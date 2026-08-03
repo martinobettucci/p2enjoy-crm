@@ -88,14 +88,40 @@ Aucune clé de production n'est utilisée pour les tests. Aucun environnement lo
 
 ## 3. Migrations en attente
 
-**Aucune.** Aucune migration n'a encore été écrite.
-
-Lorsqu'une migration sera produite, elle sera listée ici avec : son ordre, son objectif, ses
-dépendances, sa réversibilité, et le service à redéployer.
+Ces migrations existent dans le dépôt et **n'ont jamais été appliquées en production**, celle-ci
+n'étant pas provisionnée. Elles sont à appliquer dans l'ordre indiqué, une transaction par
+fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automatique.
 
 | Ordre | Fichier | Objectif | Dépendances | Retour arrière |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| 1 | `supabase/migrations/0001_identite_et_cloisonnement.sql` | Extension `pgcrypto`, schéma `app`, `profiles` et son trigger de création, `workspaces`, `workspace_members`, `track_members`, `channel_members`. RLS activée sans politique : refus par défaut. | Schéma `auth` créé par GoTrue : le service doit avoir démarré **avant** l'application. | `drop schema app cascade;` puis `drop table` des cinq tables et `drop trigger on_auth_user_created on auth.users`. Aucune donnée applicative n'est encore présente, donc aucune perte : ce retour arrière cessera d'être anodin dès la première mise en service. |
+
+**Toutes les migrations du dépôt sont idempotentes.** Le conteneur `migrations-runner` ne tient
+aucun registre : il rejoue l'intégralité du répertoire à chaque démarrage de la pile
+(`docs/DAT.md` §3.2, `docs/JOURNAL.md` décision 20). Une migration réappliquée sur une base déjà
+migrée doit donc réussir sans effet de bord — vérifié par `scripts/verify-migrations.sh`.
+
+En production, cette propriété ne dispense de rien : les migrations y sont appliquées à la main,
+dans l'ordre de ce tableau, et le tableau est vidé une fois l'application confirmée.
+
+### Commande d'application manuelle en production
+
+```bash
+# Depuis l'hôte de production, la pile démarrée et GoTrue sain.
+docker exec -i p2enjoy-db psql -U postgres -d "$POSTGRES_DB" \
+	--set ON_ERROR_STOP=1 --single-transaction \
+	-f - < supabase/migrations/0001_identite_et_cloisonnement.sql
+```
+
+Après application, contrôler que les cinq tables portent bien RLS :
+
+```sql
+select relname, relrowsecurity from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public'
+   and relname in ('profiles','workspaces','workspace_members',
+                   'track_members','channel_members');
+```
 
 ## 4. Services à redéployer
 

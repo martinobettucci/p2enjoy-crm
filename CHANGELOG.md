@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-003` — Migrations d'amorçage : identité et cloisonnement.**
+  - `supabase/migrations/0001_identite_et_cloisonnement.sql` : extension `pgcrypto`, schéma `app`
+    (non exposé par l'API REST), et les cinq tables de `docs/SCHEMA.md` §1 — `profiles`,
+    `workspaces`, `workspace_members`, `track_members`, `channel_members`.
+  - Création automatique du profil à l'ouverture d'un compte, par trigger sur `auth.users` : le
+    seul point qui capte tous les modes de création — invitation, seed, API d'administration.
+  - **Refus par défaut** : RLS activée sur les cinq tables, sans aucune politique. Une lecture
+    anonyme ou authentifiée retourne zéro ligne, une écriture est refusée, jusqu'aux politiques de
+    `CRM-010` et `CRM-012`. Les privilèges de table sont posés explicitement plutôt qu'hérités des
+    privilèges par défaut de l'image.
+  - Les migrations du dépôt sont **idempotentes** : le `migrations-runner` ne tient aucun registre
+    et rejoue tout le répertoire à chaque démarrage.
+  - `supabase/tests/0001_identite_et_cloisonnement.test.sql` : suite pgTAP de l'unité
+    (**70 assertions**).
+  - `scripts/verify-migrations.sh` : harnais rejouable des preuves de l'unité (**23 contrôles**),
+    dont la création d'un compte par l'API d'administration GoTrue et les refus mesurés hors
+    interface avec les jetons réels.
 - **`CRM-002` — Scripts de lancement et contrat d'environnement.** *(unité `[~]` : une preuve
   reste bloquée par une dépendance, voir les notes)*
   - `.env.example` : gabarit documenté des **76** variables — rôle, format, caractère

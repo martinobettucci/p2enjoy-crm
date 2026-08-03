@@ -18,6 +18,13 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 - Les énumérations sont des types PostgreSQL lorsqu'elles sont stables, des colonnes `text` avec
   contrainte `CHECK` lorsqu'elles sont susceptibles d'évoluer par migration.
 - Les noms de colonnes sont en anglais, les libellés destinés aux utilisateurs sont des données.
+- **Les migrations sont idempotentes.** Le conteneur `migrations-runner` rejoue tout le répertoire
+  à chaque démarrage de la pile et ne tient aucun registre : une migration doit pouvoir être
+  appliquée plusieurs fois sans erreur ni effet de bord (`docs/DAT.md` §3.2, `docs/JOURNAL.md`
+  décision 20).
+- **RLS est activée dans la migration qui crée la table**, sans attendre ses politiques. Une table
+  livrée avant ses politiques ne retourne donc aucune ligne et refuse toute écriture, plutôt que
+  d'être ouverte à quiconque détient la clé anonyme, qui est publique par construction.
 
 ---
 
@@ -62,8 +69,17 @@ restreint ou étend explicitement l'accès à un sous-arbre (voir `docs/SPEC-per
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `track_id` / `channel_id` | `uuid` | PK composite |
-| `user_id` | `uuid` | PK composite |
+| `user_id` | `uuid` | PK composite, FK `profiles` `ON DELETE CASCADE` |
 | `access` | `text` | `CHECK (access IN ('member','viewer','none'))` |
+| `created_at` | `timestamptz` | date d'octroi du droit fin |
+
+**Deux écarts assumés, consignés et non résolus implicitement :**
+
+- `track_id` et `channel_id` ne portent **aucune clé étrangère** dans la migration d'amorçage
+  `CRM-003` : les tables `tracks` et `channels` sont livrées par `CRM-020` et `CRM-021`, après
+  elle. Voir `docs/INCONSISTENCY_REPORT.md`, INC-010.
+- Ces deux tables ne portent **pas** `workspace_id`, alors que les conventions générales de ce
+  document l'exigent de toute table métier. Voir `docs/INCONSISTENCY_REPORT.md`, INC-011.
 
 ---
 

@@ -193,8 +193,19 @@ Les tests d'autorisation interrogent la base **directement**, avec les jetons r�
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
 Ces commandes arrivent avec le harnais de tests (`CRM-008`). Les preuves disponibles aujourd'hui
-sont les deux harnais rejouables `scripts/verify-stack.sh` (pile) et `scripts/verify-scripts.sh`
-(scripts et contrat d'environnement).
+sont trois harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
+
+```bash
+scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
+scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
+scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
+```
+
+`scripts/verify-migrations.sh` exécute la suite pgTAP de `supabase/tests/`, réapplique la
+migration pour prouver son idempotence, crée un compte par l'**API d'administration GoTrue** puis
+constate le profil correspondant par PostgREST, et mesure les refus **hors interface** avec les
+jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : chaque mutation doit le
+faire échouer.
 
 ## 8. Build
 
@@ -245,10 +256,12 @@ Livré à ce jour :
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
 │   ├── verify-stack.sh         Preuves rejouables de la pile
-│   └── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
+│   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
+│   └── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
-    └── migrations/             SQL versionné (vide : CRM-003)
+    ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
+    └── tests/                  Suites pgTAP, une par migration
 ```
 
 Prévu par le backlog, pas encore livré :
@@ -286,8 +299,14 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **Le produit n'est pas implémenté** : la pile d'exécution démarre, mais il n'y a ni schéma, ni
-  interface, ni messagerie. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état réel.
+- **Le produit n'est pas implémenté** : la pile d'exécution démarre et le socle d'identité est en
+  base (`profiles`, `workspaces`, membres et droits fins), mais il n'y a ni interface, ni
+  messagerie, ni seed. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état réel.
+- **Les autorisations ne sont pas encore écrites.** Les tables du socle d'identité sont en
+  **refus par défaut** : RLS activée, aucune politique. Une lecture retourne zéro ligne et une
+  écriture est refusée, quel que soit le compte. Les politiques et les fonctions d'autorisation
+  arrivent avec `CRM-010` et `CRM-012` ; tant qu'elles manquent, la base est sûre mais
+  inexploitable par l'API, ce qui est le comportement voulu et non un défaut.
 - **Descripteurs de fichiers.** Realtime et le pooler réclament `STACK_RLIMIT_NOFILE`
   descripteurs (défaut `100000`). Sur un hôte dont la limite dure est inférieure — conteneur sans
   `CAP_SYS_RESOURCE`, par exemple — ces deux services redémarrent en boucle tant que la variable

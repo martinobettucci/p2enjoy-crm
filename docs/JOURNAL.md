@@ -555,3 +555,155 @@ Toutes exécutées dans l'environnement de la routine, sur la pile réellement d
   donc l'autorité interne de Caddy : mêmes limites que `CRM-001`, pour les mêmes raisons.
 - **La valeur par défaut `STACK_RLIMIT_NOFILE=100000` reste non éprouvée** : l'hôte de la routine
   plafonne à 4096, et c'est précisément ce que l'ajustement automatique inscrit.
+
+---
+
+## 2026-08-03 — `CRM-003` : migrations d'amorçage, identité et cloisonnement
+
+### Contexte
+
+Première migration applicative du produit. `CRM-001` et `CRM-002` ont livré une pile qui démarre
+et des scripts qui l'amorcent ; le répertoire `supabase/migrations/` était vide. Cette unité crée
+le socle d'identité : extensions, schéma `app`, `profiles` et son trigger de création,
+`workspaces`, `workspace_members`, `track_members`, `channel_members`.
+
+Trois questions ont dû être tranchées avant d'écrire la première ligne de SQL.
+
+### Décision 20 — Pas de registre de migrations, donc des migrations idempotentes
+
+Le conteneur `migrations-runner` livré par `CRM-001` ne tient **aucune** table de suivi : il
+rejoue l'intégralité de `supabase/migrations/*.sql` à chaque démarrage de la pile. Ce
+comportement n'avait pas d'incidence tant qu'aucune migration n'existait ; il en a une dès la
+première.
+
+Deux options : introduire un registre de migrations, ou exiger que chaque migration soit
+rejouable.
+
+*Retenu : des migrations idempotentes.* Un registre est un composant à écrire, à tester et à
+maintenir cohérent avec un contrat de déploiement qui, en production, applique les migrations à la
+main. L'idempotence, elle, se vérifie mécaniquement : `scripts/verify-migrations.sh` réapplique la
+migration sur une base déjà migrée et compare la structure obtenue colonne par colonne.
+
+*Conséquence à surveiller.* L'idempotence est facile pour des créations d'objets, beaucoup moins
+pour des transformations de données. La première migration qui devra transformer des lignes
+existantes remettra ce choix en question — et c'est à ce moment-là qu'il faudra le rouvrir, pas
+avant.
+
+*Conséquence assumée.* Une migration rejouée ne détecte pas une divergence : si un objet a été
+modifié à la main dans la base, `create table if not exists` ne le corrigera pas. La base de
+développement est recréable par `./resetMe.sh`, et la production n'utilise pas ce chemin.
+
+### Décision 21 — Une table naît en refus, pas en attente de ses politiques
+
+`CRM-010` et `CRM-012` livreront les fonctions d'autorisation et les politiques RLS. La question
+était de savoir ce que font les cinq tables entre-temps.
+
+*Retenu : RLS activée dès la migration qui crée la table, sans aucune politique.* Le refus par
+défaut est donc total : zéro ligne en lecture, refus en écriture. Livrer ces tables sans RLS,
+même le temps d'une ou deux unités, les exposerait à quiconque détient la clé anonyme — qui est
+publique par construction, puisqu'elle voyage dans le navigateur.
+
+Trois précisions qui en découlent :
+
+1. **`FORCE ROW LEVEL SECURITY` n'est pas utilisée.** Elle soumettrait le propriétaire des tables
+   aux politiques, donc `app.handle_new_user()`, qui s'exécute avec les droits de `postgres` : le
+   trigger ne pourrait plus créer le moindre profil. Les rôles qui contournent RLS sont ceux qui
+   le doivent, `postgres` et `service_role`.
+2. **`SELECT` est accordé à `anon` et `authenticated`.** C'est contre-intuitif, et c'est
+   délibéré : `docs/SPEC-permissions-rls.md` §7 exige qu'un refus de lecture se manifeste par
+   **zéro ligne**, pas par une erreur de privilège. Sans ce `GRANT`, PostgREST répondrait `401`
+   ou `403` — une erreur ambiguë, qui renseigne l'appelant sur l'existence de la table au lieu de
+   la lui rendre invisible.
+3. **Les privilèges sont posés explicitement.** Les privilèges par défaut de l'image accordent
+   déjà tout à `anon`, `authenticated` et `service_role` sur les tables créées dans `public`. On
+   ne s'y fie pas : un `REVOKE ALL` suivi des `GRANT` voulus rend le comportement du produit
+   indépendant d'un réglage d'image susceptible de changer d'une version à l'autre.
+
+### Décision 22 — Le nom affiché a une chaîne de repli, parce que l'alternative est pire
+
+`profiles.full_name` est non nul (`docs/SCHEMA.md` §1). Le trigger le renseigne depuis les
+métadonnées du compte GoTrue. Reste le cas d'un compte sans métadonnée **et** sans email —
+authentification par téléphone, ou SSO n'exposant pas d'adresse.
+
+*Retenu : une chaîne de repli déterministe et documentée* — métadonnée `full_name`, puis `name`,
+puis la partie locale de l'email, puis `Utilisateur <8 premiers caractères de l'identifiant>`.
+
+Le dernier maillon n'est pas un remplissage de complaisance : sans lui, la contrainte `NOT NULL`
+ferait échouer l'insertion dans `profiles`, donc le trigger, donc **la création du compte
+elle-même**. Un nom fade est un défaut d'affichage ; un compte impossible à créer est un défaut
+bloquant. Les quatre branches sont couvertes par la suite pgTAP, une par une.
+
+`on conflict (id) do nothing` complète le dispositif. Ce n'est pas un masquage d'erreur : la clé
+du profil **est** `auth.users.id`, donc un conflit signifie que le profil visé existe déjà, avec
+des valeurs éventuellement éditées par son titulaire, qu'une réécriture perdrait.
+
+### Deux contradictions relevées, non résolues
+
+- **INC-010** : `track_members` et `channel_members` sont créées avant `tracks` et `channels`
+  (`CRM-020`, `CRM-021`). Les colonnes `track_id` et `channel_id` restent donc sans clé étrangère.
+  La suite pgTAP **constate** cette absence, de sorte qu'elle devienne rouge le jour où la
+  contrainte sera posée sans mise à jour de la suite.
+- **INC-011** : ces deux tables ne portent pas `workspace_id`, alors que les conventions générales
+  de `docs/SCHEMA.md` l'exigent de toute table métier — mais que le §1 du même document ne le
+  déclare pas. La définition spécifique l'emporte sur la convention générale, et l'arbitrage est
+  demandé avant `CRM-012`.
+
+Aucune des deux n'a été tranchée par la routine : créer `tracks` par anticipation aurait préempté
+`CRM-020`, et ajouter `workspace_id` aurait contredit le §1 sans mandat.
+
+### Vérifications réalisées
+
+Toutes exécutées dans l'environnement de la routine, sur la pile réellement démarrée.
+
+| Vérification | Résultat |
+|---|---|
+| `scripts/verify-migrations.sh` | **23 contrôles, aucune anomalie** |
+| Suite pgTAP `supabase/tests/0001_identite_et_cloisonnement.test.sql` | **70 assertions, aucune anomalie** |
+| Rejeu **à blanc** : `./resetMe.sh --yes`, cluster détruit puis recréé | Migration appliquée par `migrations-runner` sur un cluster vierge, code de sortie `0`, redémarrage complet en **38,1 s** |
+| Rejeu **sur base déjà migrée** | Migration réappliquée sans erreur ; empreinte de structure des cinq tables identique avant et après |
+| Trigger par le **véritable** chemin applicatif | Compte créé par l'API d'administration GoTrue (`HTTP 200`), profil constaté par PostgREST avec le nom et la langue des métadonnées |
+| Suppression du compte par GoTrue | Profil disparu (cascade), constaté par PostgREST |
+| Refus n° 11 — anonyme sur les cinq tables | `HTTP 200` et corps `[]` : **zéro ligne**, jamais une erreur |
+| Compte authentifié réel, jeton obtenu par la route de connexion | Son propre profil invisible (`[]`) tant qu'aucune politique n'existe |
+| Écriture par un compte authentifié | Création de workspace refusée (`HTTP 403`) ; modification de son propre profil sans effet (corps `[]`) |
+| Schéma `app` | Non joignable par l'API REST (`HTTP 404`) : il n'est pas dans `PGRST_DB_SCHEMAS` |
+| `scripts/verify-stack.sh` après le rejeu à blanc | **33 contrôles, aucune anomalie** |
+| `scripts/verify-scripts.sh` après le rejeu à blanc | **38 contrôles, aucune anomalie** |
+
+**Le harnais n'est pas complaisant** — vérifié en mutant volontairement la structure. Chaque
+mutation est injectée dans la transaction de la suite pgTAP, annulée en fin de parcours ; elle est
+d'abord appliquée seule, avec arrêt à la première erreur, pour qu'une mutation qui ne s'appliquerait
+pas ne soit pas comptée comme une détection.
+
+| Mutation introduite | Détection |
+|---|---|
+| Trigger `on_auth_user_created` retiré | **9** assertions en échec |
+| RLS désactivée sur `profiles` | 1 assertion en échec |
+| Politique permissive ajoutée sur `workspaces` | 1 assertion en échec |
+| `SELECT` retiré à `anon` sur `profiles` | 1 assertion en échec |
+| Contrainte de rôle de `workspace_members` supprimée | 1 assertion en échec |
+| Cascade de suppression du profil retirée | 1 assertion en échec |
+
+Deux défauts du harnais ont été corrigés au passage, tous deux découverts parce qu'un contrôle a
+échoué :
+
+1. une substitution de commande accidentelle dans un message — un identifiant entre accents graves
+   à l'intérieur de guillemets doubles — que le shell exécutait ;
+2. une mutation comptée comme « non détectée » alors qu'elle interrompait la suite sur erreur au
+   lieu de produire un `not ok`. Le harnais distingue désormais les deux, et une assertion
+   explicite sur `ON DELETE CASCADE` a été ajoutée à la suite pour que ce cas produise un échec
+   propre.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun test E2E dédié, ni vérification visuelle** : cette unité ne livre aucun parcours
+  utilisateur ni aucun écran. Le premier écran du produit arrive avec `CRM-007`, et le harnais
+  Playwright avec `CRM-008`. Les preuves de cette unité sont unitaires (pgTAP) et d'intégration
+  (API réelle, hors interface), ce que la Definition of Done demande pour une migration.
+- **Le seed n'est pas mis à jour**, faute d'exister : c'est l'objet de `CRM-005`. La base repart
+  donc vide après `./resetMe.sh`, et le script le dit.
+- **Les politiques RLS ne sont pas écrites.** Ce qui est prouvé ici, c'est le refus par défaut —
+  pas la résolution des droits, qui relève de `CRM-010` et `CRM-012`. Les preuves n° 1 à 10 et 12
+  de `docs/SPEC-permissions-rls.md` §7 restent à produire ; seule la n° 11 est acquise.
+- **L'intégrité référentielle des droits fins n'est pas garantie** entre cette unité et
+  `CRM-020` / `CRM-021` (INC-010).

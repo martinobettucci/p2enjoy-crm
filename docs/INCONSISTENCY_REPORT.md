@@ -214,6 +214,63 @@ la rattacher à `CRM-005` — qui vérifierait alors que `resetMe.sh` le rejoue 
 
 ---
 
+### INC-010 — `track_members` et `channel_members` sont créées avant les tables qu'elles référencent
+
+**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-03, pendant `CRM-003`.
+
+`CRM-003` doit créer `track_members` et `channel_members`. Or `tracks` est livrée par `CRM-020` et
+`channels` par `CRM-021`, toutes deux placées dans le chunk 3, donc **après**. Les colonnes
+`track_id` et `channel_id` ne peuvent pas porter de clé étrangère au moment où le plan demande
+ces tables.
+
+Ce n'est pas un oubli de rédaction : `docs/SCHEMA.md` §1 déclare explicitement les clés étrangères
+de `workspace_members` et **n'en déclare aucune** pour ces deux tables. La documentation est donc
+cohérente avec elle-même, mais laisse une intégrité référentielle non garantie : rien n'empêche
+aujourd'hui d'insérer un droit fin sur un `track_id` qui ne désigne aucun track, et rien ne
+supprimera ce droit lorsque le track sera supprimé.
+
+**Comportement retenu :** les tables sont créées **sans** clé étrangère sur `track_id` et
+`channel_id`, avec un commentaire de table qui le dit et nomme cette entrée. Aucune table `tracks`
+ou `channels` n'est créée par anticipation pour faire disparaître la contradiction : cela
+déborderait du périmètre de `CRM-003` et préempterait `CRM-020`. La suite pgTAP **constate**
+l'absence de la contrainte, de sorte qu'elle devienne rouge le jour où elle sera posée sans que la
+suite soit mise à jour.
+
+**Risque résiduel :** entre `CRM-003` et `CRM-020`, un droit fin peut désigner un track
+inexistant. Le risque est borné : aucune interface ni aucun seed n'écrit encore dans ces tables.
+
+**Arbitrage attendu du responsable :** désigner l'unité qui pose ces deux clés étrangères —
+`CRM-020` et `CRM-021` semblent les candidats naturels — et l'inscrire dans leur Definition of
+Done, ou décider que ces colonnes restent volontairement sans contrainte.
+
+---
+
+### INC-011 — `track_members` et `channel_members` sans `workspace_id`, contre la convention générale
+
+**Nature :** contradiction interne à `docs/SCHEMA.md`.
+**Relevé le :** 2026-08-03, pendant `CRM-003`.
+
+Les conventions générales de `docs/SCHEMA.md` posent que « toute table métier porte
+`workspace_id`, y compris lorsqu'il serait déductible par jointure : les politiques RLS restent
+ainsi simples et indexables ». Or la définition de `track_members` et `channel_members`, au §1 du
+même document, ne comporte pas cette colonne.
+
+Les deux lectures se défendent. Sans `workspace_id`, une politique RLS sur ces tables devra
+joindre `tracks` ou `channels` pour retrouver le workspace, ce que la convention cherche
+précisément à éviter. Avec, la colonne devient une donnée dénormalisée de plus à maintenir
+cohérente, sur une table dont chaque ligne est déjà rattachée à un objet cloisonné.
+
+**Comportement retenu :** la définition **spécifique** du §1 l'emporte sur la convention
+générale, et les tables sont créées sans `workspace_id`. Ce choix est réversible par une migration
+d'ajout de colonne ; l'inverse — retirer une colonne déjà exploitée par des politiques — le serait
+beaucoup moins.
+
+**Arbitrage attendu du responsable :** trancher avant `CRM-012`, qui écrira les politiques de
+résolution des droits fins et fixera de fait la forme des requêtes.
+
+---
+
 ## Clos
 
 *Aucune entrée close à ce jour.*

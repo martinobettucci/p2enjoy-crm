@@ -137,11 +137,66 @@ unité n'atteint l'interface, dont le premier écran arrive avec `CRM-007`.
 - La valeur par défaut `STACK_RLIMIT_NOFILE=100000` reste **non éprouvée** : l'hôte de la routine
   plafonne à 4096, valeur que l'amorçage inscrit automatiquement et signale.
 
-### CRM-003 — Migrations d'amorçage `[ ]`
+### CRM-003 — Migrations d'amorçage `[x]`
 Extensions, schéma `app`, `profiles` (+ trigger de création), `workspaces`,
 `workspace_members`, `track_members`, `channel_members`.
 **DoD** : migrations rejouables à blanc ; `docs/SCHEMA.md` §1 conforme ; pgTAP sur le trigger de
 création de profil ; `docs/PROD_MIGRATIONS.md` mis à jour.
+
+- [x] `supabase/migrations/0001_identite_et_cloisonnement.sql` : extension `pgcrypto`, schéma
+      `app` (non exposé par PostgREST), `app.set_updated_at()`, `app.handle_new_user()`, et les
+      cinq tables de `docs/SCHEMA.md` §1.
+- [x] **Rejouée à blanc** : `./resetMe.sh --yes` détruit le cluster, `migrations-runner`
+      l'applique sur une base vierge et se termine en `0`, pile complète redémarrée en **38,1 s**.
+- [x] **Rejouée sur une base déjà migrée** : réapplication sans erreur, empreinte de structure des
+      cinq tables **identique** avant et après. Le `migrations-runner` de `CRM-001` ne tient aucun
+      registre : l'idempotence est une exigence d'exécution, motivée par `docs/JOURNAL.md`,
+      décision 20.
+- [x] `docs/SCHEMA.md` §1 conforme à la structure réellement créée — vérifié colonne par colonne
+      par `columns_are`, les clés primaires, les clés étrangères, les contraintes `CHECK`, les
+      valeurs par défaut et les index. Les deux écarts constatés sont **documentés dans
+      `docs/SCHEMA.md` et consignés**, pas corrigés en douce (INC-010, INC-011).
+- [x] **pgTAP sur le trigger de création de profil** :
+      `supabase/tests/0001_identite_et_cloisonnement.test.sql`, **70 assertions, aucune anomalie**.
+      Les quatre branches de la chaîne de repli du nom affiché sont couvertes une par une, ainsi
+      que la non-réécriture d'un profil existant, la cascade de suppression, et le maintien
+      d'`updated_at` malgré une valeur forcée par le client.
+- [x] **Preuve par le véritable chemin applicatif**, hors interface : compte créé par l'API
+      d'administration GoTrue, profil constaté par PostgREST avec le nom et la langue des
+      métadonnées ; suppression du compte par GoTrue, profil disparu.
+- [x] **Refus par défaut réellement mesuré** : RLS activée sur les cinq tables, aucune politique.
+      Anonyme sur les cinq tables → `HTTP 200` et corps `[]`, soit **zéro ligne et non une
+      erreur** (preuve n° 3 et n° 11 de `docs/SPEC-permissions-rls.md` §7). Compte authentifié
+      réel → son propre profil invisible, création de workspace refusée (`403`), modification de
+      profil sans effet. Schéma `app` injoignable par l'API (`404`).
+- [x] Harnais de preuves rejouable `scripts/verify-migrations.sh` : **23 contrôles, aucune
+      anomalie**, et **non complaisant** — il échoue bien lorsque le trigger est retiré (9
+      assertions), lorsque RLS est désactivée, lorsqu'une politique permissive est ajoutée,
+      lorsque `SELECT` est retiré à `anon`, lorsque la contrainte de rôle est supprimée et
+      lorsque la cascade de suppression du profil est retirée.
+- [x] `scripts/verify-stack.sh` (**33/33**) et `scripts/verify-scripts.sh` (**38/38**) rejoués
+      après le redémarrage à blanc : aucune régression sur les unités précédentes.
+- [x] `docs/PROD_MIGRATIONS.md` §3 mis à jour : migration listée avec son objectif, ses
+      dépendances et son retour arrière. `docs/SCHEMA.md`, `docs/DAT.md` §3.2, `README.md` §7 et
+      §10, `CHANGELOG.md` mis à jour dans le même changement.
+
+*DoD adaptée, écarts explicites.* **Aucun test E2E dédié ni vérification visuelle** : cette unité
+ne livre aucun parcours utilisateur ni aucun écran — le premier arrive avec `CRM-007`, le harnais
+Playwright avec `CRM-008`. Ses preuves sont unitaires (pgTAP) et d'intégration (API réelle, hors
+interface), ce que la nature d'une migration commande. **Aucune mise à jour du seed** : il
+n'existe pas encore, c'est l'objet de `CRM-005`.
+
+*Limites nommées, non masquées.*
+
+- **Les politiques RLS ne sont pas écrites** : ce qui est prouvé est le refus par défaut, pas la
+  résolution des droits (`CRM-010`, `CRM-012`). Sur les douze preuves de refus de
+  `docs/SPEC-permissions-rls.md` §7, seules la n° 3 et la n° 11 sont acquises.
+- **`track_members.track_id` et `channel_members.channel_id` sont sans clé étrangère**, faute de
+  tables à référencer avant `CRM-020` et `CRM-021` : `docs/INCONSISTENCY_REPORT.md`, INC-010,
+  **en attente d'arbitrage**.
+- **Ces deux tables ne portent pas `workspace_id`**, contre la convention générale de
+  `docs/SCHEMA.md` mais conformément à son §1 : INC-011, **en attente d'arbitrage avant
+  `CRM-012`**.
 
 ### CRM-004 — Décision chiffrement des secrets `[ ]`
 **Bloquante pour `CRM-052` et `CRM-053`.** Vérifier la présence de `supabase_vault` et de

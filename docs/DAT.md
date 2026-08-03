@@ -117,6 +117,20 @@ En production, ce chemin est **désactivé** par `APPLY_MIGRATIONS=false` : les 
 appliquées sur instruction humaine explicite, selon `docs/PROD_MIGRATIONS.md`. Le conteneur se
 contente alors de renvoyer vers ce document et se termine avec le code `0`.
 
+**Toute migration du dépôt est idempotente.** Le conteneur ne tient aucun registre des migrations
+déjà appliquées : il rejoue l'intégralité du répertoire à chaque démarrage de la pile. Une
+migration qui échouerait au second passage bloquerait `rest`, qui attend sa terminaison réussie.
+Ce choix — pas de table de suivi, mais des migrations rejouables — est motivé dans
+`docs/JOURNAL.md`, décision 20 ; il est vérifié par `scripts/verify-migrations.sh`, qui réapplique
+la migration sur une base déjà migrée et compare la structure obtenue.
+
+**Une table naît en refus.** Toute table métier créée par une migration active RLS dans la même
+migration. Tant que ses politiques ne sont pas livrées, elle ne retourne aucune ligne et refuse
+toute écriture. Les privilèges de table sont posés explicitement, sans s'en remettre aux
+privilèges par défaut de l'image : `SELECT` est accordé à `anon` et `authenticated` afin qu'un
+refus de lecture se manifeste par zéro ligne et non par une erreur de privilège
+(`docs/SPEC-permissions-rls.md` §7).
+
 ### 3.3 `mail-sync` — service Python
 
 Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités :
