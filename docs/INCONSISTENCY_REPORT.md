@@ -578,6 +578,48 @@ ou douter de la validité des unités suivantes.
 changement qui lui soit propre, et le traiter désormais comme une section à revoir à chaque
 livraison — au même titre que `CHANGELOG.md`.
 
+**Mise à jour du 2026-08-03, pendant `CRM-006`.** La troisième affirmation devient ambiguë à son
+tour : `webapp/` existe désormais, mais ne contient que les types générés et leurs assertions —
+aucun écran, aucun composant, aucun build. « Aucune webapp » reste vrai au sens du produit et faux
+au sens du répertoire. À prendre en compte dans la réécriture attendue.
+
+---
+
+### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
+
+**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-03, pendant `CRM-006`.
+
+La DoD de `CRM-006` tient en deux exigences : « `npm run types:generate` régénère depuis le schéma
+local ; **build de la webapp vert** ». La seconde ne peut pas être satisfaite au moment où le plan
+demande cette unité : la webapp est l'objet de `CRM-007`, que `docs/MASTER_PLAN.md` §2.c place
+**après**. Il n'existe ni `index.html`, ni composant, ni configuration Vite à builder.
+
+C'est le même mode de défaillance qu'INC-009 — la DoD de `CRM-002` exigeait un seed livré trois
+unités plus tard — et qu'INC-013.
+
+**Comportement retenu :** `CRM-006` livre ce qui est démontrable, et le nomme :
+
+- `tsc --noEmit` en mode `strict` compile **réellement** les types livrés et leurs assertions.
+  C'est moins qu'un build — aucun bundle n'est produit, aucun plugin Vite n'est exercé — et c'est
+  dit comme tel dans `docs/BACKLOG.md` et dans `docs/SPEC-types.md` §9 ;
+- rien n'est fabriqué pour faire disparaître la contradiction : aucune webapp factice, aucun
+  `index.html` vide, aucune configuration Vite écrite par anticipation. Cela préempterait
+  `CRM-007`.
+
+**Risque résiduel :** faible et borné. Ce que `tsc` ne couvre pas est la résolution des modules
+telle que Vite l'appliquera — extension `.js` dans les imports, `moduleResolution`, alias. Le
+`tsconfig.json` de la racine est réglé en `moduleResolution: bundler`, qui est le mode d'un build
+Vite ; la confirmation reste due par `CRM-007`.
+
+**Conséquence sur l'état de l'unité :** `CRM-006` reste `[~]`, avec cette seule preuve manquante
+nommée noir sur blanc. Ce n'est pas un défaut de réalisation.
+
+**Action attendue du responsable :** aucune décision n'est requise — la preuve s'acquerra
+mécaniquement avec `CRM-007`, dont la Definition of Done doit alors **reprendre explicitement** la
+vérification du build avec les types générés importés, faute de quoi cette case resterait ouverte
+sans propriétaire.
+
 ---
 
 ## Clos

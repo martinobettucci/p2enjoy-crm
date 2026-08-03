@@ -34,6 +34,32 @@ d'exécuter le code attendu.
   - **INC-008** mise à jour : sa première question est réglée par nécessité, la seconde — une
     façade `npm` par-dessus les scripts — reste **ouverte et non préemptée**.
 
+- **`CRM-006` — Types TypeScript générés depuis le schéma (`[~]`).**
+  - `webapp/src/lib/database.types.ts` : les types du socle d'identité, **générés depuis la base
+    réellement migrée** et versionnés, en-tête de traçabilité réémis à chaque génération.
+  - `scripts/generate-types.sh` : trois modes — régénération, `--check` qui compare sans écrire,
+    `--stdout`. Aucune dépendance nouvelle : le générateur est le service `meta` déjà présent pour
+    Studio (décision 37).
+  - `package.json` et `tsconfig.json` : `npm run types:generate`, `npm run types:check`,
+    `npm run typecheck`, en mode `strict`. **Aucun alias `npm` des scripts de lancement** — la
+    façade `npm` reste un arbitrage ouvert (décision 38, INC-008).
+  - `webapp/src/lib/database.types.test-d.ts` : **19 assertions de type** vérifiées à la
+    compilation, dont deux qui **figent des limites connues** et échoueront volontairement quand
+    leur cause disparaîtra — le vocabulaire des rôles s'il devient un type énuméré, les relations
+    incomplètes à `CRM-020` et `CRM-021`.
+  - `scripts/verify-types.sh` : **30 contrôles, aucune anomalie**. Garde anti-dérive éprouvée
+    **par le fichier et par le schéma** — une table réellement créée en base la fait échouer, puis
+    son retrait rend la sortie identique au fichier versionné. Générateur arrêté : échec explicite
+    et **aucun fichier écrit**, vérifié par empreinte.
+  - Les sept harnais des unités précédentes rejoués — 33, 38, 23, 26, 26, 42 et 49 contrôles —
+    aucune régression.
+  - **Reste ouvert** : le build de la webapp qu'exige la Definition of Done, impossible avant
+    `CRM-007` faute de webapp. Contradiction d'ordonnancement consignée en **INC-020**, remplacée
+    par un `tsc --noEmit` strict qui est **moins qu'un build** et le dit.
+  - Limites nommées : les contraintes `CHECK` ne survivent pas à la génération (`role` se type
+    `string`) ; les types n'expriment aucun droit ; le prérequis Node 24 du dépôt n'a pas été
+    exercé, les preuves ayant été obtenues sur Node 22.22.2.
+
 - **`CRM-005` — Spécification du seed, écrite avant tout code.**
   - `docs/SPEC-seed.md` : contrat des données de développement — l'espace de travail, les trois
     comptes et leurs rôles, les identifiants **stables**, le mot de passe de développement, les

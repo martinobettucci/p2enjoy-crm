@@ -1492,3 +1492,80 @@ la trancher en silence.
 
 *Conséquence.* INC-008 reste **ouverte**, avec sa première question désormais réglée par nécessité
 et la seconde intacte. `npm run db:seed`, annoncé par `docs/DAT.md` §13, n'existe toujours pas.
+
+---
+
+## 2026-08-03 — `CRM-006` : types générés, garde anti-dérive éprouvée par le schéma
+
+### Ce que l'unité livre, et pourquoi la garde compte plus que le fichier
+
+Le fichier de types est une commodité ; la **garde** est ce qui lui donne sa valeur. Un fichier
+généré une fois puis oublié devient une affirmation invérifiable : il décrit un schéma qui a
+changé, et le compilateur valide alors des requêtes que la base refusera. C'est exactement le mode
+de défaillance que `CRM-006` doit fermer.
+
+`npm run types:check` régénère et compare **octet à octet**, sans jamais réécrire. Un écart est un
+échec, pas une correction silencieuse — réécrire effacerait l'information au moment précis où elle
+apparaît.
+
+### Décision 39 — TypeScript est épinglé à `5.9.3`, et la question est rouverte à `CRM-007`
+
+*Décision.* `package.json` épingle `typescript` en `5.9.3`, alors que le registre publie `7.0.2`
+en `latest` (et `6.0.3` sur la ligne intermédiaire).
+
+*Motif.* `CLAUDE.md` §19 demande de vérifier la compatibilité d'une dépendance avec la stack. Or la
+stack de l'interface — Vite, le greffon React, l'analyseur ESLint — n'existe pas encore : elle
+arrive avec `CRM-007`. Choisir aujourd'hui la ligne la plus récente reviendrait à parier sur une
+compatibilité qu'aucune mesure ne peut établir dans ce dépôt à cette date. `5.9.3` est la dernière
+version de la ligne que cet outillage consomme sans réserve.
+
+*Conséquence, et ce que la décision n'est pas.* Ce n'est pas un choix définitif : `CRM-007`
+assemble la chaîne complète et rend la question **mesurable**. La limite est inscrite dans
+`docs/BACKLOG.md` pour qu'elle ne se perde pas. Rien dans les types livrés ne dépend d'une
+nouveauté de TypeScript 6 ou 7 : le passage, s'il est décidé, se réduira à changer la version et à
+rejouer `npm run typecheck`.
+
+### Prouver la garde par le schéma, et non seulement par le fichier
+
+Altérer le fichier généré et constater que la garde échoue prouve peu de chose : cela montre qu'un
+`cmp` fonctionne. La question qui compte est ailleurs — **le générateur lit-il vraiment la base
+vivante**, ou une empreinte, un cache, un artefact ?
+
+`scripts/verify-types.sh` y répond en agissant sur la base : il crée réellement une table dans
+`public`, constate qu'elle apparaît **immédiatement** dans la sortie du générateur, constate que la
+garde échoue, puis supprime la table et exige que la sortie **redevienne identique** au fichier
+versionné. Les trois observations ensemble établissent ce qu'aucune ne dit seule.
+
+Le harnais restaure ensuite tout ce qu'il a touché — table, fichiers, conteneur arrêté — et le
+**constate** en sortant : compte des tables de preuve résiduelles à zéro, fichiers comparés à leur
+sauvegarde. Un harnais qui laisserait un résidu invaliderait la preuve suivante.
+
+### Figer une limite par une assertion plutôt que par une phrase
+
+Les contraintes `CHECK` ne survivent pas à la génération : `workspace_members.role` se type
+`string`. La limite est documentée (`docs/SPEC-types.md` §7), mais une phrase dans un document ne
+se rappelle pas au bon moment.
+
+Elle est donc **figée par une assertion de type** qui exige que `role` ne soit *pas* l'union
+`'admin' | 'business_developer' | 'viewer'`. L'assertion paraît absurde lue isolément ; son objet
+est précis : le jour où le schéma passerait à un type énuméré PostgreSQL, la compilation
+échouerait, et la limite devrait être révisée **dans le même changement** au lieu de survivre à sa
+cause. Même mécanique pour les deux relations incomplètes de `track_members` et `channel_members`
+(INC-010), qui échoueront à `CRM-020` et `CRM-021`.
+
+*Règle qui en découle,* opposable aux unités à venir : une limite connue d'un contrat de types
+s'écrit comme une assertion exécutable quand c'est possible, et comme une phrase seulement quand
+ça ne l'est pas.
+
+### Ce que cette unité ne prouve pas
+
+- **Le build de la webapp**, qu'exige pourtant sa Definition of Done. Il n'existe rien à builder :
+  INC-020, ouverte à cette occasion, nomme la contradiction d'ordonnancement et l'action attendue
+  de `CRM-007`. Ce qui la remplace — `tsc --noEmit` en mode `strict` — compile réellement les types
+  livrés, mais ne produit aucun bundle et n'exerce aucun plugin Vite. La résolution des modules
+  telle que Vite l'appliquera reste non vérifiée.
+- **Aucun test E2E, aucune vérification visuelle** : l'unité ne livre ni écran ni parcours. Aucune
+  capture n'a été produite, et il aurait été malhonnête d'en fabriquer une.
+- **Le prérequis Node du projet n'a pas été exercé** : `.nvmrc` et `README.md` §3 demandent Node 24,
+  l'environnement de vérification fournit Node 22.22.2. `package.json` déclare `>=24` — le contrat
+  du dépôt — mais toutes les preuves ont été obtenues sur Node 22.

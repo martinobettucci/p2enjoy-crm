@@ -517,8 +517,87 @@ n'a pas à changer, la production n'appliquant jamais de seed.
 - **Les comptes ne naissent pas d'un parcours produit** : la création exige la clé de service, donc
   reste une opération d'exploitation (INC-015), comme pour `CRM-011`.
 
-### CRM-006 — Types TypeScript générés `[ ]`
+### CRM-006 — Types TypeScript générés `[~]`
 **DoD** : `npm run types:generate` régénère depuis le schéma local ; build de la webapp vert.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-types.md` : la DoD ne disait ni d'où
+      viennent les types, ni où ils vont, ni ce qui prouve qu'ils décrivent encore le schéma trois
+      migrations plus tard. Rédigée **après mesure** de `supabase/postgres-meta:v0.96.6`, la
+      version épinglée, et non de mémoire. Commit documentaire dédié.
+- [x] `scripts/generate-types.sh` : génération depuis la **base réellement migrée**, par le service
+      `meta` de l'overlay de développement — aucune dépendance nouvelle, ni CLI à télécharger
+      (décision 37). Trois modes : écriture, `--check`, `--stdout`.
+- [x] `webapp/src/lib/database.types.ts` **versionné**, 311 lignes, en-tête de traçabilité réémis à
+      chaque génération. Versionné plutôt que produit au build, pour que la dérive se lise dans le
+      diff au lieu de rester invisible (décision 36).
+- [x] `package.json` et `tsconfig.json` livrés : `types:generate`, `types:check`, `typecheck`, en
+      mode `strict`. **Aucun alias `npm` des scripts existants** n'est ajouté : la façade `npm`
+      reste un arbitrage ouvert (décision 38, INC-008 mise à jour).
+- [x] **Garde anti-dérive prouvée non complaisante de deux façons**, en agissant sur le monde réel
+      et non en l'affirmant : une colonne renommée à la main fait échouer `types:check` ; et une
+      table **réellement créée en base** apparaît dans la sortie, fait échouer la garde, puis, une
+      fois retirée, la sortie **redevient identique** au fichier versionné. C'est cette seconde
+      preuve qui établit que le générateur lit la base vivante, et non un cache.
+- [x] **Déterminisme mesuré** : deux générations successives rendent des octets identiques. Une
+      régénération sur un dépôt à jour ne réécrit pas le fichier, et le dit.
+- [x] **Test unitaire dédié** : `webapp/src/lib/database.types.test-d.ts`, **19 assertions de
+      type** vérifiées à la compilation — tables du socle, nullabilité, colonnes exigées à
+      l'insertion, relations réellement déclarées. **Non complaisant, éprouvé** : une assertion
+      volontairement fausse fait bien échouer `tsc` (code `2`), puis restaurée, le vert revient.
+- [x] **Les limites sont figées par des assertions**, non seulement documentées : `role` et
+      `access` se typent `string`, et une assertion **exige** qu'ils ne soient pas l'union des
+      valeurs autorisées. Le jour où le schéma passerait à un type énuméré, elle échouerait et
+      forcerait à réviser la limite plutôt qu'à la laisser survivre à sa cause.
+- [x] **Gardes du script prouvées par le refus** : profil `prod` refusé ; option inconnue refusée ;
+      **générateur arrêté → échec explicite et aucun fichier écrit**, vérifié par empreinte.
+- [x] Harnais de preuves rejouable `scripts/verify-types.sh` : **30 contrôles, aucune anomalie**.
+      Il restaure tout ce qu'il altère — table de preuve, fichiers, conteneur — et le **constate**
+      en sortant plutôt que de le supposer.
+- [x] `scripts/verify-stack.sh` (**33/33**), `scripts/verify-scripts.sh` (**38/38**),
+      `scripts/verify-migrations.sh` (**23/23**), `scripts/verify-vault.sh` (**26/26**),
+      `scripts/verify-authz.sh` (**26/26**), `scripts/verify-auth.sh` (**42/42**) et
+      `scripts/verify-seed.sh` (**49/49**) rejoués : aucune régression.
+- [x] `README.md` §4, §5 et §10, `docs/DAT.md` §3.1 et §13, `docs/MASTER_PLAN.md` §3,
+      `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Build de la webapp : IMPOSSIBLE à ce stade.** La DoD l'exige ; il n'existe ni `index.html`,
+      ni composant, ni configuration Vite — la webapp est l'objet de `CRM-007`
+      (`docs/MASTER_PLAN.md` §2.c). Ce qui est livré à la place est `tsc --noEmit` en mode
+      `strict`, qui compile **réellement** les types et leurs assertions : c'est moins qu'un build,
+      aucun bundle n'est produit, aucun plugin Vite n'est exercé. **Cette preuve est bloquée par
+      une dépendance, pas par un défaut de l'unité.** Contradiction d'ordonnancement consignée dans
+      `docs/INCONSISTENCY_REPORT.md`, **INC-020**, avec l'action attendue : la DoD de `CRM-007`
+      doit reprendre explicitement cette vérification, faute de quoi la case resterait sans
+      propriétaire.
+
+*DoD adaptée, écarts explicites.* **Aucun test E2E dédié, aucune vérification visuelle** : l'unité
+ne livre ni écran ni parcours — le premier arrive avec `CRM-007`, le harnais Playwright avec
+`CRM-008`. **Aucune mise à jour du seed** : les types ne dépendent d'aucune donnée, et le seed n'a
+aucun effet sur le schéma. **Aucune opération de déploiement** : ni migration, ni service, ni
+variable d'environnement — `docs/PROD_MIGRATIONS.md` est inchangé à dessein.
+
+*Limites nommées, non masquées.*
+
+- **Le build de la webapp n'est pas prouvé** (voir ci-dessus, INC-020). En particulier, la
+  résolution des modules telle que Vite l'appliquera n'est pas exercée.
+- **Les contraintes `CHECK` ne survivent pas à la génération** : `workspace_members.role` se type
+  `string`, pas `'admin' | 'business_developer' | 'viewer'`. Le compilateur ne protégera donc pas
+  `CRM-007` d'une chaîne de rôle erronée — seule la base la refuse. Fabriquer l'union à la main
+  créerait une seconde source de vérité, donc une dérive de plus à surveiller.
+- **Les types n'expriment aucun droit** : une table en refus par défaut se type comme une table
+  ouverte. L'interface ne peut jamais déduire une autorisation d'un type.
+- **Les relations de `track_members` et `channel_members` sont incomplètes**, faute de `tracks` et
+  `channels` (INC-010) ; deux assertions le figent et échoueront à `CRM-020` et `CRM-021`.
+- **La génération exige la pile de développement démarrée** : le service `meta` ne publie aucun
+  port, l'appel passe par `docker exec`. Aucun chemin hors ligne n'est fourni.
+- **Le prérequis Node du projet n'a pas été exercé.** `README.md` §3 et `.nvmrc` demandent Node 24 ;
+  l'environnement de vérification fournit **Node 22.22.2 et npm 10.9.7**. `package.json` déclare
+  bien `>=24`, mais toutes les preuves ci-dessus ont été obtenues sur Node 22. La compilation et la
+  génération ne dépendent d'aucune interface propre à Node 24 ; la version épinglée reste néanmoins
+  **non éprouvée**.
+- **TypeScript est épinglé à `5.9.3`** alors que `7.0.2` est la version courante du registre. Motif
+  assumé : c'est la dernière du cycle que l'outillage Vite/React consomme aujourd'hui sans réserve,
+  et la compatibilité réelle ne devient mesurable qu'à `CRM-007`, où la chaîne complète est
+  assemblée. À réexaminer à ce moment-là (décision 39).
 
 ### CRM-007 — Squelette de la webapp `[ ]`
 React + Vite + Tailwind, jetons du design system en variables CSS, mise en page barre latérale et

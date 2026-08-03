@@ -1,0 +1,18 @@
+{
+  "name": "p2enjoy-crm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CRM P2Enjoy — racine du dépôt. @spec CRM-006 (docs/BACKLOG.md) ; docs/SPEC-types.md §4 (commandes). Ne porte que les commandes que la Definition of Done de CRM-006 nomme : aucune façade npm des scripts existants n'est ajoutée (docs/JOURNAL.md décision 38, INC-008).",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "types:generate": "scripts/generate-types.sh",
+    "types:check": "scripts/generate-types.sh --check",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

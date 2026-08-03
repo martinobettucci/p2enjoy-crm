@@ -83,9 +83,11 @@ d'exemple non sensible. Deux conventions y ont force de contrat, et les scripts 
 - une valeur **vide** signale une variable facultative ; toute autre variable doit être
   renseignée.
 
-`npm install` n'a pas encore d'objet : le dépôt ne contient aucun `package.json` avant l'unité
-qui introduit la webapp. Voir [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md),
-INC-008.
+`npm install` installe les dépendances de développement de la racine. Le `package.json` est
+introduit par `CRM-006` et ne porte que les commandes que cette unité livre — génération et
+vérification des types, compilation. **Aucun alias `npm` des scripts de lancement n'existe** :
+la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte, voir
+[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
 
 ## 5. Commandes principales
 
@@ -108,7 +110,10 @@ INC-008.
 | `supabase/seed/apply-seed.sh` | Applique le seed socle sur la pile de développement | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-007`, INC-008) |
-| `npm run types:generate` | Régénère les types TypeScript depuis le schéma | à venir (`CRM-006`) |
+| `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
+| `npm run types:check` | Vérifie que les types versionnés n'ont pas dérivé du schéma, sans rien réécrire | **disponible** |
+| `npm run typecheck` | `tsc --noEmit` sur les types générés et leurs assertions | **disponible** |
+| `scripts/verify-types.sh` | Rejoue les preuves des types générés : déterminisme, garde anti-dérive éprouvée par le fichier **et par le schéma**, assertions | **disponible** |
 | `npm run build` | Build de production de la webapp | à venir (`CRM-007`) |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
@@ -116,8 +121,10 @@ celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves 
 fichier jetable sans toucher à la configuration du poste.
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`. Le `npm run stop` annoncé
-dans les versions antérieures de ce document n'a pas d'objet tant qu'aucun `package.json`
-n'existe : voir [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
+dans les versions antérieures de ce document n'existe toujours pas : le `package.json` livré par
+`CRM-006` se limite aux commandes de types, et créer des alias des scripts trancherait en silence
+un point laissé à l'arbitrage — voir
+[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
 
 Les commandes `docker compose` sous-jacentes restent utilisables directement :
 
@@ -234,8 +241,12 @@ npm run e2e:report         # Rapport HTML
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
-Ces commandes arrivent avec le harnais de tests (`CRM-008`). Les preuves disponibles aujourd'hui
-sont six harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
+Ces commandes arrivent avec le harnais de tests (`CRM-008`). `npm run typecheck` fait exception :
+livré par `CRM-006`, il compile les types générés et leurs **19 assertions de contrat**, et ne
+demande aucune pile démarrée.
+
+Les autres preuves disponibles aujourd'hui sont huit harnais rejouables, à exécuter sur une pile de
+développement déjà démarrée :
 
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
@@ -245,6 +256,7 @@ scripts/verify-vault.sh        # chiffrement des secrets de messagerie          
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
 scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
+scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -326,6 +338,8 @@ Livré à ce jour :
 ├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
 ├── caddy/Caddyfile             Terminaison TLS et service des fichiers statiques
+├── package.json                Commandes de types (CRM-006) — aucun alias des scripts (INC-008)
+├── tsconfig.json               Compilation stricte des types générés et de leurs assertions
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
@@ -334,21 +348,35 @@ Livré à ce jour :
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
 │   ├── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
-│   └── verify-auth.sh          Preuves rejouables de l'authentification
-└── supabase/
-    ├── docker/                 Configuration Kong et scripts d'initialisation de la base
-    ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
-    ├── seed/                    Seed socle, appliqué par les API réelles (CRM-005)
-    └── tests/                  Suites pgTAP, une par migration
+│   ├── verify-auth.sh          Preuves rejouables de l'authentification
+│   ├── verify-seed.sh          Preuves rejouables du seed socle
+│   ├── generate-types.sh       Génération des types TypeScript depuis le schéma migré
+│   └── verify-types.sh         Preuves rejouables des types générés et de leur garde anti-dérive
+├── supabase/
+│   ├── docker/                 Configuration Kong et scripts d'initialisation de la base
+│   ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
+│   ├── seed/                   Seed socle, appliqué par les API réelles (CRM-005)
+│   └── tests/                  Suites pgTAP, une par migration
+└── webapp/src/lib/             Types générés depuis le schéma et leurs assertions (CRM-006)
 ```
 
 Prévu par le backlog, pas encore livré :
 
 ```
-├── webapp/                     CRM-007
 ├── e2e/                        CRM-008
 └── mail-sync/                  CRM-051
 ```
+
+Le répertoire `webapp/` existe déjà, mais ne contient que ce que `CRM-006` livre :
+
+```
+webapp/src/lib/
+├── database.types.ts           Types générés depuis le schéma — fichier généré, ne pas éditer
+└── database.types.test-d.ts    Assertions de type, vérifiées à la compilation
+```
+
+L'application elle-même — `index.html`, composants, routes, configuration Vite — relève de
+`CRM-007`.
 
 Le répertoire `supabase/functions/` (edge functions Deno) mentionné dans les versions antérieures
 de ce document n'a **aucun** composant correspondant dans l'architecture ni aucune unité de
@@ -382,6 +410,11 @@ Documentation de référence :
 - **Le produit n'est pas implémenté** : la pile d'exécution démarre et le socle d'identité est en
   base (`profiles`, `workspaces`, membres et droits fins), mais il n'y a ni interface, ni
   messagerie, ni seed. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état réel.
+- **Les types générés ne décrivent que le schéma, jamais les droits.** Une table en refus par
+  défaut se type exactement comme une table ouverte : elle rend simplement zéro ligne à
+  l'exécution. Une contrainte `CHECK` ne survit pas non plus à la génération —
+  `workspace_members.role` se type `string`, et seule la base refuse une valeur hors vocabulaire.
+  Voir [`docs/SPEC-types.md`](docs/SPEC-types.md) §7.
 - **Les autorisations ne sont pas encore écrites.** Les tables du socle d'identité sont en
   **refus par défaut** : RLS activée, aucune politique. Une lecture retourne zéro ligne et une
   écriture est refusée, quel que soit le compte. Les politiques et les fonctions d'autorisation

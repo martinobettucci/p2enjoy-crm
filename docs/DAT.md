@@ -97,6 +97,16 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 (board, card, inbox, workflow, réglages), `src/components/ui` (composants du design system),
 `src/routes`.
 
+**Livré à ce jour :** `src/lib/database.types.ts` seulement — les types dérivés du schéma
+(`CRM-006`, `docs/SPEC-types.md`), accompagnés de leurs assertions de contrat. Le fichier est
+**généré et versionné** ; `npm run types:check` prouve qu'il n'a pas dérivé du schéma réellement
+migré. Tout le reste — client Supabase, composants, routes, build Vite — relève de `CRM-007`.
+
+Ces types décrivent le schéma, **jamais les droits** : une table en refus par défaut se type
+exactement comme une table ouverte. L'interface ne peut donc déduire aucune autorisation d'un
+type, ce qui est cohérent avec le principe ci-dessus — le refus fait toujours autorité côté
+backend.
+
 ### 3.2 `db` — PostgreSQL 17
 
 Source de vérité du produit. Contient :
@@ -459,8 +469,10 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 
 ## 13. Commandes de lancement
 
-Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`, `npm run db:migrate`,
-`npm run db:seed`, `npm run types:generate`, `npm run build`.
+Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,
+`npm run types:generate`, `npm run types:check`, `npm run typecheck`. `npm run db:migrate`,
+`npm run db:seed` et `npm run build` restent à venir — le `package.json` livré par `CRM-006` se
+limite aux commandes des types (`docs/JOURNAL.md`, décision 38 ; INC-008).
 
 Les trois scripts partagent `scripts/lib/env.sh`, qui porte la lecture du fichier
 d'environnement, son amorçage et ses gardes. Le fichier visé est `.env` à la racine, ou celui que
@@ -472,6 +484,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
+| `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.
