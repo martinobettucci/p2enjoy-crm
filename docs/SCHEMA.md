@@ -480,10 +480,12 @@ File d'envoi persistante.
 
 ## 9. Fonctions et RPC
 
-| Fonction | Rôle |
-|---|---|
-| `app.is_workspace_member(ws)` / `app.is_workspace_admin(ws)` | Résolution du rôle, `SECURITY DEFINER` pour éviter la récursion RLS |
-| `app.can_read_channel(ch)` / `app.can_write_channel(ch)` | Droit effectif après application des droits fins |
+| Fonction | Rôle | État |
+|---|---|---|
+| `app.workspace_role(ws)` | Rôle de l'appelant dans le workspace, `NULL` s'il n'en est pas membre. `SECURITY DEFINER`, `STABLE` | livrée (`CRM-010`) |
+| `app.is_workspace_member(ws)` / `app.is_workspace_admin(ws)` | Résolution du rôle, `SECURITY DEFINER` pour éviter la récursion RLS | livrées (`CRM-010`) |
+| `app.resolve_access(ws_role, track_access, channel_access)` | Algorithme « le plus spécifique gagne » de `docs/SPEC-permissions-rls.md` §2.2, appliqué à trois valeurs déjà lues. Rend `none`, `read` ou `write`. Fonction pure : `IMMUTABLE`, `SECURITY INVOKER` | livrée (`CRM-010`) |
+| `app.can_read_track(track)` / `app.can_read_channel(ch)` / `app.can_write_channel(ch)` / `app.can_read_card(card)` | Droit effectif après application des droits fins : lecture de la ligne, puis `app.resolve_access` | **différées** — dépendent de `tracks`, `channels` et `cards` (INC-013) |
 | `move_card(card_id, to_step_id, comment)` | **Garde centrale** : droit d'écriture, transition déclarée, champs requis renseignés |
 | `copy_workflow_to_track(workflow_id, track_id)` | Copie tracée d'un workflow global vers un track |
 | `move_card_to_channel(card_id, channel_id, step_mapping)` | Changement de channel avec remappage explicite des étapes |

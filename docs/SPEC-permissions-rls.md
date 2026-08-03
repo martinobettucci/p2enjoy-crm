@@ -45,14 +45,14 @@ irrécupérables.
 
 Déclarées `SECURITY DEFINER`, `search_path` fixé, accordées à `authenticated` :
 
-| Fonction | Retour |
-|---|---|
-| `app.is_workspace_member(ws uuid)` | l'appelant appartient au workspace |
-| `app.is_workspace_admin(ws uuid)` | l'appelant y est administrateur |
-| `app.can_read_track(track uuid)` | droit de lecture effectif sur le track |
-| `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel |
-| `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel |
-| `app.can_read_card(card uuid)` | dérivé du channel de la card |
+| Fonction | Retour | Livrée par |
+|---|---|---|
+| `app.is_workspace_member(ws uuid)` | l'appelant appartient au workspace | `CRM-010` |
+| `app.is_workspace_admin(ws uuid)` | l'appelant y est administrateur | `CRM-010` |
+| `app.can_read_track(track uuid)` | droit de lecture effectif sur le track | différée, INC-013 |
+| `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel | différée, INC-013 |
+| `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel | différée, INC-013 |
+| `app.can_read_card(card uuid)` | dérivé du channel de la card | différée, INC-013 |
 
 Ces fonctions existent pour deux raisons : éviter la **récursion** des politiques (une politique
 sur `workspace_members` qui interrogerait `workspace_members`), et garder les politiques lisibles
@@ -60,6 +60,35 @@ et indexables.
 
 Elles sont `STABLE` et s'appuient sur `auth.uid()`. **Les droits ne sont pas portés par le JWT** :
 une révocation prend effet immédiatement, sans attendre l'expiration du jeton.
+
+### 3.1 Deux fonctions d'appui, livrées par `CRM-010`
+
+| Fonction | Retour |
+|---|---|
+| `app.workspace_role(ws uuid)` | rôle de l'appelant dans le workspace, `NULL` s'il n'en est pas membre. `SECURITY DEFINER`, `STABLE` |
+| `app.resolve_access(ws_role text, track_access text, channel_access text)` | `none`, `read` ou `write` — l'algorithme du §2.2, appliqué à trois valeurs déjà lues. Fonction **pure** : `IMMUTABLE`, `SECURITY INVOKER`, aucun accès aux tables |
+
+`app.resolve_access` n'est pas une fonction supplémentaire du modèle : c'est la **décomposition**
+des quatre fonctions `can_*`, dont elle isole la seule partie qui porte une règle métier. Les
+quatre, une fois écrivables, se réduisent à une lecture de ligne suivie de son appel. Cette
+séparation permet de prouver la règle par énumération exhaustive de ses 64 combinaisons d'entrées,
+sans fixture ni compte (`docs/JOURNAL.md`, décision 25).
+
+Conséquence de la précédence channel → track → workspace, explicitée ici parce qu'elle est
+contre-intuitive : un `channel_members.access = 'member'` **l'emporte** sur un
+`track_members.access = 'none'` posé sur le track qui contient ce channel. « Le plus spécifique
+gagne » vaut dans les deux sens, y compris lorsqu'il rouvre plus bas ce qui est fermé plus haut.
+
+### 3.2 `EXECUTE` est également accordé à `anon`
+
+Une politique RLS est évaluée avec les droits du **rôle courant**. Un appelant anonyme atteignant
+une table dont la politique appelle l'une de ces fonctions recevrait, faute d'`EXECUTE`, une
+**erreur de privilège** — alors que le comportement exigé au §7 est **zéro ligne**. `EXECUTE` est
+donc accordé à `anon`, `authenticated` et `service_role`, jamais à `PUBLIC`.
+
+Le droit n'ouvre rien : `auth.uid()` étant nul sans jeton, les prédicats rendent faux et
+`app.workspace_role` rend `NULL`. C'est la même logique qui accorde `SELECT` à `anon` sur les
+tables d'identité (`docs/JOURNAL.md`, décisions 21 et 26).
 
 ## 4. Politiques par famille de tables
 

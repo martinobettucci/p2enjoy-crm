@@ -320,7 +320,19 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 - **Rôles de workspace** : `admin`, `business_developer`, `viewer`.
 - **Droits fins** : `track_members` et `channel_members` accordent l'accès à un sous-arbre.
 - **Application** : politiques RLS sur toutes les tables, appuyées sur des fonctions
-  `SECURITY DEFINER` afin d'éviter la récursion des politiques.
+  `SECURITY DEFINER` afin d'éviter la récursion des politiques. Que ces fonctions évitent
+  réellement la récursion est **mesuré**, non supposé : la suite pgTAP de `CRM-010` la provoque
+  d'abord de deux façons — `42P17` par une politique auto-référente, `54001` par une jumelle
+  `SECURITY INVOKER` — puis exécute la même politique adossée à la fonction livrée, qui répond
+  sans erreur (`docs/JOURNAL.md`, décision 27).
+- **Les droits ne sont pas portés par le jeton** : les fonctions relisent `workspace_members` à
+  chaque appel, donc une révocation prend effet immédiatement. Mesuré sous PostgREST avec un jeton
+  toujours valide par `scripts/verify-authz.sh`.
+- **État de livraison** : `app.workspace_role`, `app.is_workspace_member`,
+  `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
+  fonctions `can_*` sont différées, faute des tables `tracks`, `channels` et `cards` —
+  `docs/INCONSISTENCY_REPORT.md`, INC-013. Aucune politique RLS n'est encore écrite : les tables
+  d'identité restent en refus par défaut.
 - **Secrets de messagerie** : la colonne portant la référence du secret est révoquée pour le
   rôle `authenticated`. Aucun chemin de lecture ne l'expose à un client.
 

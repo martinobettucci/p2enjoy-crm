@@ -309,9 +309,11 @@ select is_empty(
 -- 5. Refus par défaut — docs/SPEC-permissions-rls.md §4, §7
 -- =============================================================================================
 -- RLS activée sans aucune politique : toute lecture par `anon` ou `authenticated` retourne zéro
--- ligne, toute écriture est refusée. Les politiques arrivent avec `CRM-010` et `CRM-012` ; cette
--- suite deviendra rouge si elles sont ajoutées sans qu'elle soit mise à jour, ce qui est
--- l'effet recherché.
+-- ligne, toute écriture est refusée. `CRM-010` a livré les **fonctions** d'autorisation sans poser
+-- la moindre politique ; celles-ci restent donc attendues, sans qu'aucune unité ne les porte
+-- nommément pour les trois tables d'identité — `docs/INCONSISTENCY_REPORT.md`, INC-014. Cette
+-- suite deviendra rouge si elles sont ajoutées sans qu'elle soit mise à jour, ce qui est l'effet
+-- recherché.
 
 select is(
 	(select bool_and(relrowsecurity) from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -333,11 +335,11 @@ select is(
 );
 
 select policies_are('public', 'profiles',          array[]::text[],
-	'`profiles` n''a aucune politique : refus par défaut jusqu''à CRM-010');
+	'`profiles` n''a aucune politique : refus par défaut, INC-014');
 select policies_are('public', 'workspaces',        array[]::text[],
-	'`workspaces` n''a aucune politique : refus par défaut jusqu''à CRM-010');
+	'`workspaces` n''a aucune politique : refus par défaut, INC-014');
 select policies_are('public', 'workspace_members', array[]::text[],
-	'`workspace_members` n''a aucune politique : refus par défaut jusqu''à CRM-010');
+	'`workspace_members` n''a aucune politique : refus par défaut, INC-014');
 select policies_are('public', 'track_members',     array[]::text[],
 	'`track_members` n''a aucune politique : refus par défaut jusqu''à CRM-012');
 select policies_are('public', 'channel_members',   array[]::text[],
@@ -364,14 +366,16 @@ select ok(not has_table_privilege('authenticated', 'public.profiles', 'DELETE'),
 select ok(not has_table_privilege('anon', 'public.profiles', 'INSERT'),
 	'`anon` ne peut pas insérer un profil');
 select ok(has_table_privilege('authenticated', 'public.profiles', 'UPDATE'),
-	'`authenticated` peut modifier un profil, sous réserve des politiques de CRM-010');
+	'`authenticated` peut modifier un profil, sous réserve des politiques à venir');
 
 select ok(not has_table_privilege('anon', 'public.workspaces', 'INSERT'),
 	'`anon` n''écrit dans aucune table métier');
 select ok(not has_table_privilege('anon', 'public.workspace_members', 'INSERT'),
 	'`anon` n''écrit pas dans `workspace_members`');
 
--- Le schéma `app` est utilisable, mais ses futures fonctions ne sont pas exécutables par défaut.
+-- Le schéma `app` est utilisable. `handle_new_user` n'est exécutable par personne : elle n'est
+-- appelée que par le trigger. Les fonctions d'autorisation de `CRM-010`, elles, sont explicitement
+-- accordées à `anon` — voir `supabase/tests/0002_fonctions_autorisation.test.sql` §5.
 select ok(has_schema_privilege('anon', 'app', 'USAGE'),
 	'`anon` a USAGE sur `app` : une politique appelant une fonction `app.*` refusera par zéro '
 	'ligne, non par une erreur de privilège');

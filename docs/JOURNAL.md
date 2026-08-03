@@ -894,3 +894,142 @@ jamais masquer le message, qui reste ce que chaque contrôle examine.
   fonctionne dans l'image retenue — pas son usage par le produit, qui relève de `CRM-052` et
   `CRM-053`.
 - **La restauration d'une sauvegarde n'est pas éprouvée** (décision 24, limite connue).
+
+---
+
+## 2026-08-03 — `CRM-010` : fonctions d'autorisation
+
+Première brique du modèle d'autorisation. Objectif : livrer les fonctions sur lesquelles les
+politiques RLS de `CRM-012` s'appuieront, et prouver qu'elles répondent juste — y compris pour un
+appelant anonyme, pour un membre d'un autre workspace, et lorsqu'un droit est révoqué sans que le
+jeton ait expiré.
+
+### Le problème rencontré d'emblée : quatre fonctions sur six ne sont pas écrivables
+
+`docs/SPEC-permissions-rls.md` §3 énumère six fonctions. Quatre d'entre elles —
+`can_read_track`, `can_read_channel`, `can_write_channel`, `can_read_card` — reçoivent
+l'identifiant d'un objet et doivent remonter jusqu'à son workspace. Ce chemin passe par `tracks`,
+`channels` et `cards`, livrées par `CRM-020`, `CRM-021` et `CRM-040`, c'est-à-dire au chunk
+suivant.
+
+*Options examinées.*
+
+1. **Créer les tables manquantes par anticipation.** Écarté : cela préempte trois unités et
+   déborde très largement du périmètre autorisé.
+2. **Écrire les quatre fonctions quand même.** PL/pgSQL accepte une référence à une table absente
+   — la fonction est créée, puis échoue au premier appel. Écarté : aucune preuve ne serait
+   possible avant `CRM-020`, et le dépôt porterait quatre pièges silencieux.
+3. **Rendre les fonctions tolérantes à l'absence des tables** (`to_regclass`, garde conditionnelle).
+   Écarté sans hésitation : c'est du masquage d'erreur, interdit par `CLAUDE.md` §18.
+4. **Livrer ce qui est démontrable, consigner le reste.** Retenu.
+
+La contradiction d'ordonnancement est consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-013**,
+avec trois options d'arbitrage. L'unité reste `[~]` : ce n'est pas un défaut de réalisation, mais
+une dépendance non satisfiable dans l'ordre actuel du plan.
+
+### Décision 25 — L'algorithme de résolution est isolé des tables qu'il ne peut pas encore lire
+
+*Problème.* La règle métier de `docs/SPEC-permissions-rls.md` §2.2 — « le plus spécifique gagne »,
+« un administrateur n'est jamais restreint » — est la partie difficile et la seule qui puisse
+produire un défaut d'autorisation. Or elle se trouvait, dans la rédaction initiale, enfermée à
+l'intérieur des quatre fonctions non écrivables. Attendre `CRM-020` aurait signifié livrer plus
+tard une règle non éprouvée, au milieu de jointures, donc éprouvable seulement par fixtures.
+
+*Décision.* La règle est livrée **maintenant**, sous la forme d'une fonction pure :
+`app.resolve_access(ws_role, track_access, channel_access)`, qui ne lit aucune table et rend
+`none`, `read` ou `write`. Les quatre fonctions différées n'auront plus qu'à lire leur ligne et
+l'appeler.
+
+*Conséquences.* La règle se prouve par **énumération complète** de ses entrées : 4 rôles de
+workspace — dont l'absence de rôle — par 4 états du droit fin de track par 4 états du droit fin de
+channel, soit **64 combinaisons**, toutes écrites en clair dans la suite pgTAP. Aucune fixture,
+aucun compte, aucune table. Lorsque `CRM-020` arrivera, la partie restante des quatre fonctions
+sera une lecture de ligne, dont la preuve est bien plus simple à écrire.
+
+*Écart assumé.* `resolve_access` n'est pas nommée dans `docs/SPEC-permissions-rls.md` §3. Ce n'est
+pas un périmètre supplémentaire mais une **décomposition** des fonctions spécifiées : elle n'ajoute
+aucun comportement, elle isole celui qui existe déjà. `docs/SCHEMA.md` §9 et
+`docs/SPEC-permissions-rls.md` §3 la documentent dans le même changement.
+
+*Un point de sémantique tranché explicitement.* « Le plus spécifique gagne » vaut dans les deux
+sens : un `channel_members.access = 'member'` l'emporte sur un `track_members.access = 'none'` du
+track qui contient ce channel. Ce cas est peu intuitif — il autorise plus bas ce qui est refusé
+plus haut — mais c'est ce que la précédence channel → track → workspace signifie. Il est écrit
+noir sur blanc dans la migration et couvert par les lignes 45 à 48 et 61 à 64 de la matrice.
+
+### Décision 26 — `EXECUTE` est accordé à `anon`, pour que le refus reste « zéro ligne »
+
+*Problème.* `docs/SPEC-permissions-rls.md` §3 demande que ces fonctions soient « accordées à
+`authenticated` ». Une politique RLS est pourtant évaluée avec les droits du **rôle courant** : un
+appelant anonyme atteignant une table dont la politique appelle `app.is_workspace_member()`
+recevrait, sans `EXECUTE`, une **erreur de privilège**. Or le §7 exige exactement l'inverse : « un
+refus ne se manifeste pas toujours par une erreur : pour une lecture, l'attendu est zéro ligne ».
+
+*Décision.* `EXECUTE` est accordé à `anon`, `authenticated` et `service_role`. C'est la même
+logique qui avait conduit `CRM-003` à accorder `SELECT` à `anon` sur les cinq tables, et à lui
+accorder `USAGE` sur le schéma `app`.
+
+*Conséquences.* Le droit n'ouvre rien : `auth.uid()` étant nul sans jeton, les trois prédicats
+rendent faux ou NULL. La suite pgTAP le mesure (§3.6), et `scripts/verify-authz.sh` le mesure une
+seconde fois sous PostgREST avec la clé anonyme réelle : `HTTP 200` et corps `[]`. `PUBLIC` reste
+exclu, ce qui est vérifié sur l'ACL des quatre fonctions.
+
+### Décision 27 — Prouver l'absence de récursion en la provoquant
+
+*Problème.* La Definition of Done exige que l'« absence de récursion soit démontrée ». Une
+assertion sur `prosecdef = true` ne démontre rien : elle constate un attribut, pas un
+comportement.
+
+*Décision.* La suite pgTAP provoque la récursion de deux façons distinctes, puis exécute la même
+politique adossée à la fonction livrée.
+
+*Mesures obtenues.*
+
+| Montage | Résultat mesuré |
+|---|---|
+| Politique sur `workspace_members` interrogeant `workspace_members` | `42P17` — « infinite recursion detected in policy for relation » |
+| Politique appelant une jumelle `SECURITY INVOKER` de `is_workspace_member` | `54001` — « stack depth limit exceeded » |
+| Politique appelant `app.is_workspace_member` telle que livrée | aucune erreur, et le filtrage attendu — 3 membres visibles sur 4 |
+
+*Fait relevé, contraire à l'attente initiale.* Le second montage ne produit **pas** `42P17`.
+PostgreSQL ne détecte pas la récursion lorsqu'elle traverse une fonction : la pile est épuisée à
+la place. Le résultat est le même — la requête échoue — mais le diagnostic est bien moins lisible.
+C'est un argument de plus en faveur de `SECURITY DEFINER`, et la raison pour laquelle la suite
+attend `54001` et non `42P17` sur ce montage : elle mesure ce qui se produit réellement, et non ce
+qu'on aurait supposé.
+
+### Décision 28 — Instrumenter pour prouver, puis retirer et vérifier le retrait
+
+*Problème.* Le schéma `app` n'est pas exposé par PostgREST, et `CRM-010` ne livre volontairement
+aucune politique. Le comportement de ces fonctions sous un **vrai jeton**, à travers la véritable
+pile, n'était donc observable par aucun chemin : la preuve se serait réduite à ce que pgTAP mesure
+déjà en base, ce que `CLAUDE.md` §10 refuse — « toute règle d'accès doit être vérifiée par une
+requête directe qui contourne l'interface ».
+
+*Décision.* `scripts/verify-authz.sh` pose **temporairement** deux politiques sur
+`public.workspaces`, adossées aux fonctions livrées, interroge l'API avec trois jetons réels
+obtenus par la route de connexion, puis les retire et **vérifie qu'il n'en reste aucune**.
+
+*Conséquences.* Ce qui est mesuré est bien le comportement réel : chaque profil ne voit que son
+workspace, l'anonyme obtient `200` et `[]`, un `viewer` ne modifie rien, un administrateur d'un
+autre workspace non plus, et une appartenance retirée coupe l'accès immédiatement avec un jeton
+toujours valide. Le harnais encadre l'instrumentation par un `trap` — les politiques disparaissent
+même en cas d'interruption —, il vérifie qu'aucune politique ne subsiste, et il constate que le
+refus par défaut de `CRM-003` est restauré à l'identique. Les politiques portent le préfixe
+`tst_crm010_` et n'existent dans aucune migration.
+
+*Ce que ce montage ne prouve pas.* Il ne préjuge en rien des politiques que `CRM-012` écrira :
+celles-ci sont un choix de conception, pas une conséquence de cette instrumentation.
+
+### Ce que cette unité ne prouve pas
+
+- **Quatre des six fonctions ne sont pas livrées** (INC-013). Ce qui manque n'est pas la règle
+  métier — elle est livrée et prouvée — mais la jointure qui remonte au workspace.
+- **Aucune politique RLS n'est écrite.** Le refus par défaut de `CRM-003` est intact, ce que la
+  suite pgTAP vérifie explicitement. Au passage, aucune unité du backlog ne porte nommément les
+  politiques des tables d'identité : consigné en **INC-014**.
+- **Aucun test E2E dédié, ni vérification visuelle.** Cette unité ne livre ni parcours utilisateur
+  ni écran — le premier arrive avec `CRM-007`, le harnais Playwright avec `CRM-008`. Ses preuves
+  sont unitaires (pgTAP) et d'intégration (PostgREST, jetons réels, hors interface).
+- **Aucune mise à jour du seed** : il n'existe pas encore, c'est l'objet de `CRM-005`. Les comptes
+  et les workspaces de l'étape 3 du harnais sont créés puis détruits par le harnais lui-même.

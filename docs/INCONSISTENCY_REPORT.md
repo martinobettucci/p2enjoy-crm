@@ -282,6 +282,90 @@ réévaluation de `pg_cron` maintenant que sa disponibilité est acquise. À tra
 
 ---
 
+### INC-013 — Quatre des six fonctions d'autorisation dépendent de tables livrées deux chunks plus tard
+
+**Nature :** contradiction d'ordonnancement entre `docs/SPEC-permissions-rls.md` §3,
+`docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-03, pendant `CRM-010`.
+
+`CRM-010` doit livrer six fonctions. Quatre d'entre elles — `app.can_read_track`,
+`app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — reçoivent l'identifiant
+d'un track, d'un channel ou d'une card et doivent remonter jusqu'au workspace pour connaître le
+rôle de l'appelant. Ce chemin passe nécessairement par `tracks`, `channels` et `cards`, livrées
+par `CRM-020`, `CRM-021` et `CRM-040`, toutes placées dans le **chunk 3**, donc après.
+
+Ce n'est pas une difficulté d'écriture contournable : sans `tracks`, rien ne relie un
+`track_id` à un `workspace_id`. Le langage PL/pgSQL accepterait une fonction référençant une table
+absente — elle échouerait au premier appel, et aucune preuve ne pourrait être produite d'ici
+`CRM-020`. C'est exactement le même motif qu'INC-010, un cran plus loin : `CRM-003` avait dû se
+passer des clés étrangères, `CRM-010` doit se passer des jointures.
+
+**Comportement retenu :** `CRM-010` livre ce qui est démontrable aujourd'hui, et **rien de plus** :
+
+- `app.resolve_access(ws_role, track_access, channel_access)` — l'**algorithme** de résolution
+  du §2.2, isolé de toute table, donc éprouvé de façon exhaustive sur ses 64 combinaisons
+  d'entrées. C'est la seule partie qui porte une règle métier ; les quatre fonctions différées
+  n'auront plus qu'à lire leur ligne et l'appeler ;
+- `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin` — la résolution du
+  rôle de workspace, qui ne dépend que de `workspace_members`.
+
+Aucune table n'est créée par anticipation pour faire disparaître la contradiction : cela
+préempterait trois unités. La suite pgTAP **constate** l'absence des quatre fonctions
+(`hasnt_function`), de sorte qu'elle devienne rouge le jour où elles seront écrites sans que ces
+preuves soient étendues.
+
+**Risque résiduel :** aucun à ce stade — aucune politique ne les appelle, puisque `CRM-010` n'en
+pose aucune. Le risque naîtrait si `CRM-012` écrivait les politiques des tracks et des channels en
+supposant ces fonctions disponibles.
+
+**Conséquence sur l'état de l'unité :** `CRM-010` reste `[~]`. Ce n'est pas un défaut de
+réalisation mais une dépendance non satisfiable dans l'ordre actuel du plan.
+
+**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-012`**, qui écrira
+les politiques et figera la forme des requêtes :
+
+1. rattacher chacune des quatre fonctions à l'unité qui livre sa table — `can_read_track` à
+   `CRM-020`, `can_read_channel` et `can_write_channel` à `CRM-021`, `can_read_card` à `CRM-040` —
+   et l'inscrire dans leur Definition of Done ;
+2. déplacer `CRM-010` après `CRM-021` dans `docs/MASTER_PLAN.md` §2, au prix de livrer `tracks` et
+   `channels` avant le modèle d'autorisation, ce que le plan cherche précisément à éviter ;
+3. créer une unité distincte, par exemple `CRM-010b`, placée après `CRM-040`.
+
+Tant que le point est ouvert, l'unité reste `[~]` et la limite est nommée.
+
+---
+
+### INC-014 — Aucune unité ne nomme explicitement l'écriture des politiques RLS des tables d'identité
+
+**Nature :** référence manquante dans le découpage du backlog.
+**Relevé le :** 2026-08-03, pendant `CRM-010`.
+
+`docs/SPEC-permissions-rls.md` §4 spécifie les politiques de `profiles`, `workspaces` et
+`workspace_members` — lecture par les membres, écriture réservée à l'administrateur, et la règle
+« un administrateur ne peut pas se retirer son propre rôle s'il est le dernier ». Or aucune unité
+du backlog ne les porte nommément :
+
+- `CRM-010` livre les **fonctions**, pas les politiques ;
+- `CRM-012` est intitulée « Droits fins par track et channel » et sa Definition of Done vise les
+  preuves n° 3, 4, 7 et 11, qui concernent les cards et les comptes mail ;
+- `CRM-013` traite des **colonnes** protégées, dont aucune de ces trois tables.
+
+Le commentaire de `supabase/tests/0001_identite_et_cloisonnement.test.sql` annonce d'ailleurs ces
+politiques « jusqu'à `CRM-010` », ce que `CRM-010` ne fait pas — la mention a été corrigée en
+`CRM-012` dans le même changement, faute de meilleur candidat, mais **le rattachement lui-même
+n'est pas tranché**.
+
+**Comportement en attendant :** les trois tables restent en refus par défaut, comme les a laissées
+`CRM-003`. Aucune politique n'est écrite hors d'une unité qui la porte.
+
+**Conséquence pratique :** la preuve n° 10 du §7 — « dernier administrateur tente de se retirer
+son rôle » — n'est actuellement attribuée à aucune unité.
+
+**Arbitrage attendu du responsable :** rattacher explicitement les politiques des tables
+d'identité, ainsi que la preuve n° 10, à `CRM-012` ou à une unité dédiée.
+
+---
+
 ## Clos
 
 ### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée

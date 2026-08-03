@@ -15,6 +15,43 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-010` — Fonctions d'autorisation (partiel : 4 fonctions sur 6, voir INC-013).**
+  - `supabase/migrations/0002_fonctions_autorisation.sql` : `app.resolve_access`,
+    `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`. **Aucune politique
+    RLS** — le refus par défaut posé par `CRM-003` reste intact, ce que les preuves vérifient
+    explicitement.
+  - **L'algorithme de résolution des droits fins est isolé des tables qu'il ne peut pas encore
+    lire** (décision 25). `app.resolve_access(ws_role, track_access, channel_access)` est une
+    fonction **pure** : elle se prouve par énumération **exhaustive** de ses **64 combinaisons**
+    d'entrées, sans fixture ni compte. Les quatre fonctions différées n'auront plus qu'à lire leur
+    ligne et l'appeler.
+  - **L'absence de récursion est démontrée en la provoquant** (décision 27) : une politique
+    auto-référente échoue en `42P17`, une jumelle `SECURITY INVOKER` épuise la pile en `54001`, et
+    la même politique adossée à la fonction livrée répond sans erreur avec le filtrage attendu.
+    Fait relevé au passage, contraire à l'attente : PostgreSQL **ne détecte pas** la récursion
+    lorsqu'elle traverse une fonction.
+  - **Les droits ne sont pas portés par le jeton** : l'appartenance retirée, le même jeton non
+    expiré cesse immédiatement d'ouvrir des droits. Mesuré en base **et** sous PostgREST.
+  - **`EXECUTE` est accordé à `anon`** (décision 26), pour que le refus d'un appelant anonyme reste
+    **zéro ligne** au lieu d'une erreur de privilège. Le droit n'ouvre rien, et `PUBLIC` reste
+    exclu — vérifié sur l'ACL des quatre fonctions.
+  - `scripts/verify-authz.sh` : harnais de preuves rejouable, **26 contrôles, aucune anomalie**, et
+    non complaisant — sept affaiblissements volontaires le font échouer. Suite pgTAP
+    `supabase/tests/0002_fonctions_autorisation.test.sql` : **127 assertions, aucune anomalie**.
+  - Preuves **hors interface** avec les jetons réels de trois profils : chaque profil ne voit que
+    son workspace, l'anonyme obtient `200` et `[]` (preuve n° 11), un `viewer` ne modifie rien, un
+    administrateur d'un autre workspace non plus (preuve n° 3). Le schéma `app` n'étant pas exposé
+    par l'API, deux politiques d'instrumentation sont posées temporairement puis retirées, et
+    l'absence de toute politique résiduelle est vérifiée (décision 28).
+  - `docs/INCONSISTENCY_REPORT.md` : **INC-013 ouverte** — quatre des six fonctions dépendent de
+    `tracks`, `channels` et `cards`, livrées deux chunks plus tard ; trois options d'arbitrage sont
+    proposées, à trancher avant `CRM-012`. **INC-014 ouverte** — aucune unité ne porte nommément
+    les politiques RLS des tables d'identité, ni la preuve de refus n° 10.
+  - `docs/SCHEMA.md` §9, `docs/SPEC-permissions-rls.md` §3, §3.1, §3.2, `docs/DAT.md` §7,
+    `docs/PROD_MIGRATIONS.md` §3, `README.md` §5 et §7 mis à jour dans le même changement.
+  - **L'unité reste `[~]`** : les quatre fonctions `can_*` ne sont pas livrables dans l'ordre
+    actuel du plan.
+
 - **`CRM-004` — Chiffrement des secrets de messagerie : hypothèse levée, décision prise.**
   - `scripts/verify-vault.sh` : harnais de preuves rejouable et **autonome** — il ne dépend ni de
     `.env` ni de la pile en cours d'exécution, crée ses propres conteneur et volumes jetables et

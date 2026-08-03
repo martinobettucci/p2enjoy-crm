@@ -96,6 +96,7 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 | Ordre | Fichier | Objectif | Dépendances | Retour arrière |
 |---|---|---|---|---|
 | 1 | `supabase/migrations/0001_identite_et_cloisonnement.sql` | Extension `pgcrypto`, schéma `app`, `profiles` et son trigger de création, `workspaces`, `workspace_members`, `track_members`, `channel_members`. RLS activée sans politique : refus par défaut. | Schéma `auth` créé par GoTrue : le service doit avoir démarré **avant** l'application. | `drop schema app cascade;` puis `drop table` des cinq tables et `drop trigger on_auth_user_created on auth.users`. Aucune donnée applicative n'est encore présente, donc aucune perte : ce retour arrière cessera d'être anodin dès la première mise en service. |
+| 2 | `supabase/migrations/0002_fonctions_autorisation.sql` | Fonctions d'autorisation `app.resolve_access`, `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`, et leurs privilèges d'exécution. **Aucune politique RLS** : le refus par défaut reste inchangé. | Migration 1 : le schéma `app` et la table `public.workspace_members` doivent exister. | `drop function` des quatre fonctions. Sans objet tant qu'aucune politique ne les appelle ; dès `CRM-012`, les retirer rendrait les politiques inopérantes et devra donc précéder ou suivre le retour arrière de celles-ci. |
 
 **Toutes les migrations du dépôt sont idempotentes.** Le conteneur `migrations-runner` ne tient
 aucun registre : il rejoue l'intégralité du répertoire à chaque démarrage de la pile
@@ -109,9 +110,12 @@ dans l'ordre de ce tableau, et le tableau est vidé une fois l'application confi
 
 ```bash
 # Depuis l'hôte de production, la pile démarrée et GoTrue sain.
-docker exec -i p2enjoy-db psql -U postgres -d "$POSTGRES_DB" \
-	--set ON_ERROR_STOP=1 --single-transaction \
-	-f - < supabase/migrations/0001_identite_et_cloisonnement.sql
+# Une transaction par fichier, dans l'ordre du tableau ci-dessus.
+for m in supabase/migrations/0001_identite_et_cloisonnement.sql \
+         supabase/migrations/0002_fonctions_autorisation.sql; do
+	docker exec -i p2enjoy-db psql -U postgres -d "$POSTGRES_DB" \
+		--set ON_ERROR_STOP=1 --single-transaction -f - < "$m" || break
+done
 ```
 
 Après application, contrôler que les cinq tables portent bien RLS :
@@ -123,6 +127,22 @@ select relname, relrowsecurity from pg_class c
    and relname in ('profiles','workspaces','workspace_members',
                    'track_members','channel_members');
 ```
+
+Contrôler ensuite que les quatre fonctions d'autorisation sont présentes, `SECURITY DEFINER` là où
+il le faut, et que **toutes** fixent `search_path` :
+
+```sql
+select proname, prosecdef, provolatile, proconfig
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'app'
+ order by proname;
+```
+
+Attendu : `resolve_access` en `SECURITY INVOKER` et `IMMUTABLE` (`prosecdef` faux, `provolatile`
+`i`) ; `workspace_role`, `is_workspace_member` et `is_workspace_admin` en `SECURITY DEFINER` et
+`STABLE` ; `proconfig` valant `{"search_path=\"\""}` sur chacune. Aucune politique RLS n'est
+attendue à ce stade : `select count(*) from pg_policies where schemaname = 'public'` doit rendre
+`0`.
 
 ## 4. Services à redéployer
 

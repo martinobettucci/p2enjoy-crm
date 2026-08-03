@@ -103,6 +103,7 @@ INC-008.
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
+| `scripts/verify-authz.sh` | Rejoue les preuves des fonctions d'autorisation : suite pgTAP, idempotence, comportement sous PostgREST avec des jetons réels | **disponible** |
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-005`) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma | à venir (`CRM-006`) |
@@ -195,13 +196,14 @@ Les tests d'autorisation interrogent la base **directement**, avec les jetons r�
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
 Ces commandes arrivent avec le harnais de tests (`CRM-008`). Les preuves disponibles aujourd'hui
-sont trois harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
+sont cinq harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
 
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
-scripts/verify-vault.sh        # chiffrement des secrets de messagerie             (CRM-004)
+scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
+scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -217,6 +219,14 @@ migration pour prouver son idempotence, crée un compte par l'**API d'administra
 constate le profil correspondant par PostgREST, et mesure les refus **hors interface** avec les
 jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : chaque mutation doit le
 faire échouer.
+
+`scripts/verify-authz.sh` couvre les fonctions d'autorisation. Sa suite pgTAP énumère les **64
+combinaisons** de la matrice de résolution des droits fins, éprouve la résolution du rôle contre
+cinq comptes réels — dont un membre d'un autre workspace et un appelant anonyme —, et **provoque**
+la récursion des politiques pour démontrer que les fonctions livrées y échappent. Le schéma `app`
+n'étant pas exposé par l'API, l'étape d'intégration pose **temporairement** deux politiques
+adossées à ces fonctions, interroge PostgREST avec trois jetons obtenus par la route de connexion,
+puis les retire et vérifie qu'aucune ne subsiste (`docs/JOURNAL.md`, décision 28).
 
 ## 8. Build
 
@@ -269,7 +279,8 @@ Livré à ce jour :
 │   ├── verify-stack.sh         Preuves rejouables de la pile
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
-│   └── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
+│   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
+│   └── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
     ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`

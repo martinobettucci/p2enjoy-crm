@@ -258,11 +258,86 @@ elle-même énonce : vérification exécutée, sortie consignée, décision insc
   la décision est conservé, son énoncé corrigé, et la question de rouvrir l'arbitrage est
   consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-012, en attente d'arbitrage**.
 
-### CRM-010 — Fonctions d'autorisation `[ ]`
+### CRM-010 — Fonctions d'autorisation `[~]`
 `app.is_workspace_member`, `app.is_workspace_admin`, `app.can_read_track`,
 `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card`.
 **DoD** : pgTAP couvrant chaque rôle et chaque combinaison de droits fins ; absence de récursion
 démontrée ; `search_path` fixé sur toutes les fonctions `SECURITY DEFINER`.
+
+- [x] `supabase/migrations/0002_fonctions_autorisation.sql` : `app.resolve_access`,
+      `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`, et leurs
+      privilèges d'exécution. **Aucune politique RLS** : le refus par défaut de `CRM-003` est
+      intact, ce que la suite pgTAP vérifie explicitement.
+- [x] **pgTAP couvrant chaque rôle et chaque combinaison de droits fins** :
+      `supabase/tests/0002_fonctions_autorisation.test.sql`, **127 assertions, aucune anomalie**.
+      La matrice de `docs/SPEC-permissions-rls.md` §2.2 est énumérée **exhaustivement** — 4 rôles
+      de workspace, dont l'absence de rôle, × 4 états du droit fin de track × 4 du droit fin de
+      channel, soit **64 combinaisons**, chacune une assertion nommée.
+- [x] **Absence de récursion démontrée en la provoquant**, et non affirmée : une politique
+      auto-référente échoue en `42P17`, une jumelle `SECURITY INVOKER` épuise la pile en `54001`,
+      et la même politique adossée à la fonction livrée répond sans erreur avec le filtrage
+      attendu. Fait relevé au passage : PostgreSQL **ne détecte pas** la récursion lorsqu'elle
+      traverse une fonction (`docs/JOURNAL.md`, décision 27).
+- [x] **`search_path` fixé** sur les sept fonctions du schéma `app`, et valant exactement la chaîne
+      vide sur les quatre nouvelles. `SECURITY DEFINER` seulement là où il est nécessaire :
+      `resolve_access`, qui ne lit aucune table, reste `SECURITY INVOKER`.
+- [x] **Résolution du rôle éprouvée contre des comptes réels** : administratrice, business
+      developer, viewer, membre d'un **autre** workspace, compte sans appartenance, et appelant
+      anonyme. Le refus est **calme** — faux ou NULL —, jamais une erreur. Workspace inconnu et
+      workspace nul également couverts.
+- [x] **Les droits ne sont pas portés par le jeton** : l'appartenance retirée, le même jeton non
+      expiré cesse immédiatement d'ouvrir des droits. Mesuré en base **et** sous PostgREST.
+- [x] **Preuves d'intégration hors interface, avec les jetons réels de trois profils** obtenus par
+      la véritable route de connexion : chaque profil ne voit que son workspace ; l'anonyme obtient
+      `200` et `[]` (preuve n° 11) ; un `viewer` ne modifie rien ; un administrateur d'un autre
+      workspace non plus (preuve n° 3). Le schéma `app` n'étant pas exposé par l'API, deux
+      politiques d'instrumentation sont posées **temporairement** puis retirées, et l'absence de
+      toute politique résiduelle est vérifiée (`docs/JOURNAL.md`, décision 28).
+- [x] **Migration rejouable** : réappliquée sur une base déjà migrée sans modifier la définition,
+      la volatilité ni les droits des fonctions ; `migrations-runner` rejoue les deux migrations et
+      se termine en `0` ; réinitialisation **à blanc** par `./resetMe.sh --yes` suivie d'un rejeu
+      complet des preuves, toujours 26/26.
+- [x] Harnais de preuves rejouable `scripts/verify-authz.sh` : **26 contrôles, aucune anomalie**,
+      et **non complaisant** — il échoue bien lorsque `is_workspace_member` repasse en
+      `SECURITY INVOKER`, lorsque `search_path` est relâché, lorsque `resolve_access` autorise
+      tout, lorsqu'un administrateur devient restreignable par un droit fin, lorsqu'`EXECUTE` est
+      retiré à `anon`, lorsqu'une politique permissive est ajoutée, et lorsqu'une des quatre
+      fonctions différées est créée sans étendre les preuves.
+- [x] `scripts/verify-stack.sh` (**33/33**), `scripts/verify-scripts.sh` (**38/38**) et
+      `scripts/verify-migrations.sh` (**23/23**) rejoués : aucune régression sur les unités
+      précédentes.
+- [x] `docs/SCHEMA.md` §9, `docs/SPEC-permissions-rls.md` §3, §3.1, §3.2, `docs/DAT.md` §7,
+      `docs/PROD_MIGRATIONS.md` §3, `README.md` §5 et §7, `CHANGELOG.md` mis à jour dans le même
+      changement.
+- [ ] **Quatre des six fonctions ne sont pas livrées : `app.can_read_track`,
+      `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card`.** Elles doivent
+      remonter d'un track, d'un channel ou d'une card jusqu'à son workspace ; ce chemin passe par
+      `tracks`, `channels` et `cards`, livrées par `CRM-020`, `CRM-021` et `CRM-040`, soit au
+      chunk suivant. **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité :
+      il n'y a rien à y faire tant que ces tables n'existent pas.** Contradiction
+      d'ordonnancement consignée dans `docs/INCONSISTENCY_REPORT.md`, INC-013, avec trois options
+      d'arbitrage, **à trancher avant `CRM-012`**.
+
+*DoD adaptée, écarts explicites.* **Aucun test E2E dédié, aucune vérification visuelle** : cette
+unité ne livre ni parcours utilisateur ni écran — le premier arrive avec `CRM-007`, le harnais
+Playwright avec `CRM-008`. Ses preuves sont unitaires (pgTAP) et d'intégration (PostgREST, jetons
+réels, hors interface), ce que la nature de fonctions SQL commande. **Aucune mise à jour du seed** :
+il n'existe pas encore, c'est l'objet de `CRM-005` ; les comptes et workspaces du harnais sont
+créés puis détruits par lui.
+
+*Limites nommées, non masquées.*
+
+- **Les quatre fonctions `can_*` ne sont pas livrées** (voir ci-dessus, INC-013). Ce qui manque
+  n'est pas la règle métier — livrée et prouvée sur ses 64 combinaisons — mais la jointure qui
+  remonte au workspace.
+- **Aucune politique RLS n'est écrite** : ce qui est prouvé, ce sont les fonctions, pas leur emploi
+  par le produit. Les politiques relèvent de `CRM-012`. Au passage, **aucune unité du backlog ne
+  porte nommément les politiques des tables d'identité**, ni la preuve de refus n° 10 :
+  `docs/INCONSISTENCY_REPORT.md`, **INC-014, en attente d'arbitrage**.
+- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, seules la n° 3 et la
+  n° 11 sont acquises, et uniquement au niveau du workspace — pas encore des cards.
+- **La création des workspaces et des appartenances du harnais passe par SQL**, faute de politique
+  autorisant leur création par l'API. Le fait est nommé dans le script, pas masqué.
 
 ### CRM-011 — Authentification `[ ]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,
