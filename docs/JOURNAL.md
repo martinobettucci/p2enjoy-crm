@@ -1199,3 +1199,130 @@ possible — et c'est précisément celle que sa Definition of Done nomme.
 - **Aucun rattachement d'un compte invité à un workspace** (INC-015).
 - **L'expiration des liens d'invitation et de réinitialisation** n'est pas mesurée : la valeur par
   défaut est de 24 heures, et la vérifier exigerait de manipuler le temps de l'instance.
+
+---
+
+## 2026-08-03 — `CRM-005` : spécification du seed, écrite après mesure
+
+### Contexte : pourquoi une spécification avant le script
+
+`CRM-005` avait une Definition of Done — « utilisateurs créés par l'API d'administration GoTrue ;
+un workspace ; les rôles représentés ; identifiants stables » — mais **aucun document ne disait
+lesquels**. Or `docs/DAT.md` §11 pose que le seed est un *contrat maintenu* : un contrat dont le
+contenu ne vit que dans un script est un contrat que personne ne peut opposer au code.
+
+Les unités à venir en dépendent directement : `CRM-014` interrogera l'API avec les jetons de ces
+comptes, `CRM-007` produira des captures où ces noms figureront, `CRM-046` étendra ce jeu. Chacune
+a besoin d'identifiants stables **écrits quelque part**. D'où `docs/SPEC-seed.md`, écrit et commité
+avant la première ligne du script, comme `docs/SPEC-auth.md` l'avait été pour `CRM-011`.
+
+### Choix de l'unité : pourquoi `CRM-005` et non `CRM-012`
+
+`docs/MASTER_PLAN.md` §2 place l'étape 2.b (`CRM-010` → `CRM-014`) avant l'étape 2.c
+(`CRM-005` → `CRM-008`). Les trois unités restantes de 2.b ont pourtant été écartées, après examen
+et non par commodité :
+
+- **`CRM-012`** — sa Definition of Done vise les preuves n° 3, 4, 7 et 11 de
+  `docs/SPEC-permissions-rls.md` §7, qui portent sur les *cards* et les *comptes mail* : aucune de
+  ces tables n'existe. Elle écrirait de surcroît les politiques des tracks et channels, qui
+  appellent les quatre fonctions différées d'INC-013. INC-011 et INC-013 demandent explicitement un
+  arbitrage **avant** `CRM-012` ; la démarrer reviendrait à trancher implicitement deux points que
+  le responsable doit trancher.
+- **`CRM-013`** — porte sur `cards.current_step_id`, `mail_accounts.secret_id`, `card_events` et
+  `audit_log` : aucune de ces tables n'est livrée.
+- **`CRM-014`** — exige un projet Playwright, objet de `CRM-008`, et les douze scénarios de refus,
+  eux-mêmes bloqués par ce qui précède.
+
+`CRM-005` est donc la première unité **réellement exécutable**. Elle n'enfreint aucune des
+« contraintes d'ordre à ne pas enfreindre » de `docs/MASTER_PLAN.md` §2, qui ne la mentionnent pas,
+et elle lève la dernière case ouverte de `CRM-002` — la branche « seed » de `resetMe.sh`, restée
+non prouvée faute de seed (INC-009).
+
+### Décision 32 — Le seed passe par les API réelles, jamais par `psql`
+
+`docs/DAT.md` §11 exigeait déjà que les utilisateurs naissent de l'API d'administration GoTrue.
+La décision étend la règle à tout ce que le seed écrit :
+
+- comptes → `POST /auth/v1/admin/users` ;
+- profils → **personne** : ils naissent du trigger de `CRM-003`, alimenté par `user_metadata` ;
+- workspace et appartenances → `POST /rest/v1/...`, l'API REST réelle.
+
+*Motif.* Un seed qui écrirait en SQL direct contournerait exactement ce que le produit oppose à ses
+clients : contraintes, triggers, cache de schéma, refus par défaut. Il produirait un état que
+l'application ne sait pas produire, et les tests qui s'appuieraient dessus prouveraient quelque
+chose d'autre que le produit.
+
+*Conséquence assumée.* Le chemin employé reste celui d'un **opérateur** — il exige la clé de
+service —, pas celui d'un administrateur depuis l'interface. Ce dernier suppose les politiques de
+`CRM-012` et un écran ; ni l'un ni l'autre n'existent. La limite est écrite dans
+`docs/SPEC-seed.md` §3.2 et §8 plutôt que passée sous silence.
+
+*Mesures.* La clé de service écrit bien malgré RLS sans politique (`201`) ; la clé anonyme est
+refusée (`401`, `SQLSTATE 42501`, `INSERT` non accordé à `anon` par la migration `0001`) ; la
+contrainte `CHECK` sur `workspace_members.role` est active à travers l'API (`400`, `23514`).
+
+### Décision 33 — Les identifiants du seed sont fixés, et reconnaissables à l'œil
+
+**Mesure préalable, sans laquelle la décision n'était pas tenable** : `supabase/gotrue:v2.189.0`
+**accepte un `id` fourni** dans la charge utile de `POST /auth/v1/admin/users`. Le compte créé porte
+exactement l'UUID demandé. Rien ne l'imposait : l'hypothèse inverse aurait obligé le seed à relire
+les identifiants après coup et interdit toute référence stable dans un test écrit d'avance.
+
+Tous les identifiants du seed sont donc constants, et adoptent le préfixe **`5eed`** :
+
+```
+5eed0000-0000-4000-8000-000000000011
+```
+
+*Motif.* Une ligne seedée doit être reconnaissable **sans requête**, dans une capture, un journal
+d'erreur ou un tableau de Studio. Les UUID restent parfaitement valides — version 4, variant RFC
+4122 — et aucun outil ne les traite différemment.
+
+### Décision 34 — Le seed converge, et converge le profil explicitement
+
+Le seed est rejouable sans erreur ni doublon, pour la même raison que les migrations
+(décision 20) : `resetMe.sh` l'appelle à chaque redémarrage à froid, et `npm run db:seed` le
+rejouera à la demande.
+
+Deux mesures ont dicté la forme de cette convergence :
+
+1. **Recréer un compte existant est refusé** — `422`, `error_code` `email_exists`. Le seed teste
+   donc la présence avant de créer.
+2. **Mettre à jour les métadonnées d'un compte ne met pas à jour son profil.** Le trigger de
+   `CRM-003` est `AFTER INSERT` et porte `on conflict (id) do nothing` : il ne se déclenche pas sur
+   un `UPDATE`, et n'écraserait pas un profil existant même dans ce cas. C'est exactement ce que la
+   décision 22 voulait — un profil édité par son titulaire n'est pas écrasé — et cela signifie que
+   le seed **ne peut pas** compter sur `user_metadata` pour rattraper une dérive du nom affiché.
+
+Le seed converge donc `public.profiles` par un `PATCH /rest/v1/profiles` explicite, mesuré efficace
+avec la clé de service. Pour les tables sans trigger, l'upsert natif de PostgREST suffit :
+`Prefer: resolution=merge-duplicates` a été mesuré sur `workspace_members`, dont la clé primaire est
+composite — deux passages rendent `201` puis `200` et laissent **une seule ligne**.
+
+*Conséquence.* La preuve n° 9 du §7 de `docs/SPEC-seed.md` n'est pas décorative : elle **fausse
+réellement** un nom de profil et un rôle, rejoue le seed, et exige le rétablissement. Sans elle, la
+décision ne serait qu'une intention.
+
+### Ce que la mesure a démenti : la politique de mot de passe n'est pas universelle
+
+`docs/SPEC-auth.md` §4 énonce `PASSWORD_MIN_LENGTH=12` sans réserve, et `CRM-011` l'a prouvée dans
+les deux sens — mais sur le chemin **utilisateur** seulement. Le chemin employé par le seed est
+celui de l'**administration**, et il ne l'applique pas :
+
+```
+PUT  /auth/v1/user          mot de passe de 11 caractères  -> 422 weak_password
+POST /auth/v1/admin/users   mot de passe de  8 caractères  -> 200, compte créé
+```
+
+Le réglage est pourtant bien appliqué au conteneur (`GOTRUE_PASSWORD_MIN_LENGTH=12`), et le compte
+créé avec huit caractères **se connecte réellement** : `200` et un jeton d'accès valide. La
+politique encadre ce qu'un utilisateur choisit, jamais ce qu'un opérateur impose.
+
+Le point est consigné en **INC-018**, avec trois options d'arbitrage, et **non résolu ici** : la
+correction appartient à `CRM-011`, dont c'est la spécification. Le seed s'y conforme volontairement
+— 16 caractères — et son harnais **prouve** cette longueur au lieu de la supposer, puisque l'API ne
+la garantit pas.
+
+C'est la deuxième fois qu'une mesure prise pour une autre unité corrige l'énoncé d'une décision
+antérieure (après INC-012). Le motif est le même : un comportement de service tiers avait été
+généralisé à partir d'un seul chemin d'appel.

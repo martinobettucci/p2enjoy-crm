@@ -331,6 +331,7 @@ Documentation de référence :
 | [`docs/SPEC-mail-subsystem.md`](docs/SPEC-mail-subsystem.md) | IMAP, SMTP, classement, dossiers |
 | [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rls.md) | Rôles, RLS, preuves de refus |
 | [`docs/SPEC-auth.md`](docs/SPEC-auth.md) | Authentification, sessions, cycle de vie d'un compte |
+| [`docs/SPEC-seed.md`](docs/SPEC-seed.md) | Données de développement : contrat du seed, identifiants stables |
 | [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md) | Contrat de déploiement |
 | [`docs/manual.md`](docs/manual.md) | Manuel utilisateur |
 | [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md) | Contradictions relevées, en attente d'arbitrage |

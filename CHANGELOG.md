@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-005` — Spécification du seed, écrite avant tout code.**
+  - `docs/SPEC-seed.md` : contrat des données de développement — l'espace de travail, les trois
+    comptes et leurs rôles, les identifiants **stables**, le mot de passe de développement, les
+    gardes, et les **12 preuves** exigées, toutes exécutées hors interface.
+  - Spécification rédigée **après mesure** du comportement réel de `supabase/gotrue:v2.189.0` et
+    de `postgrest/postgrest:v14.12`, et non de mémoire.
+  - Mesure notable : l'API d'administration GoTrue **accepte un identifiant fourni** par
+    l'appelant, ce qui rend les identifiants stables tenables sans lecture préalable.
+  - Mesure notable : mettre à jour les métadonnées d'un compte **ne met pas à jour son profil** —
+    le trigger de `CRM-003` est `AFTER INSERT` et ne réécrit jamais un profil existant. Le seed
+    converge donc `profiles` explicitement, au lieu de le supposer.
+  - Mesure notable : l'API d'administration **n'applique pas** la politique de mot de passe qu'un
+    utilisateur subit — un mot de passe de 8 caractères crée un compte qui se connecte réellement.
+  - Décisions 32 à 34 consignées dans `docs/JOURNAL.md` ; contradiction **INC-018** (politique de
+    mot de passe démentie sur le chemin d'administration) consignée **sans résolution implicite**.
+
 - **`CRM-011` — Spécification de l'authentification, écrite avant tout code.**
   - `docs/SPEC-auth.md` : cycle de vie d'un compte de bout en bout — inscription libre refusée,
     invitation, acceptation, connexion, session, déconnexion, réinitialisation de mot de passe —,

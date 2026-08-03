@@ -488,6 +488,56 @@ qui lui soit propre.
 
 ---
 
+### INC-018 — L'API d'administration de GoTrue n'applique pas la politique de mot de passe
+
+**Nature :** spécification démentie par la mesure.
+**Relevé le :** 2026-08-03, pendant `CRM-005`, en mesurant le chemin de création des comptes du
+seed.
+
+`docs/SPEC-auth.md` §4 énonce la politique **sans réserve** : « `PASSWORD_MIN_LENGTH` vaut 12 [...]
+Le refus est explicite : `HTTP 422`, code `weak_password`, avec la raison `length`. » `CRM-011` l'a
+prouvée dans les deux sens — onze caractères refusés, douze acceptés — mais **sur le chemin
+utilisateur uniquement**.
+
+Mesure sur la pile de développement, `GOTRUE_PASSWORD_MIN_LENGTH=12` réellement appliqué au
+conteneur `p2enjoy-auth` :
+
+| Chemin | Mot de passe | Résultat mesuré |
+|---|---|---|
+| `PUT /auth/v1/user` | `onzecaracte` (11) | `422 weak_password` — « Password should be at least 12 characters. » |
+| `POST /auth/v1/admin/users` | `court123` (8) | `200` — compte créé |
+
+Le compte ainsi créé n'est pas un artefact inerte : la connexion par mot de passe avec ces huit
+caractères rend `200` et un jeton d'accès valide. La politique encadre donc ce qu'un
+**utilisateur** choisit, jamais ce qu'un **opérateur** impose.
+
+**Portée réelle.** Aujourd'hui, seuls la clé de service et donc un opérateur atteignent ce chemin ;
+le risque n'est pas une escalade depuis le produit, mais une **fausse assurance** : lire
+`docs/SPEC-auth.md` §4 laisse croire qu'aucun compte faible ne peut exister dans la base, ce qui
+est faux. Le jour où `CRM-011` obtiendra son écran d'invitation (INC-015), un administrateur de
+workspace choisissant un mot de passe initial passerait par ce même chemin.
+
+**Comportement retenu en attendant :** rien n'est modifié. `CRM-005` s'y conforme
+**volontairement** — les mots de passe du seed font 16 caractères — et `scripts/verify-seed.sh`
+**prouve** cette longueur au lieu de la supposer, précisément parce que l'API ne la garantit pas
+(`docs/SPEC-seed.md` §3.5 et §7, preuve n° 7).
+
+**Pourquoi ce n'est pas résolu ici :** la correction appartient à `CRM-011`, dont c'est la
+spécification, et le choix n'est pas neutre. Trois options s'offrent, aucune évidente :
+
+1. **documenter la réserve** dans `docs/SPEC-auth.md` §4 — la politique encadre le chemin
+   utilisateur, pas le chemin d'administration — et s'en tenir là ;
+2. **valider côté appelant** dans tout script ou service qui crée un compte par l'API
+   d'administration, seed compris ;
+3. **valider côté base**, par un `CHECK` ou un trigger sur `auth.users`, ce qui reviendrait à
+   écrire dans un schéma dont GoTrue est l'autorité — écart notable de la ligne du projet.
+
+**Arbitrage attendu du responsable :** trancher entre ces options avant que l'invitation ne
+devienne un parcours produit (INC-015), moment où le chemin d'administration cessera d'être
+réservé à un opérateur.
+
+---
+
 ## Clos
 
 ### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée
