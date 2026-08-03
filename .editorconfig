@@ -1,0 +1,23 @@
+# editorconfig.org
+root = true
+
+[*]
+indent_size = 2
+indent_style = space
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+# Les retours à la ligne significatifs du Markdown (deux espaces) sont préservés.
+trim_trailing_whitespace = false
+
+[*.py]
+indent_size = 4
+
+[*.sql]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
