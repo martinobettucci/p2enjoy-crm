@@ -246,3 +246,183 @@ L'autre point de vigilance est la Definition of Done : une part des preuves exig
 Supabase et un navigateur. Si l'environnement cloud ne les fournit pas, les unités doivent rester
 en `[~]` avec la limite nommée explicitement. Une dérive vers des `[x]` non prouvés serait le
 principal risque de ce dispositif.
+
+---
+
+## 2026-08-03 — `CRM-001` : assemblage et vérification de la pile Supabase self-hosted
+
+### Contexte
+
+Première unité de code du projet. Objectif : une pile Supabase self-hosted qui démarre
+réellement, avec un assemblage commun et deux overlays, sans outillage de développement en
+production.
+
+### Observations d'environnement
+
+L'environnement de la routine cloud fournit Docker 29.3.1 et Compose v5.1.1, 4 cœurs, 15 Gio de
+mémoire et environ 30 Gio de disque libre. Deux constats ont orienté le travail :
+
+1. **Le démon Docker n'est pas démarré** au début de la session ; il faut le lancer soi-même
+   (`dockerd`). Sans cela, aucune preuve de `CRM-001` n'est possible.
+2. **`../starter.2025.12/` n'existe pas** dans le conteneur : seul `p2enjoy-crm` est cloné. Voir
+   `docs/INCONSISTENCY_REPORT.md`, INC-006 — point laissé à l'arbitrage du responsable.
+
+### Décision 11 — La passerelle ne connaît aucun service de développement
+
+*Problème.* La configuration Kong officielle de Supabase se termine par une route « attrape-tout »
+vers Studio, plus des routes vers `postgres-meta` et l'endpoint MCP. Studio et `postgres-meta`
+sont des outils de développement (`docs/DAT.md` §3.6). Les conserver imposait soit deux
+configurations Kong divergentes, soit une passerelle de production pointant vers des services
+inexistants.
+
+*Options.* Deux fichiers `kong.yml` complets, l'un pour chaque environnement — au prix d'une
+duplication de 400 lignes ; un mécanisme de fragments concaténés par le point d'entrée ; ou
+retirer purement ces routes.
+
+*Décision.* **Retirer les routes vers Studio, `postgres-meta` et MCP.** `README.md` §6 prévoit
+déjà Studio sur son propre port (54323), et Studio joint `postgres-meta` directement par le
+réseau interne : la passerelle n'a jamais besoin de les connaître. La configuration devient
+**identique** en développement et en production, ce qui supprime toute divergence possible entre
+les deux environnements.
+
+*Conséquences.* Les consommateurs `DASHBOARD` et le greffon `basic-auth` deviennent inutiles et
+sont retirés. Studio n'étant plus derrière l'authentification basique de Kong, son port n'est
+publié que sur l'interface de bouclage (`DEV_BIND_ADDRESS`, valeur `127.0.0.1` par défaut).
+`scripts/verify-stack.sh` vérifie que la racine de Kong répond bien `404` : si quelqu'un
+réintroduisait la route attrape-tout, la preuve échouerait.
+
+### Décision 12 — Services écartés de la pile officielle
+
+Trois services de la distribution officielle ne sont **pas** déployés :
+
+| Service écarté | Motif |
+|---|---|
+| `analytics` (Logflare) et `vector` | Absents de la stack annoncée par `README.md` §2 ; ils imposeraient une dépendance lourde et des `depends_on` supplémentaires sans qu'aucune unité ne les exige. |
+| `imgproxy` | Sert la transformation d'images du Storage. Aucune unité livrée n'en dépend ; `ENABLE_IMAGE_TRANSFORMATION` est donc à `false`. À reconsidérer lors de `CRM-074` (aperçu des pièces jointes). |
+| `functions` (edge-runtime) | Aucun composant de fonctions edge dans `docs/DAT.md` §3, aucune unité de backlog. Voir INC-007. |
+
+*Conséquence.* La pile compte **onze** services de longue durée en développement et **huit** en
+production, contre une quinzaine dans la distribution officielle. Moins de surface à superviser,
+et chaque service présent est justifié par une unité du backlog.
+
+### Décision 13 — Le stockage vise toujours S3
+
+`STORAGE_BACKEND` vaut `s3` dans **les deux** environnements : MinIO en développement, fournisseur
+réel en production. Le repli `file` de la distribution officielle n'est pas utilisé.
+
+*Motif.* Un développement qui écrit sur disque local et une production qui écrit sur S3 ne
+testent pas le même chemin de code. La preuve n° 5 de `scripts/verify-stack.sh` dépose un objet
+par l'API, le relit, puis **vérifie par un client S3 que l'octet est bien dans le bucket MinIO** :
+un repli silencieux sur disque ferait échouer la vérification.
+
+### Décision 14 — Le nombre de descripteurs de fichiers est explicite
+
+*Problème.* Realtime et Supavisor élèvent `RLIMIT_NOFILE` au démarrage (10 000 et 100 000
+respectivement). Les deux conteneurs **redémarraient en boucle** dans l'environnement de la
+routine, dont la limite dure est de 4096 sans possibilité de l'élever :
+
+```
+$ sh -c 'ulimit -Hn 1048576'
+sh: 1: ulimit: error setting limit (Operation not permitted)
+$ docker run --rm --ulimit nofile=10000:10000 postgres:17-alpine true
+Error ... error setting rlimit type 7: operation not permitted
+```
+
+La capacité `CAP_SYS_RESOURCE` est retirée à l'environnement (`CapEff` = `000001fffeffffff`,
+bit 24 à zéro) : ni le shell ni le démon Docker ne peuvent dépasser 4096.
+
+*Décision.* Introduire `STACK_RLIMIT_NOFILE`, appliquée aux deux services, de valeur par défaut
+**100000**. Le besoin devient une donnée de configuration explicite au lieu d'un défaut de démon
+non documenté, et un hôte contraint peut l'abaisser sans modifier la pile.
+
+*Limite assumée et non masquée.* Les vérifications de ce jour ont été menées avec
+`STACK_RLIMIT_NOFILE=4096`. La **valeur par défaut du dépôt (100000) n'a donc pas été vérifiée
+ici** : elle le sera sur un hôte disposant de `CAP_SYS_RESOURCE`. Cette limite est reportée dans
+`README.md` §11.
+
+### Décision 15 — Variables d'environnement requises par l'assemblage
+
+`.env.example` relève de `CRM-002`. Pour que cette unité soit un contrat exploitable, voici la
+liste **exhaustive** des variables consommées par les trois fichiers Compose :
+
+| Famille | Variables |
+|---|---|
+| Base | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_PASSWORD`, `POSTGRES_DIRECT_PORT` *(dev)* |
+| Jetons | `JWT_SECRET`, `JWT_EXPIRY`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `SECRET_KEY_BASE`, `VAULT_ENC_KEY`, `REALTIME_DB_ENC_KEY`, `PG_META_CRYPTO_KEY` |
+| Clés opaques *(facultatives)* | `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `ANON_KEY_ASYMMETRIC`, `SERVICE_ROLE_KEY_ASYMMETRIC` |
+| API | `KONG_HTTP_PORT`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL`, `ADDITIONAL_REDIRECT_URLS`, `PGRST_DB_SCHEMAS`, `PGRST_DB_MAX_ROWS`, `PGRST_DB_EXTRA_SEARCH_PATH` |
+| Authentification | `DISABLE_SIGNUP`, `ENABLE_EMAIL_SIGNUP`, `ENABLE_EMAIL_AUTOCONFIRM`, `ENABLE_ANONYMOUS_USERS`, `ENABLE_PHONE_SIGNUP`, `ENABLE_PHONE_AUTOCONFIRM`, `MAILER_URLPATHS_INVITE`, `MAILER_URLPATHS_CONFIRMATION`, `MAILER_URLPATHS_RECOVERY`, `MAILER_URLPATHS_EMAIL_CHANGE` |
+| SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ADMIN_EMAIL`, `SMTP_SENDER_NAME` |
+| Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `GLOBAL_S3_PROTOCOL`, `GLOBAL_S3_FORCE_PATH_STYLE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET`, `STORAGE_TENANT_ID`, `STORAGE_FILE_SIZE_LIMIT`, `REGION` |
+| Pooler | `POOLER_TENANT_ID`, `POOLER_DEFAULT_POOL_SIZE`, `POOLER_MAX_CLIENT_CONN`, `POOLER_DB_POOL_SIZE`, `POOLER_PROXY_PORT_SESSION`, `POOLER_PROXY_PORT_TRANSACTION` |
+| Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` |
+| Développement | `DEV_BIND_ADDRESS`, `STUDIO_PORT`, `STUDIO_DEFAULT_ORGANIZATION`, `STUDIO_DEFAULT_PROJECT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_API_PORT`, `MINIO_CONSOLE_PORT`, `INBUCKET_WEB_PORT`, `INBUCKET_SMTP_PORT` |
+| Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` |
+
+### Vérifications réalisées
+
+Toutes exécutées dans l'environnement de la routine, sur la pile réellement démarrée.
+
+| Vérification | Résultat |
+|---|---|
+| Démarrage à froid du développement (volumes et `PGDATA` détruits au préalable) | **26 s**, code de retour `0`, les 11 services de longue durée `healthy`, les 2 conteneurs éphémères terminés en `0` |
+| `scripts/verify-stack.sh` | **33 contrôles, aucune anomalie** |
+| Kong sans clé d'API | `401` — la passerelle filtre réellement |
+| Kong avec clé de service / clé anonyme sur la racine OpenAPI | `200` / `403` |
+| Studio | `200`, capture observée (`docs/captures/CRM-001/`) |
+| Chaîne de stockage | objet déposé par l'API, relu à l'identique, **et retrouvé dans le bucket MinIO** |
+| Démarrage réel de l'assemblage de **production** | les 8 services `healthy`, Caddy compris |
+| Caddy en production | `http://` → `308` vers `https://` ; API jointe en TLS (`/auth/v1/health` → `200`, `/rest/v1/` sans clé → `401`, avec clé de service → `200`) |
+| Ports publiés en production | `80` et `443` par Caddy **uniquement** ; ni Kong, ni PostgreSQL, ni le pooler |
+| Outillage de développement en production | aucun conteneur `studio`, `meta`, `minio`, `inbucket` |
+| `APPLY_MIGRATIONS=false` | le conteneur de migrations renvoie vers `docs/PROD_MIGRATIONS.md` et se termine en `0` |
+
+**Le harnais n'est pas complaisant** — vérifié en le mettant volontairement en défaut :
+
+| Régression introduite | Détection |
+|---|---|
+| Arrêt de `p2enjoy-storage` | 2 anomalies, code de sortie `1` |
+| Réintroduction de `studio` dans `docker-compose.prod.yml` | 2 anomalies : service de développement en production, **et** port `54323` publié |
+| Arrêt de MinIO | 4 anomalies, dont « le stockage ne vise pas MinIO » |
+
+### Deux défauts d'outillage corrigés au passage
+
+**1. `.gitignore` excluait la configuration de la pile.** La règle `volumes/`, non ancrée,
+s'appliquait à *tout* répertoire de ce nom, donc aussi à `supabase/docker/volumes/` — qui contient
+la configuration déclarative de Kong et les scripts d'initialisation de la base. Constaté au
+moment de l'indexation : `git check-ignore -v` désignait la ligne 37.
+
+```
+$ git check-ignore -v supabase/docker/volumes/api/kong.yml
+.gitignore:37:volumes/	supabase/docker/volumes/api/kong.yml
+```
+
+*Conséquence évitée.* Un dépôt cloné à neuf n'aurait contenu **ni** la configuration de la
+passerelle **ni** les scripts d'initialisation : la pile n'aurait pas démarré, sans que rien ne
+le signale. Les lignes 34 à 36, qui excluent explicitement les données générées *à l'intérieur*
+de ce répertoire, montrent d'ailleurs que l'intention initiale était bien de le versionner.
+
+*Correction.* Règle ancrée à la racine (`/volumes/`), et exclusion ciblée du contenu généré par
+Studio dans `supabase/docker/volumes/snippets/`.
+
+**2. Les commits partaient au nom de l'agent.** La configuration effective provenait de
+`/root/.gitconfig` (outillage d'agent) et valait `Claude <noreply@anthropic.com>`, alors que
+l'historique du dépôt est intégralement au nom de `P2Enjoy <contact@p2enjoy.studio>`. Le dépôt
+n'avait aucune configuration locale : l'identité globale de l'outillage prenait le dessus, en
+violation directe de `CLAUDE.md` §13.
+
+*Correction.* Identité fixée dans la configuration **locale** du dépôt, alignée sur l'historique
+existant. Le correctif est durable : il vaut pour tous les passages suivants de la routine, qui
+n'ont plus à y penser.
+
+### Ce que cette unité ne prouve pas
+
+- La **valeur par défaut** `STACK_RLIMIT_NOFILE=100000` (voir décision 14).
+- L'obtention d'un certificat **ACME** : la vérification de production a utilisé
+  `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy. Le chemin Let's Encrypt exige un
+  domaine public et reste à éprouver au premier déploiement réel.
+- Le service des fichiers de la **webapp** par Caddy : `webapp/dist` n'existe pas avant `CRM-007`.
+  Caddy répond `404` sur `/`, ce qui est le comportement attendu à ce stade.
+- La pile de production a été démarrée contre un **fournisseur S3 simulé** (un MinIO autonome,
+  extérieur à l'assemblage), faute de compte S3 réel. Le contrat testé est celui d'un stockage
+  compatible S3, pas celui d'un fournisseur particulier.

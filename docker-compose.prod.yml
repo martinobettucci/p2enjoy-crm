@@ -1,0 +1,75 @@
+# @spec CRM-001 (docs/BACKLOG.md) — overlay de production de la pile Supabase self-hosted
+# @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
+# @spec docs/PROD_MIGRATIONS.md §2 (prérequis), §4 (services à redéployer)
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Aucun service de développement n'est déclaré ici, et aucun n'est hérité : Studio, MinIO,
+# Inbucket et postgres-meta n'existent que dans `docker-compose.dev.yml`. Cet assemblage est
+# vérifié par `scripts/verify-stack.sh`, qui échoue si l'un d'eux réapparaît.
+#
+# Seul Caddy est joignable depuis l'extérieur. Kong et Supavisor ne publient plus aucun port :
+# ils ne sont atteints que par le réseau interne de la pile.
+
+services:
+
+  db:
+    restart: always
+
+  auth:
+    restart: always
+
+  rest:
+    restart: always
+
+  realtime:
+    restart: always
+
+  # Le stockage vise le fournisseur S3 réel, décrit par les variables d'environnement de
+  # production (docs/PROD_MIGRATIONS.md §2.3). Aucune valeur n'est codée en dur ici.
+  storage:
+    restart: always
+
+  # Le pooler reste interne : aucun accès PostgreSQL n'est publié depuis l'hôte.
+  supavisor:
+    restart: always
+    ports: !reset []
+
+  # La passerelle n'est plus publiée : Caddy la joint par le réseau interne et termine TLS.
+  kong:
+    restart: always
+    ports: !reset []
+
+  # --- Périphérie ----------------------------------------------------------------------------
+
+  # Caddy termine TLS et sert la webapp buildée (docs/DAT.md §3.5).
+  # `webapp/dist` est produit par `npm run build` (README.md §8) ; tant que l'unité `CRM-007`
+  # n'est pas livrée, le répertoire est vide et Caddy ne sert que l'API.
+  caddy:
+    container_name: p2enjoy-caddy
+    image: caddy:2.9-alpine
+    restart: always
+    depends_on:
+      kong:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro,z
+      - ./webapp/dist:/srv/www:ro,z
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL}
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  caddy-data:
+  caddy-config:

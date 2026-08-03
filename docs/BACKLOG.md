@@ -33,15 +33,56 @@ documentation à jour, commit poussé. **Aucune exception.**
 
 ## Chunk 2 — Infrastructure et socle d'identité
 
-### CRM-001 — Pile Supabase self-hosted `[ ]`
-Copie de la pile éprouvée (`../starter.2025.12/supabase/docker/`), versions épinglées.
-Assemblage `docker-compose.yml` + overlays dev et prod. MinIO en dev, Storage sur S3.
+### CRM-001 — Pile Supabase self-hosted `[x]`
+Pile self-hosted à versions épinglées. Assemblage `docker-compose.yml` + overlays dev et prod.
+MinIO en dev, Storage sur S3.
 **DoD** : `docker compose up` démarre tous les services sains ; Kong répond ; Studio accessible en
 dev ; aucun service de développement présent en prod.
 
+- [x] Assemblage commun `docker-compose.yml` : `db`, `migrations-runner`, `auth`, `rest`,
+      `realtime`, `storage`, `supavisor`, `kong`. Toutes les images épinglées à une version
+      exacte.
+- [x] Overlay `docker-compose.dev.yml` : Studio, `postgres-meta`, MinIO, Inbucket ; ports publiés
+      sur l'interface de bouclage uniquement.
+- [x] Overlay `docker-compose.prod.yml` : Caddy, aucun outillage de développement, ni Kong ni
+      PostgreSQL publiés.
+- [x] Démarrage à froid vérifié : volumes et `PGDATA` détruits, puis `up` en **26 s**, les
+      11 services de longue durée `healthy`, les 2 conteneurs éphémères terminés en `0`.
+- [x] Kong répond et **filtre réellement** : `401` sans clé, `200` avec la clé de service, `403`
+      pour la clé anonyme sur la racine OpenAPI.
+- [x] Studio accessible en développement (`200`), capture produite **et observée** :
+      `docs/captures/CRM-001/`.
+- [x] Assemblage de production **réellement démarré** : les 8 services `healthy` (Caddy compris),
+      redirection `http` → `https`, API jointe en TLS, aucun conteneur `studio`, `meta`, `minio`
+      ou `inbucket`, seuls les ports `80` et `443` publiés.
+- [x] Chaîne de stockage prouvée de bout en bout : objet déposé par l'API, relu à l'identique, et
+      **retrouvé dans le bucket MinIO** par un client S3.
+- [x] Harnais de preuves rejouable `scripts/verify-stack.sh` : **33 contrôles, aucune anomalie**,
+      et **non complaisant** — il échoue bien lorsqu'un service est arrêté, lorsque MinIO est
+      coupé, ou lorsqu'un service de développement est réintroduit en production.
+
+*DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
+aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
+correspondantes sont d'intégration et vivent dans `scripts/verify-stack.sh`. Le harnais Vitest,
+pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
+
+*Limites nommées, non masquées.*
+
+- La valeur par défaut `STACK_RLIMIT_NOFILE=100000` **n'a pas pu être vérifiée** :
+  l'environnement de la routine est privé de `CAP_SYS_RESOURCE` et plafonne à 4096 descripteurs.
+  Les vérifications ont donc tourné à `4096` (`docs/JOURNAL.md`, décision 14).
+- L'obtention d'un certificat **ACME** n'est pas prouvée : la vérification de production a utilisé
+  `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy.
+- La production a été démarrée contre un **fournisseur S3 simulé**, faute de compte S3 réel.
+- La pile provient de la distribution self-hosted **officielle** de Supabase et non de
+  `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
+  **en attente d'arbitrage du responsable**.
+
 ### CRM-002 — Scripts de lancement et environnement `[ ]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,
-format, obligatoire ou non, exemple non sensible).
+format, obligatoire ou non, exemple non sensible). La liste exhaustive des variables déjà
+consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`, décision 15 :
+`.env.example` doit la couvrir intégralement.
 **DoD** : démarrage à froid depuis un dépôt propre ; `resetMe.sh` recrée la base et le seed ;
 aucun secret réel versionné ; `README.md` §5–6 conforme au comportement réel.
 

@@ -108,6 +108,59 @@ confirme.
 
 ---
 
+### INC-006 — Pile de référence `../starter.2025.12/` introuvable dans l'environnement d'exécution
+
+**Nature :** référence absente, contournée sans arbitrage.
+**Relevé le :** 2026-08-03, pendant `CRM-001`.
+
+`docs/BACKLOG.md` décrit `CRM-001` comme la « copie de la pile éprouvée
+(`../starter.2025.12/supabase/docker/`) », et `docs/JOURNAL.md` s'appuie sur son inspection. Or
+la routine cloud travaille sur un conteneur où **seul** le dépôt `p2enjoy-crm` est cloné : le
+répertoire voisin n'existe pas et n'est pas accessible.
+
+```
+$ ls -la /home/user/
+drwxr-xr-x 3 root root 4096 .
+drwxr-xr-x 5 root root 4096 ..
+drwxr-xr-x 4 root root 4096 p2enjoy-crm
+```
+
+**Comportement retenu :** la pile a été assemblée à partir de la distribution self-hosted
+**officielle** de Supabase (`supabase/supabase`, répertoire `docker/`), avec versions épinglées,
+et non à partir de la pile voisine. Les fichiers d'initialisation repris portent la mention de
+leur origine.
+
+**Risque résiduel :** si `../starter.2025.12/` contenait des adaptations maison (réglages
+PostgreSQL, correctifs, versions volontairement figées à un autre niveau), elles sont **absentes**
+de la pile livrée, sans que la routine puisse le constater.
+
+**Arbitrage attendu du responsable :** confirmer que la pile officielle épinglée convient, ou
+fournir les écarts de `starter.2025.12` à reporter. Tant que ce point est ouvert, aucune
+divergence n'est supposée ni inventée.
+
+---
+
+### INC-007 — `supabase/functions/` référencé sans composant correspondant
+
+**Nature :** référence documentaire sans contrepartie architecturale.
+**Relevé le :** 2026-08-03, pendant `CRM-001`.
+
+`README.md` §10 annonce un répertoire `supabase/functions/` décrit comme « Edge functions Deno ».
+Or :
+
+- `docs/DAT.md` §3 ne liste **aucun** composant de fonctions edge ;
+- `docs/DAT.md` §6 n'expose **aucune** interface de ce type ;
+- **aucune** unité de `docs/BACKLOG.md` ne prévoit d'en écrire.
+
+**Comportement en attendant :** le service `edge-runtime` n'est **pas** déployé et la route
+`/functions/v1/` n'est **pas** déclarée dans la passerelle. Ni le `README.md` ni le `DAT.md` ne
+sont modifiés pour faire disparaître la contradiction : elle est consignée ici.
+
+**Arbitrage attendu du responsable :** soit les fonctions edge entrent au périmètre et reçoivent
+une unité de backlog, soit la mention est retirée du `README.md` §10.
+
+---
+
 ## Clos
 
 *Aucune entrée close à ce jour.*

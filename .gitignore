@@ -31,10 +31,15 @@ supabase/.env.compose
 
 # --- Volumes et données locales -----------------------------------------
 # Données générées par la pile docker locale : jamais versionnées.
+# Attention : la règle doit rester ancrée à la racine. Un motif `volumes/` non ancré
+# exclurait aussi `supabase/docker/volumes/`, qui contient la configuration versionnée de
+# la passerelle et les scripts d'initialisation de la base (CRM-001).
 supabase/docker/volumes/db/data/
 supabase/docker/volumes/storage/
 supabase/docker/volumes/functions/deno_cache/
-volumes/
+supabase/docker/volumes/snippets/*
+!supabase/docker/volumes/snippets/.gitkeep
+/volumes/
 mail-data/
 clamav-data/
 caddy/.letsencrypt/

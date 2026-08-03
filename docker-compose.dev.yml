@@ -1,0 +1,173 @@
+# @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
+# @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
+# @spec README.md §6 (lancement en développement)
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# Tout ce qui figure ici est **exclusivement** destiné au développement et ne doit jamais se
+# retrouver dans l'assemblage de production (docs/DAT.md §3.6). Les ports ne sont publiés que
+# sur l'interface de bouclage : la pile de développement n'est pas destinée à être exposée.
+
+services:
+
+  # Base recréable à volonté en développement : pas de redémarrage automatique, et accès SQL
+  # direct depuis l'hôte pour pgTAP et l'outillage de migration (CRM-003, CRM-008).
+  db:
+    restart: "no"
+    ports:
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_DIRECT_PORT}:${POSTGRES_PORT}
+
+  # Les emails transactionnels partent vers Inbucket, jamais vers l'extérieur.
+  auth:
+    depends_on:
+      db:
+        condition: service_healthy
+      inbucket:
+        condition: service_started
+
+  # Le stockage vise le MinIO local ; aucun compte S3 réel n'est requis en développement
+  # (CLAUDE.md §3 : « aucun service cloud obligatoire lorsque son équivalent local peut être
+  # fourni »).
+  storage:
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      minio-createbucket:
+        condition: service_completed_successfully
+    environment:
+      GLOBAL_S3_ENDPOINT: http://minio:9000
+      GLOBAL_S3_PROTOCOL: http
+      GLOBAL_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+
+  kong:
+    ports: !override
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${KONG_HTTP_PORT}:8000/tcp
+
+  supavisor:
+    ports: !override
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${POOLER_PROXY_PORT_SESSION}:5432
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${POOLER_PROXY_PORT_TRANSACTION}:6543
+
+  # --- Outillage de développement ------------------------------------------------------------
+
+  # Inspection de la base. Joint directement sur son port, jamais au travers de Kong : la
+  # passerelle ne connaît donc aucun service de développement.
+  studio:
+    container_name: p2enjoy-studio
+    image: supabase/studio:2026.07.07-sha-a6a04f2
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      meta:
+        condition: service_started
+    ports:
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${STUDIO_PORT}:3000
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node -e "fetch('http://localhost:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
+      timeout: 10s
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./supabase/docker/volumes/snippets:/app/snippets:z
+    environment:
+      HOSTNAME: "0.0.0.0"
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER_READ_WRITE: postgres
+      PG_META_CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
+      PGRST_DB_MAX_ROWS: ${PGRST_DB_MAX_ROWS:-1000}
+      PGRST_DB_EXTRA_SEARCH_PATH: ${PGRST_DB_EXTRA_SEARCH_PATH:-public}
+      DEFAULT_ORGANIZATION_NAME: ${STUDIO_DEFAULT_ORGANIZATION}
+      DEFAULT_PROJECT_NAME: ${STUDIO_DEFAULT_PROJECT}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      ENABLED_FEATURES_LOGS_ALL: "false"
+      SNIPPETS_MANAGEMENT_FOLDER: /app/snippets
+
+  # Passerelle d'introspection du schéma, consommée uniquement par Studio.
+  meta:
+    container_name: p2enjoy-meta
+    image: supabase/postgres-meta:v0.96.6
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: ${POSTGRES_HOST}
+      PG_META_DB_PORT: ${POSTGRES_PORT}
+      PG_META_DB_NAME: ${POSTGRES_DB}
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+
+  # Équivalent local de S3 : le développement ne dépend d'aucun stockage objet payant.
+  minio:
+    container_name: p2enjoy-minio
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    ports:
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_PORT}:9000
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${MINIO_CONSOLE_PORT}:9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server --console-address ":9001" /data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - minio-data:/data
+
+  # Création idempotente du bucket des pièces jointes, par le vrai client S3.
+  minio-createbucket:
+    container_name: p2enjoy-minio-createbucket
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set p2enjoy http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "p2enjoy/${GLOBAL_S3_BUCKET}"
+
+  # Puits des emails transactionnels : invitations, réinitialisations, @mentions, digest
+  # (docs/JOURNAL.md décision 6). Il n'expose pas d'IMAP : le vrai serveur mail arrive en
+  # CRM-050.
+  inbucket:
+    container_name: p2enjoy-inbucket
+    image: inbucket/inbucket:stable
+    restart: unless-stopped
+    ports:
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${INBUCKET_WEB_PORT}:9000
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${INBUCKET_SMTP_PORT}:2500
+    environment:
+      INBUCKET_WEB_ADDR: 0.0.0.0:9000
+      INBUCKET_SMTP_ADDR: 0.0.0.0:2500
+      INBUCKET_POP3_ADDR: 0.0.0.0:1100
+
+volumes:
+  minio-data:

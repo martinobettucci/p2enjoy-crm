@@ -57,13 +57,23 @@ valeurs distinctes de celles du développement :
 | `POSTGRES_PASSWORD` | Mot de passe de la base | Oui |
 | `JWT_SECRET` | Signature des jetons | Oui |
 | `ANON_KEY`, `SERVICE_ROLE_KEY` | Clés d'API Supabase, dérivées de `JWT_SECRET` | Oui |
+| `SECRET_KEY_BASE` | Secret de session de Realtime et du pooler | Oui |
+| `REALTIME_DB_ENC_KEY` | Chiffrement interne de Realtime | Oui |
 | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL` | URL publiques | Oui |
 | `VAULT_ENC_KEY` | Chiffrement des secrets de messagerie | Oui |
-| `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Stockage des pièces jointes | Oui |
+| `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `GLOBAL_S3_PROTOCOL`, `GLOBAL_S3_FORCE_PATH_STYLE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `REGION` | Stockage des pièces jointes | Oui |
+| `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET`, `STORAGE_TENANT_ID`, `STORAGE_FILE_SIZE_LIMIT` | Paramétrage du service Storage | Oui |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Emails transactionnels (invitations, notifications) | Oui |
 | `CRM_INBOUND_DOMAIN` | Domaine des adresses de card | Oui |
 | `MAIL_MAX_ATTACHMENT_MB` | Borne d'ingestion des pièces jointes | Oui |
 | `DISABLE_SIGNUP` | Doit valoir `true` : les comptes sont créés par invitation | Oui |
+| `APP_DOMAIN` | Domaine servi par Caddy | Oui |
+| `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
+| `APPLY_MIGRATIONS` | Doit valoir `false` : aucune migration n'est appliquée automatiquement | Oui |
+| `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime et le pooler ; défaut `100000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
+| `POOLER_TENANT_ID`, `POOLER_DEFAULT_POOL_SIZE`, `POOLER_MAX_CLIENT_CONN`, `POOLER_DB_POOL_SIZE`, `POOLER_PROXY_PORT_SESSION`, `POOLER_PROXY_PORT_TRANSACTION` | Paramétrage du pooler | Oui |
+
+La liste exhaustive, développement compris, figure dans `docs/JOURNAL.md`, décision 15.
 
 Aucune clé de production n'est utilisée pour les tests. Aucun environnement local n'est relié en
 écriture à la base de production.
@@ -85,7 +95,14 @@ dépendances, sa réversibilité, et le service à redéployer.
 |---|---|
 | `webapp` | À chaque changement d'interface |
 | `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances |
-| Pile Supabase | À chaque changement de version épinglée d'un composant |
+| Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
+| `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
+| `caddy` | À chaque changement de `caddy/Caddyfile` |
+
+**Prérequis d'hôte à vérifier avant le premier démarrage.** Realtime et le pooler réclament
+`STACK_RLIMIT_NOFILE` descripteurs de fichiers (défaut `100000`). Si la limite dure de l'hôte est
+inférieure, les deux services redémarrent en boucle : contrôler `ulimit -Hn` et, le cas échéant,
+relever la limite du démon Docker ou abaisser la variable.
 
 ## 5. Vérifications après déploiement
 

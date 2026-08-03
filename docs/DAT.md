@@ -109,7 +109,13 @@ Source de vérité du produit. Contient :
 - les triggers d'audit et de timeline (`card_events`).
 
 Les migrations sont appliquées au démarrage par le conteneur `migrations-runner`, qui rejoue en
-ordre les fichiers de `supabase/migrations/`.
+ordre lexicographique les fichiers de `supabase/migrations/`, une transaction par fichier, en
+s'arrêtant à la première erreur. Il démarre après GoTrue, dont le schéma `auth` est référencé dès
+les migrations d'amorçage, et `rest` attend qu'il se soit terminé avec succès.
+
+En production, ce chemin est **désactivé** par `APPLY_MIGRATIONS=false` : les migrations y sont
+appliquées sur instruction humaine explicite, selon `docs/PROD_MIGRATIONS.md`. Le conteneur se
+contente alors de renvoyer vers ce document et se termine avec le code `0`.
 
 ### 3.3 `mail-sync` — service Python
 
@@ -147,10 +153,50 @@ statut `pending` tant qu'elle n'est pas analysée et n'est jamais téléchargeab
 | Composant | Rôle | Pourquoi il n'est pas en production |
 |---|---|---|
 | Supabase Studio | Inspection de la base | Outil d'administration, non exposé publiquement |
+| `postgres-meta` | Introspection du schéma, consommée **uniquement** par Studio | Sans Studio, il n'a aucun consommateur |
 | Inbucket | Puits des emails transactionnels | La production envoie réellement |
 | Stalwart | Vrai serveur IMAP/SMTP local | La production utilise les serveurs des utilisateurs |
 | Roundcube | Webmail de vérification visuelle | Outil de contrôle du développement |
 | MinIO | S3 local | La production utilise son propre stockage objet |
+
+Ces composants vivent exclusivement dans `docker-compose.dev.yml`. La passerelle **ne connaît
+aucun d'entre eux** : Studio est joint directement sur son port, et il joint `postgres-meta` par
+le réseau interne. La configuration de Kong est donc rigoureusement identique dans les deux
+environnements, ce qui supprime toute divergence possible entre eux
+(`docs/JOURNAL.md`, décision 11).
+
+### 3.7 Versions épinglées
+
+Aucune image n'est suivie par un tag mouvant. Toute évolution est un changement explicite qui
+impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGRATIONS.md` §4.
+
+| Service | Image | Environnements |
+|---|---|---|
+| `db` | `supabase/postgres:17.6.1.136` | dev, prod |
+| `migrations-runner` | `postgres:17-alpine` | dev, prod |
+| `auth` | `supabase/gotrue:v2.189.0` | dev, prod |
+| `rest` | `postgrest/postgrest:v14.12` | dev, prod |
+| `realtime` | `supabase/realtime:v2.102.3` | dev, prod |
+| `storage` | `supabase/storage-api:v1.60.4` | dev, prod |
+| `supavisor` | `supabase/supavisor:2.9.5` | dev, prod |
+| `kong` | `kong/kong:3.9.1` | dev, prod |
+| `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
+| `meta` | `supabase/postgres-meta:v0.96.6` | dev |
+| `minio` | `minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev |
+| `minio-createbucket` | `minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev |
+| `inbucket` | `inbucket/inbucket:stable` | dev |
+| `caddy` | `caddy:2.9-alpine` | prod |
+
+Trois services de la distribution officielle sont **écartés** : `analytics` et `vector`
+(journalisation Logflare), `imgproxy` (transformation d'images, `ENABLE_IMAGE_TRANSFORMATION` à
+`false`) et `functions` (edge-runtime). Motifs détaillés dans `docs/JOURNAL.md`, décision 12.
+
+### 3.8 Contraintes d'exécution de l'hôte
+
+Realtime et Supavisor élèvent leur nombre de descripteurs de fichiers au démarrage. Le besoin est
+exprimé par `STACK_RLIMIT_NOFILE` (défaut `100000`) plutôt que laissé à un défaut de démon : un
+hôte dont la limite dure est inférieure doit l'abaisser, faute de quoi ces deux services
+redémarrent en boucle (`docs/JOURNAL.md`, décision 14).
 
 ## 4. Flux principaux
 
@@ -279,6 +325,14 @@ de messagerie.
 |---|---|---|
 | Développement | `docker-compose.yml` + `docker-compose.dev.yml` | Studio, Inbucket, Stalwart, Roundcube, MinIO, Vite en HMR, seed complet |
 | Production | `docker-compose.yml` + `docker-compose.prod.yml` | Caddy et TLS, images buildées, aucun outillage de développement, aucun seed |
+
+En production, **seul Caddy publie des ports** (`80` et `443`) : Kong, PostgreSQL et le pooler ne
+sont atteints que par le réseau interne de la pile. En développement, tous les ports sont publiés
+sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut).
+
+Le stockage vise **S3 dans les deux environnements** — MinIO en développement, fournisseur réel en
+production. Le repli sur système de fichiers n'est pas utilisé, afin que les deux environnements
+empruntent le même chemin de code (`docs/JOURNAL.md`, décision 13).
 
 Les migrations de production ne sont **jamais** appliquées automatiquement : elles sont listées
 dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.

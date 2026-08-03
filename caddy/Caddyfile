@@ -1,0 +1,39 @@
+# @spec CRM-001 (docs/BACKLOG.md) — terminaison TLS et service des fichiers statiques
+# @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
+# @spec docs/PROD_MIGRATIONS.md §2.1 (infrastructure)
+#
+# Production uniquement. Le développement n'utilise pas Caddy : la webapp est servie par Vite
+# et l'API est jointe directement sur le port de Kong (README.md §6).
+
+{
+	email {$CADDY_ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# API Supabase : les chemins sont conservés tels quels, car Kong route sur les préfixes
+	# versionnés (`/auth/v1/`, `/rest/v1/`, …). Aucune réécriture ici, sous peine de rendre la
+	# configuration déclarative de Kong inopérante.
+	@supabase path /auth/v1/* /rest/v1/* /graphql/v1/* /realtime/v1/* /storage/v1/* /.well-known/oauth-authorization-server
+	handle @supabase {
+		reverse_proxy kong:8000 {
+			header_up X-Forwarded-Path {uri}
+		}
+	}
+
+	# Webapp : application monopage, toute route inconnue retombe sur `index.html`.
+	handle {
+		root * /srv/www
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
