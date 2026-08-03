@@ -31,6 +31,34 @@ d'exécuter le code attendu.
     d'invitation sans composant pour le porter) et **INC-016** (gabarits d'emails, repli silencieux
     vers l'anglais) consignées sans résolution implicite.
 
+- **`CRM-011` — Authentification durcie et prouvée hors interface (partiel : ni écran ni E2E
+  d'interface avant `CRM-007`).**
+  - **La longueur minimale de mot de passe passe de 6 à 12** (décision 29). Le défaut de GoTrue
+    n'était pas théorique : un mot de passe de six caractères était **réellement accepté**.
+    Nouvelle variable `PASSWORD_MIN_LENGTH`, documentée dans `.env.example` et câblée dans le
+    service `auth`. Prouvée dans les deux sens — onze caractères refusés, douze acceptés.
+  - `scripts/verify-auth.sh` : harnais de preuves rejouable, **42 contrôles, aucune anomalie**,
+    couvrant les vingt scénarios de `docs/SPEC-auth.md` §7 — invitation, acceptation **en suivant
+    le lien de l'email reçu**, connexion, refus, contenu du jeton, session, déconnexion,
+    réinitialisation menée à son terme, suppression.
+  - **Le harnais commence par comparer la configuration réellement appliquée au conteneur aux
+    valeurs du `.env`** : sans ce contrôle, tous les suivants mesureraient les défauts de l'image
+    en croyant mesurer le produit.
+  - **Non-complaisance éprouvée dans les deux sens** : un GoTrue **jetable**, même version
+    épinglée, portant le réglage affaibli, doit accepter ce que la pile refuse ; et le harnais a été
+    **réellement mis en échec** contre la pile affaiblie — `DISABLE_SIGNUP=false` produit
+    6 anomalies, `PASSWORD_MIN_LENGTH=6` en produit 2.
+  - **Vérification visuelle observée** : `docs/captures/CRM-011/` — moniteur Inbucket et les deux
+    emails ouverts. Constat relevé à cette occasion : les emails de GoTrue sont en **HTML seul**,
+    sans partie `text/plain` (INC-016).
+  - **Comportement d'exploitation mesuré et documenté** : une variable ajoutée au gabarit
+    n'atteint pas un `.env` existant, mais la garde de `CRM-002` refuse le démarrage et **nomme**
+    la variable manquante. Marche à suivre écrite dans `docs/PROD_MIGRATIONS.md` §4.
+  - `README.md` §7, §9, §10 et §11, `docs/DAT.md` §4.1 et §7, `docs/PROD_MIGRATIONS.md` §2 et §4,
+    `docs/manual.md` mis à jour. **INC-017** relevée au passage : `README.md` §11 annonce encore
+    comme non vérifié ce que `CRM-004` a mesuré — consignée, non corrigée ici, car elle relève
+    d'un autre périmètre.
+
 - **`CRM-010` — Fonctions d'autorisation (partiel : 4 fonctions sur 6, voir INC-013).**
   - `supabase/migrations/0002_fonctions_autorisation.sql` : `app.resolve_access`,
     `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`. **Aucune politique

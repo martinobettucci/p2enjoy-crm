@@ -163,6 +163,12 @@ mode de défaillance : lorsque le gabarit est injoignable, GoTrue **journalise u
 tout de même le gabarit anglais par défaut**. Un email qui part n'est donc pas la preuve que le
 gabarit configuré a été employé.
 
+Second constat, relevé en observant les emails reçus : les gabarits par défaut produisent un
+message **HTML seul**, sans partie `text/plain`. La partie texte que lit le harnais de preuves est
+donc **reconstruite par Inbucket**, et non émise par GoTrue. Le jour où des gabarits propres seront
+écrits, ils devront porter les deux variantes. Captures observées :
+`docs/captures/CRM-011/`.
+
 ## 6. Ce que cette unité ne livre pas
 
 - **Aucun écran.** La webapp arrive avec `CRM-007` ; le parcours de connexion, l'écran de mot de

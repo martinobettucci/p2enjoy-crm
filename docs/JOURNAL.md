@@ -1144,12 +1144,51 @@ conteneurs. Les deux débordent de `CRM-011` et empiètent sur `CRM-007`.
 `docs/SPEC-auth.md` §5 plutôt que masquée, et consignée en **INC-016** — rattachée à `CRM-P09`
 (internationalisation), qui reste en attente d'arbitrage.
 
+### Deux constats faits pendant la vérification, et non prévus par la spécification
+
+*Les emails sont en HTML seul.* Inbucket signale sur chaque message reçu « MIME problems detected
+— Plain Text from HTML: Message did not contain a text/plain part ». Les gabarits par défaut de
+GoTrue n'émettent aucune partie `text/plain`. Conséquence pour le produit : signal négatif de
+délivrabilité, et clients en mode texte mal servis. Conséquence pour les preuves : la partie texte
+que lit `scripts/verify-auth.sh` est **reconstruite par Inbucket**, elle n'est pas émise par
+GoTrue. Consigné en INC-016 plutôt que corrigé, puisque les gabarits ne sont pas modifiables sans
+trancher INC-016 lui-même.
+
+*Une variable ajoutée n'atteint pas un `.env` existant, mais le cas n'est pas silencieux.* Après
+avoir ajouté `PASSWORD_MIN_LENGTH` au gabarit, le service `auth` a démarré avec la variable
+**vide** — un `.env` déjà amorcé ne gagne pas les variables introduites depuis. La validation de
+`CRM-002` a bien attrapé le cas au lancement suivant :
+
+```
+  manquante PASSWORD_MIN_LENGTH
+ERREUR 1 variable(s) à corriger dans /home/user/p2enjoy-crm/.env. Le contrat est .env.example.
+```
+
+C'est exactement le comportement voulu, et il valait d'être mesuré plutôt que supposé. La marche à
+suivre est désormais écrite dans `docs/PROD_MIGRATIONS.md` §4. Le harnais en tire une leçon : son
+premier contrôle compare la configuration **réellement appliquée au conteneur** aux valeurs du
+`.env`, de sorte qu'un réglage documenté mais non câblé ne puisse pas passer inaperçu — sans lui,
+tous les contrôles suivants auraient mesuré les défauts de l'image en croyant mesurer le produit.
+
 ### Vérifications réalisées
 
-Voir `scripts/verify-auth.sh`. Le cycle complet a été exercé hors interface avant toute rédaction :
-invitation émise, email constaté dans Inbucket, acceptation par le code à six chiffres, mot de
-passe défini, connexion, mot de passe erroné refusé, déconnexion, jeton de rafraîchissement
-refusé après déconnexion, réinitialisation demandée et email constaté.
+`scripts/verify-auth.sh` : **42 contrôles, aucune anomalie**. Le cycle complet est exercé hors
+interface — invitation émise, email constaté dans Inbucket, acceptation en suivant le lien de cet
+email, mot de passe défini, connexion, mot de passe erroné refusé, adresse inconnue indistinguable,
+requête sans clé refusée par la passerelle, contenu du jeton vérifié claim par claim, jeton accepté
+par PostgREST, rafraîchissement, déconnexion, rafraîchissement ensuite refusé, réinitialisation
+menée à son terme, ancien mot de passe refusé, compte supprimé sans profil orphelin.
+
+*Non-complaisance éprouvée dans les deux sens.* Le harnais démarre un GoTrue **jetable**, même
+version épinglée, portant le réglage affaibli, et exige qu'il accepte ce que la pile refuse. Et le
+harnais a été **réellement mis en échec** contre la pile affaiblie : `DISABLE_SIGNUP=false` produit
+**6 anomalies**, `PASSWORD_MIN_LENGTH=6` en produit **2**, dans les deux cas avec un code de sortie
+`1`. La configuration a ensuite été restaurée et le harnais est repassé à 42/42.
+
+*Vérification visuelle réellement observée.* Trois captures dans `docs/captures/CRM-011/` : le
+moniteur d'Inbucket montrant le trafic SMTP réel des exécutions, l'email d'invitation et l'email
+de réinitialisation, ouverts et lus. C'est la seule vérification visuelle que cette unité rend
+possible — et c'est précisément celle que sa Definition of Done nomme.
 
 ### Ce que cette unité ne prouve pas
 

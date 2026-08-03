@@ -229,7 +229,15 @@ redémarrent en boucle (`docs/JOURNAL.md`, décision 14).
    revendications portées par le jeton : un droit révoqué prend effet immédiatement, sans
    attendre l'expiration du JWT.
 
-L'inscription libre est désactivée. Les comptes sont créés par invitation d'un administrateur.
+L'inscription libre est désactivée : `POST /signup` est refusé par `422 signup_disabled`, et
+**le privilège ne contourne pas ce refus** — la clé `service_role` est refusée à l'identique
+(mesuré, `docs/JOURNAL.md`, `CRM-011`). Les comptes sont créés par invitation.
+
+L'émission d'une invitation exige un jeton `service_role`, que la webapp ne détient jamais : c'est
+donc aujourd'hui une opération d'**exploitation** et non un parcours produit. Le composant qui
+porterait ce parcours n'existe pas et n'est rattaché à aucune unité (INC-015). Le détail complet
+du cycle de vie d'un compte — invitation, acceptation, connexion, session, déconnexion,
+réinitialisation — est spécifié dans `docs/SPEC-auth.md`.
 
 ### 4.2 Déplacement d'une card dans son workflow
 
@@ -316,7 +324,11 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 ## 7. Authentification et autorisation
 
 - **Authentification** : GoTrue, email et mot de passe, inscription libre désactivée,
-  invitations émises par un administrateur.
+  invitations émises avec un droit d'administration. Spécifiée par `docs/SPEC-auth.md`, prouvée
+  hors interface par `scripts/verify-auth.sh` (**42 contrôles**).
+- **Politique de mot de passe** : longueur minimale de 12 caractères (`PASSWORD_MIN_LENGTH`),
+  sans exigence de composition. Le défaut de GoTrue, 6, a été mesuré comme réellement permissif
+  (`docs/JOURNAL.md`, décision 29).
 - **Rôles de workspace** : `admin`, `business_developer`, `viewer`.
 - **Droits fins** : `track_members` et `channel_members` accordent l'accès à un sous-arbre.
 - **Application** : politiques RLS sur toutes les tables, appuyées sur des fonctions

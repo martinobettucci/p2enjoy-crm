@@ -352,6 +352,83 @@ dans Inbucket ; captures observées.
 - [x] Deux contradictions consignées sans être résolues implicitement : **INC-015** (le parcours
       d'invitation depuis le produit n'a aucun composant pour le porter) et **INC-016** (gabarits
       d'emails chargeables en HTTP seulement, avec repli **silencieux** vers l'anglais).
+- [x] **Inscription libre réellement refusée, et le privilège ne contourne pas le refus** :
+      `422 signup_disabled` avec la clé anonyme **comme avec la clé de service**. Vérifié aussi
+      qu'aucun compte n'est créé par ces tentatives.
+- [x] **Invitation** : refusée à la clé anonyme (`403 not_admin`), acceptée avec la clé de service.
+      Le compte naît avec `invited_at`, **sans mot de passe** et sans adresse confirmée, et le
+      trigger de `CRM-003` crée son profil avec le nom des métadonnées.
+- [x] **Email d'invitation réellement envoyé et constaté dans Inbucket**, puis **acceptation en
+      suivant le lien de cet email** — pas un raccourci d'API : `303` vers `SITE_URL` portant la
+      session, adresse confirmée ensuite.
+- [x] **Politique de mot de passe prouvée dans les deux sens** : onze caractères refusés
+      (`422 weak_password`, raison `length`), douze acceptés. `PASSWORD_MIN_LENGTH=12` livrée dans
+      `.env.example` et câblée dans le service `auth` ; le défaut de GoTrue, 6, était mesuré comme
+      réellement permissif (décision 29).
+- [x] **Connexion, refus et discrétion** : connexion `200` ; mot de passe erroné `400
+      invalid_credentials` ; **adresse inconnue rendant le même code et le même message**, comparés
+      chaîne à chaîne ; requête sans clé `apikey` refusée en `401` par la passerelle.
+- [x] **Contenu du jeton vérifié claim par claim** : `sub` égal à l'identifiant réel, `role` et
+      `aud` à `authenticated`, `exp − iat` exactement `JWT_EXPIRY`. Le jeton est **accepté par
+      PostgREST**, où le refus par défaut se manifeste bien par `200` et zéro ligne.
+- [x] **Session** : le rafraîchissement fait tourner le jeton ; la déconnexion rend `204` et le
+      jeton de rafraîchissement est ensuite refusé (`refresh_token_not_found`).
+- [x] **Réinitialisation menée à son terme** : `recover` sur une adresse inconnue rend `200` **sans
+      émettre d'email** — boîte vérifiée vide —, `recover` sur un compte existant produit un email
+      réellement reçu, dont le lien ouvre une session ; nouveau mot de passe accepté, **ancien
+      refusé**.
+- [x] **Suppression du compte** par l'API d'administration : aucun profil orphelin (cascade).
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-011/` — moniteur Inbucket
+      montrant le trafic SMTP réel, email d'invitation et email de réinitialisation ouverts et lus.
+      C'est la seule vérification visuelle que cette unité rend possible, et c'est celle que sa
+      Definition of Done nomme.
+- [x] Harnais de preuves rejouable `scripts/verify-auth.sh` : **42 contrôles, aucune anomalie**.
+      Son premier contrôle compare la configuration **réellement appliquée au conteneur** aux
+      valeurs du `.env` : sans lui, tous les suivants mesureraient les défauts de l'image en
+      croyant mesurer le produit.
+- [x] Harnais **non complaisant, éprouvé dans les deux sens** : il démarre un GoTrue **jetable**, à
+      la même version épinglée, portant le réglage affaibli, et exige qu'il accepte ce que la pile
+      refuse ; et il a été **réellement mis en échec** contre la pile affaiblie —
+      `DISABLE_SIGNUP=false` produit **6 anomalies**, `PASSWORD_MIN_LENGTH=6` en produit **2**,
+      code de sortie `1` dans les deux cas. Configuration restaurée, retour à 42/42.
+- [x] `scripts/verify-stack.sh` (**33/33**), `scripts/verify-scripts.sh` (**38/38**),
+      `scripts/verify-migrations.sh` (**23/23**), `scripts/verify-vault.sh` (**26/26**) et
+      `scripts/verify-authz.sh` (**26/26**) rejoués : aucune régression.
+- [x] `docs/DAT.md` §4.1 et §7, `README.md` §7, §9, §10 et §11, `docs/PROD_MIGRATIONS.md` §2 et §4,
+      `docs/manual.md`, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **E2E d'interface et captures de l'application : IMPOSSIBLES à ce stade.** La Definition of
+      Done demande un « E2E de connexion et de refus » et des « captures observées ». Il n'existe
+      **aucun écran** : la webapp est l'objet de `CRM-007` et le harnais Playwright celui de
+      `CRM-008`, tous deux planifiés après (`docs/MASTER_PLAN.md` §2.c). Ce qui est livré est le
+      mécanisme, prouvé **hors interface** sur les vingt scénarios de `docs/SPEC-auth.md` §7 — ce
+      que `CLAUDE.md` §10 exige de toute façon, l'interface n'ayant jamais valeur de preuve.
+      **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
+- [ ] **L'invitation n'est pas un parcours produit.** Elle exige la clé de service : c'est une
+      opération d'**exploitation**. Le composant qui permettrait à un administrateur de workspace
+      d'inviter depuis le produit n'existe pas et n'est rattaché à aucune unité — **INC-015, en
+      attente d'arbitrage** (décision 30).
+- [ ] **Aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son
+      profil ; elle ne crée aucune ligne `workspace_members`. Relève du même arbitrage.
+
+*DoD adaptée, écarts explicites.* **Aucun test unitaire dédié** : cette unité ne livre aucune
+logique applicative propre — elle configure un service tiers et prouve son comportement. Ses
+preuves sont d'intégration par nature et vivent dans `scripts/verify-auth.sh`. **Aucune mise à
+jour du seed** : il n'existe pas encore, c'est l'objet de `CRM-005` ; les comptes du harnais sont
+créés puis détruits par lui, et la base est vérifiée vide en sortant.
+
+*Limites nommées, non masquées.*
+
+- **E2E d'interface et captures d'application impossibles** avant `CRM-007` et `CRM-008`
+  (voir ci-dessus).
+- **L'invitation reste une opération d'exploitation** (INC-015).
+- **Les emails transactionnels partent en anglais**, et le repli vers le gabarit par défaut est
+  **silencieux** du point de vue du destinataire : un email reçu ne prouve pas que le gabarit
+  configuré a été employé (INC-016). Constat associé : ces emails sont en **HTML seul**, sans
+  partie `text/plain`.
+- **L'expiration des liens d'invitation et de réinitialisation n'est pas mesurée.** Le défaut est
+  de 24 heures ; le vérifier exigerait de manipuler le temps de l'instance.
+- **La fenêtre de grâce de 10 secondes** sur la rotation des jetons de rafraîchissement est
+  documentée d'après le défaut de GoTrue ; sa borne exacte n'a pas été mesurée.
 
 ### CRM-012 — Droits fins par track et channel `[ ]`
 Résolution « le plus spécifique gagne », administrateur jamais restreint.

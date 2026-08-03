@@ -441,12 +441,50 @@ statique de plus dans les deux assemblages pour quatre fichiers, soit de les hé
 webapp — qui n'existe pas (`CRM-007`) et dont l'origine n'est de toute façon pas joignable depuis
 le réseau des conteneurs. Les deux débordent du périmètre de `CRM-011`.
 
+**Constat supplémentaire, relevé lors de la vérification visuelle.** Inbucket signale sur chacun
+des emails émis : « MIME problems detected — Plain Text from HTML: Message did not contain a
+text/plain part ». Les gabarits par défaut de GoTrue produisent donc un message **HTML seul**,
+sans variante texte. Deux conséquences, l'une pour le produit, l'autre pour les preuves : un
+message sans partie texte est un signal négatif pour la délivrabilité et gêne les clients en mode
+texte ; et la partie « texte » que lit `scripts/verify-auth.sh` est **reconstruite** par Inbucket
+à partir du HTML, elle n'est pas émise par GoTrue. Captures :
+`docs/captures/CRM-011/email-invitation-1280x800.jpg` et
+`docs/captures/CRM-011/email-reinitialisation-1280x800.jpg`.
+
 **Comportement en attendant :** gabarits par défaut conservés, limite nommée dans
 `docs/SPEC-auth.md` §5.
 
 **Arbitrage attendu du responsable :** rattacher les gabarits d'emails français à `CRM-007`, qui
 introduira une origine HTTP servie, ou à `CRM-P09` (internationalisation, en attente d'arbitrage),
 ou décider que les emails transactionnels restent en anglais.
+
+---
+
+### INC-017 — `README.md` §11 annonce encore comme non vérifié ce que `CRM-004` a mesuré
+
+**Nature :** documentation en retard sur une décision déjà prise.
+**Relevé le :** 2026-08-03, pendant `CRM-011`, en relisant `README.md`.
+
+`README.md` §11 « Limites connues » porte toujours :
+
+> **Disponibilité de `supabase_vault` et `pg_cron` non vérifiée** dans l'image PostgreSQL
+> retenue. Un repli est documenté pour chacun (`pgcrypto` et ordonnanceur applicatif). Le point
+> sera tranché avant tout code de messagerie.
+
+Or `CRM-004` a mesuré les deux extensions dans l'image réellement épinglée, a clos INC-001 et a
+retenu Vault (décision 23). Le `README.md` avait bien été mis à jour en §5, §7 et §12 par cette
+unité, mais **pas** en §11.
+
+**Pourquoi ce n'est pas corrigé ici.** La ligne appartient au périmètre de `CRM-004` et non à
+celui de `CRM-011`. La modifier au passage mêlerait deux sujets dans un même commit, contre
+`CLAUDE.md` §13. Ce n'est pas non plus une contradiction à arbitrer : la décision est prise et
+documentée, seul son report dans ce paragraphe manque.
+
+**Risque :** un lecteur du seul `README.md` peut croire la question ouverte et refaire le travail
+de `CRM-004`.
+
+**Action attendue :** retirer ou reformuler cette limite dans `README.md` §11, dans un changement
+qui lui soit propre.
 
 ---
 

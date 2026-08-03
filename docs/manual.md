@@ -17,7 +17,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 1 | Se connecter, récupérer son mot de passe | `CRM-011` | À livrer |
+| 1 | Se connecter, récupérer son mot de passe | `CRM-011`, `CRM-007` | À livrer — le mécanisme existe et est prouvé (`docs/SPEC-auth.md`), l'écran arrive avec `CRM-007` |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | À livrer |
 
@@ -48,7 +48,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Inviter et gérer les membres | `CRM-011` | À livrer |
+| 17 | Inviter et gérer les membres | `CRM-011`, non rattachée | À livrer — l'invitation est aujourd'hui une opération d'**exploitation** et non un parcours produit ; aucune unité ne porte l'écran (INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
 | 19 | Le catalogue de nœuds | `CRM-030` | À livrer |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | À livrer |

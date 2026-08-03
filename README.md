@@ -196,7 +196,7 @@ Les tests d'autorisation interrogent la base **directement**, avec les jetons r�
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
 Ces commandes arrivent avec le harnais de tests (`CRM-008`). Les preuves disponibles aujourd'hui
-sont cinq harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
+sont six harnais rejouables, à exécuter sur une pile de développement déjà démarrée :
 
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
@@ -204,6 +204,7 @@ scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
+scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -228,6 +229,17 @@ n'étant pas exposé par l'API, l'étape d'intégration pose **temporairement** 
 adossées à ces fonctions, interroge PostgREST avec trois jetons obtenus par la route de connexion,
 puis les retire et vérifie qu'aucune ne subsiste (`docs/JOURNAL.md`, décision 28).
 
+`scripts/verify-auth.sh` couvre l'authentification, entièrement **hors interface**. Il vérifie
+d'abord que la configuration réellement appliquée au service `auth` est celle du `.env`, puis
+exerce le cycle de vie complet d'un compte : inscription libre refusée — y compris avec la clé de
+service —, invitation refusée à la clé anonyme puis émise par la clé de service, email
+**réellement reçu** dans Inbucket, acceptation en suivant le lien de cet email, définition du mot
+de passe, connexion, rafraîchissement, déconnexion, réinitialisation menée à son terme et
+suppression du compte. Les refus qui doivent rester **muets** sur l'existence d'un compte sont
+comparés message à message. Sa non-complaisance est éprouvée par un GoTrue **jetable**, à la même
+version épinglée, portant le réglage affaibli : le contrôle n'est réussi que si ce GoTrue-là
+accepte ce que la pile refuse.
+
 ## 8. Build
 
 ```bash
@@ -237,7 +249,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 
 ## 9. Variables d'environnement
 
-Les **76** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **77** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -252,6 +264,7 @@ preuves.
 | Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | Obligatoires **à partir de `CRM-051`** : aucun service ne les consomme aujourd'hui |
 | Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |
+| Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
@@ -280,7 +293,8 @@ Livré à ce jour :
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
-│   └── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
+│   ├── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
+│   └── verify-auth.sh          Preuves rejouables de l'authentification
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
     ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
@@ -316,6 +330,7 @@ Documentation de référence :
 | [`docs/SPEC-form-composer.md`](docs/SPEC-form-composer.md) | Champs conditionnels par étape |
 | [`docs/SPEC-mail-subsystem.md`](docs/SPEC-mail-subsystem.md) | IMAP, SMTP, classement, dossiers |
 | [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rls.md) | Rôles, RLS, preuves de refus |
+| [`docs/SPEC-auth.md`](docs/SPEC-auth.md) | Authentification, sessions, cycle de vie d'un compte |
 | [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md) | Contrat de déploiement |
 | [`docs/manual.md`](docs/manual.md) | Manuel utilisateur |
 | [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md) | Contradictions relevées, en attente d'arbitrage |
@@ -350,5 +365,14 @@ Documentation de référence :
 - **La production exige des prérequis externes** non fournis par le dépôt : domaine des adresses
   de card, enregistrements DNS, SPF/DKIM/DMARC pour les identités sortantes, certificats TLS.
   Voir [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md).
+- **L'invitation n'est pas encore un parcours produit.** Un compte se crée par
+  `POST /auth/v1/invite`, qui exige la clé de service : c'est aujourd'hui une opération
+  d'**exploitation**, pas un bouton dans l'interface. Le composant qui permettrait à un
+  administrateur de workspace d'inviter depuis le produit n'existe pas et n'est rattaché à aucune
+  unité — consigné en [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-015.
+- **Les emails transactionnels partent en anglais.** GoTrue ne sait charger un gabarit
+  personnalisé que par HTTP, et le dépôt n'expose aucune origine HTTP joignable depuis le réseau
+  des conteneurs avant la webapp. Le repli vers le gabarit anglais est de surcroît **silencieux**
+  du point de vue du destinataire : INC-016.
 - **Le seed de démonstration n'est pas une base de production** : mots de passe faibles connus,
   domaines fictifs, boîtes locales.

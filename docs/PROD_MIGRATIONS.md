@@ -74,6 +74,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `CRM_INBOUND_DOMAIN` | Domaine des adresses de card | Oui |
 | `MAIL_MAX_ATTACHMENT_MB` | Borne d'ingestion des pièces jointes | Oui |
 | `DISABLE_SIGNUP` | Doit valoir `true` : les comptes sont créés par invitation | Oui |
+| `PASSWORD_MIN_LENGTH` | **Nouvelle variable (`CRM-011`).** Longueur minimale d'un mot de passe ; le défaut de GoTrue, 6, est mesuré comme réellement permissif. Valeur retenue : `12` (`docs/SPEC-auth.md` §4) | Oui |
 | `APP_DOMAIN` | Domaine servi par Caddy | Oui |
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
 | `APPLY_MIGRATIONS` | Doit valoir `false` : aucune migration n'est appliquée automatiquement | Oui |
@@ -153,6 +154,19 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
 | `caddy` | À chaque changement de `caddy/Caddyfile` |
+| `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
+
+**Une variable ajoutée n'atteint pas un `.env` existant.** Les scripts n'amorcent que les fichiers
+absents : un `.env` déjà en place ne gagne pas les variables introduites depuis. Le cas n'est pas
+silencieux — la validation de `CRM-002` refuse le démarrage et **nomme** la variable manquante :
+
+```
+  manquante PASSWORD_MIN_LENGTH
+ERREUR 1 variable(s) à corriger dans /chemin/.env. Le contrat est .env.example.
+```
+
+Comportement mesuré lors de la livraison de `CRM-011`. La marche à suivre est d'ajouter la
+variable au fichier d'environnement de l'hôte, puis de recréer le service `auth`.
 
 **Prérequis d'hôte à vérifier avant le premier démarrage.** Realtime et le pooler réclament
 `STACK_RLIMIT_NOFILE` descripteurs de fichiers (défaut `100000`). Si la limite dure de l'hôte est
