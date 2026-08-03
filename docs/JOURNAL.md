@@ -1033,3 +1033,130 @@ celles-ci sont un choix de conception, pas une conséquence de cette instrumenta
   sont unitaires (pgTAP) et d'intégration (PostgREST, jetons réels, hors interface).
 - **Aucune mise à jour du seed** : il n'existe pas encore, c'est l'objet de `CRM-005`. Les comptes
   et les workspaces de l'étape 3 du harnais sont créés puis détruits par le harnais lui-même.
+
+---
+
+## 2026-08-03 — `CRM-011` : authentification, spécification écrite après mesure
+
+Le backlog décrit `CRM-011` en une ligne — « GoTrue, inscription libre désactivée, invitation par
+un administrateur, connexion, déconnexion, réinitialisation de mot de passe » — et `docs/DAT.md`
+§4.1 et §7 s'en tiennent à deux phrases. Aucun document ne dit ce qu'un refus doit rendre, qui a le
+droit d'inviter, ni ce que le produit exige d'un mot de passe. La spécification manquait : elle est
+écrite et committée avant toute ligne de code (`CLAUDE.md` §5), dans `docs/SPEC-auth.md`.
+
+Elle a été écrite **après mesure** et non de mémoire. GoTrue est un service tiers dont le
+comportement réel est la seule autorité : rédiger d'abord puis découvrir ensuite que la version
+épinglée fait autre chose aurait produit une spécification fausse, donc pire qu'absente. Toutes les
+valeurs du §7 de `docs/SPEC-auth.md` proviennent d'appels réellement exécutés contre
+`supabase/gotrue:v2.189.0`.
+
+### Ce que la mesure a démenti, et ce qu'elle a confirmé
+
+*Confirmé.* `DISABLE_SIGNUP=true` refuse `POST /signup` par `422 signup_disabled`. Le refus est
+celui de l'instance et **le privilège ne le contourne pas** : présenté avec la clé `service_role`,
+le même appel est refusé à l'identique. C'était une hypothèse — beaucoup d'implémentations
+laissent un administrateur passer outre — et elle méritait d'être vérifiée plutôt que supposée.
+
+*Confirmé.* L'invitation présentée avec la clé anonyme est refusée par `403 not_admin`.
+
+*Confirmé.* Une adresse inconnue et un mot de passe erroné rendent **le même** message,
+`400 invalid_credentials` ; `POST /recover` sur une adresse inconnue rend `200` sans émettre
+d'email — boîte Inbucket vérifiée vide. L'API ne renseigne donc pas un attaquant sur l'existence
+d'un compte.
+
+*Démenti, et corrigé par cette unité.* La longueur minimale de mot de passe valait **6**. Ce
+n'était pas une valeur théorique : un mot de passe de six caractères a été réellement accepté par
+`PUT /auth/v1/user` avant cette unité.
+
+### Décision 29 — La longueur minimale de mot de passe passe à 12, sans exigence de composition
+
+*Problème.* Le défaut de GoTrue, 6 caractères, est mesuré comme réellement permissif. Un CRM
+contient les données commerciales et la correspondance d'une entreprise : c'est trop bas.
+
+*Options examinées.*
+
+1. **Ne rien changer** et laisser le sujet à une unité de durcissement ultérieure. Écarté : aucune
+   unité ne le porte, et laisser un défaut connu derrière soi au motif qu'il n'est pas nommé est
+   exactement ce que `CLAUDE.md` §17 interdit.
+2. **Imposer une composition** — majuscule, chiffre, caractère spécial. Écarté : ces règles
+   poussent vers des mots de passe courts, complexes et réutilisés, plus faibles en pratique que
+   des mots de passe longs, et elles multiplient les états d'erreur à traduire et à tester.
+3. **Porter la longueur minimale à 12, sans autre exigence.** Retenu.
+
+*Conséquences.* `PASSWORD_MIN_LENGTH` entre dans `.env.example` et dans le service `auth`. Le refus
+est explicite (`422 weak_password`, raison `length`) et prouvé dans les deux sens : onze caractères
+refusés, douze acceptés. Aucun compte n'existe encore, donc aucun mot de passe existant n'est
+invalidé — la décision est gratuite aujourd'hui et coûteuse plus tard, ce qui est précisément le
+motif de la prendre maintenant.
+
+### Décision 30 — L'invitation reste une opération d'opérateur, faute d'arbitrage
+
+*Problème.* `POST /auth/v1/invite` exige un jeton `service_role`. La webapp ne doit **jamais**
+détenir cette clé. Entre l'administrateur de workspace qui clique et GoTrue qui envoie l'email, il
+manque donc un composant serveur, et le projet n'en possède aucun qui convienne : les fonctions
+edge ne sont pas au périmètre (INC-007), et `mail-sync` (`CRM-051`) n'existe pas encore et vise la
+messagerie du produit, pas l'identité.
+
+*Mesure faite pour éclairer l'arbitrage, et non pour le trancher.* `pg_net` 0.20.3 est **déjà
+installée** dans la base et préchargée, et la base joint réellement GoTrue :
+
+```
+select net.http_get('http://auth:9999/health');
+-- status_code 200, {"version":"v2.189.0","name":"GoTrue",...}
+```
+
+Une fonction `SECURITY DEFINER` vérifiant `app.is_workspace_admin` puis appelant GoTrue par
+`pg_net`, avec la clé de service rangée en Vault, est donc **techniquement possible aujourd'hui**.
+
+*Pourquoi elle n'est pas écrite ici.* Elle introduirait une table d'invitations absente de
+`docs/SCHEMA.md`, un appel sortant depuis la base absent de `docs/DAT.md` §3, et une clé de service
+à provisionner en Vault, c'est-à-dire trois choix d'architecture que `CRM-011` n'a pas mandat de
+prendre. Les inventer au motif qu'ils sont possibles reviendrait à résoudre implicitement une
+question ouverte, ce que `CLAUDE.md` §5 interdit.
+
+*Comportement retenu en attendant.* L'invitation est émise par un **opérateur** disposant de la clé
+de service. Le parcours produit est consigné en **INC-015**, avec les trois options et la mesure
+ci-dessus, et attend l'arbitrage du responsable.
+
+### Décision 31 — Les gabarits d'emails restent ceux de GoTrue, et le mode de défaillance est documenté
+
+*Problème.* Les emails partent en anglais, dans un produit français.
+
+*Mesure.* GoTrue v2.189 ne sait charger un gabarit personnalisé que par **HTTP**. Un chemin de
+fichier n'est pas reconnu : la valeur est concaténée à `SITE_URL`, ce que la journalisation du
+service montre sans ambiguïté :
+
+```
+templatemailer: template type "invite":
+Get "http://localhost:5173file///etc/gotrue/templates/invite.html": no such host
+```
+
+**Et l'email est tout de même parti**, avec le gabarit anglais par défaut. C'est le fait important :
+la défaillance est **silencieuse du point de vue du destinataire**. Un email reçu ne prouve pas que
+le gabarit configuré a été employé.
+
+*Options examinées.* Ajouter un serveur statique au seul usage des gabarits — un service de plus
+dans deux assemblages, pour quatre fichiers. Servir les gabarits depuis la webapp, qui n'existe pas
+et dont l'origine `localhost:5173` n'est de toute façon pas joignable depuis le réseau des
+conteneurs. Les deux débordent de `CRM-011` et empiètent sur `CRM-007`.
+
+*Décision.* Les gabarits par défaut sont conservés. La limite est nommée dans
+`docs/SPEC-auth.md` §5 plutôt que masquée, et consignée en **INC-016** — rattachée à `CRM-P09`
+(internationalisation), qui reste en attente d'arbitrage.
+
+### Vérifications réalisées
+
+Voir `scripts/verify-auth.sh`. Le cycle complet a été exercé hors interface avant toute rédaction :
+invitation émise, email constaté dans Inbucket, acceptation par le code à six chiffres, mot de
+passe défini, connexion, mot de passe erroné refusé, déconnexion, jeton de rafraîchissement
+refusé après déconnexion, réinitialisation demandée et email constaté.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun écran, aucun test E2E d'interface, aucune capture d'application.** La webapp arrive avec
+  `CRM-007` et le harnais Playwright avec `CRM-008`. La seule vérification visuelle possible et
+  réellement faite porte sur l'email d'invitation tel qu'il arrive dans Inbucket, ce que la
+  Definition of Done de l'unité nomme explicitement.
+- **Aucun rattachement d'un compte invité à un workspace** (INC-015).
+- **L'expiration des liens d'invitation et de réinitialisation** n'est pas mesurée : la valeur par
+  défaut est de 24 heures, et la vérifier exigerait de manipuler le temps de l'instance.

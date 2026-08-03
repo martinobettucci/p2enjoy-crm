@@ -339,11 +339,19 @@ créés puis détruits par lui.
 - **La création des workspaces et des appartenances du harnais passe par SQL**, faute de politique
   autorisant leur création par l'API. Le fait est nommé dans le script, pas masqué.
 
-### CRM-011 — Authentification `[ ]`
+### CRM-011 — Authentification `[~]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,
 réinitialisation de mot de passe.
 **DoD** : E2E de connexion et de refus ; email d'invitation **réellement envoyé** et constaté
 dans Inbucket ; captures observées.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-auth.md` : aucun document ne disait ce
+      qu'un refus doit rendre, qui a le droit d'inviter, ni ce que le produit exige d'un mot de
+      passe. Rédigée **après mesure** du comportement réel de `supabase/gotrue:v2.189.0`, la
+      version épinglée, et non de mémoire. Commit documentaire dédié.
+- [x] Deux contradictions consignées sans être résolues implicitement : **INC-015** (le parcours
+      d'invitation depuis le produit n'a aucun composant pour le porter) et **INC-016** (gabarits
+      d'emails chargeables en HTTP seulement, avec repli **silencieux** vers l'anglais).
 
 ### CRM-012 — Droits fins par track et channel `[ ]`
 Résolution « le plus spécifique gagne », administrateur jamais restreint.

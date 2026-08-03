@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-011` — Spécification de l'authentification, écrite avant tout code.**
+  - `docs/SPEC-auth.md` : cycle de vie d'un compte de bout en bout — inscription libre refusée,
+    invitation, acceptation, connexion, session, déconnexion, réinitialisation de mot de passe —,
+    politique de mot de passe, contenu du jeton, et les **20 preuves de refus et d'acceptation**
+    exigées, toutes exécutées hors interface.
+  - Spécification rédigée **après mesure** du comportement réel de `supabase/gotrue:v2.189.0` et
+    non de mémoire : GoTrue est un service tiers dont le comportement fait autorité.
+  - Mesure notable : le refus d'inscription libre **n'est pas contournable par le privilège** — la
+    clé `service_role` est refusée exactement comme la clé anonyme.
+  - Mesure notable : l'API ne renseigne pas sur l'existence d'un compte — adresse inconnue et mot
+    de passe erroné rendent le même message, et `recover` sur une adresse inconnue rend `200` sans
+    émettre d'email.
+  - Décisions 29 à 31 consignées dans `docs/JOURNAL.md` ; contradictions **INC-015** (parcours
+    d'invitation sans composant pour le porter) et **INC-016** (gabarits d'emails, repli silencieux
+    vers l'anglais) consignées sans résolution implicite.
+
 - **`CRM-010` — Fonctions d'autorisation (partiel : 4 fonctions sur 6, voir INC-013).**
   - `supabase/migrations/0002_fonctions_autorisation.sql` : `app.resolve_access`,
     `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`. **Aucune politique

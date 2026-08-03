@@ -366,6 +366,90 @@ d'identité, ainsi que la preuve n° 10, à `CRM-012` ou à une unité dédiée.
 
 ---
 
+### INC-015 — Le parcours d'invitation depuis le produit n'a pas de composant pour le porter
+
+**Nature :** référence manquante dans l'architecture, décision non prise.
+**Relevé le :** 2026-08-03, pendant `CRM-011`.
+
+`docs/BACKLOG.md` décrit `CRM-011` comme livrant « l'invitation par un administrateur », et
+`docs/manual.md` rattache le chapitre 17, « Inviter et gérer les membres », à cette unité. Or
+`POST /auth/v1/invite` exige un jeton portant `service_role` — mesuré : la clé anonyme est refusée
+par `403 not_admin`. La webapp ne doit jamais détenir cette clé.
+
+Il manque donc un composant serveur entre l'administrateur de workspace et GoTrue, et le projet
+n'en possède aucun qui convienne :
+
+- les fonctions edge ne sont **pas** au périmètre (INC-007, ouvert) ;
+- `mail-sync` (`CRM-051`) n'existe pas encore, et vise la messagerie du produit, pas l'identité ;
+- la webapp (`CRM-007`) est un client, sans partie serveur.
+
+**Mesure faite pour éclairer l'arbitrage.** `pg_net` 0.20.3 est déjà installée dans la base et
+préchargée, et la base joint réellement GoTrue (`net.http_get('http://auth:9999/health')` rend
+`200`). Une fonction `SECURITY DEFINER` vérifiant `app.is_workspace_admin` puis appelant GoTrue par
+`pg_net`, la clé de service rangée en Vault, est donc techniquement possible **aujourd'hui**.
+
+**Ce qui n'est pas tranché, et n'a pas été tranché ici.** Cette voie suppose trois choix
+d'architecture que `CRM-011` n'a pas mandat de prendre : une table d'invitations absente de
+`docs/SCHEMA.md`, un appel sortant depuis la base absent de `docs/DAT.md` §3, et une clé de service
+à provisionner en Vault. S'y ajoute une question de règle métier entière : ce que l'invitation
+porte comme workspace et comme rôle, et à quel moment la ligne `workspace_members` est créée — à
+l'émission de l'invitation, ou à son acceptation.
+
+**Comportement retenu en attendant :** l'invitation est émise par un **opérateur** disposant de la
+clé de service, hors interface. Aucune table, aucune fonction et aucun appel sortant n'est créé par
+anticipation. `docs/SPEC-auth.md` §3.2 et §6 le disent explicitement plutôt que de laisser croire à
+un parcours produit livré.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. rattacher le parcours à `CRM-070` (administration des permissions fines), qui traite déjà de la
+   gestion des membres, et livrer d'ici là l'invitation par opérateur ;
+2. créer une unité dédiée, placée après `CRM-007`, portant la table d'invitations, la fonction
+   `SECURITY DEFINER` et le provisionnement de la clé de service en Vault ;
+3. décider que l'invitation reste définitivement une opération d'exploitation, et retirer le
+   chapitre 17 de `docs/manual.md`.
+
+Lié à INC-014 : les politiques RLS des tables d'identité ne sont toujours rattachées à aucune
+unité, et le rattachement d'une éventuelle table d'invitations poserait la même question.
+
+---
+
+### INC-016 — Gabarits d'emails : chargement HTTP obligatoire et repli silencieux vers l'anglais
+
+**Nature :** limite d'un composant tiers, contraire à une exigence générale.
+**Relevé le :** 2026-08-03, pendant `CRM-011`.
+
+Le produit est en français ; les emails transactionnels partent en **anglais**, avec les gabarits
+par défaut de GoTrue.
+
+**Mesure.** `supabase/gotrue:v2.189.0` ne sait charger un gabarit personnalisé que par **HTTP**. Un
+chemin de fichier n'est pas reconnu : la valeur est concaténée à `SITE_URL`, ce que la
+journalisation du service montre sans ambiguïté.
+
+```
+templatemailer: template type "invite":
+Get "http://localhost:5173file///etc/gotrue/templates/invite.html": no such host
+```
+
+**Le point qui compte : l'email est tout de même parti**, avec le gabarit anglais par défaut. La
+défaillance est donc **silencieuse du point de vue du destinataire**. Un email reçu ne prouve pas
+que le gabarit configuré a été employé — toute preuve future portant sur les gabarits devra
+vérifier le **contenu** de l'email, jamais sa seule présence.
+
+**Pourquoi ce n'est pas résolu ici.** Servir les gabarits en HTTP demanderait soit un service
+statique de plus dans les deux assemblages pour quatre fichiers, soit de les héberger dans la
+webapp — qui n'existe pas (`CRM-007`) et dont l'origine n'est de toute façon pas joignable depuis
+le réseau des conteneurs. Les deux débordent du périmètre de `CRM-011`.
+
+**Comportement en attendant :** gabarits par défaut conservés, limite nommée dans
+`docs/SPEC-auth.md` §5.
+
+**Arbitrage attendu du responsable :** rattacher les gabarits d'emails français à `CRM-007`, qui
+introduira une origine HTTP servie, ou à `CRM-P09` (internationalisation, en attente d'arbitrage),
+ou décider que les emails transactionnels restent en anglais.
+
+---
+
 ## Clos
 
 ### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée
