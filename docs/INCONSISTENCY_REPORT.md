@@ -168,6 +168,15 @@ qui les appelle. Les deux questions relèvent d'un arbitrage, pas d'un choix d'i
 **Arbitrage attendu du responsable :** rattacher `package.json` à une unité explicite, et dire si
 les alias `npm` doivent exister en doublon des scripts.
 
+**Mise à jour du 2026-08-03, pendant `CRM-006`.** La première question s'est tranchée d'elle-même :
+la Definition of Done de `CRM-006` nomme `npm run types:generate`, l'unité ne peut donc pas être
+livrée sans `package.json`. Il est introduit par elle (`docs/JOURNAL.md`, décision 38), **réduit
+aux seules commandes que cette DoD exige** — `types:generate`, `types:check`, `typecheck`.
+
+**La seconde question reste entière, et n'a pas été préemptée :** aucun alias `npm` des scripts
+existants n'a été ajouté. `npm run dev`, `npm run stop` et `npm run db:seed` — ce dernier annoncé
+par `docs/DAT.md` §13 — n'existent toujours pas. L'entrée reste **ouverte**.
+
 ---
 
 ### INC-009 — La Definition of Done de `CRM-002` dépend d'une unité planifiée bien après elle

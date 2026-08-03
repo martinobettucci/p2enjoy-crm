@@ -1408,3 +1408,87 @@ rende possible, et elle vaut d'être faite — elle donne à voir l'état que le
   `scripts/verify-authz.sh`.
 - **`npm run db:seed` n'existe toujours pas** : il attend le `package.json` de `CRM-007` (INC-008).
   Le seed s'invoque par `supabase/seed/apply-seed.sh`, ou par `resetMe.sh` qui l'appelle.
+
+---
+
+## 2026-08-03 — `CRM-006` : spécification des types générés, écrite après mesure
+
+### Choix de l'unité : pourquoi `CRM-006`
+
+Deux unités sont `[~]` et devraient, selon la règle d'avancement, être terminées avant toute
+autre. Elles ont été réexaminées, et non écartées par commodité :
+
+- **`CRM-010`** — sa seule case ouverte est la livraison de `app.can_read_track`,
+  `app.can_read_channel`, `app.can_write_channel` et `app.can_read_card`. Ces fonctions doivent
+  remonter d'un track, d'un channel ou d'une card jusqu'à son workspace ; `tracks`, `channels` et
+  `cards` n'existent pas et relèvent de `CRM-020`, `CRM-021` et `CRM-040`. INC-013 demande de
+  surcroît un arbitrage **avant `CRM-012`**. Rien n'est faisable ici sans préempter trois unités.
+- **`CRM-011`** — ses cases ouvertes sont un E2E d'interface et des captures d'application. Il
+  n'existe aucun écran : la webapp est `CRM-007`, le harnais Playwright `CRM-008`. La limite est
+  déjà nommée dans `docs/BACKLOG.md`.
+
+Les trois unités `[ ]` restantes de l'étape 2.b sont bloquées pour les motifs déjà consignés lors
+de `CRM-005` : `CRM-012` par INC-011 et INC-013, `CRM-013` par des tables absentes, `CRM-014` par
+le harnais Playwright de `CRM-008`. `CRM-006` est donc la première unité réellement exécutable, et
+la suivante dans l'ordre de `docs/MASTER_PLAN.md` §2.c. Elle n'enfreint aucune des « contraintes
+d'ordre à ne pas enfreindre » du §2, qui ne la mentionnent pas.
+
+### Contexte : pourquoi une spécification pour une commande d'une ligne
+
+La Definition of Done de `CRM-006` tient en une phrase — « `npm run types:generate` régénère depuis
+le schéma local ; build de la webapp vert » — et ne dit ni **d'où** viennent les types, ni **où**
+ils vont, ni ce qui prouve qu'ils décrivent encore le schéma trois migrations plus tard. Ce sont
+précisément les trois questions qui feront la différence entre un type utile et un type qui ment.
+
+Le comportement réel du générateur a donc été mesuré **avant** d'écrire la spécification, comme
+pour `CRM-011` et `CRM-005`. Mesures consignées dans `docs/SPEC-types.md` §3 : route, code de
+retour, taille de la sortie, déterminisme de deux appels successifs, effet exact du paramètre
+`detect_one_to_one_relationships`.
+
+### Décision 36 — Le fichier de types est versionné, pas produit au build
+
+*Décision.* La sortie du générateur est committée dans le dépôt, et une garde prouve qu'elle
+correspond au schéma.
+
+*Motif.* Générer au build rendrait `npm run build` dépendant d'un démon Docker et d'une base
+migrée, y compris en intégration continue. Il rendrait surtout la dérive **invisible** : le build
+produirait toujours des types cohérents avec la base du moment, et personne ne verrait jamais
+qu'une migration a changé le contrat que l'interface lit. Versionner déplace la dérive dans le
+diff, là où elle se lit.
+
+*Conséquence.* Il faut une garde, sans quoi le fichier committé deviendrait une affirmation
+invérifiable : `npm run types:check` régénère et compare octet à octet, sans jamais réécrire.
+Cette garde doit elle-même être éprouvée dans les deux sens (`docs/SPEC-types.md` §6).
+
+### Décision 37 — Le générateur est `postgres-meta`, déjà présent, et non la CLI Supabase
+
+*Décision.* La génération appelle le service `meta` de l'overlay de développement
+(`supabase/postgres-meta:v0.96.6`) par `docker exec`, sur
+`GET /generators/typescript?included_schemas=public&detect_one_to_one_relationships=true`.
+
+*Motif.* C'est le moteur qu'emploie `supabase gen types typescript` : le résultat est le même, sans
+introduire de dépendance. La CLI Supabase exigerait le téléchargement d'un binaire hors registre
+npm, épinglé nulle part dans le dépôt, pour un service que la pile de développement fait déjà
+tourner pour Studio (`CLAUDE.md` §19 : vérifier qu'une dépendance existante ne suffit pas).
+
+*Détail mesuré, et non supposé.* `meta` ne publie aucun port sur l'hôte : il n'est joignable que
+depuis le réseau Docker. L'appel passe donc nécessairement par `docker exec` dans `p2enjoy-meta`,
+et la commande exige la pile démarrée — prérequis identique à celui des sept harnais existants.
+
+*Écart assumé.* `included_schemas` vaut `public` seul. Le générateur accepte `app` — vérifié — mais
+PostgREST n'expose pas ce schéma : l'inclure produirait un type décrivant des appels impossibles.
+
+### Décision 38 — `package.json` naît avec `CRM-006`, réduit à ce que sa Definition of Done nomme
+
+*Décision.* Le premier `package.json` du dépôt est introduit par `CRM-006`, et ne porte que les
+commandes que sa DoD exige : `types:generate`, `types:check`, `typecheck`. **Aucun alias `npm` des
+scripts existants** n'est ajouté — ni `npm run dev`, ni `npm run stop`, ni `npm run db:seed`.
+
+*Motif.* INC-008 laisse ouvertes deux questions distinctes : quelle unité introduit `package.json`,
+et si le projet veut une façade `npm` par-dessus les scripts. La première se tranche d'elle-même —
+`CRM-006` est la première unité dont la DoD nomme une commande `npm`, elle ne peut pas être livrée
+sans. La seconde reste un arbitrage, et rien ici ne la préempte : ajouter des alias reviendrait à
+la trancher en silence.
+
+*Conséquence.* INC-008 reste **ouverte**, avec sa première question désormais réglée par nécessité
+et la seconde intacte. `npm run db:seed`, annoncé par `docs/DAT.md` §13, n'existe toujours pas.

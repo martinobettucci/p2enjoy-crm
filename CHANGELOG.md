@@ -15,6 +15,25 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-006` — Spécification des types générés, écrite avant tout code.**
+  - `docs/SPEC-types.md` : d'où viennent les types TypeScript du produit, où ils vivent, comment
+    ils se régénèrent, et **ce qui prouve qu'ils n'ont pas dérivé** du schéma réellement migré.
+  - Spécification rédigée **après mesure** du comportement réel de
+    `supabase/postgres-meta:v0.96.6`, la version épinglée : route, code `200`, sortie de 300 lignes
+    et 8 527 octets sur le schéma d'amorçage, **déterminisme constaté** sur deux appels successifs.
+  - Mesure notable : le service `meta` **ne publie aucun port** sur l'hôte — la génération passe
+    nécessairement par `docker exec`, et exige donc la pile de développement démarrée.
+  - Mesure notable : `detect_one_to_one_relationships=true` ajoute `isOneToOne` aux relations ;
+    sans lui, `supabase-js` type mal une relation embarquée.
+  - Limite nommée d'emblée : les contraintes `CHECK` **ne survivent pas** à la génération —
+    `workspace_members.role` se type `string`, pas `'admin' | 'business_developer' | 'viewer'`.
+    Seule la base refuse une valeur hors vocabulaire.
+  - Décisions 36 à 38 consignées dans `docs/JOURNAL.md` : fichier **versionné** plutôt que produit
+    au build, générateur `postgres-meta` déjà présent plutôt que CLI à télécharger, et
+    `package.json` introduit par cette unité **réduit aux commandes que sa DoD nomme**.
+  - **INC-008** mise à jour : sa première question est réglée par nécessité, la seconde — une
+    façade `npm` par-dessus les scripts — reste **ouverte et non préemptée**.
+
 - **`CRM-005` — Spécification du seed, écrite avant tout code.**
   - `docs/SPEC-seed.md` : contrat des données de développement — l'espace de travail, les trois
     comptes et leurs rôles, les identifiants **stables**, le mot de passe de développement, les
