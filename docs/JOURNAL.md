@@ -412,8 +412,13 @@ n'avait aucune configuration locale : l'identité globale de l'outillage prenait
 violation directe de `CLAUDE.md` §13.
 
 *Correction.* Identité fixée dans la configuration **locale** du dépôt, alignée sur l'historique
-existant. Le correctif est durable : il vaut pour tous les passages suivants de la routine, qui
-n'ont plus à y penser.
+existant.
+
+*Correctif moins durable qu'annoncé — constaté le 2026-08-03 pendant `CRM-002`.* La routine cloud
+travaille sur un conteneur qui **reclone le dépôt** à chaque session : `.git/config` est donc
+recréé, et la configuration locale disparaît avec lui. L'identité globale de l'outillage
+(`Claude <noreply@anthropic.com>`) reprend alors le dessus. Le contrôle et, si besoin, la remise
+en place de l'identité locale font partie du démarrage de chaque passage, avant tout commit.
 
 ### Ce que cette unité ne prouve pas
 
@@ -426,3 +431,127 @@ n'ont plus à y penser.
 - La pile de production a été démarrée contre un **fournisseur S3 simulé** (un MinIO autonome,
   extérieur à l'assemblage), faute de compte S3 réel. Le contrat testé est celui d'un stockage
   compatible S3, pas celui d'un fournisseur particulier.
+
+---
+
+## 2026-08-03 — `CRM-002` : scripts de lancement et contrat d'environnement
+
+### Contexte
+
+`CRM-001` a livré une pile qui démarre, mais qui exige un `.env` que **rien** ne fournissait :
+aucun gabarit n'était versionné, et la liste des variables ne vivait que dans la décision 15 de ce
+journal. Un dépôt cloné à neuf ne démarrait donc pas. Cette unité comble ce trou et livre les
+trois scripts annoncés par `README.md` §5.
+
+### Décision 16 — Les secrets de développement sont tirés au hasard, jamais versionnés
+
+*Problème.* Un gabarit d'environnement doit être copiable et immédiatement fonctionnel, mais
+`CLAUDE.md` §3 interdit qu'une clé ou un mot de passe réel entre dans le dépôt. La distribution
+self-hosted officielle de Supabase résout la tension en livrant des clés de démonstration
+publiquement connues — `JWT_SECRET` compris. Toute installation qui oublie de les changer expose
+donc une `SERVICE_ROLE_KEY` que n'importe qui peut reconstituer, et cette clé **contourne la RLS**.
+
+*Options.* Reprendre les clés de démonstration officielles, au prix d'un secret partagé par
+construction ; exiger que l'utilisateur produise lui-même quinze valeurs à la main, au prix d'une
+installation pénible et d'erreurs de longueur ; ou faire produire ces valeurs par le script
+d'amorçage.
+
+*Décision.* **`./runDev.sh` amorce `.env` et tire chaque secret au hasard.** `ANON_KEY` et
+`SERVICE_ROLE_KEY` ne sont pas tirées mais **dérivées** : ce sont de véritables jetons HS256
+signés par le `JWT_SECRET` produit, fabriqués par `openssl` dans `scripts/lib/env.sh`. Le gabarit
+ne contient que des marqueurs `CHANGE_ME_*`, et le fichier produit naît en mode `600`.
+
+*Conséquences.* Deux postes n'ont jamais les mêmes clés, et aucun secret ne peut fuiter par le
+dépôt. En contrepartie, un `.env` perdu ne se reconstitue pas : la base locale devient illisible,
+ce qui est acceptable pour un environnement recréable par `./resetMe.sh`. La production, elle,
+n'est **jamais** amorcée automatiquement — `./runProd.sh` refuse de démarrer plutôt que d'inventer
+un secret.
+
+### Décision 17 — Le gabarit est un contrat vérifié, pas une documentation à la main
+
+*Problème.* Un `.env.example` dérive silencieusement : on ajoute une variable à un service, on
+oublie de la documenter, et l'installation suivante échoue sur une erreur incompréhensible.
+
+*Décision.* `scripts/verify-scripts.sh` compare l'ensemble des variables interpolées par les trois
+fichiers Compose à celles déclarées par `.env.example`, dans les **deux** sens. Une variable
+consommée mais non documentée fait échouer les preuves ; une variable documentée que rien ne
+consomme doit figurer dans une courte liste justifiée, à l'intérieur du harnais. Le harnais
+vérifie en outre que chaque variable est précédée d'un commentaire disant son format et son
+caractère obligatoire.
+
+*Conséquence.* Les quatre variables aujourd'hui documentées sans être consommées sont nommées et
+motivées : `P2ENJOY_ENV_PROFILE` (lue par les scripts) et les trois variables de messagerie
+annoncées par `README.md` §9 et `docs/PROD_MIGRATIONS.md` §2.3, qui ne prendront effet qu'avec
+`mail-sync`.
+
+### Décision 18 — Un profil d'environnement explicite garde les opérations dangereuses
+
+*Problème.* Deux erreurs coûteuses sont possibles avec trois scripts et un seul fichier `.env` :
+démarrer la production avec les secrets du développement, et effacer une base qui n'est pas
+locale. Aucune des deux ne se détecte à partir du contenu des variables, qui se ressemblent.
+
+*Décision.* Introduire `P2ENJOY_ENV_PROFILE`, valant `dev` ou `prod`. `runDev.sh` et `resetMe.sh`
+exigent `dev`, `runProd.sh` exige `prod`. `runProd.sh` impose en outre `APPLY_MIGRATIONS=false`,
+conformément à `docs/PROD_MIGRATIONS.md`. `resetMe.sh` réclame une confirmation, explicite
+(`--yes`) hors terminal interactif.
+
+*Conséquence.* Une variable de plus, qu'aucun service ne consomme — c'est le prix d'une garde
+lisible. Les cinq refus sont éprouvés par `scripts/verify-scripts.sh`, dans les deux sens : le
+harnais vérifie aussi qu'un environnement conforme est bien **accepté**.
+
+### Décision 19 — Le nombre de descripteurs s'ajuste à l'hôte lors de l'amorçage
+
+La décision 14 avait rendu `STACK_RLIMIT_NOFILE` explicite, sans résoudre le fait qu'un hôte
+contraint voit Realtime et le pooler redémarrer en boucle. L'amorçage lit désormais `ulimit -Hn`
+et inscrit la limite dure réelle dans le `.env` produit lorsqu'elle est inférieure à la valeur
+demandée, **en le disant**. La valeur par défaut du dépôt reste `100000`.
+
+*Portée volontairement étroite.* L'ajustement n'a lieu qu'à l'amorçage : un `.env` existant n'est
+jamais réécrit, et la production n'en bénéficie pas. Le prérequis d'hôte reste donc à contrôler
+avant un déploiement (`docs/PROD_MIGRATIONS.md` §4).
+
+### Vérifications réalisées
+
+Toutes exécutées dans l'environnement de la routine, sur la pile réellement démarrée.
+
+| Vérification | Résultat |
+|---|---|
+| `scripts/verify-scripts.sh` | **38 contrôles, aucune anomalie** |
+| Démarrage à froid par `./runDev.sh`, dépôt sans `.env` ni `PGDATA` | `.env` amorcé puis pile démarrée en **31,8 s**, les 11 services de longue durée `healthy`, les 2 éphémères terminés en `0` |
+| `scripts/verify-stack.sh` contre le `.env` **amorcé par le script** | **33 contrôles, aucune anomalie** — les jetons produits sont réellement acceptés par Kong, PostgREST, Storage et Realtime |
+| Ajustement automatique des descripteurs | `STACK_RLIMIT_NOFILE` inscrit à `4096`, égal à `ulimit -Hn` de l'hôte, avec avertissement |
+| Droits du fichier amorcé | `600` |
+| `./resetMe.sh --yes` | Base réellement recréée : identifiant du cluster passé de `7669853337939968035` à `7669853644045238308`, table témoin `sonde_reset` disparue, redémarrage à froid en **38,9 s**, puis `verify-stack.sh` de nouveau à 33/33 |
+| Absence de seed | Signalée explicitement par `resetMe.sh`, qui nomme l'unité `CRM-005` au lieu de laisser croire à un succès complet |
+| `./runProd.sh` avec un fichier de profil `prod` | Les **8** services `healthy`, Caddy compris, en **37,9 s** |
+| Caddy | `http://localhost/` → `308` vers `https://` ; `/auth/v1/health` avec clé anonyme → `200` ; `/rest/v1/` sans clé → `401`, avec clé de service → `200` ; `/` → `404`, webapp non livrée |
+| Ports publiés en production | `80` et `443` par Caddy **uniquement** |
+| Outillage de développement en production | aucun conteneur `studio`, `meta`, `minio`, `inbucket` |
+| `APPLY_MIGRATIONS=false` en production | le conteneur de migrations renvoie vers `docs/PROD_MIGRATIONS.md` et se termine en `0` |
+| `./runDev.sh --stop`, `./runProd.sh --stop` | Arrêt propre, volumes conservés |
+| `--withLog webapp`, `mail-sync`, `stalwart` | Refus explicite nommant `CRM-007`, `CRM-051`, `CRM-050`, code de sortie `1` |
+
+**Le harnais n'est pas complaisant** — vérifié en le mettant volontairement en défaut :
+
+| Régression introduite | Détection |
+|---|---|
+| Variable `${SONDE_NON_DOCUMENTEE}` ajoutée à un service Compose | 3 anomalies : variable non documentée, puis les deux assemblages non interpolables |
+| `JWT_SECRET` renseigné en clair dans `.env.example` | 1 anomalie : « valeur non neutre dans le gabarit » |
+| `env_require_profile prod` commentée dans `runProd.sh` | 1 anomalie : la production accepte un environnement de développement |
+| Dérivation d'`ANON_KEY` faussée par un autre secret | 1 anomalie : « signature invalide ou rôle inattendu » |
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun test unitaire ni E2E dédié**, et c'est assumé : cette unité ne livre ni logique métier
+  ni parcours utilisateur. Les preuves correspondantes sont d'intégration et vivent dans
+  `scripts/verify-scripts.sh`. Le harnais Vitest, pytest et Playwright reste l'objet de `CRM-008`.
+- **Aucune vérification visuelle** : rien de cette unité n'atteint l'interface. Le premier écran
+  du produit arrive avec `CRM-007`.
+- **Le seed n'est pas rejoué**, faute d'exister (`CRM-005`). `resetMe.sh` appelle
+  `supabase/seed/apply-seed.sh` s'il est exécutable, et le dit clairement sinon. La partie
+  « recrée le seed » de la Definition of Done de `CRM-002` reste donc **non prouvée**, et l'unité
+  ne peut pas se déclarer complète sur ce point.
+- **La production a été démarrée contre un fournisseur S3 simulé** et avec `APP_DOMAIN=localhost`,
+  donc l'autorité interne de Caddy : mêmes limites que `CRM-001`, pour les mêmes raisons.
+- **La valeur par défaut `STACK_RLIMIT_NOFILE=100000` reste non éprouvée** : l'hôte de la routine
+  plafonne à 4096, et c'est précisément ce que l'ajustement automatique inscrit.

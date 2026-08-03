@@ -78,13 +78,64 @@ pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
   `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
   **en attente d'arbitrage du responsable**.
 
-### CRM-002 — Scripts de lancement et environnement `[ ]`
+### CRM-002 — Scripts de lancement et environnement `[~]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,
 format, obligatoire ou non, exemple non sensible). La liste exhaustive des variables déjà
 consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`, décision 15 :
 `.env.example` doit la couvrir intégralement.
 **DoD** : démarrage à froid depuis un dépôt propre ; `resetMe.sh` recrée la base et le seed ;
 aucun secret réel versionné ; `README.md` §5–6 conforme au comportement réel.
+
+- [x] `.env.example` : **76 variables**, chacune documentée avec son rôle, son format, son
+      caractère obligatoire et une valeur d'exemple non sensible. Le gabarit couvre **exactement**
+      les 72 variables interpolées par les trois fichiers Compose ; les 4 restantes sont nommées
+      et justifiées dans `scripts/verify-scripts.sh`.
+- [x] Aucun secret réel versionné : les 14 variables sensibles valent un marqueur `CHANGE_ME_*`,
+      et `.env` est ignoré par git — vérifié.
+- [x] `runDev.sh` amorce `.env` au premier lancement, chaque secret **tiré au hasard**, en mode
+      `600`, sans jamais écraser un fichier existant. `ANON_KEY` et `SERVICE_ROLE_KEY` sont des
+      jetons HS256 réellement dérivés du `JWT_SECRET` produit — signature et rôle vérifiés.
+- [x] Démarrage à froid depuis un dépôt propre — ni `.env`, ni `PGDATA` — par la seule commande
+      `./runDev.sh` : amorçage puis pile démarrée en **31,8 s**, 11 services `healthy`, 2
+      éphémères terminés en `0`.
+- [x] `scripts/verify-stack.sh` rejoué contre le `.env` **amorcé par le script** : **33 contrôles,
+      aucune anomalie**. Les jetons produits sont donc réellement acceptés par Kong, PostgREST,
+      Storage et Realtime.
+- [x] `resetMe.sh` recrée bien la base : identifiant de cluster PostgreSQL changé, table témoin
+      disparue, redémarrage à froid en **38,9 s**, `verify-stack.sh` de nouveau à 33/33.
+- [x] `runProd.sh` démarre réellement l'assemblage de production : **8 services `healthy`**, Caddy
+      compris, redirection `http` → `https`, API jointe en TLS, aucun outillage de développement,
+      seuls `80` et `443` publiés.
+- [x] Gardes prouvées par le refus **et** par l'acceptation : profil `dev` exigé par `runDev.sh`
+      et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
+      production, confirmation explicite avant destruction, aucun amorçage en production.
+- [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **38 contrôles, aucune
+      anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
+      documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
+      est retirée, et lorsque la dérivation d'un jeton est faussée.
+- [ ] **`resetMe.sh` rejoue le seed : NON PROUVÉ.** `supabase/seed/apply-seed.sh` n'existe pas —
+      c'est l'objet de `CRM-005`, planifiée après `CRM-014` (`docs/MASTER_PLAN.md` §2.c). Seule
+      la branche « seed absent » a pu être exercée : elle avertit explicitement et nomme
+      `CRM-005`, au lieu de laisser croire à un succès complet. **Cette preuve est bloquée par une
+      dépendance, pas par un défaut de l'unité : il n'y a rien à y faire tant que `CRM-005` n'est
+      pas livrée.** Contradiction d'ordonnancement consignée dans
+      `docs/INCONSISTENCY_REPORT.md`, INC-009.
+
+*DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
+aucune logique métier ni parcours utilisateur, seulement l'outillage d'exécution. Les preuves
+correspondantes sont d'intégration et vivent dans `scripts/verify-scripts.sh`. Le harnais Vitest,
+pytest et Playwright reste l'objet de `CRM-008`. **Aucune vérification visuelle** : rien de cette
+unité n'atteint l'interface, dont le premier écran arrive avec `CRM-007`.
+
+*Limites nommées, non masquées.*
+
+- La branche « seed » de `resetMe.sh` n'est pas exercée (voir ci-dessus).
+- L'assemblage de production a été démarré contre un **fournisseur S3 simulé** et avec
+  `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy : l'émission d'un certificat **ACME**
+  reste non prouvée, comme pour `CRM-001`.
+- La valeur par défaut `STACK_RLIMIT_NOFILE=100000` reste **non éprouvée** : l'hôte de la routine
+  plafonne à 4096, valeur que l'amorçage inscrit automatiquement et signale.
 
 ### CRM-003 — Migrations d'amorçage `[ ]`
 Extensions, schéma `app`, `profiles` (+ trigger de création), `workspaces`,

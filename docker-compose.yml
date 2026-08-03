@@ -9,9 +9,8 @@
 #   Développement : docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 #   Production    : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# Les variables consommées ici sont fournies par le fichier `.env` du dépôt. Leur gabarit
-# documenté (`.env.example`) est livré par l'unité `CRM-002` ; la liste exhaustive attendue est
-# consignée dans `docs/JOURNAL.md` (décision 12).
+# Les variables consommées ici sont fournies par le fichier `.env` du dépôt, amorcé par
+# `./runDev.sh` à partir du gabarit documenté `.env.example` (unité `CRM-002`).
 
 name: p2enjoy-crm
 

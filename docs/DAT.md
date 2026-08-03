@@ -378,7 +378,22 @@ Aucune trace n'est fabriquée artificiellement pour simuler l'exécution d'un pr
 ## 13. Commandes de lancement
 
 Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`, `npm run db:migrate`,
-`npm run db:seed`, `npm run types:generate`, `npm run build`, `npm run stop`.
+`npm run db:seed`, `npm run types:generate`, `npm run build`.
+
+Les trois scripts partagent `scripts/lib/env.sh`, qui porte la lecture du fichier
+d'environnement, son amorçage et ses gardes. Le fichier visé est `.env` à la racine, ou celui que
+désigne `P2ENJOY_ENV_FILE`.
+
+| Script | Rôle | Gardes appliquées |
+|---|---|---|
+| `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` |
+| `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
+| `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
+
+L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
+volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.
+
+Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`.
 
 ## 14. Observabilité
 

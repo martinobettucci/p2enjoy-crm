@@ -161,6 +161,59 @@ une unité de backlog, soit la mention est retirée du `README.md` §10.
 
 ---
 
+### INC-008 — Commandes `npm` annoncées sans `package.json`, et `npm run stop` attribué à `CRM-002`
+
+**Nature :** contradiction entre la documentation et le périmètre des unités.
+**Relevé le :** 2026-08-03, pendant `CRM-002`.
+
+`README.md` annonçait `npm install` en §4 et `npm run stop` en §5, cette dernière marquée « à
+venir (`CRM-002`) » ; `docs/DAT.md` §13 la reprenait. Or :
+
+- le dépôt ne contient **aucun** `package.json`, et aucune unité du backlog ne dit lequel
+  l'introduit — `CRM-006` (types générés) et `CRM-007` (webapp) le supposent tous deux ;
+- `CRM-002` est décrite dans `docs/BACKLOG.md` comme livrant `runDev.sh`, `runProd.sh`,
+  `resetMe.sh` et `.env.example`. Rien n'y mentionne d'alias `npm`, et en créer un aurait exigé
+  d'introduire un `package.json` sans unité pour le porter.
+
+**Comportement retenu :** `CRM-002` livre l'arrêt propre là où il a du sens, sous forme d'options
+des scripts qu'elle produit — `./runDev.sh --stop` et `./runProd.sh --stop`. `README.md` §5 et
+`docs/DAT.md` §13 décrivent désormais ces commandes réellement exécutables, et la ligne
+`npm run stop` en a été retirée plutôt que laissée à décrire une commande inexistante.
+
+**Ce qui n'est pas tranché, et n'a pas été tranché ici :** quelle unité introduit `package.json`,
+et si le projet veut par-dessus les scripts une façade `npm` — `npm run stop`, `npm run dev` —
+qui les appelle. Les deux questions relèvent d'un arbitrage, pas d'un choix d'implémentation.
+
+**Arbitrage attendu du responsable :** rattacher `package.json` à une unité explicite, et dire si
+les alias `npm` doivent exister en doublon des scripts.
+
+---
+
+### INC-009 — La Definition of Done de `CRM-002` dépend d'une unité planifiée bien après elle
+
+**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md`.
+**Relevé le :** 2026-08-03, pendant `CRM-002`.
+
+La DoD de `CRM-002` exige que « `resetMe.sh` recrée la base **et le seed** ». Or le seed est
+l'objet de `CRM-005`, que `docs/MASTER_PLAN.md` §2.c place **après** `CRM-010` → `CRM-014`.
+`CRM-002` ne peut donc pas satisfaire sa propre DoD au moment où le plan lui demande d'être
+livrée, quelle que soit la qualité de son implémentation.
+
+**Comportement retenu :** `resetMe.sh` appelle `supabase/seed/apply-seed.sh` s'il est exécutable,
+et avertit explicitement en nommant `CRM-005` sinon. L'unité reste `[~]`, avec cette seule preuve
+manquante nommée noir sur blanc. Rien n'est simulé : aucun script de seed factice n'a été créé
+pour rendre la preuve verte, ce qui aurait été une fausse déclaration de complétion.
+
+**Ce qu'il ne faut pas en conclure :** que `CRM-002` est à reprendre. Elle est terminée pour tout
+ce qui dépend d'elle ; la preuve restante ne s'obtiendra qu'au moment où `CRM-005` existera.
+
+**Arbitrage attendu du responsable :** soit retirer la mention du seed de la DoD de `CRM-002` et
+la rattacher à `CRM-005` — qui vérifierait alors que `resetMe.sh` le rejoue —, soit avancer
+`CRM-005` avant `CRM-002` dans `docs/MASTER_PLAN.md`. Tant que le point est ouvert, l'unité reste
+`[~]` et la limite est nommée.
+
+---
+
 ## Clos
 
 *Aucune entrée close à ce jour.*

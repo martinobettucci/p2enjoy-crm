@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-002` — Scripts de lancement et contrat d'environnement.** *(unité `[~]` : une preuve
+  reste bloquée par une dépendance, voir les notes)*
+  - `.env.example` : gabarit documenté des **76** variables — rôle, format, caractère
+    obligatoire, valeur d'exemple non sensible. Aucun secret réel ; les valeurs sensibles portent
+    un marqueur `CHANGE_ME_*`.
+  - `runDev.sh` : amorce `.env` au premier lancement en **tirant chaque secret au hasard**, en
+    mode `600`, sans jamais écraser un fichier existant. `ANON_KEY` et `SERVICE_ROLE_KEY` sont
+    dérivées du `JWT_SECRET` produit, sous forme de jetons HS256 valides. Options `--dev`,
+    `--withLog <composant>`, `--bootstrap`, `--stop`.
+  - `runProd.sh` : démarre l'assemblage de production. N'amorce jamais de fichier
+    d'environnement et n'invente aucun secret ; refuse un profil de développement et refuse
+    `APPLY_MIGRATIONS=true`.
+  - `resetMe.sh` : détruit la base et les volumes locaux, redémarre à froid, rejoue les
+    migrations, puis le seed s'il existe. Refuse tout profil autre que `dev` et exige une
+    confirmation explicite.
+  - `scripts/lib/env.sh` : socle commun — lecture du fichier d'environnement, amorçage,
+    validation contre le gabarit, gardes de profil.
+  - `scripts/verify-scripts.sh` : harnais rejouable des preuves de l'unité (**38 contrôles**).
+  - Nouvelle variable `P2ENJOY_ENV_PROFILE` (`dev` ou `prod`), garde des trois scripts.
+  - `STACK_RLIMIT_NOFILE` s'ajuste à la limite dure de l'hôte lors de l'amorçage, et le signale.
 - **`CRM-001` — Pile Supabase self-hosted, à versions épinglées.**
   - `docker-compose.yml` : assemblage commun — PostgreSQL 17, GoTrue, PostgREST, Realtime,
     Storage, Supavisor, Kong, et un conteneur `migrations-runner` qui rejoue
@@ -53,13 +73,19 @@ d'exécuter le code attendu.
 
 ### Notes
 
-- La pile d'exécution est livrée et vérifiée, mais **aucun code applicatif ni aucune migration**
-  ne l'est encore : `supabase/migrations/` est vide, il n'y a ni webapp ni service `mail-sync`.
-  Les commandes `runDev.sh`, `runProd.sh` et `resetMe.sh` du `README.md` §5 restent un contrat à
-  honorer (`CRM-002`).
-- Limites de vérification nommées dans `docs/BACKLOG.md` (`CRM-001`) : valeur par défaut de
-  `STACK_RLIMIT_NOFILE` non éprouvée, certificat ACME non obtenu, production démarrée contre un
-  fournisseur S3 simulé.
+- La pile d'exécution et son outillage de lancement sont livrés et vérifiés, mais **aucun code
+  applicatif ni aucune migration** ne l'est encore : `supabase/migrations/` est vide, il n'y a ni
+  webapp ni service `mail-sync`.
+- `CRM-002` reste `[~]` : la branche « rejoue le seed » de `resetMe.sh` **n'a pas pu être
+  prouvée**, faute de seed — c'est l'objet de `CRM-005`, planifiée plus tard. Contradiction
+  d'ordonnancement consignée dans `docs/INCONSISTENCY_REPORT.md`, INC-009. Aucun seed factice
+  n'a été fabriqué pour rendre la preuve verte.
+- Limites de vérification nommées dans `docs/BACKLOG.md` (`CRM-001`, `CRM-002`) : valeur par
+  défaut de `STACK_RLIMIT_NOFILE` non éprouvée, certificat ACME non obtenu, production démarrée
+  contre un fournisseur S3 simulé.
+- Les commandes `npm` annoncées sans `package.json` — dont `npm run stop`, attribué à `CRM-002` —
+  sont consignées dans `docs/INCONSISTENCY_REPORT.md`, INC-008. L'arrêt propre passe par
+  `./runDev.sh --stop` et `./runProd.sh --stop`.
 
 ## [Publié]
 

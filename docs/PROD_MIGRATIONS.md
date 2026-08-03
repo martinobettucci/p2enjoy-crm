@@ -50,10 +50,16 @@ enregistrement MX ni ouverture du port 25 n'est nécessaire.
 ### 2.3 Variables d'environnement
 
 Toutes documentées dans `.env.example`. À produire spécifiquement pour la production, avec des
-valeurs distinctes de celles du développement :
+valeurs distinctes de celles du développement.
+
+**Ces valeurs sont produites par un humain.** `./runProd.sh` n'amorce aucun fichier
+d'environnement et n'invente aucun secret : il se contente de refuser de démarrer tant que le
+fichier n'est pas conforme. Partir de `.env.example`, remplacer chaque valeur `CHANGE_ME_*`, et
+positionner `P2ENJOY_ENV_PROFILE=prod`.
 
 | Variable | Rôle | Obligatoire |
 |---|---|---|
+| `P2ENJOY_ENV_PROFILE` | Doit valoir `prod`. Garde de `./runProd.sh`, qui refuse un fichier de développement, et de `./resetMe.sh`, qui refuse de détruire un environnement qui n'est pas local | Oui |
 | `POSTGRES_PASSWORD` | Mot de passe de la base | Oui |
 | `JWT_SECRET` | Signature des jetons | Oui |
 | `ANON_KEY`, `SERVICE_ROLE_KEY` | Clés d'API Supabase, dérivées de `JWT_SECRET` | Oui |
@@ -73,7 +79,9 @@ valeurs distinctes de celles du développement :
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime et le pooler ; défaut `100000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
 | `POOLER_TENANT_ID`, `POOLER_DEFAULT_POOL_SIZE`, `POOLER_MAX_CLIENT_CONN`, `POOLER_DB_POOL_SIZE`, `POOLER_PROXY_PORT_SESSION`, `POOLER_PROXY_PORT_TRANSACTION` | Paramétrage du pooler | Oui |
 
-La liste exhaustive, développement compris, figure dans `docs/JOURNAL.md`, décision 15.
+La liste exhaustive, développement compris, figure dans `.env.example`, où chaque variable est
+documentée avec son rôle, son format et son caractère obligatoire. `scripts/verify-scripts.sh`
+vérifie que ce gabarit couvre exactement les variables consommées par les fichiers Compose.
 
 Aucune clé de production n'est utilisée pour les tests. Aucun environnement local n'est relié en
 écriture à la base de production.

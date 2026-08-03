@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'environnement de développement
+# @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
+# @spec docs/DAT.md §13 (commandes de lancement) ; README.md §5 (commandes), §6 (développement)
+#
+# Démarre la pile de développement, en amorçant `.env` au premier lancement.
+#
+# Usage :
+#   ./runDev.sh                      amorce `.env` si absent, puis démarre la pile
+#   ./runDev.sh --dev                idem, sans la webapp conteneurisée
+#   ./runDev.sh --withLog <composant>  démarre puis suit les journaux d'un composant
+#   ./runDev.sh --bootstrap          amorce `.env` puis s'arrête, sans rien démarrer
+#   ./runDev.sh --stop               arrêt propre, volumes conservés
+#   ./runDev.sh --help
+#
+# Composants acceptés par `--withLog` : supabase, webapp, mail-sync, stalwart.
+# Ceux qui ne sont pas encore livrés le disent, en nommant leur unité de backlog.
+
+set -euo pipefail
+
+# shellcheck source=scripts/lib/env.sh
+source "$(dirname "${BASH_SOURCE[0]}")/scripts/lib/env.sh"
+
+MODE=start
+WITH_WEBAPP=true
+LOG_COMPONENT=""
+
+usage() { print_header_help "${BASH_SOURCE[0]}"; }
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--dev)       WITH_WEBAPP=false ;;
+		--withLog)   [ $# -ge 2 ] || die "--withLog attend un nom de composant."
+		             LOG_COMPONENT=$2; shift ;;
+		--bootstrap) MODE=bootstrap ;;
+		--stop)      MODE=stop ;;
+		--help|-h)   usage; exit 0 ;;
+		*)           die "option inconnue « $1 ». Voir ./runDev.sh --help." ;;
+	esac
+	shift
+done
+
+# --- Amorçage ----------------------------------------------------------------------------------
+
+if env_bootstrap_dev; then
+	:
+else
+	info "$(basename "$ENV_FILE") existant : conservé tel quel."
+fi
+
+env_validate
+env_require_profile dev
+
+if [ "$MODE" = bootstrap ]; then
+	say "Environnement prêt. Rien n'a été démarré (--bootstrap)."
+	exit 0
+fi
+
+require_docker
+
+# --- Arrêt -------------------------------------------------------------------------------------
+
+if [ "$MODE" = stop ]; then
+	say "Arrêt de la pile de développement"
+	compose_dev down
+	info "Volumes conservés. Pour tout détruire et repartir à neuf : ./resetMe.sh"
+	exit 0
+fi
+
+# --- Démarrage ---------------------------------------------------------------------------------
+
+say "Démarrage de la pile de développement"
+compose_dev up -d --wait
+
+KONG_HTTP_PORT=$(env_get "$ENV_FILE" KONG_HTTP_PORT)
+STUDIO_PORT=$(env_get "$ENV_FILE" STUDIO_PORT)
+INBUCKET_WEB_PORT=$(env_get "$ENV_FILE" INBUCKET_WEB_PORT)
+MINIO_CONSOLE_PORT=$(env_get "$ENV_FILE" MINIO_CONSOLE_PORT)
+POSTGRES_DIRECT_PORT=$(env_get "$ENV_FILE" POSTGRES_DIRECT_PORT)
+BIND=$(env_get "$ENV_FILE" DEV_BIND_ADDRESS)
+
+echo
+say "Services disponibles"
+info "API Supabase (Kong)   http://${BIND}:${KONG_HTTP_PORT}"
+info "Supabase Studio       http://${BIND}:${STUDIO_PORT}"
+info "Inbucket              http://${BIND}:${INBUCKET_WEB_PORT}"
+info "Console MinIO         http://${BIND}:${MINIO_CONSOLE_PORT}"
+info "PostgreSQL direct     ${BIND}:${POSTGRES_DIRECT_PORT}"
+
+echo
+say "Non encore livrés par le backlog"
+if [ "$WITH_WEBAPP" = true ]; then
+	info "webapp     : aucune image ni source à ce jour (unité CRM-007)."
+else
+	info "webapp     : écartée par --dev, et de toute façon pas encore livrée (unité CRM-007)."
+fi
+info "mail-sync  : unité CRM-051."
+info "Stalwart, Roundcube : unité CRM-050."
+
+echo
+info "Preuves de la pile : scripts/verify-stack.sh"
+info "Preuves des scripts : scripts/verify-scripts.sh"
+
+# --- Journaux ----------------------------------------------------------------------------------
+
+if [ -n "$LOG_COMPONENT" ]; then
+	echo
+	case "$LOG_COMPONENT" in
+		supabase)
+			say "Journaux de la pile Supabase (Ctrl-C pour rendre la main)"
+			compose_dev logs -f
+			;;
+		webapp)
+			die "composant « webapp » pas encore livré : voir l'unité CRM-007 de docs/BACKLOG.md."
+			;;
+		mail-sync)
+			die "composant « mail-sync » pas encore livré : voir l'unité CRM-051 de docs/BACKLOG.md."
+			;;
+		stalwart)
+			die "composant « stalwart » pas encore livré : voir l'unité CRM-050 de docs/BACKLOG.md."
+			;;
+		*)
+			die "composant « $LOG_COMPONENT » inconnu. Attendus : supabase, webapp, mail-sync, stalwart."
+			;;
+	esac
+fi

@@ -57,42 +57,99 @@ backend autorise (voir [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rl
 ## 4. Installation
 
 ```bash
-npm install
-cp .env.example .env          # puis renseigner les valeurs locales
-cp .env.dev.example .env.local
+./runDev.sh
 ```
 
-Aucun secret réel n'est versionné. `.env.example` documente chaque variable : rôle, format,
-caractère obligatoire, et valeur d'exemple non sensible.
+C'est tout. Au premier lancement, `runDev.sh` crée `.env` à partir de `.env.example` et **tire au
+hasard** chaque secret : mot de passe PostgreSQL, `JWT_SECRET`, clés MinIO, secrets de Realtime et
+du pooler. `ANON_KEY` et `SERVICE_ROLE_KEY` sont dérivées du `JWT_SECRET` produit, sous forme de
+jetons HS256 valides. **Aucune clé n'est reprise du dépôt** : deux postes n'ont jamais les mêmes.
+
+Le fichier est créé en mode `600` et n'est jamais versionné. Un `.env` existant n'est jamais
+écrasé.
+
+Amorçage manuel, si l'on préfère garder la main :
+
+```bash
+cp .env.example .env          # puis remplacer chaque valeur CHANGE_ME_*
+./runDev.sh
+```
+
+`.env.example` documente chaque variable : rôle, format, caractère obligatoire, et valeur
+d'exemple non sensible. Deux conventions y ont force de contrat, et les scripts les appliquent :
+
+- une valeur `CHANGE_ME_*` **doit** être remplacée — `runDev.sh` la remplace, `runProd.sh` refuse
+  de démarrer tant qu'il en reste une ;
+- une valeur **vide** signale une variable facultative ; toute autre variable doit être
+  renseignée.
+
+`npm install` n'a pas encore d'objet : le dépôt ne contient aucun `package.json` avant l'unité
+qui introduit la webapp. Voir [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md),
+INC-008.
 
 ## 5. Commandes principales
 
 | Commande | Effet | État |
 |---|---|---|
-| `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait` | Démarre la pile de développement | **disponible** |
-| `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` | Démarre la pile de production | **disponible** |
-| `docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v` | Arrête la pile et détruit ses volumes | **disponible** |
+| `./runDev.sh` | Amorce `.env` si besoin, puis démarre la pile de développement | **disponible** |
+| `./runDev.sh --dev` | Idem sans la webapp conteneurisée (utile si Vite tourne dans l'IDE) | **disponible** |
+| `./runDev.sh --withLog <composant>` | Démarre puis suit les journaux d'un composant (`supabase`, `webapp`, `mail-sync`, `stalwart`) | **disponible** |
+| `./runDev.sh --bootstrap` | Amorce `.env` et s'arrête, sans rien démarrer | **disponible** |
+| `./runDev.sh --stop` | Arrêt propre de la pile de développement, volumes conservés | **disponible** |
+| `./runProd.sh` | Démarre l'assemblage de production (sans outillage de développement, TLS via Caddy) | **disponible** |
+| `./runProd.sh --stop` | Arrêt propre de l'assemblage de production | **disponible** |
+| `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
-| `./runDev.sh` | Démarre la pile de développement complète (Supabase, mail-sync, Stalwart, Roundcube, Inbucket, MinIO, webapp) | à venir (`CRM-002`) |
-| `./runDev.sh --dev` | Idem sans la webapp conteneurisée (utile si Vite tourne dans l'IDE) | à venir (`CRM-002`) |
-| `./runDev.sh --withLog <composant>` | Suit les journaux d'un composant (`webapp`, `mail-sync`, `supabase`, `stalwart`) | à venir (`CRM-002`) |
-| `./runProd.sh` | Démarre la pile de production (sans outillage de développement, TLS via Caddy) | à venir (`CRM-002`) |
-| `./resetMe.sh` | Détruit les volumes locaux, rejoue les migrations et le seed | à venir (`CRM-002`) |
+| `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-005`) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma | à venir (`CRM-006`) |
 | `npm run build` | Build de production de la webapp | à venir (`CRM-007`) |
-| `npm run stop` | Arrêt propre de tous les services | à venir (`CRM-002`) |
 
-Tant que `CRM-002` n'est pas livré, la pile se lance directement par `docker compose` et exige un
-fichier `.env` à la racine. Aucun gabarit n'est encore versionné : la liste exhaustive des
-variables attendues figure dans [`docs/JOURNAL.md`](docs/JOURNAL.md), décision 15.
+Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
+celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
+fichier jetable sans toucher à la configuration du poste.
+
+L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`. Le `npm run stop` annoncé
+dans les versions antérieures de ce document n'a pas d'objet tant qu'aucun `package.json`
+n'existe : voir [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
+
+Les commandes `docker compose` sous-jacentes restent utilisables directement :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+```
+
+Elles n'appliquent en revanche **aucune** des gardes des scripts : ni validation du fichier
+d'environnement contre `.env.example`, ni refus de démarrer la production avec des secrets de
+développement, ni protection contre l'effacement d'un environnement qui n'est pas local.
+
+### Gardes des scripts
+
+| Garde | Où | Effet |
+|---|---|---|
+| Fichier d'environnement complet | les trois scripts | Refus si une variable de `.env.example` manque, est vide alors qu'elle est obligatoire, ou vaut encore `CHANGE_ME_*` |
+| `P2ENJOY_ENV_PROFILE=dev` | `runDev.sh`, `resetMe.sh` | Refus d'agir sur un fichier décrivant un autre environnement |
+| `P2ENJOY_ENV_PROFILE=prod` | `runProd.sh` | Refus de démarrer la production avec les secrets du développement |
+| `APPLY_MIGRATIONS=false` | `runProd.sh` | Refus de démarrer si la production applique les migrations toute seule (`docs/PROD_MIGRATIONS.md`) |
+| Confirmation explicite | `resetMe.sh` | `oui` à la demande, ou `--yes` hors terminal interactif |
+| Aucun amorçage en production | `runProd.sh` | Le script n'invente jamais de secret : les valeurs de production sont produites par un humain |
 
 ## 6. Lancement en développement
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
+./runDev.sh
 scripts/verify-stack.sh
+scripts/verify-scripts.sh
+```
+
+Le premier lancement amorce `.env` (voir §4) ; les suivants le conservent tel quel. Repartir d'une
+base vierge :
+
+```bash
+./resetMe.sh          # détruit la base et les volumes, redémarre à froid, rejoue les migrations
 ```
 
 Services exposés. Les ports ne sont publiés que sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) :
@@ -135,6 +192,10 @@ npm run e2e:report         # Rapport HTML
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
+Ces commandes arrivent avec le harnais de tests (`CRM-008`). Les preuves disponibles aujourd'hui
+sont les deux harnais rejouables `scripts/verify-stack.sh` (pile) et `scripts/verify-scripts.sh`
+(scripts et contrat d'environnement).
+
 ## 8. Build
 
 ```bash
@@ -144,18 +205,24 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 
 ## 9. Variables d'environnement
 
-Toutes les variables sont documentées dans `.env.example` (rôle, format, obligatoire ou
-facultatif, exemple non sensible). Familles principales :
+Les **76** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
+`scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
+trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
+preuves.
 
 | Famille | Exemples | Remarque |
 |---|---|---|
+| Profil | `P2ENJOY_ENV_PROFILE` | Obligatoire. `dev` ou `prod` ; c'est la garde des scripts |
 | Base de données | `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` | Obligatoires |
-| Jetons Supabase | `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` | Obligatoires, jamais versionnés |
+| Jetons Supabase | `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` | Obligatoires, jamais versionnés. Les deux clés sont **dérivées** de `JWT_SECRET` |
 | API | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `KONG_HTTP_PORT` | Obligatoires |
-| Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires |
-| Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | Obligatoires |
-| Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY` | Obligatoires |
+| Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
+| Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | Obligatoires **à partir de `CRM-051`** : aucun service ne les consomme aujourd'hui |
+| Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
+| Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production |
+| Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
 
 Les identifiants IMAP/SMTP **des utilisateurs** ne sont jamais des variables d'environnement :
 ils sont saisis dans l'application et chiffrés en base (Supabase Vault).
@@ -166,13 +233,19 @@ Livré à ce jour :
 
 ```
 .
+├── .env.example                Gabarit documenté de l'environnement, contrat de référence
+├── runDev.sh                   Lancement du développement, amorçage de `.env`
+├── runProd.sh                  Lancement de la production, gardes de profil et de migrations
+├── resetMe.sh                  Réinitialisation destructive de l'environnement local
 ├── docker-compose.yml          Assemblage commun des services
 ├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
 ├── caddy/Caddyfile             Terminaison TLS et service des fichiers statiques
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
-│   └── verify-stack.sh         Preuves rejouables de la pile
+│   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
+│   ├── verify-stack.sh         Preuves rejouables de la pile
+│   └── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
     └── migrations/             SQL versionné (vide : CRM-003)
@@ -181,11 +254,10 @@ Livré à ce jour :
 Prévu par le backlog, pas encore livré :
 
 ```
-├── runDev.sh · runProd.sh · resetMe.sh    CRM-002
-├── supabase/seed/                          CRM-005
-├── webapp/                                 CRM-007
-├── e2e/                                    CRM-008
-└── mail-sync/                              CRM-051
+├── supabase/seed/              CRM-005
+├── webapp/                     CRM-007
+├── e2e/                        CRM-008
+└── mail-sync/                  CRM-051
 ```
 
 Le répertoire `supabase/functions/` (edge functions Deno) mentionné dans les versions antérieures
@@ -219,8 +291,11 @@ Documentation de référence :
 - **Descripteurs de fichiers.** Realtime et le pooler réclament `STACK_RLIMIT_NOFILE`
   descripteurs (défaut `100000`). Sur un hôte dont la limite dure est inférieure — conteneur sans
   `CAP_SYS_RESOURCE`, par exemple — ces deux services redémarrent en boucle tant que la variable
-  n'est pas abaissée. La valeur par défaut n'a **pas** pu être éprouvée dans l'environnement de
-  vérification, plafonné à 4096.
+  n'est pas abaissée. `./runDev.sh` détecte le cas lors de l'amorçage : il inscrit la limite dure
+  réelle de l'hôte dans le `.env` produit et le signale. Un `.env` déjà existant n'est en revanche
+  jamais corrigé, et la production ne bénéficie d'aucun ajustement automatique : le prérequis
+  reste à vérifier avant le premier démarrage (`docs/PROD_MIGRATIONS.md` §4). La valeur par défaut
+  n'a **pas** pu être éprouvée dans l'environnement de vérification, plafonné à 4096.
 - **TLS de production non éprouvé** : la pile de production a été vérifiée avec
   `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy. L'émission d'un certificat ACME exige
   un domaine public et reste à confirmer au premier déploiement réel.

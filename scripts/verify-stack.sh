@@ -21,8 +21,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [ ! -f .env ]; then
-	echo "ERREUR : fichier .env absent. Son gabarit documenté est livré par l'unité CRM-002 ;" >&2
-	echo "        la liste des variables attendues figure dans docs/JOURNAL.md (décision 12)." >&2
+	echo "ERREUR : fichier .env absent. Lancez ./runDev.sh, qui l'amorce depuis .env.example," >&2
+	echo "        où chaque variable est documentée." >&2
 	exit 1
 fi
 
