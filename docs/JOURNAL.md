@@ -193,3 +193,56 @@ candidates en attente d'arbitrage, sans être planifiées.
 Consignés dans `docs/INCONSISTENCY_REPORT.md` : disponibilité de `supabase_vault` et `pg_cron`,
 empreinte de repli pour les messages sans `Message-ID`, transition « Réalisation → Perdu » non
 déclarée dans le workflow par défaut, politique face aux expéditeurs inconnus.
+
+---
+
+## 2026-08-03 — Worker cloud d'avancement du backlog
+
+### Décision
+
+Sur instruction du responsable, une **routine cloud** avance le backlog de façon autonome : à
+chaque passage, elle prend une unité de `docs/BACKLOG.md` dans l'ordre de `docs/MASTER_PLAN.md`,
+la mène à son terme, met à jour la documentation associée, puis committe et pousse.
+
+| Paramètre | Valeur |
+|---|---|
+| Identifiant | `trig_01DaJKPwKV32xPQ4vi5R8RS8` |
+| Cadence | `55 * * * *` — toutes les heures |
+| Environnement | Unrestricted |
+| Modèle | Opus 5 |
+| Dépôt | `github.com/martinobettucci/p2enjoy-crm` |
+
+### Écart assumé à la convention générale
+
+`CLAUDE.md` §1 prescrit de ne pas déléguer à des sous-agents. Le responsable a explicitement
+demandé la mise en place de ce worker : l'instruction explicite prime (`CLAUDE.md` §26,
+priorité 2 sur priorité 8). L'écart est borné par le prompt de la routine, qui impose les mêmes
+règles que celles suivies ici — documentation avant code, une seule unité par passage, preuves
+obligatoires, interdiction de déclarer terminé ce qui n'est que codé, attribution des commits au
+seul responsable.
+
+### Limites constatées de l'API des routines
+
+Trois écarts entre la demande et ce que l'API accepte réellement :
+
+1. **Cadence de 30 minutes impossible.** L'intervalle minimum est d'une heure ; `*/30 * * * *`
+   est rejeté. Cadence horaire retenue en accord avec le responsable.
+2. **Minute du cron non contrôlable.** Le serveur l'aligne sur l'instant de création ou de mise à
+   jour : deux tentatives de fixer `0 * * * *` ont produit `54 * * * *` puis `55 * * * *`. Sans
+   conséquence fonctionnelle, mais l'heure de passage n'est pas ronde.
+3. **Niveau d'effort non exposé.** Le champ `effort` demandé au niveau `max` est silencieusement
+   ignoré : la réponse de l'API ne le conserve pas. Compensation partielle par une consigne de
+   raisonnement approfondi placée en tête du prompt — ce n'est **pas** équivalent à un réglage
+   d'effort, et le responsable en a été informé.
+
+### Conséquence à surveiller
+
+Les passages sont horaires et travaillent tous sur `main`. Le prompt impose une resynchronisation
+en début de passage et une résolution des conflits sur place, sans création de branche. Si deux
+passages se chevauchent sur une unité longue, le second doit terminer l'unité en cours plutôt que
+d'en ouvrir une nouvelle. Ce comportement sera vérifié sur les premiers passages réels.
+
+L'autre point de vigilance est la Definition of Done : une part des preuves exige Docker, la pile
+Supabase et un navigateur. Si l'environnement cloud ne les fournit pas, les unités doivent rester
+en `[~]` avec la limite nommée explicitement. Une dérive vers des `[x]` non prouvés serait le
+principal risque de ce dispositif.
