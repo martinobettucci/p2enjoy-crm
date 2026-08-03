@@ -101,6 +101,8 @@ INC-008.
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
+| `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
+| `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-005`) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma | à venir (`CRM-006`) |
@@ -199,7 +201,16 @@ sont trois harnais rejouables, à exécuter sur une pile de développement déj�
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
+scripts/verify-vault.sh        # chiffrement des secrets de messagerie             (CRM-004)
 ```
+
+`scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
+cours d'exécution, et crée ses propres conteneur et volumes jetables, détruits en sortant. Il
+mesure l'image PostgreSQL **réellement épinglée** par `docker-compose.yml` — extensions
+disponibles, chiffrement et déchiffrement effectifs, refus d'`anon` et d'`authenticated` sur le
+schéma `vault` — puis éprouve le cycle de vie de la clé racine : conservée, le secret survit à un
+redémarrage ; perdue, il devient définitivement illisible. C'est ce dernier point qui fonde la
+contrainte de sauvegarde de `docs/DAT.md` §10.
 
 `scripts/verify-migrations.sh` exécute la suite pgTAP de `supabase/tests/`, réapplique la
 migration pour prouver son idempotence, crée un compte par l'**API d'administration GoTrue** puis
@@ -257,7 +268,8 @@ Livré à ce jour :
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
 │   ├── verify-stack.sh         Preuves rejouables de la pile
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
-│   └── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
+│   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
+│   └── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
     ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`

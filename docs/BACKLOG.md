@@ -198,12 +198,65 @@ n'existe pas encore, c'est l'objet de `CRM-005`.
   `docs/SCHEMA.md` mais conformément à son §1 : INC-011, **en attente d'arbitrage avant
   `CRM-012`**.
 
-### CRM-004 — Décision chiffrement des secrets `[ ]`
+### CRM-004 — Décision chiffrement des secrets `[x]`
 **Bloquante pour `CRM-052` et `CRM-053`.** Vérifier la présence de `supabase_vault` et de
 `pg_cron` dans l'image PostgreSQL retenue. Retenir Vault ou le repli `pgcrypto`.
 **DoD** : vérification exécutée et **sortie de commande consignée** dans `docs/JOURNAL.md` ;
 décision inscrite dans `docs/DAT.md` §8 et `docs/SCHEMA.md` ; entrée retirée de
 `docs/INCONSISTENCY_REPORT.md`.
+
+- [x] Vérification exécutée sur l'image **réellement épinglée** par `docker-compose.yml`,
+      `supabase/postgres:17.6.1.136`, et non sur une image supposée : `supabase_vault` **0.3.1**
+      présente, **déjà installée** et **préchargée** ; `pg_cron` **1.6.4** disponible, préchargé,
+      installable, et ordonnançant réellement une tâche. `pgcrypto` 1.3, `pg_net` 0.20.3 et
+      `pgtap` 1.3.3 relevés au passage.
+- [x] **Sorties de commande consignées** dans `docs/JOURNAL.md`, section `CRM-004` : version du
+      serveur, `pg_available_extensions`, `shared_preload_libraries`, création et déchiffrement
+      d'un secret, refus par rôle, et script de dérivation de la clé racine.
+- [x] **Décision 23 — Vault retenu, repli `pgcrypto` abandonné.** Inscrite dans `docs/DAT.md` §8,
+      §12 et §15, `docs/SCHEMA.md` §11, `docs/SPEC-mail-subsystem.md` §2.3.
+- [x] **Chiffrement prouvé effectif, pas supposé** : le clair n'est pas dans `vault.secrets` — un
+      chiffré base64 avec nonce y figure —, la vue le restitue à l'identique, et
+      `vault.update_secret` remplace réellement la valeur.
+- [x] **Cloisonnement mesuré hors interface, avec les rôles réels** : `anon` et `authenticated`
+      refusés (`permission denied for schema vault`) sur `vault.secrets`,
+      `vault.decrypted_secrets` **et** `vault.create_secret` ; `service_role` lit, déchiffre et
+      crée. Protection **plus forte que prévu** : le refus porte sur le schéma entier, pas sur une
+      colonne. Le `REVOKE` de `secret_id` reste exigé — il vise des tables de `public`, exposées
+      par PostgREST.
+- [x] **Décision 24 — la clé racine est une donnée de sauvegarde à part entière.** Découverte en
+      vérifiant : `/etc/postgresql-custom/pgsodium_root.key` vit dans le volume `db-config`,
+      **hors de `PGDATA`**. Mesuré et non déduit : PGDATA conservé et volume de configuration
+      neuf, le chiffré est toujours en base et le déchiffrement échoue (`invalid ciphertext`) ;
+      la clé d'origine restituée, le secret redevient lisible. Répercuté dans `docs/DAT.md` §10 et
+      `docs/PROD_MIGRATIONS.md` §2.1, §5, §6, §7.
+- [x] **INC-001 retirée des ouverts** et déplacée en section « Clos » de
+      `docs/INCONSISTENCY_REPORT.md`, avec sa mesure et sa décision.
+- [x] Harnais de preuves rejouable `scripts/verify-vault.sh` : **26 contrôles, aucune anomalie**.
+      Autonome — il ne dépend ni de `.env` ni de la pile en cours d'exécution — et il détruit ses
+      conteneur et volumes jetables en sortant, y compris sur interruption.
+- [x] Harnais **non complaisant**, éprouvé de deux façons : il relâche lui-même le cloisonnement
+      et exige que le contrôle échoue, puis restitue la clé d'origine et exige que le secret
+      redevienne lisible ; exécuté contre une image `postgres:17-alpine` dépourvue de Vault, il
+      rend **25 anomalies sur 26** et sort en `1`.
+- [x] `README.md` §5, §7 et §12, `CHANGELOG.md` mis à jour dans le même changement.
+
+*DoD adaptée, écarts explicites.* **Aucun test unitaire, aucun test E2E, aucune vérification
+visuelle, aucune mise à jour du seed** : cette unité est une décision d'architecture. Elle ne
+livre ni logique métier, ni migration, ni écran — le premier arrive avec `CRM-007`. Ses preuves
+sont d'intégration par nature et vivent dans `scripts/verify-vault.sh`. C'est la DoD que l'unité
+elle-même énonce : vérification exécutée, sortie consignée, décision inscrite, entrée retirée.
+
+*Limites nommées, non masquées.*
+
+- **Aucun secret de messagerie n'est encore stocké** : `mail_accounts` et
+  `mail_outbound_identities` n'existent pas. Ce qui est prouvé, c'est que le mécanisme fonctionne
+  dans l'image retenue — pas son usage par le produit, qui relève de `CRM-052` et `CRM-053`.
+- **La restauration d'une sauvegarde n'est pas éprouvée.** La contrainte portant sur la clé
+  racine est acquise et documentée ; la procédure qui la respecte reste à livrer.
+- **Le motif principal de la décision 8 est démenti** : `pg_cron` est disponible. Le résultat de
+  la décision est conservé, son énoncé corrigé, et la question de rouvrir l'arbitrage est
+  consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-012, en attente d'arbitrage**.
 
 ### CRM-010 — Fonctions d'autorisation `[ ]`
 `app.is_workspace_member`, `app.is_workspace_admin`, `app.can_read_track`,

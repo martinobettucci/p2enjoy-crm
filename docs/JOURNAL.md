@@ -707,3 +707,190 @@ Deux défauts du harnais ont été corrigés au passage, tous deux découverts p
   de `docs/SPEC-permissions-rls.md` §7 restent à produire ; seule la n° 11 est acquise.
 - **L'intégrité référentielle des droits fins n'est pas garantie** entre cette unité et
   `CRM-020` / `CRM-021` (INC-010).
+
+---
+
+## 2026-08-03 — `CRM-004` : chiffrement des secrets de messagerie, hypothèse levée
+
+### Problème
+
+`docs/DAT.md` §8, `docs/SCHEMA.md` §11 et `docs/SPEC-mail-subsystem.md` §2 reposaient tous sur la
+même hypothèse **non vérifiée** : la présence de l'extension `supabase_vault` dans l'image
+PostgreSQL retenue. La décision 7 du responsable — secrets IMAP/SMTP chiffrés en Vault — n'était
+donc pas exécutable en l'état, et `docs/INCONSISTENCY_REPORT.md` INC-001 la marquait bloquante
+pour `CRM-052` et `CRM-053`. La décision 8 reposait sur une hypothèse jumelle au sujet de
+`pg_cron`.
+
+`CRM-004` n'avait qu'un objet : **mesurer**, puis trancher.
+
+### Observations — sorties de commande
+
+L'image mesurée est celle réellement épinglée par `docker-compose.yml`, `supabase/postgres:17.6.1.136`.
+
+```
+$ docker exec crm004-probe psql -U postgres -c "select version();"
+ PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit
+
+$ docker exec crm004-probe psql -U postgres -Ax -c "select name, default_version, installed_version
+    from pg_available_extensions where name in ('supabase_vault','pg_cron','pgcrypto','pgtap','pg_net');"
+name|pg_cron         default_version|1.6.4    installed_version|
+name|pg_net          default_version|0.20.3   installed_version|
+name|pgcrypto        default_version|1.3      installed_version|1.3
+name|pgtap           default_version|1.3.3    installed_version|
+name|supabase_vault  default_version|0.3.1    installed_version|0.3.1
+
+$ docker exec crm004-probe psql -U postgres -c "show shared_preload_libraries;"
+ pg_stat_statements, pgaudit, plpgsql, plpgsql_check, pg_cron, pg_net, pgsodium, auto_explain,
+ pg_tle, plan_filter, supabase_vault
+```
+
+`supabase_vault` **0.3.1 est présente, déjà installée et préchargée**. `pg_cron` **1.6.4 est
+disponible et préchargé** ; il s'installe et ordonnance réellement :
+
+```
+$ psql -c "create extension if not exists pg_cron;"
+$ psql -c "select cron.schedule('crm004-sonde','5 seconds','select 1');"  ->  1
+$ psql -c "select jobid, schedule, command, active from cron.job;"
+     1 | 5 seconds | select 1 | t
+```
+
+Vault chiffre réellement — le clair n'est pas dans la table, et la vue le restitue :
+
+```
+$ psql -Ax -c "select vault.create_secret('mot-de-passe-imap-secret-2026','crm004-preuve');"
+id|f57b4c38-ba40-49ce-b4c5-a4849945ec2f
+
+$ psql -Ax -c "select secret, nonce is not null from vault.secrets where name='crm004-preuve';"
+secret|qmwsd/yyVJXCvB3hliO5UUWeo8V/QUQ2NBruZaL1qghLKFyZD/7kCoBmFogQMqTnKoiDwFwKtAxJeLclqA==
+a_nonce|t
+
+$ psql -Ax -c "select decrypted_secret from vault.decrypted_secrets where name='crm004-preuve';"
+decrypted_secret|mot-de-passe-imap-secret-2026
+```
+
+Le cloisonnement voulu par la décision 7 est **déjà appliqué par l'image**, au niveau du schéma —
+donc plus fort qu'un simple `REVOKE` de colonne :
+
+```
+$ psql -c "set role anon;          select count(*) from vault.decrypted_secrets;"
+ERROR:  permission denied for schema vault
+$ psql -c "set role authenticated; select count(*) from vault.decrypted_secrets;"
+ERROR:  permission denied for schema vault
+$ psql -c "set role service_role;  select count(*) from vault.decrypted_secrets;"
+ 2
+```
+
+### Décision 23 — Vault est retenu, le repli `pgcrypto` est abandonné
+
+*Constat.* `supabase_vault` 0.3.1 est présente dans l'image épinglée, déjà installée, préchargée,
+et fonctionnelle de bout en bout. Le cloisonnement par rôle est effectif sans travail
+supplémentaire.
+
+*Décision.* **Vault est retenu.** Le repli `pgcrypto` décrit dans `docs/DAT.md` §8 et
+`docs/SCHEMA.md` §11 est abandonné : le maintenir serait entretenir un second chemin de
+chiffrement que rien n'obligerait à exercer, donc jamais éprouvé le jour où il servirait.
+`pgcrypto` reste installé pour `gen_random_uuid()`, ce qui est son autre usage dans le projet.
+
+*Conséquence.* `CRM-052` et `CRM-053` sont débloquées. Aucune variable d'environnement de clé de
+chiffrement applicative n'est à prévoir : la clé est gérée par l'extension.
+
+*Conséquence de conception, plus forte que prévu.* La décision 7 protégeait `secret_id` par un
+`REVOKE SELECT` pour `authenticated`. La mesure montre que le schéma `vault` est **intégralement**
+hors de portée d'`anon` et d'`authenticated`. Le `REVOKE` sur `secret_id` reste néanmoins exigé :
+il porte sur `mail_accounts` et `mail_outbound_identities`, tables du schéma `public` que
+PostgREST expose, et empêche un membre du workspace de lire la **référence** du secret d'un
+collègue. Les deux mesures se cumulent, elles ne se remplacent pas.
+
+### Décision 24 — La clé racine de Vault est une donnée de sauvegarde à part entière
+
+*Problème découvert en vérifiant, et non anticipé.* La clé racine de Vault ne vit **pas** dans
+`PGDATA` :
+
+```
+$ psql -c "select name, setting from pg_settings where name like '%vault%' or name like '%sodium%';"
+ pgsodium.getkey_script | /usr/lib/postgresql/bin/pgsodium_getkey.sh
+ vault.getkey_script    | /usr/lib/postgresql/bin/pgsodium_getkey.sh
+
+$ cat /usr/lib/postgresql/bin/pgsodium_getkey.sh
+KEY_FILE=/etc/postgresql-custom/pgsodium_root.key
+if [[ ! -f "${KEY_FILE}" ]]; then
+    head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n' > "${KEY_FILE}"
+fi
+cat $KEY_FILE
+```
+
+`/etc/postgresql-custom` est monté depuis le volume nommé `db-config` (`docker-compose.yml`),
+distinct du volume de données. Une sauvegarde de la seule base ne restitue donc **aucun** secret.
+Le fait a été mesuré, pas déduit : PGDATA conservé, volume de configuration remplacé par un
+volume neuf, le chiffré est toujours en base et le déchiffrement échoue.
+
+```
+$ psql -Atc "select left(secret,20) from vault.secrets where name='cle-test';"
+YD+4JshlhDol0VGifcSE
+$ psql -Atc "select decrypted_secret from vault.decrypted_secrets where name='cle-test';"
+ERROR:  pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext
+```
+
+*Décision.* Le volume `db-config`, et plus précisément `/etc/postgresql-custom/pgsodium_root.key`,
+est inscrit comme **élément obligatoire du périmètre de sauvegarde** dans `docs/DAT.md` §10 et
+dans `docs/PROD_MIGRATIONS.md`. Une restauration qui l'omettrait rendrait tous les comptes de
+messagerie inutilisables et **irrécupérables** : il faudrait ressaisir chaque mot de passe.
+
+*Conséquence pour le développement.* Aucune : `resetMe.sh` fait `compose down -v`, qui détruit
+`db-config` en même temps que la base. Clé et secrets disparaissent ensemble, ce qui est cohérent.
+
+*Limite connue.* La procédure de restauration n'est pas testée — c'est l'objet de l'unité de
+sauvegarde dédiée (`CRM-P11`, en attente d'arbitrage). Ce qui est acquis ici, c'est la
+**contrainte** ; sa mise en œuvre reste à livrer.
+
+### Ce que la mesure invalide : le motif principal de la décision 8
+
+La décision 8 écartait `pg_cron` pour deux motifs. Le premier — « sa présence dans l'image retenue
+n'est pas vérifiée » — est **faux depuis cette mesure** : `pg_cron` 1.6.4 est là, préchargé, et
+ordonnance réellement. Le second motif tient toujours : placer l'ordonnancement dans `mail-sync`
+le rend testable par pytest sans manipuler la base, et garde l'orchestration métier dans le
+service qui la porte.
+
+Le **résultat** de la décision 8 est donc conservé — l'ordonnanceur reste applicatif — mais son
+énoncé est corrigé dans `docs/DAT.md` §3.3 et §12 pour ne plus invoquer un motif démenti par la
+mesure. Rouvrir le choix lui-même dépasse le périmètre de `CRM-004` : le point est consigné en
+`docs/INCONSISTENCY_REPORT.md`, INC-012, **en attente d'arbitrage du responsable**.
+
+### Vérifications réalisées
+
+`scripts/verify-vault.sh` rejoue l'ensemble : **26 vérifications, aucune anomalie**. Le harnais est
+autonome — il ne dépend ni de `.env` ni de la pile en cours d'exécution —, crée ses propres
+conteneur et volumes jetables et les détruit en sortant, y compris sur interruption.
+
+Il est **non complaisant**, ce qui a été éprouvé de trois manières :
+
+1. *Contre-épreuve interne.* Le harnais relâche lui-même le cloisonnement
+   (`grant usage on schema vault to authenticated`) et exige que le contrôle du §3 **échoue** ;
+   puis il restitue la clé racine d'origine et exige que le secret **redevienne** lisible — sans
+   quoi l'échec de déchiffrement du §4 aurait pu tenir à une autre cause.
+2. *Contre-épreuve externe.* Exécuté contre une image `postgres:17-alpine` dépourvue de Vault, il
+   rend **25 anomalies sur 26** et sort en `1`. Le seul contrôle encore vert est la contre-épreuve
+   interne elle-même, qui constate à juste titre que le contrôle de cloisonnement échoue.
+3. *Défaut corrigé pendant l'écriture.* La première version concluait au chiffrement dès lors que
+   le clair n'apparaissait pas dans la sortie — ce qu'une requête **en erreur** satisfait aussi.
+   La contre-épreuve externe l'a révélé par un « OK » injustifié. Le contrôle exige désormais une
+   valeur réellement lue, en base64, distincte du clair. Le contrôle « aucune copie de la clé dans
+   PGDATA » souffrait du même vice et est désormais subordonné à l'existence d'une clé.
+
+Un second défaut, d'exécution celui-là, a été corrigé : `psql -c` retourne un code non nul sur une
+erreur, et `set -euo pipefail` interrompait le harnais au premier refus **attendu**. Les refus sont
+la matière même des preuves : les fonctions d'accès neutralisent désormais le code de retour, sans
+jamais masquer le message, qui reste ce que chaque contrôle examine.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun test E2E dédié, ni vérification visuelle.** Cette unité est une décision d'architecture :
+  elle ne livre aucun parcours utilisateur, aucun écran, aucune migration. Ses preuves sont
+  d'intégration, et vivent dans `scripts/verify-vault.sh`.
+- **Aucune mise à jour du seed** : rien de cette unité n'y atteint. Le seed est l'objet de
+  `CRM-005`.
+- **Aucun secret de messagerie n'est encore stocké** : les tables `mail_accounts` et
+  `mail_outbound_identities` n'existent pas. Ce qui est prouvé, c'est que le mécanisme retenu
+  fonctionne dans l'image retenue — pas son usage par le produit, qui relève de `CRM-052` et
+  `CRM-053`.
+- **La restauration d'une sauvegarde n'est pas éprouvée** (décision 24, limite connue).

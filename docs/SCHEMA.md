@@ -512,8 +512,13 @@ seul rôle qui doit les appeler.
 
 Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 
-1. **Disponibilité de `supabase_vault`** dans l'image PostgreSQL retenue. Repli : `pgcrypto`
-   avec clé d'environnement dédiée.
+1. ~~**Disponibilité de `supabase_vault`** dans l'image PostgreSQL retenue. Repli : `pgcrypto`
+   avec clé d'environnement dédiée.~~ **Tranché par `CRM-004`** : `supabase_vault` 0.3.1 est
+   présente, installée et préchargée dans `supabase/postgres:17.6.1.136`. Vault est retenu, le
+   repli `pgcrypto` est abandonné (`docs/JOURNAL.md`, décision 23 ; `docs/DAT.md` §8). Les
+   colonnes `secret_id` ci-dessous portent donc bien une référence Vault. Contrainte
+   d'exploitation associée : la clé racine vit hors de `PGDATA` et doit être sauvegardée à part
+   (décision 24, `docs/DAT.md` §10).
 2. **Messages sans `Message-ID`.** Certains expéditeurs non conformes n'en fournissent pas. Une
    empreinte de repli (expéditeur, date, sujet, taille) devra être définie dans la spécification
    du sous-système mail avant implémentation.

@@ -12,25 +12,6 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
-### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée
-
-**Nature :** hypothèse non vérifiée, bloquante.
-**Relevé le :** 2026-08-03.
-
-L'architecture prévoit de chiffrer les mots de passe IMAP/SMTP avec Supabase Vault. La présence
-de l'extension `supabase_vault` dans l'image PostgreSQL retenue n'a **pas** été constatée : seule
-la présence de `pg_net` l'a été, dans les scripts d'initialisation de la pile voisine. Il en va
-de même pour `pg_cron`.
-
-**Comportement en attendant :** aucun code de messagerie n'est écrit. Repli documenté si Vault
-est absent : chiffrement `pgcrypto` avec une clé dédiée fournie par l'environnement, et fonctions
-d'accès réservées à `service_role`. Pour `pg_cron`, le contournement est déjà acté : l'ordonnancement
-vit dans `mail-sync` (voir `docs/JOURNAL.md`, décision 8).
-
-**Résolution attendue :** unité `CRM-004`, avec la sortie de commande consignée.
-
----
-
 ### INC-002 — Messages entrants sans `Message-ID`
 
 **Nature :** cas limite non tranché.
@@ -271,6 +252,50 @@ résolution des droits fins et fixera de fait la forme des requêtes.
 
 ---
 
+### INC-012 — Le motif principal de la décision 8 est démenti par la mesure
+
+**Nature :** motif de décision invalidé par un fait vérifié.
+**Relevé le :** 2026-08-03, en clôturant `CRM-004`.
+
+La décision 8 (`docs/JOURNAL.md`) place l'ordonnancement des relances, séquences, digests et
+purges dans `mail-sync` plutôt que dans `pg_cron`. Elle invoquait deux motifs :
+
+1. « sa présence dans l'image retenue n'est pas vérifiée » ;
+2. l'ordonnancement applicatif est testable par pytest sans manipuler la base.
+
+La mesure de `CRM-004` **dément le premier** : `pg_cron` 1.6.4 est présent dans
+`supabase/postgres:17.6.1.136`, préchargé par le serveur, installable, et il ordonnance
+réellement une tâche. Le second motif tient toujours.
+
+**Comportement en attendant :** le **résultat** de la décision 8 est conservé — l'ordonnanceur
+reste applicatif — parce que le motif de testabilité suffit à le justifier seul. Seul l'**énoncé**
+a été corrigé, dans `docs/DAT.md` §3.3 et §12, pour ne plus invoquer un fait démenti. Aucun code
+d'ordonnancement n'existe encore : rien n'est donc à défaire à ce stade.
+
+**Pourquoi ce n'est pas résolu ici :** rouvrir le choix d'architecture dépasse le périmètre de
+`CRM-004`, dont l'objet était de mesurer et de trancher le chiffrement des secrets. Le point est
+consigné plutôt qu'arbitré implicitement.
+
+**Arbitrage attendu du responsable :** confirmer l'ordonnanceur applicatif, ou demander la
+réévaluation de `pg_cron` maintenant que sa disponibilité est acquise. À trancher avant `CRM-062`
+(relances automatiques), première unité qui consommera réellement un ordonnanceur.
+
+---
+
 ## Clos
 
-*Aucune entrée close à ce jour.*
+### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée
+
+**Close le :** 2026-08-03, par l'unité `CRM-004`.
+
+**Mesure :** l'image réellement épinglée par `docker-compose.yml`, `supabase/postgres:17.6.1.136`,
+fournit `supabase_vault` **0.3.1** — déjà installée et préchargée — et `pg_cron` **1.6.4**,
+disponible, préchargé et fonctionnel. Sorties de commande consignées dans `docs/JOURNAL.md`,
+section `CRM-004`. Preuves rejouables : `scripts/verify-vault.sh` (26 vérifications).
+
+**Décision :** Vault est retenu, le repli `pgcrypto` est abandonné (décision 23). `pg_cron` reste
+inutilisé, mais pour le seul motif de testabilité — voir INC-012, ouvert à cette occasion.
+
+**Conséquence non anticipée, désormais documentée :** la clé racine de Vault vit hors de `PGDATA`
+et devient une donnée de sauvegarde à part entière (décision 24, `docs/DAT.md` §10,
+`docs/PROD_MIGRATIONS.md`).

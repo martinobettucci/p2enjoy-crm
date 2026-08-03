@@ -33,6 +33,7 @@ Ces éléments ne sont pas fournis par le dépôt et exigent une action humaine.
 | Certificats TLS | Obtenus par Caddy, ou fournis manuellement |
 | Stockage objet | Bucket S3 ou compatible, avec ses accès dédiés |
 | Sauvegardes | Destination et planification définies avant la mise en service |
+| **Clé racine de Vault** | `/etc/postgresql-custom/pgsodium_root.key`, porté par le volume `db-config`. **Hors de `PGDATA`** : à inclure explicitement dans le périmètre de sauvegarde, avec les mêmes précautions qu'un secret (`CRM-004`, `docs/DAT.md` §10) |
 
 ### 2.2 Messagerie
 
@@ -150,6 +151,11 @@ relever la limite du démon Docker ou abaisser la variable.
 6. Une réponse envoyée depuis une card parvient au destinataire avec le bon `Reply-To`.
 7. Les preuves d'autorisation sont rejouées contre l'environnement déployé.
 8. Les sauvegardes s'exécutent et une restauration a été testée au moins une fois.
+9. **La sauvegarde couvre le volume `db-config`**, et pas seulement la base : sans
+   `pgsodium_root.key`, une restauration laisse les secrets de messagerie chiffrés et
+   indéchiffrables. Contrôle rapide sur l'environnement restauré, avec le rôle `service_role` :
+   `select decrypted_secret from vault.decrypted_secrets limit 1;` doit renvoyer une valeur, et
+   non `invalid ciphertext`.
 
 ## 6. Procédure de retour arrière
 
@@ -157,6 +163,7 @@ relever la limite du démon Docker ou abaisser la variable.
 |---|---|
 | Régression applicative | Redéployer l'image précédente ; le schéma restant compatible, aucune action base n'est requise |
 | Migration défectueuse | Appliquer le script de retour arrière fourni avec la migration ; à défaut, restaurer la sauvegarde antérieure |
+| Restauration de base sans la clé racine de Vault | **Aucun retour arrière possible** : le chiffré est intact mais définitivement illisible. Restaurer le volume `db-config` d'origine ; à défaut, chaque mot de passe IMAP/SMTP doit être ressaisi dans l'application |
 | Messagerie défaillante | Arrêter `mail-sync` : le CRM reste utilisable, la file d'envoi est persistante et reprendra |
 
 Toute migration non réversible doit **documenter explicitement pourquoi** et être précédée d'une
@@ -166,6 +173,10 @@ sauvegarde vérifiée.
 
 - **Aucune restauration n'a encore été testée.** Tant que ce n'est pas fait, la capacité de
   reprise est une hypothèse, pas un fait.
+- **La clé racine de Vault est un point de défaillance unique.** Elle vit hors de `PGDATA` et
+  n'est reconstituable par aucun moyen : une sauvegarde qui l'omet est une sauvegarde qui perd
+  tous les accès de messagerie. Le fait est mesuré (`scripts/verify-vault.sh`), la parade
+  documentée, mais **la restauration complète reste non éprouvée**.
 - **Réputation d'expédition** : un domaine neuf utilisé pour l'envoi est susceptible d'être
   filtré. Prévoir une montée en charge progressive.
 - **Données personnelles** : le produit stocke la correspondance de tiers. La rétention et la

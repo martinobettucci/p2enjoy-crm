@@ -146,10 +146,15 @@ Il se connecte à PostgreSQL avec le rôle `service_role`. C'est **le seul** con
 secrets de messagerie déchiffrés.
 
 **Choix : un ordonnanceur applicatif plutôt que `pg_cron`.** Le service tourne déjà en continu ;
-y placer l'ordonnancement évite une dépendance à une extension dont la disponibilité dans
-l'image PostgreSQL retenue n'est pas encore vérifiée, et rend les tâches planifiées testables
-par pytest sans manipuler la base. Compromis : si le service est arrêté, les tâches planifiées
-ne s'exécutent pas — l'état de santé du service doit donc être supervisé.
+y placer l'ordonnancement garde l'orchestration métier dans le service qui la porte, et rend les
+tâches planifiées testables par pytest sans manipuler la base. Compromis : si le service est
+arrêté, les tâches planifiées ne s'exécutent pas — l'état de santé du service doit donc être
+supervisé.
+
+*Motif corrigé par `CRM-004`.* Ce choix invoquait aussi l'indisponibilité supposée de `pg_cron`.
+La mesure la dément : `pg_cron` **1.6.4 est présent, préchargé et fonctionnel** dans l'image
+épinglée. Seul le motif de testabilité subsiste, et il suffit à maintenir le choix. La question de
+rouvrir l'arbitrage est consignée en `docs/INCONSISTENCY_REPORT.md`, INC-012.
 
 ### 3.4 `clamav`
 
@@ -327,11 +332,29 @@ Le détail, y compris la matrice des droits et les preuves de refus exigées, es
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke
 qu'un identifiant de secret, et seul `mail-sync` (rôle `service_role`) peut le déchiffrer.
 
-**Vérification préalable requise :** la disponibilité de l'extension `supabase_vault` dans
-l'image PostgreSQL retenue n'est pas encore constatée. Repli documenté si elle est absente :
-chiffrement `pgcrypto` avec une clé dédiée fournie par l'environnement, jamais versionnée, et
-fonctions d'accès réservées à `service_role`. Le point est tranché avant toute écriture de code
-de messagerie.
+**Point tranché par `CRM-004`** (`docs/JOURNAL.md`, décision 23). L'extension `supabase_vault`
+**0.3.1 est présente dans l'image épinglée** `supabase/postgres:17.6.1.136` : déjà installée,
+préchargée par le serveur, et fonctionnelle de bout en bout. Le repli `pgcrypto` envisagé est
+**abandonné** : entretenir un second chemin de chiffrement que rien n'obligerait à exercer
+reviendrait à ne jamais l'éprouver avant le jour où il servirait. `pgcrypto` reste installé pour
+`gen_random_uuid()`.
+
+Deux protections se cumulent, et ne se remplacent pas :
+
+1. **Le schéma `vault` est hors de portée d'`anon` et d'`authenticated`**, refusés dès l'accès au
+   schéma — donc aucun chemin PostgREST n'atteint le chiffré ni le déchiffré. Seul `service_role`
+   lit `vault.decrypted_secrets` et appelle `vault.create_secret`.
+2. **La colonne `secret_id` de `mail_accounts` et `mail_outbound_identities` reste révoquée en
+   lecture pour `authenticated`.** Ces tables vivent dans `public`, que PostgREST expose : sans ce
+   `REVOKE`, un membre légitime du workspace lirait la *référence* du secret d'un collègue.
+
+**Clé racine — contrainte d'exploitation.** La clé est engendrée au premier démarrage par
+`/usr/lib/postgresql/bin/pgsodium_getkey.sh` et déposée dans
+`/etc/postgresql-custom/pgsodium_root.key`, c'est-à-dire dans le volume `db-config` — **hors de
+`PGDATA`**. Une sauvegarde de la seule base ne restitue donc aucun secret : le chiffré subsiste,
+le déchiffrement échoue. Voir §10 et `docs/PROD_MIGRATIONS.md`.
+
+Les preuves sont rejouables : `scripts/verify-vault.sh`.
 
 ## 9. Déploiement
 
@@ -355,6 +378,14 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
 
 - **Base** : sauvegarde `pg_dump` planifiée, chiffrée, avec procédure de restauration à tester
   (unité de backlog dédiée).
+- **Clé racine de Vault — obligatoire, et distincte de la base.** Le fichier
+  `/etc/postgresql-custom/pgsodium_root.key`, porté par le volume `db-config`, ne se trouve
+  **pas** dans `PGDATA` : il doit être sauvegardé séparément, et avec les mêmes précautions qu'un
+  secret. Mesuré par `scripts/verify-vault.sh` : PGDATA restauré sans cette clé, le chiffré est
+  toujours en base et le déchiffrement échoue (`invalid ciphertext`). Une restauration qui
+  l'omettrait rendrait **tous** les comptes de messagerie irrécupérables — il faudrait ressaisir
+  chaque mot de passe. La procédure de restauration elle-même n'est pas encore éprouvée
+  (`docs/JOURNAL.md`, décision 24).
 - **Stockage objet** : réplication ou sauvegarde du bucket des pièces jointes.
 - **Messagerie** : la file `mail_outbox` est persistante ; un redémarrage reprend les envois en
   attente. L'état de synchronisation IMAP (dernier UID vu par dossier) est persisté, ce qui
@@ -384,7 +415,8 @@ Aucune trace n'est fabriquée artificiellement pour simuler l'exécution d'un pr
 | Catalogue de nœuds partagé | Rend l'analytique comparable entre channels | Un nœud partagé renommé se répercute partout : les surcharges sont explicites |
 | Copie tracée des workflows vers un track | Correspond au geste demandé, et l'origine reste connue | Les copies divergent ; une évolution du workflow global ne se propage pas |
 | Service mail en Python séparé | IMAP/SMTP demandent des connexions longues, incompatibles avec des fonctions courtes | Un service de plus à superviser |
-| Ordonnanceur applicatif | Évite une dépendance à `pg_cron`, testable par pytest | Les tâches planifiées s'arrêtent si le service s'arrête |
+| Ordonnanceur applicatif | Testable par pytest sans manipuler la base, orchestration dans le service qui la porte — `pg_cron` est pourtant disponible (`CRM-004`, INC-012) | Les tâches planifiées s'arrêtent si le service s'arrête |
+| Secrets de messagerie en Supabase Vault | Extension présente et fonctionnelle dans l'image épinglée ; schéma `vault` hors de portée d'`anon` et d'`authenticated` (`CRM-004`) | La clé racine vit hors de `PGDATA` : elle devient une donnée de sauvegarde à part entière (§10) |
 | Deux serveurs mail en développement | Inbucket ne fournit pas d'IMAP, indispensable au produit | Un conteneur supplémentaire en développement |
 | Index fractionnaire pour l'ordre des cards | Réordonnancement en une écriture | Nécessite une renumérotation lorsque les écarts deviennent trop petits |
 | Dédoublonnage par `Message-ID` | Un message arrive souvent par deux boîtes | Les expéditeurs non conformes sans `Message-ID` exigent une empreinte de repli |
@@ -423,7 +455,7 @@ Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`.
 | Dépendance | Rôle | Remarque |
 |---|---|---|
 | Supabase self-hosted | Base, authentification, API, stockage, temps réel | Versions épinglées, alignées sur la pile validée en interne |
-| PostgreSQL 17 | Données et règles métier | Extensions requises : `pgcrypto`, `pg_net` ; souhaitées : `supabase_vault`, `pgtap` |
+| PostgreSQL 17 | Données et règles métier | Extensions **constatées** dans `supabase/postgres:17.6.1.136` (`CRM-004`) : `pgcrypto` 1.3 et `supabase_vault` 0.3.1 installées ; `pg_net` 0.20.3, `pgtap` 1.3.3 et `pg_cron` 1.6.4 disponibles. `supabase_vault` et `pg_cron` sont préchargés par le serveur |
 | React 18 / Vite | Interface | Aligné sur les conventions maison |
 | Bibliothèque IMAP Python | Connexions IDLE et manipulation des dossiers | Choix arrêté au chunk du sous-système mail, après vérification de la licence et de la maintenance |
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |

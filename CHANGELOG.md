@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-004` — Chiffrement des secrets de messagerie : hypothèse levée, décision prise.**
+  - `scripts/verify-vault.sh` : harnais de preuves rejouable et **autonome** — il ne dépend ni de
+    `.env` ni de la pile en cours d'exécution, crée ses propres conteneur et volumes jetables et
+    les détruit en sortant. **26 vérifications, aucune anomalie.**
+  - L'image **réellement épinglée** par `docker-compose.yml` est mesurée, et non supposée :
+    `supabase_vault` **0.3.1** présente, déjà installée et préchargée ; `pg_cron` **1.6.4**
+    disponible, préchargé et fonctionnel ; `pgcrypto` 1.3, `pg_net` 0.20.3, `pgtap` 1.3.3.
+  - **Vault est retenu ; le repli `pgcrypto` est abandonné** (décision 23). Entretenir un second
+    chemin de chiffrement que rien n'obligerait à exercer reviendrait à ne jamais l'éprouver avant
+    le jour où il servirait.
+  - Cloisonnement mesuré **hors interface** avec les rôles réels : `anon` et `authenticated` sont
+    refusés sur le schéma `vault` tout entier — donc plus fortement qu'un `REVOKE` de colonne —,
+    tandis que `service_role` lit, déchiffre et crée. Le `REVOKE` sur `secret_id` reste exigé : il
+    porte sur des tables de `public`, exposées par PostgREST.
+  - **La clé racine de Vault vit hors de `PGDATA`** (décision 24), dans le volume `db-config`.
+    Mesuré : PGDATA restauré sans elle, le chiffré subsiste et le déchiffrement échoue. Elle
+    devient un **élément obligatoire du périmètre de sauvegarde** — `docs/DAT.md` §10 et
+    `docs/PROD_MIGRATIONS.md` §2.1, §5, §6, §7.
+  - `docs/INCONSISTENCY_REPORT.md` : **INC-001 close**, avec sa mesure et sa décision. **INC-012
+    ouverte** : la mesure dément le motif principal de la décision 8 — `pg_cron` est disponible.
+    Le résultat de la décision est conservé, son énoncé corrigé dans `docs/DAT.md` §3.3 et §12, et
+    la réouverture de l'arbitrage est laissée au responsable.
+  - `docs/DAT.md` §8, §10, §12, §15, `docs/SCHEMA.md` §11, `docs/SPEC-mail-subsystem.md` §2.3,
+    `README.md` §5, §7, §12 mis à jour dans le même changement.
+  - **Débloque `CRM-052` et `CRM-053`.**
+
 - **`CRM-003` — Migrations d'amorçage : identité et cloisonnement.**
   - `supabase/migrations/0001_identite_et_cloisonnement.sql` : extension `pgcrypto`, schéma `app`
     (non exposé par l'API REST), et les cinq tables de `docs/SCHEMA.md` §1 — `profiles`,

@@ -58,8 +58,17 @@ Les formulaires de configuration n'affichent jamais un secret enregistré ; ils 
 « remplacer le mot de passe ». Le bouton « Tester la connexion » exerce le véritable chemin de
 connexion et retourne un diagnostic assaini, sans identifiant ni trace de secret.
 
-*Prérequis à vérifier avant implémentation* : disponibilité de `supabase_vault` dans l'image
-PostgreSQL retenue. Repli documenté : `pgcrypto` avec clé dédiée fournie par l'environnement.
+*Prérequis levé par `CRM-004`* : `supabase_vault` 0.3.1 est présente, installée et préchargée dans
+l'image épinglée `supabase/postgres:17.6.1.136`. **Vault est retenu ; le repli `pgcrypto` est
+abandonné** (`docs/JOURNAL.md`, décision 23 ; `docs/DAT.md` §8).
+
+La mesure a montré une protection plus forte que prévu : le schéma `vault` est **entièrement**
+hors de portée d'`anon` et d'`authenticated`, refusés dès l'accès au schéma. Le `REVOKE` sur
+`secret_id` reste néanmoins exigé — il porte sur des tables du schéma `public`, que PostgREST
+expose, et empêche un membre du workspace de lire la *référence* du secret d'un collègue.
+
+*Contrainte d'exploitation à ne pas perdre de vue* : la clé racine de Vault vit hors de `PGDATA`.
+Sa perte rend les secrets définitivement indéchiffrables — voir `docs/DAT.md` §10.
 
 ## 3. Adresse d'une card
 
