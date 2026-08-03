@@ -31,6 +31,28 @@ d'exécuter le code attendu.
   - Décisions 32 à 34 consignées dans `docs/JOURNAL.md` ; contradiction **INC-018** (politique de
     mot de passe démentie sur le chemin d'administration) consignée **sans résolution implicite**.
 
+- **`CRM-005` — Seed socle livré et prouvé (`[x]`).**
+  - `supabase/seed/apply-seed.sh` : un espace de travail **P2Enjoy SAS** et trois comptes couvrant
+    les trois rôles de workspace — `admin`, `business_developer`, `viewer`.
+  - **Produit par les vrais mécanismes** : comptes par l'API d'administration GoTrue, profils par
+    le trigger de `CRM-003`, espace de travail et appartenances par l'API REST. **Aucun `psql`,
+    aucun `INSERT` direct** (décision 32).
+  - **Identifiants stables**, fixés et préfixés `5eed` pour qu'une ligne seedée se reconnaisse sans
+    requête (décision 33). Rendu possible par une mesure : l'API accepte un `id` fourni.
+  - **Convergent** (décision 34) : rejoué sans doublon, il rattrape une dérive réellement
+    provoquée. Le profil est convergé par un `PATCH` explicite, une mise à jour de métadonnées ne
+    déclenchant pas le trigger de `CRM-003`.
+  - **Garde** : refuse tout profil d'environnement autre que `dev`, et il est vérifié qu'aucune
+    écriture n'a lieu pendant ce refus. La production n'applique jamais de seed.
+  - `supabase/tests/0003_seed_socle.test.sql` : **30 assertions** pgTAP, le même contrat vu au
+    niveau SQL. `scripts/verify-seed.sh` : **49 contrôles, aucune anomalie**, couvrant les 12
+    preuves de `docs/SPEC-seed.md` §7 hors interface, dont la **connexion réelle** des trois
+    comptes et la conformité du `sub` de leur jeton.
+  - Harnais **non complaisant, éprouvé en faussant réellement le seed** : rôle faussé → 4
+    anomalies ; identifiant faussé → jusqu'à 7 anomalies ; code de sortie `1` à chaque fois.
+  - Vérification visuelle observée : `docs/captures/CRM-005/` — comptes, profils, workspace et
+    appartenances dans Studio.
+
 - **`CRM-011` — Spécification de l'authentification, écrite avant tout code.**
   - `docs/SPEC-auth.md` : cycle de vie d'un compte de bout en bout — inscription libre refusée,
     invitation, acceptation, connexion, session, déconnexion, réinitialisation de mot de passe —,
@@ -210,6 +232,20 @@ d'exécuter le code attendu.
   - `docs/PROD_MIGRATIONS.md` — contrat de déploiement et prérequis manuels ;
   - `docs/manual.md` — manuel utilisateur ;
   - `docs/INCONSISTENCY_REPORT.md` — registre des contradictions en attente d'arbitrage.
+
+### Corrigé
+
+- **`CRM-002` passe `[x]`.** Sa dernière case ouverte — « `resetMe.sh` rejoue le seed » — est
+  levée : `./resetMe.sh --yes` détruit le cluster, rejoue les migrations à blanc **puis applique
+  le seed**, en 45,6 s, et les trois comptes sont constatés sur la base neuve. INC-009 peut être
+  close par le responsable.
+- **Suite pgTAP de `CRM-003` corrigée** (décision 35) : elle supposait une base vide — décompte
+  global des profils, et slug `p2enjoy` réservé, ce dernier provoquant une **erreur d'insertion**
+  qui interrompait tout ce qui suivait. Elle ne porte plus que sur ses propres fixtures et repasse
+  à **70/70**. Aucune régression sur les sept harnais : **237 contrôles** au total.
+- Contradiction **INC-019** consignée : le bandeau d'état du `README.md` décrit encore un dépôt
+  sans migrations, dépassé depuis `CRM-003`. **Non corrigée ici** — elle relève de l'état global du
+  dépôt, pas du périmètre de cette unité.
 
 ### Notes
 

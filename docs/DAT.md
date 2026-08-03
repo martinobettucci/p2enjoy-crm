@@ -419,7 +419,7 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
 
 ## 11. Données de développement
 
-Le seed est un contrat maintenu (voir `docs/BACKLOG.md`). Il doit démontrer chaque
+Le seed est un contrat maintenu, spécifié par `docs/SPEC-seed.md`. Il doit démontrer chaque
 fonctionnalité livrée, et il est produit **par les vrais mécanismes applicatifs** :
 
 - les utilisateurs sont créés par l'API d'administration GoTrue ;
@@ -430,6 +430,18 @@ fonctionnalité livrée, et il est produit **par les vrais mécanismes applicati
   cycle de réception.
 
 Aucune trace n'est fabriquée artificiellement pour simuler l'exécution d'un processus.
+
+**Livré à ce jour (`CRM-005`, seed socle).** `supabase/seed/apply-seed.sh` pose un espace de
+travail et trois comptes couvrant les trois rôles de workspace. Les comptes naissent de l'API
+d'administration GoTrue, leurs profils du trigger de `CRM-003`, l'espace de travail et les
+appartenances de l'API REST : **aucun `INSERT` direct, aucun `psql`** (`docs/JOURNAL.md`,
+décision 32). Le script est **convergent** — rejoué sans doublon, il rattrape une dérive — et
+refuse tout profil d'environnement autre que `dev`. Ses identifiants sont fixes et préfixés
+`5eed` (décision 33). Preuves : `scripts/verify-seed.sh` (49 contrôles) et
+`supabase/tests/0003_seed_socle.test.sql` (30 assertions).
+
+La production **n'applique jamais de seed** : `docker-compose.prod.yml` ne le monte pas, et le
+script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet de `CRM-046`.
 
 ## 12. Choix techniques et compromis
 
@@ -459,6 +471,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` |
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
+| `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.

@@ -198,10 +198,19 @@ select is(
 	'sans email ni métadonnée, le nom affiché dérive de l''identifiant'
 );
 
+-- Le compte est fait sur les **seules fixtures de cette suite**, et non sur toute la table.
+-- Un décompte global supposait une base vide, ce qui n'a jamais été garanti et a cessé d'être
+-- vrai avec le seed socle de `CRM-005` : `resetMe.sh` l'applique après chaque redémarrage à
+-- froid. Une suite dont le résultat dépend de ce qui l'entoure ne prouve pas ce qu'elle annonce
+-- (`docs/JOURNAL.md`, décision 35).
 select is(
-	(select count(*)::int from public.profiles),
+	(select count(*)::int from public.profiles
+	  where id in ('00000000-0000-4000-8000-000000000001',
+	               '00000000-0000-4000-8000-000000000002',
+	               '00000000-0000-4000-8000-000000000003',
+	               '00000000-0000-4000-8000-000000000004')),
 	4,
-	'quatre comptes créés, quatre profils'
+	'quatre comptes créés par cette suite, quatre profils'
 );
 
 -- 3.5 `updated_at` est maintenu par trigger, pas par le client
@@ -245,11 +254,15 @@ select is_empty(
 -- 4. Contraintes d'intégrité
 -- =============================================================================================
 
+-- Le slug appartient à cette suite seule. « p2enjoy » a été abandonné ici : c'est celui de
+-- l'espace de travail du seed socle (`docs/SPEC-seed.md` §2.1), et le réserver faisait échouer
+-- la suite sur une base seedée — par une erreur d'insertion, non par une assertion, ce qui
+-- interrompait tout ce qui suit (`docs/JOURNAL.md`, décision 35).
 insert into public.workspaces (id, name, slug)
-values ('00000000-0000-4000-8000-0000000000a1', 'P2Enjoy', 'p2enjoy');
+values ('00000000-0000-4000-8000-0000000000a1', 'Espace pgTAP CRM-003', 'pgtap-crm-003');
 
 select throws_ok(
-	$$ insert into public.workspaces (name, slug) values ('Doublon', 'p2enjoy') $$,
+	$$ insert into public.workspaces (name, slug) values ('Doublon', 'pgtap-crm-003') $$,
 	'23505',
 	null,
 	'deux workspaces ne peuvent pas partager le même `slug`'

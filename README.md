@@ -105,7 +105,9 @@ INC-008.
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
 | `scripts/verify-authz.sh` | Rejoue les preuves des fonctions d'autorisation : suite pgTAP, idempotence, comportement sous PostgREST avec des jetons réels | **disponible** |
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
-| `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-005`) |
+| `supabase/seed/apply-seed.sh` | Applique le seed socle sur la pile de développement | **disponible** |
+| `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
+| `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-007`, INC-008) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma | à venir (`CRM-006`) |
 | `npm run build` | Build de production de la webapp | à venir (`CRM-007`) |
 
@@ -152,7 +154,7 @@ Le premier lancement amorce `.env` (voir §4) ; les suivants le conservent tel q
 base vierge :
 
 ```bash
-./resetMe.sh          # détruit la base et les volumes, redémarre à froid, rejoue les migrations
+./resetMe.sh          # détruit la base et les volumes, redémarre à froid, rejoue migrations et seed
 ```
 
 Services exposés. Les ports ne sont publiés que sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) :
@@ -180,6 +182,43 @@ doit *lire* des boîtes en IMAP, y créer des dossiers imbriqués et y déposer 
 cela exige un vrai serveur, d'où Stalwart. Roundcube permet de **voir** le résultat, ce qui rend
 la vérification visuelle possible.
 
+### Données de développement — le seed socle
+
+`./resetMe.sh` applique le seed après le redémarrage à froid. Pour le rejouer seul, sur une pile
+déjà démarrée :
+
+```bash
+supabase/seed/apply-seed.sh      # crée ou met à jour ; ne détruit jamais rien
+scripts/verify-seed.sh           # rejoue les 12 preuves du seed
+```
+
+Le seed est **convergent** : le rejouer ne duplique rien et rattrape une valeur modifiée à la
+main. Ses identifiants sont **stables** et commencent tous par `5eed`, ce qui rend une ligne
+seedée reconnaissable au premier coup d'œil.
+
+Un espace de travail, **P2Enjoy SAS** (`p2enjoy`), et trois comptes couvrant les trois rôles :
+
+| Email | Nom affiché | Rôle | Identifiant |
+|---|---|---|---|
+| `admin@p2enjoy.test` | Camille Aubert | `admin` | `5eed0000-0000-4000-8000-000000000011` |
+| `bizdev@p2enjoy.test` | Driss Lemoine | `business_developer` | `5eed0000-0000-4000-8000-000000000012` |
+| `viewer@p2enjoy.test` | Farida Nowak | `viewer` | `5eed0000-0000-4000-8000-000000000013` |
+
+Mot de passe commun : **`SeedDev2026Local`**.
+
+Ce mot de passe n'est pas un secret, et c'est délibéré : il ne protège rien. Les adresses sont
+sous `p2enjoy.test`, TLD réservé par la RFC 2606, donc non routable — un email envoyé par erreur
+à l'un de ces comptes ne peut atteindre personne. Le seed **refuse** de s'appliquer à un
+environnement dont le profil n'est pas `dev`.
+
+> **Ces données ne sont pas encore lisibles par l'API.** Les tables du socle sont en refus par
+> défaut depuis `CRM-003` : RLS activée, aucune politique. Une lecture retourne zéro ligne, même
+> avec le jeton de l'administrateur seedé. Les politiques arrivent avec `CRM-012` ; le seed n'en
+> pose aucune, et ne doit pas en poser.
+
+Le contrat complet — mécanismes employés, convention d'identifiants, preuves exigées — est dans
+[`docs/SPEC-seed.md`](docs/SPEC-seed.md).
+
 ## 7. Tests
 
 ```bash
@@ -205,6 +244,7 @@ scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut     
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
 scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
+scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -298,13 +338,13 @@ Livré à ce jour :
 └── supabase/
     ├── docker/                 Configuration Kong et scripts d'initialisation de la base
     ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
+    ├── seed/                    Seed socle, appliqué par les API réelles (CRM-005)
     └── tests/                  Suites pgTAP, une par migration
 ```
 
 Prévu par le backlog, pas encore livré :
 
 ```
-├── supabase/seed/              CRM-005
 ├── webapp/                     CRM-007
 ├── e2e/                        CRM-008
 └── mail-sync/                  CRM-051

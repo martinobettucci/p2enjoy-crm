@@ -1326,3 +1326,85 @@ la garantit pas.
 C'est la deuxième fois qu'une mesure prise pour une autre unité corrige l'énoncé d'une décision
 antérieure (après INC-012). Le motif est le même : un comportement de service tiers avait été
 généralisé à partir d'un seul chemin d'appel.
+
+### Vérifications réalisées
+
+`scripts/verify-seed.sh` : **49 contrôles, aucune anomalie**, dont la suite pgTAP
+`supabase/tests/0003_seed_socle.test.sql` (**30 assertions**) qui vérifie le même contrat un cran
+sous l'API. Les douze preuves de `docs/SPEC-seed.md` §7 sont exercées hors interface : contrat du
+workspace, identifiants fixes des trois comptes, profils et langues, appartenances et rôles,
+**connexion réelle** des trois comptes avec le mot de passe publié, `sub` du jeton conforme à
+l'identifiant fixe, rejouabilité, rattrapage d'une dérive réellement provoquée, refus par défaut
+intact, et refus d'un profil d'environnement autre que `dev`.
+
+*Non-complaisance éprouvée en faussant réellement le seed*, et non en le simulant :
+
+| Mutation | Résultat |
+|---|---|
+| Rôle du `viewer` changé en `admin` dans le seed | **4 anomalies**, code de sortie `1` — détectée par pgTAP **et** par l'API |
+| Identifiant d'un compte faussé, compte déjà présent | Le seed **refuse lui-même** : sa garde d'identifiant fait échouer le harnais |
+| Identifiant faussé, compte préalablement supprimé | **7 anomalies**, code de sortie `1` : identifiant, profil, appartenance et `sub` du jeton |
+
+Après remise en état, retour à 49/49.
+
+*Preuve que `CRM-005` débloque `CRM-002`.* La branche « seed » de `resetMe.sh`, jamais exercée
+jusqu'ici faute de seed (INC-009), l'a été : `./resetMe.sh --yes` détruit le cluster — identifiant
+PostgreSQL passé de `7669930091773866019` à `7669933096091242530`, table témoin disparue —, rejoue
+les migrations à blanc, **puis applique le seed**, le tout en **45,6 s**. Les trois comptes et
+leurs appartenances sont constatés sur la base neuve.
+
+*Aucune régression.* Les sept harnais rejoués après réinitialisation à froid :
+`verify-stack` 33/33, `verify-scripts` 38/38, `verify-migrations` 23/23, `verify-vault` 26/26,
+`verify-authz` 26/26, `verify-auth` 42/42, `verify-seed` 49/49 — **237 contrôles**.
+
+### Décision 35 — Une suite de tests ne doit pas dépendre de ce qui l'entoure
+
+Le seed a fait **échouer la suite pgTAP de `CRM-003`**, de deux façons distinctes :
+
+1. une assertion comptait `select count(*) from public.profiles` et attendait `4`, ses propres
+   fixtures — elle en a trouvé `7`, les trois du seed compris ;
+2. la suite insérait un workspace de slug `p2enjoy`, celui-là même que le seed pose désormais. La
+   collision d'unicité produisait une **erreur d'insertion**, pas une assertion rouge : tout ce qui
+   suivait était interrompu.
+
+Le défaut n'est pas dans le seed. Il est dans une suite qui supposait la base vide — hypothèse
+jamais garantie, vraie seulement par accident, et que `resetMe.sh` invalide désormais à chaque
+redémarrage à froid puisqu'il applique le seed.
+
+*Correction, dans le même changement :* l'assertion compte ses **quatre fixtures nommées** au lieu
+de toute la table, et le workspace de test prend le slug `pgtap-crm-003`, qui n'appartient qu'à
+elle. La suite repasse à **70/70**.
+
+*Pourquoi ce n'est pas consigné comme contradiction à arbitrer.* La correction n'a qu'une forme
+sensée — un test se borne à ses propres données —, elle ne change rien à ce que la suite prouve, et
+elle ne préempte aucune décision du responsable. La consigner en `INCONSISTENCY_REPORT.md` aurait
+demandé un arbitrage là où il n'y a pas de choix.
+
+*Règle qui en découle,* opposable aux suites à venir : une assertion pgTAP ne porte que sur des
+lignes qu'elle a elle-même créées, ou filtrées par un identifiant qui lui appartient. Les
+identifiants du seed commençant tous par `5eed` (décision 33), la distinction est immédiate.
+
+### Vérification visuelle réellement observée
+
+Quatre captures dans `docs/captures/CRM-005/`, produites contre la pile réellement exécutée et
+**observées** : la liste des comptes dans Studio — les trois identifiants `5eed…`, les noms
+affichés et les adresses, « Total: 3 users » —, la table `profiles`, la table `workspaces` et la
+table `workspace_members` avec ses trois rôles distincts.
+
+Comme pour `CRM-011`, ces captures montrent un outil d'**exploitation**, pas le produit : le
+premier écran du CRM arrive avec `CRM-007`. C'est la seule vérification visuelle que cette unité
+rende possible, et elle vaut d'être faite — elle donne à voir l'état que le seed produit.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun test E2E dédié, aucune capture d'application.** Le harnais Playwright est l'objet de
+  `CRM-008` et le premier écran celui de `CRM-007`. Les preuves de cette unité sont unitaires
+  (pgTAP) et d'intégration (API réelle, hors interface), ce que la nature d'un seed commande.
+- **Le seed ne rend rien lisible**, et ne le doit pas : les tables du socle restent en refus par
+  défaut jusqu'à `CRM-012`. Le script l'affiche à chaque exécution, et la preuve n° 11 le mesure.
+- **Aucun second workspace, aucun compte extérieur au workspace** (`docs/SPEC-seed.md` §8) : les
+  preuves n° 3 et n° 7 de `docs/SPEC-permissions-rls.md` §7 en exigeront, et `CRM-014` devra soit
+  étendre le seed, soit continuer de fabriquer ses propres comptes comme le fait aujourd'hui
+  `scripts/verify-authz.sh`.
+- **`npm run db:seed` n'existe toujours pas** : il attend le `package.json` de `CRM-007` (INC-008).
+  Le seed s'invoque par `supabase/seed/apply-seed.sh`, ou par `resetMe.sh` qui l'appelle.

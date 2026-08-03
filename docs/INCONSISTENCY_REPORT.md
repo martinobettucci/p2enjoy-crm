@@ -538,6 +538,39 @@ réservé à un opérateur.
 
 ---
 
+### INC-019 — Le bandeau d'état du `README.md` décrit un dépôt que trois unités ont dépassé
+
+**Nature :** documentation en retard sur l'état réel.
+**Relevé le :** 2026-08-03, pendant `CRM-005`, en mettant à jour le `README.md`.
+
+Le bandeau « État d'avancement — lisez ceci en premier », en tête du `README.md`, porte encore :
+
+> En revanche, **le produit n'existe pas encore** : aucune migration
+> (`supabase/migrations/` est vide), aucune webapp, aucun service `mail-sync`.
+
+Deux de ces trois affirmations sont fausses depuis `CRM-003` : `supabase/migrations/` contient
+deux migrations appliquées et vérifiées, et le socle d'identité est en base. `CRM-005` y ajoute un
+seed. Seules « aucune webapp » et « aucun service `mail-sync` » restent exactes.
+
+C'est le même mode de défaillance qu'INC-017, à un autre endroit du même fichier : une unité met à
+jour les sections qu'elle touche et laisse le paragraphe de synthèse en arrière.
+
+**Pourquoi ce n'est pas corrigé ici.** Le bandeau relève de l'état global du dépôt, non du
+périmètre de `CRM-005`. Le réécrire au passage mêlerait deux sujets dans un même commit, contre
+`CLAUDE.md` §13 — c'est le raisonnement retenu pour INC-017, et il vaut ici à l'identique. Ce
+n'est pas non plus une contradiction à arbitrer : aucune décision n'est en jeu, seulement une mise
+à jour.
+
+**Risque :** un lecteur qui s'arrête au bandeau — ce que le bandeau lui demande explicitement de
+faire en premier — croit le dépôt vide de toute migration, et peut refaire le travail de `CRM-003`
+ou douter de la validité des unités suivantes.
+
+**Action attendue :** réécrire le bandeau à partir de l'état réel de `docs/BACKLOG.md`, dans un
+changement qui lui soit propre, et le traiter désormais comme une section à revoir à chaque
+livraison — au même titre que `CHANGELOG.md`.
+
+---
+
 ## Clos
 
 ### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée

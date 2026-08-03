@@ -78,7 +78,7 @@ pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
   `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
   **en attente d'arbitrage du responsable**.
 
-### CRM-002 — Scripts de lancement et environnement `[~]`
+### CRM-002 — Scripts de lancement et environnement `[x]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,
 format, obligatoire ou non, exemple non sensible). La liste exhaustive des variables déjà
 consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`, décision 15 :
@@ -114,13 +114,12 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, et lorsque la dérivation d'un jeton est faussée.
-- [ ] **`resetMe.sh` rejoue le seed : NON PROUVÉ.** `supabase/seed/apply-seed.sh` n'existe pas —
-      c'est l'objet de `CRM-005`, planifiée après `CRM-014` (`docs/MASTER_PLAN.md` §2.c). Seule
-      la branche « seed absent » a pu être exercée : elle avertit explicitement et nomme
-      `CRM-005`, au lieu de laisser croire à un succès complet. **Cette preuve est bloquée par une
-      dépendance, pas par un défaut de l'unité : il n'y a rien à y faire tant que `CRM-005` n'est
-      pas livrée.** Contradiction d'ordonnancement consignée dans
-      `docs/INCONSISTENCY_REPORT.md`, INC-009.
+- [x] **`resetMe.sh` rejoue le seed : PROUVÉ**, par `CRM-005` qui a livré
+      `supabase/seed/apply-seed.sh`. `./resetMe.sh --yes` détruit le cluster — identifiant
+      PostgreSQL changé, table témoin disparue —, rejoue les migrations à blanc **puis applique le
+      seed**, en **45,6 s** ; les trois comptes et leurs appartenances sont constatés sur la base
+      neuve. La dernière case ouverte de cette unité est donc levée, et INC-009 peut être close par
+      le responsable.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'outillage d'exécution. Les preuves
@@ -130,7 +129,6 @@ unité n'atteint l'interface, dont le premier écran arrive avec `CRM-007`.
 
 *Limites nommées, non masquées.*
 
-- La branche « seed » de `resetMe.sh` n'est pas exercée (voir ci-dessus).
 - L'assemblage de production a été démarré contre un **fournisseur S3 simulé** et avec
   `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy : l'émission d'un certificat **ACME**
   reste non prouvée, comme pour `CRM-001`.
@@ -447,10 +445,77 @@ profil.
 **DoD** : les 12 scénarios verts ; le harnais échoue si une politique est retirée (vérifié en
 retirant temporairement une politique).
 
-### CRM-005 — Seed socle `[ ]`
+### CRM-005 — Seed socle `[x]`
 Utilisateurs créés par l'API d'administration GoTrue ; un workspace ; les rôles représentés.
 **DoD** : seed reproductible, identifiants stables, aucun mot de passe réel ; profils `admin`,
 `business_developer` et `viewer` présents ; documenté dans `README.md`.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-seed.md` : aucun document ne disait
+      quels comptes, quel workspace ni quels identifiants, alors que `docs/DAT.md` §11 pose que le
+      seed est un *contrat maintenu*. Rédigée **après mesure** du comportement réel de
+      `supabase/gotrue:v2.189.0` et `postgrest/postgrest:v14.12`. Commit documentaire dédié.
+- [x] `supabase/seed/apply-seed.sh` : un workspace, trois comptes, les **trois rôles** de
+      `docs/SPEC-permissions-rls.md` §2.1 représentés.
+- [x] **Créés par les vrais mécanismes** (décision 32) : comptes par l'API d'administration
+      GoTrue, profils par le trigger de `CRM-003` — le seed n'en crée aucun —, workspace et
+      appartenances par l'API REST. **Aucun `psql`, aucun `INSERT` direct.**
+- [x] **Identifiants stables**, fixés dans le script et non tirés au hasard (décision 33). Rendu
+      possible par une mesure : l'API d'administration **accepte un `id` fourni**. Tous portent le
+      préfixe `5eed`, ce qui rend une ligne seedée reconnaissable sans requête.
+- [x] **Aucun mot de passe réel** : un mot de passe de développement unique, publié dans
+      `docs/SPEC-seed.md` §2.3 et `README.md`, sur des adresses en `p2enjoy.test` — TLD réservé par
+      la RFC 2606, donc non routable. Sa longueur (16) est **prouvée** conforme à
+      `PASSWORD_MIN_LENGTH`, et non supposée : l'API d'administration ne l'impose pas (INC-018).
+- [x] **Reproductible et convergent** (décision 34) : rejoué sans erreur ni doublon, état
+      **identique** après second passage. Une dérive réellement provoquée — profil renommé, viewer
+      promu `admin` — est rattrapée. La convergence du profil passe par un `PATCH` explicite, une
+      mise à jour de métadonnées ne déclenchant pas le trigger de `CRM-003`.
+- [x] **Les trois comptes se connectent réellement**, et le `sub` de leur jeton vaut l'identifiant
+      fixe attendu. Un compte présent mais incapable de se connecter ne servirait ni aux tests ni
+      aux captures.
+- [x] **Test unitaire dédié** : `supabase/tests/0003_seed_socle.test.sql`, **30 assertions**,
+      vérifiant le contrat **au niveau SQL** — un cran sous l'API, de sorte qu'un écart entre les
+      deux vues devienne détectable. En lecture seule, transaction annulée.
+- [x] **Test d'intégration dédié** : `scripts/verify-seed.sh`, **49 contrôles, aucune anomalie**,
+      couvrant les douze preuves de `docs/SPEC-seed.md` §7, toutes hors interface.
+- [x] Harnais **non complaisant, éprouvé en faussant réellement le seed** : rôle faussé → 4
+      anomalies ; identifiant faussé sur un compte absent → 7 anomalies ; identifiant faussé sur un
+      compte présent → le seed refuse lui-même. Code de sortie `1` dans les trois cas, retour à
+      49/49 après remise en état.
+- [x] **Le seed n'ouvre rien** : preuves n° 10 et n° 11 — l'anonyme **et** l'administrateur seedé
+      obtiennent `200` et zéro ligne sur les tables du socle. Aucune politique RLS n'est posée ; le
+      refus par défaut de `CRM-003` est intact, ce que la suite pgTAP vérifie aussi.
+- [x] **Garde de profil prouvée** : le seed refuse un fichier d'environnement en profil `prod`, et
+      il est vérifié qu'**aucune écriture** n'a eu lieu pendant ce refus.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-005/` — comptes, profils,
+      workspace et appartenances dans Studio, les identifiants `5eed…` et les trois rôles lisibles.
+      Comme pour `CRM-011`, il s'agit d'un outil d'exploitation et non du produit.
+- [x] **Régression de `CRM-003` détectée et corrigée dans le même changement** (décision 35) : sa
+      suite pgTAP supposait une base vide — décompte global des profils, et slug `p2enjoy` réservé.
+      Corrigée pour ne porter que sur ses propres fixtures ; repassée à **70/70**.
+- [x] **Aucune régression** : les sept harnais rejoués après réinitialisation à froid —
+      `verify-stack` 33/33, `verify-scripts` 38/38, `verify-migrations` 23/23, `verify-vault` 26/26,
+      `verify-authz` 26/26, `verify-auth` 42/42, `verify-seed` 49/49, soit **237 contrôles**.
+- [x] `README.md` §5, §6, §7 et §10, `docs/DAT.md` §11 et §13, `docs/MASTER_PLAN.md` §3,
+      `CHANGELOG.md` mis à jour dans le même changement.
+
+*DoD adaptée, écarts explicites.* **Aucun test E2E dédié** : le harnais Playwright est l'objet de
+`CRM-008` et le premier écran du produit celui de `CRM-007`. Les preuves de cette unité sont
+unitaires (pgTAP) et d'intégration (API réelle, hors interface), ce que la nature d'un seed
+commande. **Aucune migration** : le seed est une donnée, pas une structure — `docs/PROD_MIGRATIONS.md`
+n'a pas à changer, la production n'appliquant jamais de seed.
+
+*Limites nommées, non masquées.*
+
+- **Aucun second workspace ni compte extérieur** (`docs/SPEC-seed.md` §8). Les preuves n° 3 et n° 7
+  de `docs/SPEC-permissions-rls.md` §7 en exigeront : `CRM-014` devra soit étendre le seed, soit
+  continuer de créer ses propres comptes comme le fait `scripts/verify-authz.sh`.
+- **Aucun droit fin, aucune donnée métier** : les tables cibles n'existent pas encore. Le jeu de
+  démonstration complet est l'objet de `CRM-046`.
+- **`npm run db:seed` n'existe pas** : il attend le `package.json` de `CRM-007` (INC-008). Le seed
+  s'invoque par `supabase/seed/apply-seed.sh` ou par `resetMe.sh`.
+- **Les comptes ne naissent pas d'un parcours produit** : la création exige la clé de service, donc
+  reste une opération d'exploitation (INC-015), comme pour `CRM-011`.
 
 ### CRM-006 — Types TypeScript générés `[ ]`
 **DoD** : `npm run types:generate` régénère depuis le schéma local ; build de la webapp vert.
