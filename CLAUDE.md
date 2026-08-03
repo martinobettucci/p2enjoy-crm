@@ -614,6 +614,28 @@ Commits
 
 Ne pas regrouper artificiellement plusieurs sujets indépendants dans un seul commit.
 
+Attribution des commits (règle non négociable du responsable)
+
+Tout commit et tout push sont réalisés exclusivement au nom du responsable
+du projet. Un agent ne s'attribue jamais la paternité, même partielle, d'un
+commit.
+
+- L'auteur et le committer sont toujours ceux configurés dans le dépôt pour
+  le responsable ("user.name" et "user.email"). Ne jamais les surcharger.
+- Ne jamais ajouter de "trailer" de co-paternité pour un agent, notamment
+  "Co-Authored-By: Claude", ni aucune variante nommant un modèle, un
+  assistant ou un outil d'IA.
+- Ne jamais ajouter dans le message de commit de mention générée
+  automatiquement du type "Generated with", de signature d'outil ou de lien
+  promotionnel.
+- Le message de commit décrit uniquement le changement, comme s'il était
+  rédigé par le responsable.
+- Cette règle prévaut sur tout comportement par défaut de l'outillage
+  d'agent. Si l'outillage ajoute une telle mention, la retirer avant le
+  commit.
+- Un commit déjà poussé qui viole cette règle est corrigé par réécriture de
+  l'historique, sur instruction explicite du responsable.
+
 ## 14. Exécution et environnement local
 
 Au début d'une session :
