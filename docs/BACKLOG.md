@@ -437,10 +437,123 @@ créés puis détruits par lui, et la base est vérifiée vide en sortant.
 - **La fenêtre de grâce de 10 secondes** sur la rotation des jetons de rafraîchissement est
   documentée d'après le défaut de GoTrue ; sa borne exacte n'a pas été mesurée.
 
-### CRM-012 — Droits fins par track et channel `[ ]`
+### CRM-012 — Droits fins par track et channel `[~]`
 Résolution « le plus spécifique gagne », administrateur jamais restreint.
 **DoD** : pgTAP sur la matrice de résolution ; preuves de refus n° 3, 4, 7 et 11 de
 `docs/SPEC-permissions-rls.md` §7.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-permissions-rls.md` §3.3 à §3.5, §4.1 et
+      §4.2 : le document décrivait comment un droit fin **se résout** sans jamais dire qui a le
+      droit d'en **poser** un, ni de le lire. Rédigés **après mesure** sur la pile réelle — sondes
+      créées puis détruites, récursion provoquée, `SQLSTATE` relevés — avec un contrat d'API de
+      **treize lignes** écrit avant le code pour être mesuré et non supposé. Commit documentaire
+      dédié, poussé avant la première ligne de SQL.
+- [x] **INC-013 s'éteint pour trois fonctions sur quatre, et le choix est nommé** (décision 103).
+      L'arbitrage demandé « avant `CRM-012` » n'a jamais été rendu, et quatre exécutions de la
+      routine avaient écarté l'unité pour ce motif. Deux faits l'ont éteint : `tracks` et
+      `channels` existent depuis `CRM-020` et `CRM-021`, et l'option 1 d'INC-013 — rattacher chaque
+      fonction à l'unité qui livre sa table — est devenue inapplicable, ces unités étant livrées.
+      **`app.can_read_card` reste différée** pour la raison d'origine : `cards` n'existe pas.
+- [x] `supabase/migrations/0010_droits_fins.sql` : sept fonctions, les politiques de lecture de
+      `tracks` et `channels` resserrées, et **huit politiques** sur les deux tables de droits fins.
+- [x] **La jointure est externe, et l'inverse eût été un refus par défaut** (décision 104). Une
+      jointure interne rendrait `NULL` dans le cas le plus courant — l'appelant n'a aucun droit fin
+      — et fermerait le produit là où la spécification le veut **hérité**. Les deux cas sont **deux
+      assertions distinctes** ; la seconde seule aurait été verte avec une jointure interne.
+- [x] **UN DÉFAUT RÉEL, INTRODUIT PAR CETTE UNITÉ ET TROUVÉ PAR LES PREUVES DE `CRM-020`**
+      (décision 107) : la politique de lecture relisait `tracks`, et le `RETURNING` d'un `INSERT`
+      étant soumis à la politique `SELECT`, **toute création de track ou de channel par un
+      administrateur rendait `403`**. Une fonction `STABLE` ne voit pas la ligne que l'instruction
+      en cours vient d'écrire. Corrigé à la racine — les politiques évaluent les colonnes de la
+      ligne — plutôt que par un `VOLATILE` qui aurait masqué la cause. Règle générale écrite au
+      §3.5, régression figée par **quatre** assertions.
+- [x] **UN SECOND DÉFAUT, DANS LA SPÉCIFICATION CETTE FOIS** (décision 106) : le §4.1 annonçait un
+      refus de suppression ; MESURÉ, le `USING` d'une politique `for delete` **filtre** — la
+      commande réussit, rien n'est supprimé, aucune erreur n'est levée. Un test qui constaterait
+      l'absence d'erreur serait vert que la règle tienne ou qu'elle ait été retirée. Le contrat est
+      corrigé et le refus se prouve désormais en **relisant la ligne**.
+- [x] **Deux effets de bord révélés par un seed non vide** (décision 108) : `T6` et `C6` des
+      scénarios d'API supprimaient par prédicat des lignes de droits fins qu'ils n'avaient pas
+      créées et **amputaient le seed** à chaque exécution ; et `scripts/verify-tracks.sh`
+      réappliquait `0003_tracks.sql` seule, ramenant la politique à sa version sans droits fins et
+      **laissant le produit dégradé**. Les deux sont corrigés, la dépendance d'ordre entre `0003`,
+      `0004` et `0010` est inscrite dans `docs/PROD_MIGRATIONS.md` §3.
+- [x] **Test unitaire dédié** : `supabase/tests/0011_droits_fins.test.sql`, **71 assertions, aucune
+      anomalie** — forme des sept fonctions, matrice appliquée à des lignes réelles, réouverture
+      d'un channel sous un track fermé, administrateur non restreint, politiques des deux tables de
+      droits fins, privilèges, et `insert … returning`.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/droits-fins.spec.ts`, **15
+      scénarios**, avec les jetons réels des trois profils seedés. Les treize lignes du contrat
+      d'API du §4.2 y sont rejouées.
+- [x] **Preuves de refus n° 3, 4 et 11 acquises** au niveau des tracks et des channels : membre du
+      workspace A lisant B → zéro ligne ; `access = 'none'` → zéro ligne, sur le track **et** sur
+      ses channels ; anonyme → zéro ligne sur les quatre tables concernées. Le refus est mesuré
+      comme **zéro ligne**, jamais comme une erreur.
+- [x] **Seed repris dans le même changement** : quatre droits fins, un par situation de la matrice,
+      dont un posé sur l'administratrice pour que « un administrateur n'est jamais restreint » soit
+      démontré en permanence et non seulement dans une suite de tests.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+      `npm run test:sql` **789 assertions**, `npm run test:unit` **164 tests**, `npm run e2e:api`
+      **167 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier au prix du contournement
+      récurrent d'INC-036.
+- [x] **Aucune régression** : les dix-sept harnais précédents rejoués — `verify-stack`,
+      `verify-migrations`, `verify-authz`, `verify-seed`, `verify-tracks`, `verify-channels`,
+      `verify-catalogue`, `verify-workflows`, `verify-copie-workflow`, `verify-coherence-workflow`,
+      `verify-champs-formulaire` —, aucune anomalie. `scripts/verify-droits-fins.sh` :
+      **42 contrôles, aucune anomalie**.
+- [x] Harnais de preuves rejouable `scripts/verify-droits-fins.sh`, **non complaisant, éprouvé par
+      trois dégradations réelles** — politique revenue à `is_workspace_member`, jointure interne,
+      lecture des droits fins ouverte à tout membre. Chacune fait passer une lecture qui doit être
+      refusée, et la restauration est **constatée**.
+- [x] **Neuf assertions figées par des unités précédentes ont échoué comme prévu, et ont été
+      révisées** (mécanisme de la décision 51, huitième et neuvième occurrences) : dans
+      `0001`, `0002`, `0003`, `0004`, `0005`, et dans `verify-authz.sh`, `verify-tracks.sh`,
+      `tracks.spec.ts`, `channels.spec.ts`. **Aucune n'a été retirée** : elles sont retournées ou
+      restreintes aux trois tables d'identité, qui restent le sujet d'INC-014.
+- [x] `docs/SPEC-permissions-rls.md`, `docs/SCHEMA.md` §1 et §9, `docs/SPEC-tracks.md` §5.3,
+      `docs/SPEC-channels.md` §6.3, `docs/SPEC-seed.md` §2.11, `docs/DAT.md` §7,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 10), `docs/manual.md` §3.2 quater, `CHANGELOG.md`
+      mis à jour dans le même changement.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La webapp reste un appelant
+      **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Un droit fin est
+      par construction invisible à un anonyme, qui n'a déjà aucun accès : il n'existe **aucune**
+      vérification visuelle sensée à produire pour cette unité tant que l'arbitrage n'est pas rendu.
+      Les règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de
+      toute façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **Preuve de refus n° 7 non acquise** : « lecture du compte mail d'un autre utilisateur »
+      exige `mail_inbound_accounts`, livrée au chunk 4 (`CRM-052`). La Definition of Done la
+      nommait ; elle n'était pas satisfaisable à cette place du plan.
+- [ ] **`app.can_read_card` non livrée**, et la preuve n° 4 **au niveau des cards** avec elle :
+      `cards` arrive à `CRM-040`. INC-013 reste ouverte pour ce seul point, et pour la Definition
+      of Done de `CRM-010`, qui nomme six fonctions dont quatre lui échappent désormais.
+- [ ] **Les politiques des tables d'identité ne sont pas écrites** : `profiles`, `workspaces` et
+      `workspace_members` restent en refus par défaut. Aucune unité du backlog ne les porte, ni la
+      preuve n° 10 — **INC-014, arbitrage attendu**. Se les attribuer aurait été confortable, cette
+      unité touchant déjà aux politiques ; c'eût été décider à la place du responsable.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur la matrice de
+résolution ; preuves de refus n° 3, 4, 7 et 11 ». La première est livrée, largement au-delà — la
+matrice est éprouvée sur des lignes réelles, ce que `CRM-010` ne pouvait pas faire. Les preuves
+n° 3, 4 et 11 sont acquises **au niveau des tracks et des channels** ; la n° 7 et la n° 4 au niveau
+des **cards** ne l'étaient pas à cette place du plan, et l'absence est nommée plutôt que compensée
+par une preuve de substitution.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Neuvième unité consécutive à buter sur INC-021.
+- **Une exception restrictive posée avant cette migration devient opposable au moment où elle est
+  appliquée**, sans autre signal. Aucune ligne n'existe sur les bases du projet hors du seed, mais
+  le contrôle à exécuter avant tout déploiement est écrit dans `docs/PROD_MIGRATIONS.md` §3.
+- **La lecture d'un droit fin est réservée à l'administration et à l'intéressé.** C'est un choix de
+  produit, réversible, soumis à arbitrage en **INC-045**.
+- **`app.can_write_channel` est livrée sans usage** : aucune table fille de `channels` n'existe
+  encore. Elle est prouvée par la suite pgTAP, elle ne gouverne aujourd'hui aucune politique. Le
+  dire est plus honnête que de laisser croire l'inverse.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec
+  le certificat du proxy (INC-032, INC-042), et `npm ci` précédé d'un `npm config set cafile`.
 
 ### CRM-013 — Colonnes protégées `[ ]`
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables

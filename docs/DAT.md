@@ -446,9 +446,16 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   autre workspace rende « introuvable » et non « interdit » (`docs/JOURNAL.md`, décision 82). Sa
   vue `workflow_derivations` est `security_invoker = true` : elle n'ajoute aucun droit, elle relit
   les tables avec ceux de l'appelant.
-  Sur `tracks` et `channels`, ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
-  `app.can_read_channel` et `app.can_write_channel` étant différées : INC-024 et INC-030, à
-  resserrer par `CRM-012`. Sur le **catalogue de nœuds**, l'absence de droit fin n'est pas un
+  Sur `tracks` et `channels`, ces politiques appliquent les **droits fins** depuis `CRM-012` :
+  `app.can_read_track`, `app.can_read_channel` et `app.can_write_channel` sont livrées, INC-024 et
+  INC-030 sont closes. Les politiques n'appellent pas ces fonctions directement mais
+  `app.resolve_track_access(workspace_id, id)` et `app.resolve_channel_access(...)`, qui prennent
+  les colonnes de la ligne évaluée : **une politique qui relit sa propre table casse
+  `insert … returning`**, donc toute écriture demandant `Prefer: return=representation`
+  (`docs/SPEC-permissions-rls.md` §3.5, `docs/JOURNAL.md` décision 107). Les deux tables de droits
+  fins portent elles-mêmes quatre politiques chacune — lecture par l'administration et par
+  l'intéressé, écriture et suppression par l'administration (§4.1). Reste due
+  `app.can_read_card`, jusqu'à `CRM-040`. Sur le **catalogue de nœuds**, l'absence de droit fin n'est pas un
   écart : `track_members` et `channel_members` portent sur un sous-arbre d'organisation, et le
   catalogue n'appartient ni à un track ni à un channel — sa politique s'arrête au rôle de
   workspace **par conception** (`docs/SPEC-workflow-engine.md` §2.7). Les tables d'identité, elles,

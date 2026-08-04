@@ -212,33 +212,48 @@ select is(
 -- =============================================================================================
 -- 5. Ce que le seed ne pose PAS — docs/SPEC-seed.md §2.2 et §8
 -- =============================================================================================
--- Ces deux contrôles ne sont pas une formalité : ils rendront la suite rouge le jour où une unité
--- ajoutera des droits fins au seed sans étendre ces preuves. Les tables `tracks` et `channels`
--- n'existent pas encore (CRM-020, CRM-021) : une ligne de droit fin y désignerait le vide.
+-- Ces deux contrôles ne sont pas une formalité : ils devaient rendre la suite rouge le jour où une
+-- unité ajouterait des droits fins au seed sans étendre ces preuves. **C'est exactement ce qui
+-- s'est produit à `CRM-012`** (docs/JOURNAL.md décision 51, neuvième occurrence), et ils sont
+-- retournés plutôt que retirés : ils comptent désormais ce que le seed doit poser, de sorte qu'un
+-- droit fin ajouté ou perdu reste immédiatement visible depuis la suite du seed.
+--
+-- Le contrat détaillé — quelle ligne démontre quelle situation de la matrice — est en
+-- `docs/SPEC-seed.md` §2.11, et ses effets sont prouvés par
+-- `supabase/tests/0011_droits_fins.test.sql` et `e2e/api/droits-fins.spec.ts`.
 
 select is(
 	(select count(*)::int from public.track_members),
-	0,
-	'aucun droit fin de track : les tables cibles n''existent pas avant CRM-020');
+	2,
+	'deux droits fins de track : la restriction du viewer, et celle — sans effet — de '
+	'l''administratrice (docs/SPEC-seed.md §2.11)');
 
 select is(
 	(select count(*)::int from public.channel_members),
-	0,
-	'aucun droit fin de channel : les tables cibles n''existent pas avant CRM-021');
+	2,
+	'deux droits fins de channel : la réouverture de `prospection` pour le viewer, et la '
+	'lecture seule de `maintenance` pour le business developer');
 
 -- =============================================================================================
 -- 6. Le seed n'a ouvert aucun accès — docs/SPEC-permissions-rls.md §7
 -- =============================================================================================
 -- Peupler la base ne doit pas la rendre lisible. Le refus par défaut de CRM-003 — RLS activée,
--- aucune politique — doit tenir, seed ou pas. Les politiques sont l'objet de CRM-012.
+-- aucune politique — doit tenir, seed ou pas.
+--
+-- RÉVISÉE À `CRM-012`, non retirée : l'assertion portait sur cinq tables, dont les deux tables de
+-- droits fins que `CRM-012` a dotées de politiques (§4.1). Elle est devenue rouge au passage de
+-- l'unité, comme la décision 51 l'attendait, et est **restreinte aux trois tables d'identité** —
+-- les seules dont le refus par défaut soit encore la règle, INC-014 restant ouverte. Ce qu'elle
+-- prouve est inchangé : le **seed** n'ouvre rien. Ce qui a changé est ce qu'une **migration** a
+-- légitimement ouvert.
 
 select is(
 	(select count(*)::int from pg_policies
 	  where schemaname = 'public'
-	    and tablename in ('profiles', 'workspaces', 'workspace_members',
-	                      'track_members', 'channel_members')),
+	    and tablename in ('profiles', 'workspaces', 'workspace_members')),
 	0,
-	'aucune politique RLS n''a été posée par le seed : le refus par défaut est intact');
+	'aucune politique RLS n''a été posée sur les tables d''identité : le refus par défaut est '
+	'intact, et le seed ne l''a pas contourné (INC-014)');
 
 select * from finish();
 

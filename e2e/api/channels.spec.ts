@@ -129,7 +129,11 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		expect(await reponse.json()).toEqual([])
 	})
 
-	for (const compte of COMPTES_SEED) {
+	// RÉVISÉ À `CRM-012`, non retiré : le seed pose désormais des droits fins
+	// (docs/SPEC-seed.md §2.11), et Farida Nowak ne voit plus les six channels. Ce que ce
+	// scénario prouvait est conservé pour les deux profils qu'aucun droit fin ne vise ; le cas
+	// du `viewer` est prouvé séparément, ci-dessous.
+	for (const compte of COMPTES_SEED.filter((c) => c.role !== 'viewer')) {
 		test(`lignes c et d — ${compte.role} lit les channels de son workspace`, async ({
 			request,
 		}) => {
@@ -143,16 +147,42 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 			// Les six, archivé compris : c'est le **filtre de la barre d'onglets** qui masque
 			// l'archivé, pas la politique de lecture. Un administrateur doit pouvoir désarchiver.
 			expect(lignes).toHaveLength(6)
-			// Lire n'exige pas d'écrire : le `viewer` voit ce que voit l'administrateur.
+			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'admin.
 			expect(lignes.map((c) => c.slug)).toContain(CHANNEL_ARCHIVE)
 		})
 	}
+
+	test('le `viewer` seedé ne voit que quatre channels, dont un rouvert sous un track fermé', async ({
+		request,
+	}) => {
+		// LE SCÉNARIO LE PLUS INSTRUCTIF DE CE FICHIER, et il porte sur les données du seed.
+		// Farida Nowak est écartée de `conseil-ia` par un droit fin de **track**, ce qui masque
+		// ses trois channels ; un droit fin de **channel** lui rouvre `prospection`, et lui seul.
+		// « Le plus spécifique gagne » vaut dans les deux sens (§3.1).
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+
+		expect(reponse.status()).toBe(200)
+		const slugs = ((await reponse.json()) as Channel[]).map((c) => c.slug).sort()
+		// `refonte` et `maintenance` relèvent de `studio-web`, `inter-entreprises` de
+		// `formation` : aucun droit fin ne les vise. `prospection` est le seul channel de
+		// `conseil-ia` qui subsiste, et il ne subsiste que parce qu'un droit fin le rouvre.
+		expect(slugs).toEqual(['inter-entreprises', 'maintenance', 'prospection', 'refonte'])
+		// Les deux autres channels de `conseil-ia` restent masqués, l'archivé compris.
+		expect(slugs).not.toContain('grands-comptes')
+		expect(slugs).not.toContain(CHANNEL_ARCHIVE)
+	})
 
 	test('la requête de la barre d’onglets rend l’ordre du track, sans l’archivé', async ({
 		request,
 	}) => {
 		// La requête est exactement celle de `webapp/src/lib/channels.ts`.
-		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		// L'administratrice, et non plus le `viewer` : celui-ci ne voit plus qu'un des deux
+		// channels actifs de `conseil-ia` depuis `CRM-012`, et l'ordre se mesure sur la liste
+		// complète du track.
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const reponse = await request.get(
 			`${CHEMIN}?select=id,name,slug,position&track_id=eq.${TRACK_CONSEIL}` +
 				'&archived_at=is.null&order=position,name',
@@ -462,42 +492,49 @@ test.describe('C5 — archivage et suppression (lignes i, m)', () => {
 	})
 })
 
-test.describe('C6 — INC-030 : les droits fins ne sont pas appliqués', () => {
-	test('un `channel_members.access = none` ne masque rien encore', async ({ request }) => {
-		// L'écart est **prouvé**, pas seulement documenté : le jour où `CRM-012` resserrera la
-		// politique, ce scénario deviendra rouge et forcera sa révision (décision 51).
-		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
-		const profil = await request.get('/rest/v1/profiles?select=id&limit=100', {
-			headers: enTetesService(),
-		})
-		const profils = (await profil.json()) as { id: string }[]
-		expect(profils.length).toBeGreaterThan(0)
-
-		const canal = await request.get(`${CHEMIN}?select=id&slug=eq.prospection`, {
+test.describe('C6 — INC-030 close : les droits fins sont appliqués', () => {
+	// RÉVISÉ À `CRM-012`, non retiré. Ce scénario constatait qu'un `channel_members.access =
+	// 'none'` ne masquait rien, et devait devenir rouge au resserrement de la politique
+	// (décision 51). Il l'est devenu, et il est **retourné**.
+	//
+	// Il vise désormais un channel et un compte que le seed ne rapproche pas. La version
+	// précédente posait sa restriction sur `prospection` pour le `viewer`, puis la supprimait dans
+	// un `finally` — c'est-à-dire exactement la ligne que le seed pose depuis `CRM-012`. Elle
+	// détruisait donc une donnée du contrat à chaque exécution, silencieusement (décision 108).
+	test('un `channel_members.access = none` masque le channel à celui qu\'il vise', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[1].adresse)
+		const canal = await request.get(`${CHEMIN}?select=id&slug=eq.refonte`, {
 			headers: enTetesService(),
 		})
 		const [cible] = (await canal.json()) as Channel[]
+		const bizdevId = '5eed0000-0000-4000-8000-000000000012'
 
-		// L'identifiant du `viewer` seedé (`docs/SPEC-seed.md` §2.3).
-		const viewerId = '5eed0000-0000-4000-8000-000000000013'
+		// Condition de validité : la ligne est visible **avant** la restriction (décision 50).
+		const avant = await request.get(`${CHEMIN}?select=slug&slug=eq.refonte`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await avant.json()) as Channel[]).toHaveLength(1)
+
 		await request.post('/rest/v1/channel_members', {
 			headers: {
 				...enTetesService(),
 				'Content-Type': 'application/json',
 				Prefer: 'resolution=merge-duplicates',
 			},
-			data: { channel_id: cible?.id, user_id: viewerId, access: 'none' },
+			data: { channel_id: cible?.id, user_id: bizdevId, access: 'none' },
 		})
 
 		try {
-			const reponse = await request.get(`${CHEMIN}?select=slug&slug=eq.prospection`, {
+			const reponse = await request.get(`${CHEMIN}?select=slug&slug=eq.refonte`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 			expect(reponse.status()).toBe(200)
-			expect((await reponse.json()) as Channel[]).toHaveLength(1)
+			expect((await reponse.json()) as Channel[]).toHaveLength(0)
 		} finally {
 			await request.delete(
-				`/rest/v1/channel_members?channel_id=eq.${cible?.id}&user_id=eq.${viewerId}`,
+				`/rest/v1/channel_members?channel_id=eq.${cible?.id}&user_id=eq.${bizdevId}`,
 				{ headers: enTetesService() },
 			)
 		}

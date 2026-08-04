@@ -134,6 +134,30 @@ par `tracks`. Les écrire en `SECURITY DEFINER` évite la même récursion crois
 `track_members` interroge `tracks`, dont la politique interroge `track_members`. MESURÉ : aucune
 récursion, et les deux tables restent lisibles avec le filtrage attendu.
 
+### 3.5 Une politique n'appelle jamais une fonction qui relit sa propre table
+
+**Règle générale, née d'un défaut mesuré** (`docs/JOURNAL.md`, décision 107).
+
+Une politique `SELECT` gouverne aussi le `RETURNING` d'un `INSERT` ou d'un `UPDATE` — ce que
+PostgREST émet dès que l'appelant demande `Prefer: return=representation`. Si son prédicat appelle
+une fonction `STABLE` qui **relit la table gouvernée**, cette fonction voit le cliché du début de
+l'instruction : la ligne qui vient d'être écrite lui est invisible, la politique la refuse, et
+l'écriture entière est annulée en `42501`. Le défaut se manifeste **à l'écriture**, là où personne
+ne cherche une politique de lecture.
+
+La règle est donc : le prédicat d'une politique n'emploie que **les colonnes de la ligne évaluée**
+et des tables **tierces**. Les fonctions destinées aux politiques prennent ces colonnes en
+argument plutôt qu'un identifiant à résoudre :
+
+| Fonction | Employée par | Lit |
+|---|---|---|
+| `app.resolve_track_access(ws, track)` | la politique de `tracks` | `workspace_members`, `track_members` |
+| `app.resolve_channel_access(ws, track, ch)` | la politique de `channels` | `workspace_members`, `track_members`, `channel_members` |
+
+Les fonctions `can_*` du §3.3 conservent leur signature à un seul identifiant : elles s'adressent
+aux appelants qui n'ont que lui — une garde RPC, un test — et délèguent à celles-ci. Ce sont deux
+usages distincts, et les confondre est précisément ce qui a produit le défaut.
+
 ## 4. Politiques par famille de tables
 
 | Table | Lecture | Écriture |
@@ -191,6 +215,17 @@ Le remplacer par un archivage obligerait à distinguer « aucune ligne » de « 
 états que `app.resolve_access` traite identiquement. Même raisonnement que la décision 96 pour
 `form_field_rules`.
 
+**Un refus de suppression ne lève aucune erreur — il ne supprime rien.** MESURÉ pendant
+l'implémentation, et contraire à ce que ce chapitre annonçait d'abord : le `USING` d'une politique
+`for delete` **filtre** les lignes candidates. La commande réussit, `DELETE 0`, et PostgREST rend
+`200` avec `[]`. Seul un `WITH CHECK` lève `42501`, et une politique de suppression n'en porte pas.
+
+Conséquence pour les preuves, et elle n'est pas cosmétique : **un refus de suppression se prouve en
+relisant la ligne**, jamais en constatant une erreur ni son absence. Un test qui se contenterait de
+« la commande n'a pas échoué » serait vert que la règle tienne ou qu'elle soit retirée. C'est le
+dernier paragraphe du §7 — « un refus ne se manifeste pas toujours par une erreur » — appliqué à la
+suppression, où il est le plus facile d'oublier. Voir `docs/JOURNAL.md`, décision 106.
+
 **Un administrateur peut se restreindre lui-même, et cela ne l'atteint pas.** La règle 2 du §2.2 —
 « un administrateur n'est jamais restreint » — vaut à la résolution, pas à l'écriture. Une ligne
 `track_members` posée sur un administrateur est acceptée, stockée, lisible, et **sans effet**. Ce
@@ -215,6 +250,7 @@ prédites.
 | h | `business_developer` pose un droit fin | `403` | `42501`, `new row violates row-level security policy` |
 | i | `admin` pose un droit fin | `201` | la ligne |
 | j | `admin` supprime un droit fin | `204` | l'accès redevient hérité |
+| j' | `viewer` supprime **sa propre** restriction | `200` | `[]` — **aucune erreur, aucune suppression** : le `USING` filtre, la ligne survit (§4.1) |
 | k | `admin` de A pose un droit fin sur un track de B | `403` | `42501` |
 | l | `admin` de A lit les tracks de B | `200` | `[]` — **preuve n° 3**, inchangée par le resserrement |
 

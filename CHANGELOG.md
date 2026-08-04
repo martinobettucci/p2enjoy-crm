@@ -15,6 +15,57 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-012` — les droits fins par track et par channel deviennent opposables.**
+  `supabase/migrations/0010_droits_fins.sql`.
+  - **Trois des quatre fonctions `can_*`** que `docs/SPEC-permissions-rls.md` §3 annonçait depuis
+    `CRM-000` sont livrées : `app.can_read_track`, `app.can_read_channel`, `app.can_write_channel`.
+    Leur motif d'attente — la table de destination n'existait pas — est éteint depuis `CRM-020` et
+    `CRM-021`. `app.can_read_card` reste différée, `cards` arrivant à `CRM-040` (INC-013,
+    décision 103).
+  - **Les politiques de lecture de `tracks` et de `channels` appliquent le droit fin** : un
+    `track_members.access = 'none'` masque désormais le track **et tous ses channels**, et un
+    `channel_members.access = 'member'` en rouvre un sous un track fermé. INC-024 et INC-030 sont
+    closes.
+  - **`track_members` et `channel_members` portent enfin des politiques** — aucun chapitre ne les
+    nommait, lacune ouverte en INC-045. Lecture par l'administrateur du workspace **et** par
+    l'intéressé pour sa propre ligne ; insertion, mise à jour et **suppression** réservées à
+    l'administrateur, la suppression étant exposée parce que retirer un droit fin n'est pas
+    supprimer une donnée mais revenir à l'accès hérité (décision 105).
+  - **Un administrateur n'est jamais restreint** : une ligne restrictive posée sur son compte est
+    acceptée, lisible, et sans effet tant qu'il administre. Le seed en pose une pour que la règle
+    soit démontrée en permanence, et non seulement dans une suite de tests.
+  - **Le seed pose quatre droits fins** (`docs/SPEC-seed.md` §2.11), un par situation de la matrice
+    du §2.2. Farida Nowak ne voit plus que trois des quatre tracks, et un seul des trois channels
+    de « Conseil & IA ». C'est la première fois qu'un compte du seed voit autre chose qu'un autre.
+  - Preuves : `supabase/tests/0011_droits_fins.test.sql` (**71 assertions**),
+    `e2e/api/droits-fins.spec.ts` (**15 scénarios**, les treize lignes du contrat d'API du §4.2 avec
+    les jetons réels des trois profils), et `scripts/verify-droits-fins.sh`, non complaisant —
+    éprouvé par trois dégradations réelles, chacune restaurée et la restauration **constatée**.
+
+### Corrigé
+
+- **`CRM-012` — une politique qui relit sa propre table casse `insert … returning`.** Défaut réel,
+  introduit puis corrigé dans le même changement, et trouvé par les preuves de `CRM-020`. Le
+  `RETURNING` d'un `INSERT` est soumis à la politique `SELECT` ; une fonction `STABLE` ne voit pas
+  la ligne écrite par l'instruction en cours. Toute création de track ou de channel par un
+  administrateur rendait `403`. Les politiques évaluent désormais les **colonnes de la ligne**
+  (`app.resolve_track_access`, `app.resolve_channel_access`) au lieu de relire la table. Règle
+  générale écrite en `docs/SPEC-permissions-rls.md` §3.5, régression figée par quatre assertions
+  (décision 107).
+- **`CRM-012` — un refus de suppression ne lève aucune erreur.** Le `USING` d'une politique
+  `for delete` **filtre** les lignes : la commande réussit, rien n'est supprimé, PostgREST rend
+  `200`. Une preuve de suppression refusée qui ne relit pas la ligne est verte que la règle tienne
+  ou qu'elle ait été retirée. Le contrat du §4.1 et quatre assertions ont été corrigés en
+  conséquence (décision 106).
+- **`CRM-020`, `CRM-021` — deux scénarios d'API détruisaient des données du seed.** `T6` et `C6`
+  supprimaient par prédicat des lignes de droits fins qu'ils n'avaient pas toutes créées, et
+  amputaient le seed à chaque exécution de `npm run e2e:api`. Invisible tant que les tables
+  restaient vides (décision 108).
+- **`CRM-020` — `scripts/verify-tracks.sh` laissait le produit dégradé.** Il réappliquait
+  `0003_tracks.sql` seule, ce qui ramenait `tracks_lecture_membre` à sa version sans droits fins.
+  Il rejoue désormais la paire `0003` + `0010`, dans l'ordre du `migrations-runner`. La dépendance
+  d'ordre est inscrite dans `docs/PROD_MIGRATIONS.md` §3.
+
 - **`CRM-035` — un workflow porte désormais son formulaire.**
   `supabase/migrations/0009_champs_formulaire.sql`.
   - **`public.form_fields`** : les questions posées à propos d'une card, déclarées pour un

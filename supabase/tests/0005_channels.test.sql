@@ -17,8 +17,9 @@
 --      simulées exactement comme PostgREST les pose ;
 --   6. les **écarts, figés par des assertions** : `workflow_id` nullable et sans clé étrangère
 --      tant que `workflows` n'existe pas (INC-029), et un `channel_members` restrictif qui ne
---      masque rien (INC-030). Ces assertions deviendront rouges à `CRM-031` et à `CRM-012`, et
---      forceront la révision de la spécification plutôt que de la laisser dériver en silence.
+--      masquait rien (INC-030). Ces deux assertions sont **devenues rouges** à `CRM-033` et à
+--      `CRM-012`, et ont été retournées dans le changement qui les a rendues fausses — jamais
+--      retirées, jamais laissées survivre à leur cause.
 --
 -- Exécution : `npm run test:sql`, `scripts/verify-channels.sh`, ou directement
 --   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -547,13 +548,12 @@ reset role;
 rollback to savepoint avant_revocation;
 
 -- =============================================================================================
--- 10. INC-030 — l'écart de droit fin, figé par une assertion
+-- 10. INC-030 — l'écart de droit fin a été soldé, et l'assertion qui le figeait a été révisée
 -- =============================================================================================
--- `docs/SPEC-permissions-rls.md` §4 prescrit `app.can_read_channel`, différée par INC-013. La
--- politique livrée s'arrête au rôle de workspace : elle cloisonne, elle ne restreint pas.
---
--- L'assertion qui suit **constate** cet écart plutôt que de le commenter. Le jour où `CRM-012`
--- resserrera la politique, elle deviendra rouge et forcera sa révision.
+-- Jusqu'à `CRM-012`, la politique de lecture s'arrêtait au rôle de workspace : elle cloisonnait,
+-- elle ne restreignait pas. L'assertion qui suit **constatait** cet écart ; elle est devenue rouge
+-- au passage de `CRM-012`, comme la décision 51 l'attendait, et elle est **retournée** plutôt que
+-- retirée — elle prouve désormais que le droit fin masque bien le channel.
 
 -- Le droit fin vise **un** channel précis, désigné par son track : `coherent` existe aussi dans
 -- `track-a2` et dans le workspace B, l'unicité du slug étant par track. Compter sur le seul slug
@@ -569,10 +569,9 @@ select pg_temp.endosser('44440000-0000-4000-8000-00000000000b');
 select is(
 	(select count(*)::int from public.channels c
 	  where c.slug = 'coherent' and c.track_id = '33330000-0000-4000-8000-0000000000a1'),
-	1,
-	'INC-030 : un `channel_members.access = ''none''` ne masque **rien** encore — la politique '
-	'ignore les droits fins, faute de `app.can_read_channel` (INC-013). Cette assertion '
-	'deviendra rouge lorsque `CRM-012` resserrera la politique');
+	0,
+	'INC-030 CLOSE : un `channel_members.access = ''none''` **masque** désormais le channel — la '
+	'politique de CRM-012 s''appuie sur `app.can_read_channel`. Assertion retournée, non retirée');
 reset role;
 rollback to savepoint avant_droit_fin;
 
@@ -583,10 +582,10 @@ rollback to savepoint avant_droit_fin;
 -- concernent directement cette table, afin qu'aucune ne puisse apparaître au détour d'une unité
 -- sans que les preuves des channels soient étendues.
 
-select hasnt_function('app', 'can_read_channel',
-	'INC-013 : `app.can_read_channel` reste différée — son arbitrage appartient au responsable');
-select hasnt_function('app', 'can_write_channel',
-	'INC-013 : `app.can_write_channel` reste différée');
+select has_function('app', 'can_read_channel',
+	'INC-013 éteinte pour elle : `app.can_read_channel` est livrée par CRM-012');
+select has_function('app', 'can_write_channel',
+	'INC-013 éteinte pour elle : `app.can_write_channel` est livrée par CRM-012');
 
 select * from finish();
 rollback;

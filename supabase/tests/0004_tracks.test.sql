@@ -466,17 +466,17 @@ reset role;
 rollback to savepoint avant_revocation;
 
 -- =============================================================================================
--- 8. INC-024 — l'écart de droit fin, figé par une assertion
+-- 8. INC-024 — l'écart de droit fin a été soldé, et l'assertion qui le figeait a été révisée
 -- =============================================================================================
 -- LIMITE FIGÉE PAR UNE ASSERTION, ET NON PAR UN COMMENTAIRE (docs/JOURNAL.md, décision 51).
 --
--- `docs/SPEC-permissions-rls.md` §4 prescrit `app.can_read_track`, différée par INC-013. La
--- politique livrée s'arrête au rôle de workspace : un `track_members.access = 'none'` ne masque
--- donc rien encore.
+-- Jusqu'à `CRM-012`, la politique de lecture s'arrêtait au rôle de workspace : un
+-- `track_members.access = 'none'` ne masquait rien. Deux assertions **constataient** cet écart, et
+-- elles sont devenues rouges au passage de `CRM-012` — c'est exactement ce qu'on leur demandait.
 --
--- Les deux assertions ci-dessous **constatent** cet état. Le jour où `CRM-012` resserrera la
--- politique, elles deviendront rouges et forceront leur révision, au lieu de laisser la limite
--- survivre à sa cause.
+-- Elles ne sont pas retirées, elles sont **retournées** : elles prouvent désormais que le droit
+-- fin masque bien le track. Le comptage se fait toujours à l'endroit même où l'écart était
+-- constaté, de sorte que la trace du passage subsiste dans le fichier.
 
 savepoint avant_droit_fin;
 
@@ -487,14 +487,14 @@ insert into public.track_members (track_id, user_id, access)
 select pg_temp.endosser('22220000-0000-4000-8000-00000000000b');
 select is(
 	(select count(*)::int from public.tracks t where t.slug = 'jeton-brand'),
-	1,
-	'INC-024 : un `track_members.access = ''none''` ne masque PAS encore le track — la politique '
-	'de CRM-020 s''arrête au rôle de workspace. Cette assertion doit devenir rouge à CRM-012');
+	0,
+	'INC-024 CLOSE : un `track_members.access = ''none''` **masque** désormais le track — la '
+	'politique de CRM-012 s''appuie sur `app.can_read_track`. Assertion retournée, non retirée');
 reset role;
 
-select hasnt_function('app', 'can_read_track', array['uuid'],
-	'INC-013 : `app.can_read_track` n''est toujours pas livrée — son arbitrage reste ouvert, et '
-	'CRM-020 ne le tranche pas à la place du responsable');
+select has_function('app', 'can_read_track', array['uuid'],
+	'INC-013 éteinte pour elle : `app.can_read_track` est livrée par CRM-012, et ses preuves de '
+	'comportement vivent dans supabase/tests/0011_droits_fins.test.sql');
 
 rollback to savepoint avant_droit_fin;
 

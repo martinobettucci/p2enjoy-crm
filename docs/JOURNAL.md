@@ -3862,3 +3862,125 @@ fonctions d'appui, `app.track_workspace` et `app.channel_workspace`, en `SECURIT
 même raison qu'au §3.3 — sans quoi `track_members` interrogerait `tracks`, dont la politique
 interroge `track_members`. MESURÉ : aucune récursion, les deux tables restent lisibles avec le
 filtrage attendu. L'écart d'INC-011 n'est pas résolu ; il est **payé**, et le prix est nommé.
+
+### Décision 106 — Un refus de suppression ne lève aucune erreur, et la preuve a dû changer de forme
+
+**Le défaut, trouvé par les preuves de l'unité elle-même.** Le §4.1 écrit avant le code annonçait
+une politique `for delete` en `USING`, et la suite pgTAP a été rédigée en conséquence : deux
+assertions `throws_ok` attendaient `42501` sur une suppression refusée. Les deux sont **devenues
+rouges**, et pour une raison que ni le chapitre ni le test n'avaient vue.
+
+**Ce qui a été mesuré.** Le `USING` d'une politique `for delete` ne refuse pas la commande : il
+**filtre** les lignes candidates. La commande réussit, `DELETE 0`, aucune ligne ne disparaît, et
+aucune erreur n'est levée. À travers PostgREST, un `viewer` qui tente de retirer sa propre
+restriction reçoit `200` et `[]`. Seul un `WITH CHECK` lève `42501` — et une politique de
+suppression n'en porte pas, PostgreSQL n'en acceptant pas sur `for delete`.
+
+**Pourquoi cela compte plus qu'une correction de test.** Une assertion écrite « la commande n'a pas
+échoué » aurait été verte **que la règle tienne ou qu'elle ait été retirée** : il n'y a aucune
+différence observable entre « la politique a filtré la ligne » et « la politique n'existe pas et la
+ligne n'était pas là ». Une preuve de suppression refusée qui ne relit pas la ligne ne prouve rien.
+C'est exactement le piège que le §7 nomme depuis `CRM-000` — « un refus ne se manifeste pas
+toujours par une erreur » — appliqué à l'opération où il est le plus facile d'oublier, parce que
+l'insertion et la mise à jour, elles, lèvent bien `42501`.
+
+**Décision.** Les deux assertions deviennent **quatre** : `lives_ok` sur la commande, puis une
+relecture de la ligne hors du rôle restreint, qui la constate **intacte**. Le §4.1 et le contrat
+d'API du §4.2 sont corrigés dans le même changement — ligne *j'* ajoutée —, plutôt que le test
+relâché. C'est la même règle qu'à la décision 87 : quand la mesure contredit le contrat écrit,
+c'est le contrat qui est révisé, jamais la preuve qui est adoucie.
+
+**Portée au-delà de cette unité.** Aucune autre politique `for delete` n'existe dans le dépôt :
+`form_field_rules` est la seule autre table dont la suppression est exposée, et `CRM-035` ne lui a
+posé aucune politique de suppression — son refus vient du **privilège** manquant, qui lève bien
+`42501`. Les preuves existantes ne sont donc pas concernées. Elles le deviendront à la première
+table qui exposera `DELETE` à `authenticated` : la règle est écrite ici pour qu'elle soit lue
+avant, non après.
+
+### Décision 107 — Une politique ne relit pas sa propre table : `insert … returning` en dépend
+
+**LE DÉFAUT LE PLUS GRAVE DE CE PASSAGE, ET IL A ÉTÉ TROUVÉ PAR LES PREUVES D'UNE UNITÉ
+PRÉCÉDENTE.** La suite pgTAP de `CRM-012` était verte sur ses 67 assertions ; c'est
+`e2e/api/tracks.spec.ts`, livré par `CRM-020`, qui a rougi.
+
+**Le symptôme.** `ligne g — l'administrateur crée un track` rendait `403`, code `42501`, là où le
+contrat mesuré de `docs/SPEC-tracks.md` §6 annonce `201`. Un administrateur ne pouvait plus créer
+ni track ni channel depuis l'API. Ce n'est pas une preuve devenue caduque : c'est une fonction du
+produit cassée par cette unité.
+
+**La cause, mesurée et non supposée.** La politique de lecture s'appuyait sur
+`app.can_read_track(id)`, qui **relit `public.tracks`** pour en tirer le workspace. Deux mesures
+l'établissent : un `insert` seul réussit, le même `insert … returning` échoue. PostgREST envoie
+toujours la seconde forme dès que l'appelant demande `Prefer: return=representation` — et le
+`RETURNING` d'un `INSERT` est soumis à la politique `SELECT`. Or la fonction est `STABLE` : elle
+voit le cliché du **début de l'instruction**, où la ligne insérée n'existe pas encore. La politique
+refuse une ligne que l'appelant vient lui-même d'écrire, et l'`INSERT` entier est annulé.
+
+**Ce qui n'a pas été fait, et pourquoi.** Passer la fonction en `VOLATILE` aurait fait disparaître
+le symptôme : une fonction volatile recharge son cliché et verrait la ligne. C'eût été payer un
+rechargement par ligne évaluée, sur toutes les lectures de la table, pour contourner un défaut de
+conception au lieu de le corriger. Refusé.
+
+**La correction.** Une politique RLS est évaluée **sur une ligne dont elle possède déjà toutes les
+colonnes**. Relire la table par son identifiant n'apporte rien et coûte le défaut ci-dessus. Deux
+fonctions prennent désormais les colonnes en argument — `app.resolve_track_access(ws, track)` et
+`app.resolve_channel_access(ws, track, ch)` — et ne lisent que `track_members` et
+`channel_members`, tables que l'instruction en cours ne touche pas. Les politiques les appellent
+avec `workspace_id`, `track_id` et `id` pris sur la ligne. Les fonctions `can_*` du §3.3 sont
+conservées telles que la spécification les décrit — elles servent les appelants qui n'ont qu'un
+identifiant — et délèguent à celles-ci.
+
+Effet secondaire favorable, non recherché : la lecture d'une liste de tracks ne fait plus une
+relecture de `tracks` par ligne rendue.
+
+**Ce que cela enseigne, et qui dépasse cette unité.** Toute politique `SELECT` dont le prédicat
+relit sa propre table casse `insert … returning` sur cette table, silencieusement, et le symptôme
+apparaît **à l'écriture** — là où personne ne le cherche. Les politiques déjà livrées ont été
+relues : `tracks`, `channels`, `workflow_nodes_catalog`, `workflows`, `workflow_steps`,
+`workflow_transitions`, `form_fields`, `form_field_rules` s'appuient toutes sur
+`app.is_workspace_member(workspace_id)`, qui ne lit que `workspace_members`. Aucune autre
+correction n'était due. La règle est écrite ici pour être lue **avant** la prochaine politique, non
+après.
+
+**Ce qui fige la régression.** Deux assertions de `supabase/tests/0011_droits_fins.test.sql` font
+un `insert … returning` sur `tracks` puis sur `channels` avec le jeton de l'administrateur. Elles
+échouent si l'une des deux politiques revient à relire sa table. Un commentaire n'aurait pas tenu.
+
+### Décision 108 — Deux effets de bord que seul un seed non vide pouvait révéler
+
+Rendre les droits fins opposables **et** en poser dans le seed a mis au jour deux défauts qui
+dormaient depuis `CRM-020`. Aucun des deux n'est dans le code livré par cette unité ; tous deux
+étaient invisibles tant que les tables de droits fins restaient vides.
+
+**1. Deux scénarios d'API détruisaient des données du seed.** `e2e/api/tracks.spec.ts` (T6) et
+`e2e/api/channels.spec.ts` (C6) posaient une ligne de droit fin sur `conseil-ia` / `prospection`
+pour le `viewer`, puis la supprimaient dans un `finally`. Ce sont **exactement** les deux lignes que
+le seed pose depuis `docs/SPEC-seed.md` §2.11. Chaque exécution de `npm run e2e:api` amputait donc
+le seed de la moitié de son contrat de droits fins, sans le dire — et le symptôme apparaissait bien
+plus tard, sur un scénario sans rapport.
+
+Le défaut était invisible avant : la suppression d'une ligne que le harnais venait lui-même de
+créer ne détruisait rien. Correction : les deux scénarios visent désormais un couple
+(objet, compte) **que le seed ne rapproche pas**, et leur `finally` ne peut plus atteindre une
+ligne du contrat. La règle générale est simple et vaut pour tout scénario à venir : *un test ne
+supprime jamais par prédicat ce qu'il n'a pas créé par identifiant*.
+
+**2. Deux migrations définissent la même politique, et rejouer la première seule dégrade le
+produit.** `0003_tracks.sql` crée `tracks_lecture_membre` ; `0010_droits_fins.sql` la redéfinit
+pour y appliquer les droits fins. Le `migrations-runner` rejoue tout le répertoire dans l'ordre :
+l'état final est toujours celui de `0010`, et rien n'est cassé en fonctionnement normal.
+
+Mais `scripts/verify-tracks.sh` réapplique `0003` **seule**, à deux endroits — son contrôle
+d'idempotence, et la restauration après chaque dégradation. Il ramenait donc la base à l'état de
+`CRM-020`, faisait échouer sa propre empreinte, **et laissait le produit dégradé derrière lui**.
+
+Deux corrections étaient possibles. Retirer la politique de `0003` aurait rendu la migration
+autonome, au prix de rouvrir un livrable de `CRM-020` (`CLAUDE.md` §13) et de rendre `0003`
+inapplicable seule sur une base neuve. Retenue : le harnais rejoue la **paire**, dans l'ordre du
+runner, et la dépendance est inscrite dans `docs/PROD_MIGRATIONS.md` §3 — là où un humain qui
+applique les migrations à la main la lira.
+
+**Ce que ces deux défauts ont en commun.** Ils ne se voyaient que sur un état non trivial : des
+droits fins réellement posés, et une politique réellement redéfinie. C'est l'argument du §8 de
+`CLAUDE.md` — un seed qui couvre les états réels n'est pas un confort de démonstration, c'est un
+révélateur.

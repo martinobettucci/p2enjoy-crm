@@ -27,7 +27,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(127);
+select plan(128);
 
 -- =============================================================================================
 -- 1. Contrat des fonctions livrées — docs/SPEC-permissions-rls.md §3
@@ -489,13 +489,29 @@ select is(
 -- `CRM-010` n'écrit **aucune** politique : le refus par défaut posé par `CRM-003` est intact. Les
 -- politiques sont l'objet de `CRM-012`.
 
+-- RÉVISÉE À `CRM-012`, non retirée. Cette assertion portait sur cinq tables et exigeait zéro
+-- politique. `CRM-012` en a posé quatre sur `track_members` et quatre sur `channel_members`
+-- (docs/SPEC-permissions-rls.md §4.1) : elle est devenue rouge comme la décision 51 l'attendait.
+-- Elle est **restreinte aux trois tables d'identité**, qui restent le sujet d'INC-014 et le seul
+-- endroit où le refus par défaut de `CRM-003` doit encore être intact. Elle deviendra rouge à
+-- nouveau le jour où INC-014 sera tranchée, et c'est ce qu'on lui demande.
 select is(
 	(select count(*)::int from pg_policies
 	  where schemaname = 'public'
-	    and tablename in ('profiles', 'workspaces', 'workspace_members',
-	                      'track_members', 'channel_members')),
+	    and tablename in ('profiles', 'workspaces', 'workspace_members')),
 	0,
-	'aucune politique n''est posée par CRM-010 : le refus par défaut de CRM-003 est intact'
+	'INC-014 : `profiles`, `workspaces` et `workspace_members` restent en refus par défaut — '
+	'aucune unité ne porte leurs politiques, et CRM-012 ne se les est pas attribuées'
+);
+
+-- Le pendant de l'assertion ci-dessus : ce que `CRM-012` a **bien** posé. Sans elle, restreindre
+-- la précédente à trois tables reviendrait à effacer la trace des deux autres.
+select is(
+	(select count(*)::int from pg_policies
+	  where schemaname = 'public'
+	    and tablename in ('track_members', 'channel_members')),
+	8,
+	'CRM-012 a posé quatre politiques sur chacune des deux tables de droits fins (§4.1)'
 );
 
 -- Les quatre fonctions restantes de `docs/SPEC-permissions-rls.md` §3 dépendent de `tracks`,
@@ -503,12 +519,18 @@ select is(
 -- leur absence plutôt que de la taire, afin de devenir rouge le jour où elles seront écrites sans
 -- que ces preuves soient étendues (INC-013, même procédé qu'INC-010 dans la suite `0001`).
 
-select hasnt_function('app', 'can_read_track', array['uuid'],
-	'INC-013 : `app.can_read_track` non livrée — `tracks` arrive avec CRM-020');
-select hasnt_function('app', 'can_read_channel', array['uuid'],
-	'INC-013 : `app.can_read_channel` non livrée — `channels` arrive avec CRM-021');
-select hasnt_function('app', 'can_write_channel', array['uuid'],
-	'INC-013 : `app.can_write_channel` non livrée — `channels` arrive avec CRM-021');
+-- RÉVISÉES À `CRM-012`, converties et non retirées : trois des quatre fonctions sont livrées, et
+-- ce sont leurs tables qui n'existaient pas. Les `hasnt_function` sont devenues rouges exactement
+-- comme prévu ; les remplacer par des `has_function` est ce que la décision 51 attend d'elles, et
+-- leurs preuves de comportement sont étendues par `supabase/tests/0011_droits_fins.test.sql`.
+select has_function('app', 'can_read_track', array['uuid'],
+	'INC-013 éteinte pour elle : `app.can_read_track` est livrée par CRM-012');
+select has_function('app', 'can_read_channel', array['uuid'],
+	'INC-013 éteinte pour elle : `app.can_read_channel` est livrée par CRM-012');
+select has_function('app', 'can_write_channel', array['uuid'],
+	'INC-013 éteinte pour elle : `app.can_write_channel` est livrée par CRM-012');
+
+-- Celle-ci reste due, et pour la raison d'origine : `cards` n'existe pas.
 select hasnt_function('app', 'can_read_card', array['uuid'],
 	'INC-013 : `app.can_read_card` non livrée — `cards` arrive avec CRM-040');
 

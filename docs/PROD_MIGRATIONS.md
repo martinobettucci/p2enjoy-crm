@@ -107,6 +107,7 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 | 8 | `supabase/migrations/0008_coherence_workflow_channel.sql` | **Deux** triggers de cohérence workflow ↔ channel — `channels_verifier_workflow` (`BEFORE INSERT OR UPDATE OF workflow_id, track_id, workspace_id`) et `workflows_verifier_portee_occupee` (`BEFORE UPDATE OF scope, track_id`) — et la contrainte **`NOT NULL`** sur `channels.workflow_id` qu'INC-029 laissait due depuis `CRM-021`. Le second trigger n'était demandé par aucune spécification : la mesure a établi que **deux** des quatre écritures capables de casser la cohérence passent par `workflows` et non par `channels` (INC-040, `docs/JOURNAL.md` décision 89). | Migrations 1 à 6 : `public.channels`, `public.workflows` et `public.tracks` doivent exister. **Et une condition de données**, ci-dessous. | `drop trigger channels_verifier_workflow on public.channels; drop trigger workflows_verifier_portee_occupee on public.workflows; alter table public.channels alter column workflow_id drop not null; drop function app.channels_verifier_workflow(); drop function app.workflows_verifier_portee_occupee();` — **non destructif** : aucune donnée n'est perdue, seules les gardes disparaissent. Les rattachements incohérents créés après le retour arrière ne seront pas détectés. |
 
 | 9 | `supabase/migrations/0009_champs_formulaire.sql` | Les deux tables du form composer : `public.form_fields` (champs d'un workflow, quinze types, options exigées pour `select`, `multiselect` et `money`, unicité **totale** de la clé par workflow, trigger d'attribution de `position`) et `public.form_field_rules` (visibilité d'un champ à une étape, clé primaire `(field_id, step_id)`, **trois clés étrangères composites** qui rendent structurellement impossible une règle croisant deux workflows). Six politiques RLS, privilèges explicites, et **aucun** privilège `DELETE` sur les champs — l'archivage tient lieu de suppression (`docs/JOURNAL.md` décisions 94 à 98). | Migrations 1 à 6 : `public.workflows` et `public.workflow_steps` doivent exister. **Aucune condition de données** : les deux tables sont créées vides. | `drop table public.form_field_rules; drop table public.form_fields; drop function app.form_fields_attribuer_position();` — **destructif au sens strict** : les définitions de formulaires et leurs règles sont perdues. Aucune autre table n'en dépend aujourd'hui, `card_field_values` n'étant pas livrée (`CRM-036`). |
+| 10 | `supabase/migrations/0010_droits_fins.sql` | Les droits fins deviennent **opposables** : cinq fonctions `SECURITY DEFINER` (`app.can_read_track`, `app.can_read_channel`, `app.can_write_channel`, plus `app.track_workspace` et `app.channel_workspace`) et deux fonctions de résolution employées par les politiques (`app.resolve_track_access`, `app.resolve_channel_access`). Les politiques de **lecture** de `public.tracks` et de `public.channels` sont **redéfinies** pour appliquer les droits fins ; `public.track_members` et `public.channel_members` reçoivent leurs quatre politiques chacune — lecture par l'administrateur et par l'intéressé, écriture et **suppression** par l'administrateur (`docs/SPEC-permissions-rls.md` §4.1). `app.can_read_card` reste différée : `cards` arrive à `CRM-040`. | Migrations 1 à 4 : `public.tracks`, `public.channels`, `public.track_members`, `public.channel_members` et les fonctions de la migration 2 doivent exister. **DÉPENDANCE D'ORDRE STRICTE** : cette migration redéfinit `tracks_lecture_membre` et `channels_lecture_membre`, créées par les migrations 3 et 4. Réappliquer 3 ou 4 **après** celle-ci ramène les politiques à leur version sans droits fins — toute réapplication partielle doit donc se terminer par la 10 (`docs/JOURNAL.md` décision 108). | `drop policy` des huit politiques de `track_members` et `channel_members`, puis réapplication des migrations 3 et 4 pour restaurer les politiques de lecture d'origine, puis `drop function` des sept fonctions. **Non destructif** : aucune donnée n'est perdue. **Effet immédiat et visible** : les droits fins cessent d'être appliqués, et tout membre du workspace retrouve l'accès à tous les tracks et channels — c'est un **élargissement** d'accès, à ne pas exécuter sans l'avoir voulu. |
 
 **VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 8.** Elle pose `NOT NULL` sur
 `channels.workflow_id`. Si une seule ligne de `public.channels` portait `workflow_id` nul,
@@ -137,6 +138,29 @@ choisir le workflow d'un channel est une décision métier, non une valeur par d
 supposée : elle ne crée que des tables neuves, ne modifie aucune table existante et ne pose aucune
 contrainte sur des données déjà présentes. Une production qui l'applique voit apparaître deux tables
 vides ; aucun formulaire n'existe tant qu'un administrateur n'en a pas défini.
+
+**CE QUE LA MIGRATION 10 CHANGE POUR LES UTILISATEURS EXISTANTS, ET QU'IL FAUT MESURER AVANT.**
+Elle **restreint** des accès, ce qu'aucune migration précédente n'avait fait. Toute ligne déjà
+présente dans `public.track_members` ou `public.channel_members` portant `access = 'none'` ou
+`access = 'viewer'` devient **opposable au moment de l'application**, sans autre signal. Avant
+d'appliquer :
+
+```sql
+select 'track' as portee, tm.access, count(*)
+  from public.track_members tm group by 1, 2
+union all
+select 'channel', cm.access, count(*)
+  from public.channel_members cm group by 1, 2;
+```
+
+Un résultat vide signifie qu'aucun accès n'est modifié. Sinon, chaque ligne restrictive doit être
+confirmée avec le responsable du workspace concerné : un droit fin posé « pour plus tard » à une
+époque où il ne produisait aucun effet deviendrait actif sans que personne l'ait décidé.
+
+**Ce que la migration 10 ne fait pas, et qui reste dû.** Elle n'écrit **aucune** politique sur
+`public.profiles`, `public.workspaces` et `public.workspace_members` : ces trois tables restent en
+refus par défaut depuis la migration 1, et aucune unité du backlog ne porte leurs politiques
+(INC-014, arbitrage attendu). Elle n'écrit pas non plus `app.can_read_card`, faute de table.
 
 **Ce que la migration 9 ne fait pas, et qui reste dû.** `copy_workflow_to_track` (migration 7) ne
 copie **aucun** champ de formulaire : un workflow copié vers un track naît sans formulaire. Le

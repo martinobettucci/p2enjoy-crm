@@ -384,10 +384,19 @@ select policies_are('public', 'workspaces',        array[]::text[],
 	'`workspaces` n''a aucune politique : refus par défaut, INC-014');
 select policies_are('public', 'workspace_members', array[]::text[],
 	'`workspace_members` n''a aucune politique : refus par défaut, INC-014');
-select policies_are('public', 'track_members',     array[]::text[],
-	'`track_members` n''a aucune politique : refus par défaut jusqu''à CRM-012');
-select policies_are('public', 'channel_members',   array[]::text[],
-	'`channel_members` n''a aucune politique : refus par défaut jusqu''à CRM-012');
+-- RÉVISÉES À `CRM-012`, non retirées : les deux tables de droits fins portent désormais leurs
+-- quatre politiques (docs/SPEC-permissions-rls.md §4.1). Les deux `policies_are` vides sont
+-- devenues rouges au passage de l'unité, exactement comme la décision 51 l'attendait, et sont
+-- **retournées** — elles nomment maintenant les politiques attendues, de sorte qu'en retirer une
+-- reste immédiatement visible depuis la suite du socle.
+select policies_are('public', 'track_members',
+	array['track_members_lecture', 'track_members_insertion_admin',
+	      'track_members_maj_admin', 'track_members_suppression_admin'],
+	'`track_members` porte les quatre politiques de CRM-012 (§4.1)');
+select policies_are('public', 'channel_members',
+	array['channel_members_lecture', 'channel_members_insertion_admin',
+	      'channel_members_maj_admin', 'channel_members_suppression_admin'],
+	'`channel_members` porte les quatre politiques de CRM-012 (§4.1)');
 
 -- Un refus de lecture doit se manifester par zéro ligne, jamais par une erreur de privilège :
 -- `SELECT` est donc bien accordé, et c'est RLS qui filtre.

@@ -29,6 +29,9 @@ const TRACKS_ACTIFS = ['conseil-ia', 'studio-web', 'formation']
 /** Le quatrième track du seed, archivé — il existe pour rendre l'état « archivé » démontrable. */
 const TRACK_ARCHIVE = 'pipeline-2024'
 
+/** Le track sur lequel le seed pose ses droits fins (`docs/SPEC-seed.md` §2.11). */
+const TRACK_CONSEIL_ID = '5eed0000-0000-4000-8000-000000000021'
+
 const CHEMIN = '/rest/v1/tracks'
 
 type Track = {
@@ -98,7 +101,16 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		expect(await reponse.json()).toEqual([])
 	})
 
-	for (const compte of COMPTES_SEED) {
+	// RÉVISÉ À `CRM-012`, non retiré. Ce scénario affirmait que les trois profils voient
+	// **exactement** les mêmes quatre tracks — « lire n'exige pas d'écrire ». Il est devenu rouge
+	// au passage de `CRM-012`, qui a rendu les droits fins opposables **et** en a posé dans le
+	// seed (docs/SPEC-seed.md §2.11) : Farida Nowak porte un `track_members.access = 'none'` sur
+	// `conseil-ia`.
+	//
+	// Ce qu'il prouvait reste vrai et est conservé pour les deux profils qu'aucun droit fin ne
+	// vise ; ce qui a changé est nommé, et prouvé par un scénario distinct plutôt que dilué dans
+	// une tolérance.
+	for (const compte of COMPTES_SEED.filter((c) => c.role !== 'viewer')) {
 		test(`lignes c et d — ${compte.role} lit les tracks de son workspace`, async ({ request }) => {
 			const jeton = await jetonDe(compte.adresse)
 			const reponse = await request.get(`${CHEMIN}?select=slug,position&order=position`, {
@@ -110,15 +122,54 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 			// Les quatre, archivé compris : c'est le **filtre de la barre latérale** qui masque
 			// l'archivé, pas la politique de lecture. Un administrateur doit pouvoir désarchiver.
 			expect(lignes).toHaveLength(4)
-			// Lire n'exige pas d'écrire : le `viewer` voit exactement ce que voit l'administrateur.
+			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'administrateur.
 			expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE])
 		})
 	}
 
+	test('le `viewer` seedé ne voit que trois tracks : son droit fin en masque un', async ({
+		request,
+	}) => {
+		// PREUVE DE REFUS N° 4 au niveau des tracks, sur les données **du seed** et non sur une
+		// fixture créée pour l'occasion : la restriction est permanente et opposable.
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+
+		expect(reponse.status()).toBe(200)
+		const lignes = (await reponse.json()) as Track[]
+		expect(lignes.map((t) => t.slug)).toEqual(['studio-web', 'formation', TRACK_ARCHIVE])
+		// Le refus est **zéro ligne**, jamais une erreur (docs/SPEC-permissions-rls.md §7).
+		expect(lignes.map((t) => t.slug)).not.toContain('conseil-ia')
+	})
+
+	test('l’administratrice porte le **même** droit fin, et voit pourtant les quatre', async ({
+		request,
+	}) => {
+		// RÈGLE 2 DU §2.2, prouvée sur les données du seed : un administrateur n'est jamais
+		// restreint. La ligne restrictive existe bel et bien — le contrôle par la clé de service
+		// l'établit —, elle est simplement sans effet sur lui.
+		const lignesDroitFin = await request.get(
+			`/rest/v1/track_members?select=access&track_id=eq.${TRACK_CONSEIL_ID}` +
+				'&user_id=eq.5eed0000-0000-4000-8000-000000000011',
+			{ headers: enTetesService() },
+		)
+		expect((await lignesDroitFin.json()) as { access: string }[]).toEqual([{ access: 'none' }])
+
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await reponse.json()) as Track[]).toHaveLength(4)
+	})
+
 	test('l’ordre rendu par l’API est celui de `position`, pas celui de l’insertion', async ({
 		request,
 	}) => {
-		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		// L'administratrice, et non plus le `viewer` : celui-ci ne voit plus les trois tracks
+		// actifs depuis `CRM-012`, et l'ordre se mesure sur une liste complète.
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const reponse = await request.get(
 			`${CHEMIN}?select=slug,position&archived_at=is.null&order=position,name`,
 			{ headers: enTetesAuthentifies(jeton) },
@@ -361,16 +412,29 @@ test.describe('T5 — cloisonnement entre workspaces (lignes j, k, l)', () => {
 	})
 })
 
-test.describe('T6 — INC-024 : le droit fin ne restreint rien encore', () => {
-	// LIMITE FIGÉE PAR UNE ASSERTION, ET NON PAR UN COMMENTAIRE (docs/JOURNAL.md décision 51).
+test.describe('T6 — INC-024 close : le droit fin restreint réellement', () => {
+	// RÉVISÉ À `CRM-012`, non retiré. Ce scénario constatait l'écart INC-024 — un
+	// `track_members.access = 'none'` ne masquait rien — et devait devenir rouge le jour où la
+	// politique serait resserrée (décision 51). Il l'est devenu, et il est **retourné**.
 	//
-	// La politique de lecture de `CRM-020` s'arrête au rôle de workspace : `app.can_read_track`
-	// est différée par INC-013. Ce scénario **constate** l'état réel — un `track_members` posé à
-	// `none` ne masque rien — et deviendra rouge le jour où `CRM-012` resserrera la politique.
-	test('un `track_members.access = "none"` ne masque pas encore le track', async ({ request }) => {
-		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
-		const trackId = '5eed0000-0000-4000-8000-000000000021'
-		const userId = '5eed0000-0000-4000-8000-000000000013'
+	// Il pose son propre droit fin plutôt que de s'appuyer sur celui du seed, et le retire dans un
+	// `finally` : la version précédente supprimait la ligne sans distinguer la sienne de celle du
+	// seed, ce qui aurait détruit une donnée du contrat à chaque exécution. Il vise donc un track
+	// **et un compte** que le seed ne rapproche pas.
+	test('un `track_members.access = "none"` masque le track à celui qu\'il vise', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[1].adresse)
+		const trackId = '5eed0000-0000-4000-8000-000000000023' // `formation`, hors droits du seed
+		const userId = '5eed0000-0000-4000-8000-000000000012' // le `business_developer`
+
+		// Condition de validité : la ligne est visible **avant** la restriction. Sans elle,
+		// « zéro ligne » serait vrai que la politique agisse ou que le track n'existe pas
+		// (docs/JOURNAL.md décision 50).
+		const avant = await request.get(`${CHEMIN}?select=id&id=eq.${trackId}`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await avant.json()) as Track[]).toHaveLength(1)
 
 		await request.post('/rest/v1/track_members', {
 			headers: {
@@ -385,13 +449,41 @@ test.describe('T6 — INC-024 : le droit fin ne restreint rien encore', () => {
 			const reponse = await request.get(`${CHEMIN}?select=id&id=eq.${trackId}`, {
 				headers: enTetesAuthentifies(jeton),
 			})
+			// Le refus est **zéro ligne**, et un `200` : jamais une erreur (§7).
 			expect(reponse.status()).toBe(200)
-			expect((await reponse.json()) as Track[]).toHaveLength(1)
+			expect((await reponse.json()) as Track[]).toHaveLength(0)
 		} finally {
 			await request.delete(
 				`/rest/v1/track_members?track_id=eq.${trackId}&user_id=eq.${userId}`,
 				{ headers: enTetesService() },
 			)
 		}
+	})
+
+	test('retirer le droit fin rend l\'accès hérité, et la ligne redevient visible', async ({
+		request,
+	}) => {
+		// La contrepartie du scénario précédent : sans elle, une politique qui refuserait
+		// **toujours** serait verte. C'est la suppression exposée du §4.1 qui est éprouvée ici.
+		const jeton = await jetonDe(COMPTES_SEED[1].adresse)
+		const trackId = '5eed0000-0000-4000-8000-000000000023'
+		const userId = '5eed0000-0000-4000-8000-000000000012'
+
+		await request.post('/rest/v1/track_members', {
+			headers: {
+				...enTetesService(),
+				'Content-Type': 'application/json',
+				Prefer: 'resolution=merge-duplicates',
+			},
+			data: { track_id: trackId, user_id: userId, access: 'none' },
+		})
+		await request.delete(`/rest/v1/track_members?track_id=eq.${trackId}&user_id=eq.${userId}`, {
+			headers: enTetesService(),
+		})
+
+		const reponse = await request.get(`${CHEMIN}?select=id&id=eq.${trackId}`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await reponse.json()) as Track[]).toHaveLength(1)
 	})
 })

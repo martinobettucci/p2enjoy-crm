@@ -139,6 +139,28 @@ CHANNELS=(
 	'5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000023|inter-entreprises|Inter-entreprises|1|-'
 )
 
+# Droits fins par track et par channel — docs/SPEC-seed.md §2.11, docs/SPEC-permissions-rls.md §2.2.
+#
+# Quatre lignes, choisies pour que **chacune des quatre situations** de la matrice du §2.2 soit
+# exercée par une donnée réelle, et non seulement décrite. Elles ne sont posées qu'à partir de
+# `CRM-012`, l'unité qui les rend opposables : avant elle, elles auraient donné à croire à une
+# restriction qui n'existait pas.
+#
+# La quatrième — un `none` sur l'administratrice — mérite son motif : sans elle, « un administrateur
+# n'est jamais restreint » resterait démontré par la seule suite pgTAP, sur une ligne créée puis
+# détruite. Avec elle, la démonstration est **permanente** et opposable.
+#
+# Aucune ligne ne vise un track ou un channel **archivé** : les deux causes de refus s'y
+# confondraient, et l'assertion ne prouverait plus laquelle agit.
+#
+# table | cible | compte | access
+DROITS_FINS=(
+	'track_members|5eed0000-0000-4000-8000-000000000021|5eed0000-0000-4000-8000-000000000013|none'
+	'channel_members|5eed0000-0000-4000-8000-000000000031|5eed0000-0000-4000-8000-000000000013|member'
+	'channel_members|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000012|viewer'
+	'track_members|5eed0000-0000-4000-8000-000000000021|5eed0000-0000-4000-8000-000000000011|none'
+)
+
 # Catalogue de nœuds du workspace — docs/SPEC-workflow-engine.md §2.9.
 #
 # Les sept nœuds du tableau de la spécification, plus **un huitième archivé** : sans lui, l'état
@@ -790,13 +812,52 @@ done
 info "Champs : ${#CHAMPS[@]}, dont un archivé — règles : ${#REGLES[@]}, couvrant les trois visibilités"
 info "La copie de portée track ne reçoit aucun champ : INC-037, arbitrage attendu"
 
+# --- 8 bis. Droits fins par track et par channel — docs/SPEC-seed.md §2.11 ---------------------
+# Posés par la véritable API REST avec la clé de service, comme tout le reste du seed. La clé de
+# service est employée ici pour la même raison qu'aux sections précédentes : l'écriture par un
+# **administrateur** est possible depuis `CRM-012` (§4.1), mais le seed doit pouvoir s'appliquer
+# sur une base où aucun compte n'est encore connecté. Le geste d'administration réel est prouvé
+# hors du seed, par `e2e/api/droits-fins.spec.ts` avec le jeton de l'administratrice.
+#
+# La clé primaire est le couple `(cible, utilisateur)` : `merge-duplicates` rend l'application
+# convergente, un rejeu ne crée aucun doublon et corrige un `access` divergent.
+
+echo
+say "8 bis. Droits fins par track et par channel"
+
+for ligne in "${DROITS_FINS[@]}"; do
+	IFS='|' read -r table cible compte acces <<< "$ligne"
+
+	case "$table" in
+		track_members)   colonne=track_id ;;
+		channel_members) colonne=channel_id ;;
+		*) die "table de droit fin inconnue « $table » — corrigez DROITS_FINS." ;;
+	esac
+
+	charge=$(jq -nc --arg colonne "$colonne" --arg cible "$cible" --arg u "$compte" \
+	               --arg a "$acces" \
+	     '{($colonne): $cible, user_id: $u, access: $a}')
+
+	code=$(api POST "/rest/v1/$table" \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "droit fin $table ${cible: -3} → ${compte: -3}" 200 201
+
+	printf '  %-16s %-6s %s\n' "$table" "${cible: -3}" "$acces"
+done
+info "Droits fins : ${#DROITS_FINS[@]} — une ligne par situation de la matrice (docs/SPEC-permissions-rls.md §2.2)"
+info "Farida Nowak (viewer) ne voit plus « Conseil & IA », mais voit « Prospection » : le droit"
+info "de channel rouvre ce que le droit de track ferme. Camille Aubert (admin) voit tout."
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
 # ou dans l'autre tromperait celui qui lit cette sortie.
 #
 #   * les tables du socle — profiles, workspaces, workspace_members — restent en refus par défaut
-#     depuis `CRM-003` : RLS activée, aucune politique. Elles relèvent de `CRM-012` ;
+#     depuis `CRM-003` : RLS activée, aucune politique. Aucune unité ne les porte, INC-014 ;
+#   * `track_members` et `channel_members` portent les politiques de `CRM-012` : un administrateur
+#     y lit et y écrit, l'intéressé y lit sa propre ligne, personne d'autre n'y voit rien ;
 #   * `tracks` porte les politiques de `CRM-020`, `channels` celles de `CRM-021` et
 #     `workflow_nodes_catalog` celles de `CRM-030` : un membre du workspace y lit, un
 #     administrateur seul y écrit. Un appelant **anonyme** n'y lit rien.
@@ -811,9 +872,11 @@ info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workfl
 info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
 info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
+info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
-warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
+warn "ces tables restent en refus par défaut : aucune unité ne porte leurs politiques (INC-014)."
+info "Les droits fins sont OPPOSABLES depuis CRM-012 : le viewer ne voit que 3 des 4 tracks."
 info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps, workflow_transitions,"
 info "form_fields et form_field_rules sont lisibles par un membre du workspace, et par lui seul"
 info "(CRM-020, CRM-021, CRM-030, CRM-031, CRM-035)."

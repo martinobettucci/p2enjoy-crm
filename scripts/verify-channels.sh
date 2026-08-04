@@ -40,6 +40,16 @@ cd "$(dirname "$0")/.."
 
 TEST_FILE=supabase/tests/0005_channels.test.sql
 MIGRATION_FILE=supabase/migrations/0004_channels.sql
+# `0010_droits_fins.sql` **redéfinit** `channels_lecture_membre` pour y appliquer les droits fins.
+# Toute réapplication de `0004` doit donc être suivie de la sienne, exactement comme le fait le
+# `migrations-runner`, qui rejoue le répertoire dans l'ordre. Rejouer `0004` seule ramènerait la
+# politique à sa version `CRM-021` et laisserait le produit dégradé — mesuré à `CRM-012`
+# (docs/JOURNAL.md décision 108, docs/PROD_MIGRATIONS.md §3, dépendance de la migration 10).
+MIGRATION_DROITS_FINS=supabase/migrations/0010_droits_fins.sql
+rejouer_migrations() {
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DROITS_FINS" >/dev/null 2>&1 || return 1
+}
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -156,8 +166,8 @@ empreinte() {
 }
 
 avant=$(empreinte)
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
-	ok "la migration se réapplique sans erreur sur une base déjà migrée"
+if rejouer_migrations; then
+	ok "la migration se réapplique sans erreur sur une base déjà migrée, suivie de 0010 comme le fait le migrations-runner"
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
@@ -346,8 +356,8 @@ else
 	ok "unicité déplacée au workspace : un slug homonyme dans un autre track est refusé à tort"
 fi
 
-# d. Restauration **constatée**, et non supposée.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+# d. Restauration **constatée**, et non supposée. La paire, dans l'ordre du runner.
+rejouer_migrations || true
 sleep 1
 restaure=$(psql_db -c "
 	select (select count(*) from pg_constraint

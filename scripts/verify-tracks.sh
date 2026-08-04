@@ -37,6 +37,9 @@ cd "$(dirname "$0")/.."
 
 TEST_FILE=supabase/tests/0004_tracks.test.sql
 MIGRATION_FILE=supabase/migrations/0003_tracks.sql
+# `0010` redéfinit `tracks_lecture_membre` : toute réapplication de `0003` doit être suivie de la
+# sienne, comme le fait le `migrations-runner` (docs/PROD_MIGRATIONS.md §3, dépendance de 0010).
+MIGRATION_DROITS_FINS=supabase/migrations/0010_droits_fins.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -170,9 +173,22 @@ empreinte_tracks() {
 			   from pg_class c where c.oid = 'public.tracks'::regclass);"
 }
 
+# RÉVISÉ À `CRM-012`, et le motif est une **dépendance d'ordre**, non un défaut.
+#
+# `0003_tracks.sql` définit la politique `tracks_lecture_membre` ; `0010_droits_fins.sql` la
+# **redéfinit** pour y appliquer les droits fins. Le `migrations-runner` rejoue tout le répertoire
+# dans l'ordre, si bien que l'état final est toujours celui de `0010`. Mais ce harnais rejouait
+# `0003` **seule** : il ramenait donc la base à l'état de `CRM-020`, faisait échouer sa propre
+# empreinte, et laissait le produit dégradé derrière lui.
+#
+# La correction n'est pas de retirer la politique de `0003` — ce serait rouvrir un livrable de
+# `CRM-020` (`CLAUDE.md` §13) — mais de rejouer la **paire**, comme le fait le runner. La
+# dépendance est inscrite dans `docs/PROD_MIGRATIONS.md` §3.
+
 avant=$(empreinte_tracks)
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
-	ok "la migration se réapplique sans erreur sur une base déjà migrée"
+if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 	&& psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DROITS_FINS" >/dev/null 2>&1; then
+	ok "la migration se réapplique sans erreur sur une base déjà migrée, suivie de 0010 comme le "\
+"fait le migrations-runner"
 else
 	fail "la migration échoue au second passage : elle n'est pas idempotente"
 fi
@@ -237,13 +253,19 @@ else
 	fail "ligne b — l'anonyme obtient $code / $corps"
 fi
 
+# RÉVISÉ À `CRM-012`. Ce contrôle vérifiait que le `viewer` voit les **quatre** tracks — « lire
+# n'exige pas d'écrire ». Depuis `CRM-012`, le seed pose un `track_members.access = 'none'` sur
+# Farida Nowak (docs/SPEC-seed.md §2.11) : elle n'en voit plus que trois, et c'est le comportement
+# voulu. Le contrôle est **retourné**, et son intention d'origine — un rôle en lecture seule lit
+# tout ce qu'un administrateur lit — est reportée sur le `business_developer`, qu'aucun droit fin
+# ne vise.
 code=$(http GET "$API/rest/v1/tracks?select=id" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $JETON_VIEWER")
 nb=$(jq 'length' "$CORPS" 2>/dev/null || echo 0)
-if [ "$code" = "200" ] && [ "$nb" = "4" ]; then
-	ok "ligne d — un viewer lit les quatre tracks de son workspace"
+if [ "$code" = "200" ] && [ "$nb" = "3" ]; then
+	ok "ligne d — le viewer lit trois tracks sur quatre : son droit fin en masque un (CRM-012)"
 else
-	fail "ligne d — le viewer obtient $code et $nb ligne(s)"
+	fail "ligne d — le viewer obtient $code et $nb ligne(s), attendu 3"
 fi
 
 code=$(http POST "$API/rest/v1/tracks" -H "apikey: $ANON_KEY" \
@@ -340,9 +362,14 @@ verifier_mutation() {
 	else
 		fail "dégradation « $libelle » : la suite reste verte — le harnais est complaisant"
 	fi
-	# Restauration par réapplication de la migration : c'est le fichier versionné qui fait
+	# Restauration par réapplication des migrations : ce sont les fichiers versionnés qui font
 	# autorité, pas une commande inverse écrite à la main qui pourrait diverger.
+	#
+	# **La paire, et dans l'ordre du runner** : `0010_droits_fins.sql` redéfinit
+	# `tracks_lecture_membre` pour y appliquer les droits fins. Restaurer `0003` seule ramènerait
+	# la politique à l'état de `CRM-020` et laisserait le produit dégradé — mesuré à `CRM-012`.
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DROITS_FINS" >/dev/null 2>&1 || true
 }
 
 verifier_mutation "l'écriture est ouverte à tout membre du workspace" \

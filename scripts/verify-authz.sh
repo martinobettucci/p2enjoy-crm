@@ -351,13 +351,18 @@ psql_db -v ON_ERROR_STOP=1 -c "
 	drop policy tst_crm010_ws_select on public.workspaces;
 	drop policy tst_crm010_ws_update on public.workspaces;" >/dev/null
 
+# RÉVISÉ À `CRM-012`, non retiré. Ce contrôle portait sur cinq tables et exigeait zéro politique.
+# `CRM-012` en a légitimement posé quatre sur `track_members` et quatre sur `channel_members`
+# (docs/SPEC-permissions-rls.md §4.1) : il est devenu rouge, comme la décision 51 l'attendait.
+# Il est restreint aux trois tables d'**identité**, les seules dont le refus par défaut de
+# `CRM-003` soit encore la règle — INC-014 restant ouverte. Ce qu'il prouve est inchangé :
+# l'instrumentation posée par ce harnais ne laisse aucune trace.
 restantes=$(psql_db -c "
 	select count(*) from pg_policies
 	 where schemaname = 'public'
-	   and tablename in ('profiles','workspaces','workspace_members',
-	                     'track_members','channel_members');")
+	   and tablename in ('profiles','workspaces','workspace_members');")
 if [ "$restantes" = 0 ]; then
-	ok "aucune politique ne subsiste : la base retrouve exactement l'état livré par CRM-003"
+	ok "aucune politique d'instrumentation ne subsiste sur les tables d'identité : la base retrouve exactement l'état livré par CRM-003"
 else
 	fail "$restantes politique(s) subsistent après le retrait de l'instrumentation"
 fi
@@ -439,8 +444,14 @@ verifier_mutation "EXECUTE retiré à anon sur is_workspace_member" \
 verifier_mutation "politique permissive ajoutée sur workspaces" \
 	"create policy tst_permissive on public.workspaces for select to authenticated using (true);"
 
-verifier_mutation "can_read_track créée sans étendre les preuves (garde INC-013)" \
-	"create function app.can_read_track(track uuid) returns boolean language sql stable
+# RÉVISÉ À `CRM-012`. Cette garde créait `app.can_read_track` pour vérifier que la suite `0002`
+# refuserait une des quatre fonctions différées apparue sans que ses preuves soient étendues. Les
+# trois fonctions de track et de channel sont livrées depuis `CRM-012` : la mutation ne s'applique
+# plus, la fonction existant déjà. Elle est **reportée sur la seule qui reste différée**,
+# `app.can_read_card`, dont la suite `0002` constate toujours l'absence (INC-013). L'intention est
+# identique, la cible a suivi le produit.
+verifier_mutation "can_read_card créée sans étendre les preuves (garde INC-013)" \
+	"create function app.can_read_card(card uuid) returns boolean language sql stable
 	   security definer set search_path = '' as 'select true';"
 
 # --- Bilan -------------------------------------------------------------------------------------

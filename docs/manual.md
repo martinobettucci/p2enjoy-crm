@@ -139,6 +139,46 @@ l'API. La suppression définitive d'un track n'est **jamais** proposée — l'ar
 des tracks passe aujourd'hui par l'API, ce qui est une opération d'exploitation, pas un parcours
 produit.
 
+### 3.2 quater Les accès par track et par channel
+
+*Livrée par `CRM-012`. Aucune capture : cette règle n'a pas encore d'écran, voir plus bas.*
+
+Par défaut, votre accès à un track ou à un channel découle de votre **rôle dans l'espace de
+travail** : une personne administratrice administre, une business developer travaille, une
+observatrice consulte. Rien à configurer.
+
+Une personne administratrice peut cependant poser une **exception** sur un track ou sur un channel
+précis, pour une personne précise. Trois exceptions existent :
+
+| Exception | Effet sur ce track ou ce channel |
+|---|---|
+| **Accès complet** | vous y lisez et y écrivez, même si votre rôle est « observatrice » |
+| **Lecture seule** | vous y lisez sans y écrire, même si votre rôle vous autorise à écrire ailleurs |
+| **Aucun accès** | ce track ou ce channel disparaît de votre affichage |
+
+Trois choses méritent d'être sues, parce qu'elles surprennent :
+
+- **L'exception la plus précise l'emporte.** Une exception posée sur un channel prime sur celle de
+  son track. On peut donc vous fermer tout un track *et* vous rouvrir un seul de ses channels : ce
+  channel restera visible alors que le track qui le contient ne le sera plus.
+- **Une exception ne s'applique jamais à une personne administratrice.** Elle peut être enregistrée
+  sur son compte, elle restera sans effet tant que cette personne administre l'espace — sans quoi
+  une exception malheureuse pourrait rendre un espace impossible à administrer. Elle reprendrait
+  effet si ce compte cessait d'être administrateur.
+- **Un track ou un channel qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît
+  pas du tout.** C'est voulu. Un libellé « accès refusé » révélerait l'existence et le nom d'une
+  activité que vous n'avez pas à connaître.
+
+**Ce que vous pouvez voir de vos propres exceptions.** Vous pouvez consulter celles qui vous
+concernent — une restriction invisible à celle qui la subit serait une mauvaise règle — mais pas
+celles de vos collègues, et vous ne pouvez pas lever la vôtre. Seule une personne administratrice
+pose et retire une exception. Retirer une exception ne « redonne » pas un accès particulier : elle
+rend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre rôle.
+
+**Aucun écran ne permet encore de les gérer**, pour la même raison qu'au §3.2 : le produit n'a pas
+de parcours de connexion. La règle est en revanche **appliquée par le serveur** dès aujourd'hui, et
+non par l'affichage : elle tient même si l'on s'adresse directement à l'API.
+
 ### 3.2 ter Les onglets d'un track
 
 *Livrée par `CRM-021`. Captures dans `docs/captures/CRM-021/`.*
