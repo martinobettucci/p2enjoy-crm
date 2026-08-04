@@ -1304,6 +1304,93 @@ l'état. Aucun commit antérieur n'a été touché.
 
 ---
 
+### INC-035 — Les clés étrangères des migrations `0003`, `0004` et `0005` sont idempotentes sans être convergentes
+
+**Nature :** défaut réel latent, mesuré sur une migration voisine ; les fichiers concernés
+appartiennent à des unités déjà vérifiées.
+**Relevé le :** 2026-08-04, pendant `CRM-031`.
+
+`CRM-031` a mesuré qu'une contrainte posée en
+`if not exists (select 1 from pg_constraint where conname = …)` n'est **jamais réparée** : elle
+n'est créée que si le **nom** est absent, si bien qu'une clé remplacée à la main par une clé plus
+faible portant le même nom survit à tous les rejeux de la migration. La base reste durablement
+affaiblie, et rien ne le signale. Le défaut a été trouvé par la dégradation **d** de
+`scripts/verify-workflows.sh`, qui a échoué sur la **restauration** ; il est corrigé dans
+`0006_workflows.sql` (`docs/JOURNAL.md`, décision 78).
+
+**Le même motif est présent ailleurs, et n'est pas corrigé ici :**
+
+| Fichier | Contrainte | Unité |
+|---|---|---|
+| `0004_channels.sql` | `tracks_id_workspace_id_key` (unicité) | `CRM-021` |
+| `0004_channels.sql` | `channels_track_id_workspace_id_fkey` | `CRM-021` |
+| `0004_channels.sql` | `channel_members_channel_id_fkey` | `CRM-021` |
+| `0003_tracks.sql` | `track_members_track_id_fkey` | `CRM-020` |
+
+**Conséquence mesurée sur `CRM-031`, donc reproductible ailleurs.** Une clé composite
+`channels_track_id_workspace_id_fkey` remplacée par une clé simple sur `track_id` laisserait un
+channel déclarer un `workspace_id` étranger à son track, et la politique de lecture des channels
+cloisonnerait alors sur une valeur fausse — exactement ce que `docs/SPEC-channels.md` §2.4 cherche
+à empêcher. Aucune commande du dépôt ne rétablirait la clé.
+
+**Ce qui n'est pas fait, et pourquoi.** Corriger ces quatre contraintes reviendrait à rouvrir
+`CRM-020` et `CRM-021`, toutes deux vérifiées, dans un commit consacré à une troisième unité, et à
+toucher leurs harnais de preuves — ce que `CLAUDE.md` §13 interdit. Le comportement reste
+**inchangé** ; aucune de ces contraintes n'est aujourd'hui dégradée sur les bases du projet.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. reprendre les deux migrations dans une unité de dette dédiée, en généralisant le mécanisme de
+   `0006_workflows.sql` — l'option la plus fidèle à la décision 57, au prix d'une unité de plus ;
+2. extraire le mécanisme dans une migration d'amorçage antérieure, de sorte que toutes les
+   migrations puissent l'appeler sans le redéfinir, et reprendre les fichiers concernés ;
+3. considérer le risque comme théorique — personne ne remplace une contrainte à la main en
+   production — et se contenter d'un contrôle de conformité du schéma dans un harnais transverse.
+
+**Lié à :** `docs/JOURNAL.md` décisions 57, 64 et 78 (les trois formes du même défaut).
+
+---
+
+### INC-036 — Les navigateurs préinstallés de l'environnement d'exécution ne correspondent pas au Playwright épinglé
+
+**Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
+**Relevé le :** 2026-08-04, pendant `CRM-031`.
+
+`package.json` épingle `@playwright/test` 1.62.1, qui attend la révision `1234` du navigateur.
+L'environnement de la routine cloud fournit la révision `1194`, sous une arborescence différente —
+`chromium_headless_shell-1194/chrome-linux/headless_shell` au lieu de
+`chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell`.
+
+**Conséquence mesurée.** `npm run e2e:ui` échoue sur ses **37** scénarios, tous avec
+« Executable doesn't exist ». Aucune preuve d'interface n'est exécutable, y compris celles qui
+n'ont rien à voir avec l'unité en cours. Le projet `api` n'est pas concerné : il ne lance aucun
+navigateur.
+
+**Contournement appliqué, et pourquoi il n'est pas la correction.** Une arborescence de
+compatibilité a été créée **hors dépôt**, faisant pointer les chemins attendus vers les binaires
+présents. Le geste n'est documenté nulle part et la prochaine exécution devra le refaire — même
+nature qu'INC-032.
+
+**Ce qui n'est pas fait, et pourquoi.** `e2e/playwright.config.ts` est un livrable de `CRM-008`,
+et y écrire un `executablePath` conditionnel reviendrait à rouvrir cette unité pendant un passage
+consacré à une troisième — et à faire dépendre la configuration du dépôt d'un chemin propre à un
+environnement d'exécution particulier.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. aligner la version épinglée de `@playwright/test` sur celle dont l'environnement fournit les
+   navigateurs, au prix d'un suivi de version dicté par l'hébergeur ;
+2. rendre l'exécutable configurable par une variable d'environnement documentée, lue par
+   `e2e/playwright.config.ts` et vide par défaut ;
+3. conteneuriser l'exécution des preuves d'interface, de sorte que la révision du navigateur
+   appartienne au dépôt et non à la machine — l'option la plus fidèle à `CLAUDE.md` §3, et la plus
+   coûteuse.
+
+**Lié à :** INC-032 et INC-034 (même nature : un chemin du dépôt inatteignable depuis
+l'environnement réel).
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante

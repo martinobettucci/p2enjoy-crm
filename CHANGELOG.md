@@ -57,13 +57,39 @@ d'exécuter le code attendu.
     façon composite, et les six channels du seed portent le workflow par défaut. La contrainte
     `NOT NULL` reste due par `CRM-033`.
   - **Preuves** : `supabase/tests/0007_workflows.test.sql` **106 assertions**,
-    `e2e/api/workflows.spec.ts` **21 scénarios**, `scripts/verify-workflows.sh` **46 contrôles**,
-    non complaisant — trois dégradations réelles, restauration constatée.
+    `e2e/api/workflows.spec.ts` **21 scénarios**, `scripts/verify-workflows.sh` **47 contrôles**,
+    non complaisant — quatre dégradations réelles, restauration constatée.
   - **Quatre garde-fous figés par les unités précédentes sont devenus rouges et ont été révisés**
     dans le même changement, dont les compteurs du harnais (454 / 75 / 37 → **559 / 96 / 37**).
   - **Décisions 76 et 77** : le comptage de pgTAP est sensible aux savepoints, et une ligne
     doublement fautive est refusée par sa contrainte de valeur avant son unicité. Les deux ont été
     établies par un échec d'assertion, non par une lecture de documentation.
+
+### Corrigé
+
+- **Décision 78 — les contraintes nommées d'une migration doivent être convergentes, pas seulement
+  idempotentes.** Défaut réel trouvé par une exécution parallèle de la routine : une contrainte
+  posée en `if not exists (… where conname = …)` n'est jamais réparée, si bien qu'une clé composite
+  remplacée à la main par une clé simple portant le même nom survit à tous les rejeux de la
+  migration. La base reste durablement affaiblie — une transition peut alors sortir de son
+  workflow — et **rien ne le signale**. Les douze contraintes nommées de `0006_workflows.sql`
+  passent désormais par un mécanisme unique qui compare la définition réelle à celle attendue, et
+  la dégradation qui a trouvé le défaut devient le quatrième contrôle de non-complaisance du
+  harnais. C'est la troisième forme du défaut de la décision 57.
+- **Deux exécutions parallèles de la routine ont livré `CRM-031`.** Conformément à la décision 66,
+  l'implémentation **déjà poussée fait foi** ; le travail parallèle est conservé localement sans
+  être poussé, et **seul le défaut ci-dessus** en est reporté. Toutes les preuves ont été rejouées
+  sur ce socle après intégration.
+
+### Signalé
+
+- **`INC-035`** — les clés étrangères des migrations `0003`, `0004` et `0005` portent le défaut
+  corrigé ci-dessus. Non corrigées : ce sont des livrables d'unités vérifiées, et les reprendre
+  dans un commit consacré à une troisième unité irait contre `CLAUDE.md` §13. Trois options
+  d'arbitrage.
+- **`INC-036`** — les navigateurs préinstallés de l'environnement d'exécution ne correspondent pas
+  au Playwright épinglé par le dépôt : `npm run e2e:ui` échoue sur ses 37 scénarios avec
+  « Executable doesn't exist ». Contourné hors dépôt, comme INC-032. Trois options d'arbitrage.
   - **Reste dû, et nommé** : aucun éditeur d'administration, aucun E2E d'interface, aucune capture —
     la webapp est un appelant anonyme (INC-021). L'unité reste `[~]`.
 

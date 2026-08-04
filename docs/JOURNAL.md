@@ -3035,3 +3035,94 @@ n'existait dans le dépôt, et les deux premiers commits de cette exécution ont
 deux commits réécrits ; le fait, ses conséquences et ce qui reste à arbitrer sont consignés en
 **INC-034**. La configuration locale vivant dans `.git/config`, non versionné, elle sera perdue au
 prochain conteneur neuf : le correctif durable relève d'un arbitrage, pas de cette unité.
+
+---
+
+## 2026-08-04 — `CRM-031` : deux exécutions parallèles, et un défaut que seule la seconde a vu
+
+### Décision 78 — La convergence vaut pour **toute** contrainte nommée, pas seulement pour celles déjà rencontrées
+
+*Contexte.* Deux exécutions de la routine ont livré `CRM-031` en parallèle, à partir du même commit
+de spécification. Conformément à la **décision 66**, l'implémentation **déjà poussée fait foi** :
+c'est elle qui est intégrée ici, et le travail parallèle est abandonné plutôt que fusionné. Il est
+conservé localement sous `travail-crm031-parallele-um0mbt`, sans être poussé. Ce qui suit est le
+seul **défaut réel** trouvé par l'exécution parallèle et absent de la version retenue — exactement
+ce que la décision 66 prévoit de reporter.
+
+*Problème.* Les douze contraintes nommées de `supabase/migrations/0006_workflows.sql` — cinq clés
+étrangères composites et sept unicités — étaient posées en
+`if not exists (select 1 from pg_constraint where conname = …)` : elles n'étaient créées que si le
+**nom** était absent.
+
+*Observation, produite par un harnais et non par une relecture.* L'exécution parallèle avait écrit
+une dégradation que la version retenue ne portait pas : remplacer
+`workflow_transitions_to_step_fkey` — clé **composite** `(to_step_id, workflow_id)` — par une clé
+**simple** `(to_step_id)` du même nom, pour vérifier qu'une transition peut alors sortir de son
+workflow. Elle le peut. Mais le contrôle suivant, celui de la restauration, a **échoué** :
+
+```
+ECHEC restauration incomplète :
+  « FOREIGN KEY (to_step_id) REFERENCES workflow_steps(id) ON DELETE CASCADE/… »
+```
+
+La migration s'était réappliquée **sans erreur** et avait laissé la clé dégradée en place. La
+garantie la plus structurante de l'unité — une transition ne sort pas de son workflow — était
+perdue, et rien ne le signalait.
+
+*Analyse.* C'est le défaut de la décision 57, à l'identique, pour la troisième fois. `CRM-020`
+l'avait rencontré sur une contrainte `CHECK` et avait rendu convergentes les contraintes de valeur.
+`CRM-021` l'avait rencontré sur une contrainte d'unicité de table (décision 64) et avait rendu
+convergente cette contrainte-là. Chaque fois, la correction avait porté sur **la forme rencontrée**,
+jamais sur la classe. Les clés étrangères sont la troisième forme, et il n'y avait aucune raison
+d'attendre qu'un défaut les atteigne.
+
+*Décision.* Un mécanisme unique, `app.migration_0006_converger_contrainte(table, nom, définition)`,
+compare la définition réelle rendue par `pg_get_constraintdef` à la définition attendue et ne
+reconstruit que si elles diffèrent. Les **douze** contraintes nommées du fichier passent par lui.
+La dégradation qui a trouvé le défaut devient la dégradation **d** de
+`scripts/verify-workflows.sh`, de sorte qu'il ne puisse pas revenir en silence.
+
+*Conséquences.*
+
+- La reconstruction reste **conditionnelle** : un `drop`/`add` inconditionnel revaliderait la table
+  et reconstruirait l'index à chaque démarrage de la pile, ce qui n'est pas le prix négligeable
+  d'une revalidation de `CHECK`.
+- `search_path` vidé n'est pas ici une convention de style : `pg_get_constraintdef` rend les noms de
+  relations **selon le `search_path`**, et avec un chemin vide il les rend pleinement qualifiés.
+  Les deux côtés de la comparaison s'écrivent alors de la même façon. Sans cela, la comparaison est
+  toujours fausse et la contrainte reconstruite à chaque démarrage — ce que le contrôle 2 du
+  harnais, qui exige qu'un rejeu ne modifie aucune empreinte, aurait attrapé à son tour.
+- La fonction est **retirée en fin de migration**. Laisser dans le schéma `app` une fonction capable
+  de reconstruire n'importe quelle contrainte de n'importe quelle table en ferait une surface
+  publique que rien ne documente.
+- Les migrations `0003`, `0004` et `0005` portent le **même défaut** sur leurs propres clés
+  étrangères et sur `tracks_id_workspace_id_key`. Elles ne sont pas corrigées ici : ce sont des
+  livrables d'unités vérifiées, et les reprendre dans un commit consacré à une troisième unité
+  irait contre `CLAUDE.md` §13. L'écart est ouvert en **INC-035**, avec ses options.
+
+### Ce que l'intégration a coûté, et ce qu'elle a confirmé
+
+L'implémentation retenue a été **rejouée intégralement sur ce socle** après intégration, comme la
+décision 71 l'exige : la migration réappliquée, le seed rejoué, le harnais de l'unité et les treize
+harnais précédents relancés. Sans quoi le vert mesuré ailleurs n'aurait rien prouvé ici.
+
+Deux différences de détail méritent d'être notées, parce qu'elles ne sont **pas** des défauts :
+
+- l'exécution parallèle avait réécrit l'assertion INC-029 de `supabase/tests/0005_channels.test.sql`
+  en comptant les clés étrangères dont `workflow_id` est l'**unique** membre, ce qui serait resté
+  **vert à tort** face à une clé composite. La version retenue la réécrit par **nom de
+  contrainte** — plus simple, et sans ce piège. La leçon générale vaut d'être écrite : une
+  assertion de figeage se relit en se demandant *quelle formulation resterait verte alors que la
+  cause a disparu* ;
+- les deux versions ont mesuré les mêmes faits sur les mêmes points, avec des comptes différents —
+  106 contre 109 assertions pgTAP, 21 contre 20 scénarios d'API. Aucune des deux n'est plus
+  complète que l'autre sur le fond.
+
+### Un troisième obstacle d'environnement, nouveau
+
+`npm run e2e:ui` **n'était pas exécutable** : les navigateurs préinstallés de l'environnement sont
+une révision plus ancienne que celle qu'exige le Playwright épinglé par le dépôt, et les 37
+scénarios échouent tous sur « Executable doesn't exist ». Contourné par une arborescence de
+compatibilité **hors dépôt** — même nature qu'INC-032, et à refaire au prochain passage.
+**INC-036** ouverte. Sans ce geste, aucune preuve d'interface du projet n'est exécutable, y compris
+celles qui n'ont rien à voir avec l'unité en cours.

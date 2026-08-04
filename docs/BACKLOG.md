@@ -1292,12 +1292,30 @@ E2E de création ; captures de l'éditeur.
       façon **composite** ; les six channels du seed sont rattachés au workflow par défaut. La
       contrainte `NOT NULL` **reste due par `CRM-033`**, qui porte le contrat de création d'un
       channel qu'elle modifierait. L'entrée est mise à jour, non close.
-- [x] Harnais de preuves rejouable `scripts/verify-workflows.sh` : **46 contrôles, aucune
-      anomalie** — 39 hors suites Playwright et build (`--rapide`) —, et **non complaisant, éprouvé
-      par trois dégradations réelles** : politique d'écriture relâchée, index de l'étape initiale
-      retiré, transition du seed supprimée. Chacune fait sortir le harnais en code `1`, et la
-      restauration est **constatée** — index revenu, dix transitions revenues, politique revenue à
-      `is_workspace_admin`, refus de nouveau opposé au `business_developer`.
+- [x] Harnais de preuves rejouable `scripts/verify-workflows.sh` : **47 contrôles, aucune
+      anomalie** — 40 hors suites Playwright et build (`--rapide`) —, et **non complaisant, éprouvé
+      par quatre dégradations réelles** : politique d'écriture relâchée, index de l'étape initiale
+      retiré, transition du seed supprimée, et **clé composite remplacée par une clé simple du même
+      nom**. Chacune fait sortir le harnais en code `1`, et la restauration est **constatée** —
+      index revenu, dix transitions revenues, politique revenue à `is_workspace_admin`, clé
+      composite **réparée**, refus de nouveau opposé au `business_developer`.
+- [x] **DÉFAUT RÉEL TROUVÉ PAR L'EXÉCUTION PARALLÈLE, ET CORRIGÉ ICI** (décision 78) : les douze
+      contraintes nommées de la migration étaient posées en `if not exists (… where conname = …)`,
+      donc **idempotentes sans être convergentes**. Une clé composite remplacée à la main par une
+      clé simple portant le même nom survivait à tous les rejeux — la garantie la plus structurante
+      de l'unité était perdue et rien ne le signalait. C'est le **contrôle de restauration** de la
+      quatrième dégradation qui l'a établi, en échouant. Un mécanisme unique compare désormais la
+      définition réelle à la définition attendue pour les douze contraintes, et la fonction
+      d'assistance est retirée en fin de migration.
+- [x] **Les treize harnais précédents rejoués sur ce socle** — 33, 38, 23, 26, 42, 26, 49, 30, 41,
+      22, 40, 23 et 29 contrôles, soit **422** au total —, aucune anomalie.
+- [x] **Intégration d'une exécution parallèle, et rejeu intégral sur ce socle** (décision 78, qui
+      applique la décision 66). Deux exécutions de la routine ont livré cette unité en parallèle à
+      partir du même commit de spécification. L'implémentation **déjà poussée fait foi** et est
+      celle retenue ici ; le travail parallèle est conservé sous
+      `travail-crm031-parallele-um0mbt`, sans être poussé, et **seul le défaut ci-dessus** en est
+      reporté. Toutes les preuves ont été **réexécutées sur ce socle** après intégration, sans quoi
+      le vert mesuré ailleurs n'aurait rien prouvé ici.
 - [x] **Quatre garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été
       révisés** : trois assertions pgTAP de `CRM-021` (INC-029), deux de `CRM-030` (INC-031), le
       contrôle n° 5 de `scripts/verify-catalogue.sh`, celui du seed de `scripts/verify-channels.sh`,

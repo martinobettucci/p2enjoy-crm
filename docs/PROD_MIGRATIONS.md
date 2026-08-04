@@ -169,6 +169,15 @@ base existante. Conséquence en production : chaque passage **revalide** la tabl
 négligeable ; la propriété
 achetée est que le schéma converge vers ce que le dépôt déclare.
 
+**La migration 6 va plus loin, et c'est un correctif.** Ses **clés étrangères et ses unicités** sont
+convergentes elles aussi, par un mécanisme qui compare la définition réelle rendue par
+`pg_get_constraintdef` à celle attendue et ne reconstruit que si elles diffèrent — la
+reconstruction d'un index n'étant pas le prix négligeable d'une revalidation de `CHECK`. Sans cela,
+une clé composite remplacée à la main par une clé simple **du même nom** survivrait à tous les
+rejeux : la base resterait durablement affaiblie et rien ne le signalerait
+(`docs/JOURNAL.md`, décision 78). Les migrations 3, 4 et 5 **n'ont pas** cette propriété sur leurs
+clés étrangères : `docs/INCONSISTENCY_REPORT.md`, **INC-035**, en attente d'arbitrage.
+
 **Toutes les migrations du dépôt sont idempotentes.** Le conteneur `migrations-runner` ne tient
 aucun registre : il rejoue l'intégralité du répertoire à chaque démarrage de la pile
 (`docs/DAT.md` §3.2, `docs/JOURNAL.md` décision 20). Une migration réappliquée sur une base déjà

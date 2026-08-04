@@ -495,7 +495,40 @@ restant=$(psql_db -c "select count(*) from public.workflow_transitions where wor
 	&& ok "dégradation c : une transition du seed retirée, le contrôle de la section 4 aurait échoué" \
 	|| fail "dégradation c : $restant transitions, attendu 9"
 
-# d. Restauration **constatée**, et non supposée.
+# d. LA DÉGRADATION QUI A TROUVÉ UN DÉFAUT RÉEL (décision 78). La clé composite qui empêche une
+#    transition de sortir de son workflow est remplacée par une clé **simple** portant le même nom.
+#    Deux choses sont vérifiées à la suite : que le refus disparaît réellement — donc que la clé
+#    composite porte bien la garantie —, puis, à la restauration, que la migration la **répare**.
+#
+#    C'est ce second point qui a échoué la première fois : la clé était posée en
+#    `if not exists (… where conname = …)`, si bien que la version dégradée survivait à tous les
+#    rejeux. La migration est convergente depuis ; ce contrôle est ce qui l'y oblige.
+psql_db -c "
+	alter table public.workflow_transitions drop constraint workflow_transitions_to_step_fkey;
+	alter table public.workflow_transitions add constraint workflow_transitions_to_step_fkey
+		foreign key (to_step_id) references public.workflow_steps (id) on delete cascade;
+	insert into public.workflows (id, workspace_id, name)
+	values ('a3313000-0000-4000-8000-000000000002', '$WS_SEED', 'tst-crm031-ailleurs');
+	insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position)
+	values ('a3314000-0000-4000-8000-000000000002', 'a3313000-0000-4000-8000-000000000002',
+	        '$WS_SEED', '$NOEUD_LIBRE', 1);
+" >/dev/null
+if psql_db -v ON_ERROR_STOP=1 -c "
+	insert into public.workflow_transitions (id, workflow_id, workspace_id, from_step_id, to_step_id)
+	values ('a3315000-0000-4000-8000-000000000002', '$WF_SEED', '$WS_SEED',
+	        '$ETAPE_PROSPECTION', 'a3314000-0000-4000-8000-000000000002');" >/dev/null 2>&1; then
+	ok "dégradation d : clé composite remplacée par une clé simple, une transition sort de son "\
+"workflow — la clé composite porte donc bien la garantie, elle n'est pas décorative"
+else
+	fail "dégradation d : la transition hors workflow est encore refusée, la garantie vient d'ailleurs"
+fi
+psql_db -c "
+	delete from public.workflow_transitions where id = 'a3315000-0000-4000-8000-000000000002';
+	delete from public.workflow_steps where id = 'a3314000-0000-4000-8000-000000000002';
+	delete from public.workflows where id = 'a3313000-0000-4000-8000-000000000002';
+" >/dev/null
+
+# e. Restauration **constatée**, et non supposée.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
 ./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué à la restauration"
 sleep 1
@@ -507,13 +540,18 @@ restaure=$(psql_db -c "
 	       (select count(*) from public.workflow_transitions where workflow_id = '$WF_SEED')::text
 	    || '/' ||
 	       (select coalesce(with_check, '') from pg_policies
-	         where tablename = 'workflows' and policyname = 'workflows_insertion_admin');
+	         where tablename = 'workflows' and policyname = 'workflows_insertion_admin')
+	    || '/' ||
+	       (select pg_get_constraintdef(oid) from pg_constraint
+	         where conname = 'workflow_transitions_to_step_fkey'
+	           and conrelid = 'public.workflow_transitions'::regclass);
 ")
 if [ "${restaure%%/*}" = "1" ] \
 	&& [ "$(printf '%s' "$restaure" | cut -d/ -f2)" = "10" ] \
-	&& printf '%s' "$restaure" | grep -q 'is_workspace_admin'; then
+	&& printf '%s' "$restaure" | grep -q 'is_workspace_admin' \
+	&& printf '%s' "$restaure" | grep -q 'FOREIGN KEY (to_step_id, workflow_id)'; then
 	ok "restauration constatée : index revenu, dix transitions revenues, politique revenue à "\
-"\`is_workspace_admin\`"
+"\`is_workspace_admin\`, et **clé composite réparée** — c'est ce dernier point qui avait échoué"
 else
 	fail "restauration incomplète : « $restaure »"
 fi

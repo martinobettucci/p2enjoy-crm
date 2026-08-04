@@ -56,7 +56,70 @@
 -- (décision 57).
 
 -- =============================================================================================
--- 0. L'unicité que le catalogue doit offrir à ses étapes
+-- 0. Convergence des contraintes nommées — l'outil, et le défaut qui l'a rendu nécessaire
+-- =============================================================================================
+-- DÉFAUT RÉEL, TROUVÉ PAR UNE EXÉCUTION PARALLÈLE DE LA ROUTINE, ET CORRIGÉ ICI (décision 78).
+--
+-- Les douze contraintes nommées de ce fichier — clés étrangères composites et unicités — étaient
+-- posées en `if not exists (select 1 from pg_constraint where conname = …)` : elles n'étaient
+-- créées que si **le nom** était absent. MESURÉ : une clé composite remplacée à la main par une clé
+-- **simple** portant le même nom survit alors à tous les rejeux de la migration. La base reste
+-- durablement affaiblie — une transition peut sortir de son workflow, une étape peut mentir sur son
+-- workspace —, et **rien ne le signale** : la migration se réapplique sans erreur.
+--
+-- Le défaut a été trouvé par un harnais qui **dégradait délibérément** une clé composite en clé
+-- simple pour vérifier que le refus disparaissait, puis constatait la restauration. C'est le
+-- contrôle de restauration qui a échoué. Le contrôle 7.d de `scripts/verify-workflows.sh` reprend
+-- cette dégradation, de sorte que le défaut ne puisse pas revenir en silence.
+--
+-- C'est la troisième forme du défaut de la décision 57. `CRM-020` l'avait rencontrée sur une
+-- contrainte `CHECK` et avait rendu convergentes les contraintes de valeur ; `CRM-021` sur une
+-- contrainte d'unicité de table (décision 64) et avait rendu convergente celle-là. Chaque fois, la
+-- correction avait porté sur **la forme rencontrée**, jamais sur la classe. Elle est ici
+-- généralisée à toute contrainte nommée, par un mécanisme unique.
+--
+-- La reconstruction reste **conditionnelle** : un `drop`/`add` inconditionnel revaliderait la table
+-- et reconstruirait l'index à chaque démarrage de la pile, ce qui n'est pas le prix négligeable
+-- d'une revalidation de `CHECK`. La définition réelle est comparée à celle attendue, et la
+-- contrainte n'est refaite que si elles diffèrent.
+--
+-- `search_path` vidé n'est pas ici une simple convention de style : `pg_get_constraintdef` rend les
+-- noms de relations **selon le `search_path`**, et avec un chemin vide il les rend pleinement
+-- qualifiés. Les deux côtés de la comparaison s'écrivent donc de la même façon — condition pour
+-- que la comparaison veuille dire quelque chose, et pour que le rejeu ne modifie aucune empreinte.
+--
+-- La fonction est **retirée en fin de migration**, section 8. Laisser dans le schéma `app` une
+-- fonction capable de reconstruire n'importe quelle contrainte de n'importe quelle table en ferait
+-- une surface publique que rien ne documente.
+
+create or replace function app.migration_0006_converger_contrainte(
+	nom_table text, nom_contrainte text, definition_attendue text
+) returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+	definition_reelle text;
+begin
+	select pg_get_constraintdef(c.oid) into definition_reelle
+	  from pg_constraint c
+	 where c.conrelid = nom_table::regclass
+	   and c.conname  = nom_contrainte;
+
+	if definition_reelle is null then
+		execute format('alter table %s add constraint %I %s',
+		               nom_table, nom_contrainte, definition_attendue);
+	elsif definition_reelle <> definition_attendue then
+		execute format('alter table %s drop constraint %I', nom_table, nom_contrainte);
+		execute format('alter table %s add constraint %I %s',
+		               nom_table, nom_contrainte, definition_attendue);
+	end if;
+end;
+$$;
+
+-- =============================================================================================
+-- 0 bis. L'unicité que le catalogue doit offrir à ses étapes
 -- =============================================================================================
 -- Une étape doit instancier un nœud **du même workspace** que son workflow. La seule façon de le
 -- garantir par la base est une clé étrangère composite `(node_id, workspace_id)`, qui exige une
@@ -67,18 +130,9 @@
 -- aucune ligne, existante ou future. C'est le même geste que `tracks_id_workspace_id_key`, posée
 -- par `CRM-021` pour la même raison (docs/SPEC-channels.md §2.4).
 
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_nodes_catalog_id_workspace_id_key'
-		   and conrelid = 'public.workflow_nodes_catalog'::regclass
-	) then
-		alter table public.workflow_nodes_catalog
-			add constraint workflow_nodes_catalog_id_workspace_id_key unique (id, workspace_id);
-	end if;
-end
-$$;
+select app.migration_0006_converger_contrainte(
+	'public.workflow_nodes_catalog', 'workflow_nodes_catalog_id_workspace_id_key',
+	'UNIQUE (id, workspace_id)');
 
 -- =============================================================================================
 -- 1. `public.workflows`
@@ -152,34 +206,15 @@ alter table public.workflows add  constraint workflows_derivation_self_check
 -- raconte** (docs/JOURNAL.md, décision 73). L'unicité `tracks (id, workspace_id)` nécessaire
 -- existe déjà, posée par `CRM-021`.
 
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflows_track_id_workspace_id_fkey'
-		   and conrelid = 'public.workflows'::regclass
-	) then
-		alter table public.workflows
-			add constraint workflows_track_id_workspace_id_fkey
-			foreign key (track_id, workspace_id)
-			references public.tracks (id, workspace_id) on delete cascade;
-	end if;
-end
-$$;
+select app.migration_0006_converger_contrainte(
+	'public.workflows', 'workflows_track_id_workspace_id_fkey',
+	'FOREIGN KEY (track_id, workspace_id) REFERENCES public.tracks(id, workspace_id) '
+	'ON DELETE CASCADE');
 
 -- L'unicité dont les étapes et les transitions ont besoin pour leur propre clé composite.
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflows_id_workspace_id_key'
-		   and conrelid = 'public.workflows'::regclass
-	) then
-		alter table public.workflows
-			add constraint workflows_id_workspace_id_key unique (id, workspace_id);
-	end if;
-end
-$$;
+select app.migration_0006_converger_contrainte(
+	'public.workflows', 'workflows_id_workspace_id_key',
+	'UNIQUE (id, workspace_id)');
 
 -- --- 1.3 Au plus un workflow par défaut, par workspace ----------------------------------------
 -- MESURÉ : la seconde ligne marquée par défaut dans le même workspace est refusée en `23505`.
@@ -284,54 +319,26 @@ alter table public.workflow_steps add  constraint workflow_steps_stale_check
 -- supprimait un, l'effacement silencieux des étapes qui l'instancient détruirait des workflows
 -- entiers sans le dire.
 
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_steps_workflow_id_workspace_id_fkey'
-		   and conrelid = 'public.workflow_steps'::regclass
-	) then
-		alter table public.workflow_steps
-			add constraint workflow_steps_workflow_id_workspace_id_fkey
-			foreign key (workflow_id, workspace_id)
-			references public.workflows (id, workspace_id) on delete cascade;
-	end if;
+select app.migration_0006_converger_contrainte(
+	'public.workflow_steps', 'workflow_steps_workflow_id_workspace_id_fkey',
+	'FOREIGN KEY (workflow_id, workspace_id) REFERENCES public.workflows(id, workspace_id) '
+	'ON DELETE CASCADE');
 
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_steps_node_id_workspace_id_fkey'
-		   and conrelid = 'public.workflow_steps'::regclass
-	) then
-		alter table public.workflow_steps
-			add constraint workflow_steps_node_id_workspace_id_fkey
-			foreign key (node_id, workspace_id)
-			references public.workflow_nodes_catalog (id, workspace_id) on delete restrict;
-	end if;
+select app.migration_0006_converger_contrainte(
+	'public.workflow_steps', 'workflow_steps_node_id_workspace_id_fkey',
+	'FOREIGN KEY (node_id, workspace_id) '
+	'REFERENCES public.workflow_nodes_catalog(id, workspace_id) ON DELETE RESTRICT');
 
-	-- `docs/SCHEMA.md` §3 : « un nœud n'apparaît qu'une fois par workflow ». Posée hors du
-	-- `create table`, qui porte `if not exists` et ne rétablirait donc jamais une unicité retirée
-	-- à la main sur une base existante (décision 57).
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_steps_workflow_id_node_id_key'
-		   and conrelid = 'public.workflow_steps'::regclass
-	) then
-		alter table public.workflow_steps
-			add constraint workflow_steps_workflow_id_node_id_key unique (workflow_id, node_id);
-	end if;
+-- `docs/SCHEMA.md` §3 : « un nœud n'apparaît qu'une fois par workflow ».
+select app.migration_0006_converger_contrainte(
+	'public.workflow_steps', 'workflow_steps_workflow_id_node_id_key',
+	'UNIQUE (workflow_id, node_id)');
 
-	-- L'unicité dont les transitions ont besoin. MESURÉ : sans elle, leur clé composite échoue en
-	-- `42830`.
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_steps_id_workflow_id_key'
-		   and conrelid = 'public.workflow_steps'::regclass
-	) then
-		alter table public.workflow_steps
-			add constraint workflow_steps_id_workflow_id_key unique (id, workflow_id);
-	end if;
-end
-$$;
+-- L'unicité dont les transitions ont besoin pour leurs propres clés composites. MESURÉ : sans
+-- elle, leur création échoue en `42830`.
+select app.migration_0006_converger_contrainte(
+	'public.workflow_steps', 'workflow_steps_id_workflow_id_key',
+	'UNIQUE (id, workflow_id)');
 
 -- --- 2.3 Au plus une étape initiale, par workflow ----------------------------------------------
 -- MESURÉ : la seconde étape initiale du même workflow est refusée en `23505`. C'est la moitié de
@@ -411,53 +418,27 @@ alter table public.workflow_transitions add  constraint workflow_transitions_lab
 -- MESURÉ également : supprimer une étape emporte ses arêtes. C'est voulu — une arête vers une
 -- étape disparue n'est pas une donnée à conserver, c'est une arête cassée.
 
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_transitions_workflow_id_workspace_id_fkey'
-		   and conrelid = 'public.workflow_transitions'::regclass
-	) then
-		alter table public.workflow_transitions
-			add constraint workflow_transitions_workflow_id_workspace_id_fkey
-			foreign key (workflow_id, workspace_id)
-			references public.workflows (id, workspace_id) on delete cascade;
-	end if;
+select app.migration_0006_converger_contrainte(
+	'public.workflow_transitions', 'workflow_transitions_workflow_id_workspace_id_fkey',
+	'FOREIGN KEY (workflow_id, workspace_id) REFERENCES public.workflows(id, workspace_id) '
+	'ON DELETE CASCADE');
 
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_transitions_from_step_fkey'
-		   and conrelid = 'public.workflow_transitions'::regclass
-	) then
-		alter table public.workflow_transitions
-			add constraint workflow_transitions_from_step_fkey
-			foreign key (from_step_id, workflow_id)
-			references public.workflow_steps (id, workflow_id) on delete cascade;
-	end if;
+-- LES DEUX EXTRÉMITÉS D'UNE ARÊTE, LIÉES À **SON** WORKFLOW. C'est ce qui empêche une transition
+-- de sortir de son workflow, et c'est structurel, non surveillé par un trigger.
+select app.migration_0006_converger_contrainte(
+	'public.workflow_transitions', 'workflow_transitions_from_step_fkey',
+	'FOREIGN KEY (from_step_id, workflow_id) '
+	'REFERENCES public.workflow_steps(id, workflow_id) ON DELETE CASCADE');
 
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_transitions_to_step_fkey'
-		   and conrelid = 'public.workflow_transitions'::regclass
-	) then
-		alter table public.workflow_transitions
-			add constraint workflow_transitions_to_step_fkey
-			foreign key (to_step_id, workflow_id)
-			references public.workflow_steps (id, workflow_id) on delete cascade;
-	end if;
+select app.migration_0006_converger_contrainte(
+	'public.workflow_transitions', 'workflow_transitions_to_step_fkey',
+	'FOREIGN KEY (to_step_id, workflow_id) '
+	'REFERENCES public.workflow_steps(id, workflow_id) ON DELETE CASCADE');
 
-	-- `docs/SCHEMA.md` §3 : une arête n'est déclarée qu'une fois.
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'workflow_transitions_workflow_from_to_key'
-		   and conrelid = 'public.workflow_transitions'::regclass
-	) then
-		alter table public.workflow_transitions
-			add constraint workflow_transitions_workflow_from_to_key
-			unique (workflow_id, from_step_id, to_step_id);
-	end if;
-end
-$$;
+-- Une arête n'est déclarée qu'une fois.
+select app.migration_0006_converger_contrainte(
+	'public.workflow_transitions', 'workflow_transitions_workflow_from_to_key',
+	'UNIQUE (workflow_id, from_step_id, to_step_id)');
 
 -- La question posée par le menu d'actions d'une card : « les transitions déclarées depuis cette
 -- étape ».
@@ -650,20 +631,10 @@ comment on policy workflow_steps_suppression_admin on public.workflow_steps is
 -- channel, qui deviendrait impossible sans workflow. Elle revient à `CRM-033` avec son trigger de
 -- cohérence workflow ↔ track. INC-029 est mise à jour, non close.
 
-do $$
-begin
-	if not exists (
-		select 1 from pg_constraint
-		 where conname = 'channels_workflow_id_workspace_id_fkey'
-		   and conrelid = 'public.channels'::regclass
-	) then
-		alter table public.channels
-			add constraint channels_workflow_id_workspace_id_fkey
-			foreign key (workflow_id, workspace_id)
-			references public.workflows (id, workspace_id) on delete restrict;
-	end if;
-end
-$$;
+select app.migration_0006_converger_contrainte(
+	'public.channels', 'channels_workflow_id_workspace_id_fkey',
+	'FOREIGN KEY (workflow_id, workspace_id) REFERENCES public.workflows(id, workspace_id) '
+	'ON DELETE RESTRICT');
 
 comment on column public.channels.workflow_id is
 	'Workflow suivi par le channel. Clé étrangère **composite** avec `workspace_id` depuis '
@@ -696,6 +667,15 @@ grant insert, update, delete on public.workflow_transitions to authenticated;
 grant all privileges on public.workflows            to service_role;
 grant all privileges on public.workflow_steps       to service_role;
 grant all privileges on public.workflow_transitions to service_role;
+
+-- =============================================================================================
+-- 8. La fonction d'assistance ne survit pas à la migration
+-- =============================================================================================
+-- Elle n'a de sens que le temps de ce fichier. La laisser dans le schéma `app` en ferait une
+-- surface publique que rien ne documente, et qu'un appelant pourrait employer pour reconstruire
+-- n'importe quelle contrainte de n'importe quelle table.
+
+drop function if exists app.migration_0006_converger_contrainte(text, text, text);
 
 -- PostgREST met son schéma en cache : sans ce signal, les tables nouvellement créées ne sont pas
 -- visibles de l'API tant que le service n'a pas redémarré.

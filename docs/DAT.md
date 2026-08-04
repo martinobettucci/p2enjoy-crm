@@ -401,7 +401,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   **aucune suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés
   par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
   (**30 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**),
-  `scripts/verify-workflows.sh` (**39 contrôles hors suites**), `e2e/api/tracks.spec.ts`,
+  `scripts/verify-workflows.sh` (**47 contrôles**, 40 hors suites), `e2e/api/tracks.spec.ts`,
   `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts` et `e2e/api/workflows.spec.ts`.
   Sur les workflows, la suppression physique est **exposée aux étapes et aux transitions**, et à
   elles seules : elles sont la composition d'un workflow et n'ont aucun `archived_at`
