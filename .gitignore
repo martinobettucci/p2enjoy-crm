@@ -50,6 +50,9 @@ e2e/.env
 e2e/artifacts/
 e2e/test-results/
 e2e/playwright-report/
+# Rapport HTML produit par le rapporteur `html` et servi par `npm run e2e:report` (CRM-008).
+# Un rapport est une pièce de diagnostic, pas un livrable versionné.
+e2e/report/
 e2e/output/
 coverage/
 .nyc_output/

@@ -494,9 +494,11 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 ## 13. Commandes de lancement
 
 Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,
-`npm run types:generate`, `npm run types:check`, `npm run typecheck`. `npm run db:migrate`,
-`npm run db:seed` et `npm run build` restent à venir — le `package.json` livré par `CRM-006` se
-limite aux commandes des types (`docs/JOURNAL.md`, décision 38 ; INC-008).
+`npm run types:generate`, `npm run types:check`, `npm run typecheck`, `npm run build`, et les
+commandes de test livrées par `CRM-008` — `npm run test:sql`, `test:unit`, `e2e:api`, `e2e:ui`,
+`e2e:report` (`README.md` §7, `docs/SPEC-test-harness.md` §9). `npm run db:migrate` et
+`npm run db:seed` restent à venir : aucune façade `npm` des scripts de lancement n'est ajoutée
+(`docs/JOURNAL.md`, décision 38 ; INC-008).
 
 Les trois scripts partagent `scripts/lib/env.sh`, qui porte la lecture du fichier
 d'environnement, son amorçage et ses gardes. Le fichier visé est `.env` à la racine, ou celui que
@@ -509,6 +511,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
+| `scripts/run-sql-tests.sh` | Exécute les suites pgTAP de `supabase/tests/` et **calcule** le verdict TAP, que `psql` ne rend pas | Conteneur `db` en marche ; n'écrit rien en base |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.

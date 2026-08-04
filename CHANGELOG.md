@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-008` — Harnais de tests (`[~]`).**
+  - **`npm run test:sql`** : les trois suites pgTAP de `supabase/tests/`, **227 assertions**, avec
+    un verdict **calculé** et non emprunté. Quatre conditions d'échec indépendantes, dont l'écart
+    entre le plan annoncé et le nombre d'assertions réellement émises — le seul contrôle qui
+    attrape une suite tronquée, pgTAP restant muet lorsque `finish()` manque.
+  - **Projet Playwright `api`** et **`npm run e2e:api`** : **13 scénarios verts**, entièrement hors
+    interface, aucun navigateur lancé. Refus de la passerelle, schéma `app` non exposé, **preuve
+    de refus n° 11**, absence de privilège des trois profils seedés, et refus d'écriture `403`
+    doublé de la vérification que la ligne n'a été créée nulle part.
+  - **Les jetons viennent de la véritable route de connexion**, jamais fabriqués. `e2e/api/jetons.ts`
+    est le livrable durable : `CRM-014` s'y appuiera pour ses douze scénarios.
+  - **« Zéro ligne » n'est affirmé que là où il prouve quelque chose** : les tables sont d'abord
+    constatées **non vides** avec la clé de service ; les deux tables réellement vides sont exclues.
+  - **`npm run e2e:api` ne construit ni ne sert la webapp**, mesuré en supprimant `webapp/dist` et
+    en constatant qu'il n'est pas recréé. Playwright démarrant son `webServer` pour toute
+    exécution, le besoin est déclaré par `E2E_PROJETS`.
+  - **`npm run e2e:report`** : rapporteur `html` avec `open: 'never'`, sortie ignorée par git, et
+    rapport **réellement servi** — interrogé en HTTP, `200` constaté.
+  - **Aucune régression** : `e2e:ui` reste à 13 scénarios, `test:unit` à 96 tests, `typecheck` vert
+    sur les quatre projets ; les neuf harnais précédents rejoués (33, 38, 23, 26, 26, 42, 49, 30,
+    41 contrôles).
+  - Harnais rejouable `scripts/verify-harness.sh` : **22 contrôles, aucune anomalie**, éprouvé par
+    **six dégradations réelles** — assertion fausse, plan tronqué sans `finish()`, erreur SQL,
+    **politique RLS permissive réellement posée**, test unitaire faux — chacune devant faire
+    échouer la commande visée. Restauration constatée, aucune politique résiduelle.
+  - **Reste dû, et l'unité reste `[~]` pour cela** : `pytest mail-sync/tests` et
+    `npm run e2e:mail`, dont les sujets arrivent au chunk 4 (INC-023).
 - **`docs/SPEC-test-harness.md` — spécification du harnais de tests, écrite avant tout code.**
   L'énoncé de `CRM-008` nommait quatre outils sans dire ce que chacun doit rendre, ni comment un
   harnais peut mentir. Rédigée **après mesure** du comportement réel des outils épinglés, pas de

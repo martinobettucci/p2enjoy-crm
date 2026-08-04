@@ -2,7 +2,7 @@
   "name": "p2enjoy-crm",
   "version": "0.0.0",
   "private": true,
-  "description": "CRM P2Enjoy — racine du dépôt. @spec CRM-006 (docs/BACKLOG.md), CRM-007 ; docs/SPEC-types.md §4 (commandes), docs/SPEC-webapp.md §3.2 (projet npm unique), §13 (commandes). Projet npm unique : Vite prend webapp/ pour racine par --config (docs/JOURNAL.md décision 42). Aucune façade npm des scripts de lancement n'est ajoutée (décision 38, INC-008).",
+  "description": "CRM P2Enjoy — racine du dépôt. @spec CRM-006 (docs/BACKLOG.md), CRM-007, CRM-008 ; docs/SPEC-types.md §4 (commandes), docs/SPEC-webapp.md §3.2 (projet npm unique), §13 (commandes), docs/SPEC-test-harness.md §9 (commandes du harnais). Projet npm unique : Vite prend webapp/ pour racine par --config (docs/JOURNAL.md décision 42). Aucune façade npm des scripts de lancement n'est ajoutée (décision 38, INC-008). E2E_PROJETS est un contrat interne entre ces scripts et e2e/playwright.config.ts : Playwright démarre son webServer pour toute exécution, et le filtre --project n'est pas visible des workers (décision 49).",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -14,8 +14,11 @@
     "dev": "vite --config webapp/vite.config.ts",
     "build": "vite build --config webapp/vite.config.ts",
     "preview": "vite preview --config webapp/vite.config.ts",
+    "test:sql": "scripts/run-sql-tests.sh",
     "test:unit": "vitest run --config webapp/vitest.config.ts",
-    "e2e:ui": "playwright test --config e2e/playwright.config.ts"
+    "e2e:api": "E2E_PROJETS=api playwright test --config e2e/playwright.config.ts --project=api",
+    "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
+    "e2e:report": "playwright show-report e2e/report"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

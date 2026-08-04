@@ -689,9 +689,107 @@ dans Caddy, pas une image.
   livrés : la recherche n'a rien à interroger et le profil suppose une session. Les afficher
   inertes serait une commande morte.
 
-### CRM-008 — Harnais de tests `[ ]`
+### CRM-008 — Harnais de tests `[~]`
 pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
 **DoD** : chaque commande du `README.md` §7 s'exécute ; un test volontairement faux échoue bien.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-test-harness.md` : l'énoncé nommait
+      quatre outils sans dire ce que chacun doit rendre, ni comment un harnais peut mentir.
+      Rédigée **après mesure** du comportement réel des outils épinglés, non de mémoire. Commit
+      documentaire dédié.
+- [x] **Mesure fondatrice, qui a décidé de la conception** : `psql` rend **`0`** sur une suite
+      pgTAP dont les assertions échouent, **`0`** sur un plan non tenu, et pgTAP n'émet **aucun**
+      diagnostic de plan lorsque `finish()` manque. Le code de sortie ne peut donc pas servir de
+      verdict, ni le diagnostic de pgTAP le remplacer (`docs/JOURNAL.md`, décision 48).
+- [x] `scripts/run-sql-tests.sh` et `npm run test:sql` : les **trois** suites de `supabase/tests/`,
+      **227 assertions**, avec quatre conditions d'échec indépendantes — code de sortie de `psql`,
+      absence de plan, présence d'un `not ok`, et **écart entre le plan annoncé et le nombre
+      d'assertions réellement émises**, que l'exécuteur calcule lui-même.
+- [x] **Projet Playwright `api` livré**, `npm run e2e:api` : **13 scénarios verts**, entièrement
+      **hors interface**, aucun navigateur lancé. Ils couvrent le refus de la passerelle (`401`),
+      la non-exposition du schéma `app` (`404 PGRST202`), la **preuve de refus n° 11** de
+      `docs/SPEC-permissions-rls.md` §7, l'absence de privilège des trois profils seedés, et le
+      refus d'écriture (`403`, code `42501`) **doublé** de la vérification que la ligne n'a été
+      créée nulle part.
+- [x] **Les jetons sont obtenus par la véritable route de connexion**, jamais fabriqués :
+      `e2e/api/jetons.ts` est le livrable durable de l'unité, celui sur lequel `CRM-014`
+      s'appuiera pour ses douze scénarios.
+- [x] **« Zéro ligne » n'est affirmé que là où il prouve quelque chose** : le scénario A3 constate
+      d'abord, avec la clé de service, que `profiles`, `workspaces` et `workspace_members`
+      **contiennent réellement des lignes**. `track_members` et `channel_members`, vides, sont
+      exclues — sur une table vide, `[]` serait vrai que la RLS refuse ou qu'elle autorise tout
+      (décision 50).
+- [x] **Le projet `api` ne construit ni ne sert la webapp**, mesuré et non déduit : `webapp/dist`
+      est supprimé avant l'exécution et **n'est pas recréé**. Playwright démarrant son `webServer`
+      pour toute exécution quel que soit le filtre `--project` — et ce filtre n'étant pas visible
+      des workers —, le besoin est **déclaré** par `E2E_PROJETS` (décision 49).
+- [x] `npm run e2e:report` livré, et **réellement servi** : le processus est lancé, interrogé en
+      HTTP, et le code `200` constaté avant qu'il soit arrêté. Rapporteur `html` ajouté avec
+      `open: 'never'`, sortie dans `e2e/report/`, ignorée par git.
+- [x] **Aucune régression sur `CRM-007`** : `npm run e2e:ui` reste vert sur ses **13 scénarios**
+      malgré le renommage du projet et la déclaration conditionnelle du serveur ;
+      `npm run test:unit` reste à **96 tests** ; `npm run typecheck` reste vert sur les quatre
+      projets, les nouveaux fichiers `e2e/` étant couverts par `tsconfig.tools.json`.
+- [x] Harnais de preuves rejouable `scripts/verify-harness.sh` : **22 contrôles, aucune anomalie**,
+      et **non complaisant, éprouvé par six dégradations réelles** — une assertion fausse dans une
+      suite pgTAP réelle, un plan non tenu **sans** `finish()`, une erreur SQL, une **politique RLS
+      permissive réellement posée** sur `workspaces`, et un test unitaire volontairement faux.
+      Chacune doit faire échouer la commande correspondante.
+- [x] **Le contrôle de la politique RLS est le contrôle décisif du projet `api`** : il est d'abord
+      vérifié que la politique posée est **effective** — l'anonyme voit alors 1 ligne —, puis
+      qu'`npm run e2e:api` échoue. Sans lui, les scénarios pourraient se contenter de constater
+      une base vide au lieu de mesurer un refus.
+- [x] **Restauration constatée, pas supposée** : suite pgTAP identique à sa version versionnée,
+      test faux supprimé, **aucune politique résiduelle** sur `public.workspaces`, et les deux
+      commandes redevenues vertes.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-008/` — le rapport HTML
+      servi par `npm run e2e:report`, sur une exécution verte puis sur une exécution **rouge**,
+      celle que provoque la politique permissive. Comme pour `CRM-001`, `CRM-005` et `CRM-011`, il
+      s'agit d'un outil d'exploitation et non du produit : le harnais n'a pas d'interface propre.
+- [x] Les neuf harnais précédents rejoués : **33, 38, 23, 26, 26, 42, 49, 30 et 41 contrôles**,
+      aucune régression.
+- [x] `docs/SPEC-test-harness.md`, `README.md` §7 et §13, `docs/DAT.md` §13,
+      `docs/SPEC-webapp.md` §13, `docs/MASTER_PLAN.md` §3, `.gitignore`, `package.json`,
+      `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **`pytest mail-sync/tests` n'est pas livré** : aucun code Python n'existe dans le dépôt, le
+      service `mail-sync` étant l'objet de `CRM-051`. Un harnais pytest sans sujet rendrait `5`
+      (« no tests ran ») ou, pire, `0` sur un périmètre vide.
+- [ ] **`npm run e2e:mail` n'est pas livré** : ni Stalwart, ni boîte, ni ingestion — `CRM-050` et
+      `CRM-054`. Rien à faire circuler.
+- [ ] **Ces deux manques ne sont pas des défauts de l'unité, mais une contradiction
+      d'ordonnancement** : la Definition of Done exige des commandes dont les sujets arrivent
+      **deux chunks plus loin**. Consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-023**, avec
+      trois options d'arbitrage — dont la constatation que `CRM-051` et `CRM-054` portent **déjà**
+      ces deux commandes dans leur propre DoD, ce qui les compte deux fois. **À trancher par le
+      responsable.**
+
+*DoD adaptée, écarts explicites.* **Aucune migration, aucune mise à jour du seed** : un harnais de
+tests n'introduit ni table, ni statut, ni flux ; il consomme le seed socle de `CRM-005` sans le
+modifier. `docs/PROD_MIGRATIONS.md` est inchangé à dessein — ni schéma, ni service déployé, ni
+variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat interne entre
+`package.json` et la configuration Playwright, et n'a pas sa place dans `.env.example`).
+
+*Limites nommées, non masquées.*
+
+- **Deux des sept commandes de `README.md` §7 ne sont pas livrées** (voir ci-dessus, INC-023).
+  L'unité reste `[~]` pour cette seule raison.
+- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7, seule la n° 11 est
+  acquise.** Les onze autres exigent des cards, des channels, des comptes mail et un second
+  workspace : elles restent dues par `CRM-014`, qui héritera des fixtures livrées ici.
+- **Les scénarios A5 et A6 décrivent un produit sans politiques RLS et échoueront à `CRM-012`.**
+  C'est voulu et annoncé à l'endroit même de l'assertion (décision 51) : une limite figée par une
+  assertion force sa révision, alors qu'une limite commentée survit à sa cause.
+- **La lecture du TAP est dupliquée** : l'exécuteur la porte, et `verify-migrations.sh`,
+  `verify-authz.sh` et `verify-seed.sh` gardent la leur. Les unifier reviendrait à modifier les
+  preuves de trois autres unités dans ce commit (`CLAUDE.md` §13).
+- **`E2E_PROJETS` doit rester cohérente avec `--project`**, et rien ne peut le vérifier depuis la
+  configuration. Une incohérence n'est pas silencieuse pour autant : elle démarre un serveur
+  inutile, ou l'omet — auquel cas les scénarios `ui` échouent bruyamment.
+- **Un seul navigateur** pour le projet `ui` : Chromium, comme depuis `CRM-007`.
+- **Le projet `api` ne couvre ni Realtime ni Storage** : ces contrats entreront dans le harnais
+  avec les unités qui les emploient.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ---
 

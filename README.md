@@ -240,24 +240,36 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 ## 7. Tests
 
 ```bash
-npm run test:unit          # Vitest (webapp)              — disponible
-npm run e2e:ui             # Playwright, interface        — disponible
-npm run test:sql           # pgTAP (fonctions SQL, gardes de transition, helpers RLS)
-pytest mail-sync/tests     # unitaires et intégration du service mail
-npm run e2e:api            # Playwright — contrats API et refus d'autorisation
-npm run e2e:ui             # Playwright — parcours utilisateur
-npm run e2e:mail           # Playwright — aller-retour email réel via Stalwart
-npm run e2e:report         # Rapport HTML
+npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
+npm run test:unit          # Vitest (webapp), 96 tests    — aucune pile requise
+npm run test:sql           # pgTAP, 227 assertions        — pile démarrée
+npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
+npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
+npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
+pytest mail-sync/tests     # PAS ENCORE LIVRÉ — attend le service mail-sync (CRM-051)
+npm run e2e:mail           # PAS ENCORE LIVRÉ — attend Stalwart (CRM-050, CRM-054)
 ```
 
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
-Les commandes encore absentes arrivent avec le harnais de tests (`CRM-008`). Trois font déjà
-exception : `npm run typecheck`, livré par `CRM-006` et étendu par `CRM-007`, compile désormais
-**quatre projets** — types générés, application, tests, outillage — et ne demande aucune pile
-démarrée ; `npm run test:unit` exécute les **96 tests** de la webapp ; `npm run e2e:ui` exécute les
-**13 scénarios** d'interface contre le build servi, et produit les captures.
+Les six premières commandes sont livrées et prouvées. Les deux dernières ne le sont pas, et
+elles ne sont **pas déclarées vides pour autant** : `pytest` sans service à exercer rendrait `5`,
+et un projet Playwright sans scénario rendrait `0` sans rien avoir mesuré — ce qui serait pire
+qu'une commande absente. Elles arriveront avec leur sujet, au chunk 4 ; la contradiction entre
+cette réalité et la Definition of Done de `CRM-008` est consignée en
+[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-023.
+
+`npm run test:sql` ne se fie **ni** au code de sortie de `psql`, **ni** au diagnostic de pgTAP :
+mesuré, `psql` rend `0` sur une suite dont toutes les assertions échouent, et pgTAP n'émet aucun
+diagnostic de plan lorsque `finish()` manque. L'exécuteur compare donc lui-même le plan `1..N` au
+nombre d'assertions réellement émises. Voir
+[`docs/SPEC-test-harness.md`](docs/SPEC-test-harness.md) §3.
+
+`npm run e2e:api` ne construit ni ne sert la webapp : le projet parle directement à Kong. Comme
+Playwright démarre son `webServer` pour toute exécution quel que soit le filtre `--project`, le
+besoin est déclaré par la variable `E2E_PROJETS`, positionnée par les scripts npm eux-mêmes
+(`docs/SPEC-test-harness.md` §4.2).
 
 Les autres preuves disponibles aujourd'hui sont huit harnais rejouables, à exécuter sur une pile de
 développement déjà démarrée :
@@ -272,6 +284,7 @@ scripts/verify-auth.sh         # authentification : invitation, connexion, mot d
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 scripts/verify-webapp.sh       # squelette de la webapp : build, jetons, états, clavier (CRM-007)
+scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

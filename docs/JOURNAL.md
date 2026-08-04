@@ -1959,3 +1959,60 @@ seulement qu'il ne mesure rien.
 contradiction entre la Definition of Done de `CRM-008` et l'ordre d'exécution de
 `docs/MASTER_PLAN.md` §2 est consignée en **INC-023**, avec trois options d'arbitrage. Elle n'est
 pas résolue ici : `CRM-008` restera `[~]`.
+
+---
+
+## 2026-08-04 — `CRM-008` : harnais livré, et ce qu'il attrape réellement
+
+### Ce qui a été livré
+
+- `scripts/run-sql-tests.sh` et `npm run test:sql` — trois suites, **227 assertions**, verdict
+  calculé selon les quatre conditions de la décision 48.
+- Projet Playwright `api`, `npm run e2e:api` — **13 scénarios**, hors interface, sans navigateur.
+- `e2e/api/jetons.ts` — fixtures de jetons réels, livrable durable repris par `CRM-014`.
+- `e2e/env.ts` — amorce d'environnement extraite de `playwright.config.ts`, un fichier de
+  scénarios ne pouvant importer la configuration sans dépendance circulaire.
+- `npm run e2e:report` — rapporteur `html`, sortie dans `e2e/report/`, ignorée par git.
+- `scripts/verify-harness.sh` — **22 contrôles**, dont six dégradations réelles.
+
+### Ce que la non-complaisance a réellement montré
+
+Le contrôle décisif n'est pas le nombre de scénarios verts, mais ce qui se passe quand on ouvre
+une brèche. Une politique RLS permissive posée **sur la seule table `workspaces`** fait échouer
+`npm run e2e:api` — et l'observation du rapport HTML montre qu'**un seul** scénario devient rouge :
+A4 sur `workspaces`. Les deux autres tables du même scénario restent vertes.
+
+C'est la propriété qu'on attendait sans pouvoir l'affirmer d'avance : le harnais ne signale pas
+« quelque chose a changé », il désigne **ce qui** a changé. Un harnais qui aurait viré au rouge
+en bloc aurait été aussi peu utile qu'un harnais resté vert.
+
+Les deux captures — `docs/captures/CRM-008/rapport-api-vert-1440.jpg` et
+`rapport-api-rouge-1440.jpg` — sont conservées pour cette raison : elles montrent la différence,
+pas seulement le succès.
+
+### Ce que cette unité ne prouve pas
+
+- **`pytest` et `e2e:mail` ne sont pas livrés.** Leurs sujets arrivent au chunk 4 (INC-023).
+  L'unité reste `[~]` pour cette seule raison.
+- **Onze des douze preuves de refus restent dues** par `CRM-014`. Ce qui est livré ici est le
+  moyen de les écrire, pas les preuves elles-mêmes.
+- **La lecture du TAP reste dupliquée** entre l'exécuteur et trois `scripts/verify-*.sh`. Unifier
+  reviendrait à toucher les preuves de trois autres unités dans ce commit.
+
+### Limites de l'environnement de vérification, nommées et non masquées
+
+Deux obstacles ont dû être levés **hors du dépôt**, et aucun correctif n'a été versionné pour eux :
+
+1. **L'image du service `webapp` ne se construit pas derrière le proxy de la routine** : celui-ci
+   interpose son propre certificat et `npm ci` refuse la chaîne (`SELF_SIGNED_CERT_IN_CHAIN`). Le
+   `webapp/Dockerfile` prévoyait déjà le secret facultatif `npm_ca` pour ce cas ; l'image a été
+   construite à la main en le fournissant, puis la pile démarrée par `./runDev.sh --dev`. Le
+   dépôt est correct : c'est `docker compose` qui ne transmet pas de secret de build. Question
+   ouverte, à examiner si le cas se reproduit — hors périmètre de `CRM-008`.
+2. **Le Chromium préinstallé de l'environnement ne correspond pas à la version qu'exige
+   `@playwright/test@1.62.1`** (build 1194 contre 1234 attendu). Le navigateur attendu a été
+   installé avant de rejouer `npm run e2e:ui`. Sans cela, les 13 scénarios de `CRM-007` auraient
+   échoué pour une raison sans rapport avec le produit.
+
+Ces deux points sont des propriétés de l'hôte de vérification, pas du projet. Ils sont consignés
+pour qu'une exécution future ne les rediagnostique pas depuis zéro.

@@ -413,8 +413,10 @@ nécessaire après leur changement, ce que `docs/PROD_MIGRATIONS.md` doit dire.
 | `npm run e2e:ui` | Playwright, parcours et captures |
 | `scripts/verify-webapp.sh` | rejoue l'ensemble des preuves de l'unité |
 
-`npm run test:sql`, `e2e:api`, `e2e:mail` et `e2e:report` restent dus par `CRM-008` : cette unité
-ne les invente pas.
+`npm run test:sql`, `e2e:api` et `e2e:report` **ont depuis été livrés par `CRM-008`**
+(`docs/SPEC-test-harness.md`). `npm run e2e:ui` y a pris son nom de projet explicite, sans
+changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` — voir
+`docs/INCONSISTENCY_REPORT.md`, INC-023.
 
 ## 14. Preuves attendues
 
