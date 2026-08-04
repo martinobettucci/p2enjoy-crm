@@ -99,7 +99,8 @@ tables d'identité (`docs/JOURNAL.md`, décisions 21 et 26).
 | `workspace_members` | Membres du workspace | `admin` ; **un administrateur ne peut pas se retirer son propre rôle s'il est le dernier** |
 | `tracks` | `app.can_read_track` — **livré par `CRM-020` avec `app.is_workspace_member`**, les droits fins restant dus (INC-024) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-tracks.md` §4) |
 | `channels` | `app.can_read_channel` — **livré par `CRM-021` avec `app.is_workspace_member`**, les droits fins restant dus (INC-030) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-channels.md` §4) |
-| `workflow_nodes_catalog`, `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace | `admin` |
+| `workflow_nodes_catalog` | Membres du workspace — **livré par `CRM-030`** avec `app.is_workspace_member`, qui **est** la règle spécifiée et non un repli : aucun droit fin ne gouverne le catalogue | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-workflow-engine.md` §2.6) |
+| `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace | `admin` |
 | `form_fields`, `form_field_rules` | Membres du workspace | `admin` |
 | `cards` | `app.can_read_card` | `app.can_write_channel` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement** |
 | `card_field_values` | Lecture de la card | Écriture sur le channel |
@@ -158,7 +159,7 @@ interface**, avec les jetons réels de chaque profil :
 | # | Scénario | Attendu |
 |---|---|---|
 | 1 | `viewer` tente `move_card` | Refus |
-| 2 | `business_developer` tente de modifier un workflow | Refus |
+| 2 | `business_developer` tente de modifier un workflow | Refus — **acquise sur `workflow_nodes_catalog` par `CRM-030`** ; les trois autres tables de la famille restent dues par `CRM-031` |
 | 3 | Membre du workspace A lit une card du workspace B | Aucune ligne |
 | 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne |
 | 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus |

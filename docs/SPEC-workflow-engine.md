@@ -215,6 +215,15 @@ vide, parce qu'aucune ligne n'a été **vue** comme modifiable. Un test qui se c
 constater l'absence d'erreur conclurait donc que l'écriture a réussi. Toute preuve de refus de mise
 à jour doit relire la ligne et vérifier qu'elle est **inchangée** — sans quoi elle ne prouve rien.
 
+*Précision acquise en écrivant les preuves, et non à la sonde.* Ce comportement **n'est pas une
+particularité de PostgREST** : c'est celui du moteur. Une clause `USING` ne *refuse* pas une ligne,
+elle la rend **invisible** ; l'ordre `UPDATE` ne trouve alors rien à modifier et réussit sur zéro
+ligne. L'assertion pgTAP correspondante, d'abord écrite en `throws_ok('42501')` par symétrie avec
+l'insertion, a **échoué** en rendant « caught: no exception » — et c'est cet échec qui a établi le
+fait (`docs/JOURNAL.md`, décision 67). La différence avec la ligne j est nette : là, l'appelant
+**voit** la ligne, et c'est le `WITH CHECK` qui refuse celle d'arrivée — le refus est alors bien
+une erreur `42501`. Les deux formes coexistent sur la même politique.
+
 Constat associé, déjà consigné : le refus de la ligne i **divulgue la commande `GRANT` à exécuter**
 dans son `hint`. Comportement de la version épinglée de PostgREST, portée transverse, INC-026.
 

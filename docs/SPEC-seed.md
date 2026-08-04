@@ -175,6 +175,8 @@ ligne seedée reconnaissable immédiatement dans la base, dans un journal ou dan
 | Espaces de travail | `…000000000001` et suivants |
 | Comptes | `…000000000011` et suivants |
 | Tracks | `…000000000021` et suivants (`CRM-020`) |
+| Channels | `…000000000031` et suivants (`CRM-021`) |
+| Nœuds du catalogue | `…000000000041` et suivants (`CRM-030`) |
 
 Les identifiants restent des UUID valides : version `4`, variant `8`. Aucun outil ne les distingue
 d'un identifiant produit par `gen_random_uuid()` autrement que par leur préfixe.
@@ -270,11 +272,42 @@ pas à démontrer une barre d'onglets.
 `workflow_id` est laissé **nul partout**. C'est l'état réel du produit jusqu'à `CRM-031` (INC-029),
 et le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire (`CLAUDE.md` §8).
 
+### 2.7 Catalogue de nœuds — ajouté par `CRM-030`
+
+Les sept nœuds du workflow de référence, plus un **archivé**. Contrat détaillé et motifs :
+`docs/SPEC-workflow-engine.md` §2.9.
+
+| id | clé | libellé | type | couleur | probabilité | seuil | position | état |
+|---|---|---|---|---|---|---|---|---|
+| `…041` | `prospection` | Prospection | `open` | `neutral` | 10 % | 14 j | 1 | actif |
+| `…042` | `relance` | Relance | `open` | `accent` | 20 % | 7 j | 2 | actif |
+| `…043` | `negociation` | Négociation | `open` | `brand` | 50 % | 10 j | 3 | actif |
+| `…044` | `signature` | Signature | `open` | `brand` | 90 % | 7 j | 4 | actif |
+| `…045` | `realisation` | Réalisation | `open` | `success` | 100 % | 30 j | 5 | actif |
+| `…046` | `livre` | Livré | `won` | `success` | 100 % | — | 6 | actif |
+| `…047` | `perdu` | Perdu | `lost` | `danger` | 0 % | — | 7 | actif |
+| `…048` | `qualification` | Qualification | `open` | `neutral` | 5 % | 21 j | 8 | **archivé** |
+
+Trois propriétés sont démontrées, et non une seule :
+
+- **les trois types sont représentés**, `won` et `lost` compris — sans eux, l'analytique de
+  conversion n'aurait aucune donnée de démonstration ;
+- **les cinq jetons du design system sont exercés**, `danger` compris. Un jeton que rien ne porte
+  n'est jamais mesuré : c'est la leçon du correctif de contraste de `CRM-020` ;
+- **les deux nœuds terminaux n'ont aucun seuil de relance**, la valeur étant `NULL` et non `0` —
+  une affaire livrée ou perdue n'est pas en retard, et la contrainte de la migration refuserait un
+  zéro.
+
+Le nœud archivé est hors des sept du contrat métier : sans lui, l'état archivé du catalogue serait
+documenté sans être démontrable (`CLAUDE.md` §8), comme pour le track archivé de `CRM-020` et le
+channel archivé de `CRM-021`.
+
 **Ce que le seed rend désormais visible, et ce qu'il ne rend toujours pas visible.** Le message
-affiché en fin d'exécution a été corrigé par `CRM-020` puis par `CRM-021` : `tracks` et `channels`
-portent des politiques, et un membre du workspace y lit ses quatre tracks et ses six channels,
-tandis que `profiles`, `workspaces` et `workspace_members` restent en refus par défaut jusqu'à
-`CRM-012`. Annoncer un refus général serait devenu faux.
+affiché en fin d'exécution a été corrigé par `CRM-020`, `CRM-021` puis `CRM-030` : `tracks`,
+`channels` et `workflow_nodes_catalog` portent des politiques, et un membre du workspace y lit ses
+quatre tracks, ses six channels et ses huit nœuds, tandis que `profiles`, `workspaces` et
+`workspace_members` restent en refus par défaut jusqu'à `CRM-012`. Annoncer un refus général serait
+devenu faux.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

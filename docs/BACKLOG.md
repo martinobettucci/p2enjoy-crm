@@ -1090,10 +1090,139 @@ telle.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-030 — Catalogue de nœuds `[ ]`
+### CRM-030 — Catalogue de nœuds `[~]`
 `workflow_nodes_catalog`, catalogue initial de sept nœuds, refus d'archivage d'un nœud occupé.
 **DoD** : pgTAP sur le refus d'archivage ; E2E d'administration ; seed conforme au tableau de
 `docs/SPEC-workflow-engine.md` §2.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §2 réécrit : le
+      chapitre tenait en dix-huit lignes et ne disait ni ce qu'une clé de nœud a le droit d'être,
+      ni comment le catalogue s'ordonne, ni ce que l'API doit rendre à chacun des trois rôles, ni
+      quelles couleurs les sept nœuds portent — alors que `docs/SCHEMA.md` §3 exige la colonne.
+      Rédigé **après mesure** sur une table sonde jetable `public.sonde_wnc`, créée puis détruite,
+      l'absence de reste étant constatée. Commit documentaire dédié.
+- [x] `supabase/migrations/0005_workflow_nodes_catalog.sql` : table, unicité de la clé **par
+      workspace**, six contraintes de valeur convergentes, trigger d'attribution de `position`
+      dans la portée du workspace, trigger d'`updated_at`, index partiel du catalogue actif,
+      **trois politiques RLS** et privilèges explicites. **Aucun `DELETE` accordé à personne** :
+      l'archivage tient lieu de suppression.
+- [x] **Test unitaire dédié** : `supabase/tests/0006_workflow_nodes_catalog.test.sql`,
+      **80 assertions, aucune anomalie** — structure, bornes, unicité par workspace, ordre attribué
+      et ordre fourni, archivage réversible, politiques, privilèges, et les autorisations éprouvées
+      contre quatre comptes réels avec les revendications JWT simulées comme PostgREST les pose.
+- [x] **Une affirmation de la spécification démentie par la mesure, et la spécification corrigée**
+      (décision 67) : le §2.8 attribuait à PostgREST le fait qu'une mise à jour refusée rende `200`
+      et un tableau vide. **C'est le moteur.** Une clause `USING` ne refuse pas une ligne, elle la
+      rend invisible ; l'`UPDATE` réussit alors sur zéro ligne. L'assertion pgTAP, d'abord écrite
+      en `throws_ok('42501')` par symétrie avec l'insertion, a **échoué** en rendant « caught: no
+      exception » — et c'est cet échec qui a établi le fait. La preuve correcte relit la ligne et
+      la constate inchangée.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/catalogue-noeuds.spec.ts`,
+      **25 scénarios**, avec les jetons réels des trois profils obtenus par la véritable route de
+      connexion. Les treize lignes du contrat d'API de `docs/SPEC-workflow-engine.md` §2.8 y sont
+      rejouées.
+- [x] **PREUVE DE REFUS N° 2 ACQUISE, pour la première fois du projet** : un
+      `business_developer` ne modifie ni ne renomme aucun nœud, et la ligne est relue **inchangée**.
+      Les trois autres tables de la famille des workflows restent dues par `CRM-031`.
+- [x] **Preuves de refus n° 3 et n° 11 acquises au niveau du catalogue** : un membre du workspace A
+      ne voit aucun nœud de B — la ligne de B étant d'abord constatée présente avec la clé de
+      service, sans quoi le « zéro ligne » ne prouverait rien (décision 50) ; l'anonyme obtient
+      `200` et `[]` alors que la table contient huit lignes.
+- [x] **L'écriture est réservée aux administrateurs, prouvée par le refus ET par l'acceptation** :
+      `viewer` et `business_developer` refusés en `403` / `42501`, la ligne n'existant **nulle
+      part** ensuite ; administrateur accepté en `201`, `position` attribuée automatiquement, et
+      les défauts de colonne appliqués — `open` et `neutral`, jamais `brand`.
+- [x] **Le `WITH CHECK` de la mise à jour est prouvé nécessaire** : un administrateur de A ne peut
+      pas déplacer son nœud vers B, refus que le `USING` seul aurait laissé passer. Et il se
+      manifeste ici par une **erreur** `42501`, à la différence du refus par le `USING` : les deux
+      formes coexistent sur la même politique, ce qui est exactement ce qui rend la seconde
+      difficile à voir.
+- [x] **`numeric(5,2)` arrondit avant la contrainte, mesuré et figé** : `99.999` est accepté et
+      stocké `100.00`, `100.01` et `-0.01` refusés. Sans cette preuve, un test futur insérant
+      `99.999` échouerait pour une raison sans rapport avec la règle métier, et serait « corrigé »
+      en relâchant la contrainte (décision 65).
+- [x] **Seed mis à jour dans le même changement** : les sept nœuds du §2.9 plus **un archivé**,
+      créés par la véritable API REST, convergents. Les **trois types** sont représentés, les
+      **cinq jetons** du design system exercés, et les deux nœuds terminaux portent un seuil de
+      relance **nul** et non `0`. Rejoué : toujours huit lignes, aucun doublon.
+- [x] Harnais de preuves rejouable `scripts/verify-catalogue.sh` : **36 contrôles, aucune
+      anomalie** — 29 hors suites Playwright et build (`--rapide`) —, et **non complaisant, éprouvé
+      par trois dégradations réelles** — lecture ouverte
+      à tous, seed privé de son nœud archivé, seuil de relance posé sur un nœud terminal. Chacune
+      fait sortir le harnais en code `1`, et la restauration est **constatée** : contrainte revenue,
+      politiques revenues, libellé du seed revenu à « Prospection ».
+- [x] **Le contrôle décisif de ce harnais est celui de la ligne h** : il ouvre réellement la
+      politique de mise à jour et **constate que le renommage passe**. Sans lui, la preuve du refus
+      serait tout aussi verte sur un produit où **rien** n'est modifiable.
+- [x] **Convergence prouvée, et non simple idempotence** : une contrainte retirée à la main est
+      **rétablie** par un rejeu de la migration, conformément à la décision 57.
+- [x] **Deux compteurs figés par des unités précédentes ont échoué comme prévu, et ont été
+      révisés** : `scripts/verify-harness.sh` (374 / 50 / 37 → **454 / 75 / 37**, le compteur
+      d'interface **inchangé**, cette unité ne livrant aucun écran) et
+      `webapp/src/lib/database.types.test-d.ts`, dont l'énumération des tables a échoué à la
+      régénération des types. Le mécanisme de la décision 51 a fonctionné une troisième fois.
+- [x] **Sept assertions de type ajoutées** pour figer le contrat du catalogue, dont la troisième
+      occurrence d'INC-027 : le type généré exige `position` à l'insertion, que le trigger rend
+      facultative — le générateur ignore les triggers.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert —
+      les types régénérés suivent le schéma. `npm run test:unit` **164 tests**, `npm run e2e:ui`
+      **37 scénarios**, inchangés : aucune régression.
+- [x] **Aucune régression** : les douze harnais précédents rejoués — **33, 38, 23, 26, 26, 42, 49,
+      30, 41, 22, 43 et 28 contrôles**, aucune anomalie.
+- [x] `docs/SPEC-workflow-engine.md` §2 (réécrit), §8, §9, `docs/SCHEMA.md` §3,
+      `docs/SPEC-permissions-rls.md` §4 et §7, `docs/SPEC-seed.md` §2.7 et §4, `docs/DAT.md` §7 et
+      §8, `docs/PROD_MIGRATIONS.md` §3 et §5, `docs/manual.md` §3.2 et sommaire,
+      `docs/MASTER_PLAN.md` §3, `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Le refus d'archivage d'un nœud occupé n'est pas livré.** Son chemin est
+      `cards.current_step_id → workflow_steps.node_id → workflow_nodes_catalog.id` : il traverse
+      `workflow_steps` (`CRM-031`) et `cards` (`CRM-040`). Mesuré : les trois tables rendent `NULL`
+      à `to_regclass`. Mesuré aussi, et c'est ce qui a tranché : PostgreSQL **accepte la création**
+      d'une fonction PL/pgSQL référençant une table absente, l'échec ne survenant qu'au premier
+      appel — un trigger écrit ici ferait échouer **toute** mise à jour du catalogue sans rien
+      protéger. **INC-031, en attente d'arbitrage** (trois options), avec trois assertions
+      `hasnt_table` et un contrôle du harnais qui deviendront rouges le jour où les tables
+      apparaîtront.
+      **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
+- [ ] **Aucun E2E d'administration, aucune capture d'application.** Le catalogue n'a **aucun
+      écran** et n'en aura pas avant l'éditeur de workflow de `CRM-031` : il n'existe rien à
+      regarder, et rien à administrer depuis une interface. La webapp reste de surcroît un appelant
+      **anonyme**, faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Le CRUD est
+      livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon.
+      **Cette preuve est bloquée par une dépendance et par un arbitrage, pas par un défaut de
+      l'unité.**
+
+*DoD adaptée, écarts explicites.* La Definition of Done exige « E2E d'administration ». Aucun n'est
+livré, et aucun ne pouvait l'être : cette unité ne livre ni écran ni parcours. Ses preuves sont
+unitaires (pgTAP) et d'intégration (PostgREST, jetons réels, hors interface), ce que la nature
+d'une table de référence commande. **Aucune vérification visuelle** pour la même raison — et non
+parce qu'elle aurait été omise.
+
+*Limites nommées, non masquées.*
+
+- **La garde d'archivage manque** (INC-031, ci-dessus). Ce qui manque n'est pas la règle — elle est
+  écrite au §2.6 — mais la jointure qui remonte d'un nœud à ses cards.
+- **Aucune donnée du catalogue ne peut apparaître dans l'interface tant qu'INC-021 n'est pas
+  tranchée.** Quatrième unité consécutive du chunk 3 à buter sur le même obstacle.
+- **L'administration du catalogue est une opération d'exploitation**, pas un parcours produit —
+  même nature qu'INC-015 pour l'invitation et que les constats de `CRM-020` et `CRM-021`.
+- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, les n° 2, 3 et 11 sont
+  désormais acquises au niveau du catalogue, la n° 2 pour la première fois. Les neuf autres
+  exigent des cards, des comptes mail et des colonnes protégées : elles restent dues par `CRM-013`
+  et `CRM-014`.
+- **Le réordonnancement du catalogue n'a pas d'opération atomique** : réordonner, c'est écrire
+  `position`. Une RPC deviendra nécessaire avec l'éditeur de `CRM-031`.
+- **Le type généré exige `position` à l'insertion**, que le trigger rend facultative : INC-027 se
+  reproduit à l'identique une troisième fois, et l'écart y est figé par une assertion.
+- **PostgREST divulgue la commande `GRANT`** dans son refus de privilège. Comportement de la
+  version épinglée, portée transverse, **INC-026** — désormais **figé par une assertion**, de sorte
+  qu'une version future qui cesserait de le faire rende le scénario rouge et permette de clore
+  l'entrée.
+- **Aucune limite de nombre de nœuds par workspace** n'est posée côté serveur.
+- **Aucune contrainte ne lie `kind` et `default_probability`.** Un nœud `won` à 0 % ou un nœud
+  `lost` à 100 % est accepté en base. Le seed respecte la cohérence ; le produit ne l'impose pas,
+  faute d'une règle écrite dans la spécification d'origine.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ### CRM-031 — Workflows, étapes, transitions `[ ]`
 Éditeur d'administration ; workflow par défaut du seed conforme au graphe spécifié.

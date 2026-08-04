@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # @spec CRM-005 (docs/BACKLOG.md) — seed socle : comptes, espace de travail, rôles
 # @spec CRM-020 (docs/BACKLOG.md) — tracks de démonstration, dont un archivé
+# @spec CRM-021 (docs/BACKLOG.md) — channels de démonstration, dont un archivé
+# @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
 # @spec docs/SPEC-seed.md §2 (contrat), §3 (mécanismes mesurés), §4 (identifiants), §5 (gardes)
-# @spec docs/SPEC-tracks.md §8 (seed des tracks)
-# @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation)
+# @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
+# @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial livré par le seed)
+# @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation), §3 (workflows)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
 #
@@ -124,6 +127,37 @@ CHANNELS=(
 	'5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000022|refonte|Refonte de site|1|-'
 	'5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000022|maintenance|Maintenance|2|-'
 	'5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000023|inter-entreprises|Inter-entreprises|1|-'
+)
+
+# Catalogue de nœuds du workspace — docs/SPEC-workflow-engine.md §2.9.
+#
+# Les sept nœuds du tableau de la spécification, plus **un huitième archivé** : sans lui, l'état
+# « archivé » du catalogue serait documenté sans être démontrable, ce que `CLAUDE.md` §8 refuse.
+# C'est le même choix qu'un track archivé pour `CRM-020` et un channel archivé pour `CRM-021`.
+#
+# Les couleurs emploient les **cinq** jetons du design system : les deux nœuds terminaux prennent
+# `success` et `danger`, dont c'est exactement le sens (`docs/DESIGN_SYSTEM.md` §1), `relance` prend
+# `accent`, et `prospection` reste `neutral` — un début d'affaire ne porte aucun jugement.
+#
+# Le seuil de relance est **nul** pour les deux nœuds terminaux : une affaire livrée ou perdue
+# n'est pas en retard. La contrainte de la migration refuserait un zéro, qui signalerait toute card
+# dès son arrivée.
+#
+# `position` est écrite explicitement, pour le même motif que les tracks et les channels : un ordre
+# attribué par effet de bord ne serait pas reproductible si l'ordre des insertions changeait. Le
+# trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
+#
+# id | clé | libellé | type | couleur | probabilité (ou « - ») | seuil en jours (ou « - ») |
+#    position | date d'archivage (ou « - »)
+NOEUDS=(
+	'5eed0000-0000-4000-8000-000000000041|prospection|Prospection|open|neutral|10|14|1|-'
+	'5eed0000-0000-4000-8000-000000000042|relance|Relance|open|accent|20|7|2|-'
+	'5eed0000-0000-4000-8000-000000000043|negociation|Négociation|open|brand|50|10|3|-'
+	'5eed0000-0000-4000-8000-000000000044|signature|Signature|open|brand|90|7|4|-'
+	'5eed0000-0000-4000-8000-000000000045|realisation|Réalisation|open|success|100|30|5|-'
+	'5eed0000-0000-4000-8000-000000000046|livre|Livré|won|success|100|-|6|-'
+	'5eed0000-0000-4000-8000-000000000047|perdu|Perdu|lost|danger|0|-|7|-'
+	'5eed0000-0000-4000-8000-000000000048|qualification|Qualification|open|neutral|5|21|8|2026-03-01T09:00:00Z'
 )
 
 # --- Accès à l'API -----------------------------------------------------------------------------
@@ -309,15 +343,55 @@ for ligne in "${CHANNELS[@]}"; do
 	printf '  %-20s %-18s %s\n' "$slug" "${track: -3}" "$etat"
 done
 
-# --- 5. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
+# --- 5. Catalogue de nœuds — docs/SPEC-workflow-engine.md §2.9 ---------------------------------
+# Mêmes règles que les tracks et les channels : véritable API REST, clé de service, écriture
+# convergente sur `id`.
+#
+# `default_probability` et `default_stale_after_days` sont envoyés **null** lorsque le contrat dit
+# « — », et non omis : omettre laisserait la valeur précédente en place lors d'un rejeu convergent,
+# de sorte qu'un seuil posé à la main sur `livre` y survivrait. Le seed est un contrat opposable ;
+# il doit ramener la ligne à son état déclaré, y compris pour effacer.
+
+echo
+say "5. Catalogue de nœuds"
+
+for ligne in "${NOEUDS[@]}"; do
+	IFS='|' read -r id cle libelle type couleur proba seuil position archive <<< "$ligne"
+
+	[ "$proba"   = '-' ] && proba_json='null'   || proba_json="$proba"
+	[ "$seuil"   = '-' ] && seuil_json='null'   || seuil_json="$seuil"
+	[ "$archive" = '-' ] && archive_json='null' || archive_json="\"$archive\""
+
+	charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg cle "$cle" --arg libelle "$libelle" \
+	               --arg type "$type" --arg couleur "$couleur" --argjson position "$position" \
+	               --argjson proba "$proba_json" --argjson seuil "$seuil_json" \
+	               --argjson archive "$archive_json" \
+	     '{id: $id, workspace_id: $ws, key: $cle, label: $libelle, kind: $type, color: $couleur,
+	       default_probability: $proba, default_stale_after_days: $seuil, position: $position,
+	       archived_at: $archive}')
+
+	code=$(api POST /rest/v1/workflow_nodes_catalog \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du nœud $cle" 200 201
+
+	if [ "$archive" = '-' ]; then etat='actif'; else etat="archivé le ${archive%%T*}"; fi
+	[ "$proba" = '-' ] && affiche_proba='—' || affiche_proba="${proba} %"
+	[ "$seuil" = '-' ] && affiche_seuil='—' || affiche_seuil="${seuil} j"
+	printf '  %-14s %-6s %-9s %6s %5s   %s\n' \
+		"$cle" "$type" "$couleur" "$affiche_proba" "$affiche_seuil" "$etat"
+done
+
+# --- 6. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
 # ou dans l'autre tromperait celui qui lit cette sortie.
 #
 #   * les tables du socle — profiles, workspaces, workspace_members — restent en refus par défaut
 #     depuis `CRM-003` : RLS activée, aucune politique. Elles relèvent de `CRM-012` ;
-#   * `tracks` porte les politiques de `CRM-020` et `channels` celles de `CRM-021` : un membre du
-#     workspace y lit, un administrateur seul y écrit. Un appelant **anonyme** n'y lit rien.
+#   * `tracks` porte les politiques de `CRM-020`, `channels` celles de `CRM-021` et
+#     `workflow_nodes_catalog` celles de `CRM-030` : un membre du workspace y lit, un
+#     administrateur seul y écrit. Un appelant **anonyme** n'y lit rien.
 
 echo
 say "Seed appliqué"
@@ -325,8 +399,11 @@ info "Espace de travail : $WS_NAME ($WS_SLUG)"
 info "Comptes : ${#COMPTES[@]}, un par rôle — mot de passe commun publié dans docs/SPEC-seed.md §2.3"
 info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
 info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks — docs/SPEC-channels.md §8"
+info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
-info "tracks et channels sont lisibles par un membre du workspace, et par lui seul (CRM-020, CRM-021)."
-info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh — channels : scripts/verify-channels.sh"
+info "tracks, channels et workflow_nodes_catalog sont lisibles par un membre du workspace, et par lui seul"
+info "(CRM-020, CRM-021, CRM-030). Aucun workflow n'existe encore : CRM-031."
+info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
+info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"

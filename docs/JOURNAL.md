@@ -2695,3 +2695,72 @@ et écartées, chacune pour une raison mesurée :
 raison déjà consignée : `CRM-008` par INC-023, `CRM-010` par INC-013, `CRM-011` et `CRM-020` et
 `CRM-021` par INC-021, l'absence d'écran de connexion. Aucune n'a été rouverte : ce qui leur manque
 est un arbitrage du responsable ou une table du chunk suivant, et non un travail à faire.
+
+
+---
+
+## 2026-08-04 — `CRM-030` : catalogue de nœuds livré, et un refus qui ne ressemble pas à un refus
+
+**Ce qui est livré.** `supabase/migrations/0005_workflow_nodes_catalog.sql` : la table, l'unicité
+de la clé par workspace, six contraintes de valeur convergentes, le trigger d'attribution de
+`position` dans la portée du workspace, l'index partiel du catalogue actif, et trois politiques
+RLS. Le seed porte les sept nœuds du contrat plus un archivé. Les preuves sont unitaires
+(**80 assertions pgTAP**), d'API (**25 scénarios Playwright**, hors interface, jetons réels) et
+rejouables (`scripts/verify-catalogue.sh`, **29 contrôles**).
+
+### Décision 67 — Un refus de mise à jour ne lève aucune exception, et c'est le moteur qui le veut
+
+La spécification écrite avant le code disait déjà, au §2.8, qu'un `PATCH` refusé rend `200` et un
+tableau vide. Elle l'attribuait à PostgREST. **C'est faux, et c'est une assertion qui l'a établi.**
+
+Écrite d'abord en `throws_ok('42501')` par symétrie avec l'insertion, l'assertion pgTAP du refus de
+renommage par un `business_developer` a rendu « caught: no exception » — en SQL direct, sans
+PostgREST. La cause est structurelle : une clause `USING` ne **refuse** pas une ligne, elle la rend
+**invisible**. L'ordre `UPDATE` ne trouve alors rien à modifier et réussit sur zéro ligne. Une
+clause `WITH CHECK`, elle, refuse bel et bien, en `42501` : les deux formes coexistent sur la même
+politique, ce qui est précisément ce qui rend la première difficile à voir.
+
+**Conséquence, et elle dépasse cette unité.** Toute preuve de refus de mise à jour doit relire la
+ligne et la constater **inchangée**. Une preuve qui se contenterait de l'absence d'erreur — ou pire,
+d'un `throws_ok` qui échouerait puis serait « corrigé » en relâchant l'attente — ne prouverait rien.
+Le fait est désormais écrit au §2.8, et le harnais porte un contrôle de non-complaisance dédié : il
+ouvre réellement la politique de mise à jour et **constate que le renommage passe**, sans quoi la
+preuve du refus serait tout aussi verte sur un produit où rien n'est modifiable.
+
+### Ce que le harnais a réellement attrapé
+
+Trois dégradations volontaires, chacune faisant sortir `scripts/verify-catalogue.sh` en code `1` :
+
+1. **lecture ouverte à tous** — la suite pgTAP tombe la première, avant même que la migration ne
+   soit rejouée ;
+2. **seed privé de son nœud archivé** — trois contrôles tombent : le compte, l'état archivé, et la
+   lecture de l'administrateur ;
+3. **seuil de relance posé sur un nœud terminal** — le contrôle des nœuds terminaux tombe.
+
+La restauration est **constatée** dans chaque cas, et non supposée : contrainte revenue, politiques
+revenues, libellé du seed revenu à « Prospection ».
+
+### Deux compteurs figés par des unités précédentes ont échoué comme prévu
+
+- `scripts/verify-harness.sh` fige le nombre d'assertions pgTAP et de scénarios Playwright, de
+  sorte qu'une suite cessant d'être découverte ne passe pas pour verte. Portés de **374 / 50 / 37**
+  à **454 / 75 / 37** — le compteur d'interface est **inchangé**, cette unité ne livrant aucun
+  écran.
+- `webapp/src/lib/database.types.test-d.ts` énumère les tables du schéma. L'assertion a échoué à la
+  régénération des types, et a été **révisée** dans le même changement, accompagnée de sept
+  nouvelles qui figent le contrat du catalogue — dont la troisième occurrence d'INC-027,
+  `position` exigée à l'insertion par un générateur qui ignore les triggers.
+
+### Ce que cette unité ne prouve pas
+
+- **Le refus d'archiver un nœud occupé n'est pas livré** (INC-031). Ce n'est pas un renoncement :
+  ses tables cibles n'existent pas, et l'écrire ferait échouer toute mise à jour du catalogue. Le
+  harnais **vérifie que cette absence est toujours vraie**, de sorte qu'elle ne survive pas à sa
+  cause.
+- **Aucune interface, donc aucune capture d'application.** Le catalogue n'a pas d'écran et n'en
+  aura pas avant l'éditeur de `CRM-031`. La Definition of Done exige un « E2E d'administration » :
+  il n'y a rien à administrer depuis un écran, et la webapp reste de surcroît un appelant anonyme
+  faute de parcours de connexion (INC-021). C'est la quatrième unité consécutive du chunk 3 à
+  buter sur cet arbitrage.
+- **Les preuves de refus n° 2, n° 3 et n° 11 sont acquises au niveau du catalogue**, la n° 2 pour
+  la première fois. Les neuf autres restent dues par `CRM-014`.

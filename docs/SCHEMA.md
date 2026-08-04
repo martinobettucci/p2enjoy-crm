@@ -190,11 +190,26 @@ Catalogue partagé des étapes. C'est lui qui rend l'analytique comparable d'un 
 | `color` | `text` | jeton du design system |
 | `default_probability` | `numeric(5,2)` | `CHECK (0 <= x <= 100)` |
 | `default_stale_after_days` | `integer` | seuil de relance par défaut |
-| `position` | `numeric` | ordre d'affichage du catalogue |
+| `position` | `numeric` | ordre d'affichage du catalogue, attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | un nœud utilisé n'est jamais supprimé, seulement archivé |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` maintenue par trigger |
+
+Précisions apportées par `CRM-030`, après mesure (`docs/SPEC-workflow-engine.md` §2.2 à §2.6) :
+
+- `key` suit la même forme que les slugs de `tracks` et de `channels` :
+  `^[a-z0-9]+(-[a-z0-9]+)*$` ;
+- `color` vaut l'un des cinq jetons du design system, défaut `neutral` ;
+- `default_probability` et `default_stale_after_days` sont **nullables**, `0` n'étant pas `NULL` ;
+  le seuil est contraint à `> 0` et vaut `NULL` pour un nœud terminal ;
+- `numeric(5,2)` **arrondit avant** que la contrainte de valeur ne soit évaluée : `99.999` est
+  accepté et stocké `100.00` ;
+- **aucune suppression n'est exposée** : ni politique `for delete`, ni privilège `DELETE` ;
+- le **refus d'archiver un nœud occupé** n'est pas livré — sa cible traverse `workflow_steps` et
+  `cards`, qui n'existent pas encore. `docs/INCONSISTENCY_REPORT.md`, INC-031.
 
 Catalogue initial livré par le seed : `prospection`, `relance`, `negociation`, `signature`,
-`realisation`, `livre` (`kind = 'won'`), `perdu` (`kind = 'lost'`).
+`realisation`, `livre` (`kind = 'won'`), `perdu` (`kind = 'lost'`), plus un nœud **archivé** —
+`qualification` — pour que l'état archivé soit démontrable et non seulement documenté.
 
 ### `workflows`
 

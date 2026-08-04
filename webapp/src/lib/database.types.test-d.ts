@@ -44,6 +44,7 @@ type _tables = Expect<
     | 'profiles'
     | 'track_members'
     | 'tracks'
+    | 'workflow_nodes_catalog'
     | 'workspace_members'
     | 'workspaces'
   >
@@ -156,6 +157,72 @@ type _channelsInsertRequis = Expect<
   >
 >
 
+// --- 5 ter. `workflow_nodes_catalog`, livrée par `CRM-030` ---------------------------------------
+// docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §2.2.
+
+type _catalogueColonnes = Expect<
+  Equal<
+    keyof Tables<'workflow_nodes_catalog'>,
+    | 'archived_at'
+    | 'color'
+    | 'created_at'
+    | 'default_probability'
+    | 'default_stale_after_days'
+    | 'id'
+    | 'key'
+    | 'kind'
+    | 'label'
+    | 'position'
+    | 'updated_at'
+    | 'workspace_id'
+  >
+>
+
+// Les deux valeurs par défaut sont **nullables** dans le type parce qu'elles le sont en base, et
+// c'est voulu : `0` n'est pas `NULL`. « Perdu à coup sûr » et « aucune signification
+// prévisionnelle » sont deux états différents (docs/SPEC-workflow-engine.md §2.5).
+type _probabiliteNullable = Expect<
+  Equal<Tables<'workflow_nodes_catalog'>['default_probability'], number | null>
+>
+type _seuilNullable = Expect<
+  Equal<Tables<'workflow_nodes_catalog'>['default_stale_after_days'], number | null>
+>
+
+// `kind` et `color` restent des `string` : ce sont des colonnes `text` avec contrainte `CHECK`, que
+// le générateur ne lit pas. Même limite que `tracks.color` et `workspace_members.role`, figée par
+// une assertion plutôt que déplorée dans un commentaire (INC-020, `CRM-006`).
+type _kindEstUneChaine = Expect<Equal<Tables<'workflow_nodes_catalog'>['kind'], string>>
+type _couleurCatalogueEstUneChaine = Expect<
+  Equal<Tables<'workflow_nodes_catalog'>['color'], string>
+>
+
+// Le catalogue ne porte qu'une seule clé étrangère : son workspace. Il n'a pas de parent
+// intermédiaire, ce qui est précisément pourquoi sa dénormalisation ne peut pas mentir, à la
+// différence de `channels` (docs/SPEC-workflow-engine.md §2.2).
+type _relationsCatalogue = Expect<
+  Equal<
+    Database['public']['Tables']['workflow_nodes_catalog']['Relationships'][number]['foreignKeyName'],
+    'workflow_nodes_catalog_workspace_id_fkey'
+  >
+>
+
+// INC-027 se reproduit une troisième fois : `position` est renseignée par un trigger, que le
+// générateur ignore, et le type l'exige donc à l'insertion alors que l'API l'accepte omise —
+// mesuré ligne m du §2.8. Le constat est figé plutôt que corrigé : le fichier est **généré**.
+type _catalogueInsertRequis = Expect<
+  Equal<
+    {
+      [K in keyof TablesInsert<'workflow_nodes_catalog'> as {} extends Pick<
+        TablesInsert<'workflow_nodes_catalog'>,
+        K
+      >
+        ? never
+        : K]: true
+    },
+    { key: true; label: true; position: true; workspace_id: true }
+  >
+>
+
 // `workspace_members` porte au contraire ses deux clés étrangères.
 type _relationsWorkspaceMembers = Expect<
   Equal<
@@ -249,6 +316,13 @@ export type AssertionsDuContratDeTypes = [
   _relationsChannels,
   _workflowIdNullable,
   _channelsInsertRequis,
+  _catalogueColonnes,
+  _probabiliteNullable,
+  _seuilNullable,
+  _kindEstUneChaine,
+  _couleurCatalogueEstUneChaine,
+  _relationsCatalogue,
+  _catalogueInsertRequis,
   _relationsWorkspaceMembers,
   _aucuneVue,
   _aucuneFonction,

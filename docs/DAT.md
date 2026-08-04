@@ -353,7 +353,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog`, `workflows`, `workflow_steps`, `workflow_transitions` |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` |
 | Formulaires | `form_fields`, `form_field_rules`, `card_field_values` |
 | Cards | `cards`, `card_comments`, `card_activities`, `card_events`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` |
 | Relations | `organizations`, `contacts`, `card_contacts` |
@@ -394,14 +394,20 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 - **État de livraison** : `app.workspace_role`, `app.is_workspace_member`,
   `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
   fonctions `can_*` restent différées — `docs/INCONSISTENCY_REPORT.md`, INC-013.
-- **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks` et
-  `CRM-021` trois sur `public.channels` — lecture par `app.is_workspace_member`, insertion et mise
-  à jour par `app.is_workspace_admin`, **aucune suppression**. Prouvées hors interface avec les
-  jetons réels des trois profils seedés par `scripts/verify-tracks.sh` (**40 contrôles**),
-  `scripts/verify-channels.sh` (**28 contrôles**), `e2e/api/tracks.spec.ts` et
-  `e2e/api/channels.spec.ts`. Ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
+- **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks`,
+  `CRM-021` trois sur `public.channels` et `CRM-030` trois sur `public.workflow_nodes_catalog` —
+  lecture par `app.is_workspace_member`, insertion et mise à jour par `app.is_workspace_admin`,
+  **aucune suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés
+  par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
+  (**28 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**), `e2e/api/tracks.spec.ts`,
+  `e2e/api/channels.spec.ts` et `e2e/api/catalogue-noeuds.spec.ts`.
+  Sur `tracks` et `channels`, ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
   `app.can_read_channel` et `app.can_write_channel` étant différées : INC-024 et INC-030, à
-  resserrer par `CRM-012`. Les tables d'identité, elles, restent en refus par défaut.
+  resserrer par `CRM-012`. Sur le **catalogue de nœuds**, l'absence de droit fin n'est pas un
+  écart : `track_members` et `channel_members` portent sur un sous-arbre d'organisation, et le
+  catalogue n'appartient ni à un track ni à un channel — sa politique s'arrête au rôle de
+  workspace **par conception** (`docs/SPEC-workflow-engine.md` §2.7). Les tables d'identité, elles,
+  restent en refus par défaut.
 - **Le cloisonnement ne repose pas seulement sur les politiques.** `channels.workspace_id` est
   dénormalisé, et c'est lui que la politique interroge. `CRM-021` pose une clé étrangère
   **composite** `(track_id, workspace_id) → tracks (id, workspace_id)` qui rend impossible qu'un

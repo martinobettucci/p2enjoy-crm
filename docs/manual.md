@@ -50,7 +50,7 @@
 |---|---|---|---|
 | 17 | Inviter et gérer les membres | `CRM-011`, non rattachée | À livrer — l'invitation est aujourd'hui une opération d'**exploitation** et non un parcours produit ; aucune unité ne porte l'écran (INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
-| 19 | Le catalogue de nœuds | `CRM-030` | À livrer |
+| 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les sept états d'une affaire, plus les vôtres — et l'espace de travail est livré avec le sien. Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | À livrer |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032` | À livrer |
 | 22 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
@@ -90,10 +90,16 @@ L'écran se lit en trois zones :
 L'application affiche partout **« Aucun track »**, **« Aucun channel »** et **« Aucun workspace
 accessible »**. Ce n'est pas une erreur, et ce n'est plus tout à fait pour la même raison qu'avant.
 
-Les **tracks existent désormais** : ils sont créés, ordonnés et archivés côté serveur, et une
-personne administratrice de l'espace de travail peut les gérer. Mais l'application n'a **pas encore
-d'écran de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent rien à
-un visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
+Les **tracks et les channels existent désormais**, et depuis peu le **catalogue de nœuds** —
+le vocabulaire des états par lesquels une affaire passe : Prospection, Relance, Négociation,
+Signature, Réalisation, Livré, Perdu. Tous trois sont créés, ordonnés et archivés côté serveur, et
+une personne administratrice de l'espace de travail peut les gérer. Mais l'application n'a **pas
+encore d'écran de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent
+rien à un visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
+
+Le catalogue de nœuds n'a d'ailleurs **aucun écran du tout**, connexion ou non : il n'en aura pas
+avant l'éditeur de workflow du chapitre 20. Ce qui est livré est le vocabulaire lui-même, sur
+lequel les workflows s'appuieront.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
 qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.

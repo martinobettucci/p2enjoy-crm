@@ -226,6 +226,59 @@ export type Database = {
           },
         ]
       }
+      workflow_nodes_catalog: {
+        Row: {
+          archived_at: string | null
+          color: string
+          created_at: string
+          default_probability: number | null
+          default_stale_after_days: number | null
+          id: string
+          key: string
+          kind: string
+          label: string
+          position: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          default_probability?: number | null
+          default_stale_after_days?: number | null
+          id?: string
+          key: string
+          kind?: string
+          label: string
+          position: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          default_probability?: number | null
+          default_stale_after_days?: number | null
+          id?: string
+          key?: string
+          kind?: string
+          label?: string
+          position?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_nodes_catalog_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string

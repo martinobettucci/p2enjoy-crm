@@ -41,16 +41,17 @@ PORT_RAPPORT=9323
 # entière cessait d'être découverte (docs/SPEC-test-harness.md §3). Le prix est cette révision
 # explicite ; c'est exactement ce qu'on lui demande.
 #
-# Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37
-# depuis `CRM-021`.
+# Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
+# `CRM-021` ; 454 / 75 / 37 depuis `CRM-030`.
 #
-# Les trois compteurs ont **réellement échoué** à la livraison de `CRM-021`, comme prévu, et sont
-# révisés ici dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
+# Les compteurs ont **réellement échoué** à chaque livraison qui les dépassait, comme prévu, et
+# sont révisés dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
 # fonctionnement acceptable : les déduire de l'exécution reviendrait à supprimer le contrôle.
-ASSERTIONS_ATTENDUES=374
-SCENARIOS_API=50
+ASSERTIONS_ATTENDUES=454
+SCENARIOS_API=75
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
-# (`e2e/ui/channels.spec.ts`).
+# (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, qui ne livre aucune interface — le catalogue
+# de nœuds n'a pas d'écran et n'en aura pas avant l'éditeur de `CRM-031` (INC-021).
 SCENARIOS_UI=37
 
 TRAVAIL=$(mktemp -d)

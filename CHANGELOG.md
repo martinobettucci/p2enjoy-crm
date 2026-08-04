@@ -15,6 +15,46 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-030` — Catalogue de nœuds (`[~]`).** Le vocabulaire des états d'une affaire, et la
+  **première preuve de refus n° 2** du projet.
+  - **`supabase/migrations/0005_workflow_nodes_catalog.sql`** : table
+    `public.workflow_nodes_catalog` — clé stable unique **par workspace**, libellé, type
+    `open`/`won`/`lost`, jeton de couleur, probabilité par défaut, seuil de relance, `position`
+    numérique, archivage doux, horodatages. Trigger d'attribution automatique de `position` **dans
+    la portée du workspace**, et non du track comme pour les channels : le catalogue est une liste
+    unique par workspace, sans conteneur intermédiaire.
+  - **Six contraintes de valeur, convergentes** : forme de la clé, libellé non blanc, `kind`, jeton
+    de couleur — jamais un hexadécimal —, bornes de la probabilité et seuil de relance
+    **strictement positif**. Un seuil de zéro jour signalerait toute card dès son arrivée et
+    masquerait l'absence de seuil sous une valeur qui a l'air d'en être une. Un rejeu de la
+    migration **répare** une contrainte retirée à la main.
+  - **Trois politiques RLS**, prouvées hors interface avec les jetons réels des trois profils
+    seedés : lecture par les membres du workspace, insertion et mise à jour par ses
+    administrateurs. **Aucune suppression n'est exposée** — le refus se manifeste dès le privilège.
+    L'absence de droit fin n'est pas un écart ici, contrairement à `tracks` et `channels` : le
+    catalogue n'appartient ni à un track ni à un channel, et sa politique s'arrête au rôle de
+    workspace **par conception**.
+  - **Preuve de refus n° 2 acquise pour la première fois** : un `business_developer` ne modifie pas
+    le vocabulaire du workspace. Les n° 3 et n° 11 le sont également au niveau du catalogue.
+  - **Seed étendu** : les sept nœuds du workflow de référence plus un **archivé**. Les trois types
+    sont représentés, les **cinq** jetons du design system exercés, et les deux nœuds terminaux
+    portent un seuil de relance nul — une affaire livrée ou perdue n'est pas en retard.
+  - **Un écart assumé, consigné et figé par des assertions** : le refus d'archiver un nœud occupé
+    n'est pas livré, sa cible traversant `workflow_steps` et `cards` qui n'existent pas encore
+    (**INC-031**). Mesuré : PostgreSQL accepte la création d'une fonction PL/pgSQL référençant une
+    table absente, et l'échec ne survient qu'au premier appel — un trigger écrit aujourd'hui ferait
+    échouer toute mise à jour du catalogue sans rien protéger.
+
+### Corrigé
+
+- **La spécification attribuait à PostgREST un comportement du moteur** (`CRM-030`). Le §2.8
+  affirmait qu'une mise à jour refusée rend `200` et un tableau vide « sous PostgREST ». C'est faux
+  en SQL direct aussi : une clause `USING` ne refuse pas une ligne, elle la rend **invisible**, et
+  l'ordre `UPDATE` réussit alors sur zéro ligne. L'erreur a été établie par une **assertion pgTAP
+  qui a échoué** — écrite en `throws_ok('42501')` par symétrie avec l'insertion, elle a rendu
+  « caught: no exception ». Conséquence au-delà de cette unité : toute preuve de refus de mise à
+  jour doit relire la ligne et la constater inchangée.
+
 - **`CRM-021` — Channels (`[~]`).** Second niveau d'organisation, et **premier cloisonnement
   garanti par une contrainte plutôt que par une politique**.
   - **`supabase/migrations/0004_channels.sql`** : table `public.channels` — nom, slug unique **par

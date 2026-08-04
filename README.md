@@ -136,6 +136,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-harness.sh` | Rejoue les preuves du harnais de tests : exécuteurs, projets, non-complaisance | **disponible** |
 | `scripts/verify-tracks.sh` | Rejoue les preuves des tracks : modèle, ordre, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 | `scripts/verify-channels.sh` | Rejoue les preuves des channels : modèle, cloisonnement par clé composite, ordre par track, archivage, politiques RLS, seed, non-complaisance | **disponible** |
+| `scripts/verify-catalogue.sh` | Rejoue les preuves du catalogue de nœuds : modèle, bornes, ordre par workspace, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
@@ -297,6 +298,7 @@ scripts/verify-webapp.sh       # squelette de la webapp : build, jetons, états,
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
 scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)
+scripts/verify-catalogue.sh    # catalogue de nœuds : bornes, ordre, archivage, RLS      (CRM-030)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -405,6 +407,7 @@ Livré à ce jour :
 │   ├── verify-harness.sh       Preuves rejouables du harnais de tests et de sa non-complaisance
 │   ├── verify-tracks.sh        Preuves rejouables des tracks : modèle, ordre, archivage, RLS
 │   ├── verify-channels.sh      Preuves rejouables des channels : cloisonnement, onglets, RLS
+│   ├── verify-catalogue.sh     Preuves rejouables du catalogue de nœuds : bornes, ordre, RLS
 │   └── lib/classes-css.mjs     Contrôle : toute classe citée existe dans le CSS produit
 ├── supabase/
 │   ├── docker/                 Configuration Kong et scripts d'initialisation de la base
