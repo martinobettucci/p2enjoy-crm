@@ -239,7 +239,7 @@ select throws_ok(
 -- porte donc sur la valeur arrondie par le type, jamais sur celle que le client a envoyée. Sans
 -- cette assertion, un test futur insérant `99.999` et attendant `99.999` échouerait pour une raison
 -- sans rapport avec la règle métier — et serait « corrigé » en relâchant la contrainte
--- (docs/JOURNAL.md, décision 65).
+-- (docs/JOURNAL.md, décision 68).
 insert into public.workflow_nodes_catalog (workspace_id, key, label, default_probability, position)
 	values ('66660000-0000-4000-8000-000000000001', 'arrondi', 'Arrondi', 99.999, 24);
 select is(
@@ -296,7 +296,7 @@ rollback to savepoint avant_cascade;
 -- 5. Ordre — docs/SPEC-workflow-engine.md §2.4
 -- =============================================================================================
 -- La portée du compteur est le **workspace**, et non le track comme pour `channels` (décision 61) :
--- le catalogue est une liste unique par workspace, sans conteneur intermédiaire (décision 64).
+-- le catalogue est une liste unique par workspace, sans conteneur intermédiaire (décision 67).
 -- Mesuré avant écriture sur une table sonde ; réaffirmé ici sur la table réelle.
 
 insert into public.workflow_nodes_catalog (workspace_id, key, label)
@@ -525,7 +525,7 @@ select throws_ok(
 -- vide (docs/SPEC-workflow-engine.md §2.8, ligne h), mais du moteur lui-même.
 --
 -- La preuve correcte relit la ligne et la constate **inchangée**. Une preuve qui se contenterait
--- de l'absence d'erreur conclurait que l'écriture a réussi (docs/JOURNAL.md, décision 67).
+-- de l'absence d'erreur conclurait que l'écriture a réussi (docs/JOURNAL.md, décision 70).
 update public.workflow_nodes_catalog set label = 'Renommé' where key = 'prospection';
 select is(
 	(select n.label from public.workflow_nodes_catalog n where n.key = 'prospection'),

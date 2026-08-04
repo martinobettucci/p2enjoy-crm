@@ -488,7 +488,7 @@ test.describe('N5 — bornes des valeurs, éprouvées par l’API', () => {
 	test('`numeric(5,2)` arrondit avant la contrainte : 99.999 est accepté et vaut 100.00', async ({
 		request,
 	}) => {
-		// Comportement MESURÉ pendant la spécification (§2.5, décision 65). Il est figé ici parce
+		// Comportement MESURÉ pendant la spécification (§2.5, décision 68). Il est figé ici parce
 		// qu'un lecteur pressé le prendrait pour un défaut, et « corrigerait » la contrainte.
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const cle = `api-arrondi-${Date.now()}`

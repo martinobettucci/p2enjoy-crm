@@ -1111,7 +1111,7 @@ telle.
       et ordre fourni, archivage réversible, politiques, privilèges, et les autorisations éprouvées
       contre quatre comptes réels avec les revendications JWT simulées comme PostgREST les pose.
 - [x] **Une affirmation de la spécification démentie par la mesure, et la spécification corrigée**
-      (décision 67) : le §2.8 attribuait à PostgREST le fait qu'une mise à jour refusée rende `200`
+      (décision 70) : le §2.8 attribuait à PostgREST le fait qu'une mise à jour refusée rende `200`
       et un tableau vide. **C'est le moteur.** Une clause `USING` ne refuse pas une ligne, elle la
       rend invisible ; l'`UPDATE` réussit alors sur zéro ligne. L'assertion pgTAP, d'abord écrite
       en `throws_ok('42501')` par symétrie avec l'insertion, a **échoué** en rendant « caught: no
@@ -1140,7 +1140,7 @@ telle.
 - [x] **`numeric(5,2)` arrondit avant la contrainte, mesuré et figé** : `99.999` est accepté et
       stocké `100.00`, `100.01` et `-0.01` refusés. Sans cette preuve, un test futur insérant
       `99.999` échouerait pour une raison sans rapport avec la règle métier, et serait « corrigé »
-      en relâchant la contrainte (décision 65).
+      en relâchant la contrainte (décision 68).
 - [x] **Seed mis à jour dans le même changement** : les sept nœuds du §2.9 plus **un archivé**,
       créés par la véritable API REST, convergents. Les **trois types** sont représentés, les
       **cinq jetons** du design system exercés, et les deux nœuds terminaux portent un seuil de

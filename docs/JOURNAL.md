@@ -2708,7 +2708,7 @@ RLS. Le seed porte les sept nœuds du contrat plus un archivé. Les preuves sont
 (**80 assertions pgTAP**), d'API (**25 scénarios Playwright**, hors interface, jetons réels) et
 rejouables (`scripts/verify-catalogue.sh`, **29 contrôles**).
 
-### Décision 67 — Un refus de mise à jour ne lève aucune exception, et c'est le moteur qui le veut
+### Décision 70 — Un refus de mise à jour ne lève aucune exception, et c'est le moteur qui le veut
 
 La spécification écrite avant le code disait déjà, au §2.8, qu'un `PATCH` refusé rend `200` et un
 tableau vide. Elle l'attribuait à PostgREST. **C'est faux, et c'est une assertion qui l'a établi.**

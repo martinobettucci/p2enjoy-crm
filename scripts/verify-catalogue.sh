@@ -206,7 +206,7 @@ else
 fi
 
 # La borne haute, et l'arrondi qui la précède : `99.999` est **accepté** parce que le type arrondit
-# avant que la contrainte ne soit évaluée (décision 65).
+# avant que la contrainte ne soit évaluée (décision 68).
 arrondi=$(psql_db -c "
 	insert into $TABLE (workspace_id, key, label, default_probability)
 	values ('a3330000-0000-4000-8000-000000000001', 'tst-crm030-arrondi', 'A', 99.999)

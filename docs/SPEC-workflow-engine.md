@@ -220,7 +220,7 @@ particularité de PostgREST** : c'est celui du moteur. Une clause `USING` ne *re
 elle la rend **invisible** ; l'ordre `UPDATE` ne trouve alors rien à modifier et réussit sur zéro
 ligne. L'assertion pgTAP correspondante, d'abord écrite en `throws_ok('42501')` par symétrie avec
 l'insertion, a **échoué** en rendant « caught: no exception » — et c'est cet échec qui a établi le
-fait (`docs/JOURNAL.md`, décision 67). La différence avec la ligne j est nette : là, l'appelant
+fait (`docs/JOURNAL.md`, décision 70). La différence avec la ligne j est nette : là, l'appelant
 **voit** la ligne, et c'est le `WITH CHECK` qui refuse celle d'arrivée — le refus est alors bien
 une erreur `42501`. Les deux formes coexistent sur la même politique.
 

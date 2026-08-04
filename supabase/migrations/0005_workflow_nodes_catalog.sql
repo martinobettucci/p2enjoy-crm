@@ -127,7 +127,7 @@ alter table public.workflow_nodes_catalog add  constraint workflow_nodes_catalog
 -- MESURÉ, et contre-intuitif : `numeric(5,2)` **arrondit avant** que cette contrainte ne soit
 -- évaluée. `99.999` est stocké `100.00` et **accepté** ; `100.01` et `-0.01` sont refusés. La
 -- contrainte porte donc sur la valeur arrondie par le type, jamais sur celle que le client a
--- envoyée (docs/JOURNAL.md, décision 65).
+-- envoyée (docs/JOURNAL.md, décision 68).
 alter table public.workflow_nodes_catalog drop constraint if exists workflow_nodes_catalog_probability_check;
 alter table public.workflow_nodes_catalog add  constraint workflow_nodes_catalog_probability_check
 	check (default_probability is null
@@ -183,7 +183,7 @@ create trigger workflow_nodes_catalog_set_updated_at
 -- docs/SPEC-workflow-engine.md §2.4. La portée est le **workspace**, et non le track comme pour
 -- `channels` (décision 61) : le catalogue est une liste unique par workspace, affichée d'un seul
 -- tenant dans l'écran d'administration. Il n'a pas de conteneur intermédiaire, donc pas d'autre
--- portée possible (docs/JOURNAL.md, décision 64).
+-- portée possible (docs/JOURNAL.md, décision 67).
 --
 -- MESURÉ sur la sonde : trois insertions sans `position` dans un workspace rendent `1`, `2`, `3` ;
 -- une quatrième dans un **autre** workspace rend `1` ; une valeur explicite (`42`) est conservée.
