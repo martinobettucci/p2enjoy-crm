@@ -333,7 +333,8 @@ champs_vides=$(psql_db -c "select count(*) from public.workflow_transitions
 	&& ok "quatre transitions exigent un commentaire — celles qui mènent à « Perdu »" \
 	|| fail "transitions exigeant un commentaire : $avec_commentaire, attendu 4"
 [ "$champs_vides" = "10" ] \
-	&& ok "INC-033 : \`require_fields\` reste vide partout, \`form_fields\` n'existant pas" \
+	&& ok "INC-033 : \`require_fields\` reste vide partout — depuis \`CRM-035\` le motif n'est plus "\
+"l'absence de \`form_fields\`, mais l'absence de garde qui le lise (décision 97)" \
 	|| fail "transitions à \`require_fields\` vide : $champs_vides, attendu 10"
 # Révisé par `CRM-033` : `prospection` suit désormais la copie de portée `track` de son propre
 # track (docs/SPEC-workflow-engine.md §4.12.7), et le compte tombe donc à cinq. Le contrôle est

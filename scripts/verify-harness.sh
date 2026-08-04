@@ -47,18 +47,18 @@ PORT_RAPPORT=9323
 #
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
 # `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 à `CRM-031` ; 622 / 110 / 37 à `CRM-032` ;
-# 653 / 125 / 37 depuis `CRM-033`.
+# 653 / 125 / 37 à `CRM-033` ; 717 / 150 / 37 depuis `CRM-035`.
 #
 # Les compteurs ont **réellement échoué** à chaque livraison qui les dépassait, comme prévu, et
 # sont révisés dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
 # fonctionnement acceptable : les déduire de l'exécution reviendrait à supprimer le contrôle.
-ASSERTIONS_ATTENDUES=653
-SCENARIOS_API=125
+ASSERTIONS_ATTENDUES=717
+SCENARIOS_API=150
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
-# (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032` puis `CRM-033`, qui ne
-# livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la mention de
-# divergence, ni l'affectation d'un workflow à un channel n'ont d'écran, et n'en auront pas avant
-# que l'écran de connexion existe (INC-021).
+# (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
+# `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
+# mention de divergence, ni l'affectation d'un workflow à un channel, ni la grille champ × étape
+# n'ont d'écran, et n'en auront pas avant que l'écran de connexion existe (INC-021).
 SCENARIOS_UI=37
 
 TRAVAIL=$(mktemp -d)

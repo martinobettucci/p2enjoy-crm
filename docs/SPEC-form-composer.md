@@ -179,7 +179,7 @@ avant le code, et les scénarios de `e2e/api/champs-formulaire.spec.ts` les rejo
 | f | `POST /form_fields` | anonyme | `401` — refus par le privilège, avant toute politique |
 | g | `PATCH /form_fields` | `admin` | `200`, la ligne modifiée |
 | h | `PATCH /form_fields` | `business_developer` | `200` **et aucune ligne modifiée** — un refus par `USING` ne lève aucune erreur (décision 70) ; la preuve relit la ligne |
-| i | `DELETE /form_fields` | `admin` | refusé — aucun privilège `DELETE` n'est accordé, l'archivage tient lieu de suppression |
+| i | `DELETE /form_fields` | `admin` | `403` — aucun privilège `DELETE` n'est accordé, l'archivage tient lieu de suppression. **Mesuré** : `403` et non `401`, un rôle authentifié privé du privilège n'étant pas un appelant sans rôle (ligne f) |
 | j | `POST /form_fields` avec un `workflow_id` d'un **autre** workspace | `admin` | refusé par la clé étrangère composite, `409` / `23503` |
 | k | `POST /form_fields`, `type` hors liste | `admin` | `400` / `23514` |
 | l | `POST /form_fields`, `select` sans `choices` | `admin` | `400` / `23514` |

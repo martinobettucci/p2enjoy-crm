@@ -371,13 +371,28 @@ defauts=$(psql_db -c "select count(*) from public.workflows
 
 titre "6. INC-037 et INC-038 : deux absences, vérifiées comme le reste"
 
-# Ces deux contrôles sont l'inverse de contrôles ordinaires : ils constatent que quelque chose
-# **manque** toujours. Le jour où `CRM-035` livrera `form_fields`, le premier tombera — et c'est ce
-# qu'on lui demande.
+# CONTRÔLE RÉVISÉ PAR `CRM-035`, NON RETIRÉ. Il constatait que `form_fields` n'existait pas ; il est
+# tombé le jour prévu. Ce qu'il constate désormais est **l'écart lui-même**, chiffré à chaque
+# exécution : la source du seed porte sept champs, la copie n'en porte aucun.
+# `copy_workflow_to_track` n'en copie pas, et le comportement reste inchangé — INC-037, arbitrage
+# attendu du responsable, décision 93. Ce contrôle tombera à son tour le jour où la copie des champs
+# sera écrite, et exigera sa propre révision.
 champs=$(psql_db -c "select coalesce(to_regclass('public.form_fields')::text, 'NULL');")
-[ "$champs" = "NULL" ] \
-	&& ok "INC-037 : \`form_fields\` n'existe toujours pas — la copie des champs reste due par \`CRM-035\`" \
-	|| fail "INC-037 : \`form_fields\` existe désormais — la copie des champs doit être écrite"
+[ "$champs" != "NULL" ] \
+	&& ok "INC-037 : \`form_fields\` existe depuis \`CRM-035\` — le contrôle d'absence posé ici est "\
+"devenu rouge le jour prévu, et a été révisé" \
+	|| fail "INC-037 : \`form_fields\` a disparu — la migration 0009 n'est plus appliquée"
+
+champs_source=$(psql_db -c "select count(*) from public.form_fields where workflow_id = '$WF_SEED';")
+champs_copie=$(psql_db -c "
+	select count(*) from public.form_fields f
+	  join public.workflows w on w.id = f.workflow_id
+	 where w.derived_from_workflow_id = '$WF_SEED';")
+[ "$champs_source" = "7" ] && [ "$champs_copie" = "0" ] \
+	&& ok "INC-037 : la source porte 7 champs, la copie **0** — l'écart de la Definition of Done "\
+"de \`CRM-032\` est mesuré et compté, jamais corrigé en silence" \
+	|| fail "INC-037 : source $champs_source champs, copie $champs_copie — attendu 7 et 0. Si la "\
+"copie en porte, la fonction a changé et cette entrée doit être close"
 
 # INC-038 : une suppression dans la source n'allume pas le signal. Éprouvé sur une arête d'essai
 # ajoutée puis retirée, pour ne pas toucher au graphe du seed.

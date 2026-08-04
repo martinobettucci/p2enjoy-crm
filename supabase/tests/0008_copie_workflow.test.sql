@@ -40,7 +40,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(63);
+select plan(65);
 
 -- =============================================================================================
 -- 1. La fonction existe, et elle a exactement la forme spécifiée
@@ -376,7 +376,8 @@ select ok(
 select ok(
 	(select bool_and(cardinality(t.require_fields) = 0) from public.workflow_transitions t
 	  where t.workflow_id = (select id from pg_temp_copie)),
-	'INC-037 : `require_fields` est copié tel quel, et reste vide — `form_fields` n''existe pas');
+	'INC-037 : `require_fields` est copié tel quel, et reste vide — le motif a changé avec '
+	'`CRM-035` : la colonne pourrait désigner des champs, aucune garde ne la lit (décision 97)');
 
 -- --- 5.2 Le nom par défaut ---------------------------------------------------------------------
 
@@ -619,11 +620,32 @@ reset role;
 -- 8. Écarts figés par des assertions
 -- =============================================================================================
 
-select hasnt_table(
+-- GARDE-FOU RÉVISÉ PAR `CRM-035`, NON RETIRÉ (mécanisme de la décision 51, septième occurrence).
+-- Il constatait que `form_fields` n'existait pas ; il est devenu rouge le jour prévu. Ce qu'il
+-- constate désormais est **l'écart lui-même**, chiffré : la source du seed porte sept champs, et la
+-- copie n'en porte aucun. `copy_workflow_to_track` n'en copie pas, et le comportement reste
+-- inchangé — INC-037, arbitrage attendu du responsable, décision 93.
+--
+-- Un garde-fou qu'on relâche au lieu de le resserrer cesse d'en être un : celui-ci deviendra rouge
+-- à son tour le jour où la copie des champs sera écrite, et exigera sa propre révision.
+select has_table(
 	'public', 'form_fields',
-	'INC-037 : `form_fields` n''existe pas — la Definition of Done exige la copie des champs, dont '
-	'la table arrive à `CRM-035`. Cette assertion devient rouge ce jour-là, forçant la reprise de '
-	'la fonction et de ses preuves');
+	'`form_fields` existe depuis `CRM-035` — l''assertion d''absence posée ici est devenue rouge le '
+	'jour prévu, et a été révisée plutôt que retirée');
+
+select is(
+	(select count(*)::int from public.form_fields
+	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
+	7,
+	'INC-037 : la source du seed porte sept champs de formulaire');
+
+select is(
+	(select count(*)::int from public.form_fields f
+	   join public.workflows w on w.id = f.workflow_id
+	  where w.derived_from_workflow_id = '5eed0000-0000-4000-8000-000000000051'),
+	0,
+	'INC-037 : et sa copie n''en porte **aucun**. L''écart que la Definition of Done de `CRM-032` '
+	'nommait est désormais mesurable, et il est compté plutôt que corrigé en silence');
 
 -- INC-039 : la suppression d'un workspace est refusée dès qu'un workflow instancie ses nœuds. Ce
 -- n'est le défaut d'aucune des deux clés étrangères, correctes isolément ; c'est leur interaction,

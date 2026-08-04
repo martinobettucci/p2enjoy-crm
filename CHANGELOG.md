@@ -15,6 +15,38 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-035` — un workflow porte désormais son formulaire.**
+  `supabase/migrations/0009_champs_formulaire.sql`.
+  - **`public.form_fields`** : les questions posées à propos d'une card, déclarées pour un
+    **workflow** et non pour un channel. Quinze types, unicité **totale** de la clé par workflow —
+    un champ archivé garde la sienne (décision 96) —, `position` attribuée par trigger dans la
+    portée du workflow, et deux exigences d'options que la base tient plutôt que de laisser naître
+    un formulaire cassé : un `select` a au moins un choix, un `money` a une devise ISO 4217
+    (décision 94).
+  - **`public.form_field_rules`** : la visibilité d'un champ à une étape — `hidden`, `visible`,
+    `required` —, l'**absence** de règle valant `visible`. **Trois clés étrangères composites**
+    articulées autour de `workflow_id` rendent structurellement impossible une règle croisant deux
+    workflows, mesuré dans les **deux** sens : quel que soit le workflow déclaré, l'une des deux
+    clés attrape l'erreur (décision 95).
+  - **Sept politiques RLS** : lecture par les membres du workspace, écriture par les `admin`, et une
+    asymétrie de suppression assumée — une **règle** se supprime, un **champ** s'archive, sans
+    politique ni privilège `DELETE`. Le refus est double, et la dégradation n° 3 du harnais le
+    prouve en accordant le privilège pour constater que la politique tient encore.
+  - **Seed** : sept champs sur le workflow par défaut, dont **un archivé**, couvrant sept types ;
+    quinze règles couvrant les trois visibilités, dont deux `visible` **explicites** ; et vingt-sept
+    couples champ × étape laissés **sans règle**, sans quoi la valeur par défaut serait écrite sans
+    être démontrée.
+  - **Preuves** : `supabase/tests/0010_champs_formulaire.test.sql` (61 assertions),
+    `e2e/api/champs-formulaire.spec.ts` (25 scénarios, jetons réels des trois profils),
+    `scripts/verify-champs-formulaire.sh` (30 contrôles hors suites, trois dégradations réelles).
+  - **Aucun écran** : la grille champ × étape suppose un écran d'administration authentifié
+    (INC-021). Les règles sont prouvées en base et par l'API.
+  - **Deux limites nommées, non masquées.** `required` est une **déclaration sans garde** tant que
+    `move_card` n'existe pas (`CRM-034`, non commencée faute de cible — INC-043), et un workflow
+    **copié** vers un track naît **sans champ** : `copy_workflow_to_track` n'en copie aucun, le
+    comportement reste inchangé, et l'écart est **compté** par trois assertions révisées (INC-037,
+    décision 93).
+
 - **`CRM-033` — un channel suit désormais un workflow, et pas n'importe lequel.**
   `supabase/migrations/0008_coherence_workflow_channel.sql`.
   - **Deux triggers, pas un.** `channels_verifier_workflow` sur `public.channels`
@@ -63,6 +95,15 @@ d'exécuter le code attendu.
     ces gardes, et reste non complaisant — neutraliser les gardes en fait échouer 9. Démarrage
     à froid réel : `./resetMe.sh --yes` puis `./runDev.sh`, 11 services `healthy`,
     `verify-stack.sh` 33/33, `verify-seed.sh` 49/49.
+- **`CRM-035` — deux contraintes `CHECK` ne refusaient rien, faute d'un `coalesce`.**
+  Trouvé par la suite pgTAP de l'unité, dans le même changement que le code qu'elle vérifie.
+  Écrites `type not in (…) or (jsonb_typeof(options -> 'choices') = 'array' and …)`, elles
+  refusaient `{"choices": []}` et **laissaient passer l'absence pure** — qui est pourtant le cas le
+  plus courant, `{}` étant le défaut de la colonne. La cause est la logique ternaire de SQL : un
+  accès `jsonb` absent rend `NULL`, la conjonction rend `NULL`, et **un `CHECK` qui rend `NULL`
+  accepte la ligne**. Les deux expressions sont enveloppées d'un `coalesce(…, false)`, et
+  `jsonb_array_length` — qui **lève une erreur** sur un scalaire, dans un `AND` dont l'ordre
+  d'évaluation n'est pas garanti — est remplacé par une comparaison `jsonb`. Décision 102.
 
 - **`CRM-032` — le seed était idempotent sans être convergent, et il en créait des doublons.**
   INC-041. La copie du workflow était cherchée par sa source **et** son track ; le `track_id` déplacé,

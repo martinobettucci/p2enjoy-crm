@@ -439,8 +439,8 @@ Les quinze règles couvrent les **trois** visibilités :
 valeur `'visible'` de la colonne ne serait jamais exercée par aucune donnée, et rien ne
 distinguerait « déclaré facultatif » de « non déclaré ».
 
-**Et vingt-neuf couples champ × étape restent sans règle** — sept étapes fois six champs actifs,
-moins les treize règles portant sur un champ actif. C'est ce qui démontre la valeur par défaut du
+**Et vingt-sept couples champ × étape restent sans règle** — sept étapes fois six champs actifs,
+moins les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par défaut du
 §3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
 
 **`require_fields` reste vide sur les dix transitions.** Le motif a changé avec `CRM-035` et il est

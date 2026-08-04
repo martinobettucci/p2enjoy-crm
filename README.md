@@ -10,10 +10,14 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), le **seed
 > socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
 > (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`), les **channels**
-> (`CRM-021`), le **catalogue de nœuds** (`CRM-030`) et les **workflows** (`CRM-031`).
-> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni formulaires,
+> (`CRM-021`), le **catalogue de nœuds** (`CRM-030`), les **workflows** (`CRM-031`), leur **copie
+> vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`) et les **champs de
+> formulaire** (`CRM-035`).
+> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni valeurs de formulaire,
 > ni messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
-> (`docs/INCONSISTENCY_REPORT.md`, INC-021).
+> (`docs/INCONSISTENCY_REPORT.md`, INC-021). La garde centrale `move_card` (`CRM-034`) n'est pas
+> commencée : ses six vérifications portent toutes sur des cards, qui arrivent à `CRM-040`
+> (INC-043).
 > **Conséquence à connaître avant de lancer l'application** : les tracks et leurs channels
 > existent réellement côté serveur, sont ordonnés, archivables, cloisonnés, et leur écriture est
 > réservée aux administrateurs — tout cela est mesuré. Mais l'interface interroge le serveur
@@ -254,8 +258,8 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest (webapp), 96 tests    — aucune pile requise
-npm run test:sql           # pgTAP, 227 assertions        — pile démarrée
+npm run test:unit          # Vitest (webapp), 164 tests   — aucune pile requise
+npm run test:sql           # pgTAP, 717 assertions        — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
@@ -304,6 +308,7 @@ scripts/verify-catalogue.sh    # catalogue de nœuds : bornes, ordre, archivage,
 scripts/verify-workflows.sh    # workflows, étapes, transitions : graphe, RLS, seed     (CRM-031)
 scripts/verify-copie-workflow.sh # copie vers un track : refus, remappage, divergence  (CRM-032)
 scripts/verify-coherence-workflow.sh # cohérence workflow ↔ channel : quatre portes  (CRM-033)
+scripts/verify-champs-formulaire.sh # champs de formulaire et règles de visibilité   (CRM-035)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

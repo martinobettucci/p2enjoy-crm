@@ -41,6 +41,8 @@ type _tables = Expect<
     keyof Database['public']['Tables'],
     | 'channel_members'
     | 'channels'
+    | 'form_field_rules'
+    | 'form_fields'
     | 'profiles'
     | 'track_members'
     | 'tracks'
@@ -281,6 +283,85 @@ type _etapesInsertRequis = Expect<
   >
 >
 
+// --- 5 quater. `form_fields` et `form_field_rules`, livrées par `CRM-035` ------------------------
+// docs/SCHEMA.md §4, docs/SPEC-form-composer.md §2.2 et §3.2.
+
+type _champsColonnes = Expect<
+  Equal<
+    keyof Tables<'form_fields'>,
+    | 'archived_at'
+    | 'created_at'
+    | 'help_text'
+    | 'id'
+    | 'key'
+    | 'label'
+    | 'options'
+    | 'position'
+    | 'type'
+    | 'updated_at'
+    | 'workflow_id'
+    | 'workspace_id'
+  >
+>
+
+type _reglesColonnes = Expect<
+  Equal<
+    keyof Tables<'form_field_rules'>,
+    | 'created_at'
+    | 'field_id'
+    | 'step_id'
+    | 'updated_at'
+    | 'visibility'
+    | 'workflow_id'
+    | 'workspace_id'
+  >
+>
+
+// `type` et `visibility` sont des `text` avec contrainte `CHECK`, non des types énumérés : le
+// générateur ne peut pas en faire des unions. La limite est **figée**, comme pour `role`, `color`,
+// `kind` et `scope`. Un client qui rend un formulaire ne tient pas la vérité de ces champs depuis
+// le type : elle est dans `docs/SPEC-form-composer.md` §2.3 et §3.1.
+type _typeChampEstUneChaine = Expect<
+  Equal<Database['public']['Tables']['form_fields']['Row']['type'], string>
+>
+type _visibiliteEstUneChaine = Expect<
+  Equal<Database['public']['Tables']['form_field_rules']['Row']['visibility'], string>
+>
+
+// `options` est un `jsonb` : le générateur en fait `Json`, qui est une union récursive. Le type ne
+// dit donc **rien** de la présence de `choices` ni de `currency`, que les contraintes de la base
+// exigent pourtant (décision 94). Constat figé : la vérité est côté base, pas côté type.
+type _optionsEstDuJson = Expect<
+  Equal<Database['public']['Tables']['form_fields']['Row']['options'], Json>
+>
+
+// Les clés étrangères des règles sont **composites** : c'est ce qui rend impossible une règle
+// croisant deux workflows (décision 95). Aucune clé simple sur `field_id` ni sur `step_id`.
+type _relationsRegles = Expect<
+  Equal<
+    Database['public']['Tables']['form_field_rules']['Relationships'][number]['foreignKeyName'],
+    | 'form_field_rules_field_id_workflow_id_fkey'
+    | 'form_field_rules_step_id_workflow_id_fkey'
+    | 'form_field_rules_workflow_id_workspace_id_fkey'
+  >
+>
+
+// INC-027, CINQUIÈME OCCURRENCE : `position` est renseignée par un trigger, que le générateur
+// ignore, et le type l'exige donc à l'insertion alors que l'API l'accepte omise.
+type _champsInsertRequis = Expect<
+  Equal<
+    {
+      [C in keyof Database['public']['Tables']['form_fields']['Insert'] as Record<
+        string,
+        never
+      > extends Pick<Database['public']['Tables']['form_fields']['Insert'], C>
+        ? never
+        : C]: true
+    },
+    { key: true; label: true; position: true; type: true; workflow_id: true; workspace_id: true }
+  >
+>
+
 // --- 5 ter. `workflow_nodes_catalog`, livrée par `CRM-030` ---------------------------------------
 // docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §2.2.
 
@@ -471,6 +552,13 @@ export type AssertionsDuContratDeTypes = [
   _relationsChannels,
   _workflowIdObligatoire,
   _channelsInsertRequis,
+  _champsColonnes,
+  _reglesColonnes,
+  _typeChampEstUneChaine,
+  _visibiliteEstUneChaine,
+  _optionsEstDuJson,
+  _relationsRegles,
+  _champsInsertRequis,
   _catalogueColonnes,
   _probabiliteNullable,
   _seuilNullable,

@@ -42,7 +42,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(106);
+select plan(107);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §3.2 à §3.4
@@ -177,9 +177,22 @@ select is(
 	'étapes. Aucune ne part de `require_fields` : PostgreSQL refuse une clé étrangère depuis un '
 	'tableau, et cela ne changera pas quand `form_fields` existera');
 
-select hasnt_table('public', 'form_fields',
-	'INC-033 : `form_fields` n''existe pas encore — `CRM-035`. `require_fields` reste vide dans le '
-	'seed');
+-- GARDE-FOU RÉVISÉ PAR `CRM-035`, NON RETIRÉ (mécanisme de la décision 51, septième occurrence).
+-- Il constatait que `form_fields` n'existait pas. La table existe désormais, et ce qui doit être
+-- constaté a changé : `require_fields` **pourrait** désigner des champs réels, et reste vide. Le
+-- motif n'est plus l'absence de table, c'est l'absence de garde qui le lise — `move_card` est
+-- `CRM-034`, non commencée (INC-043, décision 97).
+select has_table('public', 'form_fields',
+	'`form_fields` existe depuis `CRM-035` : l''assertion d''absence posée ici a été révisée, non '
+	'retirée');
+
+select is(
+	(select count(*)::int from public.workflow_transitions
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
+	    and cardinality(require_fields) > 0),
+	0,
+	'INC-033 : `require_fields` reste vide dans le seed — non plus faute de champs, mais faute de '
+	'garde qui le lise (décision 97)');
 
 -- =============================================================================================
 -- 3. Fixtures

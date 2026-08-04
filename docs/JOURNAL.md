@@ -3592,6 +3592,7 @@ première à pourrir puisque rien ne protège le tableau d'un identifiant suppri
 
 **Ce que cela laisse dû :** l'union « champs `required` de l'étape cible + `require_fields` de la
 transition » du §3.5 reste sans donnée de démonstration jusqu'à `CRM-034`.
+
 ## 2026-08-04 — `./runDev.sh` sur un poste WSL : quatre causes d'échec, aucune dans le code métier
 
 Le responsable signale que `./runDev.sh` ne démarre pas sur son poste, alors que la même commande
@@ -3694,3 +3695,57 @@ que nommée une seconde fois. Le point de montage `node_modules` est créé par 
 Compose, ce qui le laisse à son propriétaire légitime. Les deux gardes sont inutiles là où le démon
 et l'utilisateur partagent le même compte — le conteneur d'intégration —, ce qui explique une fois
 de plus que rien n'y ait jamais été visible.
+
+## 2026-08-04 — `CRM-035`, suite : un défaut trouvé par les preuves de l'unité elle-même
+
+Le numéro de cette décision n'est pas contigu à celles de `CRM-035` — 92 à 97 : une autre
+exécution de la routine a livré les décisions 98 à 101 pendant ce passage, et la
+renumérotation a porté sur la plus récente. Le fait est consigné plutôt que masqué : deux
+exécutions parallèles peuvent réclamer le même numéro, et c'est la seconde arrivée qui cède.
+
+### Décision 102 — Un `CHECK` qui rend `NULL` passe : les deux contraintes d'options ne refusaient rien
+
+**Défaut réel, trouvé par la suite pgTAP de cette unité, corrigé dans le même changement.**
+
+Les deux contraintes de la décision 94 étaient écrites ainsi :
+
+```sql
+check (type not in ('select','multiselect')
+       or (jsonb_typeof(options -> 'choices') = 'array'
+           and jsonb_array_length(options -> 'choices') > 0))
+check (type <> 'money' or (options ->> 'currency') ~ '^[A-Z]{3}$')
+```
+
+**Mesuré** : elles refusaient `{"choices": []}` et laissaient passer l'**absence pure** — qui est
+pourtant le cas à refuser en premier, `{}` étant le **défaut de la colonne**.
+
+```
+not ok 23 - un `select` sans `choices` est refusé
+#       caught: no exception
+#       wanted: 23514
+```
+
+La cause est la logique ternaire de SQL : `options -> 'choices'` rend `NULL` quand la clé est
+absente, `jsonb_typeof(NULL)` rend `NULL`, la conjonction rend `NULL`, `false or NULL` rend `NULL`
+— et **un `CHECK` qui rend `NULL` accepte la ligne**. Même chaîne pour `->>` et l'expression
+régulière.
+
+**Décision.** Les deux expressions sont enveloppées dans un `coalesce(…, false)`. Le contrat écrit
+au §2.4 devient celui que la base tient réellement.
+
+**Et `jsonb_array_length` disparaît**, pour une seconde raison découverte en corrigeant la
+première : cette fonction **lève une erreur** sur un scalaire — « cannot get array length of a
+scalar » —, et l'ordre d'évaluation d'un `AND` n'est pas garanti en SQL. Un `CHECK` ne doit jamais
+pouvoir échouer autrement qu'en refusant la ligne. La comparaison `options -> 'choices' <> '[]'`
+n'a pas ce défaut.
+
+**Ce que cela enseigne au-delà de cette unité.** Les contraintes déjà livrées de la forme
+`colonne is null or …` sont saines : le `is null` est explicite. Le piège ne se referme que sur
+une expression qui **traverse** un accès `jsonb` ou une colonne nullable sans le dire. Deux
+contraintes du dépôt sont dans ce cas et ont été relues : `workflow_steps_probability_check` et
+`workflow_nodes_catalog_*`, toutes deux protégées par un `is null` explicite. Aucune autre
+correction n'était due.
+
+**Ce qui protège l'écart :** les deux cas — clé absente **et** liste vide — sont désormais deux
+assertions distinctes de `supabase/tests/0010_champs_formulaire.test.sql`. La première seule aurait
+laissé passer le défaut ; c'est elle qui l'a trouvé.

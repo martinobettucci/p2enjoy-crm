@@ -5,12 +5,16 @@
 # @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
 # @spec CRM-031 (docs/BACKLOG.md) — workflow par défaut, ses étapes et ses transitions
 # @spec CRM-032 (docs/BACKLOG.md) — copie du workflow vers un track, par la véritable RPC
+# @spec CRM-035 (docs/BACKLOG.md) — champs de formulaire et règles de visibilité
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
 # @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial), §3.9 (workflow par défaut),
 #       §4.10 (copie livrée par le seed)
-# @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation), §3 (workflows)
+# @spec docs/SPEC-form-composer.md §2.9 (champs et règles livrés par le seed) ;
+#       docs/SPEC-seed.md §2.10
+# @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation), §3 (workflows),
+#       §4 (formulaires conditionnels)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
 #
@@ -220,8 +224,11 @@ ETAPES=(
 # pas de l'étape d'arrivée. Choix pris faute d'énoncé d'origine, nommé au §3.9 et renversable ici
 # même (docs/JOURNAL.md, décision 75).
 #
-# `require_fields` reste vide partout : `form_fields` n'existe pas (`CRM-035`), et le seed ne
-# fabrique pas une donnée que le modèle ne sait pas encore produire.
+# `require_fields` reste vide partout. Le motif a changé avec `CRM-035` et il est réécrit plutôt que
+# laissé périmé : la colonne peut désormais désigner des champs réels, mais **aucune garde ne la
+# lit** — `move_card` est `CRM-034`, non commencée (décision 92, INC-043). Une donnée de
+# démonstration que rien n'exerce est une décoration, pas une preuve, et elle serait la première à
+# pourrir, aucune intégrité référentielle n'étant possible sur un `uuid[]` (INC-033).
 #
 # id | étape de départ | étape d'arrivée | libellé | commentaire exigé (oui/non)
 TRANSITIONS=(
@@ -235,6 +242,80 @@ TRANSITIONS=(
 	'5eed0000-0000-4000-8000-000000000078|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
 	'5eed0000-0000-4000-8000-000000000079|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
 	'5eed0000-0000-4000-8000-00000000007a|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
+)
+
+# Champs de formulaire du workflow par défaut — docs/SPEC-form-composer.md §2.9,
+# docs/SPEC-seed.md §2.10.
+#
+# Sept champs, dont **un archivé** : sans lui, l'état « archivé » serait documenté sans être
+# démontrable côté formulaire, ce que `CLAUDE.md` §8 refuse. C'est le même choix qu'un track, un
+# channel et un nœud archivés avant lui, et il démontre en outre qu'un champ archivé **garde sa clé
+# réservée** (décision 96).
+#
+# Six types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
+# seuls dont la base **exige** des options (décision 94). Sans eux ici, ces deux contraintes
+# seraient documentées sans être démontrables.
+#
+# `options` est envoyé pour **tous** les champs, `{}` compris, et non omis : omettre laisserait la
+# valeur précédente en place lors d'un rejeu convergent, de sorte qu'un `choices` posé à la main sur
+# `motif-perte` y survivrait. Le seed est un contrat opposable ; il doit ramener la ligne à son état
+# déclaré, y compris pour effacer.
+#
+# `position` est écrite explicitement, pour le même motif que les tracks, les channels, les nœuds et
+# les étapes : un ordre attribué par effet de bord ne serait pas reproductible si l'ordre des
+# insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
+#
+# id | clé | libellé | type | position | aide (ou « - ») | date d'archivage (ou « - »)
+CHAMPS=(
+	'5eed0000-0000-4000-8000-000000000081|budget|Budget estimé|money|1|Montant hors taxes, en euros.|-'
+	"5eed0000-0000-4000-8000-000000000082|source|Origine du contact|select|2|-|-"
+	'5eed0000-0000-4000-8000-000000000083|date-signature-prevue|Date de signature prévue|date|3|-|-'
+	'5eed0000-0000-4000-8000-000000000084|motif-perte|Motif de la perte|textarea|4|Repris tel quel dans l’analyse des affaires perdues.|-'
+	'5eed0000-0000-4000-8000-000000000085|decideur-identifie|Décideur identifié|checkbox|5|-|-'
+	'5eed0000-0000-4000-8000-000000000086|lien-proposition|Lien vers la proposition|url|6|-|-'
+	'5eed0000-0000-4000-8000-000000000087|budget-previsionnel|Budget prévisionnel|number|7|-|2026-03-15T09:00:00Z'
+)
+
+# Options des deux champs qui ne peuvent pas s'en passer. Écrites à part parce qu'elles contiennent
+# des séparateurs `|` impossibles à loger dans le tableau ci-dessus.
+OPTIONS_BUDGET='{"currency": "EUR", "min": 0}'
+OPTIONS_SOURCE='{"choices": [
+	{"key": "salon",         "label": "Salon"},
+	{"key": "recommandation","label": "Recommandation"},
+	{"key": "site",          "label": "Site web"},
+	{"key": "prospection",   "label": "Prospection directe"}
+]}'
+
+# Règles de visibilité — docs/SPEC-form-composer.md §3.1, docs/SPEC-seed.md §2.10.
+#
+# Quinze règles couvrant les **trois** visibilités. `visible` est écrit **explicitement** deux fois,
+# bien qu'il soit la valeur par défaut : sans cela, la valeur `'visible'` de la colonne ne serait
+# jamais exercée par aucune donnée, et rien ne distinguerait « déclaré facultatif » de « non
+# déclaré ».
+#
+# Vingt-sept couples champ × étape restent **sans règle** — sept étapes fois six champs actifs, moins
+# les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par défaut du §3.1 :
+# une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
+#
+# Le champ archivé n'a **aucune** règle : l'archivage ne demande aucun ménage.
+#
+# champ | étape | visibilité
+REGLES=(
+	'5eed0000-0000-4000-8000-000000000081|5eed0000-0000-4000-8000-000000000061|hidden'
+	'5eed0000-0000-4000-8000-000000000081|5eed0000-0000-4000-8000-000000000063|required'
+	'5eed0000-0000-4000-8000-000000000081|5eed0000-0000-4000-8000-000000000064|required'
+	'5eed0000-0000-4000-8000-000000000082|5eed0000-0000-4000-8000-000000000061|required'
+	'5eed0000-0000-4000-8000-000000000082|5eed0000-0000-4000-8000-000000000062|visible'
+	'5eed0000-0000-4000-8000-000000000083|5eed0000-0000-4000-8000-000000000061|hidden'
+	'5eed0000-0000-4000-8000-000000000083|5eed0000-0000-4000-8000-000000000064|required'
+	'5eed0000-0000-4000-8000-000000000084|5eed0000-0000-4000-8000-000000000061|hidden'
+	'5eed0000-0000-4000-8000-000000000084|5eed0000-0000-4000-8000-000000000062|hidden'
+	'5eed0000-0000-4000-8000-000000000084|5eed0000-0000-4000-8000-000000000063|hidden'
+	'5eed0000-0000-4000-8000-000000000084|5eed0000-0000-4000-8000-000000000064|hidden'
+	'5eed0000-0000-4000-8000-000000000084|5eed0000-0000-4000-8000-000000000067|required'
+	'5eed0000-0000-4000-8000-000000000085|5eed0000-0000-4000-8000-000000000064|required'
+	'5eed0000-0000-4000-8000-000000000086|5eed0000-0000-4000-8000-000000000061|hidden'
+	'5eed0000-0000-4000-8000-000000000086|5eed0000-0000-4000-8000-000000000063|visible'
 )
 
 # --- Accès à l'API -----------------------------------------------------------------------------
@@ -648,7 +729,68 @@ code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
 attendu "$code" "rattachement de prospection à la copie de portée track" 200
 info "prospection suit $WF_COPIE_NOM — les cinq autres channels suivent le workflow global"
 
-# --- 8. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
+# --- 8. Champs de formulaire et règles de visibilité — docs/SPEC-form-composer.md §2.9 ---------
+# Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
+# convergente sur la clé primaire.
+#
+# Cette section vient **après** la copie, et non avant, pour une raison qui mérite d'être écrite :
+# elle ne change rien. Les champs appartiennent au workflow **global**, et `copy_workflow_to_track`
+# n'en copie aucun — la copie de la section 7 naît donc sans formulaire, qu'elle soit créée avant ou
+# après. C'est l'écart d'INC-037, dont l'arbitrage appartient au responsable (décision 93). Il est
+# **compté** par `scripts/verify-copie-workflow.sh` et par la suite pgTAP `0008`, jamais corrigé en
+# silence.
+#
+# `help_text` et `archived_at` sont envoyés **null** lorsque le contrat dit « — », et non omis, pour
+# le même motif que `options` : un rejeu convergent doit ramener la ligne à son état déclaré, y
+# compris pour effacer une valeur posée à la main.
+
+echo
+say "8. Champs de formulaire et règles de visibilité"
+
+for ligne in "${CHAMPS[@]}"; do
+	IFS='|' read -r id cle libelle type position aide archive <<< "$ligne"
+
+	case "$cle" in
+		budget) options=$OPTIONS_BUDGET ;;
+		source) options=$OPTIONS_SOURCE ;;
+		*)      options='{}' ;;
+	esac
+
+	[ "$aide"    = '-' ] && aide_json='null'    || aide_json=$(jq -nc --arg v "$aide" '$v')
+	[ "$archive" = '-' ] && archive_json='null' || archive_json=$(jq -nc --arg v "$archive" '$v')
+
+	charge=$(jq -nc --arg id "$id" --arg wf "$WF_ID" --arg ws "$WS_ID" --arg cle "$cle" \
+	               --arg libelle "$libelle" --arg type "$type" --argjson position "$position" \
+	               --argjson options "$options" --argjson aide "$aide_json" \
+	               --argjson archive "$archive_json" \
+	     '{id: $id, workflow_id: $wf, workspace_id: $ws, key: $cle, label: $libelle, type: $type,
+	       options: $options, help_text: $aide, position: $position, archived_at: $archive}')
+
+	code=$(api POST /rest/v1/form_fields \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du champ $cle" 200 201
+
+	if [ "$archive" = '-' ]; then etat='actif'; else etat="archivé le ${archive%%T*}"; fi
+	printf '  %-24s %-11s %s\n' "$cle" "$type" "$etat"
+done
+
+for ligne in "${REGLES[@]}"; do
+	IFS='|' read -r champ etape visibilite <<< "$ligne"
+
+	charge=$(jq -nc --arg champ "$champ" --arg etape "$etape" --arg wf "$WF_ID" --arg ws "$WS_ID" \
+	               --arg v "$visibilite" \
+	     '{field_id: $champ, step_id: $etape, workflow_id: $wf, workspace_id: $ws, visibility: $v}')
+
+	code=$(api POST /rest/v1/form_field_rules \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la règle ${champ: -3}×${etape: -3}" 200 201
+done
+info "Champs : ${#CHAMPS[@]}, dont un archivé — règles : ${#REGLES[@]}, couvrant les trois visibilités"
+info "La copie de portée track ne reçoit aucun champ : INC-037, arbitrage attendu"
+
+# --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
 # ou dans l'autre tromperait celui qui lit cette sortie.
@@ -668,12 +810,15 @@ info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks �
 info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
 info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
 info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
+info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
-info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps et workflow_transitions"
-info "sont lisibles par un membre du workspace, et par lui seul (CRM-020, CRM-021, CRM-030, CRM-031)."
+info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps, workflow_transitions,"
+info "form_fields et form_field_rules sont lisibles par un membre du workspace, et par lui seul"
+info "(CRM-020, CRM-021, CRM-030, CRM-031, CRM-035)."
 info "workflow_derivations expose la divergence d'une copie, en lecture seule (CRM-032)."
 info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
 info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-workflow.sh"
+info "champs de formulaire : scripts/verify-champs-formulaire.sh"

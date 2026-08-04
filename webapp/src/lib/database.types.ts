@@ -134,6 +134,139 @@ export type Database = {
           },
         ]
       }
+      form_field_rules: {
+        Row: {
+          created_at: string
+          field_id: string
+          step_id: string
+          updated_at: string
+          visibility: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_id: string
+          step_id: string
+          updated_at?: string
+          visibility: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          field_id?: string
+          step_id?: string
+          updated_at?: string
+          visibility?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_field_rules_field_id_workflow_id_fkey"
+            columns: ["field_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "form_fields"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "form_field_rules_step_id_workflow_id_fkey"
+            columns: ["step_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "form_field_rules_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "form_field_rules_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "form_field_rules_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      form_fields: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          help_text: string | null
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          type: string
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position: number
+          type: string
+          updated_at?: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          type?: string
+          updated_at?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "form_fields_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "form_fields_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

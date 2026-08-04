@@ -1652,9 +1652,136 @@ Les six vérifications de `docs/SPEC-workflow-engine.md` §5.
 **DoD** : pgTAP pour chacune des six ; preuves de refus n° 1 et 5 ; message d'erreur listant les
 clés manquantes.
 
-### CRM-035 — Définition des champs `[ ]`
+- [ ] **NON COMMENCÉE, ET BLOQUÉE PAR L'ORDRE DU PLAN LUI-MÊME — INC-043, décision 92.** Les six
+      vérifications portent toutes sur des **cards**, qui arrivent à `CRM-040`. MESURÉ le 2026-08-04
+      sur la base du seed : `cards`, `card_events`, `card_comments`, `card_field_values` et
+      `move_card` valent tous `NULL`. Aucune part de l'unité n'est livrable — `move_card` sans
+      `cards` n'est pas une garde partielle, c'est une signature vide. Aucune table n'est créée par
+      anticipation : cela préempterait `CRM-040`, `CRM-043` et `CRM-044` en même temps.
+      **Trois options d'arbitrage** sont écrites dans INC-043 ; la plus simple déplace l'unité après
+      `CRM-040`, en conservant la contrainte « `CRM-034` avant `CRM-041` », qui reste juste.
+
+### CRM-035 — Définition des champs `[~]`
 `form_fields`, `form_field_rules`, grille champ × étape dans l'éditeur.
 **DoD** : unitaire, API (écriture réservée aux administrateurs), E2E, captures de la grille.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-form-composer.md` §2 et §3 réécrits en
+      seize sous-chapitres : les deux chapitres dataient de `CRM-000`, tenaient en cinquante lignes
+      et ne disaient ni sur quelles colonnes les tables reposent, ni ce qu'un refus rend, ni ce que
+      la base peut tenir des options d'un `select`, ni ce qu'il advient d'une règle qui croiserait
+      deux workflows. Rédigés **après mesure** sur la pile réelle — sondes créées puis détruites,
+      `SQLSTATE` relevés à la main —, avec un contrat d'API de **vingt et une lignes** écrit avant le
+      code pour être mesuré et non supposé. Commit documentaire dédié.
+- [x] **L'unité du plan n'était pas celle qui pouvait être faite, et la mesure l'a dit** (décision 92,
+      INC-043) : `CRM-034` précède de trois à dix unités **toutes** les tables dont sa garde a besoin.
+      MESURÉ : `cards`, `card_events`, `card_comments`, `card_field_values` et `move_card` valent
+      tous `NULL`. Aucune part de l'unité n'est livrable — `move_card` sans `cards` n'est pas une
+      garde partielle, c'est une signature vide. `CRM-034` reste `[ ]`, non commencée, et **aucune
+      contrainte d'ordre de `docs/MASTER_PLAN.md` §2 n'est enfreinte**.
+- [x] `supabase/migrations/0009_champs_formulaire.sql` : `form_fields` et `form_field_rules`, les
+      quinze types, les trois visibilités, l'unicité **totale** de la clé par workflow, l'attribution
+      automatique de `position` dans la portée du workflow, **sept** politiques RLS et les privilèges
+      explicites.
+- [x] **Une règle ne peut pas croiser deux workflows, et c'est structurel** (décision 95) : trois
+      clés étrangères composites articulées autour de `workflow_id`. MESURÉ dans les **deux** sens —
+      quel que soit le workflow déclaré, l'une des deux clés attrape l'erreur en `23503`. Un trigger
+      aurait rendu le même service, plus tard et moins sûrement. MESURÉ également : sans l'unicité
+      `(id, workflow_id)` sur `form_fields`, la table des règles ne peut pas être créée (`42830`).
+- [x] **La base tient ce que la spécification promet des options** (décision 94) : un `select` sans
+      choix et un `money` sans devise sont refusés. Le prix est assumé et nommé — un `select` naît
+      avec au moins un choix. Ce que la base **ne** tient **pas** — la forme des entrées de
+      `choices` — est dit au §2.4 et **figé par une assertion**, non tu.
+- [x] **UN DÉFAUT RÉEL, TROUVÉ PAR LA SUITE pgTAP ET CORRIGÉ DANS LE MÊME CHANGEMENT** (décision 102) :
+      les deux contraintes ci-dessus **ne refusaient rien** dans le cas le plus courant. Un accès
+      `jsonb` absent rend `NULL`, la conjonction rend `NULL`, et **un `CHECK` qui rend `NULL` accepte
+      la ligne** : elles refusaient `{"choices": []}` et laissaient passer l'absence pure, qui est
+      pourtant le premier cas à refuser. `coalesce(…, false)` sur les deux, et `jsonb_array_length`
+      — qui lève une erreur sur un scalaire, dans un `AND` dont l'ordre n'est pas garanti — remplacé
+      par une comparaison `jsonb`. Les deux cas sont désormais **deux** assertions distinctes ; la
+      première seule aurait laissé passer le défaut, et c'est elle qui l'a trouvé.
+- [x] **Asymétrie de suppression, et refus double** (décision 96) : une **règle** se supprime, un
+      **champ** s'archive — aucune politique `for delete`, aucun privilège `DELETE`. La dégradation
+      n° 3 du harnais **accorde** le privilège pour constater que la politique tient encore la
+      seconde barrière : sans elle, on ne saurait pas lequel des deux mécanismes refuse.
+- [x] **Test unitaire dédié** : `supabase/tests/0010_champs_formulaire.test.sql`, **61 assertions,
+      aucune anomalie** — forme des deux tables, contraintes de valeur, les deux sens du croisement,
+      les cascades, l'unicité totale de la clé y compris pour un champ archivé, `position` dans la
+      portée du workflow, RLS, politiques, privilèges, et la conformité du seed.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/champs-formulaire.spec.ts`,
+      **25 scénarios**, avec les jetons réels des trois profils seedés. Les vingt et une lignes du
+      contrat d'API du §2.8 y sont rejouées, chaque refus **relisant la ligne** pour la constater
+      inchangée.
+- [x] **Une ligne du contrat a été révisée par la mesure** : la suppression d'un champ par un `admin`
+      rend `403`, non `401`. Un rôle **authentifié** privé du privilège n'est pas un appelant sans
+      rôle. Le §2.8 est corrigé dans le même changement, plutôt que le test relâché.
+- [x] **Seed repris dans le même changement** : sept champs dont un archivé, couvrant sept types ;
+      quinze règles couvrant les trois visibilités, dont **deux `visible` explicites** sans quoi cette
+      valeur ne serait exercée par aucune donnée ; et **vingt-sept couples champ × étape laissés sans
+      règle**, sans quoi la valeur par défaut du §3.1 serait écrite sans être démontrée.
+- [x] Harnais de preuves rejouable `scripts/verify-champs-formulaire.sh` : **30 contrôles hors
+      suites, aucune anomalie**, et **non complaisant, éprouvé par trois dégradations réelles** —
+      contrainte des choix retirée, clé composite dégradée en clé **simple** sous le même nom,
+      privilège `DELETE` accordé. Chacune fait passer une écriture qui doit être refusée, et la
+      restauration est **constatée**.
+- [x] **Trois garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été
+      révisés** (mécanisme de la décision 51, septième occurrence) : `hasnt_table('form_fields')`
+      dans `0007_workflows` et dans `0008_copie_workflow`, et le contrôle d'absence de
+      `scripts/verify-copie-workflow.sh`. Aucun n'a été retiré : le premier constate que
+      `require_fields` reste vide **pour un autre motif**, les deux autres **comptent l'écart** —
+      source sept champs, copie zéro.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération. `npm run test:sql` **717 assertions**, `npm run test:unit` **164 tests**,
+      `npm run e2e:api` **150 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé et
+      **réellement exécuté**, au prix du contournement récurrent d'INC-036.
+- [x] **Aucune régression** : les seize harnais précédents rejoués — `verify-stack` 33,
+      `verify-scripts` 38, `verify-migrations` 23, `verify-vault` 26, `verify-authz` 26,
+      `verify-auth` 42, `verify-seed` 49, `verify-types` 30, `verify-webapp` 41, `verify-harness` 25,
+      `verify-tracks` 40, `verify-channels` 23, `verify-catalogue` 29, `verify-workflows` 41,
+      `verify-copie-workflow` 27, `verify-coherence-workflow` 26 —, aucune anomalie.
+- [x] `docs/SPEC-form-composer.md` (§2 et §3 réécrits, §7 scindé par unité), `docs/SCHEMA.md` §4,
+      `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.10, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 9), `docs/manual.md` chapitre 23 et §3.2, `README.md`,
+      `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La grille champ × étape que la
+      Definition of Done nomme suppose un écran d'administration authentifié, et la webapp reste un
+      appelant **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Les
+      règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute
+      façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **La copie d'un workflow vers un track n'emporte pas ses champs.** `docs/SPEC-form-composer.md`
+      §2.1 dit pourtant que le formulaire suit le workflow. MESURÉ : la copie du seed porte **zéro**
+      champ là où sa source en porte sept. Le comportement de `copy_workflow_to_track` reste
+      **inchangé** — INC-037 réserve l'arbitrage au responsable, et le corriger rouvrirait `CRM-032`
+      dans un changement consacré à `CRM-035` (décision 93). L'écart est **compté** par trois
+      assertions, jamais corrigé en silence.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « unitaire, API (écriture réservée
+aux administrateurs), E2E, captures de la grille » : les deux premières sont livrées, largement
+au-delà de ce qu'elle demandait — vingt et une lignes de contrat d'API mesurées, trois dégradations
+réelles. **Les deux dernières n'existent pas**, faute d'écran, et l'absence est nommée plutôt que
+compensée par une preuve de substitution. **Aucune vérification visuelle** pour la même raison ; les
+captures réécrites par le rejeu des suites d'interface ont été **regardées puis restaurées**, comme
+aux quatre unités précédentes.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Huitième unité consécutive du chunk 3 à buter sur INC-021.
+- **`required` est une déclaration sans garde.** Ce qui l'applique est `move_card` (`CRM-034`), non
+  commencée faute de cible (INC-043). Un champ déclaré obligatoire n'empêche aujourd'hui **rien**, et
+  le dire est plus honnête que de laisser croire l'inverse.
+- **La copie ne copie pas les champs** — INC-037, arbitrage attendu (voir ci-dessus).
+- **La forme des entrées de `choices` n'est pas contrainte par la base** : un `CHECK` ne peut porter
+  aucune sous-requête. La vérification appartient à `CRM-036` et à `CRM-037`, seuls endroits où une
+  clé de choix inconnue produit une conséquence. Figé par une assertion.
+- **`require_fields` reste vide dans le seed**, et le motif a changé : la colonne peut désormais
+  désigner des champs réels, mais aucune garde ne la lit (décision 97). L'union « étape + transition »
+  du §3.5 reste donc sans donnée de démonstration jusqu'à `CRM-034`.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : l'image `webapp` construite à la main avec le certificat du proxy (INC-032, INC-042),
+  `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de compatibilité des
+  navigateurs Playwright (INC-036). **Première exécution où le conteneur `webapp` démarre réellement**
+  — les quinze services de la pile de développement sont sains.
 
 ### CRM-036 — Valeurs et validation `[ ]`
 `card_field_values`, validation par type, union étape + transition.

@@ -365,7 +365,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
 | Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) |
-| Formulaires | `form_fields`, `form_field_rules`, `card_field_values` |
+| Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (`CRM-036`) |
 | Cards | `cards`, `card_comments`, `card_activities`, `card_events`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` |
 | Relations | `organizations`, `contacts`, `card_contacts` |
 | Messagerie | `mail_inbound_accounts`, `mail_outbound_identities`, `mail_messages`, `mail_message_occurrences`, `mail_attachments`, `mail_outbox`, `mail_folder_map`, `mail_templates`, `mail_sequences`, `card_sequence_enrollments` |
@@ -406,8 +406,9 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
   fonctions `can_*` restent différées — `docs/INCONSISTENCY_REPORT.md`, INC-013.
 - **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks`,
-  `CRM-021` trois sur `public.channels`, `CRM-030` trois sur `public.workflow_nodes_catalog` et
-  `CRM-031` **neuf** sur les trois tables de workflow —
+  `CRM-021` trois sur `public.channels`, `CRM-030` trois sur `public.workflow_nodes_catalog`,
+  `CRM-031` **neuf** sur les trois tables de workflow et `CRM-035` **sept** sur les deux tables de
+  formulaire —
   lecture par `app.is_workspace_member`, insertion et mise à jour par `app.is_workspace_admin`,
   **aucune suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés
   par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
@@ -415,9 +416,18 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   `scripts/verify-workflows.sh` (**47 contrôles**, 40 hors suites),
   `scripts/verify-copie-workflow.sh` (**33 contrôles**, 26 hors suites),
   `scripts/verify-coherence-workflow.sh` (**33 contrôles**, 26 hors suites),
+  `scripts/verify-champs-formulaire.sh` (**37 contrôles**, 30 hors suites),
   `e2e/api/tracks.spec.ts`, `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts`,
-  `e2e/api/workflows.spec.ts`, `e2e/api/copie-workflow.spec.ts` et
-  `e2e/api/coherence-workflow.spec.ts`.
+  `e2e/api/workflows.spec.ts`, `e2e/api/copie-workflow.spec.ts`,
+  `e2e/api/coherence-workflow.spec.ts` et `e2e/api/champs-formulaire.spec.ts`.
+
+  **Depuis `CRM-035`, un formulaire appartient à un workflow.** Les champs et leurs règles de
+  visibilité suivent la même règle d'accès que les workflows — lecture par les membres, écriture par
+  les administrateurs —, avec une asymétrie de suppression : une **règle** se supprime, un **champ**
+  s'archive, et aucun privilège `DELETE` ne lui est accordé (décision 96). Une règle ne peut pas
+  croiser deux workflows : trois clés étrangères composites l'en empêchent structurellement, et non
+  un trigger (décision 95). `visibility = 'required'` reste cependant une **déclaration sans
+  garde** : ce qui l'applique est `move_card`, non commencée faute de cible (INC-043).
 
   **Depuis `CRM-033`, un channel ne peut plus naître sans workflow**, et le workflow qu'il désigne
   doit être `global` ou rattaché à **son** track. La règle est portée par deux triggers — un sur

@@ -106,6 +106,8 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 | 7 | `supabase/migrations/0007_copie_workflow.sql` | Fonction `public.copy_workflow_to_track(workflow_id, track_id, new_name)` — copie tracée d'un workflow global vers un track, arêtes remappées par le nœud — et vue `public.workflow_derivations`, qui porte le signal de divergence. Les **privilèges sont posés en nommant les rôles** : `revoke … from public` ne retire pas ce que les privilèges par défaut de l'image accordent nommément à `anon` (MESURÉ, `docs/JOURNAL.md` décision 80). La fonction n'est exécutable que par `authenticated` et `service_role` ; la vue est en lecture seule. | Migrations 1 à 6 : `public.tracks`, `public.workflows`, `public.workflow_steps`, `public.workflow_transitions` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. | `drop view public.workflow_derivations; drop function public.copy_workflow_to_track(uuid, uuid, text);` — **non destructif** : les copies déjà créées survivent, ce sont des workflows ordinaires. Seuls le geste de copie et le signal de divergence disparaissent. |
 | 8 | `supabase/migrations/0008_coherence_workflow_channel.sql` | **Deux** triggers de cohérence workflow ↔ channel — `channels_verifier_workflow` (`BEFORE INSERT OR UPDATE OF workflow_id, track_id, workspace_id`) et `workflows_verifier_portee_occupee` (`BEFORE UPDATE OF scope, track_id`) — et la contrainte **`NOT NULL`** sur `channels.workflow_id` qu'INC-029 laissait due depuis `CRM-021`. Le second trigger n'était demandé par aucune spécification : la mesure a établi que **deux** des quatre écritures capables de casser la cohérence passent par `workflows` et non par `channels` (INC-040, `docs/JOURNAL.md` décision 89). | Migrations 1 à 6 : `public.channels`, `public.workflows` et `public.tracks` doivent exister. **Et une condition de données**, ci-dessous. | `drop trigger channels_verifier_workflow on public.channels; drop trigger workflows_verifier_portee_occupee on public.workflows; alter table public.channels alter column workflow_id drop not null; drop function app.channels_verifier_workflow(); drop function app.workflows_verifier_portee_occupee();` — **non destructif** : aucune donnée n'est perdue, seules les gardes disparaissent. Les rattachements incohérents créés après le retour arrière ne seront pas détectés. |
 
+| 9 | `supabase/migrations/0009_champs_formulaire.sql` | Les deux tables du form composer : `public.form_fields` (champs d'un workflow, quinze types, options exigées pour `select`, `multiselect` et `money`, unicité **totale** de la clé par workflow, trigger d'attribution de `position`) et `public.form_field_rules` (visibilité d'un champ à une étape, clé primaire `(field_id, step_id)`, **trois clés étrangères composites** qui rendent structurellement impossible une règle croisant deux workflows). Six politiques RLS, privilèges explicites, et **aucun** privilège `DELETE` sur les champs — l'archivage tient lieu de suppression (`docs/JOURNAL.md` décisions 94 à 98). | Migrations 1 à 6 : `public.workflows` et `public.workflow_steps` doivent exister. **Aucune condition de données** : les deux tables sont créées vides. | `drop table public.form_field_rules; drop table public.form_fields; drop function app.form_fields_attribuer_position();` — **destructif au sens strict** : les définitions de formulaires et leurs règles sont perdues. Aucune autre table n'en dépend aujourd'hui, `card_field_values` n'étant pas livrée (`CRM-036`). |
+
 **VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 8.** Elle pose `NOT NULL` sur
 `channels.workflow_id`. Si une seule ligne de `public.channels` portait `workflow_id` nul,
 l'`alter table` échouerait — et comme PostgREST attend la terminaison réussie du
@@ -130,6 +132,17 @@ select c.id, c.slug, c.track_id, w.scope, w.track_id as track_du_workflow
 par défaut de son workspace, puis vérifier de nouveau. Aucune reprise automatique n'est écrite ici —
 choisir le workflow d'un channel est une décision métier, non une valeur par défaut
 (`docs/JOURNAL.md`, décision 91).
+
+**AUCUNE VÉRIFICATION PRÉALABLE POUR LA MIGRATION 9**, et la raison est écrite plutôt que
+supposée : elle ne crée que des tables neuves, ne modifie aucune table existante et ne pose aucune
+contrainte sur des données déjà présentes. Une production qui l'applique voit apparaître deux tables
+vides ; aucun formulaire n'existe tant qu'un administrateur n'en a pas défini.
+
+**Ce que la migration 9 ne fait pas, et qui reste dû.** `copy_workflow_to_track` (migration 7) ne
+copie **aucun** champ de formulaire : un workflow copié vers un track naît sans formulaire. Le
+comportement est inchangé et documenté — INC-037, arbitrage attendu du responsable. Si la production
+emploie la copie de workflow, ses copies devront recevoir leurs champs à la main tant que l'arbitrage
+n'est pas rendu.
 
 **VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 3.** Elle ajoute une clé étrangère sur
 `public.track_members`. Si cette table contenait une ligne dont `track_id` ne correspond à aucun

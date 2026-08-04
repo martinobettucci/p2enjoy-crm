@@ -54,7 +54,7 @@
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses sept étapes et ses dix transitions, et chacun de ses six channels le suit. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part — il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 22 | Choisir le workflow d'un channel | `CRM-033` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute autre affectation est refusée, y compris de façon détournée — déplacer un channel vers un autre track, ou déplacer un workflow sous les channels qui le suivent. L'espace de travail livré le montre : cinq channels suivent « Cycle commercial standard », « Prospection » suit la copie réservée à son track. Ce qui manque est l'écran : aucun sélecteur ne permet encore de changer le workflow d'un channel, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 23 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
+| 23 | Composer le formulaire d'un workflow | `CRM-035` | **Livré côté serveur, sans écran.** Un workflow porte désormais son propre formulaire : les questions posées à propos d'une affaire, et le moment où chacune est affichée, facultative ou obligatoire. L'espace de travail livré en montre sept — budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié, lien vers la proposition, et un champ retiré du formulaire dont les réponses restent consultables. Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Deux limites à connaître : l'obligation n'est **pas encore appliquée** — rien n'empêche aujourd'hui de faire avancer une affaire sans avoir répondu, la garde arrivant avec le chapitre 8 (`CRM-034`) —, et un workflow **copié** dans un track naît **sans formulaire**, qu'il faut donc recomposer. Ce qui manque est l'écran : la grille champ × étape n'existe pas, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 24 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 25 | Boîte mail système de l'espace | `CRM-052` | À livrer |
 | 26 | Jetons d'API et webhooks | `CRM-073` | À livrer |
@@ -104,9 +104,11 @@ visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
 Le catalogue de nœuds et les workflows n'ont d'ailleurs **aucun écran du tout**, connexion ou non.
 Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, le
 refus de tout déplacement qui n'y figure pas, la **copie** d'un workflow vers un track avec la
-mémoire de son origine — chapitre 21 —, et, depuis le chapitre 22, la garantie qu'un channel ne peut
-suivre **que** le workflow général de l'espace de travail ou celui de son propre track. Les écrans
-viendront avec l'éditeur du chapitre 20, lui-même suspendu à l'écran de connexion.
+mémoire de son origine — chapitre 21 —, la garantie qu'un channel ne peut suivre **que** le workflow
+général de l'espace de travail ou celui de son propre track — chapitre 22 —, et, depuis le
+chapitre 23, le **formulaire** attaché à un workflow : les questions posées à propos d'une affaire et
+le moment où chacune est affichée ou exigée. Les écrans viendront avec l'éditeur du chapitre 20,
+lui-même suspendu à l'écran de connexion.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
 qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.

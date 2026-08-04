@@ -1396,6 +1396,15 @@ neuf fournissait de nouveau la révision `1194`, et `npm run e2e:ui` échouait s
 scénarios avant que les liens ne soient recréés. Une fois l'arborescence rétablie, les 37 sont
 passés. Comme pour INC-032, le coût est **récurrent**.
 
+**Prédiction vérifiée une troisième fois, le 2026-08-04, pendant `CRM-035`.** Même révision `1194`,
+même « Executable doesn't exist at
+`/opt/pw-browsers/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell` »,
+mêmes **37** scénarios rouges, y compris ceux qui n'ont rien à voir avec l'unité en cours. Une
+observation s'ajoute, et elle aggrave le constat : l'échec est **silencieux pour qui ne lit que le
+résumé** — `scripts/verify-webapp.sh` signalait « 10 anomalies » dont neuf « capture manquante », la
+cause réelle n'apparaissant qu'en lisant la sortie complète de Playwright. Les liens recréés, les 37
+scénarios et les deux harnais concernés sont repassés au vert.
+
 **Ce qui n'est pas fait, et pourquoi.** `e2e/playwright.config.ts` est un livrable de `CRM-008`,
 et y écrire un `executablePath` conditionnel reviendrait à rouvrir cette unité pendant un passage
 consacré à une troisième — et à faire dépendre la configuration du dépôt d'un chemin propre à un
