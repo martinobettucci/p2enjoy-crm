@@ -336,8 +336,9 @@ Quatre propriétés sont démontrées, et non une seule :
   vérifie.
 
 Le nœud archivé `qualification` reste **hors** du workflow : un vocabulaire retiré ne s'instancie
-pas. `require_fields` reste vide partout, `form_fields` n'existant pas (`CRM-035`) — le seed ne
-fabrique pas une donnée que le modèle ne sait pas encore produire.
+pas. `require_fields` reste vide partout — depuis `CRM-035` le motif a changé, et il est écrit au
+§2.10 plutôt que laissé périmé : la colonne peut désormais désigner des champs réels, mais aucune
+garde ne la lit.
 
 **Les six channels reçoivent ce workflow.** Ils étaient sans `workflow_id` depuis `CRM-021`, faute
 de table `workflows` (INC-029). Le rattachement se fait en fin de section 6 du script, et non dans
@@ -402,6 +403,56 @@ plutôt que de la contourner.
 workflows, dont un seul `global` et un seul par défaut. Les contrôles qui comptaient « un workflow,
 ni plus ni moins » ont été révisés dans le même changement — mécanisme de la décision 51, cinquième
 occurrence.
+
+### 2.10 Champs de formulaire et règles de visibilité — ajoutés par `CRM-035`
+
+Sept champs sur le workflow par défaut, dont **un archivé**, et quinze règles de visibilité.
+Contrat détaillé et motifs : `docs/SPEC-form-composer.md` §2.9.
+
+| id | clé | libellé | type | position | état |
+|---|---|---|---|---|---|
+| `…081` | `budget` | Budget estimé | `money` | 1 | actif |
+| `…082` | `source` | Origine du contact | `select` | 2 | actif |
+| `…083` | `date-signature-prevue` | Date de signature prévue | `date` | 3 | actif |
+| `…084` | `motif-perte` | Motif de la perte | `textarea` | 4 | actif |
+| `…085` | `decideur-identifie` | Décideur identifié | `checkbox` | 5 | actif |
+| `…086` | `lien-proposition` | Lien vers la proposition | `url` | 6 | actif |
+| `…087` | `budget-previsionnel` | Budget prévisionnel | `number` | 7 | **archivé** le 2026-03-15 |
+
+Six types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
+seuls dont la base **exige** des options (`docs/SPEC-form-composer.md` §2.4, décision 94). Sans eux
+dans le seed, ces deux contraintes seraient documentées sans être démontrables.
+
+Le champ archivé démontre deux choses d'un seul geste : l'état « archivé » côté formulaire, comme un
+track, un channel et un nœud archivés avant lui, **et** le fait qu'un champ archivé garde sa clé
+réservée (décision 96). Il n'a **aucune règle** — l'archivage ne demande aucun ménage.
+
+Les quinze règles couvrent les **trois** visibilités :
+
+| Visibilité | Nombre | Où |
+|---|---|---|
+| `hidden` | 7 | `budget`, `date-signature-prevue`, `lien-proposition` et `motif-perte` en prospection ; `motif-perte` aussi en relance, négociation et signature |
+| `required` | 6 | `source` en prospection ; `budget` en négociation et en signature ; `date-signature-prevue` et `decideur-identifie` en signature ; `motif-perte` en perdu |
+| `visible` | 2 | `source` en relance, `lien-proposition` en négociation |
+
+`visible` est écrit **explicitement** deux fois, bien qu'il soit la valeur par défaut. Sans cela, la
+valeur `'visible'` de la colonne ne serait jamais exercée par aucune donnée, et rien ne
+distinguerait « déclaré facultatif » de « non déclaré ».
+
+**Et vingt-neuf couples champ × étape restent sans règle** — sept étapes fois six champs actifs,
+moins les treize règles portant sur un champ actif. C'est ce qui démontre la valeur par défaut du
+§3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
+
+**`require_fields` reste vide sur les dix transitions.** Le motif a changé avec `CRM-035` et il est
+nommé plutôt que laissé périmé : la colonne peut désormais désigner des champs réels, mais aucune
+garde ne la lit — `move_card` est `CRM-034`, non commencée (décision 92). Une donnée que rien
+n'exerce est une décoration, et elle serait la première à pourrir, aucune intégrité référentielle
+n'étant possible sur un `uuid[]` (INC-033).
+
+**La copie de la section 2.9 ne reçoit aucun champ.** `copy_workflow_to_track` n'en copie aucun, et
+son comportement reste inchangé — INC-037, arbitrage attendu du responsable, décision 93. L'écart
+est **compté** par les preuves plutôt que passé sous silence : la source porte sept champs, la copie
+zéro.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

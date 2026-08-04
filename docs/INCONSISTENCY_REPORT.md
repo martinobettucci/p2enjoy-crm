@@ -838,6 +838,19 @@ une lacune du tableau, non une décision d'y renoncer » — n'a pas été confi
 Deux unités l'ont appliquée ; si elle est fausse, ce sont deux migrations qu'il faut reprendre, et
 non une.
 
+**MISE À JOUR — 2026-08-04, `CRM-035`.** L'omission n'était pas propre au §2 : le §4 la répète pour
+`form_fields`, `form_field_rules` et `card_field_values`, et y ajoute `workspace_id`, que les mêmes
+conventions générales exigent « y compris lorsqu'il serait déductible par jointure ».
+**Cinquième et sixième occurrences** — après `tracks`, `channels`, `workflow_nodes_catalog` et les
+trois tables du §3. `CRM-035` livre ses deux tables avec les trois colonnes et met le §4 à jour dans
+le même changement, comme les quatre unités précédentes.
+
+Le nombre d'occurrences change la nature du constat : ce n'est plus une lacune ponctuelle d'un
+tableau, c'est une **règle d'écriture** que `docs/SCHEMA.md` n'applique nulle part hors du §1. Si la
+lecture retenue est fausse, ce sont désormais **six** migrations à reprendre. L'arbitrage devient
+d'autant plus utile qu'il est peu coûteux : une phrase dans les conventions générales suffirait à
+dispenser chaque tableau de répéter les colonnes communes.
+
 ---
 
 ### INC-026 — Le refus d'un privilège manquant par PostgREST divulgue la commande `GRANT` à exécuter
@@ -1441,8 +1454,32 @@ précisément ce que `CRM-035` devra trancher, l'assertion l'y obligeant.
    partiellement due jusqu'à `CRM-035` ;
 3. créer une unité de reprise dédiée, par exemple `CRM-032b`, placée après `CRM-035`.
 
+**Mise à jour du 2026-08-04, pendant `CRM-035` : la conséquence n'est plus nulle, elle est
+mesurable.** `form_fields` existe désormais, et `CRM-035` la rattache bien au **workflow**, comme
+`docs/SCHEMA.md` §4 l'imposait. C'est la branche que cette entrée annonçait comme « incorrecte » :
+la copie posée par le seed porte **zéro champ** là où sa source en porte **sept**. Un channel qui
+suivrait la copie afficherait un formulaire vide, sans qu'aucune erreur ne le signale.
+
+Le comportement de `copy_workflow_to_track` reste **inchangé**. La corriger reviendrait à trancher
+l'option 1 ci-dessous à la place du responsable, et à rouvrir `CRM-032` — sa fonction, sa suite
+pgTAP, ses scénarios d'API et son harnais — pendant un passage consacré à `CRM-035`, ce que
+`CLAUDE.md` §13 interdit. C'est le raisonnement déjà retenu pour INC-024, INC-030 et INC-031.
+
+Les trois garde-fous que cette entrée avait posés ont échoué comme prévu, et ont été **révisés
+plutôt que retirés** — mécanisme de la décision 51 :
+
+| Garde-fou | Avant | Après |
+|---|---|---|
+| `supabase/tests/0007_workflows.test.sql` | `hasnt_table('form_fields')` | la table existe, et `require_fields` reste vide dans le seed |
+| `supabase/tests/0008_copie_workflow.test.sql` | `hasnt_table('form_fields')` | la table existe, la source porte des champs, **la copie n'en porte aucun** |
+| `scripts/verify-copie-workflow.sh` | « `form_fields` n'existe toujours pas » | l'écart est mesuré et chiffré à chaque exécution |
+
+L'écart n'est donc plus une prédiction : il est **compté**, et le jour où la copie des champs sera
+écrite, ce sont ces trois assertions qui exigeront leur propre révision.
+
 **Lié à :** INC-013, INC-029, INC-031 (mêmes contradictions d'ordonnancement), INC-033
-(`require_fields` sans intégrité référentielle).
+(`require_fields` sans intégrité référentielle), INC-043 (le même mode de défaillance, sixième
+occurrence), `docs/SPEC-form-composer.md` §2.10 et point ouvert n° 3.
 
 ---
 
@@ -1648,6 +1685,78 @@ autre unité rouvrirait celle-là.
 
 **Lié à :** INC-032 et INC-036 (mêmes coûts récurrents), `webapp/Dockerfile` (le secret prévu),
 `docker-compose.dev.yml` (le service `webapp`).
+
+**Prédiction vérifiée, le 2026-08-04, pendant `CRM-035`.** L'entrée disait « la prochaine exécution
+devra le refaire » ; elle a dû le refaire. `./runDev.sh --dev` s'est arrêté au même endroit, avec le
+même `SELF_SIGNED_CERT_IN_CHAIN` — et l'on note au passage que `--dev`, qui écarte la webapp par
+`--scale webapp=0`, **ne dispense pas de la construire** : Compose bâtit l'image d'un service même
+lorsqu'il n'en démarre aucune instance. L'option documentée comme « sans la webapp » n'offre donc
+aucun contournement. La pile n'a démarré qu'après un
+`docker build --secret id=npm_ca,src=… -f webapp/Dockerfile -t p2enjoy-crm-webapp .` lancé à la
+main ; une fois l'image présente, `./runDev.sh` complet a rendu **quinze services**, `webapp`
+compris et sain. Quatrième exécution consécutive à payer ce coût, et première à obtenir le
+conteneur `webapp` réellement démarré.
+
+---
+
+### INC-043 — `CRM-034` précède de trois à dix unités toutes les tables dont sa garde a besoin
+
+**Nature :** contradiction d'ordonnancement entre `docs/MASTER_PLAN.md` §2,
+`docs/SPEC-workflow-engine.md` §5 et `docs/BACKLOG.md`.
+**Relevé le :** 2026-08-04, avant de choisir l'unité de ce passage.
+
+`docs/MASTER_PLAN.md` §2 place `CRM-034` — la garde centrale `move_card` — à l'étape 3.b, et le
+justifie ainsi : « le moteur de workflow avant les cards, car une card naît dans une étape ». Le
+raisonnement vaut pour `CRM-030` à `CRM-033`, qui décrivent le graphe. Il **s'inverse** pour
+`CRM-034`, dont les six vérifications du §5 ne portent sur rien d'autre que des cards.
+
+MESURÉ sur la base du seed, la pile en marche :
+
+```
+cards=NULL   card_events=NULL   card_comments=NULL   card_field_values=NULL
+form_fields=NULL   form_field_rules=NULL   move_card=NULL
+```
+
+Chacune des six vérifications exigées, et l'unité qui livrera sa cible :
+
+| # | Vérification du §5 | Objet requis | Unité |
+|---|---|---|---|
+| 1 | La card existe et n'est ni archivée ni supprimée | `cards` | `CRM-040` |
+| 2 | L'appelant a le droit d'écriture sur le channel | `cards`, `app.can_write_channel` | `CRM-040`, `CRM-012` |
+| 3 | L'étape cible appartient au workflow de la card | `cards` | `CRM-040` |
+| 4 | Une transition est déclarée | `cards` (livrée : `workflow_transitions`) | `CRM-040` |
+| 5 | Le commentaire est fourni si la transition l'exige | `card_comments` | `CRM-043` |
+| 6 | Les champs requis de l'étape cible sont renseignés | `form_fields`, `form_field_rules`, `card_field_values` | `CRM-035`, `CRM-036` |
+
+Et l'effet de bord exigé en cas de succès — « écriture d'un `card_event` de type `moved` » — vise
+`card_events`, livrée par `CRM-044`.
+
+C'est le sixième cas du même mode de défaillance, après INC-010 (clés étrangères), INC-013
+(jointures d'autorisation), INC-029 (une colonne), INC-031 (une cible d'archivage) et INC-037 (des
+champs à copier). Il s'en distingue par son **ampleur** : les précédents laissaient une part
+livrable de l'unité, celui-ci n'en laisse **aucune**. `move_card` sans `cards` n'est pas une garde
+partielle, c'est une signature vide.
+
+**Comportement retenu :** `CRM-034` n'est pas commencée, et reste `[ ]`. Aucune table n'est créée
+par anticipation — cela préempterait `CRM-040`, `CRM-043` et `CRM-044` en même temps. Le passage a
+pris l'unité `[ ]` suivante que l'ordre du plan n'interdit pas, `CRM-035`, dont les deux tables ne
+dépendent que de `workflows` et de `workflow_steps`, livrées. **Aucune contrainte d'ordre de
+`docs/MASTER_PLAN.md` §2 n'est enfreinte** : les trois qui concernent ces unités sont « `CRM-034`
+avant `CRM-041` », « `CRM-036` avant `CRM-037` » et « `CRM-004` avant `CRM-052` », toutes intactes.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. **déplacer `CRM-034` après `CRM-040`** dans `docs/MASTER_PLAN.md` §2, en conservant la
+   contrainte « `CRM-034` avant `CRM-041` » qui reste juste — l'ordre deviendrait
+   `CRM-035` → `CRM-036` → `CRM-040` → `CRM-034` → `CRM-037` → `CRM-041` ;
+2. **scinder `CRM-034`** en une partie livrable maintenant — le catalogue des refus, leurs
+   `SQLSTATE` et le format du message listant les clés manquantes — et une partie exécutable après
+   `CRM-040`, au prix d'une unité dont la moitié ne s'exécute jamais ;
+3. **laisser l'ordre inchangé** et accepter que `CRM-034` reste bloquée jusqu'à `CRM-040`, ce qui
+   revient à l'option 1 sans l'écrire.
+
+**Lié à :** INC-010, INC-013, INC-029, INC-031, INC-037 (le même mode de défaillance, cinq fois
+avant celui-ci), INC-023 (une Definition of Done dont les sujets arrivent plus tard).
 
 ---
 

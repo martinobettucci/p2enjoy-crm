@@ -331,15 +331,17 @@ Spécification complète : `docs/SPEC-form-composer.md`.
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id` | `uuid` | PK |
-| `workflow_id` | `uuid` | FK, non nul |
-| `key` | `text` | unique par workflow |
-| `label` | `text` | non nul |
-| `type` | `text` | `text`, `textarea`, `number`, `money`, `date`, `datetime`, `select`, `multiselect`, `checkbox`, `url`, `email`, `phone`, `user`, `contact`, `file` |
-| `options` | `jsonb` | choix des types `select`/`multiselect`, bornes des numériques |
-| `help_text` | `text` | |
-| `position` | `numeric` | |
-| `archived_at` | `timestamptz` | |
+| `id` | `uuid` | PK ; **`UNIQUE (id, workflow_id)`** en plus, condition de la clé composite de `form_field_rules` |
+| `workflow_id` | `uuid` | non nul ; FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)`, `ON DELETE CASCADE` |
+| `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS ; sa véracité est garantie par la clé composite ci-dessus |
+| `key` | `text` | non nul, unique par workflow — **totale**, un champ archivé garde sa clé ; `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| `label` | `text` | non nul, non vide |
+| `type` | `text` | non nul, `CHECK` : `text`, `textarea`, `number`, `money`, `date`, `datetime`, `select`, `multiselect`, `checkbox`, `url`, `email`, `phone`, `user`, `contact`, `file` |
+| `options` | `jsonb` | non nul, défaut `{}`, **objet** JSON ; `select`/`multiselect` exigent `choices` non vide, `money` exige `currency` (`^[A-Z]{3}$`) |
+| `help_text` | `text` | nullable, non vide si fourni |
+| `position` | `numeric` | non nul **sans défaut de colonne** ; attribuée par trigger dans la portée du workflow si omise |
+| `archived_at` | `timestamptz` | nullable ; non nul = archivé. **Aucune suppression n'est exposée** |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
 ### `form_field_rules`
 Conditionnalité par étape : c'est la table qui rend un champ visible ou obligatoire selon le
@@ -347,11 +349,18 @@ statut courant de la card.
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `field_id` | `uuid` | PK composite, FK |
-| `step_id` | `uuid` | PK composite, FK `workflow_steps` |
-| `visibility` | `text` | `CHECK (visibility IN ('hidden','visible','required'))` |
+| `field_id` | `uuid` | PK composite ; FK **composite** `(field_id, workflow_id) → form_fields (id, workflow_id)`, `ON DELETE CASCADE` |
+| `step_id` | `uuid` | PK composite ; FK **composite** `(step_id, workflow_id) → workflow_steps (id, workflow_id)`, `ON DELETE CASCADE` |
+| `workflow_id` | `uuid` | non nul ; **charnière** des deux clés composites — c'est lui qui rend impossible une règle croisant deux workflows |
+| `workspace_id` | `uuid` | non nul ; FK composite `(workflow_id, workspace_id) → workflows (id, workspace_id)` |
+| `visibility` | `text` | non nul, `CHECK (visibility IN ('hidden','visible','required'))` |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` |
 
-Absence de ligne pour un couple : le champ suit sa valeur par défaut, `visible`.
+Absence de ligne pour un couple : le champ suit sa valeur par défaut, `visible`. Le formulaire
+d'une étape se lit donc en listant les **champs du workflow** puis en appliquant les règles
+trouvées, jamais en listant les règles de l'étape.
+
+Détail des contraintes, de leurs mesures et de leurs motifs : `docs/SPEC-form-composer.md` §2 et §3.
 
 ### `card_field_values`
 

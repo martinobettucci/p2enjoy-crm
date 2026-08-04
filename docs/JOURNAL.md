@@ -3460,3 +3460,135 @@ transformerait une omission du client en un choix qu'il n'a pas fait.
 ligne ne dépend d'aucun nœud du catalogue — seules ses étapes en dépendent —, si bien que la section
 se scinde : la ligne d'abord, ses étapes et ses transitions après le catalogue. Le `PATCH` de
 rattachement que `CRM-031` avait posé en fin de section disparaît, les channels naissant rattachés.
+
+## 2026-08-04 — `CRM-035` : l'unité suivante n'était pas celle du plan, et la mesure l'a dit
+
+### Décision 92 — `CRM-034` n'est pas commencée : sa garde n'a aucune cible, et rien n'en est livrable
+
+**Fait mesuré**, sur la base du seed, la pile en marche :
+
+```
+cards=NULL   card_events=NULL   card_comments=NULL   card_field_values=NULL
+form_fields=NULL   form_field_rules=NULL   move_card=NULL
+```
+
+`docs/MASTER_PLAN.md` §2 place `CRM-034` avant les cards, et le justifie ainsi : « le moteur de
+workflow avant les cards, car une card naît dans une étape ». Le raisonnement est juste pour
+`CRM-030` à `CRM-033`, qui décrivent le **graphe**. Il s'inverse pour `CRM-034`, dont les six
+vérifications du §5 ne portent sur rien d'autre que des **cards** : leur existence, le droit
+d'écriture sur leur channel, leur étape courante, leur commentaire, leurs valeurs de champs.
+
+**Décision.** `CRM-034` reste `[ ]`, non commencée. Aucune table n'est créée par anticipation : la
+commencer exigerait de préempter `CRM-040`, `CRM-043`, `CRM-044` **et** `CRM-036` dans le même
+geste. Le passage prend l'unité `[ ]` suivante que l'ordre du plan n'interdit pas — `CRM-035`, dont
+les deux tables ne dépendent que de `workflows` et de `workflow_steps`, toutes deux livrées.
+
+**Pourquoi ce n'est pas un contournement de l'ordre.** Les trois contraintes d'ordre que
+`docs/MASTER_PLAN.md` §2 énonce sur ces unités — « `CRM-034` avant `CRM-041` », « `CRM-036` avant
+`CRM-037` », « `CRM-004` avant `CRM-052` » — restent toutes vraies après ce passage. L'ordre
+**détaillé** du tableau est une justification, pas une contrainte ; les contraintes sont listées
+séparément, et aucune n'est enfreinte.
+
+**Conséquence.** INC-043 est ouverte, avec trois options d'arbitrage. Elle n'est pas résolue ici :
+déplacer `CRM-034` dans le plan serait une décision de planification, qui appartient au responsable.
+
+### Décision 93 — Un champ appartient à son workflow, et la copie vers un track n'en hérite pas — l'écart est compté, pas corrigé
+
+**Fait.** `docs/SCHEMA.md` §4 donne à `form_fields` une colonne `workflow_id` et aucune colonne
+`channel_id`. `docs/SPEC-form-composer.md` §2 en tire que deux channels partageant un workflow
+partagent son formulaire — et ajoutait, entre parenthèses, « la copie duplique aussi les champs ».
+
+`copy_workflow_to_track`, livrée par `CRM-032`, ne copie aucun champ : elle a été écrite quand la
+table n'existait pas, et INC-037 le disait déjà en prévoyant les deux branches possibles.
+
+**Mesuré après ce passage :** la copie posée par le seed porte **zéro** champ là où sa source en
+porte **sept**.
+
+**Décision.** Le comportement de `copy_workflow_to_track` reste **inchangé**. Trois motifs, dans cet
+ordre :
+
+1. INC-037 réserve explicitement l'arbitrage au responsable, avec trois options — rattacher la copie
+   des champs à `CRM-035`, laisser `CRM-032` partiellement due, ou créer une unité de reprise. En
+   choisir une reviendrait à trancher à sa place, ce que `CRM-031` a refusé pour INC-031 et
+   `CRM-020` pour INC-024 ;
+2. la corriger rouvrirait `CRM-032` — sa fonction, sa suite pgTAP, ses quinze scénarios d'API, son
+   harnais — dans un commit consacré à `CRM-035`, ce que `CLAUDE.md` §13 interdit ;
+3. l'écart n'est pas silencieux : il est **compté** par trois assertions révisées plutôt que
+   retirées.
+
+**Conséquence assumée.** Un channel qui suivrait la copie afficherait un formulaire vide. Aucun ne
+le fait dans le seed — `prospection` suit la copie, et la démonstration du formulaire porte sur le
+workflow global. C'est une limite du produit, nommée dans `docs/BACKLOG.md`, dans
+`docs/SPEC-form-composer.md` §2.10 et dans son point ouvert n° 3.
+
+### Décision 94 — `select` sans choix et `money` sans devise sont refusés par la base, et l'éditeur en paie le prix
+
+**Fait.** `docs/SPEC-form-composer.md` §2.3 dit « liste de choix définie dans `options` » pour
+`select` et `multiselect`, et « `money` avec devise » pour `money`. Rien n'obligeait la base à le
+tenir : `options` est un `jsonb` dont le défaut est `{}`.
+
+**Décision.** Deux contraintes `CHECK` posent ces deux exigences. Un `select` sans `choices` non vide
+et un `money` sans `currency` conforme à `^[A-Z]{3}$` sont refusés à l'écriture.
+
+**Prix payé, et assumé :** un champ `select` naît avec au moins un choix. On ne peut pas créer la
+question puis ses réponses en deux gestes. C'est peu — les deux écritures partent du même écran — et
+cela garantit qu'aucun formulaire rendu ne comporte de liste vide, c'est-à-dire d'impasse.
+
+**Ce que la base ne tient pas, et pourquoi c'est dit plutôt que tu.** La forme de chaque entrée de
+`choices` — `{key, label}` — et l'unicité des clés de choix ne sont **pas** contraintes : un `CHECK`
+ne peut porter aucune sous-requête, et déplier un tableau `jsonb` dans une contrainte exigerait une
+fonction dont l'immutabilité serait à démontrer. La vérification appartient donc au rendu
+(`CRM-037`) et à la validation des valeurs (`CRM-036`), seul endroit où une clé de choix inconnue
+produit une conséquence.
+
+### Décision 95 — La règle porte le workflow, et c'est lui qui rend le croisement impossible
+
+**Fait mesuré, sur sonde créée puis détruite.** Une table de règles portant `(field_id, step_id)`
+sans `workflow_id` ne peut exprimer aucune appartenance commune : rien n'empêche une règle de lier
+un champ du workflow A à une étape du workflow B, et seul un trigger la rattraperait.
+
+**Décision.** `form_field_rules` porte `workflow_id`, et deux clés étrangères **composites** —
+`(field_id, workflow_id)` et `(step_id, workflow_id)` — le prennent pour charnière.
+
+**Mesuré, dans les deux sens** : la règle croisée est refusée quel que soit le `workflow_id`
+déclaré. Avec celui du champ, c'est la clé des étapes qui parle (`23503`, « Key (step_id,
+workflow_id)=… is not present in table "workflow_steps" ») ; avec celui de l'étape, c'est celle des
+champs. Une des deux clés attrape toujours l'erreur — il n'y a pas de troisième valeur à essayer.
+
+**Mesuré également** : l'unicité `(id, workflow_id)` sur `form_fields` est la **condition** de cette
+clé. Sans elle, la création de la table échoue en `42830`, « there is no unique constraint matching
+given keys for referenced table ». C'est le même geste que `workflows_id_workspace_id_key` et
+`workflow_steps_id_workflow_id_key`, pour la troisième fois.
+
+### Décision 96 — Un champ archivé garde sa clé, et le produit n'expose aucune suppression de champ
+
+**Fait.** `docs/SPEC-form-composer.md` §5 dit que l'archivage d'un champ le retire des formulaires
+« sans supprimer les valeurs déjà saisies ».
+
+**Décision.** L'unicité de `key` est **totale par workflow**, et non partielle sur les champs
+actifs : un champ archivé garde sa clé réservée. Et aucun privilège `DELETE` n'est accordé sur
+`form_fields`, ni aucune politique `for delete` écrite — le refus est double, comme pour les
+workflows, les tracks, les channels et le catalogue.
+
+**Motif.** Les valeurs survivent à l'archivage. Réattribuer la clé d'un champ archivé à un champ neuf
+rendrait un export ambigu — deux questions différentes sous la même colonne — sans qu'aucune erreur
+ne le signale. Et supprimer physiquement un champ effacerait les valeurs par cascade.
+
+**Asymétrie assumée sur les règles.** `form_field_rules` n'a pas d'`archived_at` et sa suppression
+**est** ouverte aux administrateurs : une règle est la composition d'un formulaire, pas un objet à
+durée de vie propre. Un éditeur qui ne peut pas retirer une règle ne peut pas éditer. C'est
+exactement la décision 74, appliquée une seconde fois.
+
+### Décision 97 — `require_fields` peut désormais désigner des champs réels, et le seed n'en désigne aucun
+
+**Fait.** `workflow_transitions.require_fields` est un `uuid[]` qui ne porte aucune intégrité
+référentielle et n'en portera jamais — INC-033, propriété du type. Jusqu'ici il était vide pour une
+autre raison : `form_fields` n'existait pas.
+
+**Décision.** Il reste vide. Le motif change, et il est réécrit dans le seed plutôt que laissé
+périmé : aucune garde ne lit ce tableau — `move_card` est `CRM-034`, non commencée (décision 92).
+Une donnée de démonstration que rien n'exerce est une décoration, pas une preuve, et elle serait la
+première à pourrir puisque rien ne protège le tableau d'un identifiant supprimé.
+
+**Ce que cela laisse dû :** l'union « champs `required` de l'étape cible + `require_fields` de la
+transition » du §3.5 reste sans donnée de démonstration jusqu'à `CRM-034`.
