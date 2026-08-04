@@ -1733,11 +1733,19 @@ clés manquantes.
       après régénération. `npm run test:sql` **717 assertions**, `npm run test:unit` **164 tests**,
       `npm run e2e:api` **150 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé et
       **réellement exécuté**, au prix du contournement récurrent d'INC-036.
-- [x] **Aucune régression** : les seize harnais précédents rejoués — `verify-stack` 33,
-      `verify-scripts` 38, `verify-migrations` 23, `verify-vault` 26, `verify-authz` 26,
-      `verify-auth` 42, `verify-seed` 49, `verify-types` 30, `verify-webapp` 41, `verify-harness` 25,
-      `verify-tracks` 40, `verify-channels` 23, `verify-catalogue` 29, `verify-workflows` 41,
-      `verify-copie-workflow` 27, `verify-coherence-workflow` 26 —, aucune anomalie.
+- [x] **Aucune régression du fait de cette unité** : les seize harnais précédents rejoués **après
+      synchronisation** avec `origin/main` — `verify-stack` 33, `verify-migrations` 23,
+      `verify-vault` 26, `verify-authz` 26, `verify-auth` 42, `verify-seed` 49, `verify-types` 30,
+      `verify-webapp` 41, `verify-harness` 25, `verify-tracks` 40, `verify-channels` 23,
+      `verify-catalogue` 29, `verify-workflows` 41, `verify-copie-workflow` 27,
+      `verify-coherence-workflow` 26 —, aucune anomalie.
+- [ ] **`scripts/verify-scripts.sh` : 51 contrôles verts sur 52, et le 52ᵉ est laissé en échec.**
+      Il appartient à `CRM-002`, livré pendant ce passage par une autre exécution de la routine, et
+      il échoue pour une raison d'**hôte** : ni `ss` ni `netstat` ne sont installés, si bien que
+      `host_listening_ports` rend zéro ligne et que la garde de ports conclut à tort que tout est
+      libre. Le contrôle fait donc exactement ce qu'on lui demande. Consigné en **INC-044**, sans
+      correction — `scripts/lib/env.sh` est un livrable de `CRM-002`, `[x]`, et le corriger ici
+      rouvrirait cette unité (`CLAUDE.md` §13). L'échec est **nommé plutôt que masqué**.
 - [x] `docs/SPEC-form-composer.md` (§2 et §3 réécrits, §7 scindé par unité), `docs/SCHEMA.md` §4,
       `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.10, `docs/DAT.md`,
       `docs/PROD_MIGRATIONS.md` §3 (migration 9), `docs/manual.md` chapitre 23 et §3.2, `README.md`,

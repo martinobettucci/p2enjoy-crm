@@ -1769,6 +1769,56 @@ avant celui-ci), INC-023 (une Definition of Done dont les sujets arrivent plus t
 
 ---
 
+### INC-044 — Sans `ss` ni `netstat`, la garde de ports est silencieusement inerte
+
+**Nature :** garde livrée par `CRM-002` dont l'hypothèse d'outillage n'est pas vérifiée.
+**Relevé le :** 2026-08-04, pendant `CRM-035`, en rejouant les harnais après synchronisation.
+
+`scripts/lib/env.sh` a reçu, pendant ce passage et par une autre exécution de la routine, la garde
+`require_free_ports` et sa fonction de lecture `host_listening_ports`. Celle-ci essaie `ss`, puis
+`netstat`, et **ne dit rien si aucun des deux n'existe** :
+
+```sh
+host_listening_ports() {
+	if command -v ss >/dev/null 2>&1; then …
+	elif command -v netstat >/dev/null 2>&1; then …
+	fi
+}
+```
+
+MESURÉ sur l'hôte de la routine : ni `ss` ni `netstat` ne sont installés. La fonction rend donc
+**zéro ligne**, la garde conclut que tous les ports sont libres, et `./runDev.sh` démarre — ce qui
+s'est produit ici. Le contrôle 52 de `scripts/verify-scripts.sh`, qui compare un port dont Docker
+affirme qu'il est publié à la liste des ports en écoute, **échoue** : c'est lui qui a révélé le
+point, et il fonctionne exactement comme prévu.
+
+Le mode de défaillance est celui que `CLAUDE.md` §18 nomme « valeur par défaut trompeuse » : une
+liste vide ne signifie pas « aucun port pris », elle signifie « je ne sais pas ». Là où la garde
+devait remplacer un échec obscur de Compose par un refus explicite, elle rend le silence — sur un
+poste dépourvu des deux outils, le symptôme d'origine reviendrait à l'identique, et l'opérateur
+aurait de surcroît la garde comme preuve apparente que les ports vont bien.
+
+**Comportement retenu :** **inchangé**. `scripts/lib/env.sh` et `scripts/verify-scripts.sh` sont
+des livrables de `CRM-002`, `[x]` et vérifiée ; les corriger pendant un passage consacré à
+`CRM-035` rouvrirait cette unité et toucherait ses 52 contrôles dans un commit qui n'en traite pas
+(`CLAUDE.md` §13). Le contrôle en échec est **laissé en échec** et nommé dans le compte rendu :
+le masquer serait exactement ce que `CLAUDE.md` §18 interdit.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. faire **échouer bruyamment** `require_free_ports` lorsque aucun des deux outils n'est
+   disponible — le plus fidèle à son intention, au prix d'un prérequis de plus à documenter ;
+2. ajouter une troisième source de lecture qui ne dépend d'aucun paquet — `/proc/net/tcp` et
+   `/proc/net/tcp6` sont lisibles partout où le noyau est Linux, et donnent les ports en
+   hexadécimal ;
+3. accepter l'inertie et la **documenter** dans `README.md`, la garde n'étant qu'un confort.
+
+**Lié à :** `docs/JOURNAL.md` décision 99 (la garde et son intention), `CLAUDE.md` §18 (ne jamais
+masquer une erreur par une valeur par défaut trompeuse), INC-032, INC-036 et INC-042 (autres écarts
+entre l'hôte supposé et l'hôte réel).
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
