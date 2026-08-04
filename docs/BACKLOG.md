@@ -1518,10 +1518,32 @@ laissé par le pilote Playwright, artefact non déterministe déjà relevé lors
   épinglé, et une arborescence de compatibilité a dû être recréée. Même nature qu'INC-032, dont le
   contournement a également dû être refait pour démarrer la pile.
 
-### CRM-033 — Cohérence workflow ↔ channel `[ ]`
+### CRM-033 — Cohérence workflow ↔ channel `[~]`
 Trigger : workflow `global` du workspace, ou `track` du track du channel.
 **DoD** : pgTAP sur les trois cas (global accepté, track du même track accepté, track étranger
 refusé) ; refus constaté aussi lors d'un déplacement de channel.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §4.12 réécrit en huit
+      sous-chapitres : le chapitre tenait en dix lignes, datait de `CRM-000` et n'engageait qu'une
+      intention. Il ne disait ni sur quelles colonnes le trigger se déclenche, ni ce qu'un refus rend,
+      ni ce qui arrive lorsque le workflow désigné est introuvable, ni ce que la contrainte `NOT NULL`
+      change au contrat de création d'un channel. Rédigé **après mesure** sur la pile réelle — quatre
+      écritures appliquées sur la base du seed, trigger sonde posé sur `channels` puis détruit et son
+      absence constatée (`to_regprocedure` nul), codes HTTP relevés contre PostgREST avec le jeton réel
+      de l'administrateur. Commit documentaire dédié.
+- [x] **Deux défauts trouvés par la mesure, consignés sans être résolus implicitement** : INC-040 (la
+      spécification ne nommait que **deux** des **quatre** écritures qui cassent la cohérence — les
+      deux autres passent par `workflows`, et l'une invalide d'un seul `UPDATE` le rattachement des six
+      channels du seed) et INC-041 (le seed de `CRM-032` est **idempotent sans être convergent** : la
+      copie déplacée à la main, un rejeu en crée une **seconde** — reproduit en quatre gestes).
+- [x] Trois décisions consignées (`docs/JOURNAL.md`, décisions 89 à 91) : la règle est défendue des
+      **deux côtés** ; le refus d'incompatibilité porte `23514` et non `P0001`, et le trigger se tait
+      lorsque la clé étrangère parle mieux que lui ; `NOT NULL` est posée **sans défaut de colonne**.
+- [ ] Migration, deux triggers, contrainte `NOT NULL`, suite pgTAP, scénarios d'API, harnais, reprise
+      du seed : à livrer.
+
+*État réel.* **Spécification seule.** Aucune ligne de code n'est écrite à ce stade ; l'unité reste
+`[~]` et le restera tant que ses preuves ne seront pas produites.
 
 ### CRM-034 — `move_card`, garde centrale `[ ]`
 Les six vérifications de `docs/SPEC-workflow-engine.md` §5.

@@ -161,9 +161,17 @@ de la même façon : `CRM-021` livre **ce qui est démontrable aujourd'hui, et r
 | Aspect | Livré ici | Différé, et par qui |
 |---|---|---|
 | La colonne `workflow_id uuid` | oui | — |
-| La clé étrangère vers `workflows` | non | `CRM-031` |
-| La contrainte `NOT NULL` | non | `CRM-031`, après reprise des lignes existantes |
+| La clé étrangère vers `workflows` | non | `CRM-031` — **livrée**, et composite |
+| La contrainte `NOT NULL` | non | `CRM-031` s'y est refusée : elle change le contrat de création d'un channel. **`CRM-033`** |
 | Le trigger de cohérence workflow ↔ track | non | `CRM-033`, comme la DoD de `CRM-021` le prévoit déjà |
+
+**Mise à jour, `CRM-033`.** Les deux lignes différées sont soldées par cette unité, et le contrat de
+création d'un channel change avec elles : **désigner un workflow devient obligatoire**, et le
+workflow désigné doit être `global` ou rattaché au **track du channel**. Le §7 ci-dessous est
+complété des lignes correspondantes, et le §8 décrit l'ordre nouveau du seed — le workflow par défaut
+naît avant les channels, qui naissent donc rattachés. La règle, ses quatre portes mesurées et son
+contrat d'API sont écrits dans `docs/SPEC-workflow-engine.md` §4.12, qui les porte pour les deux
+tables concernées plutôt que de les répartir entre deux documents.
 
 **Pourquoi livrer la colonne plutôt que l'omettre.** Trois raisons, et une seule aurait suffi :
 
@@ -401,9 +409,14 @@ Motifs de ce choix, et non d'un autre :
 - `prospection` existe dans `conseil-ia` **et** pourrait exister dans `studio-web` sans conflit :
   l'unicité est par track. Le seed ne le fait pas — il n'a pas à démontrer une absence de
   contrainte —, mais la suite pgTAP le prouve ;
-- `workflow_id` est laissé **nul** partout : c'est l'état réel du produit jusqu'à `CRM-031` (§2.5),
-  et le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire (`CLAUDE.md` §8,
-  « ne pas fabriquer artificiellement des traces »).
+- `workflow_id` était laissé **nul** partout jusqu'à `CRM-031` : c'était l'état réel du produit
+  (§2.5), et le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire
+  (`CLAUDE.md` §8, « ne pas fabriquer artificiellement des traces »). **`CRM-031`** a rattaché les six
+  channels au workflow par défaut par un `PATCH` de fin de section, la table existant enfin.
+  **`CRM-033`** supprime ce `PATCH` : la contrainte `NOT NULL` impose que le workflow par défaut naisse
+  **avant** les channels, qui le désignent donc à leur création. `prospection` fait exception et suit
+  la copie de portée `track` posée sur son propre track par `CRM-032`, sans quoi le cas accepté le
+  plus intéressant de la règle du §4.12 serait documenté sans être démontrable.
 
 Ils sont créés par **l'API REST avec la clé de service**, comme le reste du seed
 (`docs/SPEC-seed.md` §3, décision 32), et l'écriture est **convergente** :
@@ -427,8 +440,10 @@ constate le retour au vert.
 
 ## 10. Limites connues
 
-1. **`workflow_id` n'est ni obligatoire, ni référencée, ni cohérente** (§2.5, INC-029) — `CRM-031`
-   et `CRM-033`.
+1. ~~**`workflow_id` n'est ni obligatoire, ni référencée, ni cohérente** (§2.5, INC-029) — `CRM-031`
+   et `CRM-033`.~~ **Levée** : la clé étrangère composite est posée par `CRM-031`, la contrainte
+   `NOT NULL` et la cohérence workflow ↔ track par `CRM-033`
+   (`docs/SPEC-workflow-engine.md` §4.12).
 2. **Aucune interface d'administration des channels** : ni création, ni renommage, ni
    réordonnancement, ni archivage depuis l'écran. Bloqué par INC-021.
 3. **Aucun channel visible dans l'interface**, pour la même raison : l'appelant est anonyme, et la

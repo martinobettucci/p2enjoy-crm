@@ -1529,6 +1529,80 @@ est appliqué par le harnais de `CRM-032`, et le fait est **figé par une assert
 
 ---
 
+### INC-040 — Quatre écritures cassent la cohérence workflow ↔ channel, là où la spécification n'en nommait que deux
+
+**Nature :** insuffisance de la spécification d'origine, constatée par la mesure.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-033`.
+
+Le §4.12 de `docs/SPEC-workflow-engine.md`, écrit à `CRM-000`, nommait deux gestes à surveiller :
+l'affectation d'un workflow à un channel, et le déplacement d'un channel vers un autre track. La
+mesure en trouve **quatre**, toutes acceptées sur la base du seed :
+
+| # | Écriture | Table visée |
+|---|---|---|
+| 1 | Rattacher un channel de `studio-web` au workflow `track` de `conseil-ia` | `channels` |
+| 2 | Déplacer vers `studio-web` un channel de `conseil-ia` suivant le workflow `track` de `conseil-ia` | `channels` |
+| 3 | Changer le `track_id` d'un workflow `track` **sous** les channels qui le suivent | `workflows` |
+| 4 | Faire passer le workflow **par défaut** de `global` à `track` sous ses six channels | `workflows` |
+
+Les portes 3 et 4 ne passent pas par la table que la règle prétendait surveiller. La quatrième
+invalide d'un seul `UPDATE` le rattachement des **six** channels du seed.
+
+**Comportement retenu :** la spécification est corrigée dans le même changement — §4.12 réécrit après
+mesure — et `CRM-033` livre **deux** triggers plutôt qu'un, `docs/JOURNAL.md` décision 89. L'entrée
+est ouverte parce que l'écart entre ce qu'une spécification énonce et ce que la base tolère mérite
+d'être tracé, non parce qu'il resterait quelque chose à trancher.
+
+**Ce qui reste à arbitrer :** rien pour `CRM-033`. En revanche, le mode de défaillance est
+**transverse** : chaque fois qu'une règle relie deux tables, la spécification d'origine n'a nommé que
+la table « évidente ». Le responsable peut vouloir qu'une relecture systématique des chapitres non
+encore mesurés — §5 à §9 de ce document, `docs/SPEC-form-composer.md` — cherche les portes
+symétriques avant que les unités correspondantes ne les découvrent une à une.
+
+**Lié à :** `docs/SPEC-workflow-engine.md` §4.12.1 (les quatre portes), `docs/JOURNAL.md`
+décision 89 ; INC-029 (la dette `NOT NULL` que la même unité solde).
+
+---
+
+### INC-041 — Le seed de `CRM-032` est idempotent sans être convergent : une copie déplacée en fait naître une seconde
+
+**Nature :** défaut réel du produit livré, trouvé par la mesure et reproductible.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-033`.
+
+La section 7 du seed cherche la copie du workflow par `derived_from_workflow_id` **et** par
+`track_id`. MESURÉ, en quatre gestes reproductibles :
+
+```
+1. seed appliqué sur une base neuve          → 1 copie, sur le track « Conseil & IA »
+2. track_id de la copie déplacé à la main    → 1 copie, sur « Formation »
+3. seed rejoué                               → la recherche ne trouve rien
+4. état final                                → 2 copies, sur deux tracks différents
+```
+
+Le contrat du §4.10 en déclare **une**. Le seed en laisse deux, sans erreur ni avertissement.
+
+C'est la troisième forme du défaut de la décision 57, après celle de `CRM-020` sur une contrainte
+`CHECK` et celle de `CRM-031` sur une contrainte nommée : un mécanisme **idempotent** — rejouable
+sans erreur — qui n'est pas **convergent** — il ne ramène pas l'état à ce que le contrat déclare.
+Cette fois, ce n'est pas une migration mais un seed, ce qui explique qu'aucun des garde-fous posés
+pour les deux précédentes ne l'ait vu.
+
+**Comportement retenu :** corrigé par `CRM-033`, dans le même changement que la réécriture de la
+section du seed qu'impose la contrainte `NOT NULL` (§4.12.5). La copie est cherchée par sa **seule**
+dérivation, et son `track_id` est **ramené** à la valeur déclarée plutôt que servir de critère de
+recherche. Le harnais de `CRM-033` reproduit la dégradation et constate la restauration, sans quoi le
+défaut pourrait revenir en silence.
+
+**Ce qui reste à arbitrer :** faut-il un contrôle transverse de convergence du seed — un harnais qui
+dégraderait chaque objet déclaré et vérifierait que le rejeu le ramène —, plutôt qu'une vérification
+ajoutée unité par unité après chaque défaut trouvé ? Les trois occurrences plaident pour, mais le
+coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
+
+**Lié à :** `docs/JOURNAL.md` décisions 57, 64, 78 (les formes précédentes du même défaut) et 91 ;
+`docs/SPEC-workflow-engine.md` §4.12.7 ; `docs/SPEC-seed.md` §2.9.
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante

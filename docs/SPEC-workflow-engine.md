@@ -816,14 +816,174 @@ changement — c'est le mécanisme de la décision 51, et sa cinquième occurren
 
 ### 4.12 Contrainte d'affectation — `CRM-033`
 
-Un trigger sur `channels` vérifie que `workflow_id` désigne un workflow `global` du même
-workspace **ou** un workflow `track` rattaché au track du channel. Toute autre valeur est
-refusée. La même vérification s'applique lors du déplacement d'un channel vers un autre track.
+Un channel suit un workflow `global` de son workspace, **ou** un workflow `track` rattaché à son
+propre track. Toute autre valeur est refusée. Avec elle vient la contrainte `NOT NULL` sur
+`channels.workflow_id` qu'INC-029 laisse due depuis `CRM-021`.
 
-Cette contrainte n'appartient pas à `CRM-032` : elle relève de `CRM-033`, avec la contrainte
-`NOT NULL` sur `channels.workflow_id` qu'INC-029 laisse due. `CRM-032` la rend **nécessaire** — un
-workflow de portée `track` existe désormais dans le seed, et rien n'empêche encore de le rattacher
-à un channel d'un autre track.
+Ce chapitre a été **réécrit après mesure**, et non de mémoire : les quatre écritures du §4.12.1 ont
+été appliquées sur la pile réelle, un trigger sonde a été posé sur `channels` puis détruit — son
+absence constatée, `to_regprocedure('app.sonde_crm033()')` rendant `NULL` —, et les codes HTTP ont
+été relevés contre PostgREST avec le jeton réel de l'administrateur seedé. Les affirmations chiffrées
+des §4.12.1 à §4.12.6 sont ces mesures.
+
+#### 4.12.1 Quatre portes ouvertes, et non deux — mesuré
+
+La rédaction d'origine de ce chapitre nommait deux gestes à surveiller : l'affectation d'un workflow
+à un channel, et le déplacement d'un channel vers un autre track. La mesure en trouve **quatre**.
+Les quatre ont été exécutées sur la base du seed, et les quatre ont été **acceptées** :
+
+| # | Écriture | Côté | État mesuré |
+|---|---|---|---|
+| 1 | Rattacher un channel de `studio-web` au workflow `track` de `conseil-ia` | `channels` | **acceptée** |
+| 2 | Déplacer vers `studio-web` un channel de `conseil-ia` qui suit le workflow `track` de `conseil-ia` | `channels` | **acceptée** |
+| 3 | Changer le `track_id` d'un workflow `track` **sous** les channels qui le suivent | `workflows` | **acceptée** |
+| 4 | Faire passer le workflow **par défaut** de `global` à `track` sous ses six channels | `workflows` | **acceptée** |
+
+Les portes 3 et 4 n'étaient nommées nulle part. Elles sont pourtant les plus dommageables : la
+quatrième invalide d'un seul `UPDATE` le rattachement des **six** channels du seed, et aucune des
+deux ne passe par la table que la règle prétendait surveiller.
+
+**Conséquence sur la conception : la règle est défendue des deux côtés.** Un invariant gardé d'un
+seul côté n'est pas un invariant, c'est une convention — et l'écriture qui le contourne ne sera pas
+signalée. `docs/JOURNAL.md`, décision 88.
+
+#### 4.12.2 La règle, énoncée une fois
+
+Pour tout channel dont `workflow_id` est renseigné, en désignant par *W* le workflow et par *C* le
+channel :
+
+```
+W.workspace_id = C.workspace_id                          (déjà garanti : clé étrangère composite)
+et (   W.scope = 'global'
+    ou (W.scope = 'track' et W.track_id = C.track_id) )
+```
+
+La première ligne est **déjà tenue par la base** depuis `CRM-031` :
+`channels_workflow_id_workspace_id_fkey` est composite. Elle n'est pas réécrite dans un trigger — la
+redire coûterait une lecture à chaque écriture pour une garantie déjà acquise, et le jour où la clé
+serait relâchée, le trigger masquerait la perte au lieu de la révéler.
+
+La seconde ligne est ce que `CRM-033` livre.
+
+#### 4.12.3 Le trigger sur `channels`
+
+`BEFORE INSERT OR UPDATE OF workflow_id, track_id, workspace_id`. Les trois colonnes, et pas la
+seule `workflow_id` : c'est la porte 2 qui l'impose — déplacer un channel ne touche pas
+`workflow_id`, et un trigger qui ne se réveille que pour elle laisserait passer le déplacement.
+
+Le trigger **se tait dans deux cas**, et chacun est un choix :
+
+1. `new.workflow_id is null` — le trigger n'a rien à dire ; l'obligation d'un workflow relève de la
+   contrainte `NOT NULL` du §4.12.5, qui la dit mieux et plus tôt ;
+2. **le workflow désigné est introuvable** dans le workspace du channel. MESURÉ : la clé étrangère
+   composite répond alors `23503` → `409`, en nommant la contrainte et la table. Le trigger se
+   range : il rendrait un message moins précis pour la même faute. Une clé étrangère est vérifiée
+   **après** les triggers `BEFORE`, de sorte que le trigger voit d'abord une ligne dont il ne peut
+   rien dire — il rend la main plutôt que d'inventer un refus.
+
+Dans tous les autres cas, l'incompatibilité lève une exception nommée `workflow_hors_track`, en
+`SQLSTATE 23514`.
+
+**`23514` et non `P0001`, et c'est mesuré.** Le §4.4 a établi que `P0001` rend `400` : le code
+conviendrait. `23514` — `check_violation` — rend `400` lui aussi, MESURÉ sur la sonde, et dit en
+outre **de quelle nature** est le refus : une contrainte d'intégrité, pas une règle applicative. Un
+client qui trie ses erreurs par famille le range alors avec `channels_name_check` et
+`channels_slug_check`, ce qu'il est. `docs/JOURNAL.md`, décision 89.
+
+#### 4.12.4 Le trigger sur `workflows`, qui ferme les portes 3 et 4
+
+`BEFORE UPDATE OF scope, track_id` sur `public.workflows`. Il refuse la modification dès qu'elle
+laisserait **au moins un** channel rattaché à un workflow qui ne lui convient plus.
+
+Le refus lève `workflow_portee_occupee`, en `SQLSTATE 23514` également : c'est la même règle, vue de
+l'autre côté, et lui donner un autre code laisserait croire à une autre règle.
+
+**Ce trigger ne refuse pas les modifications qui ne changent rien.** Une écriture qui réaffecte la
+même valeur passe : la condition porte sur l'état résultant, non sur le fait qu'une colonne a été
+mentionnée. Un `UPDATE` qui ne touche ni `scope` ni `track_id` ne le réveille pas du tout.
+
+**Ce qu'il n'interdit pas, et c'est voulu** : un workflow `track` **sans aucun channel** change de
+track librement. La règle protège des rattachements, pas des workflows.
+
+#### 4.12.5 `NOT NULL` : la dette d'INC-029, et ce qu'elle change
+
+`docs/SCHEMA.md` §2 décrit `channels.workflow_id` comme **non nulle** depuis l'origine. `CRM-021` ne
+pouvait pas la poser — `workflows` n'existait pas —, `CRM-031` non plus : elle change le **contrat de
+création d'un channel**, et cela relevait de l'unité qui porte ce contrat. C'est celle-ci.
+
+**Mesuré : aucune ligne n'y ferait obstacle aujourd'hui.**
+`select count(*) from public.channels where workflow_id is null` rend **`0`** — les six channels du
+seed sont rattachés au workflow par défaut depuis `CRM-031`. La contrainte est donc posable sans
+reprise de données.
+
+**Ce que le contrat devient.** Créer un channel exige désormais de désigner un workflow. Trois
+conséquences, toutes assumées et aucune masquée :
+
+1. le **seed** doit créer le workflow par défaut **avant** les channels. La ligne `workflows` ne
+   dépend d'aucun nœud du catalogue — seules ses **étapes** en dépendent —, si bien que la section
+   du workflow se scinde : la ligne d'abord, ses étapes et ses transitions après le catalogue. Le
+   `PATCH` de rattachement en fin de section 6, posé par `CRM-031`, disparaît : les channels naissent
+   rattachés (`docs/SPEC-channels.md` §8) ;
+2. les **scénarios d'API qui créaient un channel sans workflow** deviennent rouges et sont révisés
+   dans le même changement — mécanisme de la décision 51, sixième occurrence ;
+3. **aucun défaut de colonne n'est posé.** Rattacher automatiquement le channel neuf au workflow par
+   défaut du workspace serait commode et faux : un workspace peut n'avoir aucun défaut (§3.2), et le
+   défaut silencieux transformerait une omission du client en un choix qu'il n'a pas fait.
+
+#### 4.12.6 Contrat d'API attendu
+
+Écrit avant le code ; les scénarios de `e2e/api/coherence-workflow.spec.ts` le rejouent ligne à
+ligne. `A` désigne le workspace du seed.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `PATCH /channels` — workflow `global` du workspace | `admin` | `204` — accepté |
+| b | `PATCH /channels` — workflow `track` **du track du channel** | `admin` | `204` — accepté |
+| c | `PATCH /channels` — workflow `track` d'un **autre** track | `admin` | `400`, `23514`, `workflow_hors_track` |
+| d | `PATCH /channels` — déplacement du channel vers un autre track, workflow `track` conservé | `admin` | `400`, `23514`, `workflow_hors_track` |
+| e | `PATCH /channels` — même déplacement, workflow `global` | `admin` | `204` — un workflow global suit le channel partout |
+| f | `POST /channels` — création **sans** `workflow_id` | `admin` | `400`, `23502` — `NOT NULL` |
+| g | `POST /channels` — création avec un workflow `global` | `admin` | `201` |
+| h | `POST /channels` — création avec un workflow `track` d'un autre track | `admin` | `400`, `23514` |
+| i | `PATCH /channels` — workflow inexistant | `admin` | `409`, `23503` — la clé étrangère parle, pas le trigger |
+| j | `PATCH /workflows` — le `track_id` d'un workflow `track` **occupé** | `admin` | `400`, `23514`, `workflow_portee_occupee` |
+| k | `PATCH /workflows` — `global` → `track` sur un workflow **occupé** | `admin` | `400`, `23514`, `workflow_portee_occupee` |
+| l | `PATCH /workflows` — le `track_id` d'un workflow `track` **libre** | `admin` | `204` — la règle protège des rattachements, pas des workflows |
+| m | Toutes les écritures ci-dessus | `business_developer` | refusées **avant** la règle, par la politique RLS de `CRM-021` / `CRM-031` |
+
+La ligne m n'est pas une redite : elle établit que la nouvelle règle **s'ajoute** aux autorisations
+et ne les remplace pas. Un refus de rôle doit rester un refus de rôle, et non devenir un refus
+d'intégrité qui apprendrait au demandeur ce que contient la base.
+
+#### 4.12.7 Ce que le seed livre
+
+Le workspace du seed porte déjà les six channels et les deux workflows. `CRM-033` ne crée **aucune
+ligne nouvelle** ; il change l'**ordre** de leur création (§4.12.5) et rattache un channel au
+workflow de portée `track` :
+
+- `prospection`, channel du track **Conseil & IA**, suit désormais « Cycle commercial — Conseil IA »,
+  la copie de portée `track` posée sur ce même track par `CRM-032` ;
+- les cinq autres channels continuent de suivre le workflow global par défaut.
+
+Sans ce rattachement, le cas accepté le plus intéressant de la règle — un workflow `track` sur un
+channel de **son** track — serait documenté sans être démontrable, ce que `CLAUDE.md` §8 refuse.
+
+**Un défaut de convergence du seed est corrigé dans le même changement.** MESURÉ et reproductible :
+la section du seed livrée par `CRM-032` cherche la copie par `derived_from_workflow_id` **et**
+`track_id`. Le `track_id` de la copie déplacé à la main, la recherche ne la trouve plus et le seed
+en crée une **seconde** — deux copies là où le contrat en déclare une. Le seed était idempotent sans
+être convergent, troisième forme de la décision 57 après celles de `CRM-020` et de `CRM-031`. Il
+cherche désormais la copie par sa seule dérivation, et **ramène** son track à la valeur déclarée.
+Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-041**.
+
+#### 4.12.8 Preuves attendues de `CRM-033`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Les deux triggers existent et portent sur les bonnes colonnes ; les trois cas de la Definition of Done — global accepté, `track` du même track accepté, `track` étranger refusé ; le déplacement d'un channel refusé ; les portes 3 et 4 refusées ; un workflow `track` **libre** encore déplaçable ; `NOT NULL` posée ; la clé étrangère laissée parler pour un workflow introuvable |
+| API | Les treize lignes du §4.12.6, hors interface, avec les jetons réels des trois profils |
+| Seed | L'ordre nouveau, le rattachement de `prospection` au workflow `track`, et la convergence **éprouvée par une dégradation** (INC-041) |
+| Interface | **Aucune** — l'affectation d'un workflow à un channel exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
 
 ## 5. Garde centrale : `move_card`
 

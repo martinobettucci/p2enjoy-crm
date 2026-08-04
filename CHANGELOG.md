@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **`CRM-033` — spécification de la cohérence workflow ↔ channel, écrite après mesure et avant tout
+  code.** `docs/SPEC-workflow-engine.md` §4.12 réécrit en huit sous-chapitres.
+  - **Quatre portes mesurées, là où la spécification n'en nommait que deux** : les deux écritures
+    connues passent par `channels` ; les deux autres passent par `workflows` — changer le `track_id`
+    d'un workflow `track` sous ses channels, et faire passer le workflow par défaut de `global` à
+    `track`, cette dernière invalidant d'un seul `UPDATE` le rattachement des **six** channels du
+    seed. Les quatre ont été appliquées sur la base réelle et **acceptées**. INC-040.
+  - **Deux triggers plutôt qu'un** : un invariant gardé d'un seul côté n'est pas un invariant
+    (décision 89).
+  - **`23514` et non `P0001`** pour le refus d'incompatibilité — les deux rendent `400`, mesuré, mais
+    le premier dit de quelle nature est le refus. Le trigger **se tait** lorsque le workflow est
+    introuvable : la clé étrangère composite rend alors `409` / `23503` en nommant la contrainte
+    (décision 90).
+  - **La dette `NOT NULL` d'INC-029 est datée** : posable sans reprise — mesuré, zéro ligne nulle —,
+    elle change le contrat de création d'un channel et impose de réordonner le seed. Aucun défaut de
+    colonne ne vient l'adoucir (décision 91).
+  - **Un défaut réel du seed de `CRM-032` trouvé et reproduit** : la copie cherchée par sa dérivation
+    **et** son track, un déplacement de la copie fait naître une **seconde** copie au rejeu. Troisième
+    forme de la décision 57, la première sur un seed. INC-041, correction rattachée à `CRM-033`.
+
 ### Corrigé
 
 - **`CRM-008` — un faux vert réel de l'exécuteur pgTAP, trouvé, reproduit et corrigé.**

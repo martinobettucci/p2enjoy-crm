@@ -3400,3 +3400,63 @@ nommée, une fonction nommée, sa signature exacte —, de sorte qu'un objet de 
 nouveau. Les scénarios d'API comptent désormais « un workflow **global** » et « un seul par
 défaut », qui est ce que `CRM-031` garantit réellement. Un garde-fou qu'on relâche au lieu de le
 resserrer cesse d'en être un.
+
+### Décision 89 — Un invariant gardé d'un seul côté n'est pas un invariant : la règle est défendue sur `channels` **et** sur `workflows`
+
+**Fait mesuré.** Le §4.12 écrit à `CRM-000` nommait deux gestes à surveiller : affecter un workflow à
+un channel, et déplacer un channel vers un autre track. Quatre écritures ont été appliquées sur la
+base du seed, et les **quatre** ont été acceptées :
+
+1. rattacher un channel de `studio-web` au workflow `track` de `conseil-ia` ;
+2. déplacer vers `studio-web` un channel de `conseil-ia` qui suit le workflow `track` de `conseil-ia` ;
+3. changer le `track_id` d'un workflow `track` **sous** les channels qui le suivent ;
+4. faire passer le workflow **par défaut** de `global` à `track` sous ses six channels.
+
+Les deux dernières ne passent pas par `channels`. Elles n'étaient nommées nulle part, et la quatrième
+invalide d'un seul `UPDATE` le rattachement des six channels du seed.
+
+**Décision.** `CRM-033` livre **deux** triggers : l'un sur `channels`, l'autre sur `workflows`. La
+Definition of Done n'en demandait qu'un, et un seul aurait laissé la règle contournable par la table
+qu'elle ne surveillait pas. Ce n'est pas un élargissement de périmètre : c'est la condition pour que
+la règle énoncée — « toute autre valeur est refusée » — soit vraie.
+
+**Conséquence.** Le trigger de `workflows` ne refuse que ce qui **casse un rattachement existant** :
+un workflow `track` sans channel change de track librement. La règle protège des rattachements, pas
+des workflows — et le dire évite qu'on lui prête plus tard une intention qu'elle n'a pas.
+
+### Décision 90 — Le refus d'incompatibilité est une violation de contrainte, et il en porte le code
+
+**Fait mesuré, sur un trigger sonde posé sur `channels` puis détruit.** `raise exception … using
+errcode = '23514'` est rendu par PostgREST en **`400`**, corps JSON conservé, `code` et `message`
+transmis tels quels. Un workflow **introuvable** rend en revanche `409` / `23503`, la clé étrangère
+composite de `CRM-031` nommant elle-même la contrainte et la table.
+
+**Décision.** Le refus d'incompatibilité emploie `23514` — `check_violation` — et non le `P0001` que
+le §4.4 avait retenu pour la RPC de `CRM-032`. Les deux rendent `400` ; `23514` dit en outre de
+quelle **nature** est le refus. Un client qui trie ses erreurs par famille range alors
+`workflow_hors_track` avec `channels_name_check` et `channels_slug_check`, ce qu'il est : une règle
+d'intégrité, pas une règle applicative.
+
+**Et le trigger se tait lorsque le workflow est introuvable.** Une clé étrangère est vérifiée **après**
+les triggers `BEFORE` : le trigger voit alors une ligne dont il ne peut rien dire. Il rend la main
+plutôt que d'inventer un refus moins précis que celui que la base rendra de toute façon.
+
+### Décision 91 — `NOT NULL` est posée, et aucun défaut de colonne ne vient l'adoucir
+
+**Fait.** `docs/SCHEMA.md` §2 décrit `channels.workflow_id` comme non nulle depuis l'origine.
+`CRM-021` ne pouvait pas la poser — `workflows` n'existait pas —, `CRM-031` s'y est refusée parce
+qu'elle change le contrat de création d'un channel. INC-029 la porte depuis trois unités.
+
+**Mesuré :** `select count(*) from public.channels where workflow_id is null` rend `0`. Aucune reprise
+de données n'est nécessaire.
+
+**Décision.** La contrainte est posée par `CRM-033`. Créer un channel exige désormais de désigner un
+workflow, et **aucun défaut de colonne n'est ajouté** : rattacher automatiquement le channel neuf au
+workflow par défaut du workspace serait commode et faux. Un workspace peut n'avoir aucun workflow par
+défaut — le §3.2 dit « au plus un », jamais « exactement un » —, et un défaut silencieux
+transformerait une omission du client en un choix qu'il n'a pas fait.
+
+**Conséquence assumée sur le seed.** Le workflow par défaut doit naître **avant** les channels. Sa
+ligne ne dépend d'aucun nœud du catalogue — seules ses étapes en dépendent —, si bien que la section
+se scinde : la ligne d'abord, ses étapes et ses transitions après le catalogue. Le `PATCH` de
+rattachement que `CRM-031` avait posé en fin de section disparaît, les channels naissant rattachés.
