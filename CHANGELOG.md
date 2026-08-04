@@ -15,6 +15,79 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-034` — `move_card` : le graphe du workflow devient opposable.**
+  `supabase/migrations/0012_move_card.sql`, `docs/SPEC-workflow-engine.md` §5.
+  - **La fonction `public.move_card(card_id, to_step_id, comment)`**, seul chemin par lequel une
+    card change d'étape. Elle rend la ligne mise à jour — donc un **objet** JSON pour PostgREST, non
+    un tableau —, ce qui évite au client une relecture qu'une politique pourrait refuser entre-temps.
+  - **Cinq vérifications, dans un ordre qui compte** : la card existe, est visible et **active** ;
+    l'appelant a le droit d'**écriture** sur son channel ; l'étape cible appartient au workflow de la
+    card ; une transition est **déclarée** de l'étape courante vers elle ; le commentaire est fourni
+    si la transition l'exige. Une card archivée ou en corbeille est traitée comme absente.
+  - **La règle de discrétion** : une card d'un channel fermé par un droit fin rend `card_not_found`,
+    jamais `forbidden` — répondre « interdit » confirmerait son existence à qui n'a pas le droit de
+    la connaître. Un lecteur de son propre workspace obtient bien `forbidden`.
+  - **`entered_step_at` remise à l'instant du déplacement** et **`position` recalculée en fin de la
+    colonne d'arrivée** : le trigger d'attribution de `CRM-040` est un `BEFORE INSERT` et ne voyait
+    pas les déplacements, ce qui aurait laissé deux cards au même rang.
+  - **LA PROTECTION DE COLONNE, sans laquelle la garde ne garderait rien.** `authenticated` perd
+    l'`UPDATE` de **table** sur `cards` ; treize colonnes lui sont rendues nommément. Mesuré avec le
+    jeton réel de l'administratrice : `PATCH` de `current_step_id` → **`403`/`42501`**, `PATCH` de
+    `description` → `204`. C'est la **preuve de refus n° 5** de `docs/SPEC-permissions-rls.md` §7,
+    et le chevauchement de Definition of Done avec `CRM-013` est tranché de ce côté (INC-049).
+  - **Preuve de refus n° 1 acquise**, et la discrétion prouvée **par le même jeton** dans ses deux
+    sens — seule façon d'exclure que l'écart vienne du profil plutôt que de la règle.
+  - `supabase/tests/0013_move_card.test.sql` : **73 assertions**, les cinq vérifications chacune
+    dans les **deux** sens, les colonnes ouvertes énumérées une par une, et le contournement refusé
+    sous le rôle réel.
+  - `e2e/api/move-card.spec.ts` : **26 scénarios** hors interface, les treize lignes du contrat du
+    §5.8, chaque refus **relisant la ligne** pour la constater inchangée.
+  - `scripts/verify-move-card.sh` : **56 contrôles**, éprouvé par **trois dégradations réelles** —
+    privilège de colonne rendu, `anon` retrouvant `EXECUTE`, vérification n° 4 retirée. Il prouve en
+    outre la **convergence** : un `grant update on public.cards to authenticated` posé à la main est
+    **refermé** par un rejeu de la migration.
+
+### Modifié
+
+- **Quatre assertions figées par des unités précédentes ont été retournées**, aucune retirée
+  (mécanisme de la décision 51, onzième occurrence) : trois dans `supabase/tests/0012_cards.test.sql`
+  — dont un `lives_ok` devenu `throws_ok` et un droit de **table** devenu un droit de **colonne** —,
+  et une dans `webapp/src/lib/database.types.test-d.ts`, qui annonçait littéralement « une fonction
+  de plus les rendrait rouges ».
+- `webapp/src/lib/database.types.ts` régénéré : `move_card` est la deuxième fonction appelable de
+  `public`, et son type de retour confirme qu'elle rend la ligne.
+- `README.md` : `scripts/verify-cards.sh` et `scripts/verify-droits-fins.sh` manquaient à la liste
+  des harnais, omission de leurs unités respectives ; ajoutés avec `scripts/verify-move-card.sh`.
+
+### Limites nommées
+
+- **La sixième vérification n'est pas écrite** — INC-047. « Les champs requis de l'étape cible sont
+  renseignés » lit `card_field_values`, due par `CRM-036`. Refuser toute transition dont l'ensemble
+  exigé n'est pas vide interdirait — mesuré sur le seed — les entrées en négociation, en signature
+  et les **quatre** transitions « Marquer perdu », c'est-à-dire le parcours que la garde est censée
+  garder ; prétendre vérifier sans vérifier serait un faux vert. **Le message listant les clés
+  manquantes n'existe donc pas non plus.** `CRM-034` reste `[~]`.
+- **Le commentaire fourni n'est conservé nulle part** — INC-048, `CRM-043`. Il est exigé, contrôlé,
+  et perdu.
+- **Aucun `card_event`** n'est écrit (`CRM-044`), et aucune cadence de relance n'est arrêtée : aucune
+  table n'en porte, aucune unité n'en prévoit.
+- **Aucun écran, aucune capture** : le board est `CRM-041`, et la webapp reste un appelant anonyme
+  faute d'écran de connexion (INC-021) — onzième unité consécutive.
+- **Trois contradictions relevées et NON résolues**, consignées pour arbitrage : INC-050, le §5.5 se
+  contredit sur `email_local_part` — comportement **laissé inchangé**, la colonne reste ouverte
+  jusqu'à `CRM-013` ; INC-051, la ligne i du §5.8 nomme un profil que le seed ne peut pas mettre en
+  défaut ; INC-052, « un commentaire vide n'est pas un commentaire » ne refuse pas une tabulation,
+  `btrim` à un argument ne retirant que des espaces.
+
+### Contrat de déploiement
+
+- **Migration 12 — changement de contrat pour tout appelant existant.** `authenticated` perd
+  l'`UPDATE` de table sur `cards` : toute intégration qui écrivait `current_step_id` par un `PATCH`
+  direct recevra `403` et **doit passer par `move_card`**. `service_role` n'est pas touché.
+  `docs/PROD_MIGRATIONS.md` §3 en porte le détail, le contrôle préalable et le retour arrière.
+
+### Ajouté
+
 - **`CRM-040` — les cards : l'objet métier principal existe enfin.**
   `supabase/migrations/0011_cards.sql`, `docs/SPEC-cards.md`.
   - **La table `public.cards`** : titre, description, responsable, montant et devise, probabilité de

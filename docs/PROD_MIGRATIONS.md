@@ -158,6 +158,27 @@ confirmée avec le responsable du workspace concerné : un droit fin posé « po
 époque où il ne produisait aucun effet deviendrait actif sans que personne l'ait décidé.
 
 | 11 | `supabase/migrations/0011_cards.sql` | Table `public.cards` — l'objet métier principal —, ses **trois clés étrangères composites** (cloisonnement, workflow du channel, étape du workflow), le trigger de génération de `email_local_part` (`c-<8 base32 Crockford>`, non devinable), le trigger d'attribution de `position` dans la portée `(channel, étape)`, la colonne générée `search_tsv` et **cinq index** dont l'unicité globale de l'adresse, **trois politiques RLS** appliquant les droits fins dès la première ligne, `app.can_read_card` (dernier point d'INC-013), et la **garde d'archivage d'un nœud occupé** du catalogue qu'INC-031 attendait depuis `CRM-030`. Ajoute au passage à `public.channels` deux unicités **redondantes** — `channels_id_workspace_id_key` et `channels_id_workflow_id_key` — sans lesquelles les clés composites sont refusées à la création. | Migrations 1 à 10 : `public.workspaces`, `public.profiles`, `public.channels`, `public.workflows`, `public.workflow_steps`, `public.workflow_nodes_catalog` et les fonctions `app.can_read_channel` / `app.can_write_channel` doivent exister. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER** : la clé `cards_channel_id_workflow_id_fkey` rend **refusé** tout changement de `channels.workflow_id` sur un channel qui porte au moins une card (`23503`). Règle non spécifiée, consignée en INC-046 — arbitrage attendu. Aucune ligne n'existe sur les bases du projet hors du seed. | `drop table public.cards cascade;` puis `drop function app.can_read_card(uuid), app.cards_generer_email_local_part(), app.cards_attribuer_position(), app.catalogue_refuser_archivage_noeud_occupe();` et `alter table public.channels drop constraint channels_id_workflow_id_key, drop constraint channels_id_workspace_id_key;` — **destructif dès la première mise en service** : il détruit toutes les affaires du workspace. Il exige une sauvegarde préalable. Retirer le trigger d'archivage rouvre en outre l'archivage d'un nœud occupé, ce qui ferait disparaître une colonne de board sous ses cards. |
+| 12 | `supabase/migrations/0012_move_card.sql` | Fonction `public.move_card(card_id, to_step_id, comment)` — **garde centrale de transition**, seul chemin par lequel une card change d'étape. Rend `public.cards`, remet `entered_step_at` à `now()`, recalcule `position` en fin de colonne d'arrivée. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `public` et `anon`**, accordé à `authenticated` et `service_role`. **ET LA PROTECTION DE COLONNE QUI VA AVEC** : `revoke update on public.cards from authenticated`, suivi d'un `grant update (…)` énumérant treize colonnes. | Migration 11 : `public.cards`, `public.workflow_steps`, `public.workflow_transitions` et les fonctions `app.can_read_channel` / `app.can_write_channel` doivent exister. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER, et c'est un changement de contrat pour tout client existant** : `authenticated` perd l'`UPDATE` de **table** sur `cards`. Toute intégration qui écrivait `current_step_id`, `entered_step_at`, `workflow_id`, `channel_id`, `health_score` ou `workspace_id` par un `PATCH` direct recevra désormais `403`/`42501` et **doit passer par `move_card`**. Les treize colonnes énumérées restent ouvertes. `service_role` n'est pas touché : les scripts d'exploitation qui l'emploient sont inchangés. | `revoke update on public.cards from authenticated; grant update on public.cards to authenticated; drop function public.move_card(uuid, uuid, text);` — **rouvre la porte que cette migration ferme** : une card pourra de nouveau franchir une arête non déclarée par un simple `PATCH`. À n'exécuter que pour débloquer une intégration en production, et à refermer aussitôt. |
+
+**Ce que la migration 12 ajoute au contrat d'exploitation.** Un seul point, mais il casse
+potentiellement des appelants existants :
+
+- **`cards` n'est plus modifiable colonne par colonne comme avant.** Contrôle à exécuter **avant**
+  application, sur la base cible : recenser les intégrations, jetons d'API et scripts qui font un
+  `PATCH /rest/v1/cards` avec un jeton `authenticated`, et vérifier quelles colonnes ils écrivent.
+  Celles qui touchent `current_step_id` doivent être portées sur `POST /rest/v1/rpc/move_card`
+  **avant** l'application, faute de quoi elles tomberont en `403`. Le message de refus divulgue la
+  commande `GRANT` à exécuter — comportement de PostgREST, INC-026 : ne pas la suivre, elle
+  rouvrirait la garde.
+
+**Ce que la migration 12 ne fait pas, et qui reste dû.** La **sixième** vérification de la garde —
+« les champs requis de l'étape cible sont renseignés » — n'est **pas écrite** : elle lit
+`card_field_values`, livrée par `CRM-036` (INC-047). Un déplacement vers une étape portant des
+champs requis réussit donc aujourd'hui. Le commentaire exigé par une transition n'est **conservé
+nulle part** tant que `card_comments` n'existe pas (INC-048, `CRM-043`), et aucun `card_event` n'est
+écrit (`CRM-044`). `email_local_part` reste modifiable directement : elle relève de `CRM-013`, et le
+§5.5 de la spécification se contredisant sur ce point, le comportement a été **laissé inchangé**
+(INC-050).
 
 **Ce que la migration 11 ajoute au contrat d'exploitation.** Deux points, à lire avant de
 l'appliquer sur une base déjà en service :

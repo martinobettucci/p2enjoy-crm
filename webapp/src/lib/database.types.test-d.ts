@@ -495,8 +495,13 @@ type _tracksInsertRequis = Expect<
 // ce qui est livré**, et non supprimées : une vue ou une fonction de plus les rendrait rouges.
 
 type _laSeuleVue = Expect<Equal<keyof Database['public']['Views'], 'workflow_derivations'>>
-type _laSeuleFonction = Expect<
-  Equal<keyof Database['public']['Functions'], 'copy_workflow_to_track'>
+
+// RÉVISÉ UNE SECONDE FOIS PAR `CRM-034` (mécanisme de la décision 51, et l'assertion avait bien
+// annoncé le moment : « une fonction de plus les rendrait rouges »). `move_card` est la deuxième
+// fonction appelable de `public` (docs/SPEC-workflow-engine.md §5.2). L'assertion est **resserrée
+// sur les deux qui sont livrées**, et non relâchée : une troisième la rendra rouge à son tour.
+type _lesDeuxFonctions = Expect<
+  Equal<keyof Database['public']['Functions'], 'copy_workflow_to_track' | 'move_card'>
 >
 
 // La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,
@@ -509,6 +514,29 @@ type _signatureCopie = Expect<
 >
 type _retourCopie = Expect<
   Equal<Database['public']['Functions']['copy_workflow_to_track']['Returns'], string>
+>
+
+// La signature de `move_card` exposée au client TypeScript est celle du contrat du §5.2 :
+// `comment` facultatif, les deux identifiants exigés.
+type _signatureDeplacement = Expect<
+  Equal<
+    Database['public']['Functions']['move_card']['Args'],
+    { card_id: string; comment?: string; to_step_id: string }
+  >
+>
+
+// LE RETOUR EST LA LIGNE, ET LE TYPE GÉNÉRÉ LE CONFIRME : `move_card` rend un objet portant les
+// colonnes de `cards`, non un `void` ni un tableau. C'est ce qui permet au client d'obtenir
+// l'étape, `entered_step_at` et `position` recalculés SANS relecture — relecture qu'une politique
+// pourrait, entre-temps, refuser (docs/SPEC-workflow-engine.md §5.2).
+type _retourDeplacementEstUnObjet = Expect<
+  Equal<Database['public']['Functions']['move_card']['Returns'] extends unknown[] ? true : false, false>
+>
+type _retourDeplacementPorteLEtape = Expect<
+  Equal<Database['public']['Functions']['move_card']['Returns']['current_step_id'], string>
+>
+type _retourDeplacementPorteLInstant = Expect<
+  Equal<Database['public']['Functions']['move_card']['Returns']['entered_step_at'], string>
 >
 
 // Toutes les colonnes d'une vue sont nullables du point de vue du générateur : PostgreSQL ne porte
@@ -577,9 +605,13 @@ export type AssertionsDuContratDeTypes = [
   _etapesInsertRequis,
   _relationsWorkspaceMembers,
   _laSeuleVue,
-  _laSeuleFonction,
+  _lesDeuxFonctions,
   _signatureCopie,
   _retourCopie,
+  _signatureDeplacement,
+  _retourDeplacementEstUnObjet,
+  _retourDeplacementPorteLEtape,
+  _retourDeplacementPorteLInstant,
   _vueToutNullable,
   _aucunEnum,
   _aucunTypeCompose,

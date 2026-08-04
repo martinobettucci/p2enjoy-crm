@@ -1767,19 +1767,128 @@ visuelle** pour la même raison ; les captures réécrites par le rejeu des suit
   celui attendu par l'image ; la pile a été démarrée sans lui, ce qui est sans effet sur les preuves,
   Playwright démarrant son propre serveur. **INC-042.**
 
-### CRM-034 — `move_card`, garde centrale `[ ]`
+### CRM-034 — `move_card`, garde centrale `[~]`
 Les six vérifications de `docs/SPEC-workflow-engine.md` §5.
 **DoD** : pgTAP pour chacune des six ; preuves de refus n° 1 et 5 ; message d'erreur listant les
 clés manquantes.
 
-- [ ] **NON COMMENCÉE, ET BLOQUÉE PAR L'ORDRE DU PLAN LUI-MÊME — INC-043, décision 92.** Les six
-      vérifications portent toutes sur des **cards**, qui arrivent à `CRM-040`. MESURÉ le 2026-08-04
-      sur la base du seed : `cards`, `card_events`, `card_comments`, `card_field_values` et
-      `move_card` valent tous `NULL`. Aucune part de l'unité n'est livrable — `move_card` sans
-      `cards` n'est pas une garde partielle, c'est une signature vide. Aucune table n'est créée par
-      anticipation : cela préempterait `CRM-040`, `CRM-043` et `CRM-044` en même temps.
-      **Trois options d'arbitrage** sont écrites dans INC-043 ; la plus simple déplace l'unité après
-      `CRM-040`, en conservant la contrainte « `CRM-034` avant `CRM-041` », qui reste juste.
+- [x] **INC-043 EST CLOSE, ET LE BLOCAGE A ÉTÉ LEVÉ PAR `CRM-040`.** L'unité était `[ ]` parce que
+      ses six vérifications portent toutes sur des **cards**, dont la table n'existait pas. Elle
+      existe depuis `CRM-040`, qui l'a nommément constaté : « `CRM-034` est désormais débloquée : sa
+      cible existe ». **Aucune contrainte d'ordre de `docs/MASTER_PLAN.md` §2 n'est enfreinte** —
+      celle qui compte, « `CRM-034` avant `CRM-041` », est respectée : le board n'existe pas encore.
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §5 réécrit en onze
+      sous-chapitres, avec un contrat d'API de **treize lignes** rédigé avant le code pour être
+      mesuré et non supposé. Commit documentaire dédié, poussé avant la première ligne de SQL.
+- [x] `supabase/migrations/0012_move_card.sql` : la fonction, **cinq** de ses six vérifications, la
+      remise à zéro d'`entered_step_at`, le recalcul de `position`, les privilèges de la fonction et
+      **la protection de colonne** sans laquelle la garde ne garderait rien.
+- [x] **La porte est fermée, et c'est la moitié de l'unité** (INC-049) : `authenticated` n'a plus
+      l'`UPDATE` de table sur `cards` ; seules douze colonnes lui sont rendues nommément. MESURÉ
+      avec le jeton réel de l'administratrice : `PATCH` de `current_step_id` → **`403`/`42501`**,
+      `PATCH` de `description` → `204`. C'est la **preuve de refus n° 5** de
+      `docs/SPEC-permissions-rls.md` §7, et sans elle les cinq vérifications ne s'appliqueraient
+      qu'aux clients qui veulent bien passer par la fonction.
+- [x] **Preuve de refus n° 1 acquise, et la règle de discrétion prouvée par le MÊME jeton** : le
+      `viewer` obtient `forbidden` sur une card qu'il voit, et `card_not_found` sur une card d'un
+      channel que le seed lui ferme. Employer deux profils différents aurait laissé planer le doute
+      que l'écart vienne du profil plutôt que de la règle.
+- [x] **L'ORDRE des vérifications n° 3 et n° 4 est prouvé**, et il ne se prouve pas autrement : une
+      étape **du bon workflow** mais non reliée rend `transition_not_allowed`, jamais
+      `step_not_in_workflow`. Si l'ordre était inversé, le client serait envoyé chercher un workflow
+      là où il manque une arête.
+- [x] **Test unitaire dédié** : `supabase/tests/0013_move_card.test.sql`, **73 assertions, aucune
+      anomalie** — forme et privilèges de la fonction, `search_path` vide, les cinq vérifications
+      **chacune dans les deux sens**, la discrétion par le même profil, les effets du succès sur une
+      colonne d'arrivée **déjà peuplée**, les colonnes ouvertes une par une, le contournement refusé
+      sous le rôle réel, et les écarts figés.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/move-card.spec.ts`, **26 scénarios**,
+      avec les jetons réels des trois profils seedés. Les treize lignes du contrat du §5.8 y sont
+      rejouées, et **chaque refus relit la ligne** pour la constater inchangée — une réponse
+      d'erreur ne prouve pas qu'aucune écriture n'a eu lieu.
+- [x] **Seed inchangé, et exercé** (§5.9) : le graphe de `CRM-031` fournit déjà les transitions
+      déclarées, les paires non reliées et les quatre transitions à commentaire. Convergence
+      **vérifiée** : le seed rejoué après cette unité reste vert, `service_role` conservant son
+      `UPDATE` de table.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération. `npm run test:sql` **951 assertions**, `npm run test:unit` **164 tests**,
+      `npm run e2e:api` **220 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé,
+      cette unité ne touchant aucun écran, et **réellement exécuté** au prix du contournement
+      récurrent d'INC-036.
+- [x] **Aucune régression** : les harnais précédents rejoués — `verify-migrations` 23,
+      `verify-authz` 26, `verify-seed` 49, `verify-tracks` 40, `verify-channels` 23,
+      `verify-catalogue` 32, `verify-workflows` 42, `verify-copie-workflow` 27,
+      `verify-coherence-workflow` 26, `verify-champs-formulaire` 30, `verify-droits-fins` 35,
+      `verify-cards` 37 —, aucune anomalie.
+- [x] Harnais de preuves rejouable `scripts/verify-move-card.sh` : **56 contrôles, aucune
+      anomalie**, et **non complaisant, éprouvé par trois dégradations réelles** — privilège de
+      colonne rendu, `anon` retrouvant `EXECUTE`, et **la vérification n° 4 retirée**. Chacune fait
+      passer une opération qui doit être refusée, et la restauration est **constatée**. Il prouve en
+      outre la **convergence** : un `grant update on public.cards to authenticated` posé à la main —
+      la porte même que l'unité ferme — est **refermé** par un rejeu de la migration.
+- [x] **Quatre assertions figées par des unités précédentes ont échoué comme prévu, et ont été
+      retournées** (mécanisme de la décision 51, onzième occurrence) : trois dans
+      `0012_cards.test.sql` et une dans `database.types.test-d.ts`, dont celle qui annonçait
+      littéralement « une fonction de plus les rendrait rouges ». **Aucune n'a été retirée** ; deux
+      sont désormais plus fortes — un `lives_ok` devenu `throws_ok`, et un droit de table devenu un
+      droit de colonne qui nomme ce qui est modifiable.
+- [x] `docs/SPEC-workflow-engine.md` §5, `docs/SCHEMA.md` §9, `docs/SPEC-permissions-rls.md` §4.3 et
+      §7, `docs/DAT.md` §5, `docs/PROD_MIGRATIONS.md` §3 (migration 12), `docs/manual.md` chapitre 4.3 et
+      sommaire, `README.md`, `CHANGELOG.md` mis à jour dans le même changement. `docs/MASTER_PLAN.md`
+      §3 est **inchangé** : son tableau rattache déjà les transitions à `docs/SPEC-workflow-engine.md`,
+      et son exemple de commentaire `@spec` cite nommément cette unité.
+- [ ] **LA VÉRIFICATION N° 6 N'EST PAS ÉCRITE — INC-047.** La Definition of Done exige « pgTAP pour
+      chacune des **six** » ; cinq sont livrées. La n° 6 demande que les champs requis de l'étape
+      cible soient **renseignés**, et l'ensemble renseigné n'a aucune source : `card_field_values`
+      est le livrable de `CRM-036`. MESURÉ, `to_regclass` rend `NULL`. Les deux écritures possibles
+      sont écartées au §5.7 — refuser toute transition dont l'ensemble exigé n'est pas vide
+      interdirait les entrées en négociation, en signature et les **quatre** transitions « Marquer
+      perdu », c'est-à-dire le parcours que la garde est censée garder ; prétendre vérifier sans
+      vérifier est le faux vert que `CLAUDE.md` §17 proscrit. L'écart est **figé par deux
+      assertions**, en pgTAP et en API, qui deviendront rouges à `CRM-036`.
+- [ ] **Le message d'erreur listant les clés manquantes n'existe pas**, et c'est la conséquence
+      directe du point précédent : il décrit la vérification qui n'est pas écrite, et naîtra avec
+      elle. La Definition of Done le nomme ; il est dû.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le board est `CRM-041`, et la
+      webapp reste un appelant **anonyme** faute d'écran de connexion — **INC-021, en attente
+      d'arbitrage**. Il n'existe **aucune** vérification visuelle sensée à produire : la garde n'a
+      pas de surface. Les règles sont livrées et prouvées **en base et par l'API**, ce que
+      `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
+      défaut de l'unité** — onzième unité consécutive à buter sur INC-021.
+- [ ] **Le commentaire fourni n'est conservé nulle part — INC-048.** La vérification n° 5 l'exige,
+      la fonction le contrôle, et rien ne l'écrit : `card_comments` est livrée par `CRM-043`. Un
+      utilisateur qui motive une affaire perdue verra sa transition acceptée et son motif
+      disparaître. Conséquence de l'ordre du plan, nommée plutôt que tue.
+- [ ] **Aucun `card_event` de type `moved`** : `card_events` est due par `CRM-044`. La trace du
+      déplacement n'existe pas, et **aucune cadence de relance n'est arrêtée** — aucune table n'en
+      porte, aucune unité du backlog n'en prévoit.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP pour chacune des six ;
+preuves de refus n° 1 et 5 ; message d'erreur listant les clés manquantes ». **Les preuves de refus
+n° 1 et 5 sont acquises**, la seconde ayant exigé de livrer la protection de colonne qu'INC-049
+disputait à `CRM-013`. **Cinq vérifications sur six** sont couvertes en pgTAP, largement au-delà de
+ce qui était demandé — chacune dans les deux sens. **La sixième et son message n'existent pas**, et
+l'absence est nommée plutôt que compensée par une preuve de substitution.
+
+*Limites nommées, non masquées.*
+
+- **`CRM-034` reste `[~]`** : la n° 6 manque, son message aussi, et aucune capture n'existe.
+- **Trois contradictions relevées et NON résolues**, consignées pour arbitrage : INC-050 — le §5.5
+  se contredit sur `email_local_part`, et le comportement est **laissé inchangé**, la colonne
+  restant ouverte jusqu'à `CRM-013` ; INC-051 — la ligne i du §5.8 nomme le `bizdev`, à qui le seed
+  ne ferme aucun channel, et le `viewer` l'exerce à sa place ; INC-052 — « un commentaire vide n'est
+  pas un commentaire » ne refuse pas une tabulation, `btrim` à un argument ne retirant que des
+  espaces.
+- **`health_score` et `snoozed_until` restent jamais alimentées**, inchangé depuis `CRM-040`.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **`scripts/verify-scripts.sh` rend une anomalie préexistante et étrangère à cette unité** — « un
+  port publié par un conteneur n'apparaît pas dans les ports en écoute », propriété de l'hôte de
+  vérification et non du produit. Aucun fichier touché ici n'entre dans son périmètre.
+- **Quatre contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, image `webapp` construite avec le certificat du proxy
+  (INC-032, INC-042), `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de
+  compatibilité des navigateurs Playwright (INC-036, **cinquième** occurrence).
 
 ### CRM-035 — Définition des champs `[~]`
 `form_fields`, `form_field_rules`, grille champ × étape dans l'éditeur.

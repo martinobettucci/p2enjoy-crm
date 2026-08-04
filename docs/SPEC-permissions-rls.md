@@ -284,7 +284,8 @@ ligne est lisible :
 | Colonne | Protection |
 |---|---|
 | `cards.current_step_id` | Écriture refusée ; passe par `move_card` — **livrée par `CRM-034`**, voir ci-dessous |
-| `cards.email_local_part` | Généré par trigger, non modifiable — **non livrée**, `CRM-013` |
+| `cards.email_local_part` | Généré par trigger, non modifiable — **non livrée**, `CRM-013`. `CRM-034` l'a **laissée nommément ouverte** dans son énumération : son §5.5 se contredisait, et le comportement a été laissé inchangé plutôt que résolu en silence (INC-050) |
+| `cards.entered_step_at` | Fermée **par conséquence** du mécanisme ci-dessous, et c'est le comportement voulu : `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card`, et un client qui la réécrirait fausserait toute mesure d'ancienneté à l'étape — livrée par `CRM-034` |
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
 | `api_tokens.token_hash` | Jamais exposé |
 | `card_events.*`, `audit_log.*` | Insertion par trigger ou `service_role` |
@@ -313,7 +314,21 @@ Trois conséquences, toutes mesurées et toutes à connaître avant d'employer c
 3. **le refus rend `403` et divulgue la commande `GRANT` à exécuter** — comportement de PostgREST,
    quatrième occurrence d'INC-026.
 
-Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5.
+**Le mécanisme est livré, et la liste réellement posée est celle-ci** (`CRM-034`,
+`supabase/migrations/0012_move_card.sql` §2) : `title`, `description`, `position`, `owner_id`,
+`amount`, `currency`, `probability_override`, `next_action`, `next_action_at`, `snoozed_until`,
+`archived_at`, `deleted_at`, et `email_local_part` — cette dernière **à dessein**, INC-050. Sont
+donc fermées : `id`, `workspace_id`, `channel_id`, `workflow_id`, `current_step_id`,
+`entered_step_at`, `health_score`, `created_by`, `created_at`, `updated_at`. `search_tsv` est
+générée et ne l'a jamais été. `service_role` conserve `all privileges`, le `revoke` ne visant
+qu'`authenticated` : le seed est inchangé.
+
+La conséquence n° 1 ci-dessus n'est pas laissée à la mémoire : `supabase/tests/0013_move_card.test.sql`
+**énumère les colonnes ouvertes une par une**, de sorte qu'ajouter une colonne à `cards` sans
+trancher son cas fasse échouer la suite.
+
+Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5 —
+**cinq sont livrées**, la n° 6 attendant `card_field_values` (INC-047).
 
 ## 5. Storage
 
@@ -339,11 +354,11 @@ interface**, avec les jetons réels de chaque profil :
 
 | # | Scénario | Attendu |
 |---|---|---|
-| 1 | `viewer` tente `move_card` | Refus |
+| 1 | `viewer` tente `move_card` | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, `forbidden`, mesuré avec le jeton réel du `viewer` sur une card qu'il **voit**. Sur une card d'un channel que le seed lui ferme, la réponse est `card_not_found` et non `forbidden` — règle de discrétion, éprouvée par le **même jeton** (docs/SPEC-workflow-engine.md §5.3) |
 | 2 | `business_developer` tente de modifier un workflow | Refus — **acquise sur `workflow_nodes_catalog` par `CRM-030`** ; les trois autres tables de la famille restent dues par `CRM-031` |
 | 3 | Membre du workspace A lit une card du workspace B | Aucune ligne — **acquise sur `tracks` et `channels`** par `CRM-020`, `CRM-021` et reconduite par `CRM-012` ; sur les cards, due par `CRM-040` |
 | 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne — **acquise sur le channel lui-même et sur son track** par `CRM-012` (§4.2, lignes *d* et *e*) ; sur les cards, due par `CRM-040` |
-| 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus |
+| 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, « permission denied for table cards », mesuré avec le jeton de l'administratrice, la ligne étant relue et constatée inchangée. Le chevauchement de Definition of Done avec `CRM-013` est tranché de ce côté (INC-049), parce qu'une unité dont la DoD exige une preuve doit livrer ce qui la rend possible |
 | 6 | Lecture de `secret_id` d'un compte mail par `authenticated` | Refus (colonne révoquée) |
 | 7 | Lecture du compte mail d'un autre utilisateur | Aucune ligne |
 | 8 | Insertion directe dans `card_events` ou `audit_log` | Refus |

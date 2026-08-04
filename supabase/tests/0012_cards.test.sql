@@ -298,8 +298,15 @@ select ok(not has_table_privilege('anon', 'public.cards', 'INSERT'),
 	'`anon` n''a aucun droit d''écriture');
 select ok(has_table_privilege('authenticated', 'public.cards', 'INSERT'),
 	'`authenticated` peut créer une card — la politique décide ensuite');
-select ok(has_table_privilege('authenticated', 'public.cards', 'UPDATE'),
-	'`authenticated` peut modifier une card');
+-- ASSERTION RETOURNÉE PAR `CRM-034` (décision 51). Elle disait « `authenticated` peut modifier une
+-- card » et portait sur la TABLE ; `CRM-034` a retiré ce privilège de table pour fermer la colonne
+-- `current_step_id` (docs/SPEC-workflow-engine.md §5.5). Elle n'est pas retirée mais **précisée**,
+-- et elle est désormais PLUS FORTE : elle nomme la colonne dont dépendait la politique éprouvée
+-- plus bas, au lieu de se contenter d'un droit de table qui ne dit pas QUOI est modifiable.
+select ok(has_column_privilege('authenticated', 'public.cards', 'title', 'UPDATE'),
+	'`authenticated` peut modifier une card — éprouvé sur `title`. Le privilège est désormais posé '
+	'COLONNE PAR COLONNE : `CRM-034` a fermé `current_step_id` pour que sa garde ne soit pas '
+	'contournable par un `PATCH` (docs/SPEC-workflow-engine.md §5.5)');
 select ok(not has_table_privilege('authenticated', 'public.cards', 'DELETE'),
 	'AUCUN privilège `DELETE` : « supprimer » est toujours un horodatage (§4)');
 select ok(not has_table_privilege('anon', 'public.cards', 'DELETE'),
@@ -507,9 +514,14 @@ select is(
 -- Aucune de ces assertions n'est un constat résigné : chacune devient rouge le jour où l'unité qui
 -- la porte livre son objet, et force la révision des preuves plutôt que leur silence (décision 51).
 
-select hasnt_function('public', 'move_card', array['uuid', 'uuid', 'text'],
-	'`move_card` reste due par `CRM-034`, désormais DÉBLOQUÉE : sa cible existe (INC-043). '
-	'Cinq de ses six vérifications restent à écrire — la troisième est acquise (§2.4)');
+-- ASSERTION RETOURNÉE PAR `CRM-034` (décision 51). Elle disait « `move_card` reste due » ; l'unité
+-- l'a livrée, et l'assertion a donc désigné son moment, exactement comme le mécanisme le prévoit.
+-- Ses preuves propres sont dans `supabase/tests/0013_move_card.test.sql` ; ici, seule la PRÉSENCE
+-- est constatée — c'est ce dont cette suite-ci a besoin pour que les assertions ci-dessous, qui
+-- décrivent ce que la garde ferme, aient un objet.
+select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
+	'`move_card` est LIVRÉE par `CRM-034` (INC-043 était son blocage, et `CRM-040` l''a levé). '
+	'Cinq vérifications sur six : la n° 6 attend `card_field_values` — INC-047');
 
 select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : aucun trigger d''événement n''est écrit ici, il '
@@ -529,14 +541,20 @@ select lives_ok($$
 	'CRM-013 NON LIVRÉE : `email_local_part` reste MODIFIABLE par qui écrit sur le channel. Le '
 	'trigger GÉNÈRE, il ne protège pas (§3.4). Cette assertion doit devenir rouge à `CRM-013`');
 
-select lives_ok($$
+-- ASSERTION RETOURNÉE PAR `CRM-034` (décision 51), et c'est la plus significative des trois : elle
+-- constatait que `current_step_id` s'écrivait DIRECTEMENT, sans transition déclarée. `CRM-034` a
+-- fermé ce chemin. Le `lives_ok` devient un `throws_ok`, et l'assertion est désormais PLUS FORTE —
+-- elle ne constate plus un manque, elle oppose un refus.
+select throws_ok($$
 	update public.cards
 	   set current_step_id = (select s.id from public.workflow_steps s
 	                           join public.workflow_nodes_catalog n on n.id = s.node_id
 	                          where s.workflow_id = public.cards.workflow_id and n.key = 'perdu')
 	 where id = '5eed0000-0000-4000-8000-0000000000c1' $$,
-	'CRM-034 ET CRM-013 NON LIVRÉES : `current_step_id` s''écrit directement, sans transition '
-	'déclarée. La seule garde qui tienne est structurelle — l''étape doit appartenir au workflow');
+	'42501', 'permission denied for table cards',
+	'`CRM-034` EST LIVRÉE : `current_step_id` ne s''écrit PLUS directement. La garde n''est plus '
+	'contournable, et `move_card` est le seul chemin. `CRM-013` reste due pour les AUTRES colonnes '
+	'— INC-049, INC-050');
 
 rollback to savepoint p_crm013;
 

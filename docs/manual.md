@@ -26,8 +26,8 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré, sans écran** — voir le chapitre 4 ci-dessous. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. Ce qui manque est l'écran, et la **fiche** elle-même — les réponses au formulaire relèvent de `CRM-036` |
-| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | À livrer. **Débloqué** : la garde attendait les affaires, qui existent depuis `CRM-040` |
-| 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037` | À livrer |
+| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré côté serveur, sans écran** — voir le chapitre 4.3. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. Cinq vérifications sur six sont en place ; la sixième, « les questions obligatoires ont une réponse », attend `CRM-036`. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
+| 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037` | **Partiellement livré** : les cinq motifs de refus existent et sont nommés (chapitre 4.3). Ce qui manque est leur **affichage** — et le message listant les questions restées sans réponse, qui naîtra avec la sixième vérification (`CRM-036`) |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | À livrer |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
@@ -54,7 +54,7 @@
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses sept étapes et ses dix transitions, et chacun de ses six channels le suit. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part — il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 22 | Choisir le workflow d'un channel | `CRM-033` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute autre affectation est refusée, y compris de façon détournée — déplacer un channel vers un autre track, ou déplacer un workflow sous les channels qui le suivent. L'espace de travail livré le montre : cinq channels suivent « Cycle commercial standard », « Prospection » suit la copie réservée à son track. Ce qui manque est l'écran : aucun sélecteur ne permet encore de changer le workflow d'un channel, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 23 | Composer le formulaire d'un workflow | `CRM-035` | **Livré côté serveur, sans écran.** Un workflow porte désormais son propre formulaire : les questions posées à propos d'une affaire, et le moment où chacune est affichée, facultative ou obligatoire. L'espace de travail livré en montre sept — budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié, lien vers la proposition, et un champ retiré du formulaire dont les réponses restent consultables. Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Deux limites à connaître : l'obligation n'est **pas encore appliquée** — rien n'empêche aujourd'hui de faire avancer une affaire sans avoir répondu, la garde arrivant avec le chapitre 8 (`CRM-034`) —, et un workflow **copié** dans un track naît **sans formulaire**, qu'il faut donc recomposer. Ce qui manque est l'écran : la grille champ × étape n'existe pas, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
+| 23 | Composer le formulaire d'un workflow | `CRM-035` | **Livré côté serveur, sans écran.** Un workflow porte désormais son propre formulaire : les questions posées à propos d'une affaire, et le moment où chacune est affichée, facultative ou obligatoire. L'espace de travail livré en montre sept — budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié, lien vers la proposition, et un champ retiré du formulaire dont les réponses restent consultables. Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Deux limites à connaître : l'obligation n'est **toujours pas appliquée** — la garde de déplacement est livrée (`CRM-034`, chapitre 4.3) et vérifie cinq points sur six, mais la sixième, « les questions obligatoires ont une réponse », lit des réponses que rien ne sait encore enregistrer (`CRM-036`) —, et un workflow **copié** dans un track naît **sans formulaire**, qu'il faut donc recomposer. Ce qui manque est l'écran : la grille champ × étape n'existe pas, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 24 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 25 | Boîte mail système de l'espace | `CRM-052` | À livrer |
 | 26 | Jetons d'API et webhooks | `CRM-073` | À livrer |
@@ -278,7 +278,50 @@ Vous ne la choisissez pas, et une valeur que vous fourniriez serait ignorée —
 qu'aucune adresse ne soit devinable. Elle servira, à partir du chapitre sur la messagerie, à
 rattacher automatiquement à l'affaire tout message qui lui est envoyé.
 
-### 4.3 Archiver n'est pas supprimer
+### 4.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse
+
+Une affaire change d'étape par **un seul chemin**, et c'est délibéré : le produit refuse désormais
+qu'on écrive directement l'étape d'une affaire, même à une administratrice. Tout déplacement passe
+par la commande de déplacement, qui vérifie cinq choses **avant** d'accepter.
+
+| Ce qui est vérifié | Ce que vous voyez si cela bloque |
+|---|---|
+| L'affaire existe, vous y avez accès, et elle n'est **ni archivée ni en corbeille** | « affaire introuvable » |
+| Vous avez le droit d'**écrire** dans son onglet | « accès refusé » |
+| L'étape visée appartient bien au workflow de l'affaire | « cette étape n'est pas dans ce workflow » |
+| Le workflow **déclare** un déplacement de l'étape actuelle vers celle-là | « ce déplacement n'est pas autorisé » |
+| Vous avez donné un **motif**, si ce déplacement l'exige | « un commentaire est requis » |
+
+**Le quatrième point est le cœur de la chose.** Le workflow que vous avez dessiné n'est pas une
+suggestion : une affaire ne peut emprunter qu'un déplacement que vous avez déclaré. Dans l'espace de
+travail livré, une affaire en « Prospect » peut passer en « Relance » ou être marquée perdue, mais
+pas sauter directement en « Négociation ». Le produit vous le dit, et il refuse.
+
+**Le cinquième explique une exigence que vous rencontrerez tôt.** Les quatre déplacements « Marquer
+perdu » du workflow livré exigent un motif. Un motif fait uniquement d'espaces est refusé comme
+l'absence de motif.
+
+Deux effets accompagnent chaque déplacement accepté : la date d'**entrée dans l'étape** est remise
+à l'instant présent — c'est elle qui mesurera l'ancienneté d'une affaire à son étape —, et l'affaire
+est placée **en fin** de la colonne d'arrivée, sans bousculer l'ordre que vous y aviez mis.
+
+**Trois limites à connaître, et elles sont réelles.**
+
+1. **L'obligation de répondre aux champs requis n'est pas encore appliquée.** Une affaire peut
+   aujourd'hui entrer dans une étape qui pose des questions obligatoires sans que personne y ait
+   répondu. Cette vérification est la sixième, et elle attend le chapitre où les réponses aux
+   formulaires deviennent enregistrables.
+2. **Le motif que vous donnez n'est conservé nulle part.** Il est exigé, il est contrôlé, et il
+   disparaît : les commentaires arrivent avec leur propre chapitre. Un déplacement motivé est donc
+   accepté, mais sa raison n'est pas relisible.
+3. **Aucune trace du déplacement n'est enregistrée.** L'historique d'une affaire n'existe pas
+   encore.
+
+**Aucun écran ne permet encore de faire ce geste.** Le tableau kanban et son glisser-déposer
+arrivent au chapitre suivant ; la règle, elle, est déjà en place et opposable — c'est volontaire,
+l'interface ne fera qu'exercer une garde qui existe déjà.
+
+### 4.4 Archiver n'est pas supprimer
 
 Une affaire a **deux** façons de quitter votre vue, et elles ne veulent pas dire la même chose.
 
@@ -296,7 +339,7 @@ peut retirer.
 À l'inverse, un état qu'une affaire **active** occupe encore ne peut pas être archivé : le produit
 refuse, plutôt que de faire disparaître une colonne du tableau sous les affaires qu'elle contient.
 
-### 4.4 Qui peut faire quoi
+### 4.5 Qui peut faire quoi
 
 - **Voir** les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par
   channel du §3.2 *quater* s'appliquent **dès la première affaire** : une restriction `Aucun accès`
@@ -308,7 +351,7 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 - **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
   vous aviez le droit d'écrire là où elle se trouvait.
 
-### 4.5 Ce qui n'est pas encore livré
+### 4.6 Ce qui n'est pas encore livré
 
 - **Le tableau et la vue liste** : aucun écran n'affiche encore les affaires.
 - **Le déplacement encadré d'une étape à l'autre.** Le graphe du chapitre 22 dit quels déplacements

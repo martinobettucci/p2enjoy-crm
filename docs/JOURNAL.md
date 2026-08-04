@@ -4345,3 +4345,72 @@ message que l'utilisateur apprend à ignorer.
 La même règle range les cards archivées et en corbeille du côté de `card_not_found`, avec la
 définition d'« active » de `docs/SPEC-cards.md` §5 : `archived_at is null and deleted_at is null`,
 la même que celle qu'emploie la garde d'archivage d'un nœud occupé.
+
+### Décision 120 — Une contradiction de spécification se consigne, et le comportement ne bouge pas
+
+**Problème.** Le §5.5 de `docs/SPEC-workflow-engine.md` dit deux choses incompatibles
+d'`email_local_part`. Sa prose l'énumère parmi ce qui « reste à `CRM-013` », son bloc `GRANT` ne la
+liste pas — et le mécanisme étant exclusif, ne pas la lister la **ferme**. Il fallait trancher pour
+écrire une ligne de SQL.
+
+**Ce qui a décidé.** Les deux lectures sont défendables ; ce qui ne l'est pas, c'est de choisir en
+silence. Fermer la colonne aurait livré la moitié de `CRM-013` — unité `[ ]` distincte — sans que
+rien ne le dise, et aurait fait rougir à la **mauvaise unité** une assertion de
+`0012_cards.test.sql` qui annonce explicitement devenir rouge « à `CRM-013` ».
+
+**Décision.** `CLAUDE.md` §5 prescrit exactement ce cas : consigner, et **laisser le comportement
+inchangé**. La colonne est donc ajoutée nommément à la liste des colonnes ouvertes, avec un
+commentaire qui renvoie à INC-050. Le comportement est identique à celui de `CRM-040`.
+
+**Conséquence.** Le geste paraît contre-intuitif — on écrit une ligne de `GRANT` pour *ne rien
+changer* —, et c'est précisément ce qui le rend traçable : la ligne existe, elle porte son motif,
+et le jour de `CRM-013` il suffira de la retirer. Une omission silencieuse n'aurait laissé aucune
+prise. Deux autres contradictions ont suivi la même règle dans la même unité : INC-051, la ligne i
+du contrat d'API nommant un profil que le seed ne peut pas mettre en défaut ; INC-052, `btrim` à un
+argument ne retirant que des espaces là où le titre du paragraphe annonçait « un commentaire vide ».
+
+### Décision 121 — Une preuve de discrétion n'a de valeur qu'avec un seul jeton
+
+**Problème.** La règle de discrétion de la décision 119 produit deux réponses différentes —
+`card_not_found` et `forbidden` — selon ce que l'appelant voit. Le contrat d'API du §5.8 les
+faisait exercer par **deux profils différents** : le `viewer` pour `forbidden`, le `bizdev` pour
+`card_not_found`.
+
+**Observation, mesurée.** Le `bizdev` **lit les neuf cards du seed** : aucun droit fin ne lui ferme
+de channel, et l'appel rend `200`. La ligne était insatisfaisable, et le §5.9 interdit de modifier
+le seed pour la sauver (INC-051).
+
+**Ce que la correction a révélé.** Le remplacement du `bizdev` par le `viewer` n'est pas un
+pis-aller : c'est une preuve **strictement meilleure**. Avec deux profils, un lecteur pouvait
+raisonnablement soupçonner que l'écart entre les deux réponses venait du profil — l'un est `viewer`,
+l'autre `business_developer`, ils ne sont pas censés obtenir la même chose. Avec **le même jeton**,
+à la même seconde, sur deux cards qui ne diffèrent que par le droit fin de leur channel, l'écart ne
+peut venir que de la règle.
+
+**Décision.** Les lignes h et i sont exercées par le seul `viewer`. Le `bizdev` reste employé, mais
+pour ce qu'il prouve réellement : la rétrogradation en lecture par un droit fin de **channel**, qui
+est l'**autre** chemin vers `forbidden` — là où la ligne h passe par un rôle de workspace. Le fait
+qui rend la ligne d'origine inapplicable est lui-même figé par un scénario, qui deviendra rouge si
+un droit fin venait à fermer ce channel au `bizdev`.
+
+**Portée générale.** Chaque fois qu'une règle produit deux réponses selon une condition, la preuve
+doit faire varier **la condition seule**. Faire varier le profil en même temps, c'est mesurer deux
+choses et n'en prouver aucune.
+
+### Décision 122 — La convergence d'une migration se prouve sur la porte qu'elle ferme
+
+**Problème.** `scripts/verify-move-card.sh` devait établir que la migration 12 est convergente et
+pas seulement idempotente (mécanisme des décisions 57 et 78). Restait à choisir **quelle**
+dégradation soumettre au rejeu.
+
+**Ce qui a décidé.** Une migration qui pose des privilèges a une dégradation naturelle et une seule :
+la commande qui rouvre ce qu'elle ferme. Ici, `grant update on public.cards to authenticated` — un
+seul geste, celui-là même que le message de refus de PostgREST **suggère à l'utilisateur**
+(INC-026, quatrième occurrence). Un exploitant pressé le tapera un jour.
+
+**Décision.** Le harnais pose ce `grant`, **constate** que la garde est redevenue contournable — sans
+ce constat intermédiaire, le contrôle suivant serait vert sur une dégradation qui n'aurait pas pris
+—, rejoue la migration, et vérifie que la porte est **refermée**.
+
+**Conséquence.** La convergence n'est pas une propriété abstraite qu'on affirme dans un commentaire :
+c'est le seul rempart contre un `hint` de PostgREST que quelqu'un aura suivi de bonne foi.

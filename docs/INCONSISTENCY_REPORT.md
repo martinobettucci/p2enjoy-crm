@@ -2037,6 +2037,130 @@ Definition of Done amendée pour retirer la preuve n° 5.
 
 ---
 
+### INC-050 — Le §5.5 de `SPEC-workflow-engine` se contredit sur `email_local_part`
+
+**Nature :** contradiction interne à une spécification, entre son bloc de code et sa prose.
+**Relevé le :** 2026-08-04, pendant l'implémentation de `CRM-034`.
+
+`docs/SPEC-workflow-engine.md` §5.5 dit deux choses incompatibles de la même colonne.
+
+**Sa prose** l'énumère explicitement parmi ce qui reste dû : « **Ce qui n'est PAS livré par
+`CRM-034`, et reste à `CRM-013` :** `email_local_part`, dont l'écriture directe reste ouverte », et
+conclut « Seule la colonne que cette garde protège est traitée ici ».
+
+**Son bloc `GRANT`**, lui, ne la liste pas :
+
+```
+grant  update (title, description, position, owner_id, amount, currency,
+               probability_override, next_action, next_action_at, snoozed_until,
+               archived_at, deleted_at) on public.cards to authenticated;
+```
+
+Or le mécanisme est **exclusif par construction** : le privilège `UPDATE` ne se retire pas colonne
+par colonne d'un privilège de table, il faut retirer le privilège de table puis rendre nommément ce
+qui doit rester ouvert. Toute colonne absente de cette liste est donc **fermée**. Appliquer le bloc
+à la lettre fermerait `email_local_part` — c'est-à-dire livrerait la moitié de `CRM-013`, unité
+`[ ]` distincte, sans que rien ne le dise.
+
+**Ce n'est pas une subtilité de rédaction.** `supabase/tests/0012_cards.test.sql` porte, depuis
+`CRM-040`, une assertion qui **constate** cette colonne modifiable et qui doit « devenir rouge à
+`CRM-013` ». La fermer ici la rendrait rouge à la mauvaise unité, et la Definition of Done de
+`CRM-013` serait à demi faite sans trace.
+
+**Comportement retenu :** `CLAUDE.md` §5 tranche le cas d'une contradiction relevée en relecture —
+la consigner, et **laisser le comportement inchangé**. `email_local_part` est donc ajoutée
+nommément à la liste des colonnes ouvertes, avec un commentaire qui renvoie ici, et le comportement
+est exactement celui de `CRM-040`. L'assertion de `0012` reste verte, et celle de
+`supabase/tests/0013_move_card.test.sql` la double en nommant l'arbitrage attendu.
+
+**Arbitrage attendu du responsable :** soit corriger le bloc `GRANT` du §5.5 en y ajoutant
+`email_local_part`, ce qui aligne le code sur la prose ; soit corriger la prose, ce qui transfère
+cette moitié de `CRM-013` vers `CRM-034` — auquel cas il faut retirer la colonne de la liste, et
+retourner les deux assertions dans le même changement.
+
+**Lié à :** INC-049 (le chevauchement de Definition of Done), `CRM-013`.
+
+---
+
+### INC-051 — La ligne i du contrat d'API de `move_card` nomme un profil que le seed ne peut pas mettre en défaut
+
+**Nature :** erreur de fait dans une spécification, mesurée contre la pile réelle.
+**Relevé le :** 2026-08-04, pendant l'implémentation de `CRM-034`.
+
+`docs/SPEC-workflow-engine.md` §5.8 énumère treize appels à mesurer. Sa ligne i dit :
+
+| # | Appelant | Appel | Attendu |
+|---|---|---|---|
+| i | `bizdev` | card d'un channel fermé par un droit fin | `400`, `card_not_found` — discrétion |
+
+**MESURÉ le 2026-08-04 contre la pile réelle**, avec le jeton du compte seedé : le `bizdev`
+**lit les neuf cards du seed**, et l'appel rend `200`. Le tableau des droits effectifs le confirme —
+`app.can_read_channel` rend `true` pour lui sur les quatre channels qui portent des cards.
+
+Le motif est dans le seed lui-même (`docs/SPEC-seed.md` §2.11) : ses quatre droits fins ferment le
+track `conseil-ia` au **viewer** et à l'**administratrice**, et rétrogradent le `bizdev` en lecture
+sur le channel `maintenance`. **Aucune ligne ne ferme quoi que ce soit au `bizdev`** — une
+rétrogradation en lecture n'est pas une fermeture, et elle produit `forbidden`, pas
+`card_not_found`. La ligne i est donc insatisfaisable telle qu'écrite, et le §5.9 pose par ailleurs
+que le seed **n'est pas modifié** par cette unité.
+
+**Comportement retenu :** le profil retenu pour la ligne i est le **`viewer`**, à qui le seed ferme
+réellement le track de `grands-comptes`. Ce choix est meilleur que celui d'origine, et pas seulement
+faute de mieux : les lignes h et i sont désormais exercées **par le même jeton**, ce qui est la
+seule façon d'exclure que l'écart entre `forbidden` et `card_not_found` vienne du profil plutôt que
+de la règle de discrétion. Le fait qui rend la ligne d'origine inapplicable est lui-même **figé par
+un scénario** de `e2e/api/move-card.spec.ts`, qui mesure le `200` du `bizdev` et deviendra rouge si
+un droit fin venait à lui fermer ce channel. Un scénario supplémentaire couvre la rétrogradation du
+`bizdev` sur `maintenance`, qui exerce l'autre chemin vers `forbidden`.
+
+**Arbitrage attendu du responsable :** corriger la ligne i du §5.8 pour qu'elle nomme le `viewer`,
+ou ajouter au seed un droit fin fermant un channel au `bizdev` — ce que le §5.9 interdit
+aujourd'hui, et qui n'apporterait aucune preuve que le `viewer` n'apporte déjà.
+
+**Lié à :** `docs/SPEC-seed.md` §2.11, `CRM-012`.
+
+---
+
+### INC-052 — « Un commentaire vide n'est pas un commentaire » ne refuse pas une tabulation
+
+**Nature :** écart entre l'intention affichée d'une règle et l'expression qui la met en œuvre, les
+deux étant écrites dans la même spécification.
+**Relevé le :** 2026-08-04, pendant l'implémentation de `CRM-034`.
+
+`docs/SPEC-workflow-engine.md` §5.3 pose la règle sous un titre sans ambiguïté — « **Un commentaire
+vide n'est pas un commentaire** » — puis en spécifie l'expression **caractère pour caractère** :
+« `comment` est normalisé par `nullif(btrim(comment), '')` avant la vérification n° 5 : une chaîne
+d'espaces est refusée comme l'absence ».
+
+**MESURÉ :** `btrim(text)` à un seul argument ne retire **que des espaces**. `btrim(E'\t\n ')` rend
+deux caractères, `nullif(…, '')` ne les annule donc pas, et une tabulation seule **passe pour un
+motif d'affaire perdue**. La règle écrite est plus étroite que le titre qui l'annonce.
+
+L'implémentation est **fidèle à la spécification** : c'est la spécification qui dit deux choses
+d'ampleur différente. `btrim(comment, E' \t\r\n')` refuserait strictement davantage et ne casserait
+aucun usage légitime — un motif fait de blancs n'a aucune valeur pour personne.
+
+**Comportement retenu :** l'expression du §5.3 est reprise **inchangée**. Élargir ce que la règle
+refuse est une décision de produit, et la spécification l'a posée explicitement plutôt que par
+défaut : la trancher au moment de l'implémentation serait la résoudre implicitement, ce que
+`CLAUDE.md` §5 proscrit. L'écart est **figé par une assertion** de
+`supabase/tests/0013_move_card.test.sql`, qui constate qu'une tabulation passe et qui deviendra
+rouge le jour où l'arbitrage sera rendu.
+
+**Portée réelle, pour que l'arbitrage se fasse en connaissance de cause :** l'exposition est faible.
+Le seul cas atteint est un client qui envoie délibérément un commentaire fait de blancs non-espaces,
+et le produit ne perd aucune donnée — il enregistre une transition dont le motif est vide, ce qui
+est précisément ce que la n° 5 voulait empêcher. Rien ne dépend de cette valeur aujourd'hui, le
+commentaire n'étant conservé nulle part (INC-048).
+
+**Arbitrage attendu du responsable :** élargir l'expression du §5.3 à `btrim(comment, E' \t\r\n')`
+et retourner l'assertion dans le même changement, ou confirmer que seuls les espaces sont refusés et
+corriger le titre du §5.3 pour qu'il n'annonce pas davantage.
+
+**Lié à :** INC-048 (le commentaire n'est conservé nulle part).
+
+---
+
 ## Clos
 
 ### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`

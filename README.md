@@ -309,6 +309,9 @@ scripts/verify-workflows.sh    # workflows, étapes, transitions : graphe, RLS, 
 scripts/verify-copie-workflow.sh # copie vers un track : refus, remappage, divergence  (CRM-032)
 scripts/verify-coherence-workflow.sh # cohérence workflow ↔ channel : quatre portes  (CRM-033)
 scripts/verify-champs-formulaire.sh # champs de formulaire et règles de visibilité   (CRM-035)
+scripts/verify-droits-fins.sh  # droits fins par track et channel : matrice, refus    (CRM-012)
+scripts/verify-cards.sh        # cards : adresse générée, archivage, corbeille, RLS   (CRM-040)
+scripts/verify-move-card.sh    # move_card : les cinq gardes, protection de colonne   (CRM-034)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

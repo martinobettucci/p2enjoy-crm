@@ -1059,10 +1059,19 @@ fonction n'ajoute aucune garantie : elle ajoute **un message** — `step_not_in_
 qu'une étape d'un autre workflow ne soit jamais rapportée comme une « transition non déclarée »,
 ce qui enverrait le client chercher une arête à créer là où le problème est ailleurs.
 
-**Un commentaire vide n'est pas un commentaire.** `comment` est normalisé par
+**Un commentaire d'espaces n'est pas un commentaire.** `comment` est normalisé par
 `nullif(btrim(comment), '')` avant la vérification n° 5 : une chaîne d'espaces est refusée comme
 l'absence, sans quoi la règle « la raison d'une affaire perdue est exigée » se satisferait d'une
 barre d'espace.
+
+**ET SEULEMENT D'ESPACES — MESURÉ APRÈS COUP, ET LE TITRE DE CE PARAGRAPHE A DÛ ÊTRE CORRIGÉ.** Il
+annonçait « un commentaire **vide** n'est pas un commentaire », ce que l'expression ci-dessus ne
+tient pas : `btrim(text)` à un seul argument ne retire **que des espaces**, et `btrim(E'\t\n ')`
+rend deux caractères. Une tabulation seule passe donc pour un motif. `btrim(comment, E' \t\r\n')`
+refuserait strictement davantage sans casser aucun usage légitime, mais élargir ce qu'une règle
+refuse est une décision de produit, non un détail d'implémentation : l'expression reste **inchangée**,
+l'écart est figé par une assertion de `supabase/tests/0013_move_card.test.sql`, et l'arbitrage est
+demandé en `docs/INCONSISTENCY_REPORT.md`, **INC-052**.
 
 ### 5.4 Ce qui est écrit en cas de succès, et ce qui ne peut pas l'être
 
@@ -1201,7 +1210,7 @@ Treize lignes, écrites **avant** le code pour être mesurées et non supposées
 | f | `admin` | card **archivée** | `400`, `card_not_found` |
 | g | `admin` | card en **corbeille** | `400`, `card_not_found` |
 | h | `viewer` | card visible de lui | `403`, `forbidden` — preuve de refus n° 1 |
-| i | `bizdev` | card d'un channel fermé par un droit fin | `400`, `card_not_found` — discrétion |
+| i | `viewer` | card d'un channel fermé par un droit fin | `400`, `card_not_found` — discrétion |
 | j | `admin` | étape appartenant à un **autre** workflow | `400`, `step_not_in_workflow` |
 | k | `admin` | étape du bon workflow, **aucune transition déclarée** | `400`, `transition_not_allowed` |
 | l | `admin` | transition exigeant un commentaire, sans commentaire | `400`, `comment_required` |
@@ -1209,6 +1218,21 @@ Treize lignes, écrites **avant** le code pour être mesurées et non supposées
 
 Chaque refus **relit la ligne** pour la constater inchangée : une réponse d'erreur ne prouve pas
 qu'aucune écriture n'a eu lieu.
+
+**LA LIGNE i A ÉTÉ CORRIGÉE APRÈS MESURE — INC-051.** Elle nommait le `bizdev`. MESURÉ contre la
+pile réelle : le `bizdev` **lit les neuf cards du seed**, aucun droit fin ne lui ferme de channel,
+et l'appel rend `200`. Le seed ferme le track de `grands-comptes` au **`viewer`** et à
+l'administratrice, et rétrograde le `bizdev` en lecture sur `maintenance` — une rétrogradation
+produit `forbidden`, pas `card_not_found`. La ligne était donc insatisfaisable, et le §5.9 interdit
+de modifier le seed pour la sauver. Le `viewer` la porte désormais, ce qui est **meilleur** que
+l'écriture d'origine : les lignes h et i sont exercées par le **même jeton**, seule façon d'exclure
+que l'écart entre les deux réponses vienne du profil plutôt que de la règle de discrétion.
+
+Deux appels s'ajoutent aux treize, non pour élargir le contrat mais pour tenir des faits qui, sans
+eux, ne reposeraient que sur cette prose : le `200` du `bizdev` sur la card de la ligne i, qui
+deviendra rouge si un droit fin venait à lui fermer ce channel ; et le `403` du `bizdev` sur
+`maintenance`, qui exerce l'**autre** chemin vers `forbidden` — un droit fin de channel, là où la
+ligne h passe par un rôle de workspace.
 
 ### 5.9 Ce que le seed livre
 
