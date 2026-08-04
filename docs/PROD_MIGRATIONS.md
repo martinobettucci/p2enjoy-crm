@@ -101,6 +101,7 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 | 3 | `supabase/migrations/0003_tracks.sql` | Table `public.tracks` (organisation de premier niveau), ses contraintes de valeur, le trigger d'attribution de `position`, ses **trois politiques RLS** — lecture par les membres du workspace, insertion et mise à jour par ses administrateurs — et la clé étrangère `track_members.track_id → tracks.id` qu'INC-010 avait différée. | Migrations 1 et 2 : `public.workspaces`, `public.track_members` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. | `drop table public.tracks cascade;` — la cascade retire la clé étrangère de `track_members` **et détruit tous les tracks**. Dès la première mise en service, ce retour arrière est destructif : il exige une sauvegarde préalable de `public.tracks`. |
 | 4 | `supabase/migrations/0004_channels.sql` | Table `public.channels` (organisation de second niveau), l'unicité du slug **par track**, le trigger d'attribution de `position` dans la portée du track, ses **trois politiques RLS**, la contrainte d'unicité `tracks (id, workspace_id)` et la **clé étrangère composite** `channels (track_id, workspace_id) → tracks (id, workspace_id)` qui garantit que le `workspace_id` dénormalisé ne peut pas mentir à la RLS, ainsi que la clé étrangère `channel_members.channel_id → channels.id` qu'INC-010 avait différée. | Migrations 1 à 3 : `public.workspaces`, `public.tracks`, `public.channel_members` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. | `drop table public.channels cascade;` puis `alter table public.tracks drop constraint tracks_id_workspace_id_key;` — la cascade retire la clé étrangère de `channel_members` **et détruit tous les channels**. Dès la première mise en service, ce retour arrière est destructif : il exige une sauvegarde préalable de `public.channels`. |
 | 5 | `supabase/migrations/0005_workflow_nodes_catalog.sql` | Table `public.workflow_nodes_catalog` (vocabulaire des états d'une card), l'unicité de la clé **par workspace**, ses contraintes de valeur — forme de la clé, libellé non blanc, `kind`, jeton de couleur, bornes de la probabilité, seuil de relance strictement positif —, le trigger d'attribution de `position` dans la portée du workspace, l'index partiel du catalogue actif et ses **trois politiques RLS** : lecture par les membres du workspace, insertion et mise à jour par ses administrateurs. **Aucune suppression n'est exposée.** | Migrations 1 et 2 : `public.workspaces` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. Aucune dépendance envers `tracks` ni `channels` : le catalogue n'a pas de parent intermédiaire. | `drop table public.workflow_nodes_catalog cascade;` — **destructif dès la première mise en service** : il détruit le vocabulaire du workspace, et avec lui toute comparabilité analytique historique. Il exige une sauvegarde préalable. À partir de `CRM-031`, la cascade emportera aussi les `workflow_steps` qui référencent ces nœuds, donc les workflows eux-mêmes : ce retour arrière devra alors être précédé de celui de la migration de `CRM-031`. |
+| 6 | `supabase/migrations/0006_workflows.sql` | Tables `public.workflows`, `public.workflow_steps` et `public.workflow_transitions` (graphe des états d'une card), la cohérence de portée `scope` / `track_id`, l'unicité du workflow par défaut **par workspace**, l'unicité `(workflow, nœud)`, l'index unique partiel qui garantit **au plus une étape initiale**, les **clés étrangères composites** qui empêchent une transition de sortir de son workflow et une étape d'instancier le nœud d'un autre workspace, le trigger d'attribution de `position` dans la portée du workflow, **neuf politiques RLS**, et la clé étrangère `channels (workflow_id, workspace_id) → workflows (id, workspace_id)` qu'INC-029 avait différée. La suppression physique est exposée aux **étapes et transitions uniquement**, jamais aux workflows. | Migrations 1 à 5 : `public.workspaces`, `public.tracks`, `public.channels`, `public.workflow_nodes_catalog` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. | `alter table public.channels drop constraint channels_workflow_id_workspace_id_fkey;` puis `drop table public.workflow_transitions, public.workflow_steps, public.workflows cascade;` et enfin `alter table public.workflow_nodes_catalog drop constraint workflow_nodes_catalog_id_workspace_id_key;` — **destructif dès la première mise en service** : il détruit tous les workflows du workspace, donc les boards de tous les channels. Il exige une sauvegarde préalable. |
 
 **VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 3.** Elle ajoute une clé étrangère sur
 `public.track_members`. Si cette table contenait une ligne dont `track_id` ne correspond à aucun
@@ -135,11 +136,37 @@ index — négligeable à la cardinalité des tracks d'un workspace, à surveill
 grande. Cette contrainte est la **condition** de la clé composite de `channels` : la retirer
 rendrait la seconde impossible à recréer (`docs/SPEC-channels.md` §2.4).
 
-**Particularité des migrations 3 et 4 : leurs contraintes de valeur sont convergentes.** Elles sont
+**VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 6.** Elle ajoute une clé étrangère sur
+`public.channels`. Une ligne dont `workflow_id` ne correspondrait à aucun workflow ferait échouer
+l'`alter table` et **empêcherait la pile de redémarrer**. Le cas est réel : `CRM-021` a livré la
+colonne nullable, et toute valeur posée à la main avant cette migration serait orpheline.
+
+```sql
+-- Doit rendre zéro ligne. Sinon, arbitrer les orphelins AVANT d'appliquer la migration.
+select c.id, c.workflow_id
+  from public.channels c
+ where c.workflow_id is not null
+   and not exists (select 1 from public.workflows w
+                    where w.id = c.workflow_id and w.workspace_id = c.workspace_id);
+```
+
+**La migration 6 ajoute aussi une contrainte d'unicité à `public.workflow_nodes_catalog`**,
+`workflow_nodes_catalog_id_workspace_id_key` sur `(id, workspace_id)`. L'ajout est **additif et
+sans risque**, pour la même raison que son jumeau sur `tracks` : `(id)` étant déjà la clé primaire,
+le couple est unique par construction. Cette contrainte est la **condition** de la clé composite
+des étapes ; la retirer rendrait la seconde impossible à recréer.
+
+**La contrainte `NOT NULL` de `channels.workflow_id` n'est pas posée par cette migration.** Elle
+reste due par `CRM-033` (INC-029). Une reprise des channels existants sera nécessaire ce jour-là :
+tout channel sans workflow devra en recevoir un **avant** que la contrainte ne soit posée, sans quoi
+l'`alter table` échouera et bloquera le démarrage de la pile.
+
+**Particularité des migrations 3 à 6 : leurs contraintes de valeur sont convergentes.** Elles sont
 posées par `drop constraint if exists` suivi d'`add constraint`, et non dans le `create table`,
 qui porte `if not exists` et ne réparerait donc jamais une contrainte retirée à la main sur une
-base existante. Conséquence en production : chaque passage **revalide** la table. Sur `tracks` et
-`channels`, dont la cardinalité est celle d'un workspace, le coût est négligeable ; la propriété
+base existante. Conséquence en production : chaque passage **revalide** la table. Sur `tracks`,
+`channels`, le catalogue et les workflows, dont la cardinalité est celle d'un workspace, le coût est
+négligeable ; la propriété
 achetée est que le schéma converge vers ce que le dépôt déclare.
 
 **Toutes les migrations du dépôt sont idempotentes.** Le conteneur `migrations-runner` ne tient

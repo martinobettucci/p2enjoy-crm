@@ -51,7 +51,7 @@
 | 17 | Inviter et gérer les membres | `CRM-011`, non rattachée | À livrer — l'invitation est aujourd'hui une opération d'**exploitation** et non un parcours produit ; aucune unité ne porte l'écran (INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les sept états d'une affaire, plus les vôtres — et l'espace de travail est livré avec le sien. Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | À livrer |
+| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses sept étapes et ses dix transitions, et chacun de ses six channels le suit. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032` | À livrer |
 | 22 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
 | 23 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
@@ -90,16 +90,19 @@ L'écran se lit en trois zones :
 L'application affiche partout **« Aucun track »**, **« Aucun channel »** et **« Aucun workspace
 accessible »**. Ce n'est pas une erreur, et ce n'est plus tout à fait pour la même raison qu'avant.
 
-Les **tracks et les channels existent désormais**, et depuis peu le **catalogue de nœuds** —
-le vocabulaire des états par lesquels une affaire passe : Prospection, Relance, Négociation,
-Signature, Réalisation, Livré, Perdu. Tous trois sont créés, ordonnés et archivés côté serveur, et
-une personne administratrice de l'espace de travail peut les gérer. Mais l'application n'a **pas
-encore d'écran de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent
-rien à un visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
+Les **tracks et les channels existent désormais**, ainsi que le **catalogue de nœuds** — le
+vocabulaire des états par lesquels une affaire passe : Prospection, Relance, Négociation,
+Signature, Réalisation, Livré, Perdu — et, depuis peu, un **workflow** qui les enchaîne : « Cycle
+commercial standard », avec ses sept étapes et les dix déplacements qu'il autorise. Chacun des six
+channels de l'espace de travail suit ce workflow. Tout cela est créé, ordonné et archivable côté
+serveur, et une personne administratrice peut le gérer. Mais l'application n'a **pas encore d'écran
+de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent rien à un
+visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
 
-Le catalogue de nœuds n'a d'ailleurs **aucun écran du tout**, connexion ou non : il n'en aura pas
-avant l'éditeur de workflow du chapitre 20. Ce qui est livré est le vocabulaire lui-même, sur
-lequel les workflows s'appuieront.
+Le catalogue de nœuds et les workflows n'ont d'ailleurs **aucun écran du tout**, connexion ou non.
+Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, et
+le refus de tout déplacement qui n'y figure pas. Les écrans viendront avec l'éditeur du
+chapitre 20, lui-même suspendu à l'écran de connexion.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
 qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.

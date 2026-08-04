@@ -1244,7 +1244,114 @@ E2E de création ; captures de l'éditeur.
       l'API doit rendre à chacun des trois rôles. Rédigé **après mesure** sur trois tables sondes
       jetables, créées puis détruites, l'absence de reste étant constatée. Commit documentaire
       dédié.
-- [ ] Migration, suite pgTAP, scénarios d'API, seed, harnais de preuves : à livrer.
+- [x] `supabase/migrations/0006_workflows.sql` : les trois tables, la cohérence de portée
+      `scope` / `track_id`, l'unicité du workflow par défaut **par workspace**, l'unicité
+      `(workflow, nœud)`, l'index unique partiel de l'étape initiale, **quatre clés étrangères
+      composites** — celles qui enferment une transition dans son workflow et celles qui rendent
+      les `workspace_id` dénormalisés véridiques —, le trigger d'ordre dans la portée du workflow,
+      **neuf politiques RLS** et les privilèges explicites.
+- [x] **Test unitaire dédié** : `supabase/tests/0007_workflows.test.sql`, **106 assertions, aucune
+      anomalie** — structure des trois tables, bornes des surcharges, cohérence de portée,
+      dérivation, unicités, cascades, ordre, politiques, privilèges, et les autorisations éprouvées
+      contre quatre comptes réels avec les revendications JWT simulées comme PostgREST les pose.
+- [x] **« Exactement une étape initiale » : la moitié imposable est imposée, l'autre est nommée**
+      (décision 72). Mesuré sur une sonde : un `constraint trigger` différé accepte l'insertion
+      isolée d'un workflow puis **fait échouer le `commit`** — il rendrait la création d'un workflow
+      impossible par l'API, une requête PostgREST valant une transaction. La base garantit « au plus
+      une » ; « au moins une » devient une condition d'emploi, vérifiée par `CRM-033` et `CRM-040`,
+      et fournie par le seed. Un workflow sans étape initiale est un **brouillon**, écrit au §3.5
+      plutôt que découvert par le premier éditeur.
+- [x] **Une transition ne sort pas de son workflow, et c'est structurel** (décision 73) : clés
+      étrangères composites `(step_id, workflow_id)`, refus mesuré en `23503`. Elles exigent une
+      unicité `(id, workflow_id)` sans laquelle leur création échoue en `42830` — mesuré aussi.
+- [x] **Une mesure a démenti une attente, et l'assertion l'a établie** : une ligne qui viole à la
+      fois une contrainte de valeur et une unicité est refusée par la **contrainte de valeur**
+      (`23514`), non par l'unicité. L'assertion, d'abord écrite en `23505`, a échoué — et c'est cet
+      échec qui a fixé le fait.
+- [x] **Le comptage de pgTAP mesuré, et l'écriture de la suite adaptée** : une assertion exécutée
+      dans un savepoint ensuite annulé est **numérotée mais non comptée**, de sorte que le plan
+      n'est jamais tenu et que `scripts/run-sql-tests.sh` refuse la suite. Les blocs d'autorisation
+      n'annulent donc rien : ils rendent la main au superutilisateur et défont explicitement leurs
+      écritures.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/workflows.spec.ts`, **21 scénarios**,
+      avec les jetons réels des trois profils. Les seize lignes du contrat d'API de
+      `docs/SPEC-workflow-engine.md` §3.8 y sont rejouées.
+- [x] **Preuves de refus n° 2, n° 3 et n° 11 acquises au niveau des workflows** : un
+      `business_developer` ne crée, ne renomme et ne supprime rien — la ligne étant **relue
+      inchangée**, un refus par le `USING` ne levant aucune erreur ; un membre de A ne voit aucun
+      workflow de B, la ligne de B étant d'abord constatée présente avec la clé de service ;
+      l'anonyme obtient `200` et `[]` sur les trois tables.
+- [x] **La suppression est ouverte aux étapes et aux transitions, et à elles seules** (décision 74),
+      seul endroit du produit livré où un client peut supprimer une ligne. Un workflow, lui, est
+      refusé en `403` **par le privilège**, avant même la politique, et s'archive à la place.
+- [x] **Seed mis à jour dans le même changement** : le workflow du §3.9, ses sept étapes — dont une
+      initiale et deux surcharges sur deux colonnes différentes — et ses dix transitions, dont
+      **quatre exigeant un commentaire**, créés par la véritable API REST, convergents. L'absence de
+      `Réalisation → Perdu` est vérifiée comme le reste.
+- [x] **INC-029 levée pour la clé étrangère** : `channels.workflow_id` est enfin référencée, et de
+      façon **composite** ; les six channels du seed sont rattachés au workflow par défaut. La
+      contrainte `NOT NULL` **reste due par `CRM-033`**, qui porte le contrat de création d'un
+      channel qu'elle modifierait. L'entrée est mise à jour, non close.
+- [x] Harnais de preuves rejouable `scripts/verify-workflows.sh` : **46 contrôles, aucune
+      anomalie** — 39 hors suites Playwright et build (`--rapide`) —, et **non complaisant, éprouvé
+      par trois dégradations réelles** : politique d'écriture relâchée, index de l'étape initiale
+      retiré, transition du seed supprimée. Chacune fait sortir le harnais en code `1`, et la
+      restauration est **constatée** — index revenu, dix transitions revenues, politique revenue à
+      `is_workspace_admin`, refus de nouveau opposé au `business_developer`.
+- [x] **Quatre garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été
+      révisés** : trois assertions pgTAP de `CRM-021` (INC-029), deux de `CRM-030` (INC-031), le
+      contrôle n° 5 de `scripts/verify-catalogue.sh`, celui du seed de `scripts/verify-channels.sh`,
+      un scénario d'API de `CRM-021`, une assertion de type, et les compteurs de
+      `scripts/verify-harness.sh` (454 / 75 / 37 → **559 / 96 / 37**, le compteur d'interface
+      **inchangé**, cette unité ne livrant aucun écran). Le mécanisme de la décision 51 a fonctionné
+      une quatrième fois.
+- [x] **Huit assertions de type ajoutées** pour figer le contrat des trois tables, dont la quatrième
+      occurrence d'INC-027 et le constat qu'aucune relation ne part de `require_fields`.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+      `npm run test:sql` **559 assertions**, `npm run test:unit` **164 tests**, `npm run e2e:api`
+      **96 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé.
+- [x] **Aucune régression** : les treize harnais précédents rejoués — **33, 38, 23, 26, 26, 42, 49,
+      30, 41, 22, 40, 23 et 29 contrôles**, aucune anomalie. Les trois derniers — tracks, channels,
+      catalogue — l'ont été en `--rapide`, leurs suites Playwright et leur build étant déjà couverts
+      par le harnais de cette unité ; les dix autres n'ont pas de mode rapide et ont été rejoués
+      intégralement.
+- [x] `docs/SPEC-workflow-engine.md` §3 (réécrit), §9, `docs/SCHEMA.md` §2 et §3,
+      `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.8 et §8, `docs/DAT.md` §7 et §8,
+      `docs/PROD_MIGRATIONS.md` §3, `docs/manual.md` chapitre 20 et §3.2, `README.md`,
+      `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Aucun éditeur d'administration, aucun E2E de création par l'interface, aucune capture.**
+      La Definition of Done les exige. Ils supposent un écran d'administration authentifié, et la
+      webapp reste un appelant **anonyme** faute d'écran de connexion — **INC-021, en attente
+      d'arbitrage**. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute
+      façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **La contrainte `NOT NULL` de `channels.workflow_id` n'est pas posée** (INC-029, ci-dessus) :
+      elle revient à `CRM-033`. **Bloquée par une frontière d'unité, pas par un défaut.**
+
+*DoD adaptée, écarts explicites.* La Definition of Done exige un « E2E de création » et des
+« captures de l'éditeur ». Aucun n'est livré, et aucun ne pouvait l'être : cette unité ne livre ni
+écran ni parcours, l'éditeur étant suspendu à INC-021. Ses preuves sont unitaires (pgTAP) et
+d'intégration (PostgREST, jetons réels, hors interface). **Aucune vérification visuelle** pour la
+même raison — et non parce qu'elle aurait été omise. Les deux captures réécrites par le rejeu des
+suites d'interface ont été **regardées puis restaurées** : elles montraient un survol laissé par le
+pilote Playwright, artefact non déterministe déjà relevé lors de l'intégration de `CRM-030`.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Cinquième unité consécutive du chunk 3 à buter sur INC-021.
+- **« Au moins une étape initiale » n'est pas garantie par la base**, et ne peut pas l'être sans
+  rendre la création d'un workflow impossible par l'API (décision 72). Un workflow brouillon est un
+  état légitime du produit, à traiter par `CRM-033` et `CRM-040`.
+- **`require_fields` ne portera jamais d'intégrité référentielle** : INC-033, ouverte, trois options
+  d'arbitrage avant `CRM-036`.
+- **La garde d'archivage d'un nœud occupé reste due** : `workflow_steps` existe désormais, `cards`
+  non (INC-031). L'option 2 de l'arbitrage — limiter la garde à l'occupation par une étape — n'a pas
+  été adoptée : elle est plus stricte que la règle spécifiée.
+- **Aucune détection de cycle, aucune limite de taille** : un workflow peut porter autant d'étapes
+  et d'arêtes que voulu, et les cycles sont **voulus**.
+- **Aucune RPC de réordonnancement** : réordonner un board, c'est écrire `position` étape par étape.
+  Le besoin apparaîtra avec l'éditeur.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ### CRM-032 — Copie d'un workflow vers un track `[ ]`
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.

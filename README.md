@@ -9,9 +9,9 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > d'amorçage** et leur refus par défaut (`CRM-003`), le **chiffrement des secrets** (`CRM-004`),
 > les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), le **seed
 > socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
-> (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`) et les **channels**
-> (`CRM-021`).
-> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni workflows,
+> (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`), les **channels**
+> (`CRM-021`), le **catalogue de nœuds** (`CRM-030`) et les **workflows** (`CRM-031`).
+> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni formulaires,
 > ni messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
 > (`docs/INCONSISTENCY_REPORT.md`, INC-021).
 > **Conséquence à connaître avant de lancer l'application** : les tracks et leurs channels
@@ -299,6 +299,7 @@ scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-co
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
 scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)
 scripts/verify-catalogue.sh    # catalogue de nœuds : bornes, ordre, archivage, RLS      (CRM-030)
+scripts/verify-workflows.sh    # workflows, étapes, transitions : graphe, RLS, seed     (CRM-031)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -481,10 +482,11 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **Le métier n'est pas implémenté** : la pile démarre, le socle d'identité est en base, le seed
-  socle existe et **le squelette de l'interface est livré** — mais il n'y a ni tracks, ni
-  channels, ni cards, ni workflows, ni messagerie. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour
-  l'état réel.
+- **Le métier est incomplet** : la pile démarre, le socle d'identité est en base, le seed existe,
+  **le squelette de l'interface est livré**, et les tracks, channels, nœuds et workflows existent
+  réellement côté serveur — mais il n'y a ni cards, ni formulaires, ni messagerie, et **aucun de
+  ces objets n'a d'écran d'administration**. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état
+  réel.
 - **Aucun écran de connexion, et donc aucune donnée à l'écran.** L'interface interroge l'API avec
   la seule clé anonyme ; la RLS en refus par défaut rend `200` et `[]`, et l'application affiche
   ses états vides. Mesuré : **un compte seedé connecté obtient exactement le même vide**, faute de

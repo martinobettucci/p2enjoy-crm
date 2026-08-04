@@ -45,6 +45,9 @@ type _tables = Expect<
     | 'track_members'
     | 'tracks'
     | 'workflow_nodes_catalog'
+    | 'workflow_steps'
+    | 'workflow_transitions'
+    | 'workflows'
     | 'workspace_members'
     | 'workspaces'
   >
@@ -129,14 +132,16 @@ type _relationsChannelMembers = Expect<
 type _relationsChannels = Expect<
   Equal<
     Database['public']['Tables']['channels']['Relationships'][number]['foreignKeyName'],
-    'channels_track_id_workspace_id_fkey' | 'channels_workspace_id_fkey'
+    | 'channels_track_id_workspace_id_fkey'
+    | 'channels_workflow_id_workspace_id_fkey'
+    | 'channels_workspace_id_fkey'
   >
 >
 
-// INC-029, FIGÉE DANS LE TYPE. `docs/SCHEMA.md` §2 exige `workflow_id` **non nulle** et référencée.
-// La table `workflows` n'existant pas avant `CRM-031`, la colonne est livrée nullable et sans clé
-// étrangère. Cette assertion deviendra rouge le jour où `CRM-031` posera la contrainte, et forcera
-// la reprise de `docs/SPEC-channels.md` §2.5 — comme les trois assertions pgTAP jumelles.
+// INC-029, FIGÉE DANS LE TYPE, ET RÉVISÉE PAR `CRM-031`. La clé étrangère existe désormais — elle
+// est **composite**, et visible ci-dessus. La colonne, elle, reste nullable : `docs/SCHEMA.md` §2
+// l'exige non nulle, et cette contrainte revient à `CRM-033` avec le contrat de création d'un
+// channel qu'elle modifie. L'assertion deviendra rouge ce jour-là.
 type _workflowIdNullable = Expect<
   Equal<Database['public']['Tables']['channels']['Row']['workflow_id'], string | null>
 >
@@ -154,6 +159,113 @@ type _channelsInsertRequis = Expect<
         : C]: true
     },
     { name: true; position: true; slug: true; track_id: true; workspace_id: true }
+  >
+>
+
+// --- 5 quater. `workflows`, `workflow_steps`, `workflow_transitions`, livrées par `CRM-031` -----
+// docs/SPEC-workflow-engine.md §3.2 à §3.4. Les colonnes sont figées comme celles du catalogue
+// l'ont été : une migration qui en ajouterait ou en retirerait une sans régénérer les types casse
+// ici, avant d'atteindre le produit.
+
+type _workflowsColonnes = Expect<
+  Equal<
+    keyof Database['public']['Tables']['workflows']['Row'],
+    | 'archived_at'
+    | 'created_at'
+    | 'derived_at'
+    | 'derived_from_workflow_id'
+    | 'id'
+    | 'is_default'
+    | 'name'
+    | 'scope'
+    | 'track_id'
+    | 'updated_at'
+    | 'workspace_id'
+  >
+>
+
+type _etapesColonnes = Expect<
+  Equal<
+    keyof Database['public']['Tables']['workflow_steps']['Row'],
+    | 'created_at'
+    | 'id'
+    | 'is_initial'
+    | 'label_override'
+    | 'node_id'
+    | 'position'
+    | 'probability_override'
+    | 'stale_after_days'
+    | 'updated_at'
+    | 'workflow_id'
+    | 'workspace_id'
+  >
+>
+
+type _transitionsColonnes = Expect<
+  Equal<
+    keyof Database['public']['Tables']['workflow_transitions']['Row'],
+    | 'created_at'
+    | 'from_step_id'
+    | 'id'
+    | 'label'
+    | 'require_comment'
+    | 'require_fields'
+    | 'to_step_id'
+    | 'updated_at'
+    | 'workflow_id'
+    | 'workspace_id'
+  >
+>
+
+// `scope` est un `text` avec contrainte `CHECK`, non un type énuméré : le générateur ne peut donc
+// pas en faire une union. La limite est **figée**, comme elle l'est pour `role`, `color` et `kind`
+// (INC-006 du §5 ter) : le client qui affiche un workflow ne tient pas la vérité de ce champ.
+type _scopeEstUneChaine = Expect<
+  Equal<Database['public']['Tables']['workflows']['Row']['scope'], string>
+>
+
+// Les surcharges d'une étape sont nullables, et `null` signifie « prendre la valeur du catalogue »
+// — jamais zéro (docs/SPEC-workflow-engine.md §3.3).
+type _surchargesNullables = Expect<
+  Equal<Database['public']['Tables']['workflow_steps']['Row']['label_override'], string | null> &
+    Equal<
+      Database['public']['Tables']['workflow_steps']['Row']['probability_override'],
+      number | null
+    >
+>
+
+// INC-033, FIGÉE DANS LE TYPE : `require_fields` est un tableau de chaînes, sans la moindre
+// relation. Aucune clé étrangère n'est possible depuis une colonne tableau — le type le montre
+// aussi clairement que la base.
+type _requireFieldsSansRelation = Expect<
+  Equal<Database['public']['Tables']['workflow_transitions']['Row']['require_fields'], string[]>
+>
+
+// Les clés étrangères des transitions sont **composites** : c'est ce qui empêche une arête de
+// sortir de son workflow (décision 73). Aucune clé simple sur `from_step_id` ou `to_step_id`.
+type _relationsTransitions = Expect<
+  Equal<
+    Database['public']['Tables']['workflow_transitions']['Relationships'][number]['foreignKeyName'],
+    | 'workflow_transitions_from_step_fkey'
+    | 'workflow_transitions_to_step_fkey'
+    | 'workflow_transitions_workflow_id_workspace_id_fkey'
+  >
+>
+
+// INC-027, QUATRIÈME OCCURRENCE : `position` est renseignée par un trigger, que le générateur
+// ignore, et le type l'exige donc à l'insertion alors que l'API l'accepte omise. Le constat est
+// figé plutôt que corrigé — le fichier est **généré**.
+type _etapesInsertRequis = Expect<
+  Equal<
+    {
+      [C in keyof Database['public']['Tables']['workflow_steps']['Insert'] as Record<
+        string,
+        never
+      > extends Pick<Database['public']['Tables']['workflow_steps']['Insert'], C>
+        ? never
+        : C]: true
+    },
+    { node_id: true; position: true; workflow_id: true; workspace_id: true }
   >
 >
 
@@ -323,6 +435,14 @@ export type AssertionsDuContratDeTypes = [
   _couleurCatalogueEstUneChaine,
   _relationsCatalogue,
   _catalogueInsertRequis,
+  _workflowsColonnes,
+  _etapesColonnes,
+  _transitionsColonnes,
+  _scopeEstUneChaine,
+  _surchargesNullables,
+  _requireFieldsSansRelation,
+  _relationsTransitions,
+  _etapesInsertRequis,
   _relationsWorkspaceMembers,
   _aucuneVue,
   _aucuneFonction,

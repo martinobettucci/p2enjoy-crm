@@ -304,10 +304,45 @@ channel archivé de `CRM-021`.
 
 **Ce que le seed rend désormais visible, et ce qu'il ne rend toujours pas visible.** Le message
 affiché en fin d'exécution a été corrigé par `CRM-020`, `CRM-021` puis `CRM-030` : `tracks`,
-`channels` et `workflow_nodes_catalog` portent des politiques, et un membre du workspace y lit ses
-quatre tracks, ses six channels et ses huit nœuds, tandis que `profiles`, `workspaces` et
+`channels`, `workflow_nodes_catalog` et, depuis `CRM-031`, `workflows`, `workflow_steps` et
+`workflow_transitions` portent des politiques : un membre du workspace y lit ses quatre tracks, ses
+six channels, ses huit nœuds et son workflow, tandis que `profiles`, `workspaces` et
 `workspace_members` restent en refus par défaut jusqu'à `CRM-012`. Annoncer un refus général serait
 devenu faux.
+
+### 2.8 Workflow par défaut — ajouté par `CRM-031`
+
+Un workflow `global`, par défaut du workspace, ses sept étapes et ses dix transitions. Contrat
+détaillé et motifs : `docs/SPEC-workflow-engine.md` §3.9.
+
+| id | nom | portée | par défaut | étapes | transitions |
+|---|---|---|---|---|---|
+| `…051` | Cycle commercial standard | `global` | oui | 7 | 10 |
+
+Les étapes portent les identifiants `…061` à `…067`, dans l'ordre du catalogue actif ; les
+transitions, `…071` à `…07a`.
+
+Quatre propriétés sont démontrées, et non une seule :
+
+- **une étape initiale, et une seule** — la base garantit « au plus une » (§3.5), le seed fournit
+  l'autre moitié de l'exigence, que la base ne peut pas imposer ;
+- **deux surcharges, sur deux colonnes différentes** — `negociation` raccourcit son seuil de
+  relance à 5 jours, `realisation` prend le libellé « Réalisation en cours ». Sans elles, la
+  faculté de surcharger serait documentée sans être démontrable ;
+- **quatre transitions exigent un commentaire**, celles qui mènent à « Perdu » — sans quoi
+  `require_comment` ne serait jamais exercée. Ce choix est nommé au §3.9 et renversable ;
+- **`Réalisation → Perdu` n'est pas déclarée**, conformément au point ouvert n° 1 de la
+  spécification : une absence se démontre comme le reste, et `scripts/verify-workflows.sh` la
+  vérifie.
+
+Le nœud archivé `qualification` reste **hors** du workflow : un vocabulaire retiré ne s'instancie
+pas. `require_fields` reste vide partout, `form_fields` n'existant pas (`CRM-035`) — le seed ne
+fabrique pas une donnée que le modèle ne sait pas encore produire.
+
+**Les six channels reçoivent ce workflow.** Ils étaient sans `workflow_id` depuis `CRM-021`, faute
+de table `workflows` (INC-029). Le rattachement se fait en fin de section 6 du script, et non dans
+la section des channels : à ce moment-là, le workflow n'existe pas encore, ses étapes instanciant
+des nœuds du catalogue créé après eux.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
@@ -317,8 +352,9 @@ devenu faux.
   est nommé ici pour que `CRM-014` sache qu'il devra soit étendre le seed, soit continuer de
   fabriquer ses propres comptes. Ce n'est pas une contradiction, seulement une frontière d'unité.
 - **Aucun droit fin.** Voir §2.2 : les tables cibles n'existent pas.
-- **Aucune donnée métier** — ni track, ni channel, ni workflow, ni card, ni message : aucune de ces
-  tables n'est livrée. C'est l'objet de `CRM-046`.
+- **Aucune card, aucun message.** Les tracks, les channels, le catalogue de nœuds et le workflow
+  par défaut sont désormais seedés (`CRM-020`, `CRM-021`, `CRM-030`, `CRM-031`) ; les cards et les
+  messages restent l'objet de `CRM-046`.
 - **Aucun écran, aucune vérification visuelle.** Le seed n'atteint pas l'interface, dont le premier
   écran arrive avec `CRM-007`.
 - **Le seed ne crée pas ses comptes depuis le produit.** Le parcours d'invitation n'a aucun

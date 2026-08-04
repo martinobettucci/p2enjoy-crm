@@ -100,7 +100,7 @@ tables d'identité (`docs/JOURNAL.md`, décisions 21 et 26).
 | `tracks` | `app.can_read_track` — **livré par `CRM-020` avec `app.is_workspace_member`**, les droits fins restant dus (INC-024) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-tracks.md` §4) |
 | `channels` | `app.can_read_channel` — **livré par `CRM-021` avec `app.is_workspace_member`**, les droits fins restant dus (INC-030) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-channels.md` §4) |
 | `workflow_nodes_catalog` | Membres du workspace — **livré par `CRM-030`** avec `app.is_workspace_member`, qui **est** la règle spécifiée et non un repli : aucun droit fin ne gouverne le catalogue | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-workflow-engine.md` §2.6) |
-| `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace | `admin` |
+| `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace — **livré par `CRM-031`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un workflow | `admin` ; **la suppression est exposée aux étapes et aux transitions**, et à elles seules — elles sont la composition d'un workflow et n'ont aucun `archived_at` (`docs/SPEC-workflow-engine.md` §3.7, `docs/JOURNAL.md` décision 74). Un workflow, lui, s'archive |
 | `form_fields`, `form_field_rules` | Membres du workspace | `admin` |
 | `cards` | `app.can_read_card` | `app.can_write_channel` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement** |
 | `card_field_values` | Lecture de la card | Écriture sur le channel |

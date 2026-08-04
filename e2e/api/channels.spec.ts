@@ -21,6 +21,9 @@ import { COMPTES_SEED, enTetesAnonymes, enTetesAuthentifies, enTetesService, jet
 /** Le workspace du seed socle (`docs/SPEC-seed.md` §2). */
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 
+/** Le workflow par défaut du seed, auquel `CRM-031` rattache les six channels (§3.9). */
+const WORKFLOW_SEED = '5eed0000-0000-4000-8000-000000000051'
+
 /** Les tracks du seed qui portent des channels (`docs/SPEC-channels.md` §8). */
 const TRACK_CONSEIL = '5eed0000-0000-4000-8000-000000000021'
 const TRACK_STUDIO = '5eed0000-0000-4000-8000-000000000022'
@@ -97,9 +100,11 @@ test.describe('C0 — la table contient réellement des lignes', () => {
 		expect(lignes).toHaveLength(6)
 		expect(lignes.filter((c) => c.archived_at !== null)).toHaveLength(1)
 		expect(new Set(lignes.map((c) => c.track_id)).size).toBe(3)
-		// INC-029 : `workflow_id` est nul partout, et c'est l'état réel du produit jusqu'à
-		// `CRM-031`. Le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire.
-		expect(lignes.every((c) => c.workflow_id === null)).toBe(true)
+		// INC-029, révisée par `CRM-031` : `workflow_id` était nul partout tant que `workflows`
+		// n'existait pas. La table existe, la clé étrangère est posée, et le seed rattache les six
+		// channels au workflow par défaut — chacun a donc enfin un board. La contrainte `NOT NULL`
+		// reste due par `CRM-033`.
+		expect(lignes.every((c) => c.workflow_id === WORKFLOW_SEED)).toBe(true)
 	})
 })
 

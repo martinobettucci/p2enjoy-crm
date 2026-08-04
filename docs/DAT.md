@@ -353,7 +353,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) |
 | Formulaires | `form_fields`, `form_field_rules`, `card_field_values` |
 | Cards | `cards`, `card_comments`, `card_activities`, `card_events`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` |
 | Relations | `organizations`, `contacts`, `card_contacts` |
@@ -395,12 +395,18 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
   fonctions `can_*` restent différées — `docs/INCONSISTENCY_REPORT.md`, INC-013.
 - **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks`,
-  `CRM-021` trois sur `public.channels` et `CRM-030` trois sur `public.workflow_nodes_catalog` —
+  `CRM-021` trois sur `public.channels`, `CRM-030` trois sur `public.workflow_nodes_catalog` et
+  `CRM-031` **neuf** sur les trois tables de workflow —
   lecture par `app.is_workspace_member`, insertion et mise à jour par `app.is_workspace_admin`,
   **aucune suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés
   par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
-  (**28 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**), `e2e/api/tracks.spec.ts`,
-  `e2e/api/channels.spec.ts` et `e2e/api/catalogue-noeuds.spec.ts`.
+  (**30 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**),
+  `scripts/verify-workflows.sh` (**39 contrôles hors suites**), `e2e/api/tracks.spec.ts`,
+  `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts` et `e2e/api/workflows.spec.ts`.
+  Sur les workflows, la suppression physique est **exposée aux étapes et aux transitions**, et à
+  elles seules : elles sont la composition d'un workflow et n'ont aucun `archived_at`
+  (`docs/JOURNAL.md`, décision 74). C'est le seul endroit du produit livré où un client peut
+  supprimer une ligne.
   Sur `tracks` et `channels`, ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
   `app.can_read_channel` et `app.can_write_channel` étant différées : INC-024 et INC-030, à
   resserrer par `CRM-012`. Sur le **catalogue de nœuds**, l'absence de droit fin n'est pas un

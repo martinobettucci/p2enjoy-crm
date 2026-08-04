@@ -81,37 +81,41 @@ select has_function('app', 'channels_attribuer_position',
 	'la fonction du trigger d''ordre existe');
 
 -- =============================================================================================
--- 2. INC-029 — `workflow_id` : l'écart est constaté, pas commenté
+-- 2. INC-029 — `workflow_id` : l'écart, revu par `CRM-031`
 -- =============================================================================================
--- `docs/SCHEMA.md` §2 exige `workflow_id` **non nul** et référencée vers `workflows`. La table
--- n'existe pas : elle arrive avec `CRM-031`. Les trois assertions qui suivent **deviendront
--- rouges** ce jour-là et forceront la reprise de `docs/SPEC-channels.md` §2.5. C'est le mécanisme
--- de la décision 51, et non un contournement.
+-- `docs/SCHEMA.md` §2 exige `workflow_id` **non nulle et référencée** vers `workflows`. Au moment
+-- de `CRM-021`, la table n'existait pas et trois assertions figeaient cet état pour devenir rouges
+-- à `CRM-031`. **Elles l'ont fait**, et sont ici révisées avec le code : le mécanisme de la
+-- décision 51 a fonctionné une quatrième fois.
+--
+-- Ce qui a changé : la clé étrangère existe, et elle est **composite** — le workflow d'un channel
+-- appartient au même workspace, garanti par la base. Ce qui n'a pas changé : la colonne reste
+-- **nullable**, la contrainte `NOT NULL` revenant à `CRM-033` avec le contrat de création d'un
+-- channel qu'elle modifie. INC-029 reste donc ouverte, et l'assertion suivante deviendra rouge à
+-- son tour ce jour-là.
 
 select has_column('public', 'channels', 'workflow_id',
-	'INC-029 : la colonne `workflow_id` est livrée, même sans ses contraintes');
+	'INC-029 : la colonne `workflow_id` est livrée');
 
 select ok(
 	(select not attnotnull from pg_attribute
 	  where attrelid = 'public.channels'::regclass and attname = 'workflow_id'),
-	'INC-029 : `workflow_id` est **nullable** — docs/SCHEMA.md §2 l''exige non nulle. Cette '
-	'assertion deviendra rouge à `CRM-031`');
+	'INC-029 : `workflow_id` est **encore nullable** — docs/SCHEMA.md §2 l''exige non nulle. La '
+	'contrainte revient à `CRM-033` ; cette assertion deviendra rouge ce jour-là');
 
-select is(
-	(select count(*)::int from pg_constraint
-	  where conrelid = 'public.channels'::regclass and contype = 'f'
-	    and conkey = array[(select attnum from pg_attribute
-	                         where attrelid = 'public.channels'::regclass
-	                           and attname = 'workflow_id')]),
-	0,
-	'INC-029 : `workflow_id` ne porte **aucune** clé étrangère — la table `workflows` n''existe '
-	'pas encore');
+select ok(
+	exists (select 1 from pg_constraint
+	         where conname = 'channels_workflow_id_workspace_id_fkey'
+	           and conrelid = 'public.channels'::regclass
+	           and contype = 'f'),
+	'INC-029, levée pour la clé étrangère par `CRM-031` : `workflow_id` est référencée, et de '
+	'façon **composite** avec `workspace_id`');
 
-select is(
+select isnt(
 	(select to_regclass('public.workflows')::text),
 	null,
-	'INC-029 : `public.workflows` n''existe pas — c''est la cause de l''écart, mesurée et non '
-	'supposée. Cette assertion deviendra rouge à `CRM-031`');
+	'INC-029 : `public.workflows` existe depuis `CRM-031` — la cause de l''écart a disparu, la '
+	'moitié qui restait est nommée ci-dessus');
 
 -- =============================================================================================
 -- 3. INC-010 — la seconde clé étrangère différée par `CRM-003` est rétablie

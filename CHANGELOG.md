@@ -35,6 +35,38 @@ d'exécuter le code attendu.
     — mesuré, et propriété du type, non différé d'ordonnancement.
   - **`INC-029` et `INC-031` mises à jour**, sans être closes.
 
+### Ajouté
+
+- **`CRM-031` — Workflows, étapes et transitions (`[~]`).** Le graphe des états d'une card :
+  `workflows`, `workflow_steps`, `workflow_transitions`, **neuf politiques RLS**, et le workflow par
+  défaut du seed — « Cycle commercial standard », sept étapes, dix transitions.
+  - **Une transition ne peut pas sortir de son workflow, et c'est structurel** : clés étrangères
+    **composites** `(step_id, workflow_id)`, refus mesuré en `23503`. Trois autres cohérences suivent
+    le même procédé — le track d'un workflow, le nœud d'une étape et le workflow d'un channel
+    appartiennent tous au workspace attendu, garanti par la base et non surveillé par un trigger.
+  - **Au plus une étape initiale par workflow**, par index unique partiel. « Au moins une » n'est
+    **pas** imposable à l'écriture : mesuré, un `constraint trigger` différé rendrait la création
+    d'un workflow impossible par l'API. Un workflow sans étape initiale est un brouillon, écrit dans
+    la spécification plutôt que découvert plus tard.
+  - **La suppression est exposée aux étapes et aux transitions, et à elles seules** : seul endroit
+    du produit livré où un client peut supprimer une ligne. Un workflow s'archive ; sa suppression
+    est refusée **par le privilège**, avant même la politique.
+  - **Preuves de refus n° 2, n° 3 et n° 11** acquises au niveau des workflows, hors interface, avec
+    les jetons réels des trois profils.
+  - **`INC-029` levée pour la clé étrangère** : `channels.workflow_id` est enfin référencée, de
+    façon composite, et les six channels du seed portent le workflow par défaut. La contrainte
+    `NOT NULL` reste due par `CRM-033`.
+  - **Preuves** : `supabase/tests/0007_workflows.test.sql` **106 assertions**,
+    `e2e/api/workflows.spec.ts` **21 scénarios**, `scripts/verify-workflows.sh` **46 contrôles**,
+    non complaisant — trois dégradations réelles, restauration constatée.
+  - **Quatre garde-fous figés par les unités précédentes sont devenus rouges et ont été révisés**
+    dans le même changement, dont les compteurs du harnais (454 / 75 / 37 → **559 / 96 / 37**).
+  - **Décisions 76 et 77** : le comptage de pgTAP est sensible aux savepoints, et une ligne
+    doublement fautive est refusée par sa contrainte de valeur avant son unicité. Les deux ont été
+    établies par un échec d'assertion, non par une lecture de documentation.
+  - **Reste dû, et nommé** : aucun éditeur d'administration, aucun E2E d'interface, aucune capture —
+    la webapp est un appelant anonyme (INC-021). L'unité reste `[~]`.
+
 ### Intégré
 
 - **`CRM-030` reportée sur `main`, puis intégralement revérifiée sur ce socle.** L'unité avait été

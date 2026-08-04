@@ -127,7 +127,7 @@ Livrée par `CRM-021`. Spécification complète : `docs/SPEC-channels.md`.
 | `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
 | `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique **par track** |
 | `description` | `text` | |
-| `workflow_id` | `uuid` | *devrait être* FK `workflows`, non nul — **livrée nullable et sans clé étrangère** jusqu'à `CRM-031`, voir ci-dessous |
+| `workflow_id` | `uuid` | FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)` depuis `CRM-031` ; **encore nullable**, la contrainte `NOT NULL` revenant à `CRM-033`, voir ci-dessous |
 | `position` | `numeric` | non nul, ordre des onglets **dans son track** ; attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, défaut `now()` ; `updated_at` maintenue par `app.set_updated_at()` |
@@ -153,12 +153,19 @@ qu'elle contient (`docs/SPEC-channels.md` §2.4, `docs/JOURNAL.md` décision 60)
 **La clé étrangère `channel_members.channel_id → channels.id` est posée par cette migration** :
 c'est la seconde moitié d'INC-010, que `CRM-021` referme.
 
-**`workflow_id` : écart assumé, consigné, figé par des assertions.** Ce tableau l'exige non nulle
-et référencée. La table `workflows` est livrée par `CRM-031`, que `docs/MASTER_PLAN.md` §2 place
-**après** `CRM-021` ; mesuré, `to_regclass('public.workflows')` rend `NULL`. La colonne est donc
-livrée **nullable et sans clé étrangère**, et trois assertions de
-`supabase/tests/0005_channels.test.sql` le constatent — elles deviendront rouges à `CRM-031` et
-forceront la reprise. `docs/INCONSISTENCY_REPORT.md`, **INC-029**.
+**`workflow_id` : écart réduit de moitié par `CRM-031`, et non clos.** Ce tableau l'exige non nulle
+et référencée. `CRM-021` avait dû livrer la colonne nue, `workflows` n'existant pas, et trois
+assertions figeaient cet état ; elles sont **devenues rouges à `CRM-031`**, comme prévu, et ont été
+révisées avec le code.
+
+Ce qui est acquis : la clé étrangère existe, et elle est **composite** —
+`(workflow_id, workspace_id) → workflows (id, workspace_id)` —, de sorte que le workflow d'un
+channel appartienne au même workspace, garanti par la base. Le seed rattache les six channels au
+workflow par défaut.
+
+Ce qui reste dû : la contrainte `NOT NULL`, qui change le **contrat de création d'un channel** et
+revient donc à `CRM-033` avec le trigger de cohérence qu'elle accompagne.
+`docs/INCONSISTENCY_REPORT.md`, **INC-029**, mise à jour et toujours ouverte.
 
 **Contrainte non exprimable en clé étrangère, différée à `CRM-033`** — un trigger garantira que
 `workflow_id` désigne soit un workflow de portée `global` du même workspace, soit un workflow de
@@ -227,6 +234,19 @@ Catalogue initial livré par le seed : `prospection`, `relance`, `negociation`, 
 
 Contrainte : `CHECK ((scope='global' AND track_id IS NULL) OR (scope='track' AND track_id IS NOT NULL))`.
 
+Précisions apportées par `CRM-031`, après mesure (`docs/SPEC-workflow-engine.md` §3.2 à §3.7) :
+
+- `created_at` / `updated_at` sont livrées, comme les conventions générales l'exigent et comme le
+  tableau ci-dessus les omet — quatrième occurrence d'INC-025 ;
+- `track_id` porte une clé étrangère **composite** `(track_id, workspace_id) → tracks (id,
+  workspace_id)` : le track d'un workflow appartient au même workspace, garanti par la base ;
+- `is_default` : **au plus un** vrai par workspace, par index unique partiel. « Au plus » et non
+  « exactement » — un workspace neuf n'a aucun workflow ;
+- `derived_from_workflow_id` est `on delete set null` : la copie est une divergence assumée, et
+  supprimer l'original ne doit pas emporter ses copies. `derived_at` l'accompagne obligatoirement ;
+- **aucune suppression n'est exposée** sur `workflows` : ni politique `for delete`, ni privilège.
+  L'archivage tient lieu de suppression, comme pour les tracks, les channels et le catalogue.
+
 ### `workflow_steps`
 Instanciation d'un nœud du catalogue dans un workflow.
 
@@ -243,6 +263,24 @@ Instanciation d'un nœud du catalogue dans un workflow.
 
 Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow.
 
+Précisions apportées par `CRM-031`, après mesure :
+
+- la table porte `workspace_id`, comme les conventions générales l'exigent de toute table métier ;
+  sa **véracité** est garantie par la clé composite `(workflow_id, workspace_id) → workflows (id,
+  workspace_id)`, non supposée ;
+- `node_id` porte une clé composite `(node_id, workspace_id)` vers le catalogue, en `on delete
+  restrict` : un nœud instancié ne se supprime pas sous ses étapes ;
+- unique également : `(id, workflow_id)`, **condition** des clés composites des transitions ;
+- `is_initial` : **au plus une** vraie par workflow, par index unique partiel. « Au moins une » n'est
+  pas imposable à l'écriture — mesuré : un `constraint trigger` différé rendrait la création d'un
+  workflow impossible par l'API (`docs/SPEC-workflow-engine.md` §3.5, `docs/JOURNAL.md`
+  décision 72). Un workflow sans étape initiale est un **brouillon**, valide et inutilisable ;
+- `position` est attribuée par trigger dans la portée du **workflow** lorsqu'elle est omise ;
+- les surcharges sont nullables, et `NULL` signifie « prendre la valeur du catalogue », jamais zéro ;
+- la **suppression physique est exposée** aux administrateurs, ici et sur les transitions
+  seulement : une étape est la composition d'un workflow, pas un objet à durée de vie propre, et
+  aucun `archived_at` ne lui est donné (décision 74).
+
 ### `workflow_transitions`
 Arêtes autorisées. **Une transition non déclarée est refusée.** Les cycles sont permis
 (négociation → relance), ainsi que les branches vers un nœud terminal.
@@ -258,6 +296,16 @@ Arêtes autorisées. **Une transition non déclarée est refusée.** Les cycles 
 | `require_fields` | `uuid[]` | champs exigés en plus de ceux requis par l'étape cible |
 
 Unique : `(workflow_id, from_step_id, to_step_id)`.
+
+Précisions apportées par `CRM-031`, après mesure :
+
+- les deux extrémités portent une clé étrangère **composite** `(step_id, workflow_id)` : une
+  transition ne peut pas sortir de son workflow, refus mesuré en `23503`. Supprimer une étape
+  emporte ses arêtes (`on delete cascade`) ;
+- `workspace_id` est porté et garanti comme pour les étapes ;
+- `require_fields` ne peut porter **aucune** intégrité référentielle : PostgreSQL refuse une clé
+  étrangère depuis une colonne tableau. Ce n'est pas un différé en attendant `form_fields`, c'est
+  une propriété du type — `docs/INCONSISTENCY_REPORT.md`, INC-033.
 
 ---
 

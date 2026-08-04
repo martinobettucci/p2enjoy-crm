@@ -2939,3 +2939,77 @@ contrat de seed, et porté au §9 comme point ouvert n° 4 plutôt que présent�
   n'adopte pas l'option 2 — rattacher la garde d'archivage à cette unité en la limitant à
   l'occupation par une étape —, parce qu'elle est **plus stricte** que la règle spécifiée et que
   l'adopter en silence trancherait à la place du responsable.
+
+---
+
+## 2026-08-04 — `CRM-031` : les workflows livrés, et une exigence que la base ne peut pas tenir
+
+L'unité livre les trois tables du graphe des états, leurs neuf politiques, le seed du workflow par
+défaut et la clé étrangère qu'INC-029 avait différée. Ce qui suit n'est pas le récit du code, mais
+ce que la mesure a appris pendant qu'il s'écrivait.
+
+### Décision 76 — Le comptage de pgTAP est sensible aux savepoints, et cela dicte l'écriture des suites
+
+**Fait mesuré, et découvert par un échec.** La suite a d'abord été écrite comme celles de `CRM-030`
+et de `CRM-021` : chaque profil endossé isolé dans un `savepoint … rollback to savepoint`. Résultat
+mesuré : **106 assertions émises, 86 comptées**. `finish()` annonçait « planned 96 but ran 85 »,
+puis `scripts/run-sql-tests.sh` refusait la suite en « plan annoncé 86, 106 assertions émises ».
+
+La cause a été isolée en tronquant la suite section par section : les résultats de pgTAP vivent dans
+une table, qu'un `rollback to savepoint` annule comme le reste, alors que la numérotation, portée
+par une séquence, poursuit. Une assertion rejouée dans un savepoint annulé **s'affiche** — et
+échoue bruyamment si elle doit échouer — mais **ne compte pas**.
+
+**Décision.** Les blocs d'autorisation de `supabase/tests/0007_workflows.test.sql` n'annulent rien :
+ils rendent la main au rôle superutilisateur et **défont explicitement** leurs écritures. Une arête
+supprimée par un administrateur est réinsérée avec la clé de service avant la preuve suivante, de
+sorte que « le `business_developer` n'a rien supprimé » porte sur une arête réellement présente.
+
+**Pourquoi ne pas simplement aligner le plan sur 86.** Parce que les deux gardes disent des choses
+différentes — pgTAP compare le plan à ce qu'il a **enregistré**, le harnais à ce qu'il a **vu
+passer** — et qu'aligner l'une aurait laissé l'autre en contradiction. Un fichier de preuves dont la
+sortie se contredit n'est pas une preuve.
+
+**Ce que cela ne dit pas.** Les suites `0002`, `0004`, `0005` et `0006` emploient toujours des
+savepoints et restent vertes, plan tenu. La différence n'a pas été élucidée, et elle n'a pas été
+supposée : ce qui est écrit ici est ce qui a été mesuré sur **cette** suite. Le fait est consigné
+dans son en-tête pour que la prochaine ne le redécouvre pas.
+
+### Décision 77 — Une ligne doublement fautive est refusée par sa contrainte de valeur, pas par son unicité
+
+**Fait mesuré, et lui aussi établi par un échec d'assertion.** Une transition portant à la fois un
+libellé blanc et un couple `(from, to)` déjà déclaré est refusée en `23514` — la contrainte de
+valeur —, non en `23505`. L'assertion avait été écrite dans l'autre sens, par symétrie avec le
+catalogue ; elle a échoué, et c'est cet échec qui a fixé l'ordre d'évaluation.
+
+Le fait compte pour la suite : une preuve future qui attendrait un conflit d'unicité sur une ligne
+par ailleurs invalide échouerait pour une raison sans rapport avec ce qu'elle croit vérifier — et
+serait « corrigée » en relâchant la mauvaise contrainte. C'est le même piège que l'arrondi de
+`numeric(5,2)` mesuré à `CRM-030` (décision 68).
+
+### Ce que quatre garde-fous ont coûté, et ce qu'ils ont rapporté
+
+Le mécanisme de la décision 51 a fonctionné une **quatrième** fois, et à plus grande échelle que
+jamais : trois assertions pgTAP de `CRM-021`, deux de `CRM-030`, un contrôle de
+`scripts/verify-catalogue.sh`, un de `scripts/verify-channels.sh`, un scénario d'API de `CRM-021`,
+une assertion de type et les trois compteurs de `scripts/verify-harness.sh` sont **devenus rouges**
+en même temps que la migration devenait verte.
+
+Aucun n'a été contourné. Chacun a été révisé dans le même changement, et deux d'entre eux disent
+désormais l'inverse de ce qu'ils disaient — `workflows` existe, `channels.workflow_id` est
+référencée — tout en conservant la moitié qui reste due : la colonne est encore nullable, et
+l'assertion qui le constate deviendra rouge à `CRM-033`.
+
+C'est le coût annoncé de cette pratique, et il est modeste au regard de ce qu'il évite : sans ces
+assertions, INC-029 et INC-031 auraient survécu à leur cause, et la clé étrangère de `channels`
+serait restée absente sans que rien ne le signale.
+
+### Ce que l'unité ne livre pas, et qui n'est pas un oubli
+
+- **L'éditeur de workflow**, exigé par la Definition of Done. Il suppose un écran d'administration
+  authentifié ; la webapp reste un appelant anonyme (INC-021). Cinquième unité consécutive du
+  chunk 3 à buter sur cet arbitrage.
+- **La contrainte `NOT NULL` de `channels.workflow_id`** : elle change le contrat de création d'un
+  channel et revient à `CRM-033` (INC-029, mise à jour).
+- **La garde d'archivage d'un nœud occupé** : `workflow_steps` existe, `cards` non (INC-031). Le
+  chemin est à moitié praticable, ce qui ne suffit pas.

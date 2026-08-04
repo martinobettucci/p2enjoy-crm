@@ -3,9 +3,10 @@
 # @spec CRM-020 (docs/BACKLOG.md) — tracks de démonstration, dont un archivé
 # @spec CRM-021 (docs/BACKLOG.md) — channels de démonstration, dont un archivé
 # @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
+# @spec CRM-031 (docs/BACKLOG.md) — workflow par défaut, ses étapes et ses transitions
 # @spec docs/SPEC-seed.md §2 (contrat), §3 (mécanismes mesurés), §4 (identifiants), §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
-# @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial livré par le seed)
+# @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial), §3.9 (workflow par défaut)
 # @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation), §3 (workflows)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
@@ -113,8 +114,10 @@ TRACKS=(
 # `appels-offres` est **archivé**, pour que l'état le soit aussi côté channels et non seulement
 # documenté (`CLAUDE.md` §8).
 #
-# `workflow_id` est laissé **nul** partout : c'est l'état réel du produit jusqu'à `CRM-031`
-# (INC-029). Le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire.
+# `workflow_id` n'est pas écrit ici : le workflow n'existe pas encore à ce point du script, ses
+# étapes instanciant des nœuds du catalogue créé plus bas. Les six channels sont rattachés au
+# workflow par défaut en **fin de section 6**, une fois celui-ci créé (INC-029, levée pour la clé
+# étrangère ; la contrainte `NOT NULL` reste due par `CRM-033`).
 #
 # `position` est écrite explicitement, pour le même motif que les tracks : un ordre attribué par
 # effet de bord ne serait pas reproductible si l'ordre des insertions changeait.
@@ -158,6 +161,63 @@ NOEUDS=(
 	'5eed0000-0000-4000-8000-000000000046|livre|Livré|won|success|100|-|6|-'
 	'5eed0000-0000-4000-8000-000000000047|perdu|Perdu|lost|danger|0|-|7|-'
 	'5eed0000-0000-4000-8000-000000000048|qualification|Qualification|open|neutral|5|21|8|2026-03-01T09:00:00Z'
+)
+
+# Workflow par défaut du workspace — docs/SPEC-workflow-engine.md §3.9.
+#
+# Un seul workflow, `global`, par défaut du workspace. Sept étapes, une par nœud **actif** du
+# catalogue : le nœud archivé `qualification` reste hors du workflow, un vocabulaire retiré ne
+# s'instanciant pas.
+#
+# Deux surcharges, sur deux colonnes différentes, sans quoi la faculté de surcharger serait
+# documentée sans être démontrable (`CLAUDE.md` §8) : `negociation` raccourcit son seuil de relance,
+# `realisation` change son libellé. Une surcharge absente vaut « prendre la valeur du catalogue »,
+# jamais zéro — elle est donc envoyée **null** et non omise, pour qu'un rejeu convergent efface une
+# valeur posée à la main.
+#
+# `position` est écrite explicitement, pour le même motif que les tracks, les channels et les
+# nœuds : un ordre attribué par effet de bord ne serait pas reproductible si l'ordre des insertions
+# changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
+WF_ID=5eed0000-0000-4000-8000-000000000051
+WF_NOM='Cycle commercial standard'
+
+# id | nœud | position | initiale (oui/non) | libellé surchargé (ou « - ») | probabilité (ou « - »)
+#    | seuil surchargé (ou « - »)
+ETAPES=(
+	'5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000041|1|oui|-|-|-'
+	'5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000042|2|non|-|-|-'
+	'5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000043|3|non|-|-|5'
+	'5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000044|4|non|-|-|-'
+	'5eed0000-0000-4000-8000-000000000065|5eed0000-0000-4000-8000-000000000045|5|non|Réalisation en cours|-|-'
+	'5eed0000-0000-4000-8000-000000000066|5eed0000-0000-4000-8000-000000000046|6|non|-|-|-'
+	'5eed0000-0000-4000-8000-000000000067|5eed0000-0000-4000-8000-000000000047|7|non|-|-|-'
+)
+
+# Dix transitions, exactement celles du graphe de docs/SPEC-workflow-engine.md §3.9 : la
+# progression linéaire, le retour Négociation → Relance, et le passage vers Perdu depuis les quatre
+# premières étapes. **Réalisation → Perdu n'est pas déclaré** : une affaire signée qui échoue relève
+# d'un autre traitement, point ouvert n° 1 de la spécification.
+#
+# Les quatre transitions vers Perdu **exigent un commentaire** : une affaire perdue sans motif n'est
+# exploitable par aucune analyse, et c'est la seule transition du graphe dont la raison ne se déduit
+# pas de l'étape d'arrivée. Choix pris faute d'énoncé d'origine, nommé au §3.9 et renversable ici
+# même (docs/JOURNAL.md, décision 75).
+#
+# `require_fields` reste vide partout : `form_fields` n'existe pas (`CRM-035`), et le seed ne
+# fabrique pas une donnée que le modèle ne sait pas encore produire.
+#
+# id | étape de départ | étape d'arrivée | libellé | commentaire exigé (oui/non)
+TRANSITIONS=(
+	'5eed0000-0000-4000-8000-000000000071|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000062|Relancer|non'
+	'5eed0000-0000-4000-8000-000000000072|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000063|Engager la négociation|non'
+	'5eed0000-0000-4000-8000-000000000073|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000064|Passer en signature|non'
+	'5eed0000-0000-4000-8000-000000000074|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000065|Démarrer la réalisation|non'
+	'5eed0000-0000-4000-8000-000000000075|5eed0000-0000-4000-8000-000000000065|5eed0000-0000-4000-8000-000000000066|Marquer comme livré|non'
+	'5eed0000-0000-4000-8000-000000000076|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000062|Revenir en relance|non'
+	'5eed0000-0000-4000-8000-000000000077|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
+	'5eed0000-0000-4000-8000-000000000078|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
+	'5eed0000-0000-4000-8000-000000000079|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
+	'5eed0000-0000-4000-8000-00000000007a|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
 )
 
 # --- Accès à l'API -----------------------------------------------------------------------------
@@ -382,7 +442,87 @@ for ligne in "${NOEUDS[@]}"; do
 		"$cle" "$type" "$couleur" "$affiche_proba" "$affiche_seuil" "$etat"
 done
 
-# --- 6. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
+# --- 6. Workflow par défaut — docs/SPEC-workflow-engine.md §3.9 --------------------------------
+# Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
+# convergente sur `id`.
+#
+# Cette section vient **après** le catalogue parce qu'une étape instancie un nœud, et après les
+# channels parce que l'ordre d'affichage des sections suit celui du produit. Le rattachement des
+# channels au workflow se fait donc ici, en fin de section, plutôt que dans la section 4 : à ce
+# moment-là, le workflow n'existait pas encore.
+
+echo
+say "6. Workflow par défaut"
+
+charge=$(jq -nc --arg id "$WF_ID" --arg ws "$WS_ID" --arg nom "$WF_NOM" \
+	'{id: $id, workspace_id: $ws, name: $nom, scope: "global", track_id: null,
+	  derived_from_workflow_id: null, derived_at: null, is_default: true, archived_at: null}')
+code=$(api POST /rest/v1/workflows \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création du workflow $WF_NOM" 200 201
+info "$WF_NOM — global, par défaut du workspace"
+
+for ligne in "${ETAPES[@]}"; do
+	IFS='|' read -r id noeud position initiale libelle proba seuil <<< "$ligne"
+
+	[ "$initiale" = 'oui' ] && initiale_json='true' || initiale_json='false'
+	[ "$libelle" = '-' ] && libelle_json='null'  || libelle_json="\"$libelle\""
+	[ "$proba"   = '-' ] && proba_json='null'    || proba_json="$proba"
+	[ "$seuil"   = '-' ] && seuil_json='null'    || seuil_json="$seuil"
+
+	charge=$(jq -nc --arg id "$id" --arg wf "$WF_ID" --arg ws "$WS_ID" --arg noeud "$noeud" \
+	               --argjson position "$position" --argjson initiale "$initiale_json" \
+	               --argjson libelle "$libelle_json" --argjson proba "$proba_json" \
+	               --argjson seuil "$seuil_json" \
+	     '{id: $id, workflow_id: $wf, workspace_id: $ws, node_id: $noeud, position: $position,
+	       is_initial: $initiale, label_override: $libelle, probability_override: $proba,
+	       stale_after_days: $seuil}')
+
+	code=$(api POST /rest/v1/workflow_steps \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de l'étape $position du workflow" 200 201
+
+	cle=$(jq -r '.[0].node_id // empty' "$CORPS")
+	[ "$initiale" = 'oui' ] && marque='initiale' || marque='        '
+	[ "$libelle" = '-' ] && surcharge='' || surcharge="libellé « $libelle »"
+	[ "$seuil"   = '-' ] || surcharge="seuil $seuil j"
+	printf '  étape %s  %s  %s\n' "$position" "$marque" "$surcharge"
+done
+
+for ligne in "${TRANSITIONS[@]}"; do
+	IFS='|' read -r id depuis vers libelle commentaire <<< "$ligne"
+
+	[ "$commentaire" = 'oui' ] && commentaire_json='true' || commentaire_json='false'
+
+	charge=$(jq -nc --arg id "$id" --arg wf "$WF_ID" --arg ws "$WS_ID" --arg depuis "$depuis" \
+	               --arg vers "$vers" --arg libelle "$libelle" \
+	               --argjson commentaire "$commentaire_json" \
+	     '{id: $id, workflow_id: $wf, workspace_id: $ws, from_step_id: $depuis, to_step_id: $vers,
+	       label: $libelle, require_comment: $commentaire, require_fields: []}')
+
+	code=$(api POST /rest/v1/workflow_transitions \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la transition « $libelle »" 200 201
+done
+info "Étapes : ${#ETAPES[@]} — transitions : ${#TRANSITIONS[@]}, dont 4 exigeant un commentaire"
+
+# Rattachement des six channels au workflow par défaut — docs/SPEC-workflow-engine.md §3.9.
+# `CRM-021` avait laissé `workflow_id` nul partout, faute de table `workflows` (INC-029). La clé
+# étrangère existe depuis `CRM-031` ; le seed peut donc enfin livrer des channels dotés d'un board.
+# La contrainte `NOT NULL` reste due par `CRM-033`.
+for ligne in "${CHANNELS[@]}"; do
+	IFS='|' read -r id _reste <<< "$ligne"
+	code=$(api PATCH "/rest/v1/channels?id=eq.$id" \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg wf "$WF_ID" '{workflow_id: $wf}')")
+	attendu "$code" "rattachement du channel $id au workflow" 200
+done
+info "Channels rattachés au workflow : ${#CHANNELS[@]}"
+
+# --- 7. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
 # ou dans l'autre tromperait celui qui lit cette sortie.
@@ -400,10 +540,12 @@ info "Comptes : ${#COMPTES[@]}, un par rôle — mot de passe commun publié dan
 info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
 info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks — docs/SPEC-channels.md §8"
 info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
+info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
-info "tracks, channels et workflow_nodes_catalog sont lisibles par un membre du workspace, et par lui seul"
-info "(CRM-020, CRM-021, CRM-030). Aucun workflow n'existe encore : CRM-031."
+info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps et workflow_transitions"
+info "sont lisibles par un membre du workspace, et par lui seul (CRM-020, CRM-021, CRM-030, CRM-031)."
 info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
+info "workflows : scripts/verify-workflows.sh"

@@ -16,8 +16,9 @@
 #      rétablie par un rejeu, et non laissée manquante (décision 57) ;
 #   4. le seed est **convergent** : rejoué, il laisse exactement huit nœuds, dont un archivé, les
 #      cinq jetons du design system exercés et les deux nœuds terminaux sans seuil de relance ;
-#   5. INC-031 est **constatée** : les tables dont dépend la garde d'archivage n'existent toujours
-#      pas, et aucun trigger ne prétend porter cette garde ;
+#   5. INC-031 est **constatée** : `cards`, dont dépend la garde d'archivage, n'existe toujours pas
+#      — `workflow_steps` a été livrée par `CRM-031` —, et aucun trigger ne prétend porter cette
+#      garde ;
 #   6. le contrat d'API est rejoué avec les jetons réels des trois profils seedés ;
 #   7. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
 #      échouer, et la restauration est constatée, pas supposée.
@@ -32,8 +33,9 @@
 # (`docs/INCONSISTENCY_REPORT.md`, INC-021).
 #
 # Il ne prouve pas non plus le refus d'archivage d'un nœud occupé, exigé par la Definition of Done :
-# ses tables cibles n'existent pas (INC-031). Ce que le harnais fait, c'est **vérifier que cette
-# absence est toujours vraie** — le jour où elle cessera de l'être, le contrôle 5 tombera.
+# `cards` n'existe pas (INC-031), et `workflow_steps` seule ne suffit pas à dire qu'un nœud est
+# occupé. Ce que le harnais fait, c'est **vérifier que cette absence est toujours vraie** — le jour
+# où elle cessera de l'être, le contrôle 5 tombera, comme il l'a fait à `CRM-031`.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -276,14 +278,17 @@ titre "5. INC-031 : la garde d'archivage est différée, et son absence est vér
 # Ce contrôle est l'inverse d'un contrôle ordinaire : il constate que quelque chose **manque**
 # toujours. Le jour où `CRM-031` ou `CRM-040` livrera ses tables, il tombera — et c'est ce qu'on
 # lui demande (décision 51).
+# MISE À JOUR PAR `CRM-031`, qui a livré `workflow_steps` : ce contrôle a **réellement échoué**,
+# comme il avait été écrit pour le faire, et il est révisé avec le code. Il ne reste qu'une table
+# manquante — `cards`, due par `CRM-040` —, et le contrôle tombera de nouveau ce jour-là.
 tables=$(psql_db -c "select coalesce(to_regclass('public.workflow_steps')::text, 'NULL')
                        || '/' || coalesce(to_regclass('public.cards')::text, 'NULL');")
-if [ "$tables" = "NULL/NULL" ]; then
-	ok "INC-031 : \`workflow_steps\` et \`cards\` n'existent toujours pas — la garde reste hors "\
-"d'atteinte, et le rester est vérifié plutôt que supposé"
+if [ "$tables" = "workflow_steps/NULL" ]; then
+	ok "INC-031 : \`workflow_steps\` existe depuis \`CRM-031\`, \`cards\` non — la garde reste "\
+"sans cible, et le rester est vérifié plutôt que supposé"
 else
-	fail "INC-031 : les tables existent désormais (« $tables ») — la garde d'archivage doit être "\
-"écrite et l'entrée close"
+	fail "INC-031 : état des tables « $tables » — si \`cards\` existe, la garde d'archivage doit "\
+"être écrite et l'entrée close"
 fi
 
 triggers=$(psql_db -c "select count(*) from pg_trigger

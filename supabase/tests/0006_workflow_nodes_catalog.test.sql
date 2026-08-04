@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(80);
+select plan(79);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §2.2
@@ -116,19 +116,19 @@ select has_function('app', 'catalogue_noeuds_attribuer_position',
 -- Aucune de ces deux tables n'existe : `workflow_steps` arrive avec `CRM-031`, `cards` avec
 -- `CRM-040`.
 --
--- Les trois assertions qui suivent **deviendront rouges** ce jour-là. C'est le mécanisme de la
--- décision 51 : une limite figée par une assertion force sa révision, alors qu'une limite
--- commentée survit à sa cause.
+-- Les trois assertions qui suivaient ont été écrites pour **devenir rouges** ce jour-là. Deux
+-- l'ont fait à `CRM-031`, qui a livré `workflows` et `workflow_steps` : elles sont révisées ici,
+-- avec le code, et disent désormais l'état réel. C'est le mécanisme de la décision 51 — une limite
+-- figée par une assertion force sa révision, alors qu'une limite commentée survit à sa cause.
 
-select hasnt_table('public', 'workflows',
-	'INC-031 : `workflows` n''existe pas encore — `CRM-031`. Cette assertion deviendra rouge ce '
-	'jour-là');
-select hasnt_table('public', 'workflow_steps',
-	'INC-031 : `workflow_steps` n''existe pas encore — la garde d''archivage n''a pas de cible '
-	'intermédiaire');
+select ok(
+	to_regclass('public.workflows') is not null
+	  and to_regclass('public.workflow_steps') is not null,
+	'INC-031 : `workflows` et `workflow_steps` existent depuis `CRM-031` — la moitié du chemin de '
+	'la garde d''archivage est désormais praticable');
 select hasnt_table('public', 'cards',
-	'INC-031 : `cards` n''existe pas encore — `CRM-040`. Sans elle, « un nœud occupé » n''est pas '
-	'une propriété calculable');
+	'INC-031 : `cards` n''existe toujours pas — `CRM-040`. Sans elle, « un nœud occupé » n''est '
+	'pas une propriété calculable, et la garde reste sans cible');
 
 -- La garde n'est pas livrée, et son absence est vérifiée nommément : personne ne doit pouvoir
 -- croire qu'elle existe parce qu'un trigger porte un nom voisin.
@@ -137,7 +137,8 @@ select is(
 	  where tgrelid = 'public.workflow_nodes_catalog'::regclass and not tgisinternal),
 	2,
 	'exactement deux triggers — `updated_at` et `position`. Aucune garde d''archivage : elle est '
-	'différée, pas oubliée (INC-031)');
+	'différée, pas oubliée. `CRM-031` ne l''a pas écrite non plus — la limiter à l''occupation par '
+	'une étape serait plus strict que la règle du §2.6 (INC-031)');
 
 -- =============================================================================================
 -- 3. Fixtures

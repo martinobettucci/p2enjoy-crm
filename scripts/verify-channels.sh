@@ -13,7 +13,8 @@
 #   3. le cloisonnement est garanti **en base** : un `workspace_id` incohérent avec le track est
 #      refusé, y compris à `postgres`, donc indépendamment de toute politique RLS ;
 #   4. le seed est **convergent** : rejoué, il laisse exactement six channels, dont un archivé,
-#      répartis sur trois tracks, et `workflow_id` reste nul partout (INC-029) ;
+#      répartis sur trois tracks, et tous rattachés au workflow par défaut depuis `CRM-031`
+#      (INC-029, dont la moitié « clé étrangère » est levée) ;
 #   5. les scénarios d'API et d'interface sont verts, ainsi que les tests unitaires et le build ;
 #   6. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
 #      échouer, et la restauration est constatée, pas supposée.
@@ -231,8 +232,10 @@ ordre=$(psql_db -c "select string_agg(slug, ',' order by position) from public.c
 	|| fail "channels archivés : $archives, attendu 1"
 [ "$tracks_porteurs" = "3" ] && ok "répartis sur trois tracks" \
 	|| fail "tracks porteurs : $tracks_porteurs, attendu 3"
-[ "$sans_workflow" = "6" ] && ok "INC-029 : \`workflow_id\` reste nul partout, comme le produit" \
-	|| fail "channels sans workflow : $sans_workflow, attendu 6"
+[ "$sans_workflow" = "0" ] \
+	&& ok "INC-029 : les six channels portent désormais un \`workflow_id\` — \`CRM-031\` a livré la \
+clé étrangère et le seed les rattache au workflow par défaut" \
+	|| fail "channels sans workflow : $sans_workflow, attendu 0 depuis \`CRM-031\`"
 [ "$ordre" = "prospection,grands-comptes" ] \
 	&& ok "l'ordre des onglets de \`conseil-ia\` est celui de \`position\`" \
 	|| fail "ordre des onglets : « $ordre »"
