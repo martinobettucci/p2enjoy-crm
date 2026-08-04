@@ -98,6 +98,28 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 |---|---|---|---|---|
 | 1 | `supabase/migrations/0001_identite_et_cloisonnement.sql` | Extension `pgcrypto`, schéma `app`, `profiles` et son trigger de création, `workspaces`, `workspace_members`, `track_members`, `channel_members`. RLS activée sans politique : refus par défaut. | Schéma `auth` créé par GoTrue : le service doit avoir démarré **avant** l'application. | `drop schema app cascade;` puis `drop table` des cinq tables et `drop trigger on_auth_user_created on auth.users`. Aucune donnée applicative n'est encore présente, donc aucune perte : ce retour arrière cessera d'être anodin dès la première mise en service. |
 | 2 | `supabase/migrations/0002_fonctions_autorisation.sql` | Fonctions d'autorisation `app.resolve_access`, `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin`, et leurs privilèges d'exécution. **Aucune politique RLS** : le refus par défaut reste inchangé. | Migration 1 : le schéma `app` et la table `public.workspace_members` doivent exister. | `drop function` des quatre fonctions. Sans objet tant qu'aucune politique ne les appelle ; dès `CRM-012`, les retirer rendrait les politiques inopérantes et devra donc précéder ou suivre le retour arrière de celles-ci. |
+| 3 | `supabase/migrations/0003_tracks.sql` | Table `public.tracks` (organisation de premier niveau), ses contraintes de valeur, le trigger d'attribution de `position`, ses **trois politiques RLS** — lecture par les membres du workspace, insertion et mise à jour par ses administrateurs — et la clé étrangère `track_members.track_id → tracks.id` qu'INC-010 avait différée. | Migrations 1 et 2 : `public.workspaces`, `public.track_members` et les fonctions `app.is_workspace_member` / `app.is_workspace_admin` doivent exister. | `drop table public.tracks cascade;` — la cascade retire la clé étrangère de `track_members` **et détruit tous les tracks**. Dès la première mise en service, ce retour arrière est destructif : il exige une sauvegarde préalable de `public.tracks`. |
+
+**VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 3.** Elle ajoute une clé étrangère sur
+`public.track_members`. Si cette table contenait une ligne dont `track_id` ne correspond à aucun
+track, l'`alter table` échouerait — et comme PostgREST attend la terminaison réussie du
+`migrations-runner`, **la pile ne redémarrerait plus**. Aucun `not valid` n'est employé pour
+contourner : il rendrait la contrainte décorative sur les lignes existantes
+(`docs/JOURNAL.md`, décision 55).
+
+```sql
+-- Doit rendre zéro ligne. Sinon, arbitrer les orphelins AVANT d'appliquer la migration.
+select tm.track_id, tm.user_id
+  from public.track_members tm
+ where not exists (select 1 from public.tracks t where t.id = tm.track_id);
+```
+
+**Particularité de la migration 3 : ses contraintes de valeur sont convergentes.** Elles sont
+posées par `drop constraint if exists` suivi d'`add constraint`, et non dans le `create table`,
+qui porte `if not exists` et ne réparerait donc jamais une contrainte retirée à la main sur une
+base existante. Conséquence en production : chaque passage **revalide** la table. Sur `tracks`,
+dont la cardinalité est celle des tracks d'un workspace, le coût est négligeable ; la propriété
+achetée est que le schéma converge vers ce que le dépôt déclare.
 
 **Toutes les migrations du dépôt sont idempotentes.** Le conteneur `migrations-runner` ne tient
 aucun registre : il rejoue l'intégralité du répertoire à chaque démarrage de la pile

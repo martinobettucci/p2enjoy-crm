@@ -36,9 +36,15 @@ TEST_FAUX=webapp/src/lib/non-complaisance.tmp.test.ts
 POLITIQUE=preuve_non_complaisance_crm_008
 PORT_RAPPORT=9323
 
-ASSERTIONS_ATTENDUES=227
-SCENARIOS_API=13
-SCENARIOS_UI=13
+# Comptes attendus, révisés à chaque unité qui ajoute des preuves. Ils sont **figés** et non
+# déduits : un exécuteur qui se contenterait de « le vert est vert » resterait vert si une suite
+# entière cessait d'être découverte (docs/SPEC-test-harness.md §3). Le prix est cette révision
+# explicite ; c'est exactement ce qu'on lui demande.
+#
+# Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 depuis `CRM-020`.
+ASSERTIONS_ATTENDUES=306
+SCENARIOS_API=30
+SCENARIOS_UI=22
 
 TRAVAIL=$(mktemp -d)
 failures=0

@@ -795,9 +795,127 @@ variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat in
 
 ## Chunk 3 — CRM utilisable
 
-### CRM-020 — Tracks `[ ]`
+### CRM-020 — Tracks `[~]`
 CRUD, ordre, archivage, barre latérale.
 **DoD** : unitaire, API (écriture refusée aux non-administrateurs), E2E, captures.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-tracks.md` : aucun document ne disait
+      comment un track s'ordonne, ce qu'archiver veut dire pour lui, ni ce que l'API doit rendre à
+      chacun des trois rôles. Rédigée **après mesure** — une table sonde jetable, portant la
+      structure et les politiques envisagées, créée sur la pile réelle, interrogée avec les jetons
+      des trois comptes seedés, puis détruite et l'absence de reste constatée. Les douze lignes du
+      §6 sont ces mesures. Commit documentaire dédié.
+- [x] `supabase/migrations/0003_tracks.sql` : table, contraintes, index partiel de la barre
+      latérale, trigger de `position`, trigger d'`updated_at`, **trois politiques RLS** et
+      privilèges explicites. **Aucun `DELETE` accordé à personne** : l'archivage tient lieu de
+      suppression (`docs/SCHEMA.md`, conventions générales).
+- [x] **INC-010 refermée de moitié** : la clé étrangère `track_members.track_id → tracks.id` est
+      posée, en `ON DELETE CASCADE`. Le risque d'exploitation associé — une ligne orpheline
+      empêcherait le démarrage de la pile — est **nommé dans la migration** et porté par
+      `docs/PROD_MIGRATIONS.md` §3 comme vérification préalable, plutôt que masqué par un
+      `not valid` qui rendrait la contrainte décorative.
+- [x] **Test unitaire dédié** : `supabase/tests/0004_tracks.test.sql`, **78 assertions, aucune
+      anomalie** — structure, contraintes de valeur, unicité **par workspace**, ordre attribué et
+      ordre fourni, archivage réversible, politiques, privilèges, et les autorisations éprouvées
+      contre des comptes réels avec les revendications JWT simulées comme PostgREST les pose.
+- [x] **Deux affirmations de la spécification démenties par la mesure, et la spécification
+      corrigée** (décision 56) : écrire `null` dans `position` à l'insertion **équivaut à
+      l'omettre** — un trigger `BEFORE INSERT` ne peut pas distinguer les deux ; et
+      `updated_at > created_at` est invérifiable dans une transaction, `now()` y étant constant —
+      ce qui se prouve est que le trigger **écrase** la valeur du client.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/tracks.spec.ts`, **17 scénarios**,
+      avec les jetons réels des trois profils obtenus par la véritable route de connexion. Les
+      douze lignes du §6 sont rejouées contre la table réelle.
+- [x] **Preuve de refus n° 3 acquise au niveau des tracks** : un membre du workspace A ne voit
+      aucun track du workspace B — et la ligne de B est d'abord constatée présente avec la clé de
+      service, sans quoi le « zéro ligne » ne prouverait rien (décision 50).
+- [x] **Preuve de refus n° 11 acquise sur `tracks`** : l'anonyme obtient `200` et `[]` alors que la
+      table contient quatre lignes.
+- [x] **L'écriture est réservée aux administrateurs, prouvée par le refus ET par l'acceptation** :
+      `viewer` et `business_developer` refusés en `403` / `42501`, la ligne n'existant **nulle
+      part** ensuite ; administrateur accepté en `201`, `position` attribuée automatiquement.
+- [x] **Le `WITH CHECK` de la mise à jour est prouvé nécessaire** : un administrateur de A ne peut
+      pas déplacer son track vers B, refus que le `USING` seul aurait laissé passer.
+- [x] **Contraintes de valeur convergentes** (décision 57) : défaut réel trouvé par le contrôle de
+      restauration du harnais — `create table if not exists` ne répare jamais une contrainte
+      retirée, et la base restait durablement affaiblie. Les contraintes sont désormais reposées à
+      chaque passage, et le rejeu **répare**.
+- [x] **Seed mis à jour dans le même changement** : quatre tracks, dont un **archivé**, créés par
+      la véritable API REST, convergents. Rejoué : toujours quatre lignes, aucun doublon.
+      `docs/SPEC-seed.md` §2.5 et §4 mis à jour ; le message de fin d'exécution du seed, devenu
+      faux, est corrigé — `tracks` est lisible par un membre, les tables d'identité ne le sont pas.
+- [x] **Test E2E dédié** : `e2e/ui/tracks.spec.ts`, **9 scénarios verts** — la requête réellement
+      émise par l'application construite (filtre serveur, ordre, colonnes), l'état vide, le
+      chargement, le refus, et les quatre paliers responsive.
+- [x] **Tests unitaires d'interface** : `webapp/src/lib/tracks.test.ts`,
+      `webapp/src/app/presentation-tracks.test.ts`, `webapp/src/app/SectionTracks.test.tsx`.
+      **133 tests unitaires** au total (96 avant l'unité). Un défaut réel y a été trouvé : la
+      recherche dans les catalogues rendait une propriété héritée d'`Object` pour `constructor` ou
+      `toString`, court-circuitant les replis — corrigé par `Object.hasOwn`.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-020/` — huit captures,
+      dont l'état vide, l'état chargé, le chargement, le refus, et les quatre paliers. **Deux
+      défauts trouvés en les regardant, alors que toutes les preuves étaient vertes** : l'écran
+      affirmait « Aucun track n'est accessible » en listant trois tracks, et la pilule `accent`
+      n'atteignait pas le contraste AA en texte jaune. Corrigés dans le même changement.
+- [x] Harnais de preuves rejouable `scripts/verify-tracks.sh` : **40 contrôles, aucune anomalie**,
+      et **non complaisant, éprouvé par sept dégradations réelles** — écriture ouverte aux membres,
+      `WITH CHECK` retiré, contrainte de couleur retirée, `DELETE` accordé, trigger de position
+      retiré, lecture ouverte à tous, seed privé de son track archivé. Chacune fait échouer les
+      preuves, et la restauration est **constatée** : trois politiques et elles seules, aucun
+      `DELETE` résiduel, seed revenu à son contrat.
+- [x] **Trois assertions figées par des unités précédentes ont échoué comme prévu, et ont été
+      révisées** : la clé étrangère absente (`CRM-003`, suite `0001`), la liste des tables et les
+      relations de `track_members` (`CRM-006`, `database.types.test-d.ts`), et les comptes de
+      preuves (`CRM-008`, `verify-harness.sh` : 306 assertions, 30 scénarios `api`, 22 `ui`). Le
+      mécanisme de la décision 51 a fonctionné comme prévu.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert —
+      les types régénérés suivent le schéma.
+- [x] **Aucune régression** : les dix harnais précédents rejoués — **33, 38, 23, 26, 26, 42, 49,
+      30, 41 et 22 contrôles**, aucune anomalie.
+- [x] `docs/SCHEMA.md` §2, `docs/SPEC-permissions-rls.md` §3 et §4, `docs/SPEC-webapp.md` §6.3,
+      `docs/SPEC-seed.md` §2.5 et §4, `docs/DESIGN_SYSTEM.md` §5.5 bis, §12.4 et §12.5,
+      `docs/DAT.md` §3.1 et §7, `docs/PROD_MIGRATIONS.md` §3, `docs/manual.md` §3.2 et §3.2 bis,
+      `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Aucun track n'est visible dans l'interface, et aucune interface ne permet de les gérer.**
+      La webapp est un appelant **anonyme** : elle n'a aucun parcours de connexion, qu'aucune unité
+      du backlog ne porte — **INC-021, en attente d'arbitrage**. La politique de lecture ne consent
+      donc rien à l'interface, et il n'existe ni écran de création, ni de renommage, ni de
+      réordonnancement, ni d'archivage. Le CRUD est livré et prouvé **par l'API**, ce que
+      `CLAUDE.md` §10 exige de toute façon, l'interface n'ayant jamais valeur de preuve.
+      **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **Les droits fins ne sont pas appliqués.** La politique de lecture s'arrête au rôle de
+      workspace : `app.can_read_track` est l'une des quatre fonctions différées par INC-013, dont
+      l'arbitrage reste ouvert, et l'écrire ici trancherait à la place du responsable. Un
+      `track_members.access = 'none'` ne masque donc rien encore. **INC-024**, avec une assertion
+      pgTAP qui deviendra rouge lorsque `CRM-012` resserrera la politique.
+
+*DoD adaptée, écarts explicites.* La Definition of Done exige « E2E, captures ». Les deux sont
+livrés, mais sur les **états que le backend consent réellement** à un appelant anonyme : vide,
+chargement, refus, paliers. Le rendu **chargé** — pilules, couleurs, icônes, ordre, repli — est
+éprouvé par test unitaire du composant réel et, dans l'application construite, en substituant la
+**réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun des deux n'est présenté comme
+telle.
+
+*Limites nommées, non masquées.*
+
+- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.**
+  Ce n'est plus une gêne locale : `CRM-021`, `CRM-041`, `CRM-042` et les suivantes buteront sur le
+  même obstacle et livreront, au mieux, des captures vides. L'arbitrage conditionne la valeur
+  démontrable de **tout le chunk 3**.
+- **L'administration des tracks est une opération d'exploitation**, pas un parcours produit — même
+  nature qu'INC-015 pour l'invitation.
+- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, la n° 3 et la n° 11 sont
+  désormais acquises **au niveau des tracks**. Les dix autres exigent des cards, des channels et
+  des comptes mail : elles restent dues par `CRM-014`.
+- **Le réordonnancement n'a pas d'opération atomique** : réordonner, c'est écrire `position`. Une
+  RPC deviendra nécessaire avec le glisser-déposer (`CRM-041`).
+- **Le type généré exige `position` à l'insertion**, que le trigger rend facultative : le
+  générateur ignore les triggers. Écart figé par une assertion, **INC-027**.
+- **PostgREST divulgue la commande `GRANT`** dans son refus de privilège. Comportement de la
+  version épinglée, portée transverse, **INC-026**.
+- **Aucune limite de nombre de tracks par workspace** n'est posée côté serveur.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ### CRM-021 — Channels `[ ]`
 CRUD, ordre, archivage, onglets, débordement horizontal.

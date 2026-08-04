@@ -172,6 +172,7 @@ ligne seedée reconnaissable immédiatement dans la base, dans un journal ou dan
 |---|---|
 | Espaces de travail | `…000000000001` et suivants |
 | Comptes | `…000000000011` et suivants |
+| Tracks | `…000000000021` et suivants (`CRM-020`) |
 
 Les identifiants restent des UUID valides : version `4`, variant `8`. Aucun outil ne les distingue
 d'un identifiant produit par `gen_random_uuid()` autrement que par leur préfixe.
@@ -228,6 +229,27 @@ La preuve n° 11 mérite d'être explicitée : elle constate qu'à ce stade **le
 données lisibles**. C'est le comportement voulu — les politiques arrivent avec `CRM-012` —, et le
 seed ne doit surtout pas l'anticiper en posant une politique pour « rendre l'application
 utilisable ».
+
+### 2.5 Tracks — ajoutés par `CRM-020`
+
+Quatre tracks dans l'espace de travail, dont un **archivé**. Contrat détaillé et motifs :
+`docs/SPEC-tracks.md` §8.
+
+| id | slug | nom | couleur | icône | position | état |
+|---|---|---|---|---|---|---|
+| `…021` | `conseil-ia` | Conseil & IA | `brand` | `sparkles` | 1 | actif |
+| `…022` | `studio-web` | Studio web | `success` | `layout-dashboard` | 2 | actif |
+| `…023` | `formation` | Formation | `accent` | `graduation-cap` | 3 | actif |
+| `…024` | `pipeline-2024` | Pipeline 2024 | `neutral` | `archive` | 4 | **archivé** |
+
+Le quatrième existe pour que l'état « archivé » soit **démontrable** et non seulement documenté
+(`CLAUDE.md` §8). Comme le workspace et les appartenances, ils sont créés par l'API REST avec la
+clé de service, et l'écriture est convergente (`Prefer: resolution=merge-duplicates`).
+
+**Ce que le seed rend désormais visible, et ce qu'il ne rend toujours pas visible.** Le message
+affiché en fin d'exécution a été corrigé par `CRM-020` : `tracks` porte des politiques et un membre
+du workspace y lit ses quatre tracks, tandis que `profiles`, `workspaces` et `workspace_members`
+restent en refus par défaut jusqu'à `CRM-012`. Annoncer un refus général serait devenu faux.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

@@ -10,6 +10,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import type { ClientCrm } from '../lib/supabase'
+import type { Track } from '../lib/tracks'
 import type { Workspace } from '../lib/workspaces'
 
 const injecte = vi.hoisted(() => ({ client: null as ClientCrm | null }))
@@ -24,20 +25,43 @@ vi.mock('../lib/supabase', () => ({
 
 const { AppShell } = await import('./AppShell')
 
-type Reponse = { data: Workspace[] | null; error: { message: string } | null; status: number }
+type Reponse = {
+	data: Workspace[] | Track[] | null
+	error: { message: string } | null
+	status: number
+}
 
-function client(reponses: readonly Reponse[]): ClientCrm {
-	let rang = 0
+/**
+ * Client factice servant **deux** tables depuis `CRM-020` : `workspaces`, lue par l'en-tête, et
+ * `tracks`, lue par la barre latérale.
+ *
+ * Le constructeur de requête reproduit la forme réellement employée par `webapp/src/lib` :
+ * `select().order()` pour les workspaces, `select().is().order().order()` pour les tracks. Chaque
+ * maillon rend un objet qui porte à la fois les affineurs et la promesse, de sorte que la chaîne
+ * puisse être terminée à n'importe quelle profondeur — c'est ce que fait `postgrest-js`, dont le
+ * constructeur est un `thenable`.
+ */
+function client(reponses: readonly Reponse[], reponsesTracks?: readonly Reponse[]): ClientCrm {
+	const rangs: Record<string, number> = {}
+
+	const suivante = (table: string): Reponse => {
+		const suite = table === 'tracks' ? (reponsesTracks ?? [VIDE]) : reponses
+		const rang = rangs[table] ?? 0
+		rangs[table] = rang + 1
+		return suite[Math.min(rang, suite.length - 1)] as Reponse
+	}
+
+	const constructeur = (table: string): unknown => {
+		const chaine = {
+			is: () => chaine,
+			order: () => chaine,
+			then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(suivante(table)).then(resoudre),
+		}
+		return chaine
+	}
+
 	return {
-		from: () => ({
-			select: () => ({
-				order: () => {
-					const reponse = reponses[Math.min(rang, reponses.length - 1)]
-					rang += 1
-					return Promise.resolve(reponse)
-				},
-			}),
-		}),
+		from: (table: string) => ({ select: () => constructeur(table) }),
 	} as unknown as ClientCrm
 }
 
@@ -46,6 +70,22 @@ const REFUS: Reponse = { data: null, error: { message: 'permission denied' }, st
 const PANNE: Reponse = { data: null, error: { message: 'Failed to fetch' }, status: 0 }
 const UNE_LIGNE: Reponse = {
 	data: [{ id: 'w-1', name: 'Atelier P2Enjoy', slug: 'atelier' }],
+	error: null,
+	status: 200,
+}
+const TROIS_TRACKS: Reponse = {
+	data: [
+		{ id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', color: 'brand', icon: 'sparkles', position: 1 },
+		{
+			id: 't-2',
+			name: 'Studio web',
+			slug: 'studio-web',
+			color: 'success',
+			icon: 'layout-dashboard',
+			position: 2,
+		},
+		{ id: 't-3', name: 'Formation', slug: 'formation', color: 'accent', icon: 'inconnue', position: 3 },
+	],
 	error: null,
 	status: 200,
 }
@@ -116,11 +156,14 @@ describe('états systématiques (docs/DESIGN_SYSTEM.md §5.8)', () => {
 		expect(screen.getByText('contenu')).toBeTruthy()
 	})
 
-	it('annonce l’absence d’espace de travail dans la région polie', async () => {
+	// Depuis `CRM-020`, la région relaie **deux** chargements : le contexte d'espace de travail
+	// et les tracks de la barre latérale. N'en annoncer qu'un laisserait l'autre changer en
+	// silence (docs/DESIGN_SYSTEM.md §8).
+	it('annonce l’absence d’espace de travail et de track dans la région polie', async () => {
 		monter()
 		await waitFor(() =>
 			expect(screen.getByTestId('region-annonces').textContent).toBe(
-				'Aucun espace de travail accessible',
+				'Aucun espace de travail accessible Aucun track accessible',
 			),
 		)
 	})
@@ -148,6 +191,29 @@ describe('états systématiques (docs/DESIGN_SYSTEM.md §5.8)', () => {
 		bouton.click()
 		await waitFor(() => expect(screen.getByTestId('workspace-courant').textContent).toBe('Atelier P2Enjoy'))
 		expect(screen.queryByTestId('etat-erreur')).toBeNull()
+	})
+
+	// La barre latérale liste les tracks depuis `CRM-020`. Ce test monte la coquille entière, et
+	// non la seule barre : il prouve que le chargement des tracks est bien câblé à l'écran, ce
+	// que `SectionTracks.test.tsx` ne dit pas — il monte la barre avec un état déjà résolu.
+	it('liste les tracks du backend dans la barre latérale, et l’annonce', async () => {
+		injecte.client = client([UNE_LIGNE], [TROIS_TRACKS])
+		monter()
+		await waitFor(() => expect(screen.getAllByTestId('entree-track')).toHaveLength(3))
+		expect(screen.getByText('Conseil & IA')).toBeTruthy()
+		expect(screen.getByTestId('region-annonces').textContent).toBe(
+			'Espaces de travail chargés Tracks chargés',
+		)
+		expect(screen.queryByTestId('tracks-vides')).toBeNull()
+	})
+
+	// Un échec du chargement des tracks ne doit pas être avalé : la barre latérale n'a pas la
+	// place de l'expliquer, donc la zone principale s'en charge (CLAUDE.md §18).
+	it('remonte un échec des tracks dans la zone principale, même si les workspaces répondent', async () => {
+		injecte.client = client([UNE_LIGNE], [PANNE])
+		monter()
+		await waitFor(() => expect(screen.getByTestId('etat-erreur')).toBeTruthy())
+		expect(screen.getByRole('button', { name: 'Réessayer' })).toBeTruthy()
 	})
 
 	it('affiche l’état de configuration incomplète quand aucun client n’a pu être construit', () => {

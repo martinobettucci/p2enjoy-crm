@@ -15,6 +15,51 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-020` — Tracks (`[~]`).** Premier objet métier du produit, et **premières politiques RLS**.
+  - **`supabase/migrations/0003_tracks.sql`** : table `public.tracks` — nom, slug unique par
+    workspace, couleur contrainte aux jetons du design system, icône, `position` numérique,
+    archivage doux, horodatages. Trigger d'attribution automatique de `position` en fin de liste du
+    workspace, et **clé étrangère `track_members.track_id → tracks.id`**, moitié d'INC-010 refermée.
+  - **Trois politiques RLS, prouvées hors interface avec les jetons réels des trois profils
+    seedés** : lecture par les membres du workspace, insertion et mise à jour par ses
+    administrateurs. **Aucune suppression n'est exposée** — ni politique, ni privilège : l'archivage
+    tient lieu de suppression, et le refus est mesuré (`403`, `42501`).
+  - Le `WITH CHECK` de la mise à jour interdit de **déplacer** un track vers un workspace où
+    l'appelant n'est pas administrateur — refus que le `USING` seul aurait laissé passer.
+  - **Contraintes de valeur convergentes** : posées par `drop constraint if exists` puis
+    `add constraint`, de sorte qu'un rejeu **répare** une contrainte retirée à la main. Défaut réel
+    trouvé par le contrôle de restauration du harnais, où `create table if not exists` laissait la
+    base durablement affaiblie.
+  - **Seed étendu** : quatre tracks dans l'espace de démonstration, dont un **archivé**, pour que
+    l'état « archivé » soit démontrable et non seulement documenté. Écriture convergente par la
+    véritable API REST.
+  - **Barre latérale** : la section « Tracks » lit désormais `public.tracks` — filtrée sur les non
+    archivés **côté serveur**, ordonnée par `position` puis par nom. Pilules colorées par jeton,
+    précédées de leur icône Lucide, avec repli documenté sur `neutral` et `Folder`.
+  - **La zone principale regarde les deux chargements** : un échec sur les tracks n'est plus avalé
+    par une barre latérale qui n'a pas la place de l'expliquer.
+  - **Preuves** : `supabase/tests/0004_tracks.test.sql` (**78 assertions**),
+    `e2e/api/tracks.spec.ts` (**17 scénarios**, dont les preuves de refus n° 3 et n° 11 au niveau
+    des tracks), `e2e/ui/tracks.spec.ts` (**9 scénarios**), `webapp/src/lib/tracks.test.ts`,
+    `webapp/src/app/presentation-tracks.test.ts`, `webapp/src/app/SectionTracks.test.tsx`
+    (**133 tests unitaires** au total), et `scripts/verify-tracks.sh` — **40 contrôles, aucune
+    anomalie**.
+  - **Harnais non complaisant, éprouvé par sept dégradations réelles** : écriture ouverte aux
+    membres, `WITH CHECK` retiré, contrainte de couleur retirée, `DELETE` accordé, trigger de
+    position retiré, lecture ouverte à tous, seed privé de son track archivé. Chacune fait échouer
+    les preuves ; la restauration est ensuite **constatée**, pas supposée.
+  - **Deux défauts trouvés en observant les captures**, alors que toutes les preuves étaient
+    vertes : l'écran affirmait « Aucun track n'est accessible » en listant trois tracks, et la
+    pilule `accent` n'atteignait pas le contraste AA en texte jaune. Corrigés.
+  - **Trois assertions figées par des unités précédentes ont échoué comme prévu et ont été
+    révisées** : la clé étrangère absente (`CRM-003`), la liste des tables et les relations de
+    `track_members` dans les types (`CRM-006`), les comptes de preuves du harnais (`CRM-008`).
+  - **Reste dû, et l'unité reste `[~]` pour cela** : aucun track n'apparaît dans l'interface, et
+    aucune interface ne permet de les gérer — la webapp est un appelant anonyme faute d'écran de
+    connexion (**INC-021**). Les droits fins ne sont pas appliqués (**INC-024**).
+  - Contradictions consignées sans être résolues : **INC-024**, **INC-025**, **INC-026**,
+    **INC-027**.
+
 - **`CRM-008` — Harnais de tests (`[~]`).**
   - **`npm run test:sql`** : les trois suites pgTAP de `supabase/tests/`, **227 assertions**, avec
     un verdict **calculé** et non emprunté. Quatre conditions d'échec indépendantes, dont l'écart

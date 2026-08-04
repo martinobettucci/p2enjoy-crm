@@ -128,8 +128,17 @@ new.position := coalesce(
 
 Le trigger est `BEFORE INSERT`. **Mesuré** : un trigger `BEFORE INSERT` renseigne bien une colonne
 `NOT NULL` *avant* que la contrainte ne soit vérifiée — deux insertions successives sans `position`
-ont rendu `1` puis `2`. La colonne peut donc rester `NOT NULL` sans défaut de colonne, ce qui
-interdit à un client d'écrire `NULL` explicitement.
+ont rendu `1` puis `2`. La colonne peut donc rester `NOT NULL` sans défaut de colonne.
+
+**Correction apportée par la première exécution de la suite pgTAP.** Cette section affirmait
+d'abord qu'un client ne pourrait pas écrire `NULL` explicitement. **C'est faux**, et l'assertion
+correspondante a échoué : un trigger `BEFORE INSERT` reçoit `new.position` à `NULL` dans les deux
+cas et **ne peut pas distinguer** l'omission de la négation. Écrire `position: null` à l'insertion
+équivaut donc à l'omettre, et le trigger place le track en fin de liste.
+
+C'est la spécification qui a été corrigée, non l'assertion ajustée. La protection subsiste après la
+création : le trigger ne couvrant que l'insertion, un `UPDATE ... SET position = NULL` se heurte
+bien à la contrainte `NOT NULL` (`23502`), ce que la suite vérifie séparément.
 
 L'ordre d'affichage est `position` croissante, puis `name` à position égale : deux tracks de même
 position ne doivent pas s'échanger d'un chargement à l'autre.

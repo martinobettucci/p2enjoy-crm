@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # @spec CRM-005 (docs/BACKLOG.md) — seed socle : comptes, espace de travail, rôles
+# @spec CRM-020 (docs/BACKLOG.md) — tracks de démonstration, dont un archivé
 # @spec docs/SPEC-seed.md §2 (contrat), §3 (mécanismes mesurés), §4 (identifiants), §5 (gardes)
-# @spec docs/SCHEMA.md §1 (identité et cloisonnement)
+# @spec docs/SPEC-tracks.md §8 (seed des tracks)
+# @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
 #
@@ -78,6 +80,25 @@ COMPTES=(
 	'5eed0000-0000-4000-8000-000000000011|admin@p2enjoy.test|Camille Aubert|admin'
 	'5eed0000-0000-4000-8000-000000000012|bizdev@p2enjoy.test|Driss Lemoine|business_developer'
 	'5eed0000-0000-4000-8000-000000000013|viewer@p2enjoy.test|Farida Nowak|viewer'
+)
+
+# Tracks du workspace — docs/SPEC-tracks.md §8.
+#
+# Le quatrième est **archivé** : sans lui, l'état « archivé » serait documenté sans être
+# démontrable, ce que `CLAUDE.md` §8 refuse (« couvrir les principaux états »). Les couleurs
+# emploient quatre des cinq jetons du design system ; `danger` reste libre, aucune activité ne se
+# décrivant honnêtement comme « en danger » par défaut.
+#
+# `position` est écrite explicitement plutôt que laissée au trigger : le seed est un **contrat**
+# opposable, et un ordre attribué par un effet de bord ne serait pas reproductible si l'ordre des
+# insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
+#
+# id | slug | nom | couleur | icône | position | date d'archivage (ou « - »)
+TRACKS=(
+	'5eed0000-0000-4000-8000-000000000021|conseil-ia|Conseil & IA|brand|sparkles|1|-'
+	'5eed0000-0000-4000-8000-000000000022|studio-web|Studio web|success|layout-dashboard|2|-'
+	'5eed0000-0000-4000-8000-000000000023|formation|Formation|accent|graduation-cap|3|-'
+	'5eed0000-0000-4000-8000-000000000024|pipeline-2024|Pipeline 2024|neutral|archive|4|2026-01-15T09:00:00Z'
 )
 
 # --- Accès à l'API -----------------------------------------------------------------------------
@@ -192,17 +213,59 @@ for ligne in "${COMPTES[@]}"; do
 	printf '  %-22s %-20s %s\n' "$email" "$role" "$etat"
 done
 
-# --- 3. Ce que le seed ne rend PAS visible -----------------------------------------------------
-# Rappel volontaire, affiché à chaque exécution : peupler la base ne la rend pas lisible. Les
-# tables du socle sont en refus par défaut depuis `CRM-003` — RLS activée, aucune politique — et
-# le seed ne pose surtout aucune politique pour « rendre l'application utilisable ». Les
-# politiques sont l'objet de `CRM-012`.
+# --- 3. Tracks — docs/SPEC-tracks.md §8 --------------------------------------------------------
+# Créés par la véritable API REST avec la clé de service, comme le workspace et les appartenances
+# (docs/JOURNAL.md décision 32) : le seed ne parle jamais SQL à la place du produit.
+#
+# `resolution=merge-duplicates` : l'écriture est **convergente**. Un track renommé à la main pendant
+# une session de développement est rétabli au contrat, pas dupliqué — mesuré par `CRM-005`
+# (décision 34), et l'upsert porte ici sur la clé primaire `id`.
+
+echo
+say "3. Tracks"
+
+for ligne in "${TRACKS[@]}"; do
+	IFS='|' read -r id slug nom couleur icone position archive <<< "$ligne"
+
+	if [ "$archive" = '-' ]; then
+		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg nom "$nom" --arg slug "$slug" \
+		               --arg couleur "$couleur" --arg icone "$icone" --argjson position "$position" \
+		     '{id: $id, workspace_id: $ws, name: $nom, slug: $slug, color: $couleur,
+		       icon: $icone, position: $position, archived_at: null}')
+	else
+		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg nom "$nom" --arg slug "$slug" \
+		               --arg couleur "$couleur" --arg icone "$icone" --argjson position "$position" \
+		               --arg archive "$archive" \
+		     '{id: $id, workspace_id: $ws, name: $nom, slug: $slug, color: $couleur,
+		       icon: $icone, position: $position, archived_at: $archive}')
+	fi
+
+	code=$(api POST /rest/v1/tracks \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du track $slug" 200 201
+
+	if [ "$archive" = '-' ]; then etat='actif'; else etat="archivé le ${archive%%T*}"; fi
+	printf '  %-16s %-14s %-18s %s\n' "$slug" "$couleur" "$icone" "$etat"
+done
+
+# --- 5. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
+# Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
+# ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
+# ou dans l'autre tromperait celui qui lit cette sortie.
+#
+#   * les tables du socle — profiles, workspaces, workspace_members — restent en refus par défaut
+#     depuis `CRM-003` : RLS activée, aucune politique. Elles relèvent de `CRM-012` ;
+#   * `tracks` porte les politiques de `CRM-020` : un membre du workspace lit ses tracks, un
+#     administrateur seul les écrit. Un appelant **anonyme** n'y lit toujours rien.
 
 echo
 say "Seed appliqué"
 info "Espace de travail : $WS_NAME ($WS_SLUG)"
 info "Comptes : ${#COMPTES[@]}, un par rôle — mot de passe commun publié dans docs/SPEC-seed.md §2.3"
+info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
 echo
-warn "Les données seedées ne sont PAS lisibles par l'API avec un jeton d'utilisateur :"
-warn "les tables du socle restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
-info "Preuves du seed : scripts/verify-seed.sh"
+warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
+warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
+info "tracks est lisible par un membre du workspace, et par lui seul (CRM-020)."
+info "Preuves du seed : scripts/verify-seed.sh — preuves des tracks : scripts/verify-tracks.sh"

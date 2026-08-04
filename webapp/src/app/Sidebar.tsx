@@ -18,15 +18,16 @@ import { NavLink } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { ENTREES_TRANSVERSES } from './navigation'
+import { classesPilule, iconeTrack } from './presentation-tracks'
 import type { EtatAsync } from '../lib/async'
-import type { Workspace } from '../lib/workspaces'
+import type { Track } from '../lib/tracks'
 
 export type ProprietesSidebar = {
 	readonly replie: boolean
 	readonly onBasculerRepli: () => void
 	readonly tiroirOuvert: boolean
 	readonly onFermerTiroir: () => void
-	readonly etatWorkspaces: EtatAsync<readonly Workspace[]>
+	readonly etatTracks: EtatAsync<readonly Track[]>
 }
 
 export function Sidebar({
@@ -34,7 +35,7 @@ export function Sidebar({
 	onBasculerRepli,
 	tiroirOuvert,
 	onFermerTiroir,
-	etatWorkspaces,
+	etatTracks,
 }: ProprietesSidebar) {
 	// Au-delà de `lg`, les libellés ne réapparaissent qu'à `xl` et seulement si l'utilisateur
 	// n'a pas replié la barre. Ils sont **masqués visuellement**, jamais retirés du document :
@@ -155,22 +156,28 @@ export function Sidebar({
 				>
 					{t('nav.section.tracks')}
 				</h2>
-				<SectionTracks etat={etatWorkspaces} replie={replie} />
+				<SectionTracks etat={etatTracks} replie={replie} />
 			</section>
 		</aside>
 	)
 }
 
 /**
- * Les tracks ne sont pas encore une table (`CRM-020`). La section affiche donc l'état de la
- * seule information dont la coquille dispose : ce que le backend consent à rendre du workspace
- * courant. Elle ne fabrique aucune donnée d'attente.
+ * Les tracks du workspace, en pilules (`docs/DESIGN_SYSTEM.md` §4).
+ *
+ * La section affiche ce que le backend consent à rendre, et rien d'autre : elle ne fabrique
+ * aucune donnée d'attente. Aujourd'hui, l'appelant étant anonyme faute d'écran de connexion
+ * (INC-021), c'est l'**état vide** qui s'affiche — et c'est le refus réel de la RLS
+ * (`docs/SPEC-tracks.md` §7).
+ *
+ * Les pilules ne sont pas cliquables : un track s'ouvre sur ses channels, livrés par `CRM-021`.
+ * Une pilule menant à une route vide serait une commande morte.
  */
 function SectionTracks({
 	etat,
 	replie,
 }: {
-	readonly etat: EtatAsync<readonly Workspace[]>
+	readonly etat: EtatAsync<readonly Track[]>
 	readonly replie: boolean
 }) {
 	const classeTexte = replie ? 'not-sr-only lg:sr-only' : 'not-sr-only lg:sr-only xl:not-sr-only'
@@ -189,20 +196,28 @@ function SectionTracks({
 	}
 	return (
 		<ul className="flex flex-col gap-1">
-			{etat.donnees.map((workspace) => (
-				<li
-					key={workspace.id}
-					data-testid="entree-workspace"
-					title={workspace.name}
-					className={[
-						'flex items-center gap-2 px-2 min-h-[var(--size-target)] rounded-full',
-						'bg-brand-soft text-brand',
-					].join(' ')}
-				>
-					<span aria-hidden="true" className="size-2 rounded-full bg-brand shrink-0" />
-					<span className={['truncate', classeTexte].join(' ')}>{workspace.name}</span>
-				</li>
-			))}
+			{etat.donnees.map((track) => {
+				// `docs/DESIGN_SYSTEM.md` §5.6 : une pilule est précédée d'une icône, « afin que
+				// l'information ne repose jamais sur la seule couleur ». C'est aussi ce qui rend
+				// la liste lisible au palier « colonne d'icônes », où les libellés sont masqués
+				// visuellement mais restent annoncés (§7, §8).
+				const Icone = iconeTrack(track.icon)
+				return (
+					<li
+						key={track.id}
+						data-testid="entree-track"
+						data-slug={track.slug}
+						title={track.name}
+						className={[
+							'flex items-center gap-2 px-2 min-h-[var(--size-target)] rounded-full',
+							classesPilule(track.color),
+						].join(' ')}
+					>
+						<Icone aria-hidden="true" size={18} className="shrink-0" />
+						<span className={['truncate', classeTexte].join(' ')}>{track.name}</span>
+					</li>
+				)
+			})}
 		</ul>
 	)
 }

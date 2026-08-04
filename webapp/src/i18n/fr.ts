@@ -38,12 +38,18 @@ export const fr = {
 	'tabs.empty.hint': 'Les channels apparaîtront ici une fois un track ouvert.',
 
 	// --- Tracks -------------------------------------------------------------------------
+	// Les libellés des tracks eux-mêmes sont des **données** et ne passent pas par ce
+	// dictionnaire (docs/DESIGN_SYSTEM.md §10). Seul le vide est un texte d'interface.
 	'tracks.empty.title': 'Aucun track',
 
 	// --- Routes -------------------------------------------------------------------------
 	'route.board.title': 'Board',
 	'route.board.empty.title': 'Aucun board à afficher',
-	'route.board.empty.body': "Un board s'ouvre depuis un track. Aucun track n'est accessible pour le moment.",
+	// Corrigé par `CRM-020`, sur observation d'une capture. Le texte précédent affirmait
+	// « Aucun track n'est accessible » alors que la barre latérale en listait trois : l'écran se
+	// contredisait lui-même. Ce qui manque réellement pour ouvrir un board, ce sont les channels.
+	'route.board.empty.body':
+		"Un board affiche les cards d'un channel. Aucun channel n'est disponible dans cet espace de travail.",
 	'route.inbox.title': 'Inbox',
 	'route.inbox.empty.title': 'Aucun message',
 	'route.inbox.empty.body': "La messagerie n'est pas encore raccordée à cet espace de travail.",
@@ -77,6 +83,9 @@ export const fr = {
 	'live.workspaces.loaded': 'Espaces de travail chargés',
 	'live.workspaces.empty': 'Aucun espace de travail accessible',
 	'live.workspaces.error': 'Le chargement des espaces de travail a échoué',
+	'live.tracks.loaded': 'Tracks chargés',
+	'live.tracks.empty': 'Aucun track accessible',
+	'live.tracks.error': 'Le chargement des tracks a échoué',
 } as const
 
 export type CleTraduction = keyof typeof fr

@@ -2109,3 +2109,97 @@ vérification préalable, plutôt que masqué par un `not valid` qui rendrait la
 - **INC-021 reste ouverte, et devient l'obstacle principal du projet.** Sans écran de connexion, la
   webapp est un appelant anonyme : elle ne verra aucun track, quelles que soient les politiques
   livrées. Toute unité d'interface du chunk 3 rencontrera cet obstacle, pas seulement celle-ci.
+
+---
+
+## 2026-08-04 — `CRM-020` : tracks livrés, et deux affirmations démenties par la mesure
+
+L'unité livre `public.tracks`, ses politiques, son seed et la section « Tracks » de la barre
+latérale. Ce qui suit ne retient que ce qu'une mesure a **corrigé**, et ce que l'observation a
+trouvé — le reste est dans `docs/SPEC-tracks.md` et dans les preuves.
+
+### Décision 56 — Deux affirmations de la spécification étaient fausses, et ce sont elles qui ont cédé
+
+La spécification est écrite avant le code ; elle n'est pas pour autant à l'abri. Deux de ses
+affirmations ont été **démenties par la première exécution de la suite pgTAP**, et c'est la
+spécification qui a été corrigée, jamais l'assertion ajustée pour retomber sur ses pieds.
+
+1. **« La colonne `NOT NULL` interdit à un client d'écrire `NULL` explicitement. »** Faux. Un
+   trigger `BEFORE INSERT` reçoit `new.position` à `NULL` que le client ait omis la colonne ou
+   qu'il y ait écrit `null` : il ne peut pas distinguer les deux, et remplace dans les deux cas.
+   La protection existe bien, mais elle ne couvre que les **mises à jour**, que le trigger ne voit
+   pas. `docs/SPEC-tracks.md` §3 porte désormais les deux cas, et deux assertions distinctes les
+   tiennent.
+2. **« `updated_at` est avancée par la modification. »** Invérifiable telle quelle : `now()` rend
+   l'heure de **transaction**, constante dans toute la suite, et une comparaison `>=` aurait été
+   vraie sans rien prouver. Ce qui se prouve à l'intérieur d'une transaction, c'est que le trigger
+   **écrase** la valeur écrite par le client — l'assertion écrit `2000-01-01` et constate qu'elle
+   ne survit pas.
+
+Motif retenu : une assertion qu'on affaiblit pour qu'elle passe cesse d'être une preuve. Quand la
+mesure et le document divergent, c'est le document qui a tort.
+
+### Décision 57 — Les contraintes de valeur sont convergentes, parce qu'un rejeu doit réparer
+
+Défaut réel, trouvé par le **contrôle de restauration** de `scripts/verify-tracks.sh`, et non par
+raisonnement : après avoir retiré `tracks_color_check` pour éprouver la non-complaisance du
+harnais, la réapplication de la migration ne la remettait pas. `create table if not exists` saute
+la table entière dès qu'elle existe — la migration était idempotente sans être **réparatrice**, et
+la base restait durablement affaiblie.
+
+Les contraintes de valeur sont donc sorties du `create table` et posées par `drop constraint if
+exists` puis `add constraint` : la définition du fichier fait autorité à chaque passage. Le prix
+est une revalidation de la table à chaque démarrage de la pile ; sur `tracks`, il est négligeable.
+La propriété achetée vaut mieux : **le schéma converge vers ce que le dépôt déclare**, au lieu de
+converger seulement sur une base neuve. Le point est porté dans `docs/PROD_MIGRATIONS.md` §3.
+
+Sans le contrôle de restauration, ce défaut serait passé : les preuves étaient vertes avant la
+dégradation, et vertes après. C'est l'écart entre les deux qui l'a montré.
+
+### Décision 58 — Deux chargements, et aucun échec avalé
+
+La coquille lit désormais deux sources : `workspaces` pour l'en-tête, `tracks` pour la barre
+latérale. La barre latérale n'a pas la place d'expliquer une erreur — c'était déjà le choix de
+`CRM-007`, et il tient. Mais si la zone principale ne regardait que les workspaces, un échec du
+chargement des tracks produirait un écran **vide et silencieux**, c'est-à-dire la valeur par défaut
+trompeuse que `CLAUDE.md` §18 interdit.
+
+`ZonePrincipale` reçoit donc la liste des états et présente le premier échec, un refus l'emportant
+sur une panne — le refus est définitif, la panne se retente, et proposer « Réessayer » à qui n'a
+pas les droits serait une fausse promesse. La reprise relance **tous** les chargements.
+
+### Défauts trouvés en regardant les captures, et non les tests
+
+Deux problèmes ont été trouvés par l'observation, alors que toutes les preuves étaient vertes.
+
+1. **L'écran se contredisait.** Avec trois tracks dans la barre latérale, la zone principale
+   affichait toujours « Un board s'ouvre depuis un track. Aucun track n'est accessible pour le
+   moment. » Le texte datait de `CRM-007`, où il était vrai. Il affirme désormais ce qui manque
+   réellement pour ouvrir un board : un **channel**.
+2. **Le fond de la pilule `accent`.** Le jaune du design system sur son propre fond doux n'atteint
+   pas le contraste AA ; la pilule porte donc son texte en encre. L'écart est inscrit dans
+   `docs/DESIGN_SYSTEM.md` §5.5 bis plutôt que laissé à la lecture du code.
+
+Aucun des deux n'aurait été trouvé par une suite de tests : le premier est une incohérence entre
+deux zones qu'aucune assertion ne rapprochait, le second une question de perception.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun track n'apparaît dans l'interface**, et aucune ne le pourra avant qu'un écran de
+  connexion existe (INC-021). Le rendu chargé est éprouvé par test unitaire du composant réel et
+  par substitution de la réponse réseau ; ni l'un ni l'autre n'est une session.
+- **Aucune interface d'administration des tracks** : créer, renommer, réordonner et archiver se
+  font par l'API, ce qui est une opération d'exploitation. Le CRUD est prouvé, le parcours produit
+  ne l'est pas.
+- **Les droits fins ne sont pas appliqués** (INC-024). Un `track_members.access = 'none'` ne masque
+  rien encore, et une assertion le constate pour forcer sa révision à `CRM-012`.
+
+### INC-021 n'est plus une gêne locale, c'est l'obstacle du chunk 3
+
+Le fait mérite d'être écrit ici, parce qu'il déborde `CRM-020` : le produit sait maintenant servir
+de la donnée métier à un membre du workspace — mesuré, avec des jetons réels — et l'interface n'en
+voit rien. Toutes les unités d'interface qui suivent (`CRM-021`, `CRM-041`, `CRM-042`, …) buteront
+sur le même obstacle et livreront, au mieux, des captures vides.
+
+L'arbitrage d'INC-021 conditionne donc la valeur démontrable de tout le chunk 3, et non la seule
+Definition of Done de `CRM-011`.

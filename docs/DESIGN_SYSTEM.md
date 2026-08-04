@@ -142,6 +142,30 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
 
 Hauteur minimale 40 px. Anneau de focus 2 px `--color-brand` avec décalage.
 
+### 5.5 bis Pilule de track — `CRM-020`
+
+Composant de la barre latérale (§4). `rounded-full`, hauteur minimale `--size-target`, fond de la
+couleur douce du track, texte à sa couleur pleine, **précédé de son icône Lucide**.
+
+| Jeton `tracks.color` | Fond | Texte |
+|---|---|---|
+| `brand` | `--color-brand-soft` | `--color-brand` |
+| `success` | `--color-success-soft` | `--color-success` |
+| `accent` | `--color-accent-soft` | `--color-ink` |
+| `danger` | `--color-danger-soft` | `--color-danger` |
+| `neutral` | `--color-hover` | `--color-text-2` |
+
+`accent` porte son texte en **encre** et non en jaune : le jaune sur jaune doux n'atteint pas le
+contraste AA du §8. `neutral` emploie les neutres existants plutôt qu'un « neutre doux » que la
+palette ne déclare pas.
+
+La correspondance vit à un seul endroit, `webapp/src/app/presentation-tracks.ts`, avec un repli
+documenté vers `neutral` : la valeur vient du backend, et un type ne garantit jamais une valeur
+(`docs/SPEC-types.md`). Idem pour l'icône, dont le catalogue se replie sur `Folder`.
+
+**Les pilules de track ne sont pas cliquables à ce stade** : un track s'ouvre sur ses channels,
+livrés par `CRM-021`. Voir §12.4.
+
 ### 5.6 Badges et pilules
 
 `rounded-full`, fond de la couleur à 10–15 %, texte à la couleur pleine, **précédés d'un point
@@ -256,5 +280,24 @@ profit du contexte, contre le §7 (« aucun contenu n'est masqué sans point d'a
 Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repliée, les libellés de
 navigation passent en `sr-only` au lieu d'être supprimés : réduire l'affichage ne doit pas réduire
 l'information annoncée aux technologies d'assistance.
+
+### 12.4 Pilules de track non cliquables — temporaire, `CRM-020`
+
+La barre latérale liste les tracks (§4), mais chaque pilule est un élément de liste, non un lien.
+Un track s'ouvre sur ses **channels**, livrés par `CRM-021` : une pilule menant à une route vide
+serait une commande morte, ce que le §8 interdit — un élément indisponible doit expliquer pourquoi,
+pas feindre d'agir. Le lien arrivera avec la destination.
+
+### 12.5 Aucune donnée métier n'est visible dans l'interface — `CRM-020`
+
+Constat, et non choix de conception. La webapp n'a aucun parcours de connexion
+(`docs/INCONSISTENCY_REPORT.md`, INC-021) : son client est anonyme, et les politiques RLS ne
+consentent aucune ligne à un anonyme. Les captures de référence montrent donc l'**état vide**, qui
+est le refus réel du backend.
+
+Conséquence pour toute revue d'interface à venir : une capture vide ne prouve pas un défaut
+d'interface tant que cet arbitrage n'est pas rendu, et le rendu chargé se vérifie par test
+unitaire du composant réel (`webapp/src/app/SectionTracks.test.tsx`) ou en substituant la réponse
+réseau — jamais en injectant un état interne.
 
 Tout écart futur est consigné ici avec sa justification et sa date.

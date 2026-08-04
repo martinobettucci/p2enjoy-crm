@@ -39,7 +39,12 @@ type Expect<T extends true> = T
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
-    'channel_members' | 'profiles' | 'track_members' | 'workspace_members' | 'workspaces'
+    | 'channel_members'
+    | 'profiles'
+    | 'track_members'
+    | 'tracks'
+    | 'workspace_members'
+    | 'workspaces'
   >
 >
 
@@ -93,15 +98,16 @@ type _roleNEstPasLUnion = Expect<
   Equal<Equal<Tables<'workspace_members'>['role'], 'admin' | 'business_developer' | 'viewer'>, false>
 >
 
-// --- 5. Limite assumée : les clés étrangères différées ne sont pas inventées ---------------------
-// INC-010. `track_members.track_id` et `channel_members.channel_id` ne portent aucune clé
-// étrangère tant que `tracks` et `channels` n'existent pas : leurs relations se limitent donc au
-// compte. `CRM-020` et `CRM-021` feront échouer ces deux assertions, ce qui est le signal voulu.
+// --- 5. INC-010 : une moitié close par `CRM-020`, l'autre encore ouverte -------------------------
+// L'assertion sur `track_members` affirmait l'absence de clé étrangère vers `tracks`, « ce qui
+// fera échouer cette assertion à CRM-020, et c'est le signal voulu ». Le signal s'est produit :
+// elle a **réellement échoué** à la livraison de `CRM-020`, et elle est révisée ici.
+// `channel_members` garde la sienne : `channels` arrive avec `CRM-021`.
 
 type _relationsTrackMembers = Expect<
   Equal<
     Database['public']['Tables']['track_members']['Relationships'][number]['foreignKeyName'],
-    'track_members_user_id_fkey'
+    'track_members_track_id_fkey' | 'track_members_user_id_fkey'
   >
 >
 
@@ -117,6 +123,54 @@ type _relationsWorkspaceMembers = Expect<
   Equal<
     Database['public']['Tables']['workspace_members']['Relationships'][number]['foreignKeyName'],
     'workspace_members_user_id_fkey' | 'workspace_members_workspace_id_fkey'
+  >
+>
+
+// --- 5 bis. `tracks`, livrée par `CRM-020` -------------------------------------------------------
+// docs/SCHEMA.md §2, docs/SPEC-tracks.md §2.1.
+
+type _tracksColonnes = Expect<
+  Equal<
+    keyof Tables<'tracks'>,
+    | 'archived_at'
+    | 'color'
+    | 'created_at'
+    | 'description'
+    | 'icon'
+    | 'id'
+    | 'name'
+    | 'position'
+    | 'slug'
+    | 'updated_at'
+    | 'workspace_id'
+  >
+>
+
+// `archived_at` nul signifie « actif » : c'est la seule colonne de la table dont la nullabilité
+// porte une règle métier (docs/SPEC-tracks.md §4).
+type _archivedAtNullable = Expect<Equal<Tables<'tracks'>['archived_at'], string | null>>
+
+// `color` et `icon` sont des `string`, pas des unions. Les contraintes `CHECK` de la migration
+// ne remontent pas dans les types : docs/SPEC-types.md pose que le générateur décrit le
+// **stockage**, jamais la règle. Croire le type, ici, reviendrait à croire qu'une valeur
+// inattendue est impossible — ce que `webapp/src/app/presentation-tracks.ts` traite par un repli.
+type _colorEstUneChaine = Expect<Equal<Tables<'tracks'>['color'], string>>
+type _iconEstUneChaine = Expect<Equal<Tables<'tracks'>['icon'], string>>
+
+// LIMITE FIGÉE PAR UNE ASSERTION (docs/JOURNAL.md décision 51).
+//
+// `position` est **exigée à l'insertion** par le type généré, alors que le trigger
+// `app.tracks_attribuer_position` la rend facultative : le générateur ne lit que le défaut de
+// colonne, et un trigger lui est invisible. Le type est donc plus strict que le produit.
+//
+// L'écart est constaté ici plutôt que corrigé à la main : `webapp/src/lib/database.types.ts` est
+// un fichier **généré**, et le retoucher ferait échouer la garde anti-dérive de `CRM-006`.
+// Conséquence pratique : un client TypeScript devra fournir `position`, ou passer par un cast.
+// Consigné en docs/INCONSISTENCY_REPORT.md, INC-027.
+type _tracksInsertRequis = Expect<
+  Equal<
+    { [K in keyof TablesInsert<'tracks'> as {} extends Pick<TablesInsert<'tracks'>, K> ? never : K]: true },
+    { name: true; position: true; slug: true; workspace_id: true }
   >
 >
 
@@ -147,6 +201,11 @@ export type AssertionsDuContratDeTypes = [
   _accesTrackEstUneChaine,
   _accesChannelEstUneChaine,
   _roleNEstPasLUnion,
+  _tracksColonnes,
+  _archivedAtNullable,
+  _colorEstUneChaine,
+  _iconEstUneChaine,
+  _tracksInsertRequis,
   _relationsTrackMembers,
   _relationsChannelMembers,
   _relationsWorkspaceMembers,

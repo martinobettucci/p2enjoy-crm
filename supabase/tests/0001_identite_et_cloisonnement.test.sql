@@ -22,7 +22,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(70);
+select plan(71);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §1
@@ -84,14 +84,21 @@ select fk_ok('public', 'workspace_members', 'workspace_id', 'public', 'workspace
 select fk_ok('public', 'workspace_members', 'user_id', 'public', 'profiles', 'id',
 	'`workspace_members.user_id` référence `profiles.id`');
 
--- INC-010 : la clé étrangère vers `tracks` / `channels` est différée, faute de tables à
--- référencer. Le test **constate** cet état plutôt que de le taire, afin qu'il devienne rouge le
--- jour où `CRM-020` la posera sans mettre à jour cette suite.
+-- INC-010, MOITIÉ CLOSE PAR `CRM-020`. Cette suite affirmait l'absence de clé étrangère vers
+-- `tracks`, faute de table à référencer, « afin qu'elle devienne rouge le jour où `CRM-020` la
+-- posera sans mettre à jour cette suite ». Ce jour est venu : l'assertion a **réellement échoué**
+-- lors de la livraison de `CRM-020`, et elle est révisée ici — c'est le mécanisme de la
+-- décision 51, qui fonctionne comme prévu, et non un ajustement de confort.
+select fk_ok('public', 'track_members', 'track_id', 'public', 'tracks', 'id',
+	'INC-010 : `track_members.track_id` référence `tracks.id` depuis CRM-020');
+
+-- L'autre moitié reste ouverte : `channels` arrive avec `CRM-021`. L'assertion garde donc sa
+-- fonction de garde pour cette table-là.
 select is_empty(
 	$$ select conname from pg_constraint
-	    where conrelid = 'public.track_members'::regclass and contype = 'f'
-	      and conname like '%track_id%' $$,
-	'INC-010 : `track_members.track_id` n''a pas encore de clé étrangère (CRM-020)'
+	    where conrelid = 'public.channel_members'::regclass and contype = 'f'
+	      and conname like '%channel_id%' $$,
+	'INC-010 : `channel_members.channel_id` n''a pas encore de clé étrangère (CRM-021)'
 );
 
 select has_index('public', 'workspace_members', 'workspace_members_user_id_idx',

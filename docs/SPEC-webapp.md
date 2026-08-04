@@ -263,8 +263,9 @@ L'arbitrage de la persistance de session revient à l'unité qui livrera la conn
 
 ### 6.3 Ce que la coquille lit
 
-La coquille lit `public.workspaces` — la seule table métier existante à ce jour — pour nommer le
-contexte courant. **Mesuré, hors interface :**
+La coquille lit `public.workspaces` pour nommer le contexte courant, et — depuis `CRM-020` —
+`public.tracks` pour remplir la barre latérale (`docs/SPEC-tracks.md` §7). **Mesuré, hors
+interface :**
 
 | Appelant | Réponse | En base |
 |---|---|---|
@@ -272,8 +273,14 @@ contexte courant. **Mesuré, hors interface :**
 | jeton réel d'un compte seedé, obtenu par la véritable route de connexion | `200` et `[]` | 1 ligne |
 
 Les deux appelants obtiennent le même vide, alors que la ligne existe. Ce n'est pas l'absence de
-session qui vide l'écran : **aucune politique RLS n'est écrite** — elles relèvent de `CRM-012` — et
-le refus par défaut de `CRM-003` s'applique donc à tout le monde. L'état vide affiché est l'état
+session qui vide l'écran : **aucune politique RLS n'est écrite sur `workspaces`** — elles relèvent
+de `CRM-012` — et le refus par défaut de `CRM-003` s'applique donc à tout le monde.
+
+`tracks` est le premier cas différent, et il éclaire la vraie cause : `CRM-020` **a** livré ses
+politiques, et un membre du workspace y lit bien ses tracks (mesuré, `docs/SPEC-tracks.md` §6). La
+webapp n'en voit pourtant aucun, parce qu'elle est un appelant **anonyme** faute d'écran de
+connexion (INC-021). Tant que cet arbitrage n'est pas rendu, **aucune donnée métier ne peut
+apparaître dans l'interface**, quelles que soient les politiques livrées. L'état vide affiché est l'état
 réel du backend, pas une simulation, et il le restera pour un utilisateur connecté tant que
 `CRM-012` n'aura pas livré ses politiques.
 

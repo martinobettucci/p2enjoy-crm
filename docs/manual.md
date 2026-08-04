@@ -88,10 +88,41 @@ L'écran se lit en trois zones :
 ### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
 
 L'application affiche partout **« Aucun track »**, **« Aucun channel »** et **« Aucun workspace
-accessible »**. Ce n'est pas une erreur : les tracks, les channels et les cards ne sont pas encore
-livrés, et l'application n'a **pas encore d'écran de connexion**. Elle interroge donc le serveur
-sans compte, et le serveur ne lui accorde rien — ce qu'elle vous dit, au lieu d'afficher une page
-blanche.
+accessible »**. Ce n'est pas une erreur, et ce n'est plus tout à fait pour la même raison qu'avant.
+
+Les **tracks existent désormais** : ils sont créés, ordonnés et archivés côté serveur, et une
+personne administratrice de l'espace de travail peut les gérer. Mais l'application n'a **pas encore
+d'écran de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent rien à
+un visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
+
+Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
+qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.
+
+### 3.2 bis La section Tracks
+
+*Livrée par `CRM-020`. Captures dans `docs/captures/CRM-020/`.*
+
+Sous les quatre entrées de navigation, la section **Tracks** liste les activités de votre espace de
+travail — par exemple « Conseil & IA », « Studio web », « Formation ». Chaque track s'affiche en
+pilule colorée, précédée de son icône.
+
+- L'**ordre** est celui défini par l'administration de l'espace, pas l'ordre de création.
+- Un track **archivé** n'apparaît pas dans cette liste. L'archivage masque sans détruire : il est
+  réversible à tout moment par une personne administratrice.
+- La **couleur** et l'**icône** sont choisies parmi un jeu fixe : elles aident à repérer un track
+  d'un coup d'œil, et ne portent jamais seules une information — le libellé et l'icône
+  l'accompagnent toujours.
+- Les pilules ne sont **pas encore cliquables** : un track s'ouvre sur ses channels, qui ne sont pas
+  livrés. Le lien apparaîtra en même temps que sa destination.
+
+**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un track est réservé aux personnes
+**administratrices** de l'espace de travail. Les autres profils les consultent. Cette règle est
+appliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à
+l'API. La suppression définitive d'un track n'est **jamais** proposée — l'archivage en tient lieu.
+
+**Aucun écran ne permet encore de les gérer**, faute d'écran de connexion (voir §3.2). La gestion
+des tracks passe aujourd'hui par l'API, ce qui est une opération d'exploitation, pas un parcours
+produit.
 
 ### 3.3 Replier la barre latérale
 

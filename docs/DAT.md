@@ -107,8 +107,11 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   `npm run types:check` prouve qu'ils n'ont pas dérivé du schéma réellement migré ;
 - `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
   qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44) ;
-- `src/lib/async.ts`, `src/lib/workspaces.ts` — un type somme unique pour tout chargement, et la
-  seule lecture que la coquille effectue aujourd'hui ;
+- `src/lib/async.ts`, `src/lib/workspaces.ts`, `src/lib/tracks.ts` — un type somme unique pour tout
+  chargement, et les **deux** lectures que la coquille effectue : le contexte d'espace de travail
+  pour l'en-tête, et les tracks pour la barre latérale (`CRM-020`) ;
+- `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
+  composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les
   composants du design system, le dictionnaire, et les jetons ;
 - `webapp/Dockerfile` et le service `webapp` de l'overlay de développement — Vite sur
@@ -118,7 +121,13 @@ Le build de production est produit **sur l'hôte** par `npm run build` et servi 
 image de production n'est fabriquée pour des fichiers statiques.
 
 Restent dus : l'écran de connexion, qu'aucune unité ne porte
-(`docs/INCONSISTENCY_REPORT.md`, INC-021), et tout le métier — `CRM-020` et suivantes.
+(`docs/INCONSISTENCY_REPORT.md`, INC-021), et le reste du métier — `CRM-021` et suivantes.
+
+**Conséquence devenue structurante, et qui déborde `CRM-020`.** Depuis que `tracks` porte des
+politiques RLS, le produit sait servir de la donnée métier à un membre du workspace — mesuré — mais
+l'interface, appelant anonyme, n'en voit rien. **Aucune unité d'interface du chunk 3 ne pourra
+produire de capture chargée tant qu'INC-021 n'est pas tranchée.** Ce n'est plus une gêne locale,
+c'est un obstacle sur le chemin de toutes les unités qui suivent.
 
 **Choix structurant, mesuré :** les espaces de noms de Tailwind sont remis à zéro dans
 `tokens.css`, de sorte qu'une couleur ou un espacement hors design system **n'existe pas** comme
@@ -376,9 +385,13 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   toujours valide par `scripts/verify-authz.sh`.
 - **État de livraison** : `app.workspace_role`, `app.is_workspace_member`,
   `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
-  fonctions `can_*` sont différées, faute des tables `tracks`, `channels` et `cards` —
-  `docs/INCONSISTENCY_REPORT.md`, INC-013. Aucune politique RLS n'est encore écrite : les tables
-  d'identité restent en refus par défaut.
+  fonctions `can_*` restent différées — `docs/INCONSISTENCY_REPORT.md`, INC-013.
+- **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks` — lecture
+  par `app.is_workspace_member`, insertion et mise à jour par `app.is_workspace_admin`, **aucune
+  suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés par
+  `scripts/verify-tracks.sh` (**40 contrôles**) et `e2e/api/tracks.spec.ts`. Ces politiques
+  n'appliquent **aucun droit fin**, `app.can_read_track` étant différée : INC-024, à resserrer
+  par `CRM-012`. Les tables d'identité, elles, restent en refus par défaut.
 - **Secrets de messagerie** : la colonne portant la référence du secret est révoquée pour le
   rôle `authenticated`. Aucun chemin de lecture ne l'expose à un client.
 

@@ -14,7 +14,9 @@ import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
 import { EtatConfiguration, EtatErreur, EtatRefus } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
+import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
+import { useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
@@ -31,7 +33,16 @@ export type ProprietesAppShell = {
 export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 	const { replie, basculer } = useReplisidebar()
 	const [tiroirOuvert, setTiroirOuvert] = useState(false)
+	// Deux chargements indépendants depuis `CRM-020` : le contexte d'espace de travail, porté par
+	// l'en-tête, et les tracks, portés par la barre latérale. Ils échouent séparément, et la zone
+	// principale décide en les regardant **tous les deux** (voir `ZonePrincipale`).
 	const { etat, recharger } = useWorkspaces(clientCrm)
+	const { etat: etatTracks, recharger: rechargerTracks } = useTracks(clientCrm)
+
+	const toutRecharger = useCallback(() => {
+		recharger()
+		rechargerTracks()
+	}, [recharger, rechargerTracks])
 
 	const fermerTiroir = useCallback(() => setTiroirOuvert(false), [])
 	const ouvrirTiroir = useCallback(() => setTiroirOuvert(true), [])
@@ -47,12 +58,24 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 		return () => globalThis.removeEventListener('keydown', surTouche)
 	}, [tiroirOuvert])
 
+	// La région polie annonce ce que l'utilisateur voit réellement changer : le contexte d'espace
+	// de travail **et** le contenu de la barre latérale, qui liste les tracks depuis `CRM-020`.
+	// N'annoncer que le premier laisserait le second changer en silence (docs/DESIGN_SYSTEM.md §8).
+	//
+	// Les deux annonces sont concaténées plutôt que mises en concurrence : une région `aria-live`
+	// unique n'en relaie qu'une à la fois, et supprimer la seconde reviendrait à choisir laquelle
+	// des deux informations l'utilisateur n'aura pas.
 	const annonce = useMemo(() => {
 		if (clientCrm === null) return ''
-		if (etat.statut === 'chargement') return ''
-		if (etat.statut === 'erreur') return t('live.workspaces.error')
-		return etat.donnees.length === 0 ? t('live.workspaces.empty') : t('live.workspaces.loaded')
-	}, [etat])
+		const parts: string[] = []
+		if (etat.statut === 'erreur') parts.push(t('live.workspaces.error'))
+		else if (etat.statut === 'pret')
+			parts.push(etat.donnees.length === 0 ? t('live.workspaces.empty') : t('live.workspaces.loaded'))
+		if (etatTracks.statut === 'erreur') parts.push(t('live.tracks.error'))
+		else if (etatTracks.statut === 'pret')
+			parts.push(etatTracks.donnees.length === 0 ? t('live.tracks.empty') : t('live.tracks.loaded'))
+		return parts.join(' ')
+	}, [etat, etatTracks])
 
 	return (
 		<div className="min-h-dvh flex flex-col">
@@ -76,7 +99,7 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 					onBasculerRepli={basculer}
 					tiroirOuvert={tiroirOuvert}
 					onFermerTiroir={fermerTiroir}
-					etatWorkspaces={etat}
+					etatTracks={etatTracks}
 				/>
 
 				<div className="flex flex-col flex-1 min-w-0">
@@ -87,7 +110,11 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 					/>
 					<TabBar />
 					<main id={ID_CONTENU} tabIndex={-1} className="flex-1 min-w-0 p-4 overflow-x-auto">
-						<ZonePrincipale etat={etat} recharger={recharger} contenu={children} />
+						<ZonePrincipale
+							etats={[etat, etatTracks]}
+							recharger={toutRecharger}
+							contenu={children}
+						/>
 					</main>
 				</div>
 			</div>
@@ -99,13 +126,19 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
  * Décide ce qu'affiche la zone principale. L'ordre des cas est celui de leur gravité : une
  * configuration absente rend tout le reste indécidable, un refus est définitif là où une panne
  * de transport se retente.
+ *
+ * Depuis `CRM-020`, la décision porte sur **plusieurs** chargements. Aucun échec ne doit être
+ * avalé : la barre latérale n'a pas la place d'expliquer une erreur, et si l'un des chargements
+ * échoue sans que rien ne le dise, l'écran affiche un vide qui n'en est pas un — exactement la
+ * valeur par défaut trompeuse que `CLAUDE.md` §18 interdit. Le premier échec rencontré occupe
+ * donc la zone principale, et la reprise les relance **tous**.
  */
 function ZonePrincipale({
-	etat,
+	etats,
 	recharger,
 	contenu,
 }: {
-	readonly etat: ReturnType<typeof useWorkspaces>['etat']
+	readonly etats: readonly EtatAsync<unknown>[]
 	readonly recharger: () => void
 	readonly contenu: ReactNode
 }) {
@@ -118,14 +151,28 @@ function ZonePrincipale({
 			/>
 		)
 	}
-	if (etat.statut === 'erreur') {
-		if (etat.erreur.nature === 'forbidden') {
-			return <EtatRefus titre={t('state.forbidden.title')} corps={t('state.forbidden.body')} />
-		}
+
+	// Prédicat de type explicite : `filter` seul ne restreint pas le type somme, et le
+	// compilateur refuserait ensuite l'accès à `erreur`.
+	const estEnErreur = (
+		etat: EtatAsync<unknown>,
+	): etat is Extract<EtatAsync<unknown>, { statut: 'erreur' }> => etat.statut === 'erreur'
+
+	const echecs = etats.filter(estEnErreur)
+	// Un refus l'emporte sur une panne : il est définitif, tandis qu'une panne se retente. Les
+	// présenter dans l'ordre inverse proposerait un bouton « Réessayer » à qui n'a pas les droits.
+	const refus = echecs.find((etat) => etat.erreur.nature === 'forbidden')
+	if (refus !== undefined) {
+		return <EtatRefus titre={t('state.forbidden.title')} corps={t('state.forbidden.body')} />
+	}
+	const panne = echecs[0]
+	if (panne !== undefined) {
 		return (
 			<EtatErreur
 				titre={t('state.error.title')}
-				corps={etat.erreur.nature === 'network' ? t('state.error.network') : t('state.error.unknown')}
+				corps={
+					panne.erreur.nature === 'network' ? t('state.error.network') : t('state.error.unknown')
+				}
 				libelleReprise={t('state.error.retry')}
 				onReprise={recharger}
 			/>

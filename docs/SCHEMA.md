@@ -87,17 +87,33 @@ restreint ou étend explicitement l'accès à un sous-arbre (voir `docs/SPEC-per
 
 ### `tracks`
 
+Livrée par `CRM-020`. Spécification complète : `docs/SPEC-tracks.md`.
+
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id` | `uuid` | PK |
-| `workspace_id` | `uuid` | FK, non nul |
-| `name` | `text` | non nul |
-| `slug` | `text` | unique par workspace |
+| `id` | `uuid` | PK, défaut `gen_random_uuid()` |
+| `workspace_id` | `uuid` | FK `workspaces`, non nul, `ON DELETE CASCADE` |
+| `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
+| `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique par workspace |
 | `description` | `text` | |
-| `color` | `text` | jeton du design system, pas un hexadécimal libre |
-| `icon` | `text` | nom d'icône lucide |
-| `position` | `numeric` | ordre dans la barre latérale |
-| `archived_at` | `timestamptz` | |
+| `color` | `text` | non nul, défaut `'neutral'`, `CHECK (color IN ('brand','success','accent','danger','neutral'))` — jeton du design system, pas un hexadécimal libre |
+| `icon` | `text` | non nul, défaut `'folder'`, `CHECK (icon ~ '^[a-z][a-z0-9-]*$')` — nom d'icône lucide ; la **forme** est contrainte, l'existence est traitée par l'interface |
+| `position` | `numeric` | non nul, ordre dans la barre latérale ; attribuée par trigger si omise |
+| `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, défaut `now()` ; `updated_at` maintenue par `app.set_updated_at()` |
+
+`created_at` et `updated_at` étaient absentes de ce tableau alors que les « Conventions
+générales » les exigent de toute table : lacune consignée en `docs/INCONSISTENCY_REPORT.md`,
+INC-025, et corrigée ici. Le tableau de `channels` ci-dessous n'est **pas** corrigé — il relève de
+`CRM-021`, qui livrera la table.
+
+**La clé étrangère `track_members.track_id → tracks.id` est posée par cette migration** : c'est la
+moitié d'INC-010 que `CRM-020` referme. `channel_members.channel_id` attend `CRM-021`.
+
+**Politiques RLS** (`docs/SPEC-permissions-rls.md` §4) : lecture par `app.is_workspace_member`,
+insertion et mise à jour par `app.is_workspace_admin`, **aucune suppression** — ni politique, ni
+privilège. `app.can_read_track` reste différée (INC-013), la lecture n'applique donc **aucun droit
+fin** : INC-024.
 
 ### `channels`
 

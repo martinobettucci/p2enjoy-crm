@@ -234,6 +234,19 @@ inexistant. Le risque est borné : aucune interface ni aucun seed n'écrit encor
 `CRM-020` et `CRM-021` semblent les candidats naturels — et l'inscrire dans leur Definition of
 Done, ou décider que ces colonnes restent volontairement sans contrainte.
 
+
+**MISE À JOUR — 2026-08-04, `CRM-020`.** La moitié `tracks` est **close** : la migration
+`0003_tracks.sql` pose `track_members_track_id_fkey` en `ON DELETE CASCADE`, et l'assertion de la
+suite `0001` qui constatait son absence a **réellement échoué** puis été révisée — le mécanisme de
+la décision 51 a fonctionné comme prévu. La moitié `channel_members.channel_id` **reste ouverte** :
+`channels` arrive avec `CRM-021`, et l'assertion garde sa fonction de garde pour cette table.
+
+Risque d'exploitation associé, nommé à cette occasion : l'ajout d'une clé étrangère échoue s'il
+existe une ligne orpheline, et le `migrations-runner` étant une dépendance de démarrage de
+PostgREST, la pile ne redémarrerait plus. La vérification préalable est portée par
+`docs/PROD_MIGRATIONS.md` §3 (`docs/JOURNAL.md`, décision 55).
+
+
 ---
 
 ### INC-011 — `track_members` et `channel_members` sans `workspace_id`, contre la convention générale
@@ -831,6 +844,47 @@ risquerait d'appauvrir des diagnostics légitimes.
 
 **Action attendue du responsable :** décider si ce `hint` doit être filtré à la passerelle, et si
 oui, rattacher la mesure à une unité — aucune ne la porte aujourd'hui.
+
+---
+
+### INC-027 — Le type généré exige `position` à l'insertion, que le trigger rend facultative
+
+**Nature :** écart entre `webapp/src/lib/database.types.ts` (généré) et le comportement réel de
+`public.tracks`.
+**Relevé le :** 2026-08-04, pendant `CRM-020`.
+
+`tracks.position` est `NOT NULL` **sans défaut de colonne** : c'est le trigger
+`app.tracks_attribuer_position` qui la renseigne lorsqu'un client l'omet, ce qui est le
+comportement voulu et prouvé (`docs/SPEC-tracks.md` §3).
+
+Le générateur de types ne lit que le défaut de **colonne**, et ignore les triggers. Il déclare
+donc `position` comme requise dans `TablesInsert<'tracks'>` :
+
+```ts
+Insert: { ...; position: number; ... }   // requise pour TypeScript
+```
+
+Un appel REST qui l'omet réussit pourtant — mesuré, `201`, position attribuée. **Le type est plus
+strict que le produit.**
+
+**Pourquoi ce n'est pas corrigé.** `webapp/src/lib/database.types.ts` est un fichier **généré**, et
+la garde anti-dérive de `CRM-006` (`npm run types:check`) compare le fichier versionné à ce que la
+base produit. Le retoucher à la main la ferait échouer, et à juste titre.
+
+**Ce qui est fait à la place :** l'écart est **figé par une assertion** dans
+`webapp/src/lib/database.types.test-d.ts` (`_tracksInsertRequis`), qui énumère exactement les
+colonnes requises à l'insertion. Si une migration future ajoutait un défaut de colonne, l'assertion
+deviendrait rouge et forcerait sa révision.
+
+**Conséquence pratique, bornée :** un client TypeScript qui crée un track doit fournir `position`,
+ou passer par un cast. Aucun code du dépôt ne crée de track depuis TypeScript aujourd'hui — le seed
+passe par `curl`, et l'interface n'a aucun parcours de création (INC-021).
+
+**Action attendue du responsable :** décider, le jour où une interface créera des tracks, entre
+trois conduites — poser un défaut de colonne en plus du trigger, exposer une RPC de création, ou
+assumer le cast. Le même écart se reproduira sur toute colonne renseignée par trigger.
+
+**Lié à :** INC-021 (aucun écran de connexion, donc aucun parcours de création).
 
 ---
 
