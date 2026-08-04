@@ -86,7 +86,11 @@ flowchart LR
 
 React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 
-- Authentification via `supabase-js` (GoTrue), session persistée par la bibliothèque.
+- Authentification via `supabase-js` (GoTrue). **La persistance de la session n'est pas
+  tranchée** : cette ligne annonçait « session persistée par la bibliothèque », ce que
+  `CLAUDE.md` §11 n'autorise pas sans consentement explicite, et ce que contredit d'ailleurs le
+  client réellement livré (voir « Livré à ce jour » ci-dessous). Contradiction consignée en
+  **INC-022**, en attente d'arbitrage : elle doit être tranchée avant l'écran de connexion.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.

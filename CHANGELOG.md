@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Contradiction consignée, sans être résolue : INC-022.** `docs/DAT.md` §3.1 portait, à quatre
+  lignes d'intervalle, « session persistée par la bibliothèque » et « sans persistance de
+  session ». La première annonce comme acquise une écriture persistante dans `localStorage` que
+  `CLAUDE.md` §11 n'autorise pas sans consentement explicite. La ligne est **signalée sur place**
+  comme non tranchée, le comportement livré est **inchangé**, et l'arbitrage — trois postures
+  posées — est demandé avant que l'écran de connexion ne soit écrit.
+- **Constat d'exploitation consigné au journal : deux exécutions concurrentes de la routine ont
+  livré `CRM-007` en double.** Le doublon a été abandonné sans être poussé, la livraison la mieux
+  prouvée conservée, et ses affirmations rejouées indépendamment — `typecheck`, 96 tests
+  unitaires et `build` verts depuis un `node_modules` reconstruit. La sérialisation de la routine
+  est proposée au responsable.
+
 - **`CRM-007` — Squelette de la webapp (`[x]`).**
   - Chaîne complète : Vite 8, React 19, TypeScript strict, Tailwind 4, React Router 8,
     `@supabase/supabase-js`, Lucide. `npm run dev`, `build`, `preview`, `test:unit`, `e2e:ui`.

@@ -1801,3 +1801,57 @@ regardant deux images.
 - **Firefox et WebKit** : les preuves E2E s'exécutent sur Chromium seul.
 - **Node 24 sur l'hôte** : il n'est exercé que dans le conteneur `webapp`, où build, tests et
   compilation ont été rejoués verts. Les preuves E2E, elles, tournent sous Node 22.22.2.
+
+---
+
+## 2026-08-04 — Deux exécutions concurrentes ont livré `CRM-007` en double
+
+### Le constat, et pourquoi il compte
+
+Deux exécutions de la routine d'avancement du backlog ont tourné **en parallèle** et ont toutes
+deux implémenté `CRM-007` **intégralement et indépendamment** : deux arborescences `webapp/src`
+complètes, deux jeux de tests, deux harnais `scripts/verify-webapp.sh`, deux séries de captures.
+
+La seconde s'était pourtant resynchronisée avant de commencer : à cet instant, `origin/main` était
+encore sur `5ad19b3`, la spécification. Le commit de la première est arrivé pendant le travail.
+Se resynchroniser au démarrage ne protège donc de rien : la fenêtre de collision est la durée
+entière d'une unité, pas l'instant du `git pull`.
+
+Le rebase a produit des conflits sur **tous** les fichiers de l'unité — des implémentations
+divergentes des mêmes composants, non fusionnables ligne à ligne.
+
+### Ce qui a été retenu, et pourquoi
+
+**La livraison conservée est celle de la première exécution**, déjà poussée. Elle est strictement
+mieux prouvée : son environnement disposait de Docker, elle a donc obtenu **la preuve
+d'intégration hors interface** que l'autre ne pouvait pas produire — la requête de la coquille
+rejouée contre PostgREST, avec la clé anonyme **et** avec le jeton réel d'un compte seedé, alors
+que la base contient bien une ligne. C'est la seule preuve qui établit que l'écran vide est le
+refus par défaut du backend et non un défaut d'interface. Elle a aussi construit et démarré le
+service `webapp` conteneurisé, et exercé le prérequis Node 24 du dépôt.
+
+Le doublon a été **abandonné sans être poussé**. Écraser un travail déjà publié est interdit
+(`CLAUDE.md` §13), et fusionner deux architectures divergentes du même écran aurait produit un
+troisième code que personne n'aurait conçu.
+
+### Vérification indépendante de la livraison conservée
+
+Les affirmations de `CRM-007` ont été rejouées depuis un `node_modules` reconstruit par
+`npm ci` :
+
+- `npm run typecheck` — **vert** sur les quatre projets TypeScript ;
+- `npm run test:unit` — **96 tests, 5 fichiers, tous verts** ;
+- `npm run build` — **vert**, `webapp/dist` produit.
+
+`npm run e2e:ui` n'a pas pu être rejoué : sa configuration exige un `.env`, donc la pile démarrée,
+donc Docker — absent de cet environnement. Ce n'est pas un défaut : c'est le choix, défendable, de
+faire porter les preuves E2E par la pile réelle. La suite reste donc **vérifiée par l'exécution
+qui l'a livrée, non revérifiée ici**.
+
+### Ce que ce constat appelle
+
+Le coût est une exécution entière perdue, et le risque est plus grave que le gaspillage : deux
+implémentations concurrentes d'une même unité peuvent se fondre en un état incohérent si le
+conflit est résolu à la hâte. **La routine devrait être sérialisée** — une seule exécution à la
+fois — ou prendre un verrou sur l'unité qu'elle ouvre. La décision revient au responsable ; elle
+n'est pas prise ici, elle est signalée.

@@ -634,6 +634,52 @@ reste anonyme.
 
 ---
 
+### INC-022 — `docs/DAT.md` §3.1 se contredit sur la persistance de session, et l'une des deux versions heurte `CLAUDE.md` §11
+
+**Nature :** contradiction interne à `docs/DAT.md` §3.1, doublée d'une contradiction avec
+`CLAUDE.md` §11.
+**Relevé le :** 2026-08-04, en relisant `docs/DAT.md` après la livraison de `CRM-007`.
+
+Le même chapitre porte les deux affirmations, à quatre lignes d'intervalle :
+
+> - Authentification via `supabase-js` (GoTrue), **session persistée par la bibliothèque**.
+
+> - `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
+>   qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44).
+
+La seconde décrit ce qui est livré et vérifié. La première décrit une intention, écrite avant
+qu'aucun code n'existe — et cette intention n'est pas neutre : le défaut de
+`@supabase/supabase-js` est d'écrire la session dans `localStorage`.
+
+`CLAUDE.md` §11 n'admet une donnée persistante sur l'appareil que si elle est « strictement
+nécessaire au fonctionnement demandé » ou « persistante avec consentement explicite lorsque ce
+consentement est requis ». Le DAT annonce donc, comme acquise, une écriture persistante dont ni le
+recueil du consentement ni le comportement en cas de refus ne sont décrits nulle part.
+
+**Pourquoi ce n'est pas résolu ici.** Ce n'est pas une coquille : c'est un arbitrage de
+conformité, et le trancher au passage reviendrait à décider seul de la posture RGPD du produit.
+`CRM-007` a fait le seul choix tenable en l'absence de parcours de connexion — ne rien écrire — et
+l'a prouvé par un contrôle E2E exigeant un `localStorage` vide. Cela ne répond pas à la question
+posée pour la suite.
+
+**Risque :** l'unité qui livrera la connexion peut lire `docs/DAT.md` §3.1, y voir la persistance
+présentée comme le comportement attendu, et laisser simplement le défaut de la bibliothèque
+s'appliquer. La posture de consentement du produit serait alors décidée par une valeur par défaut,
+en silence — ce que `CLAUDE.md` §11 interdit explicitement.
+
+**Action attendue du responsable :** trancher entre trois postures **avant** que l'écran de
+connexion ne soit écrit, puis corriger `docs/DAT.md` §3.1 :
+
+1. session en mémoire seule, reperdue à chaque rechargement — aucun consentement requis ;
+2. session en `sessionStorage`, limitée à l'onglet — catégorie 2 de `CLAUDE.md` §11 ;
+3. session persistante en `localStorage` avec consentement explicite, refus possible sans perdre
+   la connexion elle-même — catégorie 3.
+
+Cette contradiction est liée à **INC-021** : c'est la même unité manquante — l'écran de connexion —
+qui les porte toutes les deux.
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
