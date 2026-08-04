@@ -101,11 +101,20 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		)
 		expect(reponseWf.status()).toBe(200)
 		const workflows = (await reponseWf.json()) as Workflow[]
-		expect(workflows).toHaveLength(1)
-		expect(workflows[0]!.scope).toBe('global')
-		expect(workflows[0]!.track_id).toBeNull()
-		expect(workflows[0]!.is_default).toBe(true)
-		expect(workflows[0]!.archived_at).toBeNull()
+
+		// RÉVISÉ PAR `CRM-032` (mécanisme de la décision 51) : le workspace du seed porte désormais
+		// **deux** workflows — le workflow global par défaut de cette unité, et la copie de portée
+		// `track` livrée par `docs/SPEC-workflow-engine.md` §4.10. L'assertion d'origine comptait
+		// « un workflow, ni plus ni moins » ; elle est resserrée sur ce que cette unité garantit
+		// réellement, plutôt que relâchée : un seul workflow **global**, un seul **par défaut**.
+		expect(workflows.filter((w) => w.scope === 'global')).toHaveLength(1)
+		expect(workflows.filter((w) => w.is_default)).toHaveLength(1)
+
+		const defaut = workflows.find((w) => w.id === WORKFLOW_SEED)!
+		expect(defaut.scope).toBe('global')
+		expect(defaut.track_id).toBeNull()
+		expect(defaut.is_default).toBe(true)
+		expect(defaut.archived_at).toBeNull()
 
 		const reponseEtapes = await request.get(
 			`${STEPS}?select=*&workflow_id=eq.${WORKFLOW_SEED}&order=position`,
@@ -171,12 +180,18 @@ test.describe('W1 — lecture (§3.8, lignes a, b, c)', () => {
 			})
 			expect(reponse.status()).toBe(200)
 			const lignes = (await reponse.json()) as Workflow[]
-			expect(lignes).toHaveLength(1)
-			expect(lignes[0]!.id).toBe(WORKFLOW_SEED)
+
+			// RÉVISÉ PAR `CRM-032` : le seed livre désormais deux workflows, le global par défaut et
+			// sa copie de portée `track` (§4.10). Ce que cette ligne du contrat prouve reste entier —
+			// le profil lit **son** workflow —, et une assertion d'appartenance le dit mieux qu'un
+			// compte figé.
+			expect(lignes.map((l) => l.id)).toContain(WORKFLOW_SEED)
+			expect(lignes.filter((l) => l.is_default)).toHaveLength(1)
 
 			// Un `viewer` lit aussi les étapes et les transitions : sans elles, il ne verrait ni les
-			// colonnes du board ni les actions possibles.
-			const etapes = await request.get(`${STEPS}?select=id`, {
+			// colonnes du board ni les actions possibles. Sept par workflow, donc quatorze depuis
+			// que la copie existe.
+			const etapes = await request.get(`${STEPS}?select=id&workflow_id=eq.${WORKFLOW_SEED}`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 			expect((await etapes.json()) as unknown[]).toHaveLength(7)

@@ -1409,14 +1409,114 @@ mention de divergence visible dans l'interface.
       appliquée à la main dans une transaction annulée, codes HTTP relevés contre PostgREST avec le
       jeton réel de l'administrateur, sondes créées puis détruites et l'absence de reste constatée.
       Commit documentaire dédié.
-- [x] Cinq décisions consignées (`docs/JOURNAL.md`, décisions 80 à 85) et **trois contradictions
+- [x] Six décisions consignées (`docs/JOURNAL.md`, décisions 80 à 85) et **trois contradictions
       relevées sans être résolues** : INC-037 (la DoD exige la copie de champs dont la table arrive
       à `CRM-035`), INC-038 (le signal de divergence ne voit pas une suppression dans la source),
       INC-039 (la suppression d'un workspace échoue quand un workflow instancie ses nœuds).
-- [ ] Migration, fonction, vue, suite pgTAP, scénarios d'API, harnais, seed : à livrer.
+- [x] `supabase/migrations/0007_copie_workflow.sql` : la fonction
+      `public.copy_workflow_to_track(workflow_id, track_id, new_name)`, ses **quatre refus**, le
+      remappage des arêtes par le nœud, la vue `public.workflow_derivations` en
+      `security_invoker`, et les privilèges posés **en nommant les rôles**.
+- [x] **Un défaut d'origine de l'image trouvé par la mesure, et corrigé ici** (décision 80) :
+      `revoke all … from public` ne protège **rien** dans le schéma `public`. L'image livre des
+      `ALTER DEFAULT PRIVILEGES` qui accordent nommément à `anon` l'exécution de toute fonction
+      nouvelle et **tous** les droits de toute vue nouvelle. Mesuré en appelant la fonction
+      « protégée » avec la clé anonyme : l'appel **a réussi**. La révocation nomme désormais les
+      rôles, et le contrôle 7.b du harnais rend le défaut impossible à réintroduire en silence.
+- [x] **Test unitaire dédié** : `supabase/tests/0008_copie_workflow.test.sql`, **63 assertions,
+      aucune anomalie** — forme de la fonction et de la vue, privilèges, contenu de la copie,
+      remappage des arêtes, surcharges et positions fractionnaires préservées, `is_default` forcé,
+      lignage, les quatre refus éprouvés contre quatre comptes réels, et le signal de divergence
+      allumé puis éteint.
+- [x] **Le contrat d'API des codes HTTP est mesuré, non déduit** (décision 81) : `P0001` → `400`,
+      `P0002` → **`500`**, `42501` → `403`, `23505` → `409`. `P0002`, le code le plus naturel pour
+      « rien ne correspond », étant rendu comme une erreur serveur, il est écarté. Le `404` propre
+      qu'un `SQLSTATE` conventionnel `PGRST` permettrait est écarté aussi, et le motif est écrit :
+      une fonction SQL qui connaît les codes HTTP de son client cesse d'être portable.
+- [x] **La règle de discrétion est prouvée dans les deux sens** (décision 82) : un workflow d'un
+      **autre** workspace — d'abord **constaté présent** avec la clé de service — rend
+      `workflow_not_found`, exactement comme un identifiant inventé ; un membre non administrateur
+      de son propre workspace obtient `forbidden`. L'ordre des contrôles est lui-même éprouvé par
+      une assertion dédiée.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/copie-workflow.spec.ts`, **14
+      scénarios**, avec les jetons réels des trois profils. Les seize lignes du contrat d'API de
+      `docs/SPEC-workflow-engine.md` §4.9 y sont rejouées.
+- [x] **Preuves de refus n° 2, n° 3 et n° 11 acquises au niveau de la copie** : un
+      `business_developer` et un `viewer` sont refusés en `403 forbidden` et **aucune ligne n'est
+      créée** — constaté avec la clé de service ; un administrateur du workspace B ne voit aucune
+      ligne de la vue ; l'anonyme obtient `200` et `[]` sur `workflow_derivations`, et **`401`** sur
+      la RPC, refusé par le privilège avant tout contrôle.
+- [x] **Seed mis à jour dans le même changement**, et par la **véritable route** : la copie du
+      §4.10 est créée par l'appel RPC réel, avec le jeton de l'administrateur seedé obtenu par la
+      vraie route de connexion — la clé de service n'a pas de `sub`, et l'appel serait refusé par
+      `workflow_not_found`. Convergent : un second passage ne recrée rien.
+- [x] **L'identifiant de la copie n'est pas stable, et le fait est nommé** (`docs/SPEC-seed.md`
+      §2.9) : il est frappé par la fonction. Le rendre stable supposerait un paramètre ajouté pour
+      le seul confort du seed — une API façonnée par ses tests. C'est le prix assumé de la règle
+      « la donnée de démonstration naît du mécanisme réel ».
+- [x] Harnais de preuves rejouable `scripts/verify-copie-workflow.sh` : **33 contrôles, aucune
+      anomalie** — 26 hors suites Playwright et build (`--rapide`) —, et **non complaisant, éprouvé
+      par trois dégradations réelles** : contrôle du rôle retiré de la fonction, privilège rendu à
+      `anon`, et vue repassée en `security_definer`. Chacune fait sortir le harnais en code `1`, et
+      la restauration est **constatée** — privilège retiré, vue revenue à `security_invoker`, une
+      seule copie du seed, et le contrôle du rôle revenu dans la définition de la fonction.
+- [x] **Six garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été
+      révisés** : deux assertions de type de `CRM-006` (« aucune vue », « aucune fonction »),
+      resserrées sur ce qui est livré plutôt que supprimées ; deux scénarios d'API de `CRM-031` qui
+      comptaient « un workflow, ni plus ni moins » ; deux contrôles de
+      `scripts/verify-workflows.sh`, resserrés sur « un workflow **global** » et sur les étapes du
+      workflow par défaut ; et les compteurs de
+      `scripts/verify-harness.sh` (559 / 96 / 37 → **622 / 110 / 37**, le compteur d'interface
+      **inchangé**, cette unité ne livrant aucun écran). Le mécanisme de la décision 51 a fonctionné
+      une cinquième fois.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+      `npm run test:sql` **622 assertions**, `npm run test:unit` **164 tests**, `npm run e2e:api`
+      **110 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé.
+- [x] **Aucune régression** : les treize harnais précédents rejoués — **33, 38, 23, 26, 42, 26, 49,
+      30, 41, 40, 23, 29 et 25 contrôles**, aucune anomalie. Les trois derniers — tracks, channels,
+      catalogue — l'ont été en `--rapide`, leurs suites Playwright et leur build étant déjà couverts
+      par le harnais de cette unité.
+- [x] `docs/SPEC-workflow-engine.md` §4 (réécrit), `docs/SCHEMA.md` §9 et §9.1 (nouveau),
+      `docs/SPEC-seed.md` §2.9, `docs/DAT.md` §7 et §8, `docs/PROD_MIGRATIONS.md` §3,
+      `docs/manual.md` chapitre 21 et §3.2, `README.md` §5, `CHANGELOG.md` mis à jour dans le même
+      changement.
+- [ ] **Aucun écran, aucune mention de divergence affichée, aucune capture.** La Definition of Done
+      exige que la divergence soit « visible dans l'interface ». Elle suppose un écran
+      d'administration authentifié, et la webapp reste un appelant **anonyme** faute d'écran de
+      connexion — **INC-021, en attente d'arbitrage**. Ce qui est livré est la **donnée** qui
+      porterait cette phrase, prouvée par l'API. **Cette preuve est bloquée par un arbitrage, pas
+      par un défaut de l'unité.**
+- [ ] **La copie des champs de formulaire n'est pas livrée.** `form_fields` arrive à `CRM-035` —
+      mesuré, `to_regclass` nul. **Bloquée par une frontière d'unité**, INC-037, dont l'arbitrage
+      est attendu avant `CRM-035`. L'absence est figée par une assertion `hasnt_table`.
 
-*État réel.* **Spécification seule.** Aucune ligne de code n'est écrite à ce stade ; l'unité reste
-`[~]` et le restera tant que ses preuves ne sont pas produites.
+*DoD adaptée, écarts explicites.* La Definition of Done exige un « E2E » et une « mention de
+divergence visible dans l'interface ». Aucun n'est livré, et aucun ne pouvait l'être : cette unité
+ne livre ni écran ni parcours, l'éditeur étant suspendu à INC-021. Ses preuves sont unitaires
+(pgTAP) et d'intégration (PostgREST, jetons réels, hors interface). **Aucune vérification visuelle**
+pour la même raison — et non parce qu'elle aurait été omise. Les quatre captures réécrites par le
+rejeu des suites d'interface ont été **regardées puis restaurées** : elles montraient un survol
+laissé par le pilote Playwright, artefact non déterministe déjà relevé lors de `CRM-030` et de
+`CRM-031`.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Sixième unité consécutive du chunk 3 à buter sur INC-021.
+- **Le signal de divergence ne voit pas une suppression** dans la source : INC-038, ouverte, trois
+  options d'arbitrage. L'angle mort est **mesuré** et figé par une assertion qui deviendra rouge le
+  jour où il sera corrigé.
+- **Rien n'interdit deux copies du même workflow sur le même track.** Aucune unicité ne le refuse,
+  et aucune n'est inventée : la spécification ne dit pas qu'une seconde copie serait une erreur.
+  C'est le seed qui converge, en vérifiant avant d'agir.
+- **La suppression d'un workspace échoue** dès qu'un workflow instancie ses nœuds : INC-039,
+  ouverte. Contournement — supprimer les étapes d'abord — appliqué par le harnais et figé par une
+  assertion.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
+- **Les preuves d'interface n'ont pu être rejouées qu'au prix d'un contournement hors dépôt**
+  (INC-036) : les navigateurs préinstallés de l'environnement ne correspondent pas au Playwright
+  épinglé, et une arborescence de compatibilité a dû être recréée. Même nature qu'INC-032, dont le
+  contournement a également dû être refait pour démarrer la pile.
 
 ### CRM-033 — Cohérence workflow ↔ channel `[ ]`
 Trigger : workflow `global` du workspace, ou `track` du track du channel.

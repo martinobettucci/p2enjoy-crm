@@ -723,6 +723,13 @@ composition au moment de la copie, journaliser les suppressions, ou comparer les
 options qui engagent le schéma. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-038**, avec ses
 options.
 
+**La vue est fermée deux fois, et une seule fermeture est visible de l'API.** Aucun privilège
+d'écriture n'est accordé (§4.7) ; et, mesuré, PostgreSQL refuse de toute façon la réécriture d'une
+vue qui joint deux tables — `55000`, « Views that do not select from a single table or view are not
+automatically updatable » —, **avant** tout contrôle de privilège. PostgREST ne sait pas traduire ce
+code et rend `500`. Le privilège manquant est donc prouvé en base, par pgTAP, et non par l'API, qui
+ne va jamais jusque-là.
+
 **Deux modifications faites dans la même transaction que la copie ne divergent pas non plus**, et
 pour une raison différente : `now()` est constant sur toute la durée d'une transaction — mesuré.
 `derived_at` et l'`updated_at` d'une écriture concomitante valent alors exactement la même chose, et
@@ -780,7 +787,7 @@ avant le code, et les scénarios de `e2e/api/copie-workflow.spec.ts` les rejouen
 | l | copie d'un workflow **par défaut** | `admin` | `200`, et la copie n'est **pas** par défaut |
 | m | `GET /workflow_derivations` | membre du workspace | `200`, la ligne de la copie, `source_modified_since_copy` renseigné |
 | n | `GET /workflow_derivations` | anonyme | `200` et `[]` (preuve de refus n° 11) |
-| o | `PATCH /workflow_derivations` | `admin` | refusé — la vue est en lecture seule, aucun privilège d'écriture |
+| o | `PATCH /workflow_derivations` | `admin` | refusé, `500` / `55000` — mesuré : la vue joint deux tables, PostgreSQL refuse la réécriture **avant** tout contrôle de privilège |
 | p | source modifiée après la copie | `admin` | `source_modified_since_copy` passe à vrai |
 
 ### 4.10 Ce que le seed livre

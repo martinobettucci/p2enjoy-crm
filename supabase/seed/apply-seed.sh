@@ -4,9 +4,12 @@
 # @spec CRM-021 (docs/BACKLOG.md) — channels de démonstration, dont un archivé
 # @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
 # @spec CRM-031 (docs/BACKLOG.md) — workflow par défaut, ses étapes et ses transitions
-# @spec docs/SPEC-seed.md §2 (contrat), §3 (mécanismes mesurés), §4 (identifiants), §5 (gardes)
+# @spec CRM-032 (docs/BACKLOG.md) — copie du workflow vers un track, par la véritable RPC
+# @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
+#       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
-# @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial), §3.9 (workflow par défaut)
+# @spec docs/SPEC-workflow-engine.md §2.9 (catalogue initial), §3.9 (workflow par défaut),
+#       §4.10 (copie livrée par le seed)
 # @spec docs/SCHEMA.md §1 (identité et cloisonnement), §2 (organisation), §3 (workflows)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
@@ -180,6 +183,16 @@ NOEUDS=(
 # changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
 WF_ID=5eed0000-0000-4000-8000-000000000051
 WF_NOM='Cycle commercial standard'
+
+# Copie du workflow par défaut vers le track « Conseil & IA » — docs/SPEC-workflow-engine.md §4.10.
+#
+# Le contrat porte ici le **track**, le **nom** et la **source**, mais **pas l'identifiant** de la
+# copie : il est frappé par la fonction, et c'est voulu. `CLAUDE.md` §8 exige qu'une donnée de
+# démonstration naisse du mécanisme réel ; imposer un identifiant supposerait un paramètre de plus
+# sur `copy_workflow_to_track`, ajouté pour le seul confort du seed. La copie se retrouve donc par
+# sa source et son track, ce que font les preuves (docs/SPEC-seed.md §2.9).
+WF_COPIE_TRACK=5eed0000-0000-4000-8000-000000000021
+WF_COPIE_NOM='Cycle commercial — Conseil IA'
 
 # id | nœud | position | initiale (oui/non) | libellé surchargé (ou « - ») | probabilité (ou « - »)
 #    | seuil surchargé (ou « - »)
@@ -522,7 +535,56 @@ for ligne in "${CHANNELS[@]}"; do
 done
 info "Channels rattachés au workflow : ${#CHANNELS[@]}"
 
-# --- 7. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
+# --- 7. Copie vers un track — docs/SPEC-workflow-engine.md §4.10 --------------------------------
+# Cette section n'écrit **aucune** ligne directement : elle appelle `copy_workflow_to_track`, la
+# véritable fonction du produit, par la véritable route — l'appel RPC de l'API REST. `CLAUDE.md` §8
+# l'exige : « une inscription doit utiliser le véritable flux applicatif ».
+#
+# Deux différences avec les sections précédentes, et toutes deux voulues.
+#
+# 1. **Le jeton employé est celui de l'administrateur seedé, obtenu par la vraie route de
+#    connexion**, et non la clé de service. La fonction exige `app.is_workspace_admin`, qui lit
+#    `auth.uid()` : la clé de service n'a pas de `sub`, `auth.uid()` y est nul, et l'appel serait
+#    refusé par `workflow_not_found`. Ce n'est pas un obstacle contourné, c'est la garde qui
+#    fonctionne — et le seed la traverse comme un administrateur le ferait.
+#
+# 2. **La convergence est vérifiée avant d'agir**, et non obtenue par un upsert : la fonction crée
+#    toujours une ligne neuve, et rien n'interdit deux copies du même workflow sur le même track.
+#    Le seed regarde donc si la copie existe déjà — par sa source et son track — et n'appelle la
+#    fonction que si elle manque. Un second passage ne crée rien.
+
+echo
+say "7. Copie du workflow vers un track"
+
+JETON_ADMIN=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
+	-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" -H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg m 'admin@p2enjoy.test' --arg p "$SEED_PASSWORD" \
+	      '{email: $m, password: $p}')" \
+	| jq -r '.access_token // empty')
+[ -n "$JETON_ADMIN" ] || die "connexion de l'administrateur seedé impossible : la copie ne peut pas
+        être créée par la véritable route."
+
+code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&track_id=eq.$WF_COPIE_TRACK")
+attendu "$code" "recherche d'une copie existante" 200
+copie_id=$(jq -r '.[0].id // empty' "$CORPS")
+
+if [ -n "$copie_id" ]; then
+	info "Copie déjà présente : $WF_COPIE_NOM — rien à créer (seed convergent)"
+else
+	copie_id=$(curl -s -X POST "$API/rest/v1/rpc/copy_workflow_to_track" \
+		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+		-H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' \
+		-d "$(jq -nc --arg wf "$WF_ID" --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
+		      '{workflow_id: $wf, track_id: $tr, new_name: $nom}')" \
+		| jq -r 'if type == "string" then . else empty end')
+	[ -n "$copie_id" ] || die "l'appel à copy_workflow_to_track n'a rendu aucun identifiant."
+	info "$WF_COPIE_NOM — créée par copy_workflow_to_track, portée track"
+fi
+
+info "Copie : ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions reprises, lignage renseigné"
+
+# --- 8. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
 # ou dans l'autre tromperait celui qui lit cette sortie.
@@ -541,11 +603,13 @@ info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
 info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks — docs/SPEC-channels.md §8"
 info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
 info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
+info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
 info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps et workflow_transitions"
 info "sont lisibles par un membre du workspace, et par lui seul (CRM-020, CRM-021, CRM-030, CRM-031)."
+info "workflow_derivations expose la divergence d'une copie, en lecture seule (CRM-032)."
 info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
-info "workflows : scripts/verify-workflows.sh"
+info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-workflow.sh"

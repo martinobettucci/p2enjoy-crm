@@ -95,6 +95,31 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-032` — Copie d'un workflow vers un track (`[~]`).** La fonction
+  `public.copy_workflow_to_track(workflow_id, track_id, new_name)` duplique un workflow global vers
+  un track — sept étapes, dix arêtes **remappées par le nœud**, surcharges et positions
+  fractionnaires conservées, `is_default` forcé à faux, lignage renseigné —, et la vue
+  `public.workflow_derivations` porte le signal de divergence. Le seed livre une copie de
+  démonstration sur le track « Conseil & IA », créée par le **véritable appel RPC**, avec le jeton
+  de l'administrateur obtenu par la vraie route de connexion.
+  - **Un défaut d'origine de l'image, trouvé par la mesure et corrigé** : `revoke all … from public`
+    ne protège rien dans le schéma `public`. La fonction ainsi « protégée » a été appelée **avec
+    succès par la clé anonyme**. Les rôles sont désormais révoqués nommément, et le harnais rend le
+    droit à `anon` pour vérifier que le refus disparaît, puis que le rejeu le retire.
+  - **Quatre refus, avec leurs codes HTTP mesurés** : `workflow_not_found` et `track_not_found`
+    (`400`), `forbidden` (`403`), `workflow_not_global` (`400`) ; l'anonyme obtient **`401`**, refusé
+    par le privilège avant tout contrôle.
+  - **Règle de discrétion** : un workflow d'un autre workspace rend « introuvable », jamais
+    « interdit ». La visibilité est vérifiée avant le rôle, et l'ordre est éprouvé par une assertion.
+  - **Preuves** : `supabase/tests/0008_copie_workflow.test.sql` (**63 assertions**),
+    `e2e/api/copie-workflow.spec.ts` (**14 scénarios**), `scripts/verify-copie-workflow.sh`
+    (**33 contrôles**, trois dégradations réelles et restauration constatée).
+  - **Sans écran** : la mention de divergence exige un écran d'administration authentifié, suspendu
+    à INC-021. La donnée qui la porterait est livrée et prouvée par l'API.
+  - **Six garde-fous d'unités précédentes ont échoué comme prévu et ont été resserrés** : deux
+    assertions de type de `CRM-006`, deux scénarios d'API et deux contrôles de harnais de
+    `CRM-031`, et les compteurs du harnais de tests (559 / 96 / 37 → **622 / 110 / 37**).
+
 - **`CRM-031` — Workflows, étapes et transitions (`[~]`).** Le graphe des états d'une card :
   `workflows`, `workflow_steps`, `workflow_transitions`, **neuf politiques RLS**, et le workflow par
   défaut du seed — « Cycle commercial standard », sept étapes, dix transitions.

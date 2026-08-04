@@ -391,13 +391,44 @@ type _tracksInsertRequis = Expect<
   >
 >
 
-// --- 6. Ce que le schéma n'expose pas encore -----------------------------------------------------
-// Aucune vue, aucune fonction appelable en RPC, aucun type énuméré. Les fonctions de `CRM-010`
-// vivent dans le schéma `app`, que PostgREST n'expose pas (docs/SPEC-types.md §3) : leur absence
-// ici est **exacte**, et non un oubli de génération.
+// --- 6. La vue et la fonction de `CRM-032` -------------------------------------------------------
+// RÉVISÉ PAR `CRM-032` (mécanisme de la décision 51). Ces deux assertions disaient « aucune vue,
+// aucune fonction appelable en RPC », et c'était exact jusqu'ici : les fonctions du produit vivent
+// dans le schéma `app`, que PostgREST n'expose pas (docs/SPEC-types.md §3).
+//
+// `CRM-032` livre les deux premiers objets appelables de `public` : la RPC de copie et la vue de
+// divergence (docs/SPEC-workflow-engine.md §4.2, §4.6). Les assertions sont donc **resserrées sur
+// ce qui est livré**, et non supprimées : une vue ou une fonction de plus les rendrait rouges.
 
-type _aucuneVue = Expect<Equal<keyof Database['public']['Views'], never>>
-type _aucuneFonction = Expect<Equal<keyof Database['public']['Functions'], never>>
+type _laSeuleVue = Expect<Equal<keyof Database['public']['Views'], 'workflow_derivations'>>
+type _laSeuleFonction = Expect<
+  Equal<keyof Database['public']['Functions'], 'copy_workflow_to_track'>
+>
+
+// La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,
+// les deux autres exigés, et un `uuid` en retour (docs/SPEC-workflow-engine.md §4.2).
+type _signatureCopie = Expect<
+  Equal<
+    Database['public']['Functions']['copy_workflow_to_track']['Args'],
+    { new_name?: string; track_id: string; workflow_id: string }
+  >
+>
+type _retourCopie = Expect<
+  Equal<Database['public']['Functions']['copy_workflow_to_track']['Returns'], string>
+>
+
+// Toutes les colonnes d'une vue sont nullables du point de vue du générateur : PostgreSQL ne porte
+// aucune contrainte `NOT NULL` sur une vue, et le fait est **constaté** plutôt que contourné. Un
+// client qui lit `source_modified_since_copy` doit donc traiter le cas nul, alors que la vue ne
+// peut pas en produire — quatrième occurrence du même écart entre le schéma réel et son type
+// généré (INC-027).
+type _vueToutNullable = Expect<
+  Equal<
+    Database['public']['Views']['workflow_derivations']['Row']['source_modified_since_copy'],
+    boolean | null
+  >
+>
+
 type _aucunEnum = Expect<Equal<keyof Database['public']['Enums'], never>>
 type _aucunTypeCompose = Expect<Equal<keyof Database['public']['CompositeTypes'], never>>
 
@@ -444,8 +475,11 @@ export type AssertionsDuContratDeTypes = [
   _relationsTransitions,
   _etapesInsertRequis,
   _relationsWorkspaceMembers,
-  _aucuneVue,
-  _aucuneFonction,
+  _laSeuleVue,
+  _laSeuleFonction,
+  _signatureCopie,
+  _retourCopie,
+  _vueToutNullable,
   _aucunEnum,
   _aucunTypeCompose,
 ]

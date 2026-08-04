@@ -344,6 +344,46 @@ de table `workflows` (INC-029). Le rattachement se fait en fin de section 6 du s
 la section des channels : à ce moment-là, le workflow n'existe pas encore, ses étapes instanciant
 des nœuds du catalogue créé après eux.
 
+### 2.9 Copie du workflow vers un track — ajoutée par `CRM-032`
+
+Une copie du workflow par défaut, posée sur le track « Conseil & IA », sous le nom
+« Cycle commercial — Conseil IA ». Contrat détaillé et motifs :
+`docs/SPEC-workflow-engine.md` §4.10.
+
+| source | track | nom | portée | par défaut | étapes | transitions |
+|---|---|---|---|---|---|---|
+| `…051` | `…021` | Cycle commercial — Conseil IA | `track` | **non** | 7 | 10 |
+
+Deux points distinguent cette section de toutes les précédentes, et ils sont voulus.
+
+**Elle n'écrit aucune ligne : elle appelle `copy_workflow_to_track`**, la véritable fonction du
+produit, par le véritable appel RPC de l'API REST. `CLAUDE.md` §8 l'exige — une donnée de
+démonstration naît du mécanisme réel. Ce qu'elle démontre d'un seul geste : la portée `track`, la
+traçabilité d'origine, le forçage de `is_default` et le remappage des arêtes.
+
+**Le jeton employé est celui de l'administrateur seedé, obtenu par la vraie route de connexion**, et
+non la clé de service. La fonction exige `app.is_workspace_admin`, qui lit `auth.uid()` ; la clé de
+service n'a pas de `sub`, et l'appel serait refusé par `workflow_not_found`. Ce n'est pas un
+obstacle contourné, c'est la garde qui fonctionne : le seed la traverse comme un administrateur le
+ferait.
+
+**L'identifiant de la copie n'est PAS stable**, contrairement à toutes les autres lignes du seed
+(§4). Il est frappé par la fonction. Le rendre stable supposerait un paramètre de plus sur
+`copy_workflow_to_track`, ajouté pour le seul confort du seed — une API façonnée par ses tests. La
+copie se retrouve donc par sa **source et son track**, ce que font toutes les preuves. C'est le
+prix assumé de la règle « la donnée de démonstration naît du mécanisme réel », et il est nommé ici
+plutôt que découvert par le premier test qui chercherait un `…052`.
+
+**La convergence est vérifiée avant d'agir**, et non obtenue par un upsert : la fonction crée
+toujours une ligne neuve, et rien n'interdit deux copies du même workflow sur le même track. Le
+seed regarde si la copie existe — par sa source et son track — et n'appelle la fonction que si elle
+manque. Un second passage ne crée rien, ce que `scripts/verify-copie-workflow.sh` mesure.
+
+**Conséquence sur les comptes des unités précédentes :** le workspace porte désormais **deux**
+workflows, dont un seul `global` et un seul par défaut. Les contrôles qui comptaient « un workflow,
+ni plus ni moins » ont été révisés dans le même changement — mécanisme de la décision 51, cinquième
+occurrence.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

@@ -353,7 +353,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) |
 | Formulaires | `form_fields`, `form_field_rules`, `card_field_values` |
 | Cards | `cards`, `card_comments`, `card_activities`, `card_events`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` |
 | Relations | `organizations`, `contacts`, `card_contacts` |
@@ -401,12 +401,20 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   **aucune suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés
   par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
   (**30 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**),
-  `scripts/verify-workflows.sh` (**47 contrôles**, 40 hors suites), `e2e/api/tracks.spec.ts`,
-  `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts` et `e2e/api/workflows.spec.ts`.
+  `scripts/verify-workflows.sh` (**47 contrôles**, 40 hors suites),
+  `scripts/verify-copie-workflow.sh` (**33 contrôles**, 26 hors suites), `e2e/api/tracks.spec.ts`,
+  `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts`, `e2e/api/workflows.spec.ts` et
+  `e2e/api/copie-workflow.spec.ts`.
   Sur les workflows, la suppression physique est **exposée aux étapes et aux transitions**, et à
   elles seules : elles sont la composition d'un workflow et n'ont aucun `archived_at`
   (`docs/JOURNAL.md`, décision 74). C'est le seul endroit du produit livré où un client peut
   supprimer une ligne.
+  **`CRM-032` n'ajoute aucune politique** : elle livre une fonction `SECURITY DEFINER`, qui
+  contourne la RLS par construction, et porte donc sa règle d'accès dans un **contrôle explicite**
+  — administrateur du workspace, vérifié après la visibilité de la ligne, pour qu'un workflow d'un
+  autre workspace rende « introuvable » et non « interdit » (`docs/JOURNAL.md`, décision 82). Sa
+  vue `workflow_derivations` est `security_invoker = true` : elle n'ajoute aucun droit, elle relit
+  les tables avec ceux de l'appelant.
   Sur `tracks` et `channels`, ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
   `app.can_read_channel` et `app.can_write_channel` étant différées : INC-024 et INC-030, à
   resserrer par `CRM-012`. Sur le **catalogue de nœuds**, l'absence de droit fin n'est pas un

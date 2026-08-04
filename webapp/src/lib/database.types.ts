@@ -108,6 +108,20 @@ export type Database = {
             foreignKeyName: "channels_workflow_id_workspace_id_fkey"
             columns: ["workflow_id", "workspace_id"]
             isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channels_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channels_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
             referencedRelation: "workflows"
             referencedColumns: ["id", "workspace_id"]
           },
@@ -338,6 +352,20 @@ export type Database = {
             foreignKeyName: "workflow_steps_workflow_id_workspace_id_fkey"
             columns: ["workflow_id", "workspace_id"]
             isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_steps_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_steps_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
             referencedRelation: "workflows"
             referencedColumns: ["id", "workspace_id"]
           },
@@ -399,6 +427,20 @@ export type Database = {
             foreignKeyName: "workflow_transitions_workflow_id_workspace_id_fkey"
             columns: ["workflow_id", "workspace_id"]
             isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_transitions_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_transitions_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
             referencedRelation: "workflows"
             referencedColumns: ["id", "workspace_id"]
           },
@@ -445,6 +487,20 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workflows_derived_from_workflow_id_fkey"
+            columns: ["derived_from_workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id"]
+          },
+          {
+            foreignKeyName: "workflows_derived_from_workflow_id_fkey"
+            columns: ["derived_from_workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id"]
+          },
           {
             foreignKeyName: "workflows_derived_from_workflow_id_fkey"
             columns: ["derived_from_workflow_id"]
@@ -536,10 +592,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      workflow_derivations: {
+        Row: {
+          derived_at: string | null
+          name: string | null
+          source_archived_at: string | null
+          source_modified_at: string | null
+          source_modified_since_copy: boolean | null
+          source_name: string | null
+          source_workflow_id: string | null
+          track_id: string | null
+          workflow_id: string | null
+          workspace_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_track_id_workspace_id_fkey"
+            columns: ["track_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflows_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      copy_workflow_to_track: {
+        Args: { new_name?: string; track_id: string; workflow_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

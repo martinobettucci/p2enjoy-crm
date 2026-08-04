@@ -294,7 +294,12 @@ titre "4. Le seed est convergent"
 
 ./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué"
 
-workflows=$(psql_db -c "select count(*) from public.workflows where workspace_id = '$WS_SEED';")
+# RÉVISÉ PAR `CRM-032` (mécanisme de la décision 51) : le workspace porte désormais **deux**
+# workflows — le global par défaut de cette unité, et la copie de portée `track` du §4.10. Le
+# contrôle est **resserré** sur ce que `CRM-031` garantit réellement — un seul workflow `global` —
+# plutôt que relâché sur un total qui changera à chaque copie livrée par le seed.
+workflows=$(psql_db -c "select count(*) from public.workflows
+                         where workspace_id = '$WS_SEED' and scope = 'global';")
 etapes=$(psql_db -c "select count(*) from public.workflow_steps where workflow_id = '$WF_SEED';")
 transitions=$(psql_db -c "select count(*) from public.workflow_transitions
                            where workflow_id = '$WF_SEED';")
@@ -312,7 +317,8 @@ defaut=$(psql_db -c "select count(*) from public.workflows
 champs_vides=$(psql_db -c "select count(*) from public.workflow_transitions
                             where workflow_id = '$WF_SEED' and cardinality(require_fields) = 0;")
 
-[ "$workflows" = "1" ] && ok "un workflow, ni plus ni moins" || fail "workflows : $workflows, attendu 1"
+[ "$workflows" = "1" ] && ok "un workflow **global**, ni plus ni moins" \
+	|| fail "workflows globaux : $workflows, attendu 1"
 [ "$defaut" = "1" ] && ok "il est le workflow **par défaut** du workspace" \
 	|| fail "workflows par défaut : $defaut, attendu 1"
 [ "$etapes" = "7" ] && ok "sept étapes, une par nœud actif du catalogue" \
@@ -398,10 +404,13 @@ else
 	fail "ligne b — l'anonyme obtient $code et $(head -c 80 "$CORPS")"
 fi
 
-http GET "$API/rest/v1/workflow_steps?select=id" -H "apikey: $ANON_KEY" \
+# RÉVISÉ PAR `CRM-032` : la copie du seed porte sept étapes de plus. Le filtre porte donc sur le
+# workflow de **cette** unité — ce que la ligne a du contrat dit, et que « toutes les étapes
+# visibles » disait par accident tant qu'il n'existait qu'un workflow.
+http GET "$API/rest/v1/workflow_steps?select=id&workflow_id=eq.$WF_SEED" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $T_VIEWER" >/dev/null
 [ "$(jq -r 'length' < "$CORPS")" = "7" ] \
-	&& ok "ligne a — un viewer lit les sept étapes de son workspace : lire n'exige pas d'écrire" \
+	&& ok "ligne a — un viewer lit les sept étapes du workflow par défaut : lire n'exige pas d'écrire" \
 	|| fail "ligne a — le viewer lit $(jq -r 'length' < "$CORPS") étapes, attendu 7"
 
 code=$(http POST "$API/rest/v1/workflows" -H "apikey: $ANON_KEY" \

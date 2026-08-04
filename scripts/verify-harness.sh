@@ -46,17 +46,18 @@ PORT_RAPPORT=9323
 # explicite ; c'est exactement ce qu'on lui demande.
 #
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
-# `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 depuis `CRM-031`.
+# `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 à `CRM-031` ; 622 / 110 / 37 depuis
+# `CRM-032`.
 #
 # Les compteurs ont **réellement échoué** à chaque livraison qui les dépassait, comme prévu, et
 # sont révisés dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
 # fonctionnement acceptable : les déduire de l'exécution reviendrait à supprimer le contrôle.
-ASSERTIONS_ATTENDUES=559
-SCENARIOS_API=96
+ASSERTIONS_ATTENDUES=622
+SCENARIOS_API=110
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
-# (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030` puis à `CRM-031`, qui ne livrent aucune
-# interface — ni le catalogue de nœuds ni les workflows n'ont d'écran, et n'en auront pas avant
-# que l'écran de connexion existe (INC-021).
+# (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031` puis `CRM-032`, qui ne livrent
+# aucune interface — ni le catalogue de nœuds, ni les workflows, ni la mention de divergence n'ont
+# d'écran, et n'en auront pas avant que l'écran de connexion existe (INC-021).
 SCENARIOS_UI=37
 
 TRAVAIL=$(mktemp -d)

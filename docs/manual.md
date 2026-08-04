@@ -52,7 +52,7 @@
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les sept états d'une affaire, plus les vôtres — et l'espace de travail est livré avec le sien. Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses sept étapes et ses dix transitions, et chacun de ses six channels le suit. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 21 | Copier un workflow dans un track et le modifier | `CRM-032` | À livrer |
+| 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part — il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 22 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
 | 23 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 24 | Boîte mail système de l'espace | `CRM-052` | À livrer |
@@ -100,8 +100,9 @@ de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne con
 visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
 
 Le catalogue de nœuds et les workflows n'ont d'ailleurs **aucun écran du tout**, connexion ou non.
-Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, et
-le refus de tout déplacement qui n'y figure pas. Les écrans viendront avec l'éditeur du
+Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, le
+refus de tout déplacement qui n'y figure pas, et — depuis le chapitre 21 — la **copie** d'un
+workflow vers un track, avec la mémoire de son origine. Les écrans viendront avec l'éditeur du
 chapitre 20, lui-même suspendu à l'écran de connexion.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant

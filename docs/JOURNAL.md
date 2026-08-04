@@ -3322,3 +3322,81 @@ de dérivations rendrait `derived_from_workflow_id` illisible sans parcourir tou
 signalement de divergence devrait dire **lequel des ancêtres** a changé, question à laquelle la
 spécification ne répond pas. L'interdire est réversible ; l'autoriser puis se raviser ne l'est pas,
 les données existant alors déjà.
+
+## 2026-08-04 — `CRM-032` : la copie livrée, et une porte que personne n'avait vue ouverte
+
+L'unité est implémentée telle que le §4 l'annonçait : une fonction, une vue, sept étapes et dix
+arêtes recopiées, un lignage renseigné, et un signal de divergence. Ce qui mérite d'être consigné
+n'est pas cela — c'est ce que la mise en œuvre a trouvé, et qui n'était pas dans la spécification.
+
+### Décision 86 — La porte de la décision 80 était réellement ouverte, et le harnais est ce qui l'y empêche de revenir
+
+**Ce que la spécification annonçait**, et qui n'était encore qu'une mesure faite sur une sonde :
+`revoke all … from public` ne retire pas un droit accordé nommément à `anon` par les privilèges par
+défaut de l'image.
+
+**Ce que l'implémentation a confirmé sur l'objet réel :** la fonction livrée, protégée par la seule
+révocation visant `public`, aurait été **exécutable par la clé anonyme de la webapp** — donc par
+n'importe qui, puisque cette clé est publique par construction. Une copie de workflow par un
+visiteur anonyme n'aurait été arrêtée que par le contrôle explicite du §4.3, c'est-à-dire par une
+ligne de PL/pgSQL et non par un privilège.
+
+**Décision.** Le privilège est révoqué **en nommant `anon`**, et — c'est le point qui compte — le
+harnais **rend le droit à `anon`** puis vérifie que le refus disparaît, avant de constater que le
+rejeu de la migration le retire de nouveau. Un privilège correct par accident n'est pas un
+privilège : sans cette dégradation, un `revoke` mal écrit resterait vert.
+
+Le contrôle 2 du même harnais en tire une seconde conséquence : la migration est **convergente sur
+un privilège**, et pas seulement sur une contrainte. C'est la quatrième forme du défaut de la
+décision 57, et la première qui porte sur un droit plutôt que sur une structure.
+
+### Décision 87 — Le refus d'écriture sur la vue ne vient pas d'où on l'attendait, et l'attente écrite a été révisée
+
+**Fait mesuré.** Le §4.9 annonçait, ligne o, qu'un `PATCH` sur `workflow_derivations` serait
+« refusé — aucun privilège d'écriture ». La mesure a rendu autre chose : `500`, `SQLSTATE 55000`,
+« Views that do not select from a single table or view are not automatically updatable ».
+
+PostgreSQL refuse la **réécriture** de la requête avant d'en arriver au contrôle du privilège. La
+vue joint deux fois `workflows` ; elle n'est donc pas automatiquement modifiable, et le privilège
+manquant n'a jamais l'occasion de servir.
+
+**Décision.** L'attente du §4.9 est **corrigée d'après la mesure**, et non l'inverse. Les deux
+verrous existent — l'absence de privilège est prouvée en base par pgTAP, la non-modifiabilité par
+l'API —, et le §4.6 dit lequel parle en premier. Écrire « refusé, `403` » aurait été une prédiction
+fausse maintenue par commodité.
+
+### Décision 88 — Le seed traverse la garde plutôt que de la contourner, et paie l'identifiant stable
+
+**Fait.** `copy_workflow_to_track` exige `app.is_workspace_admin`, qui lit `auth.uid()`. La clé de
+service — celle qu'emploient toutes les autres sections du seed — n'a pas de `sub` : `auth.uid()` y
+est nul, et l'appel est refusé par `workflow_not_found`.
+
+Deux issues : ajouter à la fonction une dérogation pour `service_role`, ou faire **se connecter** le
+seed.
+
+**Décision.** Le seed se connecte, par la véritable route de connexion, avec le compte
+administrateur qu'il vient lui-même de créer. Une dérogation dans la fonction aurait été une porte
+ouverte pour le confort d'un script — exactement ce que la décision 86 vient de refermer ailleurs.
+
+**Le prix, nommé plutôt que caché :** l'identifiant de la copie est frappé par la fonction, donc
+**pas stable**, alors que `docs/SPEC-seed.md` §4 fait des identifiants stables un contrat. Le rendre
+stable supposerait un quatrième paramètre ajouté pour le seul confort du seed — une API façonnée par
+ses tests. La copie se retrouve par sa source et son track, et le §2.9 le dit explicitement pour que
+personne ne cherche un `…052` qui n'existe pas.
+
+**Conséquence assumée :** la convergence du seed ne peut plus venir d'un `upsert`. Elle vient d'une
+vérification préalable — la copie existe-t-elle déjà sur ce track ? —, ce que le harnais mesure en
+rejouant le seed et en comptant **une** copie, ni zéro ni deux.
+
+### Ce que cette unité a fait tomber, et qui devait tomber
+
+Quatre garde-fous posés par des unités précédentes ont échoué à la livraison, comme le mécanisme de
+la décision 51 le prévoit : deux assertions de type de `CRM-006` — « aucune vue », « aucune fonction
+appelable en RPC », vraies jusqu'à ce que cette unité livre les deux premières —, deux scénarios
+d'API de `CRM-031` qui comptaient « un workflow, ni plus ni moins », et les compteurs du harnais.
+
+Aucun n'a été supprimé. Les assertions de type sont **resserrées** sur ce qui est livré — une vue
+nommée, une fonction nommée, sa signature exacte —, de sorte qu'un objet de plus les rende rouges à
+nouveau. Les scénarios d'API comptent désormais « un workflow **global** » et « un seul par
+défaut », qui est ce que `CRM-031` garantit réellement. Un garde-fou qu'on relâche au lieu de le
+resserrer cesse d'en être un.

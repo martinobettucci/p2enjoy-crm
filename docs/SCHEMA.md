@@ -602,14 +602,32 @@ File d'envoi persistante.
 | `app.is_workspace_member(ws)` / `app.is_workspace_admin(ws)` | Résolution du rôle, `SECURITY DEFINER` pour éviter la récursion RLS | livrées (`CRM-010`) |
 | `app.resolve_access(ws_role, track_access, channel_access)` | Algorithme « le plus spécifique gagne » de `docs/SPEC-permissions-rls.md` §2.2, appliqué à trois valeurs déjà lues. Rend `none`, `read` ou `write`. Fonction pure : `IMMUTABLE`, `SECURITY INVOKER` | livrée (`CRM-010`) |
 | `app.can_read_track(track)` / `app.can_read_channel(ch)` / `app.can_write_channel(ch)` / `app.can_read_card(card)` | Droit effectif après application des droits fins : lecture de la ligne, puis `app.resolve_access` | **différées** — dépendent de `tracks`, `channels` et `cards` (INC-013) |
-| `move_card(card_id, to_step_id, comment)` | **Garde centrale** : droit d'écriture, transition déclarée, champs requis renseignés |
-| `copy_workflow_to_track(workflow_id, track_id)` | Copie tracée d'un workflow global vers un track |
+| `move_card(card_id, to_step_id, comment)` | **Garde centrale** : droit d'écriture, transition déclarée, champs requis renseignés | à livrer (`CRM-034`) |
+| `copy_workflow_to_track(workflow_id, track_id, new_name)` | Copie tracée d'un workflow global vers un track : étapes, arêtes remappées par le nœud, lignage renseigné. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Quatre refus : `workflow_not_found`, `forbidden`, `workflow_not_global`, `track_not_found` (docs/SPEC-workflow-engine.md §4.3) | livrée (`CRM-032`) |
 | `move_card_to_channel(card_id, channel_id, step_mapping)` | Changement de channel avec remappage explicite des étapes |
 | `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé |
 
 Toutes les fonctions `SECURITY DEFINER` fixent `search_path` explicitement et sont accordées au
 seul rôle qui doit les appeler.
+
+**Un `revoke … from public` ne suffit pas dans le schéma `public`.** MESURÉ pendant `CRM-032`
+(docs/JOURNAL.md, décision 80) : l'image livre des `ALTER DEFAULT PRIVILEGES` qui accordent
+**nommément** à `anon`, `authenticated` et `service_role` l'exécution de toute fonction nouvelle du
+schéma `public`, et **tous** les droits de toute table ou vue nouvelle. Tout objet créé dans
+`public` doit donc être fermé en nommant les rôles, avant d'être rouvert au strict nécessaire. Les
+fonctions du schéma `app` ne sont pas concernées : ce schéma n'a aucun privilège par défaut, et
+l'API ne l'expose pas.
+
+### 9.1 Vues exposées
+
+| Vue | Rôle | État |
+|---|---|---|
+| `public.workflow_derivations` | Une ligne par workflow dérivé : son origine, la date de la copie, la date du dernier changement de la source **composition comprise**, et le booléen de divergence. `security_invoker = true`, lecture seule (docs/SPEC-workflow-engine.md §4.6) | livrée (`CRM-032`) |
+
+Une vue exposée à l'API est toujours `security_invoker = true` : sans ce réglage, elle lirait ses
+tables avec les droits de son propriétaire et deviendrait une porte dérobée sur des tables
+protégées par RLS.
 
 ---
 
