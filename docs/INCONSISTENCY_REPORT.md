@@ -1071,6 +1071,61 @@ Aucune ligne `channel_members` n'existe sur les bases du projet — le seed n'y 
 
 ---
 
+### INC-031 — Le refus d'archivage d'un nœud occupé exige `workflow_steps` et `cards`, livrées après
+
+**Nature :** contradiction d'ordonnancement entre `docs/SPEC-workflow-engine.md` §2, la Definition
+of Done de `CRM-030` dans `docs/BACKLOG.md`, et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-030`.
+
+La Definition of Done de `CRM-030` exige « pgTAP sur le refus d'archivage » d'un nœud occupé, et
+`docs/SPEC-workflow-engine.md` §2 énonce la règle : « son archivage est refusé tant qu'une card
+active s'y trouve ».
+
+Or « une card active se trouve sur ce nœud » n'est pas une propriété du nœud. Le chemin est
+`cards.current_step_id → workflow_steps.node_id → workflow_nodes_catalog.id`. Il traverse donc deux
+tables livrées **après** cette unité par `docs/MASTER_PLAN.md` §2 : `workflow_steps` par `CRM-031`,
+`cards` par `CRM-040`. **Mesuré** au moment de la spécification :
+`to_regclass('public.workflow_steps')`, `to_regclass('public.workflows')` et
+`to_regclass('public.cards')` rendent tous les trois `NULL`.
+
+C'est le troisième cas du même motif — INC-010 pour des clés étrangères, INC-013 pour des
+jointures d'autorisation, INC-029 pour une colonne. Ici, ce qui manque est la **cible** de la
+garde.
+
+**Ce qui rend l'écriture anticipée pire que l'omission — mesuré, non supposé.** PostgreSQL
+**accepte la création** d'une fonction PL/pgSQL référençant une table absente : le corps n'est pas
+analysé à la création. L'échec ne survient qu'au **premier appel**, en
+`relation "public.cards" does not exist`. Un trigger d'archivage écrit aujourd'hui ne protégerait
+donc rien, et ferait échouer **toute** mise à jour du catalogue — y compris un simple renommage —
+dès sa livraison. Le seed lui-même ne pourrait plus converger.
+
+**Comportement retenu :** `CRM-030` livre l'archivage **doux et réversible** — `archived_at`,
+aucune suppression physique, aucun privilège `DELETE` — sans la garde d'occupation. La règle est
+énoncée dans la spécification, l'absence de ses tables est **figée par des assertions pgTAP**
+(`hasnt_table`), de sorte que la suite devienne rouge le jour où `workflow_steps` ou `cards`
+apparaîtront sans que la garde ait été écrite. Mécanisme de la décision 51, employé une quatrième
+fois.
+
+**Risque résiduel :** nul aujourd'hui — aucune card n'existe, aucun nœud ne peut être occupé. Le
+risque naîtrait à `CRM-040` si la garde n'était pas écrite avant que des cards ne peuplent des
+étapes : un nœud archivé alors qu'il porte des cards actives ferait disparaître une colonne du
+board sans que ses cards aient été déplacées.
+
+**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-040`** :
+
+1. rattacher la garde à `CRM-040`, l'unité qui livre la dernière table dont elle dépend, et
+   l'inscrire dans sa Definition of Done ;
+2. rattacher la garde à `CRM-031`, en la limitant à l'occupation par une **étape** — un nœud
+   instancié dans un workflow ne serait plus archivable, règle plus stricte que celle spécifiée et
+   qui interdirait d'archiver un nœud pourtant vide de cards ;
+3. créer une unité distincte, par exemple `CRM-030b`, placée après `CRM-040`.
+
+Tant que le point est ouvert, `CRM-030` reste `[~]` et la limite est nommée.
+
+**Lié à :** INC-010, INC-013, INC-029 (le même motif, sur d'autres objets), INC-023.
+
+---
+
 ---
 
 ## Clos

@@ -2574,3 +2574,124 @@ deux exécutions se chevauchent : la seconde peut partir d'un état à jour et d
 heure plus tard. Le fait est consigné ici parce qu'il se reproduira, et que le réflexe correct est
 celui appliqué ici — vérifier ce que la version poussée contient **déjà**, et n'ajouter que ce qui
 lui manque réellement, plutôt que d'imposer son propre travail.
+---
+
+## 2026-08-04 — `CRM-030` : spécification du catalogue de nœuds, écrite après mesure
+
+**Problème.** `docs/SPEC-workflow-engine.md` §2 tenait en dix-huit lignes : un tableau de sept
+nœuds, une phrase sur le type `won` / `lost`, une phrase sur l'archivage. Il ne disait ni ce qu'une
+clé de nœud a le droit d'être, ni comment le catalogue s'ordonne, ni ce que l'API doit rendre à
+chacun des trois rôles, ni quelles couleurs les sept nœuds portent — alors que `docs/SCHEMA.md` §3
+exige une colonne `color`. Écrire la migration avant d'avoir répondu à ces questions revenait à
+les trancher dans du SQL.
+
+**Méthode.** Celle de la décision 52, appliquée une troisième fois : une table sonde jetable
+`public.sonde_wnc`, portant la structure et les politiques envisagées, créée sur la pile réelle,
+interrogée avec les jetons des trois comptes seedés obtenus par la véritable route de connexion,
+puis détruite — l'absence de reste étant **constatée** et non supposée (`to_regclass` nul, aucune
+fonction `app.sonde*` résiduelle, aucun workspace de sonde). Les chiffres des §2.3 à §2.8 de la
+spécification sont ces mesures.
+
+### Décision 67 — Le catalogue s'ordonne par **workspace**, et c'est la portée naturelle ici
+
+`CRM-021` avait tranché l'inverse pour les channels : leur `position` est attribuée dans la portée
+du **track**, parce que les onglets d'un track forment une barre à eux seuls (décision 61). La
+question se repose donc pour le catalogue, et la réponse est différente sans être contradictoire :
+le catalogue est **une liste unique par workspace**, affichée d'un seul tenant dans l'écran
+d'administration. Il n'a pas de conteneur intermédiaire, donc pas d'autre portée possible.
+
+Mesuré sur la sonde : trois insertions sans `position` dans un workspace rendent `1`, `2`, `3` ; une
+quatrième dans un autre workspace rend `1` ; une valeur explicite (`42`) est conservée. La
+propriété héritée de `CRM-020` — écrire `position: null` équivaut à l'omettre, un trigger
+`BEFORE INSERT` ne pouvant pas distinguer les deux — a été **vérifiée à nouveau** plutôt que
+supposée acquise.
+
+**Conséquence.** Deux triggers d'attribution de position coexistent désormais dans le projet, avec
+deux portées différentes. Ce n'est pas une duplication à factoriser : ce qui diffère entre eux est
+précisément la règle métier, et une fonction générique paramétrée par le nom de la colonne de
+portée serait moins lisible que deux fonctions de six lignes.
+
+### Décision 68 — `numeric(5,2)` arrondit **avant** la contrainte, et le fait est documenté
+
+Mesure inattendue : `99.999` inséré dans une colonne `numeric(5,2)` portant
+`CHECK (0 <= x <= 100)` est **accepté** et stocké `100.00`. `100.004` également. Seuls `100.01` et
+`-0.01` sont refusés. La contrainte porte donc sur la valeur **arrondie par le type**, jamais sur
+celle que le client a envoyée.
+
+Rien à corriger : le comportement est correct pour une probabilité en pourcentage à deux décimales.
+Mais il devait être écrit, faute de quoi un test insérant `99.999` et attendant `99.999` échouerait
+pour une raison sans rapport avec la règle métier — et serait « corrigé » en relâchant la
+contrainte. C'est l'application de la décision 47 : le comportement réel de l'outil est documenté,
+pas contourné.
+
+### Décision 69 — La garde d'archivage n'est pas écrite, parce que l'écrire ne protégerait rien
+
+`docs/SPEC-workflow-engine.md` §2 exige que l'archivage d'un nœud soit refusé tant qu'une card
+active s'y trouve, et la Definition of Done de `CRM-030` exige une preuve pgTAP de ce refus. Le
+chemin de la garde est `cards.current_step_id → workflow_steps.node_id → workflow_nodes_catalog.id`.
+Mesuré : les trois tables `workflows`, `workflow_steps` et `cards` rendent `NULL` à `to_regclass`.
+
+La tentation est réelle d'écrire quand même le trigger, puisque PostgreSQL l'accepterait. **Mesuré,
+et c'est ce qui a tranché** : la création d'une fonction PL/pgSQL référençant `public.cards`
+**réussit** — le corps n'est pas analysé à la création — et l'échec ne survient qu'au premier
+appel, en `relation "public.cards" does not exist`. Un trigger `BEFORE UPDATE` écrit aujourd'hui
+ferait donc échouer **toute** mise à jour du catalogue dès sa livraison : renommer un nœud,
+corriger une couleur, et le seed lui-même, qui n'aurait plus convergé.
+
+Une garde qui casse ce qu'elle est censée protéger, sans protéger quoi que ce soit, est pire que
+son absence. Elle est donc **différée et nommée** : INC-031, avec trois options d'arbitrage, et
+l'absence des deux tables **figée par des assertions `hasnt_table`** qui deviendront rouges à
+`CRM-031` et à `CRM-040`. Quatrième emploi du mécanisme de la décision 51.
+
+### Ce que la spécification a dû trancher, et qui n'était écrit nulle part
+
+- **Les couleurs des sept nœuds.** `docs/SCHEMA.md` §3 exigeait la colonne, le tableau du §2 ne
+  donnait aucune valeur. Fixées au §2.9 : les deux nœuds terminaux prennent `success` et `danger`,
+  dont c'est exactement le sens dans `docs/DESIGN_SYSTEM.md` §1 ; `prospection` reste `neutral`, un
+  début d'affaire ne portant aucun jugement.
+- **`default_stale_after_days` doit être nul pour un nœud terminal.** Une affaire livrée ou perdue
+  n'est pas en retard. La contrainte livrée est `x > 0` : un seuil de zéro jour signalerait toute
+  card dès son arrivée et masquerait l'absence de seuil sous une valeur qui a l'air d'en être une.
+- **`default_probability` est nullable, et `0` n'est pas `NULL`.** `perdu` vaut réellement `0 %` ;
+  un nœud métier peut n'avoir aucune signification prévisionnelle. Confondre les deux rendrait
+  toute moyenne fausse.
+
+### Ce que la mesure a rappelé, et qui vaut au-delà de cette unité
+
+**Une mise à jour refusée par la clause `USING` d'une politique ne produit aucune erreur.** Mesuré :
+un `business_developer` tentant d'archiver un nœud reçoit `200` et un tableau **vide**, parce
+qu'aucune ligne n'a été vue comme modifiable. Un test qui se contenterait de constater l'absence
+d'erreur conclurait que l'écriture a réussi. Toute preuve de refus de mise à jour doit donc relire
+la ligne et vérifier qu'elle est **inchangée**. Le fait vaut pour `tracks` et `channels` autant que
+pour le catalogue ; il est désormais écrit au §2.8 de la spécification.
+
+### Les droits fins ne sont pas différés ici — ils ne s'appliquent pas
+
+`tracks` et `channels` portent chacun un écart ouvert — INC-024, INC-030 — parce que leur politique
+de lecture devrait consulter un droit fin et ne le fait pas encore. Le catalogue **n'est pas dans
+ce cas** : `track_members` et `channel_members` portent sur un sous-arbre d'organisation, et le
+catalogue n'appartient ni à un track ni à un channel. Sa politique s'arrête au rôle de workspace
+**par conception**, pas par différé, et aucune entrée d'incohérence n'est ouverte à ce titre.
+
+### Le choix de l'unité — pourquoi `CRM-030`, et pas `CRM-012`
+
+`docs/MASTER_PLAN.md` §2 place `CRM-012` → `CRM-014` avant le chunk 3. Les trois ont été examinées
+et écartées, chacune pour une raison mesurée :
+
+- **`CRM-012` — droits fins par track et channel.** INC-013 exige explicitement d'être tranchée
+  « **avant `CRM-012`**, qui écrira les politiques et figera la forme des requêtes ». L'arbitrage
+  n'a pas été rendu. Écrire les quatre fonctions `can_*` reviendrait à choisir l'option 1 à la
+  place du responsable, et rendrait rouge la suite pgTAP de `CRM-010` qui constate leur absence.
+- **`CRM-013` — colonnes protégées.** Sa Definition of Done porte sur `cards.current_step_id`,
+  `cards.email_local_part`, `mail_*.secret_id`, `card_events` et `audit_log`. Mesuré : aucune de
+  ces tables n'existe. Il n'y a rien à révoquer.
+- **`CRM-014` — harnais de preuves d'autorisation.** Ses douze scénarios exigent des cards, des
+  comptes mail et un second workspace. Dix des douze preuves de refus restent hors d'atteinte.
+
+`CRM-030` est donc la première unité du plan dont le sujet existe, et elle est la tête du chunk 3.b
+— « le moteur de workflow avant les cards, car une card naît dans une étape ».
+
+**Les cinq unités `[~]` du backlog ont également été réexaminées**, chacune restant bloquée pour la
+raison déjà consignée : `CRM-008` par INC-023, `CRM-010` par INC-013, `CRM-011` et `CRM-020` et
+`CRM-021` par INC-021, l'absence d'écran de connexion. Aucune n'a été rouverte : ce qui leur manque
+est un arbitrage du responsable ou une table du chunk suivant, et non un travail à faire.
