@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Intégré
+
+- **`CRM-030` reportée sur `main`, puis intégralement revérifiée sur ce socle.** L'unité avait été
+  poussée sur une branche parallèle, sur un état du dépôt qui ignorait le correctif d'idempotence
+  de `CRM-021`. Ses deux commits — spécification, puis implémentation — sont reportés sans être
+  refaits, et **toutes** ses preuves rejouées sur `main` : `scripts/verify-catalogue.sh` 36/36, et
+  les douze harnais précédents, **439 contrôles au total, aucune anomalie**.
+  - **Quatre décisions du journal renumérotées 67 → 70** : elles portaient les numéros 64 à 67,
+    déjà pris par `CRM-021`. Les onze références croisées — migration, suite pgTAP, harnais,
+    scénarios d'API, spécification du moteur de workflow, backlog — suivent dans le même
+    changement.
+  - **Un décompte du backlog corrigé** : `scripts/verify-channels.sh` vaut **30** contrôles et non
+    28 depuis le correctif d'idempotence, ce que le décompte écrit sur la branche parallèle ne
+    pouvait pas connaître.
+  - **`INC-032` ouverte** : `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS
+    interposé — la construction de l'image `webapp` s'arrête sur `SELF_SIGNED_CERT_IN_CHAIN`, alors
+    que `webapp/Dockerfile` prévoit le secret `npm_ca` pour ce cas exact et que
+    `docker-compose.dev.yml` ne le câble pas. Comportement **inchangé**, arbitrage attendu.
+  - **Trois captures régénérées par le rejeu ont été restaurées** après observation : l'une
+    montrait deux entrées de navigation mises en valeur, artefact du survol laissé par le pilote
+    Playwright. Ce passage ne touche aucun écran.
+
 ### Ajouté
 
 - **`CRM-030` — Catalogue de nœuds (`[~]`).** Le vocabulaire des états d'une affaire, et la

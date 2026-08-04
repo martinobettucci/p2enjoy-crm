@@ -1169,6 +1169,14 @@ telle.
       **37 scénarios**, inchangés : aucune régression.
 - [x] **Aucune régression** : les douze harnais précédents rejoués — **33, 38, 23, 26, 26, 42, 49,
       30, 41, 22, 43 et 28 contrôles**, aucune anomalie.
+- [x] **Rejoué intégralement sur `main` après intégration** (décision 71). Cette unité avait été
+      poussée sur une branche parallèle, donc sur un socle qui ignorait le correctif d'idempotence
+      de `CRM-021` (décision 64). Elle a été reportée sur `main`, puis **toutes ses preuves
+      réexécutées sur ce socle**, sans quoi le vert mesuré ailleurs n'aurait rien prouvé ici :
+      `scripts/verify-catalogue.sh` **36 contrôles, aucune anomalie**, et les **douze harnais
+      précédents** — 33, 38, 23, 26, 26, 42, 49, 30, 41, 22, 43 et **30** contrôles, soit **439**
+      au total. Le douzième vaut 30 et non 28 : `CRM-021` lui a ajouté deux contrôles sur `main`
+      entre-temps, ce que le décompte ci-dessus ne pouvait pas connaître.
 - [x] `docs/SPEC-workflow-engine.md` §2 (réécrit), §8, §9, `docs/SCHEMA.md` §3,
       `docs/SPEC-permissions-rls.md` §4 et §7, `docs/SPEC-seed.md` §2.7 et §4, `docs/DAT.md` §7 et
       §8, `docs/PROD_MIGRATIONS.md` §3 et §5, `docs/manual.md` §3.2 et sommaire,

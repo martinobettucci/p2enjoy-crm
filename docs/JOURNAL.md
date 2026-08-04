@@ -2764,3 +2764,77 @@ revenues, libellé du seed revenu à « Prospection ».
   buter sur cet arbitrage.
 - **Les preuves de refus n° 2, n° 3 et n° 11 sont acquises au niveau du catalogue**, la n° 2 pour
   la première fois. Les neuf autres restent dues par `CRM-014`.
+
+---
+
+## 2026-08-04 — Intégration sur `main` du catalogue de nœuds, et ce que l'environnement a coûté
+
+### Décision 71 — Un travail poussé ailleurs que sur `main` s'intègre, il ne se refait pas
+
+**Fait.** `CRM-030` avait été livrée par une exécution de la routine qui l'a poussée sur une
+branche — `claude/happy-goldberg-c627zj` —, et non sur `main`, contre `CLAUDE.md` §13. Deux
+commits y étaient donc bloqués : la spécification et l'implémentation. `main` avait de son côté
+avancé d'un commit, le correctif d'idempotence de `CRM-021` (décision 64).
+
+**Décision.** Les deux commits sont **reportés sur `main` par `cherry-pick`**, et non refaits. La
+situation n'est pas celle de la décision 66 : là, deux implémentations complètes et vérifiées de la
+**même** unité se faisaient concurrence, et fusionner aurait produit un ensemble que personne
+n'avait éprouvé. Ici il n'y a **qu'une** implémentation, et l'alternative n'était pas de choisir
+mais de la perdre — puis de la réécrire à la prochaine exécution, qui aurait trouvé `CRM-030`
+marquée `[ ]` sur `main`.
+
+**Ce que l'intégration a dû trancher.** Les quatre décisions du catalogue portaient les numéros
+64 à 67, déjà pris sur `main` par `CRM-021`. Elles deviennent **67 à 70**, et les onze références
+croisées qui les citent — migration, suite pgTAP, harnais, scénarios d'API, spécification du moteur
+de workflow, backlog — sont corrigées dans le même changement. Aucune décision antérieure n'est
+renumérotée : un journal chronologique ne réécrit pas son passé pour faire de la place.
+
+**Ce que l'intégration ne dispense pas de faire.** Un vert mesuré sur un autre socle ne prouve rien
+sur celui-ci. **Toutes** les preuves ont donc été réexécutées sur `main` : `verify-catalogue.sh`
+36/36, et les douze harnais précédents, **439 contrôles au total, aucune anomalie**. Un décompte
+du backlog s'en trouve corrigé — `verify-channels.sh` vaut 30 et non 28 depuis la décision 64.
+
+**Ce que cela change pour la suite.** La consigne « resynchronise-toi d'abord » ne protège pas
+d'une exécution qui pousse ailleurs : la resynchronisation regarde `main`, où le travail n'est
+jamais arrivé. Le réflexe correct, appliqué ici, est d'**énumérer les branches distantes** avant de
+choisir son unité, et non seulement de mettre `main` à jour.
+
+### Ce que l'environnement de la routine a coûté, mesuré et non supposé
+
+Trois obstacles ont dû être levés avant qu'une seule preuve puisse être produite. Ils sont écrits
+ici parce qu'ils se reproduiront à chaque exécution sur un conteneur neuf.
+
+- **Le démon Docker n'est pas démarré, et son script d'init échoue.** `service docker start` sort en
+  erreur sur `ulimit: Operation not permitted` — l'hôte est privé de `CAP_SYS_RESOURCE`, ce que la
+  décision 14 avait déjà mesuré pour `STACK_RLIMIT_NOFILE`. Le démon se lance directement
+  (`dockerd --host=unix:///var/run/docker.sock`), et la pile démarre ensuite normalement.
+- **`./runDev.sh` échoue à froid derrière un proxy TLS interposé.** La construction de l'image
+  `webapp` s'arrête sur `npm error SELF_SIGNED_CERT_IN_CHAIN`. `webapp/Dockerfile` prévoit
+  pourtant le secret `npm_ca` pour ce cas exact, mais `docker-compose.dev.yml` ne le câble pas :
+  le chemin documenté est inatteignable depuis le script de lancement. Contourné en construisant
+  l'image à la main avec `--secret id=npm_ca`. **Non corrigé** — c'est un livrable de `CRM-002` et
+  de `CRM-007`, hors du périmètre de ce passage : consigné en **INC-032**.
+- **Les navigateurs préinstallés ne correspondent pas à la version épinglée de Playwright.**
+  `@playwright/test@1.62.1` attend la révision `1234` de Chromium ; l'image n'expose que la `1194`.
+  Les **37 scénarios** du projet `ui` échouaient tous sur `browserType.launch: Executable doesn't
+  exist`, c'est-à-dire pour une raison sans aucun rapport avec le produit. Résolu par
+  `npx playwright install chromium chromium-headless-shell`. Le fait est noté parce qu'un harnais
+  qui échoue en bloc invite à chercher une régression là où il n'y en a pas.
+
+### Les captures régénérées ne sont pas systématiquement meilleures que celles qu'elles remplacent
+
+Le rejeu des harnais a réécrit trois captures de `CRM-007` et de `CRM-021`. Elles ont été
+**regardées** avant d'en décider, et non conservées par défaut. `route-reglages-1440.jpg` montrait
+**deux** entrées de navigation mises en valeur — « Ma journée » plus fortement que « Réglages »,
+qui est pourtant la route courante — là où la version versionnée n'en montre qu'une. La différence
+n'est pas un changement du produit : c'est l'état de survol laissé par le pointeur du pilote
+Playwright au moment de la prise, et il rend la capture **trompeuse** sur ce qu'elle est censée
+documenter.
+
+Les trois captures sont donc **restaurées**. Ce passage ne touche aucun écran ; remplacer des
+captures de référence par des variantes non déterministes, dont une fausse le sens, aurait ajouté
+du bruit à un commit documentaire et affaibli la preuve visuelle de deux unités `[x]`.
+
+**Règle qui en sort.** Une capture régénérée par un rejeu se regarde comme une capture neuve. Elle
+ne remplace la précédente que si elle documente au moins aussi bien l'état qu'elle prétend montrer
+— l'automatisme « le harnais l'a réécrite, donc elle est à jour » n'est pas un critère.

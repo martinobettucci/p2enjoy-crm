@@ -1126,6 +1126,57 @@ Tant que le point est ouvert, `CRM-030` reste `[~]` et la limite est nommée.
 
 ---
 
+### INC-032 — `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS interposé
+
+**Nature :** chemin documenté inatteignable depuis le script de lancement.
+**Relevé le :** 2026-08-04, pendant l'intégration de `CRM-030` sur `main`.
+
+Sur un environnement neuf, `./runDev.sh` s'interrompt à la construction de l'image `webapp` :
+
+```
+npm error code SELF_SIGNED_CERT_IN_CHAIN
+npm error request to https://registry.npmjs.org/... failed,
+  reason: self-signed certificate in certificate chain
+```
+
+Le motif est connu et **anticipé par le dépôt** : `webapp/Dockerfile` §20–29 monte un secret de
+construction `npm_ca` précisément pour ce cas, et documente l'invocation attendue —
+`docker build --secret id=npm_ca,src=/chemin/vers/ca.crt`. Mais `docker-compose.dev.yml` ne déclare
+aucun `secrets:` dans la section `build:` du service `webapp`, et `runDev.sh` appelle
+`compose_dev up -d --wait` sans passer par `docker build`. Le chemin prévu existe donc, et **aucune
+commande du dépôt ne l'emprunte**.
+
+**Conséquence mesurée.** `./runDev.sh` sort en `1` sur toute machine dont le trafic HTTPS traverse
+un proxy présentant sa propre autorité — ce qui est le cas de l'environnement de la routine cloud,
+et le cas courant en entreprise. La pile complète est alors inaccessible, et avec elle **toutes**
+les preuves du projet, y compris celles qui n'ont rien à voir avec la webapp.
+
+**Contournement appliqué, et pourquoi il n'est pas la correction.** L'image a été construite à la
+main avec le secret, puis `runDev.sh` l'a réutilisée — `compose up` ne reconstruit pas une image
+présente. C'est un geste hors dépôt, que rien ne documente et que la prochaine exécution devra
+refaire.
+
+**Ce qui n'est pas fait, et pourquoi.** `docker-compose.dev.yml` et `runDev.sh` sont des livrables
+de `CRM-002` et de `CRM-007`, toutes deux `[x]`. Les corriger reviendrait à rouvrir deux unités
+vérifiées pendant un passage consacré à une troisième, et à toucher les preuves de `CRM-002`
+(`scripts/verify-scripts.sh`, 38 contrôles) dans un commit qui n'en traite pas — ce que
+`CLAUDE.md` §13 interdit. Le comportement reste donc **inchangé**.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. déclarer un secret de construction facultatif dans `docker-compose.dev.yml`, alimenté par une
+   variable `NPM_CA_FILE` documentée dans `.env.example` — la correction la plus fidèle à
+   l'intention du `Dockerfile`, au prix d'une variable de plus ;
+2. laisser le dépôt tel quel et **documenter** la construction manuelle dans `README.md` §6, en
+   assumant que l'amorçage n'est pas autonome derrière un proxy interposé, contre `CLAUDE.md` §3
+   (« l'environnement de développement doit être aussi autonome que possible ») ;
+3. rattacher la correction à une unité de dette dédiée, avec ses propres preuves.
+
+**Lié à :** `CLAUDE.md` §3 (autonomie de l'environnement de développement), `CLAUDE.md` §14
+(démarrage des services locaux).
+
+---
+
 ---
 
 ## Clos
