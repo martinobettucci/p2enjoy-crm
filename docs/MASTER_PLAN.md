@@ -75,6 +75,7 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 |---|---|
 | Migrations et schéma | `docs/SCHEMA.md` (chapitre concerné) |
 | Autorisations, RLS | `docs/SPEC-permissions-rls.md` |
+| Tracks et channels | `docs/SPEC-tracks.md`, `docs/SPEC-channels.md` |
 | Workflows, transitions | `docs/SPEC-workflow-engine.md` |
 | Formulaires conditionnels | `docs/SPEC-form-composer.md` |
 | Messagerie | `docs/SPEC-mail-subsystem.md` |

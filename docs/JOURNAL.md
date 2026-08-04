@@ -2411,3 +2411,93 @@ arrivera avec la destination » — est en revanche un écart réellement **refe
 - **INC-021** — aucun écran de connexion. La route d'un track affichera donc son état « track
   introuvable » pour un appelant anonyme, qui est le refus réel du backend et non un défaut
   d'interface. C'est le troisième chunk 3 consécutif où cet arbitrage borne ce qui est démontrable.
+
+---
+
+## 2026-08-04 — `CRM-021` : channels livrés, et un cloisonnement qui ne repose plus sur la confiance
+
+### Ce qui a été livré
+
+La table `public.channels`, ses trois politiques RLS, le trigger d'ordre par track, la clé
+étrangère qu'INC-010 avait dû différer, la route `/tracks/:slug[/:channel]`, la barre d'onglets
+réelle, six channels seedés, et cinq harnais de preuves — pgTAP, API, unitaire, E2E,
+`scripts/verify-channels.sh`.
+
+### Décision 63 — La dénormalisation devait être rendue **véridique**, pas seulement documentée
+
+C'est le point le plus important de cette unité, et il n'était pas dans son énoncé.
+
+`docs/SCHEMA.md` impose `workspace_id` sur toute table métier, « y compris lorsqu'il serait
+déductible par jointure », au motif que les politiques RLS restent ainsi simples et indexables. La
+politique de lecture des channels interroge donc `channels.workspace_id` — et **rien**, dans
+l'énoncé de l'unité, n'exigeait que cette colonne dise la vérité.
+
+Or si elle pouvait mentir, tout le reste s'effondrerait sans qu'aucune preuve ne le voie : les
+politiques resteraient correctes, la suite pgTAP resterait verte, et le channel d'un track du
+workspace A serait lisible par les membres de B. La faille ne serait pas dans la règle mais dans la
+donnée sur laquelle la règle s'applique — un endroit qu'aucune règle ne surveille.
+
+La clé composite ferme ce chemin en base. Ce qui la distingue d'une précaution est qu'elle a été
+**mesurée dans les deux sens** : le refus d'une ligne menteuse est constaté en tant que `postgres`,
+donc au-dessus de toute RLS ; et l'acceptation d'une ligne cohérente est constatée aussi, faute de
+quoi une contrainte trop stricte passerait pour une garantie.
+
+Leçon, indépendante de cette unité : **une dénormalisation acceptée pour la RLS crée une surface
+que la RLS ne peut pas défendre.** Toute table métier à venir portant `workspace_id` — `cards`,
+`card_comments`, `mail_messages` — rencontrera exactement la même question.
+
+### Ce que la relecture des captures a trouvé, et que les tests ne pouvaient pas trouver
+
+Deux défauts, aucun attrapable par une assertion.
+
+1. **Une capture montrait un écran impossible** : un track ouvert, titré, avec ses trois onglets, et
+   une barre latérale affirmant « Aucun track ». La substitution réseau ne servait le track qu'à la
+   requête `slug=eq.`, pas à celle de la barre latérale. Le scénario passait — il n'observait que
+   les onglets. Substituer le réseau doit produire un état **cohérent** du produit, sinon la
+   capture ne prouve rien de ce que l'utilisateur verrait.
+
+2. **À 390 px, la barre d'onglets était tronquée sans indication.** Le §7 du design system était
+   respecté : la page ne défilait pas. Le §4 était violé : « défilable, jamais tronqué **sans
+   indication** ». Les deux règles étant vérifiées séparément, et chacune satisfaite, aucune
+   assertion ne pouvait signaler leur conjonction fautive.
+
+Le second est le plus instructif : ce n'est pas une règle manquante, c'est un **angle mort entre
+deux règles vérifiées**. La correction n'ajoute donc pas seulement une classe, elle ajoute une règle
+au design system (§12.6) qui nomme l'obligation à la charge du conteneur, pour que le board et la
+vue liste ne la redécouvrent pas.
+
+### Le harnais de `CRM-007` était devenu complaisant en silence
+
+`scripts/verify-webapp.sh` éprouve sa propre non-complaisance en dégradant réellement la barre
+d'onglets — un espacement hors échelle, une couleur hexadécimale — par substitution de chaîne.
+`CRM-021` a réécrit ce composant : les substitutions ne s'appliquaient plus, dégradaient **zéro
+ligne**, et les trois contrôles passaient sans rien mesurer.
+
+Le harnais a échoué bruyamment, ce qui est le comportement voulu. Le fait mérite d'être noté au-delà
+de sa correction : **un contrôle de non-complaisance qui vise un fichier par son contenu est
+lui-même fragile au changement de ce fichier**, et son échec est alors la seule chose qui le
+signale. C'est un argument pour que ces contrôles échouent bruyamment plutôt que de vérifier
+silencieusement qu'ils ont bien dégradé quelque chose.
+
+### Trois assertions figées par des unités précédentes ont échoué comme prévu
+
+- `supabase/tests/0001` constatait l'absence de `channel_members_channel_id_fkey` ;
+- la même suite insérait un droit fin sur un channel imaginaire, ce que la clé étrangère interdit
+  désormais ;
+- `webapp/src/lib/database.types.test-d.ts` énumérait les tables et les clés étrangères de
+  `channel_members`.
+
+Toutes trois ont été **révisées, jamais contournées**, dans le même changement — et la première a
+gagné au passage une preuve qu'elle n'avait pas : l'orphelin est désormais refusé.
+
+### Ce que cette unité ne prouve pas
+
+- **Aucun channel n'apparaît dans l'interface**, et aucun ne le pourra avant qu'un écran de
+  connexion existe (INC-021). La route d'un track affiche « Track introuvable » pour **tout**
+  identifiant. C'est la démonstration la plus nette de ce que cet arbitrage coûte au chunk 3.
+- **`workflow_id` n'est ni obligatoire, ni référencée, ni cohérente** (INC-029). Un channel sans
+  workflow n'a pas d'étapes ; le risque est borné à la fenêtre `CRM-021` → `CRM-031`, les cards
+  n'existant pas avant `CRM-040`.
+- **Les droits fins ne sont pas appliqués** (INC-030). Un `channel_members.access = 'none'` ne
+  masque rien encore, et deux preuves — une pgTAP, un scénario d'API — le constatent pour forcer
+  leur révision à `CRM-012`.

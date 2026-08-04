@@ -9,15 +9,17 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > d'amorçage** et leur refus par défaut (`CRM-003`), le **chiffrement des secrets** (`CRM-004`),
 > les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), le **seed
 > socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
-> (`CRM-007`), le **harnais de tests** (`CRM-008`) et les **tracks** (`CRM-020`).
-> En revanche, **le reste du métier n'existe pas encore** : ni channels, ni cards, ni workflows,
+> (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`) et les **channels**
+> (`CRM-021`).
+> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni workflows,
 > ni messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
 > (`docs/INCONSISTENCY_REPORT.md`, INC-021).
-> **Conséquence à connaître avant de lancer l'application** : les tracks existent réellement
-> côté serveur, sont ordonnés, archivables, et leur écriture est réservée aux administrateurs —
-> tout cela est mesuré. Mais l'interface interroge le serveur **sans compte**, et le serveur ne
-> consent rien à un appelant anonyme. L'écran affiche donc « Aucun track », ce qui est le refus
-> réel du backend et non un défaut d'affichage. Tant qu'INC-021 n'est pas tranchée, **aucune
+> **Conséquence à connaître avant de lancer l'application** : les tracks et leurs channels
+> existent réellement côté serveur, sont ordonnés, archivables, cloisonnés, et leur écriture est
+> réservée aux administrateurs — tout cela est mesuré. Mais l'interface interroge le serveur
+> **sans compte**, et le serveur ne consent rien à un appelant anonyme. L'écran affiche donc
+> « Aucun track », et la route d'un track affiche « Track introuvable » pour tout identifiant :
+> c'est le refus réel du backend et non un défaut d'affichage. Tant qu'INC-021 n'est pas tranchée, **aucune
 > donnée métier ne peut apparaître à l'écran**.
 > Les commandes marquées « à venir » dans le tableau du §5 sont le **contrat** que
 > l'implémentation devra respecter, pas un état constaté.
@@ -133,6 +135,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-webapp.sh` | Rejoue les preuves du squelette : build, jetons, états, clavier, captures | **disponible** |
 | `scripts/verify-harness.sh` | Rejoue les preuves du harnais de tests : exécuteurs, projets, non-complaisance | **disponible** |
 | `scripts/verify-tracks.sh` | Rejoue les preuves des tracks : modèle, ordre, archivage, politiques RLS, seed, non-complaisance | **disponible** |
+| `scripts/verify-channels.sh` | Rejoue les preuves des channels : modèle, cloisonnement par clé composite, ordre par track, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
@@ -293,6 +296,7 @@ scripts/verify-types.sh        # types générés : déterminisme, garde anti-d�
 scripts/verify-webapp.sh       # squelette de la webapp : build, jetons, états, clavier (CRM-007)
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
+scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -400,6 +404,7 @@ Livré à ce jour :
 │   ├── verify-webapp.sh        Preuves rejouables du squelette : build, jetons, états, clavier
 │   ├── verify-harness.sh       Preuves rejouables du harnais de tests et de sa non-complaisance
 │   ├── verify-tracks.sh        Preuves rejouables des tracks : modèle, ordre, archivage, RLS
+│   ├── verify-channels.sh      Preuves rejouables des channels : cloisonnement, onglets, RLS
 │   └── lib/classes-css.mjs     Contrôle : toute classe citée existe dans le CSS produit
 ├── supabase/
 │   ├── docker/                 Configuration Kong et scripts d'initialisation de la base

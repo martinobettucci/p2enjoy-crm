@@ -50,8 +50,8 @@ Déclarées `SECURITY DEFINER`, `search_path` fixé, accordées à `authenticate
 | `app.is_workspace_member(ws uuid)` | l'appelant appartient au workspace | `CRM-010` |
 | `app.is_workspace_admin(ws uuid)` | l'appelant y est administrateur | `CRM-010` |
 | `app.can_read_track(track uuid)` | droit de lecture effectif sur le track | différée, INC-013 — la politique de `tracks` s'appuie sur `is_workspace_member` en attendant (INC-024) |
-| `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel | différée, INC-013 |
-| `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel | différée, INC-013 |
+| `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel | différée, INC-013 — la politique de `channels` s'appuie sur `is_workspace_member` en attendant (INC-030) |
+| `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel | différée, INC-013 (INC-030) |
 | `app.can_read_card(card uuid)` | dérivé du channel de la card | différée, INC-013 |
 
 Ces fonctions existent pour deux raisons : éviter la **récursion** des politiques (une politique
@@ -98,7 +98,7 @@ tables d'identité (`docs/JOURNAL.md`, décisions 21 et 26).
 | `workspaces` | Membres | `admin` |
 | `workspace_members` | Membres du workspace | `admin` ; **un administrateur ne peut pas se retirer son propre rôle s'il est le dernier** |
 | `tracks` | `app.can_read_track` — **livré par `CRM-020` avec `app.is_workspace_member`**, les droits fins restant dus (INC-024) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-tracks.md` §4) |
-| `channels` | `app.can_read_channel` | `admin` |
+| `channels` | `app.can_read_channel` — **livré par `CRM-021` avec `app.is_workspace_member`**, les droits fins restant dus (INC-030) | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-channels.md` §4) |
 | `workflow_nodes_catalog`, `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace | `admin` |
 | `form_fields`, `form_field_rules` | Membres du workspace | `admin` |
 | `cards` | `app.can_read_card` | `app.can_write_channel` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement** |

@@ -76,3 +76,45 @@
 		}
 	}
 }
+
+@layer components {
+	/*
+	  Indication de débordement horizontal — `CRM-021`, docs/DESIGN_SYSTEM.md §4 et §12.6.
+
+	  DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE. À 390 px, la barre d'onglets débordait sans que rien
+	  ne le signale : le dernier libellé était coupé net au bord du conteneur. Le §7 était pourtant
+	  respecté — la **page** ne défilait pas —, mais le §4 exige que le débordement soit
+	  « défilable, jamais tronqué sans indication ». Aucun test ne pouvait l'attraper : les deux
+	  règles étaient satisfaites au sens où elles étaient vérifiées.
+
+	  Technique des « ombres de défilement » en CSS pur, sans JavaScript ni état : deux dégradés
+	  attachés au **contenu** (`local`) masquent deux dégradés attachés au **conteneur** (`scroll`).
+	  Lorsqu'il n'y a rien à faire défiler d'un côté, l'ombre de ce côté est recouverte. L'indication
+	  n'apparaît donc **que** lorsqu'il y a réellement quelque chose de plus à voir, ce qu'un
+	  dégradé permanent ne saurait pas faire.
+
+	  Aucun `resize` ni `scroll` n'est écouté : un événement non traité ne peut pas désynchroniser
+	  l'affichage, comme pour les paliers de la barre latérale.
+
+	  Aucune valeur hexadécimale : les quatre dégradés partent des jetons.
+	*/
+	.indique-debordement-x {
+		background-image:
+			linear-gradient(to right, var(--color-bg), transparent),
+			linear-gradient(to left, var(--color-bg), transparent),
+			linear-gradient(to right, var(--color-border), transparent),
+			linear-gradient(to left, var(--color-border), transparent);
+		background-position:
+			left center,
+			right center,
+			left center,
+			right center;
+		background-repeat: no-repeat;
+		background-size:
+			24px 100%,
+			24px 100%,
+			10px 100%,
+			10px 100%;
+		background-attachment: local, local, scroll, scroll;
+	}
+}

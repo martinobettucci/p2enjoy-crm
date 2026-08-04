@@ -59,6 +59,18 @@ export const fr = {
 	'route.settings.title': 'Réglages',
 	'route.settings.empty.title': 'Aucun réglage modifiable',
 	'route.settings.empty.body': "La configuration de l'instance est tenue par le fichier d'environnement du serveur.",
+	'route.track.title': 'Track',
+	'route.track.notfound.title': 'Track introuvable',
+	'route.track.notfound.body':
+		"Aucun track de cet espace de travail ne correspond à cette adresse, ou votre compte n'y a pas accès.",
+	'route.track.nochannel.title': 'Aucun channel dans ce track',
+	'route.track.nochannel.body':
+		"Les channels d'un track s'administrent par l'API : aucun écran de création n'est encore livré.",
+	'route.track.pickchannel.title': 'Choisissez un channel',
+	'route.track.pickchannel.body': 'Les onglets ci-dessus ouvrent les channels de ce track.',
+	'route.channel.empty.title': 'Aucune card dans ce channel',
+	'route.channel.empty.body':
+		'Le board et la vue liste de ce channel arrivent avec les cards.',
 	'route.notfound.title': 'Page introuvable',
 	'route.notfound.body': "Cette adresse ne correspond à aucun écran de l'application.",
 	'route.notfound.action': "Revenir à l'accueil",

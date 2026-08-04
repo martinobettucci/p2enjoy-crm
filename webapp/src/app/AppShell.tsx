@@ -16,6 +16,7 @@ import { EtatConfiguration, EtatErreur, EtatRefus } from '../components/ui/State
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
+import type { Channel } from '../lib/channels'
 import { useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
 import { Header } from './Header'
@@ -27,10 +28,32 @@ const ID_CONTENU = 'contenu-principal'
 
 export type ProprietesAppShell = {
 	readonly cleTitreRoute: CleTraduction
+	/**
+	 * Titre affiché à la place du libellé traduit — `CRM-021`. Le nom d'un track est une
+	 * **donnée**, pas une traduction (`docs/DESIGN_SYSTEM.md` §10) : il ne peut donc pas passer
+	 * par une clé. La clé reste exigée comme repli, pour que l'en-tête ne soit jamais sans titre
+	 * pendant le chargement ou lorsque le track est introuvable.
+	 */
+	readonly titreRoute?: string
+	/**
+	 * Channels du track courant, pour la barre d'onglets — `CRM-021`. Absent hors d'une route de
+	 * track : la barre affiche alors son état vide, comme depuis `CRM-007`.
+	 */
+	readonly etatChannels?: EtatAsync<readonly Channel[]>
+	readonly onRechargerChannels?: () => void
+	/** Slug du track porteur, pour construire l'adresse de chaque onglet. */
+	readonly slugTrack?: string
 	readonly children: ReactNode
 }
 
-export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
+export function AppShell({
+	cleTitreRoute,
+	titreRoute,
+	etatChannels,
+	onRechargerChannels,
+	slugTrack,
+	children,
+}: ProprietesAppShell) {
 	const { replie, basculer } = useReplisidebar()
 	const [tiroirOuvert, setTiroirOuvert] = useState(false)
 	// Deux chargements indépendants depuis `CRM-020` : le contexte d'espace de travail, porté par
@@ -42,7 +65,8 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 	const toutRecharger = useCallback(() => {
 		recharger()
 		rechargerTracks()
-	}, [recharger, rechargerTracks])
+		onRechargerChannels?.()
+	}, [recharger, rechargerTracks, onRechargerChannels])
 
 	const fermerTiroir = useCallback(() => setTiroirOuvert(false), [])
 	const ouvrirTiroir = useCallback(() => setTiroirOuvert(true), [])
@@ -104,14 +128,21 @@ export function AppShell({ cleTitreRoute, children }: ProprietesAppShell) {
 
 				<div className="flex flex-col flex-1 min-w-0">
 					<Header
-						titreRoute={t(cleTitreRoute)}
+						titreRoute={titreRoute ?? t(cleTitreRoute)}
 						onOuvrirTiroir={ouvrirTiroir}
 						etatWorkspaces={etat}
 					/>
-					<TabBar />
+					<TabBar etat={etatChannels} slugTrack={slugTrack} />
 					<main id={ID_CONTENU} tabIndex={-1} className="flex-1 min-w-0 p-4 overflow-x-auto">
+						{/* Le chargement des channels rejoint les deux autres : un échec ne doit pas
+						    être avalé par une barre d'onglets qui n'a pas la place de l'expliquer,
+						    exactement comme pour les tracks à `CRM-020`. */}
 						<ZonePrincipale
-							etats={[etat, etatTracks]}
+							etats={
+								etatChannels === undefined
+									? [etat, etatTracks]
+									: [etat, etatTracks, etatChannels]
+							}
 							recharger={toutRecharger}
 							contenu={children}
 						/>

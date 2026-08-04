@@ -107,9 +107,15 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   `npm run types:check` prouve qu'ils n'ont pas dérivé du schéma réellement migré ;
 - `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
   qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44) ;
-- `src/lib/async.ts`, `src/lib/workspaces.ts`, `src/lib/tracks.ts` — un type somme unique pour tout
-  chargement, et les **deux** lectures que la coquille effectue : le contexte d'espace de travail
-  pour l'en-tête, et les tracks pour la barre latérale (`CRM-020`) ;
+- `src/lib/async.ts`, `src/lib/workspaces.ts`, `src/lib/tracks.ts`, `src/lib/channels.ts` — un type
+  somme unique pour tout chargement, et les lectures que l'application effectue : le contexte
+  d'espace de travail pour l'en-tête, les tracks pour la barre latérale (`CRM-020`), et — sur la
+  route d'un track — sa résolution par slug puis ses channels pour la barre d'onglets (`CRM-021`).
+  Ces deux dernières sont **séquentielles**, la seconde ayant besoin de l'identifiant que la
+  première rapporte, et la seconde n'est pas émise lorsque le track n'est pas consenti ;
+- `src/app/RouteTrack.tsx` — la route `/tracks/:slugTrack[/:slugChannel]`, hors de la table
+  statique de `routes.tsx` : son titre est une **donnée** (le nom du track) et non une clé de
+  traduction, et son contenu dépend de paramètres d'URL ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les
@@ -121,11 +127,13 @@ Le build de production est produit **sur l'hôte** par `npm run build` et servi 
 image de production n'est fabriquée pour des fichiers statiques.
 
 Restent dus : l'écran de connexion, qu'aucune unité ne porte
-(`docs/INCONSISTENCY_REPORT.md`, INC-021), et le reste du métier — `CRM-021` et suivantes.
+(`docs/INCONSISTENCY_REPORT.md`, INC-021), et le reste du métier — `CRM-030` et suivantes.
 
-**Conséquence devenue structurante, et qui déborde `CRM-020`.** Depuis que `tracks` porte des
-politiques RLS, le produit sait servir de la donnée métier à un membre du workspace — mesuré — mais
-l'interface, appelant anonyme, n'en voit rien. **Aucune unité d'interface du chunk 3 ne pourra
+**Conséquence devenue structurante, et qui déborde `CRM-020` puis `CRM-021`.** Depuis que `tracks`
+et `channels` portent des politiques RLS, le produit sait servir de la donnée métier à un membre du
+workspace — mesuré — mais l'interface, appelant anonyme, n'en voit rien. `CRM-021` en donne
+l'illustration la plus nette : la route d'un track affiche « Track introuvable » pour **tout** slug,
+puisqu'aucune ligne ne lui est consentie. **Aucune unité d'interface du chunk 3 ne pourra
 produire de capture chargée tant qu'INC-021 n'est pas tranchée.** Ce n'est plus une gêne locale,
 c'est un obstacle sur le chemin de toutes les unités qui suivent.
 
@@ -386,12 +394,20 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 - **État de livraison** : `app.workspace_role`, `app.is_workspace_member`,
   `app.is_workspace_admin` et `app.resolve_access` sont livrées par `CRM-010`. Les quatre
   fonctions `can_*` restent différées — `docs/INCONSISTENCY_REPORT.md`, INC-013.
-- **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks` — lecture
-  par `app.is_workspace_member`, insertion et mise à jour par `app.is_workspace_admin`, **aucune
-  suppression**. Prouvées hors interface avec les jetons réels des trois profils seedés par
-  `scripts/verify-tracks.sh` (**40 contrôles**) et `e2e/api/tracks.spec.ts`. Ces politiques
-  n'appliquent **aucun droit fin**, `app.can_read_track` étant différée : INC-024, à resserrer
-  par `CRM-012`. Les tables d'identité, elles, restent en refus par défaut.
+- **Premières politiques RLS du produit** : `CRM-020` en pose trois sur `public.tracks` et
+  `CRM-021` trois sur `public.channels` — lecture par `app.is_workspace_member`, insertion et mise
+  à jour par `app.is_workspace_admin`, **aucune suppression**. Prouvées hors interface avec les
+  jetons réels des trois profils seedés par `scripts/verify-tracks.sh` (**40 contrôles**),
+  `scripts/verify-channels.sh` (**28 contrôles**), `e2e/api/tracks.spec.ts` et
+  `e2e/api/channels.spec.ts`. Ces politiques n'appliquent **aucun droit fin**, `app.can_read_track`,
+  `app.can_read_channel` et `app.can_write_channel` étant différées : INC-024 et INC-030, à
+  resserrer par `CRM-012`. Les tables d'identité, elles, restent en refus par défaut.
+- **Le cloisonnement ne repose pas seulement sur les politiques.** `channels.workspace_id` est
+  dénormalisé, et c'est lui que la politique interroge. `CRM-021` pose une clé étrangère
+  **composite** `(track_id, workspace_id) → tracks (id, workspace_id)` qui rend impossible qu'un
+  channel déclare un workspace différent de celui de son track. Sans elle, une donnée fausse ferait
+  cloisonner la RLS sur une valeur fausse, et aucune politique ne le rattraperait
+  (`docs/JOURNAL.md`, décision 60).
 - **Secrets de messagerie** : la colonne portant la référence du secret est révoquée pour le
   rôle `authenticated`. Aucun chemin de lecture ne l'expose à un client.
 

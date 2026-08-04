@@ -13,7 +13,63 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **`CRM-021` — Channels (`[~]`).** Second niveau d'organisation, et **premier cloisonnement
+  garanti par une contrainte plutôt que par une politique**.
+  - **`supabase/migrations/0004_channels.sql`** : table `public.channels` — nom, slug unique **par
+    track**, description, `position` numérique, archivage doux, horodatages. Trigger d'attribution
+    automatique de `position` **dans la portée du track**, et non du workspace : les onglets d'un
+    track forment une barre à eux seuls, et compter à l'échelle du workspace produirait des barres
+    commençant à 7 sans que rien ne l'explique.
+  - **Clé étrangère composite `(track_id, workspace_id) → tracks (id, workspace_id)`**, avec la
+    contrainte d'unicité qu'elle exige sur `tracks`. `channels.workspace_id` est dénormalisé et
+    c'est lui que la politique RLS interroge : s'il pouvait différer du workspace de son track, la
+    politique cloisonnerait sur une valeur fausse, et aucune règle RLS ne le rattraperait. Le refus
+    est mesuré **y compris à `postgres`**, donc indépendamment de toute politique, et à la mise à
+    jour comme à l'insertion.
+  - **Trois politiques RLS**, prouvées hors interface avec les jetons réels des trois profils
+    seedés : lecture par les membres du workspace, insertion et mise à jour par ses
+    administrateurs. **Aucune suppression n'est exposée** — le refus se manifeste dès le privilège.
+  - **INC-010 refermée** : la clé étrangère `channel_members.channel_id → channels.id` est posée.
+    Deux assertions figées par des unités précédentes ont **réellement échoué** en la posant, puis
+    ont été révisées dans le même changement.
+  - **INC-025 refermée** : `created_at` et `updated_at` sont livrées, et le tableau de `channels`
+    de `docs/SCHEMA.md` §2 complété.
+  - **Seed étendu** : six channels sur trois tracks, dont un **archivé** et un track n'en portant
+    qu'un — une barre à un seul onglet est un cas d'affichage réel, distinct de la barre vide.
+    `workflow_id` reste nul partout, ce qui est l'état réel du produit jusqu'à `CRM-031`.
+  - **Route d'un track** `/tracks/:slug[/:channel]` : la destination que `CRM-020` avait annoncée
+    sans pouvoir la livrer. Les pilules de la barre latérale deviennent des liens, et l'écart
+    `docs/DESIGN_SYSTEM.md` §12.4 est **refermé**. L'état actif s'ajoute à la couleur du track sans
+    la remplacer.
+  - **Barre d'onglets réelle**, en navigation par liens et non en `tablist` : nos onglets changent
+    l'URL, un `tablist` décrit des panneaux qui s'échangent dans la même page, et son `tabindex`
+    glissant retirerait la navigation par `Tab`. L'écart §12.1 cesse d'être temporaire pour devenir
+    une position motivée.
+  - **Un slug refusé et un slug inexistant produisent le même écran**, délibérément : les
+    distinguer renseignerait un appelant sans droit sur l'existence d'un track.
+  - **Deux écarts assumés, consignés et figés par des assertions** : `workflow_id` livrée nullable
+    et sans clé étrangère, la table `workflows` n'arrivant qu'avec `CRM-031` (**INC-029**) ; et la
+    lecture qui n'applique aucun droit fin, `app.can_read_channel` restant différée (**INC-030**).
+
 ### Corrigé
+
+- **Le débordement horizontal de la barre d'onglets n'était pas signalé** (`CRM-021`). À 390 px, le
+  dernier libellé était coupé net au bord du conteneur. Le §7 du design system était respecté — la
+  page ne défilait pas — et le §4 violé : « défilable, jamais tronqué **sans indication** ».
+  **Aucune assertion ne pouvait l'attraper**, les deux règles étant vérifiées séparément ; le défaut
+  a été trouvé en regardant une capture. Corrigé par une classe `.indique-debordement-x` en CSS pur,
+  sans JavaScript ni écoute d'événement : l'indication n'apparaît que lorsqu'il reste réellement
+  quelque chose à voir de ce côté. Règle consignée en `docs/DESIGN_SYSTEM.md` §12.6.
+- **Une capture de référence montrait un écran incohérent** (`CRM-021`) — un track ouvert avec ses
+  onglets, et une barre latérale affirmant qu'aucun track n'existe — parce que la substitution
+  réseau ne servait le track qu'à une des deux requêtes qui l'interrogent.
+- **`scripts/verify-webapp.sh` était devenu complaisant en silence** (`CRM-021`) : ses contrôles de
+  non-complaisance dégradent la barre d'onglets par substitution de chaîne, et cette unité a
+  réécrit ce composant. Une substitution qui ne s'applique plus dégrade zéro ligne, et le contrôle
+  passe alors sans rien mesurer. Le harnais a réellement échoué, et ses motifs ont été révisés dans
+  le même changement.
 
 - **`CRM-020` — le contraste des pilules de track était déclaré, non mesuré.** `docs/DESIGN_SYSTEM.md`
   §8 exige 4,5:1 « y compris pour les badges colorés », et aucune preuve du dépôt ne calculait un

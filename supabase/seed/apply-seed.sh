@@ -101,6 +101,31 @@ TRACKS=(
 	'5eed0000-0000-4000-8000-000000000024|pipeline-2024|Pipeline 2024|neutral|archive|4|2026-01-15T09:00:00Z'
 )
 
+# Channels des tracks actifs — docs/SPEC-channels.md §8.
+#
+# Trois tracks actifs sur quatre en portent ; `formation` n'en porte qu'**un**, ce qui donne une
+# barre à un seul onglet — un cas d'affichage réel, distinct de la barre vide. Le track archivé
+# `pipeline-2024` n'en porte **aucun** : un track masqué n'a pas à démontrer une barre d'onglets.
+#
+# `appels-offres` est **archivé**, pour que l'état le soit aussi côté channels et non seulement
+# documenté (`CLAUDE.md` §8).
+#
+# `workflow_id` est laissé **nul** partout : c'est l'état réel du produit jusqu'à `CRM-031`
+# (INC-029). Le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire.
+#
+# `position` est écrite explicitement, pour le même motif que les tracks : un ordre attribué par
+# effet de bord ne serait pas reproductible si l'ordre des insertions changeait.
+#
+# id | track | slug | nom | position | date d'archivage (ou « - »)
+CHANNELS=(
+	'5eed0000-0000-4000-8000-000000000031|5eed0000-0000-4000-8000-000000000021|prospection|Prospection|1|-'
+	'5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000021|grands-comptes|Grands comptes|2|-'
+	"5eed0000-0000-4000-8000-000000000033|5eed0000-0000-4000-8000-000000000021|appels-offres|Appels d'offres|3|2026-02-01T09:00:00Z"
+	'5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000022|refonte|Refonte de site|1|-'
+	'5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000022|maintenance|Maintenance|2|-'
+	'5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000023|inter-entreprises|Inter-entreprises|1|-'
+)
+
 # --- Accès à l'API -----------------------------------------------------------------------------
 
 CORPS=$(mktemp)
@@ -249,6 +274,41 @@ for ligne in "${TRACKS[@]}"; do
 	printf '  %-16s %-14s %-18s %s\n' "$slug" "$couleur" "$icone" "$etat"
 done
 
+# --- 4. Channels — docs/SPEC-channels.md §8 ----------------------------------------------------
+# Mêmes règles que les tracks : véritable API REST, clé de service, écriture convergente sur `id`.
+#
+# `workspace_id` est envoyé explicitement bien qu'il soit déductible du track : la colonne est
+# `NOT NULL` et dénormalisée par convention (`docs/SCHEMA.md`). Sa cohérence avec le track n'est
+# pas laissée à la bonne foi du seed — la clé étrangère composite de `CRM-021` la refuserait si
+# elle mentait (docs/SPEC-channels.md §2.4).
+
+echo
+say "4. Channels"
+
+for ligne in "${CHANNELS[@]}"; do
+	IFS='|' read -r id track slug nom position archive <<< "$ligne"
+
+	if [ "$archive" = '-' ]; then
+		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
+		               --arg slug "$slug" --argjson position "$position" \
+		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
+		       workflow_id: null, position: $position, archived_at: null}')
+	else
+		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
+		               --arg slug "$slug" --argjson position "$position" --arg archive "$archive" \
+		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
+		       workflow_id: null, position: $position, archived_at: $archive}')
+	fi
+
+	code=$(api POST /rest/v1/channels \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du channel $slug" 200 201
+
+	if [ "$archive" = '-' ]; then etat='actif'; else etat="archivé le ${archive%%T*}"; fi
+	printf '  %-20s %-18s %s\n' "$slug" "${track: -3}" "$etat"
+done
+
 # --- 5. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -256,16 +316,17 @@ done
 #
 #   * les tables du socle — profiles, workspaces, workspace_members — restent en refus par défaut
 #     depuis `CRM-003` : RLS activée, aucune politique. Elles relèvent de `CRM-012` ;
-#   * `tracks` porte les politiques de `CRM-020` : un membre du workspace lit ses tracks, un
-#     administrateur seul les écrit. Un appelant **anonyme** n'y lit toujours rien.
+#   * `tracks` porte les politiques de `CRM-020` et `channels` celles de `CRM-021` : un membre du
+#     workspace y lit, un administrateur seul y écrit. Un appelant **anonyme** n'y lit rien.
 
 echo
 say "Seed appliqué"
 info "Espace de travail : $WS_NAME ($WS_SLUG)"
 info "Comptes : ${#COMPTES[@]}, un par rôle — mot de passe commun publié dans docs/SPEC-seed.md §2.3"
 info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
+info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks — docs/SPEC-channels.md §8"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut jusqu'à CRM-012 (aucune politique RLS)."
-info "tracks est lisible par un membre du workspace, et par lui seul (CRM-020)."
-info "Preuves du seed : scripts/verify-seed.sh — preuves des tracks : scripts/verify-tracks.sh"
+info "tracks et channels sont lisibles par un membre du workspace, et par lui seul (CRM-020, CRM-021)."
+info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh — channels : scripts/verify-channels.sh"

@@ -949,9 +949,140 @@ telle.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-021 — Channels `[ ]`
+### CRM-021 — Channels `[~]`
 CRUD, ordre, archivage, onglets, débordement horizontal.
 **DoD** : idem, plus le trigger de cohérence du workflow (`CRM-033`) une fois disponible.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-channels.md` : aucun document ne disait
+      ce qu'un channel doit garantir de son cloisonnement, ni ce que la barre d'onglets doit lire.
+      Rédigée **après mesure** du comportement réel de la pile épinglée, sur une table sonde
+      jetable `public.sonde_channels` créée puis détruite. Commit documentaire dédié.
+- [x] `supabase/migrations/0004_channels.sql` : table, unicité du slug **par track**, contraintes
+      de valeur convergentes, trigger d'attribution de `position` dans la portée du track, trigger
+      d'`updated_at`, index partiel des channels actifs, **trois politiques RLS**.
+- [x] **Le cloisonnement est garanti, pas espéré** (décision 60). `channels.workspace_id` est
+      dénormalisé et c'est lui que la politique interroge : s'il pouvait mentir, la RLS
+      cloisonnerait sur une valeur fausse et aucune politique ne le rattraperait. La clé étrangère
+      est donc **composite** — `(track_id, workspace_id) → tracks (id, workspace_id)` — et elle
+      remplace la clé simple, qu'elle contient. Sa condition, `unique (id, workspace_id)` sur
+      `tracks`, a été **mesurée** : sans elle PostgreSQL refuse la clé composite.
+- [x] **Refus prouvé au niveau où il compte** : l'insertion d'un channel dont `workspace_id` ne
+      correspond pas à celui de son track est refusée en `23503` **y compris à `postgres`**, donc
+      indépendamment de toute politique. La preuve porte aussi sur la **mise à jour**, sans quoi il
+      suffirait de créer une ligne cohérente puis de la corrompre.
+- [x] **INC-010 refermée** : la clé étrangère `channel_members.channel_id → channels.id` est
+      posée. C'est la seconde des deux clés qu'INC-010 avait dû différer, et **deux assertions
+      figées ont réellement échoué** au moment de la poser — celle de la suite `0001` et celle de
+      `database.types.test-d.ts` — puis ont été révisées dans le même changement. Le mécanisme de
+      la décision 51 a fonctionné une seconde fois, à un chunk d'intervalle.
+- [x] **INC-025 refermée** : `created_at` et `updated_at` sont livrées, et le tableau de `channels`
+      de `docs/SCHEMA.md` §2 est complété. Les deux moitiés de l'entrée sont traitées.
+- [x] **Test unitaire dédié** : `supabase/tests/0005_channels.test.sql`, **67 assertions, aucune
+      anomalie** — structure, clé composite, ordre par track, archivage, politiques, privilèges,
+      et les autorisations éprouvées contre quatre comptes réels avec les revendications JWT
+      simulées comme PostgREST les pose.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/channels.spec.ts`, **20 scénarios**,
+      avec les jetons réels des trois profils obtenus par la véritable route de connexion. Les
+      quatorze lignes du contrat d'API de `docs/SPEC-channels.md` §7 y sont rejouées.
+- [x] **Preuves de refus n° 3 et n° 11 acquises au niveau des channels** : un membre du workspace A
+      ne voit aucun channel de B (constaté d'abord avec la clé de service, pour que le « zéro
+      ligne » ne soit pas vrai sur une table vide) ; l'anonyme obtient `200` et `[]`.
+- [x] **L'écriture est réservée aux administrateurs, prouvée par le refus ET par l'acceptation** :
+      `viewer` et `business_developer` refusés en `403`/`42501`, administrateur accepté en `201`
+      avec `position` attribuée **en troisième position de son track**, et non à la suite de tous
+      les channels du workspace.
+- [x] **L'unicité par track est prouvée dans les deux sens** : le même slug refusé dans le même
+      track, accepté dans un autre track du même workspace. C'est la différence de fond avec
+      `tracks`, dont le slug est unique par workspace.
+- [x] **Aucune suppression physique** : `DELETE` n'est accordé à personne ; le refus se manifeste
+      dès le privilège (`permission denied for table channels`) et la ligne survit.
+- [x] **Seed mis à jour dans le même changement** : six channels sur trois tracks, dont un
+      **archivé**, et un track n'en portant qu'**un** — une barre à un seul onglet est un cas
+      d'affichage réel, distinct de la barre vide. Créés par la véritable API REST, écriture
+      convergente, rejoué sans doublon.
+- [x] **Test E2E dédié** : `e2e/ui/channels.spec.ts`, **13 scénarios verts** contre le build de
+      production — la route interroge réellement `tracks` puis `channels`, ne demande pas les
+      channels quand le track n'est pas consenti, et traite les quatre états.
+- [x] **Tests unitaires d'interface** : `webapp/src/lib/channels.test.ts` et
+      `webapp/src/app/TabBar.test.tsx` — la requête émise, la classification des échecs, le rendu
+      des onglets, l'onglet courant et l'absence de `tablist`. **164 tests, 10 fichiers**, verts.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-021/` — sept captures,
+      dont les quatre paliers, regardées une à une.
+- [x] **Deux défauts trouvés en regardant les captures, corrigés, et figés par un test** :
+      (1) une capture montrait un écran **incohérent** — un track ouvert avec ses onglets, et une
+      barre latérale affirmant qu'aucun track n'existe — parce que la substitution réseau ne
+      servait le track qu'à une des deux requêtes ; (2) à 390 px, la barre d'onglets débordait sans
+      indication, le dernier libellé coupé net. Le §7 était respecté (la page ne défilait pas) et
+      le §4 violé (« jamais tronqué sans indication ») : **aucune assertion ne pouvait l'attraper**,
+      les deux règles étant vérifiées séparément. Corrigé par `.indique-debordement-x`, en CSS pur
+      et sans écouter d'événement, et consigné en `docs/DESIGN_SYSTEM.md` §12.6.
+- [x] **`docs/DESIGN_SYSTEM.md` §12.4 refermé** : les pilules de track sont des liens, la
+      destination existant désormais. L'état actif **s'ajoute** à la couleur du track sans la
+      remplacer, et `aria-current="page"` porte l'information indépendamment du visuel.
+- [x] **`docs/DESIGN_SYSTEM.md` §12.1 requalifié** : l'écart temporaire devient une **position
+      motivée** (décision 62). Le patron `tablist` annoncé par `CRM-007` est écarté — nos onglets
+      changent l'URL, un `tablist` décrit des panneaux qui s'échangent dans la même page, et le
+      `tabindex` glissant retirerait la navigation par `Tab`.
+- [x] Harnais de preuves rejouable `scripts/verify-channels.sh` : **28 contrôles, aucune
+      anomalie**, et **non complaisant** — il relâche réellement la politique d'insertion (le
+      refus disparaît), retire réellement la clé composite (la ligne menteuse passe), puis
+      **constate** la restauration au lieu de la supposer.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+- [x] `docs/SCHEMA.md` §2, `docs/SPEC-permissions-rls.md` §3 et §4, `docs/SPEC-seed.md` §2.2, §2.6,
+      `docs/DESIGN_SYSTEM.md` §4, §12.1, §12.4, §12.6, `docs/DAT.md` §3.1 et §7,
+      `docs/PROD_MIGRATIONS.md` §3, `docs/manual.md` §3.2 bis et §3.2 ter, `docs/MASTER_PLAN.md` §3,
+      `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Aucun channel n'est visible dans l'interface, et aucune interface ne permet de les gérer.**
+      La webapp est un appelant **anonyme** : elle n'a aucun parcours de connexion, qu'aucune unité
+      du backlog ne porte — **INC-021, en attente d'arbitrage**. La route d'un track affiche donc
+      « Track introuvable » pour **tout** identifiant, et il n'existe ni écran de création, ni de
+      renommage, ni de réordonnancement, ni d'archivage. Le CRUD est livré et prouvé **par l'API**,
+      ce que `CLAUDE.md` §10 exige de toute façon.
+      **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **`workflow_id` n'est ni obligatoire, ni référencée, ni cohérente.** `docs/SCHEMA.md` §2
+      l'exige non nulle et référencée vers `workflows`, table livrée par `CRM-031`, deux étapes
+      plus loin dans le plan. Mesuré : `to_regclass('public.workflows')` rend `NULL`. La colonne
+      est livrée nullable et sans clé étrangère, et **trois assertions pgTAP plus une assertion de
+      type** constatent l'écart pour le rendre rouge à `CRM-031`. **INC-029, en attente
+      d'arbitrage** (trois options). Le trigger de cohérence relève de `CRM-033`, ce que la DoD de
+      cette unité prévoyait déjà.
+      **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
+- [ ] **Les droits fins ne sont pas appliqués.** La politique de lecture s'arrête au rôle de
+      workspace : `app.can_read_channel` et `app.can_write_channel` sont deux des quatre fonctions
+      différées par INC-013, dont l'arbitrage reste ouvert, et les écrire ici trancherait à la
+      place du responsable. Un `channel_members.access = 'none'` ne masque donc rien encore.
+      **INC-030**, avec une assertion pgTAP et un scénario d'API qui deviendront rouges lorsque
+      `CRM-012` resserrera la politique.
+
+*DoD adaptée, écarts explicites.* La Definition of Done exige « E2E, captures ». Les deux sont
+livrés, mais sur les **états que le backend consent réellement** à un appelant anonyme : track
+introuvable, barre vide, erreur, paliers. Le rendu **chargé** — onglets, ordre, onglet courant — est
+éprouvé par test unitaire du composant réel et, dans l'application construite, en substituant la
+**réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun des deux n'est présenté comme
+telle.
+
+*Limites nommées, non masquées.*
+
+- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.**
+  Troisième unité consécutive du chunk 3 à buter sur le même obstacle, et la plus démonstrative :
+  la route d'un track ne peut afficher que « Track introuvable ».
+- **L'administration des channels est une opération d'exploitation**, pas un parcours produit.
+- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, la n° 3 et la n° 11 sont
+  désormais acquises **au niveau des channels**. Les dix autres exigent des cards et des comptes
+  mail : elles restent dues par `CRM-014`.
+- **Le réordonnancement des onglets n'a pas d'opération atomique** : réordonner, c'est écrire
+  `position`. Une RPC deviendra nécessaire avec le glisser-déposer (`CRM-041`).
+- **Le type généré exige `position` à l'insertion**, que le trigger rend facultative : INC-027 se
+  reproduit à l'identique sur `channels`, et l'écart y est figé par une assertion.
+- **L'archivage d'un track ne cascade pas sur ses channels** : choix motivé (`docs/SPEC-channels.md`
+  §4), mais il signifie qu'un désarchivage de track fait réapparaître exactement les channels qui
+  étaient visibles avant.
+- **Aucune limite de nombre de channels par track** n'est posée côté serveur.
+- **INC-010 et INC-025 sont techniquement closes mais restent ouvertes au registre** : l'arbitrage
+  qu'elles demandaient — désigner l'unité porteuse, confirmer la lecture des conventions — n'a
+  jamais été rendu. Le fait technique est acquis, la décision documentaire ne l'est pas.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ### CRM-030 — Catalogue de nœuds `[ ]`
 `workflow_nodes_catalog`, catalogue initial de sept nœuds, refus d'archivage d'un nœud occupé.

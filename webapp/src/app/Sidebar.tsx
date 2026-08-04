@@ -156,7 +156,7 @@ export function Sidebar({
 				>
 					{t('nav.section.tracks')}
 				</h2>
-				<SectionTracks etat={etatTracks} replie={replie} />
+				<SectionTracks etat={etatTracks} replie={replie} onNaviguer={onFermerTiroir} />
 			</section>
 		</aside>
 	)
@@ -170,15 +170,18 @@ export function Sidebar({
  * (INC-021), c'est l'**état vide** qui s'affiche — et c'est le refus réel de la RLS
  * (`docs/SPEC-tracks.md` §7).
  *
- * Les pilules ne sont pas cliquables : un track s'ouvre sur ses channels, livrés par `CRM-021`.
- * Une pilule menant à une route vide serait une commande morte.
+ * Les pilules sont **cliquables depuis `CRM-021`** : un track s'ouvre sur ses channels, et la
+ * destination `/tracks/:slug` existe désormais. L'écart temporaire de `docs/DESIGN_SYSTEM.md`
+ * §12.4 — « le lien arrivera avec la destination » — est donc refermé.
  */
 function SectionTracks({
 	etat,
 	replie,
+	onNaviguer,
 }: {
 	readonly etat: EtatAsync<readonly Track[]>
 	readonly replie: boolean
+	readonly onNaviguer: () => void
 }) {
 	const classeTexte = replie ? 'not-sr-only lg:sr-only' : 'not-sr-only lg:sr-only xl:not-sr-only'
 
@@ -203,18 +206,32 @@ function SectionTracks({
 				// visuellement mais restent annoncés (§7, §8).
 				const Icone = iconeTrack(track.icon)
 				return (
-					<li
-						key={track.id}
-						data-testid="entree-track"
-						data-slug={track.slug}
-						title={track.name}
-						className={[
-							'flex items-center gap-2 px-2 min-h-[var(--size-target)] rounded-full',
-							classesPilule(track.color),
-						].join(' ')}
-					>
-						<Icone aria-hidden="true" size={18} className="shrink-0" />
-						<span className={['truncate', classeTexte].join(' ')}>{track.name}</span>
+					<li key={track.id}>
+						<NavLink
+							to={`/tracks/${track.slug}`}
+							// Le tiroir se referme après la navigation, comme pour les entrées
+							// transverses : laisser une surface qui recouvre l'écran ouverte sur
+							// un contenu qu'elle masque serait un cul-de-sac.
+							onClick={onNaviguer}
+							data-testid="entree-track"
+							data-slug={track.slug}
+							title={track.name}
+							className={({ isActive }) =>
+								[
+									'flex items-center gap-2 px-2 min-h-[var(--size-target)] rounded-full',
+									'transition-colors duration-[var(--transition-duration-fast)]',
+									classesPilule(track.color),
+									// L'état actif s'ajoute à la couleur du track, il ne la remplace
+									// pas : la couleur est une **donnée**, et l'écraser ferait perdre
+									// au track actif ce qui l'identifie. `aria-current="page"`, posé
+									// par `NavLink`, porte l'information indépendamment du visuel.
+									isActive ? 'ring-2 ring-brand font-medium' : '',
+								].join(' ')
+							}
+						>
+							<Icone aria-hidden="true" size={18} className="shrink-0" />
+							<span className={['truncate', classeTexte].join(' ')}>{track.name}</span>
+						</NavLink>
 					</li>
 				)
 			})}

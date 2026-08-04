@@ -22,7 +22,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(71);
+select plan(72);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §1
@@ -92,14 +92,12 @@ select fk_ok('public', 'workspace_members', 'user_id', 'public', 'profiles', 'id
 select fk_ok('public', 'track_members', 'track_id', 'public', 'tracks', 'id',
 	'INC-010 : `track_members.track_id` référence `tracks.id` depuis CRM-020');
 
--- L'autre moitié reste ouverte : `channels` arrive avec `CRM-021`. L'assertion garde donc sa
--- fonction de garde pour cette table-là.
-select is_empty(
-	$$ select conname from pg_constraint
-	    where conrelid = 'public.channel_members'::regclass and contype = 'f'
-	      and conname like '%channel_id%' $$,
-	'INC-010 : `channel_members.channel_id` n''a pas encore de clé étrangère (CRM-021)'
-);
+-- INC-010, SECONDE MOITIÉ CLOSE PAR `CRM-021`. Cette suite affirmait ici l'absence de clé
+-- étrangère vers `channels`, « afin qu'elle devienne rouge le jour où `CRM-021` la posera ». Ce
+-- jour est venu : l'assertion a **réellement échoué** lors de la livraison de `CRM-021`, et elle
+-- est révisée ici. Les deux moitiés d'INC-010 sont désormais techniquement closes.
+select fk_ok('public', 'channel_members', 'channel_id', 'public', 'channels', 'id',
+	'INC-010 : `channel_members.channel_id` référence `channels.id` depuis CRM-021');
 
 select has_index('public', 'workspace_members', 'workspace_members_user_id_idx',
 	'index inverse sur `workspace_members.user_id`');
@@ -309,11 +307,30 @@ select throws_ok(
 	'`track_members.access` n''accepte que member, viewer ou none'
 );
 
+-- Depuis `CRM-021`, `channel_members.channel_id` porte une clé étrangère : un droit fin ne peut
+-- plus désigner un channel imaginaire. La preuve gagne au change — elle exige désormais un objet
+-- réel, et elle prouve **en plus** que l'orphelin est refusé.
+insert into public.tracks (id, workspace_id, name, slug, position)
+values ('00000000-0000-4000-8000-0000000000b9', '00000000-0000-4000-8000-0000000000a1',
+        'Track pgTAP CRM-003', 'pgtap-crm-003-track', 1);
+insert into public.channels (id, workspace_id, track_id, name, slug, position)
+values ('00000000-0000-4000-8000-0000000000c9', '00000000-0000-4000-8000-0000000000a1',
+        '00000000-0000-4000-8000-0000000000b9', 'Channel pgTAP CRM-003', 'pgtap-crm-003-channel', 1);
+
 select lives_ok(
 	$$ insert into public.channel_members (channel_id, user_id, access)
-	   values ('00000000-0000-4000-8000-0000000000c1',
+	   values ('00000000-0000-4000-8000-0000000000c9',
 	           '00000000-0000-4000-8000-000000000001', 'none') $$,
 	'un droit fin `none` est un enregistrement valide, pas une absence de ligne'
+);
+
+select throws_ok(
+	$$ insert into public.channel_members (channel_id, user_id, access)
+	   values ('00000000-0000-4000-8000-0000000000ce',
+	           '00000000-0000-4000-8000-000000000001', 'none') $$,
+	'23503',
+	null,
+	'INC-010 : un droit fin ne peut plus désigner un channel inexistant (CRM-021)'
 );
 
 -- La suppression d'un workspace emporte ses membres : aucun droit ne survit à son objet.

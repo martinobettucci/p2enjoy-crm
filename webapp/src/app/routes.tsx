@@ -65,3 +65,14 @@ export function PageIntrouvable() {
 }
 
 export const CLE_TITRE_INTROUVABLE: CleTraduction = 'route.notfound.title'
+
+/**
+ * Routes d'un track — `CRM-021`. Elles ne figurent pas dans `ROUTES` : leur titre est une
+ * **donnée** (le nom du track) et non une clé de traduction, et leur contenu dépend de paramètres
+ * d'URL. Les décrire dans la même table obligerait à y introduire un cas particulier qui
+ * profiterait à une seule entrée.
+ *
+ * Deux chemins, et non un seul : ouvrir un track sans choisir de channel est un état légitime —
+ * c'est ce que fait un clic sur une pilule de la barre latérale.
+ */
+export const CHEMINS_TRACK = ['/tracks/:slugTrack', '/tracks/:slugTrack/:slugChannel'] as const

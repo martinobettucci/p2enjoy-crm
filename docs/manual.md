@@ -112,8 +112,8 @@ pilule colorée, précédée de son icône.
 - La **couleur** et l'**icône** sont choisies parmi un jeu fixe : elles aident à repérer un track
   d'un coup d'œil, et ne portent jamais seules une information — le libellé et l'icône
   l'accompagnent toujours.
-- Les pilules ne sont **pas encore cliquables** : un track s'ouvre sur ses channels, qui ne sont pas
-  livrés. Le lien apparaîtra en même temps que sa destination.
+- Les pilules sont **cliquables depuis `CRM-021`** : un clic ouvre le track sur ses channels. Le
+  track ouvert se signale par un anneau bleu, qui s'ajoute à sa couleur sans la remplacer.
 
 **Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un track est réservé aux personnes
 **administratrices** de l'espace de travail. Les autres profils les consultent. Cette règle est
@@ -123,6 +123,38 @@ l'API. La suppression définitive d'un track n'est **jamais** proposée — l'ar
 **Aucun écran ne permet encore de les gérer**, faute d'écran de connexion (voir §3.2). La gestion
 des tracks passe aujourd'hui par l'API, ce qui est une opération d'exploitation, pas un parcours
 produit.
+
+### 3.2 ter Les onglets d'un track
+
+*Livrée par `CRM-021`. Captures dans `docs/captures/CRM-021/`.*
+
+Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse `/tracks/<identifiant>` —
+affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la
+page.
+
+- L'**ordre** des onglets est celui défini par l'administration, pas l'ordre de création.
+- Un channel **archivé** n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,
+  et reste réversible.
+- L'onglet **ouvert** se signale par un libellé bleu et un soulignement : jamais par la couleur
+  seule.
+- Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
+  ombre au bord indique qu'il reste des onglets à voir de ce côté.
+- Un track **sans channel** affiche « Aucun channel dans ce track » plutôt qu'une barre vide sans
+  explication.
+
+Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu du
+channel — board, vue liste, cards — n'est pas encore livré ; l'écran le dit explicitement plutôt
+que d'afficher un vide.
+
+**Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
+« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
+message : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le
+droit de voir.
+
+**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un channel est réservé aux
+personnes **administratrices** de l'espace de travail, exactement comme pour les tracks, et la
+règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
+ne permet encore de les gérer**, faute d'écran de connexion (voir §3.2).
 
 ### 3.3 Replier la barre latérale
 

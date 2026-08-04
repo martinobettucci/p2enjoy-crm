@@ -40,6 +40,7 @@ type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
     | 'channel_members'
+    | 'channels'
     | 'profiles'
     | 'track_members'
     | 'tracks'
@@ -98,11 +99,12 @@ type _roleNEstPasLUnion = Expect<
   Equal<Equal<Tables<'workspace_members'>['role'], 'admin' | 'business_developer' | 'viewer'>, false>
 >
 
-// --- 5. INC-010 : une moitié close par `CRM-020`, l'autre encore ouverte -------------------------
+// --- 5. INC-010 : les deux moitiés sont closes --------------------------------------------------
 // L'assertion sur `track_members` affirmait l'absence de clé étrangère vers `tracks`, « ce qui
 // fera échouer cette assertion à CRM-020, et c'est le signal voulu ». Le signal s'est produit :
-// elle a **réellement échoué** à la livraison de `CRM-020`, et elle est révisée ici.
-// `channel_members` garde la sienne : `channels` arrive avec `CRM-021`.
+// elle a **réellement échoué** à la livraison de `CRM-020`, et elle a été révisée.
+// Celle de `channel_members` a échoué à son tour à la livraison de `CRM-021`, et est révisée ici.
+// Les deux signaux ont fonctionné, à un chunk d'intervalle.
 
 type _relationsTrackMembers = Expect<
   Equal<
@@ -114,7 +116,43 @@ type _relationsTrackMembers = Expect<
 type _relationsChannelMembers = Expect<
   Equal<
     Database['public']['Tables']['channel_members']['Relationships'][number]['foreignKeyName'],
-    'channel_members_user_id_fkey'
+    'channel_members_channel_id_fkey' | 'channel_members_user_id_fkey'
+  >
+>
+
+// --- 5 bis. `channels` : le cloisonnement est **composite**, et INC-029 est visible dans le type -
+// `CRM-021`. La clé étrangère de `channels` porte sur le couple `(track_id, workspace_id)` et non
+// sur `track_id` seul : c'est elle qui empêche le `workspace_id` dénormalisé de mentir à la RLS
+// (docs/SPEC-channels.md §2.4). Aucune clé simple sur `track_id` ne doit apparaître ici.
+
+type _relationsChannels = Expect<
+  Equal<
+    Database['public']['Tables']['channels']['Relationships'][number]['foreignKeyName'],
+    'channels_track_id_workspace_id_fkey' | 'channels_workspace_id_fkey'
+  >
+>
+
+// INC-029, FIGÉE DANS LE TYPE. `docs/SCHEMA.md` §2 exige `workflow_id` **non nulle** et référencée.
+// La table `workflows` n'existant pas avant `CRM-031`, la colonne est livrée nullable et sans clé
+// étrangère. Cette assertion deviendra rouge le jour où `CRM-031` posera la contrainte, et forcera
+// la reprise de `docs/SPEC-channels.md` §2.5 — comme les trois assertions pgTAP jumelles.
+type _workflowIdNullable = Expect<
+  Equal<Database['public']['Tables']['channels']['Row']['workflow_id'], string | null>
+>
+
+// INC-027 se reproduit à l'identique sur `channels` : `position` est renseignée par un trigger,
+// que le générateur ignore, et le type l'exige donc à l'insertion alors que l'API l'accepte omise.
+// Le constat est figé plutôt que corrigé — le fichier est **généré**, et le retoucher ferait
+// échouer la garde anti-dérive de `CRM-006`.
+type _channelsInsertRequis = Expect<
+  Equal<
+    {
+      [C in keyof Database['public']['Tables']['channels']['Insert'] as Record<string, never> extends
+        Pick<Database['public']['Tables']['channels']['Insert'], C>
+        ? never
+        : C]: true
+    },
+    { name: true; position: true; slug: true; track_id: true; workspace_id: true }
   >
 >
 
@@ -208,6 +246,9 @@ export type AssertionsDuContratDeTypes = [
   _tracksInsertRequis,
   _relationsTrackMembers,
   _relationsChannelMembers,
+  _relationsChannels,
+  _workflowIdNullable,
+  _channelsInsertRequis,
   _relationsWorkspaceMembers,
   _aucuneVue,
   _aucuneFonction,

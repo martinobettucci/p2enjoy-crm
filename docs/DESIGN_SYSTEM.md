@@ -92,8 +92,9 @@ un libellé ou une icône.
 - **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, Ma journée,
   Réglages). Repliable ; l'état de repli est une préférence de session, pas une donnée
   persistée sans consentement.
-- **Onglets** : les channels du track courant. Débordement horizontal défilable, jamais tronqué
-  sans indication.
+- **Onglets** : les channels du track courant, en **liens** de navigation et non en `tablist`
+  (§12.1). Débordement horizontal défilable, jamais tronqué sans indication — l'indication est
+  portée par `.indique-debordement-x` (§12.6).
 - **Board** : une colonne par étape, dans l'ordre `workflow_steps.position`. En-tête de colonne
   avec libellé, compteur, et montant cumulé lorsque le montant est utilisé.
 
@@ -271,12 +272,29 @@ le français.
 
 ## 12. Écarts propres au projet
 
-### 12.1 Barre d'onglets sans patron `tablist` — temporaire, `CRM-007`
+### 12.1 Barre d'onglets : navigation par liens, non `tablist` — position motivée, `CRM-021`
 
-Tant qu'aucun channel n'existe (`CRM-021`), la barre d'onglets affiche son **état vide** au lieu
-d'un `tablist` sans onglet : un `tablist` vide est annoncé par les lecteurs d'écran comme un groupe
-d'onglets, c'est-à-dire comme une interface qui n'existe pas. Le patron ARIA complet — `role="tab"`,
-`tabindex` glissant, flèches, `Home`, `Fin` — arrive avec les onglets réels et leurs preuves.
+`CRM-007` avait laissé cette barre en état vide faute de channels, en annonçant que « le patron
+ARIA complet — `role="tab"`, `tabindex` glissant, flèches, `Home`, `Fin` — arrive avec les onglets
+réels ». Les onglets réels sont arrivés avec `CRM-021`, et ce patron est **écarté**. L'écart cesse
+donc d'être temporaire pour devenir une position motivée, ce qui n'est pas la même chose qu'un
+écart refermé.
+
+Motifs (`docs/JOURNAL.md`, décision 62) :
+
+- un `tablist` décrit des panneaux qui s'échangent **dans la même page**, sans changer d'adresse.
+  Nos onglets changent l'URL et le contenu principal ;
+- les annoncer comme des onglets décrirait aux technologies d'assistance un comportement qui n'est
+  pas celui du produit ;
+- le `tabindex` glissant du patron `tablist` retirerait à l'utilisateur la navigation par `Tab`
+  qu'un ensemble de liens lui donne naturellement.
+
+Patron retenu : `nav` étiqueté + liste de liens, avec `aria-current="page"` sur l'onglet courant,
+posé par `NavLink`. L'état actif se signale **en plus** par une bordure basse, faute de quoi
+l'information reposerait sur la seule couleur (§1). Les deux états portent une bordure de même
+épaisseur, pour que le texte ne se décale pas au changement d'onglet.
+
+Lorsqu'un track n'a aucun channel, la barre affiche son état vide, comme avant.
 
 ### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`
 
@@ -292,12 +310,17 @@ Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repli
 navigation passent en `sr-only` au lieu d'être supprimés : réduire l'affichage ne doit pas réduire
 l'information annoncée aux technologies d'assistance.
 
-### 12.4 Pilules de track non cliquables — temporaire, `CRM-020`
+### 12.4 Pilules de track non cliquables — écart **refermé** par `CRM-021`
 
-La barre latérale liste les tracks (§4), mais chaque pilule est un élément de liste, non un lien.
-Un track s'ouvre sur ses **channels**, livrés par `CRM-021` : une pilule menant à une route vide
-serait une commande morte, ce que le §8 interdit — un élément indisponible doit expliquer pourquoi,
-pas feindre d'agir. Le lien arrivera avec la destination.
+La barre latérale listait les tracks (§4) en éléments de liste, non en liens : « un track s'ouvre
+sur ses channels, livrés par `CRM-021` : une pilule menant à une route vide serait une commande
+morte […] Le lien arrivera avec la destination. »
+
+La destination est arrivée. Chaque pilule est désormais un `NavLink` vers `/tracks/:slug`, qui
+conserve son icône, sa couleur douce et son libellé (§5.5 bis). L'état actif **s'ajoute** à la
+couleur du track — un anneau `--color-brand` — et ne la remplace pas : la couleur est une donnée,
+et l'écraser ferait perdre au track actif ce qui l'identifie. `aria-current="page"` porte
+l'information indépendamment du visuel.
 
 ### 12.5 Aucune donnée métier n'est visible dans l'interface — `CRM-020`
 
@@ -345,5 +368,28 @@ le seed n'emploie pas — un jeton que rien ne rend n'est jamais mesuré.
 
 **Portée :** limitée aux pilules de track tant qu'INC-028 n'est pas tranchée. Les badges, liserés
 de card et compteurs de colonne rencontreront la même contradiction et ne sont **pas** modifiés ici.
+
+### 12.6 Le débordement horizontal doit être **signalé**, pas seulement possible — `CRM-021`, 2026-08-04
+
+Le §4 demande que les onglets débordent « défilable, jamais tronqué **sans indication** ». Le §7
+demande que « la page ne défile jamais horizontalement ». Les deux étaient satisfaites, et l'écran
+était pourtant fautif : à 390 px, la barre d'onglets défilait bien dans son conteneur, mais le
+dernier libellé était **coupé net au bord**, sans que rien ne signale qu'il y avait plus à voir.
+
+Défaut trouvé **en regardant une capture**, pas en lisant un test : les deux règles étant vérifiées
+séparément, aucune assertion ne pouvait l'attraper.
+
+**Règle ajoutée :** tout conteneur en `overflow-x: auto` porte la classe `.indique-debordement-x`,
+définie une seule fois dans `webapp/src/styles/app.css`. Elle emploie la technique des « ombres de
+défilement » en CSS pur : deux dégradés attachés au **contenu** (`background-attachment: local`)
+recouvrent deux dégradés attachés au **conteneur** (`scroll`). L'indication n'apparaît donc que
+lorsqu'il y a réellement quelque chose de plus à voir, de ce côté-là — ce qu'un dégradé permanent
+ne saurait pas faire, et sans écouter aucun événement `scroll` ou `resize`.
+
+Les quatre dégradés partent des jetons `--color-bg` et `--color-border` : aucune valeur
+hexadécimale n'entre dans un composant (§11).
+
+**Portée :** la barre d'onglets aujourd'hui. Le board (`CRM-041`) et la vue liste (`CRM-042`)
+déborderont de la même façon et devront porter la même classe.
 
 Tout écart futur est consigné ici avec sa justification et sa date.

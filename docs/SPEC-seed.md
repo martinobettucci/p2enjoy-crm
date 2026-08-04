@@ -57,9 +57,11 @@ Les trois rôles de `docs/SPEC-permissions-rls.md` §2.1 sont représentés, un 
 | `5eed0000-0000-4000-8000-000000000012` | `bizdev@p2enjoy.test` | Driss Lemoine | `business_developer` |
 | `5eed0000-0000-4000-8000-000000000013` | `viewer@p2enjoy.test` | Farida Nowak | `viewer` |
 
-Aucun droit fin (`track_members`, `channel_members`) n'est posé : les tables `tracks` et `channels`
-n'existent pas encore (`CRM-020`, `CRM-021`), et une ligne de droit fin y renverrait un identifiant
-qui ne désigne rien.
+Aucun droit fin (`track_members`, `channel_members`) n'est posé. Le motif d'origine — les tables
+cibles n'existaient pas — est levé depuis `CRM-020` et `CRM-021`, mais la position ne change pas :
+les droits fins ne sont **pas appliqués** par les politiques livrées (INC-024, INC-030), et en
+poser dans le seed donnerait à croire à une restriction qui n'existe pas encore. Ils seront ajoutés
+par l'unité qui les rendra opposables, `CRM-012`.
 
 ### 2.3 Mot de passe de développement
 
@@ -246,10 +248,33 @@ Le quatrième existe pour que l'état « archivé » soit **démontrable** et no
 (`CLAUDE.md` §8). Comme le workspace et les appartenances, ils sont créés par l'API REST avec la
 clé de service, et l'écriture est convergente (`Prefer: resolution=merge-duplicates`).
 
+### 2.6 Channels — ajoutés par `CRM-021`
+
+Six channels répartis sur les trois tracks actifs, dont un **archivé**. Contrat détaillé et
+motifs : `docs/SPEC-channels.md` §8.
+
+| id | track | slug | nom | position | état |
+|---|---|---|---|---|---|
+| `…031` | `conseil-ia` | `prospection` | Prospection | 1 | actif |
+| `…032` | `conseil-ia` | `grands-comptes` | Grands comptes | 2 | actif |
+| `…033` | `conseil-ia` | `appels-offres` | Appels d'offres | 3 | **archivé** |
+| `…034` | `studio-web` | `refonte` | Refonte de site | 1 | actif |
+| `…035` | `studio-web` | `maintenance` | Maintenance | 2 | actif |
+| `…036` | `formation` | `inter-entreprises` | Inter-entreprises | 1 | actif |
+
+Trois répartitions sont démontrées, et non une seule : deux channels actifs plus un archivé, deux
+channels actifs, et **un seul** channel — une barre à un onglet est un cas d'affichage réel,
+distinct de la barre vide. Le track archivé `pipeline-2024` n'en porte aucun : un track masqué n'a
+pas à démontrer une barre d'onglets.
+
+`workflow_id` est laissé **nul partout**. C'est l'état réel du produit jusqu'à `CRM-031` (INC-029),
+et le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire (`CLAUDE.md` §8).
+
 **Ce que le seed rend désormais visible, et ce qu'il ne rend toujours pas visible.** Le message
-affiché en fin d'exécution a été corrigé par `CRM-020` : `tracks` porte des politiques et un membre
-du workspace y lit ses quatre tracks, tandis que `profiles`, `workspaces` et `workspace_members`
-restent en refus par défaut jusqu'à `CRM-012`. Annoncer un refus général serait devenu faux.
+affiché en fin d'exécution a été corrigé par `CRM-020` puis par `CRM-021` : `tracks` et `channels`
+portent des politiques, et un membre du workspace y lit ses quatre tracks et ses six channels,
+tandis que `profiles`, `workspaces` et `workspace_members` restent en refus par défaut jusqu'à
+`CRM-012`. Annoncer un refus général serait devenu faux.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

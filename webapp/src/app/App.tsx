@@ -7,7 +7,8 @@
 
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { AppShell } from './AppShell'
-import { CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
+import { RouteTrack } from './RouteTrack'
+import { CHEMINS_TRACK, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
 
 export function App() {
 	return (
@@ -19,6 +20,11 @@ export function App() {
 						path={route.chemin}
 						element={<AppShell cleTitreRoute={route.cleTitre}>{route.rendu()}</AppShell>}
 					/>
+				))}
+				{/* Les routes d'un track portent leur propre coquille : leur titre est le nom du
+				    track — une donnée — et leur barre d'onglets dépend du chargement (`CRM-021`). */}
+				{CHEMINS_TRACK.map((chemin) => (
+					<Route key={chemin} path={chemin} element={<RouteTrack />} />
 				))}
 				<Route
 					path="*"

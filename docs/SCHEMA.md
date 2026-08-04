@@ -117,22 +117,59 @@ fin** : INC-024.
 
 ### `channels`
 
+Livrée par `CRM-021`. Spécification complète : `docs/SPEC-channels.md`.
+
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id` | `uuid` | PK |
-| `workspace_id` | `uuid` | FK, non nul (dénormalisé) |
-| `track_id` | `uuid` | FK, non nul |
-| `name` | `text` | non nul |
-| `slug` | `text` | unique par track |
+| `id` | `uuid` | PK, défaut `gen_random_uuid()` |
+| `workspace_id` | `uuid` | FK `workspaces`, non nul (dénormalisé), `ON DELETE CASCADE` |
+| `track_id` | `uuid` | non nul ; la clé étrangère est **composite**, voir ci-dessous |
+| `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
+| `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique **par track** |
 | `description` | `text` | |
-| `workflow_id` | `uuid` | FK `workflows`, non nul |
-| `position` | `numeric` | ordre des onglets |
-| `archived_at` | `timestamptz` | |
+| `workflow_id` | `uuid` | *devrait être* FK `workflows`, non nul — **livrée nullable et sans clé étrangère** jusqu'à `CRM-031`, voir ci-dessous |
+| `position` | `numeric` | non nul, ordre des onglets **dans son track** ; attribuée par trigger si omise |
+| `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, défaut `now()` ; `updated_at` maintenue par `app.set_updated_at()` |
 
-**Contrainte non exprimable en clé étrangère** — un trigger garantit que `workflow_id` désigne
-soit un workflow de portée `global` du même workspace, soit un workflow de portée `track`
-rattaché à `track_id`. C'est la traduction de « les channels choisissent parmi les workflows
-disponibles dans leur track ».
+`created_at` et `updated_at` étaient absentes de ce tableau alors que les « Conventions
+générales » les exigent de toute table : c'est la **seconde moitié** d'INC-025, que `CRM-020` avait
+explicitement laissée à `CRM-021`. Les deux tables du §2 suivent désormais les conventions.
+
+**Le cloisonnement est garanti par une clé étrangère composite**, et non par la bonne foi :
+
+```sql
+alter table public.tracks   add constraint tracks_id_workspace_id_key unique (id, workspace_id);
+alter table public.channels add constraint channels_track_id_workspace_id_fkey
+	foreign key (track_id, workspace_id) references public.tracks (id, workspace_id) on delete cascade;
+```
+
+`channels.workspace_id` est dénormalisé, et c'est lui que la politique RLS interroge. S'il pouvait
+différer du workspace de son track, la politique cloisonnerait sur une valeur fausse — le channel
+d'un track de A serait lisible par les membres de B, avec des politiques pourtant correctes. La
+clé composite rend cet état impossible. Elle **remplace** la clé simple `track_id → tracks(id)`,
+qu'elle contient (`docs/SPEC-channels.md` §2.4, `docs/JOURNAL.md` décision 60).
+
+**La clé étrangère `channel_members.channel_id → channels.id` est posée par cette migration** :
+c'est la seconde moitié d'INC-010, que `CRM-021` referme.
+
+**`workflow_id` : écart assumé, consigné, figé par des assertions.** Ce tableau l'exige non nulle
+et référencée. La table `workflows` est livrée par `CRM-031`, que `docs/MASTER_PLAN.md` §2 place
+**après** `CRM-021` ; mesuré, `to_regclass('public.workflows')` rend `NULL`. La colonne est donc
+livrée **nullable et sans clé étrangère**, et trois assertions de
+`supabase/tests/0005_channels.test.sql` le constatent — elles deviendront rouges à `CRM-031` et
+forceront la reprise. `docs/INCONSISTENCY_REPORT.md`, **INC-029**.
+
+**Contrainte non exprimable en clé étrangère, différée à `CRM-033`** — un trigger garantira que
+`workflow_id` désigne soit un workflow de portée `global` du même workspace, soit un workflow de
+portée `track` rattaché à `track_id`. C'est la traduction de « les channels choisissent parmi les
+workflows disponibles dans leur track ». La Definition of Done de `CRM-021` le rattache
+explicitement à `CRM-033`, « une fois disponible ».
+
+**Politiques RLS** (`docs/SPEC-permissions-rls.md` §4) : lecture par `app.is_workspace_member`,
+insertion et mise à jour par `app.is_workspace_admin`, **aucune suppression** — ni politique, ni
+privilège. `app.can_read_channel` et `app.can_write_channel` restent différées (INC-013), la
+lecture n'applique donc **aucun droit fin** : INC-030.
 
 ---
 

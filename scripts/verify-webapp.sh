@@ -230,7 +230,13 @@ else
 fi
 
 # Non-complaisance : un espacement hors de l'échelle fermée n'existe pas, et doit être vu.
-sed -i 's/gap-2 px-4 py-2 bg-bg/gap-2 px-7 py-2 bg-bg/' webapp/src/app/TabBar.tsx
+#
+# La cible de ces dégradations est la barre d'onglets, dont `CRM-021` a réécrit la classe. Les
+# motifs ci-dessous ont donc été **révisés dans le même changement** que le composant : une
+# substitution qui ne s'applique plus dégrade zéro ligne, le contrôle de non-complaisance passe
+# alors sans rien mesurer, et le harnais devient complaisant en silence. Il a réellement échoué
+# à la livraison de `CRM-021`, ce qui est le comportement voulu.
+sed -i 's/gap-2 px-4 bg-bg/gap-2 px-7 bg-bg/' webapp/src/app/TabBar.tsx
 if node scripts/lib/classes-css.mjs webapp/src webapp/dist/assets >/dev/null 2>&1; then
 	fail "un espacement hors échelle passe inaperçu"
 else
@@ -257,7 +263,7 @@ fi
 # Non-complaisance, éprouvée en dégradant réellement le produit puis en le rebuildant :
 # une couleur écrite dans un composant doit être vue à la source **et** dans le CSS produit,
 # et un texte visible en dur doit faire échouer les tests unitaires.
-sed -i 's|className="flex items-center gap-2 px-4 py-2 bg-bg border-b border-border overflow-x-auto"|className="flex items-center gap-2 px-4 py-2 bg-[#23468c] border-b border-border overflow-x-auto"|' webapp/src/app/TabBar.tsx
+sed -i 's|bg-bg border-b border-border overflow-x-auto|bg-[#23468c] border-b border-border overflow-x-auto|' webapp/src/app/TabBar.tsx
 sed -i 's|{t('"'"'tabs.empty'"'"')}|Aucun channel pour le moment|' webapp/src/app/TabBar.tsx
 npm run --silent build >/dev/null 2>&1 || true
 
