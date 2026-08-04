@@ -67,7 +67,7 @@ export type Database = {
           slug: string
           track_id: string
           updated_at: string
-          workflow_id: string | null
+          workflow_id: string
           workspace_id: string
         }
         Insert: {
@@ -80,7 +80,7 @@ export type Database = {
           slug: string
           track_id: string
           updated_at?: string
-          workflow_id?: string | null
+          workflow_id: string
           workspace_id: string
         }
         Update: {
@@ -93,7 +93,7 @@ export type Database = {
           slug?: string
           track_id?: string
           updated_at?: string
-          workflow_id?: string | null
+          workflow_id?: string
           workspace_id?: string
         }
         Relationships: [

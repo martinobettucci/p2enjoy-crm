@@ -127,7 +127,7 @@ Livrée par `CRM-021`. Spécification complète : `docs/SPEC-channels.md`.
 | `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
 | `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique **par track** |
 | `description` | `text` | |
-| `workflow_id` | `uuid` | FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)` depuis `CRM-031` ; **encore nullable**, la contrainte `NOT NULL` revenant à `CRM-033`, voir ci-dessous |
+| `workflow_id` | `uuid` | **non nul depuis `CRM-033`** ; FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)` depuis `CRM-031` ; portée vérifiée par trigger, voir ci-dessous |
 | `position` | `numeric` | non nul, ordre des onglets **dans son track** ; attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, défaut `now()` ; `updated_at` maintenue par `app.set_updated_at()` |
@@ -163,15 +163,29 @@ Ce qui est acquis : la clé étrangère existe, et elle est **composite** —
 channel appartienne au même workspace, garanti par la base. Le seed rattache les six channels au
 workflow par défaut.
 
-Ce qui reste dû : la contrainte `NOT NULL`, qui change le **contrat de création d'un channel** et
-revient donc à `CRM-033` avec le trigger de cohérence qu'elle accompagne.
-`docs/INCONSISTENCY_REPORT.md`, **INC-029**, mise à jour et toujours ouverte.
+**INC-029 EST SOLDÉE PAR `CRM-033`.** La contrainte `NOT NULL` est posée : créer un channel exige
+désormais de désigner un workflow, et **aucun défaut de colonne** ne l'adoucit — un workspace peut
+n'avoir aucun workflow par défaut, et un défaut silencieux transformerait une omission du client en
+un choix qu'il n'a pas fait (`docs/JOURNAL.md`, décision 91). Mesuré avant de la poser : aucune ligne
+n'y faisait obstacle.
 
-**Contrainte non exprimable en clé étrangère, différée à `CRM-033`** — un trigger garantira que
-`workflow_id` désigne soit un workflow de portée `global` du même workspace, soit un workflow de
-portée `track` rattaché à `track_id`. C'est la traduction de « les channels choisissent parmi les
-workflows disponibles dans leur track ». La Definition of Done de `CRM-021` le rattache
-explicitement à `CRM-033`, « une fois disponible ».
+**Contrainte non exprimable en clé étrangère, livrée par `CRM-033`** — `workflow_id` désigne soit un
+workflow de portée `global` du même workspace, soit un workflow de portée `track` rattaché à
+`track_id`. C'est la traduction de « les channels choisissent parmi les workflows disponibles dans
+leur track ». Elle est portée par **deux** triggers et non un seul : la mesure a établi que deux des
+quatre écritures capables de la casser passent par `workflows` — déplacer un workflow `track` sous
+ses channels, faire basculer un workflow `global` occupé vers `track` — et qu'aucun trigger sur
+`channels` ne pouvait les voir (INC-040, décision 89).
+
+| Trigger | Table | Colonnes surveillées | Refus |
+|---|---|---|---|
+| `channels_verifier_workflow` | `public.channels` | `workflow_id`, `track_id`, `workspace_id` | `23514`, `workflow_hors_track` |
+| `workflows_verifier_portee_occupee` | `public.workflows` | `scope`, `track_id` | `23514`, `workflow_portee_occupee` |
+
+Le premier **se tait** lorsque le workflow désigné est introuvable : la clé étrangère composite rend
+alors `23503` en nommant la contrainte, et un refus inventé serait moins précis (décision 90). Le
+second ne refuse que ce qui **casse un rattachement existant** : un workflow `track` sans channel
+change de track librement.
 
 **Politiques RLS** (`docs/SPEC-permissions-rls.md` §4) : lecture par `app.is_workspace_member`,
 insertion et mise à jour par `app.is_workspace_admin`, **aucune suppression** — ni politique, ni

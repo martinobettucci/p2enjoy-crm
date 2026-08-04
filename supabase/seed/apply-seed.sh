@@ -117,10 +117,10 @@ TRACKS=(
 # `appels-offres` est **archivé**, pour que l'état le soit aussi côté channels et non seulement
 # documenté (`CLAUDE.md` §8).
 #
-# `workflow_id` n'est pas écrit ici : le workflow n'existe pas encore à ce point du script, ses
-# étapes instanciant des nœuds du catalogue créé plus bas. Les six channels sont rattachés au
-# workflow par défaut en **fin de section 6**, une fois celui-ci créé (INC-029, levée pour la clé
-# étrangère ; la contrainte `NOT NULL` reste due par `CRM-033`).
+# `workflow_id` est **obligatoire** depuis `CRM-033` (INC-029 soldée) : les six channels naissent
+# rattachés au workflow par défaut, dont la ligne est créée en section 3 bis. `prospection` est
+# ensuite rattaché à la copie de portée `track` en section 7 — elle dérive du workflow global et ne
+# peut donc pas le précéder (docs/SPEC-workflow-engine.md §4.12.7).
 #
 # `position` est écrite explicitement, pour le même motif que les tracks : un ordre attribué par
 # effet de bord ne serait pas reproductible si l'ordre des insertions changeait.
@@ -193,6 +193,10 @@ WF_NOM='Cycle commercial standard'
 # sa source et son track, ce que font les preuves (docs/SPEC-seed.md §2.9).
 WF_COPIE_TRACK=5eed0000-0000-4000-8000-000000000021
 WF_COPIE_NOM='Cycle commercial — Conseil IA'
+# Le channel qui suit la copie, et non le workflow global — docs/SPEC-workflow-engine.md §4.12.7.
+# `prospection` appartient au track « Conseil & IA », celui-là même que la copie porte : c'est le cas
+# **accepté** le plus intéressant de la règle de `CRM-033`, et il doit être démontrable.
+WF_COPIE_CHANNEL=5eed0000-0000-4000-8000-000000000031
 
 # id | nœud | position | initiale (oui/non) | libellé surchargé (ou « - ») | probabilité (ou « - »)
 #    | seuil surchargé (ou « - »)
@@ -381,6 +385,31 @@ for ligne in "${TRACKS[@]}"; do
 	printf '  %-16s %-14s %-18s %s\n' "$slug" "$couleur" "$icone" "$etat"
 done
 
+# --- 3 bis. La ligne du workflow par défaut — docs/SPEC-workflow-engine.md §4.12.5 -------------
+# Cette section n'existait pas avant `CRM-033`. Le workflow était créé en section 6, après les
+# channels, et ceux-ci lui étaient rattachés par un `PATCH` de fin de section — la table `workflows`
+# n'existant pas encore au moment de leur création (INC-029).
+#
+# `CRM-033` pose la contrainte `NOT NULL` sur `channels.workflow_id` : un channel ne peut plus naître
+# sans workflow, et l'ordre du seed doit suivre le contrat du produit plutôt que l'inverse.
+#
+# Seule la **ligne** du workflow est créée ici. Ses **étapes** instancient des nœuds du catalogue,
+# qui n'existe qu'en section 5 : elles restent donc en section 6, avec les transitions. Un workflow
+# sans étape est un **brouillon**, état structurellement valide du produit (§3.5, décision 72) — le
+# seed n'en fabrique pas un durablement, il traverse cet état le temps de deux sections.
+
+echo
+say "3 bis. Ligne du workflow par défaut"
+
+charge=$(jq -nc --arg id "$WF_ID" --arg ws "$WS_ID" --arg nom "$WF_NOM" \
+	'{id: $id, workspace_id: $ws, name: $nom, scope: "global", track_id: null,
+	  derived_from_workflow_id: null, derived_at: null, is_default: true, archived_at: null}')
+code=$(api POST /rest/v1/workflows \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création du workflow $WF_NOM" 200 201
+info "$WF_NOM — global, par défaut du workspace ; ses étapes arrivent en section 6"
+
 # --- 4. Channels — docs/SPEC-channels.md §8 ----------------------------------------------------
 # Mêmes règles que les tracks : véritable API REST, clé de service, écriture convergente sur `id`.
 #
@@ -388,6 +417,11 @@ done
 # `NOT NULL` et dénormalisée par convention (`docs/SCHEMA.md`). Sa cohérence avec le track n'est
 # pas laissée à la bonne foi du seed — la clé étrangère composite de `CRM-021` la refuserait si
 # elle mentait (docs/SPEC-channels.md §2.4).
+#
+# `workflow_id` est désormais **obligatoire** (`CRM-033`) : les six channels naissent rattachés au
+# workflow par défaut, créé en section 3 bis. `prospection` sera rattaché à la copie de portée
+# `track` en section 7, une fois celle-ci créée — elle dérive du workflow global et ne peut donc pas
+# le précéder.
 
 echo
 say "4. Channels"
@@ -397,14 +431,15 @@ for ligne in "${CHANNELS[@]}"; do
 
 	if [ "$archive" = '-' ]; then
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
-		               --arg slug "$slug" --argjson position "$position" \
+		               --arg slug "$slug" --argjson position "$position" --arg wf "$WF_ID" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: null, position: $position, archived_at: null}')
+		       workflow_id: $wf, position: $position, archived_at: null}')
 	else
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg archive "$archive" \
+		               --arg wf "$WF_ID" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: null, position: $position, archived_at: $archive}')
+		       workflow_id: $wf, position: $position, archived_at: $archive}')
 	fi
 
 	code=$(api POST /rest/v1/channels \
@@ -459,22 +494,13 @@ done
 # Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
 # convergente sur `id`.
 #
-# Cette section vient **après** le catalogue parce qu'une étape instancie un nœud, et après les
-# channels parce que l'ordre d'affichage des sections suit celui du produit. Le rattachement des
-# channels au workflow se fait donc ici, en fin de section, plutôt que dans la section 4 : à ce
-# moment-là, le workflow n'existait pas encore.
+# Cette section vient **après** le catalogue parce qu'une étape instancie un nœud. La **ligne** du
+# workflow, elle, est créée en section 3 bis : `CRM-033` rend `channels.workflow_id` obligatoire, et
+# les channels de la section 4 doivent pouvoir la désigner. Le `PATCH` de rattachement qui terminait
+# cette section jusqu'à `CRM-031` a disparu pour la même raison.
 
 echo
-say "6. Workflow par défaut"
-
-charge=$(jq -nc --arg id "$WF_ID" --arg ws "$WS_ID" --arg nom "$WF_NOM" \
-	'{id: $id, workspace_id: $ws, name: $nom, scope: "global", track_id: null,
-	  derived_from_workflow_id: null, derived_at: null, is_default: true, archived_at: null}')
-code=$(api POST /rest/v1/workflows \
-	-H 'Prefer: return=representation,resolution=merge-duplicates' \
-	-d "$charge")
-attendu "$code" "création du workflow $WF_NOM" 200 201
-info "$WF_NOM — global, par défaut du workspace"
+say "6. Étapes et transitions du workflow par défaut"
 
 for ligne in "${ETAPES[@]}"; do
 	IFS='|' read -r id noeud position initiale libelle proba seuil <<< "$ligne"
@@ -522,18 +548,6 @@ for ligne in "${TRANSITIONS[@]}"; do
 done
 info "Étapes : ${#ETAPES[@]} — transitions : ${#TRANSITIONS[@]}, dont 4 exigeant un commentaire"
 
-# Rattachement des six channels au workflow par défaut — docs/SPEC-workflow-engine.md §3.9.
-# `CRM-021` avait laissé `workflow_id` nul partout, faute de table `workflows` (INC-029). La clé
-# étrangère existe depuis `CRM-031` ; le seed peut donc enfin livrer des channels dotés d'un board.
-# La contrainte `NOT NULL` reste due par `CRM-033`.
-for ligne in "${CHANNELS[@]}"; do
-	IFS='|' read -r id _reste <<< "$ligne"
-	code=$(api PATCH "/rest/v1/channels?id=eq.$id" \
-		-H 'Prefer: return=representation' \
-		-d "$(jq -nc --arg wf "$WF_ID" '{workflow_id: $wf}')")
-	attendu "$code" "rattachement du channel $id au workflow" 200
-done
-info "Channels rattachés au workflow : ${#CHANNELS[@]}"
 
 # --- 7. Copie vers un track — docs/SPEC-workflow-engine.md §4.10 --------------------------------
 # Cette section n'écrit **aucune** ligne directement : elle appelle `copy_workflow_to_track`, la
@@ -550,8 +564,26 @@ info "Channels rattachés au workflow : ${#CHANNELS[@]}"
 #
 # 2. **La convergence est vérifiée avant d'agir**, et non obtenue par un upsert : la fonction crée
 #    toujours une ligne neuve, et rien n'interdit deux copies du même workflow sur le même track.
-#    Le seed regarde donc si la copie existe déjà — par sa source et son track — et n'appelle la
-#    fonction que si elle manque. Un second passage ne crée rien.
+#    Le seed regarde donc si la copie existe déjà et n'appelle la fonction que si elle manque.
+#
+#    DÉFAUT RÉEL CORRIGÉ ICI PAR `CRM-033` — INC-041. La recherche portait sur la source **et** le
+#    track. MESURÉ, reproductible en quatre gestes : le `track_id` de la copie déplacé à la main, la
+#    recherche ne la trouvait plus et le seed en créait une **seconde**. Le contrat en déclare une ;
+#    le seed en laissait deux, sans erreur ni avertissement. Il était idempotent sans être
+#    convergent — troisième forme de la décision 57, la première sur un seed.
+#
+#    La copie est désormais cherchée par sa **seule** dérivation, et son track est **ramené** à la
+#    valeur déclarée plutôt que de servir de critère de recherche.
+#
+# 3. **`prospection` suit la copie**, et non le workflow global (docs/SPEC-workflow-engine.md
+#    §4.12.7). Sans ce rattachement, le cas accepté le plus intéressant de la règle de `CRM-033` — un
+#    workflow `track` sur un channel de **son** track — serait documenté sans être démontrable.
+#
+#    L'ordre des trois gestes n'est pas indifférent : le channel est d'abord rendu au workflow
+#    global, ce qui **libère** la copie, puis la copie est ramenée à son track déclaré, puis le
+#    channel la rejoint. Rattacher d'abord ferait refuser la convergence par le trigger de
+#    `CRM-033`, qui interdit de déplacer un workflow sous ses occupants — la garde fonctionnant, le
+#    seed la traverse dans le bon ordre plutôt que de la contourner.
 
 echo
 say "7. Copie du workflow vers un track"
@@ -564,12 +596,36 @@ JETON_ADMIN=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
 [ -n "$JETON_ADMIN" ] || die "connexion de l'administrateur seedé impossible : la copie ne peut pas
         être créée par la véritable route."
 
-code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&track_id=eq.$WF_COPIE_TRACK")
+# Le channel est rendu au workflow global avant toute chose : la copie doit être **libre** pour que
+# son track puisse être ramené à la valeur déclarée.
+code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
+	-H 'Prefer: return=representation' \
+	-d "$(jq -nc --arg wf "$WF_ID" '{workflow_id: $wf}')")
+attendu "$code" "libération du channel $WF_COPIE_CHANNEL avant convergence de la copie" 200
+
+code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&order=created_at")
 attendu "$code" "recherche d'une copie existante" 200
 copie_id=$(jq -r '.[0].id // empty' "$CORPS")
 
+# Convergence, suite d'INC-041 : le contrat en déclare **une**. Une base qui en porte plusieurs —
+# héritage du défaut corrigé ici, ou copie créée à la main — est ramenée à une, la plus ancienne
+# étant conservée. Sans cela, le seed serait convergent pour un track déplacé mais pas pour un
+# doublon, et le contrôle du harnais de `CRM-032` resterait rouge sans que rien ne le répare.
+for surnumeraire in $(jq -r '.[1:][].id' "$CORPS"); do
+	code=$(api DELETE "/rest/v1/workflows?id=eq.$surnumeraire")
+	attendu "$code" "suppression de la copie surnuméraire $surnumeraire" 200 204
+	warn "Copie surnuméraire supprimée : $surnumeraire — le contrat n'en déclare qu'une (INC-041)"
+done
+
 if [ -n "$copie_id" ]; then
-	info "Copie déjà présente : $WF_COPIE_NOM — rien à créer (seed convergent)"
+	# Convergence : la copie retrouvée est **ramenée** à son track et à son nom déclarés. C'est ce
+	# qui manquait, et ce qui faisait naître une seconde copie (INC-041).
+	code=$(api PATCH "/rest/v1/workflows?id=eq.$copie_id" \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
+		      '{scope: "track", track_id: $tr, name: $nom, is_default: false, archived_at: null}')")
+	attendu "$code" "convergence de la copie $WF_COPIE_NOM" 200
+	info "Copie déjà présente : $WF_COPIE_NOM — ramenée à son contrat (seed convergent)"
 else
 	copie_id=$(curl -s -X POST "$API/rest/v1/rpc/copy_workflow_to_track" \
 		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
@@ -583,6 +639,14 @@ else
 fi
 
 info "Copie : ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions reprises, lignage renseigné"
+
+# `prospection` rejoint la copie : un workflow de portée `track` sur un channel de **son** track,
+# cas accepté de la règle de `CRM-033` (docs/SPEC-workflow-engine.md §4.12.7).
+code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
+	-H 'Prefer: return=representation' \
+	-d "$(jq -nc --arg wf "$copie_id" '{workflow_id: $wf}')")
+attendu "$code" "rattachement de prospection à la copie de portée track" 200
+info "prospection suit $WF_COPIE_NOM — les cinq autres channels suivent le workflow global"
 
 # --- 8. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base

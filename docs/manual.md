@@ -53,19 +53,20 @@
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les sept états d'une affaire, plus les vôtres — et l'espace de travail est livré avec le sien. Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses sept étapes et ses dix transitions, et chacun de ses six channels le suit. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part — il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 22 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
-| 23 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
-| 24 | Boîte mail système de l'espace | `CRM-052` | À livrer |
-| 25 | Jetons d'API et webhooks | `CRM-073` | À livrer |
-| 26 | Journal d'audit, export et suppression de données | `CRM-072` | À livrer |
+| 22 | Choisir le workflow d'un channel | `CRM-033` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute autre affectation est refusée, y compris de façon détournée — déplacer un channel vers un autre track, ou déplacer un workflow sous les channels qui le suivent. L'espace de travail livré le montre : cinq channels suivent « Cycle commercial standard », « Prospection » suit la copie réservée à son track. Ce qui manque est l'écran : aucun sélecteur ne permet encore de changer le workflow d'un channel, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
+| 23 | Composer le formulaire d'un workflow | `CRM-035` | À livrer |
+| 24 | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
+| 25 | Boîte mail système de l'espace | `CRM-052` | À livrer |
+| 26 | Jetons d'API et webhooks | `CRM-073` | À livrer |
+| 27 | Journal d'audit, export et suppression de données | `CRM-072` | À livrer |
 
 ### Pilotage
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 27 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
-| 28 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
-| 29 | Cards figées et relances automatiques | `CRM-062` | À livrer |
+| 28 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
+| 29 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
+| 30 | Cards figées et relances automatiques | `CRM-062` | À livrer |
 
 ---
 
@@ -94,16 +95,18 @@ Les **tracks et les channels existent désormais**, ainsi que le **catalogue de 
 vocabulaire des états par lesquels une affaire passe : Prospection, Relance, Négociation,
 Signature, Réalisation, Livré, Perdu — et, depuis peu, un **workflow** qui les enchaîne : « Cycle
 commercial standard », avec ses sept étapes et les dix déplacements qu'il autorise. Chacun des six
-channels de l'espace de travail suit ce workflow. Tout cela est créé, ordonné et archivable côté
+channels de l'espace de travail suit un workflow — cinq suivent celui-ci, et « Prospection » suit sa
+**copie réservée au track « Conseil & IA »**. Tout cela est créé, ordonné et archivable côté
 serveur, et une personne administratrice peut le gérer. Mais l'application n'a **pas encore d'écran
 de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent rien à un
 visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
 
 Le catalogue de nœuds et les workflows n'ont d'ailleurs **aucun écran du tout**, connexion ou non.
 Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, le
-refus de tout déplacement qui n'y figure pas, et — depuis le chapitre 21 — la **copie** d'un
-workflow vers un track, avec la mémoire de son origine. Les écrans viendront avec l'éditeur du
-chapitre 20, lui-même suspendu à l'écran de connexion.
+refus de tout déplacement qui n'y figure pas, la **copie** d'un workflow vers un track avec la
+mémoire de son origine — chapitre 21 —, et, depuis le chapitre 22, la garantie qu'un channel ne peut
+suivre **que** le workflow général de l'espace de travail ou celui de son propre track. Les écrans
+viendront avec l'éditeur du chapitre 20, lui-même suspendu à l'écran de connexion.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
 qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.

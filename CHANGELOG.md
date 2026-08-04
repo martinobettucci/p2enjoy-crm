@@ -13,6 +13,49 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **`CRM-033` — un channel suit désormais un workflow, et pas n'importe lequel.**
+  `supabase/migrations/0008_coherence_workflow_channel.sql`.
+  - **Deux triggers, pas un.** `channels_verifier_workflow` sur `public.channels`
+    (`workflow_id`, `track_id`, `workspace_id`) et `workflows_verifier_portee_occupee` sur
+    `public.workflows` (`scope`, `track_id`). La Definition of Done n'en demandait qu'un ; la mesure
+    a établi que **deux des quatre** écritures capables de casser la cohérence passent par
+    `workflows` — dont la bascule du workflow par défaut de `global` à `track`, qui invalidait d'un
+    seul `UPDATE` le rattachement des six channels du seed. INC-040, décision 89.
+  - **INC-029 soldée**, trois unités après son ouverture : `channels.workflow_id` est **non nulle**.
+    Créer un channel exige de désigner un workflow, et **aucun défaut de colonne** ne l'adoucit
+    (décision 91).
+  - **`23514` pour le refus d'incompatibilité**, mesuré à `400` ; le trigger **se tait** lorsque le
+    workflow est introuvable, la clé étrangère composite rendant `409` / `23503` en nommant
+    elle-même la contrainte (décision 90).
+  - **Preuves** : `supabase/tests/0009_coherence_workflow_channel.test.sql` (31 assertions),
+    `e2e/api/coherence-workflow.spec.ts` (15 scénarios, jetons réels),
+    `scripts/verify-coherence-workflow.sh` (26 contrôles hors suites, trois dégradations réelles).
+  - **Aucun écran** : affecter un workflow à un channel suppose un écran d'administration
+    authentifié (INC-021). La règle est prouvée en base et par l'API.
+
+### Corrigé
+
+- **`CRM-032` — le seed était idempotent sans être convergent, et il en créait des doublons.**
+  INC-041. La copie du workflow était cherchée par sa source **et** son track ; le `track_id` déplacé,
+  la recherche ne la trouvait plus et un rejeu en créait une **seconde**. Le contrat en déclare une.
+  - **Reproduit en quatre gestes**, et corrigé en trois : recherche par la seule dérivation, track et
+    nom **ramenés** aux valeurs déclarées, copies surnuméraires supprimées.
+  - Troisième forme de la décision 57, et la **première sur un seed** — ce qui explique qu'aucun des
+    garde-fous posés pour les deux précédentes ne l'ait vue.
+
+### Modifié
+
+- **Le seed crée le workflow par défaut avant les channels** (section 3 bis), que `NOT NULL` oblige à
+  le désigner. Le `PATCH` de rattachement posé par `CRM-031` disparaît. `prospection` suit désormais
+  la copie de portée `track` de son propre track, pour que le cas accepté le plus intéressant de la
+  règle soit démontrable et non seulement documenté.
+- **Sept garde-fous d'unités précédentes révisés** après être devenus rouges comme prévu : deux
+  assertions pgTAP, une assertion de type, deux scénarios d'API, trois contrôles de harnais, et les
+  compteurs de `scripts/verify-harness.sh` (622 / 110 / 37 → **653 / 125 / 37**). Décision 51,
+  sixième occurrence.
+
 ### Documentation
 
 - **`CRM-033` — spécification de la cohérence workflow ↔ channel, écrite après mesure et avant tout

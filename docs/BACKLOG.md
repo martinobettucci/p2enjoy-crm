@@ -1539,11 +1539,104 @@ refusé) ; refus constaté aussi lors d'un déplacement de channel.
 - [x] Trois décisions consignées (`docs/JOURNAL.md`, décisions 89 à 91) : la règle est défendue des
       **deux côtés** ; le refus d'incompatibilité porte `23514` et non `P0001`, et le trigger se tait
       lorsque la clé étrangère parle mieux que lui ; `NOT NULL` est posée **sans défaut de colonne**.
-- [ ] Migration, deux triggers, contrainte `NOT NULL`, suite pgTAP, scénarios d'API, harnais, reprise
-      du seed : à livrer.
+- [x] `supabase/migrations/0008_coherence_workflow_channel.sql` : **deux** triggers —
+      `channels_verifier_workflow` (`BEFORE INSERT OR UPDATE OF workflow_id, track_id, workspace_id`)
+      et `workflows_verifier_portee_occupee` (`BEFORE UPDATE OF scope, track_id`) — et la contrainte
+      `NOT NULL` sur `channels.workflow_id`. **INC-029 est soldée**, trois unités après son
+      ouverture.
+- [x] **Le second trigger n'était demandé par aucune Definition of Done, et la mesure l'a imposé**
+      (décision 89) : deux des quatre écritures capables de casser la cohérence passent par
+      `workflows`, non par `channels`. La quatrième — faire basculer le workflow par défaut de
+      `global` à `track` — invalidait d'un seul `UPDATE` le rattachement des **six** channels du
+      seed. Un invariant gardé d'un seul côté n'est pas un invariant.
+- [x] **Test unitaire dédié** : `supabase/tests/0009_coherence_workflow_channel.test.sql`,
+      **31 assertions, aucune anomalie** — forme et colonnes surveillées des deux triggers, les trois
+      cas de la Definition of Done, le déplacement d'un channel, les portes 3 et 4, ce que la règle
+      **n'interdit pas** (workflow `track` libre, écriture qui ne change rien), `NOT NULL` sans défaut
+      de colonne, le silence du trigger devant la clé étrangère, et la conformité du seed.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/coherence-workflow.spec.ts`,
+      **15 scénarios**, avec les jetons réels des profils seedés. Les treize lignes du contrat d'API
+      de `docs/SPEC-workflow-engine.md` §4.12.6 y sont rejouées, chaque refus **relisant la ligne**
+      pour la constater inchangée.
+- [x] **La règle s'ajoute aux autorisations et ne les remplace pas** (ligne m) : un
+      `business_developer` est refusé par la politique RLS **avant** que la règle ne soit évaluée.
+      Sans cette preuve, un refus de rôle pourrait devenir un refus d'intégrité, qui apprendrait au
+      demandeur ce que contient une base qu'il n'a pas le droit d'écrire.
+- [x] **`23514` et non `P0001`** (décision 90), mesuré : les deux rendent `400`, mais le premier dit
+      de quelle **nature** est le refus. Et le trigger **se tait** lorsque le workflow est
+      introuvable : la clé étrangère composite rend alors `409` / `23503` en nommant la contrainte,
+      et un refus inventé serait moins précis.
+- [x] **Seed repris dans le même changement** : la ligne du workflow par défaut naît en section
+      3 bis, **avant** les channels, que `NOT NULL` oblige à la désigner ; le `PATCH` de rattachement
+      posé par `CRM-031` disparaît ; `prospection` rejoint la copie de portée `track` de son propre
+      track, sans quoi le cas accepté le plus intéressant de la règle serait documenté sans être
+      démontrable.
+- [x] **UN DÉFAUT RÉEL DU SEED DE `CRM-032`, TROUVÉ, REPRODUIT ET CORRIGÉ ICI** (INC-041) : la copie
+      était cherchée par sa source **et** son track. Le `track_id` déplacé à la main, la recherche ne
+      la trouvait plus et le seed en créait une **seconde** — deux copies là où le contrat en déclare
+      une, sans erreur ni avertissement. Idempotent sans être convergent, troisième forme de la
+      décision 57 et la **première sur un seed**. Trois corrections : recherche par la seule
+      dérivation, track et nom **ramenés** aux valeurs déclarées, copies surnuméraires supprimées.
+- [x] Harnais de preuves rejouable `scripts/verify-coherence-workflow.sh` : **26 contrôles hors
+      suites, aucune anomalie**, et **non complaisant, éprouvé par trois dégradations réelles** —
+      trigger de `channels` retiré, trigger de `workflows` retiré, contrainte `NOT NULL` retirée.
+      Chacune fait passer une écriture qui doit être refusée, et la restauration est **constatée**.
+      La deuxième est celle qui compte le plus : aucune spécification ne demandait ce trigger, et
+      sans elle personne ne saurait qu'il porte réellement quelque chose.
+- [x] **Sept garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été
+      révisés** : deux assertions pgTAP d'INC-029 (`0005_channels`, `0007_workflows`), une assertion
+      de type de `CRM-006` (`workflow_id` nullable → obligatoire) et la liste des colonnes exigées à
+      l'insertion, deux scénarios d'API (`channels.spec.ts` C0, `workflows.spec.ts` INC-029), deux
+      contrôles de `scripts/verify-workflows.sh`, un de `scripts/verify-channels.sh`, et les
+      compteurs de `scripts/verify-harness.sh` (622 / 110 / 37 → **653 / 125 / 37**, le compteur
+      d'interface **inchangé**, cette unité ne livrant aucun écran). Le mécanisme de la décision 51 a
+      fonctionné une sixième fois. Les fixtures de channels des suites `0001` et `0005` ont dû
+      recevoir un workflow : c'est le contrat de création qui change, et les tests le subissent comme
+      le produit.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération. `npm run test:sql` **653 assertions**, `npm run test:unit` **164 tests**,
+      `npm run e2e:api` **125 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé et
+      **réellement exécuté**, au prix du contournement récurrent d'INC-036.
+- [x] **Aucune régression** : les harnais précédents rejoués — `verify-tracks` 40, `verify-channels`
+      23, `verify-catalogue` 29, `verify-workflows` 41, `verify-copie-workflow` 26,
+      `verify-harness` 25 contrôles —, aucune anomalie.
+- [x] `docs/SPEC-workflow-engine.md` §4.12 (réécrit en huit sous-chapitres), `docs/SPEC-channels.md`
+      §2.5, §8 et §10, `docs/SCHEMA.md` §2, `docs/SPEC-seed.md`, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 8 et **sa vérification obligatoire**), `docs/manual.md`
+      chapitre 22 et §3.2, `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Affecter un workflow à un channel
+      suppose un écran d'administration authentifié, et la webapp reste un appelant **anonyme** faute
+      d'écran de connexion — **INC-021, en attente d'arbitrage**. La règle est livrée et prouvée **en
+      base et par l'API**, ce que `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par
+      un arbitrage, pas par un défaut de l'unité.**
 
-*État réel.* **Spécification seule.** Aucune ligne de code n'est écrite à ce stade ; l'unité reste
-`[~]` et le restera tant que ses preuves ne seront pas produites.
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur les trois cas » et
+« refus constaté aussi lors d'un déplacement de channel » : les deux sont livrés, et **deux refus de
+plus** que ce qu'elle demandait, la mesure ayant montré que la règle était contournable par
+`workflows`. Elle ne demandait aucune preuve d'interface, et il n'y en a aucune — non par
+renoncement, mais parce que cette unité ne livre ni écran ni parcours. **Aucune vérification
+visuelle** pour la même raison ; les captures réécrites par le rejeu des suites d'interface ont été
+**regardées puis restaurées**, comme aux trois unités précédentes.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Septième unité consécutive du chunk 3 à buter sur INC-021.
+- **Les triggers ne valident pas les lignes existantes.** Un trigger ne s'applique qu'aux écritures
+  futures : une base qui porterait déjà un rattachement incohérent le conserverait sans être
+  signalée. La requête de détection est écrite dans `docs/PROD_MIGRATIONS.md`, en vérification
+  **obligatoire** avant d'appliquer la migration 8.
+- **Aucune reprise automatique n'est écrite pour un channel sans workflow.** Choisir le workflow d'un
+  channel est une décision métier, pas une valeur par défaut (décision 91). Si la production en
+  portait, la migration échouerait bruyamment — comportement voulu, et documenté.
+- **Rien n'interdit qu'un workflow `track` reste sans channel**, ni qu'un track porte plusieurs
+  workflows `track`. Aucune unicité n'est inventée : la spécification n'en demande pas.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Les preuves d'interface n'ont pu être rejouées qu'au prix d'un contournement hors dépôt**
+  (INC-036), refait pour la troisième exécution consécutive. Le conteneur `webapp` n'a pas pu être
+  construit du tout — le registre npm est atteint à travers un proxy dont le certificat n'est pas
+  celui attendu par l'image ; la pile a été démarrée sans lui, ce qui est sans effet sur les preuves,
+  Playwright démarrant son propre serveur. **INC-042.**
 
 ### CRM-034 — `move_card`, garde centrale `[ ]`
 Les six vérifications de `docs/SPEC-workflow-engine.md` §5.

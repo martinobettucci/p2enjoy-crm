@@ -56,13 +56,16 @@ type Channel = {
 async function poserWorkspaceB(
 	requete: APIRequestContext,
 	suffixe: string,
-): Promise<{ workspaceId: string; trackId: string }> {
+): Promise<{ workspaceId: string; trackId: string; workflowId: string }> {
 	// Le suffixe complète un UUID : il vaut exactement cinq caractères hexadécimaux, sinon
 	// l'identifiant produit est trop court et PostgREST refuse la requête en `400` — un échec qui
 	// ressemblerait à un refus d'autorisation sans en être un.
 	if (!/^[0-9a-f]{5}$/.test(suffixe)) throw new Error(`suffixe invalide : ${suffixe}`)
 	const workspaceId = `c0000000-0000-4000-8000-0000000${suffixe}`
 	const trackId = `c0000000-0000-4000-8000-0000001${suffixe}`
+	// `CRM-033` rend `channels.workflow_id` obligatoire : la fixture de B doit porter un workflow,
+	// sans quoi aucun channel n'y est créable (docs/SPEC-workflow-engine.md §4.12.5).
+	const workflowId = `c0000000-0000-4000-8000-0000002${suffixe}`
 
 	const ws = await requete.post('/rest/v1/workspaces', {
 		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
@@ -80,7 +83,12 @@ async function poserWorkspaceB(
 		},
 	})
 	expect(tr.status(), 'la fixture du track de B doit être posée').toBeLessThan(300)
-	return { workspaceId, trackId }
+	const wf = await requete.post('/rest/v1/workflows', {
+		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+		data: { id: workflowId, workspace_id: workspaceId, name: 'Workflow de B', scope: 'global' },
+	})
+	expect(wf.status(), 'la fixture du workflow de B doit être posée').toBeLessThan(300)
+	return { workspaceId, trackId, workflowId }
 }
 
 /** Retire ce que le scénario a créé, pour que la base reste conforme au seed. */
@@ -100,11 +108,14 @@ test.describe('C0 — la table contient réellement des lignes', () => {
 		expect(lignes).toHaveLength(6)
 		expect(lignes.filter((c) => c.archived_at !== null)).toHaveLength(1)
 		expect(new Set(lignes.map((c) => c.track_id)).size).toBe(3)
-		// INC-029, révisée par `CRM-031` : `workflow_id` était nul partout tant que `workflows`
-		// n'existait pas. La table existe, la clé étrangère est posée, et le seed rattache les six
-		// channels au workflow par défaut — chacun a donc enfin un board. La contrainte `NOT NULL`
-		// reste due par `CRM-033`.
-		expect(lignes.every((c) => c.workflow_id === WORKFLOW_SEED)).toBe(true)
+		// INC-029 est SOLDÉE par `CRM-033` : `workflow_id` est désormais obligatoire, et aucun
+		// channel du seed n'est sans workflow. L'assertion « les six suivent le workflow par
+		// défaut », posée par `CRM-031`, est **révisée** et non supprimée : `prospection` suit
+		// depuis `CRM-033` la copie de portée `track` de son propre track, sans quoi le cas accepté
+		// le plus intéressant de la règle du §4.12 serait documenté sans être démontrable.
+		expect(lignes.every((c) => c.workflow_id !== null)).toBe(true)
+		expect(lignes.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(5)
+		expect(lignes.filter((c) => c.workflow_id !== WORKFLOW_SEED)).toHaveLength(1)
 	})
 })
 
@@ -206,7 +217,15 @@ test.describe('C2 — écriture réservée aux administrateurs (lignes e, f, g, 
 				'Content-Type': 'application/json',
 				Prefer: 'return=representation',
 			},
-			data: { workspace_id: WORKSPACE_SEED, track_id: TRACK_STUDIO, name: 'Créé par API', slug },
+			// `workflow_id` est **obligatoire** depuis `CRM-033` : le désigner fait partie du contrat
+			// de création d'un channel (docs/SPEC-workflow-engine.md §4.12.5).
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				track_id: TRACK_STUDIO,
+				workflow_id: WORKFLOW_SEED,
+				name: 'Créé par API',
+				slug,
+			},
 		})
 
 		expect(reponse.status()).toBe(201)
@@ -214,7 +233,7 @@ test.describe('C2 — écriture réservée aux administrateurs (lignes e, f, g, 
 		// `studio-web` porte déjà deux channels : le trigger place celui-ci en troisième position
 		// **de son track**, et non à la suite de tous les channels du workspace (décision 61).
 		expect(Number(cree?.position)).toBe(3)
-		expect(cree?.workflow_id).toBeNull()
+		expect(cree?.workflow_id).toBe(WORKFLOW_SEED)
 
 		await request.delete(`${CHEMIN}?id=eq.${cree?.id}`, { headers: enTetesService() })
 	})
@@ -228,6 +247,7 @@ test.describe('C2 — écriture réservée aux administrateurs (lignes e, f, g, 
 			data: {
 				workspace_id: WORKSPACE_SEED,
 				track_id: TRACK_CONSEIL,
+				workflow_id: WORKFLOW_SEED,
 				name: 'Doublon',
 				slug: 'prospection',
 			},
@@ -251,6 +271,7 @@ test.describe('C2 — écriture réservée aux administrateurs (lignes e, f, g, 
 			data: {
 				workspace_id: WORKSPACE_SEED,
 				track_id: TRACK_STUDIO,
+				workflow_id: WORKFLOW_SEED,
 				name: 'Prospection du studio',
 				slug: 'prospection',
 			},
@@ -277,6 +298,7 @@ test.describe('C3 — le cloisonnement, garanti par la clé composite (lignes n,
 				data: {
 					workspace_id: WORKSPACE_SEED,
 					track_id: trackId,
+					workflow_id: WORKFLOW_SEED,
 					name: 'Menteur',
 					slug: 'menteur',
 				},
@@ -300,6 +322,7 @@ test.describe('C3 — le cloisonnement, garanti par la clé composite (lignes n,
 			data: {
 				workspace_id: WORKSPACE_SEED,
 				track_id: '00000000-0000-4000-8000-00000000dead',
+				workflow_id: WORKFLOW_SEED,
 				name: 'Orphelin',
 				slug: 'orphelin',
 			},
@@ -319,13 +342,14 @@ test.describe('C4 — cloisonnement entre workspaces (lignes j, k, l)', () => {
 	test('ligne j — PREUVE DE REFUS N° 3 : un membre de A ne voit aucun channel de B', async ({
 		request,
 	}) => {
-		const { workspaceId, trackId } = await poserWorkspaceB(request, '000c4')
+		const { workspaceId, trackId, workflowId } = await poserWorkspaceB(request, '000c4')
 		try {
 			await request.post(CHEMIN, {
 				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 				data: {
 					workspace_id: workspaceId,
 					track_id: trackId,
+					workflow_id: workflowId,
 					name: 'Channel de B',
 					slug: 'channel-b',
 					position: 1,

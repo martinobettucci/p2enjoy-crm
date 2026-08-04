@@ -313,9 +313,16 @@ select throws_ok(
 insert into public.tracks (id, workspace_id, name, slug, position)
 values ('00000000-0000-4000-8000-0000000000b9', '00000000-0000-4000-8000-0000000000a1',
         'Track pgTAP CRM-003', 'pgtap-crm-003-track', 1);
-insert into public.channels (id, workspace_id, track_id, name, slug, position)
+-- `CRM-033` rend `channels.workflow_id` obligatoire : la fixture doit désigner un workflow. Un
+-- workflow **global** convient à tout channel de son workspace
+-- (docs/SPEC-workflow-engine.md §4.12.2).
+insert into public.workflows (id, workspace_id, name, scope)
+values ('00000000-0000-4000-8000-0000000000f1', '00000000-0000-4000-8000-0000000000a1',
+        'Workflow pgTAP CRM-003', 'global');
+
+insert into public.channels (id, workspace_id, track_id, workflow_id, name, slug, position)
 values ('00000000-0000-4000-8000-0000000000c9', '00000000-0000-4000-8000-0000000000a1',
-        '00000000-0000-4000-8000-0000000000b9', 'Channel pgTAP CRM-003', 'pgtap-crm-003-channel', 1);
+        '00000000-0000-4000-8000-0000000000b9', '00000000-0000-4000-8000-0000000000f1', 'Channel pgTAP CRM-003', 'pgtap-crm-003-channel', 1);
 
 select lives_ok(
 	$$ insert into public.channel_members (channel_id, user_id, access)

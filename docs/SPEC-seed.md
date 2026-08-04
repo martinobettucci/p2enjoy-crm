@@ -376,8 +376,27 @@ plutôt que découvert par le premier test qui chercherait un `…052`.
 
 **La convergence est vérifiée avant d'agir**, et non obtenue par un upsert : la fonction crée
 toujours une ligne neuve, et rien n'interdit deux copies du même workflow sur le même track. Le
-seed regarde si la copie existe — par sa source et son track — et n'appelle la fonction que si elle
-manque. Un second passage ne crée rien, ce que `scripts/verify-copie-workflow.sh` mesure.
+seed regarde si la copie existe et n'appelle la fonction que si elle manque. Un second passage ne
+crée rien, ce que `scripts/verify-copie-workflow.sh` mesure.
+
+**Un défaut de convergence, trouvé et corrigé par `CRM-033` — INC-041.** La recherche portait sur la
+source **et** le track. Mesuré, reproductible : le `track_id` de la copie déplacé à la main, la
+recherche ne la trouvait plus et le seed en créait une **seconde**. Le contrat en déclare une ; le
+seed en laissait deux, sans erreur ni avertissement — idempotent sans être convergent, troisième
+forme de la décision 57 et la première sur un seed. Trois corrections dans le même changement : la
+copie est cherchée par sa **seule** dérivation, son track et son nom sont **ramenés** aux valeurs
+déclarées, et toute copie **surnuméraire** est supprimée, la plus ancienne étant conservée.
+
+**Ce que `CRM-033` change à l'ordre du seed.** `channels.workflow_id` devient `NOT NULL` : le
+workflow par défaut doit donc naître **avant** les channels. Sa ligne est créée en section 3 bis —
+elle ne dépend d'aucun nœud du catalogue, seules ses étapes en dépendent —, et le `PATCH` de
+rattachement qui terminait la section 6 depuis `CRM-031` disparaît, les channels naissant rattachés.
+`prospection` est ensuite rattaché à la copie de portée `track` en section 7, une fois celle-ci
+créée : elle dérive du workflow global et ne peut donc pas le précéder. L'ordre des trois gestes de
+cette section n'est pas indifférent — le channel est rendu au workflow global, ce qui **libère** la
+copie, puis la copie est ramenée à son track, puis le channel la rejoint. Rattacher d'abord ferait
+refuser la convergence par le trigger de `CRM-033` : le seed traverse la garde dans le bon ordre
+plutôt que de la contourner.
 
 **Conséquence sur les comptes des unités précédentes :** le workspace porte désormais **deux**
 workflows, dont un seul `global` et un seul par défaut. Les contrôles qui comptaient « un workflow,

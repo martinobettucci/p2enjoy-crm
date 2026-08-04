@@ -1603,6 +1603,54 @@ coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
 
 ---
 
+### INC-042 — L'image de la webapp ne se construit pas dans l'environnement de la routine : le registre npm est derrière un proxy à certificat interposé
+
+**Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
+**Relevé le :** 2026-08-04, pendant `CRM-033`.
+
+`./runDev.sh --dev` échoue à la construction de l'image `webapp`, avant tout démarrage :
+
+```
+npm error code SELF_SIGNED_CERT_IN_CHAIN
+npm error request to https://registry.npmjs.org/… failed,
+            reason: self-signed certificate in certificate chain
+```
+
+L'environnement de la routine route tout le trafic HTTPS sortant par un proxy qui **interpose son
+propre certificat**, et fournit son autorité de certification à l'hôte. Le conteneur de construction,
+lui, ne l'a pas. `webapp/Dockerfile` a prévu exactement ce cas — il monte un secret facultatif
+`npm_ca` et le pose en `cafile` s'il est fourni — mais **aucun fichier Compose ne déclare ce
+secret** : le point d'entrée existe, rien ne le branche.
+
+**Contournement appliqué, et pourquoi il n'est pas la correction.** La pile a été démarrée **sans le
+service `webapp`**, en nommant les douze autres services. C'est sans effet sur les preuves : le
+projet Playwright `ui` démarre son **propre** serveur Vite sur l'hôte (`e2e/playwright.config.ts`),
+et le conteneur `webapp` ne sert qu'au confort de développement. Les 37 scénarios d'interface ont été
+exécutés et sont verts. Sur l'hôte, `npm ci` a exigé le même geste — `npm config set cafile` vers le
+paquet d'autorités du proxy — avant de réussir.
+
+Le geste n'est documenté nulle part et la prochaine exécution devra le refaire : même nature
+qu'INC-032 et INC-036, et **troisième** coût récurrent de cet environnement.
+
+**Ce qui n'est pas fait, et pourquoi.** Brancher le secret dans `docker-compose.dev.yml` ferait
+dépendre le fichier Compose d'un chemin propre à un environnement d'exécution particulier, et
+`docker-compose.dev.yml` est un livrable de `CRM-001` : le modifier pendant un passage consacré à une
+autre unité rouvrirait celle-là.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. déclarer dans `docker-compose.dev.yml` un secret de build `npm_ca` alimenté par une variable
+   d'environnement documentée et **vide par défaut**, de sorte qu'un poste sans proxy ne change pas
+   de comportement — l'option la plus proche de ce que le `Dockerfile` a déjà prévu ;
+2. documenter le contournement dans `README.md` et l'assumer comme une contrainte de l'hébergeur ;
+3. ne rien faire, la webapp conteneurisée n'étant nécessaire à aucune preuve — au prix d'un
+   `./runDev.sh` qui échoue par défaut dans cet environnement.
+
+**Lié à :** INC-032 et INC-036 (mêmes coûts récurrents), `webapp/Dockerfile` (le secret prévu),
+`docker-compose.dev.yml` (le service `webapp`).
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante

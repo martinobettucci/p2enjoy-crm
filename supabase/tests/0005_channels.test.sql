@@ -97,11 +97,13 @@ select has_function('app', 'channels_attribuer_position',
 select has_column('public', 'channels', 'workflow_id',
 	'INC-029 : la colonne `workflow_id` est livrée');
 
-select ok(
-	(select not attnotnull from pg_attribute
-	  where attrelid = 'public.channels'::regclass and attname = 'workflow_id'),
-	'INC-029 : `workflow_id` est **encore nullable** — docs/SCHEMA.md §2 l''exige non nulle. La '
-	'contrainte revient à `CRM-033` ; cette assertion deviendra rouge ce jour-là');
+-- INC-029 EST SOLDÉE. Cette assertion a été **révisée**, non supprimée : elle constatait que
+-- `workflow_id` restait nullable et devait devenir rouge le jour où `CRM-033` poserait la
+-- contrainte. Ce jour est venu, elle est devenue rouge, et elle dit désormais l'état réel — c'est
+-- exactement le mécanisme de la décision 51, à sa sixième occurrence.
+select col_not_null('public', 'channels', 'workflow_id',
+	'INC-029 SOLDÉE : `workflow_id` est **obligatoire** depuis `CRM-033`, comme docs/SCHEMA.md §2 '
+	'l''exige depuis l''origine. Créer un channel exige désormais de désigner un workflow');
 
 select ok(
 	exists (select 1 from pg_constraint
@@ -181,25 +183,37 @@ insert into public.tracks (id, workspace_id, name, slug, position) values
 	('33330000-0000-4000-8000-0000000000b1', '33330000-0000-4000-8000-000000000002',
 	 'Track B1', 'track-b1', 1);
 
+-- Un workflow **global** par workspace. `CRM-033` rend `channels.workflow_id` obligatoire : les
+-- fixtures de channels doivent désigner un workflow, et un workflow global convient à tout channel
+-- de son workspace (docs/SPEC-workflow-engine.md §4.12.2). Chaque insertion désigne celui du
+-- workspace qu'elle **déclare**, y compris lorsqu'elle ment sur ce workspace : sans cela, le refus
+-- viendrait de la clé étrangère du workflow et non de celle du track, et l'assertion prouverait
+-- autre chose que ce qu'elle annonce.
+insert into public.workflows (id, workspace_id, name, scope) values
+	('33330000-0000-4000-8000-0000000000f1', '33330000-0000-4000-8000-000000000001',
+	 'Workflow CH A', 'global'),
+	('33330000-0000-4000-8000-0000000000f2', '33330000-0000-4000-8000-000000000002',
+	 'Workflow CH B', 'global');
+
 select lives_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Cohérent', 'coherent', 10)$$,
 	'un channel dont le `workspace_id` est celui de son track est accepté');
 
 -- LE REFUS QUI COMPTE. Le workspace déclaré est réel, le track est réel, l'appelant est
 -- `postgres` — donc au-dessus de toute RLS. Seule la clé composite peut refuser cette ligne.
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f2',
 	          'Menteur', 'menteur', 11)$$,
 	'23503', null,
 	'un channel ne peut pas déclarer un `workspace_id` différent de celui de son track : la '
 	'dénormalisation ne peut pas mentir à la RLS');
 
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-00000000dead',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-00000000dead', '33330000-0000-4000-8000-0000000000f1',
 	          'Orphelin', 'orphelin', 12)$$,
 	'23503', null,
 	'un channel ne peut pas désigner un track inexistant');
@@ -226,20 +240,20 @@ rollback to savepoint avant_cascade;
 -- =============================================================================================
 
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Majuscules', 'Prospection', 20)$$,
 	'23514', null, 'un slug en majuscules est refusé');
 
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Tirets', 'grands--comptes', 21)$$,
 	'23514', null, 'un slug à tirets doublés est refusé');
 
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          '   ', 'nom-blanc', 22)$$,
 	'23514', null,
 	'un nom réduit à des blancs est refusé : `not null` seul ne l''aurait pas attrapé');
@@ -247,21 +261,21 @@ select throws_ok(
 -- UNICITÉ **PAR TRACK**, et non par workspace. C'est la différence avec `tracks`, dont le slug est
 -- unique par workspace, et elle est vérifiée dans les deux sens.
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Doublon', 'coherent', 23)$$,
 	'23505', null, 'le même slug deux fois dans le **même** track est refusé');
 
 select lives_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2', '33330000-0000-4000-8000-0000000000f1',
 	          'Homonyme', 'coherent', 24)$$,
 	'le même slug dans un **autre track du même workspace** est accepté : l''unicité est par '
 	'track, pas par workspace');
 
 select lives_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1', '33330000-0000-4000-8000-0000000000f2',
 	          'Homonyme B', 'coherent', 25)$$,
 	'le même slug dans un autre workspace est accepté');
 
@@ -272,11 +286,11 @@ select lives_ok(
 -- barre à eux seuls (décision 61). Mesuré avant écriture sur une table sonde ; réaffirmé ici sur
 -- la table réelle.
 
-insert into public.channels (workspace_id, track_id, name, slug)
-	values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1',
+insert into public.channels (workspace_id, track_id, workflow_id, name, slug)
+	values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1', '33330000-0000-4000-8000-0000000000f2',
 	        'Ordre un', 'ordre-un');
-insert into public.channels (workspace_id, track_id, name, slug)
-	values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1',
+insert into public.channels (workspace_id, track_id, workflow_id, name, slug)
+	values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1', '33330000-0000-4000-8000-0000000000f2',
 	        'Ordre deux', 'ordre-deux');
 
 select is(
@@ -290,8 +304,8 @@ select is(
 
 -- Le compteur redémarre à chaque track : un track vide commence à 1, quelle que soit l'activité
 -- des autres tracks du même workspace.
-insert into public.channels (workspace_id, track_id, name, slug)
-	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2',
+insert into public.channels (workspace_id, track_id, workflow_id, name, slug)
+	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2', '33330000-0000-4000-8000-0000000000f1',
 	        'Suite A2', 'suite-a2');
 select is(
 	(select c.position from public.channels c where c.slug = 'suite-a2'),
@@ -300,8 +314,8 @@ select is(
 
 -- Propriété héritée de `CRM-020` et vérifiée ici plutôt que supposée : un trigger `BEFORE INSERT`
 -- ne distingue pas une `position` omise d'une `position` écrite `null`.
-insert into public.channels (workspace_id, track_id, name, slug, position)
-	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2',
+insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2', '33330000-0000-4000-8000-0000000000f1',
 	        'Nulle', 'ordre-nul', null);
 select is(
 	(select c.position from public.channels c where c.slug = 'ordre-nul'),
@@ -315,8 +329,8 @@ select throws_ok(
 	'une mise à jour vers `null` est refusée : le trigger ne couvre que l''insertion');
 
 -- Une `position` fournie n'est jamais écrasée par le trigger.
-insert into public.channels (workspace_id, track_id, name, slug, position)
-	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2',
+insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a2', '33330000-0000-4000-8000-0000000000f1',
 	        'Intercalé', 'intercale', 25.5);
 select is(
 	(select c.position from public.channels c where c.slug = 'intercale'),
@@ -466,8 +480,8 @@ rollback to savepoint avant_anon;
 savepoint avant_viewer_ecrit;
 select pg_temp.endosser('44440000-0000-4000-8000-00000000000b');
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Par un viewer', 'par-viewer', 40)$$,
 	'42501', null,
 	'un `viewer` ne crée aucun channel');
@@ -477,8 +491,8 @@ rollback to savepoint avant_viewer_ecrit;
 savepoint avant_bizdev;
 select pg_temp.endosser('44440000-0000-4000-8000-00000000000c');
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Par un bizdev', 'par-bizdev', 41)$$,
 	'42501', null,
 	'un `business_developer` non plus : l''organisation est une prérogative d''administration. Il '
@@ -489,13 +503,13 @@ rollback to savepoint avant_bizdev;
 savepoint avant_admin;
 select pg_temp.endosser('44440000-0000-4000-8000-00000000000a');
 select lives_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000001', '33330000-0000-4000-8000-0000000000a1', '33330000-0000-4000-8000-0000000000f1',
 	          'Par un admin', 'par-admin', 42)$$,
 	'un administrateur crée un channel dans son workspace');
 select throws_ok(
-	$$insert into public.channels (workspace_id, track_id, name, slug, position)
-	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1',
+	$$insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	  values ('33330000-0000-4000-8000-000000000002', '33330000-0000-4000-8000-0000000000b1', '33330000-0000-4000-8000-0000000000f2',
 	          'Intrusion', 'intrusion', 43)$$,
 	'42501', null,
 	'un administrateur du workspace A ne crée aucun channel dans le workspace B');

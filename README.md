@@ -301,6 +301,7 @@ scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RL
 scripts/verify-catalogue.sh    # catalogue de nœuds : bornes, ordre, archivage, RLS      (CRM-030)
 scripts/verify-workflows.sh    # workflows, étapes, transitions : graphe, RLS, seed     (CRM-031)
 scripts/verify-copie-workflow.sh # copie vers un track : refus, remappage, divergence  (CRM-032)
+scripts/verify-coherence-workflow.sh # cohérence workflow ↔ channel : quatre portes  (CRM-033)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

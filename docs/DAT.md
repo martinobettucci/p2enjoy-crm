@@ -402,9 +402,19 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   par `scripts/verify-tracks.sh` (**43 contrôles**), `scripts/verify-channels.sh`
   (**30 contrôles**), `scripts/verify-catalogue.sh` (**36 contrôles**),
   `scripts/verify-workflows.sh` (**47 contrôles**, 40 hors suites),
-  `scripts/verify-copie-workflow.sh` (**33 contrôles**, 26 hors suites), `e2e/api/tracks.spec.ts`,
-  `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts`, `e2e/api/workflows.spec.ts` et
-  `e2e/api/copie-workflow.spec.ts`.
+  `scripts/verify-copie-workflow.sh` (**33 contrôles**, 26 hors suites),
+  `scripts/verify-coherence-workflow.sh` (**33 contrôles**, 26 hors suites),
+  `e2e/api/tracks.spec.ts`, `e2e/api/channels.spec.ts`, `e2e/api/catalogue-noeuds.spec.ts`,
+  `e2e/api/workflows.spec.ts`, `e2e/api/copie-workflow.spec.ts` et
+  `e2e/api/coherence-workflow.spec.ts`.
+
+  **Depuis `CRM-033`, un channel ne peut plus naître sans workflow**, et le workflow qu'il désigne
+  doit être `global` ou rattaché à **son** track. La règle est portée par deux triggers — un sur
+  `public.channels`, un sur `public.workflows` — parce que la mesure a établi que deux des quatre
+  écritures capables de la casser ne passent pas par `channels` (INC-040, décision 89). Elle
+  s'**ajoute** aux autorisations et ne les remplace pas : un `business_developer` est refusé par la
+  politique RLS avant même que la règle ne soit évaluée, faute de quoi un refus de rôle deviendrait
+  un refus d'intégrité qui apprendrait au demandeur ce que contient la base.
   Sur les workflows, la suppression physique est **exposée aux étapes et aux transitions**, et à
   elles seules : elles sont la composition d'un workflow et n'ont aucun `archived_at`
   (`docs/JOURNAL.md`, décision 74). C'est le seul endroit du produit livré où un client peut

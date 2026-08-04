@@ -138,18 +138,23 @@ type _relationsChannels = Expect<
   >
 >
 
-// INC-029, FIGÉE DANS LE TYPE, ET RÉVISÉE PAR `CRM-031`. La clé étrangère existe désormais — elle
-// est **composite**, et visible ci-dessus. La colonne, elle, reste nullable : `docs/SCHEMA.md` §2
-// l'exige non nulle, et cette contrainte revient à `CRM-033` avec le contrat de création d'un
-// channel qu'elle modifie. L'assertion deviendra rouge ce jour-là.
-type _workflowIdNullable = Expect<
-  Equal<Database['public']['Tables']['channels']['Row']['workflow_id'], string | null>
+// INC-029 EST SOLDÉE PAR `CRM-033`, ET L'ASSERTION EST RÉVISÉE, NON SUPPRIMÉE. Elle constatait la
+// colonne **nullable** et annonçait qu'elle deviendrait rouge le jour où la contrainte `NOT NULL`
+// serait posée. Ce jour est venu : `docs/SCHEMA.md` §2 est enfin tenu à la lettre, la clé étrangère
+// composite est visible ci-dessus, et le type le dit — troisième occurrence du mécanisme de la
+// décision 51 sur ce seul fichier.
+type _workflowIdObligatoire = Expect<
+  Equal<Database['public']['Tables']['channels']['Row']['workflow_id'], string>
 >
 
 // INC-027 se reproduit à l'identique sur `channels` : `position` est renseignée par un trigger,
 // que le générateur ignore, et le type l'exige donc à l'insertion alors que l'API l'accepte omise.
 // Le constat est figé plutôt que corrigé — le fichier est **généré**, et le retoucher ferait
 // échouer la garde anti-dérive de `CRM-006`.
+//
+// `workflow_id` rejoint la liste avec `CRM-033`, mais pour une **autre** raison, et il faut les
+// distinguer : elle y figure parce que la colonne est réellement obligatoire, non parce que le
+// générateur ignore un trigger. Le type dit ici la vérité du produit.
 type _channelsInsertRequis = Expect<
   Equal<
     {
@@ -158,7 +163,14 @@ type _channelsInsertRequis = Expect<
         ? never
         : C]: true
     },
-    { name: true; position: true; slug: true; track_id: true; workspace_id: true }
+    {
+      name: true
+      position: true
+      slug: true
+      track_id: true
+      workflow_id: true
+      workspace_id: true
+    }
   >
 >
 
@@ -457,7 +469,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsTrackMembers,
   _relationsChannelMembers,
   _relationsChannels,
-  _workflowIdNullable,
+  _workflowIdObligatoire,
   _channelsInsertRequis,
   _catalogueColonnes,
   _probabiliteNullable,

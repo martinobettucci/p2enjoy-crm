@@ -159,10 +159,12 @@ select ok(
 	'INC-029 levée pour la clé étrangère : `channels.workflow_id` est enfin référencée, et de '
 	'façon **composite** — le workflow d''un channel appartient à son workspace');
 
-select col_is_null('public', 'channels', 'workflow_id',
-	'INC-029 : `channels.workflow_id` est **encore nullable**. docs/SCHEMA.md §2 l''exige non '
-	'nulle ; la contrainte revient à `CRM-033`, qui porte le contrat de création d''un channel. '
-	'Cette assertion deviendra rouge ce jour-là');
+-- Révisée par `CRM-033`, qui a soldé INC-029 : l'assertion constatait la colonne nullable et
+-- annonçait qu'elle deviendrait rouge le jour où la contrainte serait posée. Elle l'est devenue, et
+-- elle est révisée plutôt que supprimée (décision 51, sixième occurrence).
+select col_not_null('public', 'channels', 'workflow_id',
+	'INC-029 SOLDÉE par `CRM-033` : `channels.workflow_id` est **obligatoire**, comme '
+	'docs/SCHEMA.md §2 l''exige depuis l''origine');
 
 -- INC-033 : aucune clé étrangère ne peut partir d'une colonne tableau. Ce n'est pas un différé,
 -- c'est une propriété du type — l'assertion le fige pour que personne ne la croie oubliée.

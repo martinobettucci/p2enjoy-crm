@@ -43,6 +43,7 @@ MIGRATION_FILE=supabase/migrations/0004_channels.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
+WF_SEED=5eed0000-0000-4000-8000-000000000051
 TRACK_CONSEIL=5eed0000-0000-4000-8000-000000000021
 TRACK_STUDIO=5eed0000-0000-4000-8000-000000000022
 MAIL_ADMIN=admin@p2enjoy.test
@@ -111,8 +112,9 @@ jeton_de() {
 # de preuve ni un channel de preuve derrière elle.
 menage() {
 	psql_db -c "
-		delete from public.channels where slug like 'tst-crm021-%';
-		delete from public.tracks   where slug like 'tst-crm021-%';
+		delete from public.channels  where slug like 'tst-crm021-%';
+		delete from public.workflows where name like 'tst-crm021-%';
+		delete from public.tracks    where slug like 'tst-crm021-%';
 		delete from public.workspaces where slug like 'tst-crm021-%';
 	" >/dev/null 2>&1 || true
 }
@@ -190,9 +192,13 @@ else
 fi
 
 if psql_db -v ON_ERROR_STOP=1 -c "
-	insert into public.channels (workspace_id, track_id, name, slug, position)
+	insert into public.workflows (id, workspace_id, name, scope)
+	values ('a1110000-0000-4000-8000-0000000000f1', 'a1110000-0000-4000-8000-000000000001',
+	        'tst-crm021-workflow', 'global')
+	on conflict (id) do nothing;
+	insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
 	values ('a1110000-0000-4000-8000-000000000001', 'a1110000-0000-4000-8000-0000000000a1',
-	        'Cohérent', 'tst-crm021-coherent', 1);
+	        'a1110000-0000-4000-8000-0000000000f1', 'Cohérent', 'tst-crm021-coherent', 1);
 " >/dev/null 2>&1; then
 	ok "un \`workspace_id\` cohérent est accepté : la contrainte n'interdit pas le cas normal"
 else
@@ -201,9 +207,9 @@ fi
 
 # Le compteur de `position` est propre au track.
 psql_db -c "
-	insert into public.channels (workspace_id, track_id, name, slug)
+	insert into public.channels (workspace_id, track_id, workflow_id, name, slug)
 	values ('a1110000-0000-4000-8000-000000000001', 'a1110000-0000-4000-8000-0000000000a1',
-	        'Suivant', 'tst-crm021-suivant');
+	        'a1110000-0000-4000-8000-0000000000f1', 'Suivant', 'tst-crm021-suivant');
 " >/dev/null
 pos=$(psql_db -c "select position from public.channels where slug = 'tst-crm021-suivant';")
 if [ "$pos" = "2" ]; then
@@ -291,7 +297,8 @@ psql_db -c "
 sleep 1
 code=$(http POST "$API/rest/v1/channels" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $T_VIEWER" -H 'Content-Type: application/json' \
-	-d "{\"workspace_id\":\"$WS_SEED\",\"track_id\":\"$TRACK_CONSEIL\",\"name\":\"X\",\"slug\":\"tst-crm021-relache\"}")
+	-d "{\"workspace_id\":\"$WS_SEED\",\"track_id\":\"$TRACK_CONSEIL\",\"workflow_id\":\"$WF_SEED\",
+	     \"name\":\"X\",\"slug\":\"tst-crm021-relache\"}")
 if [ "$code" = "201" ]; then
 	ok "politique relâchée : le refus disparaît réellement — le contrôle n'est pas décoratif"
 else
@@ -304,8 +311,9 @@ psql_db -c "
 	alter table public.channels drop constraint channels_track_id_workspace_id_fkey;
 " >/dev/null
 if psql_db -v ON_ERROR_STOP=1 -c "
-	insert into public.channels (workspace_id, track_id, name, slug, position)
-	values ('$WS_SEED', '00000000-0000-4000-8000-00000000dead', 'Menteur', 'tst-crm021-m2', 99);
+	insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	values ('$WS_SEED', '00000000-0000-4000-8000-00000000dead', '$WF_SEED', 'Menteur',
+	        'tst-crm021-m2', 99);
 " >/dev/null 2>&1; then
 	ok "clé composite retirée : la ligne menteuse passe — la contrainte porte bien la garantie"
 	psql_db -c "delete from public.channels where slug = 'tst-crm021-m2';" >/dev/null
@@ -329,8 +337,8 @@ psql_db -c "
 	alter table public.channels add constraint channels_track_id_slug_key unique (workspace_id, slug);
 " >/dev/null
 if psql_db -v ON_ERROR_STOP=1 -c "
-	insert into public.channels (workspace_id, track_id, name, slug, position)
-	values ('$WS_SEED', '$TRACK_STUDIO', 'Homonyme', 'prospection', 98);
+	insert into public.channels (workspace_id, track_id, workflow_id, name, slug, position)
+	values ('$WS_SEED', '$TRACK_STUDIO', '$WF_SEED', 'Homonyme', 'prospection', 98);
 " >/dev/null 2>&1; then
 	fail "unicité déplacée : le slug homonyme passe encore, la dégradation n'a rien changé"
 	psql_db -c "delete from public.channels where slug = 'prospection' and track_id = '$TRACK_STUDIO';" >/dev/null

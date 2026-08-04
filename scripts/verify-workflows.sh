@@ -335,9 +335,21 @@ champs_vides=$(psql_db -c "select count(*) from public.workflow_transitions
 [ "$champs_vides" = "10" ] \
 	&& ok "INC-033 : \`require_fields\` reste vide partout, \`form_fields\` n'existant pas" \
 	|| fail "transitions à \`require_fields\` vide : $champs_vides, attendu 10"
-[ "$channels_rattaches" = "6" ] \
-	&& ok "INC-029 : les six channels du seed sont rattachés au workflow — chacun a enfin un board" \
-	|| fail "channels rattachés : $channels_rattaches, attendu 6"
+# Révisé par `CRM-033` : `prospection` suit désormais la copie de portée `track` de son propre
+# track (docs/SPEC-workflow-engine.md §4.12.7), et le compte tombe donc à cinq. Le contrôle est
+# **resserré** plutôt que supprimé — il compte ce qui suit le workflow **par défaut**, et un second
+# contrôle vérifie qu'aucun channel n'est resté sans board.
+[ "$channels_rattaches" = "5" ] \
+	&& ok "INC-029 : cinq channels du seed suivent le workflow par défaut — le sixième suit la "\
+"copie de portée \`track\` livrée par \`CRM-032\` et rattachée par \`CRM-033\`" \
+	|| fail "channels rattachés au workflow par défaut : $channels_rattaches, attendu 5"
+
+sans_board=$(psql_db -c "select count(*) from public.channels
+                          where workspace_id = '$WS_SEED' and workflow_id is null;")
+[ "$sans_board" = "0" ] \
+	&& ok "et **aucun** channel n'est sans board : \`CRM-033\` a soldé INC-029 par une contrainte "\
+"\`NOT NULL\`, non par une convention" \
+	|| fail "channels sans workflow : $sans_board, attendu 0"
 
 # `Réalisation → Perdu` n'est **pas** déclarée : le point ouvert n° 1 de la spécification est une
 # absence, et une absence se vérifie comme le reste.
@@ -352,7 +364,7 @@ realisation_perdu=$(psql_db -c "
 	&& ok "\`Réalisation → Perdu\` n'est pas déclarée : le point ouvert n° 1 est tenu" \
 	|| fail "\`Réalisation → Perdu\` existe alors que la spécification ne la déclare pas"
 
-titre "5. INC-029 : la clé étrangère est posée, la contrainte NOT NULL ne l'est pas"
+titre "5. INC-029 : clé étrangère posée par CRM-031, contrainte NOT NULL posée par CRM-033"
 
 fk=$(psql_db -c "select count(*) from pg_constraint
                   where conname = 'channels_workflow_id_workspace_id_fkey'
@@ -362,11 +374,13 @@ fk=$(psql_db -c "select count(*) from pg_constraint
 
 notnull=$(psql_db -c "select attnotnull from pg_attribute
                        where attrelid = 'public.channels'::regclass and attname = 'workflow_id';")
-if [ "$notnull" = "f" ]; then
-	ok "la contrainte \`NOT NULL\` n'est **pas** posée : elle revient à \`CRM-033\`, avec le "\
-"contrat de création d'un channel qu'elle modifie (INC-029 reste ouverte)"
+# Révisé par `CRM-033`, qui a soldé INC-029. Le contrôle annonçait qu'il tomberait le jour où la
+# contrainte serait posée ; il est tombé, et il dit désormais l'état réel (décision 51).
+if [ "$notnull" = "t" ]; then
+	ok "la contrainte \`NOT NULL\` est posée par \`CRM-033\` : INC-029 est **soldée**, et "\
+"docs/SCHEMA.md §2 enfin tenu à la lettre"
 else
-	fail "la contrainte \`NOT NULL\` est posée : INC-029 doit être close et \`CRM-033\` revue"
+	fail "la contrainte \`NOT NULL\` a disparu : INC-029 était soldée par \`CRM-033\`"
 fi
 
 titre "6. INC-031 : la garde d'archivage reste hors d'atteinte, et son absence est vérifiée"

@@ -150,14 +150,22 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		expect(transitions.every((t) => t.require_fields.length === 0)).toBe(true)
 	})
 
-	test('INC-029 — les six channels du seed sont rattachés à ce workflow', async ({ request }) => {
+	// Révisé par `CRM-033`, qui a soldé INC-029. L'assertion posée ici comptait « les six »
+	// rattachés au workflow par défaut ; elle est devenue rouge le jour où le seed a rattaché
+	// `prospection` à la copie de portée `track` de son propre track — cas accepté de la règle du
+	// §4.12, qui serait autrement documenté sans être démontrable. Elle est **resserrée** sur ce que
+	// cette unité-ci garantit : aucun channel sans workflow, et cinq sur six suivant le global.
+	test('INC-029 — les channels du seed sont tous rattachés, cinq au workflow par défaut', async ({
+		request,
+	}) => {
 		const reponse = await request.get(
 			`/rest/v1/channels?select=id,workflow_id&workspace_id=eq.${WORKSPACE_SEED}`,
 			{ headers: enTetesService() },
 		)
 		const channels = (await reponse.json()) as { id: string; workflow_id: string | null }[]
 		expect(channels).toHaveLength(6)
-		expect(channels.every((c) => c.workflow_id === WORKFLOW_SEED)).toBe(true)
+		expect(channels.every((c) => c.workflow_id !== null)).toBe(true)
+		expect(channels.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(5)
 	})
 })
 
