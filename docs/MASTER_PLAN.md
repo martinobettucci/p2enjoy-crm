@@ -81,6 +81,7 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 | Squelette de la webapp, coquille, états | `docs/SPEC-webapp.md` |
 | Données de développement, seed | `docs/SPEC-seed.md` |
 | Types TypeScript générés | `docs/SPEC-types.md` |
+| Harnais de tests, exécuteurs, projets Playwright | `docs/SPEC-test-harness.md` |
 | Interface | `docs/DESIGN_SYSTEM.md` |
 | Architecture, services, déploiement | `docs/DAT.md` |
 | Fonctionnalité visible | `docs/manual.md` (chapitre concerné) |

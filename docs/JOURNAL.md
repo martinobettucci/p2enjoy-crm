@@ -1855,3 +1855,107 @@ implémentations concurrentes d'une même unité peuvent se fondre en un état i
 conflit est résolu à la hâte. **La routine devrait être sérialisée** — une seule exécution à la
 fois — ou prendre un verrou sur l'unité qu'elle ouvre. La décision revient au responsable ; elle
 n'est pas prise ici, elle est signalée.
+
+---
+
+## 2026-08-04 — `CRM-008` : spécification du harnais de tests, écrite après mesure
+
+### Décision 48 — Le code de sortie de `psql` ne peut pas servir de verdict à une suite pgTAP
+
+**Problème.** `npm run test:sql` doit rendre un verdict sur les suites pgTAP de `supabase/tests/`.
+La voie évidente — lancer `psql` et lire son code de sortie — n'a pas été supposée valide : elle a
+été mesurée.
+
+**Mesures**, le 2026-08-04, contre le conteneur `p2enjoy-db` de la pile de développement :
+
+| Situation | Sortie TAP | Code de sortie |
+|---|---|---|
+| Suite verte (`0003_seed_socle.test.sql`) | `ok 1…30` | `0` |
+| Une assertion fausse | `not ok 2` + `# Looks like you failed 1 test of 2` | **`0`** |
+| Plan `5`, une seule assertion exécutée | `# Looks like you planned 5 tests but ran 1` | **`0`** |
+| Plan `1`, `finish()` **jamais appelé** | `ok 1`, **aucun diagnostic** | **`0`** |
+| Erreur SQL, `ON_ERROR_STOP=1` | message d'erreur | `3` |
+
+**Observations.** Les trois premières lignes suffisaient à écarter le code de sortie. C'est la
+quatrième qui a changé la conception : **sans `finish()`, pgTAP n'émet aucun diagnostic de plan**.
+Une suite tronquée — fichier coupé, erreur avalée, `finish()` oublié à la relecture — passerait
+donc pour complète, y compris pour un harnais qui lirait consciencieusement les lignes `#` de
+pgTAP.
+
+**Décision.** L'exécuteur ne fait confiance ni au code de sortie de `psql`, ni au diagnostic de
+pgTAP. Il compare **lui-même** l'en-tête de plan `1..N` au nombre de lignes `ok` et `not ok`
+réellement émises, et exige en outre qu'un plan ait été émis. `ON_ERROR_STOP=1` reste obligatoire.
+
+**Conséquences.** Quatre conditions d'échec indépendantes plutôt qu'une (`docs/SPEC-test-harness.md`
+§3.2), et quatre contrôles de non-complaisance qui les éprouvent une par une. Le coût est un
+exécuteur plus verbeux que le `psql … && echo ok` qu'on écrirait spontanément ; le bénéfice est
+qu'aucun des quatre modes de défaillance mesurés ne peut passer pour un succès.
+
+### Décision 49 — Le besoin de `webServer` est déclaré, faute de pouvoir être déduit
+
+**Problème.** Le projet Playwright `api` parle directement à Kong : il n'a aucun besoin de
+l'application construite et servie. Le projet `ui` en a besoin. La configuration doit donc savoir
+lequel est demandé.
+
+**Mesures.** Deux comportements de `@playwright/test@1.62.1` ont été constatés, non supposés :
+
+1. Un serveur factice écrivant un marqueur à son démarrage est lancé pour **toute** exécution —
+   `--project=api`, `--project=ui`, ou sans filtre. Playwright ne conditionne pas le `webServer`
+   au périmètre réellement sélectionné.
+2. La configuration est **réévaluée dans chaque processus worker**, où `process.argv` vaut
+   exactement `["…/node", "…/workerProcessEntry.js"]`. Le filtre `--project` **n'y est pas
+   visible**.
+
+**Solutions envisagées.** Déduire le besoin de `process.argv` — écartée par la mesure 2 : elle
+serait juste dans le processus principal et fausse dans les workers. Éclater en trois fichiers de
+configuration — écartée : les trois projets partagent la même amorce d'environnement, le même
+`.env` et le même rapport ; les séparer triplerait cette amorce sans rien isoler d'utile.
+
+**Décision.** Le besoin est **déclaré** par une variable d'environnement `E2E_PROJETS`, positionnée
+par le script npm qui lance l'exécution. Absente, elle vaut « tous les projets », donc `webServer`
+déclaré : le défaut est le comportement sûr, et une invocation directe de `playwright test`
+continue de fonctionner.
+
+**Conséquences.** Une cohérence à tenir entre `E2E_PROJETS` et `--project`, que rien ne peut
+vérifier depuis la configuration. L'incohérence n'est pas silencieuse pour autant : elle démarre un
+serveur inutile, ou l'omet — auquel cas les scénarios `ui` échouent bruyamment sur une connexion
+refusée. La limite est nommée dans `docs/SPEC-test-harness.md` §10.
+
+### Décision 50 — « Zéro ligne » ne se prouve que sur une table qui contient des lignes
+
+**Problème.** La preuve n° 11 de `docs/SPEC-permissions-rls.md` §7 — « utilisateur anonyme lit
+n'importe quelle table métier → aucune ligne » — est le refus par défaut aujourd'hui en vigueur. Le
+projet `api` doit l'établir.
+
+**Observation.** Mesuré sur la pile seedée : `profiles` contient 3 lignes, `workspaces` 1,
+`workspace_members` 3, vues par la clé de service. En revanche `track_members` et `channel_members`
+en contiennent **zéro** — leurs tables cibles n'existent pas avant `CRM-020` et `CRM-021`.
+
+**Décision.** Le scénario constate d'abord, avec la clé de service, que les lignes existent, puis
+qu'aucun appelant ne les voit. Les deux tables réellement vides sont **exclues** de la preuve.
+
+**Motif.** Sur une table vide, « l'API rend `[]` » est vrai que la RLS refuse ou qu'elle autorise
+tout : l'assertion serait verte dans les deux cas, donc sans valeur probante. C'est le même
+raisonnement que le contrôle décisif de `scripts/verify-webapp.sh`, qui compare l'état de l'API à
+celui de la base au lieu de se contenter du premier.
+
+### Décision 51 — Les assertions qui décrivent une limite doivent échouer quand la limite tombe
+
+**Problème.** Les scénarios A5 et A6 du projet `api` décrivent un produit **sans politiques RLS** :
+un membre du workspace ne voit rien, et son écriture est refusée. `CRM-012` changera cela.
+
+**Décision.** Ces assertions sont écrites telles quelles, et leur échec futur est **annoncé à
+l'endroit même de l'assertion**. Le jour où `CRM-012` livrera les politiques, `npm run e2e:api`
+deviendra rouge, et il faudra réviser le scénario.
+
+**Motif.** C'est la convention déjà retenue par `CRM-006` pour les types générés : une limite figée
+par une assertion force sa révision, alors qu'une limite seulement commentée survit tranquillement
+à la cause qui la justifiait. Un harnais qui resterait vert au passage de `CRM-012` prouverait
+seulement qu'il ne mesure rien.
+
+### Ce que cette spécification ne tranche pas
+
+`pytest mail-sync/tests` et `npm run e2e:mail` n'ont aucun sujet à exercer avant le chunk 4. La
+contradiction entre la Definition of Done de `CRM-008` et l'ordre d'exécution de
+`docs/MASTER_PLAN.md` §2 est consignée en **INC-023**, avec trois options d'arbitrage. Elle n'est
+pas résolue ici : `CRM-008` restera `[~]`.

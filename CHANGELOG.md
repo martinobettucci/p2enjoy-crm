@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`docs/SPEC-test-harness.md` — spécification du harnais de tests, écrite avant tout code.**
+  L'énoncé de `CRM-008` nommait quatre outils sans dire ce que chacun doit rendre, ni comment un
+  harnais peut mentir. Rédigée **après mesure** du comportement réel des outils épinglés, pas de
+  mémoire. Mesure fondatrice : `psql` rend `0` sur une suite pgTAP dont **toutes** les assertions
+  échouent, et pgTAP n'émet **aucun** diagnostic de plan lorsque `finish()` manque — le code de
+  sortie ne peut donc pas servir de verdict, ni le diagnostic de pgTAP le remplacer.
+  Décisions 48 à 51 consignées au journal.
+- **Contradiction consignée, sans être résolue : INC-023.** La Definition of Done de `CRM-008`
+  exige que « chaque commande du `README.md` §7 s'exécute », or deux d'entre elles —
+  `pytest mail-sync/tests` et `npm run e2e:mail` — n'ont aucun sujet à exercer avant le chunk 4.
+  Les déclarer vides serait une fausse complétion ; fabriquer leur sujet serait préempter
+  `CRM-051` et `CRM-054`. Trois options d'arbitrage sont posées, `CRM-008` restera `[~]`.
 - **Contradiction consignée, sans être résolue : INC-022.** `docs/DAT.md` §3.1 portait, à quatre
   lignes d'intervalle, « session persistée par la bibliothèque » et « sans persistance de
   session ». La première annonce comme acquise une écriture persistante dans `localStorage` que

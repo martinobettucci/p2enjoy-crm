@@ -680,6 +680,65 @@ qui les porte toutes les deux.
 
 ---
 
+### INC-023 — La Definition of Done de `CRM-008` exige des commandes dont les sujets arrivent au chunk 4
+
+**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-008`.
+
+La Definition of Done de `CRM-008` tient en une phrase : « chaque commande du `README.md` §7
+s'exécute ; un test volontairement faux échoue bien ». Or `README.md` §7 énumère sept commandes,
+et deux d'entre elles n'ont **aucun sujet à exercer** avant le chunk 4 :
+
+- `pytest mail-sync/tests` suppose le service `mail-sync`, livré par `CRM-051` ;
+- `npm run e2e:mail` suppose Stalwart et un aller-retour d'email réel, livrés par `CRM-050` puis
+  `CRM-054`.
+
+C'est le même mode de défaillance qu'INC-020, où la DoD de `CRM-006` exigeait le build d'une webapp
+que l'unité suivante allait livrer, et qu'INC-013, où quatre fonctions d'autorisation attendaient
+des tables du chunk 3. La différence tient à l'ampleur : ici, l'écart n'est pas d'une unité mais de
+**deux chunks entiers**.
+
+**Pourquoi ce n'est pas résolu ici.** Trois conduites étaient possibles, et deux sont exclues par
+`CLAUDE.md` :
+
+1. **Déclarer les projets vides**, pour que les commandes « s'exécutent ». Ce serait une
+   déclaration mensongère de complétion (`CLAUDE.md` §26) : `pytest` sur un répertoire sans test
+   rend `5`, et un projet Playwright sans scénario rend `0` sans rien avoir exercé. Le dépôt a
+   déjà écrit ce refus en toutes lettres dans `e2e/playwright.config.ts` depuis `CRM-007`.
+2. **Fabriquer un `mail-sync/` minimal** pour avoir quelque chose à tester : c'est préempter
+   `CRM-051` et inventer du périmètre (`CLAUDE.md` §1).
+3. **Livrer ce qui est livrable et nommer le reste** : conduite retenue.
+
+**Ce qui est donc livré par `CRM-008`** : `npm run test:sql`, le projet Playwright `api` et ses
+fixtures de jetons réels, `npm run e2e:report`, et la preuve de non-complaisance sur chaque famille
+de tests. **Ce qui reste dû** : `pytest` et `e2e:mail`.
+
+**Conséquence sur l'état de l'unité :** `CRM-008` reste `[~]`. Elle ne peut pas passer `[x]` sans
+mentir sur deux des sept commandes de sa propre Definition of Done.
+
+**Trois options d'arbitrage :**
+
+1. **Scinder `CRM-008`** en `CRM-008a` — harnais SQL et API, livrable maintenant et close — et
+   `CRM-008b` — harnais mail et pytest, rattachée au chunk 4. C'est l'option qui laisse chaque
+   unité à son objet, et elle a la préférence de rédaction.
+2. **Restreindre la Definition of Done de `CRM-008`** aux commandes dont le sujet existe, et faire
+   porter `pytest` par `CRM-051` et `e2e:mail` par `CRM-054`, dont les DoD les mentionnent déjà
+   toutes les deux. Cette lecture rendrait `CRM-008` close immédiatement.
+3. **Laisser `CRM-008` ouverte jusqu'au chunk 4**, ce qui la ferait traverser tout le chunk 3 en
+   `[~]` et contreviendrait à la règle 1 de `docs/MASTER_PLAN.md` §1 — « aucun `[~]` laissé
+   derrière soi ».
+
+**Action attendue du responsable :** trancher. À noter que l'option 2 s'appuie sur un fait
+vérifiable et non sur une commodité : la DoD de `CRM-051` exige déjà « pytest unitaire », et celle
+de `CRM-054` « pytest unitaire et intégration contre Stalwart » ainsi que « E2E `mail` avec un
+email **réellement envoyé** ». Les deux commandes manquantes sont donc **déjà** couvertes par les
+unités qui livreront leur sujet ; les exiger aussi de `CRM-008` les compte deux fois.
+
+**Lié à :** INC-013 (fonctions d'autorisation en attente de tables), INC-020 (build dû par l'unité
+suivante, close).
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
