@@ -273,31 +273,56 @@ ordre_seed=$(psql_db -c "select string_agg(key, ',' order by position) from $TAB
 	&& ok "l'ordre du catalogue est celui de la spécification §2.9" \
 	|| fail "ordre du catalogue : « $ordre_seed »"
 
-titre "5. INC-031 : la garde d'archivage est différée, et son absence est vérifiée"
+titre "5. INC-031 : la garde d'archivage est écrite, et son comportement est vérifié"
 
-# Ce contrôle est l'inverse d'un contrôle ordinaire : il constate que quelque chose **manque**
-# toujours. Le jour où `CRM-031` ou `CRM-040` livrera ses tables, il tombera — et c'est ce qu'on
-# lui demande (décision 51).
-# MISE À JOUR PAR `CRM-031`, qui a livré `workflow_steps` : ce contrôle a **réellement échoué**,
-# comme il avait été écrit pour le faire, et il est révisé avec le code. Il ne reste qu'une table
-# manquante — `cards`, due par `CRM-040` —, et le contrôle tombera de nouveau ce jour-là.
+# Ce contrôle était l'inverse d'un contrôle ordinaire : il constatait que quelque chose **manquait**
+# toujours, et il avait été écrit pour tomber le jour où la dernière table arriverait (décision 51).
+# Il est tombé DEUX FOIS, comme prévu : à `CRM-031` pour `workflow_steps`, à `CRM-040` pour `cards`.
+#
+# RÉVISÉ À `CRM-040`, avec le code : les deux tables existent, la garde est écrite (décision 111),
+# et le contrôle **se retourne** — il ne constate plus une absence, il exige la présence et
+# éprouve le comportement. C'est ce que le message d'échec précédent demandait mot pour mot.
 tables=$(psql_db -c "select coalesce(to_regclass('public.workflow_steps')::text, 'NULL')
                        || '/' || coalesce(to_regclass('public.cards')::text, 'NULL');")
-if [ "$tables" = "workflow_steps/NULL" ]; then
-	ok "INC-031 : \`workflow_steps\` existe depuis \`CRM-031\`, \`cards\` non — la garde reste "\
-"sans cible, et le rester est vérifié plutôt que supposé"
+if [ "$tables" = "workflow_steps/cards" ]; then
+	ok "INC-031 : \`workflow_steps\` et \`cards\` existent — le chemin de la garde est complet"
 else
-	fail "INC-031 : état des tables « $tables » — si \`cards\` existe, la garde d'archivage doit "\
-"être écrite et l'entrée close"
+	fail "INC-031 : état des tables « $tables », attendu « workflow_steps/cards »"
 fi
 
 triggers=$(psql_db -c "select count(*) from pg_trigger
                         where tgrelid = '$TABLE'::regclass and not tgisinternal;")
-if [ "$triggers" = "2" ]; then
-	ok "exactement deux triggers — \`updated_at\` et \`position\`. Aucun ne prétend porter la garde"
+if [ "$triggers" = "3" ]; then
+	ok "exactement trois triggers — \`updated_at\`, \`position\`, et la garde d'archivage"
 else
-	fail "triggers : $triggers, attendu 2"
+	fail "triggers : $triggers, attendu 3"
 fi
+
+garde=$(psql_db -c "select count(*) from pg_trigger
+                     where tgrelid = '$TABLE'::regclass and not tgisinternal
+                       and tgname = 'workflow_nodes_catalog_refuser_archivage_occupe';")
+[ "$garde" = "1" ] \
+	&& ok "la garde est NOMMÉE, non déduite d'un comptage : CRM-040 l'a écrite avec sa cible" \
+	|| fail "la garde d'archivage d'un nœud occupé est absente — INC-031, décision 111"
+
+# Le comportement, et pas seulement la présence : un trigger qui existerait sans rien refuser
+# serait pire qu'aucun trigger. Le nœud `relance` du seed porte deux cards actives.
+noeud_occupe=$(psql_db -c "select id from $TABLE
+                            where workspace_id = '$WS_SEED' and key = 'relance';")
+refus=$(psql_db -c "do \$\$ begin
+	update public.workflow_nodes_catalog set archived_at = now() where id = '$noeud_occupe';
+	raise notice 'ACCEPTE';
+exception when insufficient_privilege then raise notice 'REFUSE';
+end \$\$;" 2>&1 | grep -o 'REFUSE\|ACCEPTE' | head -1)
+[ "$refus" = "REFUSE" ] \
+	&& ok "archiver un nœud qu'une card ACTIVE occupe est réellement refusé, en 42501" \
+	|| fail "la garde n'a rien refusé sur un nœud occupé : « $refus »"
+
+encore_actif=$(psql_db -c "select count(*) from $TABLE
+                            where id = '$noeud_occupe' and archived_at is null;")
+[ "$encore_actif" = "1" ] \
+	&& ok "et le nœud est relu ACTIF : le refus n'a rien laissé passer" \
+	|| fail "le nœud a été archivé malgré le refus annoncé"
 
 titre "6. Contrat d'API, avec les jetons réels (docs/SPEC-workflow-engine.md §2.8)"
 

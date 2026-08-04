@@ -291,11 +291,54 @@ test.describe('K3 — création d’un channel (lignes f, g, h)', () => {
 })
 
 test.describe('K4 — le trigger se tait là où la base parle mieux (ligne i)', () => {
-	test('ligne i — un workflow **introuvable** est refusé par la clé étrangère, en 409', async ({
+	// RÉVISÉ À `CRM-040`, et non retiré — mécanisme de la décision 51.
+	//
+	// Ce scénario constatait qu'un workflow introuvable était refusé par
+	// `channels_workflow_id_workspace_id_fkey`, en `23503` / `409`. `CRM-040` a posé sur `cards` une
+	// clé composite `(channel_id, workflow_id) → channels (id, workflow_id)` : dès qu'un channel
+	// porte une card, c'est ELLE qui parle la première, avec le même `SQLSTATE` et le même statut.
+	//
+	// Le refus est donc INCHANGÉ dans sa nature ; seule la contrainte qui le prononce a changé, et
+	// la conséquence — un channel occupé ne change plus de workflow — est **la règle non décidée**
+	// d'INC-046, arbitrage attendu. `CHANNEL_REFONTE` porte une card du seed
+	// (docs/SPEC-cards.md §9), et ce scénario le documente plutôt que de choisir un channel vide
+	// pour retrouver l'ancien message : le contourner masquerait précisément ce qu'il faut voir.
+	test('ligne i — un workflow **introuvable** est refusé par une clé étrangère, en 409', async ({
 		request,
 	}) => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const reponse = await request.patch(`${CHANNELS}?id=eq.${CHANNEL_REFONTE}`, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workflow_id: '00000000-0000-4000-8000-00000000dead' },
+		})
+
+		expect(reponse.status()).toBe(409)
+		const corps = (await reponse.json()) as Erreur
+		expect(corps.code).toBe('23503')
+		// INC-046 : sur un channel OCCUPÉ, c'est la clé de `cards` qui refuse d'abord.
+		expect(corps.message).toContain('cards_channel_id_workflow_id_fkey')
+	})
+
+	// Le refus d'origine — celui de `CRM-033` — reste prouvé, sur un channel que le seed laisse
+	// VIDE de cards. Sans ce second scénario, la preuve de `CRM-033` disparaîtrait derrière celle
+	// de `CRM-040`, et l'on ne saurait plus si `channels_workflow_id_workspace_id_fkey` tient
+	// encore.
+	test('ligne i bis — sur un channel SANS card, c’est bien la clé de `channels` qui refuse', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const vides = await request.get(`${CHANNELS}?select=id&slug=eq.appels-offres`, {
+			headers: enTetesService(),
+		})
+		const [channel] = (await vides.json()) as Channel[]
+
+		// Constaté, non supposé : ce channel doit être vide de cards pour que la preuve porte.
+		const cards = await request.get(`/rest/v1/cards?select=id&channel_id=eq.${channel!.id}`, {
+			headers: enTetesService(),
+		})
+		expect(await cards.json()).toHaveLength(0)
+
+		const reponse = await request.patch(`${CHANNELS}?id=eq.${channel!.id}`, {
 			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
 			data: { workflow_id: '00000000-0000-4000-8000-00000000dead' },
 		})

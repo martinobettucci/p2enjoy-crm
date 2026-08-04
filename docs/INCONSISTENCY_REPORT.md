@@ -1849,6 +1849,41 @@ qu'une règle non décidée mais visible.
 devra d'abord vider ce channel de ses cards. Aucune interface ne l'expose aujourd'hui (INC-021), et
 le message d'erreur est celui de PostgreSQL, non un message produit.
 
+**Ce n'est pas un risque théorique : le seed du projet l'exerce déjà, et MESURÉ il tombe.** Le
+channel `prospection` est le seul que le seed **repointe**, deux fois par exécution — la section 4
+le ramène au workflow global déclaré, la section 7 le rattache à la copie de portée track livrée par
+`CRM-032`. Une card posée dans ce channel, puis le seed rejoué : **échec, code de sortie `1`**, dès
+la section 4.
+
+```
+ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
+  {"code":"23503","details":"Key (id, workflow_id)=(…31, 244bbfc6-…) is still referenced
+   from table \"cards\"", …}
+```
+
+Contre-épreuve mesurée : une card dans `grands-comptes`, dont le workflow ne change jamais, laisse
+le seed **vert**, code de sortie `0`, zéro erreur. Le conflit est donc **exactement** celui décrit
+ci-dessus, et pas un effet de bord plus large.
+
+**Ce que `CRM-040` en fait, et ce qu'elle refuse de faire.** Le seed de `CRM-040` **ne pose aucune
+card dans `prospection`**, ce qui le laisse convergent, et le motif est écrit dans
+`docs/SPEC-cards.md` §9.1 plutôt que tu. Deux corrections étaient possibles, toutes deux écartées :
+
+1. **rendre conditionnels les deux `PATCH` de convergence du seed**, pour qu'ils ne s'exécutent que
+   si la valeur diffère. Cela ne suffit pas : sur un rejeu, `prospection` est bien sur la copie, la
+   section 4 la ramène bien au global, et la valeur **diffère** réellement. Le geste resterait
+   nécessaire et resterait refusé ;
+2. **faire déplacer les cards par le seed** avant de repointer le channel, puis les ramener. C'est
+   écrire à la main ce que `CRM-045` doit livrer, dans un seed, sans garde ni événement — soit
+   exactement le « geste fabriqué » que `CLAUDE.md` §8 proscrit.
+
+Aucune des deux ne tranche l'arbitrage ci-dessous ; elles le contourneraient. Le comportement de
+`CRM-032` et de `CRM-033` reste donc **inchangé**, et la contradiction reste visible.
+
+**Conséquence à ne pas perdre de vue :** tant que la règle n'est pas arbitrée, le seed ne peut pas
+démontrer une card sur un **workflow dérivé**. La divergence de `CRM-032` reste donc démontrée par
+ses étapes et ses transitions, jamais par une card qui les emprunterait.
+
 **Arbitrage attendu du responsable.** Trois options :
 
 1. **confirmer la règle** et l'inscrire dans `docs/SPEC-channels.md` — le changement de workflow

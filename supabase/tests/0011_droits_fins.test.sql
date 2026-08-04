@@ -561,12 +561,14 @@ select ok(not has_table_privilege('anon', 'public.channel_members', 'INSERT'),
 -- rouge le jour où `CRM-040` livrera `cards` et écrira la quatrième fonction, et forcera
 -- l'extension des preuves plutôt que leur silence.
 
-select hasnt_function('app', 'can_read_card', array['uuid'],
-	'INC-013 : `app.can_read_card` reste différée — `cards` arrive à `CRM-040`. Cette assertion '
-	'doit devenir rouge à ce moment-là');
+-- RÉVISÉES À `CRM-040`, converties et non retirées : les deux sont devenues rouges exactement
+-- comme cette suite l'annonçait, et le report a pris fin avec sa cause.
+select has_function('app', 'can_read_card', array['uuid'],
+	'INC-013 ÉTEINTE : `app.can_read_card` est livrée par `CRM-040`. La quatrième et dernière des '
+	'fonctions différées ; ses preuves de comportement vivent dans 0012_cards.test.sql §8');
 
-select hasnt_table('public', 'cards',
-	'`cards` n''existe pas encore : c''est la raison, et la seule, du report ci-dessus');
+select has_table('public', 'cards',
+	'`cards` existe : c''était la raison, et la seule, du report — elle a disparu avec lui');
 
 select * from finish();
 rollback;

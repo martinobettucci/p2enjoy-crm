@@ -384,23 +384,35 @@ else
 	fail "la contrainte \`NOT NULL\` a disparu : INC-029 était soldée par \`CRM-033\`"
 fi
 
-titre "6. INC-031 : la garde d'archivage reste hors d'atteinte, et son absence est vérifiée"
+titre "6. INC-031 : la garde d'archivage est écrite, et sa présence est vérifiée"
 
-# Ce contrôle est l'inverse d'un contrôle ordinaire : il constate que quelque chose **manque**
-# toujours. Le jour où `CRM-040` livrera `cards`, il tombera — et c'est ce qu'on lui demande.
+# Ce contrôle était l'inverse d'un contrôle ordinaire : il constatait que quelque chose **manquait**
+# toujours, et disait « le jour où `CRM-040` livrera `cards`, il tombera — et c'est ce qu'on lui
+# demande ». Il est tombé. RÉVISÉ À `CRM-040`, avec le code (décision 51) : il exige désormais la
+# présence de la cible et de la garde. Son COMPORTEMENT est éprouvé par
+# `scripts/verify-cards.sh` et par `supabase/tests/0012_cards.test.sql` §9 — ce harnais-ci
+# appartient aux workflows, et se borne à constater que la garde a bien été écrite.
 cards=$(psql_db -c "select coalesce(to_regclass('public.cards')::text, 'NULL');")
-if [ "$cards" = "NULL" ]; then
-	ok "INC-031 : \`cards\` n'existe toujours pas — la garde reste sans cible, \`CRM-040\` la doit"
+if [ "$cards" = "public.cards" ] || [ "$cards" = "cards" ]; then
+	ok "INC-031 : \`cards\` est livrée par \`CRM-040\` — le chemin de la garde est complet"
 else
-	fail "INC-031 : \`cards\` existe désormais — la garde d'archivage doit être écrite"
+	fail "INC-031 : \`cards\` introuvable (« $cards ») alors que \`CRM-040\` la déclare livrée"
 fi
 
 triggers=$(psql_db -c "select count(*) from pg_trigger
                         where tgrelid = 'public.workflow_nodes_catalog'::regclass
                           and not tgisinternal;")
-[ "$triggers" = "2" ] \
-	&& ok "toujours deux triggers sur le catalogue : aucun ne prétend porter la garde" \
-	|| fail "triggers du catalogue : $triggers, attendu 2"
+[ "$triggers" = "3" ] \
+	&& ok "trois triggers sur le catalogue : \`updated_at\`, \`position\`, et la garde d'archivage" \
+	|| fail "triggers du catalogue : $triggers, attendu 3"
+
+garde=$(psql_db -c "select count(*) from pg_trigger
+                     where tgrelid = 'public.workflow_nodes_catalog'::regclass
+                       and not tgisinternal
+                       and tgname = 'workflow_nodes_catalog_refuser_archivage_occupe';")
+[ "$garde" = "1" ] \
+	&& ok "et la garde est NOMMÉE, non déduite d'un comptage (décision 111)" \
+	|| fail "la garde d'archivage d'un nœud occupé est absente — INC-031"
 
 titre "7. Contrat d'API, avec les jetons réels (docs/SPEC-workflow-engine.md §3.8)"
 

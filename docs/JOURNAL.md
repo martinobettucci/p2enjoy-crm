@@ -4129,3 +4129,99 @@ fournie par le client — « généré » signifie que la valeur ne vient pas de
 jour**, il ne fait rien, et la colonne reste modifiable : cette protection est nommément la
 Definition of Done de `CRM-013`, unité `[ ]` distincte. L'écart est figé par une assertion plutôt
 que corrigé au passage, ce qui rouvrirait une unité que ce chunk ne traite pas (`CLAUDE.md` §13).
+
+---
+
+## 2026-08-04 — `CRM-040`, suite : l'objet métier existe, et il fait tomber ce qui l'attendait
+
+Le code, ses preuves et ses conséquences. Trois constats méritent d'être écrits, parce qu'aucun
+n'était prévu au moment de la spécification.
+
+### Décision 113 — Une erreur de la spécification, trouvée par sa propre preuve de non-complaisance
+
+`docs/SPEC-cards.md` §6.1 affirmait, dans le commit documentaire : « Le `WITH CHECK` de la mise à
+jour n'est pas une redondance. Sans lui, un appelant ayant le droit d'écriture sur le channel A
+pourrait déplacer une card **vers** le channel B. »
+
+La règle est juste. La conclusion ne l'était pas, et c'est la **dégradation b** de
+`scripts/verify-cards.sh` qui l'a dit : elle retirait le `WITH CHECK` et attendait que le
+déplacement passe. Il n'est pas passé. MESURÉ ensuite sur une politique sonde `for update` écrite
+sans `with check` :
+
+```
+WITH CHECK ABSENT — PostgreSQL réutilise le USING
+```
+
+`pg_get_expr(polwithcheck, …)` rend `NULL`, et le moteur **réutilise le `USING`** pour juger la
+nouvelle ligne. Omettre la clause ne rouvre donc rien.
+
+**Ce qui est retenu.** La clause est **conservée** — elle rend la règle lisible sans connaître ce
+détail du moteur, et elle protège d'une réécriture ultérieure qui donnerait au `USING` une
+expression plus large que celle voulue à l'arrivée. Mais le fait qu'elle soit **redondante** est
+écrit, dans la spécification comme dans la migration, plutôt que laissé à croire.
+
+Et la dégradation change de forme : elle rend le `WITH CHECK` **permissif** (`with check (true)`)
+au lieu de le retirer. Retirer une clause qui ne change rien est une dégradation **complaisante** —
+elle produit un « OK » sans rien avoir dégradé, et rien ne le signale. C'est exactement ce que la
+non-complaisance d'un harnais est censée empêcher, et il aura fallu qu'un harnais se trompe pour
+qu'on l'apprenne.
+
+### Décision 114 — Le seed ne posera aucune card dans `prospection`, et le motif est mesuré, pas supposé
+
+INC-046 annonçait, au moment de la spécification, un risque théorique : un channel occupé ne change
+plus de workflow. Le risque s'est réalisé **immédiatement**, sur le seul objet du projet qui
+l'exerce.
+
+`prospection` est le seul channel que le seed **repointe** : la section 4 le ramène au workflow
+global déclaré, la section 7 le rattache à la copie de portée track livrée par `CRM-032`. MESURÉ,
+une card posée dans ce channel puis le seed rejoué :
+
+```
+ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
+  {"code":"23503", "details":"Key (id, workflow_id)=(…31, 244bbfc6-…) is still referenced
+   from table \"cards\"", …}
+exit=1
+```
+
+Contre-épreuve mesurée, et elle compte autant : une card dans `grands-comptes`, channel dont le
+workflow ne change jamais, laisse le seed **vert**, code de sortie `0`. Le conflit est donc
+exactement celui qu'INC-046 décrit, et pas un effet de bord plus large.
+
+**Deux corrections étaient possibles, toutes deux écartées.**
+
+1. **Rendre conditionnels les deux `PATCH` du seed**, pour qu'ils ne s'exécutent que si la valeur
+   diffère. Cela ne suffit pas : sur un rejeu, `prospection` est bien sur la copie, la section 4 la
+   ramène bien au global, et la valeur **diffère** réellement. Le geste resterait nécessaire et
+   resterait refusé.
+2. **Faire déplacer les cards par le seed** avant de repointer, puis les ramener. C'est écrire à la
+   main ce que `CRM-045` doit livrer, dans un seed, sans garde ni événement — le « geste fabriqué »
+   que `CLAUDE.md` §8 proscrit.
+
+**Retenu :** aucune card dans `prospection`, le motif écrit en `docs/SPEC-cards.md` §9.1, l'écart
+figé par une assertion, et l'arbitrage laissé au responsable. Le prix est nommé : le seed ne peut
+pas démontrer une card sur un **workflow dérivé**. La démonstration que cette card portait — la
+réouverture d'un channel par un droit fin — est reprise **ailleurs et mieux**, par le scénario *n*
+de `e2e/api/cards.spec.ts`, où c'est le `viewer` lui-même qui écrit.
+
+### Décision 115 — Une assertion figée peut devenir plus forte que ce qu'elle remplaçait
+
+Sept assertions écrites par des unités précédentes pour **devenir rouges** ce jour-là l'ont fait.
+Aucune n'a été retirée ; toutes ont été **retournées**, ce qui est le mécanisme habituel de la
+décision 51. Deux méritent d'être signalées, parce que la révision les a rendues **plus fortes** que
+l'assertion d'origine.
+
+`0006` et `0007` comptaient les triggers du catalogue — « exactement deux, aucun ne prétend porter la
+garde ». Un comptage prouve une absence ; il prouve mal une présence, puisqu'un troisième trigger
+quelconque le satisferait. La révision compte donc **trois** triggers **et nomme le troisième** :
+`has_trigger(… 'workflow_nodes_catalog_refuser_archivage_occupe')`. Même mouvement dans
+`scripts/verify-catalogue.sh`, qui ne se contente plus de constater la présence de la garde : il
+**l'exerce**, archive un nœud occupé, exige le refus, et relit le nœud pour le constater actif.
+
+La garde d'INC-013 dans `scripts/verify-authz.sh` a suivi le même chemin, en sens inverse : elle
+**créait** une fonction que la suite devait refuser ; elle **retire** désormais celle que la suite
+exige. L'intention est inchangée — la suite doit dénoncer l'écart entre le produit et ses preuves —,
+seul le sens a suivi le produit.
+
+Une limite figée par une assertion ne se contente donc pas de survivre à sa cause : elle est
+l'occasion, le jour où elle tombe, d'écrire une preuve meilleure que celle qu'on aurait écrite sans
+elle.

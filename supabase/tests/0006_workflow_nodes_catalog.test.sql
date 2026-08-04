@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(79);
+select plan(80);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §2.2
@@ -126,19 +126,24 @@ select ok(
 	  and to_regclass('public.workflow_steps') is not null,
 	'INC-031 : `workflows` et `workflow_steps` existent depuis `CRM-031` — la moitié du chemin de '
 	'la garde d''archivage est désormais praticable');
-select hasnt_table('public', 'cards',
-	'INC-031 : `cards` n''existe toujours pas — `CRM-040`. Sans elle, « un nœud occupé » n''est '
-	'pas une propriété calculable, et la garde reste sans cible');
+select has_table('public', 'cards',
+	'INC-031 : `cards` est livrée par `CRM-040` — le chemin de la garde d''archivage est complet, '
+	'et la garde est écrite (décision 111)');
 
--- La garde n'est pas livrée, et son absence est vérifiée nommément : personne ne doit pouvoir
--- croire qu'elle existe parce qu'un trigger porte un nom voisin.
+-- RÉVISÉE À `CRM-040`. Cette assertion comptait les triggers pour que personne ne puisse croire
+-- que la garde existait parce qu'un trigger portait un nom voisin. Elle est devenue rouge dès que
+-- la garde a été écrite : elle compte désormais TROIS triggers, et NOMME le troisième — ce qui est
+-- une preuve plus forte que le comptage seul.
 select is(
 	(select count(*)::int from pg_trigger
 	  where tgrelid = 'public.workflow_nodes_catalog'::regclass and not tgisinternal),
-	2,
-	'exactement deux triggers — `updated_at` et `position`. Aucune garde d''archivage : elle est '
-	'différée, pas oubliée. `CRM-031` ne l''a pas écrite non plus — la limiter à l''occupation par '
-	'une étape serait plus strict que la règle du §2.6 (INC-031)');
+	3,
+	'exactement trois triggers — `updated_at`, `position`, et la garde d''archivage livrée par '
+	'`CRM-040` (INC-031, décision 111)');
+select has_trigger('public', 'workflow_nodes_catalog',
+	'workflow_nodes_catalog_refuser_archivage_occupe',
+	'et le troisième est bien la garde attendue depuis `CRM-030`, nommée et non déduite. Son '
+	'comportement est prouvé par supabase/tests/0012_cards.test.sql §9');
 
 -- =============================================================================================
 -- 3. Fixtures

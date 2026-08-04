@@ -25,8 +25,8 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | À livrer |
-| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | À livrer |
+| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré, sans écran** — voir le chapitre 4 ci-dessous. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. Ce qui manque est l'écran, et la **fiche** elle-même — les réponses au formulaire relèvent de `CRM-036` |
+| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | À livrer. **Débloqué** : la garde attendait les affaires, qui existent depuis `CRM-040` |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037` | À livrer |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | À livrer |
@@ -38,7 +38,7 @@
 |---|---|---|---|
 | 10 | Connecter sa boîte de réception (IMAP) | `CRM-052` | À livrer |
 | 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053` | À livrer |
-| 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-054` | À livrer |
+| 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire et non devinable (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement | `CRM-055`, `CRM-057` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
 | 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | À livrer |
@@ -101,14 +101,14 @@ serveur, et une personne administratrice peut le gérer. Mais l'application n'a 
 de connexion**. Elle interroge donc le serveur sans compte, et le serveur ne consent rien à un
 visiteur anonyme — ce qu'elle vous dit, au lieu d'afficher une page blanche.
 
-Le catalogue de nœuds et les workflows n'ont d'ailleurs **aucun écran du tout**, connexion ou non.
-Ce qui est livré est la mécanique : le vocabulaire des états, le graphe des déplacements permis, le
-refus de tout déplacement qui n'y figure pas, la **copie** d'un workflow vers un track avec la
-mémoire de son origine — chapitre 21 —, la garantie qu'un channel ne peut suivre **que** le workflow
-général de l'espace de travail ou celui de son propre track — chapitre 22 —, et, depuis le
-chapitre 23, le **formulaire** attaché à un workflow : les questions posées à propos d'une affaire et
-le moment où chacune est affichée ou exigée. Les écrans viendront avec l'éditeur du chapitre 20,
-lui-même suspendu à l'écran de connexion.
+Le catalogue de nœuds, les workflows et **les affaires elles-mêmes** n'ont d'ailleurs **aucun écran
+du tout**, connexion ou non. Ce qui est livré est la mécanique : le vocabulaire des états, le graphe
+des déplacements permis, le refus de tout déplacement qui n'y figure pas, la **copie** d'un workflow
+vers un track avec la mémoire de son origine — chapitre 21 —, la garantie qu'un channel ne peut
+suivre **que** le workflow général de l'espace de travail ou celui de son propre track —
+chapitre 22 —, le **formulaire** attaché à un workflow — chapitre 23 —, et, depuis le chapitre 4,
+**l'affaire** : l'objet autour duquel tout le reste s'organise. Les écrans viendront avec l'éditeur
+du chapitre 20 et le tableau du chapitre 5, l'un et l'autre suspendus à l'écran de connexion.
 
 Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
 qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.
@@ -244,6 +244,78 @@ En cas de panne du serveur, l'application **réessaie trois fois** avant d'affic
 message peut donc mettre quelques secondes à apparaître.
 
 ---
+
+## 4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
+
+*Livrée par `CRM-040`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir §3.2.*
+
+L'**affaire** — appelée *card* dans le produit — est l'objet autour duquel tout le CRM s'organise :
+une opportunité, un dossier, un projet. Elle vit dans un onglet (channel), à une étape du workflow
+que cet onglet suit, et c'est à elle que se rattacheront les commentaires, les documents et les
+échanges de messagerie.
+
+### 4.1 Ce qu'une affaire porte
+
+| Ce que vous renseignez | Ce que cela sert |
+|---|---|
+| Un **titre** | Il ne peut pas être vide ni composé d'espaces |
+| Une **description** | Texte libre |
+| Un **responsable** | Une personne de l'espace de travail. Facultatif : une affaire peut attendre d'être attribuée |
+| Un **montant** et une **devise** | La devise s'écrit en trois lettres majuscules — `EUR`, `CHF`. La valeur par défaut est `EUR` |
+| Une **probabilité** | Facultative, entre 0 et 100. Sans elle, celle de l'étape s'applique |
+| Une **prochaine action** et son **échéance** | Ce qui alimentera la vue « Ma journée » |
+
+Deux valeurs sont posées pour vous et ne se saisissent pas : l'**étape courante**, qui vient de
+l'onglet où l'affaire naît, et l'**adresse email** ci-dessous.
+
+### 4.2 L'adresse email de l'affaire
+
+Chaque affaire reçoit à sa création une **adresse email qui lui est propre**, de la forme
+`c-3p55qdgw@…`. Elle est tirée au hasard sur un espace d'environ mille milliards de possibilités :
+une adresse divulguée ne permet donc pas de deviner celles des autres affaires.
+
+Vous ne la choisissez pas, et une valeur que vous fourniriez serait ignorée — c'est ce qui garantit
+qu'aucune adresse ne soit devinable. Elle servira, à partir du chapitre sur la messagerie, à
+rattacher automatiquement à l'affaire tout message qui lui est envoyé.
+
+### 4.3 Archiver n'est pas supprimer
+
+Une affaire a **deux** façons de quitter votre vue, et elles ne veulent pas dire la même chose.
+
+| Geste | Ce que cela signifie | Réversible |
+|---|---|---|
+| **Archiver** | Le dossier est clos, et vous le conservez | Oui |
+| **Mettre à la corbeille** | C'était une erreur de saisie, vous l'effacez | Oui |
+
+Aucune suppression définitive n'existe : le produit n'en expose aucune, à personne, pas même à une
+administratrice. Ce qu'il appelle « supprimer » est toujours une date posée sur la ligne, que l'on
+peut retirer.
+
+**Une affaire archivée ou en corbeille n'occupe plus son étape.** C'est ce qui permet d'archiver un
+état du catalogue (chapitre 20) une fois que toutes les affaires qui s'y trouvaient ont été closes.
+À l'inverse, un état qu'une affaire **active** occupe encore ne peut pas être archivé : le produit
+refuse, plutôt que de faire disparaître une colonne du tableau sous les affaires qu'elle contient.
+
+### 4.4 Qui peut faire quoi
+
+- **Voir** les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par
+  channel du §3.2 *quater* s'appliquent **dès la première affaire** : une restriction `Aucun accès`
+  masque les affaires comme elle masque l'onglet, et un accès `Membre` posé sur un onglet les rouvre
+  même si le track est fermé.
+- **Créer et modifier** une affaire suppose le droit d'**écriture** sur l'onglet. Une personne en
+  lecture seule voit les affaires et ne peut pas les toucher — et sa tentative ne produit aucun
+  message d'erreur : la modification n'a simplement aucun effet.
+- **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
+  vous aviez le droit d'écrire là où elle se trouvait.
+
+### 4.5 Ce qui n'est pas encore livré
+
+- **Le tableau et la vue liste** : aucun écran n'affiche encore les affaires.
+- **Le déplacement encadré d'une étape à l'autre.** Le graphe du chapitre 22 dit quels déplacements
+  sont permis ; ce qui les **fait respecter** n'est pas encore livré. Aujourd'hui, seule une
+  garantie tient : l'étape choisie doit appartenir au workflow de l'affaire.
+- **Les commentaires, l'historique et les documents.**
+- **Le score de santé** : la colonne existe, rien ne l'alimente.
 
 ## Règles de rédaction de ce manuel
 

@@ -558,6 +558,13 @@ par une preuve de substitution.
 ### CRM-013 — Colonnes protégées `[ ]`
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables
 directement ; `card_events` et `audit_log` en écriture par trigger uniquement.
+
+- [ ] **PARTIELLEMENT DÉBLOQUÉE PAR `CRM-040`.** Deux de ses six cibles existent désormais :
+      `cards.current_step_id` et `cards.email_local_part`, toutes deux **modifiables**, ce que deux
+      assertions de `supabase/tests/0012_cards.test.sql` §11 constatent explicitement et qui
+      deviendront rouges quand cette unité sera livrée. Les quatre autres — `mail_inbound_accounts`,
+      `mail_outbound_identities`, `api_tokens`, `card_events`, `audit_log` — restent absentes
+      (chunks 4 et 5).
 **DoD** : preuves de refus n° 5, 6 et 8 ; test explicite qu'une lecture refusée retourne **zéro
 ligne** et non une erreur ambiguë.
 
@@ -1914,9 +1921,134 @@ Champs par étape, section repliée des valeurs d'autres étapes, mention « req
 **DoD** : E2E (transition bloquée, saisie, transition réussie) ; captures de chaque étape ;
 accessibilité des erreurs vérifiée.
 
-### CRM-040 — Cards `[ ]`
+### CRM-040 — Cards `[~]`
 CRUD, adresse email générée, responsable, montant, archivage, corbeille.
 **DoD** : pgTAP sur la génération et l'unicité de `email_local_part` ; E2E ; captures.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-cards.md` : aucun document ne décrivait
+      cette table au-delà du tableau de colonnes de `docs/SCHEMA.md` §5 — ni ce qu'une adresse de
+      card doit à sa non-devinabilité, ni comment le workspace, le workflow et l'étape sont tenus
+      cohérents, ni ce qu'un refus rend. Rédigée **après mesure** sur la pile réelle — quatre sondes
+      créées puis détruites, `to_regclass('public.sonde_c4')` rendant `NULL` —, avec un contrat
+      d'API de **vingt-quatre lignes** écrit avant le code pour être mesuré et non supposé. Commit
+      documentaire dédié, poussé avant la première ligne de SQL.
+- [x] **L'unité choisie est la première du plan dont toutes les dépendances existent.** Les quatre
+      unités `[ ]` que `docs/MASTER_PLAN.md` §2 place avant elle ont été examinées et MESURÉES
+      infaisables : `CRM-013` vise six tables dont **aucune** n'existe, `CRM-014` dix scénarios sur
+      douze, `CRM-034` n'a aucune part livrable (INC-043), `CRM-036` est une table fille de `cards`.
+      **Aucune contrainte d'ordre de `docs/MASTER_PLAN.md` §2 n'est enfreinte.**
+- [x] `supabase/migrations/0011_cards.sql` : la table, **trois clés étrangères composites**, deux
+      triggers, cinq index, trois politiques, les privilèges, `app.can_read_card`, et la garde
+      d'archivage d'un nœud occupé.
+- [x] **Trois clés composites plutôt que trois triggers** (décision 109). Conséquence non
+      anticipée : la troisième livre **la vérification n° 3 des six de `move_card`** — « l'étape
+      cible appartient au workflow de la card » —, que `CRM-034` n'aura pas à écrire, et qui vaut
+      aussi pour un `PATCH` direct qu'aucune garde applicative ne verrait passer.
+- [x] **INC-013 est close** : `app.can_read_card` est livrée, quatrième et dernière des fonctions
+      différées. Elle n'est **pas** employée par les politiques de `cards` (décision 110) : une
+      politique qui relirait sa propre table ferait rendre `403` à toute création — le défaut réel
+      trouvé par `CRM-012` sur `tracks` (décision 107), évité avant d'être payé une seconde fois.
+- [x] **INC-031 est close** : la garde d'archivage d'un nœud occupé est écrite (décision 111).
+      L'arbitrage n'avait pas été rendu ; deux faits l'ont réduit à une seule issue tenable, et
+      **deux harnais livrés par des unités précédentes l'exigeaient nommément** — leur message
+      d'échec disait « si `cards` existe, la garde d'archivage doit être écrite ».
+- [x] **UNE CONSÉQUENCE ÉMERGENTE, MESURÉE, ET QUI N'EST ÉCRITE NULLE PART — INC-046.** La clé
+      `cards (channel_id, workflow_id)` rend **refusé** le changement de workflow d'un channel qui
+      porte au moins une card. Règle défendable, que nulle spécification n'énonce. **Elle atteint le
+      seed du projet** : MESURÉ, une card dans `prospection` — le seul channel que le seed repointe —
+      le fait échouer **en section 4**, code de sortie `1`. Contre-épreuve mesurée : une card dans
+      `grands-comptes` laisse le seed vert. Le comportement de `CRM-032` et de `CRM-033` reste
+      **inchangé** ; le seed ne pose aucune card dans `prospection`, et le motif est écrit en
+      `docs/SPEC-cards.md` §9.1 plutôt que tu.
+- [x] **UNE ERREUR DE LA SPÉCIFICATION, TROUVÉE PAR SA PROPRE PREUVE DE NON-COMPLAISANCE.** Le §6.1
+      annonçait que le `WITH CHECK` de la politique de mise à jour était indispensable. La
+      dégradation du harnais l'a retiré… et le refus a tenu. MESURÉ sur une politique sonde :
+      `pg_get_expr(polwithcheck, …)` rend `NULL` et PostgreSQL **réutilise le `USING`**. La
+      spécification est corrigée, la clause conservée pour la lisibilité, et la dégradation rend
+      désormais le `WITH CHECK` **permissif** — le retirer était une dégradation complaisante que
+      rien n'aurait signalée.
+- [x] **Test unitaire dédié** : `supabase/tests/0012_cards.test.sql`, **88 assertions, aucune
+      anomalie** — forme de la table, contraintes de valeur, les trois clés composites dans les
+      **deux** sens, génération et unicité de l'adresse, `position` dans sa portée, colonne générée,
+      index, politiques éprouvées avec les rôles réels des comptes seedés, `app.can_read_card`
+      éprouvée **directement**, la garde d'archivage dans ses trois cas, conformité du seed, et les
+      écarts figés par des assertions.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/cards.spec.ts`, **24 scénarios**, avec
+      les jetons réels des trois profils seedés. Les vingt-quatre lignes du contrat d'API du §8.1 y
+      sont rejouées, chaque refus de mise à jour **relisant la ligne** pour la constater inchangée.
+- [x] **Preuves de refus n° 4 et n° 11 acquises au niveau des cards** : `access = 'none'` sur le
+      track → zéro card dans ses channels ; anonyme → zéro ligne. Le refus est mesuré comme **zéro
+      ligne**, jamais comme une erreur — et la table est d'abord constatée **non vide** avec la clé
+      de service, sans quoi l'assertion serait verte que la RLS refuse ou qu'elle autorise tout.
+- [x] **Seed repris dans le même changement** : neuf cards sur quatre channels et trois tracks, dont
+      une archivée, une en corbeille, une sans responsable ni montant, et deux devises distinctes.
+      **Convergence vérifiée** : le seed rejoué sur une base déjà peuplée reste vert, et les adresses
+      des cards seedées sont **stables** d'un rejeu à l'autre.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération. `npm run test:sql` **878 assertions**, `npm run test:unit` **164 tests**,
+      `npm run e2e:api` **194 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier inchangé et
+      **réellement exécuté**, au prix du contournement récurrent d'INC-036.
+- [x] **Aucune régression** : les harnais précédents rejoués — `verify-stack` 33, `verify-migrations`
+      23, `verify-authz` 26, `verify-seed` 49, `verify-tracks` 43, `verify-channels` 30,
+      `verify-catalogue` 39, `verify-workflows` 49, `verify-copie-workflow` 34,
+      `verify-coherence-workflow` 33, `verify-champs-formulaire` 37, `verify-droits-fins` 42 —,
+      aucune anomalie.
+- [x] Harnais de preuves rejouable `scripts/verify-cards.sh` : **44 contrôles, aucune anomalie**, et
+      **non complaisant, éprouvé par trois dégradations réelles** — politique de lecture ramenée à
+      `is_workspace_member`, `WITH CHECK` rendu permissif, garde d'archivage retirée. Chacune fait
+      passer une opération qui doit être refusée, et la restauration est **constatée**.
+- [x] **Sept assertions figées par des unités précédentes ont échoué comme prévu, et ont été
+      révisées** (mécanisme de la décision 51, dixième occurrence) : dans `0002`, `0006`, `0007`,
+      `0011`, et dans `verify-authz.sh`, `verify-catalogue.sh`, `verify-workflows.sh`. **Aucune n'a
+      été retirée** : chacune est **retournée**, et deux d'entre elles sont désormais plus fortes
+      qu'avant — elles **nomment** la garde au lieu de compter des triggers.
+- [x] `docs/SPEC-cards.md`, `docs/SCHEMA.md` §5 et §9, `docs/SPEC-permissions-rls.md` §3, §3.6 et §4,
+      `docs/SPEC-seed.md` §2.12, `docs/DAT.md` §5, `docs/PROD_MIGRATIONS.md` §3 (migration 11),
+      `docs/manual.md` chapitre 4 et §3.2, `docs/MASTER_PLAN.md` §3, `CHANGELOG.md` mis à jour dans
+      le même changement.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La Definition of Done exige
+      « E2E ; captures ». La webapp reste un appelant **anonyme** faute d'écran de connexion —
+      **INC-021, en attente d'arbitrage** —, et une card est par construction invisible à un
+      anonyme : il n'existe **aucune** vérification visuelle sensée à produire tant que l'arbitrage
+      n'est pas rendu. Les règles sont livrées et prouvées **en base et par l'API**, ce que
+      `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
+      défaut de l'unité.**
+- [ ] **La protection de colonne de `current_step_id` et d'`email_local_part` n'est pas livrée.**
+      C'est mot pour mot la Definition of Done de `CRM-013`, unité `[ ]` distincte, désormais
+      **partiellement débloquée** — deux de ses six cibles existent. Le trigger **génère** l'adresse ;
+      il ne la protège pas en mise à jour. L'écart est **figé par deux assertions** de la suite
+      pgTAP, qui deviendront rouges à `CRM-013`.
+- [ ] **Aucune card sur un workflow dérivé dans le seed** — INC-046 (voir ci-dessus). La divergence
+      de `CRM-032` reste donc démontrée par ses étapes et ses transitions, jamais par une card qui
+      les emprunterait.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur la génération et
+l'unicité de `email_local_part` ; E2E ; captures ». La première est livrée, largement au-delà — la
+génération, l'unicité, la valeur du client ignorée, et le fait que ce soit l'**index** et non la
+boucle qui garantisse. **Les deux dernières n'existent pas**, faute d'écran, et l'absence est nommée
+plutôt que compensée par une preuve de substitution.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Dixième unité consécutive à buter sur INC-021.
+- **`move_card` n'existe pas** : `current_step_id` s'écrit directement par un `PATCH`, et une card
+  peut franchir une transition non déclarée. La seule garde qui tienne aujourd'hui est structurelle —
+  l'étape doit appartenir au workflow de la card. `CRM-034` est désormais **débloquée** : sa cible
+  existe.
+- **`health_score` et `snoozed_until` sont livrées et jamais alimentées** : aucun ordonnanceur
+  n'existe, aucune unité n'en porte. `entered_step_at` est renseignée à la création et sa remise à
+  zéro appartient à `move_card`.
+- **`amount` n'est pas contraint en signe** : refuser les négatifs est une décision de produit que
+  personne n'a prise, et l'absence est **figée par une assertion** (docs/SPEC-cards.md §10).
+- **Aucune purge de la corbeille** : toute rétention est une décision de conformité, arbitrage
+  attendu.
+- **La recherche est monolingue** — `to_tsvector('french', …)`.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Quatre contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, image `webapp` construite avec le certificat du proxy
+  (INC-032, INC-042), `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de
+  compatibilité des navigateurs Playwright (INC-036, **quatrième** occurrence).
 
 ### CRM-041 — Board kanban `[ ]`
 Colonnes par étape, glisser-déposer appelant `move_card`, menu des transitions déclarées,

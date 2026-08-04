@@ -52,7 +52,7 @@ Déclarées `SECURITY DEFINER`, `search_path` fixé, accordées à `authenticate
 | `app.can_read_track(track uuid)` | droit de lecture effectif sur le track, droits fins appliqués | `CRM-012` (§3.3) |
 | `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel, droits fins appliqués | `CRM-012` (§3.3) |
 | `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel | `CRM-012` (§3.3) |
-| `app.can_read_card(card uuid)` | dérivé du channel de la card | **différée** — `cards` arrive à `CRM-040` (INC-013) |
+| `app.can_read_card(card uuid)` | dérivé du channel de la card | `CRM-040` (§3.6) — INC-013 close |
 
 Ces fonctions existent pour deux raisons : éviter la **récursion** des politiques (une politique
 sur `workspace_members` qui interrogerait `workspace_members`), et garder les politiques lisibles
@@ -158,6 +158,28 @@ Les fonctions `can_*` du §3.3 conservent leur signature à un seul identifiant 
 aux appelants qui n'ont que lui — une garde RPC, un test — et délèguent à celles-ci. Ce sont deux
 usages distincts, et les confondre est précisément ce qui a produit le défaut.
 
+### 3.6 `app.can_read_card`, livrée par `CRM-040`, et qu'aucune politique de `cards` n'appelle
+
+```
+app.can_read_card(card uuid) → boolean
+  = coalesce((select app.can_read_channel(c.channel_id) from public.cards c where c.id = card), false)
+```
+
+`SECURITY DEFINER`, `STABLE`, `search_path` vidé, `EXECUTE` accordé à `anon`, `authenticated` et
+`service_role` pour le motif du §3.2.
+
+**Les politiques de `cards` ne l'appellent pas**, et c'est la règle du §3.5 appliquée avant d'être
+payée une seconde fois : une politique qui appellerait `app.can_read_card(id)` relirait `cards`, et
+une fonction `STABLE` ne voit pas la ligne que l'instruction en cours vient d'écrire — le
+`RETURNING` d'un `INSERT` étant soumis à la politique `SELECT`, **toute création de card rendrait
+`403`**. C'est exactement le défaut trouvé par `CRM-012` sur `tracks` (décision 107). Les politiques
+de `cards` jugent donc sur `channel_id`, **colonne de la ligne jugée**.
+
+Ses appelants sont les tables **filles** — `card_comments` (`CRM-043`), `card_field_values`
+(`CRM-036`), `card_events` (`CRM-044`), `mail_messages` (`CRM-054`) et les politiques de Storage
+(§5) —, qui ne disposent que d'un `card_id`. Livrer une fonction sans usage immédiat est assumé et
+dit ; la suite pgTAP l'éprouve **directement**.
+
 ## 4. Politiques par famille de tables
 
 | Table | Lecture | Écriture |
@@ -172,7 +194,7 @@ usages distincts, et les confondre est précisément ce qui a produit le défaut
 | `workflow_nodes_catalog` | Membres du workspace — **livré par `CRM-030`** avec `app.is_workspace_member`, qui **est** la règle spécifiée et non un repli : aucun droit fin ne gouverne le catalogue | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-workflow-engine.md` §2.6) |
 | `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace — **livré par `CRM-031`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un workflow | `admin` ; **la suppression est exposée aux étapes et aux transitions**, et à elles seules — elles sont la composition d'un workflow et n'ont aucun `archived_at` (`docs/SPEC-workflow-engine.md` §3.7, `docs/JOURNAL.md` décision 74). Un workflow, lui, s'archive |
 | `form_fields`, `form_field_rules` | Membres du workspace — **livré par `CRM-035`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un formulaire, qui appartient à un workflow | `admin` ; **la suppression est exposée aux règles**, et à elles seules — un champ porte `archived_at` et l'archivage tient lieu de suppression, une règle est la composition d'un formulaire (`docs/SPEC-form-composer.md` §2.7, `docs/JOURNAL.md` décision 96) |
-| `cards` | `app.can_read_card` | `app.can_write_channel` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement** |
+| `cards` | `app.can_read_channel(channel_id)` — **la colonne de la ligne, non `app.can_read_card`** (§3.6) | `app.can_write_channel(channel_id)` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement : dû par `CRM-013`, non livré par `CRM-040`** |
 | `card_field_values` | Lecture de la card | Écriture sur le channel |
 | `card_comments` | Lecture de la card | Écriture sur le channel ; modification et suppression réservées à l'auteur et aux `admin` |
 | `card_activities` | Lecture de la card | Écriture sur le channel |
@@ -324,6 +346,6 @@ d'erreur ne prouve rien.
    `CRM-012` ne les écrit pas : son objet est le droit fin par track et par channel, et se les
    attribuer trancherait INC-014 à la place du responsable. Ces trois tables restent en refus par
    défaut. **Arbitrage attendu**, `docs/INCONSISTENCY_REPORT.md` INC-014.
-4. **`app.can_read_card`** reste différée : `cards` arrive à `CRM-040`. Le motif d'INC-013 est
-   éteint pour les trois autres fonctions, dont les tables existent ; il subsiste pour celle-là
-   seule.
+4. **`app.can_read_card` est livrée par `CRM-040`**, et **INC-013 est close**. Les quatre fonctions
+   existent. Voir §3.6 pour la raison — mesurée — qui l'empêche d'être employée par les politiques
+   de `cards` elles-mêmes.

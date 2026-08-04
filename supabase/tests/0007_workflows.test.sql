@@ -135,20 +135,20 @@ select has_function('app', 'workflow_steps_attribuer_position',
 -- 2. Les écarts figés par des assertions
 -- =============================================================================================
 -- INC-031 : la garde d'archivage d'un nœud occupé traverse `workflow_steps` — livrée ici — et
--- `cards`, qui ne l'est pas. La moitié du chemin existe désormais ; l'assertion sur `cards`
--- deviendra rouge à `CRM-040` et forcera l'écriture de la garde (décision 51).
+-- `cards`. Les deux assertions qui suivent ont été écrites pour devenir rouges le jour où `cards`
+-- arriverait ; elles l'ont fait à `CRM-040`, et sont RÉVISÉES ici plutôt que retirées (décision 51).
+-- La garde existe désormais, et son comportement est prouvé par
+-- supabase/tests/0012_cards.test.sql §9 — cette suite se borne à constater qu'elle a été écrite.
 
-select hasnt_table('public', 'cards',
-	'INC-031 : `cards` n''existe toujours pas — `CRM-040`. Sans elle, « un nœud occupé » n''est '
-	'pas une propriété calculable, et la garde d''archivage reste sans cible');
+select has_table('public', 'cards',
+	'INC-031 : `cards` est livrée par `CRM-040`, et le chemin de la garde d''archivage est complet');
 
 select is(
 	(select count(*)::int from pg_trigger
 	  where tgrelid = 'public.workflow_nodes_catalog'::regclass and not tgisinternal),
-	2,
-	'INC-031 : toujours exactement deux triggers sur le catalogue — `updated_at` et `position`. '
-	'`CRM-031` n''a pas écrit la garde d''archivage : la limiter à l''occupation par une étape '
-	'serait plus strict que la règle spécifiée');
+	3,
+	'INC-031 : trois triggers sur le catalogue — `updated_at`, `position`, et la garde d''archivage '
+	'que `CRM-040` a écrite en même temps que sa cible (décision 111)');
 
 -- INC-029 : la clé étrangère est livrée, la contrainte `NOT NULL` ne l'est pas — elle change le
 -- contrat de création d'un channel et revient à `CRM-033`.

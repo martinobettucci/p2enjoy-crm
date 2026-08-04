@@ -15,6 +15,63 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-040` — les cards : l'objet métier principal existe enfin.**
+  `supabase/migrations/0011_cards.sql`, `docs/SPEC-cards.md`.
+  - **La table `public.cards`** : titre, description, responsable, montant et devise, probabilité de
+    surcharge, prochaine action et échéance, position fractionnaire, archivage, corbeille, et une
+    colonne générée `search_tsv` indexée en GIN. Cinq index, dont l'unicité **globale** de l'adresse.
+  - **Trois clés étrangères composites plutôt que trois triggers** (décision 109) : une card ne peut
+    mentir ni sur son workspace, ni sur le workflow de son channel, ni sur l'appartenance de son
+    étape à ce workflow. La troisième livre **gratuitement la vérification n° 3 des six de
+    `move_card`**, que `CRM-034` n'aura pas à écrire.
+  - **L'adresse email de la card est générée** — `c-<8 caractères base32 Crockford>`, environ
+    1,1 × 10¹² possibilités —, et une valeur fournie par le client est **ignorée et remplacée**. La
+    boucle de réessai du trigger ne garantit rien : c'est l'index unique qui garantit, et le §3.3 de
+    la spécification le dit explicitement (décision 112).
+  - **`app.can_read_card` est livrée, et INC-013 est close** — la quatrième et dernière des fonctions
+    d'autorisation différées. Elle n'est **pas** employée par les politiques de `cards`, qui jugent
+    sur `channel_id`, colonne de la ligne : une politique qui relirait sa propre table ferait rendre
+    `403` à toute création (décision 110, leçon de la décision 107). Ses appelants sont les tables
+    filles à venir.
+  - **Les droits fins s'appliquent dès la première card** : contrairement à `tracks` et à `channels`,
+    cette table naît avec `app.can_read_channel` et `app.can_write_channel` dans ses politiques.
+    INC-024 et INC-030 n'ont pas d'équivalent ici.
+  - **La garde d'archivage d'un nœud occupé est écrite, et INC-031 est close** (décision 111). Un
+    nœud du catalogue qu'une card **active** occupe ne peut plus être archivé (`42501`,
+    `node_occupied`) ; une card archivée ou en corbeille n'occupe rien. Deux harnais livrés par des
+    unités précédentes l'exigeaient nommément.
+  - **Archiver et mettre à la corbeille sont deux gestes distincts**, tous deux réversibles. Aucun
+    privilège `DELETE` n'est accordé, à personne.
+  - **Seed** : neuf cards, dont une archivée, une en corbeille et une sans responsable ni montant,
+    sur quatre channels et trois tracks.
+  - **Preuves** : `supabase/tests/0012_cards.test.sql` **88 assertions** ; `e2e/api/cards.spec.ts`
+    **24 scénarios** avec les jetons réels des trois profils seedés ; `scripts/verify-cards.sh`
+    **44 contrôles**, éprouvé par trois dégradations réelles.
+
+### Corrigé
+
+- **`docs/SPEC-cards.md` §6.1 rectifié avant d'être publié** : le `WITH CHECK` d'une politique
+  `for update` y était présenté comme indispensable. MESURÉ sur une politique sonde, il ne l'est
+  pas — PostgreSQL **réutilise le `USING`** lorsque `with check` est omis. La clause est conservée
+  pour la lisibilité, le fait qu'elle soit redondante est écrit, et la dégradation du harnais la rend
+  **permissive** plutôt que de la retirer : la retirer ne dégradait rien et rendait la preuve
+  complaisante sans que rien ne le signale.
+
+### Modifié
+
+- **Sept assertions figées par des unités précédentes ont échoué comme prévu, et ont été révisées**
+  (mécanisme de la décision 51, dixième occurrence) : dans `0002`, `0006`, `0007` et `0011`, ainsi
+  que dans `scripts/verify-authz.sh`, `scripts/verify-catalogue.sh` et `scripts/verify-workflows.sh`.
+  **Aucune n'a été retirée** : chacune est **retournée** — de « la fonction est absente » à « la
+  fonction est livrée », de « deux triggers » à « trois triggers, et le troisième est nommé », et la
+  dégradation d'INC-013 crée désormais l'inverse de ce qu'elle créait.
+- **`e2e/api/coherence-workflow.spec.ts` K4 révisé, et dédoublé** : sur un channel **occupé**, c'est
+  désormais la clé de `cards` qui refuse d'abord un workflow introuvable. Un second scénario, sur un
+  channel vide, conserve la preuve d'origine de `CRM-033`.
+- **`scripts/verify-coherence-workflow.sh`, dégradation a** : elle visait un channel du seed devenu
+  occupé, et mesurait donc la clé de `CRM-040` au lieu du trigger de `CRM-033`. Elle porte désormais
+  sur un channel **jetable**, créé pour elle et détruit aussitôt.
+
 - **`CRM-012` — les droits fins par track et par channel deviennent opposables.**
   `supabase/migrations/0010_droits_fins.sql`.
   - **Trois des quatre fonctions `can_*`** que `docs/SPEC-permissions-rls.md` §3 annonçait depuis

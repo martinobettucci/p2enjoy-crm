@@ -477,6 +477,31 @@ son comportement reste inchangé — INC-037, arbitrage attendu du responsable, 
 est **compté** par les preuves plutôt que passé sous silence : la source porte sept champs, la copie
 zéro.
 
+### 2.12 Cards — ajoutées par `CRM-040`
+
+Neuf cards, réparties sur **quatre** channels et **trois** tracks, à cinq étapes distinctes du
+workflow global. Le détail du contrat vit dans `docs/SPEC-cards.md` §9, qui est la référence ; ce
+chapitre ne retient que ce qui engage le seed.
+
+- **Sept actives, une archivée, une en corbeille.** Les deux suppressions douces de
+  `docs/SPEC-cards.md` §4 sont donc démontrées par des données réelles, non seulement décrites.
+- **Une card sans responsable et sans montant**, pour que le caractère nullable d'`owner_id` et
+  d'`amount` soit exercé.
+- **Deux devises distinctes**, sans quoi le défaut de colonne `EUR` serait la seule valeur jamais
+  observée.
+- **`email_local_part` n'est jamais envoyé** par le seed : il est généré par le trigger de la
+  migration 11. Il est donc **stable d'un rejeu à l'autre**, la branche de mise à jour d'un `upsert`
+  ne touchant que les colonnes envoyées. Un contrôle de `scripts/verify-cards.sh` le constate.
+- **AUCUNE card dans `prospection`**, et le motif est mesuré : c'est le seul channel que le seed
+  **repointe** — section 4 vers le workflow global, section 7 vers la copie de portée track —, et la
+  clé composite de `CRM-040` refuse ce déplacement dès qu'une card l'occupe. MESURÉ : le seed échoue
+  alors **en section 4**, code de sortie `1`, `23503`. Contre-épreuve mesurée : une card dans
+  `grands-comptes` laisse le seed vert. INC-046, arbitrage attendu, `docs/SPEC-cards.md` §9.1.
+
+Ce que le seed **ne** démontre **pas**, et qui est nommé plutôt que compensé : aucune card sur un
+**workflow dérivé**, pour la raison ci-dessus ; aucune valeur de formulaire, `card_field_values`
+arrivant à `CRM-036` ; aucun événement de timeline, `card_events` arrivant à `CRM-044`.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

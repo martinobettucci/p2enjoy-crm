@@ -340,6 +340,49 @@ REGLES=(
 	'5eed0000-0000-4000-8000-000000000086|5eed0000-0000-4000-8000-000000000063|visible'
 )
 
+# Cards de démonstration — docs/SPEC-cards.md §9, docs/SPEC-seed.md §2.12.
+#
+# Neuf cards, réparties sur quatre channels et trois tracks, à cinq étapes distinctes du workflow
+# global. Chaque état du cycle de vie est représenté par une donnée réelle : sept actives, **une
+# archivée**, **une en corbeille**. Sans ces deux dernières, les deux suppressions douces de
+# `docs/SPEC-cards.md` §4 seraient documentées sans être démontrables, ce que `CLAUDE.md` §8 refuse.
+#
+# AUCUNE CARD DANS `prospection`, ET LE MOTIF EST MESURÉ — INC-046, docs/SPEC-cards.md §9.1.
+# `prospection` est le seul channel que ce seed **repointe** : la section 4 le ramène au workflow
+# global déclaré, la section 7 le rattache ensuite à la copie de portée track. La clé étrangère
+# composite `cards (channel_id, workflow_id)` de `CRM-040` refuse ce déplacement dès qu'une card y
+# vit. MESURÉ : une card dans `prospection` puis ce seed rejoué échoue **en section 4**, code de
+# sortie 1, `23503`. Contre-épreuve mesurée : une card dans `grands-comptes`, channel dont le
+# workflow ne change jamais, laisse le seed vert. La réouverture d'un channel par droit fin reste
+# démontrée — mieux — par `e2e/api/cards.spec.ts`, où le `viewer` crée lui-même une card dans
+# `prospection` avant de la retirer.
+#
+# `email_local_part` n'est **jamais** envoyé : il est généré par le trigger de la migration 0011 et
+# ne doit pas venir du client (docs/SPEC-cards.md §3.4). Il reste donc **stable d'un rejeu à
+# l'autre**, la branche `merge-duplicates` ne mettant à jour que les colonnes envoyées.
+#
+# `position` est écrite explicitement, pour le même motif que les tracks, les channels, les nœuds,
+# les étapes et les champs : un ordre attribué par effet de bord ne serait pas reproductible si
+# l'ordre des insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les
+# scénarios d'API.
+#
+# `owner_id`, `amount`, `next_action` et `next_action_at` sont envoyés **null** lorsque le contrat
+# dit « - », et non omis : un rejeu convergent doit ramener la ligne à son état déclaré, y compris
+# pour effacer une valeur posée à la main.
+#
+# id | channel | étape | titre | responsable | montant | devise | position | prochaine action | échéance | archivage | corbeille
+CARDS=(
+	'5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000062|Refonte du site vitrine|5eed0000-0000-4000-8000-000000000012|48000.00|EUR|1|Relancer la DSI après la démo|2026-08-12T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000062|Migration ERP Sogexia|5eed0000-0000-4000-8000-000000000012|125000.00|EUR|2|Obtenir le cadrage technique|2026-08-20T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000061|Audit sécurité applicative|5eed0000-0000-4000-8000-000000000011|15500.00|EUR|1|Premier appel de qualification|2026-08-07T14:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000063|Refonte intranet Ville de Lyon|5eed0000-0000-4000-8000-000000000012|72000.00|EUR|1|Négocier le lot accessibilité|2026-08-18T10:30:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c5|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Support niveau 2 — Atelier Meunier|5eed0000-0000-4000-8000-000000000013|9600.00|EUR|1|Confirmer le périmètre d’astreinte|2026-08-25T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c6|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000061|Piste entrante à qualifier|-|-|EUR|1|-|-|-|-'
+	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000064|Formation Data & IA — promo 2026|5eed0000-0000-4000-8000-000000000011|28000.00|CHF|2|Faire signer la convention|2026-08-10T08:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c8|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Contrat cadre 2025|5eed0000-0000-4000-8000-000000000011|96000.00|EUR|1|-|-|2026-03-31T16:00:00Z|-'
+	'5eed0000-0000-4000-8000-0000000000c9|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000061|Saisie erronée|5eed0000-0000-4000-8000-000000000011|-|EUR|2|-|-|-|2026-04-02T11:00:00Z'
+)
+
 # --- Accès à l'API -----------------------------------------------------------------------------
 
 CORPS=$(mktemp)
@@ -849,6 +892,63 @@ info "Droits fins : ${#DROITS_FINS[@]} — une ligne par situation de la matrice
 info "Farida Nowak (viewer) ne voit plus « Conseil & IA », mais voit « Prospection » : le droit"
 info "de channel rouvre ce que le droit de track ferme. Camille Aubert (admin) voit tout."
 
+# --- 8 ter. Cards — docs/SPEC-cards.md §9 ------------------------------------------------------
+# Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
+# convergente sur la clé primaire.
+#
+# Cette section vient **après** la copie de la section 7, et l'ordre n'est pas indifférent : la
+# section 4 puis la section 7 repointent toutes deux le `workflow_id` de `prospection`, geste que la
+# clé composite de `CRM-040` refuse dès qu'une card occupe ce channel (INC-046). Aucune card n'y est
+# posée, et les huit autres vivent dans des channels dont le workflow ne bouge jamais — le seed
+# reste donc convergent, ce qui est vérifié en le rejouant.
+#
+# `workflow_id` vaut `$WF_ID` — le workflow **global** — pour les neuf cards, et le contrat ne le
+# répète pas ligne à ligne : les quatre channels employés le suivent tous. Le seul channel qui
+# porte la copie de portée track est `prospection`, qui n'en reçoit aucune. Si une card devait un
+# jour y vivre, cette valeur ne serait plus correcte et la clé composite le dirait — en `23503`,
+# jamais en silence.
+
+echo
+say "8 ter. Cards"
+
+for ligne in "${CARDS[@]}"; do
+	IFS='|' read -r id channel etape titre owner montant devise position action echeance archive corbeille <<< "$ligne"
+
+	[ "$owner"     = '-' ] && owner_json='null'     || owner_json=$(jq -nc --arg v "$owner" '$v')
+	[ "$montant"   = '-' ] && montant_json='null'   || montant_json=$montant
+	[ "$action"    = '-' ] && action_json='null'    || action_json=$(jq -nc --arg v "$action" '$v')
+	[ "$echeance"  = '-' ] && echeance_json='null'  || echeance_json=$(jq -nc --arg v "$echeance" '$v')
+	[ "$archive"   = '-' ] && archive_json='null'   || archive_json=$(jq -nc --arg v "$archive" '$v')
+	[ "$corbeille" = '-' ] && corbeille_json='null' || corbeille_json=$(jq -nc --arg v "$corbeille" '$v')
+
+	charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg ch "$channel" --arg wf "$WF_ID" \
+	               --arg etape "$etape" --arg titre "$titre" --arg devise "$devise" \
+	               --argjson position "$position" --argjson owner "$owner_json" \
+	               --argjson montant "$montant_json" --argjson action "$action_json" \
+	               --argjson echeance "$echeance_json" --argjson archive "$archive_json" \
+	               --argjson corbeille "$corbeille_json" \
+	     '{id: $id, workspace_id: $ws, channel_id: $ch, workflow_id: $wf, current_step_id: $etape,
+	       title: $titre, owner_id: $owner, amount: $montant, currency: $devise,
+	       position: $position, next_action: $action, next_action_at: $echeance,
+	       created_by: "5eed0000-0000-4000-8000-000000000011",
+	       archived_at: $archive, deleted_at: $corbeille}')
+
+	code=$(api POST /rest/v1/cards \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la card ${titre:0:28}" 200 201
+
+	if   [ "$corbeille" != '-' ]; then etat='corbeille'
+	elif [ "$archive"   != '-' ]; then etat='archivée'
+	else                               etat='active'
+	fi
+	printf '  %-36s %-10s %s\n' "${titre:0:36}" "$etat" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
+done
+
+info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille — docs/SPEC-cards.md §9"
+info "Aucune dans « prospection » : la clé composite de CRM-040 refuse que le seed y repointe le"
+info "workflow tant qu'une card l'occupe — INC-046, mesuré, docs/SPEC-cards.md §9.1."
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -873,6 +973,7 @@ info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIO
 info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
+info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille, sur quatre channels — docs/SPEC-cards.md §9"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut : aucune unité ne porte leurs politiques (INC-014)."
@@ -880,8 +981,11 @@ info "Les droits fins sont OPPOSABLES depuis CRM-012 : le viewer ne voit que 3 d
 info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps, workflow_transitions,"
 info "form_fields et form_field_rules sont lisibles par un membre du workspace, et par lui seul"
 info "(CRM-020, CRM-021, CRM-030, CRM-031, CRM-035)."
+info "cards applique les droits fins DÈS SA PREMIÈRE LIGNE (CRM-040) : le viewer ne voit aucune"
+info "card de « Grands comptes », dont le track lui est fermé. Aucune card dans « Prospection » :"
+info "INC-046, docs/SPEC-cards.md §9.1."
 info "workflow_derivations expose la divergence d'une copie, en lecture seule (CRM-032)."
 info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
 info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-workflow.sh"
-info "champs de formulaire : scripts/verify-champs-formulaire.sh"
+info "champs de formulaire : scripts/verify-champs-formulaire.sh — cards : scripts/verify-cards.sh"

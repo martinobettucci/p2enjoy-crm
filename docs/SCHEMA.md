@@ -418,6 +418,17 @@ Index GIN sur `value` pour les filtres des vues sauvegardées.
 afin qu'une adresse divulguée ne permette pas d'énumérer les autres cards. L'adresse complète
 est `email_local_part || '@' || workspaces.inbound_domain`.
 
+**Livrée par `CRM-040`** — voir `docs/SPEC-cards.md`. Trois précisions que le tableau ci-dessus ne
+porte pas, et qui sont opposables :
+
+- `created_at` et `updated_at` s'ajoutent, comme pour toute table métier (« Conventions
+  générales » ; troisième occurrence d'INC-025) ;
+- la cohérence workspace / workflow / étape est tenue par **trois clés étrangères composites** et
+  non par des triggers (décision 109). L'une d'elles a une conséquence non spécifiée : le workflow
+  d'un channel **occupé** ne peut plus changer — INC-046, arbitrage attendu ;
+- l'alphabet base32 retenu est celui de **Crockford en minuscules**, `0123456789abcdefghjkmnpqrstvwxyz`,
+  et la forme est tenue par un `CHECK`, non seulement par le trigger qui la produit.
+
 ### `card_comments`
 
 | Colonne | Type | Contraintes |
@@ -635,7 +646,7 @@ File d'envoi persistante.
 | `app.resolve_access(ws_role, track_access, channel_access)` | Algorithme « le plus spécifique gagne » de `docs/SPEC-permissions-rls.md` §2.2, appliqué à trois valeurs déjà lues. Rend `none`, `read` ou `write`. Fonction pure : `IMMUTABLE`, `SECURITY INVOKER` | livrée (`CRM-010`) |
 | `app.can_read_track(track)` / `app.can_read_channel(ch)` / `app.can_write_channel(ch)` | Droit effectif après application des droits fins : lecture de la ligne par jointures **externes**, puis `app.resolve_access`, enveloppé dans `coalesce(…, false)`. `SECURITY DEFINER`, `search_path` vide — sans quoi la politique de `tracks` s'interrogerait elle-même et épuiserait la pile (`54001`, mesuré) | livrées (`CRM-012`) |
 | `app.track_workspace(track)` / `app.channel_workspace(ch)` | Workspace propriétaire, `NULL` si l'objet n'existe pas. Support des politiques de `track_members` et `channel_members`, qui ne portent pas `workspace_id` (INC-011) | livrées (`CRM-012`) |
-| `app.can_read_card(card)` | Droit effectif sur une card, dérivé de son channel | **différée** — `cards` arrive à `CRM-040` (INC-013) |
+| `app.can_read_card(card)` | Droit effectif sur une card, dérivé de son channel | **livrée** par `CRM-040` — INC-013 close. Destinée aux tables **filles** : les politiques de `cards` jugent sur `channel_id` (décision 110) |
 | `move_card(card_id, to_step_id, comment)` | **Garde centrale** : droit d'écriture, transition déclarée, champs requis renseignés | à livrer (`CRM-034`) |
 | `copy_workflow_to_track(workflow_id, track_id, new_name)` | Copie tracée d'un workflow global vers un track : étapes, arêtes remappées par le nœud, lignage renseigné. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Quatre refus : `workflow_not_found`, `forbidden`, `workflow_not_global`, `track_not_found` (docs/SPEC-workflow-engine.md §4.3) | livrée (`CRM-032`) |
 | `move_card_to_channel(card_id, channel_id, step_mapping)` | Changement de channel avec remappage explicite des étapes |

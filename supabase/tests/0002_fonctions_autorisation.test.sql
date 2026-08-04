@@ -530,9 +530,13 @@ select has_function('app', 'can_read_channel', array['uuid'],
 select has_function('app', 'can_write_channel', array['uuid'],
 	'INC-013 éteinte pour elle : `app.can_write_channel` est livrée par CRM-012');
 
--- Celle-ci reste due, et pour la raison d'origine : `cards` n'existe pas.
-select hasnt_function('app', 'can_read_card', array['uuid'],
-	'INC-013 : `app.can_read_card` non livrée — `cards` arrive avec CRM-040');
+-- RÉVISÉE À `CRM-040`, convertie et non retirée — deuxième passage du même mécanisme sur cette
+-- assertion. La quatrième fonction est livrée maintenant que `cards` existe, et **INC-013 est
+-- entièrement éteinte**. Son comportement est prouvé par
+-- `supabase/tests/0012_cards.test.sql` §8, directement : aucune politique ne l'appelle, la
+-- politique de `cards` jugeant sur `channel_id` pour ne pas relire sa propre table (décision 110).
+select has_function('app', 'can_read_card', array['uuid'],
+	'INC-013 ÉTEINTE : `app.can_read_card` est livrée par CRM-040, avec `cards`');
 
 select * from finish();
 

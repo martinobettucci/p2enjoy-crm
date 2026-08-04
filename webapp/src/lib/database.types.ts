@@ -20,6 +20,130 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cards: {
+        Row: {
+          amount: number | null
+          archived_at: string | null
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          current_step_id: string
+          deleted_at: string | null
+          description: string | null
+          email_local_part: string
+          entered_step_at: string
+          health_score: number | null
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          owner_id: string | null
+          position: number
+          probability_override: number | null
+          search_tsv: unknown
+          snoozed_until: string | null
+          title: string
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          amount?: number | null
+          archived_at?: string | null
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          current_step_id: string
+          deleted_at?: string | null
+          description?: string | null
+          email_local_part: string
+          entered_step_at?: string
+          health_score?: number | null
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_id?: string | null
+          position: number
+          probability_override?: number | null
+          search_tsv?: unknown
+          snoozed_until?: string | null
+          title: string
+          updated_at?: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number | null
+          archived_at?: string | null
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          current_step_id?: string
+          deleted_at?: string | null
+          description?: string | null
+          email_local_part?: string
+          entered_step_at?: string
+          health_score?: number | null
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_id?: string | null
+          position?: number
+          probability_override?: number | null
+          search_tsv?: unknown
+          snoozed_until?: string | null
+          title?: string
+          updated_at?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cards_channel_id_workflow_id_fkey"
+            columns: ["channel_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "cards_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "cards_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cards_current_step_id_workflow_id_fkey"
+            columns: ["current_step_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "cards_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_members: {
         Row: {
           access: string

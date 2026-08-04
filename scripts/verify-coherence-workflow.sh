@@ -345,16 +345,32 @@ fi
 titre "7. Non-complaisance : le harnais échoue-t-il quand le produit se dégrade ?"
 
 # a. Le trigger de `channels` retiré : la porte 1 doit se rouvrir.
+#
+# RÉVISÉ À `CRM-040`. Cette dégradation visait `CH_REFONTE`, channel du seed. `CRM-040` y a posé une
+# card, et sa clé étrangère composite `cards (channel_id, workflow_id)` refuse désormais tout
+# changement de workflow d'un channel occupé — MESURÉ, `409` / `23503`, INC-046. La dégradation ne
+# mesurait donc plus le trigger, mais cette clé : elle rendait le harnais **faussement rouge** sur
+# une garantie qui tient toujours.
+#
+# Elle porte désormais sur un channel JETABLE, créé pour elle dans un autre track et détruit
+# aussitôt. C'est plus juste que de viser un channel du seed : la dégradation n'a jamais eu besoin
+# d'une donnée de démonstration, seulement d'un channel dont le track diffère de celui de la copie.
+CH_JETABLE=aaaa0000-0000-4000-8000-0000000000d1
+psql_db -c "insert into public.channels (id, workspace_id, track_id, name, slug, workflow_id,
+                                         position)
+            values ('$CH_JETABLE', '$WS_SEED', '$TRACK_STUDIO', 'Dégradation a',
+                    'tst-crm033-degradation-a', '$WF_GLOBAL', 99)
+            on conflict (id) do nothing;" >/dev/null
 psql_db -c "drop trigger channels_verifier_workflow on public.channels;" >/dev/null
 COPIE=$(psql_db -c "select id from public.workflows
                      where derived_from_workflow_id = '$WF_GLOBAL' limit 1;")
-code=$(patch "channels?id=eq.$CH_REFONTE" "{\"workflow_id\":\"$COPIE\"}")
+code=$(patch "channels?id=eq.$CH_JETABLE" "{\"workflow_id\":\"$COPIE\"}")
 if [ "$code" = "204" ]; then
 	ok "dégradation a : trigger retiré, un workflow \`track\` étranger passe — le contrôle de la "\
 "porte 1 aurait échoué"
-	psql_db -c "update public.channels set workflow_id = '$WF_GLOBAL' where id = '$CH_REFONTE';" \
-		>/dev/null
+	psql_db -c "delete from public.channels where id = '$CH_JETABLE';" >/dev/null
 else
+	psql_db -c "delete from public.channels where id = '$CH_JETABLE';" >/dev/null
 	fail "dégradation a : le refus est encore opposé sans le trigger ($code) — la garantie vient "\
 "d'ailleurs"
 fi

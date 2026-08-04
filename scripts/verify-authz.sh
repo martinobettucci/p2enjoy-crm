@@ -444,15 +444,18 @@ verifier_mutation "EXECUTE retiré à anon sur is_workspace_member" \
 verifier_mutation "politique permissive ajoutée sur workspaces" \
 	"create policy tst_permissive on public.workspaces for select to authenticated using (true);"
 
-# RÉVISÉ À `CRM-012`. Cette garde créait `app.can_read_track` pour vérifier que la suite `0002`
-# refuserait une des quatre fonctions différées apparue sans que ses preuves soient étendues. Les
-# trois fonctions de track et de channel sont livrées depuis `CRM-012` : la mutation ne s'applique
-# plus, la fonction existant déjà. Elle est **reportée sur la seule qui reste différée**,
-# `app.can_read_card`, dont la suite `0002` constate toujours l'absence (INC-013). L'intention est
-# identique, la cible a suivi le produit.
-verifier_mutation "can_read_card créée sans étendre les preuves (garde INC-013)" \
-	"create function app.can_read_card(card uuid) returns boolean language sql stable
-	   security definer set search_path = '' as 'select true';"
+# RÉVISÉ UNE SECONDE FOIS, À `CRM-040`. La garde d'origine créait une des quatre fonctions
+# différées par INC-013 pour vérifier que la suite `0002` la refuserait, apparue sans que ses
+# preuves soient étendues. `CRM-012` l'avait déjà reportée de `can_read_track` sur `can_read_card`,
+# seule encore différée. **INC-013 est désormais entièrement éteinte** : les quatre fonctions sont
+# livrées, et la mutation ne s'applique plus — MESURÉ, `function "can_read_card" already exists`.
+#
+# Elle est donc **retournée**, comme la décision 51 le fait des assertions figées : au lieu de
+# créer une fonction que la suite doit refuser, on **retire** celle que la suite exige désormais, et
+# l'on vérifie que `0002` tombe. L'intention est inchangée — la suite doit dénoncer l'écart entre le
+# produit et ses preuves —, seul le sens de la dégradation a suivi le produit.
+verifier_mutation "can_read_card retirée après sa livraison (garde INC-013, retournée)" \
+	"drop function app.can_read_card(uuid);"
 
 # --- Bilan -------------------------------------------------------------------------------------
 

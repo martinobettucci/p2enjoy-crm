@@ -157,6 +157,21 @@ Un résultat vide signifie qu'aucun accès n'est modifié. Sinon, chaque ligne r
 confirmée avec le responsable du workspace concerné : un droit fin posé « pour plus tard » à une
 époque où il ne produisait aucun effet deviendrait actif sans que personne l'ait décidé.
 
+| 11 | `supabase/migrations/0011_cards.sql` | Table `public.cards` — l'objet métier principal —, ses **trois clés étrangères composites** (cloisonnement, workflow du channel, étape du workflow), le trigger de génération de `email_local_part` (`c-<8 base32 Crockford>`, non devinable), le trigger d'attribution de `position` dans la portée `(channel, étape)`, la colonne générée `search_tsv` et **cinq index** dont l'unicité globale de l'adresse, **trois politiques RLS** appliquant les droits fins dès la première ligne, `app.can_read_card` (dernier point d'INC-013), et la **garde d'archivage d'un nœud occupé** du catalogue qu'INC-031 attendait depuis `CRM-030`. Ajoute au passage à `public.channels` deux unicités **redondantes** — `channels_id_workspace_id_key` et `channels_id_workflow_id_key` — sans lesquelles les clés composites sont refusées à la création. | Migrations 1 à 10 : `public.workspaces`, `public.profiles`, `public.channels`, `public.workflows`, `public.workflow_steps`, `public.workflow_nodes_catalog` et les fonctions `app.can_read_channel` / `app.can_write_channel` doivent exister. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER** : la clé `cards_channel_id_workflow_id_fkey` rend **refusé** tout changement de `channels.workflow_id` sur un channel qui porte au moins une card (`23503`). Règle non spécifiée, consignée en INC-046 — arbitrage attendu. Aucune ligne n'existe sur les bases du projet hors du seed. | `drop table public.cards cascade;` puis `drop function app.can_read_card(uuid), app.cards_generer_email_local_part(), app.cards_attribuer_position(), app.catalogue_refuser_archivage_noeud_occupe();` et `alter table public.channels drop constraint channels_id_workflow_id_key, drop constraint channels_id_workspace_id_key;` — **destructif dès la première mise en service** : il détruit toutes les affaires du workspace. Il exige une sauvegarde préalable. Retirer le trigger d'archivage rouvre en outre l'archivage d'un nœud occupé, ce qui ferait disparaître une colonne de board sous ses cards. |
+
+**Ce que la migration 11 ajoute au contrat d'exploitation.** Deux points, à lire avant de
+l'appliquer sur une base déjà en service :
+
+1. **Un channel occupé ne change plus de workflow.** C'est la conséquence structurelle de la clé
+   composite `cards (channel_id, workflow_id)`, et la règle n'a été décidée par personne — INC-046.
+   Contrôle à exécuter **avant** application, sur la base cible : si des cards existent déjà et
+   qu'une opération d'exploitation prévoit de repointer le workflow d'un channel, elle deviendra
+   impossible sans vider ce channel.
+2. **La garde d'archivage d'un nœud du catalogue devient active.** Un nœud qu'une card **active**
+   occupe ne peut plus être archivé (`42501`, `node_occupied`). Une card archivée ou en corbeille
+   n'occupe rien. Une procédure d'exploitation qui archivait des nœuds en masse doit donc être
+   revue.
+
 **Ce que la migration 10 ne fait pas, et qui reste dû.** Elle n'écrit **aucune** politique sur
 `public.profiles`, `public.workspaces` et `public.workspace_members` : ces trois tables restent en
 refus par défaut depuis la migration 1, et aucune unité du backlog ne porte leurs politiques

@@ -364,10 +364,21 @@ passée un jour, ce qui viderait la garde de son sens.
 
 Aucune politique `for delete`, aucun privilège `DELETE`.
 
-**Le `WITH CHECK` de la mise à jour n'est pas une redondance.** Sans lui, un appelant ayant le droit
-d'écriture sur le channel A pourrait déplacer une card **vers** le channel B où il n'a rien à faire :
-le `USING` juge la ligne **avant** modification, le `WITH CHECK` la juge **après**. Les deux sont
-nécessaires, et l'écart entre les deux est prouvé par un scénario dédié.
+**Le `WITH CHECK` de la mise à jour est écrit explicitement, et il est pourtant redondant —
+mesuré.** Le raisonnement d'origine était que sans lui, un appelant ayant le droit d'écriture sur le
+channel A pourrait déplacer une card **vers** le channel B où il n'a rien à faire : le `USING` juge
+la ligne **avant** modification, le `WITH CHECK` la juge **après**.
+
+La règle est juste, la conclusion ne l'était pas. MESURÉ sur une politique sonde `for update`
+écrite **sans** `with check` : `pg_get_expr(polwithcheck, …)` rend `NULL`, et PostgreSQL
+**réutilise le `USING`** pour juger la nouvelle ligne. L'omettre ne rouvre donc rien.
+
+La clause est **conservée**, pour deux raisons, et le fait qu'elle soit redondante est écrit plutôt
+que tu : elle rend la règle lisible sans connaître ce détail du moteur, et elle protège d'une
+réécriture ultérieure qui donnerait au `USING` une expression plus large que celle qu'on veut
+appliquer à la ligne d'arrivée. La preuve de non-complaisance du harnais rend donc le `WITH CHECK`
+**permissif** — `with check (true)` — plutôt que de le retirer : le retirer ne dégraderait rien, et
+la dégradation serait complaisante sans que rien ne le signale.
 
 **Les prédicats lisent la colonne de la ligne, jamais la card par son identifiant.** C'est la règle
 générale écrite au §3.5 de `docs/SPEC-permissions-rls.md` après le défaut trouvé par `CRM-012`
@@ -517,24 +528,51 @@ seule dénomination stable : `prospection`, `relance`, `negociation`, `signature
 | Refonte du site vitrine | `conseil-ia` / `grands-comptes` | `relance` | active | Le cas nominal, avec responsable et montant |
 | Migration ERP Sogexia | `conseil-ia` / `grands-comptes` | `relance` | active | Deux cards dans la **même** colonne : l'ordre `position` |
 | Audit sécurité applicative | `conseil-ia` / `grands-comptes` | `prospection` | active | Une autre colonne du même board |
-| Accompagnement IA générative | `conseil-ia` / `prospection` | `prospection` | active | Le channel que le **droit fin rouvre** pour le `viewer`, et le **workflow dérivé** du track |
 | Refonte intranet Ville de Lyon | `studio-web` / `refonte` | `negociation` | active | Un second track, donc un second board |
 | Support niveau 2 — Atelier Meunier | `studio-web` / `maintenance` | `prospection` | active | Le channel en **lecture seule** pour le `business_developer` |
 | Piste entrante à qualifier | `formation` / `inter-entreprises` | `prospection` | active | **Sans responsable, sans montant** : le caractère nullable d'`owner_id` et d'`amount`, démontré et non seulement écrit |
+| Formation Data & IA — promo 2026 | `formation` / `inter-entreprises` | `signature` | active | Une `currency` autre qu'`EUR`, sans quoi le défaut de colonne serait la seule valeur jamais observée |
 | Contrat cadre 2025 | `conseil-ia` / `grands-comptes` | `livre` | **archivée** | L'archivage, et une card qui **n'occupe plus** son nœud (§5) |
 | Saisie erronée | `conseil-ia` / `grands-comptes` | `prospection` | **en corbeille** | La corbeille, distincte de l'archivage |
 
 Les identifiants sont **stables** — `5eed0000-0000-4000-8000-0000000000c1` à `…c9` —, comme
 `CLAUDE.md` §8 l'exige des données dont les tests dépendent.
 
-**L'étape de « Accompagnement IA générative » ne peut pas être un identifiant stable.** Son channel
-porte le workflow **dérivé** créé par `copy_workflow_to_track` (`CRM-032`), dont les étapes reçoivent
-des identifiants tirés au hasard à chaque application du seed. MESURÉ : les sept étapes du workflow
-« Cycle commercial — Conseil IA » portent des `uuid` sans rapport avec ceux du workflow global. Le
-seed **résout** donc cette étape par sa clé de nœud, ce qui est de toute façon la seule désignation
-que la spécification donne.
+### 9.1 Aucune card dans `prospection`, et le motif est mesuré
 
-Chaque card active hors la septième porte un `owner_id` réel parmi les trois profils, un `amount`,
+Le channel `prospection` est le seul du seed que le workflow **dérivé** de `CRM-032` occupe, et
+c'est aussi celui que le droit fin du `viewer` rouvre. Il aurait été le meilleur candidat pour
+démontrer les deux. Il est pourtant **laissé vide**, et le motif n'est pas un choix esthétique.
+
+MESURÉ, une card posée dans `prospection` puis le seed rejoué : **échec, code de sortie `1`**, dès
+la **section 4** :
+
+```
+ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
+  {"code":"23503","details":"Key (id, workflow_id)=(…31, 244bbfc6-…) is still referenced
+   from table \"cards\"", …}
+```
+
+Le seed **repointe le `workflow_id` de `prospection` deux fois à chaque exécution** : la section 4
+le ramène au workflow global déclaré, la section 7 le rattache ensuite à la copie de portée track.
+La clé composite du §2.4 refuse le premier geste dès qu'une card y vit. Contre-épreuve mesurée :
+une card dans `grands-comptes`, dont le workflow ne change jamais, laisse le seed **vert**, code de
+sortie `0`, zéro erreur.
+
+Ce n'est pas un défaut de la clé, et ce n'est pas un défaut du seed : c'est la **conséquence
+concrète et immédiate** de la règle non décidée d'INC-046, sur le seul objet du projet qui
+l'exerce. Le comportement du seed reste **inchangé** — le corriger supposerait de trancher INC-046,
+ou de rendre conditionnelle une convergence livrée par `CRM-032` et `CRM-033`, dont
+`scripts/verify-copie-workflow.sh` dépend. La démonstration que la card perdue portait est reprise
+**ailleurs, sans rien perdre** : la ligne *n* du contrat du §8.1 fait créer une card dans
+`prospection` par le `viewer` lui-même, ce qui prouve la réouverture par droit fin mieux qu'une
+ligne de seed ne le ferait, puis la retire.
+
+L'écart est **figé par une assertion** de la suite pgTAP, qui constate qu'aucune card ne réside
+dans `prospection` **et** que la clé composite refuse le déplacement. Le jour où l'arbitrage
+d'INC-046 sera rendu, elle le dira.
+
+Chaque card active hors « Piste entrante à qualifier » porte un `owner_id` réel parmi les trois profils, un `amount`,
 une `currency`, une `next_action` et une `next_action_at` — sans quoi la vue « Ma journée » et
 l'index du §2.8 seraient livrés sans aucune donnée pour les exercer. Deux cards portent une
 `currency` autre qu'`EUR`, sans quoi le défaut de colonne serait la seule valeur jamais observée.

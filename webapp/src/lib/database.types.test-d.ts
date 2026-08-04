@@ -39,6 +39,7 @@ type Expect<T extends true> = T
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'cards'
     | 'channel_members'
     | 'channels'
     | 'form_field_rules'
