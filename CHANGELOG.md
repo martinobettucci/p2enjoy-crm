@@ -41,6 +41,38 @@ d'exécuter le code attendu.
 
 ### Documenté
 
+- **`CRM-032` — spécification de la copie d'un workflow vers un track, écrite après mesure et avant
+  tout code.** `docs/SPEC-workflow-engine.md` §4 est réécrit : le chapitre datait de `CRM-000`,
+  tenait en vingt-cinq lignes et n'engageait qu'une signature et une intention. L'algorithme de
+  copie a été appliqué à la main sur la pile réelle dans une transaction annulée, et les codes HTTP
+  relevés contre PostgREST avec le jeton réel de l'administrateur seedé ; sondes créées puis
+  détruites, absence de reste constatée.
+  - **Décision 80 — sur un objet neuf du schéma `public`, révoquer à `public` ne protège rien.**
+    Mesuré : une fonction « protégée » par `revoke all … from public` reste **exécutable par la clé
+    anonyme**, l'image livrant des `ALTER DEFAULT PRIVILEGES` qui accordent nommément à `anon`,
+    `authenticated` et `service_role` l'exécution de toute fonction et **tous** les droits de toute
+    vue nouvelle. Les rôles sont désormais révoqués nommément.
+  - **Décision 81 — le `404` est atteignable, et il est écarté.** Mesuré : `P0001` → `400`,
+    `P0002` → **`500`**, `42501` → `403`, `23505` → `409` ; et un `SQLSTATE` conventionnel `PGRST`
+    permet bien d'imposer `404`. Il est refusé : une fonction SQL qui connaît les codes HTTP de son
+    client cesse d'être portable.
+  - **Décision 82 — un workflow d'un autre workspace rend « introuvable », jamais « interdit ».**
+    La visibilité est vérifiée avant le rôle ; répondre « interdit » confirmerait l'existence de la
+    ligne à qui n'a pas le droit de la connaître.
+  - **Décision 83 — les arêtes sont remappées par le nœud**, clé naturelle d'une étape depuis
+    l'unicité `(workflow_id, node_id)`. Mesuré : zéro arête de la copie ne pointe vers la source ;
+    `is_default` doit être **forcé à faux**, faute de quoi la copie d'un workflow par défaut est
+    refusée en `23505` ; les `position` fractionnaires sont conservées.
+  - **Décision 84 — le signalement de divergence est une vue**, `security_invoker = true`, mesurée
+    soumise à la RLS. Son angle mort est mesuré, non supposé : une **suppression** dans la source
+    ne modifie aucun `updated_at` et n'est donc pas détectée.
+  - **Décision 85 — une copie ne se copie pas** : un workflow déjà de portée `track` est refusé.
+  - **`INC-037` ouverte** : la Definition of Done exige la copie de champs dont la table arrive à
+    `CRM-035`.
+  - **`INC-038` ouverte** : l'angle mort du signal de divergence, avec ses trois options.
+  - **`INC-039` ouverte** : la suppression d'un workspace échoue en `23503` dès qu'un de ses
+    workflows instancie ses nœuds — interaction mesurée entre deux clés étrangères correctes.
+
 - **`CRM-031` — spécification des workflows, écrite après mesure et avant tout code.**
   `docs/SPEC-workflow-engine.md` §3 est réécrit : le chapitre datait de `CRM-000`, tenait en
   vingt-six lignes et n'engageait que l'intention. Trois tables sondes jetables ont été créées sur

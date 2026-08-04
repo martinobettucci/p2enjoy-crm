@@ -1396,10 +1396,27 @@ pilote Playwright, artefact non déterministe déjà relevé lors de l'intégrat
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-032 — Copie d'un workflow vers un track `[ ]`
+### CRM-032 — Copie d'un workflow vers un track `[~]`
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.
 **DoD** : pgTAP (copie complète des étapes, transitions et champs ; lignage renseigné) ; E2E ;
 mention de divergence visible dans l'interface.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §4 réécrit : le
+      chapitre tenait en vingt-cinq lignes, datait de `CRM-000` et n'engageait qu'une signature et
+      une intention. Il ne disait ni qui a le droit de copier, ni ce qu'un refus rend, ni ce qui
+      arrive à `is_default`, ni comment une arête retrouve ses extrémités dans la copie, ni d'où
+      sortirait la date du « modifié depuis ». Rédigé **après mesure** sur la pile réelle — copie
+      appliquée à la main dans une transaction annulée, codes HTTP relevés contre PostgREST avec le
+      jeton réel de l'administrateur, sondes créées puis détruites et l'absence de reste constatée.
+      Commit documentaire dédié.
+- [x] Cinq décisions consignées (`docs/JOURNAL.md`, décisions 80 à 85) et **trois contradictions
+      relevées sans être résolues** : INC-037 (la DoD exige la copie de champs dont la table arrive
+      à `CRM-035`), INC-038 (le signal de divergence ne voit pas une suppression dans la source),
+      INC-039 (la suppression d'un workspace échoue quand un workflow instancie ses nœuds).
+- [ ] Migration, fonction, vue, suite pgTAP, scénarios d'API, harnais, seed : à livrer.
+
+*État réel.* **Spécification seule.** Aucune ligne de code n'est écrite à ce stade ; l'unité reste
+`[~]` et le restera tant que ses preuves ne sont pas produites.
 
 ### CRM-033 — Cohérence workflow ↔ channel `[ ]`
 Trigger : workflow `global` du workspace, ou `track` du track du channel.

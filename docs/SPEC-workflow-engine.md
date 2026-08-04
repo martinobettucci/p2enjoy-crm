@@ -569,31 +569,254 @@ conséquence, elle n'est pas close.
 | Seed | Le workflow du §3.9, ses sept étapes et ses dix transitions, créés par la véritable API REST, convergents ; les six channels rattachés |
 | Interface | **Aucune** — l'éditeur de workflow exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
 
-## 4. Portée et dérivation
+## 4. Portée, copie vers un track et divergence — `CRM-032`
 
 | Portée | `track_id` | Disponible pour |
 |---|---|---|
 | `global` | nul | tous les channels du workspace |
 | `track` | renseigné | uniquement les channels de ce track |
 
-`copy_workflow_to_track(workflow_id, track_id)` duplique un workflow global, ses étapes, ses
-transitions et ses champs de formulaire vers un track, en renseignant `derived_from_workflow_id`
-et `derived_at`.
+Ce chapitre a été **écrit après mesure**, et non de mémoire : l'algorithme de copie a été appliqué
+à la main sur la pile réelle, dans une transaction annulée ; les codes HTTP ont été relevés contre
+PostgREST avec le jeton réel de l'administrateur seedé, au moyen de fonctions sondes créées puis
+détruites, l'absence de reste étant constatée (`pg_proc` vide de toute fonction `sonde*`,
+`to_regclass` nul sur la vue sonde). Les affirmations chiffrées et les codes des §4.3 à §4.8 sont
+ces mesures.
 
-**La copie est une divergence assumée**, conforme au geste demandé : une modification ultérieure
-du workflow global ne se propage pas. L'interface signale la situation — « ce workflow dérive de
-*X*, modifié depuis le *jj/mm/aaaa* » — et propose de comparer, sans jamais réappliquer
-automatiquement.
+### 4.1 Ce que la copie est, et ce qu'elle n'est pas
+
+**La copie est une divergence assumée**, conforme au geste demandé : une modification ultérieure du
+workflow global ne se propage pas. L'interface signale la situation — « ce workflow dérive de *X*,
+modifié depuis le *jj/mm/aaaa* » — et propose de comparer, sans jamais réappliquer automatiquement.
+
+Elle n'est donc **pas** une instanciation, pas un héritage, pas un lien vivant. `CRM-031` a posé la
+clé étrangère `derived_from_workflow_id` en `on delete set null` précisément pour cela : supprimer
+l'original ne doit pas emporter ses copies (§3.2). La copie est un objet neuf qui se souvient d'où
+il vient.
 
 *Écart relevé et assumé* : la convention générale privilégie la surcharge à la duplication
 (`CLAUDE.md` §4). Le responsable a explicitement demandé une copie modifiable. La traçabilité
 d'origine est la contrepartie retenue ; l'écart est consigné dans `docs/JOURNAL.md`.
 
-### Contrainte d'affectation
+### 4.2 Signature
+
+```
+copy_workflow_to_track(workflow_id uuid, track_id uuid, new_name text default null) returns uuid
+```
+
+Elle rend l'identifiant du workflow créé. `new_name` est facultatif : à défaut, la copie reprend le
+nom de sa source. Aucune unicité ne porte sur `workflows.name` — deux workflows homonymes sont
+structurellement valides —, de sorte que le renommage est une **commodité de l'appelant** et non
+une condition de succès. Le nom fourni subit la même contrainte que tout autre : non vide après
+`btrim`.
+
+La fonction est `SECURITY DEFINER`, `search_path` fixé à la chaîne vide, et son privilège
+d'exécution n'est accordé qu'à `authenticated` et `service_role` (§4.7). `SECURITY DEFINER` n'est
+pas ici une facilité : les politiques RLS ne s'appliquent pas au propriétaire des tables, donc
+**c'est la fonction elle-même qui porte la règle d'accès**, par un contrôle explicite (§4.3) — et
+non les politiques, qu'elle contourne par construction.
+
+### 4.3 Vérifications, dans l'ordre, et ce que chacune rend
+
+Chacune lève une exception nommée. Les codes HTTP de la dernière colonne sont **mesurés** contre
+PostgREST `v14.12`, non déduits (§4.4).
+
+| # | Vérification | Message | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | Le workflow existe, est **visible de l'appelant** et n'est pas archivé | `workflow_not_found` | `P0001` | `400` |
+| 2 | L'appelant est **administrateur** du workspace du workflow | `forbidden` | `42501` | `403` |
+| 3 | Le workflow est de portée `global` | `workflow_not_global` | `P0001` | `400` |
+| 4 | Le track existe, appartient au **même workspace** et n'est pas archivé | `track_not_found` | `P0001` | `400` |
+
+**L'ordre des deux premières vérifications est une règle de discrétion, pas un détail
+d'implémentation.** « Visible » signifie `app.is_workspace_member` : un workflow d'un **autre**
+workspace rend `workflow_not_found`, jamais `forbidden`. Répondre « interdit » révélerait qu'il
+existe, à quelqu'un qui n'a pas le droit de le savoir. Un membre non administrateur de **son
+propre** workspace obtient en revanche `forbidden` : il sait déjà que le workflow existe, il le lit
+tous les jours.
+
+**Le contrôle 3 refuse la copie d'un workflow déjà rattaché à un track.** Le §4 d'origine ne parlait
+que de la copie d'un workflow *global*, et cette lecture est retenue : une chaîne de dérivations
+— une copie d'une copie d'une copie — rendrait `derived_from_workflow_id` illisible sans parcourir
+tout l'arbre, et le signalement de divergence du §4.6 devrait alors dire lequel des ancêtres a
+changé. Le besoin n'est pas énoncé ; l'interdire est réversible, l'autoriser ne l'est pas.
+
+### 4.4 Ce que PostgREST fait des `SQLSTATE`, mesuré
+
+Mesuré en appelant une fonction sonde qui ne fait que lever l'exception demandée, avec le jeton réel
+de l'administrateur seedé :
+
+| `SQLSTATE` levé | HTTP rendu |
+|---|---|
+| `P0001` (`raise exception` sans `errcode`) | `400` |
+| `P0002` (`no_data_found`) | **`500`** |
+| `42501` (`insufficient_privilege`) | `403` |
+| `23505` (`unique_violation`) | `409` |
+
+**`P0002` est inutilisable** : le code le plus naturel pour dire « rien ne correspond » est rendu
+comme une **erreur serveur**, ce qui ferait passer une donnée mal désignée par le client pour une
+panne du produit. Les quatre refus du §4.3 emploient donc `P0001` et `42501`, et rien d'autre.
+
+Un `404` **serait** atteignable : PostgREST accepte un `SQLSTATE` conventionnel `PGRST` dont le
+`DETAIL` porte le statut voulu, et la mesure le confirme — `404` rendu, corps JSON conservé. Il est
+**écarté** : il coudrait la base à un serveur d'API particulier, et une fonction SQL qui connaît les
+codes HTTP de son client cesse d'être portable. La décision est consignée (`docs/JOURNAL.md`,
+décision 81) plutôt que laissée au hasard d'une écriture.
+
+**L'appelant anonyme est refusé par le privilège, et rend `401`** — non `403`, mesuré : PostgREST
+traite l'absence de droit d'un appelant non authentifié comme une invitation à s'authentifier. Le
+refus est donc double, privilège puis contrôle explicite, et le premier suffit.
+
+### 4.5 Ce que la copie copie, et comment les arêtes sont remappées
+
+| Objet | Copié | Remarque |
+|---|---|---|
+| `workflows` | nom (ou `new_name`), `workspace_id` | `scope` forcé à `track`, `track_id` renseigné |
+| | `derived_from_workflow_id`, `derived_at` | la traçabilité d'origine, renseignée par la fonction |
+| | `is_default` | **forcé à faux**, jamais copié |
+| | `archived_at` | jamais copié : une copie naît active |
+| `workflow_steps` | `node_id`, `position`, les trois surcharges, `is_initial` | à l'identique |
+| `workflow_transitions` | `label`, `require_comment`, `require_fields` | extrémités remappées (ci-dessous) |
+| champs de formulaire | **non** | `form_fields` n'existe pas — §4.8, INC-037 |
+
+**`is_default` forcé à faux n'est pas une précaution, c'est une nécessité mesurée.** Copier la
+colonne telle quelle depuis un workflow par défaut est refusé en `23505` par
+`workflows_workspace_default_uk` : au plus un défaut par workspace (§3.2). Or le workflow que l'on
+copie est, en pratique, le workflow par défaut. Sans ce forçage, la fonctionnalité échouerait sur
+son cas d'emploi principal.
+
+**Les arêtes sont remappées par le nœud, et non par une table de correspondance.** `(workflow_id,
+node_id)` est unique (§3.3) : le nœud est donc la **clé naturelle** d'une étape dans son workflow, et
+l'étape de la copie qui correspond à une étape de la source est celle qui instancie le même nœud.
+Aucune structure temporaire n'est nécessaire, et la propriété se vérifie : mesuré sur la sonde,
+**zéro** arête de la copie pointe vers une étape restée dans la source.
+
+**Les positions fractionnaires sont conservées telles quelles.** Mesuré : une source portant
+`1`, `2.5`, `3` donne une copie portant `1`, `2.5`, `3`. Le trigger d'attribution automatique
+(§3.6) ne se déclenche pas, `position` étant fournie — et c'est ce qu'on lui demande : renuméroter
+la copie changerait l'ordre du board sans que personne ne l'ait demandé.
+
+### 4.6 Signalement de divergence : la vue `public.workflow_derivations`
+
+Le §4.1 exige que l'interface puisse dire « dérive de *X*, modifié depuis le *jj/mm/aaaa* ». Cette
+phrase n'est **pas** calculable à partir des seules colonnes de `workflows` : modifier une étape ou
+une transition ne touche pas la ligne du workflow, donc son `updated_at` ne bouge pas. Le produit
+doit donc exposer la date du dernier changement **du workflow et de sa composition**.
+
+`public.workflow_derivations` est une vue en lecture seule, déclarée `security_invoker = true` —
+mesuré : les politiques RLS des tables sous-jacentes s'appliquent bien à l'appelant, un rôle `anon`
+n'y voyant aucune ligne là où le propriétaire en voit une.
+
+| Colonne | Sens |
+|---|---|
+| `workflow_id`, `workspace_id`, `name`, `track_id` | la copie |
+| `source_workflow_id`, `source_name`, `source_archived_at` | son origine |
+| `derived_at` | la date de la copie |
+| `source_modified_at` | le plus récent `updated_at` de la source **et de sa composition** |
+| `source_modified_since_copy` | `source_modified_at > derived_at` |
+
+**Ce que ce signal ne voit pas, et c'est mesuré.** Une **suppression** dans la source — une
+transition retirée, une étape retirée — ne modifie aucun `updated_at` et laisse donc
+`source_modified_since_copy` à faux. La source a pourtant divergé. Le fait est établi par la mesure,
+non supposé, et n'est **pas** corrigé ici : le corriger suppose de choisir entre stocker la
+composition au moment de la copie, journaliser les suppressions, ou comparer les cardinalités — trois
+options qui engagent le schéma. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-038**, avec ses
+options.
+
+**Deux modifications faites dans la même transaction que la copie ne divergent pas non plus**, et
+pour une raison différente : `now()` est constant sur toute la durée d'une transaction — mesuré.
+`derived_at` et l'`updated_at` d'une écriture concomitante valent alors exactement la même chose, et
+`>` est faux. Ce n'est pas un défaut : au moment du `commit`, la copie est bien à jour.
+
+### 4.7 Autorisations, privilèges, et un défaut d'origine de l'image
+
+`docs/SPEC-permissions-rls.md` §4 réserve l'écriture des workflows aux administrateurs du
+workspace. La copie est une écriture ; elle leur est donc réservée, et le contrôle 2 du §4.3
+l'applique **dans la fonction**, la RLS ne protégeant pas contre son propriétaire.
+
+**Mesuré, et contraire à l'attente : `revoke all … from public` ne suffit pas.** L'image de la base
+livre des privilèges par défaut (`ALTER DEFAULT PRIVILEGES`) qui accordent, sur **tout** objet neuf
+du schéma `public`, l'exécution des fonctions et **tous** les droits des tables et des vues à `anon`,
+`authenticated` et `service_role`. Une fonction créée puis « protégée » par le seul
+`revoke all … from public` reste donc exécutable par l'anonyme — vérifié : l'appel a réussi. Il faut
+**révoquer nommément** `anon`. La même règle vaut pour la vue du §4.6, qui naîtrait autrement
+`arwdDxtm` pour les trois rôles, donc modifiable.
+
+C'est la première fois que le produit crée un objet dans `public` autrement qu'une table : les
+migrations précédentes révoquaient déjà nommément sur leurs tables, et les fonctions du projet
+vivent dans le schéma `app`, que l'API n'expose pas. Le fait est écrit ici pour que les unités
+suivantes le trouvent écrit (`docs/JOURNAL.md`, décision 80).
+
+### 4.8 Les champs de formulaire ne sont pas copiés, et ne peuvent pas l'être
+
+La Definition of Done de `CRM-032` exige la copie « des étapes, des transitions **et des champs** ».
+Les champs de formulaire vivent dans `form_fields`, livrée par `CRM-035` — deux étapes plus loin dans
+`docs/MASTER_PLAN.md` §2. Mesuré : `to_regclass('public.form_fields')` rend `NULL`.
+
+Aucune table n'est créée par anticipation : cela préempterait `CRM-035`. La fonction copie ce qui
+existe, et `require_fields` — le seul endroit du modèle qui désigne des champs — est copié **tel
+quel**, ce qui est correct tant qu'il est vide partout, et le restera après `CRM-035` puisque les
+identifiants qu'il porte désignent des champs du **workspace**, que la copie ne change pas.
+Contradiction d'ordonnancement consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-037**.
+
+### 4.9 Contrat d'API attendu
+
+Les lignes ci-dessous sont ce que `CRM-032` doit **mesurer** et non supposer ; elles sont écrites
+avant le code, et les scénarios de `e2e/api/copie-workflow.spec.ts` les rejouent une à une.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/copy_workflow_to_track` | `admin` | `200`, l'identifiant de la copie ; la copie porte les mêmes étapes et les mêmes transitions |
+| b | idem, avec `new_name` | `admin` | `200`, la copie porte le nom fourni |
+| c | `POST /rpc/copy_workflow_to_track` | `business_developer` | `403`, message `forbidden`, et **aucune ligne créée** |
+| d | `POST /rpc/copy_workflow_to_track` | `viewer` | `403`, message `forbidden` |
+| e | `POST /rpc/copy_workflow_to_track` | anonyme | `401` — refus par le privilège, avant tout contrôle |
+| f | workflow d'un **autre** workspace | `admin` | `400`, message `workflow_not_found` — jamais `forbidden` |
+| g | workflow inexistant | `admin` | `400`, message `workflow_not_found` |
+| h | workflow archivé | `admin` | `400`, message `workflow_not_found` |
+| i | workflow déjà de portée `track` | `admin` | `400`, message `workflow_not_global` |
+| j | track d'un **autre** workspace | `admin` | `400`, message `track_not_found` |
+| k | track archivé | `admin` | `400`, message `track_not_found` |
+| l | copie d'un workflow **par défaut** | `admin` | `200`, et la copie n'est **pas** par défaut |
+| m | `GET /workflow_derivations` | membre du workspace | `200`, la ligne de la copie, `source_modified_since_copy` renseigné |
+| n | `GET /workflow_derivations` | anonyme | `200` et `[]` (preuve de refus n° 11) |
+| o | `PATCH /workflow_derivations` | `admin` | refusé — la vue est en lecture seule, aucun privilège d'écriture |
+| p | source modifiée après la copie | `admin` | `source_modified_since_copy` passe à vrai |
+
+### 4.10 Ce que le seed livre
+
+Le seed applique la fonction **par la véritable route** — l'appel RPC de l'API REST, avec la clé de
+service —, et non par des `INSERT` fabriqués : `CLAUDE.md` §8 exige qu'une donnée de démonstration
+naisse du mécanisme réel.
+
+Une copie du workflow par défaut est posée sur le track **Conseil IA**, sous le nom
+« Cycle commercial — Conseil IA ». Elle démontre d'un seul geste la portée `track`, la traçabilité
+d'origine, le forçage de `is_default` et le remappage des arêtes : sept étapes, dix transitions,
+une étape initiale, `derived_from_workflow_id` renseigné.
+
+Le workspace du seed porte donc **deux** workflows, dont un seul par défaut. Les contrôles des
+unités précédentes qui comptaient « un workflow, ni plus ni moins » sont révisés dans le même
+changement — c'est le mécanisme de la décision 51, et sa cinquième occurrence.
+
+### 4.11 Preuves attendues de `CRM-032`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Existence, volatilité, `search_path` et privilèges de la fonction et de la vue ; copie complète des étapes et des transitions ; arêtes remappées ; surcharges et positions préservées ; `is_default` forcé ; lignage renseigné ; les quatre refus du §4.3 éprouvés contre des comptes réels ; **absence de `form_fields`**, figée pour devenir rouge à `CRM-035` |
+| API | Les seize lignes du §4.9, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 2 et n° 11 au niveau de la copie |
+| Seed | La copie du §4.10, créée par le véritable appel RPC, convergente |
+| Interface | **Aucune** — la mention de divergence exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
+
+### 4.12 Contrainte d'affectation — `CRM-033`
 
 Un trigger sur `channels` vérifie que `workflow_id` désigne un workflow `global` du même
 workspace **ou** un workflow `track` rattaché au track du channel. Toute autre valeur est
 refusée. La même vérification s'applique lors du déplacement d'un channel vers un autre track.
+
+Cette contrainte n'appartient pas à `CRM-032` : elle relève de `CRM-033`, avec la contrainte
+`NOT NULL` sur `channels.workflow_id` qu'INC-029 laisse due. `CRM-032` la rend **nécessaire** — un
+workflow de portée `track` existe désormais dans le seed, et rien n'empêche encore de le rattacher
+à un channel d'un autre track.
 
 ## 5. Garde centrale : `move_card`
 

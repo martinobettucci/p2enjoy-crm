@@ -3191,3 +3191,134 @@ elle a des preuves finales que personne n'a enregistrées.
 plan tenu, et aucune n'émet de diagnostic — vérifié fichier par fichier avant d'écrire cette entrée.
 Le contrôle ajouté ne corrige donc rien aujourd'hui ; il empêche demain un vert qui ne vaudrait
 rien.
+
+## 2026-08-04 — `CRM-032` : spécification de la copie vers un track, écrite après mesure et avant tout code
+
+Le §4 de `docs/SPEC-workflow-engine.md` tenait en vingt-cinq lignes et datait de `CRM-000`. Il
+donnait une signature — `copy_workflow_to_track(workflow_id, track_id)` —, une intention — « la
+copie est une divergence assumée » — et une phrase d'interface — « ce workflow dérive de *X*,
+modifié depuis le *jj/mm/aaaa* ». Il ne disait ni qui a le droit de copier, ni ce qu'un refus rend,
+ni ce qui arrive à `is_default`, ni comment une arête retrouve ses deux extrémités dans la copie, ni
+d'où sortirait la date du « modifié depuis ».
+
+Il a été **réécrit après mesure** : l'algorithme de copie appliqué à la main sur la pile réelle dans
+une transaction annulée, et les codes HTTP relevés contre PostgREST au moyen de trois fonctions
+sondes et d'une vue sonde, créées puis détruites — l'absence de reste étant constatée (`pg_proc`
+vide de toute fonction `sonde*`, `to_regclass` nul sur la vue, aucun workspace de sonde restant).
+
+Ce qui suit est ce que la mesure a appris, et qui n'était pas déductible du texte d'origine.
+
+### Décision 80 — Sur un objet neuf du schéma `public`, révoquer à `public` ne protège rien
+
+**Fait mesuré, et contraire à l'attente.** Une fonction créée dans `public`, puis « protégée » par
+`revoke all on function … from public` suivi d'un `grant execute … to authenticated`, a été appelée
+**avec succès par la clé anonyme**. Le contrôle du privilège dans `pg_proc.proacl` explique
+pourquoi : l'ACL portait `anon=X/postgres`, un droit accordé nommément, qu'un `revoke` visant
+`public` ne touche pas.
+
+L'origine est dans l'image : `pg_default_acl` contient, pour le schéma `public`, des
+`ALTER DEFAULT PRIVILEGES` qui accordent à `anon`, `authenticated` et `service_role` l'exécution de
+**toute** fonction nouvelle et **tous** les droits (`arwdDxtm`) de toute table, vue ou séquence
+nouvelle. Vérifié sur une vue jetable : elle est née modifiable par les trois rôles.
+
+**Décision.** Tout objet créé dans `public` par le produit est ouvert par un `revoke` **nommant les
+rôles** — `revoke … from anon, authenticated` — avant tout `grant`. C'est ce que les migrations
+faisaient déjà pour leurs tables ; la règle est étendue aux fonctions et aux vues, et elle est
+écrite au §4.7 plutôt que reproduite de mémoire.
+
+**Pourquoi cela n'avait pas été rencontré.** Les fonctions du produit vivent toutes dans le schéma
+`app`, que l'API n'expose pas, et où le défaut d'ACL de l'image ne s'applique pas. `CRM-032` est la
+première unité à créer une fonction et une vue **dans `public`**, parce qu'elles doivent être
+appelables par le client.
+
+**Conséquence.** Le harnais de l'unité ne se contente pas de constater les privilèges attendus : il
+**dégrade** l'ACL de la fonction pour vérifier que l'anonyme y accède alors, et que la migration
+répare. Un privilège correct par accident n'est pas un privilège.
+
+### Décision 81 — Le `404` est atteignable, et il est écarté
+
+**Fait mesuré.** Le tableau complet de ce que PostgREST `v14.12` fait des `SQLSTATE` levés par une
+fonction : `P0001` → `400`, `P0002` → **`500`**, `42501` → `403`, `23505` → `409`. Le code le plus
+naturel pour « rien ne correspond », `no_data_found`, est donc rendu comme une **erreur serveur** —
+une donnée mal désignée par le client passerait pour une panne du produit.
+
+Mesuré également : un `404` propre **est** atteignable. PostgREST reconnaît un `SQLSTATE`
+conventionnel `PGRST` dont le `DETAIL` porte le statut voulu ; la sonde a rendu `404` avec le corps
+JSON attendu.
+
+**Décision.** Il est **écarté**. Une fonction SQL qui connaît les codes HTTP de son client cesse
+d'être portable : elle n'est plus une règle métier, elle est une moitié de contrôleur web. Les
+refus de `copy_workflow_to_track` emploient `P0001` — `400`, « votre argument ne désigne rien
+d'utilisable » — et `42501` — `403`, « vous n'avez pas le droit ». Le `400` pour un identifiant
+inconnu est défendable : du point de vue de l'API, l'appel est mal formé, pas la ressource absente.
+
+**Ce que cela coûte, et qui est nommé :** un client ne peut pas distinguer les quatre refus par le
+seul code HTTP. Il le peut par le **message**, qui est stable et fait partie du contrat (§4.3).
+
+### Décision 82 — Un workflow d'un autre workspace rend « introuvable », jamais « interdit »
+
+**Fait.** Deux refus se disputent le même appel : l'appelant n'est pas administrateur, ou le
+workflow n'est pas le sien. L'ordre dans lequel ils sont évalués **change ce que l'appelant
+apprend**.
+
+**Décision.** La visibilité est vérifiée **avant** le rôle. Un workflow d'un autre workspace rend
+`workflow_not_found`, exactement comme un identifiant inventé — répondre « interdit » confirmerait
+son existence à quelqu'un qui n'a pas le droit de le savoir. Un membre non administrateur de son
+**propre** workspace obtient en revanche `forbidden` : il lit ce workflow tous les jours, le lui
+cacher ne protégerait rien et l'induirait en erreur.
+
+C'est la transposition à une RPC de ce que les politiques `select` font déjà silencieusement : un
+refus de lecture se manifeste par **zéro ligne**, jamais par une erreur (`docs/SPEC-permissions-rls.md`
+§7).
+
+### Décision 83 — Les arêtes sont remappées par le nœud, qui est la clé naturelle d'une étape
+
+**Fait mesuré.** `(workflow_id, node_id)` est unique depuis `CRM-031` : dans un workflow donné, un
+nœud désigne **une** étape et une seule. L'étape de la copie qui correspond à une étape de la source
+est donc celle qui instancie le même nœud — aucune table de correspondance temporaire n'est
+nécessaire, et la jointure tient en deux `join`.
+
+Vérifié sur la sonde : **zéro** arête de la copie pointe vers une étape restée dans la source, les
+trois transitions ayant retrouvé leurs deux extrémités.
+
+**Deux faits mesurés au passage, qui décident du reste de la fonction :**
+
+- copier `is_default` tel quel depuis un workflow par défaut est refusé en `23505`. Comme le
+  workflow que l'on copie *est*, en pratique, le workflow par défaut, la colonne est **forcée à
+  faux** ; sans cela la fonctionnalité échouerait sur son cas d'emploi principal ;
+- les `position` fractionnaires sont conservées à l'identique — `1`, `2.5`, `3` donnent `1`, `2.5`,
+  `3` —, le trigger d'attribution ne se déclenchant pas quand la valeur est fournie. Renuméroter la
+  copie changerait l'ordre du board sans que personne ne l'ait demandé.
+
+### Décision 84 — Le signalement de divergence est une vue, et son angle mort est mesuré plutôt que supposé
+
+**Fait mesuré.** La phrase exigée par le §4.1 — « dérive de *X*, **modifié depuis** le
+*jj/mm/aaaa* » — n'est pas calculable à partir des colonnes de `workflows` : modifier une étape ne
+touche pas la ligne du workflow, donc son `updated_at` ne bouge pas. Il faut le plus récent
+`updated_at` du workflow **et de sa composition**.
+
+**Décision.** Une vue `public.workflow_derivations`, `security_invoker = true` — mesuré : un rôle
+`anon` n'y voit aucune ligne là où le propriétaire en voit une, les politiques des tables
+sous-jacentes s'appliquant bien à l'appelant. La vue expose la copie, son origine, `derived_at`,
+`source_modified_at` et le booléen `source_modified_since_copy`.
+
+**L'angle mort, mesuré et non corrigé.** Une **suppression** dans la source — une arête retirée —
+ne modifie aucun `updated_at` : après suppression, `source_modified_since_copy` vaut toujours faux.
+La source a pourtant divergé. Le corriger engage le schéma — stocker la composition au moment de la
+copie, journaliser les suppressions, ou comparer les cardinalités —, ce qui dépasse cette unité.
+Consigné en INC-038 avec ses trois options, **sans être résolu implicitement**.
+
+**Second fait, plus bénin :** `now()` est constant sur toute la durée d'une transaction. Une
+modification faite dans la même transaction que la copie ne diverge donc pas — et c'est correct :
+au `commit`, la copie est à jour.
+
+### Décision 85 — Une copie ne se copie pas
+
+**Fait.** Le §4 d'origine ne parlait que de la copie d'un workflow *global*. Rien n'interdisait
+techniquement de copier une copie.
+
+**Décision.** Le contrôle 3 refuse un workflow de portée `track` — `workflow_not_global`. Une chaîne
+de dérivations rendrait `derived_from_workflow_id` illisible sans parcourir tout l'arbre, et le
+signalement de divergence devrait dire **lequel des ancêtres** a changé, question à laquelle la
+spécification ne répond pas. L'interdire est réversible ; l'autoriser puis se raviser ne l'est pas,
+les données existant alors déjà.

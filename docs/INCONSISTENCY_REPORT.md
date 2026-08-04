@@ -1391,6 +1391,132 @@ l'environnement réel).
 
 ---
 
+### INC-037 — La Definition of Done de `CRM-032` exige la copie de champs dont la table arrive à `CRM-035`
+
+**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md`, `docs/SPEC-workflow-engine.md`
+§4 et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-032`.
+
+La Definition of Done de `CRM-032` exige un test pgTAP prouvant la « copie complète des étapes, des
+transitions **et des champs** ». Les champs de formulaire vivent dans `form_fields`, livrée par
+`CRM-035` — étape 3.c de `docs/MASTER_PLAN.md` §2, deux unités après celle-ci. MESURÉ :
+`to_regclass('public.form_fields')` rend `NULL`.
+
+C'est le même motif qu'INC-010, INC-013, INC-029 et INC-031 : une preuve dont la cible n'existe pas
+encore. La différence tient à ce que la conséquence est ici **nulle** tant que `form_fields`
+n'existe pas — il n'y a rien à copier, et rien qui manque.
+
+**Comportement retenu :** la fonction copie ce qui existe. `require_fields` — le seul endroit du
+modèle qui désigne des champs — est copié **tel quel**, et le restera correctement après `CRM-035` :
+les identifiants qu'il porte désigneront des champs du **workspace**, que la copie ne change pas.
+Aucune table n'est créée par anticipation : cela préempterait `CRM-035`.
+
+**Ce qui protège l'écart :** il est **figé par une assertion** et non par un commentaire. La suite
+`supabase/tests/0008_copie_workflow.test.sql` constate l'absence de `form_fields` (`hasnt_table`) et
+deviendra rouge le jour où `CRM-035` la livrera, forçant la reprise de la fonction et de ses preuves
+(mécanisme de la décision 51).
+
+**Risque résiduel :** aucun aujourd'hui. Le jour où `form_fields` existera, une copie faite avant
+cette date n'aura pas de champs propres — ce qui est correct, puisque les champs appartiendront au
+workspace et non au workflow, ou incorrect si `CRM-035` les rattache au workflow. Ce point est
+précisément ce que `CRM-035` devra trancher, l'assertion l'y obligeant.
+
+**Arbitrage attendu du responsable**, à trancher **avant `CRM-035`** :
+
+1. rattacher la copie des champs à `CRM-035`, en l'inscrivant dans sa Definition of Done, et
+   retirer le mot « champs » de celle de `CRM-032` ;
+2. laisser la Definition of Done de `CRM-032` telle quelle et considérer l'unité comme
+   partiellement due jusqu'à `CRM-035` ;
+3. créer une unité de reprise dédiée, par exemple `CRM-032b`, placée après `CRM-035`.
+
+**Lié à :** INC-013, INC-029, INC-031 (mêmes contradictions d'ordonnancement), INC-033
+(`require_fields` sans intégrité référentielle).
+
+---
+
+### INC-038 — Le signalement de divergence ne voit pas une suppression dans la source
+
+**Nature :** limite mesurée du mécanisme livré par `CRM-032` ; `docs/SPEC-workflow-engine.md` §4.1
+promet davantage que ce que le signal détecte.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-032`.
+
+Le §4.1 exige que l'interface signale « ce workflow dérive de *X*, **modifié depuis** le
+*jj/mm/aaaa* ». Le signal livré, `workflow_derivations.source_modified_since_copy`, compare
+`derived_at` au plus récent `updated_at` du workflow source **et de sa composition**.
+
+**MESURÉ :** une **suppression** dans la source ne modifie aucun `updated_at`. Après avoir retiré
+une transition du workflow source, `source_modified_since_copy` vaut toujours **faux**, alors que la
+source a bel et bien divergé de sa copie. Le même angle mort vaut pour une étape retirée.
+
+**Comportement retenu par `CRM-032` :** le signal est livré tel quel, sa portée exacte est écrite au
+§4.6, et l'angle mort est **figé par une assertion** de `supabase/tests/0008_copie_workflow.test.sql`
+qui le constate — de sorte qu'il ne puisse pas être oublié, et qu'une correction future rende
+l'assertion rouge. Aucune règle n'est inventée : chacune des corrections possibles engage le schéma,
+ce qui dépasse le périmètre d'une unité consacrée à la copie.
+
+**Risque résiduel :** un administrateur qui retire une arête d'un workflow global ne verra apparaître
+aucune mention de divergence sur les copies qui en dérivent. Il est borné par le fait qu'aucune copie
+n'existe hors du seed, et que l'interface qui afficherait la mention n'existe pas non plus (INC-021).
+
+**Arbitrage attendu du responsable**, à trancher avant que l'interface de `CRM-032` ne soit écrite :
+
+1. stocker à la copie le nombre d'étapes et de transitions copiées, et comparer les cardinalités —
+   deux colonnes de plus sur `workflows`, absentes de `docs/SCHEMA.md` §3 ;
+2. journaliser les suppressions d'étapes et de transitions dans une table d'événements, ce que
+   `card_events` fera pour les cards et qui n'existe pas pour les workflows ;
+3. calculer une empreinte de la composition de la source — une somme des identifiants et des
+   horodatages — et la comparer à celle enregistrée à la copie, au prix d'une colonne et d'un
+   calcul à chaque lecture.
+
+**Lié à :** INC-021 (aucune interface pour afficher la mention), `docs/JOURNAL.md` décision 84.
+
+---
+
+### INC-039 — La suppression d'un workspace échoue lorsqu'un de ses workflows instancie ses nœuds
+
+**Nature :** conséquence non anticipée de deux clés étrangères livrées par des unités différentes.
+**Relevé le :** 2026-08-04, pendant les mesures de `CRM-032`.
+
+MESURÉ, et reproductible : `delete from public.workspaces where id = …` échoue en `23503` dès qu'un
+workflow du workspace porte au moins une étape.
+
+```
+ERROR:  update or delete on table "workflow_nodes_catalog" violates foreign key constraint
+        "workflow_steps_node_id_workspace_id_fkey" on table "workflow_steps"
+DETAIL: Key (id, workspace_id)=(…) is still referenced from table "workflow_steps".
+```
+
+La cause est l'ordre dans lequel PostgreSQL propage les cascades. `workspaces` cascade vers
+`workflow_nodes_catalog` (`CRM-030`) **et** vers `workflows` (`CRM-031`) ; `workflows` cascade
+ensuite vers `workflow_steps`. Lorsque le catalogue est traité avant les workflows, la clé
+`workflow_steps.node_id`, posée en `on delete restrict` à dessein (§3.3 : l'effacement silencieux
+des étapes détruirait des workflows entiers sans le dire), bloque la suppression entière.
+
+**Ce n'est pas un défaut du `on delete restrict`**, qui protège exactement ce qu'il doit protéger.
+C'est une interaction entre deux règles, chacune correcte isolément, que personne n'avait mesurée.
+
+**Conséquence pratique.** Toute suppression d'un workspace — nettoyage de harnais, purge RGPD,
+réinitialisation partielle — doit retirer les étapes **avant** le workspace. Les harnais livrés y
+échappent par accident : ils suppriment les workflows avant les workspaces, ce qui emporte les
+étapes en cascade. Le fait est écrit ici pour que ce ne soit plus un accident.
+
+**Comportement retenu :** aucun changement de schéma. Le contournement — supprimer dans l'ordre —
+est appliqué par le harnais de `CRM-032`, et le fait est **figé par une assertion** de
+`supabase/tests/0008_copie_workflow.test.sql`, qui provoque le refus et le constate.
+
+**Arbitrage attendu du responsable :**
+
+1. laisser en l'état et documenter l'ordre de suppression comme une contrainte d'exploitation ;
+2. passer `workflow_steps.node_id` en `on delete cascade`, ce qui contredirait le §3.3 et rendrait
+   silencieuse la destruction d'un workflow par une purge du catalogue ;
+3. livrer une fonction `app.purge_workspace(uuid)` qui applique l'ordre correct, à rattacher à
+   l'unité RGPD `CRM-072`.
+
+**Lié à :** `docs/SPEC-workflow-engine.md` §3.3 (`on delete restrict` et son motif), `CRM-072`
+(conformité RGPD, où une purge réelle sera écrite).
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
