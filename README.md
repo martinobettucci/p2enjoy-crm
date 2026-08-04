@@ -65,6 +65,8 @@ backend autorise (voir [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rl
 - Node 24 (voir `.nvmrc`) et npm 11+
 - Environ 8 Go de RAM disponibles pour la pile complète
 - Aucun service cloud n'est requis en développement : la pile est autonome.
+- `jq` **ou** `python3`, uniquement sur un poste dont la configuration Docker délègue ses
+  identifiants à un binaire Windows — cas courant sous WSL. Voir §11.
 
 ## 4. Installation
 
@@ -516,6 +518,29 @@ Documentation de référence :
   jamais corrigé, et la production ne bénéficie d'aucun ajustement automatique : le prérequis
   reste à vérifier avant le premier démarrage (`docs/PROD_MIGRATIONS.md` §4). La valeur par défaut
   n'a **pas** pu être éprouvée dans l'environnement de vérification, plafonné à 4096.
+- **Ce que la pile suppose de l'hôte.** Quatre suppositions ont été mesurées fausses sur un poste
+  WSL alors qu'elles tenaient dans le conteneur d'intégration. Elles sont désormais gardées par les
+  scripts, et chaque garde est inerte là où elle ne s'applique pas
+  (`docs/JOURNAL.md`, décisions 98 à 101) :
+  - **Magasin d'identifiants Docker.** Un `~/.docker/config.json` désignant `desktop.exe` fait
+    passer chaque accès au registre par un binaire Windows. En rafale — et Compose tire ses images
+    en parallèle — il rend une sortie vide, et le tirage s'arrête sur
+    `error getting credentials`. `./runDev.sh` écarte alors les assistants `.exe` pour la durée de
+    son exécution, en conservant le contexte Docker du poste, et le dit. Les tirages deviennent
+    anonymes ; toutes les images de la pile sont publiques. Écarter ces assistants demande `jq` ou
+    `python3` : sans l'un des deux, le script le signale et laisse la configuration intacte.
+  - **Ports déjà pris.** `./runDev.sh`, `./resetMe.sh` et `./runProd.sh` refusent de démarrer
+    lorsqu'un port publié par l'assemblage est tenu par un autre programme, en nommant le port,
+    son détenteur et la variable à changer dans `.env`. **Aucun port n'est choisi automatiquement**
+    : les URL ci-dessus, les preuves et le seed en dépendent. `.env` est propre au poste, le
+    modifier ne change rien au dépôt.
+  - **Effacement du cluster PostgreSQL.** PostgreSQL referme son répertoire de données en `0750`
+    sous son propre compte : sur un hôte dont l'utilisateur n'est pas celui du conteneur, `rm`
+    échoue. `./resetMe.sh` confie alors la destruction à un conteneur jetable. Aucun `sudo` n'est
+    demandé.
+  - **`node_modules` à la racine.** Le service `webapp` monte un volume nommé sur
+    `/app/node_modules` ; le répertoire est créé sur l'hôte avant Compose, faute de quoi le démon
+    le crée en `root` et `npm install` échoue ensuite en `EACCES` dans votre propre dépôt.
 - **TLS de production non éprouvé** : la pile de production a été vérifiée avec
   `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy. L'émission d'un certificat ACME exige
   un domaine public et reste à confirmer au premier déploiement réel.

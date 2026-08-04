@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'environnement de développement
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
-# @spec docs/DAT.md §13 (commandes de lancement) ; README.md §5 (commandes), §6 (développement)
+# @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage), décision 101 (points de
+#       montage créés par l'hôte)
+# @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §13 (commandes de lancement)
+# @spec README.md §5 (commandes), §6 (développement), §11 (limites connues)
 #
 # Démarre la pile de développement, en amorçant `.env` au premier lancement.
 #
@@ -68,6 +71,16 @@ if [ "$MODE" = stop ]; then
 fi
 
 # --- Démarrage ---------------------------------------------------------------------------------
+
+ensure_host_mountpoints
+
+# `--dev` écarte la webapp conteneurisée : son port est donc laissé au Vite de l'IDE, et le
+# contrôle de disponibilité ne doit pas le réclamer.
+if [ "$WITH_WEBAPP" = true ]; then
+	require_free_ports compose_dev
+else
+	require_free_ports compose_dev "$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)"
+fi
 
 say "Démarrage de la pile de développement"
 # `--dev` écarte la webapp conteneurisée : Vite tourne alors dans l'IDE, sur le même port.

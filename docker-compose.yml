@@ -1,5 +1,7 @@
 # @spec CRM-001 (docs/BACKLOG.md) — pile Supabase self-hosted, assemblage commun des services
-# @spec docs/DAT.md §3 (composants), §9 (déploiement), §15 (dépendances structurantes)
+# @spec docs/JOURNAL.md décision 100 (un contrôle de santé nomme une famille d'adresses)
+# @spec docs/DAT.md §3 (composants), §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement),
+#       §15 (dépendances structurantes)
 # @spec README.md §2 (stack), §5 (commandes), §6 (lancement en développement)
 #
 # Assemblage **commun** aux deux environnements. Il ne contient aucun outillage de
@@ -223,7 +225,12 @@ services:
       rest:
         condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/status"]
+      # 127.0.0.1 plutôt que « localhost » : le service n'écoute qu'en IPv4 — ses journaux
+      # annoncent 127.0.0.1:5000 et l'adresse du réseau Compose, jamais `::`. Or `/etc/hosts` du
+      # conteneur résout aussi « localhost » en `::1`, et sur un hôte où la résolution rend cette
+      # adresse en premier, le contrôle de santé reçoit un refus de connexion sans que le service
+      # n'ait rien : la pile entière échoue alors sur « container p2enjoy-storage is unhealthy ».
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
       timeout: 5s
       interval: 5s
       retries: 5

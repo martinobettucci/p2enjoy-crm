@@ -37,6 +37,33 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **`CRM-002` — `./runDev.sh` ne démarrait pas sur un poste WSL, pour quatre raisons d'hôte.**
+  Aucune ne touche au métier ; toutes tenaient à ce que le dépôt supposait de l'hôte sans le
+  vérifier. Chaque garde est inerte là où elle ne s'applique pas, ce qui explique que rien de tout
+  cela n'ait jamais été visible dans le conteneur d'intégration. Décisions 98 à 101.
+  - **Magasin d'identifiants Docker.** Un `credsStore` valant `desktop.exe` fait passer chaque
+    accès au registre par un binaire Windows. Mesuré : **52 sorties vides sur 150 appels
+    simultanés**, et Compose tire ses images en parallèle — d'où l'arrêt sur
+    « error getting credentials ». `require_docker` dérive désormais une
+    configuration Docker privée des assistants `.exe`, contexte, proxies et greffons conservés,
+    hors du dépôt et en mode `600`.
+  - **Ports déjà pris.** Quatre des dix ports publiés étaient tenus par un autre projet du poste.
+    `require_free_ports` refuse **avant** tout démarrage, en nommant le port, son détenteur et la
+    variable de `.env`. Les ports de la pile elle-même sont ignorés — les plages annoncées par
+    Docker sont développées port par port —, et `runDev.sh --dev` écarte celui de la webapp.
+  - **`storage` déclaré `unhealthy` alors qu'il allait bien.** Le service n'écoute qu'en IPv4 et
+    son contrôle de santé visait `localhost`, que `/etc/hosts` résout aussi en `::1`. Le contrôle
+    vise `127.0.0.1` (`docker-compose.yml`).
+  - **Ce que la pile écrivait sur l'hôte lui échappait.** `./resetMe.sh` ne pouvait plus effacer le
+    cluster PostgreSQL, refermé en `0750` par le compte du conteneur : la destruction passe par un
+    conteneur jetable, sans `sudo`. `./runDev.sh` laissait un `node_modules` appartenant à `root` à
+    la racine du dépôt, ce qui faisait ensuite échouer `npm install` en `EACCES` et **cinq preuves**
+    sans rapport ; le point de montage est créé avant Compose.
+  - **Preuves** : `scripts/verify-scripts.sh` passe de 38 à **52 contrôles**, dont 14 nouveaux sur
+    ces gardes, et reste non complaisant — neutraliser les gardes en fait échouer 9. Démarrage
+    à froid réel : `./resetMe.sh --yes` puis `./runDev.sh`, 11 services `healthy`,
+    `verify-stack.sh` 33/33, `verify-seed.sh` 49/49.
+
 - **`CRM-032` — le seed était idempotent sans être convergent, et il en créait des doublons.**
   INC-041. La copie du workflow était cherchée par sa source **et** son track ; le `track_id` déplacé,
   la recherche ne la trouvait plus et un rejeu en créait une **seconde**. Le contrat en déclare une.

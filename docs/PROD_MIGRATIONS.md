@@ -29,6 +29,7 @@ Ces éléments ne sont pas fournis par le dépôt et exigent une action humaine.
 | Élément | Détail |
 |---|---|
 | Hôte | Docker et Compose v2, ressources dimensionnées pour la pile Supabase complète |
+| Ports `80` et `443` | Libres sur l'hôte : ce sont les seuls que la production publie. `./runProd.sh` refuse de démarrer si l'un est tenu, en nommant son détenteur (`docs/JOURNAL.md`, décision 99) |
 | Nom de domaine applicatif | Pour la webapp et l'API |
 | Certificats TLS | Obtenus par Caddy, ou fournis manuellement |
 | Stockage objet | Bucket S3 ou compatible, avec ses accès dédiés |

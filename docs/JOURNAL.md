@@ -3592,3 +3592,105 @@ première à pourrir puisque rien ne protège le tableau d'un identifiant suppri
 
 **Ce que cela laisse dû :** l'union « champs `required` de l'étape cible + `require_fields` de la
 transition » du §3.5 reste sans donnée de démonstration jusqu'à `CRM-034`.
+## 2026-08-04 — `./runDev.sh` sur un poste WSL : quatre causes d'échec, aucune dans le code métier
+
+Le responsable signale que `./runDev.sh` ne démarre pas sur son poste, alors que la même commande
+tourne dans le conteneur d'intégration. Aucune des quatre causes trouvées n'appartient au métier :
+toutes tiennent à ce que le dépôt suppose de l'hôte sans jamais le vérifier. Elles sont consignées
+ici parce qu'elles se ressemblent — le dépôt tient pour acquis un environnement qui n'est pas celui
+de l'exécution — et parce que chacune est désormais gardée plutôt que subie.
+
+### Décision 98 — Le magasin d'identifiants Docker de Windows échoue en rafale, et la pile n'en a aucun besoin
+
+**Le symptôme.** `./runDev.sh` s'arrête pendant le tirage des images, sur :
+
+    error getting credentials - err: exit status 1, out: ``
+
+**La mesure.** `~/.docker/config.json` du poste vaut `{"auths":{},"credsStore":"desktop.exe"}`.
+Chaque interrogation du registre passe donc par un binaire Windows, joint par l'interopérabilité
+WSL. Appelé seul, il répond correctement — `credentials not found in native keychain` sur la sortie
+standard, code 1, que le client Docker sait interpréter comme « aucun identifiant » et non comme une
+panne. Appelé en rafale, il rend **une sortie vide** : sur 150 appels simultanés, **52** n'ont rien
+écrit. Compose tirant ses images en parallèle, le client lit cette sortie vide comme une erreur et
+abandonne. Le journal du noyau accompagne les échecs de `WSL … ERROR: UtilAcceptVsock:273: accept4
+failed 110`.
+
+**Ce qui a été écarté.** Un `docker login`, qui ne résout rien puisque `auths` est vide et que la
+pile n'emploie que des images publiques. Une réécriture du fichier du poste, qui déborde du dépôt.
+Une sérialisation des tirages, qui ralentirait tout le monde pour un défaut d'un seul hôte.
+
+**Décision.** `require_docker` dérive une configuration Docker **privée des assistants `.exe`**, et
+n'exporte `DOCKER_CONFIG` que s'il y avait effectivement quelque chose à écarter. Tout le reste de
+la configuration du poste — contexte courant, proxies, greffons — est **recopié ou lié tel quel** :
+sans les contextes, un `currentContext` désignerait un démon introuvable, et la commande viserait
+un autre moteur que celui de l'utilisateur. Un assistant qui n'est pas un `.exe` est conservé.
+
+**Conséquence assumée.** Les tirages deviennent anonymes sur cet hôte. C'était déjà le cas — le
+magasin ne contenait aucun identifiant — et les images de la pile sont publiques. Le répertoire
+dérivé vit **hors du dépôt**, sous `${XDG_STATE_HOME:-~/.local/state}/p2enjoy-crm/docker` : il
+recopie une configuration qui peut porter des identifiants, et rien de tel n'a sa place dans un
+arbre versionné. Sur un hôte sans assistant Windows — le conteneur d'intégration —, la garde ne
+fait rien, ce qui explique que le défaut n'y soit jamais apparu.
+
+### Décision 99 — Un port déjà pris se dit avant le démarrage, et nomme la variable — jamais un port choisi à la place de l'opérateur
+
+**La mesure.** Le poste héberge la pile Supabase d'un autre dépôt. Quatre des dix ports publiés par
+l'assemblage de développement étaient tenus : `54322`, `54323`, `54324` par cette pile, `5173` par
+un serveur Vite hors Docker. Compose ne s'en aperçoit qu'au moment de créer le conteneur concerné :
+la moitié de la pile était déjà démarrée, et le démon ne rendait qu'un numéro de port, sans dire à
+qui il appartenait ni quelle variable le portait.
+
+**Décision.** `require_free_ports` s'exécute avant tout démarrage, et nomme le port, son détenteur
+et la variable du fichier d'environnement à changer. La liste des ports vient de `docker compose
+config`, donc de l'assemblage lui-même : elle ne peut pas diverger des fichiers Compose.
+
+**Ce qui a été écarté.** Choisir un port libre à la place de l'opérateur. Les URL documentées,
+`verify-stack.sh` et les preuves d'interface en dépendent ; un port choisi en silence rendrait le
+`README` faux sans que personne ne le sache.
+
+**Deux exactitudes qui ont coûté une mesure chacune.** Les ports tenus par la pile elle-même sont
+ignorés, sans quoi relancer une pile en marche serait refusé — et Docker annonce ses plages sous la
+forme `127.0.0.1:9000-9001->9000-9001/tcp`, si bien qu'une recherche de `:9000->` faisait passer
+MinIO pour un intrus. Les plages sont donc développées port par port. Enfin, `runDev.sh --dev`
+écarte explicitement le port de la webapp : cette option existe précisément parce qu'un Vite de
+l'IDE le tient déjà.
+
+**Conséquence pour ce poste.** Les quatre valeurs ont été changées dans le `.env` local — fichier
+propre au poste, non versionné — et non dans `.env.example`, dont les valeurs par défaut restent le
+contrat du dépôt.
+
+### Décision 100 — Un contrôle de santé nomme une famille d'adresses, jamais « localhost »
+
+**La mesure.** La pile démarrait entièrement, puis échouait sur `container p2enjoy-storage is
+unhealthy`. Le service, lui, allait bien : ses journaux annoncent `Server listening at
+http://127.0.0.1:5000`. Son contrôle de santé interrogeait `http://localhost:5000/status`, et le
+`/etc/hosts` du conteneur résout `localhost` en `127.0.0.1` **et** en `::1`. Sur cet hôte, la
+résolution rend `::1` en premier ; le service n'écoutant qu'en IPv4, le contrôle recevait un refus
+de connexion. Mesuré dans le conteneur : `wget http://127.0.0.1:5000/status` réussit, `wget
+http://localhost:5000/status` échoue.
+
+**Décision.** Le contrôle de santé de `storage` vise `127.0.0.1`. Les autres contrôles de la pile
+sont laissés en l'état : ils sont mesurés sains sur cet hôte, et les modifier sans défaut constaté
+reviendrait à changer ce que l'on ne sait pas éprouver.
+
+### Décision 101 — Ce que la pile crée sur l'hôte doit appartenir à l'hôte
+
+**Deux faits de même nature, trouvés à quelques minutes d'écart.**
+
+`./resetMe.sh` échoue sur `rm: cannot remove '…/volumes/db/data': Permission denied`. PostgreSQL
+crée son cluster sous son propre compte et referme le répertoire en `0750` : le compte de
+l'utilisateur ne peut même pas y descendre.
+
+`./runDev.sh` laisse un `node_modules` **appartenant à `root`** à la racine du dépôt. Le service
+`webapp` monte un volume nommé sur `/app/node_modules`, chemin situé à l'intérieur du dépôt lui-même
+monté en `/app` ; le répertoire n'existant pas sur l'hôte, c'est le démon qui le crée, donc `root`.
+`npm install` échouait ensuite en `EACCES` **dans le dépôt de l'utilisateur**, et c'est ce qui
+faisait échouer cinq preuves — `verify-tracks`, `verify-channels`, `verify-catalogue`,
+`verify-workflows`, `verify-copie-workflow` — pour une raison qui n'avait rien à voir avec elles.
+
+**Décision.** Aucun `sudo` n'est demandé. La destruction du cluster est confiée à un conteneur
+jetable, qui a les droits que l'hôte n'a pas, et dont l'image est **lue dans l'assemblage** plutôt
+que nommée une seconde fois. Le point de montage `node_modules` est créé par les scripts avant
+Compose, ce qui le laisse à son propriétaire légitime. Les deux gardes sont inutiles là où le démon
+et l'utilisateur partagent le même compte — le conteneur d'intégration —, ce qui explique une fois
+de plus que rien n'y ait jamais été visible.

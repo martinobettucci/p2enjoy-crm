@@ -268,6 +268,17 @@ exprimé par `STACK_RLIMIT_NOFILE` (défaut `100000`) plutôt que laissé à un 
 hôte dont la limite dure est inférieure doit l'abaisser, faute de quoi ces deux services
 redémarrent en boucle (`docs/JOURNAL.md`, décision 14).
 
+Quatre autres suppositions sur l'hôte ont été mesurées fausses sur un poste WSL, et sont désormais
+**gardées par les scripts** plutôt que subies (`docs/JOURNAL.md`, décisions 98 à 101). Chacune est
+inerte là où elle ne s'applique pas, en particulier dans le conteneur d'intégration.
+
+| Supposition | Ce que fait le dépôt |
+|---|---|
+| Le magasin d'identifiants Docker répond | `require_docker` dérive une configuration Docker privée de tout assistant `.exe`, contexte et greffons conservés. Un assistant Windows joint par l'interopérabilité WSL rend une sortie vide sous les tirages parallèles de Compose |
+| Les ports de l'assemblage sont libres | `require_free_ports` refuse avant tout démarrage, en nommant le port, son détenteur et la variable du fichier d'environnement. Aucun port n'est choisi à la place de l'opérateur |
+| `localhost` désigne IPv4 dans un conteneur | Le contrôle de santé de `storage` vise `127.0.0.1` : le service n'écoute qu'en IPv4, et `/etc/hosts` résout aussi `localhost` en `::1` |
+| L'hôte peut effacer ce que la pile a écrit | `resetMe.sh` détruit le cluster PostgreSQL par un conteneur jetable ; `ensure_host_mountpoints` crée `node_modules` avant Compose, faute de quoi le démon le crée en `root` dans le dépôt de l'utilisateur |
+
 ## 4. Flux principaux
 
 ### 4.1 Authentification et session

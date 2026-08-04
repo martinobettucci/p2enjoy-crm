@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes)
-# @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9
+# @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris)
+# @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
+# @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9, §11
 #
 # Rejoue les preuves de `CRM-002` :
 #
@@ -359,6 +361,182 @@ if docker info >/dev/null 2>&1; then
 else
 	skip "interpolation Compose : le démon Docker ne répond pas"
 	skip "interpolation Compose (production) : le démon Docker ne répond pas"
+fi
+
+# --- 8. Robustesse face à l'hôte ----------------------------------------------------------------
+# Causes d'échec mesurées sur un poste WSL, invisibles dans le code du dépôt et pourtant
+# suffisantes pour que `./runDev.sh` ne démarre jamais : un magasin d'identifiants Docker qui
+# échoue en rafale, des ports déjà tenus par un autre projet du même poste, et un point de montage
+# que le démon crée en `root` dans le dépôt de l'utilisateur.
+# Voir docs/JOURNAL.md, décisions 98, 99 et 101.
+#
+# Deux gardes de la même famille sont prouvées ailleurs, faute de pouvoir l'être ici sans détruire
+# ou sans démarrer : le contrôle de santé de `storage` par `scripts/verify-stack.sh`, qui exige la
+# pile entière saine (décision 100), et la destruction du cluster PostgreSQL par conteneur jetable
+# par un `./resetMe.sh --yes` réel.
+
+echo
+echo "8. Robustesse face à l'hôte"
+
+# Rend la valeur de DOCKER_CONFIG après passage de la garde, sans jamais toucher à celle du poste.
+#   derive <répertoire source> <répertoire dérivé>
+derive() {
+	(
+		P2ENJOY_DOCKER_CONFIG_DIR=$2
+		DOCKER_CONFIG=$1
+		# shellcheck source=scripts/lib/env.sh
+		. "$REPO_ROOT/scripts/lib/env.sh"
+		docker_drop_windows_credential_helpers 2>/dev/null
+		printf '%s' "$DOCKER_CONFIG"
+	)
+}
+
+WIN_HOME="$WORK/docker-windows"
+DERIVED="$WORK/docker-derived"
+mkdir -p "$WIN_HOME/contexts/meta"
+printf '%s\n' '{"auths":{},"credsStore":"desktop.exe","currentContext":"default"}' \
+	> "$WIN_HOME/config.json"
+echo repere > "$WIN_HOME/contexts/meta/repere.txt"
+
+if [ "$(derive "$WIN_HOME" "$DERIVED")" = "$DERIVED" ]; then
+	ok "assistant d'identifiants Windows : DOCKER_CONFIG dérivé vers une configuration propre"
+else
+	fail "assistant d'identifiants Windows : DOCKER_CONFIG laissé sur la configuration fautive"
+fi
+
+if [ -f "$DERIVED/config.json" ] && ! grep -q 'desktop.exe' "$DERIVED/config.json"; then
+	ok "la configuration dérivée ne nomme plus aucun assistant .exe"
+else
+	fail "la configuration dérivée nomme encore un assistant .exe, ou n'existe pas"
+fi
+
+if [ -f "$DERIVED/config.json" ] && grep -q '"currentContext"' "$DERIVED/config.json"; then
+	ok "la configuration dérivée conserve le contexte Docker du poste"
+else
+	fail "la configuration dérivée a perdu le contexte Docker du poste"
+fi
+
+if [ -r "$DERIVED/contexts/meta/repere.txt" ]; then
+	ok "les fichiers voisins de la configuration d'origine restent joignables"
+else
+	fail "les fichiers voisins de la configuration d'origine ne sont plus joignables"
+fi
+
+if [ -f "$DERIVED/config.json" ] && [ "$(stat -c '%a' "$DERIVED/config.json")" = 600 ]; then
+	ok "la configuration dérivée est écrite en mode 600"
+else
+	fail "la configuration dérivée n'est pas en mode 600"
+fi
+
+MIXED_HOME="$WORK/docker-mixed"
+mkdir -p "$MIXED_HOME"
+printf '%s\n' '{"credHelpers":{"reg.example":"desktop.exe","autre.example":"pass"}}' \
+	> "$MIXED_HOME/config.json"
+derive "$MIXED_HOME" "$WORK/docker-mixed-derived" >/dev/null
+if grep -q '"autre.example"' "$WORK/docker-mixed-derived/config.json" 2>/dev/null \
+   && ! grep -q 'desktop.exe' "$WORK/docker-mixed-derived/config.json" 2>/dev/null; then
+	ok "seuls les assistants .exe sont retirés : un assistant natif est conservé"
+else
+	fail "le tri des assistants d'identifiants est faux"
+fi
+
+CLEAN_HOME="$WORK/docker-clean"
+mkdir -p "$CLEAN_HOME"
+printf '%s\n' '{"auths":{},"credsStore":"pass"}' > "$CLEAN_HOME/config.json"
+if [ "$(derive "$CLEAN_HOME" "$WORK/docker-clean-derived")" = "$CLEAN_HOME" ] \
+   && [ ! -e "$WORK/docker-clean-derived" ]; then
+	ok "configuration Docker saine : aucune dérivation, aucun répertoire créé"
+else
+	fail "une configuration Docker saine a tout de même été détournée"
+fi
+
+# Le contrôle des ports est éprouvé sur des observations injectées : l'écoute de l'hôte et la
+# table des ports publiés sont remplacées par des valeurs connues, de sorte que le verdict soit
+# reproductible et qu'aucune pile ne soit démarrée par la preuve.
+#   port_verdict <ports en écoute> <table port détenteur> [port ignoré...]
+# Les deux variables portent un préfixe : `require_free_ports` déclare `listening` et `published`
+# en `local`, et le nommage dynamique de bash les masquerait à l'intérieur des doublures.
+port_verdict() {
+	local fixture_listening=$1 fixture_published=$2
+	shift 2
+	(
+		# shellcheck source=scripts/lib/env.sh
+		. "$REPO_ROOT/scripts/lib/env.sh"
+		ENV_FILE="$BOOT1"
+		host_listening_ports()  { printf '%s\n' "$fixture_listening"; }
+		docker_published_ports() { printf '%s\n' "$fixture_published"; }
+		compose_fixture() {
+			case "$1" in
+				config) printf '        published: "%s"\n' 54322 5173 ;;
+				ps)     printf 'p2enjoy-db\n' ;;
+			esac
+		}
+		require_free_ports compose_fixture "$@" 2>&1
+	)
+}
+
+if verdict=$(port_verdict '54322' '54322 supabase_db_autre_projet'); then
+	fail "un port tenu par un conteneur étranger n'arrête pas le démarrage"
+else
+	if printf '%s' "$verdict" | grep -q 'POSTGRES_DIRECT_PORT' \
+	   && printf '%s' "$verdict" | grep -q 'supabase_db_autre_projet'; then
+		ok "port pris par un tiers : refus, en nommant la variable et le détenteur"
+	else
+		fail "port pris par un tiers : refus, mais sans nommer la variable ou le détenteur"
+	fi
+fi
+
+if verdict=$(port_verdict '5173' ''); then
+	fail "un port tenu par un programme hors Docker n'arrête pas le démarrage"
+else
+	printf '%s' "$verdict" | grep -q 'WEBAPP_DEV_PORT' \
+		&& ok "port pris hors Docker : refus, en nommant la variable" \
+		|| fail "port pris hors Docker : refus, mais sans nommer la variable"
+fi
+
+if port_verdict '54322' '54322 p2enjoy-db' >/dev/null; then
+	ok "port tenu par la pile elle-même : relancer reste permis"
+else
+	fail "un port tenu par la pile elle-même bloque son propre redémarrage"
+fi
+
+if port_verdict '5173' '' 5173 >/dev/null; then
+	ok "port explicitement écarté — cas de runDev.sh --dev — : démarrage permis"
+else
+	fail "runDev.sh --dev serait refusé à cause du port laissé au Vite de l'IDE"
+fi
+
+if port_verdict '' '' >/dev/null; then
+	ok "aucun port en écoute : aucun refus"
+else
+	fail "un hôte sans port en écoute est tout de même refusé"
+fi
+
+if ( . "$REPO_ROOT/scripts/lib/env.sh"
+     REPO_ROOT="$WORK/faux-depot"
+     mkdir -p "$REPO_ROOT"
+     ensure_host_mountpoints
+     [ -d "$WORK/faux-depot/node_modules" ] ); then
+	ok "le point de montage node_modules est créé avant Compose, donc par l'utilisateur"
+else
+	fail "node_modules n'est pas créé avant Compose : le démon le créerait en root"
+fi
+
+# La liste réelle des ports de l'hôte n'est pas simulable : elle est éprouvée contre un port dont
+# Docker affirme par ailleurs qu'il est publié.
+if docker info >/dev/null 2>&1; then
+	# shellcheck source=scripts/lib/env.sh
+	( . "$REPO_ROOT/scripts/lib/env.sh"
+	  reference=$(docker_published_ports | awk 'NR == 1 { print $1 }')
+	  [ -n "$reference" ] || exit 2
+	  host_listening_ports | grep -qx "$reference" )
+	case $? in
+		0) ok "les ports réellement en écoute sont bien vus par la garde" ;;
+		2) skip "aucun conteneur ne publie de port : lecture réelle non éprouvée" ;;
+		*) fail "un port publié par un conteneur n'apparaît pas dans les ports en écoute" ;;
+	esac
+else
+	skip "lecture réelle des ports de l'hôte : le démon Docker ne répond pas"
 fi
 
 # --- Bilan --------------------------------------------------------------------------------------

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'assemblage de production
 # @spec docs/JOURNAL.md décision 16 (gardes de profil et de migrations)
-# @spec docs/PROD_MIGRATIONS.md §2 (prérequis), §4 (services à redéployer)
-# @spec docs/DAT.md §9 (déploiement), §13 (commandes) ; README.md §5 (commandes principales)
+# @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage : 80 et 443)
+# @spec docs/PROD_MIGRATIONS.md §2.1 (prérequis d'infrastructure), §4 (services à redéployer)
+# @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement), §13 (commandes)
+# @spec README.md §5 (commandes principales), §11 (limites connues)
 #
 # Démarre l'assemblage de production : Caddy termine TLS, aucun outillage de développement, ni
 # Kong ni PostgreSQL publiés.
@@ -73,6 +75,8 @@ if [ ! -d "$REPO_ROOT/webapp/dist" ]; then
 fi
 
 APP_DOMAIN=$(env_get "$ENV_FILE" APP_DOMAIN)
+
+require_free_ports compose_prod
 
 say "Démarrage de l'assemblage de production — domaine $APP_DOMAIN"
 compose_prod up -d --wait

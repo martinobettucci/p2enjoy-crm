@@ -110,10 +110,19 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
       production, confirmation explicite avant destruction, aucun amorçage en production.
 - [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
-- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **38 contrôles, aucune
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **52 contrôles, aucune
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
-      est retirée, et lorsque la dérivation d'un jeton est faussée.
+      est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
+      tombent** dès que les gardes d'hôte sont neutralisées.
+- [x] **Gardes d'hôte** livrées et prouvées après échec réel de `./runDev.sh` sur un poste WSL
+      (`docs/JOURNAL.md`, décisions 98 à 101) : magasin d'identifiants Docker écarté lorsqu'il
+      délègue à un binaire Windows, ports occupés refusés **avant** démarrage en nommant la
+      variable et le détenteur, contrôle de santé de `storage` fixé sur `127.0.0.1`, cluster
+      PostgreSQL détruit par conteneur jetable, `node_modules` créé avant Compose pour rester à
+      l'utilisateur. Démarrage à froid rejoué de bout en bout : `./resetMe.sh --yes` puis
+      `./runDev.sh`, 11 services `healthy`, `verify-stack.sh` **33/33**, `verify-seed.sh`
+      **49/49**.
 - [x] **`resetMe.sh` rejoue le seed : PROUVÉ**, par `CRM-005` qui a livré
       `supabase/seed/apply-seed.sh`. `./resetMe.sh --yes` détruit le cluster — identifiant
       PostgreSQL changé, table témoin disparue —, rejoue les migrations à blanc **puis applique le
