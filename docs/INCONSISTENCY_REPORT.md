@@ -365,7 +365,35 @@ les politiques et figera la forme des requêtes :
    `channels` avant le modèle d'autorisation, ce que le plan cherche précisément à éviter ;
 3. créer une unité distincte, par exemple `CRM-010b`, placée après `CRM-040`.
 
-Tant que le point est ouvert, l'unité reste `[~]` et la limite est nommée.
+**Mise à jour du 2026-08-04 — trois des quatre fonctions sont livrées par `CRM-012`, et le motif
+d'attente s'est éteint de lui-même pour elles.** L'arbitrage n'a pas été rendu ; quatre exécutions
+de la routine l'ont attendu et ont choisi une autre unité en le nommant (`docs/JOURNAL.md`,
+décisions au choix d'unité de `CRM-005`, `CRM-020`, `CRM-021` et `CRM-030`). Deux faits ont changé
+la situation :
+
+- **les tables existent.** `tracks` est livrée depuis `CRM-020`, `channels` depuis `CRM-021`. La
+  contradiction relevée ici — « la jointure n'a pas de table où aller » — ne vaut plus que pour
+  `can_read_card`, `cards` arrivant à `CRM-040` ;
+- **l'option 1 est devenue inapplicable pour ces trois fonctions.** Elle proposait de les rattacher
+  à `CRM-020` et `CRM-021` ; ces deux unités sont livrées et rouvrir leur périmètre pour y verser
+  une fonction écrite après elles contredirait `CLAUDE.md` §13.
+
+`CRM-012` les écrit donc, ce qui n'est pas une quatrième option inventée mais la lecture littérale
+de son titre — « droits fins par track et channel » — et de sa Definition of Done, qui exige la
+matrice de résolution et les preuves n° 3 et n° 4. **Le choix est nommé plutôt que tu** :
+`docs/JOURNAL.md`, décision 103.
+
+**Ce qui reste ouvert, et n'est pas tranché ici :**
+
+1. **`app.can_read_card`.** Toujours différée, et pour la raison d'origine : `cards` n'existe pas.
+   Elle sera écrite par l'unité qui livre la table, `CRM-040`, ou par une unité dédiée si le
+   responsable préfère. La suite pgTAP de `CRM-010` continue de constater son absence.
+2. **La Definition of Done de `CRM-010`.** Elle nomme six fonctions ; quatre lui échappent
+   désormais pour de bon. Faut-il la réécrire à quatre — les deux qu'elle livre plus
+   `resolve_access` et `workspace_role` —, ou la laisser porter une dette que d'autres unités
+   soldent ? `CRM-010` reste `[~]` tant que le point n'est pas tranché.
+
+L'entrée reste **ouverte** pour ces deux points.
 
 ---
 
@@ -762,47 +790,6 @@ unités qui livreront leur sujet ; les exiger aussi de `CRM-008` les compte deux
 **Lié à :** INC-013 (fonctions d'autorisation en attente de tables), INC-020 (build dû par l'unité
 suivante, close).
 
-### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
-
-**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
-`CRM-020`.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-020`.
-
-`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `tracks`, une lecture gouvernée par
-`app.can_read_track`. Cette fonction est l'une des quatre différées par INC-013, dont l'arbitrage
-appartient au responsable et **reste ouvert**. `CRM-020` doit néanmoins livrer une politique de
-lecture : sans elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son
-CRUD, ni sa lecture, ni le cloisonnement entre workspaces.
-
-**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
-prouvée par `CRM-010`. Elle est donc **correcte mais incomplète** : elle cloisonne par workspace,
-elle n'applique aucun droit fin. Concrètement, un `track_members.access = 'none'` posé sur un track
-ne le masque pas encore.
-
-**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
-créer reviendrait à trancher l'option 1 d'INC-013 — « rattacher chacune des quatre fonctions à
-l'unité qui livre sa table » — à la place du responsable. La suite pgTAP de `CRM-010` constate
-d'ailleurs leur absence (`hasnt_function`) et deviendrait rouge si elles apparaissaient sans que
-ses preuves soient étendues.
-
-**Ce qui protège l'écart :** il est **figé par une assertion** et non par un commentaire. La suite
-`supabase/tests/0004_tracks.test.sql` pose une ligne `track_members` restrictive et constate que le
-track reste lisible, en nommant `CRM-012`. Le jour où la politique sera resserrée, l'assertion
-deviendra rouge et forcera sa révision (`docs/JOURNAL.md`, décision 51).
-
-**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un track n'aurait aucun effet.
-Aucune ligne `track_members` n'existe sur les bases du projet — le seed n'y écrit rien — et
-`CRM-012` est l'unité suivante du chunk 2 à traiter dès que ses tables existent. Le risque est donc
-borné à la fenêtre entre `CRM-020` et `CRM-012`.
-
-**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
-`app.can_read_track` et quand cette politique est resserrée.
-
-**Lié à :** INC-013 (quatre fonctions différées), INC-014 (aucune unité ne nomme les politiques des
-tables d'identité).
-
----
-
 ### INC-025 — `docs/SCHEMA.md` §2 omet `created_at` et `updated_at`, que ses propres conventions exigent
 
 **Nature :** contradiction interne à `docs/SCHEMA.md`.
@@ -1064,43 +1051,6 @@ workflow ↔ channel — `CRM-033`, déjà nommée par la Definition of Done de 
 **engagée à moitié et non tranchée** : `CRM-031` a fait ce qu'il pouvait faire sans décider à la
 place du responsable. Les options 2 et 3 restent ouvertes ; l'option 3, en particulier, rendrait la
 `NOT NULL` inutile plutôt que différée.
-
----
-
-### INC-030 — La politique de lecture des channels ignore les droits fins, faute de `app.can_read_channel`
-
-**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
-`CRM-021`.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-021`.
-
-Jumelle d'INC-024, pour les channels.
-
-`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `channels`, une lecture gouvernée par
-`app.can_read_channel`, et une écriture par `app.can_write_channel` pour les tables filles.
-Ces deux fonctions sont parmi les quatre différées par INC-013, dont l'arbitrage appartient au
-responsable et **reste ouvert**. `CRM-021` doit néanmoins livrer une politique de lecture : sans
-elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son CRUD, ni sa lecture,
-ni le cloisonnement entre workspaces.
-
-**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
-prouvée par `CRM-010` — exactement le choix de `CRM-020` pour `tracks`. Elle est donc **correcte
-mais incomplète** : elle cloisonne par workspace, elle n'applique aucun droit fin. Un
-`channel_members.access = 'none'` posé sur un channel ne le masque pas encore.
-
-**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
-créer reviendrait à trancher l'option 1 d'INC-013 à la place du responsable, et la suite pgTAP de
-`CRM-010` — qui constate leur absence par `hasnt_function` — deviendrait rouge.
-
-**Ce qui protège l'écart :** une assertion de `supabase/tests/0005_channels.test.sql` pose une ligne
-`channel_members` restrictive et constate que le channel reste lisible, en nommant `CRM-012`.
-
-**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un channel n'aurait aucun effet.
-Aucune ligne `channel_members` n'existe sur les bases du projet — le seed n'y écrit rien.
-
-**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
-`app.can_read_channel` et `app.can_write_channel`, et quand ces politiques sont resserrées.
-
-**Lié à :** INC-013, INC-024 (la même entrée pour `tracks`), INC-014.
 
 ---
 
@@ -1819,7 +1769,135 @@ entre l'hôte supposé et l'hôte réel).
 
 ---
 
+### INC-045 — Aucun chapitre ne nommait les politiques de `track_members` et `channel_members`
+
+**Nature :** référence manquante dans `docs/SPEC-permissions-rls.md` §4.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-012`.
+
+Le tableau « Politiques par famille de tables » du §4 énumère vingt tables, de `profiles` à
+`saved_views`. `track_members` et `channel_members` n'y figuraient pas — alors qu'elles sont
+l'objet même de `CRM-012`, dont le titre est « droits fins par track et channel ». Le document
+spécifiait donc comment un droit fin **se résout** (§2.2) sans jamais dire qui a le droit d'en
+**poser** un, ni de le lire.
+
+C'est la jumelle d'INC-014, à une différence près qui change tout : INC-014 constate que les
+politiques des tables d'**identité** ne sont portées par aucune unité, et l'attribution reste
+ouverte ; ici, l'unité qui porte les tables est nommée sans ambiguïté par son propre titre, et
+c'est la **règle** qui manquait, non son porteur.
+
+**Comportement retenu :** la règle est écrite en `docs/SPEC-permissions-rls.md` §4.1, dans le
+commit documentaire qui précède le code, et les tables sont ajoutées au tableau du §4. Sans elle,
+`CRM-012` aurait livré un mécanisme de droits fins qu'aucun administrateur ne peut opérer depuis le
+produit : les deux tables restaient en refus par défaut depuis `CRM-003`, et seul `service_role`
+pouvait y écrire.
+
+**Ce qui n'est pas décidé ici :** rien qui déborde des deux tables. Les politiques des tables
+d'identité restent hors de `CRM-012` (INC-014), et la règle « un administrateur ne peut pas se
+retirer son propre rôle s'il est le dernier » — preuve n° 10 — reste sans porteur.
+
+**Arbitrage attendu du responsable :** confirmer la règle du §4.1, en particulier le choix de
+réserver la **lecture** d'un droit fin à l'administration et à l'intéressé. Un produit qui
+afficherait « qui a accès à ce channel » à tout membre du workspace exigerait une lecture plus
+large ; c'est un choix de produit, et il est réversible.
+
+**Lié à :** INC-011 (l'absence de `workspace_id` oblige les politiques à remonter par `tracks`),
+INC-013, INC-014, INC-024 et INC-030.
+
+---
+
 ## Clos
+
+### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
+
+**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
+`CRM-020`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-020`.
+
+`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `tracks`, une lecture gouvernée par
+`app.can_read_track`. Cette fonction est l'une des quatre différées par INC-013, dont l'arbitrage
+appartient au responsable et **reste ouvert**. `CRM-020` doit néanmoins livrer une politique de
+lecture : sans elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son
+CRUD, ni sa lecture, ni le cloisonnement entre workspaces.
+
+**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
+prouvée par `CRM-010`. Elle est donc **correcte mais incomplète** : elle cloisonne par workspace,
+elle n'applique aucun droit fin. Concrètement, un `track_members.access = 'none'` posé sur un track
+ne le masque pas encore.
+
+**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
+créer reviendrait à trancher l'option 1 d'INC-013 — « rattacher chacune des quatre fonctions à
+l'unité qui livre sa table » — à la place du responsable. La suite pgTAP de `CRM-010` constate
+d'ailleurs leur absence (`hasnt_function`) et deviendrait rouge si elles apparaissaient sans que
+ses preuves soient étendues.
+
+**Ce qui protège l'écart :** il est **figé par une assertion** et non par un commentaire. La suite
+`supabase/tests/0004_tracks.test.sql` pose une ligne `track_members` restrictive et constate que le
+track reste lisible, en nommant `CRM-012`. Le jour où la politique sera resserrée, l'assertion
+deviendra rouge et forcera sa révision (`docs/JOURNAL.md`, décision 51).
+
+**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un track n'aurait aucun effet.
+Aucune ligne `track_members` n'existe sur les bases du projet — le seed n'y écrit rien — et
+`CRM-012` est l'unité suivante du chunk 2 à traiter dès que ses tables existent. Le risque est donc
+borné à la fenêtre entre `CRM-020` et `CRM-012`.
+
+**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
+`app.can_read_track` et quand cette politique est resserrée.
+
+**Lié à :** INC-013 (quatre fonctions différées), INC-014 (aucune unité ne nomme les politiques des
+tables d'identité).
+
+**CLOSE le 2026-08-04 par `CRM-012`.** La politique de lecture de `tracks` s'appuie désormais sur
+`app.can_read_track`, qui applique les droits fins. MESURÉ : un `track_members.access = 'none'`
+posé sur le viewer lui masque le track — trois tracks visibles au lieu de quatre —, tandis que le
+même droit fin posé sur l'administratrice ne lui masque rien. L'assertion de
+`supabase/tests/0004_tracks.test.sql` qui figeait l'écart est **devenue rouge comme prévu** et a
+été révisée dans le même changement, non retirée (mécanisme de la décision 51).
+
+---
+
+### INC-030 — La politique de lecture des channels ignore les droits fins, faute de `app.can_read_channel`
+
+**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
+`CRM-021`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-021`.
+
+Jumelle d'INC-024, pour les channels.
+
+`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `channels`, une lecture gouvernée par
+`app.can_read_channel`, et une écriture par `app.can_write_channel` pour les tables filles.
+Ces deux fonctions sont parmi les quatre différées par INC-013, dont l'arbitrage appartient au
+responsable et **reste ouvert**. `CRM-021` doit néanmoins livrer une politique de lecture : sans
+elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son CRUD, ni sa lecture,
+ni le cloisonnement entre workspaces.
+
+**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
+prouvée par `CRM-010` — exactement le choix de `CRM-020` pour `tracks`. Elle est donc **correcte
+mais incomplète** : elle cloisonne par workspace, elle n'applique aucun droit fin. Un
+`channel_members.access = 'none'` posé sur un channel ne le masque pas encore.
+
+**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
+créer reviendrait à trancher l'option 1 d'INC-013 à la place du responsable, et la suite pgTAP de
+`CRM-010` — qui constate leur absence par `hasnt_function` — deviendrait rouge.
+
+**Ce qui protège l'écart :** une assertion de `supabase/tests/0005_channels.test.sql` pose une ligne
+`channel_members` restrictive et constate que le channel reste lisible, en nommant `CRM-012`.
+
+**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un channel n'aurait aucun effet.
+Aucune ligne `channel_members` n'existe sur les bases du projet — le seed n'y écrit rien.
+
+**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
+`app.can_read_channel` et `app.can_write_channel`, et quand ces politiques sont resserrées.
+
+**Lié à :** INC-013, INC-024 (la même entrée pour `tracks`), INC-014.
+
+**CLOSE le 2026-08-04 par `CRM-012`.** La politique de lecture de `channels` s'appuie désormais sur
+`app.can_read_channel`, et `app.can_write_channel` est livrée avec elle. MESURÉ : un
+`channel_members.access = 'none'` masque le channel ; un `channel_members.access = 'member'` posé
+sous un track fermé le **rouvre**, ce qui est « le plus spécifique gagne » dans le sens
+contre-intuitif du §3.1. L'assertion de `supabase/tests/0005_channels.test.sql` qui figeait l'écart
+est devenue rouge et a été révisée dans le même changement.
+
+---
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
 

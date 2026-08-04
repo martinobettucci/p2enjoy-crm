@@ -3749,3 +3749,116 @@ correction n'était due.
 **Ce qui protège l'écart :** les deux cas — clé absente **et** liste vide — sont désormais deux
 assertions distinctes de `supabase/tests/0010_champs_formulaire.test.sql`. La première seule aurait
 laissé passer le défaut ; c'est elle qui l'a trouvé.
+
+---
+
+## 2026-08-04 — `CRM-012` : les droits fins deviennent opposables, et INC-013 s'éteint pour trois fonctions sur quatre
+
+### Choix de l'unité — pourquoi `CRM-012`, et pourquoi maintenant
+
+`docs/MASTER_PLAN.md` §2 place `CRM-012` en tête des unités `[ ]`, au chunk 2.b. Quatre exécutions
+de la routine l'ont examinée puis écartée — `CRM-005`, `CRM-020`, `CRM-021`, `CRM-030` — et chacune
+a nommé le même motif : INC-013 exige un arbitrage « **avant `CRM-012`** », et deux de ses trois
+options concernent des tables qui n'existaient pas.
+
+Ce motif est éteint, et il l'est par les faits, non par lassitude :
+
+- `tracks` existe depuis `CRM-020`, `channels` depuis `CRM-021`. Des quatre fonctions différées,
+  trois ont désormais une table où aller ; seule `app.can_read_card` n'en a pas ;
+- l'option 1 d'INC-013 — « rattacher chaque fonction à l'unité qui livre sa table » — proposait
+  `can_read_track` à `CRM-020` et les deux fonctions de channel à `CRM-021`. Ces deux unités sont
+  livrées. Y verser aujourd'hui une fonction écrite après elles rouvrirait leur périmètre, ce que
+  `CLAUDE.md` §13 refuse.
+
+Reste la lecture littérale de l'unité : `CRM-012` s'intitule « droits fins par track et channel »,
+et sa Definition of Done demande « pgTAP sur la matrice de résolution » et les preuves de refus
+n° 3 et n° 4. Aucune de ces deux exigences n'est satisfaisable sans les trois fonctions. Les
+écrire ici n'invente pas une quatrième option : c'est ce que l'unité demande depuis le premier
+jour.
+
+**Ce que ce passage ne tranche pas, et le dit.** Deux points d'INC-013 restent ouverts —
+`app.can_read_card`, et la Definition of Done de `CRM-010` qui nomme six fonctions dont quatre lui
+échappent. L'entrée reste **ouverte** pour eux. Et INC-014 — les politiques des tables d'identité —
+n'est pas davantage tranchée : `profiles`, `workspaces` et `workspace_members` restent en refus par
+défaut. Se les attribuer aurait été confortable, l'unité touchant déjà aux politiques ; c'eût été
+décider à la place du responsable.
+
+### Décision 103 — Trois fonctions `can_*` sont écrites, la quatrième reste différée pour la raison d'origine
+
+**Problème.** INC-013 réservait l'écriture des quatre fonctions à un arbitrage jamais rendu, la
+routine s'exécutant sans personne devant l'écran.
+
+**Ce qui a été mesuré avant de décider.** Sur la pile réellement démarrée, avec les données du
+seed :
+
+- une fonction candidate `can_read_track` appelée sur un track **inexistant** rend `NULL`, non
+  `false` — le `where` ne rend aucune ligne ;
+- adossée à cette fonction en `SECURITY DEFINER`, la politique de lecture de `tracks` répond avec
+  le filtrage attendu, **alors même que la fonction lit `tracks`** ; la jumelle `SECURITY INVOKER`
+  épuise la pile d'appels. Seconde occurrence de la décision 27 ;
+- la matrice se comporte comme le §2.2 la décrit : `viewer` + `track_members = 'none'` → refus ;
+  `admin` + le même droit fin → accès ; `channel_members = 'member'` sous un track fermé →
+  **écriture**, la règle la plus spécifique rouvrant ce que la moins spécifique ferme.
+
+**Décision.** `app.can_read_track`, `app.can_read_channel` et `app.can_write_channel` sont livrées
+par `CRM-012`, en `SECURITY DEFINER`, `search_path` vide, résultat enveloppé dans
+`coalesce(…, false)`. `app.can_read_card` n'est **pas** écrite : `cards` n'existe pas, et une
+fonction qui référence une table absente échouerait au premier appel sans qu'aucune preuve puisse
+être produite. Le motif d'origine d'INC-013 vaut encore pour elle, et pour elle seule.
+
+**Conséquence assumée.** Les assertions `hasnt_function` de `supabase/tests/0002_...` deviennent
+rouges pour trois des quatre fonctions. Elles ne sont pas retirées : elles sont **converties** en
+`has_function` avec le contrôle de leur volatilité, de leur `search_path` et de leurs privilèges.
+C'est ce que la décision 51 attendait d'elles — forcer la révision, non disparaître avec la cause.
+
+### Décision 104 — Les jointures des fonctions `can_*` sont externes, et l'inverse eût été le refus par défaut
+
+**Problème.** `app.resolve_access` distingue strictement `NULL` — « aucun avis à ce niveau » — de
+`'none'` — « accès explicitement fermé ». Cette distinction ne survit que si la lecture de la ligne
+de droit fin rend `NULL` en son absence.
+
+**Ce qui aurait été faux.** Une jointure interne entre `tracks` et `track_members` ne rend **aucune
+ligne** lorsque l'appelant n'a pas de droit fin — c'est-à-dire dans le cas de très loin le plus
+courant. La fonction rendrait `NULL`, la politique refuserait, et tout membre du workspace perdrait
+l'accès à tout ce sur quoi personne ne lui a rien accordé. Le produit serait fermé par défaut là où
+la spécification le veut **hérité** par défaut.
+
+**Décision.** Les deux jointures — `track_members` et `channel_members` — sont des `left join`
+portant `user_id = auth.uid()` **dans la condition de jointure**, jamais dans le `where`. Un
+`where tm.user_id = auth.uid()` aurait annulé l'effet du `left join` et reproduit exactement le
+défaut décrit ci-dessus. Les deux cas — avec et sans droit fin — sont **deux assertions
+distinctes** de la suite pgTAP, et non une seule : la seconde seule aurait été verte avec une
+jointure interne.
+
+### Décision 105 — Un droit fin se lit par l'administration et par l'intéressé, et se supprime
+
+**Problème.** `docs/SPEC-permissions-rls.md` §4 ne nommait aucune politique pour `track_members` et
+`channel_members` (INC-045). Les deux tables étaient donc en refus par défaut depuis `CRM-003` :
+`CRM-012` allait rendre les droits fins opposables sans que quiconque puisse en poser un depuis le
+produit.
+
+**Décision, écrite au §4.1 avant le code.** Lecture par l'administrateur du workspace propriétaire
+**et** par l'utilisateur concerné pour sa propre ligne ; insertion, mise à jour et **suppression**
+réservées à l'administrateur.
+
+Trois motifs, dont deux se discutent :
+
+- **la lecture n'est pas ouverte au workspace.** Savoir qui est écarté de quel channel est une
+  donnée d'administration. L'intéressé y a droit — une restriction invisible à celui qui la subit
+  est une mauvaise règle — mais un `viewer` n'a pas à connaître les restrictions de ses collègues.
+  Le choix est **réversible** et soumis à arbitrage en INC-045 ;
+- **la suppression est exposée**, contrairement aux tracks et aux channels. Ces tables n'ont pas
+  d'`archived_at`, et retirer un droit fin n'est pas supprimer une donnée métier : c'est revenir à
+  l'accès hérité, l'état par défaut du §2.2. Un archivage obligerait `app.resolve_access` à
+  distinguer « aucune ligne » de « ligne archivée », deux états qu'elle traite — et doit traiter —
+  identiquement. Même raisonnement que la décision 96 ;
+- **un administrateur peut porter un droit fin restrictif, et cela ne l'atteint pas.** La règle
+  « un administrateur n'est jamais restreint » vaut à la résolution, pas à l'écriture. La ligne est
+  acceptée, stockée, et redevient opposante le jour où ce compte cesse d'être administrateur. MESURÉ.
+
+**Ce que ces politiques ont coûté à INC-011.** `track_members` ne porte pas `workspace_id` : sa
+politique ne peut pas filtrer par workspace directement et doit remonter par `tracks`. D'où deux
+fonctions d'appui, `app.track_workspace` et `app.channel_workspace`, en `SECURITY DEFINER` pour la
+même raison qu'au §3.3 — sans quoi `track_members` interrogerait `tracks`, dont la politique
+interroge `track_members`. MESURÉ : aucune récursion, les deux tables restent lisibles avec le
+filtrage attendu. L'écart d'INC-011 n'est pas résolu ; il est **payé**, et le prix est nommé.

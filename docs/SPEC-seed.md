@@ -57,11 +57,8 @@ Les trois rôles de `docs/SPEC-permissions-rls.md` §2.1 sont représentés, un 
 | `5eed0000-0000-4000-8000-000000000012` | `bizdev@p2enjoy.test` | Driss Lemoine | `business_developer` |
 | `5eed0000-0000-4000-8000-000000000013` | `viewer@p2enjoy.test` | Farida Nowak | `viewer` |
 
-Aucun droit fin (`track_members`, `channel_members`) n'est posé. Le motif d'origine — les tables
-cibles n'existaient pas — est levé depuis `CRM-020` et `CRM-021`, mais la position ne change pas :
-les droits fins ne sont **pas appliqués** par les politiques livrées (INC-024, INC-030), et en
-poser dans le seed donnerait à croire à une restriction qui n'existe pas encore. Ils seront ajoutés
-par l'unité qui les rendra opposables, `CRM-012`.
+**Les droits fins sont posés depuis `CRM-012`**, l'unité qui les a rendus opposables. Contrat
+détaillé au §2.11.
 
 ### 2.3 Mot de passe de développement
 
@@ -309,6 +306,32 @@ affiché en fin d'exécution a été corrigé par `CRM-020`, `CRM-021` puis `CRM
 six channels, ses huit nœuds et son workflow, tandis que `profiles`, `workspaces` et
 `workspace_members` restent en refus par défaut jusqu'à `CRM-012`. Annoncer un refus général serait
 devenu faux.
+
+### 2.11 Droits fins — ajoutés par `CRM-012`
+
+Quatre lignes, choisies pour que **chacune des quatre situations** de la matrice du §2.2 de
+`docs/SPEC-permissions-rls.md` soit exercée par une donnée réelle, et non seulement décrite.
+
+| Table | Cible | Compte | `access` | Ce que cette ligne démontre |
+|---|---|---|---|---|
+| `track_members` | `conseil-ia` | `viewer@p2enjoy.test` | `none` | une restriction **ferme** un sous-arbre entier, ses channels compris |
+| `channel_members` | `prospection` | `viewer@p2enjoy.test` | `member` | la règle la plus spécifique **rouvre** ce que la moins spécifique ferme, et en écriture |
+| `channel_members` | `maintenance` | `bizdev@p2enjoy.test` | `viewer` | une restriction en **lecture seule** d'un compte qui écrit partout ailleurs |
+| `track_members` | `conseil-ia` | `admin@p2enjoy.test` | `none` | un administrateur **n'est jamais restreint** : la ligne existe, elle est lisible, elle est sans effet |
+
+La quatrième mérite son motif. Sans elle, « un administrateur n'est jamais restreint » resterait une
+règle démontrée par la seule suite pgTAP, sur une ligne créée puis détruite. Avec elle, la
+démonstration est **permanente** et opposable : n'importe qui peut se connecter avec le compte
+administrateur et constater qu'un droit fin restrictif le laisse voir les quatre tracks.
+
+**Ce que ces lignes changent aux écrans, et qui est voulu.** Le compte `viewer@p2enjoy.test` ne voit
+plus que trois tracks sur quatre, et un seul des trois channels de `conseil-ia`. Ce n'est pas un
+appauvrissement du seed : c'est la première fois qu'un compte du seed voit **autre chose** qu'un
+autre, ce que `CLAUDE.md` §8 demande de couvrir — « les principaux profils », « les branches
+alternatives ».
+
+**Aucune ligne n'est posée sur un track ou un channel archivé.** Un droit fin sur un objet déjà
+masqué ne démontrerait rien, les deux causes de refus se confondant.
 
 ### 2.8 Workflow par défaut — ajouté par `CRM-031`
 

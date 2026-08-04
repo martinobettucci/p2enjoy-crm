@@ -180,24 +180,27 @@ lecture doit se manifester par **zéro ligne** et non par une erreur de privilè
 (`docs/SPEC-permissions-rls.md` §7, dernier paragraphe). `INSERT` et `UPDATE` vont à
 `authenticated` seul, `service_role` conserve tout.
 
-### 5.3 Ce que la lecture ne fait **pas** encore
+### 5.3 Les droits fins sont appliqués depuis `CRM-012`
 
-La politique de lecture s'arrête au rôle de workspace. Elle **n'applique aucun droit fin** :
-un `track_members.access = 'none'` posé sur un track ne le masque pas encore.
+La politique de lecture s'appuyait sur `app.is_workspace_member` et s'arrêtait au rôle de
+workspace : un `track_members.access = 'none'` ne masquait rien. C'était l'écart INC-024, figé par
+une assertion plutôt que commenté.
 
-C'est délibéré et borné :
+**`CRM-012` l'a soldé.** La lecture s'appuie désormais sur `app.can_read_track`
+(`docs/SPEC-permissions-rls.md` §3.3), qui applique les droits fins. Le tableau du §5.1 devient :
 
-- `app.can_read_track` est l'une des quatre fonctions différées par INC-013, dont l'arbitrage
-  appartient au responsable et reste ouvert ;
-- la resserrer relève de `CRM-012`, dont c'est exactement l'objet — « droits fins par track et
-  channel » ;
-- l'écart est **figé par une assertion** de la suite pgTAP, et non seulement commenté : une ligne
-  `track_members` restrictive est posée, et la suite constate que le track reste lisible, en
-  nommant `CRM-012`. Le jour où la politique sera resserrée, l'assertion deviendra rouge et forcera
-  sa révision (même procédé que `CRM-006` et `CRM-008`, `docs/JOURNAL.md` décision 51).
+| Opération | Autorisée à | Fonction |
+|---|---|---|
+| `SELECT` | tout membre du workspace **dont le droit fin ne l'écarte pas** | `app.can_read_track(id)` |
+| `INSERT` / `UPDATE` | administrateur du workspace | `app.is_workspace_admin(workspace_id)`, inchangé |
 
-Cette limite est consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-024**, et n'est **pas** une
-résolution implicite d'INC-013 : aucune des quatre fonctions différées n'est écrite ici.
+MESURÉ : le viewer du seed, porteur d'un `access = 'none'` sur « Conseil & IA », voit trois tracks
+au lieu de quatre ; l'administratrice, porteuse du **même** droit fin, en voit quatre. L'assertion
+qui figeait l'écart est devenue rouge comme prévu et a été **révisée**, non retirée
+(`docs/JOURNAL.md` décision 51, huitième occurrence).
+
+L'écriture n'est pas touchée : elle reste réservée à l'administrateur, qu'un droit fin ne restreint
+jamais.
 
 ## 6. Contrat d'API — mesuré
 

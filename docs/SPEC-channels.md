@@ -328,20 +328,26 @@ se manifester par **zéro ligne** et non par une erreur de privilège
 (`docs/SPEC-permissions-rls.md` §7, dernier paragraphe). `INSERT` et `UPDATE` vont à
 `authenticated` seul, `service_role` conserve tout.
 
-### 6.3 Ce que la lecture ne fait **pas** encore
+### 6.3 Les droits fins sont appliqués depuis `CRM-012`
 
-La politique de lecture s'arrête au rôle de workspace. Elle **n'applique aucun droit fin** : un
-`channel_members.access = 'none'` posé sur un channel ne le masque pas encore.
+La politique de lecture s'appuyait sur `app.is_workspace_member` : un
+`channel_members.access = 'none'` ne masquait rien. C'était INC-030, jumelle d'INC-024 pour les
+channels, figée par une assertion plutôt que commentée.
 
-C'est délibéré et borné, pour les mêmes raisons qu'au §5.3 de `docs/SPEC-tracks.md` :
-`app.can_read_channel` et `app.can_write_channel` sont deux des quatre fonctions différées par
-INC-013, dont l'arbitrage **reste ouvert** ; les écrire ici trancherait l'option 1 à la place du
-responsable, et la suite pgTAP de `CRM-010` — qui constate leur absence par `hasnt_function` —
-deviendrait rouge.
+**`CRM-012` l'a soldée.** La lecture s'appuie désormais sur `app.can_read_channel`
+(`docs/SPEC-permissions-rls.md` §3.3), et `app.can_write_channel` est livrée avec elle — elle
+gouvernera l'écriture des tables filles à partir de `CRM-040`.
 
-L'écart est **figé par une assertion** : une ligne `channel_members` restrictive est posée, et la
-suite constate que le channel reste lisible, en nommant `CRM-012`. Consigné en
-`docs/INCONSISTENCY_REPORT.md`, **INC-030**, jumelle d'INC-024 pour les channels.
+Un channel hérite du droit fin de **son track** : c'est la précédence channel → track → workspace
+du §2.2 de `docs/SPEC-permissions-rls.md`. Deux conséquences mesurées, la seconde
+contre-intuitive :
+
+- un `track_members.access = 'none'` masque **tous** les channels de ce track, sans qu'aucune ligne
+  `channel_members` ne soit nécessaire ;
+- un `channel_members.access = 'member'` posé sous ce même track **rouvre** ce channel-là, et lui
+  seul. « Le plus spécifique gagne » vaut dans les deux sens.
+
+L'écriture n'est pas touchée : elle reste réservée à l'administrateur.
 
 ### 6.4 Ce que la clé composite apporte à la sécurité, et ce qu'elle n'apporte pas
 
@@ -448,7 +454,8 @@ constate le retour au vert.
    réordonnancement, ni archivage depuis l'écran. Bloqué par INC-021.
 3. **Aucun channel visible dans l'interface**, pour la même raison : l'appelant est anonyme, et la
    route d'un track affiche donc son état « introuvable ».
-4. **Les droits fins ne sont pas appliqués** (§6.3, INC-030) — `CRM-012`.
+4. **Les droits fins sont appliqués depuis `CRM-012`** (§6.3) — INC-030 close. Ce qui reste dû
+   est `app.can_read_card`, différée jusqu'à `CRM-040`.
 5. **Le réordonnancement des onglets n'a pas de RPC dédiée** : réordonner, c'est écrire `position`.
 6. **Aucune limite de nombre de channels par track** n'est posée côté serveur. La barre défile.
 7. **L'archivage d'un track ne cascade pas sur ses channels** (§4) : choix motivé, mais il signifie
