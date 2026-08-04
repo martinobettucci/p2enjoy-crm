@@ -13,6 +13,32 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **`CRM-008` — un faux vert réel de l'exécuteur pgTAP, trouvé, reproduit et corrigé.**
+  `scripts/run-sql-tests.sh` déclarait verte une suite que pgTAP déclarait tronquée.
+  - **Cause mesurée** : pgTAP tient **deux** comptes — la numérotation des lignes, portée par une
+    séquence que rien n'annule, et le compte relu par `finish()`, porté par une table qu'un
+    `rollback to savepoint` annule. Une suite dont les **dernières** assertions sont prises dans un
+    savepoint annulé émet donc exactement autant de lignes que son plan en annonce, et passait le
+    quatrième contrôle du contrat.
+  - **Mesuré en déposant le fichier dans `supabase/tests/`** : « 1 fichiers, 3 assertions, aucune
+    anomalie », code de sortie `0`, alors que pgTAP annonçait « planned 3 but ran 1 » et que les
+    deux dernières preuves n'avaient pas été enregistrées.
+  - **Correction** : un **cinquième contrôle** au contrat de `docs/SPEC-test-harness.md` §3.2 —
+    tout diagnostic `# Looks like you planned` fait échouer le fichier. Il compare le plan au compte
+    **enregistré** là où le quatrième le compare aux lignes **émises**.
+  - **Contrainte d'écriture** qui en découle, portée par le §3.2 : une suite se termine **hors
+    savepoint**, par une assertion de fond.
+  - **Régression figée** : septième dégradation de `scripts/verify-harness.sh`, qui constate
+    d'abord que la suite piégée émet bien ses trois lignes — sans quoi le contrôle ne prouverait
+    rien —, puis exige l'échec de `npm run test:sql`. Le harnais passe de **22** à **25 contrôles**.
+  - **La cause laissée ouverte par la décision 76 est élucidée** : la différence entre les suites
+    qui dérivent et celles qui ne dérivent pas tient à la **position du dernier `rollback`**.
+  - **Aucune suite livrée n'était concernée**, vérifié fichier par fichier : les sept sont vertes,
+    plan tenu, aucun diagnostic.
+
+
 ### Documenté
 
 - **`CRM-031` — spécification des workflows, écrite après mesure et avant tout code.**

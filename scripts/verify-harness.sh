@@ -3,7 +3,7 @@
 # @verifies docs/SPEC-test-harness.md §3 (exécuteur pgTAP), §4 (projets Playwright),
 #           §5 (rapport), §7 (preuves attendues)
 # @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 11)
-# @verifies docs/JOURNAL.md décisions 48 à 51
+# @verifies docs/JOURNAL.md décisions 48 à 51, décision 79 (faux vert du plan pgTAP)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-008` :
 #
@@ -16,7 +16,8 @@
 #   6. `npm run test:unit` reste vert ;
 #   7. `npm run typecheck` reste vert, les fichiers `e2e/` étant couverts par tsconfig.tools.json ;
 #   8. `npm run e2e:report` sert réellement le dernier rapport — interrogé en HTTP, pas supposé ;
-#   9. le harnais est **non complaisant** : six dégradations réelles doivent le faire échouer ;
+#   9. le harnais est **non complaisant** : sept dégradations réelles doivent le faire échouer,
+#      dont la régression d'un faux vert **réel** de l'exécuteur (décision 79) ;
 #  10. tout ce qui a été altéré est restauré, et l'état final est **constaté**.
 #
 # Le script ne démarre ni n'arrête la pile : elle doit tourner (`./runDev.sh`), et le seed doit
@@ -33,6 +34,9 @@ cd "$(dirname "$0")/.."
 DB_CONTAINER=p2enjoy-db
 SUITE_MUTABLE=supabase/tests/0003_seed_socle.test.sql
 TEST_FAUX=webapp/src/lib/non-complaisance.tmp.test.ts
+# Suite jetable de la dégradation 9.6 : un plan tenu ligne pour ligne, mais des dernières
+# assertions prises dans un savepoint annulé (docs/JOURNAL.md, décision 79).
+SUITE_FAUX_VERT=supabase/tests/9999_non_complaisance_plan.tmp.test.sql
 POLITIQUE=preuve_non_complaisance_crm_008
 PORT_RAPPORT=9323
 
@@ -68,7 +72,7 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 # suite pgTAP mutée, le test unitaire faux, la politique RLS posée, et le serveur de rapport.
 menage() {
 	[ -f "$TRAVAIL/suite.sql" ] && cp "$TRAVAIL/suite.sql" "$SUITE_MUTABLE"
-	rm -f "$TEST_FAUX"
+	rm -f "$TEST_FAUX" "$SUITE_FAUX_VERT"
 	psql_db -c "drop policy if exists \"$POLITIQUE\" on public.workspaces;" >/dev/null 2>&1 || true
 	[ -n "${PID_RAPPORT:-}" ] && kill "$PID_RAPPORT" 2>/dev/null || true
 	rm -rf "$TRAVAIL"
@@ -232,7 +236,7 @@ PID_RAPPORT=
 # n'échoue jamais ne prouve rien de ce qu'il affirme.
 
 echo
-echo "9. Non-complaisance : six dégradations réelles doivent faire échouer le harnais"
+echo "9. Non-complaisance : sept dégradations réelles doivent faire échouer le harnais"
 
 # 9.1 — une assertion volontairement fausse dans une suite pgTAP réelle.
 sed -i "s/'P2Enjoy SAS',/'P2Enjoy SARL',/" "$SUITE_MUTABLE"
@@ -301,6 +305,47 @@ else
 fi
 rm -f "$TEST_FAUX"
 
+# 9.6 — plan tenu ligne pour ligne, mais dernières assertions dans un savepoint annulé.
+# C'EST LA RÉGRESSION D'UN FAUX VERT RÉEL DE CET EXÉCUTEUR (docs/JOURNAL.md, décision 79). pgTAP
+# tient deux comptes : la numérotation, portée par une séquence que rien n'annule, et le compte relu
+# par `finish()`, porté par une table qu'un `rollback to savepoint` annule. Avant le cinquième
+# contrôle du §3.2, l'exécuteur comparait `3` à `3`, ne trouvait aucun `not ok`, et rendait `0` sur
+# une suite que pgTAP déclarait tronquée.
+#
+# Le contrôle est écrit en deux temps, et le premier compte autant que le second : il faut d'abord
+# constater que la suite **émet bien** autant de lignes que son plan en annonce, sans quoi c'est le
+# quatrième contrôle qui la refuserait et le cinquième ne prouverait rien.
+cat > "$SUITE_FAUX_VERT" <<'FAUXVERT'
+-- Fichier temporaire créé par scripts/verify-harness.sh, supprimé par son trap.
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(3);
+select ok(true, 'assertion hors savepoint');
+savepoint s1;
+select ok(true, 'assertion dans un savepoint annule');
+select ok(true, 'derniere assertion, dans le meme savepoint');
+rollback to s1;
+select * from finish();
+rollback;
+FAUXVERT
+
+sortie_faux_vert=$(docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA \
+	-v ON_ERROR_STOP=1 -f - < "$SUITE_FAUX_VERT" 2>&1 || true)
+emises_faux_vert=$(printf '%s\n' "$sortie_faux_vert" | grep -cE '^(not )?ok ' || true)
+if [ "$emises_faux_vert" = "3" ] \
+	&& printf '%s' "$sortie_faux_vert" | grep -q 'Looks like you planned 3 tests but ran 1'; then
+	ok "la suite piégée émet bien ses 3 lignes tout en étant tronquée pour pgTAP : le quatrième contrôle ne la verrait pas"
+else
+	fail "la suite piégée n'a pas le comportement attendu ($emises_faux_vert ligne(s)) : le contrôle suivant ne prouverait rien"
+fi
+
+if npm run --silent test:sql >/dev/null 2>&1; then
+	fail "un plan dénoncé par pgTAP ne fait pas échouer npm run test:sql — le faux vert de la décision 79 est de retour"
+else
+	ok "un plan dénoncé par pgTAP fait échouer npm run test:sql"
+fi
+rm -f "$SUITE_FAUX_VERT"
+
 # --- 10. État final ----------------------------------------------------------------------------
 
 echo
@@ -316,6 +361,12 @@ if [ ! -e "$TEST_FAUX" ]; then
 	ok "le test unitaire faux est supprimé"
 else
 	fail "le test unitaire faux subsiste : $TEST_FAUX"
+fi
+
+if [ ! -e "$SUITE_FAUX_VERT" ]; then
+	ok "la suite pgTAP piégée est supprimée : supabase/tests/ ne contient que les sept suites livrées"
+else
+	fail "la suite pgTAP piégée subsiste : $SUITE_FAUX_VERT"
 fi
 
 politiques=$(psql_db -c "select count(*) from pg_policies where schemaname='public' and tablename='workspaces';")

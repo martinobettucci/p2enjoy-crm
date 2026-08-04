@@ -15,9 +15,17 @@
 #   - sans `finish()`, pgTAP n'émet AUCUN diagnostic de plan : une suite tronquée passe alors
 #     pour complète, y compris aux yeux d'un harnais qui lirait ses lignes « # ».
 #
-# Le verdict est donc calculé ici, à partir de quatre conditions indépendantes : le code de
-# sortie de `psql`, la présence d'un plan, l'absence de `not ok`, et l'égalité entre le plan
-# annoncé et le nombre d'assertions réellement émises.
+# Le verdict est donc calculé ici, à partir de cinq conditions indépendantes : le code de
+# sortie de `psql`, la présence d'un plan, l'absence de `not ok`, l'égalité entre le plan annoncé et
+# le nombre d'assertions réellement émises, et l'absence de diagnostic de plan émis par pgTAP.
+#
+# La cinquième a été ajoutée après coup, sur un faux vert **mesuré** de ce script même
+# (`docs/JOURNAL.md`, décision 79) : pgTAP tient deux comptes distincts — la numérotation des
+# lignes, portée par une séquence, et le compte relu par `finish()`, porté par une table qu'un
+# `rollback to savepoint` annule. Une suite dont les **dernières** assertions sont prises dans un
+# savepoint annulé émet donc exactement autant de lignes que son plan en annonce, et passait le
+# quatrième contrôle, alors que pgTAP la déclarait tronquée et que ses dernières preuves n'avaient
+# pas été enregistrées.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`). Il n'écrit rien en base — les suites livrées ouvrent une transaction et
@@ -130,6 +138,20 @@ for fichier in "${FICHIERS[@]}"; do
 	if [ "$plan" -ne "$emises" ]; then
 		fail "$fichier — plan annoncé $plan, $emises assertion(s) émise(s) : suite incomplète"
 		grep -E '^#' "$sortie" | sed 's/^/        /' | head -n 10
+		echecs=$((echecs + 1))
+		continue
+	fi
+
+	# Contrôle symétrique du précédent, et non son doublon : celui-ci compare le plan à ce que
+	# pgTAP a **enregistré**, le précédent à ce que ce script a **vu passer**. Les deux divergent
+	# dès qu'un `rollback to savepoint` intervient après la dernière assertion, et c'est ce que le
+	# faux vert de la décision 79 exploitait — plan tenu ligne pour ligne, suite tronquée pour
+	# pgTAP.
+	diagnostic=$(grep -m 1 -E '^# Looks like you planned' "$sortie" || true)
+	if [ -n "$diagnostic" ]; then
+		fail "$fichier — pgTAP dénonce son propre plan : les lignes émises ne sont pas celles qu'il a comptées"
+		printf '        %s\n' "$diagnostic"
+		printf '        Une suite se termine hors savepoint (docs/SPEC-test-harness.md §3.2).\n'
 		echecs=$((echecs + 1))
 		continue
 	fi

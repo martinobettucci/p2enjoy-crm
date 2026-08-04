@@ -730,11 +730,36 @@ pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
       malgré le renommage du projet et la déclaration conditionnelle du serveur ;
       `npm run test:unit` reste à **96 tests** ; `npm run typecheck` reste vert sur les quatre
       projets, les nouveaux fichiers `e2e/` étant couverts par `tsconfig.tools.json`.
-- [x] Harnais de preuves rejouable `scripts/verify-harness.sh` : **22 contrôles, aucune anomalie**,
-      et **non complaisant, éprouvé par six dégradations réelles** — une assertion fausse dans une
+- [x] Harnais de preuves rejouable `scripts/verify-harness.sh` : **25 contrôles, aucune anomalie**,
+      et **non complaisant, éprouvé par sept dégradations réelles** — une assertion fausse dans une
       suite pgTAP réelle, un plan non tenu **sans** `finish()`, une erreur SQL, une **politique RLS
-      permissive réellement posée** sur `workspaces`, et un test unitaire volontairement faux.
-      Chacune doit faire échouer la commande correspondante.
+      permissive réellement posée** sur `workspaces`, un test unitaire volontairement faux, et une
+      suite au **plan tenu ligne pour ligne mais tronquée pour pgTAP**. Chacune doit faire échouer
+      la commande correspondante.
+- [x] **Un faux vert réel de l'exécuteur trouvé, reproduit et corrigé** (décision 79, protocole
+      `CLAUDE.md` §18). pgTAP tient **deux** comptes : la numérotation des lignes, portée par une
+      séquence que rien n'annule, et le compte relu par `finish()`, porté par une table qu'un
+      `rollback to savepoint` annule. Une suite dont les **dernières** assertions sont prises dans
+      un savepoint annulé émet donc exactement autant de lignes que son plan en annonce.
+      **Mesuré en déposant le fichier dans `supabase/tests/`** : l'exécuteur affichait « 1 fichiers,
+      3 assertions, aucune anomalie » et sortait en `0`, alors que pgTAP annonçait « planned 3 but
+      ran 1 » et que les **deux dernières preuves n'avaient pas été enregistrées**. C'est le mode de
+      défaillance silencieux que `docs/SPEC-test-harness.md` §3.1 énumère depuis l'ouverture de
+      l'unité, et il visait cette fois l'exécuteur lui-même.
+      **Correction** : un **cinquième contrôle** au contrat du §3.2 — tout diagnostic
+      `# Looks like you planned` fait échouer le fichier. Il ne double pas le quatrième : celui-ci
+      compare le plan aux lignes **émises**, le nouveau au compte **enregistré**. La régression est
+      figée par la dégradation 9.6 du harnais, écrite en deux temps — elle constate d'abord que la
+      suite piégée **émet bien** ses trois lignes, sans quoi c'est le quatrième contrôle qui la
+      refuserait et le cinquième ne prouverait rien.
+- [x] **La cause que la décision 76 avait laissée ouverte est élucidée.** Elle notait que les
+      suites `0002`, `0004`, `0005` et `0006` employaient des savepoints en restant vertes, et que
+      « la différence n'a pas été élucidée ». Elle tient à la **position du dernier `rollback`** :
+      toute assertion exécutée après lui remet les deux comptes d'accord, et ces quatre suites se
+      terminent hors savepoint. Le §3.2 porte désormais la contrainte d'écriture qui en découle.
+- [x] **Aucune suite livrée n'était concernée**, vérifié fichier par fichier avant correction :
+      les sept sont vertes, plan tenu, **aucun diagnostic** émis. Le contrôle ajouté ne corrige rien
+      aujourd'hui ; il empêche demain un vert qui ne vaudrait rien.
 - [x] **Le contrôle de la politique RLS est le contrôle décisif du projet `api`** : il est d'abord
       vérifié que la politique posée est **effective** — l'anonyme voit alors 1 ligne —, puis
       qu'`npm run e2e:api` échoue. Sans lui, les scénarios pourraient se contenter de constater
