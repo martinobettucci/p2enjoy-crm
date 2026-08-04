@@ -620,6 +620,53 @@ mécaniquement avec `CRM-007`, dont la Definition of Done doit alors **reprendre
 vérification du build avec les types générés importés, faute de quoi cette case resterait ouverte
 sans propriétaire.
 
+### INC-021 — Aucune unité ne porte l'écran de connexion, que la DoD de `CRM-011` présuppose
+
+**Nature :** référence manquante entre `docs/BACKLOG.md` et lui-même.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-007`.
+
+La Definition of Done de `CRM-011` exige un « **E2E de connexion et de refus** ». Un tel parcours
+suppose un écran où l'on saisit une adresse et un mot de passe. Or :
+
+- `CRM-011` a livré et prouvé le **mécanisme** d'authentification, entièrement hors interface, et a
+  nommé l'absence d'écran comme la seule preuve qui lui manque ;
+- `CRM-007` livre le **squelette** de la webapp : mise en page, jetons, états. Son énoncé ne
+  mentionne ni formulaire de connexion, ni session, ni parcours d'authentification ;
+- `CRM-008` livre le **harnais** de tests, c'est-à-dire de quoi exécuter un E2E, pas de quoi en
+  avoir un à exécuter ;
+- aucune unité de `CRM-012` à `CRM-075` ne nomme cet écran.
+
+C'est le même mode de défaillance qu'INC-015, un cran plus bas : INC-015 constate que le parcours
+d'**invitation** n'a aucun composant pour le porter ; on constate ici que le parcours de
+**connexion** n'en a pas davantage. La différence est que l'invitation reste discutable — elle peut
+demeurer une opération d'exploitation — alors que la connexion ne l'est pas : sans elle, la webapp
+ne peut afficher que ce que la clé anonyme obtient, c'est-à-dire rien.
+
+**Conséquence mesurable, aujourd'hui :** la coquille livrée par `CRM-007` n'affiche que des états
+vides, non parce qu'elle est inachevée, mais parce que la RLS en refus par défaut rend `200` et
+`[]` à un appelant anonyme. C'est l'état réel du produit.
+
+**Comportement retenu :** `CRM-007` ne l'invente pas. Elle livre la coquille, traite l'état vide
+comme un état de premier rang, et **nomme** la limite dans `docs/SPEC-webapp.md` §15 et dans
+`docs/BACKLOG.md`. Aucun écran de connexion n'est écrit par anticipation : ce serait préempter un
+arbitrage et gonfler une unité au-delà de son énoncé.
+
+**Trois options d'arbitrage :**
+
+1. **Rattacher l'écran à `CRM-011`**, qui redeviendrait alors ouverte au sens plein, et dont la
+   Definition of Done serait enfin satisfaisable telle qu'elle est écrite.
+2. **Créer une unité dédiée** — connexion, déconnexion, session, garde de route — placée entre
+   `CRM-007` et `CRM-008`, ce qui rendrait `CRM-011` et `CRM-006` closes dans la foulée.
+3. **Élargir `CRM-007`**, ce qui reviendrait à faire porter par le squelette une fonctionnalité que
+   son énoncé ne mentionne pas.
+
+**Action attendue du responsable :** trancher entre ces trois options. L'option 2 a la préférence
+de rédaction — elle laisse chaque unité à son objet — mais la décision n'appartient pas à l'agent.
+Tant qu'elle n'est pas prise, `CRM-011` reste `[~]` avec sa preuve d'E2E manquante, et la webapp
+reste anonyme.
+
+**Lié à :** INC-015 (invitation sans composant), INC-020 (build dû par `CRM-007`).
+
 ---
 
 ## Clos

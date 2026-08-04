@@ -401,6 +401,7 @@ Documentation de référence :
 | [`docs/SPEC-auth.md`](docs/SPEC-auth.md) | Authentification, sessions, cycle de vie d'un compte |
 | [`docs/SPEC-seed.md`](docs/SPEC-seed.md) | Données de développement : contrat du seed, identifiants stables |
 | [`docs/SPEC-types.md`](docs/SPEC-types.md) | Types TypeScript générés depuis le schéma, garde anti-dérive |
+| [`docs/SPEC-webapp.md`](docs/SPEC-webapp.md) | Squelette de la webapp : chaîne de build, jetons, coquille, états |
 | [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md) | Contrat de déploiement |
 | [`docs/manual.md`](docs/manual.md) | Manuel utilisateur |
 | [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md) | Contradictions relevées, en attente d'arbitrage |

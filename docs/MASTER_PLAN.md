@@ -78,6 +78,7 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 | Workflows, transitions | `docs/SPEC-workflow-engine.md` |
 | Formulaires conditionnels | `docs/SPEC-form-composer.md` |
 | Messagerie | `docs/SPEC-mail-subsystem.md` |
+| Squelette de la webapp, coquille, états | `docs/SPEC-webapp.md` |
 | Données de développement, seed | `docs/SPEC-seed.md` |
 | Types TypeScript générés | `docs/SPEC-types.md` |
 | Interface | `docs/DESIGN_SYSTEM.md` |

@@ -1569,3 +1569,136 @@ s'écrit comme une assertion exécutable quand c'est possible, et comme une phra
 - **Le prérequis Node du projet n'a pas été exercé** : `.nvmrc` et `README.md` §3 demandent Node 24,
   l'environnement de vérification fournit Node 22.22.2. `package.json` déclare `>=24` — le contrat
   du dépôt — mais toutes les preuves ont été obtenues sur Node 22.
+
+---
+
+## 2026-08-04 — `CRM-007` : spécification du squelette de la webapp, écrite après mesure
+
+### Contexte
+
+Trois unités portent la mention `[~]` — `CRM-010`, `CRM-011`, `CRM-006` — et il a fallu vérifier,
+avant de choisir, qu'aucune n'était terminable maintenant. Chacune n'a plus qu'une case ouverte, et
+chacune est bloquée par une dépendance nommée, pas par un défaut de réalisation :
+
+- `CRM-010` attend `tracks`, `channels` et `cards` pour ses quatre fonctions `can_*` (INC-013) ;
+- `CRM-011` attend un écran pour son E2E de connexion ;
+- `CRM-006` attend une webapp pour sa preuve de build (INC-020).
+
+Deux de ces trois blocages tombent avec `CRM-007`, qui est par ailleurs la première unité `[ ]`
+dans l'ordre de `docs/MASTER_PLAN.md` §2.c. Le choix ne demandait donc aucun arbitrage.
+
+### Ce qui a été mesuré avant d'écrire
+
+La spécification est écrite après installation et exercice réel de la chaîne, jamais de mémoire.
+Sorties retenues :
+
+- `vite@8.2.0` + `@vitejs/plugin-react@6.0.5` + `react@19.2.8` : `vite build` vert, **1 782 modules
+  transformés en 219 ms**, `dist/assets/index-*.js` 192 ko, CSS 4,44 ko ;
+- `tailwindcss@4.3.3` par `@tailwindcss/vite` : le bloc `@theme` émet les jetons sur `:root,:host`
+  — `--color-brand:#23468c` constaté dans le CSS produit — et les utilitaires les **référencent**
+  (`.bg-brand{background-color:var(--color-brand)}`, `.rounded-lg{border-radius:var(--radius-lg)}`).
+  C'est la mesure qui rend `docs/DESIGN_SYSTEM.md` §11 satisfiable sans fichier de configuration
+  JavaScript ;
+- `vitest@4.1.10` + `jsdom@30.0.1` + `@testing-library/react@16.3.2` : suite verte sur un cas
+  témoin, environnement jsdom monté en 669 ms ;
+- `@playwright/test@1.62.1` : le navigateur attendu est le build **chromium 1234**, alors que
+  l'environnement en fournissait un 1194 préinstallé. `playwright install chromium` a réellement
+  téléchargé le build attendu (114,7 Mio) ; une capture JPEG a été produite contre un
+  `vite preview`. La chaîne de preuve visuelle est donc disponible, ce qui n'allait pas de soi ;
+- `psql` et PostgREST : sous la clé anonyme, `GET /rest/v1/workspaces` rend bien `200` et `[]` —
+  c'est cette mesure qui fonde le §6.3 de la spécification.
+
+### Décision 40 — React 19, et `docs/DAT.md` corrigé plutôt que contourné
+
+`docs/DAT.md` §3.1 annonce « React 18 ». Il a été écrit avant qu'aucun code n'existe. La version
+courante est **19.2.8**, et c'est celle sur laquelle `@vitejs/plugin-react@6` et `@types/react@19`
+sont alignés. Livrer React 18 serait une régression délibérée, choisie pour faire coïncider le code
+avec une phrase.
+
+*Décision : React 19, et `docs/DAT.md` §3.1 corrigé dans le même changement.*
+
+*Motif :* entre un document et la réalité, c'est le document qui se corrige quand la réalité est
+meilleure — à condition que la correction soit explicite et datée, ce qu'elle est ici. Le
+contraire — écrire du code diminué pour ne pas toucher au document — installerait une dette dont
+personne ne retrouverait la cause.
+
+*Conséquence :* aucune contradiction n'est laissée ouverte ; il n'y a donc pas lieu d'ouvrir une
+entrée d'incohérence pour ce point.
+
+### Décision 41 — TypeScript reste à `5.9.3`, et la mesure est consignée
+
+La décision 39 demandait de réexaminer l'épinglage **à cette unité**. Le réexamen a eu lieu par la
+mesure, pas par l'opinion : `typescript@7.0.2` a été installé et exécuté contre la configuration
+de l'application.
+
+Résultat : il compile, **à une condition** — `vite/client` doit figurer dans les types ambiants,
+sans quoi il refuse l'import à effet de bord d'une feuille de style (`TS2882`), là où `5.9.3`
+l'accepte sans rien dire. Le correctif est d'une ligne, et il est de toute façon souhaitable.
+
+*Décision : conserver `5.9.3` pour cette unité, et documenter que la porte est ouverte.*
+
+*Motif :* toutes les preuves de `CRM-006` reposent sur le compilateur épinglé ; une bascule les
+rejouerait toutes sans qu'aucune exigence ne la demande. La migration mérite son propre changement,
+avec ses propres preuves, pas d'être embarquée dans une unité d'interface.
+
+*Conséquence :* la limite de `CRM-006` sur TypeScript cesse d'être une inconnue — elle devient une
+migration mesurée et différée.
+
+### Décision 42 — Un seul projet npm, Vite pointé sur `webapp/`
+
+Deux dispositions étaient possibles : un `package.json` propre à `webapp/`, ou un projet unique à
+la racine avec Vite configuré pour prendre `webapp/` comme racine.
+
+*Décision : projet unique à la racine ; Vite invoqué avec `--config webapp/vite.config.ts`, ce qui
+place sa racine dans `webapp/`.*
+
+*Motif :* deux projets npm imposeraient deux installations, deux verrous de dépendances et deux
+occasions de dériver, pour aucun gain à cette échelle. Le `package.json` livré par `CRM-006` vit
+déjà à la racine et y porte `types:generate`, `types:check` et `typecheck` ; le scinder maintenant
+casserait ces commandes sans nécessité.
+
+*Conséquence :* la configuration TypeScript de la racine devait être **restreinte** aux deux
+fichiers générés. Elle visait `webapp/src/lib/**/*.ts` ; le client Supabase y serait tombé, compilé
+sous une configuration sans types DOM ni `vite/client`, et aurait échoué pour une raison sans
+rapport avec lui. `docs/SPEC-types.md` §9 est mis à jour dans le même changement.
+
+### Décision 43 — Aucune bibliothèque d'internationalisation
+
+`docs/DESIGN_SYSTEM.md` §10 exige des clés stables et interdit le texte en dur. Le besoin
+d'aujourd'hui est exactement cela : un dictionnaire et une fonction de recherche.
+
+*Décision : un objet TypeScript figé et une fonction `t` dont le type n'accepte que les clés
+existantes. Aucune dépendance ajoutée.*
+
+*Motif :* `CLAUDE.md` §19 demande de vérifier qu'une fonction native ou existante ne suffit pas
+avant d'ajouter une dépendance. Ici elle suffit, et elle apporte davantage : une clé inconnue **ne
+compile pas**, ce qu'aucune bibliothèque de messages ne garantit à la compilation.
+
+*Conséquence :* pluriels, dates et nombres ne sont pas traités. Ils ne se posent pas encore — aucune
+donnée réelle ne traverse l'interface — et la limite est nommée dans la spécification plutôt
+qu'anticipée par une abstraction sans usage.
+
+### Décision 44 — Le client est créé sans persistance de session
+
+`supabase-js` persiste par défaut la session dans `localStorage` et la rafraîchit seule. L'unité ne
+livre aucun parcours de connexion : aucune session ne devrait donc exister, et rien ne devrait être
+écrit sur l'appareil.
+
+*Décision : `persistSession: false` et `autoRefreshToken: false`, et un contrôle E2E qui exige un
+`localStorage` vide après un parcours complet.*
+
+*Motif :* `CLAUDE.md` §11 borne le stockage sur l'appareil à ce qui est strictement nécessaire.
+Laisser le défaut de la bibliothèque installerait une écriture persistante par inadvertance, sans
+consentement et sans usage — exactement ce que la règle interdit.
+
+*Conséquence :* l'arbitrage de la persistance de session revient à l'unité qui livrera la
+connexion, avec la question du consentement posée à ce moment-là, et non tranchée en silence
+aujourd'hui.
+
+### Ce que cette spécification ne tranche pas
+
+- **L'écran de connexion**, que la Definition of Done de `CRM-011` présuppose et qu'aucune unité ne
+  porte. Consigné en **INC-021**, sans résolution implicite : cette unité ne l'invente pas.
+- **Le rendu populé de la coquille.** Sans tracks ni channels, la barre latérale et les onglets
+  n'affichent que leurs états vides. C'est l'état réel du produit ; le peupler avec des données
+  fabriquées donnerait des captures flatteuses et fausses.

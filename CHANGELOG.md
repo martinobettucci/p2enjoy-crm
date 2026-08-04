@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-007` — Spécification du squelette de la webapp, écrite avant tout code.**
+  - `docs/SPEC-webapp.md` : où vit la webapp, comment elle se build, comment les jetons du design
+    system deviennent des variables CSS, quelle coquille est livrée, et **ce que chaque état de
+    l'interface signifie** — chargement, vide, erreur, absence de droit.
+  - Spécification rédigée **après mesure** de la chaîne réellement installée, et non de mémoire :
+    `vite@8.2.0` (build vert, 1 782 modules en 219 ms), `tailwindcss@4.3.3` (jetons émis sur
+    `:root,:host`, utilitaires en `var(--…)`), `vitest@4.1.10` sur `jsdom`, et
+    `@playwright/test@1.62.1` dont le navigateur attendu a été **réellement téléchargé** puis a
+    produit une capture.
+  - Mesure fondatrice du §6.3 : sous la clé anonyme, `GET /rest/v1/workspaces` rend `200` et `[]`.
+    L'état vide de l'interface sera donc **le refus du backend**, pas un défaut de l'interface.
+  - Décisions 40 à 44 consignées dans `docs/JOURNAL.md` : React 19 avec `docs/DAT.md` corrigé
+    plutôt que contourné ; TypeScript conservé à `5.9.3` après réexamen **mesuré** de `7.0.2`
+    (décision 39 close) ; projet npm unique avec Vite pointé sur `webapp/` ; aucune bibliothèque
+    d'internationalisation ; client Supabase **sans persistance de session**, faute de
+    consentement recueilli (`CLAUDE.md` §11).
+  - **INC-021** ouverte : aucune unité ne porte l'écran de connexion, que la Definition of Done de
+    `CRM-011` présuppose pourtant. Trois options d'arbitrage sont posées, **aucune n'est prise** ;
+    l'écran n'est pas écrit par anticipation.
+
 - **`CRM-006` — Spécification des types générés, écrite avant tout code.**
   - `docs/SPEC-types.md` : d'où viennent les types TypeScript du produit, où ils vivent, comment
     ils se régénèrent, et **ce qui prouve qu'ils n'ont pas dérivé** du schéma réellement migré.
