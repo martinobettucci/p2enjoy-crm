@@ -1028,6 +1028,12 @@ CRUD, ordre, archivage, onglets, débordement horizontal.
       refus disparaît), retire réellement la clé composite (la ligne menteuse passe), puis
       **constate** la restauration au lieu de la supposer.
 - [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+- [x] **Trois compteurs figés par `CRM-008` ont échoué comme prévu, et ont été révisés** :
+      `scripts/verify-harness.sh` fige le nombre d'assertions pgTAP et de scénarios Playwright, de
+      sorte qu'une suite cessant d'être découverte ne passe pas pour verte. Les trois sont passés
+      à **374 / 50 / 37**.
+- [x] **Aucune régression** : les douze harnais rejoués après commit — **33, 38, 23, 26, 26, 42,
+      49, 30, 41, 22, 43 et 28 contrôles**, aucune anomalie.
 - [x] `docs/SCHEMA.md` §2, `docs/SPEC-permissions-rls.md` §3 et §4, `docs/SPEC-seed.md` §2.2, §2.6,
       `docs/DESIGN_SYSTEM.md` §4, §12.1, §12.4, §12.6, `docs/DAT.md` §3.1 et §7,
       `docs/PROD_MIGRATIONS.md` §3, `docs/manual.md` §3.2 bis et §3.2 ter, `docs/MASTER_PLAN.md` §3,

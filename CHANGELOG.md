@@ -65,6 +65,10 @@ d'exécuter le code attendu.
 - **Une capture de référence montrait un écran incohérent** (`CRM-021`) — un track ouvert avec ses
   onglets, et une barre latérale affirmant qu'aucun track n'existe — parce que la substitution
   réseau ne servait le track qu'à une des deux requêtes qui l'interrogent.
+- **Les compteurs figés de `scripts/verify-harness.sh` ont échoué comme prévu** (`CRM-021`) : ils
+  interdisent qu'une suite cessant d'être découverte passe pour verte, et toute unité qui ajoute
+  des preuves doit donc les réviser explicitement. Portés à 374 assertions pgTAP, 50 scénarios
+  d'API et 37 scénarios d'interface.
 - **`scripts/verify-webapp.sh` était devenu complaisant en silence** (`CRM-021`) : ses contrôles de
   non-complaisance dégradent la barre d'onglets par substitution de chaîne, et cette unité a
   réécrit ce composant. Une substitution qui ne s'applique plus dégrade zéro ligne, et le contrôle

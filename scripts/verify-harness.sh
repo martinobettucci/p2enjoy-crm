@@ -41,12 +41,17 @@ PORT_RAPPORT=9323
 # entière cessait d'être découverte (docs/SPEC-test-harness.md §3). Le prix est cette révision
 # explicite ; c'est exactement ce qu'on lui demande.
 #
-# Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 depuis `CRM-020`.
-ASSERTIONS_ATTENDUES=306
-SCENARIOS_API=30
-# 23 depuis l'ajout de la mesure de contraste par `CRM-020` (docs/DESIGN_SYSTEM.md §12.5) : la
-# conformité AA était déclarée, jamais mesurée, et `success` rendait 3,82:1.
-SCENARIOS_UI=23
+# Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37
+# depuis `CRM-021`.
+#
+# Les trois compteurs ont **réellement échoué** à la livraison de `CRM-021`, comme prévu, et sont
+# révisés ici dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
+# fonctionnement acceptable : les déduire de l'exécution reviendrait à supprimer le contrôle.
+ASSERTIONS_ATTENDUES=374
+SCENARIOS_API=50
+# 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
+# (`e2e/ui/channels.spec.ts`).
+SCENARIOS_UI=37
 
 TRAVAIL=$(mktemp -d)
 failures=0
