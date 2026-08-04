@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documenté
+
+- **`CRM-031` — spécification des workflows, écrite après mesure et avant tout code.**
+  `docs/SPEC-workflow-engine.md` §3 est réécrit : le chapitre datait de `CRM-000`, tenait en
+  vingt-six lignes et n'engageait que l'intention. Trois tables sondes jetables ont été créées sur
+  la pile réelle, éprouvées, puis détruites — l'absence de reste étant constatée.
+  - **Décision 72 — « exactement une étape initiale » n'est pas imposable à l'écriture.** Mesuré :
+    un `constraint trigger` différé accepte l'insertion isolée d'un workflow puis **fait échouer le
+    `commit`**, c'est-à-dire rend la création impossible par l'API. La base garantit « au plus
+    une » ; « au moins une » devient une condition d'emploi, vérifiée par `CRM-033` et `CRM-040`.
+  - **Décision 73 — une transition ne sort pas de son workflow parce que la base l'interdit.**
+    Clés étrangères composites `(step_id, workflow_id)` : refus mesuré en `23503`. Elles exigent
+    une unicité `(id, workflow_id)`, sans quoi leur création échoue en `42830`.
+  - **Décision 74 — la suppression physique est ouverte aux étapes et aux transitions, et à elles
+    seules.** Elles sont la composition d'un workflow, non des objets à durée de vie propre, et
+    `docs/SCHEMA.md` §3 ne leur donne aucun `archived_at`.
+  - **Décision 75 — le commentaire exigé sur les transitions vers « Perdu »** est un choix pris
+    faute d'énoncé d'origine, nommé comme tel et renversable.
+  - **`INC-033` ouverte** : `require_fields` étant un `uuid[]`, aucune clé étrangère n'est possible
+    — mesuré, et propriété du type, non différé d'ordonnancement.
+  - **`INC-029` et `INC-031` mises à jour**, sans être closes.
+
 ### Intégré
 
 - **`CRM-030` reportée sur `main`, puis intégralement revérifiée sur ce socle.** L'unité avait été

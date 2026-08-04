@@ -4,8 +4,9 @@ Unités de backlog : `CRM-030` à `CRM-034` (voir `docs/BACKLOG.md`).
 Documents liés : `docs/SCHEMA.md` §3, `docs/SPEC-permissions-rls.md`,
 `docs/SPEC-form-composer.md`, `docs/SPEC-seed.md`, `docs/DESIGN_SYSTEM.md` §1, §5.1–5.2.
 
-Le §2 a été **réécrit après mesure** lors de `CRM-030` ; les §3 à §9 datent de `CRM-000` et
-n'engagent que l'intention, jusqu'à ce que les unités correspondantes les mesurent à leur tour.
+Le §2 a été **réécrit après mesure** lors de `CRM-030`, le §3 lors de `CRM-031` ; les §4 à §9
+datent de `CRM-000` et n'engagent que l'intention, jusqu'à ce que les unités correspondantes les
+mesurent à leur tour.
 
 ---
 
@@ -262,21 +263,240 @@ serait jamais représenté dans les données de démonstration — même raison 
 | Seed | Les sept nœuds du §2.9 plus un nœud archivé, créés par la véritable API REST, convergents |
 | Interface | **Aucune** — le catalogue n'a pas d'écran, et n'en aura pas avant l'éditeur de `CRM-031`. Voir INC-021 |
 
-## 3. Workflow, étapes, transitions
+## 3. Workflow, étapes, transitions — `CRM-031`
 
-Un workflow est une sélection de nœuds (`workflow_steps`) et un ensemble d'arêtes
-(`workflow_transitions`).
+Un workflow est une **sélection de nœuds** (`workflow_steps`) et un **ensemble d'arêtes**
+(`workflow_transitions`). Le catalogue du §2 dit quels états ont un nom ; le workflow dit dans
+quel ordre une card les traverse et quels déplacements sont permis.
 
-- Une étape référence exactement un nœud du catalogue, une seule fois par workflow.
-- Une étape peut surcharger localement le libellé, la probabilité et le seuil de relance ;
-  la clé et le type restent ceux du catalogue.
-- **Exactement une étape initiale** par workflow (`is_initial`). Toute card créée y démarre.
-- Les transitions sont orientées. Les **cycles sont autorisés** (Négociation → Relance) ainsi
-  que les raccourcis vers un nœud terminal (n'importe quelle étape ouverte → Perdu).
-- Une transition peut exiger un commentaire (`require_comment`) et des champs supplémentaires
-  (`require_fields`).
+Ce chapitre a été **écrit après mesure**, et non de mémoire : trois tables sondes jetables
+portant la structure envisagée ont été créées sur la pile réelle, éprouvées, puis détruites —
+l'absence de reste étant constatée (`to_regclass` nul sur les trois, aucune fonction `sonde*`).
+Les affirmations chiffrées et les codes d'erreur des §3.2 à §3.6 sont ces mesures.
 
-### Workflow par défaut livré par le seed
+### 3.1 Ce qu'un workflow est, et ce qu'il n'est pas
+
+Un workflow est un **graphe orienté**, pas une liste ordonnée. La `position` d'une étape sert
+l'affichage du board — l'ordre des colonnes — et **ne définit aucun déplacement autorisé** :
+seule une transition déclarée autorise un mouvement. Deux étapes voisines à l'écran peuvent être
+inatteignables l'une depuis l'autre, et deux étapes éloignées peuvent être reliées.
+
+Un workflow n'est pas non plus un vocabulaire : il **instancie** des nœuds du catalogue. La clé
+et le type restent ceux du nœud ; l'étape ne peut en surcharger que le libellé, la probabilité et
+le seuil de relance (§3.3). C'est cette invariance qui rend comparable le temps passé en
+« Relance » d'un channel à l'autre.
+
+### 3.2 Modèle — `workflows`
+
+Référence de schéma : `docs/SCHEMA.md` §3, complété des `created_at` / `updated_at` que les
+conventions générales du même document exigent de toute table métier et que le §3 omettait —
+quatrième occurrence du même oubli (INC-025).
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `id` | `uuid` | PK, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul, FK `workspaces` `on delete cascade` |
+| `name` | `text` | non nul, non vide après `btrim` |
+| `scope` | `text` | `global` ou `track`, défaut `global` |
+| `track_id` | `uuid` | nul si `global`, non nul si `track` ; FK **composite** vers `tracks (id, workspace_id)` |
+| `derived_from_workflow_id` | `uuid` | FK `workflows (id)` `on delete set null` |
+| `derived_at` | `timestamptz` | date de la copie |
+| `is_default` | `boolean` | non nul, défaut faux ; **au plus un vrai par workspace** |
+| `archived_at` | `timestamptz` | suppression douce |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` par trigger |
+
+Trois points méritent d'être écrits parce qu'ils ne se déduisent pas du tableau.
+
+**La cohérence de portée est une contrainte, pas une convention.** `scope = 'global'` exige
+`track_id` nul, `scope = 'track'` l'exige renseigné. Sans cette contrainte, un workflow `global`
+portant un `track_id` résiduel serait un objet dont personne ne saurait dire s'il est disponible
+pour tout le workspace ou pour un seul track.
+
+**Le track d'un workflow appartient au même workspace, et c'est la base qui le garantit.** La clé
+étrangère est **composite** — `(track_id, workspace_id)` vers `tracks (id, workspace_id)` —, non
+pas simple vers `tracks (id)`. Une clé simple laisserait un administrateur du workspace A rattacher
+son workflow à un track de B, ce qu'aucune politique RLS ne rattraperait : la politique décide qui
+écrit la ligne, pas ce que la ligne raconte. L'unicité `tracks (id, workspace_id)` nécessaire à
+cette clé **existe déjà**, posée par `CRM-021` pour la même raison (`docs/SPEC-channels.md` §2.4).
+
+**`derived_from_workflow_id` est une trace, pas un lien de dépendance.** La copie est une
+divergence assumée (§4) : le workflow copié vit sa vie. La clé étrangère est donc `on delete set
+null` et non `cascade` — supprimer l'original ne doit pas emporter ses copies. Mesuré : la copie
+survit à la suppression de son origine, `derived_from_workflow_id` repassant à nul.
+
+**`is_default` : au plus un vrai par workspace.** Posé par un index unique partiel
+`(workspace_id) where is_default`. Mesuré : la seconde ligne marquée par défaut dans le même
+workspace est refusée en `23505`. « Au plus un » et non « exactement un » : un workspace neuf n'a
+aucun workflow, et exiger un défaut rendrait sa création impossible.
+
+### 3.3 Modèle — `workflow_steps`
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `workflow_id` | `uuid` | non nul, FK **composite** vers `workflows (id, workspace_id)` `on delete cascade` |
+| `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS, **véracité garantie** par la clé composite ci-dessus |
+| `node_id` | `uuid` | non nul, FK **composite** vers `workflow_nodes_catalog (id, workspace_id)` `on delete restrict` |
+| `position` | `numeric` | non nulle, attribuée par trigger dans la portée du **workflow** si omise |
+| `label_override` | `text` | facultatif, non vide après `btrim` s'il est fourni |
+| `probability_override` | `numeric(5,2)` | facultatif, de 0 à 100 |
+| `stale_after_days` | `integer` | facultatif, strictement positif |
+| `is_initial` | `boolean` | non nul, défaut faux |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales |
+
+Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow, comme
+`docs/SCHEMA.md` §3 l'exige. Unique également : `(id, workflow_id)`, sans quoi les transitions du
+§3.4 ne peuvent pas porter de clé étrangère composite. Mesuré : sans cette unicité, la création de
+la clé échoue en `42830`, « there is no unique constraint matching given keys for referenced
+table ».
+
+**Le nœud d'une étape appartient au même workspace que le workflow**, garanti par la clé composite
+`(node_id, workspace_id)`. `on delete restrict` et non `cascade` : le catalogue n'expose aucune
+suppression (§2.6), mais si une purge en venait à en supprimer un, l'effacement silencieux des
+étapes qui l'instancient détruirait des workflows entiers sans le dire.
+
+**Les surcharges sont facultatives et ne portent que sur trois colonnes.** Ni la clé ni le type ne
+sont surchargeables : ils ne sont pas copiés dans l'étape, ils restent lus depuis le nœud. Une
+surcharge absente vaut « prendre la valeur du catalogue » ; elle ne vaut pas zéro. C'est la même
+distinction qu'au §2.5, et elle a la même conséquence : `probability_override` et
+`stale_after_days` sont **nullables**, et `0` n'est pas `NULL`.
+
+### 3.4 Modèle — `workflow_transitions`
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `workflow_id` | `uuid` | non nul, FK composite vers `workflows (id, workspace_id)` `on delete cascade` |
+| `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS |
+| `from_step_id` | `uuid` | non nul, FK **composite** `(from_step_id, workflow_id)` vers `workflow_steps (id, workflow_id)` `on delete cascade` |
+| `to_step_id` | `uuid` | non nul, même clé composite, et **différent** de `from_step_id` |
+| `label` | `text` | facultatif, libellé du bouton d'action |
+| `require_comment` | `boolean` | non nul, défaut faux |
+| `require_fields` | `uuid[]` | non nul, défaut `'{}'` |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales |
+
+Unique : `(workflow_id, from_step_id, to_step_id)` — une arête n'est déclarée qu'une fois.
+
+**Une transition ne peut pas sortir de son workflow, et c'est structurel.** Les deux clés
+étrangères portent `(step_id, workflow_id)` et non `step_id` seul. Mesuré : une arête dont
+l'étape cible appartient à un autre workflow est refusée en `23503`, avec le détail
+`Key (to_step_id, workflow_id)=(…) is not present in table "workflow_steps"`. Un trigger aurait
+rendu le même service, plus tard et moins sûrement.
+
+**Les cycles sont autorisés, et rien ne les empêche.** Mesuré : `A → B` et `B → A` coexistent sans
+erreur. C'est voulu — Négociation ⇄ Relance est un aller-retour légitime. Aucune détection de
+cycle n'est faite, ni ici ni ailleurs : un workflow n'est pas un graphe acyclique.
+
+**Supprimer une étape emporte ses arêtes.** Mesuré : la suppression d'une étape reliée par deux
+transitions laisse zéro transition. C'est la conséquence du `on delete cascade` des clés
+composites, et c'est le comportement voulu : une arête vers une étape disparue n'est pas une
+donnée à conserver, c'est une arête cassée.
+
+**`require_fields` ne peut porter aucune intégrité référentielle, et jamais n'en portera.** Mesuré,
+et c'est une propriété du type, non un différé : `alter table … add foreign key (require_fields)
+references form_fields (id)` échoue en « Key columns "require_fields" and "id" are of incompatible
+types: uuid[] and uuid ». PostgreSQL ne sait pas contraindre les éléments d'un tableau. La
+suppression d'un champ de formulaire laissera donc des identifiants morts dans ce tableau, que
+seul `move_card` (§5) pourra ignorer à la lecture. Écart consigné en
+`docs/INCONSISTENCY_REPORT.md`, **INC-033**, avec ses options ; il n'est pas tranché ici.
+`form_fields` n'existe de surcroît pas encore — `CRM-035`, mesuré : `to_regclass` nul.
+
+### 3.5 « Exactement une étape initiale » : ce que la base peut garantir, et ce qu'elle ne peut pas
+
+`docs/SCHEMA.md` §3 et le §1 de ce document exigent **exactement une** étape initiale par
+workflow. La mesure a montré que cette exigence se scinde en deux moitiés très inégales.
+
+**Au plus une : garanti par la base.** Un index unique partiel `(workflow_id) where is_initial`
+refuse la seconde étape initiale en `23505`. Cette moitié est acquise, sans trigger ni fonction.
+
+**Au moins une : impossible à imposer à l'écriture, mesuré.** Un workflow naît **avant** ses
+étapes : la seule façon d'exiger qu'il en ait une serait un `constraint trigger … deferrable
+initially deferred`, qui reporte le contrôle à la validation de la transaction. Éprouvé sur la
+sonde : une insertion isolée de workflow — exactement ce que fait PostgREST, une requête valant
+une transaction — est acceptée, puis **le `commit` échoue** en `workflow_sans_etape_initiale`. La
+garde ne protégerait donc rien : elle rendrait la création d'un workflow **impossible par l'API**,
+et l'éditeur d'administration du produit n'aurait aucun moyen de créer le premier objet qu'il est
+censé éditer.
+
+**Décision.** La base garantit « au plus une ». « Au moins une » est une condition **d'emploi**, pas
+d'existence : un workflow sans étape initiale est un brouillon, structurellement valide et
+inutilisable. Elle est vérifiée là où elle a un sens :
+
+- au rattachement d'un channel à un workflow (`CRM-033`) ;
+- à la création d'une card, qui doit savoir où la poser (`CRM-040`) ;
+- par le seed, dont le workflow par défaut en porte une.
+
+Le fait qu'un workflow puisse être un brouillon est **écrit ici plutôt que découvert plus tard** :
+`docs/JOURNAL.md`, décision 72.
+
+### 3.6 Ordre des étapes
+
+`position` est un `numeric`, comme `tracks.position`, `channels.position` et la `position` du
+catalogue : un index fractionnaire, de sorte qu'insérer une colonne entre deux autres n'exige pas
+de renuméroter le board entier.
+
+Elle est attribuée par un trigger `BEFORE INSERT` lorsqu'elle est omise, **dans la portée du
+workflow** — et non du workspace comme pour le catalogue (§2.4), ni du track comme pour les
+channels : l'ordre qu'elle sert est celui des colonnes d'un board, qui appartient à un workflow.
+Mesuré : trois insertions sans `position` dans un workflow rendent `1`, `2`, `3` ; une insertion
+dans un **autre** workflow rend `1`.
+
+Propriété héritée de `CRM-020` et vérifiée à nouveau plutôt que supposée : un trigger
+`BEFORE INSERT` ne distingue pas une colonne **omise** d'une colonne écrite explicitement à `NULL`.
+Écrire `position: null` équivaut donc à omettre.
+
+### 3.7 Autorisations
+
+`docs/SPEC-permissions-rls.md` §4 range les trois tables ensemble : **lecture par les membres du
+workspace, écriture par les administrateurs**. Aucun droit fin ne les gouverne — un workflow n'est
+ni un track ni un channel, et `track_members` / `channel_members` portent sur un sous-arbre
+d'organisation. La règle s'arrête au rôle de workspace **par conception**, non par différé.
+
+La lecture est accordée à `anon` **et** `authenticated` : sans jeton, `auth.uid()` est nul, le
+prédicat rend faux, et le refus se manifeste par **zéro ligne** plutôt que par une erreur de
+privilège.
+
+**La suppression est exposée pour les étapes et les transitions, et refusée pour les workflows.**
+C'est le seul endroit du produit livré où une suppression physique est ouverte à un client, et cela
+demande une justification, pas une exception silencieuse :
+
+- un workflow est un objet de premier plan, il porte `archived_at`, et l'archivage tient lieu de
+  suppression — même règle que les tracks, les channels et le catalogue ;
+- une étape et une transition sont la **composition** d'un workflow, pas des objets à durée de vie
+  propre. `docs/SCHEMA.md` §3 ne leur donne d'ailleurs aucun `archived_at`. Un éditeur qui ne peut
+  pas retirer une arête ne peut pas éditer : la seule alternative serait d'inventer une colonne que
+  la référence de schéma ne prévoit pas.
+
+Le jour où des cards occuperont des étapes (`CRM-040`), la clé étrangère
+`cards.current_step_id → workflow_steps (id)` devra être `on delete restrict` : la suppression
+d'une étape occupée doit alors être refusée par la base. Le fait est écrit ici pour que `CRM-040`
+le trouve écrit.
+
+### 3.8 Contrat d'API attendu
+
+Les lignes ci-dessous sont ce que `CRM-031` doit **mesurer** et non supposer ; elles sont écrites
+avant le code, et les scénarios de `e2e/api/workflows.spec.ts` les rejouent une à une.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `GET /workflows` | membre du workspace | `200`, les workflows de son workspace uniquement |
+| b | `GET /workflows` | anonyme | `200` et `[]`, alors que la table n'est pas vide |
+| c | `GET /workflows` | membre d'un autre workspace | `200` et `[]` |
+| d | `POST /workflows` | `admin` | `201` |
+| e | `POST /workflows` | `business_developer` | `403`, code `42501`, et la ligne n'existe **nulle part** |
+| f | `POST /workflows` | `viewer` | `403`, code `42501` |
+| g | `PATCH /workflows` | `business_developer` | `200` et `[]` — le `USING` rend la ligne invisible, il ne lève pas d'erreur ; la ligne est **relue inchangée** |
+| h | `PATCH /workflows` vers un autre workspace | `admin` | `403`, code `42501` — c'est le `WITH CHECK` |
+| i | `POST /workflow_steps` avec `position` omise | `admin` | `201`, `position` attribuée en fin de workflow |
+| j | `POST /workflow_steps` d'un nœud déjà présent | `admin` | `409`, code `23505` |
+| k | `POST /workflow_steps` avec une seconde étape initiale | `admin` | `409`, code `23505` |
+| l | `POST /workflow_transitions` vers une étape d'un autre workflow | `admin` | `409`, code `23503` |
+| m | `POST /workflow_transitions` avec `from = to` | `admin` | `400`, contrainte de valeur |
+| n | `DELETE /workflow_transitions` | `admin` | `204` |
+| o | `DELETE /workflow_transitions` | `business_developer` | `403` ou zéro ligne supprimée, l'arête étant **relue présente** |
+| p | `DELETE /workflows` | `admin` | `403` — aucune politique, aucun privilège |
+
+### 3.9 Workflow par défaut livré par le seed
 
 ```
 Prospection ──▶ Relance ◀──▶ Négociation ──▶ Signature ──▶ Réalisation ──▶ Livré
@@ -284,9 +504,70 @@ Prospection ──▶ Relance ◀──▶ Négociation ──▶ Signature ─�
      └─────────────┴──────────────┴──────────────┴────────────────────────▶ Perdu
 ```
 
-Transitions déclarées : la progression linéaire, le retour Négociation ⇄ Relance, et le passage
-vers Perdu depuis les quatre premières étapes. **Réalisation → Perdu n'est pas déclaré** : une
-affaire signée qui échoue relève d'un autre traitement, à arbitrer si le besoin apparaît.
+Un seul workflow, `global`, par défaut du workspace : **Cycle commercial standard**. Sept étapes,
+une par nœud actif du catalogue (§2.9), le nœud archivé `qualification` restant hors du workflow —
+un vocabulaire retiré ne s'instancie pas.
+
+| Étape | Nœud | `position` | Initiale | Surcharge |
+|---|---|---|---|---|
+| Prospection | `prospection` | 1 | **oui** | — |
+| Relance | `relance` | 2 | non | — |
+| Négociation | `negociation` | 3 | non | `stale_after_days` = 5 |
+| Signature | `signature` | 4 | non | — |
+| Réalisation | `realisation` | 5 | non | `label_override` = « Réalisation en cours » |
+| Livré | `livre` | 6 | non | — |
+| Perdu | `perdu` | 7 | non | — |
+
+Les deux surcharges ne sont pas décoratives : sans elles, la faculté de surcharger serait
+documentée sans être démontrable dans les données de démonstration, ce que `CLAUDE.md` §8 refuse.
+Elles portent sur deux colonnes différentes, de sorte que le rendu — libellé d'une part, seuil de
+relance d'autre part — soit exercé des deux façons.
+
+Dix transitions, exactement celles du graphe :
+
+| De | Vers | Libellé | Commentaire exigé |
+|---|---|---|---|
+| Prospection | Relance | Relancer | non |
+| Relance | Négociation | Engager la négociation | non |
+| Négociation | Signature | Passer en signature | non |
+| Signature | Réalisation | Démarrer la réalisation | non |
+| Réalisation | Livré | Marquer comme livré | non |
+| Négociation | Relance | Revenir en relance | non |
+| Prospection | Perdu | Marquer perdu | **oui** |
+| Relance | Perdu | Marquer perdu | **oui** |
+| Négociation | Perdu | Marquer perdu | **oui** |
+| Signature | Perdu | Marquer perdu | **oui** |
+
+**`Réalisation → Perdu` n'est pas déclaré** : une affaire signée qui échoue relève d'un autre
+traitement. Le point reste ouvert au §9, comme il l'était.
+
+**Les quatre transitions vers `Perdu` exigent un commentaire.** Ce choix n'était pas écrit dans
+l'énoncé d'origine : il est pris ici, et il est justifiable — une affaire perdue sans motif n'est
+exploitable par aucune analyse, et c'est la seule transition du graphe dont la raison ne se déduit
+pas de l'étape d'arrivée. Il fait de surcroît de `require_comment` une colonne **démontrable** dans
+le seed. Le responsable peut le renverser ; le §9 le porte comme point ouvert n° 4.
+
+`require_fields` reste vide partout : `form_fields` n'existe pas (`CRM-035`), et le seed ne
+fabrique pas une donnée que le modèle ne sait pas encore produire — même règle que `workflow_id`
+laissé nul sur les channels jusqu'à cette unité.
+
+**Les six channels du seed reçoivent ce workflow.** `docs/SCHEMA.md` §2 exige `channels.workflow_id`
+non nulle et référencée ; `CRM-021` a dû livrer la colonne nue, `workflows` n'existant pas
+(INC-029). Cette unité pose la **clé étrangère composite** `(workflow_id, workspace_id)` — le
+workflow d'un channel appartient donc au même workspace, garanti par la base — et renseigne les six
+channels du seed. La contrainte `NOT NULL` **reste due**, et par `CRM-033` : elle change le contrat
+de création d'un channel, qui devient impossible sans workflow, et c'est précisément l'unité de la
+cohérence workflow ↔ channel qui doit la porter avec son trigger. INC-029 est mise à jour en
+conséquence, elle n'est pas close.
+
+### 3.10 Preuves attendues de `CRM-031`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Structure des trois tables ; unicité `(workflow_id, node_id)` ; au plus une étape initiale ; transition hors workflow refusée ; `from = to` refusé ; cohérence de portée `scope` / `track_id` ; au plus un workflow par défaut ; ordre attribué dans la portée du workflow ; politiques et privilèges ; autorisations éprouvées contre des comptes réels ; **absence de `cards`**, figée pour devenir rouge à `CRM-040` |
+| API | Les seize lignes du §3.8, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 2, n° 3 et n° 11 au niveau des workflows |
+| Seed | Le workflow du §3.9, ses sept étapes et ses dix transitions, créés par la véritable API REST, convergents ; les six channels rattachés |
+| Interface | **Aucune** — l'éditeur de workflow exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
 
 ## 4. Portée et dérivation
 
@@ -380,4 +661,14 @@ sans que le déplacement soit sémantiquement équivalent.
 2. **Suppression d'une transition** encore empruntée par des cadences ou des automatisations :
    comportement à définir (refus, ou avertissement).
 3. **Le refus d'archivage d'un nœud occupé n'est rattaché à aucune unité livrable** : INC-031,
-   trois options d'arbitrage, à trancher avant `CRM-040`.
+   trois options d'arbitrage, à trancher avant `CRM-040`. `CRM-031` en a livré la moitié du
+   chemin — `workflow_steps` existe désormais —, `cards` reste due.
+4. **Les quatre transitions vers `Perdu` exigent un commentaire** dans le workflow par défaut du
+   seed (§3.9). Choix pris par `CRM-031`, faute d'énoncé d'origine, et renversable : il suffit de
+   passer `require_comment` à faux dans le contrat du seed.
+5. **Un workflow sans étape initiale est structurellement valide** (§3.5). La base ne peut pas
+   exiger « au moins une » sans rendre la création impossible par l'API, ce qui a été mesuré. La
+   condition est reportée sur l'emploi du workflow — `CRM-033`, `CRM-040`.
+6. **`require_fields` ne portera jamais d'intégrité référentielle** (§3.4, INC-033) : PostgreSQL
+   ne sait pas contraindre les éléments d'un tableau. La conséquence — des identifiants morts après
+   suppression d'un champ — attend un arbitrage.

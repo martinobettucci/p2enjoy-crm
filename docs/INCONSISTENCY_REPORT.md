@@ -1032,6 +1032,26 @@ de la forme de la reprise :
 
 **Lié à :** INC-010 et INC-013 (même mode de défaillance), INC-025 (autre lacune du même tableau).
 
+**Mise à jour du 2026-08-04, pendant `CRM-031` — la moitié structurelle est levée, l'arbitrage
+reste ouvert.** `workflows` existe désormais. `CRM-031` livre donc :
+
+- la clé étrangère, et **composite** — `(workflow_id, workspace_id)` vers
+  `workflows (id, workspace_id)` —, de sorte que le workflow d'un channel appartienne au même
+  workspace, garanti par la base et non par une politique ;
+- le rattachement des **six channels du seed** au workflow par défaut, ce qui retire le risque
+  résiduel nommé ci-dessus : plus aucun channel de démonstration n'est sans board ;
+- la mise à jour des trois assertions de `supabase/tests/0005_channels.test.sql`, devenues rouges
+  comme prévu — le mécanisme a fonctionné une quatrième fois.
+
+**La contrainte `NOT NULL` n'est pas posée**, et ce n'est pas un oubli. Elle change le **contrat de
+création d'un channel** : créer un channel deviendrait impossible sans désigner un workflow, ce qui
+touche les scénarios d'API de `CRM-021` et le geste produit lui-même. C'est l'unité de la cohérence
+workflow ↔ channel — `CRM-033`, déjà nommée par la Definition of Done de `CRM-021` pour son trigger
+— qui doit la porter, avec la règle qu'elle applique. L'option 1 de l'arbitrage ci-dessus est donc
+**engagée à moitié et non tranchée** : `CRM-031` a fait ce qu'il pouvait faire sans décider à la
+place du responsable. Les options 2 et 3 restent ouvertes ; l'option 3, en particulier, rendrait la
+`NOT NULL` inutile plutôt que différée.
+
 ---
 
 ### INC-030 — La politique de lecture des channels ignore les droits fins, faute de `app.can_read_channel`
@@ -1124,6 +1144,22 @@ Tant que le point est ouvert, `CRM-030` reste `[~]` et la limite est nommée.
 
 **Lié à :** INC-010, INC-013, INC-029 (le même motif, sur d'autres objets), INC-023.
 
+**Mise à jour du 2026-08-04, pendant `CRM-031` — la moitié du chemin existe, l'arbitrage reste
+ouvert.** `workflows` et `workflow_steps` sont livrées. Le chemin de la garde n'est donc plus
+interrompu qu'en un point : `cards`, due par `CRM-040`. **Mesuré à nouveau** :
+`to_regclass('public.workflow_steps')` rend désormais la table, `to_regclass('public.cards')` rend
+toujours `NULL`.
+
+`CRM-031` **n'écrit pas la garde**, et n'adopte pas l'option 2 qui la lui rattacherait : cette
+option est plus stricte que la règle spécifiée — elle interdirait d'archiver un nœud instancié dans
+un workflow mais vide de toute card —, et l'adopter en silence trancherait à la place du
+responsable. Les trois options restent donc ouvertes, à trancher avant `CRM-040`.
+
+Les assertions qui figeaient l'écart sont mises à jour dans le même changement : deux
+`hasnt_table` sont devenues fausses et ont été remplacées par leur constat inverse — les tables
+existent, `cards` n'existe pas, et **aucun trigger d'archivage n'est posé sur le catalogue**. La
+troisième, sur `cards`, reste en place et deviendra rouge à `CRM-040`.
+
 ---
 
 ### INC-032 — `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS interposé
@@ -1176,6 +1212,46 @@ vérifiées pendant un passage consacré à une troisième, et à toucher les pr
 (démarrage des services locaux).
 
 ---
+
+---
+
+### INC-033 — `require_fields` ne peut porter aucune intégrité référentielle, jamais
+
+**Nature :** limite du modèle de données, mesurée ; `docs/SCHEMA.md` §3 la décrit sans la nommer.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-031`.
+
+`docs/SCHEMA.md` §3 donne à `workflow_transitions.require_fields` le type `uuid[]` : « champs
+exigés en plus de ceux requis par l'étape cible ». Ces identifiants désignent des lignes de
+`form_fields` (`CRM-035`).
+
+**Mesuré sur la sonde :** PostgreSQL refuse toute clé étrangère depuis une colonne tableau —
+`alter table … add foreign key (require_fields) references … (id)` échoue en « Key columns
+"require_fields" and "id" are of incompatible types: uuid[] and uuid ». Ce n'est pas un différé
+d'ordonnancement comme INC-029 ou INC-031 : c'est une propriété du type, qui ne changera pas quand
+`form_fields` existera.
+
+**Conséquence.** La suppression d'un champ de formulaire laissera des identifiants morts dans les
+tableaux `require_fields` des transitions. Rien ne les signalera, et le comportement de `move_card`
+(§5) face à un identifiant qui ne désigne plus rien n'est écrit nulle part : exiger un champ
+inexistant bloquerait toute transition, l'ignorer relâcherait silencieusement une exigence.
+
+**Comportement retenu par `CRM-031` :** la colonne est livrée telle que la référence de schéma la
+décrit — `uuid[]`, non nulle, défaut `'{}'` —, l'absence de contrainte est **écrite** dans
+`docs/SPEC-workflow-engine.md` §3.4, et le seed la laisse vide partout, `form_fields` n'existant
+pas. Aucune règle de nettoyage n'est inventée.
+
+**Arbitrage attendu du responsable**, à trancher avant `CRM-036` qui livrera la validation des
+champs :
+
+1. remplacer le tableau par une table de liaison `workflow_transition_required_fields`, qui
+   restaurerait l'intégrité référentielle au prix d'une table de plus et d'un écart avec
+   `docs/SCHEMA.md` §3 ;
+2. conserver le tableau et poser un trigger de nettoyage à la suppression d'un champ, qui retirerait
+   l'identifiant des transitions concernées ;
+3. conserver le tableau et décider explicitement du comportement de `move_card` face à un
+   identifiant mort — l'ignorer, en le journalisant.
+
+**Lié à :** INC-029, INC-031 (écarts nommés sur le même modèle, d'origine différente).
 
 ---
 

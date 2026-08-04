@@ -1232,10 +1232,19 @@ parce qu'elle aurait été omise.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-031 — Workflows, étapes, transitions `[ ]`
+### CRM-031 — Workflows, étapes, transitions `[~]`
 Éditeur d'administration ; workflow par défaut du seed conforme au graphe spécifié.
 **DoD** : pgTAP (étape initiale unique, unicité `(workflow, nœud)`, transitions distinctes) ;
 E2E de création ; captures de l'éditeur.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §3 réécrit : le
+      chapitre tenait en vingt-six lignes, datait de `CRM-000` et n'engageait que l'intention. Il
+      ne disait ni comment « exactement une étape initiale » serait garantie, ni ce qui empêche une
+      transition de sortir de son workflow, ni ce qu'une étape a le droit de surcharger, ni ce que
+      l'API doit rendre à chacun des trois rôles. Rédigé **après mesure** sur trois tables sondes
+      jetables, créées puis détruites, l'absence de reste étant constatée. Commit documentaire
+      dédié.
+- [ ] Migration, suite pgTAP, scénarios d'API, seed, harnais de preuves : à livrer.
 
 ### CRM-032 — Copie d'un workflow vers un track `[ ]`
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.

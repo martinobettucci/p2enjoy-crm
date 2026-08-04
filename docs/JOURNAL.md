@@ -2838,3 +2838,104 @@ du bruit à un commit documentaire et affaibli la preuve visuelle de deux unité
 **Règle qui en sort.** Une capture régénérée par un rejeu se regarde comme une capture neuve. Elle
 ne remplace la précédente que si elle documente au moins aussi bien l'état qu'elle prétend montrer
 — l'automatisme « le harnais l'a réécrite, donc elle est à jour » n'est pas un critère.
+
+---
+
+## 2026-08-04 — `CRM-031` : spécification des workflows, écrite après mesure et avant tout code
+
+Le §3 de `docs/SPEC-workflow-engine.md` tenait en vingt-six lignes et datait de `CRM-000`. Il
+énonçait une intention — « exactement une étape initiale », « les cycles sont autorisés », « une
+étape peut surcharger » — sans dire par quel moyen la base le garantirait, ni ce qui arrive quand
+elle ne le peut pas. Il a été **réécrit après mesure**, sur trois tables sondes jetables créées
+sur la pile réelle puis détruites, l'absence de reste étant constatée (`to_regclass` nul sur les
+trois, aucune fonction `sonde*` restante).
+
+Ce qui suit est ce que la mesure a appris, et qui n'était pas déductible du texte d'origine.
+
+### Décision 72 — « Exactement une étape initiale » n'est pas imposable à l'écriture, et l'exiger casserait la création d'un workflow
+
+**Fait mesuré.** L'exigence se scinde en deux moitiés très inégales.
+
+*Au plus une* est acquise sans rien inventer : un index unique partiel `(workflow_id) where
+is_initial` refuse la seconde étape initiale en `23505`.
+
+*Au moins une* ne l'est pas. Un workflow naît **avant** ses étapes ; le seul mécanisme capable de
+l'exiger est un `constraint trigger … deferrable initially deferred`, qui reporte le contrôle à la
+validation de la transaction. Éprouvé sur la sonde : l'insertion isolée d'un workflow — exactement
+ce que fait PostgREST, une requête valant une transaction — est **acceptée**, puis le `commit`
+**échoue** en `workflow_sans_etape_initiale`. La garde ne protégerait donc rien du tout : elle
+rendrait la création d'un workflow impossible par l'API, et l'éditeur d'administration n'aurait
+aucun moyen de créer le premier objet qu'il est censé éditer.
+
+**Décision.** La base garantit « au plus une ». « Au moins une » devient une condition **d'emploi**
+et non d'existence : un workflow sans étape initiale est un **brouillon**, structurellement valide
+et inutilisable. La condition est vérifiée là où elle a un sens — au rattachement d'un channel
+(`CRM-033`), à la création d'une card (`CRM-040`) — et le seed en fournit une.
+
+**Conséquence.** Le produit admet un état que la spécification d'origine ne prévoyait pas. Il est
+**écrit** au §3.5 et porté au §9 comme point ouvert n° 5, plutôt que découvert par le premier
+éditeur qui enregistrera un workflow vide.
+
+### Décision 73 — Une transition ne sort pas de son workflow parce que la base l'interdit, non parce qu'un trigger le vérifie
+
+**Fait mesuré.** Une clé étrangère composite `(from_step_id, workflow_id)` vers
+`workflow_steps (id, workflow_id)` refuse en `23503` une arête dont l'étape appartient à un autre
+workflow — `Key (to_step_id, workflow_id)=(…) is not present in table "workflow_steps"`. Elle exige
+en contrepartie une unicité `(id, workflow_id)` sur les étapes, faute de quoi sa création échoue en
+`42830`, « there is no unique constraint matching given keys ».
+
+**Décision.** Les deux extrémités d'une transition portent la clé composite. C'est le même geste
+que `channels.workspace_id` rendu véridique par `(track_id, workspace_id)` (décision 62) : la
+cohérence est **structurelle**, pas surveillée. Un trigger aurait rendu le même service, plus tard
+— au premier appel — et moins sûrement.
+
+Trois autres cohérences suivent le même procédé, pour le même motif : le track d'un workflow
+appartient à son workspace, le nœud d'une étape appartient au workspace de son workflow, et le
+workflow d'un channel appartient au workspace du channel. Aucune politique RLS ne rattraperait ces
+trois erreurs : une politique décide **qui écrit** la ligne, pas **ce que la ligne raconte**.
+
+**Effet de bord mesuré et voulu :** supprimer une étape emporte ses arêtes (`on delete cascade`).
+Une arête vers une étape disparue n'est pas une donnée à conserver.
+
+### Décision 74 — La suppression physique est ouverte aux étapes et aux transitions, et à elles seules
+
+**Fait.** `docs/SCHEMA.md` donne pour convention générale la suppression douce et réserve la
+suppression physique aux purges RGPD. Les quatre tables livrées jusqu'ici s'y tiennent : aucune
+politique `for delete`, aucun privilège `DELETE`.
+
+**Décision.** `workflow_steps` et `workflow_transitions` font exception, et l'exception est écrite
+plutôt que silencieuse. Motif : ces lignes sont la **composition** d'un workflow, pas des objets à
+durée de vie propre ; `docs/SCHEMA.md` §3 ne leur donne d'ailleurs aucun `archived_at`. Un éditeur
+qui ne peut pas retirer une arête ne peut pas éditer, et la seule alternative aurait été d'inventer
+une colonne que la référence de schéma ne prévoit pas. Le `DELETE` est réservé aux administrateurs,
+par politique **et** par privilège.
+
+**Conséquence écrite d'avance pour `CRM-040`.** Le jour où des cards occuperont des étapes, la clé
+étrangère `cards.current_step_id → workflow_steps (id)` devra être `on delete restrict`, faute de
+quoi la suppression d'une étape occupée passerait. Le fait est inscrit au §3.7 pour que `CRM-040`
+le trouve écrit.
+
+### Décision 75 — Le commentaire exigé sur les transitions vers « Perdu » est un choix, et il est nommé comme tel
+
+L'énoncé d'origine ne disait pas quelles transitions du workflow par défaut exigent un commentaire.
+Ne rien exiger aurait laissé `require_comment` non démontrée dans les données de démonstration, ce
+que `CLAUDE.md` §8 refuse. Le choix retenu — les quatre transitions vers `Perdu` — est justifiable :
+une affaire perdue sans motif n'est exploitable par aucune analyse, et c'est la seule transition du
+graphe dont la raison ne se déduit pas de l'étape d'arrivée. Il est **renversable en une ligne** du
+contrat de seed, et porté au §9 comme point ouvert n° 4 plutôt que présenté comme une règle établie.
+
+### Ce que la mesure a ouvert, et qui n'est pas tranché ici
+
+- **INC-033.** `require_fields` est un `uuid[]` : PostgreSQL refuse toute clé étrangère depuis une
+  colonne tableau — « Key columns "require_fields" and "id" are of incompatible types ». Ce n'est
+  pas un différé d'ordonnancement, c'est une propriété du type. Des identifiants morts survivront à
+  la suppression d'un champ de formulaire, et le comportement de `move_card` face à eux n'est écrit
+  nulle part. Trois options, à trancher avant `CRM-036`.
+- **INC-029, mise à jour.** La clé étrangère de `channels.workflow_id` est livrable et livrée ; la
+  contrainte `NOT NULL` ne l'est pas, parce qu'elle change le contrat de création d'un channel.
+  Elle revient à `CRM-033`, avec le trigger de cohérence qu'elle accompagne. L'option 1 de
+  l'arbitrage est engagée **à moitié**, et le dire est plus honnête que de clore l'entrée.
+- **INC-031, mise à jour.** `workflow_steps` existe désormais ; `cards` reste due. `CRM-031`
+  n'adopte pas l'option 2 — rattacher la garde d'archivage à cette unité en la limitant à
+  l'occupation par une étape —, parce qu'elle est **plus stricte** que la règle spécifiée et que
+  l'adopter en silence trancherait à la place du responsable.
