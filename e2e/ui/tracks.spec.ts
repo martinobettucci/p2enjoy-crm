@@ -44,7 +44,15 @@ const TRACKS_SERVIS = [
 		icon: 'graduation-cap',
 		position: 3,
 	},
+	// `danger` et `neutral` ne sont dans aucun track du seed. Ils sont servis ici parce qu'un
+	// jeton que rien ne rend n'est jamais mesuré : le contraste de `danger` était sous la barre
+	// du §8 sans qu'aucune preuve ne le voie.
+	{ id: 't-4', name: 'Litiges', slug: 'litiges', color: 'danger', icon: 'archive', position: 4 },
+	{ id: 't-5', name: 'Divers', slug: 'divers', color: 'neutral', icon: 'folder', position: 5 },
 ]
+
+/** Les cinq jetons, dans l'ordre où `TRACKS_SERVIS` les rend. */
+const JETONS_SERVIS = ['brand', 'success', 'accent', 'danger', 'neutral'] as const
 
 test.describe('la barre latérale interroge réellement `tracks`', () => {
 	test('une requête part vers `/rest/v1/tracks`, filtrée et ordonnée', async ({ page }) => {
@@ -105,7 +113,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		await page.goto('/')
 
 		const entrees = page.getByTestId('entree-track')
-		await expect(entrees).toHaveCount(3)
+		await expect(entrees).toHaveCount(TRACKS_SERVIS.length)
 		await expect(entrees.nth(0)).toContainText('Conseil & IA')
 		await expect(entrees.nth(2)).toContainText('Formation')
 		// L'ordre affiché est celui reçu : l'interface ne retrie pas ce que `position` a décidé.
@@ -114,7 +122,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		// docs/DESIGN_SYSTEM.md §5.6 : la couleur ne porte jamais seule l'information — chaque
 		// pilule est précédée d'une icône.
-		for (const rang of [0, 1, 2]) {
+		for (let rang = 0; rang < TRACKS_SERVIS.length; rang += 1) {
 			await expect(entrees.nth(rang).locator('svg')).toHaveCount(1)
 		}
 
@@ -124,9 +132,76 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		const fonds = await entrees.evaluateAll((elements) =>
 			elements.map((element) => globalThis.getComputedStyle(element).backgroundColor),
 		)
-		expect(new Set(fonds).size).toBe(3)
+		expect(new Set(fonds).size).toBe(TRACKS_SERVIS.length)
 
 		await capturer(page, 'tracks-charges-1440', 'CRM-020')
+	})
+
+	// LA PREUVE QUI MANQUAIT, ET QUI A TROUVÉ UN DÉFAUT RÉEL.
+	//
+	// `docs/DESIGN_SYSTEM.md` §8 exige un contraste AA de 4,5:1 « y compris pour les badges
+	// colorés ». Rien ne le vérifiait : la conformité était **déclarée**, jamais mesurée. Or, avec
+	// « texte à la couleur pleine » (§5.6), trois jetons sur cinq échouaient — `accent` à 1,45:1,
+	// visible à l'œil et corrigé à ce titre, mais aussi `success` à 3,82:1 et `danger` à 3,29:1,
+	// qui passaient inaperçus parce qu'ils restent lisibles sans être conformes.
+	//
+	// La mesure porte sur le rendu réel, et la conversion en octets sRGB est confiée au navigateur
+	// — la couleur est **peinte** sur un canevas d'un pixel, puis relue. Analyser la chaîne rendue
+	// par `getComputedStyle` serait faux : mesuré, Chromium rend les `color-mix` avec des canaux
+	// de 0 à 1 (`color(srgb 0.91 …)`) et les couleurs littérales en octets (`rgb(35, 70, 140)`).
+	test('chaque pilule tient le contraste AA de 4,5:1 (docs/DESIGN_SYSTEM.md §8)', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await page.route(ROUTE_TRACKS, (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify(TRACKS_SERVIS),
+			}),
+		)
+		await page.goto('/')
+		await expect(page.getByTestId('entree-track')).toHaveCount(TRACKS_SERVIS.length)
+
+		const mesures = await page.getByTestId('entree-track').evaluateAll((elements) => {
+			const canevas = document.createElement('canvas')
+			canevas.width = 1
+			canevas.height = 1
+			const contexte = canevas.getContext('2d', { willReadFrequently: true })
+			if (contexte === null) throw new Error('canevas 2d indisponible')
+
+			const octets = (valeurCss: string): [number, number, number] => {
+				contexte.clearRect(0, 0, 1, 1)
+				contexte.fillStyle = valeurCss
+				contexte.fillRect(0, 0, 1, 1)
+				const donnees = contexte.getImageData(0, 0, 1, 1).data
+				return [donnees[0] ?? 0, donnees[1] ?? 0, donnees[2] ?? 0]
+			}
+			const canal = (composante: number) => {
+				const v = composante / 255
+				return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+			}
+			const luminance = ([r, g, b]: [number, number, number]) =>
+				0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b)
+
+			return elements.map((element) => {
+				const style = globalThis.getComputedStyle(element)
+				const lTexte = luminance(octets(style.color))
+				const lFond = luminance(octets(style.backgroundColor))
+				const haut = Math.max(lTexte, lFond)
+				const bas = Math.min(lTexte, lFond)
+				return { slug: element.getAttribute('data-slug'), ratio: (haut + 0.05) / (bas + 0.05) }
+			})
+		})
+
+		expect(mesures).toHaveLength(TRACKS_SERVIS.length)
+		mesures.forEach((mesure, rang) => {
+			expect(
+				mesure.ratio,
+				`jeton « ${JETONS_SERVIS[rang]} » (track ${mesure.slug}) : ` +
+					`${mesure.ratio.toFixed(2)}:1, en dessous des 4,5:1 exigés par docs/DESIGN_SYSTEM.md §8`,
+			).toBeGreaterThanOrEqual(4.5)
+		})
 	})
 
 	test('le chargement des tracks montre des squelettes, jamais un spinner', async ({ page }) => {
@@ -183,7 +258,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 				await expect(page.getByTestId('barre-laterale')).toBeInViewport({ ratio: 0.99 })
 			}
 
-			await expect(page.getByTestId('entree-track')).toHaveCount(3)
+			await expect(page.getByTestId('entree-track')).toHaveCount(TRACKS_SERVIS.length)
 
 			// docs/DESIGN_SYSTEM.md §7 : la page ne défile jamais horizontalement.
 			const debordement = await page.evaluate(

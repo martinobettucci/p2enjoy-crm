@@ -888,6 +888,65 @@ assumer le cast. Le même écart se reproduira sur toute colonne renseignée par
 
 ---
 
+### INC-028 — `docs/DESIGN_SYSTEM.md` §5.6 et §8 sont incompatibles pour trois jetons sur cinq
+
+**Nature :** contradiction interne au design system, **mesurée**.
+**Relevée le :** 2026-08-04, en ajoutant à `CRM-020` la preuve de contraste qui manquait.
+
+Le §5.6 décrivait les pilules : « fond de la couleur à 10–15 %, **texte à la couleur pleine** ». Le
+§8 exige : « Contrastes AA (4,5:1) vérifiés, **y compris pour les badges colorés** ».
+
+Appliquées ensemble aux cinq jetons de couleur de donnée du §1, les deux règles se contredisent.
+Contrastes calculés selon WCAG 2.1, texte plein sur son propre fond doux :
+
+| Jeton | Texte | Fond doux | Contraste | §8 |
+|---|---|---|---|---|
+| `brand` | `#23468C` | `#E9ECF4` | **7,64:1** | conforme |
+| `success` | `#238C33` | `#E9F4EB` | **3,82:1** | ÉCHEC |
+| `accent` | `#D9CF4A` | `#F7F4D7` | **1,45:1** | ÉCHEC |
+| `danger` | `#F24141` | `#FEECEC` | **3,29:1** | ÉCHEC |
+| `neutral` | `#4B5563` | `#F3F4F6` | **6,87:1** | conforme |
+
+La contradiction date de `CRM-000`, pas de `CRM-020` : elle n'avait jamais été rencontrée, aucun
+composant n'ayant eu à peindre un texte sur un fond doux de sa propre couleur — `CRM-007`
+n'employait `bg-brand-soft text-brand`, le seul couple conforme, que pour l'état actif.
+
+**Ce que la première livraison de `CRM-020` avait corrigé, et ce qu'elle avait laissé passer.**
+`accent`, à 1,45:1, est illisible : il a été vu sur une capture et corrigé par un repli sur l'encre.
+`success` et `danger` sont restés en couleur pleine. Ils sont **lisibles sans être conformes** — ils
+ne se voient pas, ils se mesurent — et la conformité AA n'était alors que *déclarée* : aucune preuve
+du dépôt ne calculait un contraste. Le track `studio-web` du seed, en `success`, a donc été rendu à
+3,82:1 pendant que la Definition of Done invoquait le §8.
+
+**Ce qui a été fait, et pourquoi ce n'est pas une résolution implicite.** Une pilule devait bien
+être peinte : il n'existait aucun comportement antérieur conforme à laisser inchangé. La conduite
+est donc explicite — quatre jetons `--color-*-on-soft`, le jeton plein assombri juste assez pour
+tenir le §8 en conservant sa teinte, donc l'intention du §5.6. Valeurs **calculées** à partir du
+jeton, comme les fonds doux, jamais des hexadécimaux ad hoc. Contrastes obtenus : 7,64 / 4,85 /
+4,72 / 4,67. Écart déclaré en `docs/DESIGN_SYSTEM.md` §12.5, et **mesuré sur le rendu** par
+`e2e/ui/tracks.spec.ts`.
+
+Entre les deux règles, `CLAUDE.md` §26 place de toute façon la protection des personnes avant la
+préférence stylistique.
+
+**Ce qui reste à trancher, et qui déborde `CRM-020` :**
+
+1. Le §5.6 doit-il être **réécrit** pour tout le produit, ou l'écart §12.5 doit-il rester borné aux
+   pilules de track ?
+2. Les mêmes jetons `*-on-soft` s'appliquent-ils aux **badges** (`Badge.tsx`), aux liserés de card
+   (§5.1) et aux compteurs de colonne (§5.2), qui rencontreront la même contradiction ?
+3. Le jeton `accent` reste-t-il utilisable comme couleur de donnée ? Le §1 le réserve à « un seul
+   surlignage par vue » ; l'ouvrir aux tracks, comme le fait le seed, va au-delà de cette phrase.
+
+**Leçon retenue, indépendante de l'arbitrage :** une exigence chiffrée qu'aucune preuve ne calcule
+n'est pas une exigence, c'est une intention. Les contrôles d'accessibilité chiffrés du §8 devraient
+être mesurés partout où ils s'appliquent, et non seulement sur les pilules de track.
+
+**Action attendue du responsable :** trancher les trois points, et rattacher la mise en conformité
+des autres composants à une unité si le §5.6 est réécrit.
+
+---
+
 ---
 
 ## Clos

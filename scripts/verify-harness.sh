@@ -44,7 +44,9 @@ PORT_RAPPORT=9323
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 depuis `CRM-020`.
 ASSERTIONS_ATTENDUES=306
 SCENARIOS_API=30
-SCENARIOS_UI=22
+# 23 depuis l'ajout de la mesure de contraste par `CRM-020` (docs/DESIGN_SYSTEM.md §12.5) : la
+# conformité AA était déclarée, jamais mesurée, et `success` rendait 3,82:1.
+SCENARIOS_UI=23
 
 TRAVAIL=$(mktemp -d)
 failures=0

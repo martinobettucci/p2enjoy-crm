@@ -13,6 +13,41 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **`CRM-020` — le contraste des pilules de track était déclaré, non mesuré.** `docs/DESIGN_SYSTEM.md`
+  §8 exige 4,5:1 « y compris pour les badges colorés », et aucune preuve du dépôt ne calculait un
+  contraste. Mesuré sur le rendu réel : `success` à **3,82:1** — la couleur du track `studio-web` du
+  seed — et `danger` à **3,29:1**. `accent`, à 1,45:1, avait déjà été corrigé parce qu'illisible ;
+  les deux autres sont **lisibles sans être conformes** et ne pouvaient être trouvés qu'en mesurant.
+  - Quatre jetons **`--color-*-on-soft`** : le jeton conservant sa teinte, assombri juste assez pour
+    tenir les 4,5:1 — 7,64 / 4,85 / 4,72 / 4,67. Valeurs **calculées** à partir du jeton plein,
+    comme les fonds doux ; `tokens.css` reste le seul fichier à contenir une couleur.
+  - `accent` repasse de `text-ink` à `text-accent-on-soft` : le repli sur l'encre était conforme
+    mais faisait de lui une **exception** dans un tableau qui devra s'étendre aux badges. Une règle
+    unique se propage, une exception se recopie mal.
+  - **Preuve ajoutée, et c'est elle le livrable** : `e2e/ui/tracks.spec.ts` mesure le contraste sur
+    les couleurs **réellement rendues**, peintes sur un canevas d'un pixel. Lire `getComputedStyle`
+    serait faux — Chromium mêle canaux 0–1 (`color-mix`) et octets (couleurs littérales) ; la
+    première version de la mesure rendait 2,31:1 pour un contraste de 7,64:1.
+  - Le scénario sert désormais **les cinq jetons**, dont `danger` et `neutral` qu'aucun track du
+    seed n'emploie : un jeton que rien ne rend n'est jamais mesuré.
+  - **Le mappage exact est figé** par `webapp/src/app/presentation-tracks.test.ts`. Les trois
+    assertions qui existaient — « non vide », « pas d'hexadécimal », « fond et texte distincts » —
+    étaient toutes vertes avec `text-success` : une propriété générale ne remplace pas la valeur
+    attendue.
+  - **`scripts/verify-tracks.sh` : 43 contrôles, aucune anomalie**, et une **huitième dégradation** —
+    le jeton de contraste ramené à la couleur pleine doit faire échouer le projet `ui`. Sans elle,
+    rien ne distinguerait « la conformité AA est mesurée » de « la conformité AA est déclarée ».
+  - `scripts/verify-harness.sh` : **22 → 23** scénarios `ui` épinglés.
+  - Contradiction consignée en **INC-028** : `docs/DESIGN_SYSTEM.md` §5.6 (« texte à la couleur
+    pleine ») et §8 sont incompatibles pour trois jetons sur cinq, depuis `CRM-000`. Trois questions
+    dépassent cette unité et sont portées à l'arbitrage — réécrire le §5.6 pour tout le produit,
+    étendre les jetons aux badges et liserés de card, et maintenir ou non `accent` comme couleur de
+    donnée.
+  - `docs/DESIGN_SYSTEM.md` §1, §5.6 et **§12.5** (nouvel écart), `docs/JOURNAL.md` mis à jour dans
+    le même changement.
+
 ### Ajouté
 
 - **`CRM-020` — Tracks (`[~]`).** Premier objet métier du produit, et **premières politiques RLS**.

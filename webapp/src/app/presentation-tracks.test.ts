@@ -50,6 +50,25 @@ describe('couleurs (docs/DESIGN_SYSTEM.md §1)', () => {
 		}
 	})
 
+	// LE MAPPAGE EXACT EST FIGÉ, et pas seulement sa forme. Les trois assertions précédentes —
+	// « non vide », « pas d'hexadécimal », « fond et texte distincts » — étaient toutes vertes
+	// avec `text-success`, qui rend 3,82:1 contre les 4,5:1 exigés par docs/DESIGN_SYSTEM.md §8.
+	// Une propriété générale ne remplace pas la valeur attendue.
+	//
+	// La conformité elle-même est mesurée sur le rendu par `e2e/ui/tracks.spec.ts` : jsdom ne
+	// calcule pas les `color-mix`, aucun test unitaire ne peut donc constater un contraste. Ce
+	// test-ci garde l'autre moitié du contrat — que ce soit bien la déclinaison lisible qui soit
+	// demandée, et non la couleur pleine (écart docs/DESIGN_SYSTEM.md §12.5).
+	it.each([
+		['brand', 'bg-brand-soft text-brand-on-soft'],
+		['success', 'bg-success-soft text-success-on-soft'],
+		['accent', 'bg-accent-soft text-accent-on-soft'],
+		['danger', 'bg-danger-soft text-danger-on-soft'],
+		['neutral', 'bg-hover text-text-2'],
+	])('le jeton « %s » emploie sa déclinaison lisible', (jeton, attendu) => {
+		expect(classesPilule(jeton)).toBe(attendu)
+	})
+
 	it('replie une couleur inconnue sur le neutre, sans lever', () => {
 		expect(classesPilule('turquoise')).toBe(classesPilule(COULEUR_PAR_DEFAUT))
 		expect(classesPilule('')).toBe(classesPilule(COULEUR_PAR_DEFAUT))

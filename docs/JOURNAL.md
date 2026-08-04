@@ -2203,3 +2203,82 @@ sur le même obstacle et livreront, au mieux, des captures vides.
 
 L'arbitrage d'INC-021 conditionne donc la valeur démontrable de tout le chunk 3, et non la seule
 Definition of Done de `CRM-011`.
+
+---
+
+## 2026-08-04 — `CRM-020` : le contraste des pilules était déclaré, non mesuré
+
+Entrée écrite après la livraison de `CRM-020`, sur un défaut trouvé en cherchant à **prouver** ce
+que sa Definition of Done affirmait déjà.
+
+### Le défaut
+
+`docs/DESIGN_SYSTEM.md` §8 exige un contraste AA de 4,5:1 « y compris pour les badges colorés ».
+Aucune preuve du dépôt ne calculait un contraste. La conformité était donc **déclarée**.
+
+Mesurés sur le rendu réel, les cinq jetons de couleur de donnée avec « texte à la couleur pleine »
+(§5.6) donnaient :
+
+```
+brand    7,64  conforme
+success  3,82  ÉCHEC   ← rendu par le track « studio-web » du seed
+accent   1,45  ÉCHEC   ← déjà corrigé, parce qu'illisible
+danger   3,29  ÉCHEC   ← aucun track du seed ne l'emploie
+neutral  6,87  conforme
+```
+
+`accent` avait été vu et corrigé : à 1,45:1 il saute aux yeux sur une capture. `success` et `danger`
+ont survécu **parce qu'ils sont lisibles sans être conformes**. Il n'y avait rien à voir ; il y
+avait quelque chose à mesurer.
+
+### Ce que cela dit du procédé, au-delà de ce défaut
+
+Trois preuves existaient sur ces classes et étaient toutes vertes : « les classes ne sont pas
+vides », « elles ne contiennent aucun hexadécimal », « chaque jeton a un fond et un texte
+distincts ». Aucune ne portait la **valeur attendue**, seulement des propriétés générales. Une
+propriété générale est peu coûteuse à écrire et rassurante à lire — et c'est exactement pour cela
+qu'elle laisse passer une valeur fausse.
+
+Deux conclusions, consignées parce qu'elles dépassent cette unité :
+
+1. **Une exigence chiffrée qu'aucune preuve ne calcule n'est pas une exigence, c'est une
+   intention.** Les seuils du §8 s'appliquent partout ; ils ne sont mesurés que sur les pilules de
+   track.
+2. **Un jeton que rien ne rend n'est jamais mesuré.** `danger` n'apparaît dans aucun track du seed.
+   Le scénario de contraste sert donc désormais **cinq** couleurs, dont deux absentes du seed, au
+   lieu des trois qu'il affichait.
+
+### La correction, et pourquoi une règle unique plutôt qu'un cas particulier
+
+Quatre jetons `--color-*-on-soft` : le jeton conservant sa teinte, assombri juste assez pour tenir
+les 4,5:1 — 7,64 / 4,85 / 4,72 / 4,67. Valeurs **calculées** à partir du jeton plein, comme les
+fonds doux ; `tokens.css` reste le seul fichier du dépôt à contenir une couleur.
+
+`accent` repasse de `text-ink` à `text-accent-on-soft`. Le repli sur l'encre était conforme, mais il
+faisait de lui une **exception** dans un tableau de correspondances qui devra s'étendre aux badges,
+aux liserés de card et aux compteurs de colonne. Une règle unique se propage ; une exception se
+recopie mal.
+
+### Le piège de mesure, qui a failli produire une preuve fausse
+
+La première version du scénario lisait `getComputedStyle().color` et en extrayait trois nombres.
+Chromium rend les `color-mix` avec des canaux de **0 à 1** (`color(srgb 0.91 …)`) et les couleurs
+littérales en **octets** (`rgb(35, 70, 140)`). Lire les deux avec la même règle donnait 2,31:1 là où
+le contraste vaut 7,64:1.
+
+Ici, l'erreur produisait un faux **rouge**, donc visible. Elle aurait tout aussi bien pu produire un
+faux vert — c'est-à-dire une preuve de conformité rassurante et sans objet, exactement le défaut
+qu'on cherchait à corriger. La conversion est donc confiée au navigateur : la couleur est
+**réellement peinte** sur un canevas d'un pixel, et les octets sont relus.
+
+### Deux exécutions concurrentes de la même routine
+
+Cette correction a été écrite après avoir constaté que `CRM-020` venait d'être livrée par une autre
+exécution de la routine, pendant que la présente travaillait sur la même unité — les deux ayant
+démarré du même commit. Le travail parallèle a été **abandonné** plutôt que substitué : `CLAUDE.md`
+§13 interdit d'écraser les modifications d'un autre contributeur, et la version livrée était saine
+(43 contrôles, huit dégradations réelles).
+
+Ce qui est retenu ici est le seul écart qu'une relecture ait révélé — un défaut réel, reproduit par
+un test rouge avant correction (`CLAUDE.md` §18). Le reste du travail parallèle, largement
+équivalent, n'apportait aucune preuve que la version livrée ne portait déjà.

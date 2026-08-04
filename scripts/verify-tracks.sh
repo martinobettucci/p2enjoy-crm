@@ -309,6 +309,8 @@ for capture in tracks-vides-1440 tracks-charges-1440 tracks-chargement-1440 trac
 	fi
 done
 
+TRAVAIL_JETONS=$(mktemp)
+
 # --- 7. Non-complaisance -----------------------------------------------------------------------
 # Le harnais doit **échouer** quand le produit est affaibli. Sans cette section, rien ne
 # distinguerait un harnais qui mesure d'un harnais qui acquiesce.
@@ -378,6 +380,35 @@ else
 fi
 supabase/seed/apply-seed.sh >/dev/null 2>&1 || true
 
+# Dégradation du **jeton de contraste**, et non de la base : elle éprouve la preuve ajoutée à
+# `e2e/ui/tracks.spec.ts`, celle qui mesure le contraste sur le rendu réel. Sans elle, rien ne
+# distinguerait « la conformité AA est mesurée » de « la conformité AA est déclarée » — et c'est
+# précisément cette confusion qui avait laissé passer `success` à 3,82:1.
+#
+# La restauration est garantie par un `trap` : un échec en cours de route ne doit pas laisser le
+# dépôt modifié.
+JETONS_CSS=webapp/src/styles/tokens.css
+cp "$JETONS_CSS" "$TRAVAIL_JETONS"
+trap 'cp "$TRAVAIL_JETONS" "$JETONS_CSS" 2>/dev/null; rm -f "$TRAVAIL_JETONS"' EXIT
+EMPREINTE_JETONS=$(sha256sum "$JETONS_CSS" | cut -d' ' -f1)
+
+sed -i 's|^\t--color-success-on-soft: .*$|\t--color-success-on-soft: var(--color-success);|' "$JETONS_CSS"
+if grep -q -- '--color-success-on-soft: var(--color-success);' "$JETONS_CSS"; then
+	ok "dégradation « texte du jeton success ramené à la couleur pleine » : réellement appliquée"
+else
+	fail "la dégradation du jeton n'a pas été appliquée — le contrôle suivant serait sans valeur"
+fi
+
+if npm run --silent e2e:ui >/dev/null 2>&1; then
+	fail "dégradation « contraste du jeton success » : le projet « ui » reste vert — le harnais est complaisant"
+else
+	ok "dégradation « contraste du jeton success » : le projet « ui » échoue bien"
+fi
+
+cp "$TRAVAIL_JETONS" "$JETONS_CSS"
+trap - EXIT
+rm -f "$TRAVAIL_JETONS"
+
 # --- 8. Restauration constatée, pas supposée ---------------------------------------------------
 
 echo
@@ -398,6 +429,15 @@ delete_acc=$(psql_db -c "select has_table_privilege('authenticated', 'public.tra
 archives=$(psql_db -c "select count(*) from public.tracks where workspace_id = '$WS_SEED' and archived_at is not null;")
 [ "$archives" = "1" ] && ok "le seed est revenu à son contrat : un track archivé" \
 	|| fail "après restauration, tracks archivés : $archives"
+
+# L'empreinte est comparée à celle relevée AVANT la dégradation, et non à la version committée :
+# ce harnais est rejoué sur un arbre de travail modifié — c'est même son cas d'usage principal,
+# juste avant le commit.
+if [ "$(sha256sum "$JETONS_CSS" | cut -d' ' -f1)" = "$EMPREINTE_JETONS" ]; then
+	ok "le fichier de jetons est rendu octet pour octet identique à son état d'avant dégradation"
+else
+	fail "$JETONS_CSS diffère de son état d'avant dégradation"
+fi
 
 lire_tap "$TEST_FILE"
 

@@ -26,6 +26,11 @@ Déclinaisons calculées, jamais d'hexadécimal ad hoc dans un composant :
 `--color-brand-soft` (10 %) pour les fonds de pilule et de badge, `--color-brand-hover` `#1B3670`,
 et les équivalents pour succès, danger et accent en fonds à 10–22 %.
 
+`--color-*-on-soft` — le jeton **écrit sur son propre fond doux**, assombri juste assez pour tenir
+le contraste AA du §8 tout en conservant sa teinte. Voir l'écart §12.5 : « texte à la couleur
+pleine » échoue à 4,5:1 pour `success`, `accent` et `danger`. Valeurs calculées à partir du jeton
+plein, au même titre que les fonds doux.
+
 `--color-veil` — l'encre à 40 % — est le voile posé sous toute surface qui recouvre l'écran :
 tiroir de navigation, et modales à venir. C'est un **jeton**, et non un modificateur d'opacité
 écrit dans le composant : mesuré, un `bg-ink/40` fait recopier la valeur hexadécimale dans le CSS
@@ -168,8 +173,14 @@ livrés par `CRM-021`. Voir §12.4.
 
 ### 5.6 Badges et pilules
 
-`rounded-full`, fond de la couleur à 10–15 %, texte à la couleur pleine, **précédés d'un point
-ou d'une icône** afin que l'information ne repose jamais sur la seule couleur.
+`rounded-full`, fond de la couleur à 10–15 %, texte à la **déclinaison lisible** de la couleur
+(`--color-*-on-soft`), **précédés d'un point ou d'une icône** afin que l'information ne repose
+jamais sur la seule couleur.
+
+**« À la déclinaison lisible » et non « à la couleur pleine » : voir l'écart §12.5.** La
+formulation d'origine est incompatible avec le §8 pour trois des cinq jetons de donnée. Savoir si
+cette correction vaut pour **tous** les badges du produit reste ouvert
+(`docs/INCONSISTENCY_REPORT.md`, INC-028).
 
 ### 5.7 Champs de formulaire
 
@@ -299,5 +310,40 @@ Conséquence pour toute revue d'interface à venir : une capture vide ne prouve 
 d'interface tant que cet arbitrage n'est pas rendu, et le rendu chargé se vérifie par test
 unitaire du composant réel (`webapp/src/app/SectionTracks.test.tsx`) ou en substituant la réponse
 réseau — jamais en injectant un état interne.
+
+### 12.5 Texte des pilules de donnée : déclinaison assombrie, non couleur pleine — `CRM-020`, 2026-08-04
+
+Le §5.6 demandait « texte à la couleur pleine » sur un fond de la même couleur à 10–22 %. Le §8
+exige un contraste AA de 4,5:1 « y compris pour les badges colorés ». **Mesuré**, les deux règles
+sont incompatibles pour trois jetons sur cinq :
+
+| Jeton | Texte plein sur son fond doux | Contraste | §8 |
+|---|---|---|---|
+| `brand` | `#23468C` sur `#E9ECF4` | 7,64:1 | conforme |
+| `success` | `#238C33` sur `#E9F4EB` | 3,82:1 | **échec** |
+| `accent` | `#D9CF4A` sur `#F7F4D7` | 1,45:1 | **échec** |
+| `danger` | `#F24141` sur `#FEECEC` | 3,29:1 | **échec** |
+| `neutral` | `#4B5563` sur `#F3F4F6` | 6,87:1 | conforme |
+
+**Comment les trois ont été trouvés, et pourquoi pas en même temps.** `accent`, à 1,45:1, est
+illisible : il a sauté aux yeux sur une capture et a d'abord été corrigé seul, par un repli sur
+l'encre. `success` et `danger` sont **lisibles sans être conformes** — ils ne se voient pas, ils se
+mesurent. Ils ont survécu parce que la conformité AA était *déclarée* et non *mesurée* : aucune
+preuve du dépôt ne calculait un contraste.
+
+**Écart retenu :** le texte d'une pilule de donnée emploie `--color-*-on-soft`, le jeton conservant
+sa teinte mais assombri jusqu'à tenir les 4,5:1 — 7,64 / 4,85 / 4,72 / 4,67. Une seule règle pour
+les quatre jetons chromatiques, plutôt qu'un repli sur l'encre pour l'un et la couleur pleine pour
+les autres : le tableau devra s'étendre aux badges, et une exception s'y propagerait mal.
+`neutral` est inchangé — il emploie les neutres existants et tient déjà 6,87:1.
+
+**La conformité est désormais mesurée, pas déclarée.** `e2e/ui/tracks.spec.ts` calcule le contraste
+à partir des couleurs **réellement rendues**, en les peignant sur un canevas d'un pixel : lire
+`getComputedStyle` serait faux, Chromium rendant les `color-mix` avec des canaux de 0 à 1 et les
+couleurs littérales en octets. Les cinq jetons y sont exercés, y compris `danger` et `neutral` que
+le seed n'emploie pas — un jeton que rien ne rend n'est jamais mesuré.
+
+**Portée :** limitée aux pilules de track tant qu'INC-028 n'est pas tranchée. Les badges, liserés
+de card et compteurs de colonne rencontreront la même contradiction et ne sont **pas** modifiés ici.
 
 Tout écart futur est consigné ici avec sa justification et sa date.

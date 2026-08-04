@@ -896,8 +896,40 @@ chargement, refus, paliers. Le rendu **chargé** — pilules, couleurs, icônes,
 **réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun des deux n'est présenté comme
 telle.
 
+*Correctif du 2026-08-04 — le contraste des pilules était déclaré, non mesuré.*
+
+- [x] **Défaut réel trouvé et corrigé, protocole `CLAUDE.md` §18 suivi** : reproduit par un test
+      **rouge avant correction**, puis corrigé, puis vérifié. `docs/DESIGN_SYSTEM.md` §8 exige
+      4,5:1 « y compris pour les badges colorés » et aucune preuve ne calculait un contraste :
+      `success` — la couleur du track `studio-web` du seed — rendait **3,82:1**, et `danger`
+      **3,29:1**. Tous deux **lisibles sans être conformes**, donc invisibles à l'observation ;
+      seul `accent`, à 1,45:1, avait été vu et corrigé.
+- [x] **Quatre jetons `--color-*-on-soft`**, calculés à partir du jeton plein : 7,64 / 4,85 / 4,72 /
+      4,67. `accent` repasse de `text-ink` à `text-accent-on-soft` — une règle unique plutôt qu'une
+      exception dans un tableau qui devra s'étendre aux badges.
+- [x] **La conformité est désormais mesurée sur le rendu**, pas déclarée : `e2e/ui/tracks.spec.ts`
+      peint les couleurs rendues sur un canevas d'un pixel et relit les octets. Lire
+      `getComputedStyle` serait faux — la première version de la mesure rendait 2,31:1 pour un
+      contraste de 7,64:1, un faux rouge qui aurait aussi bien pu être un faux vert.
+- [x] **Les cinq jetons sont exercés**, dont `danger` et `neutral` qu'aucun track du seed n'emploie :
+      un jeton que rien ne rend n'est jamais mesuré.
+- [x] **Le mappage exact est figé** (`presentation-tracks.test.ts`). Les trois assertions
+      existantes — « non vide », « pas d'hexadécimal », « fond et texte distincts » — étaient toutes
+      vertes avec `text-success` : une propriété générale ne remplace pas la valeur attendue.
+- [x] `npm run test:unit` **138 tests**, `npm run e2e:ui` **23 scénarios**,
+      `scripts/verify-tracks.sh` **43 contrôles, aucune anomalie** avec une **huitième dégradation**
+      qui éprouve la nouvelle preuve, `scripts/verify-harness.sh` **22 contrôles** (comptes `ui`
+      épinglés portés de 22 à 23).
+- [x] `docs/DESIGN_SYSTEM.md` §1, §5.6, **§12.5**, `docs/INCONSISTENCY_REPORT.md` **INC-028**,
+      `docs/JOURNAL.md` et `CHANGELOG.md` mis à jour dans le même changement.
+
 *Limites nommées, non masquées.*
 
+- **INC-028 est ouverte et dépasse cette unité.** La contradiction §5.6 / §8 date de `CRM-000` et
+  vaut pour les badges, les liserés de card et les compteurs de colonne, qui ne sont **pas**
+  modifiés ici. Trois questions sont portées à l'arbitrage.
+- **Les seuils chiffrés du §8 ne sont mesurés que sur les pilules de track.** Partout ailleurs, la
+  conformité AA reste déclarée — c'est-à-dire dans l'état où étaient les pilules avant ce correctif.
 - **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.**
   Ce n'est plus une gêne locale : `CRM-021`, `CRM-041`, `CRM-042` et les suivantes buteront sur le
   même obstacle et livreront, au mieux, des captures vides. L'arbitrage conditionne la valeur

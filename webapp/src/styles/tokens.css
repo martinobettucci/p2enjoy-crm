@@ -49,6 +49,34 @@
 	--color-accent-soft: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
 	--color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
 
+	/* Le jeton **écrit sur son propre fond doux** — `CRM-020`, docs/DESIGN_SYSTEM.md §12.5.
+
+	   Motif MESURÉ, non supposé. §5.6 demandait « texte à la couleur pleine » sur un fond de la
+	   même couleur à 10–22 % ; §8 exige un contraste AA de 4,5:1 « y compris pour les badges
+	   colorés ». Les deux règles sont **incompatibles** pour trois jetons sur cinq :
+
+	     brand    #23468C sur #E9ECF4 = 7,64  conforme
+	     success  #238C33 sur #E9F4EB = 3,82  ÉCHEC
+	     accent   #D9CF4A sur #F7F4D7 = 1,45  ÉCHEC
+	     danger   #F24141 sur #FEECEC = 3,29  ÉCHEC
+
+	   `accent`, illisible, avait été vu à l'œil et corrigé en repli sur l'encre. `success` et
+	   `danger` étaient passés inaperçus : ils restent *lisibles* sans être *conformes*, et aucune
+	   preuve ne mesurait le contraste. C'est le scénario de `e2e/ui/tracks.spec.ts` qui les a
+	   trouvés, en peignant les couleurs rendues sur un canevas.
+
+	   Ces déclinaisons conservent la teinte du jeton — donc l'intention du §5.6 — en
+	   l'assombrissant juste assez. Ce sont des valeurs **calculées** à partir du jeton plein, comme
+	   les fonds doux ci-dessus, jamais un hexadécimal ad hoc. Contrastes obtenus : 7,64 / 4,85 /
+	   4,72 / 4,67. `brand` n'a besoin d'aucun assombrissement.
+
+	   La contradiction elle-même est consignée en docs/INCONSISTENCY_REPORT.md, INC-028 : savoir si
+	   le §5.6 doit être réécrit pour tout le produit dépasse cette unité. */
+	--color-brand-on-soft: var(--color-brand);
+	--color-success-on-soft: color-mix(in srgb, var(--color-success) 85%, var(--color-ink));
+	--color-accent-on-soft: color-mix(in srgb, var(--color-accent) 50%, var(--color-ink));
+	--color-danger-on-soft: color-mix(in srgb, var(--color-danger) 80%, var(--color-ink));
+
 	/* Voile posé sous une surface qui recouvre l'écran (tiroir de navigation, modale à venir).
 	   C'est un jeton, et non un modificateur d'opacité écrit dans le composant : mesuré, un
 	   `bg-ink/40` fait **recopier la valeur hexadécimale** dans le CSS produit, en repli des

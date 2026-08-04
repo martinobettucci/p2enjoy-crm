@@ -38,17 +38,26 @@ export type JetonCouleur = 'brand' | 'success' | 'accent' | 'danger' | 'neutral'
 
 /**
  * Classes de la pilule pour chaque jeton — `docs/DESIGN_SYSTEM.md` §5.6 : fond de la couleur
- * douce, texte à la couleur pleine.
+ * douce, texte à la **déclinaison lisible** de la couleur (écart §12.5).
  *
- * `neutral` emploie les neutres existants (`--color-hover`, `--color-text-2`) : le design system
+ * Les quatre jetons chromatiques emploient `*-on-soft` : le jeton conservant sa teinte, assombri
+ * juste assez pour tenir le contraste AA du §8 sur son propre fond doux. Une seule règle plutôt
+ * que quatre cas particuliers — `accent` employait auparavant `text-ink`, ce qui était conforme
+ * mais faisait de lui une exception dans un tableau qui devra s'étendre aux badges.
+ *
+ * `neutral` reste sur les neutres existants (`--color-hover`, `--color-text-2`) : le design system
  * ne déclare pas de « neutre doux », et en inventer un pour l'occasion créerait un jeton que le
- * document ne connaît pas (`docs/SPEC-tracks.md` §7.1).
+ * document ne connaît pas (`docs/SPEC-tracks.md` §7.1). Il tient déjà 6,87:1.
+ *
+ * Les classes sont écrites en toutes lettres et jamais composées par interpolation : Tailwind
+ * analyse le source statiquement, et une classe construite à l'exécution ne serait pas engendrée —
+ * donc absente du CSS, sans effet, **en silence** (docs/DESIGN_SYSTEM.md §11).
  */
 const CLASSES_PILULE: Readonly<Record<JetonCouleur, string>> = {
-	brand: 'bg-brand-soft text-brand',
-	success: 'bg-success-soft text-success',
-	accent: 'bg-accent-soft text-ink',
-	danger: 'bg-danger-soft text-danger',
+	brand: 'bg-brand-soft text-brand-on-soft',
+	success: 'bg-success-soft text-success-on-soft',
+	accent: 'bg-accent-soft text-accent-on-soft',
+	danger: 'bg-danger-soft text-danger-on-soft',
 	neutral: 'bg-hover text-text-2',
 }
 
