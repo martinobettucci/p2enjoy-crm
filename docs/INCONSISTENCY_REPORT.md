@@ -737,6 +737,103 @@ unités qui livreront leur sujet ; les exiger aussi de `CRM-008` les compte deux
 **Lié à :** INC-013 (fonctions d'autorisation en attente de tables), INC-020 (build dû par l'unité
 suivante, close).
 
+### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
+
+**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
+`CRM-020`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-020`.
+
+`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `tracks`, une lecture gouvernée par
+`app.can_read_track`. Cette fonction est l'une des quatre différées par INC-013, dont l'arbitrage
+appartient au responsable et **reste ouvert**. `CRM-020` doit néanmoins livrer une politique de
+lecture : sans elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son
+CRUD, ni sa lecture, ni le cloisonnement entre workspaces.
+
+**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
+prouvée par `CRM-010`. Elle est donc **correcte mais incomplète** : elle cloisonne par workspace,
+elle n'applique aucun droit fin. Concrètement, un `track_members.access = 'none'` posé sur un track
+ne le masque pas encore.
+
+**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
+créer reviendrait à trancher l'option 1 d'INC-013 — « rattacher chacune des quatre fonctions à
+l'unité qui livre sa table » — à la place du responsable. La suite pgTAP de `CRM-010` constate
+d'ailleurs leur absence (`hasnt_function`) et deviendrait rouge si elles apparaissaient sans que
+ses preuves soient étendues.
+
+**Ce qui protège l'écart :** il est **figé par une assertion** et non par un commentaire. La suite
+`supabase/tests/0004_tracks.test.sql` pose une ligne `track_members` restrictive et constate que le
+track reste lisible, en nommant `CRM-012`. Le jour où la politique sera resserrée, l'assertion
+deviendra rouge et forcera sa révision (`docs/JOURNAL.md`, décision 51).
+
+**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un track n'aurait aucun effet.
+Aucune ligne `track_members` n'existe sur les bases du projet — le seed n'y écrit rien — et
+`CRM-012` est l'unité suivante du chunk 2 à traiter dès que ses tables existent. Le risque est donc
+borné à la fenêtre entre `CRM-020` et `CRM-012`.
+
+**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
+`app.can_read_track` et quand cette politique est resserrée.
+
+**Lié à :** INC-013 (quatre fonctions différées), INC-014 (aucune unité ne nomme les politiques des
+tables d'identité).
+
+---
+
+### INC-025 — `docs/SCHEMA.md` §2 omet `created_at` et `updated_at`, que ses propres conventions exigent
+
+**Nature :** contradiction interne à `docs/SCHEMA.md`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-020`.
+
+Les « Conventions générales » de `docs/SCHEMA.md` posent : « Horodatages `timestamptz`, toujours en
+UTC. `created_at` par défaut `now()`. » Les tables du socle livrées par `CRM-003` — `profiles`,
+`workspaces` — portent bien `created_at` et `updated_at`, et le tableau du §1 les énumère.
+
+Le tableau du §2, qui décrit `tracks` et `channels`, ne les énumère **pas**. Rien dans le document
+ne justifie l'exception, et les deux tables sont des tables métier ordinaires.
+
+**Comportement retenu :** `CRM-020` livre `tracks` **avec** les deux colonnes et le trigger
+`app.set_updated_at()`, conformément aux conventions générales, et met à jour le tableau du §2 dans
+le même changement. L'omission est traitée comme une lacune du tableau, non comme une décision
+implicite d'y renoncer.
+
+**Ce qui n'est pas fait :** le tableau de `channels`, dans le même §2, n'est **pas** corrigé — il
+relève de `CRM-021`, qui livrera la table. Le corriger ici modifierait la spécification d'une unité
+non commencée.
+
+**Action attendue du responsable :** confirmer la lecture, ou nommer la raison pour laquelle les
+tables du §2 devraient échapper aux conventions générales.
+
+---
+
+### INC-026 — Le refus d'un privilège manquant par PostgREST divulgue la commande `GRANT` à exécuter
+
+**Nature :** comportement de PostgREST `v14.12`, mesuré, en tension avec `CLAUDE.md` §20 (« les
+erreurs doivent permettre le diagnostic sans exposer l'infrastructure »).
+**Relevé le :** 2026-08-04, pendant la mesure préalable à `CRM-020`.
+
+`tracks` n'accorde `DELETE` à personne : la suppression du produit est l'archivage
+(`docs/SPEC-tracks.md` §4). Le refus mesuré est correct — `403`, code `42501` — mais son corps
+porte un `hint` :
+
+```
+"hint": "Grant the required privileges to the current role with: GRANT DELETE ON public.tracks TO authenticated;"
+```
+
+Le message nomme la table, le schéma, le rôle courant et la commande exacte qui lèverait le refus.
+Aucun secret n'est divulgué, et la table est déjà nommée par la route appelée ; l'information
+ajoutée est la **forme du modèle de privilèges**.
+
+**Pourquoi ce n'est pas résolu ici :** le `hint` est produit par PostgREST, pas par le produit. Le
+supprimer supposerait un filtrage à la passerelle (Kong) portant sur **toutes** les réponses
+d'erreur, donc une décision d'architecture transverse qui déborde très largement `CRM-020`, et qui
+risquerait d'appauvrir des diagnostics légitimes.
+
+**Portée réelle :** tous les refus de privilège de l'API, sur toute table, présente et à venir.
+
+**Action attendue du responsable :** décider si ce `hint` doit être filtré à la passerelle, et si
+oui, rattacher la mesure à une unité — aucune ne la porte aujourd'hui.
+
+---
+
 ---
 
 ## Clos

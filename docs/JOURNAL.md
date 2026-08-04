@@ -2016,3 +2016,96 @@ Deux obstacles ont dû être levés **hors du dépôt**, et aucun correctif n'a 
 
 Ces deux points sont des propriétés de l'hôte de vérification, pas du projet. Ils sont consignés
 pour qu'une exécution future ne les rediagnostique pas depuis zéro.
+
+---
+
+## 2026-08-04 — `CRM-020` : spécification des tracks, écrite après mesure
+
+`docs/MASTER_PLAN.md` §1 règle 2 : « la documentation précède le code ». Aucun document ne disait
+comment un track s'ordonne, ce qu'archiver veut dire pour lui, ni ce que l'API doit rendre à
+chacun des trois rôles. `docs/SPEC-tracks.md` est écrite avant la migration, et **après mesure**.
+
+### Choix de l'unité — pourquoi `CRM-020` et non `CRM-012`
+
+L'ordre de `docs/MASTER_PLAN.md` §2 place `CRM-012`, `CRM-013` et `CRM-014` avant `CRM-020`. Les
+trois ont été examinées et écartées, non par confort mais par impossibilité :
+
+| Unité | Ce qu'elle exige | Pourquoi elle ne peut pas commencer |
+|---|---|---|
+| `CRM-012` | politiques des droits fins par track et channel | ni `tracks` ni `channels` n'existent ; et INC-013 demande un arbitrage **avant** cette unité |
+| `CRM-013` | colonnes protégées de `cards`, `mail_*`, `api_tokens`, `audit_log` | aucune de ces tables n'existe (chunks 3 et 4) |
+| `CRM-014` | les douze scénarios de refus | ils portent sur des cards, des channels et des comptes mail |
+
+`CRM-020` est donc la première unité réellement commençable, et elle lève la dépendance de trois
+d'entre elles. Les trois unités `[~]` déjà au dépôt — `CRM-008`, `CRM-010`, `CRM-011` — ont été
+relues avant de choisir : leurs points ouverts restent bloqués par un arbitrage ou par une table
+absente, sans rien d'actionnable.
+
+### Décision 52 — La spécification est écrite après une sonde jetable, pas de mémoire
+
+Les unités précédentes ont mesuré des **outils** avant de les spécifier. Ici, ce qu'il fallait
+mesurer était le comportement de PostgreSQL et de PostgREST sous les politiques envisagées — donc
+quelque chose qui n'existait pas encore.
+
+Conduite retenue : une table sonde `public.zz_probe`, portant exactement la structure, les
+triggers, les politiques et les privilèges envisagés, a été créée sur la pile de développement,
+interrogée avec les jetons réels des trois comptes seedés, puis **détruite** avant la rédaction.
+L'absence de reste a été constatée (`0` relation `zz_%`, `1` workspace).
+
+Douze mesures en sont sorties, reportées telles quelles dans `docs/SPEC-tracks.md` §6. Trois ont
+changé la conception :
+
+1. **Un trigger `BEFORE INSERT` renseigne une colonne `NOT NULL` avant la vérification de la
+   contrainte.** Mesuré : deux insertions sans `position` rendent `1` puis `2`. `position` peut
+   donc rester `NOT NULL` sans défaut de colonne — un client ne peut pas y écrire `NULL`, et
+   l'omettre reste licite. Sans cette mesure, la colonne aurait été rendue nullable « au cas où »,
+   ce qui aurait autorisé des tracks sans ordre.
+2. **`WITH CHECK` sur l'`UPDATE` n'est pas une redondance.** Un administrateur du workspace A
+   déplaçant son track vers le workspace B est refusé — `403`, `42501` — par le seul `WITH CHECK` ;
+   le `USING` seul l'aurait laissé passer, puisque la ligne *avant* modification lui appartient.
+3. **La suppression physique n'est pas exposée.** `DELETE` n'est accordé à personne : le refus
+   mesuré (`403`, `permission denied for table`) est cohérent avec la convention de suppression
+   douce de `docs/SCHEMA.md`. Ce refus a fait apparaître INC-026.
+
+Motif de cette conduite : mesurer d'abord évite d'écrire une spécification qui décrit le
+comportement espéré. Le coût est une sonde à détruire ; le bénéfice est que les douze lignes du §6
+sont des observations, pas des prévisions.
+
+### Décision 53 — Le défaut de `color` est `neutral`, pas `brand`
+
+`docs/DESIGN_SYSTEM.md` §1 réserve le bleu primaire aux actions primaires, aux liens et au **track
+actif**. Un track qui n'a pas choisi sa couleur ne doit pas revendiquer celle de l'état actif :
+l'écran deviendrait illisible dès que plusieurs tracks coexisteraient, tous bleus, dont un
+prétendument actif. Le défaut est donc `neutral`.
+
+Conséquence sur les jetons : le design system ne déclare pas de « neutre doux ». La pilule
+`neutral` emploie les neutres existants — `--color-hover` en fond, `--color-text-2` en texte —
+plutôt qu'un jeton nouveau créé pour l'occasion.
+
+### Décision 54 — La contrainte sur `icon` porte sur la forme, pas sur l'existence
+
+Une contrainte `CHECK` énumérant les icônes de Lucide serait fausse au premier `npm update`, sans
+qu'aucune migration ne le signale : la base affirmerait une vérité que le paquet aurait cessé de
+tenir. La contrainte se limite donc à la forme (kebab-case), et l'existence est traitée dans
+l'interface par un catalogue explicite et un repli documenté vers `Folder`.
+
+C'est la même règle que `docs/SPEC-types.md` applique aux types : ce qui n'est pas vérifiable là où
+il est écrit ne doit pas y être affirmé.
+
+### Décision 55 — La clé étrangère différée par INC-010 est rétablie ici, et son risque est nommé
+
+`CRM-003` avait dû créer `track_members` sans clé étrangère, `tracks` n'existant pas. `CRM-020` la
+pose. Le point délicat n'est pas la contrainte mais son **application** : si une ligne orpheline
+existait, l'ajout échouerait et, le `migrations-runner` étant une dépendance de démarrage de
+PostgREST, **la pile ne démarrerait plus**.
+
+Le fait est écrit dans la migration et porté dans `docs/PROD_MIGRATIONS.md` comme point de
+vérification préalable, plutôt que masqué par un `not valid` qui rendrait la contrainte décorative.
+
+### Ce que cette spécification ne résout pas
+
+- **INC-013 reste ouverte.** Aucune des quatre fonctions `can_*` n'est écrite. La politique de
+  lecture s'arrête au rôle de workspace, et l'écart est figé par une assertion pgTAP — INC-024.
+- **INC-021 reste ouverte, et devient l'obstacle principal du projet.** Sans écran de connexion, la
+  webapp est un appelant anonyme : elle ne verra aucun track, quelles que soient les politiques
+  livrées. Toute unité d'interface du chunk 3 rencontrera cet obstacle, pas seulement celle-ci.
