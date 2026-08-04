@@ -7,7 +7,7 @@
 #
 # Usage :
 #   ./runDev.sh                      amorce `.env` si absent, puis démarre la pile
-#   ./runDev.sh --dev                idem, sans la webapp conteneurisée
+#   ./runDev.sh --dev                idem, sans la webapp conteneurisée (Vite tourne dans l'IDE)
 #   ./runDev.sh --withLog <composant>  démarre puis suit les journaux d'un composant
 #   ./runDev.sh --bootstrap          amorce `.env` puis s'arrête, sans rien démarrer
 #   ./runDev.sh --stop               arrêt propre, volumes conservés
@@ -70,18 +70,30 @@ fi
 # --- Démarrage ---------------------------------------------------------------------------------
 
 say "Démarrage de la pile de développement"
-compose_dev up -d --wait
+# `--dev` écarte la webapp conteneurisée : Vite tourne alors dans l'IDE, sur le même port.
+# Les deux ne peuvent pas coexister, le port serait déjà pris.
+if [ "$WITH_WEBAPP" = true ]; then
+	compose_dev up -d --wait
+else
+	compose_dev up -d --wait --scale webapp=0
+fi
 
 KONG_HTTP_PORT=$(env_get "$ENV_FILE" KONG_HTTP_PORT)
 STUDIO_PORT=$(env_get "$ENV_FILE" STUDIO_PORT)
 INBUCKET_WEB_PORT=$(env_get "$ENV_FILE" INBUCKET_WEB_PORT)
 MINIO_CONSOLE_PORT=$(env_get "$ENV_FILE" MINIO_CONSOLE_PORT)
 POSTGRES_DIRECT_PORT=$(env_get "$ENV_FILE" POSTGRES_DIRECT_PORT)
+WEBAPP_DEV_PORT=$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)
 BIND=$(env_get "$ENV_FILE" DEV_BIND_ADDRESS)
 
 echo
 say "Services disponibles"
 info "API Supabase (Kong)   http://${BIND}:${KONG_HTTP_PORT}"
+if [ "$WITH_WEBAPP" = true ]; then
+	info "Webapp (Vite)         http://${BIND}:${WEBAPP_DEV_PORT}"
+else
+	info "Webapp                écartée par --dev : lancez « npm run dev » sur l'hôte."
+fi
 info "Supabase Studio       http://${BIND}:${STUDIO_PORT}"
 info "Inbucket              http://${BIND}:${INBUCKET_WEB_PORT}"
 info "Console MinIO         http://${BIND}:${MINIO_CONSOLE_PORT}"
@@ -89,11 +101,6 @@ info "PostgreSQL direct     ${BIND}:${POSTGRES_DIRECT_PORT}"
 
 echo
 say "Non encore livrés par le backlog"
-if [ "$WITH_WEBAPP" = true ]; then
-	info "webapp     : aucune image ni source à ce jour (unité CRM-007)."
-else
-	info "webapp     : écartée par --dev, et de toute façon pas encore livrée (unité CRM-007)."
-fi
 info "mail-sync  : unité CRM-051."
 info "Stalwart, Roundcube : unité CRM-050."
 
@@ -111,7 +118,8 @@ if [ -n "$LOG_COMPONENT" ]; then
 			compose_dev logs -f
 			;;
 		webapp)
-			die "composant « webapp » pas encore livré : voir l'unité CRM-007 de docs/BACKLOG.md."
+			say "Journaux de la webapp (Ctrl-C pour rendre la main)"
+			compose_dev logs -f webapp
 			;;
 		mail-sync)
 			die "composant « mail-sync » pas encore livré : voir l'unité CRM-051 de docs/BACKLOG.md."

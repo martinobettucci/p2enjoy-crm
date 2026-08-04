@@ -101,7 +101,8 @@ webapp/
 ├── index.html                 point d'entrée Vite
 ├── vite.config.ts             configuration de build et de développement
 ├── tsconfig.json              configuration TypeScript de l'application
-├── Dockerfile                 image de développement (Vite) et de build (dist)
+├── tsconfig.test.json         configuration TypeScript des tests unitaires
+├── Dockerfile                 image de développement (Vite)
 ├── dist/                      produit par `npm run build`, non versionné
 └── src/
     ├── main.tsx               montage React
@@ -119,16 +120,31 @@ par anticipation.
 ### 3.2 Un seul projet npm
 
 Le dépôt conserve **un seul `package.json` et un seul `node_modules`, à la racine**. Vite est
-invoqué avec `--config webapp/vite.config.ts` : la racine du projet Vite devient alors le
-répertoire de ce fichier, `webapp/`. Motif : deux projets npm imposeraient deux installations, deux
-verrous de dépendances et deux points de dérive, pour aucun gain à cette échelle.
+invoqué avec `--config webapp/vite.config.ts`, et sa racine est **déclarée explicitement** dans
+cette configuration (`root: import.meta.dirname`). Mesuré : `--config` ne déplace pas la racine,
+qui reste le répertoire courant — sans `root`, le build échoue en `UNRESOLVED_ENTRY` faute de
+trouver `index.html`, et Vitest ne trouve aucun test. Motif du projet unique : deux projets npm
+imposeraient deux installations, deux verrous de dépendances et deux points de dérive, pour aucun
+gain à cette échelle.
 
-### 3.3 Deux configurations TypeScript, deux périmètres
+### 3.3 Quatre configurations TypeScript, quatre périmètres
 
 | Fichier | Périmètre | Motif |
 |---|---|---|
 | `tsconfig.json` (racine) | les deux fichiers de types générés de `CRM-006` | `types: []`, aucune bibliothèque DOM : ces fichiers ne dépendent de rien |
-| `webapp/tsconfig.json` | tout `webapp/src` | JSX, `lib` DOM, `types: ["vite/client"]` |
+| `webapp/tsconfig.json` | `webapp/src`, hors tests | JSX, `lib` DOM, `types: ["vite/client"]` |
+| `webapp/tsconfig.test.json` | les tests unitaires | ils s'exécutent sous Node, avec un DOM simulé : ils ont besoin des deux |
+| `tsconfig.tools.json` | configurations Vite/Vitest et scénarios E2E | Node **et** DOM : un pilote de navigateur vit à cheval sur les deux |
+
+Deux périmètres, devenus quatre à la mesure : séparer les tests du code de l'application n'est pas
+une commodité, c'est ce qui garde `process` et `node:fs` **interdits** dans un fichier destiné au
+navigateur.
+
+`webapp/tsconfig.json` porte `skipLibCheck: true`, seul relâchement du dépôt : `@supabase/storage-js`
+et `@supabase/phoenix` déclarent `Buffer` et le namespace `NodeJS` dans leurs propres `.d.ts`.
+L'alternative — ajouter `node` aux types ambiants de l'application — ferait entrer ces globales dans
+du code de navigateur (`docs/JOURNAL.md` décision 45). Les trois autres projets conservent
+`skipLibCheck: false`.
 
 L'`include` de la configuration racine est **restreint aux deux fichiers générés** : il visait
 auparavant `webapp/src/lib/**/*.ts`, ce qui aurait entraîné la compilation du client Supabase sous
@@ -248,8 +264,18 @@ L'arbitrage de la persistance de session revient à l'unité qui livrera la conn
 ### 6.3 Ce que la coquille lit
 
 La coquille lit `public.workspaces` — la seule table métier existante à ce jour — pour nommer le
-contexte courant. Sous la clé anonyme, la RLS en refus par défaut de `CRM-003` rend `200` et `[]` :
-**mesuré**. L'état vide affiché est donc l'état réel du backend, pas une simulation.
+contexte courant. **Mesuré, hors interface :**
+
+| Appelant | Réponse | En base |
+|---|---|---|
+| clé anonyme | `200` et `[]` | 1 ligne |
+| jeton réel d'un compte seedé, obtenu par la véritable route de connexion | `200` et `[]` | 1 ligne |
+
+Les deux appelants obtiennent le même vide, alors que la ligne existe. Ce n'est pas l'absence de
+session qui vide l'écran : **aucune politique RLS n'est écrite** — elles relèvent de `CRM-012` — et
+le refus par défaut de `CRM-003` s'applique donc à tout le monde. L'état vide affiché est l'état
+réel du backend, pas une simulation, et il le restera pour un utilisateur connecté tant que
+`CRM-012` n'aura pas livré ses politiques.
 
 L'interface n'en déduit **aucun droit** : `docs/DAT.md` §3.1 et `docs/SPEC-types.md` posent qu'un
 type ne décrit jamais une autorisation. Ce que la coquille affiche est ce que le backend a
@@ -304,8 +330,11 @@ chacun des quatre paliers.
 - Points de repère `aside`, `nav`, `main`, `header`.
 - Anneau de focus 2 px `--color-brand` avec décalage, via `:focus-visible`, **partout**.
 - Cibles interactives ≥ 40 px (`docs/DESIGN_SYSTEM.md` §5.5, §8).
-- Barre d'onglets au patron ARIA `tablist` : flèches gauche/droite, `Home`, `Fin`, `tabindex`
-  glissant. Vide, elle expose son état vide au lecteur d'écran plutôt qu'un `tablist` sans onglet.
+- Barre d'onglets : sans channel — ils relèvent de `CRM-021` — elle expose son **état vide**
+  plutôt qu'un `tablist` sans onglet, qu'un lecteur d'écran annoncerait comme un groupe d'onglets
+  inexistant. Le patron ARIA complet (`role="tab"`, `tabindex` glissant, flèches, `Home`, `Fin`)
+  arrive avec les onglets réels et leurs preuves : l'écrire aujourd'hui produirait du code
+  qu'aucun test ne pourrait exercer.
 - Région `aria-live="polite"` unique, alimentée par les changements importants.
 - États désactivés lisibles, avec la raison de l'indisponibilité.
 - `prefers-reduced-motion` respecté : les transitions sont neutralisées.
@@ -349,8 +378,21 @@ soit **vide**.
 
 `docker-compose.dev.yml` gagne un service `webapp` : Vite en écoute sur `${WEBAPP_DEV_PORT}`,
 publié sur l'interface de bouclage comme tous les services de développement. Les sources sont
-montées ; `node_modules` reste dans le conteneur. `runDev.sh --dev` continue d'écarter ce service
-lorsque Vite tourne dans l'IDE — le comportement que le script annonçait déjà.
+montées ; `node_modules` reste celui de l'image, pour que des binaires compilés pour une autre
+plateforme ne l'écrasent pas. `runDev.sh --dev` écarte ce service (`--scale webapp=0`) lorsque
+Vite tourne dans l'IDE : les deux ne peuvent pas coexister, le port serait déjà pris.
+
+L'image est bâtie sur `node:24-alpine`, la version que `.nvmrc` et `engines.node` demandent.
+**C'est le seul endroit du projet où ce prérequis est réellement exercé**, et il lève la limite que
+`CRM-006` avait nommée.
+
+Le `Dockerfile` accepte un secret de construction **facultatif**, `npm_ca` : derrière un proxy
+HTTPS qui interpose son propre certificat, `npm ci` échoue en `SELF_SIGNED_CERT_IN_CHAIN` tant que
+l'autorité n'est pas connue du conteneur. Le fichier n'entre ni dans l'image, ni dans le dépôt ;
+sans lui, la construction se déroule normalement.
+
+Aucune image de production n'est fabriquée : Caddy sert des fichiers statiques, et en produire une
+ajouterait un artefact à construire, publier et faire dériver.
 
 ### 12.2 Production
 
@@ -378,26 +420,32 @@ ne les invente pas.
 
 `scripts/verify-webapp.sh` rejoue, sur une pile de développement démarrée :
 
-1. **Build** : `npm run build` vert, `webapp/dist/index.html` et ses actifs produits ; les types
-   générés de `CRM-006` sont **réellement importés** par le code buildé — reprise explicite de la
-   preuve due par INC-020.
+1. **Build** : `npm run build` vert, `webapp/dist/index.html` et ses actifs produits, et la
+   configuration réellement injectée dans le bundle — reprise explicite de la preuve due par
+   INC-020.
+   Les types générés de `CRM-006` sont importés par le client et la couche d'accès. Ils sont
+   **effacés à la compilation** : le bundle n'en contient rien, et prétendre le contraire serait
+   faux. Ce qui les prouve utiles est le contrôle suivant : une **colonne inexistante glissée dans
+   la requête doit faire échouer `typecheck`** — c'est le schéma qui contraint alors le code.
 2. **Compilation** : `npm run typecheck` vert sur les deux projets.
 3. **Jetons** : les valeurs de `docs/DESIGN_SYSTEM.md` §1 sont présentes dans le CSS produit ;
    aucune valeur hexadécimale hors `tokens.css` dans `webapp/src`.
 4. **Textes** : aucun texte visible en dur dans un composant.
 5. **Unitaires** : `npm run test:unit` vert.
 6. **Intégration hors interface** : la requête que la coquille adresse à PostgREST est rejouée
-   directement, avec la clé anonyme (attendu `200` et `[]`) puis avec le **jeton réel** d'un compte
-   seedé obtenu par la véritable route de connexion (attendu son workspace). Ce contrôle prouve que
-   l'état vide de l'interface est bien le refus du backend, et non un défaut de l'interface.
+   directement, avec la clé anonyme puis avec le **jeton réel** d'un compte seedé obtenu par la
+   véritable route de connexion. Les deux doivent rendre `200` et `[]` **alors que la base
+   contient au moins une ligne** — comparaison faite dans le même contrôle. C'est ce qui établit
+   que l'écran vide est le refus du backend, et non un défaut de l'interface.
 7. **E2E** : `npm run e2e:ui` vert — coquille rendue, quatre paliers responsive, absence de
    défilement horizontal, parcours clavier complet, `localStorage` vide, états de chargement et
    d'erreur atteints en faisant réellement échouer la requête au niveau du réseau.
 8. **Captures** : produites depuis l'application réellement exécutée, dans `e2e/output/`
-   (`docs/DESIGN_SYSTEM.md` §11), et **observées**.
-9. **Non-complaisance** : le harnais est éprouvé en dégradant réellement le produit — une couleur
-   hexadécimale glissée dans un composant, un texte en dur, une assertion faussée — et doit échouer
-   dans chaque cas.
+   (`docs/DESIGN_SYSTEM.md` §11), copiées dans `docs/captures/CRM-007/`, et **observées**.
+9. **Non-complaisance** : le harnais est éprouvé en dégradant réellement le produit, puis en le
+   rebuildant — une couleur hexadécimale glissée dans un composant, un texte visible en dur, un
+   espacement hors de l'échelle fermée, une colonne inexistante dans une requête — et doit échouer
+   dans chaque cas. Il restaure ensuite tout ce qu'il a altéré, et le **constate** en sortant.
 
 ## 15. Limites connues
 
@@ -406,13 +454,16 @@ ne les invente pas.
   masqué. Aucune unité du backlog ne porte cet écran, alors que la Definition of Done de `CRM-011`
   exige un « E2E de connexion et de refus » : contradiction consignée dans
   `docs/INCONSISTENCY_REPORT.md`.
-- **HMR non mesuré.** Le service `webapp` de développement sert Vite ; le rechargement à chaud
-  n'est pas éprouvé par une preuve automatique.
+- **HMR non mesuré.** Le service `webapp` de développement sert Vite, et son rendu a été constaté
+  (`docs/captures/CRM-007/conteneur-dev-1280.jpg`) ; le rechargement à chaud lui-même n'est éprouvé
+  par aucune preuve automatique.
 - **Pluriels, dates et nombres** ne sont pas traités par le dictionnaire : aucune donnée réelle ne
   les exige encore.
 - **Aucun test de contraste automatisé.** Les contrastes AA sont vérifiés par lecture des jetons et
   observation des captures, pas par un outil.
-- **Node 24 non exercé** : `.nvmrc` et `README.md` §3 demandent Node 24 ; l'environnement de
-  vérification fournit Node 22.22.2. Même limite que `CRM-006`.
+- **Node 24 est exercé, mais seulement dans le conteneur.** Le service `webapp` tourne sur
+  `node:24-alpine` — build, tests unitaires et compilation y ont été rejoués verts. Sur l'hôte de
+  vérification, en revanche, la chaîne s'exécute sous Node 22.22.2 : c'est là que passent les
+  preuves E2E.
 - **Un seul palier de navigateur** : les preuves E2E s'exécutent sur Chromium. Firefox et WebKit ne
   sont pas exercés.

@@ -26,6 +26,11 @@ Déclinaisons calculées, jamais d'hexadécimal ad hoc dans un composant :
 `--color-brand-soft` (10 %) pour les fonds de pilule et de badge, `--color-brand-hover` `#1B3670`,
 et les équivalents pour succès, danger et accent en fonds à 10–22 %.
 
+`--color-veil` — l'encre à 40 % — est le voile posé sous toute surface qui recouvre l'écran :
+tiroir de navigation, et modales à venir. C'est un **jeton**, et non un modificateur d'opacité
+écrit dans le composant : mesuré, un `bg-ink/40` fait recopier la valeur hexadécimale dans le CSS
+produit, en repli des navigateurs sans `color-mix` (`CRM-007`).
+
 ### Neutres
 
 | Usage | Token | Hex |
@@ -211,6 +216,17 @@ le français.
 
 - Les jetons sont déclarés une seule fois, en variables CSS sur `:root`, et exposés à Tailwind
   par la configuration du thème. Aucun hexadécimal dans un composant.
+- **Les espaces de noms de Tailwind sont remis à zéro** (`--color-*: initial`, `--spacing`,
+  `--text-*`, `--radius-*`, `--shadow-*`, `--breakpoint-*`) avant d'être redéfinis dans
+  `webapp/src/styles/tokens.css`. Ce n'est pas une précaution de style : sans cela, la palette et
+  l'échelle par défaut restent disponibles, et rien n'empêche d'écrire `bg-red-500` ou `p-7`.
+  Remises à zéro, **ces classes n'existent pas**.
+- Corollaire mesuré : une classe dont le jeton n'est pas déclaré n'est **pas engendrée du tout**,
+  et en silence. C'est ainsi que `min-w-0` a disparu, avec la garde qui empêche une colonne de
+  flex de déborder. Un contrôle du harnais (`scripts/lib/classes-css.mjs`) vérifie donc que
+  **chaque classe citée par un composant existe dans le CSS produit**.
+- L'échelle d'espacement comprend le **zéro** (`--spacing-0`), qui n'est pas une valeur
+  d'espacement mais son absence, et sans lequel `min-w-0`, `min-h-0` et `gap-0` n'existent pas.
 - Les composants du design system vivent dans `webapp/src/components/ui` et sont les seuls à
   définir des styles de base ; les composants métier les composent.
 - Chaque composant partagé porte un commentaire `@spec` citant ce document et son unité de
@@ -220,4 +236,25 @@ le français.
 
 ## 12. Écarts propres au projet
 
-Aucun à ce jour. Tout écart futur est consigné ici avec sa justification et sa date.
+### 12.1 Barre d'onglets sans patron `tablist` — temporaire, `CRM-007`
+
+Tant qu'aucun channel n'existe (`CRM-021`), la barre d'onglets affiche son **état vide** au lieu
+d'un `tablist` sans onglet : un `tablist` vide est annoncé par les lecteurs d'écran comme un groupe
+d'onglets, c'est-à-dire comme une interface qui n'existe pas. Le patron ARIA complet — `role="tab"`,
+`tabindex` glissant, flèches, `Home`, `Fin` — arrive avec les onglets réels et leurs preuves.
+
+### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`
+
+Sous le palier `md`, l'en-tête abandonne d'abord le **nom du produit** et le **contexte
+d'espace de travail**, jamais le **titre de la route**. Motif : les deux premiers sont portés
+ailleurs — barre latérale, onglet du navigateur —, le titre de la route ne se déduit de rien.
+Défaut réellement observé sur une capture avant correction : à 390 px, le titre disparaissait au
+profit du contexte, contre le §7 (« aucun contenu n'est masqué sans point d'accès »).
+
+### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
+
+Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repliée, les libellés de
+navigation passent en `sr-only` au lieu d'être supprimés : réduire l'affichage ne doit pas réduire
+l'information annoncée aux technologies d'assistance.
+
+Tout écart futur est consigné ici avec sa justification et sa date.

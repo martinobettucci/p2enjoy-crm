@@ -169,5 +169,45 @@ services:
       INBUCKET_SMTP_ADDR: 0.0.0.0:2500
       INBUCKET_POP3_ADDR: 0.0.0.0:1100
 
+  # Interface en développement : Vite, sources montées, rechargement à chaud (CRM-007).
+  # Le build de production ne passe pas par ici : il est produit sur l'hôte par
+  # `npm run build` et servi par Caddy (docker-compose.prod.yml, README.md §8).
+  #
+  # Les deux variables `VITE_*` sont lues **au démarrage de Vite** en développement, et
+  # figées **au build** en production : c'est la même configuration, à deux moments
+  # différents (docs/SPEC-webapp.md §12).
+  webapp:
+    container_name: p2enjoy-webapp
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      kong:
+        condition: service_healthy
+    ports:
+      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${WEBAPP_DEV_PORT}:5173
+    environment:
+      WEBAPP_DEV_PORT: 5173
+      WEBAPP_DEV_HOST: 0.0.0.0
+      # L'URL est celle que le **navigateur** doit joindre, donc celle de l'hôte : un
+      # `http://kong:8000` ne serait résoluble que depuis le réseau Docker.
+      VITE_SUPABASE_URL: http://localhost:${KONG_HTTP_PORT}
+      VITE_SUPABASE_ANON_KEY: ${ANON_KEY}
+    volumes:
+      - ./:/app:z
+      # `node_modules` reste celui de l'image : les binaires installés dans le conteneur ne
+      # doivent pas être écrasés par ceux de l'hôte, qui peuvent viser une autre plateforme.
+      - webapp-node-modules:/app/node_modules
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node -e "fetch('http://localhost:5173/').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
 volumes:
   minio-data:
+  webapp-node-modules:

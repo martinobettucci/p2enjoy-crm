@@ -84,7 +84,7 @@ flowchart LR
 
 ### 3.1 `webapp` — interface
 
-React 18 + Vite + TypeScript + Tailwind. Responsabilités :
+React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 
 - Authentification via `supabase-js` (GoTrue), session persistée par la bibliothèque.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
@@ -97,10 +97,30 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 (board, card, inbox, workflow, réglages), `src/components/ui` (composants du design system),
 `src/routes`.
 
-**Livré à ce jour :** `src/lib/database.types.ts` seulement — les types dérivés du schéma
-(`CRM-006`, `docs/SPEC-types.md`), accompagnés de leurs assertions de contrat. Le fichier est
-**généré et versionné** ; `npm run types:check` prouve qu'il n'a pas dérivé du schéma réellement
-migré. Tout le reste — client Supabase, composants, routes, build Vite — relève de `CRM-007`.
+**Livré à ce jour** (`CRM-006` puis `CRM-007`, `docs/SPEC-webapp.md`) :
+
+- `src/lib/database.types.ts` — les types dérivés du schéma, **générés et versionnés** ;
+  `npm run types:check` prouve qu'ils n'ont pas dérivé du schéma réellement migré ;
+- `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
+  qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44) ;
+- `src/lib/async.ts`, `src/lib/workspaces.ts` — un type somme unique pour tout chargement, et la
+  seule lecture que la coquille effectue aujourd'hui ;
+- `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les
+  composants du design system, le dictionnaire, et les jetons ;
+- `webapp/Dockerfile` et le service `webapp` de l'overlay de développement — Vite sur
+  `node:24-alpine`, seul endroit où le prérequis Node du dépôt est réellement exercé.
+
+Le build de production est produit **sur l'hôte** par `npm run build` et servi par Caddy : aucune
+image de production n'est fabriquée pour des fichiers statiques.
+
+Restent dus : l'écran de connexion, qu'aucune unité ne porte
+(`docs/INCONSISTENCY_REPORT.md`, INC-021), et tout le métier — `CRM-020` et suivantes.
+
+**Choix structurant, mesuré :** les espaces de noms de Tailwind sont remis à zéro dans
+`tokens.css`, de sorte qu'une couleur ou un espacement hors design system **n'existe pas** comme
+classe. Le corollaire est qu'une classe dont le jeton manque n'est pas engendrée, en silence ; un
+contrôle du harnais vérifie donc que chaque classe citée existe dans le CSS produit
+(`docs/DESIGN_SYSTEM.md` §11).
 
 Ces types décrivent le schéma, **jamais les droits** : une table en refus par défaut se type
 exactement comme une table ouverte. L'interface ne peut donc déduire aucune autorisation d'un
@@ -506,7 +526,10 @@ Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`.
 |---|---|---|
 | Supabase self-hosted | Base, authentification, API, stockage, temps réel | Versions épinglées, alignées sur la pile validée en interne |
 | PostgreSQL 17 | Données et règles métier | Extensions **constatées** dans `supabase/postgres:17.6.1.136` (`CRM-004`) : `pgcrypto` 1.3 et `supabase_vault` 0.3.1 installées ; `pg_net` 0.20.3, `pgtap` 1.3.3 et `pg_cron` 1.6.4 disponibles. `supabase_vault` et `pg_cron` sont préchargés par le serveur |
-| React 18 / Vite | Interface | Aligné sur les conventions maison |
+| React 19 / Vite 8 | Interface | Aligné sur les conventions maison ; version courante mesurée à `CRM-007` |
+| Tailwind 4 | Jetons et utilitaires | Un seul bloc `@theme` satisfait `docs/DESIGN_SYSTEM.md` §11, sans fichier de configuration JavaScript |
+| React Router 8 | Routage | Nommé par ce document dès l'origine |
+| `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | Bibliothèque IMAP Python | Connexions IDLE et manipulation des dossiers | Choix arrêté au chunk du sous-système mail, après vérification de la licence et de la maintenance |
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |
 | Caddy | TLS et service des fichiers statiques | Production uniquement |

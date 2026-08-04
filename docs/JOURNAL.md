@@ -1702,3 +1702,102 @@ aujourd'hui.
 - **Le rendu populé de la coquille.** Sans tracks ni channels, la barre latérale et les onglets
   n'affichent que leurs états vides. C'est l'état réel du produit ; le peupler avec des données
   fabriquées donnerait des captures flatteuses et fausses.
+
+---
+
+## 2026-08-04 — `CRM-007` : squelette de la webapp, défauts trouvés par l'observation
+
+### Décision 45 — `skipLibCheck` relâché pour l'application, et pour elle seule
+
+`@supabase/storage-js` et `@supabase/phoenix` déclarent `Buffer` et le namespace `NodeJS` dans
+leurs propres fichiers de types. Avec `skipLibCheck: false` — le réglage que `CRM-006` avait posé
+alors qu'aucune dépendance n'existait —, la compilation échoue sur des fichiers que ce dépôt
+n'écrit pas et ne peut pas corriger.
+
+Deux issues : ajouter `node` aux types ambiants de l'application, ou relâcher la vérification des
+déclarations tierces.
+
+*Décision : `skipLibCheck: true` sur `webapp/tsconfig.json`, et sur lui seul.*
+
+*Motif :* la première issue ferait entrer `process` et `Buffer` dans du code qui s'exécute dans un
+navigateur. Le compilateur cesserait d'y voir une erreur, et le défaut ne se manifesterait qu'à
+l'exécution, chez l'utilisateur. Entre relâcher la vérification des déclarations d'un tiers et
+relâcher celle du code qu'on écrit, c'est la première qui coûte le moins.
+
+*Conséquence :* le projet racine, celui des tests et celui de l'outillage conservent
+`skipLibCheck: false`. Les tests ont d'ailleurs leur propre configuration, précisément pour que
+`node:fs` leur soit permis et reste interdit à l'application.
+
+### Décision 46 — L'échelle d'espacement comprend le zéro, et une garde le prouve
+
+Les espaces de noms de Tailwind sont remis à zéro dans `tokens.css` : sans cela, `bg-red-500` et
+`p-7` restent écrivables, et le design system n'est qu'une recommandation. C'était le but.
+
+Le corollaire ne l'était pas : **une classe dont le jeton n'est pas déclaré n'est pas engendrée du
+tout, et en silence**. `--spacing-0` n'existant pas, `min-w-0` a disparu — et avec elle la garde
+qui empêche une colonne de flex d'imposer sa largeur minimale. Constat : la page **défilait
+horizontalement** sous 768 px, contre `docs/DESIGN_SYSTEM.md` §7. Rien ne l'avait signalé : ni le
+build, ni la compilation, ni les tests unitaires.
+
+*Décision : ajouter `--spacing-0`, et surtout ajouter une garde — `scripts/lib/classes-css.mjs`
+vérifie que **chaque classe citée par un composant existe dans le CSS produit**.*
+
+*Motif :* le défaut n'est pas la classe manquante, c'est le **silence**. Une remise à zéro des
+espaces de noms transforme toute faute de frappe et tout jeton oublié en règle absente sans
+message. Une garde qui rend ce silence bruyant vaut mieux qu'une vigilance qu'il faudrait
+maintenir à chaque revue.
+
+*Vérification :* la garde échoue bien sur un `px-7` introduit volontairement, et le harnais en fait
+l'un de ses contrôles de non-complaisance.
+
+### Décision 47 — Le comportement réel de la bibliothèque est documenté, pas contourné
+
+`postgrest-js` réessaie **trois fois** une lecture en échec, avec 1 s, 2 s puis 4 s d'attente.
+Mesuré en abandonnant réellement la requête au niveau du réseau : l'état d'erreur n'apparaît
+qu'après environ sept secondes.
+
+Un premier scénario E2E a échoué pour cette raison, et la tentation était d'écourter l'attente en
+désactivant les reprises.
+
+*Décision : conserver les reprises, et régler les preuves sur le comportement réel.*
+
+*Motif :* trois reprises espacées sont exactement ce qu'il faut face à une coupure brève, et
+l'utilisateur voit pendant ce temps des squelettes, pas un écran figé. Désactiver un mécanisme utile
+pour faire passer un test plus vite reviendrait à ajuster le produit à la commodité de sa preuve.
+Le délai est en revanche **nommé** — dans la spécification, dans le manuel, et dans le commentaire
+du scénario — parce qu'un utilisateur qui attend sept secondes mérite qu'on ait su pourquoi.
+
+### Deux défauts que seules les captures ont révélés
+
+`CLAUDE.md` §16 pose que les tests automatisés ne remplacent pas l'observation visuelle. Deux
+défauts en donnent la démonstration : build vert, 96 tests unitaires verts, 13 scénarios E2E verts,
+et pourtant :
+
+1. **À 390 px, le titre de la route disparaissait.** Le contexte d'espace de travail, marqué
+   `shrink-0`, écrasait un titre marqué `truncate`. L'écran affichait « ☰ P2Enjoy CRM / Aucun
+   workspace accessible » — et rien qui dise sur quelle page on se trouvait. Aucune assertion ne
+   l'aurait vu : le titre était bien dans le document, avec une largeur nulle.
+   *Règle qui en découle,* écrite dans `docs/DESIGN_SYSTEM.md` §12.2 : sous les petits paliers,
+   l'en-tête sacrifie d'abord ce qui est porté ailleurs, jamais ce qui ne se déduit de rien.
+
+2. **Repliée, la barre latérale rognait sa propre bascule.** À 64 px de large, la marque et le
+   bouton ne tenaient plus côte à côte, et c'est le bouton qui sortait. Le repli devenait
+   **irréversible** : aucun moyen de revenir, sinon de vider le stockage de session. Là encore,
+   les tests étaient verts — le bouton existait, il était simplement hors de la vue.
+
+Les deux sont désormais gardés par des assertions E2E qui exigent, l'une que le titre reste visible
+à chacun des quatre paliers, l'autre que la bascule soit **entièrement** dans la fenêtre et déplie
+réellement la barre.
+
+*Ce qu'il faut en retenir,* opposable aux unités d'interface à venir : une capture n'est pas une
+formalité de fin de tâche. Ces deux défauts n'ont pas été trouvés en relisant du code, mais en
+regardant deux images.
+
+### Ce que cette unité ne prouve pas
+
+- **Le rechargement à chaud** de Vite : le conteneur sert bien l'application, ce qu'une capture
+  atteste, mais aucune preuve automatique n'exerce le HMR.
+- **Les contrastes**, vérifiés par lecture des jetons et observation, non par un outil.
+- **Firefox et WebKit** : les preuves E2E s'exécutent sur Chromium seul.
+- **Node 24 sur l'hôte** : il n'est exercé que dans le conteneur `webapp`, où build, tests et
+  compilation ont été rejoués verts. Les preuves E2E, elles, tournent sous Node 22.22.2.

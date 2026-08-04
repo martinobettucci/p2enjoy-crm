@@ -1,0 +1,33 @@
+{
+  // @spec CRM-007 (docs/BACKLOG.md) — compilation de l'outillage : configurations et preuves
+  // @spec docs/SPEC-webapp.md §3.3 (deux configurations, deux périmètres), §14 (preuves)
+  //
+  // Ces fichiers s'exécutent dans Node, pas dans le navigateur : ils ont besoin des types de
+  // Node et n'ont aucun usage des types DOM. Les compiler sous la configuration de
+  // l'application ferait échouer `process`, et les compiler sous celle de la racine ferait
+  // échouer leurs imports d'outillage.
+  "compilerOptions": {
+    "target": "ES2022",
+    // Le DOM est requis : les scénarios Playwright embarquent des fonctions **évaluées dans
+    // la page**, et les déclarations de `playwright-core` référencent elles-mêmes `HTMLElement`
+    // et `SVGElement`. Ce projet vit donc à cheval sur les deux mondes, ce qui est la nature
+    // d'un pilote de navigateur.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "skipLibCheck": false,
+    "noEmit": true
+  },
+  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts"]
+}

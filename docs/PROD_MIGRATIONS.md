@@ -149,7 +149,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 
 | Service | Condition de redéploiement |
 |---|---|
-| `webapp` | À chaque changement d'interface |
+| `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous |
 | `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
@@ -167,6 +167,27 @@ ERREUR 1 variable(s) à corriger dans /chemin/.env. Le contrat est .env.example.
 
 Comportement mesuré lors de la livraison de `CRM-011`. La marche à suivre est d'ajouter la
 variable au fichier d'environnement de l'hôte, puis de recréer le service `auth`.
+
+**La webapp de production n'est pas une image : c'est un répertoire.** `npm run build` produit
+`webapp/dist` sur l'hôte, et `docker-compose.prod.yml` le monte en lecture seule dans Caddy. Le
+déploiement d'une nouvelle interface consiste donc à **rebuilder puis recharger Caddy**, pas à
+reconstruire une image.
+
+**Les deux variables `VITE_*` sont figées au build**, pas lues au démarrage : elles sont inscrites
+dans le bundle JavaScript. Les changer sans rebuilder n'a **aucun effet** — l'application
+continuerait de viser l'ancienne adresse. Livrées par `CRM-007` :
+
+| Variable | Rôle | Format |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Adresse publique de l'API, telle que le **navigateur** doit la joindre | URL absolue |
+| `VITE_SUPABASE_ANON_KEY` | Clé anonyme, publique par construction | JWT |
+
+Absentes au build, l'application démarre et affiche « Configuration incomplète » : elle ne tombe
+pas en panne silencieuse, mais elle ne sert à rien non plus. Le contrôle après déploiement est donc
+d'ouvrir l'application et de vérifier que **cet écran n'apparaît pas**.
+
+`WEBAPP_DEV_PORT`, également livrée par `CRM-007`, n'a **aucun effet en production** : elle ne sert
+qu'à l'overlay de développement.
 
 **Prérequis d'hôte à vérifier avant le premier démarrage.** Realtime et le pooler réclament
 `STACK_RLIMIT_NOFILE` descripteurs de fichiers (défaut `100000`). Si la limite dure de l'hôte est

@@ -15,6 +15,53 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-007` — Squelette de la webapp (`[x]`).**
+  - Chaîne complète : Vite 8, React 19, TypeScript strict, Tailwind 4, React Router 8,
+    `@supabase/supabase-js`, Lucide. `npm run dev`, `build`, `preview`, `test:unit`, `e2e:ui`.
+  - **Jetons du design system en variables CSS**, `webapp/src/styles/tokens.css` étant le seul
+    fichier du dépôt autorisé à porter un hexadécimal. Les espaces de noms de Tailwind sont
+    **remis à zéro** : `bg-red-500` et `p-7` n'existent pas comme classes.
+  - Coquille conforme à `docs/DESIGN_SYSTEM.md` §4 — barre latérale repliable, en-tête, barre
+    d'onglets, quatre routes — et **quatre états explicites** : chargement, vide, erreur, refus,
+    plus l'état de configuration incomplète. Aucune page blanche.
+  - **Les états sont provoqués sur le réseau, pas simulés** : réponse retardée, requête réellement
+    abandonnée, `403` réel. La reprise **relance la requête**, ce qu'un scénario prouve en rendant
+    la seconde réponse différente de la première.
+  - **Preuve d'intégration décisive, hors interface** : la requête de la coquille rend `200` et
+    `[]` **avec la clé anonyme comme avec le jeton réel d'un compte seedé**, alors que la base
+    contient bien une ligne. L'écran vide est le refus par défaut de `CRM-003`, faute de politiques
+    RLS (`CRM-012`) — pas un défaut d'interface.
+  - `scripts/verify-webapp.sh` : **41 contrôles, aucune anomalie**, non complaisant et éprouvé en
+    dégradant réellement le produit puis en le rebuildant — couleur hexadécimale dans un composant,
+    texte visible en dur, espacement hors échelle, colonne inexistante dans une requête.
+  - `scripts/lib/classes-css.mjs` : garde née d'un défaut réel — une classe dont le jeton manque
+    n'était **pas engendrée, en silence**, et la page défilait horizontalement sous 768 px.
+  - **96 tests unitaires** (Vitest, jsdom) et **13 scénarios E2E** (Playwright) contre le **build
+    de production** servi, pas contre le serveur de développement.
+  - **Deux défauts trouvés en regardant les captures**, alors que tout était vert : à 390 px le
+    titre de la route disparaissait ; repliée, la barre latérale rognait sa propre bascule et le
+    repli devenait irréversible. Corrigés, et figés par des assertions E2E.
+  - Service `webapp` conteneurisé (`node:24-alpine`) : `runDev.sh` cesse de l'annoncer comme dû, et
+    **le prérequis Node 24 du dépôt y est exercé pour la première fois** — build, tests et
+    compilation rejoués verts dans le conteneur.
+  - **Aucune écriture sur l'appareil** : `localStorage` vérifié vide après un parcours complet ;
+    le repli de la barre vit en `sessionStorage` ; le client est créé **sans persistance de
+    session**, faute de consentement recueilli (`CLAUDE.md` §11).
+  - **Aucun texte visible en dur** : dictionnaire typé de 50 clés, `t` refusant une clé inconnue à
+    la compilation, et un test qui échoue sur une clé morte.
+  - Décisions 45 à 47 consignées dans `docs/JOURNAL.md`, avec les deux défauts que seules les
+    captures ont révélés. `docs/DESIGN_SYSTEM.md` §1, §11 et §12 mis à jour ;
+    `docs/manual.md` gagne son chapitre 3, écrit depuis l'application exécutée.
+  - Les huit harnais précédents rejoués — 33, 38, 23, 26, 26, 42, 49 et 30 contrôles — aucune
+    régression.
+
+- **`CRM-006` — Build de la webapp acquis, unité close (`[x]`).**
+  - La seule preuve qui manquait à `CRM-006` est acquise par `CRM-007`, exactement comme
+    **INC-020** l'avait prévu : `npm run build` est vert et le code importe réellement les types
+    générés. Les types étant effacés à la compilation, ce qui établit qu'ils **contraignent** le
+    code est un contrôle non complaisant — une colonne inexistante fait échouer `npm run typecheck`.
+  - **INC-020 close.**
+
 - **`CRM-007` — Spécification du squelette de la webapp, écrite avant tout code.**
   - `docs/SPEC-webapp.md` : où vit la webapp, comment elle se build, comment les jetons du design
     system deviennent des variables CSS, quelle coquille est livrée, et **ce que chaque état de

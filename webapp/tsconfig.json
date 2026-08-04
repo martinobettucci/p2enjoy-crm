@@ -1,0 +1,49 @@
+{
+  // @spec CRM-007 (docs/BACKLOG.md) — compilation de l'application
+  // @spec docs/SPEC-webapp.md §3.3 (deux configurations, deux périmètres)
+  //
+  // Périmètre : tout `webapp/src`. La configuration de la racine ne couvre que les deux
+  // fichiers de types générés par CRM-006, qui ne dépendent d'aucune bibliothèque DOM.
+  //
+  // `vite/client` est requis : sans lui, TypeScript refuse l'import à effet de bord d'une
+  // feuille de style — mesuré en TypeScript 7.0.2, silencieux en 5.9.3
+  // (docs/JOURNAL.md décision 41).
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": false,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Mesuré : `@supabase/storage-js` et `@supabase/phoenix` déclarent `Buffer` et le
+    // namespace `NodeJS` dans leurs `.d.ts`. Sans relâchement, la compilation échoue sur des
+    // fichiers que ce dépôt n'écrit pas et ne peut pas corriger.
+    //
+    // L'alternative — ajouter `node` aux types ambiants — ferait entrer `process` et `Buffer`
+    // dans le code de l'application, qui s'exécute dans un navigateur : le compilateur
+    // cesserait d'y voir une erreur, et le défaut ne se manifesterait qu'à l'exécution.
+    // Entre relâcher la vérification des déclarations d'un tiers et relâcher celle du code
+    // qu'on écrit, c'est la première qui coûte le moins (docs/JOURNAL.md décision 45).
+    //
+    // Le projet racine et celui de l'outillage conservent `skipLibCheck: false`.
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  // Les tests sont compilés par `tsconfig.test.json` : ils s'exécutent sous Node et n'ont
+  // donc pas les mêmes types ambiants que le code du navigateur.
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+}

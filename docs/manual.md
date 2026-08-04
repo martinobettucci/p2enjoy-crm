@@ -17,9 +17,9 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 1 | Se connecter, récupérer son mot de passe | `CRM-011`, `CRM-007` | À livrer — le mécanisme existe et est prouvé (`docs/SPEC-auth.md`), l'écran arrive avec `CRM-007` |
+| 1 | Se connecter, récupérer son mot de passe | `CRM-011`, non rattachée | À livrer — le mécanisme existe et est prouvé (`docs/SPEC-auth.md`), mais **aucune unité ne porte l'écran** (INC-021) |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
-| 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | À livrer |
+| 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
 
 ### Suivi quotidien
 
@@ -66,6 +66,64 @@
 | 27 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
 | 28 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
 | 29 | Cards figées et relances automatiques | `CRM-062` | À livrer |
+
+---
+
+## 3. Naviguer : barre latérale, onglets, états
+
+*Livré par `CRM-007`. Décrit l'application réellement exécutée ; captures dans
+`docs/captures/CRM-007/`.*
+
+### 3.1 La disposition de l'écran
+
+L'écran se lit en trois zones :
+
+- à gauche, la **barre latérale** : le nom du produit, les quatre entrées de navigation — Board,
+  Inbox, Ma journée, Réglages — puis la section **Tracks** ;
+- en haut, l'**en-tête** : le fil d'Ariane, qui nomme la page ouverte, et le contexte d'espace de
+  travail à droite ;
+- sous l'en-tête, la **barre d'onglets**, qui listera les channels du track courant ;
+- au centre, le **contenu** de la page.
+
+### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
+
+L'application affiche partout **« Aucun track »**, **« Aucun channel »** et **« Aucun workspace
+accessible »**. Ce n'est pas une erreur : les tracks, les channels et les cards ne sont pas encore
+livrés, et l'application n'a **pas encore d'écran de connexion**. Elle interroge donc le serveur
+sans compte, et le serveur ne lui accorde rien — ce qu'elle vous dit, au lieu d'afficher une page
+blanche.
+
+### 3.3 Replier la barre latérale
+
+Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce
+choix vaut **pour la session en cours** : il est oublié à la fermeture de l'onglet, et rien n'est
+conservé sur votre appareil au-delà.
+
+Sur un écran étroit, la barre latérale devient un **tiroir** : le bouton en haut à gauche de
+l'en-tête l'ouvre, la croix ou la touche `Échap` la referme.
+
+### 3.4 Naviguer au clavier
+
+L'application s'utilise entièrement au clavier :
+
+- la première tabulation fait apparaître le lien **« Aller au contenu »**, qui saute la
+  navigation ;
+- les tabulations suivantes parcourent le bouton de repli, puis les quatre entrées de navigation ;
+- `Entrée` active l'entrée sélectionnée ;
+- l'élément qui a le focus est toujours entouré d'un liseré bleu visible.
+
+### 3.5 Quand quelque chose ne va pas
+
+| Ce qui s'affiche | Ce que cela signifie | Ce que vous pouvez faire |
+|---|---|---|
+| Barres grises animées | Les données sont en cours de chargement | Patienter |
+| « Aucun … » | Le serveur n'a rien à afficher pour vous | Rien : ce n'est pas une erreur |
+| « Chargement impossible » | Le serveur n'a pas répondu | **Réessayer** ; le bouton relance la requête sans recharger la page |
+| « Accès refusé » | Le serveur a refusé la lecture | Demander l'accès à un administrateur de l'espace |
+| « Configuration incomplète » | L'application a été construite sans l'adresse du serveur | Prévenir la personne qui a déployé l'application |
+
+En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le
+message peut donc mettre quelques secondes à apparaître.
 
 ---
 

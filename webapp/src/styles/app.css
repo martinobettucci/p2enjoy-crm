@@ -1,0 +1,78 @@
+/*
+  @spec CRM-007 (docs/BACKLOG.md) — styles de base de l'application
+  @spec docs/DESIGN_SYSTEM.md §2 (typographie), §6 (interactions), §8 (accessibilité)
+  @spec docs/SPEC-webapp.md §4 (jetons), §9 (accessibilité)
+
+  Ce fichier ne contient **aucune valeur hexadécimale** : il ne fait que consommer les jetons
+  de `tokens.css`.
+*/
+
+@import 'tailwindcss';
+@import './tokens.css';
+
+@layer base {
+	html {
+		font-family: var(--font-sans);
+		color: var(--color-text);
+		background-color: var(--color-bg);
+		/* La page ne défile jamais horizontalement (docs/DESIGN_SYSTEM.md §7) : les zones
+		   larges défilent dans leur propre conteneur. */
+		overflow-x: hidden;
+	}
+
+	body {
+		font-size: var(--text-base);
+		line-height: var(--leading-normal);
+		min-height: 100dvh;
+	}
+
+	h1 {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	h2 {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	h3 {
+		font-size: var(--text-h3);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	/* Focus visible partout, sans exception (docs/DESIGN_SYSTEM.md §8). La règle est posée
+	   ici plutôt que composant par composant : un composant qui l'oublierait resterait
+	   accessible au clavier. */
+	:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+	}
+
+	/* Données techniques : monospace, chiffres tabulaires (docs/DESIGN_SYSTEM.md §2). */
+	code,
+	kbd,
+	samp {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* docs/DESIGN_SYSTEM.md §6 : `prefers-reduced-motion` respecté. */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
+}

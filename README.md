@@ -5,10 +5,15 @@ workflows à transitions contraintes, formulaires conditionnels par étape, et u
 intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 
 > **État d'avancement — lisez ceci en premier.**
-> La **pile d'exécution** est livrée et vérifiée (`CRM-001`) : les trois fichiers Compose
-> démarrent une pile Supabase self-hosted complète, en développement comme en production.
-> En revanche, **le produit n'existe pas encore** : aucune migration
-> (`supabase/migrations/` est vide), aucune webapp, aucun service `mail-sync`.
+> Sont livrés et vérifiés : la **pile d'exécution** (`CRM-001`, `CRM-002`), les **migrations
+> d'amorçage** et leur refus par défaut (`CRM-003`), le **chiffrement des secrets** (`CRM-004`),
+> les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), le **seed
+> socle** (`CRM-005`), les **types générés** (`CRM-006`) et le **squelette de la webapp**
+> (`CRM-007`).
+> En revanche, **le métier n'existe pas encore** : ni tracks, ni channels, ni cards, ni
+> workflows, ni messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
+> (`docs/INCONSISTENCY_REPORT.md`, INC-021). L'interface n'affiche donc, pour l'instant, que ce
+> que la clé anonyme obtient : rien, ce qu'elle dit explicitement.
 > Les commandes marquées « à venir » dans le tableau du §5 sont le **contrat** que
 > l'implémentation devra respecter, pas un état constaté.
 > L'état réel, unité par unité, est tenu dans [`docs/BACKLOG.md`](docs/BACKLOG.md) ; l'ordre
@@ -35,7 +40,7 @@ réellement créés côté serveur IMAP.
 
 | Couche | Technologie |
 |---|---|
-| Interface | React 18, Vite, TypeScript, Tailwind CSS, lucide-react, React Router, TanStack Query, react-hook-form, zod, dnd-kit |
+| Interface | React 19, Vite 8, TypeScript, Tailwind CSS 4, lucide-react, React Router 8 ; TanStack Query, react-hook-form, zod et dnd-kit viendront avec le métier qui les exige |
 | Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Kong, Supavisor) |
 | Règles métier | PostgreSQL : fonctions `SECURITY DEFINER` + Row Level Security |
 | Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP, ordonnanceur) |
@@ -83,9 +88,10 @@ d'exemple non sensible. Deux conventions y ont force de contrat, et les scripts 
 - une valeur **vide** signale une variable facultative ; toute autre variable doit être
   renseignée.
 
-`npm install` installe les dépendances de développement de la racine. Le `package.json` est
-introduit par `CRM-006` et ne porte que les commandes que cette unité livre — génération et
-vérification des types, compilation. **Aucun alias `npm` des scripts de lancement n'existe** :
+`npm install` installe les dépendances de la racine — le dépôt n'a **qu'un seul projet npm**, et
+Vite prend `webapp/` pour racine par sa configuration. Le `package.json` porte les commandes de
+`CRM-006` (types, compilation) et celles de `CRM-007` (développement, build, tests).
+**Aucun alias `npm` des scripts de lancement n'existe** :
 la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte, voir
 [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
 
@@ -109,12 +115,17 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle sur la pile de développement | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
-| `npm run db:seed` | Rejoue le seed de démonstration | à venir (`CRM-007`, INC-008) |
+| `npm run db:seed` | Rejoue le seed de démonstration | à venir (INC-008, arbitrage ouvert) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
 | `npm run types:check` | Vérifie que les types versionnés n'ont pas dérivé du schéma, sans rien réécrire | **disponible** |
-| `npm run typecheck` | `tsc --noEmit` sur les types générés et leurs assertions | **disponible** |
+| `npm run typecheck` | `tsc --noEmit` sur les quatre projets : types générés, application, tests, outillage | **disponible** |
 | `scripts/verify-types.sh` | Rejoue les preuves des types générés : déterminisme, garde anti-dérive éprouvée par le fichier **et par le schéma**, assertions | **disponible** |
-| `npm run build` | Build de production de la webapp | à venir (`CRM-007`) |
+| `npm run dev` | Vite en développement, hors conteneur | **disponible** |
+| `npm run build` | Build de production de la webapp vers `webapp/dist` | **disponible** |
+| `npm run preview` | Sert le build produit, utilisé par les preuves E2E | **disponible** |
+| `npm run test:unit` | Tests unitaires de la webapp (Vitest) | **disponible** |
+| `npm run e2e:ui` | Scénarios E2E de l'interface et captures (Playwright) | **disponible** |
+| `scripts/verify-webapp.sh` | Rejoue les preuves du squelette : build, jetons, états, clavier, captures | **disponible** |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
@@ -229,7 +240,8 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 ## 7. Tests
 
 ```bash
-npm run test:unit          # Vitest (webapp)
+npm run test:unit          # Vitest (webapp)              — disponible
+npm run e2e:ui             # Playwright, interface        — disponible
 npm run test:sql           # pgTAP (fonctions SQL, gardes de transition, helpers RLS)
 pytest mail-sync/tests     # unitaires et intégration du service mail
 npm run e2e:api            # Playwright — contrats API et refus d'autorisation
@@ -241,9 +253,11 @@ npm run e2e:report         # Rapport HTML
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
-Ces commandes arrivent avec le harnais de tests (`CRM-008`). `npm run typecheck` fait exception :
-livré par `CRM-006`, il compile les types générés et leurs **19 assertions de contrat**, et ne
-demande aucune pile démarrée.
+Les commandes encore absentes arrivent avec le harnais de tests (`CRM-008`). Trois font déjà
+exception : `npm run typecheck`, livré par `CRM-006` et étendu par `CRM-007`, compile désormais
+**quatre projets** — types générés, application, tests, outillage — et ne demande aucune pile
+démarrée ; `npm run test:unit` exécute les **96 tests** de la webapp ; `npm run e2e:ui` exécute les
+**13 scénarios** d'interface contre le build servi, et produit les captures.
 
 Les autres preuves disponibles aujourd'hui sont huit harnais rejouables, à exécuter sur une pile de
 développement déjà démarrée :
@@ -257,6 +271,7 @@ scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels        
 scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
+scripts/verify-webapp.sh       # squelette de la webapp : build, jetons, états, clavier (CRM-007)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
@@ -299,9 +314,17 @@ npm run build              # webapp -> webapp/dist
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 ```
 
+Les deux variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` sont lues **au build** et
+figées dans le bundle : après leur changement, il faut reconstruire, pas seulement redémarrer
+(`docs/PROD_MIGRATIONS.md`). Absentes, l'application démarre et affiche son état « configuration
+incomplète » plutôt que d'échouer en silence.
+
+En production, Caddy sert `webapp/dist` en lecture seule : aucune image n'est fabriquée pour des
+fichiers statiques.
+
 ## 9. Variables d'environnement
 
-Les **77** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **78** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -335,11 +358,12 @@ Livré à ce jour :
 ├── runProd.sh                  Lancement de la production, gardes de profil et de migrations
 ├── resetMe.sh                  Réinitialisation destructive de l'environnement local
 ├── docker-compose.yml          Assemblage commun des services
-├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket)
+├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket, webapp)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
 ├── caddy/Caddyfile             Terminaison TLS et service des fichiers statiques
-├── package.json                Commandes de types (CRM-006) — aucun alias des scripts (INC-008)
+├── package.json                Projet npm unique : types (CRM-006), webapp (CRM-007) — aucun alias des scripts (INC-008)
 ├── tsconfig.json               Compilation stricte des types générés et de leurs assertions
+├── tsconfig.tools.json         Compilation des configurations et des scénarios E2E
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
@@ -351,13 +375,30 @@ Livré à ce jour :
 │   ├── verify-auth.sh          Preuves rejouables de l'authentification
 │   ├── verify-seed.sh          Preuves rejouables du seed socle
 │   ├── generate-types.sh       Génération des types TypeScript depuis le schéma migré
-│   └── verify-types.sh         Preuves rejouables des types générés et de leur garde anti-dérive
+│   ├── verify-types.sh         Preuves rejouables des types générés et de leur garde anti-dérive
+│   ├── verify-webapp.sh        Preuves rejouables du squelette : build, jetons, états, clavier
+│   └── lib/classes-css.mjs     Contrôle : toute classe citée existe dans le CSS produit
 ├── supabase/
 │   ├── docker/                 Configuration Kong et scripts d'initialisation de la base
 │   ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
 │   ├── seed/                   Seed socle, appliqué par les API réelles (CRM-005)
 │   └── tests/                  Suites pgTAP, une par migration
-└── webapp/src/lib/             Types générés depuis le schéma et leurs assertions (CRM-006)
+├── e2e/
+│   ├── playwright.config.ts    Projet `ui` ; `api` et `mail` restent dus par CRM-008
+│   └── ui/                     Scénarios d'interface et production des captures
+└── webapp/
+    ├── index.html              Point d'entrée Vite
+    ├── vite.config.ts          Build et serveur de développement (racine déclarée : webapp/)
+    ├── vitest.config.ts        Tests unitaires, environnement jsdom
+    ├── tsconfig.json           Compilation de l'application (navigateur)
+    ├── tsconfig.test.json      Compilation des tests (Node + DOM simulé)
+    ├── Dockerfile              Image de développement, Node 24
+    └── src/
+        ├── app/                Coquille : mise en page, routes, préférences de session
+        ├── components/ui/      Composants du design system, seuls porteurs de styles de base
+        ├── i18n/               Dictionnaire français et fonction `t` typée
+        ├── lib/                Client Supabase, contrat asynchrone, types générés (CRM-006)
+        └── styles/tokens.css   Jetons du design system — seul fichier portant des hexadécimaux
 ```
 
 Prévu par le backlog, pas encore livré :
@@ -408,9 +449,18 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **Le produit n'est pas implémenté** : la pile d'exécution démarre et le socle d'identité est en
-  base (`profiles`, `workspaces`, membres et droits fins), mais il n'y a ni interface, ni
-  messagerie, ni seed. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état réel.
+- **Le métier n'est pas implémenté** : la pile démarre, le socle d'identité est en base, le seed
+  socle existe et **le squelette de l'interface est livré** — mais il n'y a ni tracks, ni
+  channels, ni cards, ni workflows, ni messagerie. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour
+  l'état réel.
+- **Aucun écran de connexion, et donc aucune donnée à l'écran.** L'interface interroge l'API avec
+  la seule clé anonyme ; la RLS en refus par défaut rend `200` et `[]`, et l'application affiche
+  ses états vides. Mesuré : **un compte seedé connecté obtient exactement le même vide**, faute de
+  politiques RLS (`CRM-012`). L'écran est donc exact, pas inachevé. Aucune unité ne porte cet
+  écran de connexion : [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-021.
+- **La webapp ne connaît aucune règle d'accès**, par construction : elle affiche ce que le backend
+  consent à rendre. Un type ne décrit jamais un droit (voir ci-dessous), et l'interface ne
+  masque rien qui ne soit déjà refusé côté base.
 - **Les types générés ne décrivent que le schéma, jamais les droits.** Une table en refus par
   défaut se type exactement comme une table ouverte : elle rend simplement zéro ligne à
   l'exécution. Une contrainte `CHECK` ne survit pas non plus à la génération —
@@ -418,9 +468,10 @@ Documentation de référence :
   Voir [`docs/SPEC-types.md`](docs/SPEC-types.md) §7.
 - **Les autorisations ne sont pas encore écrites.** Les tables du socle d'identité sont en
   **refus par défaut** : RLS activée, aucune politique. Une lecture retourne zéro ligne et une
-  écriture est refusée, quel que soit le compte. Les politiques et les fonctions d'autorisation
-  arrivent avec `CRM-010` et `CRM-012` ; tant qu'elles manquent, la base est sûre mais
-  inexploitable par l'API, ce qui est le comportement voulu et non un défaut.
+  écriture est refusée, quel que soit le compte. Les **fonctions** d'autorisation sont livrées et
+  prouvées (`CRM-010`) ; les **politiques** qui les emploient relèvent de `CRM-012`. Tant qu'elles
+  manquent, la base est sûre mais inexploitable par l'API, ce qui est le comportement voulu et non
+  un défaut.
 - **Descripteurs de fichiers.** Realtime et le pooler réclament `STACK_RLIMIT_NOFILE`
   descripteurs (défaut `100000`). Sur un hôte dont la limite dure est inférieure — conteneur sans
   `CAP_SYS_RESOURCE`, par exemple — ces deux services redémarrent en boucle tant que la variable
@@ -435,9 +486,9 @@ Documentation de référence :
 - **OAuth2 Gmail / Microsoft 365 hors périmètre v1.** La connexion d'une boîte se fait par
   serveur + identifiant + mot de passe applicatif. Les organisations imposant OAuth ne pourront
   pas connecter leurs boîtes tant que l'unité correspondante du backlog n'est pas livrée.
-- **Disponibilité de `supabase_vault` et `pg_cron` non vérifiée** dans l'image PostgreSQL
-  retenue. Un repli est documenté pour chacun (`pgcrypto` et ordonnanceur applicatif). Le point
-  sera tranché avant tout code de messagerie.
+- **Les preuves d'interface s'exécutent sur Chromium seul**, et sur Node 22 côté hôte ; Node 24,
+  le prérequis du dépôt, n'est exercé que dans le conteneur `webapp`. Firefox et WebKit ne sont
+  pas couverts, et le rechargement à chaud de Vite n'est éprouvé par aucune preuve automatique.
 - **La production exige des prérequis externes** non fournis par le dépôt : domaine des adresses
   de card, enregistrements DNS, SPF/DKIM/DMARC pour les identités sortantes, certificats TLS.
   Voir [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md).

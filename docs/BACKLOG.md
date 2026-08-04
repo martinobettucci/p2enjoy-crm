@@ -394,13 +394,13 @@ dans Inbucket ; captures observées.
       `scripts/verify-authz.sh` (**26/26**) rejoués : aucune régression.
 - [x] `docs/DAT.md` §4.1 et §7, `README.md` §7, §9, §10 et §11, `docs/PROD_MIGRATIONS.md` §2 et §4,
       `docs/manual.md`, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **E2E d'interface et captures de l'application : IMPOSSIBLES à ce stade.** La Definition of
-      Done demande un « E2E de connexion et de refus » et des « captures observées ». Il n'existe
-      **aucun écran** : la webapp est l'objet de `CRM-007` et le harnais Playwright celui de
-      `CRM-008`, tous deux planifiés après (`docs/MASTER_PLAN.md` §2.c). Ce qui est livré est le
-      mécanisme, prouvé **hors interface** sur les vingt scénarios de `docs/SPEC-auth.md` §7 — ce
-      que `CLAUDE.md` §10 exige de toute façon, l'interface n'ayant jamais valeur de preuve.
-      **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
+- [ ] **E2E de connexion : toujours impossible, et la cause a changé.** `CRM-007` a livré la
+      webapp, ses captures et un harnais Playwright fonctionnel : ce qui manque n'est plus
+      l'outillage, c'est **l'écran de connexion lui-même**, qu'aucune unité du backlog ne porte —
+      **INC-021, en attente d'arbitrage**. Ce qui est livré reste le mécanisme, prouvé **hors
+      interface** sur les vingt scénarios de `docs/SPEC-auth.md` §7 — ce que `CLAUDE.md` §10 exige
+      de toute façon, l'interface n'ayant jamais valeur de preuve.
+      **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
 - [ ] **L'invitation n'est pas un parcours produit.** Elle exige la clé de service : c'est une
       opération d'**exploitation**. Le composant qui permettrait à un administrateur de workspace
       d'inviter depuis le produit n'existe pas et n'est rattaché à aucune unité — **INC-015, en
@@ -517,7 +517,7 @@ n'a pas à changer, la production n'appliquant jamais de seed.
 - **Les comptes ne naissent pas d'un parcours produit** : la création exige la clé de service, donc
   reste une opération d'exploitation (INC-015), comme pour `CRM-011`.
 
-### CRM-006 — Types TypeScript générés `[~]`
+### CRM-006 — Types TypeScript générés `[x]`
 **DoD** : `npm run types:generate` régénère depuis le schéma local ; build de la webapp vert.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-types.md` : la DoD ne disait ni d'où
@@ -559,15 +559,16 @@ n'a pas à changer, la production n'appliquant jamais de seed.
       `scripts/verify-seed.sh` (**49/49**) rejoués : aucune régression.
 - [x] `README.md` §4, §5 et §10, `docs/DAT.md` §3.1 et §13, `docs/MASTER_PLAN.md` §3,
       `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **Build de la webapp : IMPOSSIBLE à ce stade.** La DoD l'exige ; il n'existe ni `index.html`,
-      ni composant, ni configuration Vite — la webapp est l'objet de `CRM-007`
-      (`docs/MASTER_PLAN.md` §2.c). Ce qui est livré à la place est `tsc --noEmit` en mode
-      `strict`, qui compile **réellement** les types et leurs assertions : c'est moins qu'un build,
-      aucun bundle n'est produit, aucun plugin Vite n'est exercé. **Cette preuve est bloquée par
-      une dépendance, pas par un défaut de l'unité.** Contradiction d'ordonnancement consignée dans
-      `docs/INCONSISTENCY_REPORT.md`, **INC-020**, avec l'action attendue : la DoD de `CRM-007`
-      doit reprendre explicitement cette vérification, faute de quoi la case resterait sans
-      propriétaire.
+- [x] **Build de la webapp : ACQUIS par `CRM-007`**, comme INC-020 l'avait prévu. `npm run build`
+      est vert, `webapp/dist` est produit, et le client comme la couche d'accès **importent
+      réellement** `database.types.ts`. La preuve ne s'arrête pas à la compilation : les types
+      étant effacés à la compilation, ce qui établit qu'ils contraignent le code est le contrôle
+      **non complaisant** de `scripts/verify-webapp.sh` — une colonne inexistante glissée dans la
+      requête fait échouer `npm run typecheck`. INC-020 est close.
+- [x] **Le prérequis Node 24 est exercé** depuis `CRM-007` : le conteneur `webapp` tourne sur
+      `node:24-alpine`, où le build, les **96 tests unitaires** et la compilation des quatre
+      projets ont été rejoués verts. La limite « toutes les preuves obtenues sur Node 22 » ne vaut
+      donc plus que pour l'hôte de vérification.
 
 *DoD adaptée, écarts explicites.* **Aucun test E2E dédié, aucune vérification visuelle** : l'unité
 ne livre ni écran ni parcours — le premier arrive avec `CRM-007`, le harnais Playwright avec
@@ -577,8 +578,6 @@ variable d'environnement — `docs/PROD_MIGRATIONS.md` est inchangé à dessein.
 
 *Limites nommées, non masquées.*
 
-- **Le build de la webapp n'est pas prouvé** (voir ci-dessus, INC-020). En particulier, la
-  résolution des modules telle que Vite l'appliquera n'est pas exercée.
 - **Les contraintes `CHECK` ne survivent pas à la génération** : `workspace_members.role` se type
   `string`, pas `'admin' | 'business_developer' | 'viewer'`. Le compilateur ne protégera donc pas
   `CRM-007` d'une chaîne de rôle erronée — seule la base la refuse. Fabriquer l'union à la main
@@ -589,21 +588,106 @@ variable d'environnement — `docs/PROD_MIGRATIONS.md` est inchangé à dessein.
   `channels` (INC-010) ; deux assertions le figent et échoueront à `CRM-020` et `CRM-021`.
 - **La génération exige la pile de développement démarrée** : le service `meta` ne publie aucun
   port, l'appel passe par `docker exec`. Aucun chemin hors ligne n'est fourni.
-- **Le prérequis Node du projet n'a pas été exercé.** `README.md` §3 et `.nvmrc` demandent Node 24 ;
-  l'environnement de vérification fournit **Node 22.22.2 et npm 10.9.7**. `package.json` déclare
-  bien `>=24`, mais toutes les preuves ci-dessus ont été obtenues sur Node 22. La compilation et la
-  génération ne dépendent d'aucune interface propre à Node 24 ; la version épinglée reste néanmoins
-  **non éprouvée**.
+- **Node 24 n'est exercé que dans le conteneur** livré par `CRM-007` ; sur l'hôte de vérification,
+  la chaîne s'exécute sous Node 22.22.2 et npm 10.9.7.
 - **TypeScript est épinglé à `5.9.3`** alors que `7.0.2` est la version courante du registre. Motif
   assumé : c'est la dernière du cycle que l'outillage Vite/React consomme aujourd'hui sans réserve,
   et la compatibilité réelle ne devient mesurable qu'à `CRM-007`, où la chaîne complète est
   assemblée. À réexaminer à ce moment-là (décision 39).
 
-### CRM-007 — Squelette de la webapp `[ ]`
+### CRM-007 — Squelette de la webapp `[x]`
 React + Vite + Tailwind, jetons du design system en variables CSS, mise en page barre latérale et
 onglets, états de chargement, d'erreur et vide.
 **DoD** : `docs/DESIGN_SYSTEM.md` §11 respecté (aucun hexadécimal hors jetons) ; captures aux
-quatre paliers responsive observées ; navigation clavier vérifiée.
+quatre paliers responsive observées ; navigation clavier vérifiée. **Reprend la preuve de build due
+par `CRM-006`** (INC-020).
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-webapp.md` : l'énoncé ne disait ni où
+      vit la webapp, ni comment les jetons deviennent des variables CSS, ni ce que chaque état
+      signifie. Rédigée **après installation et exercice réel** de la chaîne — `vite@8.2.0`,
+      `tailwindcss@4.3.3`, `vitest@4.1.10`, `@playwright/test@1.62.1` — et non de mémoire. Commit
+      documentaire dédié.
+- [x] **Chaîne livrée et build vert** : `webapp/index.html`, `vite.config.ts`, quatre projets
+      TypeScript, `npm run build` → `webapp/dist`. **Preuve de `CRM-006` reprise** : le client et
+      la couche d'accès importent les types générés, et une **colonne inexistante fait échouer**
+      `npm run typecheck` — c'est le schéma qui contraint le code, pas une déclaration d'intention.
+- [x] **Jetons du design system en variables CSS**, un seul fichier autorisé à porter des
+      hexadécimaux (`webapp/src/styles/tokens.css`). Les espaces de noms de Tailwind sont
+      **remis à zéro** : `bg-red-500` et `p-7` n'existent pas. Chaque couleur de la charte n'a
+      **qu'une déclaration** dans le CSS produit, et aucune ne figure dans le corps d'une règle de
+      classe.
+- [x] **Garde née d'un défaut réel** : une classe dont le jeton manque n'est pas engendrée, en
+      silence — `min-w-0` avait ainsi disparu, et la page défilait horizontalement sous 768 px.
+      `scripts/lib/classes-css.mjs` vérifie désormais que **chaque classe citée existe dans le CSS
+      produit**, et échoue sur un `px-7`.
+- [x] **Coquille conforme à `docs/DESIGN_SYSTEM.md` §4** : `aside`, `nav`, `header`, `main`, barre
+      d'onglets, quatre routes de premier niveau, aucune page blanche.
+- [x] **Quatre états explicites, provoqués sur le réseau et non simulés** : chargement (réponse
+      retardée), vide (`200` et `[]` réels), erreur de transport (requête réellement abandonnée),
+      refus (`403` réel), plus l'état de configuration incomplète. La reprise **relance la
+      requête**, ce qu'un scénario vérifie en rendant la seconde réponse différente.
+- [x] **Preuve d'intégration hors interface, décisive** : la requête de la coquille rejouée
+      directement rend `200` et `[]` **avec la clé anonyme comme avec le jeton réel d'un compte
+      seedé** obtenu par la véritable route de connexion, alors que la base contient bien une
+      ligne. L'écran vide n'est donc pas un défaut d'interface : c'est le refus par défaut de
+      `CRM-003`, faute de politiques RLS (`CRM-012`).
+- [x] **Captures aux quatre paliers, produites et observées** : `docs/captures/CRM-007/` —
+      1440, 1152, 900 et 390 px, plus le tiroir ouvert, la barre repliée, les états de chargement,
+      d'erreur et de refus, le lien d'évitement focalisé, et l'application servie par le conteneur.
+- [x] **Deux défauts trouvés par l'observation des captures, corrigés, et figés par un test** :
+      à 390 px le titre de la route disparaissait au profit du contexte ; repliée, la barre
+      latérale rognait sa propre bascule, rendant le repli **irréversible**. Les deux sont
+      désormais gardés par un scénario E2E (`docs/DESIGN_SYSTEM.md` §12.2).
+- [x] **Navigation clavier vérifiée** dans l'application exécutée : lien d'évitement en premier
+      élément focusable et menant réellement au contenu, ordre de tabulation conforme à l'ordre
+      visuel, activation à `Entrée`, anneau de focus **mesuré** à 2 px, tiroir refermé par `Échap`.
+- [x] **Aucune écriture sur l'appareil** (`CLAUDE.md` §11) : `localStorage` vérifié **vide** après
+      un parcours complet ; le repli de la barre vit en `sessionStorage` ; le client est créé sans
+      persistance de session, faute de consentement recueilli (décision 44).
+- [x] **Aucun texte visible en dur** : dictionnaire typé de 50 clés, `t` refusant une clé inconnue
+      **à la compilation**. Deux contrôles indépendants — nœuds de texte et attributs visibles —
+      et un test qui échoue sur une **clé morte**.
+- [x] **Test unitaire dédié** : `npm run test:unit`, **96 tests, 5 fichiers**, montant réellement
+      les composants et les interrogeant par leur rôle accessible.
+- [x] **Test E2E dédié** : `npm run e2e:ui`, **13 scénarios** contre le **build de production**
+      servi par `vite preview`, pas contre le serveur de développement.
+- [x] **Service `webapp` conteneurisé** livré : `runDev.sh` cesse de l'annoncer comme dû.
+      `node:24-alpine` — **le prérequis Node 24 du dépôt y est exercé pour la première fois** :
+      build, 96 tests et compilation rejoués verts dans le conteneur.
+- [x] Harnais de preuves rejouable `scripts/verify-webapp.sh` : **41 contrôles, aucune anomalie**,
+      et **non complaisant, éprouvé en dégradant réellement le produit puis en le rebuildant** —
+      couleur hexadécimale dans un composant, texte visible en dur, espacement hors échelle,
+      colonne inexistante dans une requête. Il restaure tout ce qu'il altère et le **constate**.
+- [x] Les huit harnais précédents rejoués : **33, 38, 23, 26, 26, 42, 49 et 30 contrôles**, aucune
+      régression — y compris le contrat `.env.example`, que la nouvelle variable et le nouveau
+      service auraient pu rompre.
+- [x] `docs/SPEC-webapp.md`, `docs/DESIGN_SYSTEM.md` §1, §11, §12, `docs/DAT.md` §3.1 et §3.7,
+      `README.md` §2, §4, §5, §7, §8, §10, §11, `docs/manual.md` chapitre 3, `.env.example`,
+      `docs/PROD_MIGRATIONS.md` §4, `CHANGELOG.md` mis à jour dans le même changement.
+
+*DoD adaptée, écarts explicites.* **Aucune mise à jour du seed** : le squelette ne lit que
+`workspaces`, que le seed socle alimente déjà, et il n'introduit ni table, ni statut, ni flux.
+**Aucune migration**, **aucun service de production nouveau** : le build est un répertoire monté
+dans Caddy, pas une image.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran de connexion**, et aucune unité ne le porte : **INC-021, en attente d'arbitrage**.
+  L'interface ne peut donc afficher que ce que la clé anonyme obtient — et, mesuré, un compte
+  connecté n'obtiendrait pas davantage tant que `CRM-012` n'a pas livré les politiques.
+- **La barre d'onglets n'implémente pas le patron ARIA `tablist`** : sans channel, il n'y a rien à
+  parcourir, et l'écrire produirait du code qu'aucun test ne pourrait exercer
+  (`docs/DESIGN_SYSTEM.md` §12.1). Dû par `CRM-021`.
+- **Le rechargement à chaud n'est pas éprouvé** par une preuve automatique ; seul le rendu du
+  conteneur a été constaté.
+- **Aucun test de contraste automatisé** : les contrastes AA sont vérifiés par lecture des jetons
+  et observation des captures.
+- **Un seul navigateur** : Chromium. Firefox et WebKit ne sont pas exercés.
+- **Node 24 n'est exercé que dans le conteneur** ; les preuves E2E s'exécutent sur l'hôte, en
+  Node 22.22.2.
+- **Recherche, `Cmd+K` et menu de profil**, annoncés par `docs/DESIGN_SYSTEM.md` §4, ne sont pas
+  livrés : la recherche n'a rien à interroger et le profil suppose une session. Les afficher
+  inertes serait une commande morte.
 
 ### CRM-008 — Harnais de tests `[ ]`
 pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
