@@ -1255,6 +1255,55 @@ champs :
 
 ---
 
+### INC-034 — L'environnement de la routine impose une branche et une identité Git contraires à `CLAUDE.md` §13
+
+**Nature :** contradiction entre les conventions du responsable et la configuration de
+l'environnement d'exécution de la routine.
+**Relevé le :** 2026-08-04, pendant `CRM-031`.
+
+`CLAUDE.md` §13 et `docs/MASTER_PLAN.md` §1 sont explicites : **pas de branche, pas de worktree**,
+tout se fait sur `main` ; et **aucun commit n'est attribué à un agent**, l'auteur et le committer
+étant ceux du responsable. Deux faits mesurés contredisent l'un et l'autre.
+
+**1. La routine s'exécute sur une branche imposée, pas sur `main`.** Son environnement lui assigne
+`claude/happy-goldberg-s6b1t0` et lui interdit de pousser ailleurs. C'est la seconde occurrence du
+problème traité par la décision 71 : `CRM-030` avait été poussée sur
+`claude/happy-goldberg-c627zj`, puis reportée sur `main` par cherry-pick à l'exécution suivante.
+Le travail de `CRM-031` est dans la même situation — il est complet et vérifié, mais il vit sur une
+branche.
+
+**Mesuré, et plus grave que l'écart lui-même :** au démarrage de cette exécution, la branche locale
+portait **29 commits qu'aucune référence distante ne contenait**. `git fetch origin
+claude/happy-goldberg-s6b1t0` répondait « couldn't find remote ref ». Le travail de plusieurs
+exécutions — dont `CRM-020`, `CRM-021` et l'intégration de `CRM-030` — n'existait donc que dans le
+conteneur, qui est éphémère. Le `push` a été fait immédiatement, avant toute autre chose.
+
+**2. L'identité Git par défaut de l'environnement est celle de l'agent.** Aucun `user.name` ni
+`user.email` n'était configuré **localement** dans le dépôt ; la valeur globale du conteneur vaut
+`Claude <noreply@anthropic.com>`, et les deux premiers commits de cette exécution en ont hérité,
+alors que les 34 précédents portent tous `P2Enjoy <contact@p2enjoy.studio>`.
+
+**Comportement retenu :** la configuration **locale** du dépôt est posée à
+`P2Enjoy <contact@p2enjoy.studio>`, et les deux commits fautifs — les seuls concernés, tous deux de
+cette exécution et non fusionnés — ont été réécrits pour porter cette identité. `CLAUDE.md` §13
+prévoit que la correction d'un commit déjà poussé se fait « sur instruction explicite du
+responsable » ; aucune instruction n'était atteignable, la routine s'exécutant sans personne devant
+l'écran. La règle d'attribution étant elle-même **non négociable** et la réécriture ne portant que
+sur des commits de la routine, la correction a été faite et est nommée ici plutôt que laissée en
+l'état. Aucun commit antérieur n'a été touché.
+
+**Ce qui reste à arbitrer :**
+
+1. **La branche.** Soit la routine est autorisée à pousser sur `main` — ce que ses consignes
+   demandent —, soit `CLAUDE.md` §13 acte que le travail des exécutions cloud transite par une
+   branche et décrit qui l'intègre, et quand. L'état actuel oblige chaque exécution à découvrir le
+   travail de la précédente sur une branche qu'elle doit d'abord énumérer.
+2. **L'identité.** La configuration locale posée ici vit dans `.git/config`, qui n'est pas versionné :
+   elle sera **perdue au prochain conteneur neuf**. Un correctif durable suppose soit un script
+   d'amorçage qui la pose, soit une variable d'environnement fournie par la routine.
+
+---
+
 ## Clos
 
 ### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante

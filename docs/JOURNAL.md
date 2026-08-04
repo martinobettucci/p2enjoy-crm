@@ -3013,3 +3013,25 @@ serait restée absente sans que rien ne le signale.
   channel et revient à `CRM-033` (INC-029, mise à jour).
 - **La garde d'archivage d'un nœud occupé** : `workflow_steps` existe, `cards` non (INC-031). Le
   chemin est à moitié praticable, ce qui ne suffit pas.
+
+### Ce que l'environnement de la routine a coûté cette fois-ci, mesuré
+
+Les trois obstacles relevés lors de l'intégration de `CRM-030` se sont **tous reproduits** sur un
+conteneur neuf, comme annoncé : démon Docker à lancer à la main, image `webapp` à construire avec
+`--secret id=npm_ca` faute de câblage dans `docker-compose.dev.yml` (INC-032), navigateurs
+Playwright à réinstaller pour la révision attendue par la version épinglée. Deux faits nouveaux s'y
+ajoutent, et ils sont d'une autre nature.
+
+**Vingt-neuf commits n'existaient nulle part ailleurs que dans le conteneur.** Au démarrage,
+`git fetch origin claude/happy-goldberg-s6b1t0` répondait « couldn't find remote ref » : la branche
+de travail de la routine n'avait **jamais** été poussée, et le travail de plusieurs exécutions —
+`CRM-020`, `CRM-021`, l'intégration de `CRM-030` — ne survivait que dans un environnement éphémère.
+Le `push` a été la première action de cette exécution, avant même de choisir une unité. La consigne
+« resynchronise-toi d'abord » suppose qu'il y ait quelque chose à quoi se synchroniser.
+
+**L'identité Git par défaut du conteneur est celle de l'agent.** Aucune configuration locale
+n'existait dans le dépôt, et les deux premiers commits de cette exécution ont porté
+`Claude <noreply@anthropic.com>`, contre `CLAUDE.md` §13. La configuration locale a été posée et les
+deux commits réécrits ; le fait, ses conséquences et ce qui reste à arbitrer sont consignés en
+**INC-034**. La configuration locale vivant dans `.git/config`, non versionné, elle sera perdue au
+prochain conteneur neuf : le correctif durable relève d'un arbitrage, pas de cette unité.
