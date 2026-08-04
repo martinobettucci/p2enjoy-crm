@@ -75,6 +75,7 @@ Mesuré le 2026-08-04, contre `p2enjoy-db` :
 | Une assertion fausse | `not ok 2` + `# Looks like you failed 1 test of 2` | **`0`** |
 | Plan annoncé `5`, une seule assertion exécutée | `# Looks like you planned 5 tests but ran 1` | **`0`** |
 | Plan annoncé `1`, `finish()` **jamais appelé** | `ok 1`, **aucun diagnostic** | **`0`** |
+| Plan annoncé `3`, dernières assertions dans un `savepoint` annulé | `ok 1…3` **et** `# Looks like you planned 3 tests but ran 1` | **`0`** |
 | Erreur SQL, avec `ON_ERROR_STOP=1` | message d'erreur | `3` |
 
 Trois conséquences, qui sont la raison d'être de l'exécuteur :
@@ -88,6 +89,30 @@ Trois conséquences, qui sont la raison d'être de l'exécuteur :
    de plan `1..N` au nombre de lignes `ok` et `not ok` réellement émises.
 3. **`ON_ERROR_STOP=1` est obligatoire.** Sans lui, une erreur SQL au milieu d'un fichier laisse la
    suite continuer et le code de sortie reste `0`.
+4. **Compter les lignes émises ne suffit pas non plus, et c'est la quatrième mesure de ce
+   tableau.** pgTAP tient deux comptes distincts : la **numérotation** des lignes, portée par une
+   séquence, et le **compte** que `finish()` relit, porté par une table. Un `rollback to savepoint`
+   annule le second et pas le premier. Une suite dont les **dernières** assertions sont prises dans
+   un savepoint annulé émet donc autant de lignes que son plan en annonce — l'exécuteur la voit
+   complète — alors que pgTAP la déclare tronquée. Mesuré sur trois lignes :
+
+   ```sql
+   select plan(3);
+   select ok(true, 'hors savepoint');
+   savepoint s1;
+   select ok(true, 'dans le savepoint');
+   select ok(true, 'derniere assertion, dans le meme savepoint');
+   rollback to s1;
+   select * from finish();
+   ```
+
+   Sortie : `ok 1`, `ok 2`, `ok 3`, puis `# Looks like you planned 3 tests but ran 1`. Le contrôle 4
+   du §3.2 compare `3` à `3` et **passe**. C'est exactement le mode de défaillance silencieux que ce
+   tableau existe pour empêcher, et il visait l'exécuteur lui-même (`docs/JOURNAL.md`, décision 79).
+
+   Les suites `0002` à `0007` restent vertes et plan tenu : toutes se terminent par au moins une
+   assertion **hors savepoint**, qui remet le compte d'accord avec la numérotation. C'est la
+   différence que la décision 76 avait relevée sans l'élucider.
 
 ### 3.2 Contrat de l'exécuteur
 
@@ -105,12 +130,22 @@ Trois conséquences, qui sont la raison d'être de l'exécuteur :
   3. si au moins une ligne `not ok` est présente → **échec**, les lignes `not ok` et leurs
      diagnostics `#` sont reproduits ;
   4. si `N` diffère du nombre de lignes `ok` + `not ok` → **échec**, l'écart est chiffré ;
-  5. sinon → **succès**, avec le nombre d'assertions.
+  5. si pgTAP a émis un diagnostic de plan — une ligne `# Looks like you planned` — → **échec**,
+     la ligne est reproduite. Ce contrôle est **indépendant** du précédent et ne le double pas : le
+     contrôle 4 compare le plan aux lignes **émises**, celui-ci au compte que pgTAP a
+     **enregistré**, et les deux divergent dès qu'un `rollback to savepoint` intervient après la
+     dernière assertion (§3.1, mesure 4) ;
+  6. sinon → **succès**, avec le nombre d'assertions.
 - **Verdict global** : `0` si et seulement si tous les fichiers réussissent ; `1` sinon.
 - **Options** : un ou plusieurs chemins de fichiers en arguments restreignent le périmètre ;
   `--help` décrit l'usage. Aucune autre option — un exécuteur de tests n'a pas de mode dégradé.
 - **Aucune écriture** : les suites livrées ouvrent une transaction et l'annulent. L'exécuteur ne
   crée, ne modifie et ne supprime rien par lui-même.
+
+**Contrainte que le contrôle 5 impose aux suites.** Une suite se **termine hors savepoint**, par au
+moins une assertion de fond — jamais par une assertion ajoutée pour le compte. La contrainte n'est
+pas une commodité d'outillage : une suite qui finit dans un savepoint annulé n'a pas seulement un
+compte faux, elle a des preuves finales que pgTAP n'a pas enregistrées.
 
 ### 3.3 Sortie
 

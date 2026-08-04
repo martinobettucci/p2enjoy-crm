@@ -3126,3 +3126,68 @@ scénarios échouent tous sur « Executable doesn't exist ». Contourné par une
 compatibilité **hors dépôt** — même nature qu'INC-032, et à refaire au prochain passage.
 **INC-036** ouverte. Sans ce geste, aucune preuve d'interface du projet n'est exécutable, y compris
 celles qui n'ont rien à voir avec l'unité en cours.
+
+---
+
+## 2026-08-04 — Le comptage de pgTAP, élucidé, et le faux vert qu'il cachait dans l'exécuteur
+
+Cette exécution de la routine a livré `CRM-031` **en parallèle** de deux autres. L'implémentation
+poussée la première fait foi (décision 66), et le travail parallèle n'est pas poussé : le rejeu de
+`scripts/verify-workflows.sh` et des sept suites pgTAP sur le socle retenu est vert, l'unité est
+livrée, la refaire ne prouverait rien.
+
+Reste ce que ce passage a trouvé et que le socle retenu ne porte pas. La décision 76 avait mesuré
+qu'une suite pgTAP pouvait émettre plus de lignes qu'elle n'en comptait, et refermait sur un aveu :
+« Les suites `0002`, `0004`, `0005` et `0006` emploient toujours des savepoints et restent vertes,
+plan tenu. **La différence n'a pas été élucidée.** » Elle l'est ici, et elle cachait pire qu'un
+compte faux.
+
+### Décision 79 — L'écart de comptage tient à la **position** du dernier `rollback`, et il rend l'exécuteur faussement vert
+
+**La différence, mesurée sur trois lignes.** Ce n'est pas la présence de savepoints qui décale le
+compte, c'est le fait que la **dernière** assertion soit prise dans un savepoint annulé :
+
+```sql
+select plan(3);
+select ok(true, 'hors savepoint');
+savepoint s1;
+select ok(true, 'dans le savepoint');
+select ok(true, 'derniere assertion, dans le meme savepoint');
+rollback to s1;
+select * from finish();
+```
+
+Sortie : `ok 1`, `ok 2`, `ok 3`, puis `# Looks like you planned 3 tests but ran 1`. La numérotation
+est portée par une séquence, que rien n'annule ; le compte relu par `finish()` vit dans une table,
+que le `rollback` annule comme le reste. Toute assertion exécutée **après** le dernier `rollback`
+remet les deux d'accord — et c'est précisément ce que font `0002`, `0004`, `0005` et `0006`, qui se
+terminent toutes hors savepoint. La décision 76 avait vu l'effet sans voir la cause ; elle n'avait
+rien supposé, et c'est ce qui rendait la reprise possible.
+
+**Ce que cela cachait, et qui est plus grave que le compte.** `scripts/run-sql-tests.sh` compare le
+plan annoncé au nombre de lignes **émises** (§3.2, contrôle 4). Sur la suite ci-dessus, il compare
+`3` à `3`, ne trouve aucun `not ok`, et rend **`0`** — mesuré, et non déduit : le fichier a été
+déposé dans `supabase/tests/`, l'exécuteur lancé, et il a affiché « 1 fichiers, 3 assertions, aucune
+anomalie ».
+
+L'exécuteur déclarait donc verte une suite que pgTAP déclarait tronquée, et dont les **deux
+dernières preuves n'avaient pas été enregistrées**. C'est exactement le mode de défaillance que le
+§3.1 énumère depuis `CRM-008` — « une commande qui rend `0` sans rien avoir exercé est pire qu'une
+commande absente » — et il visait cette fois l'exécuteur lui-même. Le contrôle 4 mesure ce que le
+harnais a **vu passer** ; il ne mesure pas ce que pgTAP a **retenu**.
+
+**Décision.** Un **cinquième contrôle** est ajouté au contrat du §3.2 : tout diagnostic de plan émis
+par pgTAP — une ligne `# Looks like you planned` — fait échouer le fichier, la ligne étant
+reproduite. Il est indépendant du contrôle 4 et ne le double pas : l'un compare le plan aux lignes
+émises, l'autre au compte enregistré, et les deux divergent dès qu'un `rollback to savepoint`
+intervient après la dernière assertion.
+
+Le §3.2 porte de plus la contrainte d'écriture qui en découle : **une suite se termine hors
+savepoint**, par une assertion de fond et non par une assertion ajoutée pour le compte. La
+formulation compte — une suite qui finit dans un savepoint annulé n'a pas seulement un compte faux,
+elle a des preuves finales que personne n'a enregistrées.
+
+**Ce que cette décision ne fait pas.** Elle ne touche à aucune suite livrée : les sept sont vertes,
+plan tenu, et aucune n'émet de diagnostic — vérifié fichier par fichier avant d'écrire cette entrée.
+Le contrôle ajouté ne corrige donc rien aujourd'hui ; il empêche demain un vert qui ne vaudrait
+rien.
