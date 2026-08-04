@@ -1805,6 +1805,66 @@ INC-013, INC-014, INC-024 et INC-030.
 
 ---
 
+### INC-046 — « Figé à la création, suit le channel » énonce deux règles distinctes, et la seconde interdit un geste que nulle spécification n'aborde
+
+**Nature :** énoncé ambigu de `docs/SCHEMA.md` §5, dont la lecture structurelle produit une règle
+de produit non spécifiée.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-040`.
+
+`docs/SCHEMA.md` §5 décrit `cards.workflow_id` ainsi : « `FK`, non nul — **figé à la création, suit
+le channel** ». Deux exigences s'y lisent, qui ne demandent pas la même garde :
+
+1. « **suit le channel** » — le workflow d'une card est celui de son channel. Tenu en permanence par
+   la clé étrangère composite `(channel_id, workflow_id) → channels (id, workflow_id)` ;
+2. « **figé** » — la colonne ne peut pas être réécrite. Un gel littéral interdirait
+   `move_card_to_channel` (`CRM-045`), dont l'objet est précisément de changer `channel_id` **et**
+   `workflow_id` ensemble.
+
+`CRM-040` retient la lecture n° 1, qui est la plus faible et la seule qui ne préempte pas `CRM-045`.
+Ce n'est pas la contradiction relevée ici.
+
+**Ce qui est relevé est la conséquence de la clé composite, mesurée sur la sonde `sonde_c4` :**
+
+```
+ERROR:  update or delete on table "channels" violates foreign key constraint
+        "sonde_c4_wf_fk" on table "sonde_c4"
+DETAIL: Key (id, workflow_id)=(…) is still referenced from table "sonde_c4".
+```
+
+Autrement dit : **changer le `workflow_id` d'un channel qui porte au moins une card devient
+refusé**, en `23503`, donc `409` par l'API. La règle est défendable — repointer le workflow d'un
+channel sous des cards existantes les laisserait sur des étapes d'un graphe qu'elles ne suivent
+plus, et `CRM-045` prévoit un remappage **explicite** pour le cas voisin du changement de channel.
+Elle n'en est pas moins une **règle de produit que personne n'a décidée** : ni `docs/SPEC-channels.md`,
+ni `docs/SPEC-workflow-engine.md`, ni la Definition of Done de `CRM-021` ou de `CRM-033` ne
+l'énoncent. Aucune n'aborde le changement de workflow d'un channel déjà en service.
+
+**Comportement retenu :** la clé composite est posée, la règle émergente est **écrite** dans
+`docs/SPEC-cards.md` §2.4 et **figée par une assertion** de la suite pgTAP, qui constate le refus.
+L'alternative — remplacer la clé par un trigger `BEFORE INSERT` sur `cards` — laisserait la
+cohérence se rompre en silence à la première mise à jour d'un channel, ce qui est strictement pire
+qu'une règle non décidée mais visible.
+
+**Risque résiduel :** un administrateur qui souhaite légitimement changer le workflow d'un channel
+devra d'abord vider ce channel de ses cards. Aucune interface ne l'expose aujourd'hui (INC-021), et
+le message d'erreur est celui de PostgreSQL, non un message produit.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. **confirmer la règle** et l'inscrire dans `docs/SPEC-channels.md` — le changement de workflow
+   d'un channel occupé est refusé, et passe par le vidage ou par `CRM-045` card par card ;
+2. **prévoir un remappage de channel**, symétrique de `move_card_to_channel` : une RPC qui change le
+   workflow d'un channel **et** remappe l'étape de chacune de ses cards, dans la même transaction.
+   C'est une unité de backlog qui n'existe pas ;
+3. **relâcher la contrainte** en laissant les cards conserver leur ancien workflow, ce qui produirait
+   des cards dont le workflow diffère de celui de leur channel — l'exact contraire de « suit le
+   channel ».
+
+**Lié à :** INC-029 (la colonne `workflow_id` de `channels`, différée puis livrée par `CRM-033`),
+INC-033 (une intégrité que le type interdit), INC-043 (`CRM-034` sans cible), `CRM-045`.
+
+---
+
 ## Clos
 
 ### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`

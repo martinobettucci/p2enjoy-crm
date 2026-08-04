@@ -3984,3 +3984,148 @@ applique les migrations à la main la lira.
 droits fins réellement posés, et une politique réellement redéfinie. C'est l'argument du §8 de
 `CLAUDE.md` — un seed qui couvre les états réels n'est pas un confort de démonstration, c'est un
 révélateur.
+
+---
+
+## 2026-08-04 — `CRM-040` : spécification des cards, écrite après mesure et avant tout code
+
+**Problème.** Le produit décrivait jusqu'ici une organisation **vide** : des tracks, des channels,
+un catalogue de nœuds, des workflows et un vocabulaire de formulaire, sans rien à y ranger.
+`CRM-040` livre l'objet métier principal au sens de `CLAUDE.md` §4. Aucun document ne le
+spécifiait au-delà du tableau de colonnes de `docs/SCHEMA.md` §5 : ni ce qu'une adresse de card
+doit à sa non-devinabilité, ni comment le workspace, le workflow et l'étape d'une card sont tenus
+cohérents, ni ce qu'un refus rend, ni ce que « figé à la création » exige au juste.
+
+**Choix de l'unité.** Les quatre unités `[ ]` que `docs/MASTER_PLAN.md` §2 place avant `CRM-040`
+ont été examinées, et MESURÉ sur la base du seed, la pile en marche :
+
+```
+cards=NULL  card_events=NULL  card_comments=NULL  card_field_values=NULL
+card_activities=NULL  move_card=NULL  app.can_read_card=NULL
+```
+
+| Unité | Ce qu'elle exige | Pourquoi elle n'est pas livrable |
+|---|---|---|
+| `CRM-013` | `cards.current_step_id`, `cards.email_local_part`, `mail_*.secret_id`, `api_tokens.token_hash`, `card_events`, `audit_log` | **aucune** de ces tables n'existe |
+| `CRM-014` | les douze preuves de refus | dix d'entre elles portent sur des cards, des comptes mail ou des pièces jointes |
+| `CRM-034` | les six vérifications de `move_card` | INC-043 : aucune part livrable, `move_card` sans `cards` est une signature vide |
+| `CRM-036` | `card_field_values` | une table fille de `cards` |
+
+`CRM-040` est donc la première unité `[ ]` de l'ordre du plan dont **toutes** les dépendances sont
+livrées : `channels` (`CRM-021`), `workflows` et `workflow_steps` (`CRM-031`), `profiles`
+(`CRM-003`), les fonctions `can_*` (`CRM-012`). C'est aussi l'ordre que l'option 1 d'INC-043
+recommandait. **Aucune contrainte d'ordre de `docs/MASTER_PLAN.md` §2 n'est enfreinte** : les trois
+qui concernent ces unités — « `CRM-034` avant `CRM-041` », « `CRM-036` avant `CRM-037` », « `CRM-004`
+avant `CRM-052` » — restent intactes.
+
+**Observations, sur sondes créées puis détruites.** Quatre tables sondes, `public.sonde_c1` à
+`public.sonde_c4`, détruites avant rédaction — `to_regclass('public.sonde_c4')` rend `NULL`.
+
+1. `channels` ne porte **aucune** unicité sur `(id, workspace_id)` ni sur `(id, workflow_id)` :
+   toute clé étrangère composite vers elle est refusée à la création,
+   « there is no unique constraint matching given keys for referenced table "channels" ».
+2. `workflow_steps` porte **déjà** `(id, workflow_id)` unique, posée par `CRM-031`. La clé composite
+   `(current_step_id, workflow_id)` est donc immédiatement possible, et MESURÉ elle refuse en
+   `23503` une étape appartenant à un autre workflow.
+3. Une colonne `GENERATED ALWAYS AS` contenant `gen_random_bytes` est **refusée** :
+   « generation expression is not immutable ». Le trigger de génération de l'adresse est une
+   nécessité mesurée, non un choix de style.
+4. `to_tsvector('french', …)` en colonne générée `STORED` est accepté, et produit
+   `'client':4 'histor':5 'refont':1 'sit':3` sur `'Refonte du site' / 'Client historique'`. La
+   configuration doit être **explicite** : sans elle, l'expression dépend d'un paramètre de session
+   et n'est pas immuable.
+5. PostgreSQL ne sait pas encoder en base32 — `encode()` connaît `hex`, `base64`, `escape`. La
+   conversion `('x' || encode(gen_random_bytes(5),'hex'))::bit(40)::bigint` puis dépliage par
+   groupes de cinq bits rend huit caractères, MESURÉ y compris sur des valeurs basses.
+6. Codes HTTP mesurés avec le jeton réel de l'administratrice seedée : `23503 → 409`,
+   `23514 → 400`, `23502 → 400`. Ils complètent la table de `docs/SPEC-workflow-engine.md` §4.4.
+
+### Décision 109 — Trois clés composites plutôt que trois triggers, et la vérification n° 3 de `move_card` devient gratuite
+
+La cohérence d'une card — son workspace, son workflow, son étape — est tenue par **trois clés
+étrangères composites**, non par des triggers :
+
+| Contrainte | Ce qu'elle rend impossible |
+|---|---|
+| `(channel_id, workspace_id) → channels (id, workspace_id)` | un `workspace_id` dénormalisé mensonger |
+| `(channel_id, workflow_id) → channels (id, workflow_id)` | un workflow autre que celui du channel |
+| `(current_step_id, workflow_id) → workflow_steps (id, workflow_id)` | une étape d'un autre workflow |
+
+**Motif.** Un trigger se contourne par un `DISABLE TRIGGER`, ne dit rien de l'état déjà en base, et
+doit être écrit deux fois — insertion et mise à jour. Une clé composite est vérifiée par le moteur
+des deux côtés de la relation. C'est le même raisonnement que la décision 95 pour
+`form_field_rules`, et il est ici trois fois plus rentable.
+
+**Conséquence non anticipée, et qui vaut d'être dite :** la troisième clé livre **la vérification
+n° 3 des six de `move_card`** — « l'étape cible appartient au workflow de la card ». `CRM-034`
+n'aura pas à l'écrire ; la base la tient, à l'insertion comme à toute mise à jour, y compris pour un
+`PATCH` direct qu'aucune garde applicative ne verrait passer.
+
+**Prix payé, et il est réel.** Deux unicités doivent être ajoutées à `channels` — structurellement
+redondantes, `id` étant déjà sa clé primaire — et la seconde clé produit une règle de produit que
+personne n'a décidée : changer le workflow d'un channel occupé devient refusé. Cette règle est
+écrite, figée par une assertion, et soumise à arbitrage en **INC-046** plutôt que découverte un jour
+par un administrateur devant un message de PostgreSQL.
+
+### Décision 110 — La politique de `cards` n'appelle pas `app.can_read_card`, et la fonction est livrée quand même
+
+`docs/SPEC-permissions-rls.md` §3 prescrit `app.can_read_card` depuis `CRM-010`. INC-013 l'a
+différée quatre fois faute de `cards`. Elle est livrée ici — **dernier point d'INC-013** — et
+pourtant les politiques de `cards` ne l'emploient pas : elles appellent `app.can_read_channel` et
+`app.can_write_channel` **sur la colonne `channel_id` de la ligne jugée**.
+
+**Motif, et il est mesuré, non théorique.** C'est la règle générale écrite au §3.5 de
+`docs/SPEC-permissions-rls.md` après le défaut trouvé par `CRM-012` (décision 107) : une politique
+qui appellerait `app.can_read_card(id)` relirait `cards`, et une fonction `STABLE` ne voit pas la
+ligne que l'instruction en cours vient d'écrire — le `RETURNING` d'un `INSERT` étant soumis à la
+politique `SELECT`, **toute création de card rendrait `403`**. La leçon de `CRM-012` est appliquée
+avant d'être payée une seconde fois.
+
+**Pourquoi la fonction existe malgré tout.** Ses appelants sont les tables **filles** —
+`card_comments` (`CRM-043`), `card_field_values` (`CRM-036`), `card_events` (`CRM-044`),
+`mail_messages` (`CRM-054`), les politiques de Storage —, dont les politiques ne disposent que d'un
+`card_id` et n'ont aucun moyen d'atteindre le channel sans elle. Livrer une fonction sans usage
+immédiat est assumé et **dit** : c'est le même cas que `app.can_write_channel` à `CRM-012`, et la
+suite pgTAP l'éprouve **directement** plutôt qu'à travers une politique qui ne l'appelle pas.
+
+### Décision 111 — La garde d'archivage d'un nœud occupé est rattachée à `CRM-040`, et deux faits ont réduit l'arbitrage à une seule issue
+
+INC-031 soumettait trois options au responsable, « à trancher **avant `CRM-040`** ». L'arbitrage n'a
+pas été rendu. Deux faits l'ont éteint, selon le mécanisme de la décision 103 :
+
+- l'**option 2** — rattacher la garde à `CRM-031`, limitée à l'occupation par une **étape** — est
+  éteinte : `CRM-031` est livrée, et l'avait elle-même écartée comme **plus stricte que la règle
+  spécifiée**, puisqu'elle interdirait d'archiver un nœud instancié mais vide de cards ;
+- l'**option 3** — créer une unité `CRM-030b` — reviendrait à **inventer une unité de backlog**, ce
+  que `CLAUDE.md` §1 interdit.
+
+Reste l'**option 1**, que deux harnais livrés par des unités précédentes **exigent déjà** :
+`scripts/verify-catalogue.sh` et `scripts/verify-workflows.sh` portent un contrôle dont le message
+dit « si `cards` existe, la garde d'archivage doit être écrite ». Livrer `cards` sans la garde
+laisserait deux harnais rouges ; les amender pour les rendre verts serait exactement le masquage
+que `CLAUDE.md` §18 interdit.
+
+**Conséquence sur `CRM-030`** : sa Definition of Done exigeait « pgTAP sur le refus d'archivage »
+d'un nœud occupé. Cette preuve devient acquise, mais elle est produite par `CRM-040`. Le fait est
+écrit dans les deux entrées de backlog, plutôt que compté deux fois.
+
+**Réversible :** INC-031 reste ouverte. Le responsable peut déplacer la garde ailleurs ; il saura
+alors où elle est.
+
+### Décision 112 — Une boucle de réessai n'est pas une garantie d'unicité, et le dire fait partie du livrable
+
+Le trigger qui génère `email_local_part` tire une valeur, vérifie qu'aucune card ne la porte, et
+recommence jusqu'à dix fois. Cette boucle **ne garantit rien** : deux transactions concurrentes ne
+voient pas leurs lignes non validées respectives. Ce qui garantit l'unicité est l'**index unique**,
+et lui seul.
+
+La boucle ne fait que rendre l'erreur visible improbable — sur un espace de 2⁴⁰, il faudrait environ
+un million de cards dans la base pour qu'une collision devienne vraisemblable. Le §3.3 de
+`docs/SPEC-cards.md` l'écrit explicitement, parce qu'une boucle de réessai qui **passerait** pour la
+garantie d'unicité serait précisément la fausse sécurité que `CLAUDE.md` §18 proscrit.
+
+**Conséquence assumée :** le trigger renseigne l'adresse à l'insertion **quelle que soit** la valeur
+fournie par le client — « généré » signifie que la valeur ne vient pas de l'appelant. À la **mise à
+jour**, il ne fait rien, et la colonne reste modifiable : cette protection est nommément la
+Definition of Done de `CRM-013`, unité `[ ]` distincte. L'écart est figé par une assertion plutôt
+que corrigé au passage, ce qui rouvrirait une unité que ce chunk ne traite pas (`CLAUDE.md` §13).

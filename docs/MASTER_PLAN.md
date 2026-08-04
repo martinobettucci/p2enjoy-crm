@@ -78,6 +78,7 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 | Tracks et channels | `docs/SPEC-tracks.md`, `docs/SPEC-channels.md` |
 | Catalogue de nœuds, workflows, transitions | `docs/SPEC-workflow-engine.md` (§2 pour le catalogue) |
 | Formulaires conditionnels | `docs/SPEC-form-composer.md` |
+| Cards, adresse générée, archivage et corbeille | `docs/SPEC-cards.md` |
 | Messagerie | `docs/SPEC-mail-subsystem.md` |
 | Squelette de la webapp, coquille, états | `docs/SPEC-webapp.md` |
 | Données de développement, seed | `docs/SPEC-seed.md` |
