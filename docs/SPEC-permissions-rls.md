@@ -283,8 +283,8 @@ ligne est lisible :
 
 | Colonne | Protection |
 |---|---|
-| `cards.current_step_id` | Écriture refusée ; passe par `move_card` |
-| `cards.email_local_part` | Généré par trigger, non modifiable |
+| `cards.current_step_id` | Écriture refusée ; passe par `move_card` — **livrée par `CRM-034`**, voir ci-dessous |
+| `cards.email_local_part` | Généré par trigger, non modifiable — **non livrée**, `CRM-013` |
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
 | `api_tokens.token_hash` | Jamais exposé |
 | `card_events.*`, `audit_log.*` | Insertion par trigger ou `service_role` |
@@ -292,6 +292,28 @@ ligne est lisible :
 La révocation au niveau colonne est indispensable : une politique RLS autorise ou refuse une
 **ligne**, pas une colonne. Sans `REVOKE`, un membre légitime du workspace pourrait lire la
 référence du secret de messagerie d'un collègue.
+
+**Comment la révocation d'écriture s'écrit réellement, mesuré par `CRM-034`.** PostgreSQL n'offre
+pas de `REVOKE UPDATE (colonne)` qui laisserait intact un `GRANT UPDATE` posé sur la table entière :
+un privilège de table couvre toutes ses colonnes, y compris futures. La forme qui fonctionne est le
+retrait du privilège de table, suivi d'un `GRANT UPDATE (…)` **énumérant** les colonnes ouvertes :
+
+```
+revoke update on public.cards from authenticated;
+grant  update (title, description, position, …) on public.cards to authenticated;
+```
+
+Trois conséquences, toutes mesurées et toutes à connaître avant d'employer ce mécanisme ailleurs :
+
+1. **une colonne nouvelle est fermée par défaut.** Toute migration ultérieure qui ajoute une colonne
+   destinée à être modifiable doit l'ajouter à cette énumération, faute de quoi elle sera
+   silencieusement en lecture seule ;
+2. **une fonction `SECURITY DEFINER` n'est pas concernée** : elle s'exécute avec les droits de son
+   propriétaire. C'est ce qui permet à `move_card` d'écrire ce que son appelant ne peut pas écrire ;
+3. **le refus rend `403` et divulgue la commande `GRANT` à exécuter** — comportement de PostgREST,
+   quatrième occurrence d'INC-026.
+
+Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5.
 
 ## 5. Storage
 

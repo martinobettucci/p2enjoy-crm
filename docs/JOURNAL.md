@@ -4225,3 +4225,123 @@ seul le sens a suivi le produit.
 Une limite figée par une assertion ne se contente donc pas de survivre à sa cause : elle est
 l'occasion, le jour où elle tombe, d'écrire une preuve meilleure que celle qu'on aurait écrite sans
 elle.
+
+---
+
+## 2026-08-04 — `CRM-034` : spécification de la garde centrale, écrite après mesure et avant tout code
+
+**Problème.** Depuis `CRM-040`, le produit a un objet métier — mais aucune règle ne gouverne son
+déplacement. `cards.current_step_id` s'écrit par un simple `PATCH`, et une card franchit une arête
+que personne n'a déclarée. La seule garde qui tienne est structurelle : la clé composite
+`(current_step_id, workflow_id)` impose que l'étape appartienne au workflow de la card, rien de
+plus. `docs/SPEC-workflow-engine.md` §5 tenait en trente lignes et ne disait ni ce que la fonction
+rend, ni quel `SQLSTATE` porte chaque refus, ni ce qu'un commentaire vide vaut, ni comment la
+colonne qu'elle protège est réellement fermée.
+
+**Choix de l'unité.** `CRM-034` est la première unité `[ ]` de `docs/MASTER_PLAN.md` §2, et la
+raison qui l'écartait quatre passages durant — INC-043, « aucune part livrable, `move_card` sans
+`cards` est une signature vide » — a disparu : `cards` est arrivée à `CRM-040`, qui l'a écrit
+noir sur blanc. La contrainte d'ordre « `CRM-034` avant `CRM-041` » est respectée par construction,
+`CRM-041` étant `[ ]`.
+
+Les unités `[~]` du chunk 2 et du chunk 3 ont été réexaminées avant de choisir : `CRM-010`,
+`CRM-011`, `CRM-012`, `CRM-020`, `CRM-021`, `CRM-030` à `CRM-033`, `CRM-035` et `CRM-040` butent
+toutes sur INC-021 — aucun écran de connexion — ou sur des tables du chunk 4. Aucune n'est
+terminable par un travail de code aujourd'hui.
+
+**Observations, mesurées sur la pile réelle, sondes créées puis détruites.**
+`to_regclass('public.sonde_c34_move')` et `to_regclass('public.sonde_c34_ret')` rendent `NULL`
+après ménage.
+
+1. `card_field_values`, `card_events` et `card_comments` valent tous `NULL` : les trois effets que
+   le §5 d'origine promettait en cas de succès n'ont aucune table où s'écrire.
+2. Un `revoke update on public.cards from authenticated` suivi d'un `grant update (…)` énumérant les
+   colonnes ouvertes produit exactement l'effet voulu : `PATCH` de `current_step_id` refusé en
+   `42501`, rendu **`403`** par PostgREST avec le message divulguant la commande `GRANT` (INC-026,
+   quatrième occurrence) ; `PATCH` de `description` toujours accepté, `204`.
+3. Une fonction `SECURITY DEFINER` **écrit la colonne révoquée** : le privilège de colonne juge le
+   rôle qui exécute l'instruction, et une telle fonction s'exécute avec les droits de son
+   propriétaire. C'est le mécanisme entier de la garde, et il est mesuré et non déduit.
+4. Une fonction rendant `public.cards` est rendue par PostgREST comme **un objet JSON unique**, non
+   comme un tableau. Le paramètre nommé `comment` est accepté sans réserve, en PL/pgSQL comme dans
+   la charge JSON.
+5. `revoke all on function … from public` **ne suffit pas** : l'ACL mesurée après ce seul `revoke`
+   vaut `postgres=X anon=X authenticated=X service_role=X`, l'image posant un
+   `ALTER DEFAULT PRIVILEGES` qui accorde `EXECUTE` **nommément** à `anon`. Un appelant sans jeton
+   obtenait `200`. Après `revoke … from public, anon` : **`401`**, « permission denied for function ».
+   La décision 80 avait relevé le même piège sur `copy_workflow_to_track` ; il se reproduit à
+   l'identique.
+
+### Décision 116 — La garde protège la colonne qu'elle garde, sinon elle ne garde rien
+
+La preuve de refus n° 5 de `docs/SPEC-permissions-rls.md` §7 — « mise à jour directe de
+`cards.current_step_id` par PostgREST → refus » — figure dans la Definition of Done de `CRM-034`
+**et** dans celle de `CRM-013`. Le chevauchement est réel, et il n'est pas anodin : tant que
+`authenticated` détient `UPDATE` sur toute la table, `move_card` est une commodité facultative que
+n'importe quel client contourne, et les six vérifications ne s'appliquent qu'à ceux qui veulent
+bien passer par elles.
+
+Livrer la garde sans la protection reviendrait à livrer une décoration, puis à en apporter la preuve
+par un test qui ne teste pas le produit réel. La protection de `cards.current_step_id` est donc
+livrée **ici**. Le périmètre restant de `CRM-013` est réduit et **nommé** — `email_local_part`,
+`secret_id`, `token_hash`, `card_events`, `audit_log` —, et le mécanisme mesuré est écrit dans
+`docs/SPEC-permissions-rls.md` §4.3 pour que `CRM-013` le reprenne sans le redécouvrir. Consigné en
+INC-049, avec l'option inverse laissée au responsable.
+
+**Le prix est écrit avec la décision** : le retrait du `GRANT UPDATE` de table ferme **par défaut**
+toute colonne ajoutée plus tard à `cards`. Une migration qui ajouterait une colonne modifiable sans
+l'énumérer la rendrait silencieusement en lecture seule. L'énumération est donc **figée par une
+assertion** qui liste les colonnes ouvertes une par une : ajouter une colonne sans trancher son cas
+fera échouer la suite, plutôt que de produire une régression muette.
+
+### Décision 117 — La sixième vérification n'est pas écrite, parce que ses deux écritures possibles sont l'une destructrice, l'autre mensongère
+
+« Les champs requis de l'étape cible sont **renseignés** » compare deux ensembles. L'ensemble exigé
+est calculable — `form_field_rules` et `require_fields` existent depuis `CRM-035`. L'ensemble
+renseigné n'a **aucune source** : `card_field_values` est le livrable de `CRM-036`, que le plan
+place après.
+
+La lecture littérale — rien n'est renseigné, donc tout ensemble exigé non vide refuse — a été
+MESURÉE avant d'être écartée : le seed déclare `required` sur `prospection`, `negociation`,
+`signature` et `perdu`. Elle interdirait l'entrée en négociation, l'entrée en signature et les
+**quatre** transitions « Marquer perdu ». La garde interdirait le parcours qu'elle est censée
+garder, et `CRM-041` n'aurait plus rien à démontrer. L'autre lecture — tout est renseigné, donc rien
+n'est vérifié — est le faux vert que `CLAUDE.md` §17 proscrit nommément.
+
+`CRM-034` livre donc **cinq vérifications sur six**, reste `[~]`, et l'écart est figé par une
+assertion qui deviendra rouge le jour de `CRM-036`. Le mécanisme est celui que `CRM-040` a employé
+pour la protection de colonne, et qui a effectivement désigné son moment — aujourd'hui. Consigné en
+INC-047.
+
+Corollaire assumé : le message « liste des clés manquantes », que la Definition of Done nomme,
+n'existe pas encore. Il naîtra avec la vérification qu'il décrit.
+
+### Décision 118 — `position` est recalculée au déplacement, et c'est une conséquence, pas un ajout
+
+`docs/SPEC-cards.md` §2.6 définit la portée de `position` comme le couple
+`(channel_id, current_step_id)` — **une colonne du board**, non le channel entier. Changer
+`current_step_id` sans recalculer `position` laisse donc la card dans une portée où sa valeur n'a
+jamais été attribuée : deux cards y porteraient le même rang, et l'ordre du board deviendrait
+arbitraire au premier déplacement.
+
+Le trigger d'attribution livré par `CRM-040` est un `BEFORE INSERT` : il ne voit pas les
+déplacements, et l'étendre aux mises à jour reviendrait à renuméroter une card à chaque `PATCH` de
+son titre. `move_card` place donc la card **en fin** de la colonne d'arrivée, exactement comme une
+card qui y naîtrait. Ce n'est pas un périmètre nouveau : c'est la seule écriture qui rende vraie la
+définition posée par l'unité précédente.
+
+### Décision 119 — Une card invisible n'existe pas, une card visible et fermée est interdite
+
+L'ordre des deux premières vérifications reprend la règle de discrétion du §4.3, écrite par
+`CRM-032`, plutôt que d'en inventer une autre. « La card existe » signifie **et** qu'elle est
+visible de l'appelant, au sens d'`app.can_read_channel` : une card d'un autre workspace, ou d'un
+channel fermé par un droit fin, rend `card_not_found`. Répondre « interdit » révélerait son
+existence à quelqu'un qui n'a pas le droit de la connaître.
+
+Un `viewer` de son propre workspace obtient en revanche `forbidden` : il voit la card tous les
+jours, lui dire qu'elle n'existe pas serait un mensonge inutile — et un message qui ment est un
+message que l'utilisateur apprend à ignorer.
+
+La même règle range les cards archivées et en corbeille du côté de `card_not_found`, avec la
+définition d'« active » de `docs/SPEC-cards.md` §5 : `archived_at is null and deleted_at is null`,
+la même que celle qu'emploie la garde d'archivage d'un nœud occupé.

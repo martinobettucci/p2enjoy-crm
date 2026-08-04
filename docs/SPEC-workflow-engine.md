@@ -985,29 +985,257 @@ Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-041**.
 | Seed | L'ordre nouveau, le rattachement de `prospection` au workflow `track`, et la convergence **éprouvée par une dégradation** (INC-041) |
 | Interface | **Aucune** — l'affectation d'un workflow à un channel exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
 
-## 5. Garde centrale : `move_card`
+## 5. Garde centrale : `move_card` — `CRM-034`
 
-Toute écriture de `cards.current_step_id` passe par cette fonction. La mise à jour directe de la
-colonne est refusée aux clients par les politiques RLS.
+### 5.1 Ce que la garde est, et ce qu'elle n'est pas
+
+`move_card` est le **seul chemin** par lequel une card change d'étape. Ce n'est pas une commodité
+offerte au client : c'est la seule place du produit où le graphe du workflow devient opposable.
+Tant qu'elle n'existe pas, `cards.current_step_id` s'écrit par un simple `PATCH` et une card
+franchit une arête que personne n'a déclarée — ce qui a été l'état du produit depuis `CRM-040`, et
+qui est **nommé** dans sa Definition of Done plutôt que tu.
+
+Elle **n'est pas** :
+
+- **une politique RLS.** Une politique juge une ligne, pas une trajectoire. Aucune expression
+  `USING` ne peut dire « la transition de l'ancienne étape vers la nouvelle est déclarée » : elle ne
+  dispose pas des deux valeurs en même temps sous une forme exploitable, et surtout elle ne peut
+  pas produire un message d'erreur nommant ce qui manque ;
+- **une validation d'interface.** `docs/SPEC-form-composer.md` §6 le pose explicitement :
+  « l'interface ne fait que prévenir ». `CLAUDE.md` §10 l'exige de toute règle d'accès ;
+- **un remplacement des gardes structurelles.** La vérification n° 3 ci-dessous est déjà tenue par
+  une clé étrangère composite livrée par `CRM-040` (§5.3). La fonction la refait quand même, pour
+  la raison donnée au §5.3 : un message, et un ordre.
+
+### 5.2 Signature et valeur de retour
 
 ```
-move_card(card_id uuid, to_step_id uuid, comment text default null)
+public.move_card(card_id uuid, to_step_id uuid, comment text default null) returns public.cards
 ```
 
-Vérifications, dans l'ordre, chacune levant une exception explicite :
+**Elle rend la ligne mise à jour**, et non `void`. MESURÉ contre PostgREST `v14.12` : une fonction
+rendant un type composite `public.cards` est rendue par l'API comme un objet JSON unique, non comme
+un tableau. Le client obtient donc en une requête l'étape, `entered_step_at` et `position`
+recalculés, sans relecture — et sans que cette relecture puisse, entre-temps, être refusée par une
+politique.
 
-| # | Vérification | Message |
+Rendre la ligne est sans conséquence sur la confidentialité, et ce n'est pas une intuition : le
+droit d'écriture sur un channel implique le droit de lecture. `app.can_write_channel` exige
+`= 'write'`, `app.can_read_channel` exige `<> 'none'` (`docs/SPEC-permissions-rls.md` §3.3) ;
+la vérification n° 2 ayant réussi, la n° 1 l'a précédée.
+
+Le troisième paramètre s'appelle `comment`, comme l'énonçait le §5 d'origine. MESURÉ : ce n'est pas
+un mot réservé de PL/pgSQL, et PostgREST accepte sans réserve une clé JSON `comment`.
+
+### 5.3 Les six vérifications, dans l'ordre, et ce que chacune rend
+
+Les codes HTTP sont **mesurés** contre PostgREST `v14.12` selon la table du §4.4, non déduits.
+
+| # | Vérification | Message | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | La card existe, est **visible de l'appelant**, et n'est ni archivée ni en corbeille | `card_not_found` | `P0001` | `400` |
+| 2 | L'appelant a le droit d'**écriture** sur le channel de la card | `forbidden` | `42501` | `403` |
+| 3 | L'étape cible existe et appartient au workflow de la card | `step_not_in_workflow` | `P0001` | `400` |
+| 4 | Une transition est déclarée de l'étape courante vers la cible | `transition_not_allowed` | `P0001` | `400` |
+| 5 | Le commentaire est fourni si la transition l'exige | `comment_required` | `P0001` | `400` |
+| 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields` | `P0001` | `400` |
+
+**L'ordre des deux premières est une règle de discrétion, reprise du §4.3 et non réinventée.**
+« Visible » signifie `app.can_read_channel` sur le channel de la card. Une card d'un autre
+workspace, ou d'un channel fermé par un droit fin, rend `card_not_found` — jamais `forbidden`.
+Répondre « interdit » révélerait son existence à quelqu'un qui n'a pas le droit de la connaître. Un
+`viewer` de son propre workspace obtient en revanche `forbidden` : il voit la card tous les jours,
+lui dire qu'elle n'existe pas serait un mensonge inutile.
+
+**Une card archivée ou en corbeille est traitée comme absente.** C'est la définition d'« active »
+de `docs/SPEC-cards.md` §5, la même que celle qu'emploie la garde d'archivage d'un nœud occupé. Une
+card qu'on a rangée ne se déplace pas ; on la restaure d'abord.
+
+**La vérification n° 3 est déjà tenue par la base, et elle est refaite quand même.** La clé
+composite `cards (current_step_id, workflow_id) → workflow_steps (id, workflow_id)` livrée par
+`CRM-040` la garantit sans exception, y compris contre un `PATCH` direct. La refaire dans la
+fonction n'ajoute aucune garantie : elle ajoute **un message** — `step_not_in_workflow` plutôt qu'un
+`23503` brut nommant une contrainte — et **une place dans l'ordre**, avant la n° 4, de sorte
+qu'une étape d'un autre workflow ne soit jamais rapportée comme une « transition non déclarée »,
+ce qui enverrait le client chercher une arête à créer là où le problème est ailleurs.
+
+**Un commentaire vide n'est pas un commentaire.** `comment` est normalisé par
+`nullif(btrim(comment), '')` avant la vérification n° 5 : une chaîne d'espaces est refusée comme
+l'absence, sans quoi la règle « la raison d'une affaire perdue est exigée » se satisferait d'une
+barre d'espace.
+
+### 5.4 Ce qui est écrit en cas de succès, et ce qui ne peut pas l'être
+
+| Effet | Livré par `CRM-034` | Motif |
 |---|---|---|
-| 1 | La card existe et n'est ni archivée ni supprimée | `card_not_found` |
-| 2 | L'appelant a le droit d'écriture sur le channel | `forbidden` |
-| 3 | L'étape cible appartient au workflow de la card | `step_not_in_workflow` |
-| 4 | Une transition est déclarée de l'étape courante vers la cible | `transition_not_allowed` |
-| 5 | Le commentaire est fourni si la transition l'exige | `comment_required` |
-| 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields` (liste des clés) |
+| `current_step_id` ← étape cible | **oui** | l'objet même de la fonction |
+| `entered_step_at` ← `now()` | **oui** | `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card` |
+| `position` ← fin de la colonne d'arrivée | **oui** | voir ci-dessous |
+| `updated_at` | **oui**, par le trigger existant | `app.set_updated_at()`, `CRM-040` |
+| `card_event` de type `moved` | **non** | `card_events` n'existe pas — `CRM-044`. MESURÉ : `to_regclass` nul |
+| insertion du commentaire fourni | **non** | `card_comments` n'existe pas — `CRM-043`. MESURÉ : `to_regclass` nul |
+| arrêt des cadences de relance | **non** | aucune table de cadence n'existe, et **aucune unité du backlog n'en porte** |
 
-En cas de succès : mise à jour de `current_step_id`, réinitialisation de `entered_step_at`,
-écriture d'un `card_event` de type `moved`, insertion du commentaire s'il est fourni, arrêt des
-cadences de relance si l'étape cible est terminale.
+**`position` est recalculée, et ce n'est pas un ajout de périmètre.** `docs/SPEC-cards.md` §2.6
+définit la portée de `position` comme le couple `(channel_id, current_step_id)` — **une colonne du
+board**. Changer `current_step_id` sans recalculer `position` laisse la card dans une portée où sa
+valeur n'a jamais été attribuée : deux cards y porteraient le même rang, et l'ordre des colonnes du
+board deviendrait arbitraire. Le trigger d'attribution de `CRM-040` est un `BEFORE INSERT` : il ne
+voit pas les déplacements. La card est donc placée **en fin** de la colonne d'arrivée, exactement
+comme une card qui y naîtrait.
+
+**Le commentaire fourni n'est aujourd'hui conservé nulle part, et c'est une perte que l'on nomme.**
+La vérification n° 5 l'exige, la fonction le contrôle, et rien ne l'écrit : `card_comments` est
+livrée par `CRM-043`. Un utilisateur qui motive une affaire perdue verra sa transition acceptée et
+son motif disparaître. C'est une conséquence de l'ordre du plan, pas un choix — consignée en
+`docs/INCONSISTENCY_REPORT.md`, **INC-048**, avec ses options. La taire aurait été plus confortable
+et strictement pire.
+
+### 5.5 La protection de colonne, sans laquelle la garde ne garde rien
+
+Une garde que l'on contourne par un `PATCH` n'est pas une garde. Tant que `authenticated` détient
+`UPDATE` sur **toute** la table `cards`, `move_card` est une commodité facultative, et les six
+vérifications ci-dessus ne s'appliquent qu'à ceux qui veulent bien passer par elles.
+
+La preuve de refus n° 5 de `docs/SPEC-permissions-rls.md` §7 — « mise à jour directe de
+`cards.current_step_id` par PostgREST → refus » — figure **dans la Definition of Done de
+`CRM-034`**. Elle figure aussi dans celle de `CRM-013`. Le chevauchement est réel et il est
+consigné (**INC-049**) ; il est tranché du côté de `CRM-034`, parce qu'une unité dont la Definition
+of Done exige une preuve doit livrer ce qui la rend possible.
+
+**Le mécanisme, mesuré et non supposé.** Le privilège `UPDATE` de PostgreSQL s'accorde colonne par
+colonne :
+
+```
+revoke update on public.cards from authenticated;
+grant  update (title, description, position, owner_id, amount, currency,
+               probability_override, next_action, next_action_at, snoozed_until,
+               archived_at, deleted_at) on public.cards to authenticated;
+```
+
+Mesuré sur la pile réelle, avec le jeton de l'administratrice seedée :
+
+| Geste | Résultat |
+|---|---|
+| `PATCH /rest/v1/cards` sur `current_step_id` | **`403`**, `42501`, « permission denied for table cards » |
+| `PATCH /rest/v1/cards` sur `description` | `204` — les colonnes ouvertes le restent |
+| Appel d'une fonction `SECURITY DEFINER` écrivant `current_step_id` | **accepté** |
+
+La troisième ligne est le point non évident : un privilège de colonne s'applique au rôle qui exécute
+l'instruction, et une fonction `SECURITY DEFINER` s'exécute avec les droits de son **propriétaire**.
+La garde écrit donc ce que son appelant ne peut pas écrire — ce qui est exactement ce qu'on lui
+demande.
+
+**Ce qui n'est PAS livré par `CRM-034`, et reste à `CRM-013` :** `email_local_part`, dont
+l'écriture directe reste ouverte ; `secret_id` et `token_hash`, dont les tables n'existent pas ;
+`card_events` et `audit_log`, idem. Seule la colonne que cette garde protège est traitée ici.
+
+**Le message de refus divulgue la commande `GRANT` à exécuter** — « Grant the required privileges
+to the current role with: GRANT UPDATE ON public.cards TO authenticated; ». Quatrième occurrence
+d'INC-026, comportement de PostgREST et non du produit, inchangé et non masqué.
+
+### 5.6 Autorisations et privilèges — trois faits mesurés
+
+`SECURITY DEFINER`, `search_path` fixé à la chaîne vide, propriétaire `postgres`.
+
+**`revoke … from public` ne suffit pas, et c'est mesuré.** L'image Supabase pose un
+`ALTER DEFAULT PRIVILEGES IN SCHEMA public` qui accorde `EXECUTE` **nommément** à `anon`,
+`authenticated` et `service_role` sur toute fonction nouvelle. Une fonction créée puis « protégée »
+par le seul `revoke all … from public` reste donc exécutable par la clé anonyme : MESURÉ,
+`200` rendu à un appelant sans jeton sur une fonction sonde ainsi protégée. Le `revoke` doit viser
+`public` **et** `anon`, comme `copy_workflow_to_track` le fait depuis la décision 80.
+
+**Le refus de l'appelant anonyme rend `401`, non `403`.** MESURÉ après le `revoke` correct :
+`401`, `42501`, « permission denied for function move_card ». PostgREST traite l'absence de droit
+d'un appelant non authentifié comme une invitation à s'authentifier (§4.4). Le refus est donc
+double — privilège, puis vérification n° 2 —, et le premier suffit.
+
+**`EXECUTE` n'est accordé qu'à `authenticated`.** Contrairement aux fonctions `app.can_*`, qui sont
+appelées **depuis des politiques** et doivent donc être exécutables par `anon` pour que le refus se
+manifeste par zéro ligne, `move_card` est appelée **directement** par un client : lui refuser le
+privilège est le comportement voulu.
+
+### 5.7 La vérification n° 6 n'est pas livrable par `CRM-034`, et le nier serait un faux vert
+
+La n° 6 demande que « les champs requis de l'étape cible soient **renseignés** ». L'ensemble exigé
+est calculable dès aujourd'hui — c'est l'union définie par `docs/SPEC-form-composer.md` §3.5 : les
+champs `required` de l'étape cible dans `form_field_rules`, et les `require_fields` de la transition
+empruntée. Les deux tables existent depuis `CRM-035`.
+
+**L'ensemble renseigné, lui, n'a aucune source.** `card_field_values` est le livrable de `CRM-036`.
+MESURÉ le 2026-08-04 : `to_regclass('public.card_field_values')` rend `NULL`.
+
+Deux écritures étaient possibles, et **toutes deux sont écartées** :
+
+1. **considérer que rien n'est renseigné**, donc refuser toute transition dont l'ensemble exigé
+   n'est pas vide. C'est la lecture littérale, et elle est **mesurablement destructrice** : le seed
+   déclare `required` sur les étapes `prospection`, `negociation`, `signature` et `perdu`. Les
+   entrées en négociation, en signature et les **quatre** transitions « Marquer perdu » seraient
+   refusées, définitivement, jusqu'à `CRM-036`. Le produit livrerait une garde qui interdit le
+   parcours qu'elle est censée garder ;
+2. **considérer que tout est renseigné**, donc ne rien vérifier en le prétendant vérifié. C'est le
+   faux vert que `CLAUDE.md` §17 proscrit.
+
+**Comportement retenu :** la vérification n° 6 n'est **pas écrite**. `CRM-034` livre cinq
+vérifications sur six, l'écart est **figé par une assertion** de la suite pgTAP — un déplacement
+vers une étape portant une règle `required` réussit aujourd'hui, et cette assertion deviendra rouge
+le jour de `CRM-036` — et l'unité reste `[~]`. La contradiction d'ordonnancement est consignée en
+`docs/INCONSISTENCY_REPORT.md`, **INC-047**. C'est le mécanisme employé par `CRM-040` pour la
+protection de colonne, qui a effectivement fonctionné : l'assertion a désigné son moment.
+
+Conséquence à ne pas perdre de vue : le message « liste des clés manquantes », que la Definition of
+Done de `CRM-034` nomme, **n'existe pas encore**. Il naîtra avec la vérification qu'il décrit.
+
+### 5.8 Contrat d'API attendu, à mesurer
+
+Treize lignes, écrites **avant** le code pour être mesurées et non supposées. Appels
+`POST /rest/v1/rpc/move_card`, jetons réels des trois profils seedés.
+
+| # | Appelant | Appel | Attendu |
+|---|---|---|---|
+| a | anonyme | n'importe lequel | `401` — privilège |
+| b | `admin` | card active, transition déclarée, sans exigence | `200`, la card, étape à jour |
+| c | `admin` | même appel, relecture de la ligne | `entered_step_at` postérieure à l'appel |
+| d | `admin` | même appel, relecture de la ligne | `position` en fin de colonne d'arrivée |
+| e | `admin` | `card_id` inconnu | `400`, `card_not_found` |
+| f | `admin` | card **archivée** | `400`, `card_not_found` |
+| g | `admin` | card en **corbeille** | `400`, `card_not_found` |
+| h | `viewer` | card visible de lui | `403`, `forbidden` — preuve de refus n° 1 |
+| i | `bizdev` | card d'un channel fermé par un droit fin | `400`, `card_not_found` — discrétion |
+| j | `admin` | étape appartenant à un **autre** workflow | `400`, `step_not_in_workflow` |
+| k | `admin` | étape du bon workflow, **aucune transition déclarée** | `400`, `transition_not_allowed` |
+| l | `admin` | transition exigeant un commentaire, sans commentaire | `400`, `comment_required` |
+| m | `admin` | `PATCH` direct de `current_step_id` | `403`, `42501` — preuve de refus n° 5 |
+
+Chaque refus **relit la ligne** pour la constater inchangée : une réponse d'erreur ne prouve pas
+qu'aucune écriture n'a eu lieu.
+
+### 5.9 Ce que le seed livre
+
+Le seed de `CRM-031` déclare déjà tout ce dont cette garde a besoin, et il n'est **pas modifié** :
+le graphe complet du workflow par défaut, dont les quatre transitions « Marquer perdu » exigent un
+commentaire (§3.9) — c'est la donnée qui exerce la vérification n° 5 en permanence — et les paires
+d'étapes non reliées qui exercent la n° 4.
+
+`require_fields` reste vide partout, et le motif est inchangé : la vérification qui le lirait n'est
+pas livrée (§5.7). Une donnée de démonstration que rien n'exerce est une décoration, pas une preuve.
+
+### 5.10 Preuves attendues de `CRM-034`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Les cinq vérifications livrées, chacune dans les **deux** sens — ce qui doit passer passe ; forme et privilèges de la fonction ; `search_path` vide ; le privilège de colonne posé et les autres colonnes laissées ouvertes ; `entered_step_at` et `position` mises à jour ; l'écart de la n° 6 figé par une assertion ; l'absence de `card_events` et de `card_comments` figée de même |
+| API | Les treize lignes du §5.8, hors interface, avec les jetons réels des trois profils. Preuves de refus n° 1 et 5 de `docs/SPEC-permissions-rls.md` §7 |
+| Seed | Inchangé, et **exercé** : le graphe seedé fournit les transitions déclarées, les paires non reliées et les quatre transitions à commentaire |
+| Interface | **Aucune** — le board est `CRM-041`, et la webapp reste un appelant anonyme faute d'écran de connexion (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
+
+### 5.11 Points ouverts propres à `move_card`
+
+1. **La vérification n° 6 et son message** — INC-047, `CRM-036`.
+2. **Le commentaire fourni n'est pas conservé** — INC-048, `CRM-043`.
+3. **Aucun `card_event`** n'est écrit : la trace du déplacement n'existe pas — `CRM-044`.
+4. **Aucune cadence de relance** n'est arrêtée, aucune table n'en porte, aucune unité n'en prévoit.
+5. **Le chevauchement de Definition of Done avec `CRM-013`** — INC-049.
 
 La fonction est `SECURITY DEFINER`, avec `search_path` fixé, accordée au seul rôle
 `authenticated`.
@@ -1039,8 +1267,8 @@ sans que le déplacement soit sémantiquement équivalent.
 
 | Niveau | Preuves attendues |
 |---|---|
-| pgTAP | Transition déclarée acceptée ; transition non déclarée refusée ; champ requis manquant refusé ; commentaire exigé absent refusé ; étape hors workflow refusée ; unicité de l'étape initiale ; refus d'archivage d'un nœud occupé — **différé, INC-031** : sa cible traverse `workflow_steps` (`CRM-031`) et `cards` (`CRM-040`), voir §2.6 |
-| API | Appel direct de `move_card` avec le jeton d'un `viewer` → refusé ; mise à jour directe de `cards.current_step_id` par PostgREST → refusée |
+| pgTAP | Transition déclarée acceptée ; transition non déclarée refusée ; commentaire exigé absent refusé ; étape hors workflow refusée ; unicité de l'étape initiale ; refus d'archivage d'un nœud occupé — **livré et prouvé par `CRM-040`**, INC-031 close (§2.6). Champ requis manquant refusé — **différé, INC-047** : sa source est `card_field_values` (`CRM-036`), voir §5.7 |
+| API | Appel direct de `move_card` avec le jeton d'un `viewer` → refusé ; mise à jour directe de `cards.current_step_id` par PostgREST → refusée. Les treize lignes du §5.8 détaillent ce que `CRM-034` mesure |
 | E2E | Parcours complet Prospection → Livré par l'interface ; tentative de glisser-déposer interdite ; message d'erreur de champ requis affiché et compréhensible |
 | Visuel | Board aux quatre paliers responsive, colonne vide, card figée au-delà du seuil, menu de transitions |
 
@@ -1050,9 +1278,10 @@ sans que le déplacement soit sémantiquement équivalent.
    responsable.
 2. **Suppression d'une transition** encore empruntée par des cadences ou des automatisations :
    comportement à définir (refus, ou avertissement).
-3. **Le refus d'archivage d'un nœud occupé n'est rattaché à aucune unité livrable** : INC-031,
-   trois options d'arbitrage, à trancher avant `CRM-040`. `CRM-031` en a livré la moitié du
-   chemin — `workflow_steps` existe désormais —, `cards` reste due.
+3. ~~**Le refus d'archivage d'un nœud occupé n'est rattaché à aucune unité livrable**~~ — **clos.**
+   `CRM-040` a livré `cards`, dernière table du chemin, et la garde avec elle : INC-031 est close
+   (décision 111). Le point est conservé barré plutôt que supprimé, pour que la trace du différé
+   reste lisible.
 4. **Les quatre transitions vers `Perdu` exigent un commentaire** dans le workflow par défaut du
    seed (§3.9). Choix pris par `CRM-031`, faute d'énoncé d'origine, et renversable : il suffit de
    passer `require_comment` à faux dans le contrat du seed.
@@ -1062,3 +1291,5 @@ sans que le déplacement soit sémantiquement équivalent.
 6. **`require_fields` ne portera jamais d'intégrité référentielle** (§3.4, INC-033) : PostgreSQL
    ne sait pas contraindre les éléments d'un tableau. La conséquence — des identifiants morts après
    suppression d'un champ — attend un arbitrage.
+7. **`move_card` est livrée à cinq vérifications sur six**, ne conserve pas le commentaire qu'elle
+   exige, n'écrit aucun événement et n'arrête aucune cadence : §5.11, INC-047, INC-048, INC-049.

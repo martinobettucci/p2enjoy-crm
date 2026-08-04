@@ -1900,6 +1900,143 @@ INC-033 (une intégrité que le type interdit), INC-043 (`CRM-034` sans cible), 
 
 ---
 
+### INC-047 — La sixième vérification de `move_card` lit une table que le plan livre après elle
+
+**Nature :** contradiction d'ordonnancement entre `docs/MASTER_PLAN.md` §2 et la Definition of Done
+de `CRM-034`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-034`.
+
+`docs/SPEC-workflow-engine.md` §5 exige six vérifications. La sixième — « les champs requis de
+l'étape cible sont **renseignés** », message `missing_required_fields` portant la liste des clés —
+compare deux ensembles :
+
+- l'**ensemble exigé**, calculable dès aujourd'hui : les champs `required` de l'étape cible dans
+  `form_field_rules`, unis aux `require_fields` de la transition empruntée
+  (`docs/SPEC-form-composer.md` §3.5). Les deux tables existent depuis `CRM-035` ;
+- l'**ensemble renseigné**, qui n'a **aucune source**. `card_field_values` est le livrable de
+  `CRM-036`, unité que `docs/MASTER_PLAN.md` §2 place **après** `CRM-034`. MESURÉ le 2026-08-04 :
+  `to_regclass('public.card_field_values')` rend `NULL`.
+
+C'est la seconde occurrence du problème d'INC-043 : `CRM-034` précède les tables sur lesquelles elle
+opère. La première avait été réglée par le temps — `cards` est arrivée. Celle-ci ne le sera pas :
+`CRM-036` reste devant.
+
+**Les deux écritures possibles sont l'une destructrice, l'autre mensongère.**
+
+1. **Rien n'est renseigné, donc toute transition à ensemble exigé non vide est refusée.** Lecture
+   littérale, et MESURÉE destructrice : le seed déclare `required` sur `prospection`, `negociation`,
+   `signature` et `perdu`. Les entrées en négociation, en signature et les **quatre** transitions
+   « Marquer perdu » seraient refusées jusqu'à `CRM-036`. La garde interdirait le parcours qu'elle
+   garde, et `CRM-041` n'aurait plus rien à démontrer ;
+2. **Tout est renseigné, donc rien n'est vérifié** en le présentant comme vérifié. C'est le faux
+   vert que `CLAUDE.md` §17 proscrit nommément.
+
+**Comportement retenu :** la vérification n° 6 n'est **pas écrite**. `CRM-034` livre cinq
+vérifications sur six, l'unité reste `[~]`, et l'écart est **figé par une assertion** de
+`supabase/tests/0013_move_card.test.sql` : un déplacement vers une étape portant une règle
+`required` réussit aujourd'hui, et cette assertion deviendra **rouge** le jour où `CRM-036`
+livrera `card_field_values`. C'est le mécanisme employé par `CRM-040` pour la protection de colonne,
+qui a effectivement désigné son moment.
+
+**Conséquence à ne pas perdre de vue :** le message « liste des clés manquantes », que la Definition
+of Done de `CRM-034` nomme, n'existe pas. Il naîtra avec la vérification qu'il décrit.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. **rattacher la vérification n° 6 à `CRM-036`**, dont la Definition of Done porte déjà « union
+   étape + transition » et « `hidden` non exigé » — c'est-à-dire, mot pour mot, la sémantique de
+   cette vérification. C'est l'option la plus simple, et la lecture la plus naturelle du backlog ;
+2. **déplacer `CRM-036` avant `CRM-034`** dans `docs/MASTER_PLAN.md` §2, ce qui n'est plus possible
+   sans rouvrir `CRM-034` une fois livrée ;
+3. **retirer la vérification n° 6 de la spécification** et faire porter l'obligation par
+   l'interface seule — écarté d'office : `CLAUDE.md` §10 interdit qu'une règle métier ne vive que
+   dans l'interface.
+
+**Lié à :** INC-043 (`CRM-034` avant ses tables), INC-033 (`require_fields` sans intégrité),
+`CRM-036`, `CRM-037`.
+
+---
+
+### INC-048 — `move_card` exige un commentaire qu'elle ne peut conserver nulle part
+
+**Nature :** perte de donnée utilisateur induite par l'ordre du plan.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-034`.
+
+La vérification n° 5 de `docs/SPEC-workflow-engine.md` §5 exige un commentaire lorsque la transition
+le demande — dans le seed, les **quatre** transitions « Marquer perdu ». Le même paragraphe énonce
+qu'en cas de succès la fonction procède à l'« insertion du commentaire s'il est fourni » et à
+l'« écriture d'un `card_event` de type `moved` ».
+
+MESURÉ le 2026-08-04 : `to_regclass('public.card_comments')` et `to_regclass('public.card_events')`
+rendent tous deux `NULL`. Ces tables sont les livrables de `CRM-043` et de `CRM-044`, unités que
+`docs/MASTER_PLAN.md` §2 place après `CRM-034`.
+
+**Conséquence exacte :** un utilisateur qui motive une affaire perdue voit sa transition acceptée et
+**son motif disparaître**. Ce n'est pas une fonctionnalité différée, c'est une donnée saisie qui
+n'est écrite nulle part. Le déplacement lui-même ne laisse par ailleurs **aucune trace** : ni
+auteur, ni date, ni étape d'origine.
+
+**Comportement retenu :** le paramètre est conservé dans la signature — le retirer casserait la
+vérification n° 5, qui est dans la Definition of Done — et la perte est **écrite** dans
+`docs/SPEC-workflow-engine.md` §5.4, dans `docs/manual.md` et dans la Definition of Done de
+`CRM-034`, qui reste `[~]`. **Aucune table n'est créée par anticipation** : `card_comments` et
+`card_events` préempteraient `CRM-043` et `CRM-044`, et la règle du projet est constante depuis
+`CRM-035` (décision 92).
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. **accepter la perte temporaire** et livrer la garde maintenant, ce qui est le comportement
+   retenu par défaut ci-dessus, le déplacement gardé valant mieux qu'un déplacement libre ;
+2. **refuser toute transition exigeant un commentaire** tant que `card_comments` n'existe pas — ce
+   qui neutraliserait les quatre transitions vers `Perdu` du seed, exactement le défaut décrit en
+   INC-047 ;
+3. **avancer `CRM-043` et `CRM-044`** avant `CRM-034`, ce qui inverse l'ordre du chunk 3 et retarde
+   la seule garde du produit.
+
+**Lié à :** INC-047 (même ordonnancement), `CRM-043`, `CRM-044`.
+
+---
+
+### INC-049 — La preuve de refus n° 5 figure dans deux Definitions of Done à la fois
+
+**Nature :** chevauchement de périmètre entre `CRM-034` et `CRM-013`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-034`.
+
+`docs/SPEC-permissions-rls.md` §7 numérote douze preuves de refus. La n° 5 — « mise à jour directe
+de `cards.current_step_id` par PostgREST → refus » — est réclamée par **deux** unités :
+
+- `CRM-034`, dont la Definition of Done dit « preuves de refus n° 1 et 5 » ;
+- `CRM-013`, dont la Definition of Done dit « `current_step_id` et `email_local_part` non
+  modifiables directement » et « preuves de refus n° 5, 6 et 8 ».
+
+Ce n'est pas une redondance sans conséquence. **Sans la protection de colonne, `move_card` ne garde
+rien** : n'importe quel client contourne les six vérifications par un `PATCH`. Livrer `CRM-034` en
+laissant la colonne ouverte reviendrait à livrer une garde décorative et à en apporter la preuve par
+un test qui ne teste pas le produit réel.
+
+**Comportement retenu :** la protection de `cards.current_step_id` est livrée par **`CRM-034`**,
+parce qu'une unité dont la Definition of Done exige une preuve doit livrer ce qui la rend possible.
+Le périmètre restant de `CRM-013` est **réduit et nommé** : `cards.email_local_part`,
+`mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id`, `api_tokens.token_hash`,
+`card_events.*`, `audit_log.*` — cinq cibles sur six dont les tables n'existent pas encore. Le
+mécanisme mesuré est écrit dans `docs/SPEC-permissions-rls.md` §4.3 pour que `CRM-013` le reprenne
+sans le redécouvrir.
+
+**Risque résiduel, et il est réel :** le retrait du `GRANT UPDATE` de table ferme **par défaut**
+toute colonne ajoutée plus tard à `cards`. Une migration ultérieure qui ajouterait une colonne
+modifiable et oublierait l'énumération la rendrait silencieusement en lecture seule. Le fait est
+écrit au §4.3 et **figé par une assertion** de `supabase/tests/0013_move_card.test.sql`, qui
+énumère les colonnes ouvertes une par une : ajouter une colonne sans trancher son cas fera échouer
+la suite.
+
+**Arbitrage attendu du responsable :** confirmer ce partage, ou rendre la protection de colonne à
+`CRM-013` — auquel cas `CRM-034` doit être livrée en sachant que sa garde est contournable, et sa
+Definition of Done amendée pour retirer la preuve n° 5.
+
+**Lié à :** INC-026 (le message de refus divulgue le `GRANT`), `CRM-013`.
+
+---
+
 ## Clos
 
 ### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
