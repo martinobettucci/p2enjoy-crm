@@ -247,6 +247,18 @@ PostgREST, la pile ne redémarrerait plus. La vérification préalable est port�
 `docs/PROD_MIGRATIONS.md` §3 (`docs/JOURNAL.md`, décision 55).
 
 
+**MISE À JOUR — 2026-08-04, `CRM-021`.** La seconde moitié est **close** : la migration
+`0004_channels.sql` pose `channel_members_channel_id_fkey` en `ON DELETE CASCADE`. Les deux clés
+étrangères différées par cette entrée sont désormais en place.
+
+L'entrée reste **ici, dans les ouverts**, et non déplacée en « Clos », pour une raison qu'il faut
+dire plutôt que taire : l'arbitrage demandé — « désigner l'unité qui pose ces deux clés étrangères
+et l'inscrire dans leur Definition of Done » — n'a **jamais été rendu**. `CRM-020` et `CRM-021` ont
+posé les clés parce qu'elles étaient les candidates naturelles, ce que cette entrée suggérait, mais
+aucune Definition of Done n'a été modifiée par le responsable. Le fait technique est acquis ; la
+décision documentaire ne l'est pas, et la déclarer close reviendrait à la prendre à sa place.
+
+
 ---
 
 ### INC-011 — `track_members` et `channel_members` sans `workspace_id`, contre la convention générale
@@ -815,6 +827,17 @@ non commencée.
 **Action attendue du responsable :** confirmer la lecture, ou nommer la raison pour laquelle les
 tables du §2 devraient échapper aux conventions générales.
 
+
+**MISE À JOUR — 2026-08-04, `CRM-021`.** La seconde moitié est traitée : `channels` est livrée
+**avec** `created_at`, `updated_at` et le trigger `app.set_updated_at()`, et le tableau du §2 est
+complété dans le même changement. Les deux tables du §2 suivent désormais les conventions
+générales.
+
+L'entrée reste **ouverte** pour la même raison qu'INC-010 : la lecture retenue — « l'omission était
+une lacune du tableau, non une décision d'y renoncer » — n'a pas été confirmée par le responsable.
+Deux unités l'ont appliquée ; si elle est fausse, ce sont deux migrations qu'il faut reprendre, et
+non une.
+
 ---
 
 ### INC-026 — Le refus d'un privilège manquant par PostgREST divulgue la commande `GRANT` à exécuter
@@ -944,6 +967,107 @@ n'est pas une exigence, c'est une intention. Les contrôles d'accessibilité chi
 
 **Action attendue du responsable :** trancher les trois points, et rattacher la mise en conformité
 des autres composants à une unité si le §5.6 est réécrit.
+
+---
+
+### INC-029 — `channels.workflow_id` est exigée `non nul` et référencée, alors que `workflows` arrive deux étapes plus tard
+
+**Nature :** contradiction d'ordonnancement entre `docs/SCHEMA.md` §2 et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-021`.
+
+`docs/SCHEMA.md` §2 décrit `channels.workflow_id` comme `uuid`, **`FK workflows`, non nul**. La
+table `workflows` est livrée par `CRM-031`, que `docs/MASTER_PLAN.md` §2 place au chunk **3.b**,
+après `CRM-021` qui est au **3.a**. Mesuré sur la base migrée du projet :
+`to_regclass('public.workflows')` rend `NULL`.
+
+Ce n'est pas contournable par l'écriture. Une clé étrangère vers une table absente est refusée à la
+création, et une contrainte `NOT NULL` sur une colonne qu'aucune valeur licite ne peut renseigner
+rendrait la table **inutilisable** : ni le seed, ni les preuves d'API ne pourraient créer un
+channel. C'est le troisième cas du même mode de défaillance, après INC-010 (`CRM-003` a dû se
+passer de clés étrangères) et INC-013 (`CRM-010` a dû se passer de jointures) ; ici, `CRM-021` doit
+se passer d'une contrainte.
+
+Le plan lui-même est cohérent avec son propre motif — « l'arborescence conditionne tout le reste »
+place tracks et channels d'abord, « le moteur de workflow avant les cards » place les workflows
+ensuite. C'est le **modèle de données** qui introduit une dépendance inverse, en faisant du
+workflow une propriété obligatoire du channel.
+
+**Comportement retenu :** `CRM-021` livre ce qui est démontrable aujourd'hui, et **rien de plus**.
+
+| Aspect | Livré par `CRM-021` | Différé, et à qui |
+|---|---|---|
+| Colonne `workflow_id uuid` | oui, **nullable** | — |
+| Clé étrangère vers `workflows` | non | `CRM-031` |
+| Contrainte `NOT NULL` | non | `CRM-031`, après reprise des lignes existantes |
+| Trigger de cohérence workflow ↔ track | non | `CRM-033`, déjà nommé par la DoD de `CRM-021` |
+
+Aucune table `workflows` n'est créée par anticipation : cela préempterait `CRM-030` et `CRM-031`.
+
+**Ce qui protège l'écart :** il est **figé par des assertions** de
+`supabase/tests/0005_channels.test.sql`, non par un commentaire. La suite constate que
+`workflow_id` est nullable, qu'elle ne porte aucune clé étrangère, et que `public.workflows`
+n'existe pas. Les trois deviendront rouges le jour où `CRM-031` livrera la table, et forceront la
+reprise de `docs/SPEC-channels.md` §2.5 (même procédé que la décision 51).
+
+**Risque résiduel :** un channel sans workflow n'a pas d'étapes, donc pas de board. Le risque est
+**borné à la fenêtre `CRM-021` → `CRM-031`** : les cards n'existent pas avant `CRM-040`, qui vient
+après les deux. Le seed laisse `workflow_id` nul partout, ce qui est l'état réel du produit, et ne
+fabrique pas une donnée que le modèle ne sait pas encore produire.
+
+**Conséquence sur l'état de l'unité :** `CRM-021` ne peut pas satisfaire `docs/SCHEMA.md` §2 à la
+lettre. Ce n'est pas un défaut de réalisation mais une dépendance non satisfiable dans l'ordre
+actuel du plan.
+
+**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-031`**, qui décidera
+de la forme de la reprise :
+
+1. inscrire dans la Definition of Done de `CRM-031` la pose de la clé étrangère **et** de la
+   contrainte `NOT NULL`, avec la reprise des channels existants — symétrique de ce qu'INC-010 a
+   demandé à `CRM-020` et `CRM-021` ;
+2. déplacer `CRM-030` et `CRM-031` avant `CRM-021` dans `docs/MASTER_PLAN.md` §2, au prix de livrer
+   le moteur de workflow avant l'arborescence qu'il équipe ;
+3. décider que `workflow_id` reste **facultative** dans le modèle — un channel sans workflow étant
+   alors un état légitime du produit — et corriger `docs/SCHEMA.md` §2 en conséquence. Cette option
+   a un coût qu'il faut nommer : tout code lisant `channel.workflow_id` devra traiter le cas nul.
+
+**Lié à :** INC-010 et INC-013 (même mode de défaillance), INC-025 (autre lacune du même tableau).
+
+---
+
+### INC-030 — La politique de lecture des channels ignore les droits fins, faute de `app.can_read_channel`
+
+**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
+`CRM-021`.
+**Relevé le :** 2026-08-04, pendant la spécification de `CRM-021`.
+
+Jumelle d'INC-024, pour les channels.
+
+`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `channels`, une lecture gouvernée par
+`app.can_read_channel`, et une écriture par `app.can_write_channel` pour les tables filles.
+Ces deux fonctions sont parmi les quatre différées par INC-013, dont l'arbitrage appartient au
+responsable et **reste ouvert**. `CRM-021` doit néanmoins livrer une politique de lecture : sans
+elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son CRUD, ni sa lecture,
+ni le cloisonnement entre workspaces.
+
+**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
+prouvée par `CRM-010` — exactement le choix de `CRM-020` pour `tracks`. Elle est donc **correcte
+mais incomplète** : elle cloisonne par workspace, elle n'applique aucun droit fin. Un
+`channel_members.access = 'none'` posé sur un channel ne le masque pas encore.
+
+**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
+créer reviendrait à trancher l'option 1 d'INC-013 à la place du responsable, et la suite pgTAP de
+`CRM-010` — qui constate leur absence par `hasnt_function` — deviendrait rouge.
+
+**Ce qui protège l'écart :** une assertion de `supabase/tests/0005_channels.test.sql` pose une ligne
+`channel_members` restrictive et constate que le channel reste lisible, en nommant `CRM-012`.
+
+**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un channel n'aurait aucun effet.
+Aucune ligne `channel_members` n'existe sur les bases du projet — le seed n'y écrit rien.
+
+**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
+`app.can_read_channel` et `app.can_write_channel`, et quand ces politiques sont resserrées.
+
+**Lié à :** INC-013, INC-024 (la même entrée pour `tracks`), INC-014.
 
 ---
 

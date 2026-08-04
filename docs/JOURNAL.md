@@ -2282,3 +2282,132 @@ démarré du même commit. Le travail parallèle a été **abandonné** plutôt 
 Ce qui est retenu ici est le seul écart qu'une relecture ait révélé — un défaut réel, reproduit par
 un test rouge avant correction (`CLAUDE.md` §18). Le reste du travail parallèle, largement
 équivalent, n'apportait aucune preuve que la version livrée ne portait déjà.
+## 2026-08-04 — `CRM-021` : spécification des channels, écrite après mesure
+
+### Choix de l'unité — pourquoi `CRM-021` alors que trois unités la précèdent dans le plan
+
+`docs/MASTER_PLAN.md` §2 place `CRM-012`, `CRM-013` et `CRM-014` avant `CRM-021`. Les trois ont été
+examinées et écartées, chacune pour une raison vérifiable et non pour convenance :
+
+- **`CRM-012` — droits fins par track et channel.** INC-013 pose noir sur blanc que son arbitrage
+  doit être rendu « **avant `CRM-012`** », parce que cette unité écrira les politiques et figera la
+  forme des requêtes. L'ouvrir reviendrait à trancher l'option 1 d'INC-013 à la place du
+  responsable. Elle porte de surcroît « par track **et channel** » : sa moitié channel n'a
+  aujourd'hui aucune table sur quoi s'exercer.
+- **`CRM-013` — colonnes protégées.** Elle vise `secret_id`, `token_hash`, `current_step_id`,
+  `email_local_part`, `card_events` et `audit_log`. **Aucune** de ces colonnes ni de ces tables
+  n'existe : elles relèvent de `CRM-040`, `CRM-044` et du chunk 4. Il n'y a rien à protéger.
+- **`CRM-014` — harnais des douze preuves de refus.** Dix des douze scénarios exigent des cards,
+  des channels ou des comptes mail. Le livrer maintenant produirait un harnais dont les deux tiers
+  seraient des attentes vides.
+
+`CRM-021` est donc la première unité `[ ]` du plan réellement exécutable. Le fait que `CRM-012`
+attende `CRM-021` pour sa propre moitié channel confirme au passage que l'ordre du plan est ici en
+tension avec lui-même — ce que INC-013 signale déjà, et que cette entrée ne prétend pas résoudre.
+
+Les quatre unités `[~]` ont été revues d'abord, comme la règle l'exige : `CRM-008`, `CRM-010`,
+`CRM-011` et `CRM-020` restent bloquées par des dépendances de chunk 4 ou par des arbitrages
+ouverts (INC-013, INC-015, INC-021, INC-023). Aucune n'a progressé, et aucune n'a régressé.
+
+### Décision 59 — `workflow_id` est livrée nullable et sans clé étrangère, plutôt qu'omise
+
+`docs/SCHEMA.md` §2 l'exige `non nul` avec clé étrangère vers `workflows`. Mesuré :
+`to_regclass('public.workflows')` rend `NULL` — la table arrive avec `CRM-031`, deux étapes plus
+loin dans le plan. INC-029.
+
+Deux conduites étaient possibles : omettre la colonne, ou la livrer sans ses contraintes. La
+seconde a été retenue, pour trois raisons dont une seule aurait suffi.
+
+1. La colonne fait partie de l'identité du channel dans la référence de schéma du projet. L'omettre
+   ferait diverger le dépôt de son propre `docs/SCHEMA.md`, alors que la livrer ne diffère que deux
+   contraintes.
+2. Les types générés de `CRM-006` la porteront, et le code qui viendra la lire n'aura pas à être
+   réécrit.
+3. **Le coût de reprise est identique.** Absente ou nulle, les lignes créées d'ici `CRM-031`
+   devront être renseignées avant que `NOT NULL` puisse être posée. L'omission n'achète donc rien.
+
+Ce qui distingue cette décision d'un contournement est qu'elle est **figée par des assertions** :
+la suite pgTAP constate que la colonne est nullable, qu'elle ne porte aucune clé étrangère, et que
+`public.workflows` n'existe pas. Les trois deviendront rouges à `CRM-031` et forceront la reprise
+(décision 51).
+
+### Décision 60 — Le cloisonnement passe par une clé étrangère **composite**, pas par une clé simple
+
+`docs/SCHEMA.md` impose `workspace_id` sur toute table métier, « y compris lorsqu'il serait
+déductible par jointure », au motif que les politiques RLS restent ainsi simples et indexables.
+C'est une dénormalisation assumée.
+
+Le danger d'une dénormalisation est qu'elle **mente**. Si `channels.workspace_id` pouvait différer
+du workspace du track désigné par `channels.track_id`, la politique de lecture — qui interroge
+`channels.workspace_id` — cloisonnerait sur une valeur fausse : le channel d'un track de A serait
+lisible par les membres de B, avec des politiques pourtant correctes. Aucune règle RLS ne rattrape
+cela, puisqu'elle fait confiance à la donnée.
+
+La clé étrangère est donc portée par le couple :
+
+```sql
+alter table public.tracks   add constraint tracks_id_workspace_id_key unique (id, workspace_id);
+alter table public.channels add constraint channels_track_id_workspace_id_fkey
+	foreign key (track_id, workspace_id) references public.tracks (id, workspace_id) on delete cascade;
+```
+
+**Mesuré sur la sonde, et non déduit :**
+
+- sans `unique (id, workspace_id)` sur `tracks`, PostgreSQL refuse la clé composite —
+  `there is no unique constraint matching given keys for referenced table "tracks"`. L'unicité
+  n'est donc pas décorative, elle est la condition de la garantie ;
+- avec elle, un `workspace_id` incohérent est refusé en `23503` ;
+- un `workspace_id` cohérent passe.
+
+Cette contrainte **remplace** la clé simple `track_id → tracks(id)` : elle la contient. En ajouter
+une seconde coûterait une vérification supplémentaire à chaque écriture sans rien garantir de plus.
+
+Conséquence assumée : cette unité ajoute une contrainte d'unicité à `tracks`, table livrée par
+`CRM-020`. L'ajout est **additif et idempotent** — `(id)` étant déjà clé primaire, `(id,
+workspace_id)` est unique par construction et ne peut refuser aucune ligne. Si une assertion de la
+suite `0004` énumère les contraintes de `tracks`, elle deviendra rouge et sera **étendue dans le
+même changement**, jamais contournée.
+
+### Décision 61 — `position` est attribuée dans la portée du **track**, pas du workspace
+
+Les onglets d'un track forment une barre à eux seuls. Compter à l'échelle du workspace ferait
+dépendre la numérotation d'un track de l'activité d'un autre, et produirait des barres commençant à
+7 ou à 12 sans que rien ne l'explique.
+
+Mesuré sur la sonde : trois insertions sans `position` — deux dans `conseil-ia`, une dans
+`studio-web` — rendent `1`, `2` et `1`. La numérotation redémarre bien à chaque track.
+
+La propriété apprise à `CRM-020` est reprise telle quelle, sans être redécouverte : un trigger
+`BEFORE INSERT` ne distingue pas une `position` omise d'une `position` écrite `null`, et la
+contrainte `NOT NULL` ne protège donc que les mises à jour.
+
+### Décision 62 — La barre d'onglets est une navigation par liens, non un `tablist`
+
+`docs/DESIGN_SYSTEM.md` §12.1 annonçait, comme écart temporaire de `CRM-007`, que « le patron ARIA
+complet — `role="tab"`, `tabindex` glissant, flèches, `Home`, `Fin` — arrive avec les onglets
+réels ». Les onglets réels arrivent ici, et le patron annoncé est **écarté**.
+
+Motif : un `tablist` décrit des panneaux qui s'échangent **dans la même page**, sans changer
+d'adresse. Nos onglets changent l'URL et le contenu principal. Les annoncer comme des onglets
+décrirait aux technologies d'assistance un comportement qui n'est pas celui du produit — et le
+`tabindex` glissant ferait perdre à l'utilisateur la navigation par `Tab` qu'un ensemble de liens
+lui donne naturellement.
+
+Le patron retenu est `nav` + liste de liens, avec `aria-current="page"` sur l'onglet courant.
+`docs/DESIGN_SYSTEM.md` §12.1 est mis à jour dans le même changement : l'écart temporaire devient
+une **position motivée**, ce qui n'est pas la même chose qu'un écart refermé, et le document doit
+le dire.
+
+Corollaire : `docs/DESIGN_SYSTEM.md` §12.4 — « les pilules de track ne sont pas cliquables, le lien
+arrivera avec la destination » — est en revanche un écart réellement **refermé** : la destination
+`/tracks/:slug` est livrée ici.
+
+### Ce que cette spécification ne tranche pas
+
+- **INC-029** — qui pose la clé étrangère et la contrainte `NOT NULL` de `workflow_id`, et quand.
+  Trois options sont proposées, aucune n'est choisie.
+- **INC-030** — `app.can_read_channel` et `app.can_write_channel` restent différées, comme les deux
+  autres fonctions d'INC-013. La politique livrée cloisonne, elle ne restreint pas.
+- **INC-021** — aucun écran de connexion. La route d'un track affichera donc son état « track
+  introuvable » pour un appelant anonyme, qui est le refus réel du backend et non un défaut
+  d'interface. C'est le troisième chunk 3 consécutif où cet arbitrage borne ce qui est démontrable.
