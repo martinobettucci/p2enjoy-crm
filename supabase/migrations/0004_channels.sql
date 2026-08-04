@@ -121,11 +121,48 @@ create table if not exists public.channels (
 	-- section 7, aucun `grant delete`.
 	archived_at  timestamptz,
 	created_at   timestamptz not null default now(),
-	updated_at   timestamptz not null default now(),
-	-- `docs/SCHEMA.md` §2 : « unique par track ». Deux tracks peuvent donc porter un channel
-	-- `prospection` sans se gêner, ce que l'unicité par workspace interdirait.
-	unique (track_id, slug)
+	updated_at   timestamptz not null default now()
 );
+
+-- --- 2.0 bis L'unicité par track, posée de façon convergente ----------------------------------
+-- `docs/SCHEMA.md` §2 : « unique par track ». Deux tracks peuvent donc porter un channel
+-- `prospection` sans se gêner, ce que l'unicité par workspace interdirait.
+--
+-- DÉFAUT RÉEL, REPRODUIT ET CORRIGÉ APRÈS COUP. Cette contrainte était écrite **dans le
+-- `create table`**, qui porte `if not exists`. Mesuré sur la base de développement : après avoir
+-- remplacé l'unicité par une unicité par workspace, la réapplication de ce fichier se termine
+-- **sans erreur** et laisse la contrainte dégradée. La migration était idempotente **sans être
+-- réparatrice**, et la base restait durablement affaiblie — un channel `prospection` devenant
+-- impossible dans deux tracks du même workspace.
+--
+-- C'est exactement le défaut que `CRM-020` avait rencontré sur `tracks_color_check` (décision 57).
+-- La leçon avait été appliquée aux contraintes `CHECK` de la section 2.1 sans être généralisée aux
+-- autres contraintes de table.
+--
+-- La reconstruction n'est pas inconditionnelle, à la différence des contraintes de valeur : un
+-- `drop`/`add` d'une contrainte d'unicité **reconstruit son index** à chaque démarrage de la pile,
+-- ce qui n'est pas le prix négligeable d'une revalidation de `CHECK`. La définition réelle est
+-- donc comparée à celle attendue, et la contrainte n'est refaite que si elles diffèrent.
+
+do $$
+declare
+	definition text;
+begin
+	select pg_get_constraintdef(c.oid) into definition
+	  from pg_constraint c
+	 where c.conrelid = 'public.channels'::regclass
+	   and c.conname = 'channels_track_id_slug_key';
+
+	if definition is null then
+		alter table public.channels
+			add constraint channels_track_id_slug_key unique (track_id, slug);
+	elsif definition <> 'UNIQUE (track_id, slug)' then
+		alter table public.channels drop constraint channels_track_id_slug_key;
+		alter table public.channels
+			add constraint channels_track_id_slug_key unique (track_id, slug);
+	end if;
+end;
+$$;
 
 -- --- 2.1 Contraintes de valeur, posées de façon convergente -----------------------------------
 -- Elles ne sont pas écrites dans le `create table` : celui-ci porte `if not exists`, et une

@@ -310,7 +310,32 @@ else
 	fail "clé composite retirée : la ligne est encore refusée, la garantie vient d'ailleurs"
 fi
 
-# c. Restauration **constatée**, et non supposée.
+# c. Unicité déplacée du track vers le workspace.
+#
+# CETTE DÉGRADATION A TROUVÉ UN DÉFAUT RÉEL DE LA MIGRATION, et c'est le motif de son ajout.
+# L'unicité `(track_id, slug)` était écrite **dans le `create table`**, qui porte `if not exists` :
+# la réapplication du fichier se terminait **sans erreur** en laissant la contrainte dégradée. La
+# migration était idempotente **sans être réparatrice**, et la base restait durablement affaiblie —
+# un channel `prospection` devenant impossible dans deux tracks du même workspace.
+#
+# Le défaut ne pouvait pas se voir autrement : toutes les autres preuves s'exécutent sur une base
+# fraîchement migrée, où la contrainte est correcte. Seule la **restauration** après dégradation
+# l'expose. Même nature que le défaut trouvé par `CRM-020` sur `tracks_color_check`.
+psql_db -c "
+	alter table public.channels drop constraint channels_track_id_slug_key;
+	alter table public.channels add constraint channels_track_id_slug_key unique (workspace_id, slug);
+" >/dev/null
+if psql_db -v ON_ERROR_STOP=1 -c "
+	insert into public.channels (workspace_id, track_id, name, slug, position)
+	values ('$WS_SEED', '$TRACK_STUDIO', 'Homonyme', 'prospection', 98);
+" >/dev/null 2>&1; then
+	fail "unicité déplacée : le slug homonyme passe encore, la dégradation n'a rien changé"
+	psql_db -c "delete from public.channels where slug = 'prospection' and track_id = '$TRACK_STUDIO';" >/dev/null
+else
+	ok "unicité déplacée au workspace : un slug homonyme dans un autre track est refusé à tort"
+fi
+
+# d. Restauration **constatée**, et non supposée.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
 sleep 1
 restaure=$(psql_db -c "
@@ -325,6 +350,18 @@ if printf '%s' "$restaure" | grep -q '^1/' && printf '%s' "$restaure" | grep -q 
 	ok "restauration constatée : la clé composite et la politique d'origine sont revenues"
 else
 	fail "restauration incomplète : « $restaure »"
+fi
+
+# La restauration de l'**unicité** est constatée séparément : c'est elle que la migration ne
+# réparait pas, et un contrôle global l'aurait manquée.
+unicite=$(psql_db -c "
+	select pg_get_constraintdef(oid) from pg_constraint
+	 where conrelid = 'public.channels'::regclass and conname = 'channels_track_id_slug_key';
+")
+if [ "$unicite" = "UNIQUE (track_id, slug)" ]; then
+	ok "restauration constatée : l'unicité est de nouveau **par track**, la migration répare"
+else
+	fail "l'unicité n'est pas réparée par le rejeu de la migration : « $unicite »"
 fi
 
 code=$(http POST "$API/rest/v1/channels" -H "apikey: $ANON_KEY" \

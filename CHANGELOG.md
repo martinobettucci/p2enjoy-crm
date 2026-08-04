@@ -55,6 +55,34 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **La migration des channels était idempotente sans être réparatrice** (`CRM-021`). L'unicité
+  `(track_id, slug)` était écrite **dans le `create table`**, qui porte `if not exists` : après
+  qu'une contrainte a été remplacée à la main — ou par la dégradation d'un harnais —, la
+  réapplication du fichier se terminait **sans erreur** en laissant la base durablement affaiblie.
+  Un channel `prospection` devenait alors impossible dans deux tracks du même workspace, alors que
+  `docs/SCHEMA.md` §2 l'autorise expressément. Reproduit sur la base de développement avant
+  correction.
+  - C'est exactement le défaut que `CRM-020` avait rencontré sur `tracks_color_check` : la leçon
+    avait été appliquée aux contraintes `CHECK` sans être généralisée aux autres contraintes de
+    table.
+  - La contrainte est posée hors du `create table`, de façon convergente **et conditionnelle** :
+    `pg_get_constraintdef` est comparé à la définition attendue, et la contrainte n'est refaite que
+    si elle diffère. Un `drop`/`add` inconditionnel aurait **reconstruit son index à chaque
+    démarrage de la pile**, ce qui n'est pas le prix négligeable d'une revalidation de `CHECK` —
+    vérifié : à rejeu identique, l'OID de la contrainte ne change pas.
+  - **Le défaut ne pouvait pas se voir autrement.** Toutes les autres preuves s'exécutent sur une
+    base fraîchement migrée, où la contrainte est correcte ; seule la **restauration** après
+    dégradation l'expose. `scripts/verify-channels.sh` ne dégradait pas cette contrainte : la
+    dégradation manquante est ajoutée, et la restauration de l'unicité est désormais constatée
+    séparément — un contrôle global l'aurait manquée.
+- **`scripts/verify-webapp.sh` vérifiait la propreté de l'arbre de travail au lieu de sa propre
+  restauration** (`CRM-007`). Son contrôle final employait `git diff`, donc une comparaison avec le
+  **dernier commit**, et passait au rouge dès qu'un des fichiers qu'il altère portait une
+  modification légitime non committée — c'est-à-dire dans son cas d'usage principal, juste avant un
+  commit. Toute unité touchant `TabBar.tsx` ou `workspaces.ts`, ce que `CRM-021` fait, voyait ce
+  contrôle échouer alors que le harnais avait parfaitement restauré ce qu'il avait altéré. Il
+  compare désormais avec les sauvegardes prises avant la première altération, comme
+  `scripts/verify-tracks.sh` le faisait déjà pour son fichier de jetons.
 - **Le débordement horizontal de la barre d'onglets n'était pas signalé** (`CRM-021`). À 390 px, le
   dernier libellé était coupé net au bord du conteneur. Le §7 du design system était respecté — la
   page ne défilait pas — et le §4 violé : « défilable, jamais tronqué **sans indication** ».

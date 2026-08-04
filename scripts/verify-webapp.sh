@@ -376,10 +376,29 @@ done
 echo
 echo "9. Le harnais a tout restauré"
 
-if git diff --quiet -- "${A_RESTAURER[@]}"; then
+# DÉFAUT CORRIGÉ APRÈS COUP. Cette vérification employait `git diff`, c'est-à-dire une comparaison
+# avec le **dernier commit** — et non avec l'état d'avant dégradation. Elle échouait donc dès que
+# l'un de ces fichiers portait une modification légitime non encore committée, ce qui est
+# précisément le cas d'usage principal du harnais : on le rejoue **juste avant** de committer.
+# Toute unité qui touche `TabBar.tsx` ou `workspaces.ts` — `CRM-021` l'a fait — voyait ce contrôle
+# passer au rouge alors que le harnais avait parfaitement restauré ce qu'il avait altéré.
+#
+# La comparaison porte désormais sur les sauvegardes prises avant la première altération. Ce qu'un
+# contrôle de restauration doit prouver est « le harnais rend ce qu'il a pris », jamais « l'arbre de
+# travail est propre », qui n'est pas son affaire. `scripts/verify-tracks.sh` avait déjà dû faire ce
+# raisonnement pour son fichier de jetons ; il est généralisé ici.
+restes=""
+for fichier in "${A_RESTAURER[@]}"; do
+	sauvegarde="$TRAVAIL/$(echo "$fichier" | tr '/' '_')"
+	if [ -f "$sauvegarde" ] && ! cmp -s "$sauvegarde" "$fichier"; then
+		restes="$restes $fichier"
+	fi
+done
+
+if [ -z "$restes" ]; then
 	ok "les fichiers altérés par les contrôles de non-complaisance sont restaurés"
 else
-	fail "des altérations subsistent : $(git diff --name-only -- "${A_RESTAURER[@]}" | tr '\n' ' ')"
+	fail "des altérations subsistent :$restes"
 fi
 
 echo

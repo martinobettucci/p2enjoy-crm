@@ -2501,3 +2501,76 @@ gagné au passage une preuve qu'elle n'avait pas : l'orphelin est désormais ref
 - **Les droits fins ne sont pas appliqués** (INC-030). Un `channel_members.access = 'none'` ne
   masque rien encore, et deux preuves — une pgTAP, un scénario d'API — le constatent pour forcer
   leur révision à `CRM-012`.
+
+### Décision 64 — Une contrainte d'unicité dans un `create table if not exists` n'est jamais réparée
+
+*Relevée après la livraison de `CRM-021`, en rejouant ses preuves sur un second poste.*
+
+**Problème.** La dégradation volontaire de l'unicité `(track_id, slug)` en unicité par workspace
+n'était pas rattrapée par la réapplication de `supabase/migrations/0004_channels.sql`. Le fichier se
+terminait **sans erreur**, et la base restait durablement affaiblie : un channel `prospection`
+devenait impossible dans deux tracks du même workspace, ce que `docs/SCHEMA.md` §2 autorise
+expressément.
+
+**Observation, mesurée et non déduite.** La contrainte était déclarée **dans le `create table`**,
+qui porte `if not exists` : au second passage, PostgreSQL saute l'instruction entière, contrainte
+comprise. La migration était **idempotente sans être réparatrice** — exactement le défaut que
+`CRM-020` avait rencontré sur `tracks_color_check` (décision 57). La leçon avait alors été
+appliquée aux contraintes `CHECK` de la section 2.1, sans être généralisée aux autres contraintes
+de table : c'est la généralisation qui manquait, pas la compréhension.
+
+**Décision.** La contrainte est posée hors du `create table`, de façon convergente **et
+conditionnelle**. La différence avec les contraintes `CHECK` est délibérée : un `drop`/`add`
+inconditionnel d'une contrainte d'unicité **reconstruit son index** à chaque démarrage de la pile,
+là où une revalidation de `CHECK` est négligeable. `pg_get_constraintdef` est donc comparé à la
+définition attendue, et la contrainte n'est refaite que si elle diffère. Vérifié : à rejeu
+identique, l'OID de la contrainte ne change pas.
+
+**Ce que cela dit des preuves.** Le défaut était invisible à toutes les autres : elles s'exécutent
+sur une base fraîchement migrée, où la contrainte est correcte. Seule la **restauration** après
+dégradation l'expose — et `scripts/verify-channels.sh` ne dégradait pas cette contrainte-là. La
+dégradation manquante est ajoutée, et la restauration de l'unicité est constatée **séparément** du
+reste : un contrôle global, qui vérifie « la clé composite et la politique sont revenues », serait
+resté vert pendant que l'unicité restait fausse.
+
+**Règle qui en sort, et qui vaut pour les unités suivantes.** Une contrainte qu'aucune dégradation
+n'exerce n'est pas une contrainte prouvée. La liste des dégradations d'un harnais doit couvrir
+**chaque** contrainte que la migration déclare, et pas seulement celles qui portent la garantie la
+plus visible.
+
+### Décision 65 — Un harnais vérifie sa propre restauration, pas la propreté de l'arbre
+
+**Problème.** `scripts/verify-webapp.sh`, livré par `CRM-007`, terminait par
+`git diff --quiet -- webapp/src/app/TabBar.tsx webapp/src/lib/workspaces.ts`. `CRM-021` modifie
+`TabBar.tsx` pour y livrer les onglets réels : le contrôle passait au rouge alors que le harnais
+avait parfaitement restauré ce qu'il avait altéré.
+
+**Observation.** `git diff` compare au **dernier commit**, pas à l'état d'avant dégradation. Le
+contrôle échouait donc dans le cas d'usage principal du harnais — on le rejoue juste **avant** de
+committer, donc sur un arbre nécessairement modifié. `scripts/verify-tracks.sh` avait déjà dû
+résoudre le même problème pour son fichier de jetons, en le notant explicitement ; la leçon n'avait
+pas été reportée.
+
+**Décision.** La comparaison porte sur les sauvegardes que le harnais prend déjà avant sa première
+altération. Ce qu'un contrôle de restauration doit prouver est « le harnais rend ce qu'il a pris »,
+jamais « l'arbre de travail est propre », qui n'est pas son affaire — et qui, affirmé par un
+harnais, ferait échouer toute livraison touchant les fichiers qu'il altère.
+
+### Décision 66 — Deux exécutions concurrentes de la routine ont livré `CRM-021` en parallèle
+
+**Fait.** Deux exécutions de la routine d'avancement du backlog ont travaillé simultanément sur
+`CRM-021`, en partant du même commit (`07da59b`, la spécification). L'une a poussé la sienne ; la
+seconde a découvert le conflit au moment de se resynchroniser.
+
+**Décision.** L'implémentation **déjà poussée fait foi**, et le travail parallèle est abandonné
+plutôt que fusionné : les deux étaient complètes et vérifiées, et rejouer un merge de deux
+migrations, deux suites pgTAP et deux harnais aurait produit un ensemble que personne n'a éprouvé
+tel quel. Seuls les **défauts trouvés par l'exécution parallèle et absents de la version retenue**
+sont reportés — les décisions 64 et 65 ci-dessus. La branche du travail abandonné est conservée
+localement sous `travail-crm021-parallele`, sans être poussée.
+
+**Ce que cela change pour la suite.** La consigne « resynchronise-toi d'abord » ne suffit pas quand
+deux exécutions se chevauchent : la seconde peut partir d'un état à jour et découvrir le conflit une
+heure plus tard. Le fait est consigné ici parce qu'il se reproduira, et que le réflexe correct est
+celui appliqué ici — vérifier ce que la version poussée contient **déjà**, et n'ajouter que ce qui
+lui manque réellement, plutôt que d'imposer son propre travail.
