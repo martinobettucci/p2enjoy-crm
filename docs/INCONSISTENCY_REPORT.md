@@ -1192,6 +1192,13 @@ main avec le secret, puis `runDev.sh` l'a réutilisée — `compose up` ne recon
 présente. C'est un geste hors dépôt, que rien ne documente et que la prochaine exécution devra
 refaire.
 
+**Prédiction vérifiée, le 2026-08-04, pendant `CRM-032`.** La phrase ci-dessus disait « la prochaine
+exécution devra le refaire » ; elle a dû le refaire. Sur un conteneur neuf, `./runDev.sh` s'est
+arrêté exactement au même endroit, avec le même `SELF_SIGNED_CERT_IN_CHAIN`, et la pile n'a démarré
+qu'après un `docker build --secret id=npm_ca,src=…` lancé à la main. Le coût de l'entrée est donc
+récurrent, et non ponctuel : chaque exécution de la routine le paie avant de pouvoir produire la
+moindre preuve. L'arbitrage attendu ci-dessous n'en devient que plus concret.
+
 **Ce qui n'est pas fait, et pourquoi.** `docker-compose.dev.yml` et `runDev.sh` sont des livrables
 de `CRM-002` et de `CRM-007`, toutes deux `[x]`. Les corriger reviendrait à rouvrir deux unités
 vérifiées pendant un passage consacré à une troisième, et à toucher les preuves de `CRM-002`
@@ -1370,6 +1377,11 @@ navigateur.
 compatibilité a été créée **hors dépôt**, faisant pointer les chemins attendus vers les binaires
 présents. Le geste n'est documenté nulle part et la prochaine exécution devra le refaire — même
 nature qu'INC-032.
+
+**Prédiction vérifiée, le 2026-08-04, pendant `CRM-032`.** Elle a dû être refaite : le conteneur
+neuf fournissait de nouveau la révision `1194`, et `npm run e2e:ui` échouait sur ses **37**
+scénarios avant que les liens ne soient recréés. Une fois l'arborescence rétablie, les 37 sont
+passés. Comme pour INC-032, le coût est **récurrent**.
 
 **Ce qui n'est pas fait, et pourquoi.** `e2e/playwright.config.ts` est un livrable de `CRM-008`,
 et y écrire un `executablePath` conditionnel reviendrait à rouvrir cette unité pendant un passage
