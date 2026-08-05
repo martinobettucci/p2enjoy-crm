@@ -12,6 +12,50 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-065 — L'adresse d'une card nomme un track et un channel que rien ne confronte à la card
+
+**Nature :** règle absente ; aucune spécification ne dit ce qu'une adresse incohérente doit rendre.
+**Relevé le :** 2026-08-05, pendant la reprise de `CRM-037`.
+
+`docs/SPEC-form-composer.md` §4.6 pose l'adresse `/tracks/:slugTrack/:slugChannel/cards/:idCard` et
+précise que la card est désignée par son **identifiant**. C'est ce que fait le code : la requête
+porte `id=eq.<idCard>` et `deleted_at=is.null`, et **rien d'autre**.
+
+**Conséquence, structurelle et non hypothétique.** Les deux premiers segments ne sont confrontés à
+rien. Une adresse formée du bon identifiant de card et d'un couple `(track, channel)` quelconque
+rend le formulaire de cette card, sous les onglets de ce track-là. Le §4.6 bis, écrit pendant ce
+passage, alimente désormais la barre d'onglets depuis `slugTrack` : l'incohérence devient
+**visible** là où elle était seulement latente.
+
+**Ce que cela ne met pas en cause.** Aucun droit n'est contourné : la card n'est rendue que si la
+politique de lecture de `public.cards` la consent à l'appelant, et les channels affichés ne le sont
+que si celle de `public.channels` les consent. Deux lectures autorisées mises côte à côte ne
+donnent pas un accès de plus. Le défaut est de **cohérence d'affichage**, pas d'autorisation.
+
+**Ce qui n'est pas su.** `docs/SPEC-cards.md` décrit le rattachement d'une card à son channel, mais
+aucun chapitre ne dit ce qu'une **adresse** incohérente doit produire. Trois lectures se défendent,
+et aucune n'est appliquée en silence :
+
+1. **rediriger** vers l'adresse canonique de la card, déduite de son channel réel — le plus
+   confortable, mais suppose que le rendu sache lire le channel de la card, ce qui n'est pas dans
+   le périmètre de `CRM-037` ;
+2. **refuser**, en rendant le même état « card introuvable » qu'un identifiant inconnu — cohérent
+   avec la discrétion de `docs/SPEC-permissions-rls.md` §7, au prix d'une requête de plus ;
+3. **tolérer**, en actant que les deux premiers segments ne sont qu'un contexte de navigation et
+   n'ont aucune valeur d'assertion — ce que fait le code aujourd'hui, sans que ce soit écrit.
+
+**Comportement retenu :** inchangé — l'option 3, de fait. Elle n'est pas *choisie* ici, elle est
+*constatée*, et c'est la raison de cette entrée.
+
+**Arbitrage attendu du responsable**, et rattachement de la correction à l'unité qui porte le
+rattachement d'une card à son channel — `CRM-040`, ou `CRM-045` qui traite du déplacement d'une
+card entre channels — plutôt qu'au rendu du formulaire.
+
+**Lié à :** `docs/SPEC-form-composer.md` §4.6 et §4.6 bis, `docs/SPEC-cards.md`,
+`docs/SPEC-permissions-rls.md` §7.
+
+---
+
 ### INC-064 — Un contrôle de restitution comparant à `HEAD` peut exister dans d'autres harnais, et n'y a pas été cherché
 
 **Nature :** défaut de méthode possiblement répliqué, non vérifié.

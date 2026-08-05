@@ -451,6 +451,54 @@ La card est désignée par son **identifiant** et non par un slug : `docs/SPEC-c
 donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
 publique le divulguerait.
 
+### 4.6 bis Ce que la coquille montre autour du formulaire
+
+Ce paragraphe est écrit **après** la première livraison du §4.6, et **avant** la ligne de code qui
+le tient : la route livrée le 2026-08-05 laissait la barre d'onglets vide, et rien dans ce chapitre
+ne disait ce qu'elle devait montrer. L'écart a été relevé **sur une capture**, consigné comme limite
+de `CRM-037` — « la barre d'onglets reste vide sur la route d'une card […] à reprendre au prochain
+passage » —, et c'est ce passage.
+
+**La règle, et d'où elle vient.** `docs/DESIGN_SYSTEM.md` §4 pose : « Onglets : les channels du
+track courant. » La route du §4.6 porte un track courant — son premier segment est un `slugTrack`,
+et le second un `slugChannel`. La coquille montre donc, autour du formulaire, **exactement** ce
+qu'elle montre sur la route d'un track :
+
+| Élément | Sur `/tracks/:slugTrack/:slugChannel` | Sur `/tracks/:slugTrack/:slugChannel/cards/:idCard` |
+|---|---|---|
+| Barre latérale | tracks du workspace | identique |
+| Titre de route | nom du track | **titre de la card** (déjà livré) |
+| Barre d'onglets | channels du track porteur, onglet courant marqué | **identique** |
+
+Les channels sont lus par le **même chargeur** que la route d'un track — `docs/SPEC-channels.md`
+§5, requête filtrée côté serveur sur `track_id`, archivés exclus, ordonnés par `position` puis par
+`name`. Un second chargeur qui lirait les mêmes lignes autrement finirait par en diverger.
+
+**L'onglet courant n'a pas besoin d'être calculé.** Le patron du §5.3 de `docs/SPEC-channels.md`
+est une navigation par `NavLink` vers `/tracks/:slugTrack/:slugChannel`, dont l'état actif se
+résout par **préfixe de segments** : l'adresse d'une card commence par celle de son channel, donc
+l'onglet du channel porteur est actif de lui-même. Aucune règle particulière n'est ajoutée pour la
+route de card — en ajouter une créerait une seconde définition de « onglet courant ».
+
+**Ce que la coquille fait d'un échec.** Le chargement des channels rejoint les deux chargements
+déjà présents — contexte d'espace de travail, tracks — dans la décision de la zone principale : un
+refus l'emporte sur une panne, une panne offre une reprise, et la reprise les relance **tous**.
+Un échec de channels remplace donc le formulaire par l'état d'erreur, plutôt que d'être avalé par
+une barre d'onglets qui n'a la place ni de l'expliquer ni d'offrir une reprise. C'est la règle déjà
+posée pour la route d'un track, et non une règle propre à cet écran.
+
+**Ce que ce paragraphe ne dit pas, délibérément.** Il n'exige **aucun contrôle de cohérence** entre
+la card et le couple `(slugTrack, slugChannel)` de l'adresse : la card est résolue par son seul
+identifiant (§4.6), et rien ne vérifie qu'elle appartient au channel nommé. Une adresse dont le
+track et le channel seraient étrangers à la card affiche donc le formulaire de la card et les
+onglets de ce track. Le fait est réel, il n'est pas tranché ici, et il est porté par **INC-065**.
+
+**État attendu lorsque rien n'est consenti.** L'appelant étant anonyme (INC-021), la résolution du
+track rend zéro ligne, les channels ne sont pas demandés, et la barre affiche son état vide — le
+même écran qu'avant ce paragraphe, pour une raison différente et **mesurable** : ce n'est plus une
+barre qu'on n'a pas alimentée, c'est un refus du backend. La distinction se prouve en substituant
+la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5), et le §7.3 l'exige.
+
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
 - **Aucune écriture.** Enregistrer une valeur exige une session, que la webapp n'a pas (INC-021).
@@ -818,6 +866,7 @@ Ce qui est atteignable, et exigé de `CRM-037` :
 | Unitaire | La composition du §4.1 sur les quatre destinations du §4.2, l'absence de règle valant `visible`, l'ordre par `position`, le champ archivé porteur d'une valeur, le prédicat « renseigné » du §4.3 sur le tableau de cas partagé, et le rendu du composant réel : astérisque, mention « requis pour passer à », `role="alert"`, `aria-describedby`, `aria-invalid`, section repliée |
 | API | Le tableau de cas du §4.3 écrit dans de vraies lignes `card_field_values` par la vraie route, chaque valeur confrontée au refus `missing_required_fields` de `move_card` : la lecture SQL de « renseigné » et la lecture TypeScript sont comparées sur les mêmes valeurs |
 | E2E | La route du §4.6 atteinte par un appelant **anonyme** : elle rend l'état « card introuvable », qui est le refus réel du backend ; puis, **la réponse réseau substituée** — procédé endossé par `docs/DESIGN_SYSTEM.md` §12.5 —, le formulaire chargé, sa section repliée ouverte au clavier, son état d'exigence, et les quatre paliers du §7 du design system |
+| E2E (§4.6 bis) | La route du §4.6 demande réellement les channels de son track porteur — requête filtrée sur `track_id`, archivés exclus — et, la réponse substituée, la barre d'onglets porte ces channels avec l'onglet du channel de l'adresse marqué `aria-current="page"` ; anonyme, elle affiche l'état vide, qui est le refus réel du backend |
 | Visuel | Captures des états ci-dessus, produites depuis l'application réellement construite et servie, **observées** avant livraison |
 
 ## 8. Points ouverts

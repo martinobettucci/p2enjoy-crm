@@ -305,6 +305,21 @@ conteneur, déjà en `overflow-x-auto` depuis `CRM-007`.
 
 Lorsqu'un track n'a **aucun** channel, la barre affiche son état vide, comme aujourd'hui.
 
+### 5.4 La barre d'onglets ne s'arrête pas à la route d'un track — `CRM-037`, 2026-08-05
+
+Le §5 ci-dessus dit « le track courant est désormais porté par la route », et `CRM-021` n'avait
+qu'une route porteuse : `/tracks/:slugTrack[/:slugChannel]`. Une seconde est arrivée depuis —
+`/tracks/:slugTrack/:slugChannel/cards/:idCard` (`docs/SPEC-form-composer.md` §4.6) —, et elle
+porte le même track courant.
+
+**Règle générale, écrite ici parce qu'elle vaut pour toute route à venir :** toute route dont
+l'adresse porte un `slugTrack` alimente la barre d'onglets par le chargeur de ce chapitre, et
+aucune ne réécrit sa propre lecture des channels. Les routes transverses — Inbox, Ma journée,
+Réglages — n'en portent pas et gardent l'état vide, qui n'est pas un cas d'erreur.
+
+Le détail de ce que la coquille montre autour du formulaire d'une card, et de ce qu'elle fait d'un
+échec de chargement, est écrit là où vit cet écran : `docs/SPEC-form-composer.md` §4.6 bis.
+
 ## 6. Autorisations
 
 ### 6.1 Règle

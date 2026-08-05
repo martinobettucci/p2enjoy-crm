@@ -5601,3 +5601,58 @@ ne le lit. C'est le pendant des décisions 143, 145 et 157, qui traitaient toute
 dans ce passage : ce sont les livrables d'autres unités, et les reprendre ici rouvrirait celles-là
 (`CLAUDE.md` §13). Le constat est porté par INC-064 pour que la revue soit faite là où elle
 appartient.
+
+### Décision 167 — La barre d'onglets d'une card se lit avec le chargeur des channels, et non avec un second
+
+**Problème.** `CRM-037` a livré la route `/tracks/:slugTrack/:slugChannel/cards/:idCard` en
+transmettant `slugTrack` à la coquille sans lui donner les channels du track porteur. La barre
+d'onglets affichait donc « Aucun channel » sur **toute** route de card, alors que
+`docs/DESIGN_SYSTEM.md` §4 pose « Onglets : les channels du track courant » et que cette route en
+porte un. Le défaut avait été relevé sur une capture pendant la livraison, et laissé volontairement
+en l'état pour ne pas mêler deux sujets dans un commit (`CLAUDE.md` §13) — « à reprendre au prochain
+passage sur `CRM-037` ». C'est ce passage.
+
+**Hypothèses écartées.**
+
+- *Écrire une lecture des channels propre à la route de card.* Deux chargeurs pour les mêmes lignes
+  finissent par diverger : l'un filtrerait les archivés, l'autre non ; l'un ordonnerait par
+  `position` puis `name`, l'autre par `position` seul. La règle du §5 de `docs/SPEC-channels.md` est
+  déjà écrite une fois, elle est réemployée telle quelle — `useContenuTrack`, qui résout le track
+  par son slug puis lit ses channels.
+- *Calculer l'onglet actif à partir de `slugChannel`.* Inutile, et coûteux : le patron du §5.3 est
+  une navigation par `NavLink` vers `/tracks/:slugTrack/:slugChannel`, dont l'état actif se résout
+  par préfixe de segments. MESURÉ dans le navigateur : sur
+  `/tracks/inter-entreprises/formations/cards/…c6`, l'onglet `formations` porte
+  `aria-current="page"` sans qu'aucune règle ne soit ajoutée. Une seconde définition de « onglet
+  courant » aurait été une occasion de divergence de plus.
+
+**Décision.** `RouteCard` charge le contenu du track porteur par `useContenuTrack` et le transmet à
+la coquille — `etatChannels`, `onRechargerChannels`, `slugTrack` —, exactement comme `RouteTrack`.
+Le formulaire, lui, continue d'être chargé par `useContenuCard` : les deux chargements sont
+indépendants, comme le sont déjà ceux du contexte d'espace de travail et des tracks depuis
+`CRM-020`.
+
+**Conséquences, y compris celles qui coûtent.**
+
+- Deux requêtes de plus sur la route d'une card — la résolution du track, puis ses channels. Elles
+  ne sont pas gratuites, et elles sont le prix de la règle du §4 du design system. La seconde n'est
+  pas émise lorsque la première rend zéro ligne, ce que le chargeur fait déjà.
+- Un échec de chargement des channels **remplace le formulaire** par l'état d'erreur, la coquille
+  décidant sur l'ensemble des chargements. C'est la règle déjà posée pour la route d'un track :
+  aucun échec n'est avalé par une barre qui n'a la place ni de l'expliquer, ni d'offrir une reprise.
+  Le comportement est écrit au §4.6 bis plutôt que découvert.
+- L'appelant étant anonyme (INC-021), l'écran **ne change pas** aujourd'hui : la résolution du track
+  rend zéro ligne et la barre garde son état vide. Ce qui change est la **raison** de cet état, et
+  elle est désormais mesurable — la preuve d'interface substitue la réponse réseau et montre les
+  onglets réels.
+
+**Ce que la décision a rendu visible, et qui n'est pas tranché.** Alimenter la barre depuis
+`slugTrack` met en évidence que rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse
+à la card qu'elle désigne : une adresse incohérente affiche le formulaire de la card sous les
+onglets d'un autre track. Aucun droit n'est contourné — les deux lectures restent soumises à leurs
+politiques —, mais aucune spécification ne dit ce qu'une telle adresse doit rendre. Consigné en
+**INC-065**, comportement inchangé, arbitrage demandé.
+
+**Vérifications.** Test unitaire du chargement transmis par la route, preuve d'interface sur le
+build de production — requête `channels` réellement émise et filtrée sur `track_id`, onglets rendus
+et onglet courant marqué, réponse substituée —, captures produites et observées.
