@@ -30,6 +30,32 @@ d'exécuter le code attendu.
 
   Aucun code n'accompagne ce changement.
 
+- **La mémoire d'une affaire, côté serveur** — `CRM-044`, `docs/SPEC-cards.md` §14. Une affaire se
+  souvient désormais de ce qui lui est arrivé : sa création, chaque franchissement d'étape, chaque
+  changement de responsable, son archivage, sa mise à la corbeille et leurs retours, et chaque
+  valeur de formulaire écrite ou modifiée. Chaque trace porte sa date, son auteur lorsqu'il y en a
+  un, et l'état d'avant comme celui d'après.
+
+  **Personne ne peut écrire dans cette mémoire, et personne ne peut la corriger.** Ni un
+  utilisateur, ni un administrateur, ni même le compte technique qui installe le jeu de
+  démonstration : c'est la base elle-même qui écrit, au moment où l'acte a lieu. Une trace posée ne
+  peut plus être modifiée, par qui que ce soit. Ce que la mémoire d'une affaire montre a donc
+  réellement eu lieu — ce n'est plus une convention de développement, c'est une propriété du
+  produit.
+
+  **Une écriture qui ne change rien ne laisse aucune trace** : réenregistrer une fiche sans la
+  modifier n'ajoute pas de ligne. Le jeu de démonstration en profite pour montrer une affaire
+  déplacée puis ramenée à son étape, et une affaire réattribuée puis rendue à son responsable — les
+  deux histoires sont réelles, et l'état de démonstration reste exactement celui d'hier.
+
+  **Ce que cette livraison ne fait pas encore** : elle n'a pas d'écran. La colonne de droite d'une
+  affaire montre toujours la seule discussion. Le motif qu'on saisit en déplaçant une affaire perdue
+  n'est toujours conservé nulle part. Les emails et les activités — appels, réunions — n'ont pas
+  encore de table, et n'apparaissent donc pas dans le fil.
+
+  **À savoir avant tout déploiement** : cette table grandit sans limite et rien ne la purge ; aucune
+  règle de conservation n'a été décidée. Le détail est dans `docs/PROD_MIGRATIONS.md`.
+
 - **Les commentaires d'une affaire, côté serveur** — `CRM-043`, `docs/SPEC-cards.md` §13. Une
   affaire peut désormais porter une **discussion** : chaque membre qui a le droit d'écrire dans son
   channel peut y publier un commentaire, le corriger, ou le supprimer — et **lui seul** peut

@@ -6678,3 +6678,27 @@ aucune manière de les réconcilier.
 d'activité se lit habituellement du plus récent au plus ancien : le fil contient une conversation,
 et `CRM-043` avait écrit cette règle précisément pour que cette unité ne l'inverse pas par
 habitude. Le coût est nommé : sur une affaire longue, les faits récents seront en bas.
+
+### Décision 210 — Seule la naissance d'une card est idempotente ; son histoire ne l'est pas
+
+**Problème, trouvé en exécutant.** La preuve d'API assérait « 27 événements sur les cards du
+seed ». Elle est verte seule et **rouge dans la suite complète** : 93 événements. La cause n'est pas
+un défaut — c'est le produit qui fonctionne. `e2e/api/move-card.spec.ts` déplace des cards du seed
+et les remet, `e2e/api/valeurs-champs.spec.ts` écrit des valeurs : chacun de ces gestes laisse sa
+trace, puisque c'est exactement ce que `CRM-044` livre.
+
+**Décision.** Un seul compte exact est asséré partout : **neuf `created`**, une card ne naissant
+qu'une fois. Tout le reste est borné **par le bas** — au moins deux `moved`, au moins deux
+`assigned`, au moins quatorze `field_changed`, au moins quatre événements portant un acteur réel.
+Le chiffre de 27 reste écrit dans la spécification et dans le seed, avec sa condition de validité :
+**immédiatement après l'application du seed sur une base neuve**, ce que
+`scripts/verify-timeline.sh` mesure à cet instant-là.
+
+**Ce qui a été écarté.** Nettoyer la timeline entre les fichiers de preuve : ce serait supprimer des
+lignes d'une table append-only, c'est-à-dire démonter la propriété que l'unité entière construit.
+Et filtrer les événements « du seed » par leur date : une heure de coupure est une temporisation
+arbitraire, que `CLAUDE.md` §18 range parmi les façons de masquer une erreur.
+
+**Conséquence.** La croissance du fil n'est pas un défaut à contenir : c'est la **démonstration**
+que la trace est réelle et qu'aucune écriture n'y échappe. C'est la sixième fois qu'une exécution
+dénonce ce qu'une lecture laissait passer.

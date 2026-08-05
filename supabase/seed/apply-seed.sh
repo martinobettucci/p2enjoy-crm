@@ -1137,6 +1137,94 @@ fi
 info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
 info "Celui de la card c5 porte pour auteur le viewer : témoin de la preuve de lecture (décision 50)"
 
+# --- 8 sexies. Événements de timeline — docs/SPEC-cards.md §14.11, docs/SPEC-seed.md §2.15 -----
+# LE SEED N'ÉCRIT AUCUN ÉVÉNEMENT, ET IL NE LE PEUT PAS. `card_events` n'accorde le privilège
+# `INSERT` à personne, `service_role` compris — MESURÉ, décision 205. Cette section est donc la
+# première dont le contenu est ENTIÈREMENT DÉRIVÉ des autres actes du seed : les 9 cards insérées
+# ont produit 9 `created`, les 14 valeurs de formulaire ont produit 14 `field_changed`.
+#
+# Restent deux familles qu'aucune écriture du seed ne produit spontanément, parce que le seed pose
+# ses cards dans leur état final : `moved` et `assigned`. Elles sont démontrées par DEUX
+# ALLERS-RETOURS qui laissent l'état du seed RIGOUREUSEMENT IDENTIQUE — c'est la condition pour
+# qu'aucune assertion des unités précédentes ne bouge. Seule l'histoire s'allonge.
+#
+# LES DEUX GESTES PASSENT PAR LE JETON RÉEL DE L'ADMINISTRATRICE, non par la clé de service :
+#   * `move_card` refuserait la clé de service — `auth.uid()` y est nul, donc `card_not_found` ;
+#   * et l'acteur des quatre événements est ainsi un PROFIL RÉEL, ce qu'aucun autre événement du
+#     seed ne démontre (les 23 autres portent `actor_id` nul, marque du service).
+#
+# CONVERGENCE : les deux gestes sont CONDITIONNÉS PAR UNE RELECTURE. Un événement ne peut être ni
+# réécrit ni supprimé ; sans cette garde, chaque rejeu allongerait le fil de quatre lignes et le
+# seed cesserait de converger. La lecture passe par la clé de service, qui a le droit de LIRE la
+# table sans avoir celui d'y écrire.
+
+echo
+say "8 sexies. Événements de timeline"
+
+# Rend le code HTTP d'un appel effectué avec le jeton RÉEL de l'administratrice.
+api_admin() {
+	local method=$1 chemin=$2
+	shift 2
+	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$API$chemin" \
+		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+		-H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' \
+		"$@"
+}
+
+# Nombre d'événements d'un type déjà portés par une card, lu avec la clé de service.
+evenements_de() {
+	curl -s "$API/rest/v1/card_events?card_id=eq.$1&type=eq.$2&select=id" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+		| jq -r 'length'
+}
+
+CARD_MOUVEMENT=5eed0000-0000-4000-8000-0000000000c4   # Refonte intranet Ville de Lyon, en négociation
+ETAPE_NEGOCIATION=5eed0000-0000-4000-8000-000000000063
+ETAPE_RELANCE=5eed0000-0000-4000-8000-000000000062
+CARD_ATTRIBUTION=5eed0000-0000-4000-8000-0000000000c1 # Refonte du site vitrine
+OWNER_DECLARE=5eed0000-0000-4000-8000-000000000012    # Driss Lemoine, responsable au contrat du seed
+OWNER_TRANSITOIRE=5eed0000-0000-4000-8000-000000000011 # Camille Aubert, le temps de l'aller-retour
+
+# --- Aller-retour d'étape : deux `moved`, par la VRAIE RPC -------------------------------------
+# « Revenir en relance » puis « Engager la négociation » : deux transitions RÉELLEMENT DÉCLARÉES du
+# workflow global. `entered_step_at` et `position` sont réécrits par `move_card` — seul effet que
+# l'aller-retour ne rend pas à l'identique, et il est nommé (docs/SPEC-cards.md §14.11).
+if [ "$(evenements_de "$CARD_MOUVEMENT" moved)" = '0' ]; then
+	for etape in "$ETAPE_RELANCE" "$ETAPE_NEGOCIATION"; do
+		code=$(api_admin POST /rest/v1/rpc/move_card \
+			-d "$(jq -nc --arg c "$CARD_MOUVEMENT" --arg e "$etape" \
+			      '{card_id: $c, to_step_id: $e}')")
+		attendu "$code" "déplacement de ${CARD_MOUVEMENT: -2} vers ${etape: -2}" 200
+	done
+	etape_finale=$(jq -r '.current_step_id' "$CORPS")
+	[ "$etape_finale" = "$ETAPE_NEGOCIATION" ] || die "l'aller-retour de ${CARD_MOUVEMENT: -2} n'a pas
+        rendu la card à son étape de départ : « $etape_finale »."
+	info "c4 : aller-retour d'étape par move_card — 2 événements moved, état rendu identique"
+else
+	info "c4 : déjà déplacée au moins une fois — rien à faire (convergence par état)"
+fi
+
+# --- Aller-retour de responsable : deux `assigned`, par un VRAI PATCH --------------------------
+if [ "$(evenements_de "$CARD_ATTRIBUTION" assigned)" = '0' ]; then
+	for proprietaire in "$OWNER_TRANSITOIRE" "$OWNER_DECLARE"; do
+		code=$(api_admin PATCH "/rest/v1/cards?id=eq.$CARD_ATTRIBUTION" \
+			-H 'Prefer: return=representation' \
+			-d "$(jq -nc --arg o "$proprietaire" '{owner_id: $o}')")
+		attendu "$code" "attribution de ${CARD_ATTRIBUTION: -2} à ${proprietaire: -2}" 200
+	done
+	owner_final=$(jq -r '.[0].owner_id' "$CORPS")
+	[ "$owner_final" = "$OWNER_DECLARE" ] || die "l'aller-retour de responsable de ${CARD_ATTRIBUTION: -2}
+        n'a pas rendu la card à son responsable déclaré : « $owner_final »."
+	info "c1 : aller-retour de responsable par PATCH — 2 événements assigned, état rendu identique"
+else
+	info "c1 : déjà réattribuée au moins une fois — rien à faire (convergence par état)"
+fi
+
+total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

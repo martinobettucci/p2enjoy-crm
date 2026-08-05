@@ -483,7 +483,6 @@ test.describe('PREUVE N° 5 — même une administratrice ne déplace pas une ca
 const ABSENCES = [
 	{ preuve: 6, table: 'mail_inbound_accounts', unite: 'CRM-052' },
 	{ preuve: 7, table: 'mail_outbound_identities', unite: 'CRM-053' },
-	{ preuve: 8, table: 'card_events', unite: 'CRM-044' },
 	{ preuve: 8, table: 'audit_log', unite: 'CRM-072' },
 	{ preuve: 9, table: 'attachments', unite: 'CRM-057' },
 ] as const
@@ -501,6 +500,31 @@ test.describe('PREUVES N° 6, 7, 8, 9 — leurs tables n’existent pas, et c’
 			expect((await reponse.json()) as Erreur).toMatchObject({ code: 'PGRST205' })
 		})
 	}
+})
+
+// PREUVE N° 8, MOITIÉ SATISFAISABLE DEPUIS `CRM-044`. `card_events` est sortie de la liste des
+// absences ci-dessus : elle existe, et le refus qu'elle oppose est désormais MESURABLE plutôt
+// qu'attendu. Le contrat complet — lecture filtrée, immuabilité, cycle de vie — est exercé par
+// `e2e/api/timeline.spec.ts` ; ce qui est repris ici est la ligne du §7 de
+// `docs/SPEC-permissions-rls.md`, et elle seule.
+test.describe('PREUVE N° 8 — insertion directe dans `card_events`, refusée', () => {
+	test('403 et 42501 : aucun rôle ne peut forger un événement, `service_role` compris', async ({
+		request,
+	}) => {
+		const card = await request.get('/rest/v1/cards?select=id,workspace_id&limit=1', {
+			headers: enTetesService(),
+		})
+		const cards = (await card.json()) as Array<{ id: string; workspace_id: string }>
+		const cible = cards.at(0)
+		expect(cible, 'aucune card en base : le scénario n’aurait aucun sujet').toBeDefined()
+
+		const reponse = await request.post('/rest/v1/card_events', {
+			headers: enTetesService(),
+			data: { card_id: cible?.id, workspace_id: cible?.workspace_id, type: 'moved' },
+		})
+		expect(reponse.status()).toBe(403)
+		expect((await reponse.json()) as Erreur).toMatchObject({ code: '42501' })
+	})
 })
 
 test.describe('PREUVE N° 12 — `queue_outbound_email` n’existe pas, et c’est asséré', () => {

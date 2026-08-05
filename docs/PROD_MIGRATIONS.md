@@ -164,6 +164,8 @@ confirmée avec le responsable du workspace concerné : un droit fin posé « po
 | 14 | `supabase/migrations/0014_colonnes_protegees.sql` | **Protection de colonne** : retire à `authenticated` le privilège `UPDATE` sur `public.cards.email_local_part`, par la seule forme que PostgreSQL admette — `revoke update` de table, puis `grant update (…)` énumérant les **douze** colonnes qui restent ouvertes. Met à jour le commentaire de la colonne. **Aucune donnée n'est touchée, aucune structure n'est modifiée** : la migration ne pose que des privilèges. | Migrations 1 à 13 : `public.cards` doit exister. **DÉPENDANCE D'ORDRE STRICTE** : la section 2 de la migration 12 réapplique les mêmes privilèges **avec** `email_local_part` dans la liste. Réappliquer la 12 **après** celle-ci **rouvre** la colonne, sans aucun signal — toute réapplication partielle doit donc se terminer par la 13 **puis** la 14. `scripts/verify-colonnes-protegees.sh` mesure cette dépendance dans les deux sens, et `scripts/verify-cards.sh` comme `scripts/verify-valeurs-champs.sh` ont dû être repris pour chaîner la 14 derrière leurs rejeux de la 12 — la dépendance est **rétroactive** sur tout harnais antérieur. | Réapplication de la seule section 2 de la migration 12, qui rend `email_local_part` à la liste des colonnes ouvertes. **Non destructif** : aucune donnée n'est perdue. **Effet immédiat sur le comportement** : l'adresse entrante d'une card redevient réécrivable par tout membre qui écrit sur son channel, donc remplaçable par une valeur devinable — c'est un **relâchement** de garde, à ne pas exécuter sans l'avoir voulu. |
 | 15 | `supabase/migrations/0015_commentaires.sql` | Table `public.card_comments` (fil de discussion d'une card), la contrainte `UNIQUE (id, workspace_id)` ajoutée à `public.cards` — condition de la clé étrangère composite, MESURÉ —, deux triggers `SECURITY INVOKER` (dérivation du workspace à l'insertion ; **pierre tombale**, colonnes gelées et `edited_at` à la mise à jour), un `CHECK` **conditionnel** sur `body` — 1 à 10 000 caractères tant que le commentaire vit, **chaîne vide** dès qu'il est supprimé —, un index, **trois politiques RLS** (aucune `DELETE`), les privilèges précédés d'un `revoke all` avec `update` limité à `(body, deleted_at)`, et l'**ajout de la table à la publication `supabase_realtime`**. | Migrations 1 à 13 : `public.cards`, `public.profiles` et `app.can_read_card` / `app.can_write_card` doivent exister. **AUCUNE dépendance d'ordre nouvelle** : cette migration ne repose aucun privilège d'une table qu'une autre migration touche — le piège 12 → 14 ne se reproduit pas. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER** : c'est la **première table du produit publiée au temps réel**. La publication `supabase_realtime` est créée si elle manque. Un flux de réplication logique s'ouvre donc sur cette table : le service `realtime` doit tourner, et le slot `supabase_realtime_replication_slot_` être actif — un slot inactif fait croître le WAL sans borne. | `alter publication supabase_realtime drop table public.card_comments; drop table public.card_comments; drop function app.card_comments_avant_insertion(), app.card_comments_avant_maj(); alter table public.cards drop constraint cards_id_workspace_id_key;` — **destructif au sens strict** : tous les commentaires sont perdus, et ils ne se reconstituent pas. Il exige une sauvegarde préalable de `public.card_comments`. Le retrait de la publication est, lui, non destructif et réversible. |
 
+| 16 | `supabase/migrations/0016_timeline.sql` | Table `public.card_events` (mémoire d'une affaire, **append-only**), son `CHECK` de vocabulaire à **huit** valeurs, la clé étrangère composite vers `cards (id, workspace_id)` avec `ON DELETE CASCADE`, l'index de `docs/SCHEMA.md` §10, **une seule politique RLS** — la lecture —, des privilèges réduits à `SELECT` **pour les trois rôles, `service_role` compris**, un trigger `BEFORE UPDATE` d'immuabilité, et **cinq triggers `SECURITY DEFINER`** d'alimentation : deux sur `cards`, un sur `card_field_values`, plus la fonction d'écriture commune `app.card_event_ecrire`. | Migrations 1 à 15 : `public.cards`, `public.profiles`, `public.card_field_values`, `app.can_read_card`, et **l'unicité `cards (id, workspace_id)` posée par la migration 15**. **AUCUNE dépendance d'ordre nouvelle.** **CONSÉQUENCES À CONNAÎTRE AVANT D'APPLIQUER** : toute écriture existante sur `cards` et `card_field_values` produit désormais des lignes dans une table qui ne se purge pas — voir le contrat d'exploitation ci-dessous. | `drop table public.card_events cascade; drop function app.card_event_ecrire(uuid,uuid,text,jsonb), app.card_events_apres_insertion_card(), app.card_events_apres_maj_card(), app.card_events_apres_ecriture_valeur(), app.card_events_refuser_maj();` — **destructif au sens strict** : toute la mémoire des affaires est perdue et ne se reconstitue pas. Il exige une sauvegarde préalable de `public.card_events`. Les triggers tombent avec la table par la `cascade`. |
+
 **Ce que la migration 12 ajoute au contrat d'exploitation.** Un seul point, mais il casse
 potentiellement des appelants existants :
 
@@ -192,6 +194,26 @@ d'exploitation pure :
   suppression. Toute intégration qui tenterait un `DELETE /rest/v1/card_comments` recevra `403`.
   C'est le comportement voulu ; le message de refus divulgue la commande `GRANT` qui l'ouvrirait
   (INC-026) — ne pas la suivre.
+
+**Ce que la migration 16 ajoute au contrat d'exploitation.** Quatre points, et les trois premiers
+doivent être lus **avant** l'application sur une base déjà en service :
+
+- **`card_events` CROÎT SANS BORNE, et rien ne la purge.** Chaque création de card, chaque
+  déplacement, chaque changement de responsable, chaque archivage, chaque mise à la corbeille et
+  chaque écriture de valeur de formulaire y ajoute une ligne. Aucune rétention n'est écrite : ce
+  serait une décision de conformité que personne n'a prise (`docs/SPEC-cards.md` §14.13, point n° 2).
+  Contrôle à inscrire dans la supervision : `select pg_size_pretty(pg_total_relation_size(
+  'public.card_events'))`, et une alerte sur sa dérivée plutôt que sur sa valeur.
+- **AUCUNE ÉCRITURE N'EST POSSIBLE, PAS MÊME AVEC LA CLÉ DE SERVICE.** C'est voulu — c'est ce que
+  l'unité livre. Toute intégration, tout script de reprise, tout import qui tenterait un
+  `POST /rest/v1/card_events` recevra `403`. Il n'existe **aucun** chemin d'écriture applicatif :
+  seule une intervention du **propriétaire de la base** peut insérer une ligne, et elle
+  contredirait la propriété que la table garantit.
+- **La table est APPEND-ONLY, y compris pour l'exploitation.** Une correction de donnée par `UPDATE`
+  est refusée par trigger, pour tous les rôles. Une reprise de données passe donc par une
+  suppression et une réécriture sous le rôle propriétaire, ou par rien.
+- **Une suppression physique de card emporte sa mémoire** (cascade). C'est la contrepartie assumée
+  du maintien de ce geste d'exploitation ; le produit, lui, n'expose aucune suppression physique.
 
 **Ce que la migration 13 ajoute au contrat d'exploitation.** Deux points, à lire avant de
 l'appliquer sur une base déjà en service :

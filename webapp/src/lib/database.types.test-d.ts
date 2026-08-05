@@ -40,6 +40,7 @@ type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
     | 'card_comments'
+    | 'card_events'
     | 'card_field_values'
     | 'cards'
     | 'channel_members'

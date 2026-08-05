@@ -636,9 +636,15 @@ select ok(
 	'n° 5 le CONTRÔLE, rien ne l''ÉCRIT, et l''utilisateur qui motive une affaire perdue voit son '
 	'motif disparaître. L''arbitrage n''est plus théorique : il est EXIGIBLE');
 
-select hasnt_table('public', 'card_events',
-	'`card_events` reste due par `CRM-044` : aucun événement `moved` n''est écrit, la trace du '
-	'déplacement n''existe pas');
+-- RÉVISÉE À `CRM-044`, NON RETIRÉE. Elle constatait l'absence de toute trace ; elle constate
+-- désormais que la trace existe SANS que `move_card` ait été rouverte : le trigger de la migration
+-- 16 est posé sur `cards` et capte l'effet de la fonction (décision 203). Ce que l'assertion mesure
+-- encore, c'est que `CRM-034` n'a pas été touchée sous une unité qui ne la porte pas.
+select ok(
+	(select prosrc not like '%card_events%' from pg_proc
+	  where oid = 'public.move_card(uuid, uuid, text)'::regprocedure),
+	'`move_card` n''écrit PAS elle-même l''événement `moved` : la trace existe depuis `CRM-044`, '
+	'mais elle vient d''un trigger sur `cards`, et la fonction de `CRM-034` reste intacte');
 
 -- --- INC-050 : `email_local_part` est FERMÉE, et la contradiction est éteinte ------------------
 -- ASSERTION RETOURNÉE PAR `CRM-013` (décision 51). Elle constatait la colonne ouverte, et disait

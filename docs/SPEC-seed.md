@@ -608,6 +608,11 @@ sont exécutés que si la card ne porte encore **aucun** événement du type vis
 `…0c4`, `assigned` pour `…0c1`. La lecture passe par la clé de service, qui a le droit de **lire**
 la table sans avoir celui d'y écrire.
 
+**Le compte de 27 ne vaut qu'au sortir du seed.** Une timeline enregistre tout, y compris ce que
+les preuves du dépôt font ensuite à la même pile. Seule la naissance d'une card est idempotente :
+les suites assèrent neuf `created` exactement, et des bornes inférieures pour le reste
+(`docs/JOURNAL.md` décision 210).
+
 **Aucune des cinq autres familles n'est démontrée par le seed** : `archived`, `unarchived`,
 `trashed` et `restored` supposeraient d'archiver puis de désarchiver une card du seed, ce qui
 toucherait `archived_at` et `deleted_at` — deux colonnes dont l'état est asserté par `CRM-040`. Les

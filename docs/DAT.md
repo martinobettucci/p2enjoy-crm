@@ -373,13 +373,20 @@ sequenceDiagram
     PG-->>UI: exception (le refus fait autorité)
   else tout est satisfait
     PG->>PG: mise à jour de la card + entered_step_at
-    PG->>PG: écriture d'un card_event (timeline)
+    PG->>PG: le trigger de card_events écrit l'événement moved
     PG-->>UI: card mise à jour
   end
 ```
 
 Le glisser-déposer du board appelle exactement la même RPC : aucun chemin d'écriture ne
 contourne les gardes.
+
+**L'événement n'est pas écrit PAR `move_card`, mais par un trigger de `cards`** (`CRM-044`,
+`docs/JOURNAL.md` décision 203). La différence compte : `owner_id`, `archived_at` et `deleted_at`
+s'écrivent par un `PATCH` direct qu'aucune RPC ne médie, et une trace placée dans les fonctions
+laisserait sans mémoire l'archivage, la corbeille et le changement de responsable. Le §3.2 de ce
+document — « les triggers d'audit et de timeline » — est celui des deux formulations que
+l'implémentation suit à la lettre.
 
 ### 4.3 Réception d'un email
 
@@ -424,7 +431,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 | Organisation | `tracks`, `channels` |
 | Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) |
 | Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (livrée, `CRM-036`), sa validation par type par trigger, et les fonctions `app.valeur_de_champ_est_vide` et `app.can_write_card` |
-| Cards | `cards` (livrée, `CRM-040`) ; `card_comments` (`CRM-043`), `card_events` (`CRM-044`), `card_activities`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` — ces cinq dernières ne sont rattachées à aucune unité |
+| Cards | `cards` (livrée, `CRM-040`) ; `card_comments` (livrée, `CRM-043`) ; `card_events` (livrée, `CRM-044` — **append-only**, alimentée par cinq triggers, aucune écriture cliente) ; `card_activities`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` — ces cinq dernières ne sont rattachées à aucune unité |
 | Relations | `organizations`, `contacts`, `card_contacts` |
 | Messagerie | `mail_inbound_accounts`, `mail_outbound_identities`, `mail_messages`, `mail_message_occurrences`, `mail_attachments`, `mail_outbox`, `mail_folder_map`, `mail_templates`, `mail_sequences`, `card_sequence_enrollments` |
 | Transverse | `notifications`, `notification_preferences`, `audit_log`, `api_tokens`, `webhook_endpoints`, `webhook_deliveries`, `saved_views` |

@@ -3648,8 +3648,72 @@ connexion.
       `mail_received` et `mail_sent`, `clock_timestamp()` et son motif mesuré, l'absence d'
       `updated_at` comme **conséquence** et non comme écart.
 - [x] `docs/JOURNAL.md` décisions 203 à 209, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **La migration, ses triggers et ses preuves ne sont pas écrits.** Rien de cette unité n'est
-      livré au-delà de sa spécification.
+- [x] **LA TABLE EST LIVRÉE, ET PERSONNE NE PEUT Y ÉCRIRE.**
+      `supabase/migrations/0016_timeline.sql` : `public.card_events`, son `CHECK` de vocabulaire à
+      huit valeurs, la clé composite vers `cards (id, workspace_id)`, l'index de `docs/SCHEMA.md`
+      §10, **une seule politique** — la lecture —, des privilèges réduits à `SELECT` **pour les
+      trois rôles**, un trigger d'immuabilité et **cinq triggers d'alimentation**. **Rejouée deux
+      fois sans erreur** : idempotente et convergente au sens d'INC-035.
+- [x] **`service_role` N'A PAS L'ÉCRITURE, et c'est la propriété que l'unité cherchait**
+      (décision 205). `CLAUDE.md` §8 interdit de fabriquer des traces ; toutes les unités
+      précédentes l'ont respecté **par convention**, ici le seed ne le **peut** pas. MESURÉ :
+      `permission denied for table card_events` avec le jeton de l'administratrice **comme** avec
+      la clé de service.
+- [x] **L'immuabilité est opposable au PROPRIÉTAIRE lui-même** : un trigger `BEFORE UPDATE` lève
+      `card_event_immutable` pour tous les rôles. MESURÉ. **Aucun trigger de suppression** en
+      revanche, et le motif est mesuré : la clé composite portant `ON DELETE CASCADE`, un refus
+      rendrait impossible `delete from public.cards`, geste d'exploitation que la migration 15
+      avait préservé (décision 207). La conséquence est écrite sans détour — une card physiquement
+      supprimée **emporte sa mémoire**.
+- [x] **Les triggers sont sur les TABLES, non dans les RPC** (décision 203). `move_card` n'est pas
+      rouverte — elle appartient à `CRM-034` —, et le trigger de `cards` capte son effet **tout en
+      couvrant strictement plus** : `owner_id`, `archived_at` et `deleted_at` s'écrivent par un
+      `PATCH` direct qu'aucune fonction ne médie.
+- [x] **`clock_timestamp()` et non `now()`** (décision 204). MESURÉ : trois événements nés d'un
+      seul `UPDATE` portent le même horodatage avec `now()`, et l'ordre du fil devient celui de
+      leurs `uuid` ; avec `clock_timestamp()`, trois valeurs distinctes **dans l'ordre réel**.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0018_timeline.test.sql`, **87 assertions**, dont les
+      huit types éprouvés **en écrivant** et les trois refusés — `mail_received`, `mail_sent`,
+      `commented`. `npm run test:sql` passe de 1250 à **1337**.
+- [x] **Preuve d'API dédiée** : `e2e/api/timeline.spec.ts`, **16 scénarios** avec les jetons réels.
+      `npm run e2e:api` passe de 375 à **392** — seize ici, et **un** de plus dans
+      `e2e/api/preuves-refus.spec.ts`.
+- [x] **LA PREUVE DE REFUS N° 8 CESSE D'ÊTRE HORS D'ATTEINTE, POUR MOITIÉ.**
+      `docs/SPEC-permissions-rls.md` §7 la comptait parmi les cinq non satisfaisables ; elles ne
+      sont plus que **quatre**. `card_events` existe et refuse ; `audit_log` reste due par
+      `CRM-072`, et son absence reste figée.
+- [x] **SIX GARDE-FOUS ANTÉRIEURS ONT DÉNONCÉ LA NAISSANCE DE LA TABLE** — le mécanisme de la
+      décision 51, **onzième** occurrence, et le plus large jusqu'ici. Six assertions pgTAP et deux
+      scénarios d'API constataient l'absence de `card_events` ; ils sont **révisés, non retirés**,
+      et mesurent désormais ce qui compte encore : que `move_card` ne soit pas rouverte, qu'un
+      commentaire n'écrive aucun événement, que `card_field_values` ne conserve toujours aucun
+      historique. Le compte de politiques passe de 44 à **45**.
+- [x] **UN DÉFAUT DE MES PROPRES PREUVES, TROUVÉ EN EXÉCUTANT** (décision 210). L'assertion « 27
+      événements » est verte seule et **rouge dans la suite complète** — 93 : les autres fichiers de
+      preuve agissent sur les cards du seed, et la timeline enregistre tout. Ce n'est pas un défaut
+      du produit, c'est le produit. Seule la **naissance** d'une card est idempotente : les suites
+      assèrent neuf `created` exactement, et des **bornes inférieures** pour le reste.
+- [x] **Seed étendu sans changer d'un iota l'état qu'il livrait** : deux allers-retours
+      **conditionnés par une relecture** — d'étape sur `…0c4` par la vraie RPC `move_card`, de
+      responsable sur `…0c1` par un vrai `PATCH` —, tous deux avec le **jeton réel de
+      l'administratrice**, seuls événements du seed à porter un acteur. 27 événements au sortir du
+      seed, et le rejeu n'en ajoute **aucun** : vérifié.
+- [x] Harnais de preuves rejouable `scripts/verify-timeline.sh` : **49 contrôles**, et **non
+      complaisant** — **six** dégradations volontaires le font réellement échouer : `INSERT` rendu à
+      `authenticated`, `INSERT` rendu à `service_role`, trigger d'immuabilité retiré, `CHECK` élargi
+      à `mail_received`, politique de lecture ouverte à tous, trigger de mise à jour de `cards`
+      retiré. La restauration est **constatée** : migration rejouée, fichiers rendus intacts, suite
+      verte.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 1250 → **1337**
+      assertions, 375 → **392** scénarios d'API. `SCENARIOS_UI` inchangé à cette étape.
+- [x] `docs/SPEC-cards.md` §14 (quatorze sous-chapitres), `docs/SCHEMA.md` §5,
+      `docs/DESIGN_SYSTEM.md` §5.11, `docs/SPEC-seed.md` §2.15, `docs/DAT.md` §3.2, §4.2 et §7,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 16 et son contrat d'exploitation),
+      `docs/JOURNAL.md` décisions 203 à 210, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **L'ÉCRAN N'EST PAS LIVRÉ.** Le §5.11 du design system décrit le fil unifié, ses quatre
+      familles de filtres et ses deux vides distincts ; aucun composant ne le rend. La colonne de
+      droite du détail de card porte encore le seul panneau de commentaires de `CRM-043`.
+- [ ] **Aucune preuve d'interface, aucune capture** : elles supposent l'écran.
 
 ### CRM-045 — Déplacement d'une card entre channels `[ ]`
 `move_card_to_channel` avec remappage explicite.

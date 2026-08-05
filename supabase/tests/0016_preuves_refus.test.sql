@@ -110,9 +110,11 @@ select is(pg_temp.politiques('form_field_rules'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	44,
-	'QUARANTE-QUATRE politiques dans `public`, et pas une de plus — 41 jusqu''à `CRM-042`, plus les '
-	'TROIS de `card_comments` livrées par `CRM-043`. Une politique ajoutée sans que cette suite '
+	45,
+	'QUARANTE-CINQ politiques dans `public`, et pas une de plus — 41 jusqu''à `CRM-042`, plus les '
+	'TROIS de `card_comments` livrées par `CRM-043`, plus l''UNIQUE politique de lecture de '
+	'`card_events` livrée par `CRM-044` — qui n''en porte pas d''autre, écrire n''y étant ouvert à '
+	'personne. Une politique ajoutée sans que cette suite '
 	'soit étendue — permissive ou non — fait échouer ce compte : c''est la contrepartie du contrôle '
 	'par nom, qui à lui seul ne verrait pas un ajout');
 
@@ -260,8 +262,17 @@ select hasnt_table('public', 'mail_outbound_identities',
 	'PREUVE N° 7 NON SATISFAISABLE : `mail_outbound_identities` attend `CRM-053`. La lecture du '
 	'compte mail d''un autre utilisateur n''a aucun sujet');
 
-select hasnt_table('public', 'card_events',
-	'PREUVE N° 8 NON SATISFAISABLE, 1/2 : `card_events` attend `CRM-044`');
+-- ASSERTION RETOURNÉE PAR `CRM-044` (décision 51). La moitié de la preuve n° 8 est désormais
+-- SATISFAISABLE, et le refus est mesuré ici même plutôt qu'annoncé : aucun privilège d'écriture,
+-- pour aucun des trois rôles. `e2e/api/timeline.spec.ts` l'exerce avec les jetons réels.
+select is(
+	(select count(*)::int from information_schema.role_table_grants
+	  where table_schema = 'public' and table_name = 'card_events'
+	    and grantee in ('anon','authenticated','service_role')
+	    and privilege_type <> 'SELECT'),
+	0,
+	'PREUVE N° 8 SATISFAISABLE POUR MOITIÉ, 1/2 : `card_events` est livrée par `CRM-044` et '
+	'n''accorde AUCUN privilège d''écriture, `service_role` compris');
 
 select hasnt_table('public', 'audit_log',
 	'PREUVE N° 8 NON SATISFAISABLE, 2/2 : `audit_log` attend `CRM-072`');
@@ -288,12 +299,13 @@ select hasnt_function('public', 'queue_outbound_email',
 select is(
 	(select count(*)::int from (values
 		('public.mail_inbound_accounts'), ('public.mail_outbound_identities'),
-		('public.card_events'), ('public.audit_log'), ('public.attachments')
+		('public.audit_log'), ('public.attachments')
 	) as cibles(nom) where to_regclass(nom) is not null),
 	0,
-	'CINQ PREUVES SUR DOUZE RESTENT HORS D''ATTEINTE, et le compte est asséré plutôt qu''énoncé : '
-	'aucune des cinq tables absentes n''existe. Le jour où l''une naît, ce compte cesse de valoir '
-	'zéro et l''unité doit être rouverte');
+	'QUATRE PREUVES SUR DOUZE RESTENT HORS D''ATTEINTE — elles étaient CINQ jusqu''à `CRM-044`, qui '
+	'a livré `card_events` et rendu la moitié de la n° 8 satisfaisable. Le compte est asséré plutôt '
+	'qu''énoncé : le jour où l''une des quatre naît, il cesse de valoir zéro et l''unité doit être '
+	'rouverte');
 
 select finish();
 rollback;

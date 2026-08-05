@@ -1698,8 +1698,14 @@ le produit de ses actes réels :
 |---|---|---|
 | Les 9 cards insérées | 9 × `created`, `actor_id` **nul** | la naissance, et l'attribution à un service |
 | Les 14 valeurs de formulaire | 14 × `field_changed`, `payload` **sans clé `from`** | la valeur qui naît |
-| Un aller-retour d'étape sur `…0c4` | 2 × `moved` | la transition, dans les deux sens, par la **vraie** RPC `move_card` |
-| Un aller-retour de responsable sur `…0c1` | 2 × `assigned` | l'attribution, par un **vrai** `PATCH` |
+| Un aller-retour d'étape sur `…0c4` | 2 × `moved`, `actor_id` = **Camille Aubert** | la transition, dans les deux sens, par la **vraie** RPC `move_card` |
+| Un aller-retour de responsable sur `…0c1` | 2 × `assigned`, `actor_id` = **Camille Aubert** | l'attribution, par un **vrai** `PATCH` |
+
+MESURÉ **immédiatement après l'application du seed sur une base neuve** : **27 événements**, dont
+**4 portent un acteur réel** et 23 n'en portent aucun. La précision de temps n'est pas une
+précaution de style — voir ci-dessous. Les quatre gestes des allers-retours passent par le **jeton réel de
+l'administratrice**, non par la clé de service — `move_card` refuserait cette dernière, `auth.uid()`
+y étant nul —, et c'est la seule chose du seed qui démontre un `actor_id` non nul.
 
 **Les deux allers-retours laissent l'état du seed rigoureusement identique à celui d'hier.** C'est
 la condition pour qu'aucune assertion des unités précédentes ne bouge : la card `…0c4` repart de
@@ -1707,6 +1713,14 @@ l'étape de négociation où elle était, la card `…0c1` retrouve son responsa
 s'allonge. MESURÉ sur la sonde : l'aller-retour d'étape franchit deux transitions réellement
 déclarées — « Revenir en relance » puis « Engager la négociation » — et rend `current_step_id` à sa
 valeur de départ.
+
+**LE COMPTE EXACT NE TIENT QU'À CET INSTANT-LÀ, ET C'EST UNE PROPRIÉTÉ DE L'UNITÉ.** Une timeline
+enregistre **tout**, y compris ce que les autres preuves du dépôt font à la même pile :
+`e2e/api/move-card.spec.ts` déplace des cards du seed et les remet, et chacun de ces gestes laisse
+sa trace. Seule la **naissance** d'une card est idempotente — une card ne naît qu'une fois. Les
+suites de preuves assèrent donc **neuf `created` exactement**, et des **bornes inférieures** pour
+tout le reste. Cette croissance n'est pas un défaut à contenir : c'est la démonstration que la
+trace est réelle, et qu'aucune écriture n'y échappe.
 
 **Ils sont conditionnés par une relecture**, comme les commentaires du §13.11 : le seed n'exécute
 l'aller-retour que si la card ne porte **aucun** événement du type visé. Sans cette garde, chaque

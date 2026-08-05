@@ -280,9 +280,18 @@ select hasnt_table('public', 'mail_outbound_identities',
 select hasnt_table('public', 'api_tokens',
 	'CIBLE 3/6 NON LIVRÉE : `api_tokens.token_hash` attend `CRM-073`');
 
-select hasnt_table('public', 'card_events',
-	'CIBLE 4/6 NON LIVRÉE : `card_events` attend `CRM-044`. La preuve de refus n° 8 — insertion '
-	'directe refusée — reste hors d''atteinte');
+-- CIBLE 4/6 LIVRÉE PAR `CRM-044`, ET L'ASSERTION EST RETOURNÉE (décision 51). La preuve de refus
+-- n° 8 est désormais satisfaisable pour MOITIÉ, et le refus y est plus fort qu'une colonne
+-- protégée : ce n'est pas une colonne qui est fermée, c'est la table entière, pour les TROIS rôles.
+select is(
+	(select count(*)::int from information_schema.role_table_grants
+	  where table_schema = 'public' and table_name = 'card_events'
+	    and grantee in ('anon','authenticated','service_role')
+	    and privilege_type <> 'SELECT'),
+	0,
+	'CIBLE 4/6 LIVRÉE : `card_events` n''accorde AUCUN privilège d''écriture, à AUCUN des trois '
+	'rôles — `service_role` compris. La preuve de refus n° 8 est satisfaisable pour moitié '
+	'(`audit_log` reste due par `CRM-072`)');
 
 select hasnt_table('public', 'audit_log',
 	'CIBLE 5/6 NON LIVRÉE : `audit_log` attend `CRM-072`, même refus n° 8');

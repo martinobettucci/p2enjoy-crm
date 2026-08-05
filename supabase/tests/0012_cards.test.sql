@@ -524,9 +524,18 @@ select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
 	'porte SIX vérifications sur six depuis `CRM-036`, qui a apporté `card_field_values` et '
 	'refermé INC-047');
 
-select hasnt_table('public', 'card_events',
-	'`card_events` reste due par `CRM-044` : aucun trigger d''événement n''est écrit ici, il '
-	'n''aurait pas de table où écrire');
+-- RÉVISÉE À `CRM-044`, NON RETIRÉE — mécanisme de la décision 51, ONZIÈME occurrence. Elle
+-- constatait que `cards` ne portait aucun trigger d'événement ; elle constate désormais qu'elle en
+-- porte DEUX, et que ni l'un ni l'autre n'appartient à `CRM-040` : ils sont posés par la migration
+-- 16, sur la table, et non dans une RPC (décision 203).
+select is(
+	(select array_agg(tgname order by tgname)::text from pg_trigger
+	  where tgrelid = 'public.cards'::regclass and not tgisinternal
+	    and tgname like 'card_events%'),
+	'{card_events_apres_insertion,card_events_apres_maj}',
+	'`cards` porte les DEUX triggers de timeline de `CRM-044` — sur la TABLE, non dans une RPC : '
+	'`owner_id`, `archived_at` et `deleted_at` s''écrivent par un PATCH qu''aucune fonction ne '
+	'médie (décision 203)');
 -- RÉVISÉE À `CRM-043`, NON RETIRÉE — mécanisme de la décision 51, dixième occurrence. Elle
 -- constatait une absence ; elle constate désormais la présence, et la conséquence qui compte pour
 -- `cards` : l'unicité `(id, workspace_id)` que `CRM-043` a dû ajouter pour que la clé étrangère

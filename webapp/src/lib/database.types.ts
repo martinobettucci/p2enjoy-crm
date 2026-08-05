@@ -71,6 +71,51 @@ export type Database = {
           },
         ]
       }
+      card_events: {
+        Row: {
+          actor_id: string | null
+          card_id: string
+          created_at: string
+          id: string
+          payload: Json
+          type: string
+          workspace_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          card_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          type: string
+          workspace_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          card_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_events_card_id_workspace_id_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       card_field_values: {
         Row: {
           card_id: string

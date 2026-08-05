@@ -766,9 +766,15 @@ select is(
 -- Aucune n'est un constat résigné : chacune devient rouge le jour où l'unité qui la porte livre son
 -- objet, et force la révision des preuves plutôt que leur silence (décision 51).
 
-select hasnt_table('public', 'card_events',
-	'`card_events` reste due par `CRM-044` : une valeur écrasée ne laisse AUCUNE trace, ni auteur '
-	'précédent, ni date, ni valeur d''origine');
+-- RÉVISÉE À `CRM-044`, NON RETIRÉE. Elle constatait qu'une valeur écrasée ne laissait AUCUNE
+-- trace ; la trace existe désormais, écrite par un trigger de la migration 16. Ce qui reste vrai,
+-- et que l'assertion mesure maintenant : `card_field_values` elle-même ne conserve toujours aucun
+-- historique — l'auteur précédent d'une valeur est écrasé par `updated_by`, et seule la timeline
+-- se souvient.
+select has_trigger('public', 'card_field_values', 'card_events_apres_ecriture_valeur',
+	'Une valeur écrasée laisse désormais une trace `field_changed` — mais dans `card_events` '
+	'(`CRM-044`), la table des valeurs ne conservant toujours AUCUN historique : `updated_by` est '
+	'écrasé à chaque écriture');
 
 -- RÉVISÉE À `CRM-043`, NON RETIRÉE : la table existe, et le commentaire de `move_card` reste
 -- perdu. Voir `supabase/tests/0013_move_card.test.sql`, où l'écart est mesuré sur la fonction

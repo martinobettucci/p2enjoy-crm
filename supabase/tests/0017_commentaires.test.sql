@@ -531,9 +531,16 @@ select is(
 -- =============================================================================================
 -- Chacune devient ROUGE le jour où la table naît, obligeant l'unité concernée à revenir ici.
 
-select is(to_regclass('public.card_events')::text, null,
-	'`card_events` n''existe pas : un commentaire écrit, modifié ou supprimé ne laisse AUCUNE '
-	'trace typée. `CRM-044` — et cette assertion tombera le jour où la table naîtra');
+-- RÉVISÉE À `CRM-044`, NON RETIRÉE. La table est née, et le constat qu'elle portait reste vrai
+-- pour une autre raison : un commentaire n'écrit toujours aucun événement, parce que le fil est
+-- unifié À LA LECTURE (décision 209). Dupliquer produirait deux représentations d'un même fait,
+-- dont l'une — immuable — survivrait à la pierre tombale de l'autre.
+select is(
+	(select count(*)::int from pg_trigger
+	  where tgrelid = 'public.card_comments'::regclass and not tgisinternal
+	    and tgname like 'card_events%'),
+	0, '`card_comments` ne porte AUCUN trigger de timeline : un commentaire n''écrit pas '
+	   'd''événement, le fil est unifié à la LECTURE (`CRM-044`, décision 209)');
 
 select is(to_regclass('public.notifications')::text, null,
 	'`notifications` n''existe pas : `mentions` n''a aucun destinataire à servir. `CRM-063`');

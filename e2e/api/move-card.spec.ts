@@ -763,12 +763,23 @@ test.describe('M7 — INC-047 CLOSE : la vérification n° 6 est livrée par `CR
 		}
 	})
 
-	test('aucun card_event n’est écrit : la trace du déplacement n’existe pas — CRM-044', async ({
+	// ASSERTION RETOURNÉE PAR `CRM-044` (décision 51). Elle constatait que la table n'existait pas ;
+	// elle constate désormais que la trace existe SANS que `move_card` ait été rouverte — le trigger
+	// vit sur `cards` (décision 203) — et que le `comment` de la fonction n'y atteint toujours rien
+	// (INC-048). Le contrat complet est exercé par `e2e/api/timeline.spec.ts`.
+	test('la trace du déplacement existe depuis CRM-044, et le motif est TOUJOURS perdu', async ({
 		request,
 	}) => {
-		const table = await request.get('/rest/v1/card_events?select=id&limit=1', {
+		const table = await request.get('/rest/v1/card_events?select=id,payload&type=eq.moved', {
 			headers: enTetesService(),
 		})
-		expect(table.status()).toBe(404)
+		expect(table.status()).toBe(200)
+
+		const evenements = (await table.json()) as Array<{ payload: Record<string, unknown> }>
+		expect(evenements.length).toBeGreaterThan(0)
+		expect(
+			evenements.every((e) => !('comment' in e.payload)),
+			'INC-048 : un `moved` porte le motif que `move_card` exige',
+		).toBe(true)
 	})
 })
