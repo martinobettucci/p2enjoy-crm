@@ -1038,7 +1038,7 @@ Les codes HTTP sont **mesurés** contre PostgREST `v14.12` selon la table du §4
 | 3 | L'étape cible existe et appartient au workflow de la card | `step_not_in_workflow` | `P0001` | `400` |
 | 4 | Une transition est déclarée de l'étape courante vers la cible | `transition_not_allowed` | `P0001` | `400` |
 | 5 | Le commentaire est fourni si la transition l'exige | `comment_required` | `P0001` | `400` |
-| 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields` | `P0001` | `400` |
+| 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields`, `DETAIL` portant les clés manquantes | `P0001` | `400` |
 
 **L'ordre des deux premières est une règle de discrétion, reprise du §4.3 et non réinventée.**
 « Visible » signifie `app.can_read_channel` sur le channel de la card. Une card d'un autre
@@ -1164,36 +1164,42 @@ appelées **depuis des politiques** et doivent donc être exécutables par `anon
 manifeste par zéro ligne, `move_card` est appelée **directement** par un client : lui refuser le
 privilège est le comportement voulu.
 
-### 5.7 La vérification n° 6 n'est pas livrable par `CRM-034`, et le nier serait un faux vert
+### 5.7 La vérification n° 6 n'était pas livrable par `CRM-034` — livrée par `CRM-036`
 
-La n° 6 demande que « les champs requis de l'étape cible soient **renseignés** ». L'ensemble exigé
-est calculable dès aujourd'hui — c'est l'union définie par `docs/SPEC-form-composer.md` §3.5 : les
-champs `required` de l'étape cible dans `form_field_rules`, et les `require_fields` de la transition
-empruntée. Les deux tables existent depuis `CRM-035`.
+**Historique conservé, parce qu'il porte une décision et non seulement un état.** La n° 6 demande
+que « les champs requis de l'étape cible soient **renseignés** ». L'ensemble exigé était calculable
+dès `CRM-034` — l'union définie par `docs/SPEC-form-composer.md` §3.5. **L'ensemble renseigné, lui,
+n'avait aucune source** : `card_field_values` est le livrable de `CRM-036`, que `docs/MASTER_PLAN.md`
+§2 place après. MESURÉ le 2026-08-04 : `to_regclass('public.card_field_values')` rendait `NULL`.
 
-**L'ensemble renseigné, lui, n'a aucune source.** `card_field_values` est le livrable de `CRM-036`.
-MESURÉ le 2026-08-04 : `to_regclass('public.card_field_values')` rend `NULL`.
-
-Deux écritures étaient possibles, et **toutes deux sont écartées** :
+Deux écritures étaient possibles, et **toutes deux ont été écartées** :
 
 1. **considérer que rien n'est renseigné**, donc refuser toute transition dont l'ensemble exigé
-   n'est pas vide. C'est la lecture littérale, et elle est **mesurablement destructrice** : le seed
-   déclare `required` sur les étapes `prospection`, `negociation`, `signature` et `perdu`. Les
-   entrées en négociation, en signature et les **quatre** transitions « Marquer perdu » seraient
-   refusées, définitivement, jusqu'à `CRM-036`. Le produit livrerait une garde qui interdit le
-   parcours qu'elle est censée garder ;
+   n'est pas vide. Lecture littérale, et **mesurablement destructrice** : le seed déclare
+   `required` sur les étapes `prospection`, `negociation`, `signature` et `perdu`. Les entrées en
+   négociation, en signature et les **quatre** transitions « Marquer perdu » auraient été refusées,
+   définitivement, jusqu'à `CRM-036` ;
 2. **considérer que tout est renseigné**, donc ne rien vérifier en le prétendant vérifié. C'est le
    faux vert que `CLAUDE.md` §17 proscrit.
 
-**Comportement retenu :** la vérification n° 6 n'est **pas écrite**. `CRM-034` livre cinq
-vérifications sur six, l'écart est **figé par une assertion** de la suite pgTAP — un déplacement
-vers une étape portant une règle `required` réussit aujourd'hui, et cette assertion deviendra rouge
-le jour de `CRM-036` — et l'unité reste `[~]`. La contradiction d'ordonnancement est consignée en
-`docs/INCONSISTENCY_REPORT.md`, **INC-047**. C'est le mécanisme employé par `CRM-040` pour la
-protection de colonne, qui a effectivement fonctionné : l'assertion a désigné son moment.
+`CRM-034` a donc livré **cinq** vérifications sur six, l'écart figé par une assertion de la suite
+pgTAP destinée à devenir rouge, et la contradiction consignée en INC-047.
 
-Conséquence à ne pas perdre de vue : le message « liste des clés manquantes », que la Definition of
-Done de `CRM-034` nomme, **n'existe pas encore**. Il naîtra avec la vérification qu'il décrit.
+**LE MÉCANISME A FONCTIONNÉ, ET L'ASSERTION A DÉSIGNÉ SON MOMENT.** `CRM-036` a livré
+`card_field_values` le 2026-08-05 ; l'assertion `hasnt_table` est devenue rouge, et avec elle les
+deux scénarios — pgTAP et API — qui constataient qu'un déplacement vers une étape `required`
+réussissait. Ils ont été **révisés, non retirés** : ils constatent désormais le refus, et leur
+jumeau constate l'acceptation une fois la valeur renseignée.
+
+**Ce que la n° 6 contrôle exactement** est écrit en `docs/SPEC-form-composer.md` §6.7 : l'union des
+champs `required` de l'étape cible et des `require_fields` de la transition, **moins** les champs
+archivés et les identifiants que la jointure ne résout pas. Le refus porte
+`message = 'missing_required_fields'` — jeton stable, comme les cinq autres — et le `DETAIL` porte
+la liste des clés manquantes, ordonnées par `position`. MESURÉ : PostgREST expose ce `DETAIL` dans
+la clé `details` de sa réponse, et rend `400`.
+
+**Elle vient en dernier**, après les cinq autres : une card invisible ne doit pas apprendre par un
+refus quels champs son workflow exige.
 
 ### 5.8 Contrat d'API attendu, à mesurer
 
@@ -1241,8 +1247,14 @@ le graphe complet du workflow par défaut, dont les quatre transitions « Marque
 commentaire (§3.9) — c'est la donnée qui exerce la vérification n° 5 en permanence — et les paires
 d'étapes non reliées qui exercent la n° 4.
 
-`require_fields` reste vide partout, et le motif est inchangé : la vérification qui le lirait n'est
-pas livrée (§5.7). Une donnée de démonstration que rien n'exerce est une décoration, pas une preuve.
+`require_fields` restait vide partout, et le motif était nommé : la vérification qui le lirait
+n'était pas livrée (§5.7). Une donnée de démonstration que rien n'exerce est une décoration, pas une
+preuve.
+
+**LE MOTIF A DISPARU AVEC `CRM-036`, ET LE SEED SUIT.** La transition *signature → réalisation*
+porte désormais `require_fields = {lien-proposition}` : c'est la seule donnée du seed qui exerce le
+**second membre** de l'union du §3.5, et sans elle cette moitié de la règle ne serait démontrée par
+aucune donnée permanente (`docs/SPEC-form-composer.md` §6.11). Le reste du graphe est inchangé.
 
 ### 5.10 Preuves attendues de `CRM-034`
 
@@ -1255,7 +1267,7 @@ pas livrée (§5.7). Une donnée de démonstration que rien n'exerce est une dé
 
 ### 5.11 Points ouverts propres à `move_card`
 
-1. **La vérification n° 6 et son message** — INC-047, `CRM-036`.
+1. ~~**La vérification n° 6 et son message**~~ — **CLOS par `CRM-036`**, INC-047 refermée.
 2. **Le commentaire fourni n'est pas conservé** — INC-048, `CRM-043`.
 3. **Aucun `card_event`** n'est écrit : la trace du déplacement n'existe pas — `CRM-044`.
 4. **Aucune cadence de relance** n'est arrêtée, aucune table n'en porte, aucune unité n'en prévoit.
@@ -1291,7 +1303,7 @@ sans que le déplacement soit sémantiquement équivalent.
 
 | Niveau | Preuves attendues |
 |---|---|
-| pgTAP | Transition déclarée acceptée ; transition non déclarée refusée ; commentaire exigé absent refusé ; étape hors workflow refusée ; unicité de l'étape initiale ; refus d'archivage d'un nœud occupé — **livré et prouvé par `CRM-040`**, INC-031 close (§2.6). Champ requis manquant refusé — **différé, INC-047** : sa source est `card_field_values` (`CRM-036`), voir §5.7 |
+| pgTAP | Transition déclarée acceptée ; transition non déclarée refusée ; commentaire exigé absent refusé ; étape hors workflow refusée ; unicité de l'étape initiale ; refus d'archivage d'un nœud occupé — **livré et prouvé par `CRM-040`**, INC-031 close (§2.6). Champ requis manquant refusé — **livré et prouvé par `CRM-036`**, INC-047 close : la source est `card_field_values`, voir §5.7 et `docs/SPEC-form-composer.md` §6.7 |
 | API | Appel direct de `move_card` avec le jeton d'un `viewer` → refusé ; mise à jour directe de `cards.current_step_id` par PostgREST → refusée. Les treize lignes du §5.8 détaillent ce que `CRM-034` mesure |
 | E2E | Parcours complet Prospection → Livré par l'interface ; tentative de glisser-déposer interdite ; message d'erreur de champ requis affiché et compréhensible |
 | Visuel | Board aux quatre paliers responsive, colonne vide, card figée au-delà du seuil, menu de transitions |
@@ -1314,6 +1326,9 @@ sans que le déplacement soit sémantiquement équivalent.
    condition est reportée sur l'emploi du workflow — `CRM-033`, `CRM-040`.
 6. **`require_fields` ne portera jamais d'intégrité référentielle** (§3.4, INC-033) : PostgreSQL
    ne sait pas contraindre les éléments d'un tableau. La conséquence — des identifiants morts après
-   suppression d'un champ — attend un arbitrage.
-7. **`move_card` est livrée à cinq vérifications sur six**, ne conserve pas le commentaire qu'elle
-   exige, n'écrit aucun événement et n'arrête aucune cadence : §5.11, INC-047, INC-048, INC-049.
+   suppression d'un champ — est **traitée** depuis `CRM-036` : la sixième vérification les **ignore**,
+   et le motif de ce choix plutôt que du refus est écrit en `docs/SPEC-form-composer.md` §6.7. Ce
+   qui reste sans arbitrage, c'est l'absence de tout signal côté administration.
+7. **`move_card` est livrée à SIX vérifications sur six** depuis `CRM-036`. Elle ne conserve
+   toujours pas le commentaire qu'elle exige, n'écrit aucun événement et n'arrête aucune cadence :
+   §5.11, INC-048, INC-049.

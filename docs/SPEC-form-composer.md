@@ -5,10 +5,11 @@ Documents liés : `docs/SCHEMA.md` §4, `docs/SPEC-workflow-engine.md` §3 (éta
 (`move_card`), `docs/SPEC-permissions-rls.md` §4 et §7, `docs/SPEC-seed.md` §2,
 `docs/DESIGN_SYSTEM.md` §5.7.
 
-Les §2 et §3 ont été **réécrits après mesure** pendant `CRM-035`, sur la pile réelle : sondes
-créées puis détruites dans la base du seed, `SQLSTATE` relevés à la main, contrat d'API écrit avant
-le code pour être mesuré et non supposé. Ce qu'ils énoncent est ce que la base tient, ni plus ni
-moins ; ce qu'elle ne tient pas est nommé au §2.4 et au §2.10.
+Les §2 et §3 ont été **réécrits après mesure** pendant `CRM-035`, le §6 pendant `CRM-036`, sur la
+pile réelle : sondes créées puis détruites dans la base du seed, `SQLSTATE` et codes HTTP relevés à
+la main, contrat d'API écrit avant le code pour être mesuré et non supposé. Ce qu'ils énoncent est
+ce que la base tient, ni plus ni moins ; ce qu'elle ne tient pas est nommé au §2.4, au §2.10, au
+§6.5 et au §6.12.
 
 ---
 
@@ -94,7 +95,9 @@ tu : `contact` vise `contacts` (`CRM-060`), `user` vise `profiles` (livrée), `f
 Aucune intégrité référentielle n'est posée sur la **valeur** — elle vivra dans un `jsonb`, où
 aucune clé étrangère n'est possible, exactement comme `require_fields` sur un `uuid[]` (INC-033).
 Déclarer un champ de type `contact` est donc licite dès `CRM-035` ; le **résoudre** appartient à
-`CRM-036` et à `CRM-060`.
+`CRM-036` et à `CRM-060`. **`CRM-036` ne l'a pas résolu**, et le motif est écrit au §6.5 : `contacts`
+n'existe pas, et résoudre `user` seul rendrait la famille incohérente tout en posant une règle que
+nul document n'énonce. INC-053, arbitrage attendu.
 
 ### 2.4 Ce que `options` doit porter, et pourquoi la base l'exige
 
@@ -307,8 +310,12 @@ indépendamment de l'étape cible. L'ensemble effectivement contrôlé est l'uni
 Aucune intégrité référentielle ne protège ce tableau, et cela ne changera pas maintenant que
 `form_fields` existe : PostgreSQL refuse une clé étrangère depuis une colonne `uuid[]` — INC-033,
 mesuré, propriété du type et non différé. Un identifiant de champ supprimé ou appartenant à un
-autre workflow y survivrait sans que rien ne le signale. C'est `move_card` (`CRM-034`) qui devra
-ignorer, ou dénoncer, un identifiant qu'elle ne résout pas.
+autre workflow y survivrait sans que rien ne le signale. C'est `move_card` qui devra ignorer, ou
+dénoncer, un identifiant qu'elle ne résout pas.
+
+**TRANCHÉ PAR `CRM-036` : elle l'ignore**, et le motif est écrit au §6.7 — dénoncer bloquerait
+définitivement une transition pour une erreur de saisie qu'aucun utilisateur ne peut corriger depuis
+le produit. Le comportement est figé par une assertion.
 
 ## 4. Rendu
 
@@ -331,17 +338,304 @@ régler la visibilité de chaque couple en un seul écran, plutôt que champ par
 L'archivage d'un champ (`archived_at`) le retire des formulaires **sans supprimer les valeurs
 déjà saisies**, qui restent consultables dans la section repliée et dans l'export.
 
-## 6. Validation côté backend
+## 6. Valeurs et validation — `CRM-036`
 
-La validation vit dans `move_card` (voir `docs/SPEC-workflow-engine.md` §5). Elle ne peut pas
-être contournée :
+Ce chapitre a été **réécrit après mesure**, le 2026-08-05, sur la pile réelle : sondes créées puis
+détruites, `SQLSTATE` et codes HTTP relevés à la main contre PostgreSQL `17.6.1.136` et PostgREST
+`v14.12`. Il tenait auparavant en dix lignes, qui disaient *où* la validation vit sans jamais dire
+sur quelles colonnes la table repose, ce qu'un refus rend, ce que « renseigné » veut dire, ni ce
+qu'il advient d'une valeur portée par un champ archivé.
 
-- l'interface ne fait que prévenir ;
-- l'écriture directe d'une valeur de champ passe par `card_field_values`, protégée par RLS ;
-- le contrôle des champs requis est exécuté dans la même transaction que le déplacement.
+### 6.1 Ce qu'une valeur est, et ce qu'elle n'est pas
 
-Le message d'erreur retourne **la liste des clés manquantes**, afin que le client puisse les
-mettre en évidence sans deviner.
+Une valeur est la **réponse d'une card à une question de son workflow**. Elle n'existe qu'au
+croisement des deux : ni une colonne de `cards`, ni une propriété du champ.
+
+Ce qu'elle **n'est pas**, et que `CRM-036` ne livre donc pas :
+
+- elle n'est **pas rendue**. Le formulaire, sa section repliée et la mention « requis pour passer
+  à » sont `CRM-037` (§4) ;
+- elle ne porte **aucune intégrité référentielle sur son contenu**. Une valeur vit dans un `jsonb`,
+  où aucune clé étrangère n'est possible — même propriété du type que pour `require_fields` sur un
+  `uuid[]` (INC-033). Ce que `CRM-036` valide est la **forme**, pas l'existence de la cible (§6.5) ;
+- elle n'a **aucune histoire**. Une valeur écrasée est perdue : la trace des modifications relève
+  de `card_events` (`CRM-044`), qui n'existe pas.
+
+### 6.2 Modèle — `card_field_values`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `card_id` | `uuid` | PK composite ; clé étrangère **composite** avec `workflow_id` |
+| `field_id` | `uuid` | PK composite ; clé étrangère **composite** avec `workflow_id` |
+| `workflow_id` | `uuid` | non nul ; le workflow **commun** à la card et au champ — charnière des deux clés composites du §6.3 |
+| `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS ; sa véracité est garantie par une troisième clé composite |
+| `value` | `jsonb` | non nul ; `'null'::jsonb` signifie **explicitement vide** (§6.6) |
+| `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
+
+La clé primaire est `(card_id, field_id)` : une card porte **au plus une** valeur par champ. Deux
+réponses contradictoires à la même question sont structurellement impossibles, comme deux
+visibilités pour un même couple champ × étape (§3.2).
+
+`created_at` ne figure pas dans le tableau de `docs/SCHEMA.md` §4, qui n'énumère que `updated_at`.
+C'est la **quatrième occurrence d'INC-025** : les « Conventions générales » du même document
+imposent les deux horodatages à toute table métier. La table est livrée **avec les deux**, et le
+tableau de `docs/SCHEMA.md` est corrigé dans le même changement.
+
+### 6.3 Ce que la base garantit structurellement — mesuré
+
+Trois clés étrangères composites, et non simples :
+
+```
+(card_id,     workflow_id) → cards        (id, workflow_id)   ON DELETE CASCADE
+(field_id,    workflow_id) → form_fields  (id, workflow_id)   ON DELETE CASCADE
+(workflow_id, workspace_id) → workflows   (id, workspace_id)
+```
+
+Elles rendent **structurellement impossible** une valeur qui répondrait, pour une card donnée, à
+une question posée par un autre workflow. C'est le mécanisme de la décision 95, repris et non
+réinventé : un trigger aurait rendu le même service, plus tard et moins sûrement.
+
+**La première n'était pas possible en l'état, et la mesure l'a dit.** MESURÉ le 2026-08-05 :
+
+```
+create table sonde (card_id uuid, workflow_id uuid,
+  foreign key (card_id, workflow_id) references public.cards (id, workflow_id));
+ERROR:  there is no unique constraint matching given keys for referenced table "cards"
+```
+
+`cards` ne portait que `PRIMARY KEY (id)`. `CRM-036` ajoute donc `UNIQUE (id, workflow_id)` sur
+`cards`, exactement comme `form_fields` porte `UNIQUE (id, workflow_id)` depuis `CRM-035` et
+`workflow_steps` depuis `CRM-031`. **Cet ajout ne change aucun comportement** : `id` étant déjà
+clé primaire, le couple était déjà unique ; il rend seulement la relation exprimable. MESURÉ après
+l'ajout : une paire cohérente est acceptée, une paire croisant deux workflows est refusée en
+`23503`, « Key (card_id, workflow_id)=(…) is not present in table "cards" ».
+
+**La cascade est voulue dans les deux sens.** Supprimer une card emporte ses valeurs — une réponse
+sans question posée n'est pas une donnée à conserver ; supprimer un champ emporte les siennes. Ce
+second cas ne se produit pas depuis le produit : `form_fields` n'expose **aucune** suppression, et
+l'archivage tient lieu de suppression (§2.7). La cascade protège la cohérence d'un geste
+d'exploitation, pas d'un geste d'utilisateur.
+
+### 6.4 La validation par type est un trigger, parce qu'un `CHECK` ne peut pas — mesuré
+
+Le type qui gouverne une valeur est déclaré **sur une autre table**, `form_fields.type`. Un
+`CHECK` ne peut donc pas l'atteindre. MESURÉ le 2026-08-05 :
+
+```
+create table sonde (… constraint c check (exists (select 1 from public.form_fields …)));
+ERROR:  cannot use subquery in check constraint
+```
+
+La validation est donc un trigger `BEFORE INSERT OR UPDATE`, `SECURITY DEFINER` et `search_path`
+vide : il doit lire `form_fields` **en entier**, et non ce que la RLS de l'appelant lui montre —
+un champ invisible ne doit pas être un champ non validé.
+
+MESURÉ contre PostgREST `v14.12` : un refus levé depuis un trigger est rendu **`400`**, que le
+`SQLSTATE` soit `P0001` ou `22023`, et le `DETAIL` du `raise` apparaît dans la clé `details` de la
+réponse JSON. Le refus porte donc `message = 'invalid_field_value'` — un jeton stable, comparable
+par égalité, comme les cinq refus de `move_card` — et le `DETAIL` nomme la clé du champ et la forme
+attendue.
+
+### 6.5 Ce que chaque type accepte, et ce qui n'est pas vérifié
+
+| Type | Forme `jsonb` acceptée | Vérification supplémentaire |
+|---|---|---|
+| `text`, `textarea`, `url`, `email`, `phone` | `string` | `url` : `^https?://` ; `email` : présence d'un `@` et d'un point dans le domaine. `phone` : **aucune**, les formats nationaux étant trop divers pour qu'un refus soit défendable |
+| `number`, `money` | `number` | aucune. `money` ne vérifie pas la devise : elle est portée par `options.currency` du champ, non par la valeur |
+| `date` | `string` convertible en `date` | la conversion elle-même |
+| `datetime` | `string` convertible en `timestamptz` | la conversion elle-même |
+| `select` | `string` | **la clé doit figurer dans `options.choices`** |
+| `multiselect` | `array` de `string` | **chaque clé doit figurer dans `options.choices`** ; les doublons sont acceptés |
+| `checkbox` | `boolean` | aucune |
+| `user`, `contact` | `string` convertible en `uuid` | **aucune résolution** — voir ci-dessous |
+| `file` | `string` | aucune : le chemin vise Storage, service distinct |
+
+**`select` et `multiselect` closent le point ouvert n° 4 du §8.** Le §2.4 posait que la base ne
+contraint pas la forme des entrées de `choices`, et renvoyait la vérification à « la validation de
+`CRM-036`, ou pas du tout ». Elle est faite : une clé de choix inconnue est refusée. MESURÉ sur le
+seed, les quatre clés du champ `source` sont `salon`, `recommandation`, `site`, `prospection` ; une
+cinquième est refusée.
+
+**`user` et `contact` ne sont pas résolus, et c'est nommé plutôt que tu.** Le §2.3 annonce que
+« le résoudre appartient à `CRM-036` et à `CRM-060` » sans dire lequel fait quoi. `contact` vise
+`contacts`, table qui n'existe pas (`CRM-060`) : sa résolution est impossible aujourd'hui.
+Résoudre `user` seul rendrait la famille incohérente — deux types voisins, l'un opposable et
+l'autre non — et **poserait une règle que nul document n'énonce** : un `user` doit-il être membre
+du workspace, ou tout profil convient-il ? Les deux types valident donc la **forme** d'un `uuid`, et
+rien de plus. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-053**, arbitrage attendu.
+
+### 6.6 « Renseigné » : la définition dont dépend la sixième vérification
+
+Une ligne présente ne suffit pas. Une valeur est **renseignée** lorsqu'elle n'est **aucune** de :
+
+- `'null'::jsonb` — la façon dont le produit exprime « vidé explicitement » (`docs/SCHEMA.md` §4) ;
+- une chaîne vide, ou faite de seuls espaces ;
+- un tableau vide.
+
+Tout le reste est renseigné, y compris `false`, `0` et `"0"` : une case décochée est une réponse,
+pas une absence de réponse. Confondre les deux rendrait une case à cocher impossible à satisfaire
+par la négative.
+
+Cette définition est portée par une fonction, `app.valeur_de_champ_est_vide(jsonb)`, et non par une
+expression recopiée dans chaque appelant : la sixième vérification de `move_card` et le rendu de
+`CRM-037` doivent en donner la **même** lecture, faute de quoi l'interface annoncerait passable une
+transition que la garde refuse.
+
+### 6.7 La sixième vérification de `move_card`, et l'union qu'elle contrôle
+
+`CRM-034` a livré cinq vérifications sur six ; la sixième attendait cette unité (INC-047, et
+`docs/SPEC-workflow-engine.md` §5.7). Elle est livrée ici, ce que la Definition of Done de
+`CRM-036` demande mot pour mot — « union étape + transition », « `hidden` non exigé ».
+
+**L'ensemble exigé** est l'union définie au §3.5 :
+
+1. les champs portant une règle `required` sur l'**étape cible** ;
+2. les champs désignés par `require_fields` de la **transition empruntée**.
+
+**Ce qui n'en fait pas partie**, et chaque exclusion est une décision :
+
+- un champ **sans règle** à l'étape cible. Le défaut du §3.1 est `visible`, non `required` : une
+  absence de règle n'a jamais rien exigé ;
+- un champ `hidden` à l'étape cible **par la règle de cette étape**. C'est la lecture littérale du
+  §3.1 — `hidden` n'est pas `required` — et la Definition of Done la nomme ;
+- un champ **archivé** (`archived_at` non nul), quelle que soit sa règle et quel que soit
+  `require_fields`. Le §5 pose que l'archivage retire un champ des formulaires : exiger un champ
+  qu'aucun formulaire n'affiche rendrait la transition impossible à satisfaire depuis le produit ;
+- un identifiant de `require_fields` **que la jointure ne résout pas** — champ supprimé, ou
+  appartenant à un autre workflow. Le §3.5 laissait le choix entre « ignorer » et « dénoncer ». Le
+  choix est d'**ignorer**, et le motif est asymétrique : dénoncer bloquerait définitivement une
+  transition pour une erreur de saisie d'administrateur, sans qu'aucun utilisateur ne puisse la
+  corriger depuis le produit, alors qu'ignorer ne fait que ne pas exiger ce que personne ne peut
+  renseigner. Aucune intégrité référentielle ne protège ce tableau (INC-033), et le comportement est
+  **figé par une assertion** plutôt que laissé au hasard.
+
+**En revanche, un champ `hidden` à l'étape cible ET désigné par `require_fields` est exigé.** Le
+§3.5 dit « indépendamment de l'étape cible », et une arête déclarée par un administrateur est un
+geste explicite, là où l'absence de règle est un défaut. Le cas est exercé par une assertion, sans
+quoi cette prose serait la seule chose qui le tienne.
+
+**Le refus.** `message = 'missing_required_fields'`, `SQLSTATE` `P0001`, donc HTTP `400` — MESURÉ,
+comme les quatre autres refus `P0001` de la fonction. Le `DETAIL` porte **la liste des clés
+manquantes**, séparées par `, ` et ordonnées par `position`, ce que `docs/SPEC-form-composer.md` §6
+exigeait depuis `CRM-000` : « afin que le client puisse les mettre en évidence sans deviner ».
+
+MESURÉ le 2026-08-05, deux écritures possibles et le choix entre elles :
+
+| Écriture | Réponse PostgREST |
+|---|---|
+| `raise exception 'missing_required_fields: %', clés` | `{"code":"P0001","details":null,"message":"missing_required_fields: {budget,source}"}` |
+| `raise … using detail = clés` | `{"code":"P0001","details":"budget, source","message":"missing_required_fields"}` |
+
+La seconde est retenue. La première rend le `message` **incomparable par égalité** : il porterait
+une liste variable, et chaque test devrait le découper pour le lire. Les cinq refus déjà livrés sont
+des jetons stables ; le sixième le reste, et la donnée variable voyage dans le champ prévu pour elle.
+
+**La vérification vient en dernier**, après les cinq autres. Une card invisible ne doit pas
+apprendre par un refus quels champs son workflow exige : la discrétion du §5.3 de
+`docs/SPEC-workflow-engine.md` prime.
+
+### 6.8 Ce qui ne peut pas être contourné
+
+- l'interface ne fait que **prévenir** : `CLAUDE.md` §10 l'exige de toute règle d'accès, et la
+  garde vit en base ;
+- l'écriture directe d'une valeur passe par `card_field_values`, protégée par RLS **et** par le
+  trigger de validation, qui s'applique au propriétaire de la table comme à quiconque ;
+- le contrôle des champs requis s'exécute **dans la même transaction** que le déplacement : aucune
+  fenêtre ne s'ouvre entre le contrôle et l'écriture.
+
+### 6.9 Autorisations
+
+| Geste | Qui |
+|---|---|
+| Lire une valeur | Qui a le droit de **lire la card** — `app.can_read_card(card_id)` |
+| Écrire une valeur, la modifier | Qui a le droit d'**écrire sur le channel** de la card |
+| Supprimer une valeur | **Personne.** Vider un champ, c'est écrire `'null'::jsonb` (§6.6) |
+
+C'est exactement la ligne `card_field_values` du tableau de `docs/SPEC-permissions-rls.md` §4 —
+« Lecture de la card / Écriture sur le channel ».
+
+`app.can_read_card` existe depuis `CRM-040`, et son commentaire nomme `card_field_values` parmi ses
+appelants prévus. Son symétrique en écriture n'existait pas : `CRM-036` livre
+**`app.can_write_card(uuid)`**, de même forme, parce qu'une table fille ne dispose que d'un
+`card_id` et qu'aucune politique ne peut atteindre le channel sans cette jointure. Ce n'est pas un
+élargissement de périmètre : c'est le seul moyen d'écrire la règle que le §4 prescrit. Elle est
+inscrite dans `docs/SPEC-permissions-rls.md` §3 dans le même changement.
+
+**Aucun privilège `DELETE`, aucune politique `for delete`** : le refus est double, comme pour
+`form_fields` (décision 96). La dégradation du harnais accorde le privilège pour constater que la
+politique tient encore la seconde barrière.
+
+**Le `RETURNING` d'un `INSERT` est soumis à la politique `SELECT`** : la politique de lecture
+appelle `app.can_read_card`, qui lit `cards` — une **autre** table, déjà écrite. Le défaut de la
+décision 107 ne se reproduit donc pas ici ; il se reproduirait si la politique relisait
+`card_field_values`, ce qu'elle ne fait pas.
+
+### 6.10 Contrat d'API attendu, à mesurer
+
+Dix-huit lignes, écrites **avant** le code pour être mesurées et non supposées. Jetons réels des
+trois profils seedés, appels `POST`, `PATCH` et `GET` sur `/rest/v1/card_field_values`, et
+`POST /rest/v1/rpc/move_card`.
+
+| # | Appelant | Geste | Attendu |
+|---|---|---|---|
+| a | anonyme | lecture | `200`, `[]` — refus n° 11 |
+| b | anonyme | écriture | refus, aucune ligne créée |
+| c | `admin` | lecture des valeurs seedées | `200`, les valeurs de son workspace |
+| d | `viewer` | écriture d'une valeur sur une card qu'il voit | `403` — droit d'écriture requis |
+| e | `viewer` | lecture d'une valeur d'une card qu'il voit | `200`, la valeur |
+| f | `viewer` | lecture d'une valeur d'une card d'un channel que le seed lui ferme | `200`, `[]` — refus n° 4 |
+| g | `bizdev` | écriture d'une valeur sur une card d'un channel où il est rétrogradé en lecture | `403` |
+| h | `admin` | écriture d'une valeur de type conforme | `201` |
+| i | `admin` | `money` recevant une chaîne | `400`, `invalid_field_value` |
+| j | `admin` | `checkbox` recevant une chaîne | `400`, `invalid_field_value` |
+| k | `admin` | `select` recevant une clé absente de `choices` | `400`, `invalid_field_value` |
+| l | `admin` | `date` recevant une chaîne non convertible | `400`, `invalid_field_value` |
+| m | `admin` | `url` recevant `javascript:…` | `400`, `invalid_field_value` |
+| n | `admin` | `'null'::jsonb` sur n'importe quel type | `201` — vidé explicitement |
+| o | `admin` | valeur croisant card et champ de deux workflows | `400`, `23503` |
+| p | `admin` | `DELETE` d'une valeur | refus |
+| q | `admin` | `move_card` vers une étape dont un champ `required` est vide | `400`, `missing_required_fields`, `details` nommant la clé |
+| r | `admin` | même appel, la valeur ayant été renseignée | `200` |
+
+Chaque refus **relit la ligne** pour la constater inchangée : une réponse d'erreur ne prouve pas
+qu'aucune écriture n'a eu lieu.
+
+### 6.11 Ce que le seed livre
+
+Le seed pose des valeurs sur **cinq cards**, choisies pour que chaque règle soit exercée par une
+donnée permanente et non seulement par une suite de tests :
+
+| Card | Valeurs | Ce que la donnée démontre |
+|---|---|---|
+| `c1` « Refonte du site vitrine », étape *relance* | `source`, et `budget` à `'null'::jsonb` | **Une ligne présente n'est pas une valeur renseignée** (§6.6). La transition vers *négociation* est refusée, et la carte reste le cas de refus permanent du produit |
+| `c2` « Migration ERP Sogexia », étape *relance* | `source`, `budget` | Le cas symétrique : même étape, même transition, **acceptée**. Sans cette paire, un refus ne prouverait pas que la règle discrimine |
+| `c3` « Audit sécurité applicative », étape *prospection* | `source`, `budget`, `budget-previsionnel` | Un champ `hidden` à l'étape courante **portant une valeur** (§4, section repliée), et une valeur portée par un champ **archivé** (§5) |
+| `c4` « Refonte intranet Ville de Lyon », étape *négociation* | `budget`, `lien-proposition` | La liste **à plusieurs clés** : la transition vers *signature* manque `date-signature-prevue` et `decideur-identifie` |
+| `c6` « Piste entrante à qualifier », étape *prospection* | `motif-perte`, `source` | Le parcours « Marquer perdu » reste franchissable : l'étape *perdu* exige `motif-perte` |
+| `c7` « Formation Data & IA », étape *signature* | `budget`, `date-signature-prevue`, `decideur-identifie` | Les trois exigences de son étape courante sont satisfaites — et la transition suivante en exige une **quatrième**, par `require_fields` |
+
+**`require_fields` cesse d'être vide, et le motif de son vide a disparu.** Le §5.9 de
+`docs/SPEC-workflow-engine.md` le justifiait ainsi : « la vérification qui le lirait n'est pas
+livrée ». Elle l'est. La transition *signature → réalisation* exige donc `lien-proposition` :
+c'est la seule donnée du seed qui exerce le **second membre** de l'union du §3.5, et sans elle
+cette moitié de la règle ne serait démontrée par aucune donnée.
+
+Sept types sur quinze sont exercés par le seed — `money`, `select`, `date`, `textarea`, `checkbox`,
+`url`, `number` —, ce sont ceux que `CRM-035` a déclarés. Les huit autres sont éprouvés par la
+suite pgTAP sur des champs sondes, créés puis détruits : ajouter des champs au seed pour eux
+rouvrirait `CRM-035`.
+
+### 6.12 Ce que `CRM-036` ne livre pas, et qui est nommé
+
+- **aucun écran.** Le rendu du formulaire, la section repliée, la mention « requis pour passer à »
+  et le défilement jusqu'au premier champ manquant sont `CRM-037` (§4) ;
+- **aucune résolution de `user`, `contact` ni `file`** — §6.5, INC-053 ;
+- **aucune trace** : une valeur écrasée ne laisse rien derrière elle (`CRM-044`) ;
+- **aucune condition inter-champs** : point ouvert n° 1 du §8, inchangé ;
+- **aucune copie des valeurs** lorsqu'un workflow est copié vers un track. La copie ne porte déjà
+  pas les champs (INC-037) ; elle ne portera pas davantage leurs réponses, qui appartiennent à des
+  cards et non à un workflow.
 
 ## 7. Vérification exigée
 
@@ -354,12 +648,19 @@ mettre en évidence sans deviner.
 | E2E | **Aucune** : cette unité ne livre aucun écran (INC-021). L'absence est nommée, elle n'est pas contournée par une preuve de substitution |
 | Visuel | **Aucune**, pour la même raison |
 
-### 7.2 Preuves attendues de `CRM-036` et `CRM-037`
+### 7.2 Preuves attendues de `CRM-036`
 
 | Niveau | Preuves attendues |
 |---|---|
-| pgTAP | Champ `required` manquant → transition refusée ; champ `hidden` non exigé même si vide ; union étape + transition ; valeur de type incorrect refusée ; règle ajoutée après coup n'invalide pas une card déjà en place |
-| API | Écriture d'une valeur par un `viewer` → refusée ; écriture sur une card d'un autre workspace → refusée |
+| pgTAP | Forme de la table, de ses trois clés composites et de l'unicité ajoutée à `cards` ; les quinze types validés **dans les deux sens** ; `'null'::jsonb` accepté partout ; `select` hors `choices` refusé ; champ `required` manquant → transition refusée, avec la liste des clés ; champ `hidden` non exigé même si vide ; **union** étape + transition ; champ archivé non exigé ; identifiant non résolu de `require_fields` ignoré ; règle ajoutée après coup n'invalide pas une card déjà en place ; RLS active, politiques présentes, aucun privilège `DELETE` ; conformité du seed |
+| API | Les dix-huit lignes du contrat du §6.10, avec les jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater inchangée. Preuves de refus n° 4 et n° 11 de `docs/SPEC-permissions-rls.md` §7 |
+| E2E | **Aucune** : cette unité ne livre aucun écran (INC-021). L'absence est nommée, elle n'est pas contournée par une preuve de substitution |
+| Visuel | **Aucune**, pour la même raison |
+
+### 7.3 Preuves attendues de `CRM-037`
+
+| Niveau | Preuves attendues |
+|---|---|
 | E2E | Transition bloquée avec message compréhensible, saisie du champ, transition réussie ; champ d'une autre étape visible en lecture seule |
 | Visuel | Formulaire à chaque étape, état d'erreur, section repliée, rendu sur mobile |
 
@@ -375,5 +676,10 @@ mettre en évidence sans deviner.
    Done. Depuis `CRM-035`, la conséquence est **réelle** : la copie posée par le seed porte zéro
    champ là où sa source en porte sept. INC-037, trois options d'arbitrage, à trancher par le
    responsable. Le comportement reste inchangé tant qu'il ne l'a pas été.
-4. **La forme des entrées de `choices` n'est pas contrainte par la base** (§2.4). Elle le sera par
-   la validation de `CRM-036`, ou pas du tout si le responsable juge le coût supérieur au risque.
+4. ~~**La forme des entrées de `choices` n'est pas contrainte par la base** (§2.4).~~ **CLOS par
+   `CRM-036`** : la base ne la contraint toujours pas — un `CHECK` ne peut porter aucune
+   sous-requête —, mais la **valeur** d'un `select` ou d'un `multiselect` est désormais refusée
+   lorsque sa clé ne figure pas dans `options.choices` (§6.5). Le risque nommé au §2.4 — une clé de
+   choix inconnue arrivant jusqu'à l'affichage — est éteint du côté qui compte, celui des réponses.
+5. **`user` et `contact` ne sont pas résolus** (§6.5) : leur valeur est validée comme un `uuid` et
+   rien de plus. INC-053, arbitrage attendu.

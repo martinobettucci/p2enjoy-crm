@@ -4414,3 +4414,206 @@ ce constat intermédiaire, le contrôle suivant serait vert sur une dégradation
 
 **Conséquence.** La convergence n'est pas une propriété abstraite qu'on affirme dans un commentaire :
 c'est le seul rempart contre un `hint` de PostgREST que quelqu'un aura suivi de bonne foi.
+
+## 2026-08-05 — `CRM-036` : spécification des valeurs de formulaire, écrite après mesure et avant tout code
+
+**Unité choisie, et pourquoi celle-là.** `docs/MASTER_PLAN.md` §2 place `CRM-036` immédiatement
+après `CRM-035` au chunk 3.c, et sa contrainte d'ordre — « `CRM-036` (validation des champs)
+précède `CRM-037` (rendu du formulaire) » — la désigne sans ambiguïté. Les deux unités `[ ]` qui la
+précèdent dans le fichier ont été **mesurées** et restent infaisables :
+
+- `CRM-013` vise six cibles ; quatre de ses tables — `mail_inbound_accounts`,
+  `mail_outbound_identities`, `api_tokens`, `card_events`, `audit_log` — n'existent pas (chunks 4
+  et 5), et les deux qui existent, `cards.current_step_id` et `cards.email_local_part`, sont
+  gouvernées par des décisions déjà consignées (INC-049, INC-050) ;
+- `CRM-014` exige les douze scénarios de refus ; six d'entre eux portent sur des tables des chunks
+  4 et 5.
+
+**Aucune contrainte d'ordre de `docs/MASTER_PLAN.md` §2 n'est enfreinte.**
+
+### Décision 123 — L'arbitrage d'INC-047 n'avait pas à être demandé une seconde fois
+
+**Problème.** INC-047 posait trois options, dont la première : « rattacher la vérification n° 6 à
+`CRM-036`, dont la Definition of Done porte déjà "union étape + transition" et "`hidden` non exigé"
+— c'est-à-dire, mot pour mot, la sémantique de cette vérification ». L'arbitrage n'a jamais été
+rendu. Fallait-il attendre, comme quatre exécutions de la routine l'ont fait pour INC-013 avant que
+la décision 103 ne tranche ?
+
+**Ce qui décide.** Non, et pour une raison qui n'est pas la lassitude : **l'option 1 n'est pas une
+décision de produit, c'est la lecture littérale d'un texte déjà écrit.** La Definition of Done de
+`CRM-036` dans `docs/BACKLOG.md` énonce « `card_field_values`, validation par type, **union étape +
+transition** » ; le §7.2 de `docs/SPEC-form-composer.md` énonce « champ `required` manquant →
+transition refusée ; champ `hidden` non exigé même si vide ; **union étape + transition** ». Livrer
+`CRM-036` sans écrire la n° 6, c'est livrer une unité amputée de ce que sa propre Definition of Done
+nomme. Les options 2 et 3 d'INC-047 déplaçaient des unités dans le plan ; aucune n'était nécessaire
+puisque le plan, suivi tel quel, amène `CRM-036` ici.
+
+**Décision.** La vérification n° 6 est écrite par `CRM-036`. INC-047 est **close**, avec sa mesure
+et son issue, plutôt que laissée ouverte au motif que le responsable n'a pas eu à se prononcer.
+
+**Conséquence.** Le mécanisme de la décision 51 a fonctionné une neuvième fois : les deux assertions
+que `CRM-034` avait écrites pour devenir rouges ce jour-là — l'une pgTAP, l'autre d'API — l'ont fait,
+et ont été **retournées**, non retirées.
+
+### Décision 124 — Une valeur est opposable parce que trois clés composites la tiennent, et l'une exigeait une unicité qui manquait
+
+**Problème.** Rien n'empêchait structurellement une ligne de `card_field_values` d'associer une card
+suivant le workflow A à un champ déclaré sur le workflow B. C'est le problème exact que `CRM-035`
+avait résolu pour `form_field_rules` par deux clés étrangères composites articulées autour de
+`workflow_id` (décision 95).
+
+**Observation, mesurée le 2026-08-05.** La même solution ne s'écrivait pas :
+
+```
+create table sonde (card_id uuid, workflow_id uuid,
+  foreign key (card_id, workflow_id) references public.cards (id, workflow_id));
+ERROR:  there is no unique constraint matching given keys for referenced table "cards"
+```
+
+`cards` ne porte que `PRIMARY KEY (id)`, là où `form_fields` porte `UNIQUE (id, workflow_id)` depuis
+`CRM-035` et `workflow_steps` depuis `CRM-031`. La contrainte manquait **par omission**, non par
+choix : `CRM-040` n'avait aucune table fille à servir.
+
+**Décision.** `CRM-036` ajoute `UNIQUE (id, workflow_id)` sur `cards`. **Cet ajout ne change aucun
+comportement** — `id` étant déjà clé primaire, le couple était déjà unique —, il rend seulement la
+relation exprimable. MESURÉ après ajout : une paire cohérente est acceptée, une paire croisant deux
+workflows est refusée en `23503`.
+
+**Conséquence.** Une valeur ne peut plus répondre à la question d'un autre workflow, et ce n'est ni
+un trigger ni une politique qui le tient : c'est le moteur, des deux côtés de la relation, y compris
+contre un `PATCH` direct qu'aucune garde applicative ne verrait passer.
+
+### Décision 125 — La validation par type est un trigger parce qu'un `CHECK` ne peut pas la porter
+
+**Problème.** Le type qui gouverne une valeur est déclaré sur une **autre** table,
+`form_fields.type`. La contrainte naturelle serait un `CHECK`.
+
+**Observation, mesurée.** `create table sonde (… check (exists (select 1 from public.form_fields …)))`
+rend `ERROR: cannot use subquery in check constraint`. La mesure ferme la question : ce n'est pas un
+choix d'écriture, c'est une propriété de PostgreSQL.
+
+**Décision.** Un trigger `BEFORE INSERT OR UPDATE`, `SECURITY DEFINER` et `search_path` vide. Le
+`SECURITY DEFINER` n'est pas un confort : le trigger doit lire `form_fields` **en entier**, et non ce
+que la RLS de l'appelant lui montre. Un champ invisible ne doit pas être un champ non validé.
+
+**Ce qui a été mesuré au passage, et qui décide de la forme du refus.** PostgREST rend `400` pour un
+refus levé depuis un trigger, que le `SQLSTATE` soit `P0001` ou `22023`, et il expose le `DETAIL` du
+`raise` dans la clé `details` de sa réponse JSON.
+
+### Décision 126 — La liste des clés manquantes voyage dans le `DETAIL`, pas dans le message
+
+**Problème.** Le §6 de `docs/SPEC-form-composer.md` exige depuis `CRM-000` que le refus « retourne
+la liste des clés manquantes, afin que le client puisse les mettre en évidence sans deviner ». Deux
+écritures étaient possibles.
+
+**Observation, mesurée sur deux fonctions sondes créées puis détruites :**
+
+| Écriture | Réponse PostgREST |
+|---|---|
+| `raise exception 'missing_required_fields: %', clés` | `{"code":"P0001","details":null,"message":"missing_required_fields: {budget,source}"}` |
+| `raise … using detail = clés` | `{"code":"P0001","details":"budget, source","message":"missing_required_fields"}` |
+
+**Décision.** La seconde. La première rend le `message` **incomparable par égalité** : il porterait
+une liste variable, et chaque test — comme chaque client — devrait le découper pour le lire. Les cinq
+refus déjà livrés par `CRM-034` sont des jetons stables ; le sixième le reste, et la donnée variable
+voyage dans le champ prévu pour elle.
+
+**Portée générale.** Un message d'erreur a deux lecteurs : un programme, qui veut un jeton, et un
+humain, qui veut un détail. Les mélanger, c'est mal servir les deux.
+
+### Décision 127 — « Renseigné » est une définition, et elle vit dans une fonction
+
+**Problème.** La sixième vérification compare un ensemble exigé à un ensemble **renseigné**. Or une
+ligne présente ne suffit pas : `docs/SCHEMA.md` §4 pose que `'null'::jsonb` signifie « explicitement
+vide ». Une chaîne vide et un tableau vide posent la même question.
+
+**Décision.** Une valeur est renseignée lorsqu'elle n'est ni `'null'::jsonb`, ni une chaîne vide ou
+faite de seuls espaces, ni un tableau vide. **Tout le reste l'est, y compris `false`, `0` et `"0"`** :
+une case décochée est une réponse, pas une absence de réponse — confondre les deux rendrait une case
+à cocher impossible à satisfaire par la négative.
+
+**Pourquoi une fonction et non une expression recopiée.** `move_card` et le rendu de `CRM-037`
+doivent donner la **même** lecture de « renseigné », faute de quoi l'interface annoncerait passable
+une transition que la garde refuse. `app.valeur_de_champ_est_vide(jsonb)` est le seul endroit où
+cette définition existe.
+
+### Décision 128 — Un identifiant mort de `require_fields` est ignoré, et l'asymétrie du choix est le motif
+
+**Problème.** Le §3.5 de `docs/SPEC-form-composer.md` laissait à `move_card` le choix d'« ignorer, ou
+dénoncer, un identifiant qu'elle ne résout pas ». Aucune intégrité référentielle ne protège ce
+tableau — PostgreSQL refuse une clé étrangère depuis un `uuid[]` (INC-033).
+
+**Ce qui décide, et ce n'est pas une préférence.** Les deux erreurs possibles n'ont pas le même
+coût :
+
+- **dénoncer** bloque définitivement une transition pour une erreur de saisie d'administrateur, et
+  **aucun utilisateur ne peut la corriger depuis le produit** — il faudrait modifier la transition,
+  écran réservé à l'administration ;
+- **ignorer** ne fait que ne pas exiger ce que personne ne peut renseigner : le champ visé n'existe
+  pas, ou appartient à un autre workflow, donc aucune valeur ne pourra jamais lui être associée — les
+  clés composites de la décision 124 l'interdisent.
+
+**Décision.** Ignorer. La jointure de la sixième vérification est écrite de sorte que l'identifiant
+non résolu tombe naturellement, et le comportement est **figé par une assertion** plutôt que laissé
+au hasard d'une écriture.
+
+**Ce qui n'est pas décidé ici.** L'absence de tout signal côté administration reste entière : rien ne
+prévient un administrateur que le `require_fields` qu'il vient de poser désigne un champ mort. Le
+point ouvert n° 6 du §9 de `docs/SPEC-workflow-engine.md` est réécrit pour le dire.
+
+### Décision 129 — Un champ archivé n'exige rien, et c'est la seule lecture tenable
+
+**Problème.** Le §5 de `docs/SPEC-form-composer.md` pose que l'archivage d'un champ « le retire des
+formulaires sans supprimer les valeurs déjà saisies ». Que devient une règle `required` portant sur
+un champ archivé, ou un `require_fields` le désignant ?
+
+**Décision.** Le champ archivé est **exclu de l'ensemble exigé**, quelle que soit sa règle. Exiger un
+champ qu'aucun formulaire n'affiche rendrait la transition impossible à satisfaire depuis le produit :
+l'utilisateur verrait un refus nommant une clé qu'il ne peut renseigner nulle part.
+
+**Conséquence sur le seed.** Le champ archivé `budget-previsionnel` reçoit une valeur sur la card
+`…0c3`, précisément pour que « une valeur survit à l'archivage de son champ » soit démontré par une
+donnée permanente, et non seulement écrit.
+
+### Décision 130 — `app.can_write_card` est livrée, et ce n'est pas un élargissement de périmètre
+
+**Problème.** Le tableau du §4 de `docs/SPEC-permissions-rls.md` prescrit « Écriture sur le channel »
+pour `card_field_values`, sans dire par quel chemin. Une table fille ne dispose que d'un `card_id` ;
+aucune politique ne peut atteindre le channel sans une jointure.
+
+**Ce qui décide.** `app.can_read_card` existe depuis `CRM-040` pour exactement cette raison, et son
+commentaire nomme `card_field_values` parmi ses appelants prévus. Son symétrique en écriture
+manquait. L'alternative — recopier la sous-requête dans chacune des politiques d'insertion et de
+mise à jour — répète la jointure et la rend impossible à corriger d'un seul endroit.
+
+**Décision.** `app.can_write_card(uuid)` est livrée, de forme identique à `app.can_read_card`, et
+inscrite au §3.7 de `docs/SPEC-permissions-rls.md` dans le commit documentaire qui précède le code.
+Comme sa jumelle, elle n'est **pas** appelée par les politiques de `cards`, qui jugent sur
+`channel_id`, colonne de la ligne jugée (décision 110).
+
+### Décision 131 — La forme des choix est enfin contrainte, du côté des réponses
+
+**Problème.** Le point ouvert n° 4 du §8 de `docs/SPEC-form-composer.md` était en suspens depuis
+`CRM-035` : la base ne contraint pas la forme des entrées de `options.choices`, un `CHECK` ne pouvant
+porter de sous-requête. Le §8 renvoyait la question à « la validation de `CRM-036`, ou pas du tout ».
+
+**Décision.** La contrainte est posée là où elle a une conséquence : **la valeur**. Un `select` ou un
+`multiselect` dont la clé ne figure pas dans `options.choices` est refusé. La déclaration reste libre
+— on peut toujours écrire un `choices` mal formé —, mais aucune card ne peut plus porter une réponse
+que son champ n'offre pas.
+
+**Conséquence.** Le risque nommé au §2.4 — une clé de choix inconnue arrivant jusqu'à l'affichage —
+est éteint du côté qui compte. Le point ouvert n° 4 est barré, son motif conservé.
+
+### Décision 132 — `user` et `contact` ne sont pas résolus, et résoudre l'un seul aurait été pire
+
+**Problème.** Le §2.3 annonce que « le résoudre appartient à `CRM-036` et à `CRM-060` », sans dire
+lequel fait quoi. `contact` vise `contacts`, table qui n'existe pas ; `user` vise `profiles`, livrée.
+
+**Ce qui décide.** Résoudre `user` seul rendrait la famille incohérente — deux types voisins, l'un
+opposable et l'autre non — et surtout **poserait une règle que nul document n'énonce** : un `user`
+doit-il être membre du workspace de la card, ou tout profil convient-il ? Trancher cela reviendrait à
+décider à la place du responsable, dans une unité qui ne le lui a jamais demandé.
+
+**Décision.** Les deux types valident la **forme** d'un `uuid`, et rien de plus. Consigné en
+**INC-053**, arbitrage attendu, sans que le comportement soit décidé implicitement.

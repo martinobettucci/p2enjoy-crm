@@ -375,13 +375,24 @@ Détail des contraintes, de leurs mesures et de leurs motifs : `docs/SPEC-form-c
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `card_id` | `uuid` | PK composite, FK |
-| `field_id` | `uuid` | PK composite, FK |
-| `value` | `jsonb` | non nul ; `'null'::jsonb` signifie explicitement vide |
-| `updated_by` | `uuid` | FK `profiles` |
-| `updated_at` | `timestamptz` | |
+| `card_id` | `uuid` | PK composite ; FK **composite** `(card_id, workflow_id) → cards (id, workflow_id)`, `ON DELETE CASCADE` |
+| `field_id` | `uuid` | PK composite ; FK **composite** `(field_id, workflow_id) → form_fields (id, workflow_id)`, `ON DELETE CASCADE` |
+| `workflow_id` | `uuid` | non nul ; **charnière** des deux clés composites — c'est lui qui rend impossible une valeur répondant à la question d'un autre workflow |
+| `workspace_id` | `uuid` | non nul ; FK composite `(workflow_id, workspace_id) → workflows (id, workspace_id)` |
+| `value` | `jsonb` | non nul ; `'null'::jsonb` signifie explicitement vide. La **forme** est validée par trigger selon `form_fields.type` — un `CHECK` ne peut pas porter de sous-requête, mesuré |
+| `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
+| `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
 Index GIN sur `value` pour les filtres des vues sauvegardées.
+
+**Livrée par `CRM-036`** — voir `docs/SPEC-form-composer.md` §6. Deux précisions opposables que le
+tableau d'origine ne portait pas :
+
+- `created_at` s'ajoute, comme pour toute table métier (« Conventions générales » ; **quatrième
+  occurrence d'INC-025**) ;
+- `cards` reçoit `UNIQUE (id, workflow_id)` dans la même migration, **condition** de la première clé
+  composite ci-dessus. MESURÉ : sans elle, « there is no unique constraint matching given keys for
+  referenced table "cards" ». L'ajout ne change aucun comportement, `id` étant déjà clé primaire.
 
 ---
 

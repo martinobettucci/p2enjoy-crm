@@ -466,11 +466,10 @@ distinguerait « déclaré facultatif » de « non déclaré ».
 moins les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par défaut du
 §3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
 
-**`require_fields` reste vide sur les dix transitions.** Le motif a changé avec `CRM-035` et il est
-nommé plutôt que laissé périmé : la colonne peut désormais désigner des champs réels, mais aucune
-garde ne la lit — `move_card` est `CRM-034`, non commencée (décision 92). Une donnée que rien
-n'exerce est une décoration, et elle serait la première à pourrir, aucune intégrité référentielle
-n'étant possible sur un `uuid[]` (INC-033).
+**`require_fields` restait vide sur les dix transitions** tant qu'aucune garde ne la lisait. Le
+motif est éteint depuis `CRM-036`, qui a livré la sixième vérification de `move_card` : la
+transition *signature → réalisation* porte désormais `require_fields = {…086}` — `lien-proposition`.
+Voir §2.13.
 
 **La copie de la section 2.9 ne reçoit aucun champ.** `copy_workflow_to_track` n'en copie aucun, et
 son comportement reste inchangé — INC-037, arbitrage attendu du responsable, décision 93. L'écart
@@ -501,6 +500,40 @@ chapitre ne retient que ce qui engage le seed.
 Ce que le seed **ne** démontre **pas**, et qui est nommé plutôt que compensé : aucune card sur un
 **workflow dérivé**, pour la raison ci-dessus ; aucune valeur de formulaire, `card_field_values`
 arrivant à `CRM-036` ; aucun événement de timeline, `card_events` arrivant à `CRM-044`.
+
+### 2.13 Valeurs de formulaire — ajoutées par `CRM-036`
+
+Quatorze valeurs sur **six cards**. Contrat détaillé et motifs : `docs/SPEC-form-composer.md` §6.11.
+
+| Card | Champ | Valeur | Ce qu'elle démontre |
+|---|---|---|---|
+| `…0c1` *Refonte du site vitrine*, relance | `source` | `"recommandation"` | un `select` dont la clé figure dans `options.choices` |
+| `…0c1` | `budget` | `null` | **une ligne présente n'est pas une valeur renseignée** (§6.6) : la transition vers *négociation* est refusée |
+| `…0c2` *Migration ERP Sogexia*, relance | `source` | `"salon"` | — |
+| `…0c2` | `budget` | `45000` | le cas **symétrique** de `…0c1` : même étape, même transition, acceptée |
+| `…0c3` *Audit sécurité applicative*, prospection | `source` | `"site"` | l'exigence de son étape courante, satisfaite |
+| `…0c3` | `budget` | `90000` | un champ **`hidden` à l'étape courante portant une valeur** (§4, section repliée) |
+| `…0c3` | `budget-previsionnel` | `72000` | une valeur portée par un champ **archivé** (§5) : elle survit, et n'exige rien |
+| `…0c4` *Refonte intranet Ville de Lyon*, négociation | `budget` | `120000` | — |
+| `…0c4` | `lien-proposition` | `"https://…"` | un `url` conforme |
+| `…0c6` *Piste entrante à qualifier*, prospection | `source` | `"prospection"` | — |
+| `…0c6` | `motif-perte` | `"…"` | le parcours **« Marquer perdu »** reste franchissable : l'étape *perdu* exige ce champ |
+| `…0c7` *Formation Data & IA*, signature | `budget` | `78000` | — |
+| `…0c7` | `date-signature-prevue` | `"2026-09-30"` | un `date` convertible |
+| `…0c7` | `decideur-identifie` | `true` | un `checkbox` — et **`false` serait tout autant renseigné** (§6.6) |
+
+Sept types sur quinze sont donc exercés par des données permanentes : `money`, `select`, `date`,
+`textarea`, `checkbox`, `url`, `number`. Ce sont exactement ceux que `CRM-035` a déclarés ; en
+ajouter d'autres exigerait de nouveaux champs, donc de rouvrir `CRM-035`. Les huit restants sont
+éprouvés par la suite pgTAP sur des champs sondes, créés puis détruits.
+
+**Une transition porte enfin `require_fields`.** *Signature → réalisation* (`…074`) exige
+`lien-proposition`. C'est la seule donnée du seed qui exerce le **second membre** de l'union du
+§3.5 de `docs/SPEC-form-composer.md` : la card `…0c7` satisfait les trois exigences de son étape
+courante et reste bloquée par cette quatrième, portée par l'arête et non par l'étape.
+
+**Aucune valeur n'est posée sur la card archivée ni sur celle en corbeille.** Une card rangée ne se
+déplace pas : y poser des valeurs n'exercerait rien que les six autres n'exercent déjà.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

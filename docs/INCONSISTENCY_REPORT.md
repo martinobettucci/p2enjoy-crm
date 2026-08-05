@@ -1900,7 +1900,7 @@ INC-033 (une intégrité que le type interdit), INC-043 (`CRM-034` sans cible), 
 
 ---
 
-### INC-047 — La sixième vérification de `move_card` lit une table que le plan livre après elle
+### INC-047 — La sixième vérification de `move_card` lit une table que le plan livre après elle — **CLOSE**
 
 **Nature :** contradiction d'ordonnancement entre `docs/MASTER_PLAN.md` §2 et la Definition of Done
 de `CRM-034`.
@@ -1952,10 +1952,28 @@ of Done de `CRM-034` nomme, n'existe pas. Il naîtra avec la vérification qu'il
    l'interface seule — écarté d'office : `CLAUDE.md` §10 interdit qu'une règle métier ne vive que
    dans l'interface.
 
-**Lié à :** INC-043 (`CRM-034` avant ses tables), INC-033 (`require_fields` sans intégrité),
-`CRM-036`, `CRM-037`.
+**CLOSE LE 2026-08-05, PAR `CRM-036`.** L'arbitrage n'a jamais été rendu, et il n'avait pas à
+l'être : l'**option 1** ci-dessus n'est pas une décision de produit, c'est la lecture littérale de
+deux textes déjà écrits. La Definition of Done de `CRM-036` dans `docs/BACKLOG.md` énonce « union
+étape + transition » ; le §7.2 de `docs/SPEC-form-composer.md` énonce « champ `required` manquant →
+transition refusée ; champ `hidden` non exigé même si vide ; union étape + transition ». C'est, mot
+pour mot, la sémantique de la vérification n° 6. Livrer `CRM-036` sans l'écrire aurait amputé
+l'unité de ce que sa propre Definition of Done nomme (décision 123).
+
+**Le mécanisme de l'assertion figée a fonctionné.** Les deux preuves que `CRM-034` avait écrites
+pour devenir rouges ce jour-là — `hasnt_table('public','card_field_values')` et le scénario *M7* de
+`e2e/api/move-card.spec.ts` — le sont devenues, et ont été **retournées** : elles constatent
+désormais le refus, et leur jumelle constate l'acceptation une fois la valeur renseignée.
+
+**Ce que la n° 6 contrôle** est écrit au §6.7 de `docs/SPEC-form-composer.md`, et le message
+« liste des clés manquantes » que la Definition of Done de `CRM-034` nommait existe : il voyage dans
+le `DETAIL` du `raise`, mesuré exposé par PostgREST dans la clé `details` (décision 126).
+
 
 ---
+
+**Lié à :** INC-043 (`CRM-034` avant ses tables), INC-033 (`require_fields` sans intégrité),
+`CRM-036`, `CRM-037`.
 
 ### INC-048 — `move_card` exige un commentaire qu'elle ne peut conserver nulle part
 
@@ -2158,6 +2176,51 @@ et retourner l'assertion dans le même changement, ou confirmer que seuls les es
 corriger le titre du §5.3 pour qu'il n'annonce pas davantage.
 
 **Lié à :** INC-048 (le commentaire n'est conservé nulle part).
+
+---
+
+### INC-053 — `SPEC-form-composer` §2.3 confie la résolution de `user` et `contact` à deux unités sans dire laquelle fait quoi
+
+**Nature :** référence ambiguë dans `docs/SPEC-form-composer.md` §2.3.
+**Relevé le :** 2026-08-05, pendant la spécification de `CRM-036`.
+
+Le §2.3 énonce : « Déclarer un champ de type `contact` est donc licite dès `CRM-035` ; le
+**résoudre** appartient à `CRM-036` et à `CRM-060`. » La phrase désigne deux unités et n'attribue
+rien : elle ne dit ni ce que chacune doit résoudre, ni ce que « résoudre » signifie.
+
+**Ce que `CRM-036` a mesuré et retenu.** Trois types désignent des objets : `user` vise `profiles`
+(livrée), `contact` vise `contacts` (`CRM-060`, non commencée — MESURÉ,
+`to_regclass('public.contacts')` rend `NULL`), `file` vise Storage, service distinct. `CRM-036`
+valide donc la **forme** d'un `uuid` pour `user` et `contact`, et une chaîne pour `file`. Aucune
+résolution n'est faite.
+
+**Pourquoi ne pas résoudre `user`, qui serait possible.** Deux raisons, dont la seconde est la vraie :
+
+1. la famille deviendrait incohérente — deux types voisins, l'un opposable et l'autre non, sans que
+   rien dans le formulaire ne le laisse voir ;
+2. surtout, cela **poserait une règle que nul document n'énonce** : un `user` doit-il être membre du
+   workspace de la card ? un membre du workspace suffit-il ? un profil quelconque ? Le §2.3 ne le dit
+   pas, `docs/SPEC-permissions-rls.md` non plus, et chacune de ces réponses est une décision de
+   produit défendable.
+
+**Comportement retenu :** la validation de forme, et rien de plus. L'écart est nommé au §6.5 et au
+§6.12 de `docs/SPEC-form-composer.md`, et figé par une assertion de
+`supabase/tests/0014_valeurs_champs.test.sql` qui constate qu'un `uuid` bien formé désignant un
+profil **inexistant** est accepté aujourd'hui.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. **résoudre `user` contre `profiles`**, en nommant la règle d'appartenance attendue, et laisser
+   `contact` à `CRM-060` — au prix de l'incohérence temporaire de la famille ;
+2. **rattacher les deux résolutions à `CRM-060`**, qui livrera `contacts` et pourra traiter la
+   famille d'un seul geste — c'est la lecture la plus économe, et elle laisse le comportement actuel
+   inchangé jusque-là ;
+3. **renoncer à toute résolution**, en assumant qu'un `jsonb` ne porte aucune intégrité et que
+   l'interface seule proposera des valeurs valides — au prix d'un `PATCH` direct capable d'écrire
+   n'importe quel `uuid`.
+
+**Lié à :** INC-033 (aucune intégrité référentielle possible sur un `uuid[]`, même famille de
+limite), `CRM-060`.
 
 ---
 

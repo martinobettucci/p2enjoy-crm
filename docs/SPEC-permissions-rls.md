@@ -53,6 +53,7 @@ Déclarées `SECURITY DEFINER`, `search_path` fixé, accordées à `authenticate
 | `app.can_read_channel(ch uuid)` | droit de lecture effectif sur le channel, droits fins appliqués | `CRM-012` (§3.3) |
 | `app.can_write_channel(ch uuid)` | droit d'écriture effectif sur le channel | `CRM-012` (§3.3) |
 | `app.can_read_card(card uuid)` | dérivé du channel de la card | `CRM-040` (§3.6) — INC-013 close |
+| `app.can_write_card(card uuid)` | droit d'**écriture** dérivé du channel de la card | `CRM-036` (§3.7) |
 
 Ces fonctions existent pour deux raisons : éviter la **récursion** des politiques (une politique
 sur `workspace_members` qui interrogerait `workspace_members`), et garder les politiques lisibles
@@ -177,8 +178,29 @@ de `cards` jugent donc sur `channel_id`, **colonne de la ligne jugée**.
 
 Ses appelants sont les tables **filles** — `card_comments` (`CRM-043`), `card_field_values`
 (`CRM-036`), `card_events` (`CRM-044`), `mail_messages` (`CRM-054`) et les politiques de Storage
-(§5) —, qui ne disposent que d'un `card_id`. Livrer une fonction sans usage immédiat est assumé et
-dit ; la suite pgTAP l'éprouve **directement**.
+(§5) —, qui ne disposent que d'un `card_id`. **`CRM-036` est son premier appelant réel** : la
+politique de lecture de `card_field_values` l'emploie, et le défaut de la décision 107 ne s'y
+reproduit pas — la fonction lit `cards`, une **autre** table, déjà écrite.
+
+### 3.7 `app.can_write_card`, livrée par `CRM-036`
+
+```
+app.can_write_card(card uuid) → boolean
+  = coalesce((select app.can_write_channel(c.channel_id) from public.cards c where c.id = card), false)
+```
+
+Symétrique exact de `app.can_read_card`, et livrée pour la même raison : **une table fille ne
+dispose que d'un `card_id`**, et aucune politique d'écriture ne peut atteindre le channel sans
+cette jointure. Le tableau du §4 prescrivait « Écriture sur le channel » pour `card_field_values`,
+`card_activities` et `card_comments` sans dire par quel chemin ; ce chemin est celui-ci.
+
+`SECURITY DEFINER`, `STABLE`, `search_path` vidé. `EXECUTE` accordé à `anon` **aussi**, pour le
+motif du §3.2 : sans lui, un appelant anonyme atteignant une table dont la politique l'appelle
+recevrait une erreur de privilège là où le comportement exigé par le §7 est **zéro ligne**. Le droit
+n'ouvre rien — `auth.uid()` étant nul, `app.can_write_channel` rend faux.
+
+**Comme `app.can_read_card`, elle n'est pas appelée par les politiques de `cards`**, qui jugent sur
+`channel_id`, colonne de la ligne jugée (§3.5, §3.6).
 
 ## 4. Politiques par famille de tables
 
@@ -195,7 +217,7 @@ dit ; la suite pgTAP l'éprouve **directement**.
 | `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace — **livré par `CRM-031`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un workflow | `admin` ; **la suppression est exposée aux étapes et aux transitions**, et à elles seules — elles sont la composition d'un workflow et n'ont aucun `archived_at` (`docs/SPEC-workflow-engine.md` §3.7, `docs/JOURNAL.md` décision 74). Un workflow, lui, s'archive |
 | `form_fields`, `form_field_rules` | Membres du workspace — **livré par `CRM-035`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un formulaire, qui appartient à un workflow | `admin` ; **la suppression est exposée aux règles**, et à elles seules — un champ porte `archived_at` et l'archivage tient lieu de suppression, une règle est la composition d'un formulaire (`docs/SPEC-form-composer.md` §2.7, `docs/JOURNAL.md` décision 96) |
 | `cards` | `app.can_read_channel(channel_id)` — **la colonne de la ligne, non `app.can_read_card`** (§3.6) | `app.can_write_channel(channel_id)` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement : dû par `CRM-013`, non livré par `CRM-040`** |
-| `card_field_values` | Lecture de la card | Écriture sur le channel |
+| `card_field_values` | `app.can_read_card(card_id)` — **livré par `CRM-036`** | `app.can_write_card(card_id)` (§3.7) pour l'insertion et la mise à jour ; **aucune suppression n'est exposée**, vider un champ c'est écrire `'null'::jsonb` (`docs/SPEC-form-composer.md` §6.9) |
 | `card_comments` | Lecture de la card | Écriture sur le channel ; modification et suppression réservées à l'auteur et aux `admin` |
 | `card_activities` | Lecture de la card | Écriture sur le channel |
 | `card_events` | Lecture de la card | **Aucune écriture par un client** : triggers uniquement |
@@ -328,7 +350,7 @@ La conséquence n° 1 ci-dessus n'est pas laissée à la mémoire : `supabase/te
 trancher son cas fasse échouer la suite.
 
 Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5 —
-**cinq sont livrées**, la n° 6 attendant `card_field_values` (INC-047).
+**les six sont livrées** depuis `CRM-036`, qui a apporté `card_field_values` et refermé INC-047.
 
 ## 5. Storage
 
@@ -357,7 +379,7 @@ interface**, avec les jetons réels de chaque profil :
 | 1 | `viewer` tente `move_card` | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, `forbidden`, mesuré avec le jeton réel du `viewer` sur une card qu'il **voit**. Sur une card d'un channel que le seed lui ferme, la réponse est `card_not_found` et non `forbidden` — règle de discrétion, éprouvée par le **même jeton** (docs/SPEC-workflow-engine.md §5.3) |
 | 2 | `business_developer` tente de modifier un workflow | Refus — **acquise sur `workflow_nodes_catalog` par `CRM-030`** ; les trois autres tables de la famille restent dues par `CRM-031` |
 | 3 | Membre du workspace A lit une card du workspace B | Aucune ligne — **acquise sur `tracks` et `channels`** par `CRM-020`, `CRM-021` et reconduite par `CRM-012` ; sur les cards, due par `CRM-040` |
-| 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne — **acquise sur le channel lui-même et sur son track** par `CRM-012` (§4.2, lignes *d* et *e*) ; sur les cards, due par `CRM-040` |
+| 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne — **acquise sur le channel lui-même et sur son track** par `CRM-012` (§4.2, lignes *d* et *e*), **sur les cards** par `CRM-040`, et **sur leurs valeurs de formulaire** par `CRM-036` (`docs/SPEC-form-composer.md` §6.10, ligne *f*) |
 | 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, « permission denied for table cards », mesuré avec le jeton de l'administratrice, la ligne étant relue et constatée inchangée. Le chevauchement de Definition of Done avec `CRM-013` est tranché de ce côté (INC-049), parce qu'une unité dont la DoD exige une preuve doit livrer ce qui la rend possible |
 | 6 | Lecture de `secret_id` d'un compte mail par `authenticated` | Refus (colonne révoquée) |
 | 7 | Lecture du compte mail d'un autre utilisateur | Aucune ligne |
