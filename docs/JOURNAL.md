@@ -4851,3 +4851,46 @@ arbitrage.
 **Portée générale.** Une contradiction dont toutes les branches mènent au même état du produit
 n'est pas un arbitrage : c'est une question d'imputation, que l'exécution de l'unité nommée
 résout. La distinguer d'un vrai arbitrage évite d'immobiliser une unité qui n'attend rien.
+
+### Décision 143 — Un harnais restaure en rejouant ce que le runner produit, non sa seule migration
+
+**Problème rencontré.** `scripts/verify-cards.sh` restaurait son état en rejouant
+`0011_cards.sql`. MESURÉ le 2026-08-05, sur une base saine, avant et après son passage :
+`has_table_privilege('authenticated', 'public.cards', 'update')` passait de `false` à `true`, et
+`npm run test:sql` de « aucune anomalie » à **huit assertions en échec**. La section 7 de `0011`
+accorde l'`UPDATE` de table sur `cards` ; `0012` le retire précisément pour rendre `move_card`
+incontournable. Rejouer `0011` seul **désactivait la garde centrale de `CRM-034`** pour tout ce qui
+s'exécutait ensuite.
+
+**Ce que le harnais annonçait pendant ce temps.** « 37 contrôles, aucune anomalie. » Il disait vrai
+de ce qu'il mesurait, et laissait derrière lui une base où la porte qu'il venait de vérifier était
+rouverte. C'est la forme la plus coûteuse d'un faux vert : il n'est pas faux là où on le lit, il est
+faux **ailleurs**, et plus tard.
+
+**Options.**
+
+1. **Sauvegarder puis restaurer les privilèges** autour de chaque dégradation. Rejeté : il faudrait
+   énumérer ce qui peut changer, et cette liste dériverait à chaque migration nouvelle.
+2. **Ne plus rejouer aucune migration** et restaurer par des instructions ciblées. Rejeté : le rejeu
+   est précisément ce qui prouve la **convergence** (décision 57), qu'aucune instruction ciblée ne
+   démontrerait.
+3. **Rejouer la migration de l'unité ET celles qui la complètent**, dans l'ordre du répertoire.
+
+**Décision.** L'option 3. Le `migrations-runner` rejoue tout le répertoire dans l'ordre à chaque
+démarrage (décision 20) : « restaurer » ne peut vouloir dire qu'une chose — ramener la base à l'état
+que le runner produit. Restaurer à un état intermédiaire, c'est restaurer à un état que le produit
+n'a jamais.
+
+**Conséquence heureuse, et elle n'était pas cherchée.** La correction a fait tomber la dégradation
+*b* du même harnais, qui éprouvait le `WITH CHECK` de `cards_maj` par un `PATCH` de `channel_id`.
+Cette colonne est fermée au niveau **privilège** depuis `CRM-034` : le `PATCH` est refusé avant
+qu'aucune politique ne soit consultée, et la dégradation ne prouvait donc plus rien — **elle ne
+l'exerçait que grâce au défaut lui-même**. Elle est réécrite en deux temps : le refus tenu par le
+seul privilège, puis le `WITH CHECK` réellement exercé une fois le privilège rendu. Le contrôle en
+sort plus fort, et chaque barrière est mesurée séparément.
+
+**Ce qui n'est pas fait, et pourquoi.** Aucune règle générale n'est inscrite dans
+`docs/SPEC-test-harness.md`. Le même piège attend toute unité qui modifiera par une migration
+ultérieure un objet créé par une migration antérieure, et une règle d'outillage engage toutes les
+unités à venir : la question est posée en **INC-055**, à l'arbitrage du responsable. La correction
+porte sur la seule occurrence mesurée.

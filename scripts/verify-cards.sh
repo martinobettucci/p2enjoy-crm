@@ -50,6 +50,27 @@ cd "$(dirname "$0")/.."
 
 TEST_FILE=supabase/tests/0012_cards.test.sql
 MIGRATION_FILE=supabase/migrations/0011_cards.sql
+# RESTAURER, C'EST RAMENER LA BASE À L'ÉTAT QUE LE RUNNER PRODUIT — et le runner rejoue TOUT le
+# répertoire, dans l'ordre (docs/JOURNAL.md décision 20). Rejouer `0011` SEUL rend à
+# `authenticated` le `grant update on public.cards` de sa section 7, ce que `0012` retire
+# précisément pour rendre `move_card` incontournable, et ce que `0013` complète.
+#
+# DÉFAUT RÉEL, MESURÉ LE 2026-08-05 — INC-055 : ce harnais laissait la base dans un état que le
+# runner ne produit JAMAIS. MESURÉ, avant et après son passage sur une base saine :
+# `has_table_privilege('authenticated', 'public.cards', 'update')` passait de `false` à `true`, et
+# `npm run test:sql` de « aucune anomalie » à **huit assertions en échec** réparties sur
+# `0012_cards.test.sql` et `0013_move_card.test.sql`. La garde centrale de `CRM-034` était donc
+# désactivée pour tout ce qui s'exécutait ensuite, sans qu'aucun message ne le signale.
+MIGRATIONS_SUIVANTES="supabase/migrations/0012_move_card.sql supabase/migrations/0013_valeurs_champs.sql"
+
+# Rejoue la migration de cette unité PUIS celles qui la complètent, dans l'ordre du répertoire.
+rejouer_migrations() {
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
+	local suivante
+	for suivante in $MIGRATIONS_SUIVANTES; do
+		psql_db -v ON_ERROR_STOP=1 -f - < "$suivante" >/dev/null 2>&1 || return 1
+	done
+}
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -187,7 +208,7 @@ empreinte() {
 }
 
 avant=$(empreinte)
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
+if rejouer_migrations; then
 	ok "la migration se réapplique sans erreur sur une base déjà migrée"
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
@@ -207,7 +228,7 @@ apres=$(empreinte)
 
 # Convergence, et non simple idempotence : une contrainte **retirée** est rétablie (décision 57).
 psql_db -c "alter table public.cards drop constraint cards_currency_check;" >/dev/null
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_migrations || true
 [ "$(psql_db -c "select count(*) from pg_constraint
                   where conrelid = 'public.cards'::regclass
                     and conname = 'cards_currency_check';")" = "1" ] \
@@ -222,7 +243,7 @@ psql_db -c "
 		add constraint cards_channel_id_workflow_id_fkey
 		foreign key (channel_id) references public.channels (id);
 " >/dev/null
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_migrations || true
 definition=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
                           where conname = 'cards_channel_id_workflow_id_fkey';")
 case "$definition" in
@@ -458,15 +479,40 @@ psql_db -c "
 	drop policy cards_maj on public.cards;
 	create policy cards_maj on public.cards for update to authenticated
 		using (app.can_write_channel(channel_id)) with check (true);" >/dev/null
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$(psql_db -c "select id from public.cards
-                                                           where title = 'tst-crm040-une';")" \
+#
+#    RÉVISÉE LE 2026-08-05, ET LA RÉVISION CORRIGE UN CONTRÔLE QUI PASSAIT POUR UNE MAUVAISE RAISON
+#    — INC-055, second effet. `channel_id` est fermée au niveau COLONNE depuis `CRM-034`
+#    (`0012_move_card.sql` §2.3), qui ne rend nommément que treize colonnes à `authenticated`. Un
+#    `PATCH` sur `channel_id` est donc refusé par le PRIVILÈGE, avant que la moindre politique ne
+#    soit consultée : cette dégradation ne prouvait plus rien du `WITH CHECK`. Elle ne l'exerçait
+#    que parce que ce harnais rejouait `0011` SEUL et rouvrait la table entière — l'état qu'INC-055
+#    décrit, et que le runner ne produit jamais.
+#
+#    Le contrôle est donc écrit EN DEUX TEMPS, ce qui le rend plus fort et non plus faible :
+#    d'abord le refus tenu par le seul privilège, ensuite le `WITH CHECK` réellement exercé une
+#    fois ce privilège rendu. Le refus est DOUBLE, et chaque barrière est mesurée séparément.
+CARD_SONDE=$(psql_db -c "select id from public.cards where title = 'tst-crm040-une';")
+
+code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
+        -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_BIZDEV" \
+        -H 'Content-Type: application/json' \
+        -d "$(jq -nc --arg c "$CH_MAINTENANCE" '{channel_id: $c}')")
+[ "$code" = "403" ] \
+	&& ok "dégradation b, premier temps : le \`WITH CHECK\` rendu permissif ne suffit PAS — le "\
+"privilège de colonne de \`CRM-034\` refuse encore le déplacement. Le refus est double" \
+	|| fail "dégradation b : le privilège de colonne ne refuse plus le PATCH de channel_id ($code)"
+
+psql_db -c "grant update (channel_id) on public.cards to authenticated;" >/dev/null
+code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_BIZDEV" \
         -H 'Content-Type: application/json' \
         -d "$(jq -nc --arg c "$CH_MAINTENANCE" '{channel_id: $c}')")
 [ "$code" != "403" ] \
-	&& ok "dégradation b : \`WITH CHECK\` rendu permissif, la card se déplace vers un channel "\
-"interdit ($code) — le contrôle de la ligne s du §8.1 aurait échoué" \
-	|| fail "dégradation b : le refus tient avec un \`WITH CHECK\` permissif — la clause ne juge rien"
+	&& ok "dégradation b, second temps : les DEUX barrières tombées, la card se déplace vers un "\
+"channel interdit ($code) — le contrôle de la ligne s du §8.1 aurait échoué" \
+	|| fail "dégradation b : le refus tient avec un \`WITH CHECK\` permissif ET le privilège rendu"
+psql_db -c "update public.cards set channel_id = '$CH_GRANDS_COMPTES'
+             where id = '$CARD_SONDE';" >/dev/null 2>&1 || true
 
 # c. La garde d'archivage retirée : un nœud occupé devient archivable.
 psql_db -c "drop trigger workflow_nodes_catalog_refuser_archivage_occupe
@@ -482,7 +528,7 @@ psql_db -c "update public.workflow_nodes_catalog set archived_at = null where id
 	>/dev/null
 
 # Restauration par la migration elle-même, puis CONSTAT — jamais supposé.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_migrations || true
 restaure=$(psql_db -c "select
 	(select count(*) from pg_policy where polrelid = 'public.cards'::regclass
 	   and polname = 'cards_maj' and polwithcheck is not null)::text || '/' ||

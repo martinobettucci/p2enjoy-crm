@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **Un harnais de preuves désactivait la garde centrale de `CRM-034` derrière lui** — INC-055,
+  décision 143. `scripts/verify-cards.sh` restaurait son état en rejouant `0011_cards.sql` **seul**,
+  dont la section 7 rend à `authenticated` l'`UPDATE` de table sur `cards` — ce que
+  `0012_move_card.sql` retire précisément pour rendre `move_card` incontournable. MESURÉ sur une
+  base saine, avant et après son passage : le privilège passait de `false` à `true`, et
+  `npm run test:sql` de « aucune anomalie » à **huit assertions en échec**. Le harnais annonçait
+  pendant ce temps « aucune anomalie » : il disait vrai de ce qu'il mesurait, et laissait derrière
+  lui une base où la porte qu'il venait de vérifier était rouverte. **Le défaut est antérieur à
+  `CRM-036` : il date de `CRM-034`.** Il rejoue désormais sa migration **et celles qui la
+  complètent**, c'est-à-dire ce que le `migrations-runner` produit. Aucun comportement du produit
+  n'est modifié.
+- **Une dégradation qui ne prouvait plus rien, réécrite plus fort.** Découverte par la correction
+  ci-dessus : la dégradation *b* de `scripts/verify-cards.sh` exerçait le `WITH CHECK` de
+  `cards_maj` par un `PATCH` de `channel_id`, colonne fermée au niveau **privilège** depuis
+  `CRM-034`. Elle ne l'exerçait donc que grâce à l'état dégradé décrit ci-dessus — c'est-à-dire
+  grâce au défaut lui-même. Réécrite **en deux temps** — refus par le seul privilège, puis
+  `WITH CHECK` réellement exercé une fois le privilège rendu —, elle mesure désormais chaque
+  barrière séparément. Le harnais passe de 37 à **38 contrôles hors suites** (44 à 45 au total).
+
 ### Ajouté
 
 - **`CRM-036` — les valeurs de formulaire, et la sixième vérification de `move_card`.**

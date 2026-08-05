@@ -12,6 +12,61 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-055 — Un harnais qui rejoue sa seule migration laisse la base dans un état que le runner ne produit jamais
+
+**Nature :** défaut d'outillage de vérification ; aucun comportement du produit en cause.
+**Relevé le :** 2026-08-05, pendant `CRM-036`. **Le défaut lui-même date de `CRM-034`.**
+
+Le `migrations-runner` rejoue **tout** le répertoire, dans l'ordre, à chaque démarrage de la pile
+(décision 20). Un harnais de preuves qui restaure son état en rejouant **sa seule** migration
+produit donc un état intermédiaire que le produit ne connaît **jamais**.
+
+`scripts/verify-cards.sh` rejoue `0011_cards.sql`, dont la section 7 fait
+`grant insert, update on public.cards to authenticated`. Or `0012_move_card.sql` **retire**
+précisément l'`UPDATE` de table pour rendre `move_card` incontournable — c'est la moitié de
+l'unité `CRM-034`, et la **preuve de refus n° 5** de `docs/SPEC-permissions-rls.md` §7.
+
+**MESURÉ le 2026-08-05, sur une base saine, avant et après un passage du harnais :**
+
+```
+avant  has_table_privilege('authenticated', 'public.cards', 'update') → false
+après  has_table_privilege('authenticated', 'public.cards', 'update') → true
+après  npm run test:sql → 2 fichiers en échec, 8 assertions
+       (0012_cards.test.sql : 1 · 0013_move_card.test.sql : 7)
+```
+
+**La garde centrale de `CRM-034` était donc désactivée pour tout ce qui s'exécutait ensuite**, sans
+qu'aucun message ne le signale : le harnais se déclarait « aucune anomalie » en laissant la base
+dans un état où la porte qu'il venait de vérifier était rouverte. Le défaut est **antérieur à
+`CRM-036`** — il date de `CRM-034`, qui a ajouté le `revoke` dans une migration ultérieure sans
+reprendre le harnais de `CRM-040`.
+
+**Correction appliquée, et son périmètre.** `scripts/verify-cards.sh` rejoue désormais sa migration
+**et celles qui la complètent** — `0012_move_card.sql` puis `0013_valeurs_champs.sql` —, c'est-à-dire
+exactement ce que le runner produit. La correction ne touche **aucun** comportement du produit,
+aucune migration, aucune politique et aucun privilège : elle porte sur la seule restauration d'un
+outil de vérification. Elle est signalée ici plutôt que passée sous silence, parce qu'elle modifie
+un livrable de `CRM-040`.
+
+**Un second effet, découvert par cette correction.** La dégradation *b* de `scripts/verify-cards.sh`
+faisait un `PATCH` de `channel_id` pour éprouver le `WITH CHECK` de `cards_maj`. Or `channel_id` est
+fermée au **niveau colonne** depuis `CRM-034` : ce `PATCH` est refusé par le **privilège**, avant
+qu'aucune politique ne soit consultée. La dégradation ne prouvait donc plus rien du `WITH CHECK` —
+elle ne l'exerçait que grâce à l'état dégradé décrit ci-dessus, c'est-à-dire grâce au défaut
+lui-même. Elle est réécrite **en deux temps**, ce qui la rend plus forte : le refus tenu par le seul
+privilège, puis le `WITH CHECK` réellement exercé une fois le privilège rendu. Le refus est
+**double**, et chaque barrière est désormais mesurée séparément.
+
+**Ce qui reste ouvert, et qui appartient au responsable.** Faut-il une règle générale — « un harnais
+restaure en rejouant toutes les migrations de son numéro à la dernière » — inscrite dans
+`docs/SPEC-test-harness.md`, plutôt que corrigée harnais par harnais à mesure que le défaut se
+manifeste ? Le même piège attend toute unité qui modifiera par une migration ultérieure un objet
+créé par une migration antérieure. Le comportement est corrigé pour la seule occurrence mesurée,
+sans généralisation implicite.
+
+**Lié à :** décision 20 (le runner ne tient aucun registre), `CRM-034` §2 (la protection de colonne),
+INC-049 (chevauchement de Definition of Done entre `CRM-034` et `CRM-013`).
+
 ### INC-002 — Messages entrants sans `Message-ID`
 
 **Nature :** cas limite non tranché.

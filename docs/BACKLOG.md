@@ -2264,10 +2264,25 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
       `verify-catalogue` 39, `verify-workflows` 49, `verify-copie-workflow` 34,
       `verify-coherence-workflow` 33, `verify-champs-formulaire` 37, `verify-droits-fins` 42 —,
       aucune anomalie.
-- [x] Harnais de preuves rejouable `scripts/verify-cards.sh` : **44 contrôles, aucune anomalie**, et
+- [x] Harnais de preuves rejouable `scripts/verify-cards.sh` : **45 contrôles, aucune anomalie**, et
       **non complaisant, éprouvé par trois dégradations réelles** — politique de lecture ramenée à
       `is_workspace_member`, `WITH CHECK` rendu permissif, garde d'archivage retirée. Chacune fait
       passer une opération qui doit être refusée, et la restauration est **constatée**.
+- [x] **DEUX DÉFAUTS DE CE HARNAIS, TROUVÉS ET CORRIGÉS LE 2026-08-05 pendant `CRM-036`**
+      (INC-055, décision 143). Ils sont consignés ici, sur l'unité qui porte le harnais, et non sur
+      celle qui les a trouvés.
+      1. **Il désactivait la garde centrale de `CRM-034` derrière lui.** Il restaurait en rejouant
+         `0011_cards.sql` **seul**, dont la section 7 rend à `authenticated` l'`UPDATE` de table sur
+         `cards` — ce que `0012` retire précisément. MESURÉ, avant et après son passage sur une base
+         saine : le privilège passait de `false` à `true`, et `npm run test:sql` de « aucune
+         anomalie » à **huit assertions en échec**. Il annonçait pendant ce temps « aucune
+         anomalie » : vrai de ce qu'il mesurait, faux **ailleurs et plus tard**. Il rejoue désormais
+         sa migration **et celles qui la complètent**.
+      2. **Sa dégradation *b* ne prouvait plus rien**, et ne l'exerçait que grâce au défaut n° 1 :
+         elle éprouvait le `WITH CHECK` de `cards_maj` par un `PATCH` de `channel_id`, colonne
+         fermée au niveau **privilège** depuis `CRM-034`. Réécrite **en deux temps** — refus par le
+         seul privilège, puis `WITH CHECK` réellement exercé une fois le privilège rendu —, elle
+         mesure désormais chaque barrière séparément. Le contrôle en sort **plus fort**.
 - [x] **Sept assertions figées par des unités précédentes ont échoué comme prévu, et ont été
       révisées** (mécanisme de la décision 51, dixième occurrence) : dans `0002`, `0006`, `0007`,
       `0011`, et dans `verify-authz.sh`, `verify-catalogue.sh`, `verify-workflows.sh`. **Aucune n'a
