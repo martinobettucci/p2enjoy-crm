@@ -2534,6 +2534,31 @@ et le produit ne perd aucune donnée — il enregistre une transition dont le mo
 est précisément ce que la n° 5 voulait empêcher. Rien ne dépend de cette valeur aujourd'hui, le
 commentaire n'étant conservé nulle part (INC-048).
 
+**SECONDE OCCURRENCE, relevée le 2026-08-05 pendant `CRM-037` — même propriété, autre appelant, et
+elle avait déjà produit un défaut.** `app.valeur_de_champ_est_vide(jsonb)` emploie
+`btrim(valeur #>> '{}') = ''`, et `docs/SPEC-form-composer.md` §6.6 l'annonce par « une chaîne vide,
+ou faite de seuls espaces ». MESURÉ contre la base réelle, par la vraie route et le vrai refus de
+`move_card` : une valeur réduite à `"\t"` ou `"\n"` est **renseignée**, et satisfait donc un champ
+`required`.
+
+Le prédicat TypeScript de `CRM-037` avait été écrit avec `String.prototype.trim()`, qui retire
+**toute** l'espace blanche : les deux lectures divergeaient sur ces valeurs, ce que le §4.3 existe
+précisément pour interdire. Le défaut a été reproduit puis corrigé — `docs/JOURNAL.md` décision 165,
+`webapp/src/lib/valeur-renseignee.ts` — en **reproduisant fidèlement `btrim`**, non en élargissant
+la règle.
+
+**Ce qui reste ouvert est donc inchangé et s'étend à un second endroit** : faut-il que le produit
+tienne pour vide une chaîne de blancs non-espaces ? La réponse vaudrait pour le §5.3 de
+`docs/SPEC-workflow-engine.md` **et** pour le §6.6 de `docs/SPEC-form-composer.md`, et la correction
+devrait alors bouger **des deux côtés à la fois** — la preuve d'API de `CRM-037` dénoncera un côté
+qui bougerait seul.
+
+**Arbitrage attendu du responsable :** élargir l'expression du §5.3 à `btrim(comment, E' \t\r\n')`
+et retourner l'assertion dans le même changement, ou confirmer que seuls les espaces sont refusés et
+corriger le titre du §5.3 pour qu'il n'annonce pas davantage.
+
+**Lié à :** INC-048 (le commentaire n'est conservé nulle part).
+
 ---
 
 ### INC-053 — `SPEC-form-composer` §2.3 confie la résolution de `user` et `contact` à deux unités sans dire laquelle fait quoi

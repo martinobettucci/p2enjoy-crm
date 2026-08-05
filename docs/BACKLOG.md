@@ -2690,9 +2690,37 @@ y sont déjà — la card `c6`, son champ `hidden` porteur d'une valeur, son cha
 archivé — et deux contrôles du harnais échouent si elles cessent d'y être. L'unité n'introduit ni
 table, ni statut, ni flux.
 
+*Correction apportée après la livraison, par une seconde exécution de la routine.*
+
+- [x] **Le prédicat « renseigné » divergeait de la garde, et c'est la mesure qui l'a dit** —
+      décision 165, INC-052 seconde occurrence. `estRenseigne` employait `String.prototype.trim()`
+      pour transcrire la clause « chaîne vide après `btrim` » du §6.6. `btrim(texte)` ne retire que
+      l'espace U+0020 ; `trim()` retire toute l'espace blanche. MESURÉ contre la base réelle : une
+      valeur réduite à `"\t"` ou `"\n"` est **renseignée** pour `app.valeur_de_champ_est_vide` et
+      satisfait un champ `required`, là où l'interface l'annonçait vide. **Reproduit avant d'être
+      corrigé** : les deux cas ajoutés au tableau de cas partagé ont rendu deux tests unitaires et
+      deux scénarios d'API rouges **avant** que le prédicat ne soit touché. Corrigé en reproduisant
+      `btrim` fidèlement, sans élargir la règle — l'arbitrage d'INC-052 reste dû. Dégradation
+      **D2 bis** ajoutée à `scripts/verify-formulaire.sh`, confrontée à la base.
+- [x] **Ce que l'épisode dit du harnais** : le mécanisme de comparaison était **bon** — tableau de
+      cas partagé, confronté à la base — et il n'a rien attrapé, parce que le tableau ne contenait
+      pas le cas. Un comparateur ne vaut que les cas qu'on lui donne, comme la décision 50 le disait
+      des tables vides.
+
 *Limites nommées, non masquées.*
 
 - **INC-062 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- **INC-063 est ouverte** : `docs/SPEC-form-composer.md` §4.5 prescrit `role="alert"` pour le
+  **message d'exigence**, `docs/DESIGN_SYSTEM.md` §5.7 le réserve à l'**erreur**. Le code a tranché
+  pour la seconde lecture — la mention est un texte ordinaire, `role="alert"` ne porte que sur
+  l'alerte de champ manquant — et c'est probablement la bonne, mais c'est une **résolution
+  implicite** qui n'était consignée nulle part. Le comportement est **laissé inchangé** ;
+  l'arbitrage est demandé.
+- **La barre d'onglets reste vide sur la route d'une card** : `RouteCard` transmet `slugTrack` à la
+  coquille mais ne charge pas les channels du track porteur, si bien qu'une card ouverte s'affiche
+  sous « Aucun channel ». Constat relevé sur une capture, **non corrigé ici** : le geste appartient
+  à cette unité, mais la corriger dans le même passage qu'une correction de prédicat mêlerait deux
+  sujets dans un commit (`CLAUDE.md` §13). À reprendre au prochain passage sur `CRM-037`.
 - **Aucune donnée métier n'apparaît dans l'interface tant qu'INC-021 n'est pas tranchée.** Sixième
   unité consécutive du chunk 3 à buter sur le même obstacle, et la première dont un écran existe
   pourtant : la route rend « card introuvable » à tout visiteur, ce qui est le refus réel du backend.

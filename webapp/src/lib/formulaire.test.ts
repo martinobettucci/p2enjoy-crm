@@ -81,6 +81,18 @@ describe('« renseigné » donne la même lecture que app.valeur_de_champ_est_vi
 		expect(vides.map((cas) => cas.nom)).toContain('null explicite')
 	})
 
+	it('la tabulation n’est PAS un espace pour `btrim` : la chaîne reste renseignée', () => {
+		// Décision 165, INC-052 seconde occurrence. MESURÉ contre la base réelle : `btrim(texte)`
+		// sans second argument ne retire que l'espace U+0020. Employer `String.prototype.trim()`
+		// ici ferait annoncer par l'interface une transition bloquée que la garde accepte — le
+		// défaut que le §4.3 existe pour rendre impossible, et qui a bien été livré avant d'être
+		// mesuré.
+		expect(estRenseigne('\t')).toBe(true)
+		expect(estRenseigne('\n')).toBe(true)
+		expect(estRenseigne(' \t ')).toBe(true)
+		expect(estRenseigne('   ')).toBe(false)
+	})
+
 	it('faux, zéro et « 0 » sont renseignés : une case décochée est une réponse', () => {
 		expect(estRenseigne(false)).toBe(true)
 		expect(estRenseigne(0)).toBe(true)

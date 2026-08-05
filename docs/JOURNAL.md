@@ -5534,6 +5534,41 @@ en **regardant**, pas en lisant des tests verts — comme le contraste des pilul
 débordement des onglets à `CRM-021`. `CLAUDE.md` §16 n'est pas une formalité de fin de tâche : les
 deux règles ci-dessus n'existeraient pas sans elle.
 
+### Décision 165 — Le prédicat « renseigné » de l'interface employait `trim()` là où la garde emploie `btrim`, et la mesure l'a dénoncé
+
+**Contexte.** Deux exécutions de la routine ont travaillé `CRM-037` en parallèle, la première ayant
+livré son implémentation pendant que la seconde écrivait la sienne. La seconde a **abandonné son
+code** — c'est le geste déjà pris à `CRM-014`, et refaire un travail commité n'apporte rien — mais
+elle avait mesuré un cas que la première n'avait pas : `webapp/src/lib/valeur-renseignee.ts`
+transcrivait la clause « chaîne vide après `btrim` » du §6.6 par `String.prototype.trim()`.
+
+**Problème.** La transcription est **fausse**, et l'erreur est invisible à la relecture comme à
+l'œil sur une capture. `btrim(texte)` sans second argument retire les **espaces** (U+0020) et eux
+seuls ; `trim()` retire toute l'espace blanche Unicode. Une valeur réduite à une tabulation est donc
+**renseignée** pour `app.valeur_de_champ_est_vide`, et **vide** pour l'interface.
+
+**Reproduit avant d'être corrigé** (`CLAUDE.md` §18). Les deux cas ont été ajoutés au tableau de cas
+partagé, sans toucher au prédicat : `webapp/src/lib/formulaire.test.ts` a rendu **deux tests
+rouges**, et `e2e/api/rendu-formulaire.spec.ts` **deux scénarios rouges** contre la base réelle —
+« `app.valeur_de_champ_est_vide` juge `"\t"` renseignée ; la lecture TypeScript dit vide ». C'est
+exactement l'égalité que le §4.3 exige, prise en défaut.
+
+**Correction.** `estRenseigne` porte désormais sa propre fonction `retirerEspaces`, qui ne retire
+que l'espace U+0020. Les deux cas restent dans le tableau partagé, et une assertion nommée les
+répète pour que l'intention ne dépende pas d'une ligne de tableau. `scripts/verify-formulaire.sh`
+gagne une dégradation **D2 bis** qui remet `trim()` en place et **confronte le résultat à la base** :
+seule cette confrontation peut attraper ce défaut, aucun test unitaire écrit seul ne l'aurait vu.
+
+**Ce que la correction ne fait PAS.** Elle n'élargit pas ce que le produit tient pour vide. La
+propriété de `btrim` est celle d'INC-052, relevée à `CRM-034` sur le commentaire de `move_card` ;
+c'en est la **seconde occurrence**, consignée là-bas, et l'arbitrage reste dû. Les deux lectures sont
+désormais **identiques** — ce que le §6.6 exige — y compris dans ce qu'elles laissent passer.
+
+**Ce que l'épisode enseigne sur le harnais.** La première exécution avait écrit le bon mécanisme —
+tableau de cas partagé, confronté à la base — et il n'a rien attrapé, parce que **le tableau ne
+contenait pas le cas**. Un mécanisme de comparaison ne vaut que ce que valent les cas qu'on lui
+donne : c'est le même enseignement que la décision 50 sur les tables vides.
+
 ### Décision 166 — Un contrôle de restitution comparait au dernier commit, et ne pouvait donc pas être vert pendant qu'on travaille
 
 **Problème.** La section 7 de `scripts/verify-formulaire.sh` vérifie que le harnais a bien restauré

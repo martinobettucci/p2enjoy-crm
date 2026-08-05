@@ -27,6 +27,20 @@ d'exécuter le code attendu.
   qu'on travaille finit par être ignoré. Les autres harnais n'ont **pas** été relus à ce titre — ce
   sont les livrables d'autres unités, INC-064.
 
+- **Le prédicat « renseigné » de l'interface divergeait de la garde sur les blancs non-espaces** —
+  décision 165, INC-052 seconde occurrence. `webapp/src/lib/valeur-renseignee.ts` transcrivait la
+  clause « chaîne vide après `btrim` » du §6.6 par `String.prototype.trim()`. MESURÉ contre la base
+  réelle : `btrim(texte)` sans second argument ne retire que l'espace U+0020, là où `trim()` retire
+  toute l'espace blanche Unicode. Une valeur réduite à `"\t"` ou `"\n"` est donc **renseignée** pour
+  `app.valeur_de_champ_est_vide` et satisfait un champ `required` — l'interface, elle, l'annonçait
+  vide et la transition bloquée. C'est exactement le défaut que le §4.3 existe pour rendre
+  impossible, et il était livré. **Reproduit avant d'être corrigé** : les deux cas ajoutés au
+  tableau de cas partagé ont rendu deux tests unitaires **et** deux scénarios d'API rouges contre la
+  base, avant qu'une ligne du prédicat ne soit touchée. Corrigé en **reproduisant fidèlement
+  `btrim`**, jamais en élargissant la règle : ce que le produit tient pour vide reste une décision
+  ouverte (INC-052). `scripts/verify-formulaire.sh` gagne la dégradation **D2 bis**, qui remet
+  `trim()` en place et confronte le résultat à la base — seule cette confrontation attrape ce
+  défaut. Le mécanisme de comparaison était bon ; le tableau ne contenait pas le cas.
 ### Ajouté
 
 - **`CRM-037` — le formulaire conditionnel d'une card est rendu, et il a un écran.** Première unité

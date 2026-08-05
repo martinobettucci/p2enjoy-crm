@@ -322,6 +322,15 @@ else
 		'	if (Array.isArray(valeur)) return valeur.length > 0
 	if (valeur === false) return false' api
 
+	# D2 bis — le prédicat revient à `String.prototype.trim()`. Ce n'est pas une dégradation
+	# théorique : c'est **l'état du code livré le 2026-08-05**, corrigé par la décision 165 après
+	# mesure contre la base. `btrim` ne retire que l'espace U+0020, `trim()` retire toute l'espace
+	# blanche : une valeur réduite à une tabulation est renseignée pour la garde et vide pour une
+	# interface écrite avec `trim()`. Seule la confrontation à la BASE peut l'attraper.
+	degradation "le prédicat revient à trim(), et diverge de btrim" "$PREDICAT" \
+		"	if (typeof valeur === 'string') return retirerEspaces(valeur).length > 0" \
+		"	if (typeof valeur === 'string') return valeur.trim().length > 0" api
+
 	# D3 — la composition se met à lire les règles au lieu des champs : le champ sans règle
 	# disparaît de l'écran, et c'est exactement le défaut que le §4.1 interdit.
 	degradation "un champ sans règle disparaît (§3.1 nié)" "$MODULE" \
