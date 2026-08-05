@@ -6418,3 +6418,73 @@ colonne doit rester ouverte pour que le geste « supprimer » existe, et sa vale
 question posée au client. C'est le seul endroit du produit où une colonne est à la fois ouverte et
 non décidée par l'appelant ; le §13.7 de `docs/SPEC-cards.md` l'écrit pour que nul ne le déduise du
 code.
+
+### Décision 198 — Quatre garde-fous ont dénoncé la naissance de `card_comments`, et ils ont été révisés, non retirés
+
+**Ce qui s'est passé.** La migration 15 appliquée, `npm run test:sql` est passé de vert à **quatre
+suites en échec**, et `npm run e2e:api` à **un scénario en échec**. Aucune n'était un défaut : les
+cinq assertions constataient l'**absence** de `card_comments`, posées par `CRM-040`, `CRM-034`,
+`CRM-036` et `CRM-014` selon le mécanisme de la décision 51 — « figer un manque par une assertion
+qui tombera le jour où il sera comblé ».
+
+| Preuve | Ce qu'elle constatait | Ce qu'elle constate désormais |
+|---|---|---|
+| `0012_cards.test.sql` | la table n'existe pas | elle existe, **et** `cards (id, workspace_id)` est devenue unique pour elle |
+| `0013_move_card.test.sql` | la table n'existe pas | elle existe, **et** `move_card` n'écrit toujours pas le motif |
+| `0014_valeurs_champs.test.sql` | la table n'existe pas | elle existe, et le motif reste perdu |
+| `0016_preuves_refus.test.sql` | **41** politiques dans `public` | **44** : les trois de `card_comments` |
+| `e2e/api/move-card.spec.ts` | `GET /card_comments` rend `404` | il rend `200`, et la card déplacée ne porte **aucun** commentaire |
+
+**Décision : réviser, jamais retirer.** Une assertion qui a rempli son office se **retourne** vers
+ce qui compte encore. Les trois premières mesuraient un alibi — « la table n'existe pas » ; elles
+mesurent maintenant l'**écart lui-même** : `move_card` exige un motif, le contrôle, et ne l'écrit
+nulle part alors que sa destination existe. INC-048 change ainsi de nature sans changer de
+conséquence, et l'arbitrage passe de théorique à **exigible**.
+
+**Ce que cela apprend sur le mécanisme.** Le garde-fou de la décision 51 a fonctionné exactement
+comme annoncé, pour la **dixième** fois, et il a coûté ce qu'il devait coûter : cinq révisions dans
+le même changement que la migration. C'est le prix d'un manque écrit plutôt que tu.
+
+### Décision 199 — `like` sur une colonne `uuid` rend `404`, et un nettoyage écrit ainsi échoue en silence
+
+**Problème.** `e2e/api/commentaires.spec.ts` **écrit** — la moitié de son contrat porte sur
+l'écriture — et doit donc nettoyer. INC-061 a mesuré trois fois ce que coûte un jeu d'essai laissé
+en base : à la troisième occurrence, **onze** scénarios d'API tombaient, dont sept appartenant à la
+preuve dédiée de `CRM-042`.
+
+Le nettoyage a d'abord été écrit `DELETE /rest/v1/card_comments?id=like.f00d*`. **MESURÉ** :
+
+```
+HTTP 404 — {"code":"42883","message":"operator does not exist: uuid ~~ unknown"}
+```
+
+PostgREST ne sait pas appliquer `like` à une colonne `uuid`. Le premier passage de la preuve a donc
+laissé **six lignes d'essai** en base, et le `afterAll` n'a rien signalé : un `DELETE` qui échoue
+dans un crochet de fin ne fait pas échouer le fichier.
+
+**Décision.** Les identifiants d'essai sont **énumérés** — `RANGS_ESSAI` —, le nettoyage porte sur
+`id=in.(…)`, et il est **constaté** par une relecture qui doit rendre `[]`. Le harnais le vérifie
+une seconde fois, hors du fichier de preuve. Un nettoyage dont on ne mesure pas l'effet est un
+nettoyage qu'on suppose.
+
+**Conséquence pour les preuves à venir :** aucune ligne d'essai ne porte le préfixe `5eed`, réservé
+au seed. La suite pgTAP compte les commentaires seedés par ce préfixe ; une ligne d'essai qui le
+porterait ferait tomber la conformité du seed — INC-061 en sens inverse.
+
+### Décision 200 — Le générateur de types ne voit pas les triggers, et le client enverra donc un `workspace_id` qu'il ne décide pas
+
+**Mesuré.** `public.card_comments.workspace_id` est `NOT NULL` sans défaut : elle est **dérivée par
+un trigger** (§13.3). Le générateur de types la déclare donc **obligatoire à l'insertion** —
+`Insert: { workspace_id: string }` — alors que la pile l'accepte omise : le `BEFORE INSERT`
+s'exécute avant la vérification de la contrainte. Le seed le prouve, qui ne l'envoie jamais.
+
+**Décision.** Le type n'est **pas** contourné par une assertion. L'interface lira `workspace_id`
+sur la card qu'elle affiche déjà et l'enverra ; le trigger le remplacera par la valeur exacte
+quelle que soit celle transmise, et la preuve d'API le mesure en envoyant délibérément un workspace
+**inventé** — la ligne écrite porte celui de la card.
+
+**Le motif du refus de contourner.** Un `as` ou un `!` ferait taire le compilateur sur une ligne où
+il a raison : la colonne **est** obligatoire dans le schéma. Ce qui est en cause n'est pas le type,
+c'est que le générateur ne peut pas voir un trigger — limite connue, sans remède local. Faire dire
+au client une valeur qu'il croit décider et que la base corrige est honnête tant que c'est **écrit**
+et **mesuré** ; le cacher derrière une assertion de type ne le serait pas.

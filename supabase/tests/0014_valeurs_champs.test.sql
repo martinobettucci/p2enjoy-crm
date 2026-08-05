@@ -770,8 +770,12 @@ select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : une valeur écrasée ne laisse AUCUNE trace, ni auteur '
 	'précédent, ni date, ni valeur d''origine');
 
-select hasnt_table('public', 'card_comments',
-	'INC-048 : `card_comments` reste due par `CRM-043`, et le commentaire exigé par la cinquième '
-	'vérification de `move_card` n''est toujours conservé nulle part');
+-- RÉVISÉE À `CRM-043`, NON RETIRÉE : la table existe, et le commentaire de `move_card` reste
+-- perdu. Voir `supabase/tests/0013_move_card.test.sql`, où l'écart est mesuré sur la fonction
+-- elle-même plutôt que sur l'absence de sa destination.
+select has_table('public', 'card_comments',
+	'INC-048 : `card_comments` existe depuis `CRM-043`, et le commentaire exigé par la cinquième '
+	'vérification de `move_card` n''est TOUJOURS conservé nulle part — l''écart a changé de nature, '
+	'pas de conséquence');
 
 rollback;

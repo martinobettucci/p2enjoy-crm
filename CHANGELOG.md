@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les commentaires d'une affaire, côté serveur** — `CRM-043`, `docs/SPEC-cards.md` §13. Une
+  affaire peut désormais porter une **discussion** : chaque membre qui a le droit d'écrire dans son
+  channel peut y publier un commentaire, le corriger, ou le supprimer — et **lui seul** peut
+  toucher aux siens. Un lecteur seul lit la discussion sans pouvoir y écrire.
+
+  **Supprimer supprime vraiment.** Un commentaire retiré ne disparaît pas de la conversation — sa
+  place reste tenue —, mais **son texte est détruit** : il n'est ni masqué, ni conservé quelque
+  part. Le geste est définitif, et rien ne permet de le défaire. Cette place laissée est ce qui
+  permet à la suppression de se propager instantanément aux écrans des autres.
+
+  **Le fil se met à jour tout seul.** C'est la première donnée du produit diffusée en temps réel :
+  un commentaire publié apparaît chez les autres membres sans qu'ils rechargent quoi que ce soit —
+  et **uniquement** chez ceux qui ont accès à l'affaire. Un collègue à qui le dossier est fermé ne
+  reçoit rien, ce qui a été vérifié en écoutant des deux côtés à la fois.
+
+  Le jeu de démonstration porte cinq commentaires sur trois affaires, écrits par les trois comptes,
+  dont un corrigé et un supprimé — les deux états sont produits par l'application elle-même, jamais
+  fabriqués.
+
+  **Aucun écran n'est encore livré** : tout ce qui précède existe côté serveur et se vérifie par
+  l'API, mais le panneau de discussion viendra dans un second temps. L'unité reste donc en cours.
+
 - **La spécification des commentaires** — `CRM-043`, `docs/SPEC-cards.md` §13. Aucune ligne de code
   n'est livrée ici : le document précède l'implémentation, comme pour chaque unité. Le chapitre dit
   ce qu'un commentaire est, ce qu'il devient quand on le supprime — une **pierre tombale réellement

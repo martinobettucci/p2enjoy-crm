@@ -40,7 +40,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(73);
+select plan(74);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -622,10 +622,19 @@ rollback to savepoint inc047;
 
 -- --- INC-048 : le commentaire fourni n'est conservé nulle part ---------------------------------
 
-select hasnt_table('public', 'card_comments',
-	'INC-048 : `card_comments` reste due par `CRM-043`. La vérification n° 5 EXIGE le commentaire, '
-	'la fonction le CONTRÔLE, et rien ne l''ÉCRIT : un utilisateur qui motive une affaire perdue '
-	'verra son motif disparaître. Conséquence de l''ordre du plan, nommée plutôt que tue');
+-- RÉVISÉE À `CRM-043`, NON RETIRÉE, ET LE DÉFAUT SUBSISTE. `card_comments` existe désormais : la
+-- cause bloquante d'INC-048 — « la table n'existe pas » — est levée. Le motif d'une affaire perdue
+-- disparaît POURTANT toujours, `move_card` n'ayant pas été redéfinie : elle est un livrable de
+-- `CRM-034`, et `CRM-043` ne reprend pas les gardes d'une autre unité sans les rejouer sous la
+-- sienne (`CLAUDE.md` §13). L'assertion mesure maintenant l'écart lui-même, et non plus son alibi.
+select has_table('public', 'card_comments',
+	'INC-048 : `card_comments` EXISTE depuis `CRM-043` — la cause bloquante est levée');
+select ok(
+	(select prosrc not like '%card_comments%' from pg_proc
+	  where oid = 'public.move_card(uuid, uuid, text)'::regprocedure),
+	'INC-048 : et `move_card` n''écrit TOUJOURS PAS le commentaire qu''elle exige. La vérification '
+	'n° 5 le CONTRÔLE, rien ne l''ÉCRIT, et l''utilisateur qui motive une affaire perdue voit son '
+	'motif disparaître. L''arbitrage n''est plus théorique : il est EXIGIBLE');
 
 select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : aucun événement `moved` n''est écrit, la trace du '

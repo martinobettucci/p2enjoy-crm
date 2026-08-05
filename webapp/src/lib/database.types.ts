@@ -20,6 +20,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      card_comments: {
+        Row: {
+          author_id: string
+          body: string
+          card_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          mentions: string[]
+          workspace_id: string
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          card_id: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          mentions?: string[]
+          workspace_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          card_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          mentions?: string[]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_comments_card_id_workspace_id_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       card_field_values: {
         Row: {
           card_id: string

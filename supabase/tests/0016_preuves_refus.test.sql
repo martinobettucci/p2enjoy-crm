@@ -110,10 +110,11 @@ select is(pg_temp.politiques('form_field_rules'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	41,
-	'QUARANTE ET UNE politiques dans `public`, et pas une de plus. Une politique ajoutée sans que '
-	'cette suite soit étendue — permissive ou non — fait échouer ce compte : c''est la contrepartie '
-	'du contrôle par nom, qui à lui seul ne verrait pas un ajout');
+	44,
+	'QUARANTE-QUATRE politiques dans `public`, et pas une de plus — 41 jusqu''à `CRM-042`, plus les '
+	'TROIS de `card_comments` livrées par `CRM-043`. Une politique ajoutée sans que cette suite '
+	'soit étendue — permissive ou non — fait échouer ce compte : c''est la contrepartie du contrôle '
+	'par nom, qui à lui seul ne verrait pas un ajout');
 
 -- La RLS activée est ce qui rend les politiques opposables. Une table dont la RLS serait désactivée
 -- porterait ses politiques sans les appliquer : le pire des deux mondes, un inventaire rassurant

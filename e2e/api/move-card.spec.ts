@@ -618,15 +618,24 @@ test.describe('M5 — lignes j à l : le graphe devient opposable', () => {
 			expect(reponse.status()).toBe(200)
 			expect((await reponse.json()).current_step_id).toBe(ETAPE_PERDU)
 
-			// INC-048 : le commentaire est EXIGÉ, CONTRÔLÉ, et conservé NULLE PART. `card_comments`
-			// est le livrable de `CRM-043`. La perte est nommée ici plutôt que tue.
-			const tables = await request.get('/rest/v1/card_comments?select=id&limit=1', {
-				headers: enTetesService(),
-			})
+			// INC-048, RÉVISÉE À `CRM-043` ET TOUJOURS OUVERTE — mécanisme de la décision 51. La
+			// table `card_comments` EXISTE désormais : la cause bloquante — « elle n'existe pas » —
+			// est levée. Le motif fourni disparaît POURTANT toujours, `move_card` n'ayant pas été
+			// redéfinie : elle est un livrable de `CRM-034`, et `CRM-043` ne reprend pas les gardes
+			// d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13).
+			//
+			// L'assertion mesure maintenant la PERTE elle-même, et non plus son alibi : la card
+			// déplacée ne porte aucun commentaire, alors qu'un motif vient d'être exigé et fourni.
+			const commentaires = await request.get(
+				`/rest/v1/card_comments?card_id=eq.${CARD_C6}&select=id,body`,
+				{ headers: enTetesService() },
+			)
+			expect(commentaires.status()).toBe(200)
 			expect(
-				tables.status(),
-				'INC-048 : `card_comments` n’existe pas — le motif fourni est PERDU. `CRM-043`',
-			).toBe(404)
+				await commentaires.json(),
+				'INC-048 : `card_comments` existe depuis `CRM-043`, et le motif fourni à `move_card` ' +
+					'est TOUJOURS perdu. L’arbitrage n’est plus théorique : il est exigible',
+			).toEqual([])
 		} finally {
 			await remettre(request, CARD_C6, avant.current_step_id, avant.position)
 		}

@@ -3448,17 +3448,121 @@ Rédaction libre par tout membre pouvant lire la card, édition et suppression p
       autres — `ignore-duplicates` et deux mises à jour conditionnées par une relecture — parce que
       le trigger refuse toute écriture sur une ligne supprimée, et parce qu'un commentaire est une
       parole et non un paramètre.
-- [ ] **Migration, politiques, triggers, publication au temps réel** : non livrés.
-- [ ] **Suite pgTAP dédiée** : non livrée.
-- [ ] **Preuve d'API dédiée** — les seize lignes du contrat mesuré du §13.8, dont le **refus opposé
-      au `viewer`** exigé par la Definition of Done, et le **temps réel** avec son témoin : non
-      livrée.
-- [ ] **Panneau de commentaires, test unitaire, preuve d'interface, captures observées** : non
-      livrés.
-- [ ] **Seed** : non étendu.
+- [x] **La table est livrée, et elle ne porte aucune règle dans l'interface.**
+      `supabase/migrations/0015_commentaires.sql` : `public.card_comments`, l'unicité
+      `(id, workspace_id)` que `cards` devait offrir, la clé étrangère composite, deux triggers,
+      un `CHECK` **conditionnel**, un index, trois politiques, les privilèges de colonne, et
+      l'ajout à la publication `supabase_realtime`. **Rejouée deux fois sans erreur** :
+      idempotente et convergente au sens d'INC-035.
+- [x] **La pierre tombale est une propriété de la BASE, pas une politesse du code** (décision 193).
+      Un commentaire supprimé ne porte plus aucun contenu : le `CHECK` exige `body = ''` dès que
+      `deleted_at` est renseignée. MESURÉ par la preuve d'API : la date envoyée — `2001` — est
+      ignorée au profit de `now()`, le corps revient **vide**, et toute écriture ultérieure rend
+      `comment_deleted`. La ligne survit pour que la suppression **se propage au temps réel**, qui
+      n'émet que ce que l'abonné peut lire.
+- [x] **LE REFUS OPPOSÉ AU `viewer` EST PROUVÉ, HORS INTERFACE, AVEC SON JETON RÉEL** — la preuve
+      que la Definition of Done exige nommément. `403`, `42501`, sur une card qu'il **voit**, la
+      lisibilité étant d'abord constatée dans le même scénario : sans elle, le refus prouverait
+      qu'il ne voit pas la card, non que commenter exige le droit d'**écriture** (INC-071).
+- [x] **Trois autres refus mesurés** : signer du nom d'autrui (`403`), écrire sans jeton (`401`),
+      supprimer physiquement (`403` — **aucun privilège**, et aucune politique derrière). Et un
+      **non-refus** qui compte autant : un tiers qui a pourtant le droit d'écrire obtient `200` et
+      un corps **vide** en tentant de modifier le commentaire d'un autre — le `USING` filtre, aucune
+      erreur n'est levée, et la preuve **relit** la ligne pour constater qu'elle est intacte.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0017_commentaires.test.sql`, **84 assertions**.
+      `npm run test:sql` passe de 1164 à **1250**.
+- [x] **Preuve d'API dédiée** : `e2e/api/commentaires.spec.ts`, **17 scénarios** avec les jetons
+      réels des trois comptes. `npm run e2e:api` passe de 358 à **375**.
+- [x] **LE TEMPS RÉEL EST CONSTATÉ, ET IL EST AUSSI UNE SURFACE D'AUTORISATION** (décision 195).
+      `card_comments` est la **première table du produit publiée** : MESURÉ avant l'unité,
+      `pg_publication_tables` en comptait **zéro**, alors que le §4 de `docs/DAT.md` annonçait des
+      abonnements depuis le socle documentaire. La preuve exerce le **témoin** — l'administratrice
+      reçoit l'événement — et le **silence** — le `viewer` fermé sur le track ne reçoit rien. Sans
+      le témoin, le silence prouverait aussi bien la RLS qu'un temps réel en panne.
+- [x] **L'établissement du canal est OBSERVÉ, jamais temporisé.** La preuve n'attend pas une durée :
+      elle attend un **fait** — que le canal se soit montré vivant en rapportant un premier
+      événement —, puis vide ce qu'elle a reçu et mesure le produit. Une temporisation arbitraire
+      serait la « temporisation » que `CLAUDE.md` §18 range parmi les façons de masquer une erreur.
+- [x] **Seed étendu** : cinq commentaires sur trois cards, par les trois comptes, dont un
+      **modifié** et un **supprimé au corps vide**. Les deux états sont posés par le **produit** —
+      un second `PATCH` traversant les vrais triggers —, jamais fabriqués. La convergence de cette
+      section ne s'écrit **pas** comme les autres (`ignore-duplicates` et deux mises à jour
+      conditionnées par une relecture) : le trigger refuse toute écriture sur une ligne supprimée,
+      et un commentaire est une parole, non un paramètre. Le rejeu est **vérifié**.
+- [x] **QUATRE GARDE-FOUS ANTÉRIEURS ONT DÉNONCÉ LA NAISSANCE DE LA TABLE** (décision 198) — le
+      mécanisme de la décision 51, **dixième** occurrence. Cinq assertions constataient l'absence de
+      `card_comments` ; elles sont **révisées, non retirées**, et mesurent désormais ce qui compte
+      encore : que `move_card` n'écrive toujours pas le motif qu'elle exige. Le compte de politiques
+      de `CRM-014` passe de 41 à **44**.
+- [x] **INC-048 change de nature : la cause bloquante est LEVÉE, la perte SUBSISTE.** L'argument qui
+      fondait l'acceptation temporaire — « aucune table n'est créée par anticipation » — n'a plus
+      d'objet. `move_card` n'est **pas** redéfinie ici : elle appartient à `CRM-034`, et la
+      reprendre sous une unité qui ne la porte pas toucherait ses six vérifications sans les
+      rejouer. L'arbitrage est désormais **exigible**, et son périmètre est plus étroit.
+- [x] **DEUX DÉFAUTS DE MES PROPRES PREUVES, TROUVÉS EN EXÉCUTANT.** `?id=like.f00d*` rend **404** —
+      PostgREST ne sait pas appliquer `like` à une colonne `uuid` — et le nettoyage a laissé **six
+      lignes d'essai** en base sans rien signaler (décision 199, INC-061 en sens inverse). Les
+      identifiants sont désormais **énumérés**, et le nettoyage est **constaté** par une relecture,
+      deux fois : dans le fichier de preuve, puis dans le harnais.
+- [x] **UNE LIMITE DE L'OUTILLAGE, MESURÉE ET NON CONTOURNÉE** (décision 200) : le générateur de
+      types déclare `workspace_id` obligatoire à l'insertion, alors que la pile l'accepte omise —
+      il ne voit pas le trigger qui la dérive. Aucune assertion de type ne fait taire le
+      compilateur : l'interface enverra la valeur qu'elle lit sur la card, et la base la remplacera.
+      La preuve d'API le mesure en envoyant un workspace **inventé**.
+- [x] Harnais de preuves rejouable `scripts/verify-commentaires.sh` : **38 contrôles, aucune
+      anomalie**, et **non complaisant** — **six** dégradations volontaires le font réellement
+      échouer : le privilège `DELETE` rendu, `edited_at` rouverte au client, la table retirée de la
+      publication, la politique d'insertion ramenée au droit de **lecture** (INC-071 rouverte en
+      silence), la clause d'auteur retirée de la mise à jour, le trigger de mise à jour supprimé.
+      La restauration est **constatée** : migration rejouée, fichiers rendus intacts, suite verte.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 1164 → **1250**
+      assertions — la première révision depuis `CRM-036`, l'unité livrant enfin une table — et
+      358 → **375** scénarios d'API. `SCENARIOS_UI` inchangé, l'écran n'étant pas livré.
+- [x] `docs/SPEC-cards.md` §13 (quatorze sous-chapitres), `docs/SCHEMA.md` §5,
+      `docs/DESIGN_SYSTEM.md` §5.10, `docs/SPEC-seed.md` §2.14, `docs/DAT.md` §4 et §7,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 15 et son contrat d'exploitation),
+      `docs/INCONSISTENCY_REPORT.md` (INC-071 et INC-072 ouvertes, INC-048 et INC-034 enrichies),
+      `docs/JOURNAL.md` décisions 192 à 200, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **AUCUN ÉCRAN N'EST LIVRÉ.** Le panneau de commentaires du §13.10 — son composant, son test
+      unitaire, sa preuve d'interface et ses captures observées — reste dû. Le design system l'écrit
+      (§5.10), le backend le sert, et rien ne l'affiche. **C'est la raison principale pour laquelle
+      cette unité reste `[~]`**, avant même INC-021.
+- [ ] **`docs/manual.md` n'est pas mis à jour**, et c'est cohérent : le manuel décrit le produit
+      **réellement exécuté** (`CLAUDE.md` §7), et aucun utilisateur ne peut aujourd'hui écrire ni
+      lire un commentaire depuis l'interface. Le chapitre viendra avec l'écran.
 - [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les treize unités précédentes : le
       parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
-      connexion.
+      connexion. **Quatorzième unité consécutive.**
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « API (refus pour un `viewer`) ;
+E2E ; temps réel constaté ». **Le premier et le troisième sont livrés et mesurés** — le refus avec
+le jeton réel du `viewer` sur une card qu'il voit, et le temps réel avec son témoin et son silence.
+**Le second ne l'est pas** : aucun écran n'existe, donc aucun parcours à éprouver de bout en bout.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran** (voir ci-dessus). L'unité est backend seulement à cette étape.
+- **INC-071 et INC-072 sont ouvertes**, relevées par cette unité : la première sur ce qu'il faut
+  pour commenter, la seconde sur la modération. Le comportement livré est celui des sources
+  concordantes et de l'intersection ; **aucun modérateur ne peut retirer un commentaire déplacé**.
+- **INC-048 est enrichie et toujours ouverte** : `move_card` n'écrit pas le motif qu'elle exige,
+  bien que sa destination existe désormais.
+- **INC-014 est ouverte** : le nom de l'auteur n'est lisible par personne, ce qui pèsera sur le
+  panneau plus lourdement encore que sur la colonne « Responsable » de la vue liste.
+- **Le markdown est stocké et rendu en texte brut** : aucune unité ne porte son assainissement,
+  et l'interpréter sans politique ouvrirait une injection (`docs/SPEC-cards.md` §13.13).
+- **Aucune notification, aucun événement de timeline** : `mentions` n'est alimentée par rien, et
+  `card_events` n'existe pas. Trois assertions les figent.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, `npm ci` précédé d'un `npm config set cafile`
+  (INC-032, INC-042), et `PLAYWRIGHT_CHROMIUM_PATH` renseigné vers le navigateur préinstallé —
+  INC-036, **douzième** occurrence. `./runDev.sh` n'a pas été employé : la pile a été démarrée par
+  `docker compose up` en énumérant les treize services autres que `webapp`, dont la construction
+  d'image échoue de nouveau. Aucune preuve n'en dépend, et aucun script du dépôt n'a été modifié.
+- **Identité Git reposée avant le premier commit** — INC-034 point 2, **cinquième** occurrence,
+  aucune réécriture d'historique nécessaire cette fois.
 
 ### CRM-044 — Timeline unifiée `[ ]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.

@@ -118,8 +118,19 @@ PORT_RAPPORT=9323
 # `416`, bascule board ↔ liste, données longues et quatre paliers). 332 + 26 = 358 ;
 # 72 + 27 = 99. `ASSERTIONS_ATTENDUES` est de nouveau inchangée : l'unité ne livre ni table, ni
 # fonction, ni politique. Valeurs MESURÉES, non déduites.
-ASSERTIONS_ATTENDUES=1164
-SCENARIOS_API=358
+# RÉVISÉS UNE HUITIÈME FOIS, LE 2026-08-05, PAR `CRM-043` — les commentaires. L'unité livre une
+# TABLE, ce que les deux précédentes ne faisaient pas : `ASSERTIONS_ATTENDUES` bouge donc enfin.
+# `supabase/tests/0017_commentaires.test.sql` compte **84 assertions** (forme, unicité ajoutée à
+# `cards`, dérivation du workspace, `CHECK` conditionnel, pierre tombale, `edited_at`, colonnes
+# gelées, trois politiques, privilèges de colonne, publication de temps réel, conformité du seed).
+# DEUX assertions antérieures ont en outre été RÉVISÉES sans changer le total — celles qui
+# constataient l'absence de `card_comments` dans `0012_cards` et `0013_move_card` —, et deux
+# assertions s'y sont ajoutées : 1164 + 84 + 2 = 1250. `e2e/api/commentaires.spec.ts` livre
+# **17 scénarios** (les seize lignes du contrat du §13.8, plus le temps réel avec son témoin) :
+# 358 + 17 = 375. `SCENARIOS_UI` est inchangé — le panneau de commentaires n'est pas livré à cette
+# étape, et l'unité reste `[~]`. Valeurs MESURÉES, non déduites.
+ASSERTIONS_ATTENDUES=1250
+SCENARIOS_API=375
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

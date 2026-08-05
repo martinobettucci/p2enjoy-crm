@@ -94,6 +94,14 @@ React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.
+  **LIVRÉ POUR LES SEULS COMMENTAIRES depuis `CRM-043`**, et par un mécanisme qu'aucun document ne
+  nommait : une table n'est diffusée que si elle appartient à la publication `supabase_realtime`.
+  MESURÉ le 2026-08-05 avant `CRM-043` : cette publication ne portait **aucune** table, et cette
+  ligne annonçait donc depuis le socle documentaire un flux que rien ne branchait.
+  `public.card_comments` y est ajoutée par la migration 15 ; les cards et les notifications
+  restent dues par leurs unités. `realtime.apply_rls` évalue la politique `SELECT` de la table
+  pour chaque abonné : **le temps réel est une surface d'autorisation**, et se prouve comme telle
+  (`docs/SPEC-cards.md` §13.9).
 - Aucune règle d'autorisation propre : l'interface masque ce que le backend refuserait, mais le
   refus fait toujours autorité.
 
@@ -427,7 +435,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|---|
 | PostgREST | webapp | REST généré depuis le schéma, filtré par RLS |
 | RPC PostgreSQL | webapp | Écritures métier soumises à garde |
-| Realtime | webapp | Abonnements aux commentaires, cards, notifications |
+| Realtime | webapp | Abonnements aux commentaires — **livré `CRM-043`**, `public.card_comments` publiée sur `supabase_realtime`. Cards et notifications : dues par leurs unités |
 | Storage | webapp, mail-sync | Pièces jointes et documents |
 | API interne mail-sync | webapp (via Kong) | Test de connexion, backfill, état de synchronisation |
 | Webhooks sortants | Systèmes tiers | Événements signés (unité de backlog dédiée) |

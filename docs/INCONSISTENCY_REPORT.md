@@ -2794,7 +2794,30 @@ vérification n° 5, qui est dans la Definition of Done — et la perte est **é
 3. **avancer `CRM-043` et `CRM-044`** avant `CRM-034`, ce qui inverse l'ordre du chunk 3 et retarde
    la seule garde du produit.
 
-**Lié à :** INC-047 (même ordonnancement), `CRM-043`, `CRM-044`.
+**LA CAUSE BLOQUANTE EST LEVÉE, 2026-08-05, PAR `CRM-043` — ET LA PERTE SUBSISTE.**
+`public.card_comments` existe depuis la migration 15. L'argument qui fondait le « comportement
+retenu » ci-dessus — « aucune table n'est créée par anticipation » — n'a donc plus d'objet, et
+l'option 1 cesse d'être une acceptation *temporaire* : elle devient un choix par défaut que
+personne n'a pris.
+
+`CRM-043` **n'a pas** redéfini `move_card`, et le motif est de périmètre, non de faisabilité :
+la fonction est un livrable de `CRM-034`, et la reprendre sous une unité qui ne la porte pas
+toucherait ses six vérifications sans les rejouer sous la sienne (`CLAUDE.md` §13). Deux à trois
+lignes suffiraient pourtant — une insertion dans `card_comments` à l'intérieur de la fonction —,
+et c'est précisément ce qui rend l'arbitrage exigible plutôt que théorique.
+
+Quatre assertions ont été **révisées, non retirées** (mécanisme de la décision 51) : elles
+constataient l'absence de la table, elles constatent désormais la **perte elle-même** —
+`supabase/tests/0012_cards.test.sql`, `supabase/tests/0013_move_card.test.sql`,
+`supabase/tests/0014_valeurs_champs.test.sql` et `e2e/api/move-card.spec.ts`, cette dernière
+mesurant qu'une card déplacée avec un motif exigé et fourni ne porte **aucun** commentaire.
+
+**Ce qui reste à arbitrer est désormais plus étroit :** faut-il que `move_card` écrive le motif
+comme un commentaire ordinaire — donc lisible et supprimable par son auteur —, ou comme un
+événement de timeline que `CRM-044` portera, ou les deux ? Les trois options ci-dessus restent
+formellement ouvertes, mais seules la première et la troisième ont encore un sens.
+
+**Lié à :** INC-047 (même ordonnancement), `CRM-043` (**table livrée**), `CRM-044`.
 
 ---
 

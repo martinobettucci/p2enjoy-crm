@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(89);
+select plan(90);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -527,8 +527,16 @@ select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
 select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : aucun trigger d''événement n''est écrit ici, il '
 	'n''aurait pas de table où écrire');
-select hasnt_table('public', 'card_comments',
-	'`card_comments` reste due par `CRM-043`');
+-- RÉVISÉE À `CRM-043`, NON RETIRÉE — mécanisme de la décision 51, dixième occurrence. Elle
+-- constatait une absence ; elle constate désormais la présence, et la conséquence qui compte pour
+-- `cards` : l'unicité `(id, workspace_id)` que `CRM-043` a dû ajouter pour que la clé étrangère
+-- composite des commentaires soit seulement exprimable.
+select has_table('public', 'card_comments',
+	'`card_comments` est livrée par `CRM-043` — deuxième appelant réel d''`app.can_read_card`');
+select col_is_unique('public', 'cards', array['id', 'workspace_id'],
+	'…et `cards (id, workspace_id)` est devenue unique pour elle : sans cette contrainte, « there '
+	'is no unique constraint matching given keys for referenced table "cards" » — MESURÉ. Aucun '
+	'comportement de `cards` ne change, `id` étant déjà clé primaire');
 -- RÉVISÉE À `CRM-036`, NON RETIRÉE — mécanisme de la décision 51, neuvième occurrence. Elle
 -- constatait une absence ; elle constate désormais la présence, et la conséquence qui comptait :
 -- `app.can_read_card`, livrée sans usage par `CRM-040`, a enfin son premier appelant réel.

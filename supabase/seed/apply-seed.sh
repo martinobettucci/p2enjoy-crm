@@ -428,6 +428,36 @@ VALEURS=(
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000085|true'
 )
 
+# --- Commentaires — docs/SPEC-cards.md §13.11, docs/SPEC-seed.md §2.14 -------------------------
+# Cinq commentaires sur trois cards, écrits par les trois comptes. Aucun n'est décoratif :
+#
+#   * deux auteurs sur `…0c1` font un FIL, ce qu'un commentaire isolé ne démontre pas ;
+#   * le troisième est MODIFIÉ : `edited_at` renseigné, état démontré et non seulement décrit ;
+#   * celui de `…0c4` est SUPPRIMÉ — pierre tombale, corps vide —, et il vit dans un channel d'un
+#     AUTRE track, pour que la suppression ne soit pas prouvée sur le seul channel déjà couvert ;
+#   * celui de `…0c5` porte pour auteur Farida Nowak, `viewer` du workspace. Il est le TÉMOIN de la
+#     preuve de lecture : sans lui, « le viewer lit `200` et `[]` » serait vrai que la RLS refuse ou
+#     qu'elle autorise tout (décision 50). C'est la seule ligne du seed dont l'auteur ne pourrait
+#     PAS l'écrire lui-même : la politique d'insertion exige le droit d'écriture (INC-071), et le
+#     seed le dit plutôt que de le maquiller.
+#
+# `workspace_id` n'est JAMAIS envoyé : le trigger de la migration 15 le dérive de la card, quelle
+# que soit la valeur fournie. `edited_at` et `deleted_at` non plus — ils sont posés par le produit,
+# dans les deux mises à jour conditionnelles de la section 8 quinquies.
+#
+# id | card | auteur | corps
+COMMENTAIRES=(
+	'5eed0000-0000-4000-8000-0000000000d1|5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000011|La DSI a confirmé le périmètre de la refonte : trois gabarits, pas cinq.'
+	'5eed0000-0000-4000-8000-0000000000d2|5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000012|Démo faite le 3 août. Retour attendu sous quinzaine, relance calée.'
+	'5eed0000-0000-4000-8000-0000000000d3|5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000011|Budget confirmé à 48 000 EUR hors maintenance.'
+	'5eed0000-0000-4000-8000-0000000000d4|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000012|Note interne publiée par erreur sur la mauvaise affaire.'
+	"5eed0000-0000-4000-8000-0000000000d5|5eed0000-0000-4000-8000-0000000000c5|5eed0000-0000-4000-8000-000000000013|Astreinte à confirmer : le client demande une couverture jusqu'à 20 h."
+)
+
+# Corps du commentaire `…d3` APRÈS modification. C'est ce second corps qui pose `edited_at` : le
+# trigger ne marque que si le corps change réellement.
+COMMENTAIRE_D3_MODIFIE='Budget confirmé à 48 000 EUR hors maintenance, et hors reprise de contenu.'
+
 # --- Accès à l'API -----------------------------------------------------------------------------
 
 CORPS=$(mktemp)
@@ -1038,6 +1068,75 @@ done
 info "Valeurs : ${#VALEURS[@]} sur 6 cards, couvrant 7 types — docs/SPEC-form-composer.md §6.11"
 info "« budget » de la card c1 vaut null : une ligne présente n'est PAS une valeur renseignée (§6.6)"
 
+# --- 8 quinquies. Commentaires — docs/SPEC-cards.md §13.11 -------------------------------------
+# CETTE SECTION NE CONVERGE PAS COMME LES AUTRES, et le motif est structurel (docs/SPEC-seed.md
+# §2.14). Partout ailleurs le seed emploie `resolution=merge-duplicates` : la ligne présente est
+# réécrite, ce qui répare une modification faite à la main. Ici ce geste ÉCHOUERAIT — le trigger de
+# la migration 15 refuse toute écriture sur une ligne supprimée (`comment_deleted`), et le rejeu
+# tomberait en erreur sur `…d4`. Il serait de surcroît faux dans son principe : un commentaire est
+# une PAROLE, non un paramètre ; la réécrire à chaque rejeu effacerait ce qu'un utilisateur aurait
+# ajouté.
+#
+# La section emploie donc `resolution=ignore-duplicates` pour les cinq insertions, puis deux mises
+# à jour CONDITIONNÉES PAR UNE RELECTURE. La convergence est celle de la PRÉSENCE ET DE L'ÉTAT,
+# non celle du contenu.
+#
+# Elle vient après les cards : la clé composite `(card_id, workspace_id)` exige que la card existe,
+# et le trigger d'insertion lit son `workspace_id`.
+
+echo
+say "8 quinquies. Commentaires"
+
+for ligne in "${COMMENTAIRES[@]}"; do
+	IFS='|' read -r id card auteur corps <<< "$ligne"
+
+	charge=$(jq -nc --arg id "$id" --arg card "$card" --arg auteur "$auteur" --arg corps "$corps" \
+	     '{id: $id, card_id: $card, author_id: $auteur, body: $corps}')
+
+	code=$(api POST /rest/v1/card_comments \
+		-H 'Prefer: return=representation,resolution=ignore-duplicates' \
+		-d "$charge")
+	attendu "$code" "commentaire ${id: -2}" 200 201
+
+	printf '  %-4s card %s  auteur %s\n' "${id: -2}" "${card: -2}" "${auteur: -2}"
+done
+
+# --- L'état « modifié », posé par le produit et non fabriqué ----------------------------------
+# `edited_at` est écrite par le trigger SI ET SEULEMENT SI le corps change. Le seed ne peut donc
+# pas la poser : il modifie réellement le corps, et le produit marque.
+etat_d3=$(curl -s "$API/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d3&select=edited_at" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].edited_at // "null"')
+
+if [ "$etat_d3" = 'null' ]; then
+	charge=$(jq -nc --arg corps "$COMMENTAIRE_D3_MODIFIE" '{body: $corps}')
+	code=$(api PATCH '/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d3' \
+		-H 'Prefer: return=representation' -d "$charge")
+	attendu "$code" "modification du commentaire d3" 200
+	info "d3 modifié : edited_at posé par le trigger, non par le seed"
+else
+	info "d3 déjà modifié : rien à faire (convergence par état)"
+fi
+
+# --- L'état « supprimé », idem ------------------------------------------------------------------
+# La date envoyée est ignorée : le trigger pose `now()` et VIDE le corps. Le seed ne fabrique donc
+# aucune pierre tombale — il demande la suppression, et le produit la réalise.
+etat_d4=$(curl -s "$API/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4&select=deleted_at" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].deleted_at // "null"')
+
+if [ "$etat_d4" = 'null' ]; then
+	code=$(api PATCH '/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4' \
+		-H 'Prefer: return=representation' -d '{"deleted_at": "2026-08-04T15:00:00Z"}')
+	attendu "$code" "suppression du commentaire d4" 200
+	corps_d4=$(jq -r '.[0].body' "$CORPS")
+	[ "$corps_d4" = '' ] || die "d4 supprimé mais son corps n'est pas vide : « $corps_d4 »."
+	info "d4 supprimé : corps VIDÉ par le trigger, et la date envoyée ignorée au profit de now()"
+else
+	info "d4 déjà supprimé : rien à faire (convergence par état)"
+fi
+
+info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
+info "Celui de la card c5 porte pour auteur le viewer : témoin de la preuve de lecture (décision 50)"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -1064,6 +1163,7 @@ info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visi
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
 info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille, sur quatre channels — docs/SPEC-cards.md §9"
 info "Valeurs de formulaire : ${#VALEURS[@]} sur 6 cards, dont une vidée explicitement — docs/SPEC-form-composer.md §6.11"
+info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut : aucune unité ne porte leurs politiques (INC-014)."
@@ -1079,3 +1179,4 @@ info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-track
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
 info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-workflow.sh"
 info "champs de formulaire : scripts/verify-champs-formulaire.sh — cards : scripts/verify-cards.sh"
+info "commentaires : scripts/verify-commentaires.sh"
