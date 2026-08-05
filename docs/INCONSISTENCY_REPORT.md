@@ -12,6 +12,71 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-064 — Un contrôle de restitution comparant à `HEAD` peut exister dans d'autres harnais, et n'y a pas été cherché
+
+**Nature :** défaut de méthode possiblement répliqué, non vérifié.
+**Relevé le :** 2026-08-05, pendant la correction de `CRM-037`.
+
+`scripts/verify-formulaire.sh` vérifiait qu'il avait bien restauré les fichiers qu'il dégrade en les
+comparant à **`HEAD`** (`git diff --quiet`). Ce contrôle confond « non restauré » et « non encore
+committé », et il est donc rouge pour tout travail en cours sur ces fichiers — c'est-à-dire à son
+moment d'emploi. Corrigé pour ce harnais par une empreinte prise à l'entrée du script
+(`docs/JOURNAL.md` décision 166).
+
+**Ce qui n'est pas su.** Le dépôt compte vingt-quatre scripts `verify-*.sh`, dont plusieurs
+pratiquent des dégradations volontaires et les restaurent. Aucun n'a été relu à ce titre pendant ce
+passage : ce sont les livrables d'unités déjà closes ou en cours, et les reprendre ici les rouvrirait
+(`CLAUDE.md` §13). **Le nombre de harnais concernés est inconnu, et il n'est pas supposé nul.**
+
+**Comportement retenu :** aucun autre script n'est modifié.
+
+**Arbitrage attendu :** une revue transverse des harnais sur ce point précis, rattachée à l'unité
+d'outillage — `CRM-008` — plutôt qu'à l'unité fonctionnelle qui la traverse.
+
+---
+
+### INC-063 — Deux chapitres prescrivent `role="alert"` pour deux éléments différents du formulaire, et l'implémentation a tranché sans arbitrage
+
+**Nature :** contradiction entre deux documents, résolue de fait par le code.
+**Relevé le :** 2026-08-05, après la livraison de `CRM-037`.
+
+Deux textes prescrivent `role="alert"`, et ils ne désignent pas le même élément :
+
+- `docs/DESIGN_SYSTEM.md` §5.7 le pose sur **l'erreur** d'un champ — « Erreur en `--color-danger`
+  avec icône, `role="alert"`, associée au champ par `aria-describedby` » ;
+- `docs/SPEC-form-composer.md` §4.5, écrit pendant `CRM-037`, le pose sur le **message
+  d'exigence** — « élément portant `role="alert"`, cité par l'`aria-describedby` du contrôle ».
+
+La différence n'est pas de forme. `role="alert"` est une région live **assertive** : son contenu est
+annoncé dès qu'il apparaît. Le message d'exigence — « Requis pour passer à *E* » — n'est pas une
+erreur, c'est une explication permanente, rendue pour **chaque** champ exigé de l'étape. Appliqué à
+la lettre du §4.5, il ferait annoncer autant de messages assertifs qu'il y a de champs exigés, au
+**chargement** de l'écran. MESURÉ sur le seed : l'étape `signature` porte trois champs `required`,
+donc trois annonces pour un écran qui n'a rien signalé.
+
+**Ce que le code fait aujourd'hui, et qui n'est écrit nulle part.** `webapp/src/app/FormulaireCard.tsx`
+sépare les deux : la mention d'exigence est un texte ordinaire (`requis-<clé>`), et `role="alert"`
+ne porte que sur l'**alerte de champ manquant** (`alerte-<clé>`), qui n'apparaît que lorsque le
+champ exigé est vide. C'est la lecture du §5.7, et elle est probablement la bonne — mais c'est une
+**résolution implicite** du §4.5, que `CLAUDE.md` §5 proscrit, et elle n'est consignée dans aucun
+document.
+
+**Comportement retenu :** le code est **laissé inchangé**. Il est le plus défendable des deux, et le
+modifier maintenant échangerait une contradiction non consignée contre une autre.
+
+**Trois options d'arbitrage :**
+
+1. **Corriger le §4.5 de `docs/SPEC-form-composer.md`** pour qu'il décrive ce que le code fait :
+   `role="alert"` sur l'alerte de champ manquant, texte ordinaire pour la mention d'exigence ;
+2. **Employer `role="status"`** (poli) pour la mention d'exigence, et conserver `role="alert"` pour
+   l'alerte — la mention serait alors annoncée, mais sans interrompre ;
+3. **Appliquer la lettre du §4.5** et l'assumer en le motivant dans le design system.
+
+L'option 1 décrit l'existant et ne change aucun comportement ; elle **modifie une spécification déjà
+committée**, ce qui appartient au responsable.
+
+---
+
 ### INC-062 — La Definition of Done de `CRM-037` exige un parcours de transition que `CRM-041`, ordonnée après elle, est seule à pouvoir livrer
 
 **Nature :** contradiction d'ordonnancement entre la Definition of Done de `CRM-037`
@@ -1600,6 +1665,14 @@ il est la seule façon d'éviter une réécriture d'historique à chaque contene
    elle sera **perdue au prochain conteneur neuf**. Un correctif durable suppose soit un script
    d'amorçage qui la pose, soit une variable d'environnement fournie par la routine.
 
+
+**QUATRIÈME occurrence du point 2, le 2026-08-05.** Le conteneur de cette exécution rend de nouveau
+`user.name = Claude` et `user.email = noreply@anthropic.com`. L'écart a été **vu avant le premier
+commit** cette fois — contrairement à la troisième occurrence (décision 159), où deux commits avaient
+dû être réécrits —, et la configuration locale a été reposée à `P2Enjoy <contact@p2enjoy.studio>`
+avant toute écriture d'historique. Le coût reste **récurrent à chaque conteneur neuf**, et le
+correctif durable — script d'amorçage, ou variable d'environnement de l'environnement d'exécution —
+reste dû.
 ---
 
 ### INC-035 — Les clés étrangères des migrations `0003`, `0004` et `0005` sont idempotentes sans être convergentes
@@ -2460,12 +2533,6 @@ Le seul cas atteint est un client qui envoie délibérément un commentaire fait
 et le produit ne perd aucune donnée — il enregistre une transition dont le motif est vide, ce qui
 est précisément ce que la n° 5 voulait empêcher. Rien ne dépend de cette valeur aujourd'hui, le
 commentaire n'étant conservé nulle part (INC-048).
-
-**Arbitrage attendu du responsable :** élargir l'expression du §5.3 à `btrim(comment, E' \t\r\n')`
-et retourner l'assertion dans le même changement, ou confirmer que seuls les espaces sont refusés et
-corriger le titre du §5.3 pour qu'il n'annonce pas davantage.
-
-**Lié à :** INC-048 (le commentaire n'est conservé nulle part).
 
 ---
 

@@ -90,12 +90,31 @@ restaurer() {
 		cible=$(basename "$fichier" | tr '@' '/')
 		cp "$fichier" "$cible"
 	done
-	rm -rf "$TRAVAIL"
+	rm -rf "$TRAVAIL" "${DEPART:-}"
 }
 trap restaurer EXIT
 
 sauvegarder() { cp "$1" "$SAUVEGARDES/$(printf '%s' "$1" | tr '/' '@')"; }
 rendre() { cp "$SAUVEGARDES/$(printf '%s' "$1" | tr '/' '@')" "$1"; }
+
+# État des fichiers dégradables **à l'entrée du harnais**, et non l'état de `HEAD`.
+#
+# C'est cette empreinte que la section 7 compare, et le motif est une mesure : la première
+# rédaction y employait `git diff --quiet`, qui compare au dernier commit. Ce contrôle ne
+# distingue donc pas « une dégradation n'a pas été restaurée » — ce qu'il cherche — de « le
+# fichier porte un changement non encore committé » — ce qui est l'état normal de tout travail
+# en cours. MESURÉ : le harnais rendait `46 contrôles, 1 en échec` sur une correction de
+# `valeur-renseignee.ts` pourtant parfaitement restaurée, et il l'aurait rendu pour **toute**
+# modification de ces trois fichiers avant son commit. Un contrôle qui ne peut pas être vert
+# pendant qu'on travaille finit par être ignoré.
+DEPART=$(mktemp -d)
+empreinte_depart() { cp "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')"; }
+est_rendu_intact() { diff -q "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')" >/dev/null 2>&1; }
+
+# L'empreinte est prise AVANT tout contrôle, et le répertoire est détruit avec le reste.
+for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT"; do
+	[ -f "$fichier" ] && empreinte_depart "$fichier"
+done
 
 # --- 1. Les fichiers livrés et leur traçabilité --------------------------------------------------
 
@@ -335,8 +354,8 @@ fi
 titre "7. Ce que le harnais laisse derrière lui"
 
 for fichier in "$PREDICAT" "$MODULE" "$COMPOSANT"; do
-	if git diff --quiet -- "$fichier"; then
-		ok "$(basename "$fichier") est rendu intact"
+	if est_rendu_intact "$fichier"; then
+		ok "$(basename "$fichier") est rendu tel qu'il était à l'entrée du harnais"
 	else
 		fail "$(basename "$fichier") est laissé MODIFIÉ : une dégradation n'a pas été restaurée"
 	fi

@@ -5533,3 +5533,36 @@ compare pas colonne par colonne.
 en **regardant**, pas en lisant des tests verts — comme le contraste des pilules à `CRM-020` et le
 débordement des onglets à `CRM-021`. `CLAUDE.md` §16 n'est pas une formalité de fin de tâche : les
 deux règles ci-dessus n'existeraient pas sans elle.
+
+### Décision 166 — Un contrôle de restitution comparait au dernier commit, et ne pouvait donc pas être vert pendant qu'on travaille
+
+**Problème.** La section 7 de `scripts/verify-formulaire.sh` vérifie que le harnais a bien restauré
+les trois fichiers qu'il dégrade volontairement. Elle le faisait par `git diff --quiet -- <fichier>`,
+c'est-à-dire en comparant à **`HEAD`**.
+
+**Observation, mesurée.** Ce contrôle ne distingue pas les deux choses qu'il doit distinguer :
+« une dégradation n'a pas été restaurée » — ce qu'il cherche — et « le fichier porte un changement
+non encore committé » — l'état normal de tout travail en cours. Le harnais a rendu
+`46 contrôles, 1 en échec` sur une correction de `webapp/src/lib/valeur-renseignee.ts` pourtant
+**parfaitement restaurée** : le fichier différait de `HEAD` parce que la correction n'était pas
+encore committée, et pour aucune autre raison.
+
+**Portée.** Elle est générale, pas anecdotique : le contrôle serait rouge pour **toute** modification
+de `formulaire.ts`, `valeur-renseignee.ts` ou `FormulaireCard.tsx` tant qu'elle n'est pas committée —
+donc à chaque fois qu'on s'en sert pour vérifier ce qu'on vient d'écrire, ce qui est précisément son
+moment d'emploi.
+
+**Décision.** Le harnais prend une **empreinte des trois fichiers à son entrée**, et la section 7
+compare à cette empreinte plutôt qu'à `HEAD`. Elle mesure alors exactement ce qu'elle prétend
+mesurer : ce que le harnais a laissé derrière lui, indépendamment de l'état du dépôt.
+
+**Ce que ce défaut n'est pas.** Il n'est pas complaisant — c'est l'inverse, il est trop strict, et
+c'est ce qui le rend dangereux d'une autre façon : un contrôle qui ne peut pas être vert pendant
+qu'on travaille finit par être ignoré, et le jour où il dénonce une vraie dégradation, plus personne
+ne le lit. C'est le pendant des décisions 143, 145 et 157, qui traitaient toutes de contrôles
+**trop** indulgents.
+
+**Ce qui n'est pas fait, et pourquoi.** Les autres harnais du dépôt n'ont pas été relus à ce titre
+dans ce passage : ce sont les livrables d'autres unités, et les reprendre ici rouvrirait celles-là
+(`CLAUDE.md` §13). Le constat est porté par INC-064 pour que la revue soit faite là où elle
+appartient.

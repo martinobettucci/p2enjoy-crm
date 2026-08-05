@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **Un contrôle de restitution comparait au dernier commit, et ne pouvait donc pas être vert pendant
+  qu'on travaille** — décision 166, INC-064. La section 7 de `scripts/verify-formulaire.sh` vérifiait
+  que le harnais avait bien restauré les trois fichiers qu'il dégrade, par `git diff --quiet`. Ce
+  contrôle ne distingue pas « une dégradation n'a pas été restaurée » de « le fichier porte un
+  changement non encore committé ». MESURÉ : `46 contrôles, 1 en échec` sur un fichier **parfaitement
+  restauré**, au seul motif que la correction n'était pas encore committée — et il en aurait été
+  ainsi de toute modification de ces fichiers, donc à chaque emploi du harnais. Le script prend
+  désormais une **empreinte à son entrée** et compare à elle. Ce n'est pas un défaut de complaisance
+  mais son inverse, et il est dangereux autrement : un contrôle qui ne peut pas être vert pendant
+  qu'on travaille finit par être ignoré. Les autres harnais n'ont **pas** été relus à ce titre — ce
+  sont les livrables d'autres unités, INC-064.
+
 ### Ajouté
 
 - **`CRM-037` — le formulaire conditionnel d'une card est rendu, et il a un écran.** Première unité
