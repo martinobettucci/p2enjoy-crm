@@ -5089,3 +5089,99 @@ l'historique ne peut pas laisser derrière lui l'état intermédiaire qu'INC-055
 **Portée.** Ce n'est pas une réponse générale à INC-055 — l'arbitrage y reste attendu. C'est la
 constatation qu'un harnais peut souvent éviter le problème en dégradant au niveau où il vérifie,
 plutôt qu'au niveau de la migration qui l'a posé.
+
+### Décision 151 — Une suite de preuves de refus est structurellement aveugle au sur-refus, et la mesure l'a établie
+
+**Prédiction écrite dans la spécification, avant le code.** Le §7.4 annonçait que retirer la
+politique `cards_lecture` ferait échouer les scénarios n° 3, n° 4 et n° 11 — un `viewer` ne verrait
+plus rien, l'anonyme non plus, et la preuve n° 4 perdrait sa condition de validité.
+
+**MESURÉ, sur la pile réelle, la politique réellement retirée :**
+
+```
+drop policy cards_lecture on public.cards;
+npm run e2e:api -- e2e/api/preuves-refus.spec.ts   →   37 passed
+```
+
+**Aucun scénario n'échoue.** La prédiction était fausse, et son erreur n'est pas un détail
+d'écriture : c'est une propriété que je n'avais pas vue et qui vaut pour **toute** suite de preuves
+de refus. Retirer une politique de lecture fait refuser *davantage*. Or chacune de ces assertions
+attend soit zéro ligne, soit une erreur — un produit devenu plus strict les satisfait toutes. Les
+conditions de validité elles-mêmes tiennent, puisqu'elles passent par la clé de service, qui
+contourne la RLS.
+
+Même la preuve n° 1 reste verte, et pour une raison mesurée : `move_card` est `SECURITY DEFINER` et
+n'interroge pas la politique de lecture — elle appelle `app.can_write_channel`. Le `viewer` obtient
+donc toujours `forbidden`, sur une card qu'il ne peut désormais plus lire.
+
+**Ce que cela dit du harnais qu'on croyait avoir.** La Definition of Done de `CRM-014` exige que le
+harnais « échoue si une politique est retirée ». Si l'unité n'avait livré que le fichier de
+scénarios, cette exigence aurait été **impossible à satisfaire**, et il aurait été très facile de
+ne pas s'en apercevoir : il suffisait d'écrire la dégradation sans mesurer son effet, ou de
+constater « quelque chose a échoué » sans regarder quoi. C'est d'ailleurs le premier piège dans
+lequel le harnais est tombé — son contrôle cherchait « PREUVE N° 4 » dans **toute** la sortie de
+Playwright, où ce texte apparaît aussi sur les scénarios **verts**. Le contrôle était vert pour la
+mauvaise raison, et la contradiction avec le contrôle voisin l'a dénoncé.
+
+**Décision.** La détection du **sur-refus** est portée par la suite pgTAP, dont l'inventaire nomme
+les quarante et une politiques et les compte ; la détection du **sur-accès** reste portée par les
+scénarios HTTP. Le harnais éprouve les deux, dans les deux sens :
+
+| Dégradation | Ce qui doit échouer | Mesuré |
+|---|---|---|
+| `cards_lecture` retirée | la suite pgTAP | échoue ; les scénarios restent verts, et l'assertion **fige ce fait** |
+| politique permissive pour `anon` | les scénarios **et** la suite pgTAP | un seul scénario échoue — la preuve n° 11 sur `cards` — et le compte de 41 politiques tombe |
+
+**Ce que le harnais assère désormais**, plutôt que de l'espérer : que le fichier reste vert sans
+`cards_lecture`. Une assertion de ce genre paraît étrange jusqu'à ce qu'on voie ce qu'elle achète —
+si un jour ce scénario échoue, c'est que la structure des preuves a changé, et la décision 151 doit
+être révisée. La limite est figée, pas commentée.
+
+**Portée générale.** Une suite qui ne contient que des preuves de refus mesure une **borne
+supérieure** des droits, jamais une borne inférieure. Elle ne remarquera jamais qu'un produit a
+cessé de fonctionner ; elle ne remarquera que le jour où il en fait trop. Les unités à venir qui
+livreront des preuves d'autorisation — et non de refus — devront le savoir : la moitié manquante
+est celle qui vérifie qu'un profil légitime **obtient** ce qui lui est dû, et elle vit aujourd'hui
+dans les contrats d'API de chaque unité, non ici.
+
+### Décision 152 — Le balayage de clôture a trouvé une contradiction entre deux harnais, et non un défaut du produit — INC-058
+
+**Le geste.** La décision 145 posait qu'une unité touchant un privilège ou une politique doit finir
+par un balayage : rejouer les harnais précédents **un par un** et relever l'état de la base après
+chacun. `CRM-014` l'a fait, en mode **complet** — sans `--rapide` — et en mesurant après chaque
+passage le nombre de politiques et le privilège d'écriture sur `cards.email_local_part`.
+
+**Ce que le balayage a rendu.** Vingt harnais sur vingt et un verts, l'état de la base **inchangé**
+après chacun — `41` politiques, `email_local_part` fermée. Aucune dette rétroactive de la sorte
+qu'avait laissée `CRM-013`. Un seul écart : `scripts/verify-cards.sh`, `45 contrôles, 1 en échec`.
+
+**La cause, et pourquoi elle n'est pas celle qu'on attendait.** L'échec porte sur son contrôle
+`npm run test:sql`, et la sortie capturée désigne trois assertions de `CRM-013` :
+« les neuf cards du seed sont intactes ». En échantillonnant le compte de cards toutes les trois
+secondes pendant l'exécution, il vaut **14** puis **9** : le harnais crée cinq cards et les retire
+dans son `trap EXIT`, donc **après** la section qui lance les suites. L'assertion compte, elle, la
+table entière.
+
+Ce n'est donc ni un défaut du produit, ni une mesure fausse : c'est une **composition**
+contradictoire entre deux harnais qui, pris isolément, ont chacun raison.
+
+**Vérifié comme antérieur à cette unité**, et non supposé tel : la suite pgTAP de `CRM-014` retirée
+du répertoire, `scripts/verify-cards.sh` échoue à l'identique. La preuve tient en une commande, et
+elle valait la peine d'être faite — attribuer à l'unité en cours un défaut qu'elle n'a pas causé
+aurait été aussi faux que l'inverse.
+
+**Décision.** Comportement **inchangé**, contradiction consignée en **INC-058** avec trois options
+d'arbitrage. `scripts/verify-cards.sh` appartient à `CRM-040` et les trois assertions à `CRM-013` :
+les corriger ici rouvrirait deux unités vérifiées dans un commit qui n'en traite qu'une.
+
+**Ce que l'épisode ajoute à INC-055.** C'est la troisième fois qu'une règle de **composition** entre
+harnais manque : un harnais qui rejoue un préfixe de migrations (INC-055), un garde-fou qui dépend
+de l'âge de la base (INC-056), et maintenant une assertion qui compte une population globale qu'un
+autre harnais fait varier (INC-058). Les trois se corrigent au cas par cas depuis trois unités. La
+question de les écrire une fois pour toutes dans `docs/SPEC-test-harness.md` n'est plus une
+suggestion : c'est le même défaut sous trois formes.
+
+**Et une leçon de méthode, pour l'unité suivante.** Le défaut n'existe que sur le chemin **complet**
+du harnais : `--rapide` saute la section des suites, et c'est ce mode que `CRM-013` avait employé
+pour rapporter « 37 contrôles ». Un harnais dont deux modes ne mesurent pas la même chose finit par
+n'être vérifié que dans le plus court.

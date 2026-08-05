@@ -36,6 +36,54 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-014` — les douze preuves de refus sont rassemblées, comptées, et l'absence des cinq
+  impossibles est figée.** `e2e/api/preuves-refus.spec.ts`,
+  `supabase/tests/0016_preuves_refus.test.sql`, `scripts/verify-preuves-refus.sh`,
+  `docs/SPEC-permissions-rls.md` §7.1 à §7.4.
+  - **Sept preuves sur douze sont acquises, et le périmètre est mesuré, non estimé** (décision 146).
+    Les douze scénarios de `docs/SPEC-permissions-rls.md` §7 ont été rejoués à la main contre la
+    pile réelle **avant** d'écrire la spécification : n° 1 à 5, n° 10 et n° 11 sont livrables ; les
+    n° 6, 7, 8, 9 et 12 portent sur des tables ou une fonction **qui n'existent pas**.
+  - **La preuve n° 3 sur les cards n'existait nulle part**, alors que l'en-tête de
+    `e2e/api/cards.spec.ts` l'annonçait — INC-057, consignée sans être corrigée dans le fichier
+    d'une autre unité. Elle est livrée ici, sur une chaîne complète créée dans un second workspace
+    — workspace, track, workflow, nœud, étape, channel, card —, constatée présente avec la clé de
+    service puis invisible aux trois profils du workspace A.
+  - **La preuve n° 11 passe de trois tables à douze.** `CRM-008` l'exerçait sur les seules tables du
+    socle, `track_members` et `channel_members` étant alors vides. Les douze tables métier sont
+    aujourd'hui peuplées et **énumérées**, jamais échantillonnées.
+  - **La preuve n° 10 obtient son effet sans porter sa règle, et le dit** (décision 148). Un
+    administrateur qui tente de se retirer son rôle est bien sans effet — mesuré —, mais parce que
+    `workspace_members` ne porte **aucune** politique (INC-014), non parce qu'une règle protège le
+    dernier administrateur. Trois assertions figent ce zéro : le jour où INC-014 sera arbitrée,
+    elles deviendront rouges, et c'est alors que la règle devra être écrite.
+  - **Les cinq absences sont figées par des assertions**, jamais compensées par une preuve de
+    substitution : `404` / `PGRST205` pour une table, `404` / `PGRST202` pour une fonction,
+    inventaire vide pour `storage.buckets`. Chacune deviendra rouge à la naissance de son objet.
+  - **UNE PRÉDICTION DE LA SPÉCIFICATION ÉTAIT FAUSSE, ET LA DÉGRADATION L'A ÉTABLIE**
+    (décision 151). Le §7.4 annonçait que retirer `cards_lecture` ferait échouer trois scénarios ;
+    MESURÉ, **aucun** n'échoue et le fichier reste vert sur ses trente-sept. Ce n'est pas un défaut
+    du fichier mais une propriété structurelle : une suite de preuves de refus mesure une **borne
+    supérieure** des droits — un produit devenu plus strict satisfait toutes ses assertions. La
+    détection du sur-refus est donc portée par l'inventaire pgTAP des 41 politiques, et celle du
+    sur-accès par les scénarios. La spécification est corrigée, pas le contrôle relâché.
+  - **Test unitaire dédié** : `supabase/tests/0016_preuves_refus.test.sql`, **46 assertions** —
+    l'inventaire des politiques nom par nom **et** par un compte, la RLS activée sur toutes les
+    tables, les douze conditions de validité de la preuve n° 11, les causes en base des preuves
+    n° 1, 4 et 5, et les sept assertions d'absence.
+  - **Test d'intégration dédié, hors interface** : `e2e/api/preuves-refus.spec.ts`, **37
+    scénarios**, avec les jetons réels des trois profils obtenus par la véritable route de
+    connexion.
+  - **Harnais rejouable et non complaisant** : `scripts/verify-preuves-refus.sh`, **26 contrôles**,
+    21 hors suites. Il dégrade réellement le produit **dans les deux sens** — politique retirée,
+    politique permissive —, mesure ce qui échoue et **où**, et compare l'inventaire des politiques
+    à celui relevé avant dégradation.
+  - **Il ne rejoue aucune migration** (décision 150). Quatre harnais ont laissé la base dégradée en
+    rejouant un préfixe incomplet de l'historique (INC-055) ; celui-ci recrée la politique retirée
+    à partir de sa définition **lue en base** avant retrait, jamais réécrite de mémoire.
+  - Compteurs de `scripts/verify-harness.sh` révisés dans le **même** changement : 1093 → **1139**
+    assertions, 254 → **291** scénarios d'API.
+
 - **`CRM-013` — l'adresse d'une affaire cesse d'être réécrivable.**
   `supabase/migrations/0014_colonnes_protegees.sql`, `docs/SPEC-permissions-rls.md` §4.4.
   - **`cards.email_local_part` n'est plus modifiable par un client.** Le privilège `UPDATE` est

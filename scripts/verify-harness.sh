@@ -48,7 +48,7 @@ PORT_RAPPORT=9323
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
 # `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 à `CRM-031` ; 622 / 110 / 37 à `CRM-032` ;
 # 653 / 125 / 37 à `CRM-033` ; 717 / 150 / 37 à `CRM-035` ; 1051 / 242 / 37 à `CRM-036` ;
-# **1093 / 254 / 37 depuis `CRM-013`**.
+# 1093 / 254 / 37 à `CRM-013` ; **1139 / 291 / 37 depuis `CRM-014`**.
 #
 # LES COMPTEURS ÉTAIENT RESTÉS À LEUR VALEUR DE `CRM-035`, ET LE FAIT EST NOMMÉ PLUTÔT QUE CORRIGÉ
 # EN SILENCE. Trois unités livrées entre-temps — `CRM-012`, `CRM-040` et `CRM-034` — ont ajouté des
@@ -65,8 +65,13 @@ PORT_RAPPORT=9323
 # `supabase/tests/0015_colonnes_protegees.test.sql` (41 assertions), une assertion à
 # `supabase/tests/0007_workflows.test.sql` (INC-056) et `e2e/api/colonnes-protegees.spec.ts`
 # (12 scénarios) : 1051 + 42 = 1093, et 242 + 12 = 254. Les deux valeurs sont MESURÉES.
-ASSERTIONS_ATTENDUES=1093
-SCENARIOS_API=254
+#
+# RÉVISÉS DE NOUVEAU À `CRM-014`, dans le même changement, et sans retard non plus. L'unité ajoute
+# `supabase/tests/0016_preuves_refus.test.sql` (46 assertions) et
+# `e2e/api/preuves-refus.spec.ts` (37 scénarios) : 1093 + 46 = 1139, et 254 + 37 = 291. Les deux
+# valeurs sont MESURÉES le 2026-08-05, non déduites.
+ASSERTIONS_ATTENDUES=1139
+SCENARIOS_API=291
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

@@ -475,6 +475,21 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 Le détail, y compris la matrice des droits et les preuves de refus exigées, est dans
 `docs/SPEC-permissions-rls.md`.
 
+**Les douze preuves de refus sont inventoriées en un seul lieu depuis `CRM-014`.** Le fichier
+`e2e/api/preuves-refus.spec.ts` (**37 scénarios**) les rejoue dans l'ordre du §7, avec les jetons
+réels des trois profils, et `supabase/tests/0016_preuves_refus.test.sql` (**46 assertions**) tient
+l'inventaire des **41 politiques** de `public` — nom par nom et par un compte. Le harnais
+`scripts/verify-preuves-refus.sh` (**26 contrôles**, 21 hors suites) éprouve les deux dans les deux
+sens : une politique **retirée** fait échouer l'inventaire pgTAP, une politique **permissive** fait
+échouer les scénarios, et la restauration est comparée à l'inventaire relevé avant dégradation.
+
+Sur les douze preuves, **sept sont acquises** — n° 1 à 5, n° 10 et n° 11 — et **cinq portent sur
+des tables ou une fonction qui n'existent pas** (messagerie, journal d'événements, audit, pièces
+jointes). Ces cinq absences sont **figées par des assertions** qui deviendront rouges à la
+naissance de leur objet. La n° 10 est acquise dans son effet seulement : aucune politique ne
+protège le dernier administrateur, le refus venant du refus par défaut — INC-014, arbitrage
+attendu (`docs/JOURNAL.md`, décisions 148 et 151).
+
 ## 8. Chiffrement des secrets
 
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke

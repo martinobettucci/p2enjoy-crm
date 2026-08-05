@@ -731,11 +731,146 @@ vérification visuelle** : l'unité ne livre aucun écran.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **septième** occurrence).
 
-### CRM-014 — Harnais de preuves d'autorisation `[ ]`
+### CRM-014 — Harnais de preuves d'autorisation `[~]`
 Projet Playwright `api` exécutant les douze scénarios de refus avec les jetons réels de chaque
 profil.
 **DoD** : les 12 scénarios verts ; le harnais échoue si une politique est retirée (vérifié en
 retirant temporairement une politique).
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-permissions-rls.md` §7.1 à §7.4 : aucun
+      document ne disait **combien** des douze preuves étaient satisfaisables, alors que onze unités
+      successives avaient écrit que telle ou telle « restait due par `CRM-014` ». Rédigée **après
+      mesure** — les douze scénarios rejoués à la main contre la pile réelle, avec les jetons réels,
+      codes HTTP et `SQLSTATE` relevés. Commit documentaire dédié, poussé avant la première ligne
+      de code.
+- [x] **Le périmètre livrable est SEPT preuves sur douze, et il est mesuré, non estimé**
+      (décision 146). Acquises : n° 1, 2, 3, 4, 5, 10 et 11. Non satisfaisables : n° 6, 7, 8, 9
+      et 12, dont l'objet **n'existe pas**.
+- [x] **UNE PREUVE ÉTAIT ANNONCÉE SANS EXISTER — INC-057.** L'en-tête `@verifies` de
+      `e2e/api/cards.spec.ts` déclare porter la preuve n° 3 ; recherche faite, elle n'y est pas, et
+      l'énoncé de `CRM-040` dans ce backlog ne l'annonçait d'ailleurs pas. Consignée **sans être
+      corrigée** dans le fichier d'une autre unité, et la preuve est écrite ici.
+- [x] **Test unitaire dédié** : `supabase/tests/0016_preuves_refus.test.sql`, **46 assertions,
+      aucune anomalie** — l'inventaire des **41** politiques de `public`, table par table, nom par
+      nom **et** par un compte ; la RLS activée sur toutes les tables ; les **douze** conditions de
+      validité de la preuve n° 11 ; les causes en base des preuves n° 1, n° 4 et n° 5 ; les sept
+      assertions d'absence.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/preuves-refus.spec.ts`, **37
+      scénarios**, avec les jetons réels des trois profils seedés obtenus par la véritable route de
+      connexion. Les douze preuves y sont **nommées une à une**, et le harnais vérifie qu'elles ont
+      toutes été réellement exécutées — sur la sortie de Playwright, non sur le texte du fichier.
+- [x] **La preuve n° 3 sur les cards est livrée sur une chaîne complète** : workspace, track,
+      workflow, nœud, étape initiale, channel et card créés dans un **second** workspace avec la clé
+      de service, la card constatée **présente**, puis invisible aux trois profils du workspace A ;
+      son `PATCH` par un administrateur de A rend `200` et `[]` sans effet, la ligne étant relue.
+      Le seed ne fournit aucun second workspace (`docs/SPEC-seed.md` §8) : `CRM-014` fabrique le
+      sien et le **détruit**, plutôt que d'étendre un seed qui appartient à `CRM-005` et `CRM-046`.
+- [x] **La preuve n° 11 passe de trois tables à douze.** `CRM-008` l'exerçait sur le seul socle,
+      `track_members` et `channel_members` étant alors vides — un « zéro ligne » sur une table vide
+      ne prouvant rien. Les douze tables métier sont aujourd'hui peuplées, **énumérées** et non
+      échantillonnées, et chaque scénario constate la table non vide avec la clé de service avant
+      d'affirmer que l'anonyme n'y lit rien.
+- [x] **UNE PRÉDICTION DE MA PROPRE SPÉCIFICATION ÉTAIT FAUSSE, ET LA DÉGRADATION L'A ÉTABLIE**
+      (décision 151). Le §7.4 annonçait que retirer `cards_lecture` ferait échouer les scénarios
+      n° 3, n° 4 et n° 11. MESURÉ : `drop policy cards_lecture` puis exécution → **37 passed**,
+      aucun échec. Une suite composée de preuves de refus mesure une **borne supérieure** des
+      droits : un produit devenu plus strict satisfait toutes ses assertions. Même la preuve n° 1
+      reste verte, `move_card` étant `SECURITY DEFINER` et n'interrogeant pas la politique. La
+      spécification est **corrigée**, le contrôle n'est pas relâché, et le harnais **assère
+      désormais ce fait** au lieu d'espérer un échec qui n'arrive pas.
+- [x] **Harnais de preuves rejouable `scripts/verify-preuves-refus.sh` : 26 contrôles, aucune
+      anomalie** — 21 hors suites —, et **non complaisant dans les deux sens** : une politique
+      **retirée** fait échouer l'inventaire pgTAP ; une politique **permissive** posée sur `cards`
+      pour `anon` fait échouer **exactement un** scénario, la preuve n° 11 sur les cards, et le
+      compte de 41 politiques. La ligne d'échec est isolée par son numéro — chercher « PREUVE N° 11 »
+      dans toute la sortie matcherait aussi les scénarios **verts**, faux positif mesuré à
+      l'écriture et corrigé.
+- [x] **Restauration constatée, non supposée** : l'inventaire complet des politiques — nom, table,
+      commande, rôles, `USING`, `WITH CHECK` — est relevé avant dégradation et comparé après. Le
+      seed est constaté intact : neuf cards, un seul workspace, aucun résidu du second.
+- [x] **Aucune migration rejouée** (décision 150). Les quatre défaillances d'INC-055 venaient toutes
+      d'un harnais rejouant un préfixe incomplet de l'historique. Celui-ci dégrade au niveau où il
+      vérifie et recrée la politique à partir de sa définition **lue en base** avant retrait.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets. `npm run test:sql`
+      **1139 assertions**, `npm run e2e:api` **291 scénarios**, `npm run test:unit` vert,
+      `npm run e2e:ui` **37 scénarios** — ce dernier au prix du contournement récurrent d'INC-036
+      (**huitième** occurrence). Les trois captures réécrites par ce rejeu ont été **regardées puis
+      restaurées**, comme aux sept unités précédentes : cette unité ne touche aucun composant de
+      l'interface, et l'écran reste celui d'un appelant anonyme. La seule différence observée est
+      l'état de survol laissé par le pointeur du pilote, déjà décrit par `CRM-032`.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** que les preuves
+      qu'ils comptent, et sans retard : 1093 → **1139** assertions, 254 → **291** scénarios d'API.
+      `scripts/verify-harness.sh` rejoué : **25 contrôles, aucune anomalie**.
+- [x] **Les vingt et un harnais précédents rejoués en mode COMPLET**, l'état de la base relevé après
+      chacun — `41` politiques et `email_local_part` fermée, **invariants** : `verify-stack` 33,
+      `verify-scripts` 52 (dont **1 anomalie connue**, INC-044), `verify-migrations` 23,
+      `verify-authz` 26, `verify-auth` 42, `verify-seed` 49, `verify-types` 30, `verify-webapp` 41,
+      `verify-harness` 25, `verify-tracks` 43, `verify-channels` 30, `verify-catalogue` 39,
+      `verify-workflows` 49, `verify-copie-workflow` 34, `verify-coherence-workflow` 33,
+      `verify-champs-formulaire` 38, `verify-droits-fins` 42, `verify-move-card` 56,
+      `verify-valeurs-champs` 40, `verify-colonnes-protegees` 50. **Aucune dette rétroactive** de la
+      sorte que `CRM-013` avait laissée.
+- [x] **UNE CONTRADICTION ENTRE DEUX HARNAIS, TROUVÉE PAR CE BALAYAGE — INC-058** (décision 152).
+      `scripts/verify-cards.sh` rend `45 contrôles, 1 en échec` en mode **complet** : son
+      `npm run test:sql` échoue sur trois assertions de `CRM-013` — « les neuf cards du seed sont
+      intactes ». MESURÉ en échantillonnant le compte de cards pendant l'exécution : il vaut **14**
+      puis **9**, le harnais retirant ses cinq cards dans son `trap EXIT`, donc **après** la section
+      qui lance les suites. Ni défaut du produit, ni mesure fausse : une composition contradictoire.
+      **Vérifié comme antérieur à `CRM-014`** — la suite `0016` retirée du répertoire, l'échec est
+      identique. Comportement **inchangé**, consigné avec trois options d'arbitrage : les deux
+      fichiers appartiennent à `CRM-040` et `CRM-013`.
+- [x] `docs/SPEC-permissions-rls.md` §7, §7.1 à §7.4, §8, `docs/SPEC-test-harness.md` §4.6, §8,
+      §10, `docs/DAT.md` §7, `README.md` §7, `CHANGELOG.md`, `docs/JOURNAL.md` (décisions 146
+      à 152), `docs/INCONSISTENCY_REPORT.md` (INC-057 et INC-058 ouvertes) mis à jour dans le même
+      changement.
+- [ ] **CINQ PREUVES SUR DOUZE RESTENT HORS D'ATTEINTE, ET LEURS OBJETS N'EXISTENT PAS** : n° 6
+      (`mail_inbound_accounts`, `CRM-052`), n° 7 (`mail_outbound_identities`, `CRM-053`), n° 8
+      (`card_events`, `CRM-044` et `audit_log`, `CRM-072`), n° 9 (aucune table de pièces jointes,
+      aucun bucket de storage), n° 12 (`queue_outbound_email`, `CRM-058`). Chaque absence est figée
+      par une assertion pgTAP **et** par un scénario d'API, qui deviendront rouges à la naissance de
+      leur objet et désigneront alors la preuve à écrire. **Bloqué par une dépendance, pas par un
+      défaut de l'unité.**
+- [ ] **La preuve n° 10 n'est acquise que dans son EFFET, pas dans sa règle** (décision 148).
+      L'écriture est sans effet parce que `workspace_members` ne porte **aucune** politique
+      (INC-014), non parce qu'une règle protège le dernier administrateur. Trois assertions figent
+      ce zéro. **Bloqué par un arbitrage** — INC-014, en attente.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La webapp reste un appelant
+      **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Un refus opposé
+      à un profil authentifié est par construction hors de portée d'un anonyme, qui ne voit déjà
+      aucune donnée métier : il n'existe **aucune** vérification visuelle sensée à produire pour
+      cette unité tant que l'arbitrage n'est pas rendu. **Bloqué par un arbitrage, pas par un défaut
+      de l'unité.**
+- [ ] **Le seed n'a pas été étendu, et le choix est documenté.** La preuve n° 3 exige un second
+      workspace ; `CRM-014` le fabrique et le détruit, comme `scripts/verify-authz.sh`, plutôt que
+      d'étendre un seed qui appartient à `CRM-005` et `CRM-046` (`docs/SPEC-seed.md` §8). Rien
+      d'autre n'était à ajouter : l'unité ne crée ni table, ni colonne, ni statut, ni flux.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « les 12 scénarios verts ». Les
+douze scénarios **existent et sont verts**, mais cinq d'entre eux n'assèrent pas un refus : ils
+assèrent que le sujet du refus **n'existe pas**. La différence est nommée plutôt que masquée par une
+formulation qui laisserait croire à douze refus prouvés. Le second point — « le harnais échoue si
+une politique est retirée » — est **livré et mesuré**, et la mesure a montré que c'est l'inventaire
+pgTAP, non les scénarios HTTP, qui porte cette détection (décision 151). **Aucun test E2E
+d'interface, aucune vérification visuelle** : l'unité ne livre aucun écran.
+
+*Limites nommées, non masquées.*
+
+- **Cinq preuves sur douze restent dues**, et leurs unités sont nommées ci-dessus.
+- **Aucun écran.** Douzième unité consécutive à buter sur INC-021.
+- **La duplication avec les quatorze autres fichiers de scénarios est assumée** (§7.1,
+  décision 147) : les preuves des unités précédentes ne sont ni retirées ni déplacées, les retirer
+  rouvrirait sept unités dans un commit qui n'en traite qu'une.
+- **Une suite de preuves de refus ne vérifie jamais qu'un profil légitime OBTIENT ce qui lui est
+  dû** (décision 151). Cette moitié-là vit dans les contrats d'API de chaque unité, pas ici, et
+  aucune unité du backlog ne porte nommément son inventaire.
+- **`scripts/verify-scripts.sh` rend 1 anomalie sur 52**, connue et inchangée : INC-044, la garde de
+  ports est inerte faute de `ss` et de `netstat` sur l'hôte. Elle ne relève pas de cette unité.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, pile démarrée **sans** le service `webapp` faute de
+  pouvoir construire son image derrière le proxy à certificat interposé (INC-032, INC-042), et
+  l'arborescence de compatibilité des navigateurs Playwright (INC-036, **huitième** occurrence).
 
 ### CRM-005 — Seed socle `[x]`
 Utilisateurs créés par l'API d'administration GoTrue ; un workspace ; les rôles représentés.

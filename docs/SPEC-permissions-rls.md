@@ -623,9 +623,7 @@ La Definition of Done de `CRM-014` exige que le harnais **échoue si une politiq
 `scripts/verify-preuves-refus.sh` l'éprouve en dégradant réellement le produit, puis en le
 restaurant :
 
-1. la politique `cards_lecture` est **réellement retirée** ; les scénarios n° 3, 4 et 11 doivent
-   alors échouer — un `viewer` ne verrait plus rien, mais surtout l'anonyme non plus, et la preuve
-   n° 4 perdrait sa condition de validité ;
+1. la politique `cards_lecture` est **réellement retirée** ; le harnais doit alors échouer ;
 2. une politique **permissive** est réellement posée sur `cards` pour `anon` ; le scénario n° 11
    doit échouer, ce qui prouve que le fichier détecte une régression d'autorisation et non une base
    vide ;
@@ -634,6 +632,22 @@ restaurant :
 
 Un harnais qui ne sait pas échouer ne prouve rien ; la vérification porte donc autant sur son
 échec provoqué que sur son succès.
+
+**Ce que la dégradation n° 1 a mesuré, et qui contredisait la prédiction (décision 151).** Cette
+section annonçait d'abord que les scénarios n° 3, 4 et 11 échoueraient sans `cards_lecture`.
+MESURÉ : **aucun n'échoue**, et le fichier reste vert sur ses trente-sept scénarios. Ce n'est pas
+un défaut du fichier, mais une **propriété structurelle** de toute suite composée de preuves de
+refus : retirer une politique de lecture fait refuser *davantage*, or chaque assertion attend soit
+zéro ligne, soit une erreur — un produit devenu plus strict les satisfait toutes. La preuve n° 1
+elle-même reste verte, `move_card` étant `SECURITY DEFINER` : elle n'interroge pas la politique,
+elle appelle `app.can_write_channel`.
+
+Conséquence retenue, et c'est la raison d'être de la suite pgTAP de l'unité : **la détection du
+sur-refus repose sur l'inventaire des politiques**, non sur les scénarios HTTP. Le harnais échoue
+donc bien lorsqu'une politique est retirée — par sa suite pgTAP —, et le fichier de scénarios,
+lui, garde la détection du **sur-accès**, qui est la régression dont un utilisateur souffre. Les
+deux moitiés sont nécessaires ; aucune ne remplace l'autre. La prédiction fausse est corrigée ici
+plutôt que le contrôle relâché.
 
 ## 8. Points ouverts
 

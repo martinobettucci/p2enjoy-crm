@@ -12,6 +12,69 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-058 — Une assertion pgTAP compte une donnée globale qu'un autre harnais fait varier pendant qu'il l'exécute
+
+**Nature :** contradiction entre deux harnais de vérification ; aucun comportement du produit en
+cause. L'assertion est livrée par `CRM-013`, le harnais qui la met en défaut par `CRM-040`.
+**Relevé le :** 2026-08-05, pendant `CRM-014`, en rejouant les vingt et un harnais précédents.
+
+`scripts/verify-cards.sh` échoue en mode **complet** — `45 contrôles, 1 en échec` — sur son
+contrôle `npm run test:sql`. MESURÉ, en capturant la sortie de ce `npm run test:sql` :
+
+```
+ECHEC  supabase/tests/0015_colonnes_protegees.test.sql — 3 assertion(s) en échec sur 41
+       not ok 33 - les neuf cards du seed sont intactes
+       not ok 34 - et leurs neuf adresses ont toujours la forme générée
+       not ok 35 - neuf adresses DISTINCTES
+```
+
+**La cause, mesurée et non déduite.** En échantillonnant `select count(*) from public.cards`
+toutes les trois secondes pendant une exécution complète du harnais, le compte vaut **14** pendant
+onze relevés, puis **9** pendant vingt-trois. `scripts/verify-cards.sh` crée cinq cards pour ses
+propres preuves et les retire dans son `trap EXIT` — donc **après** sa section 10, qui est
+précisément celle qui lance `npm run test:sql`. Les trois assertions de `CRM-013` comptent, elles,
+neuf cards à l'échelle de la table entière. Elles ne peuvent donc **pas** être vertes à ce moment
+précis, quelle que soit la qualité du produit.
+
+**Ce n'est ni un défaut du produit, ni un défaut de mesure.** Les deux côtés sont défendables pris
+isolément : un harnais a le droit de créer ses données avant de nettoyer, et une assertion a le
+droit de vérifier que le seed est intact. C'est leur **composition** qui est contradictoire, et
+rien ne la surveillait.
+
+**Pourquoi c'était invisible jusqu'ici.** `CRM-013` rapporte `verify-cards` à **37 contrôles** ;
+en mode complet il en rend **45**. L'écart est exactement la section 10 — sept contrôles de suites
+et de build —, que `--rapide` saute. Le défaut n'existe donc que sur le chemin le plus long, celui
+qu'on emprunte le moins souvent.
+
+**Vérifié comme antérieur à `CRM-014`** : la suite `supabase/tests/0016_preuves_refus.test.sql`
+retirée du répertoire, `scripts/verify-cards.sh` échoue à l'identique, au même contrôle. L'unité en
+cours n'y est pour rien, et sa propre suite pgTAP passe dans cet état — elle n'assère que des
+tables **non vides**, jamais un compte global de cards.
+
+**Comportement retenu :** **inchangé**. `scripts/verify-cards.sh` est un livrable de `CRM-040` et
+les trois assertions un livrable de `CRM-013` ; les corriger pendant un passage consacré à
+`CRM-014` rouvrirait deux unités vérifiées, ce que `CLAUDE.md` §13 interdit.
+
+**Action attendue du responsable :** trancher entre
+
+1. déplacer le ménage de `scripts/verify-cards.sh` **avant** sa section 10, de sorte qu'aucune
+   suite ne s'exécute sur un état transitoire — la correction la plus simple, à un seul endroit ;
+2. restreindre les trois assertions de `CRM-013` aux **neuf identifiants du seed** plutôt qu'au
+   compte de la table, ce qui les rendrait insensibles à toute donnée de test ;
+3. poser en règle générale, dans `docs/SPEC-test-harness.md`, qu'une assertion pgTAP ne compte
+   jamais une population **globale** mais toujours un ensemble nommé — règle qui vaudrait pour tout
+   le dépôt et préviendrait la prochaine occurrence au lieu de la corriger.
+
+L'option 3 rejoint la question déjà posée en **INC-055** : faut-il inscrire les règles de
+composition des harnais dans leur spécification, plutôt que les corriger harnais par harnais ?
+C'est la **troisième** fois que la question se pose sous une forme différente.
+
+**Lié à :** INC-055 (un harnais laisse un état que le produit ne connaît pas), INC-056 (un
+garde-fou qui dépend de l'âge de la base), `docs/SPEC-test-harness.md` §7, `CLAUDE.md` §8 (le seed
+est un contrat reproductible).
+
+---
+
 ### INC-057 — Un commentaire `@verifies` annonçait une preuve de refus que le fichier ne portait pas
 
 **Nature :** commentaire de traçabilité inexact, livré par `CRM-040`.
