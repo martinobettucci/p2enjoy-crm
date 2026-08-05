@@ -54,6 +54,23 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **Les neuf harnais laissés en attente par `CRM-042` ont été rejoués, et huit sont verts** —
+  `verify-catalogue` 39, `verify-workflows` 49, `verify-copie-workflow` 34,
+  `verify-coherence-workflow` 33, `verify-champs-formulaire` 38, `verify-droits-fins` 42,
+  `verify-colonnes-protegees` 50, `verify-preuves-refus` 26, **aucune anomalie**. Ce que l'unité
+  tenait pour probable est désormais mesuré. Aucune ligne de produit n'a changé.
+
+- **INC-061 reçoit une troisième occurrence, et sa cause est isolée hors du harnais fautif.**
+  `scripts/verify-cards.sh` rejoue les suites globales **avant** de retirer ses cinq cards de
+  preuve : il se mesure lui-même en train de tenir son jeu d'essai. La cause a été reproduite par le
+  **vrai chemin applicatif** — cinq cards créées en `201`, base portée à 14 —, et l'ampleur a
+  **quintuplé en deux unités** : onze scénarios d'API échouent, dont **sept** appartiennent à la
+  preuve d'intégration dédiée de la vue liste. Base ramenée à 9 cards, les suites redeviennent
+  intégralement vertes — **1164 assertions** et **358 scénarios**. Ni le produit ni les preuves ne
+  sont en cause ; **aucune assertion n'a été relâchée** pour rendre le harnais vert, et le harnais
+  n'est pas corrigé ici : il appartient à `CRM-040`, et l'arbitrage du responsable est dû pour la
+  troisième fois.
+
 - **INC-068 consignée, non résolue** : les pastilles d'étiquettes du §5.1 du design system n'ont ni
   table dans `docs/SCHEMA.md`, ni unité dans `docs/MASTER_PLAN.md`. `CRM-041` avait nommé l'absence
   sur la carte ; la **prescription** restait, elle, sans porteur. Distinct de l'avatar du

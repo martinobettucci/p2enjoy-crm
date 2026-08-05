@@ -6214,3 +6214,51 @@ seul geste qui l'en sort. La barre ne répète plus l'action lorsque l'état vid
 absence de toute `columnheader` — pour qu'ils ne puissent pas revenir en silence. Le §12.7 bis de
 `docs/SPEC-cards.md` les écrit. C'est la quatrième fois qu'une capture dénonce un défaut que les
 tests laissaient passer (décisions 163, 175, et l'écart du §12.5 du design system).
+
+### Décision 191 — Le balayage promis est mené, et il rend un harnais fautif à sa troisième récidive
+
+**Problème.** `CRM-042` s'était achevée en laissant **neuf harnais non rejoués**, et en le disant :
+`verify-catalogue`, `verify-workflows`, `verify-copie-workflow`, `verify-coherence-workflow`,
+`verify-champs-formulaire`, `verify-droits-fins`, `verify-colonnes-protegees`, `verify-preuves-refus`
+et `verify-cards`. L'unité tenait pour probable qu'ils fussent verts — elle ne livre aucun SQL,
+aucune migration, aucune politique — mais nommait ce raisonnement pour ce qu'il était : **un
+raisonnement, pas une mesure**. L'entrée se terminait par « à rejouer à la prochaine exécution ».
+
+**Ce qui a été fait.** Les neuf ont été rejoués **en mode complet**, séquentiellement — jamais en
+parallèle, INC-058 décrivant précisément ce que deux harnais concurrents se font l'un à l'autre —
+contre la pile réellement démarrée et le seed réellement appliqué. Huit rendent **aucune anomalie** :
+39, 49, 34, 33, 38, 42, 50 et 26 contrôles. Trois de ces comptes dépassent ceux qu'avaient consignés
+leurs unités respectives (36, 47, 33) ; `git log` sur les trois fichiers montre qu'ils ont été
+enrichis par des unités postérieures, ce qui explique l'écart sans rien laisser d'inexpliqué.
+
+**Ce que le neuvième a rendu.** `scripts/verify-cards.sh` échoue, de façon reproductible, sur
+`npm run test:sql` **et** `npm run e2e:api` — INC-061, dont c'est la **troisième occurrence**.
+
+**Comment la cause a été établie, cette fois sans le harnais.** Les deux occurrences précédentes
+déduisaient la cause de la sortie du harnais. Celle-ci la **reproduit hors de lui** : cinq cards ont
+été créées par le **vrai chemin applicatif** — `POST /rest/v1/cards`, jeton réel de
+l'administratrice, cinq `201` —, portant la base à **14** cards ; les suites ont été mesurées dans
+cet état ; les cards ont été retirées. Résultat : les mêmes trois assertions de
+`0015_colonnes_protegees.test.sql`, et **onze** scénarios d'API contre trois à la deuxième
+occurrence — dont **sept** appartenant à `e2e/api/liste-cards.spec.ts`, la preuve d'intégration
+dédiée de `CRM-042` elle-même. Base ramenée à 9 cards, les deux suites redeviennent intégralement
+vertes : **1164 assertions** et **358 scénarios**.
+
+**Décision : ne pas corriger, consigner et escalader.** Trois raisons, dans cet ordre. D'abord
+`scripts/verify-cards.sh` est un livrable de `CRM-040` : le reprendre sous `CRM-042` toucherait les
+45 contrôles d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13). Ensuite l'arbitrage
+est **déjà ouvert** depuis deux occurrences, avec trois options écrites ; en trancher une seul
+reviendrait à s'arroger la décision du responsable. Enfin, et surtout, **la correction évidente est
+la mauvaise** : déplacer la section 10 après le `trap` réparerait un harnais et laisserait le motif
+intact pour tous les autres qui tiennent un jeu d'essai. La troisième occurrence en donne la mesure —
+le nombre de scénarios touchés a **quintuplé en deux unités**, sans qu'aucune ligne du harnais ait
+changé ; ce qui a changé, c'est le nombre de preuves qui comptent des cards.
+
+**Conséquence.** INC-061 est enrichie de la mesure et de ce qu'elle tranche : l'option 2 — poser dans
+`docs/SPEC-test-harness.md` la règle « un harnais ne rejoue jamais les suites globales tant qu'il
+tient un jeu d'essai », et l'appliquer par une unité de dette dédiée — est la seule qui protège les
+preuves **à venir**. `CRM-042` reste `[~]`, non à cause de ce harnais, mais parce qu'INC-021 lui
+interdit toujours son E2E de bout en bout. **Aucune assertion n'a été relâchée** pour rendre le
+harnais vert : compter les cards du seed est exactement ce qui rend la pagination vérifiable, et
+l'assouplir pour accommoder un outil fautif serait supprimer un test pour obtenir un vert
+(`CLAUDE.md` §26).

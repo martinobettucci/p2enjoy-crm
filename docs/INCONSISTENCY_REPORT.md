@@ -440,8 +440,41 @@ et relâcher ce compte pour qu'un harnais fautif passe reviendrait à supprimer 
 un vert (`CLAUDE.md` §26). L'arbitrage reste dû, et l'option 2 gagne en poids : la règle générale
 protégerait les preuves à venir, que l'option 1 ne protège pas.
 
+**TROISIÈME OCCURRENCE, MESURÉE LE 2026-08-05 PENDANT LE REJEU DES NEUF HARNAIS EN ATTENTE DE
+`CRM-042`, ET LA CAUSE EST ISOLÉE SANS LE HARNAIS.** Le harnais rend de nouveau « 45 contrôles,
+**2** en échec », `npm run test:sql` et `npm run e2e:api`. Cette fois la cause n'est pas déduite du
+harnais : elle est **reproduite hors de lui**. Les cinq cards de preuve ont été recréées par le
+**vrai chemin applicatif** — `POST /rest/v1/cards` avec le jeton réel de l'administratrice, cinq
+`201`, base portée à **14** cards —, les suites ont été mesurées dans cet état, puis les cards
+retirées. MESURÉ :
+
+```
+not ok 33 - les neuf cards du seed sont intactes …
+not ok 34 - et leurs neuf adresses ont toujours la forme générée …
+not ok 35 - neuf adresses DISTINCTES …
+11 failed, 347 passed  (npm run e2e:api)
+```
+
+**Onze scénarios d'API**, contre deux à la première occurrence et trois à la deuxième :
+`e2e/api/board.spec.ts` (2), `e2e/api/colonnes-protegees.spec.ts` (1) et surtout
+`e2e/api/liste-cards.spec.ts` (**7**) — les deux lectures de la vue liste, les deux filtres
+d'activité, la contre-épreuve des deux lignes de plus, et les cinq scénarios de la pagination et du
+`416`. Base ramenée à **9** cards, `npm run test:sql` rend ensuite **1164 assertions, aucune
+anomalie** et `npm run e2e:api` **358 scénarios, aucune anomalie**.
+
+**Ce que la troisième occurrence tranche.** La prédiction de la deuxième — « il frappera toute
+preuve future qui comptera des cards » — est **vérifiée** : la victime la plus atteinte est la
+preuve d'intégration dédiée de l'unité la plus récente, livrée après que l'entrée a été écrite. Le
+nombre de scénarios touchés a **quintuplé en deux unités**, et rien n'indique que cela s'arrête :
+toute unité qui lira des cards ajoutera ses propres victimes. **L'option 2 — poser la règle générale
+dans `docs/SPEC-test-harness.md` — est la seule qui protège les preuves à venir**, l'option 1 ne
+protégeant que le harnais fautif d'aujourd'hui. La correction n'est toujours **pas appliquée** :
+`scripts/verify-cards.sh` est un livrable de `CRM-040`, et le reprendre sous `CRM-042` reviendrait à
+toucher les 45 contrôles d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13).
+**Arbitrage attendu du responsable, pour la troisième fois.**
+
 **Lié à :** INC-055 et INC-060 (défauts d'outillage de la même famille), INC-058 (compteur perturbé
-par un harnais concurrent), `docs/JOURNAL.md` décision 158.
+par un harnais concurrent), `docs/JOURNAL.md` décisions 158 et 191.
 
 ---
 
@@ -1910,6 +1943,15 @@ La configuration locale a été reposée à `P2Enjoy <contact@p2enjoy.studio>`, 
 de cette exécution — le documentaire, déjà poussé, et celui de l'unité, non poussé — ont été
 réécrits pour la porter, puis republiés. Aucun commit antérieur n'a été touché ; aucun commit
 d'une autre exécution n'est concerné.
+
+**QUATRIÈME OCCURRENCE DE L'IDENTITÉ, 2026-08-05, PENDANT LE REJEU DES HARNAIS DE `CRM-042`.** La
+prédiction du point 2 s'est vérifiée pour la quatrième fois : conteneur neuf, aucune configuration
+**locale**, `git config user.email` rendant `noreply@anthropic.com`. Le commit de cette exécution a
+été créé sous cette identité, l'écart vu **immédiatement après**, la configuration locale reposée à
+`P2Enjoy <contact@p2enjoy.studio>` et le commit réécrit par `--amend --reset-author` **avant tout
+push** — aucune référence distante n'a donc porté l'identité fautive. La branche assignée était
+`claude/happy-goldberg-szblin`, et `git branch -a` en dénombre désormais **plus de trente**, toutes
+issues d'exécutions successives de la même routine. Les deux points ci-dessous restent entiers.
 
 Le motif est celui déjà retenu : `CLAUDE.md` §13 prévoit l'instruction explicite du responsable
 pour réécrire un commit poussé, aucune instruction n'est atteignable pendant une exécution

@@ -3323,15 +3323,40 @@ Tri, filtres, densité maîtrisée, pagination.
 - [ ] **Le seed n'a pas été étendu, et le choix est documenté.** L'unité n'introduit ni table, ni
       colonne, ni statut, ni flux : elle lit ce que `CRM-040` a livré. Six contrôles du harnais
       échouent si les données qu'elle démontre cessent d'être là.
-- [ ] **NEUF HARNAIS N'ONT PAS ÉTÉ REJOUÉS, ET LE DIRE VAUT MIEUX QUE DE L'OMETTRE.**
-      `verify-catalogue`, `verify-workflows`, `verify-copie-workflow`, `verify-coherence-workflow`,
-      `verify-champs-formulaire`, `verify-droits-fins`, `verify-colonnes-protegees`,
-      `verify-preuves-refus` et `verify-cards` **étaient encore en cours** lorsque cette exécution
-      s'est achevée — chacun rejoue les suites globales, et le balayage complet dépasse la durée
-      d'une exécution de la routine. Les neuf portent sur la **base** : migrations, politiques,
-      fonctions et privilèges. L'unité ne livre **aucun SQL**, aucune migration, aucune politique et
-      aucun privilège, et `npm run test:sql` rend **1164 assertions inchangées** — mais cela reste
-      un raisonnement, non une mesure. **À rejouer à la prochaine exécution.**
+- [x] **LES NEUF HARNAIS EN ATTENTE ONT ÉTÉ REJOUÉS, ET HUIT SONT VERTS** (décision 191). Le
+      balayage promis par l'entrée précédente a été mené en **mode complet**, séquentiellement,
+      contre la pile réellement démarrée et le seed réellement appliqué :
+      `verify-catalogue` **39**, `verify-workflows` **49**, `verify-copie-workflow` **34**,
+      `verify-coherence-workflow` **33**, `verify-champs-formulaire` **38**, `verify-droits-fins`
+      **42**, `verify-colonnes-protegees` **50**, `verify-preuves-refus` **26** — **aucune
+      anomalie**. Trois de ces comptes dépassent celui qu'avait consigné leur propre unité — 36, 47
+      et 33 — parce que les harnais concernés ont reçu des contrôles supplémentaires depuis, livrés
+      par les unités suivantes ; `git log` sur chacun des trois fichiers le montre. Le raisonnement
+      que l'entrée précédente donnait pour ce qu'il était — « l'unité ne livre aucun SQL » — est
+      désormais **une mesure**.
+- [ ] **LE NEUVIÈME ÉCHOUE, ET IL ÉCHOUAIT DÉJÀ : INC-061, TROISIÈME OCCURRENCE, AGGRAVÉE**
+      (décision 191). `scripts/verify-cards.sh` rend **45 contrôles, 2 en échec** — `npm run
+      test:sql` et `npm run e2e:api` —, de façon reproductible et pour une cause déjà consignée :
+      sa **section 10** rejoue les suites globales **avant** que son `trap … EXIT` ne retire ses
+      cinq cards de preuve. Contre-épreuve **mesurée** : la base porte **9** cards en sortant du
+      harnais, aucune ne portant le préfixe du jeu d'essai ; `npm run test:sql` rejoué juste après
+      rend **1164 assertions, aucune anomalie**, et `npm run e2e:api` **358 scénarios, aucune
+      anomalie**. Ni le produit ni les preuves de `CRM-042` ne sont en cause. **Le harnais n'est pas
+      corrigé ici** : il est un livrable de `CRM-040`, l'arbitrage est ouvert depuis deux
+      occurrences, et le reprendre sous une unité qui ne le porte pas reviendrait à toucher les 45
+      contrôles d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13).
+- [ ] **CE QUE LA TROISIÈME OCCURRENCE APPREND, ET QUI CONCERNE CETTE UNITÉ DIRECTEMENT.** La cause
+      a été isolée **sans exécuter le harnais**, en recréant ses cinq cards par le **vrai chemin
+      applicatif** — `POST /rest/v1/cards` avec le jeton réel de l'administratrice, cinq `201` — puis
+      en mesurant les suites, puis en les retirant. MESURÉ, base à **14** cards : trois assertions de
+      `supabase/tests/0015_colonnes_protegees.test.sql` tombent (`not ok 33, 34, 35`) et **onze**
+      scénarios d'API échouent, contre deux à la première occurrence et trois à la deuxième. Sept
+      d'entre eux appartiennent à `e2e/api/liste-cards.spec.ts`, **la preuve d'intégration dédiée de
+      cette unité** : les deux lectures, les deux filtres d'activité, la contre-épreuve des deux
+      lignes de plus, et les cinq scénarios de pagination et du `416`. INC-061 avait prédit que le
+      défaut frapperait « toute preuve future qui comptera des cards » ; il frappe désormais la plus
+      récente. **Aucune assertion n'est relâchée pour l'accommoder** : compter les cards du seed est
+      précisément ce qui rend la pagination vérifiable. L'arbitrage est **dû**.
 - [ ] **Aucune vue sauvegardée, aucun réglage de densité, aucune recherche globale.** Les trois sont
       hors périmètre et nommés au §12.10 : `CRM-071` porte la première, les deux autres ne sont
       portées par personne.
@@ -3368,6 +3393,23 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   l'image — INC-036, **dixième** occurrence, désormais absorbée par l'échappatoire que `CRM-041` a
   livrée (décision 181). `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
   a été démarrée sans ce service, sans effet sur les preuves.
+- **Le rejeu des neuf harnais a reproduit les trois contournements à l'identique** : démon Docker
+  lancé à la main, `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042), et
+  `PLAYWRIGHT_CHROMIUM_PATH` renseigné vers le navigateur préinstallé — INC-036, **onzième**
+  occurrence. `./runDev.sh --dev` a échoué **avant tout démarrage** en construisant l'image `webapp`
+  malgré `--scale webapp=0` : la pile a été démarrée par `docker compose up` en énumérant les treize
+  autres services. Aucune preuve n'en dépend, et aucun script du dépôt n'a été modifié pour
+  l'occasion.
+- **Quatorze captures ont été réécrites par le rejeu, puis restaurées**, comme aux exécutions
+  précédentes : elles appartiennent à `CRM-007`, `CRM-021`, `CRM-041` et `CRM-042`, et le rejeu ne
+  change que leur encodage. **Trois ont été regardées** avant restauration —
+  `CRM-042/liste-filtre-sans-resultat-1440.jpg` (l'état vide est bien **sous** la barre de filtres,
+  l'action n'apparaît qu'**une fois**, aucune carcasse de tableau : les trois corrections de la
+  décision 190 tiennent), `CRM-041/board-apres-depot-1440.jpg` (la bascule *Tableau / Liste*, trois
+  cards et un cumul de **188 500 €** qui est bien la somme arithmétique de 48 000, 125 000 et
+  15 500 — quatrième constat cohérent avec INC-067) et `CRM-021/channel-ouvert-1440.jpg`. **Les dix
+  autres captures et la vidéo `glisser-deposer.webm` n'ont pas été regardées** lors de ce rejeu :
+  elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
 ### CRM-043 — Commentaires `[ ]`
 Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.
