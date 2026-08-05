@@ -8,11 +8,13 @@
 // laisserait disparaître sans bruit. C'est exactement le procédé retenu pour les tracks.
 
 import { describe, expect, it } from 'vitest'
+import { enChargement, enErreur, pret } from './async'
 import {
 	COLONNES_CHANNEL,
 	COLONNES_TRACK_OUVERT,
 	lireChannels,
 	lireTrackParSlug,
+	projeterChannels,
 	type Channel,
 	type TrackOuvert,
 } from './channels'
@@ -168,5 +170,36 @@ describe('lireChannels', () => {
 			expect(etat.erreur.nature).toBe('network')
 			expect(etat.erreur.detail).toContain('socket fermée')
 		}
+	})
+})
+
+// @verifies CRM-037 (docs/BACKLOG.md) — la barre d'onglets d'une route de card
+// @verifies docs/SPEC-form-composer.md §4.6 bis ; docs/SPEC-channels.md §5.4
+describe('projeterChannels', () => {
+	it('rend les channels du track lorsque le contenu est prêt', () => {
+		expect(projeterChannels(pret({ track: TRACK, channels: [CHANNEL] }))).toEqual({
+			statut: 'pret',
+			donnees: [CHANNEL],
+		})
+	})
+
+	it('rend un état **prêt et vide** quand le backend n’a consenti aucun track', () => {
+		// Un refus de lecture est zéro ligne, pas une erreur : la barre affiche son état vide, et
+		// la zone principale n'a rien à reprendre (docs/SPEC-form-composer.md §4.6 bis).
+		expect(projeterChannels(pret({ track: null, channels: [] }))).toEqual({
+			statut: 'pret',
+			donnees: [],
+		})
+	})
+
+	it('transmet le chargement, pour que la barre montre son squelette', () => {
+		expect(projeterChannels(enChargement())).toEqual({ statut: 'chargement' })
+	})
+
+	it('transmet l’échec **sans le transformer en état vide**', () => {
+		// Un échec avalé deviendrait « aucun channel », c'est-à-dire la valeur par défaut trompeuse
+		// que CLAUDE.md §18 interdit. La coquille doit pouvoir le présenter et offrir une reprise.
+		const erreur = { nature: 'forbidden', detail: 'refusé' } as const
+		expect(projeterChannels(enErreur(erreur))).toEqual({ statut: 'erreur', erreur })
 	})
 })

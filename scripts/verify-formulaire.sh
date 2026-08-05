@@ -2,10 +2,14 @@
 # @verifies CRM-037 (docs/BACKLOG.md) — Definition of Done du rendu du formulaire conditionnel
 # @verifies docs/SPEC-form-composer.md §4.1 (composition), §4.2 (trois destinations),
 #           §4.3 (tableau de cas partagé), §4.4 (champ exigé), §4.5 (accessibilité),
-#           §4.6 (écran hôte), §4.7 (ce qui n'est pas livré), §7.3 (preuves attendues)
+#           §4.6 (écran hôte), §4.6 bis (la coquille autour du formulaire),
+#           §4.7 (ce qui n'est pas livré), §7.3 (preuves attendues)
+# @verifies docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.4 (toute route portant un
+#           `slugTrack` l'alimente par le même chargeur)
 # @verifies docs/DESIGN_SYSTEM.md §5.7 (champs de formulaire), §5.7 bis (case à cocher, données
 #           techniques), §7 (paliers), §8 (accessibilité), §11 (classes réellement engendrées)
-# @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-062 (parcours de transition)
+# @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-062 (parcours de
+#           transition), INC-065 (l'adresse d'une card n'est confrontée à rien)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-037` :
 #
@@ -20,7 +24,9 @@
 #   5. le seed porte bien les données que le rendu démontre — la card `c6` à `Prospection`, son
 #      champ `hidden` porteur d'une valeur, son champ sans règle ;
 #   6. le harnais est **non complaisant** : chaque affaiblissement volontaire du rendu le fait
-#      échouer, et la restauration est constatée, pas supposée.
+#      échouer, et la restauration est constatée, pas supposée. La septième dégradation vise la
+#      **coquille** : une route de card qui cesse d'alimenter sa barre d'onglets doit faire tomber
+#      la preuve d'interface — c'est le défaut réel que la décision 167 corrige.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais ne prouve pas, et le dit.
@@ -112,7 +118,7 @@ empreinte_depart() { cp "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')"; }
 est_rendu_intact() { diff -q "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')" >/dev/null 2>&1; }
 
 # L'empreinte est prise AVANT tout contrôle, et le répertoire est détruit avec le reste.
-for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT"; do
+for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT" "$ROUTE"; do
 	[ -f "$fichier" ] && empreinte_depart "$fichier"
 done
 
@@ -245,8 +251,8 @@ else
 	fi
 
 	for capture in card-introuvable-1440 formulaire-charge-1440 formulaire-champ-requis-1440 \
-		formulaire-autres-etapes-1440 formulaire-xl-1440 formulaire-lg-1152 formulaire-md-900 \
-		formulaire-sm-390; do
+		formulaire-autres-etapes-1440 coquille-onglets-1440 formulaire-xl-1440 formulaire-lg-1152 \
+		formulaire-md-900 formulaire-sm-390; do
 		if [ -s "$CAPTURES/$capture.jpg" ]; then
 			ok "capture $capture.jpg produite"
 		else
@@ -292,6 +298,15 @@ PY
 			fail "COMPLAISANT : « $libelle » et les tests unitaires restent verts"
 		else
 			ok "« $libelle » fait échouer les tests unitaires"
+		fi
+	elif [ "$cible" = ui ]; then
+		# La preuve d'interface s'exécute contre le **build de production** : Playwright le
+		# reconstruit à chaque exécution, la dégradation est donc bien celle qui est servie.
+		if npx playwright test --config e2e/playwright.config.ts --project=ui "$SPEC_UI" \
+			> "$TRAVAIL/degr.log" 2>&1; then
+			fail "COMPLAISANT : « $libelle » et la preuve d'interface reste verte"
+		else
+			ok "« $libelle » fait échouer la preuve d'interface"
 		fi
 	else
 		if npx playwright test --config e2e/playwright.config.ts --project=api "$SPEC_API" \
@@ -356,13 +371,21 @@ else
 				<p data-testid={\`requis-\${champ.key}\`} className=\"text-sm text-text-3\">" \
 		"			{false ? (
 				<p data-testid={\`requis-\${champ.key}\`} className=\"text-sm text-text-3\">" unit
+
+	# D7 — la route cesse d'alimenter la barre d'onglets, et retombe exactement dans l'état livré
+	# le 2026-08-05 : `slugTrack` transmis sans les channels, donc « Aucun channel » sur toute
+	# route de card (§4.6 bis, décision 167). Ce n'est pas une dégradation théorique — c'est le
+	# défaut réel que cette reprise corrige, et rien ne l'attrapait.
+	degradation "la barre d'onglets cesse d'être alimentée (§4.6 bis nié)" "$ROUTE" \
+		'			etatChannels={projeterChannels(etatTrack)}' \
+		'' ui
 fi
 
 # --- 7. L'état rendu derrière le harnais ---------------------------------------------------------
 
 titre "7. Ce que le harnais laisse derrière lui"
 
-for fichier in "$PREDICAT" "$MODULE" "$COMPOSANT"; do
+for fichier in "$PREDICAT" "$MODULE" "$COMPOSANT" "$ROUTE"; do
 	if est_rendu_intact "$fichier"; then
 		ok "$(basename "$fichier") est rendu tel qu'il était à l'entrée du harnais"
 	else

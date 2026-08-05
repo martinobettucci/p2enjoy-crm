@@ -385,6 +385,16 @@ Ce que vous y voyez :
   questions que l'étape courante n'affiche pas — et celles données à une question **archivée**
   depuis. Rien de ce qui a été saisi ne disparaît de la vue sans y être rangé.
 
+**La barre d'onglets reste celle du track de l'adresse.** Ouvrir une affaire ne vous fait pas
+perdre votre contexte : les onglets du track continuent d'être affichés au-dessus de la fiche, et
+celui de l'affaire ouverte est **souligné**, comme lorsque vous le parcourez. Un clic sur un autre
+onglet vous y ramène.
+
+*Ce que le produit ne vérifie pas, et que vous pouvez constater :* l'adresse d'une affaire nomme un
+track et un onglet, mais **rien ne les confronte à l'affaire elle-même**. Une adresse dont le track
+serait faux afficherait la bonne affaire sous les mauvais onglets. Aucun droit n'est contourné pour
+autant : chaque partie de l'écran reste soumise à ce que le serveur vous consent.
+
 **Cet écran est en consultation seule, et il le dit.** Un bandeau explique que l'enregistrement
 d'une réponse exige une session, et qu'aucun écran de connexion n'est encore livré. Les champs
 restent lisibles et sont désactivés — vous voyez ce que l'affaire porte, vous ne pouvez rien y

@@ -2707,20 +2707,91 @@ table, ni statut, ni flux.
       pas le cas. Un comparateur ne vaut que les cas qu'on lui donne, comme la décision 50 le disait
       des tables vides.
 
+*Seconde correction après la livraison, par une troisième exécution de la routine.*
+
+- [x] **LA BARRE D'ONGLETS ÉTAIT VIDE SUR LA ROUTE D'UNE CARD, ET LE §4 DU DESIGN SYSTEM DIT LE
+      CONTRAIRE** — décision 167. `RouteCard` transmettait `slugTrack` à la coquille **sans** les
+      channels du track porteur : toute fiche s'ouvrait sous « Aucun channel », là où
+      `docs/DESIGN_SYSTEM.md` §4 pose « Onglets : les channels du track courant ». Le défaut avait
+      été relevé sur une capture par l'exécution précédente et laissé en l'état pour ne pas mêler
+      deux sujets dans un commit ; il est corrigé ici.
+- [x] **Spécification écrite avant le code, dans un commit dédié** : `docs/SPEC-form-composer.md`
+      §4.6 bis — ce que la coquille montre autour du formulaire, ce qu'elle fait d'un échec de
+      chargement, et ce qu'elle ne vérifie **pas** — et `docs/SPEC-channels.md` §5.4, qui pose la
+      règle générale : toute route dont l'adresse porte un `slugTrack` alimente la barre par le
+      chargeur du §5, et aucune ne réécrit sa propre lecture des channels.
+- [x] **Aucune seconde lecture des channels n'est écrite.** `RouteCard` emploie `useContenuTrack`,
+      celui de `CRM-021`. La projection d'un état de contenu de track en état de channels quitte
+      `RouteTrack` pour `webapp/src/lib/channels.ts` : elle est désormais **partagée**, et non
+      recopiée. Quatre tests unitaires l'exercent, dont celui qui interdit qu'un échec devienne un
+      état vide.
+- [x] **L'onglet courant n'est pas calculé, et c'est mesuré.** `NavLink` le résout par préfixe de
+      segments, l'adresse d'une card commençant par celle de son channel. Le scénario d'interface
+      exige qu'**un seul** onglet porte `aria-current="page"` — sans ce compte, servir un unique
+      channel aurait rendu l'assertion vraie par accident.
+- [x] **Preuves d'interface : 3 scénarios de plus**, `e2e/ui/formulaire.spec.ts`. Le premier
+      n'emploie **aucune substitution** : anonyme, la route demande réellement le track de
+      l'adresse — `slug=eq.formation`, `archived_at=is.null` —, la requête de channels n'est **pas**
+      émise faute de track résolu, et la barre affiche l'état vide, qui est le refus réel du backend.
+      Les deux autres substituent la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5) et le disent.
+      `npm run e2e:ui` passe de 47 à **50 scénarios**.
+- [x] **L'ADRESSE DE LA PREUVE N'ÉTAIT L'ADRESSE DE RIEN — INC-065.** Elle nommait
+      `/tracks/inter-entreprises/formations/…` ; MESURÉ en base, la card `…0000c6` appartient au
+      channel `inter-entreprises` du **track `formation`**. Les deux segments étaient intervertis et
+      le second n'existait pas — et **aucune assertion ne pouvait le voir**, la card étant résolue
+      par son seul identifiant. L'adresse redevient celle du produit. Que rien ne confronte le couple
+      `(slugTrack, slugChannel)` à la card reste **non tranché** : comportement inchangé, arbitrage
+      demandé.
+- [x] **Harnais non complaisant, éprouvé** : `scripts/verify-formulaire.sh` gagne la dégradation
+      **D7**, qui remet la route dans son état fautif — `etatChannels` retiré — et exige que la
+      preuve d'interface **tombe**. Elle tombe. La cible `ui` est ajoutée à son mécanisme de
+      dégradation, qui ne connaissait que `unit` et `api` ; `RouteCard.tsx` rejoint les fichiers dont
+      la restitution est constatée en section 7. Le harnais passe de 45 à **49 contrôles, aucune
+      anomalie**.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-037/coquille-onglets-1440.jpg`
+      — les deux onglets rendus, celui de l'adresse souligné et bleu, la pilule du track porteur
+      active dans la barre latérale, le formulaire sous cette barre. Les huit captures antérieures
+      ont été **régénérées** : elles montrent désormais la coquille cohérente que le produit rend, et
+      non un formulaire sous une barre vide. Toutes regardées.
+- [x] **Un garde-fou figé a échoué comme prévu, et a été révisé** (mécanisme de la décision 51,
+      douzième occurrence) : `scripts/verify-harness.sh` attendait 47 scénarios d'interface. Révisé
+      à **50**, valeur mesurée.
+- [x] **ET IL A DÉNONCÉ UNE RÉVISION OMISE PAR LA CORRECTION PRÉCÉDENTE.** MESURÉ :
+      `npm run e2e:api` rend **308** scénarios, quand `SCENARIOS_API` valait encore 306. La
+      correction du prédicat « renseigné » (décision 165) avait ajouté deux cas au tableau de cas
+      partagé — `"\t"` et `"\n"` —, donc deux scénarios à `e2e/api/rendu-formulaire.spec.ts`, qui
+      passe de 15 à **17**, sans réviser ce compteur dans le même changement. Le contrôle a fait ce
+      qu'on lui demande ; c'est la révision qui manquait. Portée à **308** ici.
+      `ASSERTIONS_ATTENDUES` reste à **1164** : aucune assertion pgTAP n'est ajoutée par l'une ni
+      par l'autre de ces deux reprises.
+- [x] **Chaîne complète rejouée** : `npm run typecheck` vert sur les quatre projets,
+      `npm run test:unit` **234 tests** (230 avant, quatre de plus pour la projection),
+      `npm run test:sql` **1164 assertions**, `npm run e2e:api` **308 scénarios**,
+      `npm run e2e:ui` **50 scénarios**, `npm run build` vert et chaque classe citée présente dans
+      le CSS produit. `scripts/verify-harness.sh` : **25 contrôles, aucune anomalie**, compteurs
+      révisés compris.
+- [x] `docs/SPEC-form-composer.md` §4.6 bis et §7.3, `docs/SPEC-channels.md` §5.4,
+      `docs/manual.md` §4.7, `docs/INCONSISTENCY_REPORT.md` INC-065, `docs/JOURNAL.md` décision 167,
+      `CHANGELOG.md` mis à jour dans le même changement. **`docs/DESIGN_SYSTEM.md` n'est pas
+      modifié** : aucune règle visuelle, aucun composant et aucun écart nouveaux — la correction rend
+      l'implémentation conforme au §4 existant, et la règle d'architecture de l'information vit dans
+      `docs/SPEC-channels.md`.
+
 *Limites nommées, non masquées.*
 
 - **INC-062 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- **INC-065 est ouverte** : rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la
+  card qu'elle désigne. Aucun droit n'est contourné — chaque lecture reste soumise à sa politique —,
+  mais aucune spécification ne dit ce qu'une adresse incohérente doit rendre. Comportement inchangé,
+  correction à rattacher à `CRM-040` ou `CRM-045`.
 - **INC-063 est ouverte** : `docs/SPEC-form-composer.md` §4.5 prescrit `role="alert"` pour le
   **message d'exigence**, `docs/DESIGN_SYSTEM.md` §5.7 le réserve à l'**erreur**. Le code a tranché
   pour la seconde lecture — la mention est un texte ordinaire, `role="alert"` ne porte que sur
   l'alerte de champ manquant — et c'est probablement la bonne, mais c'est une **résolution
   implicite** qui n'était consignée nulle part. Le comportement est **laissé inchangé** ;
   l'arbitrage est demandé.
-- **La barre d'onglets reste vide sur la route d'une card** : `RouteCard` transmet `slugTrack` à la
-  coquille mais ne charge pas les channels du track porteur, si bien qu'une card ouverte s'affiche
-  sous « Aucun channel ». Constat relevé sur une capture, **non corrigé ici** : le geste appartient
-  à cette unité, mais la corriger dans le même passage qu'une correction de prédicat mêlerait deux
-  sujets dans un commit (`CLAUDE.md` §13). À reprendre au prochain passage sur `CRM-037`.
+- ~~**La barre d'onglets reste vide sur la route d'une card.**~~ **CORRIGÉ** par la troisième
+  exécution — voir la section ci-dessous.
 - **Aucune donnée métier n'apparaît dans l'interface tant qu'INC-021 n'est pas tranchée.** Sixième
   unité consécutive du chunk 3 à buter sur le même obstacle, et la première dont un écran existe
   pourtant : la route rend « card introuvable » à tout visiteur, ce qui est le refus réel du backend.

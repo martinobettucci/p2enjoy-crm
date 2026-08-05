@@ -1,6 +1,10 @@
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
-// @spec docs/SPEC-form-composer.md §4.6 (l'écran hôte, et pourquoi c'est une route), §4.5 (états)
-// @spec docs/DESIGN_SYSTEM.md §5.3 (détail de card), §5.8 (états explicites), §7 (responsive)
+// @spec docs/SPEC-form-composer.md §4.6 (l'écran hôte, et pourquoi c'est une route),
+//       §4.6 bis (ce que la coquille montre autour du formulaire), §4.5 (états)
+// @spec docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.4 (toute route portant un
+//       `slugTrack` l'alimente par le même chargeur)
+// @spec docs/DESIGN_SYSTEM.md §4 (onglets : les channels du track courant), §5.3 (détail de card),
+//       §5.8 (états explicites), §7 (responsive)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
 //
 // Le formulaire est la colonne gauche du détail de card (docs/DESIGN_SYSTEM.md §5.3). Il lui faut
@@ -18,10 +22,24 @@
 // et un identifiant inexistant produisent le même écran, délibérément : les distinguer
 // renseignerait un appelant sans droit sur l'existence d'une card
 // (docs/SPEC-permissions-rls.md §7).
+//
+// DEUX CHARGEMENTS INDÉPENDANTS, ET POURQUOI (§4.6 bis, décision 167). La card et son formulaire
+// d'un côté ; le track porteur et ses channels de l'autre, pour la barre d'onglets — que
+// `docs/DESIGN_SYSTEM.md` §4 veut alimentée sur toute route portant un track courant. La première
+// livraison de cette route transmettait `slugTrack` sans les channels : la barre affichait
+// « Aucun channel » partout. Les channels sont lus par le **même chargeur** que la route d'un
+// track (`docs/SPEC-channels.md` §5.4) ; aucune lecture propre à cet écran n'est écrite.
+//
+// L'onglet courant n'est **pas** calculé ici : `NavLink` le résout par préfixe de segments, et
+// l'adresse d'une card commence par celle de son channel (§4.6 bis).
+//
+// Rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la card qu'elle désigne —
+// **INC-065**, comportement inchangé, arbitrage demandé.
 
 import { Link, useParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
+import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { useContenuCard } from '../lib/formulaire'
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
@@ -47,6 +65,7 @@ const CLE_TITRE_CARD: CleTraduction = 'route.card.title'
 export function RouteCard() {
 	const { slugTrack, idCard } = useParams()
 	const { etat, recharger } = useContenuCard(clientCrm, idCard)
+	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack)
 
 	const card = etat.statut === 'pret' ? etat.donnees.card : null
 
@@ -54,6 +73,8 @@ export function RouteCard() {
 		<AppShell
 			cleTitreRoute={CLE_TITRE_CARD}
 			{...(card === null ? {} : { titreRoute: card.title })}
+			etatChannels={projeterChannels(etatTrack)}
+			onRechargerChannels={rechargerTrack}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>
 			<ContenuCard etat={etat} onReprise={recharger} />

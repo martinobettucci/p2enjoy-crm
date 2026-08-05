@@ -15,6 +15,38 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **La barre d'onglets restait vide sur la route d'une card, contre le §4 du design system** —
+  décision 167, `docs/SPEC-form-composer.md` §4.6 bis, `docs/SPEC-channels.md` §5.4. La route livrée
+  la veille transmettait `slugTrack` à la coquille **sans** les channels du track porteur : toute
+  fiche d'affaire s'ouvrait sous « Aucun channel », là où `docs/DESIGN_SYSTEM.md` §4 pose « Onglets :
+  les channels du track courant ». Le défaut avait été relevé sur une capture et laissé en l'état
+  pour ne pas mêler deux sujets dans un commit ; il est corrigé ici. `RouteCard` charge le track
+  porteur par le **même** chargeur que la route d'un track — aucune lecture propre à cet écran — et
+  la projection d'un état de contenu de track en état de channels quitte `RouteTrack` pour
+  `webapp/src/lib/channels.ts`, désormais partagée par les deux routes. L'onglet courant n'est pas
+  calculé : `NavLink` le résout par préfixe de segments, l'adresse d'une card commençant par celle de
+  son channel. Trois scénarios d'interface l'établissent — le track de l'adresse réellement demandé
+  par un anonyme, la requête de channels filtrée sur `track_id`, l'onglet courant **seul** à porter
+  `aria-current="page"` — et `scripts/verify-formulaire.sh` gagne la dégradation **D7**, qui remet la
+  route dans son état fautif et exige que la preuve d'interface tombe.
+
+- **L'adresse employée par la preuve d'interface de `CRM-037` n'était l'adresse de rien** — INC-065.
+  Elle nommait `/tracks/inter-entreprises/formations/…` quand la card `…0000c6` appartient, MESURÉ en
+  base, au channel `inter-entreprises` du track `formation` : les deux segments étaient intervertis
+  et le second n'existait pas. **Aucune assertion ne pouvait le voir**, la card étant résolue par son
+  seul identifiant. L'adresse redevient celle du produit ; le fait que rien ne confronte le couple
+  `(slugTrack, slugChannel)` à la card reste **non tranché**, comportement inchangé, arbitrage
+  demandé.
+
+- **Deux compteurs figés de `scripts/verify-harness.sh` révisés, dont un que la correction
+  précédente avait omis.** `SCENARIOS_UI` passe de 47 à **50** — les trois scénarios de la barre
+  d'onglets ci-dessus. `SCENARIOS_API` passe de 306 à **308** : la correction du prédicat
+  « renseigné » avait ajouté deux cas au tableau de cas partagé, donc deux scénarios à
+  `e2e/api/rendu-formulaire.spec.ts` (15 → 17), sans réviser ce compteur dans le même changement.
+  Le garde-fou a fait exactement ce qu'on lui demande — il aurait rendu « vert mais 308 au lieu de
+  306 » — ; c'est la révision qui manquait. `ASSERTIONS_ATTENDUES` reste à 1164. Les deux valeurs
+  sont MESURÉES.
+
 - **Un contrôle de restitution comparait au dernier commit, et ne pouvait donc pas être vert pendant
   qu'on travaille** — décision 166, INC-064. La section 7 de `scripts/verify-formulaire.sh` vérifiait
   que le harnais avait bien restauré les trois fichiers qu'il dégrade, par `git diff --quiet`. Ce

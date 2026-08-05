@@ -112,7 +112,11 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   d'espace de travail pour l'en-tête, les tracks pour la barre latérale (`CRM-020`), et — sur la
   route d'un track — sa résolution par slug puis ses channels pour la barre d'onglets (`CRM-021`).
   Ces deux dernières sont **séquentielles**, la seconde ayant besoin de l'identifiant que la
-  première rapporte, et la seconde n'est pas émise lorsque le track n'est pas consenti ;
+  première rapporte, et la seconde n'est pas émise lorsque le track n'est pas consenti.
+  `channels.ts` porte aussi `projeterChannels`, qui transpose un état *de contenu de track* en état
+  *de channels* : elle est partagée depuis que **deux** routes portent un track courant — celle
+  d'un track et celle d'une card (`CRM-037`, `docs/SPEC-channels.md` §5.4) —, et non recopiée dans
+  chacune ;
 - `src/app/RouteTrack.tsx` — la route `/tracks/:slugTrack[/:slugChannel]`, hors de la table
   statique de `routes.tsx` : son titre est une **donnée** (le nom du track) et non une clé de
   traduction, et son contenu dépend de paramètres d'URL ;
@@ -126,7 +130,10 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 - `src/app/FormulaireCard.tsx` — le rendu de ce modèle, sans aucune règle de visibilité dans le
   JSX, et `src/app/RouteCard.tsx` — la route `/tracks/:slugTrack/:slugChannel/cards/:idCard`, seul
   hôte possible du formulaire. Aucune écriture n'est livrée : elle exigerait une session
-  (INC-021), et les contrôles sont donc indisponibles et le disent (`CRM-037`) ;
+  (INC-021), et les contrôles sont donc indisponibles et le disent (`CRM-037`). Cette route porte
+  **deux chargements indépendants** : la card et son formulaire d'un côté, le track porteur et ses
+  channels de l'autre, pour que la barre d'onglets soit celle du §4 du design system
+  (`docs/SPEC-form-composer.md` §4.6 bis) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

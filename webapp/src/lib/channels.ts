@@ -113,6 +113,26 @@ export async function lireChannels(
 }
 
 /**
+ * Projette un état de **contenu de track** en état de **channels**, pour la barre d'onglets.
+ *
+ * @spec CRM-037 — docs/SPEC-form-composer.md §4.6 bis ; docs/SPEC-channels.md §5.4
+ *
+ * Le type somme d'`EtatAsync` ne se transpose pas d'un contenu à l'autre : la barre d'onglets veut
+ * un état *de channels*, pas un état *de contenu de track*. La projection est explicite plutôt que
+ * forcée par un cast, pour que le compilateur continue d'exiger l'exhaustivité.
+ *
+ * Elle vit ici, et non dans une route, depuis que **deux** routes portent un track courant — celle
+ * d'un track (`CRM-021`) et celle d'une card (`CRM-037`, §4.6 bis). Recopiée, elle aurait été
+ * l'occasion de divergence que la décision 167 refuse : la même donnée, lue deux fois, finit par
+ * être lue de deux façons.
+ */
+export function projeterChannels(etat: EtatAsync<ContenuTrack>): EtatAsync<readonly Channel[]> {
+	if (etat.statut === 'pret') return pret(etat.donnees.channels)
+	if (etat.statut === 'chargement') return enChargement()
+	return enErreur(etat.erreur)
+}
+
+/**
  * Charge le contenu de la route d'un track : le track, puis ses channels.
  *
  * Les deux requêtes sont **séquentielles et non parallèles**, parce que la seconde a besoin de

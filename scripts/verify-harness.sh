@@ -85,15 +85,32 @@ PORT_RAPPORT=9323
 # 291 + 15 = 306 ; 37 + 10 = 47. `ASSERTIONS_ATTENDUES` est inchangée : l'unité n'ajoute aucune
 # assertion pgTAP, ses preuves de base passant par la vraie route et non par une suite SQL.
 # Valeurs MESURÉES, non déduites.
+#
+# RÉVISÉS UNE CINQUIÈME FOIS, LE 2026-08-05, PAR LA REPRISE DE `CRM-037` — le §4.6 bis de
+# `docs/SPEC-form-composer.md`, qui donne enfin ses onglets à la route d'une card. L'unité ajoute
+# **3 scénarios d'interface** à `e2e/ui/formulaire.spec.ts` : le track de l'adresse réellement
+# demandé par un anonyme, la requête de channels filtrée sur `track_id`, et l'onglet courant seul à
+# porter `aria-current="page"`. 47 + 3 = 50. Valeur MESURÉE, non déduite.
+#
+# **ET `SCENARIOS_API` ÉTAIT RESTÉ EN ARRIÈRE, D'UNE RÉVISION QUI N'AVAIT PAS ÉTÉ FAITE.** MESURÉ le
+# 2026-08-05 : `npm run e2e:api` rend **308** scénarios, pas 306. La correction du prédicat
+# « renseigné » (décision 165) avait ajouté **deux cas** au tableau de cas partagé du §4.3 —
+# `"\t"` et `"\n"` —, donc deux scénarios à `e2e/api/rendu-formulaire.spec.ts`, qui passe de 15 à
+# **17**, sans que ce compteur ne soit révisé dans le même changement. Le contrôle a fait
+# exactement ce qu'on lui demande — il aurait rendu « vert mais 308 au lieu de 306 » — mais la
+# révision, elle, avait été omise, comme à `CRM-036` pour quatre unités à la fois. Elle est faite
+# ici. `ASSERTIONS_ATTENDUES` reste à 1164 : aucune assertion pgTAP n'est ajoutée par l'une ni par
+# l'autre de ces deux reprises.
 ASSERTIONS_ATTENDUES=1164
-SCENARIOS_API=306
+SCENARIOS_API=308
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
 # mention de divergence, ni l'affectation d'un workflow à un channel, ni la grille champ × étape
 # n'ont d'écran. **`CRM-037` est la première unité du chunk 3 à en livrer un** : la route de détail
 # d'une card, qui reste un écran d'appelant anonyme tant qu'INC-021 n'est pas tranchée.
-SCENARIOS_UI=47
+# **50 depuis la reprise de `CRM-037`** : trois scénarios de plus pour la coquille de cet écran.
+SCENARIOS_UI=50
 
 TRAVAIL=$(mktemp -d)
 failures=0

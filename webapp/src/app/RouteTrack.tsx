@@ -23,7 +23,7 @@
 import { Link, useParams } from 'react-router'
 import { EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
-import { useContenuTrack } from '../lib/channels'
+import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 
@@ -51,15 +51,9 @@ export function RouteTrack() {
 
 	const track = etat.statut === 'pret' ? etat.donnees.track : null
 	const channels = etat.statut === 'pret' ? etat.donnees.channels : []
-	// Le type somme d'`EtatAsync` ne se transpose pas d'un contenu à l'autre : la barre d'onglets
-	// veut un état *de channels*, pas un état *de contenu de track*. La projection est explicite
-	// plutôt que forcée par un cast, pour que le compilateur continue d'exiger l'exhaustivité.
-	const etatChannels =
-		etat.statut === 'pret'
-			? ({ statut: 'pret', donnees: channels } as const)
-			: etat.statut === 'chargement'
-				? ({ statut: 'chargement' } as const)
-				: ({ statut: 'erreur', erreur: etat.erreur } as const)
+	// La projection vit dans `webapp/src/lib/channels.ts` depuis que la route d'une card la fait
+	// elle aussi (décision 167) : recopiée, elle aurait fini par diverger.
+	const etatChannels = projeterChannels(etat)
 
 	return (
 		<AppShell
