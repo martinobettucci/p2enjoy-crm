@@ -267,6 +267,38 @@ Inchangé quant au fond : les 13 scénarios de `CRM-007`, contre le build de pro
 `vite preview`. Deux changements de forme seulement — le projet est désormais nommé explicitement
 sur la ligne de commande, et `E2E_PROJETS=ui` maintient la déclaration du `webServer`.
 
+#### 4.4 bis Un navigateur fourni par l'environnement — `PLAYWRIGHT_CHROMIUM_PATH`, `CRM-041`
+
+**Variable d'environnement facultative**, lue par `e2e/playwright.config.ts`. Elle porte le chemin
+d'un exécutable Chromium à employer à la place de celui que Playwright résout lui-même.
+
+| | |
+|---|---|
+| Rôle | chemin d'un Chromium fourni par l'image d'exécution |
+| Format | chemin absolu vers un exécutable |
+| Obligatoire | **non** |
+| Exemple non sensible | `/opt/navigateurs/chromium` |
+
+**Motif, mesuré.** Sur une image qui préinstalle ses navigateurs et interdit `playwright install`,
+Playwright 1.62.1 réclame la révision qu'il épingle — « `Executable doesn't exist at
+…/chromium_headless_shell-1234/…` » — et **tous** les scénarios `ui` échouent au lancement, y compris
+ceux livrés par les unités précédentes. Aucune preuve d'interface n'est alors exécutable, quel que
+soit l'état du code, et la Definition of Done de toute unité touchant l'écran devient inatteignable
+pour une raison qui ne regarde pas le produit.
+
+**Absente, rien ne change.** Playwright résout le navigateur comme il l'a toujours fait. Ce n'est
+donc pas une dérogation permanente inscrite dans le dépôt, mais une porte que l'environnement
+d'exécution ouvre lui-même.
+
+**Ce que cette porte ne fait pas.** Elle ne désactive aucun contrôle, ne saute aucun scénario et ne
+substitue aucune réponse. Une preuve obtenue par ce chemin exerce le **même** build, la **même** API
+et les **mêmes** assertions ; seul le binaire du navigateur diffère.
+
+**Ce qu'elle exige en retour.** La révision employée est **nommée dans le compte rendu de
+livraison** et dans la Definition of Done de l'unité concernée. Une preuve qui n'a pas tourné sur le
+binaire nominal reste une preuve, mais le lecteur doit pouvoir le savoir sans relire un historique de
+terminal (`CLAUDE.md` §25).
+
 ### 4.5 Projet `mail`
 
 **Non déclaré.** Voir §2 et §8.

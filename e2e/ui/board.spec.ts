@@ -351,6 +351,36 @@ test.describe('menu des transitions (§7.5, §7.7)', () => {
 		await capturer(page, 'board-menu-ouvert-1440', 'CRM-041')
 	})
 
+	// LE REPLI DU §7.5, DANS L'APPLICATION RÉELLE. MESURÉ : `workflow_transitions.label` est
+	// nullable, et les dix transitions du seed en portent toutes un — aucune donnée permanente
+	// n'exerce donc ce repli, et la réponse substituée est le seul moyen de le voir à l'écran.
+	// Il était jusqu'ici construit **par concaténation dans le composant**, ce que le §7.5 interdit
+	// nommément au profit d'une clé de traduction paramétrée (CLAUDE.md §23).
+	test('une transition sans libellé se replie sur le nom de son étape d’arrivée', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirBoard(page)
+		// Déclarée **après** `servirBoard` : lorsque plusieurs motifs correspondent, Playwright
+		// applique la route enregistrée en dernier.
+		await page.route(ROUTE_TRANSITIONS, (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify([
+					{ id: 't1', from_step_id: PROSPECTION, to_step_id: RELANCE, label: null, require_comment: false },
+				]),
+			}),
+		)
+		await page.goto(ADRESSE)
+
+		await carte(page, CARD_C3).getByTestId('menu-transitions').click()
+		const geste = carte(page, CARD_C3).getByTestId('transition')
+		await expect(geste).toHaveText('Passer à Relance')
+		// Le marqueur de la clé paramétrée ne fuit jamais jusqu'à l'écran.
+		await expect(geste).not.toContainText('{etape}')
+
+		await capturer(page, 'board-transition-sans-libelle-1440', 'CRM-041')
+	})
+
 	test('se referme par Échap, et rend le focus au bouton qui l’a ouvert', async ({ page }) => {
 		await servirBoard(page)
 		await page.goto(ADRESSE)

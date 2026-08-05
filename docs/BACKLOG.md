@@ -3085,6 +3085,31 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
       `docs/manual.md` chapitres 4.8, 4.6 et sommaire, `docs/INCONSISTENCY_REPORT.md` (INC-066
       ouverte, INC-061 aggravée), `docs/JOURNAL.md` décisions 168 à 179, `CHANGELOG.md` mis à jour
       dans le même changement.
+- [x] **ÉCART AU §7.5 CORRIGÉ APRÈS COUP, ET IL AVAIT ÉCHAPPÉ À TOUTES LES PREUVES** (décision 180).
+      Le repli du libellé d'une transition était composé **par concaténation dans le composant** —
+      `` `${t('board.transition.fallback')} ${etape.libelle}` `` —, ce que le §7.5 interdit nommément
+      au profit d'une clé de traduction **paramétrée** (`CLAUDE.md` §23). MESURÉ, et c'est la raison
+      pour laquelle l'écart a survécu : les **dix** transitions du seed portent toutes un libellé, et
+      aucun jeu servi n'exerçait cette branche — elle était écrite, jamais exécutée. `t` accepte
+      désormais des paramètres, la clé devient « Passer à {etape} », et **deux preuves** ont été
+      ajoutées avec un jeu de rechange, l'une unitaire et l'autre d'interface. Les deux vérifient
+      aussi que le marqueur ne fuit jamais jusqu'à l'écran. **Contre-épreuve faite** : rétabli le
+      code d'origine, le test unitaire échoue. Capture `board-transition-sans-libelle-1440.jpg`,
+      observée.
+- [x] **Deux exécutions de la routine ont livré cette unité en parallèle** (décision 182). La
+      seconde implémentation, complète et indépendante, a été **abandonnée en entier** — conduite
+      déjà retenue pour `CRM-014`. Elle a servi de relecture adverse : l'écart au §7.5 ci-dessus et
+      l'échappatoire de navigateur ci-dessous sont les deux seules choses qui en ont été conservées.
+- [~] **Les preuves d'interface ont exigé un navigateur fourni par l'environnement** (décision 181).
+      Playwright 1.62.1 épingle une révision de Chromium que l'image d'exécution ne fournit pas, et
+      **tous** les scénarios `ui` du dépôt — pas seulement ceux de cette unité — échouaient au
+      lancement. `e2e/playwright.config.ts` accepte désormais `PLAYWRIGHT_CHROMIUM_PATH` ; les
+      scénarios ont été rejoués avec le Chromium **révision 1194** de l'image, contre la révision
+      1234 attendue. Rien n'a été désactivé ni substitué, mais la preuve n'a pas tourné sur le
+      binaire nominal, et cela est écrit plutôt que tu.
+- [x] **INC-068 consignée sans être résolue** : les pastilles d'étiquettes que `docs/DESIGN_SYSTEM.md`
+      §5.1 prescrit n'ont ni table ni unité. L'unité avait nommé leur absence **sur la carte** ; la
+      prescription, elle, restait sans porteur — même motif qu'INC-066.
 - [ ] **LE PARCOURS COMPLET N'EST PAS PROUVÉ, ET IL NE PEUT PAS L'ÊTRE — INC-021.** La Definition of
       Done exige « E2E de déplacement autorisé **et** de tentative interdite ». Les deux gestes sont
       prouvés **contre des réponses substituées**, et la garde qu'ils appellent est prouvée hors

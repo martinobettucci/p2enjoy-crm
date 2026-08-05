@@ -121,7 +121,10 @@ SCENARIOS_API=332
 # **71 depuis `CRM-041`** : vingt et un scénarios de board — colonnes, menu de transitions, dépôt
 # autorisé, dépôt refusé sans appel émis, retour arrière, saisie du motif exigé, quatre paliers et
 # la vidéo du glisser-déposer.
-SCENARIOS_UI=71
+# **72 après la correction de l'écart au §7.5** (décision 180) : un scénario de plus pour le repli
+# du libellé d'une transition sans nom, que les dix transitions du seed ne peuvent pas exercer et
+# qu'aucune preuve n'atteignait. Valeur MESURÉE, non déduite.
+SCENARIOS_UI=72
 
 TRAVAIL=$(mktemp -d)
 failures=0

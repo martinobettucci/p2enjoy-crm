@@ -13,6 +13,32 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+
+### Corrigé
+
+- **Le repli du libellé d'une transition était construit par concaténation dans le composant**, ce
+  que `docs/SPEC-workflow-engine.md` §7.5 interdit nommément au profit d'une **clé de traduction
+  paramétrée** (`CLAUDE.md` §23). L'ordre des mots du français s'y trouvait figé dans du JSX. La
+  fonction `t` accepte désormais des paramètres — format minimal, marqueurs `{nom}`, ni pluriel ni
+  genre —, et la clé devient « Passer à {etape} ». **Aucune preuve n'exerçait cette branche** : les
+  dix transitions du seed portent toutes un libellé. Deux ont été ajoutées, l'une unitaire et l'autre
+  d'interface, avec un jeu de rechange ; elles vérifient aussi que le marqueur ne fuit jamais jusqu'à
+  l'écran (décision 180).
+
+### Documentation
+
+- **INC-068 consignée, non résolue** : les pastilles d'étiquettes du §5.1 du design system n'ont ni
+  table dans `docs/SCHEMA.md`, ni unité dans `docs/MASTER_PLAN.md`. `CRM-041` avait nommé l'absence
+  sur la carte ; la **prescription** restait, elle, sans porteur. Distinct de l'avatar du
+  responsable, qui manque faute de droit de lecture et non faute de modèle de données.
+
+### Modifié
+
+- **Le harnais E2E accepte un navigateur fourni par l'environnement**, par la variable facultative
+  `PLAYWRIGHT_CHROMIUM_PATH` (`docs/SPEC-test-harness.md` §4.4 bis, décision 181). Sur une image qui
+  préinstalle ses navigateurs et interdit `playwright install`, Playwright réclame la révision qu'il
+  épingle et **tous** les scénarios `ui` du dépôt échouent au lancement. Absente, rien ne change ;
+  elle ne désactive aucun contrôle et ne substitue aucune réponse, seul le binaire diffère.
 ### Documentation
 
 - **Une contradiction mesurée sur `cards.amount`, consignée sans être résolue — INC-067.** Le type

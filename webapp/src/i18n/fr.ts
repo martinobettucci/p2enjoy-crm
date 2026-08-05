@@ -106,7 +106,9 @@ export const fr = {
 	'board.age.days': 'j dans cette étape',
 	'board.menu.open': 'Déplacer',
 	'board.menu.none': 'Aucun déplacement déclaré depuis cette étape',
-	'board.transition.fallback': 'Passer à',
+	// Clé **paramétrée** : le repli du libellé d'une transition nomme son étape d'arrivée sans que
+	// le composant construise la phrase (docs/SPEC-workflow-engine.md §7.5, CLAUDE.md §23).
+	'board.transition.fallback': 'Passer à {etape}',
 	'board.comment.label': 'Motif exigé pour passer à',
 	'board.comment.notstored':
 		"Ce motif est exigé pour valider le déplacement. Il n'est pas encore conservé : l'historique des affaires arrive avec les commentaires.",

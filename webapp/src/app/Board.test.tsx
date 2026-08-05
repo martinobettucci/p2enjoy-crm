@@ -18,6 +18,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Board } from './Board'
+import { fr } from '../i18n'
 import { composerBoard, type CardBoard, type EtapeBoard, type TransitionLue } from '../lib/board'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -77,15 +78,18 @@ function monter({
 	cards,
 	client,
 	onCards = () => {},
+	transitions = TRANSITIONS,
 }: {
 	readonly cards: readonly CardBoard[]
 	readonly client: ClientCrm
 	readonly onCards?: (cards: readonly CardBoard[]) => void
+	/** Jeu de rechange, pour exercer le **repli** du libellé d'une transition (§7.5). */
+	readonly transitions?: readonly TransitionLue[]
 }) {
 	const modele = composerBoard({
 		etapes: ETAPES,
 		cards,
-		transitions: TRANSITIONS,
+		transitions,
 		maintenant: MAINTENANT,
 	})
 	return render(
@@ -200,6 +204,29 @@ describe('menu des transitions (§7.5, §7.7)', () => {
 		const bouton = screen.getByTestId('menu-transitions') as HTMLButtonElement
 		expect(bouton.disabled).toBe(true)
 		expect(bouton.textContent?.trim().length).toBeGreaterThan(0)
+	})
+
+	// LE REPLI DU §7.5, QU'AUCUNE DONNÉE DU SEED N'EXERCE. MESURÉ : `workflow_transitions.label` est
+	// nullable, et les dix transitions du seed en portent toutes un. Sans ce jeu de rechange, le
+	// repli ne serait vérifié par rien — et il l'était d'autant moins qu'il était **construit par
+	// concaténation dans le composant**, ce que le §7.5 interdit nommément.
+	it('replie le libellé d’une transition sans nom sur son étape d’arrivée', async () => {
+		const utilisateur = userEvent.setup()
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1' })],
+			client: clientRpc().client,
+			transitions: [
+				{ id: 't1', from_step_id: 's1', to_step_id: 's2', label: null, require_comment: false },
+			],
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		const geste = screen.getByTestId('transition')
+		// La phrase entière vient de la clé, paramétrée par le libellé de l'étape cible : le
+		// composant n'en assemble aucun morceau.
+		expect(geste.textContent).toBe(fr['board.transition.fallback'].replace('{etape}', 'Relance'))
+		// Le marqueur ne fuit jamais jusqu'à l'écran.
+		expect(geste.textContent).not.toContain('{etape}')
+		expect(geste.textContent).toContain('Relance')
 	})
 
 	it('annonce son état d’ouverture aux technologies d’assistance', async () => {

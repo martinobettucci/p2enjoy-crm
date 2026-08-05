@@ -5932,3 +5932,103 @@ cumul de montant que `main` vient de livrer — INC-067.
    **MESURÉ contre l'arbre de `main` : le harnais rend 40 contrôles, aucune anomalie.** L'échec
    observé venait d'une assertion plus stricte de l'implémentation abandonnée, non du harnais. Un
    constat qu'on ne sait pas reproduire n'est pas un constat.
+
+### Décision 180 — `t` accepte des paramètres, parce que le §7.5 exige une phrase et interdit de la construire
+
+**Problème.** Le §7.5 de `docs/SPEC-workflow-engine.md` prescrit, pour une transition sans libellé,
+le repli « Passer à *<étape cible>* », « composé par une **clé de traduction paramétrée** et jamais
+par concaténation dans le composant ». La première livraison du board écrivait exactement l'inverse :
+
+```tsx
+{transition.libelle ?? `${t('board.transition.fallback')} ${transition.versEtape.libelle}`}
+```
+
+L'ordre des mots du français s'y trouvait figé dans du JSX. Une langue qui place son complément
+avant son verbe n'aurait eu aucun moyen de le corriger — c'est précisément ce que `CLAUDE.md` §23
+interdit, et ce que le §7.5 avait pris la peine de nommer **avant** que la première ligne de code ne
+soit écrite.
+
+**Comment l'écart a survécu à la livraison.** Aucune preuve ne l'exerçait. MESURÉ :
+`workflow_transitions.label` est nullable, mais les **dix** transitions du seed en portent un — le
+repli n'est atteint par aucune donnée permanente, ni en base ni dans les jeux servis. Ni le test
+unitaire du composant ni la preuve d'interface ne passaient par cette branche : elle était écrite,
+jamais exécutée. Une règle que rien n'exerce est la première à dévier de sa spécification.
+
+**Hypothèses écartées.** *Laisser la concaténation et amender le §7.5* : ce serait réécrire une
+exigence pour l'accommoder au code, alors que le document a été écrit après mesure et avant le code
+précisément pour éviter cela. *Ajouter une bibliothèque de messages* apporterait pluriels, genres et
+formats de nombre — tous inutiles aujourd'hui — au prix de la garantie que la décision 43 a retenue :
+une clé inconnue **ne compile pas**.
+
+**Décision.** `t` accepte un second paramètre facultatif et substitue des marqueurs `{nom}`. Format
+délibérément minimal, sans pluriel ni genre. Un paramètre absent de la chaîne est ignoré ; un
+marqueur sans valeur reste **visible** tel quel — il vaut mieux voir `{etape}` dans l'interface et
+corriger la clé, que de lire une phrase amputée dont rien ne signale qu'il y manque un mot. La clé
+devient `'Passer à {etape}'`, et le composant ne compose plus rien.
+
+**Deux preuves, là où il n'y en avait aucune.** Un test unitaire du composant réel, avec un jeu de
+transitions **de rechange** portant `label: null` — le seed ne pouvant pas l'exercer —, et un
+scénario d'interface qui substitue la même réponse et lit « Passer à Relance » à l'écran. Les deux
+vérifient en outre que le marqueur `{etape}` **ne fuit jamais** jusqu'à l'utilisateur.
+**Contre-épreuve faite** : rétabli le code d'origine, le test unitaire échoue ; c'est ce qui
+distingue une correction prouvée d'une correction affirmée.
+
+**Portée.** Trois clés peuvent désormais être paramétrées ; une seule l'est. La substitution n'est
+pas un chantier d'internationalisation — c'est le strict nécessaire pour que le §7.5 soit tenu.
+
+### Décision 181 — Le harnais accepte un navigateur fourni par l'environnement, sans rien changer par défaut
+
+**Problème.** Sur une image qui préinstalle ses navigateurs et interdit `playwright install`,
+Playwright 1.62.1 réclame la révision qu'il épingle — `Executable doesn't exist at
+…/chromium_headless_shell-1234/…` — et **tous** les scénarios `ui` échouent au lancement, y compris
+ceux livrés par les unités précédentes. Aucune preuve d'interface n'est alors exécutable, quel que
+soit l'état du code, et la Definition of Done de toute unité touchant l'écran devient inatteignable
+pour une raison qui ne regarde pas le produit.
+
+**Hypothèses écartées.** *Épingler le chemin dans la configuration* imposerait à tout le dépôt le
+chemin d'une image particulière, et casserait le poste du responsable. *Désactiver les scénarios
+`ui`* reviendrait à supprimer des tests pour obtenir un résultat vert, ce que `CLAUDE.md` §26
+interdit explicitement. *Déclarer la vérification impossible* aurait été prématuré : le navigateur
+**était** présent, il n'était simplement pas celui que Playwright cherchait — mesuré en le pilotant
+directement avant d'écrire une ligne de configuration.
+
+**Décision.** `e2e/playwright.config.ts` lit une variable d'environnement facultative,
+`PLAYWRIGHT_CHROMIUM_PATH`. **Absente, rien ne change** : Playwright résout le navigateur comme il
+l'a toujours fait. Ce n'est donc pas une dérogation inscrite dans le dépôt, mais une porte que
+l'environnement d'exécution ouvre lui-même.
+
+**Ce que cette porte ne fait pas.** Elle ne désactive aucun contrôle, ne saute aucun scénario et ne
+substitue aucune réponse. Une preuve obtenue par ce chemin exerce le même build, la même API et les
+mêmes assertions ; seul le binaire du navigateur diffère. La révision employée est **nommée dans le
+compte rendu de livraison**, pour qu'un lecteur sache exactement ce qui a tourné.
+
+### Décision 182 — Deux exécutions de la routine ont livré `CRM-041` en parallèle, et la seconde a abandonné son travail
+
+**Fait.** Deux exécutions de la routine d'avancement ont traité `CRM-041` dans la même heure, à
+partir du même commit de spécification. La première a poussé `55accf3` puis `16cb2ee` — le board
+complet, ses trois modules, ses preuves, son harnais `scripts/verify-board.sh`, ses captures et sa
+vidéo. La seconde a produit une implémentation **indépendante et complète** du même chapitre, avec
+ses propres modules, ses propres preuves et ses propres captures.
+
+**Décision.** La seconde implémentation est **abandonnée en entier**, sans être poussée. C'est la
+conduite déjà retenue pour `CRM-014` (commit `52dc4ff`), et elle vaut ici pour les mêmes raisons :
+deux implémentations concurrentes d'une même unité ne se fusionnent pas ligne à ligne, et écraser un
+travail déjà poussé et prouvé pour lui substituer un équivalent serait une perte sèche.
+
+**Ce qui a été conservé, et pourquoi seulement cela.** Le travail abandonné a servi de **relecture
+adverse** : écrit contre la même spécification, il permettait de voir ce que la version poussée ne
+traitait pas. Deux manques réels en sont sortis, et eux seuls ont été portés sur la base poussée :
+
+1. l'écart au §7.5, corrigé par la décision 180 — une exigence explicite de la spécification, non
+   tenue par le code livré, et qu'aucune preuve n'exerçait ;
+2. l'échappatoire de navigateur de la décision 181, sans laquelle aucune preuve d'interface n'était
+   exécutable dans cet environnement.
+
+Tout le reste — un board fonctionnellement équivalent, des tests équivalents, des captures
+équivalentes — a été jeté. **Un doublon n'est pas une amélioration**, et la seule chose qui méritait
+d'être conservée d'une seconde implémentation était ce qu'elle voyait et que la première ne voyait
+pas.
+
+**Portée générale, écrite parce qu'elle resservira.** Quand deux exécutions se croisent, la seconde
+se resynchronise **avant** de committer, compare les deux traitements de la même spécification, et
+ne pousse que les écarts que sa lecture a révélés — jamais son implémentation entière.

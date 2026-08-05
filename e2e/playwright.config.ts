@@ -44,6 +44,28 @@ const PROJETS_DEMANDES = (process.env['E2E_PROJETS'] ?? 'api,ui')
 /** Seul `ui` a besoin de l'application construite et servie. */
 const SERVEUR_REQUIS = PROJETS_DEMANDES.includes('ui')
 
+/**
+ * Chemin d'un Chromium **fourni par l'environnement**, employé à la place de celui que Playwright
+ * télécharge — `CRM-041`, `docs/SPEC-test-harness.md` §4.4 bis.
+ *
+ * MOTIF MESURÉ, et il n'est pas théorique. Sur une image qui préinstalle ses navigateurs et
+ * interdit `playwright install`, Playwright 1.62.1 réclame la révision qu'il épingle — `Executable
+ * doesn't exist at …/chromium_headless_shell-1234/…` — et **tous** les scénarios `ui` échouent au
+ * lancement, y compris ceux livrés par les unités précédentes. Aucune preuve d'interface n'est
+ * alors exécutable, quel que soit l'état du code, et la Definition of Done de toute unité touchant
+ * l'écran devient inatteignable pour une raison qui ne regarde pas le produit.
+ *
+ * Variable **absente : rien ne change**. Playwright résout le navigateur comme il l'a toujours
+ * fait, et le poste du responsable n'est pas touché. Ce n'est donc pas une dérogation permanente
+ * inscrite dans le dépôt, mais une porte que l'environnement d'exécution ouvre lui-même.
+ *
+ * Ce que cette porte **ne fait pas** : elle ne désactive aucun contrôle, ne saute aucun scénario et
+ * ne substitue aucune réponse. Une preuve obtenue par ce chemin exerce le même build, la même API
+ * et les mêmes assertions ; seul le binaire du navigateur diffère, et sa révision est alors nommée
+ * dans le compte rendu de livraison.
+ */
+const CHROMIUM_FOURNI = (process.env['PLAYWRIGHT_CHROMIUM_PATH'] ?? '').trim()
+
 const serveur = {
 	command: 'npm run build && npm run preview',
 	url: URL_BASE,
@@ -85,7 +107,13 @@ export default defineConfig({
 		{
 			name: 'ui',
 			testDir: join(import.meta.dirname, 'ui'),
-			use: { baseURL: URL_BASE, ...devices['Desktop Chrome'] },
+			use: {
+				baseURL: URL_BASE,
+				...devices['Desktop Chrome'],
+				...(CHROMIUM_FOURNI === ''
+					? {}
+					: { launchOptions: { executablePath: CHROMIUM_FOURNI } }),
+			},
 		},
 	],
 	...(SERVEUR_REQUIS ? { webServer: serveur } : {}),

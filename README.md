@@ -289,6 +289,17 @@ Playwright démarre son `webServer` pour toute exécution quel que soit le filtr
 besoin est déclaré par la variable `E2E_PROJETS`, positionnée par les scripts npm eux-mêmes
 (`docs/SPEC-test-harness.md` §4.2).
 
+**Sur une machine qui fournit son propre navigateur** — image d'intégration continue préinstallée,
+poste où `playwright install` est indisponible —, la variable facultative
+`PLAYWRIGHT_CHROMIUM_PATH` porte le chemin absolu du Chromium à employer :
+
+```bash
+PLAYWRIGHT_CHROMIUM_PATH=/chemin/vers/chromium npm run e2e:ui
+```
+
+Absente, rien ne change : Playwright résout le navigateur lui-même. Elle ne désactive aucun contrôle
+et ne substitue aucune réponse — seul le binaire diffère (`docs/SPEC-test-harness.md` §4.4 bis).
+
 Les autres preuves disponibles aujourd'hui sont huit harnais rejouables, à exécuter sur une pile de
 développement déjà démarrée :
 

@@ -537,8 +537,11 @@ function MenuTransitions({
 									onTransition(idCard, transition)
 								}}
 							>
-								{/* Un libellé absent est légal : le repli nomme l'étape cible (§7.5). */}
-								{transition.libelle ?? `${t('board.transition.fallback')} ${transition.versEtape.libelle}`}
+								{/* Un libellé absent est légal : le repli nomme l'étape cible par une clé
+								    **paramétrée**, jamais par concaténation ici — l'ordre des mots appartient
+								    à la traduction, pas au composant (§7.5, CLAUDE.md §23). */}
+								{transition.libelle ??
+									t('board.transition.fallback', { etape: transition.versEtape.libelle })}
 							</Button>
 						</li>
 					))}

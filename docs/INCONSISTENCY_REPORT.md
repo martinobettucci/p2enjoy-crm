@@ -12,6 +12,50 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-068 — Les pastilles d'étiquettes sont prescrites par le design system et n'ont ni table ni unité
+
+**Nature :** unité manquante ; un contenu d'interface prescrit sans porteur, ni côté schéma ni côté
+backlog.
+**Relevé le :** 2026-08-05, en relisant `CRM-041` contre le §5.1 du design system.
+
+`docs/DESIGN_SYSTEM.md` §5.1 énumère depuis `CRM-000` le contenu d'une carte de card : « titre
+(2 lignes maximum, ellipse), **pastilles d'étiquettes**, avatar du responsable, montant si
+renseigné, indicateur de prochaine action, et pastille d'ancienneté dans l'étape ».
+
+**Constat, mesuré sur le schéma et sur le backlog.** `docs/SCHEMA.md` ne déclare **aucune** table
+d'étiquettes, `public.cards` ne porte aucune colonne qui en tienne lieu, et aucune unité de
+`docs/MASTER_PLAN.md` §2 n'en porte — ni dans le chunk 3, ni dans le chunk 4, ni dans les extensions
+du chunk 5. Le mot n'apparaît nulle part ailleurs dans le dépôt que dans cette énumération et dans
+les deux endroits où `CRM-041` constate son absence.
+
+**Ce que cela ne met pas en cause.** Rien du comportement livré : une carte sans étiquette est
+complète au sens de tout ce que la donnée permet. Le manque est d'**affichage**, pas d'intégrité.
+
+**Pourquoi c'est distinct de l'avatar du responsable, avec lequel le §7.4 le range.** L'avatar manque
+pour une raison **connue et déjà consignée** — `profiles` reste en refus par défaut, INC-014 : la
+donnée existe et attend un arbitrage d'accès. Les étiquettes, elles, n'existent **nulle part** : ce
+n'est pas un droit de lecture qui manque, c'est un modèle de données. Les deux ne se referment pas
+par le même geste, et les ranger ensemble comme deux « absences » masque cette différence.
+
+**Ce que `CRM-041` en a fait.** Elle a nommé l'absence au §7.4 de `docs/SPEC-workflow-engine.md` et
+dans sa Definition of Done, ce qui est juste. Elle n'a pas relevé que la **prescription** du §5.1
+reste sans porteur — c'est l'objet de cette entrée. La phrase du §5.1 est conservée intacte.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. créer une unité « étiquettes » dans le chunk 5 — table, politiques d'accès, seed, et rendu sur la
+   carte —, et lui rattacher la phrase ;
+2. retirer les étiquettes du §5.1, en actant que la couleur du nœud et le libellé de colonne
+   suffisent à qualifier une affaire ;
+3. les remplacer par une donnée déjà présente que la carte pourrait afficher en pastille — la
+   probabilité de l'étape, par exemple —, ce qui changerait l'intention du §5.1 et doit donc être
+   décidé, non déduit.
+
+**Lié à :** INC-066 (même motif : une règle d'interface sans porteur), INC-014 (l'avatar, motif
+différent), `docs/DESIGN_SYSTEM.md` §5.1, `docs/SPEC-workflow-engine.md` §7.4.
+
+---
+
 ### INC-067 — Trois sources décrivent `cards.amount` de deux façons, et le cumul du board dépend de celle qui a raison
 
 **Nature :** contradiction entre deux déclarations du dépôt ; comportement inchangé.
