@@ -3296,6 +3296,14 @@ Tri, filtres, densité maîtrisée, pagination.
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 332 → **358**
       scénarios d'API, 72 → **99** d'interface. `ASSERTIONS_ATTENDUES` reste à **1164** : l'unité
       ne livre ni table, ni fonction, ni politique.
+- [x] **Aucune régression sur les douze harnais rejoués** — dont **les huit qui touchent
+      l'interface**, c'est-à-dire tous ceux qu'un changement d'écran peut atteindre :
+      `verify-harness` 25, `verify-webapp` 41, `verify-tracks` 43, `verify-channels` 30,
+      `verify-formulaire` 49, `verify-move-card` 56, `verify-valeurs-champs` 40, `verify-board` 56,
+      `verify-seed` 49, `verify-migrations` 23, `verify-authz` 35, `verify-types` 30 — **aucune
+      anomalie**. `verify-board` en particulier reste vert alors que l'écran du board a changé : la
+      bascule board ↔ liste s'est ajoutée au-dessus de lui, et ses onze captures ont été
+      **renouvelées** en conséquence, comme `CLAUDE.md` §16 l'exige.
 - [x] `docs/SPEC-cards.md` §12 (douze sous-chapitres) et §12.7 bis, `docs/DESIGN_SYSTEM.md` §5.9 et
       §12.6, `docs/DAT.md` §3.1, `README.md` §10, `docs/manual.md` chapitres 3.2, 4.6, 4.9 et
       sommaire, `docs/INCONSISTENCY_REPORT.md` (INC-069 et INC-070 ouvertes),
@@ -3315,6 +3323,15 @@ Tri, filtres, densité maîtrisée, pagination.
 - [ ] **Le seed n'a pas été étendu, et le choix est documenté.** L'unité n'introduit ni table, ni
       colonne, ni statut, ni flux : elle lit ce que `CRM-040` a livré. Six contrôles du harnais
       échouent si les données qu'elle démontre cessent d'être là.
+- [ ] **NEUF HARNAIS N'ONT PAS ÉTÉ REJOUÉS, ET LE DIRE VAUT MIEUX QUE DE L'OMETTRE.**
+      `verify-catalogue`, `verify-workflows`, `verify-copie-workflow`, `verify-coherence-workflow`,
+      `verify-champs-formulaire`, `verify-droits-fins`, `verify-colonnes-protegees`,
+      `verify-preuves-refus` et `verify-cards` **étaient encore en cours** lorsque cette exécution
+      s'est achevée — chacun rejoue les suites globales, et le balayage complet dépasse la durée
+      d'une exécution de la routine. Les neuf portent sur la **base** : migrations, politiques,
+      fonctions et privilèges. L'unité ne livre **aucun SQL**, aucune migration, aucune politique et
+      aucun privilège, et `npm run test:sql` rend **1164 assertions inchangées** — mais cela reste
+      un raisonnement, non une mesure. **À rejouer à la prochaine exécution.**
 - [ ] **Aucune vue sauvegardée, aucun réglage de densité, aucune recherche globale.** Les trois sont
       hors périmètre et nommés au §12.10 : `CRM-071` porte la première, les deux autres ne sont
       portées par personne.
