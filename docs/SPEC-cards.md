@@ -1375,3 +1375,391 @@ porte.
 | E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais le panneau sans substitution, puis le fil, l'état vide, la pierre tombale, la mention « modifié » et le refus d'écriture, réponses substituées et **dit comme tel** |
 | Visuel | Captures aux paliers du §7 du design system : fil chargé, état vide, refus d'écriture, commentaire long |
 | Harnais | `scripts/verify-commentaires.sh`, rejouable et **non complaisant** : chaque dégradation volontaire le fait réellement échouer |
+
+---
+
+## 14. Timeline unifiée — `CRM-044`
+
+L'unité tient en **deux lignes** au backlog — « `card_events` alimentée par triggers ; fil
+chronologique filtrable » — et sa Definition of Done en une seule : « pgTAP (aucune écriture
+cliente possible) ; E2E ; captures ». Quatre documents la nomment sans la décrire :
+
+- `docs/SCHEMA.md` §5 donne les **colonnes** de `card_events` et une liste de types terminée par
+  des points de suspension ;
+- `docs/SCHEMA.md` §10 lui donne un **index**, `(card_id, created_at DESC)` ;
+- `docs/SPEC-permissions-rls.md` §4 lui donne une **règle d'accès** en cinq mots ;
+- `docs/DESIGN_SYSTEM.md` §5.3 lui donne une **place** — la colonne de droite du détail de card —
+  et cinq sources dont trois n'ont aucune table.
+
+Ce chapitre est écrit **après mesure sur la pile réelle**, et avant toute ligne de code. Les
+mesures sont datées du 2026-08-05 et reproduites telles quelles : elles sont la seule chose qui
+distingue une spécification d'une intention.
+
+### 14.1 Ce que l'unité est, et ce qu'elle n'est pas
+
+`CRM-044` livre **la mémoire d'une affaire** : ce qui lui est arrivé, dans l'ordre où c'est arrivé,
+écrit par la base au moment où ça arrive, et que personne ne peut ni forger ni corriger.
+
+Dans le périmètre :
+
+- `public.card_events`, ses contraintes, ses index, sa politique de lecture, ses privilèges ;
+- **cinq triggers** qui l'alimentent, et **rien d'autre** ne l'alimente ;
+- l'immuabilité, éprouvée dans les deux sens ;
+- l'écran : la colonne de droite du détail de card devient le **fil unifié** annoncé par le §5.10
+  du design system, avec ses filtres par type ;
+- le seed, qui démontre le fil sans changer d'un iota l'état qu'il livrait hier.
+
+Hors du périmètre, et nommé :
+
+| Ce qui manque | Pourquoi |
+|---|---|
+| `mail_received`, `mail_sent` | `mail_messages` est livrée par `CRM-054`. Le `CHECK` du §14.4 ne les accepte pas : une valeur autorisée que rien n'écrit est une promesse que personne ne tient |
+| `card_activities` — appels, réunions, visios | La table est décrite par `docs/SCHEMA.md` §5 et **aucune unité du chunk 3 ne la porte** |
+| Pièces jointes | Aucune table, et `storage.buckets` est vide (`docs/SPEC-permissions-rls.md` §7.2, scénario 9) |
+| Le **motif** d'une transition | `move_card` reçoit un `comment` et ne le conserve nulle part — INC-048. Un trigger sur `cards` ne voit pas les arguments de la fonction qui a fait l'`UPDATE` |
+| Toute notification | `notifications` n'existe pas, `CRM-063` |
+| Toute pagination du fil | Mesuré au §14.11 : le seed produit **27 événements** sur neuf cards. Le §12.6 a montré ce que coûte une pagination bâtie sans mesure |
+| Tout temps réel | `card_comments` est la seule table publiée (§13.9). Publier `card_events` ajouterait une surface d'abonnement qu'aucune preuve de cette unité n'exerce ; le fil se relit à l'ouverture de la card |
+
+### 14.2 Modèle : `public.card_events`
+
+`docs/SCHEMA.md` §5, complété par les conventions générales du même document.
+
+| Colonne | Type | Contraintes | Motif |
+|---|---|---|---|
+| `id` | `uuid` | PK, défaut `gen_random_uuid()` | Convention générale |
+| `card_id` | `uuid` | non nul | L'affaire dont c'est la mémoire |
+| `workspace_id` | `uuid` | non nul | Cloisonnement, **dérivé** de la card par le trigger qui écrit — jamais décidé par un appelant, puisqu'aucun appelant n'écrit |
+| `type` | `text` | non nul, `CHECK` sur les **huit** valeurs du §14.4 | Le vocabulaire est tenu par la base |
+| `actor_id` | `uuid` | FK `profiles(id)` `ON DELETE SET NULL`, **nullable** | « Nul si l'auteur est un service » — `docs/SCHEMA.md` §5 |
+| `payload` | `jsonb` | non nul, défaut `'{}'` | Avant / après, §14.6 |
+| `created_at` | `timestamptz` | non nul, défaut **`clock_timestamp()`** | §14.3 — et c'est le seul écart de cette table à la convention |
+
+**Aucune colonne `updated_at`.** Sixième occurrence d'INC-025, et la première où l'absence n'est pas
+un écart mais une **conséquence** : une ligne qui ne peut jamais être modifiée n'a pas de date de
+dernière modification. La poser serait écrire une colonne dont la valeur est, par construction,
+toujours égale à `created_at`.
+
+### 14.3 Pourquoi `clock_timestamp()` et non `now()` — MESURÉ
+
+`now()` rend l'heure de **début de transaction** : deux événements écrits par la même instruction
+portent alors exactement le même horodatage, et l'ordre du fil devient celui, arbitraire, de leurs
+`uuid`. Ce n'est pas une hypothèse. MESURÉ le 2026-08-05, sur la sonde `sonde_ev`, avec un seul
+`UPDATE` touchant trois colonnes surveillées :
+
+```
+   type   |          created_at           | identique_au_premier
+----------+-------------------------------+----------------------
+ assigned | 2026-08-05 22:05:36.23185+00  | t
+ archived | 2026-08-05 22:05:36.232672+00 | f
+ trashed  | 2026-08-05 22:05:36.232953+00 | f
+
+ horodatages_distincts | evenements
+-----------------------+------------
+                     3 |          3
+```
+
+Avec `clock_timestamp()`, les trois horodatages sont **distincts et dans l'ordre réel des
+écritures**. L'ordre du fil devient donc *total* — l'exigence que `CRM-042` avait tirée de la sonde
+`sonde_l2`, où un ordre non total parcouru page par page perdait des lignes — **et** signifiant :
+il dit ce qui s'est passé avant quoi, à l'intérieur même d'une transaction.
+
+Le fil est néanmoins terminé par `id` partout où il est servi, parce qu'une égalité reste
+concevable (deux transactions concurrentes, résolution d'horloge) et qu'un ordre total ne doit
+dépendre d'aucune hypothèse sur l'horloge.
+
+### 14.4 Les huit types livrés
+
+`docs/SCHEMA.md` §5 énumère `created`, `moved`, `field_changed`, `assigned`, `mail_received`,
+`mail_sent`, `archived`, puis des points de suspension. Les huit valeurs suivantes sont livrées,
+et le `CHECK` **n'en accepte aucune autre** :
+
+| Type | Écrit quand | Trigger |
+|---|---|---|
+| `created` | une card naît | `cards`, `AFTER INSERT` |
+| `moved` | `current_step_id` change | `cards`, `AFTER UPDATE` |
+| `assigned` | `owner_id` change, dans un sens comme dans l'autre — y compris vers `NULL` | `cards`, `AFTER UPDATE` |
+| `archived` | `archived_at` passe de nul à renseignée | `cards`, `AFTER UPDATE` |
+| `unarchived` | `archived_at` repasse à nul | `cards`, `AFTER UPDATE` |
+| `trashed` | `deleted_at` passe de nul à renseignée | `cards`, `AFTER UPDATE` |
+| `restored` | `deleted_at` repasse à nul | `cards`, `AFTER UPDATE` |
+| `field_changed` | une valeur de formulaire naît ou change | `card_field_values`, `AFTER INSERT OR UPDATE` |
+
+`unarchived` et `restored` ne figurent pas dans la liste de `docs/SCHEMA.md`, et ils sont livrés :
+le §4 de ce document dit que la corbeille est **réversible** et que l'archivage n'est pas une
+suppression. Un cycle de vie dont la moitié des transitions ne laisse aucune trace n'est pas une
+mémoire — c'est un compte rendu partial.
+
+`mail_received` et `mail_sent` sont **refusés par le `CHECK`**. C'est délibéré : le jour où
+`CRM-054` livrera `mail_messages`, elle devra étendre l'énumération dans la même migration que le
+trigger qui l'écrit, et la base le lui rappellera par un `23514`. L'alternative — accepter dès
+aujourd'hui des valeurs que rien ne produit — laisserait croire qu'une capacité existe.
+
+### 14.5 Les triggers, et pourquoi ils sont `SECURITY DEFINER` — MESURÉ
+
+Aucun rôle client ne détient le privilège `INSERT` sur `card_events` (§14.7). Un trigger
+`SECURITY INVOKER` s'exécute avec les droits de **l'appelant** : il serait donc refusé, et
+refuserait avec lui l'écriture métier qui l'a déclenché. MESURÉ, sur la sonde `sonde_e1` :
+
+```
+ERROR:  permission denied for table sonde_e1
+CONTEXT:  SQL statement "insert into public.sonde_e1 …"
+          PL/pgSQL function public.sonde_e1_invoker() line 3 at SQL statement
+```
+
+Le même trigger en `SECURITY DEFINER`, propriété de `postgres`, écrit — **et `auth.uid()` y rend
+l'identifiant réel de l'appelant**, ce qui n'allait pas de soi : la revendication JWT est portée par
+un paramètre de session, non par le rôle courant, et le changement de droits ne l'efface pas.
+MESURÉ :
+
+```
+  note   |                acteur
+---------+--------------------------------------
+ definer | 5eed0000-0000-4000-8000-000000000011
+```
+
+Trois propriétés en découlent, et chacune est une règle :
+
+1. **Un trigger d'audit ne refuse jamais l'écriture métier.** `actor_id` n'est renseigné que si
+   `auth.uid()` désigne un profil **existant** — sous-requête, non affectation directe. Sans cette
+   précaution, un appelant dont le profil aurait disparu ferait échouer la création de sa card sur
+   une violation de clé étrangère levée par la trace, non par l'acte.
+2. **Un service n'a pas de nom.** La clé de service ne porte pas de revendication `sub` :
+   `auth.uid()` y rend `NULL`, et l'événement est attribué à personne — exactement ce que
+   `docs/SCHEMA.md` §5 prescrit. Les événements du seed en portent la marque (§14.11).
+3. **Le trigger est sur la table, pas dans la RPC.** `docs/DAT.md` §4.2 montre l'écriture d'un
+   `card_event` à l'intérieur de `move_card` ; le backlog dit « alimentée par triggers ». Les deux
+   sont satisfaits — c'est bien PostgreSQL qui écrit, dans la même transaction, après la mise à
+   jour — mais le trigger couvre **strictement plus** : un `PATCH` direct de `owner_id` ou
+   d'`archived_at`, qu'aucune RPC ne médie, laisse lui aussi sa trace. Une garde placée dans une
+   fonction ne vaut que pour ceux qui empruntent la fonction ; c'est l'argument même de la
+   migration 12, retourné vers la trace.
+
+**Aucun événement pour une écriture qui ne change rien.** Chaque garde compare `is distinct from`.
+MESURÉ : `update public.cards set title = title || ''` produit **zéro** événement, et une valeur de
+formulaire réécrite à l'identique n'en produit pas davantage. C'est ce qui rend le seed
+**convergent** : le rejeu n'allonge pas l'histoire.
+
+### 14.6 Ce que chaque `payload` porte
+
+| Type | `payload` |
+|---|---|
+| `created` | `{title, channel_id, step_id}` — l'état de naissance, tel qu'il était |
+| `moved` | `{from_step_id, to_step_id}` |
+| `assigned` | `{from_owner_id, to_owner_id}` |
+| `archived`, `unarchived`, `trashed`, `restored` | `{}` — la date est `created_at`, l'acteur est `actor_id`, il n'y a rien d'autre à dire |
+| `field_changed`, à l'insertion | `{field_id, to}` — **la clé `from` est absente** |
+| `field_changed`, à la mise à jour | `{field_id, from, to}` |
+
+**L'absence de la clé `from` est le seul moyen de distinguer deux choses que le JSON confond.**
+`docs/SPEC-form-composer.md` §6.9 pose que vider un champ, c'est écrire `'null'::jsonb`. Une valeur
+SQL `NULL` et une valeur JSON `null` rendent alors toutes deux `"from": null` — MESURÉ :
+
+```
+     type      |                                     payload
+---------------+---------------------------------------------------------------------------------
+ field_changed | {"to": 42000, "from": null, "field_id": "…081"}     ← la valeur n'existait pas
+ field_changed | {"to": null, "from": 42000, "field_id": "…081"}     ← le champ a été vidé
+```
+
+Les deux lignes ci-dessus sont issues de la même sonde : la première venait d'une valeur SQL
+`NULL`, la seconde d'un `'null'::jsonb` délibéré. Elles sont indistinguables. La clé `from` est donc
+**omise** lorsque la ligne naît, et **toujours présente** lorsqu'elle change : « la clé n'est pas
+là » signifie « il n'y avait rien », « la clé vaut `null` » signifie « il y avait le vide ».
+
+`payload` ne porte **aucun libellé**. Ni le nom de l'étape, ni la clé du champ, ni le nom du
+responsable : ce sont des données d'autres tables, qui changent, et une trace qui les recopierait
+dirait demain ce qui était vrai hier. L'écran les résout à la lecture (§14.10).
+
+### 14.7 Autorisations : aucune écriture par un client, et la mesure du refus
+
+`docs/SPEC-permissions-rls.md` §4 : « Lecture de la card. **Aucune écriture par un client** :
+triggers uniquement. »
+
+| Rôle | `SELECT` | `INSERT` | `UPDATE` | `DELETE` |
+|---|---|---|---|---|
+| `anon` | accordé, filtré par la politique | — | — | — |
+| `authenticated` | accordé, filtré par la politique | — | — | — |
+| `service_role` | accordé | — | — | — |
+
+Une seule politique, en lecture, `app.can_read_card(card_id)` — la troisième table à l'appeler,
+après `card_field_values` et `card_comments`. Accordée à `anon` pour que le refus soit **zéro
+ligne** et non une erreur de privilège (`docs/SPEC-permissions-rls.md` §3.2).
+
+**Le refus d'écriture est DOUBLE, et il vaut aussi pour la clé de service.** Aucun privilège,
+aucune politique. MESURÉ dans les deux cas :
+
+```
+ authenticated : ERROR:  permission denied for table sonde_ev
+ service_role  : ERROR:  permission denied for table sonde_ev
+```
+
+C'est la première table du produit dont `service_role` **n'est pas** propriétaire de l'écriture.
+La conséquence est voulue : **le seed lui-même ne peut pas forger un événement.** Tout ce que le
+fil montre a été produit par un acte réel passé par les vrais triggers — `CLAUDE.md` §8 pris au
+mot, non seulement respecté par convention.
+
+Cette table rend enfin satisfaisable la **moitié** de la preuve de refus n° 8 de
+`docs/SPEC-permissions-rls.md` §7 — « insertion directe dans `card_events` ou `audit_log` ».
+`card_events` existe désormais et refuse ; `audit_log` reste due par `CRM-072`, et son absence
+reste figée. Les assertions des unités précédentes qui constataient l'inexistence de la table sont
+**révisées, non retirées** : le mécanisme de la décision 51, onzième occurrence.
+
+### 14.8 L'immuabilité, et la seule porte qui reste ouverte
+
+Un journal que l'on peut réécrire n'est pas un journal.
+
+- **Mise à jour** : refusée à tous les rôles, y compris au propriétaire, par un trigger
+  `BEFORE UPDATE` qui lève systématiquement `card_event_immutable`. MESURÉ. Le refus des privilèges
+  suffirait aux clients ; le trigger ferme la porte que la clé de service et un accès
+  d'exploitation laisseraient ouverte.
+- **Suppression** : refusée aux trois rôles clients par double absence — aucun privilège, aucune
+  politique. **Aucun trigger `BEFORE DELETE` n'est posé, et c'est un choix mesuré.** La clé
+  étrangère composite vers `cards` porte `ON DELETE CASCADE`, exactement comme celle de
+  `card_comments` (§13.3) : un trigger de refus rendrait alors **impossible** la suppression
+  physique d'une card, geste d'exploitation que la migration 15 avait délibérément préservé.
+  MESURÉ : `delete from public.cards where id = …` réussit et emporte les événements.
+
+Ce que cela signifie, écrit sans détour : **une card physiquement supprimée emporte sa mémoire.**
+Le produit n'expose aucune suppression physique — archiver et mettre à la corbeille sont des
+horodatages (§4) —, mais le propriétaire de la base peut le faire, et la trace ne survit pas à
+l'objet tracé. Point ouvert n° 2 du §14.13.
+
+### 14.9 Contrat d'API
+
+Le fil se lit par PostgREST, en **une** requête, comme le panneau de commentaires :
+
+```
+GET /rest/v1/card_events?card_id=eq.<id>&select=id,type,actor_id,payload,created_at
+    &order=created_at.asc,id.asc
+```
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| a | anonyme | `GET` sur une card du seed | `200`, `[]` — refus par défaut |
+| b | `admin` | `GET` sur `…0c1` | `200`, les événements de la card, dans l'ordre croissant |
+| c | `viewer` | `GET` sur une card d'un channel qui lui est **fermé** | `200`, `[]`, alors que la clé de service y voit des lignes |
+| d | `viewer` | `GET` sur une card qu'il **voit** | `200`, les événements — commenter exige d'écrire (INC-071), **lire la mémoire n'exige que de lire** |
+| e | `admin` | `POST` d'un événement forgé | `403`, `42501`, `permission denied for table card_events` |
+| f | clé de service | `POST` d'un événement forgé | `403`, `42501` — **le service non plus** |
+| g | `admin` | `PATCH` d'un événement existant | `403`, `42501` |
+| h | `admin` | `DELETE` d'un événement existant | `403`, `42501` |
+| i | `admin` | `POST /rpc/move_card` puis relecture du fil | un événement `moved` de plus, `actor_id` = l'administratrice, `payload` portant les deux étapes |
+| j | `admin` | `PATCH` d'`owner_id` puis relecture | un événement `assigned` de plus |
+| k | `admin` | `PATCH` d'un champ à une valeur **identique** | **aucun** événement de plus |
+| l | clé de service | insertion d'une card, puis relecture | un `created` dont `actor_id` est **nul** |
+
+Le §14.14 exige que chacune de ces lignes soit exercée avec les **jetons réels**, et que tout
+scénario qui écrit nettoie derrière lui **par identifiant énuméré** — décision 199, INC-061.
+
+### 14.10 Interface : la timeline unifiée
+
+Le §5.10 du design system annonçait le panneau de commentaires comme « la première voie d'un fil
+unifié ». `CRM-044` fond les deux : la colonne de droite du détail de card devient **un seul fil**,
+alimenté par **deux sources**, avec des filtres par type. Le §5.11 du design system écrit ce que
+l'écran montre ; les règles ci-dessous sont celles du produit.
+
+- **Une seule requête par source, jamais une jointure côté client sur des pages différentes.** Le
+  fil lit `card_comments` et `card_events` séparément — ce sont deux tables, deux politiques — puis
+  **fusionne en mémoire** sur `(created_at, id)`. Aucune des deux n'est paginée (§14.1).
+- **Ordre chronologique CROISSANT**, celui du §5.10, **non inversé**. La règle avait été écrite par
+  `CRM-043` précisément pour que cette unité ne l'inverse pas par habitude ; elle est reconduite,
+  et le composeur reste en bas.
+- **Le filtre est une vue, jamais une requête.** Filtrer ne relance rien : les deux sources sont
+  déjà chargées, et le filtre masque. Un filtre qui rechargerait ferait dépendre le contenu du fil
+  de l'état d'un contrôle d'interface, et rendrait l'état vide ambigu — « rien à cette date » ou
+  « rien de ce type ».
+- **Quatre familles de filtres**, et pas huit : `Discussion` (les commentaires), `Étapes` (`moved`),
+  `Champs` (`field_changed`), `Cycle de vie` (`created`, `archived`, `unarchived`, `trashed`,
+  `restored`, `assigned`). Huit cases pour vingt-sept lignes seraient un contrôle plus gros que
+  son objet.
+- **Aucune persistance du filtre.** Ni `localStorage`, ni `sessionStorage` : `CLAUDE.md` §11 n'admet
+  une donnée sur l'appareil que si elle est nécessaire, et l'état d'un filtre ne l'est pas. Il
+  repart complet à chaque ouverture, ce qui est aussi la seule valeur qui ne cache jamais rien.
+- **Aucun nom d'acteur.** INC-014 : `profiles` n'est lisible par aucun jeton d'utilisateur. La
+  règle du §12.5 du design system s'applique une troisième fois — une donnée illisible n'est pas
+  rendue **du tout**. L'événement dit ce qui s'est passé, pas qui l'a fait, et le §5.11 le dit à
+  l'écran plutôt que d'afficher un identifiant technique.
+- **Les libellés sont résolus à la lecture**, jamais lus dans le `payload` (§14.6) : le nom d'une
+  étape vient des étapes du workflow déjà chargées par la fiche, la clé d'un champ vient des
+  champs du formulaire. **Lorsque la résolution échoue** — étape supprimée, champ archivé et non
+  chargé —, le fil affiche le type de l'événement sans son détail, et **ne construit aucune phrase
+  par concaténation** (`CLAUDE.md` §23, décision reprise de `CRM-041`).
+- **Quatre états** (§5.8), et le vide dit « aucun événement pour le moment » **par filtre** : un
+  filtre qui ne montre rien doit dire qu'il filtre, sinon il se confond avec une affaire sans
+  histoire.
+
+### 14.11 Ce que le seed livre
+
+**Le seed ne fabrique aucun événement** — il ne le peut pas (§14.7). Tout ce que le fil montre est
+le produit de ses actes réels :
+
+| Source | Événements | Ce que ça démontre |
+|---|---|---|
+| Les 9 cards insérées | 9 × `created`, `actor_id` **nul** | la naissance, et l'attribution à un service |
+| Les 14 valeurs de formulaire | 14 × `field_changed`, `payload` **sans clé `from`** | la valeur qui naît |
+| Un aller-retour d'étape sur `…0c4` | 2 × `moved` | la transition, dans les deux sens, par la **vraie** RPC `move_card` |
+| Un aller-retour de responsable sur `…0c1` | 2 × `assigned` | l'attribution, par un **vrai** `PATCH` |
+
+**Les deux allers-retours laissent l'état du seed rigoureusement identique à celui d'hier.** C'est
+la condition pour qu'aucune assertion des unités précédentes ne bouge : la card `…0c4` repart de
+l'étape de négociation où elle était, la card `…0c1` retrouve son responsable. Seule l'**histoire**
+s'allonge. MESURÉ sur la sonde : l'aller-retour d'étape franchit deux transitions réellement
+déclarées — « Revenir en relance » puis « Engager la négociation » — et rend `current_step_id` à sa
+valeur de départ.
+
+**Ils sont conditionnés par une relecture**, comme les commentaires du §13.11 : le seed n'exécute
+l'aller-retour que si la card ne porte **aucun** événement du type visé. Sans cette garde, chaque
+rejeu allongerait le fil de quatre lignes, et le seed cesserait de converger — ce qui est la seule
+propriété que `docs/SPEC-seed.md` exige de lui sans exception.
+
+`entered_step_at` et `position` de `…0c4` sont **réécrits** par l'aller-retour, `move_card` les
+maintenant (§2.9). C'est un effet réel du produit, non un effet du seed, et il est nommé ici parce
+qu'il est la seule chose que l'aller-retour ne rend pas à l'identique.
+
+### 14.12 Ce que `CRM-044` ne livre pas
+
+Outre le §14.1 :
+
+- **Aucun geste depuis le fil.** On lit, on filtre, on ne fait rien. Reprendre une valeur de champ
+  depuis un événement, ou revenir à une étape précédente, supposerait une session — INC-021.
+- **Aucune recherche dans le fil**, aucun export, aucune plage de dates.
+- **Aucun regroupement par jour.** Vingt-sept lignes n'en demandent pas ; le §12.6 a montré ce que
+  coûte une structure bâtie avant sa mesure.
+- **Aucun événement pour un commentaire.** Un commentaire *est* dans le fil — il en est la première
+  source — mais il n'écrit **pas** de ligne dans `card_events`. Le dupliquer produirait deux
+  représentations d'un même fait, dont l'une survivrait à la suppression de l'autre.
+
+### 14.13 Points ouverts
+
+1. **Le motif d'une transition reste perdu** — INC-048, enrichie une seconde fois. La destination
+   existe maintenant *deux fois* : `card_comments` depuis `CRM-043`, `card_events.payload` depuis
+   cette unité. Un trigger sur `cards` ne voit **pas** les arguments de `move_card` : l'écrire
+   supposerait de rouvrir `move_card`, livrable de `CRM-034`. L'arbitrage porte désormais sur
+   *laquelle* des deux destinations, et il est exigible.
+2. **Une card physiquement supprimée emporte sa mémoire** (§14.8). Les deux issues sont écrites :
+   soit la trace survit à l'objet — clé étrangère sans cascade, `card_id` conservé sans intégrité —,
+   soit la suppression physique disparaît du produit. Aucune n'est prise ici.
+3. **`actor_id` est perdu si le profil disparaît** (`ON DELETE SET NULL`). Un journal d'audit qui
+   oublie ses acteurs est une demi-mémoire ; conserver l'identifiant sans clé étrangère serait la
+   solution, et c'est une décision de conformité, pas une décision d'agent.
+4. **`docs/SCHEMA.md` §10 déclare l'index en `DESC`, le fil est servi en `ASC`.** Ce n'est pas une
+   contradiction — un index btree se parcourt dans les deux sens — mais l'index ne sert **pas**
+   l'ordre à ce volume. MESURÉ sur 3 600 lignes : le planificateur choisit un `Bitmap Index Scan`
+   suivi d'un `Sort`, l'index servant le **filtre** `card_id` et non le tri. L'index est posé tel
+   que `docs/SCHEMA.md` l'annonce, et ce qu'il fait réellement est écrit ici.
+5. **Aucun temps réel** (§14.1). Le fil d'une card ouverte ne bouge pas quand un tiers agit ;
+   `card_comments` est publiée, `card_events` ne l'est pas, et le panneau unifié se relit donc
+   **entièrement** à chaque événement de commentaire. Le coût est nommé : une requête de plus par
+   commentaire reçu.
+
+### 14.14 Preuves attendues de `CRM-044`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Forme de la table, `CHECK` des huit types dans les deux sens, clé composite, index, **absence de tout privilège d'écriture pour les trois rôles**, politique unique de lecture, les cinq triggers et leur `SECURITY DEFINER`, l'immuabilité, les événements réellement produits par le seed, et les gardes révisées des unités antérieures |
+| Unitaire | Fusion des deux sources, ordre total, familles de filtres, résolution des libellés et **son échec**, et le composant réel |
+| API | Les douze lignes du §14.9 avec les jetons réels des trois comptes, nettoyage **constaté** par relecture |
+| E2E d'interface | Contre le **build de production** : l'anonyme qui n'obtient rien sans substitution, puis le fil unifié, ses filtres, son état vide par filtre, réponses substituées et **dit comme tel** |
+| Visuel | Captures aux paliers du §7 du design system : fil complet, fil filtré, état vide d'un filtre, fil long |
+| Harnais | `scripts/verify-timeline.sh`, rejouable et **non complaisant** : chaque dégradation volontaire — privilège d'écriture rendu, trigger retiré, `CHECK` élargi, politique de lecture ouverte, immuabilité levée — le fait réellement échouer |

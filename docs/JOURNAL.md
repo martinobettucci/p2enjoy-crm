@@ -6533,3 +6533,148 @@ refuse. La seule correction honnête serait de **retenir** l'invitation une fois
 qui est un changement de composition à part entière. Le point est écrit au §13.13 de
 `docs/SPEC-cards.md` plutôt que corrigé au jugé, et il est la cinquième fois qu'une capture dénonce
 ce qu'un test laisse passer (décisions 163, 175, 190, et l'écart du §12.5 du design system).
+
+---
+
+## 2026-08-05 — `CRM-044`, timeline unifiée
+
+### Décision 203 — Les événements sont écrits par des triggers sur les TABLES, non par les RPC
+
+**Problème.** `docs/BACKLOG.md` dit « `card_events` alimentée par triggers ». `docs/DAT.md` §4.2
+montre l'écriture d'un `card_event` **à l'intérieur** de `move_card`. Les deux lectures ne
+produisent pas le même produit.
+
+**Observation.** Le déplacement d'étape passe forcément par `move_card` — `CRM-034` a retiré à
+`authenticated` le privilège `UPDATE` sur la colonne `current_step_id`. Mais `owner_id`,
+`archived_at` et `deleted_at`, elles, s'écrivent par un `PATCH` direct que **rien** ne médie.
+Placer la trace dans les RPC ne couvrirait donc que le seul mouvement déjà gardé, et laisserait
+sans mémoire l'archivage, la mise à la corbeille et le changement de responsable.
+
+**Décision.** Cinq triggers sur les tables : quatre sur `cards` (un à l'insertion, un à la mise à
+jour couvrant quatre colonnes surveillées), un sur `card_field_values`. `move_card` n'est **pas**
+rouverte — c'est un livrable de `CRM-034`, et le trigger sur `cards` capte son effet.
+
+**Conséquence.** Le diagramme de `docs/DAT.md` §4.2 reste vrai à son niveau de détail — c'est bien
+PostgreSQL qui écrit, dans la même transaction, après la mise à jour. Le §3.2 du même document, qui
+annonce « les triggers d'audit et de timeline », est celui des deux que l'implémentation suit à la
+lettre. Aucune contradiction n'est ouverte : c'est l'argument de la migration 12 retourné vers la
+trace — une garde placée dans une fonction ne vaut que pour ceux qui empruntent la fonction.
+
+### Décision 204 — `clock_timestamp()` et non `now()`, parce que l'ordre du fil doit être signifiant
+
+**Problème.** Le §12.4 de `docs/SPEC-cards.md` a établi qu'un ordre non total perd des lignes quand
+on le parcourt page par page. Une timeline pose le problème une seconde fois, et plus durement :
+plusieurs événements peuvent naître d'une **seule instruction**.
+
+**Mesuré.** Un `UPDATE` touchant `owner_id`, `archived_at` et `deleted_at` produit trois événements.
+Avec `now()`, les trois portent le même horodatage et l'ordre du fil devient celui de leurs `uuid`,
+c'est-à-dire aléatoire. Avec `clock_timestamp()` :
+
+```
+ assigned | 2026-08-05 22:05:36.23185+00
+ archived | 2026-08-05 22:05:36.232672+00
+ trashed  | 2026-08-05 22:05:36.232953+00
+ → 3 horodatages distincts pour 3 événements
+```
+
+**Décision.** `clock_timestamp()` comme défaut de colonne, et l'ordre servi reste terminé par `id`.
+La première rend l'ordre **signifiant** à l'intérieur d'une transaction ; le second le rend
+**total** sans hypothèse sur la résolution de l'horloge.
+
+**Conséquence.** C'est le seul écart de cette table aux conventions générales de `docs/SCHEMA.md`,
+et il est écrit dans le §5 du document lui-même plutôt que laissé au fichier de migration.
+
+### Décision 205 — Le seed ne peut pas forger un événement, et c'est la propriété qu'on cherchait
+
+**Problème.** `CLAUDE.md` §8 interdit de « fabriquer artificiellement des traces censées représenter
+l'exécution d'un processus réel ». Toutes les unités précédentes l'ont respecté **par convention** :
+rien n'empêchait le seed d'écrire ce qu'il voulait, puisqu'il détient la clé de service.
+
+**Mesuré.** Une table dont `service_role` ne reçoit que `SELECT` refuse son insertion comme celle
+d'un client :
+
+```
+ authenticated : ERROR:  permission denied for table sonde_ev
+ service_role  : ERROR:  permission denied for table sonde_ev
+```
+
+et un trigger `SECURITY DEFINER`, propriétaire `postgres`, écrit malgré tout — `auth.uid()` y rendant
+l'identifiant réel de l'appelant, la revendication JWT étant portée par un paramètre de session que
+le changement de droits n'efface pas.
+
+**Décision.** Aucun privilège d'écriture, pour aucun rôle. La règle de `CLAUDE.md` §8 cesse d'être
+une convention et devient une propriété de la base : **tout ce que le fil montre a réellement eu
+lieu.**
+
+**Conséquence.** Le seed démontre la timeline sans l'écrire, par ses propres actes — neuf `created`,
+quatorze `field_changed` —, et par deux **allers-retours** qui laissent son état identique tout en
+allongeant son histoire : deux `moved` par la vraie RPC sur `…0c4`, deux `assigned` par un vrai
+`PATCH` sur `…0c1`. Les deux gestes sont conditionnés par une relecture, sans quoi chaque rejeu
+allongerait le fil de quatre lignes et le seed cesserait de converger.
+
+### Décision 206 — Une trace ne doit jamais faire échouer l'acte qu'elle trace
+
+**Problème.** `actor_id` porte une clé étrangère vers `profiles`. Un appelant dont `auth.uid()`
+désignerait un identifiant sans profil ferait échouer **la création de sa card** sur une violation
+de clé levée par la trace, non par l'acte.
+
+**Décision.** `actor_id` est renseigné par une **sous-requête** sur `profiles`, non par une
+affectation directe : sans profil, la valeur est nulle et l'événement est attribué à personne —
+exactement le comportement prévu pour un service par `docs/SCHEMA.md` §5.
+
+**Conséquence assumée.** Un acteur sans profil est indistinguable d'un service. C'est le prix, et
+il est plus faible que celui d'un audit capable de refuser une écriture métier.
+
+### Décision 207 — Aucun trigger de refus sur la suppression, et une mémoire qui ne survit pas à son objet
+
+**Problème.** « Append-only » demande que rien ne puisse être ni modifié ni supprimé. La mise à jour
+se ferme par un trigger `BEFORE UPDATE` levant `card_event_immutable`, qui vaut pour **tous** les
+rôles, propriétaire compris — MESURÉ. Le même geste sur la suppression aurait une conséquence que
+la mesure a montrée.
+
+**Mesuré.** La clé étrangère composite vers `cards` porte `ON DELETE CASCADE`, comme celle de
+`card_comments` (décision de la migration 15). Un trigger `BEFORE DELETE` de refus rendrait donc
+**impossible** `delete from public.cards`, geste d'exploitation que la migration 15 avait
+délibérément préservé.
+
+**Décision.** Pas de trigger de suppression. Le refus reste **double** pour les clients — aucun
+privilège, aucune politique — et la suppression physique reste possible au seul propriétaire de la
+base, par cascade.
+
+**Conséquence, écrite sans détour.** Une card physiquement supprimée **emporte sa mémoire**. Les
+deux issues sont écrites au §14.13 de `docs/SPEC-cards.md` — trace qui survit à l'objet, ou
+suppression physique retirée du produit — et **aucune n'est prise ici** : c'est une décision de
+rétention, donc de conformité.
+
+### Décision 208 — La clé `from` est ABSENTE quand la valeur n'existait pas
+
+**Problème.** `docs/SPEC-form-composer.md` §6.9 pose que vider un champ, c'est écrire
+`'null'::jsonb`. Une valeur SQL `NULL` et une valeur JSON `null` rendent alors le même
+`"from": null` dans le `payload`. MESURÉ : les deux lignes sont indistinguables.
+
+**Décision.** À l'insertion, le `payload` ne porte **pas** la clé `from`. À la mise à jour, il la
+porte toujours. « La clé n'est pas là » signifie « il n'y avait rien » ; « la clé vaut `null` »
+signifie « il y avait le vide ».
+
+**Conséquence.** Le `payload` d'un `field_changed` a deux formes, et le §14.6 les écrit toutes les
+deux. C'est le prix d'une distinction que le JSON ne sait pas porter autrement.
+
+### Décision 209 — Le fil est unifié à la LECTURE, un commentaire n'écrit aucun événement
+
+**Problème.** `docs/DESIGN_SYSTEM.md` §5.3 décrit « la timeline unifiée : commentaires, transitions,
+activités, emails, pièces jointes, dans un fil chronologique unique ». Deux écritures étaient
+possibles : un événement `commented` dupliquant chaque commentaire dans `card_events`, ou une fusion
+à la lecture.
+
+**Décision.** Fusion à la lecture, sur `(created_at, id)`, à partir de deux requêtes distinctes.
+Aucun type `commented` n'existe.
+
+**Motif.** Dupliquer produirait **deux représentations d'un même fait**, dont l'une survivrait à
+l'autre : un commentaire supprimé devient une pierre tombale vidée (décision 193), tandis que son
+événement, immuable, continuerait de dire qu'il a été écrit. Deux vérités sur le même acte, et
+aucune manière de les réconcilier.
+
+**Conséquence.** L'ordre **croissant** du §5.10 est reconduit sans exception, alors qu'un fil
+d'activité se lit habituellement du plus récent au plus ancien : le fil contient une conversation,
+et `CRM-043` avait écrit cette règle précisément pour que cette unité ne l'inverse pas par
+habitude. Le coût est nommé : sur une affaire longue, les faits récents seront en bas.

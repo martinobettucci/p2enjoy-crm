@@ -581,6 +581,39 @@ La section emploie donc :
 La convergence est donc celle de la **présence et de l'état**, non celle du contenu. Elle est
 vérifiée en rejouant le seed, et `scripts/verify-commentaires.sh` la contrôle.
 
+### 2.15 Événements de timeline — ajoutés par `CRM-044`
+
+**Le seed n'écrit aucun événement, et il ne le peut pas.** `card_events` n'accorde le privilège
+`INSERT` à personne — pas même à `service_role`, MESURÉ (`docs/SPEC-cards.md` §14.7). C'est la
+première section du seed dont le contenu est **entièrement dérivé** de ses autres actes : chaque
+ligne du fil est le produit d'un trigger déclenché par une écriture réelle.
+
+| Origine | Événements produits | Ce que ça démontre |
+|---|---|---|
+| §2.12, les 9 cards insérées | 9 × `created`, `actor_id` **nul** | la naissance d'une affaire, et l'attribution à un **service** |
+| §2.13, les 14 valeurs de formulaire | 14 × `field_changed`, `payload` **sans clé `from`** | la valeur qui naît, distinguée de la valeur qui change |
+| Un aller-retour d'étape sur `…0c4` | 2 × `moved` | la transition, dans les deux sens, par la **vraie** RPC `move_card` |
+| Un aller-retour de responsable sur `…0c1` | 2 × `assigned` | l'attribution, par un **vrai** `PATCH` |
+
+**Les deux allers-retours laissent l'état du seed rigoureusement identique.** La card `…0c4`
+repart de l'étape de négociation où elle était, la card `…0c1` retrouve Driss Lemoine comme
+responsable : aucune assertion des unités précédentes ne bouge, seule l'**histoire** s'allonge.
+Deux effets ne sont pas rendus à l'identique, et ils sont nommés : `entered_step_at` et `position`
+de `…0c4`, que `move_card` maintient (`docs/SPEC-cards.md` §2.9).
+
+**Convergence : la même écriture que le §2.14, pour une raison voisine.** Un événement ne peut être
+ni réécrit ni supprimé ; un rejeu qui referait les allers-retours allongerait le fil de quatre
+lignes à chaque exécution. Les deux gestes sont donc **conditionnés par une relecture** : ils ne
+sont exécutés que si la card ne porte encore **aucun** événement du type visé — `moved` pour
+`…0c4`, `assigned` pour `…0c1`. La lecture passe par la clé de service, qui a le droit de **lire**
+la table sans avoir celui d'y écrire.
+
+**Aucune des cinq autres familles n'est démontrée par le seed** : `archived`, `unarchived`,
+`trashed` et `restored` supposeraient d'archiver puis de désarchiver une card du seed, ce qui
+toucherait `archived_at` et `deleted_at` — deux colonnes dont l'état est asserté par `CRM-040`. Les
+quatre types sont exercés par `e2e/api/timeline.spec.ts` avec les jetons réels, sur une card créée
+et détruite par la preuve elle-même.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

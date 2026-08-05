@@ -3616,9 +3616,40 @@ connexion.
   et les captures qui le montraient ne représentaient plus l'état exécuté. Les quatorze captures des
   autres unités, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
 
-### CRM-044 — Timeline unifiée `[ ]`
+### CRM-044 — Timeline unifiée `[~]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.
 **DoD** : pgTAP (aucune écriture cliente possible) ; E2E ; captures.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-cards.md` §14 : l'unité tenait
+      en **deux lignes** au backlog, et **quatre** documents la nommaient sans la décrire — le §5 de
+      `docs/SCHEMA.md` pour ses colonnes et une liste de types terminée par des points de
+      suspension, le §10 du même pour son index, le §4 de `docs/SPEC-permissions-rls.md` pour une
+      règle d'accès en cinq mots, le §5.3 de `docs/DESIGN_SYSTEM.md` pour une place et **cinq
+      sources dont trois n'ont aucune table**. Écrite en quatorze sous-chapitres opposables, après
+      mesure sur la pile réelle. Commit documentaire dédié, poussé avant la première ligne de code.
+- [x] **Ce qui a été mesuré avant d'être écrit** (sondes `sonde_e1` et `sonde_ev`, créées puis
+      détruites) : un trigger `SECURITY INVOKER` est **refusé** sur une table sans privilège
+      d'écriture — et refuserait avec lui l'écriture métier ; le même en `SECURITY DEFINER` écrit,
+      et `auth.uid()` y rend **l'identifiant réel de l'appelant** ; `service_role` est refusé comme
+      `authenticated` ; `now()` donne **le même horodatage** à trois événements nés d'un seul
+      `UPDATE` quand `clock_timestamp()` en donne trois distincts et **dans l'ordre réel** ; une
+      écriture qui ne change rien ne produit **aucun** événement ; `move_card` produit un `moved`
+      avec son acteur ; un aller-retour d'étape et un aller-retour de responsable rendent la card à
+      son état de départ ; la cascade depuis `cards` **emporte** les événements (décisions 203 à
+      209).
+- [x] `docs/DESIGN_SYSTEM.md` §5.11 écrit dans le même changement : un événement est une **ligne**
+      et non une carte — la différence de forme porte la différence de nature entre une parole et un
+      fait —, quatre familles de filtres, une couleur par famille prise dans les jetons du §1, le
+      compte porté par chaque bascule comptant **la source et non le filtre**, et **deux vides
+      distincts** — « aucun événement » et « aucun élément pour ces filtres ».
+- [x] `docs/SPEC-seed.md` §2.15 : le seed **ne peut pas** écrire un événement, et sa section est la
+      première dont le contenu est entièrement dérivé de ses autres actes.
+- [x] `docs/SCHEMA.md` §5 corrigé et complété : le `CHECK` des huit types, le refus explicite de
+      `mail_received` et `mail_sent`, `clock_timestamp()` et son motif mesuré, l'absence d'
+      `updated_at` comme **conséquence** et non comme écart.
+- [x] `docs/JOURNAL.md` décisions 203 à 209, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **La migration, ses triggers et ses preuves ne sont pas écrits.** Rien de cette unité n'est
+      livré au-delà de sa spécification.
 
 ### CRM-045 — Déplacement d'une card entre channels `[ ]`
 `move_card_to_channel` avec remappage explicite.

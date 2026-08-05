@@ -15,6 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification de la mémoire d'une affaire** — `CRM-044`, `docs/SPEC-cards.md` §14,
+  `docs/DESIGN_SYSTEM.md` §5.11, `docs/SPEC-seed.md` §2.15, `docs/SCHEMA.md` §5. Écrite **avant
+  toute ligne de code** et **après mesure sur la pile réelle** : quatre documents nommaient la
+  timeline sans la décrire, et l'unité tenait en deux lignes au backlog.
+
+  Ce que la spécification tranche : les **huit** types d'événements réellement livrables et le refus
+  des deux que la messagerie apportera ; l'horodatage à `clock_timestamp()` plutôt qu'à `now()`,
+  mesuré, sans quoi trois événements nés d'une même instruction seraient rangés au hasard ;
+  l'écriture réservée aux **triggers**, refusée à tout le monde y compris au compte de service, de
+  sorte que le jeu de démonstration ne **puisse pas** fabriquer une trace ; l'immuabilité et la
+  seule porte qu'elle laisse ouverte ; la fusion du fil des commentaires et du fil des événements
+  **à la lecture**, sans duplication.
+
+  Aucun code n'accompagne ce changement.
+
 - **Les commentaires d'une affaire, côté serveur** — `CRM-043`, `docs/SPEC-cards.md` §13. Une
   affaire peut désormais porter une **discussion** : chaque membre qui a le droit d'écrire dans son
   channel peut y publier un commentaire, le corriger, ou le supprimer — et **lui seul** peut

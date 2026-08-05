@@ -325,6 +325,70 @@ panneau est donc écrit comme la première voie d'un fil unifié, non comme un c
 - **Sous 1024 px**, le panneau passe **sous** le formulaire, dans l'ordre du document : une
   conversation se lit après le dossier qu'elle commente.
 
+### 5.11 Timeline unifiée — `CRM-044`
+
+Le §5.10 annonçait le panneau de commentaires comme « la première voie d'un fil unifié ».
+`CRM-044` fond les deux : la colonne de droite du détail de card (§5.3) porte **un seul fil**,
+alimenté par deux sources — les commentaires et les événements de `card_events` — et filtrable par
+famille. Les règles du §5.10 restent en vigueur pour les commentaires ; celles ci-dessous
+s'ajoutent, elles ne les remplacent pas.
+
+- **L'ordre du §5.10 est reconduit sans exception : chronologique CROISSANT**, le plus ancien en
+  haut, le composeur en bas. Un fil d'activité se lit habituellement du plus récent au plus ancien ;
+  ce fil-là contient une conversation, et une conversation se lit dans le sens où elle s'est tenue.
+  Inverser l'un briserait l'autre.
+
+- **Un événement n'est pas une carte.** Là où un commentaire est une carte discrète
+  (`--color-surface`, `--radius-sm`), un événement est une **ligne** : une pastille d'icône de
+  28 px à gauche — carré `--radius-md`, fond doux, icône Lucide 16 px à la couleur pleine, comme
+  le §9 la définit —, un texte de 14 px, une date de 13 px `--color-text-2`. La différence de forme
+  porte la différence de nature — l'un est une parole, l'autre un fait. Sans elle, le fil serait
+  une suite de blocs équivalents où l'œil ne distinguerait plus ce qui a été dit de ce qui est
+  arrivé.
+
+- **Un filet vertical de 1 px `--color-border`** court derrière les pastilles et relie les
+  événements entre eux. Il s'interrompt derrière les commentaires : le filet est la ligne du temps
+  des faits, pas celle des paroles.
+
+- **Une couleur par famille**, et **aucune autre** — les jetons du §1, jamais une teinte inventée :
+
+  | Famille | Types | Pastille | Icône Lucide |
+  |---|---|---|---|
+  | Discussion | commentaires | `--color-surface`, texte `--color-text-2` | `MessageSquare` |
+  | Étapes | `moved` | `--color-brand-soft`, icône `--color-brand` | `ArrowRightLeft` |
+  | Champs | `field_changed` | `--color-hover`, icône `--color-text-2` | `PencilLine` |
+  | Cycle de vie | `created`, `assigned`, `archived`, `unarchived`, `trashed`, `restored` | `--color-success-soft` pour `created` et `restored`, `--color-accent-soft` pour `assigned` et `unarchived`, `--color-hover` pour `archived` et `trashed` | `Sparkles`, `UserRoundCog`, `Archive`, `ArchiveRestore`, `Trash2`, `RotateCcw` |
+
+  La couleur ne porte **aucune information seule** (§8) : le libellé dit toujours ce qui s'est
+  passé, et l'icône est redondante avec lui.
+
+- **Filtres : une barre de quatre bascules**, en haut du panneau, hauteur `--size-target`,
+  `rounded-full`, état actif en `--color-brand-soft` / `--color-brand`. Ce sont des boutons
+  `aria-pressed`, non des cases à cocher : ils n'appartiennent à aucun formulaire et ne se
+  soumettent pas. Toutes actives à l'ouverture.
+
+- **Le compte est écrit sur chaque bascule** — « Étapes 2 » — et il compte ce que la source
+  contient, **pas** ce que le filtre laisse voir. Un compte qui suivrait le filtre vaudrait toujours
+  zéro sur une famille éteinte, et ne dirait plus rien.
+
+- **Aucun nom d'acteur.** Troisième application de la règle du §12.5 après la colonne
+  « Responsable » du §5.9 et l'en-tête du §5.10 : `profiles` n'est lisible par aucun jeton
+  d'utilisateur (INC-014), et une donnée illisible n'est pas rendue **du tout** plutôt que rendue
+  vide. Le fil dit « Étape franchie », jamais « par Untel », et jamais un identifiant technique.
+
+- **Un libellé non résolu n'est pas une phrase tronquée.** Lorsque le nom d'une étape ou d'un champ
+  n'est pas disponible, la ligne montre le libellé générique de son type — « Étape franchie », sans
+  le détail. Aucune phrase n'est construite par concaténation (§10), et aucun `undefined` n'atteint
+  l'écran.
+
+- **États** (§5.8) : chargement, erreur avec reprise, et **deux vides distincts** — « aucun
+  événement pour le moment » lorsque les deux sources sont vides, et « aucun élément pour ces
+  filtres » lorsqu'elles ne le sont pas. Confondre les deux ferait passer un filtre trop restrictif
+  pour une affaire sans histoire.
+
+- **Sous 1024 px**, le fil passe sous le formulaire, comme le panneau du §5.10, et la barre de
+  filtres défile horizontalement dans son conteneur plutôt que de se replier (§7).
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

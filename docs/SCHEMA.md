@@ -502,10 +502,26 @@ Timeline **append-only**, alimentée par triggers. Aucune écriture directe par 
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `id`, `card_id`, `workspace_id` | `uuid` | |
-| `type` | `text` | `created`, `moved`, `field_changed`, `assigned`, `mail_received`, `mail_sent`, `archived`, … |
-| `actor_id` | `uuid` | nul si l'auteur est un service |
-| `payload` | `jsonb` | avant/après |
-| `created_at` | `timestamptz` | |
+| `type` | `text` | `CHECK` sur les **huit** valeurs livrées : `created`, `moved`, `assigned`, `archived`, `unarchived`, `trashed`, `restored`, `field_changed` |
+| `actor_id` | `uuid` | nul si l'auteur est un service — FK `profiles(id)` `ON DELETE SET NULL` |
+| `payload` | `jsonb` | non nul, défaut `'{}'` ; avant/après, **sans aucun libellé** (`docs/SPEC-cards.md` §14.6) |
+| `created_at` | `timestamptz` | non nul, défaut **`clock_timestamp()`** et non `now()` |
+
+**`clock_timestamp()` et non `now()`, et c'est mesuré.** `now()` rend l'heure de début de
+transaction : trois événements écrits par un même `UPDATE` porteraient le même horodatage, et
+l'ordre du fil deviendrait celui, arbitraire, de leurs `uuid`. MESURÉ le 2026-08-05 :
+`clock_timestamp()` rend trois valeurs distinctes, dans l'ordre réel des écritures
+(`docs/SPEC-cards.md` §14.3).
+
+**`mail_received` et `mail_sent` sont REFUSÉS par le `CHECK`** tant que `CRM-054` et `CRM-058`
+n'écrivent pas ces événements : une valeur autorisée que rien ne produit laisse croire à une
+capacité inexistante. `unarchived` et `restored` s'y ajoutent en revanche, le §4 de
+`docs/SPEC-cards.md` posant que l'archivage et la corbeille sont **réversibles**.
+
+**Aucune colonne `updated_at`**, et ce n'est pas un écart aux conventions générales mais leur
+conséquence : une ligne qu'aucun rôle ne peut modifier — pas même `service_role`, pas même le
+propriétaire, un trigger `BEFORE UPDATE` levant `card_event_immutable` — n'a pas de date de
+dernière modification.
 
 ### Tables satellites
 
