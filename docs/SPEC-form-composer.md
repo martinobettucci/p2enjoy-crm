@@ -317,18 +317,154 @@ dénoncer, un identifiant qu'elle ne résout pas.
 définitivement une transition pour une erreur de saisie qu'aucun utilisateur ne peut corriger depuis
 le produit. Le comportement est figé par une assertion.
 
-## 4. Rendu
+## 4. Rendu — `CRM-037`
 
-- Les champs sont ordonnés par `position`.
-- Un champ `hidden` à l'étape courante **mais portant une valeur** est affiché dans une section
-  repliée « Informations d'autres étapes », en lecture seule. Masquer purement et simplement une
-  donnée saisie serait une perte d'information silencieuse.
-- Un champ `required` porte un astérisque et la mention explicite « requis pour passer à
-  <étape> » : l'utilisateur comprend la raison de l'obligation.
-- Les erreurs sont affichées au niveau du champ, avec `role="alert"` et association
-  `aria-describedby`.
-- Lorsqu'une transition est refusée pour champs manquants, l'interface met en évidence les
-  champs concernés et fait défiler jusqu'au premier.
+Ce chapitre a été **réécrit avant la première ligne de code de `CRM-037`**, le 2026-08-05, et
+**après mesure** du seed réellement appliqué sur la pile de développement : les sept champs, les
+dix-sept règles, les neuf cards et les quatorze valeurs citées en exemple ci-dessous ont été lues
+en base, elles ne sont pas inventées. Il tenait auparavant en cinq lignes, qui disaient *ce que*
+l'écran montre sans jamais dire *comment* il le compose ni *ce qu'il faut prouver* de lui.
+
+Les cinq règles d'origine sont conservées mot pour mot — elles ouvrent les §4.2 à §4.5 — et rien
+n'y est retiré.
+
+### 4.1 La composition, et pourquoi elle ne part jamais des règles
+
+Le §3.1 le pose déjà : « le formulaire d'une étape ne se lit **jamais** en listant les règles de
+cette étape, mais en listant les **champs du workflow** puis en appliquant les règles trouvées ».
+Le rendu en tire un algorithme, et un seul :
+
+1. lire les champs du workflow de la card, **ordonnés par `position`** ;
+2. pour chacun, chercher la règle du couple (champ, étape courante) ; **son absence vaut
+   `visible`** (§3.1) ;
+3. lire les valeurs de la card, indexées par champ ;
+4. répartir chaque champ dans **exactement une** des trois destinations du §4.2.
+
+MESURÉ sur le seed, workflow par défaut, étape `Prospection` : six champs actifs, cinq règles pour
+cette étape, donc **un champ sans règle** — `decideur-identifie` — qui doit apparaître comme
+`visible`. Une lecture par les règles seules le perdrait, et l'écran serait faux sans qu'aucune
+erreur ne le signale.
+
+### 4.2 Les trois destinations, et la seule qui ne soit pas dans le §3.1
+
+> Les champs sont ordonnés par `position`.
+
+> Un champ `hidden` à l'étape courante **mais portant une valeur** est affiché dans une section
+> repliée « Informations d'autres étapes », en lecture seule. Masquer purement et simplement une
+> donnée saisie serait une perte d'information silencieuse.
+
+| Destination | Qui y va |
+|---|---|
+| **Formulaire de l'étape** | champ actif dont la visibilité résolue est `visible` ou `required` |
+| **Section repliée « Informations d'autres étapes »** | champ dont la visibilité résolue est `hidden` **et** qui porte une valeur renseignée (§4.3) ; **et** champ **archivé** portant une valeur renseignée |
+| **Rien du tout** | champ `hidden` sans valeur ; champ archivé sans valeur |
+
+Le champ **archivé** est la seule addition à la lettre du §4 d'origine, et elle ne vient pas de
+nulle part : le §5 pose que l'archivage « retire un champ des formulaires **sans supprimer les
+valeurs déjà saisies**, qui restent consultables dans la section repliée ». Le §5 nomme donc déjà
+cette destination ; le §4 ne la nommait pas. Elle est écrite ici plutôt que laissée à
+l'interprétation du composant.
+
+MESURÉ sur le seed : la card `…0000c6` (« Piste entrante à qualifier ») est à `Prospection`, où
+`motif-perte` est `hidden`, et elle **porte** une valeur pour ce champ. La section repliée n'est
+donc pas une hypothèse d'écran : le seed la remplit.
+
+### 4.3 « Renseigné » : l'interface lit la même définition que la garde
+
+Le §6.6 définit « renseigné » et le confie à `app.valeur_de_champ_est_vide(jsonb)`, en exigeant que
+« la sixième vérification de `move_card` et le rendu de `CRM-037` [en] donnent la **même**
+lecture, faute de quoi l'interface annoncerait passable une transition que la garde refuse ».
+
+Cette exigence n'est pas prouvable par la lecture des deux codes : ils sont écrits dans deux
+langages et vivent dans deux processus. Elle est donc rendue vérifiable par un **tableau de cas
+partagé** :
+
+- le tableau vit dans le code de l'interface, à côté du prédicat, et énumère les huit familles du
+  §6.6 — `null` SQL, `'null'::jsonb`, chaîne vide, chaîne d'espaces, tableau vide, et les contre-cas
+  `false`, `0`, `"0"` — plus les valeurs ordinaires de chaque type ;
+- le **test unitaire** de l'interface l'exerce contre le prédicat TypeScript ;
+- une **preuve d'API** écrit chacune de ces valeurs dans une vraie ligne `card_field_values`, par
+  la vraie route, puis demande à `move_card` une transition qui **exige** ce champ, et relève si le
+  refus `missing_required_fields` tombe.
+
+Les deux lectures sont ainsi comparées **sur les mêmes valeurs**, chacune par son propre chemin.
+Une divergence future rend la preuve d'API rouge, quel que soit celui des deux côtés qui a bougé.
+
+### 4.4 Ce qu'un champ exigé affiche, et pourquoi il le dit
+
+> Un champ `required` porte un astérisque et la mention explicite « requis pour passer à
+> <étape> » : l'utilisateur comprend la raison de l'obligation.
+
+La mention nomme l'étape **courante**, celle dont la règle exige le champ, et non une étape à
+venir : le §3.4 pose qu'un champ `required` sur *E* est exigé « au moment où une card entre dans
+*E* ». Pour une card **déjà** dans *E*, la mention explique donc ce qui a été — ou aurait dû être —
+exigé à l'entrée, et ce que la garde exigera de nouveau à la prochaine entrée dans *E*.
+
+Le §3.4 pose aussi que « les données déjà existantes ne sont jamais invalidées rétroactivement :
+une card entrée dans *E* avant l'ajout d'une règle `required` y reste, et le champ manquant est
+**signalé dans l'interface sans bloquer la lecture** ». Le rendu tient les deux : un champ exigé et
+vide est mis en évidence, et rien de l'écran n'est retiré pour autant.
+
+Les champs exigés par la **transition** (`require_fields`, §3.5) ne sont pas connus du rendu d'une
+étape : ils dépendent de l'arête empruntée, donc d'un geste qui n'a pas encore eu lieu. Ils
+apparaîtront lorsque l'interface proposera les transitions — `CRM-041`. L'écart est nommé au §4.7.
+
+### 4.5 Erreurs, accessibilité et états
+
+> Les erreurs sont affichées au niveau du champ, avec `role="alert"` et association
+> `aria-describedby`.
+
+> Lorsqu'une transition est refusée pour champs manquants, l'interface met en évidence les
+> champs concernés et fait défiler jusqu'au premier.
+
+Contrat vérifiable, aligné sur `docs/DESIGN_SYSTEM.md` §5.7 et §8 :
+
+| Exigence | Ce qui la rend vérifiable |
+|---|---|
+| Libellé lié au champ | `label` porteur d'un `for` résolvant vers l'`id` du contrôle |
+| Astérisque | marque visuelle **doublée** d'un texte lisible par lecteur d'écran ; jamais l'astérisque seul |
+| Message d'exigence | élément portant `role="alert"`, cité par l'`aria-describedby` du contrôle |
+| Champ exigé et vide | `aria-invalid="true"` sur le contrôle |
+| Section repliée | `details`/`summary` natifs, ouvrables au clavier, contenu en lecture seule |
+| Contrôle indisponible | reste **lisible** et **explique pourquoi** (`docs/DESIGN_SYSTEM.md` §8) |
+
+Les quatre états systématiques du §5.8 du design system sont traités par l'écran hôte : chargement
+(squelettes), vide (« aucun champ pour cette étape »), erreur (message et reprise), card
+introuvable ou non consentie (état explicite, jamais une page blanche).
+
+Le **défilement jusqu'au premier champ concerné** appartient au geste de transition, qui n'existe
+pas encore : il est nommé au §4.7 plutôt qu'implémenté sans rien à quoi le rattacher.
+
+### 4.6 L'écran hôte, et pourquoi c'est une route
+
+Le formulaire est la colonne gauche du **détail de card** (`docs/DESIGN_SYSTEM.md` §5.3). Il lui
+faut donc une adresse. `CRM-037` livre la route `/tracks/:slugTrack/:slugChannel/cards/:idCard`,
+et **rien d'autre de cet écran** : la timeline (`CRM-044`), les commentaires (`CRM-043`) et les
+champs d'en-tête de la card (`CRM-040`) restent dus par leurs unités.
+
+C'est le procédé de `CRM-021`, qui a livré la route d'un track parce que la barre d'onglets n'avait
+aucun hôte. Le motif est le même, et il est écrit plutôt que supposé : un composant qu'aucune
+adresse n'atteint ne peut être ni regardé, ni éprouvé dans le navigateur, ce que `CLAUDE.md` §16
+exige de toute modification d'interface.
+
+La card est désignée par son **identifiant** et non par un slug : `docs/SPEC-cards.md` ne lui en
+donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
+publique le divulguerait.
+
+### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
+
+- **Aucune écriture.** Enregistrer une valeur exige une session, que la webapp n'a pas (INC-021).
+  Les contrôles sont donc rendus **indisponibles**, lisibles, et l'écran **dit pourquoi** — ce que
+  `docs/DESIGN_SYSTEM.md` §8 exige d'un état désactivé. Un formulaire où l'on saisirait sans
+  pouvoir enregistrer serait un piège ; un formulaire qui n'affiche rien serait une perte
+  d'information.
+- **Aucune transition.** Le menu des transitions déclarées et le glisser-déposer sont `CRM-041`.
+  Sans eux, ni les champs exigés par `require_fields` (§4.4), ni la mise en évidence consécutive à
+  un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste déclencheur.
+- **Aucun parcours E2E « transition bloquée → saisie → transition réussie »**, que la Definition of
+  Done de `CRM-037` exige : il suppose les deux points ci-dessus. INC-062, arbitrage attendu.
+- **Aucune résolution de `user`, `contact` ni `file`** : le §6.5 ne les résout pas non plus
+  (INC-053). Le rendu affiche leur valeur brute plutôt qu'un nom qu'il ne peut pas obtenir.
 
 ## 5. Édition du formulaire
 
@@ -662,10 +798,27 @@ rouvrirait `CRM-035`.
 
 ### 7.3 Preuves attendues de `CRM-037`
 
+Tableau d'origine, conservé :
+
 | Niveau | Preuves attendues |
 |---|---|
 | E2E | Transition bloquée avec message compréhensible, saisie du champ, transition réussie ; champ d'une autre étape visible en lecture seule |
 | Visuel | Formulaire à chaque étape, état d'erreur, section repliée, rendu sur mobile |
+
+**Ce que ce tableau suppose, et qui n'existe pas.** « Transition bloquée », « saisie » et
+« transition réussie » sont trois gestes d'un utilisateur **connecté** devant un contrôle de
+transition. Le premier manque par INC-021, le second et le troisième par `CRM-041`, ordonnée
+**après** cette unité. La première ligne n'est donc pas atteignable, et le constat est porté par
+**INC-062** plutôt que contourné.
+
+Ce qui est atteignable, et exigé de `CRM-037` :
+
+| Niveau | Preuves attendues |
+|---|---|
+| Unitaire | La composition du §4.1 sur les quatre destinations du §4.2, l'absence de règle valant `visible`, l'ordre par `position`, le champ archivé porteur d'une valeur, le prédicat « renseigné » du §4.3 sur le tableau de cas partagé, et le rendu du composant réel : astérisque, mention « requis pour passer à », `role="alert"`, `aria-describedby`, `aria-invalid`, section repliée |
+| API | Le tableau de cas du §4.3 écrit dans de vraies lignes `card_field_values` par la vraie route, chaque valeur confrontée au refus `missing_required_fields` de `move_card` : la lecture SQL de « renseigné » et la lecture TypeScript sont comparées sur les mêmes valeurs |
+| E2E | La route du §4.6 atteinte par un appelant **anonyme** : elle rend l'état « card introuvable », qui est le refus réel du backend ; puis, **la réponse réseau substituée** — procédé endossé par `docs/DESIGN_SYSTEM.md` §12.5 —, le formulaire chargé, sa section repliée ouverte au clavier, son état d'exigence, et les quatre paliers du §7 du design system |
+| Visuel | Captures des états ci-dessus, produites depuis l'application réellement construite et servie, **observées** avant livraison |
 
 ## 8. Points ouverts
 

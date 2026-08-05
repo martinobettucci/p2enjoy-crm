@@ -12,6 +12,59 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-062 — La Definition of Done de `CRM-037` exige un parcours de transition que `CRM-041`, ordonnée après elle, est seule à pouvoir livrer
+
+**Nature :** contradiction d'ordonnancement entre la Definition of Done de `CRM-037`
+(`docs/BACKLOG.md`), `docs/SPEC-form-composer.md` §7.3 et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-05, pendant la spécification de `CRM-037`.
+
+La Definition of Done de `CRM-037` exige « **E2E (transition bloquée, saisie, transition
+réussie)** ». Ce parcours suppose trois choses, dont **aucune** n'appartient à cette unité :
+
+1. une **session** — la webapp est un appelant anonyme, INC-021, arbitrage ouvert depuis le
+   2026-08-04 ;
+2. un **contrôle de transition** dans l'interface — le menu des transitions déclarées et le
+   glisser-déposer sont l'objet de `CRM-041` (`docs/DESIGN_SYSTEM.md` §5.1) ;
+3. une **écriture de valeur** depuis l'écran, qui exige elle aussi la session du point 1.
+
+Or `docs/MASTER_PLAN.md` §2 place `CRM-041` **après** `CRM-037` — et cet ordre est justifié :
+« le form composer s'appuie sur les étapes », et le board s'appuie sur la garde `move_card`. Il n'y
+a pas d'erreur d'ordonnancement à corriger ; il y a une Definition of Done écrite en supposant un
+écran que l'ordre du plan livre plus tard.
+
+C'est le sixième cas du motif déjà relevé — INC-010 (clés étrangères), INC-013 (jointures
+d'autorisation), INC-029 (une colonne), INC-031 (une cible d'archivage), INC-037 (des champs à
+copier) : **une preuve dont l'objet n'existe pas encore**. La différence est qu'ici l'objet manquant
+n'est pas une table mais un **geste d'interface**.
+
+**Ce qui est mesuré, et qui n'est pas une supposition :** le seed porte neuf cards, sept étapes et
+dix-sept règles de visibilité ; la card `…0000c6` est à `Prospection`, où `motif-perte` est
+`hidden`, et porte pourtant une valeur pour ce champ. Le formulaire d'une étape et sa section
+repliée sont donc **entièrement démontrables aujourd'hui**. Seule la **transition depuis l'écran**
+ne l'est pas.
+
+**Comportement retenu :** `CRM-037` livre le rendu, son écran hôte et ses preuves atteignables
+(`docs/SPEC-form-composer.md` §7.3, second tableau), et **n'invente ni contrôle de transition, ni
+parcours de connexion**. L'écart est nommé dans `docs/BACKLOG.md`, et l'unité reste `[~]`.
+
+**Trois options d'arbitrage :**
+
+1. **Déplacer cette exigence dans la Definition of Done de `CRM-041`**, l'unité qui livre le geste
+   dont elle dépend, en la retirant de `CRM-037` ;
+2. **La conserver dans `CRM-037`** et accepter que l'unité ne puisse passer `[x]` qu'après
+   `CRM-041`, c'est-à-dire hors de son rang dans le plan ;
+3. **Créer une unité de jonction** — par exemple `CRM-037b`, placée après `CRM-041` — qui porte le
+   seul parcours « transition bloquée → saisie → transition réussie ».
+
+**Action attendue du responsable :** trancher. L'option 1 a la préférence de rédaction — elle laisse
+chaque preuve à l'unité qui livre son objet, et c'est le raisonnement déjà retenu pour INC-031 —
+mais la décision ne revient pas à l'agent, et INC-021 conditionne les trois.
+
+**Lié à :** INC-021 (aucun écran de connexion), INC-031 et INC-037 (le même motif sur d'autres
+objets), INC-053 (`user` et `contact` non résolus, donc rendus bruts).
+
+---
+
 ### INC-061 — `scripts/verify-cards.sh` mesure `npm run test:sql` avant de retirer son propre jeu d'essai, et une suite livrée après lui le dénonce
 
 **Nature :** défaut d'outillage de vérification, mesuré ; aucun comportement du produit en cause.

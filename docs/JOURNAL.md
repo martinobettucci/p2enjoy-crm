@@ -5421,3 +5421,68 @@ négociable**. Le précédent existe et est documenté — INC-034 —, il est s
 suffit pas : il faut la reposer **avant le premier commit**, ce qu'aucun mécanisme du dépôt ne
 garantit aujourd'hui. Le correctif durable — script d'amorçage versionné, ou variable
 d'environnement fournie par la routine — cesse d'être un confort.
+
+### Décision 160 — Le chapitre « Rendu » disait ce que l'écran montre sans dire comment il le compose, et il est réécrit avant la première ligne de code
+
+**Problème.** `CRM-037` est la première unité `[ ]` du plan dont l'ordre est atteint
+(`docs/MASTER_PLAN.md` §2, étape 3.c). Sa spécification tenait en **cinq lignes** —
+`docs/SPEC-form-composer.md` §4 —, écrites à `CRM-000`, avant que `form_fields`,
+`form_field_rules`, `card_field_values` et `move_card` n'existent. Elles décrivent correctement ce
+que l'écran **montre**, et ne disent rien de ce qu'il faut **composer** pour y arriver, ni de ce
+qu'il faut en **prouver**.
+
+**Ce que la mesure a montré, et qui a orienté la rédaction.** Le seed a été relu en base, et non de
+mémoire : sept champs dont un archivé, dix-sept règles de visibilité, neuf cards, quatorze valeurs.
+Deux faits en sortent, qu'aucune prose n'annonçait :
+
+1. à l'étape `Prospection`, cinq règles pour six champs actifs : **un champ n'a aucune règle** et
+   doit apparaître par le défaut `visible` du §3.1. Une lecture par les règles le perdrait sans
+   qu'aucune erreur ne le signale ;
+2. la card `…0000c6` est à `Prospection`, où `motif-perte` est `hidden`, et **porte pourtant une
+   valeur** pour ce champ. La section repliée « Informations d'autres étapes » n'est donc pas une
+   hypothèse d'écran : le seed la remplit déjà.
+
+**Décision.** Le §4 est réécrit en contrat vérifiable — algorithme de composition, trois
+destinations, définition de « renseigné », contrat d'accessibilité, écran hôte, et ce qui n'est pas
+livré —, et le §7.3 est doublé d'un second tableau qui énumère les preuves **atteignables**. Les
+cinq règles d'origine sont **citées mot pour mot** plutôt que reformulées : elles sont justes, elles
+étaient seulement incomplètes. Commit documentaire dédié, poussé avant la première ligne de code
+(`CLAUDE.md` §5).
+
+**Une addition, et une seule, au-delà de la lettre du §4 : le champ archivé.** Le §5 pose depuis
+`CRM-000` que l'archivage d'un champ « le retire des formulaires sans supprimer les valeurs déjà
+saisies, qui restent consultables **dans la section repliée** ». Le §5 nommait donc cette
+destination que le §4 ignorait. Elle est écrite au §4.2 plutôt que laissée à l'interprétation du
+composant, et le seed la rend démontrable — il porte un champ archivé, et une card porte une valeur
+pour lui.
+
+**Conséquence pour la suite.** Le §4.3 impose que l'interface et `app.valeur_de_champ_est_vide`
+donnent la même lecture de « renseigné ». Deux codes, deux langages, deux processus : l'égalité
+n'est pas démontrable par relecture. Elle est donc rendue vérifiable par un **tableau de cas
+partagé**, exercé d'un côté par le test unitaire du prédicat TypeScript, de l'autre par une preuve
+d'API qui écrit les mêmes valeurs dans de vraies lignes et demande à `move_card` de trancher. Une
+divergence future rend la preuve rouge, quel que soit le côté qui a bougé — mécanisme de la
+décision 51.
+
+### Décision 161 — La Definition of Done de `CRM-037` exige un geste que l'unité suivante est seule à livrer, et l'écart est consigné plutôt que contourné
+
+**Problème.** La Definition of Done de `CRM-037` exige « E2E (transition bloquée, saisie,
+transition réussie) ». Les trois gestes supposent une session (INC-021), un contrôle de transition
+(`CRM-041`) et une écriture depuis l'écran (INC-021 de nouveau). `docs/MASTER_PLAN.md` §2 place
+`CRM-041` **après** `CRM-037`, et cet ordre est justifié — le board s'appuie sur la garde
+`move_card`, le formulaire sur les étapes.
+
+**Observation.** Il n'y a donc **pas d'erreur d'ordre à corriger**. Il y a une preuve écrite en
+supposant un écran que le plan livre plus tard. C'est le sixième cas du motif d'INC-010, INC-013,
+INC-029, INC-031 et INC-037 ; la nouveauté est que l'objet manquant n'est pas une table mais un
+**geste d'interface**.
+
+**Décision.** Trois options sont portées à l'arbitrage — INC-062 —, et **aucune n'est appliquée en
+silence**. `CRM-037` livre le rendu, son écran hôte et ses preuves atteignables ; elle n'invente ni
+contrôle de transition, ni parcours de connexion. L'unité restera `[~]` avec sa limite nommée, comme
+`CRM-030` l'a fait pour sa garde d'archivage.
+
+**Ce que ce constat change pour le chunk 3.** C'est la **sixième** unité consécutive à buter sur
+INC-021, et la première dont la Definition of Done est rendue inatteignable par une **unité du
+plan** autant que par l'arbitrage manquant. L'arbitrage d'INC-021 ne débloquerait pas à lui seul la
+première ligne du §7.3 : il faudrait encore `CRM-041`.
