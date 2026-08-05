@@ -615,3 +615,343 @@ l'index du §2.8 seraient livrés sans aucune donnée pour les exercer. Deux car
 | Harnais | `scripts/verify-cards.sh`, rejouable, **non complaisant** : éprouvé par des dégradations réelles de la base, chacune faisant passer une opération qui doit être refusée, la restauration étant constatée |
 | E2E d'interface | **Impossible** — INC-021, la webapp reste un appelant anonyme faute d'écran de connexion. Une card est par construction invisible à un anonyme |
 | Visuel | **Impossible**, même motif |
+
+---
+
+## 12. Interface : la vue liste — `CRM-042`
+
+Ce chapitre n'existait pas. `CRM-042` tenait en **deux lignes** au backlog — « Tri, filtres,
+densité maîtrisée, pagination. **DoD** : E2E ; comportement avec données longues vérifié en
+capture » —, et le reste du dépôt ne la nommait qu'en creux : le §1.2 ci-dessus la range hors du
+périmètre de `CRM-040`, le §4 l'inscrit parmi les vues où une card **active** est visible, le §7.1
+de `docs/SPEC-workflow-engine.md` écarte du board « une vue liste : tri, filtres et pagination sont
+`CRM-042` », et le §12.6 de `docs/DESIGN_SYSTEM.md` annonce qu'elle « débordera de la même façon »
+que la barre d'onglets. Quatre renvois, aucun contrat.
+
+Il est écrit **après mesure de la pile réelle** — PostgREST `v14.12`, PostgreSQL
+`supabase/postgres:17.6.1.136`, le seed en base — et non de mémoire. Les codes HTTP, les en-têtes
+`Content-Range` et le comportement du tri paginé cités ci-dessous ont été **observés** le
+2026-08-05, les deux derniers sur des tables sondes jetables `public.sonde_l1` et
+`public.sonde_l2`, détruites avant rédaction selon le procédé de `docs/JOURNAL.md` décision 52 :
+`to_regclass('public.sonde_l2')` rend `NULL`.
+
+### 12.1 Ce que la vue liste est, et ce qu'elle n'est pas
+
+La vue liste est la **seconde lecture d'un même channel**. Le board (`CRM-041`) montre les cards
+rangées par le graphe ; la liste les montre rangées par leurs **propres colonnes** — titre, montant,
+échéance, date de création — avec un filtre et une pagination. Le board répond à « où en est
+chaque affaire ? » ; la liste répond à « laquelle, parmi toutes, dois-je ouvrir ? ».
+
+C'est la raison pour laquelle sa spécification vit **ici**, dans le document des cards, et non dans
+celui de la garde : elle est le miroir de la **table**, quand le board est le miroir du **graphe**.
+Le §7.1 de `docs/SPEC-workflow-engine.md` avait déjà tracé la frontière ; ce chapitre la tient.
+
+Elle **n'est pas** :
+
+- **une autorisation.** Ce qu'elle montre est ce que la RLS a consenti. `CLAUDE.md` §10 interdit
+  qu'un écran porte une règle d'accès, et aucune ligne de cette vue n'en porte ;
+- **un écran de création, d'édition, d'archivage ou de corbeille.** Aucun n'existe (§1.2), et cette
+  unité n'en livre aucun. La liste **lit** ;
+- **un déplacement d'affaire.** Le geste est celui du board, gardé par `move_card` (`CRM-034`).
+  Offrir un second chemin d'écriture ici en ferait une seconde définition du même geste ;
+- **une vue des archives ni une corbeille.** Le §4 leur promet des vues distinctes ; aucune unité
+  du backlog ne les porte. La liste applique la définition d'« active » du §5, **la même** que le
+  board et que la première vérification de `move_card` ;
+- **une recherche globale.** La barre de recherche de l'en-tête (`docs/DESIGN_SYSTEM.md` §4) porte
+  sur tout le workspace et n'est portée par aucune unité. Le filtre textuel de ce chapitre est
+  **borné au channel ouvert**.
+
+### 12.2 Où elle s'ouvre, et pourquoi l'adresse porte tout
+
+La liste s'ouvre sur une route **propre** : `/tracks/:slugTrack/:slugChannel/liste`. Le board garde
+`/tracks/:slugTrack/:slugChannel`, qui reste la vue par défaut d'un channel.
+
+**Le tri, le filtre, la recherche et le rang de page vivent dans la chaîne de requête**, non dans
+l'état du composant :
+
+```
+/tracks/conseil-ia/grands-comptes/liste?tri=amount&sens=desc&etape=<uuid>&q=refonte&page=2
+```
+
+Trois motifs, et aucun n'est esthétique :
+
+1. **Une pagination qui se perd au rechargement ment sur l'endroit où l'on est.** L'utilisateur qui
+   recharge la page 3 doit retrouver la page 3, et celui qui colle son adresse à un collègue doit
+   lui montrer ce qu'il voit.
+2. **Aucune persistance côté client n'est introduite.** `CLAUDE.md` §11 exige que toute donnée
+   posée sur l'appareil appartienne à l'une des trois catégories ; un tri rangé dans
+   `localStorage` n'appartient à aucune, et même `sessionStorage` serait un stockage que personne
+   n'a demandé. L'URL n'est pas un stockage : elle est l'écran.
+3. **Les preuves ouvrent un état directement.** Un scénario qui doit capturer la page 2 d'un tri
+   descendant n'a pas à reproduire quatre clics pour y arriver : il ouvre l'adresse. C'est ce qui
+   rend la capture « données longues » de la Definition of Done reproductible.
+
+**Un paramètre absent, inconnu ou hors bornes se replie sur son défaut, et l'écran n'affiche
+aucune erreur** : une adresse tapée à la main n'est pas une panne. Les défauts sont `tri=title`,
+`sens=asc`, aucune étape, aucune recherche, `page=1`. Un `tri=couleur_préférée` ne devient jamais
+un `order=couleur_préférée` envoyé à l'API — la valeur est comparée à la liste close du §12.4
+avant d'entrer dans une requête.
+
+### 12.3 Ce que la liste lit, et en combien de requêtes
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 0 | le channel courant | résolu **dans la liste déjà chargée** par la coquille | — | aucune requête, comme au §7.2 de `docs/SPEC-workflow-engine.md` |
+| 1 | `workflow_steps` + `workflow_nodes_catalog` embarqué | `workflow_id=eq.<workflow du channel>` | `position` | le **libellé et la couleur** de l'étape de chaque ligne, et les choix du filtre par étape |
+| 2 | `cards` | `channel_id=eq.<channel>`, `archived_at=is.null`, `deleted_at=is.null`, plus les filtres du §12.5 | celui du §12.4 | la page courante **et** le total |
+
+**Deux requêtes, pas quatre.** `workflow_transitions` et `form_fields` ne sont pas lues : la liste
+n'offre aucun déplacement, donc aucune transition à proposer et aucun refus à traduire. Une requête
+qui ne sert rien est une requête de trop.
+
+**La lecture des étapes est celle du board, pas une seconde.** `lireEtapes` et `resoudreEtape`
+vivent dans `webapp/src/lib/board.ts` et y restent : la liste les **importe**. C'est la règle de la
+décision 167 — la même donnée lue deux fois finit par être lue de deux façons —, déjà appliquée à
+`projeterChannels` et à `workflow_id`.
+
+**Le total est demandé dans la même requête que la page**, par `Prefer: count=exact`. MESURÉ,
+`Range: 0-1` sur les trois cards actives de `grands-comptes` :
+
+```
+HTTP/1.1 206 Partial Content
+Content-Range: 0-1/3
+```
+
+**`count=exact` et non `count=planned`.** MESURÉ sur les mêmes trois lignes : `count=planned` rend
+`Content-Range: 0-0/1` — l'estimation du planificateur, **fausse d'un facteur trois**. Une
+pagination construite sur une estimation afficherait un nombre de pages qui n'existe pas. Le coût
+d'un `count(*)` exact est assumé et **borné** : le filtre `channel_id` est servi par
+`cards_channel_step_position_idx`, et le point est rouvert au §12.11 si le volume l'impose.
+
+**Le responsable n'est pas affiché, et la colonne n'existe pas.** MESURÉ avec le jeton réel de
+l'administratrice : `GET /rest/v1/profiles?select=id,full_name` rend `200` et `[]` — INC-014,
+arbitrage attendu. C'est le constat du §7.2 de `docs/SPEC-workflow-engine.md`, inchangé. Afficher
+`owner_id` à la place d'un nom serait la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit :
+la colonne « Responsable » n'est **pas** rendue du tout, plutôt que rendue vide.
+
+### 12.4 Le tri, et pourquoi il doit être TOTAL
+
+Quatre tris sont offerts, chacun dans les deux sens :
+
+| Clé | Colonne | Défaut de sens | Motif |
+|---|---|---|---|
+| `title` | `cards.title` | `asc` | le tri par défaut de la vue |
+| `amount` | `cards.amount` | `desc` | on cherche la plus grosse affaire, pas la plus petite |
+| `next_action_at` | `cards.next_action_at` | `asc` | on cherche l'échéance la plus proche |
+| `created_at` | `cards.created_at` | `desc` | on cherche la plus récente |
+
+La liste est **close**. Une clé absente de ce tableau ne devient jamais un `order=` : elle se replie
+sur `title` (§12.2). Sans cette clôture, la chaîne de requête dicterait à PostgREST le nom d'une
+colonne, ce qui n'est pas une faille de droit — la RLS juge les lignes, pas les colonnes
+demandées — mais laisserait un appelant sonder l'existence d'une colonne par la différence entre un
+`200` et un `400`.
+
+**Les valeurs absentes ne remontent jamais en tête** : tout ordre porte `nullslast`, dans les deux
+sens. MESURÉ sur `inter-entreprises`, `order=amount.desc.nullslast,title.asc` :
+`Formation Data & IA — promo 2026` (28 000 CHF) précède `Piste entrante à qualifier` (montant nul).
+Une card sans montant n'est pas la plus grosse affaire du channel.
+
+**Tout tri est complété par `id`, et ce n'est pas une précaution : c'est une correction de défaut,
+mesurée.** PostgreSQL ne promet **aucun** ordre entre deux lignes de clé de tri égale, et une
+pagination qui s'y fie perd ou duplique des lignes en silence. MESURÉ sur la sonde `sonde_l2`,
+200 000 lignes portant toutes la **même** clé, parcourues page par page, quatre pages de cinq :
+
+| Tri | Lignes rendues | Lignes **distinctes** |
+|---|---|---|
+| `order by cle` — non total | 20 | **17** |
+| `order by cle, id` — total | 20 | **20** |
+
+Trois lignes rendues deux fois, donc trois lignes que la marche n'a **jamais** montrées. Rien dans
+l'écran ne l'aurait signalé : chaque page était pleine, le total était juste, et les affaires
+manquantes n'existaient simplement plus pour l'utilisateur. Le second critère est `id`, clé
+primaire donc unique : il rend l'ordre **total**, et le résultat identique d'un plan à l'autre.
+
+`title` est ajouté comme critère intermédiaire pour les trois tris qui ne portent pas sur lui —
+deux affaires de même montant se rangent alors par leur nom, ce qu'un utilisateur peut prévoir,
+plutôt que par un identifiant qu'il ne voit pas. L'ordre complet est donc :
+
+```
+order=<clé>.<sens>.nullslast,title.asc,id.asc
+```
+
+**Aucun index ne sert ces tris, et c'est assumé.** MESURÉ, plan du tri par titre sur
+`grands-comptes` : `Sort` au-dessus d'un `Index Scan using cards_channel_step_position_idx`. Le
+filtre par channel est indexé, l'ordre ne l'est pas. Poser quatre index pour quatre tris sur une
+table qui porte neuf lignes serait une optimisation sans mesure, que `CLAUDE.md` §21 proscrit. Le
+point est ouvert au §12.11.
+
+### 12.5 Les filtres
+
+Deux filtres, tous deux **côté serveur** :
+
+| Filtre | Requête | Motif |
+|---|---|---|
+| **Étape** | `current_step_id=eq.<uuid>` | la question la plus fréquente d'un channel : « que reste-t-il en négociation ? » |
+| **Recherche** | `search_tsv=plfts(french).<termes>` | la colonne générée du §2.7, et son index GIN |
+
+**Filtrer dans le composant serait un mensonge dès la seconde page.** Un filtre appliqué après la
+pagination ne verrait que les 25 lignes rapportées : une affaire de la page 3 ne sortirait jamais
+d'une recherche. Le filtre appartient donc à la requête, avant `Range`, et le total du §12.3 est
+celui des lignes **filtrées**.
+
+**La recherche emploie `plfts` et non `ilike`.** `search_tsv` est une colonne générée `STORED`
+indexée en GIN (§2.7) ; un `ilike '%…%'` ne peut pas l'utiliser et impose un parcours complet.
+MESURÉ : `search_tsv=plfts(french).refonte` rend `Refonte du site vitrine` sur `grands-comptes`.
+La configuration `french` est **explicite**, comme dans la définition de la colonne : implicite,
+elle dépendrait de `default_text_search_config`, paramètre de session.
+
+**La monolinguisme du §2.7 s'applique à ce filtre**, et il est écrit dans l'écran plutôt que
+supposé : une card rédigée en anglais sera mal racinisée. Le point ouvert n° 3 du §10 le porte
+déjà ; ce chapitre ne le rouvre pas.
+
+L'étape offerte au filtre est prise dans la lecture n° 1 du §12.3 — donc **toutes** les étapes du
+workflow, y compris celles qu'aucune card n'occupe. Une étape absente de la liste des choix ferait
+croire qu'elle n'existe pas, quand elle est seulement vide.
+
+### 12.6 La pagination, et le `416` qui l'attend au tournant
+
+**La page compte 25 lignes.** Valeur fixée, non configurable : aucune unité du backlog ne porte un
+sélecteur de densité, et en offrir un serait un périmètre inventé. Elle est déclarée une fois, dans
+le module de composition, et les preuves l'importent au lieu de la recopier.
+
+La page `n` demande `Range: (n−1)×25 – (n×25 − 1)`, et le nombre de pages se déduit du total rendu
+par la même réponse.
+
+**MESURÉ, et le comportement est piégeux :**
+
+| Rang demandé | Total réel | Réponse |
+|---|---|---|
+| `Range: 0-1` | 3 | `206`, `Content-Range: 0-1/3`, deux lignes |
+| `Range: 2-2` | 3 | `206`, `Content-Range: 2-2/3`, une ligne |
+| `Range: 3-3` — l'offset **égale** le total | 3 | `206`, `Content-Range: */3`, **zéro ligne, aucune erreur** |
+| `Range: 4-4` — l'offset **dépasse** le total | 3 | **`416 Requested Range Not Satisfiable`**, `Content-Range: */3` |
+| `Range: 0-24` | 0 (appelant anonyme) | `200`, `Content-Range: */0`, `[]` |
+
+Vu à travers `supabase-js`, le `416` n'est pas une page vide : c'est une **erreur**. MESURÉ,
+`.range(4, 28)` rend `status: 416`, `error.code: 'PGRST103'`, `count: null` **et** `data: null`.
+Une vue liste qui traiterait toutes les erreurs de la même façon afficherait « Chargement
+impossible » à un utilisateur dont la seule faute est d'avoir gardé l'onglet ouvert pendant qu'une
+affaire était archivée ailleurs.
+
+Deux règles en découlent, et la seconde n'est pas facultative :
+
+1. **Le rang demandé est borné par le total connu.** Tant qu'un total a été rapporté, la page
+   demandée est ramenée dans `[1, nombre de pages]`. Une adresse portant `page=99` sur un channel
+   d'une page ouvre donc la page 1.
+2. **Le `416` qui survient malgré tout est classé pour lui-même**, jamais absorbé. Il survient
+   lorsque le total a diminué entre deux lectures — une card archivée par quelqu'un d'autre — et
+   l'écran affiche alors « cette page n'existe plus », avec une action qui revient à la première.
+   Ce n'est ni un `try/catch` vide ni une valeur par défaut trompeuse (`CLAUDE.md` §18) : le refus
+   est nommé, et l'utilisateur sait quoi faire.
+
+L'état vide de la liste distingue deux causes, parce que l'utilisateur n'y répond pas de la même
+façon : « aucune affaire dans ce channel » n'appelle aucune action, « aucune affaire ne correspond
+à ce filtre » appelle le retrait du filtre, et l'écran l'offre.
+
+### 12.7 Le tableau, sa densité et ses colonnes
+
+Le rendu est un **tableau** au sens sémantique — `table`, `thead`, `th scope="col"` —, et non une
+grille de `div`. Une liste de données tabulaires annoncée comme telle donne à un lecteur d'écran la
+navigation par cellule et l'en-tête de colonne à chaque cellule ; une grille de `div` ne donne rien.
+
+| Colonne | Contenu | Règle |
+|---|---|---|
+| **Affaire** | `title`, **lien** vers `/tracks/:slugTrack/:slugChannel/cards/:id` | une ligne, ellipse, `title` en attribut pour la valeur entière |
+| **Étape** | libellé de l'étape, en badge à la couleur du nœud | jamais la couleur seule (`docs/DESIGN_SYSTEM.md` §1) |
+| **Montant** | `amount` et `currency`, en **donnée technique** | `Intl.NumberFormat`, aligné à droite, cellule vide si nul |
+| **Prochaine action** | `next_action` | une ligne, ellipse |
+| **Échéance** | `next_action_at` | donnée technique, format court, cellule vide si nulle |
+
+**« Densité maîtrisée » est une contrainte mesurable, pas une intention.** Une ligne fait
+`--size-target` de haut — 40 px, la cible minimale du §8 du design system —, et **une seule ligne
+de texte par cellule** : le tableau doit rester lisible en diagonale, ce qu'un texte replié sur
+trois lignes interdit. C'est l'écart exact avec la carte de board, qui accorde deux lignes au titre
+(`docs/DESIGN_SYSTEM.md` §5.1) : une carte se lit, une ligne de tableau se balaye.
+
+**Le débordement horizontal est signalé.** Le tableau vit dans un conteneur `overflow-x: auto`
+portant `.indique-debordement-x` — le §12.6 du design system l'annonçait nommément : « la vue liste
+(`CRM-042`) débordera de la même façon et la portera aussi ». Aucun `scroll-snap` : il n'y a pas de
+colonne sur laquelle s'ancrer, contrairement au board.
+
+Les règles visuelles du tableau — hauteur de ligne, en-tête collant, séparateurs, bouton de tri,
+`aria-sort` — vivent dans `docs/DESIGN_SYSTEM.md` §5.9, écrit dans le même changement que ce
+chapitre. Ce document-ci dit **ce que** l'écran montre ; celui-là dit **comment**.
+
+### 12.8 Accessibilité et clavier
+
+- Le tri est déclenché par un **bouton dans l'en-tête de colonne**, et l'en-tête porte
+  `aria-sort="ascending" | "descending" | "none"`. L'attribut n'est pas décoratif : sans lui, un
+  lecteur d'écran ne sait pas sur quelle colonne le tableau est trié.
+- Les filtres sont des champs de formulaire étiquetés (`docs/DESIGN_SYSTEM.md` §5.7). La recherche
+  est un `form` que `Entrée` soumet : une recherche qui partirait à chaque frappe émettrait une
+  requête par caractère.
+- La pagination est une paire de boutons **désactivés aux extrémités**, jamais masqués : un état
+  désactivé reste lisible et dit pourquoi (§8 du design system). Le rang courant et le total sont
+  écrits en toutes lettres, pas seulement suggérés par la position.
+- Le changement de page, de tri ou de filtre est annoncé par la région `aria-live` polie déjà
+  livrée (`webapp/src/components/ui/LiveRegion.tsx`) : un tableau qui se remplit sans un mot est
+  un changement invisible pour qui ne voit pas l'écran.
+- La bascule board ↔ liste est une paire de **liens**, `aria-current="page"` sur la vue ouverte —
+  le patron déjà retenu pour la barre d'onglets (`docs/DESIGN_SYSTEM.md` §12.1), et pour le même
+  motif : les deux vues changent d'adresse.
+
+### 12.9 États systématiques
+
+Les quatre états du §5.8 du design system sont traités, plus deux propres à cette vue :
+
+| État | Rendu |
+|---|---|
+| Chargement | squelettes à la place des lignes, jamais un écran vide |
+| Vide — channel sans affaire | « Aucune affaire dans ce channel » |
+| Vide — **filtre trop étroit** | « Aucune affaire ne correspond », avec l'action qui efface les filtres |
+| Erreur | message et reprise, la reprise relançant la requête |
+| Refus (`401`/`403`) | explication, jamais une page blanche |
+| **Page inexistante (`416`)** | message propre et retour à la première page (§12.6) |
+
+Un refus par RLS n'est **pas** une erreur : il rend `200` et zéro ligne (§7 de
+`docs/SPEC-permissions-rls.md`), donc l'état vide. C'est le contrat de `webapp/src/lib/async.ts`,
+inchangé.
+
+### 12.10 Ce que `CRM-042` ne livre pas, et pourquoi
+
+| Absent | Motif |
+|---|---|
+| Toute **écriture** — création, édition, archivage, corbeille, déplacement | Aucun écran d'écriture n'existe (§1.2), et le déplacement est le geste du board |
+| La colonne **Responsable** | `profiles` en refus par défaut, INC-014 (§12.3) |
+| Les **étiquettes** | Aucune table `tags` n'existe, et aucune unité du backlog n'en porte (§1.2) |
+| Le **choix du nombre de lignes par page** | Périmètre inventé (§12.6) |
+| Les **vues sauvegardées** | `CRM-071`, que `docs/manual.md` nomme déjà |
+| La **recherche globale** au workspace | Aucune unité ne la porte (§12.1) |
+| Une **vue des archives** ou une **corbeille** | Promises par le §4, portées par aucune unité |
+| Le **parcours complet d'un utilisateur connecté** | INC-021. La webapp est un appelant anonyme, et une card est par construction invisible à un anonyme |
+
+### 12.11 Points ouverts propres à la vue liste
+
+1. **`count=exact` sur chaque page.** Le coût est aujourd'hui nul — neuf cards en base — et
+   deviendra mesurable. Le remplacer par un `count=estimated` ou par un compte différé est une
+   décision de produit qu'aucune mesure ne justifie encore. `CLAUDE.md` §21 interdit d'optimiser
+   sans mesure ; le point est **ouvert**, pas tranché.
+2. **Aucun index ne sert les quatre tris** (§12.4). Même motif.
+3. **Le seed ne porte aucune donnée longue.** MESURÉ : le titre le plus long du seed fait
+   **34 caractères**, la prochaine action la plus longue **34** également. La Definition of Done
+   exige un « comportement avec données longues vérifié en capture » : la capture est produite
+   contre une **réponse substituée** (`docs/DESIGN_SYSTEM.md` §12.5), et le manque appartient au
+   seed de démonstration, `CRM-046`.
+4. **Le seed ne porte aucun channel de plus de 25 cards.** MESURÉ : trois cards actives au maximum
+   dans un channel. La seconde page se prouve donc, elle aussi, contre une réponse substituée et
+   par la mesure directe du `Range` sur la pile réelle. Même destinataire : `CRM-046`.
+5. **`amount` voyage en nombre JSON** — MESURÉ une quatrième fois ici, `typeof amount === 'number'`,
+   valeur `15500`. C'est INC-067, ouverte par `CRM-041` : `e2e/api/cards.spec.ts` le déclare en
+   **chaîne**. Ce chapitre **ne tranche pas** et ne modifie aucun comportement ; il ajoute une
+   mesure à l'entrée.
+
+### 12.12 Preuves attendues de `CRM-042`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | **Aucune dédiée.** L'unité ne livre ni table, ni fonction, ni politique. Ce qu'elle lit est couvert par la suite de `CRM-040` |
+| Unitaire | Composition du modèle de liste, clôture des tris et des sens, ordre **total**, repli des paramètres d'adresse, bornage du rang de page, découpage en pages, classification du `416`, et le composant réel |
+| API | Les deux lectures du §12.3 confrontées à la pile réelle avec le jeton de l'administratrice : le `206` et son `Content-Range`, le `416` et son `PGRST103`, le `count=planned` **faux**, les quatre tris, les deux filtres, et le refus opposé à l'anonyme sur les mêmes requêtes |
+| E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais la liste sans substitution, puis le tri, le filtre, la recherche, la pagination, la bascule board ↔ liste, le `416` et l'état vide filtré, avec réponses substituées et **dit comme tel** |
+| Visuel | Captures aux **quatre paliers** du §7 du design system, plus l'état « données longues » exigé nommément par la Definition of Done |
+| Harnais | `scripts/verify-liste.sh`, rejouable et **non complaisant** : chaque dégradation volontaire le fait réellement échouer, la restauration étant constatée |

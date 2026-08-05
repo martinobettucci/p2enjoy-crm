@@ -3176,9 +3176,28 @@ déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un 
   **neuvième** occurrence. `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
   a été démarrée sans ce service, sans effet sur les preuves.
 
-### CRM-042 — Vue liste `[ ]`
+### CRM-042 — Vue liste `[~]`
 Tri, filtres, densité maîtrisée, pagination.
 **DoD** : E2E ; comportement avec données longues vérifié en capture.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-cards.md` §12 : l'unité tenait en **deux
+      lignes** au backlog, et quatre documents la nommaient sans la décrire — le §1.2 et le §4 de
+      ce même document, le §7.1 de `docs/SPEC-workflow-engine.md`, le §12.6 de
+      `docs/DESIGN_SYSTEM.md`. Écrite en **douze sous-chapitres opposables**, après mesure de la
+      pile réelle. Commit documentaire dédié, poussé avant la première ligne de code
+      (décision 183).
+- [x] **Ce qui a été mesuré avant d'être écrit** : le `206` et son `Content-Range: 0-1/3`, le
+      **`416`** à un rang près de la fin, le `count=planned` **faux d'un facteur trois**, le
+      `Content-Range: */0` de l'anonyme, `nullslast` dans les deux sens, `plfts(french)` sur
+      `search_tsv`, le plan du tri par titre — un `Sort` qu'aucun index ne sert —, et surtout la
+      **sonde `sonde_l2`** : une marche paginée sur un tri **non total** rend 20 lignes dont
+      **17 distinctes**, contre 20 sur 20 lorsque la clé primaire rend l'ordre total.
+- [x] **`docs/DESIGN_SYSTEM.md` §5.9 écrit dans le même changement** : le tableau est le **premier
+      du produit**, et le §4 l'annonçait — « board kanban […] ou vue liste » — sans lui donner une
+      seule règle visuelle. La portée du §12.6 est étendue à la vue liste, comme cette entrée
+      l'annonçait elle-même.
+- [ ] **Le code, ses tests unitaires, sa preuve d'API, ses scénarios d'interface, ses captures et
+      son harnais.** Rien de tout cela n'est livré à ce stade : ce chunk est **documentaire**.
 
 ### CRM-043 — Commentaires `[ ]`
 Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.

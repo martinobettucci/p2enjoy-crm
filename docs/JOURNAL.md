@@ -6032,3 +6032,135 @@ pas.
 **Portée générale, écrite parce qu'elle resservira.** Quand deux exécutions se croisent, la seconde
 se resynchronise **avant** de committer, compare les deux traitements de la même spécification, et
 ne pousse que les écarts que sa lecture a révélés — jamais son implémentation entière.
+---
+
+## `CRM-042` — Vue liste
+
+### Décision 183 — La spécification de la vue liste vit dans le document des cards, pas dans celui de la garde
+
+**Problème.** `CRM-042` tenait en deux lignes au backlog. Quatre documents la nomment sans la
+décrire : `docs/SPEC-cards.md` §1.2 la range hors du périmètre de `CRM-040`, son §4 l'inscrit parmi
+les vues où une card **active** est visible, `docs/SPEC-workflow-engine.md` §7.1 l'écarte du board
+— « une vue liste : tri, filtres et pagination sont `CRM-042` » —, et `docs/DESIGN_SYSTEM.md` §12.6
+annonce qu'elle « débordera de la même façon » que la barre d'onglets. Aucun ne dit ce qu'elle lit,
+dans quel ordre, ni ce qu'il faut en prouver.
+
+**Hypothèse écartée.** Écrire ce chapitre à la suite du §7 de `docs/SPEC-workflow-engine.md`, là où
+vit déjà le board. C'était le plus court, et c'était faux.
+
+**Décision.** Le chapitre est écrit en `docs/SPEC-cards.md` §12, en douze sous-chapitres opposables,
+et commité **avant la première ligne de code**. Motif : le board est le miroir du **graphe** — c'est
+l'argument même du §7.1, qui justifie sa présence dans le document de la garde —, tandis que la
+liste est le miroir de la **table** : elle trie et filtre sur les colonnes de `cards`, ne propose
+aucun geste du graphe, et ne lit ni `workflow_transitions` ni `form_fields`. Ranger les deux au même
+endroit aurait fait du document de la garde le document des écrans.
+
+**Conséquence.** `docs/DESIGN_SYSTEM.md` gagne un §5.9 dans le même changement — le tableau est le
+premier du produit, et le §4 l'annonçait sans lui donner une seule règle visuelle.
+
+### Décision 184 — Le tri, le filtre et le rang de page vivent dans l'adresse, et nulle part ailleurs
+
+**Problème.** Où ranger l'état de la vue ? Trois candidats : l'état du composant, un stockage local,
+la chaîne de requête.
+
+**Décision.** La chaîne de requête, et **aucun stockage côté client**.
+
+**Motifs, dans l'ordre où ils pèsent.**
+
+1. Une pagination perdue au rechargement ment sur l'endroit où l'on est : l'utilisateur qui recharge
+   la page 3 doit retrouver la page 3.
+2. `CLAUDE.md` §11 exige que toute donnée posée sur l'appareil relève de l'une de trois catégories.
+   Un tri rangé dans `localStorage` ne relève d'aucune, et `sessionStorage` serait une persistance
+   que personne n'a demandée. **Aucune n'est introduite.**
+3. Les preuves ouvrent un état directement plutôt que de le reconstituer par quatre clics. C'est ce
+   qui rend reproductible la capture « données longues » que la Definition of Done exige nommément.
+
+**Conséquence, et garde.** Un paramètre absent, inconnu ou hors bornes se replie sur son défaut sans
+afficher d'erreur : une adresse tapée à la main n'est pas une panne. La liste des clés de tri est
+**close** — un `tri=couleur_préférée` ne devient jamais un `order=couleur_préférée` envoyé à l'API.
+Ce n'est pas une faille de droit, la RLS jugeant les lignes et non les colonnes demandées ; c'est
+un appelant qui sonderait l'existence d'une colonne par la différence entre un `200` et un `400`.
+
+### Décision 185 — Un tri paginé qui n'est pas TOTAL perd des lignes, et la sonde l'a établi
+
+**Problème.** Quel ordre envoyer à PostgREST ? La réponse évidente — la colonne demandée par
+l'utilisateur — est celle qui perd des données.
+
+**Ce qui a été mesuré, et non supposé.** Sonde jetable `public.sonde_l2`, 200 000 lignes portant
+**toutes la même clé de tri**, parcourue page par page, quatre pages de cinq lignes :
+
+| Tri | Lignes rendues | Lignes **distinctes** |
+|---|---|---|
+| `order by cle` — non total | 20 | **17** |
+| `order by cle, id` — total | 20 | **20** |
+
+Trois lignes rendues deux fois, donc **trois lignes que la marche n'a jamais montrées**. Rien dans
+l'écran ne l'aurait signalé : chaque page était pleine, le total était juste, et les affaires
+manquantes n'existaient simplement plus pour l'utilisateur.
+
+**Décision.** Tout ordre de la vue liste est **total** : `<clé>.<sens>.nullslast,title.asc,id.asc`.
+`id` est la clé primaire, donc unique, et rend l'ordre indépendant du plan choisi. `title` s'ajoute
+comme critère intermédiaire pour les trois tris qui ne portent pas sur lui, afin que deux affaires
+de même montant se rangent par leur nom — que l'utilisateur voit — plutôt que par un identifiant
+qu'il ne voit pas.
+
+**Sondes détruites avant rédaction** : `to_regclass('public.sonde_l1')` et
+`to_regclass('public.sonde_l2')` rendent `NULL`, selon le procédé de la décision 52.
+
+**Effet de bord mesuré :** `nullslast` est posé dans les deux sens. Sans lui,
+`order=amount.desc` ferait remonter en tête les affaires **sans montant**. MESURÉ sur
+`inter-entreprises` : avec `nullslast`, `Formation Data & IA — promo 2026` (28 000 CHF) précède
+bien `Piste entrante à qualifier` (montant nul).
+
+### Décision 186 — Le `416` de PostgREST est une erreur, pas une page vide, et il est classé pour lui-même
+
+**Ce qui a été mesuré**, sur les trois cards actives de `grands-comptes` avec le jeton réel de
+l'administratrice :
+
+| Rang demandé | Réponse |
+|---|---|
+| `Range: 2-2` | `206`, `Content-Range: 2-2/3` |
+| `Range: 3-3` — l'offset **égale** le total | `206`, `Content-Range: */3`, zéro ligne, aucune erreur |
+| `Range: 4-4` — l'offset **dépasse** le total | **`416`**, `Content-Range: */3` |
+
+Vu à travers `supabase-js`, `.range(4, 28)` rend `status: 416`, `error.code: 'PGRST103'`,
+`count: null` **et** `data: null`. La frontière est à un rang près, et elle n'est écrite nulle part.
+
+**Décision.** Deux règles, et la seconde n'est pas facultative :
+
+1. le rang demandé est **borné** par le total connu — une adresse portant `page=99` sur un channel
+   d'une page ouvre la page 1 ;
+2. le `416` qui survient malgré tout — le total a diminué entre deux lectures, une card archivée par
+   quelqu'un d'autre — est **classé pour lui-même** : « cette page n'existe plus », avec une action
+   qui revient à la première. Le traiter comme les autres erreurs afficherait « Chargement
+   impossible » à un utilisateur dont la seule faute est d'avoir gardé son onglet ouvert. Ce serait
+   la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit.
+
+### Décision 187 — Le total est exact, jamais estimé, et la mesure dit pourquoi
+
+**Problème.** PostgREST offre trois comptes : `count=exact`, `count=planned`, `count=estimated`. Le
+second est gratuit.
+
+**Mesuré**, sur les mêmes trois lignes : `Prefer: count=planned` rend `Content-Range: 0-0/1` — **un**
+au lieu de trois. C'est l'estimation du planificateur sur une table que rien n'a analysée depuis le
+seed, et elle est fausse d'un facteur trois.
+
+**Décision.** `count=exact`. Une pagination construite sur une estimation afficherait un nombre de
+pages qui n'existe pas, et enverrait l'utilisateur sur le `416` de la décision 186. Le coût du
+`count(*)` est **assumé et borné** — le filtre `channel_id` est servi par
+`cards_channel_step_position_idx` —, et le point est **ouvert** au §12.11 plutôt que tranché
+d'avance : `CLAUDE.md` §21 interdit d'optimiser sans mesure, et neuf cards en base n'en fournissent
+aucune.
+
+### Décision 188 — La liste importe la lecture des étapes du board, elle ne la réécrit pas
+
+**Problème.** La liste a besoin du libellé et de la couleur de l'étape de chaque ligne, et des choix
+de son filtre par étape. Le board lit déjà exactement cela.
+
+**Décision.** `lireEtapes` et `resoudreEtape` restent dans `webapp/src/lib/board.ts` ; la liste les
+**importe**. C'est la règle de la décision 167 — la même donnée lue deux fois finit par être lue de
+deux façons —, déjà appliquée à `projeterChannels` puis à `workflow_id` (décision 169).
+
+**Ce que la liste ne lit PAS, et le motif.** Ni `workflow_transitions`, ni `form_fields` : elle
+n'offre aucun déplacement, donc aucune transition à proposer et aucun refus à traduire. Deux
+requêtes, pas quatre. Une requête qui ne sert rien est une requête de trop.

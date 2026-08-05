@@ -12,6 +12,45 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-069 — Deux décisions du journal portent le même numéro 180
+
+**Nature :** collision d'identifiants dans un document dont les numéros servent de références
+croisées.
+**Relevé le :** 2026-08-05, au début de `CRM-042`, en rebasant sur `main`.
+
+`docs/JOURNAL.md` porte **deux** entrées « Décision 180 » :
+
+- « Une seconde exécution de la routine a livré `CRM-041` en parallèle, et elle abandonne son
+  implémentation », poussée par le commit `16cb2ee` ;
+- « `t` accepte des paramètres, parce que le §7.5 exige une phrase et interdit de la construire »,
+  poussée par le commit `13da2b7`.
+
+Les deux commits sont l'œuvre de **deux exécutions concurrentes de la même routine**, chacune ayant
+lu le numéro le plus élevé avant que l'autre ne pousse le sien. C'est la conséquence directe
+d'INC-059 et du point 1 d'INC-034 : rien dans le dépôt ne sérialise les exécutions, et le journal
+est un fichier que toutes appendent par la fin.
+
+**La collision n'est pas théorique** : `docs/BACKLOG.md` et `CHANGELOG.md` citent « décision 180 »
+pour désigner l'écart au §7.5, tandis que `docs/JOURNAL.md` §`CRM-041` cite le même numéro pour
+l'arbitrage des exécutions parallèles. Un lecteur qui suit la référence tombe sur l'une ou l'autre
+selon l'ordre de lecture.
+
+**Comportement retenu : aucun.** Renuméroter une entrée déjà poussée casserait les références qui
+la citent, et les deux sont citées. `CRM-042` a **décalé ses propres décisions à 183–188** pour ne
+pas aggraver la collision, et la consigne ici plutôt que de la résoudre implicitement.
+
+**Ce qui reste à arbitrer :**
+
+1. **La numérotation.** Soit les décisions cessent d'être numérotées par un compteur global —
+   un identifiant dérivé de l'unité, `CRM-041/3` par exemple, ne collisionne pas —, soit la routine
+   se resynchronise **immédiatement avant** d'écrire son numéro, ce qui réduit la fenêtre sans la
+   fermer.
+2. **Les deux entrées 180 elles-mêmes.** Les renuméroter suppose de reprendre les références de
+   `docs/BACKLOG.md` et de `CHANGELOG.md` dans le même changement. C'est un geste sur du travail
+   déjà poussé, qui relève du responsable.
+
+---
+
 ### INC-068 — Les pastilles d'étiquettes sont prescrites par le design system et n'ont ni table ni unité
 
 **Nature :** unité manquante ; un contenu d'interface prescrit sans porteur, ni côté schéma ni côté

@@ -249,6 +249,43 @@ Toute vue traite explicitement : chargement (squelettes, pas de spinner plein é
 (message et action), erreur (message compréhensible et action de reprise), et absence de droit
 (explication, pas une page blanche).
 
+### 5.9 Tableau de données — `CRM-042`
+
+Premier tableau du produit, livré par la vue liste d'un channel. Le §4 l'annonçait — « board kanban
+[…] **ou vue liste** » — sans lui donner une seule règle visuelle. Elles sont écrites ici ; ce que
+le tableau **montre** — colonnes, tris, filtres, pagination — est spécifié dans
+`docs/SPEC-cards.md` §12, et non ici.
+
+- **Sémantique, jamais simulée.** `table`, `thead`, `tbody`, `th scope="col"`. Une grille de `div`
+  prive un lecteur d'écran de la navigation par cellule et de l'en-tête rappelé à chaque cellule.
+  Un `role="table"` posé sur des `div` reconstitue au mieux ce que l'élément donne gratuitement.
+- **Une ligne = `--size-target`** de hauteur — 40 px, la cible minimale du §8 — et **une seule
+  ligne de texte par cellule**, en ellipse, la valeur entière portée par l'attribut `title`. C'est
+  la « densité maîtrisée » : un tableau se balaye en diagonale, ce qu'un texte replié interdit.
+  L'écart avec la carte de board (§5.1), qui accorde deux lignes au titre, est **voulu** : une
+  carte se lit, une ligne se balaye.
+- **En-tête collant**, fond `--color-bg`, texte `--color-text-2`, 13 px, comme les libellés de
+  champ du §5.7. Séparateur bas 1 px `--color-border`.
+- **Séparateurs de lignes, pas de zébrures.** Une bordure basse `--color-border` par ligne. Le
+  fond alterné ajoute une couleur qui ne porte aucune information, contre le §1.
+- **Survol de ligne** : `--color-hover`. C'est le seul retour visuel, la ligne entière n'étant pas
+  cliquable — seul le titre est un lien, pour que la cible du clic soit la cible annoncée.
+- **Tri** : un `button` occupe l'en-tête de la colonne triable, et le `th` porte
+  `aria-sort="ascending" | "descending" | "none"`. L'icône de sens (`ArrowUp`, `ArrowDown`,
+  `ArrowUpDown` de Lucide) accompagne le libellé sans le remplacer : la direction ne repose jamais
+  sur la seule icône, `aria-sort` la porte aussi.
+- **Alignement** : texte à gauche, **données techniques à droite** — montants et dates, en
+  monospace à chiffres tabulaires (§2). Un montant aligné à gauche ne se compare pas colonne par
+  colonne, ce qui est la seule raison d'avoir des chiffres tabulaires.
+- **Cellule sans valeur : vide.** Ni tiret, ni « — », ni « non renseigné ». Un tiret est un
+  caractère que rien ne distingue d'une donnée ; le vide est le seul rendu qui ne prétende rien.
+- **Débordement horizontal** : conteneur `overflow-x: auto` portant `.indique-debordement-x`
+  (§12.6). Aucun `scroll-snap`, contrairement au board : il n'y a pas de colonne sur laquelle
+  s'ancrer.
+- **Pagination** : deux boutons secondaires encadrant le rang courant écrit en toutes lettres
+  (« Page 2 sur 5 »). Ils sont **désactivés** aux extrémités, jamais masqués — un état désactivé
+  reste lisible et explique pourquoi l'action est indisponible (§8).
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;
@@ -440,8 +477,9 @@ ne saurait pas faire, et sans écouter aucun événement `scroll` ou `resize`.
 Les quatre dégradés partent des jetons `--color-bg` et `--color-border` : aucune valeur
 hexadécimale n'entre dans un composant (§11).
 
-**Portée :** la barre d'onglets, **et le board depuis `CRM-041`**, qui porte la même classe comme
-cette entrée l'annonçait. La vue liste (`CRM-042`) débordera de la même façon et la portera aussi.
-Le board y ajoute `scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px.
+**Portée :** la barre d'onglets, le board depuis `CRM-041`, **et la vue liste depuis `CRM-042`** —
+les trois portent la même classe, comme cette entrée l'annonçait les deux fois. Le board y ajoute
+`scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px ; le tableau de la vue
+liste ne l'ajoute pas, faute de colonne sur laquelle s'ancrer (§5.9).
 
 Tout écart futur est consigné ici avec sa justification et sa date.

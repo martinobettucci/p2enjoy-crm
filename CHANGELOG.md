@@ -41,6 +41,16 @@ d'exécuter le code attendu.
   elle ne désactive aucun contrôle et ne substitue aucune réponse, seul le binaire diffère.
 ### Documentation
 
+- **La vue liste d'un channel est spécifiée avant d'être écrite** — `CRM-042`,
+  `docs/SPEC-cards.md` §12, douze sous-chapitres. L'unité tenait en deux lignes au backlog, et
+  quatre documents la nommaient sans jamais dire ce qu'elle lit, dans quel ordre, ni ce qu'il faut
+  en prouver. Le chapitre est écrit **après mesure de la pile réelle** : le `Content-Range` d'une
+  page, le **`416`** que PostgREST rend dès que le rang dépasse le total d'une unité, l'estimation
+  de `count=planned` **fausse d'un facteur trois**, et une sonde de 200 000 lignes qui établit
+  qu'une marche paginée sur un tri **non total** perd réellement des lignes — 20 rendues, **17
+  distinctes**. `docs/DESIGN_SYSTEM.md` gagne son §5.9, les règles du **premier tableau du
+  produit**, et la portée de son §12.6 s'étend à la vue liste comme elle l'annonçait.
+
 - **Une contradiction mesurée sur `cards.amount`, consignée sans être résolue — INC-067.** Le type
   engendré déclare `number`, `e2e/api/cards.spec.ts` déclare `string`, et la pile — MESURÉE — rend
   `{"amount":48000.00}`, un **nombre** JSON. Le constat cesse d'être anodin avec le board : son
