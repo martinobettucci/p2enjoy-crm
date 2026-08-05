@@ -49,6 +49,14 @@ cd "$(dirname "$0")/.."
 
 TEST_FILE=supabase/tests/0014_valeurs_champs.test.sql
 MIGRATION_FILE=supabase/migrations/0013_valeurs_champs.sql
+# LA 14 SUIT TOUJOURS UN REJEU DE LA 12, et c'est une dépendance MESURÉE, ajoutée par `CRM-013`.
+# Ce harnais rejoue la migration 12 en TROIS endroits, pour éprouver l'ordre 12 → 13 et pour poser
+# deux dégradations. Or la section 2 de la 12 réapplique les privilèges de colonne de `cards` avec
+# `email_local_part` DANS la liste — état d'avant `CRM-013`. Sans la 14 derrière chaque rejeu, ce
+# harnais sortait sur une base où l'adresse d'une card redevenait réécrivable, en annonçant
+# « 33 contrôles, aucune anomalie ». MESURÉ le 2026-08-05 : `has_column_privilege(…)` passait de
+# `false` à `true` après son passage. Quatrième occurrence des décisions 108, 135, 143 et 145.
+MIGRATION_COLONNES=supabase/migrations/0014_colonnes_protegees.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -131,6 +139,10 @@ menage() {
 		>/dev/null 2>&1 || true
 	psql_db -c "update public.cards set current_step_id = '$ETAPE_RELANCE', position = 2
 	             where id = '$CARD_C2' and current_step_id <> '$ETAPE_RELANCE';" >/dev/null 2>&1 || true
+	# Une INTERRUPTION entre un rejeu de la 12 et sa 14 laisserait `email_local_part` ouverte. Le
+	# ménage la referme donc, dans l'ordre 13 puis 14 — la 13 rend à `move_card` sa sixième garde.
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
 }
 trap 'menage; rm -f "$CORPS"' EXIT
 menage
@@ -191,6 +203,10 @@ apres=$(empreinte)
 # CINQ vérifications ; la 13 la remplace par celle à six. Un `migrations-runner` qui les rejouerait
 # dans l'autre sens laisserait le produit sans sa sixième vérification, sans aucun signal.
 psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
+# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
+# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
+# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
 sans_n6=$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure)
                         like '%missing_required_fields%';")
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
@@ -435,6 +451,10 @@ psql_db -c "alter table public.card_field_values enable trigger card_field_value
 # `move_card` est ramenée à sa version de la migration 12. Le produit redevient celui d'avant
 # `CRM-036`, et le contrôle du §5 doit le voir.
 psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
+# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
+# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
+# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
 code=$(deplacer "$T_ADMIN" "$CARD_C1" "$ETAPE_NEGOCIATION")
 [ "$code" = "200" ] \
 	&& ok "dégradation 2 constatée : \`move_card\` ramenée à sa version de la migration 12, le "\
@@ -451,6 +471,10 @@ psql_db -c "
 		for insert to authenticated with check (app.can_read_card(card_id));
 " >/dev/null
 psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
+# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
+# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
+# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
 code=$(poster_valeur "$T_VIEWER" "$CARD_C6" "$CHAMP_LIEN" '"https://viewer.test/x"')
 [ "$code" = "201" ] \
 	&& ok "dégradation 3 constatée : politique d'insertion adossée à la LECTURE, le \`viewer\` écrit "\
@@ -478,6 +502,13 @@ restaure=$(psql_db -c "
 	&& ok "restauration constatée : la politique d'insertion est revenue à l'ÉCRITURE, le trigger de "\
 "validation est actif, et \`move_card\` porte de nouveau sa sixième vérification" \
 	|| fail "restauration incomplète : « $restaure », attendu « true/true/true »"
+
+# ET LA COLONNE DE `CRM-013` EST REFERMÉE : sans ce contrôle, ce harnais sortirait de nouveau sur
+# une base où l'adresse d'une card est réécrivable, en annonçant « aucune anomalie ».
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
+[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update');")" = "f" ] \
+	&& ok "…et \`cards.email_local_part\` est refermée : le harnais ne laisse pas le produit dégradé" \
+	|| fail "\`email_local_part\` est restée OUVERTE : un rejeu de la migration 12 n'a pas été suivi de la 14"
 
 code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_BUDGET" '"45000"')
 [ "$code" = "400" ] && ok "et le refus est de nouveau opposé au \`money\` recevant une chaîne" \

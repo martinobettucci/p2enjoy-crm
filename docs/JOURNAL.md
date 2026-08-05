@@ -4959,3 +4959,22 @@ de l'historique, et tout ce qui a été écrit après doit l'être de nouveau. L
 pour quatre couples mesurés — 3 → 10, 11 → 12 (décision 143), 12 → 13, 12 → 14 — et il n'y a aucune
 raison de croire qu'elle s'arrête là. Un harnais qui rejoue la migration N rejoue **toutes** celles
 qui la suivent.
+
+**QUATRIÈME OCCURRENCE, MESURÉE APRÈS COUP, ET C'EST LE CONTRÔLE FINAL QUI L'A TROUVÉE.** Avant de
+clore l'unité, l'état de la base a été relu : `email_local_part` était **ouverte**, après un
+balayage complet des harnais. Le coupable a été trouvé par élimination, un harnais à la fois :
+`scripts/verify-valeurs-champs.sh` rejoue la migration 12 en **trois** endroits — une fois pour
+éprouver l'ordre 12 → 13, deux fois pour poser des dégradations — et ne rejouait ensuite que la 13.
+Il sortait donc sur une base où l'adresse d'une card redevenait réécrivable, **en annonçant
+« 33 contrôles, aucune anomalie »**.
+
+Ce harnais n'était pas fautif quand il a été écrit : la migration 14 n'existait pas. C'est la
+livraison de `CRM-013` qui l'a rendu défaillant, et c'est donc à `CRM-013` de le reprendre — ce
+qu'elle fait, en ajoutant la 14 derrière chacun des trois rejeux, dans le ménage de sortie, et en
+**constatant** la colonne refermée par un contrôle neuf (34 contrôles au lieu de 33).
+
+**Ce que l'épisode apprend, et qui vaut plus que la correction.** Une migration qui retire un
+privilège crée une **dette rétroactive** sur tous les harnais existants qui rejouent une migration
+antérieure. Les trouver ne peut pas se faire de mémoire : il a fallu **mesurer l'état de la base
+après chaque harnais, un par un**. Ce balayage devrait être le geste de clôture de toute unité qui
+touche à un privilège ou à une politique, et non l'heureuse conséquence d'une dernière relecture.

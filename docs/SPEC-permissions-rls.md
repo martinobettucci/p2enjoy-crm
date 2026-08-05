@@ -351,6 +351,16 @@ seule **rouvre** donc la colonne, sans aucun signal. Tout harnais qui rejoue la 
 13 puis la 14 derrière elle ; `docs/PROD_MIGRATIONS.md` §3 le consigne, et
 `scripts/verify-colonnes-protegees.sh` le mesure **dans les deux sens**.
 
+**Cette dépendance est rétroactive, et deux harnais antérieurs ont dû être repris** :
+`scripts/verify-cards.sh` et `scripts/verify-valeurs-champs.sh` rejouent la migration 12 — le
+second en **trois** endroits — et sortaient donc sur une colonne rouverte, tout en annonçant
+« aucune anomalie ». Ils n'étaient pas fautifs à leur écriture : la migration 14 n'existait pas.
+La règle générale à en tirer est écrite en `docs/JOURNAL.md`, décision 145 — **une migration qui
+retire un privilège crée une dette sur tout harnais rejouant une migration antérieure, et la
+trouver exige de mesurer l'état de la base après chaque harnais, un par un.** La question de
+l'inscrire dans `docs/SPEC-test-harness.md` plutôt que de la traiter harnais par harnais est posée
+en INC-055.
+
 La conséquence n° 1 ci-dessus n'est pas laissée à la mémoire : `supabase/tests/0013_move_card.test.sql`
 et `supabase/tests/0015_colonnes_protegees.test.sql` **énumèrent les colonnes ouvertes une par
 une**, et la seconde en **compte** le total, de sorte qu'ajouter une colonne à `cards` sans

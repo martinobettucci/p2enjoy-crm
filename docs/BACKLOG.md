@@ -649,6 +649,19 @@ ligne** et non une erreur ambiguë.
       suite de la correction ci-dessus : il rejoue 11 → 12 → 13, et rejouer la 12 rouvre
       `email_local_part`. Sans cet ajout, le harnais de `CRM-040` aurait défait `CRM-013` en
       sortant.
+- [x] **UNE QUATRIÈME OCCURRENCE, TROUVÉE PAR LE CONTRÔLE DE CLÔTURE ET NON PAR UN TEST**
+      (décision 145). Avant de clore, l'état de la base a été relu : `email_local_part` était
+      **ouverte** après un balayage complet des harnais. Recherche par élimination, un harnais à la
+      fois : `scripts/verify-valeurs-champs.sh` rejoue la migration 12 en **trois** endroits et ne
+      rejouait ensuite que la 13. Il sortait sur une base dégradée **en annonçant « 33 contrôles,
+      aucune anomalie »**. Ce harnais n'était pas fautif à son écriture — la migration 14 n'existait
+      pas ; c'est `CRM-013` qui l'a rendu défaillant, et donc à `CRM-013` de le reprendre. Corrigé :
+      la 14 suit chacun des trois rejeux, le ménage de sortie la rejoue, et un **contrôle neuf
+      constate** la colonne refermée (34 contrôles au lieu de 33).
+- [x] **Les vingt-deux harnais ont été passés un par un, en relevant l'état de la colonne après
+      chacun** : `verify-valeurs-champs` était le seul à la laisser ouverte, et il ne l'est plus.
+      Une migration qui retire un privilège crée une dette rétroactive sur tout harnais rejouant une
+      migration antérieure ; la trouver exige de mesurer, pas de se souvenir.
 - [x] **UN SECOND DÉFAUT, QUE SEULE UNE BASE FROIDE POUVAIT RÉVÉLER — INC-056** (décision 144).
       Trois garde-fous de `CRM-031`, `CRM-035` et `CRM-036` comptaient à l'échelle du **workspace**
       les transitions à `require_fields` non vide, et attendaient `1`. MESURÉ sur un cluster neuf :

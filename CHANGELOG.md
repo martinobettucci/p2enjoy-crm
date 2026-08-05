@@ -111,6 +111,14 @@ d'exécuter le code attendu.
   14, sans la 13 — qui redéfinit `move_card` avec sa sixième vérification. Troisième occurrence du
   même mode de défaillance (décisions 108, 135). La séquence de restauration est désormais
   12 → 13 → 14, et un contrôle explicite constate que `move_card` a retrouvé sa sixième garde.
+- **`scripts/verify-valeurs-champs.sh` rouvrait `cards.email_local_part` en sortant**, et
+  annonçait pendant ce temps « 33 contrôles, aucune anomalie ». Il rejoue la migration 12 en trois
+  endroits sans rejouer la 14 derrière — un défaut que la livraison de `CRM-013` a **créé
+  rétroactivement**, ce harnais étant antérieur à cette migration. La 14 suit désormais chacun des
+  trois rejeux, le ménage de sortie la rejoue, et un contrôle neuf **constate** la colonne
+  refermée. `scripts/verify-cards.sh` reçoit la même chaîne.
+- **Les vingt-deux harnais ont été passés un par un**, l'état du privilège étant relevé après
+  chacun : c'était le seul à fuir.
 
 - **`value` est nullable, et une mesure l'a imposé — INC-054.** `docs/SCHEMA.md` §4 exigeait
   `NOT NULL` avec `'null'::jsonb` pour « explicitement vide ». MESURÉ : PostgREST convertit un
