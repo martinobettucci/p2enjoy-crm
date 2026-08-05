@@ -516,26 +516,124 @@ l'autorisation du demandeur.
 ## 7. Preuves de refus exigées
 
 Chaque unité de backlog touchant aux droits fournit au minimum ces tests, exécutés **hors
-interface**, avec les jetons réels de chaque profil :
+interface**, avec les jetons réels de chaque profil.
+
+`CRM-014` **rassemble** ces douze scénarios en un seul fichier — `e2e/api/preuves-refus.spec.ts` —
+sans retirer ceux que les unités précédentes ont posés chacune dans leur propre fichier. Le §7.1
+dit pourquoi cette duplication est voulue, et le §7.2 donne le contrat mesuré de chaque scénario.
 
 | # | Scénario | Attendu |
 |---|---|---|
 | 1 | `viewer` tente `move_card` | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, `forbidden`, mesuré avec le jeton réel du `viewer` sur une card qu'il **voit**. Sur une card d'un channel que le seed lui ferme, la réponse est `card_not_found` et non `forbidden` — règle de discrétion, éprouvée par le **même jeton** (docs/SPEC-workflow-engine.md §5.3) |
 | 2 | `business_developer` tente de modifier un workflow | Refus — **acquise sur `workflow_nodes_catalog` par `CRM-030`** ; les trois autres tables de la famille restent dues par `CRM-031` |
-| 3 | Membre du workspace A lit une card du workspace B | Aucune ligne — **acquise sur `tracks` et `channels`** par `CRM-020`, `CRM-021` et reconduite par `CRM-012` ; sur les cards, due par `CRM-040` |
+| 3 | Membre du workspace A lit une card du workspace B | Aucune ligne — **acquise sur `tracks`, `channels`, `workflows` et le catalogue** par `CRM-020`, `CRM-021`, `CRM-030`, `CRM-031`, reconduite par `CRM-012` ; **acquise sur les cards par `CRM-014`**, `CRM-040` ne l'ayant pas livrée (INC-057) |
 | 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne — **acquise sur le channel lui-même et sur son track** par `CRM-012` (§4.2, lignes *d* et *e*), **sur les cards** par `CRM-040`, et **sur leurs valeurs de formulaire** par `CRM-036` (`docs/SPEC-form-composer.md` §6.10, ligne *f*) |
 | 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, « permission denied for table cards », mesuré avec le jeton de l'administratrice, la ligne étant relue et constatée inchangée. Le chevauchement de Definition of Done avec `CRM-013` est tranché de ce côté (INC-049), parce qu'une unité dont la DoD exige une preuve doit livrer ce qui la rend possible |
 | 6 | Lecture de `secret_id` d'un compte mail par `authenticated` | Refus (colonne révoquée) — **non satisfaisable par `CRM-013`** : `mail_inbound_accounts` et `mail_outbound_identities` arrivent avec `CRM-052` et `CRM-053` (§4.4) |
-| 7 | Lecture du compte mail d'un autre utilisateur | Aucune ligne |
+| 7 | Lecture du compte mail d'un autre utilisateur | Aucune ligne — **non satisfaisable par `CRM-014`** : la table `mail_inbound_accounts` n'existe pas (`CRM-052`). L'absence est **figée par une assertion**, non commentée (§7.3) |
 | 8 | Insertion directe dans `card_events` ou `audit_log` | Refus — **non satisfaisable par `CRM-013`** : `card_events` arrive avec `CRM-044`, `audit_log` avec `CRM-072` (§4.4) |
-| 9 | Téléchargement d'une pièce jointe `infected` ou `pending` | Refus |
-| 10 | Dernier administrateur tente de se retirer son rôle | Refus |
-| 11 | Utilisateur anonyme lit n'importe quelle table métier | Aucune ligne |
-| 12 | `queue_outbound_email` avec une identité qui ne lui appartient pas | Refus |
+| 9 | Téléchargement d'une pièce jointe `infected` ou `pending` | Refus — **non satisfaisable par `CRM-014`** : aucune table de pièces jointes, et `storage.buckets` est **vide** — mesuré. Absence figée (§7.3) |
+| 10 | Dernier administrateur tente de se retirer son rôle | Refus — **l'effet est acquis, la règle ne l'est pas** : `workspace_members` ne porte **aucune** politique (INC-014), donc le refus par défaut de `CRM-003` rend l'écriture sans effet. Mesuré et figé par `CRM-014` (§7.3) |
+| 11 | Utilisateur anonyme lit n'importe quelle table métier | Aucune ligne — **acquise**, et étendue par `CRM-014` aux **douze** tables métier réellement peuplées par le seed, énumérées et non échantillonnées |
+| 12 | `queue_outbound_email` avec une identité qui ne lui appartient pas | Refus — **non satisfaisable par `CRM-014`** : la fonction n'existe pas (`CRM-058`). Absence figée (§7.3) |
 
 Un refus ne se manifeste pas toujours par une erreur : pour une lecture, l'attendu est **zéro
 ligne**. Les deux formes sont testées explicitement, car un test qui vérifie seulement l'absence
 d'erreur ne prouve rien.
+
+### 7.1 Pourquoi `CRM-014` duplique des scénarios déjà verts
+
+À l'ouverture de `CRM-014`, sept des douze preuves sont déjà exercées quelque part : la n° 11 dans
+six fichiers, la n° 2 dans trois, la n° 3 dans quatre, la n° 4 dans trois. Chacune y est un
+**corollaire** du contrat d'API de son unité — elle prouve que *cette* table refuse *ce* profil.
+
+Aucune ne répond à la question que pose la Definition of Done de `CRM-014` : *les douze preuves
+sont-elles exercées, et lesquelles ne le sont pas ?* Cette question n'a pas de lieu où être posée
+tant que les preuves sont réparties dans quatorze fichiers de scénarios. Un fichier consolidé la
+rend mesurable, et surtout **rend l'absence visible** : une preuve non satisfaisable y occupe une
+place nommée, avec l'unité qui la débloquera, au lieu de n'exister nulle part.
+
+La duplication est donc **assumée et bornée** :
+
+- les scénarios des unités précédentes ne sont **ni retirés ni déplacés** — les retirer rouvrirait
+  sept unités dans un commit qui n'en traite qu'une, ce que `CLAUDE.md` §13 interdit ;
+- le fichier consolidé n'invente aucune règle : il rejoue les douze scénarios **du tableau
+  ci-dessus**, dans leur ordre, avec les jetons réels ;
+- lorsqu'une preuve porte sur une table absente, le scénario existe quand même et **fige
+  l'absence** (§7.3).
+
+### 7.2 Contrat mesuré des douze scénarios
+
+Mesuré le 2026-08-05 sur la pile de développement seedée, avec les jetons réels obtenus par
+`POST /auth/v1/token?grant_type=password`. Ce tableau est le contrat que
+`e2e/api/preuves-refus.spec.ts` rejoue ligne à ligne.
+
+| # | Appelant | Requête | Attendu **mesuré** |
+|---|---|---|---|
+| 1 | `viewer` | `POST /rpc/move_card` sur une card **qu'il voit** (`…0c4`) | `403`, `42501`, `forbidden` ; étape courante relue **inchangée** |
+| 1′ | `viewer` | `POST /rpc/move_card` sur une card d'un channel **qui lui est fermé** (`…0c1`) | `400`, `P0001`, `card_not_found` — règle de discrétion (`docs/SPEC-workflow-engine.md` §5.3) |
+| 2 | `business_developer` | `POST` sur `workflows`, `workflow_steps`, `workflow_transitions`, `workflow_nodes_catalog` | `403`, `42501` ; le message est `new row violates row-level security policy for table "…"` sur les tables à politique `INSERT` restrictive |
+| 2′ | `business_developer` | `PATCH` d'un workflow du seed | `200` et `[]` — refus **silencieux** par la clause `USING` ; la ligne est relue et constatée inchangée |
+| 3 | `admin`, `business_developer`, `viewer` du workspace A | `GET /cards?id=eq.<card de B>` | `200` et `[]`, la card de B étant **d'abord constatée présente** avec la clé de service |
+| 3′ | `admin` du workspace A | `PATCH` de cette card de B | `200` et `[]`, sans effet — relecture par la clé de service |
+| 4 | `viewer`, fermé sur le track de `grands-comptes` | `GET /cards?channel_id=eq.…032` puis `GET /card_field_values` | `200` et `[]`, alors que la clé de service y voit des lignes |
+| 5 | `admin` | `PATCH /cards` portant `current_step_id` | `403`, `42501`, `permission denied for table cards` ; ligne relue inchangée |
+| 6 | clé de service | `GET /mail_inbound_accounts` | `404`, `PGRST205` — **la table n'existe pas** |
+| 7 | clé de service | `GET /mail_outbound_identities` | `404`, `PGRST205` — **la table n'existe pas** |
+| 8 | clé de service | `GET /card_events`, `GET /audit_log` | `404`, `PGRST205` — **les tables n'existent pas** |
+| 9 | — | inventaire de `storage.buckets` | **aucun bucket**, aucune table de pièces jointes |
+| 10 | `admin` | `PATCH` puis `DELETE` de sa propre ligne `workspace_members` | `200` et `[]`, puis `204` ; le rôle relu par la clé de service vaut **toujours `admin`** |
+| 11 | anonyme | `GET` sur les **douze** tables métier peuplées | `200` et `[]` sur chacune |
+| 12 | clé de service | `POST /rpc/queue_outbound_email` | `404`, `PGRST202` — **la fonction n'existe pas** |
+
+Trois précautions gouvernent ce tableau, héritées des unités précédentes et rappelées ici parce
+qu'elles sont la condition de validité de l'ensemble :
+
+1. **La clé de service ne prouve jamais un refus.** Elle établit que les lignes existent, avant
+   qu'on affirme que personne ne les voit (décision 50). Un « zéro ligne » sur une table vide est
+   vrai que la RLS refuse ou qu'elle autorise tout.
+2. **Un refus d'écriture par clause `USING` ne lève rien.** PostgREST rend `200` ou `204` et ne
+   modifie rien. Toute ligne de refus d'écriture **relit** donc la ligne visée.
+3. **Tout scénario qui écrit nettoie derrière lui**, y compris en cas d'échec, et par identifiant
+   ou par préfixe — jamais par prédicat métier (décision 108).
+
+### 7.3 Ce qui n'est pas satisfaisable, et comment l'absence est figée
+
+Cinq preuves — n° 6, 7, 8, 9 et 12 — portent sur des tables ou une fonction qui **n'existent pas**
+à cette place du plan. Elles ne sont pas satisfaisables, et aucune preuve de substitution ne le
+cachera.
+
+Le scénario existe quand même, et **assère l'absence** : `404` / `PGRST205` pour une table,
+`404` / `PGRST202` pour une fonction, inventaire vide pour `storage.buckets`. C'est la convention
+déjà retenue par `CRM-006` pour les types et par `CRM-013` pour ses cinq cibles manquantes : le
+jour où la table naît, l'assertion devient **rouge** et désigne la preuve à écrire, au lieu de
+laisser une limite survivre à sa cause.
+
+La preuve n° 10 est un cas distinct, et le plus délicat : **son effet est obtenu, sa règle ne l'est
+pas.** Un administrateur qui tente de se retirer son rôle est bien sans effet — mesuré —, mais
+parce que `workspace_members` ne porte **aucune** politique et retombe sur le refus par défaut de
+`CRM-003`, non parce qu'une règle protège le dernier administrateur. Le scénario mesure donc l'état
+réel *et* dit ce qu'il ne prouve pas. Le jour où INC-014 sera arbitrée et les politiques d'identité
+écrites, l'écriture cessera d'être filtrée et l'assertion tombera : c'est exactement à ce moment-là
+que la règle du dernier administrateur devra être écrite.
+
+### 7.4 Non-complaisance du harnais
+
+La Definition of Done de `CRM-014` exige que le harnais **échoue si une politique est retirée**.
+`scripts/verify-preuves-refus.sh` l'éprouve en dégradant réellement le produit, puis en le
+restaurant :
+
+1. la politique `cards_lecture` est **réellement retirée** ; les scénarios n° 3, 4 et 11 doivent
+   alors échouer — un `viewer` ne verrait plus rien, mais surtout l'anonyme non plus, et la preuve
+   n° 4 perdrait sa condition de validité ;
+2. une politique **permissive** est réellement posée sur `cards` pour `anon` ; le scénario n° 11
+   doit échouer, ce qui prouve que le fichier détecte une régression d'autorisation et non une base
+   vide ;
+3. la restauration est **constatée** : l'inventaire des politiques est relu et comparé à celui
+   relevé avant dégradation, table par table et nom par nom.
+
+Un harnais qui ne sait pas échouer ne prouve rien ; la vérification porte donc autant sur son
+échec provoqué que sur son succès.
 
 ## 8. Points ouverts
 
@@ -549,6 +647,9 @@ d'erreur ne prouve rien.
    `CRM-012` ne les écrit pas : son objet est le droit fin par track et par channel, et se les
    attribuer trancherait INC-014 à la place du responsable. Ces trois tables restent en refus par
    défaut. **Arbitrage attendu**, `docs/INCONSISTENCY_REPORT.md` INC-014.
+   `CRM-014` ne tranche pas davantage : elle **mesure** l'état, constate que l'effet attendu de la
+   preuve n° 10 est obtenu par le refus par défaut et non par une règle, et fige ce constat par une
+   assertion qui deviendra rouge dès que les politiques d'identité seront écrites (§7.3).
 4. **`app.can_read_card` est livrée par `CRM-040`**, et **INC-013 est close**. Les quatre fonctions
    existent. Voir §3.6 pour la raison — mesurée — qui l'empêche d'être employée par les politiques
    de `cards` elles-mêmes.

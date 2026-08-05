@@ -12,6 +12,51 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-057 — Un commentaire `@verifies` annonçait une preuve de refus que le fichier ne portait pas
+
+**Nature :** commentaire de traçabilité inexact, livré par `CRM-040`.
+**Relevé le :** 2026-08-05, pendant `CRM-014`, en inventoriant les douze preuves de refus.
+
+L'en-tête de `e2e/api/cards.spec.ts` déclare :
+
+```ts
+// @verifies docs/SPEC-permissions-rls.md §7 (preuves de refus n° 3, 4 et 11 sur les cards)
+```
+
+MESURÉ, par recherche dans le fichier : la n° 4 et la n° 11 y sont bien exercées et nommées ; la
+**n° 3 ne l'est pas**. Aucun scénario de ce fichier ne crée de second workspace, et aucun ne vérifie
+qu'un membre du workspace A ne lit pas une card du workspace B. L'énoncé de `CRM-040` dans
+`docs/BACKLOG.md` est d'ailleurs exact — il n'annonce que les n° 4 et n° 11 : c'est le commentaire
+du fichier qui promet davantage que son contenu.
+
+**Pourquoi cela compte plus qu'une ligne de commentaire.** `CLAUDE.md` §5 fait des commentaires
+`@spec` / `@verifies` la trace opposable entre le code et la spécification. Un `@verifies`
+inexact est pire qu'absent : il fait croire à une couverture qui n'existe pas, et une revue qui
+s'y fie conclut que la preuve est acquise. C'est exactement le mode de défaillance que le registre
+existe pour empêcher.
+
+**Comportement retenu :** **inchangé**, et la preuve est livrée ailleurs. `CRM-014` écrit la
+preuve n° 3 sur les cards dans son fichier consolidé — chaîne complète créée dans un second
+workspace avec la clé de service, constatée présente, puis invisible aux trois profils du
+workspace A. La preuve existe donc désormais ; ce qui reste faux est le commentaire de
+`e2e/api/cards.spec.ts`, fichier livrable de `CRM-040`, qu'un passage consacré à `CRM-014` ne
+corrige pas de son propre chef (`CLAUDE.md` §13).
+
+**Action attendue du responsable :** trancher entre
+
+1. corriger l'en-tête de `e2e/api/cards.spec.ts` pour qu'il n'annonce que les n° 4 et n° 11 — une
+   ligne, dans un commit rattaché à `CRM-040` ;
+2. y ajouter réellement la preuve n° 3, ce qui la dupliquerait avec `CRM-014` sans rien prouver de
+   plus ;
+3. décider que les `@verifies` d'un fichier peuvent nommer une preuve **portée ailleurs pour la
+   même table**, et l'écrire dans `docs/MASTER_PLAN.md` §3 — auquel cas rien n'est à corriger, mais
+   la convention change pour tout le dépôt.
+
+**Lié à :** `docs/MASTER_PLAN.md` §3 (format de la traçabilité), `docs/SPEC-permissions-rls.md` §7
+(preuve n° 3), `docs/BACKLOG.md` `CRM-040`.
+
+---
+
 ### INC-055 — Un harnais qui rejoue sa seule migration laisse la base dans un état que le runner ne produit jamais
 
 **Nature :** défaut d'outillage de vérification ; aucun comportement du produit en cause.

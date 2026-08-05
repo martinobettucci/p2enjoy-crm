@@ -271,6 +271,28 @@ sur la ligne de commande, et `E2E_PROJETS=ui` maintient la déclaration du `webS
 
 **Non déclaré.** Voir §2 et §8.
 
+### 4.6 Projet `api` — le fichier consolidé des douze preuves de refus (`CRM-014`)
+
+`CRM-008` livre l'outillage ; `CRM-014` livre **les preuves elles-mêmes**, dans le projet `api` et
+sans nouvelle configuration. Un fichier de plus, `e2e/api/preuves-refus.spec.ts`, rejoue les douze
+scénarios de `docs/SPEC-permissions-rls.md` §7 dans leur ordre, avec les fixtures de
+`e2e/api/jetons.ts` annoncées ici même au §4.3 comme le livrable durable de `CRM-008`.
+
+**Ce que ce fichier ajoute par rapport aux quatorze autres.** Les preuves de refus y sont
+aujourd'hui des corollaires dispersés : chaque unité prouve que *sa* table refuse *ce* profil.
+Aucune ne dit combien des douze preuves sont exercées, ni lesquelles ne le sont pas. Le fichier
+consolidé le dit, et **fige les absences** plutôt que de les taire. Le motif détaillé, le contrat
+mesuré de chaque scénario et la convention de figeage sont dans `docs/SPEC-permissions-rls.md`
+§7.1 à §7.3 — ils appartiennent à la spécification des autorisations, pas à celle du harnais.
+
+**Aucun changement de configuration.** Ni projet, ni `webServer`, ni variable : `npm run e2e:api`
+exécute ce fichier comme les autres. La commande reste celle du §9.
+
+**Ce que `CRM-014` n'ajoute pas.** Aucun scénario d'interface, aucune capture : la webapp reste un
+appelant anonyme faute d'écran de connexion (INC-021), et un refus opposé à un profil authentifié
+est par construction hors d'atteinte d'un anonyme. La règle est prouvée en base et par l'API, ce
+que `CLAUDE.md` §10 exige de toute façon.
+
 ## 5. `npm run e2e:report`
 
 **Mesuré** : le rapporteur `html` de Playwright 1.62.1 produit un unique `index.html` autonome dans
@@ -330,8 +352,11 @@ de tests, pas seulement des nouvelles.
 | `pytest mail-sync/tests` | `CRM-051` | Aucun code Python dans le dépôt. Un harnais pytest sans sujet rendrait `5` (« no tests ran ») ou, pire, `0` sur un périmètre vide. |
 | `npm run e2e:mail` | `CRM-050`, `CRM-054` | Ni Stalwart, ni boîte, ni ingestion : rien à faire circuler. |
 
-Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 restent dues par
-`CRM-014`, qui s'appuiera sur les fixtures livrées ici.
+Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 restaient dues par
+`CRM-014`, qui s'appuie sur les fixtures livrées ici. **Elles le sont désormais pour sept d'entre
+elles** — n° 1 à 5, n° 10 et n° 11 — le fichier consolidé du §4.6 les rejouant toutes ; les cinq
+autres portent sur des tables ou une fonction qui n'existent pas, et leur absence est **figée par
+une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3).
 
 ## 9. Commandes
 
@@ -348,8 +373,9 @@ Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 resten
 
 - **`pytest` et `e2e:mail` ne sont pas livrés** (§2, §8). `CRM-008` reste `[~]` tant qu'INC-023
   n'est pas arbitrée.
-- **Sur les douze preuves de refus, une seule est acquise** — la n° 11. Les autres n'ont pas encore
-  de sujet.
+- **Sur les douze preuves de refus, une seule était acquise à l'écriture de ce document** — la
+  n° 11. `CRM-014` en acquiert **sept** (§4.6) ; les cinq autres n'ont toujours pas de sujet et
+  leur absence est figée par une assertion.
 - **La lecture du TAP est dupliquée** : l'exécuteur la porte, et trois `scripts/verify-*.sh`
   gardent la leur (§3.4). Unifier reviendrait à modifier les preuves de trois autres unités dans ce
   commit.

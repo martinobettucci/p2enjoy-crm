@@ -4978,3 +4978,114 @@ privilège crée une **dette rétroactive** sur tous les harnais existants qui r
 antérieure. Les trouver ne peut pas se faire de mémoire : il a fallu **mesurer l'état de la base
 après chaque harnais, un par un**. Ce balayage devrait être le geste de clôture de toute unité qui
 touche à un privilège ou à une politique, et non l'heureuse conséquence d'une dernière relecture.
+
+---
+
+## 2026-08-05 — `CRM-014` : les douze preuves de refus rassemblées, et ce qu'elles disent quand on les compte
+
+### Décision 146 — La spécification a été écrite après avoir mesuré les douze scénarios, un par un
+
+**Problème.** La Definition of Done de `CRM-014` tient en une ligne — « les 12 scénarios verts » —
+et onze unités successives ont écrit dans leur propre backlog que telle ou telle preuve « restait
+due par `CRM-014` ». Aucune n'a dit **combien** étaient satisfaisables. Ouvrir l'unité sur cette
+base, c'était s'engager à rendre vert un tableau dont plusieurs lignes portent sur des tables qui
+n'existent pas.
+
+**Ce qui a été mesuré, avant d'écrire une ligne de spécification.** Chacun des douze scénarios a été
+rejoué à la main contre la pile réelle, avec les jetons réels obtenus par la route de connexion :
+
+| # | Mesure |
+|---|---|
+| 1 | `move_card` par le `viewer` : `403` / `42501` / `forbidden` sur une card qu'il voit ; `400` / `P0001` / `card_not_found` sur une card d'un channel fermé |
+| 2 | `business_developer` insérant une étape : `403` / `42501`, message `new row violates row-level security policy` |
+| 3 | chaîne complète créée dans un second workspace — workspace, track, workflow, nœud, étape, channel, card : `201` sept fois. L'`admin` de A lit `200` et `[]` ; son `PATCH` rend `200` et `[]` sans effet |
+| 4 | `viewer` sur le channel `grands-comptes` : `200` et `[]`, quand la clé de service y voit cinq cards |
+| 5 | `PATCH current_step_id` par l'`admin` : `403` / `42501` / `permission denied for table cards` |
+| 6, 7 | `mail_inbound_accounts`, `mail_outbound_identities` : `404` / `PGRST205` — **tables absentes** |
+| 8 | `card_events`, `audit_log` : `404` / `PGRST205` — **tables absentes** |
+| 9 | `storage.buckets` : **vide** ; aucune table de pièces jointes |
+| 10 | `admin` retirant son propre rôle : `200` et `[]` puis `204` ; rôle relu = `admin` |
+| 11 | anonyme sur les **douze** tables métier peuplées : `200` et `[]` sur chacune |
+| 12 | `queue_outbound_email` : `404` / `PGRST202` — **fonction absente** |
+
+**Décision.** Le périmètre livrable est donc **sept preuves sur douze**, et il est mesuré, non
+estimé. Les cinq autres portent sur des objets absents. La spécification — `docs/SPEC-permissions-rls.md`
+§7.1 à §7.4 — est écrite à partir de ce tableau, et committée avant la première ligne de code.
+
+**Conséquence.** Aucune preuve de substitution ne remplacera une preuve impossible. Les cinq
+absences occupent une place nommée dans le fichier consolidé et sont **figées par une assertion**,
+selon la convention posée par `CRM-006` puis reprise par `CRM-013`.
+
+### Décision 147 — Rassembler des scénarios déjà verts n'est pas de la duplication, c'est la seule façon de compter
+
+**Problème.** Sept des douze preuves sont déjà exercées quelque part : la n° 11 dans six fichiers,
+la n° 3 dans quatre, la n° 2 dans trois, la n° 4 dans trois. La tentation était de déclarer l'unité
+acquise par héritage et de n'écrire que le reste.
+
+**Pourquoi c'eût été faux.** Chacune de ces preuves est un **corollaire** du contrat d'API de son
+unité : elle prouve que *cette* table refuse *ce* profil. Aucune ne répond à la question que
+`CRM-014` pose — *les douze sont-elles exercées, et lesquelles ne le sont pas ?* Tant que les
+preuves sont réparties dans quatorze fichiers, cette question n'a aucun lieu où être posée, et
+l'absence d'une preuve n'a aucun lieu où être vue. C'est précisément ce qui s'est produit pour la
+n° 3 sur les cards : personne ne l'a écrite, et un commentaire de traçabilité affirmait qu'elle
+existait (INC-057).
+
+**Décision.** Un fichier consolidé, `e2e/api/preuves-refus.spec.ts`, rejoue les douze scénarios
+dans l'ordre du tableau du §7. Les scénarios des unités précédentes ne sont **ni retirés ni
+déplacés** : les retirer rouvrirait sept unités dans un commit qui n'en traite qu'une.
+
+**Conséquence assumée.** Le projet `api` compte désormais des assertions redondantes. C'est le prix
+d'un inventaire, et il est faible au regard de ce qu'il achète : une preuve manquante devient
+visible au lieu d'être invisible.
+
+### Décision 148 — La preuve n° 10 est obtenue, et elle ne prouve pas ce qu'elle a l'air de prouver
+
+**Problème.** La preuve n° 10 exige qu'un dernier administrateur ne puisse pas se retirer son rôle.
+MESURÉ : le `PATCH` rend `200` et `[]`, le `DELETE` rend `204`, et le rôle relu par la clé de
+service vaut toujours `admin`. L'effet attendu est donc obtenu, et il eût été facile d'écrire un
+scénario vert et de cocher la ligne.
+
+**Pourquoi ce serait un mensonge.** L'écriture n'est pas refusée parce qu'une règle protège le
+dernier administrateur — cette règle **n'existe pas**. Elle est sans effet parce que
+`workspace_members` ne porte **aucune** politique, et retombe donc sur le refus par défaut de
+`CRM-003`. Le jour où INC-014 sera arbitrée et les politiques d'identité écrites, la même requête
+trouvera une ligne et la modifiera : la protection disparaîtra au moment précis où le produit
+deviendra utilisable.
+
+**Décision.** Le scénario mesure l'état réel **et dit ce qu'il ne prouve pas**, dans son propre
+corps et dans `docs/SPEC-permissions-rls.md` §7.3. Il assère aussi, par pgTAP, que ces trois tables
+portent **zéro politique** : le jour où l'une en recevra une, l'assertion deviendra rouge et
+désignera la règle du dernier administrateur comme restant à écrire. La ligne n'est pas cochée dans
+la Definition of Done ; elle est nommée comme **partiellement acquise**.
+
+### Décision 149 — Le harnais dégrade la politique la plus centrale, pas la plus commode
+
+**Problème.** La Definition of Done exige que le harnais « échoue si une politique est retirée ».
+N'importe quelle politique ferait techniquement l'affaire ; le choix décide de ce que la preuve
+vaut.
+
+**Décision.** La politique retirée est `cards_lecture`, et la politique permissive posée l'est sur
+`cards` pour `anon`. Motif : `cards` est la seule table dont dépendent **trois** des sept preuves
+acquises — la n° 3, la n° 4 et la n° 11. Dégrader une table périphérique ferait échouer un scénario
+isolé ; dégrader `cards` éprouve le fichier là où il porte le plus, et dans les deux sens — une
+politique retirée (le produit refuse trop) comme une politique permissive (le produit accepte
+trop).
+
+**Ce que le harnais constate ensuite.** L'inventaire complet des politiques est relevé **avant** la
+dégradation, table par table et nom par nom, puis comparé après restauration. La restauration est
+constatée, jamais supposée — leçon des décisions 143 et 145, et de leurs quatre occurrences.
+
+### Décision 150 — La séquence de restauration ne rejoue aucune migration
+
+**Problème.** Quatre harnais ont laissé la base dégradée en rejouant une migration sans celles qui
+la suivent (décisions 143 et 145, INC-055). Le remède harnais par harnais a échoué quatre fois.
+
+**Décision.** `scripts/verify-preuves-refus.sh` **ne rejoue aucune migration**. Ses dégradations
+sont des `drop policy` et des `create policy` ciblés, et sa restauration recrée exactement la
+politique relevée, dont la définition est **lue en base avant d'être retirée** (`pg_get_expr` sur
+`pg_policy`), jamais réécrite de mémoire. Un harnais qui n'a pas besoin de rejouer un préfixe de
+l'historique ne peut pas laisser derrière lui l'état intermédiaire qu'INC-055 décrit.
+
+**Portée.** Ce n'est pas une réponse générale à INC-055 — l'arbitrage y reste attendu. C'est la
+constatation qu'un harnais peut souvent éviter le problème en dégradant au niveau où il vérifie,
+plutôt qu'au niveau de la migration qui l'a posé.
