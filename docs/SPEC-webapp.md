@@ -225,6 +225,8 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 | `/inbox` | État vide de l'inbox |
 | `/ma-journee` | État vide de la journée |
 | `/reglages` | Réglages — état vide, et rappel des sources de configuration |
+| `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021` |
+| `/tracks/:slugTrack/:slugChannel/cards/:idCard` | Détail d'une card : son **formulaire conditionnel** — `CRM-037`. La card est désignée par son identifiant, `docs/SPEC-cards.md` ne lui donnant aucun slug |
 | toute autre | Route inconnue, avec retour explicite vers `/` |
 
 Chaque route rend l'un des composants d'état du §7 : aucune n'est une page blanche.

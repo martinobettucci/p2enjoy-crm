@@ -116,6 +116,17 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 - `src/app/RouteTrack.tsx` — la route `/tracks/:slugTrack[/:slugChannel]`, hors de la table
   statique de `routes.tsx` : son titre est une **donnée** (le nom du track) et non une clé de
   traduction, et son contenu dépend de paramètres d'URL ;
+- `src/lib/valeur-renseignee.ts` — « renseigné » au sens de `docs/SPEC-form-composer.md` §6.6, et
+  le **tableau de cas partagé** du §4.3. Seul dans son fichier, sans React ni DOM : la preuve d'API
+  appartient à un autre projet TypeScript et doit pouvoir l'importer plutôt que le recopier
+  (`CRM-037`) ;
+- `src/lib/formulaire.ts` — la composition du formulaire d'une étape : champs du workflow, règles
+  de l'étape courante, valeurs de la card, réparties dans les trois destinations du §4.2. Les
+  quatre lectures qui suivent la card sont **parallèles**, ne dépendant que d'elle (`CRM-037`) ;
+- `src/app/FormulaireCard.tsx` — le rendu de ce modèle, sans aucune règle de visibilité dans le
+  JSX, et `src/app/RouteCard.tsx` — la route `/tracks/:slugTrack/:slugChannel/cards/:idCard`, seul
+  hôte possible du formulaire. Aucune écriture n'est livrée : elle exigerait une session
+  (INC-021), et les contrôles sont donc indisponibles et le disent (`CRM-037`) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

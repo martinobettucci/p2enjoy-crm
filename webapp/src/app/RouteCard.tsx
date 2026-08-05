@@ -1,0 +1,118 @@
+// @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
+// @spec docs/SPEC-form-composer.md §4.6 (l'écran hôte, et pourquoi c'est une route), §4.5 (états)
+// @spec docs/DESIGN_SYSTEM.md §5.3 (détail de card), §5.8 (états explicites), §7 (responsive)
+// @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+//
+// Le formulaire est la colonne gauche du détail de card (docs/DESIGN_SYSTEM.md §5.3). Il lui faut
+// une adresse : c'est le procédé de `CRM-021`, qui a livré la route d'un track parce que la barre
+// d'onglets n'avait aucun hôte. **Rien d'autre de cet écran n'est livré ici** : la timeline
+// (`CRM-044`), les commentaires (`CRM-043`) et les champs d'en-tête de la card (`CRM-040`)
+// restent dus par leurs unités, et la colonne de droite du §5.3 avec eux.
+//
+// La card est désignée par son **identifiant** et non par un slug : `docs/SPEC-cards.md` ne lui en
+// donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
+// publique le divulguerait.
+//
+// L'appelant étant anonyme (INC-021), **toute** route de card tombe aujourd'hui sur « card
+// introuvable ». C'est le refus réel du backend, pas un défaut d'interface. Un identifiant refusé
+// et un identifiant inexistant produisent le même écran, délibérément : les distinguer
+// renseignerait un appelant sans droit sur l'existence d'une card
+// (docs/SPEC-permissions-rls.md §7).
+
+import { Link, useParams } from 'react-router'
+import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
+import { t, type CleTraduction } from '../i18n'
+import { useContenuCard } from '../lib/formulaire'
+import { clientCrm } from '../lib/supabase'
+import { AppShell } from './AppShell'
+import { FormulaireCard } from './FormulaireCard'
+
+/** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
+const CLASSES_RETOUR = [
+	'inline-flex items-center justify-center',
+	'min-h-[var(--size-target)] px-4 rounded-sm',
+	'bg-brand text-white font-medium',
+	'transition-colors duration-[var(--transition-duration-fast)] hover:bg-brand-hover',
+].join(' ')
+
+/**
+ * Repli du titre de l'en-tête, remplacé par le titre de la card dès qu'il est connu.
+ *
+ * Déclarée comme constante et non écrite dans le JSX, pour la même raison que `CLE_TITRE_TRACK` :
+ * le contrôle de clés mortes de `webapp/src/i18n/i18n.test.ts` cherche les clés citées entre
+ * apostrophes, et un attribut JSX entre guillemets lui échapperait.
+ */
+const CLE_TITRE_CARD: CleTraduction = 'route.card.title'
+
+export function RouteCard() {
+	const { slugTrack, idCard } = useParams()
+	const { etat, recharger } = useContenuCard(clientCrm, idCard)
+
+	const card = etat.statut === 'pret' ? etat.donnees.card : null
+
+	return (
+		<AppShell
+			cleTitreRoute={CLE_TITRE_CARD}
+			{...(card === null ? {} : { titreRoute: card.title })}
+			{...(slugTrack === undefined ? {} : { slugTrack })}
+		>
+			<ContenuCard etat={etat} onReprise={recharger} />
+		</AppShell>
+	)
+}
+
+function ContenuCard({
+	etat,
+	onReprise,
+}: {
+	readonly etat: ReturnType<typeof useContenuCard>['etat']
+	readonly onReprise: () => void
+}) {
+	// Pendant le chargement, la zone principale ne montre rien plutôt qu'un « introuvable »
+	// prématuré : annoncer l'absence avant d'avoir la réponse serait une valeur par défaut
+	// trompeuse (CLAUDE.md §18).
+	if (etat.statut === 'chargement') return null
+
+	if (etat.statut === 'erreur') {
+		if (etat.erreur.nature === 'forbidden') {
+			return <EtatRefus titre={t('state.forbidden.title')} corps={t('state.forbidden.body')} />
+		}
+		return (
+			<EtatErreur
+				titre={t('state.error.title')}
+				corps={t(etat.erreur.nature === 'network' ? 'state.error.network' : 'state.error.unknown')}
+				libelleReprise={t('state.error.retry')}
+				onReprise={onReprise}
+			/>
+		)
+	}
+
+	if (etat.donnees.card === null) {
+		return (
+			<EtatVide
+				titre={t('route.card.notfound.title')}
+				corps={t('route.card.notfound.body')}
+				action={
+					<Link to="/" className={CLASSES_RETOUR}>
+						{t('route.notfound.action')}
+					</Link>
+				}
+			/>
+		)
+	}
+
+	// La card existe, son étape non : le backend a consenti l'une et refusé l'autre. L'écran le
+	// dit plutôt que d'inventer une étape sans nom (webapp/src/lib/formulaire.ts).
+	if (etat.donnees.modele === null) {
+		return <EtatVide titre={t('route.card.nostep.title')} corps={t('route.card.nostep.body')} />
+	}
+
+	// Deux colonnes sur grand écran, empilées sous 1024 px (docs/DESIGN_SYSTEM.md §5.3 et §7). La
+	// seconde colonne n'est pas livrée : la grille reste donc à une colonne, et l'écart est nommé
+	// plutôt que comblé par un panneau vide.
+	return (
+		<div className="max-w-[72ch] mx-auto px-4 py-6">
+			<FormulaireCard modele={etat.donnees.modele} />
+		</div>
+	)
+}

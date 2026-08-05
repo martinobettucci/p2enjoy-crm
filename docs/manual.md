@@ -25,7 +25,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré, sans écran** — voir le chapitre 4 ci-dessous. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. **Ses réponses au formulaire existent aussi depuis `CRM-036`** — voir le chapitre 24. Ce qui manque est l'**écran** |
+| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; le formulaire a désormais un écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. **Ses réponses au formulaire existent aussi depuis `CRM-036`** — voir le chapitre 24. Ce qui manque est l'**écran** |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré côté serveur, sans écran** — voir le chapitre 4.3. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037` | **Partiellement livré** : les **six** motifs de refus existent et sont nommés (chapitre 4.3), y compris celui qui **liste les questions restées sans réponse**, livré par `CRM-036`. Ce qui manque est leur **affichage** |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
@@ -365,9 +365,42 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 - **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
   vous aviez le droit d'écrire là où elle se trouvait.
 
+### 4.7 La fiche d'une affaire : son formulaire, et ce qu'il montre
+
+Une affaire s'ouvre à l'adresse `/tracks/<track>/<onglet>/cards/<identifiant de l'affaire>`. Cet
+écran affiche le **formulaire de l'étape où l'affaire se trouve**, et lui seul : la timeline, les
+commentaires et les champs d'en-tête arrivent avec leurs chapitres.
+
+Ce que vous y voyez :
+
+- **les questions de l'étape courante**, dans l'ordre que l'administration leur a donné. Une
+  question sans réglage particulier est **affichée** : c'est la valeur par défaut, et elle évite de
+  devoir déclarer une règle par étape pour les questions courantes ;
+- **une étoile et la mention « Requis pour passer à <étape> »** sur les questions obligatoires.
+  L'étoile ne porte jamais l'information seule : la mention l'écrit en toutes lettres, et les
+  lecteurs d'écran l'annoncent ;
+- **un message d'alerte** sous chaque question obligatoire restée sans réponse. Il ne bloque pas la
+  lecture : il signale ce qui manquera au moment de faire avancer l'affaire ;
+- **une section repliée « Informations d'autres étapes »**, qui rassemble les réponses données à des
+  questions que l'étape courante n'affiche pas — et celles données à une question **archivée**
+  depuis. Rien de ce qui a été saisi ne disparaît de la vue sans y être rangé.
+
+**Cet écran est en consultation seule, et il le dit.** Un bandeau explique que l'enregistrement
+d'une réponse exige une session, et qu'aucun écran de connexion n'est encore livré. Les champs
+restent lisibles et sont désactivés — vous voyez ce que l'affaire porte, vous ne pouvez rien y
+écrire depuis le produit.
+
+**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Affaire
+introuvable ». Ce n'est pas un défaut de l'écran, c'est le refus réel du serveur, qui ne consent
+aucune affaire à un visiteur non identifié — la même cause que pour les tracks et les onglets
+(chapitre 3.2).
+
 ### 4.6 Ce qui n'est pas encore livré
 
-- **Le tableau et la vue liste** : aucun écran n'affiche encore les affaires.
+- **Le tableau et la vue liste** : aucun écran n'affiche encore les affaires en colonnes.
+- **Le geste de déplacement** : la fiche montre les questions obligatoires et ce qui leur manque,
+  mais aucun bouton ne fait avancer une affaire (chapitre 4.3).
+- **L'enregistrement d'une réponse depuis l'écran** (chapitre 4.7).
 - **Les commentaires, l'historique et les documents.**
 - **Le score de santé** : la colonne existe, rien ne l'alimente.
 

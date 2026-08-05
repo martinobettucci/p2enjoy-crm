@@ -78,14 +78,22 @@ PORT_RAPPORT=9323
 # quatre fonctions `can_*` n'ayant jamais eu de preuve portée par leur propre unité (INC-013, close).
 # 1139 + 25 = 1164. Ni le projet `api` ni le projet `ui` ne changent : l'unité ne livre ni route ni
 # écran. Valeur MESURÉE, non déduite.
+# RÉVISÉS UNE QUATRIÈME FOIS, LE 2026-08-05, PAR `CRM-037` — et les deux compteurs de scénarios ont
+# bien échoué avant d'être révisés. L'unité livre le rendu du formulaire conditionnel et son écran
+# hôte : **15 scénarios d'API** (`e2e/api/rendu-formulaire.spec.ts`, le tableau de cas partagé du
+# §4.3 jugé par la base) et **10 scénarios d'interface** (`e2e/ui/formulaire.spec.ts`).
+# 291 + 15 = 306 ; 37 + 10 = 47. `ASSERTIONS_ATTENDUES` est inchangée : l'unité n'ajoute aucune
+# assertion pgTAP, ses preuves de base passant par la vraie route et non par une suite SQL.
+# Valeurs MESURÉES, non déduites.
 ASSERTIONS_ATTENDUES=1164
-SCENARIOS_API=291
+SCENARIOS_API=306
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
 # mention de divergence, ni l'affectation d'un workflow à un channel, ni la grille champ × étape
-# n'ont d'écran, et n'en auront pas avant que l'écran de connexion existe (INC-021).
-SCENARIOS_UI=37
+# n'ont d'écran. **`CRM-037` est la première unité du chunk 3 à en livrer un** : la route de détail
+# d'une card, qui reste un écran d'appelant anonyme tant qu'INC-021 n'est pas tranchée.
+SCENARIOS_UI=47
 
 TRAVAIL=$(mktemp -d)
 failures=0

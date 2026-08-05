@@ -76,3 +76,14 @@ export const CLE_TITRE_INTROUVABLE: CleTraduction = 'route.notfound.title'
  * c'est ce que fait un clic sur une pilule de la barre latérale.
  */
 export const CHEMINS_TRACK = ['/tracks/:slugTrack', '/tracks/:slugTrack/:slugChannel'] as const
+
+/**
+ * Route de détail d'une card — `CRM-037`, `docs/SPEC-form-composer.md` §4.6.
+ *
+ * Elle ne figure pas davantage dans `ROUTES` : son titre est le titre de la card, donc une
+ * **donnée**, et son contenu dépend de paramètres d'URL.
+ *
+ * La card est désignée par son **identifiant**, et non par un slug : `docs/SPEC-cards.md` ne lui
+ * en donne aucun, et son `email_local_part` est délibérément non devinable.
+ */
+export const CHEMIN_CARD = '/tracks/:slugTrack/:slugChannel/cards/:idCard' as const

@@ -7,8 +7,9 @@
 
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { AppShell } from './AppShell'
+import { RouteCard } from './RouteCard'
 import { RouteTrack } from './RouteTrack'
-import { CHEMINS_TRACK, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
+import { CHEMIN_CARD, CHEMINS_TRACK, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
 
 export function App() {
 	return (
@@ -26,6 +27,10 @@ export function App() {
 				{CHEMINS_TRACK.map((chemin) => (
 					<Route key={chemin} path={chemin} element={<RouteTrack />} />
 				))}
+				{/* Le détail d'une card porte lui aussi sa propre coquille : son titre est celui de
+				    la card, et son contenu dépend de son identifiant (`CRM-037`). Déclarée **après**
+				    les routes de track, dont elle prolonge le chemin. */}
+				<Route path={CHEMIN_CARD} element={<RouteCard />} />
 				<Route
 					path="*"
 					element={

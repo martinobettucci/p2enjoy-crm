@@ -2569,10 +2569,150 @@ compensée par une preuve de substitution.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **sixième** occurrence).
 
-### CRM-037 — Rendu du formulaire conditionnel `[ ]`
+### CRM-037 — Rendu du formulaire conditionnel `[~]`
 Champs par étape, section repliée des valeurs d'autres étapes, mention « requis pour passer à ».
 **DoD** : E2E (transition bloquée, saisie, transition réussie) ; captures de chaque étape ;
 accessibilité des erreurs vérifiée.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-form-composer.md` §4 : le chapitre
+      « Rendu » tenait en **cinq lignes** écrites à `CRM-000`, qui disent ce que l'écran montre sans
+      jamais dire comment il le compose ni ce qu'il faut en prouver. Réécrit en contrat vérifiable
+      **après mesure du seed en base** — sept champs dont un archivé, dix-sept règles, neuf cards,
+      quatorze valeurs —, avec les cinq règles d'origine **citées mot pour mot**. Commit
+      documentaire dédié, poussé avant la première ligne de code (décision 160).
+- [x] **Une addition, et une seule, au-delà de la lettre du §4 : le champ archivé.** Le §5 posait
+      depuis `CRM-000` que ses valeurs « restent consultables dans la section repliée » ; le §4 ne
+      nommait pas cette destination. Elle est écrite au §4.2 plutôt que laissée à l'interprétation
+      du composant, et le seed la rend démontrable.
+- [x] **La composition part des champs, jamais des règles**, comme le §3.1 l'exige. MESURÉ sur le
+      seed : à `Prospection`, **cinq règles pour six champs actifs** — `decideur-identifie` n'a
+      aucune règle et doit apparaître par le défaut `visible`. Une lecture par les règles le
+      perdrait sans qu'aucune erreur ne le signale ; une dégradation du harnais le vérifie.
+- [x] **Les trois destinations du §4.2 sont exercées par des données que le produit porte** : la
+      card `…0000c6` est à `Prospection`, où `motif-perte` est `hidden`, et porte pourtant une
+      valeur pour ce champ. Un contrôle du harnais échoue si le seed cesse de le démontrer.
+- [x] **L'INTERFACE ET LA GARDE LISENT « RENSEIGNÉ » DE LA MÊME FAÇON, ET C'EST MESURÉ.** Le §6.6
+      l'exigeait « faute de quoi l'interface annoncerait passable une transition que la garde
+      refuse », sans qu'aucune preuve ne le tienne — deux codes, deux langages, deux processus.
+      Un **tableau de cas partagé** de douze valeurs vit désormais dans
+      `webapp/src/lib/valeur-renseignee.ts`, seul de son espèce : le test unitaire l'exerce contre
+      le prédicat TypeScript, et `e2e/api/rendu-formulaire.spec.ts` écrit **les mêmes valeurs** dans
+      de vraies lignes `card_field_values`, par la vraie route et avec le jeton réel de
+      l'administratrice, puis lit le jugement de `move_card`. **15 scénarios, aucune anomalie.**
+- [x] **La card ne bouge jamais pendant cette preuve**, et le procédé est écrit : `budget` étant
+      vide par contrat de seed, tout déplacement est refusé de toute façon, et c'est la **liste des
+      clés manquantes** qui porte l'information. Le seed sort intact — ce qu'un déplacement réussi
+      ne permettrait pas, `current_step_id` n'étant réécrivable par personne depuis `CRM-013`.
+- [x] **Un champ archivé n'est ni affiché ni exigé** : le §4.2 l'écarte du formulaire, le §6.7 ne
+      l'exige pas. Les deux règles se répondaient sans qu'aucune assertion ne les tienne ensemble ;
+      c'est désormais le scénario R2 de la preuve d'API.
+- [x] **Écran hôte livré** : `webapp/src/app/RouteCard.tsx`, route
+      `/tracks/:slugTrack/:slugChannel/cards/:idCard` (§4.6). C'est le procédé de `CRM-021`, qui a
+      livré la route d'un track parce que la barre d'onglets n'avait aucun hôte. **Rien d'autre du
+      §5.3 du design system n'est livré** : timeline (`CRM-044`), commentaires (`CRM-043`) et champs
+      d'en-tête (`CRM-040`) restent dus. La card est désignée par son **identifiant** — aucun slug
+      n'existe, et son adresse email est délibérément non devinable.
+- [x] **Accessibilité prouvée sur le composant réel, pas déclarée** : libellé résolvant vers son
+      contrôle par `for`, astérisque **décoratif** doublé d'un texte lisible par lecteur d'écran,
+      mention « requis pour passer à <étape> » nommant l'étape, alerte `role="alert"` citée par
+      `aria-describedby`, `aria-invalid` sur le champ exigé et vide, section repliée `details` /
+      `summary` **ouverte au clavier** dans le navigateur réel.
+- [x] **Aucune écriture, et l'écran dit pourquoi** (§4.7) : les contrôles sont indisponibles,
+      restent lisibles, et un bandeau nomme la cause — enregistrer exige une session, INC-021. Ce
+      que `docs/DESIGN_SYSTEM.md` §8 exige d'un état désactivé. Un formulaire où l'on saisirait sans
+      pouvoir enregistrer serait un piège ; un formulaire muet serait une perte d'information.
+- [x] **UN DÉFAUT RÉEL, TROUVÉ PAR LE CONTRÔLE DE CLASSES ET NON À L'ŒIL** (décision 162). La case à
+      cocher avait été écrite en `size-5`, soit 20 px. L'échelle du §3 est **fermée** et
+      `--spacing-5` n'existe pas : la classe n'était **pas engendrée du tout**, en silence, et la
+      case perdait sa taille. Exactement le défaut que `docs/DESIGN_SYSTEM.md` §11 décrit, et que
+      `scripts/lib/classes-css.mjs` existe pour attraper. Corrigé en `size-6` (24 px), valeur de
+      l'échelle.
+- [x] **Deux règles visuelles ajoutées au design system**, §5.7 bis, dans le même changement :
+      une case à cocher occupe une ligne de hauteur `--size-target` — une case de 16 px isolée était
+      la seule cible du produit sous les 40 px du §8 —, et une valeur en lecture seule dont le type
+      est un montant, une date ou un horodatage se rend en **donnée technique** au sens du §2. Les
+      deux ont été trouvées **en regardant une capture**, pas en lisant un test.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-037/`, huit captures —
+      card introuvable, formulaire chargé, champ exigé en défaut, section repliée ouverte, et les
+      **quatre paliers** du §7. Produites depuis l'application **construite et servie**, regardées
+      une à une ; c'est en les regardant que les deux règles ci-dessus ont été écrites.
+- [x] **Preuves d'interface** : `e2e/ui/formulaire.spec.ts`, **10 scénarios**, contre le build de
+      production. Deux d'entre eux n'emploient **aucune substitution** — la route interroge
+      réellement `/rest/v1/cards`, filtrée sur l'identifiant et sur `deleted_at`, et l'appelant
+      anonyme obtient l'état « card introuvable », qui est le refus réel du backend. Les huit autres
+      **substituent la réponse réseau**, procédé endossé par `docs/DESIGN_SYSTEM.md` §12.5, et
+      chacun le dit.
+- [x] **Tests unitaires dédiés** : `webapp/src/lib/formulaire.test.ts` (**30 tests** : composition,
+      les trois destinations, l'ordre, le défaut `visible`, les clés manquantes, le tableau de cas)
+      et `webapp/src/app/FormulaireCard.test.tsx` (**23 tests** sur le composant réel).
+      `npm run test:unit` passe de 164 à **227 tests**.
+- [x] Harnais de preuves rejouable `scripts/verify-formulaire.sh` : **45 contrôles, aucune
+      anomalie**, et **non complaisant** — six dégradations volontaires le font réellement échouer :
+      `false` compté comme vide (côté unitaire **et** confronté à la base), un champ sans règle qui
+      disparaît, un champ archivé qui revient dans le formulaire, `role="alert"` retiré, la mention
+      d'exigence supprimée. Sa section 7 vérifie qu'il **rend les fichiers intacts** et rejoue les
+      tests après restauration (mécanisme des décisions 143, 145, 157).
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run test:sql`
+      **1164 assertions** inchangées, `npm run e2e:api` **306 scénarios** (291 + 15),
+      `npm run e2e:ui` **47 scénarios** (37 + 10).
+- [x] **Un garde-fou figé a échoué comme prévu, et a été révisé** (mécanisme de la décision 51,
+      onzième occurrence) : `scripts/verify-harness.sh` attendait 291 scénarios d'API et 37
+      d'interface. Révisé à **306** et **47** dans le même changement, valeurs mesurées ;
+      `ASSERTIONS_ATTENDUES` reste à 1164, l'unité n'ajoutant aucune assertion pgTAP.
+- [x] **Aucune régression** : `verify-harness` 25, `verify-webapp` 41, `verify-tracks` 43,
+      `verify-channels` 30, `verify-valeurs-champs` 40 — aucune anomalie.
+- [x] `docs/SPEC-form-composer.md` §4 et §7.3, `docs/DESIGN_SYSTEM.md` §5.7 bis,
+      `docs/SPEC-webapp.md` §5.2, `docs/DAT.md` §3.1, `docs/manual.md` §4.7 et sommaire,
+      `docs/INCONSISTENCY_REPORT.md` INC-062, `docs/JOURNAL.md`, `CHANGELOG.md` mis à jour dans le
+      même changement.
+- [ ] **LE PARCOURS QUE LA DEFINITION OF DONE EXIGE N'EST PAS ATTEIGNABLE — INC-062.** « Transition
+      bloquée → saisie → transition réussie » suppose une **session** (INC-021) et un **contrôle de
+      transition**, dû par `CRM-041`, que `docs/MASTER_PLAN.md` §2 ordonne **après** cette unité.
+      Il n'y a pas d'erreur d'ordre à corriger : il y a une preuve écrite en supposant un écran que
+      le plan livre plus tard. Trois options d'arbitrage sont portées au responsable, **aucune n'est
+      appliquée en silence**.
+      **Cette preuve est bloquée par une dépendance et par un arbitrage, pas par un défaut de
+      l'unité.**
+- [ ] **« Captures de chaque étape » n'est pas tenu à la lettre.** Les captures montrent **une**
+      étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
+      destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
+      seed ne pose pas et qu'inventer ici dépasserait l'unité. Le fait est nommé, pas contourné.
+- [ ] **Aucune écriture depuis l'écran** (§4.7), donc aucune preuve de saisie. Relève d'INC-021.
+- [ ] **Le défilement jusqu'au premier champ concerné** (§4.5) n'est pas livré : il appartient au
+      geste de transition, qui n'existe pas. Même cause qu'INC-062.
+
+*DoD adaptée, écarts explicites.* **Aucun test pgTAP dédié** : cette unité ne livre ni table, ni
+fonction, ni politique — son objet est un rendu. La règle de base qu'elle doit respecter,
+« renseigné », est déjà couverte par la suite de `CRM-036` ; ce que cette unité ajoute est la
+**preuve que les deux lectures coïncident**, et cette preuve ne peut vivre qu'à cheval sur les deux
+côtés, donc dans le projet `api`. **Aucune mise à jour du seed** : les données que le rendu démontre
+y sont déjà — la card `c6`, son champ `hidden` porteur d'une valeur, son champ sans règle, son champ
+archivé — et deux contrôles du harnais échouent si elles cessent d'y être. L'unité n'introduit ni
+table, ni statut, ni flux.
+
+*Limites nommées, non masquées.*
+
+- **INC-062 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- **Aucune donnée métier n'apparaît dans l'interface tant qu'INC-021 n'est pas tranchée.** Sixième
+  unité consécutive du chunk 3 à buter sur le même obstacle, et la première dont un écran existe
+  pourtant : la route rend « card introuvable » à tout visiteur, ce qui est le refus réel du backend.
+- **`user`, `contact` et `file` ne sont pas résolus** (INC-053) : le rendu affiche leur valeur
+  **brute** plutôt qu'un nom qu'il ne peut pas obtenir.
+- **Les champs exigés par une transition** (`require_fields`, §3.5) ne sont pas signalés : ils
+  dépendent de l'arête empruntée, donc d'un geste qui n'existe pas encore.
+- **La colonne droite du §5.3 du design system n'est pas livrée**, et la grille reste donc à une
+  colonne. L'écart est nommé dans le composant plutôt que comblé par un panneau vide.
+- **`scripts/verify-cards.sh` rend 44 sur 45**, pour la raison déjà consignée — **INC-061**, son
+  propre jeu d'essai encore en base quand il rejoue `npm run test:sql`. Reproduit à l'identique ici,
+  **non corrigé** : c'est un livrable de `CRM-040`, et le reprendre dans ce commit contredirait
+  `CLAUDE.md` §13. MESURÉ : `npm run test:sql` lancé après sa sortie rend 1164 assertions sans
+  anomalie, et la base porte bien neuf cards.
+- **Deux contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, image `webapp` construite avec le certificat du proxy
+  (INC-032, INC-042), et l'arborescence de compatibilité des navigateurs Playwright — INC-036,
+  **huitième** occurrence.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
 
 ### CRM-040 — Cards `[~]`
 CRUD, adresse email générée, responsable, montant, archivage, corbeille.

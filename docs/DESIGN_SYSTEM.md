@@ -192,6 +192,28 @@ focus `--color-brand`. Texte d'aide sous le champ en 13 px `--color-text-3`. Err
 Un champ **obligatoire pour la transition en cours** est signalé par un astérisque et la mention
 « requis pour passer à <étape> » — l'utilisateur doit comprendre *pourquoi* il est requis.
 
+### 5.7 bis Case à cocher et valeurs en lecture seule — `CRM-037`
+
+Deux règles ajoutées par le premier formulaire réellement rendu, l'une et l'autre trouvées **en
+regardant une capture** et non en lisant un test :
+
+- **Une case à cocher occupe une ligne de hauteur `--size-target`.** La case elle-même reste à
+  **24 px** — l'agrandir jusqu'à 40 px la ferait passer pour un champ de saisie —, et son libellé
+  lui sert de **cible étendue** par son `for`. Sans cette ligne, une case de 16 px isolée était la
+  seule cible interactive du produit sous les 40 px du §8.
+  **24 px et non 20 :** l'échelle du §3 est fermée, et `--spacing-5` n'existe pas. Écrit d'abord
+  en `size-5`, le rendu perdait **silencieusement** sa taille — la classe n'était pas engendrée du
+  tout, exactement le défaut que le §11 décrit. Trouvé par le contrôle de classes, pas à l'œil.
+- **Une valeur affichée en lecture seule dont le type est un montant, une date ou un horodatage se
+  rend en donnée technique** au sens du §2 : monospace, chiffres tabulaires. La règle vit déjà dans
+  `webapp/src/styles/app.css`, portée par `code` ; le rendu l'emploie plutôt que de la dupliquer
+  dans une classe. `url` en est exclue : une adresse se lit, elle ne se compare pas colonne par
+  colonne.
+
+Le rendu conditionnel lui-même — composition, section repliée, mention d'exigence, accessibilité
+des erreurs — est spécifié dans `docs/SPEC-form-composer.md` §4, et non ici : ce document donne les
+règles visuelles, pas l'algorithme qui décide **quels** champs sont rendus.
+
 ### 5.8 États systématiques
 
 Toute vue traite explicitement : chargement (squelettes, pas de spinner plein écran), vide

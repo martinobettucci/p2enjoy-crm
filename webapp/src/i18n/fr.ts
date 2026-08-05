@@ -71,9 +71,28 @@ export const fr = {
 	'route.channel.empty.title': 'Aucune card dans ce channel',
 	'route.channel.empty.body':
 		'Le board et la vue liste de ce channel arrivent avec les cards.',
+	'route.card.title': 'Card',
+	'route.card.notfound.title': 'Card introuvable',
+	'route.card.notfound.body':
+		"Aucune card ne correspond à cette adresse, ou votre compte n'y a pas accès.",
+	'route.card.nostep.title': 'Étape introuvable',
+	'route.card.nostep.body':
+		"Cette card désigne une étape que votre compte n'a pas le droit de lire : son formulaire ne peut pas être composé.",
 	'route.notfound.title': 'Page introuvable',
 	'route.notfound.body': "Cette adresse ne correspond à aucun écran de l'application.",
 	'route.notfound.action': "Revenir à l'accueil",
+
+	// --- Formulaire conditionnel (docs/SPEC-form-composer.md §4) ---------------------------
+	'form.title': 'Formulaire de la card',
+	'form.step.prefix': 'Étape courante :',
+	'form.readonly':
+		"Consultation seule : enregistrer une valeur exige une session, et aucun écran de connexion n'est encore livré.",
+	'form.empty': 'Aucun champ à afficher pour cette étape.',
+	'form.required.sr': '(champ requis)',
+	'form.required.reason': 'Requis pour passer à',
+	'form.missing': "Ce champ est requis et n'est pas renseigné.",
+	'form.select.none': '— Aucun choix —',
+	'form.other.summary': "Informations d'autres étapes",
 
 	// --- États (docs/DESIGN_SYSTEM.md §5.8) ----------------------------------------------
 	'state.loading.aria': 'Chargement en cours',

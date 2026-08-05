@@ -5486,3 +5486,50 @@ contrôle de transition, ni parcours de connexion. L'unité restera `[~]` avec s
 INC-021, et la première dont la Definition of Done est rendue inatteignable par une **unité du
 plan** autant que par l'arbitrage manquant. L'arbitrage d'INC-021 ne débloquerait pas à lui seul la
 première ligne du §7.3 : il faudrait encore `CRM-041`.
+
+### Décision 162 — Une case à cocher de 20 px n'existait pas, et c'est le contrôle de classes qui l'a dit
+
+**Problème.** La première capture du formulaire montrait une case à cocher de 16 px, seule cible
+interactive du produit sous les 40 px exigés par `docs/DESIGN_SYSTEM.md` §8. La case a donc été
+portée à 20 px — `size-5` — dans une ligne de hauteur `--size-target`.
+
+**Observation, mesurée.** `scripts/verify-formulaire.sh` a rendu « des classes citées n'existent pas
+dans le CSS produit : `size-5` ». L'échelle d'espacement du §3 est **fermée** — 4, 8, 12, 16, 24,
+32, 48 — et `--spacing-5` n'est pas déclarée : la classe n'était donc **pas engendrée du tout**, en
+silence, et la case n'avait aucune taille. C'est exactement le mode de défaillance que le §11
+décrit, et pour lequel `scripts/lib/classes-css.mjs` a été écrit à `CRM-007` après la disparition
+de `min-w-0`.
+
+**Décision.** La case passe à **24 px** — `size-6`, valeur de l'échelle —, et la règle est écrite au
+§5.7 bis du design system avec **le motif du choix**, pour que le prochain à écrire un formulaire
+ne reprenne pas `size-5`. La ligne de hauteur `--size-target` est conservée : c'est elle qui donne
+la cible, la case n'ayant pas à devenir un champ de saisie pour être atteignable.
+
+**Ce que cet épisode confirme.** La règle « aucune valeur intermédiaire » du §3 n'est pas une
+préférence de style : elle est **opposable**, et son application est silencieuse. Deux défauts de ce
+type ont été trouvés par le même contrôle, jamais à l'œil — la classe manquante ne produit ni
+erreur, ni avertissement, ni différence visible tant qu'on ne compare pas au rendu attendu.
+
+### Décision 163 — Deux règles visuelles écrites en regardant une capture, et non en lisant un test
+
+**Problème.** Les preuves du rendu étaient vertes — 30 tests de composition, 23 du composant,
+15 scénarios d'API — et deux écarts au design system subsistaient, invisibles à toute assertion
+existante.
+
+**Observations, en regardant les captures.**
+
+1. La case à cocher, isolée, était la seule cible interactive du produit sous 40 px (§8).
+2. Le montant `72000`, affiché en lecture seule dans la section repliée, était rendu en corps de
+   texte, alors que le §2 range « montants, horodatages, identifiants » parmi les **données
+   techniques** : monospace, chiffres tabulaires.
+
+**Décision.** Les deux règles sont écrites au **§5.7 bis** du design system, avec leur motif, et
+tenues chacune par un test unitaire dans le même changement. La seconde n'introduit aucune classe :
+la règle vit déjà dans `webapp/src/styles/app.css`, portée par `code` — le rendu l'emploie plutôt
+que de la dupliquer. `url` en est exclue, et le motif est écrit : une adresse se lit, elle ne se
+compare pas colonne par colonne.
+
+**Ce que cet épisode confirme, et c'est la troisième fois.** Les écarts au design system se trouvent
+en **regardant**, pas en lisant des tests verts — comme le contraste des pilules à `CRM-020` et le
+débordement des onglets à `CRM-021`. `CLAUDE.md` §16 n'est pas une formalité de fin de tâche : les
+deux règles ci-dessus n'existeraient pas sans elle.

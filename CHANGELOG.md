@@ -13,7 +13,48 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **`CRM-037` — le formulaire conditionnel d'une card est rendu, et il a un écran.** Première unité
+  du chunk 3 à livrer une route affichant une donnée métier :
+  `/tracks/:slugTrack/:slugChannel/cards/:idCard`, seul hôte possible du formulaire — le procédé de
+  `CRM-021`, qui avait livré la route d'un track parce que la barre d'onglets n'en avait aucun.
+  Rien d'autre du détail de card n'est livré : timeline, commentaires et champs d'en-tête restent
+  dus par `CRM-044`, `CRM-043` et `CRM-040`.
+  - **La composition part des champs, jamais des règles** (`docs/SPEC-form-composer.md` §4.1) :
+    l'absence de règle vaut `visible`, et une lecture par les règles perdrait tous les champs par
+    défaut. MESURÉ sur le seed : à `Prospection`, cinq règles pour six champs actifs.
+  - **Trois destinations, dont une que le §4 ne nommait pas** : formulaire de l'étape, section
+    repliée « Informations d'autres étapes » — qui recueille aussi les valeurs des champs
+    **archivés**, ce que le §5 posait depuis `CRM-000` sans que le §4 le dise —, et rien du tout.
+  - **L'interface et la garde lisent « renseigné » de la même façon, et c'est mesuré.** Le §6.6
+    l'exigeait sans qu'aucune preuve ne le tienne. Un tableau de cas partagé de douze valeurs vit
+    dans `webapp/src/lib/valeur-renseignee.ts` ; le test unitaire l'exerce contre le prédicat
+    TypeScript, et `e2e/api/rendu-formulaire.spec.ts` écrit **les mêmes valeurs** dans de vraies
+    lignes `card_field_values`, par la vraie route, puis lit le jugement de `move_card`. La card ne
+    bouge jamais : `budget` étant vide par contrat de seed, c'est la liste des clés manquantes qui
+    porte l'information, et le seed sort intact.
+  - **Accessibilité prouvée sur le composant réel** : `for`, astérisque décoratif doublé d'un texte
+    lisible par lecteur d'écran, mention « requis pour passer à <étape> », `role="alert"` cité par
+    `aria-describedby`, `aria-invalid`, section repliée ouverte **au clavier** dans le navigateur.
+  - **Aucune écriture, et l'écran dit pourquoi** : enregistrer exige une session (INC-021). Les
+    contrôles sont indisponibles et restent lisibles, ce que `docs/DESIGN_SYSTEM.md` §8 exige.
+  - Preuves : `npm run test:unit` **227 tests** (164 auparavant), `npm run e2e:api` **306
+    scénarios** (291), `npm run e2e:ui` **47 scénarios** (37), `npm run test:sql` **1164
+    assertions** inchangées, `scripts/verify-formulaire.sh` **45 contrôles** avec six dégradations
+    volontaires qui le font réellement échouer, huit captures produites **et observées**.
+  - **Le parcours « transition bloquée → saisie → transition réussie » de la Definition of Done
+    n'est pas atteignable** : il exige une session et un contrôle de transition dû par `CRM-041`,
+    que le plan ordonne après cette unité. **INC-062**, trois options, arbitrage attendu. L'unité
+    reste `[~]`.
+
 ### Corrigé
+
+- **Une case à cocher de 20 px n'existait pas dans le CSS produit** — décision 162, trouvée par
+  `scripts/lib/classes-css.mjs` et non à l'œil. L'échelle d'espacement de `docs/DESIGN_SYSTEM.md`
+  §3 est fermée et `--spacing-5` n'est pas déclarée : la classe `size-5` n'était **pas engendrée du
+  tout**, en silence, et la case perdait sa taille. Portée à `size-6` (24 px), valeur de l'échelle.
+  Deuxième occurrence du mode de défaillance qui avait fait disparaître `min-w-0` à `CRM-007`.
 
 - **Un harnais déclarait vert un rejeu de migrations qu'il n'attendait pas, et rendait la main sur
   une base à moitié migrée** — INC-060, décision 157. L'étape 2 de `scripts/verify-authz.sh`
