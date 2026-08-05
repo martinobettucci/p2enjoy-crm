@@ -119,7 +119,9 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   chacune ;
 - `src/app/RouteTrack.tsx` — la route `/tracks/:slugTrack[/:slugChannel]`, hors de la table
   statique de `routes.tsx` : son titre est une **donnée** (le nom du track) et non une clé de
-  traduction, et son contenu dépend de paramètres d'URL ;
+  traduction, et son contenu dépend de paramètres d'URL. Depuis `CRM-041`, elle rend le **board**
+  du channel ouvert, et détient l'état de ses cards — le déplacement optimiste et son retour
+  arrière remplacent la liste entière, qu'un état interne au board perdrait à chaque rechargement ;
 - `src/lib/valeur-renseignee.ts` — « renseigné » au sens de `docs/SPEC-form-composer.md` §6.6, et
   le **tableau de cas partagé** du §4.3. Seul dans son fichier, sans React ni DOM : la preuve d'API
   appartient à un autre projet TypeScript et doit pouvoir l'importer plutôt que le recopier
@@ -134,6 +136,19 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   **deux chargements indépendants** : la card et son formulaire d'un côté, le track porteur et ses
   channels de l'autre, pour que la barre d'onglets soit celle du §4 du design system
   (`docs/SPEC-form-composer.md` §4.6 bis) ;
+- `src/lib/colonnes-board.ts` — les quatre chaînes `select` du board, **seules dans leur fichier et
+  sans aucun import**. Même motif que `valeur-renseignee.ts` : la preuve d'API appartient à un autre
+  projet TypeScript, qui n'a ni `vite/client` ni les types du DOM, et doit pouvoir les importer
+  plutôt que les recopier — un test qui redéclarerait sa requête prouverait qu'une requête
+  quelconque fonctionne, pas que celle du produit fonctionne (`CRM-041`) ;
+- `src/lib/board.ts` — la composition du board : colonnes à partir des **étapes** et non des cards,
+  ordre, cumuls par devise, ancienneté dans l'étape, index des transitions atteignables,
+  classification des sept refus de `move_card`, et l'appel de cette garde — seul chemin d'écriture
+  de l'étape d'une affaire. Les **quatre** lectures sont parallèles, ne dépendant que du channel et
+  de son workflow (`CRM-041`, `docs/SPEC-workflow-engine.md` §7.2) ;
+- `src/app/Board.tsx` — le rendu de ce modèle : colonnes, cartes, glisser-déposer natif HTML5, menu
+  des transitions déclarées, saisie du motif exigé, retour arrière après refus. Aucune règle n'y
+  vit : le composant décide de l'apparence et du geste, jamais de ce qui est permis (`CRM-041`) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

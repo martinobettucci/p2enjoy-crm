@@ -258,6 +258,25 @@ commentaire du script.
 3. retirer la section 10 de `scripts/verify-cards.sh`, les suites globales étant déjà rejouées par
    `npm run test:sql` et par le compte rendu de chaque unité.
 
+**SECONDE OCCURRENCE, MESURÉE LE 2026-08-05 PENDANT `CRM-041`, ET L'ENTRÉE S'AGGRAVE.** Le harnais
+rend désormais « 45 contrôles, **2** en échec » : `npm run test:sql` comme avant, et **`npm run
+e2e:api`** avec lui. La cause est identique et le second victime était prévisible — `CRM-041` livre
+`e2e/api/board.spec.ts`, dont trois scénarios comptent les cards de `grands-comptes` : trois actives,
+deux rangées, cinq en tout. Le jeu d'essai du harnais s'y ajoute, et les comptes ne tombent plus.
+
+Contre-épreuve **mesurée**, comme pour la première occurrence : la base porte **9** cards en sortant
+du harnais, `npm run e2e:api` lancé ensuite rend **332 scénarios, aucune anomalie**, et
+`npm run test:sql` **1164 assertions, aucune anomalie**. Ni le produit ni les preuves de `CRM-041`
+ne sont en cause.
+
+**Ce que la seconde occurrence apprend.** Le défaut ne concerne pas une suite en particulier : il
+frappera **toute** preuve future qui comptera des cards, et il en frappera d'autant plus que le
+produit avance. Les assertions de `CRM-041` **ne sont pas affaiblies** pour l'accommoder — compter
+les trois cards actives du seed est précisément ce qui rend la composition des colonnes vérifiable,
+et relâcher ce compte pour qu'un harnais fautif passe reviendrait à supprimer un test pour obtenir
+un vert (`CLAUDE.md` §26). L'arbitrage reste dû, et l'option 2 gagne en poids : la règle générale
+protégerait les preuves à venir, que l'option 1 ne protège pas.
+
 **Lié à :** INC-055 et INC-060 (défauts d'outillage de la même famille), INC-058 (compteur perturbé
 par un harnais concurrent), `docs/JOURNAL.md` décision 158.
 

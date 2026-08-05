@@ -101,8 +101,16 @@ PORT_RAPPORT=9323
 # révision, elle, avait été omise, comme à `CRM-036` pour quatre unités à la fois. Elle est faite
 # ici. `ASSERTIONS_ATTENDUES` reste à 1164 : aucune assertion pgTAP n'est ajoutée par l'une ni par
 # l'autre de ces deux reprises.
+#
+# RÉVISÉS UNE SIXIÈME FOIS, LE 2026-08-05, PAR `CRM-041` — le board kanban. L'unité livre
+# **24 scénarios d'API** (`e2e/api/board.spec.ts`, les quatre lectures du §7.2 confrontées à la
+# pile réelle avec le jeton de l'administratrice, et le refus opposé à l'anonyme) et
+# **21 scénarios d'interface** (`e2e/ui/board.spec.ts`, dont la vidéo du glisser-déposer et les
+# quatre paliers). 308 + 24 = 332 ; 50 + 21 = 71. `ASSERTIONS_ATTENDUES` est inchangée : l'unité ne
+# livre ni table, ni fonction, ni politique — son objet est un écran, et la garde qu'il exerce est
+# déjà couverte par la suite pgTAP de `CRM-034`. Valeurs MESURÉES, non déduites.
 ASSERTIONS_ATTENDUES=1164
-SCENARIOS_API=308
+SCENARIOS_API=332
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -110,7 +118,10 @@ SCENARIOS_API=308
 # n'ont d'écran. **`CRM-037` est la première unité du chunk 3 à en livrer un** : la route de détail
 # d'une card, qui reste un écran d'appelant anonyme tant qu'INC-021 n'est pas tranchée.
 # **50 depuis la reprise de `CRM-037`** : trois scénarios de plus pour la coquille de cet écran.
-SCENARIOS_UI=50
+# **71 depuis `CRM-041`** : vingt et un scénarios de board — colonnes, menu de transitions, dépôt
+# autorisé, dépôt refusé sans appel émis, retour arrière, saisie du motif exigé, quatre paliers et
+# la vidéo du glisser-déposer.
+SCENARIOS_UI=71
 
 TRAVAIL=$(mktemp -d)
 failures=0

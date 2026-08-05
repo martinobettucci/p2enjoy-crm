@@ -5786,3 +5786,118 @@ n'a demandé, sur une unité déjà large.
 
 **Décision.** Conservée intacte au §7.13, explicitement hors du périmètre de `CRM-041`, et consignée
 en **INC-066** avec trois options d'arbitrage. Aucune n'est appliquée.
+
+## 2026-08-05 — `CRM-041` : le board livré, et trois défauts que la mesure a dénoncés
+
+### Décision 174 — Deux gardes sur trois étaient invérifiables, et c'est une dégradation du harnais qui l'a établi
+
+**Problème.** La troisième règle d'origine du §7 exige qu'un dépôt sur une colonne non atteignable
+soit « refusé visuellement **et** ne déclenche aucun appel ». La preuve d'interface écrite d'abord
+ne constatait que la seconde moitié — aucun appel émis. La dégradation **D7** du harnais, qui retire
+la garde de `dragover`, la laissait **verte**.
+
+**Ce que la mesure a établi.** Le composant portait **trois** gardes redondantes : celle de
+`dragover`, celle de `drop`, et la recherche de transition dans `deposer`. Chacune suffit à empêcher
+l'appel ; aucune assertion portant sur « aucun appel » ne peut donc distinguer laquelle est
+présente. La seule chose que la garde de `dragover` contrôle **seule** est le refus **visuel** —
+l'indication de zone de dépôt, et le refus du navigateur lui-même.
+
+**Deux obstacles ont dû être levés pour rendre ce refus observable, et les deux sont mesurés.**
+
+1. *L'indication s'éteignait aussitôt allumée.* Le composant écoutait `dragleave` pour l'éteindre.
+   MESURÉ dans Chromium : `dragleave` remonte des enfants, et son `relatedTarget` est **nul**
+   pendant un glisser-déposer — il n'y a aucun moyen de distinguer « le pointeur quitte la colonne »
+   de « le pointeur entre dans une carte de la colonne ». L'écouteur est **retiré** : l'état de
+   survol est unique pour tout le board, passer d'une colonne à l'autre l'écrase, et la fin du
+   glissement l'éteint. C'est aussi un clignotement de moins pour l'utilisateur.
+2. *Le harnais ne provoquait aucun `dragover` sur la colonne visée.* MESURÉ en comptant les
+   événements : un unique `mouse.move` qui **s'arrête** sur une colonne n'y fait dispatcher **aucun**
+   `dragover` par Chromium, quand une colonne simplement traversée en recevait deux. La preuve était
+   verte sans rien mesurer. Le pointeur continue désormais de bouger **à l'intérieur** de la colonne
+   — ce que fait aussi une main.
+
+**Décision.** La preuve d'interface constate désormais que la colonne non atteignable **ne se
+signale jamais** comme zone de dépôt, et que l'atteignable, elle, se signale. La dégradation D7 la
+fait tomber — vérifié dans les deux sens.
+
+**Ce que l'épisode dit du procédé.** Le harnais a fait exactement son travail : il a dénoncé une
+preuve complaisante, et non un défaut du produit. C'est la quatrième fois qu'une dégradation
+volontaire trouve un trou dans la preuve qu'elle éprouve (décisions 143, 145, 157), et la première
+où elle conduit à **simplifier le composant** plutôt qu'à renforcer un contrôle.
+
+### Décision 175 — Le liseré d'un nœud neutre était invisible, et c'est une capture qui l'a dit
+
+**Problème.** `docs/DESIGN_SYSTEM.md` §5.1 pose un « liseré supérieur de 3 px à la couleur du
+nœud ». Écrit en `bg-border`, celui d'un nœud `neutral` disparaissait sur la surface blanche d'une
+carte : sur la capture, `Prospection` semblait n'en porter aucun quand `Relance` portait le sien.
+
+**Décision.** `--color-text-3`, le jeton que le **point neutre** d'un badge emploie déjà (§5.6). Un
+neutre discret, mais lisible. Règle écrite au §5.2 bis du design system dans le même changement.
+
+**Ce que l'épisode confirme.** Aucun test ne pouvait l'attraper : la classe existait, elle était
+engendrée, le contrôle de classes était vert. C'est le troisième défaut de cette nature trouvé **en
+regardant une capture** (décisions 46, 163) — et la raison pour laquelle `CLAUDE.md` §16 exige
+d'observer, pas seulement d'exécuter.
+
+### Décision 176 — Une transition qui exige un motif suspend le geste, et l'écran dit que le motif est perdu
+
+**Rappel de la décision 171**, appliquée telle quelle : le geste ouvre une saisie **avant** d'appeler,
+et la card ne bouge pas tant que le motif n'est pas donné.
+
+**Ce qui s'y ajoute à l'implémentation.** La saisie **nomme** le fait que le motif n'est pas
+conservé — `card_comments` est `CRM-043`, INC-048. Un utilisateur qui motive une affaire perdue doit
+savoir que son motif valide le déplacement et disparaît ensuite. Trois preuves le tiennent : le
+composant l'affiche, un test unitaire l'exige (`/conserv/i`), et la capture le montre.
+
+### Décision 177 — Les colonnes du board sont déclarées une seule fois, dans un module sans import
+
+**Problème.** Les quatre chaînes `select` du board doivent être exercées des **deux** côtés : par le
+test unitaire, qui vérifie la requête construite, et par la preuve d'API, qui vérifie que la pile
+réelle rend ce que ces colonnes demandent. MESURÉ : importer `board.ts` depuis `e2e/` fait échouer
+`tsc -p tsconfig.tools.json` sur `webapp/src/lib/supabase.ts`, ce projet n'ayant ni `vite/client` ni
+les types du DOM.
+
+**Hypothèse écartée.** *Recopier les colonnes dans la preuve d'API.* Elle aurait prouvé qu'une
+requête quelconque fonctionne, pas que **celle du produit** fonctionne — et les deux auraient
+divergé au premier ajout de colonne.
+
+**Décision.** `webapp/src/lib/colonnes-board.ts`, sans aucun import, réexporté par `board.ts`. C'est
+exactement le procédé retenu par `CRM-037` pour son tableau de cas partagé, et un contrôle du
+harnais exige que la preuve d'API l'importe.
+
+### Décision 178 — Une fixture mal typée fabrique un écran que le produit ne rend jamais
+
+**Problème.** La preuve d'interface de `CRM-021` sert des channels dont les identifiants étaient
+`'c-1'`, `'c-2'`, `'c-3'`. Tant que le contenu d'un channel était un état vide, cela n'avait aucune
+conséquence. Le board, lui, interroge la vraie API avec ces identifiants — et
+`channel_id=eq.c-2` est refusé en `400` par PostgREST, « invalid input syntax for type uuid ».
+L'écran montrait donc l'état d'**erreur** du board, non son état vide.
+
+**Décision.** Les fixtures emploient les identifiants **du seed**. Une fixture n'a pas le droit de
+servir une ligne que la base ne pourrait pas produire : elle fabriquerait un écran que personne ne
+verra jamais, et la preuve visuelle ne prouverait rien. Même motif que le track amputé de son icône,
+trouvé sur une capture pendant `CRM-021`.
+
+**Assertion figée retournée dans le même changement** (mécanisme de la décision 51, treizième
+occurrence) : « ouvrir un onglet montre *Aucune card dans ce channel* » devient « … montre que le
+workflow ne déclare aucune étape ». Seuls les channels sont substitués : les étapes viennent de la
+vraie API, qui n'en consent aucune à un anonyme. La capture `channel-ouvert-1440.jpg` a été
+régénérée et observée.
+
+### Décision 179 — INC-061 frappe une seconde suite, et les assertions de `CRM-041` ne sont pas relâchées pour l'accommoder
+
+**Constat mesuré.** `scripts/verify-cards.sh` rend désormais « 45 contrôles, **2** en échec » :
+`npm run test:sql` comme avant, et `npm run e2e:api` avec lui. La cause est celle d'INC-061 — le
+harnais rejoue les suites globales **avant** de retirer son jeu d'essai de cinq cards — et le second
+victime était prévisible : trois scénarios de `e2e/api/board.spec.ts` comptent les cards de
+`grands-comptes`.
+
+**Contre-épreuve mesurée.** La base porte **9** cards en sortant du harnais ; `npm run e2e:api`
+lancé ensuite rend **332 scénarios, aucune anomalie**, et `npm run test:sql` **1164 assertions,
+aucune anomalie**.
+
+**Décision.** Les comptes de `CRM-041` sont **conservés**. Les relâcher pour qu'un harnais fautif
+passe reviendrait à supprimer un test pour obtenir un vert, ce que `CLAUDE.md` §26 interdit
+explicitement. `scripts/verify-cards.sh` est un livrable de `CRM-040` et son arbitrage est ouvert :
+la seconde occurrence est consignée dans INC-061, qui gagne un argument pour son option 2 — une
+règle générale protège les preuves à venir, une correction ponctuelle non.

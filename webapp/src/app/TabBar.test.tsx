@@ -19,9 +19,11 @@ import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { fr } from '../i18n'
 import type { Channel } from '../lib/channels'
 
+// `workflow_id` a rejoint la lecture partagée à `CRM-041` (docs/SPEC-channels.md §5) : la barre
+// d'onglets ne l'affiche pas, mais elle la transporte, et une fixture amputée ne compilerait plus.
 const CHANNELS: readonly Channel[] = [
-	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1 },
-	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2 },
+	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: 'wf-1' },
+	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2, workflow_id: 'wf-1' },
 ]
 
 function monter(

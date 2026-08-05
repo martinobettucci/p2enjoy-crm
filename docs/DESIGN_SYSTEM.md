@@ -117,6 +117,35 @@ En-tête collant, fond `--color-bg`, compteur en badge neutre. Zone de dépôt s
 liseré `--color-brand` en pointillés pendant le glissement. État vide : message et action
 (« Aucune card à cette étape — créez la première »).
 
+### 5.2 bis Ce que le board a appris en étant rendu — `CRM-041`
+
+Trois règles ajoutées par le premier board réellement exécuté. Les deux premières ont été trouvées
+**en regardant une capture**, la troisième **en mesurant** un comportement du navigateur.
+
+- **Le liseré d'une carte dont le nœud est `neutral` emploie `--color-text-3`, non
+  `--color-border`.** Écrit d'abord avec la couleur de bordure, il était **invisible** sur la
+  surface blanche d'une carte : la colonne `Prospection` paraissait n'avoir aucun liseré à côté de
+  `Relance`, qui portait le sien. `--color-text-3` est déjà le jeton du **point neutre** d'un badge
+  (§5.6) : un neutre discret, mais lisible. La règle du §1 — « une couleur ne porte jamais seule une
+  information » — reste tenue par le libellé de la colonne.
+
+- **Une colonne de board a une largeur fixe de 288 px.** Ce n'est pas une valeur de l'échelle du §3,
+  et ce n'en est pas une : c'est la **forme du contenu attendu**, au même titre que
+  `--size-placeholder`. Une colonne élastique se réduirait à rien dès que le workflow compte sept
+  étapes, et le §7 exige que le board défile **dans son conteneur** plutôt que d'écraser ses
+  colonnes.
+
+- **L'indication de zone de dépôt ne s'éteint pas sur `dragleave`.** MESURÉ dans Chromium :
+  `dragleave` remonte des enfants et son `relatedTarget` est **nul** pendant un glisser-déposer — il
+  n'existe donc aucun moyen de distinguer « le pointeur quitte la colonne » de « le pointeur entre
+  dans une carte de la colonne ». Une indication qui s'y fierait clignoterait, contre le §6. L'état
+  de survol est **unique pour tout le board** : passer d'une colonne à l'autre l'écrase, et la fin
+  du glissement l'éteint.
+
+Le board lui-même — colonnes, ordre, cumuls, transitions atteignables, refus — est spécifié dans
+`docs/SPEC-workflow-engine.md` §7, et non ici : ce document donne les règles visuelles, pas
+l'algorithme qui décide **ce que** l'écran montre.
+
 ### 5.3 Détail de card
 
 Deux colonnes sur grand écran, empilées sous 1024 px :
@@ -411,7 +440,8 @@ ne saurait pas faire, et sans écouter aucun événement `scroll` ou `resize`.
 Les quatre dégradés partent des jetons `--color-bg` et `--color-border` : aucune valeur
 hexadécimale n'entre dans un composant (§11).
 
-**Portée :** la barre d'onglets aujourd'hui. Le board (`CRM-041`) et la vue liste (`CRM-042`)
-déborderont de la même façon et devront porter la même classe.
+**Portée :** la barre d'onglets, **et le board depuis `CRM-041`**, qui porte la même classe comme
+cette entrée l'annonçait. La vue liste (`CRM-042`) débordera de la même façon et la portera aussi.
+Le board y ajoute `scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px.
 
 Tout écart futur est consigné ici avec sa justification et sa date.

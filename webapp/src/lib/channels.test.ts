@@ -68,7 +68,13 @@ function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
 }
 
 const TRACK: TrackOuvert = { id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia' }
-const CHANNEL: Channel = { id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1 }
+const CHANNEL: Channel = {
+	id: 'c-1',
+	name: 'Prospection',
+	slug: 'prospection',
+	position: 1,
+	workflow_id: 'wf-1',
+}
 
 describe('lireTrackParSlug', () => {
 	it('interroge `tracks` sur le slug, en écartant les archivés', async () => {
@@ -123,8 +129,14 @@ describe('lireChannels', () => {
 		expect(appel.tris).toEqual(['position', 'name'])
 	})
 
-	it('ne demande pas `workflow_id` : la colonne est nulle partout jusqu’à CRM-031 (INC-029)', () => {
-		expect(COLONNES_CHANNEL).not.toContain('workflow_id')
+	// ASSERTION RETOURNÉE PAR `CRM-041`, non retirée (mécanisme de la décision 51). Elle exigeait
+	// jusqu'ici que `workflow_id` **ne soit pas** demandée, « la colonne étant nulle partout
+	// jusqu'à CRM-031 (INC-029) ». MESURÉ le 2026-08-05 : les six channels du seed portent un
+	// workflow, la colonne est `NOT NULL` depuis `CRM-033`, et le board en a besoin pour composer
+	// ses colonnes. Elle est lue **ici**, dans la lecture partagée, plutôt que par une seconde
+	// lecture des mêmes lignes (docs/SPEC-channels.md §5, décision 169).
+	it('demande `workflow_id`, dont le board a besoin, dans la lecture PARTAGÉE', () => {
+		expect(COLONNES_CHANNEL).toContain('workflow_id')
 	})
 
 	it('rend les channels consentis par le backend', async () => {

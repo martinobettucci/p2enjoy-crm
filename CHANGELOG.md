@@ -13,6 +13,55 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Le board kanban d'un channel** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7. Ouvrir un onglet
+  de channel affiche désormais **une colonne par étape de son workflow**, dans l'ordre de ces
+  étapes, avec son compteur et le montant cumulé de ses affaires — refusé lorsque deux devises s'y
+  mêlent, plutôt qu'une addition fausse. Chaque affaire porte le liseré de son étape, son titre
+  menant à sa fiche, son montant, sa prochaine action et son ancienneté dans l'étape, qui passe au
+  rouge au-delà du seuil de relance. Les affaires archivées et en corbeille en sont exclues **par
+  le serveur**, comme la première vérification de `move_card` les exclut.
+- **Le déplacement d'une affaire, à la souris et au clavier.** Le glisser-déposer natif appelle
+  `move_card`, seul chemin par lequel une affaire change d'étape ; le menu « Déplacer » liste
+  **exactement** les transitions déclarées depuis l'étape courante et constitue le chemin clavier.
+  Une colonne non atteignable **n'est pas une cible de dépôt** : le navigateur refuse le geste, et
+  aucun appel n'est émis. Le déplacement est **optimiste**, et un refus replace l'affaire
+  exactement où elle était en affichant sa raison — déplacement non déclaré, droit insuffisant,
+  affaire inaccessible, ou **liste des questions restées sans réponse, nommées par leur libellé**.
+  Un refus que l'écran ne connaît pas n'est **jamais absorbé** : son message brut est montré.
+- **Une transition exigeant un motif n'est jamais optimiste** : l'écran demande le motif **avant**
+  d'appeler, et l'affaire ne bouge pas tant qu'il manque. La saisie **dit** que ce motif valide le
+  déplacement et n'est pas encore conservé (INC-048) — laisser croire à un enregistrement aurait été
+  une valeur par défaut trompeuse.
+- **Preuves** : `webapp/src/lib/board.test.ts` (43 tests) et `webapp/src/app/Board.test.tsx`
+  (24 tests) portent `npm run test:unit` de 234 à **308** ; `e2e/api/board.spec.ts` (**24
+  scénarios**) confronte les quatre lectures du board à la pile réelle avec le jeton de
+  l'administratrice et constate le `200`/`[]` opposé à l'anonyme ; `e2e/ui/board.spec.ts` (**21
+  scénarios**) exerce l'écran contre le build de production, dont un scénario **sans aucune
+  substitution**. `scripts/verify-board.sh` : **56 contrôles, aucune anomalie**, éprouvé par **huit**
+  dégradations volontaires. Onze captures et la **vidéo `.webm` du glisser-déposer** ont été
+  produites et observées.
+
+### Corrigé (relevé par les preuves de `CRM-041`)
+
+- **Une preuve d'interface était complaisante, et c'est sa propre dégradation qui l'a dit** —
+  décision 174. Le refus d'un dépôt sur une colonne non atteignable n'était constaté que par
+  « aucun appel émis », alors que le composant portait trois gardes redondantes. Deux mesures ont
+  été nécessaires pour rendre le refus **visuel** observable : `dragleave` a un `relatedTarget`
+  **nul** pendant un glissement — l'écouteur est donc **retiré**, ce qui supprime au passage un
+  clignotement de l'indication de dépôt —, et un `mouse.move` qui s'**arrête** sur une colonne n'y
+  fait dispatcher **aucun** `dragover`.
+- **Le liseré d'une carte dont l'étape est neutre était invisible** — décision 175, trouvé en
+  regardant une capture. Écrit en couleur de bordure, il disparaissait sur la surface blanche.
+  Corrigé par le jeton du point neutre d'un badge, et la règle est écrite au §5.2 bis du design
+  system.
+- **Les channels servis par la preuve d'interface de `CRM-021` portaient des identifiants qui ne
+  sont pas des UUID** — décision 178. Sans conséquence tant que le contenu d'un channel était vide ;
+  le board les envoie à la vraie API, qui refuse en `400`, et l'écran capturé montrait l'état
+  d'erreur. Les fixtures emploient désormais les identifiants du seed : une fixture n'a pas le droit
+  de servir une ligne que la base ne pourrait pas produire.
+
 ### Documentation
 
 - **Le chapitre « Interface » du moteur de workflow est réécrit en contrat vérifiable, avant toute

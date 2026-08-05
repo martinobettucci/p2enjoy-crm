@@ -26,10 +26,10 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; le formulaire a désormais un écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. **Ses réponses au formulaire existent aussi depuis `CRM-036`** — voir le chapitre 24. Ce qui manque est l'**écran** |
-| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré côté serveur, sans écran** — voir le chapitre 4.3. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
-| 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037` | **Partiellement livré** : les **six** motifs de refus existent et sont nommés (chapitre 4.3), y compris celui qui **liste les questions restées sans réponse**, livré par `CRM-036`. Ce qui manque est leur **affichage** |
+| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Le tableau kanban, son glisser-déposer et son menu de déplacements sont livrés par `CRM-041` ; ils restent invisibles à un visiteur non identifié (INC-021). Côté serveur — Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
+| 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
-| 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | À livrer |
+| 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | À livrer — le **tableau kanban**, lui, est livré (chapitre 4.8) |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
 ### Messagerie
@@ -199,8 +199,8 @@ page.
   explication.
 
 Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu du
-channel — board, vue liste, cards — n'est pas encore livré ; l'écran le dit explicitement plutôt
-que d'afficher un vide.
+channel est désormais son **tableau kanban** — voir le chapitre 4.8. La vue liste, elle, n'est pas
+encore livrée.
 
 **Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
 « Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
@@ -405,12 +405,61 @@ introuvable ». Ce n'est pas un défaut de l'écran, c'est le refus réel du ser
 aucune affaire à un visiteur non identifié — la même cause que pour les tracks et les onglets
 (chapitre 3.2).
 
+### 4.8 Le tableau kanban d'un channel
+
+Ouvrir un onglet de channel affiche son **tableau** : une colonne par étape de son workflow, dans
+l'ordre de ces étapes.
+
+**Ce que montre une colonne.** Son libellé, le nombre d'affaires qu'elle contient, et le **montant
+cumulé** de celles qui en portent un. Une colonne mêlant deux devises n'affiche aucun cumul plutôt
+qu'une addition qui n'aurait pas de sens. Une colonne sans affaire le dit — c'est la situation
+normale : un workflow de sept étapes est rarement occupé partout.
+
+**Ce que montre une affaire.** Un liseré à la couleur de son étape, son titre — cliquable, il ouvre
+sa fiche —, son montant, sa prochaine action, et depuis combien de jours elle est dans cette étape.
+Ce dernier repère passe au **rouge** quand le seuil de relance de l'étape est dépassé ; il
+n'apparaît pas lorsque l'étape n'en définit aucun.
+
+Les affaires **archivées** et celles en **corbeille** n'y figurent pas : le tableau montre l'activité
+en cours (chapitre 4.4).
+
+**Faire avancer une affaire : deux gestes, une seule règle.**
+
+- **À la souris**, en faisant glisser la carte vers une colonne. Seules les colonnes vers lesquelles
+  un déplacement est **déclaré** dans le workflow acceptent le dépôt ; les autres le refusent
+  visuellement, et aucune demande n'est envoyée au serveur.
+- **Au clavier**, par le bouton « Déplacer » de la carte, qui ouvre la liste des déplacements
+  déclarés depuis l'étape courante — et **eux seuls**. Lorsqu'une étape n'en propose aucun, le
+  bouton reste lisible et le dit.
+
+Les deux gestes passent par le même contrôle du serveur, celui du chapitre 4.3 : l'écran ne propose
+jamais une action que le serveur refuserait, et il ne se substitue jamais à lui.
+
+**Quand un motif est exigé.** Certains déplacements — « Marquer perdu », par exemple — exigent une
+raison. L'écran la demande **avant** d'envoyer quoi que ce soit, et l'affaire ne bouge pas tant que
+vous ne l'avez pas donnée. **Ce motif n'est pas encore conservé** : il valide le déplacement, puis
+il est perdu, faute d'historique des affaires. L'écran vous le dit plutôt que de vous laisser croire
+le contraire.
+
+**Quand le serveur refuse.** L'affaire **retourne exactement à sa place**, et la raison s'affiche :
+déplacement non déclaré, droit d'écriture insuffisant, affaire devenue inaccessible, ou **liste des
+questions restées sans réponse**, nommées par leur libellé. Un refus que l'écran ne connaîtrait pas
+est affiché tel quel, plutôt que traduit à tort.
+
+**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
+introuvable » — le serveur ne consent aucun track à un visiteur non identifié, et le tableau n'est
+donc jamais atteint (chapitre 3.2).
+
 ### 4.6 Ce qui n'est pas encore livré
 
-- **Le tableau et la vue liste** : aucun écran n'affiche encore les affaires en colonnes.
-- **Le geste de déplacement** : la fiche montre les questions obligatoires et ce qui leur manque,
-  mais aucun bouton ne fait avancer une affaire (chapitre 4.3).
+- **La vue liste** : le tableau existe (chapitre 4.8), la vue liste et ses filtres non.
+- **La création et la modification d'une affaire** : aucun écran ne les porte, ni depuis le tableau,
+  ni depuis la fiche.
+- **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
+- **Le déplacement d'une affaire d'un channel à un autre.**
 - **L'enregistrement d'une réponse depuis l'écran** (chapitre 4.7).
+- **Le responsable et les étiquettes sur une carte** : le nom d'une personne n'est aujourd'hui
+  lisible par personne, et le produit préfère ne rien afficher plutôt qu'un identifiant technique.
 - **Les commentaires, l'historique et les documents.**
 - **Le score de santé** : la colonne existe, rien ne l'alimente.
 

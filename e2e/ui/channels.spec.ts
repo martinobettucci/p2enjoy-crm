@@ -40,10 +40,19 @@ const TRACK_SERVI = [
 ]
 
 /** Trois channels servis, dans l'ordre de leur `position`. */
+// `workflow_id` a rejoint la lecture partagée à `CRM-041` (docs/SPEC-channels.md §5). Elle est
+// `NOT NULL` en base depuis `CRM-033` : une fixture qui l'omettrait servirait une ligne que le
+// produit ne peut pas produire.
+//
+// LES IDENTIFIANTS SONT DES UUID RÉELS, ET C'EST MESURÉ. Écrits d'abord `'c-1'` et `'wf-1'`, ils
+// faisaient partir vers la vraie API des `channel_id=eq.c-2` et `workflow_id=eq.wf-1` que PostgREST
+// refuse en `400` — « invalid input syntax for type uuid ». Le board affichait donc son état
+// d'**erreur** et non son état vide : une fixture mal typée fabrique un écran que le produit ne
+// rend jamais. Ces valeurs sont celles du seed.
 const CHANNELS_SERVIS = [
-	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1 },
-	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2 },
-	{ id: 'c-3', name: 'Appels d’offres', slug: 'appels-offres', position: 3 },
+	{ id: '5eed0000-0000-4000-8000-000000000031', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: '5eed0000-0000-4000-8000-000000000051' },
+	{ id: '5eed0000-0000-4000-8000-000000000032', name: 'Grands comptes', slug: 'grands-comptes', position: 2, workflow_id: '5eed0000-0000-4000-8000-000000000051' },
+	{ id: '5eed0000-0000-4000-8000-000000000033', name: 'Appels d’offres', slug: 'appels-offres', position: 3, workflow_id: '5eed0000-0000-4000-8000-000000000051' },
 ]
 
 /** Sert les deux routes du track chargé. Le réseau est substitué, pas l'état de l'application. */
@@ -197,7 +206,13 @@ test.describe('onglets réels, servis par le réseau', () => {
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia\/grands-comptes$/)
 		// L'onglet courant se signale par `aria-current`, pas seulement par la couleur.
 		await expect(page.getByTestId('onglet-channel').nth(1)).toHaveAttribute('aria-current', 'page')
-		await expect(page.getByTestId('etat-vide')).toContainText('Aucune card dans ce channel')
+		// ASSERTION RETOURNÉE PAR `CRM-041`, non retirée (mécanisme de la décision 51). Elle
+		// attendait « Aucune card dans ce channel », l'état vide que `CRM-021` avait posé faute de
+		// board. Le board existe ; ouvrir un onglet ouvre désormais **ses colonnes**. Ici, seuls
+		// les channels sont substitués : les étapes du workflow sont demandées à la vraie API, qui
+		// n'en consent aucune à un anonyme — l'écran dit donc que le workflow ne déclare aucune
+		// étape, et c'est le refus réel du backend (docs/SPEC-workflow-engine.md §7.11).
+		await expect(page.getByTestId('etat-vide')).toContainText('aucune étape')
 		await capturer(page, 'channel-ouvert-1440', UNITE)
 	})
 

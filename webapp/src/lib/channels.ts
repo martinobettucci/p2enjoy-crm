@@ -19,13 +19,22 @@ import type { ClientCrm } from './supabase'
 /**
  * Ce que la barre d'onglets a besoin de savoir d'un channel, et rien de plus.
  *
- * `description`, `workflow_id` et les horodatages ne sont pas demandés : une requête ne rapporte
- * que ce qui est affiché. `workflow_id` est de surcroît nul partout jusqu'à `CRM-031` (INC-029) —
- * le demander donnerait l'illusion d'une donnée exploitable.
+ * `description` et les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est
+ * affiché.
+ *
+ * `workflow_id` FAIT EXCEPTION DEPUIS `CRM-041`, et l'exception est écrite plutôt que subie.
+ * `CRM-021` l'écartait parce qu'elle « est de surcroît nulle partout jusqu'à `CRM-031` (INC-029) —
+ * le demander donnerait l'illusion d'une donnée exploitable ». MESURÉ : les six channels du seed
+ * portent un workflow, et la colonne est `NOT NULL` depuis `CRM-033`. Le board en a besoin pour
+ * composer ses colonnes ; il la lit **ici**, dans la lecture déjà émise par la coquille, plutôt
+ * que par une seconde lecture des mêmes lignes — c'est la règle du §5.4 de
+ * `docs/SPEC-channels.md`, appliquée à une colonne au lieu d'une route (décision 169). La barre
+ * d'onglets transporte donc une colonne qu'elle n'affiche pas : c'est le prix, et il est moindre
+ * qu'une requête par ouverture de board et une seconde définition de « channel non archivé ».
  */
 export type Channel = Pick<
 	Database['public']['Tables']['channels']['Row'],
-	'id' | 'name' | 'slug' | 'position'
+	'id' | 'name' | 'slug' | 'position' | 'workflow_id'
 >
 
 /** Le track porteur de la route, tel que l'écran a besoin de le connaître. */
@@ -35,7 +44,7 @@ export type TrackOuvert = Pick<
 >
 
 /** Colonnes réellement demandées. Exportées pour que les tests unitaires vérifient la requête. */
-export const COLONNES_CHANNEL = 'id, name, slug, position'
+export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id'
 export const COLONNES_TRACK_OUVERT = 'id, name, slug'
 
 /**

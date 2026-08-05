@@ -2984,8 +2984,167 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
       §7 prescrit depuis `CRM-000` n'est rattaché à aucune unité du backlog — sept unités ont livré
       sa matière sans une ligne d'interface. La phrase est **conservée mot pour mot** au §7.13,
       explicitement hors du périmètre de cette unité (décision 173).
-- [ ] **Le code, ses tests et ses preuves** — voir le compte rendu de livraison ci-dessous une fois
-      le second commit poussé.
+- [x] **Le board est livré, et il ne porte aucune règle.** La composition — colonnes à partir des
+      **étapes**, ordre, cumuls par devise, ancienneté, index des transitions, classification des
+      refus — vit dans `webapp/src/lib/board.ts`, vérifiable sans navigateur ; `Board.tsx` rend.
+      L'écran est monté sur la route de `CRM-021`, `/tracks/:slugTrack/:slugChannel`, qui affichait
+      jusqu'ici l'état vide de sa zone principale.
+- [x] **`move_card` est le SEUL chemin d'écriture, et le board est son premier appelant
+      d'interface.** La ligne rendue par la garde **remplace** la card — étape, `position` et
+      `entered_step_at` viennent du serveur, jamais du client. C'est la raison pour laquelle la
+      fonction rend `public.cards` et non `void` (§5.2), écrite à `CRM-034` et employée ici.
+- [x] **`workflow_id` rejoint la lecture PARTAGÉE des channels**, et non une seconde lecture des
+      mêmes lignes (décision 169) : le channel courant est résolu dans la liste que la coquille a
+      déjà chargée, sans aucune requête. Un contrôle du harnais exige qu'il n'existe qu'**un seul**
+      `from('channels')` dans `webapp/src`.
+- [x] **Test unitaire dédié** : `webapp/src/lib/board.test.ts` (**43 tests** : composition partant
+      des étapes, ordre des colonnes et des cards avec départage à position égale, cumul et son
+      refus en devises mêlées, ancienneté dans ses quatre cas, index et ordre du menu, résolution
+      d'une étape et ses replis, les sept refus, l'optimisme et son retour arrière, les quatre
+      lectures **et leurs filtres**) et `webapp/src/app/Board.test.tsx` (**24 tests** sur le
+      composant réel). `npm run test:unit` passe de 234 à **308 tests**.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/board.spec.ts`, **24 scénarios**, avec
+      le jeton réel de l'administratrice. Les quatre lectures du §7.2 sont confrontées à la pile
+      réelle — sept étapes, jointure embarquée consentie, dix transitions dont quatre à motif, deux
+      étapes sans transition sortante, trois cards actives sur deux étapes des sept. **La preuve
+      importe les colonnes du produit** (`webapp/src/lib/colonnes-board.ts`), elle ne les recopie
+      pas (décision 177).
+- [x] **La contre-épreuve de l'exclusion est mesurée, pas supposée** : sans les filtres
+      `archived_at`/`deleted_at`, la même requête rend **cinq** cards au lieu de trois. Sans elle,
+      un filtre retiré passerait inaperçu — l'écran afficherait simplement deux cards de plus.
+- [x] **Preuve de refus reconduite** : l'anonyme obtient `200` et `[]` sur les **quatre** lectures,
+      et les quatre tables sont d'abord constatées **non vides** avec le jeton de l'administratrice
+      — sans quoi l'assertion serait verte que la RLS refuse ou qu'elle autorise tout (décision 50).
+- [x] **CE QUE LE BOARD NE PEUT PAS MONTRER EST MESURÉ, PAS SUPPOSÉ.** `profiles` rend `200` et
+      `[]` **même à l'administratrice** (INC-014) : `owner_id` est lisible, le nom ne l'est pas, et
+      la carte n'affiche donc **rien** pour le responsable plutôt qu'un identifiant technique
+      (décision 172). Aucune table d'étiquettes n'existe. Les deux absences sont écrites au §7.4.
+- [x] **Preuves d'interface** : `e2e/ui/board.spec.ts`, **21 scénarios**, contre le build de
+      production. Le premier n'emploie **aucune substitution** — l'anonyme demande réellement le
+      track de l'adresse, `slug=eq.conseil-ia` et `archived_at=is.null`, n'obtient rien, et le board
+      n'est jamais atteint. Les autres substituent la réponse réseau (`docs/DESIGN_SYSTEM.md`
+      §12.5) et le disent.
+- [x] **Le glisser-déposer est prouvé dans les DEUX sens** : un dépôt sur une colonne atteignable
+      déplace l'affaire et appelle la garde **une fois** ; un dépôt sur une colonne non atteignable
+      n'émet **aucun** appel et la colonne **ne se signale jamais** comme zone de dépôt.
+- [x] **Le déplacement au clavier est prouvé sans aucune souris**, par le menu que
+      `docs/DESIGN_SYSTEM.md` §8 désigne comme le chemin clavier : focus, `Entrée`, focus,
+      `Entrée` — la garde est appelée. `Échap` referme le menu et **rend le focus** au bouton.
+- [x] **UN HARNAIS COMPLAISANT, TROUVÉ PAR SA PROPRE DÉGRADATION** (décision 174). La preuve du
+      dépôt refusé ne constatait que « aucun appel émis », et le composant portait **trois** gardes
+      redondantes : la dégradation D7 la laissait verte. Deux mesures ont été nécessaires pour
+      rendre le refus **visuel** observable — `dragleave` a un `relatedTarget` **nul** pendant un
+      glissement, et un `mouse.move` qui **s'arrête** sur une colonne n'y fait dispatcher **aucun**
+      `dragover`. L'écouteur `dragleave` est **retiré** — c'est un clignotement de moins — et la
+      preuve tombe désormais sous D7, vérifié dans les deux sens.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-041/`, **onze captures** —
+      board anonyme, board chargé, menu ouvert, après dépôt, refus, champs manquants, motif exigé,
+      et les **quatre paliers** du §7 — plus la **vidéo `.webm` du glisser-déposer** que la
+      Definition of Done exige nommément. Toutes regardées une à une ; la vidéo a été observée
+      **image par image**, rendue dans un navigateur faute d'encodeur JPEG dans le `ffmpeg` du
+      harnais. Elle montre le liseré en pointillés de la colonne cible pendant le glissement, puis
+      la carte en fin de colonne d'arrivée avec compteurs et cumul recalculés.
+- [x] **UN DÉFAUT RÉEL, TROUVÉ EN REGARDANT UNE CAPTURE** (décision 175) : le liseré d'un nœud
+      `neutral`, écrit en `bg-border`, était **invisible** sur la surface blanche d'une carte.
+      Corrigé en `bg-text-3`, le jeton du point neutre d'un badge. Aucun test ne pouvait l'attraper :
+      la classe existait et était engendrée.
+- [x] **UN SECOND DÉFAUT, DANS UNE FIXTURE D'UNE UNITÉ PRÉCÉDENTE** (décision 178) : les channels
+      servis par `e2e/ui/channels.spec.ts` portaient des identifiants qui ne sont pas des UUID. Le
+      board les envoie à la vraie API, qui refuse en `400` : l'écran capturé montrait l'état
+      d'**erreur**. Les fixtures emploient désormais les identifiants **du seed** — une fixture n'a
+      pas le droit de servir une ligne que la base ne pourrait pas produire.
+- [x] **Trois règles ajoutées au design system**, §5.2 bis, dans le même changement : le liseré
+      neutre, la largeur fixe d'une colonne, et l'absence d'écouteur `dragleave`. La portée du §12.6
+      est mise à jour : le board porte bien `.indique-debordement-x`, comme cette entrée l'annonçait.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert,
+      `npm run test:sql` **1164 assertions** inchangées, `npm run e2e:api` **332 scénarios**
+      (308 + 24), `npm run e2e:ui` **71 scénarios** (50 + 21), et chaque classe citée par le board
+      présente dans le CSS produit.
+- [x] Harnais de preuves rejouable `scripts/verify-board.sh` : **56 contrôles, aucune anomalie**, et
+      **non complaisant** — huit dégradations volontaires le font réellement échouer : les colonnes
+      vides qui disparaissent, le menu qui perd son ordre, deux devises additionnées, un refus
+      inconnu absorbé, le retour arrière retiré, une transition à motif rendue optimiste, toute
+      colonne devenue cible de dépôt, et les cards rangées revenues sur le board. Sa section 7
+      constate que les fichiers sont **rendus intacts** et rejoue les tests après restauration.
+- [x] **Deux assertions figées ont échoué comme prévu, et ont été RETOURNÉES** (mécanisme de la
+      décision 51, treizième occurrence) : `webapp/src/lib/channels.test.ts` exigeait que
+      `workflow_id` **ne soit pas** demandée, et `e2e/ui/channels.spec.ts` attendait « Aucune card
+      dans ce channel » à l'ouverture d'un onglet. **Aucune n'a été retirée** : la première exige
+      désormais la colonne dans la lecture partagée, la seconde constate le board et son état réel.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 308 → **332**
+      scénarios d'API, 50 → **71** d'interface. `ASSERTIONS_ATTENDUES` reste à **1164** : l'unité ne
+      livre ni table, ni fonction, ni politique.
+- [x] **Aucune régression** : `verify-harness` 25, `verify-webapp` 41, `verify-tracks` 43,
+      `verify-channels` 30, `verify-formulaire` 49, `verify-move-card` 56, `verify-valeurs-champs`
+      40, `verify-seed` 49, `verify-migrations` 23, `verify-authz` 35, `verify-types` 30,
+      `verify-colonnes-protegees` 50, `verify-preuves-refus` 26 — aucune anomalie.
+      **`verify-cards` rend 45 contrôles, 2 en échec** : INC-061, **seconde occurrence**, voir les
+      limites ci-dessous.
+- [x] `docs/SPEC-workflow-engine.md` §7 (quatorze sous-chapitres), `docs/SPEC-channels.md` §5,
+      `docs/SPEC-webapp.md` §5.2, `docs/DESIGN_SYSTEM.md` §5.2 bis et §12.6, `docs/DAT.md` §3.1,
+      `docs/manual.md` chapitres 4.8, 4.6 et sommaire, `docs/INCONSISTENCY_REPORT.md` (INC-066
+      ouverte, INC-061 aggravée), `docs/JOURNAL.md` décisions 168 à 179, `CHANGELOG.md` mis à jour
+      dans le même changement.
+- [ ] **LE PARCOURS COMPLET N'EST PAS PROUVÉ, ET IL NE PEUT PAS L'ÊTRE — INC-021.** La Definition of
+      Done exige « E2E de déplacement autorisé **et** de tentative interdite ». Les deux gestes sont
+      prouvés **contre des réponses substituées**, et la garde qu'ils appellent est prouvée hors
+      interface avec les jetons réels des trois profils (`e2e/api/move-card.spec.ts`, `CRM-034`).
+      Ce qui manque est le **chaînage** des deux : un utilisateur connecté déplaçant réellement une
+      affaire depuis l'écran. Il suppose une session, et **aucune unité du backlog ne porte l'écran
+      de connexion**. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **Le seed ne démontre pas la bascule de la pastille d'ancienneté.** MESURÉ : il pose
+      `entered_step_at` à `now()`, contre des seuils de 5 à 30 jours — aucune card n'atteint jamais
+      le sien. La règle est prouvée par un test unitaire et par une réponse substituée, jamais par
+      une donnée permanente. Un contrôle du harnais **échoue** si cela venait à changer. Le manque
+      appartient au seed de démonstration, `CRM-046`.
+- [ ] **Aucun éditeur de workflow — INC-066.** La cinquième règle du §7 d'origine décrit un écran
+      réservé aux administrateurs qu'**aucune unité du backlog ne porte**, alors que sept unités ont
+      livré sa matière. La phrase est conservée mot pour mot au §7.13, hors du périmètre de cette
+      unité. **Arbitrage attendu.**
+- [ ] **Le seed n'a pas été étendu, et le choix est documenté.** Le board démontre ses colonnes,
+      ses colonnes vides, son exclusion des cards rangées et son menu avec les données déjà
+      présentes — sept étapes, dix transitions dont quatre à motif, deux étapes sans sortie, trois
+      cards actives sur deux étapes. **Huit contrôles du harnais échouent** si elles cessent d'y
+      être. L'unité n'introduit ni table, ni colonne, ni statut, ni flux.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E de déplacement autorisé et
+de tentative interdite ; déplacement au clavier vérifié ; captures aux quatre paliers ; vidéo
+`.webm` du glisser-déposer ». **Les trois derniers sont livrés** — le déplacement au clavier est
+prouvé sans aucune souris, les quatre paliers sont capturés, et la vidéo est enregistrée
+délibérément par un scénario dédié, non récupérée d'un échec. Le premier l'est **contre des réponses
+substituées**, et la limite est nommée ci-dessus plutôt que maquillée. **Aucun test pgTAP dédié** :
+l'unité ne livre ni table, ni fonction, ni politique — la règle qu'elle exerce, `move_card`, est
+déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un écran.
+
+*Limites nommées, non masquées.*
+
+- **INC-021 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus). Douzième unité
+  consécutive à buter dessus, et la deuxième dont un écran existe pourtant.
+- **INC-066 est ouverte** : aucun éditeur de workflow n'est rattaché à une unité.
+- **INC-048 est ouverte, et l'écran le DIT** : le motif exigé par une transition valide le
+  déplacement puis disparaît, `card_comments` étant `CRM-043`. La saisie l'annonce plutôt que de
+  laisser croire à un enregistrement.
+- **INC-014 est ouverte** : le nom du responsable n'est lisible par personne, et la carte n'affiche
+  donc rien à sa place (§7.4).
+- **INC-061 est AGGRAVÉE, et les comptes de cette unité ne sont pas relâchés** (décision 179).
+  `scripts/verify-cards.sh` rejoue les suites globales **avant** de retirer ses cinq cards de
+  preuve : `npm run e2e:api` s'y ajoute désormais à `npm run test:sql`. MESURÉ : la base porte bien
+  neuf cards en sortant, et les deux suites sont vertes lancées ensuite — 332 scénarios, 1164
+  assertions. Le harnais est un livrable de `CRM-040`, son arbitrage est ouvert, et relâcher les
+  comptes du board pour l'accommoder reviendrait à supprimer un test pour obtenir un vert.
+- **Aucun réordonnancement dans une colonne** : il exige une RPC atomique que
+  `docs/SPEC-channels.md` §1.2 annonce déjà comme nécessaire et qu'aucune unité ne porte.
+- **Aucune création ni modification d'affaire depuis le board** : `CRM-040` a livré la table et son
+  contrat d'API, aucun écran d'édition n'existe.
+- **La colonne droite du §5.3 du design system n'est toujours pas livrée** — elle appartient à
+  `CRM-043` et `CRM-044`.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, `npm ci` précédé d'un `npm config set cafile`
+  (INC-032, INC-042), et l'arborescence de compatibilité des navigateurs Playwright — INC-036,
+  **neuvième** occurrence. `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
+  a été démarrée sans ce service, sans effet sur les preuves.
 
 ### CRM-042 — Vue liste `[ ]`
 Tri, filtres, densité maîtrisée, pagination.

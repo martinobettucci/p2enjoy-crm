@@ -70,7 +70,13 @@ export const fr = {
 	'route.track.pickchannel.body': 'Les onglets ci-dessus ouvrent les channels de ce track.',
 	'route.channel.empty.title': 'Aucune card dans ce channel',
 	'route.channel.empty.body':
-		'Le board et la vue liste de ce channel arrivent avec les cards.',
+		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+	'route.channel.noworkflow.title': 'Aucun workflow sur ce channel',
+	'route.channel.noworkflow.body':
+		"Un board a besoin des étapes d'un workflow : ce channel n'en désigne aucun que votre compte puisse lire.",
+	'route.channel.nostep.title': 'Ce workflow ne déclare aucune étape',
+	'route.channel.nostep.body':
+		"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'administrent par l'API.",
 	'route.card.title': 'Card',
 	'route.card.notfound.title': 'Card introuvable',
 	'route.card.notfound.body':
@@ -93,6 +99,33 @@ export const fr = {
 	'form.missing': "Ce champ est requis et n'est pas renseigné.",
 	'form.select.none': '— Aucun choix —',
 	'form.other.summary': "Informations d'autres étapes",
+
+	// --- Board kanban (docs/SPEC-workflow-engine.md §7) ------------------------------------
+	'board.aria': 'Board du channel',
+	'board.column.empty': 'Aucune affaire à cette étape.',
+	'board.age.days': 'j dans cette étape',
+	'board.menu.open': 'Déplacer',
+	'board.menu.none': 'Aucun déplacement déclaré depuis cette étape',
+	'board.transition.fallback': 'Passer à',
+	'board.comment.label': 'Motif exigé pour passer à',
+	'board.comment.notstored':
+		"Ce motif est exigé pour valider le déplacement. Il n'est pas encore conservé : l'historique des affaires arrive avec les commentaires.",
+	'board.comment.submit': 'Déplacer',
+	'board.comment.cancel': 'Annuler',
+	'board.refusal.dismiss': 'Fermer',
+	'board.refusal.card_not_found':
+		"Cette affaire n'est plus accessible. Rechargez le board pour voir son état réel.",
+	'board.refusal.forbidden': "Votre compte n'a pas le droit d'écrire dans ce channel.",
+	'board.refusal.step_not_in_workflow':
+		"Cette étape n'appartient pas au workflow de l'affaire.",
+	'board.refusal.transition_not_allowed':
+		"Ce déplacement n'est pas déclaré dans le workflow de l'affaire.",
+	'board.refusal.comment_required': 'Ce déplacement exige un motif.',
+	'board.refusal.missing_required_fields':
+		"Ces questions doivent avoir une réponse avant d'entrer dans cette étape :",
+	'board.refusal.anonyme':
+		'Déplacer une affaire exige une session, et aucun écran de connexion n\'est encore livré.',
+	'board.refusal.unknown': 'Le serveur a refusé ce déplacement sans motif connu de cet écran :',
 
 	// --- États (docs/DESIGN_SYSTEM.md §5.8) ----------------------------------------------
 	'state.loading.aria': 'Chargement en cours',
@@ -117,6 +150,9 @@ export const fr = {
 	'live.tracks.loaded': 'Tracks chargés',
 	'live.tracks.empty': 'Aucun track accessible',
 	'live.tracks.error': 'Le chargement des tracks a échoué',
+	'live.board.aria': 'Annonces du board',
+	'live.board.moved': 'Affaire déplacée vers',
+	'live.board.refused': 'Déplacement refusé',
 } as const
 
 export type CleTraduction = keyof typeof fr

@@ -1,0 +1,378 @@
+// @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
+// @verifies docs/SPEC-workflow-engine.md §7.3 (colonnes), §7.4 (carte de card), §7.5 (menu),
+//           §7.7 (déplacement au clavier), §7.8 (motif exigé, jamais optimiste),
+//           §7.9 (optimisme et retour arrière), §7.10 (les sept refus), §7.11 (accessibilité)
+// @verifies docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §8 (états désactivés
+//           lisibles, annonces), §10 (aucun texte en dur)
+//
+// Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils
+// existent parce que le rendu chargé du board ne peut être vu nulle part ailleurs : la webapp est
+// un appelant anonyme faute d'écran de connexion (INC-021), et son E2E n'obtient donc jamais de
+// ligne — le procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5.
+//
+// Ce qu'ils ne prouvent PAS, et qui reste dû : qu'un utilisateur connecté déplace réellement une
+// affaire. C'est INC-021, et c'est nommé dans docs/BACKLOG.md.
+
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Board } from './Board'
+import { composerBoard, type CardBoard, type EtapeBoard, type TransitionLue } from '../lib/board'
+import type { ClientCrm } from '../lib/supabase'
+
+afterEach(cleanup)
+
+const ETAPES: readonly EtapeBoard[] = [
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14 },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7 },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null },
+]
+
+const TRANSITIONS: readonly TransitionLue[] = [
+	{ id: 't1', from_step_id: 's1', to_step_id: 's2', label: 'Relancer', require_comment: false },
+	{ id: 't2', from_step_id: 's1', to_step_id: 's7', label: 'Marquer perdu', require_comment: true },
+]
+
+const MAINTENANT = new Date('2026-08-05T12:00:00.000Z')
+
+function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step_id'>): CardBoard {
+	return {
+		title: partiel.id,
+		position: 1,
+		amount: null,
+		currency: 'EUR',
+		next_action: null,
+		entered_step_at: MAINTENANT.toISOString(),
+		email_local_part: 'c-00000000',
+		...partiel,
+	}
+}
+
+const LIBELLES = new Map([['lien-proposition', 'Lien vers la proposition']])
+
+type ReponseRpc = {
+	data: unknown
+	error: { message: string; details: string | null; code: string | null } | null
+}
+
+/** Client factice : seule `rpc` est employée par le board, et elle est **observée**. */
+function clientRpc(...reponses: readonly ReponseRpc[]): {
+	client: ClientCrm
+	appels: { nom: string; arguments: Record<string, unknown> }[]
+} {
+	const appels: { nom: string; arguments: Record<string, unknown> }[] = []
+	let rang = 0
+	const client = {
+		rpc: (nom: string, args: Record<string, unknown>) => {
+			appels.push({ nom, arguments: args })
+			const reponse = reponses[Math.min(rang++, reponses.length - 1)]
+			return Promise.resolve(reponse ?? { data: null, error: null })
+		},
+	} as unknown as ClientCrm
+	return { client, appels }
+}
+
+function monter({
+	cards,
+	client,
+	onCards = () => {},
+}: {
+	readonly cards: readonly CardBoard[]
+	readonly client: ClientCrm
+	readonly onCards?: (cards: readonly CardBoard[]) => void
+}) {
+	const modele = composerBoard({
+		etapes: ETAPES,
+		cards,
+		transitions: TRANSITIONS,
+		maintenant: MAINTENANT,
+	})
+	return render(
+		<MemoryRouter>
+			<Board
+				modele={modele}
+				cards={cards}
+				onCards={onCards}
+				libellesChamps={LIBELLES}
+				client={client}
+				slugTrack="conseil-ia"
+				slugChannel="grands-comptes"
+			/>
+		</MemoryRouter>,
+	)
+}
+
+describe('colonnes rendues (docs/SPEC-workflow-engine.md §7.3)', () => {
+	it('rend une colonne par étape, y compris celles que personne n’occupe', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		expect(screen.getAllByTestId('colonne')).toHaveLength(3)
+	})
+
+	it('nomme chaque colonne et compte ses affaires', () => {
+		monter({
+			cards: [
+				card({ id: 'c1', current_step_id: 's1' }),
+				card({ id: 'c2', current_step_id: 's1', position: 2 }),
+			],
+			client: clientRpc().client,
+		})
+		const premiere = screen.getAllByTestId('colonne')[0]
+		expect(within(premiere as HTMLElement).getByRole('heading').textContent).toBe('Prospection')
+		expect((premiere as HTMLElement).textContent).toContain('2')
+	})
+
+	it('une colonne vide le dit, plutôt que de rester muette (docs/DESIGN_SYSTEM.md §5.2)', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		expect(screen.getAllByTestId('colonne-vide')).toHaveLength(2)
+	})
+
+	it('affiche le cumul d’une colonne, et aucun cumul quand deux devises s’y mêlent', () => {
+		monter({
+			cards: [
+				card({ id: 'c1', current_step_id: 's1', amount: 48000, currency: 'EUR' }),
+				card({ id: 'c2', current_step_id: 's1', position: 2, amount: 12000, currency: 'EUR' }),
+				card({ id: 'c3', current_step_id: 's2', amount: 28000, currency: 'CHF' }),
+				card({ id: 'c4', current_step_id: 's2', position: 2, amount: 1, currency: 'EUR' }),
+			],
+			client: clientRpc().client,
+		})
+		const cumuls = screen.getAllByTestId('cumul-colonne')
+		expect(cumuls).toHaveLength(1)
+		expect(cumuls[0]?.textContent).toContain('60')
+	})
+})
+
+describe('carte de card (§7.4, docs/DESIGN_SYSTEM.md §5.1)', () => {
+	it('mène à la fiche de l’affaire par son identifiant', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1', title: 'Audit' })], client: clientRpc().client })
+		expect(screen.getByRole('link', { name: 'Audit' }).getAttribute('href')).toBe(
+			'/tracks/conseil-ia/grands-comptes/cards/c1',
+		)
+	})
+
+	it('rend le montant en donnée technique, et rien quand il n’y en a pas', () => {
+		monter({
+			cards: [
+				card({ id: 'c1', current_step_id: 's1', amount: 15500 }),
+				card({ id: 'c2', current_step_id: 's1', position: 2, amount: null }),
+			],
+			client: clientRpc().client,
+		})
+		const montants = screen.getAllByTestId('montant-card')
+		expect(montants).toHaveLength(1)
+		expect(montants[0]?.tagName.toLowerCase()).toBe('code')
+	})
+
+	it('n’affiche aucune pastille d’ancienneté quand l’étape ne pose aucun seuil', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's7' })], client: clientRpc().client })
+		expect(screen.queryByTestId('anciennete')).toBeNull()
+	})
+
+	it('signale une affaire au-delà du seuil de relance', () => {
+		monter({
+			cards: [
+				card({
+					id: 'c1',
+					current_step_id: 's2',
+					entered_step_at: new Date(MAINTENANT.getTime() - 30 * 86400000).toISOString(),
+				}),
+			],
+			client: clientRpc().client,
+		})
+		expect(screen.getByTestId('anciennete').getAttribute('data-depassee')).toBe('oui')
+	})
+})
+
+describe('menu des transitions (§7.5, §7.7)', () => {
+	it('liste EXACTEMENT les transitions déclarées depuis l’étape courante', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		const gestes = screen.getAllByTestId('transition')
+		expect(gestes.map((geste) => geste.textContent)).toEqual(['Relancer', 'Marquer perdu'])
+	})
+
+	// MESURÉ : les étapes `Livré` et `Perdu` du seed n'ont aucune transition sortante. Le bouton
+	// reste **lisible** et dit pourquoi (docs/DESIGN_SYSTEM.md §8).
+	it('reste lisible et explique l’indisponibilité quand aucune transition n’est déclarée', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's7' })], client: clientRpc().client })
+		const bouton = screen.getByTestId('menu-transitions') as HTMLButtonElement
+		expect(bouton.disabled).toBe(true)
+		expect(bouton.textContent?.trim().length).toBeGreaterThan(0)
+	})
+
+	it('annonce son état d’ouverture aux technologies d’assistance', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		const bouton = screen.getByTestId('menu-transitions')
+		expect(bouton.getAttribute('aria-expanded')).toBe('false')
+		await utilisateur.click(bouton)
+		expect(bouton.getAttribute('aria-expanded')).toBe('true')
+		expect(bouton.getAttribute('aria-controls')).toBe(
+			screen.getByTestId('liste-transitions').getAttribute('id'),
+		)
+	})
+
+	it('se referme par Échap et rend le focus au bouton qui l’a ouvert', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		const bouton = screen.getByTestId('menu-transitions')
+		await utilisateur.click(bouton)
+		await utilisateur.keyboard('{Escape}')
+		expect(screen.queryByTestId('liste-transitions')).toBeNull()
+		expect(document.activeElement).toBe(bouton)
+	})
+
+	// Le chemin clavier du déplacement (docs/DESIGN_SYSTEM.md §8) : aucun glisser-déposer au
+	// clavier n'est inventé, le menu EST ce chemin.
+	it('déplace une affaire au clavier seul, sans souris', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, appels } = clientRpc({
+			data: card({ id: 'c1', current_step_id: 's2' }),
+			error: null,
+		})
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		screen.getByTestId('menu-transitions').focus()
+		await utilisateur.keyboard('{Enter}')
+		const geste = screen.getAllByTestId('transition')[0] as HTMLElement
+		geste.focus()
+		await utilisateur.keyboard('{Enter}')
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]).toEqual({ nom: 'move_card', arguments: { card_id: 'c1', to_step_id: 's2' } })
+	})
+})
+
+describe('motif exigé, jamais optimiste (§7.8)', () => {
+	it('demande le motif avant d’appeler, et n’appelle pas tant qu’il manque', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, appels } = clientRpc({ data: card({ id: 'c1', current_step_id: 's7' }), error: null })
+		const onCards = vi.fn()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client, onCards })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[1] as HTMLElement)
+		expect(screen.getByTestId('saisie-motif')).toBeDefined()
+		expect(appels).toHaveLength(0)
+		// La card n'a pas bougé : ce geste n'est pas optimiste (§7.8).
+		expect(onCards).not.toHaveBeenCalled()
+	})
+
+	it('dit que le motif n’est pas encore conservé, plutôt que de laisser croire l’inverse', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[1] as HTMLElement)
+		expect(screen.getByTestId('saisie-motif').textContent).toMatch(/conserv/i)
+	})
+
+	it('transmet le motif saisi à la garde', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, appels } = clientRpc({ data: card({ id: 'c1', current_step_id: 's7' }), error: null })
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[1] as HTMLElement)
+		await utilisateur.type(screen.getByTestId('champ-motif'), 'Budget gelé')
+		await utilisateur.click(screen.getByTestId('valider-motif'))
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]?.arguments['comment']).toBe('Budget gelé')
+	})
+
+	it('refuse de valider un motif vide, sans appeler la garde', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, appels } = clientRpc()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[1] as HTMLElement)
+		expect((screen.getByTestId('valider-motif') as HTMLButtonElement).disabled).toBe(true)
+		expect(appels).toHaveLength(0)
+	})
+})
+
+describe('optimisme et retour arrière (§7.9)', () => {
+	it('déplace la card avant la réponse, puis la remplace par la ligne du serveur', async () => {
+		const utilisateur = userEvent.setup()
+		const ligne = card({ id: 'c1', current_step_id: 's2', position: 9 })
+		const { client } = clientRpc({ data: ligne, error: null })
+		const etats: (readonly CardBoard[])[] = []
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1' })],
+			client,
+			onCards: (cards) => etats.push(cards),
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[0] as HTMLElement)
+		await waitFor(() => expect(etats).toHaveLength(2))
+		expect(etats[0]?.[0]?.current_step_id).toBe('s2')
+		expect(etats[1]?.[0]).toEqual(ligne)
+	})
+
+	it('replace exactement la card à son état d’origine après un refus', async () => {
+		const utilisateur = userEvent.setup()
+		const origine = card({ id: 'c1', current_step_id: 's1' })
+		const { client } = clientRpc({
+			data: null,
+			error: { message: 'transition_not_allowed', details: null, code: 'P0001' },
+		})
+		const etats: (readonly CardBoard[])[] = []
+		monter({ cards: [origine], client, onCards: (cards) => etats.push(cards) })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[0] as HTMLElement)
+		await waitFor(() => expect(etats).toHaveLength(2))
+		expect(etats[1]).toEqual([origine])
+	})
+})
+
+describe('les sept refus, affichés (§7.10)', () => {
+	async function provoquer(erreur: { message: string; details: string | null; code: string | null }) {
+		const utilisateur = userEvent.setup()
+		const { client } = clientRpc({ data: null, error: erreur })
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getAllByTestId('transition')[0] as HTMLElement)
+		return await screen.findByTestId('refus-deplacement')
+	}
+
+	it('affiche la raison exacte d’un refus, dans une alerte', async () => {
+		const bandeau = await provoquer({
+			message: 'transition_not_allowed',
+			details: null,
+			code: 'P0001',
+		})
+		expect(bandeau.getAttribute('role')).toBe('alert')
+		expect(bandeau.getAttribute('data-cle')).toBe('transition_not_allowed')
+	})
+
+	it('nomme les champs manquants par leur LIBELLÉ, et non par leur clé', async () => {
+		const bandeau = await provoquer({
+			message: 'missing_required_fields',
+			details: 'lien-proposition',
+			code: 'P0001',
+		})
+		expect(within(bandeau).getByTestId('champs-manquants').textContent).toContain(
+			'Lien vers la proposition',
+		)
+	})
+
+	it('reconnaît l’appelant sans session par son SQLSTATE', async () => {
+		const bandeau = await provoquer({
+			message: 'permission denied for function move_card',
+			details: null,
+			code: '42501',
+		})
+		expect(bandeau.getAttribute('data-cle')).toBe('anonyme')
+	})
+
+	// CLAUDE.md §18 : un refus non prévu n'est jamais absorbé.
+	it('n’absorbe pas un refus inconnu et montre le message brut', async () => {
+		const bandeau = await provoquer({ message: 'quelque_chose_de_neuf', details: null, code: 'P0001' })
+		expect(bandeau.getAttribute('data-cle')).toBe('inconnu')
+		expect(within(bandeau).getByTestId('refus-brut').textContent).toBe('quelque_chose_de_neuf')
+	})
+
+	it('annonce le résultat dans la région polie (docs/DESIGN_SYSTEM.md §8)', async () => {
+		await provoquer({ message: 'forbidden', details: null, code: '42501' })
+		await waitFor(() =>
+			expect(screen.getAllByTestId('region-annonces').at(-1)?.textContent).not.toBe(''),
+		)
+	})
+})
