@@ -109,6 +109,7 @@ fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automat
 | 9 | `supabase/migrations/0009_champs_formulaire.sql` | Les deux tables du form composer : `public.form_fields` (champs d'un workflow, quinze types, options exigées pour `select`, `multiselect` et `money`, unicité **totale** de la clé par workflow, trigger d'attribution de `position`) et `public.form_field_rules` (visibilité d'un champ à une étape, clé primaire `(field_id, step_id)`, **trois clés étrangères composites** qui rendent structurellement impossible une règle croisant deux workflows). Six politiques RLS, privilèges explicites, et **aucun** privilège `DELETE` sur les champs — l'archivage tient lieu de suppression (`docs/JOURNAL.md` décisions 94 à 98). | Migrations 1 à 6 : `public.workflows` et `public.workflow_steps` doivent exister. **Aucune condition de données** : les deux tables sont créées vides. | `drop table public.form_field_rules; drop table public.form_fields; drop function app.form_fields_attribuer_position();` — **destructif au sens strict** : les définitions de formulaires et leurs règles sont perdues. Aucune autre table n'en dépend aujourd'hui, `card_field_values` n'étant pas livrée (`CRM-036`). |
 | 10 | `supabase/migrations/0010_droits_fins.sql` | Les droits fins deviennent **opposables** : cinq fonctions `SECURITY DEFINER` (`app.can_read_track`, `app.can_read_channel`, `app.can_write_channel`, plus `app.track_workspace` et `app.channel_workspace`) et deux fonctions de résolution employées par les politiques (`app.resolve_track_access`, `app.resolve_channel_access`). Les politiques de **lecture** de `public.tracks` et de `public.channels` sont **redéfinies** pour appliquer les droits fins ; `public.track_members` et `public.channel_members` reçoivent leurs quatre politiques chacune — lecture par l'administrateur et par l'intéressé, écriture et **suppression** par l'administrateur (`docs/SPEC-permissions-rls.md` §4.1). `app.can_read_card` reste différée : `cards` arrive à `CRM-040`. | Migrations 1 à 4 : `public.tracks`, `public.channels`, `public.track_members`, `public.channel_members` et les fonctions de la migration 2 doivent exister. **DÉPENDANCE D'ORDRE STRICTE** : cette migration redéfinit `tracks_lecture_membre` et `channels_lecture_membre`, créées par les migrations 3 et 4. Réappliquer 3 ou 4 **après** celle-ci ramène les politiques à leur version sans droits fins — toute réapplication partielle doit donc se terminer par la 10 (`docs/JOURNAL.md` décision 108). | `drop policy` des huit politiques de `track_members` et `channel_members`, puis réapplication des migrations 3 et 4 pour restaurer les politiques de lecture d'origine, puis `drop function` des sept fonctions. **Non destructif** : aucune donnée n'est perdue. **Effet immédiat et visible** : les droits fins cessent d'être appliqués, et tout membre du workspace retrouve l'accès à tous les tracks et channels — c'est un **élargissement** d'accès, à ne pas exécuter sans l'avoir voulu. |
 
+
 **VÉRIFICATION OBLIGATOIRE AVANT D'APPLIQUER LA MIGRATION 8.** Elle pose `NOT NULL` sur
 `channels.workflow_id`. Si une seule ligne de `public.channels` portait `workflow_id` nul,
 l'`alter table` échouerait — et comme PostgREST attend la terminaison réussie du
@@ -159,6 +160,7 @@ confirmée avec le responsable du workspace concerné : un droit fin posé « po
 
 | 11 | `supabase/migrations/0011_cards.sql` | Table `public.cards` — l'objet métier principal —, ses **trois clés étrangères composites** (cloisonnement, workflow du channel, étape du workflow), le trigger de génération de `email_local_part` (`c-<8 base32 Crockford>`, non devinable), le trigger d'attribution de `position` dans la portée `(channel, étape)`, la colonne générée `search_tsv` et **cinq index** dont l'unicité globale de l'adresse, **trois politiques RLS** appliquant les droits fins dès la première ligne, `app.can_read_card` (dernier point d'INC-013), et la **garde d'archivage d'un nœud occupé** du catalogue qu'INC-031 attendait depuis `CRM-030`. Ajoute au passage à `public.channels` deux unicités **redondantes** — `channels_id_workspace_id_key` et `channels_id_workflow_id_key` — sans lesquelles les clés composites sont refusées à la création. | Migrations 1 à 10 : `public.workspaces`, `public.profiles`, `public.channels`, `public.workflows`, `public.workflow_steps`, `public.workflow_nodes_catalog` et les fonctions `app.can_read_channel` / `app.can_write_channel` doivent exister. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER** : la clé `cards_channel_id_workflow_id_fkey` rend **refusé** tout changement de `channels.workflow_id` sur un channel qui porte au moins une card (`23503`). Règle non spécifiée, consignée en INC-046 — arbitrage attendu. Aucune ligne n'existe sur les bases du projet hors du seed. | `drop table public.cards cascade;` puis `drop function app.can_read_card(uuid), app.cards_generer_email_local_part(), app.cards_attribuer_position(), app.catalogue_refuser_archivage_noeud_occupe();` et `alter table public.channels drop constraint channels_id_workflow_id_key, drop constraint channels_id_workspace_id_key;` — **destructif dès la première mise en service** : il détruit toutes les affaires du workspace. Il exige une sauvegarde préalable. Retirer le trigger d'archivage rouvre en outre l'archivage d'un nœud occupé, ce qui ferait disparaître une colonne de board sous ses cards. |
 | 12 | `supabase/migrations/0012_move_card.sql` | Fonction `public.move_card(card_id, to_step_id, comment)` — **garde centrale de transition**, seul chemin par lequel une card change d'étape. Rend `public.cards`, remet `entered_step_at` à `now()`, recalcule `position` en fin de colonne d'arrivée. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `public` et `anon`**, accordé à `authenticated` et `service_role`. **ET LA PROTECTION DE COLONNE QUI VA AVEC** : `revoke update on public.cards from authenticated`, suivi d'un `grant update (…)` énumérant treize colonnes. | Migration 11 : `public.cards`, `public.workflow_steps`, `public.workflow_transitions` et les fonctions `app.can_read_channel` / `app.can_write_channel` doivent exister. **CONSÉQUENCE À CONNAÎTRE AVANT D'APPLIQUER, et c'est un changement de contrat pour tout client existant** : `authenticated` perd l'`UPDATE` de **table** sur `cards`. Toute intégration qui écrivait `current_step_id`, `entered_step_at`, `workflow_id`, `channel_id`, `health_score` ou `workspace_id` par un `PATCH` direct recevra désormais `403`/`42501` et **doit passer par `move_card`**. Les treize colonnes énumérées restent ouvertes. `service_role` n'est pas touché : les scripts d'exploitation qui l'emploient sont inchangés. | `revoke update on public.cards from authenticated; grant update on public.cards to authenticated; drop function public.move_card(uuid, uuid, text);` — **rouvre la porte que cette migration ferme** : une card pourra de nouveau franchir une arête non déclarée par un simple `PATCH`. À n'exécuter que pour débloquer une intégration en production, et à refermer aussitôt. |
+| 13 | `supabase/migrations/0013_valeurs_champs.sql` | Table `public.card_field_values` (réponses d'une card aux questions de son workflow), ses **trois clés étrangères composites**, la contrainte `UNIQUE (id, workflow_id)` ajoutée à `public.cards` — condition de la première, MESURÉ —, la **validation par type** de `value` par trigger `SECURITY DEFINER` (un `CHECK` ne peut porter aucune sous-requête, MESURÉ), `app.valeur_de_champ_est_vide`, `app.can_write_card`, deux index, trois politiques RLS, les privilèges explicites précédés d'un `revoke all` — sans lui, les privilèges par défaut de l'image laissent `DELETE` et `INSERT` à `anon` (`docs/JOURNAL.md` décision 134) —, et la **redéfinition de `public.move_card` avec sa SIXIÈME vérification**, `missing_required_fields`, dont le `DETAIL` porte la liste des clés manquantes. | Migrations 1 à 12 : `public.cards`, `public.form_fields`, `public.form_field_rules`, `public.workflows` et `public.profiles` doivent exister. **DÉPENDANCE D'ORDRE STRICTE** : cette migration **remplace** la définition de `public.move_card` posée par la migration 12. Réappliquer la 12 **après** celle-ci retire la sixième vérification, sans aucun signal — toute réapplication partielle doit donc se terminer par la 13. `scripts/verify-valeurs-champs.sh` mesure cette dépendance dans les deux sens. | `drop table public.card_field_values;` puis réapplication de la migration 12 pour restaurer `move_card` à cinq vérifications, puis `drop function app.card_field_values_valider(), app.valeur_de_champ_est_vide(jsonb), app.can_write_card(uuid);` et enfin `alter table public.cards drop constraint cards_id_workflow_id_key;` — **destructif au sens strict** : toutes les réponses de formulaire sont perdues, et elles ne se reconstituent pas. Il exige une sauvegarde préalable de `public.card_field_values`. **Effet immédiat sur le comportement** : les transitions redeviennent franchissables sans que les champs requis soient renseignés — c'est un **relâchement** de garde, à ne pas exécuter sans l'avoir voulu. |
 
 **Ce que la migration 12 ajoute au contrat d'exploitation.** Un seul point, mais il casse
 potentiellement des appelants existants :
@@ -171,10 +173,57 @@ potentiellement des appelants existants :
   commande `GRANT` à exécuter — comportement de PostgREST, INC-026 : ne pas la suivre, elle
   rouvrirait la garde.
 
+**Ce que la migration 13 ajoute au contrat d'exploitation.** Deux points, à lire avant de
+l'appliquer sur une base déjà en service :
+
+- **Des transitions qui passaient aujourd'hui seront refusées demain.** La sixième vérification
+  refuse tout déplacement vers une étape dont un champ `required` n'est pas renseigné, et toute
+  transition dont le `require_fields` n'est pas satisfait. Contrôle à exécuter **avant**
+  application, sur la base cible : la requête ci-dessous liste les cards qui ne pourraient plus
+  franchir la transition sortante de leur étape courante. Une liste non vide n'interdit pas
+  d'appliquer la migration — c'est le comportement voulu —, mais elle doit être **connue**, et les
+  valeurs manquantes saisies avant que les utilisateurs ne butent dessus.
+
+À exécuter **avant** l'application de la migration 13 — elle emploie donc la définition de « non
+renseigné » du §6.6 en clair, `app.valeur_de_champ_est_vide` n'existant pas encore sur la base
+cible :
+
+```sql
+-- Cards dont une transition sortante serait désormais refusée pour champs manquants.
+select c.id, c.title, t.label as transition, f.key as champ_manquant
+  from public.cards c
+  join public.workflow_transitions t
+    on t.workflow_id = c.workflow_id and t.from_step_id = c.current_step_id
+  join public.form_fields f
+    on f.workflow_id = c.workflow_id and f.archived_at is null
+ where c.archived_at is null and c.deleted_at is null
+   and (exists (select 1 from public.form_field_rules r
+                 where r.field_id = f.id and r.step_id = t.to_step_id
+                   and r.visibility = 'required')
+        or f.id = any (coalesce(t.require_fields, '{}'::uuid[])))
+   and not exists (
+       select 1 from public.card_field_values v
+        where v.card_id = c.id and v.field_id = f.id
+          and v.value is not null
+          and jsonb_typeof(v.value) <> 'null'
+          and not (jsonb_typeof(v.value) = 'string' and btrim(v.value #>> '{}') = '')
+          and not (jsonb_typeof(v.value) = 'array'  and jsonb_array_length(v.value) = 0))
+ order by c.title, f.position;
+```
+
+Sur une base **antérieure** à la migration 13, `public.card_field_values` n'existe pas : la
+sous-requête est alors à retirer, et la liste obtenue est l'ensemble **complet** des transitions qui
+deviendront refusées — ce qui est le cas le plus fréquent, aucune valeur n'ayant pu être saisie.
+
+- **`public.cards` reçoit une contrainte d'unicité supplémentaire**, `cards_id_workflow_id_key`.
+  Elle ne peut refuser aucune ligne — `id` est déjà clé primaire — et ne change donc aucun
+  comportement ; mais elle crée un index, dont le coût est à connaître sur une table volumineuse.
+
 **Ce que la migration 12 ne fait pas, et qui reste dû.** La **sixième** vérification de la garde —
-« les champs requis de l'étape cible sont renseignés » — n'est **pas écrite** : elle lit
-`card_field_values`, livrée par `CRM-036` (INC-047). Un déplacement vers une étape portant des
-champs requis réussit donc aujourd'hui. Le commentaire exigé par une transition n'est **conservé
+« les champs requis de l'étape cible sont renseignés » — n'était **pas écrite** : elle lit
+`card_field_values`. **LIVRÉE PAR LA MIGRATION 13** (`CRM-036`), qui redéfinit `move_card` : INC-047
+est close, et la dépendance d'ordre 12 → 13 est inscrite au registre ci-dessus. Le commentaire
+exigé par une transition n'est **conservé
 nulle part** tant que `card_comments` n'existe pas (INC-048, `CRM-043`), et aucun `card_event` n'est
 écrit (`CRM-044`). `email_local_part` reste modifiable directement : elle relève de `CRM-013`, et le
 §5.5 de la spécification se contredisant sur ce point, le comportement a été **laissé inchangé**

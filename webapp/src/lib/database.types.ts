@@ -20,6 +20,82 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      card_field_values: {
+        Row: {
+          card_id: string
+          created_at: string
+          field_id: string
+          updated_at: string
+          updated_by: string | null
+          value: Json | null
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          field_id: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json | null
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          field_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json | null
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_field_values_card_id_workflow_id_fkey"
+            columns: ["card_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_field_id_workflow_id_fkey"
+            columns: ["field_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "form_fields"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_field_values_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           amount: number | null

@@ -145,9 +145,15 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		expect(transitions).toHaveLength(10)
 		expect(transitions.filter((t) => t.require_comment)).toHaveLength(4)
 
-		// INC-033 : `require_fields` reste vide partout — `form_fields` n'existe pas, et le seed ne
-		// fabrique pas une donnée que le modèle ne sait pas encore produire.
-		expect(transitions.every((t) => t.require_fields.length === 0)).toBe(true)
+		// RÉVISÉ À `CRM-036`, NON RETIRÉ — mécanisme de la décision 51. L'assertion constatait le vide,
+		// motivé alors par l'absence de `form_fields`, puis par l'absence de garde qui la lise. Les
+		// deux motifs ont disparu : la sixième vérification de `move_card` LIT cette colonne, et le
+		// seed en porte exactement UNE (docs/SPEC-seed.md §2.13). Elle COMPTE désormais, de sorte
+		// qu'une seconde entrée posée sans preuve la fasse rougir à son tour.
+		expect(
+			transitions.filter((t) => t.require_fields.length > 0),
+			'INC-033 : une seule transition porte `require_fields` — « Démarrer la réalisation »',
+		).toHaveLength(1)
 	})
 
 	// Révisé par `CRM-033`, qui a soldé INC-029. L'assertion posée ici comptait « les six »

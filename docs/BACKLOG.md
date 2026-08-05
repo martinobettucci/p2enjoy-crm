@@ -1837,8 +1837,14 @@ clés manquantes.
       sommaire, `README.md`, `CHANGELOG.md` mis à jour dans le même changement. `docs/MASTER_PLAN.md`
       §3 est **inchangé** : son tableau rattache déjà les transitions à `docs/SPEC-workflow-engine.md`,
       et son exemple de commentaire `@spec` cite nommément cette unité.
-- [ ] **LA VÉRIFICATION N° 6 N'EST PAS ÉCRITE — INC-047.** La Definition of Done exige « pgTAP pour
-      chacune des **six** » ; cinq sont livrées. La n° 6 demande que les champs requis de l'étape
+- [x] **LA VÉRIFICATION N° 6 EST ÉCRITE — livrée par `CRM-036` le 2026-08-05, INC-047 CLOSE.** Les
+      deux assertions figées ici pour devenir rouges ce jour-là le sont devenues et ont été
+      **retournées**, non retirées : le mécanisme de la décision 51 a désigné son moment. Le message
+      listant les clés manquantes existe, dans le `DETAIL` du refus. Ce que la n° 6 contrôle est
+      écrit en `docs/SPEC-form-composer.md` §6.7. **Le constat d'origine est conservé ci-dessous**,
+      parce qu'il porte la décision et non seulement un état.
+- [ ] **~~LA VÉRIFICATION N° 6 N'EST PAS ÉCRITE — INC-047.~~** La Definition of Done exige « pgTAP
+      pour chacune des **six** » ; cinq sont livrées. La n° 6 demande que les champs requis de l'étape
       cible soient **renseignés**, et l'ensemble renseigné n'a aucune source : `card_field_values`
       est le livrable de `CRM-036`. MESURÉ, `to_regclass` rend `NULL`. Les deux écritures possibles
       sont écartées au §5.7 — refuser toute transition dont l'ensemble exigé n'est pas vide
@@ -1846,9 +1852,10 @@ clés manquantes.
       perdu », c'est-à-dire le parcours que la garde est censée garder ; prétendre vérifier sans
       vérifier est le faux vert que `CLAUDE.md` §17 proscrit. L'écart est **figé par deux
       assertions**, en pgTAP et en API, qui deviendront rouges à `CRM-036`.
-- [ ] **Le message d'erreur listant les clés manquantes n'existe pas**, et c'est la conséquence
-      directe du point précédent : il décrit la vérification qui n'est pas écrite, et naîtra avec
-      elle. La Definition of Done le nomme ; il est dû.
+- [x] **~~Le message d'erreur listant les clés manquantes n'existe pas~~ — LIVRÉ par `CRM-036`.**
+      Il voyage dans le `DETAIL` du refus, ordonné par `position`, et non dans le message, qui reste
+      un jeton comparable par égalité comme les cinq refus précédents (décision 126). MESURÉ :
+      PostgREST l'expose dans la clé `details` de sa réponse.
 - [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le board est `CRM-041`, et la
       webapp reste un appelant **anonyme** faute d'écran de connexion — **INC-021, en attente
       d'arbitrage**. Il n'existe **aucune** vérification visuelle sensée à produire : la garde n'a
@@ -1866,13 +1873,15 @@ clés manquantes.
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP pour chacune des six ;
 preuves de refus n° 1 et 5 ; message d'erreur listant les clés manquantes ». **Les preuves de refus
 n° 1 et 5 sont acquises**, la seconde ayant exigé de livrer la protection de colonne qu'INC-049
-disputait à `CRM-013`. **Cinq vérifications sur six** sont couvertes en pgTAP, largement au-delà de
-ce qui était demandé — chacune dans les deux sens. **La sixième et son message n'existent pas**, et
-l'absence est nommée plutôt que compensée par une preuve de substitution.
+disputait à `CRM-013`. **Cinq vérifications sur six** étaient couvertes en pgTAP par cette
+unité, largement au-delà de ce qui était demandé — chacune dans les deux sens. **La sixième et son
+message ont été livrés par `CRM-036`** le 2026-08-05 : les six sont désormais couvertes, et
+l'absence qui était nommée ici a été comblée par l'unité que le plan désignait.
 
 *Limites nommées, non masquées.*
 
-- **`CRM-034` reste `[~]`** : la n° 6 manque, son message aussi, et aucune capture n'existe.
+- **`CRM-034` reste `[~]`** : la n° 6 et son message sont livrés par `CRM-036`, mais **aucune
+  capture n'existe** — la garde n'a pas de surface, et la webapp reste anonyme (INC-021).
 - **Trois contradictions relevées et NON résolues**, consignées pour arbitrage : INC-050 — le §5.5
   se contredit sur `email_local_part`, et le comportement est **laissé inchangé**, la colonne
   restant ouverte jusqu'à `CRM-013` ; INC-051 — la ligne i du §5.8 nomme le `bizdev`, à qui le seed
@@ -2020,10 +2029,163 @@ aux quatre unités précédentes.
   navigateurs Playwright (INC-036). **Première exécution où le conteneur `webapp` démarre réellement**
   — les quinze services de la pile de développement sont sains.
 
-### CRM-036 — Valeurs et validation `[ ]`
+### CRM-036 — Valeurs et validation `[~]`
 `card_field_values`, validation par type, union étape + transition.
 **DoD** : pgTAP (type incorrect refusé, `hidden` non exigé, règle ajoutée après coup
 n'invalidant pas l'existant).
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-form-composer.md` §6 réécrit en douze
+      sous-chapitres : le §6 d'origine tenait en dix lignes, disait *où* la validation vit sans
+      jamais dire sur quelles colonnes la table repose, ce qu'un refus rend, ce que « renseigné »
+      veut dire, ni ce qu'il advient d'une valeur portée par un champ archivé. Rédigé **après
+      mesure** sur la pile réelle — sondes créées puis détruites, `SQLSTATE` et codes HTTP relevés à
+      la main —, avec un contrat d'API de **dix-huit lignes** écrit avant le code pour être mesuré
+      et non supposé. Commit documentaire dédié, poussé avant la première ligne de SQL.
+- [x] **INC-047 est close, et l'arbitrage n'avait pas à être demandé une seconde fois**
+      (décision 123). Son option 1 — rattacher la sixième vérification de `move_card` à `CRM-036` —
+      n'est pas une décision de produit : c'est la lecture littérale de la Definition of Done de
+      cette unité, qui porte « union étape + transition », et du §7.2 qui porte « champ `hidden` non
+      exigé même si vide ». Livrer l'unité sans écrire la n° 6 l'aurait amputée de ce qu'elle nomme.
+- [x] `supabase/migrations/0013_valeurs_champs.sql` : la table, **trois clés étrangères
+      composites**, l'unicité ajoutée à `cards`, la validation par type par trigger,
+      `app.valeur_de_champ_est_vide`, `app.can_write_card`, deux index, trois politiques, les
+      privilèges, et la **redéfinition de `move_card` avec sa sixième vérification**.
+- [x] **L'unicité qui manquait à `cards`, trouvée par la mesure** (décision 124) : une clé étrangère
+      composite `(card_id, workflow_id)` était impossible, `cards` ne portant que `PRIMARY KEY (id)`.
+      MESURÉ : « there is no unique constraint matching given keys for referenced table "cards" ».
+      `UNIQUE (id, workflow_id)` lui est ajoutée — **elle ne change aucun comportement**, `id` étant
+      déjà clé primaire, elle rend seulement la relation exprimable.
+- [x] **La validation est un trigger parce qu'un `CHECK` ne peut pas la porter** (décision 125) :
+      MESURÉ, « cannot use subquery in check constraint ». Le type gouvernant une valeur vit sur une
+      **autre** table. `SECURITY DEFINER` : le trigger doit voir **tous** les champs, pas ceux que
+      la RLS de l'appelant lui montre — un champ invisible ne doit pas être un champ non validé.
+- [x] **Le point ouvert n° 4 du §8 est clos du côté qui compte** (décision 131) : la base ne
+      contraint toujours pas la forme de `options.choices`, mais un `select` ou un `multiselect`
+      dont la clé ne figure pas dans les choix déclarés est **refusé**. Aucune card ne peut plus
+      porter une réponse que son champ n'offre pas.
+- [x] **La sixième vérification de `move_card`, et l'union qu'elle contrôle** : les champs
+      `required` de l'étape cible unis aux `require_fields` de la transition, **moins** les champs
+      archivés (décision 129) et les identifiants que la jointure ne résout pas (décision 128).
+      Chaque exclusion est une décision écrite, et chacune est **figée par une assertion**.
+- [x] **La liste des clés manquantes voyage dans le `DETAIL`, pas dans le message** (décision 126),
+      et le choix est mesuré : la première écriture rendait le `message` incomparable par égalité,
+      là où les cinq refus déjà livrés sont des jetons stables. MESURÉ que PostgREST expose ce
+      `DETAIL` dans la clé `details` de sa réponse.
+- [x] **UN DÉFAUT DE CONCEPTION RÉEL, TROUVÉ PAR LE SEED LUI-MÊME** (décision 133, INC-054).
+      `docs/SCHEMA.md` §4 exigeait `value` **non nul**, avec `'null'::jsonb` pour « explicitement
+      vide ». MESURÉ : PostgREST convertit un `null` JSON en **SQL NULL** et ne sait produire
+      `'null'::jsonb` par aucune écriture. « Vider un champ `money` » n'avait donc **aucune écriture
+      licite** — chaîne vide refusée par la validation de type, SQL NULL par la colonne, aucune
+      suppression exposée. La colonne est rendue nullable. **Aucune suite pgTAP ne l'aurait vu** —
+      `insert … values (…, 'null'::jsonb)` passe très bien —, ni aucun test d'API écrit *après* le
+      code, qui l'aurait été contre le comportement observé.
+- [x] **UN SECOND DÉFAUT RÉEL, TROUVÉ PAR LA SUITE pgTAP DE L'UNITÉ** (décision 134). Les
+      privilèges par défaut de l'image Supabase accordent **tout** — `DELETE` compris — à `anon` et
+      `authenticated` sur toute table neuve. Le « refus double » annoncé au §6.9 n'existait donc
+      pas : seule la politique RLS refusait. C'est la décision 80 sur les *fonctions*, dont la
+      conséquence pour les *tables* n'avait jamais été tirée. `revoke all` posé avant les `grant`,
+      de sorte qu'un rejeu **répare** un privilège relâché à la main.
+- [x] **Test unitaire dédié** : `supabase/tests/0014_valeurs_champs.test.sql`, **98 assertions,
+      aucune anomalie** — forme de la table, unicité ajoutée à `cards`, les trois clés composites
+      **dans les deux sens**, les quinze types validés dans les deux sens, la définition de
+      « renseigné » y compris `false` et `0`, la sixième vérification et ses quatre exclusions, la
+      RLS, les politiques, les privilèges, et la conformité du seed.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/valeurs-champs.spec.ts`, **22
+      scénarios**, avec les jetons réels des trois profils seedés. Les dix-huit lignes du contrat
+      d'API du §6.10 y sont rejouées, chaque refus **relisant la ligne** pour la constater inchangée.
+- [x] **Deux lignes du contrat ont été révisées par la mesure**, plutôt que les tests relâchés :
+      une violation de clé étrangère rend `409` et non `400` ; un `DELETE` refusé à un rôle
+      **authentifié** rend `403` et non `401` — même correction qu'au §2.8 de `CRM-035`.
+- [x] **Preuves de refus n° 4 et n° 11 acquises au niveau des valeurs** : le `viewer`, fermé sur le
+      track par un droit fin, ne voit **aucune** valeur des cards de `grands-comptes` ; l'anonyme
+      obtient `200` et `[]` sur une table qui porte pourtant quatorze lignes. Le refus est mesuré
+      comme **zéro ligne**, jamais comme une erreur.
+- [x] **Seed repris dans le même changement** : quatorze valeurs sur six cards, dont une **vidée
+      explicitement** — une ligne présente n'est pas une valeur renseignée —, une portée par un
+      champ **archivé**, et une **paire** de cards à la même étape dont l'une passe et l'autre non,
+      sans quoi un refus ne prouverait pas que la règle discrimine. `require_fields` cesse d'être
+      vide : « Démarrer la réalisation » exige `lien-proposition`, seule donnée du seed qui exerce
+      le **second membre** de l'union.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération. `npm run test:sql` **1051 assertions**, `npm run test:unit` **164 tests**,
+      `npm run e2e:api` **242 scénarios**.
+- [x] Harnais de preuves rejouable `scripts/verify-valeurs-champs.sh` : **33 contrôles, aucune
+      anomalie**, et **non complaisant, éprouvé par trois dégradations réelles** — trigger de
+      validation désactivé, `move_card` ramenée à sa version de la migration 12, politique
+      d'insertion adossée à la **lecture**. Chacune fait passer une écriture ou une transition qui
+      doit être refusée, et la restauration est **constatée**. Il mesure aussi la **dépendance
+      d'ordre 12 → 13** dans les deux sens : rejouer la 12 seule retire la sixième vérification.
+- [x] **Six garde-fous figés par des unités précédentes ont échoué comme prévu, et ont été révisés**
+      (mécanisme de la décision 51, neuvième occurrence) : les deux assertions d'INC-047 dans
+      `0013_move_card.test.sql` et `move-card.spec.ts` sont **retournées** ; les trois constats de
+      `require_fields` vide **comptent** désormais ; l'assertion d'absence de `card_field_values`
+      dans `0012_cards.test.sql` constate la présence **et** la conséquence qui comptait —
+      `app.can_read_card` a son premier appelant. **Aucun n'a été retiré.**
+- [x] `docs/SPEC-form-composer.md` (§6 réécrit, §7 scindé, §8 mis à jour), `docs/SCHEMA.md` §4,
+      `docs/SPEC-permissions-rls.md` §3.7, §4, §7, `docs/SPEC-workflow-engine.md` §5.3, §5.7, §5.9,
+      §8, §9, `docs/SPEC-seed.md` §2.13, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` §3 (migration 13),
+      `docs/manual.md` chapitres 4.3, 5, 6, 23 et 24, `README.md`, `CHANGELOG.md` mis à jour dans le
+      même changement.
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le rendu du formulaire, sa
+      section repliée et la mention « requis pour passer à » sont `CRM-037` ; et la webapp reste un
+      appelant **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Une
+      valeur de formulaire est par construction invisible à un anonyme, qui ne voit déjà aucune
+      card : il n'existe **aucune** vérification visuelle sensée à produire pour cette unité tant
+      que l'arbitrage n'est pas rendu. **Cette preuve est bloquée par un arbitrage, pas par un
+      défaut de l'unité.**
+- [ ] **`user` et `contact` ne sont pas résolus** : leur valeur est validée comme un `uuid`, et rien
+      de plus. `contacts` n'existe pas (`CRM-060`), et résoudre `user` seul rendrait la famille
+      incohérente tout en posant une règle d'appartenance que nul document n'énonce —
+      **INC-053, arbitrage attendu** (décision 132). L'écart est figé par une assertion : un `uuid`
+      bien formé désignant un profil **inexistant** est accepté aujourd'hui.
+- [x] **`npm run e2e:ui` : 37 scénarios verts**, au prix du contournement récurrent d'INC-036
+      (**sixième** occurrence). Les captures réécrites par ce rejeu ont été **regardées puis
+      restaurées**, comme aux cinq unités précédentes : cette unité ne touche aucun composant de
+      l'interface, et l'écran reste celui d'un appelant anonyme.
+- [x] **Aucune régression sur les dix-sept harnais précédents, APRÈS correction de trois d'entre
+      eux** — `verify-stack` 33, `verify-migrations` 23, `verify-authz` 26, `verify-seed` 49,
+      `verify-types` 30, `verify-webapp` 41, `verify-harness` 25, `verify-tracks` 40,
+      `verify-channels` 23, `verify-catalogue` 32, `verify-workflows` 42, `verify-copie-workflow`
+      27, `verify-coherence-workflow` 26, `verify-champs-formulaire` 30, `verify-droits-fins` 35,
+      `verify-cards` 37, `verify-move-card` 55 —, aucune anomalie.
+- [x] **UN HARNAIS LAISSAIT LE PRODUIT DÉGRADÉ EN SORTANT, ET C'EST LE REJEU QUI L'A TROUVÉ**
+      (décision 135). `scripts/verify-move-card.sh` rejoue la migration 12 en trois endroits ; la 13
+      la redéfinissant, chaque rejeu **retirait la sixième vérification** sans aucun signal, et les
+      harnais exécutés ensuite mesuraient un produit amputé. **Seconde occurrence exacte de la
+      décision 108.** Corrigé : les deux migrations sont rejouées dans l'ordre, et la restauration
+      de sortie rejoue la 13.
+- [x] **Deux autres harnais révisés** (décisions 136 et 137) : les compteurs de
+      `verify-harness.sh`, restés à ceux de `CRM-035` alors que trois unités les avaient dépassés
+      depuis — l'omission est **nommée** dans le fichier plutôt que lissée ; et la dégradation
+      d'`verify-authz.sh` qui retirait `app.can_read_card`, devenue inapplicable puisque la fonction
+      a désormais un appelant réel — un `cascade` la **renforce** au lieu de la retirer.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (type incorrect refusé,
+`hidden` non exigé, règle ajoutée après coup n'invalidant pas l'existant) ». Les trois sont livrées,
+largement au-delà — les quinze types éprouvés dans les deux sens, l'union et ses quatre exclusions,
+dix-huit lignes de contrat d'API mesurées, trois dégradations réelles. **Aucun test E2E d'interface,
+aucune vérification visuelle** : l'unité ne livre aucun écran, et l'absence est nommée plutôt que
+compensée par une preuve de substitution.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Dixième unité consécutive à buter sur INC-021.
+- **`user` et `contact` ne sont pas résolus** — INC-053, arbitrage attendu.
+- **INC-037 est aggravée, non corrigée** : MESURÉ, `copy_workflow_to_track` recopie le
+  `require_fields` de sa source, alors que la copie ne reçoit aucun champ. Une exigence déclarée sur
+  une copie n'exige donc **rien**, la sixième vérification ignorant un identifiant non résolu. Le
+  comportement reste inchangé — il appartient à `CRM-032` — et l'écart est **compté** par un
+  scénario.
+- **Une valeur écrasée ne laisse aucune trace** : `card_events` est due par `CRM-044`.
+- **`phone` n'est pas contraint**, les formats nationaux étant trop divers pour qu'un refus soit
+  défendable ; `file` ne vérifie pas que l'objet existe dans Storage. Les deux écarts sont figés par
+  des assertions plutôt que laissés à la prose.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec le
+  certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
+  et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **sixième** occurrence).
 
 ### CRM-037 — Rendu du formulaire conditionnel `[ ]`
 Champs par étape, section repliée des valeurs d'autres étapes, mention « requis pour passer à ».

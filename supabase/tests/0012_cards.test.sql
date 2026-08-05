@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(88);
+select plan(89);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -520,16 +520,29 @@ select is(
 -- est constatée — c'est ce dont cette suite-ci a besoin pour que les assertions ci-dessous, qui
 -- décrivent ce que la garde ferme, aient un objet.
 select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
-	'`move_card` est LIVRÉE par `CRM-034` (INC-043 était son blocage, et `CRM-040` l''a levé). '
-	'Cinq vérifications sur six : la n° 6 attend `card_field_values` — INC-047');
+	'`move_card` est LIVRÉE par `CRM-034` (INC-043 était son blocage, et `CRM-040` l''a levé), et '
+	'porte SIX vérifications sur six depuis `CRM-036`, qui a apporté `card_field_values` et '
+	'refermé INC-047');
 
 select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : aucun trigger d''événement n''est écrit ici, il '
 	'n''aurait pas de table où écrire');
 select hasnt_table('public', 'card_comments',
 	'`card_comments` reste due par `CRM-043`');
-select hasnt_table('public', 'card_field_values',
-	'`card_field_values` reste due par `CRM-036`');
+-- RÉVISÉE À `CRM-036`, NON RETIRÉE — mécanisme de la décision 51, neuvième occurrence. Elle
+-- constatait une absence ; elle constate désormais la présence, et la conséquence qui comptait :
+-- `app.can_read_card`, livrée sans usage par `CRM-040`, a enfin son premier appelant réel.
+select has_table('public', 'card_field_values',
+	'`card_field_values` est livrée par `CRM-036` : l''assertion d''absence posée ici a été '
+	'RÉVISÉE, non retirée');
+
+select is(
+	(select count(*)::int from pg_policy p
+	  where p.polrelid = 'public.card_field_values'::regclass
+	    and pg_get_expr(p.polqual, p.polrelid) like '%can_read_card%'),
+	1,
+	'`app.can_read_card`, livrée SANS USAGE par `CRM-040` (décision 110), a son PREMIER appelant '
+	'réel : la politique de lecture des valeurs de formulaire');
 
 -- CRM-013 : la protection de colonne. Cette assertion CONSTATE le manque, elle ne le tolère pas.
 savepoint p_crm013;

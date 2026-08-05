@@ -369,7 +369,7 @@ Ce qu'elle **n'est pas**, et que `CRM-036` ne livre donc pas :
 | `field_id` | `uuid` | PK composite ; clé étrangère **composite** avec `workflow_id` |
 | `workflow_id` | `uuid` | non nul ; le workflow **commun** à la card et au champ — charnière des deux clés composites du §6.3 |
 | `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS ; sa véracité est garantie par une troisième clé composite |
-| `value` | `jsonb` | non nul ; `'null'::jsonb` signifie **explicitement vide** (§6.6) |
+| `value` | `jsonb` | **nullable** ; SQL `NULL` et `'null'::jsonb` signifient **explicitement vide** (§6.6) |
 | `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
@@ -469,7 +469,10 @@ rien de plus. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-053**, arbitrag
 
 Une ligne présente ne suffit pas. Une valeur est **renseignée** lorsqu'elle n'est **aucune** de :
 
-- `'null'::jsonb` — la façon dont le produit exprime « vidé explicitement » (`docs/SCHEMA.md` §4) ;
+- SQL `NULL`, ou `'null'::jsonb` — les deux façons dont le produit exprime « vidé explicitement ».
+  **La colonne est nullable, et une mesure l'a imposé** : PostgREST convertit un `null` JSON en SQL
+  `NULL` et ne sait produire `'null'::jsonb` par aucune écriture, si bien qu'une contrainte
+  `NOT NULL` rendait un champ `money` impossible à vider. INC-054, décision 133 ;
 - une chaîne vide, ou faite de seuls espaces ;
 - un tableau vide.
 
@@ -593,8 +596,8 @@ trois profils seedés, appels `POST`, `PATCH` et `GET` sur `/rest/v1/card_field_
 | l | `admin` | `date` recevant une chaîne non convertible | `400`, `invalid_field_value` |
 | m | `admin` | `url` recevant `javascript:…` | `400`, `invalid_field_value` |
 | n | `admin` | `'null'::jsonb` sur n'importe quel type | `201` — vidé explicitement |
-| o | `admin` | valeur croisant card et champ de deux workflows | `400`, `23503` |
-| p | `admin` | `DELETE` d'une valeur | refus |
+| o | `admin` | valeur croisant card et champ de deux workflows | `409`, `23503` — **corrigé après mesure** : la table du §4.4 de `docs/SPEC-workflow-engine.md` range une violation de clé étrangère en conflit, non en requête invalide |
+| p | `admin` | `DELETE` d'une valeur | `403` — **corrigé après mesure** : un rôle **authentifié** privé du privilège n'est pas un appelant sans rôle, même correction qu'au §2.8 de `CRM-035` |
 | q | `admin` | `move_card` vers une étape dont un champ `required` est vide | `400`, `missing_required_fields`, `details` nommant la clé |
 | r | `admin` | même appel, la valeur ayant été renseignée | `200` |
 

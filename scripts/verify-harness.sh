@@ -47,13 +47,20 @@ PORT_RAPPORT=9323
 #
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
 # `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 à `CRM-031` ; 622 / 110 / 37 à `CRM-032` ;
-# 653 / 125 / 37 à `CRM-033` ; 717 / 150 / 37 depuis `CRM-035`.
+# 653 / 125 / 37 à `CRM-033` ; 717 / 150 / 37 à `CRM-035` ; **1051 / 242 / 37 depuis `CRM-036`**.
+#
+# LES COMPTEURS ÉTAIENT RESTÉS À LEUR VALEUR DE `CRM-035`, ET LE FAIT EST NOMMÉ PLUTÔT QUE CORRIGÉ
+# EN SILENCE. Trois unités livrées entre-temps — `CRM-012`, `CRM-040` et `CRM-034` — ont ajouté des
+# assertions et des scénarios sans réviser ces deux valeurs : ce harnais rendait donc « vert mais N
+# au lieu de 717 » à chaque exécution depuis. C'est exactement le comportement voulu — le contrôle
+# a bien dénoncé l'écart — mais la révision, elle, avait été omise. `CRM-036` la fait, et pour les
+# quatre unités à la fois : les valeurs ci-dessous sont MESURÉES le 2026-08-05, non déduites.
 #
 # Les compteurs ont **réellement échoué** à chaque livraison qui les dépassait, comme prévu, et
 # sont révisés dans le même changement que les preuves qu'ils comptent. C'est le seul mode de
 # fonctionnement acceptable : les déduire de l'exécution reviendrait à supprimer le contrôle.
-ASSERTIONS_ATTENDUES=717
-SCENARIOS_API=150
+ASSERTIONS_ATTENDUES=1051
+SCENARIOS_API=242
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

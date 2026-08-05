@@ -1346,6 +1346,13 @@ neuf fournissait de nouveau la révision `1194`, et `npm run e2e:ui` échouait s
 scénarios avant que les liens ne soient recréés. Une fois l'arborescence rétablie, les 37 sont
 passés. Comme pour INC-032, le coût est **récurrent**.
 
+**Prédiction vérifiée une SIXIÈME fois, le 2026-08-05, pendant `CRM-036`.** Même révision `1194`
+fournie par l'environnement, même exécutable réclamé sous `chromium_headless_shell-1234`, mêmes 37
+scénarios rouges. Les liens recréés — `chromium_headless_shell-1234 → 1194`, puis
+`chrome-headless-shell-linux64 → chrome-linux` et `chrome-headless-shell → headless_shell` à
+l'intérieur —, les 37 scénarios sont passés. Le coût reste **récurrent**, et l'arbitrage reste
+attendu.
+
 **Prédiction vérifiée une troisième fois, le 2026-08-04, pendant `CRM-035`.** Même révision `1194`,
 même « Executable doesn't exist at
 `/opt/pw-browsers/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell` »,
@@ -2221,6 +2228,51 @@ profil **inexistant** est accepté aujourd'hui.
 
 **Lié à :** INC-033 (aucune intégrité référentielle possible sur un `uuid[]`, même famille de
 limite), `CRM-060`.
+
+---
+
+### INC-054 — `SCHEMA` §4 exigeait `value` non nul, ce qui rendait inatteignable le « vide explicite » que la ligne suivante spécifie
+
+**Nature :** contradiction interne à `docs/SCHEMA.md` §4, révélée par une mesure.
+**Relevé le :** 2026-08-05, pendant `CRM-036`, **par l'échec du seed**.
+
+Le tableau de `card_field_values` posait deux règles dans la même ligne : « `value` `jsonb` **non
+nul** ; `'null'::jsonb` signifie explicitement vide ». La seconde suppose que `'null'::jsonb` soit
+écrivable ; la première interdit tout le reste.
+
+**MESURÉ le 2026-08-05** contre PostgREST `v14.12`, sur une table sonde créée puis détruite :
+
+| Corps envoyé | Colonne `jsonb` obtenue |
+|---|---|
+| `{"v": null}` | **SQL NULL** |
+| `{"v": "null"}` | la chaîne `"null"` |
+| `{"v": [null]}` | le tableau `[null]` |
+
+**Aucune écriture d'API ne produit `'null'::jsonb`.** La conséquence n'est pas théorique : « vider un
+champ » devenait impossible pour tout type dont la validation refuse la chaîne vide. Un `money`
+renseigné par erreur n'avait aucune écriture licite qui le remette à vide — chaîne vide refusée par
+la validation de type, SQL NULL par la contrainte de colonne, aucune suppression exposée.
+
+**Comportement retenu :** `value` est **nullable**, et SQL NULL vaut « explicitement vide » au même
+titre que `'null'::jsonb` (décision 133). `docs/SCHEMA.md` §4 et `docs/SPEC-form-composer.md` §6.2 et
+§6.6 sont corrigés dans le même changement.
+
+**Pourquoi la contradiction est tranchée plutôt que consignée sans suite.** `CLAUDE.md` §5 impose de
+consigner et de laisser le comportement inchangé — mais il n'y avait **aucun comportement** à
+laisser : la table naissait dans ce commit, et les deux branches ne décrivent pas deux produits
+possibles, seulement une règle réalisable et une qui ne l'est pas. Consigner sans trancher aurait
+livré une valeur impossible à retirer.
+
+**Où le défaut a été trouvé, et pourquoi cela compte.** Par le **seed**, qui est le premier client
+réel du produit et emprunte les mêmes routes qu'un utilisateur (`CLAUDE.md` §8). Aucune suite pgTAP
+ne l'aurait vu — `insert … values (…, 'null'::jsonb)` en SQL passe très bien —, et aucun test d'API
+écrit **après** le code non plus, puisqu'il aurait été écrit contre le comportement observé.
+
+**Action attendue du responsable :** confirmer la lecture, ou nommer la raison pour laquelle
+`value` devrait rester `NOT NULL` malgré l'impossibilité d'écrire `'null'::jsonb` depuis l'API.
+
+**Lié à :** INC-025 (autre lacune des tableaux de `docs/SCHEMA.md`), INC-033 (autre limite mesurée
+d'un type plutôt que d'un choix).
 
 ---
 

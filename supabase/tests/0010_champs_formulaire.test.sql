@@ -35,7 +35,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(61);
+select plan(62);
 
 -- =============================================================================================
 -- 1. Forme des deux tables
@@ -481,12 +481,22 @@ select is(
 
 -- INC-033 : `require_fields` pourrait désormais désigner des champs réels. Il ne le fait pas, et le
 -- motif a changé — aucune garde ne le lit, `move_card` étant `CRM-034` (INC-043).
+-- RÉVISÉE À `CRM-036`, NON RETIRÉE — mécanisme de la décision 51. Elle constatait le vide ; elle
+-- COMPTE désormais, et désigne nommément le champ visé : la sixième vérification de `move_card`
+-- lit cette colonne, et l'union du §3.5 a enfin une donnée qui l'exerce.
 select is(
 	(select count(*)::int from public.workflow_transitions
 	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
 	    and cardinality(require_fields) > 0),
-	0,
-	'INC-033 : `require_fields` reste vide, non plus faute de champs mais faute de garde qui le '
-	'lise — `move_card` est CRM-034, non commencée');
+	1,
+	'INC-033 : `require_fields` porte UNE entrée depuis `CRM-036` — le vide n''avait plus lieu '
+	'd''être dès que `move_card` a su la lire');
+
+select is(
+	(select t.require_fields from public.workflow_transitions t
+	  where t.id = '5eed0000-0000-4000-8000-000000000074'),
+	array['5eed0000-0000-4000-8000-000000000086'::uuid],
+	'et c''est `lien-proposition` sur « Démarrer la réalisation » : la SEULE donnée du seed qui '
+	'exerce le second membre de l''union du §3.5, celui porté par l''arête et non par l''étape');
 
 rollback;

@@ -179,20 +179,26 @@ select is(
 
 -- GARDE-FOU RÉVISÉ PAR `CRM-035`, NON RETIRÉ (mécanisme de la décision 51, septième occurrence).
 -- Il constatait que `form_fields` n'existait pas. La table existe désormais, et ce qui doit être
--- constaté a changé : `require_fields` **pourrait** désigner des champs réels, et reste vide. Le
--- motif n'est plus l'absence de table, c'est l'absence de garde qui le lise — `move_card` est
--- `CRM-034`, non commencée (INC-043, décision 97).
+-- constaté a changé deux fois : à `CRM-035`, `require_fields` **pouvait** désigner des champs
+-- réels et restait vide, faute de garde qui le lise ; à `CRM-036`, la sixième vérification de
+-- `move_card` la lit, et le seed en porte une (décision 97, puis décision 123).
 select has_table('public', 'form_fields',
 	'`form_fields` existe depuis `CRM-035` : l''assertion d''absence posée ici a été révisée, non '
 	'retirée');
 
+-- RÉVISÉE À `CRM-036`, NON RETIRÉE — mécanisme de la décision 51. Le motif du vide a disparu :
+-- la sixième vérification de `move_card` LIT désormais cette colonne, et une donnée qu'une garde
+-- exerce n'est plus une décoration. Le seed en porte exactement UNE, sur « Démarrer la
+-- réalisation ». L'assertion COMPTE plutôt que de constater le vide, de sorte qu'une seconde
+-- posée sans preuve la fasse rougir à son tour.
 select is(
 	(select count(*)::int from public.workflow_transitions
 	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
 	    and cardinality(require_fields) > 0),
-	0,
-	'INC-033 : `require_fields` reste vide dans le seed — non plus faute de champs, mais faute de '
-	'garde qui le lise (décision 97)');
+	1,
+	'INC-033 : `require_fields` porte UNE entrée dans le seed depuis `CRM-036` — non plus faute de '
+	'champs, mais parce que la sixième vérification de `move_card` la LIT désormais. Aucune '
+	'intégrité référentielle n''est possible sur un `uuid[]` — INC-033, propriété du type');
 
 -- =============================================================================================
 -- 3. Fixtures

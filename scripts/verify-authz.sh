@@ -454,8 +454,15 @@ verifier_mutation "politique permissive ajoutée sur workspaces" \
 # créer une fonction que la suite doit refuser, on **retire** celle que la suite exige désormais, et
 # l'on vérifie que `0002` tombe. L'intention est inchangée — la suite doit dénoncer l'écart entre le
 # produit et ses preuves —, seul le sens de la dégradation a suivi le produit.
-verifier_mutation "can_read_card retirée après sa livraison (garde INC-013, retournée)" \
-	"drop function app.can_read_card(uuid);"
+#
+# RÉVISÉE UNE TROISIÈME FOIS, À `CRM-036`, et le motif est un FAIT NOUVEAU qu'il vaut mieux nommer
+# que contourner : `app.can_read_card` a désormais un **appelant réel** — la politique de lecture de
+# `public.card_field_values` (décision 130). Un `drop function` simple est donc refusé par le
+# moteur, « other objects depend on it », et la mutation ne s'applique plus. Le `cascade` est ajouté,
+# ce qui **renforce** la dégradation : elle retire la fonction ET la politique qui en dépend, donc
+# elle ouvre davantage que la version précédente, et la suite `0002` doit le dénoncer d'autant plus.
+verifier_mutation "can_read_card retirée après sa livraison, avec la politique qui en dépend" \
+	"drop function app.can_read_card(uuid) cascade;"
 
 # --- Bilan -------------------------------------------------------------------------------------
 

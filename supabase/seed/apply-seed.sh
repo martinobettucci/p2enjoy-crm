@@ -253,17 +253,23 @@ ETAPES=(
 # pourrir, aucune intégrité référentielle n'étant possible sur un `uuid[]` (INC-033).
 #
 # id | étape de départ | étape d'arrivée | libellé | commentaire exigé (oui/non)
+# La sixième colonne porte `require_fields` — docs/SPEC-workflow-engine.md §5.9,
+# docs/SPEC-seed.md §2.13. Elle est restée vide sur les dix transitions tant qu'aucune garde ne la
+# lisait ; `CRM-036` a livré la sixième vérification de `move_card`, et une donnée que rien n'exerce
+# n'est plus une décoration. « Démarrer la réalisation » exige donc `lien-proposition` : c'est la
+# SEULE donnée du seed qui exerce le second membre de l'union de docs/SPEC-form-composer.md §3.5,
+# celui porté par l'arête et non par l'étape.
 TRANSITIONS=(
-	'5eed0000-0000-4000-8000-000000000071|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000062|Relancer|non'
-	'5eed0000-0000-4000-8000-000000000072|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000063|Engager la négociation|non'
-	'5eed0000-0000-4000-8000-000000000073|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000064|Passer en signature|non'
-	'5eed0000-0000-4000-8000-000000000074|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000065|Démarrer la réalisation|non'
-	'5eed0000-0000-4000-8000-000000000075|5eed0000-0000-4000-8000-000000000065|5eed0000-0000-4000-8000-000000000066|Marquer comme livré|non'
-	'5eed0000-0000-4000-8000-000000000076|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000062|Revenir en relance|non'
-	'5eed0000-0000-4000-8000-000000000077|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
-	'5eed0000-0000-4000-8000-000000000078|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
-	'5eed0000-0000-4000-8000-000000000079|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
-	'5eed0000-0000-4000-8000-00000000007a|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui'
+	'5eed0000-0000-4000-8000-000000000071|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000062|Relancer|non|-'
+	'5eed0000-0000-4000-8000-000000000072|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000063|Engager la négociation|non|-'
+	'5eed0000-0000-4000-8000-000000000073|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000064|Passer en signature|non|-'
+	'5eed0000-0000-4000-8000-000000000074|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000065|Démarrer la réalisation|non|5eed0000-0000-4000-8000-000000000086'
+	'5eed0000-0000-4000-8000-000000000075|5eed0000-0000-4000-8000-000000000065|5eed0000-0000-4000-8000-000000000066|Marquer comme livré|non|-'
+	'5eed0000-0000-4000-8000-000000000076|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000062|Revenir en relance|non|-'
+	'5eed0000-0000-4000-8000-000000000077|5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui|-'
+	'5eed0000-0000-4000-8000-000000000078|5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui|-'
+	'5eed0000-0000-4000-8000-000000000079|5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui|-'
+	'5eed0000-0000-4000-8000-00000000007a|5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000067|Marquer perdu|oui|-'
 )
 
 # Champs de formulaire du workflow par défaut — docs/SPEC-form-composer.md §2.9,
@@ -381,6 +387,45 @@ CARDS=(
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000064|Formation Data & IA — promo 2026|5eed0000-0000-4000-8000-000000000011|28000.00|CHF|2|Faire signer la convention|2026-08-10T08:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000c8|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Contrat cadre 2025|5eed0000-0000-4000-8000-000000000011|96000.00|EUR|1|-|-|2026-03-31T16:00:00Z|-'
 	'5eed0000-0000-4000-8000-0000000000c9|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000061|Saisie erronée|5eed0000-0000-4000-8000-000000000011|-|EUR|2|-|-|-|2026-04-02T11:00:00Z'
+)
+
+# --- Valeurs de formulaire — docs/SPEC-form-composer.md §6.11, docs/SPEC-seed.md §2.13 ----------
+# Quatorze valeurs sur six cards. Chaque ligne exerce une règle, aucune n'est décorative :
+#
+#   * `…0c1` porte `budget` à `null` — une LIGNE PRÉSENTE N'EST PAS UNE VALEUR RENSEIGNÉE
+#     (§6.6) : sa transition vers négociation est refusée, et c'est le cas de refus permanent du
+#     produit ;
+#   * `…0c2` est son symétrique exact — même étape, même transition, acceptée. Sans cette paire, un
+#     refus ne prouverait pas que la règle discrimine ;
+#   * `…0c3` porte une valeur sur `budget`, HIDDEN à son étape courante (§4, section repliée), et
+#     une valeur sur `budget-previsionnel`, champ ARCHIVÉ (§5, décision 129) ;
+#   * `…0c4` manque deux exigences de la transition suivante : la liste du refus porte DEUX clés ;
+#   * `…0c6` rend le parcours « Marquer perdu » franchissable — l'étape perdu exige `motif-perte` ;
+#   * `…0c7` satisfait les trois exigences de son étape et reste bloquée par une QUATRIÈME, portée
+#     par `require_fields` de l'arête et non par l'étape.
+#
+# `false` serait tout autant renseigné que `true` (§6.6) : `decideur-identifie` vaut `true` parce
+# que la card est en signature, pas parce que la valeur fausse serait refusée.
+#
+# La valeur est du JSON **littéral**, envoyé tel quel : c'est ce que la colonne `jsonb` attend, et
+# le trigger de validation la juge selon `form_fields.type`.
+#
+# card | champ | valeur JSON
+VALEURS=(
+	'5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000082|"recommandation"'
+	'5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000081|null'
+	'5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000082|"salon"'
+	'5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000081|45000'
+	'5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000082|"site"'
+	'5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000081|90000'
+	'5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000087|72000'
+	'5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000081|120000'
+	'5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000086|"https://p2enjoy.fr/propositions/lyon-intranet"'
+	'5eed0000-0000-4000-8000-0000000000c6|5eed0000-0000-4000-8000-000000000082|"prospection"'
+	'5eed0000-0000-4000-8000-0000000000c6|5eed0000-0000-4000-8000-000000000084|"Budget gelé jusqu\u2019au prochain exercice."'
+	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000081|78000'
+	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000083|"2026-09-30"'
+	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000085|true'
 )
 
 # --- Accès à l'API -----------------------------------------------------------------------------
@@ -677,15 +722,18 @@ for ligne in "${ETAPES[@]}"; do
 done
 
 for ligne in "${TRANSITIONS[@]}"; do
-	IFS='|' read -r id depuis vers libelle commentaire <<< "$ligne"
+	IFS='|' read -r id depuis vers libelle commentaire champs <<< "$ligne"
 
 	[ "$commentaire" = 'oui' ] && commentaire_json='true' || commentaire_json='false'
+	# `require_fields` est envoyé **toujours**, vide ou non : un rejeu convergent doit ramener la
+	# ligne à son état déclaré, y compris pour effacer un identifiant posé à la main.
+	[ "$champs" = '-' ] && champs_json='[]' || champs_json=$(jq -nc --arg v "$champs" '[$v]')
 
 	charge=$(jq -nc --arg id "$id" --arg wf "$WF_ID" --arg ws "$WS_ID" --arg depuis "$depuis" \
 	               --arg vers "$vers" --arg libelle "$libelle" \
-	               --argjson commentaire "$commentaire_json" \
+	               --argjson commentaire "$commentaire_json" --argjson champs "$champs_json" \
 	     '{id: $id, workflow_id: $wf, workspace_id: $ws, from_step_id: $depuis, to_step_id: $vers,
-	       label: $libelle, require_comment: $commentaire, require_fields: []}')
+	       label: $libelle, require_comment: $commentaire, require_fields: $champs}')
 
 	code=$(api POST /rest/v1/workflow_transitions \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
@@ -693,6 +741,7 @@ for ligne in "${TRANSITIONS[@]}"; do
 	attendu "$code" "création de la transition « $libelle »" 200 201
 done
 info "Étapes : ${#ETAPES[@]} — transitions : ${#TRANSITIONS[@]}, dont 4 exigeant un commentaire"
+info "« Démarrer la réalisation » exige en outre le champ lien-proposition — CRM-036, docs/SPEC-seed.md §2.13"
 
 
 # --- 7. Copie vers un track — docs/SPEC-workflow-engine.md §4.10 --------------------------------
@@ -949,6 +998,46 @@ info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille — docs/SPEC
 info "Aucune dans « prospection » : la clé composite de CRM-040 refuse que le seed y repointe le"
 info "workflow tant qu'une card l'occupe — INC-046, mesuré, docs/SPEC-cards.md §9.1."
 
+
+# --- 8 quater. Valeurs de formulaire — docs/SPEC-form-composer.md §6.11 ------------------------
+# Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
+# convergente sur la clé primaire composite `(card_id, field_id)`.
+#
+# Cette section vient **après** les cards et **après** les champs, et l'ordre est structurel : les
+# deux clés étrangères composites de la migration 13 exigent que la card et le champ existent tous
+# deux, et qu'ils désignent le MÊME workflow. Un ordre différent ferait échouer le seed en `23503`,
+# jamais en silence.
+#
+# `workflow_id` vaut `$WF_ID` pour les quatorze valeurs : les six cards concernées suivent toutes le
+# workflow global, et les sept champs y sont déclarés. Si l'une venait à changer de workflow, la
+# clé composite le dirait.
+#
+# LE TRIGGER DE VALIDATION S'APPLIQUE ICI COMME AILLEURS. Le seed n'écrit pas « à côté » du
+# produit : une valeur mal typée ferait échouer cette section, ce qui est exactement le
+# comportement voulu — `CLAUDE.md` §8 proscrit les traces fabriquées.
+
+echo
+say "8 quater. Valeurs de formulaire"
+
+for ligne in "${VALEURS[@]}"; do
+	IFS='|' read -r card champ valeur <<< "$ligne"
+
+	charge=$(jq -nc --arg card "$card" --arg champ "$champ" --arg wf "$WF_ID" --arg ws "$WS_ID" \
+	               --argjson valeur "$valeur" \
+	     '{card_id: $card, field_id: $champ, workflow_id: $wf, workspace_id: $ws, value: $valeur,
+	       updated_by: "5eed0000-0000-4000-8000-000000000011"}')
+
+	code=$(api POST /rest/v1/card_field_values \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "valeur ${card: -2}×${champ: -3}" 200 201
+
+	printf '  card %s  champ %s  %s\n' "${card: -2}" "${champ: -3}" "$valeur"
+done
+
+info "Valeurs : ${#VALEURS[@]} sur 6 cards, couvrant 7 types — docs/SPEC-form-composer.md §6.11"
+info "« budget » de la card c1 vaut null : une ligne présente n'est PAS une valeur renseignée (§6.6)"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -974,6 +1063,7 @@ info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workf
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
 info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille, sur quatre channels — docs/SPEC-cards.md §9"
+info "Valeurs de formulaire : ${#VALEURS[@]} sur 6 cards, dont une vidée explicitement — docs/SPEC-form-composer.md §6.11"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
 warn "ces tables restent en refus par défaut : aucune unité ne porte leurs politiques (INC-014)."

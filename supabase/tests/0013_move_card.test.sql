@@ -5,7 +5,8 @@
 -- @verifies docs/SPEC-cards.md §2.6 (portée de `position`), §2.9 (`entered_step_at`), §5 (« active »)
 -- @verifies docs/SPEC-permissions-rls.md §3.3 (droits effectifs), §7 (preuves de refus n° 1, n° 5)
 -- @verifies docs/SCHEMA.md §5 (cards), §9 (fonctions)
--- @verifies docs/INCONSISTENCY_REPORT.md INC-047, INC-048, INC-049, INC-050, INC-051
+-- @verifies docs/INCONSISTENCY_REPORT.md INC-047 (**close par `CRM-036`**), INC-048, INC-049,
+--           INC-050, INC-051, INC-052
 --
 -- Suite pgTAP de l'unité `CRM-034`. Elle prouve sept choses :
 --
@@ -284,11 +285,18 @@ select lives_ok($$
 rollback to savepoint v2b;
 
 -- L'administratrice n'est jamais restreinte, alors qu'elle porte un `none` seedé sur le track 21.
+--
+-- RÉVISÉE À `CRM-036` : la card employée est passée de `…0c1` à `…0c2`, et le motif est nommé.
+-- Les deux vivent dans `grands-comptes`, à la même étape, et le `none` du seed porte sur le TRACK :
+-- la démonstration est identique. Mais `…0c1` porte `budget` VIDE par contrat de seed, et la
+-- sixième vérification la refuse désormais — ce refus-là n'a rien à voir avec le droit fin, et
+-- l'assertion aurait mesuré la mauvaise règle. `…0c2` renseigne `budget` : seul le droit fin reste
+-- en cause (décision 121, portée générale — faire varier la condition SEULE).
 savepoint v2c;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'L''administratrice passe sur `grands-comptes` MALGRÉ le `none` seedé sur son track : « un '
 	'administrateur n''est jamais restreint » (docs/SPEC-permissions-rls.md §2.2), et la garde ne '
@@ -580,32 +588,35 @@ rollback to savepoint contournement;
 -- Aucune de ces assertions n'est un constat résigné : chacune devient rouge le jour où l'unité qui
 -- la porte livre son objet, et force la révision des preuves plutôt que leur silence (décision 51).
 
--- --- INC-047 : la vérification n° 6 n'est PAS écrite ------------------------------------------
--- docs/SPEC-workflow-engine.md §5.7. Le seed déclare `required` sur l'étape 63 — MESURÉ. Un
--- déplacement vers elle réussit aujourd'hui, sans qu'aucune valeur de champ existe nulle part.
+-- --- INC-047 : LA VÉRIFICATION N° 6 EST ÉCRITE — l'assertion figée a désigné son moment --------
+-- docs/SPEC-workflow-engine.md §5.7. Les deux assertions posées ici par `CRM-034` pour DEVENIR
+-- ROUGES le jour de `CRM-036` le sont devenues, et sont RETOURNÉES, non retirées — mécanisme de la
+-- décision 51, neuvième occurrence. Le détail des preuves de la n° 6 vit dans
+-- `supabase/tests/0014_valeurs_champs.test.sql` ; ce qui reste ici est ce que `CRM-034` avait
+-- promis de constater.
 
-select hasnt_table('public', 'card_field_values',
-	'INC-047 : `card_field_values` reste due par `CRM-036`. L''ensemble des champs EXIGÉS est '
-	'calculable ; l''ensemble des champs RENSEIGNÉS n''a aucune source');
+select has_table('public', 'card_field_values',
+	'INC-047 CLOSE : `card_field_values` est livrée par `CRM-036`. L''ensemble des champs EXIGÉS '
+	'était calculable dès `CRM-034` ; l''ensemble des champs RENSEIGNÉS a enfin une source');
 
 select is(
 	(select count(*)::int from public.form_field_rules r
 	  where r.step_id = '5eed0000-0000-4000-8000-000000000063'
 	    and r.visibility = 'required'),
 	1,
-	'ÉTAT CONSTATÉ : l''étape 63 porte bien une règle `required` — MESURÉ, une et non deux. Sans '
-	'ce constat, l''assertion suivante serait verte parce qu''il n''y a RIEN à vérifier, et non '
-	'parce que la n° 6 manque');
+	'ÉTAT CONSTATÉ, inchangé : l''étape 63 porte bien une règle `required` — une et non deux. Sans '
+	'ce constat, l''assertion suivante serait verte parce qu''il n''y a RIEN à vérifier');
 
 savepoint inc047;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
-select lives_ok($$
+select throws_ok($$
 	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
-	'INC-047, ÉCART FIGÉ : le déplacement vers une étape portant DEUX règles `required` RÉUSSIT '
-	'aujourd''hui. `CRM-034` livre CINQ vérifications sur six. CETTE ASSERTION DOIT DEVENIR ROUGE '
-	'À `CRM-036` : c''est elle qui désignera le moment d''écrire la n° 6 et son message');
+	'P0001', 'missing_required_fields',
+	'INC-047, ÉCART REFERMÉ : le déplacement de `…0c1` vers une étape `required` est désormais '
+	'REFUSÉ. Cette assertion constatait le contraire jusqu''à `CRM-036` — elle a été RETOURNÉE, non '
+	'retirée, et c''est elle qui a désigné le moment d''écrire la n° 6 et son message');
 
 rollback to savepoint inc047;
 

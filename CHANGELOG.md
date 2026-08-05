@@ -15,6 +15,79 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-036` — les valeurs de formulaire, et la sixième vérification de `move_card`.**
+  `supabase/migrations/0013_valeurs_champs.sql`, `docs/SPEC-form-composer.md` §6.
+  - **La table `public.card_field_values`**, réponse d'une card aux questions de son workflow, avec
+    sa clé primaire composite `(card_id, field_id)` : une card porte au plus une valeur par champ.
+  - **Trois clés étrangères composites** articulées autour de `workflow_id` : une valeur ne peut
+    **pas** répondre, pour une card donnée, à la question d'un autre workflow. MESURÉ dans les deux
+    sens. La première exigeait une unicité que `cards` ne portait pas — `UNIQUE (id, workflow_id)`
+    lui est ajoutée, sans changer aucun comportement puisque `id` est déjà clé primaire.
+  - **La validation par type est un trigger, et un `CHECK` ne pouvait pas la porter** : MESURÉ,
+    « cannot use subquery in check constraint ». Les quinze types sont validés — `money` refuse une
+    chaîne, `checkbox` refuse « true », `date` refuse ce qui ne se convertit pas, `url` refuse
+    `javascript:`, et **un `select` refuse une clé absente de ses `choices`**, ce qui clôt le point
+    ouvert n° 4 du §8 du côté qui compte, celui des réponses.
+  - **LA SIXIÈME VÉRIFICATION DE `move_card` EST ÉCRITE — INC-047 est close.** `CRM-034` en livrait
+    cinq sur six. La sixième contrôle l'**union** des champs `required` de l'étape cible et des
+    `require_fields` de la transition empruntée, **moins** les champs archivés et les identifiants
+    que la jointure ne résout pas. Refus `missing_required_fields`, `400`, dont le `DETAIL` porte
+    **la liste des clés manquantes** ordonnée par position — le message que la Definition of Done de
+    `CRM-034` nommait sans pouvoir le livrer.
+  - **`app.valeur_de_champ_est_vide`**, seule définition de « non renseigné » du produit :
+    `NULL`, `'null'::jsonb`, chaîne vide ou d'espaces, tableau vide. `false`, `0` et `"0"` sont des
+    **réponses** — confondre les deux rendrait une case à cocher impossible à satisfaire par la
+    négative.
+  - **`app.can_write_card`**, symétrique d'`app.can_read_card` : une table fille ne dispose que d'un
+    `card_id`, et aucune politique d'écriture ne peut atteindre le channel sans cette jointure.
+    `app.can_read_card`, livrée sans usage par `CRM-040`, a ici son **premier appelant réel**.
+  - Trois politiques RLS, **aucune suppression exposée** — vider un champ, c'est écrire une valeur
+    vide —, et un refus **double** : ni privilège `DELETE`, ni politique.
+  - **Seed repris dans le même changement** : quatorze valeurs sur six cards, dont une **vidée
+    explicitement** pour que « une ligne présente n'est pas une valeur renseignée » soit démontré en
+    permanence, une portée par un champ **archivé**, et une paire de cards à la même étape dont
+    l'une passe et l'autre non. `require_fields` cesse d'être vide : « Démarrer la réalisation »
+    exige `lien-proposition`, seule donnée qui exerce le second membre de l'union.
+  - `supabase/tests/0014_valeurs_champs.test.sql` : **98 assertions**.
+    `e2e/api/valeurs-champs.spec.ts` : **22 scénarios**, jetons réels des trois profils.
+    `scripts/verify-valeurs-champs.sh` : **33 contrôles**, éprouvé par trois dégradations réelles.
+
+### Corrigé
+
+- **`value` est nullable, et une mesure l'a imposé — INC-054.** `docs/SCHEMA.md` §4 exigeait
+  `NOT NULL` avec `'null'::jsonb` pour « explicitement vide ». MESURÉ : PostgREST convertit un
+  `null` JSON en **SQL NULL** et ne sait produire `'null'::jsonb` par aucune écriture. La contrainte
+  rendait donc « vider un champ `money` » **impossible depuis le produit** — chaîne vide refusée par
+  la validation de type, SQL NULL par la colonne, aucune suppression exposée. Défaut trouvé par
+  l'échec du **seed**, premier client réel du produit.
+- **Un `revoke all` manquait sur `card_field_values`, et le « refus double » n'existait pas.**
+  MESURÉ : les privilèges par défaut de l'image Supabase accordent `DELETE`, `INSERT` et `UPDATE` à
+  `anon` **et** `authenticated` sur toute table neuve — c'est la décision 80 sur les *fonctions*,
+  dont la conséquence pour les *tables* n'avait jamais été tirée. Défaut trouvé par la suite pgTAP
+  de l'unité elle-même, corrigé dans le même changement.
+- **Deux lignes du contrat d'API corrigées après mesure**, plutôt que les tests relâchés : une
+  violation de clé étrangère rend `409` et non `400` ; un `DELETE` refusé à un rôle **authentifié**
+  rend `403` et non `401`.
+
+### Modifié
+
+- **Six garde-fous figés par des unités précédentes sont devenus rouges comme prévu, et ont été
+  révisés — aucun n'a été retiré** (mécanisme de la décision 51, neuvième occurrence) : les deux
+  assertions d'INC-047 dans `0013_move_card.test.sql` et `move-card.spec.ts` sont **retournées** ;
+  les trois constats de `require_fields` vide **comptent** désormais ; et l'assertion d'absence de
+  `card_field_values` dans `0012_cards.test.sql` constate la présence, plus la conséquence qui
+  comptait — `app.can_read_card` a son premier appelant.
+- **INC-037 est aggravée, non corrigée** : MESURÉ, `copy_workflow_to_track` recopie le
+  `require_fields` de sa source, alors que la copie ne reçoit aucun champ. Une exigence déclarée sur
+  une copie n'exige donc **rien**. Le comportement reste inchangé — il appartient à `CRM-032` — et
+  l'écart est **compté** par un scénario.
+- `docs/SPEC-permissions-rls.md` §3.7 et §4, `docs/SCHEMA.md` §4, `docs/SPEC-workflow-engine.md`
+  §5.3, §5.7, §5.9, §8 et §9, `docs/SPEC-seed.md` §2.13, `docs/PROD_MIGRATIONS.md` §3,
+  `docs/DAT.md`, `docs/manual.md` chapitres 4.3, 5, 6, 23 et 24, `webapp/src/lib/database.types.ts`
+  et son test de types mis à jour dans le même changement.
+
+### Ajouté (unités précédentes)
+
 - **`CRM-034` — `move_card` : le graphe du workflow devient opposable.**
   `supabase/migrations/0012_move_card.sql`, `docs/SPEC-workflow-engine.md` §5.
   - **La fonction `public.move_card(card_id, to_step_id, comment)`**, seul chemin par lequel une

@@ -6,7 +6,8 @@
 // @verifies docs/SPEC-cards.md §2.6 (portée de `position`), §2.9 (`entered_step_at`), §5 (« active »)
 // @verifies docs/SPEC-seed.md §2.11 (droits fins), docs/SPEC-test-harness.md §4.3 (projet `api`)
 // @verifies docs/INCONSISTENCY_REPORT.md INC-021 (aucun écran), INC-026 (le `hint` de PostgREST),
-//           INC-047 (vérification n° 6), INC-048 (commentaire non conservé), INC-050, INC-051
+//           INC-047 (vérification n° 6, **close par `CRM-036`**), INC-048 (commentaire non
+//           conservé), INC-050, INC-051
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 //
 // Ces scénarios exercent la garde **sans passer par l'interface**, avec les jetons réels des trois
@@ -68,7 +69,7 @@ type Card = {
 	amount: string | null
 	owner_id: string | null
 }
-type Erreur = { code: string; message: string; hint: string | null }
+type Erreur = { code: string; message: string; hint: string | null; details: string | null }
 
 let jetonAdmin: string
 let jetonBizdev: string
@@ -437,14 +438,20 @@ test.describe('M4 — lignes h et i : forbidden ou card_not_found, selon ce que 
 	test('INC-051 : le bizdev, lui, LIT cette card — la ligne i ne peut pas le nommer', async ({
 		request,
 	}) => {
-		const avant = await lire(request, CARD_C1)
+		// RÉVISÉ À `CRM-036` : la card employée est passée de `CARD_C1` à `CARD_C2`, et le motif est
+		// nommé plutôt que tu. Les deux vivent dans `grands-comptes`, à la même étape, et le fait
+		// mesuré est identique — aucun droit fin ne ferme ce channel au `bizdev`. Mais `CARD_C1`
+		// porte `budget` VIDE par contrat de seed, et la sixième vérification la refuse désormais :
+		// ce refus n'a rien à voir avec les droits fins, et le scénario aurait mesuré la mauvaise
+		// règle. `CARD_C2` renseigne `budget` — seule la condition à prouver varie (décision 121).
+		const avant = await lire(request, CARD_C2)
 
 		try {
 			// Ce scénario ne contourne pas la ligne i : il MESURE le fait qui la rend inapplicable au
 			// `bizdev`, pour que la correction du §5.8 repose sur une preuve rejouable et non sur une
 			// affirmation. Il deviendra rouge si un droit fin venait à fermer ce channel au `bizdev`.
 			const reponse = await deplacer(request, jetonBizdev, {
-				card_id: CARD_C1,
+				card_id: CARD_C2,
 				to_step_id: ETAPE_NEGOCIATION,
 			})
 			expect(
@@ -452,7 +459,7 @@ test.describe('M4 — lignes h et i : forbidden ou card_not_found, selon ce que 
 				'le `bizdev` écrit sur `grands-comptes` : aucun droit fin ne le lui ferme',
 			).toBe(200)
 		} finally {
-			await remettre(request, CARD_C1, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C2, avant.current_step_id, avant.position)
 		}
 	})
 
@@ -696,17 +703,20 @@ test.describe('M6 — ligne m : la garde n’est pas contournable', () => {
 // M7 — ce qui reste dû, constaté par l'API
 // =================================================================================================
 
-test.describe('M7 — INC-047 : la vérification n° 6 n’est pas livrable', () => {
-	test('card_field_values n’existe pas, et un déplacement vers une étape `required` PASSE', async ({
+test.describe('M7 — INC-047 CLOSE : la vérification n° 6 est livrée par `CRM-036`', () => {
+	// RETOURNÉ, NON RETIRÉ — mécanisme de la décision 51, neuvième occurrence. Ce scénario
+	// constatait, jusqu'à `CRM-036`, qu'un déplacement vers une étape `required` RÉUSSISSAIT, et il
+	// annonçait devoir devenir rouge le jour où `card_field_values` serait livrée. Il l'est devenu.
+	//
+	// Le détail des preuves de la n° 6 vit dans `e2e/api/valeurs-champs.spec.ts` ; ce qui reste ici
+	// est ce que `CRM-034` avait promis de constater — et son inverse, désormais vrai.
+	test('card_field_values existe, et un déplacement vers une étape `required` est REFUSÉ', async ({
 		request,
 	}) => {
-		// L'ensemble des champs EXIGÉS est calculable ; l'ensemble des champs RENSEIGNÉS n'a aucune
-		// source. Les deux écritures possibles sont écartées au §5.7 : refuser interdirait le
-		// parcours que la garde est censée garder, et prétendre vérifier serait un faux vert.
-		const table = await request.get('/rest/v1/card_field_values?select=id&limit=1', {
+		const table = await request.get('/rest/v1/card_field_values?select=card_id&limit=1', {
 			headers: enTetesService(),
 		})
-		expect(table.status(), 'INC-047 : `card_field_values` est due par `CRM-036`').toBe(404)
+		expect(table.status(), 'INC-047 : `card_field_values` est livrée par `CRM-036`').toBe(200)
 
 		const regles = await request.get(
 			// `field_id` et non `id` : la table a une clé PRIMAIRE COMPOSITE `(field_id, step_id)` et
@@ -718,7 +728,7 @@ test.describe('M7 — INC-047 : la vérification n° 6 n’est pas livrable', ()
 		expect(
 			((await regles.json()) as unknown[]).length,
 			'l’étape 63 porte bien une règle `required` : sans elle, le scénario serait vert parce ' +
-				'qu’il n’y a RIEN à vérifier, et non parce que la n° 6 manque',
+				'qu’il n’y a RIEN à vérifier, et non parce que la n° 6 refuse',
 		).toBeGreaterThan(0)
 
 		const avant = await lire(request, CARD_C1)
@@ -727,12 +737,18 @@ test.describe('M7 — INC-047 : la vérification n° 6 n’est pas livrable', ()
 				card_id: CARD_C1,
 				to_step_id: ETAPE_NEGOCIATION,
 			})
-			// ÉCART FIGÉ : CE SCÉNARIO DOIT DEVENIR ROUGE À `CRM-036`.
 			expect(
 				reponse.status(),
-				'INC-047 : le déplacement vers une étape `required` RÉUSSIT aujourd’hui. `CRM-034` ' +
-					'livre CINQ vérifications sur six, et l’écart est figé plutôt que masqué',
-			).toBe(200)
+				'INC-047 REFERMÉE : le déplacement vers une étape `required` est désormais REFUSÉ. ' +
+					'`CRM-034` livrait CINQ vérifications sur six ; `CRM-036` a livré la sixième',
+			).toBe(400)
+			const erreur = (await reponse.json()) as Erreur
+			expect(erreur.message).toBe('missing_required_fields')
+			expect(
+				erreur.details,
+				'et le message « liste des clés manquantes », que la Definition of Done de `CRM-034` ' +
+					'nommait sans pouvoir le livrer, existe : il voyage dans le `DETAIL` (décision 126)',
+			).toBe('budget')
 		} finally {
 			await remettre(request, CARD_C1, avant.current_step_id, avant.position)
 		}

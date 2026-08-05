@@ -39,6 +39,7 @@ type Expect<T extends true> = T
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'card_field_values'
     | 'cards'
     | 'channel_members'
     | 'channels'
@@ -318,6 +319,38 @@ type _reglesColonnes = Expect<
   >
 >
 
+// --- 5 quinquies. `card_field_values`, livrée par `CRM-036` --------------------------------------
+// docs/SCHEMA.md §4, docs/SPEC-form-composer.md §6.2.
+
+type _valeursColonnes = Expect<
+  Equal<
+    keyof Tables<'card_field_values'>,
+    | 'card_id'
+    | 'created_at'
+    | 'field_id'
+    | 'updated_at'
+    | 'updated_by'
+    | 'value'
+    | 'workflow_id'
+    | 'workspace_id'
+  >
+>
+
+// `value` est NULLABLE côté type, et ce n'est pas un relâchement : PostgREST convertit un `null`
+// JSON en SQL NULL et ne sait produire `'null'::jsonb` par aucune écriture, si bien qu'une colonne
+// `NOT NULL` rendait un champ `money` impossible à vider (INC-054, décision 133). Le type porte
+// donc exactement ce que la base tient, et un client qui écrit `null` vide bien le champ.
+type _valeurNullable = Expect<Equal<Tables<'card_field_values'>['value'], Json | null>>
+
+// Les deux clés étrangères COMPOSITES sont visibles dans les types : c'est ce qui rend structurelle
+// la garantie « une valeur ne répond pas à la question d'un autre workflow » (§6.3, décision 124).
+type _relationsValeurs = Expect<
+  Equal<
+    Database['public']['Tables']['card_field_values']['Relationships'][0]['columns'],
+    ['card_id', 'workflow_id']
+  >
+>
+
 // `type` et `visibility` sont des `text` avec contrainte `CHECK`, non des types énumérés : le
 // générateur ne peut pas en faire des unions. La limite est **figée**, comme pour `role`, `color`,
 // `kind` et `scope`. Un client qui rend un formulaire ne tient pas la vérité de ces champs depuis
@@ -585,6 +618,9 @@ export type AssertionsDuContratDeTypes = [
   _reglesColonnes,
   _typeChampEstUneChaine,
   _visibiliteEstUneChaine,
+  _valeursColonnes,
+  _valeurNullable,
+  _relationsValeurs,
   _optionsEstDuJson,
   _relationsRegles,
   _champsInsertRequis,

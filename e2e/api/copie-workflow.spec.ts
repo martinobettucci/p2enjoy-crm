@@ -171,10 +171,31 @@ test.describe('C1 — la copie, et ce qu’elle contient (§4.9, lignes a, b, l)
 			)
 			expect(horsCopie, 'aucune arête ne pointe vers une étape restée dans la source').toHaveLength(0)
 
+			// RÉVISÉ À `CRM-036`, NON RETIRÉ — et la révision AGGRAVE le constat d'INC-037 au lieu de
+			// l'adoucir. L'assertion tenait tant que `require_fields` était vide partout. Le seed en
+			// porte désormais une, et MESURÉ : `copy_workflow_to_track` la RECOPIE telle quelle. La
+			// copie exige donc un champ qui n'existe pas dans SON workflow — puisqu'elle n'en reçoit
+			// aucun (INC-037) — et la sixième vérification de `move_card` l'IGNORE, par la décision
+			// 128. Conséquence exacte : une exigence déclarée sur la copie n'exige RIEN.
+			//
+			// Le comportement de `copy_workflow_to_track` reste INCHANGÉ : il appartient à `CRM-032`,
+			// et INC-037 réserve l'arbitrage au responsable. L'écart est COMPTÉ, comme il l'est déjà
+			// pour les champs.
+			const exigeantes = listeAretes.filter((t) => t.require_fields.length > 0)
 			expect(
-				listeAretes.every((t) => t.require_fields.length === 0),
-				'INC-037 : `require_fields` reste vide, `form_fields` n’existant pas',
-			).toBe(true)
+				exigeantes,
+				'INC-037, aggravé : la copie reçoit le `require_fields` de sa source',
+			).toHaveLength(1)
+
+			const champsDeLaCopie = await request.get(
+				`/rest/v1/form_fields?workflow_id=eq.${copieId}&select=id`,
+				{ headers: enTetesService() },
+			)
+			expect(
+				((await champsDeLaCopie.json()) as unknown[]).length,
+				'…alors qu’elle ne porte AUCUN champ : l’identifiant recopié est mort dans la copie, et ' +
+					'`move_card` l’ignore (décision 128). Une exigence déclarée qui n’exige rien',
+			).toBe(0)
 		} finally {
 			await retirerCopie(request, copieId)
 		}

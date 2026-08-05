@@ -332,10 +332,15 @@ champs_vides=$(psql_db -c "select count(*) from public.workflow_transitions
 [ "$avec_commentaire" = "4" ] \
 	&& ok "quatre transitions exigent un commentaire — celles qui mènent à « Perdu »" \
 	|| fail "transitions exigeant un commentaire : $avec_commentaire, attendu 4"
-[ "$champs_vides" = "10" ] \
-	&& ok "INC-033 : \`require_fields\` reste vide partout — depuis \`CRM-035\` le motif n'est plus "\
-"l'absence de \`form_fields\`, mais l'absence de garde qui le lise (décision 97)" \
-	|| fail "transitions à \`require_fields\` vide : $champs_vides, attendu 10"
+# RÉVISÉ À `CRM-036`, NON RETIRÉ — mécanisme de la décision 51. Le contrôle constatait le vide,
+# motivé d'abord par l'absence de `form_fields`, puis par l'absence de garde qui le lise. Les deux
+# motifs ont disparu : `move_card` porte sa sixième vérification, et le seed pose une exigence sur
+# « Démarrer la réalisation ». Le contrôle **compte** désormais, de sorte qu'une seconde exigence
+# posée sans preuve le fasse échouer à son tour.
+[ "$champs_vides" = "9" ] \
+	&& ok "INC-033 : NEUF transitions sur dix ont un \`require_fields\` vide — la dixième porte "\
+"l'exigence que la sixième vérification de \`move_card\` lit désormais (\`CRM-036\`)" \
+	|| fail "transitions à \`require_fields\` vide : $champs_vides, attendu 9"
 # Révisé par `CRM-033` : `prospection` suit désormais la copie de portée `track` de son propre
 # track (docs/SPEC-workflow-engine.md §4.12.7), et le compte tombe donc à cinq. Le contrôle est
 # **resserré** plutôt que supprimé — il compte ce qui suit le workflow **par défaut**, et un second

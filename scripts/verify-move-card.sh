@@ -51,6 +51,18 @@ cd "$(dirname "$0")/.."
 
 TEST_FILE=supabase/tests/0013_move_card.test.sql
 MIGRATION_FILE=supabase/migrations/0012_move_card.sql
+# LA MIGRATION 13 SUIT TOUJOURS LA 12, ET CE N'EST PAS UNE PRÉCAUTION DE STYLE. Depuis `CRM-036`,
+# la migration 13 REDÉFINIT `public.move_card` pour y ajouter sa sixième vérification. Rejouer la 12
+# seule ramène donc la fonction à sa version à CINQ vérifications et **laisse le produit dégradé**,
+# sans aucun signal — c'est exactement la faute que la décision 108 avait relevée sur
+# `verify-tracks.sh`, qui réappliquait `0003` seule et ramenait la politique à sa version sans
+# droits fins. `rejouer_migration` rejoue donc les deux, dans l'ordre.
+MIGRATION_SUIVANTE=supabase/migrations/0013_valeurs_champs.sql
+
+rejouer_migration() {
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || return 1
+}
 DB_CONTAINER=p2enjoy-db
 
 WF_GLOBAL=5eed0000-0000-4000-8000-000000000051
@@ -212,6 +224,11 @@ restaurer_privileges() {
 	            revoke all on function public.move_card(uuid, uuid, text) from public, anon;
 	            grant execute on function public.move_card(uuid, uuid, text) to authenticated, service_role;" \
 		>/dev/null 2>&1 || true
+	# La dégradation « vérification n° 4 retirée » réécrit la FONCTION : les privilèges seuls ne la
+	# restaurent pas. La migration 13 est rejouée, et c'est elle — non la 12 — qui porte la
+	# définition à SIX vérifications depuis `CRM-036`. La rejouer ici garantit qu'une interruption
+	# ne laisse jamais le produit avec une garde amputée.
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || true
 }
 trap 'restaurer_privileges; rm -f "$CORPS"' EXIT
 
@@ -448,7 +465,7 @@ psql_db -c "update public.cards set description = 'Premier appel de qualificatio
 titre '5. La migration est rejouable et CONVERGENTE'
 # =============================================================================================
 
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
+if rejouer_migration; then
 	ok 'la migration se rejoue sans erreur sur une base déjà migrée'
 else
 	fail 'la migration échoue au rejeu'
@@ -466,7 +483,7 @@ psql_db -c "grant update on public.cards to authenticated;" >/dev/null
 	&& ok 'dégradation posée : le privilège de table est rendu, la garde redevient contournable' \
 	|| fail 'la dégradation n’a pas pris effet — le contrôle qui suit ne prouverait rien'
 
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_migration || true
 if [ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update');")" = "f" ]; then
 	ok 'CONVERGENCE : le rejeu REFERME la porte rouverte à la main (décision 57)'
 else
@@ -536,7 +553,7 @@ echecs=$(rejouer_tap)
 	&& ok "dégradation c (vérification n° 4 retirée) — la suite pgTAP échoue : $echecs assertion(s)" \
 	|| fail 'dégradation c — la suite reste VERTE alors que le graphe n’est plus opposable'
 
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_migration || true
 [ "$(rejouer_tap)" = "0" ] \
 	&& ok 'dégradation c — restauration CONSTATÉE par le rejeu de la migration' \
 	|| fail 'dégradation c — la restauration n’a pas rétabli l’état initial'

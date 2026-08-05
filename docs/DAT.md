@@ -364,8 +364,8 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, cinq vérifications sur six — INC-047) |
-| Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (`CRM-036`) |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) |
+| Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (livrée, `CRM-036`), sa validation par type par trigger, et les fonctions `app.valeur_de_champ_est_vide` et `app.can_write_card` |
 | Cards | `cards` (livrée, `CRM-040`) ; `card_comments` (`CRM-043`), `card_events` (`CRM-044`), `card_activities`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` — ces cinq dernières ne sont rattachées à aucune unité |
 | Relations | `organizations`, `contacts`, `card_contacts` |
 | Messagerie | `mail_inbound_accounts`, `mail_outbound_identities`, `mail_messages`, `mail_message_occurrences`, `mail_attachments`, `mail_outbox`, `mail_folder_map`, `mail_templates`, `mail_sequences`, `card_sequence_enrollments` |
@@ -428,6 +428,9 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
   croiser deux workflows : trois clés étrangères composites l'en empêchent structurellement, et non
   un trigger (décision 95). `visibility = 'required'` reste cependant une **déclaration sans
   garde** : ce qui l'applique est `move_card`, non commencée faute de cible (INC-043).
+  **RÉSOLU PAR `CRM-036`** : `move_card` est livrée et porte sa sixième vérification ; un champ
+  déclaré `required` est désormais réellement exigé à l'entrée dans son étape, et le refus nomme les
+  clés manquantes dans le `DETAIL` de l'erreur (`docs/SPEC-form-composer.md` §6.7).
 
   **Depuis `CRM-033`, un channel ne peut plus naître sans workflow**, et le workflow qu'il désigne
   doit être `global` ou rattaché à **son** track. La règle est portée par deux triggers — un sur

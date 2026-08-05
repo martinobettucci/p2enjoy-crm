@@ -4617,3 +4617,118 @@ décider à la place du responsable, dans une unité qui ne le lui a jamais dema
 
 **Décision.** Les deux types valident la **forme** d'un `uuid`, et rien de plus. Consigné en
 **INC-053**, arbitrage attendu, sans que le comportement soit décidé implicitement.
+
+## 2026-08-05 — `CRM-036`, suite : un défaut de conception trouvé par le seed lui-même
+
+### Décision 133 — `value` est nullable, parce que `'null'::jsonb` est inatteignable depuis l'API
+
+**Problème.** `docs/SCHEMA.md` §4 annonçait `value` **non nul**, avec `'null'::jsonb` pour signifier
+« explicitement vide ». La spécification écrite le matin même reprenait cette lecture au §6.6. Le
+seed a été écrit d'après elle, et il a **échoué** :
+
+```
+ERREUR valeur c1×081 : code HTTP 400, attendu 200 201.
+  {"code":"23502", "message":"null value in column \"value\" of relation
+   \"card_field_values\" violates not-null constraint"}
+```
+
+**Observation, mesurée sur une table sonde créée puis détruite.** PostgREST `v14.12` convertit un
+`null` JSON du corps de la requête en **SQL NULL**, et il n'existe aucune écriture qui produise
+`'null'::jsonb` :
+
+| Corps envoyé | Colonne `jsonb` obtenue |
+|---|---|
+| `{"v": null}` | **SQL NULL** |
+| `{"v": "null"}` | la chaîne `"null"` |
+| `{"v": [null]}` | le tableau `[null]` |
+
+**La conséquence n'est pas cosmétique.** La valeur `'null'::jsonb` étant inatteignable depuis l'API,
+« vider un champ » devenait impossible pour tout type dont la validation refuse la chaîne vide. Un
+champ `money` renseigné par erreur n'avait **aucune écriture licite** qui le remette à vide : la
+chaîne vide est refusée par la validation de type, le SQL NULL par la contrainte de colonne, et
+aucune suppression n'est exposée. Le produit aurait livré une valeur impossible à retirer.
+
+**Décision.** `value` est **nullable**, et SQL NULL vaut « explicitement vide » au même titre que
+`'null'::jsonb`. `app.valeur_de_champ_est_vide` traitait déjà les deux formes de façon identique —
+la fonction a été écrite avant que le défaut n'apparaisse, et c'est la seule raison pour laquelle la
+correction tient en une ligne de DDL. Le trigger de validation sort de la même façon dans les deux
+cas, avant tout contrôle de type.
+
+**Pourquoi ce n'est pas une décision prise à la place du responsable.** La contrainte « non nul » du
+tableau de `docs/SCHEMA.md` §4 datait de `CRM-000`, écrite **avant toute mesure**, et elle rendait
+inatteignable un comportement que le même tableau spécifie une ligne plus bas. Ce n'est pas un
+arbitrage entre deux produits possibles : c'est une contradiction interne, dont une seule branche est
+réalisable. Elle est consignée en **INC-054** avec sa mesure, et le tableau est corrigé dans le même
+changement.
+
+**Portée générale, et c'est la leçon du jour.** Le seed n'est pas une donnée de démonstration : c'est
+**le premier client réel** du produit, et il emprunte les mêmes routes qu'un utilisateur
+(`CLAUDE.md` §8). Ce défaut n'aurait été trouvé par aucune suite pgTAP — `insert … values (…, null)`
+en SQL passe très bien la contrainte quand on écrit `'null'::jsonb` à la main — ni par aucun test
+d'API écrit après le code, qui aurait été écrit contre le comportement observé. Il a été trouvé
+parce qu'une donnée déclarée d'avance devait exister, et qu'elle n'a pas pu.
+
+## 2026-08-05 — `CRM-036`, suite : ce que le rejeu des dix-sept harnais précédents a dénoncé
+
+### Décision 135 — Un harnais qui rejoue une migration doit rejouer celles qui la suivent
+
+**Problème.** `scripts/verify-move-card.sh` — livrable de `CRM-034` — rejoue la migration 12 à trois
+endroits : pour éprouver son idempotence, sa convergence, et pour restaurer après dégradation.
+Depuis `CRM-036`, la migration **13** redéfinit `public.move_card` pour y ajouter sa sixième
+vérification. Rejouer la 12 seule ramène donc la fonction à sa version à **cinq** vérifications.
+
+**Observation, mesurée.** Au rejeu de l'ensemble des harnais, `verify-move-card.sh` rendait **9
+anomalies**, et — beaucoup plus grave — **laissait le produit dégradé en sortant** : la garde
+n'exigeait plus les champs requis, sans qu'aucun signal ne le dise. Les harnais exécutés ensuite
+mesuraient un produit amputé, et l'un d'eux a échoué pour cette raison sans qu'elle apparaisse dans
+son message.
+
+**C'est la seconde occurrence exacte de la décision 108**, qui avait relevé que
+`scripts/verify-tracks.sh` réappliquait `0003` seule et ramenait la politique de lecture à sa
+version sans droits fins.
+
+**Décision.** `verify-move-card.sh` rejoue les deux migrations, dans l'ordre, par une fonction
+`rejouer_migration` unique ; et sa restauration de sortie rejoue la **13**, non la 12 — c'est elle
+qui porte la définition courante. Le harnais de `CRM-036` mesure par ailleurs cette dépendance
+**dans les deux sens** : rejouer la 12 seule retire la sixième vérification, rejouer la 13 la remet.
+
+**Portée générale, et elle vaut pour toute migration future.** Dès qu'une migration en **redéfinit**
+un objet posé par une précédente, tout script qui rejoue la précédente doit rejouer la suivante.
+La dépendance est inscrite dans `docs/PROD_MIGRATIONS.md` §3, où elle rejoint celle des migrations
+3, 4 et 10.
+
+### Décision 136 — Trois unités avaient laissé les compteurs du harnais périmés, et le dire vaut mieux que les corriger en silence
+
+**Problème.** `scripts/verify-harness.sh` fige le nombre d'assertions pgTAP et de scénarios d'API
+attendus, **volontairement** : un exécuteur qui se contenterait de « le vert est vert » resterait
+vert si une suite entière cessait d'être découverte. Le prix de ce contrôle est sa révision
+explicite à chaque livraison.
+
+**Observation.** Les valeurs étaient restées à `717 / 150`, celles de `CRM-035`. Trois unités
+livrées depuis — `CRM-012`, `CRM-040`, `CRM-034` — ont ajouté des assertions et des scénarios sans
+les réviser. Le harnais rendait donc « vert mais N au lieu de 717 » à chaque exécution, et **c'est
+le comportement voulu** : le contrôle a bien dénoncé l'écart à chaque fois. Ce qui manquait, c'est
+la révision.
+
+**Décision.** Les compteurs passent à `1051 / 242`, **mesurés** le 2026-08-05 et non déduits, et le
+commentaire d'historique **nomme l'omission** au lieu de la lisser. Un lecteur qui compare les
+comptes rendus de ces trois unités à ce fichier doit pouvoir comprendre pourquoi ils divergent.
+
+**Ce qui n'est pas fait :** aucune des trois unités n'est rouverte. Le compteur est une propriété du
+harnais, pas de leur livrable.
+
+### Décision 137 — Une dégradation devenue inapplicable se renforce, elle ne se retire pas
+
+**Problème.** `scripts/verify-authz.sh` éprouve sa propre non-complaisance en retirant
+`app.can_read_card`, et en exigeant que la suite `0002` tombe. Depuis `CRM-036`, la fonction a un
+**appelant réel** — la politique de lecture de `card_field_values` —, et `drop function` est refusé
+par le moteur : « other objects depend on it ». La mutation ne s'appliquait plus, et le harnais
+rendait « contrôle non concluant ».
+
+**Décision.** `cascade` est ajouté, ce qui **renforce** la dégradation au lieu de l'affaiblir : elle
+retire désormais la fonction **et** la politique qui en dépend, donc elle ouvre davantage que la
+version précédente. La suite doit le dénoncer d'autant plus — et elle le fait.
+
+**Portée générale.** Quand une dégradation cesse de s'appliquer parce que le produit a grandi, la
+tentation est de la retirer. Le bon geste est de regarder **pourquoi** elle ne s'applique plus : ici,
+la raison est que la fonction est devenue utile, ce qui rend son retrait plus grave, pas moins.

@@ -11,13 +11,14 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
 > (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`), les **channels**
 > (`CRM-021`), le **catalogue de nœuds** (`CRM-030`), les **workflows** (`CRM-031`), leur **copie
-> vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`) et les **champs de
-> formulaire** (`CRM-035`).
-> En revanche, **le reste du métier n'existe pas encore** : ni cards, ni valeurs de formulaire,
-> ni messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
-> (`docs/INCONSISTENCY_REPORT.md`, INC-021). La garde centrale `move_card` (`CRM-034`) n'est pas
-> commencée : ses six vérifications portent toutes sur des cards, qui arrivent à `CRM-040`
-> (INC-043).
+> vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`), les **champs de
+> formulaire** (`CRM-035`), les **cards** (`CRM-040`), la **garde centrale `move_card`**
+> (`CRM-034`) et les **valeurs de formulaire** (`CRM-036`).
+> En revanche, **le reste du métier n'existe pas encore** : ni commentaires, ni historique, ni
+> messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
+> (`docs/INCONSISTENCY_REPORT.md`, INC-021). `move_card` porte désormais ses **six** vérifications :
+> la sixième, « les champs requis de l'étape cible sont renseignés », est livrée par `CRM-036`, qui
+> a refermé INC-047.
 > **Conséquence à connaître avant de lancer l'application** : les tracks et leurs channels
 > existent réellement côté serveur, sont ordonnés, archivables, cloisonnés, et leur écriture est
 > réservée aux administrateurs — tout cela est mesuré. Mais l'interface interroge le serveur
@@ -312,6 +313,7 @@ scripts/verify-champs-formulaire.sh # champs de formulaire et règles de visibil
 scripts/verify-droits-fins.sh  # droits fins par track et channel : matrice, refus    (CRM-012)
 scripts/verify-cards.sh        # cards : adresse générée, archivage, corbeille, RLS   (CRM-040)
 scripts/verify-move-card.sh    # move_card : les cinq gardes, protection de colonne   (CRM-034)
+scripts/verify-valeurs-champs.sh # valeurs de formulaire, validation, sixième garde  (CRM-036)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

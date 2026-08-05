@@ -356,12 +356,16 @@ champs_copie=$(psql_db -c "
 "et le comportement reste inchangé (INC-037, décision 93)" \
 	|| fail "source $champs_source, copie $champs_copie — attendu 7 et 0"
 
-vides=$(psql_db -c "select count(*) from public.workflow_transitions
-                     where workspace_id = '$WS_SEED' and cardinality(require_fields) > 0;")
-[ "$vides" = "0" ] \
-	&& ok "INC-033 : \`require_fields\` reste vide — non plus faute de champs, mais faute de garde "\
-"qui le lise (\`move_card\` est \`CRM-034\`, INC-043)" \
-	|| fail "transitions à \`require_fields\` non vide : $vides, attendu 0"
+# RÉVISÉ À `CRM-036`, NON RETIRÉ — mécanisme de la décision 51. Ce contrôle constatait le vide, et
+# nommait son motif : aucune garde ne lisait la colonne. `move_card` la lit désormais, et le seed
+# pose une exigence sur « Démarrer la réalisation » — la seule donnée qui exerce le second membre
+# de l'union de docs/SPEC-form-composer.md §3.5. Le contrôle **compte** au lieu de constater.
+exigeantes=$(psql_db -c "select count(*) from public.workflow_transitions
+                          where workspace_id = '$WS_SEED' and cardinality(require_fields) > 0;")
+[ "$exigeantes" = "1" ] \
+	&& ok "INC-033 : UNE transition porte \`require_fields\` depuis \`CRM-036\` — le vide n'avait "\
+"plus lieu d'être dès que \`move_card\` a su la lire" \
+	|| fail "transitions à \`require_fields\` non vide : $exigeantes, attendu 1"
 
 titre "7. Le harnais est non complaisant : trois dégradations réelles"
 
