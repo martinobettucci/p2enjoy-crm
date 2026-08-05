@@ -5398,3 +5398,26 @@ consignés, dont la seule nouveauté est d'être vérifiés une fois de plus.
 aujourd'hui — INC-060 et INC-061 — l'ont été par un **rejeu d'ensemble**, jamais par la suite de
 l'unité en cours. Un harnais ne se juge pas sur ce qu'il mesure, mais sur ce qu'il laisse mesurable
 à celui qui passe après lui.
+
+### Décision 159 — L'identité Git du conteneur était de nouveau celle de l'agent, et les deux commits de l'exécution ont été réécrits
+
+**Problème.** Le conteneur neuf rend `git config user.email` = `noreply@anthropic.com`. Le commit
+documentaire de l'unité a été créé **et poussé** sous cette identité avant que l'écart ne soit vu :
+la vérification n'a eu lieu qu'après le second commit. `CLAUDE.md` §13 l'interdit sans réserve —
+« un agent ne s'attribue jamais la paternité, même partielle, d'un commit ».
+
+**Observation.** Troisième occurrence du point 2 d'INC-034, et la première où un commit fautif est
+déjà **poussé**. Les 36 commits antérieurs du dépôt portent tous
+`P2Enjoy <contact@p2enjoy.studio>`.
+
+**Décision.** Configuration locale reposée, puis les **deux** commits de cette exécution réécrits
+pour porter l'identité du responsable, et republiés. Aucun commit antérieur n'est touché, aucun
+commit d'une autre exécution n'est concerné. Le motif est celui déjà retenu et journalisé : §13
+prévoit l'instruction explicite du responsable pour réécrire un commit poussé, aucune instruction
+n'est atteignable pendant une exécution automatique, et la règle d'attribution est elle-même **non
+négociable**. Le précédent existe et est documenté — INC-034 —, il est suivi plutôt que réinventé.
+
+**Conséquence pour le point 2 d'INC-034.** Reposer la configuration « au début de l'exécution » ne
+suffit pas : il faut la reposer **avant le premier commit**, ce qu'aucun mécanisme du dépôt ne
+garantit aujourd'hui. Le correctif durable — script d'amorçage versionné, ou variable
+d'environnement fournie par la routine — cesse d'être un confort.

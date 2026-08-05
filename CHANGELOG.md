@@ -50,6 +50,13 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'identité Git de l'exécution a dû être corrigée, et le fait est consigné** — INC-034 point 2,
+  troisième occurrence, décision 159. Le conteneur neuf rend `user.email` =
+  `noreply@anthropic.com` ; le commit documentaire de l'unité a été créé et poussé sous cette
+  identité avant que l'écart ne soit vu. Configuration locale reposée à
+  `P2Enjoy <contact@p2enjoy.studio>`, les deux commits de l'exécution réécrits et republiés. Aucun
+  commit antérieur n'est touché. Le correctif durable — script d'amorçage ou variable
+  d'environnement — reste dû.
 - **`CRM-010` est close : ses six fonctions sont enfin toutes prouvées, et INC-013 s'éteint.**
   Les quatre fonctions qu'INC-013 avait retirées à l'unité faute de tables — `app.can_read_track`,
   `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — existent depuis `CRM-012`
