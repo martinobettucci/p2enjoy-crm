@@ -544,15 +544,20 @@ select is(
 	'`app.can_read_card`, livrée SANS USAGE par `CRM-040` (décision 110), a son PREMIER appelant '
 	'réel : la politique de lecture des valeurs de formulaire');
 
--- CRM-013 : la protection de colonne. Cette assertion CONSTATE le manque, elle ne le tolère pas.
+-- CRM-013 : la protection de colonne. ASSERTION RETOURNÉE PAR `CRM-013` (décision 51) : elle
+-- constatait cette mise à jour POSSIBLE et annonçait qu'elle deviendrait rouge le jour où l'unité
+-- serait livrée. Elle l'est. L'assertion est désormais PLUS FORTE — elle ne constate plus un
+-- manque, elle oppose un refus.
 savepoint p_crm013;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
-select lives_ok($$
+select throws_ok($$
 	update public.cards set email_local_part = 'c-abcdefgh'
 	 where id = '5eed0000-0000-4000-8000-0000000000c1' $$,
-	'CRM-013 NON LIVRÉE : `email_local_part` reste MODIFIABLE par qui écrit sur le channel. Le '
-	'trigger GÉNÈRE, il ne protège pas (§3.4). Cette assertion doit devenir rouge à `CRM-013`');
+	'42501', 'permission denied for table cards',
+	'CRM-013 LIVRÉE : `email_local_part` n''est plus modifiable par qui écrit sur le channel. Le '
+	'trigger GÉNÈRE, il ne protège pas (§3.4) — c''est le privilège de colonne qui protège '
+	'(docs/SPEC-permissions-rls.md §4.4)');
 
 -- ASSERTION RETOURNÉE PAR `CRM-034` (décision 51), et c'est la plus significative des trois : elle
 -- constatait que `current_step_id` s'écrivait DIRECTEMENT, sans transition déclarée. `CRM-034` a

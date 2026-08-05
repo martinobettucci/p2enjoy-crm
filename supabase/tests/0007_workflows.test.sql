@@ -42,7 +42,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(107);
+select plan(108);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §3, docs/SPEC-workflow-engine.md §3.2 à §3.4
@@ -191,14 +191,37 @@ select has_table('public', 'form_fields',
 -- exerce n'est plus une décoration. Le seed en porte exactement UNE, sur « Démarrer la
 -- réalisation ». L'assertion COMPTE plutôt que de constater le vide, de sorte qu'une seconde
 -- posée sans preuve la fasse rougir à son tour.
+-- ASSERTION RENDUE DÉTERMINISTE PAR `CRM-013` — INC-056, et le motif est MESURÉ. Elle comptait à
+-- l'échelle du WORKSPACE. Or `copy_workflow_to_track` recopie `require_fields` (INC-037), et le
+-- seed pose ce tableau AVANT de créer la copie : sur une base FROIDE, la copie l'hérite et le
+-- compte vaut 2. Sur une base dont la copie précède `CRM-036`, il vaut 1. La valeur dépendait donc
+-- de l'ANCIENNETÉ de la base, non du produit — et `./resetMe.sh` ne reproduisait pas l'état testé.
+-- Le compte porte désormais sur le workflow GLOBAL, qui est déterministe, et l'héritage de la
+-- copie est compté séparément juste après. Aucun comportement n'est modifié : INC-037 reste
+-- ouverte et appartient à `CRM-032`.
 select is(
 	(select count(*)::int from public.workflow_transitions
-	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
+	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'
 	    and cardinality(require_fields) > 0),
 	1,
-	'INC-033 : `require_fields` porte UNE entrée dans le seed depuis `CRM-036` — non plus faute de '
-	'champs, mais parce que la sixième vérification de `move_card` la LIT désormais. Aucune '
-	'intégrité référentielle n''est possible sur un `uuid[]` — INC-033, propriété du type');
+	'INC-033 : `require_fields` porte UNE entrée sur le workflow GLOBAL du seed depuis `CRM-036` — '
+	'non plus faute de champs, mais parce que la sixième vérification de `move_card` la LIT '
+	'désormais. Aucune intégrité référentielle n''est possible sur un `uuid[]` — INC-033, '
+	'propriété du type');
+
+-- ET L'HÉRITAGE EST COMPTÉ PLUTÔT QUE SUBI. Sans cette assertion, la précédente serait verte
+-- qu'INC-037 aggrave la situation ou non : une exigence recopiée sur une copie qui ne reçoit AUCUN
+-- champ n'exige rien du tout (`CRM-036`, décision 128).
+select is(
+	(select count(*)::int from public.workflow_transitions t
+	   join public.workflows w on w.id = t.workflow_id
+	  where w.workspace_id = '5eed0000-0000-4000-8000-000000000001'
+	    and w.scope = 'track'
+	    and cardinality(t.require_fields) > 0),
+	1,
+	'INC-037, AGGRAVÉE ET COMPTÉE : la copie de portée `track` HÉRITE du `require_fields` de sa '
+	'source alors qu''elle ne reçoit aucun champ. L''exigence y est donc inerte. Comportement '
+	'INCHANGÉ — il appartient à `CRM-032` — mais mesuré, non supposé (INC-056)');
 
 -- =============================================================================================
 -- 3. Fixtures

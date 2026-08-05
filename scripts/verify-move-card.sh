@@ -58,10 +58,16 @@ MIGRATION_FILE=supabase/migrations/0012_move_card.sql
 # `verify-tracks.sh`, qui réappliquait `0003` seule et ramenait la politique à sa version sans
 # droits fins. `rejouer_migration` rejoue donc les deux, dans l'ordre.
 MIGRATION_SUIVANTE=supabase/migrations/0013_valeurs_champs.sql
+# ET LA 14 SUIT LA 13, POUR LA MÊME RAISON, TROISIÈME OCCURRENCE. Depuis `CRM-013`, la migration 14
+# retire à `authenticated` l'`UPDATE` sur `cards.email_local_part` — colonne que la section 2 de la
+# migration 12 rend au contraire OUVERTE (INC-050, à l'époque non résolue). Rejouer la 12 sans la 14
+# ROUVRE donc cette colonne et laisse le produit dégradé, exactement comme la 13 sur `move_card`.
+MIGRATION_TROISIEME=supabase/migrations/0014_colonnes_protegees.sql
 
 rejouer_migration() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || return 1
 }
 DB_CONTAINER=p2enjoy-db
 
@@ -91,9 +97,12 @@ MDP_SEED=SeedDev2026Local
 # à la fois à la restauration après dégradation et au contrôle de convergence : deux copies
 # divergeraient tôt ou tard, et la restauration silencieusement fausse serait pire que l'absence
 # de contrôle.
+# `email_local_part` EN A ÉTÉ RETIRÉE PAR `CRM-013` : la migration 0014 la ferme (INC-050, close).
+# La laisser ici ferait de la restauration de ce harnais une réouverture silencieuse — la faute
+# exacte des décisions 108 et 135.
 COLONNES_OUVERTES="title, description, position, owner_id, amount, currency,
 	probability_override, next_action, next_action_at, snoozed_until,
-	archived_at, deleted_at, email_local_part"
+	archived_at, deleted_at"
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -229,6 +238,8 @@ restaurer_privileges() {
 	# définition à SIX vérifications depuis `CRM-036`. La rejouer ici garantit qu'une interruption
 	# ne laisse jamais le produit avec une garde amputée.
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || true
+	# Et la 14 derrière elle : elle seule referme `email_local_part` (CRM-013).
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || true
 }
 trap 'restaurer_privileges; rm -f "$CORPS"' EXIT
 
@@ -285,10 +296,14 @@ titre '3. La protection de colonne — preuve de refus n° 5'
 	&& ok 'title reste ouverte : le revoke n’a pas été trop large' \
 	|| fail 'title est fermée — le revoke a cassé l’écriture ordinaire'
 
-# INC-050 : la contradiction du §5.5 est consignée, non résolue. Le comportement reste inchangé.
-[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update');")" = "t" ] \
-	&& ok 'INC-050 : email_local_part reste ouverte, comme depuis CRM-040 — elle reste à CRM-013' \
-	|| fail 'INC-050 : email_local_part a été fermée, ce qui livre la moitié de CRM-013 en silence'
+# CONTRÔLE RETOURNÉ PAR CRM-013 (décision 51) : il constatait la colonne ouverte, en nommant
+# l’unité qui devait la fermer. Elle est livrée (migration 0014), et la contradiction du §5.5 est
+# éteinte. Ce contrôle FIGE DÉSORMAIS LA DÉPENDANCE D’ORDRE 12 → 14 : ce harnais rejoue la
+# migration 12 en plusieurs endroits, et la rejouer seule ROUVRIRAIT la colonne (décisions 108,
+# 135, troisième occurrence). Sa restauration de sortie rejoue donc la 14 derrière la 12.
+[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update');")" = "f" ] \
+	&& ok 'INC-050 CLOSE : email_local_part est FERMÉE par CRM-013 — migration 0014' \
+	|| fail 'email_local_part est rouverte : la migration 12 a été rejouée sans la 14 derrière elle'
 
 [ "$(psql_db -c "select has_table_privilege('service_role', 'public.cards', 'update');")" = "t" ] \
 	&& ok 'service_role conserve son UPDATE : le seed est inchangé (§5.9)' \

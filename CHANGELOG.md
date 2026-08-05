@@ -36,6 +36,31 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-013` — l'adresse d'une affaire cesse d'être réécrivable.**
+  `supabase/migrations/0014_colonnes_protegees.sql`, `docs/SPEC-permissions-rls.md` §4.4.
+  - **`cards.email_local_part` n'est plus modifiable par un client.** Le privilège `UPDATE` est
+    retiré à `authenticated` sur cette seule colonne, par la forme énumérative que PostgreSQL
+    impose : `revoke update` de table, puis `grant update (…)` sur les **douze** colonnes qui
+    restent ouvertes.
+  - **Ce que cela corrige était une propriété de sécurité fausse, pas un confort.** MESURÉ avant
+    correction, avec le jeton réel de l'administratrice : un `PATCH` remplaçait les quarante bits
+    de hasard de l'adresse par `c-00000000`, en `200`. La non-devinabilité sur laquelle
+    `docs/SCHEMA.md` §5 fonde l'adresse entrante d'une affaire était rendue au client par une
+    simple mise à jour.
+  - **La lecture reste ouverte, et l'insertion inchangée.** Une adresse de card est une
+    **identité**, non un secret. Et le chemin d'insertion était déjà sûr — MESURÉ : le trigger de
+    `CRM-040` écrase la valeur fournie. Le fermer aurait refusé une requête que le produit accepte
+    sans dommage.
+  - **INC-050 est close, par exécution et non par arbitrage** : les deux branches attendues ne
+    portaient que sur l'attribution de la colonne à une unité, non sur son état final. L'état posé
+    coïncide désormais exactement avec le bloc `GRANT` du §5.5 de `docs/SPEC-workflow-engine.md`.
+  - **Preuves** : `supabase/tests/0015_colonnes_protegees.test.sql` (41 assertions),
+    `e2e/api/colonnes-protegees.spec.ts` (12 scénarios, jetons réels des trois profils),
+    `scripts/verify-colonnes-protegees.sh` (50 contrôles, non complaisant).
+  - **`CRM-013` reste `[~]`** : cinq de ses six cibles portent sur des tables qui n'existent pas
+    encore, et les preuves de refus n° 6 et n° 8 restent hors d'atteinte. Chaque absence est figée
+    par une assertion qui deviendra rouge à la naissance de sa table.
+
 - **`CRM-036` — les valeurs de formulaire, et la sixième vérification de `move_card`.**
   `supabase/migrations/0013_valeurs_champs.sql`, `docs/SPEC-form-composer.md` §6.
   - **La table `public.card_field_values`**, réponse d'une card aux questions de son workflow, avec
@@ -74,6 +99,18 @@ d'exécuter le code attendu.
     `scripts/verify-valeurs-champs.sh` : **33 contrôles**, éprouvé par trois dégradations réelles.
 
 ### Corrigé
+
+- **Trois garde-fous mesuraient l'âge de la base, non le produit — INC-056.** Sur une base créée de
+  zéro, trois contrôles de `CRM-031`, `CRM-035` et `CRM-036` échouaient : ils comptaient à l'échelle
+  du workspace les transitions à `require_fields` non vide, et le seed pose ce tableau **avant** de
+  créer la copie de workflow, laquelle en hérite (INC-037). Le comportement du produit est
+  **inchangé** ; les trois contrôles comptent désormais sur le workflow global, et l'héritage de la
+  copie est compté séparément plutôt que masqué.
+- **Un harnais laissait le produit dégradé en sortant, et c'est `npm run test:sql` qui l'a dit.**
+  La première écriture de `scripts/verify-colonnes-protegees.sh` rejouait la migration 12 puis la
+  14, sans la 13 — qui redéfinit `move_card` avec sa sixième vérification. Troisième occurrence du
+  même mode de défaillance (décisions 108, 135). La séquence de restauration est désormais
+  12 → 13 → 14, et un contrôle explicite constate que `move_card` a retrouvé sa sixième garde.
 
 - **`value` est nullable, et une mesure l'a imposé — INC-054.** `docs/SCHEMA.md` §4 exigeait
   `NOT NULL` avec `'null'::jsonb` pour « explicitement vide ». MESURÉ : PostgREST convertit un

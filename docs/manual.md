@@ -38,7 +38,7 @@
 |---|---|---|---|
 | 10 | Connecter sa boîte de réception (IMAP) | `CRM-052` | À livrer |
 | 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053` | À livrer |
-| 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire et non devinable (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
+| 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement | `CRM-055`, `CRM-057` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
 | 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | À livrer |
@@ -278,6 +278,13 @@ une adresse divulguée ne permet donc pas de deviner celles des autres affaires.
 Vous ne la choisissez pas, et une valeur que vous fourniriez serait ignorée — c'est ce qui garantit
 qu'aucune adresse ne soit devinable. Elle servira, à partir du chapitre sur la messagerie, à
 rattacher automatiquement à l'affaire tout message qui lui est envoyé.
+
+**Elle ne se modifie pas non plus après coup.** Le produit refuse toute tentative de réécrire
+l'adresse d'une affaire, y compris à un administrateur, et y compris si l'on s'adresse directement
+à l'API sans passer par l'écran. Sans ce refus, il suffirait de remplacer une adresse tirée au
+hasard par une adresse triviale pour que n'importe qui puisse écrire à l'affaire. L'adresse se
+**lit**, en revanche, par toute personne qui peut consulter l'affaire : c'est une identité, pas un
+mot de passe.
 
 ### 4.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse
 

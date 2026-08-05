@@ -484,13 +484,18 @@ select is(
 -- RÉVISÉE À `CRM-036`, NON RETIRÉE — mécanisme de la décision 51. Elle constatait le vide ; elle
 -- COMPTE désormais, et désigne nommément le champ visé : la sixième vérification de `move_card`
 -- lit cette colonne, et l'union du §3.5 a enfin une donnée qui l'exerce.
+-- ASSERTION RENDUE DÉTERMINISTE PAR `CRM-013` — INC-056. Elle comptait à l'échelle du WORKSPACE,
+-- ce qui la rendait dépendante de l'ancienneté de la base : `copy_workflow_to_track` recopie
+-- `require_fields` (INC-037) et le seed pose ce tableau AVANT de créer la copie, de sorte qu'une
+-- base FROIDE en compte deux. Le compte porte désormais sur le workflow GLOBAL. Comportement
+-- inchangé ; l'héritage de la copie est compté par `supabase/tests/0007_workflows.test.sql`.
 select is(
 	(select count(*)::int from public.workflow_transitions
-	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
+	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'
 	    and cardinality(require_fields) > 0),
 	1,
-	'INC-033 : `require_fields` porte UNE entrée depuis `CRM-036` — le vide n''avait plus lieu '
-	'd''être dès que `move_card` a su la lire');
+	'INC-033 : `require_fields` porte UNE entrée sur le workflow GLOBAL depuis `CRM-036` — le vide '
+	'n''avait plus lieu d''être dès que `move_card` a su la lire');
 
 select is(
 	(select t.require_fields from public.workflow_transitions t

@@ -314,6 +314,7 @@ scripts/verify-droits-fins.sh  # droits fins par track et channel : matrice, ref
 scripts/verify-cards.sh        # cards : adresse générée, archivage, corbeille, RLS   (CRM-040)
 scripts/verify-move-card.sh    # move_card : les cinq gardes, protection de colonne   (CRM-034)
 scripts/verify-valeurs-champs.sh # valeurs de formulaire, validation, sixième garde  (CRM-036)
+scripts/verify-colonnes-protegees.sh # colonnes protégées : email_local_part fermée (CRM-013)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

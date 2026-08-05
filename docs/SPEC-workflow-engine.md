@@ -1135,9 +1135,20 @@ l'instruction, et une fonction `SECURITY DEFINER` s'exécute avec les droits de 
 La garde écrit donc ce que son appelant ne peut pas écrire — ce qui est exactement ce qu'on lui
 demande.
 
-**Ce qui n'est PAS livré par `CRM-034`, et reste à `CRM-013` :** `email_local_part`, dont
-l'écriture directe reste ouverte ; `secret_id` et `token_hash`, dont les tables n'existent pas ;
-`card_events` et `audit_log`, idem. Seule la colonne que cette garde protège est traitée ici.
+**Ce qui n'était PAS livré par `CRM-034` :** `email_local_part`, dont l'écriture directe restait
+ouverte ; `secret_id` et `token_hash`, dont les tables n'existent pas ; `card_events` et
+`audit_log`, idem. Seule la colonne que cette garde protège était traitée ici.
+
+**`email_local_part` est fermée depuis `CRM-013`** (`supabase/migrations/0014_colonnes_protegees.sql`,
+`docs/SPEC-permissions-rls.md` §4.4). **INC-050 est close par cette livraison** : le bloc `GRANT`
+ci-dessus, qui ne listait pas la colonne, décrit désormais l'état réellement posé — la
+contradiction s'est éteinte par l'exécution de l'unité que la prose nommait, sans qu'aucun
+arbitrage n'ait eu à être rendu (`docs/JOURNAL.md`, décision 142).
+
+**DÉPENDANCE D'ORDRE 12 → 14 :** la section 2 de cette migration réapplique les privilèges avec
+`email_local_part` dans la liste. La rejouer seule **rouvre** donc la colonne. Elle ne se rejoue
+jamais sans la 13 puis la 14 derrière elle — `docs/PROD_MIGRATIONS.md` §3,
+`scripts/verify-move-card.sh`, `scripts/verify-colonnes-protegees.sh`.
 
 **Le message de refus divulgue la commande `GRANT` à exécuter** — « Grant the required privileges
 to the current role with: GRANT UPDATE ON public.cards TO authenticated; ». Quatrième occurrence

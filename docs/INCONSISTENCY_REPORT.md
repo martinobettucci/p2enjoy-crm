@@ -2117,51 +2117,6 @@ Definition of Done amendée pour retirer la preuve n° 5.
 
 ---
 
-### INC-050 — Le §5.5 de `SPEC-workflow-engine` se contredit sur `email_local_part`
-
-**Nature :** contradiction interne à une spécification, entre son bloc de code et sa prose.
-**Relevé le :** 2026-08-04, pendant l'implémentation de `CRM-034`.
-
-`docs/SPEC-workflow-engine.md` §5.5 dit deux choses incompatibles de la même colonne.
-
-**Sa prose** l'énumère explicitement parmi ce qui reste dû : « **Ce qui n'est PAS livré par
-`CRM-034`, et reste à `CRM-013` :** `email_local_part`, dont l'écriture directe reste ouverte », et
-conclut « Seule la colonne que cette garde protège est traitée ici ».
-
-**Son bloc `GRANT`**, lui, ne la liste pas :
-
-```
-grant  update (title, description, position, owner_id, amount, currency,
-               probability_override, next_action, next_action_at, snoozed_until,
-               archived_at, deleted_at) on public.cards to authenticated;
-```
-
-Or le mécanisme est **exclusif par construction** : le privilège `UPDATE` ne se retire pas colonne
-par colonne d'un privilège de table, il faut retirer le privilège de table puis rendre nommément ce
-qui doit rester ouvert. Toute colonne absente de cette liste est donc **fermée**. Appliquer le bloc
-à la lettre fermerait `email_local_part` — c'est-à-dire livrerait la moitié de `CRM-013`, unité
-`[ ]` distincte, sans que rien ne le dise.
-
-**Ce n'est pas une subtilité de rédaction.** `supabase/tests/0012_cards.test.sql` porte, depuis
-`CRM-040`, une assertion qui **constate** cette colonne modifiable et qui doit « devenir rouge à
-`CRM-013` ». La fermer ici la rendrait rouge à la mauvaise unité, et la Definition of Done de
-`CRM-013` serait à demi faite sans trace.
-
-**Comportement retenu :** `CLAUDE.md` §5 tranche le cas d'une contradiction relevée en relecture —
-la consigner, et **laisser le comportement inchangé**. `email_local_part` est donc ajoutée
-nommément à la liste des colonnes ouvertes, avec un commentaire qui renvoie ici, et le comportement
-est exactement celui de `CRM-040`. L'assertion de `0012` reste verte, et celle de
-`supabase/tests/0013_move_card.test.sql` la double en nommant l'arbitrage attendu.
-
-**Arbitrage attendu du responsable :** soit corriger le bloc `GRANT` du §5.5 en y ajoutant
-`email_local_part`, ce qui aligne le code sur la prose ; soit corriger la prose, ce qui transfère
-cette moitié de `CRM-013` vers `CRM-034` — auquel cas il faut retirer la colonne de la liste, et
-retourner les deux assertions dans le même changement.
-
-**Lié à :** INC-049 (le chevauchement de Definition of Done), `CRM-013`.
-
----
-
 ### INC-051 — La ligne i du contrat d'API de `move_card` nomme un profil que le seed ne peut pas mettre en défaut
 
 **Nature :** erreur de fait dans une spécification, mesurée contre la pile réelle.
@@ -2331,7 +2286,93 @@ d'un type plutôt que d'un choix).
 
 ---
 
+### INC-056 — Trois garde-fous comptaient une donnée que `copy_workflow_to_track` duplique, et leur valeur dépendait de l'âge de la base
+
+**Nature :** garde-fous non déterministes, livrés par `CRM-031`, `CRM-035` et `CRM-036`.
+**Relevé le :** 2026-08-05, pendant `CRM-013`, sur une base **froide**.
+
+Trois contrôles comptaient, **à l'échelle du workspace**, les transitions dont `require_fields`
+n'est pas vide, et attendaient `1` :
+
+- `supabase/tests/0007_workflows.test.sql` ;
+- `supabase/tests/0010_champs_formulaire.test.sql` ;
+- `scripts/verify-champs-formulaire.sh`.
+
+MESURÉ sur une base créée de zéro — `./runDev.sh` puis `supabase/seed/apply-seed.sh` sur un cluster
+neuf — le compte vaut **2**, et les trois contrôles échouent. La cause est mécanique :
+
+1. la section 6 du seed pose `require_fields` sur « Démarrer la réalisation » du workflow global ;
+2. la section 7, **ensuite**, appelle `copy_workflow_to_track`, qui recopie `require_fields` tel
+   quel (INC-037) — son propre commentaire dit encore « il est vide partout aujourd'hui », prémisse
+   que `CRM-036` a invalidée ;
+3. la copie hérite donc de l'exigence, et le workspace en porte deux.
+
+Sur une base **ancienne**, la copie a été créée avant `CRM-036` et ne porte rien : le compte vaut
+`1`, et c'est là que `CRM-036` l'a mesuré. Les trois contrôles mesuraient donc **l'âge de la base**,
+non le produit.
+
+**Ce que cela dit de plus grave que trois assertions.** `CLAUDE.md` §8 pose que le seed est un
+contrat **reproductible**. Ici, `./resetMe.sh` ne reproduisait pas l'état sur lequel les preuves
+avaient été écrites : deux exécutions de la même commande, sur deux historiques différents,
+donnaient deux états différents. Un garde-fou qui dépend de l'historique de la base ne garde rien.
+
+**Comportement retenu :** **inchangé**. Le comportement de `copy_workflow_to_track` appartient à
+`CRM-032` et relève d'INC-037, déjà ouverte. Les trois contrôles sont **rendus déterministes** —
+ils comptent désormais sur le workflow **global** — et l'héritage de la copie est **compté
+séparément**, par une assertion neuve dans `supabase/tests/0007_workflows.test.sql` et un contrôle
+neuf dans `scripts/verify-champs-formulaire.sh`. Rien n'est relâché : le total du workspace reste
+`2`, et il est désormais affirmé plutôt que subi.
+
+**Ce qui reste à trancher, et qui n'appartient pas à `CRM-013` :**
+
+1. `copy_workflow_to_track` doit-elle recopier `require_fields` alors que la copie ne reçoit
+   **aucun** champ ? L'exigence y est inerte — la sixième vérification de `move_card` ignore un
+   identifiant qu'elle ne résout pas (décision 128). C'est INC-037, aggravée.
+2. Le seed doit-il poser `require_fields` **après** la copie, de sorte que l'ordre des sections ne
+   décide plus du contenu ? Ce serait une correction à un seul endroit, mais elle appartient à
+   `CRM-005` / `CRM-046`.
+
+**Action attendue du responsable :** trancher le point 1 avec INC-037, et dire si le point 2 doit
+être rattaché au seed de démonstration complet (`CRM-046`).
+
+**Lié à :** INC-037 (la copie recopie `require_fields`), INC-033 (`require_fields` sans intégrité
+référentielle), `CLAUDE.md` §8 (le seed est reproductible).
+
+---
+
 ## Clos
+
+### INC-050 — Le §5.5 de `SPEC-workflow-engine` se contredisait sur `email_local_part`
+
+**Close le :** 2026-08-05, par l'unité `CRM-013`, **par exécution et non par arbitrage**.
+
+**Ce qui était en cause.** La prose du §5.5 rangeait `email_local_part` parmi ce qui « reste à
+`CRM-013` » — donc ouverte ; son bloc `GRANT` ne la listait pas — donc fermée. Le mécanisme étant
+exclusif par construction, les deux lectures ne pouvaient pas coexister. `CRM-034` a consigné sans
+résoudre et laissé la colonne ouverte, comme `CLAUDE.md` §5 l'impose.
+
+**Pourquoi aucun arbitrage n'était nécessaire.** Les deux branches proposées ne portaient que sur
+**l'attribution** — quelle unité ferme la colonne — et non sur le comportement final, identique des
+deux côtés : la colonne finit fermée. Exécuter `CRM-013` tranche l'attribution par l'énoncé de son
+propre backlog, « `current_step_id` et `email_local_part` non modifiables directement », sans rien
+décider à la place du responsable (`docs/JOURNAL.md`, décision 142).
+
+**Mesure.** `supabase/migrations/0014_colonnes_protegees.sql` retire `UPDATE` à `authenticated` sur
+cette colonne. L'état posé — douze colonnes ouvertes — coïncide **exactement** avec le bloc `GRANT`
+du §5.5. Preuves : `supabase/tests/0015_colonnes_protegees.test.sql` (41 assertions),
+`e2e/api/colonnes-protegees.spec.ts` (12 scénarios), `scripts/verify-colonnes-protegees.sh`
+(50 contrôles). Les trois garde-fous qui constataient la colonne ouverte ont été **retournés**, non
+retirés.
+
+**Portée générale, écrite parce qu'elle resservira :** une contradiction dont toutes les branches
+mènent au même état du produit n'est pas un arbitrage, c'est une question d'imputation — et
+l'exécution de l'unité nommée la résout. La distinguer d'un vrai arbitrage évite d'immobiliser une
+unité qui n'attend rien.
+
+**A laissé ouvert :** la dépendance d'ordre 12 → 14, réelle et mesurée, consignée dans
+`docs/PROD_MIGRATIONS.md` §3.
+
+---
 
 ### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
 

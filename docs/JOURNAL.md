@@ -4894,3 +4894,68 @@ sort plus fort, et chaque barrière est mesurée séparément.
 ultérieure un objet créé par une migration antérieure, et une règle d'outillage engage toutes les
 unités à venir : la question est posée en **INC-055**, à l'arbitrage du responsable. La correction
 porte sur la seule occurrence mesurée.
+---
+
+## 2026-08-05 — `CRM-013` : la colonne fermée, et deux défauts que la base froide a dénoncés
+
+### Décision 144 — Un garde-fou qui dépend de l'âge de la base ne garde rien — INC-056
+
+**Problème.** `npm run test:sql` a rendu **quatre** fichiers en échec après l'application de la
+migration 14, dont deux pour un motif sans aucun rapport avec elle : trois contrôles attendaient
+« UNE transition à `require_fields` non vide » et en trouvaient **deux**.
+
+**Observations, mesurées.** La seconde est la **copie** de portée track créée par le seed.
+`copy_workflow_to_track` recopie `require_fields` tel quel — INC-037 le disait déjà —, et le seed
+pose ce tableau à sa **section 6**, avant de créer la copie à sa **section 7**. Sur une base créée
+de zéro, la copie hérite donc de l'exigence. Sur la base **ancienne** où `CRM-036` a mesuré `1`, la
+copie précédait l'introduction de `require_fields` et ne portait rien.
+
+**Ce que cela révèle, et qui dépasse trois assertions.** `./resetMe.sh` ne reproduisait pas l'état
+sur lequel les preuves avaient été écrites. Deux exécutions de la même commande, sur deux
+historiques différents, donnaient deux états différents — contre `CLAUDE.md` §8, qui pose le seed
+comme un contrat **reproductible**. Le défaut n'était visible que d'une base froide, et cette
+routine tourne presque toujours sur un conteneur neuf : c'est le seul motif pour lequel il a été vu.
+
+**Décision.** Le comportement reste **inchangé** — il appartient à `CRM-032` et à `CRM-005`. Les
+trois contrôles sont rendus **déterministes** : ils comptent sur le workflow **global**. Et
+l'héritage de la copie, plutôt que d'être perdu, est **compté séparément** par une assertion neuve
+et un contrôle neuf. Le total du workspace reste `2` ; il est désormais affirmé au lieu d'être subi.
+
+**Ce qui n'a pas été fait, et pourquoi.** Déplacer la pose de `require_fields` après la copie
+aurait fait passer les trois contrôles sans rien changer d'autre. C'eût été corriger le seed d'une
+autre unité pendant un passage consacré à `CRM-013`, et surtout **effacer la trace** d'un
+comportement d'INC-037 qui mérite l'arbitrage. Consigné en INC-056, avec les deux points à trancher.
+
+**Portée générale.** Un garde-fou qui compte à une échelle plus large que ce qu'il veut prouver
+finit par compter autre chose. Le remède n'est pas de relâcher la valeur attendue : c'est de
+resserrer la portée, et de compter séparément ce que l'élargissement avait masqué.
+
+### Décision 145 — Le harnais que j'écrivais a reproduit à l'identique la faute qu'il devait prévenir
+
+**Problème.** La première version de `scripts/verify-colonnes-protegees.sh` mesurait la dépendance
+d'ordre 12 → 14 en rejouant la migration 12, puis la 14. `npm run test:sql` a ensuite rendu
+**quatre** fichiers en échec, et les deux autres — ceux de `move_card` — pour une raison nette : la
+migration 13 **redéfinit** `public.move_card` avec sa sixième vérification. Rejouer 12 puis 14, sans
+la 13, laissait le produit avec une garde à **cinq** vérifications.
+
+**Ce que c'est exactement.** La décision 135, reproduite à l'identique, par le harnais suivant, et
+par quelqu'un qui venait de la lire pour l'écrire. Le fait est consigné plutôt que réparé
+discrètement : une faute que sa propre documentation n'empêche pas est une information sur la
+documentation.
+
+**ET CE N'EST PAS UNE COÏNCIDENCE : la décision 143, écrite le même jour par une autre exécution de
+la routine, corrige exactement le même mode de défaillance sur `scripts/verify-cards.sh`.** Deux
+harnais, deux passages indépendants, la même faute — c'est le signe que le remède harnais par
+harnais ne suffit pas. La question d'inscrire la règle dans `docs/SPEC-test-harness.md` est posée
+en **INC-055** par cette autre exécution, et cette troisième occurrence la renforce.
+
+**Décision.** La séquence de restauration est **12 → 13 → 14**, jamais partielle, dans le harnais
+comme dans son `trap` de sortie. Et un **contrôle explicite** est ajouté : après le rejeu, la
+définition de `move_card` doit encore contenir `missing_required_fields`. Sans lui, le harnais
+sortirait vert sur un produit amputé — précisément ce qui s'est produit.
+
+**Portée générale.** Rejouer une migration n'est jamais un geste local : c'est rejouer un **préfixe**
+de l'historique, et tout ce qui a été écrit après doit l'être de nouveau. La règle vaut désormais
+pour quatre couples mesurés — 3 → 10, 11 → 12 (décision 143), 12 → 13, 12 → 14 — et il n'y a aucune
+raison de croire qu'elle s'arrête là. Un harnais qui rejoue la migration N rejoue **toutes** celles
+qui la suivent.

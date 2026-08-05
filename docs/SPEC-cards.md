@@ -308,12 +308,19 @@ d'unicité serait exactement le genre de fausse sécurité que `CLAUDE.md` §18 
 l'appelant. « Généré » signifie que la valeur ne vient pas du client : accepter une valeur fournie
 laisserait un appelant choisir une adresse devinable, ce qui annulerait l'exigence du §3.3.
 
-À la **mise à jour**, le trigger ne fait **rien**, et la colonne reste modifiable par un appelant
-qui a le droit d'écriture sur le channel. **C'est un manque, il est nommé** : sa correction est
-`CRM-013` — « `current_step_id` et `email_local_part` non modifiables directement » —, unité `[ ]`
-distincte dont la Definition of Done porte ces deux colonnes mot pour mot. L'écart est figé par une
-assertion de la suite pgTAP, qui deviendra rouge le jour où `CRM-013` sera livrée sans que
-l'assertion soit révisée.
+À la **mise à jour**, le trigger ne fait **rien** — et c'était un manque, désormais **corrigé par
+`CRM-013`** : ce n'est pas le trigger qui protège la colonne, c'est le **privilège**. Depuis
+`supabase/migrations/0014_colonnes_protegees.sql`, `authenticated` n'a plus `UPDATE` sur
+`email_local_part` ; une tentative rend `403` / `42501` et la ligne est relue inchangée
+(`docs/SPEC-permissions-rls.md` §4.4).
+
+La distinction mérite d'être tenue : **générer et protéger sont deux gestes**, portés par deux
+mécanismes différents et par deux unités différentes. Un trigger de restauration aurait rendu `200`
+à un appelant qui croirait avoir renommé l'adresse — la valeur par défaut trompeuse que
+`CLAUDE.md` §18 proscrit (`docs/JOURNAL.md`, décision 141).
+
+`service_role` conserve l'écriture : le seed en dépend, et la limite est nommée au §4.4.3 de
+`docs/SPEC-permissions-rls.md`.
 
 ### 3.5 L'adresse complète n'est pas une colonne
 
@@ -424,6 +431,12 @@ grant all privileges on public.cards to service_role;
 `SELECT` à `anon` : sans lui, un appelant sans jeton recevrait `401` par le privilège avant même
 qu'une politique ne s'exprime, et le refus exigé — **zéro ligne** — ne serait pas celui qui est
 mesuré.
+
+**Le `grant update` de table n'existe plus.** `CRM-034` puis `CRM-013` l'ont remplacé par un
+`grant update (…)` énumérant **douze** colonnes : `current_step_id`, `entered_step_at` et
+`email_local_part` en sont exclues, ainsi que les identifiants de rattachement et les colonnes
+techniques. La liste exacte, son mécanisme et sa conséquence — toute colonne nouvelle est fermée
+par défaut — sont dans `docs/SPEC-permissions-rls.md` §4.3 et §4.4.3.
 
 ## 7. La garde d'archivage d'un nœud occupé — INC-031
 

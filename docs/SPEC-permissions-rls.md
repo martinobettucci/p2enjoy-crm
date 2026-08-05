@@ -306,7 +306,7 @@ ligne est lisible :
 | Colonne | Protection |
 |---|---|
 | `cards.current_step_id` | Écriture refusée ; passe par `move_card` — **livrée par `CRM-034`**, voir ci-dessous |
-| `cards.email_local_part` | Généré par trigger, non modifiable — **objet de `CRM-013`, spécifié au §4.4**. Ouverte à ce jour : `CRM-034` l'a **laissée nommément ouverte** dans son énumération, son §5.5 se contredisant, et le comportement a été laissé inchangé plutôt que résolu en silence (INC-050) |
+| `cards.email_local_part` | Généré par trigger, écriture refusée — **LIVRÉE par `CRM-013`**, `supabase/migrations/0014_colonnes_protegees.sql`, spécifiée au §4.4. La **lecture** reste ouverte : une adresse de card est une identité, non un secret. INC-050 est close par cette livraison |
 | `cards.entered_step_at` | Fermée **par conséquence** du mécanisme ci-dessous, et c'est le comportement voulu : `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card`, et un client qui la réécrirait fausserait toute mesure d'ancienneté à l'étape — livrée par `CRM-034` |
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
 | `api_tokens.token_hash` | Jamais exposé |
@@ -336,18 +336,25 @@ Trois conséquences, toutes mesurées et toutes à connaître avant d'employer c
 3. **le refus rend `403` et divulgue la commande `GRANT` à exécuter** — comportement de PostgREST,
    quatrième occurrence d'INC-026.
 
-**Le mécanisme est livré, et la liste réellement posée est celle-ci** (`CRM-034`,
-`supabase/migrations/0012_move_card.sql` §2) : `title`, `description`, `position`, `owner_id`,
-`amount`, `currency`, `probability_override`, `next_action`, `next_action_at`, `snoozed_until`,
-`archived_at`, `deleted_at`, et `email_local_part` — cette dernière **à dessein**, INC-050. Sont
-donc fermées : `id`, `workspace_id`, `channel_id`, `workflow_id`, `current_step_id`,
-`entered_step_at`, `health_score`, `created_by`, `created_at`, `updated_at`. `search_tsv` est
+**Le mécanisme est livré, et la liste réellement posée est celle-ci** — douze colonnes, depuis que
+`CRM-013` a retiré la treizième (`supabase/migrations/0014_colonnes_protegees.sql`) : `title`,
+`description`, `position`, `owner_id`, `amount`, `currency`, `probability_override`,
+`next_action`, `next_action_at`, `snoozed_until`, `archived_at`, `deleted_at`. Sont donc fermées :
+`id`, `workspace_id`, `channel_id`, `workflow_id`, `current_step_id`, `entered_step_at`,
+`email_local_part`, `health_score`, `created_by`, `created_at`, `updated_at`. `search_tsv` est
 générée et ne l'a jamais été. `service_role` conserve `all privileges`, le `revoke` ne visant
 qu'`authenticated` : le seed est inchangé.
 
+**Dépendance d'ordre 12 → 14, et elle est réelle.** La section 2 de la migration 12 réapplique
+elle aussi ces privilèges, `email_local_part` **comprise** — état d'avant `CRM-013`. Rejouer la 12
+seule **rouvre** donc la colonne, sans aucun signal. Tout harnais qui rejoue la 12 doit rejouer la
+13 puis la 14 derrière elle ; `docs/PROD_MIGRATIONS.md` §3 le consigne, et
+`scripts/verify-colonnes-protegees.sh` le mesure **dans les deux sens**.
+
 La conséquence n° 1 ci-dessus n'est pas laissée à la mémoire : `supabase/tests/0013_move_card.test.sql`
-**énumère les colonnes ouvertes une par une**, de sorte qu'ajouter une colonne à `cards` sans
-trancher son cas fasse échouer la suite.
+et `supabase/tests/0015_colonnes_protegees.test.sql` **énumèrent les colonnes ouvertes une par
+une**, et la seconde en **compte** le total, de sorte qu'ajouter une colonne à `cards` sans
+trancher son cas — ou en fermer une de trop — fasse échouer la suite.
 
 Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5 —
 **les six sont livrées** depuis `CRM-036`, qui a apporté `card_field_values` et refermé INC-047.
@@ -429,24 +436,25 @@ colonne ne serait arrêté par rien. Aucun consommateur n'existe aujourd'hui ; l
 
 #### 4.4.4 Contrat d'API, à mesurer et non à supposer
 
-Douze lignes, avec les **jetons réels** des trois profils du seed. Les lignes *c* et *d* sont des
-**prédictions** sur le comportement de PostgreSQL, écrites avant le code pour être confirmées ou
-démenties par la mesure — non des faits acquis.
+Douze lignes, avec les **jetons réels** des trois profils du seed. Les lignes *c* et *d* étaient
+des **prédictions** sur le comportement de PostgreSQL, écrites avant le code : toutes deux sont
+**confirmées par la mesure**. La ligne *g*, elle, a été **révisée par la mesure** — elle disait
+« refus » sans préciser le code.
 
 | # | Appelant | Requête | Attendu |
 |---|---|---|---|
 | a | `admin` | `PATCH cards` `{email_local_part}` | `403`, `42501`, `permission denied for table cards` ; **ligne relue inchangée** |
-| b | `admin` | `PATCH cards` `{title}` | `200` — les douze colonnes ouvertes le restent |
+| b | `admin` | `PATCH cards` `{title}` | `204` — MESURÉ ; les douze colonnes ouvertes le restent |
 | c | `admin` | `PATCH cards` `{title, email_local_part}` | `403`, **et le titre n'est pas modifié non plus** : le refus porte sur l'instruction entière |
 | d | `admin` | `PATCH cards` `{email_local_part}` à sa **valeur courante** | `403` — le privilège se vérifie sur les colonnes **nommées**, pas sur les valeurs changées |
 | e | `business_developer` | `PATCH cards` `{email_local_part}` sur une card qu'il écrit | `403`, `42501` |
 | f | `viewer` | `PATCH cards` `{email_local_part}` sur une card qu'il **voit** | `403` — profil authentifié, donc `403` et non `401` (§2.8 de `CRM-035`) |
-| g | anonyme | `PATCH cards` `{email_local_part}` | refus ; **aucune ligne touchée** |
+| g | anonyme | `PATCH cards` `{email_local_part}` | **`401`**, `42501` — RÉVISÉE PAR LA MESURE : un appelant sans session obtient `401` là où un profil authentifié obtient `403` (§2.8 de `CRM-035`) ; aucune ligne touchée |
 | h | `admin` | `POST cards` avec un `email_local_part` choisi | `201`, adresse **générée**, différente de celle qui est fournie |
 | i | `admin` | `GET cards?select=email_local_part` | `200` — la colonne se **lit** : elle n'est pas un secret, elle est une **identité** |
 | j | anonyme | `GET cards` | `200` et `[]` — **preuve n° 11**, zéro ligne et non une erreur |
 | k | `viewer` | `GET cards` d'un channel dont le track lui est fermé | `200` et `[]` — **preuve n° 4**, reconduite |
-| l | `service_role` | `PATCH cards` `{email_local_part}` | `200` — le chemin du seed reste ouvert, §4.4.3 |
+| l | `service_role` | `PATCH cards` `{email_local_part}` | `204` — MESURÉ ; le chemin du seed reste ouvert, §4.4.3 |
 
 Le refus divulgue la commande `GRANT` à exécuter, dans son `hint`. C'est le comportement de
 PostgREST, **cinquième occurrence d'INC-026**, et il n'est pas corrigé ici.
@@ -463,7 +471,7 @@ colonne — et non sur le comportement final, identique dans les deux cas : la c
 de produit ne soit prise à la place du responsable. L'état posé coïncide alors exactement avec le
 bloc `GRANT` du §5.5, et la contradiction disparaît d'elle-même.
 
-#### 4.4.6 Preuves attendues de `CRM-013`
+#### 4.4.6 Preuves de `CRM-013`, produites
 
 1. les douze lignes du contrat §4.4.4 mesurées hors interface, avec les jetons réels ;
 2. `authenticated` privé d'`UPDATE` sur `email_local_part`, **et** conservant les douze autres —

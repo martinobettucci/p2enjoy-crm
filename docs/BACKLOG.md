@@ -555,18 +555,168 @@ par une preuve de substitution.
   prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec
   le certificat du proxy (INC-032, INC-042), et `npm ci` précédé d'un `npm config set cafile`.
 
-### CRM-013 — Colonnes protégées `[ ]`
+### CRM-013 — Colonnes protégées `[~]`
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables
 directement ; `card_events` et `audit_log` en écriture par trigger uniquement.
-
-- [ ] **PARTIELLEMENT DÉBLOQUÉE PAR `CRM-040`.** Deux de ses six cibles existent désormais :
-      `cards.current_step_id` et `cards.email_local_part`, toutes deux **modifiables**, ce que deux
-      assertions de `supabase/tests/0012_cards.test.sql` §11 constatent explicitement et qui
-      deviendront rouges quand cette unité sera livrée. Les quatre autres — `mail_inbound_accounts`,
-      `mail_outbound_identities`, `api_tokens`, `card_events`, `audit_log` — restent absentes
-      (chunks 4 et 5).
 **DoD** : preuves de refus n° 5, 6 et 8 ; test explicite qu'une lecture refusée retourne **zéro
 ligne** et non une erreur ambiguë.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-permissions-rls.md` §4.4 : aucun document
+      ne disait ce que `CRM-013` pouvait réellement livrer à cette place du plan, ni ce qu'un refus
+      d'écriture de colonne rend, ni si le chemin d'**insertion** devait être fermé lui aussi.
+      Rédigée **après mesure** sur la pile réelle — sondes créées puis détruites, codes HTTP et
+      `SQLSTATE` relevés à la main —, avec un contrat d'API de **douze lignes** écrit avant le code
+      pour être mesuré et non supposé. Commit documentaire dédié, poussé avant la première ligne
+      de SQL.
+- [x] **Le périmètre livrable est UNE colonne, et il est mesuré, non estimé** (décision 138).
+      `to_regclass` rend `NULL` pour `mail_inbound_accounts`, `mail_outbound_identities`,
+      `api_tokens`, `card_events` et `audit_log` : **cinq cibles sur six portent sur des tables
+      absentes**. `current_step_id` est fermée depuis `CRM-034` (INC-049). Reste
+      `cards.email_local_part`. L'unité **reste `[~]`**, et chaque absence est nommée plutôt que
+      compensée.
+- [x] **UNE PROPRIÉTÉ DE SÉCURITÉ ÉTAIT FAUSSE, ET LA MESURE L'A ÉTABLIE** (décision 139). Le
+      trigger de `CRM-040` **génère** l'adresse d'une card ; il ne la **protège** pas, et le §3.4 de
+      `docs/SPEC-cards.md` le disait en toutes lettres. MESURÉ avec le jeton réel de
+      l'administratrice : `PATCH {"email_local_part":"c-00000000"}` rendait `200`, et la relecture
+      confirmait la valeur. Les quarante bits de hasard sur lesquels `docs/SCHEMA.md` §5 fonde la
+      non-devinabilité étaient rendus au client par une simple mise à jour.
+- [x] `supabase/migrations/0014_colonnes_protegees.sql` : `revoke update` de table puis
+      `grant update (…)` énumérant les **douze** colonnes qui restent ouvertes, et le commentaire de
+      colonne mis à jour. **Aucune donnée touchée, aucune structure modifiée** : la migration ne
+      pose que des privilèges.
+- [x] **Ce que l'unité ne devait PAS changer est prouvé autant que ce qu'elle change**
+      (décision 140). MESURÉ : un `POST` portant `"email_local_part":"c-zzzzzzzz"` rend `201` et
+      enregistre une adresse **générée**. Le chemin d'insertion était déjà sûr ; le fermer aurait
+      refusé une requête que le produit accepte sans dommage. Le privilège `INSERT` reste donc de
+      table, et le trigger est **figé par deux assertions** — son existence et son type
+      `BEFORE INSERT`.
+- [x] **Aucun trigger de restauration, et le motif est écrit** (décision 141). Un `BEFORE UPDATE`
+      remettant `OLD.email_local_part` rendrait `200` à un appelant qui croirait avoir renommé
+      l'adresse : la « valeur par défaut trompeuse » que `CLAUDE.md` §18 proscrit. Un trigger levant
+      une exception ferait double emploi avec le privilège, vérifié par le moteur avant toute
+      exécution et valable pour tout chemin SQL.
+- [x] **INC-050 est CLOSE, par exécution et non par arbitrage** (décision 142). Ses deux branches ne
+      portaient que sur **l'attribution** de la colonne à une unité, jamais sur son état final,
+      identique des deux côtés. L'énoncé de backlog de `CRM-013` tranche l'imputation sans rien
+      décider à la place du responsable, et l'état posé coïncide **exactement** avec le bloc `GRANT`
+      du §5.5 de `docs/SPEC-workflow-engine.md`.
+- [x] **Test unitaire dédié** : `supabase/tests/0015_colonnes_protegees.test.sql`, **41 assertions,
+      aucune anomalie** — la colonne fermée en écriture et ouverte en lecture, les douze colonnes
+      ouvertes **énumérées une par une** et leur **total compté**, le refus opposable sous le rôle
+      réel (`42501`), le trigger d'insertion et son effet, le seed intact, et les cinq cibles
+      absentes figées par des assertions d'absence.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/colonnes-protegees.spec.ts`, **12
+      scénarios**, avec les jetons réels des trois profils seedés. Les douze lignes du contrat d'API
+      du §4.4.4 y sont rejouées, chaque refus **relisant la ligne** pour la constater inchangée.
+- [x] **Deux prédictions confirmées, une ligne révisée par la mesure.** Les lignes *c* et *d* du
+      contrat étaient signalées comme des prédictions : le refus porte bien sur l'**instruction
+      entière** — le titre d'une écriture mixte n'est pas modifié non plus — et réécrire la valeur
+      **courante** est refusé tout autant, le privilège se vérifiant sur les colonnes nommées. La
+      ligne *g* annonçait « refus » ; MESURÉ, l'anonyme obtient `401` et non `403`. Le contrat est
+      corrigé, pas le test relâché.
+- [x] **Preuves de refus n° 4 et n° 11 reconduites** au niveau des cards : le `viewer` fermé sur le
+      track ne voit aucune des cinq cards de `grands-comptes` ; l'anonyme obtient `200` et `[]` sur
+      une table qui en porte neuf. Le refus est mesuré comme **zéro ligne**, jamais comme une erreur.
+- [x] **Trois garde-fous posés par `CRM-034` et `CRM-040` ont échoué comme prévu, et ont été
+      RETOURNÉS** (mécanisme de la décision 51, dixième occurrence) : `supabase/tests/0012_cards.test.sql`,
+      `supabase/tests/0013_move_card.test.sql` et `scripts/verify-move-card.sh`. **Aucun n'a été
+      retiré** : le `lives_ok` devient un `throws_ok`, et les deux constats d'INC-050 constatent
+      désormais la fermeture **et** la dépendance d'ordre qui la menace.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert.
+      `npm run test:sql` **1093 assertions**, `npm run test:unit` **164 tests**, `npm run e2e:api`
+      **254 scénarios**, `npm run e2e:ui` **37 scénarios** — ce dernier au prix du contournement
+      récurrent d'INC-036 (**septième** occurrence). Les quatre captures réécrites par ce rejeu ont
+      été **regardées puis restaurées**, comme aux six unités précédentes : cette unité ne touche
+      aucun composant de l'interface, et l'écran reste celui d'un appelant anonyme. La seule
+      différence observée est l'état de survol laissé par le pointeur du pilote, déjà décrit par
+      `CRM-032`.
+- [x] Harnais de preuves rejouable `scripts/verify-colonnes-protegees.sh` : **50 contrôles, aucune
+      anomalie** — 44 hors suites, 50 avec elles, et **non complaisant** — la colonne rendue à la main fait passer une écriture qui
+      doit être refusée, et la restauration est **constatée**, pas supposée. Il mesure aussi la
+      **dépendance d'ordre 12 → 14 dans les deux sens** : rejouer la migration 12 seule rouvre la
+      colonne.
+- [x] **UN DÉFAUT RÉEL DANS LE HARNAIS QUE J'ÉCRIVAIS, TROUVÉ PAR `npm run test:sql`**
+      (décision 145). Sa première écriture rejouait la migration 12 puis la 14, **sans la 13** — qui
+      redéfinit `move_card` avec sa sixième vérification. Le produit sortait donc avec une garde à
+      **cinq** vérifications, et quatre fichiers pgTAP l'ont dénoncé. C'est la décision 135
+      reproduite à l'identique, par le harnais suivant. Corrigé : séquence 12 → 13 → 14, et un
+      contrôle explicite constate que `move_card` a retrouvé sa sixième garde. **Et ce n'est pas une
+      coïncidence** : une autre exécution de la routine a corrigé le même mode de défaillance sur
+      `scripts/verify-cards.sh` le même jour (décision 143, INC-055). Troisième et quatrième
+      occurrences ; la question d'inscrire la règle dans `docs/SPEC-test-harness.md` plutôt que de
+      la corriger harnais par harnais est posée en **INC-055**, à l'arbitrage.
+- [x] **`scripts/verify-cards.sh` reprend la migration 14 dans sa séquence de restauration**, à la
+      suite de la correction ci-dessus : il rejoue 11 → 12 → 13, et rejouer la 12 rouvre
+      `email_local_part`. Sans cet ajout, le harnais de `CRM-040` aurait défait `CRM-013` en
+      sortant.
+- [x] **UN SECOND DÉFAUT, QUE SEULE UNE BASE FROIDE POUVAIT RÉVÉLER — INC-056** (décision 144).
+      Trois garde-fous de `CRM-031`, `CRM-035` et `CRM-036` comptaient à l'échelle du **workspace**
+      les transitions à `require_fields` non vide, et attendaient `1`. MESURÉ sur un cluster neuf :
+      **2** — le seed pose ce tableau à sa section 6 et crée la copie de workflow à sa section 7,
+      laquelle en hérite (INC-037). Les contrôles mesuraient l'**âge de la base**, non le produit,
+      et `./resetMe.sh` ne reproduisait pas l'état sur lequel les preuves avaient été écrites,
+      contre `CLAUDE.md` §8. Comportement **inchangé** — il appartient à `CRM-032` et `CRM-005` ;
+      les trois contrôles sont rendus déterministes et l'héritage est **compté séparément**.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** que les preuves
+      qu'ils comptent — sans le retard que `CRM-036` avait dû rattraper sur quatre unités :
+      1051 → **1093** assertions, 242 → **254** scénarios d'API.
+- [x] **Aucune régression : les vingt et un harnais précédents rejoués** — `verify-stack` 33,
+      `verify-scripts` 52 (dont **1 anomalie connue**, INC-044, voir ci-dessous),
+      `verify-migrations` 23, `verify-vault` 26, `verify-authz` 26, `verify-auth` 42, `verify-seed`
+      49, `verify-types` 30, `verify-webapp` 41, `verify-harness` 25, `verify-tracks` 40,
+      `verify-channels` 23, `verify-catalogue` 32, `verify-workflows` 42, `verify-copie-workflow`
+      27, `verify-coherence-workflow` 26, `verify-champs-formulaire` 31, `verify-droits-fins` 35,
+      `verify-cards` 37, `verify-move-card` 55, `verify-valeurs-champs` 33.
+- [x] `docs/SPEC-permissions-rls.md` §4.3, §4.4, §7, `docs/SPEC-cards.md` §3.4 et §6.3,
+      `docs/SPEC-workflow-engine.md` §5.5, `docs/SCHEMA.md` §5, `docs/PROD_MIGRATIONS.md` §3
+      (migration 14), `docs/manual.md` chapitres 12 et 4.2, `README.md` §7, `CHANGELOG.md`,
+      `docs/INCONSISTENCY_REPORT.md` (INC-050 close, INC-056 ouverte) mis à jour dans le même
+      changement.
+- [ ] **CINQ CIBLES SUR SIX NE SONT PAS LIVRÉES, ET LEURS TABLES N'EXISTENT PAS** :
+      `mail_inbound_accounts.secret_id` (`CRM-052`), `mail_outbound_identities.secret_id`
+      (`CRM-053`), `api_tokens.token_hash` (`CRM-073`), `card_events` (`CRM-044`), `audit_log`
+      (`CRM-072`). **Les preuves de refus n° 6 et n° 8 restent donc hors d'atteinte** : elles
+      n'étaient pas satisfaisables à cette place du plan. Chaque absence est figée par une assertion
+      pgTAP **et** par un contrôle du harnais, qui deviendront rouges à la naissance de la table et
+      désigneront alors le `REVOKE` à écrire. **Bloqué par une dépendance, pas par un défaut de
+      l'unité.**
+- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La webapp reste un appelant
+      **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Un privilège de
+      colonne est par construction invisible à un anonyme, qui ne voit déjà aucune card : il
+      n'existe **aucune** vérification visuelle sensée à produire pour cette unité tant que
+      l'arbitrage n'est pas rendu. La règle est livrée et prouvée **en base et par l'API**, ce que
+      `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
+      défaut de l'unité.**
+- [ ] **Le seed n'a pas été mis à jour, et il n'y avait rien à y ajouter.** Cette unité ne crée ni
+      table, ni colonne, ni statut, ni flux : elle retire un privilège. Les neuf cards du seed
+      démontrent déjà la règle — leur adresse est générée, et désormais non réécrivable. Trois
+      assertions et trois contrôles constatent le seed **intact** après passage du harnais.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « preuves de refus n° 5, 6 et 8 ;
+test explicite qu'une lecture refusée retourne zéro ligne ». La n° 5 était **déjà acquise par
+`CRM-034`** (INC-049). Le second point est livré — lignes *j* et *k* du contrat, mesurées comme zéro
+ligne et non comme une erreur. Les n° 6 et n° 8 ne l'étaient pas à cette place du plan, et l'absence
+est nommée plutôt que compensée par une preuve de substitution. **Aucun test E2E d'interface, aucune
+vérification visuelle** : l'unité ne livre aucun écran.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran.** Onzième unité consécutive à buter sur INC-021.
+- **`service_role` conserve l'écriture sur la colonne**, et le seed en dépend. Un service porteur de
+  cette clé — `mail-sync` à partir de `CRM-051` — ne serait donc arrêté par rien s'il se trompait de
+  colonne. Aucun consommateur n'existe aujourd'hui ; la question devra être reposée à ce moment-là.
+- **Le refus divulgue la commande `GRANT` à exécuter**, dans son `hint`. Comportement de PostgREST,
+  **cinquième occurrence d'INC-026**, inchangé et non masqué — un scénario le constate plutôt que de
+  laisser la divulgation devenir invisible à force d'être habituelle.
+- **`scripts/verify-scripts.sh` rend 1 anomalie sur 52**, et elle est **connue et inchangée** :
+  INC-044, la garde de ports est inerte faute de `ss` et de `netstat` sur l'hôte. Elle ne relève pas
+  de cette unité, et la masquer serait exactement ce que `CLAUDE.md` §18 interdit.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec le
+  certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
+  et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **septième** occurrence).
 
 ### CRM-014 — Harnais de preuves d'autorisation `[ ]`
 Projet Playwright `api` exécutant les douze scénarios de refus avec les jetons réels de chaque

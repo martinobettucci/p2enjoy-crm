@@ -61,7 +61,10 @@ MIGRATION_FILE=supabase/migrations/0011_cards.sql
 # `npm run test:sql` de « aucune anomalie » à **huit assertions en échec** réparties sur
 # `0012_cards.test.sql` et `0013_move_card.test.sql`. La garde centrale de `CRM-034` était donc
 # désactivée pour tout ce qui s'exécutait ensuite, sans qu'aucun message ne le signale.
-MIGRATIONS_SUIVANTES="supabase/migrations/0012_move_card.sql supabase/migrations/0013_valeurs_champs.sql"
+# La 14 s'y ajoute depuis `CRM-013` : elle referme `cards.email_local_part`, que la section 2 de
+# la 12 rend au contraire OUVERTE. Rejouer 11 → 12 → 13 sans elle rouvrirait cette colonne — même
+# mode de défaillance, un cran plus loin (décisions 143 et 145).
+MIGRATIONS_SUIVANTES="supabase/migrations/0012_move_card.sql supabase/migrations/0013_valeurs_champs.sql supabase/migrations/0014_colonnes_protegees.sql"
 
 # Rejoue la migration de cette unité PUIS celles qui la complètent, dans l'ordre du répertoire.
 rejouer_migrations() {

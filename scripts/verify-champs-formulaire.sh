@@ -360,12 +360,27 @@ champs_copie=$(psql_db -c "
 # nommait son motif : aucune garde ne lisait la colonne. `move_card` la lit désormais, et le seed
 # pose une exigence sur « Démarrer la réalisation » — la seule donnée qui exerce le second membre
 # de l'union de docs/SPEC-form-composer.md §3.5. Le contrôle **compte** au lieu de constater.
+# RENDU DÉTERMINISTE PAR `CRM-013` — INC-056, et le motif est MESURÉ. Le compte portait sur le
+# WORKSPACE. Or `copy_workflow_to_track` recopie `require_fields` (INC-037) et le seed pose ce
+# tableau AVANT de créer la copie : sur une base FROIDE — celle que produit `./resetMe.sh` — la
+# copie l'hérite et le compte vaut 2. Il valait 1 sur la base ANCIENNE où `CRM-036` l'a mesuré,
+# dont la copie précédait cette unité. Le contrôle porte désormais sur le workflow GLOBAL, et
+# l'héritage est compté séparément. Aucun comportement n'est modifié.
 exigeantes=$(psql_db -c "select count(*) from public.workflow_transitions
-                          where workspace_id = '$WS_SEED' and cardinality(require_fields) > 0;")
+                          where workflow_id = '$WF_GLOBAL' and cardinality(require_fields) > 0;")
 [ "$exigeantes" = "1" ] \
-	&& ok "INC-033 : UNE transition porte \`require_fields\` depuis \`CRM-036\` — le vide n'avait "\
-"plus lieu d'être dès que \`move_card\` a su la lire" \
-	|| fail "transitions à \`require_fields\` non vide : $exigeantes, attendu 1"
+	&& ok "INC-033 : UNE transition du workflow GLOBAL porte \`require_fields\` depuis \`CRM-036\` "\
+"— le vide n'avait plus lieu d'être dès que \`move_card\` a su la lire" \
+	|| fail "transitions du workflow global à \`require_fields\` non vide : $exigeantes, attendu 1"
+
+heritees=$(psql_db -c "select count(*) from public.workflow_transitions t
+                         join public.workflows w on w.id = t.workflow_id
+                        where w.workspace_id = '$WS_SEED' and w.scope = 'track'
+                          and cardinality(t.require_fields) > 0;")
+[ "$heritees" = "1" ] \
+	&& ok "INC-037, AGGRAVÉE ET COMPTÉE : la copie HÉRITE de l'exigence sans recevoir aucun champ "\
+"— l'exigence y est inerte. Comportement INCHANGÉ, il appartient à \`CRM-032\` (INC-056)" \
+	|| fail "transitions héritées à \`require_fields\` non vide : $heritees, attendu 1"
 
 titre "7. Le harnais est non complaisant : trois dégradations réelles"
 

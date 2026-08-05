@@ -434,6 +434,12 @@ tableau d'origine ne portait pas :
 afin qu'une adresse divulguée ne permette pas d'énumérer les autres cards. L'adresse complète
 est `email_local_part || '@' || workspaces.inbound_domain`.
 
+**La colonne n'est pas modifiable par un client depuis `CRM-013`** : `authenticated` n'a plus le
+privilège `UPDATE` dessus (`docs/SPEC-permissions-rls.md` §4.4). Sans ce retrait, la
+non-devinabilité ci-dessus était rendue au client par une simple mise à jour — MESURÉ. La
+**lecture** reste ouverte : une adresse de card est une identité, non un secret. `service_role`
+conserve l'écriture, dont le seed dépend.
+
 **Livrée par `CRM-040`** — voir `docs/SPEC-cards.md`. Trois précisions que le tableau ci-dessus ne
 porte pas, et qui sont opposables :
 

@@ -631,16 +631,21 @@ select hasnt_table('public', 'card_events',
 	'`card_events` reste due par `CRM-044` : aucun événement `moved` n''est écrit, la trace du '
 	'déplacement n''existe pas');
 
--- --- INC-050 : `email_local_part` reste ouverte, et c'est le comportement INCHANGÉ -------------
--- Le §5.5 se contredit : son bloc `GRANT` ne liste pas la colonne, sa prose l'énumère parmi ce qui
--- « reste à `CRM-013` ». `CLAUDE.md` §5 impose de consigner sans résoudre, donc de laisser le
--- comportement en l'état.
+-- --- INC-050 : `email_local_part` est FERMÉE, et la contradiction est éteinte ------------------
+-- ASSERTION RETOURNÉE PAR `CRM-013` (décision 51). Elle constatait la colonne ouverte, et disait
+-- devoir devenir rouge le jour où l'unité qui la porte serait livrée. Elle l'est : la migration
+-- 0014 retire le privilège, et l'état posé coïncide alors EXACTEMENT avec le bloc `GRANT` du §5.5
+-- — la contradiction s'éteint par exécution, non par arbitrage (décision 142).
+--
+-- ELLE FIGE AUSSI LA DÉPENDANCE D'ORDRE 12 → 14 : cette suite s'exécute après le répertoire de
+-- migrations entier. Un harnais qui rejouerait la migration 12 SEULE rouvrirait la colonne, et
+-- cette assertion le dénoncerait.
 
 select ok(
-	has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update'),
-	'INC-050 : `email_local_part` reste MODIFIABLE, comme depuis `CRM-040`. Le §5.5 se contredit '
-	'sur cette colonne ; la contradiction est consignée et NON résolue ici. La fermer livrerait la '
-	'moitié de `CRM-013` en silence. CETTE ASSERTION DOIT DEVENIR ROUGE À `CRM-013`');
+	not has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update'),
+	'INC-050 CLOSE : `email_local_part` est FERMÉE par `CRM-013` (migration 0014). Si cette '
+	'assertion tombe, c''est que la migration 12 a été rejouée seule — elle rend la colonne, '
+	'§5.5 et INC-050 — et le produit est resté dégradé (décisions 108, 135)');
 
 select ok(
 	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
