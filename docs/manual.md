@@ -28,7 +28,7 @@
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; le formulaire a désormais un écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. **Ses réponses au formulaire existent aussi depuis `CRM-036`** — voir le chapitre 24. Ce qui manque est l'**écran** |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Le tableau kanban, son glisser-déposer et son menu de déplacements sont livrés par `CRM-041` ; ils restent invisibles à un visiteur non identifié (INC-021). Côté serveur — Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
-| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
+| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Partiellement livré, avec son écran** — la **discussion** d'une affaire existe et se met à jour en temps réel (chapitre 4.10). Écrire exige le droit d'écriture sur le channel ; corriger et supprimer sont réservés à l'auteur, **la règle est appliquée par le serveur mais aucun bouton ne l'offre encore**. La suppression détruit réellement le texte. L'**historique** relève de `CRM-044` et n'est pas livré |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
@@ -510,6 +510,54 @@ n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identi
 **Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
 introuvable », comme pour le tableau (chapitre 3.2).
 
+### 4.10 La discussion d'une affaire
+
+À droite de la fiche d'une affaire — sous le formulaire lorsque l'écran est étroit — se trouve la
+**discussion**. C'est le fil des commentaires laissés sur cette affaire, du plus ancien en haut au
+plus récent en bas, comme une conversation se lit.
+
+**Qui peut écrire.** Toute personne qui a le droit d'**écrire** dans le channel de l'affaire. Un
+compte en consultation seule **lit** la discussion sans pouvoir y ajouter quoi que ce soit : la
+demande est refusée par le serveur, et l'écran l'explique. Ce n'est pas le bouton qui décide — il
+est toujours là — mais le serveur, et lui seul.
+
+**Écrire un commentaire.** Le champ se trouve sous le fil. Le bouton *Publier* reste indisponible
+tant que le champ est vide ou ne contient que des espaces. Un commentaire fait au plus **10 000
+caractères**. Si la publication est refusée, **votre texte reste dans le champ** : vous n'avez rien
+à ressaisir.
+
+**Corriger et supprimer : la règle existe, les boutons pas encore.** Le serveur n'autorise la
+correction et la suppression d'un commentaire qu'à **son auteur**, et à personne d'autre —
+administrateur compris. **Aucun bouton ne les propose encore dans le fil** : la règle est donc
+opposable, mais le geste n'est pas offert par l'écran.
+
+Ce que cette règle donnera, une fois le geste livré : un commentaire corrigé portera la mention
+*modifié* — l'écran l'affiche **déjà** pour les commentaires corrigés autrement —, avec sa date en
+infobulle ; et **la suppression sera définitive**. Un commentaire supprimé garde sa place dans la
+conversation, pour qu'on voie qu'un tour de parole a existé, mais **son texte est détruit** : il
+n'est pas seulement masqué, il n'est plus enregistré nulle part et rien ne permet de le retrouver.
+Il ne peut alors plus être ni corrigé, ni restauré. L'écran sait déjà afficher un commentaire
+supprimé — la mention *Commentaire supprimé* à sa place.
+
+**Le fil se met à jour tout seul.** Un commentaire publié par un collègue apparaît sans que vous
+rechargiez la page — et seulement chez les personnes qui ont accès à l'affaire. Une suppression se
+propage de la même façon.
+
+**Ce que la discussion ne fait pas encore.**
+
+- **Aucun nom d'auteur n'est affiché** : aucun nom de personne n'est aujourd'hui lisible dans le
+  produit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même
+  limite que pour le responsable d'une affaire (chapitres 4.8 et 4.9).
+- **Les mentions ne préviennent personne** : écrire le nom d'un collègue dans un commentaire ne lui
+  envoie aucune notification.
+- **La mise en forme n'est pas interprétée** : le texte est affiché tel qu'il a été saisi, retours à
+  la ligne compris, sans gras ni liens cliquables.
+- **Aucun modérateur ne peut retirer le commentaire d'une autre personne**, pas même un
+  administrateur.
+
+**Conséquence de l'absence de connexion :** ouvrir la fiche d'une affaire aujourd'hui affiche
+« Card introuvable », et la discussion n'est donc jamais atteinte (chapitre 3.2).
+
 ### 4.6 Ce qui n'est pas encore livré
 
 - **Les vues sauvegardées** : la vue liste et ses filtres existent (chapitre 4.9), mais aucun filtre
@@ -524,7 +572,9 @@ introuvable », comme pour le tableau (chapitre 3.2).
 - **L'enregistrement d'une réponse depuis l'écran** (chapitre 4.7).
 - **Le responsable et les étiquettes sur une carte** : le nom d'une personne n'est aujourd'hui
   lisible par personne, et le produit préfère ne rien afficher plutôt qu'un identifiant technique.
-- **Les commentaires, l'historique et les documents.**
+- **L'historique et les documents** : les commentaires, eux, sont livrés (chapitre 4.10).
+- **La modification et la suppression d'un commentaire depuis l'écran** : la règle existe et le
+  serveur l'applique, mais aucun bouton ne les propose encore dans le fil.
 - **Le score de santé** : la colonne existe, rien ne l'alimente.
 
 ## Règles de rédaction de ce manuel

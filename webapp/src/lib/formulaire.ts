@@ -56,7 +56,11 @@ export type ValeurChamp = Pick<
 export const COLONNES_CHAMP = 'id, key, label, type, position, options, help_text, archived_at'
 export const COLONNES_REGLE = 'field_id, step_id, visibility'
 export const COLONNES_VALEUR = 'field_id, value'
-export const COLONNES_CARD_FORMULAIRE = 'id, title, workflow_id, current_step_id, email_local_part'
+// `workspace_id` est demandée depuis `CRM-043` : le panneau de commentaires doit l'envoyer à
+// l'insertion, le générateur de types déclarant la colonne obligatoire faute de voir le trigger
+// qui la dérive (docs/JOURNAL.md décision 200). L'écran ne l'affiche pas.
+export const COLONNES_CARD_FORMULAIRE =
+	'id, title, workflow_id, workspace_id, current_step_id, email_local_part'
 
 /** L'étape courante, telle que la mention « requis pour passer à <étape> » a besoin de la nommer. */
 export type EtapeCourante = {
@@ -67,7 +71,7 @@ export type EtapeCourante = {
 /** La card portant le formulaire, telle que l'écran a besoin de la connaître. */
 export type CardOuverte = Pick<
 	Database['public']['Tables']['cards']['Row'],
-	'id' | 'title' | 'workflow_id' | 'current_step_id' | 'email_local_part'
+	'id' | 'title' | 'workflow_id' | 'workspace_id' | 'current_step_id' | 'email_local_part'
 >
 
 /**

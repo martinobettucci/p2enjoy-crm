@@ -177,6 +177,24 @@ export const fr = {
 		"L'application n'a pas reçu l'adresse de l'API ou sa clé publique. Elle ne peut donc joindre aucun serveur.",
 	'config.error.detail': 'Variables attendues au build : VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY.',
 
+	// --- Panneau de commentaires — CRM-043, docs/DESIGN_SYSTEM.md §5.10 ------------------
+	'comments.title': 'Discussion',
+	'comments.aria': 'Fil de discussion de cette affaire',
+	'comments.empty.title': 'Aucun commentaire pour le moment',
+	'comments.empty.body': 'Soyez la première personne à commenter cette affaire.',
+	'comments.error.title': 'Discussion indisponible',
+	'comments.deleted': 'Commentaire supprimé',
+	'comments.edited': 'modifié',
+	'comments.edited.title': 'Modifié le',
+	'comments.compose.label': 'Votre commentaire',
+	'comments.compose.placeholder': 'Écrire un commentaire…',
+	'comments.compose.submit': 'Publier',
+	'comments.compose.sending': 'Publication…',
+	'comments.refus.forbidden': "Vous ne pouvez pas commenter cette affaire. Votre texte est conservé ci-dessus.",
+	'comments.refus.invalide': 'Un commentaire ne peut être vide ni dépasser 10 000 caractères.',
+	'comments.refus.network': "Le commentaire n'a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.",
+	'comments.refus.unknown': "Le commentaire n'a pas pu être publié.",
+
 	// --- Région d'annonces (docs/DESIGN_SYSTEM.md §8) ------------------------------------
 	'live.aria': 'Annonces',
 	'live.workspaces.loaded': 'Espaces de travail chargés',
@@ -190,6 +208,8 @@ export const fr = {
 	'live.board.aria': 'Annonces du board',
 	'live.board.moved': 'Affaire déplacée vers',
 	'live.board.refused': 'Déplacement refusé',
+	'live.comments.aria': 'Annonces de la discussion',
+	'live.comments.published': 'Commentaire publié',
 } as const
 
 export type CleTraduction = keyof typeof fr

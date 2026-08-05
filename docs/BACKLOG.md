@@ -3523,13 +3523,57 @@ Rédaction libre par tout membre pouvant lire la card, édition et suppression p
       `docs/PROD_MIGRATIONS.md` §3 (migration 15 et son contrat d'exploitation),
       `docs/INCONSISTENCY_REPORT.md` (INC-071 et INC-072 ouvertes, INC-048 et INC-034 enrichies),
       `docs/JOURNAL.md` décisions 192 à 200, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **AUCUN ÉCRAN N'EST LIVRÉ.** Le panneau de commentaires du §13.10 — son composant, son test
-      unitaire, sa preuve d'interface et ses captures observées — reste dû. Le design system l'écrit
-      (§5.10), le backend le sert, et rien ne l'affiche. **C'est la raison principale pour laquelle
-      cette unité reste `[~]`**, avant même INC-021.
-- [ ] **`docs/manual.md` n'est pas mis à jour**, et c'est cohérent : le manuel décrit le produit
-      **réellement exécuté** (`CLAUDE.md` §7), et aucun utilisateur ne peut aujourd'hui écrire ni
-      lire un commentaire depuis l'interface. Le chapitre viendra avec l'écran.
+- [x] **LE PANNEAU DE COMMENTAIRES EST LIVRÉ**, et il ne porte aucune règle. L'ordre du fil, la
+      classification des refus et la règle d'abonnement vivent dans `webapp/src/lib/commentaires.ts`,
+      vérifiables sans navigateur ; `PanneauCommentaires.tsx` rend. Il occupe la **colonne de
+      droite** du détail de card, que `CRM-037` avait laissée vide en nommant l'écart, et passe
+      **sous** le formulaire en dessous de 1024 px.
+- [x] **Le composeur est TOUJOURS rendu, et le refus vient du backend.** L'interface ne calcule
+      aucun droit d'écriture : elle envoie, et traduit le `403`. Masquer le bouton pour un `viewer`
+      serait une aide d'interface prise pour une autorisation (`CLAUDE.md` §10) — et supposerait de
+      calculer côté client une règle que seule la base connaît. **Le texte saisi est conservé** en
+      cas de refus : le vider ferait perdre un texte pour une erreur qui n'est pas celle de qui
+      l'a écrit.
+- [x] **Le flux DÉCLENCHE la lecture, il ne la remplace pas** (décision 201). Un événement dit que
+      le fil a changé, non ce qu'il est devenu : le panneau relit. L'ordre reste celui du serveur,
+      un événement perdu ne laisse aucun écart, et la lecture applique la RLS **courante**. Le coût
+      — une requête par événement — est nommé, et borné par l'absence de pagination.
+- [x] **Test unitaire dédié** : `webapp/src/lib/commentaires.test.ts` (**17 tests** : ordre
+      chronologique, ordre **total** à date égale, place tenue par la pierre tombale, requête
+      réellement émise, charge d'insertion sans `author_id`, quatre classifications de refus) et
+      `webapp/src/app/PanneauCommentaires.test.tsx` (**16 tests** sur le composant réel, dont la
+      lecture déclenchée par l'abonnement et la relecture sur événement). `npm run test:unit` rend
+      **438 tests**.
+- [x] **Preuve d'interface dédiée** : `e2e/ui/commentaires.spec.ts`, **14 scénarios** contre le
+      build de production. Le premier n'emploie **aucune substitution** — l'anonyme ouvre réellement
+      la fiche, n'obtient aucune card, et **aucune requête de fil ne part**. Le second substitue la
+      card **et rien d'autre** : la requête du fil est celle du produit, la réponse est celle de la
+      pile — `200` et `[]` —, et l'écran affiche son état vide. `npm run e2e:ui` passe de 99 à
+      **113**.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-043/`, **huit captures** —
+      fil chargé, fil vide, refus d'écriture, commentaire très long à 390 px, et les **quatre
+      paliers** du §7. Quatre ont été regardées une à une.
+- [x] **UNE INCOHÉRENCE TROUVÉE EN REGARDANT UNE CAPTURE** (décision 202) : dans
+      `refus-ecriture-1440.jpg`, l'état vide invite à « être la première personne à commenter »
+      **juste au-dessus** du message disant que l'on ne peut pas commenter. Les deux textes sont
+      corrects ; leur voisinage ne l'est pas. **Non corrigée**, et le motif est une règle : corriger
+      supposerait que l'interface sache avant d'envoyer que l'utilisateur n'a pas le droit d'écrire.
+      Écrite au §13.13. Cinquième fois qu'une capture dénonce ce qu'un test laisse passer.
+- [x] **`docs/manual.md` chapitre 4.10 et sommaire**, écrits d'après le produit **réellement
+      exécuté** : ce que la discussion fait, ce qu'elle ne fait pas, et **le fait que la règle de
+      correction et de suppression existe sans que le geste soit offert**.
+- [x] Harnais complété : `scripts/verify-commentaires.sh` rend **62 contrôles, aucune anomalie**, et
+      ajoute trois gardes de séparation — le composant ne trie ni ne classe, aucune identité
+      d'auteur n'atteint le rendu (INC-014), aucune persistance côté client n'apparaît
+      (`CLAUDE.md` §11).
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés une seconde fois dans le MÊME
+      changement** : `SCENARIOS_UI` 99 → **113**.
+- [ ] **LES ACTIONS « MODIFIER » ET « SUPPRIMER » NE SONT PAS RENDUES.** Le §5.10 du design system
+      les décrit, le backend les applique, la preuve d'API les exerce — **aucun bouton ne les offre
+      dans le fil**. Les deux gestes supposent de distinguer *ses* commentaires de ceux des autres,
+      donc de connaître l'identifiant de l'appelant, donc une session : INC-021. Un bouton offert à
+      tous, qui échouerait pour tous sauf l'auteur, serait une aide d'interface trompeuse. Écart
+      nommé au §13.12 et dans le manuel, non comblé au jugé.
 - [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les treize unités précédentes : le
       parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
       connexion. **Quatorzième unité consécutive.**
@@ -3537,11 +3581,15 @@ Rédaction libre par tout membre pouvant lire la card, édition et suppression p
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « API (refus pour un `viewer`) ;
 E2E ; temps réel constaté ». **Le premier et le troisième sont livrés et mesurés** — le refus avec
 le jeton réel du `viewer` sur une card qu'il voit, et le temps réel avec son témoin et son silence.
-**Le second ne l'est pas** : aucun écran n'existe, donc aucun parcours à éprouver de bout en bout.
+**Le second l'est contre des réponses substituées** : l'écran existe et ses quatorze scénarios
+s'exécutent contre le build de production, mais le **chaînage** — un utilisateur connecté publiant
+réellement depuis l'écran — suppose une session, et aucune unité du backlog ne porte l'écran de
+connexion.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran** (voir ci-dessus). L'unité est backend seulement à cette étape.
+- **Aucune action de modification ni de suppression dans le fil** (voir ci-dessus).
+- **Aucun parcours de publication par un utilisateur connecté** : INC-021.
 - **INC-071 et INC-072 sont ouvertes**, relevées par cette unité : la première sur ce qu'il faut
   pour commenter, la seconde sur la modération. Le comportement livré est celui des sources
   concordantes et de l'intersection ; **aucun modérateur ne peut retirer un commentaire déplacé**.
@@ -3563,6 +3611,10 @@ le jeton réel du `viewer` sur une card qu'il voit, et le temps réel avec son t
   d'image échoue de nouveau. Aucune preuve n'en dépend, et aucun script du dépôt n'a été modifié.
 - **Identité Git reposée avant le premier commit** — INC-034 point 2, **cinquième** occurrence,
   aucune réécriture d'historique nécessaire cette fois.
+- **Les huit captures de `CRM-037` ont été RENOUVELÉES**, comme `CLAUDE.md` §16 l'exige : l'écran de
+  détail d'une card a changé — la colonne de droite qu'il laissait vide porte désormais le panneau —,
+  et les captures qui le montraient ne représentaient plus l'état exécuté. Les quatorze captures des
+  autres unités, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
 
 ### CRM-044 — Timeline unifiée `[ ]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.

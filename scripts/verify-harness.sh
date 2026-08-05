@@ -127,8 +127,8 @@ PORT_RAPPORT=9323
 # constataient l'absence de `card_comments` dans `0012_cards` et `0013_move_card` —, et deux
 # assertions s'y sont ajoutées : 1164 + 84 + 2 = 1250. `e2e/api/commentaires.spec.ts` livre
 # **17 scénarios** (les seize lignes du contrat du §13.8, plus le temps réel avec son témoin) :
-# 358 + 17 = 375. `SCENARIOS_UI` est inchangé — le panneau de commentaires n'est pas livré à cette
-# étape, et l'unité reste `[~]`. Valeurs MESURÉES, non déduites.
+# 358 + 17 = 375, et `SCENARIOS_UI` passe de 99 à **113** avec le panneau. Valeurs MESURÉES, non
+# déduites.
 ASSERTIONS_ATTENDUES=1250
 SCENARIOS_API=375
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
@@ -147,8 +147,13 @@ SCENARIOS_API=375
 # **99 depuis `CRM-042`** : vingt-sept scénarios de vue liste — le tableau et ses cinq colonnes, le
 # tri et son `aria-sort`, la clôture des clés de tri, les deux filtres, la pagination et son `416`,
 # la bascule entre les deux vues, les données longues à deux paliers, et les quatre paliers.
+# **113 depuis `CRM-043`** : quatorze scénarios de panneau de commentaires — l'appelant anonyme qui
+# n'atteint jamais le panneau, la requête du fil observée sur la VRAIE API avec sa réponse vide, les
+# trois états d'un commentaire (vivant, modifié, pierre tombale), l'absence de tout nom d'auteur, le
+# fil vide, le composeur et son état désactivé, le `403` affiché sans perdre le texte saisi, la
+# publication au clavier, les quatre paliers et un commentaire très long.
 # Valeur MESURÉE, non déduite.
-SCENARIOS_UI=99
+SCENARIOS_UI=113
 
 TRAVAIL=$(mktemp -d)
 failures=0

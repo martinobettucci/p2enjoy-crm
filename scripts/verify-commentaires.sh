@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# @verifies CRM-043 (docs/BACKLOG.md) — Definition of Done des commentaires, partie backend
+# @verifies CRM-043 (docs/BACKLOG.md) — Definition of Done des commentaires
 # @verifies docs/SPEC-cards.md §13.2 (modèle), §13.3 (unicité et dérivation), §13.4 (la pierre
 #           tombale), §13.5 (`edited_at`), §13.6 (autorisations), §13.7 (colonnes protégées),
 #           §13.8 (contrat d'API), §13.9 (temps réel), §13.11 (seed), §13.14 (preuves attendues)
 # @verifies docs/SPEC-permissions-rls.md §3.6, §3.7 (les deux fonctions d'appui), §7 (refus n° 4)
 # @verifies docs/SPEC-seed.md §2.14 (commentaires du seed, convergence par présence et par état)
-# @verifies docs/INCONSISTENCY_REPORT.md INC-071, INC-072, INC-048, INC-061 (jeu d'essai nettoyé)
+# @verifies docs/DESIGN_SYSTEM.md §5.10 (panneau de commentaires), §7 (paliers), §12.5 (réponses
+#           substituées) ; CLAUDE.md §16 (vérification visuelle)
+# @verifies docs/INCONSISTENCY_REPORT.md INC-071, INC-072, INC-048, INC-061 (jeu d'essai nettoyé),
+#           INC-021 (webapp anonyme), INC-014 (profils illisibles)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-043`, POUR CE QUI EST LIVRÉ :
 #
@@ -18,16 +21,20 @@
 #      `DELETE`, l'appartenance à la publication de temps réel ;
 #   5. le seed porte ses cinq commentaires, dont un modifié et un supprimé au corps VIDE, et il
 #      converge — le rejeu ne change rien et ne lève aucun refus ;
-#   6. le harnais est NON COMPLAISANT : chaque affaiblissement volontaire le fait réellement
+#   6. le panneau est livré : ses tests unitaires, sa preuve d'interface contre le BUILD DE
+#      PRODUCTION, ses captures aux quatre paliers, et le build lui-même ;
+#   7. le harnais est NON COMPLAISANT : chaque affaiblissement volontaire le fait réellement
 #      échouer, et la restauration est constatée.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
 # ---------------------------------------------------------------------------------------------
-# Il ne prouve **aucun écran** : le panneau de commentaires du §13.10 n'est pas livré à cette
-# étape, non plus que son test unitaire, sa preuve d'interface et ses captures. `CRM-043` reste
-# `[~]` pour cette raison, et pour INC-021 — la webapp étant un appelant anonyme, un fil de
-# discussion ne s'affiche jamais en conditions réelles.
+# Il ne prouve **aucune publication par un utilisateur connecté** : la webapp est un appelant
+# anonyme faute d'écran de connexion (INC-021), et le fil ne se remplit jamais en conditions
+# réelles. Les états chargés sont prouvés en substituant la réponse réseau, procédé endossé par
+# docs/DESIGN_SYSTEM.md §12.5 — et le contrat d'écriture, lui, est prouvé hors interface par
+# `e2e/api/commentaires.spec.ts` avec les jetons réels des trois comptes. `CRM-043` reste `[~]`
+# pour cette raison.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -43,6 +50,12 @@ cd "$(dirname "$0")/.."
 MIGRATION=supabase/migrations/0015_commentaires.sql
 TEST_SQL=supabase/tests/0017_commentaires.test.sql
 SPEC_API=e2e/api/commentaires.spec.ts
+MODULE=webapp/src/lib/commentaires.ts
+COMPOSANT=webapp/src/app/PanneauCommentaires.tsx
+TEST_UNITAIRE=webapp/src/lib/commentaires.test.ts
+TEST_COMPOSANT=webapp/src/app/PanneauCommentaires.test.tsx
+SPEC_UI=e2e/ui/commentaires.spec.ts
+CAPTURES=docs/captures/CRM-043
 SEED=supabase/seed/apply-seed.sh
 DB_CONTAINER=p2enjoy-db
 
@@ -100,17 +113,20 @@ done
 
 titre "1. Fichiers livrés et traçabilité"
 
-for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$MODULE" "$COMPOSANT" "$TEST_UNITAIRE" \
+	"$TEST_COMPOSANT" "$SPEC_UI"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
-if head -3 "$MIGRATION" | grep -q '@spec CRM-043'; then
-	ok "la migration porte son commentaire @spec"
-else
-	fail "la migration ne cite pas son unité de backlog"
-fi
+for fichier in "$MIGRATION" "$MODULE" "$COMPOSANT"; do
+	if head -3 "$fichier" | grep -q '@spec CRM-043'; then
+		ok "$(basename "$fichier") porte son commentaire @spec"
+	else
+		fail "$(basename "$fichier") ne cite pas son unité de backlog"
+	fi
+done
 
-for fichier in "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$TEST_SQL" "$SPEC_API" "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_UI"; do
 	if head -3 "$fichier" | grep -q '@verifies CRM-043'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
@@ -283,6 +299,73 @@ if [ "$RAPIDE" = false ]; then
 		ok "la preuve d'API n'a laissé AUCUNE ligne d'essai en base — leçon d'INC-061"
 	else
 		fail "des lignes d'essai « f00d… » subsistent : les preuves des autres unités vont tomber"
+	fi
+fi
+
+# --- 4 bis. Le panneau ---------------------------------------------------------------------------
+
+titre "4 bis. Le panneau de commentaires"
+
+# LE COMPOSANT NE PORTE AUCUNE RÈGLE. Ces deux contrôles figent la séparation : l'ordre du fil et
+# la classification des refus vivent dans le module, vérifiables sans navigateur.
+if grep -qE "sort\(|classerRefus" "$COMPOSANT"; then
+	fail "le composant recompose ou reclasse : la règle doit vivre dans $MODULE"
+else
+	ok "le composant ne trie ni ne classe : il rend (§13.10)"
+fi
+
+# INC-014 : aucun nom d'auteur n'est affiché, et la règle est figée ici comme dans les tests.
+if grep -qE "auteurId|author_id" "$COMPOSANT"; then
+	fail "le composant affiche ou manipule l'identité de l'auteur — INC-014, §13.10"
+else
+	ok "aucune identité d'auteur n'atteint le rendu — INC-014, règle du §12.5"
+fi
+
+# CLAUDE.md §11 : aucune persistance côté client n'est introduite, brouillon compris.
+if grep -qE "localStorage|sessionStorage|document\.cookie" "$MODULE" "$COMPOSANT"; then
+	fail "une persistance côté client est apparue — CLAUDE.md §11"
+else
+	ok "aucune persistance côté client : ni brouillon, ni préférence (CLAUDE.md §11)"
+fi
+
+if [ "$RAPIDE" = false ]; then
+	if npm run test:unit >"$TRAVAIL/unit.log" 2>&1; then
+		tests=$(grep -oE 'Tests +[0-9]+ passed' "$TRAVAIL/unit.log" | tail -1 | grep -oE '[0-9]+')
+		if [ "${tests:-0}" -eq 438 ]; then
+			ok "npm run test:unit — 438 tests, dont 33 dédiés à cette unité"
+		else
+			fail "tests unitaires verts mais ${tests:-0} tests au lieu de 438"
+		fi
+	else
+		fail "npm run test:unit ÉCHOUE : voir $TRAVAIL/unit.log"
+	fi
+
+	if PLAYWRIGHT_CHROMIUM_PATH=${PLAYWRIGHT_CHROMIUM_PATH:-/opt/pw-browsers/chromium} \
+		npx playwright test --config e2e/playwright.config.ts --project=ui "$SPEC_UI" \
+		>"$TRAVAIL/ui.log" 2>&1; then
+		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/ui.log" | tail -1 | grep -oE '[0-9]+')
+		if [ "${passes:-0}" -eq 14 ]; then
+			ok "e2e/ui/commentaires.spec.ts — 14 scénarios contre le build de production"
+		else
+			fail "preuve d'interface verte mais ${passes:-0} scénarios au lieu de 14"
+		fi
+	else
+		fail "e2e/ui/commentaires.spec.ts ÉCHOUE : voir $TRAVAIL/ui.log"
+	fi
+
+	for capture in fil-charge-1440 fil-vide-1440 refus-ecriture-1440 commentaire-long-390 \
+		panneau-xl-1440 panneau-lg-1152 panneau-md-900 panneau-sm-390; do
+		if [ -s "$CAPTURES/$capture.jpg" ]; then
+			ok "capture $capture.jpg produite"
+		else
+			fail "capture $capture.jpg ABSENTE — CLAUDE.md §16"
+		fi
+	done
+
+	if npm run build >"$TRAVAIL/build.log" 2>&1; then
+		ok "npm run build est vert"
+	else
+		fail "npm run build ÉCHOUE : voir $TRAVAIL/build.log"
 	fi
 fi
 

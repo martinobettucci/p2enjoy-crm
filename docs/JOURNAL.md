@@ -6488,3 +6488,48 @@ il a raison : la colonne **est** obligatoire dans le schéma. Ce qui est en caus
 c'est que le générateur ne peut pas voir un trigger — limite connue, sans remède local. Faire dire
 au client une valeur qu'il croit décider et que la base corrige est honnête tant que c'est **écrit**
 et **mesuré** ; le cacher derrière une assertion de type ne le serait pas.
+
+### Décision 201 — Le flux déclenche la lecture, il ne la remplace pas
+
+**Problème.** Un événement `postgres_changes` porte la ligne écrite. Le panneau pourrait donc
+fusionner cette ligne dans son état local et n'émettre aucune requête — c'est ce que fait la
+plupart des interfaces temps réel.
+
+**Décision : à chaque événement, le panneau RELIT le fil.** L'événement dit qu'il a changé, il ne
+dit pas ce qu'il est devenu. Trois raisons, qu'une fusion locale ne donnerait pas :
+
+1. **l'ordre est celui du serveur.** Le fil est trié `created_at, id` par la base ; une fusion
+   locale devrait réimplémenter ce tri, et deux implémentations d'un même ordre finissent par
+   diverger — c'est la règle des décisions 167 et 188, appliquée au temps ;
+2. **un événement perdu ou dupliqué ne laisse aucune trace.** La décision 195 a mesuré qu'un
+   événement peut manquer sans que rien ne le signale. Une fusion locale accumulerait l'écart ; une
+   relecture le referme au premier événement suivant ;
+3. **la lecture applique la RLS COURANTE.** Un droit fin retiré pendant que l'onglet est ouvert
+   change ce que l'utilisateur peut lire ; le flux, lui, a été autorisé à l'abonnement.
+
+**Le coût est nommé** : une requête par événement, sur un fil qui n'est pas paginé. Il est borné
+par le nombre de commentaires d'une card, et le §13.12 dit pourquoi la pagination n'est pas livrée —
+MESURÉ, cinq commentaires au seed. Le jour où un fil deviendra long, c'est la pagination qu'il
+faudra livrer, pas la fusion locale.
+
+### Décision 202 — Ce que les captures ont montré, et une incohérence qui n'est pas corrigée ici
+
+**Quatre captures ont été regardées** avant de conclure — `fil-charge-1440`, `refus-ecriture-1440`,
+`panneau-sm-390` et `commentaire-long-390`. Elles confirment ce que le §5.10 décrit : deux colonnes
+au-dessus de 1024 px, la discussion **sous** le formulaire en dessous, les trois états d'un
+commentaire distincts à l'œil, un mot de 200 caractères sans espace **coupé** sans pousser la page,
+et le texte refusé **toujours présent** dans le champ.
+
+**Ce qu'une capture a montré et qu'aucune assertion ne voyait :** dans `refus-ecriture-1440`,
+l'état vide invite l'utilisateur à « être la première personne à commenter cette affaire » —
+**juste au-dessus** du message lui disant qu'il ne peut pas commenter. Les deux textes sont
+individuellement corrects et le second est le refus réel du backend ; leur voisinage, lui, est
+maladroit.
+
+**Il n'est PAS corrigé ici, et le motif est une règle du projet.** Corriger supposerait que
+l'interface sache, avant d'envoyer, que l'utilisateur n'a pas le droit d'écrire — c'est-à-dire
+qu'elle calcule côté client une règle que seule la base connaît, exactement ce que `CLAUDE.md` §10
+refuse. La seule correction honnête serait de **retenir** l'invitation une fois un refus reçu, ce
+qui est un changement de composition à part entière. Le point est écrit au §13.13 de
+`docs/SPEC-cards.md` plutôt que corrigé au jugé, et il est la cinquième fois qu'une capture dénonce
+ce qu'un test laisse passer (décisions 163, 175, 190, et l'écart du §12.5 du design system).

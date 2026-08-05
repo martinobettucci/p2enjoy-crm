@@ -1,4 +1,6 @@
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
+// @spec CRM-043 (docs/BACKLOG.md) — colonne de droite : le panneau de commentaires
+// @spec docs/SPEC-cards.md §13.10 (le panneau) ; docs/DESIGN_SYSTEM.md §5.10
 // @spec docs/SPEC-form-composer.md §4.6 (l'écran hôte, et pourquoi c'est une route),
 //       §4.6 bis (ce que la coquille montre autour du formulaire), §4.5 (états)
 // @spec docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.4 (toute route portant un
@@ -9,9 +11,12 @@
 //
 // Le formulaire est la colonne gauche du détail de card (docs/DESIGN_SYSTEM.md §5.3). Il lui faut
 // une adresse : c'est le procédé de `CRM-021`, qui a livré la route d'un track parce que la barre
-// d'onglets n'avait aucun hôte. **Rien d'autre de cet écran n'est livré ici** : la timeline
-// (`CRM-044`), les commentaires (`CRM-043`) et les champs d'en-tête de la card (`CRM-040`)
-// restent dus par leurs unités, et la colonne de droite du §5.3 avec eux.
+// d'onglets n'avait aucun hôte.
+//
+// LA COLONNE DE DROITE EST LIVRÉE PAR `CRM-043` : le **panneau de commentaires**
+// (docs/DESIGN_SYSTEM.md §5.10). Elle n'est pas encore la timeline unifiée que le §5.3 décrit —
+// `CRM-044` y fondra les transitions, les activités et les emails —, et les champs d'en-tête de la
+// card (`CRM-040`) restent dus par leur unité.
 //
 // La card est désignée par son **identifiant** et non par un slug : `docs/SPEC-cards.md` ne lui en
 // donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
@@ -44,6 +49,7 @@ import { useContenuCard } from '../lib/formulaire'
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { FormulaireCard } from './FormulaireCard'
+import { PanneauCommentaires } from './PanneauCommentaires'
 
 /** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
 const CLASSES_RETOUR = [
@@ -128,12 +134,17 @@ function ContenuCard({
 		return <EtatVide titre={t('route.card.nostep.title')} corps={t('route.card.nostep.body')} />
 	}
 
-	// Deux colonnes sur grand écran, empilées sous 1024 px (docs/DESIGN_SYSTEM.md §5.3 et §7). La
-	// seconde colonne n'est pas livrée : la grille reste donc à une colonne, et l'écart est nommé
-	// plutôt que comblé par un panneau vide.
+	// DEUX COLONNES sur grand écran, EMPILÉES sous 1024 px (docs/DESIGN_SYSTEM.md §5.3 et §7).
+	// Sous ce palier, la discussion passe SOUS le formulaire, dans l'ordre du document : une
+	// conversation se lit après le dossier qu'elle commente (§5.10).
 	return (
-		<div className="max-w-[72ch] mx-auto px-4 py-6">
+		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<FormulaireCard modele={etat.donnees.modele} />
+			<PanneauCommentaires
+				client={clientCrm}
+				idCard={etat.donnees.card.id}
+				idWorkspace={etat.donnees.card.workspace_id}
+			/>
 		</div>
 	)
 }

@@ -34,8 +34,21 @@ d'exécuter le code attendu.
   dont un corrigé et un supprimé — les deux états sont produits par l'application elle-même, jamais
   fabriqués.
 
-  **Aucun écran n'est encore livré** : tout ce qui précède existe côté serveur et se vérifie par
-  l'API, mais le panneau de discussion viendra dans un second temps. L'unité reste donc en cours.
+  **La discussion a son écran.** Elle occupe la colonne de droite de la fiche d'une affaire — sous
+  le formulaire quand l'écran est étroit —, du plus ancien commentaire en haut au plus récent en
+  bas. Un commentaire corrigé porte la mention *modifié* ; un commentaire supprimé **garde sa
+  place**, réduit à la mention *Commentaire supprimé*, pour qu'on voie qu'un tour de parole a
+  existé.
+
+  Le champ d'écriture est **toujours affiché** : ce n'est pas l'interface qui décide qui peut
+  commenter, c'est le serveur. Si la publication est refusée, le message l'explique et **votre
+  texte reste dans le champ** — il n'y a rien à ressaisir. Aucun nom d'auteur n'est encore affiché :
+  aucun nom de personne n'est aujourd'hui lisible dans le produit, et il est préféré de ne rien
+  montrer plutôt qu'un identifiant technique.
+
+  **Corriger et supprimer restent sans bouton** : la règle existe et le serveur l'applique — seul
+  l'auteur peut le faire —, mais l'écran ne propose pas encore le geste. L'unité reste donc en
+  cours. `docs/manual.md` gagne son chapitre 4.10.
 
 - **La spécification des commentaires** — `CRM-043`, `docs/SPEC-cards.md` §13. Aucune ligne de code
   n'est livrée ici : le document précède l'implémentation, comme pour chaque unité. Le chapitre dit

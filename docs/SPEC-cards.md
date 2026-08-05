@@ -1328,6 +1328,16 @@ l'écrire lui-même, et elle existe pour que la lecture autorisée soit distingu
 
 ### 13.12 Ce que `CRM-043` ne livre pas
 
+**LES ACTIONS « MODIFIER » ET « SUPPRIMER » NE SONT PAS RENDUES PAR L'ÉCRAN.** Le §5.10 du design
+system les décrit — boutons tertiaires, visibles au survol **et au focus clavier**, confirmation
+explicite pour la suppression —, et le backend les applique : les deux politiques et le trigger sont
+livrés, et `e2e/api/commentaires.spec.ts` les exerce avec les jetons réels. **Aucun bouton ne les
+offre dans le fil.** L'écart est nommé plutôt que comblé au jugé : les deux gestes supposent de
+distinguer *ses* commentaires de ceux des autres, donc de connaître l'identifiant de l'appelant,
+donc une session — INC-021. Un bouton offert à tous, qui échouerait pour tous sauf l'auteur, serait
+une aide d'interface trompeuse. Le §13.10 et `docs/manual.md` chapitre 4.10 disent l'un et l'autre
+que la règle existe et que le geste n'est pas offert.
+
 Outre le §13.1 : aucune pagination du fil — MESURÉ, cinq commentaires au seed, et le §12.6 a montré
 ce que coûte une pagination bâtie sans mesure ; aucune recherche dans les commentaires ; aucun
 `card_activities`, table voisine que `docs/SCHEMA.md` §5 décrit et qu'aucune unité du chunk 3 ne
@@ -1343,7 +1353,15 @@ porte.
 4. **Le nom de l'auteur reste illisible** (INC-014), et c'est la limite la plus visible du panneau :
    un fil de discussion sans nom d'auteur est un fil incomplet. Elle appartient aux politiques de
    `profiles`, qu'aucune unité ne porte.
-5. **La pierre tombale est irréversible et le corps est détruit.** Aucun mécanisme de restauration
+5. **L'invitation de l'état vide voisine le refus d'écriture, et c'est maladroit** (décision 202).
+   VU EN REGARDANT `docs/captures/CRM-043/refus-ecriture-1440.jpg` : « Soyez la première personne à
+   commenter cette affaire » s'affiche **juste au-dessus** de « vous ne pouvez pas commenter cette
+   affaire ». Les deux textes sont individuellement corrects ; leur voisinage ne l'est pas. La
+   corriger supposerait que l'interface sache **avant d'envoyer** que l'utilisateur n'a pas le
+   droit d'écrire — un calcul de droit côté client, que `CLAUDE.md` §10 refuse. La seule correction
+   honnête est de **retenir** l'invitation une fois un refus reçu, ce qui est un changement de
+   composition à part entière. Point ouvert, comportement inchangé.
+6. **La pierre tombale est irréversible et le corps est détruit.** Aucun mécanisme de restauration
    n'est prévu, et aucune trace du corps supprimé ne subsiste. C'est le comportement voulu (§13.4) ;
    il est nommé ici pour qu'un besoin d'archivage légal ne le découvre pas après coup.
 

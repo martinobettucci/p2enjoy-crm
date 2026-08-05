@@ -62,6 +62,10 @@ const CARD_SERVIE = [
 		id: CARD,
 		title: 'Piste entrante à qualifier',
 		workflow_id: 'wf-1',
+		// `workspace_id` est demandée depuis `CRM-043` : le panneau de commentaires l'envoie à
+		// l'insertion (docs/JOURNAL.md décision 200). Sans elle, la réponse substituée ne
+		// ressemblerait plus à ce que PostgREST rend.
+		workspace_id: '5eed0000-0000-4000-8000-000000000001',
 		current_step_id: ETAPE.id,
 		email_local_part: 'c-t2dtpcjd',
 	},
