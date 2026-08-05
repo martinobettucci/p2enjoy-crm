@@ -12,6 +12,55 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-059 — Deux exécutions de la routine ont livré `CRM-014` en parallèle, sans se voir
+
+**Nature :** défaut d'exploitation de la routine d'avancement, mesuré ; aucune conséquence sur le
+produit livré, une conséquence certaine sur le travail dépensé.
+**Relevé le :** 2026-08-05, à la clôture d'une exécution de la routine.
+
+**Ce qui a été mesuré.** Une exécution de la routine a démarré à 04:56 UTC, s'est resynchronisée —
+`origin/main` valait alors `9a69350`, le commit documentaire de `CRM-014` —, a constaté que
+l'unité suivante à traiter était `CRM-014`, et l'a implémentée : fichier consolidé de 37 scénarios,
+harnais de non-complaisance, documentation, captures, commit local à 05:33. Au `git fetch` précédant
+le `push`, `origin/main` valait `1364bf3` : **une autre exécution de la même routine avait livré
+`CRM-014` à 05:06**, pendant ce temps.
+
+Les deux livraisons sont indépendantes et concordantes sur le fond — mêmes sept preuves acquises,
+mêmes cinq absences figées, et **la même réfutation** de la prédiction du §7.4, atteinte séparément.
+La livraison poussée est la meilleure des deux : elle résout par une suite pgTAP d'inventaire ce que
+la seconde avait conclu être impossible, à savoir faire échouer le harnais au **retrait** d'une
+politique. La seconde exécution a donc abandonné son commit plutôt que de le pousser, et a vérifié
+la première de façon indépendante — 26 contrôles verts sur un conteneur neuf.
+
+**Pourquoi cela doit être consigné.** Le coût n'est pas nul et n'était pas détectable plus tôt :
+
+- la resynchronisation d'ouverture, que les consignes de la routine imposent, **ne protège de
+  rien** : elle mesure l'état du dépôt à un instant, et le travail dure une heure ;
+- rien dans le dépôt ne signale qu'une unité est **en cours de traitement** par quelqu'un. Le
+  marquage `[~]` de `docs/BACKLOG.md` désigne un travail *livré et insuffisamment vérifié*, pas un
+  travail *en cours* — les deux exécutions ont donc lu le même `[ ]` sur `CRM-014` ;
+- si la seconde exécution avait poussé sans refetch, ou avait poussé sur sa branche assignée sans
+  regarder `main`, le dépôt porterait **deux implémentations concurrentes de la même unité**, sur
+  des fichiers de même chemin.
+
+**Comportement retenu :** la seconde exécution n'a **rien poussé** de sa version de `CRM-014`. Son
+commit local `346a230` n'existe que dans le conteneur, qui est éphémère : il sera perdu, ce qui est
+le résultat voulu pour un doublon.
+
+**Action attendue du responsable :** trancher entre
+
+1. **sérialiser la routine** — une seule exécution active à la fois, ce que le planificateur sait
+   faire et qui supprime le problème à la racine ;
+2. **poser un verrou dans le dépôt** — un marquage d'unité « prise » committé et poussé avant tout
+   travail, ce qui déplace la course sur un fichier au lieu de la supprimer, mais la rend visible ;
+3. **accepter la redondance** et écrire dans `docs/MASTER_PLAN.md` §1 la règle appliquée ici :
+   refetch obligatoire avant `push`, et abandon du travail si l'unité a été livrée entre-temps.
+
+**Lié à :** INC-034 (branche et identité imposées à la routine), `docs/MASTER_PLAN.md` §1,
+`docs/BACKLOG.md` `CRM-014`.
+
+---
+
 ### INC-058 — Une assertion pgTAP compte une donnée globale qu'un autre harnais fait varier pendant qu'il l'exécute
 
 **Nature :** contradiction entre deux harnais de vérification ; aucun comportement du produit en
@@ -1424,6 +1473,21 @@ responsable » ; aucune instruction n'était atteignable, la routine s'exécutan
 l'écran. La règle d'attribution étant elle-même **non négociable** et la réécriture ne portant que
 sur des commits de la routine, la correction a été faite et est nommée ici plutôt que laissée en
 l'état. Aucun commit antérieur n'a été touché.
+
+**Confirmation mesurée, 2026-08-05.** Les deux prédictions de cette entrée se sont vérifiées à
+l'exécution suivante, sur un conteneur neuf :
+
+- la configuration **locale** posée le 2026-08-04 avait disparu — `git config user.email` rendait de
+  nouveau `noreply@anthropic.com`. Elle a été reposée **avant** le premier commit, de sorte
+  qu'aucune réécriture d'historique n'a été nécessaire cette fois. Elle disparaîtra de nouveau au
+  prochain conteneur : le correctif durable annoncé au point 2 ci-dessous reste entier ;
+- la branche assignée était encore différente — `claude/happy-goldberg-wq44ln` —, et
+  `git ls-remote` en dénombre désormais **dix-huit**, toutes issues d'exécutions successives de la
+  même routine. `refs/heads/main` suit bien le travail, mais rien dans le dépôt ne documente qui
+  l'y reporte, ni quand, ni selon quelle règle — c'est exactement le point 1 ci-dessous.
+
+Une troisième conséquence, non prévue par cette entrée, a été mesurée le même jour : deux
+exécutions ont traité la même unité en parallèle. Voir **INC-059**.
 
 **Ce qui reste à arbitrer :**
 

@@ -5185,3 +5185,53 @@ suggestion : c'est le même défaut sous trois formes.
 du harnais : `--rapide` saute la section des suites, et c'est ce mode que `CRM-013` avait employé
 pour rapporter « 37 contrôles ». Un harnais dont deux modes ne mesurent pas la même chose finit par
 n'être vérifié que dans le plus court.
+
+## 2026-08-05 — Une exécution de la routine a livré `CRM-014` en double, et ne l'a su qu'au `push`
+
+### Décision 154 — Un travail déjà livré par une autre exécution est abandonné, non fusionné
+
+**Problème.** Une exécution de la routine ouverte à 04:56 UTC s'est resynchronisée — `origin/main`
+valait `9a69350`, le commit documentaire de `CRM-014` —, a pris l'unité `CRM-014`, marquée `[ ]`, et
+l'a implémentée intégralement : `e2e/api/preuves-refus.spec.ts` (37 scénarios verts),
+`scripts/verify-preuves-refus.sh` (59 contrôles, quatre dégradations réelles), documentation,
+captures verte et rouge observées, commit local `346a230` à 05:33. Au `git fetch` précédant le
+`push`, `origin/main` valait `1364bf3` : **une autre exécution de la même routine avait livré la
+même unité à 05:06.**
+
+**Ce que la comparaison des deux livraisons a montré.** Elles concordent sur le fond, sans s'être
+vues : mêmes sept preuves acquises, mêmes cinq absences figées, mêmes identifiants de seed, et
+surtout **la même réfutation** de la prédiction du §7.4 — retirer `cards_lecture` ne fait échouer
+aucun scénario. Deux mesures indépendantes du même fait valent mieux qu'une.
+
+Elles divergent sur la conclusion à en tirer, et **la livraison poussée a raison**. La version
+abandonnée concluait que la Definition of Done — « le harnais échoue si une politique est retirée » —
+demandait une propriété impossible, et s'apprêtait à consigner cette impossibilité pour arbitrage.
+La version poussée y répond : elle ajoute une suite pgTAP, `supabase/tests/0016_preuves_refus.test.sql`,
+dont l'inventaire des 41 politiques **échoue réellement** au retrait de l'une d'elles. Le partage est
+juste et vaut d'être retenu : **les scénarios détectent le sur-accès, l'inventaire détecte le
+sur-refus**, et aucun des deux ne peut faire le travail de l'autre.
+
+**Décision.** Le commit `346a230` n'est **pas** poussé, ni rebasé, ni fusionné par morceaux. Motifs :
+
+1. les deux versions portent les **mêmes chemins de fichiers** — un rebase produirait un conflit
+   dont la résolution consisterait à choisir l'une des deux, c'est-à-dire à refaire l'arbitrage à la
+   main sur des centaines de lignes, sans preuve que le résultat mixte reste vert ;
+2. la version poussée est **strictement meilleure** sur le seul point où elles divergent ;
+3. récupérer des fragments supposerait de renuméroter décisions et entrées `INC` — les deux
+   exécutions ont attribué `INC-058` à des faits différents —, donc de modifier une unité livrée
+   par quelqu'un d'autre dans un commit qui n'en traite pas (`CLAUDE.md` §13).
+
+**Ce qui est conservé du travail abandonné**, parce que cela ne double rien : la constatation que
+deux exécutions se sont croisées. Elle est consignée en **INC-059**, avec les trois options
+d'arbitrage.
+
+**Vérification apportée à la livraison d'autrui, et c'est le seul apport net de cette exécution.**
+`scripts/verify-preuves-refus.sh` a été rejoué sur un **conteneur neuf**, base recréée depuis les
+migrations et seed réappliqué : **26 contrôles, aucune anomalie** ; `npm run test:sql` 1139
+assertions, `npm run e2e:api` 291 scénarios, `npm run test:unit`, `npm run typecheck` et
+`npm run build` verts. La livraison de 05:06 est donc reproductible ailleurs que sur la machine qui
+l'a produite — ce qu'aucune exécution ne peut établir sur son propre travail.
+
+**Portée.** La règle appliquée ici vaut pour toute exécution future : **refetch avant `push`, et
+abandon si l'unité a été livrée entre-temps.** La resynchronisation d'ouverture ne protège de rien,
+puisque le travail dure plus longtemps que l'instant qu'elle mesure.
