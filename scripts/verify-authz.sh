@@ -14,6 +14,12 @@
 #      jetons réels de trois profils distincts obtenus par la véritable route de connexion ;
 #   4. le harnais est **non complaisant** : chaque affaiblissement volontaire le fait échouer.
 #
+# REPRIS LE 2026-08-05 (décisions 155 et 156). Les quatre fonctions qu'INC-013 avait retirées à
+# `CRM-010` existent toutes depuis `CRM-040` : la suite pgTAP couvre désormais la matrice complète
+# à travers des lignes réelles, l'absence de récursion sur `tracks`, `channels` et `cards`, et le
+# recensement des fonctions `SECURITY DEFINER` (`docs/SPEC-permissions-rls.md` §3.8). Quatre
+# dégradations de plus les éprouvent à l'étape 4.
+#
 # ---------------------------------------------------------------------------------------------
 # Instrumentation de l'étape 3, et pourquoi elle est nécessaire.
 # ---------------------------------------------------------------------------------------------
@@ -177,14 +183,43 @@ else
 	fail "la définition ou les droits des fonctions ont changé après réapplication"
 fi
 
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d migrations-runner \
-	>/tmp/p2enjoy-authz-runner.log 2>&1 || true
-runner_code=$(docker inspect -f '{{.State.ExitCode}}' p2enjoy-migrations 2>/dev/null || echo -1)
-if [ "$runner_code" = 0 ]; then
-	ok "le conteneur migrations-runner rejoue les deux migrations et se termine avec le code 0"
+# CORRIGÉ LE 2026-08-05, DÉFAUT RÉEL DE CE HARNAIS TROUVÉ PAR LE REJEU (décision 157). L'écriture
+# précédente enchaînait `docker compose up -d migrations-runner` et `docker inspect .State.ExitCode`.
+# `up -d` **rend la main aussitôt le conteneur démarré**, pas quand il a fini : MESURÉ, l'inspection
+# qui suit lit `ExitCode 0` alors que `Status` vaut encore `running` — c'est le code de l'exécution
+# **précédente**. Deux conséquences, toutes deux mesurées :
+#
+#   * le contrôle était **complaisant** : il aurait dit « code 0 » d'un rejeu encore en cours, ou
+#     sur le point d'échouer ;
+#   * le harnais **rendait la main sur une base à moitié migrée**. Le runner rejoue le répertoire
+#     dans l'ordre : entre la migration 3 et la migration 10, `tracks_lecture_membre` est revenue à
+#     sa forme de `CRM-003` — `app.is_workspace_member(workspace_id)` —, les droits fins de
+#     `CRM-012` cessant d'être appliqués. MESURÉ : `npm run test:sql` lancé dans cette fenêtre rend
+#     **trois assertions rouges** dans `supabase/tests/0011_droits_fins.test.sql`, dont la preuve
+#     de refus n° 4. Troisième occurrence du mécanisme des décisions 108 et 135.
+#
+# `docker compose run --rm` est **synchrone** et rend le code de sortie du rejeu qu'il vient de
+# lancer. C'est déjà le procédé de `scripts/verify-tracks.sh` : ce n'est pas une invention, c'est
+# l'alignement du plus ancien des deux sur le plus sûr.
+if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+	run --rm migrations-runner >/tmp/p2enjoy-authz-runner.log 2>&1
+then
+	ok "le migrations-runner rejoue le répertoire complet et se termine avec le code 0"
 else
-	fail "migrations-runner s'est terminé avec le code $runner_code"
-	docker logs p2enjoy-migrations 2>&1 | tail -10 | sed 's/^/        /'
+	fail "migrations-runner s'est terminé avec un code non nul"
+	tail -10 /tmp/p2enjoy-authz-runner.log | sed 's/^/        /'
+fi
+
+# Et la base est bien celle que le répertoire complet produit, pas un état intermédiaire : la
+# politique de lecture des tracks porte la forme de la migration 10, pas celle de la migration 3.
+qual_tracks=$(psql_db -c "
+	select pg_get_expr(p.polqual, p.polrelid) from pg_policy p
+	  join pg_class c on c.oid = p.polrelid
+	 where c.relname = 'tracks' and p.polname = 'tracks_lecture_membre';")
+if printf '%s' "$qual_tracks" | grep -q 'resolve_track_access'; then
+	ok "le rejeu laisse la base à l'état complet : les droits fins de CRM-012 sont appliqués"
+else
+	fail "le rejeu laisse une base intermédiaire : tracks_lecture_membre vaut « $qual_tracks »"
 fi
 
 # --- 3. Comportement réel sous PostgREST, avec des jetons réels ---------------------------------
@@ -374,6 +409,65 @@ else
 	fail "l'instrumentation a laissé un accès ouvert : Anne voit $obtenu"
 fi
 
+# 3.6 AJOUTÉE LE 2026-08-05 (décision 156). Les quatre fonctions qu'INC-013 avait retirées à
+#     `CRM-010` n'avaient **aucune** preuve hors interface portée par cette unité : l'étape 3
+#     ci-dessus n'instrumente que `is_workspace_member` et `is_workspace_admin`. Elles n'ont pas
+#     besoin d'instrumentation, elles : `CRM-012` et `CRM-040` ont posé les politiques qui les
+#     appellent, donc `tracks`, `channels` et `cards` les exercent **par le chemin réel** du
+#     produit, sous PostgREST, avec les jetons des trois profils du seed.
+#
+#     Les nombres attendus sont ceux du seed, et ils **discriminent** : le `viewer` est fermé sur
+#     un track par un droit fin, et cette fermeture se propage à ses channels et à ses cards.
+
+MOT_DE_PASSE_SEED=SeedDev2026Local
+
+jeton_seed() {
+	local mail=$1 code
+	code=$(http POST "$API/auth/v1/token?grant_type=password" \
+		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+		-d "{\"email\":\"$mail\",\"password\":\"$MOT_DE_PASSE_SEED\"}")
+	if [ "$code" != 200 ]; then
+		echo "" ; return
+	fi
+	http_body | jq -r '.access_token'
+}
+
+compter() {
+	local table=$1 jeton=$2
+	if [ -n "$jeton" ]; then
+		http GET "$API/rest/v1/$table?select=id" \
+			-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" >/dev/null
+	else
+		http GET "$API/rest/v1/$table?select=id" -H "apikey: $ANON_KEY" >/dev/null
+	fi
+	http_body | jq 'length'
+}
+
+for profil in "admin@p2enjoy.test:4/6/9" \
+              "bizdev@p2enjoy.test:4/6/9" \
+              "viewer@p2enjoy.test:3/4/4"; do
+	mail=${profil%%:*}
+	attendu=${profil#*:}
+	jeton=$(jeton_seed "$mail")
+	if [ -z "$jeton" ]; then
+		fail "connexion du compte seedé $mail refusée — le seed est-il appliqué ? (supabase/seed/apply-seed.sh)"
+		continue
+	fi
+	obtenu="$(compter tracks "$jeton")/$(compter channels "$jeton")/$(compter cards "$jeton")"
+	if [ "$obtenu" = "$attendu" ]; then
+		ok "$mail voit $obtenu tracks/channels/cards : can_read_track, can_read_channel et can_read_card sont opposables sous PostgREST"
+	else
+		fail "$mail voit $obtenu au lieu de $attendu"
+	fi
+done
+
+obtenu="$(compter tracks '')/$(compter channels '')/$(compter cards '')"
+if [ "$obtenu" = "0/0/0" ]; then
+	ok "anonyme : zéro track, zéro channel, zéro card — et des 200, pas des erreurs (preuve n° 11)"
+else
+	fail "l'anonyme voit $obtenu"
+fi
+
 # --- 4. Non-complaisance du harnais ------------------------------------------------------------
 # Chaque affaiblissement est injecté **dans la transaction de la suite pgTAP**, qui se termine par
 # un `rollback` : la base n'en conserve rien.
@@ -463,6 +557,38 @@ verifier_mutation "politique permissive ajoutée sur workspaces" \
 # elle ouvre davantage que la version précédente, et la suite `0002` doit le dénoncer d'autant plus.
 verifier_mutation "can_read_card retirée après sa livraison, avec la politique qui en dépend" \
 	"drop function app.can_read_card(uuid) cascade;"
+
+# AJOUTÉES À LA REPRISE DE `CRM-010` LE 2026-08-05 (décisions 155 et 156). Les six mutations
+# ci-dessus n'éprouvent que les deux fonctions écrivables en 2026-08-03 : la suite pouvait rester
+# verte alors que les quatre autres étaient réécrites n'importe comment. Une preuve qui ne tombe
+# pas quand le produit se dégrade ne prouve rien, et c'est vrai fonction par fonction.
+
+verifier_mutation "can_read_track repassée en SECURITY INVOKER — la récursion redevient possible" \
+	"alter function app.can_read_track(uuid) security invoker;"
+
+verifier_mutation "can_read_channel cesse de regarder channel_members" \
+	"create or replace function app.can_read_channel(ch uuid) returns boolean
+	   language sql stable security definer set search_path = '' as \$fn\$
+	     select coalesce((
+	       select app.resolve_access(app.workspace_role(c.workspace_id), tm.access, null) <> 'none'
+	         from public.channels c
+	         left join public.track_members tm
+	           on tm.track_id = c.track_id and tm.user_id = (select auth.uid())
+	        where c.id = ch), false);
+	   \$fn\$;"
+
+verifier_mutation "can_read_card juge sur le workspace au lieu du channel" \
+	"create or replace function app.can_read_card(card uuid) returns boolean
+	   language sql stable security definer set search_path = '' as \$fn\$
+	     select coalesce((select app.is_workspace_member(c.workspace_id)
+	                        from public.cards c where c.id = card), false);
+	   \$fn\$;"
+
+# Le recensement du §3.8 c est éprouvé par ce qu'il doit attraper : une fonction ajoutée demain,
+# `SECURITY DEFINER`, sans `search_path`. Aucune liste tenue à la main ne l'aurait vue.
+verifier_mutation "une fonction SECURITY DEFINER ajoutée sans search_path" \
+	"create function app.tst_definer_sans_search_path() returns int
+	   language sql security definer as 'select 1';"
 
 # --- Bilan -------------------------------------------------------------------------------------
 

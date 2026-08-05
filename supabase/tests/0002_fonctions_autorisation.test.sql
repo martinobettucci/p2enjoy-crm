@@ -1,9 +1,14 @@
 -- @verifies CRM-010 (docs/BACKLOG.md) — fonctions d'autorisation
--- @verifies docs/SPEC-permissions-rls.md §2 (rôles et droits fins), §3 (fonctions), §7 (preuves)
+-- @verifies docs/SPEC-permissions-rls.md §2 (rôles et droits fins), §3 (fonctions),
+--           §3.3 (fonctions can_*), §3.6 (can_read_card), §3.8 (ce que CRM-010 doit prouver des
+--           six fonctions), §7 (preuves)
 -- @verifies docs/SCHEMA.md §9 (fonctions et RPC)
--- @verifies docs/INCONSISTENCY_REPORT.md INC-013 (quatre fonctions différées)
+-- @verifies docs/INCONSISTENCY_REPORT.md INC-013 (quatre fonctions différées — close le 2026-08-05)
+-- @verifies docs/JOURNAL.md décisions 27, 51, 155, 156
 --
--- Suite pgTAP de l'unité `CRM-010`. Elle prouve quatre choses :
+-- Suite pgTAP de l'unité `CRM-010`. Elle prouve sept choses — les quatre premières depuis le
+-- 2026-08-03, les trois dernières depuis la reprise de l'unité le 2026-08-05, quand les quatre
+-- fonctions différées par INC-013 sont toutes devenues écrivables :
 --
 --   1. le **contrat** des fonctions livrées : signature, type de retour, `SECURITY DEFINER` ou
 --      `INVOKER`, propriétaire, volatilité, `search_path` fixé, privilèges d'exécution ;
@@ -14,7 +19,16 @@
 --      immédiate d'un rôle ;
 --   4. l'**absence de récursion**, mesurée et non affirmée : une politique qui interroge
 --      directement sa propre table échoue en `42P17`, une jumelle `SECURITY INVOKER` épuise la
---      pile en `54001`, tandis que la fonction `SECURITY DEFINER` livrée répond normalement.
+--      pile en `54001`, tandis que la fonction `SECURITY DEFINER` livrée répond normalement ;
+--   5. la **matrice à travers des lignes réelles** — la jointure qu'INC-013 nommait comme
+--      manquante : 64 triplets construits par des lignes distinctes, comparés à `resolve_access`,
+--      et une discrimination qui interdit l'oracle dégénéré (§3.8 a) ;
+--   6. l'**absence de récursion sur les trois tables protégées** — `tracks`, `channels`, `cards` —,
+--      démontrée en la provoquant sur chacune, la fonction livrée répondant là où sa jumelle
+--      `SECURITY INVOKER` épuise la pile (§3.8 b) ;
+--   7. le **recensement** des fonctions `SECURITY DEFINER` : aucune, dans `app` ni dans `public`,
+--      ne laisse son `search_path` au hasard — une preuve qui tombera d'elle-même le jour où une
+--      unité en ajoutera une sans le sien (§3.8 c).
 --
 -- Exécution : `scripts/verify-authz.sh`, ou directement
 --   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -27,7 +41,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(128);
+select plan(153);
 
 -- =============================================================================================
 -- 1. Contrat des fonctions livrées — docs/SPEC-permissions-rls.md §3
@@ -537,6 +551,398 @@ select has_function('app', 'can_write_channel', array['uuid'],
 -- politique de `cards` jugeant sur `channel_id` pour ne pas relire sa propre table (décision 110).
 select has_function('app', 'can_read_card', array['uuid'],
 	'INC-013 ÉTEINTE : `app.can_read_card` est livrée par CRM-040, avec `cards`');
+
+-- =============================================================================================
+-- 7. La matrice à travers des lignes réelles — docs/SPEC-permissions-rls.md §3.8 a
+-- =============================================================================================
+-- Ajoutée le 2026-08-05 (décisions 155 et 156). La section 2 énumère les 64 combinaisons du §2.2
+-- sur `app.resolve_access`, fonction **pure** : elle prouve la règle métier, pas la **jointure**
+-- qui l'alimente. C'est exactement ce qu'INC-013 nommait comme manquant, et ce que les quatre
+-- fonctions livrées depuis rendent enfin prouvable.
+--
+-- Le dispositif : **un seul utilisateur**, quatre workspaces qui lui donnent les quatre états du
+-- rôle — `admin`, `business_developer`, `viewer`, et l'absence d'appartenance —, quatre tracks par
+-- workspace pour les quatre états du droit fin de track, quatre channels par track pour ceux du
+-- droit fin de channel, et une card par channel. Soit **64 triplets**, tous les états d'un même
+-- axe étant obtenus par des lignes distinctes plutôt qu'en modifiant les mêmes.
+--
+-- L'attendu est calculé par `app.resolve_access`, ce qui n'est pas une tautologie : la section 2 a
+-- déjà prouvé cette fonction contre des valeurs écrites à la main, et ce qu'on éprouve ici est le
+-- **chemin** qui va d'un identifiant de track ou de channel aux trois arguments qu'elle reçoit —
+-- jointures externes comprises. Les assertions de discrimination qui suivent chaque comparaison
+-- interdisent qu'un oracle dégénéré (« tout faux ») la rende verte.
+
+-- Le quatrième état de chaque axe est l'**absence de ligne** : `t1` n'a pas de `track_members`,
+-- `c1` pas de `channel_members`. C'est le cas de très loin le plus courant, et celui que la
+-- jointure externe du §3.3 doit rendre `NULL` plutôt que refuser (décision 104).
+create temporary table tst_matrice (
+	w int, t int, c int,
+	role_ws text, acces_track text, acces_channel text,
+	track_id uuid, channel_id uuid, card_id uuid
+) on commit drop;
+
+insert into tst_matrice (w, t, c, role_ws, acces_track, acces_channel,
+                         track_id, channel_id, card_id)
+select w, t, c,
+       (array[null, 'admin', 'business_developer', 'viewer'])[w + 1],
+       (array[null, 'none', 'viewer', 'member'])[t],
+       (array[null, 'none', 'viewer', 'member'])[c],
+       ('00000000-0000-4000-8000-b1' || '00000000' || w || t)::uuid,
+       ('00000000-0000-4000-8000-b2' || '0000000'  || w || t || c)::uuid,
+       ('00000000-0000-4000-8000-b4' || '0000000'  || w || t || c)::uuid
+  from generate_series(1, 4) w,
+       generate_series(1, 4) t,
+       generate_series(1, 4) c;
+
+-- `w = 4` est le workspace où l'utilisateur n'a **aucune** appartenance : `role_ws` y vaut NULL.
+update tst_matrice set role_ws = null where w = 4;
+update tst_matrice set role_ws = 'admin'              where w = 1;
+update tst_matrice set role_ws = 'business_developer' where w = 2;
+update tst_matrice set role_ws = 'viewer'             where w = 3;
+
+insert into auth.users (id, email, raw_user_meta_data) values
+	('00000000-0000-4000-8000-000000000006', 'mathis@exemple.test',
+	 '{"full_name":"Mathis Matrice"}');
+
+insert into public.workspaces (id, name, slug)
+select ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       'Matrice ' || w, 'matrice-' || w
+  from generate_series(1, 4) w;
+
+insert into public.workspace_members (workspace_id, user_id, role)
+select ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       '00000000-0000-4000-8000-000000000006'::uuid,
+       (array['admin', 'business_developer', 'viewer'])[w]
+  from generate_series(1, 3) w;
+
+insert into public.workflow_nodes_catalog (id, workspace_id, key, label, position)
+select ('00000000-0000-4000-8000-b500000000' || w || '1')::uuid,
+       ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       'matrice-noeud', 'Nœud matrice', 1
+  from generate_series(1, 4) w;
+
+insert into public.workflows (id, workspace_id, name, scope)
+select ('00000000-0000-4000-8000-b30000000' || '00' || w)::uuid,
+       ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       'Workflow matrice ' || w, 'global'
+  from generate_series(1, 4) w;
+
+insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position, is_initial)
+select ('00000000-0000-4000-8000-b600000000' || w || '1')::uuid,
+       ('00000000-0000-4000-8000-b30000000' || '00' || w)::uuid,
+       ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       ('00000000-0000-4000-8000-b500000000' || w || '1')::uuid,
+       1, true
+  from generate_series(1, 4) w;
+
+insert into public.tracks (id, workspace_id, name, slug, position)
+select ('00000000-0000-4000-8000-b1' || '00000000' || w || t)::uuid,
+       ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       'Track ' || w || t, 'track-' || w || '-' || t, t
+  from generate_series(1, 4) w, generate_series(1, 4) t;
+
+insert into public.channels (id, workspace_id, track_id, workflow_id, name, slug, position)
+select ('00000000-0000-4000-8000-b2' || '0000000' || w || t || c)::uuid,
+       ('00000000-0000-4000-8000-b0000000000' || w)::uuid,
+       ('00000000-0000-4000-8000-b1' || '00000000' || w || t)::uuid,
+       ('00000000-0000-4000-8000-b30000000' || '00' || w)::uuid,
+       'Channel ' || w || t || c, 'channel-' || w || '-' || t || '-' || c, c
+  from generate_series(1, 4) w, generate_series(1, 4) t, generate_series(1, 4) c;
+
+insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title)
+select m.card_id,
+       ('00000000-0000-4000-8000-b0000000000' || m.w)::uuid,
+       m.channel_id,
+       ('00000000-0000-4000-8000-b30000000' || '00' || m.w)::uuid,
+       ('00000000-0000-4000-8000-b600000000' || m.w || '1')::uuid,
+       'Card ' || m.w::text || m.t::text || m.c::text
+  from tst_matrice m;
+
+insert into public.track_members (track_id, user_id, access)
+select distinct m.track_id, '00000000-0000-4000-8000-000000000006'::uuid, m.acces_track
+  from tst_matrice m where m.acces_track is not null;
+
+insert into public.channel_members (channel_id, user_id, access)
+select m.channel_id, '00000000-0000-4000-8000-000000000006'::uuid, m.acces_channel
+  from tst_matrice m where m.acces_channel is not null;
+
+select is((select count(*)::int from tst_matrice), 64,
+	'les 64 combinaisons de rôle × droit fin de track × droit fin de channel sont construites');
+select is((select count(distinct track_id)::int from tst_matrice), 16,
+	'16 tracks distincts : 4 états du droit fin de track dans chacun des 4 états du rôle');
+
+set local request.jwt.claims =
+	'{"sub":"00000000-0000-4000-8000-000000000006","role":"authenticated"}';
+
+-- `can_read_track` ne dépend que du rôle et du droit fin de **track** : la comparaison porte donc
+-- sur les 16 tracks distincts, pas sur les 64 lignes, pour ne pas compter seize fois la même chose.
+select is(
+	(select string_agg(distinct m.w::text || m.t::text, ', ' order by m.w::text || m.t::text)
+	   from tst_matrice m
+	  where app.can_read_track(m.track_id)
+	        <> (app.resolve_access(m.role_ws, m.acces_track, null) <> 'none')),
+	null,
+	'`can_read_track` : aucune divergence avec `resolve_access` sur les 16 combinaisons '
+	'(rôle × droit fin de track) — la jointure qu''INC-013 attendait est prouvée');
+
+select is(
+	(select count(distinct m.track_id)::int from tst_matrice m
+	  where app.can_read_track(m.track_id)),
+	10,
+	'…et elle discrimine : 10 des 16 tracks sont lisibles — 4 en `admin`, 3 en '
+	'`business_developer`, 3 en `viewer`, 0 sans appartenance');
+
+select is(
+	(select string_agg(m.w::text || m.t::text || m.c::text, ', ' order by m.w::text || m.t::text || m.c::text)
+	   from tst_matrice m
+	  where app.can_read_channel(m.channel_id)
+	        <> (app.resolve_access(m.role_ws, m.acces_track, m.acces_channel) <> 'none')),
+	null,
+	'`can_read_channel` : aucune divergence sur les 64 combinaisons, précédence '
+	'channel → track → workspace comprise');
+
+select is(
+	(select count(*)::int from tst_matrice m where app.can_read_channel(m.channel_id)),
+	38,
+	'…et elle discrimine : 38 des 64 channels sont lisibles');
+
+select is(
+	(select string_agg(m.w::text || m.t::text || m.c::text, ', ' order by m.w::text || m.t::text || m.c::text)
+	   from tst_matrice m
+	  where app.can_write_channel(m.channel_id)
+	        <> (app.resolve_access(m.role_ws, m.acces_track, m.acces_channel) = 'write')),
+	null,
+	'`can_write_channel` : aucune divergence sur les 64 combinaisons — `read` n''y suffit pas');
+
+select is(
+	(select count(*)::int from tst_matrice m where app.can_write_channel(m.channel_id)),
+	27,
+	'…et elle discrimine : 27 des 64 channels sont accessibles en écriture, soit 11 de moins '
+	'qu''en lecture — un `viewer` de channel lit sans écrire');
+
+-- `app.can_read_card` n'a **aucune règle propre** : le §3.6 la définit comme la délégation
+-- `can_read_channel(card.channel_id)`. Ce qui est éprouvé ici est donc que la délégation reste
+-- stricte — qu'aucune réécriture ultérieure n'y glisse un critère de workspace, d'archivage ou de
+-- corbeille que la spécification ne porte pas.
+select is(
+	(select string_agg(m.w::text || m.t::text || m.c::text, ', ' order by m.w::text || m.t::text || m.c::text)
+	   from tst_matrice m
+	  where app.can_read_card(m.card_id) <> app.can_read_channel(m.channel_id)),
+	null,
+	'`can_read_card` délègue strictement à `can_read_channel` sur les 64 combinaisons (§3.6)');
+
+select is(
+	(select count(*)::int from tst_matrice m where app.can_read_card(m.card_id)),
+	38,
+	'…et la délégation transporte la discrimination : 38 des 64 cards sont lisibles');
+
+-- Un identifiant inconnu : refus **calme**, et un booléen plutôt que NULL (décision 102).
+select is(app.can_read_card('00000000-0000-4000-8000-00000000dead'), false,
+	'une card inexistante rend `false`, pas NULL et pas une erreur');
+
+reset role;
+
+-- =============================================================================================
+-- 8. Absence de récursion sur les trois tables protégées — docs/SPEC-permissions-rls.md §3.8 b
+-- =============================================================================================
+-- La section 4 démontre l'absence de récursion sur `app.is_workspace_member` et
+-- `public.workspace_members`, seule table qui existât en 2026-08-03. Les trois fonctions livrées
+-- depuis lisent chacune une table **elle-même protégée par RLS** — `tracks`, `channels`, `cards` —
+-- et n'ont jamais eu de démonstration mécanique : `docs/SPEC-permissions-rls.md` §3.3 en affirmait
+-- une, mesurée à la main pendant `CRM-012` et figée par aucune assertion.
+--
+-- Le procédé est celui de la décision 27, répété sur chaque table : la politique de lecture livrée
+-- est retirée, remplacée par une politique adossée à la fonction — laquelle relit alors sa propre
+-- table —, et l'on mesure. La fonction livrée répond avec le filtrage exact de la matrice ; une
+-- jumelle `SECURITY INVOKER`, définition identique au mode d'exécution près, épuise la pile.
+--
+-- C'est la propriété qui compte : la non-récursion n'est pas dans le texte de ces fonctions, elle
+-- est dans leur mode d'exécution, qu'un seul `alter function` suffirait à détruire.
+
+set local request.jwt.claims =
+	'{"sub":"00000000-0000-4000-8000-000000000006","role":"authenticated"}';
+
+-- 8.1 `tracks`
+drop policy tracks_lecture_membre on public.tracks;
+create policy tst_rec_tracks_definer on public.tracks
+	for select to authenticated using (app.can_read_track(id));
+
+set local role authenticated;
+select lives_ok(
+	'select count(*) from public.tracks',
+	'`can_read_track` dans une politique sur `tracks` : la lecture aboutit, aucune récursion');
+select is((select count(*)::int from public.tracks), 10,
+	'…et rend exactement les 10 tracks de la matrice : la politique filtre réellement');
+reset role;
+
+drop policy tst_rec_tracks_definer on public.tracks;
+
+create function app.tst_can_read_track_invoker(track uuid)
+returns boolean language sql stable security invoker set search_path = '' as $$
+	select coalesce((
+		select app.resolve_access(app.workspace_role(t.workspace_id), tm.access, null) <> 'none'
+		  from public.tracks t
+		  left join public.track_members tm
+		    on tm.track_id = t.id and tm.user_id = (select auth.uid())
+		 where t.id = track), false);
+$$;
+grant execute on function app.tst_can_read_track_invoker(uuid) to authenticated;
+
+create policy tst_rec_tracks_invoker on public.tracks
+	for select to authenticated using (app.tst_can_read_track_invoker(id));
+
+set local role authenticated;
+select throws_ok(
+	'select count(*) from public.tracks',
+	'54001',
+	null,
+	'la jumelle SECURITY INVOKER de `can_read_track` épuise la pile : c''est bien le mode '
+	'd''exécution qui règle la récursion, pas l''encapsulation dans une fonction');
+reset role;
+
+drop policy tst_rec_tracks_invoker on public.tracks;
+drop function app.tst_can_read_track_invoker(uuid);
+create policy tracks_lecture_membre on public.tracks
+	for select to authenticated
+	using (app.resolve_track_access(workspace_id, id) <> 'none');
+
+-- 8.2 `channels`
+drop policy channels_lecture_membre on public.channels;
+create policy tst_rec_channels_definer on public.channels
+	for select to authenticated using (app.can_read_channel(id));
+
+set local role authenticated;
+select lives_ok(
+	'select count(*) from public.channels',
+	'`can_read_channel` dans une politique sur `channels` : aucune récursion');
+select is((select count(*)::int from public.channels), 38,
+	'…et rend exactement les 38 channels lisibles de la matrice');
+reset role;
+
+drop policy tst_rec_channels_definer on public.channels;
+
+create function app.tst_can_read_channel_invoker(ch uuid)
+returns boolean language sql stable security invoker set search_path = '' as $$
+	select coalesce((
+		select app.resolve_access(app.workspace_role(c.workspace_id), tm.access, cm.access)
+		       <> 'none'
+		  from public.channels c
+		  left join public.track_members tm
+		    on tm.track_id = c.track_id and tm.user_id = (select auth.uid())
+		  left join public.channel_members cm
+		    on cm.channel_id = c.id and cm.user_id = (select auth.uid())
+		 where c.id = ch), false);
+$$;
+grant execute on function app.tst_can_read_channel_invoker(uuid) to authenticated;
+
+create policy tst_rec_channels_invoker on public.channels
+	for select to authenticated using (app.tst_can_read_channel_invoker(id));
+
+set local role authenticated;
+select throws_ok(
+	'select count(*) from public.channels',
+	'54001',
+	null,
+	'la jumelle SECURITY INVOKER de `can_read_channel` épuise la pile');
+reset role;
+
+drop policy tst_rec_channels_invoker on public.channels;
+drop function app.tst_can_read_channel_invoker(uuid);
+create policy channels_lecture_membre on public.channels
+	for select to authenticated
+	using (app.resolve_channel_access(workspace_id, track_id, id) <> 'none');
+
+-- 8.3 `cards`. Le cas est celui que le §3.6 interdit en production — une politique de `cards` qui
+--     appellerait `can_read_card` relirait `cards` et casserait le `RETURNING` d'un `INSERT`
+--     (décision 107). On le pose ici **exprès**, et pour la seule durée de ces deux assertions.
+drop policy cards_lecture on public.cards;
+create policy tst_rec_cards_definer on public.cards
+	for select to authenticated using (app.can_read_card(id));
+
+set local role authenticated;
+select lives_ok(
+	'select count(*) from public.cards',
+	'`can_read_card` dans une politique sur `cards` : aucune récursion');
+select is((select count(*)::int from public.cards), 38,
+	'…et rend exactement les 38 cards lisibles de la matrice');
+reset role;
+
+drop policy tst_rec_cards_definer on public.cards;
+
+create function app.tst_can_read_card_invoker(card uuid)
+returns boolean language sql stable security invoker set search_path = '' as $$
+	select coalesce((select app.can_read_channel(c.channel_id)
+	                   from public.cards c where c.id = card), false);
+$$;
+grant execute on function app.tst_can_read_card_invoker(uuid) to authenticated;
+
+create policy tst_rec_cards_invoker on public.cards
+	for select to authenticated using (app.tst_can_read_card_invoker(id));
+
+set local role authenticated;
+select throws_ok(
+	'select count(*) from public.cards',
+	'54001',
+	null,
+	'la jumelle SECURITY INVOKER de `can_read_card` épuise la pile');
+reset role;
+
+drop policy tst_rec_cards_invoker on public.cards;
+drop function app.tst_can_read_card_invoker(uuid);
+create policy cards_lecture on public.cards
+	for select to authenticated using (app.can_read_channel(channel_id));
+
+-- 8.4 Le graphe **réellement livré** ne referme aucun de ces cycles, et sa plus longue chaîne
+--     répond : `card_field_values` → `can_read_card` → `cards` → `can_read_channel` → `channels`
+--     → `resolve_channel_access` → `workspace_members`. Aucune card de la matrice ne porte de
+--     valeur ; celles du seed en portent, et l'assertion se lit donc sous une identité seedée.
+set local request.jwt.claims =
+	'{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated"}';
+set local role authenticated;
+select lives_ok(
+	'select count(*) from public.card_field_values',
+	'la plus longue chaîne du produit — quatre fonctions et trois tables — répond sans récurser');
+select cmp_ok((select count(*)::int from public.card_field_values), '>', 0,
+	'…et elle rend des lignes : la chaîne n''est pas verte parce qu''elle ne traverse rien');
+reset role;
+
+-- =============================================================================================
+-- 9. Recensement des fonctions `SECURITY DEFINER` — docs/SPEC-permissions-rls.md §3.8 c
+-- =============================================================================================
+-- La Definition of Done dit « toutes les fonctions `SECURITY DEFINER` ». En 2026-08-03, « toutes »
+-- valait sept, les seules qui existassent. Onze migrations plus tard, tenir une liste à la main
+-- serait la garantie qu'elle dérive : l'exigence est donc écrite comme un **recensement**, qui
+-- tombera de lui-même le jour où une unité ajoutera une fonction `SECURITY DEFINER` sans
+-- `search_path` — sans qu'aucun fichier ait à être mis à jour (décision 51).
+
+select is(
+	(select string_agg(n.nspname || '.' || p.proname, ', ' order by p.proname)
+	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname in ('app', 'public')
+	    and p.prosecdef
+	    and coalesce(array_to_string(p.proconfig, ','), '') <> 'search_path=""'),
+	null,
+	'aucune fonction `SECURITY DEFINER` des schémas `app` et `public` n''est sans '
+	'`search_path` vide');
+
+-- Le pendant du recensement : sans lui, « aucune anomalie » resterait vrai sur un schéma vide.
+select cmp_ok(
+	(select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname in ('app', 'public') and p.prosecdef),
+	'>=', 18,
+	'le recensement porte sur au moins les 18 fonctions `SECURITY DEFINER` mesurées le '
+	'2026-08-05 — la borne est basse à dessein, chaque unité en ajoutant');
+
+-- `search_path` vide est également exigé des fonctions `SECURITY INVOKER` du projet : elles sont
+-- appelées depuis des politiques, où le `search_path` de l''appelant n''est pas maîtrisé.
+select is(
+	(select string_agg(n.nspname || '.' || p.proname, ', ' order by p.proname)
+	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname = 'app'
+	    and coalesce(array_to_string(p.proconfig, ','), '') <> 'search_path=""'),
+	null,
+	'aucune fonction du schéma `app`, `SECURITY INVOKER` comprise, ne laisse son `search_path` '
+	'au hasard');
 
 select * from finish();
 

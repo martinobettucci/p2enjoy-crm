@@ -265,7 +265,7 @@ elle-même énonce : vérification exécutée, sortie consignée, décision insc
   la décision est conservé, son énoncé corrigé, et la question de rouvrir l'arbitrage est
   consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-012, en attente d'arbitrage**.
 
-### CRM-010 — Fonctions d'autorisation `[~]`
+### CRM-010 — Fonctions d'autorisation `[x]`
 `app.is_workspace_member`, `app.is_workspace_admin`, `app.can_read_track`,
 `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card`.
 **DoD** : pgTAP couvrant chaque rôle et chaque combinaison de droits fins ; absence de récursion
@@ -276,7 +276,8 @@ démontrée ; `search_path` fixé sur toutes les fonctions `SECURITY DEFINER`.
       privilèges d'exécution. **Aucune politique RLS** : le refus par défaut de `CRM-003` est
       intact, ce que la suite pgTAP vérifie explicitement.
 - [x] **pgTAP couvrant chaque rôle et chaque combinaison de droits fins** :
-      `supabase/tests/0002_fonctions_autorisation.test.sql`, **127 assertions, aucune anomalie**.
+      `supabase/tests/0002_fonctions_autorisation.test.sql`, **153 assertions, aucune anomalie**
+      — 127 à la livraison du 2026-08-03, étendues le 2026-08-05 par la reprise de l'unité.
       La matrice de `docs/SPEC-permissions-rls.md` §2.2 est énumérée **exhaustivement** — 4 rôles
       de workspace, dont l'absence de rôle, × 4 états du droit fin de track × 4 du droit fin de
       channel, soit **64 combinaisons**, chacune une assertion nommée.
@@ -304,47 +305,130 @@ démontrée ; `search_path` fixé sur toutes les fonctions `SECURITY DEFINER`.
       la volatilité ni les droits des fonctions ; `migrations-runner` rejoue les deux migrations et
       se termine en `0` ; réinitialisation **à blanc** par `./resetMe.sh --yes` suivie d'un rejeu
       complet des preuves, toujours 26/26.
-- [x] Harnais de preuves rejouable `scripts/verify-authz.sh` : **26 contrôles, aucune anomalie**,
+- [x] Harnais de preuves rejouable `scripts/verify-authz.sh` : **35 contrôles, aucune anomalie**,
       et **non complaisant** — il échoue bien lorsque `is_workspace_member` repasse en
       `SECURITY INVOKER`, lorsque `search_path` est relâché, lorsque `resolve_access` autorise
       tout, lorsqu'un administrateur devient restreignable par un droit fin, lorsqu'`EXECUTE` est
       retiré à `anon`, lorsqu'une politique permissive est ajoutée, et lorsqu'une des quatre
-      fonctions différées est créée sans étendre les preuves.
+      fonctions différées est créée sans étendre les preuves. *(26 contrôles jusqu'au 2026-08-05.)*
 - [x] `scripts/verify-stack.sh` (**33/33**), `scripts/verify-scripts.sh` (**38/38**) et
       `scripts/verify-migrations.sh` (**23/23**) rejoués : aucune régression sur les unités
       précédentes.
 - [x] `docs/SCHEMA.md` §9, `docs/SPEC-permissions-rls.md` §3, §3.1, §3.2, `docs/DAT.md` §7,
       `docs/PROD_MIGRATIONS.md` §3, `README.md` §5 et §7, `CHANGELOG.md` mis à jour dans le même
       changement.
-- [ ] **Quatre des six fonctions ne sont pas livrées : `app.can_read_track`,
-      `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card`.** Elles doivent
-      remonter d'un track, d'un channel ou d'une card jusqu'à son workspace ; ce chemin passe par
-      `tracks`, `channels` et `cards`, livrées par `CRM-020`, `CRM-021` et `CRM-040`, soit au
-      chunk suivant. **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité :
-      il n'y a rien à y faire tant que ces tables n'existent pas.** Contradiction
-      d'ordonnancement consignée dans `docs/INCONSISTENCY_REPORT.md`, INC-013, avec trois options
-      d'arbitrage, **à trancher avant `CRM-012`**.
+- [x] **~~Quatre des six fonctions ne sont pas livrées.~~ LES SIX SONT LIVRÉES, ET INC-013 EST
+      CLOSE** (2026-08-05, décision 155). `app.can_read_track`, `app.can_read_channel` et
+      `app.can_write_channel` par `CRM-012`, `app.can_read_card` par `CRM-040`. La Definition of
+      Done **n'a pas été réécrite** : elle nomme six fonctions, elle est redevenue satisfaisable
+      telle qu'elle est, et l'unité a été reprise pour la satisfaire plutôt que pour la réduire.
+      Le second point ouvert d'INC-013 — « faut-il la ramener à quatre ? » — tombe avec le premier.
+- [x] **Spécification écrite avant les preuves ajoutées**, `docs/SPEC-permissions-rls.md` §3.8 :
+      les trois exigences de la Definition of Done rendues vérifiables — l'égalité que les quatre
+      fonctions doivent respecter, le tableau des six cas de récursion avec leurs résultats
+      **mesurés**, et le recensement des `SECURITY DEFINER`. Commit documentaire dédié, poussé
+      avant la première ligne de test (décision 156).
+- [x] **La matrice, à travers des lignes réelles** — ce qu'INC-013 nommait comme manquant. Un seul
+      utilisateur, quatre workspaces pour les quatre états du rôle, quatre tracks et quatre
+      channels par niveau, une card par channel : **64 triplets**, tous construits par des lignes
+      distinctes. Aucune divergence entre `can_read_track`, `can_read_channel`, `can_write_channel`
+      et `app.resolve_access` — et la matrice **discrimine** : 10 tracks sur 16, 38 channels sur 64
+      en lecture, 27 sur 64 en écriture. `can_read_card` délègue strictement à `can_read_channel`
+      sur les 64, conformément au §3.6.
+- [x] **Absence de récursion démontrée sur les trois tables protégées, en la provoquant** — la
+      section 4 ne portait que sur `workspace_members`. Sur `tracks`, `channels` et `cards`, la
+      politique adossée à la fonction **livrée** répond et rend exactement le filtrage de la
+      matrice ; une jumelle `SECURITY INVOKER`, identique au mode d'exécution près, épuise la pile
+      en **`54001`**, les trois fois. La plus longue chaîne du produit —
+      `card_field_values` → `can_read_card` → `cards` → `can_read_channel` → `channels` — répond et
+      rend des lignes. `docs/SPEC-permissions-rls.md` §3.3 l'**affirmait** depuis `CRM-012` sans
+      qu'aucune assertion ne le tienne.
+- [x] **Le `search_path` est un recensement, plus une liste** : aucune fonction `SECURITY DEFINER`
+      des schémas `app` et `public` sans `search_path` vide — **18** mesurées le 2026-08-05 sur
+      **29** —, et aucune fonction du schéma `app`, `SECURITY INVOKER` comprise, qui le laisse au
+      hasard. La preuve tombera d'elle-même le jour où une unité en ajoutera une sans son
+      `search_path`, sans qu'aucun fichier n'ait à être tenu à jour (décision 51).
+- [x] **Test unitaire dédié** : `supabase/tests/0002_fonctions_autorisation.test.sql`, **153
+      assertions, aucune anomalie** (128 jusqu'au 2026-08-05).
+- [x] **Preuve d'intégration dédiée, hors interface, sur les quatre fonctions ajoutées** : sous
+      PostgREST, avec les jetons réels des trois profils du seed obtenus par la véritable route de
+      connexion, `tracks`, `channels` et `cards` rendent 4/6/9 à l'administratrice et au business
+      developer, **3/4/4** au `viewer` fermé sur un track par un droit fin, et **zéro ligne avec un
+      `200`** à l'anonyme (preuve n° 11). Ces trois tables portent les politiques qui appellent les
+      fonctions : elles les exercent par le **chemin réel** du produit, sans instrumentation.
+- [x] **UN DÉFAUT RÉEL DE CE HARNAIS, TROUVÉ PAR LE REJEU DE RÉGRESSION** (décision 157, INC-060).
+      L'étape 2 enchaînait `docker compose up -d migrations-runner` et la lecture de
+      `.State.ExitCode` : MESURÉ, l'inspection lit `0` alors que `Status` vaut encore `running`
+      — c'est le code de l'exécution **précédente**. Le contrôle était donc complaisant, et le
+      harnais rendait la main sur une base **à moitié migrée** : entre les migrations 3 et 10,
+      `tracks_lecture_membre` revenait à sa forme de `CRM-003` et `npm run test:sql` rendait trois
+      assertions rouges dans `0011_droits_fins.test.sql`, dont la preuve de refus n° 4. Corrigé par
+      `docker compose run --rm`, **synchrone**, et par un contrôle de plus qui vérifie l'**état
+      final de la base** plutôt qu'un code de conteneur. Troisième occurrence du mécanisme des
+      décisions 108 et 135.
+- [x] **Quatre dégradations de plus, et elles mordent** : `can_read_track` repassée en
+      `SECURITY INVOKER` (1 assertion rouge), `can_read_channel` cessant de regarder
+      `channel_members` (5), `can_read_card` jugeant sur le workspace au lieu du channel (3), et une
+      fonction `SECURITY DEFINER` ajoutée sans `search_path` (3). Sans elles, la suite pouvait
+      rester verte pendant que quatre des six fonctions étaient réécrites n'importe comment.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run test:unit`
+      **164 tests**, `npm run e2e:api` **291 scénarios**, `npm run e2e:ui` **37 scénarios**,
+      `npm run test:sql` **1164 assertions**.
+- [x] **Les vingt-trois harnais du dépôt rejoués** (décision 158) : `verify-stack` 33,
+      `verify-migrations` 23, `verify-vault` 26, `verify-auth` 42, `verify-authz` **35**,
+      `verify-seed` 49, `verify-types` 30, `verify-webapp` 41, `verify-harness` 25,
+      `verify-tracks` 43, `verify-channels` 30, `verify-catalogue` 39, `verify-workflows` 49,
+      `verify-copie-workflow` 34, `verify-coherence-workflow` 33, `verify-champs-formulaire` 38,
+      `verify-droits-fins` 42, `verify-move-card` 56, `verify-valeurs-champs` 40,
+      `verify-colonnes-protegees` 50, `verify-preuves-refus` 26 — **aucune anomalie**.
+- [x] **UN GARDE-FOU FIGÉ A ÉCHOUÉ COMME PRÉVU, ET A ÉTÉ RÉVISÉ** (mécanisme de la décision 51,
+      dixième occurrence) : `scripts/verify-harness.sh` comptait 1139 assertions et a rendu « vert
+      mais 1164 au lieu de 1139 ». Révisé à **1164** dans le même changement, valeur mesurée ;
+      `SCENARIOS_API` et `SCENARIOS_UI` restent à 291 et 37, l'unité ne livrant ni route ni écran.
+- [x] **DEUX HARNAIS RENDENT UNE ANOMALIE QUI NE VIENT PAS DE CETTE UNITÉ, ET AUCUNE N'EST
+      MASQUÉE** — chacune isolée, reproduite et consignée plutôt que rangée sous « régression ».
+      `scripts/verify-scripts.sh` : 51 sur 52, INC-044, défaut d'hôte connu — ni `ss` ni `netstat`
+      installés. `scripts/verify-cards.sh` : 44 sur 45, **défaut réel et nouveau**,
+      **INC-061** — sa section 10 rejoue `npm run test:sql` avant que son `trap` ne retire ses
+      cinq cards de preuve, et trois assertions de `0015_colonnes_protegees.test.sql` comptent les
+      neuf cards du seed. MESURÉ : reproductible, et `npm run test:sql` lancé immédiatement après
+      la sortie du harnais rend 1164 assertions sans anomalie. Livrable de `CRM-040` : **non
+      corrigé ici**, arbitrage attendu.
+- [x] **Septième occurrence d'INC-036, contournée hors dépôt.** Les navigateurs du conteneur sont
+      en révision `1194` là où le Playwright épinglé réclame `1234` : `verify-webapp` rendait
+      **10 anomalies** et `npm run e2e:ui` échouait sur ses 37 scénarios. L'arborescence de
+      compatibilité recréée, les deux repassent au vert. Le coût d'entrée reste **récurrent**, et
+      l'arbitrage reste attendu.
+- [x] **Les trois captures réécrites par le rejeu ont été regardées puis restaurées**, comme aux
+      six unités précédentes : cette unité ne touche aucun composant de l'interface, et l'écran
+      reste celui d'un appelant anonyme. Les différences étaient des variations de rendu, aucune
+      de contenu.
 
 *DoD adaptée, écarts explicites.* **Aucun test E2E dédié, aucune vérification visuelle** : cette
-unité ne livre ni parcours utilisateur ni écran — le premier arrive avec `CRM-007`, le harnais
-Playwright avec `CRM-008`. Ses preuves sont unitaires (pgTAP) et d'intégration (PostgREST, jetons
-réels, hors interface), ce que la nature de fonctions SQL commande. **Aucune mise à jour du seed** :
-il n'existe pas encore, c'est l'objet de `CRM-005` ; les comptes et workspaces du harnais sont
-créés puis détruits par lui.
+unité ne livre ni parcours utilisateur ni écran, et n'en livrera pas — ses objets sont sept
+fonctions SQL. Ses preuves sont unitaires (pgTAP) et d'intégration (PostgREST, jetons réels, hors
+interface), ce que `CLAUDE.md` §10 exige de toute façon d'une règle d'accès. **Aucune mise à jour du
+seed** : les comptes et workspaces de la matrice vivent dans la transaction de la suite et sont
+annulés avec elle ; ceux du harnais sont créés puis détruits par lui. L'unité n'introduit ni table,
+ni page, ni statut, ni flux — rien que le seed doive démontrer.
 
 *Limites nommées, non masquées.*
 
-- **Les quatre fonctions `can_*` ne sont pas livrées** (voir ci-dessus, INC-013). Ce qui manque
-  n'est pas la règle métier — livrée et prouvée sur ses 64 combinaisons — mais la jointure qui
-  remonte au workspace.
-- **Aucune politique RLS n'est écrite** : ce qui est prouvé, ce sont les fonctions, pas leur emploi
-  par le produit. Les politiques relèvent de `CRM-012`. Au passage, **aucune unité du backlog ne
-  porte nommément les politiques des tables d'identité**, ni la preuve de refus n° 10 :
-  `docs/INCONSISTENCY_REPORT.md`, **INC-014, en attente d'arbitrage**.
-- **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, seules la n° 3 et la
-  n° 11 sont acquises, et uniquement au niveau du workspace — pas encore des cards.
+- **Aucune politique RLS n'est écrite par cette unité** : ce qui est prouvé, ce sont les fonctions.
+  Leur emploi par le produit est prouvé ici **à travers** les politiques de `CRM-012` et `CRM-040`,
+  mais celles-ci restent leurs livrables. Au passage, **aucune unité du backlog ne porte nommément
+  les politiques des tables d'identité**, ni la preuve de refus n° 10 :
+  `docs/INCONSISTENCY_REPORT.md`, **INC-014, en attente d'arbitrage** — inchangée.
+- **`scripts/verify-migrations.sh` porte le même défaut que celui corrigé ici**, et n'est **pas**
+  corrigé : c'est un livrable de `CRM-003`, unité `[x]`, et le reprendre dans ce commit
+  contredirait `CLAUDE.md` §13. Le piège reste armé et il est nommé : **INC-060, arbitrage
+  attendu**.
 - **La création des workspaces et des appartenances du harnais passe par SQL**, faute de politique
   autorisant leur création par l'API. Le fait est nommé dans le script, pas masqué.
+- **Les preuves d'intégration ajoutées dépendent du seed** : elles lisent les nombres du seed socle
+  et échoueront explicitement — avec le message qui le dit — si le seed n'est pas appliqué.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée, sans effet sur cette unité qui ne touche aucun code TypeScript.
 
 ### CRM-011 — Authentification `[~]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,

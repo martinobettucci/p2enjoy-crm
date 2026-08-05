@@ -333,12 +333,20 @@ jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : 
 faire échouer.
 
 `scripts/verify-authz.sh` couvre les fonctions d'autorisation. Sa suite pgTAP énumère les **64
-combinaisons** de la matrice de résolution des droits fins, éprouve la résolution du rôle contre
-cinq comptes réels — dont un membre d'un autre workspace et un appelant anonyme —, et **provoque**
-la récursion des politiques pour démontrer que les fonctions livrées y échappent. Le schéma `app`
-n'étant pas exposé par l'API, l'étape d'intégration pose **temporairement** deux politiques
-adossées à ces fonctions, interroge PostgREST avec trois jetons obtenus par la route de connexion,
-puis les retire et vérifie qu'aucune ne subsiste (`docs/JOURNAL.md`, décision 28).
+combinaisons** de la matrice de résolution des droits fins **deux fois** — sur l'algorithme seul,
+puis à travers des lignes réelles pour éprouver la jointure qui l'alimente —, met à l'épreuve la
+résolution du rôle contre cinq comptes réels — dont un membre d'un autre workspace et un appelant
+anonyme —, et **provoque** la récursion des politiques sur `workspace_members`, `tracks`,
+`channels` et `cards` pour démontrer que les fonctions livrées y échappent : une jumelle
+`SECURITY INVOKER` de chacune épuise la pile. Elle recense enfin les fonctions `SECURITY DEFINER`
+des schémas `app` et `public`, dont aucune ne doit laisser son `search_path` au hasard.
+
+Le schéma `app` n'étant pas exposé par l'API, l'étape d'intégration pose **temporairement** deux
+politiques adossées aux deux fonctions de rôle, interroge PostgREST avec trois jetons obtenus par
+la route de connexion, puis les retire et vérifie qu'aucune ne subsiste (`docs/JOURNAL.md`,
+décision 28). Les quatre fonctions `can_*` n'ont pas besoin de cette instrumentation : les
+politiques de `tracks`, `channels` et `cards` les appellent déjà, et le harnais les exerce donc par
+le chemin réel du produit, avec les jetons des trois profils du seed.
 
 `scripts/verify-auth.sh` couvre l'authentification, entièrement **hors interface**. Il vérifie
 d'abord que la configuration réellement appliquée au service `auth` est celle du `.env`, puis

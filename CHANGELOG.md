@@ -15,6 +15,20 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **Un harnais déclarait vert un rejeu de migrations qu'il n'attendait pas, et rendait la main sur
+  une base à moitié migrée** — INC-060, décision 157. L'étape 2 de `scripts/verify-authz.sh`
+  enchaînait `docker compose up -d migrations-runner` et la lecture de `.State.ExitCode`. MESURÉ :
+  l'inspection lit `0` alors que `Status` vaut encore `running` — c'est le code de l'exécution
+  **précédente**. Deux conséquences : le contrôle était **complaisant**, et le harnais rendait la
+  main pendant que le runner rejouait encore le répertoire. Entre les migrations 3 et 10,
+  `tracks_lecture_membre` revenait à sa forme de `CRM-003` — les droits fins de `CRM-012` cessant
+  d'être appliqués —, et `npm run test:sql` lancé dans cette fenêtre rendait **trois assertions
+  rouges** dans `0011_droits_fins.test.sql`, dont la **preuve de refus n° 4**. Corrigé par
+  `docker compose run --rm`, **synchrone**, et par un contrôle de plus qui vérifie l'**état final
+  de la base** plutôt qu'un code de conteneur. Troisième occurrence du mécanisme des décisions 108
+  et 135. Aucun comportement du produit n'est modifié.
+  **`scripts/verify-migrations.sh` porte le même défaut et n'est pas corrigé** : livrable de
+  `CRM-003`, unité `[x]` — INC-060, arbitrage attendu.
 - **Un harnais de preuves désactivait la garde centrale de `CRM-034` derrière lui** — INC-055,
   décision 143. `scripts/verify-cards.sh` restaurait son état en rejouant `0011_cards.sql` **seul**,
   dont la section 7 rend à `authenticated` l'`UPDATE` de table sur `cards` — ce que
@@ -35,6 +49,45 @@ d'exécuter le code attendu.
   barrière séparément. Le harnais passe de 37 à **38 contrôles hors suites** (44 à 45 au total).
 
 ### Ajouté
+
+- **`CRM-010` est close : ses six fonctions sont enfin toutes prouvées, et INC-013 s'éteint.**
+  Les quatre fonctions qu'INC-013 avait retirées à l'unité faute de tables — `app.can_read_track`,
+  `app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — existent depuis `CRM-012`
+  et `CRM-040`. Sa Definition of Done n'est **pas** réécrite à quatre : elle est redevenue
+  satisfaisable telle qu'elle est, et l'unité a été reprise pour la satisfaire (décision 155).
+  - `docs/SPEC-permissions-rls.md` **§3.8**, écrit après mesure et committé avant tout code : les
+    trois exigences rendues vérifiables — l'égalité que les quatre fonctions doivent respecter, le
+    tableau des six cas de récursion avec leurs résultats mesurés, et le recensement des
+    `SECURITY DEFINER`.
+  - **La matrice à travers des lignes réelles** — ce qu'INC-013 nommait comme manquant : 64
+    triplets construits par des lignes distinctes, aucune divergence avec `app.resolve_access`, et
+    une discrimination qui interdit l'oracle dégénéré — 10 tracks sur 16, 38 channels sur 64 en
+    lecture, 27 sur 64 en écriture. `can_read_card` délègue strictement à `can_read_channel`.
+  - **L'absence de récursion démontrée en la provoquant sur `tracks`, `channels` et `cards`** : la
+    fonction livrée répond avec le filtrage exact de la matrice, sa jumelle `SECURITY INVOKER`
+    épuise la pile en **`54001`**, les trois fois. `docs/SPEC-permissions-rls.md` §3.3 l'affirmait
+    depuis `CRM-012` sans qu'aucune assertion ne le tienne.
+  - **Le `search_path` devient un recensement** plutôt qu'une liste : aucune fonction
+    `SECURITY DEFINER` d'`app` ou de `public` sans `search_path` vide — 18 sur 29 —, et la preuve
+    tombera d'elle-même le jour où une unité en ajoutera une sans le sien.
+  - **Preuve d'intégration hors interface sur les quatre fonctions** : sous PostgREST, avec les
+    jetons réels des trois profils du seed, `tracks`, `channels` et `cards` rendent 4/6/9 à
+    l'administratrice et au business developer, **3/4/4** au `viewer` fermé sur un track par un
+    droit fin, et zéro ligne avec un `200` à l'anonyme.
+  - `supabase/tests/0002_fonctions_autorisation.test.sql` passe de 128 à **153 assertions** ;
+    `scripts/verify-authz.sh` de 26 à **35 contrôles**, dont **quatre dégradations nouvelles** qui
+    font tomber la suite lorsque l'une des quatre fonctions est réécrite de travers.
+  - **Aucune migration n'est modifiée** : le produit est inchangé, ce sont ses preuves qui le
+    rattrapent.
+  - **Un garde-fou figé a échoué comme prévu et a été révisé** : le compteur d'assertions de
+    `scripts/verify-harness.sh` passe de 1139 à **1164**, dans le même changement que les preuves
+    qu'il compte. `SCENARIOS_API` et `SCENARIOS_UI` restent à 291 et 37.
+  - **Deux anomalies relevées par le rejeu des vingt-trois harnais ne viennent pas de cette unité,
+    et aucune n'est masquée** : `scripts/verify-scripts.sh` 51 sur 52 (INC-044, défaut d'hôte
+    connu) et `scripts/verify-cards.sh` 44 sur 45 — **défaut réel et nouveau, INC-061** : sa
+    section 10 rejoue `npm run test:sql` avant que son `trap` ne retire ses cinq cards de preuve,
+    et trois assertions de `0015_colonnes_protegees.test.sql` comptent les neuf cards du seed.
+    Livrable de `CRM-040`, non corrigé ici — arbitrage attendu.
 
 - **`CRM-014` — les douze preuves de refus sont rassemblées, comptées, et l'absence des cinq
   impossibles est figée.** `e2e/api/preuves-refus.spec.ts`,

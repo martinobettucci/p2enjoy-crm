@@ -5312,3 +5312,89 @@ test. Le §3.8 n'introduit aucun comportement : il rassemble ce que trois unité
 comme une liste de fonctions : elle tombera d'elle-même le jour où une unité ultérieure ajoutera une
 fonction `SECURITY DEFINER` sans `search_path`, sans qu'aucun fichier ait à être tenu à jour à la
 main. C'est un garde-fou de plus, au sens de la décision 51.
+
+### Décision 157 — Un harnais déclarait vert un rejeu qu'il n'attendait pas, et c'est le rejeu de régression qui l'a trouvé
+
+**Problème.** `npm run test:sql`, rejoué après l'extension des preuves, a rendu **trois assertions
+rouges** dans `supabase/tests/0011_droits_fins.test.sql` — dont la preuve de refus n° 4. Aucune
+migration n'avait été touchée, aucune politique réécrite, et la suite de `CRM-010` était verte.
+
+**Observation, mesurée.** `tracks_lecture_membre` portait `app.is_workspace_member(workspace_id)`,
+c'est-à-dire sa forme de `CRM-003` : les droits fins de `CRM-012` n'étaient plus appliqués. La
+cause n'est ni dans le produit ni dans les preuves ajoutées, mais dans l'étape 2 de
+`scripts/verify-authz.sh` :
+
+```
+docker compose … up -d migrations-runner
+runner_code=$(docker inspect -f '{{.State.ExitCode}}' p2enjoy-migrations)
+→ 0 running
+```
+
+`up -d` rend la main dès le démarrage du conteneur, pas à sa fin. Le `0` lu est celui de
+l'exécution **précédente**, et le harnais rend la main pendant que le runner rejoue encore le
+répertoire. Entre la migration 3 et la migration 10, la base est dans un état intermédiaire que le
+produit ne connaît jamais — et c'est dans cette fenêtre que la suite suivante a mesuré.
+
+**Deux défauts, pas un.** Le contrôle était **complaisant** — il aurait dit « code 0 » d'un rejeu en
+cours ou sur le point d'échouer — et le harnais **laissait le produit dégradé derrière lui**.
+Troisième occurrence du mécanisme des décisions 108 et 135, sous une forme nouvelle : les deux
+précédentes rejouaient trop peu de migrations, celle-ci n'attend pas celles qu'elle déclenche.
+
+**Décision.** `scripts/verify-authz.sh` emploie désormais `docker compose run --rm
+migrations-runner`, **synchrone**, dont le code de sortie est celui du rejeu qu'il vient de lancer.
+Ce n'est pas une invention : c'est déjà le procédé de `scripts/verify-tracks.sh`, et l'alignement va
+du plus ancien vers le plus sûr. Un contrôle est ajouté derrière, qui vérifie non pas un code de
+conteneur mais **l'état final de la base** — `tracks_lecture_membre` doit porter
+`resolve_track_access`, la forme de la migration 10.
+
+**Conséquence, et ce qui n'est pas fait.** `scripts/verify-migrations.sh`, livrable de `CRM-003`,
+porte exactement la même écriture. La correction est connue et tient en trois lignes ; elle n'est
+**pas** appliquée, parce que la porter reviendrait à modifier un livrable vérifié d'une autre unité
+dans un commit qui n'en traite pas (`CLAUDE.md` §13), sans rejouer ses 23 contrôles sous leur propre
+unité. Le piège reste donc armé, et il est **nommé** plutôt que laissé au hasard :
+`docs/INCONSISTENCY_REPORT.md`, INC-060, avec trois options d'arbitrage.
+
+**Ce que cet épisode confirme.** Une preuve qui n'est rejouée qu'une fois, juste après avoir été
+écrite, ne dit rien de ce que le harnais laisse derrière lui. Les trois occurrences du mécanisme ont
+toutes été trouvées par un **rejeu d'ensemble**, jamais par la suite de l'unité en cours.
+
+### Décision 158 — Le rejeu des vingt-trois harnais a rendu quatre anomalies, dont une seule appartient à cette unité
+
+**Problème.** Rejoués d'affilée, les vingt-trois harnais du dépôt rendent quatre anomalies. Les
+attribuer à l'unité en cours serait aussi faux que les ignorer : chacune a été isolée et reproduite
+séparément.
+
+**Observations, harnais par harnais.**
+
+1. **`scripts/verify-harness.sh` — 1 anomalie, ET ELLE APPARTIENT À CETTE UNITÉ.** « vert mais 1164
+   assertions au lieu de 1139 ». C'est le compteur figé de la décision 51 qui fait exactement son
+   travail : la reprise de `CRM-010` ajoute 25 assertions à `0002_fonctions_autorisation.test.sql`
+   sans qu'aucun fichier ne soit créé. **Révisé dans le même changement**, à 1164, valeur mesurée ;
+   `SCENARIOS_API` et `SCENARIOS_UI` restent à 291 et 37, l'unité ne livrant ni route ni écran.
+   Quatrième révision de ce compteur, et la première sans retard.
+2. **`scripts/verify-webapp.sh` — 10 anomalies, puis aucune.** INC-036, **septième** occurrence : le
+   conteneur fournit la révision `1194` des navigateurs Playwright là où la version épinglée réclame
+   `1234`. L'arborescence de compatibilité recréée hors dépôt, le harnais rend **41 contrôles,
+   aucune anomalie**, `npm run e2e:ui` ses **37 scénarios** et `npm run e2e:api` ses **291**.
+   Le coût d'entrée reste récurrent, comme l'entrée le prédisait.
+3. **`scripts/verify-scripts.sh` — 1 anomalie, connue et documentée.** INC-044 : ni `ss` ni
+   `netstat` sur cet hôte, donc la garde de ports conclut à tort que tout est libre. Le contrôle
+   fait ce qu'on lui demande ; le défaut est celui de l'hôte. Inchangé.
+4. **`scripts/verify-cards.sh` — 1 anomalie, DÉFAUT RÉEL ET NOUVEAU — INC-061.** Sa section 10
+   rejoue `npm run test:sql` **avant** que son `trap` ne retire ses cinq cards de preuve : la base
+   porte alors 14 cards au lieu de 9, et trois assertions de
+   `supabase/tests/0015_colonnes_protegees.test.sql` — livrée par `CRM-013` **après** que cette
+   section a été écrite — comptent précisément les neuf du seed. MESURÉ : l'échec est
+   **reproductible**, et `npm run test:sql` lancé immédiatement après la sortie du harnais rend
+   « 1164 assertions, aucune anomalie ».
+
+**Décision.** Seule l'anomalie n° 1 est corrigée ici, parce qu'elle appartient à cette unité. La
+n° 4 est **consignée sans être corrigée** : `scripts/verify-cards.sh` est un livrable de `CRM-040`,
+et le reprendre dans un commit consacré à `CRM-010` toucherait ses 45 contrôles sans les rejouer
+sous leur propre unité (`CLAUDE.md` §13). Les n° 2 et 3 sont des obstacles d'environnement déjà
+consignés, dont la seule nouveauté est d'être vérifiés une fois de plus.
+
+**Ce que ce rejeu confirme, et c'est la troisième fois.** Les trois défauts d'outillage trouvés
+aujourd'hui — INC-060 et INC-061 — l'ont été par un **rejeu d'ensemble**, jamais par la suite de
+l'unité en cours. Un harnais ne se juge pas sur ce qu'il mesure, mais sur ce qu'il laisse mesurable
+à celui qui passe après lui.

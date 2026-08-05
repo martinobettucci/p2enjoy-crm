@@ -12,6 +12,116 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-061 — `scripts/verify-cards.sh` mesure `npm run test:sql` avant de retirer son propre jeu d'essai, et une suite livrée après lui le dénonce
+
+**Nature :** défaut d'outillage de vérification, mesuré ; aucun comportement du produit en cause.
+**Relevé le :** 2026-08-05, pendant la reprise de `CRM-010`, par le rejeu des vingt-trois harnais.
+
+`scripts/verify-cards.sh` crée cinq cards de preuve, titrées `tst-crm040-%`, et les retire dans son
+`trap … EXIT`. Sa **section 10** rejoue `npm run test:sql`, `npm run e2e:api` et le reste — donc
+**avant** ce retrait. La base porte alors **14** cards au lieu des 9 du seed.
+
+Trois assertions de `supabase/tests/0015_colonnes_protegees.test.sql`, livrée par `CRM-013`
+**après** que cette section 10 a été écrite, comptent précisément les neuf cards du seed :
+
+```
+not ok 33 - les neuf cards du seed sont intactes …            have: 14  want: 9
+not ok 34 - et leurs neuf adresses ont toujours la forme générée   have: 14  want: 9
+not ok 35 - neuf adresses DISTINCTES …                            have: 14  want: 9
+```
+
+**MESURÉ :** `scripts/verify-cards.sh` rend « 45 contrôles, 1 en échec » de façon **reproductible**,
+et `npm run test:sql` lancé **immédiatement après** sa sortie rend « 1164 assertions, aucune
+anomalie ». L'écart n'est donc ni un défaut du produit, ni une régression : c'est le harnais qui se
+mesure lui-même en train de tenir son jeu d'essai.
+
+**Ce n'est pas INC-058, et ce n'est pas INC-055.** INC-058 décrit une assertion qui compte une donnée
+globale qu'un **autre** harnais fait varier pendant qu'il l'exécute ; ici, un seul harnais est en
+cause, et il se dénonce lui-même. INC-055 décrit une base laissée **dégradée en sortant** ; ici la
+base est correcte en sortant, c'est **pendant** que la mesure est faussée.
+
+**Correction connue, non appliquée.** Il suffirait de déplacer la section 10 après le retrait du jeu
+d'essai, ou de retirer les cards avant elle. `scripts/verify-cards.sh` est un livrable de `CRM-040`,
+unité `[~]` dont les preuves ont été validées ; le reprendre dans un commit consacré à `CRM-010`
+reviendrait à toucher les 45 contrôles d'une autre unité sans les rejouer sous la sienne
+(`CLAUDE.md` §13). **L'échec est nommé plutôt que masqué**, et il l'est ici plutôt que dans un
+commentaire du script.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. corriger `scripts/verify-cards.sh` sous `CRM-040`, en rejouant ses 45 contrôles ;
+2. poser dans `docs/SPEC-test-harness.md` une règle générale — « un harnais ne rejoue jamais les
+   suites globales tant qu'il tient un jeu d'essai » — et l'appliquer à tous les harnais qui en
+   créent un, par une unité de dette dédiée ;
+3. retirer la section 10 de `scripts/verify-cards.sh`, les suites globales étant déjà rejouées par
+   `npm run test:sql` et par le compte rendu de chaque unité.
+
+**Lié à :** INC-055 et INC-060 (défauts d'outillage de la même famille), INC-058 (compteur perturbé
+par un harnais concurrent), `docs/JOURNAL.md` décision 158.
+
+---
+
+### INC-060 — `scripts/verify-migrations.sh` déclare vert un rejeu qu'il n'a pas attendu, et rend la main sur une base à moitié migrée
+
+**Nature :** défaut d'outillage de vérification, mesuré ; aucun comportement du produit en cause.
+**Relevé le :** 2026-08-05, pendant la reprise de `CRM-010`.
+
+Deux harnais déclenchent le `migrations-runner` avec la même écriture :
+
+```
+docker compose … up -d migrations-runner
+runner_code=$(docker inspect -f '{{.State.ExitCode}}' p2enjoy-migrations)
+```
+
+`docker compose up -d` **rend la main dès que le conteneur est démarré**, pas quand il a fini.
+MESURÉ, immédiatement après l'appel :
+
+```
+docker inspect -f '{{.State.ExitCode}} {{.State.Status}}' p2enjoy-migrations
+→ 0 running
+```
+
+Le `0` lu est celui de l'exécution **précédente**. Deux conséquences, toutes deux mesurées :
+
+- **le contrôle est complaisant** : il annoncerait « code 0 » d'un rejeu encore en cours, ou sur le
+  point d'échouer ;
+- **le harnais rend la main sur une base intermédiaire.** Le runner rejoue le répertoire dans
+  l'ordre ; entre la migration 3 et la migration 10, `tracks_lecture_membre` est revenue à sa forme
+  de `CRM-003` — `app.is_workspace_member(workspace_id)` —, les droits fins de `CRM-012` cessant
+  d'être appliqués. MESURÉ : `npm run test:sql` lancé dans cette fenêtre rend **trois assertions
+  rouges** dans `supabase/tests/0011_droits_fins.test.sql`, dont la **preuve de refus n° 4**.
+
+C'est ainsi que le défaut a été trouvé : par un rejeu de régression qui a échoué sans qu'aucun code
+ait changé.
+
+**Corrigé pour `scripts/verify-authz.sh`**, livrable de `CRM-010`, dans le même changement que cette
+entrée : `docker compose run --rm migrations-runner` est **synchrone** et rend le code du rejeu qu'il
+vient de lancer. Ce n'est pas une invention — c'est déjà le procédé de `scripts/verify-tracks.sh`.
+Un contrôle de plus vérifie ensuite que la base est bien celle du répertoire **complet**, et non un
+état intermédiaire.
+
+**Non corrigé pour `scripts/verify-migrations.sh`**, livrable de `CRM-003`, unité `[x]`. La
+correction est connue, tient en trois lignes, et est celle qui vient d'être appliquée à l'autre
+harnais. Elle n'est pas appliquée ici parce que la porter reviendrait à modifier un livrable vérifié
+d'une autre unité dans un commit qui n'en traite pas (`CLAUDE.md` §13), et à toucher ses 23 contrôles
+sans les rejouer sous leur propre unité. **Le piège reste donc armé** : toute exécution de
+`scripts/verify-migrations.sh` suivie immédiatement d'une autre mesure peut faire échouer cette
+mesure sans qu'aucun code soit en cause.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. appliquer la même correction à `scripts/verify-migrations.sh`, en rejouant les 23 contrôles de
+   `CRM-003` dans le même changement ;
+2. inscrire dans `docs/SPEC-test-harness.md` une règle générale — « un harnais ne déclenche jamais
+   le runner sans l'attendre, et vérifie l'état final plutôt que le code d'un conteneur » — puis la
+   faire appliquer à tous les harnais existants par une unité de dette dédiée ;
+3. laisser en l'état et documenter que les harnais ne doivent pas être enchaînés sans attente.
+
+**Lié à :** INC-055 (même famille : un harnais qui laisse la base dans un état que le runner ne
+produit jamais), `docs/JOURNAL.md` décisions 108, 135 et 157.
+
+---
+
 ### INC-059 — Deux exécutions de la routine ont livré `CRM-014` en parallèle, sans se voir
 
 **Nature :** défaut d'exploitation de la routine d'avancement, mesuré ; aucune conséquence sur le
@@ -525,87 +635,6 @@ consigné plutôt qu'arbitré implicitement.
 **Arbitrage attendu du responsable :** confirmer l'ordonnanceur applicatif, ou demander la
 réévaluation de `pg_cron` maintenant que sa disponibilité est acquise. À trancher avant `CRM-062`
 (relances automatiques), première unité qui consommera réellement un ordonnanceur.
-
----
-
-### INC-013 — Quatre des six fonctions d'autorisation dépendent de tables livrées deux chunks plus tard
-
-**Nature :** contradiction d'ordonnancement entre `docs/SPEC-permissions-rls.md` §3,
-`docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
-**Relevé le :** 2026-08-03, pendant `CRM-010`.
-
-`CRM-010` doit livrer six fonctions. Quatre d'entre elles — `app.can_read_track`,
-`app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — reçoivent l'identifiant
-d'un track, d'un channel ou d'une card et doivent remonter jusqu'au workspace pour connaître le
-rôle de l'appelant. Ce chemin passe nécessairement par `tracks`, `channels` et `cards`, livrées
-par `CRM-020`, `CRM-021` et `CRM-040`, toutes placées dans le **chunk 3**, donc après.
-
-Ce n'est pas une difficulté d'écriture contournable : sans `tracks`, rien ne relie un
-`track_id` à un `workspace_id`. Le langage PL/pgSQL accepterait une fonction référençant une table
-absente — elle échouerait au premier appel, et aucune preuve ne pourrait être produite d'ici
-`CRM-020`. C'est exactement le même motif qu'INC-010, un cran plus loin : `CRM-003` avait dû se
-passer des clés étrangères, `CRM-010` doit se passer des jointures.
-
-**Comportement retenu :** `CRM-010` livre ce qui est démontrable aujourd'hui, et **rien de plus** :
-
-- `app.resolve_access(ws_role, track_access, channel_access)` — l'**algorithme** de résolution
-  du §2.2, isolé de toute table, donc éprouvé de façon exhaustive sur ses 64 combinaisons
-  d'entrées. C'est la seule partie qui porte une règle métier ; les quatre fonctions différées
-  n'auront plus qu'à lire leur ligne et l'appeler ;
-- `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin` — la résolution du
-  rôle de workspace, qui ne dépend que de `workspace_members`.
-
-Aucune table n'est créée par anticipation pour faire disparaître la contradiction : cela
-préempterait trois unités. La suite pgTAP **constate** l'absence des quatre fonctions
-(`hasnt_function`), de sorte qu'elle devienne rouge le jour où elles seront écrites sans que ces
-preuves soient étendues.
-
-**Risque résiduel :** aucun à ce stade — aucune politique ne les appelle, puisque `CRM-010` n'en
-pose aucune. Le risque naîtrait si `CRM-012` écrivait les politiques des tracks et des channels en
-supposant ces fonctions disponibles.
-
-**Conséquence sur l'état de l'unité :** `CRM-010` reste `[~]`. Ce n'est pas un défaut de
-réalisation mais une dépendance non satisfiable dans l'ordre actuel du plan.
-
-**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-012`**, qui écrira
-les politiques et figera la forme des requêtes :
-
-1. rattacher chacune des quatre fonctions à l'unité qui livre sa table — `can_read_track` à
-   `CRM-020`, `can_read_channel` et `can_write_channel` à `CRM-021`, `can_read_card` à `CRM-040` —
-   et l'inscrire dans leur Definition of Done ;
-2. déplacer `CRM-010` après `CRM-021` dans `docs/MASTER_PLAN.md` §2, au prix de livrer `tracks` et
-   `channels` avant le modèle d'autorisation, ce que le plan cherche précisément à éviter ;
-3. créer une unité distincte, par exemple `CRM-010b`, placée après `CRM-040`.
-
-**Mise à jour du 2026-08-04 — trois des quatre fonctions sont livrées par `CRM-012`, et le motif
-d'attente s'est éteint de lui-même pour elles.** L'arbitrage n'a pas été rendu ; quatre exécutions
-de la routine l'ont attendu et ont choisi une autre unité en le nommant (`docs/JOURNAL.md`,
-décisions au choix d'unité de `CRM-005`, `CRM-020`, `CRM-021` et `CRM-030`). Deux faits ont changé
-la situation :
-
-- **les tables existent.** `tracks` est livrée depuis `CRM-020`, `channels` depuis `CRM-021`. La
-  contradiction relevée ici — « la jointure n'a pas de table où aller » — ne vaut plus que pour
-  `can_read_card`, `cards` arrivant à `CRM-040` ;
-- **l'option 1 est devenue inapplicable pour ces trois fonctions.** Elle proposait de les rattacher
-  à `CRM-020` et `CRM-021` ; ces deux unités sont livrées et rouvrir leur périmètre pour y verser
-  une fonction écrite après elles contredirait `CLAUDE.md` §13.
-
-`CRM-012` les écrit donc, ce qui n'est pas une quatrième option inventée mais la lecture littérale
-de son titre — « droits fins par track et channel » — et de sa Definition of Done, qui exige la
-matrice de résolution et les preuves n° 3 et n° 4. **Le choix est nommé plutôt que tu** :
-`docs/JOURNAL.md`, décision 103.
-
-**Ce qui reste ouvert, et n'est pas tranché ici :**
-
-1. **`app.can_read_card`.** Toujours différée, et pour la raison d'origine : `cards` n'existe pas.
-   Elle sera écrite par l'unité qui livre la table, `CRM-040`, ou par une unité dédiée si le
-   responsable préfère. La suite pgTAP de `CRM-010` continue de constater son absence.
-2. **La Definition of Done de `CRM-010`.** Elle nomme six fonctions ; quatre lui échappent
-   désormais pour de bon. Faut-il la réécrire à quatre — les deux qu'elle livre plus
-   `resolve_access` et `workspace_role` —, ou la laisser porter une dette que d'autres unités
-   soldent ? `CRM-010` reste `[~]` tant que le point n'est pas tranché.
-
-L'entrée reste **ouverte** pour ces deux points.
 
 ---
 
@@ -2513,6 +2542,112 @@ référentielle), `CLAUDE.md` §8 (le seed est reproductible).
 ---
 
 ## Clos
+
+### INC-013 — Quatre des six fonctions d'autorisation dépendent de tables livrées deux chunks plus tard
+
+**Nature :** contradiction d'ordonnancement entre `docs/SPEC-permissions-rls.md` §3,
+`docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
+**Relevé le :** 2026-08-03, pendant `CRM-010`.
+
+`CRM-010` doit livrer six fonctions. Quatre d'entre elles — `app.can_read_track`,
+`app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — reçoivent l'identifiant
+d'un track, d'un channel ou d'une card et doivent remonter jusqu'au workspace pour connaître le
+rôle de l'appelant. Ce chemin passe nécessairement par `tracks`, `channels` et `cards`, livrées
+par `CRM-020`, `CRM-021` et `CRM-040`, toutes placées dans le **chunk 3**, donc après.
+
+Ce n'est pas une difficulté d'écriture contournable : sans `tracks`, rien ne relie un
+`track_id` à un `workspace_id`. Le langage PL/pgSQL accepterait une fonction référençant une table
+absente — elle échouerait au premier appel, et aucune preuve ne pourrait être produite d'ici
+`CRM-020`. C'est exactement le même motif qu'INC-010, un cran plus loin : `CRM-003` avait dû se
+passer des clés étrangères, `CRM-010` doit se passer des jointures.
+
+**Comportement retenu :** `CRM-010` livre ce qui est démontrable aujourd'hui, et **rien de plus** :
+
+- `app.resolve_access(ws_role, track_access, channel_access)` — l'**algorithme** de résolution
+  du §2.2, isolé de toute table, donc éprouvé de façon exhaustive sur ses 64 combinaisons
+  d'entrées. C'est la seule partie qui porte une règle métier ; les quatre fonctions différées
+  n'auront plus qu'à lire leur ligne et l'appeler ;
+- `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin` — la résolution du
+  rôle de workspace, qui ne dépend que de `workspace_members`.
+
+Aucune table n'est créée par anticipation pour faire disparaître la contradiction : cela
+préempterait trois unités. La suite pgTAP **constate** l'absence des quatre fonctions
+(`hasnt_function`), de sorte qu'elle devienne rouge le jour où elles seront écrites sans que ces
+preuves soient étendues.
+
+**Risque résiduel :** aucun à ce stade — aucune politique ne les appelle, puisque `CRM-010` n'en
+pose aucune. Le risque naîtrait si `CRM-012` écrivait les politiques des tracks et des channels en
+supposant ces fonctions disponibles.
+
+**Conséquence sur l'état de l'unité :** `CRM-010` reste `[~]`. Ce n'est pas un défaut de
+réalisation mais une dépendance non satisfiable dans l'ordre actuel du plan.
+
+**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-012`**, qui écrira
+les politiques et figera la forme des requêtes :
+
+1. rattacher chacune des quatre fonctions à l'unité qui livre sa table — `can_read_track` à
+   `CRM-020`, `can_read_channel` et `can_write_channel` à `CRM-021`, `can_read_card` à `CRM-040` —
+   et l'inscrire dans leur Definition of Done ;
+2. déplacer `CRM-010` après `CRM-021` dans `docs/MASTER_PLAN.md` §2, au prix de livrer `tracks` et
+   `channels` avant le modèle d'autorisation, ce que le plan cherche précisément à éviter ;
+3. créer une unité distincte, par exemple `CRM-010b`, placée après `CRM-040`.
+
+**Mise à jour du 2026-08-04 — trois des quatre fonctions sont livrées par `CRM-012`, et le motif
+d'attente s'est éteint de lui-même pour elles.** L'arbitrage n'a pas été rendu ; quatre exécutions
+de la routine l'ont attendu et ont choisi une autre unité en le nommant (`docs/JOURNAL.md`,
+décisions au choix d'unité de `CRM-005`, `CRM-020`, `CRM-021` et `CRM-030`). Deux faits ont changé
+la situation :
+
+- **les tables existent.** `tracks` est livrée depuis `CRM-020`, `channels` depuis `CRM-021`. La
+  contradiction relevée ici — « la jointure n'a pas de table où aller » — ne vaut plus que pour
+  `can_read_card`, `cards` arrivant à `CRM-040` ;
+- **l'option 1 est devenue inapplicable pour ces trois fonctions.** Elle proposait de les rattacher
+  à `CRM-020` et `CRM-021` ; ces deux unités sont livrées et rouvrir leur périmètre pour y verser
+  une fonction écrite après elles contredirait `CLAUDE.md` §13.
+
+`CRM-012` les écrit donc, ce qui n'est pas une quatrième option inventée mais la lecture littérale
+de son titre — « droits fins par track et channel » — et de sa Definition of Done, qui exige la
+matrice de résolution et les preuves n° 3 et n° 4. **Le choix est nommé plutôt que tu** :
+`docs/JOURNAL.md`, décision 103.
+
+**Ce qui reste ouvert, et n'est pas tranché ici :**
+
+1. **`app.can_read_card`.** Toujours différée, et pour la raison d'origine : `cards` n'existe pas.
+   Elle sera écrite par l'unité qui livre la table, `CRM-040`, ou par une unité dédiée si le
+   responsable préfère. La suite pgTAP de `CRM-010` continue de constater son absence.
+2. **La Definition of Done de `CRM-010`.** Elle nomme six fonctions ; quatre lui échappent
+   désormais pour de bon. Faut-il la réécrire à quatre — les deux qu'elle livre plus
+   `resolve_access` et `workspace_role` —, ou la laisser porter une dette que d'autres unités
+   soldent ? `CRM-010` reste `[~]` tant que le point n'est pas tranché.
+
+Ces deux points sont désormais tranchés — voir la clôture ci-dessous.
+
+**CLOSE le 2026-08-05, par la reprise de `CRM-010`** (`docs/JOURNAL.md`, décisions 155, 156 et 157).
+Les deux points restés ouverts le sont pour deux raisons distinctes, et aucune n'est un arbitrage
+rendu à la place du responsable.
+
+1. **`app.can_read_card` est livrée** par `CRM-040` en même temps que `cards`, et
+   `app.can_write_card` par `CRM-036`. Le motif d'attente — « la jointure n'a pas de table où
+   aller » — n'existe plus pour aucune des quatre fonctions.
+2. **La Definition of Done de `CRM-010` n'est pas réécrite, et n'a plus à l'être.** La question
+   posée le 2026-08-03 supposait quatre fonctions **inécrivables** ; elles sont écrites. Le texte
+   qui nomme six fonctions est redevenu **satisfaisable tel qu'il est**, et le réduire à quatre
+   reviendrait à retirer de l'unité ce qu'elle nomme, au moment précis où cela cesse d'être
+   impossible. `CRM-010` a donc été reprise pour le satisfaire, en étendant ses **propres** preuves
+   aux quatre fonctions : la matrice complète à travers des lignes réelles, l'absence de récursion
+   sur `tracks`, `channels` et `cards`, et le recensement des fonctions `SECURITY DEFINER`
+   (`docs/SPEC-permissions-rls.md` §3.8).
+
+**Mesure de clôture :** `supabase/tests/0002_fonctions_autorisation.test.sql` passe de 128 à
+**153 assertions**, `scripts/verify-authz.sh` de 26 à **35 contrôles**, dont quatre dégradations
+qui n'existaient pas et qui font tomber la suite lorsque l'une des quatre fonctions est réécrite de
+travers. Aucune migration n'est modifiée : le produit est inchangé, ce sont ses preuves qui le
+rattrapent.
+
+**Ce que cette clôture ne tranche pas :** INC-014 (politiques des tables d'identité, et preuve de
+refus n° 10) reste **ouverte et inchangée**.
+
+---
 
 ### INC-050 — Le §5.5 de `SPEC-workflow-engine` se contredisait sur `email_local_part`
 

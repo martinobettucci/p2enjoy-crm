@@ -48,7 +48,8 @@ PORT_RAPPORT=9323
 # Historique : 227 / 13 / 13 à `CRM-008` ; 306 / 30 / 22 puis 23 à `CRM-020` ; 374 / 50 / 37 à
 # `CRM-021` ; 454 / 75 / 37 à `CRM-030` ; 559 / 96 / 37 à `CRM-031` ; 622 / 110 / 37 à `CRM-032` ;
 # 653 / 125 / 37 à `CRM-033` ; 717 / 150 / 37 à `CRM-035` ; 1051 / 242 / 37 à `CRM-036` ;
-# 1093 / 254 / 37 à `CRM-013` ; **1139 / 291 / 37 depuis `CRM-014`**.
+# 1093 / 254 / 37 à `CRM-013` ; 1139 / 291 / 37 à `CRM-014` ;
+# **1164 / 291 / 37 depuis la reprise de `CRM-010`**.
 #
 # LES COMPTEURS ÉTAIENT RESTÉS À LEUR VALEUR DE `CRM-035`, ET LE FAIT EST NOMMÉ PLUTÔT QUE CORRIGÉ
 # EN SILENCE. Trois unités livrées entre-temps — `CRM-012`, `CRM-040` et `CRM-034` — ont ajouté des
@@ -70,7 +71,14 @@ PORT_RAPPORT=9323
 # `supabase/tests/0016_preuves_refus.test.sql` (46 assertions) et
 # `e2e/api/preuves-refus.spec.ts` (37 scénarios) : 1093 + 46 = 1139, et 254 + 37 = 291. Les deux
 # valeurs sont MESURÉES le 2026-08-05, non déduites.
-ASSERTIONS_ATTENDUES=1139
+#
+# RÉVISÉS UNE TROISIÈME FOIS, LE 2026-08-05, PAR LA REPRISE DE `CRM-010` — et le contrôle a bien
+# échoué avant d'être révisé, « vert mais 1164 au lieu de 1139 ». L'unité n'ajoute aucun fichier :
+# elle **étend** `supabase/tests/0002_fonctions_autorisation.test.sql` de 128 à 153 assertions, ses
+# quatre fonctions `can_*` n'ayant jamais eu de preuve portée par leur propre unité (INC-013, close).
+# 1139 + 25 = 1164. Ni le projet `api` ni le projet `ui` ne changent : l'unité ne livre ni route ni
+# écran. Valeur MESURÉE, non déduite.
+ASSERTIONS_ATTENDUES=1164
 SCENARIOS_API=291
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
