@@ -286,6 +286,45 @@ le tableau **montre** — colonnes, tris, filtres, pagination — est spécifié
   (« Page 2 sur 5 »). Ils sont **désactivés** aux extrémités, jamais masqués — un état désactivé
   reste lisible et explique pourquoi l'action est indisponible (§8).
 
+### 5.10 Panneau de commentaires — `CRM-043`
+
+Premier fil de discussion du produit. Il occupe la **colonne de droite** du détail de card (§5.3),
+que `CRM-037` avait laissée vide en nommant l'écart. `CRM-044` y fondra les autres flux — le
+panneau est donc écrit comme la première voie d'un fil unifié, non comme un composant isolé.
+
+- **Ordre chronologique CROISSANT** : le plus ancien en haut, le composeur en bas. C'est l'inverse
+  du board (§5.1) et de toute liste de nouveautés, et c'est délibéré — on lit une conversation dans
+  le sens où elle s'est tenue. La règle est écrite ici pour que `CRM-044` ne l'inverse pas par
+  habitude.
+- **Un commentaire = une carte discrète** : fond `--color-surface`, coins `--radius-sm`, sans
+  bordure ni ombre. La carte du §5.1 est cliquable et porte une élévation ; celle-ci ne mène nulle
+  part et n'en porte pas. Le corps est rendu en **texte brut**, `white-space: pre-wrap`, jamais
+  interprété comme du markdown (`docs/SPEC-cards.md` §13.13).
+- **En-tête d'un commentaire** : date absolue en 13 px `--color-text-2`, et **aucun nom d'auteur**.
+  Le nom n'est lisible par aucun jeton d'utilisateur — INC-014 —, et la règle du §12.5 s'applique :
+  une donnée illisible n'est **pas rendue du tout** plutôt que rendue vide, comme la colonne
+  « Responsable » du §5.9.
+- **Mention « modifié »** : suffixe 13 px `--color-text-2` après la date, la date de modification
+  portée par l'attribut `title`. Jamais une icône seule.
+- **Commentaire supprimé** : la place est **tenue**, le corps remplacé par « Commentaire supprimé »
+  en italique `--color-text-2`. Il n'y a rien d'autre à afficher — la base ne porte plus de corps
+  (`docs/SPEC-cards.md` §13.4). Le masquer ferait disparaître un tour de parole d'une conversation.
+- **Composeur** : `textarea` de trois lignes qui grandit avec le contenu, libellé visuellement
+  masqué (§12.3), bouton primaire « Publier » désactivé tant que le champ est vide ou blanc. Il est
+  **toujours rendu** : l'interface ne calcule aucun droit d'écriture, elle envoie et traduit le
+  refus du backend (§12.5 bis ci-dessous).
+- **Le refus est un message, pas une absence.** Un `403` rend une alerte `--color-danger` sous le
+  composeur, dont le texte nomme la cause — « vous ne pouvez pas commenter cette affaire » — et le
+  contenu saisi est **conservé**. Vider le champ après un refus ferait perdre le texte à
+  l'utilisateur pour une erreur qui n'est pas la sienne.
+- **Actions de l'auteur** : « Modifier » et « Supprimer », boutons tertiaires 13 px, visibles au
+  survol **et au focus clavier** (§8) — jamais au survol seul. La suppression demande une
+  confirmation explicite (§6), son caractère irréversible étant nommé dans le libellé.
+- **Quatre états** (§5.8), et le vide dit « aucun commentaire pour le moment » — sans quoi un
+  panneau vide serait indistinguable d'un panneau en panne.
+- **Sous 1024 px**, le panneau passe **sous** le formulaire, dans l'ordre du document : une
+  conversation se lit après le dossier qu'elle commente.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

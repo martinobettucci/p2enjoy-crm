@@ -535,6 +535,52 @@ courante et reste bloquée par cette quatrième, portée par l'arête et non par
 **Aucune valeur n'est posée sur la card archivée ni sur celle en corbeille.** Une card rangée ne se
 déplace pas : y poser des valeurs n'exercerait rien que les six autres n'exercent déjà.
 
+### 2.14 Commentaires — ajoutés par `CRM-043`
+
+Cinq commentaires sur **trois** cards, écrits par les **trois** comptes du seed. Contrat détaillé et
+motifs : `docs/SPEC-cards.md` §13.11.
+
+| Card | Auteur | État | Ce qu'il démontre |
+|---|---|---|---|
+| `…0c1` *Refonte du site vitrine* | Camille Aubert (`admin`) | vivant | le cas nominal |
+| `…0c1` | Driss Lemoine (`business_developer`) | vivant | deux auteurs sur une même card, donc un **fil** |
+| `…0c1` | Camille Aubert | **modifié** | `edited_at` renseigné : l'état « modifié » est démontré, non seulement décrit |
+| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **supprimé** | la pierre tombale : `deleted_at` renseigné et **corps vide**, dans un channel d'un autre track |
+| `…0c5` *Support niveau 2* | Farida Nowak (`viewer`) | vivant | le **témoin** de la preuve de lecture : le `viewer` lit ce qu'il ne peut pas écrire |
+
+Les identifiants suivent la convention du §4 : `5eed0000-0000-4000-8000-0000000000d1` à `…d5`.
+
+**Deux écritures du seed ne passent pas par le chemin d'un utilisateur, et c'est dit :**
+
+- la ligne de `…0c5` porte `author_id` = Farida Nowak, un `viewer` — que la politique d'insertion
+  refuserait. Elle est posée par la **clé de service**, comme toutes les autres lignes du seed, et
+  elle existe pour que la lecture autorisée d'un `viewer` soit distinguable d'une table vide
+  (décision 50) ;
+- l'état « modifié » et l'état « supprimé » sont obtenus par un **second appel** `PATCH` avec la
+  clé de service, qui traverse les **vrais triggers** : `edited_at` et `deleted_at` sont donc posés
+  par le produit, et le corps du commentaire supprimé est vidé par lui. Le seed ne fabrique aucune
+  trace (`CLAUDE.md` §8) — il ne pourrait d'ailleurs pas : les deux colonnes sont posées par
+  trigger, et une valeur envoyée y est ignorée.
+
+**La convergence de cette section ne s'écrit PAS comme les autres, et le motif est structurel.**
+Partout ailleurs le seed emploie `Prefer: resolution=merge-duplicates` : la ligne présente est
+réécrite, ce qui **répare** une modification faite à la main. Ici, ce geste échouerait — le trigger
+de `card_comments` refuse toute écriture sur une ligne supprimée (`comment_deleted`), et le rejeu du
+seed tomberait en erreur sur la quatrième ligne. Il serait de surcroît faux dans son principe : un
+commentaire est une **parole**, non un paramètre ; la réécrire à chaque rejeu effacerait ce qu'un
+utilisateur aurait ajouté.
+
+La section emploie donc :
+
+- `Prefer: resolution=ignore-duplicates` pour les cinq insertions — la ligne absente est créée, la
+  ligne présente est laissée telle quelle ;
+- deux mises à jour **conditionnées par une relecture** : l'état « modifié » n'est posé que si
+  `edited_at` est nul, l'état « supprimé » que si `deleted_at` l'est. Un second rejeu ne réécrit
+  rien et ne déclenche aucun refus.
+
+La convergence est donc celle de la **présence et de l'état**, non celle du contenu. Elle est
+vérifiée en rejouant le seed, et `scripts/verify-commentaires.sh` la contrôle.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

@@ -993,3 +993,367 @@ inchangé.
 | E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais la liste sans substitution, puis le tri, le filtre, la recherche, la pagination, la bascule board ↔ liste, le `416` et l'état vide filtré, avec réponses substituées et **dit comme tel** |
 | Visuel | Captures aux **quatre paliers** du §7 du design system, plus l'état « données longues » exigé nommément par la Definition of Done |
 | Harnais | `scripts/verify-liste.sh`, rejouable et **non complaisant** : chaque dégradation volontaire le fait réellement échouer, la restauration étant constatée |
+
+---
+
+## 13. Commentaires — `CRM-043`
+
+Chapitre écrit **avant toute ligne de code** de `CRM-043`, et **après mesure sur la pile réelle**
+(`docs/JOURNAL.md` décisions 192 à 197). L'unité tenait en deux lignes au backlog — « rédaction
+libre par tout membre pouvant lire la card, édition et suppression par l'auteur » —, et trois
+documents la nommaient sans la décrire : le §5 de `docs/SCHEMA.md` pour son modèle, le §4 de
+`docs/SPEC-permissions-rls.md` pour ses politiques, le §5.3 de `docs/DESIGN_SYSTEM.md` pour la
+colonne d'écran qui l'accueille. Les trois **ne disent pas la même chose**, et le §13.6 nomme la
+contradiction plutôt que de la trancher en silence.
+
+### 13.1 Ce que l'unité est, et ce qu'elle n'est pas
+
+**Est** : une table `public.card_comments`, ses politiques, la garde de son édition et de sa
+suppression, sa publication au temps réel, son seed, et un **panneau de commentaires** dans le
+détail de card.
+
+**N'est pas**, et chaque absence est figée par une assertion plutôt que compensée :
+
+- **aucune notification.** La colonne `mentions` est livrée par le §5 de `docs/SCHEMA.md` et
+  **n'est alimentée par rien** : ni analyse du corps, ni écriture par l'interface. Les
+  notifications appartiennent à `CRM-063`, et la table `notifications` n'existe pas ;
+- **aucune timeline.** Le fil unifié — commentaires, transitions, activités, emails — est
+  `CRM-044`. `CRM-043` livre le **flux des commentaires seul**, dans le panneau que `CRM-044`
+  reprendra ;
+- **aucun événement.** `card_events` n'existe pas : un commentaire écrit, modifié ou supprimé ne
+  laisse aucune trace typée. `CRM-044` ;
+- **aucune pièce jointe, aucun rendu markdown enrichi.** Le corps est stocké en markdown parce que
+  `docs/SCHEMA.md` §5 le dit ; il est **rendu en texte brut** par cette unité. Interpréter du
+  markdown reçu d'un tiers est un sujet de sécurité entier — il n'a aucune unité, et le §13.13 le
+  nomme ;
+- **aucune modération.** Voir §13.6 : le §4 de `docs/SPEC-permissions-rls.md` ouvre la suppression
+  aux `admin`, la Definition of Done ne l'ouvre qu'à l'auteur. INC-072.
+
+### 13.2 Modèle : `public.card_comments`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `card_id` | `uuid` | non nul, FK `cards (id)` `on delete cascade` |
+| `workspace_id` | `uuid` | non nul, **dérivé de la card** (§13.3) |
+| `author_id` | `uuid` | non nul, FK `profiles (id)`, **défaut `auth.uid()`** |
+| `body` | `text` | non nul, markdown, longueur tenue par un `CHECK` conditionnel (§13.4) |
+| `mentions` | `uuid[]` | non nul, défaut `'{}'`, **jamais alimentée** (§13.1) |
+| `created_at` | `timestamptz` | non nul, défaut `now()` |
+| `edited_at` | `timestamptz` | nul tant que le corps n'a pas changé, **posé par trigger** (§13.5) |
+| `deleted_at` | `timestamptz` | nul tant que le commentaire vit, **posé par trigger** (§13.4) |
+
+`updated_at` **n'est pas ajoutée**, et c'est un écart assumé à la convention générale de
+`docs/SCHEMA.md` : `edited_at` et `deleted_at` disent déjà, et plus précisément, ce qu'une colonne
+`updated_at` dirait confusément — un commentaire n'a que deux évolutions possibles, et les nommer
+vaut mieux que les confondre. C'est la cinquième occurrence d'INC-025, et la première où le tableau
+du §5 de `docs/SCHEMA.md` est **suivi à la lettre** plutôt que complété.
+
+### 13.3 L'unicité qui manque à `cards`, et la clé étrangère composite
+
+`workspace_id` est une **dénormalisation** : elle ne porte aucune décision, elle recopie celle de la
+card. Deux mécanismes la tiennent, et les deux sont nécessaires :
+
+1. un `BEFORE INSERT` la **dérive** de la card, quelle que soit la valeur envoyée. Un client qui
+   annoncerait le workspace d'un autre espace de travail obtient la valeur exacte, sans erreur :
+   la colonne n'est pas une question posée au client ;
+2. une **clé étrangère composite** `(card_id, workspace_id) → cards (id, workspace_id)` rend
+   l'incohérence impossible même par la clé de service, qui contourne la RLS mais **pas** les
+   contraintes.
+
+Le second exige une unicité que `cards` ne porte pas. MESURÉ le 2026-08-05, sur une table sonde
+créée puis annulée :
+
+```
+create table sonde_c1 (card_id uuid, workspace_id uuid,
+  foreign key (card_id, workspace_id) references public.cards (id, workspace_id));
+ERROR:  there is no unique constraint matching given keys for referenced table "cards"
+```
+
+`cards` porte `PRIMARY KEY (id)` et, depuis `CRM-036`, `UNIQUE (id, workflow_id)` — rien de plus.
+`CRM-043` ajoute donc `UNIQUE (id, workspace_id)`, **exactement** comme la migration 13 avait ajouté
+`UNIQUE (id, workflow_id)` pour la même raison (décision 124). Elle **ne change aucun comportement** :
+`id` étant déjà clé primaire, le couple était déjà unique ; elle rend seulement la relation
+exprimable.
+
+La suppression d'une card **cascade** sur ses commentaires. C'est la seule cascade du chapitre, et
+elle est sans conséquence pratique : `cards` n'expose aucune suppression (§4), l'archivage et la
+corbeille en tiennent lieu. Elle existe pour que la destruction d'un workspace par la clé de
+service ne laisse pas d'orphelins.
+
+### 13.4 Ce qu'un commentaire supprimé devient : une pierre tombale vidée
+
+C'est la décision 193, et c'est la plus structurante du chapitre.
+
+« Suppression par l'auteur » admet trois lectures, et deux sont mauvaises :
+
+1. **suppression physique.** `docs/SCHEMA.md` §5 donne à la table une colonne `deleted_at` : la
+   suppression voulue est douce. Une suppression physique la rendrait morte-née ;
+2. **`deleted_at` posé, ligne laissée lisible.** Le corps reste alors servi par l'API à tout membre
+   qui sait le demander, et « supprimé » ne serait vrai que dans l'interface. C'est exactement ce
+   que `CLAUDE.md` §10 refuse : masquer un élément d'interface n'est pas une règle d'accès ;
+3. **`deleted_at` posé, ligne retirée de la lecture.** Le corps devient inatteignable, mais la ligne
+   aussi — et le §13.9 montre ce que cela coûte : **le temps réel ne transmet que ce que le
+   destinataire peut lire**. Une suppression retirant la ligne de la lecture ne serait donc jamais
+   transmise, et l'écran d'un autre membre continuerait d'afficher le commentaire supprimé jusqu'à
+   son prochain rechargement. Une suppression qui ne se propage pas est une suppression qui ment.
+
+**Retenu : la pierre tombale.** La ligne survit, **vidée de son corps**, et le `CHECK` en fait une
+propriété de la base et non une politesse du code :
+
+```
+constraint card_comments_corps_check check (
+  (deleted_at is null     and length(btrim(body)) between 1 and 10000) or
+  (deleted_at is not null and body = '')
+)
+```
+
+Un commentaire supprimé **ne porte plus aucun contenu** : ce n'est pas caché, c'est détruit. La
+ligne subsiste pour trois raisons, toutes vérifiables : la suppression se **propage** au temps réel
+(§13.9) ; la chronologie du futur fil unifié (`CRM-044`) n'a pas de trou ; et `author_id` étant
+immuable (§13.7), la ligne ne peut pas être recyclée pour faire dire à quelqu'un ce qu'il n'a pas
+écrit.
+
+**Une pierre tombale est définitive.** Le trigger refuse toute écriture ultérieure sur une ligne
+déjà supprimée — `comment_deleted` —, et refuse la résurrection : `deleted_at` ne redevient jamais
+nul. Un corps vidé n'est pas récupérable ; c'est le sens du geste.
+
+**La borne de 10 000 caractères** est écrite parce qu'une colonne `text` sans borne est une
+promesse qu'aucune couche ne tient : un commentaire est un message, pas un document, et la limite
+appartient à la base — seul endroit que tous les chemins d'écriture traversent.
+
+### 13.5 Édition : `edited_at` est posé par un trigger, jamais par le client
+
+Un `BEFORE UPDATE` pose `edited_at := now()` **si et seulement si** le corps change. Trois
+conséquences opposables :
+
+- corriger une faute et **le dire** sont le même geste : l'interface ne peut pas éditer sans
+  marquer ;
+- une mise à jour qui renvoie le même corps ne marque rien — ce que fait tout client qui
+  réenregistre une ligne entière ;
+- `edited_at` **n'est pas ouverte à l'écriture** par `authenticated` (§13.7), et le trigger l'écrit
+  malgré tout. MESURÉ le 2026-08-05, sur une table sonde :
+
+| Geste, rôle `authenticated` | Résultat |
+|---|---|
+| `update … set corps = 'b'` — colonne **accordée** | `UPDATE 1`, et la colonne `edite_le` **renseignée par le trigger** |
+| `update … set edite_le = '2020-01-01'` — colonne **non accordée** | `ERROR: permission denied for table` |
+
+Le privilège de colonne juge la **cible du client**, pas les affectations d'un trigger. C'est ce qui
+permet à une colonne d'être à la fois tenue par le produit et fermée à l'appelant.
+
+### 13.6 Autorisations, et la contradiction que trois documents portent
+
+**Ce que les documents disent :**
+
+| Source | Qui peut écrire un commentaire | Qui peut le modifier et le supprimer |
+|---|---|---|
+| `docs/SCHEMA.md` §5 | « Tout membre pouvant **lire** la card » | non dit |
+| `docs/SPEC-permissions-rls.md` §4 | « Écriture sur le channel » | « l'auteur **et les `admin`** » |
+| `docs/BACKLOG.md`, `CRM-043` | « tout membre pouvant lire la card », **DoD : refus pour un `viewer`** | « l'auteur » |
+
+Les deux colonnes se contredisent, et pas de la même façon.
+
+**Écriture — la règle retenue est le droit d'ÉCRITURE sur le channel** (décision 192, INC-071).
+Trois raisons : le §2.1 de `docs/SPEC-permissions-rls.md` définit le `viewer` comme « consulte,
+**sans aucune écriture** », invariant de tout le produit ; le §4 du même document prescrit
+« écriture sur le channel » ; et la Definition of Done de l'unité **exige la preuve du refus opposé
+à un `viewer`**, ce qui est incompatible avec la lecture littérale de `docs/SCHEMA.md` §5. Deux
+sources contre une, dont l'une est la Definition of Done elle-même. La phrase du §5 de
+`docs/SCHEMA.md` est **corrigée dans le même changement**, et l'écart consigné en INC-071.
+
+**Modification et suppression — l'auteur seul** (décision 194, INC-072). Le §4 y ajoute les
+`admin` ; le backlog ne le fait pas. `CRM-043` livre l'**intersection** des deux énoncés, qui
+n'ouvre rien que l'un ou l'autre refuse. Conséquence nommée et non masquée : **aucun modérateur ne
+peut retirer un commentaire déplacé**. L'arbitrage est demandé ; il porte sur une politique
+supplémentaire, non sur le modèle.
+
+**Les quatre politiques :**
+
+| Opération | Rôles | Prédicat |
+|---|---|---|
+| `SELECT` | `anon`, `authenticated` | `app.can_read_card(card_id)` |
+| `INSERT` | `authenticated` | `app.can_write_card(card_id) and author_id = auth.uid()` |
+| `UPDATE` | `authenticated` | `USING` **et** `WITH CHECK` : `author_id = auth.uid() and app.can_write_card(card_id)` |
+| `DELETE` | — | **aucune politique**, et **aucun privilège** : refus double (§13.7) |
+
+`anon` reçoit `SELECT` pour le motif du §3.2 de `docs/SPEC-permissions-rls.md` : sans le privilège,
+un appelant sans jeton recevrait une **erreur de privilège** là où le comportement exigé par le §7
+est **zéro ligne**. `auth.uid()` étant nul, le prédicat rend faux et la table est vide pour lui.
+
+`card_comments` est le **deuxième appelant réel** d'`app.can_read_card` et d'`app.can_write_card`,
+après `card_field_values` (`docs/SPEC-permissions-rls.md` §3.6 et §3.7, qui la nommaient déjà). Le
+défaut de la décision 107 ne s'y reproduit pas : les deux fonctions lisent `cards`, une **autre**
+table.
+
+`author_id = auth.uid()` dans le `WITH CHECK` **n'est pas redondant** avec le défaut de colonne. Le
+défaut ne s'applique qu'à une colonne omise ; un client qui envoie `author_id` explicitement le
+contourne. La politique est ce qui refuse d'écrire sous le nom d'autrui, et elle se prouve : une
+administratrice postant au nom du commercial reçoit `403`.
+
+`app.can_write_card` dans l'`UPDATE` **n'est pas redondant** avec `author_id = auth.uid()` : un
+auteur dont le droit fin est retombé à `viewer` depuis qu'il a écrit ne doit plus pouvoir modifier —
+la règle est celle du droit **courant**, non de celui du jour de l'écriture.
+
+### 13.7 Colonnes protégées
+
+Mécanisme du §4.3 de `docs/SPEC-permissions-rls.md`, appliqué **dès la migration qui crée la
+table**, et non deux unités plus tard comme pour `cards` :
+
+```
+revoke all on public.card_comments from anon, authenticated;
+grant select                 on public.card_comments to anon;
+grant select, insert         on public.card_comments to authenticated;
+grant update (body, deleted_at) on public.card_comments to authenticated;
+grant all privileges         on public.card_comments to service_role;
+```
+
+**Deux colonnes ouvertes en mise à jour, et deux seulement.** `id`, `card_id`, `workspace_id`,
+`author_id`, `created_at` et `mentions` sont fermées par voie de conséquence : un commentaire ne
+change ni de card, ni d'auteur, ni de date de naissance. `edited_at` est fermée **et pourtant
+écrite**, par le trigger du §13.5.
+
+Le trigger de mise à jour **refuse** en outre tout changement de `card_id`, de `author_id` ou de
+`created_at` : c'est le refus double du §8.4 de la migration 13, appliqué aux colonnes plutôt qu'à
+la suppression. Sans le trigger, la clé de service — que le seed emploie — n'aurait aucune barrière.
+
+Le privilège `INSERT` reste **de table**, comme pour `cards` (décision 140) : le défaut de colonne
+et la politique suffisent à tenir `author_id`, et fermer l'insertion colonne par colonne ferait
+`403` à des clients qui envoient la ligne entière sans dommage.
+
+### 13.8 Contrat d'API, mesuré
+
+À exercer par `e2e/api/commentaires.spec.ts`, avec les **jetons réels** obtenus par la véritable
+route de connexion :
+
+| # | Identité | Requête | Attendu |
+|---|---|---|---|
+| a | administratrice | `POST /rest/v1/card_comments` `{card_id, body}` | `201`, `author_id` = son `sub`, `workspace_id` **dérivé**, `edited_at` nul |
+| b | administratrice | `POST` avec `author_id` = celui du commercial | `403`, `42501` — la politique refuse la signature d'autrui |
+| c | administratrice | `POST` avec `workspace_id` d'un autre espace | `201`, et `workspace_id` **corrigé** par le trigger |
+| d | `viewer` | `POST` sur une card **qu'il voit** (`…0c5`, channel `maintenance`) | `403`, `42501` — **la preuve nommée par la Definition of Done** |
+| e | `viewer` | `GET /rest/v1/card_comments?card_id=eq.…0c5` | `200` et les commentaires : lire n'est pas écrire |
+| f | `viewer` | `GET` sur une card d'un channel **fermé** (`…0c1`) | `200` et `[]` — preuve n° 4 des droits fins, reconduite |
+| g | anonyme | `GET /rest/v1/card_comments` | `200` et `[]`, la table étant **d'abord constatée non vide** avec la clé de service (décision 50) |
+| h | anonyme | `POST` | `401` ou `403` — jamais une ligne écrite |
+| i | auteur | `PATCH ?id=eq.…` `{body}` | `200`, `edited_at` **renseigné**, corps changé |
+| j | tiers pouvant écrire | `PATCH` sur le commentaire d'un autre | `200` et `[]` — le `USING` filtre, **aucune ligne modifiée**, et la relecture le confirme |
+| k | auteur | `PATCH` `{deleted_at: <une date>}` | `200`, `deleted_at` = `now()` **et non la date envoyée**, `body` = `''` |
+| l | auteur | `PATCH` sur un commentaire déjà supprimé | `400`, `P0001`, `comment_deleted` |
+| m | auteur | `PATCH` `{deleted_at: null}` sur un supprimé | même refus : pas de résurrection |
+| n | auteur | `PATCH` `{author_id}` ou `{created_at}` | `403` — privilège de colonne (INC-026 : le refus divulgue la commande `GRANT`) |
+| o | quiconque | `DELETE /rest/v1/card_comments?id=eq.…` | `403` — **aucun privilège**, et aucune politique derrière |
+| p | administratrice | `POST` avec `body` vide ou de 10 001 caractères | `400`, `23514` — le `CHECK` |
+
+Le point **j** mérite d'être lu deux fois : PostgREST rend `200` et un corps vide lorsqu'une
+politique `USING` ne laisse passer aucune ligne. Ce n'est **pas** un succès silencieux — c'est le
+comportement normal d'un `UPDATE … WHERE faux` —, et la preuve ne s'en contente pas : elle **relit**
+la ligne et constate qu'elle est intacte.
+
+### 13.9 Le temps réel : ce qui a été mesuré avant d'être spécifié
+
+La Definition of Done exige « temps réel constaté ». Le §4 de `docs/DAT.md` annonce des
+« abonnements Realtime pour les commentaires » depuis le socle documentaire ; **aucune table n'était
+publiée**. MESURÉ le 2026-08-05 : `select count(*) from pg_publication_tables where pubname =
+'supabase_realtime'` rend **0**. `card_comments` est la **première** table du produit à l'être.
+
+**Ce qui a été mesuré, sur une table sonde créée puis détruite** (décision 195) :
+
+| Mesure | Résultat |
+|---|---|
+| Canal `postgres_changes` ouvert par `supabase-js` à travers Kong, jeton réel | `SUBSCRIBED` |
+| `realtime.subscription` pendant que le canal vit | **1 ligne** |
+| Insertion par la clé de service, 0 / 100 / 300 / 1000 ms après `SUBSCRIBED` | **1 événement** dans les quatre cas |
+| Première sonde, émise dans la seconde suivant l'ajout de la table à la publication | **0 événement** |
+
+Le dernier cas n'a pas été reproduit et **n'est donc pas expliqué**. Il suffit à fonder une règle
+d'interface : **le panneau recharge sa liste à l'abonnement**, jamais avant. Tout événement perdu
+entre l'ouverture de l'écran et l'établissement du canal est ainsi rattrapé par la lecture qui suit,
+et le produit ne dépend pas d'une garantie que la mesure n'établit pas.
+
+**Le temps réel applique la RLS, et c'est une preuve de refus à part entière.** `realtime.apply_rls`
+évalue la politique `SELECT` de la table pour le rôle et les revendications de chaque abonné : un
+`viewer` fermé sur le track de `grands-comptes` **ne reçoit rien** d'une card de ce channel. La
+preuve d'API l'exerce, et c'est le seul endroit du produit où un refus se constate par un
+**silence** plutôt que par un code de statut — ce qui exige d'établir d'abord qu'un abonné autorisé,
+lui, reçoit bien l'événement. Sans ce témoin, le silence prouverait aussi bien la RLS qu'un temps
+réel en panne (décision 50, appliquée au temps réel).
+
+`REPLICA IDENTITY` reste à sa valeur par défaut — la clé primaire. Elle suffit : aucune suppression
+physique n'est exposée (§13.7), et une pierre tombale est un `UPDATE` dont la ligne d'arrivée est
+lisible (§13.4).
+
+### 13.10 Interface : le panneau de commentaires
+
+Le §5.3 de `docs/DESIGN_SYSTEM.md` place à droite du détail de card la timeline unifiée. Elle est
+`CRM-044`. `CRM-043` livre **la colonne de droite et le flux des commentaires**, que `CRM-044`
+reprendra ; le §5.10 du design system écrit ce que le panneau montre.
+
+- **Ordre chronologique croissant** — le plus ancien en haut, le composeur en bas, comme toute
+  conversation. C'est l'inverse du fil d'une timeline d'activité, et c'est délibéré : on lit une
+  discussion dans le sens où elle s'est tenue.
+- **Un commentaire supprimé reste à sa place**, réduit à la mention « Commentaire supprimé ». Il n'a
+  pas de corps à afficher — la base n'en porte plus (§13.4).
+- **Un commentaire modifié porte la mention « modifié »**, avec sa date en infobulle.
+- **Le nom de l'auteur n'est PAS affiché.** `profiles` n'est lisible par aucun jeton d'utilisateur —
+  INC-014, ouverte depuis `CRM-005` —, et la vue liste a tranché le même cas en ne rendant **pas du
+  tout** la colonne « Responsable » plutôt qu'en la rendant vide (§12.7). La règle est reconduite,
+  et la limite nommée à l'écran plutôt que comblée par un identifiant technique.
+- **Le composeur est toujours rendu**, et le refus vient du backend. L'interface ne calcule aucun
+  droit : elle envoie, et traduit le `403` en « vous ne pouvez pas commenter cette affaire ». C'est
+  `CLAUDE.md` §10 pris au mot — un bouton masqué n'est pas une autorisation.
+- **Les quatre états** du §5.8 du design system sont traités : chargement, erreur avec reprise,
+  refus, et **vide** — « aucun commentaire pour le moment ».
+- **Aucune persistance côté client** : ni brouillon en `localStorage`, ni préférence. `CLAUDE.md`
+  §11.
+
+### 13.11 Ce que le seed livre
+
+Cinq commentaires, sur **trois** cards, écrits par les **trois** comptes du seed, par la véritable
+API REST comme toute autre section (`docs/SPEC-seed.md` §2.14) :
+
+| Card | Auteur | État | Ce qu'il démontre |
+|---|---|---|---|
+| `…0c1` *Refonte du site vitrine* | Camille Aubert (`admin`) | vivant | le cas nominal |
+| `…0c1` | Driss Lemoine (`business_developer`) | vivant | **deux auteurs sur une même card**, donc un fil |
+| `…0c1` | Camille Aubert | **modifié** | `edited_at` renseigné : l'état « modifié » est démontré, non seulement décrit |
+| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **supprimé** | la pierre tombale, corps vide, dans un channel d'un autre track |
+| `…0c5` *Support niveau 2* | Farida Nowak (`viewer`) | vivant | **le témoin du refus** : la ligne existe, écrite par la clé de service, et le `viewer` ne peut pas en écrire une seconde par l'API. Sans elle, le §13.8 e prouverait une lecture vide |
+
+Le commentaire de `…0c5` est **posé par la clé de service**, non par le `viewer` : le seed écrit ce
+que le produit refuserait, et le dit. C'est la seule ligne du seed dont l'auteur ne pourrait pas
+l'écrire lui-même, et elle existe pour que la lecture autorisée soit distinguable d'une table vide.
+
+`mentions` reste `'{}'` sur les cinq : rien ne l'alimente (§13.1).
+
+### 13.12 Ce que `CRM-043` ne livre pas
+
+Outre le §13.1 : aucune pagination du fil — MESURÉ, cinq commentaires au seed, et le §12.6 a montré
+ce que coûte une pagination bâtie sans mesure ; aucune recherche dans les commentaires ; aucun
+`card_activities`, table voisine que `docs/SCHEMA.md` §5 décrit et qu'aucune unité du chunk 3 ne
+porte.
+
+### 13.13 Points ouverts
+
+1. **Le markdown est stocké et rendu en texte brut.** `docs/SCHEMA.md` §5 dit « markdown » ; aucune
+   unité ne porte son rendu, et le rendre exigerait une politique d'assainissement qu'aucun document
+   n'écrit. Rendre du markdown reçu d'un tiers sans cette politique serait ouvrir une injection.
+2. **Aucune modération** (§13.6, INC-072).
+3. **Aucune notification de mention** (§13.1).
+4. **Le nom de l'auteur reste illisible** (INC-014), et c'est la limite la plus visible du panneau :
+   un fil de discussion sans nom d'auteur est un fil incomplet. Elle appartient aux politiques de
+   `profiles`, qu'aucune unité ne porte.
+5. **La pierre tombale est irréversible et le corps est détruit.** Aucun mécanisme de restauration
+   n'est prévu, et aucune trace du corps supprimé ne subsiste. C'est le comportement voulu (§13.4) ;
+   il est nommé ici pour qu'un besoin d'archivage légal ne le découvre pas après coup.
+
+### 13.14 Preuves attendues de `CRM-043`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Forme de la table, unicité ajoutée à `cards`, clé composite dans les deux sens, `CHECK` conditionnel du corps, trigger d'insertion (dérivation, défauts), trigger de mise à jour (`edited_at`, pierre tombale, refus de résurrection, colonnes gelées), quatre politiques, privilèges de colonne, appartenance à la publication, conformité du seed |
+| Unitaire | Projection du fil, ordre chronologique, classification des refus, état « modifié », état « supprimé », et le composant réel |
+| API | Les seize lignes du §13.8 avec les jetons réels, plus le **temps réel** : le témoin qui reçoit, et le `viewer` fermé qui ne reçoit rien |
+| E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais le panneau sans substitution, puis le fil, l'état vide, la pierre tombale, la mention « modifié » et le refus d'écriture, réponses substituées et **dit comme tel** |
+| Visuel | Captures aux paliers du §7 du design system : fil chargé, état vide, refus d'écriture, commentaire long |
+| Harnais | `scripts/verify-commentaires.sh`, rejouable et **non complaisant** : chaque dégradation volontaire le fait réellement échouer |

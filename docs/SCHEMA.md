@@ -455,13 +455,34 @@ porte pas, et qui sont opposables :
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id`, `card_id`, `workspace_id` | `uuid` | |
-| `author_id` | `uuid` | FK `profiles` |
-| `body` | `text` | non nul, markdown |
-| `mentions` | `uuid[]` | destinataires de notification |
-| `created_at`, `edited_at`, `deleted_at` | `timestamptz` | |
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `card_id` | `uuid` | non nul, FK `cards (id)` `on delete cascade` |
+| `workspace_id` | `uuid` | non nul, **dérivé de la card par trigger** ; clé composite `(card_id, workspace_id) → cards (id, workspace_id)` |
+| `author_id` | `uuid` | non nul, FK `profiles`, défaut `auth.uid()` |
+| `body` | `text` | non nul, markdown ; `CHECK` **conditionnel** : 1 à 10 000 caractères tant que le commentaire vit, **chaîne vide** dès qu'il est supprimé |
+| `mentions` | `uuid[]` | non nul, défaut `'{}'` — destinataires de notification, **jamais alimentée** par `CRM-043` |
+| `created_at` | `timestamptz` | non nul, défaut `now()` |
+| `edited_at` | `timestamptz` | posé par trigger quand le corps change, jamais par le client |
+| `deleted_at` | `timestamptz` | posé par trigger ; **irréversible**, et le corps est alors vidé |
 
-Tout membre pouvant lire la card peut commenter : c'est la règle demandée.
+**Commenter exige le droit d'ÉCRITURE sur le channel de la card, non le droit de lecture.** Cette
+ligne corrige une phrase de ce chapitre — « tout membre pouvant lire la card peut commenter » — que
+le §4 de `docs/SPEC-permissions-rls.md` et la Definition of Done de `CRM-043` contredisaient tous
+deux, la seconde exigeant nommément la preuve du refus opposé à un `viewer`. La contradiction est
+consignée en **INC-071** ; le comportement retenu est celui des deux sources concordantes, et le
+motif complet vit dans `docs/SPEC-cards.md` §13.6.
+
+La modification et la suppression sont réservées à **l'auteur**. Le §4 de
+`docs/SPEC-permissions-rls.md` y ajoute les `admin` : `CRM-043` livre l'intersection des deux
+énoncés et demande l'arbitrage — **INC-072**.
+
+`updated_at` **n'est pas ajoutée**, seul écart assumé à la convention générale ci-dessous :
+`edited_at` et `deleted_at` nomment les deux seules évolutions possibles d'un commentaire, et les
+confondre serait perdre de l'information (`docs/SPEC-cards.md` §13.2).
+
+**Première table du produit publiée au temps réel.** `alter publication supabase_realtime add table
+public.card_comments` : `realtime.apply_rls` évalue alors la politique `SELECT` pour chaque abonné,
+de sorte qu'un membre sans accès à la card ne reçoit **rien** (`docs/SPEC-cards.md` §13.9).
 
 ### `card_activities`
 Activités typées, distinctes des commentaires libres.

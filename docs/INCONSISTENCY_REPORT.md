@@ -12,6 +12,63 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-071 — Trois documents se contredisent sur ce qu'il faut pour commenter une card
+
+**Nature :** contradiction entre spécifications, sur une règle d'autorisation.
+**Relevée le :** 2026-08-05, pendant `CRM-043`.
+
+| Source | Ce qu'elle exige pour écrire un commentaire |
+|---|---|
+| `docs/SCHEMA.md` §5 | « Tout membre pouvant **lire** la card peut commenter : c'est la règle demandée » |
+| `docs/SPEC-permissions-rls.md` §4 | « **Écriture** sur le channel » |
+| `docs/BACKLOG.md`, `CRM-043` | Énoncé : « tout membre pouvant lire la card ». **Definition of Done : « API (refus pour un `viewer`) »** |
+
+L'énoncé de backlog **se contredit lui-même** : un `viewer` peut lire une card — le seed le démontre
+sur `…0c5` —, et la preuve exigée par sa propre Definition of Done est celle de son **refus**.
+
+**Comportement retenu — le droit d'ÉCRITURE** (`app.can_write_card`), motivé au §13.6 de
+`docs/SPEC-cards.md` et à la décision 192 du journal : deux sources concordantes contre une, dont
+l'une est la Definition of Done ; et le §2.1 de `docs/SPEC-permissions-rls.md` définit le `viewer`
+comme « consulte, **sans aucune écriture** », invariant qu'aucune table n'est autorisée à percer.
+
+**Ce qui a été corrigé :** la phrase de `docs/SCHEMA.md` §5, seule des trois sources à porter la
+règle minoritaire — la laisser ferait mentir le document de schéma sur une table qu'il décrit.
+
+**Ce qui reste à arbitrer :** l'**énoncé** de `CRM-043` dans `docs/BACKLOG.md` porte toujours la
+formulation corrigée, à côté d'une Definition of Done qui la contredit. Le réécrire serait réécrire
+la demande du responsable, ce qu'aucune unité ne fait d'elle-même. Deux issues possibles : corriger
+l'énoncé pour qu'il dise « tout membre pouvant écrire sur le channel », ou — si la lecture littérale
+était bien l'intention — rouvrir la règle, ce qui suppose alors de retirer de la Definition of Done
+la preuve du refus opposé au `viewer`, et d'accepter qu'un rôle défini « sans aucune écriture »
+écrive.
+
+---
+
+### INC-072 — La modération des commentaires est ouverte aux `admin` par un document, à personne par l'autre
+
+**Nature :** contradiction entre spécifications, sur l'étendue d'un droit.
+**Relevée le :** 2026-08-05, pendant `CRM-043`.
+
+`docs/SPEC-permissions-rls.md` §4 réserve la modification et la suppression d'un commentaire « à
+l'auteur **et aux `admin`** ». L'énoncé de `CRM-043` dans `docs/BACKLOG.md` ne mentionne que
+l'auteur : « édition et suppression par l'auteur ».
+
+**Comportement retenu — l'auteur seul**, c'est-à-dire l'**intersection** des deux énoncés (décision
+194). Elle n'ouvre rien que l'une ou l'autre source refuse, là où le sur-ensemble donnerait un
+pouvoir qu'un des deux documents ne donne pas. Le choix a un fond, et il n'est pas seulement
+prudentiel : **modifier** le commentaire d'autrui n'est pas de la modération mais une falsification
+— un administrateur pourrait faire dire à un commercial l'inverse de ce qu'il a écrit, sans autre
+trace que `edited_at`, et aucun document ne demande cela.
+
+**Conséquence nommée, non masquée :** aucun modérateur ne peut retirer un commentaire déplacé.
+
+**Ce qui reste à arbitrer :** faut-il ouvrir la **suppression** aux `admin`, sans la modification ?
+Rien n'est à défaire pour l'ajouter — une politique `UPDATE` supplémentaire, restreinte à
+`deleted_at`, suffirait —, mais la décision appartient au responsable : elle donne à un rôle le
+pouvoir de faire disparaître la parole d'un autre.
+
+---
+
 ### INC-070 — Le contrôle de textes en dur lit la queue d'un ternaire comme un nœud de texte
 
 **Nature :** faux positif d'un contrôle du dépôt, reproductible.
@@ -1957,6 +2014,16 @@ Le motif est celui déjà retenu : `CLAUDE.md` §13 prévoit l'instruction expli
 pour réécrire un commit poussé, aucune instruction n'est atteignable pendant une exécution
 automatique, et la règle d'attribution est elle-même **non négociable**. La correction est faite et
 nommée, plutôt que laissée en l'état.
+
+**CINQUIÈME OCCURRENCE DE L'IDENTITÉ, 2026-08-05, PENDANT `CRM-043`.** Même constat, cinquième
+conteneur neuf : aucune configuration **locale**, `git config user.email` rendant
+`noreply@anthropic.com`, et `user.signingkey` pointant vers une clé de l'agent. Cette fois l'écart a
+été vu **avant le premier commit** : la configuration locale a été posée à
+`P2Enjoy <contact@p2enjoy.studio>` — avec `commit.gpgsign false`, la clé globale n'étant pas celle
+du responsable — et **aucune réécriture d'historique n'a été nécessaire**. C'est la deuxième
+exécution sur cinq où la vérification précède le premier commit ; les trois autres ont dû réécrire.
+Le point 2 reste entier : la seule différence entre « réécrire » et « ne rien réécrire » est
+l'ordre dans lequel l'agent pense à vérifier, ce qui n'est pas un mécanisme.
 
 **Ce que cette troisième occurrence ajoute au point 2 :** reposer la configuration au début d'une
 exécution ne suffit pas si le premier commit est créé avant. Le correctif durable — script

@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La spécification des commentaires** — `CRM-043`, `docs/SPEC-cards.md` §13. Aucune ligne de code
+  n'est livrée ici : le document précède l'implémentation, comme pour chaque unité. Le chapitre dit
+  ce qu'un commentaire est, ce qu'il devient quand on le supprime — une **pierre tombale réellement
+  vidée de son contenu**, et non un contenu masqué par l'interface —, qui peut l'écrire, qui peut le
+  modifier, et comment le fil se met à jour **sans recharger la page**.
+
+  Trois documents se contredisaient sur la question la plus simple : *qui peut commenter ?* Le
+  schéma disait « qui peut lire la card », les règles d'autorisation disaient « qui peut écrire sur
+  le channel », et l'énoncé de l'unité reprenait le premier tout en exigeant, dans sa propre
+  recette, la preuve du refus opposé à un lecteur seul. Les deux contradictions sont **écrites**
+  (`INC-071`, `INC-072`) plutôt que tranchées en silence ; le comportement retenu est celui des
+  sources concordantes — **commenter est un droit d'écriture** —, et la modification comme la
+  suppression restent réservées à **l'auteur**.
+
+  `docs/DESIGN_SYSTEM.md` gagne son **§5.10**, les règles du premier fil de discussion du produit :
+  ordre chronologique croissant, commentaire supprimé qui **garde sa place** dans la conversation,
+  refus d'écriture affiché **sans perdre le texte saisi**, et aucun nom d'auteur — cette donnée
+  n'est lisible par personne aujourd'hui, et le produit préfère ne rien afficher plutôt qu'afficher
+  du vide.
+
 - **La vue liste d'un channel** — `CRM-042`, `docs/SPEC-cards.md` §12. Un channel se lit désormais
   de **deux façons** : le tableau kanban, qui reste la vue par défaut, et une **liste** que la
   bascule *Tableau / Liste* ouvre sur sa propre adresse. Chaque ligne porte le titre de l'affaire —

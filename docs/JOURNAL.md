@@ -6262,3 +6262,159 @@ interdit toujours son E2E de bout en bout. **Aucune assertion n'a été relâch�
 harnais vert : compter les cards du seed est exactement ce qui rend la pagination vérifiable, et
 l'assouplir pour accommoder un outil fautif serait supprimer un test pour obtenir un vert
 (`CLAUDE.md` §26).
+
+### Décision 192 — Commenter est un droit d'ÉCRITURE, et trois documents ne disaient pas la même chose
+
+**Problème.** `CRM-043` tient en deux lignes au backlog, et trois documents la décrivent
+partiellement. Sur la question la plus simple — *qui peut écrire un commentaire ?* — ils se
+contredisent :
+
+| Source | Ce qu'elle dit |
+|---|---|
+| `docs/SCHEMA.md` §5 | « Tout membre pouvant **lire** la card peut commenter : c'est la règle demandée » |
+| `docs/SPEC-permissions-rls.md` §4 | « Écriture sur le channel » |
+| `docs/BACKLOG.md`, `CRM-043` | énoncé : « tout membre pouvant lire la card » ; **DoD : API (refus pour un `viewer`)** |
+
+L'énoncé du backlog reprend la phrase de `SCHEMA`, et sa **propre Definition of Done la
+contredit** : un `viewer` peut lire une card, et la preuve exigée est celle de son refus.
+
+**Décision : le droit d'écriture sur le channel**, c'est-à-dire `app.can_write_card`. Trois motifs,
+et le troisième emporte les deux autres. D'abord le §2.1 de `docs/SPEC-permissions-rls.md` définit
+le `viewer` comme « consulte, **sans aucune écriture** » — invariant du produit entier, que rien
+n'autorise à percer pour une table. Ensuite le §4 du même document prescrit « écriture sur le
+channel » pour `card_comments`, `card_field_values` et `card_activities` **ensemble** : ouvrir la
+première à la lecture seule dissocierait trois tables que ce document traite comme une famille.
+Enfin la Definition of Done **est** la condition de recette de l'unité : livrer une règle dont la
+preuve exigée serait impossible à obtenir n'est pas livrer l'unité.
+
+**Ce qui est écrit, et ce qui ne l'est pas.** La phrase fautive de `docs/SCHEMA.md` §5 est corrigée
+dans le même changement — elle est la seule des trois sources à porter la règle minoritaire, et la
+laisser ferait mentir le document de schéma. La contradiction elle-même est consignée en
+**INC-071**, non résolue implicitement : l'arbitrage porte sur le fait que l'énoncé de backlog de
+`CRM-043` reprend encore la formulation corrigée.
+
+**Conséquence mesurable.** Farida Nowak (`viewer`) lit les commentaires des cards qu'elle voit et
+n'en écrit aucun. Le seed lui en attribue un, posé par la clé de service, pour que sa lecture
+autorisée soit distinguable d'une table vide (`docs/SPEC-cards.md` §13.11).
+
+### Décision 193 — Un commentaire supprimé est une pierre tombale, et son corps est réellement détruit
+
+**Problème.** « Suppression par l'auteur », avec une colonne `deleted_at` au schéma, admet trois
+mises en œuvre. Deux sont mauvaises, et la troisième ne l'est que si l'on ignore le temps réel.
+
+1. **Suppression physique** : elle rend la colonne `deleted_at` morte-née.
+2. **`deleted_at` posé, ligne laissée lisible** : le corps reste servi par l'API à qui sait le
+   demander. « Supprimé » n'est alors vrai que dans l'interface — précisément ce que `CLAUDE.md`
+   §10 refuse.
+3. **`deleted_at` posé, ligne retirée de la lecture** : le corps devient inatteignable, mais la
+   ligne aussi. Or `realtime.apply_rls` **n'émet que ce que l'abonné peut lire** : la suppression
+   ne serait jamais transmise, et l'écran d'un autre membre garderait le commentaire affiché
+   jusqu'à son prochain rechargement. Une suppression qui ne se propage pas est une suppression qui
+   ment.
+
+**Décision : la pierre tombale.** La ligne survit, **vidée de son corps**, et c'est un `CHECK` qui
+le tient :
+
+```
+check ((deleted_at is null     and length(btrim(body)) between 1 and 10000)
+    or (deleted_at is not null and body = ''))
+```
+
+Ce n'est pas un contenu masqué, c'est un contenu détruit — propriété de la base, opposable à tous
+les chemins d'écriture. La ligne subsiste pour trois raisons vérifiables : la suppression **se
+propage** au temps réel ; la chronologie du futur fil unifié (`CRM-044`) n'a pas de trou ;
+`author_id` étant gelé, la ligne ne peut pas être recyclée pour faire dire à quelqu'un ce qu'il n'a
+pas écrit.
+
+**Conséquences assumées.** La suppression est **irréversible** : le corps n'est récupérable nulle
+part, et aucun mécanisme de restauration n'est prévu. Le trigger refuse en outre toute écriture
+ultérieure sur une ligne supprimée (`comment_deleted`) et toute résurrection. Le point est nommé au
+§13.13 de `docs/SPEC-cards.md` pour qu'un besoin d'archivage légal ne le découvre pas après coup —
+et il oblige le seed à une convergence par présence plutôt que par réécriture (`docs/SPEC-seed.md`
+§2.14).
+
+### Décision 194 — L'auteur seul modifie et supprime ; le modérateur est nommé, non livré
+
+**Problème.** Le §4 de `docs/SPEC-permissions-rls.md` réserve modification et suppression « à
+l'auteur **et aux `admin`** ». L'énoncé de `CRM-043` ne mentionne que l'auteur.
+
+**Décision : l'intersection**, c'est-à-dire l'auteur seul. Elle n'ouvre rien que l'une ou l'autre
+source refuse, là où le sur-ensemble ouvrirait un pouvoir qu'un des deux documents ne donne pas. Le
+choix a en outre un fond : **modifier** le commentaire d'autrui n'est pas de la modération, c'est
+une falsification — un administrateur pourrait faire dire à un commercial l'inverse de ce qu'il a
+écrit, sans autre trace que `edited_at`. Aucun document ne demande cela, et deux lignes de politique
+suffiraient à l'introduire par inadvertance.
+
+**Conséquence nommée, non masquée** : aucun modérateur ne peut retirer un commentaire déplacé. La
+limite est écrite au §13.6 et au §13.13 de `docs/SPEC-cards.md`, et l'arbitrage demandé en
+**INC-072**. Il porte sur une politique supplémentaire — vraisemblablement une suppression ouverte
+aux `admin`, sans modification —, non sur le modèle : rien n'est à défaire pour l'ajouter.
+
+### Décision 195 — Le temps réel est mesuré avant d'être spécifié, et le panneau recharge à l'abonnement
+
+**Problème.** La Definition of Done exige « temps réel constaté ». Le §4 de `docs/DAT.md` annonce
+des « abonnements Realtime pour les commentaires » depuis le socle documentaire, et **aucun document
+ne dit par quel mécanisme**. MESURÉ le 2026-08-05 : `pg_publication_tables` compte **zéro** table
+publiée sur `supabase_realtime`. Rien n'avait jamais été branché.
+
+**Ce qui a été mesuré**, sur une table sonde créée puis détruite, avec `supabase-js` `2.112.0` à
+travers Kong et le jeton réel de l'administratrice :
+
+| Mesure | Résultat |
+|---|---|
+| Ouverture du canal `postgres_changes` | `SUBSCRIBED` |
+| `realtime.subscription` pendant que le canal vit | **1 ligne** ; **0** dès qu'il se ferme |
+| Insertion 0 / 100 / 300 / 1000 ms après `SUBSCRIBED` | **1 événement** dans les quatre cas |
+| **Première sonde**, émise dans la seconde suivant l'ajout de la table à la publication | **0 événement** |
+
+**Décision.** `card_comments` est ajoutée à la publication `supabase_realtime` — première table du
+produit à l'être. Et le panneau **recharge sa liste à l'abonnement**, jamais avant : la lecture est
+déclenchée par le passage à `SUBSCRIBED`, non par le montage du composant.
+
+Le motif est le dernier cas mesuré. Il n'a **pas** été reproduit, donc **pas** expliqué ; il suffit
+néanmoins à interdire de bâtir l'écran sur une garantie que la mesure n'établit pas. Recharger à
+l'abonnement rattrape tout événement perdu avant l'établissement du canal, et ne coûte qu'une
+lecture. Écrire l'inverse — charger puis s'abonner — laisserait une fenêtre dont la largeur ne
+serait connue de personne.
+
+**Le temps réel est aussi une preuve de refus.** `realtime.apply_rls` évalue la politique `SELECT`
+pour le rôle et les revendications de chaque abonné : un `viewer` fermé sur le track de
+`grands-comptes` ne reçoit **rien** d'une card de ce channel. C'est le seul refus du produit qui se
+constate par un **silence**, ce qui oblige à établir d'abord qu'un abonné autorisé, lui, reçoit
+l'événement — sans ce témoin, le silence prouverait aussi bien la RLS qu'un temps réel en panne.
+C'est la décision 50 transposée au temps réel.
+
+### Décision 196 — `auth.uid()` en défaut de colonne ET dans le `WITH CHECK` : les deux, et le motif
+
+**Mesuré** le 2026-08-05, sur une table sonde annulée : `create table sonde_c3 (…, a uuid default
+auth.uid())` est acceptée, et une insertion sans jeton y laisse `null`. Le défaut fonctionne.
+
+**Décision : les deux mécanismes.** Le défaut de colonne dispense l'interface d'envoyer
+`author_id` — elle ne connaît d'ailleurs pas son propre identifiant sans lire sa session. La
+politique `WITH CHECK (author_id = auth.uid())` est ce qui **refuse d'écrire sous le nom d'autrui** :
+un défaut ne s'applique qu'à une colonne omise, et un client qui envoie `author_id` explicitement le
+contourne entièrement. Le premier est un confort, le second est la règle ; les confondre laisserait
+une signature falsifiable, ce que la preuve **b** du §13.8 exerce.
+
+### Décision 197 — Un trigger écrit une colonne que le client n'a pas le droit d'écrire, et c'est mesuré
+
+**Problème.** `edited_at` doit être posé par le produit et fermé à l'appelant. Le mécanisme des
+colonnes protégées (`CRM-013`) retire le privilège `UPDATE` de table puis rend nommément les
+colonnes ouvertes. Reste à savoir si un `BEFORE UPDATE` peut encore écrire une colonne fermée.
+
+**MESURÉ**, table sonde, rôle `authenticated`, `grant update (corps, supprime_le)` :
+
+| Geste | Résultat |
+|---|---|
+| `update … set corps = 'b'` | `UPDATE 1`, et `edite_le` **renseignée par le trigger** |
+| `update … set edite_le = '2020-01-01'` | `ERROR: permission denied for table` |
+
+Le privilège de colonne juge la **cible du client**, pas les affectations d'un trigger.
+
+**Décision.** `card_comments` n'ouvre que `body` et `deleted_at` en mise à jour. `edited_at` est
+fermée et pourtant tenue à jour ; `deleted_at` est ouverte mais **réécrite** par le trigger à
+`now()`, de sorte qu'une date antidatée envoyée par un client soit ignorée plutôt que refusée — la
+colonne doit rester ouverte pour que le geste « supprimer » existe, et sa valeur n'est pas une
+question posée au client. C'est le seul endroit du produit où une colonne est à la fois ouverte et
+non décidée par l'appelant ; le §13.7 de `docs/SPEC-cards.md` l'écrit pour que nul ne le déduise du
+code.

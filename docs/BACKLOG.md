@@ -3411,9 +3411,54 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   autres captures et la vidéo `glisser-deposer.webm` n'ont pas été regardées** lors de ce rejeu :
   elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
-### CRM-043 — Commentaires `[ ]`
+### CRM-043 — Commentaires `[~]`
 Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.
 **DoD** : API (refus pour un `viewer`) ; E2E ; temps réel constaté.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-cards.md` §13 : l'unité tenait
+      en **deux lignes** au backlog, et trois documents la nommaient sans la décrire — le §5 de
+      `docs/SCHEMA.md` pour son modèle, le §4 de `docs/SPEC-permissions-rls.md` pour ses politiques,
+      le §5.3 de `docs/DESIGN_SYSTEM.md` pour la colonne d'écran qui l'accueille. **Les trois ne
+      disaient pas la même chose.** Écrite en quatorze sous-chapitres opposables, après mesure sur
+      la pile réelle. Commit documentaire dédié, poussé avant la première ligne de code.
+- [x] **Ce qui a été mesuré avant d'être écrit** : l'absence d'unicité `(id, workspace_id)` sur
+      `cards` — `there is no unique constraint matching given keys` —, `auth.uid()` acceptée comme
+      **défaut de colonne**, un trigger qui écrit une colonne dont le privilège d'écriture est
+      **refusé au client**, et surtout le **temps réel** : `pg_publication_tables` compte **zéro**
+      table publiée, le canal `postgres_changes` répond `SUBSCRIBED` à travers Kong, l'abonnement
+      s'inscrit dans `realtime.subscription` le temps du canal, et l'événement arrive dans les
+      quatre délais mesurés — mais **pas** à la toute première sonde, ce qui n'a pas été reproduit
+      et fonde la règle « recharger à l'abonnement » (décisions 192 à 197).
+- [x] **DEUX CONTRADICTIONS RELEVÉES, NON RÉSOLUES IMPLICITEMENT.** **INC-071** : `docs/SCHEMA.md`
+      §5 ouvre le commentaire à qui peut **lire** la card, quand `docs/SPEC-permissions-rls.md` §4
+      et la Definition of Done de cette unité exigent le droit d'**écriture** — la DoD réclamant
+      nommément la preuve du refus opposé à un `viewer`, que la lecture littérale rendrait
+      impossible. Comportement retenu : le droit d'écriture ; la phrase minoritaire de `SCHEMA` est
+      corrigée, l'**énoncé** du backlog est laissé intact et l'arbitrage demandé. **INC-072** : le
+      §4 ouvre la modération aux `admin`, l'énoncé ne l'ouvre qu'à l'auteur ; l'**intersection** est
+      livrée, et l'absence de modérateur est nommée.
+- [x] `docs/DESIGN_SYSTEM.md` §5.10 écrit dans le même changement : le panneau de commentaires est
+      le **premier fil de discussion du produit**, et le §5.3 l'annonçait sans lui donner une seule
+      règle visuelle. Ordre chronologique **croissant** — écrit explicitement pour que `CRM-044` ne
+      l'inverse pas par habitude —, pierre tombale qui tient sa place, refus rendu **sans perdre le
+      texte saisi**, et **aucun nom d'auteur** : INC-014 rend `profiles` illisible, et la règle du
+      §12.5 s'applique comme pour la colonne « Responsable » de la vue liste.
+- [x] `docs/SPEC-seed.md` §2.14 : cinq commentaires sur trois cards, par les trois comptes, dont un
+      **modifié** et un **supprimé**. La convergence de cette section ne s'écrit **pas** comme les
+      autres — `ignore-duplicates` et deux mises à jour conditionnées par une relecture — parce que
+      le trigger refuse toute écriture sur une ligne supprimée, et parce qu'un commentaire est une
+      parole et non un paramètre.
+- [ ] **Migration, politiques, triggers, publication au temps réel** : non livrés.
+- [ ] **Suite pgTAP dédiée** : non livrée.
+- [ ] **Preuve d'API dédiée** — les seize lignes du contrat mesuré du §13.8, dont le **refus opposé
+      au `viewer`** exigé par la Definition of Done, et le **temps réel** avec son témoin : non
+      livrée.
+- [ ] **Panneau de commentaires, test unitaire, preuve d'interface, captures observées** : non
+      livrés.
+- [ ] **Seed** : non étendu.
+- [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les treize unités précédentes : le
+      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
+      connexion.
 
 ### CRM-044 — Timeline unifiée `[ ]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.
