@@ -3106,6 +3106,11 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
       présentes — sept étapes, dix transitions dont quatre à motif, deux étapes sans sortie, trois
       cards actives sur deux étapes. **Huit contrôles du harnais échouent** si elles cessent d'y
       être. L'unité n'introduit ni table, ni colonne, ni statut, ni flux.
+- [ ] **LE CUMUL DE MONTANT DÉPEND D'UNE DÉCLARATION QUE DEUX FICHIERS CONTREDISENT — INC-067.**
+      MESURÉ : PostgREST rend `cards.amount` en **nombre** JSON, le type engendré le déclare ainsi,
+      et `e2e/api/cards.spec.ts` — livré par `CRM-040` — le déclare en **chaîne**. Le cumul de
+      `webapp/src/lib/board.ts` additionne sans convertir : si la représentation basculait, il
+      concaténerait **en silence**. Comportement inchangé, arbitrage demandé.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E de déplacement autorisé et
 de tentative interdite ; déplacement au clavier vérifié ; captures aux quatre paliers ; vidéo

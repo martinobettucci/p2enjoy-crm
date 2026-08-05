@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Une contradiction mesurée sur `cards.amount`, consignée sans être résolue — INC-067.** Le type
+  engendré déclare `number`, `e2e/api/cards.spec.ts` déclare `string`, et la pile — MESURÉE — rend
+  `{"amount":48000.00}`, un **nombre** JSON. Le constat cesse d'être anodin avec le board : son
+  cumul de colonne additionne sans convertir, et `0 + "48000.00"` rend `"048000.00"` en JavaScript.
+  Un basculement de représentation concaténerait donc **en silence**, sans qu'aucune preuve ne le
+  voie. Comportement inchangé, trois options portées au responsable.
+
 ### Ajouté
 
 - **Le board kanban d'un channel** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7. Ouvrir un onglet

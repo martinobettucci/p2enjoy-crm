@@ -12,6 +12,50 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-067 — Trois sources décrivent `cards.amount` de deux façons, et le cumul du board dépend de celle qui a raison
+
+**Nature :** contradiction entre deux déclarations du dépôt ; comportement inchangé.
+**Relevé le :** 2026-08-05, pendant la vérification de `CRM-041`.
+
+| Source | Ce qu'elle déclare |
+|---|---|
+| `webapp/src/lib/database.types.ts`, **engendré** | `amount: number \| null` |
+| `e2e/api/cards.spec.ts` ligne 87, écrit à `CRM-040` | `amount: string \| null` |
+| **la pile réelle, MESURÉE** | `{"amount":48000.00}` — un **nombre** JSON |
+
+`GET /rest/v1/cards?select=id,amount&id=eq.…0000c1` avec le jeton réel de l'administratrice rend
+`48000.00`, non `"48000.00"`. Le type engendré a donc raison, et la preuve d'API de `CRM-040` porte
+une déclaration défensive que la pile ne justifie pas.
+
+**Pourquoi cela cesse d'être anodin avec `CRM-041`.** `webapp/src/lib/board.ts` additionne les
+montants d'une colonne sans conversion :
+
+```ts
+montant: avecMontant.reduce((total, card) => total + (card.amount ?? 0), 0),
+```
+
+En JavaScript, `0 + "48000.00"` rend `"048000.00"`. Si la représentation basculait un jour vers la
+chaîne — changement de version de PostgREST, réglage de la pile, ou colonne migrée —, le cumul
+**concaténerait en silence** et l'en-tête de colonne afficherait un nombre faux. Aucun test ne le
+verrait : les preuves actuelles emploient des fixtures où `amount` est déjà un nombre.
+
+**Ce qui n'est pas tranché.** Laquelle des deux déclarations doit être corrigée, et si la
+représentation d'un `numeric` doit être **mesurée** plutôt que supposée. La question dépasse
+`CRM-041` : elle touche `CRM-040` et toute lecture future d'une colonne `numeric`.
+**Comportement inchangé, arbitrage demandé.**
+
+**Options :**
+
+1. corriger `e2e/api/cards.spec.ts` en `number | null` — la déclaration devient exacte, et la
+   fragilité du cumul reste entière ;
+2. convertir explicitement dans le cumul (`Number(card.amount)`), et écrire le motif — la garde
+   tient les deux formes, au prix d'une conversion que la pile actuelle ne réclame pas ;
+3. ajouter à `scripts/verify-cards.sh` un contrôle qui **mesure** la représentation rendue par la
+   pile, de sorte qu'un basculement soit dénoncé au lieu d'être découvert sur un écran.
+
+**Lié à :** `CRM-040` (`e2e/api/cards.spec.ts`), `CRM-041` (`webapp/src/lib/board.ts`, cumul du
+§7.3), `docs/SPEC-types.md` (« un type ne garantit jamais une valeur »).
+
 ### INC-066 — L'éditeur de workflow est spécifié depuis `CRM-000` et n'est rattaché à aucune unité
 
 **Nature :** unité manquante ; une règle du produit n'a aucun porteur.

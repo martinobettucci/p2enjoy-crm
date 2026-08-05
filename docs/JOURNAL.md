@@ -5901,3 +5901,34 @@ passe reviendrait à supprimer un test pour obtenir un vert, ce que `CLAUDE.md` 
 explicitement. `scripts/verify-cards.sh` est un livrable de `CRM-040` et son arbitrage est ouvert :
 la seconde occurrence est consignée dans INC-061, qui gagne un argument pour son option 2 — une
 règle générale protège les preuves à venir, une correction ponctuelle non.
+
+### Décision 180 — Une seconde exécution de la routine a livré `CRM-041` en parallèle, et elle abandonne son implémentation
+
+**Constat.** Deux exécutions de la routine d'avancement ont traité `CRM-041` dans la même heure. La
+première a poussé sur `main` le commit « Le board d'un channel est rendu, et trois défauts que la
+mesure a dénoncés » ; la seconde avait produit une implémentation complète et indépendante — module
+de composition, rendu, preuves unitaires, d'API et d'interface, harnais de 61 contrôles, onze
+captures et la vidéo.
+
+**Décision.** L'implémentation de la seconde exécution est **abandonnée**, et celle de `main` est
+conservée telle quelle. `CLAUDE.md` §1 interdit de remplacer une solution existante et fonctionnelle
+sans justification technique : la livraison poussée est complète, prouvée et non complaisante, et
+lui substituer une seconde version équivalente ne serait qu'une préférence. C'est le même arbitrage
+qu'à `CRM-014`, où deux exécutions s'étaient déjà croisées.
+
+**Ce qui est néanmoins conservé, parce qu'il ne dépend d'aucune des deux implémentations.** Une
+contradiction **mesurée** sur la pile réelle et absente du rapport : `cards.amount` est rendu par
+PostgREST en **nombre** JSON, le type engendré le déclare ainsi, et `e2e/api/cards.spec.ts` le
+déclare en chaîne. Le constat vaut pour le dépôt entier, et il a une conséquence directe sur le
+cumul de montant que `main` vient de livrer — INC-067.
+
+**Ce qui n'est PAS conservé, et pourquoi.** Deux autres observations de la seconde exécution ont été
+écartées après contre-mesure :
+
+1. *Le contrôle de texte en dur lit une signature `=> Promise<…>` comme un nœud de texte.* Vrai de
+   l'implémentation abandonnée ; **aucun fichier de `main` ne porte cette forme**. Consigner un écart
+   qu'aucun code du dépôt ne déclenche serait du bruit.
+2. *`scripts/verify-valeurs-champs.sh` mesurerait avant de restaurer, comme `verify-cards.sh`.*
+   **MESURÉ contre l'arbre de `main` : le harnais rend 40 contrôles, aucune anomalie.** L'échec
+   observé venait d'une assertion plus stricte de l'implémentation abandonnée, non du harnais. Un
+   constat qu'on ne sait pas reproduire n'est pas un constat.
