@@ -12,6 +12,46 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-066 — L'éditeur de workflow est spécifié depuis `CRM-000` et n'est rattaché à aucune unité
+
+**Nature :** unité manquante ; une règle du produit n'a aucun porteur.
+**Relevé le :** 2026-08-05, pendant la spécification de `CRM-041`.
+
+`docs/SPEC-workflow-engine.md` §7 énonce depuis `CRM-000` : « L'éditeur de workflow est réservé aux
+administrateurs : sélection des nœuds, ordre, arêtes, surcharges, et champs de formulaire. » La
+phrase décrit un **écran**, et elle prescrit une règle d'accès sur cet écran.
+
+**Constat, mesuré sur le backlog et non supposé.** Sept unités ont livré la matière de cet éditeur
+sans en livrer une ligne d'interface, et **chacune l'a nommé** dans sa Definition of Done :
+`CRM-030` (catalogue de nœuds), `CRM-031` (workflows, étapes, transitions), `CRM-032` (copie vers un
+track), `CRM-033` (cohérence workflow ↔ channel), `CRM-035` (définition des champs), `CRM-036`
+(valeurs et validation), `CRM-037` (rendu du formulaire). Aucune unité `[ ]` de
+`docs/MASTER_PLAN.md` §2 ne porte cet éditeur : `CRM-041` livre le board, `CRM-042` la vue liste,
+`CRM-043` à `CRM-047` les commentaires, la timeline, le déplacement entre channels, le seed et le
+manuel. Le chunk 5 ne le nomme pas davantage.
+
+**Ce que cela ne met pas en cause.** Aucune règle d'autorisation ne manque côté serveur : les
+politiques d'écriture des cinq tables concernées réservent déjà la modification aux administrateurs
+du workspace, et elles sont prouvées hors interface. L'écran absent ne relâche rien ; il empêche
+seulement qu'un administrateur configure son produit autrement que par l'API.
+
+**Ce que `CRM-041` fait de cette phrase.** Rien. Elle est **conservée mot pour mot** au §7.13,
+comme énoncé d'intention, et l'unité ne la livre pas. La retirer du document aurait effacé une
+exigence du responsable ; la livrer aurait inventé un périmètre que personne n'a demandé.
+
+**Arbitrage attendu du responsable.** Trois options :
+
+1. créer une unité d'administration des workflows dans le chunk 5, et lui rattacher la phrase ;
+2. acter que la configuration d'un workflow reste une opération d'**exploitation**, par l'API et la
+   clé de service, et réécrire la phrase en ce sens — comme l'invitation l'est restée (INC-015) ;
+3. rattacher l'éditeur à `CRM-042`, qui est la seule unité `[ ]` du chunk 3 touchant à une vue
+   d'administration — au prix de gonfler une unité déjà large.
+
+**Lié à :** INC-015 (l'invitation, même motif : une règle produit sans écran pour la porter),
+INC-021 (aucun écran de connexion), `docs/SPEC-workflow-engine.md` §7.1 et §7.13.
+
+---
+
 ### INC-065 — L'adresse d'une card nomme un track et un channel que rien ne confronte à la card
 
 **Nature :** règle absente ; aucune spécification ne dit ce qu'une adresse incohérente doit rendre.

@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Le chapitre « Interface » du moteur de workflow est réécrit en contrat vérifiable, avant toute
+  ligne de code de `CRM-041`** — `docs/SPEC-workflow-engine.md` §7, décisions 168 à 173. Il tenait
+  en **cinq lignes** écrites à `CRM-000` : elles posent des règles justes — une colonne par étape,
+  un menu listant exactement les transitions déclarées, un dépôt impossible sans appel, un refus qui
+  replace la card — sans jamais dire ce que le board **lit**, en combien de requêtes, dans quel ordre
+  les colonnes et les cards se rangent, ni ce qu'il faut prouver. Réécrit en quatorze sous-chapitres
+  **après mesure de la pile réelle** — les quatre lectures avec le jeton réel de l'administratrice,
+  les **sept** refus de `move_card` un par un avec leur `code` et leur `details`, l'absence de
+  colonne `position` sur `workflow_transitions`, le `[]` que `profiles` rend **même à
+  l'administratrice** —, les cinq règles d'origine **citées mot pour mot**. Le glisser-déposer natif
+  HTML5 y est prescrit **parce qu'il a été mesuré pilotable** par le Playwright épinglé, condition
+  sans laquelle la vidéo `.webm` exigée par la Definition of Done serait inatteignable.
+  `docs/SPEC-channels.md` §5 acte au passage que `workflow_id` rejoint la lecture **partagée** des
+  channels, plutôt qu'une seconde lecture des mêmes lignes soit écrite pour le board.
+
+- **Une contradiction consignée sans être résolue** — **INC-066** : l'éditeur de workflow que le §7
+  prescrit depuis `CRM-000` n'est rattaché à **aucune unité** du backlog, alors que sept unités ont
+  livré sa matière sans une ligne d'interface. La phrase est conservée intacte, explicitement hors
+  du périmètre de `CRM-041`, et trois options d'arbitrage sont portées au responsable.
+
 ### Corrigé
 
 - **La barre d'onglets restait vide sur la route d'une card, contre le §4 du design system** —

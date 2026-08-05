@@ -5656,3 +5656,133 @@ politiques —, mais aucune spécification ne dit ce qu'une telle adresse doit r
 **Vérifications.** Test unitaire du chargement transmis par la route, preuve d'interface sur le
 build de production — requête `channels` réellement émise et filtrée sur `track_id`, onglets rendus
 et onglet courant marqué, réponse substituée —, captures produites et observées.
+
+---
+
+## 2026-08-05 — `CRM-041` : spécification du board kanban, écrite après mesure et avant tout code
+
+### Décision 168 — Le chapitre « Interface » disait ce que l'écran montre sans dire ce qu'il lit, et il est réécrit avant la première ligne de code
+
+**Problème.** `docs/SPEC-workflow-engine.md` §7 tenait en **cinq lignes** écrites à `CRM-000`. Elles
+posent des règles justes — une colonne par étape, un menu listant exactement les transitions
+déclarées, un dépôt impossible sans appel, un refus qui replace la card — mais aucune ne dit **ce
+que le board lit**, en combien de requêtes, dans quel ordre les colonnes et les cards se rangent,
+ni ce qu'il faut prouver. Une unité dont la spécification n'est pas écrite ne peut pas commencer
+(`docs/MASTER_PLAN.md` §1.2). C'est exactement la situation que `CRM-037` avait rencontrée sur le
+§4 du form composer (décision 160), et le même remède est appliqué.
+
+**Ce qui a été mesuré avant d'être écrit**, et non rappelé de mémoire :
+
+- le seed en base — sept étapes par workflow, dix transitions, six channels, neuf cards dont une
+  archivée et une en corbeille, `grands-comptes` occupant **deux** étapes sur sept ;
+- les réponses de PostgREST aux quatre lectures du board, avec le jeton réel de l'administratrice,
+  y compris la jointure embarquée vers le catalogue de nœuds ;
+- les **sept** refus de `move_card`, un par un, avec leur code HTTP, leur `code` et leur `details` :
+  `transition_not_allowed`, `comment_required`, `missing_required_fields` — dont le `details` porte
+  `lien-proposition` —, et le `401` de l'anonyme ;
+- que `workflow_transitions` ne porte **aucune colonne `position`**, ce qui décide de l'ordre du
+  menu ;
+- que `profiles` rend `200` et `[]` **même à l'administratrice** (INC-014), ce qui décide de
+  l'absence d'avatar ;
+- que le seed pose `entered_step_at` à `now()`, ce qui rend la pastille d'ancienneté indémontrable
+  par une donnée permanente.
+
+**Décision.** Le §7 est réécrit en quatorze sous-chapitres opposables, les cinq règles d'origine
+**citées mot pour mot** et rattachées chacune au sous-chapitre qui la rend vérifiable. Aucun
+nouveau document n'est créé : le board est la vue du graphe, et la garde qu'il exerce vit déjà ici.
+
+**Conséquences, y compris celles qui coûtent.** Le chapitre passe de cinq lignes à un contrat de
+quatre lectures, sept refus et cinq niveaux de preuve. Il engage `CRM-041` à davantage que ce que
+les cinq lignes laissaient croire — et c'est le but : ce qui n'est pas écrit avant le code n'est
+pas prouvé après.
+
+### Décision 169 — `workflow_id` rejoint la lecture partagée des channels, plutôt qu'une seconde lecture des mêmes lignes
+
+**Problème.** Le board a besoin du workflow de son channel pour composer ses colonnes. La coquille
+lit déjà les channels du track — `id, name, slug, position` — et `CRM-021` avait **délibérément**
+écarté `workflow_id` : « elle est de surcroît nulle partout jusqu'à `CRM-031` (INC-029) — le
+demander donnerait l'illusion d'une donnée exploitable ».
+
+**Hypothèses écartées.** *Écrire une lecture du channel propre à la route du board.* C'est la faute
+que la décision 167 a corrigée il y a un commit : deux lectures des mêmes lignes finissent par
+diverger — l'une filtrerait les archivés, l'autre non. `docs/SPEC-channels.md` §5.4 pose la règle
+générale, et elle vaut pour une colonne autant que pour une route.
+
+**Décision.** `workflow_id` est ajoutée à `COLONNES_CHANNEL`, la lecture partagée. MESURÉ : le
+motif de son absence a disparu — les six channels du seed portent un workflow, et la colonne est
+`NOT NULL` depuis `CRM-033`. Le channel courant est donc **résolu dans la liste déjà chargée**, par
+son slug, sans aucune requête supplémentaire.
+
+**Conséquences.** La barre d'onglets transporte une colonne qu'elle n'affiche pas — un écart au
+principe « une requête ne rapporte que ce qui est affiché », assumé et écrit. Le prix de l'inverse
+serait une requête par ouverture de board et une seconde définition de « channel non archivé ».
+
+### Décision 170 — Le glisser-déposer natif HTML5 est retenu **parce qu'il a été mesuré pilotable**, non parce qu'il est le plus simple
+
+**Problème.** La Definition of Done de `CRM-041` exige une **vidéo `.webm` du glisser-déposer**. Une
+spécification qui prescrirait un patron que le harnais ne sait pas jouer rendrait cette preuve
+inatteignable, et l'écart n'apparaîtrait qu'au moment de la produire — c'est-à-dire après le code.
+
+**Ce qui a été mesuré.** Une page d'essai portant un `draggable` et les trois écouteurs
+`dragstart` / `dragover` / `drop`, pilotée par le Playwright **réellement épinglé** (1.62.1) dans
+Chromium : `locator.dragTo()` déclenche bien le dépôt, **et** une séquence
+`mouse.down` / `mouse.move` / `mouse.up` aussi. La seconde est celle qui produit une vidéo
+exploitable ; `dragTo` saute d'un point à l'autre.
+
+**Décision.** Patron natif HTML5. Une cible non atteignable n'appelle **pas** `preventDefault()` sur
+`dragover`, ce qui fait refuser le dépôt par le navigateur lui-même : le refus visuel de la
+troisième règle d'origine est obtenu sans qu'aucune ligne ne compare quoi que ce soit au moment du
+dépôt, et aucun appel ne peut partir.
+
+**Conséquences.** Le geste dépend d'une API du navigateur plutôt que d'une bibliothèque ; il n'a
+pas d'équivalent tactile. Le chemin clavier n'est pas une compensation ajoutée après coup : c'est
+le menu de transitions, que `docs/DESIGN_SYSTEM.md` §8 exige déjà.
+
+### Décision 171 — Une transition qui exige un motif n'est jamais optimiste
+
+**Problème.** `docs/DESIGN_SYSTEM.md` §6 veut le glisser-déposer **optimiste**. Quatre transitions
+du seed exigent un commentaire. Déplacer la card, appeler, recevoir `comment_required`, remettre la
+card en place puis demander le motif ferait faire à l'utilisateur un aller-retour dont le client
+connaît d'avance l'issue — exactement ce que la troisième règle du §7 refuse pour les colonnes non
+atteignables.
+
+**Décision.** Le geste ouvre une saisie **avant** d'appeler, et la card ne bouge pas tant que le
+motif n'est pas donné. L'optimisme est conservé pour toutes les autres transitions.
+
+**Conséquence qu'il aurait été confortable de taire.** `move_card` contrôle le motif et ne l'écrit
+nulle part — `card_comments` est `CRM-043`, INC-048. La saisie **le dit** : le motif est exigé pour
+valider le déplacement, et il n'est pas encore conservé. Laisser croire à un enregistrement serait
+la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit.
+
+### Décision 172 — Ce que le board ne peut pas montrer est nommé dans la spécification, pas découvert à la capture
+
+**Problème.** `docs/DESIGN_SYSTEM.md` §5.1 énumère six contenus pour une carte de card. Deux ne sont
+pas produisibles aujourd'hui, et s'en apercevoir en regardant une capture aurait été trop tard.
+
+**Ce qui a été mesuré.** `GET /rest/v1/profiles?select=id,full_name` avec le jeton réel de
+l'administratrice rend `200` et `[]` : les trois tables d'identité restent en refus par défaut
+(INC-014). `owner_id` est lisible, le nom ne l'est pas. Et aucune table d'étiquettes n'existe, ni
+aucune unité qui en porte une.
+
+**Décision.** La carte n'affiche **rien** pour le responsable, plutôt qu'un identifiant technique à
+la place d'un nom. Les deux absences sont écrites au §7.4 dans un tableau qui traite les six
+contenus du §5.1, aucun passé sous silence.
+
+**Une troisième absence, d'une autre nature.** La pastille d'ancienneté est **livrée**, mais aucune
+card du seed ne l'exerce au-delà de son seuil : MESURÉ, `entered_step_at` vaut `now()` à
+l'application du seed, contre des seuils de 5 à 30 jours. La règle est donc prouvée par un test
+unitaire et par une réponse substituée, jamais par une donnée permanente. Le manque appartient au
+seed de démonstration, `CRM-046`.
+
+### Décision 173 — L'éditeur de workflow est conservé mot pour mot et n'est livré par personne — INC-066
+
+**Problème.** La cinquième ligne du §7 d'origine décrit un **écran** — « l'éditeur de workflow est
+réservé aux administrateurs » — qu'aucune unité du backlog ne porte. Sept unités ont livré sa
+matière sans une ligne d'interface, et chacune l'a nommé.
+
+**Hypothèses écartées.** *La retirer du document*, puisque rien ne la livre : ce serait effacer une
+exigence du responsable. *La livrer dans `CRM-041`* : ce serait inventer un périmètre que personne
+n'a demandé, sur une unité déjà large.
+
+**Décision.** Conservée intacte au §7.13, explicitement hors du périmètre de `CRM-041`, et consignée
+en **INC-066** avec trois options d'arbitrage. Aucune n'est appliquée.

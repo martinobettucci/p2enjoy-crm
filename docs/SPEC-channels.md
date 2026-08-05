@@ -248,11 +248,19 @@ latérale, donc sa route n'est plus atteignable depuis l'interface. Aucun `UPDAT
 désormais porté par la route.
 
 ```
-GET /rest/v1/channels?select=id,name,slug,position&track_id=eq.<id>&archived_at=is.null&order=position,name
+GET /rest/v1/channels?select=id,name,slug,position,workflow_id&track_id=eq.<id>&archived_at=is.null&order=position,name
 ```
 
 La requête est **filtrée côté serveur** sur `track_id` : rapporter les channels de tous les tracks
 pour n'en afficher qu'une barre ferait transiter des lignes que l'écran ne montrera jamais.
+
+**`workflow_id` a rejoint la sélection à `CRM-041`, et le motif de son absence a disparu avec la
+donnée.** `CRM-021` l'écartait en écrivant qu'elle « est de surcroît nul partout jusqu'à `CRM-031`
+(INC-029) — le demander donnerait l'illusion d'une donnée exploitable ». MESURÉ le 2026-08-05 : les
+six channels du seed portent un workflow, et la colonne est `NOT NULL` depuis `CRM-033`. Le board
+en a besoin pour composer ses colonnes (`docs/SPEC-workflow-engine.md` §7.2) ; il la lit **ici**,
+dans la lecture déjà émise par la coquille, plutôt que par une seconde lecture des mêmes lignes.
+C'est la règle du §5.4 ci-dessous, appliquée à une colonne au lieu d'une route.
 
 ### 5.1 La route d'un track
 

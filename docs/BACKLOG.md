@@ -2957,11 +2957,35 @@ plutôt que compensée par une preuve de substitution.
   (INC-032, INC-042), `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de
   compatibilité des navigateurs Playwright (INC-036, **quatrième** occurrence).
 
-### CRM-041 — Board kanban `[ ]`
+### CRM-041 — Board kanban `[~]`
 Colonnes par étape, glisser-déposer appelant `move_card`, menu des transitions déclarées,
 retour arrière visuel en cas de refus.
 **DoD** : E2E de déplacement autorisé **et** de tentative interdite ; déplacement au clavier
 vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` §7 : le chapitre
+      « Interface » tenait en **cinq lignes** écrites à `CRM-000`, qui posent des règles justes sans
+      jamais dire ce que le board **lit**, en combien de requêtes, dans quel ordre les colonnes et
+      les cards se rangent, ni ce qu'il faut prouver. Réécrit en quatorze sous-chapitres opposables
+      **après mesure de la pile réelle**, avec les cinq règles d'origine **citées mot pour mot**.
+      Commit documentaire dédié, poussé avant la première ligne de code (décision 168).
+- [x] **Ce qui a été mesuré avant d'être écrit** : le seed en base — sept étapes, dix transitions,
+      neuf cards dont une archivée et une en corbeille, `grands-comptes` n'occupant que **deux**
+      étapes sur sept —, les quatre lectures du board avec le jeton réel de l'administratrice, les
+      **sept** refus de `move_card` un par un avec leur code HTTP et leur `details`, l'absence de
+      colonne `position` sur `workflow_transitions`, le `[]` de `profiles` **même à
+      l'administratrice**, et le fait que le seed pose `entered_step_at` à `now()`.
+- [x] **Le glisser-déposer natif HTML5 est retenu parce qu'il a été MESURÉ pilotable** par le
+      Playwright réellement épinglé — `locator.dragTo()` **et** une séquence
+      `mouse.down` / `mouse.move` / `mouse.up`, seule à produire une vidéo exploitable
+      (décision 170). Sans cette mesure, la Definition of Done aurait exigé une vidéo d'un geste que
+      le harnais ne sait pas jouer.
+- [x] **Une contradiction consignée sans être résolue** : **INC-066**, l'éditeur de workflow que le
+      §7 prescrit depuis `CRM-000` n'est rattaché à aucune unité du backlog — sept unités ont livré
+      sa matière sans une ligne d'interface. La phrase est **conservée mot pour mot** au §7.13,
+      explicitement hors du périmètre de cette unité (décision 173).
+- [ ] **Le code, ses tests et ses preuves** — voir le compte rendu de livraison ci-dessous une fois
+      le second commit poussé.
 
 ### CRM-042 — Vue liste `[ ]`
 Tri, filtres, densité maîtrisée, pagination.

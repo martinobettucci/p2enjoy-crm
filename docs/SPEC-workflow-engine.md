@@ -1298,17 +1298,310 @@ l'ancien et le nouveau contexte.
 Il n'y a pas de remappage automatique par clé de nœud : deux workflows peuvent partager une clé
 sans que le déplacement soit sémantiquement équivalent.
 
-## 7. Interface
+## 7. Interface : le board kanban — `CRM-041`
 
-- Le board affiche une colonne par étape, ordonnée par `position`.
-- Le menu d'actions d'une card liste **exactement** les transitions déclarées depuis son étape
-  courante, avec leur libellé.
-- Le glisser-déposer vers une colonne non atteignable est refusé visuellement **et** ne déclenche
-  aucun appel : la liste des transitions autorisées est connue du client.
-- Un refus du backend replace la card et affiche la raison exacte (transition interdite, champs
-  manquants avec leur libellé, droit insuffisant).
-- L'éditeur de workflow est réservé aux administrateurs : sélection des nœuds, ordre, arêtes,
-  surcharges, et champs de formulaire.
+Ce chapitre tenait en **cinq lignes** écrites à `CRM-000`. Elles disent ce que l'écran montre sans
+dire comment il le compose, ce qu'il lit, ni ce qu'il faut en prouver. Il est réécrit en contrat
+vérifiable **après mesure de la pile réelle** — le seed en base, les réponses de PostgREST, les
+refus de `move_card` un par un, et la pilotabilité du glisser-déposer par le harnais. Les cinq
+règles d'origine sont **conservées mot pour mot** ci-dessous et deviennent les §7.3, §7.6, §7.7,
+§7.10 et §7.13 ; rien n'est retiré, tout est rendu opposable.
+
+> - Le board affiche une colonne par étape, ordonnée par `position`.
+> - Le menu d'actions d'une card liste **exactement** les transitions déclarées depuis son étape
+>   courante, avec leur libellé.
+> - Le glisser-déposer vers une colonne non atteignable est refusé visuellement **et** ne déclenche
+>   aucun appel : la liste des transitions autorisées est connue du client.
+> - Un refus du backend replace la card et affiche la raison exacte (transition interdite, champs
+>   manquants avec leur libellé, droit insuffisant).
+> - L'éditeur de workflow est réservé aux administrateurs : sélection des nœuds, ordre, arêtes,
+>   surcharges, et champs de formulaire.
+
+### 7.1 Ce que le board est, et ce qu'il n'est pas
+
+Le board est la **vue du graphe de workflow appliqué à un channel**. Il n'invente aucune règle : il
+rend visible l'état que `cards.current_step_id` porte, et il ne propose que les gestes que
+`move_card` accepterait. C'est la raison pour laquelle sa spécification vit ici, dans le document de
+la garde, et non dans un document d'interface : **l'écran est le miroir du graphe**, et les deux ne
+peuvent pas diverger sans que l'un des deux mente.
+
+Il **n'est pas** :
+
+- **une autorisation.** Ce que le board montre est ce que la RLS a consenti à rendre. Ce qu'il cache
+  n'est jamais une protection : `CLAUDE.md` §10 l'interdit, et `move_card` refuse de son côté tout
+  ce que le board croirait interdire ;
+- **un éditeur de workflow.** La cinquième règle d'origine — « l'éditeur de workflow est réservé aux
+  administrateurs » — décrit un écran que **`CRM-041` ne livre pas** et qu'aucune unité du backlog
+  ne porte aujourd'hui. Elle est conservée telle quelle au §7.13, comme énoncé d'intention, et le
+  manque est nommé plutôt que comblé ;
+- **une vue liste.** Tri, filtres et pagination sont `CRM-042`.
+
+### 7.2 Ce que le board lit, et en combien de requêtes
+
+Le board s'ouvre sur la route `/tracks/:slugTrack/:slugChannel`, celle que `CRM-021` a livrée et qui
+affichait jusqu'ici l'état vide de sa zone principale.
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 0 | le channel courant | résolu **dans la liste déjà chargée** par la coquille | — | aucune requête : `useContenuTrack` la rapporte déjà pour la barre d'onglets |
+| 1 | `workflow_steps` + `workflow_nodes_catalog` embarqué | `workflow_id=eq.<workflow du channel>` | `position` | les colonnes |
+| 2 | `workflow_transitions` | `workflow_id=eq.<workflow du channel>` | — | les gestes atteignables |
+| 3 | `cards` | `channel_id=eq.<channel>`, `archived_at=is.null`, `deleted_at=is.null` | `position`, puis `title` | le contenu des colonnes |
+| 4 | `form_fields` | `workflow_id=eq.<workflow du channel>` | — | le **libellé** des champs manquants d'un refus |
+
+**Le channel n'est pas relu, et `workflow_id` rejoint les colonnes que la coquille demande.**
+`CRM-021` lisait `id, name, slug, position` et écartait `workflow_id` en écrivant que « `workflow_id`
+est de surcroît nul partout jusqu'à `CRM-031` (INC-029) — le demander donnerait l'illusion d'une
+donnée exploitable ». MESURÉ : les six channels du seed portent désormais un workflow, la colonne
+est `NOT NULL` depuis `CRM-033`, et le motif de l'écarter a disparu avec lui. La colonne est donc
+ajoutée à la lecture **partagée**, plutôt qu'une seconde lecture des mêmes lignes soit écrite pour
+la route du board — c'est la règle de la décision 167 et du §5.4 de `docs/SPEC-channels.md`,
+appliquée une deuxième fois.
+
+**Les quatre requêtes sont émises en parallèle**, et non en chaîne : elles ne dépendent que de
+`workflow_id` et de `channel_id`, connus ensemble dès que le channel est résolu. Les enchaîner
+multiplierait par quatre la latence d'ouverture sans rien garantir de plus.
+
+**La quatrième requête est un coût assumé, et l'alternative est nommée.** `form_fields` n'est
+affiché nulle part sur le board ; il n'est lu que pour traduire les clés qu'un refus
+`missing_required_fields` rapporte (§7.10). L'obtenir **au moment du refus** aurait épargné une
+requête à toutes les ouvertures qui ne refusent rien — au prix de faire dépendre un message d'erreur
+d'une seconde requête qui peut échouer à son tour. Un refus expliqué à moitié est pire qu'un refus
+expliqué : la requête est émise d'avance.
+
+**Le responsable d'une card n'est pas lisible, et son avatar n'est donc pas rendu.** MESURÉ avec le
+jeton réel de l'administratrice : `GET /rest/v1/profiles?select=id,full_name` rend `200` et `[]` —
+les trois tables d'identité restent en refus par défaut, **INC-014**, arbitrage attendu. `owner_id`
+est lisible, le nom ne l'est pas. Afficher un identifiant technique à la place d'un nom serait une
+valeur par défaut trompeuse (`CLAUDE.md` §18) ; la carte n'affiche donc **rien** pour le
+responsable, et l'écart est nommé au §7.12.
+
+### 7.3 Composition des colonnes
+
+> « Le board affiche une colonne par étape, ordonnée par `position`. »
+
+- **Une colonne par étape du workflow du channel**, dans l'ordre `workflow_steps.position` (§3.6).
+  La composition part des **étapes**, jamais des cards : une étape sans card doit produire une
+  colonne vide, et une lecture qui grouperait les cards par étape la perdrait en silence. MESURÉ sur
+  le seed : le workflow standard porte **sept** étapes et le channel `grands-comptes` n'occupe que
+  **deux** d'entre elles — cinq colonnes vides sont donc la situation normale, pas le cas limite.
+- **Libellé de colonne** : `workflow_steps.label_override` s'il est renseigné, sinon
+  `workflow_nodes_catalog.label`. MESURÉ : le seed emploie l'un et l'autre — `Réalisation en cours`
+  surcharge `Réalisation`, les six autres étapes ne surchargent rien.
+- **Compteur** en badge neutre (`docs/DESIGN_SYSTEM.md` §5.2), et **montant cumulé** des cards de la
+  colonne lorsqu'au moins une porte un montant. Le cumul ne porte que sur les cards **de la même
+  devise** que la première ; une colonne mêlant deux devises n'affiche aucun cumul plutôt qu'une
+  addition fausse. MESURÉ : le seed porte `EUR` et `CHF` sur des channels distincts, la situation
+  n'y survient donc pas — l'écart est figé par un test unitaire, non par une donnée.
+- **Ordre des cards dans une colonne** : `cards.position`, portée `(channel_id, current_step_id)`
+  (`docs/SPEC-cards.md` §2.6), puis `title` à position égale. Le second critère n'est pas
+  décoratif : MESURÉ, `position` n'est pas dense — la card `…0000c7` est seule dans sa colonne et y
+  porte la position `2` —, et deux cards peuvent partager une valeur après un déplacement. Sans
+  départage, elles s'échangeraient d'un chargement à l'autre. C'est la règle déjà posée pour les
+  channels (`docs/SPEC-channels.md` §3), reprise et non réinventée.
+- **Cards archivées et en corbeille exclues**, par le filtre serveur et non par le composant : c'est
+  la définition d'« active » de `docs/SPEC-cards.md` §5, la même que celle qu'emploie la
+  vérification n° 1 de `move_card`.
+
+### 7.4 Ce qu'une carte de card montre, et ce qu'elle ne peut pas montrer
+
+`docs/DESIGN_SYSTEM.md` §5.1 énumère six contenus. Chacun est traité, aucun n'est passé sous
+silence :
+
+| Contenu du §5.1 | Livré par `CRM-041` | Motif |
+|---|---|---|
+| Liseré supérieur de 3 px à la couleur du nœud | **oui** | `workflow_nodes_catalog.color`, jeton parmi les cinq |
+| Titre, 2 lignes maximum, ellipse | **oui** | — |
+| Montant si renseigné | **oui**, en donnée technique (§2, §5.7 bis du design system) | — |
+| Indicateur de prochaine action | **oui** — `cards.next_action`, avec son icône | — |
+| Pastille d'ancienneté dans l'étape | **oui** | `entered_step_at`, seuil `workflow_steps.stale_after_days` sinon `workflow_nodes_catalog.default_stale_after_days` |
+| Pastilles d'étiquettes | **non** | aucune table d'étiquettes n'existe, **et aucune unité du backlog n'en porte** |
+| Avatar du responsable | **non** | `profiles` en refus par défaut, INC-014 (§7.2) |
+
+**La pastille d'ancienneté est neutre, puis `danger` au-delà du seuil**, comme le §5.1 l'exige. Elle
+n'est **pas** rendue lorsque le seuil est absent : MESURÉ, l'étape `Livré` n'en porte aucun, et
+inventer un seuil par défaut serait une règle de produit que personne n'a prise.
+
+**AUCUNE CARD DU SEED N'ATTEINT SON SEUIL, ET C'EST MESURÉ.** Le seed pose `entered_step_at` à
+`now()` au moment où il s'applique : l'âge de toute card seedée est de quelques secondes, contre des
+seuils de 5 à 30 jours. La bascule vers `danger` ne peut donc être démontrée **par aucune donnée
+permanente** ; elle l'est par un test unitaire et par une preuve d'interface à réponse substituée.
+Le manque appartient au seed de démonstration, `CRM-046`, et il est nommé plutôt que compensé.
+
+### 7.5 Les transitions atteignables, source unique du geste
+
+L'index `from_step_id → transitions déclarées` est calculé **une fois**, à partir de la requête n° 2,
+et sert les trois usages : les cibles de dépôt, le menu, et le refus visuel. Une seconde définition
+de « atteignable » serait une occasion de divergence, et c'est exactement ce que la garde interdit.
+
+- Une transition **sans libellé** est légale : MESURÉ, `workflow_transitions.label` est nullable.
+  Le repli est « Passer à *<étape cible>* », composé par une **clé de traduction paramétrée** et
+  jamais par concaténation dans le composant (`CLAUDE.md` §23).
+- **L'ordre du menu est celui de la position de l'étape cible.** MESURÉ : `workflow_transitions` ne
+  porte **aucune colonne `position`** — c'est le seul ordre que la donnée porte. Un ordre
+  alphabétique ferait passer « Marquer perdu » avant « Relancer » sur toutes les étapes du seed.
+- Une transition dont l'étape cible n'existe pas dans les colonnes lues est **ignorée**. Le cas est
+  structurellement impossible — la clé composite `workflow_transitions (to_step_id, workflow_id)`
+  l'interdit —, et l'ignorer plutôt que rendre une colonne fantôme est le comportement sûr.
+
+### 7.6 Le glisser-déposer
+
+> « Le glisser-déposer vers une colonne non atteignable est refusé visuellement **et** ne déclenche
+> aucun appel : la liste des transitions autorisées est connue du client. »
+
+- **Patron retenu : le glisser-déposer natif HTML5** (`draggable`, `dragstart` / `dragover` / `drop`),
+  et non une implémentation à base d'événements de pointeur. MESURÉ avant d'être écrit : Playwright
+  1.62.1 pilote réellement ce patron dans Chromium, aussi bien par `locator.dragTo()` que par une
+  séquence `mouse.down` / `mouse.move` / `mouse.up` — laquelle produit une vidéo exploitable, ce que
+  `dragTo` ne fait pas. Sans cette mesure, la Definition of Done aurait exigé une vidéo d'un geste
+  que le harnais ne sait pas jouer.
+- **Une colonne non atteignable n'est pas une cible de dépôt** : elle n'appelle pas
+  `preventDefault()` sur `dragover`, ce qui refuse le dépôt **au niveau du navigateur** — le
+  pointeur affiche l'interdit, et aucun `drop` n'est émis. C'est le refus visuel de la règle
+  d'origine, obtenu sans qu'aucune ligne ne compare quoi que ce soit au moment du dépôt.
+- **La colonne d'origine n'est pas une cible** : `move_card` refuserait
+  `from_step_id = to_step_id`, contrainte `workflow_transitions_distinct_check`, et le réordonnancement
+  dans une colonne n'est pas livré (§7.12).
+- **Une cible atteignable se signale** par un liseré `--color-brand` en pointillés pendant le
+  survol (`docs/DESIGN_SYSTEM.md` §5.2).
+
+### 7.7 Le déplacement au clavier
+
+> « Le menu d'actions d'une card liste **exactement** les transitions déclarées depuis son étape
+> courante, avec leur libellé. »
+
+`docs/DESIGN_SYSTEM.md` §8 pose que « le déplacement d'une card est possible au clavier via le menu
+de transitions ». Le menu **est** le chemin clavier ; aucun glisser-déposer au clavier n'est
+inventé.
+
+- Patron : un bouton `aria-expanded` / `aria-controls` révélant une **liste de boutons**. Le patron
+  ARIA `menu` / `menuitem` avec `tabindex` glissant est **écarté**, pour le motif déjà écrit au
+  §12.1 de `docs/DESIGN_SYSTEM.md` à propos des onglets : il retire la navigation par `Tab` que des
+  boutons ordinaires donnent naturellement, et décrit un comportement d'application de bureau que
+  le produit n'a pas.
+- `Échap` referme le menu et **rend le focus au bouton** qui l'a ouvert.
+- Une card dont l'étape n'a **aucune** transition sortante n'a pas de menu : le bouton est rendu
+  **désactivé et lisible**, avec la raison (`docs/DESIGN_SYSTEM.md` §8, « les états désactivés
+  restent lisibles et expliquent pourquoi »). MESURÉ : les étapes `Livré` et `Perdu` du seed sont
+  dans ce cas.
+
+### 7.8 Le commentaire exigé n'est jamais optimiste
+
+Une transition `require_comment` — MESURÉ, les quatre « Marquer perdu » du seed — ne peut pas
+aboutir sans motif. Deux comportements étaient possibles ; le second est retenu :
+
+1. appeler, recevoir `comment_required`, puis demander le motif. Rejeté : l'écran ferait faire à
+   l'utilisateur un aller-retour dont le client connaît d'avance l'issue, exactement ce que la
+   troisième règle d'origine refuse pour les colonnes non atteignables ;
+2. **demander le motif avant d'appeler.** Le geste — dépôt ou menu — ouvre une saisie, et l'appel
+   n'est émis qu'après confirmation.
+
+**Conséquence, et elle est voulue : ce geste n'est pas optimiste.** La card ne bouge pas tant que
+le motif n'est pas donné. Déplacer d'abord et demander ensuite montrerait une card à une étape
+qu'elle n'a pas atteinte.
+
+**Et le motif est perdu à l'arrivée.** `move_card` le contrôle et ne l'écrit nulle part —
+`card_comments` est `CRM-043`, **INC-048**. L'écran ne peut pas le taire : la saisie **dit** que le
+motif est exigé pour valider le déplacement et qu'il n'est pas encore conservé. Laisser croire à un
+enregistrement serait le mensonge que `CLAUDE.md` §18 proscrit.
+
+### 7.9 Optimisme et retour arrière
+
+`docs/DESIGN_SYSTEM.md` §6 : « le glisser-déposer d'une card est **optimiste**, mais un refus du
+backend replace la card à sa position d'origine et affiche la raison du refus. »
+
+| Instant | État de l'écran |
+|---|---|
+| dépôt sur une colonne atteignable, sans commentaire exigé | la card est **déjà** dans la colonne d'arrivée, en fin de colonne, et marquée « en cours » |
+| réponse `200` | la ligne rendue par `move_card` **remplace** la card — étape, `position` et `entered_step_at` viennent du serveur, jamais du client |
+| réponse en erreur | la card retrouve **exactement** son étape et sa position d'origine, et la raison est affichée |
+
+**La ligne rendue remplace la card, elle ne la complète pas.** `move_card` recalcule `position` et
+`entered_step_at` (§5.4) : les recopier depuis l'état optimiste laisserait l'écran afficher un rang
+que la base n'a pas attribué. C'est la raison pour laquelle la fonction rend `public.cards` et non
+`void` (§5.2), et le board est le premier appelant à s'en servir.
+
+### 7.10 Les six refus, et ce que l'écran en dit
+
+> « Un refus du backend replace la card et affiche la raison exacte (transition interdite, champs
+> manquants avec leur libellé, droit insuffisant). »
+
+Réponses **mesurées** contre la pile réelle, `POST /rest/v1/rpc/move_card`, jeton réel de
+l'administratrice :
+
+| `message` | HTTP | `code` | `details` mesuré | Ce que l'écran dit |
+|---|---|---|---|---|
+| `card_not_found` | `400` | `P0001` | `null` | l'affaire n'est plus accessible ; invite à recharger |
+| `forbidden` | `403` | `42501` | `null` | droit d'écriture insuffisant sur ce channel |
+| `step_not_in_workflow` | `400` | `P0001` | `null` | l'étape n'appartient pas au workflow de l'affaire |
+| `transition_not_allowed` | `400` | `P0001` | `null` | ce déplacement n'est pas déclaré dans le workflow |
+| `comment_required` | `400` | `P0001` | `null` | un motif est exigé (ne devrait pas survenir, §7.8) |
+| `missing_required_fields` | `400` | `P0001` | `"lien-proposition"` — les **clés**, séparées par `, ` | les **libellés** des champs manquants, résolus par la requête n° 4 |
+| `permission denied for function move_card` | `401` | `42501` | `null` | appelant anonyme — le cas de tout visiteur aujourd'hui (INC-021) |
+
+- **Le message est un jeton stable comparé par égalité**, jamais un texte affiché tel quel. C'est le
+  contrat que la décision 126 a posé en faisant voyager la liste dans le `DETAIL` plutôt que dans le
+  message.
+- **Un message inconnu n'est pas absorbé.** L'écran affiche un libellé générique **suivi du message
+  brut**. Une valeur par défaut qui cacherait un refus non prévu est précisément ce que
+  `CLAUDE.md` §18 interdit, et un refus muet ferait croire à un défaut d'interface.
+- **Une clé sans libellé reste la clé.** Si la requête n° 4 a échoué, ou si le champ a été supprimé
+  depuis, la clé brute est affichée. Elle est moins lisible qu'un libellé ; elle est vraie.
+
+### 7.11 États systématiques, responsive et accessibilité
+
+- **Les quatre états de `docs/DESIGN_SYSTEM.md` §5.8** : chargement en squelettes de colonnes, board
+  vide (« ce channel n'a encore aucune affaire »), colonne vide (message propre à la colonne,
+  §5.2), erreur avec action de reprise. Un échec **de l'une quelconque** des quatre requêtes rend
+  l'état d'erreur du board entier : afficher des colonnes sans leurs cards, ou des cards sans leurs
+  gestes, serait un écran à moitié faux.
+- **Le board défile dans son propre conteneur** et la page ne défile jamais horizontalement (§7 du
+  design system). Le conteneur porte `.indique-debordement-x` (§12.6), dont la portée annonçait
+  nommément « le board (`CRM-041`) ». Sous 768 px, l'ancrage colonne par colonne est obtenu par
+  `scroll-snap`.
+- **Accessibilité** : les colonnes sont une liste sémantique, chaque colonne étiquetée par son
+  libellé ; chaque card est un élément de liste portant un lien vers sa fiche ; le bouton de menu
+  et les boutons de transition sont des contrôles ordinaires atteignables par `Tab` ; le résultat
+  d'un déplacement — réussite comme refus — est annoncé par une région `aria-live` polie (§8).
+- **La couleur ne porte jamais seule l'information** (§1) : le liseré de nœud est doublé du libellé
+  de la colonne, et la pastille d'ancienneté d'un texte.
+
+### 7.12 Ce que `CRM-041` ne livre pas, et pourquoi
+
+- **Aucune création, aucune modification, aucune suppression de card** depuis le board. `CRM-040` a
+  livré la table et son contrat d'API ; aucun écran d'édition n'existe, et en inventer un dépasserait
+  l'unité.
+- **Aucun réordonnancement dans une colonne.** Réordonner, c'est réécrire `position` sur plusieurs
+  lignes ; il y faut une RPC atomique, que `docs/SPEC-channels.md` §1.2 annonce déjà comme
+  nécessaire et qu'aucune unité ne porte. Un réordonnancement écrit ligne à ligne laisserait le
+  board dans un ordre arbitraire au premier échec.
+- **Aucun changement de channel** : `move_card_to_channel` est `CRM-045` (§6).
+- **Aucun avatar de responsable, aucune étiquette** (§7.4).
+- **Aucun éditeur de workflow** (§7.1, §7.13).
+- **Aucune donnée métier visible en conditions réelles.** L'appelant est anonyme (INC-021) : la
+  route rend « track introuvable » et le board ne s'affiche jamais. Ses états chargés se prouvent en
+  **substituant la réponse réseau**, procédé endossé par `docs/DESIGN_SYSTEM.md` §12.5, et chaque
+  preuve le dit.
+
+### 7.13 Ce qui reste un énoncé d'intention
+
+> « L'éditeur de workflow est réservé aux administrateurs : sélection des nœuds, ordre, arêtes,
+> surcharges, et champs de formulaire. »
+
+Cette règle est conservée **intacte** et n'est **pas** livrée par `CRM-041`. Aucune unité du backlog
+ne porte cet éditeur : `CRM-030` à `CRM-036` ont livré le catalogue, les workflows, les étapes, les
+transitions et les champs **sans aucun écran d'administration**, et chacune l'a nommé dans sa
+Definition of Done. Le constat est porté par `docs/INCONSISTENCY_REPORT.md`, **INC-066**.
+
+### 7.14 Preuves attendues de `CRM-041`
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Composition des colonnes à partir des **étapes** ; libellé surchargé et non surchargé ; ordre des colonnes et des cards, départage à position égale ; compteur, cumul de montant et son refus en devises mêlées ; index des transitions et ordre du menu ; repli du libellé d'une transition ; seuil d'ancienneté dans ses trois cas — absent, en deçà, au-delà ; correspondance des sept refus, clé sans libellé comprise |
+| API | Les **quatre lectures** du §7.2, hors interface, avec le jeton réel de l'administratrice : elles rendent exactement les colonnes et les cards que le board compose. Et le refus de la même lecture à l'anonyme — `200` et `[]` —, qui est la cause de l'écran vide |
+| Interface | Le board rendu depuis des réponses substituées : colonnes, cards, colonne vide, menu de transitions et son contenu **exact**, dépôt sur une colonne atteignable, dépôt refusé sans appel émis sur une colonne non atteignable, retour arrière après refus, saisie du motif exigé. Au moins un scénario **sans aucune substitution**, montrant le refus réel du backend à un anonyme |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, colonne vide, menu ouvert, card refusée ; **vidéo `.webm`** du glisser-déposer, produite par le harnais et observée |
+| Seed | **Inchangé**, et exercé : `grands-comptes` porte trois cards actives sur deux étapes d'un workflow de sept, une archivée et une en corbeille — de quoi démontrer les colonnes occupées, les colonnes vides et l'exclusion des cards rangées |
 
 ## 8. Vérification exigée
 
