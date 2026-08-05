@@ -4732,3 +4732,122 @@ version précédente. La suite doit le dénoncer d'autant plus — et elle le fa
 **Portée générale.** Quand une dégradation cesse de s'appliquer parce que le produit a grandi, la
 tentation est de la retirer. Le bon geste est de regarder **pourquoi** elle ne s'applique plus : ici,
 la raison est que la fonction est devenue utile, ce qui rend son retrait plus grave, pas moins.
+
+---
+
+## 2026-08-05 — `CRM-013` : spécification des colonnes protégées, écrite après mesure et avant tout code
+
+L'unité choisie est la **première `[ ]` de `docs/MASTER_PLAN.md` §2**. Deux passages précédents
+l'avaient écartée comme infaisable — `CRM-040` a écrit noir sur blanc « `CRM-013` vise six tables
+dont **aucune** n'existe ». Ce constat était vrai au moment où il a été fait ; il ne l'est plus.
+`CRM-040` a livré `cards`, et avec elle deux des six cibles.
+
+### Décision 138 — Le périmètre livrable de `CRM-013` est **une colonne**, et le dire vaut mieux que gonfler l'unité
+
+**Problème.** L'énoncé de `CRM-013` porte six cibles : `secret_id` (deux tables), `token_hash`,
+`current_step_id`, `email_local_part`, `card_events` et `audit_log`. Combien sont atteignables
+aujourd'hui ?
+
+**Observations, mesurées et non déduites.** `to_regclass` rend `NULL` pour
+`mail_inbound_accounts`, `mail_outbound_identities`, `api_tokens`, `card_events` et `audit_log` :
+cinq cibles, cinq tables absentes, livrées par `CRM-052`, `CRM-053`, `CRM-073`, `CRM-044` et
+`CRM-072`. `current_step_id` est fermée depuis `CRM-034` — INC-049 a tranché ce chevauchement de
+ce côté, « parce qu'une unité dont la Definition of Done exige une preuve doit livrer ce qui la
+rend possible ».
+
+**Décision.** `CRM-013` livre `cards.email_local_part`, et **rien d'autre**. L'unité reste `[~]`,
+avec ses cinq cibles absentes nommées une par une. Trois conduites étaient possibles et deux sont
+exclues : écrire des protections sur des tables inexistantes est impossible ; déclarer l'unité
+close en comptant une cible sur six serait la déclaration mensongère que `CLAUDE.md` §26 range
+au-dessus de tout le reste.
+
+**Conséquence.** Une unité qui n'avance que d'un sixième reste une unité qui avance. Le seul point
+livrable était aussi le seul qui laissait une propriété de sécurité **fausse** dans le produit
+(décision 139).
+
+### Décision 139 — Une adresse tirée au hasard qu'un client peut réécrire n'est pas une adresse tirée au hasard
+
+**Problème.** `email_local_part` porte quarante bits de hasard, et `docs/SPEC-cards.md` §3.3 fonde
+sur eux la non-devinabilité de l'adresse d'une card. Le trigger de `CRM-040` **génère** cette
+valeur ; il ne la **protège** pas — son §3.4 le dit en toutes lettres.
+
+**Observation.** MESURÉ avec le jeton réel de `admin@p2enjoy.test`, obtenu par la véritable route
+de connexion :
+
+```
+PATCH /rest/v1/cards?id=eq.5eed…00c1   {"email_local_part":"c-00000000"}
+→ HTTP 200 ; relecture : « c-00000000 »
+```
+
+`information_schema.column_privileges` donne la cause : `authenticated` détient `UPDATE` sur
+**treize** colonnes de `cards`, `email_local_part` comprise.
+
+**Conséquence, et c'est elle qui compte.** La propriété que le tirage achète — on ne peut pas
+écrire à une card dont on ignore l'adresse — est rendue au client par une simple mise à jour. Tout
+membre qui écrit sur un channel peut donner à une card une adresse triviale, donc devinable, donc
+atteignable par n'importe qui connaissant le domaine entrant. Ce n'est pas une imperfection de
+confort : c'est la seule propriété de sécurité que cette colonne porte.
+
+**Décision.** Le privilège `UPDATE` est retiré à `authenticated` sur cette colonne, par la forme
+déjà mesurée par `CRM-034` (`docs/SPEC-permissions-rls.md` §4.3) : retrait du privilège de table,
+puis `grant update (…)` énumérant les douze colonnes qui restent ouvertes.
+
+### Décision 140 — Le chemin d'insertion est déjà sûr, et le « corriger » aurait été une régression
+
+**Problème.** Faut-il fermer aussi le privilège `INSERT` sur cette colonne ? La question se pose,
+puisqu'un client peut nommer `email_local_part` dans un `POST`.
+
+**Observation.** MESURÉ, toujours avec le jeton de l'administratrice :
+
+```
+POST /rest/v1/cards   {…, "email_local_part":"c-zzzzzzzz"}
+→ HTTP 201 ; adresse enregistrée : « c-2c3qgad2 »
+```
+
+Le trigger `BEFORE INSERT` de `CRM-040` écrase la valeur fournie, quelle qu'elle soit. La colonne
+est déjà hors d'atteinte du client à l'insertion.
+
+**Décision.** `INSERT` reste **de table**, inchangé. Le fermer ferait rendre `403` à une requête
+que le produit accepte aujourd'hui sans dommage, et casserait tout client qui renvoie la ligne
+entière. Une protection qui refuse ce qui n'était pas dangereux n'est pas une protection : c'est
+une régression.
+
+**Vérification prévue.** Le trigger et son effacement sont **figés par une assertion**, de sorte
+que le retirer un jour ne passe pas inaperçu au prétexte que le privilège suffirait.
+
+### Décision 141 — Un trigger de restauration aurait masqué l'écriture au lieu de la refuser
+
+**Problème.** Une seconde écriture était possible : un trigger `BEFORE UPDATE` remettant
+`OLD.email_local_part` dans `NEW`. Elle a l'avantage de valoir pour **tout** rôle, `service_role`
+compris, là où le privilège ne vise qu'`authenticated`.
+
+**Décision.** Écartée. Ce trigger rendrait `200` à un appelant qui croirait avoir renommé
+l'adresse, et n'aurait rien renommé — exactement la « valeur par défaut trompeuse » que
+`CLAUDE.md` §18 range parmi les manières de masquer une erreur. Un trigger qui lèverait une
+exception, lui, ferait double emploi avec le privilège sans rien ajouter : le privilège est
+vérifié par le moteur avant toute exécution et vaut pour tout chemin SQL.
+
+**Ce que la décision laisse ouvert, et qui est nommé.** `service_role` conserve
+`all privileges` — le seed en dépend. Un service qui se tromperait de colonne ne serait donc
+arrêté par rien. Aucun consommateur n'existe aujourd'hui ; la question devra être reposée le jour
+où `mail-sync` (`CRM-051`) écrira sur `cards`.
+
+### Décision 142 — INC-050 s'éteint par exécution, et il n'y avait pas d'arbitrage à demander
+
+**Problème.** INC-050 constate que le §5.5 de `docs/SPEC-workflow-engine.md` se contredit sur
+cette colonne : sa prose la range parmi ce qui « reste à `CRM-013` », son bloc `GRANT` ne la liste
+pas. `CRM-034` a consigné sans résoudre, comme `CLAUDE.md` §5 l'impose, et attendait un arbitrage.
+
+**Observation.** Les deux branches de cet arbitrage — corriger le bloc, ou corriger la prose — ne
+portaient que sur **l'attribution** : quelle unité ferme la colonne. Ni l'une ni l'autre ne
+laissait la colonne ouverte. Le comportement final était le même des deux côtés.
+
+**Décision.** Exécuter `CRM-013` tranche l'attribution par son propre énoncé de backlog —
+« `current_step_id` et `email_local_part` non modifiables directement » —, sans décider quoi que
+ce soit à la place du responsable. L'état posé coïncide alors **exactement** avec le bloc `GRANT`
+du §5.5, et la contradiction disparaît d'elle-même. INC-050 est close par exécution, non par
+arbitrage.
+
+**Portée générale.** Une contradiction dont toutes les branches mènent au même état du produit
+n'est pas un arbitrage : c'est une question d'imputation, que l'exécution de l'unité nommée
+résout. La distinguer d'un vrai arbitrage évite d'immobiliser une unité qui n'attend rien.

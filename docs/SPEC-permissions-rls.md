@@ -306,7 +306,7 @@ ligne est lisible :
 | Colonne | Protection |
 |---|---|
 | `cards.current_step_id` | Écriture refusée ; passe par `move_card` — **livrée par `CRM-034`**, voir ci-dessous |
-| `cards.email_local_part` | Généré par trigger, non modifiable — **non livrée**, `CRM-013`. `CRM-034` l'a **laissée nommément ouverte** dans son énumération : son §5.5 se contredisait, et le comportement a été laissé inchangé plutôt que résolu en silence (INC-050) |
+| `cards.email_local_part` | Généré par trigger, non modifiable — **objet de `CRM-013`, spécifié au §4.4**. Ouverte à ce jour : `CRM-034` l'a **laissée nommément ouverte** dans son énumération, son §5.5 se contredisant, et le comportement a été laissé inchangé plutôt que résolu en silence (INC-050) |
 | `cards.entered_step_at` | Fermée **par conséquence** du mécanisme ci-dessous, et c'est le comportement voulu : `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card`, et un client qui la réécrirait fausserait toute mesure d'ancienneté à l'étape — livrée par `CRM-034` |
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
 | `api_tokens.token_hash` | Jamais exposé |
@@ -352,6 +352,132 @@ trancher son cas fasse échouer la suite.
 Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow-engine.md` §5 —
 **les six sont livrées** depuis `CRM-036`, qui a apporté `card_field_values` et refermé INC-047.
 
+### 4.4 Ce que `CRM-013` ferme, et ce qu'elle laisse ouvert
+
+`CRM-013` porte six cibles dans son énoncé. **Cinq de leurs tables n'existent pas** :
+`mail_inbound_accounts` et `mail_outbound_identities` arrivent avec `CRM-052` et `CRM-053`,
+`api_tokens` avec `CRM-073`, `card_events` avec `CRM-044`, `audit_log` avec `CRM-072`. Une
+protection ne s'écrit pas sur une table absente, et la simuler serait le faux vert que
+`CLAUDE.md` §17 proscrit.
+
+Reste `cards`. `current_step_id` a été fermée par `CRM-034` (INC-049, chevauchement tranché de ce
+côté). **`cards.email_local_part` est donc la seule cible de `CRM-013` qui soit livrable
+aujourd'hui**, et ce chapitre la spécifie.
+
+#### 4.4.1 Le défaut, mesuré et non déduit
+
+MESURÉ le 2026-08-05 sur la pile réelle, avec le **jeton réel** de `admin@p2enjoy.test` obtenu par
+la véritable route de connexion :
+
+```
+PATCH /rest/v1/cards?id=eq.5eed…00c1   {"email_local_part":"c-00000000"}
+→ HTTP 200 ; relecture : {"email_local_part":"c-00000000"}
+```
+
+`information_schema.column_privileges` confirme la cause : `authenticated` détient `UPDATE` sur
+**treize** colonnes de `cards`, dont `email_local_part`.
+
+Ce n'est pas une coquette imperfection. `docs/SCHEMA.md` §5 et `docs/SPEC-cards.md` §3.3 fondent
+l'adresse d'une card sur sa **non-devinabilité** : quarante bits tirés au hasard, précisément pour
+qu'on ne puisse pas écrire à une card dont on ignore l'adresse. Un membre qui écrit sur le channel
+peut aujourd'hui remplacer cette adresse par `c-00000000`. La propriété que le tirage achète, une
+mise à jour la rend au client.
+
+#### 4.4.2 Ce qui n'est PAS un défaut, et qu'il ne faut donc pas « corriger »
+
+MESURÉ, toujours avec le jeton de l'administratrice :
+
+```
+POST /rest/v1/cards   {…, "email_local_part":"c-zzzzzzzz"}
+→ HTTP 201 ; adresse enregistrée : « c-2c3qgad2 »
+```
+
+Le chemin d'**insertion** est déjà sûr : le trigger de `CRM-040` écrase la valeur fournie
+(`docs/SPEC-cards.md` §3.4). Le privilège `INSERT` reste donc **de table**, inchangé. Le fermer
+ferait rendre `403` à une requête que le produit accepte aujourd'hui sans dommage, et casserait
+tout client qui renvoie la ligne entière. `CRM-013` ne touche qu'`UPDATE`.
+
+#### 4.4.3 La forme retenue, et pourquoi il n'y en a pas d'autre
+
+Le mécanisme est celui du §4.3, déjà mesuré par `CRM-034` : le privilège de table est retiré, puis
+rendu colonne par colonne. La liste posée par `CRM-013` est celle du §5.5 de
+`docs/SPEC-workflow-engine.md`, **sans** `email_local_part` :
+
+```
+revoke update on public.cards from authenticated;
+grant  update (title, description, position, owner_id, amount, currency,
+               probability_override, next_action, next_action_at, snoozed_until,
+               archived_at, deleted_at) on public.cards to authenticated;
+```
+
+Deux écritures ont été écartées, et le motif de chacune est écrit ici plutôt que laissé à la
+relecture :
+
+- **un trigger `BEFORE UPDATE` qui restaurerait `OLD.email_local_part`** : il *ignorerait*
+  silencieusement l'écriture au lieu de la refuser. `CLAUDE.md` §18 interdit nommément de masquer
+  une erreur par une valeur par défaut trompeuse ; un appelant recevrait `200` en croyant avoir
+  renommé l'adresse ;
+- **un trigger qui lèverait une exception** : il ferait double emploi avec le privilège, et le
+  privilège seul suffit — il est vérifié par le moteur avant toute exécution, il vaut pour tout
+  chemin SQL, et c'est la forme que le §4.3 prescrit déjà.
+
+**Ce que le privilège ne couvre pas, et qui est nommé :** `service_role` conserve
+`all privileges`. Le seed, et demain `mail-sync` (`CRM-051`), peuvent donc encore écrire cette
+colonne. C'est voulu — le seed en dépend — mais cela signifie qu'un service qui se tromperait de
+colonne ne serait arrêté par rien. Aucun consommateur n'existe aujourd'hui ; le jour où
+`mail-sync` écrira sur `cards`, la question devra être reposée.
+
+#### 4.4.4 Contrat d'API, à mesurer et non à supposer
+
+Douze lignes, avec les **jetons réels** des trois profils du seed. Les lignes *c* et *d* sont des
+**prédictions** sur le comportement de PostgreSQL, écrites avant le code pour être confirmées ou
+démenties par la mesure — non des faits acquis.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| a | `admin` | `PATCH cards` `{email_local_part}` | `403`, `42501`, `permission denied for table cards` ; **ligne relue inchangée** |
+| b | `admin` | `PATCH cards` `{title}` | `200` — les douze colonnes ouvertes le restent |
+| c | `admin` | `PATCH cards` `{title, email_local_part}` | `403`, **et le titre n'est pas modifié non plus** : le refus porte sur l'instruction entière |
+| d | `admin` | `PATCH cards` `{email_local_part}` à sa **valeur courante** | `403` — le privilège se vérifie sur les colonnes **nommées**, pas sur les valeurs changées |
+| e | `business_developer` | `PATCH cards` `{email_local_part}` sur une card qu'il écrit | `403`, `42501` |
+| f | `viewer` | `PATCH cards` `{email_local_part}` sur une card qu'il **voit** | `403` — profil authentifié, donc `403` et non `401` (§2.8 de `CRM-035`) |
+| g | anonyme | `PATCH cards` `{email_local_part}` | refus ; **aucune ligne touchée** |
+| h | `admin` | `POST cards` avec un `email_local_part` choisi | `201`, adresse **générée**, différente de celle qui est fournie |
+| i | `admin` | `GET cards?select=email_local_part` | `200` — la colonne se **lit** : elle n'est pas un secret, elle est une **identité** |
+| j | anonyme | `GET cards` | `200` et `[]` — **preuve n° 11**, zéro ligne et non une erreur |
+| k | `viewer` | `GET cards` d'un channel dont le track lui est fermé | `200` et `[]` — **preuve n° 4**, reconduite |
+| l | `service_role` | `PATCH cards` `{email_local_part}` | `200` — le chemin du seed reste ouvert, §4.4.3 |
+
+Le refus divulgue la commande `GRANT` à exécuter, dans son `hint`. C'est le comportement de
+PostgREST, **cinquième occurrence d'INC-026**, et il n'est pas corrigé ici.
+
+#### 4.4.5 INC-050 s'éteint par exécution, sans arbitrage
+
+INC-050 constatait que le §5.5 de `docs/SPEC-workflow-engine.md` se contredit : sa prose range
+`email_local_part` parmi ce qui « reste à `CRM-013` », son bloc `GRANT` ne la liste pas. Les deux
+branches de l'arbitrage attendu ne portaient **que sur l'attribution** — quelle unité ferme la
+colonne — et non sur le comportement final, identique dans les deux cas : la colonne finit fermée.
+
+`CRM-013` étant exécutée, l'énoncé de son unité dans `docs/BACKLOG.md` — « `current_step_id` et
+`email_local_part` non modifiables directement » — tranche l'attribution sans qu'aucune décision
+de produit ne soit prise à la place du responsable. L'état posé coïncide alors exactement avec le
+bloc `GRANT` du §5.5, et la contradiction disparaît d'elle-même.
+
+#### 4.4.6 Preuves attendues de `CRM-013`
+
+1. les douze lignes du contrat §4.4.4 mesurées hors interface, avec les jetons réels ;
+2. `authenticated` privé d'`UPDATE` sur `email_local_part`, **et** conservant les douze autres —
+   énumérées une par une, de sorte qu'une fermeture trop large échoue ;
+3. `service_role` inchangé, seed rejoué sans erreur ;
+4. le trigger d'insertion toujours en place et toujours écrasant la valeur fournie ;
+5. les trois garde-fous posés par `CRM-034` et `CRM-040` **retournés** — non retirés :
+   `supabase/tests/0012_cards.test.sql`, `supabase/tests/0013_move_card.test.sql`,
+   `scripts/verify-move-card.sh` ;
+6. un harnais **non complaisant** : la colonne rouverte à la main fait passer une écriture qui doit
+   être refusée, et la restauration est **constatée** ;
+7. la dépendance d'ordre **12 → 14** mesurée dans les deux sens, comme la 12 → 13 l'a été par
+   `CRM-036` : rejouer la migration 12 seule **rouvre** la colonne.
+
 ## 5. Storage
 
 Les pièces jointes et les fichiers de formulaire sont rangés sous un préfixe portant le
@@ -381,9 +507,9 @@ interface**, avec les jetons réels de chaque profil :
 | 3 | Membre du workspace A lit une card du workspace B | Aucune ligne — **acquise sur `tracks` et `channels`** par `CRM-020`, `CRM-021` et reconduite par `CRM-012` ; sur les cards, due par `CRM-040` |
 | 4 | Utilisateur avec `channel_members.access='none'` lit une card de ce channel | Aucune ligne — **acquise sur le channel lui-même et sur son track** par `CRM-012` (§4.2, lignes *d* et *e*), **sur les cards** par `CRM-040`, et **sur leurs valeurs de formulaire** par `CRM-036` (`docs/SPEC-form-composer.md` §6.10, ligne *f*) |
 | 5 | Mise à jour directe de `cards.current_step_id` par PostgREST | Refus — **ACQUISE par `CRM-034`** : `403`, `42501`, « permission denied for table cards », mesuré avec le jeton de l'administratrice, la ligne étant relue et constatée inchangée. Le chevauchement de Definition of Done avec `CRM-013` est tranché de ce côté (INC-049), parce qu'une unité dont la DoD exige une preuve doit livrer ce qui la rend possible |
-| 6 | Lecture de `secret_id` d'un compte mail par `authenticated` | Refus (colonne révoquée) |
+| 6 | Lecture de `secret_id` d'un compte mail par `authenticated` | Refus (colonne révoquée) — **non satisfaisable par `CRM-013`** : `mail_inbound_accounts` et `mail_outbound_identities` arrivent avec `CRM-052` et `CRM-053` (§4.4) |
 | 7 | Lecture du compte mail d'un autre utilisateur | Aucune ligne |
-| 8 | Insertion directe dans `card_events` ou `audit_log` | Refus |
+| 8 | Insertion directe dans `card_events` ou `audit_log` | Refus — **non satisfaisable par `CRM-013`** : `card_events` arrive avec `CRM-044`, `audit_log` avec `CRM-072` (§4.4) |
 | 9 | Téléchargement d'une pièce jointe `infected` ou `pending` | Refus |
 | 10 | Dernier administrateur tente de se retirer son rôle | Refus |
 | 11 | Utilisateur anonyme lit n'importe quelle table métier | Aucune ligne |
