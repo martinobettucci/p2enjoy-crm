@@ -9,7 +9,14 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { AppShell } from './AppShell'
 import { RouteCard } from './RouteCard'
 import { RouteTrack } from './RouteTrack'
-import { CHEMIN_CARD, CHEMINS_TRACK, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
+import {
+	CHEMIN_CARD,
+	CHEMIN_LISTE,
+	CHEMINS_TRACK,
+	CLE_TITRE_INTROUVABLE,
+	PageIntrouvable,
+	ROUTES,
+} from './routes'
 
 export function App() {
 	return (
@@ -27,6 +34,10 @@ export function App() {
 				{CHEMINS_TRACK.map((chemin) => (
 					<Route key={chemin} path={chemin} element={<RouteTrack />} />
 				))}
+				{/* La vue liste d'un channel — `CRM-042`. Même coquille et même résolution de track
+				    que le board, dont elle n'est qu'une seconde lecture : ce qui change est la zone
+				    principale, pas la route de track (docs/SPEC-cards.md §12.2). */}
+				<Route path={CHEMIN_LISTE} element={<RouteTrack vue="liste" />} />
 				{/* Le détail d'une card porte lui aussi sa propre coquille : son titre est celui de
 				    la card, et son contenu dépend de son identifiant (`CRM-037`). Déclarée **après**
 				    les routes de track, dont elle prolonge le chemin. */}

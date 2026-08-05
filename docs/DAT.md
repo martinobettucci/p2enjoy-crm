@@ -121,7 +121,11 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   statique de `routes.tsx` : son titre est une **donnée** (le nom du track) et non une clé de
   traduction, et son contenu dépend de paramètres d'URL. Depuis `CRM-041`, elle rend le **board**
   du channel ouvert, et détient l'état de ses cards — le déplacement optimiste et son retour
-  arrière remplacent la liste entière, qu'un état interne au board perdrait à chaque rechargement ;
+  arrière remplacent la liste entière, qu'un état interne au board perdrait à chaque rechargement.
+  Depuis `CRM-042`, la **même** route porte la seconde lecture d'un channel, la vue liste, montée
+  sur `/tracks/:slugTrack/:slugChannel/liste` : même coquille, même résolution de track, seule la
+  zone principale change. La bascule entre les deux vues est rendue **au-dessus** des deux, pour
+  rester atteignable pendant un chargement, sur un état vide et sur un état d'erreur ;
 - `src/lib/valeur-renseignee.ts` — « renseigné » au sens de `docs/SPEC-form-composer.md` §6.6, et
   le **tableau de cas partagé** du §4.3. Seul dans son fichier, sans React ni DOM : la preuve d'API
   appartient à un autre projet TypeScript et doit pouvoir l'importer plutôt que le recopier
@@ -149,6 +153,19 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 - `src/app/Board.tsx` — le rendu de ce modèle : colonnes, cartes, glisser-déposer natif HTML5, menu
   des transitions déclarées, saisie du motif exigé, retour arrière après refus. Aucune règle n'y
   vit : le composant décide de l'apparence et du geste, jamais de ce qui est permis (`CRM-041`) ;
+- `src/lib/colonnes-liste.ts` — les colonnes de la page de la vue liste, son **pas de pagination**
+  et le code du `416`, seuls dans leur fichier et **sans aucun import**, pour le motif de
+  `colonnes-board.ts` (`CRM-042`) ;
+- `src/lib/liste-cards.ts` — la composition de la vue liste : clôture des quatre clés de tri,
+  **ordre total** terminé par la clé primaire, repli des paramètres d'adresse, bornage du rang de
+  page, découpage en pages, classification du `416` de PostgREST, et la lecture paginée. Elle
+  **importe** la lecture des étapes du board plutôt que de la réécrire. **Deux** requêtes, non
+  quatre : la liste n'offre aucun déplacement, donc ni transitions ni champs à lire (`CRM-042`,
+  `docs/SPEC-cards.md` §12.3) ;
+- `src/app/ListeCards.tsx` — le rendu de ce modèle : tableau sémantique, tri par en-tête avec
+  `aria-sort`, filtres par étape et par recherche plein texte, pagination, et la bascule
+  board ↔ liste. Aucune règle n'y vit, et **aucun chemin d'écriture** n'y est ouvert : la liste
+  lit (`CRM-042`) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

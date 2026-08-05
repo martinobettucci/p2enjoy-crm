@@ -13,6 +13,33 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **La vue liste d'un channel** — `CRM-042`, `docs/SPEC-cards.md` §12. Un channel se lit désormais
+  de **deux façons** : le tableau kanban, qui reste la vue par défaut, et une **liste** que la
+  bascule *Tableau / Liste* ouvre sur sa propre adresse. Chaque ligne porte le titre de l'affaire —
+  lien vers sa fiche —, son étape en pastille, son montant, sa prochaine action et son échéance, sur
+  **une seule ligne de texte** : une liste se balaye, là où une carte se lit. Une case sans valeur
+  reste **vide**, sans tiret ni « non renseigné ».
+
+  **Trois colonnes se trient**, à la souris comme au clavier, et une affaire sans montant ou sans
+  échéance se range toujours en dernier. **Deux filtres** — par étape, et par recherche plein texte
+  dans le titre et la description — s'appliquent **côté serveur**, avant la pagination : un filtre
+  appliqué après ne verrait que les lignes déjà rapportées. La liste affiche **25 affaires par
+  page**, et le tri, les filtres et le rang de page vivent dans l'**adresse** : recharger la page y
+  ramène, et l'adresse se partage. Aucune donnée n'est écrite sur l'appareil.
+
+  **Un tri paginé qui n'est pas total perd des lignes, et cela a été mesuré** : sur une sonde de
+  200 000 lignes de clé égale, une marche page par page rend **20 lignes dont 17 distinctes** —
+  trois affaires que l'utilisateur n'aurait jamais vues, sans que rien ne le signale. Tout ordre de
+  la liste se termine donc par la clé primaire. **Une page devenue inexistante** — parce qu'une
+  affaire a été archivée ailleurs pendant que l'onglet était ouvert — affiche « Cette page n'existe
+  plus » et propose de revenir à la première, jamais un message d'erreur technique.
+
+  `docs/DESIGN_SYSTEM.md` gagne son **§5.9**, les règles du premier tableau du produit. Trois
+  défauts ont été trouvés **en regardant une capture** : un état vide rendu au-dessus des filtres
+  qui en étaient la cause, une action dupliquée, et une carcasse de tableau sous le message. Les
+  trois sont corrigés et figés par des assertions.
 
 ### Corrigé
 

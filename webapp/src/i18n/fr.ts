@@ -129,6 +129,39 @@ export const fr = {
 		'Déplacer une affaire exige une session, et aucun écran de connexion n\'est encore livré.',
 	'board.refusal.unknown': 'Le serveur a refusé ce déplacement sans motif connu de cet écran :',
 
+	// --- Vue liste (docs/SPEC-cards.md §12) ------------------------------------------------
+	'liste.aria': 'Affaires du channel',
+	'liste.vue.aria': 'Vue du channel',
+	'liste.vue.board': 'Tableau',
+	'liste.vue.liste': 'Liste',
+	'liste.filtres.aria': 'Filtres de la liste',
+	'liste.filtre.etape': 'Étape',
+	'liste.filtre.etape.toutes': 'Toutes les étapes',
+	'liste.filtre.recherche': 'Rechercher une affaire',
+	'liste.filtre.recherche.submit': 'Rechercher',
+	'liste.filtre.effacer': 'Effacer les filtres',
+	'liste.colonne.title': 'Affaire',
+	'liste.colonne.etape': 'Étape',
+	'liste.colonne.amount': 'Montant',
+	'liste.colonne.next_action': 'Prochaine action',
+	'liste.colonne.next_action_at': 'Échéance',
+	// Paramétrée, jamais construite par concaténation (CLAUDE.md §23, décision 180).
+	'liste.tri.aria': 'Trier par {colonne}',
+	'liste.total': 'Affaires : {total}',
+	'liste.page.position': 'Page {rang} sur {pages}',
+	'liste.page.precedente': 'Page précédente',
+	'liste.page.suivante': 'Page suivante',
+	'liste.empty.title': 'Aucune affaire dans ce channel',
+	'liste.empty.body':
+		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+	'liste.filtered.title': 'Aucune affaire ne correspond',
+	'liste.filtered.body':
+		'Aucune affaire de ce channel ne répond aux filtres appliqués. Effacez-les pour revoir la liste entière.',
+	'liste.gone.title': "Cette page n'existe plus",
+	'liste.gone.body':
+		"Le nombre d'affaires a diminué depuis l'ouverture de cette page : le rang demandé dépasse désormais la dernière page.",
+	'liste.gone.action': 'Revenir à la première page',
+
 	// --- États (docs/DESIGN_SYSTEM.md §5.8) ----------------------------------------------
 	'state.loading.aria': 'Chargement en cours',
 	'state.error.title': 'Chargement impossible',
@@ -152,6 +185,8 @@ export const fr = {
 	'live.tracks.loaded': 'Tracks chargés',
 	'live.tracks.empty': 'Aucun track accessible',
 	'live.tracks.error': 'Le chargement des tracks a échoué',
+	'live.liste.aria': 'Annonces de la liste',
+	'live.liste.loaded': 'Liste des affaires mise à jour',
 	'live.board.aria': 'Annonces du board',
 	'live.board.moved': 'Affaire déplacée vers',
 	'live.board.refused': 'Déplacement refusé',

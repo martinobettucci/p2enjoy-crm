@@ -6164,3 +6164,53 @@ deux façons —, déjà appliquée à `projeterChannels` puis à `workflow_id` 
 **Ce que la liste ne lit PAS, et le motif.** Ni `workflow_transitions`, ni `form_fields` : elle
 n'offre aucun déplacement, donc aucune transition à proposer et aucun refus à traduire. Deux
 requêtes, pas quatre. Une requête qui ne sert rien est une requête de trop.
+
+### Décision 189 — La spécification annonçait un en-tête `Range`, et le client émet `offset` et `limit`
+
+**Problème.** Le §12.6 de `docs/SPEC-cards.md`, écrit après mesure **à la main** — `curl` avec un
+en-tête `Range` —, énonçait : « la page `n` demande `Range: (n−1)×25 – (n×25 − 1)` ». La preuve
+d'interface, écrite d'après ce chapitre, cherchait cet en-tête dans la requête réellement émise.
+Elle a **échoué** : `route.request().headers()['range']` rendait `null`.
+
+**Ce qui a été mesuré ensuite.** `postgrest-js` — la version épinglée par `@supabase/supabase-js`
+`2.112.0` — traduit `.range(de, à)` en deux **paramètres de requête**, `offset` et `limit`, et
+n'émet aucun en-tête `Range`. Contre-mesure directe sur la pile, avec le jeton réel :
+
+| Demandé | Réponse |
+|---|---|
+| `offset=3&limit=1` — l'offset **égale** le total | `206`, `Content-Range: */3` |
+| `offset=4&limit=1` | **`416`**, `PGRST103`, `"An offset of 4 was requested, but there are only 3 rows."` |
+| `offset=25&limit=25` | **`416`** |
+
+Les deux chemins se comportent donc **identiquement**, jusqu'au `416` près. La règle du §12.6 est
+juste ; sa formulation désignait le mauvais transport.
+
+**Décision.** Le §12.6 est corrigé dans le même changement que le code, et les deux preuves
+observent le chemin **que le produit emprunte** : la preuve d'interface lit `offset` et `limit`, la
+preuve d'API exerce les deux. Ce qui est en cause n'est pas le comportement du produit — il était
+correct — mais une spécification écrite d'après une mesure faite par un autre chemin que le sien.
+La leçon est celle du §12.3 : **mesurer le produit, pas une équivalence.**
+
+### Décision 190 — Trois défauts du tableau vide, trouvés en regardant une capture
+
+**Ce qui a été vu.** La capture `liste-filtre-sans-resultat-1440.jpg`, produite par le scénario du
+filtre sans résultat, montrait trois choses qu'aucune assertion ne pouvait attraper — les trois
+éléments existaient bel et bien, chacun à sa place, et chacun rendu correctement :
+
+1. l'état vide était affiché **au-dessus** de la barre de filtres : l'utilisateur lisait « aucune
+   affaire ne correspond » avant de voir les filtres qui en étaient la cause ;
+2. l'action « Effacer les filtres » apparaissait **deux fois**, à cent pixels l'une de l'autre — une
+   dans l'état vide, une dans la barre ;
+3. sous l'ensemble subsistait une **carcasse de tableau** : une ligne de cinq en-têtes sans une
+   seule ligne de données, suivie d'une pagination « Page 1 sur 1 » qui ne paginait rien.
+
+**Décision.** L'état vide est **passé au tableau** plutôt qu'empilé au-dessus de lui : le composant
+le rend **à la place** du tableau et de sa pagination, sous une barre de filtres qui, elle, reste
+toujours visible — elle est la cause de l'état vide filtré, et la masquer priverait l'utilisateur du
+seul geste qui l'en sort. La barre ne répète plus l'action lorsque l'état vide la porte.
+
+**Conséquence.** Les trois défauts sont **figés par des assertions** de
+`webapp/src/app/ListeCards.test.tsx` — ordre des deux blocs dans le document, unicité de l'action,
+absence de toute `columnheader` — pour qu'ils ne puissent pas revenir en silence. Le §12.7 bis de
+`docs/SPEC-cards.md` les écrit. C'est la quatrième fois qu'une capture dénonce un défaut que les
+tests laissaient passer (décisions 163, 175, et l'écart du §12.5 du design system).

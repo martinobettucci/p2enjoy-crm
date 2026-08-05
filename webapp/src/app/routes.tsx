@@ -87,3 +87,12 @@ export const CHEMINS_TRACK = ['/tracks/:slugTrack', '/tracks/:slugTrack/:slugCha
  * en donne aucun, et son `email_local_part` est délibérément non devinable.
  */
 export const CHEMIN_CARD = '/tracks/:slugTrack/:slugChannel/cards/:idCard' as const
+
+/**
+ * Vue liste d'un channel — `CRM-042`, `docs/SPEC-cards.md` §12.2.
+ *
+ * Une route **propre**, et non un paramètre de la route du board : le tri, le filtre et le rang de
+ * page vivent déjà dans la chaîne de requête, et y ajouter la vue elle-même ferait de l'adresse un
+ * sac. Le board reste la vue par défaut d'un channel, à `/tracks/:slugTrack/:slugChannel`.
+ */
+export const CHEMIN_LISTE = '/tracks/:slugTrack/:slugChannel/liste' as const

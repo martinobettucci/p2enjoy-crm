@@ -109,8 +109,17 @@ PORT_RAPPORT=9323
 # quatre paliers). 308 + 24 = 332 ; 50 + 21 = 71. `ASSERTIONS_ATTENDUES` est inchangée : l'unité ne
 # livre ni table, ni fonction, ni politique — son objet est un écran, et la garde qu'il exerce est
 # déjà couverte par la suite pgTAP de `CRM-034`. Valeurs MESURÉES, non déduites.
+#
+# RÉVISÉS UNE SEPTIÈME FOIS, LE 2026-08-05, PAR `CRM-042` — la vue liste. L'unité livre
+# **26 scénarios d'API** (`e2e/api/liste-cards.spec.ts` : les deux lectures du §12.3, les quatre
+# tris, `nullslast` et sa contre-épreuve, la marche paginée sans doublon, les deux filtres, la
+# frontière du `416` à un rang près, le `count=planned` faux, et le refus opposé à l'anonyme) et
+# **27 scénarios d'interface** (`e2e/ui/liste-cards.spec.ts` : tableau, tri, filtres, pagination,
+# `416`, bascule board ↔ liste, données longues et quatre paliers). 332 + 26 = 358 ;
+# 72 + 27 = 99. `ASSERTIONS_ATTENDUES` est de nouveau inchangée : l'unité ne livre ni table, ni
+# fonction, ni politique. Valeurs MESURÉES, non déduites.
 ASSERTIONS_ATTENDUES=1164
-SCENARIOS_API=332
+SCENARIOS_API=358
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -123,8 +132,12 @@ SCENARIOS_API=332
 # la vidéo du glisser-déposer.
 # **72 après la correction de l'écart au §7.5** (décision 180) : un scénario de plus pour le repli
 # du libellé d'une transition sans nom, que les dix transitions du seed ne peuvent pas exercer et
-# qu'aucune preuve n'atteignait. Valeur MESURÉE, non déduite.
-SCENARIOS_UI=72
+# qu'aucune preuve n'atteignait.
+# **99 depuis `CRM-042`** : vingt-sept scénarios de vue liste — le tableau et ses cinq colonnes, le
+# tri et son `aria-sort`, la clôture des clés de tri, les deux filtres, la pagination et son `416`,
+# la bascule entre les deux vues, les données longues à deux paliers, et les quatre paliers.
+# Valeur MESURÉE, non déduite.
+SCENARIOS_UI=99
 
 TRAVAIL=$(mktemp -d)
 failures=0

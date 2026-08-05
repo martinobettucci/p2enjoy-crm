@@ -1,7 +1,9 @@
 // @spec CRM-021 (docs/BACKLOG.md) — route d'un track : ses onglets et le contenu d'un channel
 // @spec CRM-041 (docs/BACKLOG.md) — le board d'un channel ouvert
+// @spec CRM-042 (docs/BACKLOG.md) — la vue liste du même channel, seconde lecture du même contenu
 // @spec docs/SPEC-channels.md §5.1 (route d'un track), §5.3 (barre d'onglets), §1.2 (hors périmètre)
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.11 (états systématiques)
+// @spec docs/SPEC-cards.md §12.2 (l'adresse porte tout), §12.3 (ce que la liste lit), §12.9 (états)
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture), §5.8 (états explicites), §10 (libellés métier)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
 //
@@ -10,7 +12,8 @@
 //
 // Quatre issues, toutes explicites, aucune page blanche :
 //
-//   * track trouvé, channel choisi     → le **board** de ce channel (`CRM-041`) ;
+//   * track trouvé, channel choisi     → le **board** de ce channel (`CRM-041`), ou sa **vue
+//     liste** (`CRM-042`) lorsque l'adresse porte le segment `/liste` ;
 //   * track trouvé, aucun channel      → l'état vide de la barre d'onglets ;
 //   * track trouvé, aucun channel ouvert → l'invitation à en choisir un ;
 //   * aucun track pour ce slug         → « track introuvable », avec un retour vers l'accueil.
@@ -25,16 +28,30 @@
 // distinguer renseignerait un appelant sans droit sur l'existence d'un track
 // (docs/SPEC-permissions-rls.md §7).
 
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
+import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
-import { composerBoard, useContenuBoard, type CardBoard } from '../lib/board'
+import { composerBoard, useContenuBoard, type CardBoard, type EtapeBoard } from '../lib/board'
 import { projeterChannels, useContenuTrack, type Channel } from '../lib/channels'
+import {
+	bornerPage,
+	ecrireParametres,
+	lireParametres,
+	useEtapesChannel,
+	usePageCards,
+	type CardListe as CardListeRendue,
+	type ParametresListe,
+} from '../lib/liste-cards'
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { Board } from './Board'
+import { BasculeVue, ListeCards } from './ListeCards'
+
+/** Les deux lectures d'un même channel. Le board est la vue par défaut (docs/SPEC-cards.md §12.2). */
+export type VueChannel = 'board' | 'liste'
 
 /** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
 const CLASSES_RETOUR = [
@@ -54,7 +71,7 @@ const CLASSES_RETOUR = [
  */
 const CLE_TITRE_TRACK: CleTraduction = 'route.track.title'
 
-export function RouteTrack() {
+export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}) {
 	const { slugTrack, slugChannel } = useParams()
 	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack)
 
@@ -81,6 +98,7 @@ export function RouteTrack() {
 				chargement={etat.statut === 'chargement'}
 				trackTrouve={track !== null}
 				nombreChannels={channels.length}
+				vue={vue}
 				channelDemande={slugChannel}
 				{...(channelOuvert === undefined ? {} : { channelOuvert })}
 				{...(slugTrack === undefined ? {} : { slugTrack })}
@@ -94,6 +112,7 @@ function ContenuTrack({
 	trackTrouve,
 	nombreChannels,
 	channelDemande,
+	vue,
 	channelOuvert,
 	slugTrack,
 }: {
@@ -101,6 +120,7 @@ function ContenuTrack({
 	readonly trackTrouve: boolean
 	readonly nombreChannels: number
 	readonly channelDemande: string | undefined
+	readonly vue: VueChannel
 	readonly channelOuvert?: Channel
 	readonly slugTrack?: string
 }) {
@@ -145,7 +165,22 @@ function ContenuTrack({
 		)
 	}
 
-	return <ZoneBoard channel={channelOuvert} slugTrack={slugTrack} />
+	// La bascule est **au-dessus** de la zone, et non dans l'une des deux vues : elle doit rester
+	// atteignable pendant le chargement, sur un état vide et sur un état d'erreur — l'utilisateur
+	// dont la liste échoue doit pouvoir revenir au board sans retaper une adresse
+	// (docs/DESIGN_SYSTEM.md §5.8, docs/SPEC-cards.md §12.8).
+	return (
+		<div className="flex flex-col min-w-0">
+			<div className="px-4 pt-4">
+				<BasculeVue slugTrack={slugTrack} slugChannel={channelOuvert.slug} vue={vue} />
+			</div>
+			{vue === 'liste' ? (
+				<ZoneListe channel={channelOuvert} slugTrack={slugTrack} />
+			) : (
+				<ZoneBoard channel={channelOuvert} slugTrack={slugTrack} />
+			)}
+		</div>
+	)
 }
 
 /**
@@ -271,5 +306,195 @@ function BoardRendu({
 			slugTrack={slugTrack}
 			slugChannel={slugChannel}
 		/>
+	)
+}
+
+/**
+ * La vue liste d'un channel ouvert — `CRM-042`, `docs/SPEC-cards.md` §12.
+ *
+ * Les paramètres sont détenus par **l'adresse** (§12.2) : `useSearchParams` les lit, et toute
+ * modification les y réécrit. Aucun état local ne les double — un état local et une adresse qui
+ * décrivent la même chose finissent par se contredire, et c'est l'adresse qui est partagée.
+ *
+ * Le rang de page est **borné** par le dernier total connu avant d'être envoyé (§12.6, règle 1) :
+ * une adresse portant `page=99` sur un channel d'une page ouvre la page 1 sans aller chercher une
+ * page que la première réponse suffit à écarter.
+ */
+function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly slugTrack: string }) {
+	const [parametresUrl, setParametresUrl] = useSearchParams()
+	const demandes = lireParametres(parametresUrl)
+	const workflowId = channel.workflow_id ?? undefined
+	const etapes = useEtapesChannel(clientCrm, workflowId)
+	const [pageBornee, setPageBornee] = useState<number | null>(null)
+	const parametres: ParametresListe = {
+		...demandes,
+		page: pageBornee ?? demandes.page,
+	}
+	const { etat, total, recharger } = usePageCards(clientCrm, channel.id, parametres)
+
+	// Le bornage se fait **après** une réponse qui porte un total, jamais avant : borner par un
+	// total qu'on n'a pas reviendrait à inventer une valeur par défaut (CLAUDE.md §18).
+	useEffect(() => {
+		const borne = bornerPage(demandes.page, total)
+		setPageBornee(borne === demandes.page ? null : borne)
+	}, [demandes.page, total])
+
+	const appliquer = (suivants: ParametresListe) => {
+		setPageBornee(null)
+		setParametresUrl(ecrireParametres(suivants))
+	}
+
+	if (channel.workflow_id === null) {
+		return (
+			<EtatVide
+				titre={t('route.channel.noworkflow.title')}
+				corps={t('route.channel.noworkflow.body')}
+			/>
+		)
+	}
+
+	if (etat.statut === 'chargement' || etapes.etat.statut === 'chargement') {
+		return (
+			<div className="px-4 py-6">
+				<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
+			</div>
+		)
+	}
+
+	const echec = etat.statut === 'erreur' ? etat.erreur : etapes.etat.statut === 'erreur' ? etapes.etat.erreur : null
+	if (echec !== null) {
+		if (echec.nature === 'forbidden') {
+			return <EtatRefus titre={t('state.forbidden.title')} corps={t('state.forbidden.body')} />
+		}
+		return (
+			<EtatErreur
+				titre={t('state.error.title')}
+				corps={t(echec.nature === 'network' ? 'state.error.network' : 'state.error.unknown')}
+				libelleReprise={t('state.error.retry')}
+				onReprise={() => {
+					etapes.recharger()
+					recharger()
+				}}
+			/>
+		)
+	}
+
+	if (etat.statut !== 'pret' || etapes.etat.statut !== 'pret') return null
+
+	// Le `416` n'est pas une erreur de chargement : c'est une réponse légitime à une question qui
+	// ne l'est plus (§12.6, règle 2). L'écran le nomme et propose le retour à la première page.
+	if (etat.donnees.nature === 'page_inexistante') {
+		return (
+			<div className="px-4 py-6">
+				<EtatVide
+					titre={t('liste.gone.title')}
+					corps={t('liste.gone.body')}
+					action={
+						<button
+							type="button"
+							data-testid="retour-premiere-page"
+							onClick={() => appliquer({ ...parametres, page: 1 })}
+							className={CLASSES_RETOUR}
+						>
+							{t('liste.gone.action')}
+						</button>
+					}
+				/>
+			</div>
+		)
+	}
+
+	const { cards, total: totalFiltre } = etat.donnees
+	const filtre = parametres.etape !== null || parametres.recherche !== ''
+
+	// Deux états vides distincts, parce que l'utilisateur n'y répond pas de la même façon : un
+	// channel sans affaire n'appelle aucune action, un filtre trop étroit appelle son retrait (§12.9).
+	//
+	// Il est passé **au tableau**, et non empilé au-dessus de lui : le rendre à part plaçait le
+	// message avant les filtres qui en étaient la cause, doublait l'action et laissait sous elle une
+	// carcasse de tableau — défaut trouvé en regardant une capture (décision 190).
+	//
+	// Écrit en `if` et non en ternaire : le contrôle de textes en dur de
+	// `webapp/src/i18n/i18n.test.ts` lit la queue d'un `? undefined : (` comme un nœud de texte
+	// littéral, et l'a réellement signalée. La limite de l'outil est consignée en INC-070 ; la
+	// forme choisie ici est de toute façon la plus lisible des deux.
+	let etatVide: ReactNode = undefined
+	if (totalFiltre === 0) {
+		etatVide = (
+			<EtatVide
+				titre={t(filtre ? 'liste.filtered.title' : 'liste.empty.title')}
+				corps={t(filtre ? 'liste.filtered.body' : 'liste.empty.body')}
+				{...(filtre
+					? {
+							action: (
+								<button
+									type="button"
+									data-testid="effacer-filtres-vide"
+									onClick={() => appliquer({ ...parametres, etape: null, recherche: '', page: 1 })}
+									className={CLASSES_RETOUR}
+								>
+									{t('liste.filtre.effacer')}
+								</button>
+							),
+						}
+					: {})}
+			/>
+		)
+	}
+
+	return (
+		<div className="px-4 py-6 min-w-0">
+			<ListeRendue
+				cards={cards}
+				etapes={etapes.etat.donnees}
+				parametres={parametres}
+				total={totalFiltre}
+				slugTrack={slugTrack}
+				slugChannel={channel.slug}
+				onParametres={appliquer}
+				{...(etatVide === undefined ? {} : { etatVide })}
+			/>
+		</div>
+	)
+}
+
+/**
+ * Petit adaptateur : il évite de répéter sept propriétés entre les deux issues ci-dessus, et il
+ * porte l'annonce `aria-live` — un tableau qui se remplit sans un mot est un changement invisible
+ * pour qui ne voit pas l'écran (docs/SPEC-cards.md §12.8).
+ */
+function ListeRendue({
+	cards,
+	etapes,
+	parametres,
+	total,
+	slugTrack,
+	slugChannel,
+	onParametres,
+	etatVide,
+}: {
+	readonly cards: readonly CardListeRendue[]
+	readonly etapes: readonly EtapeBoard[]
+	readonly parametres: ParametresListe
+	readonly total: number
+	readonly slugTrack: string
+	readonly slugChannel: string
+	readonly onParametres: (parametres: ParametresListe) => void
+	readonly etatVide?: ReactNode
+}) {
+	return (
+		<>
+			<LiveRegion libelle={t('live.liste.aria')} message={t('live.liste.loaded')} />
+			<ListeCards
+				cards={cards}
+				etapes={etapes}
+				parametres={parametres}
+				total={total}
+				slugTrack={slugTrack}
+				slugChannel={slugChannel}
+				onParametres={onParametres}
+				{...(etatVide === undefined ? {} : { etatVide })}
+			/>
+		</>
 	)
 }

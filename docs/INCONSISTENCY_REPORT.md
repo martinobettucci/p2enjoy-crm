@@ -12,6 +12,42 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-070 — Le contrôle de textes en dur lit la queue d'un ternaire comme un nœud de texte
+
+**Nature :** faux positif d'un contrôle du dépôt, reproductible.
+**Relevé le :** 2026-08-05, pendant `CRM-042`.
+
+`webapp/src/i18n/i18n.test.ts` interdit tout texte visible écrit en dur dans un composant
+(`docs/DESIGN_SYSTEM.md` §10). Il repère les nœuds de texte d'un JSX par une expression régulière.
+MESURÉ : l'affectation
+
+```tsx
+const etatVide = totalFiltre > 0 ? undefined : (
+```
+
+lui fait rendre le littéral `0 ? undefined : (` comme un texte visible, et le test **échoue**. Le
+fragment n'est pas un texte : c'est la queue d'une condition, suivie d'une parenthèse ouvrante de
+JSX.
+
+Une observation voisine avait été portée par la seconde exécution de `CRM-041` puis écartée, au
+motif qu'aucun fichier de `main` ne portait la forme incriminée — un autre motif, une signature
+`=> Promise<…>` (`docs/JOURNAL.md`, décision 182). **Cette occurrence-ci est reproductible sur
+`main`**, et le motif est différent.
+
+**Comportement retenu : aucun changement du contrôle.** `CRM-042` a réécrit l'affectation en `if`,
+qui est de toute façon la forme la plus lisible des deux, et le motif est écrit dans le code. Élargir
+l'expression régulière d'un contrôle de qualité **sans mesure de ce qu'elle cesserait d'attraper**
+serait affaiblir une garde pour accommoder une écriture : le contraire de ce que `CLAUDE.md` §18
+demande.
+
+**Ce qui reste à arbitrer :** le contrôle repose sur une expression régulière là où il faudrait un
+analyseur de JSX. Le remplacer est une décision d'outillage, et son coût — une dépendance
+d'analyse syntaxique — dépasse le périmètre d'une unité de chunk 3. Tant qu'il n'est pas rendu, la
+règle pratique est : **pas de ternaire dont la branche est un fragment JSX ouvert par `(`** dans un
+composant.
+
+---
+
 ### INC-069 — Deux décisions du journal portent le même numéro 180
 
 **Nature :** collision d'identifiants dans un document dont les numéros servent de références

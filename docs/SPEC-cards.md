@@ -814,18 +814,31 @@ croire qu'elle n'existe pas, quand elle est seulement vide.
 sélecteur de densité, et en offrir un serait un périmètre inventé. Elle est déclarée une fois, dans
 le module de composition, et les preuves l'importent au lieu de la recopier.
 
-La page `n` demande `Range: (n−1)×25 – (n×25 − 1)`, et le nombre de pages se déduit du total rendu
-par la même réponse.
+La page `n` demande les lignes `(n−1)×25` à `n×25 − 1`, et le nombre de pages se déduit du total
+rendu par la même réponse.
+
+**Le client demande cette plage par `offset` et `limit`, non par un en-tête `Range` — et la
+première écriture de ce chapitre disait le contraire.** MESURÉ en exécutant les preuves
+d'interface : `postgrest-js` traduit `.range(de, à)` en deux **paramètres de requête**,
+`offset=<de>&limit=<à − de + 1>`. L'en-tête `Range` reste accepté par PostgREST et se comporte de
+façon identique — les deux chemins ont été mesurés jusqu'au `416` près —, mais c'est le premier que
+le produit emprunte, et c'est donc lui que les preuves doivent observer (décision 189). Le tableau
+ci-dessous vaut pour les deux ; le corps du `416` par `offset` est plus précis encore :
+
+```
+{"code":"PGRST103","details":"An offset of 4 was requested, but there are only 3 rows.", …}
+```
 
 **MESURÉ, et le comportement est piégeux :**
 
 | Rang demandé | Total réel | Réponse |
 |---|---|---|
-| `Range: 0-1` | 3 | `206`, `Content-Range: 0-1/3`, deux lignes |
-| `Range: 2-2` | 3 | `206`, `Content-Range: 2-2/3`, une ligne |
-| `Range: 3-3` — l'offset **égale** le total | 3 | `206`, `Content-Range: */3`, **zéro ligne, aucune erreur** |
-| `Range: 4-4` — l'offset **dépasse** le total | 3 | **`416 Requested Range Not Satisfiable`**, `Content-Range: */3` |
-| `Range: 0-24` | 0 (appelant anonyme) | `200`, `Content-Range: */0`, `[]` |
+| `offset=0&limit=2` | 3 | `206`, `Content-Range: 0-1/3`, deux lignes |
+| `offset=2&limit=1` | 3 | `206`, `Content-Range: 2-2/3`, une ligne |
+| `offset=3&limit=1` — l'offset **égale** le total | 3 | `206`, `Content-Range: */3`, **zéro ligne, aucune erreur** |
+| `offset=4&limit=1` — l'offset **dépasse** le total | 3 | **`416 Requested Range Not Satisfiable`**, `Content-Range: */3` |
+| `offset=25&limit=25` — la page 2 d'un channel d'une page | 3 | **`416`**, `Content-Range: */3` |
+| `offset=0&limit=25` | 0 (appelant anonyme) | `200`, `Content-Range: */0`, `[]` |
 
 Vu à travers `supabase-js`, le `416` n'est pas une page vide : c'est une **erreur**. MESURÉ,
 `.range(4, 28)` rend `status: 416`, `error.code: 'PGRST103'`, `count: null` **et** `data: null`.
@@ -877,6 +890,24 @@ Les règles visuelles du tableau — hauteur de ligne, en-tête collant, sépara
 `aria-sort` — vivent dans `docs/DESIGN_SYSTEM.md` §5.9, écrit dans le même changement que ce
 chapitre. Ce document-ci dit **ce que** l'écran montre ; celui-là dit **comment**.
 
+### 12.7 bis Ce que le tableau a appris en étant rendu
+
+Trois règles ajoutées **après avoir regardé une capture**, et non après avoir lu un test — les
+trois éléments fautifs existaient tous, si bien qu'aucune assertion ne pouvait les attraper
+(décision 190).
+
+- **Un état vide REMPLACE le tableau**, il ne s'y ajoute pas. La première écriture laissait sous le
+  message une ligne d'en-têtes sans une seule ligne de données : une carcasse de tableau, qui
+  affirme cinq colonnes et n'en remplit aucune.
+- **Un état vide se rend SOUS la barre de filtres.** Rendu au-dessus, l'utilisateur lisait
+  « aucune affaire ne correspond » **avant** de voir les filtres qui en étaient la cause.
+- **L'action « Effacer les filtres » n'existe qu'une fois à l'écran.** La barre de filtres et
+  l'état vide la portaient toutes deux, à cent pixels l'une de l'autre. Lorsque l'état vide
+  l'offre — c'est le patron du §5.8 du design system —, la barre ne la répète pas.
+
+**La barre de filtres, elle, reste toujours rendue**, y compris sur un total nul : elle est la
+cause de l'état vide filtré, et la masquer priverait l'utilisateur du seul geste qui l'en sort.
+
 ### 12.8 Accessibilité et clavier
 
 - Le tri est déclenché par un **bouton dans l'en-tête de colonne**, et l'en-tête porte
@@ -904,6 +935,7 @@ Les quatre états du §5.8 du design system sont traités, plus deux propres à 
 | Chargement | squelettes à la place des lignes, jamais un écran vide |
 | Vide — channel sans affaire | « Aucune affaire dans ce channel » |
 | Vide — **filtre trop étroit** | « Aucune affaire ne correspond », avec l'action qui efface les filtres |
+| — | Les deux états vides **remplacent le tableau** et sa pagination, et se rendent **sous** la barre de filtres, jamais au-dessus (§12.7 bis) |
 | Erreur | message et reprise, la reprise relançant la requête |
 | Refus (`401`/`403`) | explication, jamais une page blanche |
 | **Page inexistante (`416`)** | message propre et retour à la première page (§12.6) |
@@ -932,15 +964,21 @@ inchangé.
    décision de produit qu'aucune mesure ne justifie encore. `CLAUDE.md` §21 interdit d'optimiser
    sans mesure ; le point est **ouvert**, pas tranché.
 2. **Aucun index ne sert les quatre tris** (§12.4). Même motif.
-3. **Le seed ne porte aucune donnée longue.** MESURÉ : le titre le plus long du seed fait
+3. **Le total ne franchit pas les origines sans `Access-Control-Expose-Headers`.** Constat, non
+   point ouvert, mais il appartient à ce chapitre parce qu'il conditionne toute preuve d'interface :
+   `Content-Range` est un en-tête de réponse **cross-origin**, et un navigateur n'en laisse rien
+   lire s'il n'est pas explicitement exposé. PostgREST l'expose ; une fixture de test qui l'oublie
+   fait rendre `count: null` à `supabase-js`, et l'écran affiche alors « Chargement impossible » —
+   ce qui est le comportement voulu face à un total manquant (§12.6). Mesuré en exécutant.
+4. **Le seed ne porte aucune donnée longue.** MESURÉ : le titre le plus long du seed fait
    **34 caractères**, la prochaine action la plus longue **34** également. La Definition of Done
    exige un « comportement avec données longues vérifié en capture » : la capture est produite
    contre une **réponse substituée** (`docs/DESIGN_SYSTEM.md` §12.5), et le manque appartient au
    seed de démonstration, `CRM-046`.
-4. **Le seed ne porte aucun channel de plus de 25 cards.** MESURÉ : trois cards actives au maximum
+5. **Le seed ne porte aucun channel de plus de 25 cards.** MESURÉ : trois cards actives au maximum
    dans un channel. La seconde page se prouve donc, elle aussi, contre une réponse substituée et
    par la mesure directe du `Range` sur la pile réelle. Même destinataire : `CRM-046`.
-5. **`amount` voyage en nombre JSON** — MESURÉ une quatrième fois ici, `typeof amount === 'number'`,
+6. **`amount` voyage en nombre JSON** — MESURÉ une quatrième fois ici, `typeof amount === 'number'`,
    valeur `15500`. C'est INC-067, ouverte par `CRM-041` : `e2e/api/cards.spec.ts` le déclare en
    **chaîne**. Ce chapitre **ne tranche pas** et ne modifie aucun comportement ; il ajoute une
    mesure à l'entrée.

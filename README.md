@@ -327,6 +327,8 @@ scripts/verify-move-card.sh    # move_card : les cinq gardes, protection de colo
 scripts/verify-valeurs-champs.sh # valeurs de formulaire, validation, sixième garde  (CRM-036)
 scripts/verify-colonnes-protegees.sh # colonnes protégées : email_local_part fermée (CRM-013)
 scripts/verify-preuves-refus.sh # les douze preuves de refus, et la non-complaisance (CRM-014)
+scripts/verify-board.sh        # board kanban : colonnes, glisser-déposer, refus        (CRM-041)
+scripts/verify-liste.sh        # vue liste : tri total, filtres, pagination, 416        (CRM-042)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

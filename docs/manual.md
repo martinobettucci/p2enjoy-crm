@@ -29,7 +29,7 @@
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Le tableau kanban, son glisser-déposer et son menu de déplacements sont livrés par `CRM-041` ; ils restent invisibles à un visiteur non identifié (INC-021). Côté serveur — Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | À livrer |
-| 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | À livrer — le **tableau kanban**, lui, est livré (chapitre 4.8) |
+| 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
 ### Messagerie
@@ -198,9 +198,10 @@ page.
 - Un track **sans channel** affiche « Aucun channel dans ce track » plutôt qu'une barre vide sans
   explication.
 
-Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu du
-channel est désormais son **tableau kanban** — voir le chapitre 4.8. La vue liste, elle, n'est pas
-encore livrée.
+Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un
+channel se lit désormais de **deux façons**, et une bascule en haut de la zone principale passe de
+l'une à l'autre : le **tableau kanban** (chapitre 4.8), qui est la vue par défaut, et la **vue
+liste** (chapitre 4.9). Chacune a sa propre adresse.
 
 **Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
 « Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
@@ -450,9 +451,72 @@ est affiché tel quel, plutôt que traduit à tort.
 introuvable » — le serveur ne consent aucun track à un visiteur non identifié, et le tableau n'est
 donc jamais atteint (chapitre 3.2).
 
+### 4.9 La vue liste d'un channel
+
+À côté du tableau, un channel se lit aussi **en liste**. La bascule **Tableau / Liste**, en haut de
+la zone principale, passe de l'une à l'autre ; chaque vue a son adresse, et la liste ajoute la
+sienne au chemin du channel (`…/liste`).
+
+**À quoi elle sert.** Le tableau répond à « où en est chaque affaire ? ». La liste répond à
+« laquelle, parmi toutes, dois-je ouvrir ? ». Elle montre les mêmes affaires — celles qui ne sont
+ni archivées ni en corbeille — rangées par leurs propres colonnes plutôt que par le workflow.
+
+**Ce que montre une ligne.** Le titre de l'affaire, qui est un **lien** vers sa fiche ; son étape,
+en pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur
+**une seule ligne de texte** : un titre trop long est coupé, et la valeur entière apparaît en
+survolant. C'est délibéré — une liste se balaye en diagonale, là où une carte de tableau se lit.
+
+**Une case vide est vide.** Aucun tiret, aucun « non renseigné » : lorsqu'une affaire ne porte pas
+de montant ou pas d'échéance, la case reste blanche. Un tiret serait un caractère que rien ne
+distingue d'une donnée.
+
+**Trier.** Trois colonnes se trient, en cliquant leur en-tête — ou en l'atteignant au clavier et en
+pressant `Entrée` : **Affaire** (par ordre alphabétique), **Montant** (la plus grosse d'abord) et
+**Échéance** (la plus proche d'abord). Un second clic inverse le sens. Une affaire sans montant ou
+sans échéance se range **toujours en dernier**, dans les deux sens : une case vide n'est pas la plus
+grosse affaire du channel.
+
+**Filtrer.** Deux filtres, au-dessus du tableau :
+
+- **Étape** — n'afficher que les affaires d'une étape donnée. Toutes les étapes du workflow sont
+  proposées, y compris celles qu'aucune affaire n'occupe ;
+- **Rechercher une affaire** — un ou plusieurs mots, cherchés dans le **titre et la description**.
+  La recherche part lorsque vous validez, par le bouton ou par `Entrée`, et non à chaque frappe.
+  Elle est faite pour le français : une affaire rédigée en anglais peut lui échapper.
+
+Le compte affiché à droite — « Affaires : 3 » — est celui des affaires **qui correspondent aux
+filtres**, pas celui du channel entier.
+
+**Paginer.** La liste affiche **25 affaires par page**. Les boutons *Page précédente* et *Page
+suivante* encadrent le rang courant, écrit en toutes lettres (« Page 2 sur 5 ») ; ils restent
+visibles aux extrémités, simplement inutilisables, plutôt que de disparaître.
+
+**Tout est dans l'adresse.** Le tri, les filtres et le rang de page s'inscrivent dans l'adresse de
+la page. Recharger la page vous ramène exactement où vous étiez, et l'adresse se partage telle
+quelle. Une adresse abîmée à la main — un tri qui n'existe pas, un rang de page trop grand —
+retombe sur les valeurs par défaut sans afficher d'erreur.
+
+**Quand la liste ne montre rien.** Deux messages distincts, parce qu'ils n'appellent pas la même
+réponse : « Aucune affaire dans ce channel », et « Aucune affaire ne correspond », qui propose
+d'effacer les filtres. Un troisième existe : si le nombre d'affaires a diminué pendant que la page
+était ouverte, une page devenue inexistante affiche « Cette page n'existe plus » et propose de
+revenir à la première — jamais un message d'erreur technique.
+
+**Ce que la liste ne fait pas.** Elle **lit**. On n'y crée, n'y modifie, n'y archive et n'y déplace
+aucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le reste n'a pas encore
+d'écran. Le **responsable** n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom
+n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique.
+
+**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
+introuvable », comme pour le tableau (chapitre 3.2).
+
 ### 4.6 Ce qui n'est pas encore livré
 
-- **La vue liste** : le tableau existe (chapitre 4.8), la vue liste et ses filtres non.
+- **Les vues sauvegardées** : la vue liste et ses filtres existent (chapitre 4.9), mais aucun filtre
+  ne se conserve d'une session à l'autre autrement qu'en gardant l'adresse.
+- **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
+- **La recherche sur tout l'espace de travail** : la recherche de la vue liste est bornée au channel
+  ouvert.
 - **La création et la modification d'une affaire** : aucun écran ne les porte, ni depuis le tableau,
   ni depuis la fiche.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.

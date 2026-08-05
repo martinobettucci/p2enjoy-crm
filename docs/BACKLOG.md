@@ -3196,8 +3196,161 @@ Tri, filtres, densité maîtrisée, pagination.
       du produit**, et le §4 l'annonçait — « board kanban […] ou vue liste » — sans lui donner une
       seule règle visuelle. La portée du §12.6 est étendue à la vue liste, comme cette entrée
       l'annonçait elle-même.
-- [ ] **Le code, ses tests unitaires, sa preuve d'API, ses scénarios d'interface, ses captures et
-      son harnais.** Rien de tout cela n'est livré à ce stade : ce chunk est **documentaire**.
+- [x] **La vue liste est livrée, et elle ne porte aucune règle.** La clôture des tris, l'ordre
+      **total**, le repli des paramètres d'adresse, le bornage du rang de page, le découpage en
+      pages et la classification du `416` vivent dans `webapp/src/lib/liste-cards.ts`, vérifiables
+      sans navigateur ; `ListeCards.tsx` rend. L'écran est monté sur une route **propre**,
+      `/tracks/:slugTrack/:slugChannel/liste`, et une bascule board ↔ liste les relie.
+- [x] **Tout est côté serveur** : les deux filtres d'activité, le filtre par étape, la recherche
+      plein texte, l'ordre et la plage. Un filtre appliqué après la pagination ne verrait que les
+      lignes déjà rapportées — une affaire de la page 3 ne sortirait jamais d'une recherche.
+- [x] **L'ordre est TOTAL, et c'est une correction de défaut, pas une précaution** (décision 185).
+      MESURÉ sur la sonde `sonde_l2`, 200 000 lignes de clé égale parcourues page par page : un tri
+      non total rend **20 lignes dont 17 distinctes** — trois affaires jamais montrées, sans que
+      rien ne le signale. Terminé par `id`, il en rend 20 sur 20.
+- [x] **Le `416` est classé pour lui-même** (décision 186). MESURÉ : `offset` égal au total rend
+      `206` ; le rang suivant rend `416` / `PGRST103`, `count: null` **et** `data: null`. Le
+      traiter comme une erreur ordinaire afficherait « Chargement impossible » à qui a seulement
+      gardé son onglet ouvert.
+- [x] **Le total est exact, jamais estimé** (décision 187). MESURÉ : `count=planned` rend **1** là
+      où la table en porte **3** — une pagination bâtie dessus afficherait un nombre de pages qui
+      n'existe pas.
+- [x] **Aucune persistance côté client n'est introduite** : tri, filtres et rang de page vivent
+      dans l'**adresse** (décision 184, `CLAUDE.md` §11). Un contrôle du harnais échoue si un
+      `localStorage`, un `sessionStorage` ou un cookie apparaît.
+- [x] **La lecture des étapes est celle du board, importée et non réécrite** (décision 188). La
+      liste ne lit ni `workflow_transitions` ni `form_fields` : elle n'offre aucun déplacement.
+      **Deux** requêtes, pas quatre.
+- [x] **Test unitaire dédié** : `webapp/src/lib/liste-cards.test.ts` (**43 tests** : clôture des
+      tris et des sens, ordre total dans les huit combinaisons, `nullslast`, repli de chaque
+      paramètre d'adresse, aller-retour d'écriture et de relecture, découpage en pages, bornage du
+      rang, classification du `416` et des autres refus, et la requête réellement émise) et
+      `webapp/src/app/ListeCards.test.tsx` (**40 tests** sur le composant réel). `npm run test:unit`
+      passe de 316 à **399 tests**.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/liste-cards.spec.ts`, **26
+      scénarios**, avec le jeton réel de l'administratrice. **La preuve importe les colonnes et le
+      pas du produit** (`webapp/src/lib/colonnes-liste.ts`), elle ne les recopie pas.
+- [x] **Trois contre-épreuves mesurées, pas supposées** : sans les filtres d'activité, la même
+      requête rend **deux lignes de plus** ; sans `nullslast`, l'affaire sans montant remonte **en
+      tête** d'un tri descendant ; une colonne inventée est refusée en `400` par la pile — ce que
+      la clôture des clés de tri empêche d'atteindre.
+- [x] **Preuve de refus reconduite** : l'anonyme obtient `200` et `[]` sur les **deux** lectures,
+      un total de **zéro**, et ni le filtre ni la recherche ne lui ouvrent quoi que ce soit. Les
+      deux tables sont d'abord constatées **non vides** avec le jeton de l'administratrice — sans
+      quoi l'assertion serait verte que la RLS refuse ou qu'elle autorise tout (décision 50).
+- [x] **Preuves d'interface** : `e2e/ui/liste-cards.spec.ts`, **27 scénarios**, contre le build de
+      production. Le premier n'emploie **aucune substitution** — l'anonyme demande réellement le
+      track de l'adresse `/liste`, n'obtient rien, et la liste n'est jamais atteinte. Les autres
+      substituent la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5) et le disent.
+- [x] **Le tri est prouvé au clavier, sans aucune souris** : focus sur l'en-tête, `Entrée`,
+      l'adresse change et la requête part.
+- [x] **UNE ERREUR DE MA PROPRE SPÉCIFICATION, TROUVÉE EN EXÉCUTANT** (décision 189). Le §12.6
+      annonçait une plage demandée par un en-tête `Range` — mesure faite à la main, au `curl`.
+      MESURÉ : `postgrest-js` émet deux **paramètres de requête**, `offset` et `limit`, et aucun
+      en-tête. Le comportement de PostgREST est identique jusqu'au `416` près, mais la preuve
+      d'interface cherchait un en-tête qui n'existe pas. Le §12.6 est corrigé dans le même
+      changement, et les preuves observent le chemin **que le produit emprunte**.
+- [x] **UN DÉFAUT DE FIXTURE, TROUVÉ EN EXÉCUTANT** : servir `Content-Range` ne suffit pas.
+      L'API et la page sont sur deux origines, et sans `Access-Control-Expose-Headers` un navigateur
+      n'en laisse rien lire — `supabase-js` rendait `count: null`, et l'écran affichait
+      « Chargement impossible », ce qui est **le comportement voulu** face à un total manquant. La
+      fixture était fautive, pas le produit. Le §12.11 l'écrit.
+- [x] **TROIS DÉFAUTS RÉELS, TROUVÉS EN REGARDANT UNE CAPTURE** (décision 190) : l'état vide se
+      rendait **au-dessus** de la barre de filtres qui en était la cause, l'action « Effacer les
+      filtres » apparaissait **deux fois**, et sous l'ensemble subsistait une **carcasse de
+      tableau** — cinq en-têtes sans une seule ligne. Aucune assertion ne pouvait les attraper :
+      les trois éléments existaient et étaient rendus correctement. Corrigés, écrits au §12.7 bis,
+      et **figés par quatre assertions** du test de composant.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-042/`, **douze captures** —
+      liste anonyme, liste chargée, tri par montant, filtre sans résultat, page pleine de 25
+      lignes, page inexistante, **données longues** à 1440 et à 390 px, et les **quatre paliers**
+      du §7. Toutes regardées une à une ; c'est en regardant la sixième que les trois défauts
+      ci-dessus ont été vus.
+- [x] **Le comportement avec données longues est prouvé et capturé**, comme la Definition of Done
+      l'exige nommément : un titre de 128 caractères tient sur **une ligne**, la valeur entière
+      reste portée par l'attribut `title`, la hauteur de ligne ne bouge pas, et la page ne défile
+      jamais horizontalement — à 1440 comme à 390 px.
+- [x] **Une règle ajoutée au design system**, §5.9 — le **premier tableau du produit** : sémantique
+      `table`, ligne à `--size-target` et une seule ligne de texte par cellule, en-tête collant,
+      séparateurs sans zébrure, `aria-sort` sur la colonne triée, données techniques à droite,
+      cellule sans valeur **vide**, débordement signalé, pagination désactivée mais visible. La
+      portée du §12.6 est étendue à la vue liste, comme cette entrée l'annonçait.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert,
+      `npm run test:sql` **1164 assertions** inchangées, `npm run e2e:api` **358 scénarios**
+      (332 + 26), `npm run e2e:ui` **99 scénarios** (72 + 27), et chaque classe citée par la liste
+      présente dans le CSS produit.
+- [x] Harnais de preuves rejouable `scripts/verify-liste.sh` : **70 contrôles, aucune anomalie**, et
+      **non complaisant** — **douze** dégradations volontaires le font réellement échouer : l'ordre
+      qui cesse d'être total, `nullslast` retiré, un tri inconnu qui part vers l'API, une étape mal
+      formée qui part vers l'API, le total redevenu estimé, le `416` absorbé, un total manquant
+      devenu zéro, le rang de page non borné, les cards rangées revenues dans la liste, la recherche
+      qui quitte `search_tsv`, la carcasse de tableau qui revient, et `aria-sort` qui ment. Sa
+      section 7 constate que les fichiers sont **rendus intacts** et rejoue les tests après
+      restauration.
+- [x] **UN FAUX POSITIF D'UN CONTRÔLE DU DÉPÔT, REPRODUCTIBLE — INC-070.** Le contrôle de textes en
+      dur lit la queue d'un `? undefined : (` comme un nœud de texte et **a réellement échoué**.
+      L'affectation est réécrite en `if` — la forme la plus lisible des deux —, et la limite de
+      l'outil est consignée **sans que le contrôle soit affaibli** : élargir son expression
+      régulière sans mesurer ce qu'elle cesserait d'attraper serait affaiblir une garde pour
+      accommoder une écriture.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 332 → **358**
+      scénarios d'API, 72 → **99** d'interface. `ASSERTIONS_ATTENDUES` reste à **1164** : l'unité
+      ne livre ni table, ni fonction, ni politique.
+- [x] `docs/SPEC-cards.md` §12 (douze sous-chapitres) et §12.7 bis, `docs/DESIGN_SYSTEM.md` §5.9 et
+      §12.6, `docs/DAT.md` §3.1, `README.md` §10, `docs/manual.md` chapitres 3.2, 4.6, 4.9 et
+      sommaire, `docs/INCONSISTENCY_REPORT.md` (INC-069 et INC-070 ouvertes),
+      `docs/JOURNAL.md` décisions 183 à 190, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **LE PARCOURS COMPLET N'EST PAS PROUVÉ, ET IL NE PEUT PAS L'ÊTRE — INC-021.** La Definition of
+      Done exige un E2E. Le tri, les filtres et la pagination sont prouvés **contre des réponses
+      substituées**, et les requêtes qu'ils émettent sont prouvées hors interface avec le jeton réel
+      de l'administratrice (`e2e/api/liste-cards.spec.ts`). Ce qui manque est le **chaînage** des
+      deux : un utilisateur connecté triant réellement une liste depuis l'écran. Il suppose une
+      session, et **aucune unité du backlog ne porte l'écran de connexion**. **Cette preuve est
+      bloquée par un arbitrage, pas par un défaut de l'unité.** Treizième unité consécutive.
+- [ ] **Le seed ne démontre ni les données longues, ni la seconde page.** MESURÉ : le titre le plus
+      long fait **34 caractères**, et aucun channel ne porte plus de **trois** cards actives. Les
+      deux sont donc prouvés contre des réponses substituées, et la pagination l'est en outre par
+      la mesure directe de l'`offset` sur la pile réelle. Deux contrôles du harnais **échouent** si
+      cela venait à changer. Le manque appartient au seed de démonstration, `CRM-046`.
+- [ ] **Le seed n'a pas été étendu, et le choix est documenté.** L'unité n'introduit ni table, ni
+      colonne, ni statut, ni flux : elle lit ce que `CRM-040` a livré. Six contrôles du harnais
+      échouent si les données qu'elle démontre cessent d'être là.
+- [ ] **Aucune vue sauvegardée, aucun réglage de densité, aucune recherche globale.** Les trois sont
+      hors périmètre et nommés au §12.10 : `CRM-071` porte la première, les deux autres ne sont
+      portées par personne.
+- [ ] **INC-069 est ouverte** : deux décisions du journal portent le numéro 180, deux exécutions
+      concurrentes de la routine les ayant écrites en parallèle. `CRM-042` a décalé les siennes à
+      183–188 pour ne pas aggraver la collision, sans la résoudre. **Arbitrage attendu.**
+- [ ] **INC-070 est ouverte** : le contrôle de textes en dur repose sur une expression régulière là
+      où il faudrait un analyseur de JSX. **Arbitrage attendu.**
+- [ ] **INC-067 reçoit une quatrième mesure, et n'est pas tranchée.** `typeof amount === 'number'`
+      sur la pile réelle, figé par un scénario de `e2e/api/liste-cards.spec.ts`. La vue liste
+      **n'additionne aucun montant** — elle n'a pas de cumul de colonne —, elle n'est donc pas
+      exposée au défaut que le board porte. Comportement inchangé, arbitrage toujours demandé.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; comportement avec données
+longues vérifié en capture ». **Le second est livré** — deux captures, à 1440 et à 390 px, sur un
+titre de 128 caractères et une prochaine action de 134. Le premier l'est **contre des réponses
+substituées**, et la limite est nommée ci-dessus plutôt que maquillée. **Aucun test pgTAP dédié** :
+l'unité ne livre ni table, ni fonction, ni politique — ce qu'elle lit est déjà couvert par la suite
+de `CRM-040`, et ce qu'elle ajoute est un écran.
+
+*Limites nommées, non masquées.*
+
+- **INC-021 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- **INC-014 est ouverte** : le nom du responsable n'est lisible par personne, et la colonne
+  « Responsable » n'est donc **pas rendue du tout**, plutôt que rendue vide.
+- **INC-069 et INC-070 sont ouvertes**, relevées par cette unité.
+- **Aucun écran de création, d'édition, d'archivage ou de mise en corbeille** : la liste **lit**, et
+  cinq contrôles du harnais échouent si un chemin d'écriture y apparaît.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits**, comme les entrées correspondantes le
+  prédisaient : démon Docker lancé à la main, `npm ci` précédé d'un `npm config set cafile`
+  (INC-032, INC-042), et `PLAYWRIGHT_CHROMIUM_PATH` renseigné vers le navigateur préinstallé de
+  l'image — INC-036, **dixième** occurrence, désormais absorbée par l'échappatoire que `CRM-041` a
+  livrée (décision 181). `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
+  a été démarrée sans ce service, sans effet sur les preuves.
 
 ### CRM-043 — Commentaires `[ ]`
 Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.
