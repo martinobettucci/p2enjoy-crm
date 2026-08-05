@@ -202,6 +202,75 @@ n'ouvre rien — `auth.uid()` étant nul, `app.can_write_channel` rend faux.
 **Comme `app.can_read_card`, elle n'est pas appelée par les politiques de `cards`**, qui jugent sur
 `channel_id`, colonne de la ligne jugée (§3.5, §3.6).
 
+### 3.8 Ce que `CRM-010` doit prouver des six fonctions, une fois toutes livrées
+
+Chapitre ajouté par `CRM-010` le 2026-08-05, **après mesure sur la pile réelle**, pour dire ce que
+sa Definition of Done exige des quatre fonctions qu'INC-013 lui avait retirées, et qui existent
+désormais toutes. Il n'introduit **aucun comportement nouveau** : il énonce le contrat que les
+preuves de l'unité doivent exercer, et que trois unités successives ont écrit sans qu'aucune ne le
+rassemble.
+
+La Definition of Done de `CRM-010` porte trois exigences. Les trois ont été satisfaites en 2026-08-03
+pour les deux fonctions alors écrivables, et **aucune** ne l'a été pour les quatre autres.
+
+**a. « pgTAP couvrant chaque rôle et chaque combinaison de droits fins ».** `CRM-010` a énuméré les
+64 combinaisons du §2.2 sur `app.resolve_access`, fonction **pure** : la règle métier est donc
+prouvée, mais pas la **jointure** qui l'alimente. C'est exactement ce qu'INC-013 nommait — « il
+manque la jointure qui remonte au workspace ». `CRM-012` l'éprouve sur un échantillon de
+combinaisons, choisi pour attraper le défaut de jointure externe de la décision 104 ; l'énumération
+exhaustive **à travers des lignes réelles** n'existe nulle part. Le contrat à exercer est l'égalité,
+pour les 64 combinaisons de (rôle de workspace × droit fin de track × droit fin de channel) :
+
+| Fonction | Doit valoir |
+|---|---|
+| `app.can_read_track(t)` | `resolve_access(rôle, accès_track, null) <> 'none'` |
+| `app.can_read_channel(c)` | `resolve_access(rôle, accès_track, accès_channel) <> 'none'` |
+| `app.can_write_channel(c)` | `resolve_access(rôle, accès_track, accès_channel) = 'write'` |
+
+Les quatre états de chaque droit fin sont `member`, `viewer`, `none` et **l'absence de ligne**, que
+la jointure externe du §3.3 rend `NULL`. Les quatre états du rôle de workspace sont `admin`,
+`business_developer`, `viewer` et **l'absence d'appartenance**.
+
+`app.can_read_card` n'entre pas dans cette matrice : le §3.6 la définit comme une **délégation
+stricte**, sans règle propre. Son contrat est donc l'égalité `can_read_card(k) = can_read_channel(k.channel_id)`
+pour **toute** card, et sous **toute** identité, y compris anonyme.
+
+**b. « absence de récursion démontrée ».** MESURÉ le 2026-08-05 sur la pile de développement, avec
+l'identité `viewer` du seed, chaque cas dans une transaction annulée :
+
+| Cas | Politique posée sur | Prédicat | Résultat mesuré |
+|---|---|---|---|
+| A | `public.tracks` | `app.can_read_track(id)` — livrée, `SECURITY DEFINER` | **3 lignes**, soit exactement ce que rend la politique livrée |
+| B | `public.tracks` | jumelle `SECURITY INVOKER` de la même fonction | `54001` — *stack depth limit exceeded* |
+| C | `public.channels` | `app.can_read_channel(id)` — livrée | **4 lignes**, identique à la politique livrée |
+| D | `public.channels` | jumelle `SECURITY INVOKER` | `54001` |
+| E | `public.cards` | `app.can_read_card(id)` — livrée | **4 lignes**, identique à la politique livrée |
+| F | `public.cards` | jumelle `SECURITY INVOKER` | `54001` |
+
+Les trois fonctions qui lisent une table **elle-même protégée par RLS** ne sont donc non récursives
+que parce qu'elles sont `SECURITY DEFINER`. Ce n'est pas une propriété du code écrit : c'est une
+propriété de son **mode d'exécution**, qu'un `alter function … security invoker` suffit à détruire
+sans changer une ligne de la définition. La démonstration se fait donc en **provoquant** la
+récursion, jamais en l'affirmant — c'est le procédé de la décision 27, étendu aux trois tables que
+`CRM-010` ne pouvait pas atteindre.
+
+Le graphe **réellement livré** ne referme aucun de ces cycles : les politiques de `tracks`, de
+`channels` et de `cards` n'appellent pas les fonctions qui reliraient leur propre table (§3.5, §3.6).
+La chaîne la plus longue du produit est celle de `card_field_values` → `can_read_card` → `cards` →
+`can_read_channel` → `channels` → `resolve_channel_access` → `workspace_members` ; MESURÉ, elle
+répond, et rend **7 lignes** au `viewer` du seed.
+
+**c. « `search_path` fixé sur toutes les fonctions `SECURITY DEFINER` ».** La formulation dit
+« toutes », et `CRM-010` ne l'a vérifié que sur les sept fonctions de sa propre migration — les
+seules qui existaient. Le produit en compte aujourd'hui davantage, écrites par onze migrations.
+L'exigence est donc **un recensement, pas une liste** : aucune fonction des schémas `app` et
+`public` ne doit être `SECURITY DEFINER` sans porter `search_path = ''`. MESURÉ le 2026-08-05 :
+**29 fonctions**, dont **18** `SECURITY DEFINER`, et **aucune** sans `search_path` vide.
+
+Écrite ainsi, la preuve devient un garde-fou : elle tombe le jour où une unité ultérieure ajoute une
+fonction `SECURITY DEFINER` en oubliant son `search_path`, sans qu'aucune liste ait à être tenue à
+jour à la main.
+
 ## 4. Politiques par famille de tables
 
 | Table | Lecture | Écriture |

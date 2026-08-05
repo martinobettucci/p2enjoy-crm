@@ -5235,3 +5235,80 @@ l'a produite — ce qu'aucune exécution ne peut établir sur son propre travail
 **Portée.** La règle appliquée ici vaut pour toute exécution future : **refetch avant `push`, et
 abandon si l'unité a été livrée entre-temps.** La resynchronisation d'ouverture ne protège de rien,
 puisque le travail dure plus longtemps que l'instant qu'elle mesure.
+
+---
+
+## 2026-08-05 — `CRM-010` : ce que sa Definition of Done exige encore, mesuré avant d'être écrit
+
+**Contexte.** Le balayage d'ouverture a compté **seize** unités `[~]`. Aucune n'est un chantier
+inachevé : douze d'entre elles butent sur la même absence — l'écran de connexion, qu'aucune unité du
+backlog ne porte (INC-021, arbitrage attendu depuis le 2026-08-04). La première unité `[~]` dans
+l'ordre de `docs/MASTER_PLAN.md` §2 est `CRM-010`, et c'est la seule dont le motif d'attente s'est
+**réellement éteint** : les quatre fonctions qu'INC-013 lui avait retirées existent toutes.
+
+### Décision 155 — `CRM-010` est reprise parce que sa dépendance est levée, et sa Definition of Done n'est pas réécrite
+
+**Problème.** INC-013 laisse deux points ouverts. Le premier — `app.can_read_card` différée faute de
+table — est **éteint** : `CRM-040` a livré `cards` et la fonction. Le second est une question posée
+au responsable : « la Definition of Done de `CRM-010` nomme six fonctions ; faut-il la réécrire à
+quatre, ou la laisser porter une dette que d'autres unités soldent ? »
+
+**Observation.** La question a été posée le 2026-08-03, à un moment où quatre des six fonctions
+étaient **inécrivables**. Elle n'a plus le même objet : les six fonctions existent, elles sont
+livrées, et la Definition of Done telle qu'elle est écrite est désormais **satisfaisable**. La
+réécrire à quatre reviendrait à retirer de l'unité ce qu'elle nomme, au moment précis où cela cesse
+d'être impossible.
+
+**Décision.** La Definition of Done n'est pas réécrite. `CRM-010` est reprise pour la satisfaire
+**telle qu'elle est**, en étendant ses propres preuves aux quatre fonctions écrites par
+`CRM-012`, `CRM-036` et `CRM-040`. Ce n'est pas un arbitrage de produit rendu à la place du
+responsable : c'est la lecture littérale d'un texte qui ne demandait qu'à devenir applicable. Même
+mécanisme que la décision 123 sur INC-047.
+
+**Conséquence.** INC-013 perd ses deux points ouverts et peut être close par cette unité. Aucune
+autre unité n'est rouverte : les preuves ajoutées vivent dans les fichiers de `CRM-010`, et celles de
+`CRM-012`, `CRM-036` et `CRM-040` ne sont pas touchées.
+
+**Ce qui n'est pas décidé ici.** INC-014 (politiques des tables d'identité) et INC-021 (écran de
+connexion) restent ouvertes et **inchangées**. `CRM-010` ne les approche pas.
+
+### Décision 156 — Les trois exigences de la Definition of Done sont mesurées avant d'être spécifiées
+
+**Problème.** Dire « il manque des preuves » ne suffit pas : il faut savoir **lesquelles**, et ce
+qu'elles rendent réellement, avant d'écrire quoi que ce soit. La Definition of Done porte trois
+exigences ; chacune a été confrontée à l'état réel de la pile.
+
+**Observations, mesurées le 2026-08-05 sur la pile de développement, seed appliqué.**
+
+1. **La matrice.** `CRM-010` a énuméré les 64 combinaisons sur `app.resolve_access`, fonction pure.
+   La **jointure** qui alimente cette fonction — celle qu'INC-013 disait manquante — n'est éprouvée
+   nulle part de façon exhaustive : `supabase/tests/0011_droits_fins.test.sql` en couvre un
+   échantillon, choisi pour attraper le défaut de jointure externe de la décision 104.
+2. **La récursion.** La démonstration existante porte sur `app.is_workspace_member` et
+   `public.workspace_members`, et sur elles seules. Les trois fonctions qui lisent une table
+   **elle-même protégée par RLS** — `tracks`, `channels`, `cards` — n'ont aucune démonstration
+   mécanique. `docs/SPEC-permissions-rls.md` §3.3 en affirme une, mesurée à la main pendant
+   `CRM-012` et jamais figée par une assertion.
+   MESURÉ, chaque cas dans une transaction annulée, sous l'identité `viewer` du seed : adossée à la
+   fonction **livrée**, une politique posée sur la table que celle-ci relit répond et rend
+   exactement ce que rend la politique livrée — **3** tracks, **4** channels, **4** cards ; adossée
+   à une jumelle `SECURITY INVOKER` de la même fonction, la même lecture épuise la pile, **54001**,
+   sur les **trois** tables. La chaîne la plus longue du produit —
+   `card_field_values` → `can_read_card` → `cards` → `can_read_channel` → `channels` — répond et
+   rend **7** lignes.
+3. **Le `search_path`.** L'exigence dit « toutes les fonctions `SECURITY DEFINER` ». `CRM-010` ne
+   l'a vérifié que sur les sept de sa migration, les seules qui existaient alors. MESURÉ
+   aujourd'hui : les schémas `app` et `public` portent **29** fonctions, dont **18**
+   `SECURITY DEFINER`, et **aucune** sans `search_path` vide. L'état est bon ; ce qui manque est la
+   preuve qui le **restera**.
+
+**Décision.** Les trois exigences sont écrites dans `docs/SPEC-permissions-rls.md` §3.8 sous la forme
+d'un contrat vérifiable — égalités à respecter, tableau des six cas de récursion et leurs résultats
+mesurés, recensement plutôt que liste — et ce chapitre est committé **avant** la première ligne de
+test. Le §3.8 n'introduit aucun comportement : il rassemble ce que trois unités successives ont
+écrit sans qu'aucune ne le tienne d'un seul tenant.
+
+**Conséquence pour la suite.** La troisième exigence est écrite comme un **recensement** et non
+comme une liste de fonctions : elle tombera d'elle-même le jour où une unité ultérieure ajoutera une
+fonction `SECURITY DEFINER` sans `search_path`, sans qu'aucun fichier ait à être tenu à jour à la
+main. C'est un garde-fou de plus, au sens de la décision 51.
