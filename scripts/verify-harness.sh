@@ -138,11 +138,14 @@ PORT_RAPPORT=9323
 # l'absence de la table dans `0012_cards`, `0013_move_card`, `0014_valeurs_champs`,
 # `0015_colonnes_protegees`, `0016_preuves_refus` et `0017_commentaires` : 1250 + 87 = 1337.
 # `e2e/api/timeline.spec.ts` livre **16 scénarios** (les douze lignes du contrat du §14.9, plus le
-# seed, l'immuabilité et le vocabulaire), et `e2e/api/preuves-refus.spec.ts` en gagne **un** — la
-# preuve n° 8, qui cesse d'assérer une absence pour mesurer un refus : 375 + 16 + 1 = 392.
-# Valeurs MESURÉES, non déduites.
+# seed, l'immuabilité et le vocabulaire) : 375 + 16 = **391**. `e2e/api/preuves-refus.spec.ts`, lui,
+# ne bouge PAS — et l'écrire est utile, parce que son contenu a changé : la preuve n° 8 cesse
+# d'assérer une absence pour **mesurer un refus**, ce qui retire un cas de la liste des tables
+# absentes et en ajoute un nouveau. **Cette valeur a d'abord été posée à 392 par déduction, et
+# l'exécution l'a démentie** : la révision d'un compteur se MESURE, comme la décision 141 l'avait
+# déjà établi.
 ASSERTIONS_ATTENDUES=1337
-SCENARIOS_API=392
+SCENARIOS_API=391
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

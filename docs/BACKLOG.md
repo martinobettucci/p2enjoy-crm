@@ -3765,7 +3765,10 @@ connexion.
       composant qui ne trie ni ne classe, aucune persistance côté client. **Il a d'abord échoué sur
       ses propres commentaires** : les contrôles lisent désormais le code, pas la prose.
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés une seconde fois dans le MÊME changement** :
-      `SCENARIOS_UI` 113 → **127**.
+      `SCENARIOS_UI` 113 → **127**. Et `SCENARIOS_API` **corrigé après exécution** : posé à 392 par
+      déduction — seize scénarios de plus, plus un dans les preuves de refus —, il vaut **391**, la
+      preuve n° 8 ayant *remplacé* un cas au lieu d'en ajouter un. La révision d'un compteur se
+      mesure ; `scripts/verify-harness.sh` rend **25 contrôles, aucune anomalie**.
 - [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quatorze unités précédentes : le
       parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
       connexion. **Quinzième unité consécutive.**
