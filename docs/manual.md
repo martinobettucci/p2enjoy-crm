@@ -28,7 +28,7 @@
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; le formulaire a désormais un écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille. L'espace de travail livré en contient neuf, dont une archivée et une en corbeille. **Ses réponses au formulaire existent aussi depuis `CRM-036`** — voir le chapitre 24. Ce qui manque est l'**écran** |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Le tableau kanban, son glisser-déposer et son menu de déplacements sont livrés par `CRM-041` ; ils restent invisibles à un visiteur non identifié (INC-021). Côté serveur — Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse désormais toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** depuis `CRM-036` : une affaire ne peut plus entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Ce qui manque est l'écran : le tableau kanban et son glisser-déposer relèvent de `CRM-041` |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
-| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Partiellement livré, avec son écran** — la **discussion** d'une affaire existe et se met à jour en temps réel (chapitre 4.10). Écrire exige le droit d'écriture sur le channel ; corriger et supprimer sont réservés à l'auteur, **la règle est appliquée par le serveur mais aucun bouton ne l'offre encore**. La suppression détruit réellement le texte. L'**historique** relève de `CRM-044` et n'est pas livré |
+| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; corriger et supprimer sont réservés à l'auteur, **la règle est appliquée par le serveur mais aucun bouton ne l'offre encore**. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé ; il ne dit pas **qui** a agi, aucun nom n'étant lisible |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
@@ -510,11 +510,41 @@ n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identi
 **Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
 introuvable », comme pour le tableau (chapitre 3.2).
 
-### 4.10 La discussion d'une affaire
+### 4.10 L'historique et la discussion d'une affaire
 
-À droite de la fiche d'une affaire — sous le formulaire lorsque l'écran est étroit — se trouve la
-**discussion**. C'est le fil des commentaires laissés sur cette affaire, du plus ancien en haut au
-plus récent en bas, comme une conversation se lit.
+À droite de la fiche d'une affaire — sous le formulaire lorsque l'écran est étroit — se trouve
+**Historique et discussion**. C'est **un seul fil**, du plus ancien en haut au plus récent en bas
+comme une conversation se lit, où se mêlent deux choses : ce que les gens ont **dit** — les
+commentaires — et ce qui est **arrivé** à l'affaire.
+
+**Ce que l'affaire retient d'elle-même.** Chaque fait laisse une trace, écrite au moment où il a
+lieu :
+
+| Ce qui s'est passé | Ce que le fil montre |
+|---|---|
+| L'affaire a été créée | *Affaire créée* |
+| Elle a changé d'étape | *Étape franchie*, avec les deux étapes — par exemple « Prospection → Relance » |
+| Son responsable a changé | *Responsable modifié* |
+| Elle a été archivée, ou remise en service | *Affaire archivée* / *Affaire désarchivée* |
+| Elle a été mise à la corbeille, ou restaurée | *Affaire mise à la corbeille* / *Affaire restaurée* |
+| Une réponse de formulaire a été saisie ou changée | *Champ renseigné*, avec le nom du champ |
+
+**Ces traces ne peuvent être ni fabriquées, ni corrigées, ni effacées.** Personne ne peut en écrire
+une à la main — ni un utilisateur, ni un administrateur, ni le compte technique qui installe le jeu
+de démonstration. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne
+peut plus être modifiée par qui que ce soit. Ce que l'historique montre a donc **réellement eu
+lieu** ; en revanche, il ne dit **pas qui** l'a fait, pour la même raison qu'ailleurs dans le
+produit : aucun nom de personne n'est aujourd'hui lisible.
+
+**Une action qui ne change rien ne laisse rien.** Réenregistrer une réponse identique, ou
+réattribuer une affaire à la personne qui en est déjà responsable, n'ajoute aucune ligne au fil.
+
+**Filtrer le fil.** Quatre bascules le trient par famille : *Discussion*, *Étapes*, *Champs*,
+*Cycle de vie*. Toutes sont actives à l'ouverture, et le nombre porté par chacune compte ce que
+l'affaire contient — il ne bouge pas quand vous éteignez la famille. Éteindre tout affiche « Aucun
+élément pour ces filtres », qui ne se confond pas avec « Aucun événement pour le moment » : le
+premier dit que vous filtrez, le second qu'il n'y a rien. **Rien n'est retenu** : rouvrir la fiche
+rétablit le fil complet, et aucune préférence n'est enregistrée sur votre appareil.
 
 **Qui peut écrire.** Toute personne qui a le droit d'**écrire** dans le channel de l'affaire. Un
 compte en consultation seule **lit** la discussion sans pouvoir y ajouter quoi que ce soit : la
@@ -539,11 +569,21 @@ n'est pas seulement masqué, il n'est plus enregistré nulle part et rien ne per
 Il ne peut alors plus être ni corrigé, ni restauré. L'écran sait déjà afficher un commentaire
 supprimé — la mention *Commentaire supprimé* à sa place.
 
-**Le fil se met à jour tout seul.** Un commentaire publié par un collègue apparaît sans que vous
-rechargiez la page — et seulement chez les personnes qui ont accès à l'affaire. Une suppression se
-propage de la même façon.
+**Le fil se met à jour tout seul, pour la discussion seulement.** Un commentaire publié par un
+collègue apparaît sans que vous rechargiez la page — et seulement chez les personnes qui ont accès à
+l'affaire. Une suppression se propage de la même façon. **Les faits, eux, ne s'affichent pas
+d'eux-mêmes** : un déplacement effectué par un collègue pendant que vous regardez la fiche
+n'apparaît qu'au prochain chargement.
 
-**Ce que la discussion ne fait pas encore.**
+**Ce que le fil ne fait pas encore.**
+
+- **On lit, on filtre, on ne fait rien d'autre** : aucune action n'est proposée depuis une ligne
+  d'historique.
+- **Le motif d'un déplacement n'est conservé nulle part.** L'écran le demande lorsqu'une affaire est
+  marquée perdue, et il n'est enregistré ni dans le fil, ni ailleurs.
+- **Les emails et les activités — appels, réunions — n'apparaissent pas** : ils n'existent pas encore
+  dans le produit.
+- **Aucune recherche, aucun regroupement par jour, aucun export** du fil.
 
 - **Aucun nom d'auteur n'est affiché** : aucun nom de personne n'est aujourd'hui lisible dans le
   produit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même
@@ -572,7 +612,8 @@ propage de la même façon.
 - **L'enregistrement d'une réponse depuis l'écran** (chapitre 4.7).
 - **Le responsable et les étiquettes sur une carte** : le nom d'une personne n'est aujourd'hui
   lisible par personne, et le produit préfère ne rien afficher plutôt qu'un identifiant technique.
-- **L'historique et les documents** : les commentaires, eux, sont livrés (chapitre 4.10).
+- **Les documents** : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré
+  (chapitre 4.10).
 - **La modification et la suppression d'un commentaire depuis l'écran** : la règle existe et le
   serveur l'applique, mais aucun bouton ne les propose encore dans le fil.
 - **Le score de santé** : la colonne existe, rien ne l'alimente.

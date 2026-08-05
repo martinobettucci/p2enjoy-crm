@@ -165,7 +165,13 @@ SCENARIOS_API=392
 # fil vide, le composeur et son état désactivé, le `403` affiché sans perdre le texte saisi, la
 # publication au clavier, les quatre paliers et un commentaire très long.
 # Valeur MESURÉE, non déduite.
-SCENARIOS_UI=113
+# **127 depuis `CRM-044`** : quatorze scénarios de timeline unifiée — l'appelant anonyme qui
+# n'émet AUCUNE requête d'événements faute de card, le fil où la parole se range AU MILIEU des
+# faits, la résolution des libellés d'étape et de champ, l'absence de tout acteur nommé, les quatre
+# bascules et leur compte qui suit la SOURCE, le filtre qui masque sans relire, le clavier, les deux
+# vides distincts, l'absence de toute persistance, et les quatre paliers.
+# Valeur MESURÉE, non déduite.
+SCENARIOS_UI=127
 
 TRAVAIL=$(mktemp -d)
 failures=0

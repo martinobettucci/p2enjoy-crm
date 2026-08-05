@@ -56,6 +56,29 @@ d'exécuter le code attendu.
   **À savoir avant tout déploiement** : cette table grandit sans limite et rien ne la purge ; aucune
   règle de conservation n'a été décidée. Le détail est dans `docs/PROD_MIGRATIONS.md`.
 
+- **L'affaire raconte son histoire, et la discussion s'y range** — `CRM-044`,
+  `docs/DESIGN_SYSTEM.md` §5.11, `docs/manual.md` chapitre 4.10. La colonne de droite d'une affaire
+  ne porte plus la seule discussion : c'est désormais **un seul fil**, où ce qui a été *dit* et ce
+  qui est *arrivé* se lisent ensemble, du plus ancien au plus récent.
+
+  On y voit l'affaire naître, changer d'étape — avec les deux étapes nommées —, changer de
+  responsable, être archivée, mise à la corbeille ou restaurée, et chaque réponse de formulaire
+  saisie ou modifiée, avec le nom du champ. **Quatre bascules** trient le fil par famille :
+  discussion, étapes, champs, cycle de vie. Le nombre porté par chacune compte ce que l'affaire
+  contient et ne bouge pas quand on éteint la famille ; éteindre tout dit qu'on filtre, ce qui ne se
+  confond pas avec une affaire sans histoire. **Rien n'est retenu sur l'appareil** : rouvrir la
+  fiche rétablit le fil complet.
+
+  **Ce que le fil ne fait pas** : on y lit, on y filtre, on n'y agit pas. Il ne dit pas **qui** a
+  agi — aucun nom de personne n'est lisible dans le produit aujourd'hui. Les faits ne s'affichent pas
+  d'eux-mêmes pendant qu'on regarde la fiche, à la différence des commentaires. Et le motif saisi en
+  marquant une affaire perdue n'est toujours conservé nulle part.
+
+  **Cinq défauts d'affichage ont été trouvés en regardant les captures**, alors que les 127 scénarios
+  d'interface étaient verts : un compte collé à son libellé, une pastille d'icône sans taille ni
+  fond, une barre de filtres coupée au bord du panneau, et des filtres proposés sur une affaire qui
+  n'a rien à filtrer. Tous corrigés dans le même changement.
+
 - **Les commentaires d'une affaire, côté serveur** — `CRM-043`, `docs/SPEC-cards.md` §13. Une
   affaire peut désormais porter une **discussion** : chaque membre qui a le droit d'écrire dans son
   channel peut y publier un commentaire, le corriger, ou le supprimer — et **lui seul** peut

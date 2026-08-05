@@ -42,6 +42,12 @@ cd "$(dirname "$0")/.."
 MIGRATION=supabase/migrations/0016_timeline.sql
 TEST_SQL=supabase/tests/0018_timeline.test.sql
 SPEC_API=e2e/api/timeline.spec.ts
+MODULE=webapp/src/lib/timeline.ts
+COMPOSANT=webapp/src/app/PanneauTimeline.tsx
+TEST_UNITAIRE=webapp/src/lib/timeline.test.ts
+TEST_COMPOSANT=webapp/src/app/PanneauTimeline.test.tsx
+SPEC_UI=e2e/ui/timeline.spec.ts
+CAPTURES=docs/captures/CRM-044
 SEED=supabase/seed/apply-seed.sh
 DB_CONTAINER=p2enjoy-db
 
@@ -82,17 +88,20 @@ done
 
 titre "1. Fichiers livrés et traçabilité"
 
-for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$MODULE" "$COMPOSANT" "$TEST_UNITAIRE" \
+	"$TEST_COMPOSANT" "$SPEC_UI"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
-if head -3 "$MIGRATION" | grep -q '@spec CRM-044'; then
-	ok "$(basename "$MIGRATION") porte son commentaire @spec"
-else
-	fail "$(basename "$MIGRATION") ne cite pas son unité de backlog"
-fi
+for fichier in "$MIGRATION" "$MODULE" "$COMPOSANT"; do
+	if head -3 "$fichier" | grep -q '@spec CRM-044'; then
+		ok "$(basename "$fichier") porte son commentaire @spec"
+	else
+		fail "$(basename "$fichier") ne cite pas son unité de backlog"
+	fi
+done
 
-for fichier in "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$TEST_SQL" "$SPEC_API" "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_UI"; do
 	if head -3 "$fichier" | grep -q '@verifies CRM-044'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
@@ -316,6 +325,75 @@ if [ "$RAPIDE" = false ]; then
 	else
 		fail "npm run typecheck ÉCHOUE : voir $TRAVAIL/typecheck.log"
 	fi
+
+	if npm run test:unit >"$TRAVAIL/unit.log" 2>&1; then
+		ok "les tests unitaires sont verts"
+	else
+		fail "les tests unitaires ÉCHOUENT : voir $TRAVAIL/unit.log"
+	fi
+
+	if npm run build >"$TRAVAIL/build.log" 2>&1; then
+		ok "npm run build est vert"
+	else
+		fail "npm run build ÉCHOUE : voir $TRAVAIL/build.log"
+	fi
+
+	if npm run e2e:ui >"$TRAVAIL/ui.log" 2>&1; then
+		ok "la preuve d'interface est verte, contre le BUILD DE PRODUCTION"
+	else
+		fail "la preuve d'interface ÉCHOUE : voir $TRAVAIL/ui.log"
+	fi
+fi
+
+# --- 5 bis. L'écran, et ce que les captures ont dénoncé ------------------------------------------
+# `CLAUDE.md` §16 : les tests automatisés ne remplacent pas l'observation. Quatre défauts ont été
+# trouvés en REGARDANT alors que les 127 scénarios étaient verts (décision 212) ; les trois
+# contrôles ci-dessous figent ce qui les a causés.
+
+titre "5 bis. L'écran"
+
+# LES CONTRÔLES CI-DESSOUS LISENT LE CODE, PAS LES COMMENTAIRES. Écrits d'abord sur le fichier
+# entier, ils échouaient sur leurs propres explications — chaque défaut de la décision 212 est
+# nommé dans un commentaire du composant, `size-7` et `overflow-x-auto` compris. Un harnais qui
+# accuse la prose qu'il a lui-même demandé d'écrire est un harnais faux.
+code_seul() { sed -e 's;//.*;;' -e '/^[[:space:]]*\*/d' -e '/^[[:space:]]*{\/\*/,/\*\/}/d' "$1"; }
+
+for capture in fil-unifie-1440 fil-filtre-1440 fil-tout-filtre-1440 fil-vide-1440 \
+	fil-xl-1440 fil-lg-1152 fil-md-900 fil-sm-390; do
+	if [ -s "$CAPTURES/$capture.jpg" ]; then
+		ok "capture $capture.jpg produite"
+	else
+		fail "capture $capture.jpg ABSENTE — CLAUDE.md §16"
+	fi
+done
+
+# DÉFAUT 1 et 2 de la décision 212 : une classe hors de l'échelle discrète du §3 du design system
+# ne produit AUCUNE règle CSS, et n'échoue jamais bruyamment.
+if code_seul "$COMPOSANT" | grep -qE "gap-1\.5|size-7[^0-9]"; then
+	fail "le composant emploie une classe hors échelle (gap-1.5, size-7) : elle serait IGNORÉE"
+else
+	ok "aucune classe hors de l'échelle discrète du §3 (décision 212)"
+fi
+
+# DÉFAUT 3 : la barre se replie, elle ne défile pas — une option hors cadre est une option cachée.
+if code_seul "$COMPOSANT" | grep -q "overflow-x-auto"; then
+	fail "la barre de filtres défile : « Cycle de vie » sortirait du panneau (décision 212)"
+else
+	ok "la barre de filtres se replie plutôt que de défiler"
+fi
+
+# Séparation : le composant ne porte AUCUNE règle. L'ordre, les familles et la résolution des
+# libellés vivent dans le module, vérifiables sans navigateur.
+if code_seul "$COMPOSANT" | grep -qE "\.sort\(|familleDe[[:space:]]*="; then
+	fail "le composant trie ou classe : ces règles appartiennent à $MODULE"
+else
+	ok "le composant ne trie ni ne classe : les règles vivent dans $MODULE"
+fi
+
+if { code_seul "$COMPOSANT"; code_seul "$MODULE"; } | grep -qE "localStorage|sessionStorage"; then
+	fail "une persistance côté client est apparue (CLAUDE.md §11)"
+else
+	ok "aucune persistance côté client (CLAUDE.md §11)"
 fi
 
 # --- 6. Non-complaisance -------------------------------------------------------------------------

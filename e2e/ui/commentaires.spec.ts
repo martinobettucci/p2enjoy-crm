@@ -127,7 +127,11 @@ async function servirEcran(page: Page, commentaires: unknown = COMMENTAIRES_SERV
 	await page.route(ROUTE_TRACKS, servir(TRACK_SERVI))
 }
 
-const fil = (page: Page) => page.getByRole('region', { name: 'Fil de discussion de cette affaire' })
+// Le libellé de la région a changé avec `CRM-044` : la colonne de droite n'est plus le seul
+// panneau de commentaires, c'est le FIL de l'affaire — le §5.10 du design system l'annonçait
+// comme « la première voie d'un fil unifié ». Les scénarios ci-dessous restent ceux de `CRM-043`
+// et portent sur les commentaires ; `e2e/ui/timeline.spec.ts` porte sur le fil.
+const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affaire' })
 
 test.describe('le panneau interroge réellement `card_comments`', () => {
 	// L'APPELANT ANONYME N'ATTEINT JAMAIS LE PANNEAU, et c'est mesuré ici plutôt qu'affirmé. Sans
@@ -221,7 +225,9 @@ test.describe('fil chargé (réponse réseau substituée, docs/DESIGN_SYSTEM.md 
 		await servirEcran(page, [])
 		await page.goto(ADRESSE)
 		await expect(fil(page).getByTestId('etat-vide')).toBeVisible()
-		await expect(fil(page).getByTestId('etat-vide')).toContainText('Aucun commentaire')
+		// Le vide d'un fil unifié ne parle plus des seuls commentaires : les deux sources sont
+		// vides, et le §5.11 distingue ce cas de « aucun élément pour ces filtres ».
+		await expect(fil(page).getByTestId('etat-vide')).toContainText('Aucun événement')
 		await capturer(page, 'fil-vide-1440', 'CRM-043')
 	})
 })

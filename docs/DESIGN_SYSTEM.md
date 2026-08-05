@@ -346,29 +346,47 @@ s'ajoutent, elles ne les remplacent pas.
   une suite de blocs équivalents où l'œil ne distinguerait plus ce qui a été dit de ce qui est
   arrivé.
 
-- **Un filet vertical de 1 px `--color-border`** court derrière les pastilles et relie les
-  événements entre eux. Il s'interrompt derrière les commentaires : le filet est la ligne du temps
-  des faits, pas celle des paroles.
+- **Aucun filet vertical ne relie les événements**, et c'est une décision prise **après avoir
+  regardé** (`docs/JOURNAL.md` décision 212). La règle avait d'abord été écrite ici : un filet de
+  1 px derrière les pastilles, interrompu derrière les commentaires. La capture
+  `docs/captures/CRM-044/fil-unifie-1440.jpg` montre que la distinction carte / ligne porte déjà
+  seule la lecture du fil, et qu'un filet s'interrompant à chaque prise de parole produirait une
+  ligne pointillée dont les trous ne signifieraient rien de plus que ce que la forme dit déjà.
 
 - **Une couleur par famille**, et **aucune autre** — les jetons du §1, jamais une teinte inventée :
 
   | Famille | Types | Pastille | Icône Lucide |
   |---|---|---|---|
-  | Discussion | commentaires | `--color-surface`, texte `--color-text-2` | `MessageSquare` |
+  | Discussion | commentaires | **aucune pastille** — un commentaire est une carte (§5.10), pas une ligne d'événement | — |
   | Étapes | `moved` | `--color-brand-soft`, icône `--color-brand` | `ArrowRightLeft` |
   | Champs | `field_changed` | `--color-hover`, icône `--color-text-2` | `PencilLine` |
   | Cycle de vie | `created`, `assigned`, `archived`, `unarchived`, `trashed`, `restored` | `--color-success-soft` pour `created` et `restored`, `--color-accent-soft` pour `assigned` et `unarchived`, `--color-hover` pour `archived` et `trashed` | `Sparkles`, `UserRoundCog`, `Archive`, `ArchiveRestore`, `Trash2`, `RotateCcw` |
 
+  La famille **Discussion** est la seule à ne porter ni pastille ni icône : ses lignes ne sont pas
+  des événements, ce sont les cartes du §5.10, et leur donner en plus une pastille reviendrait à
+  décorer deux fois la même distinction.
+
   La couleur ne porte **aucune information seule** (§8) : le libellé dit toujours ce qui s'est
   passé, et l'icône est redondante avec lui.
 
+- **La barre de filtres n'existe que s'il y a quelque chose à filtrer** — décision prise après
+  avoir regardé `docs/captures/CRM-044/fil-vide-1440.jpg`, où quatre bascules affichant « 0 »
+  surmontaient « aucun événement pour le moment » : un contrôle sans objet. Le seuil porte sur le
+  fil **chargé**, jamais sur le fil filtré — sinon éteindre toutes les familles ferait disparaître
+  le moyen de les rallumer.
+
 - **Filtres : une barre de quatre bascules**, en haut du panneau, hauteur `--size-target`,
-  `rounded-full`, état actif en `--color-brand-soft` / `--color-brand`. Ce sont des boutons
+  `rounded-full`, état actif en `--color-brand-soft` / `--color-brand` **et en graisse moyenne** —
+  la couleur douce seule ne distinguait pas assez une bascule éteinte d'une bascule active, vu sur
+  `docs/captures/CRM-044/fil-filtre-1440.jpg`. L'état éteint porte une bordure `--color-border` sur
+  fond `--color-surface`, et `aria-pressed` le dit toujours (§8). Ce sont des boutons
   `aria-pressed`, non des cases à cocher : ils n'appartiennent à aucun formulaire et ne se
   soumettent pas. Toutes actives à l'ouverture.
 
-- **Le compte est écrit sur chaque bascule** — « Étapes 2 » — et il compte ce que la source
-  contient, **pas** ce que le filtre laisse voir. Un compte qui suivrait le filtre vaudrait toujours
+- **Le compte est écrit sur chaque bascule** — « Étapes 2 » — dans **son propre élément**, jamais
+  comme un nœud de texte accolé au libellé : MESURÉ (décision 212), un nœud de texte nu devient un
+  élément flex anonyme que `gap` ne sépare pas, et la capture montrait « Discussion1 ». Il compte
+  ce que la source contient, **pas** ce que le filtre laisse voir. Un compte qui suivrait le filtre vaudrait toujours
   zéro sur une famille éteinte, et ne dirait plus rien.
 
 - **Aucun nom d'acteur.** Troisième application de la règle du §12.5 après la colonne
@@ -386,8 +404,14 @@ s'ajoutent, elles ne les remplacent pas.
   filtres » lorsqu'elles ne le sont pas. Confondre les deux ferait passer un filtre trop restrictif
   pour une affaire sans histoire.
 
-- **Sous 1024 px**, le fil passe sous le formulaire, comme le panneau du §5.10, et la barre de
-  filtres défile horizontalement dans son conteneur plutôt que de se replier (§7).
+- **Sous 1024 px**, le fil passe sous le formulaire, comme le panneau du §5.10.
+
+- **La barre de filtres SE REPLIE, elle ne défile pas** — décision prise après avoir regardé
+  (`docs/JOURNAL.md` décision 212). Écrite d'abord avec un défilement horizontal dans son
+  conteneur, elle laissait « Cycle de vie » **coupé hors du panneau à 1440 px** : la colonne de
+  droite est étroite quelle que soit la largeur de l'écran. Un contrôle dont la dernière option
+  sort du cadre est un contrôle qui **cache** une option, ce que le §7 admet pour un tableau ou un
+  board — dont on sait qu'ils défilent — mais pas pour quatre bascules.
 
 ## 6. Interactions
 

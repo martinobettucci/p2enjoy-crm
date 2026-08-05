@@ -3412,6 +3412,11 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
 ### CRM-043 — Commentaires `[~]`
+> **Repris par `CRM-044`** : le panneau que cette unité a livré est devenu le **fil unifié**, comme
+> le §5.10 du design system l'annonçait. `PanneauCommentaires.tsx` est renommé `PanneauTimeline.tsx`,
+> ses seize tests de composant sont conservés, et deux scénarios d'interface de `CRM-043` sont
+> ajustés — le libellé de la région et le texte de l'état vide. Aucune règle de cette unité ne
+> change ; ses captures sont **renouvelées** (`CLAUDE.md` §16).
 Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.
 **DoD** : API (refus pour un `viewer`) ; E2E ; temps réel constaté.
 
@@ -3710,10 +3715,93 @@ connexion.
       `docs/DESIGN_SYSTEM.md` §5.11, `docs/SPEC-seed.md` §2.15, `docs/DAT.md` §3.2, §4.2 et §7,
       `docs/PROD_MIGRATIONS.md` §3 (migration 16 et son contrat d'exploitation),
       `docs/JOURNAL.md` décisions 203 à 210, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **L'ÉCRAN N'EST PAS LIVRÉ.** Le §5.11 du design system décrit le fil unifié, ses quatre
-      familles de filtres et ses deux vides distincts ; aucun composant ne le rend. La colonne de
-      droite du détail de card porte encore le seul panneau de commentaires de `CRM-043`.
-- [ ] **Aucune preuve d'interface, aucune capture** : elles supposent l'écran.
+- [x] **LE FIL UNIFIÉ EST LIVRÉ, ET IL NE PORTE AUCUNE RÈGLE.** La fusion des deux sources, l'ordre
+      total, les familles, les filtres et la résolution des libellés vivent dans
+      `webapp/src/lib/timeline.ts`, vérifiables sans navigateur ; `PanneauTimeline.tsx` rend. Le
+      panneau de commentaires de `CRM-043` **est repris**, comme le §5.10 l'annonçait — « la
+      première voie d'un fil unifié » —, et la colonne de droite du détail de card porte désormais
+      les deux sources dans **un seul fil**, ordre croissant **non inversé**.
+- [x] **Un commentaire n'écrit AUCUN événement** (décision 209) : la fusion se fait à la **lecture**.
+      Dupliquer produirait deux représentations d'un même fait, dont l'une — immuable — survivrait à
+      la pierre tombale de l'autre. Une assertion pgTAP fige l'absence de tout trigger de timeline
+      sur `card_comments`.
+- [x] **Test unitaire dédié** : `webapp/src/lib/timeline.test.ts` (**17 tests** : familles et leur
+      repli documenté, ordre total **entre** les deux sources, comptes qui suivent la source,
+      filtres, résolution des libellés et ses **échecs**, et le refus de lire un libellé dans le
+      `payload`) et `webapp/src/app/PanneauTimeline.test.tsx` (**26 tests** sur le composant réel,
+      dont dix nouveaux). `npm run test:unit` passe de 438 à **467 tests**.
+- [x] **Preuve d'interface dédiée** : `e2e/ui/timeline.spec.ts`, **14 scénarios** contre le build de
+      production. Le premier n'emploie **aucune substitution** : l'anonyme ouvre la fiche, n'obtient
+      aucune card, et **aucune requête d'événements ne part**. `npm run e2e:ui` passe de 113 à
+      **127**.
+- [x] **QUATRE DÉFAUTS TROUVÉS EN REGARDANT LES CAPTURES, SUITE VERTE** (décision 212) — sixième
+      occurrence. Trois viennent d'une classe utilitaire **hors de l'échelle discrète** du §3 du
+      design system : `gap-1.5` et `size-7` ne produisent **aucune** règle CSS et n'échouent jamais
+      bruyamment — le compte était collé au libellé (« Discussion1 »), et la pastille d'icône
+      n'avait ni taille ni fond. Le quatrième : la barre de filtres **débordait du panneau** à
+      1440 px, « Cycle de vie » coupé. Un cinquième point a été corrigé dans la foulée : quatre
+      bascules à « 0 » au-dessus de « aucun événement ». Les cinq sont corrigés, le §5.11 est repris
+      dans le même changement, et le harnais fige ce qui les a causés.
+- [x] **UNE RÈGLE DU DESIGN SYSTEM A ÉTÉ RETIRÉE APRÈS OBSERVATION** : le filet vertical reliant les
+      événements. La distinction carte / ligne porte déjà seule la lecture, et un filet
+      s'interrompant à chaque prise de parole aurait produit une ligne pointillée sans signification.
+      Retirée avec son motif plutôt que laissée écrite et non tenue.
+- [x] **UN SCÉNARIO D'INTERFACE A ÉTÉ RÉÉCRIT PLUTÔT QUE TEMPORISÉ** (décision 211). Il comptait les
+      requêtes après un clic de filtre et échouait : une requête part bien, mais **le clic n'en est
+      pas la cause** — le fil des commentaires se relit quand l'abonnement temps réel tombe, et la
+      lecture des événements est chaînée à la sienne. La preuve déterministe vit dans le test
+      unitaire ; l'E2E mesure ce que l'utilisateur voit.
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-044/`, **huit captures** —
+      fil unifié, fil filtré, tous filtres éteints, fil vide, et les quatre paliers du §7. Cinq ont
+      été regardées une à une, et quatre défauts en sont sortis.
+- [x] **Les captures de `CRM-037` et de `CRM-043` ont été RENOUVELÉES** (`CLAUDE.md` §16) : la
+      colonne de droite du détail de card a changé. Les captures de `CRM-007`, `CRM-021`, `CRM-041`
+      et `CRM-042`, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
+- [x] `docs/manual.md` chapitre 4.10 réécrit d'après le produit **réellement exécuté** — ce que
+      l'affaire retient d'elle-même, le fait que ces traces ne peuvent être ni fabriquées ni
+      corrigées, et le fait qu'elles ne disent **pas qui** a agi.
+- [x] Harnais complété : `scripts/verify-timeline.sh` rend **74 contrôles, aucune anomalie**, et
+      ajoute quatre gardes d'interface — aucune classe hors échelle, la barre qui se replie, le
+      composant qui ne trie ni ne classe, aucune persistance côté client. **Il a d'abord échoué sur
+      ses propres commentaires** : les contrôles lisent désormais le code, pas la prose.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés une seconde fois dans le MÊME changement** :
+      `SCENARIOS_UI` 113 → **127**.
+- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quatorze unités précédentes : le
+      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
+      connexion. **Quinzième unité consécutive.**
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (aucune écriture cliente
+possible) ; E2E ; captures ». **Les trois sont livrés** — 87 assertions pgTAP dont le refus mesuré
+pour les trois rôles, quatorze scénarios d'interface contre le build de production, huit captures
+observées. Le seul écart est celui de toutes les unités depuis `CRM-011` : les états chargés du fil
+sont prouvés contre des **réponses substituées** (`docs/DESIGN_SYSTEM.md` §12.5), la webapp étant un
+appelant anonyme faute d'écran de connexion. Le contrat de lecture, lui, est prouvé **hors
+interface** avec les jetons réels des trois comptes.
+
+*Limites nommées, non masquées.*
+
+- **Aucun parcours par un utilisateur connecté** : INC-021.
+- **Le motif d'une transition reste perdu** — INC-048, enrichie une seconde fois : sa destination
+  existe désormais **deux fois**, et l'arbitrage porte sur laquelle.
+- **Une card physiquement supprimée emporte sa mémoire** : la clé composite porte `ON DELETE
+  CASCADE`, et un trigger de refus rendrait impossible un geste d'exploitation que la migration 15
+  avait préservé. Deux issues sont écrites au §14.13, aucune n'est prise.
+- **`actor_id` est perdu si le profil disparaît**, et **aucun acteur n'est nommé à l'écran**
+  (INC-014).
+- **Aucun temps réel sur les événements** : un déplacement fait par un tiers pendant que la fiche
+  est ouverte n'apparaît qu'au prochain chargement.
+- **`mail_received`, `mail_sent`, `card_activities` et les pièces jointes** ne sont pas dans le fil :
+  leurs tables n'existent pas. Le §5.3 du design system en annonce cinq sources, deux sont livrées.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits** : démon Docker lancé à la main, `npm ci`
+  précédé d'un `npm config set cafile` (INC-032, INC-042), et `PLAYWRIGHT_CHROMIUM_PATH` renseigné
+  vers le navigateur préinstallé — INC-036, **treizième** occurrence. `./runDev.sh` et `./resetMe.sh`
+  ont été **tentés** et ont l'un et l'autre échoué sur la construction de l'image `webapp`
+  (`SELF_SIGNED_CERT_IN_CHAIN`) : la pile a été démarrée par `docker compose up` en énumérant les
+  treize services autres que `webapp`. Aucune preuve n'en dépend, et aucun script du dépôt n'a été
+  modifié.
+- **Identité Git reposée avant le premier commit** — INC-034 point 2, **sixième** occurrence.
 
 ### CRM-045 — Déplacement d'une card entre channels `[ ]`
 `move_card_to_channel` avec remappage explicite.

@@ -1,9 +1,12 @@
-// @verifies CRM-043 (docs/BACKLOG.md) — rendu réel du panneau de commentaires
-// @verifies docs/SPEC-cards.md §13.4 (la pierre tombale garde sa place), §13.5 (mention
-//           « modifié »), §13.6 (le refus vient du backend), §13.9 (recharger à l'abonnement),
-//           §13.10 (ce que le panneau montre)
-// @verifies docs/DESIGN_SYSTEM.md §5.10 (panneau de commentaires), §5.8 (états systématiques),
-//           §8 (libellé de formulaire, état désactivé lisible), §10 (aucun texte en dur)
+// @verifies CRM-044 (docs/BACKLOG.md) — rendu réel de la timeline unifiée
+// @verifies CRM-043 (docs/BACKLOG.md) — le fil des commentaires, repris par cette unité
+// @verifies docs/SPEC-cards.md §14.10 (ce que le fil unifié montre), §14.6 (aucun libellé dans le
+//           `payload`), §13.4 (la pierre tombale garde sa place), §13.5 (mention « modifié »),
+//           §13.6 (le refus vient du backend), §13.9 (recharger à l'abonnement), §13.10 (ce que
+//           le panneau montre)
+// @verifies docs/DESIGN_SYSTEM.md §5.11 (timeline unifiée), §5.10 (panneau de commentaires),
+//           §5.8 (états systématiques), §8 (libellé de formulaire, état désactivé lisible),
+//           §10 (aucun texte en dur)
 //
 // Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils existent
 // parce que le fil chargé ne peut être vu nulle part ailleurs : la webapp est un appelant anonyme
@@ -16,10 +19,11 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
-import { PanneauCommentaires } from './PanneauCommentaires'
+import { PanneauTimeline } from './PanneauTimeline'
 import { fr } from '../i18n'
 import type { CommentaireLu } from '../lib/commentaires'
 import type { ClientCrm } from '../lib/supabase'
+import type { EvenementLu } from '../lib/timeline'
 
 afterEach(cleanup)
 
@@ -31,6 +35,17 @@ function ligne(partiel: Partial<CommentaireLu> & { id: string }): CommentaireLu 
 		created_at: '2026-08-05T10:00:00.000Z',
 		edited_at: null,
 		deleted_at: null,
+		...partiel,
+	}
+}
+
+function evenement(partiel: Partial<EvenementLu> & { id: string }): EvenementLu {
+	return {
+		card_id: 'card-1',
+		type: 'created',
+		actor_id: null,
+		payload: {},
+		created_at: '2026-08-05T09:00:00.000Z',
 		...partiel,
 	}
 }
@@ -55,28 +70,39 @@ type Journal = {
  */
 function clientFactice({
 	lignes = [],
+	evenements = [],
+	etapes = [],
 	statutCanal = 'SUBSCRIBED',
 	insertion = { error: null, status: 201 },
 	lecture = { error: null as { message: string; code?: string } | null, status: 200 },
 }: {
 	lignes?: readonly CommentaireLu[]
+	evenements?: readonly EvenementLu[]
+	etapes?: readonly { id: string; workflow_nodes_catalog: { label: string } | null }[]
 	statutCanal?: string
 	insertion?: { error: { message: string; code?: string } | null; status: number }
 	lecture?: { error: { message: string; code?: string } | null; status: number }
 } = {}): { client: ClientCrm; journal: Journal } {
 	const journal: Journal = { evenements: [], nbLectures: 0 }
 
-	const chaine = {
-		eq: () => chaine,
-		order: () => chaine,
-		then: (resoudre: (valeur: unknown) => unknown) => {
-			journal.nbLectures += 1
-			return Promise.resolve({
-				data: lecture.error === null ? [...lignes] : null,
-				error: lecture.error,
-				status: lecture.status,
-			}).then(resoudre)
-		},
+	// LE CLIENT DISTINGUE LES TABLES, et il le doit : le panneau lit désormais TROIS sources —
+	// les commentaires, les événements et les étapes du workflow. Un client qui rendrait la même
+	// réponse à toutes projetterait des commentaires en événements, et le test serait vert sur un
+	// produit faux.
+	const chaineDe = (donnees: readonly unknown[], compter: boolean) => {
+		const chaine = {
+			eq: () => chaine,
+			order: () => chaine,
+			then: (resoudre: (valeur: unknown) => unknown) => {
+				if (compter) journal.nbLectures += 1
+				return Promise.resolve({
+					data: compter && lecture.error !== null ? null : [...donnees],
+					error: compter ? lecture.error : null,
+					status: compter ? lecture.status : 200,
+				}).then(resoudre)
+			},
+		}
+		return chaine
 	}
 
 	const canal = {
@@ -92,8 +118,13 @@ function clientFactice({
 	}
 
 	const client = {
-		from: () => ({
-			select: () => chaine,
+		from: (table: string) => ({
+			select: () =>
+				table === 'card_comments'
+					? chaineDe(lignes, true)
+					: table === 'card_events'
+						? chaineDe(evenements, false)
+						: chaineDe(etapes, false),
 			insert: (charge: Record<string, unknown>) => {
 				journal.charge = charge
 				return Promise.resolve(insertion)
@@ -108,7 +139,15 @@ function clientFactice({
 
 function monter(options: Parameters<typeof clientFactice>[0] = {}) {
 	const { client, journal } = clientFactice(options)
-	render(<PanneauCommentaires client={client} idCard="card-1" idWorkspace="ws-1" />)
+	render(
+		<PanneauTimeline
+			client={client}
+			idCard="card-1"
+			idWorkspace="ws-1"
+			idWorkflow="wf-1"
+			libellesChamps={new Map([['champ-1', 'Budget']])}
+		/>,
+	)
 	return journal
 }
 
@@ -266,5 +305,165 @@ describe('le composeur (§13.10)', () => {
 		await utilisateur.tab()
 		await utilisateur.keyboard('{Enter}')
 		await waitFor(() => expect(journal.charge?.['body']).toBe('Au clavier'))
+	})
+})
+
+describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
+	it('range les événements et les commentaires dans un seul fil, du plus ancien au plus récent', async () => {
+		monter({
+			lignes: [ligne({ id: 'c', body: 'Une parole', created_at: '2026-08-05T10:00:00.000Z' })],
+			evenements: [
+				evenement({ id: 'e1', type: 'created', created_at: '2026-08-05T09:00:00.000Z' }),
+				evenement({ id: 'e2', type: 'archived', created_at: '2026-08-05T11:00:00.000Z' }),
+			],
+		})
+
+		const elements = await screen.findAllByRole('listitem')
+		expect(elements).toHaveLength(3)
+		expect(elements[0]?.textContent).toContain(fr['timeline.event.created'])
+		expect(elements[1]?.textContent).toContain('Une parole')
+		expect(elements[2]?.textContent).toContain(fr['timeline.event.archived'])
+	})
+
+	it('résout le libellé d’une étape franchie, sans jamais le lire dans le payload', async () => {
+		monter({
+			evenements: [
+				evenement({
+					id: 'e1',
+					type: 'moved',
+					payload: { from_step_id: 's1', to_step_id: 's2' },
+				}),
+			],
+			etapes: [
+				{ id: 's1', workflow_nodes_catalog: { label: 'Qualification' } },
+				{ id: 's2', workflow_nodes_catalog: { label: 'Relance' } },
+			],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText(/Qualification → Relance/)).not.toBeNull()
+		})
+	})
+
+	// §5.11 : un libellé non résolu n'est PAS une phrase tronquée. La ligne montre le libellé
+	// générique de son type, et aucune concaténation ne produit d'`undefined` à l'écran.
+	it('se replie sur le libellé générique quand une étape est introuvable', async () => {
+		monter({
+			evenements: [
+				evenement({ id: 'e1', type: 'moved', payload: { from_step_id: 's1', to_step_id: 's9' } }),
+			],
+			etapes: [{ id: 's1', workflow_nodes_catalog: { label: 'Qualification' } }],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.moved'])).not.toBeNull()
+		})
+		expect(screen.queryByText(/Qualification/)).toBeNull()
+		expect(screen.queryByText(/undefined/)).toBeNull()
+	})
+
+	it('nomme le champ d’un événement de valeur, d’après les libellés déjà chargés', async () => {
+		monter({
+			evenements: [
+				evenement({ id: 'e1', type: 'field_changed', payload: { field_id: 'champ-1', to: 1 } }),
+			],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText('Budget')).not.toBeNull()
+		})
+	})
+
+	// Le repli d'un type inconnu est DOCUMENTÉ : une mémoire ne cache pas ce qu'elle ne comprend
+	// pas. Le jour où `CRM-054` écrira `mail_received`, le fil le montrera.
+	it('montre un type inconnu plutôt que de le faire disparaître', async () => {
+		monter({ evenements: [evenement({ id: 'e1', type: 'mail_received' })] })
+
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.unknown'])).not.toBeNull()
+		})
+	})
+
+	it('n’affiche AUCUN identifiant d’acteur (INC-014)', async () => {
+		monter({
+			evenements: [evenement({ id: 'e1', actor_id: '5eed0000-0000-4000-8000-000000000011' })],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.created'])).not.toBeNull()
+		})
+		expect(screen.queryByText(/5eed0000/)).toBeNull()
+	})
+})
+
+describe('les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
+	it('rend quatre bascules, toutes actives, dont le compte suit la SOURCE et non le filtre', async () => {
+		monter({
+			lignes: [ligne({ id: 'c' })],
+			evenements: [
+				evenement({ id: 'e1', type: 'created' }),
+				evenement({ id: 'e2', type: 'moved' }),
+			],
+		})
+
+		// La barre n'existe qu'une fois le fil chargé : elle n'a rien à filtrer avant (décision 212).
+		const barre = await screen.findByRole('group', { name: fr['timeline.filters.aria'] })
+		const bascules = within(barre).getAllByRole('button')
+		expect(bascules).toHaveLength(4)
+		for (const bascule of bascules) expect(bascule.getAttribute('aria-pressed')).toBe('true')
+
+		await waitFor(() => {
+			expect(within(barre).getByRole('button', { name: /Étapes/ }).textContent).toContain('1')
+		})
+
+		// Le compte ne bouge pas quand la famille est éteinte : il compte ce que la source porte.
+		await userEvent.click(within(barre).getByRole('button', { name: /Étapes/ }))
+		expect(within(barre).getByRole('button', { name: /Étapes/ }).textContent).toContain('1')
+	})
+
+	it('filtrer masque sans jamais relire : aucune requête supplémentaire n’est émise', async () => {
+		const journal = monter({
+			lignes: [ligne({ id: 'c', body: 'Une parole' })],
+			evenements: [evenement({ id: 'e1', type: 'moved' })],
+		})
+
+		await screen.findByText('Une parole')
+		const lecturesAvant = journal.nbLectures
+
+		await userEvent.click(screen.getByRole('button', { name: /Discussion/ }))
+
+		expect(screen.queryByText('Une parole')).toBeNull()
+		expect(screen.getByText(fr['timeline.event.moved'])).not.toBeNull()
+		expect(journal.nbLectures).toBe(lecturesAvant)
+	})
+
+	// DEUX VIDES DISTINCTS : les confondre ferait passer un filtre trop restrictif pour une
+	// affaire sans histoire.
+	it('distingue « aucun événement » de « aucun élément pour ces filtres »', async () => {
+		monter({ evenements: [evenement({ id: 'e1', type: 'moved' })] })
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.moved'])).not.toBeNull()
+		})
+
+		for (const nom of [/Discussion/, /Étapes/, /Champs/, /Cycle de vie/]) {
+			await userEvent.click(screen.getByRole('button', { name: nom }))
+		}
+		expect(screen.getByText(fr['timeline.filtered.title'])).not.toBeNull()
+
+		cleanup()
+		monter({})
+		await waitFor(() => {
+			expect(screen.getByText(fr['comments.empty.title'])).not.toBeNull()
+		})
+	})
+
+	// `CLAUDE.md` §11 : aucune donnée n'est écrite sur l'appareil, pas même une préférence
+	// d'interface. Le filtre repart complet à chaque ouverture.
+	it('n’écrit aucune préférence sur l’appareil', async () => {
+		monter({ evenements: [evenement({ id: 'e1', type: 'moved' })] })
+		await userEvent.click(await screen.findByRole('button', { name: /Étapes/ }))
+
+		expect(window.localStorage.length).toBe(0)
+		expect(window.sessionStorage.length).toBe(0)
 	})
 })

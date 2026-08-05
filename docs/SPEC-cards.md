@@ -1685,9 +1685,19 @@ l'écran montre ; les règles ci-dessous sont celles du produit.
   champs du formulaire. **Lorsque la résolution échoue** — étape supprimée, champ archivé et non
   chargé —, le fil affiche le type de l'événement sans son détail, et **ne construit aucune phrase
   par concaténation** (`CLAUDE.md` §23, décision reprise de `CRM-041`).
-- **Quatre états** (§5.8), et le vide dit « aucun événement pour le moment » **par filtre** : un
-  filtre qui ne montre rien doit dire qu'il filtre, sinon il se confond avec une affaire sans
-  histoire.
+- **Quatre états** (§5.8), et **deux vides distincts** : « aucun événement pour le moment » quand
+  les deux sources sont vides, « aucun élément pour ces filtres » sinon. Les confondre ferait passer
+  un filtre trop restrictif pour une affaire sans histoire.
+- **La barre de filtres n'est rendue que si le fil chargé porte quelque chose.** Quatre bascules
+  affichant « 0 » au-dessus de « aucun événement » sont un contrôle sans objet — VU sur
+  `docs/captures/CRM-044/fil-vide-1440.jpg` (décision 212). Le seuil porte sur le fil **chargé**,
+  jamais sur le fil filtré : sinon éteindre toutes les familles ferait disparaître le moyen de les
+  rallumer.
+- **Les libellés d'étape sont lus par une requête de plus**, `workflow_steps` du workflow de la
+  card. La fiche ne charge que l'étape **courante** : sans cette lecture, un déplacement
+  n'afficherait **jamais** son détail, et le repli du §5.11 — prévu pour un échec — deviendrait
+  l'état normal. Son échec, lui, n'est pas une erreur du fil : la table de libellés est vide et
+  chaque `moved` se replie, le fil restant lisible.
 
 ### 14.11 Ce que le seed livre
 
@@ -1740,6 +1750,10 @@ Outre le §14.1 :
 - **Aucune recherche dans le fil**, aucun export, aucune plage de dates.
 - **Aucun regroupement par jour.** Vingt-sept lignes n'en demandent pas ; le §12.6 a montré ce que
   coûte une structure bâtie avant sa mesure.
+- **Aucun rafraîchissement des faits.** Le fil des commentaires se met à jour tout seul —
+  `card_comments` est publiée au temps réel — mais un déplacement effectué par un tiers pendant que
+  la fiche est ouverte n'apparaît qu'au prochain chargement. Les événements sont **relus à chaque
+  changement du fil des commentaires**, ce qui est un effet de bord assumé et non une garantie.
 - **Aucun événement pour un commentaire.** Un commentaire *est* dans le fil — il en est la première
   source — mais il n'écrit **pas** de ligne dans `card_events`. Le dupliquer produirait deux
   représentations d'un même fait, dont l'une survivrait à la suppression de l'autre.
@@ -1762,7 +1776,15 @@ Outre le §14.1 :
    l'ordre à ce volume. MESURÉ sur 3 600 lignes : le planificateur choisit un `Bitmap Index Scan`
    suivi d'un `Sort`, l'index servant le **filtre** `card_id` et non le tri. L'index est posé tel
    que `docs/SCHEMA.md` l'annonce, et ce qu'il fait réellement est écrit ici.
-5. **Aucun temps réel** (§14.1). Le fil d'une card ouverte ne bouge pas quand un tiers agit ;
+5. **QUATRE DÉFAUTS ONT ÉTÉ TROUVÉS EN REGARDANT LES CAPTURES, ALORS QUE LES 127 SCÉNARIOS
+   D'INTERFACE ÉTAIENT VERTS** (décision 212). Trois viennent d'une classe utilitaire **hors de
+   l'échelle discrète** du §3 du design system — `gap-1.5` et `size-7` ne produisent **aucune**
+   règle CSS et n'échouent jamais bruyamment : le compte était collé au libellé, et la pastille
+   d'icône n'avait ni taille ni fond. Le quatrième est une composition correcte dans un cas et
+   absurde dans l'autre : la barre de filtres débordait du panneau à 1440 px. Les quatre sont
+   corrigés, et `scripts/verify-timeline.sh` fige ce qui les a causés. **Le point ouvert est le
+   mécanisme** : rien, dans l'outillage, ne signale une classe qui n'existe pas.
+6. **Aucun temps réel** (§14.1). Le fil d'une card ouverte ne bouge pas quand un tiers agit ;
    `card_comments` est publiée, `card_events` ne l'est pas, et le panneau unifié se relit donc
    **entièrement** à chaque événement de commentaire. Le coût est nommé : une requête de plus par
    commentaire reçu.

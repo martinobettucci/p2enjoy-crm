@@ -45,11 +45,11 @@ import { Link, useParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
-import { useContenuCard } from '../lib/formulaire'
+import { useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { FormulaireCard } from './FormulaireCard'
-import { PanneauCommentaires } from './PanneauCommentaires'
+import { PanneauTimeline } from './PanneauTimeline'
 
 /** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
 const CLASSES_RETOUR = [
@@ -135,16 +135,34 @@ function ContenuCard({
 	}
 
 	// DEUX COLONNES sur grand écran, EMPILÉES sous 1024 px (docs/DESIGN_SYSTEM.md §5.3 et §7).
-	// Sous ce palier, la discussion passe SOUS le formulaire, dans l'ordre du document : une
-	// conversation se lit après le dossier qu'elle commente (§5.10).
+	// Sous ce palier, le fil passe SOUS le formulaire, dans l'ordre du document : une histoire se
+	// lit après le dossier qu'elle raconte (§5.10, §5.11).
 	return (
 		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<FormulaireCard modele={etat.donnees.modele} />
-			<PanneauCommentaires
+			<PanneauTimeline
 				client={clientCrm}
 				idCard={etat.donnees.card.id}
 				idWorkspace={etat.donnees.card.workspace_id}
+				idWorkflow={etat.donnees.card.workflow_id}
+				libellesChamps={libellesChamps(etat.donnees.modele)}
 			/>
 		</div>
 	)
+}
+
+/**
+ * Les libellés des champs, tels que la fiche les a DÉJÀ chargés.
+ *
+ * Ils sont pris des deux listes du modèle — celle de l'étape courante ET la section repliée des
+ * autres étapes —, car un événement `field_changed` peut porter sur un champ que l'étape courante
+ * ne montre pas. Aucune requête supplémentaire : le formulaire porte déjà la donnée, et le fil ne
+ * lit jamais un libellé dans le `payload` d'un événement (docs/SPEC-cards.md §14.6).
+ */
+function libellesChamps(modele: ModeleFormulaire): ReadonlyMap<string, string> {
+	const libelles = new Map<string, string>()
+	for (const resolu of [...modele.champs, ...modele.autresEtapes]) {
+		libelles.set(resolu.champ.id, resolu.champ.label)
+	}
+	return libelles
 }

@@ -6702,3 +6702,54 @@ arbitraire, que `CLAUDE.md` §18 range parmi les façons de masquer une erreur.
 **Conséquence.** La croissance du fil n'est pas un défaut à contenir : c'est la **démonstration**
 que la trace est réelle et qu'aucune écriture n'y échappe. C'est la sixième fois qu'une exécution
 dénonce ce qu'une lecture laissait passer.
+
+### Décision 211 — Une preuve d'interface ne comptera pas les requêtes du fil
+
+**Problème, trouvé en exécutant.** Le scénario d'interface « filtrer ne relit rien » comptait les
+requêtes vers `card_events` après le clic. Il a échoué : une requête part bien, et elle **n'est pas
+causée par le clic**. Le fil des commentaires se relit lorsque l'abonnement temps réel se termine en
+erreur — la webapp est anonyme, INC-021 —, et la lecture des événements est **chaînée** à la
+sienne, ce que le §14.13 point 5 nomme comme un coût assumé.
+
+**Décision.** La preuve que filtrer ne relit rien reste **déterministe** et vit dans le test unitaire
+du composant réel, où le nombre de lectures émises est observé. Le scénario d'interface mesure ce
+que l'utilisateur voit : le fil se réduit **sans repasser par un état de chargement**.
+
+**Ce qui a été écarté.** Attendre un délai avant de compter : c'est la temporisation arbitraire que
+`CLAUDE.md` §18 range parmi les façons de masquer une erreur, et elle n'aurait fait que déplacer la
+course.
+
+### Décision 212 — Quatre défauts que les captures ont dénoncés, et qu'aucun test ne voyait
+
+Sixième fois qu'une capture montre ce qu'une suite verte laisse passer (décisions 163, 175, 190,
+199, 202). Les 127 scénarios d'interface étaient **verts** sur les quatre.
+
+1. **`gap-1.5` ne produit AUCUNE règle CSS.** L'échelle d'espacement du §3 du design system est
+   **discrète** — le CSS bâti ne déclare que `--spacing-1` à `--spacing-6` —, et une classe hors
+   échelle est silencieusement ignorée. La capture montrait « Discussion1 », « Cycle de vie2 ». Deux
+   corrections : `gap-2`, et le libellé placé dans son **propre élément** — un nœud de texte nu est
+   un élément flex *anonyme*, que `gap` ne sépare pas de son voisin.
+
+2. **`size-7` non plus.** La pastille d'icône du §5.11 n'avait donc **ni taille ni fond** : l'icône
+   flottait sans son carré coloré. Remplacée par une valeur arbitraire, `size-[1.75rem]`, qui elle
+   est compilée — vérifié dans le CSS bâti.
+
+3. **La barre de filtres débordait du panneau à 1440 px** : « Cycle de vie » était **coupé**. Elle
+   avait été écrite avec un défilement horizontal, règle héritée du §7 pour les tableaux et le
+   board. Mais la colonne de droite est étroite **quelle que soit** la largeur de l'écran, et un
+   contrôle dont la dernière option sort du cadre **cache** une option. La barre se replie
+   désormais ; le §5.11 est corrigé dans le même changement.
+
+4. **Quatre bascules affichant « 0 » surmontaient « aucun événement pour le moment »** : un contrôle
+   sans objet. La barre n'est plus rendue quand le fil chargé est vide. Le seuil porte sur le fil
+   **chargé**, non sur le fil filtré — sinon éteindre toutes les familles ferait disparaître le
+   moyen de les rallumer.
+
+**Une règle du design system a en outre été RETIRÉE après observation** : le filet vertical reliant
+les événements. La distinction carte / ligne porte déjà seule la lecture du fil, et un filet
+s'interrompant à chaque prise de parole aurait produit une ligne pointillée dont les trous ne
+signifiaient rien. Elle est retirée du §5.11 avec son motif, plutôt que laissée écrite et non tenue.
+
+**Ce que ces quatre défauts ont en commun** : aucun n'est une faute de logique, et aucun n'était
+visible d'un test. Trois viennent d'une classe utilitaire qui n'existe pas et qui n'échoue jamais
+bruyamment ; le quatrième d'une composition correcte dans un cas et absurde dans l'autre.
