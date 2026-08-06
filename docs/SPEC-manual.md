@@ -115,13 +115,20 @@ règles du produit, pas des états de la base, et ils ne bougent qu'avec le code
 | Affaires : total, actives, archivées, en corbeille | `cards`, `archived_at`, `deleted_at` |
 | Réponses de formulaire, et affaires qui en portent | `card_field_values` |
 | Commentaires, dont supprimés | `card_comments`, `deleted_at` |
-| Événements d'historique | `card_events` |
 | Comptes de démonstration | `workspace_members` |
 
 **Un nombre de l'annexe A est un ÉTAT, pas un invariant** — la leçon est déjà payée par `CRM-046`
 (décision 226). Le harnais du §7 compare donc l'annexe à la base **du moment**, et exige l'égalité
 sur un seed fraîchement appliqué ; il ne prétend pas que ces nombres seraient vrais après qu'un
 humain a travaillé dans l'espace.
+
+**UNE GRANDEUR EST EXCLUE DE L'ANNEXE, ET LA RÈGLE CI-DESSUS NE SUFFISAIT PAS À L'ÉCARTER.** Le
+**total d'événements d'historique** y figurait ; la première exécution du harnais après la suite
+d'API a rendu « le manuel dit 38, la base dit 73 » (décision 234). Ce total ne fait que croître, et
+croît dès que quiconque touche une affaire — une personne comme une preuve. Une grandeur qui ne peut
+pas être vraie deux fois de suite n'a pas sa place dans une table d'égalités. Ce qui est vérifié à
+sa place est le seul invariant du fil : **aucune affaire sans son événement `created`**, et le
+manuel écrit l'absence plutôt que de la taire.
 
 ## 5. Contrat de captures
 
@@ -213,10 +220,17 @@ Rejouable, hors interface, contre la base réelle. Il vérifie :
 6. **aucun volume mesurable n'est recopié hors de l'annexe A** (§4) ;
 7. le manuel ne porte **aucune valeur de variable d'environnement** ni aucune clé (§3.5).
 
-**Non complaisant.** Le harnais doit être éprouvé **en le mettant en échec** : une copie du manuel
-dont un chiffre de l'annexe est faussé, dont un dossier de captures est retiré et dont un libellé
-est paraphrasé doit produire des anomalies et un code de sortie `1`. Un harnais qu'on n'a jamais vu
-mordre ne prouve pas qu'il mord.
+**Non complaisant, et le seuil est un nombre.** Le harnais est éprouvé **en le mettant en échec**,
+par `--contre-epreuve`, sur une **copie** du manuel — jamais sur le dépôt. Cinq dégradations sont
+posées, **une par famille de contrôle** : un volume de l'annexe faussé, un dossier de captures
+inexistant, une unité citée sans backlog, le libellé faux remis, un volume recopié dans un chapitre.
+La contre-épreuve exige **au moins cinq anomalies**, et non la simple présence d'un échec.
+
+Ce seuil n'est pas une précaution d'écriture : c'est lui qui a trouvé le second défaut de la
+décision 234 — deux contrôles se terminant par `condition && ok` faisaient rendre `1` à leur
+fonction sous `set -e`, de sorte que le harnais s'interrompait **au premier écart** sans jouer les
+suivants. Une contre-épreuve exigeant « au moins une anomalie » l'aurait déclaré non complaisant à
+tort.
 
 ### 7.3 Preuve unitaire
 

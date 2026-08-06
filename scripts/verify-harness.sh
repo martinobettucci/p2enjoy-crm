@@ -222,7 +222,13 @@ SCENARIOS_API=410
 # bascules et leur compte qui suit la SOURCE, le filtre qui masque sans relire, le clavier, les deux
 # vides distincts, l'absence de toute persistance, et les quatre paliers.
 # Valeur MESURÉE, non déduite.
-SCENARIOS_UI=127
+# **136 depuis `CRM-047`** : neuf scénarios de `e2e/ui/manuel.spec.ts`. Huit exercent, SANS AUCUNE
+# SUBSTITUTION, les huit adresses que `docs/manual.md` cite, et exigent le libellé EXACT que le
+# manuel promet — c'est la seule preuve du dépôt dont l'objet est une phrase de documentation. Le
+# neuvième substitue un événement `channel_changed` pour MESURER INC-077, que rien d'autre ne rend
+# visible : le fil n'est jamais atteint par un anonyme.
+# Valeur MESURÉE, non déduite.
+SCENARIOS_UI=136
 
 TRAVAIL=$(mktemp -d)
 failures=0

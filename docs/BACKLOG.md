@@ -4182,10 +4182,100 @@ soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit av
       adresses qu'il cite (décision 233).
 - [x] `docs/JOURNAL.md` décisions 230 à 233, `docs/INCONSISTENCY_REPORT.md` INC-077, `CHANGELOG.md`
       mis à jour dans le même changement que la spécification.
-- [ ] Manuel corrigé, annexe A livrée, chapitre `CRM-045` écrit.
-- [ ] `e2e/ui/manuel.spec.ts` et `scripts/verify-manual.sh`, avec leur contre-épreuve.
-- [ ] Captures renouvelées et **observées** ; jeu `docs/captures/CRM-047/`.
+- [x] **LES DOUZE ÉCARTS DU MANUEL SONT REFERMÉS**, le treizième étant un écart du produit. Le §3.2
+      cesse de dire que les affaires n'ont aucun écran — elles en ont **trois** ; le §4.3 cesse de
+      dire qu'aucune trace de déplacement n'est enregistrée et qu'aucun écran ne porte le geste ; le
+      §4.7 cite désormais « **Card introuvable** », le libellé réel, et reconnaît que le fil occupe
+      sa colonne de droite ; le §4.4 renvoie au bon chapitre ; le §4.6 cesse de ranger `CRM-045`
+      parmi ce qui n'est pas livré.
+- [x] **Le chapitre §4.11 est écrit** — `CRM-045` était promis par le sommaire et n'existait nulle
+      part. Rédigé **après lecture de la fonction réellement installée** : les huit vérifications,
+      le remappage jamais deviné, la perte de réponses qu'il faut accepter, `entered_step_at` qui ne
+      bouge que si l'étape change, et la trace que le fil ne sait pas nommer.
+- [x] **L'annexe A est livrée**, vingt et une grandeurs **mesurées** sur la base. La prose des
+      chapitres renvoie à elle et n'écrit plus aucun volume (décision 231).
+- [x] **UN DÉFAUT RÉEL DE MON PROPRE TRAVAIL, TROUVÉ EN EXÉCUTANT LE HARNAIS** (décision 234) :
+      l'annexe portait « 38 événements », recopié de `CRM-046`. La première exécution après la suite
+      d'API a rendu « le manuel dit 38, la base dit **73** ». Un total d'événements ne se fige pas —
+      c'est la décision 226, que la spécification citait et que l'annexe enfreignait trois cents
+      lignes plus loin. La grandeur **sort de la table**, son absence est expliquée dans le manuel,
+      et l'invariant qui la remplace est vérifié : aucune affaire sans son événement `created`.
+- [x] **UN SECOND DÉFAUT, DANS LE HARNAIS, QUE SEULE LA CONTRE-ÉPREUVE POUVAIT VOIR.** Deux
+      contrôles se terminaient par `condition && ok` : sous `set -e`, la fonction rendait `1` dès
+      qu'une anomalie existait, et le script s'interrompait **au premier écart** sans jouer les
+      suivants. Invisible à toute exécution verte. Trouvé parce que la contre-épreuve exige un
+      **nombre minimal** d'anomalies — cinq, une par famille — et non la simple présence d'un échec.
+- [x] **Preuve d'interface dédiée** : `e2e/ui/manuel.spec.ts`, **9 scénarios verts**. Huit exercent
+      les huit adresses citées par le manuel **en visiteur anonyme réel, sans aucune substitution**,
+      et exigent le libellé **exact** promis au lecteur — la seule preuve du dépôt dont l'objet est
+      une phrase de documentation (décision 233).
+- [x] **INC-077 est MESURÉE, pas déduite** : le neuvième scénario sert un événement
+      `channel_changed` et constate que le fil affiche « Événement », sans nommer les dossiers.
+      Capture observée : `docs/captures/CRM-047/manuel-evenement-sans-nom-1440.jpg`.
+- [x] **Harnais de preuves rejouable** `scripts/verify-manual.sh` : **105 contrôles, aucune
+      anomalie**, et **non complaisant** — cinq dégradations posées sur une **copie** du manuel
+      produisent **6 anomalies** réparties sur les cinq familles de contrôle.
+- [x] **Captures renouvelées et OBSERVÉES.** Le corpus entier a été reproduit depuis l'application
+      réellement exécutée par les 136 scénarios du projet `ui`. Huit images ont été regardées une à
+      une : quatre du jeu `CRM-047` — accueil, track, liste, fiche — et quatre des jeux antérieurs
+      qui portent les chapitres corrigés (`CRM-007`, `CRM-041`, `CRM-042`, `CRM-044`).
+- [x] **Suite pgTAP verte** : 19 fichiers, **1405 assertions**, inchangées — l'unité ne touche
+      aucune table.
+- [x] **Preuves d'API vertes** : **410 scénarios**, inchangés.
+- [x] **Preuves d'interface vertes** : 127 → **136 scénarios**.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run test:unit` vert
+      (**467 tests**, inchangés).
+- [x] **Compteur `SCENARIOS_UI` de `scripts/verify-harness.sh` révisé dans le MÊME changement**, et
+      **mesuré** : 127 → **136**. Le harnais rejoué : **25 contrôles, aucune anomalie**.
+      `scripts/verify-seed-demo.sh` rejoué : **62 contrôles, aucune anomalie**.
+- [x] **Une seconde contradiction consignée sans être résolue** : **INC-078**. Quatre harnais du
+      chunk 3 — `verify-formulaire.sh`, `verify-commentaires.sh`, `verify-timeline.sh`,
+      `verify-move-card-to-channel.sh` — n'apparaissent dans aucune liste du `README.md`. Corriger
+      quatre lignes appartenant à quatre autres unités mêlerait quatre sujets à un commit qui n'en
+      traite qu'un : l'omission est consignée, pas refermée au passage.
+- [x] `docs/SPEC-manual.md`, `docs/manual.md`, `README.md` §5 et §7, `docs/JOURNAL.md` décisions 230
+      à 234, `docs/INCONSISTENCY_REPORT.md` INC-077 et INC-078, `CHANGELOG.md` mis à jour dans le
+      même changement que le code et les preuves.
 - [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les dix-sept unités précédentes.
+      **Dix-huitième unité consécutive.**
+
+*Definition of Done tenue.* Elle demandait « `docs/manual.md` décrit le produit réellement exécuté ;
+captures renouvelées ». **Les deux sont mesurées** : la première par les 105 contrôles de
+`scripts/verify-manual.sh` et les 9 scénarios de `e2e/ui/manuel.spec.ts`, la seconde par la
+reproduction complète du corpus et l'observation de huit images.
+
+*DoD adaptée, écart explicite.* **Aucun test unitaire dédié** : l'unité ne livre aucune logique
+applicative — elle livre un document et deux harnais. Un test unitaire qui lirait un fichier
+Markdown dupliquerait `scripts/verify-manual.sh` dans un exécuteur sans accès à la base, et serait
+donc **plus faible** que la preuve qu'il double (`docs/SPEC-manual.md` §7.3). L'écart est nommé
+plutôt que comblé par un test de façade.
+
+*Limites nommées, non masquées.*
+
+- **Le manuel décrit des écrans que personne ne peut atteindre.** Les captures chargées des
+  chapitres 4.7 à 4.10 proviennent de réponses **substituées sur le réseau**
+  (`docs/DESIGN_SYSTEM.md` §12.5) ; le parcours réel d'un lecteur est celui du jeu `CRM-047` : une
+  suite d'états vides et de refus. INC-021, dix-huitième unité consécutive.
+- **Trois captures du parcours sont identiques** — track, board et liste — parce que le refus
+  anonyme intervient **au niveau du track**, avant que le board ou la liste ne soient atteints.
+  C'est ce que le manuel dit, et non un défaut de la série.
+- **Le harnais vérifie des faits, pas du sens.** Il attrape un chiffre faux, un libellé paraphrasé,
+  une capture disparue, une unité oubliée, un secret recopié. Il n'attrape pas une phrase juste mais
+  trompeuse : la relecture humaine reste la seule preuve de la qualité d'un manuel.
+- **INC-077 n'est pas levée** : le fil ne nomme toujours pas un changement de dossier. Le manuel dit
+  ce que l'écran montre, et trois questions attendent l'arbitrage.
+- **`docs/DAT.md` n'est pas touché** : l'unité ne modifie aucun composant, service, flux, modèle de
+  données ni stratégie de déploiement.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits** : démon Docker lancé à la main,
+  `npm config set cafile` avant `npm ci`, et la pile démarrée par `docker compose up` en énumérant
+  les treize services autres que `webapp`. **INC-042, dixième occurrence** : la construction de
+  l'image `webapp` échoue en `SELF_SIGNED_CERT_IN_CHAIN`, le secret de build `npm_ca` que le
+  `Dockerfile` prévoit n'étant câblé par aucun fichier Compose. **INC-036, dixième occurrence** : le
+  Chromium préinstallé est en version `1194` là où le Playwright épinglé attend `1234` ; le
+  contournement documenté du dépôt — `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun fichier du dépôt
+  n'a été modifié pour cela.
 
 ---
 

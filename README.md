@@ -130,6 +130,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
 | `scripts/verify-seed-demo.sh` | Rejoue les preuves du jeu de démonstration : étapes peuplées, workflow dérivé exercé, aucun channel actif vide, convergence | **disponible** |
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
+| `scripts/verify-manual.sh` | Rejoue les preuves du manuel utilisateur : chiffres de l'annexe A comparés à la base, captures citées, unités couvertes, libellés réels, absence de secret | **disponible** |
+| `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (INC-008, arbitrage ouvert) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
@@ -342,6 +344,7 @@ scripts/verify-preuves-refus.sh # les douze preuves de refus, et la non-complais
 scripts/verify-board.sh        # board kanban : colonnes, glisser-déposer, refus        (CRM-041)
 scripts/verify-liste.sh        # vue liste : tri total, filtres, pagination, 416        (CRM-042)
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
+scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

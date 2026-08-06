@@ -7310,3 +7310,41 @@ lecteur le remarque. C'est exactement l'écart n° 1 des treize.
 `channel_changed`, parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais
 atteint par un anonyme, et aucun jeton n'ouvre d'écran. Il ne prouve pas un parcours ; il mesure
 INC-077 plutôt que de la déduire de la lecture d'un fichier.
+
+### Décision 234 — Le harnais du manuel a trouvé deux défauts, et les deux étaient les miens
+
+**Le premier, dans le manuel que je venais d'écrire.** L'annexe A portait « Événements
+d'historique | 38 », recopié de `CRM-046`. La toute première exécution du harnais **après** la
+suite d'API a rendu : « le manuel dit 38, la base dit **73** ». Le nombre n'était pas faux le jour
+où il a été mesuré ; il est **incapable d'être vrai**, parce qu'un total d'événements ne fait que
+croître et croît dès que quiconque touche une affaire — une personne comme une preuve automatisée.
+
+C'est exactement la leçon de la décision 226, que je venais de citer dans la spécification, et que
+j'ai enfreinte trois cents lignes plus loin en construisant l'annexe. La règle du §4 de
+`docs/SPEC-manual.md` — « un nombre de l'annexe est un ÉTAT » — ne suffisait pas : elle décrivait la
+fragilité sans exclure la grandeur qui ne peut pas la supporter.
+
+**Correction :** la grandeur **sort de la table**, et son absence est expliquée dans le manuel
+plutôt que masquée. Ce qui la remplace est le seul invariant que ce fil possède, et il est vérifié :
+**aucune affaire sans son événement `created`**. Les vingt et une autres grandeurs, elles, sont
+stables — mesuré, elles sont restées égales de part et d'autre des suites pgTAP, d'API et
+d'interface.
+
+**Le second, dans le harnais lui-même, et seule la contre-épreuve pouvait le trouver.** Deux
+contrôles se terminaient par `[ "$trouve" -eq 0 ] && ok "…"`. Sous `set -e`, ce `&&` fait rendre
+**1 à la fonction** dès qu'une anomalie est présente : le script s'interrompait alors **au premier
+écart**, sans jouer les contrôles suivants ni imprimer son verdict. Sur un manuel conforme, `trouve`
+vaut toujours zéro — le défaut était donc **invisible à toute exécution verte**, et le harnais
+aurait paru complet en ne mesurant qu'une partie de ce qu'il annonce.
+
+Il a été trouvé parce que la contre-épreuve exige un **nombre minimal d'anomalies** — cinq, une par
+famille de contrôle — et non la simple présence d'un échec. Un seuil à « au moins une » l'aurait
+laissé passer.
+
+**Conséquence, générale et non locale :** un harnais de ce dépôt ne se termine pas par
+`condition && ok`. La forme est remplacée par un `if` explicite dans les deux contrôles concernés,
+et le motif est écrit dans le fichier à côté de la correction.
+
+**Après correction, mesuré :** 105 contrôles verts sur le manuel réel ; **6 anomalies** sur le
+manuel dégradé, réparties sur les cinq familles visées, et code de sortie `0` pour la
+contre-épreuve.

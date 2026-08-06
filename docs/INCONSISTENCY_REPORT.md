@@ -12,6 +12,36 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-078 — Quatre harnais de preuves du chunk 3 n'apparaissent dans aucune liste du README
+
+**Nature :** référence manquante entre un fichier livré et le document qui l'inventorie.
+**Relevé le :** 2026-08-06, pendant `CRM-047`, en ajoutant `scripts/verify-manual.sh` aux deux
+listes du `README.md`.
+
+Le `README.md` inventorie les harnais à deux endroits — la table des commandes du §5 et le bloc du
+§7. **MESURÉ** : quatre scripts livrés par des unités du chunk 3 n'apparaissent ni dans l'un, ni
+dans l'autre, ni dans `docs/DAT.md` :
+
+| Harnais | Unité qui l'a livré |
+|---|---|
+| `scripts/verify-formulaire.sh` | `CRM-037` |
+| `scripts/verify-commentaires.sh` | `CRM-043` |
+| `scripts/verify-timeline.sh` | `CRM-044` |
+| `scripts/verify-move-card-to-channel.sh` | `CRM-045` |
+
+Les scripts existent, sont exécutables et sont cités par leur unité de backlog : rien n'est cassé.
+Ce qui manque est le **chemin de découverte** — une personne qui lit le `README.md` pour savoir
+quelles preuves rejouer en manquera quatre, et croira l'inventaire complet parce qu'il en liste
+vingt autres.
+
+**Non résolue ici, et le motif est explicite.** `CRM-047` porte le manuel utilisateur, pas le
+`README.md`, et compléter quatre lignes appartenant à quatre autres unités mêlerait quatre sujets
+dans un commit qui n'en traite qu'un (`CLAUDE.md` §1 et §13). L'omission est donc **consignée**
+plutôt que refermée au passage. Elle se corrige en quatre lignes, dans un changement qui lui est
+propre.
+
+**Lié à :** `CRM-037`, `CRM-043`, `CRM-044`, `CRM-045`, `README.md` §5 et §7.
+
 ### INC-077 — Le neuvième type d'événement est écrit par le produit et n'a aucun libellé dans le fil
 
 **Nature :** écart entre un type d'événement livré et prouvé côté serveur, et ce que l'interface
@@ -47,6 +77,12 @@ voit qu'un fait a eu lieu, et n'apprend pas lequel.
 **Le repli n'est pas en cause.** Il est délibéré (`docs/DESIGN_SYSTEM.md` §5.11 : « aucun
 `undefined` n'atteint l'écran », « un libellé non résolu n'est pas une phrase tronquée »). Il est
 fait pour un type inconnu du client — pas pour un type que le produit écrit lui-même.
+
+**Constat associé, observé sur la capture** `docs/captures/CRM-047/manuel-evenement-sans-nom-1440.jpg` :
+le repli emprunte l'icône `Sparkles`, celle de `created`. Sa pastille reste neutre (`--color-hover`)
+là où `created` porte le vert, de sorte que les deux ne se confondent pas — mais l'icône, elle, est
+partagée. Le point est consigné avec le reste, non traité séparément : il disparaîtra avec le
+libellé, ou il devra être tranché avec lui.
 
 **Ce que trois documents disent, et qui ne s'accorde pas :**
 

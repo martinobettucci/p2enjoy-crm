@@ -28,7 +28,35 @@ d'exécuter le code attendu.
 - **INC-077, consignée et non résolue** : `card_events.type` admet neuf valeurs, le fil en sait
   nommer huit. `channel_changed`, écrit par `CRM-045` et présent deux fois dans la base, s'affiche
   « Événement » — un fait dont le fil ne dit pas lequel. Le comportement reste inchangé ; trois
-  questions sont nommées pour l'arbitrage (décision 232).
+  questions sont nommées pour l'arbitrage (décision 232). L'écran n'est **pas** modifié : le manuel
+  dit désormais ce que le fil montre réellement.
+- **Le manuel utilisateur du chunk 3 est à jour du produit exécuté** — `CRM-047`, `docs/manual.md`.
+  Douze écarts refermés : les affaires ont **trois** écrans et non aucun, un déplacement **laisse**
+  une trace et **a** son écran, la fiche affiche « **Card introuvable** » et porte son fil, et
+  `CRM-045` n'est plus rangé parmi ce qui n'est pas livré.
+- **Un chapitre qui manquait est écrit** — §4.11, « Ranger une affaire dans un autre dossier ».
+  `CRM-045` était promis par le sommaire et n'existait nulle part dans le document.
+- **Annexe A, mesurée** : les vingt et un volumes de l'espace de démonstration vivent désormais dans
+  une table unique, comparée à la base à chaque vérification. La prose des chapitres n'écrit plus
+  aucun nombre mesurable.
+- **Preuve d'interface dédiée** `e2e/ui/manuel.spec.ts` : **9 scénarios**, dont huit exercent les
+  huit adresses citées par le manuel **en visiteur anonyme réel, sans aucune substitution**, et
+  exigent le libellé **exact** promis au lecteur. Le neuvième **mesure** INC-077.
+- **Harnais de preuves rejouable** `scripts/verify-manual.sh` : **105 contrôles**, et **non
+  complaisant** — cinq dégradations posées sur une copie du manuel produisent six anomalies.
+- **INC-078, consignée et non résolue** : quatre harnais du chunk 3 n'apparaissent dans aucune liste
+  du `README.md`. Corriger quatre lignes appartenant à quatre autres unités mêlerait quatre sujets à
+  un commit qui n'en traite qu'un.
+
+### Corrigé
+
+- **Deux défauts de `CRM-047` trouvés en exécutant ses propres preuves** (décision 234). L'annexe A
+  portait « 38 événements », recopié de `CRM-046` : un total d'événements ne fait que croître, et la
+  première exécution après la suite d'API a rendu « le manuel dit 38, la base dit 73 ». La grandeur
+  sort de la table, son absence est expliquée, et l'invariant qui la remplace est vérifié. Le second
+  était dans le harnais : deux contrôles terminés par `condition && ok` faisaient rendre `1` à leur
+  fonction sous `set -e`, interrompant le script au premier écart — **invisible à toute exécution
+  verte**, et trouvé parce que la contre-épreuve exige un nombre minimal d'anomalies.
 
 - **Le jeu de démonstration complet** — `CRM-046`, `supabase/seed/apply-seed.sh`. Cinq cards et
   quatre valeurs de formulaire ferment les trois manques mesurés du socle : les **sept** étapes du
