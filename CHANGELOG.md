@@ -15,6 +15,55 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Déplacement d'une card entre channels** — `CRM-045`,
+  `supabase/migrations/0017_move_card_to_channel.sql`. La RPC `move_card_to_channel` déplace une
+  card d'un graphe de workflow à un **autre** : aucune arête n'est franchie, aucune transition
+  n'est consultée, et le remappage de l'étape est **fourni par l'appelant** — jamais deviné, deux
+  workflows pouvant porter le même nœud sans que le déplacement soit équivalent. Huit refus, le
+  droit d'écriture exigé sur les **deux** channels, et `channel_changed` comme **neuvième** type de
+  la timeline. **Aucun privilège de colonne n'est posé** : `CRM-013` avait déjà fermé `channel_id`
+  et `workflow_id`, et la garde était donc close avant d'exister (décision 214).
+- **Les réponses de formulaire d'une card qui change de workflow sont détruites, et jamais en
+  silence** — `discard_field_values` vaut `false`, et le refus porte le **nombre** de réponses
+  perdues. La mémoire survit à la donnée : les `field_changed` de la timeline sont conservés
+  (décision 216). MESURÉ : sans ce traitement, la fonction rendait un `23503` pour **six cards du
+  seed sur neuf**.
+- **Un déplacement écrit UN événement, jamais deux** : la garde `moved` est conditionnée à
+  `channel_id` inchangé, `moved` signifiant « la card a franchi une arête du graphe » (décision
+  215). L'événement est écrit par le **trigger de la table**, donc aussi pour un `PATCH` direct
+  sous `service_role`.
+- **Le seed démontre enfin une card sur un workflow dérivé**, en transit : un aller-retour réel de
+  `…0c5` vers `prospection` par la vraie RPC, avec le jeton de l'administratrice. 29 événements au
+  sortir du seed, convergent au rejeu. INC-046 n'est pas levée pour autant (décision 218).
+- **Preuves** : `supabase/tests/0019_move_card_to_channel.test.sql` (**64 assertions**, les huit
+  vérifications dans les deux sens) — `npm run test:sql` passe de 1337 à **1401** ;
+  `e2e/api/move-card-to-channel.spec.ts` (**18 scénarios** hors interface, jetons réels des trois
+  profils) — `npm run e2e:api` passe de 391 à **409** ;
+  `scripts/verify-move-card-to-channel.sh` (**43 contrôles**, cinq dégradations volontaires).
+
+### Corrigé
+
+- **La pile ne redémarrait plus sur une base seedée** — `CRM-045`, décision 219, INC-074. La
+  migration 16 ramenait le vocabulaire de `card_events` à huit valeurs à chaque rejeu du
+  `migrations-runner`, avant que la 17 ne le rétablisse ; PostgreSQL refusant une contrainte que
+  les lignes présentes violent, le runner sortait en **code 3**. Le défaut était invisible sur une
+  base neuve — les migrations tournent avant le seed — et invisible de toute suite pgTAP, de toute
+  preuve d'API et de tout harnais dédié, qui s'exécutent contre une base déjà migrée. Il a été
+  trouvé par le balayage de non-régression. L'autorité sur le vocabulaire passe désormais à la
+  dernière migration qui l'étend ; aucune garantie de convergence n'est perdue.
+- **Un garde-fou de types de `CRM-034` a joué comme il l'annonçait** et a été **révisé, non
+  retiré** : `webapp/src/lib/database.types.test-d.ts` est resserré sur les **trois** fonctions
+  appelables de `public`, avec la signature et le retour de la nouvelle.
+- **Une affirmation fausse de cette unité, corrigée par vérification** : le commentaire annonçait
+  qu'une assertion « huit valeurs » de `CRM-044` serait retournée. Cette suite éprouve ses types
+  **en écrivant** et n'a jamais compté l'énumération ; aucun garde-fou ne pouvait jouer. Le
+  recensement manquait, et il est désormais porté par la suite de `CRM-045`.
+
+- **INC-074** — la convergence d'INC-035 ne sait pas exprimer « une contrainte dont la définition
+  canonique avance avec les migrations », et **aucun harnais du dépôt ne rejoue le
+  `migrations-runner` sur une base seedée**. Consignée sans être résolue au-delà de la correction
+  locale que la panne imposait.
+
 - **Spécification du déplacement d'une card entre channels** — `CRM-045`,
   `docs/SPEC-workflow-engine.md` §6, `docs/SCHEMA.md` §5 et §9, `docs/SPEC-cards.md` §14.4 et
   §14.6, `docs/SPEC-seed.md` §2.16. Écrite **avant toute ligne de code** et **après mesure sur la

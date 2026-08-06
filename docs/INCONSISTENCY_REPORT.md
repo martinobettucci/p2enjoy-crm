@@ -12,6 +12,60 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-074 — La convergence d'INC-035 ne sait pas exprimer une définition qui avance avec les migrations
+
+**Nature :** limite structurelle d'un mécanisme du dépôt, mesurée.
+**Relevée le :** 2026-08-06, pendant `CRM-045`, par le balayage de non-régression.
+
+Le remède d'INC-035 — `converger_contrainte`, repris par les migrations 11, 13, 15, 16 et 17 —
+REMPLACE une contrainte dont la définition diffère de celle que le fichier déclare. Il rend le
+dépôt convergent, et non seulement idempotent : un objet altéré à la main est réparé au prochain
+démarrage.
+
+Il suppose en revanche qu'**un seul fichier fasse autorité** sur un objet donné. Dès que deux
+migrations déclarent des définitions différentes de la même contrainte, le `migrations-runner` —
+qui rejoue tout le répertoire dans l'ordre à chaque démarrage — les fait se contredire à chaque
+passage. Le cas s'est présenté pour la première fois avec `CRM-045`, qui étend à neuf valeurs le
+`CHECK` de `card_events` créé à huit par `CRM-044` :
+
+```
+ERROR: check constraint "card_events_type_check" of relation "card_events"
+       is violated by some row
+migrations-runner : code de sortie 3
+```
+
+**Ce qui rend le cas pernicieux :** sur une base NEUVE, les migrations tournent avant le seed, aucune
+ligne n'existe, et le rétrécissement passe sans erreur. Le défaut n'apparaît qu'au **deuxième**
+démarrage, ou sur toute base déjà seedée. Aucune suite pgTAP, aucune preuve d'API et aucun harnais
+dédié ne pouvait le voir : tous s'exécutent contre une base déjà migrée.
+
+**Comportement retenu pour ce cas — décision 219 :** l'autorité sur le vocabulaire passe à la
+dernière migration qui l'étend. La 16 crée si absent, la 17 converge. Aucune garantie n'est perdue,
+elle change de fichier. La correction est **locale**, et c'est pourquoi elle n'attend pas
+d'arbitrage : la pile ne redémarrait plus.
+
+**Ce qui reste à arbitrer, et qui dépasse cette unité.** La règle « la dernière migration qui étend
+un objet en devient responsable » n'est écrite nulle part comme convention du dépôt. Elle est
+tenue ici par des commentaires dans deux fichiers, et rien ne la vérifie. Trois issues :
+
+1. **l'inscrire comme convention** dans `docs/SCHEMA.md` ou `docs/MASTER_PLAN.md` §3, et ajouter au
+   harnais un contrôle qui dénonce deux migrations déclarant la même contrainte nommée ;
+2. **doter le mécanisme d'une expression du cumul** — un helper qui ÉLARGIT une énumération au lieu
+   de la remplacer —, ce qui traiterait les `CHECK` de vocabulaire mais pas les autres contraintes ;
+3. **rejouer les migrations dans l'ordre inverse pour la convergence**, ce qui rendrait la dernière
+   déclaration gagnante par construction — au prix d'un runner beaucoup moins lisible.
+
+**Un contrôle manque, quelle que soit l'issue :** aucun harnais du dépôt ne rejoue le
+`migrations-runner` **sur une base seedée**. `scripts/verify-authz.sh` le fait par effet de bord, et
+c'est lui qui a trouvé ce défaut ; `scripts/verify-migrations.sh`, dont c'est pourtant l'objet, ne
+l'a pas vu.
+
+**Lié à :** INC-035 (la convergence des clés étrangères, dont ce mécanisme est né), INC-056 (un
+défaut que seule une base froide pouvait révéler — celui-ci est l'exact symétrique : seule une base
+CHAUDE le révèle), `docs/JOURNAL.md` décision 219.
+
+---
+
 ### INC-073 — `docs/SCHEMA.md` §9 et `docs/SPEC-workflow-engine.md` §6 décrivent deux fonctions différentes sous le même nom
 
 **Nature :** contradiction entre spécifications, sur la signature d'une fonction.

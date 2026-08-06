@@ -1221,6 +1221,56 @@ else
 	info "c1 : déjà réattribuée au moins une fois — rien à faire (convergence par état)"
 fi
 
+# --- Aller-retour de channel : deux `channel_changed`, par la VRAIE RPC ------------------------
+# docs/SPEC-seed.md §2.16, docs/SPEC-workflow-engine.md §6.12, décision 218 — `CRM-045`.
+#
+# CE QUE CE GESTE DÉMONTRE, ET QU'AUCUN AUTRE DU SEED NE DÉMONTRAIT : une card qui suit RÉELLEMENT
+# un workflow DÉRIVÉ. `prospection` est le seul channel du seed rattaché à la copie de portée track
+# créée en section 7 ; INC-046 interdit d'y laisser une card à demeure — le repointage des sections
+# 4 et 7 échouerait au rejeu en 23503. Un ALLER-RETOUR contourne l'obstacle sans le nier : la card
+# emprunte le graphe dérivé, puis rentre, et `prospection` est vide au repos.
+#
+# `…0c5` EST CHOISIE PARCE QU'ELLE NE PORTE AUCUNE RÉPONSE DE FORMULAIRE — MESURÉ, elle est l'une
+# des trois dans ce cas. Le changement de workflow n'a donc rien à détruire, `discard_field_values`
+# reste à `false`, et le seed ne démontre PAS la destruction : il ne le pourrait pas sans cesser
+# d'être convergent, une réponse détruite ne renaissant pas au retour. La destruction est prouvée
+# par `e2e/api/move-card-to-channel.spec.ts`, sur une card qu'elle crée et qu'elle détruit.
+#
+# L'ÉTAPE EST FOURNIE EXPLICITEMENT DANS LES DEUX SENS, et elle le doit : les deux workflows sont
+# distincts, donc `step_mapping_required` refuserait un appel sans étape (§6.4). Les identifiants
+# d'étapes de la copie sont tirés au hasard par `copy_workflow_to_track` — ils ne peuvent pas être
+# écrits en dur, et sont donc LUS par la clé de service.
+
+CARD_CHANNEL=5eed0000-0000-4000-8000-0000000000c5     # Support niveau 2, sans aucune réponse
+CHANNEL_MAINTENANCE=5eed0000-0000-4000-8000-000000000035
+CHANNEL_PROSPECTION=5eed0000-0000-4000-8000-000000000031
+ETAPE_PROSPECT_GLOBAL=5eed0000-0000-4000-8000-000000000061
+
+if [ "$(evenements_de "$CARD_CHANNEL" channel_changed)" = '0' ]; then
+	# Première étape du workflow DÉRIVÉ, lue et non devinée.
+	workflow_derive=$(curl -s "$API/rest/v1/channels?id=eq.$CHANNEL_PROSPECTION&select=workflow_id" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].workflow_id')
+	etape_derivee=$(curl -s \
+		"$API/rest/v1/workflow_steps?workflow_id=eq.$workflow_derive&select=id,position&order=position.asc&limit=1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id')
+	[ -n "$etape_derivee" ] && [ "$etape_derivee" != null ] \
+		|| die "l'étape initiale du workflow dérivé de prospection est introuvable."
+
+	for cible in "$CHANNEL_PROSPECTION:$etape_derivee" "$CHANNEL_MAINTENANCE:$ETAPE_PROSPECT_GLOBAL"; do
+		code=$(api_admin POST /rest/v1/rpc/move_card_to_channel \
+			-d "$(jq -nc --arg c "$CARD_CHANNEL" --arg ch "${cible%%:*}" --arg e "${cible##*:}" \
+			      '{card_id: $c, to_channel_id: $ch, to_step_id: $e}')")
+		attendu "$code" "déplacement de ${CARD_CHANNEL: -2} vers le channel ${cible%%:*}" 200
+	done
+	channel_final=$(jq -r '.channel_id' "$CORPS")
+	[ "$channel_final" = "$CHANNEL_MAINTENANCE" ] || die "l'aller-retour de channel de ${CARD_CHANNEL: -2}
+        n'a pas rendu la card à son channel de départ : « $channel_final »."
+	info "c5 : aller-retour de channel par move_card_to_channel — 2 événements channel_changed"
+	info "     et AUCUN moved : une card qui change de channel ne franchit aucune arête (décision 215)"
+else
+	info "c5 : déjà déplacée de channel au moins une fois — rien à faire (convergence par état)"
+fi
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

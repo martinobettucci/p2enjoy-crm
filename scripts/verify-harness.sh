@@ -144,8 +144,31 @@ PORT_RAPPORT=9323
 # absentes et en ajoute un nouveau. **Cette valeur a d'abord été posée à 392 par déduction, et
 # l'exécution l'a démentie** : la révision d'un compteur se MESURE, comme la décision 141 l'avait
 # déjà établi.
-ASSERTIONS_ATTENDUES=1337
-SCENARIOS_API=391
+# RÉVISÉS UNE DIXIÈME FOIS, LE 2026-08-06, PAR `CRM-045` — le déplacement d'une card entre
+# channels. L'unité ne livre AUCUNE table : elle livre une fonction, une neuvième valeur au
+# vocabulaire de `card_events`, et une cinquième garde au trigger de `cards`.
+# `supabase/tests/0019_move_card_to_channel.test.sql` compte **64 assertions** (forme et privilèges
+# de la fonction, le vocabulaire à neuf valeurs, les huit vérifications dans les DEUX SENS, les
+# effets du succès, `entered_step_at` conditionnelle, l'événement et son payload à six clés,
+# l'ABSENCE de `moved` à côté, les réponses de formulaire dans les trois cas, les colonnes fermées
+# d'avance par `CRM-013`, et ce que l'unité ne livre pas) : 1337 + 64 = **1401**.
+# `e2e/api/move-card-to-channel.spec.ts` livre **18 scénarios** (les seize lignes du contrat du
+# §6.9, plus le refus sur `workflow_id` et l'état laissé par le seed) : 391 + 18 = **409**.
+# `SCENARIOS_UI` est INCHANGÉ : `CRM-045` ne livre aucun écran, et sa Definition of Done est la
+# seule du chunk 3 à ne pas demander de captures (docs/SPEC-workflow-engine.md §6.10).
+#
+# AUCUNE ASSERTION ANTÉRIEURE N'A ÉTÉ RÉVISÉE, ET C'EST LA PREMIÈRE FOIS DEPUIS SIX UNITÉS — le
+# mécanisme de la décision 51 n'a PAS joué sur le vocabulaire, et une vérification l'a établi :
+# `0018_timeline.test.sql` éprouve ses huit types EN ÉCRIVANT, un à un, sans jamais compter
+# l'énumération. Rien ne pouvait donc devenir rouge. Le recensement manquait, et il est désormais
+# porté par `0019`.
+#
+# UN GARDE-FOU A TOUTEFOIS JOUÉ, AILLEURS : `webapp/src/lib/database.types.test-d.ts` annonçait
+# « une troisième fonction la rendra rouge à son tour », et `move_card_to_channel` l'a rendue
+# rouge. Elle est RÉVISÉE, non retirée, et resserrée sur les trois fonctions livrées.
+# Valeurs MESURÉES, non déduites.
+ASSERTIONS_ATTENDUES=1401
+SCENARIOS_API=409
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

@@ -214,7 +214,7 @@ Source de vérité du produit. Contient :
 - les politiques **RLS** de chaque table ;
 - les fonctions `SECURITY DEFINER` d'autorisation (`app.is_workspace_admin`,
   `app.can_read_channel`, `app.can_write_channel`, …) ;
-- les RPC métier (`move_card`, `copy_workflow_to_track`, `queue_outbound_email`, …) ;
+- les RPC métier (`move_card`, `move_card_to_channel`, `copy_workflow_to_track`, `queue_outbound_email`, …) ;
 - les triggers d'audit et de timeline (`card_events`).
 
 Les migrations sont appliquées au démarrage par le conteneur `migrations-runner`, qui rejoue en
@@ -429,7 +429,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) ; fonction `move_card_to_channel`, **déplacement d'une card d'un graphe à un autre** (livrée, `CRM-045`) — aucune arête n'est franchie, le remappage de l'étape est **fourni par l'appelant**, et les réponses de formulaire sont **détruites** quand le workflow change, jamais sans que `discard_field_values` l'ait dit |
 | Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (livrée, `CRM-036`), sa validation par type par trigger, et les fonctions `app.valeur_de_champ_est_vide` et `app.can_write_card` |
 | Cards | `cards` (livrée, `CRM-040`) ; `card_comments` (livrée, `CRM-043`) ; `card_events` (livrée, `CRM-044` — **append-only**, alimentée par cinq triggers, aucune écriture cliente) ; `card_activities`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` — ces cinq dernières ne sont rattachées à aucune unité |
 | Relations | `organizations`, `contacts`, `card_contacts` |

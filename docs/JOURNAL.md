@@ -6878,3 +6878,49 @@ demeure dans `prospection`.
 formulaire : l'aller-retour n'a rien à détruire, `discard_field_values` reste à `false`, et le seed
 reste convergent. Une réponse détruite ne renaîtrait pas au retour ; la destruction est donc prouvée
 par la suite d'API, sur une card qu'elle crée et qu'elle détruit.
+
+### Décision 219 — L'autorité sur une contrainte passe à la dernière migration qui l'étend
+
+**UN DÉFAUT RÉEL, TROUVÉ PAR LE BALAYAGE DE NON-RÉGRESSION ET PAR RIEN D'AUTRE.** Ni la suite
+pgTAP, ni la preuve d'API, ni le harnais dédié de `CRM-045` ne le voyaient : tous s'exécutent
+contre une base déjà migrée. `scripts/verify-authz.sh` rejoue le `migrations-runner`, et lui seul.
+
+```
+ERROR: check constraint "card_events_type_check" of relation "card_events"
+       is violated by some row
+migrations-runner : code de sortie 3
+```
+
+**Le mécanisme.** Le `migrations-runner` ne tient aucun registre et rejoue TOUT le répertoire à
+chaque démarrage (décision 20). La migration 16 employait `converger_contrainte` — le remède
+d'INC-035, qui REMPLACE une contrainte dont la définition diffère de celle que le fichier déclare.
+La migration 17 étend l'énumération à neuf valeurs. Au rejeu, la 16 ramenait donc la contrainte à
+huit AVANT que la 17 ne la rétablisse.
+
+**Sur une base neuve, cela passait inaperçu** : au moment où les migrations tournent, aucune ligne
+n'existe encore, le seed venant après. C'est ce qui explique que le rejeu à froid de cette même
+session ait rendu « 17 fichiers appliqués avec succès » alors que le défaut était déjà là. Sur une
+base portant des `channel_changed` — c'est-à-dire toute base seedée —, PostgreSQL refuse une
+contrainte que les lignes présentes violent, et **la pile ne redémarre plus**.
+
+**La leçon, qui dépasse cette contrainte.** Le mécanisme de convergence suppose qu'UN SEUL fichier
+fasse autorité sur un objet. Il n'a pas d'expression pour « une contrainte dont la définition
+canonique avance avec les migrations ». `CRM-045` est la première unité du projet à étendre un
+objet créé par une unité antérieure ; elle est donc la première à l'exposer.
+
+**Décision : l'autorité change de porteur, la valeur ne change pas.** La migration 16 POSE le
+vocabulaire initial — création si absent, et rien de plus. La dernière migration qui l'étend, la 17,
+en devient responsable et continue de le CONVERGER. Un rétrécissement manuel est toujours réparé,
+par la 17 désormais. Aucune garantie n'est perdue ; elle a changé de fichier.
+
+**Ce qui a été écarté.** Rendre la contrainte de la 16 `NOT VALID` la ferait passer, mais laisserait
+une contrainte non validée sur une base neuve et changerait le texte rendu par
+`pg_get_constraintdef`, donc les assertions de deux suites. Réécrire la 16 avec les neuf valeurs
+ferait dire à `CRM-044` ce qu'elle ne savait pas, et rendrait la section 1 de la 17 redondante —
+au prix d'un fichier qui ne décrirait plus ce que son unité a livré.
+
+**Vérifié** : `migrations-runner` recréé de force sur la base seedée, **code de sortie 0**,
+« 17 fichier(s) appliqué(s) avec succès », et la contrainte relue porte bien ses neuf valeurs.
+
+La limite structurelle est consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-074** : elle
+dépasse cette unité, et la prochaine extension d'un objet existant la rencontrera.

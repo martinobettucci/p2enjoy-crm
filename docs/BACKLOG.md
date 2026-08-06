@@ -3832,8 +3832,124 @@ interface** avec les jetons réels des trois comptes.
 - [x] `docs/SCHEMA.md` §5 et §9, `docs/SPEC-cards.md` §14.4 et §14.6, `docs/SPEC-seed.md` §2.15 et
       §2.16, `docs/JOURNAL.md` décisions 213 à 218, `CHANGELOG.md` mis à jour dans le même
       changement que la spécification.
-- [ ] **Migration, triggers, pgTAP, preuves d'API, seed et harnais** : à livrer. L'unité reste
-      `[~]` tant qu'aucune de ses preuves n'existe.
+- [x] **LA FONCTION EST LIVRÉE, ET LA GARDE ÉTAIT CLOSE AVANT ELLE.**
+      `supabase/migrations/0017_move_card_to_channel.sql` : `public.move_card_to_channel`, ses
+      huit vérifications, `SECURITY DEFINER`, `search_path` vide, `EXECUTE` révoqué de `public` ET
+      nommément d'`anon`. **Aucun privilège de colonne n'est posé** — décision 214, et c'est le
+      premier cas du projet où une unité de sécurité antérieure paie d'avance une unité qui
+      n'existait pas encore. Un contrôle du harnais et quatre assertions pgTAP défendent désormais
+      un privilège qu'**aucune migration ne pose**.
+- [x] **UN SEUL ÉVÉNEMENT, ET JAMAIS UN `moved` À CÔTÉ** (décision 215). `channel_changed` est la
+      **neuvième** valeur du vocabulaire, et la garde `moved` est conditionnée à `channel_id`
+      inchangé : une card qui change de workflow n'a franchi **aucune arête**, et il ne peut pas y
+      en avoir entre deux graphes disjoints. Rien n'est perdu — le `payload` porte l'étape d'avant
+      et celle d'après, donc **plus** que le `moved` qu'il remplace. Le trigger est sur la TABLE :
+      un `PATCH` direct sous `service_role` produit l'événement lui aussi, ce qu'une assertion
+      mesure.
+- [x] **UNE PERTE QU'AUCUN DOCUMENT N'AVAIT VUE, ET QUI N'EST JAMAIS SILENCIEUSE** (décision 216).
+      MESURÉ : `card_field_values` porte `(card_id, workflow_id) → cards (id, workflow_id)` sans
+      `ON UPDATE CASCADE`, donc changer le workflow d'une card qui porte une réponse est refusé en
+      `23503` — **six cards du seed sur neuf**. Les réponses sont détruites, et le quatrième
+      paramètre `discard_field_values` vaut `false` : le refus `field_values_would_be_lost` porte
+      leur **nombre** en `DETAIL`. La mémoire, elle, survit à la donnée : les `field_changed` sont
+      conservés, et une assertion le prouve.
+- [x] **Test unitaire dédié** : `supabase/tests/0019_move_card_to_channel.test.sql`, **64
+      assertions**, dont les huit vérifications **dans les deux sens**. `npm run test:sql` passe de
+      1337 à **1401**.
+- [x] **Preuve d'API dédiée, hors interface, avec les jetons réels des trois profils** :
+      `e2e/api/move-card-to-channel.spec.ts`, **18 scénarios** — les seize lignes du contrat du
+      §6.9, plus le refus sur `workflow_id` et l'état laissé par le seed. `npm run e2e:api` passe
+      de 391 à **409**. **Preuves de refus n° 1 et n° 5 reconduites**, la seconde sur `channel_id`.
+- [x] **Seed étendu sans changer d'un iota l'état qu'il livrait** : un aller-retour de `…0c5` vers
+      `prospection`, par la **vraie RPC** et avec le **jeton de l'administratrice**, conditionné par
+      une relecture. 29 événements au sortir du seed, et le rejeu n'en ajoute **aucun** : vérifié.
+      Le seed démontre enfin une card sur un **workflow dérivé** — en transit, jamais à demeure
+      (décision 218). **INC-046 n'est PAS levée** : elle porte sur le workflow d'un *channel*.
+- [x] **`entered_step_at` est CONDITIONNELLE** (décision 217) : remise à `now()` si l'étape change,
+      **inchangée** sinon — un changement de dossier ne fait entrer la card nulle part. `position`
+      est en revanche **toujours** recalculée : changer de channel change de portée.
+- [x] **Harnais de preuves rejouable** `scripts/verify-move-card-to-channel.sh` : **43 contrôles,
+      aucune anomalie**, et **non complaisant** — cinq dégradations volontaires le font réellement
+      échouer, dont la plus fine : la garde `moved` désinhibée, que seule l'assertion « aucun
+      `moved` » voit. La restauration est **constatée**.
+- [x] **UN DÉFAUT RÉEL DE MES PROPRES PREUVES, TROUVÉ EN EXÉCUTANT** — seconde occurrence de la
+      décision 210. Deux assertions comptaient un **cumul** d'événements que d'autres suites du
+      dépôt font varier : vertes seules, rouges dans la suite complète. Elles mesurent désormais
+      un **écart**, pris avant et après le déplacement.
+- [x] **UN SECOND DÉFAUT, DE LA MÊME FAMILLE, TROUVÉ PAR UN GARDE-FOU DE `CRM-034`.** Le scénario
+      *l* déplaçait une card du seed ; `e2e/api/move-card.spec.ts` a échoué, le rang maximal de sa
+      colonne valant 3 au lieu de 2. Le motif n'est pas un défaut du produit, **c'est le produit** :
+      `position` est toujours recalculée, et un aller-retour ne la rend jamais. Le scénario opère
+      désormais sur une card qu'il crée et qu'il détruit, et un contrôle du harnais fige les rangs
+      du seed.
+- [x] **UN TROISIÈME DÉFAUT, ET LE PLUS GRAVE — INC-074, décision 219.** Trouvé par le **balayage de
+      non-régression** et par rien d'autre. La migration 16 converge le vocabulaire vers huit
+      valeurs, la 17 vers neuf ; le runner rejouant tout le répertoire à chaque démarrage, la 16
+      ramenait la contrainte en arrière — et PostgreSQL refuse une contrainte que les lignes
+      présentes violent. **`migrations-runner` sortait en code 3, la pile ne redémarrait plus.**
+      Invisible sur une base neuve, où les migrations tournent avant le seed ; invisible de toute
+      suite pgTAP, de toute preuve d'API et de tout harnais dédié, qui s'exécutent contre une base
+      déjà migrée. Corrigé : l'autorité sur le vocabulaire passe à la dernière migration qui
+      l'étend. **Vérifié** — runner recréé de force sur la base seedée, **code 0**, neuf valeurs
+      relues.
+- [x] **Une contradiction consignée sans être résolue** : **INC-073** (`step_mapping` désignait un
+      déplacement en lot). Une **limite structurelle** consignée de même : **INC-074**, la
+      convergence d'INC-035 ne sait pas exprimer une définition qui avance avec les migrations.
+- [x] **Un garde-fou de types a joué comme il l'annonçait** : `database.types.test-d.ts` disait
+      « une troisième fonction la rendra rouge à son tour ». Elle l'a rendue rouge. **Révisé, non
+      retiré**, et resserré sur les trois fonctions livrées, avec la signature et le retour de la
+      nouvelle.
+- [x] **AUCUN GARDE-FOU DE VOCABULAIRE N'A JOUÉ, ET UNE VÉRIFICATION L'A ÉTABLI.** J'avais écrit
+      que l'assertion « huit valeurs » de `0018_timeline.test.sql` serait retournée par cette
+      unité : **c'était faux**. Cette suite éprouve ses huit types **en écrivant**, un à un, et n'a
+      jamais compté l'énumération — le mécanisme de la décision 51 ne pouvait pas jouer. Le
+      recensement manquait ; il est désormais porté par `0019`, et échouera à la dixième valeur.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run types:check` vert
+      après régénération, `npm run test:unit` vert (**467 tests**, inchangés : aucune interface).
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement**, et **mesurés,
+      non déduits** : 1337 → **1401** assertions, 391 → **409** scénarios d'API. `SCENARIOS_UI`
+      inchangé à 127 — cette unité ne livre aucun écran.
+- [x] `docs/SPEC-workflow-engine.md` §6 (treize sous-chapitres), `docs/SCHEMA.md` §5 et §9,
+      `docs/SPEC-cards.md` §14.4 et §14.6, `docs/SPEC-seed.md` §2.15 et §2.16, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` §3 (migration 17 et son contrat d'exploitation **destructif**),
+      `docs/manual.md` chapitre 7 bis, `docs/JOURNAL.md` décisions 213 à 219, `CHANGELOG.md` mis à
+      jour dans le même changement.
+- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quinze unités précédentes : le
+      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
+      connexion. **Seizième unité consécutive.**
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (remappage obligatoire,
+événement écrit) ; E2E ». **Les trois sont livrés** — 64 assertions pgTAP dont le remappage
+obligatoire dans les deux sens et l'événement écrit avec son payload complet, et 18 scénarios d'API
+hors interface avec les jetons réels des trois profils. Cette unité est **la seule du chunk 3 dont
+la Definition of Done ne demande pas de captures**, et le motif est écrit au §6.10 : elle ne livre
+aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran, donc aucun test E2E d'interface et aucune capture.** La preuve E2E est une preuve
+  d'**API**. C'est conforme à la DoD de l'unité, et ce n'est pas un parcours utilisateur.
+- **Aucun parcours par un utilisateur connecté** : INC-021, seizième unité consécutive.
+- **Les réponses de formulaire détruites ne se récupèrent pas.** `card_field_values` n'a pas
+  d'historique ; seuls les `field_changed` de la timeline subsistent, **sans libellé** — l'écran
+  résout les libellés dans les champs du workflow courant et ne les y trouve plus (§6.10).
+- **INC-046 n'est pas levée** : le workflow d'un channel peuplé reste inchangeable, et l'option 2
+  de son arbitrage — une RPC qui remappe l'étape de toutes les cards d'un channel — reste une unité
+  de backlog qui n'existe pas.
+- **Aucun déplacement en lot** : INC-073, en attente d'arbitrage.
+- **Aucun harnais du dépôt ne rejoue le `migrations-runner` sur une base SEEDÉE** : INC-074. Le
+  défaut le plus grave de cette unité a été trouvé par `verify-authz`, par effet de bord, alors que
+  `verify-migrations` — dont c'est l'objet — ne l'a pas vu.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits** : démon Docker lancé à la main,
+  `npm config set cafile` avant `npm ci` (INC-032, INC-042), et la pile démarrée par
+  `docker compose up` en énumérant les treize services autres que `webapp`. `./runDev.sh` **et**
+  `./resetMe.sh` ont été **tentés** et ont l'un et l'autre échoué sur la construction de l'image
+  `webapp` (`SELF_SIGNED_CERT_IN_CHAIN`) — INC-042, **huitième** occurrence, prédiction vérifiée
+  une nouvelle fois. `./resetMe.sh` avait toutefois **détruit le cluster avant d'échouer**, ce qui
+  a permis un vrai rejeu à froid des dix-sept migrations. Aucun script du dépôt n'a été modifié.
+- **Identité Git reposée avant le premier commit** — INC-034 point 2, **septième** occurrence.
 
 ### CRM-046 — Seed de démonstration complet `[ ]`
 Trois tracks, plusieurs channels, workflows distincts dont un dérivé, cards à toutes les étapes,

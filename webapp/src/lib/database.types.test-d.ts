@@ -533,10 +533,17 @@ type _laSeuleVue = Expect<Equal<keyof Database['public']['Views'], 'workflow_der
 
 // RÉVISÉ UNE SECONDE FOIS PAR `CRM-034` (mécanisme de la décision 51, et l'assertion avait bien
 // annoncé le moment : « une fonction de plus les rendrait rouges »). `move_card` est la deuxième
-// fonction appelable de `public` (docs/SPEC-workflow-engine.md §5.2). L'assertion est **resserrée
-// sur les deux qui sont livrées**, et non relâchée : une troisième la rendra rouge à son tour.
-type _lesDeuxFonctions = Expect<
-  Equal<keyof Database['public']['Functions'], 'copy_workflow_to_track' | 'move_card'>
+// fonction appelable de `public` (docs/SPEC-workflow-engine.md §5.2).
+//
+// RÉVISÉ UNE TROISIÈME FOIS PAR `CRM-045`, ET L'ANNONCE S'EST ENCORE VÉRIFIÉE : « une troisième la
+// rendra rouge à son tour ». `move_card_to_channel` est la troisième
+// (docs/SPEC-workflow-engine.md §6.2). L'assertion est **resserrée sur les trois qui sont
+// livrées**, et non relâchée : une quatrième la rendra rouge à son tour.
+type _lesTroisFonctions = Expect<
+  Equal<
+    keyof Database['public']['Functions'],
+    'copy_workflow_to_track' | 'move_card' | 'move_card_to_channel'
+  >
 >
 
 // La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,
@@ -572,6 +579,34 @@ type _retourDeplacementPorteLEtape = Expect<
 >
 type _retourDeplacementPorteLInstant = Expect<
   Equal<Database['public']['Functions']['move_card']['Returns']['entered_step_at'], string>
+>
+
+// La signature de `move_card_to_channel` est celle du contrat du §6.2 : `to_step_id` et
+// `discard_field_values` FACULTATIFS, les deux identifiants exigés. Le caractère facultatif du
+// troisième paramètre est une propriété du produit et non un détail de génération — « si le
+// workflow cible est identique, l'étape est conservée par défaut » (§6.4).
+type _signatureChangementDeChannel = Expect<
+  Equal<
+    Database['public']['Functions']['move_card_to_channel']['Args'],
+    { card_id: string; discard_field_values?: boolean; to_channel_id: string; to_step_id?: string }
+  >
+>
+
+// LE RETOUR EST LA LIGNE, comme pour `move_card` et pour le même motif mesuré : le client obtient
+// le channel, le workflow, l'étape et `position` recalculés SANS relecture (§6.2).
+type _retourChangementEstUnObjet = Expect<
+  Equal<
+    Database['public']['Functions']['move_card_to_channel']['Returns'] extends unknown[]
+      ? true
+      : false,
+    false
+  >
+>
+type _retourChangementPorteLeChannel = Expect<
+  Equal<Database['public']['Functions']['move_card_to_channel']['Returns']['channel_id'], string>
+>
+type _retourChangementPorteLeWorkflow = Expect<
+  Equal<Database['public']['Functions']['move_card_to_channel']['Returns']['workflow_id'], string>
 >
 
 // Toutes les colonnes d'une vue sont nullables du point de vue du générateur : PostgreSQL ne porte
@@ -643,13 +678,17 @@ export type AssertionsDuContratDeTypes = [
   _etapesInsertRequis,
   _relationsWorkspaceMembers,
   _laSeuleVue,
-  _lesDeuxFonctions,
+  _lesTroisFonctions,
   _signatureCopie,
   _retourCopie,
   _signatureDeplacement,
   _retourDeplacementEstUnObjet,
   _retourDeplacementPorteLEtape,
   _retourDeplacementPorteLInstant,
+  _signatureChangementDeChannel,
+  _retourChangementEstUnObjet,
+  _retourChangementPorteLeChannel,
+  _retourChangementPorteLeWorkflow,
   _vueToutNullable,
   _aucunEnum,
   _aucunTypeCompose,

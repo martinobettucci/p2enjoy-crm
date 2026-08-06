@@ -6,6 +6,8 @@
 -- @spec docs/SPEC-permissions-rls.md §3.6 (`app.can_read_card`), §4 (politiques par famille),
 --       §7 (preuve de refus n° 8, désormais satisfaisable pour moitié)
 -- @spec docs/DAT.md §3.2 (triggers d'audit et de timeline), §4.2 (déplacement d'une card)
+-- @spec CRM-045 (docs/BACKLOG.md) — section 1 seulement : l'autorité sur le vocabulaire passe
+--       à la dernière migration qui l'étend (docs/JOURNAL.md décision 219, INC-074)
 -- @spec docs/PROD_MIGRATIONS.md §3 (migrations en attente)
 -- @spec docs/JOURNAL.md décisions 203 (triggers sur les tables, non dans les RPC), 204
 --       (`clock_timestamp()`), 205 (le seed ne peut pas forger un événement), 206 (une trace ne
@@ -128,11 +130,44 @@ create table if not exists public.card_events (
 -- l'archivage et la corbeille sont RÉVERSIBLES, et un cycle de vie dont la moitié des transitions
 -- ne laisse aucune trace n'est pas une mémoire.
 
-select app.migration_0016_converger_contrainte(
-	'public.card_events', 'card_events_type_check',
-	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
-	'''archived''::text, ''unarchived''::text, ''trashed''::text, ''restored''::text, '
-	'''field_changed''::text])))');
+-- CETTE CONTRAINTE EST CRÉÉE SI ELLE MANQUE, ET JAMAIS RAMENÉE EN ARRIÈRE — CORRIGÉ PAR `CRM-045`,
+-- décision 219, après un DÉFAUT RÉEL constaté par le balayage de non-régression.
+--
+-- Elle employait `app.migration_0016_converger_contrainte`, comme les autres contraintes de cette
+-- migration. Le mécanisme de convergence d'INC-035 REMPLACE la contrainte lorsque sa définition
+-- diffère de celle que le fichier déclare — ce qui est exactement ce qu'il faut, tant qu'UN SEUL
+-- fichier fait autorité sur l'objet.
+--
+-- `CRM-045` étend l'énumération à NEUF valeurs dans la migration 17. Le `migrations-runner` ne
+-- tient aucun registre et rejoue TOUT le répertoire à chaque démarrage (décision 20) : au rejeu, ce
+-- fichier-ci ramenait donc la contrainte à huit valeurs AVANT que la 17 ne la rétablisse. Sur une
+-- base neuve cela passait inaperçu ; sur une base portant des `channel_changed`, PostgreSQL refuse
+-- une contrainte que les lignes présentes violent, et le runner sortait en **code 3**. MESURÉ :
+--
+--   ERROR: check constraint "card_events_type_check" of relation "card_events"
+--          is violated by some row
+--
+-- La pile ne redémarrait plus. CE QUI EST CHANGÉ EST DONC L'AUTORITÉ, ET NON LA VALEUR : ce
+-- fichier POSE le vocabulaire initial, la dernière migration qui l'étend en devient responsable et
+-- continue de le CONVERGER — un rétrécissement manuel est toujours réparé, par la migration 17
+-- désormais. Rien n'est perdu ; la garantie a changé de porteur.
+--
+-- La limite structurelle du mécanisme est consignée en `docs/INCONSISTENCY_REPORT.md`, INC-074 :
+-- la convergence d'INC-035 ne sait pas exprimer « une contrainte dont la définition canonique
+-- avance avec les migrations ».
+do $$
+begin
+	if not exists (
+		select 1 from pg_constraint
+		 where conrelid = 'public.card_events'::regclass
+		   and conname  = 'card_events_type_check'
+	) then
+		alter table public.card_events add constraint card_events_type_check
+			check (type = any (array['created', 'moved', 'assigned', 'archived', 'unarchived',
+			                         'trashed', 'restored', 'field_changed']));
+	end if;
+end;
+$$;
 
 comment on table public.card_events is
 	'CRM-044 — docs/SPEC-cards.md §14. Mémoire d''une affaire, APPEND-ONLY. Alimentée par CINQ '
