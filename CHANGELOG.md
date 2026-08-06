@@ -15,6 +15,29 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification du jeu de démonstration complet** — `CRM-046`, `docs/SPEC-seed.md` §9, écrite
+  **après mesure de la pile réelle** et avant toute ligne de code. Dix sous-chapitres opposables :
+  ce que le socle satisfait déjà, les trois manques chiffrés, la levée de l'obstruction du §9.1 de
+  `docs/SPEC-cards.md` par convergence, les cinq cards ajoutées, les deux identifiants que le
+  produit tire lui-même, le formulaire vide du workflow dérivé, ce que chaque profil voit, le
+  contrat de reproductibilité de `resetMe.sh`, quatorze preuves exigées et ce que le jeu ne livre
+  toujours pas.
+- **Trois manques du seed, mesurés et non supposés** — `realisation` **0 card**, `livre` **1 card
+  archivée**, `perdu` **0 card**, le workflow **dérivé** 0 card à ses sept étapes, et le channel
+  actif `prospection` 0 card : l'écran vide que l'énoncé de `CRM-046` proscrit. Quatre des six
+  exigences de l'énoncé sont en revanche **déjà satisfaites** par le socle, et l'unité ne les
+  refait pas (décision 220).
+- **L'obstruction du §9.1 re-mesurée** — une card posée dans `prospection` fait échouer le seed
+  **en section 4**, HTTP `409`, `23503`, code de sortie `1` ; la card retirée, le seed repasse en
+  `0`. La levée retenue est une **convergence par état** — relire avant d'écrire, en section 4 et
+  en section 7 —, et non un relâchement de la clé étrangère, qui trancherait INC-046 par
+  implémentation (décision 221).
+- **INC-075** — un channel consenti par le backend est **inatteignable par la navigation du
+  produit**. MESURÉ avec le jeton réel du `viewer` : il lit `prospection` par droit fin sous un
+  track fermé, et ne lit pas le track `conseil-ia` ; la coquille résolvant le track avant ses
+  channels, la route rend « Track introuvable ». Trois issues nommées, aucune tranchée
+  (décision 224).
+
 - **Déplacement d'une card entre channels** — `CRM-045`,
   `supabase/migrations/0017_move_card_to_channel.sql`. La RPC `move_card_to_channel` déplace une
   card d'un graphe de workflow à un **autre** : aucune arête n'est franchie, aucune transition

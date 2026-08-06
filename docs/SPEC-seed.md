@@ -28,8 +28,9 @@ Le seed est un **contrat maintenu**, pas un jeu de données de confort. Trois r�
 
 Le seed **socle** de `CRM-005` couvre l'identité et le cloisonnement, seules tables livrées à ce
 jour. Il grandit avec le produit : toute unité qui introduit une table, un statut, un flux ou une
-règle métier étend le seed **dans le même changement** (`CLAUDE.md` §8). `CRM-046` livrera le jeu
-de démonstration complet.
+règle métier étend le seed **dans le même changement** (`CLAUDE.md` §8). `CRM-046` porte le jeu de
+démonstration complet, spécifié au **§9** : ce que le socle laisse vide, ce qui le comble, et ce qui
+reste hors de portée.
 
 ## 2. Ce que le seed socle livre
 
@@ -174,6 +175,13 @@ ligne seedée reconnaissable immédiatement dans la base, dans un journal ou dan
 | Tracks | `…000000000021` et suivants (`CRM-020`) |
 | Channels | `…000000000031` et suivants (`CRM-021`) |
 | Nœuds du catalogue | `…000000000041` et suivants (`CRM-030`) |
+| Workflows, étapes, champs | `…000000000051`, `…000000000061`, `…000000000081` et suivants (`CRM-031`, `CRM-035`) |
+| Cards | `…0000000000c1` à `…0000000000ce` (`CRM-040`, étendue par `CRM-046`) |
+| Commentaires | `…0000000000d1` et suivants (`CRM-043`) |
+
+**Deux valeurs échappent à cette règle, et c'est le produit qui l'impose** : l'identifiant du
+workflow **dérivé** et ceux de ses sept étapes sont tirés par `copy_workflow_to_track`. Le seed les
+résout à l'exécution par la clé de nœud, jamais par une constante — voir §9.4.
 
 Les identifiants restent des UUID valides : version `4`, variant `8`. Aucun outil ne les distingue
 d'un identifiant produit par `gen_random_uuid()` autrement que par leur préfixe.
@@ -660,11 +668,260 @@ l'histoire s'allonge, de deux lignes.
   est nommé ici pour que `CRM-014` sache qu'il devra soit étendre le seed, soit continuer de
   fabriquer ses propres comptes. Ce n'est pas une contradiction, seulement une frontière d'unité.
 - **Aucun droit fin.** Voir §2.2 : les tables cibles n'existent pas.
-- **Aucune card, aucun message.** Les tracks, les channels, le catalogue de nœuds et le workflow
-  par défaut sont désormais seedés (`CRM-020`, `CRM-021`, `CRM-030`, `CRM-031`) ; les cards et les
-  messages restent l'objet de `CRM-046`.
+- **Aucun message.** Les tracks, les channels, le catalogue de nœuds, le workflow par défaut, les
+  champs, les cards, leurs valeurs, leurs commentaires et leur timeline sont désormais seedés
+  (`CRM-020`, `CRM-021`, `CRM-030`, `CRM-031`, `CRM-035`, `CRM-036`, `CRM-040`, `CRM-043`,
+  `CRM-044`, `CRM-045`). Les **messages** relèvent du chunk 4 et d'aucune unité de ce chapitre.
+  Ce que le socle laisse vide — trois étapes sans card, un workflow dérivé inexercé, un channel
+  actif vide — est comblé par `CRM-046`, spécifié au §9.
 - **Aucun écran, aucune vérification visuelle.** Le seed n'atteint pas l'interface, dont le premier
   écran arrive avec `CRM-007`.
 - **Le seed ne crée pas ses comptes depuis le produit.** Le parcours d'invitation n'a aucun
   composant pour le porter (INC-015) : la création reste une opération d'exploitation, comme pour
   `CRM-011`.
+
+---
+
+## 9. Le jeu de démonstration complet — `CRM-046`
+
+Le §2 décrit le **socle**, grandi unité par unité jusqu'à `CRM-045`. Ce chapitre décrit ce que
+`CRM-046` y ajoute, et il est écrit **après mesure de la pile réelle**, seedée par
+`supabase/seed/apply-seed.sh` à la version `0017` des migrations. Chaque nombre cité ci-dessous a
+été relu en base ; aucun n'est déduit d'une lecture du script.
+
+L'énoncé de backlog demande : « Trois tracks, plusieurs channels, workflows distincts dont un
+dérivé, cards à toutes les étapes, cas d'erreur et branches alternatives, **aucun écran vide** ».
+Sa Definition of Done ajoute : « `resetMe.sh` reproduit exactement le même état ; chaque
+fonctionnalité livrée est démontrable depuis le seed ».
+
+### 9.1 Ce qui manque, mesuré et non supposé
+
+Trois des quatre exigences de l'énoncé sont **déjà satisfaites** par le socle, et le dire évite de
+refaire ce qui existe : trois tracks actifs plus un archivé, six channels sur ces tracks dont un
+archivé, et **deux** workflows dont un dérivé — `Cycle commercial — Conseil IA`, copie de portée
+`track` produite par `copy_workflow_to_track`.
+
+Ce qui manque tient en trois manques, tous mesurés le 2026-08-06 sur la pile de développement :
+
+| Manque | Mesure |
+|---|---|
+| **Trois étapes sur sept ne portent aucune card active** | `realisation` : 0 card ; `livre` : 1 card, **archivée** ; `perdu` : 0 card. Sur un board de sept colonnes, trois sont vides quel que soit le profil |
+| **Le workflow dérivé ne porte aucune card, à aucune de ses sept étapes** | 0 card sur les sept étapes de la copie. Il est seedé, il est rattaché à `prospection`, et **rien ne l'exerce** |
+| **Un channel actif est vide** | `prospection` : 0 card. Sa route `/tracks/conseil-ia/prospection` rend un board sans aucune colonne peuplée — l'écran vide que l'énoncé proscrit |
+
+Les cinq autres channels ne sont pas concernés : `grands-comptes` porte 3 cards actives, `refonte`
+1, `maintenance` 1, `inter-entreprises` 2, et `appels-offres` est archivé — un channel masqué n'a
+aucun écran à remplir.
+
+### 9.2 L'obstruction, re-mesurée, et comment elle est levée
+
+Le §2.12 et `docs/SPEC-cards.md` §9.1 disent depuis `CRM-040` pourquoi aucune card ne vit dans
+`prospection`. L'obstruction a été **re-mesurée** avant d'être levée, et non reprise de confiance :
+une card posée dans `prospection` sur le workflow dérivé, puis le seed rejoué, échoue
+
+```
+[4. Channels]
+ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
+        {"code":"23503","details":"Key (id, workflow_id)=(…031, fa9f0f61-…) is still referenced
+         from table \"cards\"", "message":"update or delete on table \"channels\" violates foreign
+         key constraint \"cards_channel_id_workflow_id_fkey\" on table \"cards\""}
+```
+
+code de sortie `1`. La mesure confirme mot pour mot ce que le §9.1 de `docs/SPEC-cards.md`
+annonçait.
+
+**La cause n'est pas la clé étrangère : c'est que le seed écrit deux fois de suite le workflow de
+ce channel alors que la valeur finale est déjà en place.** Deux écritures sont en cause, et une
+seule suffirait à faire échouer le seed :
+
+1. **section 4**, qui recrée les six channels en envoyant `workflow_id = <workflow global>` — donc
+   ramène `prospection` en arrière avant que la section 7 ne le renvoie sur la copie ;
+2. **section 7**, qui « libère » le channel vers le workflow global pour pouvoir ramener la copie à
+   son track déclaré, puis l'y rattache de nouveau.
+
+Aucune des deux n'est nécessaire lorsque la base est **déjà conforme au contrat**. La levée est donc
+une **convergence par état**, exactement le mécanisme déjà employé aux §2.14 et §2.15 pour les
+commentaires et les événements : le seed relit avant d'écrire, et n'écrit que ce qui diverge.
+
+- **Section 4.** Le `workflow_id` de `prospection` n'est envoyé que si le channel **n'est pas déjà**
+  rattaché à la copie déclarée. Sur une base neuve la copie n'existe pas encore, la valeur envoyée
+  est le workflow global, et la section 7 fera le rattachement. Sur une base conforme, la colonne
+  n'est pas envoyée du tout : la branche de mise à jour de l'`upsert` ne touche que les colonnes
+  transmises, et la clé étrangère n'a rien à vérifier.
+- **Section 7.** La séquence libérer → converger → rattacher n'est jouée que si la copie **diverge**
+  de son contrat — portée, track, nom, défaut, archivage — ou si `prospection` ne la suit pas. Sur
+  une base conforme, la section ne fait **aucune écriture** et le dit.
+
+**Ce que cette levée ne fait pas, et qui reste nommé.** INC-046 n'est **pas** levée : changer le
+workflow d'un channel peuplé reste refusé en `23503`, et c'est la règle voulue. Le seed cesse
+seulement de le **tenter** quand il n'y a rien à changer. Il subsiste donc un cas où le seed échoue
+légitimement : une base dont la copie a été déplacée à la main **et** dont `prospection` porte des
+cards. Le seed le détecte et le nomme — message explicite citant INC-046 — plutôt que de laisser
+lire un `23503` brut.
+
+### 9.3 Les cards ajoutées
+
+Cinq cards, portant le rang `…0ca` à `…0ce` dans la famille des cards du §4. Aucune n'est
+décorative : chacune ferme un des trois manques du §9.1.
+
+| Id | Channel | Workflow | Étape | Titre | Ce qu'elle ferme |
+|---|---|---|---|---|---|
+| `…0ca` | `prospection` | **dérivé** | `prospection` | Cadrage data — Groupe Vallier | le channel vide **et** le workflow dérivé inexercé |
+| `…0cb` | `prospection` | **dérivé** | `negociation` | Assistant IA support — Nordis | deux colonnes peuplées sur le board dérivé, et non une seule |
+| `…0cc` | `refonte` | global | `realisation` | Portail adhérents — MGEN Loire | l'étape `realisation`, vide partout |
+| `…0cd` | `grands-comptes` | global | `livre` | Socle analytique — Vertuo | l'étape `livre`, dont la seule card est **archivée** |
+| `…0ce` | `inter-entreprises` | global | `perdu` | Cursus DevSecOps — Institut Berthier | l'étape `perdu`, vide, et la **branche alternative** du graphe |
+
+Après extension, **les sept étapes du workflow global portent au moins une card active**, et le
+workflow dérivé en porte deux. Neuf cards deviennent **quatorze** : neuf actives au socle plus
+cinq, soit **douze actives**, une archivée, une en corbeille — les deux suppressions douces restent
+démontrées, et leur proportion cesse d'être trompeuse.
+
+**`…0ce` est le seul cas d'affaire perdue du seed.** Son étape exige `motif-perte`
+(`form_field_rules`, `required` à l'étape `perdu`), et la card le porte : une affaire perdue sans
+motif serait une donnée que le produit refuse de produire lui-même.
+
+**Aucune card n'est ajoutée à `appels-offres`.** Le channel est archivé ; y poser une card
+peuplerait un écran que le produit ne montre pas.
+
+### 9.4 Les identifiants du workflow dérivé ne sont pas stables, et le seed les résout
+
+Le §4 pose que tout identifiant du seed est fixé dans le script. **Deux valeurs échappent à cette
+règle, et c'est le produit qui l'impose** : `copy_workflow_to_track` crée le workflow copié et ses
+sept étapes avec `gen_random_uuid()`. Mesuré : la copie porte `fa9f0f61-9f4a-4a03-b235-90b823cfd236`
+sur la base de vérification, et une autre valeur sur toute autre base.
+
+Les cards `…0ca` et `…0cb` ne peuvent donc pas porter un `workflow_id` ni un `current_step_id`
+écrits dans le contrat. Le seed les **résout à l'exécution**, par la clé de nœud du catalogue —
+`prospection` et `negociation` —, qui est elle stable :
+
+```
+GET /rest/v1/workflow_steps?workflow_id=eq.<copie>&select=id,node_id,workflow_nodes_catalog(key)
+```
+
+Trois conséquences, écrites ici pour qu'aucune preuve ne les redécouvre :
+
+- **les identifiants des cards restent stables** : seules leurs deux clés étrangères sont résolues ;
+- **une preuve ne peut pas figer le `workflow_id` de `…0ca`** ; elle fige la **clé du nœud** de son
+  étape, ou l'identifiant du channel ;
+- **si la copie manque, le seed échoue** en le disant, au lieu de poser les deux cards sur le
+  workflow global — ce qui aurait produit un seed vert et un contrat faux.
+
+### 9.5 Le formulaire du workflow dérivé est vide, et c'est INC-037
+
+MESURÉ : `form_fields` ne porte **aucune** ligne sur le workflow dérivé ; les sept champs sont
+déclarés sur le seul workflow global. `copy_workflow_to_track` ne copie pas les champs — le
+non-livré est écrit en tête de `supabase/migrations/0007_copie_workflow.sql`, et l'arbitrage est
+INC-037.
+
+Conséquence pour ce jeu de démonstration, **assumée et non compensée** : les cards `…0ca` et `…0cb`
+ne portent **aucune valeur de formulaire**, et leur fiche affiche une section de formulaire vide.
+Ce n'est pas un écran vide au sens de l'énoncé — le board et la liste du channel sont peuplés —,
+c'est la conséquence visible d'INC-037, et le seed ne la maquille pas en déclarant des champs que
+la fonction du produit n'a pas copiés. La clé étrangère composite
+`card_field_values (field_id, workflow_id)` refuserait d'ailleurs toute valeur ainsi fabriquée, en
+`23503`.
+
+### 9.6 Valeurs de formulaire, commentaires et événements
+
+**Quatre valeurs ajoutées**, quatorze deviennent **dix-huit** :
+
+| Card | Champ | Valeur | Motif |
+|---|---|---|---|
+| `…0cc` *réalisation* | `lien-proposition` | `"https://p2enjoy.fr/propositions/mgen-loire"` | l'arête *signature → réalisation* l'**exige** (`require_fields`) : une card à cette étape sans ce champ décrirait un franchissement impossible |
+| `…0cc` | `budget` | `64000` | — |
+| `…0cd` *livré* | `budget` | `210000` | la seule affaire **gagnée** active ; sans montant, le cumul du board serait muet à cette colonne |
+| `…0ce` *perdu* | `motif-perte` | `"…"` | l'étape l'**exige** (§9.3) |
+
+**Aucun commentaire n'est ajouté, et le motif est écrit.** Les cinq commentaires du §2.14 couvrent
+déjà le fil à deux auteurs, la modification, la suppression et l'auteur `viewer`. `card_comments`
+ne porte **aucune** référence à un workflow : un commentaire posé sur une card du workflow dérivé
+ne démontrerait rien qu'un `card_id` ne démontre déjà. Une ligne de plus serait décorative, ce que
+`CLAUDE.md` §8 proscrit.
+
+**Neuf événements naissent des triggers**, 29 deviennent **38** : cinq `created` pour les cinq
+cards, quatre `field_changed` pour les quatre valeurs. Le seed n'en forge aucun — il ne le peut
+pas, le §2.15 l'établit.
+
+### 9.7 Ce que chaque profil voit, après extension
+
+Le contrat « aucun écran vide » n'a de sens que **par profil** : la RLS et les droits fins du
+socle ne rendent pas la même arborescence à trois comptes différents. L'état mesuré **avant**
+extension, avec les jetons réels des trois comptes, est le suivant :
+
+| Profil | Tracks lus | Channels lus | Cards actives lues |
+|---|---|---|---|
+| `admin` Camille Aubert | 4 | 6 | 7 |
+| `business_developer` Driss Lemoine | 4 | 6 | 7 |
+| `viewer` Farida Nowak | 3 | 4 | 4 |
+
+Après extension, le contrat exigé est : **tout channel actif lisible par un profil lui rend au
+moins une card active**, et **toute étape du workflow d'un channel lisible porte au moins une card
+active dans au moins un channel lisible**. Les deux formulations sont vérifiables par requête, et
+`scripts/verify-seed-demo.sh` les vérifie pour les trois profils.
+
+**Un cas résiste, et il est nommé plutôt que corrigé.** Le `viewer` lit le channel `prospection` —
+un `channel_members.access = 'member'` le lui rouvre sous un track fermé, « le plus spécifique
+gagne », ligne f du §3 de `docs/SPEC-permissions-rls.md` — mais **il ne lit pas le track
+`conseil-ia`**, et la coquille résout le track **avant** ses channels. Le channel lui est donc
+consenti par le backend et **inatteignable par la navigation du produit**. Les cards `…0ca` et
+`…0cb` y sont bien lues par son jeton, ce qu'une preuve d'API mesure ; aucun écran ne les lui
+montre. Consigné en **INC-075**, sans résolution implicite : corriger cela engage soit la politique
+des tracks, soit la coquille, et ni l'un ni l'autre n'appartient à `CRM-046`.
+
+### 9.8 Convergence et reproductibilité
+
+La Definition of Done exige que « `resetMe.sh` reproduise exactement le même état ». Deux
+propriétés distinctes, et le seed doit les deux :
+
+1. **Convergence** — le seed rejoué sur une base déjà seedée n'ajoute aucune ligne, n'en modifie
+   aucune, et sort en `0`. C'est la propriété que le §9.2 restaure pour `prospection`.
+2. **Reproductibilité à froid** — `resetMe.sh` détruit le cluster, rejoue les dix-sept migrations
+   puis le seed, et l'état obtenu est **identique** à celui d'avant destruction, aux valeurs que le
+   produit tire lui-même près.
+
+Ce qui **ne peut pas** être identique, et qui est donc exclu de la comparaison, est nommé
+exhaustivement : l'identifiant et l'horodatage du workflow dérivé et de ses sept étapes (§9.4), les
+identifiants des lignes `card_events`, et toutes les colonnes `created_at`, `updated_at`,
+`derived_at`, `entered_step_at`. Tout le reste — identifiants, slugs, positions, montants, devises,
+états, `email_local_part`, rattachements — est comparé ligne à ligne.
+
+La comparaison est faite par une **empreinte** : la même requête ordonnée, exécutée avant et après,
+dont la sortie est hachée. Deux empreintes égales prouvent l'identité ; une empreinte différente
+nomme la table qui a bougé.
+
+### 9.9 Preuves exigées
+
+Exécutées **hors interface**, contre l'API réelle et la base, par
+`scripts/verify-seed-demo.sh` :
+
+| # | Scénario | Attendu |
+|---|---|---|
+| 1 | Les cinq cards du §9.3 existent, avec leurs identifiants fixes, leur channel et leur étape | Conforme |
+| 2 | Les sept étapes du workflow **global** portent chacune ≥ 1 card **active** | Conforme |
+| 3 | Le workflow **dérivé** porte ≥ 1 card active à ≥ 2 étapes distinctes | Conforme |
+| 4 | Tout channel **actif** porte ≥ 1 card active | Conforme — `appels-offres` exclu, archivé |
+| 5 | Les deux cards du workflow dérivé désignent bien la **copie**, jamais le workflow global | `workflow_id` = copie, résolu à l'exécution |
+| 6 | Aucune valeur de formulaire sur le workflow dérivé | 0 ligne — conséquence d'INC-037, figée |
+| 7 | Les quatre valeurs du §9.6 existent, et `…0cc` porte `lien-proposition` | Conforme |
+| 8 | 14 cards, dont **12 actives**, une archivée, une en corbeille | Conforme |
+| 9 | 18 valeurs, 5 commentaires, **38** événements | Conforme |
+| 10 | Le seed est **rejouable avec des cards dans `prospection`** : second passage, sortie `0` | Aucune écriture en sections 4 et 7, aucun `23503` |
+| 11 | Une dérive du rattachement de `prospection` est **rattrapée** | Le seed ramène le channel sur la copie |
+| 12 | Pour chacun des **trois** profils, tout channel actif lisible rend ≥ 1 card active | Conforme |
+| 13 | Le `viewer` lit les cards de `prospection` par son droit fin, **et** ne lit pas son track | INC-075, mesuré et figé |
+| 14 | Empreinte du §9.8 **avant** et **après** un `resetMe.sh` complet | Empreintes égales |
+
+Le harnais doit être **non complaisant** : sa sévérité est éprouvée en faussant réellement le jeu —
+une card retirée d'une étape, le rattachement de `prospection` défait, une valeur supprimée — et en
+exigeant qu'il échoue à chaque fois, puis en constatant la restauration.
+
+### 9.10 Ce que ce jeu ne livre toujours pas
+
+- **Aucun message, aucune pièce jointe.** `card_messages` et le sous-système de messagerie relèvent
+  du chunk 4 (`CRM-050` à `CRM-059`). L'énoncé de `CRM-046` n'en demande pas.
+- **Aucune valeur de formulaire sur le workflow dérivé** : INC-037, §9.5.
+- **Aucun second workspace, aucun compte extérieur** : inchangé depuis le §8.
+- **Aucune vérification visuelle d'un parcours connecté** : INC-021. Les écrans peuplés par ce jeu
+  ne sont observables qu'avec des réponses réseau substituées, comme depuis `CRM-041`.
+- **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, §9.7.

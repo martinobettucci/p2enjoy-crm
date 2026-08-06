@@ -3951,11 +3951,63 @@ aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
   a permis un vrai rejeu à froid des dix-sept migrations. Aucun script du dépôt n'a été modifié.
 - **Identité Git reposée avant le premier commit** — INC-034 point 2, **septième** occurrence.
 
-### CRM-046 — Seed de démonstration complet `[ ]`
+### CRM-046 — Seed de démonstration complet `[~]`
 Trois tracks, plusieurs channels, workflows distincts dont un dérivé, cards à toutes les étapes,
 cas d'erreur et branches alternatives, aucun écran vide.
 **DoD** : `resetMe.sh` reproduit exactement le même état ; chaque fonctionnalité livrée est
 démontrable depuis le seed.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-seed.md` §9 : l'unité tenait
+      en **cinq lignes** écrites à `CRM-000`, qui commandent un jeu de données neuf sans dire ce
+      que le seed livre déjà — vingt-cinq unités plus tard — ni ce qui lui manque réellement.
+      Réécrite en dix sous-chapitres opposables, **après mesure sur la pile réelle**. Commit
+      documentaire dédié, poussé avant la première ligne de code.
+- [x] **Ce qui a été mesuré avant d'être écrit** (décisions 220 à 224) : quatre des six exigences
+      de l'énoncé sont **déjà satisfaites** par le socle ; deux ne le sont pas, et le manque est
+      chiffré — `realisation` **0 card**, `livre` **1 card archivée**, `perdu` **0 card**, le
+      workflow dérivé **0 card à ses sept étapes**, le channel `prospection` **0 card** ;
+      l'obstruction du §9.1 de `docs/SPEC-cards.md` **re-mesurée** (section 4, HTTP `409`, `23503`,
+      sortie `1`), avec sa contre-épreuve ; l'arborescence lue par les **trois** jetons réels
+      (4/6/7 lignes pour l'`admin` et le `business_developer`, **3/4/4** pour le `viewer`) ; et
+      l'absence totale de `form_fields` sur la copie.
+- [x] **L'unité ne réécrit pas le seed** (décision 220) : cinq cards, quatre valeurs, **aucun**
+      commentaire, aucun nouveau track ni channel. Un jeu refait aurait invalidé les identifiants
+      que vingt-cinq unités, leurs suites pgTAP, leurs preuves d'API et leurs captures citent
+      nommément.
+- [x] **L'obstruction se lève par convergence, pas par relâchement** (décision 221) : les deux
+      écritures inutiles — `workflow_id` de `prospection` en section 4, séquence de libération en
+      section 7 — deviennent conditionnées par une relecture. **INC-046 n'est PAS levée** : changer
+      le workflow d'un channel peuplé reste refusé, et le seed cesse seulement de le tenter quand
+      il n'y a rien à changer.
+- [x] **Deux identifiants échappent au §4 et le produit l'impose** (décision 222) : la copie et ses
+      sept étapes naissent de `gen_random_uuid()`. Le seed les résout **par la clé de nœud**, et
+      aucune preuve ne peut figer le `workflow_id` de `…0ca`.
+- [x] **INC-037 est constatée, pas compensée** (décision 223) : les deux cards du workflow dérivé
+      ne portent aucune valeur de formulaire, et l'absence est **figée par une preuve** plutôt que
+      maquillée par sept champs déclarés à la main.
+- [x] **Une contradiction consignée sans être résolue implicitement** : **INC-075** (décision 224).
+      Le `viewer` lit le channel `prospection` par droit fin sous un track fermé — ligne f du §3 de
+      `docs/SPEC-permissions-rls.md`, la mesure même qui a clos INC-030 — mais la coquille résout le
+      track **avant** ses channels : le droit existe côté serveur et **n'a aucun chemin côté
+      produit**. Trois issues nommées, aucune tranchée.
+- [x] `docs/SPEC-seed.md` §1, §4, §8 et §9, `docs/JOURNAL.md` décisions 220 à 224,
+      `docs/INCONSISTENCY_REPORT.md` INC-075, `CHANGELOG.md` mis à jour dans le même changement que
+      la spécification.
+- [ ] **Le code n'est pas écrit.** Ni les cinq cards, ni les quatre valeurs, ni la convergence des
+      sections 4 et 7 de `supabase/seed/apply-seed.sh`.
+- [ ] **Aucune preuve du §9.9 n'existe** : `scripts/verify-seed-demo.sh` reste à écrire, et ses
+      quatorze contrôles avec lui.
+- [ ] **Les compteurs figés par les unités antérieures ne sont pas révisés.** 9 cards deviendront
+      14, 14 valeurs 18, 29 événements 38 : les garde-fous de `verify-cards.sh`,
+      `verify-valeurs-champs.sh`, `verify-move-card.sh`, `verify-colonnes-protegees.sh`,
+      `verify-preuves-refus.sh`, `e2e/api/cards.spec.ts`, `e2e/api/valeurs-champs.spec.ts`,
+      `e2e/api/move-card.spec.ts`, `e2e/api/timeline.spec.ts`,
+      `supabase/tests/0015_colonnes_protegees.test.sql` et `supabase/tests/0018_timeline.test.sql`
+      deviendront rouges et devront être **révisés, jamais retirés** (décision 51).
+- [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les seize unités précédentes.
+
+*État réel : spécification livrée et poussée, implémentation non commencée.* L'unité reste `[~]`
+et le restera tant que les trois points ci-dessus ne sont pas faits.
 
 ### CRM-047 — Manuel utilisateur du chunk 3 `[ ]`
 **DoD** : `docs/manual.md` décrit le produit réellement exécuté ; captures renouvelées.

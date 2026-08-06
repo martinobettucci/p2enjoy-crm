@@ -6924,3 +6924,140 @@ au prix d'un fichier qui ne décrirait plus ce que son unité a livré.
 
 La limite structurelle est consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-074** : elle
 dépasse cette unité, et la prochaine extension d'un objet existant la rencontrera.
+
+---
+
+### Décision 220 — `CRM-046` ne recommence pas le seed : il comble trois manques mesurés
+
+**Contexte.** L'énoncé de `CRM-046` — « Trois tracks, plusieurs channels, workflows distincts dont
+un dérivé, cards à toutes les étapes, cas d'erreur et branches alternatives, aucun écran vide » —
+se lit comme la commande d'un jeu de données neuf. Écrit à `CRM-000`, il précède de vingt-cinq
+unités le seed qui existe aujourd'hui.
+
+**Ce qui a été mesuré avant d'écrire quoi que ce soit**, le 2026-08-06, sur la pile réelle seedée à
+la migration `0017` :
+
+| Exigence de l'énoncé | État mesuré |
+|---|---|
+| Trois tracks | **satisfaite** — trois actifs, un archivé |
+| Plusieurs channels | **satisfaite** — six, dont un archivé, sur trois tracks |
+| Workflows distincts dont un dérivé | **satisfaite** — `Cycle commercial standard` (global) et sa copie de portée `track` |
+| Cards à toutes les étapes | **fausse** — `realisation` 0 card, `livre` 1 card **archivée**, `perdu` 0 card |
+| Cas d'erreur et branches alternatives | **satisfaite** — card sans responsable, sans montant, archivée, en corbeille, transition refusée pour champ requis vide, arête à `require_fields`, commentaire supprimé |
+| Aucun écran vide | **fausse** — `prospection` : 0 card ; le workflow dérivé : 0 card à ses sept étapes |
+
+**Décision : l'unité ne réécrit pas le seed, elle ferme les trois manques.** Cinq cards, quatre
+valeurs de formulaire, aucun commentaire, aucun nouveau track ni channel. Le motif est le §1 de
+`CLAUDE.md` — « ne pas remplacer une solution existante fonctionnelle sans justification
+technique » — et le §8 — aucune ligne décorative. Un jeu de données refait aurait invalidé les
+identifiants que vingt-cinq unités, leurs suites pgTAP, leurs preuves d'API et leurs captures
+citent nommément.
+
+**Conséquence.** Les compteurs figés par les unités antérieures changent — 9 cards deviennent 14,
+14 valeurs 18, 29 événements 38 — et les garde-fous qui les portent deviendront rouges. C'est le
+mécanisme de la décision 51 : ils sont **révisés, jamais retirés**, dans le même changement.
+
+---
+
+### Décision 221 — L'obstruction du §9.1 de `SPEC-cards` se lève par convergence, pas par relâchement
+
+**Problème.** Aucune card ne pouvait vivre dans `prospection` : le seed y repointe le workflow deux
+fois — section 4 vers le global, section 7 vers la copie —, et la clé étrangère composite
+`cards (channel_id, workflow_id)` refuse ce déplacement dès qu'une card occupe le channel. C'est ce
+qui rendait le workflow dérivé inexerçable, donc l'écran vide.
+
+**Re-mesuré avant d'agir**, et non repris de confiance : une card posée dans `prospection` sur le
+workflow dérivé, puis `apply-seed.sh` rejoué, échoue **en section 4**, HTTP `409`, `23503`,
+« Key (id, workflow_id)=(…031, fa9f0f61-…) is still referenced from table "cards" », code de sortie
+`1`. Contre-épreuve : la card retirée, le seed repasse en `0`, 9 cards.
+
+**Trois issues étaient ouvertes.**
+
+1. **Relâcher la clé étrangère** — supprimer `cards_channel_id_workflow_id_fkey`, ou lui donner
+   `ON UPDATE CASCADE`. **Écartée** : elle est la garde qui interdit qu'une card se retrouve sur un
+   workflow étranger à son channel, et INC-046 attend précisément l'arbitrage de ce qu'un
+   changement de workflow doit faire des cards. La lever ici trancherait INC-046 par
+   implémentation.
+2. **Poser les cards sur le workflow global dans `prospection`** — le channel porte la copie, la
+   clé refuserait. Et si elle acceptait, le contrat serait faux : le board lit les étapes du
+   workflow **du channel**.
+3. **Cesser d'écrire ce qui n'a pas à changer.** Retenue.
+
+**Décision : convergence par état, en deux points.** La section 4 n'envoie le `workflow_id` de
+`prospection` que si le channel ne porte pas déjà la copie déclarée ; la section 7 ne joue sa
+séquence libérer → converger → rattacher que si la copie **diverge** de son contrat ou si le
+channel ne la suit pas. Sur une base conforme, **aucune écriture** n'est faite sur ces deux points,
+et la clé étrangère n'a rien à vérifier.
+
+Ce n'est pas un mécanisme nouveau : c'est exactement celui des §2.14 et §2.15, où les commentaires
+modifié et supprimé, et les trois allers-retours de la timeline, sont conditionnés par une
+relecture. Le seed relit avant d'écrire.
+
+**Ce que la décision ne fait pas.** INC-046 n'est **pas** levée : changer le workflow d'un channel
+peuplé reste refusé, et doit le rester. Il subsiste un cas d'échec légitime — une copie déplacée à
+la main **et** des cards dans `prospection` —, que le seed doit **nommer** en citant INC-046 plutôt
+que de laisser lire un `23503` brut.
+
+---
+
+### Décision 222 — Deux identifiants du seed sont tirés par le produit, et le seed les résout par la clé de nœud
+
+**Problème.** Le §4 de `docs/SPEC-seed.md` pose que tout identifiant du seed est fixé dans le
+script. Les cards `…0ca` et `…0cb` vivent sur le workflow **dérivé**, dont l'identifiant et ceux de
+ses sept étapes sont produits par `copy_workflow_to_track` avec `gen_random_uuid()`. MESURÉ : la
+copie porte `fa9f0f61-9f4a-4a03-b235-90b823cfd236` sur la base de vérification, valeur qu'aucune
+autre base ne reproduira.
+
+**Écarté : forcer les identifiants de la copie.** Il aurait fallu soit poser la copie par `INSERT`
+au lieu d'appeler la fonction du produit — ce que `CLAUDE.md` §8 proscrit —, soit réécrire ses
+identifiants après coup, ce qui ferait mentir le lignage de `workflow_derivations`.
+
+**Décision : le seed résout ces deux clés à l'exécution**, par la clé de nœud du catalogue —
+`prospection`, `negociation` —, qui est stable et déclarée dans le contrat. Les identifiants des
+**cards** restent fixes ; seules leurs deux clés étrangères sont résolues.
+
+**Conséquence pour les preuves**, écrite pour qu'aucune ne la redécouvre : une preuve ne peut pas
+figer le `workflow_id` de `…0ca`. Elle fige la clé du nœud de son étape, ou l'identifiant de son
+channel. Et si la copie manque, le seed **échoue** en le disant — poser les deux cards sur le
+workflow global rendrait un seed vert et un contrat faux.
+
+---
+
+### Décision 223 — Le formulaire du workflow dérivé reste vide : INC-037 est constatée, pas compensée
+
+**Mesuré.** `form_fields` ne porte aucune ligne sur le workflow dérivé ; les sept champs sont
+déclarés sur le seul workflow global. `copy_workflow_to_track` ne copie pas les champs — le
+non-livré est écrit en tête de `supabase/migrations/0007_copie_workflow.sql`, et l'arbitrage est
+INC-037.
+
+**Écarté : déclarer à la main sept champs sur la copie.** Le seed aurait alors montré un produit
+qui copie les champs, ce que la fonction ne fait pas. Un seed qui compense un manque du produit ne
+prouve plus le produit ; il le maquille. La clé étrangère composite
+`card_field_values (field_id, workflow_id)` refuserait d'ailleurs toute valeur ainsi fabriquée.
+
+**Décision : les cards `…0ca` et `…0cb` ne portent aucune valeur de formulaire**, et l'absence est
+**figée par une preuve** — preuve n° 6 du §9.9 — plutôt que laissée à la mémoire. Le jour où
+INC-037 sera tranchée et les champs copiés, cette preuve deviendra rouge et rappellera d'elle-même
+que ce chapitre doit changer. C'est le mécanisme de la décision 51.
+
+---
+
+### Décision 224 — Un droit d'accès consenti sans chemin de navigation : INC-075
+
+**Découvert en mesurant** ce que chaque profil verrait après extension, l'énoncé « aucun écran
+vide » n'ayant de sens que par profil.
+
+Le `viewer` porte `track_members.access = 'none'` sur `conseil-ia` et
+`channel_members.access = 'member'` sur `prospection`. MESURÉ avec son jeton réel : il **ne lit
+pas** le track `conseil-ia`, et il **lit** le channel `prospection`. C'est exactement la ligne f du
+§3 de `docs/SPEC-permissions-rls.md`, et la mesure qui a permis de clore INC-030.
+
+Or la coquille résout le track **avant** ses channels : `lireTrackParSlug` puis `lireChannels`
+filtré sur `track_id`. La route `/tracks/conseil-ia/prospection` rend donc « Track introuvable » à
+ce profil. **Le droit existe côté serveur et n'a aucun chemin côté produit.**
+
+**Décision : ne rien changer, et consigner.** Les trois issues — élargir la politique des tracks,
+router par le channel, ou déclarer le cas hors parcours — touchent respectivement `CRM-012`,
+`CRM-021` et `docs/SPEC-permissions-rls.md`. Aucune n'appartient à `CRM-046`, et en trancher une
+serait résoudre implicitement une contradiction, ce que `CLAUDE.md` §5 interdit. INC-075 est
+ouverte ; `CRM-046` **mesure** le cas et le fige par sa preuve n° 13.

@@ -12,6 +12,58 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-075 — Un channel consenti par le backend est inatteignable par la navigation du produit
+
+**Nature :** écart entre une règle d'autorisation livrée et prouvée, et le parcours réellement
+possible dans l'interface.
+**Relevé le :** 2026-08-06, pendant la spécification de `CRM-046`.
+
+`docs/SPEC-permissions-rls.md` §3, ligne **f**, déclare — et `CRM-012` a livré — qu'un
+`channel_members.access = 'member'` posé **sous un track fermé** rouvre le channel : « le plus
+spécifique gagne », dans le sens contre-intuitif. INC-030 a été close sur cette mesure.
+
+Le seed exerce précisément ce cas : le `viewer` Farida Nowak porte `track_members.access = 'none'`
+sur `conseil-ia` **et** `channel_members.access = 'member'` sur `prospection`.
+
+**MESURÉ le 2026-08-06, avec le jeton réel du `viewer` :**
+
+| Lecture | Résultat |
+|---|---|
+| `GET /rest/v1/tracks` | `studio-web`, `formation`, `pipeline-2024` — **`conseil-ia` absent** |
+| `GET /rest/v1/channels` | `refonte`, `inter-entreprises`, **`prospection`**, `maintenance` |
+
+Le channel lui est donc bien consenti. Mais la coquille livrée par `CRM-021` résout le track
+**avant** ses channels — `lireTrackParSlug` filtre sur le slug puis `lireChannels` filtre sur
+`track_id` (`webapp/src/lib/channels.ts`). La route `/tracks/conseil-ia/prospection` rend donc
+« Track introuvable » à ce profil, et aucune barre latérale ne propose `conseil-ia`. **Le droit
+existe côté serveur et n'a aucun chemin côté produit.**
+
+**Ce que ce n'est pas :** ni un défaut de RLS — la politique fait exactement ce que le §3 prescrit
+—, ni un défaut d'affichage — l'interface reflète fidèlement ce que `tracks` lui rend.
+
+**Trois issues, aucune tranchée ici :**
+
+1. **La politique des tracks s'élargit** : un track redevient lisible dès qu'un de ses channels
+   l'est. Le « plus spécifique gagne » deviendrait alors transitif, ce qui touche `CRM-012` et la
+   matrice à 64 combinaisons de `CRM-010`.
+2. **La coquille cesse de passer par le track** : une route de channel qui résout le channel
+   d'abord. Cela engage `CRM-021` et la composition de la barre d'onglets.
+3. **Le cas est déclaré non pertinent** : un droit fin de channel sous un track fermé n'est pas un
+   parcours produit, et la ligne f ne décrit qu'une propriété de la fonction d'autorisation. Il
+   faudrait alors le dire dans `docs/SPEC-permissions-rls.md` §3, qui aujourd'hui ne le dit pas.
+
+**Comportement retenu en attendant l'arbitrage :** aucun. `CRM-046` **mesure** le cas et le fige
+par une preuve — le `viewer` lit bien les cards de `prospection` par son jeton, et ne lit pas son
+track —, sans rien changer ni à la politique ni à la coquille (`docs/SPEC-seed.md` §9.7).
+
+**Action attendue du responsable :** trancher entre les trois issues.
+
+**Lié à :** INC-030 (close, dont la mesure de clôture est l'origine de ce point), INC-024, INC-021
+(aucun écran de connexion, donc aucun parcours réel pour l'observer), `docs/SPEC-permissions-rls.md`
+§3 ligne f, `docs/SPEC-seed.md` §9.7.
+
+---
+
 ### INC-074 — La convergence d'INC-035 ne sait pas exprimer une définition qui avance avec les migrations
 
 **Nature :** limite structurelle d'un mécanisme du dépôt, mesurée.
