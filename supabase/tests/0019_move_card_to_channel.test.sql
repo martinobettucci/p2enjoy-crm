@@ -38,7 +38,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(64);
+select plan(66);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -93,13 +93,28 @@ $$;
 -- d'ÉVÉNEMENTS, en revanche, restent vraies partout : un événement ne peut être ni réécrit ni
 -- supprimé, et la section 8 les lit à la fin sans que l'ordre y change rien.
 
+-- RÉVISÉE PAR `CRM-046`, ET C'EST LE GARDE-FOU QUI TOURNE (décision 51). Elle figeait « AUCUNE
+-- card ne demeure dans `prospection` au repos », propriété vraie tant que le seed y repointait le
+-- workflow deux fois par exécution. `CRM-046` a cessé ces écritures — convergence par état,
+-- décision 221 — et y a posé DEUX cards, sur le workflow DÉRIVÉ (docs/SPEC-seed.md §9.3).
+--
+-- CE QUE L'ASSERTION PROUVE MAINTENANT EST PLUS FORT : les cards de `prospection` suivent le
+-- workflow du channel, et INC-046 tient toujours — le geste qu'elle interdit est éprouvé dans les
+-- deux sens en section 5.
 select is(
 	(select count(*) from public.cards c
 	  where c.channel_id = '5eed0000-0000-4000-8000-000000000031'),
+	2::bigint,
+	'`prospection` porte DEUX cards au repos depuis CRM-046 — docs/SPEC-seed.md §9.2, §9.3');
+
+select is(
+	(select count(*) from public.cards c
+	   join public.channels ch on ch.id = c.channel_id
+	  where c.channel_id = '5eed0000-0000-4000-8000-000000000031'
+	    and c.workflow_id <> ch.workflow_id),
 	0::bigint,
-	'AUCUNE CARD NE DEMEURE DANS `prospection` au repos : l''aller-retour du seed démontre le '
-	'workflow dérivé EN TRANSIT sans rendre son propre rejeu impossible. INC-046 n''est PAS levée — '
-	'elle porte sur le workflow d''un CHANNEL, cette unité déplace une CARD (§6.11, décision 218)');
+	'…et TOUTES suivent le workflow de leur channel : la lecture n° 1 d''INC-046 tient, une card ne '
+	'porte jamais un workflow étranger à son dossier (§6.5)');
 
 select is(
 	(select c.channel_id from public.cards c
@@ -456,6 +471,14 @@ create temporary table pg_temp_compte_c6 as
 	  from public.card_events
 	 where card_id = '5eed0000-0000-4000-8000-0000000000c6' and type = 'moved';
 
+-- Le rang maximal de la portée d'arrivée, mesuré AVANT le déplacement : c'est lui qui rend
+-- l'assertion de `position` indépendante du volume du seed (révision de `CRM-046`).
+create temporary table pg_temp_rang_avant as
+	select coalesce(max(position), 0) as rang_max
+	  from public.cards
+	 where channel_id = '5eed0000-0000-4000-8000-000000000031'
+	   and current_step_id = pg_temp.etape_derivee();
+
 create temporary table pg_temp_apres as
 	select * from public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c7',
 	                                          '5eed0000-0000-4000-8000-000000000031',
@@ -478,12 +501,26 @@ select is(
 	pg_temp.etape_derivee(),
 	'`current_step_id` vaut l''étape fournie, du graphe CIBLE');
 
+-- RÉVISÉE PAR `CRM-046` — MÊME DÉFAUT QUE LES COMPTES D'ÉVÉNEMENTS CI-DESSUS, ET LE COMMENTAIRE
+-- QUI LES PRÉCÈDE L'ANNONÇAIT SANS QUE LA POSITION Y SOIT SOUMISE. Le rang `2` était le rang
+-- attendu dans une colonne peuplée par la seule section 4 de cette suite ; `CRM-046` a posé une
+-- card de plus dans cette portée, et l'assertion est passée à 3. Un rang figé mesure le VOLUME du
+-- seed, pas la règle du produit.
+--
+-- La règle, elle, est « EN FIN de la portée d'arrivée » : le rang obtenu vaut le maximum qui y
+-- régnait AVANT le déplacement, plus un. C'est ce qui est désormais mesuré, et la contre-épreuve
+-- suivante conserve ce que le rang figé apportait — la portée n'était pas vide, sans quoi « en
+-- fin » et « au début » donneraient la même valeur.
 select is(
 	(select position from pg_temp_apres),
-	2::numeric,
-	'`position` est recalculée EN FIN de la portée d''arrivée `(channel_id, current_step_id)` : la '
-	'section 4 y a déjà posé `…0c1`, donc le rang est 2 et non 1 — sans une colonne déjà peuplée, '
-	'« en fin » et « au début » donneraient la même valeur (§6.5, docs/SPEC-cards.md §2.6)');
+	(select m.rang_max + 1 from pg_temp_rang_avant m),
+	'`position` est recalculée EN FIN de la portée d''arrivée `(channel_id, current_step_id)` : le '
+	'rang vaut le maximum qui y régnait avant le déplacement, plus un (§6.5, docs/SPEC-cards.md §2.6)');
+
+select cmp_ok(
+	(select m.rang_max from pg_temp_rang_avant m), '>', 0::numeric,
+	'…et la portée d''arrivée n''était PAS vide : sans une colonne déjà peuplée, « en fin » et '
+	'« au début » donneraient la même valeur, et l''assertion précédente serait verte à tort');
 
 select isnt(
 	(select a.entered_step_at from pg_temp_apres a),

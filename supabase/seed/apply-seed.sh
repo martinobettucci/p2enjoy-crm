@@ -348,20 +348,32 @@ REGLES=(
 
 # Cards de démonstration — docs/SPEC-cards.md §9, docs/SPEC-seed.md §2.12.
 #
-# Neuf cards, réparties sur quatre channels et trois tracks, à cinq étapes distinctes du workflow
-# global. Chaque état du cycle de vie est représenté par une donnée réelle : sept actives, **une
-# archivée**, **une en corbeille**. Sans ces deux dernières, les deux suppressions douces de
-# `docs/SPEC-cards.md` §4 seraient documentées sans être démontrables, ce que `CLAUDE.md` §8 refuse.
+# Douze cards sur le workflow **global**, réparties sur quatre channels et trois tracks, aux
+# **sept** étapes du graphe. Chaque état du cycle de vie est représenté par une donnée réelle : dix
+# actives, **une archivée**, **une en corbeille**. Sans ces deux dernières, les deux suppressions
+# douces de `docs/SPEC-cards.md` §4 seraient documentées sans être démontrables, ce que
+# `CLAUDE.md` §8 refuse.
 #
-# AUCUNE CARD DANS `prospection`, ET LE MOTIF EST MESURÉ — INC-046, docs/SPEC-cards.md §9.1.
-# `prospection` est le seul channel que ce seed **repointe** : la section 4 le ramène au workflow
-# global déclaré, la section 7 le rattache ensuite à la copie de portée track. La clé étrangère
-# composite `cards (channel_id, workflow_id)` de `CRM-040` refuse ce déplacement dès qu'une card y
-# vit. MESURÉ : une card dans `prospection` puis ce seed rejoué échoue **en section 4**, code de
-# sortie 1, `23503`. Contre-épreuve mesurée : une card dans `grands-comptes`, channel dont le
-# workflow ne change jamais, laisse le seed vert. La réouverture d'un channel par droit fin reste
-# démontrée — mieux — par `e2e/api/cards.spec.ts`, où le `viewer` crée lui-même une card dans
-# `prospection` avant de la retirer.
+# LES TROIS DERNIÈRES SONT AJOUTÉES PAR `CRM-046` (docs/SPEC-seed.md §9.3), et aucune n'est
+# décorative : elles ferment les trois étapes que `CRM-040` laissait sans card active — MESURÉ le
+# 2026-08-06 : `realisation` **0**, `livre` **1 card archivée**, `perdu` **0**. Sur un board de sept
+# colonnes, trois étaient vides quel que soit le profil.
+#
+#   * `…0cc` occupe `realisation`, et porte `lien-proposition` : l'arête « Démarrer la réalisation »
+#     l'**exige** par `require_fields`, et une card à cette étape sans ce champ décrirait un
+#     franchissement que `move_card` aurait refusé ;
+#   * `…0cd` occupe `livre` et est **active** : la seule card de cette étape était archivée, donc
+#     invisible de tout écran ;
+#   * `…0ce` occupe `perdu` — la **branche alternative** du graphe, que rien n'exerçait — et porte
+#     `motif-perte`, que son étape exige.
+#
+# LES CARDS DE `prospection` SONT AILLEURS : elles vivent sur le workflow **dérivé**, et leurs deux
+# clés étrangères ne peuvent pas être écrites dans un contrat. Voir `CARDS_DERIVE` ci-dessous.
+#
+# L'obstruction qui interdisait toute card dans `prospection` jusqu'à `CRM-045` — sections 4 et 7
+# repointant le channel, clé composite refusant en `23503` — est levée par **convergence par état**
+# (décision 221, §9.2). INC-046 n'est PAS levée pour autant : changer le workflow d'un channel
+# peuplé reste refusé, et le seed cesse seulement de le tenter quand il n'y a rien à changer.
 #
 # `email_local_part` n'est **jamais** envoyé : il est généré par le trigger de la migration 0011 et
 # ne doit pas venir du client (docs/SPEC-cards.md §3.4). Il reste donc **stable d'un rejeu à
@@ -387,6 +399,36 @@ CARDS=(
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000064|Formation Data & IA — promo 2026|5eed0000-0000-4000-8000-000000000011|28000.00|CHF|2|Faire signer la convention|2026-08-10T08:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000c8|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Contrat cadre 2025|5eed0000-0000-4000-8000-000000000011|96000.00|EUR|1|-|-|2026-03-31T16:00:00Z|-'
 	'5eed0000-0000-4000-8000-0000000000c9|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000061|Saisie erronée|5eed0000-0000-4000-8000-000000000011|-|EUR|2|-|-|-|2026-04-02T11:00:00Z'
+	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000065|Portail adhérents — MGEN Loire|5eed0000-0000-4000-8000-000000000012|64000.00|EUR|1|Recetter le module de cotisations|2026-09-04T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000cd|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Socle analytique — Vertuo|5eed0000-0000-4000-8000-000000000011|210000.00|EUR|1|-|-|-|-'
+	'5eed0000-0000-4000-8000-0000000000ce|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000067|Cursus DevSecOps — Institut Berthier|5eed0000-0000-4000-8000-000000000012|31000.00|EUR|1|-|-|-|-'
+)
+
+# Cards du workflow DÉRIVÉ — docs/SPEC-seed.md §9.3 et §9.4, ajoutées par `CRM-046`.
+#
+# Elles vivent dans `prospection`, seul channel rattaché à la copie de portée `track`. Sans elles,
+# le workflow dérivé est seedé, rattaché, et **rien ne l'exerce** : ses sept étapes portent zéro
+# card, et la route `/tracks/conseil-ia/prospection` rend un board sans une seule colonne peuplée —
+# l'écran vide que l'énoncé de `CRM-046` proscrit (§9.1, mesuré).
+#
+# ELLES NE PEUVENT PAS PORTER LEUR WORKFLOW NI LEUR ÉTAPE DANS CE CONTRAT, et ce n'est pas un
+# relâchement du §4 : `copy_workflow_to_track` frappe la copie et ses sept étapes avec
+# `gen_random_uuid()`. Le contrat porte donc la **clé de nœud** de l'étape voulue, stable et
+# déclarée en section 5, et la section 8 septies résout les deux clés étrangères à l'exécution
+# (décision 222). Les identifiants des cards, eux, restent fixes.
+#
+# Deux étapes distinctes, et non une seule : un board dont une seule colonne est peuplée ne
+# démontre pas l'ordre des colonnes ni la répartition.
+#
+# AUCUNE VALEUR DE FORMULAIRE ne leur est posée, et c'est INC-037 constatée plutôt que compensée
+# (décision 223) : `copy_workflow_to_track` ne copie pas les champs, la copie n'en porte aucun, et
+# la clé composite `card_field_values (field_id, workflow_id)` refuserait toute valeur fabriquée.
+#
+# id | channel | clé de nœud de l'étape | titre | responsable | montant | devise | position |
+#    prochaine action | échéance
+CARDS_DERIVE=(
+	'5eed0000-0000-4000-8000-0000000000ca|5eed0000-0000-4000-8000-000000000031|prospection|Cadrage data — Groupe Vallier|5eed0000-0000-4000-8000-000000000012|38000.00|EUR|1|Fixer l’atelier de cadrage|2026-08-28T09:00:00Z'
+	'5eed0000-0000-4000-8000-0000000000cb|5eed0000-0000-4000-8000-000000000031|negociation|Assistant IA support — Nordis|5eed0000-0000-4000-8000-000000000011|87000.00|EUR|1|Arbitrer le périmètre de la V1|2026-09-11T10:00:00Z'
 )
 
 # --- Valeurs de formulaire — docs/SPEC-form-composer.md §6.11, docs/SPEC-seed.md §2.13 ----------
@@ -403,6 +445,19 @@ CARDS=(
 #   * `…0c6` rend le parcours « Marquer perdu » franchissable — l'étape perdu exige `motif-perte` ;
 #   * `…0c7` satisfait les trois exigences de son étape et reste bloquée par une QUATRIÈME, portée
 #     par `require_fields` de l'arête et non par l'étape.
+#
+# Quatre valeurs sont ajoutées par `CRM-046` (docs/SPEC-seed.md §9.6), et aucune n'est décorative :
+#
+#   * `…0cc` porte `lien-proposition` parce que l'arête « Démarrer la réalisation » l'EXIGE, et
+#     `budget` pour que le cumul de sa colonne ne soit pas muet ;
+#   * `…0cd` porte `budget` : c'est la seule affaire GAGNÉE active du seed, et une colonne « Livré »
+#     sans montant ne dirait rien du cumul ;
+#   * `…0ce` porte `motif-perte`, que son étape exige — une affaire perdue sans motif est une donnée
+#     que le produit refuse de produire lui-même.
+#
+# AUCUNE valeur n'est posée sur `…0ca` ni `…0cb` : elles vivent sur le workflow dérivé, qui ne porte
+# aucun champ (INC-037, décision 223). Ce n'est pas un oubli, c'est une propriété figée par une
+# preuve.
 #
 # `false` serait tout autant renseigné que `true` (§6.6) : `decideur-identifie` vaut `true` parce
 # que la card est en signature, pas parce que la valeur fausse serait refusée.
@@ -426,6 +481,10 @@ VALEURS=(
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000081|78000'
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000083|"2026-09-30"'
 	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000085|true'
+	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000086|"https://p2enjoy.fr/propositions/mgen-loire"'
+	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000081|64000'
+	'5eed0000-0000-4000-8000-0000000000cd|5eed0000-0000-4000-8000-000000000081|210000'
+	'5eed0000-0000-4000-8000-0000000000ce|5eed0000-0000-4000-8000-000000000084|"Budget arbitré au profit d’un organisme déjà référencé."'
 )
 
 # --- Commentaires — docs/SPEC-cards.md §13.11, docs/SPEC-seed.md §2.14 -------------------------
@@ -643,22 +702,67 @@ info "$WF_NOM — global, par défaut du workspace ; ses étapes arrivent en sec
 # workflow par défaut, créé en section 3 bis. `prospection` sera rattaché à la copie de portée
 # `track` en section 7, une fois celle-ci créée — elle dérive du workflow global et ne peut donc pas
 # le précéder.
+#
+# CONVERGENCE PAR ÉTAT SUR `prospection` — `CRM-046`, décision 221, docs/SPEC-seed.md §9.2.
+#
+# Envoyer `workflow_id = $WF_ID` pour ce channel le RAMÈNE au workflow global, alors que son état
+# déclaré est la copie. Tant qu'aucune card n'y vivait, l'aller-retour était invisible ; dès qu'une
+# card l'occupe, la clé étrangère composite `cards (channel_id, workflow_id)` refuse le premier des
+# deux gestes. MESURÉ : HTTP `409`, `23503`, code de sortie `1`, ici même en section 4.
+#
+# La valeur envoyée pour ce channel est donc **celle qu'il porte déjà** lorsqu'il suit la copie
+# déclarée, et le workflow global sinon. Sur une base neuve, la copie n'existe pas encore : la
+# valeur envoyée est le workflow global, et la section 7 fait le rattachement avant que la moindre
+# card ne soit posée. Sur une base conforme, la colonne est réécrite **à l'identique** : la clé
+# référencée `(id, workflow_id)` ne change pas, et la clé étrangère n'a rien à refuser.
+#
+# OMETTRE LA COLONNE NE MARCHE PAS, ET C'EST MESURÉ. L'`upsert` de PostgREST construit d'abord le
+# tuple d'INSERT ; une colonne absente y vaut `NULL`, et `channels.workflow_id` est `NOT NULL`
+# depuis `CRM-033`. PostgreSQL refuse en `23502` **avant** d'atteindre la clause `ON CONFLICT` :
+#
+#   {"code":"23502","message":"null value in column \"workflow_id\" of relation \"channels\"
+#    violates not-null constraint"}
+#
+# Réécrire la valeur courante est donc la seule forme de non-écriture que cette route autorise.
+#
+# Ce n'est pas un relâchement de la garde : c'est le seed qui cesse de faire **changer** ce qui n'a
+# pas à changer. INC-046 reste entière.
 
 echo
 say "4. Channels"
 
+# L'état réel du rattachement de `prospection`, relu AVANT d'écrire quoi que ce soit.
+code=$(api GET "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL&select=workflow_id")
+attendu "$code" "relecture du rattachement de prospection" 200
+CH_PROSPECTION_WF=$(jq -r '.[0].workflow_id // empty' "$CORPS")
+
+code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&order=created_at")
+attendu "$code" "relecture de la copie de portée track" 200
+WF_COPIE_ID_CONNUE=$(jq -r '.[0].id // empty' "$CORPS")
+
 for ligne in "${CHANNELS[@]}"; do
 	IFS='|' read -r id track slug nom position archive <<< "$ligne"
 
+	# Le workflow envoyé. Le seul channel dont le workflow déclaré n'est pas le workflow global est
+	# `prospection` : s'il porte déjà la copie déclarée, la valeur est réécrite à l'identique.
+	wf_envoye=$WF_ID
+	note=''
+	if [ "$id" = "$WF_COPIE_CHANNEL" ] \
+	   && [ -n "$WF_COPIE_ID_CONNUE" ] \
+	   && [ "$CH_PROSPECTION_WF" = "$WF_COPIE_ID_CONNUE" ]; then
+		wf_envoye=$WF_COPIE_ID_CONNUE
+		note=' — workflow inchangé (déjà sur la copie)'
+	fi
+
 	if [ "$archive" = '-' ]; then
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
-		               --arg slug "$slug" --argjson position "$position" --arg wf "$WF_ID" \
+		               --arg slug "$slug" --argjson position "$position" --arg wf "$wf_envoye" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
 		       workflow_id: $wf, position: $position, archived_at: null}')
 	else
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg archive "$archive" \
-		               --arg wf "$WF_ID" \
+		               --arg wf "$wf_envoye" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
 		       workflow_id: $wf, position: $position, archived_at: $archive}')
 	fi
@@ -669,7 +773,7 @@ for ligne in "${CHANNELS[@]}"; do
 	attendu "$code" "création du channel $slug" 200 201
 
 	if [ "$archive" = '-' ]; then etat='actif'; else etat="archivé le ${archive%%T*}"; fi
-	printf '  %-20s %-18s %s\n' "$slug" "${track: -3}" "$etat"
+	printf '  %-20s %-18s %s\n' "$slug" "${track: -3}" "$etat$note"
 done
 
 # --- 5. Catalogue de nœuds — docs/SPEC-workflow-engine.md §2.9 ---------------------------------
@@ -809,6 +913,24 @@ info "« Démarrer la réalisation » exige en outre le champ lien-proposition �
 #    channel la rejoint. Rattacher d'abord ferait refuser la convergence par le trigger de
 #    `CRM-033`, qui interdit de déplacer un workflow sous ses occupants — la garde fonctionnant, le
 #    seed la traverse dans le bon ordre plutôt que de la contourner.
+#
+# 4. **LA SÉQUENCE DES TROIS GESTES EST DÉSORMAIS CONDITIONNELLE** — `CRM-046`, décision 221,
+#    docs/SPEC-seed.md §9.2.
+#
+#    Le premier des trois — la libération — ramène `prospection` au workflow global. Tant qu'aucune
+#    card n'y vivait, le geste était gratuit ; dès qu'une card l'occupe, la clé étrangère composite
+#    `cards (channel_id, workflow_id)` le refuse en `23503`. Or il n'a d'objet que si la copie doit
+#    réellement bouger.
+#
+#    La séquence n'est donc jouée que si la copie **diverge** de son contrat — portée, track, nom,
+#    défaut, archivage — ou si le channel ne la suit pas. Sur une base conforme, la section ne fait
+#    AUCUNE écriture et le dit. Sur une base neuve, la copie n'existe pas : elle est créée par la
+#    fonction du produit, puis le channel la rejoint — et aucune card n'existe encore, la section
+#    8 ter venant après.
+#
+#    IL SUBSISTE UN CAS D'ÉCHEC LÉGITIME, et le seed le NOMME au lieu de laisser lire un `23503`
+#    brut : une copie déplacée à la main **et** des cards dans `prospection`. La réparation exige
+#    alors de déplacer le workflow d'un channel peuplé, ce qu'INC-046 interdit et doit interdire.
 
 echo
 say "7. Copie du workflow vers un track"
@@ -821,56 +943,123 @@ JETON_ADMIN=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
 [ -n "$JETON_ADMIN" ] || die "connexion de l'administrateur seedé impossible : la copie ne peut pas
         être créée par la véritable route."
 
-# Le channel est rendu au workflow global avant toute chose : la copie doit être **libre** pour que
-# son track puisse être ramené à la valeur déclarée.
-code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
-	-H 'Prefer: return=representation' \
-	-d "$(jq -nc --arg wf "$WF_ID" '{workflow_id: $wf}')")
-attendu "$code" "libération du channel $WF_COPIE_CHANNEL avant convergence de la copie" 200
-
-code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&order=created_at")
+# L'état réel est relu AVANT toute écriture — décision 221. Trois questions, et leurs réponses
+# décident de tout ce qui suit : combien de copies existent, laquelle est conforme à son contrat, et
+# le channel la suit-il déjà.
+code=$(api GET "/rest/v1/workflows?select=id,scope,track_id,name,is_default,archived_at&derived_from_workflow_id=eq.$WF_ID&order=created_at")
 attendu "$code" "recherche d'une copie existante" 200
 copie_id=$(jq -r '.[0].id // empty' "$CORPS")
+copies_total=$(jq -r 'length' "$CORPS")
 
-# Convergence, suite d'INC-041 : le contrat en déclare **une**. Une base qui en porte plusieurs —
-# héritage du défaut corrigé ici, ou copie créée à la main — est ramenée à une, la plus ancienne
-# étant conservée. Sans cela, le seed serait convergent pour un track déplacé mais pas pour un
-# doublon, et le contrôle du harnais de `CRM-032` resterait rouge sans que rien ne le répare.
-for surnumeraire in $(jq -r '.[1:][].id' "$CORPS"); do
-	code=$(api DELETE "/rest/v1/workflows?id=eq.$surnumeraire")
-	attendu "$code" "suppression de la copie surnuméraire $surnumeraire" 200 204
-	warn "Copie surnuméraire supprimée : $surnumeraire — le contrat n'en déclare qu'une (INC-041)"
-done
+# DEUX CONFORMITÉS, ET NON UNE — défaut réel trouvé par `scripts/verify-seed-demo.sh`, décision 225.
+#
+# Conditionner TOUTE la réparation à la conformité de la copie fait perdre la convergence pour
+# toute dérive : un nom modifié à la main n'était plus rattrapé dès qu'une card occupait
+# « prospection ». Or une seule des colonnes du contrat exige de libérer le channel.
+#
+#   * `scope` et `track_id` — les DÉPLACER exige que le channel ne suive plus la copie : le trigger
+#     de `CRM-033` interdit de déplacer un workflow sous ses occupants, et la clé composite refuse
+#     de rendre le channel au workflow global si des cards y vivent. C'est le seul cas bloqué ;
+#   * `name`, `is_default` et `archived_at` — leur convergence n'exige RIEN. Elle est faite
+#     inconditionnellement, comme avant `CRM-046`.
+copie_placee=$(jq -r --arg tr "$WF_COPIE_TRACK" \
+	'if length == 1 and .[0].scope == "track" and .[0].track_id == $tr
+	 then "oui" else "non" end' "$CORPS")
 
-if [ -n "$copie_id" ]; then
-	# Convergence : la copie retrouvée est **ramenée** à son track et à son nom déclarés. C'est ce
-	# qui manquait, et ce qui faisait naître une seconde copie (INC-041).
-	code=$(api PATCH "/rest/v1/workflows?id=eq.$copie_id" \
-		-H 'Prefer: return=representation' \
-		-d "$(jq -nc --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
-		      '{scope: "track", track_id: $tr, name: $nom, is_default: false, archived_at: null}')")
-	attendu "$code" "convergence de la copie $WF_COPIE_NOM" 200
-	info "Copie déjà présente : $WF_COPIE_NOM — ramenée à son contrat (seed convergent)"
+code=$(api GET "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL&select=workflow_id")
+attendu "$code" "relecture du rattachement de prospection" 200
+channel_wf=$(jq -r '.[0].workflow_id // empty' "$CORPS")
+
+# LE CHEMIN COURT, et c'est celui de toute base dont la copie est BIEN PLACÉE : sa portée et son
+# track sont conformes, et le channel la suit. La libération ci-dessous ramènerait `prospection` au
+# workflow global, ce que la clé étrangère composite refuse dès qu'une card l'occupe (§9.2, mesuré).
+# Les trois autres colonnes sont convergées juste après, hors de cette branche.
+if [ "$copie_placee" = 'oui' ] && [ -n "$copie_id" ] && [ "$channel_wf" = "$copie_id" ]; then
+	info "Copie conforme et prospection la suit déjà : AUCUNE écriture (convergence par état, §9.2)"
+	info "Copie : ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions reprises, lignage renseigné"
+	WF_COPIE_ID="$copie_id"
 else
-	copie_id=$(curl -s -X POST "$API/rest/v1/rpc/copy_workflow_to_track" \
-		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
-		-H "Authorization: Bearer $JETON_ADMIN" \
-		-H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg wf "$WF_ID" --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
-		      '{workflow_id: $wf, track_id: $tr, new_name: $nom}')" \
-		| jq -r 'if type == "string" then . else empty end')
-	[ -n "$copie_id" ] || die "l'appel à copy_workflow_to_track n'a rendu aucun identifiant."
-	info "$WF_COPIE_NOM — créée par copy_workflow_to_track, portée track"
+	# Quelque chose diverge. La réparation exige de déplacer le workflow de `prospection`, ce que
+	# la clé composite refuse si des cards l'occupent. Le cas est NOMMÉ plutôt que laissé à un
+	# `23503` brut — INC-046, docs/SPEC-seed.md §9.2.
+	code=$(api GET "/rest/v1/cards?channel_id=eq.$WF_COPIE_CHANNEL&select=id&limit=1")
+	attendu "$code" "recherche de cards dans prospection avant réparation" 200
+	if [ "$(jq -r 'length' "$CORPS")" -gt 0 ]; then
+		die "la copie de portée track est MAL PLACÉE — portée ou track divergents — et des cards
+        occupent « prospection ». Réparer exigerait de déplacer le workflow d'un channel peuplé, ce que la clé étrangère
+        composite « cards_channel_id_workflow_id_fkey » refuse — INC-046, docs/SPEC-seed.md §9.2.
+        Copies trouvées : $copies_total, bien placée : $copie_placee, channel sur : ${channel_wf:-aucun}.
+        Rétablir le rattachement à la main, ou repartir d'une base neuve par ./resetMe.sh."
+	fi
+	warn "Portée, track ou rattachement divergents : la séquence de réparation est jouée (§9.2)"
+
+	# Le channel est rendu au workflow global : la copie doit être **libre** pour que son track
+	# puisse être ramené à la valeur déclarée.
+	code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg wf "$WF_ID" '{workflow_id: $wf}')")
+	attendu "$code" "libération du channel $WF_COPIE_CHANNEL avant convergence de la copie" 200
+
+	code=$(api GET "/rest/v1/workflows?select=id&derived_from_workflow_id=eq.$WF_ID&order=created_at")
+	attendu "$code" "recherche d'une copie existante" 200
+	copie_id=$(jq -r '.[0].id // empty' "$CORPS")
+
+	# Convergence, suite d'INC-041 : le contrat en déclare **une**. Une base qui en porte plusieurs —
+	# héritage du défaut corrigé ici, ou copie créée à la main — est ramenée à une, la plus ancienne
+	# étant conservée. Sans cela, le seed serait convergent pour un track déplacé mais pas pour un
+	# doublon, et le contrôle du harnais de `CRM-032` resterait rouge sans que rien ne le répare.
+	for surnumeraire in $(jq -r '.[1:][].id' "$CORPS"); do
+		code=$(api DELETE "/rest/v1/workflows?id=eq.$surnumeraire")
+		attendu "$code" "suppression de la copie surnuméraire $surnumeraire" 200 204
+		warn "Copie surnuméraire supprimée : $surnumeraire — le contrat n'en déclare qu'une (INC-041)"
+	done
+
+	if [ -n "$copie_id" ]; then
+		# Convergence : la copie retrouvée est **ramenée** à son track et à son nom déclarés. C'est ce
+		# qui manquait, et ce qui faisait naître une seconde copie (INC-041).
+		code=$(api PATCH "/rest/v1/workflows?id=eq.$copie_id" \
+			-H 'Prefer: return=representation' \
+			-d "$(jq -nc --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
+			      '{scope: "track", track_id: $tr, name: $nom, is_default: false, archived_at: null}')")
+		attendu "$code" "convergence de la copie $WF_COPIE_NOM" 200
+		info "Copie déjà présente : $WF_COPIE_NOM — ramenée à son contrat (seed convergent)"
+	else
+		copie_id=$(curl -s -X POST "$API/rest/v1/rpc/copy_workflow_to_track" \
+			-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+			-H "Authorization: Bearer $JETON_ADMIN" \
+			-H 'Content-Type: application/json' \
+			-d "$(jq -nc --arg wf "$WF_ID" --arg tr "$WF_COPIE_TRACK" --arg nom "$WF_COPIE_NOM" \
+			      '{workflow_id: $wf, track_id: $tr, new_name: $nom}')" \
+			| jq -r 'if type == "string" then . else empty end')
+		[ -n "$copie_id" ] || die "l'appel à copy_workflow_to_track n'a rendu aucun identifiant."
+		info "$WF_COPIE_NOM — créée par copy_workflow_to_track, portée track"
+	fi
+
+	info "Copie : ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions reprises, lignage renseigné"
+
+	# `prospection` rejoint la copie : un workflow de portée `track` sur un channel de **son** track,
+	# cas accepté de la règle de `CRM-033` (docs/SPEC-workflow-engine.md §4.12.7).
+	code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg wf "$copie_id" '{workflow_id: $wf}')")
+	attendu "$code" "rattachement de prospection à la copie de portée track" 200
+	WF_COPIE_ID="$copie_id"
 fi
 
-info "Copie : ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions reprises, lignage renseigné"
+[ -n "$WF_COPIE_ID" ] || die "la copie de portée track n'a pas d'identifiant à l'issue de la
+        section 7 : les cards du workflow dérivé ne peuvent pas être posées (docs/SPEC-seed.md §9.4)."
 
-# `prospection` rejoint la copie : un workflow de portée `track` sur un channel de **son** track,
-# cas accepté de la règle de `CRM-033` (docs/SPEC-workflow-engine.md §4.12.7).
-code=$(api PATCH "/rest/v1/channels?id=eq.$WF_COPIE_CHANNEL" \
+# Convergence des trois colonnes qui n'exigent AUCUNE libération — décision 225. Elle est faite
+# quel que soit le chemin emprunté ci-dessus : un nom modifié à la main, une copie archivée ou
+# promue par défaut sont rattrapés même lorsque des cards occupent « prospection ».
+#
+# `scope` et `track_id` ne sont PAS de ce lot : les déplacer est le seul geste que la clé composite
+# et le trigger de `CRM-033` peuvent refuser, et il vit dans la branche de réparation ci-dessus.
+code=$(api PATCH "/rest/v1/workflows?id=eq.$WF_COPIE_ID" \
 	-H 'Prefer: return=representation' \
-	-d "$(jq -nc --arg wf "$copie_id" '{workflow_id: $wf}')")
-attendu "$code" "rattachement de prospection à la copie de portée track" 200
+	-d "$(jq -nc --arg nom "$WF_COPIE_NOM" '{name: $nom, is_default: false, archived_at: null}')")
+attendu "$code" "convergence du nom, du défaut et de l'archivage de la copie" 200
+
 info "prospection suit $WF_COPIE_NOM — les cinq autres channels suivent le workflow global"
 
 # --- 8. Champs de formulaire et règles de visibilité — docs/SPEC-form-composer.md §2.9 ---------
@@ -1024,9 +1213,70 @@ for ligne in "${CARDS[@]}"; do
 	printf '  %-36s %-10s %s\n' "${titre:0:36}" "$etat" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
 done
 
-info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille — docs/SPEC-cards.md §9"
-info "Aucune dans « prospection » : la clé composite de CRM-040 refuse que le seed y repointe le"
-info "workflow tant qu'une card l'occupe — INC-046, mesuré, docs/SPEC-cards.md §9.1."
+info "Cards du workflow global : ${#CARDS[@]}, aux SEPT étapes, dont une archivée et une en corbeille"
+info "— docs/SPEC-cards.md §9, étendu par CRM-046 (docs/SPEC-seed.md §9.3)."
+
+
+# --- 8 ter bis. Cards du workflow DÉRIVÉ — docs/SPEC-seed.md §9.3 et §9.4 ----------------------
+# Ajoutée par `CRM-046`. Elle est la seule section du seed dont deux clés étrangères sont RÉSOLUES
+# À L'EXÉCUTION, et le motif est le produit lui-même : `copy_workflow_to_track` frappe la copie et
+# ses sept étapes avec `gen_random_uuid()` (décision 222).
+#
+# La résolution passe par la **clé de nœud** du catalogue, stable et déclarée en section 5. Elle est
+# obtenue par la jointure embarquée de PostgREST sur `workflow_nodes_catalog`, une seule requête
+# pour les sept étapes.
+#
+# SI LA COPIE OU L'ÉTAPE MANQUE, LE SEED ÉCHOUE EN LE DISANT. Poser ces cards sur le workflow global
+# rendrait un seed vert et un contrat faux : le board lit les étapes du workflow **du channel**, et
+# la card n'apparaîtrait dans aucune colonne.
+#
+# Cette section vient après la section 8 ter pour une raison de lisibilité seule : rien ne la lie
+# aux douze cards du workflow global. Elle vient en revanche nécessairement après la section 7, qui
+# établit la copie et le rattachement du channel.
+
+echo
+say "8 ter bis. Cards du workflow dérivé"
+
+code=$(api GET "/rest/v1/workflow_steps?workflow_id=eq.$WF_COPIE_ID&select=id,workflow_nodes_catalog(key)")
+attendu "$code" "lecture des étapes de la copie de portée track" 200
+ETAPES_COPIE=$(cat "$CORPS")
+
+for ligne in "${CARDS_DERIVE[@]}"; do
+	IFS='|' read -r id channel cle_noeud titre owner montant devise position action echeance <<< "$ligne"
+
+	etape=$(printf '%s' "$ETAPES_COPIE" | jq -r --arg k "$cle_noeud" \
+		'.[] | select(.workflow_nodes_catalog.key == $k) | .id' | head -n 1)
+	[ -n "$etape" ] || die "la copie de portée track ne porte aucune étape instanciant le nœud
+        « $cle_noeud » : la card « $titre » ne peut pas être posée sans mentir sur son workflow
+        (docs/SPEC-seed.md §9.4)."
+
+	[ "$owner"    = '-' ] && owner_json='null'    || owner_json=$(jq -nc --arg v "$owner" '$v')
+	[ "$montant"  = '-' ] && montant_json='null'  || montant_json=$montant
+	[ "$action"   = '-' ] && action_json='null'   || action_json=$(jq -nc --arg v "$action" '$v')
+	[ "$echeance" = '-' ] && echeance_json='null' || echeance_json=$(jq -nc --arg v "$echeance" '$v')
+
+	charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg ch "$channel" --arg wf "$WF_COPIE_ID" \
+	               --arg etape "$etape" --arg titre "$titre" --arg devise "$devise" \
+	               --argjson position "$position" --argjson owner "$owner_json" \
+	               --argjson montant "$montant_json" --argjson action "$action_json" \
+	               --argjson echeance "$echeance_json" \
+	     '{id: $id, workspace_id: $ws, channel_id: $ch, workflow_id: $wf, current_step_id: $etape,
+	       title: $titre, owner_id: $owner, amount: $montant, currency: $devise,
+	       position: $position, next_action: $action, next_action_at: $echeance,
+	       created_by: "5eed0000-0000-4000-8000-000000000011",
+	       archived_at: null, deleted_at: null}')
+
+	code=$(api POST /rest/v1/cards \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la card ${titre:0:28}" 200 201
+
+	printf '  %-36s %-14s %s\n' "${titre:0:36}" "$cle_noeud" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
+done
+
+info "Cards du workflow dérivé : ${#CARDS_DERIVE[@]}, dans « prospection », à deux étapes distinctes"
+info "Leurs workflow_id et current_step_id sont RÉSOLUS, jamais écrits — docs/SPEC-seed.md §9.4"
+info "Elles ne portent aucune valeur de formulaire : la copie n'a aucun champ (INC-037, §9.5)"
 
 
 # --- 8 quater. Valeurs de formulaire — docs/SPEC-form-composer.md §6.11 ------------------------
@@ -1299,8 +1549,9 @@ info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIO
 info "Copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
-info "Cards : ${#CARDS[@]}, dont une archivée et une en corbeille, sur quatre channels — docs/SPEC-cards.md §9"
-info "Valeurs de formulaire : ${#VALEURS[@]} sur 6 cards, dont une vidée explicitement — docs/SPEC-form-composer.md §6.11"
+info "Cards : $(( ${#CARDS[@]} + ${#CARDS_DERIVE[@]} )), dont une archivée et une en corbeille, sur CINQ channels — docs/SPEC-cards.md §9"
+info "  dont ${#CARDS[@]} sur le workflow global, à ses SEPT étapes, et ${#CARDS_DERIVE[@]} sur le workflow dérivé — CRM-046, docs/SPEC-seed.md §9.3"
+info "Valeurs de formulaire : ${#VALEURS[@]} sur 9 cards, dont une vidée explicitement — docs/SPEC-form-composer.md §6.11"
 info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
 echo
 warn "profiles, workspaces et workspace_members ne sont lisibles par AUCUN jeton d'utilisateur :"
@@ -1310,11 +1561,12 @@ info "tracks, channels, workflow_nodes_catalog, workflows, workflow_steps, workf
 info "form_fields et form_field_rules sont lisibles par un membre du workspace, et par lui seul"
 info "(CRM-020, CRM-021, CRM-030, CRM-031, CRM-035)."
 info "cards applique les droits fins DÈS SA PREMIÈRE LIGNE (CRM-040) : le viewer ne voit aucune"
-info "card de « Grands comptes », dont le track lui est fermé. Aucune card dans « Prospection » :"
-info "INC-046, docs/SPEC-cards.md §9.1."
+info "card de « Grands comptes », dont le track lui est fermé. « Prospection » porte enfin des"
+info "cards, sur le workflow DÉRIVÉ — CRM-046, docs/SPEC-seed.md §9.2 et §9.3. INC-046 reste ouverte :"
+info "le seed a cessé de repointer un channel peuplé, il n'a pas rendu le geste possible."
 info "workflow_derivations expose la divergence d'une copie, en lecture seule (CRM-032)."
 info "Preuves du seed : scripts/verify-seed.sh — tracks : scripts/verify-tracks.sh"
 info "channels : scripts/verify-channels.sh — catalogue : scripts/verify-catalogue.sh"
 info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-workflow.sh"
 info "champs de formulaire : scripts/verify-champs-formulaire.sh — cards : scripts/verify-cards.sh"
-info "commentaires : scripts/verify-commentaires.sh"
+info "commentaires : scripts/verify-commentaires.sh — jeu de démonstration : scripts/verify-seed-demo.sh"

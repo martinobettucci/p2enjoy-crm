@@ -7061,3 +7061,71 @@ router par le channel, ou déclarer le cas hors parcours — touchent respective
 `CRM-021` et `docs/SPEC-permissions-rls.md`. Aucune n'appartient à `CRM-046`, et en trancher une
 serait résoudre implicitement une contradiction, ce que `CLAUDE.md` §5 interdit. INC-075 est
 ouverte ; `CRM-046` **mesure** le cas et le fige par sa preuve n° 13.
+
+---
+
+### Décision 225 — Deux conformités, et non une : seule la POSITION de la copie exige de libérer le channel
+
+**Défaut réel de mon propre travail, trouvé en exécutant `scripts/verify-seed-demo.sh`** — première
+occurrence pour `CRM-046`, et troisième forme de la décision 210.
+
+La décision 221 avait conditionné **toute** la réparation de la section 7 à la conformité de la
+copie, jugée sur cinq colonnes : portée, track, nom, défaut, archivage. Le harnais a posé une
+dérive réparable — le nom de la copie changé à la main par la vraie route — et le seed a **échoué**
+en citant INC-046. Mesuré, et non déduit : sortie non nulle, message
+« la copie de portée track diverge de son contrat, et des cards occupent « prospection » ».
+
+**Le raisonnement était faux, et il l'était par excès.** Une seule des cinq colonnes exige que le
+channel soit libéré :
+
+| Colonne | Ce que sa convergence exige |
+|---|---|
+| `scope`, `track_id` | **déplacer** le workflow — refusé sous ses occupants par le trigger de `CRM-033`, et la libération du channel est refusée par la clé composite dès qu'une card y vit |
+| `name`, `is_default`, `archived_at` | **rien** — un `PATCH` sur ces trois colonnes ne touche à aucun rattachement |
+
+Conditionner les cinq à la première faisait perdre la convergence sur les trois autres, pour toute
+base dont `prospection` est peuplée — c'est-à-dire, depuis cette unité, **toute base seedée**.
+`CRM-046` aurait ainsi introduit une régression de convergence en croyant en réparer une.
+
+**Décision : deux conformités distinctes.** La branche de réparation ne juge plus que la
+**position** de la copie — `scope` et `track_id` — et le rattachement du channel. Les trois autres
+colonnes sont convergées **inconditionnellement**, après la branche, quel que soit le chemin
+emprunté. Le cas bloqué se réduit ainsi à sa forme minimale : une copie déplacée hors de son track
+**et** des cards dans `prospection`.
+
+**Ce que cela dit du harnais.** Il a trouvé le défaut parce qu'il dégrade par la **vraie route**
+et exige la réparation, au lieu de constater un état. Une preuve qui se serait contentée de lire
+« la copie porte le bon nom » serait restée verte.
+
+---
+
+### Décision 226 — Un total d'événements ne se fige pas : seul `created` par card est un invariant
+
+**Second défaut réel de mon propre travail, trouvé en exécutant le harnais DEUX FOIS** — seconde
+forme de la décision 210, et la première où c'est le harnais lui-même qui fausse ce qu'il mesure.
+
+Le §9.6 annonce **38 événements** au sortir du seed, et j'en avais fait une assertion d'égalité.
+Mesuré : la seconde exécution rend **46**. La section de non-complaisance archive une card, la
+désarchive, vide une valeur et la remplit — quatre écritures que les triggers de `CRM-044`
+inscrivent, et qui ne s'effacent jamais. `e2e/api` en écrit de même à chaque passage.
+
+**Le nombre 38 n'est pas faux, il n'est pas INVARIANT.** Il décrit l'état d'une base au sortir d'un
+`resetMe.sh`, pas une propriété que le seed maintient. Une assertion d'égalité sur ce total serait
+rendue rouge par la seule existence des autres preuves du dépôt — exactement le défaut corrigé à
+`CRM-045` sur deux assertions de `move-card-to-channel`.
+
+**Décision : mesurer ce qui est stable, minorer le reste.**
+
+- **Invariant assert** : un `created` par card, exactement — une card naît une fois, et le nombre
+  de cards est un contrat. Trois contrôles le portent : le compte, les cards sans `created`, et les
+  cards qui en porteraient deux.
+- **Minorants** : le total, `field_changed`, `moved`, `assigned` et `channel_changed` sont vérifiés
+  `≥` à la valeur du contrat. Cela prouve que le seed a produit ce qu'il annonce, sans mentir sur
+  ce qu'une base vivante devient.
+
+Le §9.6 et le §9.9 de `docs/SPEC-seed.md` sont réécrits en conséquence : ils disent désormais « au
+sortir d'un seed sur base neuve », et non « toujours ».
+
+**Ce qui a été écarté.** Faire nettoyer ses événements par le harnais : ils ne sont pas
+supprimables sans privilège, et les supprimer effacerait une mémoire que le produit est fait pour
+tenir. Un harnais n'a pas à mutiler la timeline pour que son assertion reste verte.

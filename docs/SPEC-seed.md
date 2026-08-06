@@ -843,6 +843,18 @@ ne démontrerait rien qu'un `card_id` ne démontre déjà. Une ligne de plus ser
 cards, quatre `field_changed` pour les quatre valeurs. Le seed n'en forge aucun — il ne le peut
 pas, le §2.15 l'établit.
 
+**CE NOMBRE EST UN ÉTAT, PAS UN INVARIANT** (décision 226). Il décrit une base **au sortir d'un
+seed sur cluster neuf**, et il croît dès la première écriture de qui que ce soit : un utilisateur
+qui archive une card, une preuve d'API qui déplace une affaire, la non-complaisance de
+`scripts/verify-seed-demo.sh` qui vide puis remplit une valeur — chacune inscrit des événements que
+rien n'efface, et c'est le produit qui fonctionne.
+
+Une seule quantité de la timeline est **invariante**, et c'est la seule que les preuves fixent par
+une égalité : **un `created` par card, exactement**, une card ne naissant qu'une fois. Tout le reste
+— le total, `field_changed`, `moved`, `assigned`, `channel_changed` — est vérifié **en minorant**.
+La même correction a été portée à `supabase/tests/0018_timeline.test.sql`, dont une assertion
+comptait un cumul en le croyant stable.
+
 ### 9.7 Ce que chaque profil voit, après extension
 
 Le contrat « aucun écran vide » n'a de sens que **par profil** : la RLS et les droits fins du
@@ -905,16 +917,28 @@ Exécutées **hors interface**, contre l'API réelle et la base, par
 | 6 | Aucune valeur de formulaire sur le workflow dérivé | 0 ligne — conséquence d'INC-037, figée |
 | 7 | Les quatre valeurs du §9.6 existent, et `…0cc` porte `lien-proposition` | Conforme |
 | 8 | 14 cards, dont **12 actives**, une archivée, une en corbeille | Conforme |
-| 9 | 18 valeurs, 5 commentaires, **38** événements | Conforme |
+| 9 | 18 valeurs, 5 commentaires ; **14 `created`, un par card** | Égalité stricte |
+| 9 bis | Total des événements, `field_changed`, `moved`, `assigned`, `channel_changed` | **Minorants** — 38, 18, 2, 2, 2 : un cumul ne se fige pas (décision 226) |
 | 10 | Le seed est **rejouable avec des cards dans `prospection`** : second passage, sortie `0` | Aucune écriture en sections 4 et 7, aucun `23503` |
-| 11 | Une dérive du rattachement de `prospection` est **rattrapée** | Le seed ramène le channel sur la copie |
+| 11 | Une dérive **réparable** de la copie — nom, défaut, archivage — est rattrapée | Le seed la ramène à son contrat, même avec des cards dans `prospection` (décision 225) |
 | 12 | Pour chacun des **trois** profils, tout channel actif lisible rend ≥ 1 card active | Conforme |
 | 13 | Le `viewer` lit les cards de `prospection` par son droit fin, **et** ne lit pas son track | INC-075, mesuré et figé |
 | 14 | Empreinte du §9.8 **avant** et **après** un `resetMe.sh` complet | Empreintes égales |
 
 Le harnais doit être **non complaisant** : sa sévérité est éprouvée en faussant réellement le jeu —
-une card retirée d'une étape, le rattachement de `prospection` défait, une valeur supprimée — et en
-exigeant qu'il échoue à chaque fois, puis en constatant la restauration.
+une card archivée, une valeur vidée, le rattachement de `prospection` que l'on tente de défaire — et
+en exigeant qu'il échoue à chaque fois, puis en constatant la restauration.
+
+**La restauration porte sur l'ÉTAT, jamais sur la mémoire.** Archiver puis désarchiver une card,
+vider puis remplir une valeur, sont quatre écritures que les triggers de `CRM-044` inscrivent et
+que rien n'efface. L'empreinte comparée après réparation exclut donc `card_events`, et l'écart de
+la timeline est mesuré **séparément, à la valeur près** : quatre événements, `archived`,
+`unarchived` et deux `field_changed`. Une empreinte qui reviendrait à l'identique, événements
+compris, prouverait que la timeline ne voit pas ce qui se passe.
+
+**Une dégradation doit être réparable par le seed lui-même**, et toutes ne le sont pas : supprimer
+une card ne l'est pas, son `email_local_part` étant frappé par le trigger de la migration 11 et ne
+se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sait rendre.
 
 ### 9.10 Ce que ce jeu ne livre toujours pas
 

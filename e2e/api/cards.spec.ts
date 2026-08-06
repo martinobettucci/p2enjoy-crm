@@ -35,6 +35,8 @@ const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
+/** Ajoutée par `CRM-046` : l'étape « Livré », que `…0cd` occupe désormais activement. */
+const ETAPE_LIVRE = '5eed0000-0000-4000-8000-000000000066'
 
 /** Les channels du seed, et ce que les droits fins en font (`docs/SPEC-seed.md` §2.11). */
 const CH_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032' // track fermé au `viewer`
@@ -66,6 +68,8 @@ const FILTRE_SEED = `id=in.(${CARDS_SEED.join(',')})`
 const CARD_GRANDS_COMPTES = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_MAINTENANCE = '5eed0000-0000-4000-8000-0000000000c5'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
+/** `…0cd`, la seule affaire GAGNÉE active du seed — ajoutée par `CRM-046`. */
+const CARD_LIVREE = '5eed0000-0000-4000-8000-0000000000cd'
 
 const CARDS = '/rest/v1/cards'
 const CATALOGUE = '/rest/v1/workflow_nodes_catalog'
@@ -502,8 +506,13 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 
 	test('x — un nœud dont les cards sont toutes archivées reste archivable', async ({ request }) => {
 		// « Active » a une définition, et elle compte : sans elle, un nœud deviendrait inarchivable
-		// dès qu'une card y serait passée un jour (docs/SPEC-cards.md §5). Le nœud `livre` ne porte
-		// que la card ARCHIVÉE du seed.
+		// dès qu'une card y serait passée un jour (docs/SPEC-cards.md §5).
+		//
+		// RÉVISÉ PAR `CRM-046` (décision 51). Le nœud `livre` ne portait que la card ARCHIVÉE du
+		// seed ; l'unité y a posé `…0cd`, ACTIVE, pour que l'étape « Livré » cesse d'être une
+		// colonne vide (docs/SPEC-seed.md §9.3). La propriété reste vraie et reste à prouver — le
+		// seed ne la sert simplement plus toute faite, et le scénario construit l'état qu'il
+		// éprouve, puis le rend.
 		const seuleCard = await relire(request, CARD_ARCHIVEE)
 		expect(seuleCard!.archived_at).not.toBeNull()
 
@@ -512,17 +521,41 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 		})
 		const [noeud] = (await noeuds.json()) as { id: string }[]
 
-		const reponse = await request.patch(`${CATALOGUE}?id=eq.${noeud!.id}`, {
-			headers: enTetesAuthentifies(jetonAdmin),
-			data: { archived_at: '2026-05-01T10:00:00Z' },
-		})
-		expect(reponse.status(), await reponse.text()).toBe(204)
-
-		// Remis dans son état de contrat : le seed déclare ce nœud actif.
-		const restauration = await request.patch(`${CATALOGUE}?id=eq.${noeud!.id}`, {
+		// Préalable : la seule card ACTIVE de cette étape est archivée le temps du scénario.
+		const misEnPlace = await request.patch(`${CARDS}?id=eq.${CARD_LIVREE}`, {
 			headers: enTetesService(),
-			data: { archived_at: null },
+			data: { archived_at: '2026-05-01T09:00:00Z' },
 		})
-		expect([200, 204]).toContain(restauration.status())
+		expect([200, 204]).toContain(misEnPlace.status())
+
+		try {
+			const restantes = await request.get(
+				`${CARDS}?select=id&current_step_id=eq.${ETAPE_LIVRE}&archived_at=is.null&deleted_at=is.null`,
+				{ headers: enTetesService() },
+			)
+			expect(
+				((await restantes.json()) as { id: string }[]).length,
+				'préalable posé : plus aucune card ACTIVE sur `livre`',
+			).toBe(0)
+
+			const reponse = await request.patch(`${CATALOGUE}?id=eq.${noeud!.id}`, {
+				headers: enTetesAuthentifies(jetonAdmin),
+				data: { archived_at: '2026-05-01T10:00:00Z' },
+			})
+			expect(reponse.status(), await reponse.text()).toBe(204)
+		} finally {
+			// Remis dans son état de contrat : le seed déclare ce nœud actif et cette card active.
+			const restauration = await request.patch(`${CATALOGUE}?id=eq.${noeud!.id}`, {
+				headers: enTetesService(),
+				data: { archived_at: null },
+			})
+			expect([200, 204]).toContain(restauration.status())
+
+			const rendue = await request.patch(`${CARDS}?id=eq.${CARD_LIVREE}`, {
+				headers: enTetesService(),
+				data: { archived_at: null },
+			})
+			expect([200, 204]).toContain(rendue.status())
+		}
 	})
 })

@@ -166,9 +166,34 @@ PORT_RAPPORT=9323
 # UN GARDE-FOU A TOUTEFOIS JOUÉ, AILLEURS : `webapp/src/lib/database.types.test-d.ts` annonçait
 # « une troisième fonction la rendra rouge à son tour », et `move_card_to_channel` l'a rendue
 # rouge. Elle est RÉVISÉE, non retirée, et resserrée sur les trois fonctions livrées.
+#
+# --- `CRM-046` ---------------------------------------------------------------------------------
+#
+# L'unité ne livre AUCUNE nouvelle suite : elle étend le seed. Les compteurs bougent donc par
+# RÉVISION d'assertions existantes, ce qui est une première dans ce fichier.
+#
+# `ASSERTIONS_ATTENDUES` passe de 1401 à **1405** : quatre assertions ajoutées en révisant, jamais
+# une de retirée (décision 51). `0012_cards.test.sql` en gagne deux — les cards de `prospection`
+# suivent le workflow dérivé, et l'état préalable de l'étape « Livré » est asserté avant que le
+# nœud ne soit archivé ; `0019_move_card_to_channel.test.sql` en gagne deux — les cards suivent le
+# workflow de leur channel, et la portée d'arrivée n'était pas vide.
+#
+# `SCENARIOS_API` passe de 409 à **410** : un seul scénario ajouté, la contre-épreuve « ligne a bis »
+# de `e2e/api/coherence-workflow.spec.ts`, qui mesure le refus `409` opposé au déplacement du
+# workflow d'un channel PEUPLÉ. Sans elle, le passage de trois scénarios à un channel jetable
+# aurait l'air d'un contournement.
+#
+# `SCENARIOS_UI` est INCHANGÉ : `CRM-046` ne livre aucun écran.
+#
+# ONZE ASSERTIONS FIGÉES PAR DES UNITÉS ANTÉRIEURES SONT DEVENUES ROUGES, ET LE MÉCANISME DE LA
+# DÉCISION 51 A JOUÉ COMME ANNONCÉ. Deux d'entre elles figeaient explicitement une conséquence
+# d'INC-046 — « aucune card seedée dans `prospection` » — et ce sont celles-là qui tournent : elles
+# prouvent désormais que les cards de ce channel suivent son workflow dérivé, et le REFUS qui fonde
+# INC-046 est éprouvé à côté. Deux autres comptaient un CUMUL d'événements (décision 226).
+#
 # Valeurs MESURÉES, non déduites.
-ASSERTIONS_ATTENDUES=1401
-SCENARIOS_API=409
+ASSERTIONS_ATTENDUES=1405
+SCENARIOS_API=410
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

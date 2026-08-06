@@ -70,6 +70,55 @@ async function copieDuSeed(requete: APIRequestContext): Promise<Workflow> {
 }
 
 /** Remet un channel dans l'état déclaré par le seed. Seule la clé de service en a le privilège. */
+/**
+ * UN CHANNEL JETABLE, ET LE MOTIF EST `CRM-046`.
+ *
+ * Trois scénarios de cette suite déplaçaient le workflow de `prospection` : c'était possible tant
+ * que ce channel était **vide**. `CRM-046` y a posé deux cards pour que le workflow dérivé cesse
+ * d'être inexercé et que la route ne rende plus un board sans colonne peuplée
+ * (docs/SPEC-seed.md §9.3), et la clé étrangère composite refuse désormais ce déplacement en `409`
+ * — c'est INC-046, et elle doit refuser.
+ *
+ * LE DÉFAUT N'ÉTAIT PAS SEULEMENT UN ROUGE. La ligne b appelait `remettreChannel` **sans rien
+ * asserter** avant son écriture utile : le retour au workflow global échouait en silence, et
+ * l'assertion suivante réaffectait une valeur déjà en place. Elle serait restée VERTE sans plus
+ * rien prouver. Mesuré en exécutant.
+ *
+ * Les scénarios opèrent donc sur un channel qu'ils créent et détruisent, vide par construction —
+ * même remède que celui appliqué au scénario *l* de `e2e/api/move-card.spec.ts` à `CRM-045`.
+ */
+const CHANNEL_JETABLE = '5eed0000-0000-4000-8000-0000000000f1'
+
+async function creerChannelJetable(
+	requete: APIRequestContext,
+	trackId: string,
+	workflowId: string,
+): Promise<string> {
+	const reponse = await requete.post(CHANNELS, {
+		headers: {
+			...enTetesService(),
+			'Content-Type': 'application/json',
+			Prefer: 'return=representation,resolution=merge-duplicates',
+		},
+		data: {
+			id: CHANNEL_JETABLE,
+			workspace_id: WORKSPACE_SEED,
+			track_id: trackId,
+			name: 'Channel jetable — cohérence workflow',
+			slug: 'jetable-coherence',
+			workflow_id: workflowId,
+			position: 99,
+			archived_at: null,
+		},
+	})
+	expect(reponse.status(), 'le channel jetable doit naître').toBeLessThan(300)
+	return CHANNEL_JETABLE
+}
+
+async function detruireChannelJetable(requete: APIRequestContext): Promise<void> {
+	await requete.delete(`${CHANNELS}?id=eq.${CHANNEL_JETABLE}`, { headers: enTetesService() })
+}
+
 async function remettreChannel(
 	requete: APIRequestContext,
 	id: string,
@@ -117,15 +166,38 @@ test.describe('K1 — affectation d’un workflow à un channel (lignes a, b, c)
 	}) => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const copie = await copieDuSeed(request)
+		// Le channel naît sur la COPIE, pour que l'écriture qui suit change réellement quelque
+		// chose : réaffecter la valeur déjà présente ne prouverait pas que le trigger l'accepte.
+		const channel = await creerChannelJetable(request, TRACK_CONSEIL, copie.id)
 		try {
-			const reponse = await request.patch(`${CHANNELS}?id=eq.${CHANNEL_PROSPECTION}`, {
+			const reponse = await request.patch(`${CHANNELS}?id=eq.${channel}`, {
 				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
 				data: { workflow_id: WORKFLOW_GLOBAL },
 			})
 			expect(reponse.status()).toBe(204)
 		} finally {
-			await remettreChannel(request, CHANNEL_PROSPECTION, TRACK_CONSEIL, copie.id)
+			await detruireChannelJetable(request)
 		}
+	})
+
+	test('ligne a bis — le même déplacement sur `prospection` PEUPLÉ est refusé : INC-046 tient', async ({
+		request,
+	}) => {
+		// Contre-épreuve ajoutée par `CRM-046`. Sans elle, le passage au channel jetable ci-dessus
+		// aurait l'air d'un contournement ; il est en réalité la seule façon d'éprouver la règle de
+		// `CRM-033` sans buter sur celle de `CRM-040`, qui n'a rien à voir avec elle.
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const reponse = await request.patch(`${CHANNELS}?id=eq.${CHANNEL_PROSPECTION}`, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workflow_id: WORKFLOW_GLOBAL },
+		})
+		expect(reponse.status(), 'déplacer le workflow d’un channel peuplé est refusé').toBe(409)
+
+		const relu = await request.get(`${CHANNELS}?select=workflow_id&id=eq.${CHANNEL_PROSPECTION}`, {
+			headers: enTetesService(),
+		})
+		const copie = await copieDuSeed(request)
+		expect(((await relu.json()) as { workflow_id: string }[])[0]!.workflow_id).toBe(copie.id)
 	})
 
 	test('ligne b — un workflow `track` est accepté sur un channel de **son** track', async ({
@@ -134,20 +206,35 @@ test.describe('K1 — affectation d’un workflow à un channel (lignes a, b, c)
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const copie = await copieDuSeed(request)
 
-		// D'abord rendu au global, pour que l'écriture qui suit change réellement quelque chose :
-		// réaffecter la valeur déjà présente ne prouverait pas que le trigger l'accepte.
-		await remettreChannel(request, CHANNEL_PROSPECTION, TRACK_CONSEIL, WORKFLOW_GLOBAL)
+		// RÉVISÉ PAR `CRM-046` : le channel jetable naît sur le workflow GLOBAL, pour que l'écriture
+		// qui suit change réellement quelque chose — réaffecter la valeur déjà présente ne
+		// prouverait pas que le trigger l'accepte. L'état de départ est ASSERTÉ, et non supposé :
+		// c'est ce qui manquait à la rédaction précédente, dont l'appel muet à `remettreChannel`
+		// aurait pu échouer sans que rien ne le dise.
+		const channel = await creerChannelJetable(request, TRACK_CONSEIL, WORKFLOW_GLOBAL)
 
-		const reponse = await request.patch(`${CHANNELS}?id=eq.${CHANNEL_PROSPECTION}`, {
-			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-			data: { workflow_id: copie.id },
-		})
-		expect(reponse.status()).toBe(204)
+		try {
+			const depart = await request.get(`${CHANNELS}?select=workflow_id&id=eq.${channel}`, {
+				headers: enTetesService(),
+			})
+			expect(
+				((await depart.json()) as Channel[])[0]!.workflow_id,
+				'l’état de départ est asserté, pas supposé',
+			).toBe(WORKFLOW_GLOBAL)
 
-		const relu = await request.get(`${CHANNELS}?select=workflow_id&id=eq.${CHANNEL_PROSPECTION}`, {
-			headers: enTetesService(),
-		})
-		expect(((await relu.json()) as Channel[])[0]!.workflow_id).toBe(copie.id)
+			const reponse = await request.patch(`${CHANNELS}?id=eq.${channel}`, {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: { workflow_id: copie.id },
+			})
+			expect(reponse.status()).toBe(204)
+
+			const relu = await request.get(`${CHANNELS}?select=workflow_id&id=eq.${channel}`, {
+				headers: enTetesService(),
+			})
+			expect(((await relu.json()) as Channel[])[0]!.workflow_id).toBe(copie.id)
+		} finally {
+			await detruireChannelJetable(request)
+		}
 	})
 
 	test('ligne c — un workflow `track` est **refusé** sur un channel d’un autre track', async ({
@@ -399,23 +486,43 @@ test.describe('K5 — les portes qu’aucun trigger sur channels ne voyait (lign
 	test('ligne l — un workflow `track` **libre** change de track : la règle protège des rattachements', async ({
 		request,
 	}) => {
+		// RÉVISÉ PAR `CRM-046`. Le scénario libérait `prospection` pour rendre la copie « libre » ;
+		// ce channel porte désormais des cards et ne peut plus être libéré (INC-046). La copie du
+		// seed n'est donc plus jamais libre, et un workflow `track` libre doit être FABRIQUÉ pour
+		// que la propriété reste éprouvée — elle n'a pas cessé d'être vraie, elle a cessé d'être
+		// servie par le seed.
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
-		const copie = await copieDuSeed(request)
+		const source = await copieDuSeed(request)
+		let copieLibre: string | null = null
 		try {
-			// Libéré d'abord — c'est précisément ce que la règle autorise ensuite.
-			await remettreChannel(request, CHANNEL_PROSPECTION, TRACK_CONSEIL, WORKFLOW_GLOBAL)
+			const creation = await request.post('/rest/v1/rpc/copy_workflow_to_track', {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: {
+					workflow_id: WORKFLOW_GLOBAL,
+					track_id: TRACK_CONSEIL,
+					new_name: 'Copie libre — ligne l',
+				},
+			})
+			expect(creation.status(), 'la copie libre naît de la vraie fonction du produit').toBe(200)
+			copieLibre = (await creation.json()) as string
+			expect(copieLibre).not.toBe(source.id)
 
-			const reponse = await request.patch(`${WORKFLOWS}?id=eq.${copie.id}`, {
+			// Aucun channel ne la suit : elle est libre par construction, et non parce qu'on a
+			// détaché quelque chose.
+			const occupants = await request.get(`${CHANNELS}?select=id&workflow_id=eq.${copieLibre}`, {
+				headers: enTetesService(),
+			})
+			expect(((await occupants.json()) as { id: string }[]).length).toBe(0)
+
+			const reponse = await request.patch(`${WORKFLOWS}?id=eq.${copieLibre}`, {
 				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
 				data: { track_id: TRACK_STUDIO },
 			})
 			expect(reponse.status()).toBe(204)
 		} finally {
-			await request.patch(`${WORKFLOWS}?id=eq.${copie.id}`, {
-				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-				data: { track_id: TRACK_CONSEIL },
-			})
-			await remettreChannel(request, CHANNEL_PROSPECTION, TRACK_CONSEIL, copie.id)
+			if (copieLibre !== null) {
+				await request.delete(`${WORKFLOWS}?id=eq.${copieLibre}`, { headers: enTetesService() })
+			}
 		}
 	})
 })

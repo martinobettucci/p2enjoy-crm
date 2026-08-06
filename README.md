@@ -127,7 +127,9 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
 | `scripts/verify-authz.sh` | Rejoue les preuves des fonctions d'autorisation : suite pgTAP, idempotence, comportement sous PostgREST avec des jetons réels | **disponible** |
 | `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
-| `supabase/seed/apply-seed.sh` | Applique le seed socle sur la pile de développement | **disponible** |
+| `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
+| `scripts/verify-seed-demo.sh` | Rejoue les preuves du jeu de démonstration : étapes peuplées, workflow dérivé exercé, aucun channel actif vide, convergence | **disponible** |
+| `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (INC-008, arbitrage ouvert) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
@@ -232,6 +234,16 @@ Le seed est **convergent** : le rejouer ne duplique rien et rattrape une valeur 
 main. Ses identifiants sont **stables** et commencent tous par `5eed`, ce qui rend une ligne
 seedée reconnaissable au premier coup d'œil.
 
+Depuis `CRM-046`, il livre le **jeu de démonstration complet** : quatre tracks dont un archivé, six
+channels dont un archivé, deux workflows dont un **dérivé**, et **quatorze cards** — douze actives,
+une archivée, une en corbeille. Les **sept** étapes du workflow global portent chacune une card
+active, le workflow dérivé en porte deux, et **aucun channel actif n'est vide**
+(`docs/SPEC-seed.md` §9). Ses preuves se rejouent par `scripts/verify-seed-demo.sh`.
+
+Deux identifiants échappent à la règle de stabilité, et c'est le produit qui l'impose : le workflow
+dérivé et ses sept étapes naissent de `copy_workflow_to_track`, avec `gen_random_uuid()`. Le seed
+les résout à l'exécution par la clé de nœud du catalogue (`docs/SPEC-seed.md` §9.4).
+
 Un espace de travail, **P2Enjoy SAS** (`p2enjoy`), et trois comptes couvrant les trois rôles :
 
 | Email | Nom affiché | Rôle | Identifiant |
@@ -259,8 +271,8 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest (webapp), 164 tests   — aucune pile requise
-npm run test:sql           # pgTAP, 717 assertions        — pile démarrée
+npm run test:unit          # Vitest (webapp), 467 tests   — aucune pile requise
+npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
@@ -329,6 +341,7 @@ scripts/verify-colonnes-protegees.sh # colonnes protégées : email_local_part f
 scripts/verify-preuves-refus.sh # les douze preuves de refus, et la non-complaisance (CRM-014)
 scripts/verify-board.sh        # board kanban : colonnes, glisser-déposer, refus        (CRM-041)
 scripts/verify-liste.sh        # vue liste : tri total, filtres, pagination, 416        (CRM-042)
+scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
 ```
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en

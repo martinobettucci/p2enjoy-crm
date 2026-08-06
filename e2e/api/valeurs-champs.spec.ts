@@ -122,13 +122,16 @@ function deplacer(
 // refuse ou qu'elle autorise tout (décision 50).
 
 test.describe('V0 — état de départ', () => {
-	test('le seed pose bien quatorze valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-046` (décision 51) : quatorze valeurs devenues DIX-HUIT — quatre ajoutées sur
+	// les trois cards qui ferment les étapes « réalisation », « livré » et « perdu »
+	// (docs/SPEC-seed.md §9.6). Le cas éprouvé ici — `budget` de `c1` VIDE — est inchangé.
+	test('le seed pose bien dix-huit valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
 		const reponse = await request.get(`${VALEURS}?select=card_id,field_id,value`, {
 			headers: enTetesService(),
 		})
 		expect(reponse.status()).toBe(200)
 		const valeurs = (await reponse.json()) as Valeur[]
-		expect(valeurs.length, 'docs/SPEC-seed.md §2.13').toBe(14)
+		expect(valeurs.length, 'docs/SPEC-seed.md §2.13 et §9.6').toBe(18)
 
 		const budgetC1 = valeurs.find((v) => v.card_id === CARD_C1 && v.field_id === CHAMP_BUDGET)
 		expect(budgetC1, 'la LIGNE existe').toBeDefined()
@@ -169,7 +172,7 @@ test.describe('V1 — lecture', () => {
 	test('c) `admin` lit les valeurs de son workspace', async ({ request }) => {
 		const reponse = await request.get(VALEURS, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
-		expect(((await reponse.json()) as Valeur[]).length).toBe(14)
+		expect(((await reponse.json()) as Valeur[]).length).toBe(18)
 	})
 })
 

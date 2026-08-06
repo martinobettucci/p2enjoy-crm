@@ -572,7 +572,17 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 	// --- q : le seed, et ce qu'il démontre ------------------------------------------------------
 
-	test('q — le seed a produit deux channel_changed, et laisse `prospection` VIDE', async ({
+	// RÉVISÉ PAR `CRM-046` (décision 51), ET LE GARDE-FOU TOURNE AU LIEU DE DISPARAÎTRE.
+	//
+	// `CRM-045` figeait ici « `prospection` reste VIDE au repos » : c'était la conséquence mesurée
+	// d'INC-046, le seed y repointant le workflow deux fois par exécution. `CRM-046` a cessé ces
+	// écritures — convergence par état, décision 221 — et y a posé deux cards sur le workflow
+	// DÉRIVÉ (docs/SPEC-seed.md §9.2 et §9.3).
+	//
+	// INC-046 N'EST PAS LEVÉE, et ce qui la prouve n'est plus un vide : c'est le REFUS opposé au
+	// geste qu'elle interdit, mesuré ci-dessous en `409`. Une assertion de refus prouve la règle ;
+	// une assertion de vide ne prouvait que l'absence d'occasion de l'enfreindre.
+	test('q — le seed a produit deux channel_changed, et `prospection` porte ses deux cards dérivées', async ({
 		request,
 	}) => {
 		const evenements = await request.get(
@@ -584,12 +594,31 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 			'l’aller-retour du seed n’a pas eu lieu',
 		).toBeGreaterThanOrEqual(2)
 
-		// INC-046 N'EST PAS LEVÉE, et cette assertion le dit : le workflow dérivé est démontré EN
-		// TRANSIT, aucune card ne demeure dans `prospection`, et le rejeu du seed reste possible.
 		const restantes = await request.get(
-			`${URL_API}${CARDS}?channel_id=eq.${CHANNEL_PROSPECTION}&select=id`,
+			`${URL_API}${CARDS}?channel_id=eq.${CHANNEL_PROSPECTION}&select=id,workflow_id`,
 			{ headers: enTetesService() },
 		)
-		expect(await restantes.json(), '`prospection` n’est pas vide au repos').toEqual([])
+		const cards = (await restantes.json()) as { id: string; workflow_id: string }[]
+		expect(cards.length, '`prospection` porte les deux cards du §9.3').toBe(2)
+
+		// Elles suivent le workflow de leur channel — la lecture n° 1 d'INC-046 — et ce workflow est
+		// bien la COPIE, jamais le global.
+		const channel = await request.get(
+			`${URL_API}/rest/v1/channels?id=eq.${CHANNEL_PROSPECTION}&select=workflow_id`,
+			{ headers: enTetesService() },
+		)
+		const workflowDuChannel = ((await channel.json()) as { workflow_id: string }[])[0]!.workflow_id
+		expect(cards.every((carte) => carte.workflow_id === workflowDuChannel)).toBe(true)
+		expect(workflowDuChannel).not.toBe(WORKFLOW_GLOBAL)
+
+		// LA PREUVE QUE LA RÈGLE TIENT : le geste qu'INC-046 interdit est refusé, ici et maintenant.
+		const interdit = await request.patch(
+			`${URL_API}/rest/v1/channels?id=eq.${CHANNEL_PROSPECTION}`,
+			{ headers: enTetesService(), data: { workflow_id: WORKFLOW_GLOBAL } },
+		)
+		expect(
+			interdit.status(),
+			'déplacer le workflow d’un channel peuplé reste refusé — INC-046',
+		).toBe(409)
 	})
 })

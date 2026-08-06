@@ -359,7 +359,10 @@ test.describe('CRM-013 — les refus de LECTURE restent zéro ligne, non une err
 			// Sur une table vide, « l'API rend `[]` » serait vrai que la RLS refuse ou qu'elle
 			// autorise tout (décision 50). L'état est donc d'abord constaté avec la clé de service.
 			const peuplee = await service.get(`${CARDS}?select=id`)
-			expect(((await peuplee.json()) as Card[]).length, 'la table porte des lignes').toBe(9)
+			// RÉVISÉ PAR `CRM-046` : neuf cards devenues QUATORZE (docs/SPEC-seed.md §9.3). Le
+			// contrôle garde sa fonction — établir que la table n'est PAS vide avant de conclure du
+			// `[]` rendu à l'anonyme.
+			expect(((await peuplee.json()) as Card[]).length, 'la table porte des lignes').toBe(14)
 
 			const reponse = await anonyme.get(`${CARDS}?select=id`)
 			expect(reponse.status(), 'un refus de LECTURE n’est pas une erreur').toBe(200)

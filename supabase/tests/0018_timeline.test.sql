@@ -373,11 +373,29 @@ select is(
 -- --- 6.5 Valeurs de formulaire, et la clé `from` absente --------------------------------------
 select pg_temp.postgres();
 
+-- RÉVISÉE PAR `CRM-046`, ET LE MOTIF EST UN DÉFAUT DE L'ASSERTION, PAS DU PRODUIT
+-- (décision 226, seconde forme de la décision 210).
+--
+-- Elle comptait un CUMUL : « aucun `field_changed` de la base ne porte la clé `from` ». C'était
+-- vrai d'une base fraîchement seedée, et faux dès la première modification d'une valeur — par un
+-- utilisateur, par une preuve d'API, ou par la non-complaisance de `scripts/verify-seed-demo.sh`,
+-- qui vide puis remplit une valeur à chaque exécution. MESURÉ : 10 événements portaient `from`
+-- après quatre passages de ce harnais, et l'assertion était rouge sans qu'aucune règle n'ait bougé.
+--
+-- CE QUI EST INVARIANT, ET QUI EST DÉSORMAIS ÉPROUVÉ : la NAISSANCE d'une valeur n'a pas de
+-- prédécesseur. Pour chaque couple (card, champ), le PREMIER `field_changed` ne porte jamais
+-- `from` — quelles qu'aient été les modifications ultérieures. C'est la propriété que la
+-- décision 208 énonçait ; l'ancienne rédaction en éprouvait un cas particulier périssable.
 select is(
-	(select count(*)::int from public.card_events
-	  where type = 'field_changed' and payload ? 'from'),
-	0, 'AUCUN `field_changed` du seed ne porte la clé `from` : les 14 valeurs sont des naissances '
-	   '(décision 208)');
+	(select count(*)::int from (
+	   select distinct on (e.card_id, e.payload ->> 'field_id') e.payload ? 'from' as porte_from
+	     from public.card_events e
+	    where e.type = 'field_changed'
+	    order by e.card_id, e.payload ->> 'field_id', e.created_at
+	 ) premiers where porte_from),
+	0, 'AUCUNE NAISSANCE de valeur ne porte la clé `from` : pour chaque couple (card, champ), le '
+	   'PREMIER `field_changed` est sans prédécesseur. Une modification ultérieure en porte une, et '
+	   'c''est le produit qui fonctionne — décisions 208 et 226');
 
 select ok(
 	(select bool_and(payload ? 'field_id' and payload ? 'to') from public.card_events
@@ -452,8 +470,9 @@ create or replace view pg_temp.evenements_du_seed as
 	 where c.title <> 'Sonde timeline';
 
 -- LE SEUL COMPTE EXACT QUI TIENNE DANS LE TEMPS : une card ne naît qu'une fois.
-select is((select count(*)::int from pg_temp.evenements_du_seed where type = 'created'), 9,
-	'Le seed a produit NEUF `created` — un par card insérée, sans en écrire aucun lui-même. C''est '
+select is((select count(*)::int from pg_temp.evenements_du_seed where type = 'created'), 14,
+	'Le seed a produit QUATORZE `created` — un par card insérée, sans en écrire aucun lui-même. C''est ' -- RÉVISÉ par CRM-046 : neuf cards devenues quatorze (docs/SPEC-seed.md §9.3)
+	
 	'le SEUL compte exact que la suite assère : la naissance d''une card est idempotente, son '
 	'histoire ne l''est pas (décision 210)');
 

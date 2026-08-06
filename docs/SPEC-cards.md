@@ -547,15 +547,30 @@ seule dénomination stable : `prospection`, `relance`, `negociation`, `signature
 | Formation Data & IA — promo 2026 | `formation` / `inter-entreprises` | `signature` | active | Une `currency` autre qu'`EUR`, sans quoi le défaut de colonne serait la seule valeur jamais observée |
 | Contrat cadre 2025 | `conseil-ia` / `grands-comptes` | `livre` | **archivée** | L'archivage, et une card qui **n'occupe plus** son nœud (§5) |
 | Saisie erronée | `conseil-ia` / `grands-comptes` | `prospection` | **en corbeille** | La corbeille, distincte de l'archivage |
+| Portail adhérents — MGEN Loire | `studio-web` / `refonte` | `realisation` | active | **`CRM-046`** — l'étape `realisation`, vide sur tout board ; porte `lien-proposition`, que l'arête entrante **exige** |
+| Socle analytique — Vertuo | `conseil-ia` / `grands-comptes` | `livre` | active | **`CRM-046`** — l'étape `livre`, dont la seule card était archivée, donc invisible de tout écran |
+| Cursus DevSecOps — Institut Berthier | `formation` / `inter-entreprises` | `perdu` | active | **`CRM-046`** — l'étape `perdu` et la **branche alternative** du graphe ; porte `motif-perte`, que l'étape exige |
+| Cadrage data — Groupe Vallier | `conseil-ia` / `prospection` | `prospection` **du workflow dérivé** | active | **`CRM-046`** — le workflow dérivé, jusque-là inexercé, et le seul channel actif vide |
+| Assistant IA support — Nordis | `conseil-ia` / `prospection` | `negociation` **du workflow dérivé** | active | **`CRM-046`** — deux colonnes peuplées sur le board dérivé, et non une seule |
 
-Les identifiants sont **stables** — `5eed0000-0000-4000-8000-0000000000c1` à `…c9` —, comme
-`CLAUDE.md` §8 l'exige des données dont les tests dépendent.
+Les identifiants sont **stables** — `5eed0000-0000-4000-8000-0000000000c1` à `…ce` —, comme
+`CLAUDE.md` §8 l'exige des données dont les tests dépendent. **Deux exceptions, et c'est le produit
+qui les impose** : les deux dernières cards vivent sur le workflow dérivé, dont l'identifiant et
+ceux de ses étapes sont frappés par `copy_workflow_to_track`. Le seed résout ces deux clés
+étrangères à l'exécution, par la clé de nœud (`docs/SPEC-seed.md` §9.4).
 
-### 9.1 Aucune card dans `prospection`, et le motif est mesuré
+Après `CRM-046`, **les sept étapes du workflow global portent chacune au moins une card active**, et
+aucun channel actif n'est vide.
+
+### 9.1 `prospection` a longtemps été vide, et le motif était mesuré — levé par `CRM-046`
+
+**Ce chapitre décrit un état révolu, et il est conservé parce que la mesure qu'il porte reste la
+seule preuve écrite de ce qui a été corrigé.**
 
 Le channel `prospection` est le seul du seed que le workflow **dérivé** de `CRM-032` occupe, et
 c'est aussi celui que le droit fin du `viewer` rouvre. Il aurait été le meilleur candidat pour
-démontrer les deux. Il est pourtant **laissé vide**, et le motif n'est pas un choix esthétique.
+démontrer les deux. De `CRM-040` à `CRM-045`, il est pourtant resté **vide**, et le motif n'était
+pas un choix esthétique.
 
 MESURÉ, une card posée dans `prospection` puis le seed rejoué : **échec, code de sortie `1`**, dès
 la **section 4** :
@@ -566,24 +581,32 @@ ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
    from table \"cards\"", …}
 ```
 
-Le seed **repointe le `workflow_id` de `prospection` deux fois à chaque exécution** : la section 4
-le ramène au workflow global déclaré, la section 7 le rattache ensuite à la copie de portée track.
-La clé composite du §2.4 refuse le premier geste dès qu'une card y vit. Contre-épreuve mesurée :
-une card dans `grands-comptes`, dont le workflow ne change jamais, laisse le seed **vert**, code de
-sortie `0`, zéro erreur.
+Le seed **repointait le `workflow_id` de `prospection` deux fois à chaque exécution** : la section 4
+le ramenait au workflow global déclaré, la section 7 le rattachait ensuite à la copie de portée
+track. La clé composite du §2.4 refuse le premier geste dès qu'une card y vit. Contre-épreuve
+mesurée : une card dans `grands-comptes`, dont le workflow ne change jamais, laisse le seed
+**vert**, code de sortie `0`, zéro erreur.
 
-Ce n'est pas un défaut de la clé, et ce n'est pas un défaut du seed : c'est la **conséquence
-concrète et immédiate** de la règle non décidée d'INC-046, sur le seul objet du projet qui
-l'exerce. Le comportement du seed reste **inchangé** — le corriger supposerait de trancher INC-046,
-ou de rendre conditionnelle une convergence livrée par `CRM-032` et `CRM-033`, dont
-`scripts/verify-copie-workflow.sh` dépend. La démonstration que la card perdue portait est reprise
-**ailleurs, sans rien perdre** : la ligne *n* du contrat du §8.1 fait créer une card dans
-`prospection` par le `viewer` lui-même, ce qui prouve la réouverture par droit fin mieux qu'une
-ligne de seed ne le ferait, puis la retire.
+**Ce que `CRM-046` a changé, et ce qu'il n'a pas changé.** Aucune règle n'a été relâchée : ni la clé
+composite, ni le trigger de `CRM-033`, ni INC-046. Ce sont les **deux écritures inutiles** qui ont
+disparu — le seed relit avant d'écrire, et n'écrit que ce qui diverge (décisions 221 et 225,
+`docs/SPEC-seed.md` §9.2). Sur une base conforme, la section 7 ne fait plus aucune écriture, et la
+clé étrangère n'a rien à vérifier.
 
-L'écart est **figé par une assertion** de la suite pgTAP, qui constate qu'aucune card ne réside
-dans `prospection` **et** que la clé composite refuse le déplacement. Le jour où l'arbitrage
-d'INC-046 sera rendu, elle le dira.
+**INC-046 reste entière, et elle est désormais éprouvée par un REFUS plutôt que par un vide.** Le
+geste qu'elle interdit — déplacer le workflow d'un channel peuplé — rend `409` sur `prospection`,
+ce que mesurent `e2e/api/coherence-workflow.spec.ts` (ligne *a bis*),
+`e2e/api/move-card-to-channel.spec.ts` (scénario *q*) et le contrôle N3 de
+`scripts/verify-seed-demo.sh`. Une assertion de refus prouve la règle ; une assertion de vide ne
+prouvait que l'absence d'occasion de l'enfreindre.
+
+La ligne *n* du contrat du §8.1 continue par ailleurs de faire créer une card dans `prospection`
+par le `viewer` lui-même, puis de la retirer : la réouverture par droit fin reste prouvée par le
+geste, non par une ligne de seed.
+
+**Conséquence de navigation, non résolue** : le `viewer` lit ces cards par son droit fin et
+**aucun écran du produit ne l'y mène**, la coquille résolvant le track avant ses channels. C'est
+INC-075, ouverte, mesurée et figée par la preuve n° 13 de `scripts/verify-seed-demo.sh`.
 
 Chaque card active hors « Piste entrante à qualifier » porte un `owner_id` réel parmi les trois profils, un `amount`,
 une `currency`, une `next_action` et une `next_action_at` — sans quoi la vue « Ma journée » et

@@ -3993,21 +3993,87 @@ démontrable depuis le seed.
 - [x] `docs/SPEC-seed.md` §1, §4, §8 et §9, `docs/JOURNAL.md` décisions 220 à 224,
       `docs/INCONSISTENCY_REPORT.md` INC-075, `CHANGELOG.md` mis à jour dans le même changement que
       la spécification.
-- [ ] **Le code n'est pas écrit.** Ni les cinq cards, ni les quatre valeurs, ni la convergence des
-      sections 4 et 7 de `supabase/seed/apply-seed.sh`.
-- [ ] **Aucune preuve du §9.9 n'existe** : `scripts/verify-seed-demo.sh` reste à écrire, et ses
-      quatorze contrôles avec lui.
-- [ ] **Les compteurs figés par les unités antérieures ne sont pas révisés.** 9 cards deviendront
-      14, 14 valeurs 18, 29 événements 38 : les garde-fous de `verify-cards.sh`,
-      `verify-valeurs-champs.sh`, `verify-move-card.sh`, `verify-colonnes-protegees.sh`,
-      `verify-preuves-refus.sh`, `e2e/api/cards.spec.ts`, `e2e/api/valeurs-champs.spec.ts`,
-      `e2e/api/move-card.spec.ts`, `e2e/api/timeline.spec.ts`,
-      `supabase/tests/0015_colonnes_protegees.test.sql` et `supabase/tests/0018_timeline.test.sql`
-      deviendront rouges et devront être **révisés, jamais retirés** (décision 51).
-- [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les seize unités précédentes.
+- [x] **LE JEU EST LIVRÉ, ET LES TROIS MANQUES SONT FERMÉS.** `supabase/seed/apply-seed.sh` :
+      cinq cards, quatre valeurs, la convergence par état des sections 4 et 7. MESURÉ après
+      application : **14 cards** dont 12 actives, **18 valeurs**, 5 commentaires, **38 événements**.
+      Les **sept** étapes du workflow global portent chacune une card active, le workflow dérivé en
+      porte deux à deux étapes distinctes, et **aucun channel actif n'est vide**.
+- [x] **UN DÉFAUT RÉEL DE MON PROPRE TRAVAIL, TROUVÉ EN EXÉCUTANT LE HARNAIS** (décision 225).
+      Conditionner TOUTE la réparation de la section 7 à la conformité de la copie faisait perdre
+      la convergence pour toute dérive réparable — un nom modifié à la main n'était plus rattrapé.
+      Seules `scope` et `track_id` exigent de libérer le channel ; `name`, `is_default` et
+      `archived_at` sont désormais convergées **inconditionnellement**. `CRM-046` aurait introduit
+      une régression de convergence en croyant en réparer une.
+- [x] **UN SECOND DÉFAUT, DE LA MÊME FAMILLE** (décision 226), trouvé en exécutant le harnais
+      **deux fois** : « 38 événements » n'est pas un invariant mais un ÉTAT, et le harnais lui-même
+      en écrit quatre par exécution. Seul « un `created` par card » se fige par une égalité ; le
+      reste est vérifié **en minorant**. L'assertion jumelle de `0018_timeline.test.sql`, qui
+      comptait le même cumul, est révisée avec lui.
+- [x] **UN TROISIÈME DÉFAUT, DANS UNE PREUVE QUE PERSONNE NE VOYAIT ROUGE.** La ligne *b* de
+      `e2e/api/coherence-workflow.spec.ts` appelait `remettreChannel` **sans rien asserter** avant
+      son écriture utile : le retour au workflow global échouait en silence, et l'assertion
+      suivante réaffectait une valeur déjà en place. Elle serait restée **VERTE sans plus rien
+      prouver**. Trois scénarios opèrent désormais sur un channel qu'ils créent et détruisent.
+- [x] **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **60 contrôles, aucune
+      anomalie**, et **non complaisant** — trois dégradations posées par la vraie route le font
+      réellement mordre, et la restauration est **constatée**. Elle porte sur l'ÉTAT : la MÉMOIRE
+      ne revient pas, et l'écart de la timeline est mesuré à la valeur près, quatre événements.
+- [x] **Onze assertions figées par des unités antérieures sont devenues rouges, et TOUTES ont été
+      RÉVISÉES, jamais retirées** (décision 51). Deux figeaient explicitement une conséquence
+      d'INC-046 — « aucune card seedée dans `prospection` » : elles prouvent désormais que ces
+      cards suivent le workflow dérivé, et le **refus** qui fonde INC-046 est éprouvé à côté, en
+      `409`. Fichiers touchés : `0012_cards.test.sql`, `0015_colonnes_protegees.test.sql`,
+      `0018_timeline.test.sql`, `0019_move_card_to_channel.test.sql`, `e2e/api/board.spec.ts`,
+      `e2e/api/cards.spec.ts`, `e2e/api/coherence-workflow.spec.ts`,
+      `e2e/api/colonnes-protegees.spec.ts`, `e2e/api/liste-cards.spec.ts`,
+      `e2e/api/move-card-to-channel.spec.ts`, `e2e/api/valeurs-champs.spec.ts`.
+- [x] **Suite pgTAP verte** : 1401 → **1405 assertions**, 19 fichiers, aucune anomalie.
+- [x] **Preuves d'API vertes** : 409 → **410 scénarios**, dont la contre-épreuve « ligne a bis » qui
+      mesure le refus `409` opposé au déplacement du workflow d'un channel peuplé.
+- [x] **Preuves d'interface vertes** : **127 scénarios**, inchangés — l'unité ne livre aucun écran.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets, `npm run test:unit` vert
+      (**467 tests**, inchangés).
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement**, et **mesurés,
+      non déduits** : 1401 → **1405** assertions, 409 → **410** scénarios d'API, `SCENARIOS_UI`
+      inchangé à 127. Le harnais rejoué : **25 contrôles, aucune anomalie**.
+- [x] `docs/SPEC-seed.md` §1, §4, §8 et §9, `docs/SPEC-cards.md` §9 et §9.1,
+      `docs/JOURNAL.md` décisions 220 à 226, `docs/INCONSISTENCY_REPORT.md` INC-075,
+      `CHANGELOG.md` mis à jour dans le même changement que le code et les preuves.
+- [ ] **LA PREUVE N° 14 SOUS SA FORME FORTE N'EST PAS JOUÉE.** La Definition of Done exige que
+      « `resetMe.sh` reproduise exactement le même état ». Le harnais prouve la forme **faible** —
+      empreinte stable d'un rejeu du seed à l'autre, et rétablie après dégradation. La forme forte
+      exige de détruire le cluster, ce qu'un harnais de vérification ne fait pas sans confirmation
+      humaine (`CLAUDE.md` §9). **À jouer à la main** :
+      `scripts/verify-seed-demo.sh --empreinte`, puis `./resetMe.sh --yes`, puis de nouveau
+      `--empreinte`.
+- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les seize unités précédentes.
+      **Dix-septième unité consécutive.**
 
-*État réel : spécification livrée et poussée, implémentation non commencée.* L'unité reste `[~]`
-et le restera tant que les trois points ci-dessus ne sont pas faits.
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « `resetMe.sh` reproduit
+exactement le même état ; chaque fonctionnalité livrée est démontrable depuis le seed ». La seconde
+moitié est livrée et mesurée pour les trois profils ; la première ne l'est que sous sa forme
+faible, et le point ci-dessus le dit.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran, donc aucune capture et aucun test E2E d'interface.** « Aucun écran vide » est
+  vérifié au niveau des **données** que chaque jeton réel obtient, jamais au niveau du rendu :
+  INC-021, dix-septième unité consécutive (`docs/SPEC-seed.md` §9.7).
+- **Les deux cards du workflow dérivé ne portent aucune valeur de formulaire** : `copy_workflow_to_track`
+  ne copie pas les champs, INC-037. L'absence est **figée par une preuve** plutôt que compensée par
+  sept champs déclarés à la main (décision 223).
+- **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, ouverte.
+- **INC-046 n'est pas levée.** Le seed a cessé de repointer un channel peuplé ; il n'a pas rendu le
+  geste possible, et le refus `409` est éprouvé par trois preuves distinctes.
+- **Aucun message, aucune pièce jointe** : chunk 4.
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **Trois contournements hors dépôt ont dû être refaits** : démon Docker lancé à la main,
+  `npm config set cafile` avant `npm ci` (INC-032, INC-042), et la pile démarrée par
+  `docker compose up` en énumérant les treize services autres que `webapp`. **INC-036, neuvième
+  occurrence** : le Chromium préinstallé est en version `1194` là où le Playwright épinglé attend
+  `1234` ; le contournement documenté du dépôt — `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun
+  fichier du dépôt n'a été modifié pour cela.
 
 ### CRM-047 — Manuel utilisateur du chunk 3 `[ ]`
 **DoD** : `docs/manual.md` décrit le produit réellement exécuté ; captures renouvelées.

@@ -39,6 +39,8 @@ const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const CHANNEL_INTER_ENTREPRISES = '5eed0000-0000-4000-8000-000000000036'
 const CHANNEL_PROSPECTION = '5eed0000-0000-4000-8000-000000000031'
+/** Le seul channel du seed sans aucune affaire depuis `CRM-046` : il est ARCHIVÉ. */
+const CHANNEL_APPELS_OFFRES = '5eed0000-0000-4000-8000-000000000033'
 const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
@@ -57,8 +59,14 @@ type CardLue = {
 	current_step_id: string
 }
 
-/** Les cards **actives** de `grands-comptes`, telles que le §12.3 les demande. */
-const ACTIVES_GRANDS_COMPTES = 3
+/**
+ * Les cards **actives** de `grands-comptes`, telles que le §12.3 les demande.
+ *
+ * RÉVISÉ PAR `CRM-046` (décision 51) : trois devenues QUATRE — `…0cd` y occupe l'étape « Livré »,
+ * dont la seule card était archivée, donc invisible de tout écran (docs/SPEC-seed.md §9.3). La
+ * constante existe précisément pour que cette révision tienne en une ligne.
+ */
+const ACTIVES_GRANDS_COMPTES = 4
 
 /** Les filtres d'activité, écrits une fois : ils sont la définition d'« active » du §5. */
 const FILTRES_ACTIVES = 'archived_at=is.null&deleted_at=is.null'
@@ -371,11 +379,16 @@ test.describe('la pagination et son `416` (§12.6)', () => {
 		expect(totalPlanifie).not.toBe(totalExact)
 	})
 
+	// RÉVISÉ PAR `CRM-046`. Le scénario employait `prospection`, alors vide ; l'unité y a posé deux
+	// cards pour que le workflow dérivé cesse d'être inexercé (docs/SPEC-seed.md §9.3), et
+	// « aucun écran vide » interdit désormais qu'un channel ACTIF soit vide. Le seul channel du
+	// seed sans affaire est donc `appels-offres`, ARCHIVÉ — il reste lisible par l'API, seule la
+	// coquille le masque, et il rend exactement ce que le §12.6 attend d'un total nul.
 	test('un channel sans affaire rend `200`, un total de zéro, et aucune erreur', async ({
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_PROSPECTION}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			`${CARDS}?select=id&channel_id=eq.${CHANNEL_APPELS_OFFRES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-24' } },
 		)
 		expect(reponse.status()).toBe(200)

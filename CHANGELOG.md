@@ -15,6 +15,45 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le jeu de démonstration complet** — `CRM-046`, `supabase/seed/apply-seed.sh`. Cinq cards et
+  quatre valeurs de formulaire ferment les trois manques mesurés du socle : les **sept** étapes du
+  workflow global portent chacune une card **active**, le workflow **dérivé** en porte deux à deux
+  étapes distinctes, et **aucun channel actif n'est vide**. Le seed livre désormais 14 cards dont 12
+  actives, 18 valeurs, 5 commentaires et 38 événements au sortir d'un cluster neuf.
+- **Une card peut enfin vivre dans « Prospection »**, et aucune règle n'a été relâchée pour cela :
+  les deux écritures inutiles du seed — le `workflow_id` réécrit en section 4, la séquence de
+  libération en section 7 — sont devenues **conditionnées par une relecture**. Sur une base
+  conforme, la section 7 ne fait plus aucune écriture. **INC-046 n'est pas levée** : déplacer le
+  workflow d'un channel peuplé reste refusé en `409`, ce que trois preuves distinctes mesurent
+  désormais — un refus prouve la règle là où un vide ne prouvait que l'absence d'occasion de
+  l'enfreindre.
+- **Deux clés étrangères du seed sont résolues à l'exécution**, et c'est le produit qui l'impose :
+  `copy_workflow_to_track` frappe la copie et ses sept étapes avec `gen_random_uuid()`. Les cards du
+  workflow dérivé retrouvent leur étape par la **clé de nœud** du catalogue, jamais par une
+  constante ; si la copie manque, le seed **échoue en le disant** plutôt que de poser ces cards sur
+  le workflow global (décision 222).
+- **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **60 contrôles**, dont ce que
+  chacun des trois profils lit réellement, et **non complaisant** — trois dégradations posées par la
+  vraie route le font mordre. Sa restauration porte sur l'**état** ; la **mémoire** ne revient pas,
+  et l'écart de la timeline est mesuré à la valeur près.
+
+### Corrigé
+
+- **Deux défauts de `CRM-046` trouvés par son propre harnais, avant tout commit de code.**
+  Conditionner toute la réparation de la section 7 à la conformité de la copie faisait perdre la
+  convergence pour toute dérive réparable — seules `scope` et `track_id` exigent de libérer le
+  channel (décision 225). Et « 38 événements » n'est pas un invariant mais un **état** : le harnais
+  lui-même en écrit quatre par exécution, seul « un `created` par card » se fige par une égalité
+  (décision 226).
+- **Une preuve d'API restait verte sans plus rien prouver.** La ligne *b* de
+  `e2e/api/coherence-workflow.spec.ts` remettait un channel à son workflow global **sans rien
+  asserter** ; l'écriture échouait en silence et l'assertion suivante réaffectait une valeur déjà en
+  place. Trois scénarios opèrent désormais sur un channel qu'ils créent et détruisent, et l'état de
+  départ est asserté.
+- **Onze assertions figées par des unités antérieures ont été révisées, jamais retirées**
+  (décision 51), dans quatre suites pgTAP et sept preuves d'API. Deux d'entre elles figeaient
+  explicitement une conséquence d'INC-046.
+
 - **Spécification du jeu de démonstration complet** — `CRM-046`, `docs/SPEC-seed.md` §9, écrite
   **après mesure de la pile réelle** et avant toute ligne de code. Dix sous-chapitres opposables :
   ce que le socle satisfait déjà, les trois manques chiffrés, la levée de l'obstruction du §9.1 de

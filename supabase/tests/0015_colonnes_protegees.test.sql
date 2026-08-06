@@ -245,21 +245,24 @@ release savepoint p_insert;
 -- Une protection qui casserait le seed serait découverte au prochain `resetMe.sh`, c'est-à-dire
 -- trop tard. Le constater ici la met sous surveillance permanente.
 
+-- RÉVISÉES PAR `CRM-046` (décision 51) : le seed livrait NEUF cards, il en livre QUATORZE
+-- (docs/SPEC-seed.md §9.3). Les trois assertions gardent leur fonction — la protection de colonne
+-- ne doit toucher ni le nombre, ni la forme, ni l'unicité des adresses.
 select is(
 	(select count(*)::int from public.cards),
-	9,
-	'les neuf cards du seed sont intactes : cette unité ne touche aucun contenu');
+	14,
+	'les quatorze cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
 	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
-	9,
-	'et leurs neuf adresses ont toujours la forme générée : aucune n''a été réécrite');
+	14,
+	'et leurs quatorze adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards),
-	9,
-	'neuf adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne l''a pas '
+	14,
+	'quatorze adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne l''a pas '
 	'relâché');
 
 -- =============================================================================================

@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(90);
+select plan(92);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -452,11 +452,33 @@ select lives_ok($$
 	'…mais un simple RENOMMAGE passe : la garde ne se déclenche qu''au passage de `archived_at` de '
 	'NULL à une valeur — c''est le défaut qu''INC-031 redoutait');
 
--- `livre` ne porte que la card ARCHIVÉE du seed. Elle n'occupe rien.
+-- RÉVISÉ PAR `CRM-046` (décision 51). `livre` ne portait que la card ARCHIVÉE du seed, qui
+-- n'occupe rien ; l'unité y a posé `…0cd`, ACTIVE, pour que l'étape « Livré » cesse d'être une
+-- colonne vide (docs/SPEC-seed.md §9.3). La propriété reste vraie et reste à prouver — le seed ne
+-- la sert simplement plus toute faite, et la suite construit désormais l'état qu'elle éprouve.
+--
+-- L'archivage est fait ICI, sous un POINT DE SAUVEGARDE annulé aussitôt après : sans lui, il
+-- fausserait la section 10, qui compte « exactement une card archivée » dans le seed. Défaut réel
+-- trouvé en exécutant — l'état posé pour une assertion ne doit pas fuir dans les suivantes.
+savepoint archivage_livre;
+
+update public.cards set archived_at = now()
+ where id = '5eed0000-0000-4000-8000-0000000000cd';
+
+select is(
+	(select count(*)::int from public.cards c
+	   join public.workflow_steps s on s.id = c.current_step_id
+	   join public.workflow_nodes_catalog n on n.id = s.node_id
+	  where n.key = 'livre' and c.archived_at is null and c.deleted_at is null),
+	0,
+	'préalable posé : plus aucune card ACTIVE sur `livre`, les deux qui y vivent sont archivées');
+
 select lives_ok($$
 	update public.workflow_nodes_catalog set archived_at = now() where key = 'livre' $$,
 	'archiver un nœud dont les seules cards sont ARCHIVÉES est accepté : « active » a une '
 	'définition, et elle compte (§5)');
+
+rollback to savepoint archivage_livre;
 
 select lives_ok($$
 	update public.workflow_nodes_catalog set archived_at = null where key = 'livre' $$,
@@ -466,11 +488,15 @@ select lives_ok($$
 -- 10. Conformité du seed — docs/SPEC-cards.md §9
 -- =============================================================================================
 
+-- RÉVISÉ PAR `CRM-046`, jamais retiré (décision 51) : le seed en livrait NEUF, il en livre
+-- QUATORZE — douze sur le workflow global, aux sept étapes, et deux sur le workflow dérivé
+-- (docs/SPEC-seed.md §9.3). L'assertion garde sa fonction : elle rendra rouge toute quinzième card
+-- ajoutée sans que le contrat soit réécrit.
 select is(
 	(select count(*)::int from public.cards
 	  where id::text like '5eed0000-0000-4000-8000-0000000000c%'),
-	9,
-	'le seed livre NEUF cards, identifiants stables — docs/SPEC-cards.md §9');
+	14,
+	'le seed livre QUATORZE cards, identifiants stables — docs/SPEC-cards.md §9, docs/SPEC-seed.md §9.3');
 
 select is(
 	(select count(*)::int from public.cards
@@ -499,8 +525,8 @@ select isnt(
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards where id::text like '5eed%'),
-	9,
-	'les neuf adresses seedées sont distinctes');
+	14,
+	'les quatorze adresses seedées sont distinctes');
 
 select is(
 	(select count(*)::int from public.cards where id::text like '5eed%'
@@ -601,14 +627,33 @@ select lives_ok($$
 	'peuvent s''exprimer ainsi. Refuser serait une décision de produit que personne n''a prise '
 	'(§10, point ouvert n° 1)');
 
--- INC-046, seconde conséquence : le seed ne peut pas poser de card dans `prospection`.
+-- RÉVISÉ PAR `CRM-046`, ET C'EST LE GARDE-FOU QUI TOURNE, NON QUI DISPARAÎT (décision 51).
+--
+-- Jusqu'à `CRM-045`, cette assertion figeait « AUCUNE card seedée dans `prospection` », conséquence
+-- mesurée d'INC-046 : le seed repointait deux fois le workflow de ce channel, et la clé composite
+-- refusait dès qu'une card l'occupait. `CRM-046` a cessé ces deux écritures — convergence par état,
+-- décision 221 — et le channel porte désormais DEUX cards.
+--
+-- INC-046 N'EST PAS LEVÉE POUR AUTANT, et l'assertion suivante le prouve mieux que la précédente :
+-- les deux cards vivent sur le workflow DÉRIVÉ, celui-là même que le channel porte. Le geste
+-- qu'INC-046 interdit — déplacer le workflow d'un channel peuplé — reste refusé, et il est éprouvé
+-- dans les deux sens quelques assertions plus haut.
 select is(
 	(select count(*)::int from public.cards c
 	   join public.channels ch on ch.id = c.channel_id
 	  where ch.slug = 'prospection' and c.id::text like '5eed%'),
-	0,
-	'INC-046 : AUCUNE card seedée dans `prospection`. MESURÉ — une seule y suffit à faire échouer '
-	'le seed en section 4, `23503`. Le motif est écrit en docs/SPEC-cards.md §9.1, pas masqué');
+	2,
+	'`prospection` porte DEUX cards seedées depuis CRM-046 — docs/SPEC-seed.md §9.2 et §9.3');
+
+select is(
+	(select count(*)::int from public.cards c
+	   join public.channels ch on ch.id = c.channel_id
+	   join public.workflows w on w.id = c.workflow_id
+	  where ch.slug = 'prospection' and c.id::text like '5eed%'
+	    and w.scope = 'track' and w.derived_from_workflow_id is not null),
+	2,
+	'…et TOUTES DEUX sur le workflow DÉRIVÉ, jamais sur le global : une card de `prospection` posée '
+	'sur le workflow global n''apparaîtrait dans aucune colonne du board (docs/SPEC-seed.md §9.4)');
 
 select * from finish();
 rollback;

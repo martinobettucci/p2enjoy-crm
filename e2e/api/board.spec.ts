@@ -28,6 +28,8 @@ const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const TRACK_CONSEIL_IA = '5eed0000-0000-4000-8000-000000000021'
 const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
+/** Ajoutée par `CRM-046` : `…0cd` occupe « Livré », dont la seule card était archivée. */
+const ETAPE_LIVRE = '5eed0000-0000-4000-8000-000000000066'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
 const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
 
@@ -206,11 +208,14 @@ test.describe('B2 — la lecture des transitions rend les gestes atteignables (�
 test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, lecture n° 3)', () => {
 	const requeteCards = `${CARDS}?select=${encodeURIComponent(COLONNES_CARD_BOARD)}&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&archived_at=is.null&deleted_at=is.null&order=position,title`
 
-	test('les trois cards actives de `grands-comptes`, et elles seules', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-046` (décision 51) : `grands-comptes` portait TROIS cards actives, il en porte
+	// QUATRE — `…0cd` y occupe l'étape « Livré », dont la seule card était archivée, donc invisible
+	// de tout écran (docs/SPEC-seed.md §9.3).
+	test('les quatre cards actives de `grands-comptes`, et elles seules', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
 		const cards = (await reponse.json()) as CardLue[]
-		expect(cards).toHaveLength(3)
+		expect(cards).toHaveLength(4)
 	})
 
 	// Les deux exclusions sont CÔTÉ SERVEUR : c'est la définition d'« active » de
@@ -223,22 +228,25 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 		expect(ids).not.toContain(CARD_ARCHIVEE)
 		expect(ids).not.toContain(CARD_CORBEILLE)
 
-		// Contre-épreuve : sans les filtres, la même requête en rend cinq. L'exclusion est donc
-		// bien l'effet des filtres, et non celui d'une politique qui masquerait ces deux lignes.
+		// Contre-épreuve : sans les filtres, la même requête en rend SIX — quatre actives, plus
+		// l'archivée et celle en corbeille. L'exclusion est donc bien l'effet des filtres, et non
+		// celui d'une politique qui masquerait ces deux lignes.
 		const sansFiltres = await request.get(
 			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		expect((await sansFiltres.json()) as { id: string }[]).toHaveLength(5)
+		expect((await sansFiltres.json()) as { id: string }[]).toHaveLength(6)
 	})
 
-	// MESURÉ : `grands-comptes` n'occupe que DEUX étapes sur sept. Cinq colonnes vides sont donc
-	// la situation normale, et c'est ce que la composition partant des étapes doit produire.
-	test('les cards n’occupent que deux des sept étapes du workflow', async ({ request }) => {
+	// MESURÉ, ET RÉVISÉ PAR `CRM-046` : `grands-comptes` n'occupait que DEUX étapes sur sept, il en
+	// occupe TROIS. Quatre colonnes vides restent la situation normale d'un channel — « aucun écran
+	// vide » (docs/SPEC-seed.md §9.1) porte sur le CHANNEL, jamais sur chacune de ses colonnes —, et
+	// c'est ce que la composition partant des étapes doit produire.
+	test('les cards n’occupent que trois des sept étapes du workflow', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
 		const cards = (await reponse.json()) as CardLue[]
 		const etapes = new Set(cards.map((card) => card.current_step_id))
-		expect([...etapes].sort()).toEqual([ETAPE_PROSPECTION, ETAPE_RELANCE].sort())
+		expect([...etapes].sort()).toEqual([ETAPE_PROSPECTION, ETAPE_RELANCE, ETAPE_LIVRE].sort())
 	})
 
 	test('l’ordre est celui des colonnes : position, puis titre', async ({ request }) => {
