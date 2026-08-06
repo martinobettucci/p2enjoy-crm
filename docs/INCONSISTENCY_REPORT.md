@@ -61,6 +61,74 @@ track —, sans rien changer ni à la politique ni à la coquille (`docs/SPEC-se
 **Lié à :** INC-030 (close, dont la mesure de clôture est l'origine de ce point), INC-024, INC-021
 (aucun écran de connexion, donc aucun parcours réel pour l'observer), `docs/SPEC-permissions-rls.md`
 §3 ligne f, `docs/SPEC-seed.md` §9.7.
+### INC-076 — Supprimer un compte est devenu impossible dès qu'il a commenté, et trois preuves du seed le constatent sans le nommer
+
+**Nature :** régression de contrat entre deux unités, mesurée. **Antérieure à `CRM-045`**, relevée
+par son balayage de non-régression.
+**Relevée le :** 2026-08-06.
+
+`CRM-011` a livré, et sa Definition of Done l'inscrit noir sur blanc : « **Suppression du compte**
+par l'API d'administration : aucun profil orphelin (cascade) ». `docs/JOURNAL.md` le confirme —
+« compte supprimé sans profil orphelin ».
+
+`CRM-043` a ensuite livré `public.card_comments` avec :
+
+```sql
+author_id uuid not null default auth.uid() references public.profiles (id)
+```
+
+**Sans aucune action `ON DELETE`**, là où les cinq autres clés vers `profiles` du schéma portent
+toutes `ON DELETE SET NULL` — `cards.owner_id`, `cards.created_by`, `card_field_values.updated_by`,
+`card_events.actor_id`. MESURÉ le 2026-08-06, sur la pile réelle, avec la clé de service :
+
+```
+DELETE /auth/v1/admin/users/<bizdev>   →   HTTP 500
+{"code":"23503","message":"update or delete on table \"profiles\" violates foreign key
+ constraint \"card_comments_author_id_fkey\" on table \"card_comments\"",
+ "detail":"Key is still referenced from table \"card_comments\"."}
+```
+
+Le seed fait de `bizdev@p2enjoy.test` l'auteur de **deux** commentaires : le compte est donc
+indestructible sur toute base seedée.
+
+**Trois contrôles de `scripts/verify-seed.sh` échouent en conséquence**, et ils échouaient déjà
+avant `CRM-045` — le script n'a pas été modifié depuis `CRM-005` :
+
+```
+ECHEC  mutation non appliquée : le compte est toujours présent, la suite ne prouverait rien
+ECHEC  le compte supprimé se connecte encore : la preuve n° 5 est complaisante
+ECHEC  un profil orphelin subsiste pour le compte détruit
+```
+
+Le troisième message est trompeur, et il vaut d'être relevé : le profil « subsiste » non parce que
+la cascade a échoué, mais parce que **la suppression n'a jamais eu lieu**. Le harnais rapporte un
+symptôme pour une cause.
+
+**Ce n'est pas seulement un défaut de preuve, c'est une règle de produit que personne n'a
+décidée** : un utilisateur qui a écrit un commentaire ne peut plus être supprimé. Sur un produit
+qui traite des données personnelles, cela heurte `CLAUDE.md` §11 — un droit à l'effacement que le
+schéma rend inexécutable.
+
+**Comportement laissé INCHANGÉ.** La colonne appartient à `CRM-043`, unité `[~]`, et la Definition
+of Done qu'elle contredit appartient à `CRM-011`, unité `[~]` elle aussi. La corriger depuis
+`CRM-045` reviendrait à rouvrir deux unités pendant un passage consacré à une troisième, ce que
+`CLAUDE.md` §13 interdit — et le choix n'est pas mécanique : `author_id` est `not null`, donc
+`ON DELETE SET NULL` **ne s'applique pas en l'état**.
+
+**Arbitrage attendu du responsable.** Trois options, et aucune n'est neutre :
+
+1. **rendre `author_id` nullable** et poser `ON DELETE SET NULL`, comme les cinq autres clés vers
+   `profiles`. Un commentaire survivrait à son auteur, anonyme — cohérent avec `CRM-044`, dont
+   `actor_id` fait déjà exactement cela, et avec la pierre tombale du §13.4 ;
+2. **poser `ON DELETE CASCADE`** : supprimer un compte effacerait ses commentaires. Cohérent avec
+   un droit à l'effacement, incohérent avec un fil de discussion dont des réponses perdraient leur
+   contexte ;
+3. **assumer la règle** — un auteur de commentaire n'est pas supprimable — et l'inscrire dans
+   `docs/SPEC-cards.md` §13 ainsi que dans la Definition of Done de `CRM-011`, qui affirme
+   aujourd'hui le contraire. Il faudrait alors traiter séparément la question du RGPD.
+
+**Lié à :** `CRM-011` (Definition of Done contredite), `CRM-043` (la colonne), `CRM-044`
+(`card_events.actor_id`, qui a tranché la même question dans l'autre sens), `CLAUDE.md` §11.
 
 ---
 

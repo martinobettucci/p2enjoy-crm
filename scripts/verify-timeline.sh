@@ -40,6 +40,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MIGRATION=supabase/migrations/0016_timeline.sql
+# LA MIGRATION 17 FAIT PARTIE DE LA SÉQUENCE DE RESTAURATION, ET CE N'EST PAS UN AJOUT DE PÉRIMÈTRE
+# — même mécanisme que `scripts/verify-cards.sh`, qui reprend la migration 14 depuis `CRM-013`.
+# `CRM-045` étend `app.card_events_apres_maj_card()` d'une CINQUIÈME garde. Rejouer la seule
+# migration 16 la remplace par sa forme à quatre gardes et laisse la base dans un état que plus
+# aucune unité ne décrit : MESURÉ, neuf assertions de
+# `supabase/tests/0019_move_card_to_channel.test.sql` en devenaient rouges, longtemps après que ce
+# harnais eut rendu la main. C'est la parente d'INC-074 : un fichier qui n'est plus la dernière
+# autorité sur un objet ne peut pas, seul, le restaurer.
+MIGRATION_SUIVANTE=supabase/migrations/0017_move_card_to_channel.sql
 TEST_SQL=supabase/tests/0018_timeline.test.sql
 SPEC_API=e2e/api/timeline.spec.ts
 MODULE=webapp/src/lib/timeline.ts
@@ -429,16 +438,25 @@ degrader_et_verifier \
 	"create trigger card_events_refuser_maj before update on public.card_events
 	   for each row execute function app.card_events_refuser_maj()"
 
+# RÉVISÉ PAR `CRM-045` (mécanisme de la décision 51, et cette dégradation était de celles qui
+# CESSENT DE MORDRE plutôt que de devenir rouges — la forme la plus discrète). Les deux listes
+# ci-dessous omettaient `channel_changed`, neuvième valeur livrée par la migration 17. Le seed
+# écrivant désormais deux événements de ce type, PostgreSQL refusait la contrainte dégradée comme
+# la contrainte restaurée — MESURÉ, « is violated by some row » —, l'`ALTER` échouait en silence
+# derrière son `|| true`, et le harnais rendait « DÉGRADATION NON VUE » sans que rien du produit
+# n'ait changé. Les deux listes portent désormais les neuf valeurs, et la dégradation redevient
+# l'ajout de `mail_received` — ce qu'elle a toujours prétendu être.
 degrader_et_verifier \
 	"le CHECK élargi à mail_received — une capacité inexistante paraîtrait livrée" \
 	"alter table public.card_events drop constraint card_events_type_check;
 	 alter table public.card_events add constraint card_events_type_check
-	   check (type = any (array['created','moved','assigned','archived','unarchived','trashed',
-	                            'restored','field_changed','mail_received']))" \
+	   check (type = any (array['created','moved','assigned','channel_changed','archived',
+	                            'unarchived','trashed','restored','field_changed',
+	                            'mail_received']))" \
 	"alter table public.card_events drop constraint card_events_type_check;
 	 alter table public.card_events add constraint card_events_type_check
-	   check (type = any (array['created','moved','assigned','archived','unarchived','trashed',
-	                            'restored','field_changed']))"
+	   check (type = any (array['created','moved','assigned','channel_changed','archived',
+	                            'unarchived','trashed','restored','field_changed']))"
 
 degrader_et_verifier \
 	"la politique de lecture ouverte à tous — la mémoire d'une affaire fermée serait lisible" \
@@ -465,6 +483,23 @@ if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=
 	ok "la migration se rejoue sans erreur — idempotence et convergence (INC-035)"
 else
 	fail "le rejeu de la migration ÉCHOUE : voir $TRAVAIL/rejeu.log"
+fi
+
+# Puis la 17, qui est la dernière autorité sur `app.card_events_apres_maj_card()` et sur le
+# vocabulaire de `card_events` (INC-074, décision 219). Sans elle, la restauration RÉGRESSE.
+if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+	-f - <"$MIGRATION_SUIVANTE" >"$TRAVAIL/rejeu17.log" 2>&1; then
+	ok "la migration 17 est rejouée avec elle : la restauration ne régresse pas (INC-074)"
+else
+	fail "le rejeu de la migration 17 ÉCHOUE : voir $TRAVAIL/rejeu17.log"
+fi
+
+if [ "$(psql_db -c "select prosrc like '%channel_changed%' from pg_proc p
+	join pg_namespace n on n.oid = p.pronamespace
+	where n.nspname='app' and p.proname='card_events_apres_maj_card'")" = t ]; then
+	ok "la cinquième garde du trigger est bien rendue — et c'est CONSTATÉ, non supposé"
+else
+	fail "le trigger est resté dans sa forme à quatre gardes : la restauration a régressé"
 fi
 
 for fichier in "$MIGRATION" "$TEST_SQL"; do

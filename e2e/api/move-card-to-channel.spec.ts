@@ -52,6 +52,8 @@ const ADMIN = '5eed0000-0000-4000-8000-000000000011'
 /** Les cards d'essai de ce fichier. Préfixe `f00d`, jamais `5eed` : INC-061 en sens inverse. */
 const CARD_ESSAI = 'f00d0000-0000-4000-8000-0000000000e5'
 const CARD_ESSAI_L = 'f00d0000-0000-4000-8000-0000000000e6'
+const CARD_ESSAI_N = 'f00d0000-0000-4000-8000-0000000000e7'
+const CARD_ESSAI_P = 'f00d0000-0000-4000-8000-0000000000e8'
 
 /** Un channel qui n'existe pas, et un identifiant de card qui n'existe pas. */
 const CHANNEL_FANTOME = '00000000-0000-4000-8000-00000000beef'
@@ -93,7 +95,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	})
 
 	test.afterAll(async ({ request }) => {
-		for (const essai of [CARD_ESSAI, CARD_ESSAI_L]) {
+		for (const essai of [CARD_ESSAI, CARD_ESSAI_L, CARD_ESSAI_N, CARD_ESSAI_P]) {
 			await request.delete(`${URL_API}${CARDS}?id=eq.${essai}`, { headers: enTetesService() })
 			const reste = await request.get(`${URL_API}${CARDS}?id=eq.${essai}&select=id`, {
 				headers: enTetesService(),
@@ -102,6 +104,35 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 				.toEqual([])
 		}
 	})
+
+	/**
+	 * Crée une card d'essai nue, dans `maintenance`, à l'étape de qualification.
+	 *
+	 * AUCUN SCÉNARIO DE CE FICHIER NE DÉPLACE UNE CARD DU SEED, ET C'EST UNE LEÇON PAYÉE DEUX FOIS.
+	 * Un aller-retour ne rend jamais `position` (§6.5) ni `entered_step_at`, et surtout : si une
+	 * assertion échoue entre l'aller et le retour, la card reste où le test l'a laissée. MESURÉ —
+	 * `…0c5` a été retrouvée dans `appels-offres` après un balayage de non-régression, et onze
+	 * assertions de la suite pgTAP en sont devenues rouges. Une preuve ne doit pas rendre une autre
+	 * preuve dépendante de son succès.
+	 */
+	async function cardDEssaiNue(
+		request: import('@playwright/test').APIRequestContext,
+		id: string,
+	): Promise<void> {
+		const creation = await request.post(`${URL_API}${CARDS}`, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				id,
+				workspace_id: WORKSPACE,
+				channel_id: CHANNEL_MAINTENANCE,
+				workflow_id: WORKFLOW_GLOBAL,
+				current_step_id: ETAPE_QUALIFICATION,
+				title: `Card d’essai CRM-045 ${id.slice(-2)}`,
+				created_by: ADMIN,
+			},
+		})
+		expect(creation.status(), await creation.text()).toBe(201)
+	}
 
 	/** Crée une card d'essai portant UNE réponse de formulaire réelle, par le vrai chemin. */
 	async function cardDEssaiAvecReponse(
@@ -430,15 +461,17 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	// --- n, p : le succès, ses effets, et l'événement --------------------------------------------
 
 	test('n — succès : objet JSON UNIQUE, trois colonnes à jour, et retour', async ({ request }) => {
+		await cardDEssaiNue(request, CARD_ESSAI_N)
+
 		const aller = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {
-				card_id: CARD_MAINTENANCE,
+				card_id: CARD_ESSAI_N,
 				to_channel_id: CHANNEL_PROSPECTION,
 				to_step_id: etapeDerivee,
 			},
 		})
-		expect(aller.status()).toBe(200)
+		expect(aller.status(), await aller.text()).toBe(200)
 
 		const card = await aller.json()
 		// MESURÉ : une fonction rendant un type composite est rendue par PostgREST comme un OBJET,
@@ -453,7 +486,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		const retour = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {
-				card_id: CARD_MAINTENANCE,
+				card_id: CARD_ESSAI_N,
 				to_channel_id: CHANNEL_MAINTENANCE,
 				to_step_id: ETAPE_QUALIFICATION,
 			},
@@ -462,14 +495,18 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		const rendue = (await retour.json()) as { channel_id: string; workflow_id: string }
 		expect(rendue.channel_id).toBe(CHANNEL_MAINTENANCE)
 		expect(rendue.workflow_id).toBe(WORKFLOW_GLOBAL)
+
+		await request.delete(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI_N}`, { headers: enTetesService() })
 	})
 
 	test('p — un channel_changed de plus, AUCUN moved, et six clés de payload', async ({
 		request,
 	}) => {
+		await cardDEssaiNue(request, CARD_ESSAI_P)
+
 		const lire = async (type: string) => {
 			const reponse = await request.get(
-				`${URL_API}${EVENEMENTS}?card_id=eq.${CARD_MAINTENANCE}&type=eq.${type}` +
+				`${URL_API}${EVENEMENTS}?card_id=eq.${CARD_ESSAI_P}&type=eq.${type}` +
 					'&select=payload,actor_id&order=created_at.desc',
 				{ headers: enTetesService() },
 			)
@@ -485,12 +522,12 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {
-				card_id: CARD_MAINTENANCE,
+				card_id: CARD_ESSAI_P,
 				to_channel_id: CHANNEL_APPELS_OFFRES,
 				to_step_id: ETAPE_RELANCE,
 			},
 		})
-		expect(reponse.status()).toBe(200)
+		expect(reponse.status(), await reponse.text()).toBe(200)
 
 		const apres = await lire('channel_changed')
 		expect(apres.length, 'aucun `channel_changed` n’a été écrit').toBe(avant + 1)
@@ -522,16 +559,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// `auth.uid()` le rend malgré le `SECURITY DEFINER` (décision 206).
 		expect(actor_id, 'l’acteur du déplacement n’est pas nommé').toBe(ADMIN)
 
-		// Retour, pour que l'état du seed soit inchangé.
-		const retour = await request.post(`${URL_API}${RPC}`, {
-			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
-				card_id: CARD_MAINTENANCE,
-				to_channel_id: CHANNEL_MAINTENANCE,
-				to_step_id: ETAPE_QUALIFICATION,
-			},
-		})
-		expect(retour.status()).toBe(200)
+		await request.delete(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI_P}`, { headers: enTetesService() })
 	})
 
 	// --- o : la garde n'est pas contournable — preuve de refus n° 5 ------------------------------
@@ -539,6 +567,12 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	test('o — PATCH direct de cards.channel_id par authenticated : 403, la garde tient', async ({
 		request,
 	}) => {
+		const initial = await request.get(
+			`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}&select=channel_id`,
+			{ headers: enTetesService() },
+		)
+		const avantPatch = ((await initial.json()) as Array<{ channel_id: string }>)[0]?.channel_id
+
 		// **PREUVE DE REFUS N° 5** de docs/SPEC-permissions-rls.md §7, reconduite sur `channel_id`.
 		// LE POINT DE LA DÉCISION 214 : ce refus ne vient PAS de cette unité. `CRM-013` avait fermé
 		// la colonne « par voie de conséquence », et la garde était donc close avant d'exister.
@@ -557,8 +591,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 			`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}&select=channel_id`,
 			{ headers: enTetesService() },
 		)
+		// LA LIGNE EST RELUE INCHANGÉE, ET « INCHANGÉE » SE MESURE PAR RAPPORT À CE QU'ELLE ÉTAIT
+		// AVANT L'APPEL — non par rapport à ce que le seed déclare : ce scénario ne doit pas
+		// présumer qu'aucune autre preuve n'a déplacé la card.
 		const lignes = (await relue.json()) as Array<{ channel_id: string }>
-		expect(lignes[0]?.channel_id).toBe(CHANNEL_MAINTENANCE)
+		expect(lignes[0]?.channel_id).toBe(avantPatch)
 	})
 
 	test('o bis — le même PATCH sur workflow_id : refusé lui aussi', async ({ request }) => {

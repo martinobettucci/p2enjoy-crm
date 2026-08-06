@@ -122,6 +122,23 @@ d'exécuter le code attendu.
   preuve d'API et de tout harnais dédié, qui s'exécutent contre une base déjà migrée. Il a été
   trouvé par le balayage de non-régression. L'autorité sur le vocabulaire passe désormais à la
   dernière migration qui l'étend ; aucune garantie de convergence n'est perdue.
+- **Une preuve de `CRM-045` rendait cinq autres suites dépendantes de son succès** — décision 229.
+  Trois scénarios déplaçaient une card du seed et ne la rendaient que si toutes leurs assertions
+  passaient ; une seule card mal rangée a rendu rouges **dix-sept assertions réparties sur cinq
+  suites**. Ils opèrent désormais sur des cards créées et détruites par la preuve elle-même.
+  Vérifié après remise à froid : les 409 scénarios d'API laissent les neuf cards du seed à leur
+  channel, leur étape et leur rang exacts.
+- **Deux défauts de `scripts/verify-timeline.sh`, tous deux nés de `CRM-045`.** Sa dégradation
+  « CHECK élargi à `mail_received` » **cessait de mordre** — ses listes omettaient
+  `channel_changed`, l'`ALTER` échouait en silence, et le harnais rendait « dégradation non vue ».
+  Sa **restauration** rejouait la seule migration 16, qui remplaçait le trigger par sa forme à
+  quatre gardes et rendait rouges neuf assertions **longtemps après** l'exécution du harnais. La
+  migration 17 rejoint la séquence de restauration, et un contrôle constate que la cinquième garde
+  est rendue : 74 → **76 contrôles**.
+- **INC-076** — `card_comments.author_id` n'a aucune action `ON DELETE`, et supprimer un compte qui
+  a commenté rend `500` / `23503`, contre la Definition of Done de `CRM-011`. **Antérieur à
+  `CRM-045`**, relevé par son balayage, laissé inchangé : la colonne appartient à `CRM-043` et
+  `author_id` étant `not null`, la correction n'est pas mécanique. Consigné, non résolu.
 - **Un garde-fou de types de `CRM-034` a joué comme il l'annonçait** et a été **révisé, non
   retiré** : `webapp/src/lib/database.types.test-d.ts` est resserré sur les **trois** fonctions
   appelables de `public`, avec la signature et le retour de la nouvelle.

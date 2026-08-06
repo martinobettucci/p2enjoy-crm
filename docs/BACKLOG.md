@@ -3882,6 +3882,15 @@ interface** avec les jetons réels des trois comptes.
       `position` est toujours recalculée, et un aller-retour ne la rend jamais. Le scénario opère
       désormais sur une card qu'il crée et qu'il détruit, et un contrôle du harnais fige les rangs
       du seed.
+- [x] **LE SECOND DÉFAUT A RÉCIDIVÉ APRÈS LE COMMIT, ET LA CORRECTION ÉTAIT À MOITIÉ FAITE**
+      (décision 229). Seul le scénario *l* avait été porté sur une card d'essai ; *n* et *p*
+      déplaçaient encore `…0c5` et ne la rendaient **que si toutes leurs assertions passaient**. Le
+      balayage de non-régression ayant dégradé la base pendant leur exécution, la card est restée
+      dans `appels-offres` — et **dix-sept assertions réparties sur cinq suites** sont devenues
+      rouges pour une seule card mal rangée. Les trois scénarios opèrent désormais sur des cards
+      créées et détruites par la preuve, y compris en cas d'échec. **Vérifié après remise à froid**
+      : les 409 scénarios d'API laissent les neuf cards du seed à leur channel, leur étape et leur
+      rang exacts, relevés un à un.
 - [x] **UN TROISIÈME DÉFAUT, ET LE PLUS GRAVE — INC-074, décision 219.** Trouvé par le **balayage de
       non-régression** et par rien d'autre. La migration 16 converge le vocabulaire vers huit
       valeurs, la 17 vers neuf ; le runner rejouant tout le répertoire à chaque démarrage, la 16
@@ -3912,8 +3921,54 @@ interface** avec les jetons réels des trois comptes.
 - [x] `docs/SPEC-workflow-engine.md` §6 (treize sous-chapitres), `docs/SCHEMA.md` §5 et §9,
       `docs/SPEC-cards.md` §14.4 et §14.6, `docs/SPEC-seed.md` §2.15 et §2.16, `docs/DAT.md`,
       `docs/PROD_MIGRATIONS.md` §3 (migration 17 et son contrat d'exploitation **destructif**),
-      `docs/manual.md` chapitre 7 bis, `docs/JOURNAL.md` décisions 213 à 219, `CHANGELOG.md` mis à
+      `docs/manual.md` chapitre 7 bis, `docs/JOURNAL.md` décisions 213 à 219 et 229, `CHANGELOG.md` mis à
       jour dans le même changement.
+- [x] **BALAYAGE DE NON-RÉGRESSION : CE QU'IL A TROUVÉ, ET À QUI CHAQUE DÉFAUT APPARTIENT.** Les
+      suites globales sont vertes sur une base fraîchement seedée — **1401 assertions pgTAP, 409
+      scénarios d'API, 127 scénarios d'interface, 467 tests unitaires**, et la suite d'API laisse
+      les neuf cards du seed à leur channel, leur étape et leur rang **exacts**, relevés un à un.
+      Les harnais rejoués individuellement rendent : `verify-authz` **35/35**, `verify-migrations`
+      **23/23**, `verify-move-card` **56/56**, `verify-move-card-to-channel` **43/43**,
+      `verify-timeline` **75/76**.
+- [x] **DEUX DÉFAUTS DU BALAYAGE M'APPARTENAIENT, ET SONT CORRIGÉS DANS CE CHANGEMENT.**
+      **(a)** La dégradation « CHECK élargi à `mail_received` » de `scripts/verify-timeline.sh`
+      **cessait de mordre** — forme la plus discrète du mécanisme de la décision 51 : ses deux
+      listes omettaient `channel_changed`, les deux `ALTER` échouaient en silence derrière leur
+      `|| true`, et le harnais rendait « DÉGRADATION NON VUE » sans que rien du produit n'ait
+      changé. **(b)** La **restauration** du même harnais rejouait la seule migration 16, qui
+      remplaçait `app.card_events_apres_maj_card()` par sa forme à **quatre** gardes : neuf
+      assertions de la suite de cette unité en devenaient rouges **longtemps après** que le harnais
+      eut rendu la main. C'est la parente d'INC-074 — un fichier qui n'est plus la dernière autorité
+      sur un objet ne peut pas, seul, le restaurer. La migration 17 rejoint la séquence de
+      restauration, comme la 14 avait rejoint celle de `verify-cards.sh` à `CRM-013`, et un
+      contrôle **constate** que la cinquième garde est rendue. Le harnais passe de 74 à **76**
+      contrôles.
+- [ ] **QUATRE DÉFAUTS DU BALAYAGE NE M'APPARTIENNENT PAS, ET AUCUN N'EST CORRIGÉ ICI.** Les
+      corriger reviendrait à rouvrir trois unités pendant un passage consacré à une quatrième
+      (`CLAUDE.md` §13). Chacun est mesuré, daté et nommé :
+      **(1) INC-076, la plus grave** — `card_comments.author_id` (`CRM-043`) n'a **aucune** action
+      `ON DELETE`, là où les cinq autres clés vers `profiles` portent toutes `ON DELETE SET NULL`.
+      Supprimer un compte qui a commenté rend `500` / `23503`. La Definition of Done de `CRM-011`
+      affirme le contraire — « aucun profil orphelin (cascade) » —, et trois contrôles de
+      `scripts/verify-seed.sh` échouent en le constatant sans le nommer. Un droit à l'effacement
+      que le schéma rend inexécutable (`CLAUDE.md` §11).
+      **(2) `scripts/verify-commentaires.sh` est resté à `CRM-043`** : il cherche
+      `PanneauCommentaires.tsx`, que `CRM-044` a **remplacé** par `PanneauTimeline.tsx`, et compte
+      **438** tests unitaires là où `CRM-044` en a porté **467**. Quatre contrôles échouent, tous
+      pour cette raison. Le fichier n'a pas été touché depuis `CRM-043` : vérifié par `git log`.
+      **(3) `scripts/verify-preuves-refus.sh` attend 41 politiques**, la base en porte **45**
+      depuis `CRM-044`. Compteur non révisé par l'unité qui l'a fait bouger.
+      **(4) INC-036, quatorzième occurrence** : les navigateurs du conteneur sont en **1194**, le
+      Playwright épinglé exige **1234**. Toute suite d'interface échoue tant que
+      `PLAYWRIGHT_CHROMIUM_PATH` n'est pas renseigné — ce qui explique **à lui seul** la majorité
+      des échecs du premier balayage. Avec le contournement, **127 scénarios verts**.
+- [ ] **UN BALAYAGE SÉQUENTIEL DE TOUS LES HARNAIS N'EST PAS REPRODUCTIBLE, ET C'EST MESURÉ.** Après
+      une passe complète, la base portait **neuf channels résiduels** (`api-cree-*`, `k6-bizdev`) et
+      `appels-offres` archivé — chaque harnais dégrade puis restaure, mais les jeux d'essai
+      s'accumulent. Les suites globales, vertes isolément, deviennent rouges. Contre-épreuve :
+      `npm run e2e:api` seul, deux fois de suite sur une base fraîche, laisse **zéro** résidu. Le
+      phénomène est de la famille d'INC-058 et d'INC-061 ; il est nommé ici parce que sa mesure
+      manquait, et parce qu'il rend tout verdict de balayage séquentiel non concluant.
 - [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quinze unités précédentes : le
       parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
       connexion. **Seizième unité consécutive.**

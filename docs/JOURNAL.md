@@ -7183,3 +7183,33 @@ touche à aucune donnée, et la reconstruction de la base est complète.
 
 **Ce qui reste, et qui n'appartient pas à cette unité** : INC-021. Aucun écran de connexion, donc
 aucun parcours connecté observable, donc aucune capture. Dix-septième unité consécutive.
+### Décision 229 — Aucune preuve de `CRM-045` ne déplace une card du seed, et la leçon a été payée deux fois
+
+**Premier paiement, pendant l'écriture.** Le scénario *l* faisait un aller-retour sur `…0c1`, et
+`e2e/api/move-card.spec.ts` a échoué : il asserte que le rang maximal de la colonne
+`(grands-comptes, relance)` vaut 2, et il valait 3. Le motif n'est pas un défaut du produit, c'est
+le produit — `position` est **toujours** recalculée en fin de colonne d'arrivée (§6.5), et un
+aller-retour rend le channel, le workflow et l'étape, jamais le rang. Le scénario a été porté sur
+une card d'essai.
+
+**Second paiement, après le commit, par le balayage de non-régression.** Les scénarios *n* et *p*
+déplaçaient encore `…0c5`. Ils la rendaient à sa place — mais **seulement si toutes leurs
+assertions passaient**. Un harnais du balayage ayant dégradé la base pendant qu'ils s'exécutaient,
+une assertion a échoué entre l'aller et le retour, et la card est restée dans `appels-offres`.
+MESURÉ ensuite : **onze assertions de la suite pgTAP de cette unité, deux de `0012_cards`, une de
+`0013_move_card`, deux de `0017_commentaires` et une de `0018_timeline`** sont devenues rouges,
+pour une seule card mal rangée.
+
+**La règle, désormais explicite : une preuve ne rend jamais une autre preuve dépendante de son
+propre succès.** Toute preuve de cette unité qui déplace une card opère sur une card qu'elle crée
+et qu'elle détruit — la destruction étant faite à la fois en fin de scénario et dans `afterAll`,
+de sorte qu'un échec en cours de route ne laisse rien derrière. Le scénario *o*, qui ne mute rien,
+compare en outre la ligne relue à ce qu'elle était **avant l'appel** plutôt qu'à ce que le seed
+déclare.
+
+**Vérifié après correction et remise à froid de la base** : la suite d'API complète — 409
+scénarios — laisse les neuf cards du seed dans leur channel, à leur étape et à leur rang exacts,
+relevés un à un.
+
+Un contrôle du harnais fige cette propriété : `scripts/verify-move-card-to-channel.sh` relit les
+rangs de `(grands-comptes, relance)` après la preuve d'API et exige « 1,2 ».
