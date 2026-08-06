@@ -594,6 +594,7 @@ ligne du fil est le produit d'un trigger déclenché par une écriture réelle.
 | §2.13, les 14 valeurs de formulaire | 14 × `field_changed`, `payload` **sans clé `from`** | la valeur qui naît, distinguée de la valeur qui change |
 | Un aller-retour d'étape sur `…0c4` | 2 × `moved` | la transition, dans les deux sens, par la **vraie** RPC `move_card` |
 | Un aller-retour de responsable sur `…0c1` | 2 × `assigned` | l'attribution, par un **vrai** `PATCH` |
+| Un aller-retour de channel sur `…0c5` — §2.16 | 2 × `channel_changed` | le changement de dossier **et de workflow**, par la vraie RPC `move_card_to_channel` |
 
 **Les deux allers-retours laissent l'état du seed rigoureusement identique.** La card `…0c4`
 repart de l'étape de négociation où elle était, la card `…0c1` retrouve Driss Lemoine comme
@@ -608,7 +609,7 @@ sont exécutés que si la card ne porte encore **aucun** événement du type vis
 `…0c4`, `assigned` pour `…0c1`. La lecture passe par la clé de service, qui a le droit de **lire**
 la table sans avoir celui d'y écrire.
 
-**Le compte de 27 ne vaut qu'au sortir du seed.** Une timeline enregistre tout, y compris ce que
+**Le compte est passé de 27 à 29 avec `CRM-045`**, et il ne vaut qu'au sortir du seed. Une timeline enregistre tout, y compris ce que
 les preuves du dépôt font ensuite à la même pile. Seule la naissance d'une card est idempotente :
 les suites assèrent neuf `created` exactement, et des bornes inférieures pour le reste
 (`docs/JOURNAL.md` décision 210).
@@ -618,6 +619,38 @@ les suites assèrent neuf `created` exactement, et des bornes inférieures pour 
 toucherait `archived_at` et `deleted_at` — deux colonnes dont l'état est asserté par `CRM-040`. Les
 quatre types sont exercés par `e2e/api/timeline.spec.ts` avec les jetons réels, sur une card créée
 et détruite par la preuve elle-même.
+
+### 2.16 Aller-retour entre channels — ajouté par `CRM-045`
+
+**Le seed ne peut pas écrire un `channel_changed`**, pour la raison exacte du §2.15 : aucun rôle ne
+détient l'`INSERT` sur `card_events`. L'événement ne naît que d'un déplacement réel.
+
+Le seed exécute donc **un aller-retour**, avec le **jeton de l'administratrice** et par la vraie RPC
+`public.move_card_to_channel` :
+
+| Geste | Card | De | Vers | Étape fournie |
+|---|---|---|---|---|
+| aller | `…0c5` « Support niveau 2 — Atelier Meunier » | `maintenance` (workflow global) | `prospection` (**copie de portée track**) | `Prospection` du graphe cible |
+| retour | la même | `prospection` | `maintenance` | `Prospection` du graphe d'origine |
+
+**Ce que cet aller-retour démontre, et qu'aucun autre geste du seed ne démontrait :** une card qui
+suit réellement un **workflow dérivé**, le temps du transit. La copie de `CRM-032` était jusqu'ici
+prouvée par ses étapes et ses transitions, jamais par une card les empruntant — conséquence
+d'INC-046, nommée au §9.1 de `docs/SPEC-cards.md`. Elle l'est désormais, sans qu'aucune card ne
+demeure dans `prospection` : le channel repointé par les sections 4 et 7 reste vide au repos, et le
+rejeu du seed reste possible.
+
+**Pourquoi `…0c5` et pas une autre.** MESURÉ : elle est l'une des trois cards du seed qui ne portent
+**aucune** réponse de formulaire. Le changement de workflow n'a donc rien à détruire,
+`discard_field_values` reste à `false`, et le seed ne démontre pas la destruction — il ne le peut
+pas sans cesser d'être convergent, une réponse détruite ne renaissant pas au retour. La destruction
+est prouvée par `e2e/api/move-card-to-channel.spec.ts`, sur une card qu'elle crée et qu'elle détruit.
+
+**Convergence.** Les deux gestes sont **conditionnés par une relecture**, comme ceux du §2.15 : ils
+ne sont exécutés que si la card est là où le seed l'attend. Le retour rend la card à son channel, à
+son workflow et à son étape de départ ; sa `position` est recalculée deux fois et retombe sur `1`,
+`…0c5` étant seule dans sa colonne. Aucune assertion des unités précédentes ne bouge — seule
+l'histoire s'allonge, de deux lignes.
 
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 

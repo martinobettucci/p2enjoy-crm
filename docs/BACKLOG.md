@@ -3806,9 +3806,34 @@ interface** avec les jetons réels des trois comptes.
   modifié.
 - **Identité Git reposée avant le premier commit** — INC-034 point 2, **sixième** occurrence.
 
-### CRM-045 — Déplacement d'une card entre channels `[ ]`
+### CRM-045 — Déplacement d'une card entre channels `[~]`
 `move_card_to_channel` avec remappage explicite.
 **DoD** : pgTAP (remappage obligatoire, événement écrit) ; E2E.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-workflow-engine.md` §6 :
+      l'unité tenait en **dix lignes** écrites à `CRM-000`, qui nomment une fonction, un principe et
+      un type d'événement sans dire ce que la fonction vérifie, dans quel ordre, ce qu'elle écrit ni
+      ce qu'elle détruit. Réécrite en treize sous-chapitres opposables, **après mesure sur la pile
+      réelle**. Commit documentaire dédié, poussé avant la première ligne de code.
+- [x] **Ce qui a été mesuré avant d'être écrit** (décisions 213 à 218) : les douze colonnes que
+      `authenticated` peut écrire sur `cards` — `channel_id`, `workflow_id` et `current_step_id`
+      **n'en sont pas**, la garde était donc close avant d'exister ; un changement de channel est
+      aujourd'hui **parfaitement silencieux**, le trigger de `CRM-044` ne surveillant pas
+      `channel_id` ; le `CHECK` de `card_events` **refuse** `channel_changed` en `23514` ; un
+      `UPDATE` du seul `channel_id` est refusé en `23503` par la clé composite, les trois colonnes
+      devant s'écrire en **une** instruction ; et surtout, `card_field_values` interdit le
+      changement de `workflow_id` d'une card qui porte une réponse — **six cards du seed sur
+      neuf**.
+- [x] **Une contradiction consignée sans être résolue implicitement** : **INC-073**,
+      `docs/SCHEMA.md` §9 et `docs/SPEC-workflow-engine.md` §6 décrivent deux fonctions différentes
+      sous le même nom — `step_mapping`, « remappage **des étapes** », annonce un déplacement en
+      lot qu'aucune unité du backlog ne porte. La lecture la plus faible est retenue, la ligne du
+      document de schéma est corrigée, l'arbitrage est demandé.
+- [x] `docs/SCHEMA.md` §5 et §9, `docs/SPEC-cards.md` §14.4 et §14.6, `docs/SPEC-seed.md` §2.15 et
+      §2.16, `docs/JOURNAL.md` décisions 213 à 218, `CHANGELOG.md` mis à jour dans le même
+      changement que la spécification.
+- [ ] **Migration, triggers, pgTAP, preuves d'API, seed et harnais** : à livrer. L'unité reste
+      `[~]` tant qu'aucune de ses preuves n'existe.
 
 ### CRM-046 — Seed de démonstration complet `[ ]`
 Trois tracks, plusieurs channels, workflows distincts dont un dérivé, cards à toutes les étapes,

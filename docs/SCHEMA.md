@@ -502,7 +502,7 @@ Timeline **append-only**, alimentée par triggers. Aucune écriture directe par 
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `id`, `card_id`, `workspace_id` | `uuid` | |
-| `type` | `text` | `CHECK` sur les **huit** valeurs livrées : `created`, `moved`, `assigned`, `archived`, `unarchived`, `trashed`, `restored`, `field_changed` |
+| `type` | `text` | `CHECK` sur les **neuf** valeurs livrées : `created`, `moved`, `assigned`, `channel_changed`, `archived`, `unarchived`, `trashed`, `restored`, `field_changed` |
 | `actor_id` | `uuid` | nul si l'auteur est un service — FK `profiles(id)` `ON DELETE SET NULL` |
 | `payload` | `jsonb` | non nul, défaut `'{}'` ; avant/après, **sans aucun libellé** (`docs/SPEC-cards.md` §14.6) |
 | `created_at` | `timestamptz` | non nul, défaut **`clock_timestamp()`** et non `now()` |
@@ -517,6 +517,13 @@ l'ordre du fil deviendrait celui, arbitraire, de leurs `uuid`. MESURÉ le 2026-0
 n'écrivent pas ces événements : une valeur autorisée que rien ne produit laisse croire à une
 capacité inexistante. `unarchived` et `restored` s'y ajoutent en revanche, le §4 de
 `docs/SPEC-cards.md` posant que l'archivage et la corbeille sont **réversibles**.
+
+**`channel_changed` est la neuvième, ajoutée par `CRM-045`**, et son arrivée a éprouvé le mécanisme
+que `CRM-044` avait posé : le `CHECK` a refusé la valeur en `23514` tant que la migration ne l'avait
+pas étendue, dans le **même** changement que le trigger qui l'écrit. `moved` et `channel_changed`
+sont **mutuellement exclusifs** pour une même écriture : une card qui change de channel n'a franchi
+aucune arête du graphe, et son `payload` porte l'étape d'avant et celle d'après
+(`docs/SPEC-workflow-engine.md` §6.7).
 
 **Aucune colonne `updated_at`**, et ce n'est pas un écart aux conventions générales mais leur
 conséquence : une ligne qu'aucun rôle ne peut modifier — pas même `service_role`, pas même le
@@ -708,7 +715,7 @@ File d'envoi persistante.
 | `app.can_read_card(card)` | Droit effectif sur une card, dérivé de son channel | **livrée** par `CRM-040` — INC-013 close. Destinée aux tables **filles** : les politiques de `cards` jugent sur `channel_id` (décision 110) |
 | `move_card(card_id, to_step_id, comment)` | **Garde centrale**, et **seul chemin** par lequel une card change d'étape : c'est la seule place du produit où le graphe du workflow est opposable. Rend `public.cards` — donc un **objet** JSON pour PostgREST, non un tableau —, remet `entered_step_at` à `now()` et recalcule `position` en fin de colonne d'arrivée. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Cinq refus : `card_not_found`, `forbidden`, `step_not_in_workflow`, `transition_not_allowed`, `comment_required` (docs/SPEC-workflow-engine.md §5.3) | **livrée** par `CRM-034` — **cinq vérifications sur six** : la n° 6, « champs requis renseignés », lit `card_field_values`, due par `CRM-036` (INC-047) |
 | `copy_workflow_to_track(workflow_id, track_id, new_name)` | Copie tracée d'un workflow global vers un track : étapes, arêtes remappées par le nœud, lignage renseigné. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Quatre refus : `workflow_not_found`, `forbidden`, `workflow_not_global`, `track_not_found` (docs/SPEC-workflow-engine.md §4.3) | livrée (`CRM-032`) |
-| `move_card_to_channel(card_id, channel_id, step_mapping)` | Changement de channel avec remappage explicite des étapes |
+| `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | Changement de channel — donc potentiellement de **workflow** — avec remappage **explicite** de l'étape : aucun remappage automatique par clé de nœud. Rend `public.cards`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Le droit d'écriture est exigé sur les **deux** channels. Huit refus : `card_not_found`, `forbidden`, `channel_not_found`, `same_channel`, `step_mapping_required`, `step_not_in_workflow`, `field_values_would_be_lost` (`docs/SPEC-workflow-engine.md` §6.4). Le paramètre annoncé ici `step_mapping` désignait une fonction différente : INC-073 | **livrée** par `CRM-045` |
 | `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé |
 

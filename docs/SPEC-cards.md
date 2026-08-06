@@ -1468,16 +1468,17 @@ Le fil est néanmoins terminé par `id` partout où il est servi, parce qu'une �
 concevable (deux transactions concurrentes, résolution d'horloge) et qu'un ordre total ne doit
 dépendre d'aucune hypothèse sur l'horloge.
 
-### 14.4 Les huit types livrés
+### 14.4 Les neuf types livrés
 
 `docs/SCHEMA.md` §5 énumère `created`, `moved`, `field_changed`, `assigned`, `mail_received`,
-`mail_sent`, `archived`, puis des points de suspension. Les huit valeurs suivantes sont livrées,
-et le `CHECK` **n'en accepte aucune autre** :
+`mail_sent`, `archived`, puis des points de suspension. Les valeurs suivantes sont livrées, et le
+`CHECK` **n'en accepte aucune autre** — **huit** par `CRM-044`, la **neuvième** par `CRM-045` :
 
 | Type | Écrit quand | Trigger |
 |---|---|---|
 | `created` | une card naît | `cards`, `AFTER INSERT` |
-| `moved` | `current_step_id` change | `cards`, `AFTER UPDATE` |
+| `moved` | `current_step_id` change **et `channel_id` ne change pas** | `cards`, `AFTER UPDATE` |
+| `channel_changed` | `channel_id` change — `CRM-045` | `cards`, `AFTER UPDATE` |
 | `assigned` | `owner_id` change, dans un sens comme dans l'autre — y compris vers `NULL` | `cards`, `AFTER UPDATE` |
 | `archived` | `archived_at` passe de nul à renseignée | `cards`, `AFTER UPDATE` |
 | `unarchived` | `archived_at` repasse à nul | `cards`, `AFTER UPDATE` |
@@ -1494,6 +1495,16 @@ mémoire — c'est un compte rendu partial.
 `CRM-054` livrera `mail_messages`, elle devra étendre l'énumération dans la même migration que le
 trigger qui l'écrit, et la base le lui rappellera par un `23514`. L'alternative — accepter dès
 aujourd'hui des valeurs que rien ne produit — laisserait croire qu'une capacité existe.
+
+**Le mécanisme a été éprouvé, et il a tenu.** `CRM-045` est la première unité à écrire un type
+nouveau : le `CHECK` a refusé `channel_changed` en `23514` — MESURÉ le 2026-08-06 — jusqu'à ce que
+sa migration étende l'énumération dans le même changement que son trigger. Ce qui n'était qu'une
+intention écrite est désormais un fait constaté.
+
+**`moved` et `channel_changed` s'excluent.** La garde `moved` est conditionnée à `channel_id`
+inchangé : une card qui change de channel n'a franchi **aucune arête** du graphe, et `moved`
+signifie exactement cela depuis `CRM-044`. Rien n'est perdu — le `payload` de `channel_changed`
+porte l'étape d'avant et celle d'après (`docs/SPEC-workflow-engine.md` §6.7).
 
 ### 14.5 Les triggers, et pourquoi ils sont `SECURITY DEFINER` — MESURÉ
 
@@ -1547,6 +1558,7 @@ formulaire réécrite à l'identique n'en produit pas davantage. C'est ce qui re
 | `created` | `{title, channel_id, step_id}` — l'état de naissance, tel qu'il était |
 | `moved` | `{from_step_id, to_step_id}` |
 | `assigned` | `{from_owner_id, to_owner_id}` |
+| `channel_changed` | `{from_channel_id, to_channel_id, from_workflow_id, to_workflow_id, from_step_id, to_step_id}` — « l'ancien et le nouveau contexte », `docs/SPEC-workflow-engine.md` §6.7 |
 | `archived`, `unarchived`, `trashed`, `restored` | `{}` — la date est `created_at`, l'acteur est `actor_id`, il n'y a rien d'autre à dire |
 | `field_changed`, à l'insertion | `{field_id, to}` — **la clé `from` est absente** |
 | `field_changed`, à la mise à jour | `{field_id, from, to}` |

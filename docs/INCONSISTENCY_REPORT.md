@@ -12,6 +12,47 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-073 — `docs/SCHEMA.md` §9 et `docs/SPEC-workflow-engine.md` §6 décrivent deux fonctions différentes sous le même nom
+
+**Nature :** contradiction entre spécifications, sur la signature d'une fonction.
+**Relevée le :** 2026-08-06, pendant la spécification de `CRM-045`.
+
+Les deux documents nomment `move_card_to_channel`, et n'en décrivent pas la même.
+
+| Source | Ce qu'elle annonce |
+|---|---|
+| `docs/SCHEMA.md` §9 | `move_card_to_channel(card_id, channel_id, **step_mapping**)` — « changement de channel avec remappage explicite **des étapes** » |
+| `docs/SPEC-workflow-engine.md` §6 | « l'appelant fournit **l'étape** de destination », au singulier, pour **une** card |
+
+`step_mapping` — au singulier grammatical mais désignant une *correspondance* — et « remappage des
+**étapes** », au pluriel, annoncent une table de correspondance : plusieurs étapes remappées en un
+appel. C'est la forme qu'aurait une fonction de déplacement **en lot**, ou une fonction qui
+changerait le workflow d'un channel entier en remappant l'étape de chacune de ses cards — soit
+précisément l'option 2 de l'arbitrage d'**INC-046**, qui n'est rattachée à aucune unité.
+
+Le §6 décrit l'autre fonction : **une** card, **une** étape de destination. Sa Definition of Done au
+backlog dit de même — « `move_card_to_channel` avec remappage explicite », et la preuve attendue est
+« remappage obligatoire », au singulier.
+
+**Comportement retenu — la lecture du §6**, et le motif est qu'elle est la plus faible : une
+fonction qui déplace une card ne préempte aucune décision, là où une fonction de lot trancherait
+INC-046 par implémentation plutôt que par arbitrage. Le paramètre est donc nommé `to_step_id`, par
+symétrie avec `move_card(card_id, **to_step_id**, comment)` livrée par `CRM-034`.
+
+**Ce qui a été corrigé :** la ligne de `docs/SCHEMA.md` §9, seule des deux sources à porter la
+signature minoritaire — la laisser ferait mentir le document de schéma sur une fonction livrée.
+
+**Ce qui reste à arbitrer :** si `step_mapping` exprimait bien l'intention d'un déplacement en lot,
+alors cette capacité **n'est portée par aucune unité du backlog**, et son absence n'était jusqu'ici
+visible que dans le nom d'un paramètre. Deux issues : confirmer que `CRM-045` livre le geste unitaire
+et que le lot n'est pas au périmètre ; ou ouvrir l'unité qui le porte, auquel cas elle rejoindrait
+naturellement l'option 2 d'INC-046 dont elle est la forme générale.
+
+**Lié à :** INC-046 (le changement de workflow d'un channel peuplé, dont le lot serait la solution),
+`docs/SPEC-workflow-engine.md` §6.2 et §6.10, `docs/SCHEMA.md` §9.
+
+---
+
 ### INC-071 — Trois documents se contredisent sur ce qu'il faut pour commenter une card
 
 **Nature :** contradiction entre spécifications, sur une règle d'autorisation.

@@ -6753,3 +6753,128 @@ signifiaient rien. Elle est retirée du §5.11 avec son motif, plutôt que laiss
 **Ce que ces quatre défauts ont en commun** : aucun n'est une faute de logique, et aucun n'était
 visible d'un test. Trois viennent d'une classe utilitaire qui n'existe pas et qui n'échoue jamais
 bruyamment ; le quatrième d'une composition correcte dans un cas et absurde dans l'autre.
+
+---
+
+## `CRM-045` — Déplacement d'une card entre channels
+
+### Décision 213 — Le paramètre `step_mapping` de `docs/SCHEMA.md` désignait une autre fonction
+
+`docs/SCHEMA.md` §9 annonçait `move_card_to_channel(card_id, channel_id, **step_mapping**)`,
+« remappage explicite **des étapes** », au pluriel. Le §6 de `docs/SPEC-workflow-engine.md` dit
+l'inverse : « l'appelant fournit **l'étape** de destination », pour **une** card.
+
+Une table de correspondance n'a de sens que pour un déplacement **en lot**, ou pour une fonction qui
+changerait le workflow d'un channel entier en remappant l'étape de chacune de ses cards — soit
+l'option 2 de l'arbitrage d'INC-046, qui n'est rattachée à aucune unité.
+
+**Décision : la lecture du §6**, parce qu'elle est la plus faible et la seule qui ne préempte aucun
+arbitrage. Le paramètre est nommé `to_step_id`, par symétrie avec `move_card(card_id, to_step_id,
+comment)`. La ligne de `docs/SCHEMA.md` est corrigée ; la contradiction est consignée en **INC-073**
+plutôt que résolue en silence, parce que si `step_mapping` exprimait bien l'intention d'un lot,
+alors cette capacité n'est portée par **aucune** unité du backlog.
+
+### Décision 214 — La garde était close avant d'exister, et c'est `CRM-013` qui l'avait fermée
+
+`CRM-034` avait dû retirer elle-même le privilège de colonne sur `current_step_id` : sans quoi
+`move_card` eût été une commodité que seuls les clients bien intentionnés empruntent. La même
+question se posait ici pour `channel_id` et `workflow_id`.
+
+**MESURÉ avant d'écrire quoi que ce soit** — les douze colonnes que `authenticated` peut écrire sur
+`cards` sont `amount, archived_at, currency, deleted_at, description, next_action, next_action_at,
+owner_id, position, probability_override, snoozed_until, title`. Ni `channel_id`, ni `workflow_id`,
+ni `current_step_id`.
+
+`CRM-013` les avait fermées « par voie de conséquence », en notant qu'elles sont « tenues cohérentes
+par les clés composites de `CRM-040` ». **La conséquence n'avait pas été nommée** : elle rend
+`move_card_to_channel` opposable dès sa naissance. `CRM-045` n'a donc **aucune** protection de
+colonne à poser, et c'est le premier cas du projet où une unité de sécurité antérieure paie
+d'avance une unité qui n'existait pas encore. La propriété est figée par une assertion plutôt que
+laissée à la chance d'une migration future.
+
+### Décision 215 — Un déplacement de channel écrit UN événement, et jamais un `moved` à côté
+
+MESURÉ : aujourd'hui, un changement de channel est **parfaitement silencieux**. Le trigger de
+`CRM-044` surveille quatre colonnes, `channel_id` n'en fait pas partie ; `…0c1` déplacée de
+`grands-comptes` vers `appels-offres` sous `postgres` produit **zéro événement**.
+
+`channel_changed` est donc ajouté — neuvième type —, et la garde `moved` est **conditionnée à
+`channel_id` inchangé**. Motif : `moved` signifie, depuis `CRM-044`, « la card a franchi une arête
+du graphe ». Une card qui change de workflow n'en a franchi aucune, et il ne peut pas y en avoir —
+deux workflows sont deux graphes disjoints. Écrire les deux ferait dire à la mémoire d'une affaire
+qu'une transition a eu lieu là où il n'y en avait pas.
+
+Rien n'est perdu : `from_step_id` et `to_step_id` figurent dans le `payload` de `channel_changed`,
+qui dit **plus** que le `moved` qu'il remplace.
+
+L'événement est écrit **par le trigger de la table**, non par la RPC — décision 203 reprise et non
+réinventée : un `PATCH` direct sous `service_role`, que la fermeture de colonne n'arrête pas, le
+produit aussi. Une garde protège les clients ; une trace doit couvrir tout le monde.
+
+### Décision 216 — Les réponses de formulaire sont détruites, mais jamais sans que l'appelant l'ait dit
+
+**Le fait, découvert en mesurant et prévu par aucun document.** `card_field_values` porte
+`(card_id, workflow_id) → cards (id, workflow_id) ON DELETE CASCADE`. La cascade joue sur la
+**suppression** d'une card, pas sur la **mise à jour** de son `workflow_id`. Changer le workflow
+d'une card qui porte une réponse est donc refusé en `23503` :
+
+```
+ERROR: update or delete on table "cards" violates foreign key constraint
+       "card_field_values_card_id_workflow_id_fkey" on table "card_field_values"
+DETAIL: Key (id, workflow_id)=(…0c1, …051) is still referenced from table "card_field_values".
+```
+
+Ce n'est pas un cas limite : MESURÉ, **six cards du seed sur neuf** portent des réponses. Sans
+traitement, la fonction rendrait pour les deux tiers du seed un code de contrainte interne.
+
+**Trois issues, et pourquoi la troisième.**
+
+1. **Remapper** les réponses par clé de champ vers le workflow cible — écarté, et pas par prudence :
+   c'est le remappage automatique par clé que le §6 interdit nommément, transposé des nœuds aux
+   champs. Deux workflows peuvent porter une clé `budget` qui ne désigne pas la même chose.
+2. **Refuser** le déplacement dès qu'une réponse existe — cohérent, et inutile : la fonction ne
+   servirait plus qu'aux cards vides.
+3. **Supprimer**, ce qui est retenu — **mais jamais par défaut**.
+
+**Le quatrième paramètre, `discard_field_values`, vaut `false`.** Tant qu'il vaut `false`, un
+déplacement qui détruirait des réponses est refusé — `field_values_would_be_lost`, avec leur nombre
+en `DETAIL`. Le motif est le principe même du chapitre : le §6 tient en une phrase, « le remappage
+est **explicite** ». Détruire les réponses d'une affaire en silence, à l'occasion d'un geste
+présenté comme un rangement, en serait l'exact contraire, et un défaut destructeur eût été la
+« valeur par défaut trompeuse » que `CLAUDE.md` §18 proscrit.
+
+**Ce que la mémoire en garde.** La suppression porte sur `card_field_values`, jamais sur
+`card_events` — que rien ne peut supprimer. Le fil d'une card déplacée continue de porter les
+`field_changed` qu'elle a produits : **la mémoire survit à la donnée**. Elle les porte sans libellé,
+les champs du workflow d'origine n'étant plus résolus par l'écran ; le manque est nommé au §6.10
+plutôt que corrigé, aucune donnée ne permettant de résoudre un libellé dans un workflow historique.
+
+### Décision 217 — `entered_step_at` n'est touchée que si l'étape change
+
+`docs/SPEC-cards.md` §2.9 réserve `entered_step_at` à `move_card`. L'étendre à
+`move_card_to_channel` est une décision, prise ici : entrer dans une étape par remappage est y
+entrer.
+
+Mais un changement de channel **à étape constante** ne fait entrer la card nulle part, et remettre
+l'horodatage à zéro y ferait mentir la seule mesure d'ancienneté du produit — une affaire en
+négociation depuis trois semaines paraîtrait y être entrée à l'instant parce qu'on l'a rangée dans
+un autre dossier. `position`, à l'inverse, est **toujours** recalculée : sa portée est le couple
+`(channel_id, current_step_id)`, et changer de channel change de portée.
+
+### Décision 218 — Le seed démontre une card sur un workflow dérivé, en transit et non à demeure
+
+INC-046 constate que le seed ne peut poser aucune card dans `prospection`, seul channel suivant la
+copie de portée track, sans rendre son propre rejeu impossible. Conséquence écrite au §9.1 de
+`docs/SPEC-cards.md` : la divergence de `CRM-032` n'est démontrée que par des étapes et des
+transitions, jamais par une card les empruntant.
+
+`move_card_to_channel` ne lève pas la contrainte — elle déplace une card, jamais un channel, et
+l'option 2 de l'arbitrage d'INC-046 reste non livrée. Elle permet en revanche un **aller-retour**,
+avec le jeton de l'administratrice et par la vraie RPC : `…0c5` de `maintenance` vers `prospection`,
+puis retour. La card suit réellement le workflow dérivé, le temps du transit, et aucune card ne
+demeure dans `prospection`.
+
+`…0c5` est choisie parce qu'elle est — MESURÉ — l'une des trois cards du seed sans aucune réponse de
+formulaire : l'aller-retour n'a rien à détruire, `discard_field_values` reste à `false`, et le seed
+reste convergent. Une réponse détruite ne renaîtrait pas au retour ; la destruction est donc prouvée
+par la suite d'API, sur une card qu'elle crée et qu'elle détruit.

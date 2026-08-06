@@ -1287,16 +1287,415 @@ aucune donnée permanente (`docs/SPEC-form-composer.md` §6.11). Le reste du gra
 La fonction est `SECURITY DEFINER`, avec `search_path` fixé, accordée au seul rôle
 `authenticated`.
 
-## 6. Changement de channel
+## 6. Changement de channel — `CRM-045`
 
-Une card change de channel — donc potentiellement de workflow — par
-`move_card_to_channel(card_id, channel_id, step_mapping)`. Le remappage est **explicite** :
-l'appelant fournit l'étape de destination. Si le workflow cible est identique, l'étape est
-conservée par défaut. L'opération écrit un `card_event` de type `channel_changed` conservant
-l'ancien et le nouveau contexte.
+Ce chapitre tenait en **dix lignes** écrites à `CRM-000`. Elles nomment une fonction, un principe —
+« le remappage est explicite » — et un type d'événement, sans dire ce que la fonction vérifie, dans
+quel ordre, ce qu'elle écrit, ni ce qu'elle détruit. Il est réécrit en contrat vérifiable **après
+mesure sur la pile réelle** : les privilèges de colonne réellement en vigueur, les clés étrangères
+composites qui s'opposent à l'écriture, le vocabulaire que le `CHECK` de `card_events` accepte, et
+le refus qu'une seule de ces clés oppose à six cards du seed sur neuf.
 
-Il n'y a pas de remappage automatique par clé de nœud : deux workflows peuvent partager une clé
-sans que le déplacement soit sémantiquement équivalent.
+Les quatre règles d'origine sont **conservées mot pour mot** ci-dessous et deviennent les §6.2,
+§6.5, §6.7 et §6.4 ; rien n'est retiré, tout est rendu opposable.
+
+> Une card change de channel — donc potentiellement de workflow — par
+> `move_card_to_channel(card_id, channel_id, step_mapping)`. Le remappage est **explicite** :
+> l'appelant fournit l'étape de destination. Si le workflow cible est identique, l'étape est
+> conservée par défaut. L'opération écrit un `card_event` de type `channel_changed` conservant
+> l'ancien et le nouveau contexte.
+>
+> Il n'y a pas de remappage automatique par clé de nœud : deux workflows peuvent partager une clé
+> sans que le déplacement soit sémantiquement équivalent.
+
+### 6.1 Ce que l'unité est, et ce qu'elle n'est pas
+
+`move_card` (§5) déplace une card **dans** son graphe : elle franchit une arête déclarée, et le
+graphe est opposable. `move_card_to_channel` déplace une card **d'un graphe à un autre**. Il n'y a
+aucune arête entre deux workflows, et il ne peut pas y en avoir : ce sont deux graphes disjoints.
+C'est la raison pour laquelle le remappage est fourni par l'appelant et non calculé — **il n'existe
+aucune donnée dans la base à partir de laquelle il pourrait l'être**.
+
+Elle **n'est pas** :
+
+- **une transition.** Aucune `workflow_transitions` n'est consultée, aucune n'est exigée. Une card
+  qui change de channel n'a franchi aucune arête ; prétendre le contraire ferait mentir le graphe ;
+- **un déplacement entre workspaces.** Le cloisonnement est la propriété la plus ancienne du
+  produit (`docs/SPEC-permissions-rls.md` §1). Le §6.4 montre qu'il est tenu **deux fois** : par la
+  vérification n° 3 et, si elle était retirée, par une clé composite ;
+- **une réponse à INC-046.** La contradiction porte sur le changement de workflow d'un **channel**
+  peuplé ; celle-ci déplace une **card**. Le §6.11 mesure ce que cette unité change à INC-046, et
+  c'est moins que ce que l'option 2 de son arbitrage demandait.
+
+### 6.2 Signature et valeur de retour
+
+```
+public.move_card_to_channel(
+    card_id              uuid,
+    to_channel_id        uuid,
+    to_step_id           uuid    default null,
+    discard_field_values boolean default false
+) returns public.cards
+```
+
+**Elle rend la ligne mise à jour**, comme `move_card` et pour le même motif mesuré au §5.2 : une
+fonction rendant `public.cards` est rendue par PostgREST comme un objet JSON unique, et le client
+obtient en une requête le channel, le workflow, l'étape, `entered_step_at` et `position`
+recalculés, sans relecture. Le droit d'écriture sur le channel **cible** ayant été exigé par la
+vérification n° 4, la lecture qu'elle rend est acquise (`app.can_write_channel` exige `= 'write'`,
+`app.can_read_channel` exige `<> 'none'`).
+
+**Le deuxième paramètre s'appelle `to_channel_id`, et non `channel_id`.** L'énoncé d'origine
+écrivait `channel_id`, qui est aussi le nom d'une colonne de `cards` : dans une fonction dont le
+corps lit et écrit cette colonne, l'homonymie est une source d'erreur silencieuse que PL/pgSQL ne
+signale pas toujours. `move_card` a tranché de la même façon en nommant `to_step_id` ce que le §5
+d'origine appelait « l'étape cible ».
+
+**Le troisième paramètre s'appelle `to_step_id`, et non `step_mapping`.** `docs/SCHEMA.md` §9 le
+nomme `step_mapping`, ce qui annonce une **table de correspondance** — plusieurs étapes remappées en
+un appel. Le §6 d'origine dit l'inverse : « l'appelant fournit **l'étape** de destination », au
+singulier, pour **une** card. Les deux énoncés ne décrivent pas la même fonction. La contradiction
+est consignée — `docs/INCONSISTENCY_REPORT.md`, **INC-073** — et **non résolue implicitement** : la
+signature retenue est celle du §6, qui décrit le geste réellement demandé, et `docs/SCHEMA.md` est
+corrigé pour cesser d'annoncer l'autre.
+
+**Le quatrième paramètre n'était prévu par aucun document, et une mesure l'a imposé** — §6.6.
+
+### 6.3 Ce que la base interdit déjà, mesuré avant d'écrire la moindre ligne
+
+Trois faits ont été mesurés sur la pile réelle **avant** de spécifier la fonction. Chacun change ce
+qu'elle doit faire.
+
+**1. `channel_id` et `workflow_id` sont déjà fermés à `authenticated`, et la garde est donc close
+avant d'exister.** `move_card` avait dû, en `CRM-034`, retirer elle-même le privilège de colonne
+sur `current_step_id` (§5.5) : sans quoi la garde eût été une commodité facultative. Ici, rien de
+tel n'est à faire. MESURÉ — les douze colonnes que `authenticated` peut écrire sont :
+
+```
+amount, archived_at, currency, deleted_at, description, next_action,
+next_action_at, owner_id, position, probability_override, snoozed_until, title
+```
+
+`channel_id`, `workflow_id` et `current_step_id` n'y sont pas. `CRM-013` les avait fermées « par
+voie de conséquence », en énonçant qu'elles sont « tenues cohérentes par les clés composites de
+`CRM-040` ». La conséquence n'avait pas été nommée : **elle rend `move_card_to_channel` opposable
+dès sa naissance**, et cette unité n'a aucune protection de colonne à poser. C'est le premier cas du
+projet où une unité de sécurité antérieure paie d'avance une unité qui n'existait pas encore.
+
+**2. Un changement de channel est aujourd'hui parfaitement silencieux.** MESURÉ, sur la card
+`…0c1` déplacée de `grands-comptes` vers `appels-offres` par un `UPDATE` direct sous `postgres` —
+deux channels partageant le même workflow, donc sans changement d'étape : **zéro événement**. Le
+trigger de `CRM-044` surveille quatre colonnes, et `channel_id` n'en fait pas partie. La mémoire
+d'une affaire ne dit pas aujourd'hui qu'elle a changé de dossier.
+
+**3. `channel_changed` est refusé par la base.** MESURÉ :
+
+```
+CHECK ((type = ANY (ARRAY['created', 'moved', 'assigned', 'archived',
+                          'unarchived', 'trashed', 'restored', 'field_changed'])))
+```
+
+`CRM-044` l'avait écrit et l'avait annoncé : « le jour où une unité écrira un type nouveau, elle
+devra étendre cette énumération **dans la même migration que son trigger**, et la base le lui
+rappellera par un `23514` ». C'est ce jour. Le mécanisme a fonctionné comme prévu, sur la première
+unité à l'éprouver.
+
+### 6.4 Les huit vérifications, dans l'ordre, et ce que chacune rend
+
+Les codes HTTP sont ceux du §4.4, **mesurés** contre PostgREST `v14.12`, non déduits.
+
+| # | Vérification | Message | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | La card existe, est **visible de l'appelant**, et n'est ni archivée ni en corbeille | `card_not_found` | `P0001` | `400` |
+| 2 | L'appelant a le droit d'**écriture** sur le channel **d'origine** | `forbidden` | `42501` | `403` |
+| 3 | Le channel cible existe et est **visible de l'appelant** | `channel_not_found` | `P0001` | `400` |
+| 4 | L'appelant a le droit d'**écriture** sur le channel **cible** | `forbidden` | `42501` | `403` |
+| 5 | Le channel cible n'est pas le channel courant | `same_channel` | `P0001` | `400` |
+| 6 | L'étape de destination est fournie si le workflow change | `step_mapping_required` | `P0001` | `400` |
+| 7 | L'étape fournie appartient au workflow du channel cible | `step_not_in_workflow` | `P0001` | `400` |
+| 8 | Les réponses de formulaire sont assumées perdues si le workflow change | `field_values_would_be_lost`, `DETAIL` portant leur nombre | `P0001` | `400` |
+
+**Les deux droits sont exigés, et l'ordre n'est pas indifférent.** Un déplacement retire une card
+d'un endroit et la pose ailleurs : c'est une écriture sur deux channels. N'exiger que le droit sur
+la destination laisserait quelqu'un vider un channel qu'il ne peut pas écrire ; n'exiger que celui
+sur l'origine laisserait déposer une card dans un channel fermé. Le refus porte sur l'origine
+**d'abord**, parce que c'est le seul des deux que l'appelant est certain de connaître : il vient d'y
+lire la card.
+
+**La règle de discrétion du §4.3 est reprise, et elle s'applique deux fois.** « Visible » signifie
+`app.can_read_channel`. Une card d'un autre workspace, ou d'un channel fermé par un droit fin, rend
+`card_not_found` — jamais `forbidden` : répondre « interdit » révélerait son existence. Un channel
+cible invisible rend de même `channel_not_found`, et **non** `forbidden` : sans quoi la fonction
+deviendrait un oracle d'existence de channels, interrogeable identifiant par identifiant par
+quiconque possède une card à déplacer.
+
+**Le cloisonnement des workspaces est tenu deux fois, et la seconde est structurelle.** La
+vérification n° 3 le tient : `app.can_read_channel` est fausse pour un channel d'un autre
+workspace, dont l'appelant n'est pas membre. Si elle était retirée, la clé composite
+`cards (channel_id, workspace_id) → channels (id, workspace_id)` refuserait l'écriture en `23503`.
+La fonction ne s'appuie pas sur ce filet — un message de contrainte PostgreSQL n'est pas un message
+de produit —, mais il existe, et une assertion le fige.
+
+**La vérification n° 5 refuse le déplacement sur place.** Un « déplacement » qui ne déplace rien
+écrirait un `channel_changed` dont l'avant et l'après seraient identiques : une trace mensongère
+dans une table que personne ne peut corriger. Le refus est explicite plutôt que silencieux —
+rendre `200` sans rien faire serait la « simulation de succès » que `CLAUDE.md` §18 proscrit.
+
+**La vérification n° 6 est le « remappage obligatoire » de la Definition of Done.** Si le workflow
+du channel cible diffère de celui de la card et que `to_step_id` est nul, la fonction refuse. Elle
+ne choisit **pas** d'étape par défaut : ni la première du graphe cible, ni celle qui porterait le
+même nœud. Le §6 d'origine l'interdit — « deux workflows peuvent partager une clé sans que le
+déplacement soit sémantiquement équivalent » —, et le seed le démontre : les deux workflows livrés
+portent **les sept mêmes nœuds dans le même ordre**, `Prospection`, `Relance`, `Négociation`,
+`Signature`, `Réalisation`, `Livré`, `Perdu`. Un remappage par clé de nœud paraîtrait donc juste
+sur ce seed, et le paraîtrait jusqu'au jour où deux workflows divergeraient. Une règle qui n'est
+fausse que plus tard est une règle fausse.
+
+**Si le workflow est identique, `to_step_id` est facultatif — et accepté.** L'étape est alors
+conservée, comme le §6 d'origine l'exige. Fournir explicitement une étape du même workflow reste
+licite : c'est un changement de channel **et** de colonne en un geste, et rien ne justifie de
+l'interdire. La vérification n° 7 s'applique dans les deux cas.
+
+**La vérification n° 7 est refaite alors que la base la tient**, exactement comme la n° 3 de
+`move_card` (§5.3) : la clé composite `cards (current_step_id, workflow_id) → workflow_steps` la
+garantit. La refaire n'ajoute aucune garantie — elle ajoute **un message**, et **une place dans
+l'ordre**, avant que la n° 8 ne parle de destruction.
+
+### 6.5 Ce qui est écrit en cas de succès
+
+| Effet | Valeur |
+|---|---|
+| `channel_id` | le channel cible |
+| `workflow_id` | le workflow du channel cible — **jamais fourni par l'appelant**, toujours dérivé |
+| `current_step_id` | `to_step_id`, ou l'étape courante si le workflow ne change pas |
+| `entered_step_at` | `now()` **si et seulement si** l'étape change |
+| `position` | fin de la colonne d'arrivée, portée `(channel_id, current_step_id)` |
+| `updated_at` | par le trigger `app.set_updated_at()`, inchangé |
+| `card_event` `channel_changed` | par le trigger de `cards`, §6.7 |
+
+**`workflow_id` n'est pas un paramètre, et ce n'est pas un oubli.** Le workflow d'une card est celui
+de son channel — c'est la lecture n° 1 de `docs/SCHEMA.md` §5 retenue par `CRM-040` (INC-046). Le
+laisser fournir par l'appelant ouvrirait la seule combinaison que la clé composite refuse, pour
+n'obtenir qu'un `23503`. Il est **lu** dans `channels`.
+
+**Les trois colonnes s'écrivent en un seul `UPDATE`, et il le faut.** MESURÉ : écrire `channel_id`
+seul rend
+
+```
+ERROR: insert or update on table "cards" violates foreign key constraint
+       "cards_channel_id_workflow_id_fkey"
+DETAIL: Key (channel_id, workflow_id)=(…031, …051) is not present in table "channels".
+```
+
+Les clés composites sont vérifiées en fin d'instruction, non en fin de transaction : deux `UPDATE`
+successifs échoueraient là où un seul passe. Ce n'est pas une préférence de style.
+
+**`entered_step_at` n'est touchée que si l'étape change.** `docs/SPEC-cards.md` §2.9 la réserve à
+`move_card` ; l'étendre à `move_card_to_channel` est une décision, prise ici : entrer dans une
+étape par remappage est y entrer. Mais un changement de channel **à étape constante** ne fait entrer
+la card nulle part, et remettre l'horodatage à zéro y ferait mentir la seule mesure d'ancienneté du
+produit — une affaire en négociation depuis trois semaines paraîtrait y être entrée à l'instant
+parce qu'on l'a rangée dans un autre dossier.
+
+**`position` est toujours recalculée**, même à étape constante : la portée définie par
+`docs/SPEC-cards.md` §2.6 est le couple `(channel_id, current_step_id)`, et changer de channel
+change de portée. Sans recalcul, deux cards porteraient le même rang dans la colonne d'arrivée et
+l'ordre du board deviendrait arbitraire — le motif exact du §5.4.
+
+### 6.6 Les réponses de formulaire, et la perte qu'aucun document n'avait vue
+
+**Le fait, mesuré.** `card_field_values` porte
+`(card_id, workflow_id) → cards (id, workflow_id) ON DELETE CASCADE`. La cascade joue sur la
+**suppression** d'une card, pas sur la **mise à jour** de son `workflow_id` : il n'y a pas
+d'`ON UPDATE CASCADE`. Changer le workflow d'une card qui porte au moins une réponse est donc
+refusé :
+
+```
+ERROR: update or delete on table "cards" violates foreign key constraint
+       "card_field_values_card_id_workflow_id_fkey" on table "card_field_values"
+DETAIL: Key (id, workflow_id)=(…0c1, …051) is still referenced from table "card_field_values".
+```
+
+Ce n'est pas un cas limite. MESURÉ sur le seed : **six cards sur neuf** portent des réponses. Sans
+traitement, `move_card_to_channel` serait, pour les deux tiers du seed, une fonction qui rend un
+`23503` brut nommant une contrainte interne.
+
+**Ce que les réponses deviennent, et pourquoi il n'y a pas de troisième voie.** Une réponse répond à
+la question d'un workflow ; la charnière `workflow_id` de `card_field_values` existe précisément
+pour « rendre impossible une valeur répondant à la question d'un **autre** workflow » (`CRM-036`).
+Une card qui change de workflow n'a donc plus de réponses valides. Trois issues étaient possibles :
+
+1. **les remapper** par clé de champ vers le workflow cible — écarté, et pas par prudence : c'est le
+   remappage automatique par clé que le §6 d'origine interdit nommément, appliqué aux champs au lieu
+   des nœuds. Deux workflows peuvent porter une clé `budget` qui ne désigne pas la même chose ;
+2. **refuser le déplacement** dès qu'une réponse existe — cohérent, et inutile : deux tiers du seed
+   deviennent indéplaçables, et la fonction ne sert plus qu'aux cards vides ;
+3. **les supprimer**, ce qui est retenu — **mais jamais sans que l'appelant l'ait dit**.
+
+**La perte est explicite, et c'est le quatrième paramètre.** `discard_field_values` vaut `false` par
+défaut. Tant qu'il vaut `false`, un déplacement qui changerait de workflow et détruirait des
+réponses est **refusé** — vérification n° 8, `field_values_would_be_lost`, avec le nombre de
+réponses en `DETAIL`. L'appelant qui pose `true` a dit ce qu'il détruisait.
+
+Le motif est le principe même de ce chapitre. Le §6 d'origine tient en une phrase : « le remappage
+est **explicite** ». Détruire les réponses d'une affaire en silence, à l'occasion d'un geste
+présenté comme un rangement, serait exactement l'inverse. Un paramètre par défaut destructeur eût
+été la « valeur par défaut trompeuse » de `CLAUDE.md` §18.
+
+**Ce que la mémoire en garde.** Les `field_changed` déjà écrits **ne sont pas supprimés** : la
+suppression porte sur `card_field_values`, pas sur `card_events`, et rien ne peut supprimer un
+événement (`CRM-044` §14.8). Le fil d'une card déplacée continue donc de porter les réponses qu'elle
+a données, avec leurs dates — **la mémoire survit à la donnée**. Elle les porte sans libellé, les
+champs du workflow d'origine n'étant plus résolus par l'écran ; c'est un manque nommé au §6.10.
+
+**Le déplacement à workflow identique ne détruit rien**, et la vérification n° 8 ne s'y applique
+pas : la charnière `workflow_id` ne change pas, les réponses restent valides et sont conservées.
+MESURÉ : `…0c1` déplacée de `grands-comptes` vers `appels-offres` conserve ses deux réponses.
+
+### 6.7 L'événement, et où il est écrit
+
+`channel_changed` s'ajoute au vocabulaire de `docs/SPEC-cards.md` §14.4, qui compte désormais
+**neuf** types. Son `payload` conserve « l'ancien et le nouveau contexte » comme le §6 d'origine
+l'exige :
+
+```json
+{"from_channel_id": "…", "to_channel_id": "…",
+ "from_workflow_id": "…", "to_workflow_id": "…",
+ "from_step_id": "…", "to_step_id": "…"}
+```
+
+**Il est écrit par le trigger de `cards`, non par la fonction** — décision 203 de `CRM-044`, reprise
+et non réinventée. Un trigger sur la table couvre **strictement plus** que la RPC : un `PATCH`
+direct sous `service_role`, que la fermeture de colonne n'arrête pas (`CRM-013` §4.4.3), produit
+lui aussi l'événement. Une garde protège les clients ; une trace doit couvrir tout le monde.
+
+**Un déplacement produit UN événement, jamais deux.** La garde `moved` du trigger est désormais
+conditionnée à `channel_id` **inchangé**. Sans cette condition, un déplacement qui change aussi
+l'étape écrirait un `moved` à côté du `channel_changed` — et `moved` signifie, depuis `CRM-044`,
+« la card a franchi une arête du graphe ». Elle n'en a franchi aucune. Rien n'est perdu pour autant :
+`from_step_id` et `to_step_id` sont dans le `payload` de `channel_changed`, qui dit **plus** que le
+`moved` qu'il remplace, et le dit sans mentir sur la nature du geste.
+
+**Un déplacement à étape constante produit l'événement quand même** : c'est le fait n° 2 du §6.3 qui
+cesse. Le rangement d'une affaire est un fait de son histoire.
+
+### 6.8 Autorisations et privilèges
+
+`SECURITY DEFINER`, `search_path` fixé à la chaîne vide, propriétaire `postgres`, exactement comme
+`move_card` (§5.6) et pour les mêmes trois motifs mesurés. `EXECUTE` est **révoqué de `public` et
+nommément d'`anon`** — un `revoke … from public` seul ne suffit pas, l'image posant des
+`ALTER DEFAULT PRIVILEGES` qui accordent nommément aux trois rôles — puis accordé au seul rôle
+`authenticated`. L'appelant anonyme obtient `401`, non `403` (§4.4).
+
+`service_role` n'a pas besoin de la fonction : il conserve `all privileges` sur `cards` et peut
+écrire les colonnes directement. C'est la limite déjà nommée au §4.4.3 de
+`docs/SPEC-permissions-rls.md`, inchangée — et le §6.7 la rend au moins **visible**, le trigger
+écrivant l'événement quel que soit le rôle.
+
+### 6.9 Contrat d'API attendu
+
+Toutes les lignes sont à **mesurer** contre PostgREST, non à déduire.
+
+| # | Appel | Attendu |
+|---|---|---|
+| a | Sans jeton | `401`, `42501` |
+| b | Jeton d'un autre workspace | `400`, `card_not_found` |
+| c | `viewer` du workspace, sur une card qu'il voit | `403`, `forbidden` |
+| d | Card inexistante | `400`, `card_not_found` |
+| e | Card archivée, puis card en corbeille | `400`, `card_not_found` |
+| f | Channel cible inexistant | `400`, `channel_not_found` |
+| g | Channel cible d'un autre workspace | `400`, `channel_not_found` |
+| h | Channel cible = channel courant | `400`, `same_channel` |
+| i | Workflow différent, `to_step_id` nul | `400`, `step_mapping_required` |
+| j | `to_step_id` appartenant à un autre workflow | `400`, `step_not_in_workflow` |
+| k | Workflow différent, réponses présentes, `discard_field_values` faux | `400`, `field_values_would_be_lost` |
+| l | Même workflow, `to_step_id` nul, réponses présentes | `200`, étape conservée, réponses **conservées** |
+| m | Workflow différent, réponses présentes, `discard_field_values` vrai | `200`, réponses **supprimées** |
+| n | Succès : objet JSON unique, `channel_id`, `workflow_id`, `current_step_id` et `position` à jour | `200` |
+| o | `PATCH` direct de `cards.channel_id` par `authenticated` | `403`, `42501` — la garde n'est pas contournable |
+| p | Après succès : un `channel_changed` de plus, **et aucun `moved`** | lecture de `card_events` |
+
+### 6.10 Ce que `CRM-045` ne livre pas, et pourquoi
+
+- **Aucun écran.** La Definition of Done de l'unité demande « pgTAP (remappage obligatoire,
+  événement écrit) ; E2E » — et, seule du chunk 3, elle ne demande **pas** de captures. Le
+  déplacement entre channels n'a pas de geste d'interface défini : ni le board (§7) ni la vue liste
+  (`docs/SPEC-cards.md` §12) ne portent de sélecteur de channel, et INC-021 interdit de toute façon
+  tout parcours par un utilisateur connecté. La preuve E2E est donc une preuve d'**API**, hors
+  interface, avec les jetons réels des trois profils.
+- **Aucun libellé pour les réponses supprimées.** Le fil continue de porter les `field_changed`
+  d'un workflow que la card ne suit plus ; l'écran résout les libellés dans les champs du workflow
+  **courant** et ne les y trouve plus. Le repli documenté de `CRM-044` s'applique — le fil affiche
+  la famille sans le nom. Corriger cela demanderait de résoudre un libellé dans un workflow
+  historique, ce qu'aucune donnée ne permet.
+- **Aucun déplacement en lot.** Une card à la fois. C'est ce que `step_mapping` laissait espérer, et
+  ce que le §6 d'origine ne demande pas (INC-073).
+- **Aucun arrêt des cadences de relance**, comme `move_card` : aucune table de cadence n'existe et
+  aucune unité du backlog n'en porte.
+
+### 6.11 Ce que cette unité change à INC-046, et ce qu'elle n'y change pas
+
+INC-046 constate que le workflow d'un channel **peuplé** ne peut plus changer, et que le seed ne
+peut donc pas démontrer une card sur un workflow **dérivé** : `prospection`, seul channel du seed à
+suivre la copie de portée track, est le seul que le seed repointe, et une card qui y séjournerait
+ferait échouer le rejeu.
+
+`move_card_to_channel` ne lève pas cette contrainte : elle déplace une card, jamais un channel.
+L'option 2 de l'arbitrage — « une RPC qui change le workflow d'un channel **et** remappe l'étape de
+chacune de ses cards » — reste **non livrée**, et reste une unité de backlog qui n'existe pas.
+
+Ce qu'elle change est plus étroit et vaut d'être écrit : le seed peut désormais démontrer une card
+sur un workflow dérivé **en transit**, par un aller-retour, sans en laisser aucune à demeure (§6.12).
+La divergence de `CRM-032` reste démontrée par ses étapes et ses transitions ; elle l'est désormais
+aussi par une card qui les a réellement empruntées, le temps d'un aller et d'un retour.
+
+### 6.12 Ce que le seed livre
+
+Le seed **ne peut pas** écrire un `channel_changed` : `card_events` n'accepte l'écriture d'aucun
+rôle, `service_role` compris (`CRM-044` §14.7). L'événement ne peut naître que d'un déplacement
+réel, ce qui est exactement ce que `CLAUDE.md` §8 demande — « ne pas fabriquer artificiellement des
+traces censées représenter l'exécution d'un processus réel ».
+
+Le seed exécute donc **un aller-retour réel**, avec le **jeton de l'administratrice**, par la vraie
+RPC, sur le modèle des deux allers-retours de `CRM-044` §14.11 :
+
+1. la card `…0c5`, « Support niveau 2 — Atelier Meunier », de `maintenance` vers `prospection` —
+   donc du workflow global vers la **copie de portée track** —, avec l'étape `Prospection` du
+   graphe cible fournie explicitement ;
+2. la même, de `prospection` vers `maintenance`, avec l'étape `Prospection` du graphe d'origine.
+
+**Pourquoi `…0c5` et non une autre.** MESURÉ : elle est l'une des trois cards du seed qui ne portent
+**aucune** réponse de formulaire. L'aller-retour n'a donc rien à détruire, `discard_field_values`
+reste à `false`, et le seed ne démontre pas la destruction — il ne la démontre pas parce qu'il ne
+peut pas la rendre convergente, une réponse détruite ne renaissant pas au retour. La destruction est
+prouvée par la suite d'API, sur une card qu'elle crée et qu'elle détruit.
+
+**Le seed reste convergent**, au sens d'INC-041 et d'INC-035 : l'aller-retour est **conditionné par
+une relecture** — il n'est exécuté que si la card est là où le seed l'attend —, et il rend la card à
+son channel, à son workflow et à son étape de départ. Sa `position` est recalculée deux fois et
+retombe sur sa valeur d'origine, `…0c5` étant seule dans sa colonne. Le rejeu ajoute donc **deux**
+`channel_changed` à chaque exécution : c'est une histoire qui s'allonge, comme celle de `CRM-044`,
+et non un état qui dérive. La distinction est celle du §14.11 — seule la **naissance** d'une card
+est idempotente.
+
+Au sortir du seed : **29 événements**, dont **2** `channel_changed`, et **aucun** `moved`
+supplémentaire — le §6.7 en fait une propriété mesurable.
+
+### 6.13 Preuves attendues de `CRM-045`
+
+1. **pgTAP dédié** : les huit refus un par un ; le remappage **obligatoire** quand le workflow
+   change ; l'événement **écrit**, avec son `payload` complet ; l'**absence** de `moved` à côté ;
+   l'événement écrit aussi pour un `PATCH` direct sous `service_role` ; les réponses conservées à
+   workflow identique et supprimées sur `discard_field_values` ; `entered_step_at` inchangée à étape
+   constante ; le `CHECK` à neuf valeurs ; `mail_received` toujours refusé.
+2. **Preuve d'API dédiée**, hors interface, avec les jetons réels des trois profils : les seize
+   lignes du contrat du §6.9.
+3. **Preuve de refus n° 5 reconduite** : le `PATCH` direct de `cards.channel_id` par
+   `authenticated` — ligne *o*.
+4. **Harnais rejouable** `scripts/verify-move-card-to-channel.sh`, **non complaisant** : éprouvé par
+   des dégradations volontaires qui doivent réellement le faire échouer.
+5. **Aucune régression** : les vingt-quatre harnais précédents rejoués, et les compteurs de
+   `scripts/verify-harness.sh` révisés **dans le même changement**.
 
 ## 7. Interface : le board kanban — `CRM-041`
 

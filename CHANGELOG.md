@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification du déplacement d'une card entre channels** — `CRM-045`,
+  `docs/SPEC-workflow-engine.md` §6, `docs/SCHEMA.md` §5 et §9, `docs/SPEC-cards.md` §14.4 et
+  §14.6, `docs/SPEC-seed.md` §2.16. Écrite **avant toute ligne de code** et **après mesure sur la
+  pile réelle**. Le chapitre tenait en dix lignes ; il est réécrit en treize sous-chapitres
+  opposables : huit vérifications avec leur `SQLSTATE` et leur code HTTP mesurés, ce que la
+  fonction écrit, l'événement `channel_changed` — neuvième type de la timeline —, les privilèges,
+  seize lignes de contrat d'API, et ce que l'unité ne livre pas. Quatre faits mesurés changent ce
+  que la fonction doit faire : `channel_id` et `workflow_id` sont **déjà** fermés à `authenticated`
+  depuis `CRM-013`, un changement de channel est aujourd'hui **silencieux** dans la timeline, le
+  `CHECK` de `card_events` **refuse** le type nouveau, et `card_field_values` **interdit** le
+  changement de workflow d'une card qui porte une réponse — six cards du seed sur neuf.
+  `discard_field_values` rend la perte explicite plutôt que silencieuse (décisions 213 à 218).
+- **INC-073** — `docs/SCHEMA.md` §9 et `docs/SPEC-workflow-engine.md` §6 décrivaient deux fonctions
+  différentes sous le même nom : `step_mapping` annonce un déplacement **en lot** qu'aucune unité
+  du backlog ne porte. La lecture la plus faible est retenue, la contradiction est consignée sans
+  être résolue implicitement.
+
 - **Spécification de la mémoire d'une affaire** — `CRM-044`, `docs/SPEC-cards.md` §14,
   `docs/DESIGN_SYSTEM.md` §5.11, `docs/SPEC-seed.md` §2.15, `docs/SCHEMA.md` §5. Écrite **avant
   toute ligne de code** et **après mesure sur la pile réelle** : quatre documents nommaient la
