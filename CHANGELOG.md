@@ -139,6 +139,11 @@ d'exécuter le code attendu.
   a commenté rend `500` / `23503`, contre la Definition of Done de `CRM-011`. **Antérieur à
   `CRM-045`**, relevé par son balayage, laissé inchangé : la colonne appartient à `CRM-043` et
   `author_id` étant `not null`, la correction n'est pas mécanique. Consigné, non résolu.
+- **Le contrôle d'INC-046 du harnais de `CRM-045` a été révisé après `CRM-046`** — deux exécutions
+  de la routine en parallèle, INC-059. Il vérifiait que `prospection` était vide ; elle porte
+  désormais deux cards sur le workflow dérivé. Ce qui prouve INC-046 n'est plus un vide mais un
+  **refus** : repointer le workflow d'un channel peuplé reste impossible, mesuré en `23503`.
+  43 → **45 contrôles**.
 - **Un garde-fou de types de `CRM-034` a joué comme il l'annonçait** et a été **révisé, non
   retiré** : `webapp/src/lib/database.types.test-d.ts` est resserré sur les **trois** fonctions
   appelables de `public`, avec la signature et le retour de la nouvelle.

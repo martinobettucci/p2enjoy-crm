@@ -19,7 +19,7 @@
 #      seul contrôle du dépôt qui défende un privilège qu'aucune migration ne pose ;
 #   4. la suite pgTAP dédiée est verte, et la suite globale avec elle ;
 #   5. la preuve d'API dédiée est verte, et elle NETTOIE derrière elle — ce qui est constaté ;
-#   6. le seed porte son aller-retour, et il CONVERGE : `prospection` est VIDE au repos ;
+#   6. le seed porte son aller-retour, et `prospection` porte ses deux cards DÉRIVÉES ;
 #   7. le harnais est NON COMPLAISANT : chaque affaiblissement volontaire le fait réellement
 #      échouer, et la restauration est constatée.
 #
@@ -28,8 +28,8 @@
 # ---------------------------------------------------------------------------------------------
 # Le compte de `channel_changed` est écrit comme une BORNE INFÉRIEURE, pour la raison de la
 # décision 210 : une timeline enregistre tout, y compris ce que les autres preuves du dépôt font à
-# la même pile. Le seul compte exact asséré est celui des cards demeurant dans `prospection` —
-# ZÉRO —, qui est un état et non une histoire.
+# la même pile. Le seul compte exact asséré est celui des cards de `prospection` — DEUX depuis
+# `CRM-046` —, qui est un état et non une histoire.
 #
 # AUCUN CONTRÔLE D'INTERFACE : `CRM-045` ne livre aucun écran, et sa Definition of Done est la
 # seule du chunk 3 à ne pas demander de captures (docs/SPEC-workflow-engine.md §6.10).
@@ -261,13 +261,44 @@ else
 	fail "aucun acteur nommé : le seed n'a pas employé le jeton de l'administratrice"
 fi
 
-# LE CONTRÔLE D'INC-046, ET C'EST UN ÉTAT, DONC UN COMPTE EXACT. Une card demeurant dans
-# `prospection` rendrait le rejeu du seed impossible (23503 sur le repointage des sections 4 et 7).
-demeurent=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_PROSPECTION'")
-if [ "$demeurent" = 0 ]; then
-	ok "AUCUNE card ne demeure dans prospection : le workflow dérivé est démontré EN TRANSIT"
+# LE CONTRÔLE D'INC-046, RÉVISÉ PAR `CRM-046` COMME IL AVAIT RÉVISÉ LES ASSERTIONS DE CETTE UNITÉ —
+# mécanisme de la décision 51, et le garde-fou TOURNE au lieu de disparaître.
+#
+# `CRM-045` figeait ici « `prospection` est VIDE au repos » : c'était la conséquence mesurée
+# d'INC-046, le seed y repointant le workflow deux fois par exécution. `CRM-046` a cessé ces
+# écritures — convergence par état — et y a posé DEUX cards sur le workflow DÉRIVÉ.
+#
+# INC-046 n'est pas levée pour autant, et ce qui la prouve n'est plus un vide mais un REFUS : le
+# changement de workflow d'un channel peuplé reste impossible. Une assertion de refus prouve la
+# règle ; une assertion de vide ne prouvait que l'absence d'occasion de l'enfreindre.
+cards_prospection=$(psql_db -c "select count(*) from public.cards
+	where channel_id='$CHANNEL_PROSPECTION'")
+if [ "$cards_prospection" = 2 ]; then
+	ok "prospection porte ses DEUX cards dérivées depuis CRM-046 (docs/SPEC-seed.md §9.3)"
 else
-	fail "$demeurent card(s) dans prospection : le rejeu du seed échouerait (INC-046)"
+	fail "$cards_prospection card(s) dans prospection au lieu de 2"
+fi
+
+derive=$(psql_db -c "select count(*) from public.cards c
+	join public.channels ch on ch.id = c.channel_id
+	where c.channel_id='$CHANNEL_PROSPECTION'
+	  and c.workflow_id = ch.workflow_id
+	  and c.workflow_id <> '5eed0000-0000-4000-8000-000000000051'")
+if [ "$derive" = 2 ]; then
+	ok "elles suivent la COPIE de portée track, jamais le workflow global — lecture n° 1 d'INC-046"
+else
+	fail "$derive card(s) sur le workflow dérivé au lieu de 2"
+fi
+
+# LE REFUS QUI PORTE DÉSORMAIS INC-046, MESURÉ PLUTÔT QUE DÉDUIT : repointer le workflow d'un
+# channel peuplé est refusé par la clé composite, en 23503.
+if psql_db -c "update public.channels set workflow_id='5eed0000-0000-4000-8000-000000000051'
+	where id='$CHANNEL_PROSPECTION'" >/dev/null 2>&1; then
+	fail "le workflow d'un channel PEUPLÉ a pu être repointé : INC-046 aurait été levée en silence"
+	psql_db -c "update public.channels set workflow_id=(select workflow_id from public.workflows
+		where scope='track' limit 1) where id='$CHANNEL_PROSPECTION'" >/dev/null 2>&1 || true
+else
+	ok "repointer le workflow d'un channel PEUPLÉ reste REFUSÉ : INC-046 n'est pas levée"
 fi
 
 etat=$(psql_db -c "select channel_id||'|'||workflow_id from public.cards where id='$CARD_SEED'")

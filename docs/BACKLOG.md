@@ -3969,6 +3969,23 @@ interface** avec les jetons réels des trois comptes.
       `npm run e2e:api` seul, deux fois de suite sur une base fraîche, laisse **zéro** résidu. Le
       phénomène est de la famille d'INC-058 et d'INC-061 ; il est nommé ici parce que sa mesure
       manquait, et parce qu'il rend tout verdict de balayage séquentiel non concluant.
+- [x] **DEUX EXÉCUTIONS DE LA ROUTINE ONT TRAVAILLÉ EN PARALLÈLE — INC-059, seconde occurrence.**
+      `CRM-046` a été livrée pendant que celle-ci finissait ses vérifications, et elle a **révisé
+      les assertions de `CRM-045`** au lieu de les contourner : `prospection` n'est plus vide, elle
+      porte deux cards sur le workflow **dérivé**. La collision a porté sur deux numérotations —
+      INC-075 et décision 220, attribuées de part et d'autre — résolues en renumérotant celles de
+      cette unité en **INC-076** et **décision 227**.
+- [x] **LE GARDE-FOU DU HARNAIS A TOURNÉ AU LIEU DE DISPARAÎTRE.** `CRM-046` avait révisé la suite
+      pgTAP et la preuve d'API de cette unité, **pas son harnais**, qui contrôlait encore
+      « `prospection` est vide ». Le contrôle est **remplacé par ce qu'INC-046 prouve désormais** :
+      les deux cards y suivent bien la **copie** de portée track, et surtout **repointer le
+      workflow d'un channel peuplé reste REFUSÉ** — mesuré en `23503`, et non déduit. Une assertion
+      de refus prouve la règle ; une assertion de vide ne prouvait que l'absence d'occasion de
+      l'enfreindre. Le harnais passe de 43 à **45 contrôles**.
+- [x] **Suites rejouées APRÈS synchronisation**, comme la DoD l'exige : **1405 assertions pgTAP**,
+      **410 scénarios d'API**, **467 tests unitaires**, typecheck et build verts,
+      `verify-move-card-to-channel` **45/45**. Les compteurs de `scripts/verify-harness.sh` étaient
+      déjà portés à 1405 et 410 par `CRM-046`.
 - [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quinze unités précédentes : le
       parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
       connexion. **Seizième unité consécutive.**
