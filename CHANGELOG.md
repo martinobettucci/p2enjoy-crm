@@ -15,6 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification du manuel utilisateur du chunk 3** — `CRM-047`, `docs/SPEC-manual.md`, écrite
+  **après mesure sur la pile réelle** et avant toute correction. L'unité tenait en une ligne de
+  backlog ; le document dit désormais quelle unité vit dans quel chapitre, ce qu'un chapitre doit
+  satisfaire, où vivent les chiffres, ce que « captures renouvelées » exige, et par quelles preuves
+  l'unité se ferme.
+- **La dérive du manuel est chiffrée : treize écarts**, chacun avec sa mesure
+  (`docs/SPEC-manual.md` §6). Quatre affirmations ont été rendues fausses par une unité
+  **ultérieure** à celle qui les avait écrites, deux chiffres l'ont été par `CRM-046`, un libellé
+  cité n'existe pas dans le produit — « Affaire introuvable » là où l'écran dit « Card introuvable »
+  —, et un chapitre promis par le sommaire n'était écrit nulle part.
+- **INC-077, consignée et non résolue** : `card_events.type` admet neuf valeurs, le fil en sait
+  nommer huit. `channel_changed`, écrit par `CRM-045` et présent deux fois dans la base, s'affiche
+  « Événement » — un fait dont le fil ne dit pas lequel. Le comportement reste inchangé ; trois
+  questions sont nommées pour l'arbitrage (décision 232).
+
 - **Le jeu de démonstration complet** — `CRM-046`, `supabase/seed/apply-seed.sh`. Cinq cards et
   quatre valeurs de formulaire ferment les trois manques mesurés du socle : les **sept** étapes du
   workflow global portent chacune une card **active**, le workflow **dérivé** en porte deux à deux

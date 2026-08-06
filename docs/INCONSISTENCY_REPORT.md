@@ -12,6 +12,69 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-077 — Le neuvième type d'événement est écrit par le produit et n'a aucun libellé dans le fil
+
+**Nature :** écart entre un type d'événement livré et prouvé côté serveur, et ce que l'interface
+sait en dire.
+**Relevé le :** 2026-08-06, pendant la spécification de `CRM-047`.
+
+`card_events.type` admet **neuf** valeurs, la contrainte de la table les énumère :
+
+```
+'created', 'moved', 'assigned', 'channel_changed', 'archived', 'unarchived', 'trashed',
+'restored', 'field_changed'
+```
+
+`webapp/src/app/PanneauTimeline.tsx` en déclare **huit**. `channel_changed` — le type écrit par
+`CRM-045` lorsqu'une affaire change de dossier — n'y figure pas.
+
+**MESURÉ le 2026-08-06, sur la base réelle :**
+
+| Type | Lignes |
+|---|---|
+| `created` | 14 |
+| `field_changed` | 35 |
+| `moved` | 18 |
+| `assigned` | 2 |
+| **`channel_changed`** | **2** |
+| `archived` | 1 |
+| `unarchived` | 1 |
+
+Le type n'est donc pas théorique : le jeu de démonstration en porte deux lignes. Le fil les affiche,
+et les affiche sous le libellé de repli `timeline.event.unknown` — **« Événement »**. Le lecteur
+voit qu'un fait a eu lieu, et n'apprend pas lequel.
+
+**Le repli n'est pas en cause.** Il est délibéré (`docs/DESIGN_SYSTEM.md` §5.11 : « aucun
+`undefined` n'atteint l'écran », « un libellé non résolu n'est pas une phrase tronquée »). Il est
+fait pour un type inconnu du client — pas pour un type que le produit écrit lui-même.
+
+**Ce que trois documents disent, et qui ne s'accorde pas :**
+
+| Document | Ce qu'il dit |
+|---|---|
+| `docs/manual.md` ch. 7 *bis* (écrit par `CRM-045`) | « Le déplacement laisse une trace *changement de dossier* dans l'historique » |
+| `docs/DESIGN_SYSTEM.md` §5.11 | table des familles : `moved` → Étapes, `field_changed` → Champs, six types → Cycle de vie. **`channel_changed` n'y est pas** |
+| `webapp/src/app/PanneauTimeline.tsx` | huit types, repli générique pour le neuvième |
+
+**Trois questions, aucune tranchée** — et elles ne relèvent pas d'une unité documentaire :
+
+1. quel **libellé** ? « Dossier changé » dirait le fait ; « Rangée dans <channel> » exigerait de
+   résoudre un nom de channel que le fil ne charge pas aujourd'hui ;
+2. quelle **famille de filtre** ? Ce n'est ni une prise de parole, ni un franchissement d'étape, ni
+   un changement de champ. « Cycle de vie » l'accueillerait par défaut, ce qui ferait passer un
+   rangement pour un événement de cycle de vie ;
+3. quelle **pastille** ? Le §5.11 attribue une couleur par famille ; en ajouter une engage la règle,
+   pas seulement une icône.
+
+**Conséquence retenue en attendant l'arbitrage :** le comportement est **inchangé**, et
+`docs/manual.md` cesse d'annoncer un libellé qui n'existe pas — il décrit ce que le fil montre
+réellement. `e2e/ui/manuel.spec.ts` **mesure** ce rendu plutôt que de le déduire, de sorte que le
+jour où un libellé sera livré, la preuve deviendra rouge et forcera la mise à jour du manuel.
+
+**Lié à :** `CRM-045` (l'unité qui écrit le type), `CRM-044` (l'unité qui rend le fil), INC-021
+(aucun écran de connexion, donc aucun parcours réel n'atteint le fil), `docs/JOURNAL.md`
+décision 232.
+
 ### INC-075 — Un channel consenti par le backend est inatteignable par la navigation du produit
 
 **Nature :** écart entre une règle d'autorisation livrée et prouvée, et le parcours réellement

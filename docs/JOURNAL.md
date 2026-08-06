@@ -7213,3 +7213,100 @@ relevés un à un.
 
 Un contrôle du harnais fige cette propriété : `scripts/verify-move-card-to-channel.sh` relit les
 rangs de `(grands-comptes, relance)` après la preuve d'API et exige « 1,2 ».
+
+### Décision 230 — Le manuel du chunk 3 avait dérivé, et la dérive se mesure : treize écarts
+
+**Problème.** `CRM-047` demande que « `docs/manual.md` décrive le produit réellement exécuté ». La
+formule suppose une comparaison, et personne ne l'avait faite depuis que le manuel est écrit — un
+chapitre à la fois, par l'unité qui le livre. Chaque chapitre était vrai le jour où il a été écrit ;
+la question est de savoir s'ils le sont **ensemble**, aujourd'hui.
+
+**Ce qui a été mesuré, avant d'écrire quoi que ce soit** : la pile démarrée, le seed appliqué, les
+libellés relus dans `webapp/src/i18n/fr.ts`, les volumes comptés dans la base, les routes lues dans
+`webapp/src/app/routes.tsx`, et quatre captures observées à l'œil.
+
+**Treize écarts**, consignés un à un dans `docs/SPEC-manual.md` §6. Ils ne sont pas de même nature,
+et c'est le constat le plus utile :
+
+- **quatre affirmations sont devenues fausses parce qu'une unité ULTÉRIEURE a livré ce qu'elles
+  déclaraient absent** — l'historique d'un déplacement (`CRM-044`), l'écran du déplacement
+  (`CRM-041`), les écrans d'une affaire (`CRM-037`, `CRM-041`, `CRM-042`), le fil sur la fiche
+  (`CRM-043`, `CRM-044`). Le manuel n'a pas menti : il a été laissé derrière ;
+- **deux chiffres ont été rendus faux par `CRM-046`** — « neuf affaires », « quatorze réponses sur
+  six affaires » — sans qu'aucun mécanisme ne le signale ;
+- **une phrase citait un libellé que le produit n'affiche pas** : « Affaire introuvable » là où
+  l'écran dit « Card introuvable ». Le même manuel écrivait déjà le bon libellé deux chapitres plus
+  loin. C'est le seul écart qui était visible sans démarrer la pile ;
+- **un chapitre promis par le sommaire n'existait nulle part** (`CRM-045`) ;
+- **un écart est du PRODUIT, non du manuel** : décision 232.
+
+**Conséquence.** L'unité ne se contente pas de corriger : elle livre deux harnais (§7 de la
+spécification) dont le rôle est que la quatorzième dérive soit rouge avant d'être fausse.
+
+### Décision 231 — Un volume du jeu de démonstration ne se recopie pas dans une phrase
+
+**Problème.** Deux des treize écarts sont des nombres périmés, et ils ont le même mécanisme : une
+grandeur mesurable recopiée dans une phrase n'a **aucun lien** avec la base qui la produit. Elle ne
+vieillit pas, elle ment, en silence, à partir du jour où une autre unité change la base.
+
+**Options.** (a) Continuer et compter sur la relecture — c'est ce qui a échoué deux fois.
+(b) Retirer tous les nombres du manuel — un manuel utilisateur qui refuse de dire ce que l'espace
+de démonstration contient est moins utile. (c) Les rassembler en **un seul endroit vérifiable**.
+
+**Décision : (c).** Une annexe A dans `docs/manual.md`, une table `| grandeur | valeur |`, et la
+prose qui y renvoie. `scripts/verify-manual.sh` compare la table à la base, ligne par ligne.
+
+**La frontière est explicite**, sans quoi la règle serait ingérable : l'annexe porte les **états de
+la base** — combien d'affaires, combien de réponses. Les chapitres gardent les **règles du
+produit** — 25 lignes par page, 10 000 caractères, une probabilité entre 0 et 100. Les premières
+changent quand un seed change ; les secondes quand le code change, et le code qui les porte est
+testé.
+
+**Conséquence assumée** : un nombre de l'annexe est un ÉTAT, pas un invariant — la leçon de la
+décision 226. Le harnais exige l'égalité sur un seed fraîchement appliqué, et ne prétend rien
+au-delà.
+
+### Décision 232 — Un changement de dossier laisse une trace que le fil ne sait pas nommer : INC-077
+
+**Ce que le manuel annonçait**, au chapitre 7 *bis*, livré avec `CRM-045` : « Le déplacement laisse
+une trace *changement de dossier* dans l'historique ».
+
+**MESURÉ le 2026-08-06.** La trace existe : `card_events` porte deux lignes de type
+`channel_changed`, écrites par le serveur. Mais `webapp/src/app/PanneauTimeline.tsx` déclare huit
+types — `created`, `moved`, `assigned`, `archived`, `unarchived`, `trashed`, `restored`,
+`field_changed` — et **pas** `channel_changed`. La contrainte de la table en admet **neuf**. Le
+neuvième tombe donc sur le repli `timeline.event.unknown`, et le fil affiche « Événement » : un
+fait, sans dire lequel.
+
+Le repli n'est pas un défaut en soi — il est délibéré (`docs/DESIGN_SYSTEM.md` §5.11 : « aucun
+`undefined` n'atteint l'écran »). Le défaut est qu'un type **livré par le produit** l'emprunte.
+
+**Décision : consigner, ne pas corriger.** INC-077. Ajouter un libellé et une pastille au fil
+serait modifier un écran depuis une unité documentaire, contre `CLAUDE.md` §1, et engagerait aussi
+`docs/DESIGN_SYSTEM.md` §5.11 — quelle famille de filtre accueille un changement de dossier ?
+Discussion, non ; Étapes, non ; Cycle de vie, peut-être. La question relève de l'arbitrage, pas
+d'un manuel.
+
+**Ce que le manuel dit donc**, et c'est la seule phrase vraie disponible : la trace est écrite, elle
+apparaît dans le fil, et le fil ne la nomme pas encore.
+
+### Décision 233 — Le manuel se prouve par un visiteur anonyme réel, pas par une substitution
+
+**Problème.** Les preuves d'interface du dépôt substituent presque toutes les réponses réseau
+(`docs/DESIGN_SYSTEM.md` §12.5) : c'est la seule façon de montrer un écran chargé sans session,
+INC-021. Or ce que le **manuel** promet à son lecteur n'est pas l'écran chargé — c'est ce qu'il
+verra en ouvrant l'adresse aujourd'hui, sans compte.
+
+**Décision.** `e2e/ui/manuel.spec.ts` n'emploie **aucune substitution** sur ses huit parcours : il
+ouvre les huit adresses citées par le manuel en visiteur anonyme réel, contre l'API réelle, et
+exige le **libellé exact** que le manuel cite entre guillemets. C'est la seule preuve du dépôt dont
+l'objet est une phrase de documentation.
+
+**Ce que cela attrape**, et qu'aucune preuve existante n'attrapait : un libellé qui change dans
+`fr.ts` rend le manuel rouge le jour du changement, au lieu de le rendre faux jusqu'à ce qu'un
+lecteur le remarque. C'est exactement l'écart n° 1 des treize.
+
+**Une exception, nommée** : le neuvième scénario du fichier substitue un événement
+`channel_changed`, parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais
+atteint par un anonyme, et aucun jeton n'ouvre d'écran. Il ne prouve pas un parcours ; il mesure
+INC-077 plutôt que de la déduire de la lecture d'un fichier.

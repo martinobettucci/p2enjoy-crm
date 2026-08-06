@@ -4157,8 +4157,35 @@ soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit av
   `1234` ; le contournement documenté du dépôt — `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun
   fichier du dépôt n'a été modifié pour cela.
 
-### CRM-047 — Manuel utilisateur du chunk 3 `[ ]`
+### CRM-047 — Manuel utilisateur du chunk 3 `[~]`
 **DoD** : `docs/manual.md` décrit le produit réellement exécuté ; captures renouvelées.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-manual.md` : l'unité tenait en
+      **une ligne**, qui ne disait ni de quoi le manuel doit parler à la fin du chunk 3, ni comment
+      on prouve qu'il décrit le produit plutôt qu'un souvenir de celui-ci. Rédigée **après mesure**
+      sur la pile réelle — pile démarrée, seed appliqué, libellés relus dans `webapp/src/i18n/fr.ts`,
+      volumes comptés dans la base, routes lues, quatre captures observées. Commit documentaire
+      dédié, poussé avant la première ligne de code.
+- [x] **La dérive est mesurée, écart par écart** : **treize**, consignés au §6 de la spécification
+      avec la mesure qui établit chacun. Quatre affirmations rendues fausses par une unité
+      **ultérieure** (`CRM-041`, `CRM-042`, `CRM-043`, `CRM-044`), deux chiffres périmés par
+      `CRM-046`, un libellé cité que le produit n'affiche pas, un chapitre promis par le sommaire et
+      écrit nulle part (`CRM-045`), et un écart qui n'est **pas** du manuel (INC-077).
+- [x] **Une contradiction consignée sans être résolue implicitement** : **INC-077** (décision 232).
+      `card_events.type` admet neuf valeurs, `PanneauTimeline.tsx` en déclare huit :
+      `channel_changed` — écrit par `CRM-045`, **deux lignes dans la base** — tombe sur le repli et
+      s'affiche « Événement ». Trois questions nommées, aucune tranchée ; le comportement reste
+      inchangé et le manuel cesse d'annoncer un libellé qui n'existe pas.
+- [x] **Deux décisions de méthode** : un volume du jeu de démonstration ne se recopie plus dans une
+      phrase mais vit dans l'annexe A, comparée à la base par le harnais (décision 231) ; et le
+      manuel se prouve par un **visiteur anonyme réel**, sans substitution de réseau, sur les huit
+      adresses qu'il cite (décision 233).
+- [x] `docs/JOURNAL.md` décisions 230 à 233, `docs/INCONSISTENCY_REPORT.md` INC-077, `CHANGELOG.md`
+      mis à jour dans le même changement que la spécification.
+- [ ] Manuel corrigé, annexe A livrée, chapitre `CRM-045` écrit.
+- [ ] `e2e/ui/manuel.spec.ts` et `scripts/verify-manual.sh`, avec leur contre-épreuve.
+- [ ] Captures renouvelées et **observées** ; jeu `docs/captures/CRM-047/`.
+- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les dix-sept unités précédentes.
 
 ---
 
