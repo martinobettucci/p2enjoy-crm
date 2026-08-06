@@ -894,13 +894,44 @@ propriétés distinctes, et le seed doit les deux :
 
 Ce qui **ne peut pas** être identique, et qui est donc exclu de la comparaison, est nommé
 exhaustivement : l'identifiant et l'horodatage du workflow dérivé et de ses sept étapes (§9.4), les
-identifiants des lignes `card_events`, et toutes les colonnes `created_at`, `updated_at`,
-`derived_at`, `entered_step_at`. Tout le reste — identifiants, slugs, positions, montants, devises,
-états, `email_local_part`, rattachements — est comparé ligne à ligne.
+identifiants des lignes `card_events`, toutes les colonnes `created_at`, `updated_at`,
+`derived_at`, `entered_step_at`, et **`email_local_part`**. Tout le reste — identifiants, slugs,
+positions, titres, montants, devises, états, rattachements, valeurs, commentaires — est comparé
+ligne à ligne.
+
+**`email_local_part` mérite son motif, et il a été trouvé en exécutant.** L'adresse d'une card est
+**tirée au hasard** par le trigger de la migration 11 — `gen_random_bytes(5)`, encodés sur
+l'alphabet du §3.4 de `docs/SPEC-cards.md`. Elle est stable d'un **rejeu du seed** à l'autre, la
+branche de mise à jour d'un `upsert` ne touchant que les colonnes envoyées ; elle ne peut **pas**
+l'être d'un cluster à l'autre. La comparer d'un `resetMe.sh` à l'autre rendrait la preuve n° 14
+rouge par construction. La valeur est donc remplacée par sa **forme** et par son **unicité**, qui
+sont, elles, des propriétés du produit — et deux contrôles dédiés les vérifient.
+
+Il y a donc **deux** empreintes, et elles ne servent pas au même usage : l'une, complète, compare
+deux états du **même** cluster et prouve que le rejeu du seed ne change rien, `email_local_part`
+comprise ; l'autre, reproductible, compare deux **reconstructions** et est celle que rend
+`scripts/verify-seed-demo.sh --empreinte`.
 
 La comparaison est faite par une **empreinte** : la même requête ordonnée, exécutée avant et après,
 dont la sortie est hachée. Deux empreintes égales prouvent l'identité ; une empreinte différente
 nomme la table qui a bougé.
+
+**MESURÉ le 2026-08-06 — la forme forte est acquise.** `./resetMe.sh --yes` a réellement détruit le
+cluster PostgreSQL et ses volumes, les dix-sept migrations ont été rejouées à froid
+(« 17 fichier(s) appliqué(s) avec succès »), puis le seed appliqué. L'empreinte reproductible est
+**identique** de part et d'autre :
+
+```
+34c409d17775c2ee6d1f68aa5fc73c03b9b49a0573596ffcf07bb2ead27d9d07
+```
+
+Et `card_events` porte **exactement 38 lignes** sur cette base neuve, ce qui confirme le nombre du
+§9.6 pour ce qu'il est : l'état d'un cluster fraîchement reconstruit.
+
+**Une réserve, nommée** : `resetMe.sh` a détruit le cluster puis **échoué** à la construction de
+l'image `webapp` (INC-042, neuvième occurrence sur cet hôte). La pile a été redémarrée à la main,
+sans le service `webapp`, qui ne touche à aucune donnée. La destruction et la reconstruction de la
+base sont donc réelles et complètes ; seul le conteneur de l'interface manque à l'appel.
 
 ### 9.9 Preuves exigées
 
@@ -923,7 +954,8 @@ Exécutées **hors interface**, contre l'API réelle et la base, par
 | 11 | Une dérive **réparable** de la copie — nom, défaut, archivage — est rattrapée | Le seed la ramène à son contrat, même avec des cards dans `prospection` (décision 225) |
 | 12 | Pour chacun des **trois** profils, tout channel actif lisible rend ≥ 1 card active | Conforme |
 | 13 | Le `viewer` lit les cards de `prospection` par son droit fin, **et** ne lit pas son track | INC-075, mesuré et figé |
-| 14 | Empreinte du §9.8 **avant** et **après** un `resetMe.sh` complet | Empreintes égales |
+| 14 | Empreinte reproductible du §9.8 **avant** et **après** une reconstruction à froid | Empreintes égales |
+| 14 bis | Les adresses de card ont la **forme** générée et sont **distinctes** | 14 et 14 — ce qui remplace la comparaison de leur valeur |
 
 Le harnais doit être **non complaisant** : sa sévérité est éprouvée en faussant réellement le jeu —
 une card archivée, une valeur vidée, le rattachement de `prospection` que l'on tente de défaire — et

@@ -32,7 +32,11 @@ d'exécuter le code attendu.
   workflow dérivé retrouvent leur étape par la **clé de nœud** du catalogue, jamais par une
   constante ; si la copie manque, le seed **échoue en le disant** plutôt que de poser ces cards sur
   le workflow global (décision 222).
-- **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **60 contrôles**, dont ce que
+- **La reproductibilité du seed est prouvée par une destruction réelle** — `./resetMe.sh --yes` a
+  détruit le cluster et ses volumes, les dix-sept migrations ont été rejouées à froid, et
+  l'empreinte est **identique** de part et d'autre. `card_events` porte exactement 38 lignes sur la
+  base neuve, ce qui confirme ce nombre pour ce qu'il est : un état, non un invariant.
+- **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **62 contrôles**, dont ce que
   chacun des trois profils lit réellement, et **non complaisant** — trois dégradations posées par la
   vraie route le font mordre. Sa restauration porte sur l'**état** ; la **mémoire** ne revient pas,
   et l'écart de la timeline est mesuré à la valeur près.
@@ -45,6 +49,11 @@ d'exécuter le code attendu.
   channel (décision 225). Et « 38 événements » n'est pas un invariant mais un **état** : le harnais
   lui-même en écrit quatre par exécution, seul « un `created` par card » se fige par une égalité
   (décision 226).
+- **`email_local_part` ne pouvait pas figurer dans une empreinte de reproductibilité** : l'adresse
+  d'une card est tirée au hasard par le trigger de la migration 11. L'inclure aurait rendu la preuve
+  de reconstruction rouge par construction, et fait conclure à une non-reproductibilité inexistante.
+  Deux empreintes distinctes désormais, et la valeur est remplacée par sa forme et son unicité
+  (décision 227).
 - **Une preuve d'API restait verte sans plus rien prouver.** La ligne *b* de
   `e2e/api/coherence-workflow.spec.ts` remettait un channel à son workflow global **sans rien
   asserter** ; l'écriture échouait en silence et l'assertion suivante réaffectait une valeur déjà en

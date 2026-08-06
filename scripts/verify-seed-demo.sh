@@ -168,6 +168,22 @@ empreinte() {
 	SQL
 }
 
+# L'EMPREINTE DE REPRODUCTIBILITÉ À FROID, et pourquoi elle diffère de la précédente.
+#
+# `email_local_part` est TIRÉ AU HASARD par le trigger de la migration 11 — `gen_random_bytes(5)`,
+# encodé sur l'alphabet du §3.4 de `docs/SPEC-cards.md`. Il est stable d'un REJEU du seed à l'autre,
+# la branche de mise à jour d'un `upsert` ne touchant que les colonnes envoyées ; il ne peut PAS
+# l'être d'un cluster à l'autre. Le comparer d'un `resetMe.sh` à l'autre rendrait la preuve n° 14
+# rouge par construction, sans qu'aucune donnée n'ait bougé.
+#
+# La valeur est donc remplacée par sa FORME et par son unicité, qui sont, elles, des propriétés du
+# produit : `c-` suivi de huit caractères de l'alphabet déclaré, et distincte pour chaque card.
+empreinte_reproductible() {
+	empreinte \
+		| grep -v '^evenement|' \
+		| sed -E 's/\|c-[0-9abcdefghjkmnpqrstvwxyz]{8}\|/|<adresse generee>|/'
+}
+
 # La même empreinte, SANS la timeline. Elle sert à la non-complaisance : une dégradation réparée
 # rétablit l'ÉTAT, jamais la MÉMOIRE — les triggers de `CRM-044` inscrivent chaque écriture, et
 # c'est le comportement voulu. L'écart de la timeline est alors mesuré à part, à la valeur près.
@@ -176,7 +192,9 @@ empreinte_hors_evenements() {
 }
 
 if [ "$EMPREINTE_SEULE" = true ]; then
-	empreinte | sha256sum | cut -d' ' -f1
+	# C'est l'empreinte REPRODUCTIBLE qui est rendue ici : cette option existe pour encadrer un
+	# `./resetMe.sh`, et l'autre serait rouge par construction (adresses tirées au hasard).
+	empreinte_reproductible | sha256sum | cut -d' ' -f1
 	exit 0
 fi
 
@@ -425,6 +443,10 @@ verifier_minorant 'événements field_changed' 18 "select count(*) from card_eve
 verifier_minorant 'événements moved'          2 "select count(*) from card_events where type = 'moved'"
 verifier_minorant 'événements assigned'       2 "select count(*) from card_events where type = 'assigned'"
 verifier_minorant 'événements channel_changed' 2 "select count(*) from card_events where type = 'channel_changed'"
+
+# Ce que l'empreinte de reproductibilité ne compare PAS, elle le remplace par ces deux propriétés.
+verifier_volume 'adresses à la forme générée' 14 "select count(*) from cards where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$'"
+verifier_volume 'adresses distinctes'          14 'select count(distinct email_local_part) from cards'
 
 # --- 12 et 13. Ce que chaque profil voit -------------------------------------------------------
 

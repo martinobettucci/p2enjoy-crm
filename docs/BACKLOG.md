@@ -4014,7 +4014,7 @@ démontrable depuis le seed.
       son écriture utile : le retour au workflow global échouait en silence, et l'assertion
       suivante réaffectait une valeur déjà en place. Elle serait restée **VERTE sans plus rien
       prouver**. Trois scénarios opèrent désormais sur un channel qu'ils créent et détruisent.
-- [x] **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **60 contrôles, aucune
+- [x] **Harnais de preuves rejouable** `scripts/verify-seed-demo.sh` : **62 contrôles, aucune
       anomalie**, et **non complaisant** — trois dégradations posées par la vraie route le font
       réellement mordre, et la restauration est **constatée**. Elle porte sur l'ÉTAT : la MÉMOIRE
       ne revient pas, et l'écart de la timeline est mesuré à la valeur près, quatre événements.
@@ -4039,20 +4039,30 @@ démontrable depuis le seed.
 - [x] `docs/SPEC-seed.md` §1, §4, §8 et §9, `docs/SPEC-cards.md` §9 et §9.1,
       `docs/JOURNAL.md` décisions 220 à 226, `docs/INCONSISTENCY_REPORT.md` INC-075,
       `CHANGELOG.md` mis à jour dans le même changement que le code et les preuves.
-- [ ] **LA PREUVE N° 14 SOUS SA FORME FORTE N'EST PAS JOUÉE.** La Definition of Done exige que
-      « `resetMe.sh` reproduise exactement le même état ». Le harnais prouve la forme **faible** —
-      empreinte stable d'un rejeu du seed à l'autre, et rétablie après dégradation. La forme forte
-      exige de détruire le cluster, ce qu'un harnais de vérification ne fait pas sans confirmation
-      humaine (`CLAUDE.md` §9). **À jouer à la main** :
-      `scripts/verify-seed-demo.sh --empreinte`, puis `./resetMe.sh --yes`, puis de nouveau
-      `--empreinte`.
+- [x] **LA PREUVE N° 14 EST ACQUISE SOUS SA FORME FORTE** (décision 228). `./resetMe.sh --yes` a
+      réellement détruit le cluster et ses volumes ; les dix-sept migrations ont été rejouées à
+      froid — « 17 fichier(s) appliqué(s) avec succès » —, le seed appliqué, et l'empreinte
+      reproductible est **identique** de part et d'autre :
+      `34c409d17775c2ee6d1f68aa5fc73c03b9b49a0573596ffcf07bb2ead27d9d07`. `card_events` porte
+      **exactement 38 lignes** sur la base neuve, ce qui confirme le nombre du §9.6 pour ce qu'il
+      est. Les **62 contrôles** du harnais sont verts sur cette base reconstruite.
+      **Réserve nommée** : `resetMe.sh` a échoué APRÈS la destruction, sur la construction de
+      l'image `webapp` (INC-042, neuvième occurrence). La pile a été redémarrée à la main sans ce
+      service, qui ne touche à aucune donnée.
+- [x] **UN QUATRIÈME DÉFAUT DE MON PROPRE TRAVAIL, VU AVANT D'EXÉCUTER** (décision 227) : le §9.8
+      déclarait comparer `email_local_part`, qui est **tiré au hasard** par le trigger de la
+      migration 11. L'inclure aurait rendu la preuve n° 14 rouge par construction. Deux empreintes
+      distinctes désormais — l'une compare deux états du même cluster, l'autre deux
+      reconstructions —, et la valeur est remplacée par sa **forme** et son **unicité**, vérifiées
+      par deux contrôles dédiés.
 - [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les seize unités précédentes.
       **Dix-septième unité consécutive.**
 
-*DoD adaptée, écarts explicites.* La Definition of Done demandait « `resetMe.sh` reproduit
-exactement le même état ; chaque fonctionnalité livrée est démontrable depuis le seed ». La seconde
-moitié est livrée et mesurée pour les trois profils ; la première ne l'est que sous sa forme
-faible, et le point ci-dessus le dit.
+*Definition of Done tenue.* Elle demandait « `resetMe.sh` reproduit exactement le même état ;
+chaque fonctionnalité livrée est démontrable depuis le seed ». **Les deux sont mesurées** : la
+première par une destruction réelle du cluster et deux empreintes identiques, la seconde par les
+soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit avec son jeton réel.
+**Seule INC-021 retient l'unité en `[~]`.**
 
 *Limites nommées, non masquées.*
 

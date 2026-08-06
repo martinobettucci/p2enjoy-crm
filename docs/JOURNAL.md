@@ -7129,3 +7129,57 @@ sortir d'un seed sur base neuve », et non « toujours ».
 **Ce qui a été écarté.** Faire nettoyer ses événements par le harnais : ils ne sont pas
 supprimables sans privilège, et les supprimer effacerait une mémoire que le produit est fait pour
 tenir. Un harnais n'a pas à mutiler la timeline pour que son assertion reste verte.
+
+---
+
+### Décision 227 — `email_local_part` ne peut pas figurer dans une empreinte de reproductibilité
+
+**Troisième défaut de mon propre travail, trouvé avant d'exécuter la preuve** — et c'est la
+première fois de cette unité qu'un défaut est vu par la lecture du produit plutôt que par un rouge.
+
+Le §9.8 déclarait comparer « identifiants, slugs, positions, montants, devises, états,
+`email_local_part`, rattachements ». Or l'adresse d'une card est **tirée au hasard** :
+`gen_random_bytes(5)` dans le trigger de la migration 11, encodés sur l'alphabet du §3.4 de
+`docs/SPEC-cards.md`. Elle est stable d'un **rejeu du seed** — la branche de mise à jour d'un
+`upsert` ne touche que les colonnes envoyées, et le seed ne l'envoie jamais — et ne peut pas l'être
+d'un **cluster** à l'autre.
+
+L'inclure aurait rendu la preuve n° 14 rouge par construction, et j'aurais conclu à une
+non-reproductibilité qui n'existe pas.
+
+**Décision : deux empreintes, pour deux usages distincts.**
+
+| Empreinte | Compare | Contient `email_local_part` |
+|---|---|---|
+| complète | deux états du **même** cluster — le rejeu du seed ne change rien | **oui**, et c'est une propriété réelle |
+| reproductible | deux **reconstructions** — ce que rend `--empreinte` | **non**, remplacée par sa forme et son unicité |
+
+Ce que la seconde perd est repris par deux contrôles dédiés : les quatorze adresses ont la forme
+`c-` suivie de huit caractères de l'alphabet déclaré, et elles sont **distinctes**. Ce sont des
+propriétés du produit ; leur valeur ne l'est pas.
+
+---
+
+### Décision 228 — La forme forte de la preuve n° 14 est acquise, et `resetMe.sh` a échoué après avoir détruit
+
+**MESURÉ le 2026-08-06.** `./resetMe.sh --yes` a réellement détruit le cluster PostgreSQL et ses
+volumes — `docker ps -a` vide —, puis a **échoué** à la construction de l'image `webapp` :
+`SELF_SIGNED_CERT_IN_CHAIN` sur `npm ci`, INC-042, **neuvième** occurrence sur cet hôte, prédiction
+vérifiée une fois de plus.
+
+**Cet échec n'a pas empêché la preuve, il l'a rendue possible.** La destruction avait eu lieu ; la
+pile a été redémarrée à la main sans le service `webapp`, les dix-sept migrations ont été rejouées à
+froid — « 17 fichier(s) appliqué(s) avec succès » —, et le seed appliqué. Résultat :
+
+- **empreinte reproductible identique** de part et d'autre :
+  `34c409d17775c2ee6d1f68aa5fc73c03b9b49a0573596ffcf07bb2ead27d9d07` ;
+- **`card_events` porte exactement 38 lignes** sur la base neuve, ce qui confirme le nombre du §9.6
+  pour ce qu'il est — un état, non un invariant (décision 226) ;
+- **62 contrôles de `scripts/verify-seed-demo.sh`, aucune anomalie**, sur cette base reconstruite.
+
+La Definition of Done de `CRM-046` — « `resetMe.sh` reproduit exactement le même état » — est donc
+satisfaite, avec une réserve nommée : le conteneur de l'interface n'a pas été reconstruit. Il ne
+touche à aucune donnée, et la reconstruction de la base est complète.
+
+**Ce qui reste, et qui n'appartient pas à cette unité** : INC-021. Aucun écran de connexion, donc
+aucun parcours connecté observable, donc aucune capture. Dix-septième unité consécutive.
