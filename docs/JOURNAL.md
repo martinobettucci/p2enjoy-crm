@@ -8792,3 +8792,31 @@ paquet d'autorités déjà fourni par l'hôte.
 est un répertoire statique construit sur l'hôte, pas cette image Vite de développement. Le contrat
 de déploiement doit donc dire explicitement « aucune variable ni opération de production » au lieu
 de laisser l'absence être interprétée comme un oubli.
+
+---
+
+### Décision 281 — Un résolveur commun que dix-neuf commandes contournent n'est pas encore commun
+
+**Défaut rencontré dans le parcours réel de `CRM-015`.** Les deux variantes de `./runDev.sh`
+aboutissent et la pile rend 50/50. La commande suivante documentée,
+`scripts/verify-webapp.sh`, part toutefois avec le `npm.exe` hérité par WSL : `cmd.exe` refuse le
+répertoire UNC et le build échoue avant toute preuve de la webapp. La chaîne Linux livrée par la
+décision 278 existe et fonctionne, mais seul le harnais global de `CRM-008` la charge.
+
+**Mesure du périmètre.** Vingt scripts autonomes `scripts/verify-*.sh` contiennent une invocation
+effective de `npm` ou `node`; dix-neuf n'appellent pas `node_toolchain_prepare`. Ils peuvent donc
+échouer pour l'outil du poste, voire prendre cette panne commune pour la réussite d'une
+contre-épreuve. Le défaut dépasse `verify-webapp.sh` et le corriger seul laisserait dix-huit faux
+points d'entrée verts dans le registre des commandes disponibles.
+
+**Décision.** Chacun de ces harnais charge `scripts/lib/node.sh` et prépare le couple imposé par
+`.nvmrc` avant sa première mutation. Le résolveur reste local au processus, refuse Windows et les
+versions incompatibles, et ne change pas le shell du responsable. Sa preuve isolée acquiert un
+cinquième contrôle : elle analyse toutes les invocations Node/npm des harnais et exige que chaque
+fichier soit protégé. Le nombre de fichiers n'est pas figé ; la propriété l'est.
+
+**Preuve de fermeture attendue.** Partir volontairement du `PATH` WSL qui expose `npm.exe`, lancer
+la preuve isolée puis `scripts/verify-webapp.sh` sans `nvm use` manuel. Le premier doit sélectionner
+Node 24/npm 11 Linux et le second rendre toutes ses vérifications, y compris Chromium et sa console
+stricte. Ce complément rouvre une seule case de `CRM-008` et devient un prérequis de fermeture du
+parcours utilisateur de `CRM-015`.

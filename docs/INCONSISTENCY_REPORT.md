@@ -12,6 +12,38 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-083 — Dix-neuf harnais autonomes contournent encore la chaîne Node de `CRM-008`
+
+**Nature :** preuve utilisateur inexécutable depuis le shell WSL réel ; portée trop étroite du
+correctif de la décision 278.
+**Relevé le :** 2026-08-07, pendant le parcours utilisateur final de `CRM-015`.
+
+**Mesure.** Après deux démarrages réels de la pile, sans puis avec `NPM_CA_FILE`,
+`scripts/verify-stack.sh` rend **50/50**. Lancé juste après depuis le même shell,
+`scripts/verify-webapp.sh` choisit pourtant `/mnt/c/Program Files/nodejs/npm` : `cmd.exe` refuse le
+chemin UNC, `vite` est introuvable, le build ne produit pas `webapp/dist`, et le harnais commence
+par **deux échecs**. Ce n'est pas une régression de la webapp : `scripts/verify-harness.sh` avait
+déjà sélectionné Node v24.14.1 / npm 11.11.0 Linux et rendu 28/28 sur la même machine.
+
+**Cause.** La décision 278 a livré un résolveur commun dans `scripts/lib/node.sh`, mais seul
+`scripts/verify-harness.sh` le charge. Une recherche des invocations effectives, hors commentaires,
+trouve **vingt** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; dix-neuf contournent
+encore le résolveur. Tous sont annoncés comme commandes autonomes dans le README ou constituent la
+preuve autonome d'une unité. Demander à l'utilisateur de corriger son `PATH` entre deux commandes
+ne rend pas ces actions exécutables.
+
+**Correction décidée.** Tout harnais shell autonome qui exécute Node ou npm charge
+`scripts/lib/node.sh` et appelle `node_toolchain_prepare` avant sa première mutation. Une preuve
+statique recense les invocations réelles et refuse tout nouveau harnais non protégé ; la preuve
+isolée du résolveur passe donc de quatre à cinq contrôles. `scripts/verify-webapp.sh` doit ensuite
+être rejoué depuis le `PATH` WSL défectueux d'origine, pas depuis un shell préparé à la main.
+
+**Portée.** Le correctif ne crée aucun alias npm, ne modifie pas le shell parent et ne change
+aucune logique métier. Il complète `CRM-008`; `CRM-015` ne pourra revendiquer son parcours final
+qu'une fois `verify-webapp.sh` redevenu réellement exécutable.
+
+---
+
 ### INC-082 — Trois décisions récupérées décrivent un assemblage Stalwart que `main` n'a pas
 
 **Nature :** contradiction entre des décisions du responsable réinsérées et l'infrastructure
