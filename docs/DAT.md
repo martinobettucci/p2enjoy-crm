@@ -94,9 +94,9 @@ React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 - Authentification via `supabase-js` (GoTrue). L'arbitrage de persistance est rendu par
   `docs/SPEC-auth.md` §9 : **`sessionStorage` uniquement**, limité à l'onglet, avec repli mémoire
   si ce stockage est indisponible. Le défaut `localStorage` de la bibliothèque n'est jamais
-  employé. Ce contrat referme INC-022. Le code a été livré sous `CRM-011`, mais l'arbitrage du
-  responsable — `docs/JOURNAL.md`, décision 253, INC-021 — le rattache à une **unité dédiée**,
-  `CRM-009` : la reprise de traçabilité est due, sans changement de comportement.
+  employé. Ce contrat referme INC-022 et appartient à l'unité dédiée `CRM-009`, selon l'arbitrage
+  du responsable — `docs/JOURNAL.md`, décision 253, INC-021. `CRM-011` reste propriétaire du
+  mécanisme GoTrue éprouvé hors interface.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.

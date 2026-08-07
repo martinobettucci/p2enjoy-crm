@@ -1283,6 +1283,10 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       stockage est indisponible — plutôt que laissé à son défaut, qui écrirait dans `localStorage`
       et tomberait sous `CLAUDE.md` §11. Un `F5` ne déconnecte pas ; la fermeture de l'onglet, si.
       `docs/SPEC-auth.md` §9.2. Preuve acquise hors interface autant que dedans.
+- [x] **Contrat des gabarits écrit avant le code**, `docs/SPEC-auth.md` §5 : service Caddy interne
+      commun aux assemblages, quatre URL et sujets français, dépendance saine de GoTrue, contenu
+      vérifié dans le message SMTP réel. La limite HTML seul de GoTrue 2.189.0 est mesurée et
+      distinguée du texte que reconstruit Inbucket.
 - [ ] **Reprendre la traçabilité** : les commentaires `@spec` du code livré, les `@verifies` des
       preuves et les mentions de `docs/DAT.md` §3.1 citent encore `CRM-011`. Ils doivent citer
       `CRM-009`. Aucun changement de comportement.

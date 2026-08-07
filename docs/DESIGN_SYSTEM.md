@@ -413,7 +413,7 @@ s'ajoutent, elles ne les remplacent pas.
   sort du cadre est un contrôle qui **cache** une option, ce que le §7 admet pour un tableau ou un
   board — dont on sait qu'ils défilent — mais pas pour quatre bascules.
 
-### 5.12 Connexion et identité de session — `CRM-011`
+### 5.12 Connexion et identité de session — `CRM-009`
 
 L'écran de connexion est une surface autonome, sans barre latérale ni onglets : tant qu'aucune
 session n'existe, ces repères ne contiennent que le refus anonyme et détournent de l'action utile.
@@ -563,11 +563,11 @@ couleur du track — un anneau `--color-brand` — et ne la remplace pas : la co
 et l'écraser ferait perdre au track actif ce qui l'identifie. `aria-current="page"` porte
 l'information indépendamment du visuel.
 
-### 12.5 Données réelles et réponses substituées — `CRM-020`, révisé par `CRM-011`
+### 12.5 Données réelles et réponses substituées — `CRM-020`, révisé par `CRM-009`
 
 Sans session, les politiques RLS ne consentent aucune ligne et les captures anonymes montrent
-l'état vide réel du backend. Depuis la reprise de `CRM-011`, un membre peut se connecter et les
-preuves de jonction exercent les données et écritures réelles sans substitution.
+l'état vide réel du backend. Depuis la livraison du parcours `CRM-009`, un membre peut se
+connecter et les preuves de jonction exercent les données et écritures réelles sans substitution.
 
 Une réponse réseau substituée reste admise pour isoler un état rare, une donnée longue ou un refus
 précis. Elle doit être nommée et ne remplace jamais le parcours connecté correspondant. Injecter

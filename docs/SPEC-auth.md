@@ -1,6 +1,7 @@
 # Spécification — Authentification, sessions et cycle de vie des comptes
 
-Unité de backlog : `CRM-011` (voir `docs/BACKLOG.md`).
+Unités de backlog : `CRM-009` (interface, session d'onglet et gabarits) et `CRM-011`
+(mécanisme GoTrue ; voir `docs/BACKLOG.md`).
 Documents liés : `docs/DAT.md` §4.1 et §7, `docs/SCHEMA.md` §1, `docs/SPEC-permissions-rls.md` §1
 et §7, `docs/manual.md` chapitres 1 et 17.
 
@@ -172,19 +173,51 @@ Les emails d'invitation, de confirmation, de réinitialisation et de changement 
 émis par GoTrue vers `SMTP_HOST`. En développement, c'est **Inbucket** : les emails sont
 réellement transmis par SMTP et consultables, jamais simulés (`CLAUDE.md` §8).
 
-Les gabarits sont ceux, en anglais, fournis par GoTrue. **Ce n'est pas un oubli, c'est une limite
-assumée** : GoTrue ne sait charger un gabarit personnalisé que par **HTTP**, et le produit ne
-dispose d'aucun serveur statique joignable depuis le réseau des conteneurs avant la webapp
-(`CRM-007`). Le point est consigné en `docs/INCONSISTENCY_REPORT.md`, INC-016, avec la mesure du
-mode de défaillance : lorsque le gabarit est injoignable, GoTrue **journalise une erreur et envoie
-tout de même le gabarit anglais par défaut**. Un email qui part n'est donc pas la preuve que le
-gabarit configuré a été employé.
+### 5.1 Service de gabarits — `CRM-009`
 
-Second constat, relevé en observant les emails reçus : les gabarits par défaut produisent un
-message **HTML seul**, sans partie `text/plain`. La partie texte que lit le harnais de preuves est
-donc **reconstruite par Inbucket**, et non émise par GoTrue. Le jour où des gabarits propres seront
-écrits, ils devront porter les deux variantes. Captures observées :
-`docs/captures/CRM-011/`.
+Les quatre gabarits sont des fichiers HTML en français, versionnés sous
+`supabase/auth/templates/` et servis par le service interne **`auth-templates`**. Ce service :
+
+- emploie l'image déjà épinglée `caddy:2.9-alpine`, monte le répertoire en lecture seule et
+  n'expose **aucun port hôte** ;
+- appartient au fichier Compose commun : il existe donc en développement comme en production ;
+- répond sur `http://auth-templates:8080`, avec un contrôle de santé portant réellement sur
+  `invite.html` ;
+- est une dépendance saine de `auth`, afin que le premier email ne puisse pas précéder le serveur.
+
+GoTrue reçoit les quatre URL absolues suivantes :
+
+| Type GoTrue | URL interne | Sujet imposé |
+|---|---|---|
+| invitation | `/invite.html` | `Invitation à P2Enjoy CRM` |
+| confirmation | `/confirmation.html` | `Confirmez votre adresse — P2Enjoy CRM` |
+| réinitialisation | `/recovery.html` | `Réinitialisez votre mot de passe — P2Enjoy CRM` |
+| changement d'adresse | `/email-change.html` | `Confirmez votre nouvelle adresse — P2Enjoy CRM` |
+
+Chaque corps nomme P2Enjoy CRM, explique l'action en français, expose une action textuelle dont
+la cible est `{{ .ConfirmationURL }}` et présente aussi le code `{{ .Token }}`. L'email reste
+compréhensible sans image ; son habillage reprend la palette, la pile typographique et les
+contrastes de `docs/DESIGN_SYSTEM.md` sans introduire de nouveau jeton.
+
+Le repli de GoTrue impose une preuve plus forte que « un message existe ». Si une URL est
+injoignable lors du premier chargement, `supabase/gotrue:v2.189.0` journalise l'échec puis met en
+cache son gabarit anglais par défaut. Les preuves n° 6 et 18 relisent donc le message **réellement
+reçu par SMTP** et exigent simultanément son sujet français, la phrase propre au gabarit, le nom
+du produit, le code à six chiffres et le lien d'action du bon type. Le repli anglais échoue ainsi
+même lorsqu'un email a bien été livré.
+
+### 5.2 Limite MIME mesurée de GoTrue 2.189.0
+
+Le service de gabarits ne peut pas fabriquer une variante `text/plain`. Dans la version épinglée,
+l'interface interne `mailer.Client.Mail` ne reçoit qu'une chaîne `body`, puis le client SMTP
+`mailmeclient` appelle `SetBody("text/html", body)`. Il n'existe aucun second corps ni paramètre de
+gabarit texte. Inbucket reconstruit donc son affichage texte depuis le HTML et signale l'absence de
+partie `text/plain` ; ce n'est pas une variante réellement émise par GoTrue.
+
+Cette limite du composant tiers est distincte d'INC-016, que les gabarits français refermeront
+après preuve. La contourner demanderait de remplacer ou d'interposer le client SMTP, ce que
+`CRM-009` ne mandate pas. Les preuves inspectent le HTML reçu et ne présentent jamais le texte
+reconstruit comme une partie MIME d'origine.
 
 ## 6. Ce que cette unité ne livre pas
 
@@ -209,7 +242,7 @@ vivent dans `scripts/verify-auth.sh`.
 | 3 | `POST /invite` avec la clé anonyme | Refus |
 | 4 | `POST /invite` avec la clé de service | `200`, `auth.users` créé avec `invited_at`, sans mot de passe |
 | 5 | Profil créé pour l'invité | Ligne `public.profiles` présente, nom affiché conforme à la chaîne de repli |
-| 6 | Email d'invitation | Réellement présent dans Inbucket, porteur d'un lien et d'un code |
+| 6 | Email d'invitation | Réellement présent dans Inbucket ; sujet et corps français exacts, nom du produit, lien `invite` et code à six chiffres |
 | 7 | Connexion d'un compte invité non accepté | Refus |
 | 8 | Acceptation par le code | `200`, session ouverte, `email_confirmed_at` renseigné |
 | 9 | Définition du mot de passe puis connexion | `200` |
@@ -221,7 +254,7 @@ vivent dans `scripts/verify-auth.sh`.
 | 15 | Rafraîchissement | Nouveau jeton de rafraîchissement, différent du précédent |
 | 16 | Déconnexion | `204`, puis rafraîchissement refusé |
 | 17 | `POST /recover` sur une adresse inconnue | `200`, aucun email émis |
-| 18 | `POST /recover` sur un compte existant | `200`, email réellement présent dans Inbucket |
+| 18 | `POST /recover` sur un compte existant | `200`, email réellement présent ; sujet et corps français exacts, nom du produit, lien `recovery` et code à six chiffres |
 | 19 | Réinitialisation menée à son terme | Connexion avec le nouveau mot de passe acceptée, ancien refusé |
 | 20 | Suppression du compte par l'API d'administration | Profil disparu par cascade |
 
@@ -233,8 +266,8 @@ anonyme.
 
 1. **INC-015** — parcours d'invitation depuis le produit : qui appelle GoTrue, et comment
    l'invitation porte-t-elle le workspace et le rôle. En attente d'arbitrage.
-2. **INC-016** — gabarits d'emails en français : chargement HTTP obligatoire, repli silencieux vers
-   l'anglais. En attente d'arbitrage, lié à `CRM-P09` (internationalisation).
+2. **Partie MIME texte absente de GoTrue 2.189.0** — limite mesurée au §5.2 ; la lever exige un
+   composant SMTP ou un client GoTrue différent et n'appartient pas à `CRM-009`.
 3. **Durée de vie des liens d'invitation et de réinitialisation** : `GOTRUE_MAILER_OTP_EXP` vaut
    24 heures par défaut. La valeur n'a pas été modifiée, et son expiration n'a **pas** été mesurée
    — la mesurer exigerait de manipuler le temps de l'instance.

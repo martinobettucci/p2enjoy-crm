@@ -8410,3 +8410,39 @@ edge, `change_channel_workflow`, la garde de ports, la transition « Réalisatio
 gabarits d'emails, le secret de build — restent **dues**, chacune rattachée à son unité. Le
 documentaire décrit désormais ce qui est décidé **et** ce qui est réellement en place, sans
 confondre les deux.
+
+---
+
+### Décision 269 — `CRM-009` sert quatre gabarits HTTP et prouve le message reçu, pas le départ SMTP
+
+**Mesure avant spécification.** Le code exact de `supabase/gotrue:v2.189.0` confirme les deux
+comportements observés sous INC-016. Son cache charge le corps par `GET` HTTP ; au premier échec,
+il installe le gabarit anglais par défaut et continue. Son interface `mailer.Client.Mail` ne reçoit
+qu'un `body`, et `mailmeclient` l'envoie avec `SetBody("text/html", body)` : aucun gabarit séparé
+`text/plain` n'existe dans cette version. Un email présent et le texte reconstruit par Inbucket ne
+prouvent donc ni le gabarit configuré, ni un multipart d'origine.
+
+**Architecture retenue pour appliquer la décision 264.** Un service `auth-templates`, fondé sur
+l'image `caddy:2.9-alpine` déjà épinglée, vit dans le Compose commun. Il monte quatre HTML versionnés
+en lecture seule, n'expose aucun port hôte et répond seulement sur le réseau interne. Son contrôle
+de santé lit réellement `invite.html`, et GoTrue dépend de cette santé. Cette place commune évite
+de dépendre du serveur Vite propre au développement ou du Caddy périphérique propre à la
+production.
+
+**Contrat des messages.** Invitation, confirmation, réinitialisation et changement d'adresse ont
+chacun un sujet français stable, une phrase propre, le nom P2Enjoy CRM, une action textuelle vers
+`{{ .ConfirmationURL }}` et le code `{{ .Token }}`. Le HTML est autonome, sans image, et reprend
+les couleurs et la typographie de `docs/DESIGN_SYSTEM.md`. La limite HTML seul est documentée ; la
+contourner exigerait de remplacer ou d'interposer le client SMTP et ne se cache pas dans un faux
+multipart écrit à l'intérieur du corps.
+
+**Preuve non complaisante.** `scripts/verify-auth.sh` vérifiera les quatre réglages d'URL et de
+sujet appliqués au conteneur. Pour l'invitation puis la réinitialisation, il relira le message
+réellement reçu par SMTP et exigera le sujet français, le marqueur propre au gabarit, le produit,
+le code à six chiffres et le lien du bon type avant de suivre ce lien. Le gabarit anglais de repli
+échoue donc alors même que le message est présent.
+
+**Portée.** `CRM-009` porte aussi la correction de traçabilité de l'écran et de la session déjà
+livrés. `CRM-011` demeure le mécanisme GoTrue et ses preuves API hors interface. INC-016 ne sera
+close et `CRM-009` ne passera `[x]` qu'après exécution de toutes ces preuves et du parcours
+Playwright au clavier contre la pile réelle.

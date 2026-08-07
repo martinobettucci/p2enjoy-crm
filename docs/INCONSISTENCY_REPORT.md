@@ -1740,6 +1740,10 @@ unité, et le rattachement d'une éventuelle table d'invitations poserait la mê
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 264.** **Les gabarits d'emails sont servis en HTTP depuis la pile.** Exigence attachée, qui vaut au-delà de cette entrée : toute preuve portant sur un email vérifie son **contenu**, jamais sa seule présence. Mise en œuvre : `CRM-009`.
 
+**Contrat de résolution écrit — `docs/JOURNAL.md`, décision 269.** Le service interne commun
+`auth-templates`, ses quatre URL, ses sujets français et les preuves de contenu sont spécifiés dans
+`docs/SPEC-auth.md` §5. L'entrée reste ouverte jusqu'à l'exécution de ces preuves.
+
 **Nature :** limite d'un composant tiers, contraire à une exigence générale.
 **Relevé le :** 2026-08-03, pendant `CRM-011`.
 
@@ -1760,7 +1764,7 @@ défaillance est donc **silencieuse du point de vue du destinataire**. Un email 
 que le gabarit configuré a été employé — toute preuve future portant sur les gabarits devra
 vérifier le **contenu** de l'email, jamais sa seule présence.
 
-**Pourquoi ce n'est pas résolu ici.** Servir les gabarits en HTTP demanderait soit un service
+**Pourquoi ce n'était pas résolu lors du constat.** Servir les gabarits en HTTP demandait soit un service
 statique de plus dans les deux assemblages pour quatre fichiers, soit de les héberger dans la
 webapp — qui n'existe pas (`CRM-007`) et dont l'origine n'est de toute façon pas joignable depuis
 le réseau des conteneurs. Les deux débordent du périmètre de `CRM-011`.
@@ -1775,12 +1779,10 @@ texte ; et la partie « texte » que lit `scripts/verify-auth.sh` est **reconstr
 `docs/captures/CRM-011/email-invitation-1280x800.jpg` et
 `docs/captures/CRM-011/email-reinitialisation-1280x800.jpg`.
 
-**Comportement en attendant :** gabarits par défaut conservés, limite nommée dans
-`docs/SPEC-auth.md` §5.
-
-**Arbitrage attendu du responsable :** rattacher les gabarits d'emails français à `CRM-007`, qui
-introduira une origine HTTP servie, ou à `CRM-P09` (internationalisation, en attente d'arbitrage),
-ou décider que les emails transactionnels restent en anglais.
+**Arbitrage désormais rendu :** décision 264, mise en œuvre par `CRM-009`. Le constat MIME reste
+une limite distincte du composant épinglé : son interface interne ne reçoit qu'un corps et son
+client SMTP l'envoie par `SetBody("text/html", body)`. Un simple gabarit ne peut donc pas créer un
+multipart alternatif (`docs/SPEC-auth.md` §5.2).
 
 ---
 
