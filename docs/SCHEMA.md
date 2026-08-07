@@ -330,6 +330,20 @@ Précisions apportées par `CRM-031`, après mesure :
   étrangère depuis une colonne tableau. Ce n'est pas un différé en attendant `form_fields`, c'est
   une propriété du type — `docs/INCONSISTENCY_REPORT.md`, INC-033.
 
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 262 : la colonne est remplacée par une
+table de liaison.** Puisque la propriété du type ne changera jamais, c'est le modèle qui est
+corrigé, et non contourné : `require_fields` devient une table `(transition_id, field_id)` avec ses
+**deux** clés étrangères et son `ON DELETE CASCADE`. L'option d'accepter le type et de nettoyer au
+moment de la suppression d'un champ est écartée : elle aurait reproduit en code applicatif, et
+imparfaitement, ce que le moteur sait faire seul — un nettoyage oublié dans un chemin de
+suppression laisse exactement la donnée morte qu'on prétend éviter.
+
+**État : dû, non appliqué.** Le schéma décrit ci-dessus est celui qui est réellement migré
+aujourd'hui. La migration est portée par **`CRM-018`**, qui rouvre `CRM-031` et `CRM-035`, et
+emporte `copy_workflow_to_track`, le seed, les suites pgTAP et les preuves d'API. INC-056 — la
+copie de workflow recopie `require_fields` tel quel et fait varier un compte global — devient
+déterministe par construction une fois la table de liaison en place.
+
 ---
 
 ## 4. Formulaires conditionnels
@@ -715,7 +729,8 @@ File d'envoi persistante.
 | `app.can_read_card(card)` | Droit effectif sur une card, dérivé de son channel | **livrée** par `CRM-040` — INC-013 close. Destinée aux tables **filles** : les politiques de `cards` jugent sur `channel_id` (décision 110) |
 | `move_card(card_id, to_step_id, comment)` | **Garde centrale**, et **seul chemin** par lequel une card change d'étape : c'est la seule place du produit où le graphe du workflow est opposable. Rend `public.cards` — donc un **objet** JSON pour PostgREST, non un tableau —, remet `entered_step_at` à `now()` et recalcule `position` en fin de colonne d'arrivée. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Cinq refus : `card_not_found`, `forbidden`, `step_not_in_workflow`, `transition_not_allowed`, `comment_required` (docs/SPEC-workflow-engine.md §5.3) | **livrée** par `CRM-034` — **cinq vérifications sur six** : la n° 6, « champs requis renseignés », lit `card_field_values`, due par `CRM-036` (INC-047) |
 | `copy_workflow_to_track(workflow_id, track_id, new_name)` | Copie tracée d'un workflow global vers un track : étapes, arêtes remappées par le nœud, lignage renseigné. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Quatre refus : `workflow_not_found`, `forbidden`, `workflow_not_global`, `track_not_found` (docs/SPEC-workflow-engine.md §4.3) | livrée (`CRM-032`) |
-| `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | Changement de channel — donc potentiellement de **workflow** — avec remappage **explicite** de l'étape : aucun remappage automatique par clé de nœud. Rend `public.cards`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Le droit d'écriture est exigé sur les **deux** channels. Huit refus : `card_not_found`, `forbidden`, `channel_not_found`, `same_channel`, `step_mapping_required`, `step_not_in_workflow`, `field_values_would_be_lost` (`docs/SPEC-workflow-engine.md` §6.4). Le paramètre annoncé ici `step_mapping` désignait une fonction différente : INC-073 | **livrée** par `CRM-045` |
+| `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | Changement de channel — donc potentiellement de **workflow** — avec remappage **explicite** de l'étape : aucun remappage automatique par clé de nœud. Rend `public.cards`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Le droit d'écriture est exigé sur les **deux** channels. Huit refus : `card_not_found`, `forbidden`, `channel_not_found`, `same_channel`, `step_mapping_required`, `step_not_in_workflow`, `field_values_would_be_lost` (`docs/SPEC-workflow-engine.md` §6.4). Le paramètre `step_mapping` annoncé à l'origine par ce §9 désignait une **fonction différente**, désormais nommée `change_channel_workflow` — décision 263, INC-046 et INC-073 | **livrée** par `CRM-045`, **inchangée** |
+| `change_channel_workflow(channel_id, workflow_id, step_mapping)` | Un **channel entier** change de workflow, et l'étape de **toutes** ses cards est remappée en un appel. Le remappage est **explicite et exhaustif** : aucune étape de départ n'est devinée, aucune card ne reste sur une étape qui n'appartient pas à son nouveau workflow, et le refus est renvoyé **entier** plutôt qu'appliqué à moitié | **due** — `CRM-019`, arbitrage du responsable, décision 263 |
 | `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé |
 

@@ -12,6 +12,43 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-082 — Trois décisions récupérées décrivent un assemblage Stalwart que `main` n'a pas
+
+**Nature :** contradiction entre des décisions du responsable réinsérées et l'infrastructure
+réellement livrée. **Aucune des deux n'est modifiée** tant que l'arbitrage n'est pas rendu.
+**Relevé le :** 2026-08-07, pendant la passe de cohérence documentaire.
+
+**Le fait.** Les décisions **249, 250 et 252** ont été rendues sur `claude/happy-goldberg-qt5vfi`,
+dont la ligne de travail sur `CRM-050` a divergé de celle de `main`. Elles décrivent un assemblage
+que `main` n'a pas adopté :
+
+| Point | Décision récupérée | Ce que `main` livre |
+|---|---|---|
+| Configuration | `stalwart/config.json` monté en lecture seule + `stalwart/plan.json.template` appliqué par `stalwart-cli apply` (décision 249) | `stalwart/config.toml` + `stalwart/provision.sh` |
+| Services d'assemblage | Deux conteneurs, `stalwart-plan` et `stalwart-init`, l'image du CLI étant *distroless* | Aucun ; provisionnement par script |
+| Écoutes réseau | **Aucune** déclarée ; les sept écoutes par défaut suffisent, TLS implicite sur 993 et 465 (décision 250) | **Cinq écoutes déclarées** dans `config.toml` |
+| Spécification citée | `docs/SPEC-mail-dev-infra.md` §9.1 et §9.8 | `docs/SPEC-mail-subsystem.md` §11 — le fichier cité **n'existe pas** dans ce dépôt |
+
+**Ce qui n'est pas en cause.** Les constats de mesure portés par ces décisions restent
+vraisemblablement valables quelle que soit la voie retenue, et méritent d'être confrontés à
+l'assemblage de `main` plutôt que perdus :
+
+- un `grep -q` en bout de tuyau sous `set -o pipefail` fait dire à un contrôle **l'inverse** de ce
+  qu'il mesure (décision 252) — le harnais de `main` doit être relu sur ce motif ;
+- une écoute Stalwart n'est liée qu'au **démarrage suivant** du serveur (décision 250) ;
+- le port 25 annonce `STARTTLS` et **jamais** `AUTH` : toute expédition authentifiée passe par 465 ;
+- `SEARCH HEADER Message-ID` rend zéro résultat sur `v0.16.16` alors que le message est bien dans
+  l'`INBOX` — ce qui concernera `CRM-054`, dont le dédoublonnage repose sur le `Message-ID`.
+
+**Arbitrage attendu du responsable.** Conserver l'assemblage de `main` et déclarer ces trois
+décisions caduques sur leur volet *mise en œuvre* ; ou reprendre l'assemblage décidé. Dans les deux
+cas, les quatre constats de mesure ci-dessus sont à vérifier contre le code réellement livré.
+
+**En attendant :** rien n'est modifié dans `stalwart/`, et les décisions 249, 250 et 252 restent
+dans `docs/JOURNAL.md` telles qu'elles ont été rendues.
+
+---
+
 ### INC-081 — Les décisions du responsable sont réinsérées ; leur mise en œuvre reste à faire
 
 **Nature :** décisions du responsable restées hors de `main`, désormais réinsérées ; l'écart qui
@@ -161,6 +198,8 @@ qu'il l'exécute), INC-078 (même motif : une omission consignée plutôt que re
 ## Clos — reprise de `CRM-050` le 2026-08-07
 
 ### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine — **CLOSE**
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 257.** Fermée par le même arbitrage qu'INC-044 : lecture de `/proc/net/tcp` en dernier recours, rattachée à `CRM-002`, prouvée dans les deux sens.
 
 **Nature :** dépendance réseau d'une image épinglée, non satisfaite par l'environnement
 d'exécution ; le composant démarre malgré tout.
@@ -486,6 +525,8 @@ CHAUDE le révèle), `docs/JOURNAL.md` décision 219.
 
 ### INC-073 — `docs/SCHEMA.md` §9 et `docs/SPEC-workflow-engine.md` §6 décrivent deux fonctions différentes sous le même nom
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 263.** Le paramètre `step_mapping` du `docs/SCHEMA.md` §9 désignait bien une **seconde fonction**, désormais nommée `change_channel_workflow`. Mise en œuvre : `CRM-019`.
+
 **Nature :** contradiction entre spécifications, sur la signature d'une fonction.
 **Relevée le :** 2026-08-06, pendant la spécification de `CRM-045`.
 
@@ -619,6 +660,8 @@ composant.
 ---
 
 ### INC-069 — Deux décisions du journal portent le même numéro 180
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 258.** **Suffixer les titres — `180 a` et `180 b` — et ne renuméroter ni l'une ni l'autre**, puisque les deux sont citées. La cause est traitée ailleurs : la routine est sérialisée.
 
 **Nature :** collision d'identifiants dans un document dont les numéros servent de références
 croisées.
@@ -1344,6 +1387,8 @@ quatre critères seraient fusionnés. Jugé improbable, mais non nul.
 
 ### INC-003 — Transition « Réalisation → Perdu » non déclarée
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 259.** La transition « Réalisation → Perdu » est ajoutée et le graphe du workflow par défaut est **relu en entier** : chaque étape doit avoir au moins une sortie. Interrogé sur l'origine de l'oubli, le responsable a répondu qu'il avait **listé des exemples** et attendait des propositions — l'oubli est celui de l'agent. Mise en œuvre : `CRM-005`, `CRM-046`.
+
 **Nature :** règle métier à confirmer.
 **Relevé le :** 2026-08-03.
 
@@ -1376,25 +1421,6 @@ les premiers contacts entrants, qui sont précisément la matière première d'u
 
 **En attente :** confirmation du responsable. Mesures de bornage déjà spécifiées : taille
 maximale des pièces jointes, analyse antivirale, aucune exécution de contenu.
-
----
-
-### INC-005 — Écart assumé : copie de workflow contre surcharge
-
-**Nature :** écart documenté à une convention générale.
-**Relevé le :** 2026-08-03.
-
-`CLAUDE.md` §4 demande que « tout existe par défaut au niveau général, puis les contextes
-spécialisés ne définissent que leurs différences ». Le responsable a explicitement demandé de
-**copier** un workflow global dans un track pour l'y modifier, ce qui produit une duplication et
-non une surcharge.
-
-**Résolution appliquée :** l'instruction explicite du responsable prime (`CLAUDE.md` §26,
-priorité 2 sur priorité 8). L'écart est compensé par la traçabilité de l'origine
-(`derived_from_workflow_id`, `derived_at`) et par un signalement de divergence dans l'interface.
-
-**Statut :** ouvert pour information, aucune action attendue. Sera clos si le responsable
-confirme.
 
 ---
 
@@ -1431,6 +1457,8 @@ divergence n'est supposée ni inventée.
 ---
 
 ### INC-007 — `supabase/functions/` référencé sans composant correspondant
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 260.** **Les fonctions edge entrent au périmètre ; la décision 12 est rouverte.** L'agent proposait de retirer la mention du `README.md` ; le responsable tranche l'inverse — livrer ce que le document annonce plutôt que faire disparaître la moitié qui gêne. Mise en œuvre : `CRM-016`.
 
 **Nature :** référence documentaire sans contrepartie architecturale.
 **Relevé le :** 2026-08-03, pendant `CRM-001`.
@@ -1597,6 +1625,8 @@ résolution des droits fins et fixera de fait la forme des requêtes.
 
 ### INC-012 — Le motif principal de la décision 8 est démenti par la mesure
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 261.** **L'ordonnancement passe à `pg_cron` ; la décision 8 est renversée.** Une purge RGPD qui ne s'exécute pas est un manquement, pas un retard. Mise en œuvre : `CRM-017` ; `CRM-051` perd son sous-composant `scheduler`.
+
 **Nature :** motif de décision invalidé par un fait vérifié.
 **Relevé le :** 2026-08-03, en clôturant `CRM-004`.
 
@@ -1658,6 +1688,8 @@ d'identité, ainsi que la preuve n° 10, à `CRM-012` ou à une unité dédiée.
 
 ### INC-015 — Le parcours d'invitation depuis le produit n'a pas de composant pour le porter
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 256.** Le parcours d'invitation est **rattaché à `CRM-070`**, et non à une unité créée maintenant : trois décisions d'architecture d'un coup pour un geste rare. En attendant, le comportement réel — invitation émise par un **opérateur**, hors interface — est nommé dans `docs/manual.md` chapitre 17 plutôt que promis comme un parcours livré.
+
 **Nature :** référence manquante dans l'architecture, décision non prise.
 **Relevé le :** 2026-08-03, pendant `CRM-011`.
 
@@ -1705,6 +1737,8 @@ unité, et le rattachement d'une éventuelle table d'invitations poserait la mê
 ---
 
 ### INC-016 — Gabarits d'emails : chargement HTTP obligatoire et repli silencieux vers l'anglais
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 264.** **Les gabarits d'emails sont servis en HTTP depuis la pile.** Exigence attachée, qui vaut au-delà de cette entrée : toute preuve portant sur un email vérifie son **contenu**, jamais sa seule présence. Mise en œuvre : `CRM-009`.
 
 **Nature :** limite d'un composant tiers, contraire à une exigence générale.
 **Relevé le :** 2026-08-03, pendant `CRM-011`.
@@ -1779,6 +1813,8 @@ qui lui soit propre.
 ---
 
 ### INC-018 — L'API d'administration de GoTrue n'applique pas la politique de mot de passe
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 265.** **Le chemin d'administration de GoTrue est interdit en production** et documenté comme une opération d'exploitation encadrée : un privilège ne dispense pas d'une règle. Mise en œuvre : `docs/PROD_MIGRATIONS.md` §7 et `docs/SPEC-auth.md` §4.1.
 
 **Nature :** spécification démentie par la mesure.
 **Relevé le :** 2026-08-03, pendant `CRM-005`, en mesurant le chemin de création des comptes du
@@ -1868,7 +1904,27 @@ au sens du répertoire. À prendre en compte dans la réécriture attendue.
 
 ## Clos — reprises du 2026-08-07
 
+### INC-005 — Écart assumé : copie de workflow contre surcharge — **CLOS**
+
+**Nature :** écart documenté à une convention générale.
+**Relevé le :** 2026-08-03. **Clos le :** 2026-08-07.
+
+`CLAUDE.md` §4 demande que « tout existe par défaut au niveau général, puis les contextes
+spécialisés ne définissent que leurs différences ». Le responsable a explicitement demandé de
+**copier** un workflow global dans un track pour l'y modifier, ce qui produit une duplication et
+non une surcharge.
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 266 : l'écart est confirmé.** L'instruction
+explicite du responsable prime (`CLAUDE.md` §26, priorité 2 sur priorité 8), et la compensation est
+en place et prouvée : l'origine reste connue (`derived_from_workflow_id`, `derived_at`) et la
+divergence est signalée. L'entrée était ouverte « pour information », en attente de cette
+confirmation ; elle est close.
+
+---
+
 ### INC-021 — Aucune unité ne porte l'écran de connexion, que la DoD de `CRM-011` présuppose — **CLOSE**
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 253.** **Option 2 : une unité dédiée, `CRM-009`**, insérée entre `CRM-007` et `CRM-008`. `docs/SPEC-auth.md` §9 avait retenu l'option 1 — rattacher l'écran à `CRM-011` — et est corrigé. Le comportement livré est conforme ; c'est le rattachement qui était faux.
 
 **Nature :** référence manquante entre `docs/BACKLOG.md` et lui-même.
 **Relevé le :** 2026-08-04, pendant la spécification de `CRM-007`.
@@ -1931,6 +1987,8 @@ relecture directe de la base et nettoyage. `CRM-011`, `CRM-041`, `CRM-043` et `C
 ---
 
 ### INC-022 — `docs/DAT.md` §3.1 se contredit sur la persistance de session — **CLOSE**
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 254.** **Option 2 : `sessionStorage`.** Catégorie 2 de `CLAUDE.md` §11, sans recueil de consentement : un `F5` ne déconnecte pas, la fermeture de l'onglet si. Aucune bannière, aucun registre de consentement, aucune persistance transverse.
 
 **Nature :** contradiction interne à `docs/DAT.md` §3.1, doublée d'une contradiction avec
 `CLAUDE.md` §11.
@@ -2442,6 +2500,8 @@ vérifiées pendant un passage consacré à une troisième, et à toucher les pr
 
 ### INC-033 — `require_fields` ne peut porter aucune intégrité référentielle, jamais
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 262.** **`require_fields` devient une table de liaison `(transition_id, field_id)`** : le modèle est corrigé, pas contourné. L'intégrité référentielle est le travail de la base, pas d'un nettoyage applicatif qu'un chemin de suppression oubliera. Mise en œuvre : `CRM-018`, qui rouvre `CRM-031` et `CRM-035`.
+
 **Nature :** limite du modèle de données, mesurée ; `docs/SCHEMA.md` §3 la décrit sans la nommer.
 **Relevé le :** 2026-08-04, pendant la spécification de `CRM-031`.
 
@@ -2924,6 +2984,8 @@ coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
 
 ### INC-042 — L'image de la webapp ne se construit pas dans l'environnement de la routine : le registre npm est derrière un proxy à certificat interposé
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 255.** **Le secret de build `npm_ca` est câblé**, dans une unité à part entière : `CRM-015`. Onzième occurrence — c'est une mesure, pas une malchance —, et le coût réel est une **preuve perdue à chaque unité**. Contrainte non négociable : le certificat vient de l'environnement, jamais du dépôt, et l'assemblage reste inerte là où la variable est absente.
+
 **Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
 **Relevé le :** 2026-08-04, pendant `CRM-033`.
 
@@ -3044,6 +3106,8 @@ avant celui-ci), INC-023 (une Definition of Done dont les sujets arrivent plus t
 
 ### INC-044 — Sans `ss` ni `netstat`, la garde de ports est silencieusement inerte
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 257.** **La garde lit `/proc/net/tcp` en dernier recours.** Seule option qui ferme les deux entrées et rende la garde réellement protectrice plutôt qu'apparemment protectrice. Rattachement : `CRM-002`. Exigence : la lecture est prouvée **dans les deux sens**.
+
 **Nature :** garde livrée par `CRM-002` dont l'hypothèse d'outillage n'est pas vérifiée.
 **Relevé le :** 2026-08-04, pendant `CRM-035`, en rejouant les harnais après synchronisation.
 
@@ -3129,6 +3193,8 @@ INC-013, INC-014, INC-024 et INC-030.
 ---
 
 ### INC-046 — « Figé à la création, suit le channel » énonce deux règles distinctes, et la seconde interdit un geste que nulle spécification n'aborde
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 263.** **Le geste pluriel est retenu et nommé `change_channel_workflow`.** Le pluriel du `docs/SCHEMA.md` §9 n'était pas une erreur de rédaction : il décrivait une fonction que personne n'avait nommée. `move_card_to_channel` est retenue **inchangée**. Mise en œuvre : `CRM-019`.
 
 **Nature :** énoncé ambigu de `docs/SCHEMA.md` §5, dont la lecture structurelle produit une règle
 de produit non spécifiée.
@@ -3590,6 +3656,8 @@ d'un type plutôt que d'un choix).
 ---
 
 ### INC-056 — Trois garde-fous comptaient une donnée que `copy_workflow_to_track` duplique, et leur valeur dépendait de l'âge de la base
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 262.** Rendue **déterministe par construction** par la table de liaison décidée en INC-033 : la copie de workflow cesse de recopier `require_fields` tel quel. Mise en œuvre : `CRM-018`.
 
 **Nature :** garde-fous non déterministes, livrés par `CRM-031`, `CRM-035` et `CRM-036`.
 **Relevé le :** 2026-08-05, pendant `CRM-013`, sur une base **froide**.

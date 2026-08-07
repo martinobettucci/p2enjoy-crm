@@ -550,6 +550,27 @@ sauvegarde vérifiée.
   filtré. Prévoir une montée en charge progressive.
 - **Données personnelles** : le produit stocke la correspondance de tiers. La rétention et la
   purge doivent être configurées avant la mise en service réelle (unité `CRM-072`).
+- **`POST /auth/v1/admin/users` contourne la politique de mot de passe.** Mesuré : ce chemin crée
+  un compte avec un mot de passe de **8 caractères** là où le chemin utilisateur en exige 12 et
+  refuse en `422 weak_password`. Le compte ainsi créé **est utilisable**.
+
+  **Arbitrage du responsable — `docs/JOURNAL.md`, décision 265, INC-018 : ce chemin est interdit
+  en production.** Il n'est pas accepté au motif qu'il exige la clé de service : un privilège ne
+  dispense pas d'une règle, et un compte à 8 caractères créé par commodité est exactement la
+  brèche que la politique existe pour éviter.
+
+  **Opération d'exploitation encadrée.** Lorsqu'un compte doit être créé hors du parcours produit —
+  amorçage d'un espace, invitation avant `CRM-070` —, l'opérateur :
+
+  1. crée le compte par ce chemin **en respectant la politique de 12 caractères**, que GoTrue
+     n'appliquera pas à sa place ;
+  2. n'emploie jamais de mot de passe partagé, réutilisé ou dérivé d'un nom ;
+  3. consigne l'opération, sa date et son motif ;
+  4. déclenche immédiatement une réinitialisation, pour que le secret n'ait jamais transité par
+     l'opérateur au-delà de la création.
+
+  La clé de service ne quitte pas l'environnement d'exploitation. `docs/SPEC-auth.md` §4.1 porte
+  la même réserve du côté de la spécification.
 
 ## 8. Historique des déploiements
 

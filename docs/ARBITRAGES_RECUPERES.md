@@ -48,6 +48,14 @@ antérieures à 235 — les décisions 8, 12, 180 et 234 — sont intacts.
 | 251 | **265** | Le chemin d'administration de GoTrue est encadré, pas accepté | — |
 | 252 | **266** | La copie de workflow contre la surcharge : l'écart est confirmé | — |
 
+## Trois décisions contredisent l'infrastructure livrée
+
+Les décisions **249, 250 et 252** (origines 235, 236 et 238) décrivent un assemblage Stalwart que
+`main` n'a pas adopté : `config.json` + `plan.json.template` et **aucune écoute déclarée**, là où
+`main` livre `config.toml` + `provision.sh` et **cinq écoutes**. Elles citent en outre
+`docs/SPEC-mail-dev-infra.md`, qui n'existe pas dans ce dépôt. La contradiction est consignée en
+**INC-082** et **n'est pas résolue** : ni les décisions ni `stalwart/` ne sont modifiés.
+
 ## Ce qui reste dû
 
 L'arbitrage **`require_fields` devient une table de liaison** (origine 248, désormais décision 260)

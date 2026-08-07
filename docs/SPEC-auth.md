@@ -149,6 +149,23 @@ des mots de passe courts et complexes, plus faibles et plus souvent réutilisés
 
 Le refus est explicite : `HTTP 422`, code `weak_password`, avec la raison `length`.
 
+### 4.1 Le chemin d'administration y échappe, et il est encadré
+
+Cette politique **n'est pas énoncée sans réserve**. Mesuré : `POST /auth/v1/admin/users` crée un
+compte avec un mot de passe de **8 caractères** là où le chemin utilisateur en exige 12 et refuse
+en `422 weak_password`. Le compte ainsi créé **est utilisable** : il se connecte.
+
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 265, INC-018 : ce chemin est interdit en
+production et documenté comme une opération d'exploitation encadrée.** L'accepter au motif qu'il
+exige la clé de service reviendrait à dire qu'un privilège dispense d'une règle. La politique de
+mot de passe n'est pas une gêne pour l'utilisateur, c'est une **propriété du produit** — et un
+compte à 8 caractères créé par commodité est exactement la brèche qu'elle existe pour éviter.
+
+En développement, le seed continue de créer ses comptes par ce chemin : c'est la seule voie
+d'amorçage, et `CLAUDE.md` §8 exige que les données de développement soient créées par les
+véritables API. La contrainte porte sur la **production**, où l'encadrement est décrit dans
+`docs/PROD_MIGRATIONS.md`.
+
 ## 5. Emails transactionnels
 
 Les emails d'invitation, de confirmation, de réinitialisation et de changement d'adresse sont
@@ -224,13 +241,29 @@ anonyme.
 
 ---
 
-## 9. Parcours de connexion de la webapp — rattachement à `CRM-011`
+## 9. Parcours de connexion de la webapp — rattachement à `CRM-009`
 
 Contrat écrit le 2026-08-07 **avant la première ligne de code**, après constat que les écrans du
 chunk 3 ne sont démontrés qu'avec des réponses réseau substituées et qu'aucun utilisateur réel ne
-peut atteindre les données que le backend lui consent. Il tranche INC-021 et INC-022 selon
-l'option la plus étroite : l'écran rejoint l'unité qui porte déjà la connexion et la déconnexion,
-et la session reste limitée à l'onglet.
+peut atteindre les données que le backend lui consent.
+
+**Rattachement corrigé — arbitrage du responsable, `docs/JOURNAL.md` décision 253 (INC-021).**
+Ce contrat était initialement rattaché à `CRM-011` « selon l'option la plus étroite ». C'était
+**l'option 1** des trois soumises ; le responsable a retenu **l'option 2**, une **unité dédiée**,
+`CRM-009`, placée dans l'ordre d'exécution **entre `CRM-007` et `CRM-008`**.
+
+Le motif de l'arbitrage : c'est la seule option qui laisse chaque unité à son objet. `CRM-011` a
+livré et prouvé le **mécanisme** d'authentification sur 42 contrôles hors interface ; le rouvrir
+pour y loger une interface mêle deux sujets qui n'ont ni les mêmes preuves ni le même risque. Une
+unité dédiée donne en outre un propriétaire clair à la posture de session — §9.2 et décision 254 —
+que les deux autres options auraient laissée orpheline.
+
+**Ce que la correction change et ne change pas.** Le comportement décrit ci-dessous est **inchangé**
+et reste conforme à la décision 254 ; c'est le **rattachement** qui est corrigé, et il est encore
+à répercuter dans les commentaires `@spec` du code livré et dans les preuves. `docs/BACKLOG.md`,
+`CRM-009` porte cette reprise.
+
+La session, elle, reste limitée à l'onglet : c'est l'objet de la décision 254, qui referme INC-022.
 
 ### 9.1 Écran et navigation
 

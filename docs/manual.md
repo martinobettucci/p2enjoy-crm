@@ -54,7 +54,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Inviter et gérer les membres | `CRM-011`, non rattachée | À livrer — l'invitation est aujourd'hui une opération d'**exploitation** et non un parcours produit ; aucune unité ne porte l'écran (INC-015) |
+| 17 | Inviter et gérer les membres | `CRM-070` | À livrer. **L'invitation est aujourd'hui une opération d'exploitation, pas un parcours produit** : un compte est créé par un **opérateur** disposant de la clé de service, hors de l'interface. Aucun écran n'existe, et aucun n'est promis avant `CRM-070`, à laquelle l'arbitrage du responsable rattache ce parcours ([`docs/JOURNAL.md`](JOURNAL.md), décision 256, INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |

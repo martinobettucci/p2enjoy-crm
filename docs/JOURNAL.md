@@ -8347,3 +8347,52 @@ doit pas transformer la preuve en acceptation silencieuse.
 dégradation `px-7` est refusée et le contrôle d'internationalisation n'écrit aucun diagnostic de
 moteur. Les captures aux quatre paliers confirment visuellement que le changement de nom de jeton
 et de palier ne dégrade ni contraste ni navigation.
+
+---
+
+### Décision 267 — Une décision réinsérée n'est pas une décision appliquée : la passe de cohérence
+
+**Le problème.** Les dix-huit décisions du responsable réinsérées par la décision 246 étaient
+revenues dans `docs/JOURNAL.md`, et nulle part ailleurs. Or elles créent des unités, en rouvrent
+d'autres, renversent deux décisions d'architecture et corrigent un rattachement. Un journal qui
+porte seul une décision que le reste du documentaire ignore ne vaut pas mieux qu'une décision
+perdue : il donne l'illusion de la trace.
+
+**Ce que la passe a propagé.** Six unités créées — `CRM-009` (écran de connexion), `CRM-015`
+(secret de build du registre npm), `CRM-016` (fonctions edge), `CRM-017` (ordonnancement par
+`pg_cron`), `CRM-018` (`require_fields` en table de liaison), `CRM-019`
+(`change_channel_workflow`). Sept unités existantes annotées de la conséquence qui les touche, dont
+`CRM-031` et `CRM-035` **rouvertes**, et `CRM-051` amputée de son sous-composant `scheduler`.
+`docs/MASTER_PLAN.md` §2 amendé pour insérer `CRM-009` entre `CRM-007` et `CRM-008` et borner le
+chunk 2 à `CRM-019`. `docs/DAT.md` : le diagramme, le §3.3 et le §12 passent à `pg_cron` et
+accueillent `edge-runtime`. `docs/SCHEMA.md` §9 nomme les deux fonctions de déplacement, et le §3
+porte la table de liaison décidée. `docs/SPEC-auth.md` gagne un §4.1 sur le chemin d'administration
+de GoTrue. `docs/PROD_MIGRATIONS.md` §7 décrit l'opération encadrée. `README.md` §10 cesse
+d'annoncer un arbitrage rendu. `docs/manual.md` chapitre 17 nomme l'invitation pour ce qu'elle est.
+`.env.example` déclare `MAIL_TEAM_DOMAIN`. Seize entrées du registre reçoivent leur arbitrage, et
+INC-005 est close par la décision 266.
+
+**Ce que la passe a trouvé, et qui n'était pas cherché.** Deux contradictions, l'une corrigée et
+l'autre consignée.
+
+La première est corrigée. `docs/SPEC-auth.md` §9 rattachait le parcours de connexion à `CRM-011`
+« selon l'option la plus étroite ». C'était **l'option 1** des trois soumises au responsable, qui a
+retenu l'**option 2** — une unité dédiée. Un agent avait donc tranché un arbitrage que le
+responsable avait déjà rendu autrement. Le comportement livré est conforme à la décision 254 ;
+c'est le rattachement qui était faux, et il est corrigé dans `docs/SPEC-auth.md`, `docs/DAT.md`
+§3.1 et `docs/BACKLOG.md`. `CRM-009` est donc `[~]` et non `[ ]` : son code existe, sous la mauvaise
+unité, et les commentaires `@spec` restent à reprendre.
+
+La seconde est consignée, pas résolue — **INC-082**. Les décisions 249, 250 et 252 décrivent un
+assemblage Stalwart que `main` n'a pas adopté : `config.json` et `plan.json.template` contre
+`config.toml` et `provision.sh`, et surtout **aucune écoute déclarée** contre les **cinq** que
+`main` déclare. Elles citent en outre `docs/SPEC-mail-dev-infra.md`, absent de ce dépôt. Trancher
+aurait consisté soit à réécrire des décisions du responsable, soit à défaire une infrastructure qui
+tourne. Ni l'un ni l'autre n'est du ressort de cette passe.
+
+**Ce qui n'a pas été fait, et c'est délibéré.** Aucune ligne de code n'est modifiée. Aucune unité
+n'est déclarée livrée. Les mises en œuvre décidées — la table de liaison, `pg_cron`, les fonctions
+edge, `change_channel_workflow`, la garde de ports, la transition « Réalisation → Perdu », les
+gabarits d'emails, le secret de build — restent **dues**, chacune rattachée à son unité. Le
+documentaire décrit désormais ce qui est décidé **et** ce qui est réellement en place, sans
+confondre les deux.

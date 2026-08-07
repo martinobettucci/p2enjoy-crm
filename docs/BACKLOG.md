@@ -78,7 +78,7 @@ pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
   `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
   **en attente d'arbitrage du responsable**.
 
-### CRM-002 — Scripts de lancement et environnement `[x]`
+### CRM-002 — Scripts de lancement et environnement `[~]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,
 format, obligatoire ou non, exemple non sensible). La liste exhaustive des variables déjà
 consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`, décision 15 :
@@ -155,6 +155,19 @@ unité n'atteint l'interface, dont le premier écran arrive avec `CRM-007`.
   reste non prouvée, comme pour `CRM-001`.
 - La valeur par défaut `STACK_RLIMIT_NOFILE=100000` reste **non éprouvée** : l'hôte de la routine
   plafonne à 4096, valeur que l'amorçage inscrit automatiquement et signale.
+
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 257 (INC-044, INC-079).** La garde de
+ports est **inerte** là où ni `ss` ni `netstat` n'existent : `host_listening_ports` rend une liste
+vide, `require_free_ports` avertit et laisse démarrer — voulu —, tandis que
+`scripts/verify-scripts.sh` **échoue** en comparant quinze ports publiés à une liste vide.
+
+- [ ] **Lire `/proc/net/tcp` en dernier recours.** C'est la seule option qui ferme les deux entrées
+      à la fois, et surtout la seule qui rende la garde **réellement** protectrice au lieu
+      d'apparemment protectrice : faire s'abstenir le contrôle aurait laissé l'angle mort intact,
+      et un vrai conflit de port serait resté invisible jusqu'à l'échec de Compose.
+- [ ] **Exigence attachée** : la lecture est prouvée **dans les deux sens** — elle voit un port
+      réellement ouvert, et ne voit pas un port fermé —, faute de quoi on aurait remplacé une garde
+      inerte par une garde qui se croit active.
 
 ### CRM-003 — Migrations d'amorçage `[x]`
 Extensions, schéma `app`, `profiles` (+ trigger de création), `workspaces`,
@@ -968,7 +981,7 @@ d'interface, aucune vérification visuelle** : l'unité ne livre aucun écran.
   pouvoir construire son image derrière le proxy à certificat interposé (INC-032, INC-042), et
   l'arborescence de compatibilité des navigateurs Playwright (INC-036, **huitième** occurrence).
 
-### CRM-005 — Seed socle `[x]`
+### CRM-005 — Seed socle `[~]`
 Utilisateurs créés par l'API d'administration GoTrue ; un workspace ; les rôles représentés.
 **DoD** : seed reproductible, identifiants stables, aucun mot de passe réel ; profils `admin`,
 `business_developer` et `viewer` présents ; documenté dans `README.md`.
@@ -1039,6 +1052,20 @@ n'a pas à changer, la production n'appliquant jamais de seed.
   s'invoque par `supabase/seed/apply-seed.sh` ou par `resetMe.sh`.
 - **Les comptes ne naissent pas d'un parcours produit** : la création exige la clé de service, donc
   reste une opération d'exploitation (INC-015), comme pour `CRM-011`.
+
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 259 (INC-003).** Le workflow par défaut
+déclare une sortie vers « Perdu » depuis Prospection, Relance, Négociation et Signature, mais
+**pas depuis Réalisation** : une affaire signée puis abandonnée en cours de réalisation n'a aucun
+chemin vers « Perdu ». Interrogé sur l'origine de l'oubli, le responsable a répondu qu'il avait
+**listé des exemples** et attendait des propositions — l'oubli est donc celui de l'agent, qui a
+recopié les exemples comme s'ils étaient le graphe complet.
+
+- [ ] **Ajouter la transition « Réalisation → Perdu »**, et **relire le graphe en entier** à cette
+      occasion : chaque étape doit avoir au moins une sortie, et toute étape sans issue est soit
+      justifiée, soit complétée.
+- [ ] **Règle générale qui en découle** : lorsqu'un document du responsable donne une **énumération
+      d'exemples**, l'agent ne la recopie pas telle quelle — il la complète, propose le résultat, et
+      **nomme** ce qu'il a ajouté.
 
 ### CRM-006 — Types TypeScript générés `[x]`
 **DoD** : `npm run types:generate` régénère depuis le schéma local ; build de la webapp vert.
@@ -1220,6 +1247,46 @@ dans Caddy, pas une image.
   livrés : la recherche n'a rien à interroger et le profil suppose une session. Les afficher
   inertes serait une commande morte.
 
+### CRM-009 — Écran de connexion `[~]`
+Écran `/connexion`, garde de route, posture de session, gabarits d'emails transactionnels servis
+en français.
+**DoD** : E2E de connexion **et** de refus ; après connexion, `localStorage` reste **vide** et
+`sessionStorage` porte la session ; après fermeture du contexte, rien ne subsiste ; un email
+transactionnel est vérifié **sur son contenu**, jamais sur sa seule présence.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 253, INC-021. Elle se place
+dans l'ordre d'exécution **entre `CRM-007` et `CRM-008`** : la coquille existe avant l'écran, et le
+harnais vient après ce qu'il doit exercer.
+
+**Pourquoi `[~]` et non `[ ]` : le code existe, sous la mauvaise unité.** `docs/SPEC-auth.md` §9
+avait rattaché ce parcours à `CRM-011` « selon l'option la plus étroite » — c'est-à-dire
+**l'option 1** des trois soumises, alors que le responsable a retenu **l'option 2**. L'écran, la
+garde de route et la posture de session ont donc été livrés et prouvés sous `CRM-011`. Le
+comportement est conforme ; c'est le **rattachement** qui était faux.
+
+- [x] **Écran `/connexion` et garde de route** — livrés, mais sous `CRM-011`. `CRM-011` a par
+      ailleurs livré et prouvé le **mécanisme** d'authentification sur 42 contrôles hors interface :
+      c'est ce mélange de deux sujets, qui n'ont ni les mêmes preuves ni le même risque, que
+      l'arbitrage écarte.
+- [x] **Session en `sessionStorage`**, décision 254 : le client `supabase-js` est **explicitement**
+      configuré — `persistSession` actif, `storage` visant `sessionStorage`, repli mémoire si ce
+      stockage est indisponible — plutôt que laissé à son défaut, qui écrirait dans `localStorage`
+      et tomberait sous `CLAUDE.md` §11. Un `F5` ne déconnecte pas ; la fermeture de l'onglet, si.
+      `docs/SPEC-auth.md` §9.2. Preuve acquise hors interface autant que dedans.
+- [ ] **Reprendre la traçabilité** : les commentaires `@spec` du code livré, les `@verifies` des
+      preuves et les mentions de `docs/DAT.md` §3.1 citent encore `CRM-011`. Ils doivent citer
+      `CRM-009`. Aucun changement de comportement.
+- [ ] **Gabarits d'emails transactionnels servis en HTTP** depuis la pile, décision 264 — **non
+      livré**. Mesuré : `supabase/gotrue:v2.189.0` ne charge un gabarit personnalisé que par HTTP,
+      et son repli vers le gabarit anglais par défaut est **silencieux du point de vue du
+      destinataire**. Le produit est en français, ses emails transactionnels partent en anglais.
+- [ ] **Exigence attachée, qui vaut au-delà de cette unité** : toute preuve portant sur un email
+      vérifie son **contenu**, jamais sa seule présence. Un email reçu ne prouve pas que le gabarit
+      configuré a été employé — c'est précisément ce que la mesure a montré.
+- [ ] **Conséquence de fermeture** : cette unité est la condition de fermeture de **dix-huit unités
+      `[~]`** dont le code est livré et prouvé. Elles ne passeront pas `[x]` d'un trait de plume :
+      chacune sera reprise, sa preuve manquante réellement exécutée, et son état révisé sur mesure.
+
 ### CRM-008 — Harnais de tests `[~]`
 pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
 **DoD** : chaque commande du `README.md` §7 s'exécute ; un test volontairement faux échoue bien.
@@ -1348,6 +1415,105 @@ variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat in
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ---
+
+### CRM-015 — Secret de build du registre npm `[ ]`
+Le secret de build `npm_ca`, déjà prévu par le `Dockerfile` de la webapp, est **fourni par les
+fichiers Compose** à partir de l'environnement.
+**DoD** : `./runDev.sh` construit l'image de la webapp derrière un proxy à certificat interposé ;
+sur un poste sans proxy, **rien ne change** ; aucun certificat n'est versionné.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 255, INC-042.
+
+- [ ] **Le motif est mesuré, pas ressenti** : INC-042 en est à sa **onzième** occurrence. Le coût
+      n'est pas du temps mais une **preuve perdue à chaque unité** — `./runDev.sh` n'a jamais été
+      exécuté de bout en bout, alors que la DoD de `CRM-050` l'exige nommément et que toutes les
+      unités d'interface reposent dessus.
+- [ ] **Contrainte non négociable attachée à la décision** : le certificat vient de
+      l'environnement, jamais du dépôt, et l'assemblage reste **inerte** là où la variable est
+      absente.
+- [ ] La variable est documentée dans `README.md` §9 et `.env.example` — nom, rôle, format,
+      caractère facultatif — sans valeur réelle.
+
+### CRM-016 — Fonctions edge `[ ]`
+`edge-runtime` déployé, `supabase/functions/` créé, route `/functions/v1/` déclarée dans la
+passerelle.
+**DoD** : la route répond ; une fonction d'exemple est appelée depuis un test ; le `README.md` §10
+cesse d'annoncer un répertoire qui n'existe pas.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 260, INC-007. **La décision
+12 est rouverte sur ce point** : l'agent avait proposé de retirer la mention du `README.md`, le
+responsable tranche l'inverse — livrer ce que le document annonce plutôt que faire disparaître la
+moitié qui gêne.
+
+- [ ] **Deux besoins réels trouvent enfin un porteur** : l'invitation d'un membre (INC-015), qui
+      exige la clé de service et ne peut pas vivre dans la webapp, et les webhooks sortants signés
+      (`CRM-073`). `CRM-070` pourra s'appuyer sur une fonction edge plutôt que sur un appel sortant
+      depuis la base par `pg_net`, chemin plus contournant.
+- [ ] **Ce que la décision ne change pas** : la logique métier reste en PostgreSQL, et `mail-sync`
+      reste un service Python — IMAP et SMTP demandent des connexions longues, incompatibles avec
+      des fonctions courtes (`docs/DAT.md` §3.3). Les fonctions edge **s'ajoutent**, elles ne
+      remplacent rien.
+
+### CRM-017 — Ordonnancement par `pg_cron` `[ ]`
+Relances, séquences, digest et purge RGPD sont ordonnancés par `pg_cron`.
+**DoD** : une tâche planifiée est créée, exécutée et prouvée **par pgTAP** ; `docs/DAT.md` §3.3 et
+§12 sont corrigés dans le même changement.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 261, INC-012. **La décision
+8 est renversée**, pas seulement corrigée dans son énoncé.
+
+- [ ] **Le premier motif de la décision 8 a été démenti par la mesure** : `CRM-004` a constaté que
+      `pg_cron` 1.6.4 est présent, préchargé et fonctionnel dans l'image épinglée. Seul le motif de
+      testabilité subsistait.
+- [ ] **Ce que l'ordonnanceur applicatif coûtait était écrit noir sur blanc** dans `docs/DAT.md`
+      §12 : « les tâches planifiées s'arrêtent si le service s'arrête ». Une purge RGPD qui ne
+      s'exécute pas est un **manquement**, pas un retard.
+- [ ] **Ce que la décision coûte, et qui est assumé** : les tâches planifiées deviennent testables
+      par pgTAP plutôt que par pytest.
+- [ ] **Conséquence sur une unité voisine** : le périmètre de `CRM-051` (`mail-sync`) **perd son
+      sous-composant `scheduler`**.
+
+### CRM-018 — `require_fields` devient une table de liaison `[ ]`
+`workflow_transitions.require_fields` (`uuid[]`) est remplacée par une table de liaison
+`(transition_id, field_id)`, avec ses deux clés étrangères et son `ON DELETE CASCADE`.
+**DoD** : migration versionnée et rejouable ; `copy_workflow_to_track`, le seed, les suites pgTAP
+et les preuves d'API mis à jour dans le même changement ; la suppression d'un champ ne laisse plus
+aucun identifiant mort.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 262, INC-033.
+
+- [ ] **Le constat est une propriété du type, pas un différé d'ordonnancement** : PostgreSQL refuse
+      toute clé étrangère depuis une colonne tableau, et cela ne changera jamais. La suppression
+      d'un champ de formulaire laisse aujourd'hui des identifiants **morts** dans les transitions,
+      et rien ne le signale.
+- [ ] **L'option écartée est nommée** : accepter le type et nettoyer au moment de la suppression
+      aurait reproduit **en code applicatif**, et imparfaitement, ce que le moteur sait faire seul.
+      L'intégrité référentielle est le travail de la base.
+- [ ] **Ce que la décision coûte, et qui est assumé** : elle **rouvre `CRM-031` et `CRM-035`**,
+      livrées et prouvées.
+- [ ] **Conséquence sur une entrée voisine** : INC-056 constatait que la copie de workflow recopie
+      `require_fields` tel quel et fait varier un compte global. La table de liaison rend ce
+      comptage déterministe **par construction**.
+
+### CRM-019 — `change_channel_workflow` `[ ]`
+Changer le workflow d'un channel entier, en remappant l'étape de **toutes** ses cards en un appel.
+**DoD** : le remappage est **explicite et exhaustif** — aucune étape de départ devinée, aucune card
+laissée sur une étape qui n'appartient pas à son nouveau workflow — et le refus est renvoyé
+**entier** plutôt qu'appliqué à moitié ; pgTAP et preuve d'API hors interface.
+
+Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 263, INC-046 et INC-073.
+
+- [ ] **Le pluriel du `docs/SCHEMA.md` §9 n'était pas une erreur de rédaction** : il décrivait une
+      fonction que personne n'avait encore nommée. Deux gestes distincts, deux fonctions, deux
+      noms :
+
+| Fonction | Objet |
+|---|---|
+| `move_card_to_channel(card_id, channel_id, step_id)` | Une card change de dossier. **Livrée par `CRM-045`, inchangée** |
+| `change_channel_workflow(channel_id, workflow_id, step_mapping)` | Un channel change de workflow, et l'étape de **toutes** ses cards est remappée |
+
+- [ ] `docs/SCHEMA.md` §9 nomme les deux fonctions et cesse de laisser croire qu'une seule porte les
+      deux gestes.
 
 ## Chunk 3 — CRM utilisable
 
@@ -1927,6 +2093,12 @@ pilote Playwright, artefact non déterministe déjà relevé lors de l'intégrat
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
+**Rouverte par arbitrage du responsable — `docs/JOURNAL.md`, décision 262 (INC-033).**
+`workflow_transitions.require_fields` est un `uuid[]`, et PostgreSQL refuse toute clé étrangère
+depuis une colonne tableau. La colonne est remplacée par une table de liaison
+`(transition_id, field_id)`. **Mise en œuvre : `CRM-018`.** Cette unité ne pourra être close
+qu'après elle.
+
 ### CRM-032 — Copie d'un workflow vers un track `[~]`
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.
 **DoD** : pgTAP (copie complète des étapes, transitions et champs ; lignage renseigné) ; E2E ;
@@ -2430,6 +2602,11 @@ aux quatre unités précédentes.
   `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de compatibilité des
   navigateurs Playwright (INC-036). **Première exécution où le conteneur `webapp` démarre réellement**
   — les quinze services de la pile de développement sont sains.
+
+**Rouverte par arbitrage du responsable — `docs/JOURNAL.md`, décision 262 (INC-033).** La
+suppression d'un champ laisse aujourd'hui des identifiants morts dans
+`workflow_transitions.require_fields`, sans que rien ne le signale. La table de liaison décidée
+rend le nettoyage automatique. **Mise en œuvre : `CRM-018`.**
 
 ### CRM-036 — Valeurs et validation `[~]`
 `card_field_values`, validation par type, union étape + transition.
@@ -4033,6 +4210,11 @@ aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
   a permis un vrai rejeu à froid des dix-sept migrations. Aucun script du dépôt n'a été modifié.
 - **Identité Git reposée avant le premier commit** — INC-034 point 2, **septième** occurrence.
 
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 263 (INC-046, INC-073).** Le pluriel du
+`docs/SCHEMA.md` §9 — « remappage explicite **des étapes** » — décrivait un second geste, distinct
+de celui livré ici. `move_card_to_channel(card_id, channel_id, step_id)` est **retenue inchangée** ;
+le geste pluriel devient `change_channel_workflow`, porté par **`CRM-019`**.
+
 ### CRM-046 — Seed de démonstration complet `[~]`
 Trois tracks, plusieurs channels, workflows distincts dont un dérivé, cards à toutes les étapes,
 cas d'erreur et branches alternatives, aucun écran vide.
@@ -4166,6 +4348,10 @@ soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit av
   occurrence** : le Chromium préinstallé est en version `1194` là où le Playwright épinglé attend
   `1234` ; le contournement documenté du dépôt — `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun
   fichier du dépôt n'a été modifié pour cela.
+
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 259 (INC-003).** Le seed de démonstration
+reprend le graphe du workflow par défaut une fois la transition « Réalisation → Perdu » ajoutée et
+le graphe relu en entier. Une affaire de démonstration doit pouvoir emprunter ce chemin.
 
 ### CRM-047 — Manuel utilisateur du chunk 3 `[~]`
 **DoD** : `docs/manual.md` décrit le produit réellement exécuté ; captures renouvelées.
@@ -4479,6 +4665,11 @@ ports de `README.md` §6 à ceux que `.env.example` déclare.
 Squelette Python, configuration, journaux structurés, point de santé, API interne.
 **DoD** : pytest unitaire ; image construite ; arrêt et redémarrage sans perte d'état.
 
+**Périmètre réduit par arbitrage du responsable — `docs/JOURNAL.md`, décision 261 (INC-012).** Cette
+unité **perd son sous-composant `scheduler`** : relances, séquences, digest et purge RGPD passent à
+`pg_cron`, porté par **`CRM-017`**. `mail-sync` reste un service Python parce qu'IMAP et SMTP
+demandent des connexions longues ; seul l'ordonnancement en sort.
+
 ### CRM-052 — Comptes entrants IMAP `[ ]`
 Configuration, secret chiffré, test de connexion réel, état de synchronisation.
 **DoD** : `CRM-004` tranché ; preuve de refus n° 6 (secret illisible) et n° 7 ; E2E de connexion
@@ -4538,12 +4729,37 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
-| CRM-070 | Administration des permissions fines | `[ ]` |
+| CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[ ]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | Snooze des fils et des cards | `[ ]` |
+
+### CRM-070 — précision d'arbitrage : l'invitation d'un membre
+
+**Arbitrage du responsable — `docs/JOURNAL.md`, décision 256 (INC-015).** `POST /auth/v1/invite`
+exige la clé de service, que la webapp ne doit jamais détenir. Le parcours d'invitation est
+**rattaché à cette unité**, qui traite déjà de la gestion des membres, plutôt que de faire l'objet
+d'une unité créée maintenant.
+
+Le motif est explicite : une unité dédiée aurait fait prendre **trois décisions d'architecture d'un
+coup** — une table d'invitations absente de `docs/SCHEMA.md`, un appel sortant depuis la base absent
+de `docs/DAT.md` §3, et une clé de service à provisionner en Vault — pour servir un geste **rare**,
+alors que l'écran de connexion sert un geste quotidien. Assumer définitivement l'invitation comme
+une opération d'exploitation était écarté : un CRM où seul un opérateur peut créer un compte n'est
+pas un produit.
+
+- [ ] Depuis la décision 260, `CRM-070` pourra s'appuyer sur une **fonction edge** (`CRM-016`)
+      plutôt que sur un appel sortant depuis la base par `pg_net`, chemin plus contournant.
+- [ ] **Exigence immédiate, qui n'est pas facultative et ne dépend pas de cette unité** : tant que
+      le parcours n'est pas livré, le comportement réel — l'invitation est émise par un
+      **opérateur** disposant de la clé de service, hors interface — est **nommé explicitement dans
+      `docs/manual.md`**, chapitre 17. Un manuel qui décrit un écran qui n'existe pas est un défaut,
+      pas une anticipation.
+- [ ] **Reste ouvert sciemment** : les trois choix d'architecture ci-dessus sont **reportés, pas
+      tranchés**. `CRM-070` devra les prendre explicitement, et INC-014 — les politiques RLS des
+      tables d'identité — posera la même question pour l'éventuelle table d'invitations.
 
 ---
 

@@ -23,6 +23,25 @@ d'exécuter le code attendu.
   est récupéré. INC-081 ne suit plus qu'un écart de **mise en œuvre** : `require_fields` en table
   de liaison, `pg_cron`, les fonctions edge et `change_channel_workflow` restent à livrer.
 
+- **Passe de cohérence : les décisions du responsable sont propagées dans tout le documentaire** —
+  six unités créées (`CRM-009`, `CRM-015` à `CRM-019`), `CRM-031` et `CRM-035` **rouvertes**,
+  `CRM-051` amputée de son `scheduler`. `docs/MASTER_PLAN.md` insère `CRM-009` entre `CRM-007` et
+  `CRM-008` ; `docs/DAT.md` passe à `pg_cron` et accueille `edge-runtime` ; `docs/SCHEMA.md` §9
+  nomme `change_channel_workflow` et §3 la table de liaison décidée ; `docs/SPEC-auth.md` §4.1 et
+  `docs/PROD_MIGRATIONS.md` §7 encadrent le chemin d'administration de GoTrue ; `README.md` §10,
+  `docs/manual.md` chapitre 17 et `.env.example` sont alignés. Seize entrées du registre reçoivent
+  leur arbitrage et INC-005 est close. **Aucune ligne de code n'est modifiée** : les mises en œuvre
+  décidées restent dues, chacune rattachée à son unité.
+
+### Corrigé
+
+- **Le parcours de connexion est rattaché à `CRM-009`, non à `CRM-011`** — `docs/SPEC-auth.md` §9
+  l'avait rattaché « selon l'option la plus étroite », c'est-à-dire l'option 1 des trois soumises,
+  alors que le responsable avait retenu l'option 2, une unité dédiée (décision 253, INC-021). Le
+  comportement livré est conforme et **inchangé** ; seuls le rattachement et la traçabilité sont
+  corrigés, dans `docs/SPEC-auth.md`, `docs/DAT.md` §3.1 et `docs/BACKLOG.md`. Les commentaires
+  `@spec` du code restent à reprendre — suivi par `CRM-009`.
+
 ### Supprimé
 
 - **Les quarante et une branches `claude/happy-goldberg-*` sont supprimées** d'`origin`, sur

@@ -46,15 +46,17 @@ flowchart LR
     PostgREST[PostgREST — API REST]
     RT[Realtime]
     Storage[Storage]
+    Edge[edge-runtime — fonctions Deno]
     DB[(PostgreSQL 17 — RLS + RPC)]
   end
 
   subgraph Mail["mail-sync — Python"]
     Imap[imap_worker]
     Smtp[smtp_worker]
-    Sched[scheduler]
     IntApi[API interne]
   end
+
+  Cron[pg_cron — relances, digest, purge RGPD]
 
   Nav -->|HTTPS| Front
   Front -->|supabase-js| Kong
@@ -63,6 +65,9 @@ flowchart LR
   Kong --> PostgREST
   Kong --> RT
   Kong --> Storage
+  Kong --> Edge
+  Edge --> DB
+  DB --> Cron
   PostgREST --> DB
   GoTrue --> DB
   RT --> DB
@@ -70,14 +75,14 @@ flowchart LR
 
   Imap -->|service_role| DB
   Smtp -->|service_role| DB
-  Sched -->|service_role| DB
+  Cron -->|dans la base| DB
   Imap --> S3
   Front -->|test connexion, backfill| IntApi
 
   Imap <-->|IMAP| MX[Serveurs IMAP externes]
   Smtp -->|SMTP| MTA[Serveurs SMTP externes]
   Imap --> AV[ClamAV]
-  Sched -->|SMTP transactionnel| MTA
+  Cron -->|SMTP transactionnel via mail_outbox| Smtp
 ```
 
 ## 3. Composants
@@ -89,7 +94,9 @@ React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 - Authentification via `supabase-js` (GoTrue). L'arbitrage de persistance est rendu par
   `docs/SPEC-auth.md` §9 : **`sessionStorage` uniquement**, limité à l'onglet, avec repli mémoire
   si ce stockage est indisponible. Le défaut `localStorage` de la bibliothèque n'est jamais
-  employé. Ce contrat est livré par `CRM-011` et a refermé INC-021 et INC-022.
+  employé. Ce contrat referme INC-022. Le code a été livré sous `CRM-011`, mais l'arbitrage du
+  responsable — `docs/JOURNAL.md`, décision 253, INC-021 — le rattache à une **unité dédiée**,
+  `CRM-009` : la reprise de traçabilité est due, sans changement de comportement.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.
@@ -243,22 +250,29 @@ Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités :
 |---|---|
 | `imap_worker` | Une connexion IDLE par compte entrant ; récupération, analyse, dédoublonnage, dépôt des pièces jointes, classement, création des dossiers imbriqués |
 | `smtp_worker` | Consommation de la file `mail_outbox` : envoi via l'identité SMTP de l'utilisateur, retry avec backoff, respect des quotas, archivage du message envoyé |
-| `scheduler` | Ordonnanceur unique : relances de cards figées, séquences, digest quotidien, purge RGPD, recalcul du score de santé |
+| ~~`scheduler`~~ | **Retiré du périmètre** par la décision 261. Relances, séquences, digest, purge RGPD et recalcul du score de santé passent à `pg_cron` — `CRM-017` |
 | API interne | Test de connexion IMAP/SMTP, déclenchement d'un backfill, exposition de l'état de synchronisation, et endpoints réservés aux tests en environnement de développement |
 
 Il se connecte à PostgreSQL avec le rôle `service_role`. C'est **le seul** consommateur des
 secrets de messagerie déchiffrés.
 
-**Choix : un ordonnanceur applicatif plutôt que `pg_cron`.** Le service tourne déjà en continu ;
-y placer l'ordonnancement garde l'orchestration métier dans le service qui la porte, et rend les
-tâches planifiées testables par pytest sans manipuler la base. Compromis : si le service est
-arrêté, les tâches planifiées ne s'exécutent pas — l'état de santé du service doit donc être
-supervisé.
+**Choix : `pg_cron`, et non un ordonnanceur applicatif.** Arbitrage du responsable —
+`docs/JOURNAL.md`, décision 261, INC-012. **La décision 8 est renversée**, pas seulement corrigée
+dans son énoncé.
 
-*Motif corrigé par `CRM-004`.* Ce choix invoquait aussi l'indisponibilité supposée de `pg_cron`.
-La mesure la dément : `pg_cron` **1.6.4 est présent, préchargé et fonctionnel** dans l'image
-épinglée. Seul le motif de testabilité subsiste, et il suffit à maintenir le choix. La question de
-rouvrir l'arbitrage est consignée en `docs/INCONSISTENCY_REPORT.md`, INC-012.
+Elle reposait sur deux motifs. `CRM-004` a **démenti le premier** par la mesure : `pg_cron`
+**1.6.4 est présent, préchargé et fonctionnel** dans l'image épinglée. Seul le motif de testabilité
+subsistait — et il ne pèse pas contre le compromis qui était écrit noir sur blanc au §12 : « les
+tâches planifiées s'arrêtent si le service s'arrête ». Pour des relances commerciales, un digest
+quotidien et une purge RGPD, c'est coûteux : **une purge RGPD qui ne s'exécute pas est un
+manquement, pas un retard.**
+
+`pg_cron` s'exécute là où vivent les données et là où vivent déjà les règles métier — une seule
+source de vérité, comme pour le reste du produit. Compromis assumé : les tâches planifiées
+deviennent testables par **pgTAP** plutôt que par pytest.
+
+**Mise en œuvre : `CRM-017`.** `mail-sync` conserve ses trois autres sous-composants : IMAP et SMTP
+demandent des connexions longues, et seul l'ordonnancement sort de son périmètre.
 
 ### 3.4 `clamav`
 
@@ -677,7 +691,8 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 | Catalogue de nœuds partagé | Rend l'analytique comparable entre channels | Un nœud partagé renommé se répercute partout : les surcharges sont explicites |
 | Copie tracée des workflows vers un track | Correspond au geste demandé, et l'origine reste connue | Les copies divergent ; une évolution du workflow global ne se propage pas |
 | Service mail en Python séparé | IMAP/SMTP demandent des connexions longues, incompatibles avec des fonctions courtes | Un service de plus à superviser |
-| Ordonnanceur applicatif | Testable par pytest sans manipuler la base, orchestration dans le service qui la porte — `pg_cron` est pourtant disponible (`CRM-004`, INC-012) | Les tâches planifiées s'arrêtent si le service s'arrête |
+| Ordonnancement par `pg_cron` | S'exécute là où vivent les données et les règles métier, et ne s'arrête pas avec un service applicatif — une purge RGPD qui ne part pas est un manquement (décision 261, INC-012, `CRM-017`) | Les tâches planifiées se testent par pgTAP et non par pytest |
+| Fonctions edge au périmètre | Le socle documentaire les annonce ; elles donnent un porteur à l'invitation d'un membre et aux webhooks sortants signés (décision 260, INC-007, `CRM-016`) | Un service de plus dans la pile ; la logique métier reste en PostgreSQL, `mail-sync` reste en Python |
 | Secrets de messagerie en Supabase Vault | Extension présente et fonctionnelle dans l'image épinglée ; schéma `vault` hors de portée d'`anon` et d'`authenticated` (`CRM-004`) | La clé racine vit hors de `PGDATA` : elle devient une donnée de sauvegarde à part entière (§10) |
 | Deux serveurs mail en développement | Inbucket ne fournit pas d'IMAP, indispensable au produit | Un conteneur supplémentaire en développement |
 | Index fractionnaire pour l'ordre des cards | Réordonnancement en une écriture | Nécessite une renumérotation lorsque les écarts deviennent trop petits |

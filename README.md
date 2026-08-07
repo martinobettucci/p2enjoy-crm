@@ -544,11 +544,17 @@ webapp/src/lib/
 L'application elle-même — `index.html`, composants, routes, configuration Vite — relève de
 `CRM-007`.
 
-Le répertoire `supabase/functions/` (edge functions Deno) mentionné dans les versions antérieures
-de ce document n'a **aucun** composant correspondant dans l'architecture ni aucune unité de
-backlog : le point est consigné dans
-[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md) (INC-007) et attend l'arbitrage du
-responsable.
+Le répertoire `supabase/functions/` (edge functions Deno) **n'existe pas encore**, et l'arbitrage
+qui le concerne est rendu : les fonctions edge **entrent au périmètre**
+([`docs/JOURNAL.md`](docs/JOURNAL.md), décision 260, INC-007). L'agent avait proposé de retirer la
+mention de ce document ; le responsable a tranché l'inverse — livrer ce que le document annonce
+plutôt que faire disparaître la moitié qui gêne. La **décision 12 est rouverte sur ce point**.
+
+L'unité **`CRM-016`** porte le service `edge-runtime`, le répertoire `supabase/functions/` et la
+route `/functions/v1/` de la passerelle. Elle donne un porteur à deux besoins qui n'en avaient
+aucun : l'invitation d'un membre, qui exige la clé de service et ne peut pas vivre dans la webapp,
+et les webhooks sortants signés (`CRM-073`). La logique métier reste en PostgreSQL et `mail-sync`
+reste un service Python : les fonctions edge **s'ajoutent**, elles ne remplacent rien.
 
 Documentation de référence :
 
