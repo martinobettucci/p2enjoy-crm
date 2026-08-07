@@ -12,7 +12,7 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
-### INC-083 — Dix-neuf harnais autonomes contournent encore la chaîne Node de `CRM-008`
+### INC-083 — Vingt et un harnais autonomes contournent encore la chaîne Node de `CRM-008`
 
 **Nature :** preuve utilisateur inexécutable depuis le shell WSL réel ; portée trop étroite du
 correctif de la décision 278.
@@ -27,7 +27,7 @@ déjà sélectionné Node v24.14.1 / npm 11.11.0 Linux et rendu 28/28 sur la mê
 
 **Cause.** La décision 278 a livré un résolveur commun dans `scripts/lib/node.sh`, mais seul
 `scripts/verify-harness.sh` le charge. Une recherche des invocations effectives, hors commentaires,
-trouve **vingt** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; dix-neuf contournent
+trouve **vingt-deux** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; vingt et un contournent
 encore le résolveur. Tous sont annoncés comme commandes autonomes dans le README ou constituent la
 preuve autonome d'une unité. Demander à l'utilisateur de corriger son `PATH` entre deux commandes
 ne rend pas ces actions exécutables.

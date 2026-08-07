@@ -8795,7 +8795,7 @@ de laisser l'absence être interprétée comme un oubli.
 
 ---
 
-### Décision 281 — Un résolveur commun que dix-neuf commandes contournent n'est pas encore commun
+### Décision 281 — Un résolveur commun que vingt et une commandes contournent n'est pas encore commun
 
 **Défaut rencontré dans le parcours réel de `CRM-015`.** Les deux variantes de `./runDev.sh`
 aboutissent et la pile rend 50/50. La commande suivante documentée,
@@ -8803,10 +8803,10 @@ aboutissent et la pile rend 50/50. La commande suivante documentée,
 répertoire UNC et le build échoue avant toute preuve de la webapp. La chaîne Linux livrée par la
 décision 278 existe et fonctionne, mais seul le harnais global de `CRM-008` la charge.
 
-**Mesure du périmètre.** Vingt scripts autonomes `scripts/verify-*.sh` contiennent une invocation
-effective de `npm` ou `node`; dix-neuf n'appellent pas `node_toolchain_prepare`. Ils peuvent donc
+**Mesure du périmètre.** Vingt-deux scripts autonomes `scripts/verify-*.sh` contiennent une invocation
+effective de `npm` ou `node`; vingt et un n'appellent pas `node_toolchain_prepare`. Ils peuvent donc
 échouer pour l'outil du poste, voire prendre cette panne commune pour la réussite d'une
-contre-épreuve. Le défaut dépasse `verify-webapp.sh` et le corriger seul laisserait dix-huit faux
+contre-épreuve. Le défaut dépasse `verify-webapp.sh` et le corriger seul laisserait vingt faux
 points d'entrée verts dans le registre des commandes disponibles.
 
 **Décision.** Chacun de ces harnais charge `scripts/lib/node.sh` et prépare le couple imposé par

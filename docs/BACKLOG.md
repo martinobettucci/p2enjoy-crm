@@ -1454,7 +1454,7 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       Node v24.14.1 / npm 11.11.0 Linux sous NVM avant toute mutation ; la preuve isolée couvre
       quatre branches et rend 4/4.
 - [ ] **La chaîne Node est réellement commune à tous les harnais autonomes** (INC-083,
-      décision 281). Le parcours final de `CRM-015` a révélé que dix-neuf des vingt scripts
+      décision 281). Le parcours final de `CRM-015` a révélé que vingt et un des vingt-deux scripts
       `verify-*.sh` exécutant Node ou npm contournaient encore le résolveur et que
       `verify-webapp.sh` choisissait donc `npm.exe`. Chaque point d'entrée concerné doit préparer
       Node avant sa première mutation, et une preuve statique doit interdire qu'un nouveau script
