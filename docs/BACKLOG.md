@@ -1134,6 +1134,13 @@ par `CRM-006`** (INC-020).
       TypeScript, `npm run build` → `webapp/dist`. **Preuve de `CRM-006` reprise** : le client et
       la couche d'accès importent les types générés, et une **colonne inexistante fait échouer**
       `npm run typecheck` — c'est le schéma qui contraint le code, pas une déclaration d'intention.
+- [ ] **LE BUILD RESTE SANS AVERTISSEMENT À MESURE QUE LE PRODUIT GRANDIT** (décision 248).
+      Mesuré après `CRM-050`, le seul chunk JavaScript atteint **530,59 kB minifiés** et Vite
+      avertit au-delà de 500 kB. La correction découpe `RouteTrack` et `RouteCard` par imports
+      dynamiques : l'écran de connexion ne doit plus télécharger le board, la liste, le formulaire
+      et la timeline avant qu'un utilisateur n'ouvre une route métier. Le seuil Vite reste à sa
+      valeur par défaut ; le chargement différé rend un squelette accessible, puis les parcours
+      utilisateur existants prouvent que les deux routes restent praticables.
 - [x] **Jetons du design system en variables CSS**, un seul fichier autorisé à porter des
       hexadécimaux (`webapp/src/styles/tokens.css`). Les espaces de noms de Tailwind sont
       **remis à zéro** : `bg-red-500` et `p-7` n'existent pas. Chaque couleur de la charte n'a

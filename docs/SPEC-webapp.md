@@ -412,6 +412,21 @@ dans Caddy. Aucune modification de l'assemblage de production n'est nécessaire 
 cesse simplement d'être vide. Les deux variables `VITE_*` sont lues **au build** : reconstruire est
 nécessaire après leur changement, ce que `docs/PROD_MIGRATIONS.md` doit dire.
 
+### 12.3 Frontières de chargement
+
+Mesuré le 2026-08-07 après l'arrivée des écrans métier : le build produit un unique chunk
+JavaScript de **530,59 kB minifiés**, au-dessus de l'avertissement Vite de 500 kB. Sa carte source
+montre que le point d'entrée importe aussi le board, la liste, le formulaire et la timeline alors
+que `/connexion` n'en rend aucun. Augmenter `chunkSizeWarningLimit` ne réduirait ni le téléchargement
+ni le travail du navigateur et ne constitue donc pas une correction.
+
+`RouteTrack` et `RouteCard` sont des frontières de chargement dynamique. La connexion,
+l'authentification, le routeur et la coquille commune restent dans le point d'entrée ; le code des
+routes métier n'est demandé que lorsqu'une URL correspondante est ouverte. Pendant ce chargement,
+un squelette portant `role="status"`, `aria-busy="true"` et le libellé traduit du chargement est
+rendu : la séparation ne crée jamais de page blanche. Le build doit conserver le seuil Vite par
+défaut, produire plusieurs chunks JavaScript et ne rendre aucun avertissement de taille.
+
 ## 13. Commandes
 
 | Commande | Effet |
@@ -433,7 +448,8 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
 
 `scripts/verify-webapp.sh` rejoue, sur une pile de développement démarrée :
 
-1. **Build** : `npm run build` vert, `webapp/dist/index.html` et ses actifs produits, et la
+1. **Build** : `npm run build` vert **sans avertissement de taille**, `webapp/dist/index.html` et
+   plusieurs chunks JavaScript produits, et la
    configuration réellement injectée dans le bundle — reprise explicite de la preuve due par
    INC-020.
    Les types générés de `CRM-006` sont importés par le client et la couche d'accès. Ils sont

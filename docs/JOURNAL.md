@@ -7750,3 +7750,29 @@ la reconstruction aboutit. `scripts/verify-scripts.sh` rend 58/58 après avoir c
 `.env.example`. L'ancien identifiant d'image qui contenait `.env` et `.git` n'existe plus ; le
 projet Docker jetable et ses volumes ont été supprimés, puis la pile normale a été restaurée sur
 ses volumes conservés.
+
+### Décision 248 — Le code des routes métier ne précède pas l'utilisateur sur l'écran de connexion
+
+**La mesure.** Le build suivant la reprise de `CRM-050` est vert, mais Vite écrit un avertissement :
+son unique chunk JavaScript pèse **530,59 kB minifiés**, pour une limite par défaut de 500 kB. Une
+carte source a été produite sans changer la configuration. Sur 151 sources conservées, les plus
+gros groupes non minifiés sont React DOM (545 kB), Supabase Auth (423 kB), React Router (347 kB),
+puis le code applicatif (288 kB). Dans ce dernier groupe figurent `Board`, `ListeCards`,
+`PanneauTimeline`, `RouteTrack` et `RouteCard`, tous importés avant même que `/connexion` puisse
+être affichée.
+
+**Décision.** `RouteTrack` et `RouteCard` deviennent deux imports dynamiques React. Ce sont les
+frontières naturelles du produit : la première agrège board et liste, la seconde le formulaire et
+la timeline. L'authentification, le routeur et la coquille commune restent immédiatement
+disponibles. Une suspension rend le squelette existant avec un statut accessible ; aucune route ne
+transite par une page blanche.
+
+**Ce qui est explicitement refusé.** Le seuil `chunkSizeWarningLimit` n'est pas relevé et le
+rapport n'est pas désactivé. Ces deux gestes feraient disparaître le message sans retirer un octet
+du chemin initial. Un groupe `vendor` manuel n'est pas retenu non plus : il faciliterait le cache,
+mais `/connexion` téléchargerait toujours tout le métier. Le découpage doit venir d'un geste réel
+de navigation.
+
+**Critère.** `npm run build` produit plusieurs chunks, chacun sous 500 kB, sans avertissement ; le
+typecheck et les tests unitaires restent verts ; Playwright ouvre réellement une route de track et
+une card après connexion, au clavier et à la souris, sans erreur de console.
