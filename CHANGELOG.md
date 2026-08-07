@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les décisions restées hors de `main` sont récupérées** — `docs/ARBITRAGES.md` et
+  `docs/ARBITRAGES_RECUPERES.md` reproduisent verbatim les dix-huit entrées de journal, dont cinq
+  arbitrages du responsable, que la branche `claude/happy-goldberg-qt5vfi` portait seule. Rien
+  n'est fusionné dans `docs/JOURNAL.md` : les deux lignes ont numéroté leurs décisions en
+  parallèle et la contradiction est consignée en INC-081, dont l'arbitrage reste dû. L'arbitrage
+  `R-14` sur `require_fields` est mesuré comme **non appliqué** sur `main`.
+
+### Supprimé
+
+- **Les quarante et une branches `claude/happy-goldberg-*` sont supprimées** d'`origin`, sur
+  instruction du responsable : leur existence violait `CLAUDE.md` §13, qui impose de travailler sur
+  `main` exclusivement. Quarante ne portaient que des réimplémentations parallèles d'unités que
+  `main` porte déjà sous ses noms retenus. `docs/BRANCHES_SUPPRIMEES.md` conserve l'inventaire, le
+  détail des vérifications et les empreintes des têtes, qui rendent une restauration possible tant
+  que le ramasse-miettes d'`origin` n'est pas passé. Aucun code applicatif n'est modifié.
+
 - **Le parcours utilisateur authentifié est livré** — écran `/connexion`, retour à la page
   demandée, restauration de session limitée à l'onglet, identité et déconnexion dans l'en-tête.
   Six scénarios Playwright sans substitution prouvent les gestes réels : commentaire publié et

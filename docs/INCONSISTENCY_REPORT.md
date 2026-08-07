@@ -12,6 +12,44 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-081 — Dix-huit décisions, dont cinq arbitrages du responsable, n'ont jamais atteint `main`
+
+**Nature :** contradiction de **numérotation et de contenu** entre deux lignes de journal écrites
+en parallèle, et perte de trace d'arbitrages.
+**Relevé le :** 2026-08-07, pendant la suppression des branches `claude/happy-goldberg-*`.
+
+**Le fait.** Quarante et une branches ont été poussées sur `origin` en violation de `CLAUDE.md`
+§13, qui interdit toute création de branche. Avant leur suppression, leur contenu a été comparé à
+`main`. Quarante ne portaient que des réimplémentations parallèles d'unités que `main` porte déjà.
+La branche `claude/happy-goldberg-qt5vfi` portait en propre **dix-huit décisions de journal
+absentes de `main`, dont cinq arbitrages explicites du responsable**, ainsi que
+`docs/ARBITRAGES.md`.
+
+**La contradiction.** Les deux lignes ont attribué les numéros 235 à 252 à des sujets différents.
+La décision 239 de `main` traite de la boîte mail du `viewer` ; celle de la branche rattache
+l'écran de connexion à `CRM-009`. Reprendre les entrées récupérées sous leur numéro d'origine
+écraserait des décisions de `main` ; les renuméroter d'office reviendrait à arbitrer à la place du
+responsable, certaines entrées se contredisant d'une ligne à l'autre.
+
+**Ce qui a été fait, et pas fait.** Les dix-huit entrées sont reproduites **verbatim** dans
+`docs/ARBITRAGES_RECUPERES.md` sous une numérotation de récupération `R-01` à `R-18`.
+`docs/JOURNAL.md` n'est **pas** modifié et aucun comportement n'est changé.
+
+**Conséquence mesurée, non corrigée.** L'arbitrage `R-14` — « `require_fields` devient une table de
+liaison » — n'est **pas appliqué** sur `main` : `docs/SCHEMA.md` §—`require_fields` le décrit
+toujours en `uuid[]` et note qu'il ne peut porter aucune intégrité référentielle, ce que cet
+arbitrage renversait. À l'inverse, `R-04` et `R-05` (unité de l'écran de connexion, session en
+`sessionStorage`) sont **appliqués** par la décision 243 de `main` : seul le registre de
+l'arbitrage manquait.
+
+**Arbitrage attendu.** Pour chacune des dix-huit entrées : reprise dans `docs/JOURNAL.md` sous un
+numéro neuf, ou déclaration de caducité. `R-14` appelle en outre une décision de schéma, qui
+engagerait une migration et la révision de `docs/SCHEMA.md`, `docs/DAT.md` et
+`docs/PROD_MIGRATIONS.md`. Tant que l'arbitrage n'est pas rendu, aucune ligne de code ne s'appuie
+sur ces entrées.
+
+---
+
 ### INC-080 — Des garde-fous du chunk 3 sont périmés, et le rejeu séquentiel des harnais n'est pas un instrument de mesure valable
 
 **Nature :** deux points distincts, mesurés le même jour. (1) des garde-fous figés par des unités

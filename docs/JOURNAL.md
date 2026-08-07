@@ -7652,3 +7652,60 @@ SMTP et Roundcube sont réellement exercés ; le journal de Stalwart ne porte ni
 sa racine rend la page explicative locale ; une configuration jetable au mauvais domaine est
 refusée sans appeler Docker. INC-079 reste ouverte jusqu'à cette mesure. INC-080 reste un sujet
 séparé : réparer les harnais historiques ne doit pas être mêlé au correctif de démarrage.
+
+---
+
+### Décision 246 — Quarante et une branches n'auraient jamais dû exister, et une seule portait quelque chose
+
+**Le problème.** Le dépôt distant portait quarante et une branches
+`claude/happy-goldberg-*`. `CLAUDE.md` §13 interdit toute création de branche, de
+worktree ou d'environnement Git parallèle : le travail se fait sur `main`
+exclusivement. La consigne a été violée quarante et une fois. Le responsable a
+demandé la récupération de ce qui n'était pas sur `main`, puis la suppression des
+branches localement et sur `origin`.
+
+**L'hypothèse à écarter.** « Rebaser les branches sur `main` » était la demande
+littérale, et c'était la mauvaise opération. Ces branches ne sont pas des travaux
+divergents à réintégrer : ce sont, pour l'essentiel, des **réexécutions parallèles
+des mêmes unités de backlog**. Quatre branches distinctes implémentent le
+déplacement d'une card entre channels, chacune avec sa propre migration numérotée
+`0017`. Un rebase en aurait empilé trois de plus sur celle que `main` porte déjà.
+
+**Les observations.** Mesures faites branche par branche, sur l'arbre et
+l'historique, pas sur les noms de fichiers :
+
+- vingt-six branches étaient déjà entièrement contenues dans `main` ;
+- quinze ne l'étaient pas ; la comparaison fichier par fichier montre que `main`
+  porte le même travail sous ses noms retenus — `ListeCards.tsx` contre
+  `Liste.tsx`, `Board.tsx` contre `BoardChannel.tsx`, `PanneauTimeline.tsx` contre
+  `PanneauCommentaires.tsx`, `0017_move_card_to_channel.sql` contre
+  `0017_deplacement_channel.sql` et `0017_changement_channel.sql`,
+  `stalwart/config.toml` contre `stalwart/config.json.template` ;
+- une seule, `claude/happy-goldberg-qt5vfi`, portait du contenu que `main` n'a
+  jamais reçu : `docs/ARBITRAGES.md`, et **dix-huit décisions de journal dont cinq
+  arbitrages explicites du responsable**. Le comptage qui l'a isolée est direct :
+  dix mentions de « arbitrage du responsable » et 250 décisions sur cette branche,
+  contre cinq et 243 sur `main` ; toutes les autres branches sont sous ces deux
+  seuils.
+
+**La décision.** Le contenu unique est récupéré sur `main` **sans être fusionné**.
+Les deux lignes ont numéroté leurs décisions en parallèle et les numéros 235 à 252
+désignent des sujets différents de chaque côté. Les dix-huit entrées sont donc
+reproduites verbatim dans `docs/ARBITRAGES_RECUPERES.md` sous une numérotation de
+récupération `R-01` à `R-18`, et ce journal n'est pas réécrit. Conformément à
+`CLAUDE.md` §5, la contradiction est consignée — INC-081 — et non résolue.
+
+**Les conséquences.** Une conséquence est mesurée et laissée ouverte :
+l'arbitrage `R-14`, « `require_fields` devient une table de liaison », n'est pas
+appliqué sur `main`, où `docs/SCHEMA.md` décrit toujours un `uuid[]` sans intégrité
+référentielle. À l'inverse, `R-04` et `R-05` sont déjà appliqués par la décision
+243 : seule leur trace manquait. Les seize autres entrées ne sont pas jugées.
+
+**Les vérifications réalisées.** Comparaison des arbres des quarante et une
+branches contre celui de `main` : hors captures, vingt-neuf fichiers n'existent pas
+sur `main`, tous rattachés à une réimplémentation parallèle sauf `docs/ARBITRAGES.md`.
+Confirmation par `docs/BACKLOG.md` que `CRM-010` est clos sur `main` avec un harnais
+pgTAP de 949 lignes, là où la branche `w9q87o` en proposait un second de 585 lignes.
+Les empreintes des quarante et une têtes sont conservées dans
+`docs/BRANCHES_SUPPRIMEES.md` : tant que le ramasse-miettes d'`origin` n'est pas
+passé, chaque branche reste restaurable par `git push origin <sha>:refs/heads/<nom>`.
