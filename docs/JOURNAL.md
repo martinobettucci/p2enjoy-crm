@@ -7348,3 +7348,97 @@ et le motif est écrit dans le fichier à côté de la correction.
 **Après correction, mesuré :** 105 contrôles verts sur le manuel réel ; **6 anomalies** sur le
 manuel dégradé, réparties sur les cinq familles visées, et code de sortie `0` pour la
 contre-épreuve.
+
+### Décision 235 — La spécification de `CRM-050` est écrite après trois pannes, pas après une lecture
+
+**Problème.** `CRM-050` tenait en quatre lignes de backlog : « Stalwart, Roundcube, ClamAV,
+Inbucket conservé ; boîte système et deux boîtes personnelles seedées ». Aucun document ne disait
+quelles images, quels ports, quels domaines, ni surtout comment un serveur mail se provisionne sans
+qu'un exploitant tape des commandes à la main.
+
+**Méthode.** La spécification (`docs/SPEC-mail-subsystem.md` §11) a été rédigée **après** avoir
+fait tourner Stalwart, Roundcube et ClamAV en conteneurs isolés, et après avoir échoué trois fois.
+Les trois échecs sont écrits dans la spécification, parce qu'aucun d'eux ne se lit dans une
+documentation :
+
+1. **La liaison `[::]` tue le serveur en silence.** C'est ce que génère `stalwart --init`. Sur un
+   conteneur sans IPv6, le processus s'arrête sans écrire une ligne : `docker logs` rend le vide,
+   le conteneur reste `Up`, aucun port n'écoute. Trente minutes ont été perdues à chercher une
+   erreur de configuration là où il n'y avait qu'une famille d'adresses. Toutes les liaisons valent
+   `0.0.0.0`.
+2. **Le traceur fichier échoue si son répertoire n'existe pas** — `Failed to create log file`. Un
+   traceur `stdout` est retenu : c'est aussi le seul qui alimente `./runDev.sh --withLog stalwart`.
+3. **Un principal sans rôle s'authentifie et ne peut rien faire.** Créé sans `"roles":["user"]`, le
+   compte valide ses identifiants — le serveur écrit `Authentication successful` — puis refuse la
+   commande avec `Unauthorized access`, **sans rien renvoyer au client**, qui attend jusqu'à sa
+   propre expiration. Le symptôme ressemble à un mot de passe faux ; la cause n'a rien à voir.
+
+**Conséquence.** Le contrôle unitaire de cette unité porte sur la configuration elle-même : une
+régression sur le point 1 rend la pile silencieusement morte, et c'est le seul contrôle capable de
+l'attraper sans démarrer quoi que ce soit.
+
+### Décision 236 — ClamAV est déclaré là où il est exercé, et sa production est une opération due
+
+**Problème.** `docs/DAT.md` §3.6 énumère les composants **exclusivement** de développement, et
+ClamAV n'y figure pas : c'est un composant de production. Fallait-il donc l'ajouter à
+`docker-compose.yml`, l'assemblage commun ?
+
+**Décision : non, pas dans cette unité.** Son unique consommateur est l'ingestion des pièces
+jointes, livrée par `CRM-054`. L'ajouter aujourd'hui à l'assemblage commun obligerait la production
+à démarrer et à tenir `healthy` un service qu'aucun autre n'appelle, et imposerait à `CRM-050` de
+rejouer les preuves de production de `CRM-002` pour un effet qu'aucun énoncé de backlog ne demande
+— c'est-à-dire d'inventer du périmètre (`CLAUDE.md` §1).
+
+Le service est déclaré dans `docker-compose.dev.yml`, là où il est **réellement exercé** par les
+preuves de cette unité. Son passage dans l'assemblage commun est inscrit comme **opération due**
+dans `docs/PROD_MIGRATIONS.md` §4, sous l'unité qui l'appellera.
+
+**Ce que cela coûte, et qui est nommé** : un écart dev/prod temporaire, borné par une unité
+identifiée. Le taire aurait été le vrai défaut.
+
+### Décision 237 — Deux domaines divergeaient parce qu'aucun service ne les comparait
+
+**Mesuré.** `.env.example` portait `CRM_INBOUND_DOMAIN=crm.exemple.tld`. Le seed écrit
+`inbound_domain = crm.p2enjoy.test` dans le workspace (`supabase/seed/apply-seed.sh`). Les deux
+valeurs ne se sont jamais rencontrées : la section 13 de `.env.example` dit en toutes lettres
+qu'« aucun service ne consomme encore ces variables ».
+
+**Pourquoi cela cesse d'être anodin.** À partir de `CRM-050`, Stalwart déclare un domaine et lui
+attache une boîte catch-all. Si ce domaine n'est pas celui que le produit inscrit dans les adresses
+de cards, la boîte système n'attrape rien : elle refuserait les seules adresses qui existent. La
+divergence passerait la compilation, passerait le démarrage, et ne se verrait qu'au premier message
+perdu.
+
+**Décision.** `CRM_INBOUND_DOMAIN` vaut `crm.p2enjoy.test` dans `.env.example`, la valeur que le
+seed écrit réellement, et `scripts/verify-mail-infra.sh` **compare les deux** — la variable
+d'environnement, et la colonne lue dans la base. Un futur changement de l'une sans l'autre rend le
+harnais rouge.
+
+### Décision 238 — Les preuves de protocole ne dépendent d'aucune bibliothèque IMAP ou SMTP
+
+**Problème.** Prouver qu'un serveur IMAP répond suppose un client. Le réflexe est d'installer
+`imapflow` ou `nodemailer`.
+
+**Décision : parler le protocole sur une socket `node:net`.** Deux motifs, et le second est le plus
+fort. D'abord, aucune dépendance n'est ajoutée au dépôt pour une unité d'infrastructure
+(`CLAUDE.md` §19). Ensuite, le point ouvert n° 1 du §10 de `docs/SPEC-mail-subsystem.md` — le choix
+d'une bibliothèque IMAP pour `mail-sync` — est explicitement réservé au chunk qui écrira le
+service : le trancher ici, par le biais d'un test, serait le trancher sans l'instruire.
+
+**Ce que cela apporte** : une preuve qui écrit `a1 LOGIN` et lit `a1 OK` éprouve le serveur. Une
+preuve qui appelle une bibliothèque éprouve surtout la bibliothèque. Le `LIST` mesuré rend d'ailleurs
+le délimiteur réel du serveur — `/` — dont `CRM-056` aura besoin pour ses dossiers imbriqués.
+
+### Décision 239 — Le `viewer` n'a pas de boîte mail, et l'absence est un contenu
+
+**Problème.** Le seed socle livre trois comptes. `CRM-050` demande « deux boîtes personnelles ».
+Laquelle des trois reste sans boîte, et pourquoi ?
+
+**Décision.** Farida Nowak, `viewer`, n'a pas de boîte. Un `viewer` lit ; il ne correspond pas. Lui
+créer une boîte inutilisée laisserait croire que le produit lui destine une messagerie, ce
+qu'aucune spécification ne dit, et le jeu de démonstration cesserait de décrire le produit pour
+décrire une commodité de seed (`CLAUDE.md` §8).
+
+**Conséquence utile** : les trois boîtes livrées couvrent les deux **natures** du §2.1 — une boîte
+système à `owner_id` nul, deux boîtes personnelles rattachées à un propriétaire — ce qu'une
+quatrième boîte n'aurait pas ajouté.

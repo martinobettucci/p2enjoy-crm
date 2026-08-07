@@ -12,6 +12,48 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine
+
+**Nature :** dépendance réseau d'une image épinglée, non satisfaite par l'environnement
+d'exécution ; le composant démarre malgré tout.
+**Relevé le :** 2026-08-07, pendant la spécification de `CRM-050`.
+
+**MESURÉ.** Au premier démarrage, `stalwartlabs/stalwart:v0.13.4` tente de dépaqueter sa console
+web ; ne la trouvant pas dans l'image, il la télécharge depuis
+`https://github.com/stalwartlabs/webadmin/releases/latest/download/webadmin.zip`. Derrière le
+proxy de la routine, la requête échoue et **deux lignes `ERROR`** sont écrites à chaque
+démarrage :
+
+```
+ERROR Resource error … details = "Failed to unpack webadmin bundle"
+ERROR Configuration build error … "Failed to download webadmin: … error sending request"
+```
+
+**Ce qui n'est pas cassé.** Le serveur démarre, ouvre ses quatre listeners, authentifie, remet et
+sert IMAP. L'API de gestion `/api/*` — celle dont le provisionnement se sert — répond
+normalement : c'est la **console web** qui manque, pas l'API.
+
+**Ce qui reste ouvert, et n'est pas résolu ici :**
+
+1. **Faut-il une console d'administration du serveur mail de développement ?** Roundcube est
+   l'outil de vérification visuelle retenu (`docs/SPEC-mail-subsystem.md` §11.5), et l'exploitation
+   passe par l'API. La console n'a peut-être aucun usage dans ce projet — auquel cas la désactiver
+   explicitement vaudrait mieux que de la laisser échouer.
+2. **Deux lignes `ERROR` à chaque démarrage sont un bruit qui use.** Une exploitation qui apprend à
+   ignorer un `ERROR` récurrent finit par ignorer le suivant. Si la console n'est pas voulue, ces
+   lignes ne doivent pas exister.
+3. **La dépendance n'est pas épinglée.** L'image télécharge `latest`. Sur un hôte au réseau ouvert,
+   deux démarrages à deux dates peuvent donc installer deux consoles différentes, ce qui heurte
+   `docs/DAT.md` §3.7 — « aucune image n'est suivie par un tag mouvant ». La règle vise les images ;
+   elle ne dit rien d'un composant qu'une image va chercher elle-même au démarrage.
+
+**Le comportement reste inchangé** : rien n'est ajouté pour contourner le téléchargement, aucune
+option n'est posée pour l'éteindre. La limite est nommée dans `docs/SPEC-mail-subsystem.md` §11.10
+et dans `README.md` §11.
+
+**Lié à :** INC-032 et INC-042 (le même motif — une dépendance réseau que l'environnement de la
+routine ne satisfait pas), `docs/DAT.md` §3.7, `CRM-050`.
+
 ### INC-078 — Quatre harnais de preuves du chunk 3 n'apparaissent dans aucune liste du README
 
 **Nature :** référence manquante entre un fichier livré et le document qui l'inventorie.

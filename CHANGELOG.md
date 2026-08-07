@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification de l'infrastructure mail de développement** — `CRM-050`,
+  `docs/SPEC-mail-subsystem.md` §11, écrite **après mesure sur des conteneurs réellement démarrés**
+  et avant toute ligne de code. L'unité tenait en quatre lignes de backlog ; le document dit
+  désormais quelles images sont épinglées, où chacune est déclarée et pourquoi, quels ports sont
+  publiés, quels domaines et quelles boîtes existent, par quel mécanisme réel elles sont créées, et
+  par quelles preuves l'unité se ferme.
+- **Trois pièges de Stalwart payés avant d'être écrits** (`docs/JOURNAL.md` décision 235) : une
+  liaison `[::]` **tue le serveur en silence** sur un conteneur sans IPv6, le traceur fichier
+  échoue tant que son répertoire n'existe pas, et un principal créé sans rôle s'authentifie puis
+  refuse toute commande sans rien renvoyer au client.
+- **ClamAV est déclaré là où il est exercé** (`docs/JOURNAL.md` décision 236) : l'overlay de
+  développement, son unique consommateur — l'ingestion des pièces jointes — arrivant à `CRM-054`.
+  Son passage dans l'assemblage commun est inscrit comme opération due dans
+  `docs/PROD_MIGRATIONS.md` §4, plutôt que d'imposer à la production un service que rien n'appelle.
+- **`CRM_INBOUND_DOMAIN` converge avec le seed** (`docs/JOURNAL.md` décision 237) :
+  `crm.p2enjoy.test`, et non plus `crm.exemple.tld`. Les deux valeurs divergeaient depuis l'origine
+  sans que rien ne les compare — à partir de `CRM-050`, une divergence rendrait la boîte système
+  incapable d'attraper les seules adresses que le produit génère.
+- **INC-079, consignée et non résolue** : l'image de Stalwart télécharge sa console web depuis
+  GitHub au démarrage ; derrière un réseau fermé la requête échoue et deux lignes `ERROR` sont
+  écrites à chaque démarrage. Le serveur fonctionne et son API de gestion répond ; seule la console
+  manque. Trois questions sont nommées pour l'arbitrage, le comportement reste inchangé.
 - **Spécification du manuel utilisateur du chunk 3** — `CRM-047`, `docs/SPEC-manual.md`, écrite
   **après mesure sur la pile réelle** et avant toute correction. L'unité tenait en une ligne de
   backlog ; le document dit désormais quelle unité vit dans quel chapitre, ce qu'un chapitre doit

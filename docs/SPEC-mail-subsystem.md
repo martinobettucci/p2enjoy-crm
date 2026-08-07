@@ -222,3 +222,269 @@ serveur (Stalwart) et un webmail de contrôle (Roundcube).
 4. **Politique anti-usurpation** : l'adresse d'une card est publique de fait. Faut-il restreindre
    l'ingestion aux expéditeurs connus, ou tout accepter en signalant les expéditeurs inconnus ?
    Comportement retenu par défaut : tout accepter, ne rien déclencher automatiquement.
+
+---
+
+## 11. Infrastructure de messagerie de développement — `CRM-050`
+
+Écrite **après mesure** sur la pile réellement exécutée le 2026-08-07, et non d'après la
+documentation des images retenues. Chaque paragraphe intitulé « Mesuré » rapporte une sortie de
+commande obtenue sur cet hôte ; les pièges nommés au §11.4 ont tous été rencontrés avant d'être
+écrits.
+
+Unité de backlog : **`CRM-050`** (`docs/BACKLOG.md`, chunk 4).
+Documents liés : `docs/DAT.md` §3.3, §3.4, §3.6 et §3.7, `README.md` §6 et §9,
+`docs/SPEC-seed.md` §4 (identifiants stables), `docs/PROD_MIGRATIONS.md` §4.
+
+### 11.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+`CRM-050` livre **le monde extérieur** dont la messagerie a besoin pour être vérifiable : un vrai
+serveur IMAP/SMTP, un webmail de contrôle, un antivirus, et des boîtes réellement créées. Elle ne
+livre **aucun consommateur** : ni `mail-sync` (`CRM-051`), ni ingestion (`CRM-054`), ni écran
+(`CRM-057`).
+
+La distinction gouverne la Definition of Done. Une preuve de cette unité exerce le **protocole** —
+un client IMAP se connecte, un client SMTP dépose, un client `clamd` fait analyser — jamais un
+comportement produit, qui n'existe pas encore. Fabriquer ici un embryon de `mail-sync` pour avoir
+quelque chose à tester préempterait `CRM-051` et gonflerait l'unité au-delà de son énoncé
+(`CLAUDE.md` §1).
+
+| Livré par `CRM-050` | Attendu d'une unité ultérieure |
+|---|---|
+| Stalwart, ses domaines et ses trois boîtes | Comptes entrants configurés dans le CRM (`CRM-052`) |
+| Roundcube, connecté à Stalwart | Inbox globale du produit (`CRM-057`) |
+| ClamAV, joignable et doté de ses signatures | Analyse des pièces jointes (`CRM-054`) |
+| Projet Playwright `mail` et ses scénarios de connexion | Aller-retour d'email complet (`CRM-054`, `CRM-058`) |
+| Inbucket **conservé** pour les emails transactionnels | — |
+
+**Inbucket n'est pas remplacé.** Il reste le puits des emails transactionnels de GoTrue, et
+`CRM-011` s'appuie sur lui. Les deux serveurs coexistent parce qu'ils ne servent pas le même
+usage : Inbucket capture ce que la pile *envoie* et n'expose pas d'IMAP ; Stalwart est un serveur
+que le produit devra *lire*. `README.md` §6 le dit déjà, et cette unité ne change pas ce partage.
+
+### 11.2 Composants, images épinglées et placement
+
+| Service | Image épinglée | Fichier Compose | Motif du placement |
+|---|---|---|---|
+| `stalwart` | `stalwartlabs/stalwart:v0.13.4` | `docker-compose.dev.yml` | La production utilise les serveurs des utilisateurs (`docs/DAT.md` §3.6) |
+| `stalwart-init` | `curlimages/curl:8.16.0` | `docker-compose.dev.yml` | Provisionne les boîtes par la véritable API de gestion, puis s'arrête |
+| `roundcube` | `roundcube/roundcubemail:1.6.11-apache` | `docker-compose.dev.yml` | Outil de contrôle du développement (`docs/DAT.md` §3.6) |
+| `clamav` | `clamav/clamav:1.4.3` | `docker-compose.dev.yml` | Voir la décision ci-dessous |
+
+**ClamAV est déclaré dans l'overlay de développement, et son déclaration de production est due à
+`CRM-054`.** `docs/DAT.md` §3.6 ne le range pas parmi les composants exclusivement de
+développement : c'est bien un composant de production. Mais son unique consommateur est
+l'ingestion des pièces jointes, livrée par `CRM-054`. L'ajouter aujourd'hui à l'assemblage commun
+imposerait à la production de démarrer et de tenir `healthy` un service qu'aucun autre service
+n'appelle, et obligerait cette unité à rejouer les preuves de production de `CRM-002` pour un
+changement dont aucun énoncé de backlog ne demande l'effet. Le service est donc déclaré là où il
+est **exercé**, et son passage dans `docker-compose.yml` est inscrit comme opération due dans
+`docs/PROD_MIGRATIONS.md` §4, sous l'unité qui l'appellera.
+
+Aucune image n'est suivie par un tag mouvant (`docs/DAT.md` §3.7). `curlimages/curl` est la
+quatrième image introduite par cette unité ; elle ne sert qu'à porter un client HTTP dans le
+réseau interne, où aucun autre service n'en fournit — mesuré : l'image de Stalwart n'embarque ni
+`curl` ni `wget`, et son `stalwart-cli` v0.13.4 n'expose **aucune** sous-commande de gestion de
+compte.
+
+### 11.3 Configuration de Stalwart
+
+Le fichier `stalwart/config.toml` est **versionné et monté en lecture seule**. L'entrée par défaut
+de l'image écrit une configuration au premier démarrage, avec un mot de passe d'administration
+**tiré au hasard et imprimé dans les journaux** : ce comportement est incompatible avec un
+environnement reproductible, et il est écarté en fournissant la configuration.
+
+Les valeurs sensibles n'y figurent pas en clair : la configuration lit l'environnement par la
+macro `%{env:VARIABLE}%`.
+
+**Mesuré — les listeners doivent lier `0.0.0.0`, jamais `[::]`.** La configuration générée par
+`--init` lie `[::]`. Sur un hôte dont le conteneur n'a pas d'IPv6, le serveur **s'arrête sans
+écrire une seule ligne**, ni sur la sortie standard ni dans un fichier : `docker logs` rend le
+vide, le conteneur reste `Up`, et aucun port n'est ouvert. C'est le piège le plus coûteux de
+l'unité, et il ne se diagnostique par aucun message. Toutes les liaisons valent donc `0.0.0.0`.
+
+**Mesuré — le traceur écrit sur la sortie standard, pas dans un fichier.** Le traceur `log`
+généré par `--init` échoue avec `Failed to create log file … No such file or directory` tant que
+le répertoire n'existe pas. Un traceur `stdout` est retenu : il rend les journaux à
+`docker compose logs`, donc à `./runDev.sh --withLog stalwart`, ce qui est le comportement attendu
+d'un service conteneurisé (`CLAUDE.md` §20).
+
+**Mesuré — la console web de Stalwart n'est pas disponible dans cet environnement.** Au démarrage,
+le serveur tente de télécharger son paquet `webadmin` depuis GitHub ; derrière le proxy de la
+routine, la requête échoue et deux lignes `ERROR` sont écrites. **Le serveur démarre malgré tout**,
+et tous ses protocoles fonctionnent : la console n'est pas un prérequis. Elle n'est de toute façon
+pas l'outil de vérification visuelle de ce projet — Roundcube l'est. La limite est nommée au
+§11.9.
+
+Listeners retenus, et rien de plus : `smtp` (remise, port 25), `submission` (soumission
+authentifiée, port 587), `imap` (port 143), `http` (API de gestion, port 8080). Les variantes
+implicitement chiffrées de la configuration générée — `submissions`, `imaptls`, `pop3s`, `https` —
+et les protocoles inutilisés — `pop3`, `managesieve` — sont retirés : un port ouvert sans usage est
+une surface, et un certificat auto-signé en développement complique chaque client sans rien
+prouver.
+
+**Aucun TLS en développement, et c'est un choix nommé.** `imap.auth.allow-plain-text` vaut `true`
+et la soumission SMTP annonce `AUTH PLAIN LOGIN` en clair. Les ports ne sont publiés que sur
+`DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) : rien ne sort de l'hôte. En production, ce sont les
+serveurs des utilisateurs qui portent le chiffrement, et `mail_inbound_accounts.security` en
+décrit déjà les trois valeurs (§2.1). Ce choix ne relâche donc aucune règle de production.
+
+### 11.4 Domaines et boîtes de développement
+
+Deux domaines sont déclarés, tous deux sous `.test`, TLD réservé par la RFC 2606 et non routable —
+la même précaution que celle du seed socle (`docs/SPEC-seed.md` §2) :
+
+| Domaine | Rôle |
+|---|---|
+| `crm.p2enjoy.test` | Domaine des adresses de cards, valeur de `workspaces.inbound_domain` du seed |
+| `p2enjoy.test` | Domaine des adresses personnelles des comptes seedés |
+
+Trois boîtes, qui sont exactement celles que l'énoncé de `CRM-050` demande — « boîte système et
+deux boîtes personnelles » :
+
+| Adresse | Nature (§2.1) | Compte du seed |
+|---|---|---|
+| `systeme@crm.p2enjoy.test` | Boîte **système** du workspace, `owner_id` `NULL` | — |
+| `admin@p2enjoy.test` | Boîte personnelle | Camille Aubert, `admin` |
+| `bizdev@p2enjoy.test` | Boîte personnelle | Driss Lemoine, `business_developer` |
+
+**Farida Nowak (`viewer`) n'a pas de boîte, et c'est délibéré.** Un `viewer` lit ; il ne
+correspond pas. Lui créer une boîte inutilisée donnerait à croire que le produit lui destine une
+messagerie, ce qu'aucune spécification ne dit.
+
+**Mesuré — la boîte système est un véritable catch-all.** L'adresse `@crm.p2enjoy.test`, inscrite
+sans partie locale dans la liste `emails` du principal, capte tout le domaine. Un message soumis à
+`c-abcd1234@crm.p2enjoy.test` — une adresse de card qui n'a jamais été déclarée — est accepté puis
+relu dans `INBOX` de `systeme@crm.p2enjoy.test`. C'est le mécanisme exact que le §2.1 attend de la
+boîte système.
+
+**Mesuré — un principal sans rôle s'authentifie et ne peut rien faire.** Créé sans
+`"roles":["user"]`, un compte valide bien ses identifiants — le serveur écrit
+`Authentication successful` — puis **refuse la commande** : `Unauthorized access … "authenticate"`,
+et le client reste sans réponse jusqu'à sa propre expiration. Aucun message d'erreur n'atteint le
+client. Le provisionnement pose donc `roles: ["user"]` sur chaque boîte, et le harnais vérifie que
+la connexion IMAP **aboutit**, pas seulement que le compte existe.
+
+**Créées par le véritable mécanisme.** Le service `stalwart-init` appelle l'API de gestion de
+Stalwart (`POST /api/principal`, authentification HTTP Basic avec l'administrateur de repli), comme
+le ferait un exploitant. Aucune écriture directe dans la base RocksDB, aucune donnée fabriquée à la
+main : c'est la règle de `CLAUDE.md` §8, appliquée à un serveur mail comme le seed socle l'applique
+aux comptes Supabase.
+
+**Convergent, comme le seed socle.** Le provisionnement se rejoue sans erreur ni doublon : un
+principal déjà présent est mis à jour, jamais dupliqué ; l'API rend alors un conflit, que le script
+reconnaît comme un état déjà atteint et non comme un échec. Un rejeu ne détruit aucun message.
+
+**Mot de passe commun `SeedDev2026Local`**, celui du seed socle. Il ne protège rien : les adresses
+sont sous `.test`, les ports ne sont ouverts que sur la boucle locale, et le serveur ne contient
+que des messages de démonstration. Le publier dans `README.md` est délibéré, exactement comme pour
+les comptes seedés (`docs/SPEC-seed.md` §2). Le mot de passe de **l'administrateur** de Stalwart,
+lui, est tiré au hasard par `runDev.sh` au premier amorçage et n'est jamais versionné.
+
+### 11.5 Roundcube
+
+Webmail de contrôle, et **seul moyen de vérification visuelle** de la messagerie tant que l'inbox
+du produit n'existe pas (`CRM-057`). Il se connecte à Stalwart par le réseau interne, en IMAP sur
+143 et en soumission sur 587. Sa base est un SQLite interne : aucun schéma supplémentaire n'est
+ajouté à PostgreSQL pour un outil de développement.
+
+Sa Definition of Done est **d'afficher les boîtes** : une session ouverte avec les identifiants
+d'une boîte seedée, et l'arborescence de dossiers rendue à l'écran. C'est ce que le scénario
+d'interface vérifie, capture à l'appui.
+
+### 11.6 ClamAV
+
+`clamd` écoute sur 3310. **Mesuré — les signatures sont dans l'image**, et aucun téléchargement
+n'est nécessaire pour que l'analyse fonctionne : `zPING` rend `PONG`, et un `zINSTREAM` portant la
+chaîne de test EICAR rend `stream: Eicar-Test-Signature FOUND`. Le rafraîchissement par
+`freshclam` reste tenté périodiquement et échoue sans conséquence lorsque le réseau est fermé ;
+l'analyse continue avec la base embarquée.
+
+La preuve retenue n'est donc **pas** la simple vivacité du service. Un `PONG` prouve qu'un
+processus écoute, pas qu'il sait détecter. Le harnais exige la détection réelle d'EICAR, qui est le
+seul contrôle capable de distinguer un antivirus opérant d'un antivirus sans base.
+
+### 11.7 Variables d'environnement
+
+Toutes documentées dans `.env.example` avec leur rôle, leur format, leur caractère obligatoire et
+une valeur d'exemple non sensible (`CLAUDE.md` §3).
+
+| Variable | Rôle | Format | Requise |
+|---|---|---|---|
+| `STALWART_IMAP_PORT` | Port IMAP publié sur l'hôte | entier 1-65535 | oui en développement |
+| `STALWART_SMTP_PORT` | Port de **remise** SMTP publié (conteneur : 25) | entier 1-65535 | oui en développement |
+| `STALWART_SUBMISSION_PORT` | Port de **soumission** authentifiée publié (conteneur : 587) | entier 1-65535 | oui en développement |
+| `STALWART_ADMIN_PORT` | Port de l'API de gestion publié (conteneur : 8080) | entier 1-65535 | oui en développement |
+| `STALWART_ADMIN_USER` | Administrateur de repli de Stalwart | chaîne | oui en développement |
+| `STALWART_ADMIN_PASSWORD` | Son mot de passe, **tiré au hasard à l'amorçage** | chaîne | oui en développement |
+| `STALWART_MAILBOX_PASSWORD` | Mot de passe commun des boîtes de développement | chaîne | oui en développement |
+| `MAIL_DEV_PERSONAL_DOMAIN` | Domaine des adresses personnelles seedées | domaine | oui en développement |
+| `ROUNDCUBE_PORT` | Port du webmail de contrôle | entier 1-65535 | oui en développement |
+| `CLAMAV_PORT` | Port `clamd` publié sur l'hôte | entier 1-65535 | oui en développement |
+
+**`CRM_INBOUND_DOMAIN` cesse d'être une variable sans consommateur.** Elle vaut désormais
+`crm.p2enjoy.test` dans `.env.example`, et non plus `crm.exemple.tld` : c'est le domaine que
+Stalwart déclare, et c'est celui que le seed écrit dans `workspaces.inbound_domain`. Les deux
+valeurs divergeaient sans que rien ne les compare, parce qu'aucun service ne lisait la variable ;
+à partir de cette unité, une divergence rendrait la boîte système inutile — le catch-all
+n'accepterait pas les adresses que le produit génère. Le harnais compare les deux valeurs.
+
+### 11.8 Ports et exposition
+
+Publiés **uniquement** sur `DEV_BIND_ADDRESS`, comme tous les services de développement
+(`README.md` §6) :
+
+| Service | Hôte | Conteneur |
+|---|---|---|
+| Stalwart IMAP | `1143` | `143` |
+| Stalwart SMTP (remise) | `1025` | `25` |
+| Stalwart soumission | `1587` | `587` |
+| Stalwart API de gestion | `8081` | `8080` |
+| Roundcube | `8080` | `80` |
+| ClamAV `clamd` | `3310` | `3310` |
+
+Les ports 1143, 1025 et 8080 sont ceux que `README.md` §6 annonçait déjà avant la livraison ; ils
+sont tenus.
+
+### 11.9 Preuves exigées
+
+| Niveau | Preuve | Fichier |
+|---|---|---|
+| Unitaire | Le fichier de configuration de Stalwart respecte les invariants mesurés : aucune liaison `[::]`, traceur `stdout`, aucun secret en clair, les quatre listeners attendus et pas d'autre | `stalwart/config.test.ts` |
+| Intégration | Provisionnement convergent, principals réellement créés avec leur rôle, catch-all déclaré | `scripts/verify-mail-infra.sh` |
+| Protocole | Connexion IMAP réelle sur les trois boîtes, `LIST` non vide, `SELECT INBOX` ; soumission SMTP authentifiée réelle, message remis dans la boîte système par le catch-all et relu par IMAP ; `clamd` détecte EICAR | `e2e/mail/*.spec.ts` (projet Playwright `mail`) |
+| Refus | Un mot de passe faux est refusé ; l'API de gestion refuse une requête anonyme | `e2e/mail/*.spec.ts` |
+| Visuel | Roundcube affiche les boîtes : session ouverte, arborescence de dossiers rendue, captures observées | `e2e/ui/roundcube.spec.ts` |
+
+Le test unitaire porte sur le **seul artefact du dépôt qui contienne de la logique** : la
+configuration de Stalwart. Il la lit et vérifie ses invariants, dont deux ont été payés par une
+panne réelle (§11.3). Ce n'est pas un test de façade : une régression sur `[::]` rend la pile
+silencieusement morte, et ce test est le seul contrôle capable de l'attraper sans démarrer la pile.
+Il vit **à côté du fichier qu'il éprouve**, et non dans `webapp/src/` : le périmètre de Vitest est
+étendu à `stalwart/` dans le même changement, plutôt que de ranger une preuve d'infrastructure
+parmi celles de l'interface.
+
+Les scénarios de protocole n'emploient **aucune bibliothèque IMAP ou SMTP**. Ils parlent le
+protocole sur une socket TCP, avec le module `node:net`. Le motif est double : aucune dépendance
+n'est ajoutée au dépôt pour une unité d'infrastructure (`CLAUDE.md` §19), et une preuve qui écrit
+`a1 LOGIN` puis lit `a1 OK` prouve le serveur, là où une bibliothèque prouverait surtout
+elle-même. Le point ouvert n° 1 du §10 — le choix d'une bibliothèque IMAP pour `mail-sync` — n'est
+donc **pas** tranché ici : il reste ouvert pour `CRM-051`.
+
+Le projet Playwright `mail`, annoncé par `README.md` §7 et laissé non déclaré par `CRM-008`
+(`docs/INCONSISTENCY_REPORT.md` INC-023), est déclaré par cette unité. Il n'exige aucun navigateur
+et aucun `webServer` : il ne parle qu'aux serveurs.
+
+### 11.10 Limites nommées
+
+- **Aucun consommateur applicatif.** Rien dans le CRM ne lit ces boîtes avant `CRM-052` et
+  `CRM-054`. Les preuves de cette unité exercent des protocoles, pas un parcours produit.
+- **La console web de Stalwart n'est pas disponible** derrière un réseau fermé (§11.3). La
+  vérification visuelle passe par Roundcube, et l'exploitation par l'API de gestion.
+- **Aucun TLS**, par choix documenté au §11.3. Un environnement de développement exposé au-delà de
+  la boucle locale exigerait de revenir sur ce choix.
+- **ClamAV n'est pas déclaré en production** (§11.2) : opération due, inscrite dans
+  `docs/PROD_MIGRATIONS.md` §4 sous `CRM-054`.
+- **La base de signatures est celle de l'image.** Sur un réseau fermé, `freshclam` échoue et les
+  signatures vieillissent avec l'image épinglée. C'est acceptable en développement ; la production
+  devra prévoir le rafraîchissement (`docs/DAT.md` §14).

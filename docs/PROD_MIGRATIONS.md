@@ -451,6 +451,21 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `caddy` | À chaque changement de `caddy/Caddyfile` |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
 
+**Opération due — déclarer `clamav` dans l'assemblage commun, avec `CRM-054`.** `CRM-050` a livré
+ClamAV dans `docker-compose.dev.yml` seulement, là où il est réellement exercé par ses preuves
+(`docs/JOURNAL.md` décision 236). Son unique consommateur est l'ingestion des pièces jointes,
+livrée par `CRM-054` : c'est cette unité qui devra le déplacer dans `docker-compose.yml`, ajouter
+sa variable de port au contrat d'environnement de production, et **rejouer les preuves de
+production de `CRM-002`** — le nombre de services attendus `healthy` par `scripts/verify-scripts.sh`
+change avec lui. Tant que l'opération n'est pas faite, la production n'analyse aucune pièce jointe,
+et elle n'en reçoit aucune : rien ne l'y dépose avant `CRM-054`.
+
+**Aucun des composants de `CRM-050` n'est destiné à la production.** Stalwart, Roundcube et le
+provisionnement de boîtes `stalwart-init` sont des composants **exclusivement** de développement
+(`docs/DAT.md` §3.6) : la production utilise les serveurs des utilisateurs, décrits au §2.2
+ci-dessus. Aucune variable `STALWART_*`, `ROUNDCUBE_*` ni `MAIL_DEV_*` n'est à provisionner sur un
+hôte de production.
+
 **Une variable ajoutée n'atteint pas un `.env` existant.** Les scripts n'amorcent que les fichiers
 absents : un `.env` déjà en place ne gagne pas les variables introduites depuis. Le cas n'est pas
 silencieux — la validation de `CRM-002` refuse le démarrage et **nomme** la variable manquante :

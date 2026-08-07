@@ -4281,11 +4281,42 @@ plutôt que comblé par un test de façade.
 
 ## Chunk 4 — Messagerie
 
-### CRM-050 — Infrastructure mail de développement `[ ]`
+### CRM-050 — Infrastructure mail de développement `[~]`
 Stalwart (IMAP/SMTP), Roundcube (vérification visuelle), ClamAV, Inbucket conservé pour les
 mails transactionnels. Boîte système et deux boîtes personnelles seedées.
 **DoD** : `runDev.sh` démarre l'ensemble ; connexion IMAP et SMTP constatée ; Roundcube affiche
 les boîtes ; `README.md` §6 conforme.
+
+- [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-mail-subsystem.md` §11 :
+      l'unité tenait en quatre lignes, qui ne disaient ni quelles images, ni quels ports, ni quels
+      domaines, ni comment un serveur mail se provisionne sans qu'un exploitant tape des commandes
+      à la main. Rédigée **après mesure** sur des conteneurs réellement démarrés — et après trois
+      pannes, écrites dans le document parce qu'aucune ne se lit dans une documentation
+      (décision 235). Commit documentaire dédié, poussé avant la première ligne de code.
+- [x] **Trois pièges mesurés, pas supposés** : la liaison `[::]` que génère `stalwart --init` **tue
+      le serveur en silence** sur un conteneur sans IPv6 — `docker logs` vide, conteneur `Up`,
+      aucun port ouvert ; le traceur fichier échoue tant que son répertoire n'existe pas ; et un
+      principal créé sans `"roles":["user"]` **s'authentifie puis ne peut rien faire**, sans qu'un
+      seul octet revienne au client.
+- [x] **Chaîne de bout en bout déjà mesurée sur des conteneurs isolés** : soumission SMTP
+      authentifiée en clair sur 587, message adressé à `c-abcd1234@crm.p2enjoy.test` — une adresse
+      de card jamais déclarée — accepté, remis par le **catch-all** dans `INBOX` de la boîte
+      système, puis relu par IMAP avec son `Message-ID` intact. Délimiteur de hiérarchie mesuré :
+      `/`, ce dont `CRM-056` aura besoin.
+- [x] **ClamAV prouvé opérant, et non seulement vivant** : `zPING` rend `PONG`, et un `zINSTREAM`
+      portant la chaîne de test EICAR rend `stream: Eicar-Test-Signature FOUND`. Les signatures
+      sont dans l'image ; aucun téléchargement n'est nécessaire.
+- [x] **Cinq décisions consignées** : `docs/JOURNAL.md` 235 à 239 — la méthode, le placement de
+      ClamAV (décision 236), la convergence de `CRM_INBOUND_DOMAIN` avec le seed (décision 237),
+      les preuves de protocole sans bibliothèque (décision 238), et l'absence de boîte pour le
+      `viewer` (décision 239).
+- [x] **Une contradiction consignée sans être résolue** : **INC-079**. L'image de Stalwart
+      télécharge sa console web depuis GitHub au démarrage ; derrière le proxy de la routine, la
+      requête échoue et deux lignes `ERROR` sont écrites à chaque démarrage. Le serveur fonctionne,
+      l'API de gestion répond, seule la console manque. Trois questions nommées — la console
+      est-elle voulue, le bruit doit-il subsister, et une dépendance téléchargée en `latest`
+      heurte-t-elle `docs/DAT.md` §3.7 — aucune tranchée, comportement inchangé.
+- [ ] **Implémentation, preuves et vérification visuelle** : voir le commit suivant.
 
 ### CRM-051 — Service `mail-sync` `[ ]`
 Squelette Python, configuration, journaux structurés, point de santé, API interne.
