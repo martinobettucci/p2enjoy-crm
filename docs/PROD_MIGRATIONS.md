@@ -86,6 +86,10 @@ La liste exhaustive, développement compris, figure dans `.env.example`, où cha
 documentée avec son rôle, son format et son caractère obligatoire. `scripts/verify-scripts.sh`
 vérifie que ce gabarit couvre exactement les variables consommées par les fichiers Compose.
 
+**Aucune opération de production pour `NPM_CA_FILE` (`CRM-015`).** Cette variable facultative ne
+sert qu'au secret BuildKit de l'image Vite de développement. La production sert `webapp/dist`
+construit sur l'hôte et `docker-compose.prod.yml` ne consomme ni `NPM_CA_FILE`, ni `npm_ca`.
+
 Aucune clé de production n'est utilisée pour les tests. Aucun environnement local n'est relié en
 écriture à la base de production.
 
@@ -466,9 +470,10 @@ provisionnement de boîtes `stalwart-init` sont des composants **exclusivement**
 ci-dessus. Aucune variable `STALWART_*`, `ROUNDCUBE_*` ni `MAIL_DEV_*` n'est à provisionner sur un
 hôte de production.
 
-**Une variable ajoutée n'atteint pas un `.env` existant.** Les scripts n'amorcent que les fichiers
-absents : un `.env` déjà en place ne gagne pas les variables introduites depuis. Le cas n'est pas
-silencieux — la validation de `CRM-002` refuse le démarrage et **nomme** la variable manquante :
+**Une variable obligatoire ajoutée n'atteint pas un `.env` existant.** Les scripts n'amorcent que
+les fichiers absents : un `.env` déjà en place ne gagne pas les variables introduites depuis. Le
+cas n'est pas silencieux — la validation de `CRM-002` refuse le démarrage et **nomme** la variable
+manquante lorsque son exemple est non vide :
 
 ```
   manquante PASSWORD_MIN_LENGTH
@@ -477,6 +482,8 @@ ERREUR 1 variable(s) à corriger dans /chemin/.env. Le contrat est .env.example.
 
 Comportement mesuré lors de la livraison de `CRM-011`. La marche à suivre est d'ajouter la
 variable au fichier d'environnement de l'hôte, puis de recréer le service `auth`.
+Une variable facultative à exemple vide peut en revanche être omise : c'est le contrat de
+compatibilité introduit par `CRM-015` pour `NPM_CA_FILE`, sans affaiblir les variables obligatoires.
 
 **La webapp de production n'est pas une image : c'est un répertoire.** `npm run build` produit
 `webapp/dist` sur l'hôte, et `docker-compose.prod.yml` le monte en lecture seule dans Caddy. Le

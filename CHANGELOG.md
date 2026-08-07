@@ -15,6 +15,12 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le contrat de `CRM-015` est spécifié avant son code.** `NPM_CA_FILE` sera un chemin PEM
+  facultatif fourni par l'environnement, validé avant Docker et transporté comme secret BuildKit
+  vers `npm_ca`; absent ou vide, `/dev/null` rend l'assemblage inerte. La décision 280 fixe aussi
+  la priorité du shell, la compatibilité des anciens `.env`, les deux builds sans cache, l'absence
+  de secret dans l'image et l'absence explicite d'opération de production.
+
 - **`CRM-008` est close sur une base froide et depuis le vrai shell WSL.** Le harnais refuse
   désormais `npm.exe`, résout Node **v24.14.1** / npm **11.11.0** dans les installations NVM
   locales avant toute mutation et éprouve ce choix dans quatre environnements isolés. Son résumé

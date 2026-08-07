@@ -1487,7 +1487,7 @@ variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat in
 
 ---
 
-### CRM-015 — Secret de build du registre npm `[ ]`
+### CRM-015 — Secret de build du registre npm `[~]`
 Le secret de build `npm_ca`, déjà prévu par le `Dockerfile` de la webapp, est **fourni par les
 fichiers Compose** à partir de l'environnement.
 **DoD** : `./runDev.sh` construit l'image de la webapp derrière un proxy à certificat interposé ;
@@ -1495,15 +1495,33 @@ sur un poste sans proxy, **rien ne change** ; aucun certificat n'est versionné.
 
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 255, INC-042.
 
-- [ ] **Le motif est mesuré, pas ressenti** : INC-042 en est à sa **onzième** occurrence. Le coût
+- [x] **Le motif est mesuré, pas ressenti** : INC-042 en est à sa **onzième** occurrence. Le coût
       n'est pas du temps mais une **preuve perdue à chaque unité** — `./runDev.sh` n'a jamais été
       exécuté de bout en bout, alors que la DoD de `CRM-050` l'exige nommément et que toutes les
       unités d'interface reposent dessus.
-- [ ] **Contrainte non négociable attachée à la décision** : le certificat vient de
+- [x] **Contrainte non négociable attachée à la décision** : le certificat vient de
       l'environnement, jamais du dépôt, et l'assemblage reste **inerte** là où la variable est
       absente.
+- [x] **Spécification écrite avant le code**, `docs/SPEC-webapp.md` §12.1, décision 280 : variable
+      `NPM_CA_FILE`, priorité du shell identique à Compose, format PEM absolu et lisible, secret
+      vide `/dev/null`, compatibilité des anciens `.env`, refus avant Docker et inspection de
+      l'image. Commit documentaire dédié.
 - [ ] La variable est documentée dans `README.md` §9 et `.env.example` — nom, rôle, format,
       caractère facultatif — sans valeur réelle.
+- [ ] `docker-compose.dev.yml` transporte le secret `npm_ca` jusqu'au montage BuildKit du
+      `Dockerfile`. Variable absente ou vide : marqueur `inactif` et `npm ci` inchangé. Variable
+      renseignée : marqueur `actif` et `cafile` limité à l'instruction de build.
+- [ ] `runDev.sh --bootstrap` refuse avant Docker toute valeur effective relative, absente, non
+      régulière, illisible, vide ou non PEM ; une valeur exportée par le shell prévaut sur `.env`.
+      Un ancien `.env` qui omet cette variable facultative reste accepté.
+- [ ] **Deux constructions sans cache réelles**, sans CA puis avec le paquet d'autorités de
+      l'hôte ; l'image finale ne contient ni `/run/secrets/npm_ca`, ni `cafile`, ni `.npmrc` non
+      vide. Aucun certificat ni copie de certificat n'apparaît dans le dépôt.
+- [ ] **Parcours utilisateur réel** : `./runDev.sh` aboutit dans les deux configurations, la
+      webapp répond, puis `scripts/verify-stack.sh`, `verify-scripts.sh`, build, tests unitaires,
+      E2E UI et console stricte restent verts.
+- [ ] `docs/PROD_MIGRATIONS.md` nomme explicitement l'absence d'opération de production : le
+      secret ne concerne que l'image Vite de développement.
 
 ### CRM-016 — Fonctions edge `[ ]`
 `edge-runtime` déployé, `supabase/functions/` créé, route `/functions/v1/` déclarée dans la

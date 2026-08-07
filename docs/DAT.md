@@ -368,9 +368,10 @@ exprimé par `STACK_RLIMIT_NOFILE` (défaut `100000`) plutôt que laissé à un 
 hôte dont la limite dure est inférieure doit l'abaisser, faute de quoi ces deux services
 redémarrent en boucle (`docs/JOURNAL.md`, décision 14).
 
-Cinq autres suppositions sur l'hôte ont été mesurées fausses sur un poste WSL, et sont désormais
+Six autres suppositions sur l'hôte ont été mesurées fausses sur un poste WSL. Cinq sont déjà
 **gardées par les scripts** plutôt que subies (`docs/JOURNAL.md`, décisions 98 à 101 et 257).
-Chacune est inerte là où elle ne s'applique pas, en particulier dans le conteneur d'intégration.
+La sixième est le travail en cours de `CRM-015` (décisions 255 et 280). Chacune est conçue pour
+rester inerte là où elle ne s'applique pas, en particulier dans le conteneur d'intégration.
 
 | Supposition | Ce que fait le dépôt |
 |---|---|
@@ -379,6 +380,7 @@ Chacune est inerte là où elle ne s'applique pas, en particulier dans le conten
 | `localhost` désigne IPv4 dans un conteneur | Le contrôle de santé de `storage` vise `127.0.0.1` : le service n'écoute qu'en IPv4, et `/etc/hosts` résout aussi `localhost` en `::1` |
 | L'hôte peut effacer ce que la pile a écrit | `resetMe.sh` détruit le cluster PostgreSQL par un conteneur jetable ; `ensure_host_mountpoints` crée `node_modules` avant Compose, faute de quoi le démon le crée en `root` dans le dépôt de l'utilisateur |
 | Le contexte de build peut lire tout le dépôt sans fuite | Le `.dockerignore` racine exclut `.env`, `.git`, les dépendances et sorties générées, ainsi que `supabase/docker/volumes/` ; le `COPY . .` de l'image de développement ne reçoit donc ni secret local ni données PostgreSQL fermées en `0750` |
+| Le registre npm présente une chaîne TLS publique | `CRM-015` doit transporter comme secret BuildKit le fichier PEM externe désigné par `NPM_CA_FILE`, après validation avant Docker. Absent ou vide, `/dev/null` garde le build strictement inerte ; le secret ne persiste jamais dans l'image |
 
 ## 4. Flux principaux
 

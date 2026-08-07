@@ -3001,6 +3001,12 @@ coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 255.** **Le secret de build `npm_ca` est câblé**, dans une unité à part entière : `CRM-015`. Onzième occurrence — c'est une mesure, pas une malchance —, et le coût réel est une **preuve perdue à chaque unité**. Contrainte non négociable : le certificat vient de l'environnement, jamais du dépôt, et l'assemblage reste inerte là où la variable est absente.
 
+**Contrat de mise en œuvre — décision 280.** `NPM_CA_FILE` porte uniquement un chemin PEM absolu
+et lisible ; Compose le remplace par `/dev/null` lorsqu'il est absent ou vide. `runDev.sh` valide
+la valeur effective avant Docker, y compris la priorité du shell sur `.env`. Les anciens `.env`
+peuvent omettre cette variable facultative. La fermeture exige deux builds sans cache, l'absence
+du secret et du `cafile` dans l'image finale, puis le lancement réel dans les deux configurations.
+
 **Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
 **Relevé le :** 2026-08-04, pendant `CRM-033`.
 

@@ -1,6 +1,6 @@
 # Spécification — squelette de la webapp
 
-Unité de backlog : `CRM-007` (`docs/BACKLOG.md`). Documents liés : `docs/DESIGN_SYSTEM.md`
+Unité de backlog : `CRM-007` (`docs/BACKLOG.md`), étendue par `CRM-015` au §12.1. Documents liés : `docs/DESIGN_SYSTEM.md`
 (référence maîtresse de l'interface), `docs/DAT.md` §3.1 (composant `webapp`), §9 (déploiement),
 §13 (commandes), `docs/SPEC-types.md` (types générés consommés ici), `README.md` §5, §7, §8, §10.
 
@@ -408,6 +408,29 @@ Le `Dockerfile` accepte un secret de construction **facultatif**, `npm_ca` : der
 HTTPS qui interpose son propre certificat, `npm ci` échoue en `SELF_SIGNED_CERT_IN_CHAIN` tant que
 l'autorité n'est pas connue du conteneur. Le fichier n'entre ni dans l'image, ni dans le dépôt ;
 sans lui, la construction se déroule normalement.
+
+#### Extension `CRM-015` — transport et gardes du secret de build
+
+Contrat validé avant implémentation (`docs/JOURNAL.md`, décision 280) :
+
+- `.env.example` déclare `NPM_CA_FILE=` comme variable facultative. Une valeur non vide est le
+  chemin **absolu** d'un fichier régulier, lisible, non vide et PEM ; le certificat lui-même ne
+  figure jamais dans `.env` ;
+- une valeur exportée par le shell a priorité sur `.env`, comme pour l'interpolation Compose, et
+  c'est cette valeur effective que `runDev.sh` valide avant tout accès à Docker ;
+- le secret Compose `npm_ca` lit `${NPM_CA_FILE:-/dev/null}`. Absent, vide ou omis d'un ancien
+  `.env`, il monte donc un fichier vide et le `Dockerfile` reste inerte ;
+- une variable facultative, reconnaissable à son exemple vide, peut manquer d'un `.env` existant.
+  Les variables dont l'exemple est non vide gardent leur contrat strict de présence et de valeur ;
+- le build annonce seulement `npm_ca: actif` ou `npm_ca: inactif`, jamais le chemin ou le contenu ;
+- après le build, `/run/secrets/npm_ca` est absent, `npm config get cafile` rend `null` et aucun
+  `.npmrc` non vide ne demeure dans l'image.
+
+Les preuves construisent sans cache les branches vide et active, la seconde avec le paquet
+d'autorités déjà disponible sur l'hôte. Elles refusent chemin relatif, fichier absent, répertoire,
+fichier illisible, vide et non PEM avant Docker, puis démarrent réellement `./runDev.sh`. Cette
+configuration est exclusivement celle de l'image Vite de développement ; l'assemblage de
+production ne la consomme pas.
 
 Aucune image de production n'est fabriquée : Caddy sert des fichiers statiques, et en produire une
 ajouterait un artefact à construire, publier et faire dériver.

@@ -8745,3 +8745,50 @@ servi en HTTP 200. Les six dégradations échouent pour leur cause propre, la po
 fichiers temporaires disparaissent, puis SQL et API redeviennent verts. Verdict : **28 contrôles,
 aucune anomalie**. Les captures réécrites mécaniquement par Playwright ont été remises à leur
 version de référence puisque l'interface n'a pas changé. `CRM-008` passe `[x]`.
+
+---
+
+### Décision 280 — Contrat exécutable de `CRM-015` : un CA facultatif, validé avant Docker et absent de l'image
+
+**Point de départ mesuré.** Le `Dockerfile` sait déjà monter un secret BuildKit facultatif
+`npm_ca`, l'utiliser comme `cafile` pendant `npm ci`, puis supprimer le réglage. Deux constructions
+sans cache ont été exécutées avec un overlay Compose jetable : l'une avec
+`/etc/ssl/certs/ca-certificates.crt`, l'autre avec `/dev/null`. Les deux réussissent ; dans l'image,
+`/run/secrets/npm_ca` est absent, `npm config get cafile` rend `null` et aucun `.npmrc` non vide ne
+subsiste. Compose v5.1.4 accepte le fichier vide comme source du secret. Ce que le dépôt ne sait
+pas faire est transporter ce choix depuis `./runDev.sh`.
+
+**Nom et format.** La variable retenue est `NPM_CA_FILE`. Elle est facultative, vide par défaut,
+et ne contient jamais le certificat : seulement le **chemin absolu** d'un fichier local régulier,
+lisible, non vide et au format PEM. Une valeur exportée par le shell prend la priorité réelle de
+Compose sur celle de `.env`; la garde de lancement doit valider cette même valeur effective.
+
+**Assemblage inerte sans proxy.** `docker-compose.dev.yml` déclare le secret de build `npm_ca` et
+sa source `${NPM_CA_FILE:-/dev/null}`. Absente, vide, ou omise d'un ancien `.env`, la variable
+donne donc un secret vide ; le test `-s /run/secrets/npm_ca` du `Dockerfile` laisse `npm ci`
+strictement inchangé. Une valeur non vide active le `cafile` pour cette seule instruction de
+build. Un marqueur de build explicite distingue les deux branches sans imprimer le chemin ni le
+contenu du certificat.
+
+**Compatibilité du contrat d'environnement.** `env_validate` traitait jusqu'ici toute variable
+du gabarit comme obligatoire à la présence, y compris celles dont l'exemple vide signifie
+« facultative ». `CRM-015` aligne le code sur la convention écrite en tête de `.env.example` :
+une variable à exemple non vide doit toujours être présente et renseignée ; une variable à
+exemple vide peut être absente d'un ancien `.env`. C'est indispensable pour que l'ajout facultatif
+ne casse pas tous les postes existants.
+
+**Refus avant effet.** Une valeur relative, absente du disque, non régulière, illisible, vide ou
+sans bloc `BEGIN CERTIFICATE` est refusée par `runDev.sh --bootstrap`, donc avant toute requête au
+démon Docker. Le message nomme `NPM_CA_FILE` et la propriété attendue sans afficher le contenu.
+
+**Preuves exigées.** `scripts/verify-scripts.sh` doit éprouver l'ancien `.env` sans variable, la
+priorité du shell, chaque refus ci-dessus, l'interpolation `/dev/null` et le chemin explicite. Il
+construit ensuite sans cache les deux branches, exige leurs marqueurs respectifs, inspecte l'image
+pour l'absence du secret et du `cafile`, puis `./runDev.sh` doit rendre la webapp saine dans les
+deux configurations. Aucun certificat n'est créé ni versionné : la branche active emploie le
+paquet d'autorités déjà fourni par l'hôte.
+
+**Production.** `NPM_CA_FILE` ne rejoint pas `docker-compose.prod.yml` : la webapp de production
+est un répertoire statique construit sur l'hôte, pas cette image Vite de développement. Le contrat
+de déploiement doit donc dire explicitement « aucune variable ni opération de production » au lieu
+de laisser l'absence être interprétée comme un oubli.
