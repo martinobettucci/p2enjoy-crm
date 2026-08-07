@@ -360,6 +360,7 @@ le client ne l'a pas confirmé.
 | E2E UI réel | mauvais mot de passe refusé ; compte seedé connecté depuis le formulaire ; rechargement conservant la session ; déconnexion ramenant à `/connexion` |
 | Parcours utilisateur réel | après connexion par l'écran, lecture des tracks et channels seedés **sans substitution réseau**, publication d'un commentaire et déplacement d'une card par le menu du board ; effet relu directement par l'API |
 | Autorisations | le même geste avec le `viewer` est refusé par le backend ; l'interface rend ce refus sans perdre la saisie ou l'état précédent |
+| Email reçu comme un utilisateur | invitation créée par l'API d'administration, puis boîte Inbucket ouverte dans Chromium ; le destinataire sélectionne le message, lit sujet, phrase et code français dans son corps rendu, et active le lien avec la souris ; GoTrue confirme l'invitation et ouvre la session |
 | Visuel | écran de connexion et produit chargé observés aux quatre paliers ; erreurs, focus, textes longs et absence de débordement vérifiés |
 
 Les données créées par une preuve sont identifiées par un jeton propre au scénario et supprimées

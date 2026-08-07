@@ -1301,7 +1301,8 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       destinataire**. Le produit est en français, ses emails transactionnels partent en anglais.
 - [ ] **Exigence attachée, qui vaut au-delà de cette unité** : toute preuve portant sur un email
       vérifie son **contenu**, jamais sa seule présence. Un email reçu ne prouve pas que le gabarit
-      configuré a été employé — c'est précisément ce que la mesure a montré.
+      configuré a été employé — c'est précisément ce que la mesure a montré. La preuve comporte
+      aussi un parcours Chromium de la boîte au lien d'invitation, comme un destinataire.
 - [ ] **Conséquence de fermeture** : cette unité est la condition de fermeture de **dix-huit unités
       `[~]`** dont le code est livré et prouvé. Elles ne passeront pas `[x]` d'un trait de plume :
       chacune sera reprise, sa preuve manquante réellement exécutée, et son état révisé sur mesure.

@@ -8467,3 +8467,24 @@ titre accessible et une trace `CRM-007` / `docs/DESIGN_SYSTEM.md` §9.
 une route ou un chunk réellement absent. Le défaut est une ressource manquante, donc la correction
 est de servir la ressource. `CRM-007` repasse `[~]` jusqu'au build et au rejeu console strict ; il
 ne retrouvera `[x]` qu'après preuve.
+
+---
+
+### Décision 271 — La preuve d'email va de la boîte rendue au lien activé par le destinataire
+
+**Écart trouvé pendant la relecture de la DoD.** Le harnais GoTrue relit bien le message reçu par
+SMTP, vérifie désormais son contenu et suit son lien par HTTP. Cela prouve le serveur, mais la
+consigne de reprise exige aussi que les actions livrées soient praticables par un utilisateur au
+clavier et à la souris. Une URL extraite par `grep` ne constate ni le rendu du message dans un
+client, ni l'action réellement offerte au destinataire.
+
+**Preuve ajoutée à `CRM-009`.** L'API d'administration crée une invitation jetable — opération de
+préparation, puisque l'invitation depuis le produit reste ouverte en INC-015. Chromium ouvre
+ensuite la vraie boîte Inbucket, sélectionne le message, constate dans son corps rendu le sujet,
+la phrase, le nom P2Enjoy CRM et le code français, puis active le lien d'invitation à la souris.
+La navigation GoTrue doit confirmer l'adresse et ouvrir une session. Le compte et sa boîte sont
+supprimés en sortie.
+
+**Frontière.** Inbucket est un client de développement, pas le produit. Il ne remplace donc ni la
+preuve SMTP/API de `scripts/verify-auth.sh`, ni un futur écran d'invitation. Il ajoute la seule
+perspective absente : celle du destinataire qui reçoit, lit et active réellement le message.
