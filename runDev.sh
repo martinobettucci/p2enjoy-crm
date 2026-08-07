@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'environnement de développement
+# @spec CRM-015 (docs/BACKLOG.md) — CA facultative validée avant le build de la webapp
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage), décision 101 (points de
 #       montage créés par l'hôte), décision 272 (origine webapp joignable depuis les emails)
@@ -55,6 +56,7 @@ fi
 
 env_validate
 env_require_profile dev
+env_require_dev_npm_ca_file
 env_require_dev_inbound_domain
 env_require_dev_webapp_origin
 

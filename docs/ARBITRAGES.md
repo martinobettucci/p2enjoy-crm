@@ -40,7 +40,7 @@ rattaché à une unité — elle n'est pas faite.
 |---|---|
 | `CRM-009` porte l'écran de connexion, la session et la garde de route | unité créée, `[ ]` |
 | La session vit en `sessionStorage`, jamais en `localStorage` | `CRM-009` |
-| `CRM-015` câble le secret de build `npm_ca` | unité créée, `[ ]` |
+| `CRM-015` câble le secret de build `npm_ca` | unité livrée et prouvée, `[x]` |
 | Le parcours d'invitation est rattaché à `CRM-070` | `CRM-070` |
 | La garde de ports lit `/proc/net/tcp` en dernier recours | `CRM-002` |
 | `cards.amount` est converti explicitement à la lecture | `CRM-040`, `CRM-041` |

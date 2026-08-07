@@ -88,9 +88,9 @@ consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`,
 **DoD** : démarrage à froid depuis un dépôt propre ; `resetMe.sh` recrée la base et le seed ;
 aucun secret réel versionné ; `README.md` §5–6 conforme au comportement réel.
 
-- [x] `.env.example` : **89 variables**, chacune documentée avec son rôle, son format, son
+- [x] `.env.example` : **90 variables**, chacune documentée avec son rôle, son format, son
       caractère obligatoire et une valeur d'exemple non sensible. Le gabarit couvre **exactement**
-      les 85 variables interpolées par les trois fichiers Compose ; les 4 restantes sont nommées
+      les 86 variables interpolées par les trois fichiers Compose ; les 4 restantes sont nommées
       et justifiées dans `scripts/verify-scripts.sh`.
 - [x] Aucun secret réel versionné : les 14 variables sensibles valent un marqueur `CHANGE_ME_*`,
       et `.env` est ignoré par git — vérifié.
@@ -112,7 +112,7 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
       production, confirmation explicite avant destruction, aucun amorçage en production.
 - [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
-- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **64 contrôles, aucune
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **80 contrôles, aucune
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
@@ -1501,7 +1501,7 @@ variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat in
 
 ---
 
-### CRM-015 — Secret de build du registre npm `[~]`
+### CRM-015 — Secret de build du registre npm `[x]`
 Le secret de build `npm_ca`, déjà prévu par le `Dockerfile` de la webapp, est **fourni par les
 fichiers Compose** à partir de l'environnement.
 **DoD** : `./runDev.sh` construit l'image de la webapp derrière un proxy à certificat interposé ;
@@ -1520,21 +1520,22 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 255
       `NPM_CA_FILE`, priorité du shell identique à Compose, format PEM absolu et lisible, secret
       vide `/dev/null`, compatibilité des anciens `.env`, refus avant Docker et inspection de
       l'image. Commit documentaire dédié.
-- [ ] La variable est documentée dans `README.md` §9 et `.env.example` — nom, rôle, format,
+- [x] La variable est documentée dans `README.md` §6 et §9 et `.env.example` — nom, rôle, format,
       caractère facultatif — sans valeur réelle.
-- [ ] `docker-compose.dev.yml` transporte le secret `npm_ca` jusqu'au montage BuildKit du
+- [x] `docker-compose.dev.yml` transporte le secret `npm_ca` jusqu'au montage BuildKit du
       `Dockerfile`. Variable absente ou vide : marqueur `inactif` et `npm ci` inchangé. Variable
       renseignée : marqueur `actif` et `cafile` limité à l'instruction de build.
-- [ ] `runDev.sh --bootstrap` refuse avant Docker toute valeur effective relative, absente, non
+- [x] `runDev.sh --bootstrap` refuse avant Docker toute valeur effective relative, absente, non
       régulière, illisible, vide ou non PEM ; une valeur exportée par le shell prévaut sur `.env`.
       Un ancien `.env` qui omet cette variable facultative reste accepté.
-- [ ] **Deux constructions sans cache réelles**, sans CA puis avec le paquet d'autorités de
+- [x] **Deux constructions sans cache réelles**, sans CA puis avec le paquet d'autorités de
       l'hôte ; l'image finale ne contient ni `/run/secrets/npm_ca`, ni `cafile`, ni `.npmrc` non
       vide. Aucun certificat ni copie de certificat n'apparaît dans le dépôt.
-- [ ] **Parcours utilisateur réel** : `./runDev.sh` aboutit dans les deux configurations, la
+- [x] **Parcours utilisateur réel** : `./runDev.sh` aboutit dans les deux configurations, la
       webapp répond, puis `scripts/verify-stack.sh`, `verify-scripts.sh`, build, tests unitaires,
-      E2E UI et console stricte restent verts.
-- [ ] `docs/PROD_MIGRATIONS.md` nomme explicitement l'absence d'opération de production : le
+      E2E UI et console stricte restent verts. Mesuré : pile **50/50**, scripts **80/80**, webapp
+      **42/42**, harnais **28/28**, dont **144/144** parcours Chromium sans avertissement.
+- [x] `docs/PROD_MIGRATIONS.md` nomme explicitement l'absence d'opération de production : le
       secret ne concerne que l'image Vite de développement.
 
 ### CRM-016 — Fonctions edge `[ ]`

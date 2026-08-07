@@ -1,4 +1,5 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
+# @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
 # @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
 # @spec README.md §6 (lancement en développement)
 #
@@ -186,6 +187,8 @@ services:
     build:
       context: .
       dockerfile: webapp/Dockerfile
+      secrets:
+        - npm_ca
     restart: unless-stopped
     depends_on:
       kong:
@@ -330,6 +333,12 @@ services:
       start_period: 120s
     volumes:
       - clamav-data:/var/lib/clamav
+
+secrets:
+  # `/dev/null` est une source vide acceptée par Compose et BuildKit. Le `Dockerfile` teste la
+  # taille du montage : sans proxy, la branche reste donc strictement inerte (décision 280).
+  npm_ca:
+    file: "${NPM_CA_FILE:-/dev/null}"
 
 volumes:
   minio-data:

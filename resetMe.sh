@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — réinitialisation des données de développement
+# @spec CRM-015 (docs/BACKLOG.md) — CA facultative validée avant toute destruction
 # @spec docs/JOURNAL.md décision 16 (gardes de profil et confirmation explicite)
 # @spec docs/JOURNAL.md décision 99 (contrôle des ports avant destruction), décision 101
 #       (destruction du cluster par conteneur jetable, points de montage de l'hôte)
@@ -45,6 +46,7 @@ done
 env_validate
 # Garde principale : jamais sur un environnement qui n'est pas de développement.
 env_require_profile dev
+env_require_dev_npm_ca_file
 env_require_dev_inbound_domain
 
 DB_DATA="$REPO_ROOT/supabase/docker/volumes/db/data"

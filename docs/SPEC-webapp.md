@@ -432,6 +432,12 @@ fichier illisible, vide et non PEM avant Docker, puis démarrent réellement `./
 configuration est exclusivement celle de l'image Vite de développement ; l'assemblage de
 production ne la consomme pas.
 
+**Résultat mesuré, 2026-08-07.** Les deux builds sans cache réussissent et annoncent leur seule
+branche, sans chemin ni contenu. L'image ne conserve ni secret, ni `cafile`, ni `.npmrc` non vide.
+`./runDev.sh` rend la webapp saine sans variable puis avec le paquet PEM de l'hôte ; les preuves
+rendent scripts **80/80**, pile **50/50**, webapp **42/42** et harnais **28/28**, dont 144 parcours
+Chromium sans avertissement.
+
 Aucune image de production n'est fabriquée : Caddy sert des fichiers statiques, et en produire une
 ajouterait un artefact à construire, publier et faire dériver.
 

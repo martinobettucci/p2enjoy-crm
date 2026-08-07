@@ -3074,7 +3074,7 @@ coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
 
 ---
 
-### INC-042 — L'image de la webapp ne se construit pas dans l'environnement de la routine : le registre npm est derrière un proxy à certificat interposé
+### INC-042 — L'image de la webapp ne se construit pas dans l'environnement de la routine : le registre npm est derrière un proxy à certificat interposé — **CLOSE**
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 255.** **Le secret de build `npm_ca` est câblé**, dans une unité à part entière : `CRM-015`. Onzième occurrence — c'est une mesure, pas une malchance —, et le coût réel est une **preuve perdue à chaque unité**. Contrainte non négociable : le certificat vient de l'environnement, jamais du dépôt, et l'assemblage reste inerte là où la variable est absente.
 
@@ -3083,6 +3083,13 @@ et lisible ; Compose le remplace par `/dev/null` lorsqu'il est absent ou vide. `
 la valeur effective avant Docker, y compris la priorité du shell sur `.env`. Les anciens `.env`
 peuvent omettre cette variable facultative. La fermeture exige deux builds sans cache, l'absence
 du secret et du `cafile` dans l'image finale, puis le lancement réel dans les deux configurations.
+
+**Clôture, 2026-08-07.** `CRM-015` câble `${NPM_CA_FILE:-/dev/null}` au secret BuildKit
+`npm_ca`, valide la valeur effective avant Docker et accepte les anciens `.env`. Les deux builds
+sans cache rendent les marqueurs `inactif` puis `actif`; l'image ne garde ni secret, ni `cafile`,
+ni `.npmrc` non vide. `./runDev.sh` aboutit réellement sans puis avec le paquet PEM de l'hôte.
+Preuves finales : scripts **80/80**, pile **50/50**, webapp **42/42**, harnais **28/28** dont UI
+**144/144 sans avertissement**. Aucun certificat n'est versionné ; aucune opération de production.
 
 **Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
 **Relevé le :** 2026-08-04, pendant `CRM-033`.

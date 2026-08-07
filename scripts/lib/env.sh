@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — socle commun des scripts de lancement et d'environnement
+# @spec CRM-015 (docs/BACKLOG.md) — validation du CA facultatif avant Docker
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 98 (identifiants Docker), décision 99 (ports déjà pris),
 #       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 257
@@ -185,8 +186,8 @@ env_bootstrap_dev() {
 }
 
 # --- Validation ---------------------------------------------------------------------------------
-# Le gabarit est le contrat : toute variable qu'il déclare doit exister dans le fichier
-# d'environnement, et toute variable dont l'exemple est non vide doit y être renseignée.
+# Le gabarit est le contrat : toute variable dont l'exemple est non vide doit exister et être
+# renseignée. Une variable à exemple vide est facultative et peut manquer d'un ancien `.env`.
 
 env_validate() {
 	[ -f "$ENV_FILE" ] || die "fichier d'environnement $ENV_FILE absent. Lancez ./runDev.sh, ou copiez .env.example."
@@ -194,12 +195,14 @@ env_validate() {
 
 	local problems=0 name example_value actual_value
 	while IFS= read -r name; do
+		example_value=$(env_get "$ENV_EXAMPLE" "$name")
 		if ! env_has "$ENV_FILE" "$name"; then
-			printf '\033[31m  manquante\033[0m %s\n' "$name" >&2
-			problems=$((problems + 1))
+			if [ -n "$example_value" ]; then
+				printf '\033[31m  manquante\033[0m %s\n' "$name" >&2
+				problems=$((problems + 1))
+			fi
 			continue
 		fi
-		example_value=$(env_get "$ENV_EXAMPLE" "$name")
 		actual_value=$(env_get "$ENV_FILE" "$name")
 		if [ -n "$example_value" ] && [ -z "$actual_value" ]; then
 			printf '\033[31m  vide\033[0m      %s (obligatoire)\n' "$name" >&2
@@ -216,6 +219,33 @@ env_validate() {
 	if [ "$problems" -gt 0 ]; then
 		die "$problems variable(s) à corriger dans $ENV_FILE. Le contrat est .env.example."
 	fi
+}
+
+# Valeur réellement interpolée par Compose : une variable exportée par le shell prévaut sur le
+# fichier passé par `--env-file`, y compris lorsqu'elle est explicitement vide.
+env_effective_npm_ca_file() {
+	if [ "${NPM_CA_FILE+x}" = x ]; then
+		printf '%s' "$NPM_CA_FILE"
+	else
+		env_get "$ENV_FILE" NPM_CA_FILE
+	fi
+}
+
+# Refuse une configuration CA inutilisable avant toute requête au démon. Le certificat n'est
+# jamais affiché ni copié : seule sa forme de fichier PEM est vérifiée (décision 280).
+env_require_dev_npm_ca_file() {
+	local ca_file
+	ca_file=$(env_effective_npm_ca_file)
+	[ -z "$ca_file" ] && return 0
+	case "$ca_file" in
+		/*) ;;
+		*) die "NPM_CA_FILE doit être un chemin absolu vers un fichier PEM lisible ; valeur relative refusée." ;;
+	esac
+	[ -f "$ca_file" ] || die "NPM_CA_FILE ne désigne pas un fichier régulier lisible."
+	[ -r "$ca_file" ] || die "NPM_CA_FILE désigne un fichier qui n'est pas lisible."
+	[ -s "$ca_file" ] || die "NPM_CA_FILE désigne un fichier vide ; laissez plutôt la variable vide."
+	grep -q -- '-----BEGIN CERTIFICATE-----' "$ca_file" \
+		|| die "NPM_CA_FILE ne contient aucun bloc PEM BEGIN CERTIFICATE."
 }
 
 # Impose le profil attendu. C'est la garde qui empêche de démarrer la production avec les

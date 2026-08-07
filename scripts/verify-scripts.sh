@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
+# @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
 #           décision 251 (`MAIL_TEAM_DOMAIN` déclaré avant son consommateur CRM-051)
 # @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
 #           décision 257 (lecture de secours des ports par /proc, ouverte et fermée),
 #           décision 247 (contexte de build sans secrets ni données locales), décision 272
-#           (origine webapp joignable depuis les emails transactionnels)
+#           (origine webapp joignable depuis les emails transactionnels), décision 280
+#           (chemin PEM effectif, ancien `.env`, deux branches de build et absence dans l'image)
 # @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
 # @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9, §11
 #
@@ -292,6 +294,94 @@ else
 	ok "runDev.sh refuse un environnement auquel il manque une variable du gabarit"
 fi
 
+# Une variable facultative se reconnaît à son exemple vide. Son ajout ne doit pas invalider tous
+# les `.env` existants ; les variables obligatoires, telle KONG_HTTP_PORT ci-dessus, restent
+# strictes (CRM-015, décision 280).
+OPTIONAL_OMITTED="$WORK/env.optional-omitted"
+grep -v '^NPM_CA_FILE=' "$BOOT1" > "$OPTIONAL_OMITTED"
+if P2ENJOY_ENV_FILE="$OPTIONAL_OMITTED" ./runDev.sh --bootstrap >"$WORK/optional-omitted.log" 2>&1; then
+	ok "un ancien .env peut omettre NPM_CA_FILE, variable facultative à exemple vide"
+else
+	fail "runDev.sh refuse un ancien .env qui omet seulement NPM_CA_FILE"
+fi
+
+HOST_CA=/etc/ssl/certs/ca-certificates.crt
+if [ -r "$HOST_CA" ] && [ -s "$HOST_CA" ] \
+	&& grep -q -- '-----BEGIN CERTIFICATE-----' "$HOST_CA"; then
+	CA_VALID_ENV="$WORK/env.ca-valid"
+	sed "s#^NPM_CA_FILE=.*#NPM_CA_FILE=$HOST_CA#" "$BOOT1" > "$CA_VALID_ENV"
+	if P2ENJOY_ENV_FILE="$CA_VALID_ENV" ./runDev.sh --bootstrap >"$WORK/ca-valid.log" 2>&1; then
+		ok "NPM_CA_FILE accepte le paquet PEM absolu et lisible fourni par l'hôte"
+	else
+		fail "runDev.sh refuse le paquet PEM valide de l'hôte"
+	fi
+else
+	fail "paquet PEM de l'hôte absent ou illisible : $HOST_CA"
+	CA_VALID_ENV="$BOOT1"
+fi
+
+ca_refusal() {
+	local id=$1 label=$2 value=$3 candidate="$WORK/env.ca-$1"
+	sed "s#^NPM_CA_FILE=.*#NPM_CA_FILE=$value#" "$BOOT1" > "$candidate"
+	if P2ENJOY_ENV_FILE="$candidate" ./runDev.sh --bootstrap >"$WORK/ca-$id.log" 2>&1; then
+		fail "NPM_CA_FILE accepte $label"
+	elif grep -q 'NPM_CA_FILE' "$WORK/ca-$id.log"; then
+		ok "NPM_CA_FILE refuse $label avant Docker et nomme la variable"
+	else
+		fail "NPM_CA_FILE refuse $label sans diagnostic exploitable"
+	fi
+}
+
+mkdir -p "$WORK/ca-directory"
+: > "$WORK/ca-empty.pem"
+printf '%s\n' 'ceci nest pas un certificat' > "$WORK/ca-not-pem.txt"
+printf '%s\n' '-----BEGIN CERTIFICATE-----' 'inaccessible' '-----END CERTIFICATE-----' \
+	> "$WORK/ca-unreadable.pem"
+chmod 000 "$WORK/ca-unreadable.pem"
+
+ca_refusal relative "un chemin relatif" "certificats/entreprise.pem"
+ca_refusal missing "un fichier absent" "$WORK/ca-absent.pem"
+ca_refusal directory "un répertoire" "$WORK/ca-directory"
+ca_refusal empty "un fichier vide" "$WORK/ca-empty.pem"
+ca_refusal nonpem "un fichier sans bloc PEM" "$WORK/ca-not-pem.txt"
+ca_refusal unreadable "un fichier illisible" "$WORK/ca-unreadable.pem"
+
+# Le shell a la même priorité que dans Compose : il peut corriger une valeur de `.env`, ou la
+# neutraliser explicitement. Symétriquement, une mauvaise surcharge doit être refusée même si le
+# fichier contient un chemin valide.
+CA_RELATIVE_ENV="$WORK/env.ca-relative"
+sed 's#^NPM_CA_FILE=.*#NPM_CA_FILE=certificats/entreprise.pem#' "$BOOT1" > "$CA_RELATIVE_ENV"
+if NPM_CA_FILE="$HOST_CA" P2ENJOY_ENV_FILE="$CA_RELATIVE_ENV" \
+	./runDev.sh --bootstrap >"$WORK/ca-shell-valid.log" 2>&1; then
+	ok "NPM_CA_FILE exportée par le shell prévaut sur la valeur invalide de .env"
+else
+	fail "la garde ne suit pas la priorité du shell appliquée par Compose"
+fi
+
+if NPM_CA_FILE=certificats/entreprise.pem P2ENJOY_ENV_FILE="$CA_VALID_ENV" \
+	./runDev.sh --bootstrap >"$WORK/ca-shell-invalid.log" 2>&1; then
+	fail "une surcharge shell relative contourne la garde NPM_CA_FILE"
+elif grep -q 'NPM_CA_FILE' "$WORK/ca-shell-invalid.log"; then
+	ok "une surcharge shell invalide est refusée malgré la valeur valide de .env"
+else
+	fail "la surcharge shell invalide est refusée sans nommer NPM_CA_FILE"
+fi
+
+if NPM_CA_FILE= P2ENJOY_ENV_FILE="$CA_VALID_ENV" \
+	./runDev.sh --bootstrap >"$WORK/ca-shell-empty.log" 2>&1; then
+	ok "une surcharge shell vide désactive explicitement le CA"
+else
+	fail "une surcharge shell vide devrait rendre le build inerte"
+fi
+
+if P2ENJOY_ENV_FILE="$CA_RELATIVE_ENV" ./resetMe.sh --yes >"$WORK/ca-reset.log" 2>&1; then
+	fail "resetMe.sh détruit les données avant de refuser NPM_CA_FILE"
+elif grep -q 'NPM_CA_FILE' "$WORK/ca-reset.log"; then
+	ok "resetMe.sh refuse NPM_CA_FILE avant toute destruction"
+else
+	fail "resetMe.sh refuse le CA invalide sans diagnostic exploitable"
+fi
+
 PLACEHOLDER="$WORK/env.placeholder"
 sed 's/^VAULT_ENC_KEY=.*/VAULT_ENC_KEY=CHANGE_ME_VAULT_ENC_KEY/' "$BOOT1" > "$PLACEHOLDER"
 if P2ENJOY_ENV_FILE="$PLACEHOLDER" ./runDev.sh --bootstrap >/dev/null 2>&1; then
@@ -442,20 +532,60 @@ if docker info >/dev/null 2>&1; then
 		fi
 	done
 
-	if docker compose --env-file "$BOOT1" -f docker-compose.yml -f docker-compose.dev.yml \
-		build webapp >"$WORK/build-webapp.log" 2>&1; then
-		ok "l'image webapp se reconstruit avec un cluster PostgreSQL local fermé"
+	if NPM_CA_FILE= docker compose --env-file "$BOOT1" -f docker-compose.yml \
+		-f docker-compose.dev.yml config --format json >"$WORK/compose-ca-empty.json" \
+		&& python3 -c 'import json,sys
+c=json.load(open(sys.argv[1])); assert c["secrets"]["npm_ca"]["file"] == "/dev/null"
+assert c["services"]["webapp"]["build"]["secrets"] == [{"source":"npm_ca"}]' \
+		"$WORK/compose-ca-empty.json"; then
+		ok "Compose câble npm_ca sur /dev/null lorsque NPM_CA_FILE est absente ou vide"
 	else
-		fail "la reconstruction réelle de webapp échoue"
-		tail -n 12 "$WORK/build-webapp.log" | sed 's/^/        /'
+		fail "l'assemblage inerte de npm_ca n'est pas celui spécifié"
+	fi
+
+	if NPM_CA_FILE="$HOST_CA" docker compose --env-file "$BOOT1" -f docker-compose.yml \
+		-f docker-compose.dev.yml config --format json >"$WORK/compose-ca-active.json" \
+		&& python3 -c 'import json,sys
+c=json.load(open(sys.argv[1])); assert c["secrets"]["npm_ca"]["file"] == sys.argv[2]
+assert c["services"]["webapp"]["build"]["secrets"] == [{"source":"npm_ca"}]' \
+		"$WORK/compose-ca-active.json" "$HOST_CA"; then
+		ok "Compose transporte le chemin PEM effectif jusqu'au secret de build npm_ca"
+	else
+		fail "Compose ne transporte pas le chemin NPM_CA_FILE explicite"
+	fi
+
+	if NPM_CA_FILE= docker compose --env-file "$BOOT1" -f docker-compose.yml \
+		-f docker-compose.dev.yml build --no-cache --progress plain webapp \
+		>"$WORK/build-webapp-no-ca.log" 2>&1 \
+		&& grep -q 'npm_ca: inactif' "$WORK/build-webapp-no-ca.log"; then
+		ok "build sans cache et sans CA : branche inactive, npm ci réussi"
+	else
+		fail "la reconstruction sans CA n'emprunte pas sa branche inactive"
+		tail -n 12 "$WORK/build-webapp-no-ca.log" | sed 's/^/        /'
+	fi
+
+	if NPM_CA_FILE="$HOST_CA" docker compose --env-file "$BOOT1" -f docker-compose.yml \
+		-f docker-compose.dev.yml build --no-cache --progress plain webapp \
+		>"$WORK/build-webapp-with-ca.log" 2>&1 \
+		&& grep -q 'npm_ca: actif' "$WORK/build-webapp-with-ca.log"; then
+		ok "build sans cache avec CA : branche active, npm ci réussi"
+	else
+		fail "la reconstruction avec CA n'emprunte pas sa branche active"
+		tail -n 12 "$WORK/build-webapp-with-ca.log" | sed 's/^/        /'
 	fi
 
 	if docker image inspect p2enjoy-crm-webapp >/dev/null 2>&1 \
 		&& docker run --rm --entrypoint sh p2enjoy-crm-webapp -c \
-			'test ! -e /app/.env && test ! -e /app/.git && test ! -e /app/supabase/docker/volumes && test -f /app/.env.example'; then
-		ok "l'image construite exclut .env, .git et les volumes, mais conserve le gabarit"
+			'test ! -e /app/.env && test ! -e /app/.git && test ! -e /app/supabase/docker/volumes && test -f /app/.env.example && test ! -e /run/secrets/npm_ca && test "$(npm config get cafile)" = null && test -z "$(find /root /app -name .npmrc -type f -size +0c -print -quit 2>/dev/null)"'; then
+		ok "l'image exclut contexte sensible, secret npm_ca, cafile et .npmrc non vide"
 	else
-		fail "l'image construite contient un chemin sensible ou a perdu .env.example"
+		fail "l'image construite conserve une donnée sensible, npm_ca ou un réglage cafile"
+	fi
+
+	if [ -z "$(git ls-files '*.crt' '*.pem' '*.cer')" ]; then
+		ok "aucun certificat n'est versionné : NPM_CA_FILE ne transporte qu'un chemin d'hôte"
+	else
+		fail "un certificat a été ajouté au dépôt au lieu d'être fourni par l'environnement"
 	fi
 else
 	skip "interpolation Compose : le démon Docker ne répond pas"

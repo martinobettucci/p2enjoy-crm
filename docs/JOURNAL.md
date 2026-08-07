@@ -8793,6 +8793,15 @@ est un répertoire statique construit sur l'hôte, pas cette image Vite de déve
 de déploiement doit donc dire explicitement « aucune variable ni opération de production » au lieu
 de laisser l'absence être interprétée comme un oubli.
 
+**Résultat de livraison.** `scripts/verify-scripts.sh` rend 80/80 : ancien `.env`, priorité du
+shell, six refus avant Docker, surcharge vide, refus avant destruction, interpolation Compose,
+deux builds sans cache et inspection de l'image. `./runDev.sh` aboutit sans variable puis avec
+`/etc/ssl/certs/ca-certificates.crt`; les 19 conteneurs sont sains et `verify-stack.sh` rend
+50/50. La chaîne frontend réparée pendant ce parcours rend `verify-webapp.sh` 42/42 puis le
+harnais global 28/28, dont 144/144 UI sans avertissement. Aucun certificat n'est versionné et
+`docs/PROD_MIGRATIONS.md` confirme qu'il n'existe aucune action de production. `CRM-015` et
+INC-042 sont closes.
+
 ---
 
 ### Décision 281 — Un résolveur commun que vingt et une commandes contournent n'est pas encore commun

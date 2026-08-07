@@ -1,4 +1,5 @@
 # @spec CRM-007 (docs/BACKLOG.md) — image de développement de la webapp
+# @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
 # @spec docs/SPEC-webapp.md §12.1 (développement) ; docs/DAT.md §3.1, §9 ; README.md §6
 #
 # Cette image ne sert **que** le développement : elle exécute Vite, avec les sources montées
@@ -25,7 +26,7 @@ WORKDIR /app
 #   docker build --secret id=npm_ca,src=/chemin/vers/ca.crt -f webapp/Dockerfile .
 COPY package.json package-lock.json ./
 RUN --mount=type=secret,id=npm_ca,required=false \
-	sh -eu -c 'if [ -s /run/secrets/npm_ca ]; then npm config set cafile /run/secrets/npm_ca; fi; \
+	sh -eu -c 'if [ -s /run/secrets/npm_ca ]; then echo "npm_ca: actif"; npm config set cafile /run/secrets/npm_ca; else echo "npm_ca: inactif"; fi; \
 	npm ci --no-audit --no-fund; npm config delete cafile || true'
 
 # Les sources sont montées par Compose en développement. Elles sont tout de même copiées ici

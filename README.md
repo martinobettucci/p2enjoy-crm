@@ -190,8 +190,9 @@ développement, ni protection contre l'effacement d'un environnement qui n'est p
 
 | Garde | Où | Effet |
 |---|---|---|
-| Fichier d'environnement complet | les trois scripts | Refus si une variable de `.env.example` manque, est vide alors qu'elle est obligatoire, ou vaut encore `CHANGE_ME_*` |
+| Fichier d'environnement complet | les trois scripts | Refus si une variable à exemple non vide manque, est vide ou vaut encore `CHANGE_ME_*` ; une variable facultative à exemple vide peut être omise |
 | `P2ENJOY_ENV_PROFILE=dev` | `runDev.sh`, `resetMe.sh` | Refus d'agir sur un fichier décrivant un autre environnement |
+| `NPM_CA_FILE` non vide | `runDev.sh`, `resetMe.sh` | Refus avant Docker si le chemin n'est pas absolu ou ne désigne pas un fichier PEM régulier, lisible et non vide |
 | `P2ENJOY_ENV_PROFILE=prod` | `runProd.sh` | Refus de démarrer la production avec les secrets du développement |
 | `APPLY_MIGRATIONS=false` | `runProd.sh` | Refus de démarrer si la production applique les migrations toute seule (`docs/PROD_MIGRATIONS.md`) |
 | Confirmation explicite | `resetMe.sh` | `oui` à la demande, ou `--yes` hors terminal interactif |
@@ -211,6 +212,19 @@ base vierge :
 ```bash
 ./resetMe.sh          # détruit la base et les volumes, redémarre à froid, rejoue migrations et seed
 ```
+
+Sur un réseau qui interpose sa propre autorité TLS devant le registre npm, fournir le **chemin**
+du paquet PEM de l'hôte — jamais son contenu — pour la construction de l'image Vite :
+
+```bash
+NPM_CA_FILE=/chemin/absolu/autorites.pem ./runDev.sh
+```
+
+La variable peut aussi vivre dans `.env`. Une valeur exportée par le shell prévaut, comme dans
+Compose. Le fichier doit être régulier, lisible, non vide et contenir un bloc
+`BEGIN CERTIFICATE`; la garde le refuse avant Docker sinon. Variable absente, vide ou omise d'un
+ancien `.env` : le build reste strictement inchangé. Le certificat reste sur l'hôte, n'est jamais
+copié dans le dépôt ou l'image et ne concerne pas la production.
 
 Services exposés. Les ports ne sont publiés que sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) :
 la pile de développement n'est pas destinée à être exposée sur le réseau.
@@ -463,7 +477,7 @@ fichiers statiques.
 
 ## 9. Variables d'environnement
 
-Les **88** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **90** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -476,6 +490,7 @@ preuves.
 | Jetons Supabase | `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` | Obligatoires, jamais versionnés. Les deux clés sont **dérivées** de `JWT_SECRET` |
 | API | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `KONG_HTTP_PORT` | Obligatoires |
 | Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
+| Build de développement | `NPM_CA_FILE` | Facultative. Chemin absolu d'un paquet PEM local pour `npm ci` derrière un proxy TLS ; vide ou absente, aucun effet |
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux autres attendent `CRM-054` |
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |
