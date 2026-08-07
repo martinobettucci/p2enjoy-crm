@@ -1459,6 +1459,11 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       `verify-webapp.sh` choisissait donc `npm.exe`. Chaque point d'entrée concerné doit préparer
       Node avant sa première mutation, et une preuve statique doit interdire qu'un nouveau script
       échappe à cette garde.
+- [ ] **Le parcours UI global est déterministe et sa commande ne produit aucun avertissement**
+      (INC-084, décision 282). Le rejeu après INC-083 rend 143/144 : la preuve de publication
+      relit l'API avant d'avoir attendu l'annonce utilisateur de succès. Le rejeu ciblé rend 10/10,
+      mais reproduit à chaque fois le conflit `NO_COLOR` / `FORCE_COLOR`. La fermeture exige le
+      scénario ciblé, les 144 parcours et le harnais 28/28, tous sans ligne `Warning:`.
 - [x] **Le résumé SQL n'annonce plus trois fichiers en dur** (décision 279). L'exécution froide
       réelle en découvre **19** pour **1405 assertions** ; le harnais extrait les deux valeurs de
       l'unique résumé de `run-sql-tests.sh` et les compare à deux attendus indépendants.

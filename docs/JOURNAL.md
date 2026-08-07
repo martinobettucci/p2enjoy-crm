@@ -8820,3 +8820,31 @@ la preuve isolée puis `scripts/verify-webapp.sh` sans `nvm use` manuel. Le prem
 Node 24/npm 11 Linux et le second rendre toutes ses vérifications, y compris Chromium et sa console
 stricte. Ce complément rouvre une seule case de `CRM-008` et devient un prérequis de fermeture du
 parcours utilisateur de `CRM-015`.
+
+---
+
+### Décision 282 — Une publication est finie au signal de succès, et une console propre commence avant le navigateur
+
+**Échec global.** Le rejeu de `scripts/verify-harness.sh` corrigé pour INC-083 passe SQL, API et la
+précondition Node, puis rend 143/144 en UI. Le parcours réel de publication de commentaire voit le
+corps dans la page mais sa relecture PostgREST immédiate n'obtient pas exactement une ligne. Les
+seize scénarios mail, 525 tests unitaires, quatre compilations et six dégradations restent verts ;
+le harnais restaure tout et rend 28 contrôles, 1 anomalie.
+
+**Ce que la répétition apprend.** Dix rejeux ciblés passent en 29 secondes, un worker, sans
+substitution réseau. L'échec n'est donc ni une règle produit systématiquement cassée ni une donnée
+résiduelle : l'attente du scénario est ambiguë. Le texte cherché est aussi le texte saisi ; le
+contrat visible de fin est ailleurs. Le composant ne vide le brouillon et n'annonce « Commentaire
+publié » qu'après le retour réussi de l'insertion. La relecture indépendante doit partir après ces
+deux effets, comme le ferait un utilisateur qui attend la confirmation.
+
+**Deuxième défaut, parfaitement déterministe.** Les dix rejeux écrivent tous l'avertissement Node
+selon lequel `NO_COLOR` est ignoré parce que `FORCE_COLOR` est défini, dans le webServer puis les
+workers. La fixture interdit déjà tout `warning`, `error` et `pageerror` du navigateur ; elle ne
+peut pas nettoyer la console du lanceur, et filtrer le texte serait un faux vert.
+
+**Décision.** Le scénario attend la région live de succès et le champ vidé avant PostgREST. La
+configuration Playwright supprime le `NO_COLOR` hérité dans son processus, avant la création du
+webServer et des workers que Playwright exécute avec couleur forcée. Ce choix est local au harnais,
+ne modifie pas le shell parent et supprime la cause plutôt que sa sortie. La fermeture exige le
+rejeu ciblé, la suite 144/144 et le harnais 28/28 sans aucune ligne `Warning:`.

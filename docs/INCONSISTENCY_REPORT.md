@@ -12,6 +12,39 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-084 — Le parcours Chromium global est instable et son exécuteur écrit des avertissements
+
+**Nature :** preuve E2E non déterministe et sortie utilisateur contraire à l'exigence zéro
+`warning`.
+**Relevé le :** 2026-08-07, pendant le rejeu de fermeture d'INC-083 et de `CRM-015`.
+
+**Mesure globale.** Après SQL 19/19 et API 410/410, `scripts/verify-harness.sh` rend **143/144**
+sur le projet UI. Le parcours « le retour à la card publie réellement le commentaire de
+l'administratrice » voit le texte dans la page, interroge immédiatement PostgREST puis reçoit un
+tableau dont la longueur n'est pas 1. Son `finally` nettoie la ligne et le reste du harnais se
+restaure ; verdict final **28 contrôles, 1 anomalie**.
+
+**Contre-mesure ciblée.** Le même scénario, exécuté **dix fois** de suite contre la pile réelle,
+rend 10/10. Ce résultat n'annule pas l'échec global : il localise un ordre d'attente trop faible.
+Le scénario attend le texte saisi dans la page, pas le signal utilisateur de fin de publication.
+Or seul le brouillon vidé et l'annonce « Commentaire publié » sont posés après le retour réussi de
+l'insertion. Une preuve qui relit l'API doit attendre ce point précis.
+
+**Avertissements reproductibles.** Chacune de ces dix exécutions écrit
+`Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set` dans le processus
+webServer puis dans les workers. Playwright force la couleur tandis que l'environnement de
+l'appelant exporte `NO_COLOR`; Node avertit avant le premier scénario. Ce n'est pas la console du
+navigateur — déjà stricte — mais c'est bien la console de la commande utilisateur, et elle ne peut
+pas être déclarée propre.
+
+**Correction décidée.** Le parcours de publication attend le brouillon vide et la région live
+« Commentaire publié » avant sa relecture hors interface. La configuration Playwright retire
+`NO_COLOR` de son propre environnement lorsque Playwright pilote les processus colorés, avant de
+lancer le webServer ou un worker. La preuve ciblée, la suite UI complète et le harnais global
+doivent ensuite rendre zéro échec et zéro ligne `Warning:`.
+
+---
+
 ### INC-083 — Vingt et un harnais autonomes contournent encore la chaîne Node de `CRM-008`
 
 **Nature :** preuve utilisateur inexécutable depuis le shell WSL réel ; portée trop étroite du

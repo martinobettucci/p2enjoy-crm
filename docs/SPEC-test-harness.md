@@ -380,10 +380,16 @@ permissive ou un test Vitest faux ont été détectés. La preuve isolée refuse
 littéral, puis force des couples incompatibles, un arbre NVM jetable et l'absence d'outil. Le
 rejeu depuis le shell WSL réel prouve en plus le remplacement effectif de `npm.exe`.
 
+Cette précondition vaut pour **tout** `scripts/verify-*.sh` autonome qui invoque Node ou npm, pas
+seulement pour le harnais global. Une preuve statique recense ces invocations hors commentaires et
+refuse tout point d'entrée dont le chargement du résolveur et sa préparation n'arrivent pas avant
+le premier appel. Le nombre de scripts peut évoluer ; la propriété « aucun contournement », non.
+
 **Mesuré à la fermeture, le 2026-08-07.** Depuis le shell WSL qui ne présentait que le npm
 Windows, le harnais sélectionne Node `v24.14.1` et npm `11.11.0` sous NVM avant tout répertoire
-temporaire. `scripts/verify-node-toolchain.sh` rend **4 contrôles sans anomalie** : chemin Windows,
-couple courant conservé, repli qui écarte Node 23 puis npm 10, et absence refusée avec `nvm use`.
+temporaire. `scripts/verify-node-toolchain.sh` rend **5 contrôles sans anomalie** : chemin Windows,
+couple courant conservé, repli qui écarte Node 23 puis npm 10, absence refusée avec `nvm use`, et
+les 22 harnais Node/npm protégés.
 
 ### 7.2 Parcours du harnais
 
@@ -392,7 +398,11 @@ couple courant conservé, repli qui écarte Node 23 puis npm 10, et absence refu
    pas nécessairement la disparition d'une suite entière (décision 279).
 2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
 3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien
-   cassé.
+   cassé. Une écriture suivie d'une relecture API attend d'abord le signal de réussite que voit
+   l'utilisateur — brouillon vidé et région live —, jamais la seule présence ambiguë du texte
+   saisi. La sortie du lanceur, du webServer et des workers ne contient aucune ligne `Warning:` :
+   lorsque Playwright force la couleur, sa configuration retire le `NO_COLOR` hérité avant tout
+   sous-processus.
 4. **`npm run test:unit`** reste vert.
 5. **`npm run e2e:report`** sert réellement le dernier rapport : le processus est lancé, interrogé
    en HTTP, et le code `200` est constaté avant qu'il soit arrêté.
