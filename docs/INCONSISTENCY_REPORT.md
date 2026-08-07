@@ -3112,7 +3112,7 @@ avant celui-ci), INC-023 (une Definition of Done dont les sujets arrivent plus t
 
 ---
 
-### INC-044 — Sans `ss` ni `netstat`, la garde de ports est silencieusement inerte
+### INC-044 — Sans `ss` ni `netstat`, la garde de ports est silencieusement inerte — **CLOSE**
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 257.** **La garde lit `/proc/net/tcp` en dernier recours.** Seule option qui ferme les deux entrées et rende la garde réellement protectrice plutôt qu'apparemment protectrice. Rattachement : `CRM-002`. Exigence : la lecture est prouvée **dans les deux sens**.
 
@@ -3161,6 +3161,12 @@ le masquer serait exactement ce que `CLAUDE.md` §18 interdit.
 **Lié à :** `docs/JOURNAL.md` décision 99 (la garde et son intention), `CLAUDE.md` §18 (ne jamais
 masquer une erreur par une valeur par défaut trompeuse), INC-032, INC-036 et INC-042 (autres écarts
 entre l'hôte supposé et l'hôte réel).
+
+**CLOSE le 2026-08-07 par la reprise de `CRM-002`.** `host_listening_ports` essaie toujours `ss`,
+puis `netstat`, mais lit désormais `/proc/net/tcp` et `/proc/net/tcp6` si les deux outils manquent.
+La preuve force réellement ce dernier chemin : une socket ouverte par le harnais apparaît, puis le
+même port disparaît après l'arrêt et l'attente de son détenteur. La conversion IPv4/IPv6 et le
+filtrage du seul état `LISTEN` ont leur contre-épreuve déterministe. `verify-scripts.sh` : **64/64**.
 
 ---
 

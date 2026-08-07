@@ -3,6 +3,7 @@
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
 #           décision 251 (`MAIL_TEAM_DOMAIN` déclaré avant son consommateur CRM-051)
 # @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
+#           décision 257 (lecture de secours des ports par /proc, ouverte et fermée),
 #           décision 247 (contexte de build sans secrets ni données locales), décision 272
 #           (origine webapp joignable depuis les emails transactionnels)
 # @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
@@ -29,7 +30,14 @@ cd "$REPO_ROOT"
 
 ENV_EXAMPLE="$REPO_ROOT/.env.example"
 WORK=$(mktemp -d)
-trap 'rm -rf "$WORK"' EXIT
+cleanup() {
+	if [ -n "${proc_listener_pid:-}" ]; then
+		kill "$proc_listener_pid" 2>/dev/null || true
+		wait "$proc_listener_pid" 2>/dev/null || true
+	fi
+	rm -rf "$WORK"
+}
+trap cleanup EXIT
 
 failures=0
 checks=0
@@ -602,6 +610,91 @@ if port_verdict '' '' >/dev/null; then
 	ok "aucun port en écoute : aucun refus"
 else
 	fail "un hôte sans port en écoute est tout de même refusé"
+fi
+
+# Force le dernier recours sans altérer le PATH du script : une fonction bash peut masquer le
+# builtin `command` dans ce seul sous-shell. Les outils restent donc disponibles, mais les deux
+# sondes prioritaires paraissent absentes exactement comme sur l'hôte minimal d'INC-044.
+proc_fallback_ports() {
+	(
+		# shellcheck source=scripts/lib/env.sh
+		. "$REPO_ROOT/scripts/lib/env.sh"
+		command() {
+			case "${1:-}:${2:-}" in
+				-v:ss|-v:netstat) return 1 ;;
+				*) builtin command "$@" ;;
+			esac
+		}
+		host_listening_ports
+	)
+}
+
+# Les deux formats du noyau sont éprouvés sur une table minimale : IPv4 et IPv6 en état LISTEN
+# sont convertis, un socket dans un autre état est écarté. Le test réel qui suit ne dépend pas de
+# cette fixture et vérifie le noyau courant.
+PROC_TCP_FIXTURE="$WORK/proc-net-tcp"
+PROC_TCP6_FIXTURE="$WORK/proc-net-tcp6"
+printf '%s\n' \
+	'  sl  local_address rem_address   st' \
+	'   0: 0100007F:C001 00000000:0000 0A' \
+	'   1: 0100007F:270F 00000000:0000 06' > "$PROC_TCP_FIXTURE"
+printf '%s\n' \
+	'  sl  local_address                         rem_address                          st' \
+	'   0: 00000000000000000000000000000000:1F90 00000000000000000000000000000000:0000 0A' \
+	> "$PROC_TCP6_FIXTURE"
+fixture_proc_ports=$(
+	# shellcheck source=scripts/lib/env.sh
+	. "$REPO_ROOT/scripts/lib/env.sh"
+	proc_listening_ports "$PROC_TCP_FIXTURE" "$PROC_TCP6_FIXTURE"
+)
+if printf '%s\n' "$fixture_proc_ports" | grep -qx 49153 \
+	&& printf '%s\n' "$fixture_proc_ports" | grep -qx 8080 \
+	&& ! printf '%s\n' "$fixture_proc_ports" | grep -qx 9999; then
+	ok "/proc/net/tcp et tcp6 : hexadécimal converti, seuls les sockets LISTEN sont retenus"
+else
+	fail "/proc/net/tcp et tcp6 : conversion ou filtrage d'état incorrect"
+fi
+
+# Une socket réellement mise en écoute est d'abord lue dans /proc, puis fermée et relue. Filtrer
+# l'état noyau 0A (LISTEN) est ainsi prouvé dans les deux sens ; un état résiduel TIME_WAIT ne doit
+# jamais être pris pour un détenteur du port.
+if command -v python3 >/dev/null 2>&1; then
+	PROC_PORT_FILE="$WORK/proc-listener-port"
+	python3 -c 'import socket, time
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+s.listen()
+print(s.getsockname()[1], flush=True)
+time.sleep(300)' > "$PROC_PORT_FILE" &
+	proc_listener_pid=$!
+	for _ in {1..100}; do
+		[ -s "$PROC_PORT_FILE" ] && break
+		sleep 0.01
+	done
+	proc_open_port=""
+	[ ! -s "$PROC_PORT_FILE" ] || IFS= read -r proc_open_port < "$PROC_PORT_FILE"
+	if [ -n "$proc_open_port" ]; then
+		proc_ports_open=$(proc_fallback_ports)
+		if printf '%s\n' "$proc_ports_open" | grep -qx "$proc_open_port"; then
+			ok "/proc/net/tcp voit un port réellement ouvert sans ss ni netstat"
+		else
+			fail "/proc/net/tcp ne voit pas le port réellement ouvert $proc_open_port"
+		fi
+
+		kill "$proc_listener_pid" 2>/dev/null || true
+		wait "$proc_listener_pid" 2>/dev/null || true
+		proc_listener_pid=""
+		proc_ports_closed=$(proc_fallback_ports)
+		if printf '%s\n' "$proc_ports_closed" | grep -qx "$proc_open_port"; then
+			fail "/proc/net/tcp croit encore le port $proc_open_port en écoute après sa fermeture"
+		else
+			ok "/proc/net/tcp ne voit plus le port réellement fermé"
+		fi
+	else
+		fail "impossible d'ouvrir la socket TCP de preuve"
+	fi
+else
+	fail "python3 absent : impossible d'ouvrir puis fermer une socket de preuve"
 fi
 
 if ( . "$REPO_ROOT/scripts/lib/env.sh"

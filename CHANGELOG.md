@@ -51,6 +51,12 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **`CRM-002` est de nouveau close : la garde de ports n'a plus d'angle mort sur un Linux
+  minimal.** Après `ss` puis `netstat`, elle lit `/proc/net/tcp` et `/proc/net/tcp6`, convertit les
+  ports hexadécimaux sans extension awk et ne retient que `LISTEN`. La preuve force ce chemin,
+  retrouve une socket réellement ouverte puis ne retrouve plus son port après fermeture :
+  `verify-scripts.sh` **64/64**. INC-044 est close.
+
 - **Le parcours de connexion est rattaché à `CRM-009`, non à `CRM-011`** — `docs/SPEC-auth.md` §9
   l'avait rattaché « selon l'option la plus étroite », c'est-à-dire l'option 1 des trois soumises,
   alors que le responsable avait retenu l'option 2, une unité dédiée (décision 253, INC-021). Le

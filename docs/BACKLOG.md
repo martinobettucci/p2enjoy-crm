@@ -80,7 +80,7 @@ pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
   `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
   **en attente d'arbitrage du responsable**.
 
-### CRM-002 — Scripts de lancement et environnement `[~]`
+### CRM-002 — Scripts de lancement et environnement `[x]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,
 format, obligatoire ou non, exemple non sensible). La liste exhaustive des variables déjà
 consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`, décision 15 :
@@ -112,7 +112,7 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
       production, confirmation explicite avant destruction, aucun amorçage en production.
 - [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
-- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **61 contrôles, aucune
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **64 contrôles, aucune
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
@@ -163,13 +163,16 @@ ports est **inerte** là où ni `ss` ni `netstat` n'existent : `host_listening_p
 vide, `require_free_ports` avertit et laisse démarrer — voulu —, tandis que
 `scripts/verify-scripts.sh` **échoue** en comparant quinze ports publiés à une liste vide.
 
-- [ ] **Lire `/proc/net/tcp` en dernier recours.** C'est la seule option qui ferme les deux entrées
+- [x] **Lire `/proc/net/tcp` en dernier recours.** C'est la seule option qui ferme les deux entrées
       à la fois, et surtout la seule qui rende la garde **réellement** protectrice au lieu
       d'apparemment protectrice : faire s'abstenir le contrôle aurait laissé l'angle mort intact,
-      et un vrai conflit de port serait resté invisible jusqu'à l'échec de Compose.
-- [ ] **Exigence attachée** : la lecture est prouvée **dans les deux sens** — elle voit un port
-      réellement ouvert, et ne voit pas un port fermé —, faute de quoi on aurait remplacé une garde
-      inerte par une garde qui se croit active.
+      et un vrai conflit de port serait resté invisible jusqu'à l'échec de Compose. IPv4 et IPv6
+      sont lus ; seul l'état noyau `0A` (`LISTEN`) est retenu, avec conversion hexadécimale portable.
+- [x] **Exigence attachée** : la lecture est prouvée **dans les deux sens** — sans `ss` ni
+      `netstat`, le harnais ouvre une vraie socket sur un port alloué par le noyau et la retrouve
+      dans `/proc/net/tcp`, tue et attend son détenteur exact, puis constate que le même port fermé
+      a disparu. Une fixture distincte couvre aussi `/proc/net/tcp6`. Résultat complet :
+      `scripts/verify-scripts.sh` **64/64**.
 - [x] **Refuser une origine webapp de développement incohérente avant Docker** (décision 272).
       `SITE_URL` doit être exactement l'origine réellement publiée par
       `DEV_BIND_ADDRESS:WEBAPP_DEV_PORT`, et `ADDITIONAL_REDIRECT_URLS` doit l'autoriser. Sans cette

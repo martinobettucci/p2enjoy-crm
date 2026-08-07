@@ -8096,6 +8096,16 @@ n'est pas faite depuis une unité qui ne traite pas ce sujet.
 elle voit un port réellement ouvert, et ne voit pas un port fermé —, faute de quoi on aurait
 remplacé une garde inerte par une garde qui se croit active.
 
+**Mise en œuvre mesurée le 2026-08-07.** `host_listening_ports` conserve `ss` puis `netstat` en
+priorité et lit les deux tables du noyau en dernier recours. Le parseur awk n'emploie pas
+`strtonum()` — absent de BusyBox —, convertit les ports hexadécimaux lui-même et ne retient que
+l'état `0A` (`LISTEN`). La preuve masque réellement les deux commandes prioritaires, ouvre une
+socket IPv4 sur un port choisi par le noyau, la retrouve, tue puis attend le processus qui la
+détient, et constate que le même port fermé n'est plus rendu. Une fixture IPv4/IPv6 écarte aussi
+un état non `LISTEN`. Deux faux défauts de la preuve ont été trouvés avant son vert : le premier
+processus rendait son PID de wrapper, puis `grep -q` fermait son pipe avant la fin sous
+`pipefail`. Aucun n'a été masqué. Résultat final : `scripts/verify-scripts.sh` **64/64**.
+
 ---
 
 ### Décision 258 — La collision du numéro 180 est levée par un suffixe, jamais par une renumérotation

@@ -624,10 +624,10 @@ Documentation de référence :
   jamais corrigé, et la production ne bénéficie d'aucun ajustement automatique : le prérequis
   reste à vérifier avant le premier démarrage (`docs/PROD_MIGRATIONS.md` §4). La valeur par défaut
   n'a **pas** pu être éprouvée dans l'environnement de vérification, plafonné à 4096.
-- **Ce que la pile suppose de l'hôte.** Quatre suppositions ont été mesurées fausses sur un poste
+- **Ce que la pile suppose de l'hôte.** Cinq suppositions ont été mesurées fausses sur un poste
   WSL alors qu'elles tenaient dans le conteneur d'intégration. Elles sont désormais gardées par les
   scripts, et chaque garde est inerte là où elle ne s'applique pas
-  (`docs/JOURNAL.md`, décisions 98 à 101) :
+  (`docs/JOURNAL.md`, décisions 98 à 101 et 257) :
   - **Magasin d'identifiants Docker.** Un `~/.docker/config.json` désignant `desktop.exe` fait
     passer chaque accès au registre par un binaire Windows. En rafale — et Compose tire ses images
     en parallèle — il rend une sortie vide, et le tirage s'arrête sur
@@ -639,7 +639,9 @@ Documentation de référence :
     lorsqu'un port publié par l'assemblage est tenu par un autre programme, en nommant le port,
     son détenteur et la variable à changer dans `.env`. **Aucun port n'est choisi automatiquement**
     : les URL ci-dessus, les preuves et le seed en dépendent. `.env` est propre au poste, le
-    modifier ne change rien au dépôt.
+    modifier ne change rien au dépôt. La détection essaie `ss`, puis `netstat`; sur un Linux
+    minimal qui ne porte aucun des deux, elle lit directement `/proc/net/tcp` et
+    `/proc/net/tcp6`. Le harnais ouvre puis ferme une vraie socket et prouve les deux verdicts.
   - **Effacement du cluster PostgreSQL.** PostgreSQL referme son répertoire de données en `0750`
     sous son propre compte : sur un hôte dont l'utilisateur n'est pas celui du conteneur, `rm`
     échoue. `./resetMe.sh` confie alors la destruction à un conteneur jetable. Aucun `sudo` n'est

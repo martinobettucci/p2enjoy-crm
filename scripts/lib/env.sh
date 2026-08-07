@@ -2,8 +2,9 @@
 # @spec CRM-002 (docs/BACKLOG.md) — socle commun des scripts de lancement et d'environnement
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 98 (identifiants Docker), décision 99 (ports déjà pris),
-#       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 272
-#       (origine webapp de développement cohérente avec le port publié)
+#       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 257
+#       (lecture de secours des ports par /proc), décision 272 (origine webapp de développement
+#       cohérente avec le port publié)
 # @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §13 (commandes de lancement)
 # @spec docs/PROD_MIGRATIONS.md §2.3
 # @spec README.md §4 (installation), §5 (commandes principales), §9 (variables d'environnement),
@@ -410,12 +411,52 @@ ensure_host_mountpoints() {
 # variable du fichier d'environnement à changer. Il ne choisit jamais un port à la place de
 # l'opérateur : les URL documentées et les preuves en dépendent.
 
-# Ports TCP en écoute sur l'hôte, un par ligne. Sortie vide si l'hôte ne sait pas les lister.
+# Ports TCP en écoute d'après les tables du noyau Linux. Le convertisseur hexadécimal est écrit en
+# awk portable : `strtonum()` n'existe ni dans toutes les implémentations d'awk, ni dans BusyBox.
+# Les deux tables sont lues séparément afin qu'un hôte sans IPv6 reste inspectable par IPv4.
+proc_listening_ports() {
+	local file readable=false status=0
+	local -a files=("$@")
+	if [ "${#files[@]}" -eq 0 ]; then
+		files=(/proc/net/tcp /proc/net/tcp6)
+	fi
+	for file in "${files[@]}"; do
+		[ -r "$file" ] || continue
+		readable=true
+		awk '
+			function hex_to_decimal(hex, result, digit, i) {
+				hex = toupper(hex)
+				result = 0
+				for (i = 1; i <= length(hex); i++) {
+					digit = index("0123456789ABCDEF", substr(hex, i, 1)) - 1
+					if (digit < 0) return -1
+					result = result * 16 + digit
+				}
+				return result
+			}
+			$4 == "0A" {
+				split($2, address, ":")
+				port = hex_to_decimal(address[2])
+				if (port >= 0) print port
+			}
+		' "$file" || status=1
+	done
+	[ "$readable" = true ] && [ "$status" -eq 0 ]
+}
+
+# Ports TCP en écoute sur l'hôte, un par ligne. `ss` et `netstat` restent prioritaires ; les
+# tables du noyau ferment leur angle mort sur une installation Linux minimale. Le code de retour
+# distingue une source valide ne portant aucun listener (succès, sortie vide) d'un hôte réellement
+# impossible à inspecter (échec).
 host_listening_ports() {
 	if command -v ss >/dev/null 2>&1; then
 		ss -ltn 2>/dev/null | tail -n +2 | awk '{ n = split($4, a, ":"); print a[n] }' | sort -un
 	elif command -v netstat >/dev/null 2>&1; then
 		netstat -ltn 2>/dev/null | awk '/^tcp/ { n = split($4, a, ":"); print a[n] }' | sort -un
+	elif proc_listening_ports; then
+		return 0
+	else
+		return 1
 	fi
 }
 
@@ -464,9 +505,8 @@ require_free_ports() {
 	shift
 	local ignored=" $* "
 
-	listening=$(host_listening_ports)
-	if [ -z "$listening" ]; then
-		warn "ports de l'hôte non inspectables (ni « ss » ni « netstat ») : un conflit de port"
+	if ! listening=$(host_listening_ports); then
+		warn "ports de l'hôte non inspectables (ni « ss », ni « netstat », ni tables /proc) : un conflit de port"
 		warn "resterait invisible jusqu'à l'échec de Compose."
 		return 0
 	fi
