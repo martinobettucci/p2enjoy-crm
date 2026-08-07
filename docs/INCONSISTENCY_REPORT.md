@@ -12,41 +12,43 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
-### INC-081 — Dix-huit décisions, dont cinq arbitrages du responsable, n'ont jamais atteint `main`
+### INC-081 — Les décisions du responsable sont réinsérées ; leur mise en œuvre reste à faire
 
-**Nature :** contradiction de **numérotation et de contenu** entre deux lignes de journal écrites
-en parallèle, et perte de trace d'arbitrages.
+**Nature :** décisions du responsable restées hors de `main`, désormais réinsérées ; l'écart qui
+subsiste est un écart **de mise en œuvre**, pas de trace.
 **Relevé le :** 2026-08-07, pendant la suppression des branches `claude/happy-goldberg-*`.
 
 **Le fait.** Quarante et une branches ont été poussées sur `origin` en violation de `CLAUDE.md`
 §13, qui interdit toute création de branche. Avant leur suppression, leur contenu a été comparé à
 `main`. Quarante ne portaient que des réimplémentations parallèles d'unités que `main` porte déjà.
-La branche `claude/happy-goldberg-qt5vfi` portait en propre **dix-huit décisions de journal
-absentes de `main`, dont cinq arbitrages explicites du responsable**, ainsi que
-`docs/ARBITRAGES.md`.
+La branche `claude/happy-goldberg-qt5vfi` retenait en propre **dix-huit décisions du responsable,
+dont cinq arbitrages explicites**, ainsi que `docs/ARBITRAGES.md`.
 
-**La contradiction.** Les deux lignes ont attribué les numéros 235 à 252 à des sujets différents.
-La décision 239 de `main` traite de la boîte mail du `viewer` ; celle de la branche rattache
-l'écran de connexion à `CRM-009`. Reprendre les entrées récupérées sous leur numéro d'origine
-écraserait des décisions de `main` ; les renuméroter d'office reviendrait à arbitrer à la place du
-responsable, certaines entrées se contredisant d'une ligne à l'autre.
+**Ce qui est fait.** Les dix-huit décisions sont **réinsérées dans `docs/JOURNAL.md`**, texte
+inchangé, sous les numéros **249 à 266**. La renumérotation était contrainte : les deux lignes
+avaient attribué les numéros 235 à 252 à des sujets différents — sur `main` le numéro 239 traite de
+la boîte mail du `viewer`, sur la branche il rattachait l'écran de connexion à `CRM-009`. Les
+numéros d'origine sont conservés en tête de chaque entrée et rappelés dans
+`docs/ARBITRAGES_RECUPERES.md`. `docs/ARBITRAGES.md` est également récupéré.
 
-**Ce qui a été fait, et pas fait.** Les dix-huit entrées sont reproduites **verbatim** dans
-`docs/ARBITRAGES_RECUPERES.md` sous une numérotation de récupération `R-01` à `R-18`.
-`docs/JOURNAL.md` n'est **pas** modifié et aucun comportement n'est changé.
+**Ce qui reste ouvert, et c'est le seul objet de cette entrée.** La **mise en œuvre** de plusieurs
+de ces décisions n'est pas faite. Mesuré :
 
-**Conséquence mesurée, non corrigée.** L'arbitrage `R-14` — « `require_fields` devient une table de
-liaison » — n'est **pas appliqué** sur `main` : `docs/SCHEMA.md` §—`require_fields` le décrit
-toujours en `uuid[]` et note qu'il ne peut porter aucune intégrité référentielle, ce que cet
-arbitrage renversait. À l'inverse, `R-04` et `R-05` (unité de l'écran de connexion, session en
-`sessionStorage`) sont **appliqués** par la décision 243 de `main` : seul le registre de
-l'arbitrage manquait.
+- **Décision 260 — `require_fields` devient une table de liaison.** Non appliquée.
+  `docs/SCHEMA.md` décrit toujours `require_fields` en `uuid[]` et note qu'il ne peut porter
+  aucune intégrité référentielle, ce que cette décision renversait. Engage une migration,
+  `docs/SCHEMA.md`, `docs/DAT.md` et `docs/PROD_MIGRATIONS.md`.
+- **Décision 259 — l'ordonnancement passe à `pg_cron`**, qui renverse la décision 8.
+- **Décision 258 — les fonctions edge entrent au périmètre**, qui rouvre la décision 12.
+- **Décision 261 — `change_channel_workflow`** est un geste distinct, sans unité de backlog dédiée.
 
-**Arbitrage attendu.** Pour chacune des dix-huit entrées : reprise dans `docs/JOURNAL.md` sous un
-numéro neuf, ou déclaration de caducité. `R-14` appelle en outre une décision de schéma, qui
-engagerait une migration et la révision de `docs/SCHEMA.md`, `docs/DAT.md` et
-`docs/PROD_MIGRATIONS.md`. Tant que l'arbitrage n'est pas rendu, aucune ligne de code ne s'appuie
-sur ces entrées.
+Appliquées, vérifiées : les décisions **253** (unité de l'écran de connexion) et **254** (session en
+`sessionStorage`) le sont déjà par la décision 243 de `main` ; seule leur trace manquait. Les
+autres entrées n'ont pas été mesurées une à une.
+
+**Suite due.** Rattacher chaque mise en œuvre restante à une unité de `docs/BACKLOG.md`, puis
+clore cette entrée lorsque les quatre points ci-dessus sont livrés ou explicitement déclarés
+caducs par le responsable.
 
 ---
 

@@ -15,12 +15,13 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
-- **Les décisions restées hors de `main` sont récupérées** — `docs/ARBITRAGES.md` et
-  `docs/ARBITRAGES_RECUPERES.md` reproduisent verbatim les dix-huit entrées de journal, dont cinq
-  arbitrages du responsable, que la branche `claude/happy-goldberg-qt5vfi` portait seule. Rien
-  n'est fusionné dans `docs/JOURNAL.md` : les deux lignes ont numéroté leurs décisions en
-  parallèle et la contradiction est consignée en INC-081, dont l'arbitrage reste dû. L'arbitrage
-  `R-14` sur `require_fields` est mesuré comme **non appliqué** sur `main`.
+- **Les décisions du responsable restées hors de `main` sont réinsérées** — les dix-huit entrées
+  que la branche `claude/happy-goldberg-qt5vfi` retenait seule, dont cinq arbitrages explicites,
+  reprennent leur place dans `docs/JOURNAL.md` sous les numéros 249 à 266, texte inchangé. La
+  renumérotation était contrainte : les deux lignes avaient donné les numéros 235 à 252 à des
+  sujets différents. `docs/ARBITRAGES_RECUPERES.md` donne la correspondance, `docs/ARBITRAGES.md`
+  est récupéré. INC-081 ne suit plus qu'un écart de **mise en œuvre** : `require_fields` en table
+  de liaison, `pg_cron`, les fonctions edge et `change_channel_workflow` restent à livrer.
 
 ### Supprimé
 
