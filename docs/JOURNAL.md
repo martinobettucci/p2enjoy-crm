@@ -8551,3 +8551,25 @@ déconnexion, l'adresse du destinataire et la session stockée sous la clé Supa
 `sessionStorage`. `localStorage` reste vide et l'URL ne contient plus ni `access_token`, ni
 `refresh_token`. Le compte est supprimé après la preuve. La console stricte reste sans erreur ni
 avertissement : un retour accepté mais partiellement initialisé n'est pas un succès.
+
+---
+
+### Décision 274 — Un lien présent mais blanc sur blanc n'est pas une action email livrée
+
+**Défaut trouvé par la capture, après un scénario pourtant vert.** Chromium trouvait l'ancre
+« Accepter l'invitation », la déclarait visible et pouvait cliquer dessus. La capture observée ne
+montrait qu'un grand espace vide entre l'introduction et le code. La mesure CSS a confirmé le faux
+positif : Inbucket retire tout l'attribut `style` de la balise `<a>` dans sa vue « Safe HTML » ; son
+fond calculé devient transparent, tandis que le texte blanc du gabarit se confond avec la carte.
+
+**Décision de rendu robuste.** Les quatre gabarits utilisent le patron classique des emails : une
+petite table de présentation, une cellule portant le fond `#23468C`, le rayon et le remplissage,
+puis un lien contenant un élément textuel intérieur blanc et gras. Si le client retire encore le
+style de l'ancre, le contraste est porté par les deux niveaux qu'il conserve déjà sur les autres
+éléments du message. Sans CSS, le libellé explicite du lien reste compréhensible.
+
+**Preuve renforcée.** Le parcours destinataire exige dans le style calculé un fond bleu et un texte
+blanc, positionne réellement la souris sur l'action, capture la fenêtre assez haute pour montrer
+action et code, puis clique. Les assertions de contraste rendent impossible le précédent vert
+sémantique sur un bouton visuellement absent. Le même patron est appliqué aux quatre emails pour
+éviter quatre variantes d'un défaut identique.

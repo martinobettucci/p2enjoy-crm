@@ -1315,6 +1315,11 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       vérifie son **contenu**, jamais sa seule présence. Un email reçu ne prouve pas que le gabarit
       configuré a été employé — c'est précisément ce que la mesure a montré. La preuve comporte
       aussi un parcours Chromium de la boîte au lien d'invitation, comme un destinataire.
+- [ ] **Action réellement visible dans le client rendu** (décision 274) : les quatre gabarits
+      emploient un bouton email robuste à l'assainissement des styles de lien. Chromium vérifie le
+      fond bleu et le texte blanc calculés dans Inbucket, puis la capture observée doit montrer
+      l'action, le code et le contenu français — une ancre seulement présente dans le DOM ne suffit
+      pas.
 - [ ] **Conséquence de fermeture** : cette unité est la condition de fermeture de **dix-huit unités
       `[~]`** dont le code est livré et prouvé. Elles ne passeront pas `[x]` d'un trait de plume :
       chacune sera reprise, sa preuve manquante réellement exécutée, et son état révisé sur mesure.

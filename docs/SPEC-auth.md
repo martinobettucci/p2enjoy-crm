@@ -199,6 +199,12 @@ la cible est `{{ .ConfirmationURL }}` et présente aussi le code `{{ .Token }}`.
 compréhensible sans image ; son habillage reprend la palette, la pile typographique et les
 contrastes de `docs/DESIGN_SYSTEM.md` sans introduire de nouveau jeton.
 
+Le bouton d'action ne porte pas son contraste sur la seule balise `<a>` : certains clients sûrs,
+dont l'Inbucket réellement livré en développement, retirent ses styles tout en conservant son
+`href`. Une cellule de tableau porte donc le fond bleu et un élément textuel intérieur porte le
+blanc ; le lien reste explicite sans CSS. La preuve Chromium exige le contraste **calculé** après
+assainissement, pas seulement une ancre accessible dans le DOM (décision 274).
+
 Le repli de GoTrue impose une preuve plus forte que « un message existe ». Si une URL est
 injoignable lors du premier chargement, `supabase/gotrue:v2.189.0` journalise l'échec puis met en
 cache son gabarit anglais par défaut. Les preuves n° 6 et 18 relisent donc le message **réellement
