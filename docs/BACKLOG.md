@@ -1347,8 +1347,9 @@ corrigée et le parcours destinataire complète le contrat initial.
       mesure. Cette dépendance n'empêche plus leur audit individuel.
 
 ### CRM-008 — Harnais de tests `[~]`
-pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
-**DoD** : chaque commande du `README.md` §7 s'exécute ; un test volontairement faux échoue bien.
+pgTAP, Vitest et Playwright (`api`, `ui`, `mail`) ; pytest naît avec `mail-sync` en `CRM-051`.
+**DoD** : chaque commande du `README.md` §7 dont le sujet existe s'exécute ; un test volontairement
+faux échoue bien. Périmètre arbitré par le responsable — décision 277, INC-023, option 2.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-test-harness.md` : l'énoncé nommait
       quatre outils sans dire ce que chacun doit rendre, ni comment un harnais peut mentir.
@@ -1433,17 +1434,17 @@ pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).
 - [x] `docs/SPEC-test-harness.md`, `README.md` §7 et §13, `docs/DAT.md` §13,
       `docs/SPEC-webapp.md` §13, `docs/MASTER_PLAN.md` §3, `.gitignore`, `package.json`,
       `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **`pytest mail-sync/tests` n'est pas livré** : aucun code Python n'existe dans le dépôt, le
-      service `mail-sync` étant l'objet de `CRM-051`. Un harnais pytest sans sujet rendrait `5`
-      (« no tests ran ») ou, pire, `0` sur un périmètre vide.
-- [ ] **`npm run e2e:mail` n'est pas livré** : ni Stalwart, ni boîte, ni ingestion — `CRM-050` et
-      `CRM-054`. Rien à faire circuler.
-- [ ] **Ces deux manques ne sont pas des défauts de l'unité, mais une contradiction
-      d'ordonnancement** : la Definition of Done exige des commandes dont les sujets arrivent
-      **deux chunks plus loin**. Consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-023**, avec
-      trois options d'arbitrage — dont la constatation que `CRM-051` et `CRM-054` portent **déjà**
-      ces deux commandes dans leur propre DoD, ce qui les compte deux fois. **À trancher par le
-      responsable.**
+- [x] **`pytest mail-sync/tests` est explicitement hors du périmètre de cette unité** (décision
+      277). Aucun code Python n'existe encore ; la commande appartient à `CRM-051`, qui porte son
+      sujet et exige déjà pytest. Aucun projet vide n'est fabriqué pour obtenir un code de sortie 0.
+- [x] **`npm run e2e:mail` est livré par `CRM-050`** : seize scénarios exercent les protocoles et
+      services réels. Le parcours d'email du produit reste dû par `CRM-054` et `CRM-058`, sans être
+      recompté comme une dette de `CRM-008`.
+- [x] **INC-023 est arbitrée, option 2.** La DoD est restreinte aux commandes dont le sujet existe ;
+      l'ordre du master plan ne dépend plus d'une unité située deux chunks plus loin.
+- [ ] **Fermeture à mesurer après arbitrage** : repartir d'une base locale froide, rejouer toutes
+      les commandes du périmètre actuel et les dégradations volontaires du harnais. L'arbitrage ne
+      remplace pas ce verdict d'exécution.
 
 *DoD adaptée, écarts explicites.* **Aucune migration, aucune mise à jour du seed** : un harnais de
 tests n'introduit ni table, ni statut, ni flux ; il consomme le seed socle de `CRM-005` sans le
@@ -1453,8 +1454,8 @@ variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat in
 
 *Limites nommées, non masquées.*
 
-- **Deux des sept commandes de `README.md` §7 ne sont pas livrées** (voir ci-dessus, INC-023).
-  L'unité reste `[~]` pour cette seule raison.
+- **`pytest mail-sync/tests` n'est pas livré et ne doit pas l'être ici** : décision 277. Il reste
+  dû par `CRM-051`; ce fait n'est plus une limite de `CRM-008`.
 - **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7, seule la n° 11 est
   acquise.** Les onze autres exigent des cards, des channels, des comptes mail et un second
   workspace : elles restent dues par `CRM-014`, qui héritera des fixtures livrées ici.

@@ -51,6 +51,12 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **INC-023 est arbitrée : chaque harnais naît avec son sujet.** Le responsable retient l'option 2
+  (décision 277) : `CRM-008` couvre les commandes exécutables de son périmètre ;
+  `pytest mail-sync/tests` appartient exclusivement à `CRM-051`. `e2e:mail`, déjà réel depuis
+  `CRM-050`, reste la preuve des protocoles ; l'aller-retour du produit reste dû par `CRM-054` et
+  `CRM-058`. Aucun projet vide n'est créé et aucune preuve n'est comptée deux fois.
+
 - **`CRM-002` est de nouveau close : la garde de ports n'a plus d'angle mort sur un Linux
   minimal.** Après `ss` puis `netstat`, elle lit `/proc/net/tcp` et `/proc/net/tcp6`, convertit les
   ports hexadécimaux sans extension awk et ne retient que `LISTEN`. La preuve force ce chemin,

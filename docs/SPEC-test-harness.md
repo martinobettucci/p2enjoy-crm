@@ -38,7 +38,7 @@ décrire un état futur :
 | `npm run test:sql` | absente | **oui** |
 | `npm run e2e:api` | absente | **oui** |
 | `npm run e2e:report` | absente | **oui** |
-| `pytest mail-sync/tests` | absente | **non** — voir §8 |
+| `pytest mail-sync/tests` | absente | **non** — porté exclusivement par `CRM-051`, décision 277 |
 | `npm run e2e:mail` | absente | **non** — voir §8. **Livrée depuis par `CRM-050`**, voir ci-dessous |
 
 ## 2. Ce que le harnais n'invente pas
@@ -54,7 +54,7 @@ livré Stalwart, ses boîtes, Roundcube et ClamAV, et `e2e/mail/` exerce les pro
 IMAP sur les trois boîtes, soumission SMTP authentifiée, remise par le catch-all et relecture,
 détection réelle d'EICAR, et Roundcube à l'écran. Ce que le projet ne prouve **pas encore** est
 l'aller-retour d'email **du produit**, qui suppose l'ingestion (`CRM-054`) et l'envoi (`CRM-058`).
-`pytest mail-sync/tests` reste sans sujet jusqu'à `CRM-051`, et INC-023 reste ouverte à ce titre.
+`pytest mail-sync/tests` reste sans sujet jusqu'à `CRM-051`.
 
 Trois conduites étaient possibles. Déclarer les projets vides : rejetée, c'est exactement
 l'illusion que `e2e/playwright.config.ts` refusait déjà en toutes lettres depuis `CRM-007`.
@@ -62,10 +62,11 @@ Fabriquer un `mail-sync/` minimal pour avoir quelque chose à tester : rejetée,
 `CRM-051` et gonfler l'unité au-delà de son énoncé (`CLAUDE.md` §1). Livrer ce qui est livrable et
 **nommer** le reste : retenue.
 
-La contradiction d'ordonnancement — une Definition of Done qui exige l'exécution de commandes dont
-les sujets arrivent deux chunks plus loin — est consignée dans `docs/INCONSISTENCY_REPORT.md`,
-**INC-023**, sans être résolue implicitement. Tant qu'elle n'est pas arbitrée, `CRM-008` reste
-`[~]`.
+**Arbitrage du responsable — décision 277, INC-023, option 2.** La Definition of Done de
+`CRM-008` est bornée aux commandes dont le sujet existe. `pytest mail-sync/tests` appartient à
+`CRM-051`; `e2e:mail` appartient aux unités qui livrent ses sujets réels. Cette répartition évite
+deux faux remèdes — un projet vide ou un squelette Python sans fonction — et le double comptage
+d'une même preuve dans deux unités.
 
 ## 3. `npm run test:sql` — exécuteur pgTAP
 
@@ -384,11 +385,11 @@ de tests, pas seulement des nouvelles.
    résiduelle est vérifiée en base, et les fichiers altérés sont identiques à leur version
    versionnée — constaté, pas supposé.
 
-## 8. Ce qui reste dû, et par qui
+## 8. Ce qui est dû, et par qui
 
 | Commande | Bloquée par | Ce qui manque exactement |
 |---|---|---|
-| `pytest mail-sync/tests` | `CRM-051` | Aucun code Python dans le dépôt. Un harnais pytest sans sujet rendrait `5` (« no tests ran ») ou, pire, `0` sur un périmètre vide. |
+| `pytest mail-sync/tests` | `CRM-051` | Aucun code Python dans le dépôt. La décision 277 l'exclut explicitement de `CRM-008`; un harnais sans sujet rendrait `5` (« no tests ran ») ou, pire, `0` sur un périmètre vide. |
 | `npm run e2e:mail` | ~~`CRM-050`~~, `CRM-054` | **Livrée par `CRM-050`** : Stalwart, trois boîtes et ClamAV existent, et le projet les éprouve par le protocole. L'aller-retour d'email du produit reste dû par `CRM-054` et `CRM-058`. |
 
 Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 restaient dues par
@@ -410,8 +411,8 @@ une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3
 
 ## 10. Limites connues
 
-- **`pytest` n'est pas livré, et `e2e:mail` l'a été depuis par `CRM-050`** (§2, §8). `CRM-008` reste `[~]` tant qu'INC-023
-  n'est pas arbitrée.
+- **`pytest` n'est pas livré, et `e2e:mail` l'a été depuis par `CRM-050`** (§2, §8). Par décision
+  277, pytest appartient à `CRM-051` et ne conditionne plus `CRM-008`.
 - **Sur les douze preuves de refus, une seule était acquise à l'écriture de ce document** — la
   n° 11. `CRM-014` en acquiert **sept** (§4.6) ; les cinq autres n'ont toujours pas de sujet et
   leur absence est figée par une assertion.

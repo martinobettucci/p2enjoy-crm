@@ -323,9 +323,9 @@ rien dans le CRM ne lit encore ces boîtes.
 
 `pytest mail-sync/tests` n'est toujours pas livré, et n'est **pas déclaré vide pour autant** :
 sans service à exercer, il rendrait `5` (« no tests ran ») — ce qui serait pire qu'une commande
-absente. Il arrivera avec son sujet, en `CRM-051` ; la contradiction entre cette réalité et la
-Definition of Done de `CRM-008` reste consignée en
-[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-023.
+absente. Il arrivera avec son sujet, en `CRM-051`. Le responsable a explicitement retiré cette
+commande de la DoD de `CRM-008` — décision 277, INC-023 — plutôt que de créer un harnais vide ou de
+compter deux fois la preuve de `CRM-051`.
 
 `npm run test:sql` ne se fie **ni** au code de sortie de `psql`, **ni** au diagnostic de pgTAP :
 mesuré, `psql` rend `0` sur une suite dont toutes les assertions échouent, et pgTAP n'émet aucun

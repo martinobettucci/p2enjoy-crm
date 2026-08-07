@@ -8648,3 +8648,27 @@ sans `warning`, `error` ni `pageerror`; le sous-ensemble d'authentification rend
 observée `docs/captures/CRM-009/invitation-francaise-destinataire.jpg` montre le sujet français,
 l'action bleue à texte blanc et le code. Le clic ouvre la vraie session GoTrue, nettoie l'URL,
 laisse `localStorage` vide et place le jeton uniquement dans `sessionStorage`.
+
+---
+
+### Décision 277 — Chaque harnais naît avec son sujet : `CRM-008` est bornée aux commandes exécutables (arbitrage du responsable, INC-023)
+
+**Question posée.** La Definition of Done historique de `CRM-008` exigeait toutes les commandes du
+`README.md` §7, dont `pytest mail-sync/tests`, alors que le service Python n'existe qu'à partir de
+`CRM-051`. Trois options étaient documentées par INC-023 : scinder l'unité, restreindre sa DoD aux
+sujets existants, ou la laisser ouverte à travers deux chunks.
+
+**Décision explicite du responsable le 2026-08-07 : option 2.** `CRM-008` porte les commandes dont
+le sujet existe au moment où le harnais est livré. `pytest mail-sync/tests` appartient à
+`CRM-051`, dont la DoD exige déjà les tests unitaires Python ; créer un projet vide ou un squelette
+sans fonction métier resterait un faux vert interdit.
+
+**Application au projet `mail`.** `npm run e2e:mail` est désormais réel depuis `CRM-050` : ses
+seize scénarios exercent Stalwart, IMAP, SMTP, ClamAV et Roundcube. L'aller-retour du **produit**
+reste distinct et dû par `CRM-054` puis `CRM-058`. La décision ne déplace aucune preuve existante :
+elle supprime seulement le double comptage qui rendait `CRM-008` impossible à fermer.
+
+**Condition de fermeture.** L'arbitrage ne vaut pas preuve. `CRM-008` reste `[~]` jusqu'au rejeu,
+sur une base de développement froide, de toutes les commandes désormais dans son périmètre et de
+ses dégradations volontaires. INC-023, contradiction de périmètre, est close par cette décision ;
+l'unité ne passera `[x]` qu'après mesure.
