@@ -1296,6 +1296,10 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       stockage est indisponible — plutôt que laissé à son défaut, qui écrirait dans `localStorage`
       et tomberait sous `CLAUDE.md` §11. Un `F5` ne déconnecte pas ; la fermeture de l'onglet, si.
       `docs/SPEC-auth.md` §9.2. Preuve acquise hors interface autant que dedans.
+- [ ] **Consommer le retour d'un email transactionnel** (décision 273) : le client accepte le
+      fragment de session émis par GoTrue, valide réellement son utilisateur, retire les jetons de
+      l'URL et persiste la session dans le même `sessionStorage` limité à l'onglet. La preuve exige
+      un `localStorage` vide et une URL débarrassée de tout jeton après le clic destinataire.
 - [x] **Contrat des gabarits écrit avant le code**, `docs/SPEC-auth.md` §5 : service Caddy interne
       commun aux assemblages, quatre URL et sujets français, dépendance saine de GoTrue, contenu
       vérifié dans le message SMTP réel. La limite HTML seul de GoTrue 2.189.0 est mesurée et

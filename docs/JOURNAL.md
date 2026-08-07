@@ -8522,3 +8522,32 @@ cohérente, puis une copie où `SITE_URL` porte un autre port, puis une copie o�
 `ADDITIONAL_REDIRECT_URLS`. Les deux copies doivent être refusées avec un diagnostic précis. La
 preuve fonctionnelle reste celle de `CRM-009` : le destinataire clique réellement le lien et voit
 la session authentifiée dans la webapp, sans erreur ni avertissement de console.
+
+---
+
+### Décision 273 — La webapp consomme le fragment GoTrue au lieu d'abandonner le destinataire anonyme
+
+**Défaut observé après la correction d'origine.** Le destinataire arrive désormais sur la bonne
+webapp. Elle rend pourtant « Se connecter » et les états anonymes. La trace montre que GoTrue a
+bien confirmé l'invitation et redirigé avec la session dans le fragment, conformément à
+`docs/SPEC-auth.md` §3.3. Le client applicatif est explicitement construit avec
+`detectSessionInUrl: false` : il ignore donc ces jetons et restaure seulement un stockage vide.
+
+**Mesure sur la version réellement installée.** `@supabase/auth-js`, dépendance de
+`@supabase/supabase-js` 2.112.0, reconnaît un retour implicite lorsqu'il trouve les paramètres de
+session. Avec `detectSessionInUrl` actif, il exige jetons d'accès et de rafraîchissement, durée et
+type, appelle `/user` pour valider le porteur, efface `window.location.hash`, puis transmet la
+session au stockage configuré. Il ne déplace donc rien vers `localStorage` : la décision 254 reste
+entière, puisque le stockage injecté demeure `sessionStorage` avec repli mémoire.
+
+**Décision rattachée à `CRM-009`.** Activer `detectSessionInUrl`. Le produit n'emploie aucun autre
+fournisseur OAuth susceptible de déposer un `access_token` concurrent dans ce fragment ; le
+comportement par défaut de la bibliothèque est donc le contrat le plus étroit qui couvre les
+quatre emails GoTrue déjà spécifiés. Une logique de parsing applicative du fragment dupliquerait
+les validations et l'effacement que la dépendance épinglée exécute déjà.
+
+**Preuve utilisateur et sécurité.** Après le clic réel dans Inbucket, Chromium doit voir la
+déconnexion, l'adresse du destinataire et la session stockée sous la clé Supabase de
+`sessionStorage`. `localStorage` reste vide et l'URL ne contient plus ni `access_token`, ni
+`refresh_token`. Le compte est supprimé après la preuve. La console stricte reste sans erreur ni
+avertissement : un retour accepté mais partiellement initialisé n'est pas un succès.

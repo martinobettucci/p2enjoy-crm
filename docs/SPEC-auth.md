@@ -321,6 +321,10 @@ La session Supabase est persistée dans **`sessionStorage`**, et nulle part aill
 - si `sessionStorage` est indisponible, le client se replie sur une mémoire de processus : la
   connexion fonctionne, mais ne survit pas au rechargement ;
 - le rafraîchissement automatique du jeton reste actif pendant la session, conformément au §3.5.
+- le client détecte le fragment de session renvoyé par GoTrue après une invitation, une
+  confirmation, une récupération ou un changement d'adresse ; `supabase-js` valide l'utilisateur,
+  retire immédiatement les jetons de l'URL, puis écrit la session dans ce même `sessionStorage`
+  — jamais dans `localStorage` (`detectSessionInUrl: true`, décision 273).
 
 Ce choix relève de la catégorie 2 de `CLAUDE.md` §11 : préférence et état nécessaires limités à
 la session, sans consentement supplémentaire. Il referme l'arbitrage d'INC-022 sans adopter la
