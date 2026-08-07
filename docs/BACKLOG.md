@@ -476,10 +476,10 @@ dans Inbucket ; captures observées.
 - [x] Deux contradictions consignées sans être résolues implicitement : **INC-015** (le parcours
       d'invitation depuis le produit n'a aucun composant pour le porter) et **INC-016** (gabarits
       d'emails chargeables en HTTP seulement, avec repli **silencieux** vers l'anglais).
-- [ ] **Retirer `GOTRUE_JWT_DEFAULT_GROUP_NAME`** (décision 275) : Supabase Auth 2.189.0 la
-      déclare non prise en charge et la journalise en avertissement. Le harnais doit constater son
-      absence de l'environnement réel, puis prouver que les jetons portent toujours
-      `role=authenticated` et que `service_role` conserve l'administration.
+- [x] **Conserver `GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated` malgré l'avertissement amont**
+      (décision 276, qui corrige la décision 275 après contre-preuve) : sans elle, GoTrue 2.189.0
+      émet réellement `role=""` et PostgREST refuse tout utilisateur en `401`. Le harnais exige la
+      variable appliquée, `role=authenticated` dans le JWT et son acceptation par PostgREST.
 - [x] **Inscription libre réellement refusée, et le privilège ne contourne pas le refus** :
       `422 signup_disabled` avec la clé anonyme **comme avec la clé de service**. Vérifié aussi
       qu'aucun compte n'est créé par ces tentatives.
@@ -547,10 +547,12 @@ comptes stables de `CRM-005` servent de profils et aucune donnée d'essai ne sub
 
 *Limites nommées, non masquées.*
 
-- GoTrue 2.189.0 écrit encore un avertissement `GOTRUE_JWT_ADMIN_GROUP_NAME` même quand cette
-  variable n'est pas injectée : son propre `ApplyDefaults()` impose `admin`, puis l'API avertit sur
-  toute valeur non vide. Masquer le niveau `warning` cacherait les vraies alertes ; la limite amont
-  est donc conservée et distinguée de la console navigateur, qui reste strictement vide.
+- GoTrue 2.189.0 écrit deux avertissements de groupes JWT. Le premier,
+  `GOTRUE_JWT_ADMIN_GROUP_NAME`, apparaît même sans variable injectée : son propre
+  `ApplyDefaults()` impose `admin`. Le second qualifie `GOTRUE_JWT_DEFAULT_GROUP_NAME` de non pris
+  en charge, mais la contre-preuve exige de le conserver : son retrait vide réellement le claim
+  `role` et casse PostgREST (décision 276). Masquer le niveau `warning` cacherait les vraies
+  alertes ; cette incohérence amont est distinguée de la console navigateur, strictement vide.
 
 - **La récupération de mot de passe reste hors interface**, bien que son mécanisme soit prouvé.
 - **L'invitation reste une opération d'exploitation** (INC-015).

@@ -50,10 +50,11 @@ utilisateurs anonymes authentifiés. Ce n'est **pas** le rôle `anon` de PostgRE
 serait coûteuse. Le produit n'utilise que le rôle `anon`, qui ne porte aucune identité et à qui
 `docs/SPEC-permissions-rls.md` §3.2 accorde `EXECUTE` pour que le refus reste « zéro ligne ».
 
-`GOTRUE_JWT_DEFAULT_GROUP_NAME` n'est pas injectée. Supabase Auth 2.189.0 la déclare non prise en
-charge ; le rôle utilisateur `authenticated` vient du mécanisme Auth pris en charge et est vérifié
-dans le jeton réel. `GOTRUE_JWT_ADMIN_ROLES=service_role` reste la seule configuration
-d'administration JWT employée (décision 275).
+`GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated` reste injectée. Supabase Auth 2.189.0 la journalise
+comme « non prise en charge », mais la contre-preuve de la décision 276 montre que son retrait
+produit réellement `role=""` et un refus PostgREST `401`. Le contrat exige donc simultanément sa
+présence dans le conteneur, `role=authenticated` dans le jeton et l'acceptation de ce jeton par
+PostgREST. `GOTRUE_JWT_ADMIN_ROLES=service_role` porte l'administration JWT.
 
 ## 3. Cycle de vie d'un compte
 

@@ -8602,3 +8602,30 @@ forkée uniquement pour retirer la ligne masquerait aussi de futures alertes uti
 avertissement administrateur amont est documenté comme limite de GoTrue 2.189.0. Il ne vient pas de
 la console navigateur : celle-ci reste contrôlée séparément et strictement vide sur les 144
 scénarios UI.
+
+---
+
+### Décision 276 — La contre-preuve renverse la décision 275 : le groupe « ignoré » porte encore `role`
+
+**Expérience destructive bornée, puis restauration immédiate.** Après retrait de
+`GOTRUE_JWT_DEFAULT_GROUP_NAME`, GoTrue redémarre sain et les cycles invitation, mot de passe,
+connexion et rafraîchissement continuent apparemment de fonctionner. Le harnais refuse pourtant le
+résultat : le JWT réel contient `aud=authenticated` mais `role=""`, puis PostgREST répond `401`
+avec `role "" does not exist`. Deux contrôles tombent sur 62. La variable a été restaurée et
+GoTrue recréé avant de poursuivre.
+
+**Conclusion mesurée.** Dans 2.189.0, « non pris en charge » ne signifie pas « sans effet ».
+`JWT_DEFAULT_GROUP_NAME` est encore copié dans le claim `role` dont PostgREST dépend. La
+documentation amont et l'avertissement de dépréciation annoncent une suppression future ; ils ne
+permettent pas de supprimer aujourd'hui le seul réglage qui produit le rôle PostgreSQL attendu.
+
+**Décision corrigée.** La décision 275 est renversée sur ce point : conserver explicitement
+`GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated`. Le harnais vérifie désormais sa valeur dans le
+conteneur avant d'exiger le claim puis l'accès PostgREST. Une migration vers le mécanisme qui le
+remplacera appartient à une future montée de version de GoTrue, après mesure de cette version — pas
+à une suppression anticipée.
+
+**Avertissements.** Les deux lignes de démarrage restent donc inévitables avec le comportement
+fonctionnel exigé : l'une vient du défaut `AdminGroupName=admin`, l'autre d'une variable à la fois
+dépréciée et encore nécessaire. Elles sont des journaux serveur amont, pas la console du navigateur.
+Abaisser ou filtrer le niveau de log resterait un faux vert et n'est pas retenu.
