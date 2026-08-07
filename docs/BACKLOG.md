@@ -168,6 +168,14 @@ vide, `require_free_ports` avertit et laisse démarrer — voulu —, tandis que
 - [ ] **Exigence attachée** : la lecture est prouvée **dans les deux sens** — elle voit un port
       réellement ouvert, et ne voit pas un port fermé —, faute de quoi on aurait remplacé une garde
       inerte par une garde qui se croit active.
+- [ ] **Refuser une origine webapp de développement incohérente avant Docker** (décision 272).
+      `SITE_URL` doit être exactement l'origine réellement publiée par
+      `DEV_BIND_ADDRESS:WEBAPP_DEV_PORT`, et `ADDITIONAL_REDIRECT_URLS` doit l'autoriser. Sans cette
+      garde, la pile démarre mais le clic d'un destinataire sur une invitation aboutit sur une
+      adresse qui n'écoute pas.
+- [ ] **Exigence attachée et non-complaisante** : le harnais accepte le trio cohérent, puis dégrade
+      séparément `SITE_URL` et `ADDITIONAL_REDIRECT_URLS` et exige un refus explicite avant tout
+      appel à Docker.
 
 ### CRM-003 — Migrations d'amorçage `[x]`
 Extensions, schéma `app`, `profiles` (+ trigger de création), `workspaces`,

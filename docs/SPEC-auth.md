@@ -42,7 +42,7 @@ Les variables sont définies par `.env.example` et consommées par le service `a
 | `ENABLE_PHONE_SIGNUP`, `ENABLE_PHONE_AUTOCONFIRM`, `ENABLE_ANONYMOUS_USERS` | `false` | Aucun de ces parcours n'est au périmètre du produit |
 | `PASSWORD_MIN_LENGTH` | `12` | Voir §4 |
 | `JWT_EXPIRY` | `3600` | Durée de vie du jeton d'accès, en secondes |
-| `SITE_URL` | origine de la webapp | Base de résolution des liens envoyés par email |
+| `SITE_URL` | origine de la webapp | Base de résolution des liens envoyés par email. En développement, `runDev.sh` exige l'origine exacte `http://DEV_BIND_ADDRESS:WEBAPP_DEV_PORT` et son autorisation dans `ADDITIONAL_REDIRECT_URLS` avant tout appel à Docker (`CRM-002`, décision 272) |
 | `SMTP_*` | Inbucket en développement, fournisseur réel en production | Les emails transactionnels sont **réellement envoyés**, jamais simulés |
 
 `ENABLE_ANONYMOUS_USERS` mérite une mention particulière : GoTrue sait émettre des jetons pour des

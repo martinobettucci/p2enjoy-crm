@@ -8488,3 +8488,37 @@ supprimés en sortie.
 **Frontière.** Inbucket est un client de développement, pas le produit. Il ne remplace donc ni la
 preuve SMTP/API de `scripts/verify-auth.sh`, ni un futur écran d'invitation. Il ajoute la seule
 perspective absente : celle du destinataire qui reçoit, lit et active réellement le message.
+
+---
+
+### Décision 272 — La pile de développement refuse une origine webapp qui rend les emails inutilisables
+
+**Défaut observé par le destinataire réel.** Le parcours Chromium de la décision 271 reçoit et
+ouvre correctement l'invitation française dans Inbucket, puis active son bouton. GoTrue vérifie le
+jeton et redirige vers `SITE_URL=http://localhost:5173` ; Chromium aboutit à
+`chrome-error://chromewebdata/`, car la webapp de cette pile est réellement publiée sur le port
+`5273`. Les conteneurs sont tous sains et le port Vite répond : c'est le contrat croisé de
+configuration qui est faux, pas le service.
+
+**Cause.** `.env.example` disait déjà que `WEBAPP_DEV_PORT` doit correspondre au port de
+`SITE_URL`, mais `runDev.sh` ne vérifiait pas cette phrase. Modifier seulement le port publié est
+donc accepté, alors que chaque lien d'invitation, confirmation, récupération ou changement
+d'adresse devient inutilisable. Une documentation sans garde n'est pas une propriété du produit.
+
+**Décision rattachée à `CRM-002`.** Après la validation générale et les gardes du profil de
+développement, mais avant toute interrogation ou mutation Docker, `runDev.sh` exige :
+
+- `SITE_URL` exactement égal à `http://<DEV_BIND_ADDRESS>:<WEBAPP_DEV_PORT>` ;
+- cette même origine présente comme entrée entière de la liste séparée par des virgules
+  `ADDITIONAL_REDIRECT_URLS`.
+
+Le refus nomme les variables, l'origine attendue et le fichier local à corriger. Cette règle ne
+s'applique ni à `runProd.sh`, dont l'origine est le domaine public, ni à un autre environnement.
+Elle vaut aussi avec `--dev` : écarter le conteneur Vite ne change pas le port sur lequel
+l'utilisateur doit lancer Vite dans son IDE.
+
+**Preuve non complaisante.** Le harnais de `CRM-002` exerce directement la garde avec une origine
+cohérente, puis une copie où `SITE_URL` porte un autre port, puis une copie où l'origine manque de
+`ADDITIONAL_REDIRECT_URLS`. Les deux copies doivent être refusées avec un diagnostic précis. La
+preuve fonctionnelle reste celle de `CRM-009` : le destinataire clique réellement le lien et voit
+la session authentifiée dans la webapp, sans erreur ni avertissement de console.
