@@ -20,6 +20,10 @@ d'exécuter le code attendu.
   `OK` aux dégradations parce que toute commande npm échouait déjà. La décision 278 impose un
   Node Linux conforme à `.nvmrc`, un repli borné vers les installations NVM locales et une preuve
   isolée avant de rejouer le harnais froid.
+- **Le second compteur SQL manquant de `CRM-008` est spécifié avant correction.** Le rejeu Node
+  sain a exécuté **19 fichiers / 1405 assertions**, tandis que le harnais affichait encore
+  « 3 fichiers » en dur et ne vérifiait que les assertions. La décision 279 fige les deux nombres
+  et impose leur extraction du résumé réel de `run-sql-tests.sh`.
 
 - **`CRM-009` est livrée de bout en bout.** Quatre gabarits transactionnels français sont servis
   à GoTrue par le Caddy interne commun `auth-templates`; invitation et récupération sont validées

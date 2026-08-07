@@ -1451,6 +1451,10 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       harnais doit valider `.nvmrc`, sélectionner si nécessaire une installation NVM locale,
       refuser un binaire sous `/mnt/<lecteur>/` et prouver ces branches dans un environnement
       isolé.
+- [ ] **Le résumé SQL ne doit plus annoncer trois fichiers en dur** (décision 279). L'exécution
+      froide réelle en découvre **19** pour **1405 assertions** ; le harnais vérifie aujourd'hui
+      le second compteur mais ment sur le premier. Il doit extraire les deux du résumé unique de
+      `run-sql-tests.sh` et les comparer à deux valeurs attendues indépendantes.
 
 *DoD adaptée, écarts explicites.* **Aucune migration, aucune mise à jour du seed** : un harnais de
 tests n'introduit ni table, ni statut, ni flux ; il consomme le seed socle de `CRM-005` sans le

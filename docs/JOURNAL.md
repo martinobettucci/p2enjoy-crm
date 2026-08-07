@@ -8709,3 +8709,24 @@ contient qu'un faux `npm` Windows et un arbre NVM jetable : le couple Linux comp
 sélectionné. Les cas déjà conforme, version majeure incorrecte et absence complète doivent aussi
 être exercés. Le harnais froid complet ne sera rejoué qu'après cette preuve ; ses dégradations ne
 pourront donc plus être vertes sur une panne commune de Node.
+
+---
+
+### Décision 279 — Le harnais compte aussi les suites SQL, pas seulement leurs assertions
+
+**Défaut observé pendant le rejeu corrigé.** `npm run test:sql` a réellement exécuté **19
+fichiers** et **1405 assertions**. `scripts/verify-harness.sh` a bien vérifié le second nombre,
+mais a ensuite affiché « 3 fichiers » en dur, valeur historique de la création de `CRM-008`.
+L'exécuteur SQL donne pourtant déjà son résumé structuré
+`19 fichiers, 1405 assertions, aucune anomalie`.
+
+**Risque.** Une suite entière pourrait disparaître si ses assertions étaient compensées ailleurs :
+le total seul resterait conforme. Surtout, le message vert du harnais décrit aujourd'hui une
+exécution impossible. Cette vérification est distincte du compteur d'assertions et obéit à la même
+règle : une valeur attendue est figée puis révisée consciemment par l'unité qui ajoute une suite.
+
+**Décision.** `CRM-008` fixe désormais deux compteurs SQL : **19 fichiers** et **1405 assertions**.
+Le harnais extrait les deux valeurs du résumé réel de `run-sql-tests.sh`, refuse l'absence ou la
+duplication du résumé, puis compare chaque nombre à son attendu. Le texte vert reprend les valeurs
+mesurées, jamais une constante narrative. La régression est prouvée par l'exécution froide complète
+qui doit afficher `19 fichiers, 1405 assertions` avant les projets Playwright.
