@@ -357,6 +357,7 @@ inerte là où elle ne s'applique pas, en particulier dans le conteneur d'intég
 | Les ports de l'assemblage sont libres | `require_free_ports` refuse avant tout démarrage, en nommant le port, son détenteur et la variable du fichier d'environnement. Aucun port n'est choisi à la place de l'opérateur |
 | `localhost` désigne IPv4 dans un conteneur | Le contrôle de santé de `storage` vise `127.0.0.1` : le service n'écoute qu'en IPv4, et `/etc/hosts` résout aussi `localhost` en `::1` |
 | L'hôte peut effacer ce que la pile a écrit | `resetMe.sh` détruit le cluster PostgreSQL par un conteneur jetable ; `ensure_host_mountpoints` crée `node_modules` avant Compose, faute de quoi le démon le crée en `root` dans le dépôt de l'utilisateur |
+| Le contexte de build peut lire tout le dépôt sans fuite | Le `.dockerignore` racine exclut `.env`, `.git`, les dépendances et sorties générées, ainsi que `supabase/docker/volumes/` ; le `COPY . .` de l'image de développement ne reçoit donc ni secret local ni données PostgreSQL fermées en `0750` |
 
 ## 4. Flux principaux
 

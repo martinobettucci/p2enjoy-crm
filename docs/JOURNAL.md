@@ -7709,3 +7709,27 @@ pgTAP de 949 lignes, là où la branche `w9q87o` en proposait un second de 585 l
 Les empreintes des quarante et une têtes sont conservées dans
 `docs/BRANCHES_SUPPRIMEES.md` : tant que le ramasse-miettes d'`origin` n'est pas
 passé, chaque branche reste restaurable par `git push origin <sha>:refs/heads/<nom>`.
+
+### Décision 247 — Un dépôt ignoré par Git n'est pas ignoré par Docker
+
+**La panne utilisateur.** La preuve littérale de `CRM-050` a arrêté proprement la pile normale,
+conservé ses volumes, puis relancé `./runDev.sh` sous un nom de projet Docker jetable. Ce nouveau
+nom force la reconstruction de l'image web. BuildKit a essayé d'envoyer tout le dépôt comme
+contexte et s'est arrêté sur `supabase/docker/volumes/db/data: permission denied` : PostgreSQL
+referme volontairement ce répertoire en `0750`.
+
+**La découverte de sécurité.** Il n'existait aucun `.dockerignore` à la racine, alors que
+`webapp/Dockerfile` exécute `COPY . .`. Une inspection d'existence, sans lire aucun contenu, a
+constaté `/app/.env` et `/app/.git` dans l'image de développement déjà construite. Le fait que
+`.env` soit ignoré par Git ne protège donc ni le contexte Docker ni ses couches : les secrets
+locaux ont été copiés dans une image.
+
+**Décision.** Un `.dockerignore` racine doit exclure `.env`, `.git`, `node_modules`, les sorties
+de build et de preuve, et tout `supabase/docker/volumes/`. L'image reste autonome parce que ses
+manifestes, sources, migrations et documents utiles restent dans le contexte ; aucune donnée
+d'exécution n'y entre. La preuve construit réellement l'image, vérifie seulement l'absence des
+chemins sensibles — jamais leur contenu — puis retire l'ancienne image locale identifiée.
+
+**Critère de clôture.** `./runDev.sh` reconstruit et démarre sous un nom de projet neuf ; la
+nouvelle image ne contient ni `/app/.env`, ni `/app/.git`, ni `/app/supabase/docker/volumes`, et
+le contrôle ne journalise aucune valeur sensible.

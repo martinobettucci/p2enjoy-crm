@@ -129,6 +129,14 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       seed**, en **45,6 s** ; les trois comptes et leurs appartenances sont constatés sur la base
       neuve. La dernière case ouverte de cette unité est donc levée, et INC-009 peut être close par
       le responsable.
+- [ ] **LE CONTEXTE DE BUILD DE LA WEBAPP EXCLUT LES DONNÉES ET LES SECRETS LOCAUX**
+      (décision 247). Mesuré pendant la preuve à froid de `CRM-050`, un nouveau nom de projet
+      oblige Compose à reconstruire l'image : l'envoi du dépôt entier échoue en lisant
+      `supabase/docker/volumes/db/data`, fermé en `0750`. Plus grave, l'image existante contient
+      réellement `/app/.env` et `/app/.git` parce que `COPY . .` n'avait aucun `.dockerignore`.
+      La correction doit exclure au minimum `.env`, `.git`, les dépendances, les sorties de build
+      et de preuve, ainsi que `supabase/docker/volumes/`; le harnais doit construire l'image et
+      constater que ces chemins en sont absents, sans jamais lire ni afficher un secret.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'outillage d'exécution. Les preuves

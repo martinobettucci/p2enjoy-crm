@@ -640,6 +640,11 @@ Documentation de référence :
   - **`node_modules` à la racine.** Le service `webapp` monte un volume nommé sur
     `/app/node_modules` ; le répertoire est créé sur l'hôte avant Compose, faute de quoi le démon
     le crée en `root` et `npm install` échoue ensuite en `EACCES` dans votre propre dépôt.
+  - **Contexte de build de la webapp.** Le `COPY . .` de l'image de développement est borné par le
+    `.dockerignore` racine : `.env`, `.git`, `node_modules`, les sorties de build et de preuve,
+    ainsi que `supabase/docker/volumes/` n'entrent jamais dans l'image. Sans cette garde, un
+    cluster PostgreSQL en `0750` fait échouer la reconstruction et, surtout, les secrets de
+    `.env` sont copiés dans une couche Docker.
 - **TLS de production non éprouvé** : la pile de production a été vérifiée avec
   `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy. L'émission d'un certificat ACME exige
   un domaine public et reste à confirmer au premier déploiement réel.
