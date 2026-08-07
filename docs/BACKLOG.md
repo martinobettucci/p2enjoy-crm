@@ -463,7 +463,7 @@ ni page, ni statut, ni flux — rien que le seed doive démontrer.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24. Limite héritée, inchangée, sans effet sur cette unité qui ne touche aucun code TypeScript.
 
-### CRM-011 — Authentification `[x]`
+### CRM-011 — Authentification `[~]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,
 réinitialisation de mot de passe.
 **DoD** : E2E de connexion et de refus ; email d'invitation **réellement envoyé** et constaté
@@ -476,6 +476,10 @@ dans Inbucket ; captures observées.
 - [x] Deux contradictions consignées sans être résolues implicitement : **INC-015** (le parcours
       d'invitation depuis le produit n'a aucun composant pour le porter) et **INC-016** (gabarits
       d'emails chargeables en HTTP seulement, avec repli **silencieux** vers l'anglais).
+- [ ] **Retirer `GOTRUE_JWT_DEFAULT_GROUP_NAME`** (décision 275) : Supabase Auth 2.189.0 la
+      déclare non prise en charge et la journalise en avertissement. Le harnais doit constater son
+      absence de l'environnement réel, puis prouver que les jetons portent toujours
+      `role=authenticated` et que `service_role` conserve l'administration.
 - [x] **Inscription libre réellement refusée, et le privilège ne contourne pas le refus** :
       `422 signup_disabled` avec la clé anonyme **comme avec la clé de service**. Vérifié aussi
       qu'aucun compte n'est créé par ces tentatives.
@@ -542,6 +546,11 @@ ajoute 32 tests unitaires au total de la suite concernée et six scénarios d'in
 comptes stables de `CRM-005` servent de profils et aucune donnée d'essai ne subsiste.
 
 *Limites nommées, non masquées.*
+
+- GoTrue 2.189.0 écrit encore un avertissement `GOTRUE_JWT_ADMIN_GROUP_NAME` même quand cette
+  variable n'est pas injectée : son propre `ApplyDefaults()` impose `admin`, puis l'API avertit sur
+  toute valeur non vide. Masquer le niveau `warning` cacherait les vraies alertes ; la limite amont
+  est donc conservée et distinguée de la console navigateur, qui reste strictement vide.
 
 - **La récupération de mot de passe reste hors interface**, bien que son mécanisme soit prouvé.
 - **L'invitation reste une opération d'exploitation** (INC-015).

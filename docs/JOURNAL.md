@@ -8573,3 +8573,32 @@ blanc, positionne réellement la souris sur l'action, capture la fenêtre assez 
 action et code, puis clique. Les assertions de contraste rendent impossible le précédent vert
 sémantique sur un bouton visuellement absent. Le même patron est appliqué aux quatre emails pour
 éviter quatre variantes d'un défaut identique.
+
+---
+
+### Décision 275 — Retirer le groupe JWT ignoré sans maquiller l'avertissement amont restant
+
+**Inspection après les preuves.** Les journaux récents des trois composants touchés ne portent
+aucune erreur. GoTrue écrit toutefois deux lignes de niveau `warning` au démarrage : groupe JWT
+administrateur et groupe JWT par défaut « non pris en charge » et bientôt supprimés. Le Compose
+injecte seulement `GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated` ; la première ligne apparaît alors
+que `GOTRUE_JWT_ADMIN_GROUP_NAME` est absente de l'environnement du conteneur.
+
+**Mesure du code exact 2.189.0.** La documentation officielle classe l'information de groupe JWT
+parmi les fonctions Netlify héritées que Supabase ne prend pas en charge. Dans
+`internal/conf/configuration.go`, `ApplyDefaults()` remplace pourtant tout `AdminGroupName` vide par
+`admin`. Dans `internal/api/api.go`, le démarrage avertit ensuite dès que ce champ est non vide.
+L'avertissement administrateur est donc inconditionnel dans cette version : ni absence ni chaîne
+vide ne peuvent le supprimer.
+
+**Décision.** Retirer `GOTRUE_JWT_DEFAULT_GROUP_NAME`, seule variable obsolète que le produit
+injecte. Conserver `GOTRUE_JWT_ADMIN_ROLES=service_role`, configuration distincte et réellement
+employée par l'API d'administration. Le harnais constate l'absence du groupe par défaut dans le
+conteneur et ses preuves existantes continuent d'exiger `role=authenticated`, l'invitation par la
+clé de service et le refus de la clé anonyme.
+
+**Pas de faux silence.** Abaisser `LOG_LEVEL` à `error`, filtrer la sortie ou construire une image
+forkée uniquement pour retirer la ligne masquerait aussi de futures alertes utiles. L'unique
+avertissement administrateur amont est documenté comme limite de GoTrue 2.189.0. Il ne vient pas de
+la console navigateur : celle-ci reste contrôlée séparément et strictement vide sur les 144
+scénarios UI.
