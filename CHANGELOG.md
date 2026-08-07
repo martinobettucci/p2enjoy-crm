@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-009` est livrée de bout en bout.** Quatre gabarits transactionnels français sont servis
+  à GoTrue par le Caddy interne commun `auth-templates`; invitation et récupération sont validées
+  sur leur contenu SMTP réel, et un repli anglais provoqué est explicitement refusé. Le parcours
+  destinataire ouvre Inbucket dans Chromium, lit et clique l'action réellement contrastée, puis
+  constate la session GoTrue dans `sessionStorage`, l'URL nettoyée et `localStorage` vide. Preuves :
+  `verify-auth` **62/62**, suite d'authentification **8/8**, suite UI complète **144/144**, console
+  sans avertissement, erreur ni `pageerror`. INC-016 est close.
+- **Le service de gabarits est inclus dans la santé de la pile.** `verify-stack.sh` contrôle
+  désormais exhaustivement les 16 services persistants, les 3 tâches one-shot et les 10 services
+  réservés au développement : **50/50**. La garde de lancement refuse aussi avant Docker toute
+  divergence entre `SITE_URL`, l'origine Vite réellement publiée et les redirections autorisées ;
+  `verify-scripts.sh` rend **61/61**.
+- **Un favicon SVG de marque est servi explicitement.** La requête implicite et bruyante de
+  Chromium vers `/favicon.ico` disparaît ; le build reste en quatre chunks (maximum 477,86 kB),
+  les **525 tests unitaires** et les **144 scénarios UI** passent.
+
 - **Les décisions du responsable restées hors de `main` sont réinsérées** — les dix-huit entrées
   que la branche `claude/happy-goldberg-qt5vfi` retenait seule, dont cinq arbitrages explicites,
   reprennent leur place dans `docs/JOURNAL.md` sous les numéros 249 à 266, texte inchangé. La
@@ -40,7 +56,7 @@ d'exécuter le code attendu.
   alors que le responsable avait retenu l'option 2, une unité dédiée (décision 253, INC-021). Le
   comportement livré est conforme et **inchangé** ; seuls le rattachement et la traçabilité sont
   corrigés, dans `docs/SPEC-auth.md`, `docs/DAT.md` §3.1 et `docs/BACKLOG.md`. Les commentaires
-  `@spec` du code restent à reprendre — suivi par `CRM-009`.
+  `@spec` du code et les `@verifies` des preuves sont maintenant repris sous `CRM-009`.
 
 ### Supprimé
 
@@ -174,7 +190,7 @@ d'exécuter le code attendu.
 - **Le chargement initial de la webapp repasse sous le seuil Vite sans relever ce seuil.**
   `RouteTrack` et `RouteCard` sont chargées à la navigation avec un squelette accessible : le
   chunk initial passe de **530,59 kB** à **477,86 kB**, trois chunks métier sont séparés et le
-  build n'écrit plus d'avertissement. Les **524 tests unitaires** et les **142 scénarios UI**
+  build n'écrit plus d'avertissement. Les **525 tests unitaires** et les **144 scénarios UI**
   passent sur le build de production.
 - **La console navigateur fait désormais partie du verdict de chaque scénario UI.** Aucun
   `warning`, `error` ou `pageerror` résiduel n'est toléré ; les erreurs réseau volontairement
@@ -190,7 +206,7 @@ d'exécuter le code attendu.
   `.dockerignore` racine exclut `.env`, `.git`, les dépendances, sorties de preuve et volumes
   locaux. Le défaut a été mesuré dans l'ancienne image, qui contenait réellement `/app/.env` et
   `/app/.git` ; elle n'existe plus. Contexte ramené de 233,04 Mo à 11,56 Mo et reconstruction
-  prouvée par les **58 contrôles** de `verify-scripts.sh`.
+  prouvée par les **61 contrôles** de `verify-scripts.sh`.
 
 - **Deux défauts de `CRM-047` trouvés en exécutant ses propres preuves** (décision 234). L'annexe A
   portait « 38 événements », recopié de `CRM-046` : un total d'événements ne fait que croître, et la

@@ -112,7 +112,7 @@ webapp/
     ├── features/              vide à ce stade — accueillera les domaines métier
     ├── i18n/                  dictionnaire et fonction de traduction
     ├── lib/                   client Supabase, types générés, utilitaires d'accès aux données
-    └── styles/tokens.css      **seul** fichier portant des valeurs hexadécimales
+    └── styles/tokens.css      **seul fichier sous `src/`** portant des valeurs hexadécimales
 ```
 
 Le point d'entrée déclare explicitement `favicon.svg` par `link rel="icon"`. Sans cette ligne,
@@ -265,11 +265,11 @@ configuration** — elle ne démarre pas dans un état muet.
 
 ### 6.2 Session
 
-`CRM-007` n'a livré aucun parcours de connexion et a donc créé le client avec
-`persistSession: false` et `autoRefreshToken: false`. `CRM-011` porte désormais le contrat qui
-succède à cette posture provisoire (`docs/SPEC-auth.md` §9) : session dans **`sessionStorage`**,
-rafraîchissement automatique actif, et repli en mémoire si le stockage de l'onglet est
-indisponible. Aucun `localStorage`, cookie non essentiel ni traceur n'est introduit.
+`CRM-007` n'avait livré aucun parcours de connexion et avait donc créé le client sans persistance.
+`CRM-009` a remplacé cette posture provisoire (`docs/SPEC-auth.md` §9) : session dans
+**`sessionStorage`**, rafraîchissement automatique actif, consommation du fragment GoTrue au
+retour d'un email transactionnel, et repli en mémoire si le stockage de l'onglet est indisponible.
+Aucun `localStorage`, cookie non essentiel ni traceur n'est introduit.
 
 La restauration de cette session précède les lectures du §6.3. L'état du routeur peut retenir
 l'adresse métier demandée pendant le passage par `/connexion`, mais cette adresse n'est jamais
@@ -291,7 +291,7 @@ session qui vide l'écran : **aucune politique RLS n'est écrite sur `workspaces
 de `CRM-012` — et le refus par défaut de `CRM-003` s'applique donc à tout le monde.
 
 `tracks` est le premier cas différent : `CRM-020` a livré ses politiques, et un membre du workspace
-y lit ses tracks. Depuis la reprise de `CRM-011`, la webapp restaure sa session avant les lectures
+y lit ses tracks. Depuis la livraison de `CRM-009`, la webapp restaure sa session avant les lectures
 et montre donc les objets métier consentis. L'état vide reste l'état réel du backend pour un
 anonyme. Les tables d'identité, elles, restent vides même connecté tant qu'INC-014 n'est pas levée.
 
@@ -489,7 +489,7 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
 
 ## 15. Limites connues
 
-- **Les tables d'identité restent illisibles (INC-014).** Depuis la reprise de `CRM-011`, l'écran
+- **Les tables d'identité restent illisibles (INC-014).** Depuis la livraison de `CRM-009`, l'écran
   `/connexion` restaure une session avant les lectures métier et les objets consentis sont
   utilisables. En revanche, `workspaces`, `profiles` et `workspace_members` restent en refus par
   défaut : l'en-tête peut donc afficher « Aucun workspace accessible » malgré une session valide

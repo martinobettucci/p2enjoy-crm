@@ -1,4 +1,4 @@
-// @spec CRM-011 (docs/BACKLOG.md) — contrat client de connexion et de déconnexion
+// @spec CRM-009 (docs/BACKLOG.md) — contrat client de connexion et de déconnexion
 // @spec docs/SPEC-auth.md §9.1 (navigation), §9.3 (erreurs), §9.4 (déconnexion)
 // @spec docs/DESIGN_SYSTEM.md §5.8 (états explicites), §5.12 (connexion)
 //

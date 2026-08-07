@@ -226,8 +226,8 @@ l'interface interne `mailer.Client.Mail` ne reçoit qu'une chaîne `body`, puis 
 gabarit texte. Inbucket reconstruit donc son affichage texte depuis le HTML et signale l'absence de
 partie `text/plain` ; ce n'est pas une variante réellement émise par GoTrue.
 
-Cette limite du composant tiers est distincte d'INC-016, que les gabarits français refermeront
-après preuve. La contourner demanderait de remplacer ou d'interposer le client SMTP, ce que
+Cette limite du composant tiers est distincte d'INC-016, **close par les gabarits français et leur
+preuve de contenu**. La contourner demanderait de remplacer ou d'interposer le client SMTP, ce que
 `CRM-009` ne mandate pas. Les preuves inspectent le HTML reçu et ne présentent jamais le texte
 reconstruit comme une partie MIME d'origine.
 
@@ -298,15 +298,14 @@ Ce contrat était initialement rattaché à `CRM-011` « selon l'option la plus 
 `CRM-009`, placée dans l'ordre d'exécution **entre `CRM-007` et `CRM-008`**.
 
 Le motif de l'arbitrage : c'est la seule option qui laisse chaque unité à son objet. `CRM-011` a
-livré et prouvé le **mécanisme** d'authentification sur 42 contrôles hors interface ; le rouvrir
+livré et prouvé le **mécanisme** d'authentification sur 62 contrôles hors interface ; le rouvrir
 pour y loger une interface mêle deux sujets qui n'ont ni les mêmes preuves ni le même risque. Une
 unité dédiée donne en outre un propriétaire clair à la posture de session — §9.2 et décision 254 —
 que les deux autres options auraient laissée orpheline.
 
-**Ce que la correction change et ne change pas.** Le comportement décrit ci-dessous est **inchangé**
-et reste conforme à la décision 254 ; c'est le **rattachement** qui est corrigé, et il est encore
-à répercuter dans les commentaires `@spec` du code livré et dans les preuves. `docs/BACKLOG.md`,
-`CRM-009` porte cette reprise.
+**Ce que la correction change et ne change pas.** Le comportement décrit ci-dessous reste conforme
+à la décision 254 ; la traçabilité est désormais corrigée dans les commentaires `@spec`, les
+preuves et l'architecture. `CRM-009` porte seule cette interface et la posture de session.
 
 La session, elle, reste limitée à l'onglet : c'est l'objet de la décision 254, qui referme INC-022.
 
@@ -382,6 +381,12 @@ le client ne l'a pas confirmé.
 Les données créées par une preuve sont identifiées par un jeton propre au scénario et supprimées
 en sortie. Une preuve de déplacement crée sa propre card : elle ne déplace jamais une card du seed,
 dont la stabilité appartient à `CRM-046`.
+
+**Résultat rejoué.** `scripts/verify-auth.sh` rend **62/62** ; la suite ciblée
+`e2e/ui/authentification.spec.ts` rend **8/8**, et la suite UI complète **144/144**. Le parcours
+destinataire part de l'interface Inbucket, active réellement le lien, constate la session GoTrue,
+une URL nettoyée, `localStorage` vide et le jeton dans `sessionStorage`. La console navigateur ne
+contient ni avertissement, ni erreur, ni `pageerror`.
 
 ### 9.6 Hors périmètre inchangé
 

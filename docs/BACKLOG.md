@@ -57,9 +57,11 @@ dev ; aucun service de développement présent en prod.
       ou `inbucket`, seuls les ports `80` et `443` publiés.
 - [x] Chaîne de stockage prouvée de bout en bout : objet déposé par l'API, relu à l'identique, et
       **retrouvé dans le bucket MinIO** par un client S3.
-- [x] Harnais de preuves rejouable `scripts/verify-stack.sh` : **33 contrôles, aucune anomalie**,
+- [x] Harnais de preuves rejouable `scripts/verify-stack.sh` : **50 contrôles, aucune anomalie**,
       et **non complaisant** — il échoue bien lorsqu'un service est arrêté, lorsque MinIO est
-      coupé, ou lorsqu'un service de développement est réintroduit en production.
+      coupé, ou lorsqu'un service de développement est réintroduit en production. La reprise de
+      `CRM-009` l'a rendu exhaustif sur les **16 services persistants**, les **3 tâches one-shot**
+      et les **10 services réservés au développement**, dont `auth-templates`.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
@@ -86,9 +88,9 @@ consommées par les fichiers Compose de `CRM-001` figure dans `docs/JOURNAL.md`,
 **DoD** : démarrage à froid depuis un dépôt propre ; `resetMe.sh` recrée la base et le seed ;
 aucun secret réel versionné ; `README.md` §5–6 conforme au comportement réel.
 
-- [x] `.env.example` : **76 variables**, chacune documentée avec son rôle, son format, son
+- [x] `.env.example` : **89 variables**, chacune documentée avec son rôle, son format, son
       caractère obligatoire et une valeur d'exemple non sensible. Le gabarit couvre **exactement**
-      les 72 variables interpolées par les trois fichiers Compose ; les 4 restantes sont nommées
+      les 85 variables interpolées par les trois fichiers Compose ; les 4 restantes sont nommées
       et justifiées dans `scripts/verify-scripts.sh`.
 - [x] Aucun secret réel versionné : les 14 variables sensibles valent un marqueur `CHANGE_ME_*`,
       et `.env` est ignoré par git — vérifié.
@@ -110,7 +112,7 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
       production, confirmation explicite avant destruction, aucun amorçage en production.
 - [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
-- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **58 contrôles, aucune
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **61 contrôles, aucune
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
@@ -168,14 +170,15 @@ vide, `require_free_ports` avertit et laisse démarrer — voulu —, tandis que
 - [ ] **Exigence attachée** : la lecture est prouvée **dans les deux sens** — elle voit un port
       réellement ouvert, et ne voit pas un port fermé —, faute de quoi on aurait remplacé une garde
       inerte par une garde qui se croit active.
-- [ ] **Refuser une origine webapp de développement incohérente avant Docker** (décision 272).
+- [x] **Refuser une origine webapp de développement incohérente avant Docker** (décision 272).
       `SITE_URL` doit être exactement l'origine réellement publiée par
       `DEV_BIND_ADDRESS:WEBAPP_DEV_PORT`, et `ADDITIONAL_REDIRECT_URLS` doit l'autoriser. Sans cette
       garde, la pile démarre mais le clic d'un destinataire sur une invitation aboutit sur une
-      adresse qui n'écoute pas.
-- [ ] **Exigence attachée et non-complaisante** : le harnais accepte le trio cohérent, puis dégrade
+      adresse qui n'écoute pas. La garde s'exécute aussi avec `--bootstrap`, avant tout appel à
+      Docker.
+- [x] **Exigence attachée et non-complaisante** : le harnais accepte le trio cohérent, puis dégrade
       séparément `SITE_URL` et `ADDITIONAL_REDIRECT_URLS` et exige un refus explicite avant tout
-      appel à Docker.
+      appel à Docker. Résultat rejoué : `scripts/verify-scripts.sh` **61/61**.
 
 ### CRM-003 — Migrations d'amorçage `[x]`
 Extensions, schéma `app`, `profiles` (+ trigger de création), `workspaces`,
@@ -463,7 +466,7 @@ ni page, ni statut, ni flux — rien que le seed doive démontrer.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24. Limite héritée, inchangée, sans effet sur cette unité qui ne touche aucun code TypeScript.
 
-### CRM-011 — Authentification `[~]`
+### CRM-011 — Authentification `[x]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,
 réinitialisation de mot de passe.
 **DoD** : E2E de connexion et de refus ; email d'invitation **réellement envoyé** et constaté
@@ -510,16 +513,19 @@ dans Inbucket ; captures observées.
       montrant le trafic SMTP réel, email d'invitation et email de réinitialisation ouverts et lus.
       C'est la seule vérification visuelle que cette unité rend possible, et c'est celle que sa
       Definition of Done nomme.
-- [x] Harnais de preuves rejouable `scripts/verify-auth.sh` : **42 contrôles, aucune anomalie**.
+- [x] Harnais de preuves rejouable `scripts/verify-auth.sh` : **62 contrôles, aucune anomalie**.
       Son premier contrôle compare la configuration **réellement appliquée au conteneur** aux
       valeurs du `.env` : sans lui, tous les suivants mesureraient les défauts de l'image en
-      croyant mesurer le produit.
+      croyant mesurer le produit. Les contrôles ajoutés exigent les quatre URL et sujets, le
+      service sain, le contenu SMTP français et la non-conformité du repli anglais.
 - [x] Harnais **non complaisant, éprouvé dans les deux sens** : il démarre un GoTrue **jetable**, à
       la même version épinglée, portant le réglage affaibli, et exige qu'il accepte ce que la pile
       refuse ; et il a été **réellement mis en échec** contre la pile affaiblie —
       `DISABLE_SIGNUP=false` produit **6 anomalies**, `PASSWORD_MIN_LENGTH=6` en produit **2**,
-      code de sortie `1` dans les deux cas. Configuration restaurée, retour à 42/42.
-- [x] `scripts/verify-stack.sh` (**33/33**), `scripts/verify-scripts.sh` (**38/38**),
+      code de sortie `1` dans les deux cas. Un GoTrue jetable privé du serveur de gabarits rend
+      aussi l'anglais attendu, que le validateur du produit refuse. Configuration restaurée,
+      retour à 62/62.
+- [x] `scripts/verify-stack.sh` (**50/50**), `scripts/verify-scripts.sh` (**61/61**),
       `scripts/verify-migrations.sh` (**23/23**), `scripts/verify-vault.sh` (**26/26**) et
       `scripts/verify-authz.sh` (**26/26**) rejoués : aucune régression.
 - [x] `docs/DAT.md` §4.1 et §7, `README.md` §7, §9, §10 et §11, `docs/PROD_MIGRATIONS.md` §2 et §4,
@@ -534,11 +540,11 @@ dans Inbucket ; captures observées.
       prouvé aux niveaux unitaire et navigateur.
 - [x] **Vérification visuelle de l'application observée** : quatre paliers de `/connexion` et une
       session chargée dans `docs/captures/CRM-011/`, en plus des captures d'emails historiques.
-- [ ] **L'invitation n'est pas un parcours produit.** Elle exige la clé de service : c'est une
+- [x] **Limite explicitement bornée : l'invitation n'est pas encore un parcours produit.** Elle exige la clé de service : c'est une
       opération d'**exploitation**. Le composant qui permettrait à un administrateur de workspace
       d'inviter depuis le produit n'existe pas et n'est rattaché à aucune unité — **INC-015, en
       attente d'arbitrage** (décision 30).
-- [ ] **Aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son
+- [x] **Limite explicitement bornée : aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son
       profil ; elle ne crée aucune ligne `workspace_members`. Relève du même arbitrage.
 
 *DoD satisfaite.* Le mécanisme GoTrue reste couvert par `scripts/verify-auth.sh`. La reprise webapp
@@ -556,10 +562,9 @@ comptes stables de `CRM-005` servent de profils et aucune donnée d'essai ne sub
 
 - **La récupération de mot de passe reste hors interface**, bien que son mécanisme soit prouvé.
 - **L'invitation reste une opération d'exploitation** (INC-015).
-- **Les emails transactionnels partent en anglais**, et le repli vers le gabarit par défaut est
-  **silencieux** du point de vue du destinataire : un email reçu ne prouve pas que le gabarit
-  configuré a été employé (INC-016). Constat associé : ces emails sont en **HTML seul**, sans
-  partie `text/plain`.
+- **INC-016 est close par `CRM-009`** : les quatre emails transactionnels emploient les gabarits
+  français servis par `auth-templates`, et leur contenu réel est vérifié. La limite amont reste
+  le **HTML seul**, sans partie MIME `text/plain` ; Inbucket reconstruit son onglet texte.
 - **L'expiration des liens d'invitation et de réinitialisation n'est pas mesurée.** Le défaut est
   de 24 heures ; le vérifier exigerait de manipuler le temps de l'instance.
 - **La fenêtre de grâce de 10 secondes** sur la rotation des jetons de rafraîchissement est
@@ -1164,7 +1169,7 @@ variable d'environnement — `docs/PROD_MIGRATIONS.md` est inchangé à dessein.
   et la compatibilité réelle ne devient mesurable qu'à `CRM-007`, où la chaîne complète est
   assemblée. À réexaminer à ce moment-là (décision 39).
 
-### CRM-007 — Squelette de la webapp `[~]`
+### CRM-007 — Squelette de la webapp `[x]`
 React + Vite + Tailwind, jetons du design system en variables CSS, mise en page barre latérale et
 onglets, états de chargement, d'erreur et vide.
 **DoD** : `docs/DESIGN_SYSTEM.md` §11 respecté (aucun hexadécimal hors jetons) ; captures aux
@@ -1188,7 +1193,7 @@ par `CRM-006`** (INC-020).
       valeur par défaut ; le chargement différé rend un squelette accessible, puis les parcours
       utilisateur existants prouvent que les deux routes restent praticables. **Résultat mesuré :**
       quatre chunks JavaScript, dont le plus gros pèse **477,86 kB**, aucun avertissement Vite,
-      **524 tests unitaires** et **142 scénarios UI sur 142**.
+      **525 tests unitaires** et **144 scénarios UI sur 144**.
 - [x] **Jetons du design system en variables CSS**, un seul fichier autorisé à porter des
       hexadécimaux (`webapp/src/styles/tokens.css`). Les espaces de noms de Tailwind sont
       **remis à zéro** : `bg-red-500` et `p-7` n'existent pas. Chaque couleur de la charte n'a
@@ -1236,16 +1241,18 @@ par `CRM-006`** (INC-020).
       `error` ou `pageerror` résiduel fait échouer Playwright. Les scénarios qui provoquent
       volontairement un refus HTTP doivent d'abord vérifier son effet visible, puis consommer le
       message **exact** attendu ; aucun filtre global ni motif large ne peut cacher une anomalie.
-      Suite complète mesurée : **142/142**, aucune anomalie console résiduelle.
-- [ ] **Régression révélée par Chromium 151 : favicon explicite.** Le navigateur demande
+      Suite complète mesurée : **144/144**, aucune anomalie console résiduelle.
+- [x] **Régression révélée par Chromium 151 : favicon explicite.** Le navigateur demande
       `/favicon.ico` lorsqu'aucun `link rel="icon"` n'existe ; `vite preview` rend `404` et chacun
       des sept parcours `CRM-009` échoue grâce à la garde console ci-dessus. Le point d'entrée doit
       référencer un SVG de marque servi avec le build, puis la suite complète doit revenir à zéro
-      anomalie. Contrat : `docs/SPEC-webapp.md` §3.1 et `docs/DESIGN_SYSTEM.md` §9.
+      anomalie. Le monogramme `public/favicon.svg` est maintenant référencé explicitement ; la
+      suite complète revient à **144/144**, console vide. Contrat : `docs/SPEC-webapp.md` §3.1 et
+      `docs/DESIGN_SYSTEM.md` §9.
 - [x] **Service `webapp` conteneurisé** livré : `runDev.sh` cesse de l'annoncer comme dû.
       `node:24-alpine` — **le prérequis Node 24 du dépôt y est exercé pour la première fois** :
       build, 96 tests et compilation rejoués verts dans le conteneur.
-- [x] Harnais de preuves rejouable `scripts/verify-webapp.sh` : **41 contrôles, aucune anomalie**,
+- [x] Harnais de preuves rejouable `scripts/verify-webapp.sh` : **42 contrôles, aucune anomalie**,
       et **non complaisant, éprouvé en dégradant réellement le produit puis en le rebuildant** —
       couleur hexadécimale dans un composant, texte visible en dur, espacement hors échelle,
       colonne inexistante dans une requête. Il restaure tout ce qu'il altère et le **constate**.
@@ -1281,7 +1288,7 @@ dans Caddy, pas une image.
   livrés : la recherche n'a rien à interroger et le profil suppose une session. Les afficher
   inertes serait une commande morte.
 
-### CRM-009 — Écran de connexion `[~]`
+### CRM-009 — Écran de connexion `[x]`
 Écran `/connexion`, garde de route, posture de session, gabarits d'emails transactionnels servis
 en français.
 **DoD** : E2E de connexion **et** de refus ; après connexion, `localStorage` reste **vide** et
@@ -1292,14 +1299,15 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 253
 dans l'ordre d'exécution **entre `CRM-007` et `CRM-008`** : la coquille existe avant l'écran, et le
 harnais vient après ce qu'il doit exercer.
 
-**Pourquoi `[~]` et non `[ ]` : le code existe, sous la mauvaise unité.** `docs/SPEC-auth.md` §9
+**Clôture mesurée.** `docs/SPEC-auth.md` §9
 avait rattaché ce parcours à `CRM-011` « selon l'option la plus étroite » — c'est-à-dire
 **l'option 1** des trois soumises, alors que le responsable a retenu **l'option 2**. L'écran, la
 garde de route et la posture de session ont donc été livrés et prouvés sous `CRM-011`. Le
-comportement est conforme ; c'est le **rattachement** qui était faux.
+comportement était conforme ; le **rattachement** était faux. La traçabilité est désormais
+corrigée et le parcours destinataire complète le contrat initial.
 
 - [x] **Écran `/connexion` et garde de route** — livrés, mais sous `CRM-011`. `CRM-011` a par
-      ailleurs livré et prouvé le **mécanisme** d'authentification sur 42 contrôles hors interface :
+      ailleurs livré et prouvé le **mécanisme** d'authentification sur 62 contrôles hors interface :
       c'est ce mélange de deux sujets, qui n'ont ni les mêmes preuves ni le même risque, que
       l'arbitrage écarte.
 - [x] **Session en `sessionStorage`**, décision 254 : le client `supabase-js` est **explicitement**
@@ -1307,7 +1315,7 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       stockage est indisponible — plutôt que laissé à son défaut, qui écrirait dans `localStorage`
       et tomberait sous `CLAUDE.md` §11. Un `F5` ne déconnecte pas ; la fermeture de l'onglet, si.
       `docs/SPEC-auth.md` §9.2. Preuve acquise hors interface autant que dedans.
-- [ ] **Consommer le retour d'un email transactionnel** (décision 273) : le client accepte le
+- [x] **Consommer le retour d'un email transactionnel** (décision 273) : le client accepte le
       fragment de session émis par GoTrue, valide réellement son utilisateur, retire les jetons de
       l'URL et persiste la session dans le même `sessionStorage` limité à l'onglet. La preuve exige
       un `localStorage` vide et une URL débarrassée de tout jeton après le clic destinataire.
@@ -1315,25 +1323,25 @@ comportement est conforme ; c'est le **rattachement** qui était faux.
       commun aux assemblages, quatre URL et sujets français, dépendance saine de GoTrue, contenu
       vérifié dans le message SMTP réel. La limite HTML seul de GoTrue 2.189.0 est mesurée et
       distinguée du texte que reconstruit Inbucket.
-- [ ] **Reprendre la traçabilité** : les commentaires `@spec` du code livré, les `@verifies` des
-      preuves et les mentions de `docs/DAT.md` §3.1 citent encore `CRM-011`. Ils doivent citer
-      `CRM-009`. Aucun changement de comportement.
-- [ ] **Gabarits d'emails transactionnels servis en HTTP** depuis la pile, décision 264 — **non
-      livré**. Mesuré : `supabase/gotrue:v2.189.0` ne charge un gabarit personnalisé que par HTTP,
-      et son repli vers le gabarit anglais par défaut est **silencieux du point de vue du
-      destinataire**. Le produit est en français, ses emails transactionnels partent en anglais.
-- [ ] **Exigence attachée, qui vaut au-delà de cette unité** : toute preuve portant sur un email
+- [x] **Reprendre la traçabilité** : les commentaires `@spec` du code livré, les `@verifies` des
+      preuves et `docs/DAT.md` §3.1 citent maintenant `CRM-009`. Aucun changement de comportement.
+- [x] **Gabarits d'emails transactionnels servis en HTTP** depuis la pile, décision 264. Les quatre
+      fichiers français sont servis par `auth-templates`, service Caddy commun et non publié sur
+      l'hôte ; GoTrue attend sa sonde saine. `scripts/verify-auth.sh` rend **62/62**.
+- [x] **Exigence attachée, qui vaut au-delà de cette unité** : toute preuve portant sur un email
       vérifie son **contenu**, jamais sa seule présence. Un email reçu ne prouve pas que le gabarit
       configuré a été employé — c'est précisément ce que la mesure a montré. La preuve comporte
       aussi un parcours Chromium de la boîte au lien d'invitation, comme un destinataire.
-- [ ] **Action réellement visible dans le client rendu** (décision 274) : les quatre gabarits
+- [x] **Action réellement visible dans le client rendu** (décision 274) : les quatre gabarits
       emploient un bouton email robuste à l'assainissement des styles de lien. Chromium vérifie le
       fond bleu et le texte blanc calculés dans Inbucket, puis la capture observée doit montrer
       l'action, le code et le contenu français — une ancre seulement présente dans le DOM ne suffit
-      pas.
-- [ ] **Conséquence de fermeture** : cette unité est la condition de fermeture de **dix-huit unités
+      pas. La capture observée `docs/captures/CRM-009/invitation-francaise-destinataire.jpg`
+      montre le contenu, l'action bleue à texte blanc et le code.
+- [x] **Conséquence de fermeture acquise** : cette unité était la condition de fermeture de **dix-huit unités
       `[~]`** dont le code est livré et prouvé. Elles ne passeront pas `[x]` d'un trait de plume :
-      chacune sera reprise, sa preuve manquante réellement exécutée, et son état révisé sur mesure.
+      chacune reste à reprendre, sa preuve manquante réellement exécutée, et son état révisé sur
+      mesure. Cette dépendance n'empêche plus leur audit individuel.
 
 ### CRM-008 — Harnais de tests `[~]`
 pgTAP, Vitest, pytest, Playwright (`api`, `ui`, `mail`).

@@ -1,4 +1,4 @@
-// @spec CRM-011 (docs/BACKLOG.md) — écran de connexion et refus générique
+// @spec CRM-009 (docs/BACKLOG.md) — écran de connexion et refus générique
 // @spec docs/SPEC-auth.md §9.1 (navigation), §9.3 (états et erreurs)
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.8 (états), §5.12 (connexion), §7, §8
 // @spec docs/manual.md chapitre 1 (connexion)

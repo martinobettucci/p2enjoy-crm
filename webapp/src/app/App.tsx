@@ -1,5 +1,5 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
-// @spec CRM-011 (docs/BACKLOG.md) — route de connexion et restauration de session
+// @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //

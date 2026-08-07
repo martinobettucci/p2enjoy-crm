@@ -1,0 +1,7 @@
+<!-- @spec CRM-007 (docs/BACKLOG.md), docs/SPEC-webapp.md §3.1, docs/DESIGN_SYSTEM.md §9 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">P2Enjoy CRM</title>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="rgb(35 70 140)"/>
+  <path fill="white" d="M14 50V14h18c10 0 16 5 16 14s-6 14-16 14H24v8H14Zm10-16h8c5 0 7-2 7-6s-2-6-7-6h-8v12Z"/>
+  <path fill="rgb(217 207 74)" d="M39 42c0-6 4-10 10-10 6 0 10 4 10 9 0 4-2 6-6 9l-3 2h9v7H39v-7l9-7c2-1 3-2 3-4 0-1-1-2-3-2s-3 1-3 3h-6Z"/>
+</svg>

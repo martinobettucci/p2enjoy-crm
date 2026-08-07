@@ -1,4 +1,4 @@
-// @verifies CRM-011 (docs/BACKLOG.md) — connexion, session d’onglet et déconnexion réelles
+// @verifies CRM-009 (docs/BACKLOG.md) — connexion, session d’onglet et déconnexion réelles
 // @verifies CRM-041 (docs/BACKLOG.md) — déplacement d’une card par un utilisateur connecté
 // @verifies CRM-043 (docs/BACKLOG.md) — publication et refus d’un commentaire dans l’interface
 // @verifies docs/SPEC-auth.md §9.1 à §9.5 (parcours, stockage, erreurs et preuves attendues)
@@ -13,6 +13,7 @@ import {
 	autoriserErreursConsole,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
+	surveillerConsole,
 	test,
 	type APIRequestContext,
 	type Page,
@@ -26,6 +27,7 @@ import {
 	jetonDe,
 } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { lireEnv } from '../env'
 
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
@@ -41,6 +43,9 @@ const ROUTE_AUDIT = `/tracks/conseil-ia/grands-comptes/cards/${CARD_AUDIT}`
 const ROUTE_MAINTENANCE = `/tracks/studio-web/maintenance/cards/${CARD_MAINTENANCE}`
 const ROUTE_BOARD_MAINTENANCE = '/tracks/studio-web/maintenance'
 const ROUTE_BOARD = '/tracks/conseil-ia/grands-comptes'
+const INBUCKET = `http://127.0.0.1:${lireEnv('INBUCKET_WEB_PORT')}`
+const SITE_URL = lireEnv('SITE_URL')
+const SUJET_INVITATION = 'Invitation à P2Enjoy CRM'
 
 let jetonAdmin: string
 
@@ -49,9 +54,13 @@ test.beforeAll(async () => {
 })
 
 async function connecter(page: Page, adresse: string): Promise<void> {
-	await page.getByLabel('Adresse email').fill(adresse)
-	await page.getByLabel('Mot de passe').fill(MOT_DE_PASSE_SEED)
-	await page.getByRole('button', { name: 'Se connecter' }).click()
+	await page.getByLabel('Adresse email').click()
+	await page.keyboard.press('ControlOrMeta+A')
+	await page.keyboard.type(adresse)
+	await page.keyboard.press('Tab')
+	await page.keyboard.press('ControlOrMeta+A')
+	await page.keyboard.type(MOT_DE_PASSE_SEED)
+	await page.keyboard.press('Enter')
 	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
 }
 
@@ -77,9 +86,11 @@ test('identifiants génériques, restauration dans l’onglet, aucun localStorag
 }) => {
 	await page.goto('/connexion')
 
-	await page.getByLabel('Adresse email').fill('personne-inconnue@p2enjoy.test')
-	await page.getByLabel('Mot de passe').fill('mot-de-passe-volontairement-invalide')
-	await page.getByRole('button', { name: 'Se connecter' }).click()
+	await page.getByLabel('Adresse email').click()
+	await page.keyboard.type('personne-inconnue@p2enjoy.test')
+	await page.keyboard.press('Tab')
+	await page.keyboard.type('mot-de-passe-volontairement-invalide')
+	await page.keyboard.press('Enter')
 	await expect(page.getByRole('alert')).toHaveText("L'adresse email ou le mot de passe est incorrect.")
 	await expect(page.getByLabel('Adresse email')).toBeFocused()
 	autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
@@ -120,11 +131,104 @@ test('identifiants génériques, restauration dans l’onglet, aucun localStorag
 	).toBe(false)
 })
 
+test('fermer l’onglet détruit la session sans laisser de persistance locale', async ({ page }) => {
+	await page.goto('/connexion')
+	await connecter(page, ADMIN)
+	const origine = new URL(page.url()).origin
+	const contexte = page.context()
+
+	await page.close()
+	const nouvelOnglet = await contexte.newPage()
+	const anomalies = surveillerConsole(nouvelOnglet)
+	await nouvelOnglet.goto(`${origine}/`)
+
+	await expect(nouvelOnglet.getByRole('link', { name: 'Se connecter' })).toBeVisible()
+	const stockage = await nouvelOnglet.evaluate(() => ({
+		local: globalThis.localStorage.length,
+		session: globalThis.sessionStorage.length,
+	}))
+	expect(stockage).toEqual({ local: 0, session: 0 })
+	expect(anomalies, 'le nouvel onglet anonyme ne laisse aucune anomalie console').toEqual([])
+	await nouvelOnglet.close()
+})
+
+test('le destinataire lit l’invitation française et active son lien à la souris', async ({
+	page,
+	request,
+}) => {
+	const adresse = `crm-009-destinataire-${randomUUID()}@exemple.test`
+	const boite = encodeURIComponent(adresse)
+	let idCompte = ''
+
+	try {
+		await page.setViewportSize({ width: 1280, height: 1000 })
+		await request.delete(`${INBUCKET}/api/v1/mailbox/${boite}`)
+		const invitation = await request.post(`${URL_API}/auth/v1/invite`, {
+			headers: enTetesService(),
+			data: { email: adresse },
+		})
+		expect(invitation.status(), await invitation.text()).toBe(200)
+		idCompte = ((await invitation.json()) as { id: string }).id
+
+		await expect
+			.poll(async () => {
+				const messages = await request.get(`${INBUCKET}/api/v1/mailbox/${boite}`)
+				return ((await messages.json()) as unknown[]).length
+			}, { message: 'l’invitation doit être reçue dans la vraie boîte SMTP' })
+			.toBe(1)
+
+		await page.goto(`${INBUCKET}/m/${boite}`)
+		await expect(page.getByText(SUJET_INVITATION, { exact: true })).toBeVisible()
+		await page.getByText(SUJET_INVITATION, { exact: true }).click()
+
+		await expect(page.getByText('Vous avez été invité(e) à rejoindre P2Enjoy CRM.')).toBeVisible()
+		await expect(page.getByText(/Vous pouvez aussi saisir ce code à six chiffres/)).toBeVisible()
+		await expect(page.getByText(/^\d{6}$/)).toBeVisible()
+		const action = page.getByRole('link', { name: 'Accepter l’invitation' })
+		await expect(action).toBeVisible()
+		const fondAction = action.locator('xpath=ancestor::td[1]')
+		const texteAction = action.locator('span')
+		await expect(fondAction).toHaveCSS('background-color', 'rgb(35, 70, 140)')
+		await expect(texteAction).toHaveCSS('color', 'rgb(255, 255, 255)')
+		await action.hover()
+		await expect(action).toBeInViewport()
+		await capturer(page, 'invitation-francaise-destinataire', 'CRM-009')
+		await action.click()
+
+		expect(await page.evaluate(() => globalThis.location.origin)).toBe(SITE_URL)
+		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+		await expect(page.getByText(adresse, { exact: true })).toBeVisible()
+		const etatNavigateur = await page.evaluate(() => ({
+			fragmentVide: globalThis.location.hash === '',
+			fragmentAvecJetonAcces: globalThis.location.hash.includes('access_token='),
+			fragmentAvecJetonRafraichissement: globalThis.location.hash.includes('refresh_token='),
+			local: globalThis.localStorage.length,
+			sessionAvecJeton: Object.entries(globalThis.sessionStorage).some(
+				([cle, valeur]) => cle.startsWith('sb-') && valeur.includes('access_token'),
+			),
+		}))
+		expect(etatNavigateur).toEqual({
+			fragmentVide: true,
+			fragmentAvecJetonAcces: false,
+			fragmentAvecJetonRafraichissement: false,
+			local: 0,
+			sessionAvecJeton: true,
+		})
+	} finally {
+		if (idCompte !== '') {
+			await request.delete(`${URL_API}/auth/v1/admin/users/${idCompte}`, {
+				headers: enTetesService(),
+			})
+		}
+		await request.delete(`${INBUCKET}/api/v1/mailbox/${boite}`)
+	}
+})
+
 test('le retour à la card publie réellement le commentaire de l’administratrice', async ({
 	page,
 	request,
 }) => {
-	const corps = `Preuve utilisateur CRM-011 ${randomUUID()}`
+	const corps = `Preuve utilisateur CRM-009 ${randomUUID()}`
 	try {
 		await page.goto(ROUTE_AUDIT)
 		await expect(page.getByTestId('etat-vide')).toContainText('Card introuvable')
@@ -158,7 +262,7 @@ test('le viewer voit la card mais son commentaire est refusé sans perdre son te
 	page,
 	request,
 }) => {
-	const corps = `Refus viewer CRM-011 ${randomUUID()}`
+	const corps = `Refus viewer CRM-009 ${randomUUID()}`
 	try {
 		await page.goto(ROUTE_MAINTENANCE)
 		await page.getByRole('link', { name: 'Se connecter' }).click()
@@ -285,11 +389,11 @@ test('l’écran de connexion tient les quatre paliers et une session chargée r
 			await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
 			`${palier.nom} ne doit pas déborder horizontalement`,
 		).toBe(true)
-		await capturer(page, `connexion-${palier.nom}`, 'CRM-011')
+		await capturer(page, `connexion-${palier.nom}`, 'CRM-009')
 	}
 
 	await page.setViewportSize({ width: 1440, height: 900 })
 	await connecter(page, ADMIN)
 	await expect(page.getByTestId('entree-track')).toHaveCount(3)
-	await capturer(page, 'session-chargee-1440', 'CRM-011')
+	await capturer(page, 'session-chargee-1440', 'CRM-009')
 })

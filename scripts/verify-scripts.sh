@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
-# @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes)
+# @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
+#           décision 251 (`MAIL_TEAM_DOMAIN` déclaré avant son consommateur CRM-051)
 # @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
-#           décision 247 (contexte de build sans secrets ni données locales)
+#           décision 247 (contexte de build sans secrets ni données locales), décision 272
+#           (origine webapp joignable depuis les emails transactionnels)
 # @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
 # @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9, §11
 #
@@ -46,6 +48,7 @@ env_get()   { sed -n "s/^$2=//p" "$1" | tail -n 1; }
 ALLOWED_ORPHANS="
 P2ENJOY_ENV_PROFILE      garde de profil, lue par les scripts et non par Compose
 CRM_INBOUND_DOMAIN       lue par les gardes de développement depuis CRM-050 (décision 245)
+MAIL_TEAM_DOMAIN         réservée au routage des boîtes personnelles de CRM-051 (décision 251)
 MAIL_SYNC_POLL_INTERVAL  consommée à partir de CRM-054 (README.md §9)
 MAIL_MAX_ATTACHMENT_MB   consommée à partir de CRM-054 (README.md §9)
 "
@@ -305,6 +308,34 @@ elif grep -q 'CRM_INBOUND_DOMAIN.*crm.p2enjoy.test' "$WORK/domaine-reset.log"; t
 	ok "resetMe.sh refuse le mauvais domaine avant toute destruction"
 else
 	fail "resetMe.sh refuse le mauvais domaine sans expliquer la valeur attendue"
+fi
+
+if P2ENJOY_ENV_FILE="$BOOT1" ./runDev.sh --bootstrap >"$WORK/origine-ok.log" 2>&1; then
+	ok "runDev.sh accepte l'origine webapp qui correspond exactement au port publié"
+else
+	fail "runDev.sh refuse une origine webapp cohérente : $(tail -n 2 "$WORK/origine-ok.log" | tr '\n' ' ')"
+fi
+
+SITE_DIVERGENT="$WORK/env.site-divergent"
+sed 's#^SITE_URL=.*#SITE_URL=http://127.0.0.1:5999#' "$BOOT1" > "$SITE_DIVERGENT"
+if P2ENJOY_ENV_FILE="$SITE_DIVERGENT" ./runDev.sh --bootstrap >"$WORK/site-divergent.log" 2>&1; then
+	fail "runDev.sh accepte SITE_URL sur un autre port que WEBAPP_DEV_PORT"
+elif grep -q 'SITE_URL' "$WORK/site-divergent.log" \
+	&& grep -q 'DEV_BIND_ADDRESS.*WEBAPP_DEV_PORT' "$WORK/site-divergent.log"; then
+	ok "runDev.sh refuse un SITE_URL incohérent avant Docker et nomme les trois variables"
+else
+	fail "runDev.sh refuse SITE_URL sans expliquer l'origine attendue"
+fi
+
+REDIRECT_DIVERGENT="$WORK/env.redirect-divergent"
+sed 's#^ADDITIONAL_REDIRECT_URLS=.*#ADDITIONAL_REDIRECT_URLS=http://127.0.0.1:5999#' \
+	"$BOOT1" > "$REDIRECT_DIVERGENT"
+if P2ENJOY_ENV_FILE="$REDIRECT_DIVERGENT" ./runDev.sh --bootstrap >"$WORK/redirect-divergent.log" 2>&1; then
+	fail "runDev.sh accepte une origine absente de ADDITIONAL_REDIRECT_URLS"
+elif grep -q 'ADDITIONAL_REDIRECT_URLS.*origine webapp' "$WORK/redirect-divergent.log"; then
+	ok "runDev.sh refuse une redirection incohérente avant Docker et nomme sa correction"
+else
+	fail "runDev.sh refuse ADDITIONAL_REDIRECT_URLS sans expliquer l'origine attendue"
 fi
 
 # --- 5. Gardes de profil -----------------------------------------------------------------------

@@ -228,13 +228,17 @@ SCENARIOS_API=410
 # neuvième substitue un événement `channel_changed` pour MESURER INC-077, que rien d'autre ne rend
 # visible : le fil n'est jamais atteint par un anonyme.
 # Valeur MESURÉE, non déduite.
-# **142 depuis la reprise de `CRM-011`** : six scénarios connectés sans substitution — refus
+# **142 lors de la première livraison de `CRM-009`** : six scénarios connectés sans substitution — refus
 # générique, session limitée à l'onglet et déconnexion, publication puis relecture d'un commentaire,
 # refus du `viewer` avec texte conservé, déplacement du `viewer` refusé et inchangé, déplacement
 # administrateur puis relecture d'une card d'essai, et les quatre paliers de l'écran de connexion.
 # Les écritures sont nettoyées par identifiant ou contenu.
+# **144 depuis la clôture de `CRM-009`** : fermeture d'un onglet prouvant la disparition de sa
+# session, puis parcours destinataire réel depuis l'interface Inbucket jusqu'à la session GoTrue,
+# URL nettoyée, `localStorage` vide et contenu français rendu. La console stricte s'applique aux
+# deux scénarios comme à tous les autres.
 # Valeur MESURÉE par la liste Playwright, puis par l'exécution complète.
-SCENARIOS_UI=142
+SCENARIOS_UI=144
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
@@ -571,7 +575,7 @@ else
 fi
 
 if [ ! -e "$SUITE_FAUX_VERT" ]; then
-	ok "la suite pgTAP piégée est supprimée : supabase/tests/ ne contient que les sept suites livrées"
+	ok "la suite pgTAP piégée est supprimée : supabase/tests/ ne contient que les suites versionnées"
 else
 	fail "la suite pgTAP piégée subsiste : $SUITE_FAUX_VERT"
 fi

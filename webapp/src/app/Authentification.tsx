@@ -1,4 +1,4 @@
-// @spec CRM-011 (docs/BACKLOG.md) — état de session partagé par la webapp
+// @spec CRM-009 (docs/BACKLOG.md) — état de session partagé par la webapp
 // @spec docs/SPEC-auth.md §9.1 (restauration avant les lectures), §9.2 (session), §9.4
 // @spec docs/SPEC-webapp.md §6.2 (restauration avant les lectures métier)
 //

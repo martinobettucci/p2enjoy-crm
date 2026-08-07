@@ -9,7 +9,7 @@
 // Ce module ne rend rien : il **lit, écrit et écoute**. La séparation est ce qui rend l'ordre du
 // fil, la classification des refus et la règle d'abonnement vérifiables **sans navigateur**.
 //
-// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-011`. L'anonyme
+// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-009`. L'anonyme
 // reçoit un fil vide et un refus ; un membre lit et publie selon la RLS. Le parcours connecté et le
 // refus du `viewer` sont éprouvés sans substitution par `e2e/ui/authentification.spec.ts`.
 

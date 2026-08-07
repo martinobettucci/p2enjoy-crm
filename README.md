@@ -7,7 +7,8 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > **État d'avancement — lisez ceci en premier.**
 > Sont livrés et vérifiés : la **pile d'exécution** (`CRM-001`, `CRM-002`), les **migrations
 > d'amorçage** et leur refus par défaut (`CRM-003`), le **chiffrement des secrets** (`CRM-004`),
-> les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), le **seed
+> les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), l'**écran de
+> connexion, la session d'onglet et les emails transactionnels français** (`CRM-009`), le **seed
 > socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
 > (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`), les **channels**
 > (`CRM-021`), le **catalogue de nœuds** (`CRM-030`), les **workflows** (`CRM-031`), leur **copie
@@ -16,7 +17,7 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > (`CRM-034`) et les **valeurs de formulaire** (`CRM-036`).
 > Le board, la vue liste, la fiche, les commentaires et l'historique sont également livrés. La
 > webapp possède désormais son **écran de connexion**, une session limitée à l'onglet et une
-> déconnexion réelle (`CRM-011`). Un utilisateur connecté peut consulter les données que la RLS
+> déconnexion réelle (`CRM-009`). Un utilisateur connecté peut consulter les données que la RLS
 > lui consent, publier un commentaire et déplacer une card. `move_card` porte ses **six** vérifications :
 > la sixième, « les champs requis de l'étape cible sont renseignés », est livrée par `CRM-036`, qui
 > a refermé INC-047.
@@ -211,7 +212,7 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | MinIO | http://localhost:9001 | Console du stockage S3 local | **disponible** |
 | PostgreSQL | localhost:54322 | Accès SQL direct (pgTAP, outillage de migration) | **disponible** |
 | Pooler (Supavisor) | localhost:5432 · 6543 | Sessions et transactions poolées | **disponible** |
-| Webapp | http://localhost:5173 | L'application | à venir (`CRM-007`) |
+| Webapp | http://127.0.0.1:5173 | L'application | **disponible** |
 | Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | **disponible** |
 | Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
 | Stalwart — API de gestion | http://localhost:8081/api/ | Provisionnement des réglages, domaines et boîtes ; la racine explique pourquoi aucune console n'est servie | **disponible** |
@@ -302,7 +303,7 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest, 524 tests            — aucune pile requise
+npm run test:unit          # Vitest, 525 tests            — aucune pile requise
 npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
@@ -348,8 +349,8 @@ PLAYWRIGHT_CHROMIUM_PATH=/chemin/vers/chromium npm run e2e:ui
 Absente, rien ne change : Playwright résout le navigateur lui-même. Elle ne désactive aucun contrôle
 et ne substitue aucune réponse — seul le binaire diffère (`docs/SPEC-test-harness.md` §4.4 bis).
 
-Les autres preuves disponibles aujourd'hui sont huit harnais rejouables, à exécuter sur une pile de
-développement déjà démarrée :
+Les autres preuves disponibles aujourd'hui sont les harnais rejouables ci-dessous, à exécuter sur
+une pile de développement déjà démarrée :
 
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
@@ -357,7 +358,7 @@ scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
-scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
+scripts/verify-auth.sh         # GoTrue + contenu des emails transactionnels (CRM-011, CRM-009)
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
@@ -668,9 +669,9 @@ Documentation de référence :
   d'**exploitation**, pas un bouton dans l'interface. Le composant qui permettrait à un
   administrateur de workspace d'inviter depuis le produit n'existe pas et n'est rattaché à aucune
   unité — consigné en [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-015.
-- **Les emails transactionnels partent en anglais.** GoTrue ne sait charger un gabarit
-  personnalisé que par HTTP, et le dépôt n'expose aucune origine HTTP joignable depuis le réseau
-  des conteneurs avant la webapp. Le repli vers le gabarit anglais est de surcroît **silencieux**
-  du point de vue du destinataire : INC-016.
+- **Les emails transactionnels français sont livrés ; leur limite est MIME.** Le service interne
+  `auth-templates` sert les quatre gabarits à GoTrue et les preuves vérifient le contenu SMTP réel,
+  pas la seule présence d'un message : INC-016 est close. GoTrue 2.189.0 n'émet toutefois qu'une
+  partie `text/html`, sans alternative `text/plain` ; Inbucket reconstruit son onglet texte.
 - **Le seed de démonstration n'est pas une base de production** : mots de passe faibles connus,
   domaines fictifs, boîtes locales.

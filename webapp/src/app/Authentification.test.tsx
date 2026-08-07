@@ -1,4 +1,4 @@
-// @verifies CRM-011 (docs/BACKLOG.md) — restauration, connexion et déconnexion partagées
+// @verifies CRM-009 (docs/BACKLOG.md) — restauration, connexion et déconnexion partagées
 // @verifies docs/SPEC-auth.md §9.1 (restauration avant lectures), §9.4 (déconnexion)
 // @verifies docs/SPEC-webapp.md §6.2 (état de session unique)
 

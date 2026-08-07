@@ -1736,19 +1736,27 @@ unité, et le rattachement d'une éventuelle table d'invitations poserait la mê
 
 ---
 
-### INC-016 — Gabarits d'emails : chargement HTTP obligatoire et repli silencieux vers l'anglais
+### INC-016 — Gabarits d'emails : chargement HTTP obligatoire et repli silencieux vers l'anglais — **CLOSE**
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 264.** **Les gabarits d'emails sont servis en HTTP depuis la pile.** Exigence attachée, qui vaut au-delà de cette entrée : toute preuve portant sur un email vérifie son **contenu**, jamais sa seule présence. Mise en œuvre : `CRM-009`.
 
 **Contrat de résolution écrit — `docs/JOURNAL.md`, décision 269.** Le service interne commun
 `auth-templates`, ses quatre URL, ses sujets français et les preuves de contenu sont spécifiés dans
-`docs/SPEC-auth.md` §5. L'entrée reste ouverte jusqu'à l'exécution de ces preuves.
+`docs/SPEC-auth.md` §5.
+
+**CLOSE le 2026-08-07 par `CRM-009`.** Le service commun est sain et GoTrue dépend de lui ; les
+quatre gabarits français sont joignables. Le harnais obtient les vrais emails d'invitation et de
+réinitialisation par SMTP, exige leur sujet, leur phrase propre, le produit, le code et le lien,
+puis démontre qu'un GoTrue jetable privé du service retombe bien sur l'anglais que ce même
+validateur refuse : **62/62**. Dans Chromium, le destinataire ouvre Inbucket, lit le contenu
+français rendu, voit l'action contrastée, clique avec la souris et obtient sa session d'onglet ;
+capture observée dans `docs/captures/CRM-009/`.
 
 **Nature :** limite d'un composant tiers, contraire à une exigence générale.
 **Relevé le :** 2026-08-03, pendant `CRM-011`.
 
-Le produit est en français ; les emails transactionnels partent en **anglais**, avec les gabarits
-par défaut de GoTrue.
+Au moment du constat, le produit était en français tandis que les emails transactionnels partaient
+en **anglais**, avec les gabarits par défaut de GoTrue.
 
 **Mesure.** `supabase/gotrue:v2.189.0` ne sait charger un gabarit personnalisé que par **HTTP**. Un
 chemin de fichier n'est pas reconnu : la valeur est concaténée à `SITE_URL`, ce que la
@@ -1779,7 +1787,7 @@ texte ; et la partie « texte » que lit `scripts/verify-auth.sh` est **reconstr
 `docs/captures/CRM-011/email-invitation-1280x800.jpg` et
 `docs/captures/CRM-011/email-reinitialisation-1280x800.jpg`.
 
-**Arbitrage désormais rendu :** décision 264, mise en œuvre par `CRM-009`. Le constat MIME reste
+**Arbitrage exécuté :** décision 264, mise en œuvre et prouvée par `CRM-009`. Le constat MIME reste
 une limite distincte du composant épinglé : son interface interne ne reçoit qu'un corps et son
 client SMTP l'envoie par `SetBody("text/html", body)`. Un simple gabarit ne peut donc pas créer un
 multipart alternatif (`docs/SPEC-auth.md` §5.2).
@@ -1971,18 +1979,16 @@ de rédaction — elle laisse chaque unité à son objet — mais la décision n
 Tant qu'elle n'est pas prise, `CRM-011` reste `[~]` avec sa preuve d'E2E manquante, et la webapp
 reste anonyme.
 
-**Arbitrage rendu le 2026-08-07.** La demande explicite de rendre les actions implémentées
-effectivement praticables par un utilisateur lève l'attente : l'option 1 est retenue, donc l'écran
-rejoint `CRM-011`, dont la Definition of Done le présuppose déjà. Le contrat est écrit dans
-`docs/SPEC-auth.md` §9 avant le code. Le point reste dans « Ouverts » jusqu'à ce que la connexion,
-la déconnexion et au moins deux écritures métier soient prouvées depuis l'interface réelle ; il
-sera déplacé dans « Clos » avec ces preuves, jamais sur la seule intention.
+**Arbitrage rendu le 2026-08-07 — décision 253 récupérée du responsable.** L'option 2 est retenue :
+une unité dédiée, `CRM-009`, entre `CRM-007` et `CRM-008`. Le rattachement transitoire à
+`CRM-011`, décidé à tort pendant que cette décision manquait de `main`, est corrigé dans le code,
+les preuves et l'architecture.
 
-**CLOSE le 2026-08-07 par la reprise de `CRM-011`.** L'écran, la session d'onglet et la
-déconnexion sont livrés. Six scénarios navigateur obtiennent les vraies sessions GoTrue puis
-prouvent lecture, publication, déplacement autorisé et déplacements/commentaires refusés, avec
-relecture directe de la base et nettoyage. `CRM-011`, `CRM-041`, `CRM-043` et `CRM-044` passent
-`[x]` ; INC-015 reste distincte.
+**CLOSE le 2026-08-07 par `CRM-009`.** Huit scénarios navigateur obtiennent les vraies sessions
+GoTrue : refus, session d'onglet, fermeture du contexte, déconnexion, lecture, publication,
+déplacements autorisé/refusé et parcours destinataire depuis Inbucket. Les effets métier sont
+relus par l'API, les données nettoyées, l'URL du lien débarrassée de ses jetons et `localStorage`
+reste vide. INC-015 reste distincte ; les unités métier dépendantes sont réévaluées une par une.
 
 **Lié à :** INC-015 (invitation sans composant), INC-020 (build dû par `CRM-007`).
 

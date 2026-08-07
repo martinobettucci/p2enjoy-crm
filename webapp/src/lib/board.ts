@@ -12,7 +12,7 @@
 // correspondance des refus du §7.10 d'être exercée par un test unitaire d'un côté et par la
 // pile réelle de l'autre.
 //
-// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-011`. L'anonyme
+// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-009`. L'anonyme
 // reçoit `200` et `[]` ; un membre consent les colonnes réelles, et le parcours connecté est
 // éprouvé sans substitution par `e2e/ui/authentification.spec.ts`.
 

@@ -1,4 +1,4 @@
-// @verifies CRM-011 (docs/BACKLOG.md) — formulaire de connexion utilisable au clavier
+// @verifies CRM-009 (docs/BACKLOG.md) — formulaire de connexion utilisable au clavier
 // @verifies docs/SPEC-auth.md §9.1 (retour), §9.3 (refus générique, double soumission)
 // @verifies docs/DESIGN_SYSTEM.md §5.7 (labels), §5.12 (connexion), §8 (focus)
 

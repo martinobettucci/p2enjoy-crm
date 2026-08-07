@@ -8629,3 +8629,12 @@ remplacera appartient à une future montée de version de GoTrue, après mesure 
 fonctionnel exigé : l'une vient du défaut `AdminGroupName=admin`, l'autre d'une variable à la fois
 dépréciée et encore nécessaire. Elles sont des journaux serveur amont, pas la console du navigateur.
 Abaisser ou filtrer le niveau de log resterait un faux vert et n'est pas retenu.
+
+**Résultat final de `CRM-009`.** Après restauration du groupe requis, `verify-auth.sh` rend
+**62/62** et PostgREST accepte le jeton réel. `verify-scripts.sh` rend **61/61**, la pile exhaustive
+**50/50**, `verify-webapp.sh` **42/42**, Vitest **525/525**, les quatre compilations TypeScript et
+le build en quatre chunks sont verts. Les **144/144** parcours Chromium passent avec une console
+sans `warning`, `error` ni `pageerror`; le sous-ensemble d'authentification rend **8/8**. La capture
+observée `docs/captures/CRM-009/invitation-francaise-destinataire.jpg` montre le sujet français,
+l'action bleue à texte blanc et le code. Le clic ouvre la vraie session GoTrue, nettoie l'URL,
+laisse `localStorage` vide et place le jeton uniquement dans `sessionStorage`.

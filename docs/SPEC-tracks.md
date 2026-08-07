@@ -241,7 +241,7 @@ Les quatre états de `docs/DESIGN_SYSTEM.md` §5.8 restent traités par le contr
 (`docs/SPEC-webapp.md` §6.4) : chargement en squelettes, vide, erreur avec reprise réelle, refus.
 
 **Ce que l'écran affiche aujourd'hui, et pourquoi.** Sans session, la lecture rend `200` et `[]` :
-la barre latérale montre son état vide réel. Depuis la reprise de `CRM-011`, la session est
+la barre latérale montre son état vide réel. Depuis `CRM-009`, la session est
 restaurée avant cette lecture et un membre voit les tracks que la RLS lui consent. La preuve
 connectée constate les trois tracks du seed, sans réponse substituée.
 

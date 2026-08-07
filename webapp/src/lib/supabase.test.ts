@@ -1,12 +1,20 @@
-// @verifies CRM-011 (docs/BACKLOG.md) — session limitée à l'onglet et repli mémoire
+// @verifies CRM-009 (docs/BACKLOG.md) — session limitée à l'onglet et repli mémoire
 // @verifies docs/SPEC-auth.md §9.2 ; docs/SPEC-webapp.md §6.2 ; CLAUDE.md §11
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { creerStockageSession, type StockageSession } from './supabase'
+
+const { creerClientSupabase } = vi.hoisted(() => ({
+	creerClientSupabase: vi.fn(() => ({})),
+}))
+
+vi.mock('@supabase/supabase-js', () => ({ createClient: creerClientSupabase }))
+
+import { creerClient, creerStockageSession, type StockageSession } from './supabase'
 
 beforeEach(() => {
 	globalThis.sessionStorage.clear()
 	globalThis.localStorage.clear()
+	creerClientSupabase.mockClear()
 })
 
 describe('stockage de session Supabase', () => {
@@ -58,5 +66,26 @@ describe('stockage de session Supabase', () => {
 		disponible = false
 
 		expect(stockage.getItem('session-crm')).toBe('jeton')
+	})
+
+	it('consomme le retour GoTrue dans le même stockage limité à l’onglet', () => {
+		creerClient({ url: 'https://api.exemple.test', cleAnonyme: 'cle-anonyme-de-test' })
+
+		expect(creerClientSupabase).toHaveBeenCalledWith(
+			'https://api.exemple.test',
+			'cle-anonyme-de-test',
+			{
+				auth: {
+					persistSession: true,
+					autoRefreshToken: true,
+					detectSessionInUrl: true,
+					storage: expect.objectContaining({
+						getItem: expect.any(Function),
+						setItem: expect.any(Function),
+						removeItem: expect.any(Function),
+					}),
+				},
+			},
+		)
 	})
 })

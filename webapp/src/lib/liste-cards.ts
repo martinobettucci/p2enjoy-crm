@@ -10,7 +10,7 @@
 // d'adresse, le bornage du rang de page, le découpage en pages, la classification du `416`.
 //
 // Sans session, la lecture rend `200` et un total de zéro ; avec la session restaurée par
-// `CRM-011`, elle rend les lignes consenties par la RLS. Le module ne bifurque jamais sur un rôle.
+// `CRM-009`, elle rend les lignes consenties par la RLS. Le module ne bifurque jamais sur un rôle.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'

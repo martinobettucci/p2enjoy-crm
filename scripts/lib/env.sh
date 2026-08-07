@@ -2,7 +2,8 @@
 # @spec CRM-002 (docs/BACKLOG.md) — socle commun des scripts de lancement et d'environnement
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 98 (identifiants Docker), décision 99 (ports déjà pris),
-#       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte)
+#       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 272
+#       (origine webapp de développement cohérente avec le port publié)
 # @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §13 (commandes de lancement)
 # @spec docs/PROD_MIGRATIONS.md §2.3
 # @spec README.md §4 (installation), §5 (commandes principales), §9 (variables d'environnement),
@@ -236,6 +237,33 @@ env_require_dev_inbound_domain() {
 	if [ "$actual" != "$expected" ]; then
 		die "CRM_INBOUND_DOMAIN vaut « ${actual:-<vide>} », or le seed de développement porte « $expected ».
         Corrigez $ENV_FILE explicitement : le catch-all Stalwart viserait sinon le mauvais domaine."
+	fi
+}
+
+# Les liens transactionnels de GoTrue reviennent vers SITE_URL. En développement, cette origine
+# doit donc désigner exactement le Vite publié par l'overlay et faire partie des redirections
+# autorisées. La garde est indépendante de Docker afin que `runDev.sh --bootstrap` puisse révéler
+# une configuration inutilisable sans démarrer ni interroger la pile (décision 272).
+env_require_dev_webapp_origin() {
+	local bind port expected site redirects
+	bind=$(env_get "$ENV_FILE" DEV_BIND_ADDRESS)
+	port=$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)
+	expected="http://${bind}:${port}"
+	site=$(env_get "$ENV_FILE" SITE_URL)
+	redirects=$(env_get "$ENV_FILE" ADDITIONAL_REDIRECT_URLS)
+
+	if [ "$site" != "$expected" ]; then
+		die "SITE_URL vaut « ${site:-<vide>} », or la webapp de développement est publiée à « $expected ».
+        Alignez SITE_URL sur DEV_BIND_ADDRESS et WEBAPP_DEV_PORT dans $ENV_FILE avant de démarrer."
+	fi
+
+	if ! printf '%s' "$redirects" | awk -v want="$expected" '
+		BEGIN { RS = ","; found = 0 }
+		{ gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0); if ($0 == want) found = 1 }
+		END { exit found ? 0 : 1 }
+	'; then
+		die "ADDITIONAL_REDIRECT_URLS n'autorise pas l'origine webapp de développement « $expected ».
+        Ajoutez cette origine comme entrée entière dans $ENV_FILE avant de démarrer."
 	fi
 }
 

@@ -1,4 +1,4 @@
-// @verifies CRM-011 (docs/BACKLOG.md) — classification assainie et retour interne après connexion
+// @verifies CRM-009 (docs/BACKLOG.md) — classification assainie et retour interne après connexion
 // @verifies docs/SPEC-auth.md §9.1 (adresse de retour), §9.3 (erreurs génériques)
 // @verifies docs/SPEC-permissions-rls.md §7 (un refus ne divulgue aucune existence)
 

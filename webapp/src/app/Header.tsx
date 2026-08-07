@@ -1,11 +1,11 @@
 // @spec CRM-007 (docs/BACKLOG.md) — en-tête de la coquille
-// @spec CRM-011 (docs/BACKLOG.md) — identité de session, connexion et déconnexion
+// @spec CRM-009 (docs/BACKLOG.md) — identité de session, connexion et déconnexion
 // @spec docs/DESIGN_SYSTEM.md §4 (en-tête), §5.12 (session), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 ; docs/SPEC-auth.md §9.1, §9.4
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
 // La recherche annoncée par docs/DESIGN_SYSTEM.md §4 n'est pas livrée : aucun moteur ne la porte.
-// L'identité de session, elle, vient de GoTrue depuis CRM-011 et offre toujours son action réelle.
+// L'identité de session, elle, vient de GoTrue depuis CRM-009 et offre toujours son action réelle.
 
 import { LogIn, LogOut, Menu } from 'lucide-react'
 import { useState } from 'react'

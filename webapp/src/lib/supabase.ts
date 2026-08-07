@@ -1,5 +1,5 @@
 // @spec CRM-007 (docs/BACKLOG.md) — client Supabase de la webapp
-// @spec CRM-011 (docs/BACKLOG.md) — session authentifiée limitée à l'onglet
+// @spec CRM-009 (docs/BACKLOG.md) — session authentifiée limitée à l'onglet
 // @spec docs/SPEC-webapp.md §6.1 (client), §6.2 (session), §11 (stockage côté client)
 // @spec docs/SPEC-auth.md §9.2 (sessionStorage et repli mémoire)
 // @spec docs/DAT.md §3.1 (webapp) ; CLAUDE.md §11 (stockage sur l'appareil)
@@ -8,7 +8,7 @@
 // Il ne porte **aucune** règle d'autorisation — l'interface ne déduit jamais un droit d'un
 // type, le refus fait toujours autorité côté backend (docs/DAT.md §3.1).
 //
-// CRM-011 conserve la session dans `sessionStorage`, jamais dans le `localStorage` choisi par
+// CRM-009 conserve la session dans `sessionStorage`, jamais dans le `localStorage` choisi par
 // défaut par supabase-js. Le stockage est borné à l'onglet ; s'il est verrouillé par le
 // navigateur, le repli mémoire maintient la session courante sans inventer de persistance.
 
@@ -104,7 +104,10 @@ export function creerClient(configuration: ConfigurationClient): ClientCrm {
 		auth: {
 			persistSession: true,
 			autoRefreshToken: true,
-			detectSessionInUrl: false,
+			// GoTrue renvoie les sessions d'invitation, confirmation, récupération et changement
+			// d'adresse dans le fragment. La bibliothèque valide l'utilisateur, efface les jetons de
+			// l'URL puis emploie le stockage d'onglet ci-dessous (décision 273).
+			detectSessionInUrl: true,
 			storage: creerStockageSession(),
 		},
 	})

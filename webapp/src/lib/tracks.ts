@@ -4,7 +4,7 @@
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 //
 // `public.tracks` porte, depuis `CRM-020`, une politique de lecture réservée aux membres du
-// workspace. Sans session la requête rend `200` et `[]` ; avec la session restaurée par `CRM-011`,
+// workspace. Sans session la requête rend `200` et `[]` ; avec la session restaurée par `CRM-009`,
 // elle rend les tracks consentis. Dans les deux cas, l'état vient du backend.
 //
 // L'interface n'en déduit aucun droit : ce qu'elle affiche est ce que le backend a consenti à

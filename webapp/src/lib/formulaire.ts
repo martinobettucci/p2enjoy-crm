@@ -9,7 +9,7 @@
 // du §4.3 d'être exercé par un test unitaire d'un côté et par une preuve d'API de l'autre.
 //
 // Sans session, les requêtes rendent `200` et `[]` et l'écran affiche « card introuvable » : c'est
-// le refus réel du backend. Avec la session restaurée par `CRM-011`, le même chargeur rend le
+// le refus réel du backend. Avec la session restaurée par `CRM-009`, le même chargeur rend le
 // formulaire réellement consenti ; aucune branche d'autorisation ne vit ici.
 
 import { useCallback, useEffect, useRef, useState } from 'react'

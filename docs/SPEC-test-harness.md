@@ -328,7 +328,7 @@ mesuré de chaque scénario et la convention de figeage sont dans `docs/SPEC-per
 exécute ce fichier comme les autres. La commande reste celle du §9.
 
 **Ce que `CRM-014` n'ajoutait pas à sa livraison.** Aucun scénario d'interface, aucune capture : la
-règle restait prouvée en base et par l'API. Depuis la reprise de `CRM-011`, des parcours connectés
+règle restait prouvée en base et par l'API. Depuis `CRM-009`, des parcours connectés
 complètent cette couche sans déplacer les preuves d'autorisation hors interface exigées par
 `CLAUDE.md` §10.
 

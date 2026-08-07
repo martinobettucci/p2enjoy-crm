@@ -34,7 +34,7 @@ Contraintes structurantes :
 flowchart LR
   Nav[Navigateur]
 
-  subgraph Front["webapp — React 18 / Vite / TypeScript"]
+  subgraph Front["webapp — React 19 / Vite / TypeScript"]
     Auth[AuthProvider]
     Router[React Router]
     Views[Vues : Board, Card, Inbox, Réglages]
@@ -43,6 +43,7 @@ flowchart LR
   subgraph Supa["Supabase self-hosted"]
     Kong[Kong — passerelle]
     GoTrue[GoTrue — authentification]
+    Templates[auth-templates — Caddy interne]
     PostgREST[PostgREST — API REST]
     RT[Realtime]
     Storage[Storage]
@@ -62,6 +63,7 @@ flowchart LR
   Front -->|supabase-js| Kong
   Front -->|RPC / REST| Kong
   Kong --> GoTrue
+  GoTrue -->|gabarits HTML français| Templates
   Kong --> PostgREST
   Kong --> RT
   Kong --> Storage
@@ -119,8 +121,9 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 
 - `src/lib/database.types.ts` — les types dérivés du schéma, **générés et versionnés** ;
   `npm run types:check` prouve qu'ils n'ont pas dérivé du schéma réellement migré ;
-- `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
-  qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44) ;
+- `src/lib/supabase.ts` — le client, typé par ce schéma, avec session limitée à
+  **`sessionStorage`**, repli mémoire, rafraîchissement automatique et consommation des fragments
+  GoTrue (`CRM-009`, `docs/SPEC-auth.md` §9). Aucun jeton ne passe dans `localStorage` ;
 - `src/lib/async.ts`, `src/lib/workspaces.ts`, `src/lib/tracks.ts`, `src/lib/channels.ts` — un type
   somme unique pour tout chargement, et les lectures que l'application effectue : le contexte
   d'espace de travail pour l'en-tête, les tracks pour la barre latérale (`CRM-020`), et — sur la
@@ -297,6 +300,9 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
 
 - **Kong** expose l'API Supabase (REST, Auth, Storage, Realtime) sur un port unique.
 - **Caddy** (production uniquement) termine TLS et sert la webapp buildée.
+- **`auth-templates`** emploie également `caddy:2.9-alpine`, mais comme serveur statique interne
+  commun aux deux assemblages. Il sert en lecture seule les quatre gabarits français de GoTrue sur
+  `:8080`, sans publier de port hôte ; `auth` attend sa sonde saine (`CRM-009`).
 
 ### 3.6 Composants de développement uniquement
 
@@ -333,6 +339,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 |---|---|---|
 | `db` | `supabase/postgres:17.6.1.136` | dev, prod |
 | `migrations-runner` | `postgres:17-alpine` | dev, prod |
+| `auth-templates` | `caddy:2.9-alpine` | dev, prod |
 | `auth` | `supabase/gotrue:v2.189.0` | dev, prod |
 | `rest` | `postgrest/postgrest:v14.12` | dev, prod |
 | `realtime` | `supabase/realtime:v2.102.3` | dev, prod |
@@ -384,6 +391,9 @@ inerte là où elle ne s'applique pas, en particulier dans le conteneur d'intég
 4. Les politiques RLS résolvent les droits **à partir des tables d'appartenance**, pas de
    revendications portées par le jeton : un droit révoqué prend effet immédiatement, sans
    attendre l'expiration du JWT.
+5. Après une invitation ou une autre action transactionnelle, le destinataire clique le lien
+   GoTrue reçu par SMTP. La webapp consomme son fragment, valide l'utilisateur, nettoie l'URL puis
+   conserve la session uniquement dans le `sessionStorage` de cet onglet (`CRM-009`).
 
 L'inscription libre est désactivée : `POST /signup` est refusé par `422 signup_disabled`, et
 **le privilège ne contourne pas ce refus** — la clé `service_role` est refusée à l'identique
@@ -488,7 +498,8 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 
 - **Authentification** : GoTrue, email et mot de passe, inscription libre désactivée,
   invitations émises avec un droit d'administration. Spécifiée par `docs/SPEC-auth.md`, prouvée
-  hors interface par `scripts/verify-auth.sh` (**42 contrôles**).
+  hors interface par `scripts/verify-auth.sh` (**62 contrôles**, dont service et contenu réel des
+  gabarits français). Le retour destinataire est en plus exercé dans Chromium par `CRM-009`.
 - **Politique de mot de passe** : longueur minimale de 12 caractères (`PASSWORD_MIN_LENGTH`),
   sans exigence de composition. Le défaut de GoTrue, 6, a été mesuré comme réellement permissif
   (`docs/JOURNAL.md`, décision 29).

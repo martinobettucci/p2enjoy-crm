@@ -1,5 +1,5 @@
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
-// @spec CRM-011 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
+// @spec CRM-009 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
 // @spec docs/DESIGN_SYSTEM.md §5.12, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
 //
 // **Toute** chaîne visible de l'application est ici, et nulle part ailleurs. Les libellés

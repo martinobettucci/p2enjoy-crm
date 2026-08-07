@@ -5,7 +5,7 @@
 //
 // `public.channels` porte, depuis `CRM-021`, une politique de lecture réservée aux membres du
 // workspace. Sans session les deux requêtes rendent `200` et `[]` ; avec la session restaurée par
-// `CRM-011`, elles rendent le track et ses channels consentis. Dans les deux cas, l'état vient du
+// `CRM-009`, elles rendent le track et ses channels consentis. Dans les deux cas, l'état vient du
 // backend.
 //
 // L'interface n'en déduit aucun droit : ce qu'elle affiche est ce que le backend a consenti à

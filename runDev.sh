@@ -2,7 +2,7 @@
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'environnement de développement
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage), décision 101 (points de
-#       montage créés par l'hôte)
+#       montage créés par l'hôte), décision 272 (origine webapp joignable depuis les emails)
 # @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §13 (commandes de lancement)
 # @spec CRM-050 (docs/BACKLOG.md) — démarrage de la messagerie de développement,
 #       docs/SPEC-mail-subsystem.md §11.8 (ports annoncés)
@@ -56,6 +56,7 @@ fi
 env_validate
 env_require_profile dev
 env_require_dev_inbound_domain
+env_require_dev_webapp_origin
 
 if [ "$MODE" = bootstrap ]; then
 	say "Environnement prêt. Rien n'a été démarré (--bootstrap)."

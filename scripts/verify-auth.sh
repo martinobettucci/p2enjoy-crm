@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# @verifies CRM-011 (docs/BACKLOG.md) — Definition of Done de l'authentification
+# @verifies CRM-009 (docs/BACKLOG.md) — gabarits français et contenu des emails réellement reçus
+# @verifies CRM-011 (docs/BACKLOG.md) — Definition of Done du mécanisme GoTrue
 # @verifies docs/SPEC-auth.md §2 (configuration imposée), §3 (cycle de vie d'un compte),
-#           §4 (politique de mot de passe), §5 (emails transactionnels), §7 (preuves exigées)
+#           §4 (politique de mot de passe), §5 (gabarits et emails), §7 (preuves exigées)
 # @verifies docs/DAT.md §4.1 (flux d'authentification), §7 (authentification et autorisation)
 # @verifies docs/SCHEMA.md §1 (`profiles` et son trigger de création)
 #
@@ -49,6 +50,15 @@ JETABLE=p2enjoy-auth-jetable
 MAIL_INVITEE=crm-011-invitee@exemple.test
 MAIL_INCONNU=crm-011-inconnu@exemple.test
 MAIL_JETABLE=crm-011-jetable@exemple.test
+
+URL_GABARIT_INVITATION=http://auth-templates:8080/invite.html
+URL_GABARIT_CONFIRMATION=http://auth-templates:8080/confirmation.html
+URL_GABARIT_RECOVERY=http://auth-templates:8080/recovery.html
+URL_GABARIT_EMAIL_CHANGE=http://auth-templates:8080/email-change.html
+SUJET_INVITATION='Invitation à P2Enjoy CRM'
+SUJET_CONFIRMATION='Confirmez votre adresse — P2Enjoy CRM'
+SUJET_RECOVERY='Réinitialisez votre mot de passe — P2Enjoy CRM'
+SUJET_EMAIL_CHANGE='Confirmez votre nouvelle adresse — P2Enjoy CRM'
 
 MDP_INITIAL="MotDePasseInitial2026"
 MDP_NOUVEAU="MotDePasseRenouvele2026"
@@ -152,8 +162,26 @@ dernier_message() {
 		'[.[] | select($s == "" or (.subject | test($s)))] | last | .id'
 }
 
-corps_message() {
-	curl -s "$INBUCKET/api/v1/mailbox/$1/$2" | jq -r '.body.text'
+message_json() {
+	curl -s "$INBUCKET/api/v1/mailbox/$1/$2"
+}
+
+invitation_est_francaise() {
+	local message=$1 html
+	html=$(printf '%s' "$message" | jq -r '.body.html')
+	[ "$(printf '%s' "$message" | jq -r '.subject')" = "$SUJET_INVITATION" ] \
+		&& printf '%s' "$html" | grep -Fq 'Vous avez été invité(e) à rejoindre P2Enjoy CRM.' \
+		&& printf '%s' "$html" | grep -Fq 'Accepter l’invitation' \
+		&& ! printf '%s' "$html" | grep -Fq 'You have been invited'
+}
+
+recovery_est_francais() {
+	local message=$1 html
+	html=$(printf '%s' "$message" | jq -r '.body.html')
+	[ "$(printf '%s' "$message" | jq -r '.subject')" = "$SUJET_RECOVERY" ] \
+		&& printf '%s' "$html" | grep -Fq 'Une demande de réinitialisation de votre mot de passe P2Enjoy CRM a été reçue.' \
+		&& printf '%s' "$html" | grep -Fq 'Choisir un nouveau mot de passe' \
+		&& ! printf '%s' "$html" | grep -Fq 'Reset password'
 }
 
 menage() {
@@ -171,7 +199,7 @@ menage() {
 trap menage EXIT
 
 echo
-echo "Preuves de CRM-011 — authentification"
+echo "Preuves de CRM-009 et CRM-011 — interface, gabarits et mécanisme GoTrue"
 echo
 
 for c in "$DB_CONTAINER" "$AUTH_CONTAINER"; do
@@ -208,7 +236,39 @@ verifier_reglage GOTRUE_DISABLE_SIGNUP "$DISABLE_SIGNUP"
 verifier_reglage GOTRUE_PASSWORD_MIN_LENGTH "$PASSWORD_MIN_LENGTH"
 verifier_reglage GOTRUE_MAILER_AUTOCONFIRM "$(env_value ENABLE_EMAIL_AUTOCONFIRM)"
 verifier_reglage GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED "$(env_value ENABLE_ANONYMOUS_USERS)"
+verifier_reglage GOTRUE_JWT_DEFAULT_GROUP_NAME authenticated
 verifier_reglage GOTRUE_JWT_EXP "$JWT_EXPIRY"
+verifier_reglage GOTRUE_MAILER_TEMPLATES_INVITE "$URL_GABARIT_INVITATION"
+verifier_reglage GOTRUE_MAILER_TEMPLATES_CONFIRMATION "$URL_GABARIT_CONFIRMATION"
+verifier_reglage GOTRUE_MAILER_TEMPLATES_RECOVERY "$URL_GABARIT_RECOVERY"
+verifier_reglage GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE "$URL_GABARIT_EMAIL_CHANGE"
+verifier_reglage GOTRUE_MAILER_SUBJECTS_INVITE "$SUJET_INVITATION"
+verifier_reglage GOTRUE_MAILER_SUBJECTS_CONFIRMATION "$SUJET_CONFIRMATION"
+verifier_reglage GOTRUE_MAILER_SUBJECTS_RECOVERY "$SUJET_RECOVERY"
+verifier_reglage GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE "$SUJET_EMAIL_CHANGE"
+
+if [ "$(docker inspect -f '{{.State.Health.Status}}' p2enjoy-auth-templates 2>/dev/null || true)" = "healthy" ]; then
+	ok "service auth-templates sain avant l'émission d'un email"
+else
+	fail "service auth-templates absent ou non sain"
+fi
+
+verifier_gabarit_http() {
+	local url=$1 marqueur=$2 contenu
+	contenu=$(docker exec -i "$AUTH_CONTAINER" wget -qO- "$url" 2>/dev/null || true)
+	if printf '%s' "$contenu" | grep -Fq "$marqueur" \
+		&& printf '%s' "$contenu" | grep -Fq '{{ .ConfirmationURL }}' \
+		&& printf '%s' "$contenu" | grep -Fq '{{ .Token }}'; then
+		ok "$url servi à GoTrue avec son marqueur et ses deux données d'action"
+	else
+		fail "$url absent, injoignable depuis GoTrue ou incomplet"
+	fi
+}
+
+verifier_gabarit_http "$URL_GABARIT_INVITATION" 'Vous avez été invité(e) à rejoindre P2Enjoy CRM.'
+verifier_gabarit_http "$URL_GABARIT_CONFIRMATION" 'Confirmez votre adresse email pour accéder à P2Enjoy CRM.'
+verifier_gabarit_http "$URL_GABARIT_RECOVERY" 'Une demande de réinitialisation de votre mot de passe P2Enjoy CRM a été reçue.'
+verifier_gabarit_http "$URL_GABARIT_EMAIL_CHANGE" 'Confirmez le changement de votre adresse email P2Enjoy CRM'
 
 if [ "$DISABLE_SIGNUP" = "true" ]; then
 	ok "DISABLE_SIGNUP vaut true dans .env (docs/SPEC-auth.md §2 : jamais false)"
@@ -294,7 +354,26 @@ else
 fi
 
 msg_id=$(dernier_message "$MAIL_INVITEE")
-corps_invite=$(corps_message "$MAIL_INVITEE" "$msg_id")
+message_invite=$(message_json "$MAIL_INVITEE" "$msg_id")
+corps_invite=$(printf '%s' "$message_invite" | jq -r '.body.text')
+if invitation_est_francaise "$message_invite"; then
+	ok "n° 6 — sujet et corps d'invitation français : le gabarit configuré a été employé"
+else
+	fail "n° 6 — sujet ou contenu de l'invitation inattendu : repli anglais possible"
+fi
+
+if printf '%s' "$corps_invite" | grep -Eq '(^|[^0-9])[0-9]{6}([^0-9]|$)'; then
+	ok "n° 6 — l'email porte un code à six chiffres"
+else
+	fail "n° 6 — aucun code à six chiffres trouvé dans l'email"
+fi
+
+if printf '%s' "$message_invite" | jq -e '.header["Content-Type"] | index("text/html; charset=UTF-8") != null' >/dev/null; then
+	ok "n° 6 — MIME observé : corps text/html d'origine, conformément à la limite GoTrue 2.189.0"
+else
+	fail "n° 6 — Content-Type d'origine inattendu"
+fi
+
 lien=$(printf '%s' "$corps_invite" \
 	| grep -oE 'https?://[^ )]*/auth/v1/verify\?token=[^ )]*type=invite[^ )]*' | head -n 1)
 if [ -n "$lien" ]; then
@@ -510,7 +589,21 @@ else
 fi
 
 msg_id=$(dernier_message "$MAIL_INVITEE")
-lien_recovery=$(corps_message "$MAIL_INVITEE" "$msg_id" \
+message_recovery=$(message_json "$MAIL_INVITEE" "$msg_id")
+corps_recovery=$(printf '%s' "$message_recovery" | jq -r '.body.text')
+if recovery_est_francais "$message_recovery"; then
+	ok "n° 18 — sujet et corps de réinitialisation français : le gabarit configuré a été employé"
+else
+	fail "n° 18 — sujet ou contenu de réinitialisation inattendu : repli anglais possible"
+fi
+
+if printf '%s' "$corps_recovery" | grep -Eq '(^|[^0-9])[0-9]{6}([^0-9]|$)'; then
+	ok "n° 18 — l'email de réinitialisation porte un code à six chiffres"
+else
+	fail "n° 18 — aucun code à six chiffres trouvé dans l'email de réinitialisation"
+fi
+
+lien_recovery=$(printf '%s' "$corps_recovery" \
 	| grep -oE 'https?://[^ )]*/auth/v1/verify\?token=[^ )]*type=recovery[^ )]*' | head -n 1)
 if [ -n "$lien_recovery" ]; then
 	ok "n° 18 — l'email de réinitialisation porte un lien de type recovery"
@@ -634,7 +727,10 @@ else
 	fail "GoTrue jetable (PASSWORD_MIN_LENGTH=6) n'a pas démarré : non-complaisance non éprouvée"
 fi
 
-if demarrer_jetable -e GOTRUE_DISABLE_SIGNUP=true -e GOTRUE_JWT_ADMIN_ROLES=anon; then
+vider_boite "$MAIL_JETABLE"
+if demarrer_jetable -e GOTRUE_DISABLE_SIGNUP=true -e GOTRUE_JWT_ADMIN_ROLES=anon \
+	-e GOTRUE_MAILER_TEMPLATES_INVITE=http://auth-templates-absent:8080/invite.html \
+	-e "GOTRUE_MAILER_SUBJECTS_INVITE=$SUJET_INVITATION"; then
 	code=$(appel_jetable -X POST "http://$JETABLE:9999/invite" \
 		-H "Authorization: Bearer $ANON_KEY" -H 'Content-Type: application/json' \
 		-d "{\"email\":\"$MAIL_JETABLE\"}")
@@ -642,6 +738,22 @@ if demarrer_jetable -e GOTRUE_DISABLE_SIGNUP=true -e GOTRUE_JWT_ADMIN_ROLES=anon
 		ok "rôle anon admis comme administrateur : l'invitation s'ouvre — le contrôle n° 3 serait mis en échec"
 	else
 		fail "rôle anon admis comme administrateur : invitation toujours refusée ($code)"
+	fi
+	if attendre_message "$MAIL_JETABLE"; then
+		msg_jetable=$(dernier_message "$MAIL_JETABLE")
+		message_jetable=$(message_json "$MAIL_JETABLE" "$msg_jetable")
+		if [ "$(printf '%s' "$message_jetable" | jq -r '.subject')" = 'You have been invited' ] \
+			&& printf '%s' "$message_jetable" | jq -r '.body.html' | grep -Fq 'You have been invited' \
+			&& ! invitation_est_francaise "$message_jetable"; then
+			ok "gabarit HTTP absent : GoTrue replie réellement sujet et corps en anglais, et le contrôle le refuse"
+		else
+			sujet_observe=$(printf '%s' "$message_jetable" | jq -r '.subject')
+			anglais_observe=$(printf '%s' "$message_jetable" | jq -r '.body.html' | grep -Fc 'You have been invited' || true)
+			francais_observe=$(printf '%s' "$message_jetable" | jq -r '.body.html' | grep -Fc 'Vous avez été invité(e)' || true)
+			fail "gabarit HTTP absent : sujet='$sujet_observe', marqueurs anglais=$anglais_observe, français=$francais_observe"
+		fi
+	else
+		fail "gabarit HTTP absent : aucun email de repli reçu, non-complaisance non éprouvée"
 	fi
 	supprimer_compte "$MAIL_JETABLE"
 else

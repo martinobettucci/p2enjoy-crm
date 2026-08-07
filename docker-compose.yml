@@ -85,14 +85,33 @@ services:
       APPLY_MIGRATIONS: ${APPLY_MIGRATIONS:-true}
     entrypoint: ["/bin/sh", "/usr/local/bin/apply-migrations.sh"]
 
+  # --- Gabarits transactionnels ---------------------------------------------------------------
+  # @spec CRM-009 (docs/BACKLOG.md), docs/SPEC-auth.md §5.1 — quatre corps français servis en
+  # HTTP sur le seul réseau interne, dans les assemblages de développement comme de production.
+  auth-templates:
+    container_name: p2enjoy-auth-templates
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    command: ["caddy", "file-server", "--root", "/srv/templates", "--listen", ":8080"]
+    volumes:
+      - ./supabase/auth/templates:/srv/templates:ro,z
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/invite.html"]
+      timeout: 5s
+      interval: 5s
+      retries: 5
+
   # --- Authentification ----------------------------------------------------------------------
-  # docs/DAT.md §4.1 : inscription libre désactivée, comptes créés par invitation (CRM-011).
+  # docs/DAT.md §4.1 : inscription libre désactivée, comptes créés par invitation (CRM-011) ;
+  # écran, session d'onglet et gabarits transactionnels portés par CRM-009.
   auth:
     container_name: p2enjoy-auth
     image: supabase/gotrue:v2.189.0
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      auth-templates:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
@@ -139,6 +158,16 @@ services:
       GOTRUE_MAILER_URLPATHS_CONFIRMATION: ${MAILER_URLPATHS_CONFIRMATION}
       GOTRUE_MAILER_URLPATHS_RECOVERY: ${MAILER_URLPATHS_RECOVERY}
       GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: ${MAILER_URLPATHS_EMAIL_CHANGE}
+      # Les URL sont absolues : sans préfixe http, GoTrue les concatène à SITE_URL. Un échec de
+      # chargement retombe sur l'anglais ; scripts/verify-auth.sh vérifie donc le corps reçu.
+      GOTRUE_MAILER_TEMPLATES_INVITE: http://auth-templates:8080/invite.html
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://auth-templates:8080/confirmation.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://auth-templates:8080/recovery.html
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://auth-templates:8080/email-change.html
+      GOTRUE_MAILER_SUBJECTS_INVITE: Invitation à P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: Confirmez votre adresse — P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: Réinitialisez votre mot de passe — P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE: Confirmez votre nouvelle adresse — P2Enjoy CRM
 
   # --- API REST ------------------------------------------------------------------------------
   # PostgREST expose le schéma filtré par RLS (docs/DAT.md §6, docs/SPEC-permissions-rls.md).
