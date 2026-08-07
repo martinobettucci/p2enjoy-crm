@@ -302,7 +302,7 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest, 523 tests            — aucune pile requise
+npm run test:unit          # Vitest, 524 tests            — aucune pile requise
 npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
@@ -360,7 +360,7 @@ scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels        
 scripts/verify-auth.sh         # authentification : invitation, connexion, mot de passe (CRM-011)
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
-scripts/verify-webapp.sh       # squelette de la webapp : build, jetons, états, clavier (CRM-007)
+scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
 scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)

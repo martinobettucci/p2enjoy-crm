@@ -9,7 +9,14 @@
 // substitution réseau. Chaque écriture est relue hors interface avec le jeton du même profil ; les
 // lignes fabriquées par le harnais sont ensuite retirées avec la clé de service.
 
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type APIRequestContext,
+	type Page,
+} from './fixtures'
 import { randomUUID } from 'node:crypto'
 import {
 	URL_API,
@@ -75,6 +82,7 @@ test('identifiants génériques, restauration dans l’onglet, aucun localStorag
 	await page.getByRole('button', { name: 'Se connecter' }).click()
 	await expect(page.getByRole('alert')).toHaveText("L'adresse email ou le mot de passe est incorrect.")
 	await expect(page.getByLabel('Adresse email')).toBeFocused()
+	autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 
 	await connecter(page, ADMIN)
 	await expect(page).toHaveURL(/\/$/)
@@ -165,6 +173,7 @@ test('le viewer voit la card mais son commentaire est refusé sans perdre son te
 			page.getByRole('alert').filter({ hasText: 'Vous ne pouvez pas commenter cette affaire' }),
 		).toBeVisible()
 		await expect(champ).toHaveValue(corps)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 
 		const reponse = await request.get(
 			urlRest('card_comments', {
@@ -200,6 +209,7 @@ test('le viewer tente un vrai déplacement, voit le refus et la card reste en pl
 	await expect(
 		page.getByRole('alert').filter({ hasText: "Votre compte n'a pas le droit d'écrire" }),
 	).toBeVisible()
+	autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 	const colonneProspection = page.locator(
 		`[data-testid="colonne"][data-etape="${ETAPE_PROSPECTION}"]`,
 	)

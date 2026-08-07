@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-007 (docs/BACKLOG.md) — Definition of Done du squelette de la webapp
-# @verifies docs/SPEC-webapp.md §4 (jetons), §6 (données), §7 (états), §14 (preuves)
+# @verifies docs/SPEC-webapp.md §4 (jetons), §6 (données), §7 (états), §12.3 (chunks), §14
 # @verifies docs/DESIGN_SYSTEM.md §1 (palette), §5.8 (états), §7 (paliers), §10, §11
 # @verifies docs/INCONSISTENCY_REPORT.md INC-020 (build dû par CRM-007)
 #
@@ -104,10 +104,16 @@ fi
 
 nb_js=$(find webapp/dist/assets -name '*.js' 2>/dev/null | wc -l)
 nb_css=$(find webapp/dist/assets -name '*.css' 2>/dev/null | wc -l)
-if [ "$nb_js" -ge 1 ] && [ "$nb_css" -ge 1 ]; then
+if [ "$nb_js" -ge 3 ] && [ "$nb_css" -ge 1 ]; then
 	ok "actifs produits : $nb_js script(s), $nb_css feuille(s) de style"
 else
-	fail "actifs manquants : $nb_js script(s), $nb_css feuille(s)"
+	fail "découpage ou actifs manquants : $nb_js script(s), $nb_css feuille(s) ; au moins 3 scripts attendus"
+fi
+
+if grep -q 'Some chunks are larger than' "$TRAVAIL/build.log"; then
+	fail "Vite signale encore un chunk supérieur à sa limite de 500 kB"
+else
+	ok "Vite ne signale aucun chunk supérieur à 500 kB, seuil par défaut inchangé"
 fi
 
 # La configuration de build est réellement injectée : sans elle, l'application afficherait son
@@ -251,7 +257,7 @@ echo "5. Internationalisation (docs/DESIGN_SYSTEM.md §10)"
 
 # Contrôle indépendant du test unitaire : il vise les attributs visibles, que le dictionnaire
 # doit alimenter comme le reste.
-attributs_durs=$(grep -rn --include='*.tsx' -E '(title|aria-label|placeholder|alt)="[^"]*[A-Za-zÀ-ÿ]{2,}[^"]*"' webapp/src \
+attributs_durs=$(grep -rn --include='*.tsx' -E '(title|aria-label|placeholder|alt)="[^"]*[[:alpha:]]{2,}[^"]*"' webapp/src \
 	| grep -v '\.test\.tsx' | grep -vE '(aria-hidden|="true"|="false"|="polite"|="page"|="status")' || true)
 if [ -z "$attributs_durs" ]; then
 	ok "aucun attribut visible écrit en dur"

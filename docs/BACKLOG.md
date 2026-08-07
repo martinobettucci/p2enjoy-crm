@@ -1161,13 +1161,15 @@ par `CRM-006`** (INC-020).
       TypeScript, `npm run build` → `webapp/dist`. **Preuve de `CRM-006` reprise** : le client et
       la couche d'accès importent les types générés, et une **colonne inexistante fait échouer**
       `npm run typecheck` — c'est le schéma qui contraint le code, pas une déclaration d'intention.
-- [ ] **LE BUILD RESTE SANS AVERTISSEMENT À MESURE QUE LE PRODUIT GRANDIT** (décision 248).
+- [x] **LE BUILD RESTE SANS AVERTISSEMENT À MESURE QUE LE PRODUIT GRANDIT** (décision 248).
       Mesuré après `CRM-050`, le seul chunk JavaScript atteint **530,59 kB minifiés** et Vite
       avertit au-delà de 500 kB. La correction découpe `RouteTrack` et `RouteCard` par imports
       dynamiques : l'écran de connexion ne doit plus télécharger le board, la liste, le formulaire
       et la timeline avant qu'un utilisateur n'ouvre une route métier. Le seuil Vite reste à sa
       valeur par défaut ; le chargement différé rend un squelette accessible, puis les parcours
-      utilisateur existants prouvent que les deux routes restent praticables.
+      utilisateur existants prouvent que les deux routes restent praticables. **Résultat mesuré :**
+      quatre chunks JavaScript, dont le plus gros pèse **477,86 kB**, aucun avertissement Vite,
+      **524 tests unitaires** et **142 scénarios UI sur 142**.
 - [x] **Jetons du design system en variables CSS**, un seul fichier autorisé à porter des
       hexadécimaux (`webapp/src/styles/tokens.css`). Les espaces de noms de Tailwind sont
       **remis à zéro** : `bg-red-500` et `p-7` n'existent pas. Chaque couleur de la charte n'a
@@ -1176,7 +1178,10 @@ par `CRM-006`** (INC-020).
 - [x] **Garde née d'un défaut réel** : une classe dont le jeton manque n'est pas engendrée, en
       silence — `min-w-0` avait ainsi disparu, et la page défilait horizontalement sous 768 px.
       `scripts/lib/classes-css.mjs` vérifie désormais que **chaque classe citée existe dans le CSS
-      produit**, et échoue sur un `px-7`.
+      produit**, et échoue sur un `px-7`. Sa reprise distingue les classes réellement invalides
+      (`text-muted`, `placeholder:text-muted`, palier `sm`) du faux positif sur
+      `before:content-['·']` : **167 classes sur 167** sont engendrées, et la contre-épreuve
+      `px-7` rend exactement le code `1` (décision 267).
 - [x] **Coquille conforme à `docs/DESIGN_SYSTEM.md` §4** : `aside`, `nav`, `header`, `main`, barre
       d'onglets, quatre routes de premier niveau, aucune page blanche.
 - [x] **Quatre états explicites, provoqués sur le réseau et non simulés** : chargement (réponse
@@ -1208,6 +1213,11 @@ par `CRM-006`** (INC-020).
       les composants et les interrogeant par leur rôle accessible.
 - [x] **Test E2E dédié** : `npm run e2e:ui`, **13 scénarios** contre le **build de production**
       servi par `vite preview`, pas contre le serveur de développement.
+- [x] **Console navigateur incluse dans le verdict de chaque scénario UI** : tout `warning`,
+      `error` ou `pageerror` résiduel fait échouer Playwright. Les scénarios qui provoquent
+      volontairement un refus HTTP doivent d'abord vérifier son effet visible, puis consommer le
+      message **exact** attendu ; aucun filtre global ni motif large ne peut cacher une anomalie.
+      Suite complète mesurée : **142/142**, aucune anomalie console résiduelle.
 - [x] **Service `webapp` conteneurisé** livré : `runDev.sh` cesse de l'annoncer comme dû.
       `node:24-alpine` — **le prérequis Node 24 du dépôt y est exercé pour la première fois** :
       build, 96 tests et compilation rejoués verts dans le conteneur.

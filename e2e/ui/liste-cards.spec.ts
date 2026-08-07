@@ -21,7 +21,14 @@
 // que le seed ne porte pas (§12.11, point 3). La connexion réelle, commune à ces lectures, est
 // prouvée dans `e2e/ui/authentification.spec.ts`.
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+	type Route,
+} from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
@@ -532,6 +539,7 @@ test.describe('la pagination (§12.6)', () => {
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByTestId('retour-premiere-page')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[416]])
 		await capturer(page, 'liste-page-inexistante-1440', 'CRM-042')
 	})
 })

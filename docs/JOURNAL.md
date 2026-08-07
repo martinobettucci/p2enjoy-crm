@@ -7777,6 +7777,13 @@ de navigation.
 typecheck et les tests unitaires restent verts ; Playwright ouvre réellement une route de track et
 une card après connexion, au clavier et à la souris, sans erreur de console.
 
+**Résultat mesuré.** Le build produit quatre chunks JavaScript : point d'entrée **477,86 kB**,
+`RouteTrack` **31,54 kB**, `RouteCard` **21,17 kB** et `channels` **1,29 kB**. Le seuil Vite reste
+inchangé et aucun avertissement de taille n'est écrit. Les **524 tests unitaires** passent. Les
+**142 scénarios UI sur 142** passent contre le build de production ; chacun porte désormais une
+garde qui échoue sur tout `warning`, `error` ou `pageerror` résiduel. Les statuts HTTP provoqués
+par les preuves de refus ne sont consommés qu'après leur effet visible et par message exact.
+
 ---
 
 ### Décision 249 — Stalwart 0.16 ne se configure plus par un fichier, et l'assemblage doit en tenir compte
@@ -8347,6 +8354,13 @@ doit pas transformer la preuve en acceptation silencieuse.
 dégradation `px-7` est refusée et le contrôle d'internationalisation n'écrit aucun diagnostic de
 moteur. Les captures aux quatre paliers confirment visuellement que le changement de nom de jeton
 et de palier ne dégrade ni contraste ni navigation.
+
+**Résultat mesuré.** **167 classes citées sur 167** existent dans le CSS du build. Une copie des
+sources réellement dégradée avec `px-7` est refusée par le contrôleur avec le code exact `1` ; un
+exécutable absent (`127`) ne peut donc pas donner un faux vert. Le contrôle des attributs ne rend
+ni texte visible en dur ni diagnostic de moteur. Les 142 scénarios UI passent, et les captures
+mobile, intermédiaire et large des neuf familles régénérées ont été observées : aucun contraste,
+débordement ou contrôle inaccessible nouveau.
 
 ---
 

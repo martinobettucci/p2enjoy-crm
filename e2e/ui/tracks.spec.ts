@@ -18,7 +18,7 @@
 // `webapp/src/app/SectionTracks.test.tsx`, qui monte le composant réel. C'est la seule preuve
 // déterministe des variantes visuelles ; il complète le parcours connecté sans le remplacer.
 
-import { expect, test } from '@playwright/test'
+import { autoriserErreursConsole, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_TRACKS = '**/rest/v1/tracks*'
@@ -231,6 +231,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('etat-refus')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'tracks-refus-1440', 'CRM-020')
 	})
 })

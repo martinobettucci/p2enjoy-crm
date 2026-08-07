@@ -22,7 +22,7 @@
 // Definition of Done exige : il suppose une session et un contrôle de transition, dus par
 // `CRM-041`. C'est INC-062, et l'absence est nommée plutôt que maquillée.
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_CARDS = '**/rest/v1/cards*'

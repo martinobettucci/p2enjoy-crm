@@ -85,8 +85,8 @@ function ControleSession() {
 				className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm text-brand font-medium hover:bg-hover"
 			>
 				<LogIn aria-hidden="true" size={18} />
-				<span className="hidden sm:inline">{t('header.auth.login')}</span>
-				<span className="sr-only sm:hidden">{t('header.auth.login')}</span>
+				<span className="hidden md:inline">{t('header.auth.login')}</span>
+				<span className="sr-only md:hidden">{t('header.auth.login')}</span>
 			</Link>
 		)
 	}
@@ -120,8 +120,8 @@ function ControleSession() {
 				className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm text-brand font-medium hover:bg-hover disabled:opacity-70 disabled:cursor-not-allowed"
 			>
 				<LogOut aria-hidden="true" size={18} />
-				<span className="hidden sm:inline">{t('header.auth.logout')}</span>
-				<span className="sr-only sm:hidden">{t('header.auth.logout')}</span>
+				<span className="hidden md:inline">{t('header.auth.logout')}</span>
+				<span className="sr-only md:hidden">{t('header.auth.logout')}</span>
 			</button>
 		</div>
 	)

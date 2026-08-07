@@ -23,7 +23,7 @@
 // parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais atteint par un
 // anonyme. Il MESURE INC-077 plutôt que de la déduire de la lecture d'un fichier.
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test, type Page, type Route } from './fixtures'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-047'

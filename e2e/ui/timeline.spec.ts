@@ -14,7 +14,7 @@
 // consentie est désormais atteint après connexion dans `e2e/ui/authentification.spec.ts`, et son
 // contrat de lecture reste prouvé hors interface par `e2e/api/timeline.spec.ts`.
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test, type Page, type Route } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_EVENEMENTS = '**/rest/v1/card_events*'

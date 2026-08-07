@@ -18,7 +18,12 @@
 // `webapp/src/app/TabBar.test.tsx`, qui monte le composant réel, et ici en substituant la
 // **réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun n'est présenté comme telle.
 
-import { expect, test } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_CONNEXION_REFUSEE,
+	expect,
+	test,
+} from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-021'
@@ -153,6 +158,7 @@ test.describe('états de la route d’un track', () => {
 		await page.goto('/tracks/conseil-ia')
 		await expect(page.getByTestId('etat-erreur')).toBeVisible({ timeout: 30_000 })
 		const appelsAvantReprise = appels
+		autoriserErreursConsole(page, Array(8).fill(ERREUR_CONNEXION_REFUSEE))
 
 		// La reprise relance la requête, elle ne recharge pas la page.
 		enPanne = false

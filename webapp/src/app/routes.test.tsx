@@ -6,6 +6,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { fr } from '../i18n'
+import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
 import { CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
 
@@ -46,5 +47,14 @@ describe('adresse inconnue', () => {
 		expect(screen.getByRole('heading').textContent).toBe(fr['route.notfound.title'])
 		const retour = screen.getByRole('link', { name: fr['route.notfound.action'] })
 		expect(retour.getAttribute('href')).toBe('/')
+	})
+})
+
+describe('chargement différé des routes métier', () => {
+	it('annonce un chargement accessible plutôt que de rendre une page blanche', () => {
+		render(<ChargementRoute />)
+		const statut = screen.getByRole('status', { name: fr['state.loading.aria'] })
+		expect(statut.getAttribute('aria-busy')).toBe('true')
+		expect(screen.getAllByTestId('squelette')).toHaveLength(1)
 	})
 })

@@ -18,7 +18,14 @@
 // prouvés sans substitution dans `e2e/ui/authentification.spec.ts`. Ce fichier conserve les états
 // fins du panneau et les réponses substituées qui les rendent déterministes.
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+	type Route,
+} from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_COMMENTAIRES = '**/rest/v1/card_comments*'
@@ -266,6 +273,7 @@ test.describe('le composeur, et le refus qui vient du backend (§13.6)', () => {
 		await page.getByRole('button', { name: 'Publier' }).click()
 
 		await expect(page.getByRole('alert')).toContainText('Vous ne pouvez pas commenter')
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		// Vider le champ ferait perdre à l'utilisateur un texte pour une erreur qui n'est pas la
 		// sienne (§5.10).
 		await expect(champ).toHaveValue('Un texte auquel je tiens')

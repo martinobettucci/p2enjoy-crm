@@ -20,7 +20,15 @@
 // Le déplacement de bout en bout par une administratrice connectée est désormais prouvé, sans
 // substitution, dans `e2e/ui/authentification.spec.ts` ; ce fichier conserve les variantes fines.
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	surveillerConsole,
+	test,
+	type Page,
+	type Route,
+} from './fixtures'
 import { copyFileSync, mkdirSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { PALIERS, capturer } from './captures'
@@ -516,6 +524,7 @@ test.describe('refus de la garde, et retour arrière (§7.9, §7.10)', () => {
 		// Retour arrière : la card est revenue dans sa colonne d'origine.
 		await expect(colonne(page, PROSPECTION).locator('[data-testid="carte-card"]')).toHaveCount(1)
 		await expect(colonne(page, RELANCE).locator('[data-testid="carte-card"]')).toHaveCount(2)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 
 		await capturer(page, 'board-refus-1440', 'CRM-041')
 	})
@@ -536,6 +545,7 @@ test.describe('refus de la garde, et retour arrière (§7.9, §7.10)', () => {
 
 		await carte(page, CARD_C3).dragTo(colonne(page, RELANCE))
 		await expect(page.getByTestId('champs-manquants')).toContainText('Lien vers la proposition')
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 		await capturer(page, 'board-champs-manquants-1440', 'CRM-041')
 	})
 
@@ -550,6 +560,7 @@ test.describe('refus de la garde, et retour arrière (§7.9, §7.10)', () => {
 		await carte(page, CARD_C3).dragTo(colonne(page, RELANCE))
 		await expect(page.getByTestId('refus-deplacement')).toHaveAttribute('data-cle', 'inconnu')
 		await expect(page.getByTestId('refus-brut')).toHaveText('un_refus_que_l_ecran_ignore')
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 	})
 })
 
@@ -644,6 +655,7 @@ test.describe('vidéo du glisser-déposer', () => {
 			recordVideo: { dir: dossier, size: { width: 1440, height: 900 } },
 		})
 		const page = await contexte.newPage()
+		const anomaliesConsole = surveillerConsole(page)
 		await servirBoard(page)
 		await servirDeplacement(page, {
 			ok: true,
@@ -663,6 +675,10 @@ test.describe('vidéo du glisser-déposer', () => {
 
 		await expect(colonne(page, RELANCE).locator('[data-testid="carte-card"]')).toHaveCount(3)
 		await page.waitForTimeout(500)
+		expect(
+			anomaliesConsole,
+			'la page enregistrée reste elle aussi sans warning, error ou pageerror',
+		).toEqual([])
 		await contexte.close()
 
 		const enregistre = readdirSync(dossier).find((nom) => nom.endsWith('.webm'))

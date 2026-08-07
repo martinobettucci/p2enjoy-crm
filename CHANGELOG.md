@@ -171,6 +171,21 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **Le chargement initial de la webapp repasse sous le seuil Vite sans relever ce seuil.**
+  `RouteTrack` et `RouteCard` sont chargées à la navigation avec un squelette accessible : le
+  chunk initial passe de **530,59 kB** à **477,86 kB**, trois chunks métier sont séparés et le
+  build n'écrit plus d'avertissement. Les **524 tests unitaires** et les **142 scénarios UI**
+  passent sur le build de production.
+- **La console navigateur fait désormais partie du verdict de chaque scénario UI.** Aucun
+  `warning`, `error` ou `pageerror` résiduel n'est toléré ; les erreurs réseau volontairement
+  provoquées par les preuves de refus sont vérifiées côté écran puis consommées par égalité exacte,
+  sans filtre global.
+- **Les classes silencieusement absentes du CSS sont corrigées, et leur contrôleur aussi**
+  (décision 267) : les composants emploient les jetons `text-3` et le palier `md` réellement
+  déclarés, l'apostrophe de `before:content-['·']` est correctement échappée, et la plage
+  locale-dépendante qui faisait écrire `grep: Invalid collation character` est remplacée.
+  **167/167 classes** sont présentes ; une vraie dégradation `px-7` reste refusée.
+
 - **Le build Docker de développement ne copie plus les secrets ni les données du poste.** Un
   `.dockerignore` racine exclut `.env`, `.git`, les dépendances, sorties de preuve et volumes
   locaux. Le défaut a été mesuré dans l'ancienne image, qui contenait réellement `/app/.env` et

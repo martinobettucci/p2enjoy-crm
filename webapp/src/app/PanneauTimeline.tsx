@@ -84,11 +84,11 @@ const PRESENTATION: Readonly<
 	created: { cle: 'timeline.event.created', icone: Sparkles, pastille: 'bg-success-soft text-success' },
 	moved: { cle: 'timeline.event.moved', icone: ArrowRightLeft, pastille: 'bg-brand-soft text-brand' },
 	assigned: { cle: 'timeline.event.assigned', icone: UserRoundCog, pastille: 'bg-accent-soft text-ink' },
-	archived: { cle: 'timeline.event.archived', icone: Archive, pastille: 'bg-hover text-muted' },
+	archived: { cle: 'timeline.event.archived', icone: Archive, pastille: 'bg-hover text-text-3' },
 	unarchived: { cle: 'timeline.event.unarchived', icone: ArchiveRestore, pastille: 'bg-accent-soft text-ink' },
-	trashed: { cle: 'timeline.event.trashed', icone: Trash2, pastille: 'bg-hover text-muted' },
+	trashed: { cle: 'timeline.event.trashed', icone: Trash2, pastille: 'bg-hover text-text-3' },
 	restored: { cle: 'timeline.event.restored', icone: RotateCcw, pastille: 'bg-success-soft text-success' },
-	field_changed: { cle: 'timeline.event.field_changed', icone: PencilLine, pastille: 'bg-hover text-muted' },
+	field_changed: { cle: 'timeline.event.field_changed', icone: PencilLine, pastille: 'bg-hover text-text-3' },
 }
 
 /**
@@ -100,7 +100,7 @@ const PRESENTATION: Readonly<
 const REPLI = {
 	cle: 'timeline.event.unknown' as CleTraduction,
 	icone: Sparkles,
-	pastille: 'bg-hover text-muted',
+	pastille: 'bg-hover text-text-3',
 }
 
 const LIBELLES_FILTRES: Readonly<Record<Famille, CleTraduction>> = {
@@ -267,7 +267,7 @@ export function PanneauTimeline({
 					placeholder={t('comments.compose.placeholder')}
 					className={[
 						'w-full rounded-sm border border-border bg-surface px-3 py-2',
-						'text-base text-ink placeholder:text-muted',
+						'text-base text-ink placeholder:text-text-3',
 						'focus:outline-none focus:ring-2 focus:ring-brand',
 					].join(' ')}
 				/>
@@ -327,7 +327,7 @@ function BarreFiltres({
 							'focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2',
 							active
 								? 'bg-brand-soft text-brand font-medium'
-								: 'bg-surface text-muted border border-border hover:bg-hover',
+								: 'bg-surface text-text-3 border border-border hover:bg-hover',
 						].join(' ')}
 					>
 						{/*
@@ -440,10 +440,10 @@ function Evenement({
 				<p className="text-base text-ink">
 					{t(presentation.cle)}
 					{detail === null ? null : (
-						<span className="text-muted before:content-['·'] before:mx-1 break-words">{detail}</span>
+						<span className="text-text-3 before:content-['·'] before:mx-1 break-words">{detail}</span>
 					)}
 				</p>
-				<p className="text-sm text-muted">
+				<p className="text-sm text-text-3">
 					<time dateTime={ligne.date}>{formaterDate(ligne.date)}</time>
 				</p>
 			</div>
@@ -454,7 +454,7 @@ function Evenement({
 function Commentaire({ commentaire }: { readonly commentaire: CommentaireAffiche }) {
 	return (
 		<article className="rounded-sm bg-surface px-3 py-2">
-			<p className="text-sm text-muted">
+			<p className="text-sm text-text-3">
 				<time dateTime={commentaire.creeLe}>{formaterDate(commentaire.creeLe)}</time>
 				{commentaire.modifieLe === null ? null : (
 					<span
@@ -469,7 +469,7 @@ function Commentaire({ commentaire }: { readonly commentaire: CommentaireAffiche
 				// Il n'y a rien d'autre à afficher : la base ne porte plus de corps
 				// (docs/SPEC-cards.md §13.4). La place est TENUE — masquer la ligne ferait
 				// disparaître un tour de parole d'une conversation.
-				<p className="text-base italic text-muted">{t('comments.deleted')}</p>
+				<p className="text-base italic text-text-3">{t('comments.deleted')}</p>
 			) : (
 				// `whitespace-pre-wrap` : le corps est du markdown STOCKÉ, rendu en TEXTE BRUT.
 				// L'interpréter sans politique d'assainissement ouvrirait une injection, et aucune

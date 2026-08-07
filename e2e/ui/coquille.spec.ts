@@ -10,7 +10,13 @@
 // retard réel, échec réel — et non en injectant un état dans l'application. Une simulation
 // interne prouverait que le composant sait s'afficher, pas que l'application sait échouer.
 
-import { expect, test } from '@playwright/test'
+import {
+	autoriserErreursConsole,
+	ERREUR_CONNEXION_REFUSEE,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+} from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_WORKSPACES = '**/rest/v1/workspaces*'
@@ -228,6 +234,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('etat-erreur')).toBeVisible({ timeout: 30_000 })
 		await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+		autoriserErreursConsole(page, Array(4).fill(ERREUR_CONNEXION_REFUSEE))
 		await capturer(page, 'etat-erreur-1440')
 
 		// La reprise relance la requête ; la seconde tentative passe, et l'erreur disparaît.
@@ -252,6 +259,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('etat-refus')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'etat-refus-1440')
 	})
 })

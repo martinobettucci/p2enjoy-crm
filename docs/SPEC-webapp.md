@@ -456,7 +456,7 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
    **effacés à la compilation** : le bundle n'en contient rien, et prétendre le contraire serait
    faux. Ce qui les prouve utiles est le contrôle suivant : une **colonne inexistante glissée dans
    la requête doit faire échouer `typecheck`** — c'est le schéma qui contraint alors le code.
-2. **Compilation** : `npm run typecheck` vert sur les deux projets.
+2. **Compilation** : `npm run typecheck` vert sur les quatre projets.
 3. **Jetons** : les valeurs de `docs/DESIGN_SYSTEM.md` §1 sont présentes dans le CSS produit ;
    aucune valeur hexadécimale hors `tokens.css` dans `webapp/src`.
 4. **Textes** : aucun texte visible en dur dans un composant.
@@ -469,9 +469,13 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
 7. **E2E** : `npm run e2e:ui` vert — coquille rendue, quatre paliers responsive, absence de
    défilement horizontal, parcours clavier complet, `localStorage` vide, états de chargement et
    d'erreur atteints en faisant réellement échouer la requête au niveau du réseau.
-8. **Captures** : produites depuis l'application réellement exécutée, dans `e2e/output/`
+8. **Console navigateur** : chaque page collecte `console.warning`, `console.error` et
+   `pageerror`, et le scénario échoue s'il en reste un. Un refus HTTP volontaire n'est consommé
+   qu'après vérification de son effet visible, par égalité sur le message exact et jamais par
+   filtre global.
+9. **Captures** : produites depuis l'application réellement exécutée, dans `e2e/output/`
    (`docs/DESIGN_SYSTEM.md` §11), copiées dans `docs/captures/CRM-007/`, et **observées**.
-9. **Non-complaisance** : le harnais est éprouvé en dégradant réellement le produit, puis en le
+10. **Non-complaisance** : le harnais est éprouvé en dégradant réellement le produit, puis en le
    rebuildant — une couleur hexadécimale glissée dans un composant, un texte visible en dur, un
    espacement hors de l'échelle fermée, une colonne inexistante dans une requête — et doit échouer
    dans chaque cas. Il restaure ensuite tout ce qu'il a altéré, et le **constate** en sortant.

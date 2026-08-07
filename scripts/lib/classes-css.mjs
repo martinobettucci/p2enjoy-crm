@@ -55,7 +55,7 @@ function classesDuFichier(sourceBrute) {
 
 /** Échappement CSS des caractères que Tailwind protège dans un sélecteur de classe. */
 function selecteur(classe) {
-	return '.' + classe.replace(/[.:[\]()/%,#>+~*=&$!?|]/g, (caractere) => `\\${caractere}`)
+	return '.' + classe.replace(/[.:[\]()/%,#>+~*=&$!?|'\"]/g, (caractere) => `\\${caractere}`)
 }
 
 const sources = fichiers(racineSrc, (nom) => /\.tsx?$/.test(nom) && !nom.includes('.test.'))
