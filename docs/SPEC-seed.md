@@ -978,6 +978,6 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
   du chunk 4 (`CRM-050` à `CRM-059`). L'énoncé de `CRM-046` n'en demande pas.
 - **Aucune valeur de formulaire sur le workflow dérivé** : INC-037, §9.5.
 - **Aucun second workspace, aucun compte extérieur** : inchangé depuis le §8.
-- **Aucune vérification visuelle d'un parcours connecté** : INC-021. Les écrans peuplés par ce jeu
-  ne sont observables qu'avec des réponses réseau substituées, comme depuis `CRM-041`.
+- **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la
+  publication et un déplacement réel sont atteints avec les comptes de ce jeu, sans substitution.
 - **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, §9.7.

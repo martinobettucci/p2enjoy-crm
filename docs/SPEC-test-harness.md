@@ -327,10 +327,10 @@ mesuré de chaque scénario et la convention de figeage sont dans `docs/SPEC-per
 **Aucun changement de configuration.** Ni projet, ni `webServer`, ni variable : `npm run e2e:api`
 exécute ce fichier comme les autres. La commande reste celle du §9.
 
-**Ce que `CRM-014` n'ajoute pas.** Aucun scénario d'interface, aucune capture : la webapp reste un
-appelant anonyme faute d'écran de connexion (INC-021), et un refus opposé à un profil authentifié
-est par construction hors d'atteinte d'un anonyme. La règle est prouvée en base et par l'API, ce
-que `CLAUDE.md` §10 exige de toute façon.
+**Ce que `CRM-014` n'ajoutait pas à sa livraison.** Aucun scénario d'interface, aucune capture : la
+règle restait prouvée en base et par l'API. Depuis la reprise de `CRM-011`, des parcours connectés
+complètent cette couche sans déplacer les preuves d'autorisation hors interface exigées par
+`CLAUDE.md` §10.
 
 ## 5. `npm run e2e:report`
 

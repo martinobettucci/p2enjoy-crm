@@ -12,10 +12,9 @@
 // correspondance des refus du §7.10 d'être exercée par un test unitaire d'un côté et par la
 // pile réelle de l'autre.
 //
-// La webapp étant un appelant **anonyme** faute d'écran de connexion (INC-021), les quatre
-// lectures ci-dessous rendent `200` et `[]` : la route affiche « track introuvable » avant même
-// d'atteindre le board. Le rendu chargé se prouve par test unitaire du composant réel et en
-// substituant la réponse réseau (docs/DESIGN_SYSTEM.md §12.5).
+// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-011`. L'anonyme
+// reçoit `200` et `[]` ; un membre consent les colonnes réelles, et le parcours connecté est
+// éprouvé sans substitution par `e2e/ui/authentification.spec.ts`.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'

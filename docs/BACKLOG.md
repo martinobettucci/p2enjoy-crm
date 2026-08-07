@@ -430,7 +430,7 @@ ni page, ni statut, ni flux — rien que le seed doive démontrer.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24. Limite héritée, inchangée, sans effet sur cette unité qui ne touche aucun code TypeScript.
 
-### CRM-011 — Authentification `[~]`
+### CRM-011 — Authentification `[x]`
 GoTrue, inscription libre désactivée, invitation par un administrateur, connexion, déconnexion,
 réinitialisation de mot de passe.
 **DoD** : E2E de connexion et de refus ; email d'invitation **réellement envoyé** et constaté
@@ -487,19 +487,16 @@ dans Inbucket ; captures observées.
       `scripts/verify-authz.sh` (**26/26**) rejoués : aucune régression.
 - [x] `docs/DAT.md` §4.1 et §7, `README.md` §7, §9, §10 et §11, `docs/PROD_MIGRATIONS.md` §2 et §4,
       `docs/manual.md`, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **E2E de connexion : toujours impossible, et la cause a changé.** `CRM-007` a livré la
-      webapp, ses captures et un harnais Playwright fonctionnel : ce qui manque n'est plus
-      l'outillage, c'est **l'écran de connexion lui-même**, qu'aucune unité du backlog ne porte —
-      **INC-021, en attente d'arbitrage**. Ce qui est livré reste le mécanisme, prouvé **hors
-      interface** sur les vingt scénarios de `docs/SPEC-auth.md` §7 — ce que `CLAUDE.md` §10 exige
-      de toute façon, l'interface n'ayant jamais valeur de preuve.
-      **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
-- [ ] **Arbitrage rendu le 2026-08-07, implémentation due dans cette unité.** L'écran de connexion,
-      la déconnexion et la session limitée à l'onglet sont rattachés à `CRM-011`, selon
-      `docs/SPEC-auth.md` §9 et `docs/DESIGN_SYSTEM.md` §5.12. La preuve exigée ne s'arrête pas au
-      formulaire : un compte seedé doit lire les vraies données, publier un commentaire et
-      déplacer une card par l'écran, sans substitution réseau, puis l'effet doit être relu par
-      l'API. Le statut reste `[~]` tant que ces parcours et leurs captures ne sont pas livrés.
+- [x] **E2E de connexion et de refus enfin livré.** Six scénarios de
+      `e2e/ui/authentification.spec.ts` exercent le build de production et la vraie API, sans
+      substitution : refus générique, session restaurée dans l'onglet, déconnexion, publication
+      d'un commentaire, refus du `viewer`, déplacement autorisé et déplacement refusé avec retour
+      à l'état précédent. Les deux écritures réussies sont relues directement par l'API.
+- [x] **Session conforme à l'arbitrage** : `sessionStorage`, repli mémoire, aucun `localStorage`.
+      Le rechargement conserve la session ; la déconnexion retire le jeton. Le comportement est
+      prouvé aux niveaux unitaire et navigateur.
+- [x] **Vérification visuelle de l'application observée** : quatre paliers de `/connexion` et une
+      session chargée dans `docs/captures/CRM-011/`, en plus des captures d'emails historiques.
 - [ ] **L'invitation n'est pas un parcours produit.** Elle exige la clé de service : c'est une
       opération d'**exploitation**. Le composant qui permettrait à un administrateur de workspace
       d'inviter depuis le produit n'existe pas et n'est rattaché à aucune unité — **INC-015, en
@@ -507,16 +504,13 @@ dans Inbucket ; captures observées.
 - [ ] **Aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son
       profil ; elle ne crée aucune ligne `workspace_members`. Relève du même arbitrage.
 
-*DoD adaptée, écarts explicites.* **Aucun test unitaire dédié** : cette unité ne livre aucune
-logique applicative propre — elle configure un service tiers et prouve son comportement. Ses
-preuves sont d'intégration par nature et vivent dans `scripts/verify-auth.sh`. **Aucune mise à
-jour du seed** : il n'existe pas encore, c'est l'objet de `CRM-005` ; les comptes du harnais sont
-créés puis détruits par lui, et la base est vérifiée vide en sortant.
+*DoD satisfaite.* Le mécanisme GoTrue reste couvert par `scripts/verify-auth.sh`. La reprise webapp
+ajoute 32 tests unitaires au total de la suite concernée et six scénarios d'interface réels ; les
+comptes stables de `CRM-005` servent de profils et aucune donnée d'essai ne subsiste.
 
 *Limites nommées, non masquées.*
 
-- **E2E d'interface et captures d'application impossibles** avant `CRM-007` et `CRM-008`
-  (voir ci-dessus).
+- **La récupération de mot de passe reste hors interface**, bien que son mécanisme soit prouvé.
 - **L'invitation reste une opération d'exploitation** (INC-015).
 - **Les emails transactionnels partent en anglais**, et le repli vers le gabarit par défaut est
   **silencieux** du point de vue du destinataire : un email reçu ne prouve pas que le gabarit
@@ -1189,9 +1183,10 @@ dans Caddy, pas une image.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran de connexion**, et aucune unité ne le porte : **INC-021, en attente d'arbitrage**.
-  L'interface ne peut donc afficher que ce que la clé anonyme obtient — et, mesuré, un compte
-  connecté n'obtiendrait pas davantage tant que `CRM-012` n'a pas livré les politiques.
+- **Limite historique close par `CRM-011`.** À la livraison de cette coquille, aucun écran de
+  connexion n'existait et `CRM-012` n'avait pas encore livré les politiques métier. La reprise de
+  `CRM-011` restaure désormais la session avant les lectures ; INC-021 est close. Les tables
+  d'identité restent, elles, soumises à INC-014.
 - **La barre d'onglets n'implémente pas le patron ARIA `tablist`** : sans channel, il n'y a rien à
   parcourir, et l'écrire produirait du code qu'aucun test ne pourrait exercer
   (`docs/DESIGN_SYSTEM.md` §12.1). Dû par `CRM-021`.
@@ -2963,7 +2958,7 @@ plutôt que compensée par une preuve de substitution.
   (INC-032, INC-042), `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de
   compatibilité des navigateurs Playwright (INC-036, **quatrième** occurrence).
 
-### CRM-041 — Board kanban `[~]`
+### CRM-041 — Board kanban `[x]`
 Colonnes par étape, glisser-déposer appelant `move_card`, menu des transitions déclarées,
 retour arrière visuel en cas de refus.
 **DoD** : E2E de déplacement autorisé **et** de tentative interdite ; déplacement au clavier
@@ -3116,13 +3111,11 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
 - [x] **INC-068 consignée sans être résolue** : les pastilles d'étiquettes que `docs/DESIGN_SYSTEM.md`
       §5.1 prescrit n'ont ni table ni unité. L'unité avait nommé leur absence **sur la carte** ; la
       prescription, elle, restait sans porteur — même motif qu'INC-066.
-- [ ] **LE PARCOURS COMPLET N'EST PAS PROUVÉ, ET IL NE PEUT PAS L'ÊTRE — INC-021.** La Definition of
-      Done exige « E2E de déplacement autorisé **et** de tentative interdite ». Les deux gestes sont
-      prouvés **contre des réponses substituées**, et la garde qu'ils appellent est prouvée hors
-      interface avec les jetons réels des trois profils (`e2e/api/move-card.spec.ts`, `CRM-034`).
-      Ce qui manque est le **chaînage** des deux : un utilisateur connecté déplaçant réellement une
-      affaire depuis l'écran. Il suppose une session, et **aucune unité du backlog ne porte l'écran
-      de connexion**. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [x] **LE PARCOURS COMPLET EST PROUVÉ DEPUIS `CRM-011`.** Une administratrice se connecte par
+      l'écran, déplace par le menu une card créée pour la preuve, la voit dans la colonne d'arrivée
+      et l'API confirme `current_step_id`. Le `viewer` tente le même geste sur une card qu'il voit :
+      le backend refuse, l'interface affiche la raison et la card reste dans sa colonne. Aucune
+      réponse réseau n'est substituée et la donnée d'essai est nettoyée.
 - [ ] **Le seed ne démontre pas la bascule de la pastille d'ancienneté.** MESURÉ : il pose
       `entered_step_at` à `now()`, contre des seuils de 5 à 30 jours — aucune card n'atteint jamais
       le sien. La règle est prouvée par un test unitaire et par une réponse substituée, jamais par
@@ -3143,19 +3136,15 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
       `webapp/src/lib/board.ts` additionne sans convertir : si la représentation basculait, il
       concaténerait **en silence**. Comportement inchangé, arbitrage demandé.
 
-*DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E de déplacement autorisé et
-de tentative interdite ; déplacement au clavier vérifié ; captures aux quatre paliers ; vidéo
-`.webm` du glisser-déposer ». **Les trois derniers sont livrés** — le déplacement au clavier est
-prouvé sans aucune souris, les quatre paliers sont capturés, et la vidéo est enregistrée
-délibérément par un scénario dédié, non récupérée d'un échec. Le premier l'est **contre des réponses
-substituées**, et la limite est nommée ci-dessus plutôt que maquillée. **Aucun test pgTAP dédié** :
+*DoD satisfaite.* Le déplacement autorisé et le refus sont désormais aussi prouvés avec les sessions
+réelles ; le déplacement au clavier, les quatre paliers et la vidéo restent couverts par la suite
+dédiée. **Aucun test pgTAP dédié** :
 l'unité ne livre ni table, ni fonction, ni politique — la règle qu'elle exerce, `move_card`, est
 déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un écran.
 
 *Limites nommées, non masquées.*
 
-- **INC-021 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus). Douzième unité
-  consécutive à buter dessus, et la deuxième dont un écran existe pourtant.
+- **INC-021 est close** par la reprise de `CRM-011`.
 - **INC-066 est ouverte** : aucun éditeur de workflow n'est rattaché à une unité.
 - **INC-048 est ouverte, et l'écran le DIT** : le motif exigé par une transition valide le
   déplacement puis disparaît, `card_comments` étant `CRM-043`. La saisie l'annonce plutôt que de
@@ -3417,7 +3406,7 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   autres captures et la vidéo `glisser-deposer.webm` n'ont pas été regardées** lors de ce rejeu :
   elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
-### CRM-043 — Commentaires `[~]`
+### CRM-043 — Commentaires `[x]`
 > **Repris par `CRM-044`** : le panneau que cette unité a livré est devenu le **fil unifié**, comme
 > le §5.10 du design system l'annonçait. `PanneauCommentaires.tsx` est renommé `PanneauTimeline.tsx`,
 > ses seize tests de composant sont conservés, et deux scénarios d'interface de `CRM-043` sont
@@ -3585,22 +3574,20 @@ Rédaction libre par tout membre pouvant lire la card, édition et suppression p
       donc de connaître l'identifiant de l'appelant, donc une session : INC-021. Un bouton offert à
       tous, qui échouerait pour tous sauf l'auteur, serait une aide d'interface trompeuse. Écart
       nommé au §13.12 et dans le manuel, non comblé au jugé.
-- [ ] **INC-021 conditionnera le passage en `[x]`**, comme pour les treize unités précédentes : le
-      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
-      connexion. **Quatorzième unité consécutive.**
+- [x] **Le parcours connecté est prouvé depuis `CRM-011`.** L'administratrice publie depuis la
+      fiche réelle, voit le commentaire dans le fil, puis l'API relit exactement cette ligne. Le
+      `viewer` commente une card qu'il voit : le backend refuse et le brouillon reste intact.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « API (refus pour un `viewer`) ;
 E2E ; temps réel constaté ». **Le premier et le troisième sont livrés et mesurés** — le refus avec
 le jeton réel du `viewer` sur une card qu'il voit, et le temps réel avec son témoin et son silence.
-**Le second l'est contre des réponses substituées** : l'écran existe et ses quatorze scénarios
-s'exécutent contre le build de production, mais le **chaînage** — un utilisateur connecté publiant
-réellement depuis l'écran — suppose une session, et aucune unité du backlog ne porte l'écran de
-connexion.
+**Le second est désormais complété par un chaînage réel** : les quatorze scénarios déterministes
+restent, et la reprise de `CRM-011` ajoute succès et refus connectés sans substitution.
 
 *Limites nommées, non masquées.*
 
 - **Aucune action de modification ni de suppression dans le fil** (voir ci-dessus).
-- **Aucun parcours de publication par un utilisateur connecté** : INC-021.
+- **La publication connectée est livrée ;** correction et suppression restent sans bouton.
 - **INC-071 et INC-072 sont ouvertes**, relevées par cette unité : la première sur ce qu'il faut
   pour commenter, la seconde sur la modération. Le comportement livré est celui des sources
   concordantes et de l'intersection ; **aucun modérateur ne peut retirer un commentaire déplacé**.
@@ -3627,7 +3614,7 @@ connexion.
   et les captures qui le montraient ne représentaient plus l'état exécuté. Les quatorze captures des
   autres unités, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
 
-### CRM-044 — Timeline unifiée `[~]`
+### CRM-044 — Timeline unifiée `[x]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.
 **DoD** : pgTAP (aucune écriture cliente possible) ; E2E ; captures.
 
@@ -3775,21 +3762,19 @@ connexion.
       déduction — seize scénarios de plus, plus un dans les preuves de refus —, il vaut **391**, la
       preuve n° 8 ayant *remplacé* un cas au lieu d'en ajouter un. La révision d'un compteur se
       mesure ; `scripts/verify-harness.sh` rend **25 contrôles, aucune anomalie**.
-- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quatorze unités précédentes : le
-      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
-      connexion. **Quinzième unité consécutive.**
+- [x] **Le fil réel est atteint depuis `CRM-011`.** La connexion revient à la fiche demandée, le
+      fil chargé est rendu et la publication nouvellement écrite y apparaît sans substitution.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (aucune écriture cliente
 possible) ; E2E ; captures ». **Les trois sont livrés** — 87 assertions pgTAP dont le refus mesuré
 pour les trois rôles, quatorze scénarios d'interface contre le build de production, huit captures
-observées. Le seul écart est celui de toutes les unités depuis `CRM-011` : les états chargés du fil
-sont prouvés contre des **réponses substituées** (`docs/DESIGN_SYSTEM.md` §12.5), la webapp étant un
-appelant anonyme faute d'écran de connexion. Le contrat de lecture, lui, est prouvé **hors
-interface** avec les jetons réels des trois comptes.
+observées. Les réponses substituées gardent les états rares déterministes ; un parcours connecté
+les complète désormais sur la vraie fiche et la vraie API. Le contrat de lecture reste aussi
+prouvé hors interface avec les jetons réels des trois comptes.
 
 *Limites nommées, non masquées.*
 
-- **Aucun parcours par un utilisateur connecté** : INC-021.
+- **Le parcours connecté est livré ;** les autres limites du fil restent inchangées.
 - **Le motif d'une transition reste perdu** — INC-048, enrichie une seconde fois : sa destination
   existe désormais **deux fois**, et l'arbitrage porte sur laquelle.
 - **Une card physiquement supprimée emporte sa mémoire** : la clé composite porte `ON DELETE

@@ -22,10 +22,10 @@
 // donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
 // publique le divulguerait.
 //
-// L'appelant étant anonyme (INC-021), **toute** route de card tombe aujourd'hui sur « card
-// introuvable ». C'est le refus réel du backend, pas un défaut d'interface. Un identifiant refusé
-// et un identifiant inexistant produisent le même écran, délibérément : les distinguer
-// renseignerait un appelant sans droit sur l'existence d'une card
+// Sans session, une route de card tombe sur « card introuvable » : c'est le refus réel du backend,
+// pas un défaut d'interface. Après connexion, le même écran rend la card consentie. Un identifiant
+// refusé et un identifiant inexistant produisent toujours le même écran, délibérément : les
+// distinguer renseignerait un appelant sans droit sur l'existence d'une card
 // (docs/SPEC-permissions-rls.md §7).
 //
 // DEUX CHARGEMENTS INDÉPENDANTS, ET POURQUOI (§4.6 bis, décision 167). La card et son formulaire

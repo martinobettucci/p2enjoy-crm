@@ -7574,3 +7574,40 @@ métier dont les politiques existent.
 
 **Ordre tenu.** `docs/SPEC-auth.md` §9, `docs/DESIGN_SYSTEM.md` §5.12, le DAT, le backlog et les
 deux incohérences sont mis à jour et committés avant la première ligne de code de l'écran.
+
+### Décision 244 — Une session n'est prouvée utile que lorsqu'elle accomplit un geste réel
+
+**Ce qui est livré.** `/connexion` appelle le vrai `signInWithPassword`, restaure la session avant
+toute lecture métier, revient à l'adresse demandée et expose la vraie déconnexion dans l'en-tête.
+Le stockage Supabase est remplacé explicitement : `sessionStorage`, miroir mémoire de secours,
+jamais `localStorage`.
+
+**La jonction mesurée.** Six scénarios navigateur parlent au build de production et à la pile
+locale sans aucune substitution réseau. L'administratrice voit les trois tracks du seed, publie un
+commentaire puis déplace une card créée pour la preuve ; les deux effets sont relus directement par
+l'API. Le `viewer` voit une card de `maintenance`, mais son commentaire et son déplacement sont
+refusés : son brouillon est conservé et la card reste dans `Prospection`. Les lignes temporaires
+sont supprimées en `finally`.
+
+**La suite historique a payé une dette utile.** Sur 141 scénarios initiaux, 140 ont passé. Le seul
+rouge cherchait encore le mot « session » dans le bandeau du formulaire, alors que la connexion
+existe désormais et que la vraie limite est l'absence de chemin d'enregistrement. L'attente a été
+retournée vers « pas encore livré », puis le cas a passé. Un sixième scénario connecté a ensuite
+porté le déplacement refusé, portant le total attendu à **142**. La suite finale complète rend
+**142 scénarios passés sur 142** contre le build de production et la pile locale réelle.
+
+**Vérification visuelle.** Les quatre captures de connexion — 1440, 1152, 900 et 390 px — et la
+session chargée à 1440 px ont été regardées. Aucun débordement ; champs, focus et action restent
+lisibles. La vue chargée montre un fait réel à ne pas masquer : `Aucun workspace accessible`
+subsiste malgré les tracks, car `workspaces` et `profiles` restent en refus par défaut (INC-014).
+
+**Chaîne finale.** `npm run typecheck`, `npm run build` et les **520 tests unitaires** passent. La
+suite UI complète passe à **142/142**. Une relecture SQL après ces parcours constate zéro card et
+zéro commentaire temporaires ; la card soumise au déplacement refusé porte toujours l'étape
+`Prospection` du seed.
+
+**Conséquence.** INC-021 et INC-022 sont closes. Les Definitions of Done de `CRM-011`, `CRM-041`,
+`CRM-043` et `CRM-044` ont désormais leur chaînage réel et passent `[x]`. L'invitation depuis le
+produit (INC-015), l'identité lisible (INC-014), l'enregistrement du formulaire et les actions de
+correction/suppression d'un commentaire restent des limites distinctes ; aucune n'est absorbée par
+la présence d'une session.

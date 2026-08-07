@@ -18,11 +18,9 @@
 //   * track trouvé, aucun channel ouvert → l'invitation à en choisir un ;
 //   * aucun track pour ce slug         → « track introuvable », avec un retour vers l'accueil.
 //
-// La dernière n'est pas hypothétique : l'appelant étant anonyme (INC-021), **toute** route de
-// track y tombe aujourd'hui, la politique de lecture ne consentant aucune ligne. C'est le refus
-// réel du backend, mesuré (docs/SPEC-channels.md §7, ligne b), et non un défaut d'interface. Le
-// board ne s'affiche donc jamais en conditions réelles, et ses états chargés se prouvent en
-// substituant la réponse réseau (docs/DESIGN_SYSTEM.md §12.5).
+// La dernière n'est pas hypothétique : un appelant anonyme ou privé du track n'obtient aucune
+// ligne. C'est le refus réel du backend, mesuré (docs/SPEC-channels.md §7, ligne b), et non un
+// défaut d'interface. Une session consentie atteint au contraire le board réel.
 //
 // Un slug refusé et un slug inexistant produisent le **même** écran, délibérément : les
 // distinguer renseignerait un appelant sans droit sur l'existence d'un track

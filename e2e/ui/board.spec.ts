@@ -12,14 +12,13 @@
 //
 // CE QU'ILS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
-// Le premier scénario n'emploie **aucune substitution** : l'anonyme demande réellement le track de
-// l'adresse, n'obtient rien, et la route rend « track introuvable » — le refus réel du backend,
-// mesuré par `e2e/api/board.spec.ts`. Le board ne s'affiche donc jamais en conditions réelles.
+// Le premier scénario n'emploie **aucune substitution** : il exerce explicitement l'anonyme, qui
+// n'obtient rien et voit « track introuvable » — le refus réel du backend.
 //
 // Les suivants substituent les réponses réseau pour montrer ce que le §7 décrit : les colonnes,
 // le menu, le dépôt autorisé, le dépôt refusé sans appel, le retour arrière, la saisie du motif.
-// Ils **ne prouvent pas** qu'un utilisateur connecté déplace une affaire de bout en bout : cela
-// suppose une session, et c'est INC-021. L'absence est nommée plutôt que maquillée.
+// Le déplacement de bout en bout par une administratrice connectée est désormais prouvé, sans
+// substitution, dans `e2e/ui/authentification.spec.ts` ; ce fichier conserve les variantes fines.
 
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { copyFileSync, mkdirSync, readdirSync } from 'node:fs'

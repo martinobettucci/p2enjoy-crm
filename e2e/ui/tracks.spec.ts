@@ -10,15 +10,13 @@
 // CE QUE CES SCÉNARIOS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
 // Ils prouvent que la barre latérale interroge réellement `public.tracks`, et qu'elle affiche
-// l'état que le backend lui rend. Ils **ne prouvent pas** qu'un track apparaît à l'écran : la
-// webapp n'a aucun parcours de connexion (INC-021), son client est donc anonyme, et la politique
-// de lecture de `CRM-020` ne consent aucune ligne à un anonyme. L'état vide observé ici est le
-// refus réel de la RLS, mesuré par `e2e/api/tracks.spec.ts` ligne b.
+// l'état que le backend lui rend. Le cas sans substitution de ce fichier exerce explicitement
+// l'anonyme et son vide réel ; `e2e/ui/authentification.spec.ts` constate que les trois tracks du
+// seed apparaissent après une connexion réelle.
 //
 // Le rendu chargé — pilules, couleurs, icônes, repli — est éprouvé par
 // `webapp/src/app/SectionTracks.test.tsx`, qui monte le composant réel. C'est la seule preuve
-// possible tant qu'aucune unité ne porte l'écran de connexion, et elle est nommée comme telle
-// plutôt que maquillée en preuve E2E.
+// déterministe des variantes visuelles ; il complète le parcours connecté sans le remplacer.
 
 import { expect, test } from '@playwright/test'
 import { PALIERS, capturer } from './captures'
@@ -97,8 +95,8 @@ test.describe('la barre latérale interroge réellement `tracks`', () => {
 test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', () => {
 	// Les lignes servies ici viennent du **réseau**, comme celles du serveur : ce qui est éprouvé
 	// est le chemin complet — requête, désérialisation, rendu — et non un composant isolé. C'est
-	// le seul moyen de voir une pilule de track dans l'application réelle tant qu'INC-021 n'est
-	// pas tranchée, et il est nommé pour ce qu'il est : une réponse substituée, pas une session.
+	// un moyen déterministe d'exercer chaque forme : il est nommé pour ce qu'il est, une réponse
+	// substituée. La session réelle et les trois pilules du seed sont prouvées ailleurs.
 	test('des tracks servis par le réseau apparaissent en pilules, avec leur icône', async ({
 		page,
 	}) => {

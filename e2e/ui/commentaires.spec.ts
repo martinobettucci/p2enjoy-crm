@@ -14,10 +14,9 @@
 //
 // Ils prouvent que le panneau existe sur la route de détail, qu'il interroge réellement
 // `public.card_comments` avec le filtre de la card, et qu'il rend ce que le §13.10 décrit. Ils
-// **ne prouvent pas** qu'un utilisateur connecté publie réellement un commentaire : cela suppose
-// une session, et aucune unité du backlog ne porte l'écran de connexion. C'est INC-021, et
-// l'absence est nommée plutôt que maquillée. Le contrat d'écriture, lui, est prouvé **hors
-// interface** par `e2e/api/commentaires.spec.ts`, avec les jetons réels des trois comptes.
+// La publication réelle d'une administratrice connectée et le refus du `viewer` sont désormais
+// prouvés sans substitution dans `e2e/ui/authentification.spec.ts`. Ce fichier conserve les états
+// fins du panneau et les réponses substituées qui les rendent déterministes.
 
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { PALIERS, capturer } from './captures'
@@ -135,8 +134,8 @@ const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affai
 
 test.describe('le panneau interroge réellement `card_comments`', () => {
 	// L'APPELANT ANONYME N'ATTEINT JAMAIS LE PANNEAU, et c'est mesuré ici plutôt qu'affirmé. Sans
-	// aucune substitution, la route de détail rend « card introuvable » — refus réel du backend
-	// (INC-021) —, le panneau n'est donc pas monté, et AUCUNE requête ne part vers
+	// aucune substitution et sans connexion, la route rend « card introuvable » — refus réel du
+	// backend —, le panneau n'est donc pas monté, et AUCUNE requête ne part vers
 	// `card_comments`. C'est ce que le premier scénario constate ; le second substitue la card, et
 	// la seule chose qu'il ne substitue pas est précisément la requête qu'il observe.
 	test('sans session, l’écran n’atteint pas le panneau : aucune requête ne part', async ({ page }) => {

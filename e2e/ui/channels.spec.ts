@@ -10,11 +10,9 @@
 // CE QU'ILS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
 // Ils prouvent que la route d'un track interroge réellement `public.tracks` puis
-// `public.channels`, et qu'elle affiche l'état que le backend lui rend. Ils **ne prouvent pas**
-// qu'un onglet apparaît à l'écran d'un utilisateur connecté : la webapp n'a aucun parcours de
-// connexion (INC-021), son client est anonyme, et la politique de lecture ne consent aucune ligne.
-// L'état « track introuvable » observé ici est le refus réel de la RLS, mesuré par
-// `e2e/api/channels.spec.ts` ligne b.
+// `public.channels`, et qu'elle affiche l'état que le backend lui rend. Le cas sans substitution
+// exerce explicitement l'anonyme et son refus réel ; le parcours connecté est couvert par
+// `e2e/ui/authentification.spec.ts`.
 //
 // Le rendu chargé — onglets, ordre, onglet courant, patron ARIA — est éprouvé par
 // `webapp/src/app/TabBar.test.tsx`, qui monte le composant réel, et ici en substituant la
@@ -115,8 +113,7 @@ test.describe('états de la route d’un track', () => {
 	test('appelant anonyme : « track introuvable », qui est le refus réel du backend', async ({
 		page,
 	}) => {
-		// C'est l'état que le produit affiche réellement aujourd'hui, à cause d'INC-021. Il est
-		// capturé comme tel, et non maquillé.
+		// C'est l'état réel du produit pour un visiteur sans session. Il est capturé comme tel.
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/tracks/conseil-ia')
 		const vide = page.getByTestId('etat-vide')

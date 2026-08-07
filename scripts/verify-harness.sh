@@ -228,7 +228,13 @@ SCENARIOS_API=410
 # neuvième substitue un événement `channel_changed` pour MESURER INC-077, que rien d'autre ne rend
 # visible : le fil n'est jamais atteint par un anonyme.
 # Valeur MESURÉE, non déduite.
-SCENARIOS_UI=136
+# **142 depuis la reprise de `CRM-011`** : six scénarios connectés sans substitution — refus
+# générique, session limitée à l'onglet et déconnexion, publication puis relecture d'un commentaire,
+# refus du `viewer` avec texte conservé, déplacement du `viewer` refusé et inchangé, déplacement
+# administrateur puis relecture d'une card d'essai, et les quatre paliers de l'écran de connexion.
+# Les écritures sont nettoyées par identifiant ou contenu.
+# Valeur MESURÉE par la liste Playwright, puis par l'exécution complète.
+SCENARIOS_UI=142
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -8,10 +8,9 @@
 // est ce qui rend la règle du §4.1 vérifiable sans navigateur, et ce qui permet au tableau de cas
 // du §4.3 d'être exercé par un test unitaire d'un côté et par une preuve d'API de l'autre.
 //
-// La webapp étant un appelant **anonyme** faute d'écran de connexion (INC-021), les requêtes
-// ci-dessous rendent `200` et `[]` : l'écran affiche donc « card introuvable », qui est le refus
-// réel du backend et non un défaut d'interface. Le rendu chargé se prouve par test unitaire du
-// composant réel et en substituant la réponse réseau (docs/DESIGN_SYSTEM.md §12.5).
+// Sans session, les requêtes rendent `200` et `[]` et l'écran affiche « card introuvable » : c'est
+// le refus réel du backend. Avec la session restaurée par `CRM-011`, le même chargeur rend le
+// formulaire réellement consenti ; aucune branche d'autorisation ne vit ici.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'

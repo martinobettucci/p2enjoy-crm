@@ -9,11 +9,9 @@
 // Ce module ne rend rien : il **lit, écrit et écoute**. La séparation est ce qui rend l'ordre du
 // fil, la classification des refus et la règle d'abonnement vérifiables **sans navigateur**.
 //
-// La webapp étant un appelant **anonyme** faute d'écran de connexion (INC-021), la lecture rend
-// `200` et `[]` et la publication rend `401` : l'écran affiche donc un fil vide et un refus. Ce
-// sont les réponses réelles du backend, non des défauts d'interface. Le rendu chargé se prouve par
-// test unitaire du composant réel et en substituant la réponse réseau
-// (docs/DESIGN_SYSTEM.md §12.5).
+// Le même client porte soit la clé anonyme, soit la session restaurée par `CRM-011`. L'anonyme
+// reçoit un fil vide et un refus ; un membre lit et publie selon la RLS. Le parcours connecté et le
+// refus du `viewer` sont éprouvés sans substitution par `e2e/ui/authentification.spec.ts`.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -29,8 +27,8 @@ import type { ClientCrm } from './supabase'
  *
  * `author_id` est demandée **et pourtant jamais affichée** : le §13.10 ne rend aucun nom d'auteur,
  * `profiles` n'étant lisible par aucun jeton d'utilisateur (INC-014). Elle sert à distinguer les
- * commentaires de l'appelant — ce que le panneau ne peut pas faire non plus aujourd'hui, faute de
- * session — et sa présence ici est ce qui rendra ce jour-là un seul champ nécessaire.
+ * commentaires de l'appelant. Les actions de correction et de suppression ne sont pas encore
+ * rendues ; cette colonne évite néanmoins une nouvelle lecture le jour où elles le seront.
  */
 export const COLONNES_COMMENTAIRE = 'id, card_id, author_id, body, created_at, edited_at, deleted_at'
 

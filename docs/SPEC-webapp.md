@@ -283,13 +283,10 @@ Les deux appelants obtiennent le même vide, alors que la ligne existe. Ce n'est
 session qui vide l'écran : **aucune politique RLS n'est écrite sur `workspaces`** — elles relèvent
 de `CRM-012` — et le refus par défaut de `CRM-003` s'applique donc à tout le monde.
 
-`tracks` est le premier cas différent, et il éclaire la vraie cause : `CRM-020` **a** livré ses
-politiques, et un membre du workspace y lit bien ses tracks (mesuré, `docs/SPEC-tracks.md` §6). La
-webapp n'en voit pourtant aucun, parce qu'elle est un appelant **anonyme** faute d'écran de
-connexion (INC-021). Tant que cet arbitrage n'est pas rendu, **aucune donnée métier ne peut
-apparaître dans l'interface**, quelles que soient les politiques livrées. L'état vide affiché est l'état
-réel du backend, pas une simulation, et il le restera pour un utilisateur connecté tant que
-`CRM-012` n'aura pas livré ses politiques.
+`tracks` est le premier cas différent : `CRM-020` a livré ses politiques, et un membre du workspace
+y lit ses tracks. Depuis la reprise de `CRM-011`, la webapp restaure sa session avant les lectures
+et montre donc les objets métier consentis. L'état vide reste l'état réel du backend pour un
+anonyme. Les tables d'identité, elles, restent vides même connecté tant qu'INC-014 n'est pas levée.
 
 L'interface n'en déduit **aucun droit** : `docs/DAT.md` §3.1 et `docs/SPEC-types.md` posent qu'un
 type ne décrit jamais une autorisation. Ce que la coquille affiche est ce que le backend a
@@ -465,11 +462,11 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
 
 ## 15. Limites connues
 
-- **Aucun écran de connexion.** L'application ne peut donc afficher que ce que la clé anonyme
-  obtient, c'est-à-dire rien. C'est l'état réel du produit ; il est traité comme un état vide, pas
-  masqué. Aucune unité du backlog ne porte cet écran, alors que la Definition of Done de `CRM-011`
-  exige un « E2E de connexion et de refus » : contradiction consignée dans
-  `docs/INCONSISTENCY_REPORT.md`.
+- **Les tables d'identité restent illisibles (INC-014).** Depuis la reprise de `CRM-011`, l'écran
+  `/connexion` restaure une session avant les lectures métier et les objets consentis sont
+  utilisables. En revanche, `workspaces`, `profiles` et `workspace_members` restent en refus par
+  défaut : l'en-tête peut donc afficher « Aucun workspace accessible » malgré une session valide
+  et des tracks visibles. Le produit n'invente ni nom d'espace ni identité pour masquer ce refus.
 - **HMR non mesuré.** Le service `webapp` de développement sert Vite, et son rendu a été constaté
   (`docs/captures/CRM-007/conteneur-dev-1280.jpg`) ; le rechargement à chaud lui-même n'est éprouvé
   par aucune preuve automatique.

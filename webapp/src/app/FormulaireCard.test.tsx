@@ -4,10 +4,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.7 (champs de formulaire), §8 (accessibilité, états
 //           désactivés lisibles), §10 (aucun texte en dur)
 //
-// Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils
-// existent parce que le rendu chargé du formulaire ne peut être vu nulle part ailleurs : la
-// webapp est un appelant anonyme faute d'écran de connexion (INC-021), et son E2E n'obtient donc
-// jamais de ligne — le procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5.
+// Ces tests montent le **vrai** composant et isolent son rendu par ses rôles accessibles. Le
+// parcours connecté réel atteint la même fiche ; l'enregistrement des réponses reste dû par
+// INC-062, indépendamment de la présence d'une session.
 //
 // Ce qu'ils ne prouvent PAS, et qui reste dû : qu'un utilisateur connecté saisisse une valeur et
 // franchisse une transition. C'est INC-062, et c'est nommé dans docs/BACKLOG.md.
@@ -189,7 +188,7 @@ describe('aucune écriture, et l’écran dit pourquoi (§4.7, docs/DESIGN_SYSTE
 
 	it('un texte explique l’indisponibilité plutôt que de la laisser deviner', () => {
 		monter()
-		expect(screen.getByTestId('formulaire-lecture-seule').textContent).toContain('session')
+		expect(screen.getByTestId('formulaire-lecture-seule').textContent).toContain('pas encore livré')
 	})
 })
 

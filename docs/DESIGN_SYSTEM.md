@@ -563,17 +563,15 @@ couleur du track — un anneau `--color-brand` — et ne la remplace pas : la co
 et l'écraser ferait perdre au track actif ce qui l'identifie. `aria-current="page"` porte
 l'information indépendamment du visuel.
 
-### 12.5 Aucune donnée métier n'est visible dans l'interface — `CRM-020`
+### 12.5 Données réelles et réponses substituées — `CRM-020`, révisé par `CRM-011`
 
-Constat, et non choix de conception. La webapp n'a aucun parcours de connexion
-(`docs/INCONSISTENCY_REPORT.md`, INC-021) : son client est anonyme, et les politiques RLS ne
-consentent aucune ligne à un anonyme. Les captures de référence montrent donc l'**état vide**, qui
-est le refus réel du backend.
+Sans session, les politiques RLS ne consentent aucune ligne et les captures anonymes montrent
+l'état vide réel du backend. Depuis la reprise de `CRM-011`, un membre peut se connecter et les
+preuves de jonction exercent les données et écritures réelles sans substitution.
 
-Conséquence pour toute revue d'interface à venir : une capture vide ne prouve pas un défaut
-d'interface tant que cet arbitrage n'est pas rendu, et le rendu chargé se vérifie par test
-unitaire du composant réel (`webapp/src/app/SectionTracks.test.tsx`) ou en substituant la réponse
-réseau — jamais en injectant un état interne.
+Une réponse réseau substituée reste admise pour isoler un état rare, une donnée longue ou un refus
+précis. Elle doit être nommée et ne remplace jamais le parcours connecté correspondant. Injecter
+directement un état interne reste interdit.
 
 ### 12.5 Texte des pilules de donnée : déclinaison assombrie, non couleur pleine — `CRM-020`, 2026-08-04
 

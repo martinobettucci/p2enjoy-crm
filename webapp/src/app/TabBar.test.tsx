@@ -3,13 +3,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §8 (clavier, cibles), §12.1 (écart)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
 //
-// Ces tests montent la **vraie** barre d'onglets et l'interrogent par ses rôles accessibles.
-// Ils existent parce que le rendu chargé des channels ne peut être vu nulle part ailleurs : la
-// webapp est un appelant anonyme faute d'écran de connexion (INC-021), et son E2E n'obtient donc
-// jamais de ligne. Sans ce fichier, un onglet réel ne serait exercé par aucune preuve.
-//
-// Ce qu'ils ne prouvent PAS, et qui reste dû : que l'écran affiche réellement des onglets à un
-// utilisateur connecté. C'est une limite du produit, nommée dans `docs/BACKLOG.md`.
+// Ces tests montent la **vraie** barre d'onglets et isolent ses états par leurs rôles accessibles.
+// Le parcours connecté réel atteint la même barre dans `e2e/ui/authentification.spec.ts`.
 
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'

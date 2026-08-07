@@ -10,10 +10,9 @@
 // card, et qu'aucune requête d'événements ne part alors — l'écran ne devine rien.
 //
 // CE QU'IL PROUVE CONTRE DES RÉPONSES SUBSTITUÉES, ET LE DIT : le fil chargé, ses filtres et ses
-// deux vides. La webapp est un appelant **anonyme** faute d'écran de connexion (INC-021) : la RLS
-// rend `200` et `[]`, et le fil ne se remplit jamais en conditions réelles. Le procédé est celui
-// endossé par docs/DESIGN_SYSTEM.md §12.5. Le contrat de lecture, lui, est prouvé **hors
-// interface** par `e2e/api/timeline.spec.ts` avec les jetons réels des trois comptes.
+// deux vides. Le procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5. Le fil réel d'une card
+// consentie est désormais atteint après connexion dans `e2e/ui/authentification.spec.ts`, et son
+// contrat de lecture reste prouvé hors interface par `e2e/api/timeline.spec.ts`.
 
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { PALIERS, capturer } from './captures'
@@ -161,7 +160,7 @@ async function servirEcran(
 const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affaire' })
 const filtres = (page: Page) => page.getByRole('group', { name: 'Filtres du fil' })
 
-test.describe('sans aucune substitution : l’appelant anonyme (INC-021)', () => {
+test.describe('sans aucune substitution : l’appelant anonyme', () => {
 	test('n’obtient aucune affaire, et aucune requête d’événements ne part', async ({ page }) => {
 		const requetes: string[] = []
 		page.on('request', (requete) => {

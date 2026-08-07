@@ -2,8 +2,7 @@
 // @verifies docs/SPEC-manual.md §3.1 (les libellés cités sont les libellés réels), §5 (les huit
 //           adresses du parcours et leur jeu de captures), §7.1 (preuve d'interface)
 // @verifies docs/manual.md §3.1, §3.2, §3.5, §4.7, §4.8, §4.9, §4.10, §4.11
-// @verifies docs/INCONSISTENCY_REPORT.md INC-077 (le neuvième type d'événement n'a aucun libellé),
-//           INC-021 (aucun écran de connexion)
+// @verifies docs/INCONSISTENCY_REPORT.md INC-077 (le neuvième type d'événement n'a aucun libellé)
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (états explicites), §12.5 (réponses substituées)
 // @verifies CLAUDE.md §7 (documentation utilisateur), §16 (vérification visuelle)
 //
@@ -16,9 +15,9 @@
 // lecteur s'en aperçoive — ce qui est exactement arrivé au §4.7, qui annonçait « Affaire
 // introuvable » là où l'écran dit « Card introuvable » (docs/SPEC-manual.md §6, écart n° 1).
 //
-// AUCUNE SUBSTITUTION SUR LES HUIT PARCOURS. Le lecteur du manuel n'a pas de session — INC-021 —,
-// et ce qu'il voit est le refus réel du serveur. Le substituer ici documenterait un produit qui
-// n'existe pas.
+// AUCUNE SUBSTITUTION SUR LES HUIT PARCOURS. Ils exercent volontairement le visiteur sans session
+// et les refus réels que le manuel lui décrit. Les parcours connectés vivent dans la preuve de
+// `CRM-011`, sans retirer la valeur de ces contre-épreuves anonymes.
 //
 // UNE SEULE EXCEPTION, NOMMÉE : le neuvième scénario substitue un événement `channel_changed`,
 // parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais atteint par un

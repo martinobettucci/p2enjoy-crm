@@ -12,16 +12,14 @@
 //
 // CE QU'ILS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
-// Le premier scénario n'emploie **aucune substitution** : l'anonyme demande réellement le track de
-// l'adresse `/liste`, n'obtient rien, et la route rend « track introuvable » — le refus réel du
-// backend, mesuré par `e2e/api/liste-cards.spec.ts`. La liste ne s'affiche donc jamais en
-// conditions réelles.
+// Le premier scénario n'emploie **aucune substitution** : il exerce explicitement l'anonyme, qui
+// n'obtient rien et voit « track introuvable » — le refus réel du backend.
 //
 // Les suivants substituent les réponses réseau pour montrer ce que le §12 décrit : le tableau, le
 // tri et son `aria-sort`, les deux filtres, la pagination et ses boutons désactivés, le `416`,
 // l'état vide filtré, la bascule board ↔ liste, et le comportement avec des **données longues**
-// que le seed ne porte pas (§12.11, point 3). Ils **ne prouvent pas** qu'un utilisateur connecté
-// trie et pagine de bout en bout : cela suppose une session, et c'est INC-021.
+// que le seed ne porte pas (§12.11, point 3). La connexion réelle, commune à ces lectures, est
+// prouvée dans `e2e/ui/authentification.spec.ts`.
 
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { PALIERS, capturer } from './captures'

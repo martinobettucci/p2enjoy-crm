@@ -97,7 +97,7 @@ describe('lireTrackParSlug', () => {
 	})
 
 	it('rend `null` — et non une erreur — lorsque le backend ne consent aucune ligne', async () => {
-		// C'est la réponse réelle à un appelant anonyme (INC-021) **comme** à un slug inexistant.
+		// C'est la réponse réelle à un appelant anonyme **comme** à un slug inexistant.
 		// Les deux se ressemblent délibérément : les distinguer renseignerait un appelant sans
 		// droit sur l'existence d'un track (docs/SPEC-permissions-rls.md §7).
 		const { client } = clientEspion({ data: [], error: null, status: 200 })

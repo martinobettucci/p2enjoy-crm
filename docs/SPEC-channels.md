@@ -44,7 +44,7 @@ liste, et celui auquel les droits fins de `channel_members` se rattachent.
 | La **clé étrangère `workflow_id → workflows`**, et la contrainte `NOT NULL` que `docs/SCHEMA.md` §2 exige | La table `workflows` n'existe pas : elle est livrée par `CRM-031`, placée **après** `CRM-021` dans `docs/MASTER_PLAN.md` §2. Contradiction d'ordonnancement consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-029**. Voir §2.5 |
 | Le **trigger de cohérence `workflow_id`** — workflow `global` du workspace, ou `track` du track du channel | Explicitement rattaché à `CRM-033` par la Definition of Done de `CRM-021` (« plus le trigger de cohérence du workflow (`CRM-033`) **une fois disponible** ») |
 | `app.can_read_channel` et `app.can_write_channel`, donc la restriction par droit fin | Deux des quatre fonctions différées par INC-013, dont l'arbitrage appartient au responsable et **reste ouvert**. La politique de lecture livrée ici s'arrête au **rôle de workspace** ; voir §6.3 et `docs/INCONSISTENCY_REPORT.md` **INC-030** |
-| Toute **interface de création, de renommage, de réordonnancement ou d'archivage** d'un channel | Exige une session, donc un écran de connexion, qu'aucune unité ne porte — INC-021. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon |
+| Toute **interface de création, de renommage, de réordonnancement ou d'archivage** d'un channel | Aucun écran d'administration n'est encore rattaché à cette unité. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon |
 | Le **contenu** d'un channel — board, vue liste, cards | `CRM-040` à `CRM-042`. La route d'un track affiche ses onglets et l'état vide de la zone principale, pas un board fantôme |
 | Le **glisser-déposer de réordonnancement** des onglets | Même motif que pour les tracks : réordonner, c'est écrire `position`. Une RPC atomique deviendra nécessaire avec `CRM-041` |
 
@@ -276,9 +276,9 @@ Le track est résolu par une requête sur son slug. Trois issues, toutes explici
 | Aucun track pour ce slug | État « track introuvable », avec un retour vers l'accueil |
 | Échec de chargement | État d'erreur commun, avec reprise **réelle** (`docs/SPEC-webapp.md` §6.4) |
 
-Le second cas n'est pas hypothétique : l'appelant étant anonyme (INC-021), **toute** route de track
-tombe aujourd'hui dans ce cas, la politique de lecture ne consentant aucune ligne. C'est le refus
-réel du backend, mesuré au §7 ligne *b*, et non un défaut d'interface.
+Le second cas n'est pas hypothétique : un appelant anonyme ou privé du track n'obtient aucune ligne.
+C'est le refus réel du backend, mesuré au §7 ligne *b*. Depuis `CRM-011`, un membre peut ouvrir les
+routes et channels que la même politique lui consent.
 
 ### 5.2 Les pilules de track deviennent des liens
 
@@ -474,7 +474,7 @@ constate le retour au vert.
    `NOT NULL` et la cohérence workflow ↔ track par `CRM-033`
    (`docs/SPEC-workflow-engine.md` §4.12).
 2. **Aucune interface d'administration des channels** : ni création, ni renommage, ni
-   réordonnancement, ni archivage depuis l'écran. Bloqué par INC-021.
+   réordonnancement, ni archivage depuis l'écran. Aucun écran d'administration ne porte ces gestes.
 3. **Aucun channel visible dans l'interface**, pour la même raison : l'appelant est anonyme, et la
    route d'un track affiche donc son état « introuvable ».
 4. **Les droits fins sont appliqués depuis `CRM-012`** (§6.3) — INC-030 close. Ce qui reste dû

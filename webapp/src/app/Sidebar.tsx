@@ -166,9 +166,8 @@ export function Sidebar({
  * Les tracks du workspace, en pilules (`docs/DESIGN_SYSTEM.md` §4).
  *
  * La section affiche ce que le backend consent à rendre, et rien d'autre : elle ne fabrique
- * aucune donnée d'attente. Aujourd'hui, l'appelant étant anonyme faute d'écran de connexion
- * (INC-021), c'est l'**état vide** qui s'affiche — et c'est le refus réel de la RLS
- * (`docs/SPEC-tracks.md` §7).
+ * aucune donnée d'attente. Un anonyme voit l'état vide réel de la RLS ; un membre connecté voit
+ * les tracks que la même politique lui consent (`docs/SPEC-tracks.md` §7).
  *
  * Les pilules sont **cliquables depuis `CRM-021`** : un track s'ouvre sur ses channels, et la
  * destination `/tracks/:slug` existe désormais. L'écart temporaire de `docs/DESIGN_SYSTEM.md`

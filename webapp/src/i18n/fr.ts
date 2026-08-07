@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
-// @spec docs/DESIGN_SYSTEM.md §10 (internationalisation) ; docs/SPEC-webapp.md §10
+// @spec CRM-011 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
+// @spec docs/DESIGN_SYSTEM.md §5.12, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
 //
 // **Toute** chaîne visible de l'application est ici, et nulle part ailleurs. Les libellés
 // métier — tracks, channels, nœuds, champs — sont des **données**, pas des traductions
@@ -31,6 +32,22 @@ export const fr = {
 	'header.breadcrumb.aria': "Fil d'Ariane",
 	'header.workspace.unknown': 'Aucun workspace accessible',
 	'header.workspace.loading': 'Chargement du workspace',
+	'header.auth.login': 'Se connecter',
+	'header.auth.logout': 'Se déconnecter',
+	'header.auth.logout.error': "La déconnexion n'a pas abouti. Réessayez.",
+
+	// --- Authentification ---------------------------------------------------------------
+	'auth.route.title': 'Se connecter',
+	'auth.intro': "L'accès est réservé aux membres invités de votre espace de travail.",
+	'auth.email.label': 'Adresse email',
+	'auth.email.placeholder': 'prenom@entreprise.fr',
+	'auth.password.label': 'Mot de passe',
+	'auth.submit': 'Se connecter',
+	'auth.submitting': 'Connexion…',
+	'auth.error.credentials': "L'adresse email ou le mot de passe est incorrect.",
+	'auth.error.network': "Le serveur n'a pas répondu. Vérifiez votre connexion, puis réessayez.",
+	'auth.error.configuration': "L'application n'est pas configurée pour joindre le serveur.",
+	'auth.loading': 'Restauration de votre session',
 
 	// --- Onglets ------------------------------------------------------------------------
 	'tabs.aria': 'Channels du track courant',
@@ -92,7 +109,7 @@ export const fr = {
 	'form.title': 'Formulaire de la card',
 	'form.step.prefix': 'Étape courante :',
 	'form.readonly':
-		"Consultation seule : enregistrer une valeur exige une session, et aucun écran de connexion n'est encore livré.",
+		"Consultation seule : l'enregistrement des réponses n'est pas encore livré dans cette fiche.",
 	'form.empty': 'Aucun champ à afficher pour cette étape.',
 	'form.required.sr': '(champ requis)',
 	'form.required.reason': 'Requis pour passer à',
@@ -126,7 +143,7 @@ export const fr = {
 	'board.refusal.missing_required_fields':
 		"Ces questions doivent avoir une réponse avant d'entrer dans cette étape :",
 	'board.refusal.anonyme':
-		'Déplacer une affaire exige une session, et aucun écran de connexion n\'est encore livré.',
+		'Déplacer une affaire exige une session. Connectez-vous, puis réessayez.',
 	'board.refusal.unknown': 'Le serveur a refusé ce déplacement sans motif connu de cet écran :',
 
 	// --- Vue liste (docs/SPEC-cards.md §12) ------------------------------------------------

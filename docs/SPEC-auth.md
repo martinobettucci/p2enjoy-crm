@@ -171,8 +171,8 @@ donc **reconstruite par Inbucket**, et non émise par GoTrue. Le jour où des ga
 
 ## 6. Ce que cette unité ne livre pas
 
-- **Aucun écran.** La webapp arrive avec `CRM-007` ; le parcours de connexion, l'écran de mot de
-  passe oublié et l'écran d'invitation en dépendent.
+- **Aucun écran de mot de passe oublié ni d'invitation.** L'écran de connexion, la session et la
+  déconnexion sont livrés par la reprise décrite au §9 ; les deux autres parcours restent distincts.
 - **Aucune politique RLS.** Les tables d'identité restent en refus par défaut (`CRM-003`), et le
   rattachement de leurs politiques n'est toujours pas arbitré (INC-014).
 - **Aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son

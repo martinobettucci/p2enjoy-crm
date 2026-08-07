@@ -22,7 +22,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 1 | Se connecter, récupérer son mot de passe | `CRM-011`, non rattachée | À livrer — le mécanisme existe et est prouvé (`docs/SPEC-auth.md`), mais **aucune unité ne porte l'écran** (INC-021) |
+| 1 | Se connecter, récupérer son mot de passe | `CRM-011` | **Partiellement livré** — connexion, session d'onglet et déconnexion sont disponibles ; la récupération du mot de passe reste hors interface |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
 
@@ -31,10 +31,10 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et de **modification** : la fiche se lit, elle ne s'écrit pas |
-| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont livrés ; ils restent invisibles à un visiteur non identifié (INC-021) |
+| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; corriger et supprimer sont réservés à l'auteur, **la règle est appliquée par le serveur mais aucun bouton ne l'offre encore**. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé ; il ne dit pas **qui** a agi, aucun nom n'étant lisible |
-| 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace dans l'historique, y compris quand personne ne passe par l'application — mais le fil **ne la nomme pas encore** : voir le chapitre 4.11. Ce qui manque est l'écran : aucun bouton ne permet encore de déplacer une affaire, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
+| 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace dans l'historique, y compris quand personne ne passe par l'application — mais le fil **ne la nomme pas encore** : voir le chapitre 4.11. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
@@ -57,11 +57,11 @@
 | 17 | Inviter et gérer les membres | `CRM-011`, non rattachée | À livrer — l'invitation est aujourd'hui une opération d'**exploitation** et non un parcours produit ; aucune unité ne porte l'écran (INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part — il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 22 | Choisir le workflow d'un channel | `CRM-033` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute autre affectation est refusée, y compris de façon détournée — déplacer un channel vers un autre track, ou déplacer un workflow sous les channels qui le suivent. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore de changer le workflow d'un channel, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 23 | Composer le formulaire d'un workflow | `CRM-035` | **Livré côté serveur, sans écran.** Un workflow porte désormais son propre formulaire : les questions posées à propos d'une affaire, et le moment où chacune est affichée, facultative ou obligatoire. L'espace de travail livré en montre six — budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié, lien vers la proposition — plus un champ retiré du formulaire dont les réponses restent consultables (annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Une limite à connaître : un workflow **copié** dans un track naît **sans formulaire**, qu'il faut donc recomposer — et, depuis `CRM-036`, une exigence recopiée sur ses transitions n'exige rien, puisqu'elle désigne un champ que la copie ne porte pas. L'obligation, elle, est **désormais appliquée** : voir le chapitre 24. Ce qui manque est l'écran : la grille champ × étape n'existe pas, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
-| 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Livré côté serveur, sans écran.** Une affaire porte désormais ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Une réponse peut être **vidée** explicitement, ce qui n'est pas la même chose que ne jamais avoir répondu — mais le produit traite les deux de la même façon lorsqu'il exige une réponse. Les réponses d'une question **retirée du formulaire** restent enregistrées et consultables. Depuis ce chapitre, l'obligation est **réellement appliquée** : voir le chapitre 4.3. Combien de réponses l'espace de démonstration porte, et sur combien d'affaires : **annexe A**. L'une d'elles est volontairement vidée pour que le refus soit démontrable. Ce qui manque est l'écran : le formulaire, sa section repliée « informations d'autres étapes » et la mention « requis pour passer à » relèvent de `CRM-037`, et il n'y en aura pas avant qu'un écran de connexion existe (INC-021) |
+| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
+| 21 | Copier un workflow dans un track et le modifier | `CRM-032` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes et ses transitions, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Le produit sait aussi dire qu'une copie a **divergé** de son original. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
+| 22 | Choisir le workflow d'un channel | `CRM-033` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute autre affectation est refusée, y compris de façon détournée — déplacer un channel vers un autre track, ou déplacer un workflow sous les channels qui le suivent. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore de changer le workflow d'un channel |
+| 23 | Composer le formulaire d'un workflow | `CRM-035` | **Livré côté serveur, sans écran.** Un workflow porte désormais son propre formulaire : les questions posées à propos d'une affaire, et le moment où chacune est affichée, facultative ou obligatoire. L'espace de travail livré en montre six — budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié, lien vers la proposition — plus un champ retiré du formulaire dont les réponses restent consultables (annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Une limite à connaître : un workflow **copié** dans un track naît **sans formulaire**, qu'il faut donc recomposer — et, depuis `CRM-036`, une exigence recopiée sur ses transitions n'exige rien, puisqu'elle désigne un champ que la copie ne porte pas. L'obligation, elle, est **désormais appliquée** : voir le chapitre 24. Ce qui manque est l'écran : la grille champ × étape n'existe pas |
+| 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche ; leur enregistrement depuis cette fiche n'est pas encore livré |
 | 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 25 | Boîte mail système de l'espace | `CRM-052` | À livrer |
 | 26 | Jetons d'API et webhooks | `CRM-073` | À livrer |
@@ -76,6 +76,32 @@
 | 30 | Cards figées et relances automatiques | `CRM-062` | À livrer |
 
 ---
+
+## 1. Se connecter et se déconnecter
+
+*Connexion livrée par `CRM-011`. Captures dans `docs/captures/CRM-011/`.*
+
+Ouvrez `/connexion`, saisissez l'adresse email et le mot de passe du compte qui vous a été invité,
+puis choisissez **Se connecter**. Si vous aviez commencé depuis une fiche ou un board, le produit
+vous ramène à cette même adresse après le succès.
+
+Une adresse inconnue et un mot de passe erroné donnent volontairement le même message : le produit
+ne révèle pas si un compte existe. Une panne de serveur est distinguée d'un refus d'identifiants et
+invite à réessayer. Le formulaire fonctionne au clavier et replace le focus sur l'adresse après un
+refus.
+
+La session dure pendant l'onglet courant et survit à son rechargement. Elle n'est jamais écrite
+dans le stockage durable du navigateur : fermer l'onglet la fait disparaître. L'en-tête affiche
+l'adresse du compte connecté et l'action **Se déconnecter**, qui révoque la session puis revient à
+l'écran de connexion.
+
+Dans l'environnement de développement seedé, les trois comptes de démonstration sont
+`admin@p2enjoy.test`, `bizdev@p2enjoy.test` et `viewer@p2enjoy.test`, avec le mot de passe commun
+`SeedDev2026Local`. Ces identifiants `.test` ne sont jamais des comptes de production.
+
+**Ce qui reste hors interface.** La récupération du mot de passe est appliquée et prouvée côté
+serveur, mais aucun écran ne la porte encore. L'invitation demeure une opération d'exploitation :
+la webapp ne détient jamais la clé de service nécessaire (INC-015).
 
 ## 3. Naviguer : barre latérale, onglets, états
 
@@ -95,34 +121,21 @@ L'écran se lit en trois zones :
 
 ### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
 
-L'application affiche partout **« Aucun track »**, **« Aucun channel »** et **« Aucun workspace
-accessible »**. Ce n'est pas une erreur, et ce n'est plus tout à fait pour la même raison qu'avant.
+Sans session, l'application affiche les états vides et « introuvable » que le serveur oppose à un
+visiteur anonyme. Après connexion, la barre latérale montre les tracks consentis à votre compte ;
+leurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de
+démonstration voit par exemple « Conseil & IA », « Studio web » et « Formation ».
 
-Les **tracks et les channels existent**, ainsi que le **catalogue de nœuds** — le vocabulaire des
-états par lesquels une affaire passe : Prospection, Relance, Négociation, Signature, Réalisation,
-Livré, Perdu — et un **workflow** qui les enchaîne : « Cycle commercial standard », avec ses étapes
-et les déplacements qu'il autorise. Chaque channel de l'espace de travail suit un workflow — le
-sien, sauf « Prospection », qui suit sa **copie réservée au track « Conseil & IA »**. Les
-**affaires** existent aussi, avec leurs réponses de formulaire, leurs commentaires et leur
-historique. Tout cela est créé, ordonné et archivable côté serveur, et une personne administratrice
-peut le gérer. Mais l'application n'a **pas encore d'écran de connexion**. Elle interroge donc le
-serveur sans compte, et le serveur ne consent rien à un visiteur anonyme — ce qu'elle vous dit, au
-lieu d'afficher une page blanche.
+Le libellé **« Aucun workspace accessible »** peut néanmoins rester visible dans l'en-tête alors
+que les données métier fonctionnent. C'est une limite connue : les tables d'identité — notamment
+`workspaces` et `profiles` — restent en refus par défaut (INC-014). Le produit préfère nommer cette
+absence plutôt qu'inventer un workspace ou exposer un identifiant technique.
 
-**Ce qui a un écran, et ce qui n'en a pas.** L'affaire, elle, en a **trois** : sa fiche
-(chapitre 4.7), le tableau kanban de son channel (chapitre 4.8) et la vue liste (chapitre 4.9), la
-discussion et l'historique tenant dans la fiche (chapitre 4.10). Ces écrans sont écrits, éprouvés et
-livrés — vous ne les atteignez simplement jamais, faute de session. En revanche, **le catalogue de
-nœuds, les workflows, leurs formulaires et les droits d'accès n'ont aucun écran du tout**, connexion
-ou non : ce qui est livré pour eux est la mécanique — le vocabulaire des états, le graphe des
-déplacements permis, le refus de tout déplacement qui n'y figure pas, la **copie** d'un workflow
-vers un track avec la mémoire de son origine (chapitre 21), la garantie qu'un channel ne peut suivre
-**que** le workflow général de l'espace de travail ou celui de son propre track (chapitre 22), et le
-**formulaire** attaché à un workflow (chapitre 23). Leur éditeur viendra avec le chapitre 20, lui
-aussi suspendu à l'écran de connexion.
-
-Autrement dit : ce que vous ne voyez pas n'est pas absent du produit, il vous est **refusé**. Tant
-qu'aucun écran de connexion n'existe, aucune donnée métier ne peut apparaître à l'écran.
+**Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
+et la vue liste ; la discussion et l'historique vivent dans la fiche. En revanche, le catalogue de
+nœuds, les workflows, leur éditeur de formulaire et les droits d'accès n'ont toujours aucun écran
+d'administration. La connexion rend accessibles les surfaces déjà livrées ; elle ne fabrique pas
+les éditeurs encore absents.
 
 ### 3.2 bis La section Tracks
 
@@ -146,9 +159,8 @@ pilule colorée, précédée de son icône.
 appliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à
 l'API. La suppression définitive d'un track n'est **jamais** proposée — l'archivage en tient lieu.
 
-**Aucun écran ne permet encore de les gérer**, faute d'écran de connexion (voir §3.2). La gestion
-des tracks passe aujourd'hui par l'API, ce qui est une opération d'exploitation, pas un parcours
-produit.
+**Aucun écran ne permet encore de les gérer.** La gestion des tracks passe aujourd'hui par l'API,
+ce qui est une opération d'exploitation, pas un parcours produit.
 
 ### 3.2 quater Les accès par track et par channel
 
@@ -186,9 +198,8 @@ celles de vos collègues, et vous ne pouvez pas lever la vôtre. Seule une perso
 pose et retire une exception. Retirer une exception ne « redonne » pas un accès particulier : elle
 rend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre rôle.
 
-**Aucun écran ne permet encore de les gérer**, pour la même raison qu'au §3.2 : le produit n'a pas
-de parcours de connexion. La règle est en revanche **appliquée par le serveur** dès aujourd'hui, et
-non par l'affichage : elle tient même si l'on s'adresse directement à l'API.
+**Aucun écran ne permet encore de les gérer.** La règle est en revanche appliquée par le serveur,
+et non par l'affichage : elle tient même si l'on s'adresse directement à l'API.
 
 ### 3.2 ter Les onglets d'un track
 
@@ -221,7 +232,7 @@ droit de voir.
 **Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un channel est réservé aux
 personnes **administratrices** de l'espace de travail, exactement comme pour les tracks, et la
 règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
-ne permet encore de les gérer**, faute d'écran de connexion (voir §3.2).
+ne permet encore de les gérer**.
 
 ### 3.3 Replier la barre latérale
 
@@ -411,15 +422,12 @@ track et un onglet, mais **rien ne les confronte à l'affaire elle-même**. Une 
 serait faux afficherait la bonne affaire sous les mauvais onglets. Aucun droit n'est contourné pour
 autant : chaque partie de l'écran reste soumise à ce que le serveur vous consent.
 
-**Cet écran est en consultation seule, et il le dit.** Un bandeau explique que l'enregistrement
-d'une réponse exige une session, et qu'aucun écran de connexion n'est encore livré. Les champs
-restent lisibles et sont désactivés — vous voyez ce que l'affaire porte, vous ne pouvez rien y
-écrire depuis le produit.
+**Cet écran est en consultation seule, et il le dit.** L'enregistrement des réponses n'est pas
+encore livré dans cette fiche. Les champs restent lisibles et sont désactivés — vous voyez ce que
+l'affaire porte, vous ne pouvez pas encore l'y modifier.
 
-**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Card
-introuvable ». Ce n'est pas un défaut de l'écran, c'est le refus réel du serveur, qui ne consent
-aucune affaire à un visiteur non identifié — la même cause que pour les tracks et les onglets
-(chapitre 3.2).
+Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
+connexion, une card consentie ouvre sa fiche et son fil.
 
 ### 4.8 Le tableau kanban d'un channel
 
@@ -464,9 +472,8 @@ déplacement non déclaré, droit d'écriture insuffisant, affaire devenue inacc
 questions restées sans réponse**, nommées par leur libellé. Un refus que l'écran ne connaîtrait pas
 est affiché tel quel, plutôt que traduit à tort.
 
-**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
-introuvable » — le serveur ne consent aucun track à un visiteur non identifié, et le tableau n'est
-donc jamais atteint (chapitre 3.2).
+Sans connexion, cette adresse affiche « Track introuvable ». Après connexion, le tableau réel est
+atteint et les déplacements consentis sont exécutables depuis le menu ou par glisser-déposer.
 
 ### 4.9 La vue liste d'un channel
 
@@ -526,8 +533,8 @@ aucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le
 d'écran. Le **responsable** n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom
 n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique.
 
-**Conséquence de l'absence de connexion :** ouvrir cette adresse aujourd'hui affiche « Track
-introuvable », comme pour le tableau (chapitre 3.2).
+Sans connexion, cette adresse affiche « Track introuvable », comme pour le tableau. Après
+connexion, la liste réelle est consultable, triable et filtrable.
 
 ### 4.10 L'historique et la discussion d'une affaire
 
@@ -626,8 +633,8 @@ n'apparaît qu'au prochain chargement.
 - **Aucun modérateur ne peut retirer le commentaire d'une autre personne**, pas même un
   administrateur.
 
-**Conséquence de l'absence de connexion :** ouvrir la fiche d'une affaire aujourd'hui affiche
-« Card introuvable », et la discussion n'est donc jamais atteinte (chapitre 3.2).
+Après connexion, le composeur publie réellement le commentaire si votre compte peut écrire dans
+le channel. Un profil en lecture seule reçoit un refus explicite et conserve son texte saisi.
 
 ### 4.11 Ranger une affaire dans un autre dossier
 
@@ -681,9 +688,8 @@ l'historique de l'affaire, y compris lorsque personne ne passe par l'application
 sous le libellé générique **« Événement »** : vous voyez qu'il s'est passé quelque chose, pas de
 quel dossier vers quel dossier. Limite consignée et non résolue, INC-077 (chapitre 4.10).
 
-**Aucun écran ne porte ce geste**, et il n'y en aura pas avant qu'un écran de connexion existe
-(INC-021). Le rangement passe aujourd'hui par l'API, ce qui est une opération d'exploitation et non
-un parcours produit.
+**Aucun écran ne porte ce geste.** Le rangement passe aujourd'hui par l'API, ce qui est une
+opération d'exploitation et non un parcours produit.
 
 ### 4.6 Ce qui n'est pas encore livré
 

@@ -5,13 +5,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §8 (états désactivés
 //           lisibles, annonces), §10 (aucun texte en dur)
 //
-// Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils
-// existent parce que le rendu chargé du board ne peut être vu nulle part ailleurs : la webapp est
-// un appelant anonyme faute d'écran de connexion (INC-021), et son E2E n'obtient donc jamais de
-// ligne — le procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5.
-//
-// Ce qu'ils ne prouvent PAS, et qui reste dû : qu'un utilisateur connecté déplace réellement une
-// affaire. C'est INC-021, et c'est nommé dans docs/BACKLOG.md.
+// Ces tests montent le **vrai** composant et isolent son menu, son optimisme et chaque refus par
+// leurs rôles accessibles. Les déplacements connecté autorisé et refusé sont prouvés en complément
+// par `e2e/ui/authentification.spec.ts`.
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

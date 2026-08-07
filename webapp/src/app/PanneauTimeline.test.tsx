@@ -8,13 +8,9 @@
 //           §5.8 (états systématiques), §8 (libellé de formulaire, état désactivé lisible),
 //           §10 (aucun texte en dur)
 //
-// Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils existent
-// parce que le fil chargé ne peut être vu nulle part ailleurs : la webapp est un appelant anonyme
-// faute d'écran de connexion (INC-021), et son E2E n'obtient donc jamais de commentaire — le
-// procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5.
-//
-// Ce qu'ils ne prouvent PAS, et qui reste dû : qu'un utilisateur connecté publie réellement un
-// commentaire depuis l'écran. C'est INC-021, et c'est nommé dans docs/BACKLOG.md.
+// Ces tests montent le **vrai** composant et isolent les formes du fil et ses refus par leurs rôles
+// accessibles. La publication connectée réelle et le refus du `viewer` sont prouvés en complément
+// par `e2e/ui/authentification.spec.ts`.
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

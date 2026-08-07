@@ -1,17 +1,20 @@
 // @spec CRM-007 (docs/BACKLOG.md) — en-tête de la coquille
-// @spec docs/DESIGN_SYSTEM.md §4 (en-tête : fil d'Ariane), §7 (tiroir sous 1024 px), §8
-// @spec docs/SPEC-webapp.md §5.1 (coquille), §8 (responsive)
+// @spec CRM-011 (docs/BACKLOG.md) — identité de session, connexion et déconnexion
+// @spec docs/DESIGN_SYSTEM.md §4 (en-tête), §5.12 (session), §7, §8
+// @spec docs/SPEC-webapp.md §5.1 ; docs/SPEC-auth.md §9.1, §9.4
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
-// La recherche et le profil annoncés par docs/DESIGN_SYSTEM.md §4 ne sont pas livrés ici :
-// la recherche n'a rien à interroger et le profil suppose une session, que cette unité ne
-// livre pas (INC-021). Les placer en décor, inertes, serait afficher une commande morte.
+// La recherche annoncée par docs/DESIGN_SYSTEM.md §4 n'est pas livrée : aucun moteur ne la porte.
+// L'identité de session, elle, vient de GoTrue depuis CRM-011 et offre toujours son action réelle.
 
-import { Menu } from 'lucide-react'
+import { LogIn, LogOut, Menu } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { t } from '../i18n'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import type { EtatAsync } from '../lib/async'
 import type { Workspace } from '../lib/workspaces'
+import { useAuthentification } from './Authentification'
 
 export type ProprietesHeader = {
 	readonly titreRoute: string
@@ -62,7 +65,65 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			</nav>
 
 			<ContexteWorkspace etat={etatWorkspaces} />
+			<ControleSession />
 		</header>
+	)
+}
+
+function ControleSession() {
+	const { etat, deconnecter } = useAuthentification()
+	const location = useLocation()
+	const navigate = useNavigate()
+	const [enCours, setEnCours] = useState(false)
+	const [erreur, setErreur] = useState(false)
+
+	if (etat.statut !== 'authentifie') {
+		return (
+			<Link
+				to="/connexion"
+				state={{ retour: `${location.pathname}${location.search}` }}
+				className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm text-brand font-medium hover:bg-hover"
+			>
+				<LogIn aria-hidden="true" size={18} />
+				<span className="hidden sm:inline">{t('header.auth.login')}</span>
+				<span className="sr-only sm:hidden">{t('header.auth.login')}</span>
+			</Link>
+		)
+	}
+
+	return (
+		<div className="flex items-center gap-2 min-w-0">
+			{erreur ? (
+				<span role="alert" className="text-sm text-danger-on-soft">
+					{t('header.auth.logout.error')}
+				</span>
+			) : null}
+			<span className="hidden md:inline max-w-[192px] truncate text-sm text-text-2" title={etat.utilisateur.email}>
+				{etat.utilisateur.email}
+			</span>
+			<button
+				type="button"
+				disabled={enCours}
+				onClick={() => {
+					if (enCours) return
+					setEnCours(true)
+					setErreur(false)
+					void deconnecter().then((resultat) => {
+						setEnCours(false)
+						if (!resultat.ok) {
+							setErreur(true)
+							return
+						}
+						navigate('/connexion', { replace: true })
+					})
+				}}
+				className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm text-brand font-medium hover:bg-hover disabled:opacity-70 disabled:cursor-not-allowed"
+			>
+				<LogOut aria-hidden="true" size={18} />
+				<span className="hidden sm:inline">{t('header.auth.logout')}</span>
+				<span className="sr-only sm:hidden">{t('header.auth.logout')}</span>
+			</button>
+		</div>
 	)
 }
 

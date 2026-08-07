@@ -35,7 +35,7 @@ latérale liste, et celui auquel les droits fins de `track_members` se rattachen
 | Ce qui n'est pas livré | Pourquoi, et par qui |
 |---|---|
 | `app.can_read_track` et la restriction par droit fin | Dépend de la résolution `track_members` → `CRM-012`. La politique de lecture livrée ici s'arrête au **rôle de workspace** ; voir §5.3 et `docs/INCONSISTENCY_REPORT.md` INC-013 et INC-024 |
-| Toute **interface de création, de renommage, de réordonnancement ou d'archivage** | Exige une session, donc un écran de connexion, qu'aucune unité ne porte — `docs/INCONSISTENCY_REPORT.md` INC-021. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon |
+| Toute **interface de création, de renommage, de réordonnancement ou d'archivage** | Aucun écran d'administration n'est encore rattaché à cette unité. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon |
 | L'**ouverture** d'un track (route, onglets) | Un track s'ouvre sur ses channels, livrés par `CRM-021`. Une route sans contenu serait une commande morte |
 | La **clé étrangère** `track_members.track_id → tracks.id` | Rétablie par cette unité : voir §2.3. C'est le seul point d'INC-010 que `CRM-020` referme |
 | Les **couleurs libres** | `docs/DESIGN_SYSTEM.md` §1 : une couleur de donnée est un **nom de jeton**, jamais un hexadécimal. Contrainte `CHECK`, §2.2 |
@@ -240,15 +240,10 @@ GET /rest/v1/tracks?select=id,name,slug,color,icon,position&archived_at=is.null&
 Les quatre états de `docs/DESIGN_SYSTEM.md` §5.8 restent traités par le contrat asynchrone commun
 (`docs/SPEC-webapp.md` §6.4) : chargement en squelettes, vide, erreur avec reprise réelle, refus.
 
-**Ce que l'écran affiche aujourd'hui, et pourquoi.** La webapp n'a pas de parcours de connexion
-(INC-021) : son client est anonyme, `persistSession: false`. La lecture ci-dessus rend donc `200`
-et `[]`, et la barre latérale montre son **état vide** — qui est le refus réel du backend, mesuré
-en §6 ligne *b*, et non un défaut d'interface.
-
-Ce n'est pas une régression par rapport à `CRM-007`, qui affichait déjà le même vide pour la même
-raison. C'est une limite **du produit**, nommée ici et dans `docs/BACKLOG.md` : tant qu'aucune
-unité ne portera l'écran de connexion, **aucune donnée métier ne pourra apparaître dans
-l'interface**, quelles que soient les politiques RLS livrées.
+**Ce que l'écran affiche aujourd'hui, et pourquoi.** Sans session, la lecture rend `200` et `[]` :
+la barre latérale montre son état vide réel. Depuis la reprise de `CRM-011`, la session est
+restaurée avant cette lecture et un membre voit les tracks que la RLS lui consent. La preuve
+connectée constate les trois tracks du seed, sans réponse substituée.
 
 ### 7.1 Rendu d'une pilule de track
 
@@ -302,7 +297,7 @@ restaure et constate le retour au vert.
 ## 10. Limites connues
 
 1. **Aucune interface d'administration des tracks** : ni création, ni renommage, ni
-   réordonnancement, ni archivage depuis l'écran. Bloqué par INC-021 (aucun écran de connexion).
+   réordonnancement, ni archivage depuis l'écran. Aucun écran d'administration ne porte ces gestes.
    Le CRUD est prouvé par l'API, avec les jetons réels.
 2. **Aucun track visible dans l'interface**, pour la même raison : l'appelant est anonyme.
 3. **Les droits fins ne sont pas appliqués** (§5.3, INC-024) — `CRM-012`.

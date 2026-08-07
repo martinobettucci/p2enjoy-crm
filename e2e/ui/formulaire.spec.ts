@@ -14,9 +14,9 @@
 // CE QU'ILS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
 // Ils prouvent que la route du §4.6 existe, qu'elle interroge réellement `public.cards`, et
-// qu'elle rend l'état que le backend lui consent — c'est-à-dire « card introuvable », la webapp
-// étant un appelant anonyme (INC-021). Réponse substituée, ils prouvent que le formulaire chargé
-// affiche ce que le §4 décrit.
+// qu'elle rend l'état que le backend consent à l'appelant anonyme — « card introuvable ».
+// Réponse substituée, ils prouvent les variantes déterministes du formulaire chargé ; la route
+// réelle connectée est atteinte dans `e2e/ui/authentification.spec.ts`.
 //
 // Ils **ne prouvent pas** le parcours « transition bloquée → saisie → transition réussie » que la
 // Definition of Done exige : il suppose une session et un contrôle de transition, dus par
@@ -287,7 +287,7 @@ test.describe('formulaire chargé (réponse réseau substituée, docs/DESIGN_SYS
 		await servirFormulaire(page)
 		await page.goto(ADRESSE)
 
-		await expect(page.getByTestId('formulaire-lecture-seule')).toContainText('session')
+		await expect(page.getByTestId('formulaire-lecture-seule')).toContainText('pas encore livré')
 
 		const controles = page.getByTestId('formulaire-card').locator('input, textarea, select')
 		const nombre = await controles.count()

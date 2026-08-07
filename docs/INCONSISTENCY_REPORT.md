@@ -1799,7 +1799,9 @@ au sens du répertoire. À prendre en compte dans la réécriture attendue.
 
 ---
 
-### INC-021 — Aucune unité ne porte l'écran de connexion, que la DoD de `CRM-011` présuppose
+## Clos — reprises du 2026-08-07
+
+### INC-021 — Aucune unité ne porte l'écran de connexion, que la DoD de `CRM-011` présuppose — **CLOSE**
 
 **Nature :** référence manquante entre `docs/BACKLOG.md` et lui-même.
 **Relevé le :** 2026-08-04, pendant la spécification de `CRM-007`.
@@ -1851,11 +1853,17 @@ rejoint `CRM-011`, dont la Definition of Done le présuppose déjà. Le contrat 
 la déconnexion et au moins deux écritures métier soient prouvées depuis l'interface réelle ; il
 sera déplacé dans « Clos » avec ces preuves, jamais sur la seule intention.
 
+**CLOSE le 2026-08-07 par la reprise de `CRM-011`.** L'écran, la session d'onglet et la
+déconnexion sont livrés. Six scénarios navigateur obtiennent les vraies sessions GoTrue puis
+prouvent lecture, publication, déplacement autorisé et déplacements/commentaires refusés, avec
+relecture directe de la base et nettoyage. `CRM-011`, `CRM-041`, `CRM-043` et `CRM-044` passent
+`[x]` ; INC-015 reste distincte.
+
 **Lié à :** INC-015 (invitation sans composant), INC-020 (build dû par `CRM-007`).
 
 ---
 
-### INC-022 — `docs/DAT.md` §3.1 se contredit sur la persistance de session, et l'une des deux versions heurte `CLAUDE.md` §11
+### INC-022 — `docs/DAT.md` §3.1 se contredit sur la persistance de session — **CLOSE**
 
 **Nature :** contradiction interne à `docs/DAT.md` §3.1, doublée d'une contradiction avec
 `CLAUDE.md` §11.
@@ -1905,7 +1913,13 @@ qui les porte toutes les deux.
 comme un acquis. Le point reste ouvert jusqu'à la preuve qu'aucune session n'est écrite dans
 `localStorage` et qu'un rechargement du même onglet conserve bien la session.
 
+**CLOSE le 2026-08-07.** Les tests unitaires éprouvent `sessionStorage` et son repli mémoire. Le
+parcours navigateur constate un `localStorage` vide, un jeton présent dans `sessionStorage`, la
+session encore active après rechargement, puis le jeton retiré après déconnexion.
+
 ---
+
+## Ouverts — suite
 
 ### INC-023 — La Definition of Done de `CRM-008` exige des commandes dont les sujets arrivent au chunk 4
 

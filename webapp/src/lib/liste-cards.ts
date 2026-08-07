@@ -9,10 +9,8 @@
 // §12 vérifiables sans navigateur — la clôture des tris, l'ordre total, le repli des paramètres
 // d'adresse, le bornage du rang de page, le découpage en pages, la classification du `416`.
 //
-// La webapp étant un appelant **anonyme** faute d'écran de connexion (INC-021), la lecture
-// ci-dessous rend `200` et un total de zéro : la route affiche « track introuvable » avant même
-// d'atteindre la liste. Le rendu chargé se prouve par test unitaire du composant réel et en
-// substituant la réponse réseau (docs/DESIGN_SYSTEM.md §12.5).
+// Sans session, la lecture rend `200` et un total de zéro ; avec la session restaurée par
+// `CRM-011`, elle rend les lignes consenties par la RLS. Le module ne bifurque jamais sur un rôle.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'

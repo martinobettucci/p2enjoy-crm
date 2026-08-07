@@ -15,13 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le parcours utilisateur authentifié est livré** — écran `/connexion`, retour à la page
+  demandée, restauration de session limitée à l'onglet, identité et déconnexion dans l'en-tête.
+  Six scénarios Playwright sans substitution prouvent les gestes réels : commentaire publié et
+  relu par l'API, déplacement d'une card d'essai et étape relue, refus du `viewer` sur les deux
+  actions sans perte du brouillon ni de la position. `localStorage` reste vide. Les cinq nouvelles
+  captures d'application de `CRM-011` ont été observées aux quatre paliers et en session chargée.
+- **INC-021 et INC-022 closes.** `CRM-011`, `CRM-041`, `CRM-043` et `CRM-044` passent `[x]` ; les
+  réponses substituées de leurs suites historiques restent utiles aux états rares mais ne sont
+  plus la seule preuve d'un écran chargé.
 - **Spécification du parcours utilisateur authentifié** — reprise de `CRM-011`,
   `docs/SPEC-auth.md` §9, écrite avant le code. L'écran de connexion est rattaché à l'unité qui
   porte déjà connexion et déconnexion ; la session est limitée à `sessionStorage`, avec repli
   mémoire, jamais au `localStorage`. La preuve exigée va jusqu'aux vraies actions du chunk 3 :
   commentaire publié et card déplacée depuis l'interface, effets relus par l'API, plus le refus du
-  `viewer`. INC-021 et INC-022 portent l'arbitrage et restent ouverts jusqu'à l'exécution de ces
-  preuves.
+  `viewer`. INC-021 et INC-022 portaient l'arbitrage désormais clos par les preuves ci-dessus.
 
 - **Spécification de l'infrastructure mail de développement** — `CRM-050`,
   `docs/SPEC-mail-subsystem.md` §11, écrite **après mesure sur des conteneurs réellement démarrés**

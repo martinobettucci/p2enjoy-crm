@@ -3,14 +3,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §4 (tracks en pilules), §5.6 (icône obligatoire), §7 (paliers)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
 //
-// Ces tests montent la **vraie** barre latérale et l'interrogent par ses rôles accessibles et
-// ses attributs de données. Ils existent parce que le rendu chargé des tracks ne peut être vu
-// nulle part ailleurs : la webapp est un appelant anonyme faute d'écran de connexion (INC-021),
-// et son E2E n'obtient donc jamais de ligne. Sans ce fichier, le rendu d'une pilule ne serait
-// exercé par aucune preuve.
-//
-// Ce qu'ils ne prouvent PAS, et qui reste dû : que l'écran affiche réellement des tracks à un
-// utilisateur connecté. C'est une limite du produit, nommée dans `docs/BACKLOG.md`.
+// Ces tests montent la **vraie** barre latérale et isolent ses variantes par leurs rôles accessibles
+// et attributs de données. Le parcours connecté complet, lui, est prouvé par
+// `e2e/ui/authentification.spec.ts` ; les deux niveaux se complètent.
 
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'

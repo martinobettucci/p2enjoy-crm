@@ -14,18 +14,17 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`), les **champs de
 > formulaire** (`CRM-035`), les **cards** (`CRM-040`), la **garde centrale `move_card`**
 > (`CRM-034`) et les **valeurs de formulaire** (`CRM-036`).
-> En revanche, **le reste du métier n'existe pas encore** : ni commentaires, ni historique, ni
-> messagerie — et **aucun écran de connexion**, qu'aucune unité ne porte à ce jour
-> (`docs/INCONSISTENCY_REPORT.md`, INC-021). `move_card` porte désormais ses **six** vérifications :
+> Le board, la vue liste, la fiche, les commentaires et l'historique sont également livrés. La
+> webapp possède désormais son **écran de connexion**, une session limitée à l'onglet et une
+> déconnexion réelle (`CRM-011`). Un utilisateur connecté peut consulter les données que la RLS
+> lui consent, publier un commentaire et déplacer une card. `move_card` porte ses **six** vérifications :
 > la sixième, « les champs requis de l'étape cible sont renseignés », est livrée par `CRM-036`, qui
 > a refermé INC-047.
-> **Conséquence à connaître avant de lancer l'application** : les tracks et leurs channels
-> existent réellement côté serveur, sont ordonnés, archivables, cloisonnés, et leur écriture est
-> réservée aux administrateurs — tout cela est mesuré. Mais l'interface interroge le serveur
-> **sans compte**, et le serveur ne consent rien à un appelant anonyme. L'écran affiche donc
-> « Aucun track », et la route d'un track affiche « Track introuvable » pour tout identifiant :
-> c'est le refus réel du backend et non un défaut d'affichage. Tant qu'INC-021 n'est pas tranchée, **aucune
-> donnée métier ne peut apparaître à l'écran**.
+> **Conséquence à connaître avant de lancer l'application** : sans session, l'interface conserve
+> les vrais états vides et de refus du backend. Après connexion, elle réutilise le même client avec
+> le jeton réel du compte ; aucune autorisation n'est calculée côté navigateur. Les tables
+> d'identité restent toutefois illisibles (INC-014), si bien que le nom du workspace et les noms de
+> personnes peuvent rester absents alors que les objets métier sont accessibles.
 > Les commandes marquées « à venir » dans le tableau du §5 sont le **contrat** que
 > l'implémentation devra respecter, pas un état constaté.
 > L'état réel, unité par unité, est tenu dans [`docs/BACKLOG.md`](docs/BACKLOG.md) ; l'ordre
@@ -591,11 +590,10 @@ Documentation de référence :
   `DEV_BIND_ADDRESS`. C'est un choix documenté (`docs/SPEC-mail-subsystem.md` §11.3) : en
   production, ce sont les serveurs des utilisateurs qui portent le chiffrement. Exposer cette pile
   au-delà de la boucle locale imposerait de revenir sur ce choix.
-- **Aucun écran de connexion, et donc aucune donnée à l'écran.** L'interface interroge l'API avec
-  la seule clé anonyme ; la RLS en refus par défaut rend `200` et `[]`, et l'application affiche
-  ses états vides. Mesuré : **un compte seedé connecté obtient exactement le même vide**, faute de
-  politiques RLS (`CRM-012`). L'écran est donc exact, pas inachevé. Aucune unité ne porte cet
-  écran de connexion : [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-021.
+- **Les tables d'identité restent illisibles.** La connexion et les objets métier fonctionnent,
+  mais `workspaces`, `profiles` et `workspace_members` restent en refus par défaut (INC-014). Le
+  nom du workspace et les noms de personnes peuvent donc manquer dans l'interface, même pour une
+  administratrice connectée.
 - **La webapp ne connaît aucune règle d'accès**, par construction : elle affiche ce que le backend
   consent à rendre. Un type ne décrit jamais un droit (voir ci-dessous), et l'interface ne
   masque rien qui ne soit déjà refusé côté base.

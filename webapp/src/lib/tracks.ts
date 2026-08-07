@@ -4,9 +4,8 @@
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 //
 // `public.tracks` porte, depuis `CRM-020`, une politique de lecture réservée aux membres du
-// workspace. La webapp n'ayant **aucun parcours de connexion** (INC-021), son client est anonyme :
-// la requête ci-dessous rend `200` et `[]`, mesuré. L'état vide affiché par la barre latérale est
-// donc le **refus réel du backend**, pas un défaut d'interface.
+// workspace. Sans session la requête rend `200` et `[]` ; avec la session restaurée par `CRM-011`,
+// elle rend les tracks consentis. Dans les deux cas, l'état vient du backend.
 //
 // L'interface n'en déduit aucun droit : ce qu'elle affiche est ce que le backend a consenti à
 // rendre (docs/DAT.md §3.1).

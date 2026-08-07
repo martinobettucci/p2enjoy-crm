@@ -4,13 +4,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau de données), §8 (états désactivés lisibles,
 //           `aria-sort`), §10 (aucun texte en dur), §12.1 (navigation par liens)
 //
-// Ces tests montent le **vrai** composant et l'interrogent par ses rôles accessibles. Ils
-// existent parce que le rendu chargé de la liste ne peut être vu nulle part ailleurs : la webapp
-// est un appelant anonyme faute d'écran de connexion (INC-021), et son E2E n'obtient donc jamais
-// de ligne — le procédé est celui endossé par docs/DESIGN_SYSTEM.md §12.5.
-//
-// Ce qu'ils ne prouvent PAS, et qui reste dû : qu'un utilisateur connecté trie, filtre et
-// pagine réellement. C'est INC-021, et c'est nommé dans docs/BACKLOG.md.
+// Ces tests montent le **vrai** composant et isolent tri, filtres et pagination par leurs rôles
+// accessibles. La session réelle est prouvée séparément ; les données servies ici rendent les
+// branches déterministes conformément à docs/DESIGN_SYSTEM.md §12.5.
 
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

@@ -8,9 +8,9 @@
 // `webapp/src/lib/formulaire.ts`. La séparation est ce qui rend la règle du §4.1 vérifiable sans
 // navigateur, et ce qui empêche une règle de visibilité de se retrouver écrite dans du JSX.
 //
-// **Aucune écriture n'est possible** : enregistrer une valeur exige une session, que la webapp
-// n'a pas (INC-021). Les contrôles sont donc rendus indisponibles, restent **lisibles**, et
-// l'écran **dit pourquoi** — ce que docs/DESIGN_SYSTEM.md §8 exige d'un état désactivé. Un
+// **Aucune écriture n'est possible** : le chemin d'enregistrement depuis la fiche n'est pas livré.
+// Les contrôles sont donc rendus indisponibles, restent **lisibles**, et l'écran **dit pourquoi**
+// — ce que docs/DESIGN_SYSTEM.md §8 exige d'un état désactivé. Un
 // formulaire où l'on saisirait sans pouvoir enregistrer serait un piège ; un formulaire qui
 // n'affiche rien serait une perte d'information (§4.7).
 

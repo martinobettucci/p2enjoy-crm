@@ -89,8 +89,7 @@ React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 - Authentification via `supabase-js` (GoTrue). L'arbitrage de persistance est rendu par
   `docs/SPEC-auth.md` §9 : **`sessionStorage` uniquement**, limité à l'onglet, avec repli mémoire
   si ce stockage est indisponible. Le défaut `localStorage` de la bibliothèque n'est jamais
-  employé. Ce contrat relève de `CRM-011` et refermera INC-021 et INC-022 lorsque ses preuves
-  seront livrées.
+  employé. Ce contrat est livré par `CRM-011` et a refermé INC-021 et INC-022.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.
@@ -143,8 +142,8 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   quatre lectures qui suivent la card sont **parallèles**, ne dépendant que d'elle (`CRM-037`) ;
 - `src/app/FormulaireCard.tsx` — le rendu de ce modèle, sans aucune règle de visibilité dans le
   JSX, et `src/app/RouteCard.tsx` — la route `/tracks/:slugTrack/:slugChannel/cards/:idCard`, seul
-  hôte possible du formulaire. Aucune écriture n'est livrée : elle exigerait une session
-  (INC-021), et les contrôles sont donc indisponibles et le disent (`CRM-037`). Cette route porte
+  hôte possible du formulaire. Aucune écriture de réponse n'est livrée dans cette fiche ; les
+  contrôles sont donc indisponibles et le disent (`CRM-037`). Cette route porte
   **deux chargements indépendants** : la card et son formulaire d'un côté, le track porteur et ses
   channels de l'autre, pour que la barre d'onglets soit celle du §4 du design system
   (`docs/SPEC-form-composer.md` §4.6 bis) ;
@@ -184,16 +183,12 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 Le build de production est produit **sur l'hôte** par `npm run build` et servi par Caddy : aucune
 image de production n'est fabriquée pour des fichiers statiques.
 
-Reste dû dans l'état documentaire présent : l'implémentation de l'écran de connexion désormais
-rattaché à `CRM-011` (`docs/SPEC-auth.md` §9), puis le reste du métier — `CRM-051` et suivantes.
+Reste dû dans l'état documentaire présent : le reste du métier — `CRM-051` et suivantes.
 
-**Conséquence devenue structurante, et qui déborde `CRM-020` puis `CRM-021`.** Depuis que `tracks`
-et `channels` portent des politiques RLS, le produit sait servir de la donnée métier à un membre du
-workspace — mesuré — mais l'interface, appelant anonyme, n'en voit rien. `CRM-021` en donne
-l'illustration la plus nette : la route d'un track affiche « Track introuvable » pour **tout** slug,
-puisqu'aucune ligne ne lui est consentie. **Aucune unité d'interface du chunk 3 ne pourra
-produire de capture chargée tant qu'INC-021 n'est pas tranchée.** Ce n'est plus une gêne locale,
-c'est un obstacle sur le chemin de toutes les unités qui suivent.
+**Conséquence structurante, révisée par `CRM-011`.** `tracks` et `channels` savent servir la donnée
+métier à un membre, et la webapp restaure désormais sa session avant de les lire. Un anonyme garde
+les vrais états vides ; un membre voit ce que la RLS lui consent. Les tables d'identité restent
+cependant en refus par défaut (INC-014), d'où un contexte de workspace parfois sans nom.
 
 **Choix structurant, mesuré :** les espaces de noms de Tailwind sont remis à zéro dans
 `tokens.css`, de sorte qu'une couleur ou un espacement hors design system **n'existe pas** comme
