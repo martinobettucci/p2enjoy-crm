@@ -46,6 +46,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0015_colonnes_protegees.test.sql
 MIGRATION_FILE=supabase/migrations/0014_colonnes_protegees.sql
 # LA MIGRATION 12 REND CE QUE LA 14 RETIRE, et ce n'est pas une hypothèse : sa section 2 réapplique

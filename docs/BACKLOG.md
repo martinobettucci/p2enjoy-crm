@@ -1346,7 +1346,7 @@ corrigée et le parcours destinataire complète le contrat initial.
       chacune reste à reprendre, sa preuve manquante réellement exécutée, et son état révisé sur
       mesure. Cette dépendance n'empêche plus leur audit individuel.
 
-### CRM-008 — Harnais de tests `[~]`
+### CRM-008 — Harnais de tests `[x]`
 pgTAP, Vitest et Playwright (`api`, `ui`, `mail`) ; pytest naît avec `mail-sync` en `CRM-051`.
 **DoD** : chaque commande du `README.md` §7 dont le sujet existe s'exécute ; un test volontairement
 faux échoue bien. Périmètre arbitré par le responsable — décision 277, INC-023, option 2.
@@ -1452,18 +1452,21 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       Reproduit depuis le shell WSL réel : 26 contrôles, 10 anomalies, et des dégradations
       faussement `OK` parce que l'exécuteur commun était déjà cassé. Le correctif sélectionne
       Node v24.14.1 / npm 11.11.0 Linux sous NVM avant toute mutation ; la preuve isolée couvre
-      quatre branches et rend 4/4.
-- [ ] **La chaîne Node est réellement commune à tous les harnais autonomes** (INC-083,
+      quatre branches, puis recense tous les points d'entrée, et rend 5/5.
+- [x] **La chaîne Node est réellement commune à tous les harnais autonomes** (INC-083,
       décision 281). Le parcours final de `CRM-015` a révélé que vingt et un des vingt-deux scripts
       `verify-*.sh` exécutant Node ou npm contournaient encore le résolveur et que
       `verify-webapp.sh` choisissait donc `npm.exe`. Chaque point d'entrée concerné doit préparer
       Node avant sa première mutation, et une preuve statique doit interdire qu'un nouveau script
-      échappe à cette garde.
-- [ ] **Le parcours UI global est déterministe et sa commande ne produit aucun avertissement**
+      échappe à cette garde. La preuve dynamique rend **5/5** et le harnais frontend **42/42**
+      depuis le `PATH` WSL qui expose `npm.exe`.
+- [x] **Le parcours UI global est déterministe et sa commande ne produit aucun avertissement**
       (INC-084, décision 282). Le rejeu après INC-083 rend 143/144 : la preuve de publication
       relit l'API avant d'avoir attendu l'annonce utilisateur de succès. Le rejeu ciblé rend 10/10,
       mais reproduit à chaque fois le conflit `NO_COLOR` / `FORCE_COLOR`. La fermeture exige le
-      scénario ciblé, les 144 parcours et le harnais 28/28, tous sans ligne `Warning:`.
+      scénario ciblé, les 144 parcours et le harnais 28/28, tous sans ligne `Warning:`. Après
+      correction : **10/10**, puis **144/144 sans avertissement**, puis **28/28** avec les six
+      dégradations et leur restauration.
 - [x] **Le résumé SQL n'annonce plus trois fichiers en dur** (décision 279). L'exécution froide
       réelle en découvre **19** pour **1405 assertions** ; le harnais extrait les deux valeurs de
       l'unique résumé de `run-sql-tests.sh` et les compare à deux attendus indépendants.

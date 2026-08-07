@@ -48,6 +48,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0012_cards.test.sql
 MIGRATION_FILE=supabase/migrations/0011_cards.sql
 # RESTAURER, C'EST RAMENER LA BASE À L'ÉTAT QUE LE RUNNER PRODUIT — et le runner rejoue TOUT le

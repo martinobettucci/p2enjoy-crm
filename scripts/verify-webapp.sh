@@ -32,6 +32,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 DB_CONTAINER=p2enjoy-db
 FICHIER_JETONS=webapp/src/styles/tokens.css
 COMPTE_SEED=admin@p2enjoy.test

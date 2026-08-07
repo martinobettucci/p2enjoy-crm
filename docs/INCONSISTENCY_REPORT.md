@@ -12,7 +12,7 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
-### INC-084 — Le parcours Chromium global est instable et son exécuteur écrit des avertissements
+### INC-084 — Le parcours Chromium global est instable et son exécuteur écrit des avertissements — **CLOSE**
 
 **Nature :** preuve E2E non déterministe et sortie utilisateur contraire à l'exigence zéro
 `warning`.
@@ -43,9 +43,15 @@ pas être déclarée propre.
 lancer le webServer ou un worker. La preuve ciblée, la suite UI complète et le harnais global
 doivent ensuite rendre zéro échec et zéro ligne `Warning:`.
 
+**Clôture, 2026-08-07.** Le scénario attend désormais le champ vidé et la région live avant la
+relecture PostgREST ; dix répétitions rendent **10/10**. La configuration retire `NO_COLOR` dans
+son propre processus avant les enfants Playwright, sans modifier le shell parent. Le harnais
+global refuse explicitement tout `warning` de la sortie UI et rend **144/144 sans avertissement**,
+puis **28 contrôles sans anomalie** après ses six dégradations et leur restauration.
+
 ---
 
-### INC-083 — Vingt et un harnais autonomes contournent encore la chaîne Node de `CRM-008`
+### INC-083 — Vingt et un harnais autonomes contournent encore la chaîne Node de `CRM-008` — **CLOSE**
 
 **Nature :** preuve utilisateur inexécutable depuis le shell WSL réel ; portée trop étroite du
 correctif de la décision 278.
@@ -60,10 +66,10 @@ déjà sélectionné Node v24.14.1 / npm 11.11.0 Linux et rendu 28/28 sur la mê
 
 **Cause.** La décision 278 a livré un résolveur commun dans `scripts/lib/node.sh`, mais seul
 `scripts/verify-harness.sh` le charge. Une recherche des invocations effectives, hors commentaires,
-trouve **vingt-deux** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; vingt et un contournent
-encore le résolveur. Tous sont annoncés comme commandes autonomes dans le README ou constituent la
-preuve autonome d'une unité. Demander à l'utilisateur de corriger son `PATH` entre deux commandes
-ne rend pas ces actions exécutables.
+trouve **vingt-deux** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; vingt et un
+contournent encore le résolveur. Tous sont annoncés comme commandes autonomes dans le README ou
+constituent la preuve autonome d'une unité. Demander à l'utilisateur de corriger son `PATH` entre
+deux commandes ne rend pas ces actions exécutables.
 
 **Correction décidée.** Tout harnais shell autonome qui exécute Node ou npm charge
 `scripts/lib/node.sh` et appelle `node_toolchain_prepare` avant sa première mutation. Une preuve
@@ -74,6 +80,12 @@ isolée du résolveur passe donc de quatre à cinq contrôles. `scripts/verify-w
 **Portée.** Le correctif ne crée aucun alias npm, ne modifie pas le shell parent et ne change
 aucune logique métier. Il complète `CRM-008`; `CRM-015` ne pourra revendiquer son parcours final
 qu'une fois `verify-webapp.sh` redevenu réellement exécutable.
+
+**Clôture, 2026-08-07.** Les vingt et un points d'entrée chargent maintenant le résolveur avant
+leur première mutation. `scripts/verify-node-toolchain.sh` recense dynamiquement les **22**
+harnais Node/npm et rend **5/5**. Depuis le `PATH` WSL qui expose réellement `npm.exe`,
+`scripts/verify-webapp.sh` sélectionne Node v24.14.1 / npm 11.11.0 Linux et rend **42/42** ; le
+rejeu global rend ensuite **28/28**. Aucun alias, téléchargement ni changement du shell parent.
 
 ---
 

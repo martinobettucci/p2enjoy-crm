@@ -21,6 +21,12 @@ import { defineConfig, devices } from '@playwright/test'
 import { join } from 'node:path'
 import { RACINE, cleAnonyme, urlApi } from './env'
 
+// @spec CRM-008 (docs/BACKLOG.md) — INC-084, décision 282
+// Playwright force la couleur de ses sous-processus. L'environnement de l'appelant peut demander
+// NO_COLOR ; laisser les deux variables atteindre Node produit un avertissement avant chaque
+// webServer et chaque worker. Cette suppression reste locale au processus du harnais.
+delete process.env['NO_COLOR']
+
 const PORT = Number(process.env['WEBAPP_PREVIEW_PORT'] ?? 4173)
 const URL_BASE = `http://127.0.0.1:${PORT}`
 

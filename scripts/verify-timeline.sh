@@ -39,6 +39,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 MIGRATION=supabase/migrations/0016_timeline.sql
 # LA MIGRATION 17 FAIT PARTIE DE LA SÉQUENCE DE RESTAURATION, ET CE N'EST PAS UN AJOUT DE PÉRIMÈTRE
 # — même mécanisme que `scripts/verify-cards.sh`, qui reprend la migration 14 depuis `CRM-013`.

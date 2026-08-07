@@ -8821,6 +8821,11 @@ Node 24/npm 11 Linux et le second rendre toutes ses vérifications, y compris Ch
 stricte. Ce complément rouvre une seule case de `CRM-008` et devient un prérequis de fermeture du
 parcours utilisateur de `CRM-015`.
 
+**Résultat.** Les vingt et un scripts manquants chargent la bibliothèque avant leur première
+mutation. La preuve statique recense 22 harnais Node/npm, tous protégés, et rend 5/5. Depuis le
+`PATH` WSL qui sélectionnait `npm.exe`, `verify-webapp.sh` choisit Node v24.14.1 / npm 11.11.0
+Linux, passe build, types, 525 tests et 144 parcours Chromium, puis rend 42/42.
+
 ---
 
 ### Décision 282 — Une publication est finie au signal de succès, et une console propre commence avant le navigateur
@@ -8848,3 +8853,9 @@ configuration Playwright supprime le `NO_COLOR` hérité dans son processus, ava
 webServer et des workers que Playwright exécute avec couleur forcée. Ce choix est local au harnais,
 ne modifie pas le shell parent et supprime la cause plutôt que sa sortie. La fermeture exige le
 rejeu ciblé, la suite 144/144 et le harnais 28/28 sans aucune ligne `Warning:`.
+
+**Résultat.** Le parcours corrigé rend 10/10 sans une ligne d'avertissement. Le rejeu global
+constate ensuite 144/144, console navigateur stricte et sortie Playwright sans avertissement, puis
+termine les 16 scénarios mail, 525 tests, quatre compilations et six dégradations. Verdict final :
+28 contrôles sans anomalie, fichiers et politique RLS restaurés. INC-083 et INC-084 sont closes ;
+`CRM-008` revient à `[x]` sur la preuve réellement rejouée.

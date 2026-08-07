@@ -44,6 +44,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0008_copie_workflow.test.sql
 MIGRATION_FILE=supabase/migrations/0007_copie_workflow.sql
 DB_CONTAINER=p2enjoy-db

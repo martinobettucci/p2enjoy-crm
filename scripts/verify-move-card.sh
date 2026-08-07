@@ -49,6 +49,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0013_move_card.test.sql
 MIGRATION_FILE=supabase/migrations/0012_move_card.sql
 # LA MIGRATION 13 SUIT TOUJOURS LA 12, ET CE N'EST PAS UNE PRÉCAUTION DE STYLE. Depuis `CRM-036`,

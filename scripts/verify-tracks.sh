@@ -35,6 +35,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0004_tracks.test.sql
 MIGRATION_FILE=supabase/migrations/0003_tracks.sql
 # `0010` redéfinit `tracks_lecture_membre` : toute réapplication de `0003` doit être suivie de la

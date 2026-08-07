@@ -47,6 +47,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 TEST_FILE=supabase/tests/0014_valeurs_champs.test.sql
 MIGRATION_FILE=supabase/migrations/0013_valeurs_champs.sql
 # LA 14 SUIT TOUJOURS UN REJEU DE LA 12, et c'est une dépendance MESURÉE, ajoutée par `CRM-013`.

@@ -23,11 +23,14 @@ d'exécuter le code attendu.
 
 - **`CRM-008` est close sur une base froide et depuis le vrai shell WSL.** Le harnais refuse
   désormais `npm.exe`, résout Node **v24.14.1** / npm **11.11.0** dans les installations NVM
-  locales avant toute mutation et éprouve ce choix dans quatre environnements isolés. Son résumé
-  SQL n'affiche plus trois fichiers en dur : il extrait et vérifie **19 fichiers / 1405
-  assertions**. Rejeu complet : **28/28**, API **410**, UI Chromium **144** avec console sans
-  avertissement, erreur ni `pageerror`, mail **16**, Vitest **525**, quatre compilations et rapport
-  HTTP **200**, puis état SQL et RLS restauré.
+  locales avant toute mutation et éprouve ce choix dans quatre environnements isolés. La garde
+  couvre désormais les **22 harnais** Node/npm autonomes, preuve statique comprise (**5/5**).
+  Son résumé SQL n'affiche plus trois fichiers en dur : il extrait et vérifie **19 fichiers / 1405
+  assertions**. La publication réelle attend son annonce de succès avant la relecture API, et
+  Playwright ne produit plus le conflit `NO_COLOR` / `FORCE_COLOR`. Rejeu complet : **28/28**, API
+  **410**, UI Chromium **144** avec console navigateur et sortie sans avertissement, erreur ni
+  `pageerror`, mail **16**, Vitest **525**, quatre compilations et rapport HTTP **200**, puis état
+  SQL et RLS restauré. INC-083 et INC-084 sont closes.
 
 - **`CRM-009` est livrée de bout en bout.** Quatre gabarits transactionnels français sont servis
   à GoTrue par le Caddy interne commun `auth-templates`; invitation et récupération sont validées

@@ -293,7 +293,7 @@ TRAVAIL=$(mktemp -d)
 trap menage EXIT
 
 if scripts/verify-node-toolchain.sh >"$TRAVAIL/node-toolchain.log" 2>&1; then
-	ok "résolution Node éprouvée en environnement isolé (4 contrôles)"
+	ok "résolution Node éprouvée en environnement isolé (5 contrôles)"
 else
 	fail "la preuve isolée de résolution Node échoue"
 	sed 's/^/        /' "$TRAVAIL/node-toolchain.log" | tail -n 20
@@ -383,8 +383,10 @@ echo "5. npm run e2e:ui — projet d'interface de CRM-007, non régressé"
 
 if npm run --silent e2e:ui >"$TRAVAIL/ui.log" 2>&1; then
 	passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/ui.log" | tail -n 1 | grep -oE '^[0-9]+' || echo 0)
-	if [ "${passes:-0}" -eq "$SCENARIOS_UI" ]; then
-		ok "npm run e2e:ui : $passes scénarios verts contre le build servi"
+	if grep -qi 'warning' "$TRAVAIL/ui.log"; then
+		fail "npm run e2e:ui est vert mais sa console contient un avertissement"
+	elif [ "${passes:-0}" -eq "$SCENARIOS_UI" ]; then
+		ok "npm run e2e:ui : $passes scénarios verts contre le build servi, aucun avertissement"
 	else
 		fail "npm run e2e:ui vert mais $passes scénarios au lieu de $SCENARIOS_UI"
 	fi

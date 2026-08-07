@@ -46,6 +46,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 MODULE=webapp/src/lib/liste-cards.ts
 COLONNES=webapp/src/lib/colonnes-liste.ts
 COMPOSANT=webapp/src/app/ListeCards.tsx

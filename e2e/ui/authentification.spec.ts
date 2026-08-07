@@ -237,8 +237,13 @@ test('le retour à la card publie réellement le commentaire de l’administratr
 
 		await expect(page).toHaveURL(new RegExp(`${ROUTE_AUDIT}$`))
 		await expect(page.getByText('Audit sécurité applicative', { exact: true }).first()).toBeVisible()
-		await page.getByLabel('Votre commentaire').fill(corps)
+		const champ = page.getByLabel('Votre commentaire')
+		await champ.fill(corps)
 		await page.getByRole('button', { name: 'Publier' }).click()
+		await expect(champ).toHaveValue('')
+		await expect(
+			page.getByRole('status', { name: 'Annonces de la discussion' }),
+		).toHaveText('Commentaire publié')
 		await expect(page.getByText(corps, { exact: true })).toBeVisible()
 
 		const reponse = await request.get(

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-008 (docs/BACKLOG.md) — sélection fiable de Node avant le harnais
-# @verifies docs/SPEC-test-harness.md §7.1 ; docs/JOURNAL.md décision 278
+# @verifies docs/SPEC-test-harness.md §7.1 ; docs/JOURNAL.md décisions 278 et 281 ; INC-083
 #
 # Éprouve le résolveur Node dans des environnements isolés et jetables. Aucune pile n'est requise.
 
@@ -82,6 +82,31 @@ if (
 	ok "l'absence de couple compatible échoue avec l'action explicite « nvm use »"
 else
 	fail "l'absence de chaîne compatible n'est pas refusée clairement"
+fi
+
+harnais_node=0
+harnais_non_proteges=()
+while IFS= read -r script; do
+	premier_appel=$(awk '
+		/^[[:space:]]*(if[[:space:]]+)?(![[:space:]]+)?(npm|node)[[:space:]]/ {
+			print NR
+			exit
+		}
+	' "$script")
+	[ -n "$premier_appel" ] || continue
+	harnais_node=$((harnais_node + 1))
+	source_node=$(grep -n -m1 '^source scripts/lib/node\.sh$' "$script" | cut -d: -f1 || true)
+	preparation=$(grep -n -m1 -E '^(if )?node_toolchain_prepare "\$PWD/\.nvmrc"' "$script" | cut -d: -f1 || true)
+	if [ -z "$source_node" ] || [ -z "$preparation" ] \
+		|| [ "$source_node" -ge "$preparation" ] || [ "$preparation" -ge "$premier_appel" ]; then
+		harnais_non_proteges+=("$script")
+	fi
+done < <(find "$REPO_ROOT/scripts" -maxdepth 1 -type f -name 'verify-*.sh' -print | sort)
+
+if [ "$harnais_node" -gt 0 ] && [ "${#harnais_non_proteges[@]}" -eq 0 ]; then
+	ok "les $harnais_node harnais qui invoquent Node ou npm préparent tous la chaîne Linux"
+else
+	fail "harnais Node/npm sans garde préalable : ${harnais_non_proteges[*]:-aucun harnais découvert}"
 fi
 
 echo
