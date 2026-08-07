@@ -413,6 +413,32 @@ s'ajoutent, elles ne les remplacent pas.
   sort du cadre est un contrôle qui **cache** une option, ce que le §7 admet pour un tableau ou un
   board — dont on sait qu'ils défilent — mais pas pour quatre bascules.
 
+### 5.12 Connexion et identité de session — `CRM-011`
+
+L'écran de connexion est une surface autonome, sans barre latérale ni onglets : tant qu'aucune
+session n'existe, ces repères ne contiennent que le refus anonyme et détournent de l'action utile.
+
+- Fond `--color-bg`, carte `--color-surface` de largeur maximale correspondant à un formulaire
+  court, `--radius-lg`, bordure `--color-border` et ombre de carte existante. Aucun nouveau jeton.
+- Nom du produit, titre H1 « Se connecter », phrase courte expliquant que l'accès est réservé aux
+  comptes invités, puis les deux champs du §5.7 et un bouton primaire sur toute la largeur.
+- Aucun lien « créer un compte » : l'inscription libre est refusée par le serveur. Aucun bouton
+  inerte « mot de passe oublié » tant que son parcours d'interface n'est pas livré.
+- L'erreur se place entre les champs et l'action, dans une surface `--color-danger-soft`, texte
+  `--color-danger-on-soft`, avec l'icône Lucide `TriangleAlert` et `role="alert"`. Elle ne déplace
+  pas le titre et reste lisible quand le texte gagne 40 %.
+- À partir de 768 px, la carte reste centrée dans les deux axes ; sous ce palier, elle occupe la
+  largeur disponible avec 16 px de marge et reste alignée en haut pour que le clavier virtuel ne
+  masque pas l'action.
+- L'en-tête connecté place l'adresse de session en texte secondaire puis l'action discrète
+  « Se déconnecter ». Sous 768 px, l'adresse passe en `sr-only` avant le titre de route ; l'action
+  reste une cible d'au moins 40 px avec un libellé accessible complet.
+- La restauration initiale de session emploie une carte squelette de même forme que l'écran de
+  connexion. Aucun spinner plein écran (§5.8).
+
+La couleur n'indique jamais seule un refus, tous les champs portent leur libellé visible, et
+l'ordre de tabulation suit l'ordre visuel : email, mot de passe, action.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

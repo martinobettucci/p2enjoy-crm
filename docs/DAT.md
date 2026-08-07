@@ -86,11 +86,11 @@ flowchart LR
 
 React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 
-- Authentification via `supabase-js` (GoTrue). **La persistance de la session n'est pas
-  tranchée** : cette ligne annonçait « session persistée par la bibliothèque », ce que
-  `CLAUDE.md` §11 n'autorise pas sans consentement explicite, et ce que contredit d'ailleurs le
-  client réellement livré (voir « Livré à ce jour » ci-dessous). Contradiction consignée en
-  **INC-022**, en attente d'arbitrage : elle doit être tranchée avant l'écran de connexion.
+- Authentification via `supabase-js` (GoTrue). L'arbitrage de persistance est rendu par
+  `docs/SPEC-auth.md` §9 : **`sessionStorage` uniquement**, limité à l'onglet, avec repli mémoire
+  si ce stockage est indisponible. Le défaut `localStorage` de la bibliothèque n'est jamais
+  employé. Ce contrat relève de `CRM-011` et refermera INC-021 et INC-022 lorsque ses preuves
+  seront livrées.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.
@@ -184,8 +184,8 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 Le build de production est produit **sur l'hôte** par `npm run build` et servi par Caddy : aucune
 image de production n'est fabriquée pour des fichiers statiques.
 
-Restent dus : l'écran de connexion, qu'aucune unité ne porte
-(`docs/INCONSISTENCY_REPORT.md`, INC-021), et le reste du métier — `CRM-030` et suivantes.
+Reste dû dans l'état documentaire présent : l'implémentation de l'écran de connexion désormais
+rattaché à `CRM-011` (`docs/SPEC-auth.md` §9), puis le reste du métier — `CRM-051` et suivantes.
 
 **Conséquence devenue structurante, et qui déborde `CRM-020` puis `CRM-021`.** Depuis que `tracks`
 et `channels` portent des politiques RLS, le produit sait servir de la donnée métier à un membre du

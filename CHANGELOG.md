@@ -15,6 +15,14 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification du parcours utilisateur authentifié** — reprise de `CRM-011`,
+  `docs/SPEC-auth.md` §9, écrite avant le code. L'écran de connexion est rattaché à l'unité qui
+  porte déjà connexion et déconnexion ; la session est limitée à `sessionStorage`, avec repli
+  mémoire, jamais au `localStorage`. La preuve exigée va jusqu'aux vraies actions du chunk 3 :
+  commentaire publié et card déplacée depuis l'interface, effets relus par l'API, plus le refus du
+  `viewer`. INC-021 et INC-022 portent l'arbitrage et restent ouverts jusqu'à l'exécution de ces
+  preuves.
+
 - **Spécification de l'infrastructure mail de développement** — `CRM-050`,
   `docs/SPEC-mail-subsystem.md` §11, écrite **après mesure sur des conteneurs réellement démarrés**
   et avant toute ligne de code. L'unité tenait en quatre lignes de backlog ; le document dit

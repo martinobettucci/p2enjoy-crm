@@ -221,3 +221,92 @@ anonyme.
 3. **Durée de vie des liens d'invitation et de réinitialisation** : `GOTRUE_MAILER_OTP_EXP` vaut
    24 heures par défaut. La valeur n'a pas été modifiée, et son expiration n'a **pas** été mesurée
    — la mesurer exigerait de manipuler le temps de l'instance.
+
+---
+
+## 9. Parcours de connexion de la webapp — rattachement à `CRM-011`
+
+Contrat écrit le 2026-08-07 **avant la première ligne de code**, après constat que les écrans du
+chunk 3 ne sont démontrés qu'avec des réponses réseau substituées et qu'aucun utilisateur réel ne
+peut atteindre les données que le backend lui consent. Il tranche INC-021 et INC-022 selon
+l'option la plus étroite : l'écran rejoint l'unité qui porte déjà la connexion et la déconnexion,
+et la session reste limitée à l'onglet.
+
+### 9.1 Écran et navigation
+
+- `/connexion` est une route publique, hors de la coquille métier. Elle porte le nom du produit,
+  un titre unique, un champ email, un champ mot de passe et l'action primaire « Se connecter ».
+- Toute page métier reste consultable sans session afin de conserver ses états de refus et de
+  vide réels. Son en-tête offre alors « Se connecter » ; ce lien mémorise **dans l'état du
+  routeur**, jamais dans un stockage, l'adresse interne à rouvrir après succès.
+- Après une connexion réussie, l'utilisateur revient à cette adresse, ou à `/` lorsqu'il est
+  arrivé directement sur `/connexion`. Une adresse externe n'est jamais acceptée comme retour.
+- Un utilisateur déjà connecté qui ouvre `/connexion` revient à `/`.
+- L'initialisation de l'authentification précède le montage des lectures métier : une session en
+  cours de restauration ne doit jamais provoquer une première vague de requêtes anonymes.
+
+### 9.2 Session limitée à l'onglet
+
+La session Supabase est persistée dans **`sessionStorage`**, et nulle part ailleurs :
+
+- un rechargement dans le même onglet conserve la session ;
+- fermer l'onglet la supprime selon le contrat du navigateur ;
+- aucun `localStorage`, cookie non essentiel ni traceur n'est ajouté ;
+- si `sessionStorage` est indisponible, le client se replie sur une mémoire de processus : la
+  connexion fonctionne, mais ne survit pas au rechargement ;
+- le rafraîchissement automatique du jeton reste actif pendant la session, conformément au §3.5.
+
+Ce choix relève de la catégorie 2 de `CLAUDE.md` §11 : préférence et état nécessaires limités à
+la session, sans consentement supplémentaire. Il referme l'arbitrage d'INC-022 sans adopter la
+persistance transverse que le défaut de `supabase-js` aurait placée dans `localStorage`.
+
+### 9.3 États, erreurs et accessibilité
+
+- Pendant la restauration initiale, un état de chargement sémantique est annoncé ; aucun contenu
+  métier trompeur n'est rendu dessous.
+- Les deux champs possèdent un libellé visible, `autocomplete="email"` et
+  `autocomplete="current-password"`. Le formulaire se soumet au clavier.
+- L'action est désactivée pendant l'envoi et ne peut pas ouvrir deux connexions concurrentes.
+- `invalid_credentials`, une adresse inconnue et tout autre refus d'identifiants rendent le **même
+  message générique**. L'interface ne réintroduit pas l'énumération que GoTrue évite au §3.4.
+- Une panne réseau est distinguée d'un refus : elle invite à réessayer sans prétendre que les
+  identifiants sont faux. Le mot de passe reste dans le champ pour cette reprise, mais n'est jamais
+  journalisé ni copié ailleurs.
+- L'erreur est portée par `role="alert"`, associée au formulaire, et le focus revient sur le champ
+  email après un refus.
+
+### 9.4 Profil et déconnexion
+
+Une session ouverte ajoute dans l'en-tête l'adresse du compte et l'action « Se déconnecter ».
+L'adresse est issue de la session GoTrue, jamais d'une lecture de `profiles` — cette table reste
+en refus par défaut (INC-014). Sous le petit palier, l'adresse peut être visuellement masquée mais
+le libellé accessible de l'action reste complet.
+
+La déconnexion appelle le véritable `signOut` de GoTrue, vide la session d'onglet, puis mène à
+`/connexion`. Un échec est annoncé ; l'interface ne prétend pas que la session est fermée tant que
+le client ne l'a pas confirmé.
+
+### 9.5 Preuves qui rendent enfin les actions opposables
+
+| Niveau | Preuve exigée |
+|---|---|
+| Unitaire | stockage limité à `sessionStorage`, repli mémoire, états de session, message générique, double soumission empêchée |
+| E2E UI réel | mauvais mot de passe refusé ; compte seedé connecté depuis le formulaire ; rechargement conservant la session ; déconnexion ramenant à `/connexion` |
+| Parcours utilisateur réel | après connexion par l'écran, lecture des tracks et channels seedés **sans substitution réseau**, publication d'un commentaire et déplacement d'une card par le menu du board ; effet relu directement par l'API |
+| Autorisations | le même geste avec le `viewer` est refusé par le backend ; l'interface rend ce refus sans perdre la saisie ou l'état précédent |
+| Visuel | écran de connexion et produit chargé observés aux quatre paliers ; erreurs, focus, textes longs et absence de débordement vérifiés |
+
+Les données créées par une preuve sont identifiées par un jeton propre au scénario et supprimées
+en sortie. Une preuve de déplacement crée sa propre card : elle ne déplace jamais une card du seed,
+dont la stabilité appartient à `CRM-046`.
+
+### 9.6 Hors périmètre inchangé
+
+- L'invitation depuis le produit reste ouverte en INC-015 : la webapp ne reçoit jamais la clé de
+  service.
+- La récupération de mot de passe reste prouvée hors interface au §7 ; cette extension ne crée
+  pas un demi-parcours dont le lien de retour ne saurait pas encore définir le nouveau mot de
+  passe.
+- Les politiques de `profiles`, `workspaces` et `workspace_members` restent ouvertes en INC-014.
+  Leur absence peut laisser le contexte d'espace de travail sans nom ; elle ne doit ni bloquer ni
+  simuler la lecture des tracks, channels et cards que leurs propres politiques consentent.

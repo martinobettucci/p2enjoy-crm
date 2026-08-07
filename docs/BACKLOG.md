@@ -494,6 +494,12 @@ dans Inbucket ; captures observées.
       interface** sur les vingt scénarios de `docs/SPEC-auth.md` §7 — ce que `CLAUDE.md` §10 exige
       de toute façon, l'interface n'ayant jamais valeur de preuve.
       **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [ ] **Arbitrage rendu le 2026-08-07, implémentation due dans cette unité.** L'écran de connexion,
+      la déconnexion et la session limitée à l'onglet sont rattachés à `CRM-011`, selon
+      `docs/SPEC-auth.md` §9 et `docs/DESIGN_SYSTEM.md` §5.12. La preuve exigée ne s'arrête pas au
+      formulaire : un compte seedé doit lire les vraies données, publier un commentaire et
+      déplacer une card par l'écran, sans substitution réseau, puis l'effet doit être relu par
+      l'API. Le statut reste `[~]` tant que ces parcours et leurs captures ne sont pas livrés.
 - [ ] **L'invitation n'est pas un parcours produit.** Elle exige la clé de service : c'est une
       opération d'**exploitation**. Le composant qui permettrait à un administrateur de workspace
       d'inviter depuis le produit n'existe pas et n'est rattaché à aucune unité — **INC-015, en

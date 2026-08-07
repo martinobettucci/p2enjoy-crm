@@ -258,10 +258,15 @@ configuration** — elle ne démarre pas dans un état muet.
 
 ### 6.2 Session
 
-L'unité ne livre **aucun parcours de connexion**. Le client est donc créé avec
-`persistSession: false` et `autoRefreshToken: false` : aucune session n'est écrite sur l'appareil,
-ce qui est la seule posture compatible avec `CLAUDE.md` §11 en l'absence de consentement recueilli.
-L'arbitrage de la persistance de session revient à l'unité qui livrera la connexion.
+`CRM-007` n'a livré aucun parcours de connexion et a donc créé le client avec
+`persistSession: false` et `autoRefreshToken: false`. `CRM-011` porte désormais le contrat qui
+succède à cette posture provisoire (`docs/SPEC-auth.md` §9) : session dans **`sessionStorage`**,
+rafraîchissement automatique actif, et repli en mémoire si le stockage de l'onglet est
+indisponible. Aucun `localStorage`, cookie non essentiel ni traceur n'est introduit.
+
+La restauration de cette session précède les lectures du §6.3. L'état du routeur peut retenir
+l'adresse métier demandée pendant le passage par `/connexion`, mais cette adresse n'est jamais
+persistée et ne peut pas désigner une origine externe.
 
 ### 6.3 Ce que la coquille lit
 

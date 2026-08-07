@@ -7536,3 +7536,41 @@ sans anomalie, `npm run test:unit` 488 tests, et les preuves de `CRM-050` sont r
 **Un bénéfice imprévu de cette destruction** : le provisionnement des boîtes a été prouvé **à
 froid**, sur un volume RocksDB inexistant. La pile complète remonte en **33 secondes**, les trois
 boîtes sont recréées, et rien n'exige d'intervention manuelle.
+
+## 2026-08-07 — `CRM-011` repris : rendre les gestes du chunk 3 praticables par un utilisateur
+
+### Décision 243 — L'écran de connexion rejoint l'authentification, et la session ne dépasse pas l'onglet
+
+**Le constat.** Les scénarios d'interface de `CRM-041`, `CRM-043` et `CRM-047` le disent eux-mêmes :
+leurs écrans chargés utilisent des réponses réseau substituées. Sans substitution, la webapp
+appelle avec la clé anonyme, reçoit zéro ligne de la RLS et affiche « Track introuvable ». La base
+sait déplacer une card et publier un commentaire avec les vrais jetons ; aucun utilisateur ne peut
+atteindre ces gestes depuis le produit. INC-021 n'est donc plus seulement une dette de preuve :
+c'est la frontière entre une démonstration d'interface et un CRM utilisable.
+
+**L'arbitrage.** La demande du responsable est explicite : vérifier qu'un utilisateur peut
+effectivement accomplir les actions implémentées. Parmi les trois options d'INC-021, l'écran est
+rattaché à `CRM-011`. Cette unité porte déjà connexion, déconnexion et leur Definition of Done ;
+créer une quatrième unité après dix-neuf unités bloquées aurait ajouté un nom sans clarifier une
+responsabilité. `CRM-007` reste la coquille, et n'est pas élargie rétroactivement.
+
+**La persistance.** INC-022 est tranchée par `sessionStorage`, catégorie 2 de `CLAUDE.md` §11. Une
+session survit au rechargement de son onglet — condition minimale pour travailler — puis disparaît
+avec lui. Le défaut `localStorage` de `supabase-js` n'est pas accepté. Si le stockage est refusé
+par le navigateur, un repli mémoire préserve la connexion courante sans inventer de persistance.
+
+**La preuve qui change de nature.** Un test du formulaire ne suffit pas. Le contrat exige deux
+gestes déjà livrés : publier un commentaire et déplacer une card depuis le board, après connexion
+par l'écran, contre la vraie API, puis relire l'effet hors interface. Le déplacement crée sa propre
+card de test et la nettoie ; il ne transforme jamais les données stables de `CRM-046`. Le `viewer`
+exerce le refus réel, parce qu'une action qui réussit avec l'administratrice sans preuve du refus
+ne suffit pas à démontrer le contrôle d'accès.
+
+**Ce qui n'est pas absorbé par cette décision.** L'invitation depuis le produit reste INC-015 :
+elle exige un composant serveur détenant la clé de service. La récupération de mot de passe reste
+prouvée hors interface tant que son parcours complet n'est pas spécifié. Les politiques des tables
+d'identité restent INC-014 ; le nom du workspace peut donc rester absent, sans bloquer les objets
+métier dont les politiques existent.
+
+**Ordre tenu.** `docs/SPEC-auth.md` §9, `docs/DESIGN_SYSTEM.md` §5.12, le DAT, le backlog et les
+deux incohérences sont mis à jour et committés avant la première ligne de code de l'écran.

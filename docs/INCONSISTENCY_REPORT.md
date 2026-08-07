@@ -1844,6 +1844,13 @@ de rédaction — elle laisse chaque unité à son objet — mais la décision n
 Tant qu'elle n'est pas prise, `CRM-011` reste `[~]` avec sa preuve d'E2E manquante, et la webapp
 reste anonyme.
 
+**Arbitrage rendu le 2026-08-07.** La demande explicite de rendre les actions implémentées
+effectivement praticables par un utilisateur lève l'attente : l'option 1 est retenue, donc l'écran
+rejoint `CRM-011`, dont la Definition of Done le présuppose déjà. Le contrat est écrit dans
+`docs/SPEC-auth.md` §9 avant le code. Le point reste dans « Ouverts » jusqu'à ce que la connexion,
+la déconnexion et au moins deux écritures métier soient prouvées depuis l'interface réelle ; il
+sera déplacé dans « Clos » avec ces preuves, jamais sur la seule intention.
+
 **Lié à :** INC-015 (invitation sans composant), INC-020 (build dû par `CRM-007`).
 
 ---
@@ -1891,6 +1898,12 @@ connexion ne soit écrit, puis corriger `docs/DAT.md` §3.1 :
 
 Cette contradiction est liée à **INC-021** : c'est la même unité manquante — l'écran de connexion —
 qui les porte toutes les deux.
+
+**Arbitrage rendu le 2026-08-07.** L'option 2 est retenue : session dans `sessionStorage`, limitée
+à l'onglet, avec repli mémoire lorsque ce stockage n'est pas disponible. Le contrat opposable est
+`docs/SPEC-auth.md` §9.2 et le DAT ne présente plus la persistance par défaut de la bibliothèque
+comme un acquis. Le point reste ouvert jusqu'à la preuve qu'aucune session n'est écrite dans
+`localStorage` et qu'un rechargement du même onglet conserve bien la session.
 
 ---
 
