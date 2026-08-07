@@ -8704,11 +8704,12 @@ identifier un binaire Windows hérité dans WSL, ni à activer la version déjà
 Le shell parent n'est jamais modifié. Les commandes `npm run …` exécutées directement restent
 précédées de `nvm use` dans la documentation d'un poste géré par NVM.
 
-**Preuve exigée avant fermeture.** Une preuve isolée doit fournir au résolveur un `PATH` qui ne
-contient qu'un faux `npm` Windows et un arbre NVM jetable : le couple Linux compatible doit être
-sélectionné. Les cas déjà conforme, version majeure incorrecte et absence complète doivent aussi
-être exercés. Le harnais froid complet ne sera rejoué qu'après cette preuve ; ses dégradations ne
-pourront donc plus être vertes sur une panne commune de Node.
+**Preuve exigée avant fermeture.** Une preuve isolée doit refuser un chemin Windows littéral puis
+exercer un couple déjà conforme, des versions Node/npm incompatibles avec un arbre NVM jetable et
+l'absence complète d'outil. Le rejeu depuis le shell WSL réel doit, lui, partir du `npm.exe`
+effectivement hérité et sélectionner le couple Linux compatible. Le harnais froid complet ne sera
+rejoué qu'après ces preuves ; ses dégradations ne pourront donc plus être vertes sur une panne
+commune de Node.
 
 ---
 
@@ -8730,3 +8731,17 @@ Le harnais extrait les deux valeurs du résumé réel de `run-sql-tests.sh`, ref
 duplication du résumé, puis compare chaque nombre à son attendu. Le texte vert reprend les valeurs
 mesurées, jamais une constante narrative. La régression est prouvée par l'exécution froide complète
 qui doit afficher `19 fichiers, 1405 assertions` avant les projets Playwright.
+
+**Résultat de fermeture de `CRM-008`.** La pile a été reconstruite par `./resetMe.sh --yes`, sans
+réutiliser la base précédente. La transition « Démarrer la réalisation » porte un champ requis
+dans le workflow global et un dans sa copie de track : le défaut historique du seed ne pollue pas
+ce verdict froid. Depuis le même shell WSL qui choisissait `npm.exe`, le résolveur retient Node
+`v24.14.1` / npm `11.11.0` Linux ; sa preuve isolée rend 4/4.
+
+Le rejeu complet affiche ensuite **19 fichiers / 1405 assertions**, **410 scénarios API**, **144
+parcours UI Chromium** avec la fixture qui interdit `warning`, `error` et `pageerror`, **16
+scénarios mail**, **525 tests Vitest**, quatre compilations TypeScript et le rapport HTML réellement
+servi en HTTP 200. Les six dégradations échouent pour leur cause propre, la politique RLS et les
+fichiers temporaires disparaissent, puis SQL et API redeviennent verts. Verdict : **28 contrôles,
+aucune anomalie**. Les captures réécrites mécaniquement par Playwright ont été remises à leur
+version de référence puisque l'interface n'a pas changé. `CRM-008` passe `[x]`.

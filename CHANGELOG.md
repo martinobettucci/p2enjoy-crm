@@ -15,15 +15,13 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
-- **Le contrat de chaîne Node de `CRM-008` est désormais explicite avant son correctif.** Le
-  parcours réel sous WSL a sélectionné `npm.exe`, produit 10 anomalies et, surtout, donné de faux
-  `OK` aux dégradations parce que toute commande npm échouait déjà. La décision 278 impose un
-  Node Linux conforme à `.nvmrc`, un repli borné vers les installations NVM locales et une preuve
-  isolée avant de rejouer le harnais froid.
-- **Le second compteur SQL manquant de `CRM-008` est spécifié avant correction.** Le rejeu Node
-  sain a exécuté **19 fichiers / 1405 assertions**, tandis que le harnais affichait encore
-  « 3 fichiers » en dur et ne vérifiait que les assertions. La décision 279 fige les deux nombres
-  et impose leur extraction du résumé réel de `run-sql-tests.sh`.
+- **`CRM-008` est close sur une base froide et depuis le vrai shell WSL.** Le harnais refuse
+  désormais `npm.exe`, résout Node **v24.14.1** / npm **11.11.0** dans les installations NVM
+  locales avant toute mutation et éprouve ce choix dans quatre environnements isolés. Son résumé
+  SQL n'affiche plus trois fichiers en dur : il extrait et vérifie **19 fichiers / 1405
+  assertions**. Rejeu complet : **28/28**, API **410**, UI Chromium **144** avec console sans
+  avertissement, erreur ni `pageerror`, mail **16**, Vitest **525**, quatre compilations et rapport
+  HTTP **200**, puis état SQL et RLS restauré.
 
 - **`CRM-009` est livrée de bout en bout.** Quatre gabarits transactionnels français sont servis
   à GoTrue par le Caddy interne commun `auth-templates`; invitation et récupération sont validées

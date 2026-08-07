@@ -3,20 +3,21 @@
 # @verifies docs/SPEC-test-harness.md §3 (exécuteur pgTAP), §4 (projets Playwright),
 #           §5 (rapport), §7 (preuves attendues)
 # @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 11)
-# @verifies docs/JOURNAL.md décisions 48 à 51, décision 79 (faux vert du plan pgTAP)
+# @verifies docs/JOURNAL.md décisions 48 à 51, décision 79 (faux vert du plan pgTAP),
+#           décision 278 (chaîne Node Linux prouvée avant toute dégradation)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-008` :
 #
 #   1. les prérequis sont réunis, et le script le dit plutôt que de mesurer autre chose ;
-#   2. `npm run test:sql` exécute les trois suites pgTAP et rend le compte attendu ;
-#   3. `npm run e2e:api` est vert sur ses treize scénarios, hors interface ;
+#   2. `npm run test:sql` exécute toutes les suites pgTAP et rend les deux comptes attendus ;
+#   3. `npm run e2e:api` est vert sur tous ses scénarios attendus, hors interface ;
 #   4. `npm run e2e:api` ne construit **ni ne sert** la webapp — mesuré en supprimant le build
 #      avant l'exécution et en constatant qu'il n'a pas été recréé ;
-#   5. `npm run e2e:ui` reste vert : le renommage du projet n'a rien cassé ;
-#   6. `npm run test:unit` reste vert ;
+#   5. `npm run e2e:ui` reste vert : le projet et la console stricte n'ont rien cassé ;
+#   6. `npm run test:unit` reste vert sur tous ses tests attendus ;
 #   7. `npm run typecheck` reste vert, les fichiers `e2e/` étant couverts par tsconfig.tools.json ;
 #   8. `npm run e2e:report` sert réellement le dernier rapport — interrogé en HTTP, pas supposé ;
-#   9. le harnais est **non complaisant** : sept dégradations réelles doivent le faire échouer,
+#   9. le harnais est **non complaisant** : six dégradations réelles doivent le faire échouer,
 #      dont la régression d'un faux vert **réel** de l'exécuteur (décision 79) ;
 #  10. tout ce qui a été altéré est restauré, et l'état final est **constaté**.
 #
@@ -30,6 +31,9 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
 
 DB_CONTAINER=p2enjoy-db
 SUITE_MUTABLE=supabase/tests/0003_seed_socle.test.sql
@@ -192,6 +196,7 @@ PORT_RAPPORT=9323
 # INC-046 est éprouvé à côté. Deux autres comptaient un CUMUL d'événements (décision 226).
 #
 # Valeurs MESURÉES, non déduites.
+FICHIERS_SQL_ATTENDUS=19
 ASSERTIONS_ATTENDUES=1405
 SCENARIOS_API=410
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
@@ -250,7 +255,6 @@ SCENARIOS_UI=144
 # Valeur MESURÉE, non déduite.
 SCENARIOS_MAIL=16
 
-TRAVAIL=$(mktemp -d)
 failures=0
 checks=0
 
@@ -268,7 +272,6 @@ menage() {
 	[ -n "${PID_RAPPORT:-}" ] && kill "$PID_RAPPORT" 2>/dev/null || true
 	rm -rf "$TRAVAIL"
 }
-trap menage EXIT
 
 echo
 echo "Preuves de CRM-008 — harnais de tests"
@@ -277,6 +280,25 @@ echo
 # --- 1. Prérequis ------------------------------------------------------------------------------
 
 echo "1. Prérequis"
+
+# Cette validation précède même le répertoire temporaire : aucune dégradation ne peut être
+# déclarée correctement refusée si l'exécuteur commun était déjà inutilisable (décision 278).
+if node_toolchain_prepare "$PWD/.nvmrc"; then
+	ok "Node $NODE_TOOLCHAIN_NODE_VERSION / npm $NODE_TOOLCHAIN_NPM_VERSION Linux via $NODE_TOOLCHAIN_SOURCE ($NODE_TOOLCHAIN_NODE_PATH)"
+else
+	exit 1
+fi
+
+TRAVAIL=$(mktemp -d)
+trap menage EXIT
+
+if scripts/verify-node-toolchain.sh >"$TRAVAIL/node-toolchain.log" 2>&1; then
+	ok "résolution Node éprouvée en environnement isolé (4 contrôles)"
+else
+	fail "la preuve isolée de résolution Node échoue"
+	sed 's/^/        /' "$TRAVAIL/node-toolchain.log" | tail -n 20
+	exit 1
+fi
 
 if [ ! -f .env ]; then
 	echo "ERREUR : fichier .env absent. Lancez ./runDev.sh." >&2
@@ -303,11 +325,18 @@ echo
 echo "2. npm run test:sql — suites pgTAP"
 
 if npm run --silent test:sql >"$TRAVAIL/sql.log" 2>&1; then
-	assertions=$(grep -oE '[0-9]+ assertions, aucune anomalie' "$TRAVAIL/sql.log" | grep -oE '^[0-9]+' || echo 0)
-	if [ "${assertions:-0}" -eq "$ASSERTIONS_ATTENDUES" ]; then
-		ok "npm run test:sql : 3 fichiers, $assertions assertions, aucune anomalie"
+	resumes=$(grep -cE '[0-9]+ fichiers, [0-9]+ assertions, aucune anomalie' "$TRAVAIL/sql.log" || true)
+	resume=$(grep -oE '[0-9]+ fichiers, [0-9]+ assertions, aucune anomalie' "$TRAVAIL/sql.log" | tail -n 1 || true)
+	fichiers=$(printf '%s' "$resume" | grep -oE '^[0-9]+' || echo 0)
+	assertions=$(printf '%s' "$resume" | grep -oE '[0-9]+ assertions' | grep -oE '^[0-9]+' || echo 0)
+	if [ "$resumes" -ne 1 ]; then
+		fail "npm run test:sql vert mais son résumé apparaît $resumes fois au lieu d'une"
+		sed 's/^/        /' "$TRAVAIL/sql.log" | tail -n 20
+	elif [ "${fichiers:-0}" -eq "$FICHIERS_SQL_ATTENDUS" ] \
+		&& [ "${assertions:-0}" -eq "$ASSERTIONS_ATTENDUES" ]; then
+		ok "npm run test:sql : $fichiers fichiers, $assertions assertions, aucune anomalie"
 	else
-		fail "npm run test:sql vert mais $assertions assertions au lieu de $ASSERTIONS_ATTENDUES"
+		fail "npm run test:sql vert mais $fichiers fichiers / $assertions assertions au lieu de $FICHIERS_SQL_ATTENDUS / $ASSERTIONS_ATTENDUES"
 	fi
 else
 	fail "npm run test:sql échoue"
@@ -447,7 +476,7 @@ PID_RAPPORT=
 # n'échoue jamais ne prouve rien de ce qu'il affirme.
 
 echo
-echo "9. Non-complaisance : sept dégradations réelles doivent faire échouer le harnais"
+echo "9. Non-complaisance : six dégradations réelles doivent faire échouer le harnais"
 
 # 9.1 — une assertion volontairement fausse dans une suite pgTAP réelle.
 sed -i "s/'P2Enjoy SAS',/'P2Enjoy SARL',/" "$SUITE_MUTABLE"

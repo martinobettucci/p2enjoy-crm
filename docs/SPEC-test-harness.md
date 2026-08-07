@@ -376,9 +376,14 @@ sont affichés avant les preuves.
 
 Ce contrôle est une condition de validité des dégradations volontaires : une commande rouge parce
 que `npm` lui-même est inexécutable ne prouve pas qu'une assertion fausse, une politique
-permissive ou un test Vitest faux ont été détectés. Une preuve isolée force donc un faux `npm`
-Windows, un arbre NVM jetable, une version incompatible et l'absence d'outil avant le rejeu
-complet.
+permissive ou un test Vitest faux ont été détectés. La preuve isolée refuse un chemin Windows
+littéral, puis force des couples incompatibles, un arbre NVM jetable et l'absence d'outil. Le
+rejeu depuis le shell WSL réel prouve en plus le remplacement effectif de `npm.exe`.
+
+**Mesuré à la fermeture, le 2026-08-07.** Depuis le shell WSL qui ne présentait que le npm
+Windows, le harnais sélectionne Node `v24.14.1` et npm `11.11.0` sous NVM avant tout répertoire
+temporaire. `scripts/verify-node-toolchain.sh` rend **4 contrôles sans anomalie** : chemin Windows,
+couple courant conservé, repli qui écarte Node 23 puis npm 10, et absence refusée avec `nvm use`.
 
 ### 7.2 Parcours du harnais
 
@@ -404,10 +409,18 @@ complet.
    - une **politique RLS permissive** réellement posée sur `workspaces` pour `anon` fait échouer
      `npm run e2e:api` : c'est la preuve que le projet `api` détecte une régression d'autorisation,
      et non qu'il constate une base vide ;
-   - un **test unitaire volontairement faux** fait échouer `npm run test:unit`.
+   - un **test unitaire volontairement faux** fait échouer `npm run test:unit` ;
+   - une suite dont le plan est tenu ligne pour ligne mais dont les dernières assertions sont
+     annulées par savepoint fait échouer `npm run test:sql` sur le diagnostic propre de pgTAP.
 9. **Restauration constatée** : la politique posée est retirée, l'absence de toute politique
    résiduelle est vérifiée en base, et les fichiers altérés sont identiques à leur version
    versionnée — constaté, pas supposé.
+
+**Verdict de fermeture, base froide du 2026-08-07.** `scripts/verify-harness.sh` rend **28
+contrôles sans anomalie** : 19 fichiers / 1405 assertions pgTAP, 410 scénarios API, 144 scénarios
+UI Chromium avec console stricte, 16 scénarios mail, 525 tests Vitest, quatre compilations
+TypeScript et rapport servi en HTTP 200. Les dégradations échouent pour leur cause propre ; le
+dernier rejeu SQL et API confirme leur restauration.
 
 ## 8. Ce qui est dû, et par qui
 
@@ -431,6 +444,7 @@ une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3
 | `npm run e2e:api` | Playwright, projet `api` — contrats et refus, hors interface | pile démarrée, seed appliqué |
 | `npm run e2e:ui` | Playwright, projet `ui` — parcours et captures | pile démarrée |
 | `npm run e2e:report` | sert le dernier rapport HTML | une exécution E2E préalable |
+| `scripts/verify-node-toolchain.sh` | éprouve la sélection Linux de Node/npm dans quatre environnements isolés | aucun |
 | `scripts/verify-harness.sh` | rejoue l'ensemble des preuves de l'unité | pile démarrée, seed appliqué ; Node Linux conforme à `.nvmrc`, résolu automatiquement parmi les installations NVM locales |
 
 ## 10. Limites connues

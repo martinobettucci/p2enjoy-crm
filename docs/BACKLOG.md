@@ -1346,7 +1346,7 @@ corrigée et le parcours destinataire complète le contrat initial.
       chacune reste à reprendre, sa preuve manquante réellement exécutée, et son état révisé sur
       mesure. Cette dépendance n'empêche plus leur audit individuel.
 
-### CRM-008 — Harnais de tests `[~]`
+### CRM-008 — Harnais de tests `[x]`
 pgTAP, Vitest et Playwright (`api`, `ui`, `mail`) ; pytest naît avec `mail-sync` en `CRM-051`.
 **DoD** : chaque commande du `README.md` §7 dont le sujet existe s'exécute ; un test volontairement
 faux échoue bien. Périmètre arbitré par le responsable — décision 277, INC-023, option 2.
@@ -1388,8 +1388,8 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       malgré le renommage du projet et la déclaration conditionnelle du serveur ;
       `npm run test:unit` reste à **96 tests** ; `npm run typecheck` reste vert sur les quatre
       projets, les nouveaux fichiers `e2e/` étant couverts par `tsconfig.tools.json`.
-- [x] Harnais de preuves rejouable `scripts/verify-harness.sh` : **25 contrôles, aucune anomalie**,
-      et **non complaisant, éprouvé par sept dégradations réelles** — une assertion fausse dans une
+- [x] Harnais de preuves rejouable `scripts/verify-harness.sh` : **28 contrôles, aucune anomalie**,
+      et **non complaisant, éprouvé par six dégradations réelles** — une assertion fausse dans une
       suite pgTAP réelle, un plan non tenu **sans** `finish()`, une erreur SQL, une **politique RLS
       permissive réellement posée** sur `workspaces`, un test unitaire volontairement faux, et une
       suite au **plan tenu ligne pour ligne mais tronquée pour pgTAP**. Chacune doit faire échouer
@@ -1442,19 +1442,20 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       recompté comme une dette de `CRM-008`.
 - [x] **INC-023 est arbitrée, option 2.** La DoD est restreinte aux commandes dont le sujet existe ;
       l'ordre du master plan ne dépend plus d'une unité située deux chunks plus loin.
-- [ ] **Fermeture à mesurer après arbitrage** : repartir d'une base locale froide, rejouer toutes
-      les commandes du périmètre actuel et les dégradations volontaires du harnais. L'arbitrage ne
-      remplace pas ce verdict d'exécution.
-- [ ] **Le parcours utilisateur ne doit pas confondre `npm.exe` et Node Linux** (décision 278).
+- [x] **Fermeture mesurée après arbitrage sur une base locale froide** : `resetMe.sh --yes` rend
+      `0`; la transition « Démarrer la réalisation » porte exactement un champ requis dans le
+      workflow global **et** sa copie de track. Le rejeu actuel rend 19 fichiers / 1405 assertions
+      pgTAP, 410 scénarios API, 144 UI Chromium avec console stricte, 16 mail, 525 Vitest, quatre
+      compilations, rapport HTTP 200, puis **28 contrôles sans anomalie** après les dégradations et
+      leur restauration.
+- [x] **Le parcours utilisateur ne confond plus `npm.exe` et Node Linux** (décision 278).
       Reproduit depuis le shell WSL réel : 26 contrôles, 10 anomalies, et des dégradations
-      faussement `OK` parce que l'exécuteur commun était déjà cassé. Avant toute mutation, le
-      harnais doit valider `.nvmrc`, sélectionner si nécessaire une installation NVM locale,
-      refuser un binaire sous `/mnt/<lecteur>/` et prouver ces branches dans un environnement
-      isolé.
-- [ ] **Le résumé SQL ne doit plus annoncer trois fichiers en dur** (décision 279). L'exécution
-      froide réelle en découvre **19** pour **1405 assertions** ; le harnais vérifie aujourd'hui
-      le second compteur mais ment sur le premier. Il doit extraire les deux du résumé unique de
-      `run-sql-tests.sh` et les comparer à deux valeurs attendues indépendantes.
+      faussement `OK` parce que l'exécuteur commun était déjà cassé. Le correctif sélectionne
+      Node v24.14.1 / npm 11.11.0 Linux sous NVM avant toute mutation ; la preuve isolée couvre
+      quatre branches et rend 4/4.
+- [x] **Le résumé SQL n'annonce plus trois fichiers en dur** (décision 279). L'exécution froide
+      réelle en découvre **19** pour **1405 assertions** ; le harnais extrait les deux valeurs de
+      l'unique résumé de `run-sql-tests.sh` et les compare à deux attendus indépendants.
 
 *DoD adaptée, écarts explicites.* **Aucune migration, aucune mise à jour du seed** : un harnais de
 tests n'introduit ni table, ni statut, ni flux ; il consomme le seed socle de `CRM-005` sans le

@@ -313,7 +313,9 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 ## 7. Tests
 
 Sur un poste NVM, exécuter d'abord `nvm use` comme indiqué au §3. Les commandes `npm run …`
-directes utilisent toujours la chaîne Node du shell courant.
+directes utilisent toujours la chaîne Node du shell courant. `scripts/verify-harness.sh`, lui,
+valide sa chaîne avant toute dégradation et peut sélectionner une version compatible déjà
+installée par NVM sans modifier le shell parent.
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
@@ -376,6 +378,7 @@ scripts/verify-auth.sh         # GoTrue + contenu des emails transactionnels (CR
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
+scripts/verify-node-toolchain.sh # résolution Linux de Node/npm, sans pile             (CRM-008)
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
 scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)
@@ -395,6 +398,12 @@ scripts/verify-liste.sh        # vue liste : tri total, filtres, pagination, 416
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
 scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
 ```
+
+Le dernier rejeu froid de `scripts/verify-harness.sh` rend **28 contrôles sans anomalie**. Il
+sélectionne Node **v24.14.1** / npm **11.11.0** Linux depuis le shell WSL réel, puis vérifie 19
+fichiers pgTAP / 1405 assertions, 410 scénarios API, 144 parcours UI, 16 scénarios mail, 525 tests
+Vitest, les quatre compilations TypeScript et le rapport HTML servi en HTTP. Les parcours UI
+échouent sur tout `console.warn`, `console.error` ou `pageerror`.
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
 cours d'exécution, et crée ses propres conteneur et volumes jetables, détruits en sortant. Il
