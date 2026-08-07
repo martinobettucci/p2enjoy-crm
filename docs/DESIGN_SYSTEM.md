@@ -481,6 +481,10 @@ propre conteneur : la page ne défile jamais horizontalement.
 - **Aucun emoji** comme substitut d'icône dans l'application.
 - Pastille d'icône : carré `--radius-md`, fond doux de la couleur de catégorie, icône à la
   couleur pleine.
+- **Favicon du produit** : monogramme géométrique `P2`, carré arrondi `--color-brand`, lettre
+  blanche et chiffre `--color-accent`. Sa forme tient à 16 px, sans détail décoratif ni police
+  distante. Le SVG porte un titre accessible et le document HTML le référence explicitement : le
+  navigateur ne doit jamais tenter un `/favicon.ico` absent ni polluer la console d'un `404`.
 
 ## 10. Internationalisation
 

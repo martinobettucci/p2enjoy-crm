@@ -1145,7 +1145,7 @@ variable d'environnement — `docs/PROD_MIGRATIONS.md` est inchangé à dessein.
   et la compatibilité réelle ne devient mesurable qu'à `CRM-007`, où la chaîne complète est
   assemblée. À réexaminer à ce moment-là (décision 39).
 
-### CRM-007 — Squelette de la webapp `[x]`
+### CRM-007 — Squelette de la webapp `[~]`
 React + Vite + Tailwind, jetons du design system en variables CSS, mise en page barre latérale et
 onglets, états de chargement, d'erreur et vide.
 **DoD** : `docs/DESIGN_SYSTEM.md` §11 respecté (aucun hexadécimal hors jetons) ; captures aux
@@ -1218,6 +1218,11 @@ par `CRM-006`** (INC-020).
       volontairement un refus HTTP doivent d'abord vérifier son effet visible, puis consommer le
       message **exact** attendu ; aucun filtre global ni motif large ne peut cacher une anomalie.
       Suite complète mesurée : **142/142**, aucune anomalie console résiduelle.
+- [ ] **Régression révélée par Chromium 151 : favicon explicite.** Le navigateur demande
+      `/favicon.ico` lorsqu'aucun `link rel="icon"` n'existe ; `vite preview` rend `404` et chacun
+      des sept parcours `CRM-009` échoue grâce à la garde console ci-dessus. Le point d'entrée doit
+      référencer un SVG de marque servi avec le build, puis la suite complète doit revenir à zéro
+      anomalie. Contrat : `docs/SPEC-webapp.md` §3.1 et `docs/DESIGN_SYSTEM.md` §9.
 - [x] **Service `webapp` conteneurisé** livré : `runDev.sh` cesse de l'annoncer comme dû.
       `node:24-alpine` — **le prérequis Node 24 du dépôt y est exercé pour la première fois** :
       build, 96 tests et compilation rejoués verts dans le conteneur.

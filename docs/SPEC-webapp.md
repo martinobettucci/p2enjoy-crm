@@ -99,6 +99,7 @@ mesure est consignée : la migration est ouverte, elle n'est pas due par cette u
 ```
 webapp/
 ├── index.html                 point d'entrée Vite
+├── public/favicon.svg         monogramme P2 servi tel quel avec le build
 ├── vite.config.ts             configuration de build et de développement
 ├── tsconfig.json              configuration TypeScript de l'application
 ├── tsconfig.test.json         configuration TypeScript des tests unitaires
@@ -113,6 +114,12 @@ webapp/
     ├── lib/                   client Supabase, types générés, utilitaires d'accès aux données
     └── styles/tokens.css      **seul** fichier portant des valeurs hexadécimales
 ```
+
+Le point d'entrée déclare explicitement `favicon.svg` par `link rel="icon"`. Sans cette ligne,
+Chromium 151 demande spontanément `/favicon.ico` ; `vite preview` répond `404` et écrit une erreur
+dans la console avant même le montage de React. Le SVG carré reste lisible à 16 px, n'emploie que
+`brand`, `accent` et le blanc de la palette, et porte un titre accessible. Il est un fichier
+statique versionné, jamais une ressource distante ni une requête tolérée par le harnais.
 
 `src/features/` reste vide tant qu'aucun domaine métier n'est livré ; le répertoire n'est pas créé
 par anticipation.

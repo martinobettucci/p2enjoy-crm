@@ -8446,3 +8446,24 @@ le code à six chiffres et le lien du bon type avant de suivre ce lien. Le gabar
 livrés. `CRM-011` demeure le mécanisme GoTrue et ses preuves API hors interface. INC-016 ne sera
 close et `CRM-009` ne passera `[x]` qu'après exécution de toutes ces preuves et du parcours
 Playwright au clavier contre la pile réelle.
+
+---
+
+### Décision 270 — Une console propre inclut la ressource que le navigateur demande de lui-même
+
+**Défaut observé, pas supposé.** Le premier rejeu de `CRM-009` sous le Chromium 151 réellement
+installé fait échouer ses sept scénarios avant toute assertion métier : chaque page écrit
+`Failed to load resource: 404`. La trace Playwright donne l'URL exacte,
+`http://127.0.0.1:4173/favicon.ico`. Le point d'entrée ne déclare aucun favicon ; ce Chromium
+demande donc le chemin historique de lui-même. L'ancien binaire employé par la preuve 142/142 ne
+le demandait pas, ce qui explique que le défaut ait survécu sans rendre la garde complaisante.
+
+**Décision.** `webapp/index.html` référence un `public/favicon.svg` versionné. C'est un monogramme
+`P2` géométrique réduit à ce qui reste lisible à 16 px : carré arrondi bleu `brand`, lettre blanche,
+chiffre jaune `accent`. Aucun nouveau jeton, aucune police ni ressource distante. Le SVG porte son
+titre accessible et une trace `CRM-007` / `docs/DESIGN_SYSTEM.md` §9.
+
+**Pourquoi pas une tolérance.** Ajouter `404` à la liste des erreurs autorisées cacherait aussi
+une route ou un chunk réellement absent. Le défaut est une ressource manquante, donc la correction
+est de servir la ressource. `CRM-007` repasse `[~]` jusqu'au build et au rejeu console strict ; il
+ne retrouvera `[x]` qu'après preuve.
