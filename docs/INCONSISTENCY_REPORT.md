@@ -91,7 +91,23 @@ où le seed socle en portait neuf — est venu **après**.
 - `verify-board.sh`, `verify-liste.sh`, `verify-formulaire.sh` et `verify-webapp.sh` rendent
   « des classes citées n'existent pas dans le CSS produit ». Ce contrôle ne parle d'aucun volume de
   seed : il compare des classes utilitaires citées par le harnais au CSS réellement engendré par le
-  build. Sa cause n'est pas établie ici.
+  build.
+
+**Cause établie et correction décidée — décision 267.** La mesure du CSS produit sépare trois
+défauts réels d'un défaut du contrôleur :
+
+- `text-muted` et `placeholder:text-muted` demandent un jeton `muted` qui n'existe pas dans la
+  palette fermée ; le jeton sémantique existant est `text-3` ;
+- `sm:hidden` et `sm:inline` demandent un palier `sm` que le design system ne déclare pas ; le
+  premier palier autorisé est `md` ;
+- `before:content-['·']` est bien engendrée dans le CSS, mais le contrôleur n'échappe pas
+  l'apostrophe comme Tailwind dans son sélecteur ;
+- le contrôle des attributs visibles emploie en outre la plage non portable `À-ÿ`, que le `grep`
+  de l'environnement refuse avec `Invalid collation character`.
+
+Les composants passent aux jetons et paliers existants ; le contrôleur apprend l'échappement de
+l'apostrophe et emploie la classe POSIX `[[:alpha:]]`. La non-complaisance qui injecte une classe
+hors échelle reste obligatoire : le correctif ne peut donc pas rendre le garde-fou permissif.
 
 #### 2. Le rejeu séquentiel des harnais dégrade l'environnement qu'il mesure
 
@@ -122,8 +138,8 @@ mêmes conditions.
 
 1. **Réviser les garde-fous périmés** — trois lignes de volumes, plus le chemin du composant
    dissous par `CRM-044`. Mécanique, mais appartenant à quatre unités antérieures.
-2. **Établir la cause des classes CSS absentes**, qui touche quatre harnais et n'est pas un
-   compteur.
+2. ~~**Établir la cause des classes CSS absentes**~~ — **résolu par la décision 267** ; les causes
+   sont distinguées ci-dessus et leur correction est portée par le rejeu du harnais webapp.
 3. **Décider ce qu'est un rejeu de non-régression valable.** Soit chaque harnais est rendu
    réellement indépendant — base recréée avant chacun —, soit le dépôt cesse de promettre un rejeu
    global et nomme l'ordre, le coût et les précautions d'un balayage. L'état actuel donne une

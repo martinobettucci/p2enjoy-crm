@@ -8322,3 +8322,28 @@ priorité 2 sur priorité 8), et la compensation est en place et prouvée : l'or
 
 **L'entrée est close** : elle était ouverte « pour information », en attente de cette confirmation.
 
+---
+
+### Décision 267 — Le contrôle CSS distingue les classes absentes de son propre défaut
+
+**Mesure (INC-080).** Les quatre harnais web qui annonçaient des classes absentes mélangeaient
+deux catégories. `text-muted`, `placeholder:text-muted`, `sm:hidden` et `sm:inline` sont réellement
+impossibles à produire : la palette fermée expose `text-3`, pas `muted`, et les paliers fermés
+commencent à `md`, pas à `sm`. À l'inverse, `before:content-['·']` est présent dans le CSS sous le
+sélecteur échappé par Tailwind ; c'est le contrôleur qui ne protégeait pas l'apostrophe. Un second
+défaut du harnais écrivait `grep: Invalid collation character` parce qu'il employait la plage
+locale-dépendante `À-ÿ`.
+
+**Décision.** Les composants emploient les seuls jetons et paliers déclarés : `text-text-3`,
+`placeholder:text-text-3`, `md:hidden` et `md:inline`. Le contrôleur CSS échappe les apostrophes de
+la même façon que Tailwind, et le contrôle des attributs visibles remplace la plage fragile par la
+classe POSIX `[[:alpha:]]`.
+
+**Garde de non-complaisance conservée.** Le harnais continue d'injecter réellement `px-7`, classe
+hors de l'échelle fermée, puis exige que son propre contrôle échoue. Corriger un faux positif ne
+doit pas transformer la preuve en acceptation silencieuse.
+
+**Critère.** Après un vrai build, toutes les classes citées existent dans le CSS produit, la
+dégradation `px-7` est refusée et le contrôle d'internationalisation n'écrit aucun diagnostic de
+moteur. Les captures aux quatre paliers confirment visuellement que le changement de nom de jeton
+et de palier ne dégrade ni contraste ni navigation.
