@@ -8350,7 +8350,7 @@ et de palier ne dégrade ni contraste ni navigation.
 
 ---
 
-### Décision 267 — Une décision réinsérée n'est pas une décision appliquée : la passe de cohérence
+### Décision 268 — Une décision réinsérée n'est pas une décision appliquée : la passe de cohérence
 
 **Le problème.** Les dix-huit décisions du responsable réinsérées par la décision 246 étaient
 revenues dans `docs/JOURNAL.md`, et nulle part ailleurs. Or elles créent des unités, en rouvrent
