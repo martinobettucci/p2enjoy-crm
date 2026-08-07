@@ -2530,7 +2530,7 @@ troisième, sur `cards`, reste en place et deviendra rouge à `CRM-040`.
 
 ---
 
-### INC-032 — `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS interposé
+### INC-032 — `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS interposé — **CLOSE**
 
 **Nature :** chemin documenté inatteignable depuis le script de lancement.
 **Relevé le :** 2026-08-04, pendant l'intégration de `CRM-030` sur `main`.
@@ -2586,7 +2586,13 @@ vérifiées pendant un passage consacré à une troisième, et à toucher les pr
 **Lié à :** `CLAUDE.md` §3 (autonomie de l'environnement de développement), `CLAUDE.md` §14
 (démarrage des services locaux).
 
----
+**Arbitrage et clôture, 2026-08-07.** Le responsable a retenu l'option 1 sous `CRM-015`
+(décisions 255 et 280). `docker-compose.dev.yml` transporte maintenant le paquet PEM externe
+désigné par `NPM_CA_FILE` jusqu'au secret `npm_ca`; absent ou vide, `/dev/null` garde le build
+inerte. `./runDev.sh` aboutit réellement sans puis avec le CA de l'hôte, sans construction
+manuelle : scripts **80/80**, pile **50/50**, webapp **42/42**, harnais **28/28**. Aucun certificat
+n'est versionné ou conservé dans l'image. INC-032 et INC-042 décrivaient les deux observations du
+même défaut ; elles sont closes par la même livraison.
 
 ---
 

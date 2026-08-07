@@ -1508,6 +1508,7 @@ fichiers Compose** à partir de l'environnement.
 sur un poste sans proxy, **rien ne change** ; aucun certificat n'est versionné.
 
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 255, INC-042.
+Elle ferme également INC-032, première entrée qui avait mesuré le même échec de `runDev.sh`.
 
 - [x] **Le motif est mesuré, pas ressenti** : INC-042 en est à sa **onzième** occurrence. Le coût
       n'est pas du temps mais une **preuve perdue à chaque unité** — `./runDev.sh` n'a jamais été

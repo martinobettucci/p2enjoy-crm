@@ -22,7 +22,7 @@ d'exécuter le code attendu.
   secret, ni `cafile`, ni `.npmrc` non vide. `./runDev.sh` aboutit réellement dans les deux
   configurations. Preuves : scripts **80/80**, pile **50/50**, webapp **42/42**, harnais **28/28**
   dont UI **144/144** sans avertissement. Aucun certificat versionné, aucune opération de
-  production ; INC-042 est close.
+  production ; INC-032 et INC-042 sont closes.
 
 - **`CRM-008` est close sur une base froide et depuis le vrai shell WSL.** Le harnais refuse
   désormais `npm.exe`, résout Node **v24.14.1** / npm **11.11.0** dans les installations NVM
