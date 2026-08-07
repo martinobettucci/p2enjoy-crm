@@ -8672,3 +8672,40 @@ elle supprime seulement le double comptage qui rendait `CRM-008` impossible à f
 sur une base de développement froide, de toutes les commandes désormais dans son périmètre et de
 ses dégradations volontaires. INC-023, contradiction de périmètre, est close par cette décision ;
 l'unité ne passera `[x]` qu'après mesure.
+
+---
+
+### Décision 278 — Le harnais prouve d'abord sa chaîne Node, avant de prendre un échec pour une preuve
+
+**Défaut reproduit sur le parcours utilisateur.** Après la remise à zéro froide autorisée, la
+commande documentée `scripts/verify-harness.sh`, lancée telle quelle depuis le shell WSL du
+responsable, a choisi `/mnt/c/Program Files/nodejs/npm`. Aucun exécutable `node` Linux n'était
+alors exposé par le `PATH`, bien que la version demandée par `.nvmrc` soit installée sous NVM.
+`cmd.exe` a refusé le chemin UNC du dépôt ; les commandes positives sont devenues rouges, mais les
+dégradations volontaires ont affiché des `OK` puisqu'elles ne vérifiaient que l'échec de `npm`.
+Verdict final : **26 contrôles, 10 anomalies**. La restauration des fichiers et de la politique
+RLS a néanmoins été constatée.
+
+**Cause.** Le harnais vérifiait la base et le seed avant toute mutation, mais pas l'outil commun à
+toutes ses familles de tests. Un échec d'infrastructure pouvait donc satisfaire à tort la moitié
+« le test faux échoue » de sa DoD. Le prérequis `Node 24 / npm 11` du README ne suffit pas à
+identifier un binaire Windows hérité dans WSL, ni à activer la version déjà installée par NVM.
+
+**Décision.** Avant de créer un fichier temporaire ou de dégrader la base, le harnais doit :
+
+1. lire la version majeure attendue depuis `.nvmrc` ;
+2. accepter un couple `node` / `npm` Linux déjà présent seulement si leurs versions conviennent ;
+3. sinon, chercher une version installée compatible dans `NVM_DIR`, puis dans l'emplacement NVM
+   usuel du compte, et préfixer son seul sous-processus au `PATH` ;
+4. refuser explicitement un outil sous `/mnt/<lecteur>/`, une version incompatible ou l'absence
+   d'outil, avec une action lisible (`nvm use`) ;
+5. afficher le couple et le chemin effectivement retenus avant les preuves.
+
+Le shell parent n'est jamais modifié. Les commandes `npm run …` exécutées directement restent
+précédées de `nvm use` dans la documentation d'un poste géré par NVM.
+
+**Preuve exigée avant fermeture.** Une preuve isolée doit fournir au résolveur un `PATH` qui ne
+contient qu'un faux `npm` Windows et un arbre NVM jetable : le couple Linux compatible doit être
+sélectionné. Les cas déjà conforme, version majeure incorrecte et absence complète doivent aussi
+être exercés. Le harnais froid complet ne sera rejoué qu'après cette preuve ; ses dégradations ne
+pourront donc plus être vertes sur une panne commune de Node.

@@ -716,6 +716,9 @@ Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,
 commandes de test livrées par `CRM-008` — `npm run test:sql`, `test:unit`, `e2e:api`, `e2e:ui`,
 `e2e:report` (`README.md` §7, `docs/SPEC-test-harness.md` §9) — auxquelles `CRM-050` ajoute
 `npm run e2e:mail`, projet Playwright qui ne parle qu'aux serveurs de messagerie.
+Le harnais consolidé doit valider avant toute mutation un couple Node Linux conforme à `.nvmrc` ; si le
+`PATH` hérité de WSL ne présente que `npm.exe`, il sélectionne une installation NVM locale sans
+modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).
 `pytest mail-sync/tests` naît avec le service Python en `CRM-051` et ne fait pas partie de la DoD
 de `CRM-008` (décision 277, INC-023) : un exécuteur vide ne constitue pas un harnais.
 `npm run db:migrate` et

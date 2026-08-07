@@ -360,6 +360,28 @@ de tests, pas seulement des nouvelles.
 
 `scripts/verify-harness.sh` rejoue, sur une pile de développement démarrée et seedée :
 
+### 7.1 Précondition commune : une chaîne Node Linux prouvée
+
+Avant toute création de fichier temporaire ou mutation de la base, le script lit `.nvmrc` et
+valide le couple `node` / `npm` qui exécutera toutes les familles de tests. Un chemin sous
+`/mnt/<lecteur>/` est un outil Windows et doit être refusé sous Linux, même si `command -v npm`
+le trouve. La version majeure de Node doit correspondre à `.nvmrc` et npm doit être en version 11
+ou ultérieure.
+
+Si le `PATH` courant ne satisfait pas ce contrat, le script cherche une installation compatible
+déjà présente dans `NVM_DIR`, puis dans l'emplacement NVM usuel du compte, et préfixe uniquement
+son propre environnement. Il ne télécharge rien, ne modifie pas le shell parent et échoue avec
+une consigne `nvm use` lorsqu'aucune version compatible n'existe. Le couple retenu et son chemin
+sont affichés avant les preuves.
+
+Ce contrôle est une condition de validité des dégradations volontaires : une commande rouge parce
+que `npm` lui-même est inexécutable ne prouve pas qu'une assertion fausse, une politique
+permissive ou un test Vitest faux ont été détectés. Une preuve isolée force donc un faux `npm`
+Windows, un arbre NVM jetable, une version incompatible et l'absence d'outil avant le rejeu
+complet.
+
+### 7.2 Parcours du harnais
+
 1. **`npm run test:sql`** est vert et exécute les trois suites, pour le nombre d'assertions attendu.
 2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
 3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien
@@ -407,7 +429,7 @@ une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3
 | `npm run e2e:api` | Playwright, projet `api` — contrats et refus, hors interface | pile démarrée, seed appliqué |
 | `npm run e2e:ui` | Playwright, projet `ui` — parcours et captures | pile démarrée |
 | `npm run e2e:report` | sert le dernier rapport HTML | une exécution E2E préalable |
-| `scripts/verify-harness.sh` | rejoue l'ensemble des preuves de l'unité | pile démarrée, seed appliqué |
+| `scripts/verify-harness.sh` | rejoue l'ensemble des preuves de l'unité | pile démarrée, seed appliqué ; Node Linux conforme à `.nvmrc`, résolu automatiquement parmi les installations NVM locales |
 
 ## 10. Limites connues
 

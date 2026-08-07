@@ -15,6 +15,12 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le contrat de chaîne Node de `CRM-008` est désormais explicite avant son correctif.** Le
+  parcours réel sous WSL a sélectionné `npm.exe`, produit 10 anomalies et, surtout, donné de faux
+  `OK` aux dégradations parce que toute commande npm échouait déjà. La décision 278 impose un
+  Node Linux conforme à `.nvmrc`, un repli borné vers les installations NVM locales et une preuve
+  isolée avant de rejouer le harnais froid.
+
 - **`CRM-009` est livrée de bout en bout.** Quatre gabarits transactionnels français sont servis
   à GoTrue par le Caddy interne commun `auth-templates`; invitation et récupération sont validées
   sur leur contenu SMTP réel, et un repli anglais provoqué est explicitement refusé. Le parcours

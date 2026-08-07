@@ -1445,6 +1445,12 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
 - [ ] **Fermeture à mesurer après arbitrage** : repartir d'une base locale froide, rejouer toutes
       les commandes du périmètre actuel et les dégradations volontaires du harnais. L'arbitrage ne
       remplace pas ce verdict d'exécution.
+- [ ] **Le parcours utilisateur ne doit pas confondre `npm.exe` et Node Linux** (décision 278).
+      Reproduit depuis le shell WSL réel : 26 contrôles, 10 anomalies, et des dégradations
+      faussement `OK` parce que l'exécuteur commun était déjà cassé. Avant toute mutation, le
+      harnais doit valider `.nvmrc`, sélectionner si nécessaire une installation NVM locale,
+      refuser un binaire sous `/mnt/<lecteur>/` et prouver ces branches dans un environnement
+      isolé.
 
 *DoD adaptée, écarts explicites.* **Aucune migration, aucune mise à jour du seed** : un harnais de
 tests n'introduit ni table, ni statut, ni flux ; il consomme le seed socle de `CRM-005` sans le

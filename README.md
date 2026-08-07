@@ -73,6 +73,17 @@ backend autorise (voir [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rl
 - `jq` **ou** `python3`, uniquement sur un poste dont la configuration Docker délègue ses
   identifiants à un binaire Windows — cas courant sous WSL. Voir §11.
 
+Sur un poste géré par NVM, activer la version du dépôt dans chaque nouveau shell avant une
+commande `npm` :
+
+```bash
+nvm use
+```
+
+Sous WSL, `command -v node` et `command -v npm` doivent désigner des exécutables Linux. Un
+`npm` trouvé sous `/mnt/c/Program Files/` est le binaire Windows et ne sait pas exécuter ce dépôt
+depuis son chemin UNC.
+
 ## 4. Installation
 
 ```bash
@@ -300,6 +311,9 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 [`docs/SPEC-seed.md`](docs/SPEC-seed.md).
 
 ## 7. Tests
+
+Sur un poste NVM, exécuter d'abord `nvm use` comme indiqué au §3. Les commandes `npm run …`
+directes utilisent toujours la chaîne Node du shell courant.
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
