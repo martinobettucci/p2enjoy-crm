@@ -271,6 +271,19 @@ Analyse chaque pièce jointe entrante avant sa mise à disposition. Une pièce j
 statut `pending` tant qu'elle n'est pas analysée et n'est jamais téléchargeable en statut
 `infected`.
 
+**Livré par `CRM-050`, mais dans l'overlay de développement seulement.** Son unique consommateur
+est l'ingestion, livrée par `CRM-054` : déclarer aujourd'hui le service dans l'assemblage commun
+imposerait à la production de tenir `healthy` un composant qu'aucun autre n'appelle. Le passage
+dans `docker-compose.yml` est une **opération due**, inscrite dans `docs/PROD_MIGRATIONS.md` §4
+sous l'unité qui l'appellera (`docs/JOURNAL.md`, décision 236). Ce n'est donc pas un composant de
+développement : c'est un composant de production **pas encore déployé**, et c'est pourquoi il ne
+figure pas au tableau du §3.6.
+
+*Mesuré (`docs/SPEC-mail-subsystem.md` §11.6)* : les signatures sont embarquées dans l'image
+épinglée. `clamd` détecte la chaîne de test EICAR sans qu'aucun téléchargement n'ait eu lieu, ce
+qu'un simple `PING` ne prouverait pas. Sur un réseau fermé, `freshclam` échoue sans conséquence et
+la base vieillit avec l'image : la production devra prévoir son rafraîchissement (§14).
+
 ### 3.5 Passerelle et périphérie
 
 - **Kong** expose l'API Supabase (REST, Auth, Storage, Realtime) sur un port unique.
@@ -284,6 +297,7 @@ statut `pending` tant qu'elle n'est pas analysée et n'est jamais téléchargeab
 | `postgres-meta` | Introspection du schéma, consommée **uniquement** par Studio | Sans Studio, il n'a aucun consommateur |
 | Inbucket | Puits des emails transactionnels | La production envoie réellement |
 | Stalwart | Vrai serveur IMAP/SMTP local | La production utilise les serveurs des utilisateurs |
+| `stalwart-init` | Provisionne les domaines et les boîtes de développement par la vraie API de gestion, puis s'arrête | Il ne provisionne que des boîtes de démonstration |
 | Roundcube | Webmail de vérification visuelle | Outil de contrôle du développement |
 | MinIO | S3 local | La production utilise son propre stockage objet |
 
@@ -313,6 +327,10 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `minio` | `minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev |
 | `minio-createbucket` | `minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev |
 | `inbucket` | `inbucket/inbucket:stable` | dev |
+| `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
+| `stalwart-init` | `curlimages/curl:8.16.0` | dev |
+| `roundcube` | `roundcube/roundcubemail:1.6.11-apache` | dev |
+| `clamav` | `clamav/clamav:1.4.3` | dev — **prod due avec `CRM-054`**, voir §3.4 |
 | `caddy` | `caddy:2.9-alpine` | prod |
 
 Trois services de la distribution officielle sont **écartés** : `analytics` et `vector`
@@ -666,7 +684,9 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,
 `npm run types:generate`, `npm run types:check`, `npm run typecheck`, `npm run build`, et les
 commandes de test livrées par `CRM-008` — `npm run test:sql`, `test:unit`, `e2e:api`, `e2e:ui`,
-`e2e:report` (`README.md` §7, `docs/SPEC-test-harness.md` §9). `npm run db:migrate` et
+`e2e:report` (`README.md` §7, `docs/SPEC-test-harness.md` §9) — auxquelles `CRM-050` ajoute
+`npm run e2e:mail`, projet Playwright qui ne parle qu'aux serveurs de messagerie.
+`npm run db:migrate` et
 `npm run db:seed` restent à venir : aucune façade `npm` des scripts de lancement n'est ajoutée
 (`docs/JOURNAL.md`, décision 38 ; INC-008).
 
@@ -682,6 +702,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
 | `scripts/run-sql-tests.sh` | Exécute les suites pgTAP de `supabase/tests/` et **calcule** le verdict TAP, que `psql` ne rend pas | Conteneur `db` en marche ; n'écrit rien en base |
+| `stalwart/provision.sh` | Crée les domaines et les trois boîtes de développement par l'API de gestion de Stalwart ; convergent, ne détruit aucun message | Exécuté par le service jetable `stalwart-init` ; API de gestion joignable |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.

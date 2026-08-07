@@ -4,6 +4,8 @@
 # @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage), décision 101 (points de
 #       montage créés par l'hôte)
 # @spec docs/DAT.md §3.8 (contraintes d'exécution de l'hôte), §13 (commandes de lancement)
+# @spec CRM-050 (docs/BACKLOG.md) — démarrage de la messagerie de développement,
+#       docs/SPEC-mail-subsystem.md §11.8 (ports annoncés)
 # @spec README.md §5 (commandes), §6 (développement), §11 (limites connues)
 #
 # Démarre la pile de développement, en amorçant `.env` au premier lancement.
@@ -97,6 +99,13 @@ INBUCKET_WEB_PORT=$(env_get "$ENV_FILE" INBUCKET_WEB_PORT)
 MINIO_CONSOLE_PORT=$(env_get "$ENV_FILE" MINIO_CONSOLE_PORT)
 POSTGRES_DIRECT_PORT=$(env_get "$ENV_FILE" POSTGRES_DIRECT_PORT)
 WEBAPP_DEV_PORT=$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)
+# Messagerie de développement (CRM-050).
+ROUNDCUBE_PORT=$(env_get "$ENV_FILE" ROUNDCUBE_PORT)
+STALWART_IMAP_PORT=$(env_get "$ENV_FILE" STALWART_IMAP_PORT)
+STALWART_SMTP_PORT=$(env_get "$ENV_FILE" STALWART_SMTP_PORT)
+STALWART_SUBMISSION_PORT=$(env_get "$ENV_FILE" STALWART_SUBMISSION_PORT)
+STALWART_ADMIN_PORT=$(env_get "$ENV_FILE" STALWART_ADMIN_PORT)
+CLAMAV_PORT=$(env_get "$ENV_FILE" CLAMAV_PORT)
 BIND=$(env_get "$ENV_FILE" DEV_BIND_ADDRESS)
 
 echo
@@ -111,11 +120,15 @@ info "Supabase Studio       http://${BIND}:${STUDIO_PORT}"
 info "Inbucket              http://${BIND}:${INBUCKET_WEB_PORT}"
 info "Console MinIO         http://${BIND}:${MINIO_CONSOLE_PORT}"
 info "PostgreSQL direct     ${BIND}:${POSTGRES_DIRECT_PORT}"
+info "Roundcube             http://${BIND}:${ROUNDCUBE_PORT}"
+info "Stalwart IMAP         ${BIND}:${STALWART_IMAP_PORT}"
+info "Stalwart SMTP         ${BIND}:${STALWART_SMTP_PORT} (remise) · ${BIND}:${STALWART_SUBMISSION_PORT} (soumission)"
+info "Stalwart gestion      http://${BIND}:${STALWART_ADMIN_PORT}"
+info "ClamAV (clamd)        ${BIND}:${CLAMAV_PORT}"
 
 echo
 say "Non encore livrés par le backlog"
 info "mail-sync  : unité CRM-051."
-info "Stalwart, Roundcube : unité CRM-050."
 
 echo
 info "Preuves de la pile : scripts/verify-stack.sh"
@@ -138,7 +151,8 @@ if [ -n "$LOG_COMPONENT" ]; then
 			die "composant « mail-sync » pas encore livré : voir l'unité CRM-051 de docs/BACKLOG.md."
 			;;
 		stalwart)
-			die "composant « stalwart » pas encore livré : voir l'unité CRM-050 de docs/BACKLOG.md."
+			say "Journaux de Stalwart (Ctrl-C pour rendre la main)"
+			compose_dev logs -f stalwart
 			;;
 		*)
 			die "composant « $LOG_COMPONENT » inconnu. Attendus : supabase, webapp, mail-sync, stalwart."

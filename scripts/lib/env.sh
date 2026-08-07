@@ -161,6 +161,13 @@ env_bootstrap_dev() {
 	env_set "$ENV_FILE" APP_DOMAIN localhost
 	env_set "$ENV_FILE" CADDY_ACME_EMAIL "dev@localhost"
 
+	# Administrateur de repli de Stalwart (CRM-050). Il n'a pas de boîte : il n'existe que pour
+	# l'API de gestion, par laquelle les boîtes sont provisionnées. Son mot de passe est tiré au
+	# hasard comme les autres secrets — le mot de passe des **boîtes**, lui, est stable et publié
+	# dans le README, exactement comme celui des comptes seedés
+	# (docs/SPEC-mail-subsystem.md §11.4).
+	env_set "$ENV_FILE" STALWART_ADMIN_PASSWORD "$(gen_hex 20)"
+
 	local wanted hard
 	wanted=$(env_get "$ENV_FILE" STACK_RLIMIT_NOFILE)
 	hard=$(host_nofile_limit)

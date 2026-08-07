@@ -17,7 +17,11 @@ export default defineConfig({
 	plugins: [react()],
 	test: {
 		environment: 'jsdom',
-		include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+		// `../stalwart/**` sort du répertoire de l'application, et c'est voulu : la preuve
+		// unitaire de `CRM-050` vit à côté du fichier qu'elle éprouve — la configuration du
+		// serveur de messagerie — plutôt que d'être rangée parmi celles de l'interface
+		// (docs/SPEC-mail-subsystem.md §11.9).
+		include: ['src/**/*.test.ts', 'src/**/*.test.tsx', '../stalwart/**/*.test.ts'],
 		restoreMocks: true,
 	},
 })

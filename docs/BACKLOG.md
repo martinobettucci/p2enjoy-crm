@@ -4316,7 +4316,148 @@ les boîtes ; `README.md` §6 conforme.
       l'API de gestion répond, seule la console manque. Trois questions nommées — la console
       est-elle voulue, le bruit doit-il subsister, et une dépendance téléchargée en `latest`
       heurte-t-elle `docs/DAT.md` §3.7 — aucune tranchée, comportement inchangé.
-- [ ] **Implémentation, preuves et vérification visuelle** : voir le commit suivant.
+- [x] **La pile de développement démarre les quatre services**, et `./runDev.sh` les annonce :
+      `stalwart` (`stalwartlabs/stalwart:v0.13.4`), `stalwart-init` (`curlimages/curl:8.16.0`),
+      `roundcube` (`roundcube/roundcubemail:1.6.11-apache`) et `clamav` (`clamav/clamav:1.4.3`).
+      Les trois services durables sont **`healthy`** et le provisionnement **sort en succès** —
+      c'est lui que `--wait` attend, exactement comme `minio-createbucket`. Le `healthcheck` de
+      Stalwart éprouve **les quatre listeners un par un** : c'est le contrôle qui attrape à
+      l'exécution la régression `[::]`, laquelle laisse le conteneur `Up` sans qu'aucun port
+      n'écoute.
+- [x] **Les boîtes sont créées par le véritable mécanisme** (`CLAUDE.md` §8) : `stalwart-init`
+      appelle l'API de gestion de Stalwart, comme le ferait un exploitant. Aucune écriture directe
+      dans RocksDB. L'image de Stalwart n'embarque ni `curl` ni `wget`, et son `stalwart-cli`
+      v0.13.4 n'a **aucune** sous-commande de gestion de compte — mesuré, d'où la quatrième image.
+- [x] **Convergent, et mesuré comme tel** : rejoué, le provisionnement rend « déjà présent,
+      attributs rétablis » pour les trois boîtes et les deux domaines, sans doublon et **sans
+      toucher un seul message**. L'API rend `200` avec un corps `fieldAlreadyExists` : la
+      convergence se lit dans le corps, pas dans le code HTTP, et un `--fail` l'aurait masquée.
+- [x] **Le catch-all fonctionne, de bout en bout et hors interface** : un message soumis en SMTP
+      authentifié à `c-<jeton>@crm.p2enjoy.test` — une adresse de card **jamais déclarée** — est
+      accepté, remis dans `INBOX` de la boîte système, puis relu par IMAP avec son `Message-ID`,
+      son sujet et son destinataire intacts.
+- [x] **Test unitaire dédié** : `stalwart/config.test.ts`, **21 assertions**, sur le seul artefact
+      du dépôt qui porte de la logique — la configuration. Deux de ses invariants ont été payés par
+      une panne réelle. Le périmètre de Vitest est étendu à `stalwart/` dans le même changement,
+      plutôt que de ranger une preuve d'infrastructure parmi celles de l'interface.
+      `npm run test:unit` : 467 → **488 tests**, 20 fichiers.
+- [x] **Preuve de protocole dédiée, hors interface** : `e2e/mail/infrastructure.spec.ts`,
+      **13 scénarios** — trois sessions IMAP réelles, le refus d'un mot de passe faux, le
+      délimiteur `/` annoncé par le serveur (ce dont `CRM-056` aura besoin), la remise par le
+      catch-all et sa relecture, le refus d'une soumission non authentifiée, trois contrôles de
+      l'API de gestion, et trois de ClamAV.
+- [x] **Le projet Playwright `mail` est DÉCLARÉ**, pour la première fois : annoncé par
+      `README.md` §7 et laissé vide par `CRM-008` faute de sujet (INC-023), il en a un désormais.
+      `npm run e2e:mail` : **16 scénarios verts**. Il ne parle qu'aux serveurs — ni build, ni
+      `webServer`.
+- [x] **Aucune bibliothèque IMAP ou SMTP ajoutée** (décision 238) : les clients sont écrits sur une
+      socket `node:net`. Le point ouvert n° 1 du §10 — le choix d'une bibliothèque IMAP pour
+      `mail-sync` — reste **ouvert** pour `CRM-051`, plutôt que tranché par un test.
+- [x] **ClamAV est prouvé opérant, pas seulement vivant** : `zPING` → `PONG`, `zINSTREAM` de la
+      chaîne EICAR → `stream: Eicar-Test-Signature FOUND`, et une **contre-épreuve** sur un contenu
+      anodin → `OK`. Sans cette dernière, un antivirus qui répondrait « FOUND » à tout passerait le
+      contrôle. La chaîne EICAR est assemblée à l'exécution : elle n'existe telle quelle dans aucun
+      fichier du dépôt, faute de quoi un antivirus installé sur le poste mettrait le dépôt en
+      quarantaine.
+- [x] **Vérification visuelle réellement observée** : `e2e/mail/roundcube.spec.ts`, 3 scénarios, et
+      `docs/captures/CRM-050/` — trois images **regardées une à une**. La boîte personnelle rend
+      son arborescence (Inbox, Drafts, Sent, Junk, Trash) ; la **boîte système montre les trois
+      messages que le catch-all a captés**, ce qui est la preuve visuelle du mécanisme ; et le
+      refus laisse le visiteur sur son formulaire avec « Login failed. ».
+- [x] **TROIS DÉFAUTS RÉELS DE MES PROPRES PREUVES, TROUVÉS EN LES EXÉCUTANT** (décision 240), et
+      les trois rendaient un **faux rouge** — ils accusaient le serveur d'un défaut qui était le
+      mien. `trim()` ne retire pas l'octet NUL que `clamd` ajoute ; une preuve de refus qui
+      poursuit le dialogue après un `535` se bloque sur le `503` suivant et l'échec est imputé à
+      une absence de réponse ; et `SEARCH HEADER Message-ID "<jeton@domaine>"` ne trouve rien,
+      Stalwart n'indexant pas les chevrons.
+- [x] **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **72 contrôles, aucune
+      anomalie**, et **non complaisant** — cinq dégradations posées sur une **copie** des fichiers
+      versionnés produisent **6 anomalies** réparties sur les familles de contrôle. Il compare
+      notamment `CRM_INBOUND_DOMAIN` à `workspaces.inbound_domain` **lu dans la base** (décision
+      237), vérifie qu'aucun des quatre services n'apparaît dans l'assemblage de production, et
+      que le mot de passe d'administration tiré au hasard n'est présent dans **aucun** fichier
+      versionné.
+- [x] **Compteur du harnais du harnais révisé dans le MÊME changement** : `scripts/verify-harness.sh`
+      gagne `SCENARIOS_MAIL=16` et un contrôle « 5 bis » qui exécute `npm run e2e:mail`. Sans lui,
+      un projet entier serait resté hors du périmètre du harnais. Rejoué : **26 contrôles, aucune
+      anomalie**.
+- [x] **Aucune régression sur les suites du dépôt** : `npm run test:sql` **1405 assertions**
+      (inchangé), `npm run e2e:api` **410 scénarios** (inchangé), `npm run e2e:ui` **136 scénarios**
+      (inchangé), `npm run build` vert, `npm run typecheck` vert sur les quatre projets.
+- [x] `README.md` §2, §5, §6, §7, §9, §10 et §11, `docs/DAT.md` §3.4, §3.6, §3.7 et §13,
+      `docs/SPEC-test-harness.md` §1, §2, §8 et §9, `docs/PROD_MIGRATIONS.md` §4,
+      `docs/SPEC-mail-subsystem.md` §11, `docs/JOURNAL.md` décisions 235 à 241,
+      `docs/INCONSISTENCY_REPORT.md` INC-079 et INC-080, `CHANGELOG.md` mis à jour dans le même
+      changement que le code et les preuves.
+- [x] **PREUVE À FROID, APRÈS DESTRUCTION COMPLÈTE.** Le cluster et **tous** les volumes ont été
+      détruits, y compris le RocksDB de Stalwart, puis la pile relancée : elle remonte en
+      **33 secondes**, `p2enjoy-migrations` sort en `0`, les seize services sont sains, et le
+      provisionnement **recrée les deux domaines et les trois boîtes** sans aucune intervention.
+      Les preuves de l'unité ont été **reprouvées sur cet état froid** : `verify-mail-infra.sh`
+      72 contrôles sans anomalie, `npm run e2e:mail` 16 scénarios, `npm run test:unit` 488 tests,
+      `npm run test:sql` 1405 assertions.
+- [ ] **LE REJEU SÉQUENTIEL DES HARNAIS N'EST PAS UN INSTRUMENT DE MESURE — INC-080**
+      (décisions 241 et 242). Les vingt-six harnais rejoués à la suite en rendent vingt-deux
+      rouges ; la **contre-mesure sur état froid** établit que ce chiffre est faux.
+      `verify-seed-demo.sh` rend 2 anomalies en séquence et **aucune** seul ;
+      `verify-preuves-refus.sh` passe de 4 à 2. Cause mesurée : à la fin du balayage,
+      `p2enjoy-migrations` était `exited (3)` sur un `deadlock detected` — plusieurs harnais
+      rejouent des migrations ou réappliquent le seed, et enchaînés ils se marchent dessus.
+- [ ] **QUATRE GARDE-FOUS PÉRIMÉS, ET UN COMPOSANT QUI N'EXISTE PLUS — INC-080**, mesurés **à
+      froid** donc réels : `verify-authz.sh` (3), `verify-cards.sh` (6), `verify-board.sh` (4) et
+      `verify-preuves-refus.sh` (2) comptent **neuf** cards là où `CRM-046` en a livré **quatorze**,
+      et 41 politiques là où il y en a 45. `scripts/verify-commentaires.sh`, lui, cherche
+      `webapp/src/app/PanneauCommentaires.tsx` : le fichier **n'existe plus**, `CRM-044` l'ayant
+      dissous dans `PanneauTimeline.tsx`. Quatre harnais rendent enfin « des classes citées
+      n'existent pas dans le CSS produit », dont la cause n'est pas établie. **Consigné plutôt que
+      refermé au passage** : cinq unités antérieures, et deux écarts qui ne sont pas des compteurs.
+      Aucun ne vient de `CRM-050`, qui ne touche ni table, ni politique, ni seed.
+- [ ] **Le seed de la base n'est pas touché, et il n'y avait rien à y ajouter.** Cette unité ne
+      crée ni table, ni page, ni statut, ni flux applicatif : elle livre des boîtes **dans un
+      serveur mail**, qui sont son propre jeu de données et se rejouent par `stalwart-init`. Les
+      tables `mail_*` n'existent pas avant `CRM-052`.
+- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les dix-huit unités précédentes.
+      **Dix-neuvième unité consécutive.**
+
+*Definition of Done tenue.* Elle demandait « `runDev.sh` démarre l'ensemble ; connexion IMAP et
+SMTP constatée ; Roundcube affiche les boîtes ; `README.md` §6 conforme ». **Les quatre sont
+mesurées** : les quatre services démarrent avec la pile et sont sains ; la connexion IMAP est
+prouvée sur les trois boîtes et la soumission SMTP par un message réellement remis et relu ;
+Roundcube affiche les boîtes, captures observées ; et `scripts/verify-mail-infra.sh` compare les
+ports de `README.md` §6 à ceux que `.env.example` déclare.
+
+*Limites nommées, non masquées.*
+
+- **Aucun consommateur applicatif.** Rien dans le CRM ne lit ces boîtes avant `CRM-052` et
+  `CRM-054`. Ce qui est livré est le **monde extérieur**, pas la fonctionnalité.
+- **`./runDev.sh` n'a pas pu être exécuté d'un bloc sur cet hôte** : la construction de l'image
+  `webapp` échoue en `SELF_SIGNED_CERT_IN_CHAIN` (**INC-042, onzième occurrence**), et la pile a
+  donc été démarrée par `docker compose up` en énumérant les services autres que `webapp`. Le
+  chemin nominal du script — amorçage de `.env`, gardes, `--wait`, annonces — est en revanche
+  exercé : `.env` a été **détruit puis réamorcé** par `./runDev.sh --bootstrap`, et les dix
+  variables de l'unité en sont sorties correctement, dont le mot de passe d'administration tiré au
+  hasard.
+- **La console web de Stalwart n'est pas installable ici** — INC-079, deux lignes `ERROR` à chaque
+  démarrage. Le serveur et son API de gestion fonctionnent ; la vérification visuelle passe par
+  Roundcube.
+- **Aucun TLS**, par choix documenté (`docs/SPEC-mail-subsystem.md` §11.3). Les ports ne sont
+  publiés que sur `DEV_BIND_ADDRESS`.
+- **ClamAV n'est pas déclaré en production** : opération due, inscrite dans
+  `docs/PROD_MIGRATIONS.md` §4 sous `CRM-054` (décision 236).
+- **`scripts/verify-scripts.sh` rend 52 contrôles et 1 anomalie**, sur un contrôle qui exige de
+  lire les ports en écoute de l'hôte : ni `ss` ni `netstat` n'existent dans ce conteneur, et
+  `host_listening_ports` rend donc le vide — **INC-044**, limite d'environnement, sans rapport
+  avec cette unité.
+- **Les vingt-six harnais du dépôt N'ONT PAS été validés un par un sur un état froid.** Le budget
+  d'une exécution ne le permet pas : quatre l'ont été (`verify-authz`, `verify-seed-demo`,
+  `verify-preuves-refus`, `verify-mail-infra`), les autres n'ont été vus qu'à travers un balayage
+  séquentiel dont INC-080 établit qu'il n'est pas fiable. **Aucune affirmation n'est faite sur
+  leur état réel.**
+- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
+  Node 24. Limite héritée, inchangée.
+- **INC-036, onzième occurrence** : le Chromium préinstallé est en version `1194` là où le
+  Playwright épinglé attend `1234` ; le contournement documenté du dépôt —
+  `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun fichier du dépôt n'a été modifié pour cela.
 
 ### CRM-051 — Service `mail-sync` `[ ]`
 Squelette Python, configuration, journaux structurés, point de santé, API interne.

@@ -132,6 +132,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
 | `scripts/verify-manual.sh` | Rejoue les preuves du manuel utilisateur : chiffres de l'annexe A comparés à la base, captures citées, unités couvertes, libellés réels, absence de secret | **disponible** |
 | `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
+| `scripts/verify-mail-infra.sh` | Rejoue les preuves de l'infrastructure mail de développement : configuration versionnée, placement des services, variables, domaines convergents, boîtes et rôles, IMAP réel, détection ClamAV, Roundcube | **disponible** |
+| `scripts/verify-mail-infra.sh --contre-epreuve` | Dégrade une **copie** des fichiers versionnés et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
 | `npm run db:seed` | Rejoue le seed de démonstration | à venir (INC-008, arbitrage ouvert) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
@@ -209,8 +211,10 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | PostgreSQL | localhost:54322 | Accès SQL direct (pgTAP, outillage de migration) | **disponible** |
 | Pooler (Supavisor) | localhost:5432 · 6543 | Sessions et transactions poolées | **disponible** |
 | Webapp | http://localhost:5173 | L'application | à venir (`CRM-007`) |
-| Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | à venir (`CRM-050`) |
-| Stalwart | IMAP 1143 · SMTP 1025 | Vrai serveur mail local (boîte système + boîtes de démonstration) | à venir (`CRM-050`) |
+| Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | **disponible** |
+| Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
+| Stalwart — API de gestion | http://localhost:8081 | Provisionnement des domaines et des boîtes ; **la console web n'est pas installable ici**, voir §11 | **disponible** |
+| ClamAV (`clamd`) | localhost:3310 | Analyse antivirale des pièces jointes ; son consommateur arrive avec `CRM-054` | **disponible** |
 
 Studio n'est **pas** joignable au travers de la passerelle : celle-ci ne connaît aucun service de
 développement, ce qui rend sa configuration identique en développement et en production
@@ -221,6 +225,30 @@ emails que l'application *envoie* (GoTrue, notifications) et n'expose pas d'IMAP
 doit *lire* des boîtes en IMAP, y créer des dossiers imbriqués et y déposer des messages :
 cela exige un vrai serveur, d'où Stalwart. Roundcube permet de **voir** le résultat, ce qui rend
 la vérification visuelle possible.
+
+### Boîtes de développement
+
+Trois boîtes sont provisionnées au démarrage, par la **véritable API de gestion** de Stalwart, et
+non par une écriture directe dans son magasin. Le provisionnement est convergent : le rejouer ne
+duplique rien, rétablit une valeur modifiée à la main, et **ne détruit aucun message**.
+
+| Adresse | Nature | Compte du seed |
+|---|---|---|
+| `systeme@crm.p2enjoy.test` | Boîte **système** du workspace, catch-all de `@crm.p2enjoy.test` | — |
+| `admin@p2enjoy.test` | Boîte personnelle | Camille Aubert, `admin` |
+| `bizdev@p2enjoy.test` | Boîte personnelle | Driss Lemoine, `business_developer` |
+
+Mot de passe commun : **`SeedDev2026Local`**, le même que celui des comptes seedés. Il ne protège
+rien, et c'est délibéré : les domaines sont sous `.test`, TLD réservé par la RFC 2606 donc non
+routable, et les ports ne sont publiés que sur la boucle locale. Farida Nowak (`viewer`) n'a pas de
+boîte : un `viewer` lit, il ne correspond pas.
+
+Le **catch-all** est ce qui rend la boîte système utile : un message adressé à
+`c-xxxxxxxx@crm.p2enjoy.test` — une adresse de card qui n'a jamais été déclarée — y est remis. Ce
+domaine doit rester celui que le seed écrit dans `workspaces.inbound_domain` ; `scripts/verify-mail-infra.sh`
+compare les deux et devient rouge s'ils divergent.
+
+Vérifier à la main, depuis le webmail : http://localhost:8080, puis l'une des trois adresses.
 
 ### Données de développement — le seed socle
 
@@ -273,23 +301,28 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest (webapp), 467 tests   — aucune pile requise
+npm run test:unit          # Vitest (webapp), 488 tests   — aucune pile requise
 npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
+npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
 pytest mail-sync/tests     # PAS ENCORE LIVRÉ — attend le service mail-sync (CRM-051)
-npm run e2e:mail           # PAS ENCORE LIVRÉ — attend Stalwart (CRM-050, CRM-054)
 ```
 
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
-Les six premières commandes sont livrées et prouvées. Les deux dernières ne le sont pas, et
-elles ne sont **pas déclarées vides pour autant** : `pytest` sans service à exercer rendrait `5`,
-et un projet Playwright sans scénario rendrait `0` sans rien avoir mesuré — ce qui serait pire
-qu'une commande absente. Elles arriveront avec leur sujet, au chunk 4 ; la contradiction entre
-cette réalité et la Definition of Done de `CRM-008` est consignée en
+Les sept premières commandes sont livrées et prouvées. `npm run e2e:mail` l'est **depuis
+`CRM-050`** : il exerce les protocoles — session IMAP sur les trois boîtes, soumission SMTP
+authentifiée, remise par le catch-all et relecture, détection réelle d'EICAR par ClamAV, et
+Roundcube à l'écran. L'aller-retour d'email **du produit** reste dû par `CRM-054` et `CRM-058` :
+rien dans le CRM ne lit encore ces boîtes.
+
+`pytest mail-sync/tests` n'est toujours pas livré, et n'est **pas déclaré vide pour autant** :
+sans service à exercer, il rendrait `5` (« no tests ran ») — ce qui serait pire qu'une commande
+absente. Il arrivera avec son sujet, en `CRM-051` ; la contradiction entre cette réalité et la
+Definition of Done de `CRM-008` reste consignée en
 [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-023.
 
 `npm run test:sql` ne se fie **ni** au code de sortie de `psql`, **ni** au diagnostic de pgTAP :
@@ -405,7 +438,7 @@ fichiers statiques.
 
 ## 9. Variables d'environnement
 
-Les **78** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **88** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -418,7 +451,8 @@ preuves.
 | Jetons Supabase | `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` | Obligatoires, jamais versionnés. Les deux clés sont **dérivées** de `JWT_SECRET` |
 | API | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `KONG_HTTP_PORT` | Obligatoires |
 | Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
-| Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | Obligatoires **à partir de `CRM-051`** : aucun service ne les consomme aujourd'hui |
+| Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux autres attendent `CRM-054` |
+| Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
@@ -468,8 +502,13 @@ Livré à ce jour :
 │   ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
 │   ├── seed/                   Seed socle, appliqué par les API réelles (CRM-005)
 │   └── tests/                  Suites pgTAP, une par migration
+├── stalwart/                   Serveur mail de développement (CRM-050)
+│   ├── config.toml             Configuration versionnée, montée en lecture seule
+│   ├── provision.sh            Domaines et boîtes créés par la vraie API de gestion
+│   └── config.test.ts          Invariants de la configuration, éprouvés par Vitest
 ├── e2e/
-│   ├── playwright.config.ts    Projet `ui` ; `api` et `mail` restent dus par CRM-008
+│   ├── playwright.config.ts    Projets `api`, `mail` et `ui`
+│   ├── mail/                   Scénarios IMAP, SMTP, ClamAV et Roundcube (CRM-050)
 │   └── ui/                     Scénarios d'interface et production des captures
 └── webapp/
     ├── index.html              Point d'entrée Vite
@@ -489,7 +528,6 @@ Livré à ce jour :
 Prévu par le backlog, pas encore livré :
 
 ```
-├── e2e/                        CRM-008
 └── mail-sync/                  CRM-051
 ```
 
@@ -540,6 +578,19 @@ Documentation de référence :
   réellement côté serveur — mais il n'y a ni cards, ni formulaires, ni messagerie, et **aucun de
   ces objets n'a d'écran d'administration**. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état
   réel.
+- **La messagerie de développement existe, mais rien ne la lit.** Depuis `CRM-050`, Stalwart,
+  Roundcube et ClamAV démarrent avec la pile, et trois boîtes sont provisionnées. **Aucun composant
+  du CRM ne s'y connecte** : le service `mail-sync` arrive en `CRM-051`, l'ingestion en `CRM-054`.
+  Ce qui est livré est le monde extérieur, pas la fonctionnalité.
+- **La console web de Stalwart n'est pas installable derrière un réseau fermé.** L'image la
+  télécharge depuis GitHub au démarrage ; lorsque la requête échoue, deux lignes `ERROR` sont
+  écrites et **le serveur démarre tout de même** — tous ses protocoles et son API de gestion
+  fonctionnent. La vérification visuelle passe par Roundcube. Consigné en
+  [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-079.
+- **Le serveur mail de développement n'emploie aucun TLS**, et ses ports ne sont publiés que sur
+  `DEV_BIND_ADDRESS`. C'est un choix documenté (`docs/SPEC-mail-subsystem.md` §11.3) : en
+  production, ce sont les serveurs des utilisateurs qui portent le chiffrement. Exposer cette pile
+  au-delà de la boucle locale imposerait de revenir sur ce choix.
 - **Aucun écran de connexion, et donc aucune donnée à l'écran.** L'interface interroge l'API avec
   la seule clé anonyme ; la RLS en refus par défaut rend `200` et `[]`, et l'application affiche
   ses états vides. Mesuré : **un compte seedé connecté obtient exactement le même vide**, faute de

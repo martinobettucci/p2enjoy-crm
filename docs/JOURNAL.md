@@ -7442,3 +7442,97 @@ décrire une commodité de seed (`CLAUDE.md` §8).
 **Conséquence utile** : les trois boîtes livrées couvrent les deux **natures** du §2.1 — une boîte
 système à `owner_id` nul, deux boîtes personnelles rattachées à un propriétaire — ce qu'une
 quatrième boîte n'aurait pas ajouté.
+
+### Décision 240 — Trois défauts de mes propres preuves, trouvés en les exécutant
+
+Les trois viennent du même endroit : un protocole se lit dans une RFC, mais se **mesure** sur un
+serveur. Aucun n'aurait été vu par une relecture.
+
+**1. `trim()` ne retire pas un octet NUL.** La réponse de `clamd` se termine par `\0`. Le premier
+contrôle exigeait `PONG` et recevait `PONG\0`, ce qui s'affiche « PONG » dans un rapport et n'est
+pourtant pas égal. Une heure de confusion possible pour un octet invisible ; le client retire
+désormais les NUL avant de comparer.
+
+**2. Une preuve de refus ne doit pas poursuivre le dialogue.** Le scénario qui prouve que la
+soumission SMTP exige une authentification réutilisait le client d'envoi complet. Après le `535`
+attendu, ce client envoyait `MAIL FROM` et recevait `503 You must authenticate first` — un code
+qu'il n'attendait pas —, puis restait bloqué jusqu'à son propre délai. **L'échec était alors imputé
+à une absence de réponse, alors que le serveur avait parfaitement refusé.** Une preuve de refus a
+désormais son propre client, qui s'arrête à l'authentification.
+
+**3. `SEARCH HEADER Message-ID "<jeton@domaine>"` ne trouve rien.** Stalwart n'indexe pas les
+chevrons. La forme sans chevrons trouve. Le scénario cherchait donc éternellement un message qui
+était pourtant bien remis — le journal du serveur disait `Message ingested`, et la boîte le
+contenait. Le détail est écrit dans le fichier de preuve, plutôt que redécouvert par la prochaine
+unité qui touchera à IMAP.
+
+**Ce que ces trois défauts ont en commun** : dans les trois cas, la preuve accusait le serveur d'un
+défaut qui était le mien. C'est le pire mode de défaillance d'un harnais — il ne rend pas un faux
+vert, il rend un faux rouge, ce qui envoie chercher un défaut là où il n'y en a pas.
+
+### Décision 241 — Le rejeu séquentiel des harnais n'est pas un instrument de mesure, et il a fallu le mesurer pour le savoir
+
+**Ce que j'ai fait, et ce que j'en ai d'abord conclu.** Les vingt-six harnais du dépôt ont été
+rejoués à la suite, pour la non-régression de `CRM-050`. Vingt-deux sont rendus rouges. La
+conclusion évidente — « le chunk 3 a dérivé depuis `CRM-046` » — était **partiellement fausse**, et
+c'est la contre-mesure qui l'a établie.
+
+**La contre-mesure.** Cluster détruit, volumes détruits, migrations rejouées, seed réappliqué, puis
+deux harnais exécutés **seuls** :
+
+- `verify-seed-demo.sh` : **2 anomalies** en séquence, **62 contrôles et aucune anomalie** seul.
+  Ses deux anomalies n'existaient pas — le rejeu les avait fabriquées.
+- `verify-preuves-refus.sh` : **4** en séquence, **2** seul. Deux réelles, deux fabriquées.
+- `verify-authz.sh` : **3** dans les deux cas. Celles-là sont réelles.
+
+**La cause, mesurée elle aussi.** À la fin du balayage, `p2enjoy-migrations` était `exited (3)`,
+sur un `deadlock detected` en pleine migration `0005`. Plusieurs harnais rejouent des migrations,
+réappliquent le seed ou dégradent la base pour éprouver leur propre non-complaisance ; enchaînés,
+ils se marchent dessus.
+
+**Décision.** Le tableau de vingt-six lignes n'est **pas** consigné comme un état du dépôt. Ce qui
+est consigné en **INC-080** est ce qui a été mesuré sur un état froid, harnais par harnais, plus le
+défaut d'instrument lui-même — qui vaut plus que la liste, parce qu'il rend suspecte toute
+livraison antérieure annonçant « les vingt-trois harnais rejoués ».
+
+**Ce que je me suis interdit, dans les deux sens** : annoncer « tous verts », ce qu'ils ne sont
+pas ; et annoncer « vingt-deux harnais cassés », ce qui aurait envoyé chercher des défauts
+inexistants dans au moins deux d'entre eux.
+
+### Décision 242 — Quatre garde-fous périmés, et un composant qui n'existe plus
+
+**Mesuré sur un état froid**, donc indépendamment de l'ordre d'exécution : `verify-authz.sh`
+(3 anomalies), `verify-cards.sh` (6), `verify-board.sh` (4) et `verify-preuves-refus.sh` (2)
+échouent sur des volumes figés — neuf cards là où le seed en porte quatorze depuis `CRM-046`,
+quarante et une politiques là où il y en a quarante-cinq. `git log` établit la chronologie sans
+ambiguïté : les garde-fous datent de `CRM-010`, `CRM-040`, `CRM-041` et `CRM-014` ; le jeu de
+démonstration complet est venu après, et ne les a pas suivis.
+
+**Un cinquième écart n'est pas un compteur.** `scripts/verify-commentaires.sh` cherche
+`webapp/src/app/PanneauCommentaires.tsx` et son test : **ces deux fichiers n'existent plus**.
+`CRM-044` (commit `2575b89`) les a supprimés en fondant le panneau des commentaires dans
+`PanneauTimeline.tsx`. Le harnais de `CRM-043` désigne donc un composant que l'unité suivante a
+dissous. Et quatre harnais rendent « des classes citées n'existent pas dans le CSS produit », dont
+la cause n'est pas établie.
+
+**Décision : consigner, ne pas refermer au passage.** Réviser les garde-fous de cinq unités
+antérieures dans le commit d'une unité du chunk 4 mêlerait six sujets à un changement qui n'en
+traite qu'un. Et deux des écarts ne sont **pas** des compteurs — un composant dissous et des
+classes CSS absentes demandent chacun une mesure qui leur est propre. Le point est ouvert en
+**INC-080**, avec ses chiffres.
+
+**Ce que je me suis interdit** : masquer les trois anomalies en annonçant « vingt-trois harnais
+rejoués, tous verts ». Ils ne le sont pas, et la Definition of Done du projet interdit précisément
+cette phrase-là.
+
+**Ce que j'ai vérifié avant de conclure**, pour ne pas accuser une unité antérieure d'un défaut qui
+serait le mien : la pile a été **entièrement reconstruite** — cluster détruit, volumes détruits,
+migrations rejouées (`p2enjoy-migrations` `exited (0)`), seed réappliqué. La base porte alors
+exactement les 14 cards et 45 politiques que le seed écrit, `npm run test:sql` rend 1405 assertions
+sans anomalie, `npm run test:unit` 488 tests, et les preuves de `CRM-050` sont reprouvées à froid :
+`npm run e2e:mail` 16 scénarios, `scripts/verify-mail-infra.sh` 72 contrôles sans anomalie.
+`CRM-050` ne touche pas la base.
+
+**Un bénéfice imprévu de cette destruction** : le provisionnement des boîtes a été prouvé **à
+froid**, sur un volume RocksDB inexistant. La pile complète remonte en **33 secondes**, les trois
+boîtes sont recréées, et rien n'exige d'intervention manuelle.

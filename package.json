@@ -17,7 +17,8 @@
     "test:sql": "scripts/run-sql-tests.sh",
     "test:unit": "vitest run --config webapp/vitest.config.ts",
     "e2e:api": "E2E_PROJETS=api playwright test --config e2e/playwright.config.ts --project=api",
-    "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
+    "e2e:mail": "E2E_PROJETS=mail playwright test --config e2e/playwright.config.ts --project=mail",
+  "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
     "e2e:report": "playwright show-report e2e/report"
   },
   "devDependencies": {

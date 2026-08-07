@@ -39,7 +39,7 @@ décrire un état futur :
 | `npm run e2e:api` | absente | **oui** |
 | `npm run e2e:report` | absente | **oui** |
 | `pytest mail-sync/tests` | absente | **non** — voir §8 |
-| `npm run e2e:mail` | absente | **non** — voir §8 |
+| `npm run e2e:mail` | absente | **non** — voir §8. **Livrée depuis par `CRM-050`**, voir ci-dessous |
 
 ## 2. Ce que le harnais n'invente pas
 
@@ -48,6 +48,13 @@ Deux des sept commandes de `README.md` §7 n'ont **aucun sujet à exercer** avan
 - `pytest mail-sync/tests` suppose le service `mail-sync`, livré par `CRM-051` ;
 - `npm run e2e:mail` suppose Stalwart et un aller-retour d'email réel, livrés par `CRM-050` et
   `CRM-054`.
+
+**Mise à jour, `CRM-050`.** Le projet `mail` est désormais **déclaré et peuplé** : `CRM-050` a
+livré Stalwart, ses boîtes, Roundcube et ClamAV, et `e2e/mail/` exerce les protocoles — session
+IMAP sur les trois boîtes, soumission SMTP authentifiée, remise par le catch-all et relecture,
+détection réelle d'EICAR, et Roundcube à l'écran. Ce que le projet ne prouve **pas encore** est
+l'aller-retour d'email **du produit**, qui suppose l'ingestion (`CRM-054`) et l'envoi (`CRM-058`).
+`pytest mail-sync/tests` reste sans sujet jusqu'à `CRM-051`, et INC-023 reste ouverte à ce titre.
 
 Trois conduites étaient possibles. Déclarer les projets vides : rejetée, c'est exactement
 l'illusion que `e2e/playwright.config.ts` refusait déjà en toutes lettres depuis `CRM-007`.
@@ -382,7 +389,7 @@ de tests, pas seulement des nouvelles.
 | Commande | Bloquée par | Ce qui manque exactement |
 |---|---|---|
 | `pytest mail-sync/tests` | `CRM-051` | Aucun code Python dans le dépôt. Un harnais pytest sans sujet rendrait `5` (« no tests ran ») ou, pire, `0` sur un périmètre vide. |
-| `npm run e2e:mail` | `CRM-050`, `CRM-054` | Ni Stalwart, ni boîte, ni ingestion : rien à faire circuler. |
+| `npm run e2e:mail` | ~~`CRM-050`~~, `CRM-054` | **Livrée par `CRM-050`** : Stalwart, trois boîtes et ClamAV existent, et le projet les éprouve par le protocole. L'aller-retour d'email du produit reste dû par `CRM-054` et `CRM-058`. |
 
 Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 restaient dues par
 `CRM-014`, qui s'appuie sur les fixtures livrées ici. **Elles le sont désormais pour sept d'entre
@@ -403,7 +410,7 @@ une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3
 
 ## 10. Limites connues
 
-- **`pytest` et `e2e:mail` ne sont pas livrés** (§2, §8). `CRM-008` reste `[~]` tant qu'INC-023
+- **`pytest` n'est pas livré, et `e2e:mail` l'a été depuis par `CRM-050`** (§2, §8). `CRM-008` reste `[~]` tant qu'INC-023
   n'est pas arbitrée.
 - **Sur les douze preuves de refus, une seule était acquise à l'écriture de ce document** — la
   n° 11. `CRM-014` en acquiert **sept** (§4.6) ; les cinq autres n'ont toujours pas de sujet et

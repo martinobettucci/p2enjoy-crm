@@ -12,6 +12,96 @@ répercutée dans les documents concernés.
 
 ## Ouverts
 
+### INC-080 — Des garde-fous du chunk 3 sont périmés, et le rejeu séquentiel des harnais n'est pas un instrument de mesure valable
+
+**Nature :** deux points distincts, mesurés le même jour. (1) des garde-fous figés par des unités
+antérieures ont été rendus faux par une unité **ultérieure** qui ne les a pas révisés ; (2) les
+harnais du dépôt **interfèrent entre eux** lorsqu'ils sont rejoués à la suite, au point qu'une
+exécution séquentielle ne prouve plus rien.
+**Relevé le :** 2026-08-07, pendant le rejeu de non-régression de `CRM-050`.
+
+---
+
+#### 1. Des garde-fous périmés, mesurés sur un état FROID
+
+Ces trois-là ont été mesurés **immédiatement après un seed appliqué sur une base saine**, avant
+tout rejeu de migration. Ils ne dépendent d'aucun ordre d'exécution :
+
+| Harnais | Anomalies | Ce qui est figé | Ce que la base porte |
+|---|---|---|---|
+| `scripts/verify-authz.sh` | 3 | `admin` et `bizdev` voient `4/6/9`, `viewer` voit `3/4/4` | `4/6/14` et `3/4/8` |
+| `scripts/verify-cards.sh` | 6 | « état du seed : `9/1/1/9` » | `14/1/1/14` |
+| `scripts/verify-board.sh` | 4 | `grands-comptes` porte 3 cards actives, occupant 2 étapes | 4 cards actives, 3 étapes |
+| `scripts/verify-preuves-refus.sh` | 2 | 41 politiques, 9 cards | 45 politiques, 14 cards |
+
+`verify-authz.sh` et `verify-preuves-refus.sh` ont été **re-mesurés après destruction complète du
+cluster et des volumes**, migrations rejouées et seed réappliqué : ils rendent respectivement 3 et
+2 anomalies, les mêmes. Le point est donc établi, et non déduit.
+
+`git log` donne la chronologie : `verify-authz.sh` n'a pas été touché depuis la reprise de
+`CRM-010` (commit `011ac2e`), et `CRM-046` — le jeu de démonstration complet, **quatorze cards** là
+où le seed socle en portait neuf — est venu **après**.
+
+**Un écart n'est pas un compteur, et ne se corrige pas en changeant un nombre :**
+
+- `scripts/verify-commentaires.sh` cherche `webapp/src/app/PanneauCommentaires.tsx` et son test.
+  **Ces deux fichiers n'existent plus** : `CRM-044` (commit `2575b89`) les a supprimés en fondant
+  le panneau des commentaires dans `PanneauTimeline.tsx`. Le harnais de `CRM-043` désigne donc un
+  composant que l'unité suivante a dissous, et personne ne l'a suivi.
+- `verify-board.sh`, `verify-liste.sh`, `verify-formulaire.sh` et `verify-webapp.sh` rendent
+  « des classes citées n'existent pas dans le CSS produit ». Ce contrôle ne parle d'aucun volume de
+  seed : il compare des classes utilitaires citées par le harnais au CSS réellement engendré par le
+  build. Sa cause n'est pas établie ici.
+
+#### 2. Le rejeu séquentiel des harnais dégrade l'environnement qu'il mesure
+
+**MESURÉ, et c'est le point le plus important de cette entrée.** Vingt-six harnais ont été rejoués
+à la suite. À l'issue du rejeu, `p2enjoy-migrations` était **`exited (3)`**, sur :
+
+```
+psql:/migrations/0005_workflow_nodes_catalog.sql:175: ERROR:  deadlock detected
+DETAIL:  Process 35645 waits for AccessExclusiveLock … blocked by process 35647.
+```
+
+Plusieurs harnais rejouent des migrations, réappliquent le seed ou dégradent la base pour éprouver
+leur propre non-complaisance. Enchaînés, ils se marchent dessus : un harnais restaure un état que
+le suivant a déjà changé.
+
+**La preuve que ce n'est pas une théorie :** `scripts/verify-seed-demo.sh` rend **2 anomalies**
+pendant le rejeu séquentiel, et **62 contrôles, aucune anomalie** lorsqu'il est exécuté seul sur un
+état froid. Ses deux anomalies n'existaient pas ; elles ont été **fabriquées par le rejeu**.
+`verify-preuves-refus.sh`, lui, passe de 4 anomalies en séquence à **2** sur un état froid : deux
+réelles, deux fabriquées.
+
+**Conséquence directe** : le tableau de vingt-six lignes produit par une exécution séquentielle
+n'est **pas** une mesure de l'état du dépôt, et ne doit pas être lu comme telle. Les livraisons
+antérieures qui annoncent « les vingt-trois harnais rejoués » l'ont probablement fait dans les
+mêmes conditions.
+
+**Ce qui reste à arbitrer :**
+
+1. **Réviser les garde-fous périmés** — trois lignes de volumes, plus le chemin du composant
+   dissous par `CRM-044`. Mécanique, mais appartenant à quatre unités antérieures.
+2. **Établir la cause des classes CSS absentes**, qui touche quatre harnais et n'est pas un
+   compteur.
+3. **Décider ce qu'est un rejeu de non-régression valable.** Soit chaque harnais est rendu
+   réellement indépendant — base recréée avant chacun —, soit le dépôt cesse de promettre un rejeu
+   global et nomme l'ordre, le coût et les précautions d'un balayage. L'état actuel donne une
+   couleur rouge à des harnais sains et une confiance imméritée à un balayage vert.
+
+**Ce que ce n'est pas.** Aucun de ces points ne vient de `CRM-050`, qui ne touche ni table, ni
+politique, ni seed de la base. Vérifié après reconstruction complète : cluster détruit, volumes
+détruits, migrations rejouées (`p2enjoy-migrations` `exited (0)`), seed réappliqué — la base porte
+14 cards et 45 politiques, `npm run test:sql` rend **1405 assertions sans anomalie**,
+`npm run test:unit` **488 tests**, `npm run e2e:mail` **16 scénarios**, et
+`scripts/verify-mail-infra.sh` **72 contrôles sans anomalie**.
+
+**Lié à :** `CRM-046` (l'unité qui a changé les volumes), `CRM-043` et `CRM-044` (le composant
+dissous), `CRM-010`, `CRM-040`, `CRM-041`, `CRM-014` (les unités qui portent les garde-fous),
+INC-055 (un harnais qui rejoue sa migration laisse la base dans un état que le runner ne produit
+jamais), INC-058 (une assertion qui compte une donnée qu'un autre harnais fait varier pendant
+qu'il l'exécute), INC-078 (même motif : une omission consignée plutôt que refermée au passage).
+
 ### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine
 
 **Nature :** dépendance réseau d'une image épinglée, non satisfaite par l'environnement

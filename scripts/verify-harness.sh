@@ -229,6 +229,16 @@ SCENARIOS_API=410
 # visible : le fil n'est jamais atteint par un anonyme.
 # Valeur MESURÉE, non déduite.
 SCENARIOS_UI=136
+# Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
+# et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
+# **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
+# le délimiteur de hiérarchie annoncé par le serveur, la remise par le catch-all d'une adresse de
+# card jamais déclarée et sa relecture, le refus d'une soumission non authentifiée, trois contrôles
+# de l'API de gestion — anonyme, mot de passe faux, inventaire des boîtes —, trois contrôles de
+# ClamAV — PONG, détection d'EICAR, contre-épreuve sur un contenu anodin — et trois scénarios
+# Roundcube, dont deux produisent les captures de l'unité.
+# Valeur MESURÉE, non déduite.
+SCENARIOS_MAIL=16
 
 TRAVAIL=$(mktemp -d)
 failures=0
@@ -348,6 +358,26 @@ if [ -s webapp/dist/index.html ]; then
 	ok "webapp/dist reconstruit par le projet ui : l'état d'avant le contrôle 4 est rétabli"
 else
 	fail "webapp/dist absent après le projet ui"
+fi
+
+# --- 5 bis. npm run e2e:mail -------------------------------------------------------------------
+# Le projet `mail` ne parle qu'aux serveurs de messagerie : il n'a besoin ni du build de la webapp
+# ni du `webServer`. Un harnais qui l'ignorerait laisserait un projet entier hors de son périmètre,
+# ce qui est exactement le défaut que `CRM-008` s'interdit.
+
+echo
+echo "5 bis. npm run e2e:mail — protocoles de messagerie, projet livré par CRM-050"
+
+if npm run --silent e2e:mail >"$TRAVAIL/mail.log" 2>&1; then
+	passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/mail.log" | tail -n 1 | grep -oE '^[0-9]+' || echo 0)
+	if [ "${passes:-0}" -eq "$SCENARIOS_MAIL" ]; then
+		ok "npm run e2e:mail : $passes scénarios verts (IMAP, SMTP, ClamAV, Roundcube réels)"
+	else
+		fail "npm run e2e:mail vert mais $passes scénarios au lieu de $SCENARIOS_MAIL"
+	fi
+else
+	fail "npm run e2e:mail échoue"
+	sed 's/^/        /' "$TRAVAIL/mail.log" | tail -n 25
 fi
 
 # --- 6. npm run test:unit et 7. npm run typecheck ----------------------------------------------

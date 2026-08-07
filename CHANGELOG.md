@@ -33,6 +33,48 @@ d'exécuter le code attendu.
   `crm.p2enjoy.test`, et non plus `crm.exemple.tld`. Les deux valeurs divergeaient depuis l'origine
   sans que rien ne les compare — à partir de `CRM-050`, une divergence rendrait la boîte système
   incapable d'attraper les seules adresses que le produit génère.
+- **L'infrastructure mail de développement est livrée** — `CRM-050`. `./runDev.sh` démarre
+  désormais **Stalwart** (vrai serveur IMAP/SMTP, ports 1143, 1025 et 1587), **Roundcube**
+  (webmail de contrôle, http://localhost:8080), **ClamAV** (`clamd` sur 3310) et un service jetable
+  qui provisionne les boîtes. Inbucket est **conservé** pour les emails transactionnels : les deux
+  serveurs ne servent pas le même usage.
+- **Trois boîtes, créées par la véritable API de gestion de Stalwart** et non par une écriture dans
+  son magasin : `systeme@crm.p2enjoy.test` — boîte système, **catch-all** de tout le domaine des
+  cards —, `admin@p2enjoy.test` et `bizdev@p2enjoy.test`. Le provisionnement est **convergent** :
+  rejoué, il rétablit les attributs sans dupliquer ni détruire un message. Farida Nowak (`viewer`)
+  n'a pas de boîte, et c'est délibéré (décision 239).
+- **Le catch-all est prouvé de bout en bout, hors interface** : un message soumis en SMTP
+  authentifié à une adresse de card **jamais déclarée** est accepté, remis dans la boîte système et
+  relu par IMAP avec son `Message-ID`, son sujet et son destinataire intacts.
+- **Le projet Playwright `mail` est déclaré**, pour la première fois — `npm run e2e:mail`,
+  **16 scénarios verts**. Il était annoncé par `README.md` §7 et laissé vide par `CRM-008` faute de
+  sujet (INC-023). Il ne parle qu'aux serveurs : ni build, ni `webServer`. **Aucune bibliothèque
+  IMAP ou SMTP n'est ajoutée au dépôt** — les clients sont écrits sur une socket `node:net`, et le
+  choix d'une bibliothèque pour `mail-sync` reste ouvert pour `CRM-051` (décision 238).
+- **ClamAV est prouvé opérant, pas seulement vivant** : `zINSTREAM` de la chaîne de test EICAR rend
+  `stream: Eicar-Test-Signature FOUND`, et une contre-épreuve sur un contenu anodin rend `OK`. Un
+  `PONG` prouve qu'un processus écoute, pas qu'il sait détecter.
+- **Test unitaire dédié sur la configuration du serveur** — `stalwart/config.test.ts`, 21
+  assertions, dont deux payées par une panne réelle : une régression sur la liaison `[::]` rend la
+  pile silencieusement morte, et c'est le seul contrôle capable de l'attraper sans démarrer quoi
+  que ce soit. `npm run test:unit` : 467 → **488 tests**.
+- **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **72 contrôles**, et **non
+  complaisant** — cinq dégradations posées sur une **copie** produisent 6 anomalies.
+- **Vérification visuelle observée** : `docs/captures/CRM-050/`, trois images regardées une à une.
+  La boîte système y montre les messages que le catch-all a captés.
+- **Preuve à froid, après destruction complète** : cluster et **tous** les volumes détruits — le
+  RocksDB de Stalwart compris —, la pile remonte en **33 secondes**, les seize services sont sains,
+  et les deux domaines et trois boîtes sont recréés sans aucune intervention.
+- **INC-080, consignée et non résolue**, en deux points. D'abord, quatre garde-fous périmés,
+  mesurés **à froid** donc réels : `verify-authz.sh`, `verify-cards.sh`, `verify-board.sh` et
+  `verify-preuves-refus.sh` comptent neuf cards là où `CRM-046` en a livré quatorze, et
+  `verify-commentaires.sh` cherche un composant que `CRM-044` a dissous. Ensuite, et c'est le point
+  le plus important : **le rejeu séquentiel des harnais dégrade l'environnement qu'il mesure** —
+  `verify-seed-demo.sh` rend 2 anomalies en séquence et **aucune** seul, et le conteneur de
+  migrations finit `exited (3)` sur un `deadlock`. Un balayage global n'est donc pas une mesure de
+  l'état du dépôt, ce qui rend suspecte toute livraison antérieure annonçant « les vingt-trois
+  harnais rejoués ». Aucun de ces points ne vient de `CRM-050`, qui ne touche ni table, ni
+  politique, ni seed.
 - **INC-079, consignée et non résolue** : l'image de Stalwart télécharge sa console web depuis
   GitHub au démarrage ; derrière un réseau fermé la requête échoue et deux lignes `ERROR` sont
   écrites à chaque démarrage. Le serveur fonctionne et son API de gestion répond ; seule la console

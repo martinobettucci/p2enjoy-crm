@@ -4,10 +4,13 @@
 // @spec docs/SPEC-webapp.md §13 (commandes), §14 (preuves) ; docs/DESIGN_SYSTEM.md §11 (captures)
 // @spec README.md §7 (tests)
 //
-// Deux projets sont déclarés : `api`, qui parle directement à Kong, et `ui`, qui exerce
-// l'application construite et servie. Le projet `mail` annoncé par README.md §7 n'est pas
-// déclaré : ni Stalwart ni l'ingestion n'existent avant CRM-050 et CRM-054, et un projet vide
-// donnerait l'illusion d'un harnais complet (docs/INCONSISTENCY_REPORT.md, INC-023).
+// Trois projets sont déclarés : `api`, qui parle directement à Kong ; `mail`, qui parle aux
+// serveurs de messagerie ; et `ui`, qui exerce l'application construite et servie.
+//
+// Le projet `mail` était annoncé par README.md §7 et laissé non déclaré par CRM-008, faute de
+// sujet à exercer (docs/INCONSISTENCY_REPORT.md, INC-023). `CRM-050` lui en donne un : Stalwart,
+// ses boîtes et ClamAV existent, et le projet les éprouve par le protocole. L'aller-retour
+// d'email complet reste dû par CRM-054 et CRM-058.
 //
 // Le serveur sous test sert le **build de production**, pas le serveur de développement : ce
 // qui est éprouvé doit être ce qui sera déployé. Le build est refait à chaque exécution, avec
@@ -36,7 +39,7 @@ const CLE_ANONYME = cleAnonyme()
  * Variable absente : tous les projets sont supposés demandés, donc le serveur est déclaré.
  * C'est le défaut sûr — une invocation directe de `playwright test` continue de fonctionner.
  */
-const PROJETS_DEMANDES = (process.env['E2E_PROJETS'] ?? 'api,ui')
+const PROJETS_DEMANDES = (process.env['E2E_PROJETS'] ?? 'api,mail,ui')
 	.split(',')
 	.map((nom) => nom.trim())
 	.filter((nom) => nom.length > 0)
@@ -103,6 +106,20 @@ export default defineConfig({
 			testDir: join(import.meta.dirname, 'api'),
 			// Aucun navigateur : ce projet n'emploie que le contexte de requête de Playwright.
 			use: { baseURL: URL_API },
+		},
+		{
+			// Messagerie : ce projet ne parle qu'aux serveurs — Stalwart, ClamAV, Roundcube. Il
+			// n'a besoin ni du build de la webapp ni du `webServer`, et `CRM-050` le déclare
+			// pour la première fois (docs/SPEC-mail-subsystem.md §11.9). Son unique scénario
+			// d'interface — Roundcube — emploie un navigateur, d'où le même `device` que `ui`.
+			name: 'mail',
+			testDir: join(import.meta.dirname, 'mail'),
+			use: {
+				...devices['Desktop Chrome'],
+				...(CHROMIUM_FOURNI === ''
+					? {}
+					: { launchOptions: { executablePath: CHROMIUM_FOURNI } }),
+			},
 		},
 		{
 			name: 'ui',

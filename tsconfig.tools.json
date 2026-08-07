@@ -29,5 +29,5 @@
     "skipLibCheck": false,
     "noEmit": true
   },
-  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts"]
+  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts", "stalwart/**/*.ts"]
 }

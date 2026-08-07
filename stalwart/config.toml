@@ -1,0 +1,103 @@
+# @spec CRM-050 (docs/BACKLOG.md) — serveur IMAP/SMTP de développement
+# @spec docs/SPEC-mail-subsystem.md §11.3 (configuration), §11.4 (domaines et boîtes),
+#       §11.8 (ports) ; docs/DAT.md §3.6 (composants de développement uniquement), §3.7 (versions)
+# @spec docs/JOURNAL.md décision 235 (les trois pannes payées avant d'être écrites)
+# @spec README.md §6 (lancement en développement)
+#
+# Ce fichier est monté **en lecture seule** dans le conteneur. Il remplace la configuration que
+# `stalwart --init` écrirait au premier démarrage, laquelle tire un mot de passe d'administration
+# **au hasard** et l'imprime dans les journaux : un environnement reproductible ne peut pas s'en
+# contenter (docs/SPEC-mail-subsystem.md §11.3).
+#
+# Aucun secret n'y figure en clair : la macro `%{env:VARIABLE}%` lit l'environnement du conteneur.
+#
+# ⚠ TROIS FAITS MESURÉS, ET NON DÉDUITS D'UNE DOCUMENTATION (docs/JOURNAL.md décision 235) :
+#
+#   1. Les liaisons valent `0.0.0.0`, **jamais `[::]`**. Sur un conteneur sans IPv6 — celui de la
+#      routine en est un — une liaison `[::]` arrête le serveur **sans écrire une seule ligne** :
+#      `docker logs` rend le vide, le conteneur reste `Up`, et aucun port n'écoute. Aucun message
+#      ne dit pourquoi. `stalwart/config.test.ts` fige cet invariant.
+#   2. Le traceur écrit sur la **sortie standard**. Un traceur `log` vers un fichier échoue avec
+#      « Failed to create log file … No such file or directory » tant que son répertoire n'existe
+#      pas, et ses journaux n'atteindraient de toute façon pas `./runDev.sh --withLog stalwart`.
+#   3. Aucun TLS. Les ports ne sont publiés que sur `DEV_BIND_ADDRESS` (boucle locale), et la
+#      production n'utilise pas ce serveur : ce sont les serveurs des utilisateurs qui portent le
+#      chiffrement (docs/SPEC-mail-subsystem.md §2.1 et §11.3).
+
+# Nom annoncé par le serveur dans ses bannières SMTP et IMAP. Sans lui, le serveur annonce
+# l'identifiant du conteneur, qui change à chaque recréation.
+[server]
+hostname = "mail.p2enjoy.test"
+
+# --- Listeners ----------------------------------------------------------------------------------
+# Quatre, et pas un de plus. Les variantes implicitement chiffrées de la configuration générée —
+# `submissions`, `imaptls`, `pop3s`, `https` — et les protocoles inutilisés — `pop3`,
+# `managesieve` — sont retirés : un port ouvert sans usage est une surface.
+
+# Remise : ce qu'un serveur extérieur emploierait pour livrer un message à une adresse de card.
+[server.listener.smtp]
+bind = "0.0.0.0:25"
+protocol = "smtp"
+
+# Soumission authentifiée : ce que `smtp_worker` (CRM-058) et Roundcube emploient pour envoyer.
+[server.listener.submission]
+bind = "0.0.0.0:587"
+protocol = "smtp"
+
+# Lecture des boîtes : ce que `imap_worker` (CRM-054) et Roundcube emploient.
+[server.listener.imap]
+bind = "0.0.0.0:143"
+protocol = "imap"
+
+# API de gestion. C'est par elle que `stalwart-init` crée les domaines et les boîtes, comme le
+# ferait un exploitant (docs/SPEC-mail-subsystem.md §11.4).
+[server.listener.http]
+bind = "0.0.0.0:8080"
+protocol = "http"
+
+# --- Stockage -----------------------------------------------------------------------------------
+# RocksDB embarqué : le serveur mail de développement ne dépend d'aucun autre service de la pile,
+# et sa destruction ne touche ni PostgreSQL ni MinIO.
+
+[storage]
+data = "rocksdb"
+fts = "rocksdb"
+blob = "rocksdb"
+lookup = "rocksdb"
+directory = "internal"
+
+[store.rocksdb]
+type = "rocksdb"
+path = "/opt/stalwart/data"
+compression = "lz4"
+
+[directory.internal]
+type = "internal"
+store = "rocksdb"
+
+# --- Journalisation -----------------------------------------------------------------------------
+
+[tracer.stdout]
+type = "stdout"
+level = "info"
+ansi = false
+enable = true
+
+# --- Authentification ---------------------------------------------------------------------------
+# L'administrateur de repli n'a pas de boîte : il n'existe que pour l'API de gestion. Son mot de
+# passe est tiré au hasard par `runDev.sh` au premier amorçage et n'est jamais versionné.
+
+[authentication.fallback-admin]
+user = "%{env:STALWART_ADMIN_USER}%"
+secret = "%{env:STALWART_ADMIN_PASSWORD}%"
+
+# La soumission exige une authentification : un client anonyme ne peut pas se servir du serveur
+# comme relais. La remise sur le port 25, elle, reste anonyme — c'est ce que fait un MTA.
+[session.auth]
+mechanisms = "[plain, login]"
+require = true
+
+# Sans cette ligne, `LOGIN` est refusé sur une connexion non chiffrée, et il n'y a pas de TLS en
+# développement (voir le fait mesuré n° 3 en tête de fichier).
+[imap.auth]
+allow-plain-text = true
