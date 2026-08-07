@@ -59,7 +59,66 @@ until appel GET '/api/principal?types=domain' >/dev/null 2>&1; do
 done
 dire "API de gestion joignable après $essai tentative(s) : $API"
 
-# --- 2. Domaines --------------------------------------------------------------------------------
+# --- 2. Réglages d'authentification -------------------------------------------------------------
+# Ces clés appartiennent au magasin modifiable de Stalwart. Les laisser dans `config.toml`
+# fonctionne, mais produit un avertissement de collision à chaque démarrage. L'API est le vrai
+# mécanisme d'administration de ce magasin ; l'insertion avec écrasement rend l'opération
+# convergente, puis le rechargement rend l'effet observable avant le premier client IMAP/SMTP.
+
+reglages='[{"type":"insert","prefix":null,"values":[["session.auth.mechanisms","[plain, login]"],["imap.auth.allow-plain-text","true"],["auth.dkim.sign","false"],["auth.arc.seal","false"],["webadmin.resource","file:///opt/stalwart/etc/webadmin-disabled.zip"]],"assert_empty":false}]'
+reponse=$(appel POST /api/settings "$reglages")
+case "$reponse" in
+	*'"data"'*) dire "réglages IMAP/SMTP et ressource webadmin — écrits dans le magasin de configuration" ;;
+	*) echec "réglages IMAP/SMTP et ressource webadmin : réponse inattendue — $reponse" ;;
+esac
+
+reponse=$(appel GET /api/reload)
+case "$reponse" in
+	*'"data"'*) dire "configuration Stalwart — rechargée" ;;
+	*) echec "rechargement de la configuration : réponse inattendue — $reponse" ;;
+esac
+
+# Le démarrage à froid importe déjà ce bundle. Cet appel supplémentaire rend aussi un ancien
+# volume convergent : le blob éventuellement téléchargé par une version précédente est remplacé
+# par la ressource locale, sans supprimer les boîtes ni leurs messages.
+reponse=$(appel GET /api/update/webadmin)
+case "$reponse" in
+	*'"data"'*) dire "bundle webadmin local — chargé et décompressé" ;;
+	*) echec "chargement du bundle webadmin local : réponse inattendue — $reponse" ;;
+esac
+
+session_lue=$(appel GET '/api/settings/list?prefix=session.auth')
+case "$session_lue" in
+	*'"mechanisms":"[plain, login]"'*) : ;;
+	*) echec "session.auth.mechanisms non relu après écriture — $session_lue" ;;
+esac
+
+imap_lue=$(appel GET '/api/settings/list?prefix=imap.auth')
+case "$imap_lue" in
+	*'"allow-plain-text":"true"'*) : ;;
+	*) echec "imap.auth.allow-plain-text non relu après écriture — $imap_lue" ;;
+esac
+
+dkim_lu=$(appel GET '/api/settings/list?prefix=auth.dkim')
+case "$dkim_lu" in
+	*'"sign":"false"'*) : ;;
+	*) echec "auth.dkim.sign non relu après écriture — $dkim_lu" ;;
+esac
+
+arc_lu=$(appel GET '/api/settings/list?prefix=auth.arc')
+case "$arc_lu" in
+	*'"seal":"false"'*) : ;;
+	*) echec "auth.arc.seal non relu après écriture — $arc_lu" ;;
+esac
+
+webadmin_lu=$(appel GET '/api/settings/list?prefix=webadmin')
+case "$webadmin_lu" in
+	*'"resource":"file:///opt/stalwart/etc/webadmin-disabled.zip"'*) : ;;
+	*) echec "webadmin.resource non relu après écriture — $webadmin_lu" ;;
+esac
+dire "réglages IMAP/SMTP et ressource webadmin — relus"
+
+# --- 3. Domaines --------------------------------------------------------------------------------
 
 domaine() {
 	reponse=$(appel POST /api/principal "{\"type\":\"domain\",\"name\":\"$1\"}")
@@ -73,7 +132,7 @@ domaine() {
 domaine "$DOMAINE_CARDS"
 domaine "$DOMAINE_PERSO"
 
-# --- 3. Boîtes ----------------------------------------------------------------------------------
+# --- 4. Boîtes ----------------------------------------------------------------------------------
 # `roles: ["user"]` est OBLIGATOIRE. Sans lui, le compte valide ses identifiants — le serveur écrit
 # `Authentication successful` — puis refuse la commande avec `Unauthorized access`, **sans rien
 # renvoyer au client**, qui attend jusqu'à sa propre expiration (docs/JOURNAL.md décision 235).
@@ -116,7 +175,7 @@ boite "systeme@$DOMAINE_CARDS" 'Boite systeme du workspace P2Enjoy SAS' \
 boite "admin@$DOMAINE_PERSO" 'Camille Aubert' "[\"admin@$DOMAINE_PERSO\"]"
 boite "bizdev@$DOMAINE_PERSO" 'Driss Lemoine' "[\"bizdev@$DOMAINE_PERSO\"]"
 
-# --- 4. Contrôle de sortie ----------------------------------------------------------------------
+# --- 5. Contrôle de sortie ----------------------------------------------------------------------
 # Le script ne se déclare pas réussi parce qu'il n'a pas échoué : il relit ce qu'il a écrit.
 
 for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO"; do

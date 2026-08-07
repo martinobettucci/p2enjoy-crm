@@ -140,7 +140,9 @@ INC-055 (un harnais qui rejoue sa migration laisse la base dans un état que le 
 jamais), INC-058 (une assertion qui compte une donnée qu'un autre harnais fait varier pendant
 qu'il l'exécute), INC-078 (même motif : une omission consignée plutôt que refermée au passage).
 
-### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine
+## Clos — reprise de `CRM-050` le 2026-08-07
+
+### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine — **CLOSE**
 
 **Nature :** dépendance réseau d'une image épinglée, non satisfaite par l'environnement
 d'exécution ; le composant démarre malgré tout.
@@ -161,7 +163,7 @@ ERROR Configuration build error … "Failed to download webadmin: … error send
 sert IMAP. L'API de gestion `/api/*` — celle dont le provisionnement se sert — répond
 normalement : c'est la **console web** qui manque, pas l'API.
 
-**Ce qui reste ouvert, et n'est pas résolu ici :**
+**Questions instruites avant correction :**
 
 1. **Faut-il une console d'administration du serveur mail de développement ?** Roundcube est
    l'outil de vérification visuelle retenu (`docs/SPEC-mail-subsystem.md` §11.5), et l'exploitation
@@ -175,19 +177,21 @@ normalement : c'est la **console web** qui manque, pas l'API.
    `docs/DAT.md` §3.7 — « aucune image n'est suivie par un tag mouvant ». La règle vise les images ;
    elle ne dit rien d'un composant qu'une image va chercher elle-même au démarrage.
 
-**Le comportement reste inchangé** : rien n'est ajouté pour contourner le téléchargement, aucune
-option n'est posée pour l'éteindre. La limite est nommée dans `docs/SPEC-mail-subsystem.md` §11.10
-et dans `README.md` §11.
-
-**Arbitrage retenu le 2026-08-07 — décision 245, correction encore à prouver.** Le projet n'a pas
+**Arbitrage retenu le 2026-08-07 — décision 245.** Le projet n'a pas
 besoin de la console : Roundcube porte la vérification visuelle et `/api/*` l'exploitation. Le
 premier démarrage doit importer, par le mécanisme natif de Stalwart, un petit bundle local
-versionné qui explique ce choix. L'incident ne passera en clos qu'après une preuve sur volume
-absent constatant à la fois l'API opérante, les protocoles opérants et zéro `ERROR`/`WARN` dans le
-journal de Stalwart.
+versionné qui explique ce choix.
+
+**Clôture mesurée.** `./runDev.sh` a démarré un projet Docker jetable sur volume Stalwart neuf ;
+l'API, IMAP, SMTP, Roundcube et ClamAV ont été exercés. Le bundle local est servi, Chromium rend la
+page avec une console propre, et le journal Stalwart reste sans `ERROR` ni `WARN` **après** la
+soumission SMTP réelle. `verify-mail-infra.sh` rend 84/84, `e2e:mail` 16/16. Les volumes normaux
+n'ont pas été supprimés et la pile a été restaurée dessus.
 
 **Lié à :** INC-032 et INC-042 (le même motif — une dépendance réseau que l'environnement de la
 routine ne satisfait pas), `docs/DAT.md` §3.7, `CRM-050`.
+
+## Ouverts — suite
 
 ### INC-078 — Quatre harnais de preuves du chunk 3 n'apparaissent dans aucune liste du README
 

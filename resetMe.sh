@@ -45,6 +45,7 @@ done
 env_validate
 # Garde principale : jamais sur un environnement qui n'est pas de développement.
 env_require_profile dev
+env_require_dev_inbound_domain
 
 DB_DATA="$REPO_ROOT/supabase/docker/volumes/db/data"
 

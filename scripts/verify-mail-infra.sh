@@ -4,7 +4,8 @@
 #           §11.4 (domaines et boîtes), §11.6 (ClamAV), §11.7 (variables), §11.8 (ports),
 #           §11.9 (preuves exigées)
 # @verifies docs/JOURNAL.md décision 235 (les trois pannes), décision 236 (placement de ClamAV),
-#           décision 237 (les deux domaines convergent), décision 239 (pas de boîte pour le `viewer`)
+#           décision 237 (les deux domaines convergent), décision 239 (pas de boîte pour le
+#           `viewer`), décision 245 (démarrage déterministe et journal Stalwart propre)
 # @verifies README.md §6 (services exposés en développement) ; CLAUDE.md §3 (variables documentées)
 #
 # ---------------------------------------------------------------------------------------------
@@ -95,6 +96,7 @@ VARIABLES=(
 TRACABILITE=(
 	"stalwart/config.toml|@spec CRM-050"
 	"stalwart/provision.sh|@spec CRM-050"
+	"stalwart/webadmin-disabled/index.html|@spec CRM-050"
 	"stalwart/config.test.ts|@verifies CRM-050"
 	"e2e/mail/protocoles.ts|@spec CRM-050"
 	"e2e/mail/infrastructure.spec.ts|@verifies CRM-050"
@@ -115,6 +117,8 @@ controles_fichiers() {
 	local prod="$racine/docker-compose.prod.yml"
 	local exemple="$racine/.env.example"
 	local readme="$racine/README.md"
+	local webadmin_source="$racine/stalwart/webadmin-disabled/index.html"
+	local webadmin_zip="$racine/stalwart/webadmin-disabled.zip"
 
 	titre "1. Configuration versionnée de Stalwart"
 
@@ -173,6 +177,30 @@ controles_fichiers() {
 		ok "aucune empreinte de mot de passe pré-calculée"
 	fi
 
+	if grep -q 'resource = "file:///opt/stalwart/etc/webadmin-disabled.zip"' "$config" \
+		&& grep -q 'config.local-keys.15 = "webadmin.resource"' "$config" \
+		&& ! grep -q 'releases/latest' "$config"; then
+		ok "la ressource webadmin est locale, déterministe et explicitement locale pour Stalwart"
+	else
+		fail "la ressource webadmin peut encore dépendre d'une release mouvante ou produire un avertissement"
+	fi
+
+	if [ -f "$webadmin_source" ] && [ -f "$webadmin_zip" ] \
+		&& head -c 4 "$webadmin_zip" | grep -aq $'PK\003\004' \
+		&& grep -aq '<h1>Console Stalwart désactivée</h1>' "$webadmin_zip"; then
+		ok "le bundle webadmin est un ZIP réel contenant la page explicative versionnée"
+	else
+		fail "bundle webadmin absent, invalide ou divergent de sa page source"
+	fi
+
+	if ! grep -qE '^\[(session|imap)\.auth\]' "$config" \
+		&& grep -q '/api/settings' "$racine/stalwart/provision.sh" \
+		&& grep -q '/api/reload' "$racine/stalwart/provision.sh"; then
+		ok "les réglages IMAP/SMTP modifiables passent par l'API puis le rechargement"
+	else
+		fail "des réglages modifiables restent locaux, ou leur provisionnement API manque"
+	fi
+
 	titre "2. Placement des services — développement seulement"
 
 	local service
@@ -190,6 +218,30 @@ controles_fichiers() {
 			ok "le service « $service » n'apparaît pas dans l'assemblage de production"
 		fi
 	done
+
+	local meta_bloc stalwart_bloc
+	meta_bloc=$(awk '
+		/^  meta:$/ { dans_service = 1 }
+		dans_service && !/^  meta:$/ && /^  [[:alnum:]_-]+:$/ { exit }
+		dans_service { print }
+	' "$dev")
+	if grep -q 'start_period: 20s' <<<"$meta_bloc"; then
+		ok "Meta dispose de sa fenêtre de démarrage mesurée de 20 secondes"
+	else
+		fail "Meta n'a pas la fenêtre de démarrage qui évite son faux négatif à froid"
+	fi
+
+	stalwart_bloc=$(awk '
+		/^  stalwart:$/ { dans_service = 1 }
+		dans_service && !/^  stalwart:$/ && /^  [[:alnum:]_-]+:$/ { exit }
+		dans_service { print }
+	' "$dev")
+	if grep -q './stalwart/webadmin-disabled.zip:/opt/stalwart/etc/webadmin-disabled.zip:ro' \
+		<<<"$stalwart_bloc"; then
+		ok "Stalwart monte le bundle webadmin local en lecture seule"
+	else
+		fail "Stalwart ne monte pas le bundle webadmin local en lecture seule"
+	fi
 
 	titre "3. Contrat des variables d'environnement"
 
@@ -260,8 +312,10 @@ controles_fichiers() {
 if [ "$CONTRE_EPREUVE" = true ]; then
 	COPIE=$(mktemp -d)
 	trap 'rm -rf "$COPIE"' EXIT
-	mkdir -p "$COPIE/stalwart" "$COPIE/e2e/mail" "$COPIE/scripts"
+	mkdir -p "$COPIE/stalwart/webadmin-disabled" "$COPIE/e2e/mail" "$COPIE/scripts"
 	cp stalwart/config.toml stalwart/provision.sh stalwart/config.test.ts "$COPIE/stalwart/"
+	cp stalwart/webadmin-disabled.zip "$COPIE/stalwart/"
+	cp stalwart/webadmin-disabled/index.html "$COPIE/stalwart/webadmin-disabled/"
 	cp e2e/mail/protocoles.ts e2e/mail/infrastructure.spec.ts e2e/mail/roundcube.spec.ts "$COPIE/e2e/mail/"
 	cp scripts/verify-mail-infra.sh "$COPIE/scripts/"
 	cp docker-compose.dev.yml docker-compose.prod.yml .env.example README.md "$COPIE/"
@@ -336,6 +390,19 @@ else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"
 fi
 
+if docker logs p2enjoy-stalwart-init 2>&1 \
+	| grep -q 'réglages IMAP/SMTP et ressource webadmin — relus'; then
+	ok "le provisionnement a écrit et relu les réglages et la ressource modifiables"
+else
+	fail "le provisionnement n'a pas relu les réglages IMAP/SMTP et la ressource webadmin"
+fi
+
+if docker logs p2enjoy-stalwart-init 2>&1 | grep -q 'bundle webadmin local — chargé'; then
+	ok "le provisionnement a rendu le bundle webadmin convergent sans supprimer les mails"
+else
+	fail "le provisionnement n'a pas chargé le bundle webadmin local"
+fi
+
 # ---------------------------------------------------------------------------------------------
 # Famille 7 — les deux domaines convergent (décision 237).
 # ---------------------------------------------------------------------------------------------
@@ -370,6 +437,23 @@ BOITE_SYSTEME="systeme@$DOMAINE_ENV"
 BOITES=("$BOITE_SYSTEME" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO")
 
 api() { curl -sS --noproxy '*' -u "$ADMIN" "$API$1"; }
+
+if api '/api/settings/list?prefix=session.auth' | grep -q '"mechanisms":"\[plain, login\]"' \
+	&& api '/api/settings/list?prefix=imap.auth' | grep -q '"allow-plain-text":"true"' \
+	&& api '/api/settings/list?prefix=auth.dkim' | grep -q '"sign":"false"' \
+	&& api '/api/settings/list?prefix=auth.arc' | grep -q '"seal":"false"' \
+	&& api '/api/settings/list?prefix=webadmin' \
+		| grep -q 'file:///opt/stalwart/etc/webadmin-disabled.zip'; then
+	ok "l'API relit les réglages IMAP/SMTP, les signatures désactivées et la ressource webadmin"
+else
+	fail "l'API ne relit pas tous les réglages IMAP/SMTP, de signature et webadmin attendus"
+fi
+
+if curl -sS --noproxy '*' "$API/" | grep -q '<h1>Console Stalwart désactivée</h1>'; then
+	ok "la racine Stalwart sert la page locale explicative"
+else
+	fail "la racine Stalwart ne sert pas la page locale explicative"
+fi
 
 code_anonyme=$(curl -sS --noproxy '*' -o /dev/null -w '%{http_code}' "$API/api/principal" || echo 000)
 if [ "$code_anonyme" = 401 ]; then
@@ -434,6 +518,17 @@ else
 	ok "un mot de passe faux est refusé par IMAP"
 fi
 
+EXPEDITEUR="admin@$DOMAINE_PERSO"
+if printf 'From: %s\r\nTo: %s\r\nSubject: Preuve journal Stalwart propre\r\n\r\nMessage de contrôle.\r\n' \
+	"$EXPEDITEUR" "$BOITE_SYSTEME" \
+	| curl -sS --noproxy '*' --url "smtp://$HOTE:$(lire_env STALWART_SUBMISSION_PORT)" \
+		--user "$EXPEDITEUR:$MDP" --mail-from "$EXPEDITEUR" --mail-rcpt "$BOITE_SYSTEME" \
+		--upload-file - >/dev/null; then
+	ok "un client SMTP réel soumet un message authentifié sans signature de production"
+else
+	fail "la soumission SMTP authentifiée du contrôle de journal échoue"
+fi
+
 # `clamd` en protocole binaire, sans dépendance : bash suffit.
 clamd_dialogue() {
 	local charge=$1 reponse=''
@@ -473,6 +568,14 @@ if curl -sS --noproxy '*' "http://$HOTE:$(lire_env ROUNDCUBE_PORT)/" | grep -q '
 	ok "Roundcube sert son formulaire de connexion"
 else
 	fail "Roundcube ne sert pas son formulaire de connexion"
+fi
+
+# Ce contrôle vient APRÈS les gestes IMAP et SMTP : placé au démarrage, il ne voyait pas les
+# avertissements de signature que la première soumission authentifiée faisait apparaître.
+if docker logs p2enjoy-stalwart 2>&1 | grep -qE '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)'; then
+	fail "le journal Stalwart contient au moins un WARN ou ERROR après les protocoles"
+else
+	ok "le journal Stalwart reste sans WARN ni ERROR après les protocoles"
 fi
 
 # ---------------------------------------------------------------------------------------------

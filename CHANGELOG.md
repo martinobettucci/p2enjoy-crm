@@ -70,6 +70,12 @@ d'exécuter le code attendu.
   (webmail de contrôle, http://localhost:8080), **ClamAV** (`clamd` sur 3310) et un service jetable
   qui provisionne les boîtes. Inbucket est **conservé** pour les emails transactionnels : les deux
   serveurs ne servent pas le même usage.
+- **Le démarrage mail est déterministe et son journal reste propre après usage réel.** Stalwart
+  importe un bundle webadmin local versionné au lieu d'une release GitHub `latest`, écrit ses
+  réglages modifiables par l'API, désactive ARC/DKIM dans le serveur local sans clés de production,
+  et refuse avant Docker un domaine catch-all divergent du seed. Preuves sur volume neuf :
+  `runDev.sh` vert, `verify-mail-infra.sh` **84/84**, `e2e:mail` **16/16**, puis zéro
+  `WARN`/`ERROR`. INC-079 est close.
 - **Trois boîtes, créées par la véritable API de gestion de Stalwart** et non par une écriture dans
   son magasin : `systeme@crm.p2enjoy.test` — boîte système, **catch-all** de tout le domaine des
   cards —, `admin@p2enjoy.test` et `bizdev@p2enjoy.test`. Le provisionnement est **convergent** :
@@ -86,11 +92,11 @@ d'exécuter le code attendu.
 - **ClamAV est prouvé opérant, pas seulement vivant** : `zINSTREAM` de la chaîne de test EICAR rend
   `stream: Eicar-Test-Signature FOUND`, et une contre-épreuve sur un contenu anodin rend `OK`. Un
   `PONG` prouve qu'un processus écoute, pas qu'il sait détecter.
-- **Test unitaire dédié sur la configuration du serveur** — `stalwart/config.test.ts`, 21
+- **Test unitaire dédié sur la configuration du serveur** — `stalwart/config.test.ts`, 24
   assertions, dont deux payées par une panne réelle : une régression sur la liaison `[::]` rend la
   pile silencieusement morte, et c'est le seul contrôle capable de l'attraper sans démarrer quoi
-  que ce soit. `npm run test:unit` : 467 → **488 tests**.
-- **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **72 contrôles**, et **non
+  que ce soit. `npm run test:unit` : **523 tests** sur l'état courant.
+- **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **84 contrôles**, et **non
   complaisant** — cinq dégradations posées sur une **copie** produisent 6 anomalies.
 - **Vérification visuelle observée** : `docs/captures/CRM-050/`, trois images regardées une à une.
   La boîte système y montre les messages que le catch-all a captés.
@@ -107,10 +113,9 @@ d'exécuter le code attendu.
   l'état du dépôt, ce qui rend suspecte toute livraison antérieure annonçant « les vingt-trois
   harnais rejoués ». Aucun de ces points ne vient de `CRM-050`, qui ne touche ni table, ni
   politique, ni seed.
-- **INC-079, consignée et non résolue** : l'image de Stalwart télécharge sa console web depuis
-  GitHub au démarrage ; derrière un réseau fermé la requête échoue et deux lignes `ERROR` sont
-  écrites à chaque démarrage. Le serveur fonctionne et son API de gestion répond ; seule la console
-  manque. Trois questions sont nommées pour l'arbitrage, le comportement reste inchangé.
+- **INC-079 close** : la console Stalwart distante et mouvante est remplacée par une page locale ;
+  l'API de gestion et Roundcube conservent leurs rôles respectifs. Le démarrage à froid et le
+  journal après protocoles sont prouvés sans avertissement.
 - **Spécification du manuel utilisateur du chunk 3** — `CRM-047`, `docs/SPEC-manual.md`, écrite
   **après mesure sur la pile réelle** et avant toute correction. L'unité tenait en une ligne de
   backlog ; le document dit désormais quelle unité vit dans quel chapitre, ce qu'un chapitre doit
@@ -145,6 +150,12 @@ d'exécuter le code attendu.
   un commit qui n'en traite qu'un.
 
 ### Corrigé
+
+- **Le build Docker de développement ne copie plus les secrets ni les données du poste.** Un
+  `.dockerignore` racine exclut `.env`, `.git`, les dépendances, sorties de preuve et volumes
+  locaux. Le défaut a été mesuré dans l'ancienne image, qui contenait réellement `/app/.env` et
+  `/app/.git` ; elle n'existe plus. Contexte ramené de 233,04 Mo à 11,56 Mo et reconstruction
+  prouvée par les **58 contrôles** de `verify-scripts.sh`.
 
 - **Deux défauts de `CRM-047` trouvés en exécutant ses propres preuves** (décision 234). L'annexe A
   portait « 38 événements », recopié de `CRM-046` : un total d'événements ne fait que croître, et la

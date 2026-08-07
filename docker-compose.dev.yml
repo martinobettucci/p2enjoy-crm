@@ -117,6 +117,11 @@ services:
       PG_META_DB_USER: postgres
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
       CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+    # Le healthcheck de l'image commence immédiatement. Mesuré, Meta répond après que ses trois
+    # premières tentatives ont parfois expiré ; Compose abandonne alors un service qui devient
+    # sain une seconde plus tard. Cette fenêtre qualifie l'initialisation, pas le verdict final.
+    healthcheck:
+      start_period: 20s
 
   # Équivalent local de S3 : le développement ne dépend d'aucun stockage objet payant.
   minio:
@@ -235,6 +240,7 @@ services:
       STALWART_ADMIN_PASSWORD: ${STALWART_ADMIN_PASSWORD}
     volumes:
       - ./stalwart/config.toml:/opt/stalwart/etc/config.toml:ro
+      - ./stalwart/webadmin-disabled.zip:/opt/stalwart/etc/webadmin-disabled.zip:ro
       - stalwart-data:/opt/stalwart/data
     # Les quatre listeners sont éprouvés un par un, et non le seul port principal : c'est le
     # contrôle qui attrape à l'exécution la régression `[::]` décrite dans `stalwart/config.toml`,

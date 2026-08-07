@@ -24,10 +24,39 @@
 #      production n'utilise pas ce serveur : ce sont les serveurs des utilisateurs qui portent le
 #      chiffrement (docs/SPEC-mail-subsystem.md §2.1 et §11.3).
 
+# --- Séparation configuration locale / configuration modifiable -------------------------------
+#
+# Stalwart avertit lorsqu'une clé modifiable en base est définie dans ce fichier. Déclarer une
+# liste personnalisée remplace ses valeurs par défaut : elles sont donc toutes reproduites ici,
+# puis `webadmin.resource` est ajouté parce que le chemin est propre au conteneur. Les réglages
+# IMAP/SMTP, eux, sont écrits par `stalwart-init` dans la base de configuration.
+config.local-keys.0 = "store.*"
+config.local-keys.1 = "directory.*"
+config.local-keys.2 = "tracer.*"
+config.local-keys.3 = "!server.blocked-ip.*"
+config.local-keys.4 = "!server.allowed-ip.*"
+config.local-keys.5 = "server.*"
+config.local-keys.6 = "certificate.*"
+config.local-keys.7 = "authentication.fallback-admin.*"
+config.local-keys.8 = "cluster.*"
+config.local-keys.9 = "storage.data"
+config.local-keys.10 = "storage.blob"
+config.local-keys.11 = "storage.lookup"
+config.local-keys.12 = "storage.fts"
+config.local-keys.13 = "storage.directory"
+config.local-keys.14 = "enterprise.license-key"
+config.local-keys.15 = "webadmin.resource"
+
 # Nom annoncé par le serveur dans ses bannières SMTP et IMAP. Sans lui, le serveur annonce
 # l'identifiant du conteneur, qui change à chaque recréation.
 [server]
 hostname = "mail.p2enjoy.test"
+
+# Stalwart v0.13.4 télécharge sinon une release `latest` au premier démarrage. Le bundle local ne
+# simule aucune console : sa page explique que Roundcube porte la vérification visuelle et que
+# l'administration passe par l'API.
+[webadmin]
+resource = "file:///opt/stalwart/etc/webadmin-disabled.zip"
 
 # --- Listeners ----------------------------------------------------------------------------------
 # Quatre, et pas un de plus. Les variantes implicitement chiffrées de la configuration générée —
@@ -83,7 +112,7 @@ level = "info"
 ansi = false
 enable = true
 
-# --- Authentification ---------------------------------------------------------------------------
+# --- Authentification locale -------------------------------------------------------------------
 # L'administrateur de repli n'a pas de boîte : il n'existe que pour l'API de gestion. Son mot de
 # passe est tiré au hasard par `runDev.sh` au premier amorçage et n'est jamais versionné.
 
@@ -91,13 +120,7 @@ enable = true
 user = "%{env:STALWART_ADMIN_USER}%"
 secret = "%{env:STALWART_ADMIN_PASSWORD}%"
 
-# La soumission exige une authentification : un client anonyme ne peut pas se servir du serveur
-# comme relais. La remise sur le port 25, elle, reste anonyme — c'est ce que fait un MTA.
-[session.auth]
-mechanisms = "[plain, login]"
-require = true
-
-# Sans cette ligne, `LOGIN` est refusé sur une connexion non chiffrée, et il n'y a pas de TLS en
-# développement (voir le fait mesuré n° 3 en tête de fichier).
-[imap.auth]
-allow-plain-text = true
+# `session.auth.mechanisms` et `imap.auth.allow-plain-text` sont des clés modifiables :
+# `stalwart-init` les pose par `/api/settings`, les relit puis recharge le serveur. La valeur par
+# v0.13.4 exige déjà l'authentification SMTP sur tout port différent de 25, donc aucune clé
+# `session.auth.require` n'est nécessaire (docs/JOURNAL.md décision 245).

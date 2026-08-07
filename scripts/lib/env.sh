@@ -227,6 +227,18 @@ env_require_profile() {
 	fi
 }
 
+# Le seed de développement porte un domaine entrant fixe. Stalwart provisionne son catch-all à
+# partir de `.env` : accepter une autre valeur produirait deux mondes sains séparément, mais aucun
+# message adressé par le CRM n'atteindrait la boîte système (docs/JOURNAL.md décision 245).
+env_require_dev_inbound_domain() {
+	local expected=crm.p2enjoy.test actual
+	actual=$(env_get "$ENV_FILE" CRM_INBOUND_DOMAIN)
+	if [ "$actual" != "$expected" ]; then
+		die "CRM_INBOUND_DOMAIN vaut « ${actual:-<vide>} », or le seed de développement porte « $expected ».
+        Corrigez $ENV_FILE explicitement : le catch-all Stalwart viserait sinon le mauvais domaine."
+	fi
+}
+
 # --- Identifiants de registre Docker -------------------------------------------------------------
 # Sous WSL, `~/.docker/config.json` désigne fréquemment `desktop.exe` comme magasin
 # d'identifiants. Chaque interrogation du registre traverse alors l'interopérabilité Windows.

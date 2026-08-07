@@ -110,7 +110,7 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       et `resetMe.sh`, profil `prod` par `runProd.sh`, `APPLY_MIGRATIONS=false` imposé en
       production, confirmation explicite avant destruction, aucun amorçage en production.
 - [x] `README.md` §4–6, §9–11 et `docs/DAT.md` §13 décrivent le comportement réellement observé.
-- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **52 contrôles, aucune
+- [x] Harnais de preuves rejouable `scripts/verify-scripts.sh` : **58 contrôles, aucune
       anomalie**, et **non complaisant** — il échoue bien lorsqu'une variable Compose n'est pas
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
@@ -129,14 +129,18 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       seed**, en **45,6 s** ; les trois comptes et leurs appartenances sont constatés sur la base
       neuve. La dernière case ouverte de cette unité est donc levée, et INC-009 peut être close par
       le responsable.
-- [ ] **LE CONTEXTE DE BUILD DE LA WEBAPP EXCLUT LES DONNÉES ET LES SECRETS LOCAUX**
+- [x] **LE CONTEXTE DE BUILD DE LA WEBAPP EXCLUT LES DONNÉES ET LES SECRETS LOCAUX**
       (décision 247). Mesuré pendant la preuve à froid de `CRM-050`, un nouveau nom de projet
       oblige Compose à reconstruire l'image : l'envoi du dépôt entier échoue en lisant
       `supabase/docker/volumes/db/data`, fermé en `0750`. Plus grave, l'image existante contient
       réellement `/app/.env` et `/app/.git` parce que `COPY . .` n'avait aucun `.dockerignore`.
       La correction doit exclure au minimum `.env`, `.git`, les dépendances, les sorties de build
       et de preuve, ainsi que `supabase/docker/volumes/`; le harnais doit construire l'image et
-      constater que ces chemins en sont absents, sans jamais lire ni afficher un secret.
+      constater que ces chemins en sont absents, sans jamais lire ni afficher un secret. Prouvé :
+      contexte ramené de **233,04 Mo à 11,56 Mo**, reconstruction réelle verte, puis absence de
+      `/app/.env`, `/app/.git` et `/app/supabase/docker/volumes` dans l'image ; `.env.example`
+      reste présent. L'ancienne image locale identifiée, qui contenait les deux premiers chemins,
+      n'existe plus.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'outillage d'exécution. Les preuves
@@ -4335,11 +4339,11 @@ les boîtes ; `README.md` §6 conforme.
       authentifié à `c-<jeton>@crm.p2enjoy.test` — une adresse de card **jamais déclarée** — est
       accepté, remis dans `INBOX` de la boîte système, puis relu par IMAP avec son `Message-ID`,
       son sujet et son destinataire intacts.
-- [x] **Test unitaire dédié** : `stalwart/config.test.ts`, **21 assertions**, sur le seul artefact
+- [x] **Test unitaire dédié** : `stalwart/config.test.ts`, **24 assertions**, sur le seul artefact
       du dépôt qui porte de la logique — la configuration. Deux de ses invariants ont été payés par
       une panne réelle. Le périmètre de Vitest est étendu à `stalwart/` dans le même changement,
       plutôt que de ranger une preuve d'infrastructure parmi celles de l'interface.
-      `npm run test:unit` : 467 → **488 tests**, 20 fichiers.
+      `npm run test:unit` : **523 tests**, 24 fichiers sur l'état courant.
 - [x] **Preuve de protocole dédiée, hors interface** : `e2e/mail/infrastructure.spec.ts`,
       **13 scénarios** — trois sessions IMAP réelles, le refus d'un mot de passe faux, le
       délimiteur `/` annoncé par le serveur (ce dont `CRM-056` aura besoin), la remise par le
@@ -4369,7 +4373,7 @@ les boîtes ; `README.md` §6 conforme.
       poursuit le dialogue après un `535` se bloque sur le `503` suivant et l'échec est imputé à
       une absence de réponse ; et `SEARCH HEADER Message-ID "<jeton@domaine>"` ne trouve rien,
       Stalwart n'indexant pas les chevrons.
-- [x] **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **72 contrôles, aucune
+- [x] **Harnais de preuves rejouable** `scripts/verify-mail-infra.sh` : **84 contrôles, aucune
       anomalie**, et **non complaisant** — cinq dégradations posées sur une **copie** des fichiers
       versionnés produisent **6 anomalies** réparties sur les familles de contrôle. Il compare
       notamment `CRM_INBOUND_DOMAIN` à `workspaces.inbound_domain` **lu dans la base** (décision
@@ -4395,16 +4399,21 @@ les boîtes ; `README.md` §6 conforme.
       Les preuves de l'unité ont été **reprouvées sur cet état froid** : `verify-mail-infra.sh`
       72 contrôles sans anomalie, `npm run e2e:mail` 16 scénarios, `npm run test:unit` 488 tests,
       `npm run test:sql` 1405 assertions.
-- [ ] **DÉMARRAGE FROID DÉTERMINISTE ET SANS AVERTISSEMENT STALWART** (décision 245) : la
+- [x] **DÉMARRAGE FROID DÉTERMINISTE ET SANS AVERTISSEMENT STALWART** (décision 245) : la
       console `latest` est remplacée par une page locale versionnée, les deux réglages
       d'authentification modifiables passent par `/api/settings` puis `/api/reload`, et le
       healthcheck hérité de `postgres-meta` reçoit une période d'initialisation. La preuve doit
       partir sans volume Stalwart, exécuter `./runDev.sh` en succès et constater zéro `ERROR` et
-      zéro `WARN` dans les journaux du serveur mail.
-- [ ] **REFUS ANTICIPÉ D'UN DOMAINE DE CATCH-ALL INCOHÉRENT** (décision 245) : en profil `dev`,
+      zéro `WARN` dans les journaux du serveur mail. Prouvé sur le projet Docker jetable
+      `p2enjoy-crm-cold-proof`, les volumes normaux conservés : `runDev.sh` sort en succès,
+      `verify-mail-infra.sh` rend **84/84**, `e2e:mail` **16/16**, puis le journal reste propre
+      après la vraie soumission SMTP. Le provisionnement désactive explicitement DKIM et ARC en
+      développement, faute de clés de production ; le harnais contrôle le journal **après** les
+      protocoles, pas avant.
+- [x] **REFUS ANTICIPÉ D'UN DOMAINE DE CATCH-ALL INCOHÉRENT** (décision 245) : en profil `dev`,
       `runDev.sh` et `resetMe.sh` refusent avant toute action un `CRM_INBOUND_DOMAIN` différent de
-      `crm.p2enjoy.test`. Le harnais doit éprouver le refus sur un fichier jetable et conserver sa
-      comparaison tardive avec la vraie base.
+      `crm.p2enjoy.test`. Le harnais éprouve le refus de `runDev.sh` et de `resetMe.sh` sur un
+      fichier jetable **avant Docker**, et conserve sa comparaison tardive avec la vraie base.
 - [ ] **LE REJEU SÉQUENTIEL DES HARNAIS N'EST PAS UN INSTRUMENT DE MESURE — INC-080**
       (décisions 241 et 242). Les vingt-six harnais rejoués à la suite en rendent vingt-deux
       rouges ; la **contre-mesure sur état froid** établit que ce chiffre est faux.
@@ -4439,34 +4448,25 @@ ports de `README.md` §6 à ceux que `.env.example` déclare.
 
 - **Aucun consommateur applicatif.** Rien dans le CRM ne lit ces boîtes avant `CRM-052` et
   `CRM-054`. Ce qui est livré est le **monde extérieur**, pas la fonctionnalité.
-- **`./runDev.sh` n'a pas pu être exécuté d'un bloc sur cet hôte** : la construction de l'image
-  `webapp` échoue en `SELF_SIGNED_CERT_IN_CHAIN` (**INC-042, onzième occurrence**), et la pile a
-  donc été démarrée par `docker compose up` en énumérant les services autres que `webapp`. Le
-  chemin nominal du script — amorçage de `.env`, gardes, `--wait`, annonces — est en revanche
-  exercé : `.env` a été **détruit puis réamorcé** par `./runDev.sh --bootstrap`, et les dix
-  variables de l'unité en sont sorties correctement, dont le mot de passe d'administration tiré au
-  hasard.
-- **La console web de Stalwart n'est pas installable ici** — INC-079, deux lignes `ERROR` à chaque
-  démarrage. Le serveur et son API de gestion fonctionnent ; la vérification visuelle passe par
-  Roundcube.
+- **`./runDev.sh` est désormais exécuté d'un bloc sur cet hôte**, y compris avec reconstruction de
+  `webapp` et volume Stalwart neuf. L'ancienne limite `SELF_SIGNED_CERT_IN_CHAIN` n'est pas apparue
+  lors de cette reprise ; le contexte Docker incorrect, lui, a été trouvé et corrigé par la
+  décision 247.
+- **La console web de Stalwart est volontairement absente** — INC-079 close. Sa racine sert une
+  page locale explicative ; l'API porte l'exploitation et Roundcube la vérification visuelle.
 - **Aucun TLS**, par choix documenté (`docs/SPEC-mail-subsystem.md` §11.3). Les ports ne sont
   publiés que sur `DEV_BIND_ADDRESS`.
 - **ClamAV n'est pas déclaré en production** : opération due, inscrite dans
   `docs/PROD_MIGRATIONS.md` §4 sous `CRM-054` (décision 236).
-- **`scripts/verify-scripts.sh` rend 52 contrôles et 1 anomalie**, sur un contrôle qui exige de
-  lire les ports en écoute de l'hôte : ni `ss` ni `netstat` n'existent dans ce conteneur, et
-  `host_listening_ports` rend donc le vide — **INC-044**, limite d'environnement, sans rapport
-  avec cette unité.
+- **`scripts/verify-scripts.sh` rend 58 contrôles, aucune anomalie**, y compris la lecture réelle
+  d'un port publié, la reconstruction de l'image webapp et l'absence des chemins sensibles.
 - **Les vingt-six harnais du dépôt N'ONT PAS été validés un par un sur un état froid.** Le budget
   d'une exécution ne le permet pas : quatre l'ont été (`verify-authz`, `verify-seed-demo`,
   `verify-preuves-refus`, `verify-mail-infra`), les autres n'ont été vus qu'à travers un balayage
   séquentiel dont INC-080 établit qu'il n'est pas fiable. **Aucune affirmation n'est faite sur
   leur état réel.**
-- **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
-  Node 24. Limite héritée, inchangée.
-- **INC-036, onzième occurrence** : le Chromium préinstallé est en version `1194` là où le
-  Playwright épinglé attend `1234` ; le contournement documenté du dépôt —
-  `PLAYWRIGHT_CHROMIUM_PATH` — a suffi, et aucun fichier du dépôt n'a été modifié pour cela.
+- **La chaîne a été rejouée sous Node 24.14.1**, conforme au prérequis du dépôt, et avec le
+  Chromium headless `1234` attendu par Playwright 1.62.1.
 
 ### CRM-051 — Service `mail-sync` `[ ]`
 Squelette Python, configuration, journaux structurés, point de santé, API interne.

@@ -20,17 +20,49 @@ const MDP = lireEnv('STALWART_MAILBOX_PASSWORD')
 const BOITE = `bizdev@${lireEnv('MAIL_DEV_PERSONAL_DOMAIN')}`
 const BOITE_SYSTEME = `systeme@${lireEnv('CRM_INBOUND_DOMAIN')}`
 
+async function saisirIdentifiants(
+	page: import('@playwright/test').Page,
+	boite: string,
+	motDePasse: string,
+) {
+	// Gestes d'utilisateur, et non affectation directe des champs : la souris place le focus,
+	// le clavier saisit puis change de champ, et la souris soumet le formulaire.
+	await page.locator('#rcmloginuser').click()
+	await page.keyboard.type(boite)
+	await page.keyboard.press('Tab')
+	await page.keyboard.type(motDePasse)
+	await page.locator('#rcmloginsubmit').click()
+}
+
 async function ouvrirSession(page: import('@playwright/test').Page, boite: string) {
 	await page.goto(URL_ROUNDCUBE)
-	await page.locator('#rcmloginuser').fill(boite)
-	await page.locator('#rcmloginpwd').fill(MDP)
-	await page.locator('#rcmloginsubmit').click()
+	await saisirIdentifiants(page, boite, MDP)
 	// L'attente porte sur la liste des dossiers, et non sur une temporisation : c'est
 	// l'élément dont l'apparition prouve que la session IMAP est établie.
 	await page.locator('#mailboxlist').waitFor({ state: 'visible', timeout: 30_000 })
 }
 
 test.describe('M5 — Roundcube affiche les boîtes', () => {
+	const anomaliesConsole = new WeakMap<import('@playwright/test').Page, string[]>()
+
+	test.beforeEach(async ({ page }) => {
+		const anomalies: string[] = []
+		anomaliesConsole.set(page, anomalies)
+		page.on('console', (message) => {
+			if (message.type() === 'warning' || message.type() === 'error') {
+				anomalies.push(`${message.type()}: ${message.text()}`)
+			}
+		})
+		page.on('pageerror', (erreur) => anomalies.push(`pageerror: ${erreur.message}`))
+	})
+
+	test.afterEach(async ({ page }) => {
+		expect(
+			anomaliesConsole.get(page) ?? [],
+			'aucun avertissement ni erreur dans la console du parcours Roundcube',
+		).toEqual([])
+	})
+
 	test('une boîte personnelle ouvre sa session et rend son arborescence', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await ouvrirSession(page, BOITE)
@@ -60,12 +92,20 @@ test.describe('M5 — Roundcube affiche les boîtes', () => {
 		// passerait les deux contrôles précédents.
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto(URL_ROUNDCUBE)
-		await page.locator('#rcmloginuser').fill(BOITE)
-		await page.locator('#rcmloginpwd').fill('mauvais-mot-de-passe')
-		await page.locator('#rcmloginsubmit').click()
+		await saisirIdentifiants(page, BOITE, 'mauvais-mot-de-passe')
 
 		await expect(page.locator('#rcmloginuser')).toBeVisible({ timeout: 30_000 })
 		await expect(page.locator('#mailboxlist')).toHaveCount(0)
+		await expect(page.getByRole('alert')).toContainText('Login failed.')
+
+		// Le 401 est ici le résultat recherché du scénario de refus, pas une erreur JS laissée
+		// dans un parcours nominal. Il est nommé et consommé exactement ; tout autre message
+		// restera visible au contrôle générique de `afterEach`.
+		const consoleDuRefus = anomaliesConsole.get(page) ?? []
+		expect(consoleDuRefus).toEqual([
+			'error: Failed to load resource: the server responded with a status of 401 (Unauthorized)',
+		])
+		consoleDuRefus.length = 0
 		await capturer(page, 'roundcube-refus-1440', 'CRM-050')
 	})
 })

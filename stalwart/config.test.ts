@@ -1,6 +1,6 @@
 // @verifies CRM-050 (docs/BACKLOG.md) — invariants de la configuration du serveur de messagerie
 // @verifies docs/SPEC-mail-subsystem.md §11.3 (configuration), §11.9 (le test unitaire de l'unité)
-// @verifies docs/JOURNAL.md décision 235 (les trois pannes payées avant d'être écrites)
+// @verifies docs/JOURNAL.md décisions 235 et 245 (configuration locale déterministe)
 //
 // CE TEST N'EST PAS UN TEST DE FAÇADE, et son objet est nommé : deux de ses invariants ont été
 // payés par une panne réelle.
@@ -20,6 +20,11 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const CONFIG = readFileSync(join(import.meta.dirname, 'config.toml'), 'utf8')
+const PROVISION = readFileSync(join(import.meta.dirname, 'provision.sh'), 'utf8')
+const WEBADMIN_SOURCE = readFileSync(
+	join(import.meta.dirname, 'webadmin-disabled', 'index.html'),
+)
+const WEBADMIN_ZIP = readFileSync(join(import.meta.dirname, 'webadmin-disabled.zip'))
 
 /** Les lignes `bind = "…"` réellement déclarées, dans l'ordre du fichier. */
 const liaisons = [...CONFIG.matchAll(/^bind\s*=\s*"([^"]+)"/gm)].map((trouve) => trouve[1]!)
@@ -98,12 +103,49 @@ describe('configuration de Stalwart — secrets', () => {
 })
 
 describe('configuration de Stalwart — authentification', () => {
-	it('exige une authentification pour la soumission SMTP', () => {
-		// Sans elle, le serveur de développement serait un relais ouvert sur la boucle locale.
-		expect(CONFIG).toMatch(/\[session\.auth\][\s\S]*?require = true/)
+	it("ne place aucune clé modifiable d'authentification dans le fichier local", () => {
+		expect(CONFIG).not.toContain('[session.auth]')
+		expect(CONFIG).not.toContain('[imap.auth]')
+		expect(CONFIG).not.toMatch(/^session\.auth\.(mechanisms|require)\s*=/m)
+		expect(CONFIG).not.toMatch(/^imap\.auth\.allow-plain-text\s*=/m)
 	})
 
-	it('autorise explicitement `LOGIN` en clair, faute de TLS en développement', () => {
-		expect(CONFIG).toMatch(/\[imap\.auth\][\s\S]*?allow-plain-text = true/)
+	it("fait écrire et relire les deux réglages par l'API avant de recharger", () => {
+		expect(PROVISION).toContain('/api/settings')
+		expect(PROVISION).toContain('session.auth.mechanisms')
+		expect(PROVISION).toContain('imap.auth.allow-plain-text')
+		expect(PROVISION).toContain('["auth.dkim.sign","false"]')
+		expect(PROVISION).toContain('["auth.arc.seal","false"]')
+		expect(PROVISION).toContain(
+			'["webadmin.resource","file:///opt/stalwart/etc/webadmin-disabled.zip"]',
+		)
+		expect(PROVISION).toContain('"assert_empty":false')
+		expect(PROVISION).not.toContain('"assertEmpty"')
+		expect(PROVISION).toContain('/api/reload')
+	})
+})
+
+describe('configuration de Stalwart — console web volontairement absente', () => {
+	it('vise une ressource locale déclarée parmi les clés locales', () => {
+		expect(CONFIG).toContain('config.local-keys.15 = "webadmin.resource"')
+		expect(CONFIG).toContain(
+			'resource = "file:///opt/stalwart/etc/webadmin-disabled.zip"',
+		)
+		expect(CONFIG).not.toContain('releases/latest')
+		expect(PROVISION).toContain('/api/update/webadmin')
+		expect(PROVISION).not.toContain('/api/reload/webadmin')
+	})
+
+	it('versionne un véritable ZIP qui contient exactement la page source', () => {
+		expect(WEBADMIN_ZIP.subarray(0, 4).toString('hex')).toBe('504b0304')
+		expect(WEBADMIN_ZIP.includes(WEBADMIN_SOURCE)).toBe(true)
+	})
+
+	it('livre une page française, sémantique et sans script', () => {
+		const source = WEBADMIN_SOURCE.toString('utf8')
+		expect(source).toContain('<html lang="fr">')
+		expect(source).toContain('<main>')
+		expect(source).toContain('<h1>Console Stalwart désactivée</h1>')
+		expect(source).not.toContain('<script')
 	})
 })

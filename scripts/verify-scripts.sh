@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes)
-# @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris)
+# @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
+#           décision 247 (contexte de build sans secrets ni données locales)
 # @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
 # @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9, §11
 #
@@ -44,7 +45,7 @@ env_get()   { sed -n "s/^$2=//p" "$1" | tail -n 1; }
 # consciemment plutôt que tolérée en silence.
 ALLOWED_ORPHANS="
 P2ENJOY_ENV_PROFILE      garde de profil, lue par les scripts et non par Compose
-CRM_INBOUND_DOMAIN       consommée à partir de CRM-051 (docs/PROD_MIGRATIONS.md §2.3)
+CRM_INBOUND_DOMAIN       lue par les gardes de développement depuis CRM-050 (décision 245)
 MAIL_SYNC_POLL_INTERVAL  consommée à partir de CRM-054 (README.md §9)
 MAIL_MAX_ATTACHMENT_MB   consommée à partir de CRM-054 (README.md §9)
 "
@@ -125,6 +126,31 @@ if git check-ignore -q .env; then
 	ok ".env est ignoré par git : aucun secret ne peut être versionné par mégarde"
 else
 	fail ".env n'est PAS ignoré par git"
+fi
+
+DOCKERIGNORE_REQUIS=(
+	.git
+	.env
+	node_modules
+	webapp/dist
+	e2e/test-results
+	supabase/docker/volumes
+)
+dockerignore_manquants=""
+for chemin in "${DOCKERIGNORE_REQUIS[@]}"; do
+	grep -Fxq "$chemin" .dockerignore 2>/dev/null \
+		|| dockerignore_manquants="$dockerignore_manquants $chemin"
+done
+if [ -z "$dockerignore_manquants" ]; then
+	ok ".dockerignore écarte secrets, métadonnées, dépendances, preuves et volumes locaux"
+else
+	fail ".dockerignore ne couvre pas :$dockerignore_manquants"
+fi
+
+if grep -Fxq '!.env.example' .dockerignore; then
+	ok "le gabarit non sensible reste dans le contexte Docker"
+else
+	fail ".env.example est exclu avec les secrets au lieu d'être réinclus"
 fi
 
 # --- 3. Amorçage ------------------------------------------------------------------------------
@@ -263,6 +289,24 @@ else
 	ok "runDev.sh refuse un marqueur CHANGE_ME_ non remplacé"
 fi
 
+DOMAINE_DIVERGENT="$WORK/env.domaine-divergent"
+sed 's/^CRM_INBOUND_DOMAIN=.*/CRM_INBOUND_DOMAIN=crm.exemple.tld/' "$BOOT1" > "$DOMAINE_DIVERGENT"
+if P2ENJOY_ENV_FILE="$DOMAINE_DIVERGENT" ./runDev.sh --bootstrap >"$WORK/domaine-dev.log" 2>&1; then
+	fail "runDev.sh accepte un domaine entrant différent de celui du seed"
+elif grep -q 'CRM_INBOUND_DOMAIN.*crm.p2enjoy.test' "$WORK/domaine-dev.log"; then
+	ok "runDev.sh refuse le mauvais domaine avant Docker et nomme la valeur du seed"
+else
+	fail "runDev.sh refuse le mauvais domaine sans expliquer la valeur attendue"
+fi
+
+if P2ENJOY_ENV_FILE="$DOMAINE_DIVERGENT" ./resetMe.sh --yes >"$WORK/domaine-reset.log" 2>&1; then
+	fail "resetMe.sh accepte de détruire avec un domaine entrant incohérent"
+elif grep -q 'CRM_INBOUND_DOMAIN.*crm.p2enjoy.test' "$WORK/domaine-reset.log"; then
+	ok "resetMe.sh refuse le mauvais domaine avant toute destruction"
+else
+	fail "resetMe.sh refuse le mauvais domaine sans expliquer la valeur attendue"
+fi
+
 # --- 5. Gardes de profil -----------------------------------------------------------------------
 
 echo
@@ -358,9 +402,26 @@ if docker info >/dev/null 2>&1; then
 			fail "assemblage $overlay : $(printf '%s' "$out" | head -n 2 | tr '\n' ' ')"
 		fi
 	done
+
+	if docker compose --env-file "$BOOT1" -f docker-compose.yml -f docker-compose.dev.yml \
+		build webapp >"$WORK/build-webapp.log" 2>&1; then
+		ok "l'image webapp se reconstruit avec un cluster PostgreSQL local fermé"
+	else
+		fail "la reconstruction réelle de webapp échoue"
+		tail -n 12 "$WORK/build-webapp.log" | sed 's/^/        /'
+	fi
+
+	if docker image inspect p2enjoy-crm-webapp >/dev/null 2>&1 \
+		&& docker run --rm --entrypoint sh p2enjoy-crm-webapp -c \
+			'test ! -e /app/.env && test ! -e /app/.git && test ! -e /app/supabase/docker/volumes && test -f /app/.env.example'; then
+		ok "l'image construite exclut .env, .git et les volumes, mais conserve le gabarit"
+	else
+		fail "l'image construite contient un chemin sensible ou a perdu .env.example"
+	fi
 else
 	skip "interpolation Compose : le démon Docker ne répond pas"
 	skip "interpolation Compose (production) : le démon Docker ne répond pas"
+	skip "reconstruction et inspection réelles de l'image webapp : le démon Docker ne répond pas"
 fi
 
 # --- 8. Robustesse face à l'hôte ----------------------------------------------------------------

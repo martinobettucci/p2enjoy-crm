@@ -346,6 +346,14 @@ par défaut mesurée de cette version exige déjà l'authentification sur tout p
 Le harnais relit les deux clés par l'API et les protocoles prouvent leur effet ; déplacer les lignes
 sans ces deux preuves ne serait qu'effacer un avertissement.
 
+**Aucune fausse signature de production n'est fabriquée.** La configuration par défaut de
+Stalwart tente de sceller ARC et de signer DKIM chaque message soumis. Le développement local ne
+possède volontairement aucune clé de domaine : inventer une clé jetable donnerait une preuve
+trompeuse et ferait passer une configuration locale pour la politique de production. Le
+provisionnement convergent écrit donc aussi `auth.arc.seal=false` et `auth.dkim.sign=false` par
+l'API de réglages. Le verdict sur les journaux est rendu **après** la soumission SMTP, afin qu'un
+retour de ces tentatives produise réellement un échec du harnais.
+
 ### 11.4 Domaines et boîtes de développement
 
 Deux domaines sont déclarés, tous deux sous `.test`, TLD réservé par la RFC 2606 et non routable —
@@ -471,7 +479,7 @@ sont tenus.
 | Intégration | Provisionnement convergent, principals réellement créés avec leur rôle, catch-all déclaré | `scripts/verify-mail-infra.sh` |
 | Protocole | Connexion IMAP réelle sur les trois boîtes, `LIST` non vide, `SELECT INBOX` ; soumission SMTP authentifiée réelle, message remis dans la boîte système par le catch-all et relu par IMAP ; `clamd` détecte EICAR | `e2e/mail/*.spec.ts` (projet Playwright `mail`) |
 | Refus | Un mot de passe faux est refusé ; l'API de gestion refuse une requête anonyme | `e2e/mail/*.spec.ts` |
-| Visuel | Roundcube affiche les boîtes : session ouverte, arborescence de dossiers rendue, captures observées | `e2e/ui/roundcube.spec.ts` |
+| Visuel | Roundcube affiche les boîtes : session ouverte au clavier et à la souris, arborescence de dossiers rendue, captures observées et console nominale vide | `e2e/mail/roundcube.spec.ts` |
 
 Le test unitaire porte sur le **seul artefact du dépôt qui contienne de la logique** : la
 configuration de Stalwart. Il la lit et vérifie ses invariants, dont deux ont été payés par une
@@ -489,8 +497,9 @@ elle-même. Le point ouvert n° 1 du §10 — le choix d'une bibliothèque IMAP 
 donc **pas** tranché ici : il reste ouvert pour `CRM-051`.
 
 Le projet Playwright `mail`, annoncé par `README.md` §7 et laissé non déclaré par `CRM-008`
-(`docs/INCONSISTENCY_REPORT.md` INC-023), est déclaré par cette unité. Il n'exige aucun navigateur
-et aucun `webServer` : il ne parle qu'aux serveurs.
+(`docs/INCONSISTENCY_REPORT.md` INC-023), est déclaré par cette unité. Il n'exige aucun
+`webServer` : les scénarios de protocole parlent directement aux serveurs, tandis que les trois
+scénarios Roundcube emploient Chromium pour exercer le véritable parcours utilisateur.
 
 Le démarrage nominal fait lui aussi partie de la preuve : sur un volume Stalwart absent,
 `./runDev.sh` doit sortir en succès, `postgres-meta` ne doit pas devenir `unhealthy` pendant sa

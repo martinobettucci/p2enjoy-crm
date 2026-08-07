@@ -55,6 +55,7 @@ fi
 
 env_validate
 env_require_profile dev
+env_require_dev_inbound_domain
 
 if [ "$MODE" = bootstrap ]; then
 	say "Environnement prêt. Rien n'a été démarré (--bootstrap)."

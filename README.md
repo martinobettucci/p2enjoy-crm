@@ -302,7 +302,7 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest (webapp), 488 tests   — aucune pile requise
+npm run test:unit          # Vitest, 523 tests            — aucune pile requise
 npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)

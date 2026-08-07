@@ -7653,6 +7653,16 @@ sa racine rend la page explicative locale ; une configuration jetable au mauvais
 refusée sans appeler Docker. INC-079 reste ouverte jusqu'à cette mesure. INC-080 reste un sujet
 séparé : réparer les harnais historiques ne doit pas être mêlé au correctif de démarrage.
 
+**Résultat mesuré.** La preuve a conservé les volumes normaux, arrêté leurs conteneurs, puis lancé
+`./runDev.sh` sous le projet jetable `p2enjoy-crm-cold-proof`, dont le volume Stalwart était neuf.
+Le script sort en succès ; Meta est sain ; `verify-mail-infra.sh` rend 84/84 et `e2e:mail` 16/16.
+Une première version du verdict de journal était placée avant l'envoi et produisait un faux vert :
+la soumission réelle révélait ensuite trois `WARN` de signatures ARC/DKIM inexistantes. Le
+provisionnement désactive donc explicitement `auth.dkim.sign` et `auth.arc.seal` dans ce serveur
+local sans clés de production, et le verdict vient désormais après une vraie soumission SMTP.
+Après la suite E2E entière, le journal ne contient ni `WARN` ni `ERROR`. La racine HTTP a été
+ouverte dans Chromium : statut 200, page française attendue et console propre. INC-079 est close.
+
 ---
 
 ### Décision 246 — Quarante et une branches n'auraient jamais dû exister, et une seule portait quelque chose
@@ -7733,3 +7743,10 @@ chemins sensibles — jamais leur contenu — puis retire l'ancienne image local
 **Critère de clôture.** `./runDev.sh` reconstruit et démarre sous un nom de projet neuf ; la
 nouvelle image ne contient ni `/app/.env`, ni `/app/.git`, ni `/app/supabase/docker/volumes`, et
 le contrôle ne journalise aucune valeur sensible.
+
+**Résultat mesuré.** Avec `.dockerignore`, le contexte BuildKit passe de 233,04 Mo à 11,56 Mo et
+la reconstruction aboutit. `scripts/verify-scripts.sh` rend 58/58 après avoir construit l'image et
+éprouvé uniquement l'absence des trois chemins sensibles ainsi que la présence de
+`.env.example`. L'ancien identifiant d'image qui contenait `.env` et `.git` n'existe plus ; le
+projet Docker jetable et ses volumes ont été supprimés, puis la pile normale a été restaurée sur
+ses volumes conservés.
