@@ -302,6 +302,14 @@ le réseau interne. La configuration de Kong est donc rigoureusement identique d
 environnements, ce qui supprime toute divergence possible entre eux
 (`docs/JOURNAL.md`, décision 11).
 
+Le port HTTP de Stalwart reste nécessaire à son API de gestion. Sa racine ne télécharge toutefois
+aucune console : elle sert un bundle statique local et versionné qui explique que l'administration
+se fait par `/api/*`. Les réglages IMAP/SMTP modifiables sont écrits dans le magasin de
+configuration par `stalwart-init`, puis rechargés par l'API ; le fichier local ne porte que les
+clés d'infrastructure. `postgres-meta` conserve son healthcheck d'image, complété dans l'overlay
+par une période de démarrage : `docker compose up --wait` ne doit pas confondre initialisation et
+indisponibilité.
+
 ### 3.7 Versions épinglées
 
 Aucune image n'est suivie par un tag mouvant. Toute évolution est un changement explicite qui
@@ -691,13 +699,13 @@ désigne `P2ENJOY_ENV_FILE`.
 
 | Script | Rôle | Gardes appliquées |
 |---|---|---|
-| `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` |
+| `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` ; `CRM_INBOUND_DOMAIN=crm.p2enjoy.test`, comme le seed |
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
 | `scripts/run-sql-tests.sh` | Exécute les suites pgTAP de `supabase/tests/` et **calcule** le verdict TAP, que `psql` ne rend pas | Conteneur `db` en marche ; n'écrit rien en base |
-| `stalwart/provision.sh` | Crée les domaines et les trois boîtes de développement par l'API de gestion de Stalwart ; convergent, ne détruit aucun message | Exécuté par le service jetable `stalwart-init` ; API de gestion joignable |
+| `stalwart/provision.sh` | Pose les réglages IMAP/SMTP modifiables, recharge Stalwart, puis crée les domaines et les trois boîtes par l'API de gestion ; convergent, ne détruit aucun message | Exécuté par le service jetable `stalwart-init` ; API de gestion joignable |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.

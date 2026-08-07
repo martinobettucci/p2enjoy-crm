@@ -4387,6 +4387,16 @@ les boîtes ; `README.md` §6 conforme.
       Les preuves de l'unité ont été **reprouvées sur cet état froid** : `verify-mail-infra.sh`
       72 contrôles sans anomalie, `npm run e2e:mail` 16 scénarios, `npm run test:unit` 488 tests,
       `npm run test:sql` 1405 assertions.
+- [ ] **DÉMARRAGE FROID DÉTERMINISTE ET SANS AVERTISSEMENT STALWART** (décision 245) : la
+      console `latest` est remplacée par une page locale versionnée, les deux réglages
+      d'authentification modifiables passent par `/api/settings` puis `/api/reload`, et le
+      healthcheck hérité de `postgres-meta` reçoit une période d'initialisation. La preuve doit
+      partir sans volume Stalwart, exécuter `./runDev.sh` en succès et constater zéro `ERROR` et
+      zéro `WARN` dans les journaux du serveur mail.
+- [ ] **REFUS ANTICIPÉ D'UN DOMAINE DE CATCH-ALL INCOHÉRENT** (décision 245) : en profil `dev`,
+      `runDev.sh` et `resetMe.sh` refusent avant toute action un `CRM_INBOUND_DOMAIN` différent de
+      `crm.p2enjoy.test`. Le harnais doit éprouver le refus sur un fichier jetable et conserver sa
+      comparaison tardive avec la vraie base.
 - [ ] **LE REJEU SÉQUENTIEL DES HARNAIS N'EST PAS UN INSTRUMENT DE MESURE — INC-080**
       (décisions 241 et 242). Les vingt-six harnais rejoués à la suite en rendent vingt-deux
       rouges ; la **contre-mesure sur état froid** établit que ce chiffre est faux.
@@ -4403,12 +4413,12 @@ les boîtes ; `README.md` §6 conforme.
       n'existent pas dans le CSS produit », dont la cause n'est pas établie. **Consigné plutôt que
       refermé au passage** : cinq unités antérieures, et deux écarts qui ne sont pas des compteurs.
       Aucun ne vient de `CRM-050`, qui ne touche ni table, ni politique, ni seed.
-- [ ] **Le seed de la base n'est pas touché, et il n'y avait rien à y ajouter.** Cette unité ne
+- [x] **Le seed de la base n'est pas touché, et il n'y avait rien à y ajouter.** Cette unité ne
       crée ni table, ni page, ni statut, ni flux applicatif : elle livre des boîtes **dans un
       serveur mail**, qui sont son propre jeu de données et se rejouent par `stalwart-init`. Les
       tables `mail_*` n'existent pas avant `CRM-052`.
-- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les dix-huit unités précédentes.
-      **Dix-neuvième unité consécutive.**
+- [x] **INC-021 est close** : la connexion réelle et les gestes utilisateur authentifiés ont été
+      livrés et mesurés lors de la reprise de `CRM-011` (décisions 243 et 244).
 
 *Definition of Done tenue.* Elle demandait « `runDev.sh` démarre l'ensemble ; connexion IMAP et
 SMTP constatée ; Roundcube affiche les boîtes ; `README.md` §6 conforme ». **Les quatre sont

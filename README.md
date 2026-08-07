@@ -84,7 +84,9 @@ du pooler. `ANON_KEY` et `SERVICE_ROLE_KEY` sont dérivées du `JWT_SECRET` prod
 jetons HS256 valides. **Aucune clé n'est reprise du dépôt** : deux postes n'ont jamais les mêmes.
 
 Le fichier est créé en mode `600` et n'est jamais versionné. Un `.env` existant n'est jamais
-écrasé.
+écrasé. Une valeur historique `CRM_INBOUND_DOMAIN=crm.exemple.tld` n'est pas corrigée en silence :
+le développement la refuse avant de démarrer, car le seed porte nécessairement
+`crm.p2enjoy.test`. Il faut aligner explicitement la valeur locale sur `.env.example`.
 
 Amorçage manuel, si l'on préfère garder la main :
 
@@ -212,7 +214,7 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | Webapp | http://localhost:5173 | L'application | à venir (`CRM-007`) |
 | Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | **disponible** |
 | Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
-| Stalwart — API de gestion | http://localhost:8081 | Provisionnement des domaines et des boîtes ; **la console web n'est pas installable ici**, voir §11 | **disponible** |
+| Stalwart — API de gestion | http://localhost:8081/api/ | Provisionnement des réglages, domaines et boîtes ; la racine explique pourquoi aucune console n'est servie | **disponible** |
 | ClamAV (`clamd`) | localhost:3310 | Analyse antivirale des pièces jointes ; son consommateur arrive avec `CRM-054` | **disponible** |
 
 Studio n'est **pas** joignable au travers de la passerelle : celle-ci ne connaît aucun service de
@@ -503,6 +505,7 @@ Livré à ce jour :
 │   └── tests/                  Suites pgTAP, une par migration
 ├── stalwart/                   Serveur mail de développement (CRM-050)
 │   ├── config.toml             Configuration versionnée, montée en lecture seule
+│   ├── webadmin-disabled.zip   Page locale déterministe ; aucun téléchargement de console `latest`
 │   ├── provision.sh            Domaines et boîtes créés par la vraie API de gestion
 │   └── config.test.ts          Invariants de la configuration, éprouvés par Vitest
 ├── e2e/
@@ -581,11 +584,9 @@ Documentation de référence :
   Roundcube et ClamAV démarrent avec la pile, et trois boîtes sont provisionnées. **Aucun composant
   du CRM ne s'y connecte** : le service `mail-sync` arrive en `CRM-051`, l'ingestion en `CRM-054`.
   Ce qui est livré est le monde extérieur, pas la fonctionnalité.
-- **La console web de Stalwart n'est pas installable derrière un réseau fermé.** L'image la
-  télécharge depuis GitHub au démarrage ; lorsque la requête échoue, deux lignes `ERROR` sont
-  écrites et **le serveur démarre tout de même** — tous ses protocoles et son API de gestion
-  fonctionnent. La vérification visuelle passe par Roundcube. Consigné en
-  [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-079.
+- **Stalwart n'expose volontairement aucune console web.** Sa racine HTTP sert une page locale
+  explicative, sans téléchargement au démarrage. Tous ses protocoles et son API de gestion
+  `/api/*` fonctionnent ; la vérification visuelle passe par Roundcube.
 - **Le serveur mail de développement n'emploie aucun TLS**, et ses ports ne sont publiés que sur
   `DEV_BIND_ADDRESS`. C'est un choix documenté (`docs/SPEC-mail-subsystem.md` §11.3) : en
   production, ce sont les serveurs des utilisateurs qui portent le chiffrement. Exposer cette pile

@@ -7611,3 +7611,44 @@ zéro commentaire temporaires ; la card soumise au déplacement refusé porte to
 produit (INC-015), l'identité lisible (INC-014), l'enregistrement du formulaire et les actions de
 correction/suppression d'un commentaire restent des limites distinctes ; aucune n'est absorbée par
 la présence d'une session.
+
+### Décision 245 — Un démarrage apparemment sain n'est pas un démarrage réussi
+
+**La mesure utilisateur.** `./runDev.sh` a été exécuté comme documenté, après arrêt propre. Il a
+créé les seize services, puis rendu `1` parce que `postgres-meta` était brièvement `unhealthy` ;
+une seconde plus tard, le même conteneur était `healthy`. Son healthcheck d'image commence sans
+`start_period` et dépense ses tentatives pendant l'initialisation. Ce n'est pas une temporisation
+arbitraire : la fenêtre et les échecs `ECONNREFUSED` sont enregistrés par Docker. L'overlay doit
+donc qualifier cette fenêtre comme démarrage, puis conserver le même endpoint et les mêmes
+tentatives pour détecter une panne réelle.
+
+Le même lancement a révélé deux défauts que la santé verte masque. Stalwart écrit trois `WARN` :
+`session.auth.mechanisms`, `session.auth.require` et `imap.auth.allow-plain-text` sont des clés de
+base déclarées dans le fichier local. Son code source au tag exact `v0.13.4` confirme cette
+séparation. La valeur par défaut de cette version exige déjà l'authentification SMTP hors port 25 : la clé
+`require` est supprimée. Les deux valeurs réellement particulières au développement sont écrites
+de façon convergente par la véritable API `/api/settings`, relues, puis activées par
+`/api/reload`. Les preuves IMAP et SMTP restent obligatoires : faire disparaître les avertissements
+sans prouver l'effet serait un faux vert.
+
+**INC-079 est tranchée, pas contournée.** Le même code source montre qu'au premier démarrage sans
+blob, `v0.13.4` télécharge sans condition la release `latest` de `webadmin-oss.zip`. Il accepte en
+revanche `webadmin.resource=file://…`. La console n'est utilisée nulle part : Roundcube porte la
+preuve visuelle et `/api/*` le provisionnement. Un petit ZIP local versionné, monté en lecture
+seule, contiendra donc une page qui dit explicitement que la console est désactivée. Stalwart
+l'importera lui-même dans son blob store ; aucune écriture RocksDB artisanale. Cela supprime à la
+fois la dépendance réseau, le contenu mouvant et les deux `ERROR`, sans masquer un événement du
+journal.
+
+**Le catch-all doit échouer avant Docker.** Le `.env` conservé sur ce poste portait encore
+`crm.exemple.tld`, ancienne valeur du gabarit. `runDev.sh` l'a accepté, Stalwart a provisionné cette
+boîte, puis `verify-mail-infra.sh` a seul signalé la divergence avec le seed
+`crm.p2enjoy.test`. En développement, le domaine du seed est fixe : le script de lancement et la
+réinitialisation doivent refuser toute autre valeur avant leur première action Docker, en nommant
+la valeur attendue et le fichier à corriger. Le fichier local n'est jamais réécrit en silence.
+
+**Critère de clôture.** Sur volume Stalwart absent : `./runDev.sh` sort en succès ; l'API, IMAP,
+SMTP et Roundcube sont réellement exercés ; le journal de Stalwart ne porte ni `ERROR` ni `WARN` ;
+sa racine rend la page explicative locale ; une configuration jetable au mauvais domaine est
+refusée sans appeler Docker. INC-079 reste ouverte jusqu'à cette mesure. INC-080 reste un sujet
+séparé : réparer les harnais historiques ne doit pas être mêlé au correctif de démarrage.

@@ -141,6 +141,13 @@ normalement : c'est la **console web** qui manque, pas l'API.
 option n'est posée pour l'éteindre. La limite est nommée dans `docs/SPEC-mail-subsystem.md` §11.10
 et dans `README.md` §11.
 
+**Arbitrage retenu le 2026-08-07 — décision 245, correction encore à prouver.** Le projet n'a pas
+besoin de la console : Roundcube porte la vérification visuelle et `/api/*` l'exploitation. Le
+premier démarrage doit importer, par le mécanisme natif de Stalwart, un petit bundle local
+versionné qui explique ce choix. L'incident ne passera en clos qu'après une preuve sur volume
+absent constatant à la fois l'API opérante, les protocoles opérants et zéro `ERROR`/`WARN` dans le
+journal de Stalwart.
+
 **Lié à :** INC-032 et INC-042 (le même motif — une dépendance réseau que l'environnement de la
 routine ne satisfait pas), `docs/DAT.md` §3.7, `CRM-050`.
 

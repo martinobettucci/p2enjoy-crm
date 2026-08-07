@@ -309,12 +309,20 @@ le répertoire n'existe pas. Un traceur `stdout` est retenu : il rend les journa
 `docker compose logs`, donc à `./runDev.sh --withLog stalwart`, ce qui est le comportement attendu
 d'un service conteneurisé (`CLAUDE.md` §20).
 
-**Mesuré — la console web de Stalwart n'est pas disponible dans cet environnement.** Au démarrage,
-le serveur tente de télécharger son paquet `webadmin` depuis GitHub ; derrière le proxy de la
-routine, la requête échoue et deux lignes `ERROR` sont écrites. **Le serveur démarre malgré tout**,
-et tous ses protocoles fonctionnent : la console n'est pas un prérequis. Elle n'est de toute façon
-pas l'outil de vérification visuelle de ce projet — Roundcube l'est. La limite est nommée au
-§11.9.
+**Le démarrage ne télécharge aucune console mouvante.** Le code source du tag exact `v0.13.4`
+établit que, lorsque son blob est absent, Stalwart télécharge sans condition
+`webadmin-oss.zip` depuis la release GitHub `latest`. Ce comportement rend le premier démarrage
+dépendant du réseau, produit deux lignes `ERROR` derrière le proxy de la routine et contourne
+l'épinglage du §3.7 du DAT. La console n'a aucun usage dans ce projet : Roundcube est l'outil de
+vérification visuelle, et l'exploitation passe par `/api/*`.
+
+`webadmin.resource` vise donc un **petit ZIP local versionné** qui ne contient qu'une page
+explicative statique. Il est monté en lecture seule et importé par le mécanisme natif de Stalwart ;
+aucun blob n'est écrit directement dans RocksDB. Le premier démarrage est ainsi identique avec ou
+sans accès Internet, l'API de gestion reste disponible, et la racine HTTP dit explicitement que la
+console est désactivée au lieu d'afficher un faux outil d'administration. Le bundle et son chemin
+local font partie des invariants de `stalwart/config.test.ts` et de
+`scripts/verify-mail-infra.sh`.
 
 Listeners retenus, et rien de plus : `smtp` (remise, port 25), `submission` (soumission
 authentifiée, port 587), `imap` (port 143), `http` (API de gestion, port 8080). Les variantes
@@ -328,6 +336,15 @@ et la soumission SMTP annonce `AUTH PLAIN LOGIN` en clair. Les ports ne sont pub
 `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) : rien ne sort de l'hôte. En production, ce sont les
 serveurs des utilisateurs qui portent le chiffrement, et `mail_inbound_accounts.security` en
 décrit déjà les trois valeurs (§2.1). Ce choix ne relâche donc aucune règle de production.
+
+**Ces réglages modifiables ne vivent pas dans le fichier local.** Stalwart `v0.13.4` avertit
+explicitement lorsqu'une clé de sa base de configuration est aussi définie dans `config.toml`.
+`session.auth.mechanisms` et `imap.auth.allow-plain-text` sont donc écrites de façon convergente
+par `stalwart-init`, avec la véritable API `POST /api/settings`, puis activées par
+`GET /api/reload` avant la création des boîtes. `session.auth.require` n'est pas écrit : la valeur
+par défaut mesurée de cette version exige déjà l'authentification sur tout port différent de 25.
+Le harnais relit les deux clés par l'API et les protocoles prouvent leur effet ; déplacer les lignes
+sans ces deux preuves ne serait qu'effacer un avertissement.
 
 ### 11.4 Domaines et boîtes de développement
 
@@ -475,12 +492,20 @@ Le projet Playwright `mail`, annoncé par `README.md` §7 et laissé non déclar
 (`docs/INCONSISTENCY_REPORT.md` INC-023), est déclaré par cette unité. Il n'exige aucun navigateur
 et aucun `webServer` : il ne parle qu'aux serveurs.
 
+Le démarrage nominal fait lui aussi partie de la preuve : sur un volume Stalwart absent,
+`./runDev.sh` doit sortir en succès, `postgres-meta` ne doit pas devenir `unhealthy` pendant sa
+fenêtre d'initialisation, et les journaux de Stalwart ne doivent contenir ni `ERROR` ni `WARN`.
+Avant de créer le moindre conteneur, le script refuse par ailleurs un profil de développement dont
+`CRM_INBOUND_DOMAIN` diffère de `crm.p2enjoy.test`, valeur fixe du seed. Le contrôle tardif du
+harnais reste présent comme défense en profondeur, mais il ne doit plus être le premier endroit où
+un utilisateur apprend que sa boîte catch-all vise le mauvais domaine.
+
 ### 11.10 Limites nommées
 
 - **Aucun consommateur applicatif.** Rien dans le CRM ne lit ces boîtes avant `CRM-052` et
   `CRM-054`. Les preuves de cette unité exercent des protocoles, pas un parcours produit.
-- **La console web de Stalwart n'est pas disponible** derrière un réseau fermé (§11.3). La
-  vérification visuelle passe par Roundcube, et l'exploitation par l'API de gestion.
+- **Pas de console web de Stalwart.** La racine HTTP sert une page locale qui le dit ; la
+  vérification visuelle passe par Roundcube, et l'exploitation par l'API de gestion (§11.3).
 - **Aucun TLS**, par choix documenté au §11.3. Un environnement de développement exposé au-delà de
   la boucle locale exigerait de revenir sur ce choix.
 - **ClamAV n'est pas déclaré en production** (§11.2) : opération due, inscrite dans
