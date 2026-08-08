@@ -227,6 +227,12 @@ ordre lexicographique les fichiers de `supabase/migrations/`, une transaction pa
 s'arrêtant à la première erreur. Il démarre après GoTrue, dont le schéma `auth` est référencé dès
 les migrations d'amorçage, et `rest` attend qu'il se soit terminé avec succès.
 
+Le rôle par défaut reste `postgres`. Une migration qui doit administrer un objet détenu par
+Supabase peut porter `-- @migration-role: supabase_admin` ; le runner n'autorise **que** ce rôle
+explicite et refuse tout autre marqueur. `0018_pg_cron.sql` est l'unique cas actuel : elle ferme
+les ACL de l'extension sous leur propriétaire, puis exécute `SET ROLE postgres` avant de créer les
+objets applicatifs et le job. `scripts/verify-scripts.sh` éprouve le choix et son refus.
+
 En production, ce chemin est **désactivé** par `APPLY_MIGRATIONS=false` : les migrations y sont
 appliquées sur instruction humaine explicite, selon `docs/PROD_MIGRATIONS.md`. Le conteneur se
 contente alors de renvoyer vers ce document et se termine avec le code `0`.

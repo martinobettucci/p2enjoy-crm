@@ -36,8 +36,16 @@ fi
 
 echo "migrations : $# fichier(s) à appliquer sur ${PGDATABASE}@${PGHOST}:${PGPORT}."
 for migration in "$@"; do
-	echo "migrations : application de $(basename "$migration")"
-	psql --no-psqlrc --quiet --set ON_ERROR_STOP=1 --single-transaction --file "$migration"
+	migration_role=$(sed -n 's/^-- @migration-role: \([a-z_][a-z_]*\)$/\1/p' "$migration")
+	if [ -z "$migration_role" ]; then
+		migration_role=$PGUSER
+	elif [ "$migration_role" != supabase_admin ]; then
+		echo "migrations : rôle refusé '$migration_role' dans $(basename "$migration")." >&2
+		exit 1
+	fi
+	echo "migrations : application de $(basename "$migration") (rôle $migration_role)"
+	PGUSER=$migration_role psql --no-psqlrc --quiet --set ON_ERROR_STOP=1 \
+		--single-transaction --file "$migration"
 done
 
 echo "migrations : $# fichier(s) appliqué(s) avec succès."

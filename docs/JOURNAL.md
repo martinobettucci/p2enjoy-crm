@@ -9035,3 +9035,36 @@ passage `succeeded` et la cadence nominale. Le harnais dégrade commande et cade
 migration, exige le même jobid puis le nouveau passage. SQL global, reset froid et régressions UI
 restent dus avant fermeture. Le contrat complet est persisté dans `docs/SPEC-scheduler.md` avant
 toute migration.
+
+---
+
+### Décision 289 — Une révocation acceptée peut ne rien révoquer : administrer l'extension sous son propriétaire
+
+**Défaut trouvé par l'élargissement de pgTAP.** La migration exécutait sous `postgres` un
+`REVOKE` des droits `PUBLIC` sur les relations et fonctions de `cron`. PostgreSQL rendait `REVOKE`
+sans avertissement ni erreur, mais les ACL restaient exactement en place : `cron.job` gardait
+`SELECT`, `cron.job_run_details` gardait `SELECT, DELETE`, et cinq fonctions gardaient `EXECUTE`.
+Leur donneur et propriétaire est `supabase_admin`; le rôle `postgres` de l'image n'est ni
+superutilisateur, ni autorisé à prendre ce rôle. L'absence d'`USAGE` sur le schéma empêchait
+l'exploitation immédiate, mais le contrat documenté de fermeture aux deux niveaux était faux.
+
+**Décision.** Une migration peut déclarer `-- @migration-role: supabase_admin`. Le runner conserve
+`postgres` par défaut, n'autorise que cet unique rôle privilégié et refuse tout autre marqueur.
+`0018_pg_cron.sql` ferme les ACL sous le propriétaire de l'extension, puis exécute
+`SET ROLE postgres` avant de créer le heartbeat, sa fonction et le job : le travail applicatif ne
+reste pas sous le superutilisateur. La production doit appliquer ce fichier avec la même identité.
+Une fixture éprouve le routage des deux rôles et le refus d'un marqueur `root`.
+
+**Deux courses de preuve fermées dans le même passage.** Sur une base chaude, le compteur pouvait
+être déjà positif alors qu'un rejeu venait de remettre la cadence à cinq secondes ; pgTAP ne
+dormait donc pas et lisait l'état transitoire. Il attend désormais aussi lorsque cette cadence
+d'amorçage est visible. Pendant la contre-épreuve, un worker déjà parti pouvait en outre terminer
+après la désactivation et réactiver le job. Le harnais désactive maintenant jusqu'à constater à la
+fois `active=false` et zéro exécution `running`, puis seulement dégrade commande, base et cadence.
+
+**Preuves chaudes.** La suite ciblée rend **48/48**, SQL complet **20 fichiers / 1453 assertions**,
+le véritable `migrations-runner` rejoue les 18 fichiers et nomme `supabase_admin` uniquement pour
+la 18 sans warning ni erreur, puis `scripts/verify-scheduler.sh` rend **14/14**. Ce dernier ouvre
+réellement `USAGE` et `EXECUTE` à `anon` sous `supabase_admin`, réapplique la migration et exige
+leur disparition, le même `jobid`, un nouveau passage réussi et la cadence horaire. La preuve
+froide et les régressions complètes restent dues avant la fermeture de `CRM-017`.

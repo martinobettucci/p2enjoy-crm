@@ -3,7 +3,7 @@
 # @verifies docs/DAT.md §8 (chiffrement des secrets), §10 (reprise et continuité), §15
 # @verifies docs/SCHEMA.md §7 (comptes de messagerie), §11 (points à trancher)
 # @verifies docs/SPEC-mail-subsystem.md §2 (comptes entrants et identités sortantes)
-# @verifies docs/JOURNAL.md décision 7 (secrets en Vault), décision 8 (ordonnanceur applicatif)
+# @verifies docs/JOURNAL.md décision 7 (secrets en Vault), décision 261 (pg_cron retenu)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-004` :
 #
@@ -133,8 +133,8 @@ case "$preload" in
 	*) fail "pg_cron absent de shared_preload_libraries : $preload" ;;
 esac
 
-# `pg_cron` n'est pas retenu (décision 8), mais son installabilité est mesurée, et non supposée :
-# c'est précisément l'hypothèse que `CRM-004` doit lever.
+# Cette sonde de `CRM-004` a démenti la décision 8 ; la décision 261 retient désormais `pg_cron`.
+# Son installabilité reste mesurée ici, dans l'image exacte, plutôt que supposée.
 sql "create extension if not exists pg_cron;" >/dev/null 2>&1 || true
 cron_installe=$(sql "select extversion from pg_extension where extname='pg_cron';")
 if [ -n "$cron_installe" ]; then

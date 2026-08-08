@@ -397,8 +397,8 @@ rend toujours 5/5 depuis le shell WSL réel.
 
 ### 7.2 Parcours du harnais
 
-1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **19 fichiers** et
-   **1405 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
+1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **20 fichiers** et
+   **1453 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
    pas nécessairement la disparition d'une suite entière (décision 279).
 2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
 3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien

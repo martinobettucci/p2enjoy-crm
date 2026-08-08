@@ -26,7 +26,10 @@ ni email, ni purge RGPD et ne fabrique aucune donnée métier.
 ## 2. Extension et objets privés
 
 La migration `supabase/migrations/0018_pg_cron.sql` installe explicitement `pg_cron` 1.6.4, déjà
-présent et préchargé dans l'image PostgreSQL épinglée. Elle crée dans le schéma privé `app` :
+présent et préchargé dans l'image PostgreSQL épinglée. Son marqueur
+`-- @migration-role: supabase_admin` permet au runner de retirer les ACL accordées par le
+propriétaire réel de l'extension ; elle redescend aussitôt sous `postgres` pour créer dans le
+schéma privé `app` :
 
 | Objet | Contrat |
 |---|---|
@@ -73,6 +76,11 @@ pouvoir programmer du SQL :
   `app.scheduler_heartbeat_tick()` ;
 - la fonction fixe `search_path` à la chaîne vide et qualifie tous ses objets ;
 - rien n'est exposé par PostgREST, Kong ou l'interface.
+
+Cette fermeture n'est pas une supposition : l'image attribue les ACL initiales de `pg_cron` à
+`supabase_admin`, et un `REVOKE` sous `postgres` est accepté sans effet. Le runner réserve donc ce
+rôle au seul marqueur explicite et la contre-épreuve rouvre réellement `USAGE` et `EXECUTE` sous
+le propriétaire avant d'exiger que la migration les retire.
 
 Le heartbeat ne contient ni secret, ni identifiant utilisateur, ni donnée personnelle. Les futures
 fonctions planifiées suivent la même règle : objets privés, privilège minimal, commande nommée et

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
+# @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
 #           décision 251 (`MAIL_TEAM_DOMAIN` déclaré avant son consommateur CRM-051)
 # @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
@@ -513,6 +514,61 @@ for script in runDev.sh runProd.sh resetMe.sh scripts/verify-stack.sh scripts/ve
 		fail "$script : erreur de syntaxe"
 	fi
 done
+
+# `pg_cron` est détenu par `supabase_admin`, tandis que les objets applicatifs restent détenus et
+# exécutés par `postgres`. Le runner reconnaît un marqueur unique et refuse toute autre élévation :
+# le choix ne peut ni être implicite, ni devenir une exécution arbitraire sous un rôle privilégié.
+MIGRATION_RUNNER=supabase/docker/migrations-runner/apply-migrations.sh
+if [ -x "$MIGRATION_RUNNER" ] && sh -n "$MIGRATION_RUNNER"; then
+	ok "migrations-runner exécutable et syntaxiquement valide"
+else
+	fail "migrations-runner absent, non exécutable ou syntaxiquement invalide"
+fi
+
+role_markers=$(grep -l '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null || true)
+if [ "$role_markers" = supabase/migrations/0018_pg_cron.sql ] \
+	&& grep -qx -- '-- @migration-role: supabase_admin' "$role_markers"; then
+	ok "seule la migration pg_cron exige explicitement le rôle propriétaire supabase_admin"
+else
+	fail "marqueurs de rôle de migration inattendus : ${role_markers:-aucun}"
+fi
+
+RUNNER_FIXTURE="$WORK/migrations-runner"
+mkdir -p "$RUNNER_FIXTURE/bin" "$RUNNER_FIXTURE/migrations"
+printf '%s\n' '-- migration ordinaire' > "$RUNNER_FIXTURE/migrations/0001.sql"
+printf '%s\n' '-- @migration-role: supabase_admin' > "$RUNNER_FIXTURE/migrations/0002.sql"
+printf '%s\n' '#!/bin/sh' \
+	'printf "%s|%s\\n" "$PGUSER" "$*" >> "$MIGRATION_ROLE_LOG"' \
+	> "$RUNNER_FIXTURE/bin/psql"
+chmod +x "$RUNNER_FIXTURE/bin/psql"
+if PATH="$RUNNER_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RUNNER_FIXTURE/migrations" \
+	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
+	MIGRATION_ROLE_LOG="$RUNNER_FIXTURE/roles.log" \
+	"$MIGRATION_RUNNER" >"$RUNNER_FIXTURE/runner.log" 2>&1; then
+	runner_fixture_ok=true
+else
+	runner_fixture_ok=false
+fi
+if [ "$runner_fixture_ok" = true ] \
+	&& [ "$(cut -d '|' -f 1 "$RUNNER_FIXTURE/roles.log" 2>/dev/null | paste -sd '|' -)" = \
+	'postgres|supabase_admin' ] \
+	&& [ "$(grep -c -- '--single-transaction --file' "$RUNNER_FIXTURE/roles.log" 2>/dev/null)" = 2 ]; then
+	ok "le runner garde postgres par défaut et ne prend supabase_admin que pour le fichier marqué"
+else
+	fail "le runner ne respecte pas les deux rôles de la fixture"
+fi
+
+printf '%s\n' '-- @migration-role: root' > "$RUNNER_FIXTURE/migrations/0003.sql"
+if PATH="$RUNNER_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RUNNER_FIXTURE/migrations" \
+	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
+	MIGRATION_ROLE_LOG="$RUNNER_FIXTURE/roles-invalid.log" \
+	"$MIGRATION_RUNNER" >"$RUNNER_FIXTURE/runner-invalid.log" 2>&1; then
+	fail "le runner accepte un marqueur de rôle arbitraire"
+elif grep -q "rôle refusé 'root'" "$RUNNER_FIXTURE/runner-invalid.log"; then
+	ok "le runner refuse tout rôle privilégié non explicitement autorisé"
+else
+	fail "le runner refuse le rôle arbitraire sans diagnostic exploitable"
+fi
 
 # --- 7. Le fichier amorcé satisfait réellement Compose ------------------------------------------
 

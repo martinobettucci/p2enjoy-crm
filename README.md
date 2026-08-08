@@ -139,6 +139,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
 | `scripts/verify-functions.sh` | Rejoue les preuves des fonctions edge : runtime, isolation, route Kong, API réelle et journaux différés | **disponible** |
+| `scripts/verify-scheduler.sh` | Rejoue les preuves de l'ordonnanceur : pgTAP, passage réel, convergence du job et restauration des ACL | **disponible** |
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
@@ -338,7 +339,7 @@ installée par NVM sans modifier le shell parent.
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
 npm run test:unit          # Vitest, 531 tests            — aucune pile requise
-npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
+npm run test:sql           # pgTAP, 1453 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
@@ -389,6 +390,7 @@ une pile de développement déjà démarrée :
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
 scripts/verify-functions.sh    # fonctions edge : runtime, Kong, API et journaux    (CRM-016)
+scripts/verify-scheduler.sh    # pg_cron : passage, convergence et ACL               (CRM-017)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
@@ -419,8 +421,8 @@ scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libell
 ```
 
 Le dernier rejeu froid de `scripts/verify-harness.sh` rend **28 contrôles sans anomalie**. Il
-sélectionne Node **v24.14.1** / npm **11.11.0** Linux depuis le shell WSL réel, puis vérifie 19
-fichiers pgTAP / 1405 assertions, 416 scénarios API, 144 parcours UI, 16 scénarios mail, 531 tests
+sélectionne Node **v24.14.1** / npm **11.11.0** Linux depuis le shell WSL réel, puis vérifie 20
+fichiers pgTAP / 1453 assertions, 416 scénarios API, 144 parcours UI, 16 scénarios mail, 531 tests
 Vitest, les quatre compilations TypeScript et le rapport HTML servi en HTTP. Les parcours UI
 échouent sur tout `console.warn`, `console.error` ou `pageerror`.
 
@@ -529,6 +531,7 @@ Livré à ce jour :
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
 │   ├── verify-stack.sh         Preuves rejouables de la pile
 │   ├── verify-functions.sh     Preuves rejouables du runtime edge, de Kong et de ses journaux
+│   ├── verify-scheduler.sh     Preuves rejouables de pg_cron, de son job et de ses ACL
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie

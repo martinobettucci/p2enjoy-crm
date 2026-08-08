@@ -203,8 +203,15 @@ PORT_RAPPORT=9323
 # refusées par Kong, POST réel de la fonction d'exemple, méthode refusée, fonction inconnue et
 # CORS. `SCENARIOS_API` passe donc de 410 à **416**, valeur MESURÉE le 2026-08-08 par la suite API
 # complète. Elle ne livre ni migration ni écran : les compteurs pgTAP et UI restent inchangés.
-FICHIERS_SQL_ATTENDUS=19
-ASSERTIONS_ATTENDUES=1405
+#
+# --- `CRM-017` ---------------------------------------------------------------------------------
+#
+# L'unité ajoute `0020_pg_cron.test.sql`, **48 assertions** mesurées : passage réel du heartbeat,
+# contrat du job et fermeture exhaustive des ACL du schéma, des relations et des fonctions
+# `cron`. Le total passe donc de 19 / 1405 à **20 fichiers / 1453 assertions**. Elle ne livre ni
+# route API ni écran : les deux compteurs Playwright restent inchangés.
+FICHIERS_SQL_ATTENDUS=20
+ASSERTIONS_ATTENDUES=1453
 SCENARIOS_API=416
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
