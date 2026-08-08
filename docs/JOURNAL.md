@@ -9402,3 +9402,19 @@ l'instant même de la copie.
 leur définition diffère. Un rejeu conforme ne remplace donc ni la clé primaire ni ses index ; une
 clé étrangère affaiblie reste réparée. Le harnais mesure les refus depuis chacun des deux parents
 et dégrade réellement la sixième garde de `move_card`, pas seulement sa donnée seedée.
+
+---
+
+### Décision 302 — L'empreinte tranche la divergence ; la date explique seulement ce qu'elle sait dater
+
+**Incohérence trouvée pendant l'audit de `CRM-018`.** L'empreinte canonique inclut les attributs
+des nœuds du catalogue utilisés par le workflow, mais `source_modified_at` omettait leur
+`updated_at` tout en prétendant couvrir la composition entière. À l'inverse, une liaison exigée ne
+porte volontairement aucun horodatage, et supprimer une ligne ne transmet l'heure de sa disparition
+à aucun survivant. Une date unique ne peut donc pas être à la fois exhaustive et honnête.
+
+**Décision.** La vue prend le plus récent `updated_at` disponible du workflow, de ses étapes,
+transitions, champs, règles et nœuds effectivement référencés. Elle ne fabrique aucun horodatage
+pour les liaisons ni pour les suppressions. `source_modified_since_copy`, issu de la comparaison
+d'empreintes, est le seul verdict : ajout, modification et suppression y restent exacts. La date
+est un contexte d'affichage, jamais une seconde preuve susceptible de contredire le booléen.

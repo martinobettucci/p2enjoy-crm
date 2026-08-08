@@ -767,7 +767,7 @@ l'API ne l'expose pas.
 
 | Vue | Rôle | État |
 |---|---|---|
-| `public.workflow_derivations` | Une ligne par workflow dérivé : son origine, la date de la copie, la date du dernier changement de la source **composition comprise**, et le booléen de divergence. `security_invoker = true`, lecture seule (docs/SPEC-workflow-engine.md §4.6) | livrée (`CRM-032`) |
+| `public.workflow_derivations` | Une ligne par workflow dérivé : son origine, la date de la copie, le dernier `updated_at` disponible de la source et de sa composition horodatée — catalogue de nœuds utilisé compris —, et le booléen exact de divergence par empreinte. `security_invoker = true`, lecture seule (docs/SPEC-workflow-engine.md §4.6) | livrée (`CRM-032`), révisée par `CRM-018` |
 
 Une vue exposée à l'API est toujours `security_invoker = true` : sans ce réglage, elle lirait ses
 tables avec les droits de son propriétaire et deviendrait une porte dérobée sur des tables

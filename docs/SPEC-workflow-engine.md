@@ -716,7 +716,7 @@ n'y voyant aucune ligne là où le propriétaire en voit une.
 | `workflow_id`, `workspace_id`, `name`, `track_id` | la copie |
 | `source_workflow_id`, `source_name`, `source_archived_at` | son origine |
 | `derived_at` | la date de la copie |
-| `source_modified_at` | le plus récent `updated_at` de la source **et de sa composition** |
+| `source_modified_at` | le plus récent `updated_at` disponible de la source et de sa composition horodatée, catalogue de nœuds utilisé compris |
 | `source_composition_fingerprint` | l'empreinte mémorisée à la copie |
 | `current_source_composition_fingerprint` | l'empreinte recalculée de la source courante |
 | `source_modified_since_copy` | vrai si les deux empreintes diffèrent |
@@ -724,8 +724,10 @@ n'y voyant aucune ligne là où le propriétaire en voit une.
 **Le signal couvre les suppressions.** `app.workflow_composition_fingerprint` sérialise de façon
 canonique les nœuds, étapes, transitions, champs, règles et exigences, triés par identifiants
 source, puis calcule leur SHA-256 avec `extensions.digest`. Ajouter, modifier ou supprimer un de
-ces objets change l'empreinte. `source_modified_at` reste une date d'aide à l'affichage ; elle ne
-porte plus le verdict de divergence (INC-038, décision 293).
+ces objets change l'empreinte. `source_modified_at` reste une date d'aide à l'affichage : elle
+inclut les nœuds référencés par les étapes, mais une suppression ou une liaison sans horodatage ne
+peut pas lui transmettre sa date. Elle ne porte donc jamais le verdict de divergence ; seul
+`source_modified_since_copy` le porte (INC-038, décisions 293 et 302).
 
 Une copie antérieure à la migration 19 garde une empreinte `NULL` : la vue rend alors
 `source_modified_since_copy = true`. L'état d'origine n'étant plus reconstructible, le déclarer à
