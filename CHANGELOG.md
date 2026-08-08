@@ -24,7 +24,8 @@ d'exécuter le code attendu.
   les sept champs, les quinze règles et l'exigence, puis conserve l'empreinte SHA-256 canonique de
   la source afin de détecter jusqu'à ses suppressions. Le seed exerce les champs dérivés et porte
   désormais 21 valeurs sur 11 cards. Cible courante : 21 fichiers / 1534 assertions pgTAP et 425
-  scénarios API ; la preuve froide reste due avant fermeture de l'unité.
+  scénarios API ; la preuve froide reste due avant fermeture de l'unité. Une copie utilisateur
+  supplémentaire n'est plus supprimée au nom de la convergence : les états ambigus sont refusés.
 - **La preuve anonyme exhaustive cesse d'oublier des tables métier.** `card_comments`,
   `card_events` et la nouvelle liaison rejoignent l'inventaire : quinze tables seedées sont
   d'abord constatées non vides par la clé de service, puis rendues `200` / `[]` à l'anonyme. Le

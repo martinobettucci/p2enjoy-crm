@@ -9353,3 +9353,26 @@ Les propositions sont arbitrées sans laisser de pseudo-backlog :
 Les unités intégrées héritent de la Definition of Done commune. Les nouvelles unités ne sont pas
 des raccourcis : elles restent à livrer séquentiellement après `CRM-075`, sauf une dépendance
 explicite qui impose de les avancer.
+
+---
+
+### Décision 300 — Le seed possède ses fixtures, jamais les copies utilisateur
+
+**Défaut découvert pendant la reprise de CRM-018.** La convergence historique d'INC-041 supprimait
+toute dérivation au-delà de la plus ancienne. Or `copy_workflow_to_track` est un vrai geste produit :
+une seconde dérivation peut avoir été créée par un utilisateur. Aucun marqueur en base ne permet au
+seed d'en revendiquer la propriété. La supprimer parce qu'un compteur attend un serait une perte de
+données silencieuse.
+
+**Décision.** Le seed choisit l'unique dérivation portant son nom déclaré. S'il n'en existe aucune,
+une dérivation unique peut être reconnue comme l'ancienne fixture déplacée et ramenée à son contrat.
+Plusieurs candidates exactes, ou plusieurs dérivations sans candidate exacte, constituent un état
+ambigu : le seed échoue, affiche les identifiants et ne supprime rien. Les copies supplémentaires
+non ambiguës sont conservées et ne participent pas aux assertions de la fixture seedée.
+
+**Exception de migration bornée.** Une copie seedée antérieure à CRM-018 ne peut pas recevoir un
+formulaire complet sans maquiller le geste de copie. Elle peut être reconstruite par la vraie RPC
+seulement après cinq preuves : source exactement conforme, candidate non ambiguë, uniquement les
+deux cards seedées, aucun commentaire sur elles, empreinte absente — jamais une divergence moderne
+inexpliquée. Les identifiants des deux cards sont recréés par le seed ; toute autre donnée provoque
+un refus. Cette exception ne transforme pas le seed en outil de suppression général.

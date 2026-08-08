@@ -3100,6 +3100,13 @@ dérivation, et son `track_id` est **ramené** à la valeur déclarée plutôt q
 recherche. Le harnais de `CRM-033` reproduit la dégradation et constate la restauration, sans quoi le
 défaut pourrait revenir en silence.
 
+**Révision de sécurité, décision 300.** Supprimer toutes les dérivations surnuméraires pour obtenir
+un compte global de un confondait convergence du seed et propriété des données. Une copie créée par
+un utilisateur n'appartient pas au seed. La candidate seedée est désormais choisie par son contrat
+exact, avec repli sur une dérivation unique ; un état ambigu est refusé et aucune copie
+supplémentaire n'est détruite. La convergence signifie « ne pas recréer la fixture », pas « ramener
+toutes les copies utilisateur à un compte global de un ».
+
 **Ce qui reste à arbitrer :** faut-il un contrôle transverse de convergence du seed — un harnais qui
 dégraderait chaque objet déclaré et vérifierait que le rejeu le ramène —, plutôt qu'une vérification
 ajoutée unité par unité après chaque défaut trouvé ? Les trois occurrences plaident pour, mais le

@@ -195,9 +195,13 @@ d'un identifiant produit par `gen_random_uuid()` autrement que par leur préfixe
 | Fichier d'environnement validé contre `.env.example` | Même contrat que les trois scripts de lancement (`CRM-002`) |
 | Pile démarrée exigée | Le seed passe par l'API : sans elle, il ne peut qu'échouer, et doit le dire plutôt que réussir à moitié |
 
-Le seed **ne détruit rien**. Il ne supprime aucun compte, aucun workspace, aucune appartenance : il
-crée ou met à jour. La destruction appartient à `resetMe.sh`, qui porte ses propres gardes et sa
-confirmation explicite (`CLAUDE.md` §9).
+Le seed **ne détruit aucune donnée inconnue ni aucune copie utilisateur**. Il ne supprime aucun
+compte, workspace ou membership. Une seule exception bornée existe depuis `CRM-018` : l'ancienne
+copie de démonstration, identifiable sans ambiguïté comme l'unique dérivation seedée, peut être
+reconstruite par la vraie RPC lorsqu'elle ne possède pas encore de formulaire. Avant ce geste, le
+seed exige la composition source exacte, seulement les deux cards aux identifiants seedés et aucun
+commentaire utilisateur ; sinon il s'arrête. Toute copie supplémentaire est conservée. Une
+ambiguïté demande un reset ou une intervention explicite, jamais une suppression opportuniste.
 
 ## 6. Interface d'exécution
 
@@ -403,9 +407,11 @@ ferait.
 **L'identifiant de la copie n'est PAS stable**, contrairement à toutes les autres lignes du seed
 (§4). Il est frappé par la fonction. Le rendre stable supposerait un paramètre de plus sur
 `copy_workflow_to_track`, ajouté pour le seul confort du seed — une API façonnée par ses tests. La
-copie se retrouve donc par sa **source et son track**, ce que font toutes les preuves. C'est le
-prix assumé de la règle « la donnée de démonstration naît du mécanisme réel », et il est nommé ici
-plutôt que découvert par le premier test qui chercherait un `…052`.
+copie se retrouve donc par sa **source et son nom déclaré**, avec repli sur une dérivation unique
+pour réparer une ancienne fixture renommée ou déplacée. Le track fait partie du contrat à
+converger, jamais d'un filtre qui créerait un doublon. C'est le prix assumé de la règle « la donnée
+de démonstration naît du mécanisme réel », nommé ici plutôt que découvert par le premier test qui
+chercherait un `…052`.
 
 **La convergence est vérifiée avant d'agir**, et non obtenue par un upsert : la fonction crée
 toujours une ligne neuve, et rien n'interdit deux copies du même workflow sur le même track. Le
@@ -418,7 +424,14 @@ recherche ne la trouvait plus et le seed en créait une **seconde**. Le contrat 
 seed en laissait deux, sans erreur ni avertissement — idempotent sans être convergent, troisième
 forme de la décision 57 et la première sur un seed. Trois corrections dans le même changement : la
 copie est cherchée par sa **seule** dérivation, son track et son nom sont **ramenés** aux valeurs
-déclarées, et toute copie **surnuméraire** est supprimée, la plus ancienne étant conservée.
+déclarées, et aucune seconde copie n'est créée lorsqu'une dérivation unique existe.
+
+**CRM-018 retire la suppression des copies surnuméraires** (décision 300). Une dérivation
+supplémentaire peut avoir été créée depuis l'interface et ne porte aucun marqueur qui autoriserait
+le seed à se l'approprier. Le seed choisit l'unique copie au nom déclaré ; à défaut, il accepte une
+unique dérivation comme ancienne fixture déplacée. Plusieurs candidates exactes, ou plusieurs
+dérivations sans candidate exacte, rendent l'état ambigu : le seed échoue en nommant les
+identifiants et n'en supprime aucune.
 
 **Ce que `CRM-033` change à l'ordre du seed.** `channels.workflow_id` devient `NOT NULL` : le
 workflow par défaut doit donc naître **avant** les channels. Sa ligne est créée en section 3 bis —
@@ -488,11 +501,11 @@ formulaire est recréée par le vrai geste de copie, jamais maquillée par des i
 
 ### 2.12 Cards — ajoutées par `CRM-040`
 
-Neuf cards, réparties sur **quatre** channels et **trois** tracks, à cinq étapes distinctes du
-workflow global. Le détail du contrat vit dans `docs/SPEC-cards.md` §9, qui est la référence ; ce
-chapitre ne retient que ce qui engage le seed.
+Douze cards suivent le workflow global et deux le workflow dérivé, soit **quatorze** cards sur cinq
+channels. Les neuf fixtures initiales de `CRM-040` sont étendues par `CRM-046` et `CRM-018` ; le
+détail courant vit dans `docs/SPEC-cards.md` §9 et au §9.3 ci-dessous.
 
-- **Sept actives, une archivée, une en corbeille.** Les deux suppressions douces de
+- **Douze actives, une archivée, une en corbeille.** Les deux suppressions douces de
   `docs/SPEC-cards.md` §4 sont donc démontrées par des données réelles, non seulement décrites.
 - **Une card sans responsable et sans montant**, pour que le caractère nullable d'`owner_id` et
   d'`amount` soit exercé.
@@ -501,19 +514,19 @@ chapitre ne retient que ce qui engage le seed.
 - **`email_local_part` n'est jamais envoyé** par le seed : il est généré par le trigger de la
   migration 11. Il est donc **stable d'un rejeu à l'autre**, la branche de mise à jour d'un `upsert`
   ne touchant que les colonnes envoyées. Un contrôle de `scripts/verify-cards.sh` le constate.
-- **AUCUNE card dans `prospection`**, et le motif est mesuré : c'est le seul channel que le seed
-  **repointe** — section 4 vers le workflow global, section 7 vers la copie de portée track —, et la
-  clé composite de `CRM-040` refuse ce déplacement dès qu'une card l'occupe. MESURÉ : le seed échoue
-  alors **en section 4**, code de sortie `1`, `23503`. Contre-épreuve mesurée : une card dans
-  `grands-comptes` laisse le seed vert. INC-046, arbitrage attendu, `docs/SPEC-cards.md` §9.1.
+- **Deux cards dans `prospection`**, toutes deux sur le workflow dérivé. Le seed ne repointe plus ce
+  channel lorsqu'il suit déjà sa copie conforme ; c'est ce qui rend son rejeu compatible avec un
+  channel peuplé. Leurs étapes et champs sont résolus à l'exécution, jamais écrits en dur.
 
-Ce que le seed **ne** démontre **pas**, et qui est nommé plutôt que compensé : aucune card sur un
-**workflow dérivé**, pour la raison ci-dessus ; aucune valeur de formulaire, `card_field_values`
-arrivant à `CRM-036` ; aucun événement de timeline, `card_events` arrivant à `CRM-044`.
+Le seed démontre désormais les deux workflows, chaque étape globale, le formulaire dérivé et la
+timeline. Les limites restantes sont nommées dans les unités fonctionnelles correspondantes, pas
+maintenues ici comme une photographie historique dépassée.
 
 ### 2.13 Valeurs de formulaire — ajoutées par `CRM-036`
 
-Quatorze valeurs sur **six cards**. Contrat détaillé et motifs : `docs/SPEC-form-composer.md` §6.11.
+Vingt et une valeurs sur **onze cards** : quatorze valeurs initiales de `CRM-036`, quatre ajoutées
+par `CRM-046` et trois portées par les champs remappés de la copie depuis `CRM-018`. Le tableau
+ci-dessous conserve les quatorze valeurs initiales ; les sept extensions sont détaillées au §9.6.
 
 | Card | Champ | Valeur | Ce qu'elle démontre |
 |---|---|---|---|
@@ -542,12 +555,11 @@ exige `lien-proposition`. C'est la seule donnée du seed qui exerce le **second 
 §3.5 de `docs/SPEC-form-composer.md` : la card `…0c7` satisfait les trois exigences de son étape
 courante et reste bloquée par cette quatrième, portée par l'arête et non par l'étape.
 
-La copie dérivée porte **zéro** liaison. Le seed relit donc exactement une ligne dans
-`workflow_transition_required_fields`, rattachée au workflow global, et aucune dans le workflow de
-track.
+La copie dérivée porte une liaison remappée vers son propre champ `lien-proposition`. Le seed relit
+donc exactement une liaison globale et une dérivée, sans identifiant de champ partagé.
 
 **Aucune valeur n'est posée sur la card archivée ni sur celle en corbeille.** Une card rangée ne se
-déplace pas : y poser des valeurs n'exercerait rien que les six autres n'exercent déjà.
+déplace pas : y poser des valeurs n'exercerait rien que les onze autres n'exercent déjà.
 
 ### 2.14 Commentaires — ajoutés par `CRM-043`
 

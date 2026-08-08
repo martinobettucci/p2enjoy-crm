@@ -340,7 +340,7 @@ installée par NVM sans modifier le shell parent.
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
 npm run test:unit          # Vitest, 531 tests            — aucune pile requise
-npm run test:sql           # pgTAP, 1508 assertions       — pile démarrée
+npm run test:sql           # pgTAP, 1534 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
@@ -423,7 +423,7 @@ scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libell
 ```
 
 La cible courante de `scripts/verify-harness.sh` est **28 contrôles** : sélection de Node
-**v24.14.1** / npm **11.11.0** Linux, 21 fichiers pgTAP / 1508 assertions, 424 scénarios API,
+**v24.14.1** / npm **11.11.0** Linux, 21 fichiers pgTAP / 1534 assertions, 425 scénarios API,
 144 parcours UI, 16 scénarios mail, 531 tests Vitest, les quatre compilations TypeScript et le
 rapport HTML servi en HTTP. Les parcours UI échouent sur tout `console.warn`, `console.error` ou
 `pageerror`. La dernière preuve froide publiée, antérieure à `CRM-017` et `CRM-018`, reste celle

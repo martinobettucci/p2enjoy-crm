@@ -131,17 +131,19 @@ empreinte à son recalcul : ajout, modification et suppression sont détectés, 
 Une copie créée avant la migration 19 ne possède pas d'empreinte d'origine reconstructible. La
 migration laisse donc sa colonne à `NULL` et la vue la signale divergente/à vérifier. Inventer
 l'empreinte de la source actuelle aurait déclaré « identique » une copie potentiellement modifiée.
-Le workflow seedé peut être recréé par le vrai geste parce que ses données sont explicitement
-détenues par le seed ; une copie utilisateur n'est jamais écrasée automatiquement.
+L'ancienne copie seedée peut être recréée par le vrai geste uniquement si elle est identifiable
+sans ambiguïté, si la source porte exactement le contrat et si elle ne contient que les deux cards
+seedées sans commentaire utilisateur. Toute copie supplémentaire est conservée ; toute ambiguïté
+arrête le seed. Une copie utilisateur n'est jamais écrasée automatiquement.
 
 ### 5.3 Seed
 
 Les transitions sont créées sans champ tableau. Une fois `form_fields` présent, le seed :
 
 1. relit les transitions du workflow global et de sa copie ;
-2. relit les correspondances de la copie par les clés de champ et les nœuds d'étape ; si une
-   ancienne copie sans formulaire existe, elle est recréée par le vrai geste de copie plutôt que
-   complétée à la main ;
+2. relit les correspondances de la copie par les clés de champ et les nœuds d'étape ; si l'unique
+   ancienne fixture sans formulaire existe et passe les gardes de propriété ci-dessus, elle est
+   recréée par le vrai geste plutôt que complétée à la main ;
 3. pose `lien-proposition` sur « Démarrer la réalisation » dans la source et son champ remappé sur
    la transition dérivée correspondante ;
 4. relit exactement une liaison globale et une liaison dérivée, sans aucun identifiant partagé,
