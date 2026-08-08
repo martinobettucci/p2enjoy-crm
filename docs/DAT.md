@@ -274,8 +274,13 @@ manquement, pas un retard.**
 source de vérité, comme pour le reste du produit. Compromis assumé : les tâches planifiées
 deviennent testables par **pgTAP** plutôt que par pytest.
 
-**Mise en œuvre : `CRM-017`.** `mail-sync` conserve ses trois autres sous-composants : IMAP et SMTP
-demandent des connexions longues, et seul l'ordonnancement sort de son périmètre.
+**Mise en œuvre : `CRM-017`.** Le contrat d'exécution est fixé dans
+`docs/SPEC-scheduler.md` : les jobs sont des configurations de base versionnées, privées et
+nommées. Un heartbeat opérationnel rend l'exécution observable immédiatement après une migration,
+puis revient à une cadence horaire ; les relances, digests et purges métier ne sont enregistrés
+que par les unités qui livrent leurs tables et leurs règles. `mail-sync` conserve ses trois autres
+sous-composants : IMAP et SMTP demandent des connexions longues, et seul l'ordonnancement sort de
+son périmètre.
 
 ### 3.4 `clamav`
 
@@ -713,7 +718,7 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 | Catalogue de nœuds partagé | Rend l'analytique comparable entre channels | Un nœud partagé renommé se répercute partout : les surcharges sont explicites |
 | Copie tracée des workflows vers un track | Correspond au geste demandé, et l'origine reste connue | Les copies divergent ; une évolution du workflow global ne se propage pas |
 | Service mail en Python séparé | IMAP/SMTP demandent des connexions longues, incompatibles avec des fonctions courtes | Un service de plus à superviser |
-| Ordonnancement par `pg_cron` | S'exécute là où vivent les données et les règles métier, et ne s'arrête pas avec un service applicatif — une purge RGPD qui ne part pas est un manquement (décision 261, INC-012, `CRM-017`) | Les tâches planifiées se testent par pgTAP et non par pytest |
+| Ordonnancement par `pg_cron` | S'exécute là où vivent les données et les règles métier, et ne s'arrête pas avec un service applicatif — une purge RGPD qui ne part pas est un manquement (décision 261, INC-012, `CRM-017`) | Les tâches planifiées se testent par pgTAP et non par pytest ; le heartbeat s'amorce en quelques secondes puis passe à une cadence horaire pour ne pas créer de bruit durable (`docs/SPEC-scheduler.md`) |
 | Fonctions edge au périmètre | Le socle documentaire les annonce ; elles donnent un porteur à l'invitation d'un membre et aux webhooks sortants signés (décision 260, INC-007, `CRM-016`) | Un service de plus dans la pile ; la logique métier reste en PostgreSQL, `mail-sync` reste en Python |
 | Secrets de messagerie en Supabase Vault | Extension présente et fonctionnelle dans l'image épinglée ; schéma `vault` hors de portée d'`anon` et d'`authenticated` (`CRM-004`) | La clé racine vit hors de `PGDATA` : elle devient une donnée de sauvegarde à part entière (§10) |
 | Deux serveurs mail en développement | Inbucket ne fournit pas d'IMAP, indispensable au produit | Un conteneur supplémentaire en développement |

@@ -1721,20 +1721,16 @@ purges dans `mail-sync` plutôt que dans `pg_cron`. Elle invoquait deux motifs :
 
 La mesure de `CRM-004` **dément le premier** : `pg_cron` 1.6.4 est présent dans
 `supabase/postgres:17.6.1.136`, préchargé par le serveur, installable, et il ordonnance
-réellement une tâche. Le second motif tient toujours.
+réellement une tâche. Le second motif — la commodité de pytest — ne compense pas le risque d'une
+tâche de conformité arrêtée avec un service applicatif ; le responsable a donc renversé la
+décision 8 (décision 261).
 
-**Comportement en attendant :** le **résultat** de la décision 8 est conservé — l'ordonnanceur
-reste applicatif — parce que le motif de testabilité suffit à le justifier seul. Seul l'**énoncé**
-a été corrigé, dans `docs/DAT.md` §3.3 et §12, pour ne plus invoquer un fait démenti. Aucun code
-d'ordonnancement n'existe encore : rien n'est donc à défaire à ce stade.
-
-**Pourquoi ce n'est pas résolu ici :** rouvrir le choix d'architecture dépasse le périmètre de
-`CRM-004`, dont l'objet était de mesurer et de trancher le chiffrement des secrets. Le point est
-consigné plutôt qu'arbitré implicitement.
-
-**Arbitrage attendu du responsable :** confirmer l'ordonnanceur applicatif, ou demander la
-réévaluation de `pg_cron` maintenant que sa disponibilité est acquise. À trancher avant `CRM-062`
-(relances automatiques), première unité qui consommera réellement un ordonnanceur.
+**Mise en œuvre ouverte le 2026-08-08.** `docs/SPEC-scheduler.md` fixe la première tâche réelle,
+son job nommé, sa sécurité et sa preuve pgTAP ; `CRM-017` passe `[~]`. Le constat restera ouvert
+jusqu'à une migration froide où `cron.job_run_details` et le heartbeat prouvent tous deux le
+passage effectif, sans réintroduire de `scheduler` applicatif. Les relances, digests et rétentions
+métier restent portés par les unités qui livrent leurs propres tables : aucun faux objet n'est
+créé pour fermer ce constat plus tôt.
 
 ---
 

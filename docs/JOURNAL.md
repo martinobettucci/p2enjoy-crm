@@ -9001,3 +9001,37 @@ Le contrat existant de `docs/SPEC-test-harness.md` §7.2 suffisait : aucune règ
 `scripts/verify-functions.sh` rend 13/13, la pile 55/55, et le harnais global **28/28** avec
 **416 API**, **144 UI sans avertissement**, **16 mail** et **531 Vitest**. Les six dégradations
 échouent pour leur cause propre et leur restauration est constatée.
+
+---
+
+### Décision 288 — Un heartbeat s'amorce vite puis se calme : prouver `pg_cron` sans bruit durable
+
+**Frontière de `CRM-017`.** L'arbitrage 261 place relances, séquences, digest et purge RGPD dans
+`pg_cron`, mais leurs tables et règles appartiennent à `CRM-063`, `CRM-069` et au chunk mail. Les
+programmer aujourd'hui imposerait des commandes sur des objets absents ou fabriquerait des données
+qui prétendent représenter un métier inexistant. La seule première tâche honnête est donc un
+heartbeat opérationnel privé, observable et sans donnée personnelle.
+
+**Mesures avant contrat.** L'image expose `pg_cron` 1.6.4 dans `shared_preload_libraries`, avec
+`cron.database_name=postgres`, `cron.log_run=on` et les connexions par `localhost`. Une création
+transactionnelle puis annulée montre que le schéma `cron` n'accorde pas `USAGE` à `public`, mais
+plusieurs fonctions gardent un `EXECUTE` public : la migration révoquera les deux niveaux et
+nommera aussi `anon`, `authenticated` et `service_role`. Deux appels de `cron.schedule` portant le
+même nom conservent le même `jobid` et mettent à jour cadence et commande — propriété mesurée, non
+supposée, sur la base locale.
+
+**Problème de fréquence.** Un heartbeat permanent toutes les cinq secondes rendrait les tests
+rapides au prix de 17 280 passages par jour, de WAL et de lignes `cron.job_run_details`. Un heartbeat
+horaire serait propre mais une preuve froide pourrait attendre presque une heure.
+
+**Décision.** La migration programme le job nommé à cinq secondes. Le premier passage incrémente
+une ligne `UNLOGGED` dans `app.scheduler_heartbeat`, puis ramène **dans la même transaction** le job
+à `7 * * * *`. Une promotion qui échoue annule aussi le heartbeat et reste visible comme échec
+`pg_cron`. Chaque rejeu de migration réamorce brièvement le même jobid ; l'état stable produit au
+plus vingt-quatre passages par jour. Le seed ne touche jamais cet objet.
+
+**Preuve exigée.** pgTAP attend au plus quinze secondes un compteur positif, une date réelle, un
+passage `succeeded` et la cadence nominale. Le harnais dégrade commande et cadence, réapplique la
+migration, exige le même jobid puis le nouveau passage. SQL global, reset froid et régressions UI
+restent dus avant fermeture. Le contrat complet est persisté dans `docs/SPEC-scheduler.md` avant
+toute migration.

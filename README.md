@@ -58,7 +58,7 @@ réellement créés côté serveur IMAP.
 | Interface | React 19, Vite 8, TypeScript, Tailwind CSS 4, lucide-react, React Router 8 ; TanStack Query, react-hook-form, zod et dnd-kit viendront avec le métier qui les exige |
 | Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong, Supavisor) |
 | Règles métier | PostgreSQL : fonctions `SECURITY DEFINER` + Row Level Security |
-| Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP, ordonnanceur) |
+| Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP) ; ordonnancement durable par `pg_cron` |
 | Antivirus | ClamAV (pièces jointes entrantes) |
 | Stockage | Supabase Storage sur S3 (MinIO en développement) |
 | Tests | pgTAP (SQL), Vitest (webapp et modules edge purs), pytest (mail-sync), Playwright (API, UI, mail) |

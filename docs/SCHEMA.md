@@ -715,6 +715,15 @@ File d'envoi persistante.
 | `webhook_endpoints`, `webhook_deliveries` | Points de sortie signés et historique des remises |
 | `saved_views` | Filtres nommés, personnels ou partagés |
 
+### Objets privés d'ordonnancement
+
+`CRM-017` ajoute `app.scheduler_heartbeat`, table `UNLOGGED` non exposée à l'API : une ligne
+`scheduler`, un compteur d'exécutions et la date du dernier passage. La fonction privée
+`app.scheduler_heartbeat_tick()` l'alimente et ramène le job nommé
+`p2enjoy-scheduler-heartbeat` de sa cadence d'amorçage à sa cadence horaire. Le catalogue et
+l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `authenticated` ou
+`service_role` n'a de privilège sur ces objets (`docs/SPEC-scheduler.md`).
+
 ---
 
 ## 9. Fonctions et RPC
@@ -731,6 +740,7 @@ File d'envoi persistante.
 | `copy_workflow_to_track(workflow_id, track_id, new_name)` | Copie tracée d'un workflow global vers un track : étapes, arêtes remappées par le nœud, lignage renseigné. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Quatre refus : `workflow_not_found`, `forbidden`, `workflow_not_global`, `track_not_found` (docs/SPEC-workflow-engine.md §4.3) | livrée (`CRM-032`) |
 | `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | Changement de channel — donc potentiellement de **workflow** — avec remappage **explicite** de l'étape : aucun remappage automatique par clé de nœud. Rend `public.cards`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Le droit d'écriture est exigé sur les **deux** channels. Huit refus : `card_not_found`, `forbidden`, `channel_not_found`, `same_channel`, `step_mapping_required`, `step_not_in_workflow`, `field_values_would_be_lost` (`docs/SPEC-workflow-engine.md` §6.4). Le paramètre `step_mapping` annoncé à l'origine par ce §9 désignait une **fonction différente**, désormais nommée `change_channel_workflow` — décision 263, INC-046 et INC-073 | **livrée** par `CRM-045`, **inchangée** |
 | `change_channel_workflow(channel_id, workflow_id, step_mapping)` | Un **channel entier** change de workflow, et l'étape de **toutes** ses cards est remappée en un appel. Le remappage est **explicite et exhaustif** : aucune étape de départ n'est devinée, aucune card ne reste sur une étape qui n'appartient pas à son nouveau workflow, et le refus est renvoyé **entier** plutôt qu'appliqué à moitié | **due** — `CRM-019`, arbitrage du responsable, décision 263 |
+| `app.scheduler_heartbeat_tick()` | Incrémente le heartbeat opérationnel puis ramène le job `pg_cron` à sa cadence nominale ; privée, sans argument, `search_path` vide, exécutable uniquement par le propriétaire PostgreSQL | **due** — `CRM-017`, `docs/SPEC-scheduler.md` |
 | `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé |
 

@@ -1582,7 +1582,7 @@ moitié qui gêne.
       des fonctions courtes (`docs/DAT.md` §3.3). Les fonctions edge **s'ajoutent**, elles ne
       remplacent rien.
 
-### CRM-017 — Ordonnancement par `pg_cron` `[ ]`
+### CRM-017 — Ordonnancement par `pg_cron` `[~]`
 Relances, séquences, digest et purge RGPD sont ordonnancés par `pg_cron`.
 **DoD** : une tâche planifiée est créée, exécutée et prouvée **par pgTAP** ; `docs/DAT.md` §3.3 et
 §12 sont corrigés dans le même changement.
@@ -1590,16 +1590,29 @@ Relances, séquences, digest et purge RGPD sont ordonnancés par `pg_cron`.
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 261, INC-012. **La décision
 8 est renversée**, pas seulement corrigée dans son énoncé.
 
-- [ ] **Le premier motif de la décision 8 a été démenti par la mesure** : `CRM-004` a constaté que
+- [x] **Contrat stable avant code** : `docs/SPEC-scheduler.md` fixe l'extension, les objets privés,
+      le job nommé, son amorçage observable puis sa cadence horaire, les privilèges et la preuve
+      d'exécution. Il refuse d'inventer les relances, digests ou rétentions dont les tables
+      arrivent dans des unités ultérieures.
+- [x] **Le premier motif de la décision 8 a été démenti par la mesure** : `CRM-004` a constaté que
       `pg_cron` 1.6.4 est présent, préchargé et fonctionnel dans l'image épinglée. Seul le motif de
       testabilité subsistait.
-- [ ] **Ce que l'ordonnanceur applicatif coûtait était écrit noir sur blanc** dans `docs/DAT.md`
+- [x] **Ce que l'ordonnanceur applicatif coûtait était écrit noir sur blanc** dans `docs/DAT.md`
       §12 : « les tâches planifiées s'arrêtent si le service s'arrête ». Une purge RGPD qui ne
       s'exécute pas est un **manquement**, pas un retard.
-- [ ] **Ce que la décision coûte, et qui est assumé** : les tâches planifiées deviennent testables
+- [x] **Ce que la décision coûte, et qui est assumé** : les tâches planifiées deviennent testables
       par pgTAP plutôt que par pytest.
-- [ ] **Conséquence sur une unité voisine** : le périmètre de `CRM-051` (`mail-sync`) **perd son
+- [x] **Conséquence sur une unité voisine** : le périmètre de `CRM-051` (`mail-sync`) **perd son
       sous-composant `scheduler`**.
+- [ ] **Migration privée, rejouable et convergente** : `pg_cron` est installé ; le heartbeat et sa
+      fonction restent dans `app`, fermés à tous les rôles API ; un unique job nommé est réparé
+      sans changer de `jobid`.
+- [ ] **Exécution réelle prouvée par pgTAP** : le job passe après migration, incrémente le compteur,
+      laisse un `succeeded` dans `cron.job_run_details` et se promeut de cinq secondes à la cadence
+      nominale horaire.
+- [ ] **Parcours froid et non-régression** : reset, migration, seed, harnais propre, SQL complet,
+      API, UI Chromium avec console stricte, mail, unitaires, types et build sont verts. Aucun seed
+      ni écran ne change.
 
 ### CRM-018 — `require_fields` devient une table de liaison `[ ]`
 `workflow_transitions.require_fields` (`uuid[]`) est remplacée par une table de liaison
