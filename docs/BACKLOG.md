@@ -1604,17 +1604,17 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 261
       par pgTAP plutôt que par pytest.
 - [x] **Conséquence sur une unité voisine** : le périmètre de `CRM-051` (`mail-sync`) **perd son
       sous-composant `scheduler`**.
-- [ ] **Migration privée, rejouable et convergente** : `pg_cron` est installé ; le heartbeat et sa
+- [x] **Migration privée, rejouable et convergente** : `pg_cron` est installé ; le heartbeat et sa
       fonction restent dans `app`, fermés à tous les rôles API ; un unique job nommé est réparé
       sans changer de `jobid`.
-- [ ] **Exécution réelle prouvée par pgTAP** : le job passe après migration, incrémente le compteur,
+- [x] **Exécution réelle prouvée par pgTAP** : le job passe après migration, incrémente le compteur,
       laisse un `succeeded` dans `cron.job_run_details` et se promeut de cinq secondes à la cadence
       nominale horaire.
 - [ ] **Parcours froid et non-régression** : reset, migration, seed, harnais propre, SQL complet,
       API, UI Chromium avec console stricte, mail, unitaires, types et build sont verts. Aucun seed
       ni écran ne change.
 
-### CRM-018 — `require_fields` devient une table de liaison `[ ]`
+### CRM-018 — `require_fields` devient une table de liaison `[~]`
 `workflow_transitions.require_fields` (`uuid[]`) est remplacée par une table de liaison
 `(transition_id, field_id)`, avec ses deux clés étrangères et son `ON DELETE CASCADE`.
 **DoD** : migration versionnée et rejouable ; `copy_workflow_to_track`, le seed, les suites pgTAP
@@ -1623,18 +1623,33 @@ aucun identifiant mort.
 
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 262, INC-033.
 
-- [ ] **Le constat est une propriété du type, pas un différé d'ordonnancement** : PostgreSQL refuse
+- [x] **Contrat stable avant code** : `docs/SPEC-transition-required-fields.md` fixe la table à
+      deux colonnes, ses cascades, la migration sans perte de comportement, la cohérence de
+      workflow, RLS, les
+      deux fonctions à réviser, le seed, les preuves et le retour arrière.
+- [x] **Le constat est une propriété du type, pas un différé d'ordonnancement** : PostgreSQL refuse
       toute clé étrangère depuis une colonne tableau, et cela ne changera jamais. La suppression
       d'un champ de formulaire laisse aujourd'hui des identifiants **morts** dans les transitions,
       et rien ne le signale.
-- [ ] **L'option écartée est nommée** : accepter le type et nettoyer au moment de la suppression
+- [x] **L'option écartée est nommée** : accepter le type et nettoyer au moment de la suppression
       aurait reproduit **en code applicatif**, et imparfaitement, ce que le moteur sait faire seul.
       L'intégrité référentielle est le travail de la base.
-- [ ] **Ce que la décision coûte, et qui est assumé** : elle **rouvre `CRM-031` et `CRM-035`**,
+- [x] **Ce que la décision coûte, et qui est assumé** : elle **rouvre `CRM-031` et `CRM-035`**,
       livrées et prouvées.
-- [ ] **Conséquence sur une entrée voisine** : INC-056 constatait que la copie de workflow recopie
+- [x] **Conséquence sur une entrée voisine** : INC-056 constatait que la copie de workflow recopie
       `require_fields` tel quel et fait varier un compte global. La table de liaison rend ce
       comptage déterministe **par construction**.
+- [ ] **Migration de mise à niveau sans perte** : les tableaux valides deviennent des liaisons,
+      tout identifiant mort ou croisement de workspace arrête explicitement l'application ; les
+      anciennes copies inertes dans un autre workflow du même workspace sont recensées puis
+      écartées, avant disparition de la colonne et réparation convergente des deux cascades.
+- [ ] **Appelants et seed révisés ensemble** : `copy_workflow_to_track`, `move_card`, les anciennes
+      migrations rejouées et le seed n'accèdent plus à la colonne ; la source et sa copie portent
+      respectivement une liaison et aucune exigence inerte.
+- [ ] **Preuves backend non complaisantes** : pgTAP, vrais jetons API et harnais de dégradation
+      couvrent autorisations, copie, sixième garde, croisement refusé et suppression sans reste.
+- [ ] **Parcours froid et non-régression** : reset, migrations, seed, SQL, API, UI Chromium à
+      console stricte, mail, unitaires, types et build sont verts. Aucun écran ni capture ne change.
 
 ### CRM-019 — `change_channel_workflow` `[ ]`
 Changer le workflow d'un channel entier, en remappant l'étape de **toutes** ses cards en un appel.

@@ -372,7 +372,6 @@ distinction qu'au §2.5, et elle a la même conséquence : `probability_override
 | `to_step_id` | `uuid` | non nul, même clé composite, et **différent** de `from_step_id` |
 | `label` | `text` | facultatif, libellé du bouton d'action |
 | `require_comment` | `boolean` | non nul, défaut faux |
-| `require_fields` | `uuid[]` | non nul, défaut `'{}'` |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales |
 
 Unique : `(workflow_id, from_step_id, to_step_id)` — une arête n'est déclarée qu'une fois.
@@ -392,14 +391,13 @@ transitions laisse zéro transition. C'est la conséquence du `on delete cascade
 composites, et c'est le comportement voulu : une arête vers une étape disparue n'est pas une
 donnée à conserver, c'est une arête cassée.
 
-**`require_fields` ne peut porter aucune intégrité référentielle, et jamais n'en portera.** Mesuré,
-et c'est une propriété du type, non un différé : `alter table … add foreign key (require_fields)
-references form_fields (id)` échoue en « Key columns "require_fields" and "id" are of incompatible
-types: uuid[] and uuid ». PostgreSQL ne sait pas contraindre les éléments d'un tableau. La
-suppression d'un champ de formulaire laissera donc des identifiants morts dans ce tableau, que
-seul `move_card` (§5) pourra ignorer à la lecture. Écart consigné en
-`docs/INCONSISTENCY_REPORT.md`, **INC-033**, avec ses options ; il n'est pas tranché ici.
-`form_fields` n'existe de surcroît pas encore — `CRM-035`, mesuré : `to_regclass` nul.
+**Les champs exigés ne vivent plus dans la transition.** `CRM-018` remplace l'ancien
+`require_fields uuid[]`, impossible à contraindre, par
+`workflow_transition_required_fields (transition_id, field_id)`. Les deux parents existent par
+clé étrangère avec suppression en cascade ; un trigger refuse tout croisement de workflows. Le
+contrat complet, sa migration et ses autorisations sont dans
+`docs/SPEC-transition-required-fields.md`. INC-033 est ainsi corrigée par le modèle plutôt que par
+un nettoyage applicatif.
 
 ### 3.5 « Exactement une étape initiale » : ce que la base peut garantir, et ce qu'elle ne peut pas
 
@@ -547,9 +545,10 @@ exploitable par aucune analyse, et c'est la seule transition du graphe dont la r
 pas de l'étape d'arrivée. Il fait de surcroît de `require_comment` une colonne **démontrable** dans
 le seed. Le responsable peut le renverser ; le §9 le porte comme point ouvert n° 4.
 
-`require_fields` reste vide partout : `form_fields` n'existe pas (`CRM-035`), et le seed ne
-fabrique pas une donnée que le modèle ne sait pas encore produire — même règle que `workflow_id`
-laissé nul sur les channels jusqu'à cette unité.
+À la livraison de `CRM-031`, `require_fields` reste vide partout : `form_fields` n'existe pas
+encore (`CRM-035`), et le seed ne fabrique pas une donnée que le modèle ne sait pas encore produire
+— même règle que `workflow_id` laissé nul sur les channels jusqu'à cette unité. `CRM-018` supprime
+ensuite cette colonne et porte l'exigence effective dans sa table de liaison.
 
 **Les six channels du seed reçoivent ce workflow.** `docs/SCHEMA.md` §2 exige `channels.workflow_id`
 non nulle et référencée ; `CRM-021` a dû livrer la colonne nue, `workflows` n'existant pas
@@ -676,7 +675,8 @@ refus est donc double, privilège puis contrôle explicite, et le premier suffit
 | | `is_default` | **forcé à faux**, jamais copié |
 | | `archived_at` | jamais copié : une copie naît active |
 | `workflow_steps` | `node_id`, `position`, les trois surcharges, `is_initial` | à l'identique |
-| `workflow_transitions` | `label`, `require_comment`, `require_fields` | extrémités remappées (ci-dessous) |
+| `workflow_transitions` | `label`, `require_comment` | extrémités remappées (ci-dessous) |
+| champs exigés par une transition | **non** | aucune liaison sans formulaire cible — INC-056 |
 | champs de formulaire | **non** | `form_fields` n'existe pas — §4.8, INC-037 |
 
 **`is_default` forcé à faux n'est pas une précaution, c'est une nécessité mesurée.** Copier la
@@ -760,11 +760,11 @@ La Definition of Done de `CRM-032` exige la copie « des étapes, des transition
 Les champs de formulaire vivent dans `form_fields`, livrée par `CRM-035` — deux étapes plus loin dans
 `docs/MASTER_PLAN.md` §2. Mesuré : `to_regclass('public.form_fields')` rend `NULL`.
 
-Aucune table n'est créée par anticipation : cela préempterait `CRM-035`. La fonction copie ce qui
-existe, et `require_fields` — le seul endroit du modèle qui désigne des champs — est copié **tel
-quel**, ce qui est correct tant qu'il est vide partout, et le restera après `CRM-035` puisque les
-identifiants qu'il porte désignent des champs du **workspace**, que la copie ne change pas.
-Contradiction d'ordonnancement consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-037**.
+Aucune table n'a été créée par anticipation : cela aurait préempté `CRM-035`. Depuis `CRM-018`, la
+fonction copie les transitions mais **aucune liaison de champ exigé**. La copie ne reçoit aucun
+formulaire ; recopier une exigence de la source créerait donc une exigence inerte, impossible à
+résoudre dans son workflow. INC-037 reste ouverte pour la copie des définitions de champs ; le
+comportement déterministe retenu entre-temps est consigné par INC-056.
 
 ### 4.9 Contrat d'API attendu
 
@@ -1203,8 +1203,9 @@ réussissait. Ils ont été **révisés, non retirés** : ils constatent désorm
 jumeau constate l'acceptation une fois la valeur renseignée.
 
 **Ce que la n° 6 contrôle exactement** est écrit en `docs/SPEC-form-composer.md` §6.7 : l'union des
-champs `required` de l'étape cible et des `require_fields` de la transition, **moins** les champs
-archivés et les identifiants que la jointure ne résout pas. Le refus porte
+champs `required` de l'étape cible et des liaisons de la transition dans
+`workflow_transition_required_fields`, **moins** les champs archivés. Les clés étrangères et la
+cohérence de workflow empêchent désormais tout identifiant mort ou étranger. Le refus porte
 `message = 'missing_required_fields'` — jeton stable, comme les cinq autres — et le `DETAIL` porte
 la liste des clés manquantes, ordonnées par `position`. MESURÉ : PostgREST expose ce `DETAIL` dans
 la clé `details` de sa réponse, et rend `400`.
@@ -1258,12 +1259,12 @@ le graphe complet du workflow par défaut, dont les quatre transitions « Marque
 commentaire (§3.9) — c'est la donnée qui exerce la vérification n° 5 en permanence — et les paires
 d'étapes non reliées qui exercent la n° 4.
 
-`require_fields` restait vide partout, et le motif était nommé : la vérification qui le lirait
+L'ancien `require_fields` restait vide partout, et le motif était nommé : la vérification qui le lirait
 n'était pas livrée (§5.7). Une donnée de démonstration que rien n'exerce est une décoration, pas une
 preuve.
 
 **LE MOTIF A DISPARU AVEC `CRM-036`, ET LE SEED SUIT.** La transition *signature → réalisation*
-porte désormais `require_fields = {lien-proposition}` : c'est la seule donnée du seed qui exerce le
+porte une liaison vers `lien-proposition` : c'est la seule donnée du seed qui exerce le
 **second membre** de l'union du §3.5, et sans elle cette moitié de la règle ne serait démontrée par
 aucune donnée permanente (`docs/SPEC-form-composer.md` §6.11). Le reste du graphe est inchangé.
 
@@ -2027,11 +2028,10 @@ Definition of Done. Le constat est porté par `docs/INCONSISTENCY_REPORT.md`, **
 5. **Un workflow sans étape initiale est structurellement valide** (§3.5). La base ne peut pas
    exiger « au moins une » sans rendre la création impossible par l'API, ce qui a été mesuré. La
    condition est reportée sur l'emploi du workflow — `CRM-033`, `CRM-040`.
-6. **`require_fields` ne portera jamais d'intégrité référentielle** (§3.4, INC-033) : PostgreSQL
-   ne sait pas contraindre les éléments d'un tableau. La conséquence — des identifiants morts après
-   suppression d'un champ — est **traitée** depuis `CRM-036` : la sixième vérification les **ignore**,
-   et le motif de ce choix plutôt que du refus est écrit en `docs/SPEC-form-composer.md` §6.7. Ce
-   qui reste sans arbitrage, c'est l'absence de tout signal côté administration.
+6. **INC-033 est arbitrée et mise en œuvre par `CRM-018`** (§3.4) : l'ancien tableau, qui ne pouvait
+   porter aucune intégrité référentielle, est remplacé par une table de liaison à deux clés
+   étrangères. La suppression cascade et le refus des croisements de workflows rendent les
+   identifiants morts ou étrangers impossibles dans l'état cible.
 7. **`move_card` est livrée à SIX vérifications sur six** depuis `CRM-036`. Elle ne conserve
    toujours pas le commentaire qu'elle exige, n'écrit aucun événement et n'arrête aucune cadence :
    §5.11, INC-048, INC-049.

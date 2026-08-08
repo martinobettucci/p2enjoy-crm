@@ -9068,3 +9068,34 @@ la 18 sans warning ni erreur, puis `scripts/verify-scheduler.sh` rend **14/14**.
 réellement `USAGE` et `EXECUTE` à `anon` sous `supabase_admin`, réapplique la migration et exige
 leur disparition, le même `jobid`, un nouveau passage réussi et la cadence horaire. La preuve
 froide et les régressions complètes restent dues avant la fermeture de `CRM-017`.
+
+---
+
+### Décision 290 — Une copie sans formulaire ne recopie plus une exigence qu'elle ne peut résoudre
+
+**Frontière de `CRM-018`.** La décision 262 impose deux colonnes et deux cascades, et la propagation
+de l'arbitrage dans INC-056 tranche explicitement le comportement : la copie cesse de recopier
+`require_fields` tel quel. `copy_workflow_to_track` ne copie toujours pas les définitions de
+formulaire — INC-037 reste ouvert —, donc recopier leur exigence produirait seulement une liaison
+inerte que `move_card` ne peut résoudre. La source garde sa liaison ; la copie n'en reçoit aucune.
+
+**Cohérence supplémentaire, sans troisième colonne.** Deux clés étrangères simples garantissent
+l'existence et les cascades, mais autoriseraient un lien vers un autre workflow. Un trigger refuse
+donc tout couple dont les parents n'appartiennent pas au même workflow — et, par conséquent, au
+même workspace. `workflow_id` reste déductible des deux parents et n'est pas stocké une troisième
+fois.
+
+**Mise à niveau sans perte de comportement.** La migration 19 accepte une base ancienne portant
+le tableau et une base neuve où les migrations historiques révisées ne le créent plus. Dans le premier cas, elle
+résout tous les identifiants avant de supprimer quoi que ce soit ; identifiant mort ou croisement
+de workspace arrête la transaction. Un lien valide du même workspace mais d'un autre workflow est
+un ancien artefact de copie déjà ignoré par `move_card` : il est recensé puis écarté conformément
+à INC-056. Dans le second état, les liaisons existantes sont préservées. Chaque rejeu répare tout
+de même contraintes, trigger, politiques et les deux fonctions.
+
+**Conséquence de l'idempotence du dépôt.** Réviser seulement la migration 19 serait faux : le
+runner rejoue aussi 0006, 0007 et 0013 à chaque démarrage. 0006 doit cesser de commenter une
+colonne supprimée ; 0007 et 0013 doivent cesser de recréer des fonctions qui la lisent. Le seed
+ne peut poser la liaison qu'après la création des champs, et synchronise alors les transitions de
+la source et de sa copie. Le contrat complet, y compris RLS, preuves et retour arrière, est écrit
+dans `docs/SPEC-transition-required-fields.md` avant la première ligne SQL.

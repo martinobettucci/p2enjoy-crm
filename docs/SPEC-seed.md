@@ -367,9 +367,9 @@ Quatre propriétés sont démontrées, et non une seule :
   vérifie.
 
 Le nœud archivé `qualification` reste **hors** du workflow : un vocabulaire retiré ne s'instancie
-pas. `require_fields` reste vide partout — depuis `CRM-035` le motif a changé, et il est écrit au
-§2.10 plutôt que laissé périmé : la colonne peut désormais désigner des champs réels, mais aucune
-garde ne la lit.
+pas. À la livraison historique de `CRM-031`, `require_fields` restait vide partout : les champs et
+la garde n'existaient pas encore. Depuis `CRM-018`, aucune colonne tableau ne subsiste ; la liaison
+effective est posée après la création des champs au §2.13.
 
 **Les six channels reçoivent ce workflow.** Ils étaient sans `workflow_id` depuis `CRM-021`, faute
 de table `workflows` (INC-029). Le rattachement se fait en fin de section 6 du script, et non dans
@@ -475,14 +475,14 @@ moins les quinze règles, qui portent toutes sur un champ actif. C'est ce qui d�
 §3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
 
 **`require_fields` restait vide sur les dix transitions** tant qu'aucune garde ne la lisait. Le
-motif est éteint depuis `CRM-036`, qui a livré la sixième vérification de `move_card` : la
-transition *signature → réalisation* porte désormais `require_fields = {…086}` — `lien-proposition`.
-Voir §2.13.
+motif est éteint depuis `CRM-036`, qui a livré la sixième vérification de `move_card`. Depuis
+`CRM-018`, la transition *signature → réalisation* porte une liaison vers `…086` —
+`lien-proposition` — et non un élément de tableau. Voir §2.13.
 
-**La copie de la section 2.9 ne reçoit aucun champ.** `copy_workflow_to_track` n'en copie aucun, et
-son comportement reste inchangé — INC-037, arbitrage attendu du responsable, décision 93. L'écart
-est **compté** par les preuves plutôt que passé sous silence : la source porte sept champs, la copie
-zéro.
+**La copie de la section 2.9 ne reçoit aucun champ ni aucune liaison d'exigence.**
+`copy_workflow_to_track` copie les transitions, mais recopier une liaison vers un champ absent du
+workflow cible créerait une exigence inerte. INC-037 reste ouverte sur la copie du formulaire ; le
+choix déterministe « une liaison source, zéro dérivée » ferme INC-056.
 
 ### 2.12 Cards — ajoutées par `CRM-040`
 
@@ -535,10 +535,14 @@ Sept types sur quinze sont donc exercés par des données permanentes : `money`,
 ajouter d'autres exigerait de nouveaux champs, donc de rouvrir `CRM-035`. Les huit restants sont
 éprouvés par la suite pgTAP sur des champs sondes, créés puis détruits.
 
-**Une transition porte enfin `require_fields`.** *Signature → réalisation* (`…074`) exige
-`lien-proposition`. C'est la seule donnée du seed qui exerce le **second membre** de l'union du
+**Une transition porte enfin une liaison de champ exigé.** *Signature → réalisation* (`…074`)
+exige `lien-proposition`. C'est la seule donnée du seed qui exerce le **second membre** de l'union du
 §3.5 de `docs/SPEC-form-composer.md` : la card `…0c7` satisfait les trois exigences de son étape
 courante et reste bloquée par cette quatrième, portée par l'arête et non par l'étape.
+
+La copie dérivée porte **zéro** liaison. Le seed relit donc exactement une ligne dans
+`workflow_transition_required_fields`, rattachée au workflow global, et aucune dans le workflow de
+track.
 
 **Aucune valeur n'est posée sur la card archivée ni sur celle en corbeille.** Une card rangée ne se
 déplace pas : y poser des valeurs n'exercerait rien que les six autres n'exercent déjà.
@@ -828,7 +832,7 @@ la fonction du produit n'a pas copiés. La clé étrangère composite
 
 | Card | Champ | Valeur | Motif |
 |---|---|---|---|
-| `…0cc` *réalisation* | `lien-proposition` | `"https://p2enjoy.fr/propositions/mgen-loire"` | l'arête *signature → réalisation* l'**exige** (`require_fields`) : une card à cette étape sans ce champ décrirait un franchissement impossible |
+| `…0cc` *réalisation* | `lien-proposition` | `"https://p2enjoy.fr/propositions/mgen-loire"` | l'arête *signature → réalisation* l'**exige** par sa liaison : une card à cette étape sans ce champ décrirait un franchissement impossible |
 | `…0cc` | `budget` | `64000` | — |
 | `…0cd` *livré* | `budget` | `210000` | la seule affaire **gagnée** active ; sans montant, le cumul du board serait muet à cette colonne |
 | `…0ce` *perdu* | `motif-perte` | `"…"` | l'étape l'**exige** (§9.3) |

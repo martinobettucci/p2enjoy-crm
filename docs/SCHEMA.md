@@ -316,7 +316,6 @@ Arêtes autorisées. **Une transition non déclarée est refusée.** Les cycles 
 | `to_step_id` | `uuid` | FK `workflow_steps`, différent de `from_step_id` |
 | `label` | `text` | libellé du bouton d'action |
 | `require_comment` | `boolean` | défaut faux |
-| `require_fields` | `uuid[]` | champs exigés en plus de ceux requis par l'étape cible |
 
 Unique : `(workflow_id, from_step_id, to_step_id)`.
 
@@ -326,23 +325,23 @@ Précisions apportées par `CRM-031`, après mesure :
   transition ne peut pas sortir de son workflow, refus mesuré en `23503`. Supprimer une étape
   emporte ses arêtes (`on delete cascade`) ;
 - `workspace_id` est porté et garanti comme pour les étapes ;
-- `require_fields` ne peut porter **aucune** intégrité référentielle : PostgreSQL refuse une clé
-  étrangère depuis une colonne tableau. Ce n'est pas un différé en attendant `form_fields`, c'est
-  une propriété du type — `docs/INCONSISTENCY_REPORT.md`, INC-033.
+- l'ancien `require_fields uuid[]` ne pouvait porter **aucune** intégrité référentielle : propriété
+  du type mesurée et corrigée par la table ci-dessous — INC-033, décision 262, `CRM-018`.
 
-**Arbitrage du responsable — `docs/JOURNAL.md`, décision 262 : la colonne est remplacée par une
-table de liaison.** Puisque la propriété du type ne changera jamais, c'est le modèle qui est
-corrigé, et non contourné : `require_fields` devient une table `(transition_id, field_id)` avec ses
-**deux** clés étrangères et son `ON DELETE CASCADE`. L'option d'accepter le type et de nettoyer au
-moment de la suppression d'un champ est écartée : elle aurait reproduit en code applicatif, et
-imparfaitement, ce que le moteur sait faire seul — un nettoyage oublié dans un chemin de
-suppression laisse exactement la donnée morte qu'on prétend éviter.
+### `workflow_transition_required_fields`
 
-**État : dû, non appliqué.** Le schéma décrit ci-dessus est celui qui est réellement migré
-aujourd'hui. La migration est portée par **`CRM-018`**, qui rouvre `CRM-031` et `CRM-035`, et
-emporte `copy_workflow_to_track`, le seed, les suites pgTAP et les preuves d'API. INC-056 — la
-copie de workflow recopie `require_fields` tel quel et fait varier un compte global — devient
-déterministe par construction une fois la table de liaison en place.
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `transition_id` | `uuid` | PK avec `field_id`, FK vers `workflow_transitions`, `ON DELETE CASCADE` |
+| `field_id` | `uuid` | PK avec `transition_id`, FK vers `form_fields`, `ON DELETE CASCADE` |
+
+La table n'a ni identité, ni horodatage, ni `workspace_id`. Un trigger refuse tout couple dont les
+deux parents appartiennent à des workflows différents. `copy_workflow_to_track` ne recopie plus
+l'ancienne exigence inerte tant qu'il ne copie pas aussi le formulaire — INC-037 reste ouvert.
+Contrat complet : `docs/SPEC-transition-required-fields.md`.
+
+**État : contrat de `CRM-018` spécifié, migration en cours.** L'option d'un nettoyage applicatif
+est écartée : les deux cascades font de l'absence d'identifiant mort une propriété de la base.
 
 ---
 

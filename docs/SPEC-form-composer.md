@@ -93,7 +93,8 @@ détermine la validation ; une valeur qui ne correspond pas au type est refusée
 **Trois types désignent des objets qui n'existent pas encore**, et cela est déclaré plutôt que
 tu : `contact` vise `contacts` (`CRM-060`), `user` vise `profiles` (livrée), `file` vise Storage.
 Aucune intégrité référentielle n'est posée sur la **valeur** — elle vivra dans un `jsonb`, où
-aucune clé étrangère n'est possible, exactement comme `require_fields` sur un `uuid[]` (INC-033).
+aucune clé étrangère n'est possible, exactement comme c'était le cas pour l'ancien tableau
+`require_fields` avant sa correction par `CRM-018` (INC-033).
 Déclarer un champ de type `contact` est donc licite dès `CRM-035` ; le **résoudre** appartient à
 `CRM-036` et à `CRM-060`. **`CRM-036` ne l'a pas résolu**, et le motif est écrit au §6.5 : `contacts`
 n'existe pas, et résoudre `user` seul rendrait la famille incohérente tout en posant une règle que
@@ -222,9 +223,10 @@ insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les s
   été écrite quand `form_fields` n'existait pas. Le comportement reste **inchangé** ici, et la
   conséquence devient réelle et mesurable — INC-037, dont l'arbitrage appartient au responsable et
   n'a pas été rendu. Elle est **figée par des assertions** plutôt que par un commentaire.
-- **`require_fields` reste vide dans le seed.** La colonne peut désormais désigner des champs
-  réels, mais aucune garde ne la lit : `move_card` est `CRM-034`. Une donnée de démonstration que
-  rien n'exerce est une décoration, pas une preuve.
+- **À la livraison de `CRM-035`, `require_fields` reste vide dans le seed.** La colonne pouvait
+  alors désigner des champs réels, mais aucune garde ne la lisait : une donnée de démonstration que
+  rien n'exerce est une décoration, pas une preuve. `CRM-036` a ensuite livré la garde et
+  `CRM-018` remplace désormais ce tableau par une liaison.
 - **Aucun écran.** La grille champ × étape de la Definition of Done suppose un écran
   d'administration authentifié, et la webapp reste un appelant anonyme faute d'écran de connexion —
   INC-021, en attente d'arbitrage.
@@ -303,19 +305,15 @@ sans bloquer la lecture.
 
 ### 3.5 Champs exigés par une transition
 
-Une transition peut exiger des champs supplémentaires (`workflow_transitions.require_fields`),
-indépendamment de l'étape cible. L'ensemble effectivement contrôlé est l'union des champs
-`required` de l'étape cible et des `require_fields` de la transition empruntée.
+Une transition peut exiger des champs supplémentaires par
+`workflow_transition_required_fields (transition_id, field_id)`, indépendamment de l'étape cible.
+L'ensemble effectivement contrôlé est l'union des champs `required` de l'étape cible et des champs
+liés à la transition empruntée.
 
-Aucune intégrité référentielle ne protège ce tableau, et cela ne changera pas maintenant que
-`form_fields` existe : PostgreSQL refuse une clé étrangère depuis une colonne `uuid[]` — INC-033,
-mesuré, propriété du type et non différé. Un identifiant de champ supprimé ou appartenant à un
-autre workflow y survivrait sans que rien ne le signale. C'est `move_card` qui devra ignorer, ou
-dénoncer, un identifiant qu'elle ne résout pas.
-
-**TRANCHÉ PAR `CRM-036` : elle l'ignore**, et le motif est écrit au §6.7 — dénoncer bloquerait
-définitivement une transition pour une erreur de saisie qu'aucun utilisateur ne peut corriger depuis
-le produit. Le comportement est figé par une assertion.
+Les deux clés étrangères suppriment les identifiants morts, avec `on delete cascade`, et un trigger
+refuse en `23514` toute liaison vers le champ d'un autre workflow. C'est la correction structurelle
+de l'ancien tableau `require_fields` décidée pour INC-033 ; son contrat complet est dans
+`docs/SPEC-transition-required-fields.md`.
 
 ## 4. Rendu — `CRM-037`
 
@@ -405,7 +403,7 @@ une card entrée dans *E* avant l'ajout d'une règle `required` y reste, et le c
 **signalé dans l'interface sans bloquer la lecture** ». Le rendu tient les deux : un champ exigé et
 vide est mis en évidence, et rien de l'écran n'est retiré pour autant.
 
-Les champs exigés par la **transition** (`require_fields`, §3.5) ne sont pas connus du rendu d'une
+Les champs exigés par la **transition** (liaisons du §3.5) ne sont pas connus du rendu d'une
 étape : ils dépendent de l'arête empruntée, donc d'un geste qui n'a pas encore eu lieu. Ils
 apparaîtront lorsque l'interface proposera les transitions — `CRM-041`. L'écart est nommé au §4.7.
 
@@ -507,8 +505,9 @@ la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5), et le §7.3 l'exige.
   pouvoir enregistrer serait un piège ; un formulaire qui n'affiche rien serait une perte
   d'information.
 - **Aucune transition.** Le menu des transitions déclarées et le glisser-déposer sont `CRM-041`.
-  Sans eux, ni les champs exigés par `require_fields` (§4.4), ni la mise en évidence consécutive à
-  un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste déclencheur.
+  Sans eux, ni les champs exigés par les liaisons de transition (§4.4), ni la mise en évidence
+  consécutive à un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste
+  déclencheur.
 - **Aucun parcours E2E « transition bloquée → saisie → transition réussie »**, que la Definition of
   Done de `CRM-037` exige : il suppose les deux points ci-dessus. INC-062, arbitrage attendu.
 - **Aucune résolution de `user`, `contact` ni `file`** : le §6.5 ne les résout pas non plus
@@ -540,8 +539,9 @@ Ce qu'elle **n'est pas**, et que `CRM-036` ne livre donc pas :
 - elle n'est **pas rendue**. Le formulaire, sa section repliée et la mention « requis pour passer
   à » sont `CRM-037` (§4) ;
 - elle ne porte **aucune intégrité référentielle sur son contenu**. Une valeur vit dans un `jsonb`,
-  où aucune clé étrangère n'est possible — même propriété du type que pour `require_fields` sur un
-  `uuid[]` (INC-033). Ce que `CRM-036` valide est la **forme**, pas l'existence de la cible (§6.5) ;
+  où aucune clé étrangère n'est possible — même propriété du type que l'ancien `require_fields`
+  sur un `uuid[]` (INC-033, corrigée pour ce dernier par `CRM-018`). Ce que `CRM-036` valide est la
+  **forme**, pas l'existence de la cible (§6.5) ;
 - elle n'a **aucune histoire**. Une valeur écrasée est perdue : la trace des modifications relève
   de `card_events` (`CRM-044`), qui n'existe pas.
 
@@ -678,7 +678,8 @@ transition que la garde refuse.
 **L'ensemble exigé** est l'union définie au §3.5 :
 
 1. les champs portant une règle `required` sur l'**étape cible** ;
-2. les champs désignés par `require_fields` de la **transition empruntée**.
+2. les champs liés à la **transition empruntée** dans
+   `workflow_transition_required_fields`.
 
 **Ce qui n'en fait pas partie**, et chaque exclusion est une décision :
 
@@ -686,18 +687,16 @@ transition que la garde refuse.
   absence de règle n'a jamais rien exigé ;
 - un champ `hidden` à l'étape cible **par la règle de cette étape**. C'est la lecture littérale du
   §3.1 — `hidden` n'est pas `required` — et la Definition of Done la nomme ;
-- un champ **archivé** (`archived_at` non nul), quelle que soit sa règle et quel que soit
-  `require_fields`. Le §5 pose que l'archivage retire un champ des formulaires : exiger un champ
-  qu'aucun formulaire n'affiche rendrait la transition impossible à satisfaire depuis le produit ;
-- un identifiant de `require_fields` **que la jointure ne résout pas** — champ supprimé, ou
-  appartenant à un autre workflow. Le §3.5 laissait le choix entre « ignorer » et « dénoncer ». Le
-  choix est d'**ignorer**, et le motif est asymétrique : dénoncer bloquerait définitivement une
-  transition pour une erreur de saisie d'administrateur, sans qu'aucun utilisateur ne puisse la
-  corriger depuis le produit, alors qu'ignorer ne fait que ne pas exiger ce que personne ne peut
-  renseigner. Aucune intégrité référentielle ne protège ce tableau (INC-033), et le comportement est
-  **figé par une assertion** plutôt que laissé au hasard.
+- un champ **archivé** (`archived_at` non nul), quelle que soit sa règle et même s'il est lié à la
+  transition. Le §5 pose que l'archivage retire un champ des formulaires : exiger un champ qu'aucun
+  formulaire n'affiche rendrait la transition impossible à satisfaire depuis le produit.
 
-**En revanche, un champ `hidden` à l'étape cible ET désigné par `require_fields` est exigé.** Le
+Un identifiant mort ou le champ d'un autre workflow ne peut plus atteindre cette lecture : les
+deux clés étrangères et le trigger de cohérence le refusent à l'écriture. L'ancien comportement de
+`CRM-036`, qui ignorait ces anomalies du tableau faute d'intégrité possible, reste historique mais
+n'est plus un état admissible après `CRM-018`.
+
+**En revanche, un champ `hidden` à l'étape cible ET lié à la transition est exigé.** Le
 §3.5 dit « indépendamment de l'étape cible », et une arête déclarée par un administrateur est un
 geste explicite, là où l'absence de règle est un défaut. Le cas est exercé par une assertion, sans
 quoi cette prose serait la seule chose qui le tienne.
@@ -800,11 +799,12 @@ donnée permanente et non seulement par une suite de tests :
 | `c3` « Audit sécurité applicative », étape *prospection* | `source`, `budget`, `budget-previsionnel` | Un champ `hidden` à l'étape courante **portant une valeur** (§4, section repliée), et une valeur portée par un champ **archivé** (§5) |
 | `c4` « Refonte intranet Ville de Lyon », étape *négociation* | `budget`, `lien-proposition` | La liste **à plusieurs clés** : la transition vers *signature* manque `date-signature-prevue` et `decideur-identifie` |
 | `c6` « Piste entrante à qualifier », étape *prospection* | `motif-perte`, `source` | Le parcours « Marquer perdu » reste franchissable : l'étape *perdu* exige `motif-perte` |
-| `c7` « Formation Data & IA », étape *signature* | `budget`, `date-signature-prevue`, `decideur-identifie` | Les trois exigences de son étape courante sont satisfaites — et la transition suivante en exige une **quatrième**, par `require_fields` |
+| `c7` « Formation Data & IA », étape *signature* | `budget`, `date-signature-prevue`, `decideur-identifie` | Les trois exigences de son étape courante sont satisfaites — et la transition suivante en exige une **quatrième**, par sa liaison à `lien-proposition` |
 
-**`require_fields` cesse d'être vide, et le motif de son vide a disparu.** Le §5.9 de
+**L'ancien `require_fields` a cessé d'être vide avec `CRM-036`, et son motif a disparu.** Le §5.9 de
 `docs/SPEC-workflow-engine.md` le justifiait ainsi : « la vérification qui le lirait n'est pas
-livrée ». Elle l'est. La transition *signature → réalisation* exige donc `lien-proposition` :
+livrée ». Elle l'est ; `CRM-018` porte désormais la même exigence dans une liaison. La transition
+*signature → réalisation* exige donc `lien-proposition` :
 c'est la seule donnée du seed qui exerce le **second membre** de l'union du §3.5, et sans elle
 cette moitié de la règle ne serait démontrée par aucune donnée.
 
@@ -839,7 +839,7 @@ rouvrirait `CRM-035`.
 
 | Niveau | Preuves attendues |
 |---|---|
-| pgTAP | Forme de la table, de ses trois clés composites et de l'unicité ajoutée à `cards` ; les quinze types validés **dans les deux sens** ; `'null'::jsonb` accepté partout ; `select` hors `choices` refusé ; champ `required` manquant → transition refusée, avec la liste des clés ; champ `hidden` non exigé même si vide ; **union** étape + transition ; champ archivé non exigé ; identifiant non résolu de `require_fields` ignoré ; règle ajoutée après coup n'invalide pas une card déjà en place ; RLS active, politiques présentes, aucun privilège `DELETE` ; conformité du seed |
+| pgTAP | Forme de la table, de ses trois clés composites et de l'unicité ajoutée à `cards` ; les quinze types validés **dans les deux sens** ; `'null'::jsonb` accepté partout ; `select` hors `choices` refusé ; champ `required` manquant → transition refusée, avec la liste des clés ; champ `hidden` non exigé même si vide ; **union** étape + transition ; champ archivé non exigé ; règle ajoutée après coup n'invalide pas une card déjà en place ; RLS active, politiques présentes, aucun privilège `DELETE` ; conformité du seed. La preuve historique d'identifiant non résolu ignoré est remplacée par les refus structurels de `CRM-018` |
 | API | Les dix-huit lignes du contrat du §6.10, avec les jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater inchangée. Preuves de refus n° 4 et n° 11 de `docs/SPEC-permissions-rls.md` §7 |
 | E2E | **Aucune** : cette unité ne livre aucun écran (INC-021). L'absence est nommée, elle n'est pas contournée par une preuve de substitution |
 | Visuel | **Aucune**, pour la même raison |

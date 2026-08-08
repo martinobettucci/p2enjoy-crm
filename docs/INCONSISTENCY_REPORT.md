@@ -2626,8 +2626,7 @@ décrit — `uuid[]`, non nulle, défaut `'{}'` —, l'absence de contrainte est
 `docs/SPEC-workflow-engine.md` §3.4, et le seed la laisse vide partout, `form_fields` n'existant
 pas. Aucune règle de nettoyage n'est inventée.
 
-**Arbitrage attendu du responsable**, à trancher avant `CRM-036` qui livrera la validation des
-champs :
+**Options historiques instruites avant la décision 262 :**
 
 1. remplacer le tableau par une table de liaison `workflow_transition_required_fields`, qui
    restaurerait l'intégrité référentielle au prix d'une table de plus et d'un écart avec
@@ -2638,6 +2637,11 @@ champs :
    identifiant mort — l'ignorer, en le journalisant.
 
 **Lié à :** INC-029, INC-031 (écarts nommés sur le même modèle, d'origine différente).
+
+**Mise en œuvre ouverte le 2026-08-08.** `docs/SPEC-transition-required-fields.md` fixe la table à
+deux colonnes, la migration sans perte de comportement, la cohérence de workflow, les cascades,
+RLS et la révision atomique de `move_card`, `copy_workflow_to_track` et du seed. INC-033 restera
+ouvert jusqu'à une preuve froide où la suppression réelle d'un champ jetable laisse zéro liaison.
 
 ---
 
