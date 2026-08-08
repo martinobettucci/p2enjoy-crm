@@ -30,6 +30,12 @@ Le service se nomme `functions` et son conteneur `p2enjoy-functions`. Il apparti
 `docker-compose.yml`, donc aux assemblages de développement **et** de production. Il ne publie
 aucun port hôte : Kong est son unique entrée depuis l'extérieur du réseau Compose.
 
+Kong attend `functions: service_healthy`. Cette dépendance a deux effets nécessaires : une route
+ne devient pas saine avant sa cible, et l'ajout de `CRM-016` modifie réellement la définition du
+conteneur Kong. Une simple modification de son fichier bind-mounté ne le recrée pas ; sans ce
+changement de graphe, un `./runDev.sh` sur une pile déjà lancée conserverait en mémoire l'ancienne
+configuration et `/functions/v1/` rendrait 404 jusqu'à une intervention manuelle.
+
 | Propriété | Contrat |
 |---|---|
 | Image | `public.ecr.aws/supabase/edge-runtime:v1.74.2` |

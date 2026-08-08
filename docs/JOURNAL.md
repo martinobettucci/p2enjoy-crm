@@ -8905,3 +8905,25 @@ parsing et contrat HTTP purs. API : clés absente et fausse refusées, POST rée
 montage en lecture seule, absence de port hôte, santé et journaux. Puis remise à zéro froide et
 rejeu global, UI comprise, sans warning, error ni pageerror. Le détail stable est persisté dans
 `docs/SPEC-edge-functions.md` avant toute ligne applicative.
+
+---
+
+### Décision 284 — Une route bind-mountée n'est pas rechargée : le graphe Compose doit activer CRM-016
+
+**Premier E2E après implémentation.** `./runDev.sh` crée `p2enjoy-functions`, attend sa santé et
+la déclare saine. Il laisse toutefois `p2enjoy-kong` en état `Running`, sans le recréer. Les six
+scénarios de `functions.spec.ts` joignent réellement `127.0.0.1:8000`, mais reçoivent tous 404 —
+y compris les deux appels sans clé qui auraient dû tomber sur `key-auth`. Le runtime n'est jamais
+joint et ses journaux restent vides.
+
+**Cause.** `kong.yml` est un bind mount. Compose compare la définition du service, pas le contenu
+courant du fichier source ; le processus Kong ne recharge pas spontanément sa configuration
+déclarative. Un `up` normal peut donc laisser l'ancienne table de routes en mémoire alors que le
+dépôt et le volume montrent déjà la nouvelle.
+
+**Décision.** Kong dépend explicitement de `functions` avec `condition: service_healthy`. C'est la
+dépendance réelle de la nouvelle route et non un artifice de redémarrage : elle empêche aussi la
+passerelle de devenir disponible avant sa cible. Pour une pile existante, elle change la définition
+Compose de Kong et provoque sa recréation au prochain `./runDev.sh`; sur une pile froide, elle fixe
+l'ordre. La preuve doit repartir de la commande documentée, jamais d'un `docker restart` manuel,
+puis obtenir les 401/200/405/404/CORS attendus.
