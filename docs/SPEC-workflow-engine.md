@@ -301,7 +301,7 @@ quatrième occurrence du même oubli (INC-025).
 | `track_id` | `uuid` | nul si `global`, non nul si `track` ; FK **composite** vers `tracks (id, workspace_id)` |
 | `derived_from_workflow_id` | `uuid` | FK `workflows (id)` `on delete set null` |
 | `derived_at` | `timestamptz` | date de la copie |
-| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source à la copie ; nul hors dérivation |
+| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source à la copie ; nul hors dérivation ou pour une copie historique à vérifier |
 | `is_default` | `boolean` | non nul, défaut faux ; **au plus un vrai par workspace** |
 | `archived_at` | `timestamptz` | suppression douce |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` par trigger |
@@ -726,6 +726,10 @@ canonique les nœuds, étapes, transitions, champs, règles et exigences, triés
 source, puis calcule leur SHA-256 avec `extensions.digest`. Ajouter, modifier ou supprimer un de
 ces objets change l'empreinte. `source_modified_at` reste une date d'aide à l'affichage ; elle ne
 porte plus le verdict de divergence (INC-038, décision 293).
+
+Une copie antérieure à la migration 19 garde une empreinte `NULL` : la vue rend alors
+`source_modified_since_copy = true`. L'état d'origine n'étant plus reconstructible, le déclarer à
+jour serait une fausse preuve. Aucune copie utilisateur n'est réécrite automatiquement.
 
 **La vue est fermée deux fois, et une seule fermeture est visible de l'API.** Aucun privilège
 d'écriture n'est accordé (§4.7) ; et, mesuré, PostgreSQL refuse de toute façon la réécriture d'une

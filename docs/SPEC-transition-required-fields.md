@@ -128,6 +128,12 @@ exclut identités de ligne propres à la copie et horodatages. `workflow_derivat
 empreinte à son recalcul : ajout, modification et suppression sont détectés, même si aucun
 `updated_at` survivant n'est postérieur à `derived_at`.
 
+Une copie créée avant la migration 19 ne possède pas d'empreinte d'origine reconstructible. La
+migration laisse donc sa colonne à `NULL` et la vue la signale divergente/à vérifier. Inventer
+l'empreinte de la source actuelle aurait déclaré « identique » une copie potentiellement modifiée.
+Le workflow seedé peut être recréé par le vrai geste parce que ses données sont explicitement
+détenues par le seed ; une copie utilisateur n'est jamais écrasée automatiquement.
+
 ### 5.3 Seed
 
 Les transitions sont créées sans champ tableau. Une fois `form_fields` présent, le seed :

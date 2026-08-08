@@ -252,7 +252,7 @@ Catalogue initial livré par le seed : `prospection`, `relance`, `negociation`, 
 | `track_id` | `uuid` | FK, nul si `scope='global'`, non nul si `scope='track'` |
 | `derived_from_workflow_id` | `uuid` | FK `workflows`, origine de la copie |
 | `derived_at` | `timestamptz` | date de la copie, permet de signaler une divergence |
-| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source au moment de la copie ; nul pour un workflow non dérivé |
+| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source au moment de la copie ; nul hors dérivation et sur une copie historique dont l'état d'origine est inconnaissable |
 | `is_default` | `boolean` | un seul défaut par workspace |
 | `archived_at` | `timestamptz` | |
 
@@ -270,7 +270,9 @@ Précisions apportées par `CRM-031`, après mesure (`docs/SPEC-workflow-engine.
   supprimer l'original ne doit pas emporter ses copies. `derived_at` l'accompagne obligatoirement ;
 - `source_composition_fingerprint` accompagne tout lignage et permet à `workflow_derivations` de
   comparer la composition complète, y compris une suppression dans la source. La date ne sert
-  plus de substitut à cette comparaison (`CRM-018`, décision 293) ;
+  plus de substitut à cette comparaison. Une copie antérieure à la migration 19 garde `NULL` et
+  est signalée divergente/à vérifier plutôt que déclarée faussement identique (`CRM-018`, décision
+  293) ;
 - **aucune suppression n'est exposée** sur `workflows` : ni politique `for delete`, ni privilège.
   L'archivage tient lieu de suppression, comme pour les tracks, les channels et le catalogue.
 
