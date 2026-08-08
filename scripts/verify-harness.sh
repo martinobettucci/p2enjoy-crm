@@ -196,9 +196,16 @@ PORT_RAPPORT=9323
 # INC-046 est éprouvé à côté. Deux autres comptaient un CUMUL d'événements (décision 226).
 #
 # Valeurs MESURÉES, non déduites.
+#
+# --- `CRM-016` ---------------------------------------------------------------------------------
+#
+# L'unité livre **6 scénarios d'API** dans `e2e/api/functions.spec.ts` : clés absente et fausse
+# refusées par Kong, POST réel de la fonction d'exemple, méthode refusée, fonction inconnue et
+# CORS. `SCENARIOS_API` passe donc de 410 à **416**, valeur MESURÉE le 2026-08-08 par la suite API
+# complète. Elle ne livre ni migration ni écran : les compteurs pgTAP et UI restent inchangés.
 FICHIERS_SQL_ATTENDUS=19
 ASSERTIONS_ATTENDUES=1405
-SCENARIOS_API=410
+SCENARIOS_API=416
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-001 (docs/BACKLOG.md) — Definition of Done de la pile Supabase self-hosted
+# @verifies CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §5, §7.2
 # @verifies docs/DAT.md §3 (composants), §3.6 (composants de développement uniquement), §9
 # @verifies README.md §6 (services exposés en développement)
 #
@@ -61,7 +62,7 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 # --- 1. Santé des services de l'assemblage de développement ------------------------------------
 # Services de longue durée porteurs d'un healthcheck : doivent être `running` ET `healthy`.
 LONG_RUNNING_HEALTHY="p2enjoy-db p2enjoy-auth-templates p2enjoy-auth p2enjoy-rest realtime-dev.p2enjoy-realtime \
-p2enjoy-storage p2enjoy-pooler p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
+p2enjoy-storage p2enjoy-functions p2enjoy-pooler p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
 p2enjoy-inbucket p2enjoy-webapp p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav"
 # Conteneurs éphémères : doivent s'être terminés avec le code 0.
 ONE_SHOT="p2enjoy-migrations p2enjoy-minio-createbucket p2enjoy-stalwart-init"
@@ -139,6 +140,34 @@ else
 	fail "Storage /bucket au travers de Kong : $code (attendu 200)"
 fi
 
+# La nouvelle route est réellement soumise à key-auth : sans clé, elle ne doit jamais atteindre
+# le runtime, même si la fonction elle-même est publique derrière la clé anonyme.
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$KONG_URL/functions/v1/example" || echo 000)
+if [ "$code" = 401 ]; then
+	ok "Functions /example sans clé d'API : refusé ($code)"
+else
+	fail "Functions /example sans clé d'API : $code (attendu 401)"
+fi
+
+function_body=$(mktemp)
+trap 'rm -f "$function_body"' EXIT
+code=$(curl -s -o "$function_body" -w '%{http_code}' -X POST \
+	-H "apikey: ${ANON_KEY}" "$KONG_URL/functions/v1/example" || echo 000)
+expected_function='{"function":"example","runtime":"edge-runtime","message":"Fonction edge opérationnelle"}'
+if [ "$code" = 200 ] && [ "$(cat "$function_body")" = "$expected_function" ]; then
+	ok "Functions /example avec clé anonyme : vrai worker et JSON exact"
+else
+	fail "Functions /example : statut=$code ou corps inattendu"
+fi
+
+revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
+	p2enjoy-kong 2>/dev/null || true)
+if [ "$revision" = crm-016 ]; then
+	ok "Kong exécute la révision déclarative crm-016"
+else
+	fail "révision Kong active : '$revision' (attendu crm-016)"
+fi
+
 # --- 3. Studio accessible en développement -----------------------------------------------------
 echo
 echo "3. Supabase Studio (http://127.0.0.1:${STUDIO_PORT})"
@@ -164,6 +193,11 @@ echo
 echo "4. Assemblage de production"
 
 prod_services=$(docker compose "${PROD_COMPOSE[@]}" config --services | sort)
+if echo "$prod_services" | grep -qx functions; then
+	ok "service commun 'functions' présent en production"
+else
+	fail "service commun 'functions' absent de l'assemblage de production"
+fi
 for dev_only in studio meta minio minio-createbucket inbucket webapp stalwart stalwart-init roundcube clamav; do
 	if echo "$prod_services" | grep -qx "$dev_only"; then
 		fail "service de développement '$dev_only' présent en production"

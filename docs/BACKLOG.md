@@ -39,9 +39,9 @@ MinIO en dev, Storage sur S3.
 **DoD** : `docker compose up` démarre tous les services sains ; Kong répond ; Studio accessible en
 dev ; aucun service de développement présent en prod.
 
-- [x] Assemblage commun `docker-compose.yml` : `db`, `migrations-runner`, `auth`, `rest`,
-      `realtime`, `storage`, `supavisor`, `kong`. Toutes les images épinglées à une version
-      exacte.
+- [x] Assemblage commun `docker-compose.yml` : `db`, `auth-templates`, `migrations-runner`,
+      `auth`, `rest`, `realtime`, `storage`, `functions`, `supavisor`, `kong`. Toutes les images
+      épinglées à une version exacte.
 - [x] Overlay `docker-compose.dev.yml` : Studio, `postgres-meta`, MinIO, Inbucket ; ports publiés
       sur l'interface de bouclage uniquement.
 - [x] Overlay `docker-compose.prod.yml` : Caddy, aucun outillage de développement, ni Kong ni
@@ -57,11 +57,12 @@ dev ; aucun service de développement présent en prod.
       ou `inbucket`, seuls les ports `80` et `443` publiés.
 - [x] Chaîne de stockage prouvée de bout en bout : objet déposé par l'API, relu à l'identique, et
       **retrouvé dans le bucket MinIO** par un client S3.
-- [x] Harnais de preuves rejouable `scripts/verify-stack.sh` : **50 contrôles, aucune anomalie**,
+- [x] Harnais de preuves rejouable `scripts/verify-stack.sh` : **55 contrôles, aucune anomalie**,
       et **non complaisant** — il échoue bien lorsqu'un service est arrêté, lorsque MinIO est
       coupé, ou lorsqu'un service de développement est réintroduit en production. La reprise de
-      `CRM-009` l'a rendu exhaustif sur les **16 services persistants**, les **3 tâches one-shot**
-      et les **10 services réservés au développement**, dont `auth-templates`.
+      `CRM-009` l'a rendu exhaustif ; `CRM-016` porte l'état courant à **17 services persistants**,
+      **3 tâches one-shot** et **10 services réservés au développement**, dont `auth-templates` et
+      le runtime `functions` réellement appelé à travers Kong.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
@@ -1445,7 +1446,7 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
 - [x] **Fermeture mesurée après arbitrage sur une base locale froide** : `resetMe.sh --yes` rend
       `0`; la transition « Démarrer la réalisation » porte exactement un champ requis dans le
       workflow global **et** sa copie de track. Le rejeu actuel rend 19 fichiers / 1405 assertions
-      pgTAP, 410 scénarios API, 144 UI Chromium avec console stricte, 16 mail, 525 Vitest, quatre
+      pgTAP, 416 scénarios API, 144 UI Chromium avec console stricte, 16 mail, 531 Vitest, quatre
       compilations, rapport HTTP 200, puis **28 contrôles sans anomalie** après les dégradations et
       leur restauration.
 - [x] **Le parcours utilisateur ne confond plus `npm.exe` et Node Linux** (décision 278).
@@ -1459,7 +1460,8 @@ faux échoue bien. Périmètre arbitré par le responsable — décision 277, IN
       `verify-webapp.sh` choisissait donc `npm.exe`. Chaque point d'entrée concerné doit préparer
       Node avant sa première mutation, et une preuve statique doit interdire qu'un nouveau script
       échappe à cette garde. La preuve dynamique rend **5/5** et le harnais frontend **42/42**
-      depuis le `PATH` WSL qui expose `npm.exe`.
+      depuis le `PATH` WSL qui expose `npm.exe`. `CRM-016` ajoute un vingt-troisième harnais ; le
+      recensement dynamique reste **5/5**.
 - [x] **Le parcours UI global est déterministe et sa commande ne produit aucun avertissement**
       (INC-084, décision 282). Le rejeu après INC-083 rend 143/144 : la preuve de publication
       relit l'API avant d'avoir attendu l'annonce utilisateur de succès. Le rejeu ciblé rend 10/10,
@@ -1539,7 +1541,7 @@ Elle ferme également INC-032, première entrée qui avait mesuré le même éch
 - [x] `docs/PROD_MIGRATIONS.md` nomme explicitement l'absence d'opération de production : le
       secret ne concerne que l'image Vite de développement.
 
-### CRM-016 — Fonctions edge `[~]`
+### CRM-016 — Fonctions edge `[x]`
 `edge-runtime` déployé, `supabase/functions/` créé, route `/functions/v1/` déclarée dans la
 passerelle.
 **DoD** : la route répond ; une fonction d'exemple est appelée depuis un test ; le `README.md` §10
@@ -1556,17 +1558,21 @@ moitié qui gêne.
       défaut a été contre-éprouvée : elle répond mais écrit deux avertissements d'isolate ;
       `oneshot` reste silencieuse après cinq POST concurrents et une fenêtre supérieure au timeout
       là où `per_request` avertit encore (décisions 283 et 286).
-- [ ] **Service commun et route protégée** : `functions` tourne dans les deux assemblages sans
+- [x] **Service commun et route protégée** : `functions` tourne dans les deux assemblages sans
       port hôte, le montage des sources est en lecture seule, son healthcheck est HTTP, et Kong
       exige une vraie clé d'API sur `/functions/v1/` avant de joindre le runtime.
-- [ ] **Preuves propres et non simulées** : Vitest éprouve les modules purs ; Playwright appelle
+- [x] **Preuves propres et non simulées** : Vitest éprouve les modules purs ; Playwright appelle
       `example` par la vraie passerelle avec refus des clés absente et fausse ; le harnais inspecte
       image, commande, montage, ports et journaux. Le service doit rester sans `warning`, `error`,
       `panic` ni terminaison d'isolate.
-- [ ] **Parcours réel et non-régression** : remise à zéro froide, commande documentée, appel HTTP
+- [x] **Parcours réel et non-régression** : remise à zéro froide, commande documentée, appel HTTP
       comme un client, pile, build, types, tests unitaires, API complète, UI Chromium et console
       stricte sont tous verts. Aucun seed ni capture ne change puisque cette unité n'ajoute pas
-      d'écran ni de donnée.
+      d'écran ni de donnée. Mesure du 2026-08-08 : Edge **13/13**, pile **55/55**, scripts
+      **80/80**, harnais global **28/28** — 19 fichiers / 1405 assertions pgTAP, **416 API**,
+      **144 UI** et **16 mail**, **531 Vitest**, quatre compilations et rapport HTTP 200 ; zéro
+      avertissement, erreur ou `pageerror` dans Chromium et zéro bruit du runtime après la fenêtre
+      différée.
 - [x] **Deux besoins réels trouvent enfin un porteur** : l'invitation d'un membre (INC-015), qui
       exige la clé de service et ne peut pas vivre dans la webapp, et les webhooks sortants signés
       (`CRM-073`). `CRM-070` pourra s'appuyer sur une fonction edge plutôt que sur un appel sortant

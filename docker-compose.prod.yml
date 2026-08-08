@@ -1,4 +1,5 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de production de la pile Supabase self-hosted
+# @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §8 — runtime edge commun
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
 # @spec docs/PROD_MIGRATIONS.md §2 (prérequis), §4 (services à redéployer)
 #
@@ -23,6 +24,9 @@ services:
     restart: always
 
   realtime:
+    restart: always
+
+  functions:
     restart: always
 
   # Le stockage vise le fournisseur S3 réel, décrit par les variables d'environnement de

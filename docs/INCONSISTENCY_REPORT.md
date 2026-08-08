@@ -1533,7 +1533,7 @@ divergence n'est supposée ni inventée.
 
 ---
 
-### INC-007 — `supabase/functions/` référencé sans composant correspondant
+### INC-007 — `supabase/functions/` référencé sans composant correspondant — **CLOSE**
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 260.** **Les fonctions edge entrent au périmètre ; la décision 12 est rouverte.** L'agent proposait de retirer la mention du `README.md` ; le responsable tranche l'inverse — livrer ce que le document annonce plutôt que faire disparaître la moitié qui gêne. Mise en œuvre : `CRM-016`.
 
@@ -1548,10 +1548,14 @@ Or :
 - **aucune** unité de `docs/BACKLOG.md` ne prévoit d'en écrire.
 
 **Mise en œuvre ouverte le 2026-08-07.** `docs/SPEC-edge-functions.md` fixe le contrat mesuré du
-service, de sa route, de son exemple et de ses preuves ; `CRM-016` passe `[~]`. Tant que son commit
-d'implémentation n'est pas livré et vérifié, le service `edge-runtime` et la route
-`/functions/v1/` restent absents de la pile active. Le constat ne sera déplacé en « Clos » qu'après
-l'appel réel par Kong et l'inspection de journaux silencieux.
+service, de sa route, de son exemple et de ses preuves ; `CRM-016` passe alors `[~]`.
+
+**Clôture, 2026-08-08.** `functions` appartient aux assemblages commun et de production, le
+répertoire annoncé existe, Kong protège puis route `/functions/v1/`, et `example` est exécutée par
+un vrai worker. Après remise à zéro froide : Edge **13/13**, pile **55/55**, API **416/416**, UI
+**144/144**, harnais global **28/28**. La relecture différée des journaux reste vide sous la
+politique `oneshot`; aucune capture ni donnée seedée ne change. Le constat documentaire n'existe
+donc plus.
 
 **Arbitrage rendu :** les fonctions edge entrent au périmètre et reçoivent `CRM-016` ; la mention
 du `README.md` doit devenir la description du répertoire réellement livré, jamais être retirée.

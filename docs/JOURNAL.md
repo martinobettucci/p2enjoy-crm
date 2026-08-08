@@ -8975,3 +8975,29 @@ preuves de `CRM-016`. La décision 283 reste la trace de la première mesure mai
 ce choix précis. Aucun `--quiet`, filtre ni tolérance orthographique n'est ajouté : le harnais
 continue de refuser `warning`, `error`, `panic`, `early termination` et `wall clock`, y compris la
 faute `duraiton` du runtime.
+
+---
+
+### Décision 287 — Une position optimiste n'est pas une preuve d'écriture : attendre l'annonce backend
+
+**Défaut révélé par le parcours utilisateur final de `CRM-016`.** Après une remise en état de la
+pile, la suite UI complète rend 143/144. L'administratrice crée une card, l'ouvre au board, choisit
+« Relancer » à la souris et voit immédiatement la card dans la colonne cible ; la relecture directe
+de PostgREST reçoit pourtant encore l'étape de départ. Quelques instants plus tard, le contexte
+d'échec montre la région live « Affaire déplacée vers Relance » et la card au bon endroit.
+
+**Cause mesurée.** La position dans la colonne est volontairement optimiste : elle change avant
+que `move_card` ait répondu. Le scénario attendait cette position puis relisait la base, créant une
+course entre l'appel RPC et sa propre requête. Le comportement produit était correct ; la preuve
+utilisait un signal ambigu. C'est le même défaut de méthode qu'INC-084 avait déjà corrigé pour la
+publication d'un commentaire.
+
+**Correction.** Le scénario attend la région live nommée « Annonces du board » et son message de
+succès avant la relecture hors interface. Cette annonce n'est posée qu'après la réponse `ok` de
+`move_card` ; elle représente donc ce que l'utilisateur sait réellement, pas l'optimisme visuel.
+Le contrat existant de `docs/SPEC-test-harness.md` §7.2 suffisait : aucune règle produit ne change.
+
+**Preuves.** Le scénario ciblé passe, puis la base est remise à zéro avec `./resetMe.sh --yes`.
+`scripts/verify-functions.sh` rend 13/13, la pile 55/55, et le harnais global **28/28** avec
+**416 API**, **144 UI sans avertissement**, **16 mail** et **531 Vitest**. Les six dégradations
+échouent pour leur cause propre et leur restauration est constatée.

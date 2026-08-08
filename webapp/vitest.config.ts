@@ -1,9 +1,11 @@
 // @spec CRM-007 (docs/BACKLOG.md) — configuration des tests unitaires
+// @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §7.1 — modules Deno purs
 // @spec docs/SPEC-webapp.md §13 (commandes), §14 (preuves) ; README.md §7 (tests)
 //
 // Les tests unitaires vivent à côté du code qu'ils éprouvent, sous le nom `*.test.tsx` ou
 // `*.test.ts`. L'environnement est `jsdom` : les composants sont réellement montés et
-// interrogés par leur rôle accessible, pas par leur balisage.
+// interrogés par leur rôle accessible, pas par leur balisage ; les modules edge purs n'emploient
+// aucune API DOM et restent donc exécutables dans le même projet sans simuler le runtime.
 //
 // Le harnais complet — pgTAP, pytest, projets Playwright `api` et `mail` — reste dû par
 // `CRM-008` : cette configuration ne couvre que Vitest.
@@ -21,7 +23,12 @@ export default defineConfig({
 		// unitaire de `CRM-050` vit à côté du fichier qu'elle éprouve — la configuration du
 		// serveur de messagerie — plutôt que d'être rangée parmi celles de l'interface
 		// (docs/SPEC-mail-subsystem.md §11.9).
-		include: ['src/**/*.test.ts', 'src/**/*.test.tsx', '../stalwart/**/*.test.ts'],
+		include: [
+			'src/**/*.test.ts',
+			'src/**/*.test.tsx',
+			'../stalwart/**/*.test.ts',
+			'../supabase/functions/**/*.test.ts',
+		],
 		restoreMocks: true,
 	},
 })

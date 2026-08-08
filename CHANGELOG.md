@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-016` livre les fonctions edge de bout en bout.** Le service commun `functions` épingle
+  Supabase Edge Runtime 1.74.2, monte `supabase/functions/` en lecture seule, ne publie aucun port
+  et crée un worker `oneshot` borné pour chaque invocation. Kong protège
+  `/functions/v1/`, recharge sa configuration grâce à une révision déclarative et exécute la
+  fonction sans effet `example` avec le JSON exact. Le routeur refuse les noms invalides ou
+  absents, ne transmet que les trois variables Supabase nécessaires et ne reçoit jamais
+  `JWT_SECRET`. Après remise à zéro froide : Edge **13/13**, pile **55/55**, scripts **80/80**,
+  harnais global **28/28** — 19 fichiers / 1405 assertions pgTAP, **416 API**, **144 UI** sans
+  avertissement, **16 mail**, **531 Vitest**, quatre compilations et rapport HTTP 200. La relecture
+  différée des journaux reste vide ; seed et captures sont inchangés. INC-007 est close.
+- **Le déplacement connecté attend désormais son succès backend avant la relecture.** Le board
+  place la card optimistement ; le parcours Chromium pouvait donc interroger PostgREST avant le
+  retour de `move_card` et produire un faux rouge. Il attend maintenant la région live « Affaire
+  déplacée » que l'utilisateur reçoit seulement après la réponse réelle. Le scénario ciblé puis
+  les **144 parcours UI** complets passent avec console stricte.
+
 - **`CRM-015` livre le secret de build npm facultatif.** `NPM_CA_FILE` est un chemin PEM absolu
   fourni par l'environnement, validé avant Docker et transporté comme secret BuildKit vers
   `npm_ca`; absent, vide ou omis d'un ancien `.env`, `/dev/null` rend l'assemblage inerte. Deux

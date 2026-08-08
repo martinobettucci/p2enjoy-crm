@@ -1,5 +1,6 @@
 {
   // @spec CRM-007 (docs/BACKLOG.md) — compilation de l'outillage : configurations et preuves
+  // @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §7 — runtime et preuves edge
   // @spec docs/SPEC-webapp.md §3.3 (deux configurations, deux périmètres), §14 (preuves)
   //
   // Ces fichiers s'exécutent dans Node, pas dans le navigateur : ils ont besoin des types de
@@ -23,11 +24,12 @@
     "noFallthroughCasesInSwitch": true,
 
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
 
     "skipLibCheck": false,
     "noEmit": true
   },
-  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts", "stalwart/**/*.ts"]
+  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts", "stalwart/**/*.ts", "supabase/functions/**/*.ts"]
 }

@@ -1,4 +1,5 @@
 # @spec CRM-001 (docs/BACKLOG.md) — pile Supabase self-hosted, assemblage commun des services
+# @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2 — runtime Deno commun
 # @spec docs/JOURNAL.md décision 100 (un contrôle de santé nomme une famille d'adresses)
 # @spec docs/DAT.md §3 (composants), §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement),
 #       §15 (dépendances structurantes)
@@ -287,6 +288,40 @@ services:
       S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID}
       S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET}
 
+  # --- Fonctions edge -----------------------------------------------------------------------
+  # @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §4.1
+  # Runtime commun au développement et à la production. Aucun port hôte : toute requête
+  # applicative traverse Kong, où la clé d'API est contrôlée avant le dispatch (§5).
+  functions:
+    container_name: p2enjoy-functions
+    image: public.ecr.aws/supabase/edge-runtime:v1.74.2
+    restart: unless-stopped
+    command:
+      - start
+      - --policy
+      - oneshot
+      - --main-service
+      - /home/deno/functions/main
+    volumes:
+      - ./supabase/functions:/home/deno/functions:ro,z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /bin/bash -ec 'exec 3<>/dev/tcp/127.0.0.1/9000;
+          printf "GET /__health HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3;
+          IFS= read -r status <&3;
+          [[ "$$status" == *" 200 "* ]];
+          cat <&3 >/dev/null'
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+
   # --- Pooler de connexions ------------------------------------------------------------------
   # Supavisor (README.md §2). Il publie l'accès PostgreSQL : le conteneur `db` n'expose aucun
   # port dans l'assemblage commun.
@@ -335,13 +370,19 @@ services:
       - /app/bin/migrate && /app/bin/supavisor eval "$$(cat /etc/pooler/pooler.exs)" && /app/bin/server
 
   # --- Passerelle ----------------------------------------------------------------------------
-  # Kong expose REST, Auth, Storage et Realtime sur un port unique (docs/DAT.md §3.5).
+  # Kong expose REST, Auth, Storage, Realtime et les fonctions edge sur un port unique
+  # (docs/DAT.md §3.5, docs/SPEC-edge-functions.md §5).
   # La configuration déclarative ne référence aucun service de développement : Studio est joint
   # directement sur son propre port en développement, jamais au travers de la passerelle.
   kong:
     container_name: p2enjoy-kong
     image: kong/kong:3.9.1
     restart: unless-stopped
+    labels:
+      com.p2enjoy.kong-config-revision: crm-016
+    depends_on:
+      functions:
+        condition: service_healthy
     networks:
       default:
         aliases:

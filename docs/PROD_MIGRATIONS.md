@@ -456,12 +456,15 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `caddy` | À chaque changement de `caddy/Caddyfile` |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
 
-**Opération due avec la livraison de `CRM-016` — activer les fonctions edge.** Tirer
+**Opération en attente du prochain déploiement de production — activer les fonctions edge.** Tirer
 `public.ecr.aws/supabase/edge-runtime:v1.74.2`, déployer le répertoire
 `supabase/functions/` en lecture seule au chemin attendu par Compose, puis recréer `functions` et
 `kong`. Aucune variable ni migration SQL n'est ajoutée : le service réemploie les clés Supabase
 existantes et ne reçoit pas `JWT_SECRET`. Avant d'ouvrir le trafic, vérifier que le conteneur est
 sain, ne publie aucun port et que ses journaux ne portent ni avertissement ni erreur.
+Le label `com.p2enjoy.kong-config-revision=crm-016` doit être présent sur le conteneur Kong ; toute
+future modification de `kong.yml` incrémente cette révision dans le même déploiement pour forcer
+la prise en compte du bind mount.
 
 **Opération due — déclarer `clamav` dans l'assemblage commun, avec `CRM-054`.** `CRM-050` a livré
 ClamAV dans `docker-compose.dev.yml` seulement, là où il est réellement exercé par ses preuves

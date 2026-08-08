@@ -391,6 +391,10 @@ temporaire. `scripts/verify-node-toolchain.sh` rend **5 contrôles sans anomalie
 couple courant conservé, repli qui écarte Node 23 puis npm 10, absence refusée avec `nvm use`, et
 les 22 harnais Node/npm protégés.
 
+**Extension courante par `CRM-016`, le 2026-08-08.** Le nouveau
+`scripts/verify-functions.sh` porte ce recensement à **23 harnais** ; le même contrôle statique
+rend toujours 5/5 depuis le shell WSL réel.
+
 ### 7.2 Parcours du harnais
 
 1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **19 fichiers** et
@@ -431,6 +435,12 @@ contrôles sans anomalie** : 19 fichiers / 1405 assertions pgTAP, 410 scénarios
 UI Chromium avec console stricte, 16 scénarios mail, 525 tests Vitest, quatre compilations
 TypeScript et rapport servi en HTTP 200. Les dégradations échouent pour leur cause propre ; le
 dernier rejeu SQL et API confirme leur restauration.
+
+**Rejeu de non-régression après `CRM-016`, base froide du 2026-08-08.** Le même harnais rend
+toujours **28/28** avec 19 fichiers / 1405 assertions pgTAP, **416 scénarios API**, 144 scénarios
+UI Chromium sans avertissement, 16 scénarios mail, **531 tests Vitest**, quatre compilations et le
+rapport HTTP 200. Le scénario de déplacement connecté attend désormais la région live de succès
+avant sa relecture API : sa position optimiste dans le board ne peut plus produire un faux rouge.
 
 ## 8. Ce qui est dû, et par qui
 

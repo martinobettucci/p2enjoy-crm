@@ -2,6 +2,7 @@
 // @verifies CRM-041 (docs/BACKLOG.md) — déplacement d’une card par un utilisateur connecté
 // @verifies CRM-043 (docs/BACKLOG.md) — publication et refus d’un commentaire dans l’interface
 // @verifies docs/SPEC-auth.md §9.1 à §9.5 (parcours, stockage, erreurs et preuves attendues)
+// @verifies docs/SPEC-test-harness.md §7.2 — attendre le signal utilisateur avant la relecture
 // @verifies docs/DESIGN_SYSTEM.md §5.12, §7, §8 ; CLAUDE.md §10, §15 et §16
 //
 // Ces scénarios sont la jonction que les preuves d’interface précédentes ne pouvaient pas faire :
@@ -367,6 +368,12 @@ test('l’administratrice déplace une card d’essai et la base confirme la nou
 			`[data-testid="colonne"][data-etape="${ETAPE_RELANCE}"]`,
 		)
 		await expect(colonneRelance.locator(`[data-card="${idCard}"]`)).toContainText(titre)
+		// La colonne bouge d'abord de façon optimiste. La région live, elle, n'annonce le succès
+		// qu'après la réponse réelle de `move_card` : c'est ce signal utilisateur non ambigu qu'il
+		// faut attendre avant de relire la base (docs/SPEC-test-harness.md §7.2).
+		await expect(page.getByRole('status', { name: 'Annonces du board' })).toHaveText(
+			'Affaire déplacée vers Relance',
+		)
 
 		const relecture = await request.get(
 			urlRest('cards', { id: `eq.${idCard}`, select: 'id,current_step_id' }),

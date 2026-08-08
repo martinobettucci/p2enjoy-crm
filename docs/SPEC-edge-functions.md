@@ -6,7 +6,7 @@ Contrat exécutable de `CRM-016`, créé à la suite de l'arbitrage du responsab
 - Unité de backlog : `CRM-016` (`docs/BACKLOG.md`).
 - Architecture : `docs/DAT.md` §2, §3.5, §3.7, §6 et §15.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §4 à §6.
-- État : contrat spécifié ; mise en œuvre de `CRM-016` en cours.
+- État : livré et intégralement vérifié le 2026-08-08.
 
 ---
 
@@ -192,3 +192,20 @@ exige le JSON du §6. Aucun secret n'est ajouté et aucune migration SQL n'est d
 Le retour arrière recrée l'ancien `kong.yml`, arrête `functions` puis retire le service de
 l'assemblage. Aucune donnée ne peut être perdue : `example` n'en écrit aucune et le runtime ne
 possède aucun volume persistant.
+
+## 9. Verdict de fermeture
+
+Après `./resetMe.sh --yes`, la seule pile recréée par les commandes documentées rend :
+
+- `scripts/verify-functions.sh` : **13/13**, dont l'appel réel de `example` et les journaux relus
+  après une attente supérieure à la borne du worker ;
+- `scripts/verify-stack.sh` : **55/55**, avec `functions` sain dans les assemblages commun et de
+  production et le JSON exact traversant Kong ;
+- `scripts/verify-scripts.sh` : **80/80**, y compris l'interpolation des deux assemblages ;
+- `scripts/verify-harness.sh` : **28/28**, soit 19 fichiers / 1405 assertions pgTAP,
+  **416 scénarios API**, **144 UI Chromium**, **16 mail**, **531 Vitest**, quatre compilations et
+  le rapport servi en HTTP 200.
+
+La suite UI entière ne produit aucun `warning`, `console.error` ou `pageerror`. Le service Edge ne
+produit aucune ligne contenant `warning`, `error`, `panic`, `early termination` ou `wall clock`,
+y compris après la fenêtre différée. Le seed et les captures versionnées restent identiques.

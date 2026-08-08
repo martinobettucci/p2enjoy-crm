@@ -15,6 +15,9 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`), les **champs de
 > formulaire** (`CRM-035`), les **cards** (`CRM-040`), la **garde centrale `move_card`**
 > (`CRM-034`) et les **valeurs de formulaire** (`CRM-036`).
+> Le runtime de **fonctions edge** est également livré (`CRM-016`) : la route
+> `/functions/v1/` traverse Kong, exige une clé d'API et exécute des workers Deno isolés sans
+> publier de port direct.
 > Le board, la vue liste, la fiche, les commentaires et l'historique sont également livrés. La
 > webapp possède désormais son **écran de connexion**, une session limitée à l'onglet et une
 > déconnexion réelle (`CRM-009`). Un utilisateur connecté peut consulter les données que la RLS
@@ -53,12 +56,12 @@ réellement créés côté serveur IMAP.
 | Couche | Technologie |
 |---|---|
 | Interface | React 19, Vite 8, TypeScript, Tailwind CSS 4, lucide-react, React Router 8 ; TanStack Query, react-hook-form, zod et dnd-kit viendront avec le métier qui les exige |
-| Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Kong, Supavisor) |
+| Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong, Supavisor) |
 | Règles métier | PostgreSQL : fonctions `SECURITY DEFINER` + Row Level Security |
 | Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP, ordonnanceur) |
 | Antivirus | ClamAV (pièces jointes entrantes) |
 | Stockage | Supabase Storage sur S3 (MinIO en développement) |
-| Tests | pgTAP (SQL), Vitest (webapp), pytest (mail-sync), Playwright (API, UI, mail) |
+| Tests | pgTAP (SQL), Vitest (webapp et modules edge purs), pytest (mail-sync), Playwright (API, UI, mail) |
 | Exécution | Docker Compose ; Caddy en production |
 
 Les règles d'accès sont appliquées **côté base**. L'interface ne fait que refléter ce que le
@@ -135,6 +138,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./runProd.sh --stop` | Arrêt propre de l'assemblage de production | **disponible** |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
+| `scripts/verify-functions.sh` | Rejoue les preuves des fonctions edge : runtime, isolation, route Kong, API réelle et journaux différés | **disponible** |
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
@@ -156,7 +160,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `npm run dev` | Vite en développement, hors conteneur | **disponible** |
 | `npm run build` | Build de production de la webapp vers `webapp/dist` | **disponible** |
 | `npm run preview` | Sert le build produit, utilisé par les preuves E2E | **disponible** |
-| `npm run test:unit` | Tests unitaires de la webapp (Vitest) | **disponible** |
+| `npm run test:unit` | Tests unitaires de la webapp et des modules edge purs (Vitest) | **disponible** |
 | `npm run e2e:ui` | Scénarios E2E de l'interface et captures (Playwright) | **disponible** |
 | `scripts/verify-webapp.sh` | Rejoue les preuves du squelette : build, jetons, états, clavier, captures | **disponible** |
 | `scripts/verify-harness.sh` | Rejoue les preuves du harnais de tests : exécuteurs, projets, non-complaisance | **disponible** |
@@ -333,7 +337,7 @@ installée par NVM sans modifier le shell parent.
 
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
-npm run test:unit          # Vitest, 525 tests            — aucune pile requise
+npm run test:unit          # Vitest, 531 tests            — aucune pile requise
 npm run test:sql           # pgTAP, 1405 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
@@ -384,6 +388,7 @@ une pile de développement déjà démarrée :
 
 ```bash
 scripts/verify-stack.sh        # pile Supabase : santé, passerelle, stockage        (CRM-001)
+scripts/verify-functions.sh    # fonctions edge : runtime, Kong, API et journaux    (CRM-016)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
@@ -415,7 +420,7 @@ scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libell
 
 Le dernier rejeu froid de `scripts/verify-harness.sh` rend **28 contrôles sans anomalie**. Il
 sélectionne Node **v24.14.1** / npm **11.11.0** Linux depuis le shell WSL réel, puis vérifie 19
-fichiers pgTAP / 1405 assertions, 410 scénarios API, 144 parcours UI, 16 scénarios mail, 525 tests
+fichiers pgTAP / 1405 assertions, 416 scénarios API, 144 parcours UI, 16 scénarios mail, 531 tests
 Vitest, les quatre compilations TypeScript et le rapport HTML servi en HTTP. Les parcours UI
 échouent sur tout `console.warn`, `console.error` ou `pageerror`.
 
@@ -516,13 +521,14 @@ Livré à ce jour :
 ├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket, webapp)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
 ├── caddy/Caddyfile             Terminaison TLS et service des fichiers statiques
-├── package.json                Projet npm unique : types (CRM-006), webapp (CRM-007) — aucun alias des scripts (INC-008)
+├── package.json                Projet npm unique : types, webapp, E2E et modules edge purs
 ├── tsconfig.json               Compilation stricte des types générés et de leurs assertions
 ├── tsconfig.tools.json         Compilation des configurations et des scénarios E2E
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
 │   ├── verify-stack.sh         Preuves rejouables de la pile
+│   ├── verify-functions.sh     Preuves rejouables du runtime edge, de Kong et de ses journaux
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
@@ -539,6 +545,7 @@ Livré à ce jour :
 │   └── lib/classes-css.mjs     Contrôle : toute classe citée existe dans le CSS produit
 ├── supabase/
 │   ├── docker/                 Configuration Kong et scripts d'initialisation de la base
+│   ├── functions/              Routeur Deno et fonctions edge, montés en lecture seule
 │   ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
 │   ├── seed/                   Seed socle, appliqué par les API réelles (CRM-005)
 │   └── tests/                  Suites pgTAP, une par migration
@@ -549,6 +556,7 @@ Livré à ce jour :
 │   └── config.test.ts          Invariants de la configuration, éprouvés par Vitest
 ├── e2e/
 │   ├── playwright.config.ts    Projets `api`, `mail` et `ui`
+│   ├── api/                    Contrats directs de Kong, PostgREST, GoTrue et Edge Runtime
 │   ├── mail/                   Scénarios IMAP, SMTP, ClamAV et Roundcube (CRM-050)
 │   └── ui/                     Scénarios d'interface et production des captures
 └── webapp/
@@ -572,28 +580,19 @@ Prévu par le backlog, pas encore livré :
 └── mail-sync/                  CRM-051
 ```
 
-Le répertoire `webapp/` existe déjà, mais ne contient que ce que `CRM-006` livre :
+Le répertoire des fonctions edge livré par `CRM-016` est volontairement petit et sans dépendance
+distante :
 
 ```
-webapp/src/lib/
-├── database.types.ts           Types générés depuis le schéma — fichier généré, ne pas éditer
-└── database.types.test-d.ts    Assertions de type, vérifiées à la compilation
+supabase/functions/
+├── main/                       Service principal, routeur validé et tests purs
+└── example/                    Fonction sans effet, handler HTTP pur et tests
 ```
 
-L'application elle-même — `index.html`, composants, routes, configuration Vite — relève de
-`CRM-007`.
-
-Le répertoire `supabase/functions/` (edge functions Deno) **n'existe pas encore**, et l'arbitrage
-qui le concerne est rendu : les fonctions edge **entrent au périmètre**
-([`docs/JOURNAL.md`](docs/JOURNAL.md), décision 260, INC-007). L'agent avait proposé de retirer la
-mention de ce document ; le responsable a tranché l'inverse — livrer ce que le document annonce
-plutôt que faire disparaître la moitié qui gêne. La **décision 12 est rouverte sur ce point**.
-
-L'unité **`CRM-016`** porte le service `edge-runtime`, le répertoire `supabase/functions/` et la
-route `/functions/v1/` de la passerelle. Elle donne un porteur à deux besoins qui n'en avaient
-aucun : l'invitation d'un membre, qui exige la clé de service et ne peut pas vivre dans la webapp,
-et les webhooks sortants signés (`CRM-073`). La logique métier reste en PostgreSQL et `mail-sync`
-reste un service Python : les fonctions edge **s'ajoutent**, elles ne remplacent rien.
+Kong est l'unique entrée : `/functions/v1/example` exige une clé d'API avant de joindre un worker
+`oneshot`, et le conteneur ne publie aucun port. Ce porteur servira à l'invitation d'un membre
+(`CRM-070`) et aux webhooks sortants signés (`CRM-073`) ; ces fonctions métier ne sont pas encore
+livrées. La logique métier existante reste en PostgreSQL et `mail-sync` reste un service Python.
 
 Documentation de référence :
 
@@ -614,17 +613,18 @@ Documentation de référence :
 | [`docs/SPEC-types.md`](docs/SPEC-types.md) | Types TypeScript générés depuis le schéma, garde anti-dérive |
 | [`docs/SPEC-webapp.md`](docs/SPEC-webapp.md) | Squelette de la webapp : chaîne de build, jetons, coquille, états |
 | [`docs/SPEC-test-harness.md`](docs/SPEC-test-harness.md) | Harnais de tests : exécuteur pgTAP, projets Playwright, rapport |
+| [`docs/SPEC-edge-functions.md`](docs/SPEC-edge-functions.md) | Runtime Deno, route Kong, sécurité, exemple et preuves Edge |
 | [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md) | Contrat de déploiement |
 | [`docs/manual.md`](docs/manual.md) | Manuel utilisateur |
 | [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md) | Contradictions relevées, en attente d'arbitrage |
 
 ## 11. Limites connues
 
-- **Le métier est incomplet** : la pile démarre, le socle d'identité est en base, le seed existe,
-  **le squelette de l'interface est livré**, et les tracks, channels, nœuds et workflows existent
-  réellement côté serveur — mais il n'y a ni cards, ni formulaires, ni messagerie, et **aucun de
-  ces objets n'a d'écran d'administration**. Voir [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état
-  réel.
+- **L'administration métier reste incomplète.** Tracks, channels, workflows, formulaires et cards
+  existent côté serveur ; le board, la liste, la fiche, les commentaires et la timeline permettent
+  déjà de les consulter et d'exercer les actions livrées. Les écrans de création et de
+  configuration, ainsi que la messagerie du produit, restent à implémenter. Voir
+  [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état exact unité par unité.
 - **La messagerie de développement existe, mais rien ne la lit.** Depuis `CRM-050`, Stalwart,
   Roundcube et ClamAV démarrent avec la pile, et trois boîtes sont provisionnées. **Aucun composant
   du CRM ne s'y connecte** : le service `mail-sync` arrive en `CRM-051`, l'ingestion en `CRM-054`.
@@ -639,7 +639,8 @@ Documentation de référence :
 - **Les tables d'identité restent illisibles.** La connexion et les objets métier fonctionnent,
   mais `workspaces`, `profiles` et `workspace_members` restent en refus par défaut (INC-014). Le
   nom du workspace et les noms de personnes peuvent donc manquer dans l'interface, même pour une
-  administratrice connectée.
+  administratrice connectée. Les politiques des objets métier et les droits fins, eux, sont
+  livrés et éprouvés depuis `CRM-012`.
 - **La webapp ne connaît aucune règle d'accès**, par construction : elle affiche ce que le backend
   consent à rendre. Un type ne décrit jamais un droit (voir ci-dessous), et l'interface ne
   masque rien qui ne soit déjà refusé côté base.
@@ -648,12 +649,6 @@ Documentation de référence :
   l'exécution. Une contrainte `CHECK` ne survit pas non plus à la génération —
   `workspace_members.role` se type `string`, et seule la base refuse une valeur hors vocabulaire.
   Voir [`docs/SPEC-types.md`](docs/SPEC-types.md) §7.
-- **Les autorisations ne sont pas encore écrites.** Les tables du socle d'identité sont en
-  **refus par défaut** : RLS activée, aucune politique. Une lecture retourne zéro ligne et une
-  écriture est refusée, quel que soit le compte. Les **fonctions** d'autorisation sont livrées et
-  prouvées (`CRM-010`) ; les **politiques** qui les emploient relèvent de `CRM-012`. Tant qu'elles
-  manquent, la base est sûre mais inexploitable par l'API, ce qui est le comportement voulu et non
-  un défaut.
 - **Descripteurs de fichiers.** Realtime et le pooler réclament `STACK_RLIMIT_NOFILE`
   descripteurs (défaut `100000`). Sur un hôte dont la limite dure est inférieure — conteneur sans
   `CAP_SYS_RESOURCE`, par exemple — ces deux services redémarrent en boucle tant que la variable
