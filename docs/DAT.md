@@ -7,7 +7,7 @@ changement** que le code.
 - Unité de backlog de référence : `CRM-000` (socle documentaire) — voir `docs/MASTER_PLAN.md`.
 - Documents liés : `docs/SCHEMA.md`, `docs/SPEC-permissions-rls.md`,
   `docs/SPEC-workflow-engine.md`, `docs/SPEC-form-composer.md`, `docs/SPEC-mail-subsystem.md`,
-  `docs/PROD_MIGRATIONS.md`.
+  `docs/SPEC-edge-functions.md`, `docs/PROD_MIGRATIONS.md`.
 
 ---
 
@@ -298,7 +298,13 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
 
 ### 3.5 Passerelle et périphérie
 
-- **Kong** expose l'API Supabase (REST, Auth, Storage, Realtime) sur un port unique.
+- **Kong** expose l'API Supabase (REST, Auth, Storage, Realtime et fonctions edge) sur un port
+  unique. `/functions/v1/` exige une clé d'API valide puis route vers `functions` ; toute future
+  autorisation métier reste appliquée par la fonction, jamais déduite de cette seule clé.
+- **`functions`** exécute les fonctions Deno courtes et de confiance dans Supabase Edge Runtime.
+  Le contrat de `CRM-016`, spécifié avant code dans `docs/SPEC-edge-functions.md`, borne chaque
+  worker à 128 Mio / 10 s, emploie la politique silencieuse `per_request`, ne publie aucun port
+  hôte et réserve les connexions longues à `mail-sync`.
 - **Caddy** (production uniquement) termine TLS et sert la webapp buildée.
 - **`auth-templates`** emploie également `caddy:2.9-alpine`, mais comme serveur statique interne
   commun aux deux assemblages. Il sert en lecture seule les quatre gabarits français de GoTrue sur
@@ -340,6 +346,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `db` | `supabase/postgres:17.6.1.136` | dev, prod |
 | `migrations-runner` | `postgres:17-alpine` | dev, prod |
 | `auth-templates` | `caddy:2.9-alpine` | dev, prod |
+| `functions` | `public.ecr.aws/supabase/edge-runtime:v1.74.2` | dev, prod |
 | `auth` | `supabase/gotrue:v2.189.0` | dev, prod |
 | `rest` | `postgrest/postgrest:v14.12` | dev, prod |
 | `realtime` | `supabase/realtime:v2.102.3` | dev, prod |
@@ -357,9 +364,10 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `clamav` | `clamav/clamav:1.4.3` | dev — **prod due avec `CRM-054`**, voir §3.4 |
 | `caddy` | `caddy:2.9-alpine` | prod |
 
-Trois services de la distribution officielle sont **écartés** : `analytics` et `vector`
-(journalisation Logflare), `imgproxy` (transformation d'images, `ENABLE_IMAGE_TRANSFORMATION` à
-`false`) et `functions` (edge-runtime). Motifs détaillés dans `docs/JOURNAL.md`, décision 12.
+Deux familles de la distribution officielle restent **écartées** : `analytics` et `vector`
+(journalisation Logflare), puis `imgproxy` (transformation d'images,
+`ENABLE_IMAGE_TRANSFORMATION` à `false`). La décision 12 est renversée pour `functions` par la
+décision 260 ; son contrat d'activation appartient à `CRM-016` et à la décision 283.
 
 ### 3.8 Contraintes d'exécution de l'hôte
 
@@ -492,6 +500,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 | RPC PostgreSQL | webapp | Écritures métier soumises à garde |
 | Realtime | webapp | Abonnements aux commentaires — **livré `CRM-043`**, `public.card_comments` publiée sur `supabase_realtime`. Cards et notifications : dues par leurs unités |
 | Storage | webapp, mail-sync | Pièces jointes et documents |
+| Fonctions edge | webapp, futurs appels serveur | `POST /functions/v1/<fonction>` par Kong ; clé d'API obligatoire, autorisation métier dans chaque fonction privilégiée |
 | API interne mail-sync | webapp (via Kong) | Test de connexion, backfill, état de synchronisation |
 | Webhooks sortants | Systèmes tiers | Événements signés (unité de backlog dédiée) |
 | API publique par jeton | Systèmes tiers | Lecture/écriture à portée limitée (unité de backlog dédiée) |
@@ -760,6 +769,7 @@ Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`.
 | Dépendance | Rôle | Remarque |
 |---|---|---|
 | Supabase self-hosted | Base, authentification, API, stockage, temps réel | Versions épinglées, alignées sur la pile validée en interne |
+| Supabase Edge Runtime | Fonctions Deno courtes (`CRM-016`) | Image et politique d'isolation épinglées ; aucun import distant ni port hôte (`docs/SPEC-edge-functions.md`) |
 | PostgreSQL 17 | Données et règles métier | Extensions **constatées** dans `supabase/postgres:17.6.1.136` (`CRM-004`) : `pgcrypto` 1.3 et `supabase_vault` 0.3.1 installées ; `pg_net` 0.20.3, `pgtap` 1.3.3 et `pg_cron` 1.6.4 disponibles. `supabase_vault` et `pg_cron` sont préchargés par le serveur |
 | React 19 / Vite 8 | Interface | Aligné sur les conventions maison ; version courante mesurée à `CRM-007` |
 | Tailwind 4 | Jetons et utilitaires | Un seul bloc `@theme` satisfait `docs/DESIGN_SYSTEM.md` §11, sans fichier de configuration JavaScript |

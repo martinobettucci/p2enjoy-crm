@@ -451,9 +451,17 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous |
 | `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
+| `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
 | `caddy` | À chaque changement de `caddy/Caddyfile` |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
+
+**Opération due avec la livraison de `CRM-016` — activer les fonctions edge.** Tirer
+`public.ecr.aws/supabase/edge-runtime:v1.74.2`, déployer le répertoire
+`supabase/functions/` en lecture seule au chemin attendu par Compose, puis recréer `functions` et
+`kong`. Aucune variable ni migration SQL n'est ajoutée : le service réemploie les clés Supabase
+existantes et ne reçoit pas `JWT_SECRET`. Avant d'ouvrir le trafic, vérifier que le conteneur est
+sain, ne publie aucun port et que ses journaux ne portent ni avertissement ni erreur.
 
 **Opération due — déclarer `clamav` dans l'assemblage commun, avec `CRM-054`.** `CRM-050` a livré
 ClamAV dans `docker-compose.dev.yml` seulement, là où il est réellement exercé par ses preuves
@@ -532,6 +540,10 @@ relever la limite du démon Docker ou abaisser la variable.
    indéchiffrables. Contrôle rapide sur l'environnement restauré, avec le rôle `service_role` :
    `select decrypted_secret from vault.decrypted_secrets limit 1;` doit renvoyer une valeur, et
    non `invalid ciphertext`.
+10. **La route edge traverse réellement Kong** : `POST /functions/v1/example` avec la clé
+    publique de l'environnement rend 200 et le JSON exact de `docs/SPEC-edge-functions.md` §6 ;
+    le même appel sans clé rend 401. Aucun port de `functions` n'est publié sur l'hôte et ses
+    journaux restent sans `warning`, `error`, `panic` ni terminaison d'isolate.
 
 ## 6. Procédure de retour arrière
 
@@ -541,6 +553,7 @@ relever la limite du démon Docker ou abaisser la variable.
 | Migration défectueuse | Appliquer le script de retour arrière fourni avec la migration ; à défaut, restaurer la sauvegarde antérieure |
 | Restauration de base sans la clé racine de Vault | **Aucun retour arrière possible** : le chiffré est intact mais définitivement illisible. Restaurer le volume `db-config` d'origine ; à défaut, chaque mot de passe IMAP/SMTP doit être ressaisi dans l'application |
 | Messagerie défaillante | Arrêter `mail-sync` : le CRM reste utilisable, la file d'envoi est persistante et reprendra |
+| Runtime edge défaillant après `CRM-016` | Restaurer la configuration Kong précédente, recréer `kong`, puis arrêter `functions`. Aucune donnée n'est perdue : la fonction `example` est sans effet et le service n'a aucun volume persistant |
 
 Toute migration non réversible doit **documenter explicitement pourquoi** et être précédée d'une
 sauvegarde vérifiée.

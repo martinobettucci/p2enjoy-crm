@@ -1539,7 +1539,7 @@ Elle ferme également INC-032, première entrée qui avait mesuré le même éch
 - [x] `docs/PROD_MIGRATIONS.md` nomme explicitement l'absence d'opération de production : le
       secret ne concerne que l'image Vite de développement.
 
-### CRM-016 — Fonctions edge `[ ]`
+### CRM-016 — Fonctions edge `[~]`
 `edge-runtime` déployé, `supabase/functions/` créé, route `/functions/v1/` déclarée dans la
 passerelle.
 **DoD** : la route répond ; une fonction d'exemple est appelée depuis un test ; le `README.md` §10
@@ -1550,11 +1550,27 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 260
 responsable tranche l'inverse — livrer ce que le document annonce plutôt que faire disparaître la
 moitié qui gêne.
 
-- [ ] **Deux besoins réels trouvent enfin un porteur** : l'invitation d'un membre (INC-015), qui
+- [x] **Contrat stable avant code** : `docs/SPEC-edge-functions.md` fixe l'image 1.74.2 et son
+      empreinte mesurée, l'isolation `per_request`, le routeur sans dépendance distante, la santé
+      interne, l'authentification Kong et le JSON exact de la fonction d'exemple. La politique par
+      défaut a été contre-éprouvée : elle répond mais écrit deux avertissements d'isolate ;
+      `per_request` répond sans aucune ligne de journal (décision 283).
+- [ ] **Service commun et route protégée** : `functions` tourne dans les deux assemblages sans
+      port hôte, le montage des sources est en lecture seule, son healthcheck est HTTP, et Kong
+      exige une vraie clé d'API sur `/functions/v1/` avant de joindre le runtime.
+- [ ] **Preuves propres et non simulées** : Vitest éprouve les modules purs ; Playwright appelle
+      `example` par la vraie passerelle avec refus des clés absente et fausse ; le harnais inspecte
+      image, commande, montage, ports et journaux. Le service doit rester sans `warning`, `error`,
+      `panic` ni terminaison d'isolate.
+- [ ] **Parcours réel et non-régression** : remise à zéro froide, commande documentée, appel HTTP
+      comme un client, pile, build, types, tests unitaires, API complète, UI Chromium et console
+      stricte sont tous verts. Aucun seed ni capture ne change puisque cette unité n'ajoute pas
+      d'écran ni de donnée.
+- [x] **Deux besoins réels trouvent enfin un porteur** : l'invitation d'un membre (INC-015), qui
       exige la clé de service et ne peut pas vivre dans la webapp, et les webhooks sortants signés
       (`CRM-073`). `CRM-070` pourra s'appuyer sur une fonction edge plutôt que sur un appel sortant
       depuis la base par `pg_net`, chemin plus contournant.
-- [ ] **Ce que la décision ne change pas** : la logique métier reste en PostgreSQL, et `mail-sync`
+- [x] **Ce que la décision ne change pas** : la logique métier reste en PostgreSQL, et `mail-sync`
       reste un service Python — IMAP et SMTP demandent des connexions longues, incompatibles avec
       des fonctions courtes (`docs/DAT.md` §3.3). Les fonctions edge **s'ajoutent**, elles ne
       remplacent rien.

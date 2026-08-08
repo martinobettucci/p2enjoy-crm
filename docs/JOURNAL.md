@@ -8868,3 +8868,40 @@ constate ensuite 144/144, console navigateur stricte et sortie Playwright sans a
 termine les 16 scénarios mail, 525 tests, quatre compilations et six dégradations. Verdict final :
 28 contrôles sans anomalie, fichiers et politique RLS restaurés. INC-083 et INC-084 sont closes ;
 `CRM-008` revient à `[x]` sur la preuve réellement rejouée.
+
+---
+
+### Décision 283 — Un worker qui répond mais avertit n'est pas sain : `per_request` devient le contrat edge
+
+**Mesure avant spécification.** L'image locale exacte
+`public.ecr.aws/supabase/edge-runtime:v1.74.2` porte l'empreinte
+`sha256:a82676277615aee03c4f288cbbbf68dedb5ba8693073e567ab8dbfdd11ba5d45`. Un service principal
+minimal, sans import distant, a créé un vrai worker `example` par
+`EdgeRuntime.userWorkers.create`; `POST /example` a rendu 200 et le JSON attendu. Le runtime est
+donc utilisable sans recopier le routeur complexe d'un autre dépôt ni dépendre de `deno.land`.
+
+**Défaut observé dans les journaux.** Avec la politique par défaut `per_worker`, la réponse reste
+verte mais le conteneur écrit `wall clock duration warning` puis
+`early termination has been triggered`. Ce n'est ni un échec HTTP ni un détail acceptable sous
+la règle de console silencieuse : le verdict utilisateur et l'état opérationnel divergent.
+
+**Contre-épreuve.** Le même montage, le même routeur, la même fonction et la politique explicite
+`--policy per_request` rendent le même HTTP 200 sans une ligne de journal. Un premier healthcheck
+qui joignait directement le worker puis fermait tôt sa socket a produit une autre ligne de durée
+murale ; la sonde finale vise donc `GET /__health` dans le service principal, consomme toute la
+réponse et ne crée pas d'isolate utilisateur. Elle est silencieuse. La preuve métier reste
+distincte et appelle `example` par Kong.
+
+**Décision.** `CRM-016` épingle l'image et `per_request`, sans `--quiet` ni filtre de logs. Le
+routeur natif valide le nom de fonction, refuse les répertoires absents avant la création d'un
+worker, borne chaque invocation à 128 Mio / 10 s et ne transmet que l'URL interne et les deux clés
+Supabase déjà configurées — jamais `JWT_SECRET`. Kong exige `key-auth` et l'ACL `anon`/`admin`,
+mais toute fonction future privilégiée doit encore authentifier et autoriser son appelant côté
+backend.
+
+**Contrat de preuve.** `example` est publique derrière la clé anonyme et sans effet. Unitaires :
+parsing et contrat HTTP purs. API : clés absente et fausse refusées, POST réel à travers
+`/functions/v1/example`, méthode refusée, fonction inconnue et CORS. Intégration : image, commande,
+montage en lecture seule, absence de port hôte, santé et journaux. Puis remise à zéro froide et
+rejeu global, UI comprise, sans warning, error ni pageerror. Le détail stable est persisté dans
+`docs/SPEC-edge-functions.md` avant toute ligne applicative.

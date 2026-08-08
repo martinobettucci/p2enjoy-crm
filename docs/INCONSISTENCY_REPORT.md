@@ -148,13 +148,13 @@ numéros d'origine sont conservés en tête de chaque entrée et rappelés dans
 **Ce qui reste ouvert, et c'est le seul objet de cette entrée.** La **mise en œuvre** de plusieurs
 de ces décisions n'est pas faite. Mesuré :
 
-- **Décision 260 — `require_fields` devient une table de liaison.** Non appliquée.
+- **Décision 262 — `require_fields` devient une table de liaison.** Non appliquée.
   `docs/SCHEMA.md` décrit toujours `require_fields` en `uuid[]` et note qu'il ne peut porter
   aucune intégrité référentielle, ce que cette décision renversait. Engage une migration,
   `docs/SCHEMA.md`, `docs/DAT.md` et `docs/PROD_MIGRATIONS.md`.
-- **Décision 259 — l'ordonnancement passe à `pg_cron`**, qui renverse la décision 8.
-- **Décision 258 — les fonctions edge entrent au périmètre**, qui rouvre la décision 12.
-- **Décision 261 — `change_channel_workflow`** est un geste distinct, sans unité de backlog dédiée.
+- **Décision 261 — l'ordonnancement passe à `pg_cron`**, qui renverse la décision 8.
+- **Décision 260 — les fonctions edge entrent au périmètre**, qui rouvre la décision 12.
+- **Décision 263 — `change_channel_workflow`** est un geste distinct, sans unité de backlog dédiée.
 
 Appliquées, vérifiées : les décisions **253** (unité de l'écran de connexion) et **254** (session en
 `sessionStorage`) le sont déjà par la décision 243 de `main` ; seule leur trace manquait. Les
@@ -1547,12 +1547,14 @@ Or :
 - `docs/DAT.md` §6 n'expose **aucune** interface de ce type ;
 - **aucune** unité de `docs/BACKLOG.md` ne prévoit d'en écrire.
 
-**Comportement en attendant :** le service `edge-runtime` n'est **pas** déployé et la route
-`/functions/v1/` n'est **pas** déclarée dans la passerelle. Ni le `README.md` ni le `DAT.md` ne
-sont modifiés pour faire disparaître la contradiction : elle est consignée ici.
+**Mise en œuvre ouverte le 2026-08-07.** `docs/SPEC-edge-functions.md` fixe le contrat mesuré du
+service, de sa route, de son exemple et de ses preuves ; `CRM-016` passe `[~]`. Tant que son commit
+d'implémentation n'est pas livré et vérifié, le service `edge-runtime` et la route
+`/functions/v1/` restent absents de la pile active. Le constat ne sera déplacé en « Clos » qu'après
+l'appel réel par Kong et l'inspection de journaux silencieux.
 
-**Arbitrage attendu du responsable :** soit les fonctions edge entrent au périmètre et reçoivent
-une unité de backlog, soit la mention est retirée du `README.md` §10.
+**Arbitrage rendu :** les fonctions edge entrent au périmètre et reçoivent `CRM-016` ; la mention
+du `README.md` doit devenir la description du répertoire réellement livré, jamais être retirée.
 
 ---
 
@@ -1778,7 +1780,8 @@ par `403 not_admin`. La webapp ne doit jamais détenir cette clé.
 Il manque donc un composant serveur entre l'administrateur de workspace et GoTrue, et le projet
 n'en possède aucun qui convienne :
 
-- les fonctions edge ne sont **pas** au périmètre (INC-007, ouvert) ;
+- les fonctions edge **entrent au périmètre avec `CRM-016`** (décision 260) et donnent à
+  `CRM-070` le composant serveur attendu, sans livrer encore le parcours d'invitation ;
 - `mail-sync` (`CRM-051`) n'existe pas encore, et vise la messagerie du produit, pas l'identité ;
 - la webapp (`CRM-007`) est un client, sans partie serveur.
 
