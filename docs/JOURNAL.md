@@ -9418,3 +9418,25 @@ transitions, champs, règles et nœuds effectivement référencés. Elle ne fabr
 pour les liaisons ni pour les suppressions. `source_modified_since_copy`, issu de la comparaison
 d'empreintes, est le seul verdict : ajout, modification et suppression y restent exacts. La date
 est un contexte d'affichage, jamais une seconde preuve susceptible de contredire le booléen.
+
+---
+
+### Décision 303 — Une copie seedée moderne divergente est refusée, jamais maquillée
+
+**Angle mort trouvé pendant l'audit de `CRM-018`.** `source_modified_since_copy` répond exactement
+à la question « la source a-t-elle changé depuis la copie ? ». Il ne peut pas répondre à une autre
+question : « la copie cible a-t-elle elle-même été modifiée ? ». Le seed ne contrôlait cette cible
+que par ses volumes. Renommer un champ, changer une option ou déplacer une règle sans modifier le
+nombre de lignes laissait donc passer une fixture fonctionnellement fausse.
+
+**Décision.** Après la sélection non ambiguë de la décision 300, le seed compare la composition
+métier complète de la copie à celle de la source : étapes par nœud, transitions par couple de
+nœuds, champs par clé, règles par clé de champ et nœud, exigences par transition et clé de champ.
+Les identifiants remappés et les horodatages techniques sont volontairement abstraits ; tous les
+attributs fonctionnels copiés restent comparés.
+
+Une différence sur une copie moderne provoque un arrêt explicite **avant toute écriture sur sa
+composition**. Le seed ne la complète pas, ne la réécrit pas et ne la reconstruit pas. La seule
+suppression admise reste l'exception legacy bornée de la décision 300. Le harnais altère un
+attribut sans changer aucun compte, exige cet arrêt, constate que l'altération subsiste, la
+restaure, puis seulement rejoue le seed vert.

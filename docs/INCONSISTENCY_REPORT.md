@@ -3112,6 +3112,12 @@ exact, avec repli sur une dérivation unique ; un état ambigu est refusé et au
 supplémentaire n'est détruite. La convergence signifie « ne pas recréer la fixture », pas « ramener
 toutes les copies utilisateur à un compte global de un ».
 
+**Révision de conformité, décision 303.** La candidate moderne ne peut pas davantage être déclarée
+conforme par ses seuls volumes : une altération de libellé, d'option, de règle ou d'exigence à compte
+constant échappait au contrôle. Le seed compare désormais la composition métier normalisée de sa
+candidate à la source et refuse toute différence sans écraser la cible. Les autres dérivations ne
+participent toujours ni à cette comparaison ni aux assertions de la fixture.
+
 **Ce qui reste à arbitrer :** faut-il un contrôle transverse de convergence du seed — un harnais qui
 dégraderait chaque objet déclaré et vérifierait que le rejeu le ramène —, plutôt qu'une vérification
 ajoutée unité par unité après chaque défaut trouvé ? Les trois occurrences plaident pour, mais le

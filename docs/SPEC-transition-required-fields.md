@@ -144,6 +144,12 @@ sans ambiguïté, si la source porte exactement le contrat et si elle ne contien
 seedées sans commentaire utilisateur. Toute copie supplémentaire est conservée ; toute ambiguïté
 arrête le seed. Une copie utilisateur n'est jamais écrasée automatiquement.
 
+Cette empreinte juge la **source**, pas les adaptations faites dans la cible. Pour la seule copie
+officielle du seed, un second contrôle canonique compare donc les deux compositions après
+abstraction des identifiants remappés (décision 303). Une cible moderne différente est refusée sans
+réécriture ni reconstruction, y compris lorsque ses comptes restent identiques. Cette garde ne
+s'applique à aucune copie utilisateur supplémentaire.
+
 ### 5.3 Seed
 
 Les transitions sont créées sans champ tableau. Une fois `form_fields` présent, le seed :
@@ -194,6 +200,10 @@ Le harnais rejouable dégrade réellement une clé étrangère, une politique, l
 API global, UI Chromium à console stricte, mail, unitaires, types et build restent obligatoires.
 Aucun écran ni capture nouvelle n'est dû : la table remplace un stockage backend sans ajouter de
 geste interactif.
+
+Le même harnais modifie aussi le libellé d'un champ de la copie officielle sans changer aucun
+volume : le seed doit refuser la divergence, laisser le libellé intact, puis réussir seulement
+après restauration explicite. Une assertion de compte ne peut donc pas tenir lieu de conformité.
 
 ## 7. Déploiement et retour arrière
 

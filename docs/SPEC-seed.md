@@ -433,6 +433,14 @@ unique dérivation comme ancienne fixture déplacée. Plusieurs candidates exact
 dérivations sans candidate exacte, rendent l'état ambigu : le seed échoue en nommant les
 identifiants et n'en supprime aucune.
 
+**Une copie moderne ne passe pas sur ses seuls comptes** (décision 303). Une fois la candidate
+seedée choisie, sa composition métier est comparée à celle de la source en faisant abstraction des
+identifiants que la RPC remappe : étapes par nœud, transitions par couple de nœuds, champs par clé,
+règles et exigences par ces mêmes clés durables. Toute différence fonctionnelle — même un simple
+libellé modifié avec sept champs toujours présents — arrête le seed avant qu'il n'écrive la
+composition cible. Il ne maquille jamais une personnalisation en copie conforme et ne reconstruit
+que l'ancienne fixture sans empreinte sous les cinq gardes de la décision 300.
+
 **Ce que `CRM-033` change à l'ordre du seed.** `channels.workflow_id` devient `NOT NULL` : le
 workflow par défaut doit donc naître **avant** les channels. Sa ligne est créée en section 3 bis —
 elle ne dépend d'aucun nœud du catalogue, seules ses étapes en dépendent —, et le `PATCH` de
