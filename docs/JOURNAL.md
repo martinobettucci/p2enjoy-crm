@@ -8927,3 +8927,25 @@ passerelle de devenir disponible avant sa cible. Pour une pile existante, elle c
 Compose de Kong et provoque sa recréation au prochain `./runDev.sh`; sur une pile froide, elle fixe
 l'ordre. La preuve doit repartir de la commande documentée, jamais d'un `docker restart` manuel,
 puis obtenir les 401/200/405/404/CORS attendus.
+
+---
+
+### Décision 285 — `depends_on` ordonne mais ne recrée pas : Kong porte la révision de sa configuration
+
+**Contre-épreuve de la décision 284.** Après ajout de `functions: service_healthy`, un second
+`./runDev.sh` attend bien le runtime puis Kong. Compose affiche pourtant encore
+`p2enjoy-kong Running`, jamais `Recreate`. Les six appels continueraient donc à recevoir 404. La
+dépendance exprime le bon graphe, mais elle ne fait pas partie de la configuration du conteneur que
+Compose compare pour décider sa recréation. La prédiction de la décision 284 sur ce second effet
+est fausse ; son effet d'ordre reste vrai.
+
+**Décision corrigée.** Le service Kong reçoit un label de révision déclaratif :
+`com.p2enjoy.kong-config-revision=crm-016`. Ce label fait partie du conteneur ; son ajout provoque
+donc la recréation qu'un bind mount seul ne provoque pas. Toute évolution future de `kong.yml`
+incrémente cette valeur dans le même changement. `scripts/verify-stack.sh` fixe la révision
+attendue pour empêcher qu'une configuration modifiée soit livrée avec un label historique.
+
+**Preuve exigée.** Rejouer une troisième fois la seule commande utilisateur `./runDev.sh` et voir
+Kong recréé, puis les six scénarios edge passer. Aucun `docker restart`, `compose restart` ni
+recréation manuelle ne peut constituer la preuve : le défaut porte précisément sur l'application
+automatique d'une nouvelle version du dépôt à une pile existante.

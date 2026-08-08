@@ -30,11 +30,12 @@ Le service se nomme `functions` et son conteneur `p2enjoy-functions`. Il apparti
 `docker-compose.yml`, donc aux assemblages de développement **et** de production. Il ne publie
 aucun port hôte : Kong est son unique entrée depuis l'extérieur du réseau Compose.
 
-Kong attend `functions: service_healthy`. Cette dépendance a deux effets nécessaires : une route
-ne devient pas saine avant sa cible, et l'ajout de `CRM-016` modifie réellement la définition du
-conteneur Kong. Une simple modification de son fichier bind-mounté ne le recrée pas ; sans ce
-changement de graphe, un `./runDev.sh` sur une pile déjà lancée conserverait en mémoire l'ancienne
-configuration et `/functions/v1/` rendrait 404 jusqu'à une intervention manuelle.
+Kong attend `functions: service_healthy` : une route ne devient pas saine avant sa cible. Cette
+dépendance ordonne un démarrage froid mais, mesure faite, ne force pas la recréation d'un conteneur
+existant. Une simple modification de `kong.yml`, bind-mounté, ne le fait pas davantage. Le service
+porte donc le label de révision `com.p2enjoy.kong-config-revision=crm-016`. Toute modification de
+la configuration déclarative incrémente ce label dans le même changement ; Compose détecte alors
+la définition différente et recrée Kong pendant le `./runDev.sh` normal, sans restart manuel.
 
 | Propriété | Contrat |
 |---|---|
