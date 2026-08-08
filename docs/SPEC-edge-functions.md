@@ -42,16 +42,18 @@ la définition différente et recrée Kong pendant le `./runDev.sh` normal, sans
 | Image | `public.ecr.aws/supabase/edge-runtime:v1.74.2` |
 | Empreinte mesurée | `sha256:a82676277615aee03c4f288cbbbf68dedb5ba8693073e567ab8dbfdd11ba5d45` |
 | Écoute interne | `0.0.0.0:9000` |
-| Point d'entrée | `start --policy per_request --main-service /home/deno/functions/main` |
+| Point d'entrée | `start --policy oneshot --main-service /home/deno/functions/main` |
 | Sources | `./supabase/functions:/home/deno/functions:ro` |
 | Redémarrage | `unless-stopped` dans le commun, `always` en production |
 | Limite d'un worker | 128 Mio et 10 secondes de temps mur |
 
-La politique `per_request` est une exigence observée, pas un réglage décoratif. Avec la politique
-par défaut `per_worker`, l'appel réel réussit mais le runtime 1.74.2 écrit ensuite
-`wall clock duration warning` et `early termination has been triggered`. Le même worker, le même
-appel et la politique `per_request` rendent HTTP 200 avec des journaux vides. Le service ne
-filtre donc aucun message et ne passe pas en mode `--quiet` : il supprime la cause du bruit.
+La politique `oneshot` est une exigence observée, pas un réglage décoratif. Avec la politique par
+défaut `per_worker`, l'appel réel réussit mais le runtime 1.74.2 écrit ensuite
+`wall clock duration warning` et `early termination has been triggered`. `per_request` semblait
+silencieuse sur un appel isolé, puis a produit `wall clock duraiton reached` après plusieurs POST
+concurrents et une attente supérieure au timeout. Les cinq mêmes appels sous `oneshot` rendent
+HTTP 200 et encore zéro ligne après 12 secondes. Le service ne filtre aucun message et ne passe
+pas en mode `--quiet` : il supprime la cause du bruit (décision 286).
 
 Le service reçoit seulement les variables nécessaires aux fonctions de confiance :
 `SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Le secret de
@@ -167,7 +169,7 @@ Le projet Playwright `api` appelle la vraie passerelle locale :
 6. préflight CORS : origine, méthode et en-têtes autorisés.
 
 La preuve inspecte ensuite le service : conteneur sain, aucun port hôte, montage en lecture seule,
-commande `per_request`, image exacte et journaux sans `warning`, `error`, `panic` ni terminaison
+commande `oneshot`, image exacte et journaux sans `warning`, `error`, `panic` ni terminaison
 d'isolate. Une contre-épreuve appelle directement le port public de Kong ; aucune invocation du
 port interne ne peut satisfaire la Definition of Done.
 

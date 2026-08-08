@@ -303,7 +303,7 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
   autorisation métier reste appliquée par la fonction, jamais déduite de cette seule clé.
 - **`functions`** exécute les fonctions Deno courtes et de confiance dans Supabase Edge Runtime.
   Le contrat de `CRM-016`, spécifié avant code dans `docs/SPEC-edge-functions.md`, borne chaque
-  worker à 128 Mio / 10 s, emploie la politique silencieuse `per_request`, ne publie aucun port
+  worker à 128 Mio / 10 s, emploie la politique silencieuse `oneshot`, ne publie aucun port
   hôte et réserve les connexions longues à `mail-sync`.
 - **Caddy** (production uniquement) termine TLS et sert la webapp buildée.
 - **`auth-templates`** emploie également `caddy:2.9-alpine`, mais comme serveur statique interne

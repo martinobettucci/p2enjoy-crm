@@ -8949,3 +8949,29 @@ attendue pour empêcher qu'une configuration modifiée soit livrée avec un labe
 Kong recréé, puis les six scénarios edge passer. Aucun `docker restart`, `compose restart` ni
 recréation manuelle ne peut constituer la preuve : le défaut porte précisément sur l'application
 automatique d'une nouvelle version du dépôt à une pile existante.
+
+---
+
+### Décision 286 — `per_request` avertit encore sous concurrence : `oneshot` ferme réellement l'isolate
+
+**Le harnais refuse un résultat différé.** Les six scénarios edge passent, puis
+`scripts/verify-functions.sh` inspecte l'intégralité des journaux du conteneur et tombe : entre
+deux paires POST/GET réussies apparaît `wall clock duraiton reached`. La lecture immédiate qui
+avait fondé la décision 283 était trop courte. La politique `per_request` améliore le cas isolé,
+mais ne garantit pas le silence après plusieurs workers.
+
+**Hypothèse du corps non consommé, éprouvée puis rejetée.** Le POST Playwright transmet un JSON que
+la fonction sans effet ne lit pas. Un probe a donc consommé `request.arrayBuffer()` avant de
+répondre. Cinq POST concurrents rendent tous 200 ; après 12 secondes — plus que la borne de 10 s —
+le runtime écrit encore une terminaison murale. Le flux entrant n'est pas la cause suffisante.
+
+**Comparaison à code constant.** Le même routeur, le même handler consommant le corps, les cinq
+mêmes POST et la même fenêtre de 12 secondes sont rejoués avec `--policy oneshot`. Les cinq réponses
+sont 200 et les journaux restent strictement vides. `oneshot` correspond au contrat de cette pile :
+un worker neuf, borné, pour chaque invocation courte, puis une terminaison attendue et silencieuse.
+
+**Décision corrective.** `oneshot` remplace `per_request` partout dans le contrat, Compose et les
+preuves de `CRM-016`. La décision 283 reste la trace de la première mesure mais est dépassée sur
+ce choix précis. Aucun `--quiet`, filtre ni tolérance orthographique n'est ajouté : le harnais
+continue de refuser `warning`, `error`, `panic`, `early termination` et `wall clock`, y compris la
+faute `duraiton` du runtime.

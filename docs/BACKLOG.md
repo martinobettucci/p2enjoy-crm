@@ -1551,10 +1551,11 @@ responsable tranche l'inverse — livrer ce que le document annonce plutôt que 
 moitié qui gêne.
 
 - [x] **Contrat stable avant code** : `docs/SPEC-edge-functions.md` fixe l'image 1.74.2 et son
-      empreinte mesurée, l'isolation `per_request`, le routeur sans dépendance distante, la santé
+      empreinte mesurée, l'isolation `oneshot`, le routeur sans dépendance distante, la santé
       interne, l'authentification Kong et le JSON exact de la fonction d'exemple. La politique par
       défaut a été contre-éprouvée : elle répond mais écrit deux avertissements d'isolate ;
-      `per_request` répond sans aucune ligne de journal (décision 283).
+      `oneshot` reste silencieuse après cinq POST concurrents et une fenêtre supérieure au timeout
+      là où `per_request` avertit encore (décisions 283 et 286).
 - [ ] **Service commun et route protégée** : `functions` tourne dans les deux assemblages sans
       port hôte, le montage des sources est en lecture seule, son healthcheck est HTTP, et Kong
       exige une vraie clé d'API sur `/functions/v1/` avant de joindre le runtime.
