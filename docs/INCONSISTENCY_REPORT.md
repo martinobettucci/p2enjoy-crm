@@ -2660,6 +2660,11 @@ deux colonnes, la migration sans perte de comportement, la cohérence de workflo
 RLS et la révision atomique de `move_card`, `copy_workflow_to_track` et du seed. INC-033 restera
 ouvert jusqu'à une preuve froide où la suppression réelle d'un champ jetable laisse zéro liaison.
 
+**Audit de mise en œuvre — décision 301.** Le contrôle ne porte pas seulement sur l'écriture de la
+liaison : les deux parents sont verrouillés pendant celle-ci, et déplacer ensuite une transition ou
+un champ déjà lié est refusé symétriquement. Sans ces gardes, la relation normalisée aurait encore
+pu devenir incohérente par un chemin d'administration ou une course concurrente.
+
 ---
 
 ### INC-034 — L'environnement de la routine impose une branche et une identité Git contraires à `CLAUDE.md` §13

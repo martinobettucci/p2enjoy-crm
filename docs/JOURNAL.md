@@ -9376,3 +9376,29 @@ seulement après cinq preuves : source exactement conforme, candidate non ambigu
 deux cards seedées, aucun commentaire sur elles, empreinte absente — jamais une divergence moderne
 inexpliquée. Les identifiants des deux cards sont recréés par le seed ; toute autre donnée provoque
 un refus. Cette exception ne transforme pas le seed en outil de suppression général.
+
+---
+
+### Décision 301 — Une liaison cohérente le reste quand ses parents bougent
+
+**Défaut découvert pendant l'audit de `CRM-018`.** Contrôler le couple seulement lors de son
+`INSERT` ou de son `UPDATE` ne crée pas un invariant. `workflow_transitions.workflow_id` et
+`form_fields.workflow_id` restent modifiables par un administrateur, et `service_role` conserve
+tous les privilèges : déplacer ensuite l'un des parents pouvait laisser une liaison entre deux
+workflows différents sans faire repasser son trigger. Deux transactions concurrentes pouvaient
+aussi valider chacune un état que l'autre rendait faux.
+
+**Décision.** La liaison verrouille ses deux parents en `FOR SHARE` pendant son contrôle. Deux
+triggers symétriques contrôlent aussi tout changement de `workflow_id` sur une transition ou un
+champ déjà lié, avec le même refus `23514` / `required_field_workflow_mismatch`. Le contrat ne se
+limite donc pas au chemin API ordinaire et reste vrai sous `service_role` et sous concurrence.
+
+**Copie atomique.** `copy_workflow_to_track` verrouille également le track cible et le catalogue
+de nœuds qu'inclut son empreinte. Une archive concurrente du track ne peut plus passer entre sa
+validation et la création, et une modification de nœud ne peut plus faire diverger l'empreinte dès
+l'instant même de la copie.
+
+**Rejeu.** Les trois contraintes structurelles de la nouvelle table ne sont reconstruites que si
+leur définition diffère. Un rejeu conforme ne remplace donc ni la clé primaire ni ses index ; une
+clé étrangère affaiblie reste réparée. Le harnais mesure les refus depuis chacun des deux parents
+et dégrade réellement la sixième garde de `move_card`, pas seulement sa donnée seedée.

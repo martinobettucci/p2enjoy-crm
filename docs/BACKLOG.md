@@ -1652,7 +1652,8 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 262
       dans la source sont tous signalés sans dépendre d'un horodatage.
 - [ ] **Preuves backend non complaisantes** : pgTAP, vrais jetons API et harnais de dégradation
       couvrent autorisations, copie complète et atomique, empreinte, sixième garde, croisement
-      refusé et suppression sans reste.
+      refusé à la création comme après déplacement de chacun des parents, concurrence verrouillée
+      et suppression sans reste.
 - [ ] **Parcours froid et non-régression** : reset, migrations, seed, SQL, API, UI Chromium à
       console stricte, mail, unitaires, types et build sont verts. Aucun écran ni capture ne change.
 

@@ -48,7 +48,10 @@ Contrat exact :
   signifie la supprimer puis en créer une autre ;
 - un trigger refuse en `23514`, `required_field_workflow_mismatch`, une liaison dont les deux
   parents n'appartiennent pas au même workflow — ce qui interdit aussi tout croisement de
-  workspace.
+  workspace ;
+- deux triggers symétriques opposent le même refus si le `workflow_id` d'une transition ou d'un
+  champ déjà lié rendrait le couple incohérent. Le contrôle de la liaison verrouille ses parents
+  en `FOR SHARE`, de sorte que l'invariant survive aussi aux écritures concurrentes (décision 301).
 
 Le workflow n'est volontairement pas une troisième colonne : il se déduit des deux parents, et le
 trigger garantit leur égalité. Ajouter `workflow_id` aurait contredit la forme à deux colonnes
@@ -121,6 +124,11 @@ Une référence impossible à remapper arrête toute la transaction. L'ancien co
 liaison parce que zéro champ » n'est plus un état acceptable ; la décision 293 remplace sur ce
 point la frontière provisoire de la décision 290.
 
+La lecture de la source est stable pendant le geste : la source et le track cible sont verrouillés,
+ainsi que les tables de composition et le catalogue de nœuds couvert par l'empreinte. Le track ne
+peut donc pas être archivé entre sa validation et l'insertion, et l'empreinte ne peut pas décrire
+un instant différent des lignes effectivement copiées (décision 301).
+
 La fonction stocke aussi dans `workflows.source_composition_fingerprint` l'empreinte SHA-256 de la
 source calculée par `app.workflow_composition_fingerprint(workflow_id)`. La sérialisation canonique
 couvre nœuds, étapes, transitions, champs, règles et exigences, triés par identifiant source ; elle
@@ -164,6 +172,7 @@ La suite pgTAP `supabase/tests/0021_transition_required_fields.test.sql` prouve 
 - forme exacte à deux colonnes, clé primaire et deux clés étrangères `on delete cascade` ;
 - migration d'un tableau peuplé sans perte, puis absence de la colonne ;
 - refus d'un parent absent et d'un croisement de workflows ;
+- refus d'un croisement créé après coup en déplaçant l'un ou l'autre parent ;
 - suppression d'une transition puis d'un champ, chacune retirant la liaison ;
 - RLS, politiques, privilèges et fonction de trigger ;
 - `move_card` refuse puis accepte selon la présence d'une valeur pour un champ lié ;

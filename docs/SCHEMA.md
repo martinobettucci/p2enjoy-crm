@@ -341,10 +341,12 @@ Précisions apportées par `CRM-031`, après mesure :
 | `transition_id` | `uuid` | PK avec `field_id`, FK vers `workflow_transitions`, `ON DELETE CASCADE` |
 | `field_id` | `uuid` | PK avec `transition_id`, FK vers `form_fields`, `ON DELETE CASCADE` |
 
-La table n'a ni identité, ni horodatage, ni `workspace_id`. Un trigger refuse tout couple dont les
-deux parents appartiennent à des workflows différents. `copy_workflow_to_track` copie désormais
-le formulaire complet et remappe chaque liaison vers le champ dérivé correspondant : aucune
-exigence inerte ni aucun identifiant partagé (`CRM-018`, décision 293).
+La table n'a ni identité, ni horodatage, ni `workspace_id`. Son trigger verrouille les deux parents
+et refuse tout couple dont ils appartiennent à des workflows différents ; deux triggers
+symétriques empêchent aussi de rendre une liaison existante incohérente en déplaçant ensuite la
+transition ou le champ (`CRM-018`, décision 301). `copy_workflow_to_track` copie désormais le
+formulaire complet et remappe chaque liaison vers le champ dérivé correspondant : aucune exigence
+inerte ni aucun identifiant partagé (`CRM-018`, décision 293).
 Contrat complet : `docs/SPEC-transition-required-fields.md`.
 
 **État : contrat de `CRM-018` spécifié, migration en cours.** L'option d'un nettoyage applicatif
