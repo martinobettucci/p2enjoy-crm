@@ -20,9 +20,11 @@ d'exécuter le code attendu.
   appartenance au même workflow et les deux suppressions en cascade. La migration 19 reprend les
   anciens tableaux effectifs, refuse les UUID morts et les croisements de workspace, recense puis
   écarte les anciennes exigences dérivées inertes. `move_card`, `copy_workflow_to_track`, le seed,
-  les types attendus et les preuves historiques sont révisés ensemble. Cible courante : 21
-  fichiers / 1508 assertions pgTAP et 424 scénarios API ; la preuve froide reste due avant
-  fermeture de l'unité.
+  les types attendus et les preuves historiques sont révisés ensemble. La copie remappe aussi
+  les sept champs, les quinze règles et l'exigence, puis conserve l'empreinte SHA-256 canonique de
+  la source afin de détecter jusqu'à ses suppressions. Le seed exerce les champs dérivés et porte
+  désormais 21 valeurs sur 11 cards. Cible courante : 21 fichiers / 1534 assertions pgTAP et 425
+  scénarios API ; la preuve froide reste due avant fermeture de l'unité.
 - **La preuve anonyme exhaustive cesse d'oublier des tables métier.** `card_comments`,
   `card_events` et la nouvelle liaison rejoignent l'inventaire : quinze tables seedées sont
   d'abord constatées non vides par la clé de service, puis rendues `200` / `[]` à l'anonyme. Le

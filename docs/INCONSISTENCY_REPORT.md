@@ -2882,6 +2882,12 @@ l'environnement réel).
 
 ### INC-037 — La Definition of Done de `CRM-032` exige la copie de champs dont la table arrive à `CRM-035`
 
+**Arbitrage final rendu — décision 293, portée par `CRM-018`.** Une copie est utilisable ou elle
+n'est pas une copie : champs, règles et exigences sont remappés atomiquement, avec des identifiants
+propres. Une empreinte de composition rend aussi visibles les ajouts, modifications et
+suppressions ultérieurs de la source. L'historique ci-dessous explique l'origine de l'écart ; il
+ne constitue plus une option suspendue.
+
 **Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md`, `docs/SPEC-workflow-engine.md`
 §4 et `docs/MASTER_PLAN.md` §2.
 **Relevé le :** 2026-08-04, pendant la spécification de `CRM-032`.
@@ -3798,7 +3804,9 @@ d'un type plutôt que d'un choix).
 
 ### INC-056 — Trois garde-fous comptaient une donnée que `copy_workflow_to_track` duplique, et leur valeur dépendait de l'âge de la base
 
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 262.** Rendue **déterministe par construction** par la table de liaison décidée en INC-033 : la copie de workflow cesse de recopier `require_fields` tel quel. Mise en œuvre : `CRM-018`.
+**Arbitrage rendu — `docs/JOURNAL.md`, décisions 262 puis 293.** La table de liaison rend le
+comptage déterministe et la copie remappe l'exigence vers le champ de sa propre composition. Mise
+en œuvre : `CRM-018`.
 
 **Nature :** garde-fous non déterministes, livrés par `CRM-031`, `CRM-035` et `CRM-036`.
 **Relevé le :** 2026-08-05, pendant `CRM-013`, sur une base **froide**.

@@ -1,6 +1,7 @@
 # Spécification — Données de développement et de démonstration
 
-Unités de backlog : `CRM-005` (socle), `CRM-046` (démonstration complète) — voir `docs/BACKLOG.md`.
+Unités de backlog : `CRM-005` (socle), `CRM-046` (démonstration complète) et `CRM-018`
+(copie utilisable du formulaire) — voir `docs/BACKLOG.md`.
 Documents liés : `docs/DAT.md` §11, `docs/SCHEMA.md` §1, `docs/SPEC-permissions-rls.md` §2,
 `docs/SPEC-auth.md` §3 et §4, `README.md` §5 et §8.
 
@@ -822,7 +823,8 @@ continuent de refuser en `23503` toute tentative de réutiliser un identifiant d
 
 ### 9.6 Valeurs de formulaire, commentaires et événements
 
-**Quatre valeurs ajoutées**, quatorze deviennent **dix-huit** :
+**Sept valeurs ajoutées**, quatorze deviennent **vingt et une** : les quatre valeurs de
+`CRM-046` et trois réponses portées par les champs remappés de la copie depuis `CRM-018`.
 
 | Card | Champ | Valeur | Motif |
 |---|---|---|---|
@@ -830,6 +832,9 @@ continuent de refuser en `23503` toute tentative de réutiliser un identifiant d
 | `…0cc` | `budget` | `64000` | — |
 | `…0cd` *livré* | `budget` | `210000` | la seule affaire **gagnée** active ; sans montant, le cumul du board serait muet à cette colonne |
 | `…0ce` *perdu* | `motif-perte` | `"…"` | l'étape l'**exige** (§9.3) |
+| `…0ca` *prospection dérivée* | `source` | `"recommandation"` | la copie expose un formulaire réellement renseignable, pas seulement ses définitions |
+| `…0cb` *négociation dérivée* | `budget` | `87000` | le montant de la card reste cohérent avec sa réponse métier |
+| `…0cb` | `lien-proposition` | `"https://p2enjoy.fr/propositions/nordis-assistant-ia"` | la branche de négociation de la copie porte sa proposition |
 
 **Aucun commentaire n'est ajouté, et le motif est écrit.** Les cinq commentaires du §2.14 couvrent
 déjà le fil à deux auteurs, la modification, la suppression et l'auteur `viewer`. `card_comments`
@@ -837,9 +842,9 @@ ne porte **aucune** référence à un workflow : un commentaire posé sur une ca
 ne démontrerait rien qu'un `card_id` ne démontre déjà. Une ligne de plus serait décorative, ce que
 `CLAUDE.md` §8 proscrit.
 
-**Neuf événements naissent des triggers**, 29 deviennent **38** : cinq `created` pour les cinq
-cards, quatre `field_changed` pour les quatre valeurs. Le seed n'en forge aucun — il ne le peut
-pas, le §2.15 l'établit.
+**Douze événements naissent des triggers**, 29 deviennent **41** : cinq `created` pour les cinq
+cards et sept `field_changed` pour les sept valeurs. Le seed n'en forge aucun — il ne le peut pas,
+le §2.15 l'établit.
 
 **CE NOMBRE EST UN ÉTAT, PAS UN INVARIANT** (décision 226). Il décrit une base **au sortir d'un
 seed sur cluster neuf**, et il croît dès la première écriture de qui que ce soit : un utilisateur
@@ -914,7 +919,7 @@ La comparaison est faite par une **empreinte** : la même requête ordonnée, ex
 dont la sortie est hachée. Deux empreintes égales prouvent l'identité ; une empreinte différente
 nomme la table qui a bougé.
 
-**MESURÉ le 2026-08-06 — la forme forte est acquise.** `./resetMe.sh --yes` a réellement détruit le
+**Mesure historique de `CRM-046`, le 2026-08-06.** `./resetMe.sh --yes` a réellement détruit le
 cluster PostgreSQL et ses volumes, les dix-sept migrations ont été rejouées à froid
 (« 17 fichier(s) appliqué(s) avec succès »), puis le seed appliqué. L'empreinte reproductible est
 **identique** de part et d'autre :
@@ -923,8 +928,9 @@ cluster PostgreSQL et ses volumes, les dix-sept migrations ont été rejouées �
 34c409d17775c2ee6d1f68aa5fc73c03b9b49a0573596ffcf07bb2ead27d9d07
 ```
 
-Et `card_events` porte **exactement 38 lignes** sur cette base neuve, ce qui confirme le nombre du
-§9.6 pour ce qu'il est : l'état d'un cluster fraîchement reconstruit.
+Et `card_events` portait **exactement 38 lignes** sur cette base neuve. `CRM-018` ajoute trois
+valeurs dérivées et porte donc le nouvel état froid attendu à **41** ; sa propre preuve froide est
+due avant fermeture de l'unité et remplacera cette empreinte historique.
 
 **Une réserve, nommée** : `resetMe.sh` a détruit le cluster puis **échoué** à la construction de
 l'image `webapp` (INC-042, neuvième occurrence sur cet hôte). La pile a été redémarrée à la main,
@@ -943,11 +949,11 @@ Exécutées **hors interface**, contre l'API réelle et la base, par
 | 3 | Le workflow **dérivé** porte ≥ 1 card active à ≥ 2 étapes distinctes | Conforme |
 | 4 | Tout channel **actif** porte ≥ 1 card active | Conforme — `appels-offres` exclu, archivé |
 | 5 | Les deux cards du workflow dérivé désignent bien la **copie**, jamais le workflow global | `workflow_id` = copie, résolu à l'exécution |
-| 6 | Aucune valeur de formulaire sur le workflow dérivé | 0 ligne — conséquence d'INC-037, figée |
-| 7 | Les quatre valeurs du §9.6 existent, et `…0cc` porte `lien-proposition` | Conforme |
+| 6 | Le formulaire de la copie est complet et autonome | 7 champs, 15 règles, 1 exigence ; aucun identifiant de champ partagé avec la source |
+| 7 | Les sept valeurs du §9.6 existent, dont les trois réponses des cards dérivées | Conforme |
 | 8 | 14 cards, dont **12 actives**, une archivée, une en corbeille | Conforme |
-| 9 | 18 valeurs, 5 commentaires ; **14 `created`, un par card** | Égalité stricte |
-| 9 bis | Total des événements, `field_changed`, `moved`, `assigned`, `channel_changed` | **Minorants** — 38, 18, 2, 2, 2 : un cumul ne se fige pas (décision 226) |
+| 9 | 21 valeurs sur 11 cards, 5 commentaires ; **14 `created`, un par card** | Égalité stricte |
+| 9 bis | Total des événements, `field_changed`, `moved`, `assigned`, `channel_changed` | **Minorants** — 41, 21, 2, 2, 2 : un cumul ne se fige pas (décision 226) |
 | 10 | Le seed est **rejouable avec des cards dans `prospection`** : second passage, sortie `0` | Aucune écriture en sections 4 et 7, aucun `23503` |
 | 11 | Une dérive **réparable** de la copie — nom, défaut, archivage — est rattrapée | Le seed la ramène à son contrat, même avec des cards dans `prospection` (décision 225) |
 | 12 | Pour chacun des **trois** profils, tout channel actif lisible rend ≥ 1 card active | Conforme |
@@ -974,7 +980,8 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
 
 - **Aucun message, aucune pièce jointe.** `card_messages` et le sous-système de messagerie relèvent
   du chunk 4 (`CRM-050` à `CRM-059`). L'énoncé de `CRM-046` n'en demande pas.
-- **Aucune valeur de formulaire sur le workflow dérivé** : INC-037, §9.5.
+- **Le formulaire dérivé n'est plus une limite** : `CRM-018` copie ses sept champs, ses quinze
+  règles et son exigence, et le seed renseigne trois valeurs par leurs identifiants remappés.
 - **Aucun second workspace, aucun compte extérieur** : inchangé depuis le §8.
 - **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la
   publication et un déplacement réel sont atteints avec les comptes de ce jeu, sans substitution.
