@@ -284,6 +284,7 @@ jour à la main.
 | `channels` | `app.can_read_channel` — **livré par `CRM-012`**, droits fins compris ; INC-030 close | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-channels.md` §4) |
 | `workflow_nodes_catalog` | Membres du workspace — **livré par `CRM-030`** avec `app.is_workspace_member`, qui **est** la règle spécifiée et non un repli : aucun droit fin ne gouverne le catalogue | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-workflow-engine.md` §2.6) |
 | `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace — **livré par `CRM-031`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un workflow | `admin` ; **la suppression est exposée aux étapes et aux transitions**, et à elles seules — elles sont la composition d'un workflow et n'ont aucun `archived_at` (`docs/SPEC-workflow-engine.md` §3.7, `docs/JOURNAL.md` décision 74). Un workflow, lui, s'archive |
+| `workflow_transition_required_fields` | Membres du workspace du workflow, résolu par la transition — **livré par `CRM-018`** ; `anon` conserve le privilège `SELECT` nécessaire à la preuve mais aucune politique ne lui ouvre de ligne | `admin` pour `INSERT` et `DELETE` ; **aucun `UPDATE` exposé** : modifier une liaison signifie la supprimer puis la créer. Un trigger, appliqué aussi au service, interdit de croiser deux workflows (`docs/SPEC-transition-required-fields.md` §4) |
 | `form_fields`, `form_field_rules` | Membres du workspace — **livré par `CRM-035`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un formulaire, qui appartient à un workflow | `admin` ; **la suppression est exposée aux règles**, et à elles seules — un champ porte `archived_at` et l'archivage tient lieu de suppression, une règle est la composition d'un formulaire (`docs/SPEC-form-composer.md` §2.7, `docs/JOURNAL.md` décision 96) |
 | `cards` | `app.can_read_channel(channel_id)` — **la colonne de la ligne, non `app.can_read_card`** (§3.6) | `app.can_write_channel(channel_id)` pour l'insertion et la mise à jour ; **`current_step_id` non modifiable directement : dû par `CRM-013`, non livré par `CRM-040`** |
 | `card_field_values` | `app.can_read_card(card_id)` — **livré par `CRM-036`** | `app.can_write_card(card_id)` (§3.7) pour l'insertion et la mise à jour ; **aucune suppression n'est exposée**, vider un champ c'est écrire `'null'::jsonb` (`docs/SPEC-form-composer.md` §6.9) |
@@ -603,7 +604,7 @@ dit pourquoi cette duplication est voulue, et le §7.2 donne le contrat mesuré 
 | 8 | Insertion directe dans `card_events` ou `audit_log` | Refus — **non satisfaisable par `CRM-013`** : `card_events` arrive avec `CRM-044`, `audit_log` avec `CRM-072` (§4.4) |
 | 9 | Téléchargement d'une pièce jointe `infected` ou `pending` | Refus — **non satisfaisable par `CRM-014`** : aucune table de pièces jointes, et `storage.buckets` est **vide** — mesuré. Absence figée (§7.3) |
 | 10 | Dernier administrateur tente de se retirer son rôle | Refus — **l'effet est acquis, la règle ne l'est pas** : `workspace_members` ne porte **aucune** politique (INC-014), donc le refus par défaut de `CRM-003` rend l'écriture sans effet. Mesuré et figé par `CRM-014` (§7.3) |
-| 11 | Utilisateur anonyme lit n'importe quelle table métier | Aucune ligne — **acquise**, et étendue par `CRM-014` aux **douze** tables métier réellement peuplées par le seed, énumérées et non échantillonnées |
+| 11 | Utilisateur anonyme lit n'importe quelle table métier | Aucune ligne — **acquise** ; les douze tables de `CRM-014`, puis `card_comments`, `card_events` et `workflow_transition_required_fields`, soit **quinze** tables réellement peuplées par le seed, énumérées et non échantillonnées |
 | 12 | `queue_outbound_email` avec une identité qui ne lui appartient pas | Refus — **non satisfaisable par `CRM-014`** : la fonction n'existe pas (`CRM-058`). Absence figée (§7.3) |
 
 Un refus ne se manifeste pas toujours par une erreur : pour une lecture, l'attendu est **zéro
@@ -652,7 +653,7 @@ Mesuré le 2026-08-05 sur la pile de développement seedée, avec les jetons ré
 | 8 | clé de service | `GET /card_events`, `GET /audit_log` | `404`, `PGRST205` — **les tables n'existent pas** |
 | 9 | — | inventaire de `storage.buckets` | **aucun bucket**, aucune table de pièces jointes |
 | 10 | `admin` | `PATCH` puis `DELETE` de sa propre ligne `workspace_members` | `200` et `[]`, puis `204` ; le rôle relu par la clé de service vaut **toujours `admin`** |
-| 11 | anonyme | `GET` sur les **douze** tables métier peuplées | `200` et `[]` sur chacune |
+| 11 | anonyme | `GET` sur les **quinze** tables métier peuplées | `200` et `[]` sur chacune |
 | 12 | clé de service | `POST /rpc/queue_outbound_email` | `404`, `PGRST202` — **la fonction n'existe pas** |
 
 Trois précautions gouvernent ce tableau, héritées des unités précédentes et rappelées ici parce
@@ -668,9 +669,10 @@ qu'elles sont la condition de validité de l'ensemble :
 
 ### 7.3 Ce qui n'est pas satisfaisable, et comment l'absence est figée
 
-Cinq preuves — n° 6, 7, 8, 9 et 12 — portent sur des tables ou une fonction qui **n'existent pas**
-à cette place du plan. Elles ne sont pas satisfaisables, et aucune preuve de substitution ne le
-cachera.
+Cinq preuves — n° 6, 7, 8, 9 et 12 — ne sont pas encore **entièrement** satisfaisables. La n° 8
+l'est pour `card_events`, dont l'insertion directe est réellement refusée depuis `CRM-044`, mais
+reste ouverte pour `audit_log`. Les quatre autres objets et cette moitié d'audit n'existent pas à
+cette place du plan ; aucune preuve de substitution ne le cachera.
 
 Le scénario existe quand même, et **assère l'absence** : `404` / `PGRST205` pour une table,
 `404` / `PGRST202` pour une fonction, inventaire vide pour `storage.buckets`. C'est la convention

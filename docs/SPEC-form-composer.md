@@ -215,14 +215,12 @@ workspace :
 les étapes : un ordre attribué par effet de bord ne serait pas reproductible si l'ordre des
 insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
 
-### 2.10 Ce que `CRM-035` ne livre pas, et qui est nommé
+### 2.10 Frontières historiques de `CRM-035`, refermées par les unités suivantes
 
-- **La copie des champs vers un track.** Le §2.1 dit que deux channels partageant un workflow
-  partagent son formulaire ; la copie d'un workflow vers un track (`CRM-032`) crée un **nouveau**
-  workflow, qui naît donc **sans aucun champ**. `copy_workflow_to_track` n'en copie aucun : elle a
-  été écrite quand `form_fields` n'existait pas. Le comportement reste **inchangé** ici, et la
-  conséquence devient réelle et mesurable — INC-037, dont l'arbitrage appartient au responsable et
-  n'a pas été rendu. Elle est **figée par des assertions** plutôt que par un commentaire.
+- **Copie des champs vers un track.** `CRM-035` n'avait pas modifié la fonction plus ancienne,
+  faute d'arbitrage sur INC-037. La décision 293 tranche désormais la frontière : `CRM-018` copie
+  et remappe le formulaire complet — champs, règles et exigences — dans le même geste que le
+  workflow. Une copie sans formulaire n'est plus un état produit conforme.
 - **À la livraison de `CRM-035`, `require_fields` reste vide dans le seed.** La colonne pouvait
   alors désigner des champs réels, mais aucune garde ne la lisait : une donnée de démonstration que
   rien n'exerce est une décoration, pas une preuve. `CRM-036` a ensuite livré la garde et
@@ -876,15 +874,16 @@ Ce qui est atteignable, et exigé de `CRM-037` :
    besoin se confirme.
 2. **Champs calculés** (score, montant pondéré affiché comme un champ) non couverts en v1 ; le
    montant pondéré est calculé à la lecture, pas stocké.
-3. **La copie d'un workflow vers un track ne copie pas ses champs.** Le §2.1 affirme pourtant que
-   le formulaire suit le workflow, et `CRM-032` avait la copie des champs dans sa Definition of
-   Done. Depuis `CRM-035`, la conséquence est **réelle** : la copie posée par le seed porte zéro
-   champ là où sa source en porte sept. INC-037, trois options d'arbitrage, à trancher par le
-   responsable. Le comportement reste inchangé tant qu'il ne l'a pas été.
+3. ~~**La copie d'un workflow vers un track ne copie pas ses champs.**~~ **ARBITRÉ par la décision
+   293, à livrer par `CRM-018`** : le formulaire, ses règles et ses exigences sont tous remappés.
+   La mesure historique « zéro champ dérivé » reste la contre-preuve que les nouvelles suites
+   doivent renverser.
 4. ~~**La forme des entrées de `choices` n'est pas contrainte par la base** (§2.4).~~ **CLOS par
    `CRM-036`** : la base ne la contraint toujours pas — un `CHECK` ne peut porter aucune
    sous-requête —, mais la **valeur** d'un `select` ou d'un `multiselect` est désormais refusée
    lorsque sa clé ne figure pas dans `options.choices` (§6.5). Le risque nommé au §2.4 — une clé de
    choix inconnue arrivant jusqu'à l'affichage — est éteint du côté qui compte, celui des réponses.
-5. **`user` et `contact` ne sont pas résolus** (§6.5) : leur valeur est validée comme un `uuid` et
-   rien de plus. INC-053, arbitrage attendu.
+5. **`user` et `contact` exigent une vraie cible** (§6.5) : la décision 295 impose dès la reprise
+   de `CRM-036` qu'un `user` soit un membre actif du workspace. `contact` est refusé explicitement
+   jusqu'à la table de `CRM-060`, puis devra viser un contact du même workspace. Aucun UUID opaque
+   n'est accepté entre-temps.

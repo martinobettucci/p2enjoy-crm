@@ -301,6 +301,7 @@ quatrième occurrence du même oubli (INC-025).
 | `track_id` | `uuid` | nul si `global`, non nul si `track` ; FK **composite** vers `tracks (id, workspace_id)` |
 | `derived_from_workflow_id` | `uuid` | FK `workflows (id)` `on delete set null` |
 | `derived_at` | `timestamptz` | date de la copie |
+| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source à la copie ; nul hors dérivation |
 | `is_default` | `boolean` | non nul, défaut faux ; **au plus un vrai par workspace** |
 | `archived_at` | `timestamptz` | suppression douce |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` par trigger |
@@ -319,10 +320,13 @@ son workflow à un track de B, ce qu'aucune politique RLS ne rattraperait : la p
 écrit la ligne, pas ce que la ligne raconte. L'unicité `tracks (id, workspace_id)` nécessaire à
 cette clé **existe déjà**, posée par `CRM-021` pour la même raison (`docs/SPEC-channels.md` §2.4).
 
-**`derived_from_workflow_id` est une trace, pas un lien de dépendance.** La copie est une
+**Le lignage est une trace, pas un lien de dépendance.** La copie est une
 divergence assumée (§4) : le workflow copié vit sa vie. La clé étrangère est donc `on delete set
 null` et non `cascade` — supprimer l'original ne doit pas emporter ses copies. Mesuré : la copie
-survit à la suppression de son origine, `derived_from_workflow_id` repassant à nul.
+survit à la suppression de son origine, `derived_from_workflow_id` repassant à nul. Tant que
+l'origine existe, `source_composition_fingerprint` conserve l'empreinte de sa composition au
+moment exact de la copie ; elle voit ainsi les suppressions que `updated_at` ne pouvait pas voir
+(décision 293).
 
 **`is_default` : au plus un vrai par workspace.** Posé par un index unique partiel
 `(workspace_id) where is_default`. Mesuré : la seconde ligne marquée par défaut dans le même
@@ -671,13 +675,14 @@ refus est donc double, privilège puis contrôle explicite, et le premier suffit
 | Objet | Copié | Remarque |
 |---|---|---|
 | `workflows` | nom (ou `new_name`), `workspace_id` | `scope` forcé à `track`, `track_id` renseigné |
-| | `derived_from_workflow_id`, `derived_at` | la traçabilité d'origine, renseignée par la fonction |
+| | `derived_from_workflow_id`, `derived_at`, `source_composition_fingerprint` | la traçabilité et l'empreinte d'origine, renseignées par la fonction |
 | | `is_default` | **forcé à faux**, jamais copié |
 | | `archived_at` | jamais copié : une copie naît active |
 | `workflow_steps` | `node_id`, `position`, les trois surcharges, `is_initial` | à l'identique |
 | `workflow_transitions` | `label`, `require_comment` | extrémités remappées (ci-dessous) |
-| champs exigés par une transition | **non** | aucune liaison sans formulaire cible — INC-056 |
-| champs de formulaire | **non** | `form_fields` n'existe pas — §4.8, INC-037 |
+| `form_fields` | clé, libellé, type, options, aide, position, archivage | nouveaux identifiants, même contrat métier |
+| `form_field_rules` | visibilité | champ et étape remappés |
+| champs exigés par une transition | oui | transition et champ remappés |
 
 **`is_default` forcé à faux n'est pas une précaution, c'est une nécessité mesurée.** Copier la
 colonne telle quelle depuis un workflow par défaut est refusé en `23505` par
@@ -685,11 +690,10 @@ colonne telle quelle depuis un workflow par défaut est refusé en `23505` par
 copie est, en pratique, le workflow par défaut. Sans ce forçage, la fonctionnalité échouerait sur
 son cas d'emploi principal.
 
-**Les arêtes sont remappées par le nœud, et non par une table de correspondance.** `(workflow_id,
-node_id)` est unique (§3.3) : le nœud est donc la **clé naturelle** d'une étape dans son workflow, et
-l'étape de la copie qui correspond à une étape de la source est celle qui instancie le même nœud.
-Aucune structure temporaire n'est nécessaire, et la propriété se vérifie : mesuré sur la sonde,
-**zéro** arête de la copie pointe vers une étape restée dans la source.
+**Chaque référence est remappée par une clé naturelle unique.** Une étape se retrouve par son
+`node_id`, un champ par sa `key`, et une transition par le couple de nœuds source/cible. La fonction
+ne conserve aucun identifiant de composition de la source. La propriété se vérifie : zéro arête,
+règle ou exigence de la copie ne pointe vers une ligne restée dans la source.
 
 **Les positions fractionnaires sont conservées telles quelles.** Mesuré : une source portant
 `1`, `2.5`, `3` donne une copie portant `1`, `2.5`, `3`. Le trigger d'attribution automatique
@@ -713,15 +717,15 @@ n'y voyant aucune ligne là où le propriétaire en voit une.
 | `source_workflow_id`, `source_name`, `source_archived_at` | son origine |
 | `derived_at` | la date de la copie |
 | `source_modified_at` | le plus récent `updated_at` de la source **et de sa composition** |
-| `source_modified_since_copy` | `source_modified_at > derived_at` |
+| `source_composition_fingerprint` | l'empreinte mémorisée à la copie |
+| `current_source_composition_fingerprint` | l'empreinte recalculée de la source courante |
+| `source_modified_since_copy` | vrai si les deux empreintes diffèrent |
 
-**Ce que ce signal ne voit pas, et c'est mesuré.** Une **suppression** dans la source — une
-transition retirée, une étape retirée — ne modifie aucun `updated_at` et laisse donc
-`source_modified_since_copy` à faux. La source a pourtant divergé. Le fait est établi par la mesure,
-non supposé, et n'est **pas** corrigé ici : le corriger suppose de choisir entre stocker la
-composition au moment de la copie, journaliser les suppressions, ou comparer les cardinalités — trois
-options qui engagent le schéma. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-038**, avec ses
-options.
+**Le signal couvre les suppressions.** `app.workflow_composition_fingerprint` sérialise de façon
+canonique les nœuds, étapes, transitions, champs, règles et exigences, triés par identifiants
+source, puis calcule leur SHA-256 avec `extensions.digest`. Ajouter, modifier ou supprimer un de
+ces objets change l'empreinte. `source_modified_at` reste une date d'aide à l'affichage ; elle ne
+porte plus le verdict de divergence (INC-038, décision 293).
 
 **La vue est fermée deux fois, et une seule fermeture est visible de l'API.** Aucun privilège
 d'écriture n'est accordé (§4.7) ; et, mesuré, PostgreSQL refuse de toute façon la réécriture d'une
@@ -754,17 +758,12 @@ migrations précédentes révoquaient déjà nommément sur leurs tables, et les
 vivent dans le schéma `app`, que l'API n'expose pas. Le fait est écrit ici pour que les unités
 suivantes le trouvent écrit (`docs/JOURNAL.md`, décision 80).
 
-### 4.8 Les champs de formulaire ne sont pas copiés, et ne peuvent pas l'être
+### 4.8 Les champs sont copiés lorsque leur schéma existe
 
-La Definition of Done de `CRM-032` exige la copie « des étapes, des transitions **et des champs** ».
-Les champs de formulaire vivent dans `form_fields`, livrée par `CRM-035` — deux étapes plus loin dans
-`docs/MASTER_PLAN.md` §2. Mesuré : `to_regclass('public.form_fields')` rend `NULL`.
-
-Aucune table n'a été créée par anticipation : cela aurait préempté `CRM-035`. Depuis `CRM-018`, la
-fonction copie les transitions mais **aucune liaison de champ exigé**. La copie ne reçoit aucun
-formulaire ; recopier une exigence de la source créerait donc une exigence inerte, impossible à
-résoudre dans son workflow. INC-037 reste ouverte pour la copie des définitions de champs ; le
-comportement déterministe retenu entre-temps est consigné par INC-056.
+`CRM-032` ne pouvait matériellement copier `form_fields`, livrée deux unités plus tard ; cette
+limite historique était mesurée et nommée par INC-037. `CRM-018`, exécutée après `CRM-035`, ferme
+désormais la Definition of Done d'origine : elle redéfinit la même RPC avec le remappage complet
+décrit au §4.5. Une base rejouée n'observe jamais une version intermédiaire comme état final.
 
 ### 4.9 Contrat d'API attendu
 

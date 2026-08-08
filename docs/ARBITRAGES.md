@@ -1,4 +1,4 @@
-# Dossier d'arbitrage — questions ouvertes en attente de décision
+# Dossier d'arbitrage — décisions rendues et travail restant
 
 Document de **travail du responsable**. Il ne remplace pas `docs/INCONSISTENCY_REPORT.md`, qui
 reste la source de vérité de chaque constat : il le **trie**, propose des options chiffrées en
@@ -6,6 +6,47 @@ avantages et inconvénients, et recommande une issue.
 
 Une entrée disparaît d'ici lorsque la décision est prise, écrite dans `docs/JOURNAL.md`, et
 l'entrée `INC-` correspondante déplacée en « Clos ».
+
+> **Mise à jour du 2026-08-08.** Le responsable a délégué l'ensemble des choix restants. Les
+> décisions 292 à 299 du journal rendent tous les arbitrages produit et techniques encore
+> suspendus. Les sections « quarante entrées qui restent » ci-dessous sont conservées comme
+> photographie historique du 2026-08-06 ; elles ne constituent plus une file de questions.
+> Une entrée reste néanmoins ouverte dans le registre jusqu'à ce que sa correction soit réellement
+> livrée et prouvée.
+
+## Matrice d'exécution des arbitrages du 2026-08-08
+
+| Entrées | Décision exécutable | Porteur |
+|---|---|---|
+| INC-002, INC-004 | empreinte MIME complète ; inconnu accepté mais sans pouvoir automatique | `CRM-054` |
+| INC-006, INC-008, INC-018, INC-026, INC-082 | pile actuelle canonique ; scripts canoniques ; erreurs UI sûres ; faits Stalwart reportés | socle, mail |
+| INC-009, INC-010, INC-012, INC-017, INC-019, INC-025, INC-029, INC-031, INC-033, INC-043, INC-047, INC-054 | choix déjà acquis confirmés ; fermeture seulement après mesure de l'unité porteuse | unités existantes |
+| INC-011, INC-014, INC-045, INC-075 | permissions dérivées des parents ; parent navigable par enfant autorisé ; identité RLS | `CRM-022`, reprise droits fins |
+| INC-027 | `DEFAULT NULL` plus trigger pour toute position omissible | reprise migrations/types |
+| INC-028 | `*-on-soft` partout, `accent` réservé au surlignage | reprise design transverse |
+| INC-034, INC-059, INC-069 | une routine séquentielle sur `main`, identité du responsable ; décisions `180a`/`180b` | méthode de travail |
+| INC-035, INC-039, INC-040, INC-041, INC-074 | dernier propriétaire = définition complète ; gardes symétriques ; seed convergent | reprise migrations/seed |
+| INC-036 | `PLAYWRIGHT_CHROMIUM_PATH` contrôlé explicitement | harnais UI |
+| INC-037, INC-038, INC-056 | copie intégrale du formulaire et empreinte de composition | `CRM-018` |
+| INC-046, INC-073 | geste pluriel atomique, mapping exhaustif | `CRM-019` |
+| INC-048, INC-052 | vrai commentaire transactionnel ; blancs Unicode normalisés | reprise `CRM-034` |
+| INC-049, INC-051, INC-057 | propriété exacte de chaque preuve et de chaque `@verifies` | reprise preuves |
+| INC-053 | `user` résolu maintenant ; `contact` refusé jusqu'à `CRM-060` | reprise formulaires, `CRM-060` |
+| INC-055, INC-058, INC-060, INC-061, INC-064, INC-078, INC-080 | harnais autonomes, synchrones, restaurés à l'entrée, comptes seedés nommés | reprise harnais |
+| INC-062 | parcours transition détenu par `CRM-041`, contre-preuve de `CRM-037` | reprise DoD |
+| INC-063 | `alert` réservé à l'erreur | reprise formulaire |
+| INC-065 | redirection canonique seulement après double autorisation | parcours card |
+| INC-066 | éditeur administrateur complet | `CRM-076` |
+| INC-067 | conversion numérique finie et parseur partagé | reprise cards, `CRM-066` |
+| INC-068 | étiquettes réelles, RLS, filtres et digest | `CRM-069` |
+| INC-070 | analyse AST TypeScript prouvée dans les deux sens | reprise `CRM-008` |
+| INC-071, INC-072, INC-076 | commenter exige écriture ; modération auditée ; auteur nullable | reprise commentaires/identité |
+| INC-077 | libellé « Dossier changé », famille « Organisation » | reprise timeline |
+| INC-081 | close seulement après livraison et preuve des quatre unités créées | `CRM-016` à `CRM-019` |
+
+Les propositions P01 à P12 sont elles aussi arbitrées par la décision 299 et par la fin de
+`docs/BACKLOG.md`. Il ne reste donc **aucune décision produit suspendue** ; il reste du travail à
+implémenter, mesurer et fermer.
 
 ---
 

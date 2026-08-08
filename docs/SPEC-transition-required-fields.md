@@ -24,10 +24,10 @@ Les exclusions existantes restent identiques : un champ archivé n'est pas exig�
 `hidden` seule n'exige rien, et l'absence de valeur est définie par
 `app.valeur_de_champ_est_vide(jsonb)`.
 
-L'unité ne copie toujours pas les définitions de champs vers un workflow dérivé. INC-037 reste
-donc ouvert. En revanche, elle cesse de recopier vers la transition dérivée une exigence qui
-désigne un champ absent de ce workflow et que `move_card` ne pourrait pas résoudre. La source
-garde sa liaison ; la copie n'en reçoit aucune tant que son formulaire n'est pas copié.
+La décision 293 ferme INC-037 : un workflow dérivé doit être immédiatement utilisable. La copie
+remappe donc dans la même transaction les champs, leurs règles et les exigences des transitions.
+Source et copie ont la même composition métier au moment de la copie, mais aucun identifiant de
+champ, règle ou liaison n'est partagé entre elles.
 
 ## 2. Table de liaison
 
@@ -108,19 +108,38 @@ L'ordre du `DETAIL`, les six jetons d'erreur et tous les autres refus restent in
 
 ### 5.2 `copy_workflow_to_track`
 
-La fonction copie les transitions, mais **aucune liaison**. Les champs restent rattachés au
-workflow source ; recopier leur identifiant produisait une exigence inerte, ignorée par
-`move_card`, et rendait le seed dépendant de l'âge de la base (INC-056). La suite exige donc zéro
-liaison sur la copie tant qu'INC-037 n'a pas décidé comment copier le formulaire lui-même.
+La fonction copie et remappe, atomiquement et dans cet ordre :
+
+1. le workflow et son lignage ;
+2. les étapes, avec une table de correspondance source → cible ;
+3. les transitions, à partir des étapes cibles ;
+4. les champs, avec une seconde table de correspondance ;
+5. les règles, à partir des deux correspondances ;
+6. les champs exigés, à partir des transitions et champs cibles.
+
+Une référence impossible à remapper arrête toute la transaction. L'ancien comportement « zéro
+liaison parce que zéro champ » n'est plus un état acceptable ; la décision 293 remplace sur ce
+point la frontière provisoire de la décision 290.
+
+La fonction stocke aussi dans `workflows.source_composition_fingerprint` l'empreinte SHA-256 de la
+source calculée par `app.workflow_composition_fingerprint(workflow_id)`. La sérialisation canonique
+couvre nœuds, étapes, transitions, champs, règles et exigences, triés par identifiant source ; elle
+exclut identités de ligne propres à la copie et horodatages. `workflow_derivations` compare cette
+empreinte à son recalcul : ajout, modification et suppression sont détectés, même si aucun
+`updated_at` survivant n'est postérieur à `derived_at`.
 
 ### 5.3 Seed
 
 Les transitions sont créées sans champ tableau. Une fois `form_fields` présent, le seed :
 
 1. relit les transitions du workflow global et de sa copie ;
-2. supprime les liaisons divergentes des seules transitions déclarées par le seed ;
-3. pose `lien-proposition` sur « Démarrer la réalisation » dans la source uniquement ;
-4. relit exactement une liaison globale et zéro liaison dérivée, puis les nomme dans son résumé.
+2. relit les correspondances de la copie par les clés de champ et les nœuds d'étape ; si une
+   ancienne copie sans formulaire existe, elle est recréée par le vrai geste de copie plutôt que
+   complétée à la main ;
+3. pose `lien-proposition` sur « Démarrer la réalisation » dans la source et son champ remappé sur
+   la transition dérivée correspondante ;
+4. relit exactement une liaison globale et une liaison dérivée, sans aucun identifiant partagé,
+   puis les nomme dans son résumé.
 
 Les autres données, identifiants stables et comptes métier ne changent pas.
 
@@ -140,13 +159,18 @@ La suite pgTAP `supabase/tests/0021_transition_required_fields.test.sql` prouve 
 - suppression d'une transition puis d'un champ, chacune retirant la liaison ;
 - RLS, politiques, privilèges et fonction de trigger ;
 - `move_card` refuse puis accepte selon la présence d'une valeur pour un champ lié ;
-- `copy_workflow_to_track` ne recopie aucune liaison sans formulaire cible ;
-- le seed porte une liaison globale et aucune dérivée, sans identifiant mort.
+- `copy_workflow_to_track` remappe champs, règles et liaisons sans partager d'identifiant ;
+- une référence impossible rend la copie entièrement atomique ;
+- l'empreinte ne diverge pas immédiatement, puis diverge après ajout, modification **et
+  suppression** dans la source ;
+- le seed porte une liaison globale et une dérivée fonctionnelle, sans identifiant mort.
 
 Les preuves d'API utilisent de vrais jetons : administrateur accepté, membre non administrateur
 refusé, anonyme sans ligne, croisement de workflows refusé, suppression par `service_role` d'un
 champ jetable suivie d'une relecture sans liaison. La suppression du champ seedé n'est jamais
-employée comme fixture.
+employée comme fixture. La preuve transverse n° 11 inclut aussi la liaison dans l'inventaire
+exhaustif des quinze tables métier peuplées ; `card_comments` et `card_events`, omises avant cette
+inspection, y entrent dans le même changement.
 
 Le harnais rejouable dégrade réellement une clé étrangère, une politique, la définition de
 `move_card` ou le seed, exige que les suites mordent, puis constate leur restauration. SQL global,

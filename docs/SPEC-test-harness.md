@@ -397,8 +397,8 @@ rend toujours 5/5 depuis le shell WSL réel.
 
 ### 7.2 Parcours du harnais
 
-1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **20 fichiers** et
-   **1453 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
+1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **21 fichiers** et
+   **1508 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
    pas nécessairement la disparition d'une suite entière (décision 279).
 2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
 3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien
@@ -441,6 +441,13 @@ toujours **28/28** avec 19 fichiers / 1405 assertions pgTAP, **416 scénarios AP
 UI Chromium sans avertissement, 16 scénarios mail, **531 tests Vitest**, quatre compilations et le
 rapport HTTP 200. Le scénario de déplacement connecté attend désormais la région live de succès
 avant sa relecture API : sa position optimiste dans le board ne peut plus produire un faux rouge.
+
+**Cible courante après écriture de `CRM-017` et `CRM-018`.** Le harnais attend désormais **21
+fichiers / 1508 assertions pgTAP** et **424 scénarios API**. Le delta de `CRM-018` comprend sa
+suite dédiée (49 assertions, cinq scénarios) et la fermeture d'un oubli transverse : la preuve
+anonyme exhaustive gagne `card_comments`, `card_events` et
+`workflow_transition_required_fields` (six assertions, trois scénarios). Cette cible ne vaut pas
+encore preuve froide ; le paragraphe précédent reste le dernier verdict exécuté.
 
 ## 8. Ce qui est dû, et par qui
 

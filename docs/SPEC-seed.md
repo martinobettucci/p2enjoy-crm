@@ -479,10 +479,11 @@ motif est éteint depuis `CRM-036`, qui a livré la sixième vérification de `m
 `CRM-018`, la transition *signature → réalisation* porte une liaison vers `…086` —
 `lien-proposition` — et non un élément de tableau. Voir §2.13.
 
-**La copie de la section 2.9 ne reçoit aucun champ ni aucune liaison d'exigence.**
-`copy_workflow_to_track` copie les transitions, mais recopier une liaison vers un champ absent du
-workflow cible créerait une exigence inerte. INC-037 reste ouverte sur la copie du formulaire ; le
-choix déterministe « une liaison source, zéro dérivée » ferme INC-056.
+**La copie de la section 2.9 reçoit le formulaire complet.** Depuis la décision 293,
+`copy_workflow_to_track` remappe champs, règles et exigences ; la liaison source
+`lien-proposition` possède donc une liaison dérivée vers un **autre** identifiant de champ. Le seed
+exige une liaison de chaque côté et zéro référence croisée. Une ancienne copie seedée sans
+formulaire est recréée par le vrai geste de copie, jamais maquillée par des insertions manuelles.
 
 ### 2.12 Cards — ajoutées par `CRM-040`
 
@@ -811,20 +812,13 @@ Trois conséquences, écrites ici pour qu'aucune preuve ne les redécouvre :
 - **si la copie manque, le seed échoue** en le disant, au lieu de poser les deux cards sur le
   workflow global — ce qui aurait produit un seed vert et un contrat faux.
 
-### 9.5 Le formulaire du workflow dérivé est vide, et c'est INC-037
+### 9.5 Le formulaire du workflow dérivé démontre la vraie copie
 
-MESURÉ : `form_fields` ne porte **aucune** ligne sur le workflow dérivé ; les sept champs sont
-déclarés sur le seul workflow global. `copy_workflow_to_track` ne copie pas les champs — le
-non-livré est écrit en tête de `supabase/migrations/0007_copie_workflow.sql`, et l'arbitrage est
-INC-037.
-
-Conséquence pour ce jeu de démonstration, **assumée et non compensée** : les cards `…0ca` et `…0cb`
-ne portent **aucune valeur de formulaire**, et leur fiche affiche une section de formulaire vide.
-Ce n'est pas un écran vide au sens de l'énoncé — le board et la liste du channel sont peuplés —,
-c'est la conséquence visible d'INC-037, et le seed ne la maquille pas en déclarant des champs que
-la fonction du produit n'a pas copiés. La clé étrangère composite
-`card_field_values (field_id, workflow_id)` refuserait d'ailleurs toute valeur ainsi fabriquée, en
-`23503`.
+La mesure historique d'INC-037 comptait zéro champ dérivé. La décision 293 remplace ce contrat :
+le workflow dérivé porte les mêmes sept clés de champ, les mêmes règles et la même exigence métier,
+avec des identifiants propres. Les cards `…0ca` et `…0cb` reçoivent des valeurs de formulaire par
+les champs dérivés, afin que leur fiche ne soit plus un état vide connu. Les clés composites
+continuent de refuser en `23503` toute tentative de réutiliser un identifiant de la source.
 
 ### 9.6 Valeurs de formulaire, commentaires et événements
 

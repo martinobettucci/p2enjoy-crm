@@ -1644,10 +1644,15 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 262
       anciennes copies inertes dans un autre workflow du même workspace sont recensées puis
       écartées, avant disparition de la colonne et réparation convergente des deux cascades.
 - [ ] **Appelants et seed révisés ensemble** : `copy_workflow_to_track`, `move_card`, les anciennes
-      migrations rejouées et le seed n'accèdent plus à la colonne ; la source et sa copie portent
-      respectivement une liaison et aucune exigence inerte.
+      migrations rejouées et le seed n'accèdent plus à la colonne ; conformément à la décision
+      293, la copie remappe intégralement champs, règles et exigences, sans partager leurs
+      identifiants avec la source.
+- [ ] **Divergence de composition exacte** : l'empreinte canonique stockée à la copie couvre
+      nœuds, étapes, transitions, champs, règles et exigences ; ajout, modification ou suppression
+      dans la source sont tous signalés sans dépendre d'un horodatage.
 - [ ] **Preuves backend non complaisantes** : pgTAP, vrais jetons API et harnais de dégradation
-      couvrent autorisations, copie, sixième garde, croisement refusé et suppression sans reste.
+      couvrent autorisations, copie complète et atomique, empreinte, sixième garde, croisement
+      refusé et suppression sans reste.
 - [ ] **Parcours froid et non-régression** : reset, migrations, seed, SQL, API, UI Chromium à
       console stricte, mail, unitaires, types et build sont verts. Aucun écran ni capture ne change.
 
@@ -1670,6 +1675,19 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 263
 
 - [ ] `docs/SCHEMA.md` §9 nomme les deux fonctions et cesse de laisser croire qu'une seule porte les
       deux gestes.
+
+### CRM-022 — Identités lisibles et memberships sûrs `[ ]`
+
+Socle RLS des `profiles`, `workspaces` et `workspace_members`, créé par la décision 294 pour fermer
+INC-014 avant que les écrans continuent à contourner le refus par défaut.
+
+**DoD** : un membre lit son workspace, les memberships et les profils nécessaires à
+l'identification de ses collègues ; il ne lit aucun autre workspace ; il modifie uniquement ses
+données de profil non privilégiées ; seul un administrateur gère les memberships ; le dernier
+administrateur ne peut ni se retirer ni se rétrograder. Preuves pgTAP et API avec vrais JWT pour
+les trois profils seedés, parcours utilisateur où noms et avatars réels apparaissent, console
+stricte, captures desktop/mobile et documentation synchronisée. `CRM-070` reste propriétaire de
+l'invitation et de l'interface d'administration complète.
 
 ## Chunk 3 — CRM utilisable
 
@@ -2272,6 +2290,9 @@ mention de divergence visible dans l'interface.
       relevées sans être résolues** : INC-037 (la DoD exige la copie de champs dont la table arrive
       à `CRM-035`), INC-038 (le signal de divergence ne voit pas une suppression dans la source),
       INC-039 (la suppression d'un workspace échoue quand un workflow instancie ses nœuds).
+- [x] **Les deux contradictions propres à la copie sont arbitrées** par la décision 293 :
+      `CRM-018` remappe le formulaire complet et remplace le signal temporel par une empreinte de
+      composition. INC-039 relève de la reprise transverse des clés différables (décision 295).
 - [x] `supabase/migrations/0007_copie_workflow.sql` : la fonction
       `public.copy_workflow_to_track(workflow_id, track_id, new_name)`, ses **quatre refus**, le
       remappage des arêtes par le nœud, la vue `public.workflow_derivations` en
@@ -2345,9 +2366,10 @@ mention de divergence visible dans l'interface.
       connexion — **INC-021, en attente d'arbitrage**. Ce qui est livré est la **donnée** qui
       porterait cette phrase, prouvée par l'API. **Cette preuve est bloquée par un arbitrage, pas
       par un défaut de l'unité.**
-- [ ] **La copie des champs de formulaire n'est pas livrée.** `form_fields` arrive à `CRM-035` —
-      mesuré, `to_regclass` nul. **Bloquée par une frontière d'unité**, INC-037, dont l'arbitrage
-      est attendu avant `CRM-035`. L'absence est figée par une assertion `hasnt_table`.
+- [ ] **Copie complète et divergence exacte à prouver avec `CRM-018`.** Les champs, règles et
+      exigences sont remappés sans identifiant partagé ; ajout, modification et suppression source
+      allument le signal de divergence. Ce point rouvre les preuves de `CRM-032` jusqu'au parcours
+      froid de `CRM-018`.
 
 *DoD adaptée, écarts explicites.* La Definition of Done exige un « E2E » et une « mention de
 divergence visible dans l'interface ». Aucun n'est livré, et aucun ne pouvait l'être : cette unité
@@ -2361,9 +2383,9 @@ laissé par le pilote Playwright, artefact non déterministe déjà relevé lors
 *Limites nommées, non masquées.*
 
 - **Aucun écran.** Sixième unité consécutive du chunk 3 à buter sur INC-021.
-- **Le signal de divergence ne voit pas une suppression** dans la source : INC-038, ouverte, trois
-  options d'arbitrage. L'angle mort est **mesuré** et figé par une assertion qui deviendra rouge le
-  jour où il sera corrigé.
+- **Le signal de divergence historique ne voyait pas une suppression** dans la source. La décision
+  293 retient l'empreinte de composition ; le point reste ouvert uniquement jusqu'à sa preuve dans
+  `CRM-018`.
 - **Rien n'interdit deux copies du même workflow sur le même track.** Aucune unicité ne le refuse,
   et aucune n'est inventée : la spécification ne dit pas qu'une seconde copie serait une erreur.
   C'est le seed qui converge, en vérifiant avant d'agir.
@@ -2723,12 +2745,10 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
       appelant **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Les
       règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute
       façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
-- [ ] **La copie d'un workflow vers un track n'emporte pas ses champs.** `docs/SPEC-form-composer.md`
-      §2.1 dit pourtant que le formulaire suit le workflow. MESURÉ : la copie du seed porte **zéro**
-      champ là où sa source en porte sept. Le comportement de `copy_workflow_to_track` reste
-      **inchangé** — INC-037 réserve l'arbitrage au responsable, et le corriger rouvrirait `CRM-032`
-      dans un changement consacré à `CRM-035` (décision 93). L'écart est **compté** par trois
-      assertions, jamais corrigé en silence.
+- [ ] **La copie du formulaire rouvre cette preuve sous `CRM-018`.** La décision 293 remplace la
+      frontière historique de la décision 93 : champs, règles et exigences doivent être remappés
+      par le vrai geste de copie. Les assertions qui exigeaient zéro champ sont remplacées par des
+      preuves d'équivalence métier et d'identifiants distincts.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « unitaire, API (écriture réservée
 aux administrateurs), E2E, captures de la grille » : les deux premières sont livrées, largement
@@ -2744,7 +2764,8 @@ aux quatre unités précédentes.
 - **`required` est une déclaration sans garde.** Ce qui l'applique est `move_card` (`CRM-034`), non
   commencée faute de cible (INC-043). Un champ déclaré obligatoire n'empêche aujourd'hui **rien**, et
   le dire est plus honnête que de laisser croire l'inverse.
-- **La copie ne copie pas les champs** — INC-037, arbitrage attendu (voir ci-dessus).
+- **La copie des champs est portée par `CRM-018`** — décision 293 ; ce point reste dû jusqu'à sa
+  preuve froide, pas jusqu'à un nouvel arbitrage.
 - **La forme des entrées de `choices` n'est pas contrainte par la base** : un `CHECK` ne peut porter
   aucune sous-requête. La vérification appartient à `CRM-036` et à `CRM-037`, seuls endroits où une
   clé de choix inconnue produit une conséquence. Figé par une assertion.
@@ -2906,11 +2927,9 @@ compensée par une preuve de substitution.
 
 - **Aucun écran.** Dixième unité consécutive à buter sur INC-021.
 - **`user` et `contact` ne sont pas résolus** — INC-053, arbitrage attendu.
-- **INC-037 est aggravée, non corrigée** : MESURÉ, `copy_workflow_to_track` recopie le
-  `require_fields` de sa source, alors que la copie ne reçoit aucun champ. Une exigence déclarée sur
-  une copie n'exige donc **rien**, la sixième vérification ignorant un identifiant non résolu. Le
-  comportement reste inchangé — il appartient à `CRM-032` — et l'écart est **compté** par un
-  scénario.
+- **INC-037 est désormais portée par `CRM-018`** : la décision 293 impose la copie atomique des
+  champs, règles et exigences. La limite historique reste une mesure utile, mais n'est plus le
+  comportement cible.
 - **Une valeur écrasée ne laisse aucune trace** : `card_events` est due par `CRM-044`.
 - **`phone` n'est pas contraint**, les formats nationaux étant trop divers pour qu'un refus soit
   défendable ; `file` ne vérifie pas que l'objet existe dans Storage. Les deux écarts sont figés par
@@ -4891,6 +4910,11 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | Snooze des fils et des cards | `[ ]` |
+| CRM-076 | Éditeur administrateur de workflows | `[ ]` |
+| CRM-077 | Corbeille et restauration des objets métier | `[ ]` |
+| CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |
+| CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
+| CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
@@ -4919,28 +4943,55 @@ pas un produit.
 
 ---
 
-## Propositions en attente d'arbitrage
+## Propositions arbitrées
 
-Ces unités ne sont **pas planifiées**. Elles ont été proposées au responsable et attendent sa
-décision. Aucune ne démarre sans arbitrage explicite.
+**Arbitrage autonome du responsable — `docs/JOURNAL.md`, décision 299.** Il n'existe plus de
+pseudo-unités suspendues : chaque proposition est intégrée à une unité planifiée ou refusée avec
+un motif explicite.
 
-| Unité | Proposition | État |
+| Proposition | Destination | État de la décision |
 |---|---|---|
-| CRM-P01 | Anti-double-prospection : alerte si un contact ou un domaine est déjà suivi ailleurs | `[ ]` |
-| CRM-P02 | Score de santé de card et tri « cards à risque » | `[ ]` |
-| CRM-P03 | Corbeille et restauration sur cards, tracks et channels | `[ ]` |
-| CRM-P04 | Versionnement des workflows et plan de remappage | `[ ]` |
-| CRM-P05 | Détection et fusion des doublons de contacts | `[ ]` |
-| CRM-P06 | Flux ICS abonnable des prochaines actions | `[ ]` |
-| CRM-P07 | Rapport hebdomadaire automatique aux administrateurs | `[ ]` |
-| CRM-P08 | Écran de revue de pipeline pour les réunions | `[ ]` |
-| CRM-P09 | Internationalisation FR/EN dès l'origine | `[ ]` |
-| CRM-P10 | Onboarding guidé au premier lancement | `[ ]` |
-| CRM-P11 | Sauvegarde chiffrée planifiée et restauration testée | `[ ]` |
-| CRM-P12 | Enrichissement automatique des contacts (à évaluer au regard du RGPD) | `[ ]` |
+| CRM-P01 anti-double-prospection | `CRM-060`, alerte non bloquante email/domaine | retenue |
+| CRM-P02 score de santé transparent | `CRM-066` | retenue |
+| CRM-P03 corbeille/restauration | `CRM-077` | retenue |
+| CRM-P04 versionnement/remappage | `CRM-078` | retenue |
+| CRM-P05 détection/fusion de contacts | `CRM-060`, avec prévisualisation et audit | retenue |
+| CRM-P06 flux ICS révocable | `CRM-061` | retenue |
+| CRM-P07 rapport hebdomadaire | `CRM-069`, planifié par `pg_cron` | retenue |
+| CRM-P08 écran de revue séparé | préréglage de vues sauvegardées + analytique | refusée comme surface distincte |
+| CRM-P09 FR/EN dès la v1 | français canonique, textes centralisés | refusée pour la v1 |
+| CRM-P10 onboarding guidé | `CRM-079` | retenue |
+| CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
+| CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-**Note sur `CRM-P04`** : l'archivage d'un nœud occupé est déjà refusé par `CRM-030`, ce qui traite
-le cas le plus dangereux. L'unité complète reste ouverte pour les cas de remappage volontaire.
+### CRM-076 — Éditeur administrateur de workflows `[ ]`
 
-**Note sur `CRM-P09`** : plus l'internationalisation est ajoutée tard, plus elle coûte cher. Si
-elle est retenue, elle doit précéder `CRM-007`.
+CRUD visuel complet des workflows, étapes, transitions, champs, règles et exigences, avec
+prévisualisation des effets et refus backend pour tout non-administrateur. **DoD** : chaque geste
+est clavier/souris, annulation des modifications non enregistrées, validation atomique, pgTAP/API,
+E2E et captures aux quatre paliers sans avertissement console.
+
+### CRM-077 — Corbeille et restauration `[ ]`
+
+Suppression logique et restauration de cards, tracks et channels avec dépendances visibles,
+durée de rétention et effacement définitif réservé au parcours RGPD. **DoD** : aucun objet enfant
+n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E et captures.
+
+### CRM-078 — Versionnement des workflows `[ ]`
+
+Versions immuables, comparaison de composition et plan explicite de remappage des cards avant
+activation. **DoD** : aucune étape n'est devinée, aperçu exhaustif, application transactionnelle,
+retour arrière, pgTAP/API/E2E et captures.
+
+### CRM-079 — Onboarding guidé `[ ]`
+
+Parcours du premier lancement fondé sur les vrais écrans déjà livrés, interrompable et relançable,
+sans tracker ni stockage persistant non consenti. **DoD** : clavier, mobile, reprise de session,
+états incomplets et console stricte prouvés ; aucun écran factice ne remplace une fonctionnalité.
+
+### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
+
+Sauvegarde planifiée de la base et des objets, chiffrement avec secret hors dépôt, rétention,
+contrôle d'intégrité et restauration régulière dans un environnement isolé. **DoD** : une preuve
+restaure réellement un snapshot, compare les invariants et détruit seulement l'environnement
+jetable ; runbook production, alertes et rotation documentés.

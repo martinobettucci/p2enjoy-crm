@@ -252,6 +252,7 @@ Catalogue initial livré par le seed : `prospection`, `relance`, `negociation`, 
 | `track_id` | `uuid` | FK, nul si `scope='global'`, non nul si `scope='track'` |
 | `derived_from_workflow_id` | `uuid` | FK `workflows`, origine de la copie |
 | `derived_at` | `timestamptz` | date de la copie, permet de signaler une divergence |
+| `source_composition_fingerprint` | `text` | SHA-256 canonique de la source au moment de la copie ; nul pour un workflow non dérivé |
 | `is_default` | `boolean` | un seul défaut par workspace |
 | `archived_at` | `timestamptz` | |
 
@@ -267,6 +268,9 @@ Précisions apportées par `CRM-031`, après mesure (`docs/SPEC-workflow-engine.
   « exactement » — un workspace neuf n'a aucun workflow ;
 - `derived_from_workflow_id` est `on delete set null` : la copie est une divergence assumée, et
   supprimer l'original ne doit pas emporter ses copies. `derived_at` l'accompagne obligatoirement ;
+- `source_composition_fingerprint` accompagne tout lignage et permet à `workflow_derivations` de
+  comparer la composition complète, y compris une suppression dans la source. La date ne sert
+  plus de substitut à cette comparaison (`CRM-018`, décision 293) ;
 - **aucune suppression n'est exposée** sur `workflows` : ni politique `for delete`, ni privilège.
   L'archivage tient lieu de suppression, comme pour les tracks, les channels et le catalogue.
 
@@ -336,8 +340,9 @@ Précisions apportées par `CRM-031`, après mesure :
 | `field_id` | `uuid` | PK avec `transition_id`, FK vers `form_fields`, `ON DELETE CASCADE` |
 
 La table n'a ni identité, ni horodatage, ni `workspace_id`. Un trigger refuse tout couple dont les
-deux parents appartiennent à des workflows différents. `copy_workflow_to_track` ne recopie plus
-l'ancienne exigence inerte tant qu'il ne copie pas aussi le formulaire — INC-037 reste ouvert.
+deux parents appartiennent à des workflows différents. `copy_workflow_to_track` copie désormais
+le formulaire complet et remappe chaque liaison vers le champ dérivé correspondant : aucune
+exigence inerte ni aucun identifiant partagé (`CRM-018`, décision 293).
 Contrat complet : `docs/SPEC-transition-required-fields.md`.
 
 **État : contrat de `CRM-018` spécifié, migration en cours.** L'option d'un nettoyage applicatif

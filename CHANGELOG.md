@@ -15,6 +15,24 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-018` remplace le tableau de champs exigés par une relation à deux clés étrangères.**
+  `workflow_transition_required_fields (transition_id, field_id)` garantit les deux parents, leur
+  appartenance au même workflow et les deux suppressions en cascade. La migration 19 reprend les
+  anciens tableaux effectifs, refuse les UUID morts et les croisements de workspace, recense puis
+  écarte les anciennes exigences dérivées inertes. `move_card`, `copy_workflow_to_track`, le seed,
+  les types attendus et les preuves historiques sont révisés ensemble. Cible courante : 21
+  fichiers / 1508 assertions pgTAP et 424 scénarios API ; la preuve froide reste due avant
+  fermeture de l'unité.
+- **La preuve anonyme exhaustive cesse d'oublier des tables métier.** `card_comments`,
+  `card_events` et la nouvelle liaison rejoignent l'inventaire : quinze tables seedées sont
+  d'abord constatées non vides par la clé de service, puis rendues `200` / `[]` à l'anonyme. Le
+  harnais associé passe à 52 assertions, 40 scénarios et 48 politiques nommées ; son ancien compte
+  de neuf cards est également ramené aux quatorze du seed courant.
+- **`CRM-017` porte l'ordonnancement applicatif dans `pg_cron`.** La migration 18 installe le
+  heartbeat privé, ferme schéma, relations et fonction aux rôles API, et converge vers un unique
+  job nommé sans changer son `jobid`. La suite dédiée compte 48 assertions et le harnais éprouve
+  passage réel, réparation et ACL. La non-régression froide reste due avant fermeture de l'unité.
+
 - **`CRM-016` livre les fonctions edge de bout en bout.** Le service commun `functions` épingle
   Supabase Edge Runtime 1.74.2, monte `supabase/functions/` en lecture seule, ne publie aucun port
   et crée un worker `oneshot` borné pour chaque invocation. Kong protège
@@ -72,8 +90,9 @@ d'exécuter le code attendu.
   reprennent leur place dans `docs/JOURNAL.md` sous les numéros 249 à 266, texte inchangé. La
   renumérotation était contrainte : les deux lignes avaient donné les numéros 235 à 252 à des
   sujets différents. `docs/ARBITRAGES_RECUPERES.md` donne la correspondance, `docs/ARBITRAGES.md`
-  est récupéré. INC-081 ne suit plus qu'un écart de **mise en œuvre** : `require_fields` en table
-  de liaison, `pg_cron`, les fonctions edge et `change_channel_workflow` restent à livrer.
+  est récupéré. Depuis cette récupération, les fonctions edge sont closes et les mises en œuvre
+  `pg_cron` / table de liaison sont écrites mais attendent leur preuve froide ;
+  `change_channel_workflow` reste à livrer.
 
 - **Passe de cohérence : les décisions du responsable sont propagées dans tout le documentaire** —
   six unités créées (`CRM-009`, `CRM-015` à `CRM-019`), `CRM-031` et `CRM-035` **rouvertes**,

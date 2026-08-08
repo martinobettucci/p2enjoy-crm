@@ -140,6 +140,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
 | `scripts/verify-functions.sh` | Rejoue les preuves des fonctions edge : runtime, isolation, route Kong, API réelle et journaux différés | **disponible** |
 | `scripts/verify-scheduler.sh` | Rejoue les preuves de l'ordonnanceur : pgTAP, passage réel, convergence du job et restauration des ACL | **disponible** |
+| `scripts/verify-transition-required-fields.sh` | Rejoue la migration de l'ancien tableau, les cascades, la cohérence de workflow, RLS et le seed des champs exigés | **disponible** |
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
@@ -339,7 +340,7 @@ installée par NVM sans modifier le shell parent.
 ```bash
 npm run typecheck          # TypeScript, quatre projets   — aucune pile requise
 npm run test:unit          # Vitest, 531 tests            — aucune pile requise
-npm run test:sql           # pgTAP, 1453 assertions       — pile démarrée
+npm run test:sql           # pgTAP, 1508 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
@@ -416,15 +417,18 @@ scripts/verify-colonnes-protegees.sh # colonnes protégées : email_local_part f
 scripts/verify-preuves-refus.sh # les douze preuves de refus, et la non-complaisance (CRM-014)
 scripts/verify-board.sh        # board kanban : colonnes, glisser-déposer, refus        (CRM-041)
 scripts/verify-liste.sh        # vue liste : tri total, filtres, pagination, 416        (CRM-042)
+scripts/verify-transition-required-fields.sh # champs exigés : liaison, migration, RLS (CRM-018)
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
 scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
 ```
 
-Le dernier rejeu froid de `scripts/verify-harness.sh` rend **28 contrôles sans anomalie**. Il
-sélectionne Node **v24.14.1** / npm **11.11.0** Linux depuis le shell WSL réel, puis vérifie 20
-fichiers pgTAP / 1453 assertions, 416 scénarios API, 144 parcours UI, 16 scénarios mail, 531 tests
-Vitest, les quatre compilations TypeScript et le rapport HTML servi en HTTP. Les parcours UI
-échouent sur tout `console.warn`, `console.error` ou `pageerror`.
+La cible courante de `scripts/verify-harness.sh` est **28 contrôles** : sélection de Node
+**v24.14.1** / npm **11.11.0** Linux, 21 fichiers pgTAP / 1508 assertions, 424 scénarios API,
+144 parcours UI, 16 scénarios mail, 531 tests Vitest, les quatre compilations TypeScript et le
+rapport HTML servi en HTTP. Les parcours UI échouent sur tout `console.warn`, `console.error` ou
+`pageerror`. La dernière preuve froide publiée, antérieure à `CRM-017` et `CRM-018`, reste celle
+de `CRM-016` : 19 fichiers / 1405 assertions et 416 scénarios API, toutes les autres familles
+inchangées.
 
 `scripts/verify-vault.sh` fait exception : il est **autonome**, ne lit ni `.env` ni la pile en
 cours d'exécution, et crée ses propres conteneur et volumes jetables, détruits en sortant. Il
@@ -532,6 +536,7 @@ Livré à ce jour :
 │   ├── verify-stack.sh         Preuves rejouables de la pile
 │   ├── verify-functions.sh     Preuves rejouables du runtime edge, de Kong et de ses journaux
 │   ├── verify-scheduler.sh     Preuves rejouables de pg_cron, de son job et de ses ACL
+│   ├── verify-transition-required-fields.sh  Preuves de la liaison des champs exigés
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie

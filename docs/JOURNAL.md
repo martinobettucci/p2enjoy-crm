@@ -9099,3 +9099,257 @@ colonne supprimée ; 0007 et 0013 doivent cesser de recréer des fonctions qui l
 ne peut poser la liaison qu'après la création des champs, et synchronise alors les transitions de
 la source et de sa copie. Le contrat complet, y compris RLS, preuves et retour arrière, est écrit
 dans `docs/SPEC-transition-required-fields.md` avant la première ligne SQL.
+
+---
+
+### Décision 291 — « N'importe quelle table métier » est un inventaire vivant, pas la photographie de CRM-014
+
+**Oubli trouvé pendant la revue de `CRM-018`.** La preuve n° 11 annonçait encore les douze tables
+peuplées à `CRM-014`. `card_comments` et `card_events`, arrivées ensuite et réellement alimentées
+par le seed, n'avaient jamais rejoint `TABLES_METIER`; la nouvelle
+`workflow_transition_required_fields` aurait été la troisième oubliée. Le test pgTAP connaissait
+le *compte* des politiques de commentaires et d'événements, mais pas leurs noms, et ne constatait
+pas la non-vacuité de leurs tables. Une suppression remplacée par une politique du même nombre
+pouvait donc échapper au contrôle nominal.
+
+**Décision corrective.** La formulation « n'importe quelle table métier » porte sur le schéma
+seedé **courant**. Chaque nouvelle table métier peuplée rejoint simultanément : l'inventaire API,
+la preuve de non-vacuité sous `service_role`, l'inventaire nominal des politiques et le compte
+global. La preuve passe ainsi à quinze tables ; `0016_preuves_refus.test.sql` à 52 assertions ;
+`preuves-refus.spec.ts` à 40 scénarios ; et `public` à 48 politiques après les trois de CRM-018.
+Le harnais corrige aussi deux compteurs déjà consignés par INC-080 : 48 politiques, non 41, et
+quatorze cards seedées, non neuf.
+
+**Conséquence sur le harnais global.** CRM-018 ajoute 49 assertions dédiées et cinq scénarios
+d'API, tandis que cette fermeture transverse en ajoute six et trois. Les cibles deviennent donc
+**21 fichiers / 1508 assertions pgTAP** et **424 scénarios API**. `playwright --list` mesure bien
+424 scénarios dans 22 fichiers ; la somme des plans SQL vaut 1508. Les 531 tests Vitest et le
+build de production passent sans avertissement.
+
+**Limite actuelle, non transformée en preuve.** Docker Desktop a perdu son intégration dans cette
+distribution : le client Linux n'est plus monté, les sockets sont sans serveur et même l'interop
+Windows échoue sur `UtilBindVsockAnyPort`. Le proxy Docker retrouvé dans l'image exige le rôle
+root que la session n'a pas. Le typecheck rougit donc uniquement sur les assertions du type généré
+encore ancien ; celui-ci ne sera ni écrit à la main ni déclaré conforme. Migration, seed, pgTAP,
+API réelle, régénération des types et parcours froid restent dus jusqu'au redémarrage de WSL.
+
+---
+
+### Décision 292 — L'autonomie déléguée ferme les questions produit, pas l'obligation de preuve
+
+**Mandat du responsable.** Le responsable demande le 2026-08-08 de trancher tous les points
+suspendus à sa place, en prenant le journal comme expression de son style, puis de terminer le
+backlog sans nouvelle validation produit. Les décisions récurrentes du journal donnent une ligne
+claire : la base porte les invariants, aucune perte n'est silencieuse, un état démonstratif vient
+du vrai mécanisme, une autorisation se prouve hors interface, et un compteur vert n'est pas une
+preuve s'il peut être complaisant.
+
+**Décision d'exécution.** Les arbitrages ci-dessous sont définitifs pour la version courante. Ils
+sont persistés avant leur code et deviennent le contrat des unités concernées. Le travail reste
+strictement séquentiel sur `main`, sans branche, worktree, sous-agent ni seconde exécution active.
+Une unité n'est jamais fermée sur décision seule : migration froide, seed, tests propres, parcours
+utilisateur clavier/souris, inspection visuelle et console sans erreur ni avertissement restent
+dus. Seule une autorité externe réellement indispensable — accès de production, secret, ou
+réparation de l'hôte — peut encore demander une intervention humaine.
+
+**Ordre retenu.** Finir `CRM-018`, livrer `CRM-019`, fermer les défauts transverses qui rendent
+les preuves trompeuses, puis reprendre chaque `[~]` et chaque `[ ]` dans l'ordre du backlog. Les
+défauts qui empêchent un utilisateur autorisé d'agir passent avant une extension de confort.
+
+---
+
+### Décision 293 — Une copie de workflow est une copie utilisable, avec formulaire complet et empreinte de composition
+
+**Arbitrage d'INC-037 et INC-038.** La frontière provisoire de la décision 290 est remplacée :
+`copy_workflow_to_track` copie dans la même transaction les étapes, transitions, définitions de
+champs, règles conditionnelles et champs exigés par transition. Tous les identifiants sont
+remappés vers les nouveaux parents. Une copie sans formulaire était techniquement cohérente mais
+fonctionnellement fausse : l'utilisateur obtenait un workflow dont les transitions et formulaires
+ne pouvaient plus exprimer le comportement de la source.
+
+**Divergence exacte.** La copie conserve une empreinte SHA-256 canonique de la composition source
+au moment de sa création. Elle couvre les attributs métier des nœuds, étapes, transitions, champs,
+règles et exigences, triés par leurs identifiants stables ; elle exclut les horodatages et
+l'identité de la copie. La vue de divergence recalcule la même empreinte. Une modification, un
+ajout **ou une suppression** dans la source devient donc visible. La date reste informative, mais
+n'est plus utilisée comme substitut à une comparaison de composition.
+
+**Convergence et preuve.** Un rejeu ramène la fonction, l'empreinte et la vue à leur définition
+finale. Le seed exige le même formulaire fonctionnel dans la source et sa copie, sans identifiant
+partagé entre elles. pgTAP et API prouvent le remappage complet, les cascades, la détection d'une
+suppression source et l'atomicité : une règle impossible à remapper fait échouer toute la copie.
+Cette décision ferme le choix d'INC-056 sans accepter l'ancien artefact inerte.
+
+---
+
+### Décision 294 — Un droit backend doit conduire à un parcours, et l'identité ne doit pas rendre les données indestructibles
+
+**Identité (`INC-014`).** Une nouvelle unité `CRM-022` porte le socle RLS qui manque : un profil
+lit et modifie ses données non privilégiées, les membres d'un même workspace peuvent lire les
+identités nécessaires à l'interface, un membre lit son workspace et ses memberships, et seul un
+administrateur gère les memberships. Retirer ou rétrograder le dernier administrateur est refusé
+en base. `CRM-070` conserve l'interface d'administration et l'invitation ; une invitation crée un
+enregistrement en attente et le membership seulement lors de son acceptation, via une fonction
+edge qui garde la clé de service hors du navigateur.
+
+**Droits fins (`INC-011`, INC-045, INC-075).** Les tables de jonction de permissions restent sans
+`workspace_id` : leur parent est la source unique du workspace, et les politiques le dérivent par
+jointure. Un sujet et les administrateurs voient les droits fins ; les autres membres ne voient
+que leur effet. Un track est lisible s'il est accordé directement **ou si au moins un de ses
+channels est lisible**. La navigation affiche alors le parent comme contexte et uniquement les
+enfants autorisés. Aucun channel accordé par le backend ne reste inaccessible dans le produit.
+
+**Commentaires (`INC-071`, INC-072, INC-076).** Commenter exige l'écriture sur le channel. Un
+auteur peut modifier ou retirer logiquement son propre commentaire. Un administrateur peut le
+retirer, jamais réécrire son contenu ; une raison de modération obligatoire et un événement
+immuable enregistrent le geste. `card_comments.author_id` devient nullable avec `ON DELETE SET
+NULL` : supprimer un compte conserve la conversation et affiche « Compte supprimé ». La même
+doctrine vaut pour toute trace historique : conserver le fait, détacher l'identité supprimée.
+
+**Contrats voisins.** Le test de `move_card` qui prétendait viser un administrateur vise le viewer
+qu'il met réellement en défaut (INC-051). La valeur `NULL` d'un champ reste un vide explicite
+valide (INC-054). La preuve de privilège de colonne appartient canoniquement à `CRM-013` ; les
+autres unités peuvent garder une contre-preuve de dépendance sans revendiquer sa propriété
+(INC-049).
+
+---
+
+### Décision 295 — Les invariants relationnels et les gestes pluriels sont atomiques et explicites
+
+**Colonnes remplies par trigger (`INC-027`).** Toute position omissible par contrat reçoit un
+`DEFAULT NULL` en plus du trigger `BEFORE` qui remplace `NULL` avant la contrainte `NOT NULL`. Le
+type généré décrit ainsi l'API réelle ; aucun cast client ni type généré retouché à la main.
+
+**Convergence (`INC-035`, INC-039, INC-040, INC-041, INC-074).** La migration la plus récente qui
+touche un objet en possède la définition finale complète ; elle ne se contente pas de « créer si
+absent ». Les clés qui doivent interdire une suppression directe tout en autorisant la cascade
+d'un workspace deviennent différables lorsque l'ordre interne de cascade l'exige. Chaque
+invariant croisant deux parents possède une garde symétrique sur chaque écriture possible. Le seed
+réconcilie ses objets par identifiants stables, retire ses propres divergences et ne duplique
+jamais une copie déplacée.
+
+**Changement de workflow (`INC-046`, INC-073).** `move_card_to_channel` reste le geste unitaire.
+`change_channel_workflow` est le geste pluriel : le mapping couvre explicitement chaque étape
+source occupée, chaque cible appartient au nouveau workflow, et l'ensemble channel + cards est
+modifié dans une transaction. Une absence, un doublon ou une cible étrangère refuse tout le lot.
+
+**Commentaire de transition (`INC-048`, INC-052).** Le texte fourni à `move_card` est normalisé
+selon l'ensemble Unicode `White_Space`; un texte uniquement blanc est vide. Lorsqu'il existe, la
+fonction crée un vrai `card_comment` dans la transaction et l'événement `moved` référence son
+`comment_id`, sans dupliquer le contenu libre dans les métadonnées.
+
+**Références de champs (`INC-053`).** Une valeur `user` doit désigner un membre actif du workspace
+dès maintenant. Une valeur `contact` est refusée tant que `CRM-060` n'a pas livré la table ; cette
+unité remplacera le refus par une clé vers un contact du même workspace. Accepter un UUID opaque
+temporaire créerait une dette de données impossible à distinguer d'une référence valide.
+
+**Montants (`INC-067`).** `cards.amount` est un nombre fini à toutes les frontières. Les clients
+convertissent explicitement la représentation PostgREST, refusent `NaN` et l'infini, puis
+calculent avec un type numérique unique. Une preuve API réelle fixe la représentation reçue ; le
+board, la liste et l'analytique partagent le même parseur.
+
+---
+
+### Décision 296 — Un harnais restitue l'état d'entrée et une preuve globale ne repose pas sur le hasard d'exécution
+
+**Règle transverse (`INC-055`, INC-058, INC-060, INC-061, INC-064, INC-074, INC-080).** Tout
+harnais destructif prend l'empreinte de son état d'entrée, attend réellement chaque migration,
+rejoue jusqu'à la dernière migration pertinente et restitue cette empreinte — jamais `HEAD`, qui
+n'est pas l'état de la base. Le ménage vient avant la mesure. Les comptes globaux de tables métier
+mutables sont remplacés par des assertions sur les identifiants seedés nommés. Le runner global
+réinitialise froidement avant et après le lot ; il orchestre des harnais autonomes, il ne rend pas
+correct un harnais qui fuit. Les harnais mutateurs ne s'exécutent jamais en parallèle.
+
+**Propriété et traçabilité (`INC-057`, INC-059, INC-069).** Un `@verifies` ne cite que les
+contrats prouvés directement. Les deux anciennes décisions 180 sont référencées `180a` et `180b`
+sans réécrire l'histoire. Une seule routine travaille sur le dépôt et elle reste sur `main` avec
+l'identité Git du responsable ; aucune branche, aucun worktree et aucun agent parallèle.
+
+**Contrôle statique (`INC-070`, INC-078).** Le détecteur de textes en dur utilise l'AST TypeScript
+déjà disponible, pas une expression régulière. Une fixture prouve à la fois qu'il détecte un vrai
+texte UI et qu'il ignore la branche structurelle d'un ternaire. Toutes les commandes de preuve
+entrent dans les inventaires README/DAT au même changement que leur création.
+
+**Navigateur (`INC-036`).** `PLAYWRIGHT_CHROMIUM_PATH` est le contrat documenté du navigateur
+préinstallé. Une preuve de démarrage et de révision échoue explicitement si le binaire n'est plus
+compatible ; aucun téléchargement implicite ou succès sans navigateur.
+
+---
+
+### Décision 297 — Le mail accepte l'inconnu sans lui donner de pouvoir, et la pile réelle reste la référence
+
+**Messages sans identifiant (`INC-002`).** Le repli est
+`fallback-sha256:<empreinte>` calculé sur l'enveloppe canonique, les en-têtes normalisés et le corps
+MIME brut complet. Il ne dépend ni de `SEARCH HEADER Message-ID` — mesuré défaillant avec la
+version Stalwart épinglée — ni d'un résumé sujet/taille collisionnable. Le service déduplique après
+récupération réelle du message.
+
+**Expéditeurs inconnus (`INC-004`).** Ils sont acceptés, visibles comme « Expéditeur inconnu » et
+mis en quarantaine fonctionnelle : aucune transition, autorisation, association automatique ou
+commande n'en découle. Limite de taille, quota, analyse des pièces jointes et contenu jamais
+exécuté bornent le risque. Refuser ces messages supprimerait précisément les premiers contacts
+qu'un CRM de prospection doit recevoir.
+
+**Pile (`INC-006`, INC-082).** La distribution self-hosted Supabase officielle épinglée et
+l'assemblage Stalwart actuel de `main` sont canoniques. Les variantes récupérées ne sont pas
+réintroduites. Leurs faits mesurés restent obligatoires à prouver sur cette pile : `pipefail` avec
+`grep -q`, listener exigeant un redémarrage, port 25 offrant STARTTLS sans AUTH, recherche
+`Message-ID` non fiable. Toute référence au starter voisin absent est retirée ou présentée comme
+origine historique, jamais comme prérequis.
+
+**Commandes et erreurs (`INC-008`, INC-018, INC-026).** Les scripts de dépôt sont les commandes
+opérationnelles canoniques ; aucun alias npm redondant n'est ajouté pour donner l'illusion d'un
+second chemin. L'API d'administration GoTrue reste interdite comme parcours produit et la
+politique de mot de passe est appliquée au vrai flux utilisateur. Kong ne filtre pas globalement
+les diagnostics PostgREST : l'API authentifiée peut conserver ses détails techniques, tandis que
+l'interface traduit les erreurs connues en messages sûrs et ne montre jamais le `hint` brut.
+
+---
+
+### Décision 298 — L'interface nomme les faits, garde une adresse canonique et réserve la couleur à un sens mesuré
+
+**Fil et formulaires (`INC-077`, INC-063).** `channel_changed` s'affiche « Dossier changé » dans
+la famille « Organisation », distincte du cycle de vente. `role="alert"` appartient uniquement à
+l'erreur de validation ; l'indication permanente d'un champ requis est un texte descriptif relié
+au champ, pas une alerte répétée.
+
+**Adresse canonique (`INC-065`).** Une route de card incohérente redirige vers son track/channel
+réels uniquement après avoir autorisé à la fois la card et le contexte canonique. Sinon elle rend
+le même état introuvable que tout objet inaccessible, sans révéler la hiérarchie réelle.
+
+**Couleurs (`INC-028`).** Tous les textes sur surfaces douces utilisent les jetons `*-on-soft`
+mesurés AA ; la règle s'applique aux badges, pilules, compteurs et états. `accent` reste réservé au
+surlignage et sort des couleurs de données choisissables. Toute donnée seedée qui l'utilisait est
+migrée vers `brand` ou `neutral`. Les hexadécimaux pleins ne servent de texte que lorsque la preuve
+de contraste passe.
+
+**Porteurs fonctionnels (`INC-062`, INC-066, INC-068).** Le parcours E2E de transition appartient
+à `CRM-041` et reste une contre-preuve nécessaire à la fermeture de `CRM-037`. `CRM-076` porte
+l'éditeur de workflow administrateur complet. Les étiquettes appartiennent à `CRM-069`, qui
+livrera tables, RLS, seed, filtres et digest ; aucune pastille décorative n'est admise avant leur
+donnée réelle.
+
+---
+
+### Décision 299 — Les propositions deviennent soit une unité nommée, soit un refus motivé
+
+Les propositions sont arbitrées sans laisser de pseudo-backlog :
+
+| Proposition | Décision |
+|---|---|
+| P01 anti-double-prospection | **retenue dans `CRM-060`** ; avertissement non bloquant par email/domaine normalisé |
+| P02 score de santé | **retenue dans `CRM-066`** ; facteurs visibles, aucun score opaque |
+| P03 corbeille/restauration | **retenue comme `CRM-077`** ; suppression logique et restauration, pas d'effacement physique ordinaire |
+| P04 versionnement des workflows | **retenue comme `CRM-078`** ; version immuable et plan de remappage explicite |
+| P05 fusion de contacts | **retenue dans `CRM-060`** ; prévisualisation, journal et retour arrière avant fusion définitive |
+| P06 flux ICS | **retenue dans `CRM-061`** ; jeton révocable et données minimales |
+| P07 rapport hebdomadaire | **retenue dans `CRM-069`** via `pg_cron`, distincte du digest quotidien |
+| P08 écran de revue séparé | **refusée** ; les vues sauvegardées et l'analytique fournissent un préréglage « revue » sans seconde surface concurrente |
+| P09 FR/EN immédiat | **refusée pour la v1** ; le français reste canonique, les textes restent centralisés pour une évolution ultérieure |
+| P10 onboarding | **retenue comme `CRM-079`**, après les parcours qu'il doit réellement enseigner |
+| P11 sauvegarde/restauration | **retenue comme `CRM-080`**, chiffrée, planifiée et restaurée en environnement isolé |
+| P12 enrichissement automatique | **refusée** tant qu'un fournisseur, une finalité, une base légale et un DPA ne sont pas explicitement approuvés |
+
+Les unités intégrées héritent de la Definition of Done commune. Les nouvelles unités ne sont pas
+des raccourcis : elles restent à livrer séquentiellement après `CRM-075`, sauf une dépendance
+explicite qui impose de les avancer.

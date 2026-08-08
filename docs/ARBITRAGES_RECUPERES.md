@@ -58,11 +58,11 @@ Les décisions **249, 250 et 252** (origines 235, 236 et 238) décrivent un asse
 
 ## Ce qui reste dû
 
-L'arbitrage **`require_fields` devient une table de liaison** (origine 248, désormais décision 260)
-n'est **pas appliqué** dans le code : `docs/SCHEMA.md` décrit toujours `require_fields` en `uuid[]`
-et note qu'il ne peut porter aucune intégrité référentielle, ce que cette décision renversait. La
-mise en œuvre engage une migration, `docs/SCHEMA.md`, `docs/DAT.md` et `docs/PROD_MIGRATIONS.md`.
-Elle est suivie en **INC-081**.
+L'arbitrage **`require_fields` devient une table de liaison** (origine 248, désormais décision
+**262**) est pris en charge par `CRM-018`. `docs/SCHEMA.md` et les spécifications décrivent la
+relation à deux colonnes ; la migration 19, les appelants, le seed et les preuves sont écrits dans
+le même changement. Sa fermeture reste conditionnée à la preuve froide exigée par l'unité. Le
+suivi historique de la récupération demeure en **INC-081**, et l'écart de modèle en **INC-033**.
 
 À l'inverse, l'unité de l'écran de connexion (décision 253) et la session en `sessionStorage`
 (décision 254) sont **déjà appliquées** sur `main` par la décision 243 : seule leur trace manquait.

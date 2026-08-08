@@ -496,7 +496,7 @@ Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. 
 |---|---|
 | Identité et tenancy | `profiles`, `workspaces`, `workspace_members`, `track_members`, `channel_members` |
 | Organisation | `tracks`, `channels` |
-| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (livrées, `CRM-032`) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) ; fonction `move_card_to_channel`, **déplacement d'une card d'un graphe à un autre** (livrée, `CRM-045`) — aucune arête n'est franchie, le remappage de l'étape est **fourni par l'appelant**, et les réponses de formulaire sont **détruites** quand le workflow change, jamais sans que `discard_field_values` l'ait dit |
+| Workflows | `workflow_nodes_catalog` (livrée, `CRM-030`), `workflows`, `workflow_steps`, `workflow_transitions` (livrées, `CRM-031`) ; `workflow_transition_required_fields`, liaison normalisée et intègre vers le formulaire (livrée, `CRM-018`) ; vue `workflow_derivations` et fonction `copy_workflow_to_track` (`CRM-032`, redéfinies par `CRM-018` pour copier champs, règles et exigences et comparer une empreinte de composition) ; fonction `move_card`, **garde centrale de transition** (livrée, `CRM-034`, **six vérifications sur six** depuis `CRM-036` qui a refermé INC-047) ; fonction `move_card_to_channel`, **déplacement d'une card d'un graphe à un autre** (livrée, `CRM-045`) — aucune arête n'est franchie, le remappage de l'étape est **fourni par l'appelant**, et les réponses de formulaire sont **détruites** quand le workflow change, jamais sans que `discard_field_values` l'ait dit |
 | Formulaires | `form_fields`, `form_field_rules` (livrées, `CRM-035`) ; `card_field_values` (livrée, `CRM-036`), sa validation par type par trigger, et les fonctions `app.valeur_de_champ_est_vide` et `app.can_write_card` |
 | Cards | `cards` (livrée, `CRM-040`) ; `card_comments` (livrée, `CRM-043`) ; `card_events` (livrée, `CRM-044` — **append-only**, alimentée par cinq triggers, aucune écriture cliente) ; `card_activities`, `card_tags`, `card_watchers`, `card_checklists`, `card_templates` — ces cinq dernières ne sont rattachées à aucune unité |
 | Relations | `organizations`, `contacts`, `card_contacts` |
@@ -610,17 +610,21 @@ Le détail, y compris la matrice des droits et les preuves de refus exigées, es
 `docs/SPEC-permissions-rls.md`.
 
 **Les douze preuves de refus sont inventoriées en un seul lieu depuis `CRM-014`.** Le fichier
-`e2e/api/preuves-refus.spec.ts` (**37 scénarios**) les rejoue dans l'ordre du §7, avec les jetons
-réels des trois profils, et `supabase/tests/0016_preuves_refus.test.sql` (**46 assertions**) tient
-l'inventaire des **41 politiques** de `public` — nom par nom et par un compte. Le harnais
+`e2e/api/preuves-refus.spec.ts` (**40 scénarios**) les rejoue dans l'ordre du §7, avec les jetons
+réels des trois profils, et `supabase/tests/0016_preuves_refus.test.sql` (**52 assertions**) tient
+l'inventaire des **48 politiques** de `public` — nom par nom et par un compte. `CRM-018` a fermé
+l'oubli des trois tables métier peuplées arrivées après l'inventaire initial : `card_comments`,
+`card_events` et `workflow_transition_required_fields`. Le harnais
 `scripts/verify-preuves-refus.sh` (**26 contrôles**, 21 hors suites) éprouve les deux dans les deux
 sens : une politique **retirée** fait échouer l'inventaire pgTAP, une politique **permissive** fait
 échouer les scénarios, et la restauration est comparée à l'inventaire relevé avant dégradation.
 
-Sur les douze preuves, **sept sont acquises** — n° 1 à 5, n° 10 et n° 11 — et **cinq portent sur
-des tables ou une fonction qui n'existent pas** (messagerie, journal d'événements, audit, pièces
-jointes). Ces cinq absences sont **figées par des assertions** qui deviendront rouges à la
-naissance de leur objet. La n° 10 est acquise dans son effet seulement : aucune politique ne
+Sur les douze preuves, **sept sont acquises** — n° 1 à 5, n° 10 et n° 11 — et **cinq ne sont pas
+encore entièrement satisfaisables** : la n° 8 refuse déjà l'écriture directe dans `card_events`,
+mais attend toujours `audit_log`; restent aussi les deux tables de messagerie, les pièces jointes
+et `queue_outbound_email`. Les absences restantes sont **figées par des assertions** qui
+deviendront rouges à la naissance de leur objet. La n° 10 est acquise dans son effet seulement :
+aucune politique ne
 protège le dernier administrateur, le refus venant du refus par défaut — INC-014, arbitrage
 attendu (`docs/JOURNAL.md`, décisions 148 et 151).
 

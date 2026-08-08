@@ -5,8 +5,18 @@ la conception ou l'implémentation. **Rien n'est résolu implicitement** : tant 
 ouvert, le comportement reste inchangé et l'arbitrage du responsable est sollicité lorsque la
 correction dépasse la tâche autorisée.
 
-Une entrée est close lorsque la décision est prise, consignée dans `docs/JOURNAL.md`, et
-répercutée dans les documents concernés.
+Une entrée est close lorsque la décision est prise, consignée dans `docs/JOURNAL.md`, **et que son
+comportement correctif est livré et prouvé** lorsqu'elle exige du code. La décision seule retire
+l'attente d'arbitrage ; elle ne transforme pas une correction due en fait acquis.
+
+**Arbitrage exhaustif du 2026-08-08.** Le responsable a délégué tous les choix suspendus. Les
+décisions 292 à 299 et la matrice de `docs/ARBITRAGES.md` tranchent chaque entrée encore en attente,
+y compris INC-002, INC-004, INC-006, INC-008, INC-011, INC-014, INC-018, INC-025 à INC-028,
+INC-034 à INC-041, INC-045, INC-046, INC-048, INC-049, INC-051 à INC-080 et INC-082. Le texte
+historique de chaque entrée conserve la mesure et les options d'origine ; toute formule
+« arbitrage attendu » y est désormais l'état **au jour du constat**, pas une question encore
+adressée au responsable. Les entrées restent dans « Ouverts » jusqu'à leur mise en œuvre et leur
+preuve, conformément à la règle ci-dessus.
 
 ---
 
@@ -163,6 +173,13 @@ autres entrées n'ont pas été mesurées une à une.
 **Suite due.** Rattacher chaque mise en œuvre restante à une unité de `docs/BACKLOG.md`, puis
 clore cette entrée lorsque les quatre points ci-dessus sont livrés ou explicitement déclarés
 caducs par le responsable.
+
+**Mise à jour du 2026-08-08.** Les quatre points ont désormais une unité : `CRM-016` à `CRM-019`.
+Les fonctions edge (`CRM-016`) sont closes. L'ordonnancement `pg_cron` (`CRM-017`) et la table de
+liaison (`CRM-018`) sont implémentés mais restent `[~]` tant que leur preuve froide commune n'a pas
+été exécutée. `change_channel_workflow` (`CRM-019`) reste non commencé. La phrase « non appliquée »
+ci-dessus est donc le constat daté de l'ouverture, et non l'état courant ; INC-081 ne sera close
+qu'après les trois fermetures restantes.
 
 ---
 
