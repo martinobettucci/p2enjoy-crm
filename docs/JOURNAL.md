@@ -10308,3 +10308,25 @@ harnais absent : son dernier verdict connu était vert. Une dégradation impossi
 mécanisme de la décision 51, et la plus régulière : trois suites figeaient le refus de
 `mail_received` en annonçant le moment où il faudrait les retourner. Elles figent désormais
 `mail_sent`, que `CRM-058` devra écrire dans la même migration que son écriture.
+
+### Décision 323 — Le nom d'un dossier IMAP n'est pas celui qu'on a demandé
+
+**Mesuré avant d'écrire quoi que ce soit de `CRM-056`.** Créer `CRM/Conseil & IA` sur Stalwart, puis
+le relire par `LIST`, rend **`CRM/Conseil &- IA`** : le serveur applique l'UTF-7 modifié de la
+RFC 3501, où `&` s'écrit `&-`. Le §4.5 avait pressenti que « le chemin créé peut différer du nom
+souhaité » ; il ne disait ni pourquoi, ni que le cas se présente sur un caractère aussi banal qu'une
+esperluette — présente dans le nom d'un track du seed, « Conseil & IA ».
+
+La conséquence n'est pas cosmétique : **`mail_folder_map` cesse d'être une commodité**. Sans elle,
+retrouver plus tard le dossier d'un track reviendrait à redemander « Conseil & IA », que le serveur
+ne connaît pas sous ce nom. La table est donc le seul chemin, et l'unité qui la livrera devra y
+écrire le **chemin demandé** et le **chemin réellement créé**, non l'un ou l'autre.
+
+**Deux autres mesures allègent l'unité.** Le renommage **emporte les enfants** — renommer un track
+renommera son dossier et ceux de ses channels sans reconstruire l'arborescence —, et chaque niveau
+se crée séparément, ce qui rend la création paresseuse naturelle.
+
+**Une troisième l'alourdit** : le serveur **n'assainit pas** à notre place. Une contre-oblique dans
+un nom de dossier est acceptée telle quelle. L'assainissement du §4.5 reste donc entièrement à la
+charge du produit, et il ne pourra pas s'en remettre au refus du serveur pour attraper ses propres
+erreurs.

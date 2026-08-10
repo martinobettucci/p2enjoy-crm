@@ -1142,3 +1142,42 @@ question qui appartient à l'unité qui livrera l'écran.
 | API | `classify_message` refusée sans droit d'écriture ; le message classé devient lisible par qui lit la card |
 | E2E `mail` | Un email **réellement envoyé à l'adresse d'une card** est ingéré puis classé **automatiquement** ; un second, adressé à personne, reste non classé et est classé **à la main** |
 | Harnais | `scripts/verify-mail-classement.sh`, non complaisant, avec son témoin |
+
+---
+
+## 17. Dossiers IMAP imbriqués — `CRM-056`
+
+### 17.1 Ce que la mesure a établi, et qui n'était écrit nulle part
+
+**Mesuré le 2026-08-10 contre le Stalwart de `CRM-050`, depuis le réseau Compose :**
+
+| Mesure | Résultat |
+|---|---|
+| Délimiteur annoncé par `LIST` | `/` |
+| `CREATE "CRM"`, puis `"CRM/Track"`, puis `"CRM/Track/Channel"` | **OK** à chaque niveau |
+| `LIST` après création de `CRM/Conseil & IA` | **`CRM/Conseil &- IA`** |
+| `RENAME "CRM/Conseil & IA"` → `"CRM/Conseil et IA"` | **OK**, et **l'enfant suit** : `CRM/Conseil et IA/Grands comptes` |
+| `CREATE` d'un nom portant une contre-oblique | **OK** — le serveur ne la refuse pas |
+
+**LE NOM CRÉÉ N'EST PAS LE NOM DEMANDÉ, ET C'EST MESURÉ.** `Conseil & IA` revient
+`Conseil &- IA` : le serveur applique l'**UTF-7 modifié** de la RFC 3501, où `&` s'écrit `&-`. Le
+§4.5 l'avait pressenti — « le chemin créé peut différer du nom souhaité » — sans dire pourquoi ni
+de combien. La conséquence est directe : **`mail_folder_map` n'est pas une commodité, c'est la
+seule façon de retrouver un dossier**. Chercher plus tard le dossier « Conseil & IA » ne le
+trouverait pas.
+
+**Le renommage emporte les enfants**, ce qui rend le §4.5 tenable : renommer un track renomme son
+dossier **et** ceux de ses channels, sans reconstruire l'arborescence.
+
+**Le serveur n'assainit pas à notre place** : une contre-oblique passe. L'assainissement du §4.5 —
+délimiteur, longueur, caractères interdits — reste donc entièrement à la charge du produit.
+
+### 17.2 Ce que l'unité livrera
+
+`mail_folder_map` — compte, entité (`track`, `channel`, `card`), identifiant, **chemin demandé**,
+**chemin réellement créé** —, la création paresseuse de l'arborescence `CRM/<Track>/<Channel>/<Card>`
+après classement, l'assainissement des noms, le renommage propagé, et la détection des labels Gmail
+(`X-GM-EXT-1`), pour lesquels le modèle de dossiers est inadapté.
+
+**Le worker ne supprime jamais un message d'`INBOX` : il copie** (§4.5). Décider à la place de
+l'utilisateur de retirer un message de sa boîte serait destructif.

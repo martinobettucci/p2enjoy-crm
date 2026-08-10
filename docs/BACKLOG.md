@@ -5434,10 +5434,20 @@ classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et docu
 règles vivent en base et non dans le service, ce qui est le choix d'architecture du produit depuis
 `CRM-010`. L'unité reste `[~]` pour les deux écarts ci-dessus.
 
-### CRM-056 — Dossiers IMAP imbriqués `[ ]`
+### CRM-056 — Dossiers IMAP imbriqués `[~]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.
 **DoD** : intégration vérifiant l'arborescence **par un client IMAP** ; observation visuelle dans
 Roundcube ; renommage d'un track propageant le renommage du dossier.
+
+- [x] **Mesures faites avant toute ligne de code**, `docs/SPEC-mail-subsystem.md` §17.1, contre le
+      vrai serveur : le délimiteur est `/`, chaque niveau se crée séparément, **le nom créé n'est
+      pas le nom demandé** — `Conseil & IA` revient `Conseil &- IA`, en UTF-7 modifié de la
+      RFC 3501 —, le renommage **emporte les enfants**, et le serveur **n'assainit pas** à notre
+      place : une contre-oblique passe.
+- [x] **La conséquence est écrite** : `mail_folder_map` n'est pas une commodité mais la seule façon
+      de retrouver un dossier. Chercher plus tard « Conseil & IA » ne le trouverait pas.
+- [ ] **Rien n'est implémenté** : ni la table, ni la création paresseuse, ni l'assainissement, ni
+      le renommage propagé, ni la détection des labels Gmail.
 
 ### CRM-057 — Inbox globale `[ ]`
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.
