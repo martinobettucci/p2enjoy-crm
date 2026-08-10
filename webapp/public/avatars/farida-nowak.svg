@@ -1,0 +1,8 @@
+<!-- @spec CRM-022 (docs/BACKLOG.md) — avatar local du profil Farida Nowak ; docs/SPEC-identite.md §8 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Farida Nowak</title>
+  <rect width="128" height="128" rx="64" fill="#D9CF4A"/>
+  <path d="M0 25c19 16 38 17 58 3 21-15 44-12 70 10v90H0z" fill="#C2B83B"/>
+  <circle cx="98" cy="29" r="15" fill="#23468C"/>
+  <text x="64" y="77" fill="#0D0D0D" font-family="ui-sans-serif,system-ui,sans-serif" font-size="42" font-weight="700" text-anchor="middle">FN</text>
+</svg>

@@ -1,0 +1,8 @@
+<!-- @spec CRM-022 (docs/BACKLOG.md) — avatar local du profil Driss Lemoine ; docs/SPEC-identite.md §8 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Driss Lemoine</title>
+  <rect width="128" height="128" rx="64" fill="#238C33"/>
+  <path d="M0 92 42 50l21 21 26-31 39 39v49H0z" fill="#1C7029"/>
+  <circle cx="31" cy="31" r="14" fill="#D9CF4A"/>
+  <text x="64" y="77" fill="#FFFFFF" font-family="ui-sans-serif,system-ui,sans-serif" font-size="42" font-weight="700" text-anchor="middle">DL</text>
+</svg>

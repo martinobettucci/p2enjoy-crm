@@ -1,0 +1,150 @@
+/*
+  @spec CRM-007 (docs/BACKLOG.md) — jetons du design system en variables CSS
+  @spec docs/DESIGN_SYSTEM.md §1 (palette), §2 (typographie), §3 (espacements et rayons), §11
+  @spec docs/SPEC-webapp.md §4 (jetons)
+
+  **Seul fichier du dépôt autorisé à contenir une valeur hexadécimale.** Un contrôle de
+  `scripts/verify-webapp.sh` échoue si une couleur hexadécimale apparaît ailleurs dans
+  `webapp/src`.
+
+  Le bloc `@theme` de Tailwind 4 remplit les deux exigences de docs/DESIGN_SYSTEM.md §11 d'un
+  seul geste : il déclare les jetons en variables CSS sur `:root`, et engendre des utilitaires
+  qui les **référencent** au lieu de recopier leur valeur.
+
+  Les espaces de noms sont **remis à zéro** (`--*: initial`) avant d'être redéfinis. Ce n'est
+  pas une précaution de style : sans cela, la palette et l'échelle d'espacement par défaut de
+  Tailwind resteraient disponibles, et rien n'empêcherait d'écrire `bg-red-500` ou `p-7` —
+  c'est-à-dire d'introduire une couleur et un espacement que le design system ne connaît pas.
+  Remises à zéro, ces classes n'existent tout simplement pas.
+*/
+
+@theme {
+	/* --- Palette (docs/DESIGN_SYSTEM.md §1) ---------------------------------------------- */
+	--color-*: initial;
+
+	--color-brand: #23468c;
+	--color-brand-hover: #1b3670;
+	--color-success: #238c33;
+	--color-accent: #d9cf4a;
+	--color-danger: #f24141;
+	--color-ink: #0d0d0d;
+
+	/* Neutres */
+	--color-bg: #f7f8fa;
+	--color-surface: #ffffff;
+	--color-border: #e5e7eb;
+	--color-text: #374151;
+	--color-text-2: #4b5563;
+	--color-text-3: #6b7280;
+	--color-hover: #f3f4f6;
+
+	--color-white: #ffffff;
+
+	/* Déclinaisons douces : calculées à partir du jeton plein, jamais réécrites en dur.
+	   10 % pour les fonds de pilule et de badge, 22 % pour les bordures douces
+	   (docs/DESIGN_SYSTEM.md §1, §5.6). */
+	--color-brand-soft: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+	--color-brand-soft-strong: color-mix(in srgb, var(--color-brand) 22%, var(--color-surface));
+	--color-success-soft: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+	--color-accent-soft: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+	--color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+
+	/* Le jeton **écrit sur son propre fond doux** — `CRM-020`, docs/DESIGN_SYSTEM.md §12.5.
+
+	   Motif MESURÉ, non supposé. §5.6 demandait « texte à la couleur pleine » sur un fond de la
+	   même couleur à 10–22 % ; §8 exige un contraste AA de 4,5:1 « y compris pour les badges
+	   colorés ». Les deux règles sont **incompatibles** pour trois jetons sur cinq :
+
+	     brand    #23468C sur #E9ECF4 = 7,64  conforme
+	     success  #238C33 sur #E9F4EB = 3,82  ÉCHEC
+	     accent   #D9CF4A sur #F7F4D7 = 1,45  ÉCHEC
+	     danger   #F24141 sur #FEECEC = 3,29  ÉCHEC
+
+	   `accent`, illisible, avait été vu à l'œil et corrigé en repli sur l'encre. `success` et
+	   `danger` étaient passés inaperçus : ils restent *lisibles* sans être *conformes*, et aucune
+	   preuve ne mesurait le contraste. C'est le scénario de `e2e/ui/tracks.spec.ts` qui les a
+	   trouvés, en peignant les couleurs rendues sur un canevas.
+
+	   Ces déclinaisons conservent la teinte du jeton — donc l'intention du §5.6 — en
+	   l'assombrissant juste assez. Ce sont des valeurs **calculées** à partir du jeton plein, comme
+	   les fonds doux ci-dessus, jamais un hexadécimal ad hoc. Contrastes obtenus : 7,64 / 4,85 /
+	   4,72 / 4,67. `brand` n'a besoin d'aucun assombrissement.
+
+	   La contradiction elle-même est consignée en docs/INCONSISTENCY_REPORT.md, INC-028 : savoir si
+	   le §5.6 doit être réécrit pour tout le produit dépasse cette unité. */
+	--color-brand-on-soft: var(--color-brand);
+	--color-success-on-soft: color-mix(in srgb, var(--color-success) 85%, var(--color-ink));
+	--color-accent-on-soft: color-mix(in srgb, var(--color-accent) 50%, var(--color-ink));
+	--color-danger-on-soft: color-mix(in srgb, var(--color-danger) 80%, var(--color-ink));
+
+	/* Voile posé sous une surface qui recouvre l'écran (tiroir de navigation, modale à venir).
+	   C'est un jeton, et non un modificateur d'opacité écrit dans le composant : mesuré, un
+	   `bg-ink/40` fait **recopier la valeur hexadécimale** dans le CSS produit, en repli des
+	   navigateurs sans `color-mix`. La règle « un jeton, une seule déclaration » ne tiendrait
+	   plus (docs/DESIGN_SYSTEM.md §12). */
+	--color-veil: color-mix(in srgb, var(--color-ink) 40%, transparent);
+
+	/* --- Typographie (docs/DESIGN_SYSTEM.md §2) ------------------------------------------ */
+	--font-*: initial;
+	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+	/* Aucun texte sous 12 px : l'échelle ne descend pas plus bas, la classe n'existe pas. */
+	--text-*: initial;
+	--text-xs: 12px;
+	--text-sm: 13px;
+	--text-base: 15px;
+	--text-base--line-height: 1.55;
+	--text-h3: 16px;
+	--text-h2: 20px;
+	--text-h1: 26px;
+
+	--leading-*: initial;
+	--leading-tight: 1.25;
+	--leading-normal: 1.55;
+
+	/* --- Espacements (docs/DESIGN_SYSTEM.md §3) ------------------------------------------ */
+	/* Échelle fermée : 4, 8, 12, 16, 24, 32, 48 px. Aucune valeur intermédiaire.
+	   Le zéro s'y ajoute : ce n'est pas une valeur d'espacement mais son absence, et sans lui
+	   les utilitaires `min-w-0`, `min-h-0` et `gap-0` ne sont pas engendrés — mesuré, avec pour
+	   effet un débordement horizontal sous 768 px (docs/JOURNAL.md décision 46). */
+	--spacing: initial;
+	--spacing-0: 0px;
+	--spacing-1: 4px;
+	--spacing-2: 8px;
+	--spacing-3: 12px;
+	--spacing-4: 16px;
+	--spacing-6: 24px;
+	--spacing-8: 32px;
+	--spacing-12: 48px;
+
+	/* --- Rayons et ombres (docs/DESIGN_SYSTEM.md §3) -------------------------------------- */
+	--radius-*: initial;
+	--radius-sm: 8px;
+	--radius-md: 10px;
+	--radius-lg: 14px;
+
+	--shadow-*: initial;
+	--shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
+	--shadow-card-hover: 0 2px 8px rgb(0 0 0 / 0.1);
+
+	/* --- Paliers responsive (docs/DESIGN_SYSTEM.md §7) ------------------------------------ */
+	/* Les quatre paliers du design system, et eux seuls. */
+	--breakpoint-*: initial;
+	--breakpoint-md: 768px;
+	--breakpoint-lg: 1024px;
+	--breakpoint-xl: 1280px;
+
+	/* --- Durées (docs/DESIGN_SYSTEM.md §6) ------------------------------------------------ */
+	--transition-duration-fast: 150ms;
+	--transition-duration-slow: 250ms;
+
+	/* --- Dimensions de la coquille -------------------------------------------------------- */
+	/* Hauteur minimale des cibles interactives : 40 px (docs/DESIGN_SYSTEM.md §5.5, §8). */
+	--size-target: 40px;
+	--size-sidebar: 248px;
+	--size-sidebar-icons: 64px;
+	/* Largeur d'un squelette de texte court : c'est la forme du contenu attendu, pas un
+	   espacement — elle n'a donc pas sa place dans l'échelle fermée ci-dessus. */
+	--size-placeholder: 120px;
+}

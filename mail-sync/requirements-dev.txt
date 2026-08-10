@@ -1,0 +1,5 @@
+# @verifies CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.6 — dépendances directes
+# et épinglées de la preuve Python ; les dépendances runtime restent une source unique.
+-r requirements.txt
+httpx2==2.7.0
+pytest==9.1.1

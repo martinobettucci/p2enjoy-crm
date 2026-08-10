@@ -1,0 +1,11 @@
+# @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.1,
+# docs/DAT.md §3.3 et §15 — dépendances runtime directes et épinglées du service.
+# @spec CRM-052 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §10 arbitrage n° 1 — IMAPClient
+#       entre dans l'image AVEC son premier consommateur, et pas avant : c'est le test de
+#       connexion réel du §13.5. Aucun client HTTP n'est ajouté — `urllib` de la bibliothèque
+#       standard couvre les deux appels PostgREST du service (CLAUDE.md §19).
+fastapi==0.139.2
+IMAPClient==3.1.0
+pydantic-settings==2.14.2
+starlette==1.3.1
+uvicorn==0.51.0

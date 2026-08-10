@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  @spec CRM-007 (docs/BACKLOG.md) — point d'entrée de la webapp
+  @spec docs/SPEC-webapp.md §3.1 (arborescence), §10 (langue par défaut)
+  @spec docs/DESIGN_SYSTEM.md §2 (typographie), §10 (français par défaut)
+
+  Le titre et la description sont les seuls textes visibles hors dictionnaire : ils sont lus
+  avant que React ne soit monté, et ne peuvent donc pas passer par la fonction de traduction.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>P2Enjoy CRM</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

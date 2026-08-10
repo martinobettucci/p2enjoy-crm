@@ -1,0 +1,19 @@
+{
+  // @spec CRM-007 (docs/BACKLOG.md) — compilation des tests unitaires de la webapp
+  // @spec docs/SPEC-webapp.md §3.3 (configurations et périmètres), §14 (preuves)
+  //
+  // Les tests s'exécutent sous Vitest, c'est-à-dire dans **Node**, avec un DOM simulé : ils
+  // ont donc besoin à la fois des types du navigateur et de ceux de Node — certains lisent le
+  // dépôt pour éprouver des règles du design system.
+  //
+  // L'application, elle, ne les obtient pas : `process` et `node:fs` doivent rester des
+  // erreurs de compilation dans un fichier destiné au navigateur.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"]
+  },
+  // L'exclusion héritée de la configuration de l'application vise précisément ces fichiers :
+  // elle est neutralisée ici, sans quoi ce projet n'aurait aucune entrée.
+  "exclude": [],
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+}

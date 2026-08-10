@@ -1,0 +1,8 @@
+# @verifies CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.6 — découverte stricte
+# des tests unitaires du service depuis la commande publique `pytest mail-sync/tests`.
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+pythonpath = ["src"]
+testpaths = ["tests"]
+

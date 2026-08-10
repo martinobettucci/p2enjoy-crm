@@ -1,0 +1,77 @@
+# --- Dépendances ---------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# --- Sorties de build ----------------------------------------------------
+dist/
+dist-ssr/
+build/
+*.local
+webapp/dist/
+mail-sync/dist/
+
+# --- Environnement -------------------------------------------------------
+# Aucun secret réel ne doit entrer dans le dépôt (CLAUDE.md §3).
+# Seuls les gabarits documentés sont versionnés : .env.example, .env.dev.example
+.env
+.env.*
+!.env.example
+!.env.dev.example
+!.env.prod.example
+supabase/.env
+supabase/.env.compose
+
+# --- Volumes et données locales -----------------------------------------
+# Données générées par la pile docker locale : jamais versionnées.
+# Attention : la règle doit rester ancrée à la racine. Un motif `volumes/` non ancré
+# exclurait aussi `supabase/docker/volumes/`, qui contient la configuration versionnée de
+# la passerelle et les scripts d'initialisation de la base (CRM-001).
+supabase/docker/volumes/db/data/
+supabase/docker/volumes/storage/
+supabase/docker/volumes/functions/deno_cache/
+supabase/docker/volumes/snippets/*
+!supabase/docker/volumes/snippets/.gitkeep
+/volumes/
+mail-data/
+clamav-data/
+caddy/.letsencrypt/
+caddy/certs/
+
+# --- Tests et rapports ---------------------------------------------------
+e2e/.env
+e2e/artifacts/
+e2e/test-results/
+e2e/playwright-report/
+# Rapport HTML produit par le rapporteur `html` et servi par `npm run e2e:report` (CRM-008).
+# Un rapport est une pièce de diagnostic, pas un livrable versionné.
+e2e/report/
+e2e/output/
+coverage/
+.nyc_output/
+
+# --- Journaux ------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Éditeurs et système -------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.fleet/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

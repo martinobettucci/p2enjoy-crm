@@ -1,0 +1,39 @@
+{
+  // @spec CRM-006 (docs/BACKLOG.md) — compilation des types générés et de leurs assertions
+  // @spec docs/SPEC-types.md §4 (commande `typecheck`), §9 (limite : configuration à la racine)
+  //
+  // Cette configuration ne couvre que ce que CRM-006 livre : les deux fichiers de types
+  // générés et leurs assertions. `CRM-007` a livré `webapp/tsconfig.json` pour l'application
+  // et `tsconfig.tools.json` pour l'outillage ; `npm run typecheck` compile les trois.
+  //
+  // L'`include` nomme les deux fichiers un par un. Il visait auparavant
+  // `webapp/src/lib/**/*.ts` : le client Supabase, livré par CRM-007 dans ce même répertoire,
+  // y serait tombé et aurait échoué faute de types DOM, pour une raison sans rapport avec lui
+  // (docs/JOURNAL.md décision 42 ; docs/SPEC-webapp.md §3.3).
+  //
+  // Les options d'émission sont volontairement absentes : `noEmit` est vrai, ce projet ne
+  // compile rien vers du JavaScript, il vérifie un contrat de types.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Aucune dépendance typée n'est installée : il n'y a aucun `.d.ts` tiers à ignorer, et
+    // ignorer serait de toute façon relâcher une vérification sans motif.
+    "skipLibCheck": false,
+    "noEmit": true
+  },
+  "include": ["webapp/src/lib/database.types.ts", "webapp/src/lib/database.types.test-d.ts"]
+}

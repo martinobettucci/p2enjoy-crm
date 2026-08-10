@@ -1,0 +1,483 @@
+# @spec CRM-001 (docs/BACKLOG.md) — pile Supabase self-hosted, assemblage commun des services
+# @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2 — runtime Deno commun
+# @spec docs/JOURNAL.md décision 100 (un contrôle de santé nomme une famille d'adresses)
+# @spec docs/DAT.md §3 (composants), §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement),
+#       §15 (dépendances structurantes)
+# @spec README.md §2 (stack), §5 (commandes), §6 (lancement en développement)
+#
+# Assemblage **commun** aux deux environnements. Il ne contient aucun outillage de
+# développement : Studio, MinIO, Inbucket et postgres-meta vivent dans
+# `docker-compose.dev.yml`, Caddy dans `docker-compose.prod.yml`.
+#
+#   Développement : docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#   Production    : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Les variables consommées ici sont fournies par le fichier `.env` du dépôt, amorcé par
+# `./runDev.sh` à partir du gabarit documenté `.env.example` (unité `CRM-002`).
+
+name: p2enjoy-crm
+
+services:
+
+  # --- Base de données -----------------------------------------------------------------------
+  # Source de vérité du produit : schéma applicatif, RLS, fonctions SECURITY DEFINER et RPC
+  # métier (docs/DAT.md §3.2, docs/SCHEMA.md).
+  db:
+    container_name: p2enjoy-db
+    image: supabase/postgres:17.6.1.136
+    restart: unless-stopped
+    volumes:
+      # Scripts d'initialisation, joués une seule fois à la création du cluster.
+      - ./supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - ./supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - ./supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      - ./supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      - ./supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - ./supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      # PGDATA persisté entre les redémarrages ; détruit par `resetMe.sh` (CRM-002).
+      - ./supabase/docker/volumes/db/data:/var/lib/postgresql/data:Z
+      - db-config:/etc/postgresql-custom
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: ${POSTGRES_PORT}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: ${JWT_EXPIRY}
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      # Évite que les requêtes de scrutation de Realtime saturent les journaux.
+      - -c
+      - log_min_messages=fatal
+
+  # --- Application des migrations applicatives -----------------------------------------------
+  # Conteneur éphémère décrit par docs/DAT.md §3.2 : il rejoue en ordre les fichiers de
+  # `supabase/migrations/`. Il s'exécute après GoTrue, dont le schéma `auth` est référencé par
+  # les migrations d'amorçage (`CRM-003`). Aucune migration n'est appliquée en production par ce
+  # chemin : docs/PROD_MIGRATIONS.md fait foi (docs/DAT.md §9).
+  migrations-runner:
+    container_name: p2enjoy-migrations
+    image: postgres:17-alpine
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    volumes:
+      - ./supabase/docker/migrations-runner/apply-migrations.sh:/usr/local/bin/apply-migrations.sh:ro,z
+      - ./supabase/migrations:/migrations:ro,z
+    environment:
+      PGHOST: ${POSTGRES_HOST}
+      PGPORT: ${POSTGRES_PORT}
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      APPLY_MIGRATIONS: ${APPLY_MIGRATIONS:-true}
+    entrypoint: ["/bin/sh", "/usr/local/bin/apply-migrations.sh"]
+
+  # --- Gabarits transactionnels ---------------------------------------------------------------
+  # @spec CRM-009 (docs/BACKLOG.md), docs/SPEC-auth.md §5.1 — quatre corps français servis en
+  # HTTP sur le seul réseau interne, dans les assemblages de développement comme de production.
+  auth-templates:
+    container_name: p2enjoy-auth-templates
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    command: ["caddy", "file-server", "--root", "/srv/templates", "--listen", ":8080"]
+    volumes:
+      - ./supabase/auth/templates:/srv/templates:ro,z
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/invite.html"]
+      timeout: 5s
+      interval: 5s
+      retries: 5
+
+  # --- Authentification ----------------------------------------------------------------------
+  # docs/DAT.md §4.1 : inscription libre désactivée, comptes créés par invitation (CRM-011) ;
+  # écran, session d'onglet et gabarits transactionnels portés par CRM-009.
+  auth:
+    container_name: p2enjoy-auth
+    image: supabase/gotrue:v2.189.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      auth-templates:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 5
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS}
+      # Toujours `true` : les comptes naissent d'une invitation d'administrateur.
+      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP}
+
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: ${JWT_EXPIRY}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_ISSUER: ${API_EXTERNAL_URL}
+
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP}
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS}
+      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM}
+      GOTRUE_EXTERNAL_PHONE_ENABLED: ${ENABLE_PHONE_SIGNUP}
+      GOTRUE_SMS_AUTOCONFIRM: ${ENABLE_PHONE_AUTOCONFIRM}
+
+      # Le défaut de GoTrue est 6, mesuré comme réellement permissif (docs/SPEC-auth.md §4).
+      GOTRUE_PASSWORD_MIN_LENGTH: ${PASSWORD_MIN_LENGTH}
+
+      # SMTP transactionnel : Inbucket en développement, fournisseur réel en production.
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL}
+      GOTRUE_SMTP_HOST: ${SMTP_HOST}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT}
+      GOTRUE_SMTP_USER: ${SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      GOTRUE_MAILER_URLPATHS_INVITE: ${MAILER_URLPATHS_INVITE}
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: ${MAILER_URLPATHS_CONFIRMATION}
+      GOTRUE_MAILER_URLPATHS_RECOVERY: ${MAILER_URLPATHS_RECOVERY}
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: ${MAILER_URLPATHS_EMAIL_CHANGE}
+      # Les URL sont absolues : sans préfixe http, GoTrue les concatène à SITE_URL. Un échec de
+      # chargement retombe sur l'anglais ; scripts/verify-auth.sh vérifie donc le corps reçu.
+      GOTRUE_MAILER_TEMPLATES_INVITE: http://auth-templates:8080/invite.html
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://auth-templates:8080/confirmation.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://auth-templates:8080/recovery.html
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://auth-templates:8080/email-change.html
+      GOTRUE_MAILER_SUBJECTS_INVITE: Invitation à P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: Confirmez votre adresse — P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: Réinitialisez votre mot de passe — P2Enjoy CRM
+      GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE: Confirmez votre nouvelle adresse — P2Enjoy CRM
+
+  # --- API REST ------------------------------------------------------------------------------
+  # PostgREST expose le schéma filtré par RLS (docs/DAT.md §6, docs/SPEC-permissions-rls.md).
+  rest:
+    container_name: p2enjoy-rest
+    image: postgrest/postgrest:v14.12
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations-runner:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "postgrest", "--ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
+      PGRST_DB_MAX_ROWS: ${PGRST_DB_MAX_ROWS:-1000}
+      PGRST_DB_EXTRA_SEARCH_PATH: ${PGRST_DB_EXTRA_SEARCH_PATH:-public}
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_ADMIN_SERVER_PORT: 3001
+      PGRST_ADMIN_SERVER_HOST: localhost
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY}
+    command: ["postgrest"]
+
+  # --- Temps réel ----------------------------------------------------------------------------
+  # Abonnements aux commentaires, déplacements de cards et notifications (docs/DAT.md §3.1).
+  # Le nom du conteneur porte le tenant : Realtime le déduit du sous-domaine.
+  realtime:
+    container_name: realtime-dev.p2enjoy-realtime
+    image: supabase/realtime:v2.102.3
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'curl -sSfL --head -o /dev/null -H "Authorization: Bearer ${ANON_KEY}" http://localhost:4000/api/tenants/realtime-dev/health'
+      timeout: 5s
+      interval: 15s
+      retries: 5
+      start_period: 20s
+    environment:
+      PORT: 4000
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: supabase_admin
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: ${REALTIME_DB_ENC_KEY}
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      METRICS_JWT_SECRET: ${JWT_SECRET}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      # Nombre de descripteurs de fichiers réclamé au démarrage. Realtime et Supavisor
+      # échouent si la limite dure de l'hôte est inférieure : la valeur est donc explicite et
+      # ajustable, plutôt que dépendante d'un défaut de démon non documenté.
+      RLIMIT_NOFILE: ${STACK_RLIMIT_NOFILE:-100000}
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+      DISABLE_HEALTHCHECK_LOGGING: "true"
+
+  # --- Stockage objet ------------------------------------------------------------------------
+  # Toujours en mode S3 : MinIO en développement, fournisseur réel en production
+  # (docs/DAT.md §3.6, README.md §6). La transformation d'images est désactivée : aucune unité
+  # livrée n'en dépend, et `imgproxy` serait un service de plus à superviser pour rien.
+  storage:
+    container_name: p2enjoy-storage
+    image: supabase/storage-api:v1.60.4
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    healthcheck:
+      # 127.0.0.1 plutôt que « localhost » : le service n'écoute qu'en IPv4 — ses journaux
+      # annoncent 127.0.0.1:5000 et l'adresse du réseau Compose, jamais `::`. Or `/etc/hosts` du
+      # conteneur résout aussi « localhost » en `::1`, et sur un hôte où la résolution rend cette
+      # adresse en premier, le contrôle de santé reçoit un refus de connexion sans que le service
+      # n'ait rien : la pile entière échoue alors sur « container p2enjoy-storage is unhealthy ».
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
+      timeout: 5s
+      interval: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      STORAGE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL}
+      REQUEST_ALLOW_X_FORWARDED_PATH: "true"
+      FILE_SIZE_LIMIT: ${STORAGE_FILE_SIZE_LIMIT}
+      TENANT_ID: ${STORAGE_TENANT_ID}
+      REGION: ${REGION}
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+      STORAGE_BACKEND: s3
+      GLOBAL_S3_BUCKET: ${GLOBAL_S3_BUCKET}
+      GLOBAL_S3_ENDPOINT: ${GLOBAL_S3_ENDPOINT}
+      GLOBAL_S3_PROTOCOL: ${GLOBAL_S3_PROTOCOL}
+      GLOBAL_S3_FORCE_PATH_STYLE: ${GLOBAL_S3_FORCE_PATH_STYLE}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${REGION}
+      S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID}
+      S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET}
+
+  # --- Fonctions edge -----------------------------------------------------------------------
+  # @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §4.1
+  # Runtime commun au développement et à la production. Aucun port hôte : toute requête
+  # applicative traverse Kong, où la clé d'API est contrôlée avant le dispatch (§5).
+  functions:
+    container_name: p2enjoy-functions
+    image: public.ecr.aws/supabase/edge-runtime:v1.74.2
+    restart: unless-stopped
+    command:
+      - start
+      - --policy
+      - oneshot
+      - --main-service
+      - /home/deno/functions/main
+    volumes:
+      - ./supabase/functions:/home/deno/functions:ro,z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /bin/bash -ec 'exec 3<>/dev/tcp/127.0.0.1/9000;
+          printf "GET /__health HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3;
+          IFS= read -r status <&3;
+          [[ "$$status" == *" 200 "* ]];
+          cat <&3 >/dev/null'
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+
+  # --- Pooler de connexions ------------------------------------------------------------------
+  # Supavisor (README.md §2). Il publie l'accès PostgreSQL : le conteneur `db` n'expose aucun
+  # port dans l'assemblage commun.
+  supavisor:
+    container_name: p2enjoy-pooler
+    image: supabase/supavisor:2.9.5
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - ${POOLER_PROXY_PORT_SESSION}:5432
+      - ${POOLER_PROXY_PORT_TRANSACTION}:6543
+    volumes:
+      - ./supabase/docker/volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
+    healthcheck:
+      test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://127.0.0.1:4000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    environment:
+      PORT: 4000
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
+      CLUSTER_POSTGRES: "true"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      VAULT_ENC_KEY: ${VAULT_ENC_KEY}
+      API_JWT_SECRET: ${JWT_SECRET}
+      METRICS_JWT_SECRET: ${JWT_SECRET}
+      REGION: local
+      ERL_AFLAGS: -proto_dist inet_tcp
+      # Voir la note du service `realtime` : même contrainte de descripteurs de fichiers.
+      RLIMIT_NOFILE: ${STACK_RLIMIT_NOFILE:-100000}
+      POOLER_TENANT_ID: ${POOLER_TENANT_ID}
+      POOLER_DEFAULT_POOL_SIZE: ${POOLER_DEFAULT_POOL_SIZE}
+      POOLER_MAX_CLIENT_CONN: ${POOLER_MAX_CLIENT_CONN}
+      POOLER_POOL_MODE: transaction
+      DB_POOL_SIZE: ${POOLER_DB_POOL_SIZE}
+    command:
+      - /bin/sh
+      - -c
+      - /app/bin/migrate && /app/bin/supavisor eval "$$(cat /etc/pooler/pooler.exs)" && /app/bin/server
+
+  # --- Passerelle ----------------------------------------------------------------------------
+  # Kong expose REST, Auth, Storage, Realtime et les fonctions edge sur un port unique
+  # (docs/DAT.md §3.5, docs/SPEC-edge-functions.md §5).
+  # La configuration déclarative ne référence aucun service de développement : Studio est joint
+  # directement sur son propre port en développement, jamais au travers de la passerelle.
+  kong:
+    container_name: p2enjoy-kong
+    image: kong/kong:3.9.1
+    restart: unless-stopped
+    labels:
+      com.p2enjoy.kong-config-revision: crm-016
+    depends_on:
+      functions:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - api-gw
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - ${KONG_HTTP_PORT}:8000/tcp
+    volumes:
+      - ./supabase/docker/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+      - ./supabase/docker/volumes/api/kong-entrypoint.sh:/home/kong/kong-entrypoint.sh:ro,z
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/kong.yml
+      KONG_ROUTER_FLAVOR: expressions
+      # https://github.com/supabase/cli/issues/14
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_DNS_NOT_FOUND_TTL: 1
+      KONG_DNS_VALID_TTL: 5
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,request-termination,post-function
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      KONG_PROXY_ACCESS_LOG: /dev/stdout combined
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
+      ANON_KEY_ASYMMETRIC: ${ANON_KEY_ASYMMETRIC:-}
+      SERVICE_ROLE_KEY_ASYMMETRIC: ${SERVICE_ROLE_KEY_ASYMMETRIC:-}
+    entrypoint: ["/bin/sh", "/home/kong/kong-entrypoint.sh"]
+
+  # --- Service de messagerie -------------------------------------------------------------------
+  #
+  # @spec CRM-051 (docs/BACKLOG.md) — socle du service `mail-sync`
+  # @spec docs/SPEC-mail-subsystem.md §12.1 (runtime et durcissement), §12.3 (santé),
+  #       §12.4 (volume d'état) ; docs/DAT.md §3.3
+  #
+  # Service **commun** aux deux assemblages : IMAP et SMTP demandent des connexions longues, que
+  # `pg_cron` ne porte pas (décision 261). Son API n'est joignable que depuis ce réseau : aucun
+  # port n'est publié, en développement comme en production.
+  #
+  # Il reçoit `SERVICE_ROLE_KEY` **depuis `CRM-052`**, et pas avant : le §12.1 réservait cette clé
+  # à « la première unité qui consomme réellement une table mail ». Le principe de moindre
+  # privilège se tient dans le temps, pas seulement dans l'espace.
+  mail-sync:
+    container_name: p2enjoy-mail-sync
+    build:
+      context: .
+      dockerfile: mail-sync/Dockerfile
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - mail-sync-state:/var/lib/p2enjoy-mail-sync
+    environment:
+      P2ENJOY_ENV_PROFILE: ${P2ENJOY_ENV_PROFILE}
+      MAIL_SYNC_INTERNAL_TOKEN: ${MAIL_SYNC_INTERNAL_TOKEN}
+      MAIL_SYNC_LOG_LEVEL: ${MAIL_SYNC_LOG_LEVEL:-INFO}
+      MAIL_SYNC_HOST: 0.0.0.0
+      MAIL_SYNC_PORT: 8080
+      MAIL_SYNC_STATE_PATH: /var/lib/p2enjoy-mail-sync/runtime.json
+      # CRM-052 : le service consomme enfin une table mail, et reçoit donc la clé qui contourne la
+      # RLS — ce que `CRM-051` avait délibérément différé (docs/SPEC-mail-subsystem.md §12.1).
+      # L'URL est celle de la passerelle SUR LE RÉSEAU COMPOSE : aucun port publié n'est employé,
+      # et le service n'a aucun chemin vers l'extérieur.
+      SUPABASE_URL: http://kong:8000
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      MAIL_SYNC_IMAP_TIMEOUT_SECONDS: ${MAIL_SYNC_IMAP_TIMEOUT_SECONDS:-10}
+      MAIL_SYNC_SMTP_TIMEOUT_SECONDS: ${MAIL_SYNC_SMTP_TIMEOUT_SECONDS:-30}
+      # CRM-054 : l'antivirus et la borne d'ingestion. Le nom d'hôte est celui du réseau Compose.
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      MAIL_MAX_ATTACHMENT_MB: ${MAIL_MAX_ATTACHMENT_MB:-25}
+    # L'image est volontairement dépourvue de `curl` et de `wget` : la sonde emprunte le seul
+    # interpréteur présent, et interroge la readiness réelle plutôt qu'un port ouvert.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          with urllib.request.urlopen("http://127.0.0.1:8080/health/ready", timeout=3) as answer:
+              sys.exit(0 if answer.status == 200 else 1)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  db-config:
+  mail-sync-state:

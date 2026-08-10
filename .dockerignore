@@ -1,0 +1,44 @@
+# @spec CRM-002 (docs/BACKLOG.md) — contexte de build de développement sans données locales
+# @spec docs/DAT.md §3.8 ; docs/JOURNAL.md décision 247 ; README.md §11
+
+# Métadonnées propres au poste ou à l'agent.
+.git
+.agents
+.codex
+.idea
+.vscode
+
+# Secrets locaux. Les gabarits documentés restent disponibles dans l'image autonome.
+.env
+.env.*
+!.env.example
+!.env.dev.example
+!.env.prod.example
+
+# Dépendances et sorties générées : l'image installe elle-même ses dépendances.
+node_modules
+**/node_modules
+webapp/dist
+mail-sync/dist
+coverage
+.nyc_output
+e2e/output
+e2e/report
+e2e/test-results
+e2e/artifacts
+
+# Données d'exécution de la pile. PostgreSQL ferme notamment son cluster en 0750.
+supabase/docker/volumes
+volumes
+mail-data
+clamav-data
+caddy/.letsencrypt
+caddy/certs
+
+# Journaux et fichiers temporaires.
+*.log
+*.local
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache

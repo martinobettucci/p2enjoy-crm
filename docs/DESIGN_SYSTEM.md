@@ -1,0 +1,677 @@
+# Design System — P2Enjoy CRM
+
+Référence maîtresse de l'interface. Dérivée de la **charte P2Enjoy SAS**.
+
+**Ce fichier se lit intégralement avant toute modification, revue ou commit touchant l'UI ou
+l'UX**, y compris pour une correction visuelle jugée mineure. Le diff UI est vérifié contre ce
+document avant commit ; si une règle, un composant ou un écart est introduit, le document est
+mis à jour dans le même changement.
+
+Unité de backlog : `CRM-000`. Documents liés : `docs/SPEC-form-composer.md` (rendu des champs),
+`docs/manual.md` (captures).
+
+---
+
+## 1. Palette
+
+| Rôle | Token | Hex | Usage dans le CRM |
+|---|---|---|---|
+| **Bleu P2Enjoy** (primaire) | `--color-brand` | `#23468C` | Actions primaires, liens, track actif, anneau de focus |
+| **Vert** (succès) | `--color-success` | `#238C33` | Étapes `won`, confirmations, compte mail connecté |
+| **Jaune** (accent) | `--color-accent` | `#D9CF4A` | Un seul surlignage par vue : la tuile de pipeline pondéré |
+| **Rouge** (danger) | `--color-danger` | `#F24141` | Étapes `lost`, erreurs, cards figées, échec d'envoi |
+| **Noir** (encre) | `--color-ink` | `#0D0D0D` | Titres et texte fort |
+
+Déclinaisons calculées, jamais d'hexadécimal ad hoc dans un composant :
+`--color-brand-soft` (10 %) pour les fonds de pilule et de badge, `--color-brand-hover` `#1B3670`,
+et les équivalents pour succès, danger et accent en fonds à 10–22 %.
+
+`--color-*-on-soft` — le jeton **écrit sur son propre fond doux**, assombri juste assez pour tenir
+le contraste AA du §8 tout en conservant sa teinte. Voir l'écart §12.5 : « texte à la couleur
+pleine » échoue à 4,5:1 pour `success`, `accent` et `danger`. Valeurs calculées à partir du jeton
+plein, au même titre que les fonds doux.
+
+`--color-veil` — l'encre à 40 % — est le voile posé sous toute surface qui recouvre l'écran :
+tiroir de navigation, et modales à venir. C'est un **jeton**, et non un modificateur d'opacité
+écrit dans le composant : mesuré, un `bg-ink/40` fait recopier la valeur hexadécimale dans le CSS
+produit, en repli des navigateurs sans `color-mix` (`CRM-007`).
+
+### Neutres
+
+| Usage | Token | Hex |
+|---|---|---|
+| Fond de page | `--color-bg` | `#F7F8FA` |
+| Surface (cartes, barre latérale, modales) | `--color-surface` | `#FFFFFF` |
+| Bordures et séparateurs | `--color-border` | `#E5E7EB` |
+| Texte secondaire | `--color-text-2` | `#4B5563` |
+| Texte tertiaire, placeholders | `--color-text-3` | `#6B7280` |
+| Survol neutre | `--color-hover` | `#F3F4F6` |
+
+**Thème clair uniquement**, aligné sur le site corporate. Pas de thème sombre tant que la charte
+n'en définit pas un.
+
+### Couleurs de données
+
+Les tracks et les nœuds de workflow portent une couleur, choisie **parmi les jetons ci-dessus**
+et stockée sous forme de nom de jeton (`brand`, `success`, `accent`, `danger`, `neutral`), jamais
+d'hexadécimal libre. Une couleur ne porte jamais seule une information : elle accompagne toujours
+un libellé ou une icône.
+
+## 2. Typographie
+
+- **Police** : pile système `ui-sans-serif, system-ui, sans-serif`.
+- **Titres** : 700, encre. H1 26 px, H2 20 px, H3 16 px.
+- **Corps** : 15 px, `#374151`, interligne 1,55.
+- **Données techniques** (adresse email de card, identifiants, horodatages, montants) :
+  `ui-monospace` 13 px, chiffres tabulaires.
+- **Jamais de texte sous 12 px.**
+
+## 3. Espacements et rayons
+
+- Échelle d'espacement : 4, 8, 12, 16, 24, 32, 48 px. Aucune valeur intermédiaire.
+- Rayons : `--radius-sm` 8 px (champs, boutons), `--radius-md` 10 px (pastilles d'icône),
+  `--radius-lg` 14 px (cartes, modales), `rounded-full` (badges, pilules, avatars).
+- Ombre de carte : `0 1px 3px rgb(0 0 0 / .06)`, légèrement renforcée au survol.
+
+## 4. Architecture des écrans
+
+```
+┌──────────────┬───────────────────────────────────────────────────────┐
+│ Barre        │  En-tête : fil d'Ariane · recherche · Cmd+K · profil   │
+│ latérale     ├───────────────────────────────────────────────────────┤
+│              │  Onglets des channels du track courant                 │
+│ Tracks       ├───────────────────────────────────────────────────────┤
+│ (pilules)    │                                                       │
+│              │  Board kanban (colonnes = étapes du workflow)         │
+│ Inbox        │  ou vue liste                                         │
+│ Ma journée   │                                                       │
+│ Réglages     │                                                       │
+└──────────────┴───────────────────────────────────────────────────────┘
+```
+
+- **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, Ma journée,
+  Réglages). Repliable ; l'état de repli est une préférence de session, pas une donnée
+  persistée sans consentement.
+- **Onglets** : les channels du track courant, en **liens** de navigation et non en `tablist`
+  (§12.1). Débordement horizontal défilable, jamais tronqué sans indication — l'indication est
+  portée par `.indique-debordement-x` (§12.6).
+- **Board** : une colonne par étape, dans l'ordre `workflow_steps.position`. En-tête de colonne
+  avec libellé, compteur, et montant cumulé lorsque le montant est utilisé.
+
+## 5. Composants
+
+### 5.1 Carte de card (board)
+
+Carte blanche `--radius-lg`, bordure 1 px, **liseré supérieur de 3 px** à la couleur du nœud.
+Contenu : titre (2 lignes maximum, ellipse), pastilles d'étiquettes, avatar du responsable,
+montant si renseigné, indicateur de prochaine action, et pastille d'ancienneté dans l'étape
+(neutre, puis `--color-danger` au-delà du seuil de relance).
+
+Le glisser-déposer utilise une zone de saisie visible au clavier : chaque card expose aussi un
+menu d'actions listant **uniquement les transitions déclarées**. C'est la garantie que
+l'interface ne propose jamais une action que le backend refuserait.
+
+**Identité — contrat `CRM-022`.** L'avatar du responsable est enfin rendu lorsque `owner_id` est
+renseigné. Il mesure 32 px, porte le nom complet comme nom accessible et se replie sur les
+initiales ; aucun UUID n'atteint l'écran. La donnée vient de la relation `profiles` embarquée avec
+la card, jamais d'une requête par carte.
+
+### 5.2 Colonne de board
+
+En-tête collant, fond `--color-bg`, compteur en badge neutre. Zone de dépôt signalée par un
+liseré `--color-brand` en pointillés pendant le glissement. État vide : message et action
+(« Aucune card à cette étape — créez la première »).
+
+### 5.2 bis Ce que le board a appris en étant rendu — `CRM-041`
+
+Trois règles ajoutées par le premier board réellement exécuté. Les deux premières ont été trouvées
+**en regardant une capture**, la troisième **en mesurant** un comportement du navigateur.
+
+- **Le liseré d'une carte dont le nœud est `neutral` emploie `--color-text-3`, non
+  `--color-border`.** Écrit d'abord avec la couleur de bordure, il était **invisible** sur la
+  surface blanche d'une carte : la colonne `Prospection` paraissait n'avoir aucun liseré à côté de
+  `Relance`, qui portait le sien. `--color-text-3` est déjà le jeton du **point neutre** d'un badge
+  (§5.6) : un neutre discret, mais lisible. La règle du §1 — « une couleur ne porte jamais seule une
+  information » — reste tenue par le libellé de la colonne.
+
+- **Une colonne de board a une largeur fixe de 288 px.** Ce n'est pas une valeur de l'échelle du §3,
+  et ce n'en est pas une : c'est la **forme du contenu attendu**, au même titre que
+  `--size-placeholder`. Une colonne élastique se réduirait à rien dès que le workflow compte sept
+  étapes, et le §7 exige que le board défile **dans son conteneur** plutôt que d'écraser ses
+  colonnes.
+
+- **L'indication de zone de dépôt ne s'éteint pas sur `dragleave`.** MESURÉ dans Chromium :
+  `dragleave` remonte des enfants et son `relatedTarget` est **nul** pendant un glisser-déposer — il
+  n'existe donc aucun moyen de distinguer « le pointeur quitte la colonne » de « le pointeur entre
+  dans une carte de la colonne ». Une indication qui s'y fierait clignoterait, contre le §6. L'état
+  de survol est **unique pour tout le board** : passer d'une colonne à l'autre l'écrase, et la fin
+  du glissement l'éteint.
+
+Le board lui-même — colonnes, ordre, cumuls, transitions atteignables, refus — est spécifié dans
+`docs/SPEC-workflow-engine.md` §7, et non ici : ce document donne les règles visuelles, pas
+l'algorithme qui décide **ce que** l'écran montre.
+
+### 5.3 Détail de card
+
+Deux colonnes sur grand écran, empilées sous 1024 px :
+- à gauche, le **formulaire conditionnel** (voir `docs/SPEC-form-composer.md`) et les champs
+  d'entête (titre, responsable, montant, prochaine action) ;
+- à droite, la **timeline unifiée** : commentaires, transitions, activités, emails, pièces
+  jointes, dans un fil chronologique unique avec filtres par type.
+
+L'adresse email de la card est affichée en monospace, avec une action de copie et une infobulle
+expliquant son usage.
+
+### 5.4 Inbox
+
+Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des
+messages, message affiché. Sous 1024 px, navigation par pile : dossiers → liste → message.
+
+Un message classé affiche la card à laquelle il appartient sous forme de pilule cliquable. Un
+message non classé affiche l'action « Classer dans une card » et, le cas échéant, la suggestion
+proposée par le classement assisté, toujours présentée **comme une suggestion à confirmer**.
+
+### 5.5 Boutons
+
+| Variante | Style |
+|---|---|
+| Primaire | Fond `--color-brand`, texte blanc, `--radius-sm`, survol `--color-brand-hover` |
+| Secondaire | Fond blanc, bordure `--color-border`, survol `--color-hover` |
+| Destructif | Rouge, plein ou contour, toujours séparé des actions primaires |
+| Discret | Texte seul, réservé aux actions tertiaires |
+
+Hauteur minimale 40 px. Anneau de focus 2 px `--color-brand` avec décalage.
+
+**Deux tailles, et une seule cible.** La taille *normale* porte son libellé en `--text-base` avec
+un rembourrage horizontal de 16 px ; la taille *compacte* le porte en `--text-sm` (13 px) avec 8 px
+de rembourrage. **La hauteur minimale de 40 px ne change pas** : une action tertiaire est un texte
+plus discret, jamais une cible plus petite — le §8 ne connaît pas d'exception. La taille compacte
+est réservée aux actions tertiaires accompagnant une métadonnée de 13 px, comme les deux gestes de
+l'auteur au §5.10 ; l'employer pour une action principale contredirait la hiérarchie du §2.
+
+### 5.5 bis Pilule de track — `CRM-020`
+
+Composant de la barre latérale (§4). `rounded-full`, hauteur minimale `--size-target`, fond de la
+couleur douce du track, texte à sa couleur pleine, **précédé de son icône Lucide**.
+
+| Jeton `tracks.color` | Fond | Texte |
+|---|---|---|
+| `brand` | `--color-brand-soft` | `--color-brand` |
+| `success` | `--color-success-soft` | `--color-success` |
+| `accent` | `--color-accent-soft` | `--color-ink` |
+| `danger` | `--color-danger-soft` | `--color-danger` |
+| `neutral` | `--color-hover` | `--color-text-2` |
+
+`accent` porte son texte en **encre** et non en jaune : le jaune sur jaune doux n'atteint pas le
+contraste AA du §8. `neutral` emploie les neutres existants plutôt qu'un « neutre doux » que la
+palette ne déclare pas.
+
+La correspondance vit à un seul endroit, `webapp/src/app/presentation-tracks.ts`, avec un repli
+documenté vers `neutral` : la valeur vient du backend, et un type ne garantit jamais une valeur
+(`docs/SPEC-types.md`). Idem pour l'icône, dont le catalogue se replie sur `Folder`.
+
+**Les pilules de track ne sont pas cliquables à ce stade** : un track s'ouvre sur ses channels,
+livrés par `CRM-021`. Voir §12.4.
+
+### 5.6 Badges et pilules
+
+`rounded-full`, fond de la couleur à 10–15 %, texte à la **déclinaison lisible** de la couleur
+(`--color-*-on-soft`), **précédés d'un point ou d'une icône** afin que l'information ne repose
+jamais sur la seule couleur.
+
+**« À la déclinaison lisible » et non « à la couleur pleine » : voir l'écart §12.5.** La
+formulation d'origine est incompatible avec le §8 pour trois des cinq jetons de donnée. Savoir si
+cette correction vaut pour **tous** les badges du produit reste ouvert
+(`docs/INCONSISTENCY_REPORT.md`, INC-028).
+
+### 5.7 Champs de formulaire
+
+Libellé au-dessus, 13 px, `--color-text-2`. Champ 40 px de haut, bordure `--color-border`,
+focus `--color-brand`. Texte d'aide sous le champ en 13 px `--color-text-3`. Erreur en
+`--color-danger` avec icône, `role="alert"`, associée au champ par `aria-describedby`.
+
+Un champ **obligatoire pour la transition en cours** est signalé par un astérisque et la mention
+« requis pour passer à <étape> » — l'utilisateur doit comprendre *pourquoi* il est requis.
+
+### 5.7 bis Case à cocher et valeurs en lecture seule — `CRM-037`
+
+Deux règles ajoutées par le premier formulaire réellement rendu, l'une et l'autre trouvées **en
+regardant une capture** et non en lisant un test :
+
+- **Une case à cocher occupe une ligne de hauteur `--size-target`.** La case elle-même reste à
+  **24 px** — l'agrandir jusqu'à 40 px la ferait passer pour un champ de saisie —, et son libellé
+  lui sert de **cible étendue** par son `for`. Sans cette ligne, une case de 16 px isolée était la
+  seule cible interactive du produit sous les 40 px du §8.
+  **24 px et non 20 :** l'échelle du §3 est fermée, et `--spacing-5` n'existe pas. Écrit d'abord
+  en `size-5`, le rendu perdait **silencieusement** sa taille — la classe n'était pas engendrée du
+  tout, exactement le défaut que le §11 décrit. Trouvé par le contrôle de classes, pas à l'œil.
+- **Une valeur affichée en lecture seule dont le type est un montant, une date ou un horodatage se
+  rend en donnée technique** au sens du §2 : monospace, chiffres tabulaires. La règle vit déjà dans
+  `webapp/src/styles/app.css`, portée par `code` ; le rendu l'emploie plutôt que de la dupliquer
+  dans une classe. `url` en est exclue : une adresse se lit, elle ne se compare pas colonne par
+  colonne.
+
+Le rendu conditionnel lui-même — composition, section repliée, mention d'exigence, accessibilité
+des erreurs — est spécifié dans `docs/SPEC-form-composer.md` §4, et non ici : ce document donne les
+règles visuelles, pas l'algorithme qui décide **quels** champs sont rendus.
+
+### 5.8 États systématiques
+
+Toute vue traite explicitement : chargement (squelettes, pas de spinner plein écran), vide
+(message et action), erreur (message compréhensible et action de reprise), et absence de droit
+(explication, pas une page blanche).
+
+### 5.9 Tableau de données — `CRM-042`
+
+Premier tableau du produit, livré par la vue liste d'un channel. Le §4 l'annonçait — « board kanban
+[…] **ou vue liste** » — sans lui donner une seule règle visuelle. Elles sont écrites ici ; ce que
+le tableau **montre** — colonnes, tris, filtres, pagination — est spécifié dans
+`docs/SPEC-cards.md` §12, et non ici.
+
+- **Sémantique, jamais simulée.** `table`, `thead`, `tbody`, `th scope="col"`. Une grille de `div`
+  prive un lecteur d'écran de la navigation par cellule et de l'en-tête rappelé à chaque cellule.
+  Un `role="table"` posé sur des `div` reconstitue au mieux ce que l'élément donne gratuitement.
+- **Une ligne = `--size-target`** de hauteur — 40 px, la cible minimale du §8 — et **une seule
+  ligne de texte par cellule**, en ellipse, la valeur entière portée par l'attribut `title`. C'est
+  la « densité maîtrisée » : un tableau se balaye en diagonale, ce qu'un texte replié interdit.
+  L'écart avec la carte de board (§5.1), qui accorde deux lignes au titre, est **voulu** : une
+  carte se lit, une ligne se balaye.
+- **En-tête collant**, fond `--color-bg`, texte `--color-text-2`, 13 px, comme les libellés de
+  champ du §5.7. Séparateur bas 1 px `--color-border`.
+- **Séparateurs de lignes, pas de zébrures.** Une bordure basse `--color-border` par ligne. Le
+  fond alterné ajoute une couleur qui ne porte aucune information, contre le §1.
+- **Survol de ligne** : `--color-hover`. C'est le seul retour visuel, la ligne entière n'étant pas
+  cliquable — seul le titre est un lien, pour que la cible du clic soit la cible annoncée.
+- **Tri** : un `button` occupe l'en-tête de la colonne triable, et le `th` porte
+  `aria-sort="ascending" | "descending" | "none"`. L'icône de sens (`ArrowUp`, `ArrowDown`,
+  `ArrowUpDown` de Lucide) accompagne le libellé sans le remplacer : la direction ne repose jamais
+  sur la seule icône, `aria-sort` la porte aussi.
+- **Alignement** : texte à gauche, **données techniques à droite** — montants et dates, en
+  monospace à chiffres tabulaires (§2). Un montant aligné à gauche ne se compare pas colonne par
+  colonne, ce qui est la seule raison d'avoir des chiffres tabulaires.
+- **Cellule sans valeur : vide.** Ni tiret, ni « — », ni « non renseigné ». Un tiret est un
+  caractère que rien ne distingue d'une donnée ; le vide est le seul rendu qui ne prétende rien.
+- **Débordement horizontal** : conteneur `overflow-x: auto` portant `.indique-debordement-x`
+  (§12.6). Aucun `scroll-snap`, contrairement au board : il n'y a pas de colonne sur laquelle
+  s'ancrer.
+- **Pagination** : deux boutons secondaires encadrant le rang courant écrit en toutes lettres
+  (« Page 2 sur 5 »). Ils sont **désactivés** aux extrémités, jamais masqués — un état désactivé
+  reste lisible et explique pourquoi l'action est indisponible (§8).
+
+### 5.10 Panneau de commentaires — `CRM-043`
+
+Premier fil de discussion du produit. Il occupe la **colonne de droite** du détail de card (§5.3),
+que `CRM-037` avait laissée vide en nommant l'écart. `CRM-044` y fondra les autres flux — le
+panneau est donc écrit comme la première voie d'un fil unifié, non comme un composant isolé.
+
+- **Ordre chronologique CROISSANT** : le plus ancien en haut, le composeur en bas. C'est l'inverse
+  du board (§5.1) et de toute liste de nouveautés, et c'est délibéré — on lit une conversation dans
+  le sens où elle s'est tenue. La règle est écrite ici pour que `CRM-044` ne l'inverse pas par
+  habitude.
+- **Un commentaire = une carte discrète** : fond `--color-surface`, coins `--radius-sm`, sans
+  bordure ni ombre. La carte du §5.1 est cliquable et porte une élévation ; celle-ci ne mène nulle
+  part et n'en porte pas. Le corps est rendu en **texte brut**, `white-space: pre-wrap`, jamais
+  interprété comme du markdown (`docs/SPEC-cards.md` §13.13).
+- **En-tête d'un commentaire** : avatar 24 px, nom de l'auteur puis date absolue en 13 px
+  `--color-text-2`. Si le profil a été supprimé, le nom devient « Compte supprimé » et le corps
+  reste intact. Cette règle est livrée par `CRM-022`, qui ferme INC-014 sans inventer un UUID.
+- **Mention « modifié »** : suffixe 13 px `--color-text-2` après la date, la date de modification
+  portée par l'attribut `title`. Jamais une icône seule.
+- **Commentaire supprimé** : la place est **tenue**, le corps remplacé par « Commentaire supprimé »
+  en italique `--color-text-2`. Il n'y a rien d'autre à afficher — la base ne porte plus de corps
+  (`docs/SPEC-cards.md` §13.4). Le masquer ferait disparaître un tour de parole d'une conversation.
+- **Composeur** : `textarea` de trois lignes qui grandit avec le contenu, libellé visuellement
+  masqué (§12.3), bouton primaire « Publier » désactivé tant que le champ est vide ou blanc. Il est
+  **toujours rendu** : l'interface ne calcule aucun droit d'écriture, elle envoie et traduit le
+  refus du backend (§12.5 bis ci-dessous).
+- **Le refus est un message, pas une absence.** Un `403` rend une alerte `--color-danger` sous le
+  composeur, dont le texte nomme la cause — « vous ne pouvez pas commenter cette affaire » — et le
+  contenu saisi est **conservé**. Vider le champ après un refus ferait perdre le texte à
+  l'utilisateur pour une erreur qui n'est pas la sienne.
+- **Actions de l'auteur** : « Modifier » et « Supprimer », boutons tertiaires 13 px, visibles au
+  survol **et au focus clavier** (§8) — jamais au survol seul. La suppression demande une
+  confirmation explicite (§6), son caractère irréversible étant nommé dans le libellé.
+
+  **Elles occupent toujours leur propre ligne**, alignées à droite, sous le nom et la date. Trois
+  autres dispositions ont été essayées et **écartées sur capture**, non par principe : partageant la
+  ligne de la métadonnée, elles la rétrécissaient jusqu'à couper « 10/08/2026 18:14 » en deux, et en
+  **permanence**, puisque des actions transparentes occupent quand même leur place ; en flux sans
+  repli, la même ligne se brisait sur trois ; en superposition absolue, elles **recouvraient** la
+  date et le début du corps. Une ligne réservée ne cache rien et ne décale rien.
+
+  **Ouvrir la correction déplace le focus dans le champ**, curseur en **fin** de texte. Sans cela,
+  activer « Modifier » au clavier laisse le focus sur un bouton qui vient de disparaître, et le
+  premier caractère saisi s'insère avant le texte existant. Les deux défauts ont été trouvés par la
+  preuve clavier, pas à la lecture.
+
+  **La confirmation n'est pas une modale** : le §5 n'en déclare aucune, et en inventer une pour
+  l'occasion ferait porter au design system un composant que personne n'a spécifié. Elle prend la
+  place du corps du commentaire, dans le flux du document — ce qui la rend atteignable au clavier
+  sans piège de focus.
+
+  **Une pierre tombale n'offre aucune action** : le trigger refuse toute écriture ultérieure
+  (`docs/SPEC-cards.md` §13.4), et un bouton qui ne peut pas aboutir est une commande morte.
+
+  **Ce que ces actions ne sont pas** : un contrôle d'accès. L'écran compare `author_id` à
+  l'identifiant de session pour ne pas proposer un geste voué au refus ; la règle est tenue par la
+  politique `UPDATE`, qui exige l'auteur **et** le droit d'écriture courant. Lorsque la comparaison
+  se trompe — droit fin retombé depuis le chargement —, le backend rend `200` et **zéro ligne**, et
+  l'écran le dit au lieu d'afficher une modification qui n'a pas eu lieu.
+- **Quatre états** (§5.8), et le vide dit « aucun commentaire pour le moment » — sans quoi un
+  panneau vide serait indistinguable d'un panneau en panne.
+- **Sous 1024 px**, le panneau passe **sous** le formulaire, dans l'ordre du document : une
+  conversation se lit après le dossier qu'elle commente.
+
+### 5.11 Timeline unifiée — `CRM-044`
+
+Le §5.10 annonçait le panneau de commentaires comme « la première voie d'un fil unifié ».
+`CRM-044` fond les deux : la colonne de droite du détail de card (§5.3) porte **un seul fil**,
+alimenté par deux sources — les commentaires et les événements de `card_events` — et filtrable par
+famille. Les règles du §5.10 restent en vigueur pour les commentaires ; celles ci-dessous
+s'ajoutent, elles ne les remplacent pas.
+
+- **L'ordre du §5.10 est reconduit sans exception : chronologique CROISSANT**, le plus ancien en
+  haut, le composeur en bas. Un fil d'activité se lit habituellement du plus récent au plus ancien ;
+  ce fil-là contient une conversation, et une conversation se lit dans le sens où elle s'est tenue.
+  Inverser l'un briserait l'autre.
+
+- **Un événement n'est pas une carte.** Là où un commentaire est une carte discrète
+  (`--color-surface`, `--radius-sm`), un événement est une **ligne** : une pastille d'icône de
+  28 px à gauche — carré `--radius-md`, fond doux, icône Lucide 16 px à la couleur pleine, comme
+  le §9 la définit —, un texte de 14 px, une date de 13 px `--color-text-2`. La différence de forme
+  porte la différence de nature — l'un est une parole, l'autre un fait. Sans elle, le fil serait
+  une suite de blocs équivalents où l'œil ne distinguerait plus ce qui a été dit de ce qui est
+  arrivé.
+
+- **Aucun filet vertical ne relie les événements**, et c'est une décision prise **après avoir
+  regardé** (`docs/JOURNAL.md` décision 212). La règle avait d'abord été écrite ici : un filet de
+  1 px derrière les pastilles, interrompu derrière les commentaires. La capture
+  `docs/captures/CRM-044/fil-unifie-1440.jpg` montre que la distinction carte / ligne porte déjà
+  seule la lecture du fil, et qu'un filet s'interrompant à chaque prise de parole produirait une
+  ligne pointillée dont les trous ne signifieraient rien de plus que ce que la forme dit déjà.
+
+- **Une couleur par famille**, et **aucune autre** — les jetons du §1, jamais une teinte inventée :
+
+  | Famille | Types | Pastille | Icône Lucide |
+  |---|---|---|---|
+  | Discussion | commentaires | **aucune pastille** — un commentaire est une carte (§5.10), pas une ligne d'événement | — |
+  | Étapes | `moved` | `--color-brand-soft`, icône `--color-brand` | `ArrowRightLeft` |
+  | Champs | `field_changed` | `--color-hover`, icône `--color-text-2` | `PencilLine` |
+  | Organisation | `channel_changed`, `workflow_changed` | `--color-accent-soft` pour `channel_changed`, `--color-brand-soft` pour `workflow_changed` | `FolderSync`, `Workflow` |
+  | Cycle de vie | `created`, `assigned`, `archived`, `unarchived`, `trashed`, `restored` | `--color-success-soft` pour `created` et `restored`, `--color-accent-soft` pour `assigned` et `unarchived`, `--color-hover` pour `archived` et `trashed` | `Sparkles`, `UserRoundCog`, `Archive`, `ArchiveRestore`, `Trash2`, `RotateCcw` |
+
+  La famille **Discussion** est la seule à ne porter ni pastille ni icône : ses lignes ne sont pas
+  des événements, ce sont les cartes du §5.10, et leur donner en plus une pastille reviendrait à
+  décorer deux fois la même distinction.
+
+  La couleur ne porte **aucune information seule** (§8) : le libellé dit toujours ce qui s'est
+  passé, et l'icône est redondante avec lui.
+
+- **La barre de filtres n'existe que s'il y a quelque chose à filtrer** — décision prise après
+  avoir regardé `docs/captures/CRM-044/fil-vide-1440.jpg`, où cinq bascules affichant « 0 »
+  surmontaient « aucun événement pour le moment » : un contrôle sans objet. Le seuil porte sur le
+  fil **chargé**, jamais sur le fil filtré — sinon éteindre toutes les familles ferait disparaître
+  le moyen de les rallumer.
+
+- **Filtres : une barre de cinq bascules**, en haut du panneau, hauteur `--size-target`,
+  `rounded-full`, état actif en `--color-brand-soft` / `--color-brand` **et en graisse moyenne** —
+  la couleur douce seule ne distinguait pas assez une bascule éteinte d'une bascule active, vu sur
+  `docs/captures/CRM-044/fil-filtre-1440.jpg`. L'état éteint porte une bordure `--color-border` sur
+  fond `--color-surface`, et `aria-pressed` le dit toujours (§8). Ce sont des boutons
+  `aria-pressed`, non des cases à cocher : ils n'appartiennent à aucun formulaire et ne se
+  soumettent pas. Toutes actives à l'ouverture.
+
+- **Le compte est écrit sur chaque bascule** — « Étapes 2 » — dans **son propre élément**, jamais
+  comme un nœud de texte accolé au libellé : MESURÉ (décision 212), un nœud de texte nu devient un
+  élément flex anonyme que `gap` ne sépare pas, et la capture montrait « Discussion1 ». Il compte
+  ce que la source contient, **pas** ce que le filtre laisse voir. Un compte qui suivrait le filtre vaudrait toujours
+  zéro sur une famille éteinte, et ne dirait plus rien.
+
+- **Acteur nommé lorsqu'il est connaissable.** `CRM-022` ferme INC-014 : le fil affiche « par
+  Untel » lorsque `actor_id` résout un profil partagé. Une valeur nulle reste muette, puisqu'elle
+  peut désigner une action de service comme un compte supprimé ; le fil n'invente jamais la cause.
+
+- **Un libellé non résolu n'est pas une phrase tronquée.** Lorsque le nom d'une étape ou d'un champ
+  n'est pas disponible, la ligne montre le libellé générique de son type — « Étape franchie », sans
+  le détail. Aucune phrase n'est construite par concaténation (§10), et aucun `undefined` n'atteint
+  l'écran.
+
+- **États** (§5.8) : chargement, erreur avec reprise, et **deux vides distincts** — « aucun
+  événement pour le moment » lorsque les deux sources sont vides, et « aucun élément pour ces
+  filtres » lorsqu'elles ne le sont pas. Confondre les deux ferait passer un filtre trop restrictif
+  pour une affaire sans histoire.
+
+- **Sous 1024 px**, le fil passe sous le formulaire, comme le panneau du §5.10.
+
+- **La barre de filtres SE REPLIE, elle ne défile pas** — décision prise après avoir regardé
+  (`docs/JOURNAL.md` décision 212). Écrite d'abord avec un défilement horizontal dans son
+  conteneur, elle laissait « Cycle de vie » **coupé hors du panneau à 1440 px** : la colonne de
+  droite est étroite quelle que soit la largeur de l'écran. Un contrôle dont la dernière option
+  sort du cadre est un contrôle qui **cache** une option, ce que le §7 admet pour un tableau ou un
+  board — dont on sait qu'ils défilent — mais pas pour cinq bascules.
+
+### 5.12 Connexion et identité de session — `CRM-009`
+
+L'écran de connexion est une surface autonome, sans barre latérale ni onglets : tant qu'aucune
+session n'existe, ces repères ne contiennent que le refus anonyme et détournent de l'action utile.
+
+- Fond `--color-bg`, carte `--color-surface` de largeur maximale correspondant à un formulaire
+  court, `--radius-lg`, bordure `--color-border` et ombre de carte existante. Aucun nouveau jeton.
+- Nom du produit, titre H1 « Se connecter », phrase courte expliquant que l'accès est réservé aux
+  comptes invités, puis les deux champs du §5.7 et un bouton primaire sur toute la largeur.
+- Aucun lien « créer un compte » : l'inscription libre est refusée par le serveur. Aucun bouton
+  inerte « mot de passe oublié » tant que son parcours d'interface n'est pas livré.
+- L'erreur se place entre les champs et l'action, dans une surface `--color-danger-soft`, texte
+  `--color-danger-on-soft`, avec l'icône Lucide `TriangleAlert` et `role="alert"`. Elle ne déplace
+  pas le titre et reste lisible quand le texte gagne 40 %.
+- À partir de 768 px, la carte reste centrée dans les deux axes ; sous ce palier, elle occupe la
+  largeur disponible avec 16 px de marge et reste alignée en haut pour que le clavier virtuel ne
+  masque pas l'action.
+- L'en-tête connecté place l'adresse de session en texte secondaire puis l'action discrète
+  « Se déconnecter ». Sous 768 px, l'adresse passe en `sr-only` avant le titre de route ; l'action
+  reste une cible d'au moins 40 px avec un libellé accessible complet.
+- La restauration initiale de session emploie une carte squelette de même forme que l'écran de
+  connexion. Aucun spinner plein écran (§5.8).
+
+La couleur n'indique jamais seule un refus, tous les champs portent leur libellé visible, et
+l'ordre de tabulation suit l'ordre visuel : email, mot de passe, action.
+
+## 6. Interactions
+
+- Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;
+  `prefers-reduced-motion` respecté.
+- Les actions destructives demandent une confirmation explicite nommant l'objet concerné.
+- Les opérations longues (envoi d'email, import CSV, backfill) affichent une progression et
+  restent interruptibles ou, à défaut, indiquent leur état réel.
+- Le glisser-déposer d'une card est **optimiste**, mais un refus du backend replace la card à sa
+  position d'origine et affiche la raison du refus.
+
+## 7. Responsive
+
+| Palier | Comportement |
+|---|---|
+| ≥ 1280 px | Barre latérale déployée, board multi-colonnes, détail de card en deux colonnes |
+| 1024–1279 px | Barre latérale réduite aux icônes, détail de card en deux colonnes resserrées |
+| 768–1023 px | Barre latérale en tiroir, détail de card empilé, inbox en pile |
+| < 768 px | Navigation par tiroir, board défilable colonne par colonne avec ancrage |
+
+Aucun contenu n'est masqué sans point d'accès. Les tableaux et les boards défilent dans leur
+propre conteneur : la page ne défile jamais horizontalement.
+
+## 8. Accessibilité
+
+- Navigation clavier complète : la barre latérale, les onglets, les colonnes et les cards sont
+  atteignables et actionnables sans souris. Le déplacement d'une card est possible au clavier
+  via le menu de transitions.
+- Points de repère sémantiques (`nav`, `main`, `aside`), titres hiérarchisés sans saut de niveau.
+- Contrastes AA (4,5:1) vérifiés, y compris pour les badges colorés.
+- Focus visible partout via `:focus-visible`.
+- Cibles interactives ≥ 40 px.
+- Les changements importants (card déplacée, email envoyé, erreur) sont annoncés par une région
+  `aria-live` polie.
+- Les états désactivés restent lisibles et expliquent pourquoi l'action est indisponible.
+
+## 9. Icônes
+
+- **Lucide** exclusivement, trait 2 px, 14–28 px, `aria-hidden` lorsqu'un libellé accompagne
+  l'icône.
+- **Aucun emoji** comme substitut d'icône dans l'application.
+- Pastille d'icône : carré `--radius-md`, fond doux de la couleur de catégorie, icône à la
+  couleur pleine.
+- **Favicon du produit** : monogramme géométrique `P2`, carré arrondi `--color-brand`, lettre
+  blanche et chiffre `--color-accent`. Sa forme tient à 16 px, sans détail décoratif ni police
+  distante. Le SVG porte un titre accessible et le document HTML le référence explicitement : le
+  navigateur ne doit jamais tenter un `/favicon.ico` absent ni polluer la console d'un `404`.
+
+## 10. Internationalisation
+
+Aucun texte visible n'est écrit en dur dans un composant : tout passe par des clés de traduction
+stables. Langue par défaut : français. Les libellés métier (tracks, channels, nœuds, champs) sont
+des **données**, pas des traductions. Les mises en page tolèrent des textes 40 % plus longs que
+le français.
+
+## 11. Implémentation
+
+- Les jetons sont déclarés une seule fois, en variables CSS sur `:root`, et exposés à Tailwind
+  par la configuration du thème. Aucun hexadécimal dans un composant.
+- **Les espaces de noms de Tailwind sont remis à zéro** (`--color-*: initial`, `--spacing`,
+  `--text-*`, `--radius-*`, `--shadow-*`, `--breakpoint-*`) avant d'être redéfinis dans
+  `webapp/src/styles/tokens.css`. Ce n'est pas une précaution de style : sans cela, la palette et
+  l'échelle par défaut restent disponibles, et rien n'empêche d'écrire `bg-red-500` ou `p-7`.
+  Remises à zéro, **ces classes n'existent pas**.
+- Corollaire mesuré : une classe dont le jeton n'est pas déclaré n'est **pas engendrée du tout**,
+  et en silence. C'est ainsi que `min-w-0` a disparu, avec la garde qui empêche une colonne de
+  flex de déborder. Un contrôle du harnais (`scripts/lib/classes-css.mjs`) vérifie donc que
+  **chaque classe citée par un composant existe dans le CSS produit**.
+- L'échelle d'espacement comprend le **zéro** (`--spacing-0`), qui n'est pas une valeur
+  d'espacement mais son absence, et sans lequel `min-w-0`, `min-h-0` et `gap-0` n'existent pas.
+- Les composants du design system vivent dans `webapp/src/components/ui` et sont les seuls à
+  définir des styles de base ; les composants métier les composent.
+- Chaque composant partagé porte un commentaire `@spec` citant ce document et son unité de
+  backlog.
+- **Captures de référence** : `e2e/output/*.jpg` et vidéos `.webm`, produites depuis
+  l'application réellement exécutée et observées à chaque livraison touchant l'interface.
+
+## 12. Écarts propres au projet
+
+### 12.1 Barre d'onglets : navigation par liens, non `tablist` — position motivée, `CRM-021`
+
+`CRM-007` avait laissé cette barre en état vide faute de channels, en annonçant que « le patron
+ARIA complet — `role="tab"`, `tabindex` glissant, flèches, `Home`, `Fin` — arrive avec les onglets
+réels ». Les onglets réels sont arrivés avec `CRM-021`, et ce patron est **écarté**. L'écart cesse
+donc d'être temporaire pour devenir une position motivée, ce qui n'est pas la même chose qu'un
+écart refermé.
+
+Motifs (`docs/JOURNAL.md`, décision 62) :
+
+- un `tablist` décrit des panneaux qui s'échangent **dans la même page**, sans changer d'adresse.
+  Nos onglets changent l'URL et le contenu principal ;
+- les annoncer comme des onglets décrirait aux technologies d'assistance un comportement qui n'est
+  pas celui du produit ;
+- le `tabindex` glissant du patron `tablist` retirerait à l'utilisateur la navigation par `Tab`
+  qu'un ensemble de liens lui donne naturellement.
+
+Patron retenu : `nav` étiqueté + liste de liens, avec `aria-current="page"` sur l'onglet courant,
+posé par `NavLink`. L'état actif se signale **en plus** par une bordure basse, faute de quoi
+l'information reposerait sur la seule couleur (§1). Les deux états portent une bordure de même
+épaisseur, pour que le texte ne se décale pas au changement d'onglet.
+
+Lorsqu'un track n'a aucun channel, la barre affiche son état vide, comme avant.
+
+### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`
+
+Sous le palier `md`, l'en-tête abandonne d'abord le **nom du produit** et le **contexte
+d'espace de travail**, jamais le **titre de la route**. Motif : les deux premiers sont portés
+ailleurs — barre latérale, onglet du navigateur —, le titre de la route ne se déduit de rien.
+Défaut réellement observé sur une capture avant correction : à 390 px, le titre disparaissait au
+profit du contexte, contre le §7 (« aucun contenu n'est masqué sans point d'accès »).
+
+### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
+
+Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repliée, les libellés de
+navigation passent en `sr-only` au lieu d'être supprimés : réduire l'affichage ne doit pas réduire
+l'information annoncée aux technologies d'assistance.
+
+### 12.4 Pilules de track non cliquables — écart **refermé** par `CRM-021`
+
+La barre latérale listait les tracks (§4) en éléments de liste, non en liens : « un track s'ouvre
+sur ses channels, livrés par `CRM-021` : une pilule menant à une route vide serait une commande
+morte […] Le lien arrivera avec la destination. »
+
+La destination est arrivée. Chaque pilule est désormais un `NavLink` vers `/tracks/:slug`, qui
+conserve son icône, sa couleur douce et son libellé (§5.5 bis). L'état actif **s'ajoute** à la
+couleur du track — un anneau `--color-brand` — et ne la remplace pas : la couleur est une donnée,
+et l'écraser ferait perdre au track actif ce qui l'identifie. `aria-current="page"` porte
+l'information indépendamment du visuel.
+
+### 12.5 Données réelles et réponses substituées — `CRM-020`, révisé par `CRM-009`
+
+Sans session, les politiques RLS ne consentent aucune ligne et les captures anonymes montrent
+l'état vide réel du backend. Depuis la livraison du parcours `CRM-009`, un membre peut se
+connecter et les preuves de jonction exercent les données et écritures réelles sans substitution.
+
+Une réponse réseau substituée reste admise pour isoler un état rare, une donnée longue ou un refus
+précis. Elle doit être nommée et ne remplace jamais le parcours connecté correspondant. Injecter
+directement un état interne reste interdit.
+
+### 12.5 Texte des pilules de donnée : déclinaison assombrie, non couleur pleine — `CRM-020`, 2026-08-04
+
+Le §5.6 demandait « texte à la couleur pleine » sur un fond de la même couleur à 10–22 %. Le §8
+exige un contraste AA de 4,5:1 « y compris pour les badges colorés ». **Mesuré**, les deux règles
+sont incompatibles pour trois jetons sur cinq :
+
+| Jeton | Texte plein sur son fond doux | Contraste | §8 |
+|---|---|---|---|
+| `brand` | `#23468C` sur `#E9ECF4` | 7,64:1 | conforme |
+| `success` | `#238C33` sur `#E9F4EB` | 3,82:1 | **échec** |
+| `accent` | `#D9CF4A` sur `#F7F4D7` | 1,45:1 | **échec** |
+| `danger` | `#F24141` sur `#FEECEC` | 3,29:1 | **échec** |
+| `neutral` | `#4B5563` sur `#F3F4F6` | 6,87:1 | conforme |
+
+**Comment les trois ont été trouvés, et pourquoi pas en même temps.** `accent`, à 1,45:1, est
+illisible : il a sauté aux yeux sur une capture et a d'abord été corrigé seul, par un repli sur
+l'encre. `success` et `danger` sont **lisibles sans être conformes** — ils ne se voient pas, ils se
+mesurent. Ils ont survécu parce que la conformité AA était *déclarée* et non *mesurée* : aucune
+preuve du dépôt ne calculait un contraste.
+
+**Écart retenu :** le texte d'une pilule de donnée emploie `--color-*-on-soft`, le jeton conservant
+sa teinte mais assombri jusqu'à tenir les 4,5:1 — 7,64 / 4,85 / 4,72 / 4,67. Une seule règle pour
+les quatre jetons chromatiques, plutôt qu'un repli sur l'encre pour l'un et la couleur pleine pour
+les autres : le tableau devra s'étendre aux badges, et une exception s'y propagerait mal.
+`neutral` est inchangé — il emploie les neutres existants et tient déjà 6,87:1.
+
+**La conformité est désormais mesurée, pas déclarée.** `e2e/ui/tracks.spec.ts` calcule le contraste
+à partir des couleurs **réellement rendues**, en les peignant sur un canevas d'un pixel : lire
+`getComputedStyle` serait faux, Chromium rendant les `color-mix` avec des canaux de 0 à 1 et les
+couleurs littérales en octets. Les cinq jetons y sont exercés, y compris `danger` et `neutral` que
+le seed n'emploie pas — un jeton que rien ne rend n'est jamais mesuré.
+
+**Portée :** limitée aux pilules de track tant qu'INC-028 n'est pas tranchée. Les badges, liserés
+de card et compteurs de colonne rencontreront la même contradiction et ne sont **pas** modifiés ici.
+
+### 12.6 Le débordement horizontal doit être **signalé**, pas seulement possible — `CRM-021`, 2026-08-04
+
+Le §4 demande que les onglets débordent « défilable, jamais tronqué **sans indication** ». Le §7
+demande que « la page ne défile jamais horizontalement ». Les deux étaient satisfaites, et l'écran
+était pourtant fautif : à 390 px, la barre d'onglets défilait bien dans son conteneur, mais le
+dernier libellé était **coupé net au bord**, sans que rien ne signale qu'il y avait plus à voir.
+
+Défaut trouvé **en regardant une capture**, pas en lisant un test : les deux règles étant vérifiées
+séparément, aucune assertion ne pouvait l'attraper.
+
+**Règle ajoutée :** tout conteneur en `overflow-x: auto` porte la classe `.indique-debordement-x`,
+définie une seule fois dans `webapp/src/styles/app.css`. Elle emploie la technique des « ombres de
+défilement » en CSS pur : deux dégradés attachés au **contenu** (`background-attachment: local`)
+recouvrent deux dégradés attachés au **conteneur** (`scroll`). L'indication n'apparaît donc que
+lorsqu'il y a réellement quelque chose de plus à voir, de ce côté-là — ce qu'un dégradé permanent
+ne saurait pas faire, et sans écouter aucun événement `scroll` ou `resize`.
+
+Les quatre dégradés partent des jetons `--color-bg` et `--color-border` : aucune valeur
+hexadécimale n'entre dans un composant (§11).
+
+**Portée :** la barre d'onglets, le board depuis `CRM-041`, **et la vue liste depuis `CRM-042`** —
+les trois portent la même classe, comme cette entrée l'annonçait les deux fois. Le board y ajoute
+`scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px ; le tableau de la vue
+liste ne l'ajoute pas, faute de colonne sur laquelle s'ancrer (§5.9).
+
+Tout écart futur est consigné ici avec sa justification et sa date.

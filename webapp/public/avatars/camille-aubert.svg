@@ -1,0 +1,8 @@
+<!-- @spec CRM-022 (docs/BACKLOG.md) — avatar local du profil Camille Aubert ; docs/SPEC-identite.md §8 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Camille Aubert</title>
+  <rect width="128" height="128" rx="64" fill="#23468C"/>
+  <circle cx="92" cy="31" r="17" fill="#D9CF4A"/>
+  <path d="M19 105c15-24 32-36 51-36 18 0 32 9 41 27v32H19z" fill="#1B3670"/>
+  <text x="64" y="76" fill="#FFFFFF" font-family="ui-sans-serif,system-ui,sans-serif" font-size="42" font-weight="700" text-anchor="middle">CA</text>
+</svg>

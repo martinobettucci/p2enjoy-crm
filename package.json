@@ -1,0 +1,47 @@
+{
+  "name": "p2enjoy-crm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CRM P2Enjoy — racine du dépôt. @spec CRM-006 (docs/BACKLOG.md), CRM-007, CRM-008, CRM-016 ; docs/SPEC-types.md §4 (commandes), docs/SPEC-webapp.md §3.2 (projet npm unique), §13 (commandes), docs/SPEC-test-harness.md §9 (commandes du harnais), docs/SPEC-edge-functions.md §7.1 (tests des modules Deno purs). Projet npm unique : Vite prend webapp/ pour racine par --config (docs/JOURNAL.md décision 42). Aucune façade npm des scripts de lancement n'est ajoutée (décision 38, INC-008). E2E_PROJETS est un contrat interne entre ces scripts et e2e/playwright.config.ts : Playwright démarre son webServer pour toute exécution, et le filtre --project n'est pas visible des workers (décision 49).",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "types:generate": "scripts/generate-types.sh",
+    "types:check": "scripts/generate-types.sh --check",
+    "verify:identites": "./scripts/verify-identites.sh",
+    "typecheck": "tsc -p tsconfig.json && tsc -p webapp/tsconfig.json && tsc -p webapp/tsconfig.test.json && tsc -p tsconfig.tools.json",
+    "dev": "vite --config webapp/vite.config.ts",
+    "build": "vite build --config webapp/vite.config.ts",
+    "preview": "vite preview --config webapp/vite.config.ts",
+    "test:sql": "scripts/run-sql-tests.sh",
+    "test:unit": "vitest run --config webapp/vitest.config.ts",
+    "e2e:api": "E2E_PROJETS=api playwright test --config e2e/playwright.config.ts --project=api",
+    "e2e:mail": "E2E_PROJETS=mail playwright test --config e2e/playwright.config.ts --project=mail",
+  "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
+    "e2e:report": "playwright show-report e2e/report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.3",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "jsdom": "30.0.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.2.0",
+    "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.0",
+    "lucide-react": "1.28.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "8.3.0"
+  }
+}

@@ -1,0 +1,120 @@
+/*
+  @spec CRM-007 (docs/BACKLOG.md) — styles de base de l'application
+  @spec docs/DESIGN_SYSTEM.md §2 (typographie), §6 (interactions), §8 (accessibilité)
+  @spec docs/SPEC-webapp.md §4 (jetons), §9 (accessibilité)
+
+  Ce fichier ne contient **aucune valeur hexadécimale** : il ne fait que consommer les jetons
+  de `tokens.css`.
+*/
+
+@import 'tailwindcss';
+@import './tokens.css';
+
+@layer base {
+	html {
+		font-family: var(--font-sans);
+		color: var(--color-text);
+		background-color: var(--color-bg);
+		/* La page ne défile jamais horizontalement (docs/DESIGN_SYSTEM.md §7) : les zones
+		   larges défilent dans leur propre conteneur. */
+		overflow-x: hidden;
+	}
+
+	body {
+		font-size: var(--text-base);
+		line-height: var(--leading-normal);
+		min-height: 100dvh;
+	}
+
+	h1 {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	h2 {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	h3 {
+		font-size: var(--text-h3);
+		font-weight: 700;
+		color: var(--color-ink);
+		line-height: var(--leading-tight);
+	}
+
+	/* Focus visible partout, sans exception (docs/DESIGN_SYSTEM.md §8). La règle est posée
+	   ici plutôt que composant par composant : un composant qui l'oublierait resterait
+	   accessible au clavier. */
+	:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+	}
+
+	/* Données techniques : monospace, chiffres tabulaires (docs/DESIGN_SYSTEM.md §2). */
+	code,
+	kbd,
+	samp {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* docs/DESIGN_SYSTEM.md §6 : `prefers-reduced-motion` respecté. */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
+}
+
+@layer components {
+	/*
+	  Indication de débordement horizontal — `CRM-021`, docs/DESIGN_SYSTEM.md §4 et §12.6.
+
+	  DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE. À 390 px, la barre d'onglets débordait sans que rien
+	  ne le signale : le dernier libellé était coupé net au bord du conteneur. Le §7 était pourtant
+	  respecté — la **page** ne défilait pas —, mais le §4 exige que le débordement soit
+	  « défilable, jamais tronqué sans indication ». Aucun test ne pouvait l'attraper : les deux
+	  règles étaient satisfaites au sens où elles étaient vérifiées.
+
+	  Technique des « ombres de défilement » en CSS pur, sans JavaScript ni état : deux dégradés
+	  attachés au **contenu** (`local`) masquent deux dégradés attachés au **conteneur** (`scroll`).
+	  Lorsqu'il n'y a rien à faire défiler d'un côté, l'ombre de ce côté est recouverte. L'indication
+	  n'apparaît donc **que** lorsqu'il y a réellement quelque chose de plus à voir, ce qu'un
+	  dégradé permanent ne saurait pas faire.
+
+	  Aucun `resize` ni `scroll` n'est écouté : un événement non traité ne peut pas désynchroniser
+	  l'affichage, comme pour les paliers de la barre latérale.
+
+	  Aucune valeur hexadécimale : les quatre dégradés partent des jetons.
+	*/
+	.indique-debordement-x {
+		background-image:
+			linear-gradient(to right, var(--color-bg), transparent),
+			linear-gradient(to left, var(--color-bg), transparent),
+			linear-gradient(to right, var(--color-border), transparent),
+			linear-gradient(to left, var(--color-border), transparent);
+		background-position:
+			left center,
+			right center,
+			left center,
+			right center;
+		background-repeat: no-repeat;
+		background-size:
+			24px 100%,
+			24px 100%,
+			10px 100%,
+			10px 100%;
+		background-attachment: local, local, scroll, scroll;
+	}
+}

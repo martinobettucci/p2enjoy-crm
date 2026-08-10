@@ -1,0 +1,371 @@
+-- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
+-- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
+-- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
+--           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
+--           §7.4 (non-complaisance)
+-- @verifies docs/SPEC-test-harness.md §4.6 (fichier consolidé du projet `api`)
+-- @verifies docs/INCONSISTENCY_REPORT.md INC-014 (soldée par les politiques d'identité),
+--           INC-057 (un `@verifies` annonçait la preuve n° 3 sans la porter)
+-- @verifies docs/SCHEMA.md §1 (tables du socle), §5 (cards)
+-- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+--
+-- Suite pgTAP de l'unité `CRM-014`. Le fichier de scénarios `e2e/api/preuves-refus.spec.ts` prouve
+-- que le produit **refuse** ; cette suite prouve que le produit **est en état d'être interrogé**,
+-- ce qui est une question distincte et qu'aucune assertion HTTP ne pose :
+--
+--   1. l'inventaire des politiques est celui attendu, table par table et nom par nom. Une politique
+--      retirée, renommée ou ajoutée fait échouer la suite — c'est ce qui rend le harnais capable
+--      d'échouer quand le produit se dégrade (§7.4) ;
+--   2. les quinze tables métier interrogées par la preuve n° 11 sont **réellement peuplées**. Sans
+--      cela, « l'anonyme lit zéro ligne » serait vrai que la RLS refuse ou qu'elle autorise tout
+--      (décision 50) ;
+--   3. les tables d'identité portent les **sept politiques** de CRM-022 et la preuve n° 10 repose
+--      désormais sur une garde d'intégrité explicite ;
+--   4. les cinq preuves non satisfaisables le sont parce que leur objet **n'existe pas**, figé par
+--      des assertions d'absence qui deviendront rouges à la naissance de la table ou de la fonction
+--      (mécanisme de la décision 51, convention de `CRM-006` puis `CRM-013`).
+--
+-- Exécution : `npm run test:sql`, `scripts/verify-preuves-refus.sh`, ou directement
+--   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+--     -f supabase/tests/0016_preuves_refus.test.sql
+--
+-- Tout se joue dans une transaction annulée en fin de fichier. Aucun bloc n'emploie
+-- `rollback to savepoint` : une assertion prise dans un savepoint annulé est **numérotée mais non
+-- comptée** par pgTAP, et le plan ne serait jamais tenu (décision 79).
+
+begin;
+
+create extension if not exists pgtap with schema extensions;
+
+select plan(53);
+
+-- =============================================================================================
+-- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
+-- =============================================================================================
+-- Chaque table métier est énumérée avec les politiques qu'elle doit porter, **nommées**. Un
+-- `drop policy` — la dégradation qu'éprouve `scripts/verify-preuves-refus.sh` — fait donc échouer
+-- la suite ici, avant même que les scénarios HTTP ne s'en aperçoivent. Compter les politiques
+-- sans les nommer laisserait passer un remplacement ; les nommer sans les compter laisserait
+-- passer un ajout permissif. Les deux sont donc assérés.
+
+create or replace function pg_temp.politiques(nom_table text)
+returns text[] language sql stable as $$
+	select coalesce(array_agg(policyname order by policyname), '{}')
+	from pg_policies where schemaname = 'public' and tablename = nom_table;
+$$;
+
+select is(pg_temp.politiques('cards'),
+	array['cards_insertion', 'cards_lecture', 'cards_maj'],
+	'`cards` porte ses trois politiques. C''est la table la plus exposée de l''inventaire : trois '
+	'des sept preuves acquises en dépendent — n° 3, n° 4 et n° 11 (décision 149)');
+
+select is(pg_temp.politiques('card_field_values'),
+	array['card_field_values_insertion', 'card_field_values_lecture', 'card_field_values_maj'],
+	'`card_field_values` porte ses trois politiques — la preuve n° 4 les traverse');
+
+select is(pg_temp.politiques('tracks'),
+	array['tracks_insertion_admin', 'tracks_lecture_membre', 'tracks_maj_admin'],
+	'`tracks` porte ses trois politiques');
+
+select is(pg_temp.politiques('channels'),
+	array['channels_insertion_admin', 'channels_lecture_membre', 'channels_maj_admin'],
+	'`channels` porte ses trois politiques');
+
+select is(pg_temp.politiques('track_members'),
+	array['track_members_insertion_admin', 'track_members_lecture', 'track_members_maj_admin',
+	      'track_members_suppression_admin'],
+	'`track_members` porte ses quatre politiques');
+
+select is(pg_temp.politiques('channel_members'),
+	array['channel_members_insertion_admin', 'channel_members_lecture', 'channel_members_maj_admin',
+	      'channel_members_suppression_admin'],
+	'`channel_members` porte ses quatre politiques');
+
+select is(pg_temp.politiques('workflows'),
+	array['workflows_insertion_admin', 'workflows_lecture_membre', 'workflows_maj_admin'],
+	'`workflows` porte ses trois politiques — la preuve n° 2 s''y oppose');
+
+select is(pg_temp.politiques('workflow_steps'),
+	array['workflow_steps_insertion_admin', 'workflow_steps_lecture_membre',
+	      'workflow_steps_maj_admin', 'workflow_steps_suppression_admin'],
+	'`workflow_steps` porte ses quatre politiques — la preuve n° 2 s''y oppose');
+
+select is(pg_temp.politiques('workflow_transitions'),
+	array['workflow_transitions_insertion_admin', 'workflow_transitions_lecture_membre',
+	      'workflow_transitions_maj_admin', 'workflow_transitions_suppression_admin'],
+	'`workflow_transitions` porte ses quatre politiques — la preuve n° 2 s''y oppose');
+
+select is(pg_temp.politiques('workflow_transition_required_fields'),
+	array['workflow_transition_required_fields_insertion_admin',
+	      'workflow_transition_required_fields_lecture_membre',
+	      'workflow_transition_required_fields_suppression_admin'],
+	'`workflow_transition_required_fields` porte ses trois politiques — CRM-018 l''ajoute à la '
+	'preuve exhaustive opposée à l''anonyme');
+
+select is(pg_temp.politiques('workflow_nodes_catalog'),
+	array['catalogue_noeuds_insertion_admin', 'catalogue_noeuds_lecture_membre',
+	      'catalogue_noeuds_maj_admin'],
+	'`workflow_nodes_catalog` porte ses trois politiques — la preuve n° 2 s''y oppose');
+
+select is(pg_temp.politiques('form_fields'),
+	array['form_fields_insertion_admin', 'form_fields_lecture_membre', 'form_fields_maj_admin'],
+	'`form_fields` porte ses trois politiques');
+
+select is(pg_temp.politiques('form_field_rules'),
+	array['form_field_rules_insertion_admin', 'form_field_rules_lecture_membre',
+	      'form_field_rules_maj_admin', 'form_field_rules_suppression_admin'],
+	'`form_field_rules` porte ses quatre politiques');
+
+select is(pg_temp.politiques('card_comments'),
+	array['card_comments_insertion', 'card_comments_lecture', 'card_comments_maj'],
+	'`card_comments` porte ses trois politiques et ne reste plus hors de l''inventaire nominal');
+
+select is(pg_temp.politiques('card_events'),
+	array['card_events_lecture'],
+	'`card_events` porte son unique politique de lecture et ne reste plus hors de l''inventaire '
+	'nominal');
+
+select is(
+	(select count(*)::int from pg_policies where schemaname = 'public'),
+	62,
+	'SOIXANTE-DEUX politiques dans `public`, et pas une de plus — 59 avant CRM-054, plus les TROIS '
+	'de l''ingestion : messages, occurrences et pièces jointes, toutes en LECTURE. Avant elles : '
+	'48 avant CRM-022, plus ses '
+	'SEPT politiques d''identité. Avant elles : 41 jusqu''à `CRM-042`, plus les '
+	'TROIS de `card_comments` livrées par `CRM-043`, plus l''UNIQUE politique de lecture de '
+	'`card_events` livrée par `CRM-044`, plus les TROIS de la liaison livrée par `CRM-018` — '
+	'`card_events` n''en porte pas d''autre, écrire n''y étant ouvert à '
+	'personne. Une politique ajoutée sans que cette suite '
+	'soit étendue — permissive ou non — fait échouer ce compte : c''est la contrepartie du contrôle '
+	'par nom, qui à lui seul ne verrait pas un ajout');
+
+-- La RLS activée est ce qui rend les politiques opposables. Une table dont la RLS serait désactivée
+-- porterait ses politiques sans les appliquer : le pire des deux mondes, un inventaire rassurant
+-- sur une table ouverte.
+select ok(
+	(select bool_and(c.relrowsecurity)
+	 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+	 where n.nspname = 'public' and c.relkind = 'r'),
+	'RLS ACTIVÉE sur TOUTES les tables de `public`, sans exception. Sans elle, l''inventaire '
+	'ci-dessus décrirait des politiques inertes');
+
+-- =============================================================================================
+-- 2. Condition de validité de la preuve n° 11 — les quinze tables métier sont peuplées
+-- =============================================================================================
+-- « L'anonyme lit zéro ligne » ne prouve rien sur une table vide : l'assertion serait verte que la
+-- RLS refuse ou qu'elle autorise tout (décision 50). Les quinze tables que le scénario n° 11
+-- interroge sont donc d'abord constatées **non vides**, ici, sous un rôle qui contourne la RLS.
+
+select isnt_empty('select 1 from public.tracks',
+	'PREUVE N° 11, condition de validité 1/15 : `tracks` est peuplée');
+select isnt_empty('select 1 from public.channels',
+	'PREUVE N° 11, condition de validité 2/15 : `channels` est peuplée');
+select isnt_empty('select 1 from public.workflows',
+	'PREUVE N° 11, condition de validité 3/15 : `workflows` est peuplée');
+select isnt_empty('select 1 from public.workflow_steps',
+	'PREUVE N° 11, condition de validité 4/15 : `workflow_steps` est peuplée');
+select isnt_empty('select 1 from public.workflow_transitions',
+	'PREUVE N° 11, condition de validité 5/15 : `workflow_transitions` est peuplée');
+select isnt_empty('select 1 from public.workflow_transition_required_fields',
+	'PREUVE N° 11, condition de validité 6/15 : `workflow_transition_required_fields` est peuplée');
+select isnt_empty('select 1 from public.workflow_nodes_catalog',
+	'PREUVE N° 11, condition de validité 7/15 : `workflow_nodes_catalog` est peuplée');
+select isnt_empty('select 1 from public.form_fields',
+	'PREUVE N° 11, condition de validité 8/15 : `form_fields` est peuplée');
+select isnt_empty('select 1 from public.form_field_rules',
+	'PREUVE N° 11, condition de validité 9/15 : `form_field_rules` est peuplée');
+select isnt_empty('select 1 from public.cards',
+	'PREUVE N° 11, condition de validité 10/15 : `cards` est peuplée');
+select isnt_empty('select 1 from public.card_field_values',
+	'PREUVE N° 11, condition de validité 11/15 : `card_field_values` est peuplée');
+select isnt_empty('select 1 from public.track_members',
+	'PREUVE N° 11, condition de validité 12/15 : `track_members` est peuplée — elle ne l''était pas '
+	'à `CRM-008`, qui l''excluait pour cette raison exacte (docs/SPEC-test-harness.md §4.3)');
+select isnt_empty('select 1 from public.channel_members',
+	'PREUVE N° 11, condition de validité 13/15 : `channel_members` est peuplée — même remarque');
+select isnt_empty('select 1 from public.card_comments',
+	'PREUVE N° 11, condition de validité 14/15 : `card_comments` est peuplée depuis CRM-043');
+select isnt_empty('select 1 from public.card_events',
+	'PREUVE N° 11, condition de validité 15/15 : `card_events` est peuplée par les triggers du seed '
+	'depuis CRM-044');
+
+-- =============================================================================================
+-- 3. Preuve n° 10 — la règle existe et ses politiques sont exhaustives (CRM-022)
+-- =============================================================================================
+-- La suite historique avait volontairement exigé zéro politique. CRM-022 retourne ces assertions :
+-- les mutations sont consenties aux admins et la constraint trigger protège le dernier d'entre eux.
+
+select is(pg_temp.politiques('workspace_members'),
+	array['workspace_members_insertion_admin','workspace_members_lecture_membre',
+	      'workspace_members_maj_admin','workspace_members_suppression_admin']::text[],
+	'PREUVE N° 10 : quatre politiques consentent lecture d''équipe et mutations administrateur');
+
+select is(pg_temp.politiques('workspaces'), array['workspaces_lecture_membre']::text[],
+	'`workspaces` porte exactement sa politique de lecture membre');
+
+select is(pg_temp.politiques('profiles'),
+	array['profiles_lecture_equipe','profiles_maj_propre']::text[],
+	'`profiles` porte lecture d''équipe et modification propre, ni plus ni moins');
+
+-- L'administratrice du seed est bien la **seule** de son workspace : sans cela, « le dernier
+-- administrateur » ne désignerait personne et le scénario n° 10 mesurerait autre chose.
+select is(
+	(select count(*)::int from public.workspace_members
+	 where workspace_id = '5eed0000-0000-4000-8000-000000000001' and role = 'admin'),
+	1,
+	'PREUVE N° 10, condition de validité : le workspace du seed n''a QU''UN administrateur. Avec '
+	'deux, le scénario ne porterait plus sur le « dernier »');
+
+-- =============================================================================================
+-- 4. Preuves n° 1, n° 2, n° 5 — ce qui les rend opposables, constaté en base
+-- =============================================================================================
+-- Ces trois preuves reposent sur des privilèges de table et sur l'existence d'une garde RPC. Les
+-- scénarios HTTP mesurent le refus ; ces assertions mesurent la **cause** du refus, de sorte qu'un
+-- privilège rendu par mégarde soit dénoncé ici et non par un `403` qui cesserait d'arriver.
+
+select ok(
+	not has_table_privilege('authenticated', 'public.cards', 'update'),
+	'PREUVE N° 5, sa cause : `authenticated` n''a AUCUN `UPDATE` de table sur `cards`. C''est ce '
+	'retrait, posé par `CRM-034`, qui rend `move_card` incontournable');
+
+select ok(
+	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+	'PREUVE N° 5, sa cible exacte : `current_step_id` n''est pas modifiable colonne à colonne non '
+	'plus. Un `grant update (…)` trop large la rouvrirait sans toucher au privilège de table');
+
+select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
+	'PREUVE N° 1, son sujet : `move_card` existe avec sa signature. Sans elle, le `403` du '
+	'`viewer` serait un `404` et la preuve porterait sur une fonction absente');
+
+select is(
+	(select prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	 where n.nspname = 'public' and p.proname = 'move_card'),
+	true,
+	'PREUVE N° 1, sa cause : `move_card` est `SECURITY DEFINER`. C''est ce qui lui permet de '
+	'refuser explicitement là où la RLS refuserait silencieusement');
+
+select ok(
+	(select prosrc like '%forbidden%' from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	 where n.nspname = 'public' and p.proname = 'move_card'),
+	'PREUVE N° 1, sa forme : `move_card` lève `forbidden`. Un refus muet rendrait `200` et ne '
+	'déplacerait rien — le pire des deux mondes (décision 141)');
+
+select ok(
+	(select prosrc like '%card_not_found%' from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	 where n.nspname = 'public' and p.proname = 'move_card'),
+	'PREUVE N° 1'', sa forme : `move_card` distingue `card_not_found` de `forbidden` — règle de '
+	'discrétion (docs/SPEC-workflow-engine.md §5.3). Confondre les deux dirait à un appelant '
+	'qu''une card existe hors de sa vue');
+
+-- =============================================================================================
+-- 5. Preuve n° 4 — le droit fin qui la rend mesurable est bien posé par le seed
+-- =============================================================================================
+
+select is(
+	(select count(*)::int from public.track_members
+	 where user_id = '5eed0000-0000-4000-8000-000000000013' and access = 'none'),
+	1,
+	'PREUVE N° 4, sa cause : le `viewer` est fermé sur un track par un droit fin `none`. Sans ce '
+	'droit, son « zéro ligne » ne distinguerait pas un refus d''une absence de données');
+
+select isnt_empty(
+	'select 1 from public.cards where channel_id = ''5eed0000-0000-4000-8000-000000000032''',
+	'PREUVE N° 4, sa condition de validité : le channel fermé au `viewer` porte RÉELLEMENT des '
+	'cards, constaté sans RLS');
+
+-- =============================================================================================
+-- 6. Les cinq preuves non satisfaisables — absences figées, non commentées (§7.3)
+-- =============================================================================================
+-- Convention posée par `CRM-006` et reprise par `CRM-013` : une limite s'assère, elle ne se
+-- commente pas. Chacune de ces assertions deviendra ROUGE le jour où l'objet naîtra, et désignera
+-- alors la preuve à écrire — au lieu de laisser la limite survivre à sa cause.
+
+-- ASSERTIONS RETOURNÉES PAR `CRM-052` (décision 51). Les deux annonçaient le moment de leur
+-- propre mort : la table est née, et les preuves n° 6 et n° 7 sont désormais MESURÉES ici, puis
+-- exercées avec les jetons réels par `e2e/api/comptes-entrants.spec.ts`.
+select is(
+	(select count(*)::int from information_schema.column_privileges
+	  where table_schema = 'public' and table_name = 'mail_inbound_accounts'
+	    and grantee = 'authenticated' and column_name = 'secret_id'),
+	0,
+	'PREUVE N° 6 ACQUISE : `mail_inbound_accounts.secret_id` n''accorde AUCUN privilège à '
+	'`authenticated` — la révocation est un privilège de COLONNE, insensible aux lignes');
+
+-- La n° 7 porte sur la LECTURE du compte d'autrui, et son sujet est `mail_inbound_accounts` : la
+-- table des identités sortantes, elle, appartient à `CRM-053` et reste due. Ce qui est mesuré ici
+-- est que la politique de lecture propriétaire existe et ne s'élargit à personne d'autre.
+select is(
+	(select count(*)::int from pg_policies
+	  where schemaname = 'public' and tablename = 'mail_inbound_accounts'
+	    and qual like '%auth.uid()%'),
+	1,
+	'PREUVE N° 7 ACQUISE sur les comptes ENTRANTS : une politique et une seule borne la lecture '
+	'd''une boîte personnelle à son propriétaire. `mail_outbound_identities` reste due par '
+	'`CRM-053`, et l''assertion suivante fige cette moitié restante');
+
+-- LA MOITIÉ RESTANTE EST LIVRÉE PAR `CRM-053`, et l'assertion annonçait ce moment. La preuve
+-- n° 7 est désormais ENTIÈREMENT acquise : les deux tables de messagerie bornent la lecture d'une
+-- ligne personnelle à son propriétaire.
+select is(
+	(select count(*)::int from pg_policies
+	  where schemaname = 'public' and tablename = 'mail_outbound_identities'
+	    and qual like '%auth.uid()%'),
+	1,
+	'PREUVE N° 7 ENTIÈREMENT ACQUISE : `mail_outbound_identities` borne elle aussi la lecture '
+	'd''une identité personnelle à son propriétaire');
+
+-- ASSERTION RETOURNÉE PAR `CRM-044` (décision 51). La moitié de la preuve n° 8 est désormais
+-- SATISFAISABLE, et le refus est mesuré ici même plutôt qu'annoncé : aucun privilège d'écriture,
+-- pour aucun des trois rôles. `e2e/api/timeline.spec.ts` l'exerce avec les jetons réels.
+select is(
+	(select count(*)::int from information_schema.role_table_grants
+	  where table_schema = 'public' and table_name = 'card_events'
+	    and grantee in ('anon','authenticated','service_role')
+	    and privilege_type <> 'SELECT'),
+	0,
+	'PREUVE N° 8 SATISFAISABLE POUR MOITIÉ, 1/2 : `card_events` est livrée par `CRM-044` et '
+	'n''accorde AUCUN privilège d''écriture, `service_role` compris');
+
+select hasnt_table('public', 'audit_log',
+	'PREUVE N° 8 NON SATISFAISABLE, 2/2 : `audit_log` attend `CRM-072`');
+
+-- ASSERTIONS RETOURNÉES PAR `CRM-054` (décision 51, neuvième occurrence). Le bucket existe, les
+-- pièces jointes aussi, et la preuve n° 9 est ACQUISE : le refus est mesuré par
+-- `e2e/api/ingestion.spec.ts` sur une pièce `infected` ET une pièce `pending`.
+select is(
+	(select public from storage.buckets where id = 'mail-attachments'),
+	false,
+	'PREUVE N° 9, 1/2 : le bucket des pièces jointes existe et il est PRIVÉ');
+
+-- CE QUI PROTÈGE RÉELLEMENT, ET QUI N'EST PAS CE QU'ON CROIT : `storage.objects` accorde tous les
+-- privilèges à `anon` et `authenticated` — défaut de Supabase, MESURÉ. La protection vient donc du
+-- refus par défaut de la RLS et de l'ABSENCE de toute politique. `CRM-057` devra en écrire une
+-- conditionnée à `av_status = 'clean'` ; écrite à la légère, elle ouvrirait aussi les `infected`.
+select is(
+	(select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'),
+	0,
+	'PREUVE N° 9, 2/2 : AUCUNE politique de lecture d''objet — c''est la RLS qui refuse, non les '
+	'privilèges, et CRM-057 devra conditionner la sienne au statut `clean`');
+
+select hasnt_function('public', 'queue_outbound_email',
+	'PREUVE N° 12 NON SATISFAISABLE : `queue_outbound_email` attend `CRM-058`. Envoyer avec une '
+	'identité qui ne vous appartient pas suppose une fonction d''envoi');
+
+-- Ce que ces sept assertions signifient ensemble, dit une fois plutôt que sept : sur les douze
+-- preuves de `docs/SPEC-permissions-rls.md` §7, **cinq** portent sur des objets absents. `CRM-014`
+-- ne les compense par aucune preuve de substitution, et reste `[~]` pour cette raison — bloquée
+-- par une dépendance, non par un défaut de l'unité.
+select is(
+	(select count(*)::int from (values
+		('public.audit_log')
+	) as cibles(nom) where to_regclass(nom) is not null),
+	0,
+	'UNE SEULE PREUVE SUR DOUZE RESTE HORS D''ATTEINTE — elles étaient CINQ jusqu''à `CRM-044`, '
+	'puis QUATRE, puis TROIS avec `CRM-052`, DEUX avec `CRM-053`, et `CRM-054` referme la n° 9 en '
+	'livrant les pièces jointes et leur bucket. Ce qui '
+	'a livré `card_events` et rendu la moitié de la n° 8 satisfaisable. Le compte est asséré plutôt '
+	'qu''énoncé : le jour où l''une des quatre naît, il cesse de valoir zéro et l''unité doit être '
+	'rouverte');
+
+select finish();
+rollback;

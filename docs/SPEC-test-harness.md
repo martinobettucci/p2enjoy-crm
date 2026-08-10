@@ -1,0 +1,532 @@
+# Spécification — Harnais de tests
+
+**Unité :** `CRM-008` (`docs/BACKLOG.md`, chunk 2).
+**Documents liés :** `docs/MASTER_PLAN.md` §4 (Definition of Done commune),
+`docs/SPEC-permissions-rls.md` §7 (preuves de refus), `docs/SPEC-webapp.md` §13 (commandes),
+`docs/DAT.md` §13 (commandes de lancement), `README.md` §7 (tests).
+
+Ce document est écrit **avant** le code du harnais, et **après mesure** du comportement réel des
+outils déjà épinglés par le dépôt : `postgres:17.6.1.136` et son `pgtap 1.3.3`,
+`@playwright/test@1.62.1`, `vitest@4.1.10`. Les paragraphes intitulés « Mesuré » rapportent une
+sortie de commande réellement obtenue le 2026-08-04 sur la pile de développement, pas un
+comportement supposé d'après la documentation des outils.
+
+---
+
+## 1. Objet
+
+`CRM-008` livre **l'outillage qui exécute les preuves**, pas les preuves elles-mêmes. La
+distinction gouverne tout ce document : un harnais capable de lancer un scénario n'est pas un
+scénario, et une commande qui rend `0` sans rien avoir exercé est pire qu'une commande absente —
+elle donne une couleur verte à un périmètre vide.
+
+Le dépôt possède déjà, à l'ouverture de cette unité :
+
+- une suite pgTAP de **trois fichiers** dans `supabase/tests/`, exécutée aujourd'hui par trois
+  scripts de vérification distincts, chacun réimplémentant sa propre lecture du TAP ;
+- Vitest, livré par `CRM-007`, avec 96 tests d'interface ;
+- Playwright, livré par `CRM-007`, avec un unique projet `ui` et 13 scénarios ;
+- neuf harnais `scripts/verify-*.sh`, qui sont les preuves d'intégration des unités précédentes.
+
+Ce que `CRM-008` ajoute est donc précisément ce qui manque pour que `README.md` §7 cesse de
+décrire un état futur :
+
+| Commande | État à l'ouverture de l'unité | Livrée par `CRM-008` |
+|---|---|---|
+| `npm run test:unit` | livrée par `CRM-007` | inchangée |
+| `npm run e2e:ui` | livrée par `CRM-007` | projet nommé explicitement |
+| `npm run test:sql` | absente | **oui** |
+| `npm run e2e:api` | absente | **oui** |
+| `npm run e2e:report` | absente | **oui** |
+| `pytest mail-sync/tests` | absente | **non** — porté exclusivement par `CRM-051`, décision 277. **Livrée depuis par `CRM-051`** |
+| `npm run e2e:mail` | absente | **non** — voir §8. **Livrée depuis par `CRM-050`**, voir ci-dessous |
+
+## 2. Ce que le harnais n'invente pas
+
+Deux des sept commandes de `README.md` §7 n'avaient **aucun sujet à exercer** avant le chunk 4 ;
+les deux ont désormais le leur, et les paragraphes suivants conservent la trace de cette montée :
+
+- `pytest mail-sync/tests` suppose le service `mail-sync`, livré par `CRM-051` ;
+- `npm run e2e:mail` suppose Stalwart et un aller-retour d'email réel, livrés par `CRM-050` et
+  `CRM-054`.
+
+**Mise à jour, `CRM-050`.** Le projet `mail` est désormais **déclaré et peuplé** : `CRM-050` a
+livré Stalwart, ses boîtes, Roundcube et ClamAV, et `e2e/mail/` exerce les protocoles — session
+IMAP sur les trois boîtes, soumission SMTP authentifiée, remise par le catch-all et relecture,
+détection réelle d'EICAR, et Roundcube à l'écran. Ce que le projet ne prouve **pas encore** est
+l'aller-retour d'email **du produit**, qui suppose l'ingestion (`CRM-054`) et l'envoi (`CRM-058`).
+**Mise à jour, `CRM-051`.** `pytest mail-sync/tests` a désormais son sujet : le service Python est
+livré, et la commande exerce **40 cas** sans pile — configuration et refus sans fuite, état
+atomique et corrompu, routes `dev`/`prod`, en-têtes, bornes de corps et journaux JSON. Le
+conteneur réel, lui, est prouvé par `scripts/verify-mail-sync.sh` et `e2e/mail/mail-sync.spec.ts`,
+qui l'atteignent par le réseau Compose — seul chemin existant, puisque aucun port n'est publié.
+
+Trois conduites étaient possibles. Déclarer les projets vides : rejetée, c'est exactement
+l'illusion que `e2e/playwright.config.ts` refusait déjà en toutes lettres depuis `CRM-007`.
+Fabriquer un `mail-sync/` minimal pour avoir quelque chose à tester : rejetée, c'est préempter
+`CRM-051` et gonfler l'unité au-delà de son énoncé (`CLAUDE.md` §1). Livrer ce qui est livrable et
+**nommer** le reste : retenue.
+
+**Arbitrage du responsable — décision 277, INC-023, option 2.** La Definition of Done de
+`CRM-008` est bornée aux commandes dont le sujet existe. `pytest mail-sync/tests` appartient à
+`CRM-051`; `e2e:mail` appartient aux unités qui livrent ses sujets réels. Cette répartition évite
+deux faux remèdes — un projet vide ou un squelette Python sans fonction — et le double comptage
+d'une même preuve dans deux unités.
+
+## 3. `npm run test:sql` — exécuteur pgTAP
+
+### 3.1 Ce que `psql` ne dit pas (mesuré)
+
+Une suite pgTAP s'exécute par `psql`. Or `psql` ne connaît rien au protocole TAP : il rend `0` dès
+lors que les ordres SQL se sont exécutés, **que les assertions soient vraies ou fausses**.
+
+Mesuré le 2026-08-04, contre `p2enjoy-db` :
+
+| Situation | Sortie TAP | Code de sortie de `psql` |
+|---|---|---|
+| Suite verte (`0003_seed_socle.test.sql`, 30 assertions) | `ok 1…30` | `0` |
+| Une assertion fausse | `not ok 2` + `# Looks like you failed 1 test of 2` | **`0`** |
+| Plan annoncé `5`, une seule assertion exécutée | `# Looks like you planned 5 tests but ran 1` | **`0`** |
+| Plan annoncé `1`, `finish()` **jamais appelé** | `ok 1`, **aucun diagnostic** | **`0`** |
+| Plan annoncé `3`, dernières assertions dans un `savepoint` annulé | `ok 1…3` **et** `# Looks like you planned 3 tests but ran 1` | **`0`** |
+| Erreur SQL, avec `ON_ERROR_STOP=1` | message d'erreur | `3` |
+
+Trois conséquences, qui sont la raison d'être de l'exécuteur :
+
+1. **Le code de sortie de `psql` ne peut pas servir de verdict.** Un harnais qui s'y fierait
+   rendrait vert sur une suite entièrement rouge. C'est le mode de défaillance le plus grave que
+   puisse avoir un outil de test, puisqu'il est silencieux.
+2. **Le diagnostic de pgTAP ne suffit pas non plus.** Sans `finish()`, pgTAP n'émet aucune ligne
+   `# Looks like you planned` : une suite tronquée — par un `return` prématuré, une erreur avalée,
+   un fichier coupé — passerait pour complète. L'exécuteur doit donc comparer **lui-même** l'en-tête
+   de plan `1..N` au nombre de lignes `ok` et `not ok` réellement émises.
+3. **`ON_ERROR_STOP=1` est obligatoire.** Sans lui, une erreur SQL au milieu d'un fichier laisse la
+   suite continuer et le code de sortie reste `0`.
+4. **Compter les lignes émises ne suffit pas non plus, et c'est la quatrième mesure de ce
+   tableau.** pgTAP tient deux comptes distincts : la **numérotation** des lignes, portée par une
+   séquence, et le **compte** que `finish()` relit, porté par une table. Un `rollback to savepoint`
+   annule le second et pas le premier. Une suite dont les **dernières** assertions sont prises dans
+   un savepoint annulé émet donc autant de lignes que son plan en annonce — l'exécuteur la voit
+   complète — alors que pgTAP la déclare tronquée. Mesuré sur trois lignes :
+
+   ```sql
+   select plan(3);
+   select ok(true, 'hors savepoint');
+   savepoint s1;
+   select ok(true, 'dans le savepoint');
+   select ok(true, 'derniere assertion, dans le meme savepoint');
+   rollback to s1;
+   select * from finish();
+   ```
+
+   Sortie : `ok 1`, `ok 2`, `ok 3`, puis `# Looks like you planned 3 tests but ran 1`. Le contrôle 4
+   du §3.2 compare `3` à `3` et **passe**. C'est exactement le mode de défaillance silencieux que ce
+   tableau existe pour empêcher, et il visait l'exécuteur lui-même (`docs/JOURNAL.md`, décision 79).
+
+   Les suites `0002` à `0007` restent vertes et plan tenu : toutes se terminent par au moins une
+   assertion **hors savepoint**, qui remet le compte d'accord avec la numérotation. C'est la
+   différence que la décision 76 avait relevée sans l'élucider.
+
+### 3.2 Contrat de l'exécuteur
+
+`scripts/run-sql-tests.sh`, invoqué par `npm run test:sql`.
+
+- **Périmètre** : tous les fichiers `supabase/tests/*.test.sql`, dans l'ordre lexicographique de
+  leur nom — qui est l'ordre des migrations qu'ils accompagnent.
+- **Cible** : le conteneur `p2enjoy-db` de la pile de développement. L'exécuteur **ne démarre ni
+  n'arrête rien** ; il échoue explicitement si le conteneur est absent, comme le font déjà les
+  neuf `scripts/verify-*.sh`.
+- **Verdict par fichier**, dans cet ordre :
+  1. si `psql` sort en erreur (code ≠ `0`) → **échec**, la sortie brute est reproduite ;
+  2. si aucune ligne `1..N` n'est trouvée → **échec** : le fichier n'a pas produit de plan, il
+     n'est donc pas une suite pgTAP exécutée ;
+  3. si au moins une ligne `not ok` est présente → **échec**, les lignes `not ok` et leurs
+     diagnostics `#` sont reproduits ;
+  4. si `N` diffère du nombre de lignes `ok` + `not ok` → **échec**, l'écart est chiffré ;
+  5. si pgTAP a émis un diagnostic de plan — une ligne `# Looks like you planned` — → **échec**,
+     la ligne est reproduite. Ce contrôle est **indépendant** du précédent et ne le double pas : le
+     contrôle 4 compare le plan aux lignes **émises**, celui-ci au compte que pgTAP a
+     **enregistré**, et les deux divergent dès qu'un `rollback to savepoint` intervient après la
+     dernière assertion (§3.1, mesure 4) ;
+  6. sinon → **succès**, avec le nombre d'assertions.
+- **Verdict global** : `0` si et seulement si tous les fichiers réussissent ; `1` sinon.
+- **Options** : un ou plusieurs chemins de fichiers en arguments restreignent le périmètre ;
+  `--help` décrit l'usage. Aucune autre option — un exécuteur de tests n'a pas de mode dégradé.
+- **Aucune écriture** : les suites livrées ouvrent une transaction et l'annulent. L'exécuteur ne
+  crée, ne modifie et ne supprime rien par lui-même.
+
+**Contrainte que le contrôle 5 impose aux suites.** Une suite se **termine hors savepoint**, par au
+moins une assertion de fond — jamais par une assertion ajoutée pour le compte. La contrainte n'est
+pas une commodité d'outillage : une suite qui finit dans un savepoint annulé n'a pas seulement un
+compte faux, elle a des preuves finales que pgTAP n'a pas enregistrées.
+
+### 3.3 Sortie
+
+Une ligne par fichier, verte ou rouge, puis un total. Le format reprend celui des
+`scripts/verify-*.sh`, afin qu'un lecteur du dépôt n'ait qu'une convention à connaître.
+
+```
+  OK    supabase/tests/0001_identite_et_cloisonnement.test.sql — 70 assertions
+  OK    supabase/tests/0002_fonctions_autorisation.test.sql — 127 assertions
+  OK    supabase/tests/0003_seed_socle.test.sql — 30 assertions
+
+  3 fichiers, 227 assertions, aucune anomalie.
+```
+
+### 3.4 Ce que l'exécuteur ne fait pas
+
+Il ne remplace pas les suites pgTAP déjà exécutées par `scripts/verify-migrations.sh`,
+`verify-authz.sh` et `verify-seed.sh`. Ces trois scripts sont les preuves de `CRM-003`, `CRM-010`
+et `CRM-005` ; les réécrire pour qu'ils délèguent à l'exécuteur mêlerait quatre unités dans un même
+commit, contre `CLAUDE.md` §13. La duplication de lecture du TAP est donc **connue et assumée pour
+l'instant** ; elle est nommée au §11 comme une limite, non masquée.
+
+### 3.5 Restaurer une ancienne migration signifie rejouer le runner courant
+
+Un harnais historique peut dégrader puis réappliquer la migration de son unité pour prouver sa
+convergence. Dès qu'une migration ultérieure révise un objet de cette unité, cette réapplication
+isolée ne constitue toutefois plus une restauration : elle laisse la base dans un état que le
+runner ne produit jamais.
+
+Le retour à l'état courant doit donc appeler le service `migrations-runner` sur **tout** le
+répertoire, avec une commande synchrone qui attend son code de sortie. Une liste manuelle de
+« migrations suivantes » est interdite : elle devient fausse à chaque nouvelle révision et peut
+laisser les suites suivantes mesurer un état intermédiaire. Une restauration réussie est suivie
+de la suite globale concernée ; le code zéro du runner seul ne suffit pas.
+
+La restauration du schéma ne remplace pas le **ménage des données d'essai**. Un harnais qui crée
+des lignes réservées les retire avant toute suite globale et constate leur absence ; son
+`trap EXIT` n'est qu'une sécurité d'interruption. SQL, API ou UI exécutés pendant que le jeu
+d'essai subsiste mesureraient le harnais, pas le seed courant (décision 296, INC-061).
+
+## 4. Projets Playwright
+
+### 4.1 Une seule configuration
+
+`e2e/playwright.config.ts` reste l'unique configuration, et déclare les projets. Motif : les trois
+projets partagent le fichier `.env` du dépôt comme source de vérité d'environnement, la même
+convention de sortie et le même rapport. Trois configurations distinctes tripleraient cette
+amorce sans rien isoler d'utile.
+
+### 4.2 `webServer` : mesure et conséquence
+
+Le projet `ui` a besoin de l'application **construite et servie** ; le projet `api` n'en a aucun
+besoin — il parle directement à Kong.
+
+**Mesuré** le 2026-08-04, avec `@playwright/test@1.62.1`, au moyen d'un serveur factice écrivant un
+marqueur sur disque à son démarrage :
+
+- `playwright test --project=api` → marqueur **présent** : le `webServer` est démarré ;
+- `playwright test --project=ui` → marqueur présent ;
+- sans filtre → marqueur présent.
+
+Autrement dit, **Playwright démarre le `webServer` pour toute exécution, quel que soit le filtre de
+projet**. Laisser la déclaration en l'état ferait donc reconstruire et servir la webapp à chaque
+`npm run e2e:api`, pour rien.
+
+Seconde mesure, qui écarte la solution la plus évidente : la configuration est **réévaluée dans
+chaque processus worker**, où `process.argv` vaut exactement
+`["…/node", "…/workerProcessEntry.js"]`. Le filtre `--project` n'y est **pas visible**. Une
+configuration qui déduirait le besoin en lisant `process.argv` fonctionnerait dans le processus
+principal et se tromperait dans les workers.
+
+**Décision.** Le besoin est déclaré explicitement par la variable d'environnement `E2E_PROJETS`,
+positionnée par le script npm qui lance l'exécution :
+
+- valeur absente → tous les projets sont supposés demandés, donc `webServer` est déclaré. C'est le
+  défaut sûr : une invocation directe de `playwright test` continue de fonctionner.
+- valeur présente → liste de noms de projets séparés par des virgules. `webServer` n'est déclaré
+  que si cette liste contient au moins un projet ayant besoin de l'application servie, c'est-à-dire
+  `ui`.
+
+La variable est un **contrat interne** entre `package.json` et la configuration ; elle n'est pas une
+variable d'environnement du produit et n'a donc pas sa place dans `.env.example`.
+
+### 4.3 Projet `api` — contrats d'API et refus d'autorisation
+
+**Objet.** Exercer le backend **hors interface**, avec les jetons réels de chaque profil, comme
+`CLAUDE.md` §10 l'exige de toute règle d'accès.
+
+**Base d'URL.** Kong, lue depuis `.env` (`KONG_HTTP_PORT`), surchargeable par
+`VITE_SUPABASE_URL`. Aucun navigateur n'est lancé : le projet n'utilise que le contexte de requête
+de Playwright.
+
+**Prérequis.** La pile de développement démarrée et le seed appliqué. À défaut, les scénarios
+échouent avec un message qui nomme la commande manquante — ils ne sont jamais ignorés en silence.
+
+**Fixtures.** Un module `e2e/api/jetons.ts` expose :
+
+- `cleAnonyme` et `cleService`, lues depuis `.env` ;
+- `jetonDe(adresse, motDePasse)`, qui obtient un jeton par la **véritable route de connexion**
+  (`POST /auth/v1/token?grant_type=password`), jamais par fabrication locale ;
+- les trois comptes du seed (`docs/SPEC-seed.md` §2.3) et leur rôle.
+
+C'est cette fixture que `CRM-014` reprendra pour ses douze scénarios : elle est le livrable
+durable de ce projet.
+
+**Scénarios livrés par `CRM-008`.** Ils décrivent l'état **réellement mesuré** du produit avant
+`CRM-012`, où aucune politique RLS n'existe :
+
+| # | Scénario | Attendu mesuré |
+|---|---|---|
+| A1 | Requête sans clé `apikey` | `401` à la passerelle |
+| A2 | Fonction du schéma `app` appelée par l'API | `404`, code `PGRST202` — le schéma n'est pas exposé |
+| A3 | Les tables du socle contiennent réellement des lignes, vu par la clé de service | `profiles` 3, `workspaces` 1, `workspace_members` 3 |
+| A4 | Appelant **anonyme** sur ces mêmes tables | `200` et `[]` — preuve n° 11 de `docs/SPEC-permissions-rls.md` §7 |
+| A5 | Jeton réel de chacun des **trois** profils seedés | `200` et `[]` |
+| A6 | Écriture d'un workspace par un jeton réel | `403`, code PostgreSQL `42501` |
+
+**A3 n'est pas décoratif : il est la condition de validité de A4 et A5.** « Zéro ligne » ne prouve
+rien sur une table vide. Le scénario constate donc d'abord, avec la clé de service, que les lignes
+existent, puis que personne ne les voit. Les tables `track_members` et `channel_members` sont
+**exclues** de A4 et A5 pour cette raison exacte : le seed n'y pose aucune ligne, leur vide ne
+démontre aucun refus.
+
+**Ce que ces scénarios deviendront.** A5 et A6 décrivent un produit **sans politiques**. Le jour où
+`CRM-012` les livrera, un membre du workspace devra voir son workspace, et A5 échouera. C'est
+voulu : l'assertion fige la limite au lieu de la commenter, et son échec forcera à la réviser
+plutôt qu'à la laisser survivre à sa cause. C'est la convention déjà retenue par `CRM-006` pour les
+types (`docs/SPEC-types.md` §9). Le fichier le dit en toutes lettres, à l'endroit de l'assertion.
+
+**Ce que ces scénarios ne couvrent pas.** Sur les douze preuves de refus, seule la n° 11 est
+acquise ici. Les onze autres exigent des cards, des channels, des comptes mail, un second workspace
+— rien de tout cela n'existe. `CRM-014` reste donc entière, et sa Definition of Done inchangée.
+
+### 4.4 Projet `ui`
+
+Inchangé quant au fond : les 13 scénarios de `CRM-007`, contre le build de production servi par
+`vite preview`. Deux changements de forme seulement — le projet est désormais nommé explicitement
+sur la ligne de commande, et `E2E_PROJETS=ui` maintient la déclaration du `webServer`.
+
+#### 4.4 bis Un navigateur fourni par l'environnement — `PLAYWRIGHT_CHROMIUM_PATH`, `CRM-041`
+
+**Variable d'environnement facultative**, lue par `e2e/playwright.config.ts`. Elle porte le chemin
+d'un exécutable Chromium à employer à la place de celui que Playwright résout lui-même.
+
+| | |
+|---|---|
+| Rôle | chemin d'un Chromium fourni par l'image d'exécution |
+| Format | chemin absolu vers un exécutable |
+| Obligatoire | **non** |
+| Exemple non sensible | `/opt/navigateurs/chromium` |
+
+**Motif, mesuré.** Sur une image qui préinstalle ses navigateurs et interdit `playwright install`,
+Playwright 1.62.1 réclame la révision qu'il épingle — « `Executable doesn't exist at
+…/chromium_headless_shell-1234/…` » — et **tous** les scénarios `ui` échouent au lancement, y compris
+ceux livrés par les unités précédentes. Aucune preuve d'interface n'est alors exécutable, quel que
+soit l'état du code, et la Definition of Done de toute unité touchant l'écran devient inatteignable
+pour une raison qui ne regarde pas le produit.
+
+**Absente, rien ne change.** Playwright résout le navigateur comme il l'a toujours fait. Ce n'est
+donc pas une dérogation permanente inscrite dans le dépôt, mais une porte que l'environnement
+d'exécution ouvre lui-même.
+
+**Ce que cette porte ne fait pas.** Elle ne désactive aucun contrôle, ne saute aucun scénario et ne
+substitue aucune réponse. Une preuve obtenue par ce chemin exerce le **même** build, la **même** API
+et les **mêmes** assertions ; seul le binaire du navigateur diffère.
+
+**Ce qu'elle exige en retour.** La révision employée est **nommée dans le compte rendu de
+livraison** et dans la Definition of Done de l'unité concernée. Une preuve qui n'a pas tourné sur le
+binaire nominal reste une preuve, mais le lecteur doit pouvoir le savoir sans relire un historique de
+terminal (`CLAUDE.md` §25).
+
+### 4.5 Projet `mail`
+
+**Non déclaré.** Voir §2 et §8.
+
+### 4.6 Projet `api` — le fichier consolidé des douze preuves de refus (`CRM-014`)
+
+`CRM-008` livre l'outillage ; `CRM-014` livre **les preuves elles-mêmes**, dans le projet `api` et
+sans nouvelle configuration. Un fichier de plus, `e2e/api/preuves-refus.spec.ts`, rejoue les douze
+scénarios de `docs/SPEC-permissions-rls.md` §7 dans leur ordre, avec les fixtures de
+`e2e/api/jetons.ts` annoncées ici même au §4.3 comme le livrable durable de `CRM-008`.
+
+**Ce que ce fichier ajoute par rapport aux quatorze autres.** Les preuves de refus y sont
+aujourd'hui des corollaires dispersés : chaque unité prouve que *sa* table refuse *ce* profil.
+Aucune ne dit combien des douze preuves sont exercées, ni lesquelles ne le sont pas. Le fichier
+consolidé le dit, et **fige les absences** plutôt que de les taire. Le motif détaillé, le contrat
+mesuré de chaque scénario et la convention de figeage sont dans `docs/SPEC-permissions-rls.md`
+§7.1 à §7.3 — ils appartiennent à la spécification des autorisations, pas à celle du harnais.
+
+**Aucun changement de configuration.** Ni projet, ni `webServer`, ni variable : `npm run e2e:api`
+exécute ce fichier comme les autres. La commande reste celle du §9.
+
+**Ce que `CRM-014` n'ajoutait pas à sa livraison.** Aucun scénario d'interface, aucune capture : la
+règle restait prouvée en base et par l'API. Depuis `CRM-009`, des parcours connectés
+complètent cette couche sans déplacer les preuves d'autorisation hors interface exigées par
+`CLAUDE.md` §10.
+
+## 5. `npm run e2e:report`
+
+**Mesuré** : le rapporteur `html` de Playwright 1.62.1 produit un unique `index.html` autonome dans
+le dossier indiqué ; `playwright show-report <dossier>` le sert sur `http://localhost:9323` et
+**reste au premier plan** jusqu'à interruption — vérifié par un `curl` rendant `200` pendant qu'il
+tourne.
+
+Conséquences retenues :
+
+- le rapporteur `html` est ajouté à côté de `list`, avec `open: 'never'` : une commande de test ne
+  doit pas tenter d'ouvrir un navigateur, encore moins sur une machine sans affichage ;
+- la sortie va dans `e2e/report/`, ignoré par git au même titre que `e2e/output/` — un rapport est
+  une pièce de diagnostic, pas un livrable versionné ;
+- `npm run e2e:report` sert le **dernier** rapport produit. Chaque exécution écrase le précédent :
+  c'est le comportement de Playwright, il est documenté ici plutôt que contourné.
+
+## 6. Vitest
+
+Aucun changement. `npm run test:unit` est livré et prouvé par `CRM-007`. `CRM-008` se borne à le
+faire figurer dans le tableau des commandes et à vérifier, dans son harnais, qu'un test
+volontairement faux le fait bien échouer — ce que la Definition of Done exige de **chaque** famille
+de tests, pas seulement des nouvelles.
+
+## 7. Preuves attendues
+
+`scripts/verify-harness.sh` rejoue, sur une pile de développement démarrée et seedée :
+
+### 7.1 Précondition commune : une chaîne Node Linux prouvée
+
+Avant toute création de fichier temporaire ou mutation de la base, le script lit `.nvmrc` et
+valide le couple `node` / `npm` qui exécutera toutes les familles de tests. Un chemin sous
+`/mnt/<lecteur>/` est un outil Windows et doit être refusé sous Linux, même si `command -v npm`
+le trouve. La version majeure de Node doit correspondre à `.nvmrc` et npm doit être en version 11
+ou ultérieure.
+
+Si le `PATH` courant ne satisfait pas ce contrat, le script cherche une installation compatible
+déjà présente dans `NVM_DIR`, puis dans l'emplacement NVM usuel du compte, et préfixe uniquement
+son propre environnement. Il ne télécharge rien, ne modifie pas le shell parent et échoue avec
+une consigne `nvm use` lorsqu'aucune version compatible n'existe. Le couple retenu et son chemin
+sont affichés avant les preuves.
+
+Ce contrôle est une condition de validité des dégradations volontaires : une commande rouge parce
+que `npm` lui-même est inexécutable ne prouve pas qu'une assertion fausse, une politique
+permissive ou un test Vitest faux ont été détectés. La preuve isolée refuse un chemin Windows
+littéral, puis force des couples incompatibles, un arbre NVM jetable et l'absence d'outil. Le
+rejeu depuis le shell WSL réel prouve en plus le remplacement effectif de `npm.exe`.
+
+Cette précondition vaut pour **tout** `scripts/verify-*.sh` autonome qui invoque Node ou npm, pas
+seulement pour le harnais global. Une preuve statique recense ces invocations hors commentaires et
+refuse tout point d'entrée dont le chargement du résolveur et sa préparation n'arrivent pas avant
+le premier appel. Le nombre de scripts peut évoluer ; la propriété « aucun contournement », non.
+
+**Mesuré à la fermeture, le 2026-08-07.** Depuis le shell WSL qui ne présentait que le npm
+Windows, le harnais sélectionne Node `v24.14.1` et npm `11.11.0` sous NVM avant tout répertoire
+temporaire. `scripts/verify-node-toolchain.sh` rend **5 contrôles sans anomalie** : chemin Windows,
+couple courant conservé, repli qui écarte Node 23 puis npm 10, absence refusée avec `nvm use`, et
+les 22 harnais Node/npm protégés.
+
+**Extension courante par `CRM-016`, le 2026-08-08.** Le nouveau
+`scripts/verify-functions.sh` porte ce recensement à **23 harnais** ; le même contrôle statique
+rend toujours 5/5 depuis le shell WSL réel.
+
+### 7.2 Parcours du harnais
+
+1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **23 fichiers** et
+   **1698 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
+   pas nécessairement la disparition d'une suite entière (décision 279).
+2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
+3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien
+   cassé. Une écriture suivie d'une relecture API attend d'abord le signal de réussite que voit
+   l'utilisateur — brouillon vidé et région live —, jamais la seule présence ambiguë du texte
+   saisi. La sortie du lanceur, du webServer et des workers ne contient aucune ligne `Warning:` :
+   lorsque Playwright force la couleur, sa configuration retire le `NO_COLOR` hérité avant tout
+   sous-processus.
+4. **`npm run test:unit`** reste vert.
+5. **`npm run e2e:report`** sert réellement le dernier rapport : le processus est lancé, interrogé
+   en HTTP, et le code `200` est constaté avant qu'il soit arrêté.
+6. **`npm run e2e:api` ne démarre pas de serveur web**, mesuré et non supposé : aucun processus
+   `vite preview` n'apparaît pendant son exécution, et `webapp/dist` n'est pas réécrit.
+7. **Compilation** : `npm run typecheck` reste vert, les nouveaux fichiers `e2e/` étant couverts par
+   `tsconfig.tools.json`.
+8. **Non-complaisance**, éprouvée en dégradant réellement le monde, puis en le restaurant :
+   - une **assertion volontairement fausse** insérée dans une suite pgTAP réelle fait échouer
+     `npm run test:sql` ;
+   - un **plan tronqué** — `finish()` retiré — le fait échouer aussi, ce qui prouve que l'exécuteur
+     ne se contente pas du diagnostic de pgTAP ;
+   - une **erreur SQL** le fait échouer ;
+   - une **politique RLS permissive** réellement posée sur `workspaces` pour `anon` fait échouer
+     `npm run e2e:api` : c'est la preuve que le projet `api` détecte une régression d'autorisation,
+     et non qu'il constate une base vide ;
+   - un **test unitaire volontairement faux** fait échouer `npm run test:unit` ;
+   - une suite dont le plan est tenu ligne pour ligne mais dont les dernières assertions sont
+     annulées par savepoint fait échouer `npm run test:sql` sur le diagnostic propre de pgTAP.
+   Les mutations qui visent le plan pgTAP reconnaissent structurellement `select plan(N)` et ne
+   figent jamais la valeur historique de `N` : augmenter une suite ne doit pas rendre la
+   contre-épreuve inopérante.
+9. **Restauration constatée** : la politique posée est retirée, l'absence de toute politique
+   résiduelle est vérifiée en base, et les fichiers altérés sont identiques, octet à octet, à
+   l'instantané pris **avant** la dégradation — constaté, pas supposé. La comparaison à `HEAD` est
+   interdite : le harnais doit fonctionner dans un arbre portant une évolution légitime non encore
+   committée et ne doit ni la déclarer résiduelle, ni la remplacer.
+
+**Verdict de fermeture, base froide du 2026-08-07.** `scripts/verify-harness.sh` rend **28
+contrôles sans anomalie** : 19 fichiers / 1405 assertions pgTAP, 410 scénarios API, 144 scénarios
+UI Chromium avec console stricte, 16 scénarios mail, 525 tests Vitest, quatre compilations
+TypeScript et rapport servi en HTTP 200. Les dégradations échouent pour leur cause propre ; le
+dernier rejeu SQL et API confirme leur restauration.
+
+**Rejeu de non-régression après `CRM-016`, base froide du 2026-08-08.** Le même harnais rend
+toujours **28/28** avec 19 fichiers / 1405 assertions pgTAP, **416 scénarios API**, 144 scénarios
+UI Chromium sans avertissement, 16 scénarios mail, **531 tests Vitest**, quatre compilations et le
+rapport HTTP 200. Le scénario de déplacement connecté attend désormais la région live de succès
+avant sa relecture API : sa position optimiste dans le board ne peut plus produire un faux rouge.
+
+**Verdict froid après fermeture de `CRM-018`, le 2026-08-09.** Le harnais rend **28/28** avec **21
+fichiers / 1553 assertions pgTAP** et **425 scénarios API**. Le delta de `CRM-018` comprend sa
+suite dédiée (88 assertions, cinq scénarios), une preuve de suppression source et la fermeture
+d'un oubli transverse : la preuve
+anonyme exhaustive gagne `card_comments`, `card_events` et
+`workflow_transition_required_fields` (six assertions, trois scénarios). Les **144** parcours UI
+Chromium restent sans `console.warn`, `console.error` ni `pageerror`; **16** scénarios mail, **531**
+tests Vitest, quatre compilations TypeScript et le rapport HTTP 200 complètent le verdict.
+
+**Verdict froid après fermeture de `CRM-019`, le 2026-08-09.** Le harnais rend toujours **28/28**
+avec **22 fichiers / 1612 assertions pgTAP**, **439 scénarios API**, **144 parcours UI Chromium**
+sans `console.warn`, `console.error` ni `pageerror`, **16 scénarios mail**, **532 tests Vitest**,
+quatre compilations et le rapport HTTP 200. La nouvelle unité apporte 59 assertions et 14
+scénarios API ; son changement de timeline révise des parcours existants sans augmenter le compte
+UI. Le harnais ciblé `verify-change-channel-workflow.sh` ajoute son verdict autonome **23/23**.
+
+## 8. Ce qui est dû, et par qui
+
+| Commande | Bloquée par | Ce qui manque exactement |
+|---|---|---|
+| `pytest mail-sync/tests` | ~~`CRM-051`~~ | **Livrée par `CRM-051`** : 40 cas verts, sans pile. La décision 277 l'excluait de `CRM-008` faute de sujet ; le sujet existe. |
+| `npm run e2e:mail` | ~~`CRM-050`~~, `CRM-054` | **Livrée par `CRM-050`** : Stalwart, trois boîtes et ClamAV existent, et le projet les éprouve par le protocole. L'aller-retour d'email du produit reste dû par `CRM-054` et `CRM-058`. |
+
+Les onze preuves de refus restantes de `docs/SPEC-permissions-rls.md` §7 restaient dues par
+`CRM-014`, qui s'appuie sur les fixtures livrées ici. **Elles le sont désormais pour sept d'entre
+elles** — n° 1 à 5, n° 10 et n° 11 — le fichier consolidé du §4.6 les rejouant toutes ; les cinq
+autres portent sur des tables ou une fonction qui n'existent pas, et leur absence est **figée par
+une assertion** au lieu d'être commentée (`docs/SPEC-permissions-rls.md` §7.3).
+
+## 9. Commandes
+
+| Commande | Effet | Prérequis |
+|---|---|---|
+| `npm run test:sql` | exécute les suites pgTAP de `supabase/tests/` | pile démarrée |
+| `npm run test:unit` | Vitest, webapp | aucun |
+| `npm run e2e:api` | Playwright, projet `api` — contrats et refus, hors interface | pile démarrée, seed appliqué |
+| `npm run e2e:ui` | Playwright, projet `ui` — parcours et captures | pile démarrée |
+| `npm run e2e:report` | sert le dernier rapport HTML | une exécution E2E préalable |
+| `scripts/verify-node-toolchain.sh` | éprouve la sélection Linux de Node/npm dans quatre environnements isolés | aucun |
+| `scripts/verify-harness.sh` | rejoue l'ensemble des preuves de l'unité | pile démarrée, seed appliqué ; Node Linux conforme à `.nvmrc`, résolu automatiquement parmi les installations NVM locales |
+
+## 10. Limites connues
+
+- **`pytest` n'est pas livré, et `e2e:mail` l'a été depuis par `CRM-050`** (§2, §8). Par décision
+  277, pytest appartient à `CRM-051` et ne conditionne plus `CRM-008`.
+- **Sur les douze preuves de refus, une seule était acquise à l'écriture de ce document** — la
+  n° 11. `CRM-014` en acquiert **sept** (§4.6) ; les cinq autres n'ont toujours pas de sujet et
+  leur absence est figée par une assertion.
+- **La lecture du TAP est dupliquée** : l'exécuteur la porte, et trois `scripts/verify-*.sh`
+  gardent la leur (§3.4). Unifier reviendrait à modifier les preuves de trois autres unités dans ce
+  commit.
+- **`E2E_PROJETS` doit rester cohérente avec `--project`.** Rien ne peut le vérifier depuis la
+  configuration, puisque le filtre n'est pas visible des workers (§4.2). Une incohérence ne rend
+  aucun résultat faux : elle démarre un serveur inutile, ou en omet un — auquel cas les scénarios
+  `ui` échouent bruyamment sur une connexion refusée.
+- **Les scripts npm positionnent la variable en syntaxe POSIX.** Le dépôt cible Linux et Docker
+  (`README.md` §3) ; aucun support Windows natif n'est prétendu.
+- **Un seul navigateur** pour le projet `ui` : Chromium, comme depuis `CRM-007`.
+- **Le projet `api` ne couvre pas Realtime ni Storage.** Ce sont des contrats d'API, ils entreront
+  dans le harnais avec les unités qui les emploient.
