@@ -24,7 +24,12 @@ from dataclasses import dataclass
 from imapclient import IMAPClient
 
 from mail_sync import antivirus
-from mail_sync.dossiers import copier_message, creer_arborescence, supporte_les_dossiers
+from mail_sync.dossiers import (
+    copier_message,
+    creer_arborescence,
+    renommer_dossier,
+    supporte_les_dossiers,
+)
 from mail_sync.mime_analyse import analyser
 from mail_sync.postgrest import PostgrestClient
 
@@ -41,6 +46,7 @@ class ResultatReleve:
     pieces: int = 0
     pieces_infectees: int = 0
     dossiers_crees: int = 0
+    dossiers_renommes: int = 0
 
 
 def chemin_de_depot(workspace_id: str, message_id: str, sha256: str) -> str:
@@ -121,7 +127,7 @@ def relever_compte(
     donc rien de neuf, ce qui rend la preuve rejouable sans nettoyage.
     """
 
-    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = 0
+    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = renommes = 0
     imap = _connecter(compte, timeout)
     try:
         # LA CAPACITÉ EST RELUE APRÈS AUTHENTIFICATION (§15.1) : `IDLE` n'est pas annoncé avant, et
@@ -132,6 +138,25 @@ def relever_compte(
         # LE MODÈLE DE DOSSIERS EST ÉCARTÉ SUR UN SERVEUR À LABELS (§4.5) : copier dans un dossier
         # y créerait un doublon visible. La détection est positive sur l'inadaptation.
         dossiers_utilisables = supporte_les_dossiers(tuple(capacites))
+
+        # LE RENOMMAGE PRÉCÈDE LA RELÈVE, et l'ordre compte : un dossier renommé après coup
+        # laisserait les messages de ce passage dans l'ancien chemin, et l'arborescence
+        # divergerait pour de bon (§4.5).
+        if dossiers_utilisables:
+            for divergence in client_base.dossiers_a_renommer(compte.account_id):
+                nouveau = renommer_dossier(
+                    imap, divergence["actual_path"], divergence["nouveau_chemin"]
+                )
+                if nouveau is None:
+                    continue
+                client_base.enregistrer_dossier(
+                    account_id=compte.account_id,
+                    entity_type="card",
+                    entity_id=divergence["entity_id"],
+                    requested_path=divergence["nouveau_chemin"],
+                    actual_path=nouveau,
+                )
+                renommes += 1
 
         for dossier in dossiers:
             try:
@@ -244,4 +269,5 @@ def relever_compte(
         pieces=pieces,
         pieces_infectees=infectees,
         dossiers_crees=ranges,
+        dossiers_renommes=renommes,
     )

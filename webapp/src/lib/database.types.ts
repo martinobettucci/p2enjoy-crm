@@ -1529,6 +1529,15 @@ export type Database = {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
       }
+      dossiers_a_renommer: {
+        Args: { p_account_id: string }
+        Returns: {
+          actual_path: string
+          entity_id: string
+          nouveau_chemin: string
+          requested_path: string
+        }[]
+      }
       mail_inbound_account_credentials: {
         Args: { p_account_id: string }
         Returns: {

@@ -584,7 +584,7 @@ type _vueDerivationColonnes = Expect<
 // RÉVISÉ UNE SIXIÈME FOIS PAR `CRM-053`, qui livre les trois fonctions jumelles des sortantes.
 // Même remarque : deux d'entre elles sont **inaccessibles au client**, leur exécution étant
 // réservée à `service_role`.
-type _lesTreizeFonctions = Expect<
+type _lesQuatorzeFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -592,6 +592,7 @@ type _lesTreizeFonctions = Expect<
     | 'chemin_dossier_card'
     | 'classer_message_automatiquement'
     | 'classify_message'
+    | 'dossiers_a_renommer'
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
     | 'mail_outbound_identity_credentials'
@@ -765,7 +766,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTreizeFonctions,
+  _lesQuatorzeFonctions,
   _signatureCopie,
   _retourCopie,
   _signatureDeplacement,

@@ -271,6 +271,12 @@ class PostgrestClient:
         resultat = self._rpc("chemin_dossier_card", {"p_card_id": card_id})
         return resultat if isinstance(resultat, str) else None
 
+    def dossiers_a_renommer(self, account_id: str) -> list[dict[str, Any]]:
+        """Les dossiers dont le chemin souhaité a divergé depuis leur création (§4.5)."""
+
+        resultat = self._rpc("dossiers_a_renommer", {"p_account_id": account_id})
+        return list(resultat) if isinstance(resultat, list) else []
+
     def enregistrer_dossier(
         self, *, account_id: str, entity_type: str, entity_id: str,
         requested_path: str, actual_path: str,

@@ -135,3 +135,46 @@ revoke all on function public.chemin_dossier_card(uuid) from public, anon, authe
 grant execute on function public.chemin_dossier_card(uuid) to service_role;
 
 drop function if exists app.chemin_dossier_card(uuid);
+
+-- =============================================================================================
+-- Le renommage propagé — §4.5
+-- =============================================================================================
+--
+-- « Un renommage de track, channel ou card RENOMME le dossier correspondant plutôt que d'en créer
+-- un nouveau. » La base ne parle pas IMAP : elle ne peut donc pas renommer elle-même. Ce qu'elle
+-- sait faire, et qui suffit, est de DIRE que la correspondance a divergé — le service compare, et
+-- renomme.
+--
+-- LE CHEMIN SOUHAITÉ EST RECALCULÉ, JAMAIS MÉMORISÉ À PART : le mémoriser créerait une troisième
+-- copie du nom, qui divergerait à son tour.
+
+create or replace function public.dossiers_a_renommer(p_account_id uuid)
+returns table (
+	entity_id      uuid,
+	actual_path    text,
+	requested_path text,
+	nouveau_chemin text
+)
+language sql
+security definer
+set search_path = ''
+stable
+as $$
+	select m.entity_id,
+	       m.actual_path,
+	       m.requested_path,
+	       public.chemin_dossier_card(m.entity_id)
+	  from public.mail_folder_map m
+	 where m.account_id = p_account_id
+	   and m.entity_type = 'card'
+	   and public.chemin_dossier_card(m.entity_id) is not null
+	   and public.chemin_dossier_card(m.entity_id) <> m.requested_path;
+$$;
+
+comment on function public.dossiers_a_renommer(uuid) is
+	'CRM-056 §4.5 — les dossiers dont le chemin souhaité a changé depuis leur création. La base ne '
+	'parle pas IMAP : elle dit ce qui a divergé, le service renomme. Le chemin souhaité est '
+	'RECALCULÉ, jamais mémorisé à part — une troisième copie du nom divergerait à son tour.';
+
+revoke all on function public.dossiers_a_renommer(uuid) from public, anon, authenticated;
+grant execute on function public.dossiers_a_renommer(uuid) to service_role;

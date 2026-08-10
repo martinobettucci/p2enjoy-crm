@@ -108,3 +108,73 @@ def test_une_copie_refusee_est_dite_et_n_interrompt_rien() -> None:
             raise RuntimeError("NO permission denied")
 
     assert copier_message(ImapQuiRefuse(), "INBOX", 1, "CRM/x") is False
+
+
+# =================================================================================================
+# Le renommage propagé — §4.5
+# =================================================================================================
+
+
+class ImapAvecRenommage(FauxImap):
+    def __init__(self) -> None:
+        super().__init__()
+        self.renommages: list[tuple[str, str]] = []
+
+    def rename_folder(self, ancien: str, nouveau: str) -> None:
+        if ancien not in self.dossiers:
+            raise RuntimeError("NONEXISTENT")
+        self.renommages.append((ancien, nouveau))
+        # LE RENOMMAGE EMPORTE LES ENFANTS — mesuré contre le vrai serveur (§17.1).
+        self.dossiers = [
+            nouveau + d[len(ancien) :] if d == ancien or d.startswith(ancien + "/") else d
+            for d in self.dossiers
+        ]
+
+
+def test_le_renommage_emporte_les_enfants() -> None:
+    """C'est ce qui rend le §4.5 tenable : renommer un track renomme ses channels et ses cards sans
+    reconstruire l'arborescence — donc sans risquer d'y perdre les messages déjà rangés."""
+
+    imap = ImapAvecRenommage()
+    creer_arborescence(imap, "CRM/Ancien/Channel/Card")
+
+    from mail_sync.dossiers import renommer_dossier
+
+    assert renommer_dossier(imap, "CRM/Ancien", "CRM/Nouveau") == "CRM/Nouveau"
+    assert "CRM/Nouveau/Channel/Card" in imap.dossiers
+    assert "CRM/Ancien/Channel/Card" not in imap.dossiers
+
+
+def test_les_parents_du_nouveau_chemin_sont_crees_avant_le_renommage() -> None:
+    """`RENAME` vers `CRM/Nouveau track/Channel/Card` échoue si `CRM/Nouveau track` n'existe pas."""
+
+    imap = ImapAvecRenommage()
+    creer_arborescence(imap, "CRM/T/C/Ancienne card")
+
+    from mail_sync.dossiers import renommer_dossier
+
+    assert (
+        renommer_dossier(imap, "CRM/T/C/Ancienne card", "CRM/T2/C2/Nouvelle card")
+        == "CRM/T2/C2/Nouvelle card"
+    )
+    assert "CRM/T2" in imap.dossiers and "CRM/T2/C2" in imap.dossiers
+
+
+def test_un_renommage_sans_changement_ne_touche_a_rien() -> None:
+    imap = ImapAvecRenommage()
+    creer_arborescence(imap, "CRM/T")
+
+    from mail_sync.dossiers import renommer_dossier
+
+    assert renommer_dossier(imap, "CRM/T", "CRM/T") == "CRM/T"
+    assert imap.renommages == []
+
+
+def test_un_renommage_refuse_est_dit_et_n_ecrase_pas_la_correspondance() -> None:
+    """Rendre `None` plutôt qu'un chemin optimiste : écrire une correspondance vers un dossier qui
+    n'existe pas rendrait tout classement ultérieur silencieusement inutile."""
+
+    from mail_sync.dossiers import renommer_dossier
+
+    imap = ImapAvecRenommage()
+    assert renommer_dossier(imap, "CRM/Inexistant", "CRM/Autre") is None

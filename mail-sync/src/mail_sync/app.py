@@ -80,6 +80,7 @@ class ReleveResponse(StrictModel):
     attachments: int
     attachments_infected: int
     filed: int
+    renamed: int
 
 
 class CheckpointResponse(StrictModel):
@@ -452,6 +453,7 @@ def create_app(
             messages_new=resultat.messages_nouveaux,
             attachments_infected=resultat.pieces_infectees,
             filed=resultat.dossiers_crees,
+            renamed=resultat.dossiers_renommes,
         )
         return ReleveResponse(
             account_id=account_id,
@@ -463,6 +465,7 @@ def create_app(
             attachments=resultat.pieces,
             attachments_infected=resultat.pieces_infectees,
             filed=resultat.dossiers_crees,
+            renamed=resultat.dossiers_renommes,
         )
 
     @application.get(

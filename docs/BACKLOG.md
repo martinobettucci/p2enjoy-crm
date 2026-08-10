@@ -5465,11 +5465,19 @@ Roundcube ; renommage d'un track propageant le renommage du dossier.
 - [x] **Le dossier suit le classement, et ne le conditionne pas** : un dossier qu'on ne sait pas
       créer n'empêche pas un message d'être rangé en base. La copie est un confort d'exploitation,
       le classement est le fait.
-- [x] **Preuves unitaires** : `mail-sync/tests/test_dossiers.py`, **9 tests**, dont le ré-encodage
-      simulé, la copie qui n'est jamais un déplacement, et le serveur à labels.
-- [ ] **Le renommage propagé n'est pas livré** : renommer un track ne renomme pas encore son
-      dossier. La mesure montre que `RENAME` emporte les enfants, donc que le geste est simple ;
-      il reste dû.
+- [x] **Preuves unitaires** : `mail-sync/tests/test_dossiers.py`, **13 tests**, dont le ré-encodage
+      simulé, la copie qui n'est jamais un déplacement, le serveur à labels, et le renommage qui
+      emporte les enfants.
+- [x] **Le renommage propagé est livré, et il est prouvé sur le vrai serveur** : renommer une card
+      renomme son dossier, et la correspondance suit. **La base dit ce qui a divergé, le service
+      renomme** — elle ne parle pas IMAP, et le chemin souhaité est **recalculé**, jamais mémorisé
+      à part : une troisième copie du nom divergerait à son tour.
+- [x] **LE RENOMMAGE PRÉCÈDE LA RELÈVE**, et l'ordre compte : renommer après coup laisserait les
+      messages du passage dans l'ancien chemin, et l'arborescence divergerait pour de bon.
+- [x] **Les parents du nouveau chemin sont créés avant le `RENAME`** : renommer vers
+      `CRM/Nouveau track/Channel/Card` échoue si `CRM/Nouveau track` n'existe pas.
+- [x] **Un renommage refusé rend `None` plutôt qu'un chemin optimiste** : écrire une correspondance
+      vers un dossier inexistant rendrait tout classement ultérieur silencieusement inutile.
 - [ ] **Aucune preuve d'intégration par un client IMAP tiers, aucune observation Roundcube** : la
       Definition of Done les exige, et elles ne sont pas faites.
 

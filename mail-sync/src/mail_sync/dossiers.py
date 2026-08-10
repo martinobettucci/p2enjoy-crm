@@ -92,3 +92,29 @@ def copier_message(imap, dossier_source: str, uid: int, dossier_cible: str) -> b
         # Une copie refusée n'annule pas l'ingestion : le message est en base, classé, et seule sa
         # présence dans un dossier manque. Le taire serait pire ; l'appelant journalise.
         return False
+
+
+def renommer_dossier(imap, ancien: str, nouveau: str) -> str | None:  # type: ignore[no-untyped-def]
+    """Renomme un dossier et rend son nouveau chemin réel, ou `None` si le serveur a refusé.
+
+    LE RENOMMAGE EMPORTE LES ENFANTS — mesuré (§17.1) —, ce qui évite de reconstruire une
+    arborescence et, surtout, d'y perdre les messages déjà rangés. Créer un nouveau dossier puis y
+    recopier serait destructif au premier échec partiel.
+
+    Les niveaux intermédiaires du NOUVEAU chemin sont créés d'abord : `RENAME` vers
+    `CRM/Nouveau track/Channel/Card` échoue si `CRM/Nouveau track` n'existe pas.
+    """
+
+    if ancien == nouveau:
+        return ancien
+    parents = segments(nouveau)[:-1]
+    for niveau in parents:
+        try:
+            imap.create_folder(niveau)
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        imap.rename_folder(ancien, nouveau)
+    except Exception:  # noqa: BLE001
+        return None
+    return nouveau
