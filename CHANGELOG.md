@@ -15,6 +15,15 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+### Corrigé
+
+- **Le redémarrage de la pile était cassé, et c'était bloquant.** Le `migrations-runner` rejoue tout
+  le répertoire à chaque démarrage ; les migrations 17 et 20 rétrécissaient le vocabulaire de
+  `card_events`, et l'arrivée de `mail_received` les faisait échouer en `23514` — PostgREST
+  n'aurait jamais démarré. Leur convergence ne s'applique plus que si le type qu'elles introduisent
+  est absent. Deux migrations se disputaient en outre la signature d'une fonction ; une seule la
+  déclare désormais (décision 325).
+
 - **`CRM-056` avance : les messages sont rangés dans une arborescence IMAP réelle.**
   `mail_folder_map`, l'assainissement des noms, le chemin `CRM/<Track>/<Channel>/<Card>` et la
   création paresseuse sont livrés ; un vrai email a créé

@@ -10370,3 +10370,32 @@ d'être rangé en base — la copie est un confort d'exploitation, le classement
 **Ce qui reste dû, et qui n'est pas caché** : le renommage propagé, la preuve d'intégration par un
 client IMAP tiers et l'observation dans Roundcube, que la Definition of Done exige toutes trois.
 L'unité reste `[~]`.
+
+### Décision 325 — Le rejeu des migrations était cassé, et mon contrôle ne pouvait pas le voir
+
+**LE DÉFAUT, ET IL EST BLOQUANT.** Le `migrations-runner` rejoue **tout** le répertoire à chaque
+démarrage de la pile (`CRM-001`), et PostgREST attend sa terminaison réussie. Or les migrations 17
+et 20 **rétrécissaient** le vocabulaire de `card_events` à leur état d'origine : dès que `CRM-055` a
+produit un `mail_received`, leur convergence a échoué en `23514`, et le runner s'est arrêté. **Un
+redémarrage de la pile ne serait jamais reparti** — mesuré, code de sortie 3.
+
+La 26 et la 27 se disputaient en outre la signature de `dossiers_a_renommer` : `CREATE OR REPLACE`
+ne peut pas changer un type de retour, et chaque rejeu voyait l'une défaire l'autre.
+
+**CE QUI A PERMIS AU DÉFAUT DE PASSER EST PIRE QUE LE DÉFAUT.** Toute la session, j'ai vérifié
+l'application d'une migration par `grep -iE "^ERROR"`. Or `psql` écrit ses erreurs préfixées :
+`psql:<stdin>:83: ERROR: …`. L'expression, ancrée en début de ligne, ne pouvait **rien** attraper.
+Chaque « appliquée sans erreur » de cette session reposait sur un contrôle aveugle ; seuls le
+succès des suites pgTAP et des preuves de bout en bout ont empêché que cela se voie plus tôt.
+
+**La règle qui en découle** : un contrôle d'exécution se fait sur le **code de sortie**, pas sur la
+forme d'un message. Un grep sur une sortie est une heuristique ; `$?` est un fait. C'est la même
+leçon que la décision 324 sous un autre angle — la sonde doit mesurer ce qu'elle prétend mesurer.
+
+**Les correctifs, et leur forme.** Les convergences de vocabulaire des migrations 17 et 20 ne
+s'appliquent plus que si le type que **cette** migration introduit est absent : elles gardent leur
+rôle — poser leur propre ajout sur une base qui ne l'a pas — sans jamais défaire celui d'une
+migration postérieure. Et une seule migration déclare `dossiers_a_renommer` : la dernière en date.
+
+**La preuve est celle du dépôt, pas la mienne** : `scripts/verify-migrations.sh` exécute le vrai
+`migrations-runner` et exige son code 0. Il rend de nouveau **25/25**.

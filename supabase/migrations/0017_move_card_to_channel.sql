@@ -93,11 +93,32 @@ $$;
 -- une valeur autorisée que rien ne produit laisse croire à une capacité inexistante. Le mécanisme
 -- est donc reconduit tel quel pour l'unité suivante.
 
-select app.migration_0017_converger_contrainte(
-	'public.card_events', 'card_events_type_check',
-	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
-	'''channel_changed''::text, ''archived''::text, ''unarchived''::text, ''trashed''::text, '
-	'''restored''::text, ''field_changed''::text])))');
+-- LE VOCABULAIRE NE SE RÉTRÉCIT JAMAIS À LA RÉAPPLICATION, ET C'EST UN CORRECTIF MESURÉ.
+-- Le `migrations-runner` rejoue TOUT le répertoire à chaque démarrage (`CRM-001`). Écrite sans
+-- garde, cette convergence remettait la liste dans son état d'origine — et faisait échouer le
+-- rejeu en `23514` dès qu'une unité ultérieure produisait un type qu'elle ne connaît pas :
+-- `mail_received`, livré par `CRM-055`, a réellement bloqué le runner. Un démarrage de pile
+-- s'arrêtait alors avant PostgREST.
+--
+-- La convergence ne s'applique donc que si le type que CETTE migration introduit est absent.
+-- Elle garde ainsi son rôle — poser son propre ajout sur une base qui ne l'a pas — sans jamais
+-- défaire celui d'une migration postérieure.
+do $$
+begin
+	if not exists (
+		select 1 from pg_constraint
+		 where conrelid = 'public.card_events'::regclass
+		   and conname = 'card_events_type_check'
+		   and pg_get_constraintdef(oid) like '%channel_changed%'
+	) then
+		perform app.migration_0017_converger_contrainte(
+			'public.card_events', 'card_events_type_check',
+			'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
+			'''channel_changed''::text, ''archived''::text, ''unarchived''::text, ''trashed''::text, '
+			'''restored''::text, ''field_changed''::text])))');
+	end if;
+end;
+$$;
 
 comment on column public.card_events.type is
 	'CRM-045 — docs/SPEC-cards.md §14.4. NEUF valeurs livrées : `channel_changed` s''ajoute aux '

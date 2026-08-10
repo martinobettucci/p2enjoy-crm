@@ -34,6 +34,12 @@ from mail_sync.mime_analyse import analyser
 from mail_sync.postgrest import PostgrestClient
 
 
+#: Borne du nombre de renommages par relève. Elle n'est pas un réglage de confort : la liste des
+#: divergences est relue à chaque tour, et une divergence qu'aucun renommage ne résout ferait
+#: tourner la boucle indéfiniment. La borne transforme un blocage en fait observable.
+RENOMMAGES_MAX = 50
+
+
 @dataclass(frozen=True)
 class ResultatReleve:
     """Ce qu'une relève a produit, en faits comptables."""
@@ -97,6 +103,19 @@ def ranger_dans_dossier(
         return False
 
     cree = creer_arborescence(imap, chemin)
+
+    # LES TROIS NIVEAUX SONT MÉMORISÉS, pas seulement la card. Sans les deux parents, renommer un
+    # track n'aurait rien à renommer : le service déplacerait chaque card une à une et laisserait
+    # un dossier vide derrière lui (§4.5).
+    for parent in client_base.parents_de_card(card_id):
+        client_base.enregistrer_dossier(
+            account_id=account_id,
+            entity_type=parent["entity_type"],
+            entity_id=parent["entity_id"],
+            requested_path=parent["chemin"],
+            actual_path=parent["chemin"],
+        )
+
     client_base.enregistrer_dossier(
         account_id=account_id,
         entity_type="card",
@@ -143,18 +162,32 @@ def relever_compte(
         # laisserait les messages de ce passage dans l'ancien chemin, et l'arborescence
         # divergerait pour de bon (§4.5).
         if dossiers_utilisables:
-            for divergence in client_base.dossiers_a_renommer(compte.account_id):
+            # LA LISTE EST RELUE À CHAQUE TOUR, et non parcourue une fois : renommer un track
+            # emporte ses enfants, donc les divergences de ces enfants disparaissent d'elles-mêmes.
+            # Les parcourir sur une photographie périmée les renommerait une seconde fois, vers un
+            # chemin que le serveur ne connaît plus.
+            for _tour in range(RENOMMAGES_MAX):
+                divergences = client_base.dossiers_a_renommer(compte.account_id)
+                if not divergences:
+                    break
+                divergence = divergences[0]
                 nouveau = renommer_dossier(
                     imap, divergence["actual_path"], divergence["nouveau_chemin"]
                 )
                 if nouveau is None:
-                    continue
+                    # Un renommage refusé n'arrête pas la relève, mais le tour suivant retomberait
+                    # sur la même divergence : la boucle s'arrête ici plutôt que de tourner à vide.
+                    break
                 client_base.enregistrer_dossier(
                     account_id=compte.account_id,
-                    entity_type="card",
+                    entity_type=divergence["entity_type"],
                     entity_id=divergence["entity_id"],
                     requested_path=divergence["nouveau_chemin"],
                     actual_path=nouveau,
+                )
+                # LE SERVEUR A DÉJÀ DÉPLACÉ LES ENFANTS ; la base l'ignore encore.
+                client_base.reparenter_dossiers(
+                    compte.account_id, divergence["actual_path"], nouveau
                 )
                 renommes += 1
 

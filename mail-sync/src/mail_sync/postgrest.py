@@ -261,6 +261,55 @@ class PostgrestClient:
         )
         return resultat if isinstance(resultat, str) else None
 
+    def parents_de_card(self, card_id: str) -> list[dict[str, str]]:
+        """Le track et le channel d'une card, avec leurs chemins souhaités.
+
+        Les TROIS niveaux sont mémorisés, et pas seulement la card : sans les deux parents, un
+        renommage de track n'aurait rien à renommer et déplacerait les cards une à une en laissant
+        un dossier vide derrière (§4.5).
+
+        DEUX LECTURES PLATES PLUTÔT QU'UNE RELATION EMBARQUÉE, et c'est mesuré : `cards` porte DEUX
+        clés étrangères vers `channels` — une par workflow, une par workspace —, et PostgREST refuse
+        l'ambiguïté par un `PGRST201`. Nommer l'une des deux contraintes marcherait, mais lierait ce
+        service à un nom d'index ; deux requêtes sans jointure ne dépendent de rien.
+        """
+
+        _, corps = self._rest("GET", f"/rest/v1/cards?id=eq.{card_id}&select=channel_id")
+        cartes = json.loads(corps) if corps else []
+        if not cartes or not cartes[0].get("channel_id"):
+            return []
+        channel_id = cartes[0]["channel_id"]
+
+        _, corps = self._rest("GET", f"/rest/v1/channels?id=eq.{channel_id}&select=track_id")
+        channels = json.loads(corps) if corps else []
+        track_id = channels[0]["track_id"] if channels else None
+
+        parents: list[dict[str, str]] = []
+        for type_entite, identifiant in (("track", track_id), ("channel", channel_id)):
+            if not identifiant:
+                continue
+            chemin = self._rpc(
+                "chemin_dossier_entite", {"p_type": type_entite, "p_id": identifiant}
+            )
+            if isinstance(chemin, str):
+                parents.append(
+                    {"entity_type": type_entite, "entity_id": identifiant, "chemin": chemin}
+                )
+        return parents
+
+    def reparenter_dossiers(self, account_id: str, ancien: str, nouveau: str) -> int:
+        """Fait suivre en base les descendants que le serveur a déjà déplacés (§4.5)."""
+
+        resultat = self._rpc(
+            "mail_folder_map_reparenter",
+            {
+                "p_account_id": account_id,
+                "p_ancien_prefixe": ancien,
+                "p_nouveau_prefixe": nouveau,
+            },
+        )
+        return int(resultat) if isinstance(resultat, int) else 0
+
     def chemin_dossier_card(self, card_id: str) -> str | None:
         """Le chemin SOUHAITÉ du dossier d'une card — `CRM/<Track>/<Channel>/<Card>` (§4.5).
 
