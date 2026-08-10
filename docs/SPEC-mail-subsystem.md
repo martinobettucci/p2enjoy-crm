@@ -1155,16 +1155,24 @@ question qui appartient à l'unité qui livrera l'écran.
 |---|---|
 | Délimiteur annoncé par `LIST` | `/` |
 | `CREATE "CRM"`, puis `"CRM/Track"`, puis `"CRM/Track/Channel"` | **OK** à chaque niveau |
-| `LIST` après création de `CRM/Conseil & IA` | **`CRM/Conseil &- IA`** |
+| `LIST` **avec `imaplib`** après création de `CRM/Conseil & IA` | **`CRM/Conseil &- IA`** |
+| `LIST` **avec IMAPClient** sur le même dossier | **`CRM/Conseil & IA`** — le nom d'origine |
 | `RENAME "CRM/Conseil & IA"` → `"CRM/Conseil et IA"` | **OK**, et **l'enfant suit** : `CRM/Conseil et IA/Grands comptes` |
 | `CREATE` d'un nom portant une contre-oblique | **OK** — le serveur ne la refuse pas |
 
-**LE NOM CRÉÉ N'EST PAS LE NOM DEMANDÉ, ET C'EST MESURÉ.** `Conseil & IA` revient
-`Conseil &- IA` : le serveur applique l'**UTF-7 modifié** de la RFC 3501, où `&` s'écrit `&-`. Le
-§4.5 l'avait pressenti — « le chemin créé peut différer du nom souhaité » — sans dire pourquoi ni
-de combien. La conséquence est directe : **`mail_folder_map` n'est pas une commodité, c'est la
-seule façon de retrouver un dossier**. Chercher plus tard le dossier « Conseil & IA » ne le
-trouverait pas.
+**LE NOM CIRCULE EN UTF-7 MODIFIÉ SUR LE FIL, ET LA BIBLIOTHÈQUE LE DÉCODE — LES DEUX MESURES ONT
+ÉTÉ FAITES, ET LA SECONDE CORRIGE LA PREMIÈRE.** Lu avec `imaplib`, `CRM/Conseil & IA` revient
+`CRM/Conseil &- IA` : c'est l'encodage de la RFC 3501, où `&` s'écrit `&-`, et `imaplib` ne le
+décode pas. Lu avec **IMAPClient** — la bibliothèque que le produit emploie —, le même dossier
+revient `CRM/Conseil & IA`. Le ré-encodage est donc une propriété **du fil**, pas du serveur, et il
+est transparent pour le produit.
+
+**`mail_folder_map` reste néanmoins nécessaire, et pour une autre raison que celle-là.** Le chemin
+demandé est dérivé de noms que l'utilisateur peut changer : renommer un track change le chemin
+souhaité, et sans correspondance mémorisée le produit ne saurait plus quel dossier renommer. Le
+§4.5 l'écrit d'ailleurs ainsi — « la correspondance réelle est mémorisée, car le chemin créé peut
+différer du nom souhaité » —, et l'assainissement du produit est justement l'un des cas où ils
+diffèrent : un track nommé « A/B » donne un segment « A B ».
 
 **Le renommage emporte les enfants**, ce qui rend le §4.5 tenable : renommer un track renomme son
 dossier **et** ceux de ses channels, sans reconstruire l'arborescence.

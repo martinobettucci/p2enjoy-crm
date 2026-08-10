@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from imapclient import IMAPClient
 
 from mail_sync import antivirus
+from mail_sync.dossiers import copier_message, creer_arborescence, supporte_les_dossiers
 from mail_sync.mime_analyse import analyser
 from mail_sync.postgrest import PostgrestClient
 
@@ -39,6 +40,7 @@ class ResultatReleve:
     occurrences: int = 0
     pieces: int = 0
     pieces_infectees: int = 0
+    dossiers_crees: int = 0
 
 
 def chemin_de_depot(workspace_id: str, message_id: str, sha256: str) -> str:
@@ -67,6 +69,40 @@ def _connecter(compte, timeout: float) -> IMAPClient:  # type: ignore[no-untyped
     return client
 
 
+def ranger_dans_dossier(
+    *,
+    imap,  # IMAPClient
+    client_base: PostgrestClient,
+    account_id: str,
+    card_id: str,
+    dossier_source: str,
+    uid: int,
+) -> bool:
+    """Crée `CRM/<Track>/<Channel>/<Card>` s'il le faut, y COPIE le message, et mémorise le chemin.
+
+    Le chemin RÉEL est relu après création — le serveur ré-encode les noms (§17.1) — et c'est lui
+    qui sert de cible à la copie comme de valeur à la correspondance. Le dossier source est
+    resélectionné ensuite : `copier_message` a changé de dossier courant, et la boucle de relève
+    poursuit sur celui qu'elle croyait ouvert.
+    """
+
+    chemin = client_base.chemin_dossier_card(card_id)
+    if chemin is None:
+        return False
+
+    cree = creer_arborescence(imap, chemin)
+    client_base.enregistrer_dossier(
+        account_id=account_id,
+        entity_type="card",
+        entity_id=card_id,
+        requested_path=cree.requested_path,
+        actual_path=cree.actual_path,
+    )
+    copie = copier_message(imap, dossier_source, uid, cree.actual_path)
+    imap.select_folder(dossier_source, readonly=True)
+    return copie
+
+
 def relever_compte(
     *,
     client_base: PostgrestClient,
@@ -85,14 +121,17 @@ def relever_compte(
     donc rien de neuf, ce qui rend la preuve rejouable sans nettoyage.
     """
 
-    vus = nouveaux = classes = occurrences = pieces = infectees = 0
+    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = 0
     imap = _connecter(compte, timeout)
     try:
         # LA CAPACITÉ EST RELUE APRÈS AUTHENTIFICATION (§15.1) : `IDLE` n'est pas annoncé avant, et
         # un client qui lirait la capacité initiale conclurait à tort que le serveur ne sait pas
         # veiller. La valeur n'est pas employée ici — la relève est explicite — mais elle est
         # journalisable, et `CRM-059` s'en servira.
-        imap.capabilities()
+        capacites = imap.capabilities()
+        # LE MODÈLE DE DOSSIERS EST ÉCARTÉ SUR UN SERVEUR À LABELS (§4.5) : copier dans un dossier
+        # y créerait un doublon visible. La détection est positive sur l'inadaptation.
+        dossiers_utilisables = supporte_les_dossiers(tuple(capacites))
 
         for dossier in dossiers:
             try:
@@ -122,10 +161,23 @@ def relever_compte(
                     # LE CLASSEMENT SUIT L'INGESTION, ET NE LA CONDITIONNE PAS : un message qu'on
                     # ne sait pas classer est ingéré quand même, et reste « non classé » (§4.4,
                     # règle 4). L'inverse perdrait du courrier faute d'une adresse reconnue.
-                    if client_base.classer_automatiquement(
+                    carte = client_base.classer_automatiquement(
                         message_id, analyse.in_reply_to, analyse.references
-                    ) is not None:
+                    )
+                    if carte is not None:
                         classes += 1
+                        # LE DOSSIER SUIT LE CLASSEMENT, ET NE LE CONDITIONNE PAS : un dossier
+                        # qu'on ne sait pas créer ne doit pas empêcher un message d'être rangé en
+                        # base. La copie est un confort d'exploitation, le classement est le fait.
+                        if dossiers_utilisables and ranger_dans_dossier(
+                            imap=imap,
+                            client_base=client_base,
+                            account_id=compte.account_id,
+                            card_id=carte,
+                            dossier_source=dossier,
+                            uid=int(uid),
+                        ):
+                            ranges += 1
 
                 if client_base.enregistrer_occurrence(
                     message_id=message_id,
@@ -191,4 +243,5 @@ def relever_compte(
         occurrences=occurrences,
         pieces=pieces,
         pieces_infectees=infectees,
+        dossiers_crees=ranges,
     )

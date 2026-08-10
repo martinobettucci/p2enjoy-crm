@@ -5439,15 +5439,39 @@ Création, assainissement, renommage, labels Gmail, `mail_folder_map`.
 **DoD** : intégration vérifiant l'arborescence **par un client IMAP** ; observation visuelle dans
 Roundcube ; renommage d'un track propageant le renommage du dossier.
 
-- [x] **Mesures faites avant toute ligne de code**, `docs/SPEC-mail-subsystem.md` §17.1, contre le
-      vrai serveur : le délimiteur est `/`, chaque niveau se crée séparément, **le nom créé n'est
-      pas le nom demandé** — `Conseil & IA` revient `Conseil &- IA`, en UTF-7 modifié de la
-      RFC 3501 —, le renommage **emporte les enfants**, et le serveur **n'assainit pas** à notre
-      place : une contre-oblique passe.
-- [x] **La conséquence est écrite** : `mail_folder_map` n'est pas une commodité mais la seule façon
-      de retrouver un dossier. Chercher plus tard « Conseil & IA » ne le trouverait pas.
-- [ ] **Rien n'est implémenté** : ni la table, ni la création paresseuse, ni l'assainissement, ni
-      le renommage propagé, ni la détection des labels Gmail.
+- [x] **Mesures faites avant toute ligne de code**, `docs/SPEC-mail-subsystem.md` §17.1 : le
+      délimiteur est `/`, chaque niveau se crée séparément, le renommage **emporte les enfants**,
+      et le serveur **n'assainit pas** à notre place — une contre-oblique passe.
+- [x] **UNE MESURE A ÉTÉ CORRIGÉE PAR LA SUIVANTE, ET LES DEUX SONT ÉCRITES.** Lu avec `imaplib`,
+      `CRM/Conseil & IA` revient `CRM/Conseil &- IA` — UTF-7 modifié de la RFC 3501. Lu avec
+      **IMAPClient**, la bibliothèque que le produit emploie, il revient intact. Le ré-encodage est
+      une propriété **du fil**, pas du serveur. Mesurer avec un outil que le produit n'emploie pas
+      conduit à écrire une règle qui ne le concerne pas.
+- [x] **`mail_folder_map` reste nécessaire, pour la vraie raison** : le chemin est dérivé de noms
+      que l'utilisateur peut changer, et l'assainissement les fait déjà diverger — « A/B » donne
+      « A B ». Sans correspondance, le produit ne saurait plus quel dossier renommer.
+- [x] **La table, l'assainissement et le chemin dérivé sont livrés** :
+      `supabase/migrations/0026_dossiers_imap.sql`. Le délimiteur est remplacé par une espace et non
+      retiré en silence — « A/B » reste lisible —, et un nom vide devient `sans-nom` plutôt que de
+      produire un segment vide.
+- [x] **La création paresseuse et la COPIE sont livrées** : après classement, l'arborescence
+      `CRM/<Track>/<Channel>/<Card>` est créée niveau par niveau, le chemin réel **relu**, la
+      correspondance écrite, et le message **copié** — jamais déplacé. Mesuré de bout en bout : un
+      vrai email a créé `CRM/Conseil & IA/Grands comptes/Audit sécurité applicative`.
+- [x] **Les labels Gmail écartent le modèle de dossiers**, et la détection est **positive sur
+      l'inadaptation** : un serveur inconnu est traité comme un serveur à dossiers, ce qui est le
+      cas général. Supposer l'inverse priverait de classement tout serveur que le produit ne
+      connaît pas encore.
+- [x] **Le dossier suit le classement, et ne le conditionne pas** : un dossier qu'on ne sait pas
+      créer n'empêche pas un message d'être rangé en base. La copie est un confort d'exploitation,
+      le classement est le fait.
+- [x] **Preuves unitaires** : `mail-sync/tests/test_dossiers.py`, **9 tests**, dont le ré-encodage
+      simulé, la copie qui n'est jamais un déplacement, et le serveur à labels.
+- [ ] **Le renommage propagé n'est pas livré** : renommer un track ne renomme pas encore son
+      dossier. La mesure montre que `RENAME` emporte les enfants, donc que le geste est simple ;
+      il reste dû.
+- [ ] **Aucune preuve d'intégration par un client IMAP tiers, aucune observation Roundcube** : la
+      Definition of Done les exige, et elles ne sont pas faites.
 
 ### CRM-057 — Inbox globale `[ ]`
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.

@@ -127,9 +127,10 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	62,
-	'SOIXANTE-DEUX politiques dans `public`, et pas une de plus — 59 avant CRM-054, plus les TROIS '
-	'de l''ingestion : messages, occurrences et pièces jointes, toutes en LECTURE. Avant elles : '
+	63,
+	'SOIXANTE-TROIS politiques dans `public`, et pas une de plus — 62 avant CRM-056, plus l''UNIQUE '
+	'politique de lecture de `mail_folder_map`, qui suit le COMPTE comme les occurrences. Avant '
+	'elle : 59 avant CRM-054, plus les TROIS de l''ingestion. Avant elles : '
 	'48 avant CRM-022, plus ses '
 	'SEPT politiques d''identité. Avant elles : 41 jusqu''à `CRM-042`, plus les '
 	'TROIS de `card_comments` livrées par `CRM-043`, plus l''UNIQUE politique de lecture de '

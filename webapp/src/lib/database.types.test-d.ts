@@ -48,6 +48,7 @@ type _tables = Expect<
     | 'form_field_rules'
     | 'form_fields'
     | 'mail_attachments'
+    | 'mail_folder_map'
     | 'mail_inbound_accounts'
     | 'mail_message_occurrences'
     | 'mail_messages'
@@ -583,11 +584,12 @@ type _vueDerivationColonnes = Expect<
 // RÉVISÉ UNE SIXIÈME FOIS PAR `CRM-053`, qui livre les trois fonctions jumelles des sortantes.
 // Même remarque : deux d'entre elles sont **inaccessibles au client**, leur exécution étant
 // réservée à `service_role`.
-type _lesDouzeFonctions = Expect<
+type _lesTreizeFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
     | 'copy_workflow_to_track'
+    | 'chemin_dossier_card'
     | 'classer_message_automatiquement'
     | 'classify_message'
     | 'mail_inbound_account_credentials'
@@ -763,7 +765,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesDouzeFonctions,
+  _lesTreizeFonctions,
   _signatureCopie,
   _retourCopie,
   _signatureDeplacement,

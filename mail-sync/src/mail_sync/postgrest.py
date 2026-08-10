@@ -261,6 +261,39 @@ class PostgrestClient:
         )
         return resultat if isinstance(resultat, str) else None
 
+    def chemin_dossier_card(self, card_id: str) -> str | None:
+        """Le chemin SOUHAITÉ du dossier d'une card — `CRM/<Track>/<Channel>/<Card>` (§4.5).
+
+        La dérivation vit en base, avec les noms qu'elle assemble : un track se renomme par une
+        mise à jour, et la règle doit être au même endroit que la donnée.
+        """
+
+        resultat = self._rpc("chemin_dossier_card", {"p_card_id": card_id})
+        return resultat if isinstance(resultat, str) else None
+
+    def enregistrer_dossier(
+        self, *, account_id: str, entity_type: str, entity_id: str,
+        requested_path: str, actual_path: str,
+    ) -> None:
+        """Écrit la correspondance, ou la met à jour si le serveur a changé d'avis.
+
+        `merge-duplicates` et non `ignore` : un dossier renommé côté serveur doit faire suivre la
+        correspondance, sans quoi le produit chercherait indéfiniment un chemin qui n'existe plus.
+        """
+
+        self._rest(
+            "POST",
+            "/rest/v1/mail_folder_map?on_conflict=account_id,entity_type,entity_id",
+            {
+                "account_id": account_id,
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "requested_path": requested_path,
+                "actual_path": actual_path,
+            },
+            {"Prefer": "return=minimal,resolution=merge-duplicates"},
+        )
+
     def enregistrer_piece(self, **champs: Any) -> None:
         self._rest(
             "POST",

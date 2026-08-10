@@ -623,6 +623,47 @@ export type Database = {
           },
         ]
       }
+      mail_folder_map: {
+        Row: {
+          account_id: string
+          actual_path: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          requested_path: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          actual_path: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          requested_path: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          actual_path?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          requested_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_folder_map_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "mail_inbound_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_inbound_accounts: {
         Row: {
           backfill_months: number
@@ -1471,6 +1512,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      chemin_dossier_card: { Args: { p_card_id: string }; Returns: string }
       classer_message_automatiquement: {
         Args: {
           p_in_reply_to?: string

@@ -10312,15 +10312,20 @@ mécanisme de la décision 51, et la plus régulière : trois suites figeaient l
 ### Décision 323 — Le nom d'un dossier IMAP n'est pas celui qu'on a demandé
 
 **Mesuré avant d'écrire quoi que ce soit de `CRM-056`.** Créer `CRM/Conseil & IA` sur Stalwart, puis
-le relire par `LIST`, rend **`CRM/Conseil &- IA`** : le serveur applique l'UTF-7 modifié de la
-RFC 3501, où `&` s'écrit `&-`. Le §4.5 avait pressenti que « le chemin créé peut différer du nom
-souhaité » ; il ne disait ni pourquoi, ni que le cas se présente sur un caractère aussi banal qu'une
-esperluette — présente dans le nom d'un track du seed, « Conseil & IA ».
+le relire par `LIST` **avec `imaplib`**, rend `CRM/Conseil &- IA` : c'est l'UTF-7 modifié de la
+RFC 3501, où `&` s'écrit `&-`.
 
-La conséquence n'est pas cosmétique : **`mail_folder_map` cesse d'être une commodité**. Sans elle,
-retrouver plus tard le dossier d'un track reviendrait à redemander « Conseil & IA », que le serveur
-ne connaît pas sous ce nom. La table est donc le seul chemin, et l'unité qui la livrera devra y
-écrire le **chemin demandé** et le **chemin réellement créé**, non l'un ou l'autre.
+**CETTE MESURE ÉTAIT INCOMPLÈTE, ET LA SUITE L'A CORRIGÉE — c'est écrit ici plutôt que réécrit.**
+Relu avec **IMAPClient**, la bibliothèque que le produit emploie réellement, le même dossier revient
+`CRM/Conseil & IA`. Le ré-encodage est une propriété **du fil**, pas du serveur, et `imaplib` ne le
+décode simplement pas. Mesurer avec un outil que le produit n'emploie pas conduit à écrire une
+règle qui ne le concerne pas : la sonde doit parler la même langue que le code.
+
+**`mail_folder_map` reste nécessaire, mais pour une autre raison, et c'est elle qu'il faut écrire.**
+Le chemin souhaité est dérivé de noms que l'utilisateur peut changer — renommer un track change le
+chemin —, et l'assainissement du produit fait déjà diverger les deux : un track nommé « A/B » donne
+un segment « A B ». Sans correspondance mémorisée, le produit ne saurait plus quel dossier renommer.
+La table conserve donc le chemin **demandé** et le chemin **réellement créé**, non l'un ou l'autre.
 
 **Deux autres mesures allègent l'unité.** Le renommage **emporte les enfants** — renommer un track
 renommera son dossier et ceux de ses channels sans reconstruire l'arborescence —, et chaque niveau
@@ -10330,3 +10335,38 @@ se crée séparément, ce qui rend la création paresseuse naturelle.
 un nom de dossier est acceptée telle quelle. L'assainissement du §4.5 reste donc entièrement à la
 charge du produit, et il ne pourra pas s'en remettre au refus du serveur pour attraper ses propres
 erreurs.
+
+### Décision 324 — La sonde doit parler la même langue que le code
+
+**Le fait, d'abord.** `CRM-056` livre `mail_folder_map`, l'assainissement des segments, le chemin
+dérivé `CRM/<Track>/<Channel>/<Card>`, la création paresseuse de l'arborescence et la **copie** du
+message — jamais son déplacement. Mesuré de bout en bout : un vrai email a créé
+`CRM/Conseil & IA/Grands comptes/Audit sécurité applicative` sur le serveur.
+
+**L'ENSEIGNEMENT DE L'UNITÉ EST AILLEURS, ET IL PORTE SUR LA MÉTHODE.** La décision 323 avait
+mesuré, avec `imaplib`, que le serveur ré-encode `&` en `&-`. C'était vrai **du fil**, et faux **du
+produit** : IMAPClient, la bibliothèque que le code emploie, décode l'UTF-7 modifié et rend le nom
+intact. J'avais donc écrit une règle qui ne concernait pas le produit, et fondé sur elle la
+justification d'une table.
+
+La règle qui en découle : **une sonde doit parler la même langue que le code**. Mesurer avec un
+outil que le produit n'emploie pas donne un fait vrai sur le protocole et faux sur le logiciel. La
+décision 323 n'est pas réécrite — elle porte la mesure d'origine et sa correction, dans cet ordre,
+parce que l'erreur est plus instructive que le résultat.
+
+**`mail_folder_map` reste nécessaire, et sa vraie justification est plus simple** : le chemin est
+dérivé de noms que l'utilisateur peut changer, et l'assainissement les fait déjà diverger — un track
+nommé « A/B » donne le segment « A B ». Sans correspondance mémorisée, le produit ne saurait plus
+quel dossier renommer.
+
+**Trois choix de conception, écrits parce qu'ils pouvaient aller autrement.** Le délimiteur est
+**remplacé par une espace** et non retiré : « A/B » devient « A B » et reste lisible, là où « AB »
+inventerait un mot. La détection des serveurs à labels est **positive sur l'inadaptation** : un
+serveur inconnu est traité comme un serveur à dossiers, parce que c'est le cas général et que
+l'inverse priverait de classement tout serveur non encore rencontré. Et le dossier **suit** le
+classement sans le conditionner : un dossier qu'on ne sait pas créer n'empêche pas un message
+d'être rangé en base — la copie est un confort d'exploitation, le classement est le fait.
+
+**Ce qui reste dû, et qui n'est pas caché** : le renommage propagé, la preuve d'intégration par un
+client IMAP tiers et l'observation dans Roundcube, que la Definition of Done exige toutes trois.
+L'unité reste `[~]`.

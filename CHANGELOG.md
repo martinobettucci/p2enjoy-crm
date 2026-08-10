@@ -15,6 +15,17 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-056` avance : les messages sont rangés dans une arborescence IMAP réelle.**
+  `mail_folder_map`, l'assainissement des noms, le chemin `CRM/<Track>/<Channel>/<Card>` et la
+  création paresseuse sont livrés ; un vrai email a créé
+  `CRM/Conseil & IA/Grands comptes/Audit sécurité applicative`. Le message est **copié**, jamais
+  déplacé : retirer un message de la boîte de quelqu'un serait destructif. Un serveur à labels
+  (Gmail) écarte le modèle de dossiers. Restent dus le renommage propagé et l'observation dans
+  Roundcube, que la Definition of Done exige.
+- **Une mesure a été corrigée par la suivante, et les deux sont écrites** : lu avec `imaplib`, un
+  nom de dossier revient ré-encodé ; lu avec la bibliothèque que le produit emploie, il revient
+  intact. Une sonde doit parler la même langue que le code (décision 324).
+
 - **`CRM-055` est livrée : un email adressé à une card y est classé tout seul.** Les règles 1, 2
   et 4 du §4.4 sont en base, arrêtées à la première satisfaite. Une adresse se reconnaît à sa
   **forme et à son domaine**, et une card archivée ne reçoit pas — la filiation ne contourne pas
