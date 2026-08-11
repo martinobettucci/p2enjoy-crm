@@ -15,6 +15,39 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **Le registre des contradictions n'a plus aucune question ouverte au responsable.** Les deux
+  dernières entrées sans arbitrage sont tranchées : **INC-085** — qui recouvrait **INC-075**, le
+  même défaut relevé deux fois à trois jours d'écart — et **INC-088**. Les cinquante-six autres
+  entrées ouvertes attendent une **mise en œuvre et une preuve**, jamais une décision (décisions 333
+  à 336).
+- **INC-085 et INC-075 sont arbitrées : « le plus spécifique gagne » devient transitif.** Un track
+  redevient lisible dès que l'un de ses channels l'est, et son ouverture n'affiche que les channels
+  consentis — la politique de lecture des `channels` filtre déjà, aucune règle n'est créée. Le
+  contrat est écrit **avant le code** en `docs/SPEC-permissions-rls.md` **§3.3 bis**, avec ce que la
+  reprise de `CRM-012` devra prouver. **Non livré** : le §8 du même document dit ce qui s'applique
+  réellement en attendant.
+- **INC-088 est arbitrée : l'écriture depuis la fiche d'une affaire appartient à `CRM-037`.** Sa
+  Definition of Done exige déjà « transition bloquée, **saisie**, transition réussie » — l'unité
+  n'est pas élargie, elle est ramenée à son énoncé, et `CRM-036` livre déjà la table, ses politiques
+  et sa validation. Règle générale posée dans le même geste : **toute limite qui cite une entrée du
+  registre est réexaminée le jour où cette entrée est close**.
+- **Collision d'identifiant corrigée dans le backlog** : `CRM-075` désignait à la fois « Snooze des
+  fils et des cards » et l'administration de l'arborescence créée la veille — le mode de défaillance
+  d'INC-069 (deux décisions n° 180) transposé à un backlog où les numéros portent des dépendances
+  d'ordre. **Le snooze devient `CRM-081`**, l'unité la moins référencée étant celle qu'on renumérote.
+  `docs/MASTER_PLAN.md` cesse de borner le chunk 5 à `CRM-075` et de déclarer les propositions
+  `CRM-P01` → `CRM-P12` en attente d'arbitrage, alors que la décision 299 les a toutes tranchées.
+- **L'ordre de solde du registre est fixé** (décision 336) : les défauts réels d'abord — **INC-076**
+  (un compte devenu indestructible dès qu'il a commenté, `500` sur toute base seedée), puis
+  **INC-085/INC-075**, puis **INC-072** —, le lot documentaire ensuite. Il est le moins cher et ne
+  répare rien.
+- **INC-089 ouverte** : une exécution concurrente de la routine a committé, à 16h58 et sous son
+  propre message, les cinq documents d'arbitrage écrits par une autre — les décisions 333 à 336 sont
+  intactes dans `d7b35d5` mais introuvables par son message, qui traite de la résilience d'envoi de
+  `CRM-059`. Aucun contenu n'est perdu ; c'est la traçabilité et l'atomicité du commit qui le sont.
+  Même cause qu'INC-059 et que le point 1 d'INC-034 : la sérialisation de la routine, décidée le
+  2026-08-08, est **hors dépôt** et n'est pas appliquée. Historique **non réécrit**, `CLAUDE.md` §13
+  réservant ce geste à une instruction explicite.
 - **INC-086 est arbitrée et close** : l'absence de toute surface d'administration des tracks et des
   channels, constatée par le responsable **en essayant le produit**, reçoit une unité dédiée —
   **`CRM-075`**, placée avant `CRM-076` dont elle est le préalable. Elle ne livrera **aucune règle

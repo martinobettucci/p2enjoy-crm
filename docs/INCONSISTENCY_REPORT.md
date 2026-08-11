@@ -24,7 +24,8 @@ décisions **333** et **334**. **Aucune question n'est donc adressée au respons
 registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en œuvre et une
 preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
 réels d'abord — **INC-076**, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
-ensuite.
+ensuite. **INC-089**, ouverte le même jour, est la seule exception : elle est née de la persistance
+de ces décisions et appelle un arbitrage.
 
 ---
 
@@ -71,6 +72,50 @@ que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de r
 
 Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
 joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
+
+### INC-089 — Une exécution concurrente de la routine a committé le travail d'une autre, sous son propre message
+
+**Nature :** violation mesurée de `CLAUDE.md` §13 — « un commit ne doit contenir que des
+modifications liées » — par le mécanisme d'exécution lui-même, et non par une décision de rédaction.
+**Relevé le :** 2026-08-11, pendant la persistance des décisions 333 à 336.
+
+**Le fait, horodaté.** Les quatre décisions d'arbitrage et leurs mises à jour documentaires —
+`docs/JOURNAL.md`, `docs/INCONSISTENCY_REPORT.md`, `docs/ARBITRAGES.md`, `docs/BACKLOG.md`,
+`docs/MASTER_PLAN.md` — ont été écrites dans l'arbre de travail entre 16h40 et 16h57. À **16h58**,
+une autre exécution de la routine a committé `d7b35d5` — « Mesure ce que la base garantit d'une
+reprise, et pas seulement le service », dont l'objet réel est la suite pgTAP
+`0031_resilience_envoi.test.sql` de `CRM-059`. Ce commit **emporte les cinq documents d'arbitrage**,
+qui n'ont aucun rapport avec son sujet, et il est **poussé**.
+
+| | Attendu | Constaté |
+|---|---|---|
+| Sujets par commit | un | **deux** : la résilience d'envoi de `CRM-059`, et les arbitrages 333 à 336 |
+| Message | décrit le changement | ne mentionne **aucune** des quatre décisions qu'il contient |
+| Traçabilité | un arbitrage se retrouve par son commit | les décisions 333 à 336 sont introuvables par le message |
+
+**La cause.** L'exécution concurrente indexe l'arbre entier avant de committer, sans distinguer ce
+qu'elle a écrit de ce qu'elle a trouvé. Ce n'est pas une erreur de jugement : c'est le même défaut
+qu'**INC-059** — deux exécutions ayant livré `CRM-014` en parallèle sans se voir — et que le point 1
+d'**INC-034**, dont la décision retenue est « **une routine séquentielle sur `main`** ». La
+sérialisation est décidée depuis le 2026-08-08 ; elle est **hors dépôt**, portée par le
+planificateur, et cette entrée mesure qu'elle n'est **pas appliquée**.
+
+**Ce que cela n'est pas.** Aucun contenu n'est perdu ni altéré : les quatre décisions sont intactes
+dans `d7b35d5`, et les documents disent ce qu'ils doivent dire. Le défaut porte sur la
+**traçabilité** et sur l'atomicité du commit, pas sur l'exactitude.
+
+**Comportement laissé inchangé.** L'historique poussé n'est pas réécrit : `CLAUDE.md` §13 réserve
+cette correction à une instruction explicite du responsable. Le rattachement est fait ici, par le
+registre, plutôt qu'en silence.
+
+**Action attendue du responsable :** dire si `d7b35d5` doit être réécrit pour séparer les deux
+sujets — ce qui suppose une réécriture d'historique déjà poussé —, et surtout **si la sérialisation
+de la routine, décidée depuis le 2026-08-08, doit devenir une garde vérifiable plutôt qu'un réglage
+de planificateur**. Tant que ce n'est pas tranché, le défaut se reproduira à chaque chevauchement.
+
+**Lié à :** INC-034 (point 1, la branche et l'identité imposées par l'environnement de la routine),
+INC-059 (deux exécutions livrant la même unité en parallèle), INC-069 (deux décisions sous le numéro
+180, née de la même cause), `CLAUDE.md` §13.
 
 ### INC-088 — La fiche d'une card reste en lecture seule au nom d'une entrée close
 

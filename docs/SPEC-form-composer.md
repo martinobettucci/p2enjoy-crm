@@ -497,11 +497,17 @@ la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5), et le §7.3 l'exige.
 
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
-- **Aucune écriture.** Enregistrer une valeur exige une session, que la webapp n'a pas (INC-021).
-  Les contrôles sont donc rendus **indisponibles**, lisibles, et l'écran **dit pourquoi** — ce que
-  `docs/DESIGN_SYSTEM.md` §8 exige d'un état désactivé. Un formulaire où l'on saisirait sans
-  pouvoir enregistrer serait un piège ; un formulaire qui n'affiche rien serait une perte
-  d'information.
+- **~~Aucune écriture.~~ L'écriture appartient à `CRM-037`** — décision 334, INC-088. Le motif
+  d'origine était l'absence de session (INC-021), **close depuis `CRM-009`** : la limite a survécu à
+  son motif, sans que personne la réexamine. La Definition of Done de l'unité exige depuis l'origine
+  « E2E (transition bloquée, **saisie**, transition réussie) » ; l'unité n'est donc pas élargie, elle
+  est ramenée à son énoncé. `CRM-036` livre déjà `card_field_values`, ses politiques et sa
+  validation : il ne manque que le chemin vers elles, et **aucune règle n'est créée ici**.
+  *État réel tant que la reprise n'est pas livrée* : les contrôles restent **indisponibles**,
+  lisibles, et l'écran **dit pourquoi** — ce que `docs/DESIGN_SYSTEM.md` §8 exige d'un état
+  désactivé. Un formulaire où l'on saisirait sans pouvoir enregistrer serait un piège ; un
+  formulaire qui n'affiche rien serait une perte d'information. Le bandeau « Consultation seule »
+  disparaît avec la livraison, pas avec la décision.
 - **Aucune transition.** Le menu des transitions déclarées et le glisser-déposer sont `CRM-041`.
   Sans eux, ni les champs exigés par les liaisons de transition (§4.4), ni la mise en évidence
   consécutive à un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste

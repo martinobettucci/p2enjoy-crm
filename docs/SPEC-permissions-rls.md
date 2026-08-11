@@ -122,6 +122,42 @@ politique qui s'interroge elle-même. Adossée à la fonction `SECURITY DEFINER`
 avec le filtrage attendu ; une jumelle `SECURITY INVOKER` épuise la pile (`54001`). C'est la
 seconde occurrence de la décision 27, et la raison pour laquelle ces fonctions existent.
 
+### 3.3 bis « Le plus spécifique gagne » est **transitif** — arbitrage du 2026-08-11
+
+**Contrat écrit avant le code**, par la décision 333 (INC-085, qui recouvre INC-075). Il modifie la
+**politique de lecture de `tracks`**, et **aucune** des trois fonctions du §3.3.
+
+**Le défaut mesuré.** Un `channel_members.access = 'member'` posé sous un track fermé rouvre le
+channel : la ligne f du §4.2 le prescrit, `app.can_read_channel` l'applique, et une assertion pgTAP
+le prouve. MESURÉ avec le jeton du `viewer` seedé : `GET /rest/v1/channels` **rend** « Prospection »
+tandis que `GET /rest/v1/tracks` **omet** « Conseil & IA », son track. L'interface ne listant les
+channels qu'une fois un track ouvert (`docs/SPEC-channels.md` §5.1), le droit accordé n'a **aucun
+chemin**, là où un droit retiré est correctement observable. Un droit qui n'a pas de chemin n'est
+pas un droit.
+
+**La règle.** Un track est lisible dès que **l'un au moins de ses channels** l'est. La politique de
+lecture de `tracks` est donc satisfaite si `app.can_read_track(id)` est vrai **ou** s'il existe un
+channel de ce track pour lequel `app.can_read_channel` est vrai.
+
+**Ce que la règle ne change pas :**
+
+- **`app.can_read_track` garde son contrat exact** du §3.3 — elle répond « l'appelant a-t-il droit à
+  ce track ? », pas « peut-il l'atteindre ? ». Les assertions qui la mesurent restent valables ;
+  c'est la politique qui s'élargit, pas la fonction.
+- **L'ouverture d'un tel track n'affiche que les channels consentis.** Aucune règle nouvelle n'est
+  nécessaire : la politique de lecture des `channels` filtre déjà, et c'est elle qui rend
+  « Prospection ». Un track réapparu avec un seul onglet est une information exacte.
+- **L'écriture est inchangée.** Atteindre un track par l'un de ses channels ne confère **aucun**
+  droit d'écriture sur le track, dont la colonne `Écriture` du §4 reste `admin`.
+- **Le §3.5 reste opposable.** La politique de `tracks` ne relit pas `tracks` : elle interroge
+  `channels` par `app.can_read_channel`, `SECURITY DEFINER`, et continue d'évaluer les colonnes de
+  la ligne pour ne pas réintroduire le `403` sur `insert … returning` de la décision 107.
+
+**Ce que la reprise de `CRM-012` doit prouver**, et qui ne sera pas tenu pour acquis : le `viewer`
+lit désormais le track porteur d'un channel qui lui est rouvert ; il ne lit **toujours pas** les
+autres channels de ce track ; il ne peut **rien y écrire** ; un `insert … returning` d'administrateur
+reste `201` ; et la preuve d'interface montre le track rendu avec son seul onglet consenti.
+
 ### 3.4 Deux fonctions d'appui, livrées par `CRM-012`
 
 | Fonction | Retour |
@@ -280,7 +316,7 @@ jour à la main.
 | `workspace_members` | Membres du workspace | `admin` ; **un administrateur ne peut pas se retirer son propre rôle s'il est le dernier** |
 | `track_members` | Administrateur du workspace propriétaire du track, **et** l'intéressé pour sa propre ligne — **livré par `CRM-012`** (§4.1) | `admin` ; **la suppression est exposée** — retirer un droit fin est le geste normal de retour à l'accès hérité (§4.1) |
 | `channel_members` | Administrateur du workspace propriétaire du channel, **et** l'intéressé pour sa propre ligne — **livré par `CRM-012`** (§4.1) | `admin` ; **la suppression est exposée**, même motif |
-| `tracks` | `app.can_read_track` — **livré par `CRM-012`**, droits fins compris ; INC-024 close | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-tracks.md` §4) |
+| `tracks` | `app.can_read_track` — **livré par `CRM-012`**, droits fins compris ; INC-024 close — **ou** l'un au moins de ses channels est lisible (**§3.3 bis**, décision 333, INC-085/INC-075) : dû par la reprise de `CRM-012`, non livré | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-tracks.md` §4) |
 | `channels` | `app.can_read_channel` — **livré par `CRM-012`**, droits fins compris ; INC-030 close | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-channels.md` §4) |
 | `workflow_nodes_catalog` | Membres du workspace — **livré par `CRM-030`** avec `app.is_workspace_member`, qui **est** la règle spécifiée et non un repli : aucun droit fin ne gouverne le catalogue | `admin` ; **aucune suppression n'est exposée**, l'archivage tient lieu de suppression (`docs/SPEC-workflow-engine.md` §2.6) |
 | `workflows`, `workflow_steps`, `workflow_transitions` | Membres du workspace — **livré par `CRM-031`** avec `app.is_workspace_member`, qui **est** la règle spécifiée : aucun droit fin ne gouverne un workflow | `admin` ; **la suppression est exposée aux étapes et aux transitions**, et à elles seules — elles sont la composition d'un workflow et n'ont aucun `archived_at` (`docs/SPEC-workflow-engine.md` §3.7, `docs/JOURNAL.md` décision 74). Un workflow, lui, s'archive |
@@ -755,6 +791,12 @@ deux moitiés sont nécessaires ; aucune ne remplace l'autre. La prédiction fau
 plutôt que le contrôle relâché.
 
 ## 8. Points ouverts
+
+**Décidé mais non livré, et c'est le seul écart de ce document entre la règle écrite et la règle
+appliquée.** Le §3.3 bis élargit la politique de lecture de `tracks` — décision 333, INC-085 et
+INC-075. Tant que la reprise de `CRM-012` n'est pas livrée et prouvée, le comportement réel reste
+l'ancien : le channel rouvert est rendu, son track ne l'est pas, et aucun geste de navigation n'y
+mène. Le §3.3 bis dit ce qui **sera** appliqué ; ce paragraphe dit ce qui l'**est**.
 
 1. **Suppression d'un membre** possédant des cards : réaffectation forcée, ou conservation avec
    un responsable inactif ? Comportement par défaut retenu : conservation, la card restant
