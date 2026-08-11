@@ -5478,8 +5478,52 @@ Roundcube ; renommage d'un track propageant le renommage du dossier.
       `CRM/Nouveau track/Channel/Card` échoue si `CRM/Nouveau track` n'existe pas.
 - [x] **Un renommage refusé rend `None` plutôt qu'un chemin optimiste** : écrire une correspondance
       vers un dossier inexistant rendrait tout classement ultérieur silencieusement inutile.
-- [ ] **Aucune preuve d'intégration par un client IMAP tiers, aucune observation Roundcube** : la
-      Definition of Done les exige, et elles ne sont pas faites.
+- [x] **L'ARBORESCENCE EST VÉRIFIÉE PAR UN CLIENT IMAP TIERS** — `e2e/mail/dossiers.spec.ts`,
+      2 scénarios. Le client vit dans un conteneur jetable, il n'est ni le service ni sa connexion,
+      et il **décode l'UTF-7 modifié** lui-même : un client qui ne décode pas ne vérifie que le fil.
+      Deux bibliothèques différentes ne se trompent pas de la même façon.
+- [x] **LE MESSAGE EST COPIÉ, ET RESTE DANS `INBOX`** — mesuré dans les deux dossiers. Retirer un
+      message de la boîte de quelqu'un serait destructif, et le §4.5 l'écrit.
+- [x] **OBSERVATION VISUELLE DANS ROUNDCUBE**, que la Definition of Done exige :
+      `e2e/mail/roundcube-dossiers.spec.ts` ouvre une vraie session à la souris et au clavier, lit
+      les **trois niveaux** avec leurs vrais noms, ouvre le dossier de la card et y trouve le
+      message. Deux captures observées.
+- [x] **UN DÉFAUT TROUVÉ PAR L'ŒIL, ET PAR LUI SEUL : LES DOSSIERS ÉTAIENT INVISIBLES.** Créer un
+      dossier ne suffit pas — un client de messagerie n'affiche que les dossiers **souscrits**
+      (RFC 3501 §6.3.6). L'arborescence existait côté serveur, l'API la voyait, et l'utilisateur
+      n'en voyait rien. Un rangement que personne ne voit ne range rien. `SUBSCRIBE` suit désormais
+      chaque création **et** chaque renommage — le renommage ne transporte pas la souscription.
+- [x] **UN SECOND DÉFAUT, DANS MA PROPRE PREUVE** : Roundcube colle le compteur de messages non lus
+      **dans** le lien du dossier — « Inbox12 ». Un `exact: true` ne résolvait jamais, et le
+      scénario expirait au bout de cinq minutes **sans rien dire**. Un test qui expire sans
+      diagnostic est pire qu'un test absent.
+- [x] **Le renommage propagé couvre les TROIS niveaux** : la correspondance mémorise le track, le
+      channel et la card, et la divergence est traitée **du plus haut au plus bas**. Un seul
+      `RENAME` suffit alors — mesuré : `renamed = 1` pour trois dossiers déplacés.
+- [x] **Un renommage refusé est DIT** : un dossier de destination qui existe déjà bloquerait la
+      boucle indéfiniment, et un arrêt muet serait un blocage permanent invisible.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0028_dossiers_imap.test.sql`, **18 assertions**.
+- [x] **Harnais dédié** `scripts/verify-mail-dossiers.sh` : **37 contrôles, aucune anomalie**,
+      témoin et trois dégradations comprises — dont la souscription retirée et la copie devenue un
+      déplacement.
+- [x] **Compteurs révisés** : 27 → **28** fichiers SQL, 1843 → **1861** assertions,
+      35 → **38** scénarios `mail`.
+- [ ] **La reprise d'un rangement manqué n'est pas livrée** : le rangement est tenté à la
+      **première** vue d'un message, et un refus est journalisé sans être rejoué. La reprise
+      appartient à `CRM-059`.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « intégration vérifiant
+l'arborescence **par un client IMAP** ; observation visuelle dans Roundcube ; renommage d'un track
+propageant le renommage du dossier ». **Les trois sont tenues.** L'unité reste `[~]` pour le seul
+écart ci-dessus, porté par une unité nommée.
+
+*Limites nommées, non masquées.*
+
+- **Aucun écran du produit** ne montre l'arborescence : Roundcube reste le seul moyen de
+  vérification visuelle tant que `CRM-057` n'existe pas.
+- **Les labels Gmail sont détectés, jamais exercés** : aucun serveur à labels n'existe dans la
+  pile de développement, et la détection est éprouvée sur un serveur simulé.
+- **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
 ### CRM-057 — Inbox globale `[ ]`
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.

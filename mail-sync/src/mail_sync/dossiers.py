@@ -65,6 +65,17 @@ def creer_arborescence(imap, chemin: str) -> DossierCree:  # type: ignore[no-unt
             # Un dossier déjà présent rend une erreur chez la plupart des serveurs ; c'est l'état
             # voulu, et s'y arrêter empêcherait toute seconde relève.
             pass
+        # CRÉER NE SUFFIT PAS : IL FAUT S'ABONNER. Mesuré dans Roundcube — un dossier créé mais
+        # non abonné n'apparaît PAS dans la liste d'un client de messagerie, qui n'affiche par
+        # défaut que les dossiers souscrits (RFC 3501 §6.3.6). L'arborescence existait donc côté
+        # serveur et restait invisible pour l'utilisateur : un rangement que personne ne voit ne
+        # range rien. Défaut trouvé par l'observation visuelle, pas par l'API.
+        try:
+            imap.subscribe_folder(niveau)
+        except Exception:  # noqa: BLE001
+            # Un serveur sans souscription — ou un dossier déjà souscrit — n'empêche pas le
+            # rangement : le dossier existe, et c'est le fait principal.
+            pass
 
     reel = chemin
     demande_normalise = chemin.replace("&", "&-")
@@ -117,4 +128,10 @@ def renommer_dossier(imap, ancien: str, nouveau: str) -> str | None:  # type: ig
         imap.rename_folder(ancien, nouveau)
     except Exception:  # noqa: BLE001
         return None
+    # LE RENOMMAGE NE TRANSPORTE PAS LA SOUSCRIPTION sur tous les serveurs : le dossier renommé
+    # redeviendrait invisible dans un client, alors même que le produit vient de le ranger.
+    try:
+        imap.subscribe_folder(nouveau)
+    except Exception:  # noqa: BLE001
+        pass
     return nouveau

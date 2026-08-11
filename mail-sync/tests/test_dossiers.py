@@ -49,9 +49,13 @@ class FauxImap:
 
     def __init__(self, refuse_existants: bool = True) -> None:
         self.dossiers: list[str] = []
+        self.souscrits: list[str] = []
         self.copies: list[tuple[str, int, str]] = []
         self.selectionne: str | None = None
         self.refuse_existants = refuse_existants
+
+    def subscribe_folder(self, nom: str) -> None:
+        self.souscrits.append(nom)
 
     def create_folder(self, nom: str) -> None:
         if nom in self.dossiers and self.refuse_existants:
@@ -178,3 +182,26 @@ def test_un_renommage_refuse_est_dit_et_n_ecrase_pas_la_correspondance() -> None
 
     imap = ImapAvecRenommage()
     assert renommer_dossier(imap, "CRM/Inexistant", "CRM/Autre") is None
+
+
+def test_chaque_niveau_est_SOUSCRIT_et_pas_seulement_cree() -> None:
+    """DÉFAUT TROUVÉ DANS ROUNDCUBE, PAS PAR L'API : un dossier créé mais non souscrit n'apparaît
+    pas dans la liste d'un client de messagerie, qui n'affiche par défaut que les dossiers
+    souscrits. L'arborescence existait côté serveur et restait invisible pour l'utilisateur."""
+
+    imap = FauxImap()
+    creer_arborescence(imap, "CRM/Track/Channel/Card")
+    assert imap.souscrits == ["CRM", "CRM/Track", "CRM/Track/Channel", "CRM/Track/Channel/Card"]
+
+
+def test_le_dossier_renomme_est_souscrit_a_son_tour() -> None:
+    """Le renommage ne transporte pas la souscription sur tous les serveurs : le dossier
+    redeviendrait invisible alors même que le produit vient de l'y ranger."""
+
+    from mail_sync.dossiers import renommer_dossier
+
+    imap = ImapAvecRenommage()
+    creer_arborescence(imap, "CRM/Ancien")
+    imap.souscrits.clear()
+    renommer_dossier(imap, "CRM/Ancien", "CRM/Nouveau")
+    assert "CRM/Nouveau" in imap.souscrits

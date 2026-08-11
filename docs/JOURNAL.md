@@ -10399,3 +10399,39 @@ migration postérieure. Et une seule migration déclare `dossiers_a_renommer` : 
 
 **La preuve est celle du dépôt, pas la mienne** : `scripts/verify-migrations.sh` exécute le vrai
 `migrations-runner` et exige son code 0. Il rend de nouveau **25/25**.
+
+### Décision 326 — Un dossier que personne ne voit ne range rien
+
+**L'unité est complète, à un écart près.** L'arborescence est vérifiée par un **client IMAP tiers**
+— un conteneur jetable, ni le service ni sa connexion, qui décode lui-même l'UTF-7 modifié : un
+client qui ne décode pas ne vérifie que le fil. Et elle est **observée dans Roundcube**, seul moyen
+de vérification visuelle de la messagerie tant que `CRM-057` n'existe pas.
+
+**LE DÉFAUT QUE SEUL L'ŒIL POUVAIT TROUVER.** Créer un dossier IMAP ne suffit pas : un client de
+messagerie n'affiche que les dossiers **souscrits** (RFC 3501 §6.3.6). L'arborescence existait donc
+côté serveur — l'API la voyait, la suite pgTAP la voyait, le client tiers la voyait — et
+l'utilisateur n'en voyait **rien**. Un rangement que personne ne voit ne range rien. `SUBSCRIBE`
+suit désormais chaque création **et** chaque renommage, le renommage ne transportant pas la
+souscription sur tous les serveurs.
+
+C'est la septième fois qu'une observation visuelle dénonce ce qu'un test laisse passer, et la
+première où l'écart n'était pas visuel au sens graphique : c'est une **absence**, invisible à toute
+mesure qui ne regarde pas l'écran d'un client réel.
+
+**UN SECOND DÉFAUT, DANS MA PROPRE PREUVE, ET IL EST DU MÊME GENRE QUE CEUX DE LA DÉCISION 321.**
+Roundcube colle le compteur de messages non lus **dans** le lien du dossier — « Inbox12 ». Un
+`exact: true` ne résolvait donc jamais, et le scénario expirait au bout de **cinq minutes sans rien
+dire** : ni assertion fausse, ni message, juste un dépassement de délai. Un test qui expire sans
+diagnostic est pire qu'un test absent — il donne l'impression d'un problème d'environnement. Le
+localiser a demandé d'instrumenter le scénario étape par étape ; la leçon est de borner chaque
+action (`click({ timeout })`) plutôt que de laisser le délai global trancher.
+
+**Le renommage couvre enfin les trois niveaux.** La correspondance mémorise le track, le channel et
+la card, et la divergence est traitée **du plus haut au plus bas** : un seul `RENAME` déplace alors
+les trois dossiers — mesuré, `renamed = 1` pour trois correspondances mises à jour. La version
+précédente ne connaissait que la card : renommer un track l'aurait déplacée une à une en laissant
+un dossier vide derrière.
+
+**Ce qui reste dû, et qui est nommé** : un rangement manqué n'est pas rejoué. Le rangement est tenté
+à la **première** vue d'un message ; un refus est journalisé, jamais repris. La reprise appartient à
+`CRM-059`, dont c'est précisément l'objet.

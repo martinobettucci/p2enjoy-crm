@@ -15,6 +15,20 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-056` tient ses trois preuves.** L'arborescence est vérifiée par un **client IMAP tiers**
+  qui décode lui-même l'UTF-7 modifié, **observée dans Roundcube** avec ses vrais noms, et le
+  renommage d'un track y déplace les trois niveaux d'un seul `RENAME`. Le message est **copié** et
+  reste dans `INBOX`.
+  Preuves : `scripts/verify-mail-dossiers.sh` **37/37**, **18 assertions** pgTAP, 3 scénarios
+  `mail`, 2 captures observées. Compteurs : 28 fichiers SQL, 1861 assertions, 38 `mail`.
+
+### Corrigé
+
+- **Les dossiers créés étaient invisibles pour l'utilisateur.** Un client de messagerie n'affiche
+  que les dossiers **souscrits** : l'arborescence existait côté serveur, l'API la voyait, et
+  personne ne la voyait à l'écran. `SUBSCRIBE` suit désormais chaque création et chaque renommage.
+  Défaut trouvé par l'observation visuelle, et par elle seule (décision 326).
+
 ### Corrigé
 
 - **Le redémarrage de la pile était cassé, et c'était bloquant.** Le `migrations-runner` rejoue tout

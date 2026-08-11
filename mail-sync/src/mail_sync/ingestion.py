@@ -130,6 +130,7 @@ def ranger_dans_dossier(
 
 def relever_compte(
     *,
+    journal=lambda _evenement, **_details: None,  # type: ignore[no-untyped-def]
     client_base: PostgrestClient,
     compte,  # InboundCredentials
     workspace_id: str,
@@ -175,8 +176,15 @@ def relever_compte(
                     imap, divergence["actual_path"], divergence["nouveau_chemin"]
                 )
                 if nouveau is None:
-                    # Un renommage refusé n'arrête pas la relève, mais le tour suivant retomberait
-                    # sur la même divergence : la boucle s'arrête ici plutôt que de tourner à vide.
+                    # UN RENOMMAGE REFUSÉ EST DIT, PAS SEULEMENT SUBI. Le tour suivant retomberait
+                    # sur la même divergence — la boucle s'arrête donc ici plutôt que de tourner à
+                    # vide —, mais un arrêt muet serait un blocage permanent invisible : le dossier
+                    # de destination peut exister déjà, et rien ne le résoudra tout seul.
+                    journal(
+                        "folder_rename_refused",
+                        entity_type=divergence["entity_type"],
+                        entity_id=divergence["entity_id"],
+                    )
                     break
                 client_base.enregistrer_dossier(
                     account_id=compte.account_id,

@@ -257,8 +257,13 @@ PORT_RAPPORT=9323
 # classement écrit désormais. Le mécanisme de la décision 51 pour la dixième fois.
 # 1823 + 20 = **1843**. `e2e/api/classement.spec.ts` ajoute **3 scénarios** : 466 + 3 = **469**.
 # `e2e/mail/ingestion.spec.ts` en gagne **1** : 34 + 1 = **35**.
-FICHIERS_SQL_ATTENDUS=27
-ASSERTIONS_ATTENDUES=1843
+# --- `CRM-056` ---------------------------------------------------------------------------------
+# `supabase/tests/0028_dossiers_imap.test.sql` ajoute **18 assertions** : 1843 + 18 = **1861**.
+# `e2e/mail/dossiers.spec.ts` ajoute **2 scénarios** — l'arborescence lue par un client IMAP tiers
+# — et `e2e/mail/roundcube-dossiers.spec.ts` **1**, l'observation visuelle que la Definition of
+# Done exige. 35 + 3 = **38**. `SCENARIOS_API` est inchangé : l'unité n'ajoute aucune route.
+FICHIERS_SQL_ATTENDUS=28
+ASSERTIONS_ATTENDUES=1861
 SCENARIOS_API=469
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
@@ -338,7 +343,7 @@ SCENARIOS_UI=157
 # `CRM-050` — succès et `LIST` sur la boîte système, `auth_failed` après changement de secret,
 # `tls_failed` sur le certificat auto-signé, `connection_refused` faute de listener 993, compte
 # inconnu, et jeton exigé. Chaque scénario relit la BASE, pas seulement la réponse HTTP.
-SCENARIOS_MAIL=35
+SCENARIOS_MAIL=38
 
 failures=0
 checks=0

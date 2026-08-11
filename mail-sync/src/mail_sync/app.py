@@ -416,6 +416,9 @@ def create_app(
 
         try:
             resultat = relever_compte(
+                journal=lambda evenement, **details: log_event(
+                    app_logger, logging.WARNING, evenement, **details
+                ),
                 client_base=client,
                 compte=compte,
                 workspace_id=compte.workspace_id,
