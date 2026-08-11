@@ -1582,6 +1582,81 @@ montré est donc **lu**, jamais supposé :
 pour frais. Une dernière relève ancienne n'est pas un incident : c'est un fait, et l'écran donne sa
 date au lieu d'inventer un jugement.
 
+### 20.10 La boucle de veille — sa forme, et pourquoi celle-là
+
+*Écrit avant le code, `docs/JOURNAL.md` décision 341.*
+
+`MAIL_SYNC_POLL_INTERVAL` est déclarée depuis `CRM-051` et **lue par rien** (§20.1). Ce chapitre dit
+ce qui la lit.
+
+#### 20.10.1 Un fil d'exécution, et non une boucle asynchrone
+
+Le service est **synchrone de bout en bout** : `PostgrestClient` parle en HTTP bloquant, les routes
+de `app.py` sont des `def` et non des `async def`, et `relever_compte` bloque sur IMAP. Une boucle
+`asyncio` obligerait à réécrire ces trois couches, ou à les envelopper dans un exécuteur — c'est-à-dire
+à retrouver un fil, en ayant payé une conversion.
+
+La veille est donc un **fil d'arrière-plan démarré avec l'application** et arrêté avec elle, piloté
+par un `threading.Event` : l'attente s'interrompt à la demande d'arrêt, au lieu de retenir le
+conteneur jusqu'à la fin de l'intervalle. Un service qui met soixante secondes à s'arrêter est un
+service qu'un orchestrateur finit par tuer.
+
+#### 20.10.2 La décision est PURE, l'attente ne l'est pas
+
+Ce que la boucle **décide** — quels comptes relever, dans quel ordre, quand le prochain tour est dû —
+est une fonction pure de l'horloge et de l'état, dans `mail_sync/veille.py`. Ce qu'elle **fait** —
+dormir, appeler la relève — vit dans le pilote.
+
+Le motif n'est pas esthétique : `CLAUDE.md` §18 proscrit la « temporisation arbitraire », et une
+preuve qui devrait attendre soixante secondes pour observer un second tour serait exactement cela.
+La décision étant pure, elle se vérifie **sans dormir une seule fois** en avançant une horloge
+injectée.
+
+#### 20.10.3 Un compte en panne n'arrête pas la veille, et ne masque pas les autres
+
+Chaque compte est relevé dans son propre essai. Une exception est **journalisée et absorbée**, puis
+le tour continue avec le compte suivant. C'est le seul endroit du service où une exception large est
+admise, et la raison est écrite : la solution de rechange — laisser remonter — arrêterait le fil, et
+un seul compte mal configuré priverait de courrier tous les autres.
+
+**L'absorption n'est pas un silence.** L'événement `veille_compte_echoue` porte l'identifiant du
+compte et le **type** de la panne, jamais son texte, qui peut contenir un identifiant de connexion
+(§13.7). Le `try/except` vide que `CLAUDE.md` §18 proscrit est celui qui ne dit rien ; celui-ci dit.
+
+#### 20.10.4 Un tour ne se chevauche jamais avec lui-même
+
+Si un tour dure plus que l'intervalle, le suivant ne démarre pas en parallèle : l'intervalle est
+compté **à partir de la fin** du tour précédent, non de son début. Deux relèves simultanées du même
+compte ne perdraient aucun message — le dédoublonnage est tenu par la base depuis `CRM-054` — mais
+elles doubleraient la charge IMAP au moment précis où le serveur est déjà lent.
+
+#### 20.10.5 `MAIL_SYNC_POLL_INTERVAL = 0` désactive la veille, explicitement
+
+Zéro n'est pas « aussi vite que possible » : c'est **aucune veille**, et la relève reste alors
+déclenchée par l'API interne comme `CRM-054` l'a livrée. Ce cas existe pour l'environnement de
+preuve, où le scénario veut décider lui-même du moment de la relève, et pour un exploitant qui
+pilote la relève depuis son propre ordonnanceur.
+
+Le journal de démarrage dit **laquelle des deux** est en vigueur — `veille_demarree` avec son
+intervalle, ou `veille_desactivee`. Un service dont on ne sait pas s'il relève tout seul est un
+service qu'on interroge en le regardant tourner.
+
+**La borne basse est de cinq secondes**, hors le zéro. Elle n'est pas un réglage de confort : une
+scrutation d'une seconde par compte transformerait la veille en charge constante sur Stalwart et sur
+PostgREST, pour un courrier qui n'arrive pas plus vite. La borne haute est d'une heure — au-delà,
+`last_sync_at` vieillirait au point que l'écran d'état du §20.7 ne distinguerait plus une veille
+lente d'un service arrêté.
+
+#### 20.10.6 Quels comptes sont relevés
+
+Ceux de `mail_inbound_accounts` **dont un secret est présent**. Un compte sans mot de passe ne peut
+pas être relevé — la route `poll` rend déjà `409` dans ce cas —, et l'inclure ferait un échec par
+tour et par compte incomplet, c'est-à-dire un journal qui crie sans rien apprendre à personne.
+
+L'ordre est celui de `last_sync_at` **croissante, les jamais relevés d'abord** : le compte le plus en
+retard passe en tête. Trier par date de création ferait attendre un compte neuf derrière tous les
+anciens.
+
 ### 20.8 Preuves exigées
 
 | Niveau | Preuve |

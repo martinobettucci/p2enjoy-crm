@@ -10972,3 +10972,49 @@ sur `main`. Une copie locale tierce aurait exigé un `reset --hard`, cinq SHA ay
 au début du travail, et non au moment du commit. Aucun garde-fou automatique ne l'impose encore : un
 crochet `pre-commit` refusant une adresse non conforme serait le remède durable, et il n'appartient
 à aucune unité — le fait est noté ici plutôt que corrigé au passage.
+
+### Décision 341 — La boucle de veille est un fil, sa décision est pure, et son intervalle a des bornes
+
+**2026-08-11 — reprise de `CRM-059` après l'arbitrage de `CRM-075`, toujours sans pile locale.**
+
+**Le point de départ, vérifié et non supposé.** `MAIL_SYNC_POLL_INTERVAL` figure dans `.env.example`
+et dans le tableau des variables du `README.md`, où elle est annoncée « en attente de `CRM-054` ».
+`grep` sur `mail-sync/src` ne la trouve **nulle part** : elle n'est pas dans `Settings`, et rien ne
+la lit. Le §20.1 l'avait mesuré ; c'est toujours vrai. Une variable documentée que rien ne lit est
+une promesse tenue par personne.
+
+**Quatre choix de conception, écrits avant le code dans `docs/SPEC-mail-subsystem.md` §20.10 :**
+
+1. **Un fil d'arrière-plan, et non `asyncio`.** Le service est synchrone de bout en bout —
+   `PostgrestClient` en HTTP bloquant, routes en `def`, `relever_compte` bloquant sur IMAP. Une
+   boucle asynchrone obligerait soit à réécrire ces trois couches, soit à les envelopper dans un
+   exécuteur, c'est-à-dire à retrouver un fil après avoir payé une conversion. L'attente s'appuie
+   sur un `threading.Event` plutôt que sur `sleep` : l'arrêt interrompt l'attente au lieu de retenir
+   le conteneur jusqu'à la fin de l'intervalle.
+
+2. **La décision est pure, l'attente ne l'est pas.** Quels comptes relever, dans quel ordre, quand
+   le prochain tour est dû : fonction de l'horloge et de l'état, sans effet. Dormir et appeler la
+   relève : le pilote. Le motif est une exigence, pas un goût — `CLAUDE.md` §18 proscrit la
+   « temporisation arbitraire », et une preuve qui attendrait soixante secondes pour observer un
+   second tour en serait une. La décision étant pure, elle se vérifie **sans dormir une seule fois**.
+
+3. **Un compte en panne n'arrête pas la veille.** Chaque compte est relevé dans son propre essai,
+   l'exception est journalisée puis absorbée, et le tour continue. C'est le seul `except` large du
+   service, et sa raison est écrite à côté : laisser remonter arrêterait le fil, et un seul compte
+   mal configuré priverait tous les autres de courrier. **L'absorption n'est pas un silence** —
+   l'événement porte l'identifiant du compte et le **type** de la panne, jamais son texte, qui peut
+   contenir un identifiant de connexion. Le `try/except` que `CLAUDE.md` §18 proscrit est celui qui
+   ne dit rien.
+
+4. **Zéro désactive la veille, et l'intervalle est borné entre cinq secondes et une heure.** Zéro
+   n'est pas « aussi vite que possible » mais « aucune veille », la relève restant déclenchable par
+   l'API interne — c'est ce dont l'environnement de preuve a besoin pour décider lui-même du moment.
+   La borne basse évite qu'une scrutation d'une seconde par compte devienne une charge constante sur
+   Stalwart et PostgREST sans faire arriver le courrier plus vite ; la borne haute évite que
+   `last_sync_at` vieillisse au point que l'écran d'état du §20.7 ne distingue plus une veille lente
+   d'un service arrêté. Le journal de démarrage dit laquelle des deux situations est en vigueur.
+
+**Ce que cette décision ne fait PAS.** Elle ne livre ni le backfill par lots (§20.6), ni la reprise
+d'un rangement manqué (§20.5), ni l'écran d'état (§20.7), qui restent dus à `CRM-059`. Elle ne
+touche pas non plus à `IDLE`, explicitement écarté par le §20.2 : la scrutation déclarée est
+observable et rejouable, la connexion permanente est un état de plus à superviser.
