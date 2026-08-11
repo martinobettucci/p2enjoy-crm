@@ -18,6 +18,14 @@ historique de chaque entrée conserve la mesure et les options d'origine ; toute
 adressée au responsable. Les entrées restent dans « Ouverts » jusqu'à leur mise en œuvre et leur
 preuve, conformément à la règle ci-dessus.
 
+**Solde d'arbitrage du 2026-08-11.** Les deux seules entrées ouvertes qui n'avaient reçu aucun
+arbitrage — **INC-085** (qui recouvrait **INC-075**) et **INC-088** — sont tranchées par les
+décisions **333** et **334**. **Aucune question n'est donc adressée au responsable dans ce
+registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en œuvre et une
+preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
+réels d'abord — **INC-076**, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
+ensuite.
+
 ---
 
 ## Ouverts
@@ -65,6 +73,8 @@ Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis 
 joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
 
 ### INC-088 — La fiche d'une card reste en lecture seule au nom d'une entrée close
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 334.** **L'écriture depuis la fiche rejoint `CRM-037`**, dont la Definition of Done exige déjà « E2E (transition bloquée, **saisie**, transition réussie) » : l'unité n'est pas élargie, elle est ramenée à son énoncé. Aucune unité n'est créée, aucune règle n'est inventée — `CRM-036` livre déjà la table, ses politiques et sa validation. Règle générale posée par la même décision : **toute limite qui cite une entrée du registre est réexaminée le jour où cette entrée est close**, dans le même changement que la clôture. L'entrée reste ouverte jusqu'à la livraison et la preuve.
 
 **Nature :** limite dont le motif invoqué a disparu, sans que la limite soit levée.
 **Relevé le :** 2026-08-11, en même temps que l'arbitrage d'INC-086 et pour la même cause — l'essai
@@ -152,6 +162,8 @@ surface manquante trouvée le même jour), `CLAUDE.md` §4 (objet métier de pre
 ---
 
 ### INC-085 — Un channel rouvert sous un track fermé est lisible par l'API, mais inatteignable à l'écran
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 333.** **Option 1 : un track redevient lisible dès qu'un de ses channels l'est** — la politique de lecture de `tracks` consultera `app.can_read_channel` sur les channels du track, et « le plus spécifique gagne » devient transitif. L'ouverture d'un tel track n'affiche **que les channels consentis**, ce que la politique de lecture des `channels` filtre déjà sans règle nouvelle. La même décision ferme **INC-075, qui décrit le même défaut** relevé trois jours plus tôt. Reprise de `CRM-012` (migration `0010_droits_fins.sql`) et de la matrice de `CRM-010`, sans réintroduire le défaut de la décision 107 — les politiques évaluent les colonnes de la ligne, jamais une relecture de la table. L'entrée reste ouverte jusqu'à la livraison et la preuve d'interface.
 
 **Nature :** écart entre une règle backend livrée et prouvée, et l'unique chemin de navigation que
 l'interface offre pour l'exercer.
@@ -672,6 +684,8 @@ le libellé métier et interdit le repli « Événement » ainsi que les noms é
 (résolution), `docs/JOURNAL.md` décisions 232 et 306.
 
 ### INC-075 — Un channel consenti par le backend est inatteignable par la navigation du produit
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 333.** **Option 1 : la politique de lecture des tracks s'élargit** — un track redevient lisible dès qu'un de ses channels l'est. **Cette entrée et INC-085 décrivent le même défaut**, relevé deux fois à trois jours d'écart : le doublon est consigné par la décision 333, et une seule livraison les ferme toutes les deux. L'entrée reste ouverte jusqu'à cette livraison et sa preuve.
 
 **Nature :** écart entre une règle d'autorisation livrée et prouvée, et le parcours réellement
 possible dans l'interface.

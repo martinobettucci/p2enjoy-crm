@@ -34,8 +34,8 @@ Chunk 1  DOCUMENTATION           CRM-000                    [x]
 Chunk 2  INFRASTRUCTURE          CRM-001 → CRM-019, puis CRM-022
 Chunk 3  CRM UTILISABLE          CRM-020 → CRM-047
 Chunk 4  MESSAGERIE              CRM-050 → CRM-059
-Chunk 5  EXTENSIONS              CRM-060 → CRM-075
-         PROPOSITIONS            CRM-P01 → CRM-P12  (en attente d'arbitrage)
+Chunk 5  EXTENSIONS              CRM-060 → CRM-081
+         PROPOSITIONS            CRM-P01 → CRM-P12  (toutes arbitrées, décision 299)
 ```
 
 L'application est **utilisable à la fin du chunk 3**. Le chunk 4 ajoute la messagerie, qui est la
@@ -55,7 +55,7 @@ fonctionnalité différenciante mais aussi la plus risquée techniquement.
 | 3.c | `CRM-035` → `CRM-037` | Le form composer s'appuie sur les étapes. |
 | 3.d | `CRM-040` → `CRM-047` | Les cards et leurs vues, puis le seed de démonstration complet. |
 | 4 | `CRM-050` → `CRM-059` | Messagerie : infrastructure mail, puis ingestion, puis interface, puis envoi. |
-| 5 | `CRM-060` → `CRM-075` | Extensions, chacune indépendamment livrable. |
+| 5 | `CRM-060` → `CRM-081` | Extensions, chacune indépendamment livrable. `CRM-075` (administration des tracks et des channels, décision 332) précède `CRM-076` : un workflow s'affecte à un channel, qui vit dans un track. Le snooze, qui portait `CRM-075`, est renuméroté `CRM-081` par la décision 335. |
 
 **Contraintes d'ordre à ne pas enfreindre :**
 

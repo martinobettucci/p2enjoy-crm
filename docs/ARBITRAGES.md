@@ -43,10 +43,26 @@ l'entrée `INC-` correspondante déplacée en « Clos ».
 | INC-071, INC-072, INC-076 | commenter exige écriture ; modération auditée ; auteur nullable | reprise commentaires/identité |
 | INC-077 | libellé « Dossier changé », famille « Organisation » — **livré et prouvé** | `CRM-019` `[x]` |
 | INC-081 | close seulement après livraison et preuve des quatre unités créées — **condition satisfaite** | `CRM-016` à `CRM-019` `[x]` |
+| INC-085, INC-075 | **même défaut, deux entrées** : un track redevient lisible dès qu'un de ses channels l'est ; ouverture limitée aux channels consentis (décision 333) | reprise `CRM-012`, matrice `CRM-010` |
+| INC-088 | l'écriture depuis la fiche rejoint `CRM-037`, dont la DoD exige déjà la saisie (décision 334) | `CRM-037` |
 
 Les propositions P01 à P12 sont elles aussi arbitrées par la décision 299 et par la fin de
 `docs/BACKLOG.md`. Il ne reste donc **aucune décision produit suspendue** ; il reste du travail à
 implémenter, mesurer et fermer.
+
+## Solde du 2026-08-11
+
+Les deux dernières entrées sans arbitrage sont tranchées (décisions 333 et 334), une collision
+d'identifiant du backlog est résolue (décision 335) et l'**ordre de solde** est fixé (décision 336) :
+
+1. **INC-076** — un compte devenu indestructible dès qu'il a commenté ; `author_id` nullable avec
+   `ON DELETE SET NULL`. Rouvre `CRM-011` et `CRM-043`.
+2. **INC-085 / INC-075** — la politique de lecture des tracks s'élargit. Rouvre `CRM-012`.
+3. **INC-072** — la suppression d'un commentaire ouverte aux `admin`, auditée, sans la modification.
+4. Le **lot documentaire** — INC-017, INC-019, INC-069 —, puis les mises en œuvre par unité porteuse.
+
+Le lot documentaire vient **après** les défauts réels, et non avant : il est le moins cher et ne
+répare rien.
 
 ---
 

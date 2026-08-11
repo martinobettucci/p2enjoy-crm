@@ -276,8 +276,13 @@ PORT_RAPPORT=9323
 # et se dédouble —, 0018 et 0022 retournent leur témoin, 0019 en gagne une aussi. 1884 + 21 + 2 =
 # **1907**, valeur MESURÉE. `e2e/api/envoi.spec.ts` ajoute **8 scénarios** : 478 + 8 = **486**.
 # `e2e/mail/envoi.spec.ts` ajoute l'aller-retour complet : 38 + 1 = **39**.
-FICHIERS_SQL_ATTENDUS=30
-ASSERTIONS_ATTENDUES=1907
+# --- `CRM-059` ---------------------------------------------------------------------------------
+# `supabase/tests/0031_resilience_envoi.test.sql` ajoute **14 assertions** : le report réel d'une
+# reprogrammation, le refus d'un délai nul, le refus de reprogrammer un envoi déjà parti,
+# l'assainissement du code d'erreur PAR LA BASE, le seuil de l'orphelin dans les deux sens, et
+# l'état exécuté avec les droits de l'appelant. 1907 + 14 = **1921**, valeur MESURÉE.
+FICHIERS_SQL_ATTENDUS=31
+ASSERTIONS_ATTENDUES=1921
 SCENARIOS_API=486
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis

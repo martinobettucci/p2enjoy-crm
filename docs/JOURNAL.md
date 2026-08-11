@@ -10678,3 +10678,128 @@ session est **au repos** ; travaillant sans interruption, elle n'a jamais eu de 
 intervalle passe de deux heures à vingt minutes, ce qui augmente le nombre d'occasions mais ne
 change pas la règle : une session occupée ne laisse pas passer de cron. Le fait est écrit ici pour
 qu'il ne soit pas redécouvert.
+
+### Décision 333 — Un droit accordé qui n'a pas de chemin n'est pas un droit
+
+**2026-08-11 — arbitrage du responsable sur INC-085, qui ferme aussi INC-075.**
+
+**Deux entrées, un seul défaut.** INC-075 (relevée le 2026-08-06, pendant la spécification de
+`CRM-046`) et INC-085 (relevée le 2026-08-09, en produisant la preuve d'interface de `CRM-012`)
+décrivent la même chose à trois jours d'écart : Farida Nowak porte `track_members.access = 'none'`
+sur « Conseil & IA » et `channel_members.access = 'member'` sur « Prospection », channel de ce
+track. Le backend fait exactement ce que `docs/SPEC-permissions-rls.md` §3 ligne f prescrit — le
+channel lui est rendu — et aucun geste de navigation n'y mène, la barre d'onglets ne listant les
+channels qu'une fois un track ouvert. Le doublon est consigné ici : une seule décision les ferme
+toutes les deux, et l'existence de deux entrées pour un même fait est elle-même le symptôme d'un
+registre relu par unité plutôt que par sujet.
+
+**L'arbitrage : option 1 — un track redevient lisible dès qu'un de ses channels l'est.** La
+politique de lecture de `tracks` consultera `app.can_read_channel` sur les channels du track.
+
+**Le motif.** « Le plus spécifique gagne » devient **transitif**, ce qui est la seule lecture qui
+rende la règle exerçable. Les deux autres issues étaient perdantes pour des raisons différentes :
+une surface « Channels partagés avec moi » n'aurait touché aucune politique mais laissait
+`/tracks/conseil-ia/prospection` rendre « Track introuvable », et faisait coexister deux chemins de
+navigation vers le même objet, sans porteur au backlog ; déclarer que le droit fin de channel ne
+sert qu'à restreindre aurait été **un changement de règle déguisé en renoncement d'interface** —
+il aurait fallu corriger le §3.4, retirer une assertion pgTAP verte et une ligne du seed, c'est-à-dire
+retirer une capacité livrée et prouvée parce que l'écran ne savait pas s'en servir.
+
+**Ce que l'ouverture du track affiche, et c'est la question que l'option 1 posait.** Seulement les
+channels consentis. Aucune règle nouvelle n'est nécessaire pour cela : la politique de lecture des
+`channels` filtre déjà, et c'est précisément elle qui rend « Prospection ». Un track réapparu dans
+la barre latérale avec un seul onglet est une information exacte, pas une anomalie d'affichage.
+
+**Portée de la reprise, et ce qui doit être re-prouvé.** La politique de lecture de `tracks` est
+livrée par `CRM-012` (`supabase/migrations/0010_droits_fins.sql`) et la matrice de résolution à 64
+combinaisons appartient à `CRM-010`. Les deux sont rouvertes par cette décision. La règle du §3.5 —
+les politiques évaluent les colonnes de la ligne, jamais une relecture de la table — reste
+opposable : l'élargissement ne doit pas ramener le défaut de la décision 107, où un `RETURNING`
+d'`INSERT` rendait `403`. La preuve d'interface de `CRM-012` devra montrer « Conseil & IA » rendu à
+Farida avec son seul onglet « Prospection », là où elle montre aujourd'hui son absence.
+
+**INC-075 et INC-085 restent ouvertes jusqu'à cette livraison et cette preuve**, conformément à la
+règle du registre : la décision retire l'attente d'arbitrage, elle ne transforme pas une correction
+due en fait acquis.
+
+### Décision 334 — Une limite ne survit pas au motif qui la justifiait
+
+**2026-08-11 — arbitrage du responsable sur INC-088.**
+
+**L'arbitrage : l'écriture depuis la fiche d'une card rejoint `CRM-037`.** Aucune unité n'est créée.
+
+**Le motif est déjà écrit dans l'unité.** La Definition of Done de `CRM-037` exige « E2E (transition
+bloquée, **saisie**, transition réussie) ». Le geste manquant y est donc nommé depuis l'origine :
+l'unité ne s'élargit pas, elle est ramenée à son énoncé. `CRM-036` livre déjà `card_field_values`,
+ses politiques et sa validation — l'écriture n'invente **aucune règle**, elle ouvre un chemin vers
+une règle livrée et prouvée, exactement comme la décision 332 l'exigeait de `CRM-075`.
+
+**Pourquoi pas une unité dédiée.** Elle aurait supposé d'**amputer** la Definition of Done de
+`CRM-037` de sa preuve de saisie, c'est-à-dire de réécrire une exigence déjà posée pour justifier
+le découpage. Un découpage qui oblige à affaiblir une DoD existante est un mauvais découpage.
+
+**Conséquence assumée :** `CRM-037` reste `[~]` plus longtemps. C'est le prix juste : elle était
+`[~]` en invoquant INC-021, close depuis `CRM-009`. Le bandeau « Consultation seule » disparaîtra
+avec la livraison, pas avec cette décision.
+
+**La leçon, et elle dépasse cette entrée.** `CRM-037` imputait sa limite à INC-021 ; INC-021 est
+close depuis `CRM-009` et personne n'a réexaminé les limites qui s'en réclamaient. `CRM-012`,
+`CRM-020` et `CRM-021` portaient la même dette et l'ont vue lever. **Toute limite qui cite une
+entrée du registre doit être réexaminée le jour où cette entrée est close**, dans le même
+changement que la clôture. Faute de quoi une entrée close continue de justifier une absence.
+
+### Décision 335 — Deux unités sous un même numéro, pour la seconde fois
+
+**2026-08-11 — arbitrage du responsable sur une collision relevée pendant la revue du backlog.**
+
+**Le fait.** La décision 332 a créé « Administration des tracks et des channels » sous le numéro
+`CRM-075`, alors que ce numéro était déjà attribué à « Snooze des fils et des cards » dans la table
+du chunk 5 de `docs/BACKLOG.md`. C'est **le mode de défaillance d'INC-069** — deux décisions n° 180
+— transposé au backlog, où les numéros ne servent pas seulement de référence mais de **dépendance
+d'ordre** : « `CRM-075` précède `CRM-076` » devient ambigu.
+
+**L'arbitrage : « Snooze des fils et des cards » devient `CRM-081`.** L'unité d'administration
+conserve `CRM-075`.
+
+**Le motif est le nombre de références déjà poussées.** L'administration de l'arborescence est citée
+par la décision 332, par `CHANGELOG.md`, par INC-086 et par le corps de `docs/BACKLOG.md` — quatre
+documents publiés. « Snooze » n'existe que comme ligne de table, cité nulle part ailleurs. Renuméroter
+l'unité la moins référencée est le geste qui casse le moins ; suffixer `075 a` et `075 b`, comme il
+a fallu le faire pour les décisions 180, aurait délibérément reproduit un défaut que le registre
+dénonce.
+
+**Corollaire à appliquer dans le même changement :** `docs/MASTER_PLAN.md` §2 borne encore le chunk 5
+à `CRM-075` alors que ses unités vont à `CRM-081`, et y déclare `CRM-P01 → CRM-P12` « en attente
+d'arbitrage » alors que la décision 299 les a toutes tranchées. Les deux mentions sont corrigées ici.
+
+**Règle posée pour la suite :** un numéro d'unité s'attribue en lisant **la table du chunk**, pas le
+dernier numéro cité dans le corps du document. La décision 332 a lu le corps.
+
+### Décision 336 — Solder d'abord ce qui est cassé
+
+**2026-08-11 — arbitrage du responsable sur l'ordre de solde du registre.**
+
+**L'état mesuré.** Cinquante-huit entrées sont ouvertes. Cinquante-six sont **arbitrées** par les
+décisions 292 à 299 et la matrice de `docs/ARBITRAGES.md` : elles restent ouvertes parce que la
+règle du registre l'exige — une décision ne ferme pas une entrée tant que sa correction n'est pas
+livrée et prouvée. Deux seulement attendaient un arbitrage, et les décisions 333 et 334 les
+rendent. **Il ne reste donc aucune question ouverte au responsable dans le registre.**
+
+**L'arbitrage sur l'ordre : les défauts réels d'abord.** Dans l'ordre — INC-076, puis INC-085 et
+INC-075, puis INC-072.
+
+**Le motif.** Ce sont les seules entrées où quelque chose est **cassé pour un utilisateur**, et non
+où une trace manque. INC-076 est mesurée : `DELETE /auth/v1/admin/users/<id>` rend `500` sur toute
+base seedée dès que le compte a écrit un commentaire, et trois contrôles de `scripts/verify-seed.sh`
+échouent en le constatant sans le nommer. Un droit à l'effacement que le schéma rend inexécutable
+heurte `CLAUDE.md` §11, et c'est le seul de ces trois défauts qui touche des données personnelles.
+
+**Ce qui est explicitement écarté :** commencer par le lot documentaire — INC-017, INC-019,
+INC-069. Il est le moins cher et ne répare rien ; le choisir d'abord reviendrait à optimiser le
+compteur d'entrées ouvertes avant la valeur rendue à l'utilisateur.
+
+**Le coût assumé :** INC-076 rouvre `CRM-011` (dont la Definition of Done affirme le contraire de ce
+que la base fait) et `CRM-043` (qui porte la colonne `author_id not null` sans action `ON DELETE`).
+Un chunk qui touche deux unités `[~]` est plus lourd qu'un chunk documentaire — c'est le prix d'une
+correction de fond, et l'arbitrage de la matrice est déjà rendu : `author_id` devient nullable avec
+`ON DELETE SET NULL`, comme les cinq autres clés vers `profiles` et comme `card_events.actor_id`.

@@ -670,7 +670,19 @@ Résolution « le plus spécifique gagne », administrateur jamais restreint.
 - [x] **~~Les politiques des tables d'identité ne sont pas écrites~~ — écrites depuis par
       `CRM-022`**, migration `0021_identites_et_memberships_surs.sql`. INC-014 est traitée là où
       elle devait l'être, et non par une unité qui touchait aux politiques par commodité.
-- [ ] **INC-085 est ouverte, et elle est née de cette preuve d'interface.** Farida porte aussi
+- [ ] **INC-085 est ARBITRÉE et non close — décision 333, cette unité est rouverte.** La politique
+      de lecture de `tracks` s'élargit : un track redevient lisible dès qu'un de ses **channels**
+      l'est, `app.can_read_channel` étant consultée sur les channels du track. « Le plus spécifique
+      gagne » devient transitif, et l'ouverture d'un tel track n'affiche **que les channels
+      consentis** — la politique de lecture des `channels` filtre déjà, aucune règle nouvelle n'est
+      créée. La même décision constate qu'**INC-075 décrit le même défaut** et se ferme avec elle.
+      À reprendre dans le même changement : `supabase/migrations/0010_droits_fins.sql`, la matrice
+      de `CRM-010`, `0011_droits_fins.test.sql`, `e2e/api/droits-fins.spec.ts`,
+      `e2e/ui/droits-fins.spec.ts` — qui devra montrer « Conseil & IA » rendu à Farida avec son seul
+      onglet « Prospection » —, `scripts/verify-droits-fins.sh` et `docs/SPEC-permissions-rls.md`
+      §3.4. **Garde-fou de la décision 107 opposable** : les politiques évaluent les colonnes de la
+      ligne, jamais une relecture de la table, faute de quoi un `insert … returning` rendra `403`.
+- [ ] **Constat d'origine, conservé.** Farida porte aussi
       `channel_members.access = 'member'` sur « Prospection », channel du track qui lui est fermé.
       MESURÉ : l'API **rend** ce channel — la réouverture du plus spécifique fonctionne — mais
       **aucun geste de navigation n'y mène**, la barre d'onglets ne listant les channels qu'une
@@ -684,8 +696,9 @@ résolution ; preuves de refus n° 3, 4, 7 et 11 ». La première est livrée, l
 matrice est éprouvée sur des lignes réelles, ce que `CRM-010` ne pouvait pas faire. Les preuves
 n° 3, 4 et 11 sont acquises **au niveau des tracks et des channels**, la n° 4 au niveau des
 **cards** par `CRM-040`, et **la n° 7 depuis `CRM-052`** pour les comptes entrants. **Les quatre
-preuves de la Definition of Done sont donc tenues** ; seule INC-085 reste ouverte, et elle appelle
-un arbitrage du responsable, non un correctif.
+preuves de la Definition of Done sont donc tenues** ; seule INC-085 reste ouverte. **Depuis la
+décision 333, elle n'appelle plus un arbitrage mais un correctif** — l'élargissement de la politique
+de lecture des tracks —, ce qui rouvre cette unité au lieu de la laisser en attente.
 
 *Limites nommées, non masquées.*
 
@@ -694,7 +707,8 @@ un arbitrage du responsable, non un correctif.
 - **~~La preuve n° 7 n'a pas de sujet.~~** `CRM-052` lui en donne un, et elle est mesurée avec les
   jetons réels : un membre ne voit que sa propre boîte.
 - **Un droit fin de channel accordé sous un track fermé n'a pas de surface** — INC-085, ouverte par
-  cette preuve, non résolue ici.
+  cette preuve, **arbitrée par la décision 333** et non résolue ici : la politique de lecture des
+  tracks s'élargira, et la limite tombera avec la reprise de cette unité.
 - **Une exception restrictive posée avant cette migration devient opposable au moment où elle est
   appliquée**, sans autre signal. Aucune ligne n'existe sur les bases du projet hors du seed, mais
   le contrôle à exécuter avant tout déploiement est écrit dans `docs/PROD_MIGRATIONS.md` §3.
@@ -3159,7 +3173,19 @@ accessibilité des erreurs vérifiée.
       étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
       destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
       seed ne pose pas et qu'inventer ici dépasserait l'unité. Le fait est nommé, pas contourné.
-- [ ] **Aucune écriture depuis l'écran** (§4.7), donc aucune preuve de saisie. Relève d'INC-021.
+- [ ] **L'ÉCRITURE DEPUIS L'ÉCRAN APPARTIENT À CETTE UNITÉ — INC-088, décision 334.** La limite
+      « aucune écriture depuis l'écran » (§4.7) s'imputait à **INC-021**, close depuis `CRM-009` :
+      le motif invoqué avait disparu sans que la limite soit réexaminée, et la fiche affiche encore
+      « Consultation seule : l'enregistrement des réponses n'est pas encore livré dans cette fiche ».
+      L'unité n'est pas élargie, elle est **ramenée à son énoncé** : sa Definition of Done exige
+      depuis l'origine « E2E (transition bloquée, **saisie**, transition réussie) ». Aucune règle
+      n'est inventée — `CRM-036` livre déjà `card_field_values`, ses politiques et sa validation ;
+      il ne manque que le chemin vers elles. Reste dû : la saisie, son refus backend mesuré **hors
+      interface** pour un profil sans droit d'écriture, les captures aux quatre paliers, le retrait
+      du bandeau « Consultation seule » et la mise à jour de `docs/manual.md`.
+  *Énoncé d'origine, conservé pour la trace : « **Aucune écriture depuis l'écran** (§4.7), donc
+  aucune preuve de saisie. Relève d'INC-021. » La limite reste vraie à l'écran ; c'est son **motif**
+  qui est caduc, pas son constat.*
 - [ ] **Le défilement jusqu'au premier champ concerné** (§4.5) n'est pas livré : il appartient au
       geste de transition, qui n'existe pas. Même cause qu'INC-062.
 
@@ -5713,12 +5739,21 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
-| CRM-075 | Snooze des fils et des cards | `[ ]` |
+| CRM-075 | **Administration des tracks et des channels** | `[ ]` |
 | CRM-076 | Éditeur administrateur de workflows | `[ ]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[ ]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
+| CRM-081 | Snooze des fils et des cards | `[ ]` |
+
+*`CRM-075` désignait « Snooze des fils et des cards » jusqu'au 2026-08-11. La décision 332 a créé
+l'administration de l'arborescence sous ce numéro sans voir qu'il était pris — même mode de
+défaillance qu'INC-069, deux décisions sous le numéro 180. **La décision 335 renumérote le snooze
+en `CRM-081`** : l'administration est déjà citée par la décision 332, par `CHANGELOG.md`, par
+INC-086 et par le corps de ce document, là où le snooze n'existait qu'en ligne de table. Un numéro
+d'unité s'attribue désormais en lisant **cette table**, jamais le dernier numéro cité dans le corps
+du document.*
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
@@ -5821,6 +5856,12 @@ retour arrière, pgTAP/API/E2E et captures.
 Parcours du premier lancement fondé sur les vrais écrans déjà livrés, interrompable et relançable,
 sans tracker ni stockage persistant non consenti. **DoD** : clavier, mobile, reprise de session,
 états incomplets et console stricte prouvés ; aucun écran factice ne remplace une fonctionnalité.
+
+### CRM-081 — Snooze des fils et des cards `[ ]`
+*Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
+collision avec l'administration de l'arborescence. Son objet n'est pas modifié ici : elle reste
+décrite par sa seule ligne de la table du chunk 5, comme les autres unités de ce chunk qui n'ont
+pas encore d'énoncé détaillé.*
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 
