@@ -71,6 +71,12 @@ class BaseFactice:
     def dossiers_a_renommer(self, _account_id):
         return []
 
+    def messages_a_ranger(self, _account_id):
+        # `CRM-059` §20.5 : la reprise d'un rangement manqué suit la relève sur un compte à
+        # dossiers. Ce fichier n'exerce pas la reprise elle-même — `test_ingestion.py` le fait —,
+        # une liste vide suffit à laisser `relever_compte` traverser l'appel.
+        return []
+
 
 def relever(monkeypatch, imap, base, dossiers=("INBOX",)):
     monkeypatch.setattr(ingestion, "_connecter", lambda _compte, _timeout: imap)
