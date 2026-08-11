@@ -77,6 +77,32 @@ de planificateur**. Tant que ce n'est pas tranché, le défaut se reproduira à 
 INC-059 (deux exécutions livrant la même unité en parallèle), INC-069 (deux décisions sous le numéro
 180, née de la même cause), `CLAUDE.md` §13.
 
+**OBSERVÉ DE NOUVEAU LE 2026-08-11, EN DIRECT, ET SANS DOMMAGE.** Deux exécutions ont travaillé sur
+`main` dans la même heure sans se voir. La seconde a poussé `199aa6f` (« Corrige le cycle de
+dépendances qui empêchait tout amorçage à froid de la pile ») entre deux poussées de la première.
+Trois faits, tous vérifiés :
+
+1. **Aucun conflit de contenu.** Les deux changements ne partagent aucun fichier hors
+   `docs/JOURNAL.md`, et le `git pull --rebase` exigé par `CLAUDE.md` §13 a suffi. Les 235
+   assertions pytest passent après rebase.
+2. **La numérotation des décisions a tenu, mais de justesse.** L'exécution concurrente a lu le
+   journal après la décision 342 et a correctement numéroté la sienne **343** — mais son **message
+   de commit** cite « décision 342 », rédigé avant de relire le fichier. La trace du dépôt est donc
+   correcte ; la référence du message est périmée. C'est le même mode de défaillance qu'INC-069,
+   arrêté cette fois par le fichier plutôt que par une convention.
+3. **L'attribution fautive s'est reproduite.** `199aa6f` porte `Claude <noreply@anthropic.com>`,
+   alors que la décision 340 venait de corriger exactement cela sur `e373900` une heure plus tôt.
+   C'est la preuve directe que la correction d'historique ne suffit pas : **seul le crochet
+   `pre-commit` nommé par la décision 340 empêcherait la récidive**, et il n'appartient toujours à
+   aucune unité. Ce commit n'est PAS réécrit : il appartient à une exécution concurrente, et une
+   réécriture d'historique pendant qu'une autre session pousse détruirait son travail.
+
+**Ce que cela change pour l'arbitrage en cours.** Le responsable a autorisé la réécriture de
+`e373900` en déclarant être **seul sur `main`**. Cette observation montre que la branche est en
+réalité partagée avec d'autres exécutions planifiées. La réécriture du 2026-08-11 est passée sans
+dommage — elle précède `199aa6f` d'une heure —, mais **toute réécriture ultérieure doit être
+considérée comme dangereuse** tant que ces exécutions ne sont pas sérialisées.
+
 ### INC-088 — La fiche d'une card reste en lecture seule au nom d'une entrée close
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 334.** **L'écriture depuis la fiche rejoint `CRM-037`**, dont la Definition of Done exige déjà « E2E (transition bloquée, **saisie**, transition réussie) » : l'unité n'est pas élargie, elle est ramenée à son énoncé. Aucune unité n'est créée, aucune règle n'est inventée — `CRM-036` livre déjà la table, ses politiques et sa validation. Règle générale posée par la même décision : **toute limite qui cite une entrée du registre est réexaminée le jour où cette entrée est close**, dans le même changement que la clôture. L'entrée reste ouverte jusqu'à la livraison et la preuve.

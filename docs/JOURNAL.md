@@ -11124,3 +11124,44 @@ cette pile démarre à froid sans intervention, depuis la création du projet.
 cette session fait, sur cette pile enfin vivante. Elle ne câble pas `pip_ca` dans un fichier Compose,
 par symétrie délibérée avec `npm_ca` (décision 280) : les deux restent un geste d'exploitant, pas un
 réglage produit.
+
+### Décision 344 — Deux exécutions ont poussé sur `main` dans la même heure, et ce qu'il faut en tirer
+
+**2026-08-11 — constat fait en poussant, non en le cherchant.**
+
+**Le fait.** Le `git pull --rebase` précédant la poussée du backfill a rapporté un commit inattendu :
+`199aa6f`, poussé deux minutes plus tôt par une **autre exécution** travaillant sur le même dépôt et
+la même branche. Aucun conflit — les deux changements ne partagent aucun fichier hors du journal —
+et les 235 assertions pytest passent après rebase.
+
+**Trois enseignements, dont deux comptent :**
+
+1. **La numérotation des décisions a tenu.** L'exécution concurrente a relu le journal et numéroté
+   la sienne **343**, après ma **342**. Son *message de commit* cite pourtant « décision 342 », ayant
+   été rédigé avant cette relecture. La trace du dépôt est juste, la référence du message est
+   périmée. La règle posée après INC-069 — un numéro s'attribue en lisant **le fichier**, jamais le
+   dernier numéro cité ailleurs — a fait son travail.
+
+2. **L'attribution fautive s'est reproduite immédiatement.** `199aa6f` porte
+   `Claude <noreply@anthropic.com>`, une heure après que la décision 340 a corrigé exactement cela
+   sur `e373900`, sur instruction du responsable. C'est la démonstration que **corriger l'historique
+   ne corrige pas la cause** : la configuration Git de chaque environnement d'exécution est
+   réinitialisée à l'identité de l'agent, et rien n'empêche le commit suivant. Le crochet
+   `pre-commit` refusant une adresse non conforme, nommé comme remède durable par la décision 340,
+   cesse d'être une suggestion : c'est la seule barrière qui tienne. Il n'appartient toujours à
+   aucune unité.
+
+   **`199aa6f` n'est PAS réécrit.** Une réécriture d'historique pendant qu'une autre exécution
+   pousse détruirait son travail, et l'autorisation du responsable portait sur un commit nommé, à un
+   moment où la branche paraissait libre.
+
+3. **La prémisse « seul sur `main` » était inexacte, sans que personne n'ait menti.** Le responsable
+   l'a déclarée de bonne foi ; ce sont ses propres routines planifiées qui partagent la branche. La
+   réécriture du 2026-08-11 est passée sans dommage parce qu'elle précède `199aa6f` d'une heure.
+   **Toute réécriture ultérieure doit être tenue pour dangereuse** tant que ces exécutions ne sont
+   pas sérialisées — ce que la sérialisation demandée par INC-089 réglerait aussi.
+
+**Ce que cette décision ne fait pas.** Elle ne sérialise rien, ne pose aucun crochet et ne réécrit
+aucun historique : les trois dépassent la tâche autorisée. Elle consigne, dans INC-089 et ici, un
+fait observé en direct plutôt qu'une hypothèse — ce que les décisions 337 et 338 avaient dû déduire
+d'un état périmé, celle-ci l'a vu se produire.
