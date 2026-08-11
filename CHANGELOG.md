@@ -13,6 +13,34 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **`CRM-075` — la couche d'accès aux données de l'administration de l'arborescence.**
+  `webapp/src/lib/administration-arborescence.ts` porte les trois lectures — tracks, channels d'un
+  track, workflows affectables — et les huit écritures : créer, renommer, déplacer, archiver et
+  désarchiver un track comme un channel. **Aucune règle backend nouvelle** : chaque refus traduit est
+  déjà posé et mesuré par `CRM-020`, `CRM-021` ou `CRM-033`.
+  - **Réordonner écrit une seule position**, le milieu des deux voisines, au lieu d'une permutation
+    en deux `UPDATE` non atomiques. Les cas où l'arithmétique ne peut pas produire une position
+    distincte — voisines de position égale, première position nulle ou négative, précision flottante
+    épuisée — sont **refusés et nommés**, jamais écrits à vide.
+  - **Les refus sont classés sur le code PostgreSQL d'abord**, le code HTTP ensuite, jamais sur le
+    texte du message. Les deux refus qui partagent le `SQLSTATE 23514` — contrainte d'affectation
+    d'un workflow et `CHECK` de forme — sont séparés par le **nom de la contrainte**, seule
+    inspection de texte du module.
+  - **Un `PATCH` rendant `200` et zéro ligne est traité comme « sans effet »**, ni succès ni erreur :
+    le `USING` de la politique a filtré la ligne, et afficher un succès montrerait une modification
+    qui n'a pas eu lieu.
+  - **`position` est envoyée à `null` à l'insertion** pour que le trigger place l'objet en fin de
+    liste — comportement mesuré par `docs/SPEC-tracks.md` §3. Le générateur de types ne voyant pas
+    les triggers déclare la colonne obligatoire ; l'écart est écrit à l'endroit exact où il est
+    contourné, plutôt que tu.
+  - Preuves : **51 assertions unitaires**, éprouvant la requête réellement émise autant que la
+    valeur rendue. Non-complaisance vérifiée par trois mutations qui font bien rougir la suite.
+    `npm run typecheck`, `npm run test:unit` (675 tests, 30 fichiers) et `npm run build` verts.
+  - **Non livré par ce changement** : l'écran lui-même, ses textes, sa route, ses preuves E2E et ses
+    captures. `CRM-075` reste `[~]`.
+
 ### Documentation
 
 - **`CRM-075` est spécifiée avant d'être écrite.** `docs/SPEC-administration-arborescence.md` décrit

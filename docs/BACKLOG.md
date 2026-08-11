@@ -5864,10 +5864,13 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
 
 **Definition of Done détaillée**, par preuve et par support :
 
-- [ ] `webapp/src/lib/administration-arborescence.ts` — lectures et six écritures, refus classés sur
+- [x] `webapp/src/lib/administration-arborescence.ts` — lectures et huit écritures, refus classés sur
       le code PostgreSQL puis le code HTTP, `200`-zéro-ligne traité comme « sans effet ».
-- [ ] `webapp/src/lib/administration-arborescence.test.ts` — position calculée, dégénérescences,
+- [x] `webapp/src/lib/administration-arborescence.test.ts` — position calculée, dégénérescences,
       proposition de slug, motif copié de la contrainte, classement de chaque refus, requêtes émises.
+      **51 assertions vertes**, non complaisantes : trois mutations — garde du milieu strict retirée,
+      filtre des archivés retiré, code HTTP testé avant le code PostgreSQL — ont été appliquées et
+      ont bien fait rougir 3, 1 et 1 assertions avant restauration.
 - [ ] Écran, index de réglages, route, textes centralisés dans `webapp/src/i18n/fr.ts`.
 - [ ] `webapp/src/app/AdministrationArborescence.test.tsx` — états, formulaires, confirmation,
       focus à l'ouverture et à la fermeture, commandes désactivées aux extrémités.
