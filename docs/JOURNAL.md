@@ -10435,3 +10435,56 @@ un dossier vide derrière.
 **Ce qui reste dû, et qui est nommé** : un rangement manqué n'est pas rejoué. Le rangement est tenté
 à la **première** vue d'un message ; un refus est journalisé, jamais repris. La reprise appartient à
 `CRM-059`, dont c'est précisément l'objet.
+
+### Décision 327 — Qui voit un message que personne n'a encore classé
+
+**2026-08-11 — `CRM-057`, spécification écrite AVANT le code (CLAUDE.md §5).**
+
+**Le problème.** `CRM-054` a laissé une question ouverte, et l'a écrite dans sa propre migration :
+un message non classé n'est lisible par personne à travers PostgREST, faute d'un porteur de droit.
+L'inbox globale ne peut pas exister sans y répondre — un panneau « Non classés » vide pour tout le
+monde ne serait pas un écran, mais une promesse non tenue.
+
+**Ce que j'ai refusé d'inventer.** Un « rôle de tri », un drapeau `visible_par_tous`, une politique
+« tous les membres du workspace ». Chacune aurait été une notion nouvelle, à documenter, à
+éprouver, et à défaire le jour où le produit tranchera vraiment la question du tri partagé.
+
+**La décision.** La visibilité d'un message non classé est **exactement celle de la boîte où il a
+été vu** — la règle que `mail_message_occurrences` porte déjà depuis `CRM-054` : le propriétaire du
+compte, ou un administrateur du workspace. Un message non classé n'existe que par ses occurrences ;
+faire suivre sa visibilité à celles-ci n'ajoute rien au modèle. Un message classé, lui, continue de
+suivre sa card.
+
+**La conséquence, nommée plutôt que masquée** : un membre ordinaire ne voit **aucun** message non
+classé, et le panneau « Non classés » lui est vide. Ouvrir le tri à tous exposerait à chacun du
+courrier dont personne n'a établi qu'il concerne le workspace — une adresse de contact reçoit aussi
+des candidatures et des factures. Une assertion fige cette absence et devra être **révisée**, non
+retirée, le jour où un rôle de tri existera.
+
+**Un défaut trouvé en écrivant la spécification, et qui n'est pas théorique.** `classify_message`
+ne vérifiait que le droit d'**écriture sur la card cible**. Tant qu'aucun message non classé
+n'était lisible, cela ne se voyait pas. Dès que l'inbox existe, un membre disposant du droit
+d'écriture sur une seule card pourrait désigner l'identifiant d'un message qu'il n'a pas le droit
+de voir, le classer **chez lui**, puis le lire en toute légitimité : le contrôle d'accès contourné
+par l'écriture. Classer exige désormais les **deux** droits. Le trou existait depuis `CRM-055` ;
+c'est la spécification de l'écran qui l'a mis en évidence, pas un test.
+
+**Une mesure qui change la forme de la migration.** `storage.objects` appartient à
+`supabase_storage_admin`, dont `postgres` n'est **pas** membre : la migration qui ouvrira le
+téléchargement des pièces saines devra déclarer `-- @migration-role: supabase_admin`, comme
+`0018_pg_cron`. Mesuré aussi, et c'est ce qui rend la politique dangereuse à écrire : `anon` et
+`authenticated` détiennent **tous** les privilèges de table sur `storage.objects`, et seule
+l'absence de politique les refuse aujourd'hui. Une politique trop large n'ouvrirait pas seulement
+les pièces jointes : elle ouvrirait tout le stockage. La restriction au bucket est donc portée par
+la politique elle-même.
+
+**Le HTML des expéditeurs ne sera pas affiché**, et ce n'est pas une paresse. Injecter dans le DOM
+le HTML d'un inconnu, c'est lui accorder l'exécution de scripts, le chargement d'images distantes —
+donc le pistage à l'ouverture — et la réécriture de l'écran autour de son message. Un rendu confiné
+demande un bac à sable, une politique de contenu et ses propres preuves : une unité, pas une ligne.
+
+**Ce que le seed devra faire, et qui coûte.** L'inbox ne se démontre pas sur un écran vide, et
+CLAUDE.md §8 interdit d'y suppléer par une trace fabriquée. Le seed enverra donc **deux vrais
+messages** par la soumission SMTP authentifiée, puis déclenchera une **vraie** relève. Cela ajoute
+une dépendance de Stalwart et de `mail-sync` à chaque exécution du seed — assumée, et bruyante en
+cas de panne : un seed qui saute discrètement une démonstration ment sur l'état du produit.

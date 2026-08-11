@@ -293,7 +293,7 @@ jour à la main.
 | `card_events` | Lecture de la card | **Aucune écriture par un client** : triggers uniquement |
 | `contacts`, `organizations` | Membres du workspace | `business_developer` et `admin` |
 | `mail_inbound_accounts`, `mail_outbound_identities` | Propriétaire, plus `admin` pour les comptes système | Propriétaire ; `admin` pour les comptes système |
-| `mail_messages` | Membres du workspace ayant accès à la card, ou message non classé du workspace | Classement par RPC uniquement |
+| `mail_messages` | Message **classé** : `app.can_read_card(card_id)`. Message **non classé** : la boîte où il a été vu — son propriétaire, ou un `admin` du workspace (`CRM-057`, `docs/SPEC-mail-subsystem.md` §18.1) | Classement par RPC uniquement, et le RPC exige **les deux** droits : voir le message, écrire dans la card |
 | `mail_attachments` | Comme le message porteur | Aucune écriture directe |
 | `mail_outbox` | Propriétaire de l'identité, plus `admin` | Insertion par `queue_outbound_email` uniquement |
 | `audit_log` | `admin` | **Aucune écriture par un client** |
@@ -592,6 +592,19 @@ workspace et la card. Les politiques d'accès au bucket reproduisent `app.can_re
 
 Une pièce jointe dont `av_status` n'est pas `clean` n'est **jamais** servie, quelle que soit
 l'autorisation du demandeur.
+
+**Livré par `CRM-057` pour le bucket `mail-attachments`**, et sous une forme que la mesure impose
+(`docs/SPEC-mail-subsystem.md` §18.5) :
+
+- la politique de lecture n'ouvre qu'une **intersection** : le bon bucket, le statut `clean`, et le
+  droit de voir le message porteur — lequel suit la card pour un message classé, la boîte pour un
+  message non classé ;
+- elle est écrite par une migration déclarant `-- @migration-role: supabase_admin`, car
+  `storage.objects` appartient à `supabase_storage_admin` et `postgres` n'en est **pas** membre ;
+- `anon` et `authenticated` détiennent déjà tous les privilèges de **table** sur `storage.objects`,
+  et seule l'absence de politique les refusait : une politique large ouvrirait tout le stockage, et
+  la restriction au bucket est donc portée par la politique elle-même, jamais supposée ;
+- **aucune écriture** n'est ouverte : le dépôt reste le fait de `service_role`.
 
 ## 6. Comptes de service
 

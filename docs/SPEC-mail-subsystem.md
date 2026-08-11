@@ -1189,3 +1189,155 @@ après classement, l'assainissement des noms, le renommage propagé, et la déte
 
 **Le worker ne supprime jamais un message d'`INBOX` : il copie** (§4.5). Décider à la place de
 l'utilisateur de retirer un message de sa boîte serait destructif.
+
+---
+
+## 18. Inbox globale — `CRM-057`
+
+### 18.1 La question que l'unité doit trancher, et qu'aucune autre ne pouvait trancher
+
+`CRM-054` a livré l'ingestion en laissant une phrase dans sa migration : « un message NON CLASSÉ
+n'est lisible par personne à travers PostgREST, faute d'un porteur de droit — l'inbox globale, qui
+décidera qui voit les non classés, appartient à `CRM-057` ». C'est ici que cela se décide.
+
+**LA RÈGLE N'EST PAS INVENTÉE : ELLE EST DÉJÀ ÉCRITE, AILLEURS.** `mail_message_occurrences` dit
+*où* un message a été vu — dans quelle boîte —, et sa politique existe depuis `CRM-054` : le
+propriétaire du compte, ou un administrateur du workspace. Un message non classé n'existe que par
+ses occurrences ; sa visibilité est donc **exactement celle de la boîte où il a été vu**. Aucune
+notion nouvelle, aucun rôle nouveau, aucune colonne nouvelle.
+
+Il en découle, sans que rien d'autre soit décidé :
+
+| Boîte | Qui voit ses messages **non classés** |
+|---|---|
+| Boîte du workspace (`owner_id` nul) | Les **administrateurs** du workspace |
+| Boîte personnelle (`owner_id` renseigné) | Son **propriétaire**, et les administrateurs |
+
+**Un membre ordinaire ne voit donc AUCUN message non classé**, et cette limite est nommée plutôt
+que contournée. Ouvrir le tri à tous les membres exposerait à chacun du courrier dont personne n'a
+encore établi qu'il concerne le workspace : une adresse de contact reçoit aussi des candidatures,
+des factures et des erreurs de destinataire. Un rôle de tri est concevable — il n'est pas demandé,
+il n'existe nulle part dans le produit, et l'inventer ici serait du périmètre en plus. **Une
+assertion fige cette absence** et devra être révisée, non retirée, le jour où un tel rôle existera.
+
+**Un message CLASSÉ ne change pas de règle** : il se lit si l'on peut lire sa card
+(`app.can_read_card`), comme depuis `CRM-054`. Un message peut donc être visible dans l'inbox à
+deux titres différents — sa boîte avant classement, sa card après — et c'est précisément ce que la
+Definition of Done demande de montrer : « visible **à la fois** dans la card et dans l'inbox ».
+
+### 18.2 Un défaut trouvé en écrivant cette spécification
+
+`classify_message` (§16.3) vérifie le droit d'**écriture sur la card cible**, et rien sur le
+message. Tant qu'aucun message non classé n'était lisible, cela restait sans conséquence
+observable. Dès lors que l'inbox existe, la faille devient réelle : un membre disposant du droit
+d'écriture sur une seule card pourrait, en désignant l'identifiant d'un message qu'il n'a pas le
+droit de voir, le **classer dans sa propre card** — et le lire ensuite en toute légitimité. Le
+contrôle d'accès serait contourné par l'écriture.
+
+**Classer exige désormais les DEUX droits** : voir le message, et écrire dans la card. C'est la
+règle naturelle d'un déplacement — on ne déplace que ce qu'on a le droit de prendre —, et son refus
+est éprouvé **hors interface**, avec le jeton d'un membre.
+
+### 18.3 Les trois panneaux
+
+Le §5.4 de `docs/DESIGN_SYSTEM.md` porte la forme ; ce qui suit porte le contenu.
+
+| Panneau | Contenu |
+|---|---|
+| Dossiers | « Non classés » en tête, **toujours présent**, puis l'arborescence Track → Channel → Card |
+| Liste | Les messages du dossier retenu, du plus récent au plus ancien, expéditeur, objet, date, présence de pièces |
+| Message | En-têtes, corps, pièces jointes et leur statut d'analyse, puis la card ou l'action de classement |
+
+**L'ARBORESCENCE NE MONTRE QUE CE QUI PORTE DU COURRIER.** Rejouer le board entier dans le premier
+panneau donnerait des dizaines de branches vides à traverser pour atteindre les trois qui
+comptent : une inbox est une vue du courrier, pas un second board. « Non classés » fait exception
+et reste affiché même à zéro — c'est l'entrée du travail de tri, et sa disparition ferait croire à
+une panne.
+
+**Le compte affiché est celui des messages visibles**, non celui des messages existants : deux
+utilisateurs voient deux nombres différents, et c'est la conséquence directe du §18.1.
+
+### 18.4 Le HTML d'un expéditeur ne s'affiche jamais
+
+`mail_messages` conserve `body_text` **et** `body_html`. L'inbox affiche le premier. Lorsqu'un
+message n'a que du HTML, le corps est réduit à du texte **dans le client**, balises retirées.
+
+Ce n'est pas une limitation temporaire, c'est une règle de sécurité : injecter dans le DOM le HTML
+d'un expéditeur inconnu, c'est lui offrir l'exécution de scripts, le chargement d'images distantes
+— donc le pistage à l'ouverture — et la réécriture de l'écran autour de son propre message. Un
+rendu HTML confiné est concevable ; il exige un bac à sable, une politique de contenu dédiée et ses
+propres preuves. **Il n'appartient pas à cette unité, et son absence est figée par une assertion.**
+
+### 18.5 La pièce jointe saine devient téléchargeable — la preuve n° 9 est RÉVISÉE, non retirée
+
+`CRM-054` a déposé les pièces dans un bucket privé **sans écrire la moindre politique** : la
+lecture est refusée à tout le monde, y compris à une administratrice, et la preuve de refus n° 9
+l'établit. La migration de `CRM-054` l'annonçait : « `CRM-057` devra en écrire une conditionnée à
+`av_status = 'clean'` ; écrite à la légère, elle ouvrirait aussi les `infected` ».
+
+La politique livrée ici ouvre **exactement une intersection** :
+
+- l'objet appartient au bucket `mail-attachments` ; **et**
+- la pièce correspondante est en statut **`clean`** — `pending`, `infected` et `skipped` restent
+  refusés, et le §4.3 range les trois parmi les statuts non téléchargeables ; **et**
+- le lecteur a le droit de voir le **message** qui la porte, selon le §18.1.
+
+**Mesuré le 2026-08-11 sur la pile de développement**, et cette mesure change la forme de la
+migration : `storage.objects` appartient à `supabase_storage_admin`, dont `postgres` n'est pas
+membre. La migration doit donc déclarer `-- @migration-role: supabase_admin`, comme `0018_pg_cron`.
+Mesuré aussi : `anon` et `authenticated` détiennent les privilèges de table sur `storage.objects`,
+et seule l'**absence de politique** les refuse — une politique trop large ouvrirait donc tout le
+stockage, et la restriction au bucket est portée par la politique elle-même.
+
+Les assertions qui figeaient l'absence deviennent : la pièce **`clean`** se télécharge avec le
+jeton de qui peut voir son message ; la pièce **`infected`** et la pièce **`pending`** restent
+refusées à tous, y compris à l'administratrice ; et l'anonyme reste refusé sur les trois.
+**Dixième occurrence du mécanisme de la décision 51.**
+
+### 18.6 Le message dans la card
+
+L'événement `mail_received` du §16.3 cesse d'être un événement sans détail : la timeline affiche
+l'objet et l'expéditeur du message reçu, et non plus seulement « un message est arrivé ». Le fil
+d'une card est sa mémoire ; une ligne qui ne dit pas de quel courrier elle parle n'en est pas une.
+
+L'objet et l'expéditeur sont lus dans `mail_messages` filtrée sur la card — donc sous la RLS de
+`CRM-054`, sans nouvelle route ni nouvelle politique. Un événement dont le message n'est pas
+lisible retombe sur l'affichage sans détail : la mémoire ne ment pas, elle se tait.
+
+### 18.7 Seed
+
+Le seed **envoie réellement deux messages** par la soumission SMTP authentifiée de `CRM-050`, puis
+déclenche **une relève réelle** — le chemin exact du produit, sans aucune trace fabriquée
+(CLAUDE.md §8) :
+
+| Message | Destinataire | État attendu |
+|---|---|---|
+| « Demande de devis — refonte » | l'adresse d'une card seedée | **classé automatiquement**, règle 1 |
+| « Candidature spontanée » | la boîte système uniquement | **non classé** |
+
+Leurs `Message-ID` sont **fixes** : rejouer le seed ne duplique rien, le dédoublonnage du §4.2 s'en
+charge, et les captures peuvent en dépendre. Le statut des comptes reste `pending` (§13.8) : la
+relève n'y touche pas.
+
+**Le second message rend le panneau « Non classés » démontrable**, et le premier rend démontrable la
+double visibilité exigée par la Definition of Done.
+
+### 18.8 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | La visibilité d'un non classé suit sa boîte ; un membre n'en voit aucun ; `classify_message` refuse un message invisible ; la politique de stockage n'ouvre que `clean` |
+| Vitest | La réduction du HTML en texte, l'arbre bâti depuis les messages, les états vide, chargement et erreur |
+| API | Hors interface, avec de vrais jetons : le refus du membre, le refus du classement d'un message invisible, le téléchargement d'une pièce `clean` et le refus des trois autres statuts |
+| E2E `ui` | Le parcours complet au **clavier et à la souris** : tri d'un non classé, classement dans une card, message retrouvé **dans la card et dans l'inbox** |
+| Captures | Les **quatre paliers** — 390, 768, 1152, 1440 px —, l'état vide et l'état d'erreur |
+| Harnais | `scripts/verify-mail-inbox.sh`, non complaisant, témoin et dégradations comprises |
+
+### 18.9 Limites nommées
+
+- **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058`. L'écran montre le courrier reçu.
+- **Aucun rendu HTML** (§18.4), et l'absence est figée.
+- **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client donnerait
+  un état faux dès la seconde session. Elle appartient à une unité qui la persistera.
+- **Aucun rôle de tri** (§18.1) : un membre ordinaire ne voit aucun non classé.
+- **Aucune suppression de message** depuis l'écran : la purge relève d'une unité RGPD.

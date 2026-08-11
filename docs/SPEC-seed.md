@@ -746,6 +746,30 @@ Posées par le véritable chemin d'écriture, comme au §2.17, avec la même con
 à jour sans dupliquer et ne réécrit pas le secret lorsqu'aucun mot de passe n'est transmis. Leur
 `status` reste `pending` : aucune connexion n'est ouverte par le seed.
 
+### 2.19 Deux messages réellement reçus — ajoutés par `CRM-057`
+
+L'inbox globale ne se démontre pas sur un écran vide, et CLAUDE.md §8 interdit d'y suppléer par une
+trace fabriquée : « un e-mail de démonstration doit être envoyé par le véritable mécanisme d'envoi
+local ». Le seed **soumet donc réellement deux messages** en SMTP authentifié sur le Stalwart de
+`CRM-050`, puis **déclenche une relève réelle** du service `mail-sync`.
+
+| Objet | Destinataire | État obtenu | Ce qu'il démontre |
+|---|---|---|---|
+| Demande de devis — refonte | l'adresse de la card « Refonte du site vitrine » | **classé**, règle 1 | La double visibilité : dans la card **et** dans l'inbox |
+| Candidature spontanée | `systeme@crm.p2enjoy.test` seul | **non classé** | Le panneau « Non classés », et le classement à la main |
+
+**Leurs `Message-ID` sont fixes** — `<seed-inbox-classe@p2enjoy.test>` et
+`<seed-inbox-non-classe@p2enjoy.test>`. Le dédoublonnage du §4.2 fait le reste : rejouer le seed
+n'ajoute rien, et les captures peuvent dépendre de ces deux objets.
+
+**Rien n'est forcé en base** : ni le classement, écrit par `classer_message_automatiquement` au
+cours de la relève, ni les occurrences, ni le statut des comptes, qui reste `pending` (§2.17). Le
+seed n'écrit pas un message : il en **fait arriver** un.
+
+**Cette étape ajoute une dépendance, et elle est assumée** : sans Stalwart ni `mail-sync`, le seed
+échoue au lieu de passer en silence. Un seed qui saute discrètement une démonstration ment sur
+l'état du produit.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

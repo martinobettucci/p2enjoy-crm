@@ -5530,6 +5530,24 @@ Trois panneaux, arborescence Track → Channel → Card, « Non classés », pil
 **DoD** : E2E ; captures aux quatre paliers ; message classé visible **à la fois** dans la card
 et dans l'inbox.
 
+*Spécifiée avant d'être écrite* — `docs/SPEC-mail-subsystem.md` §18, `docs/JOURNAL.md` décision 327.
+Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
+
+- **Qui voit un message non classé** : la boîte où il a été vu — son propriétaire, ou un
+  administrateur du workspace. Aucune notion nouvelle ; c'est la règle que
+  `mail_message_occurrences` porte depuis `CRM-054`. Un membre ordinaire n'en voit aucun, et
+  l'absence de rôle de tri est **figée par une assertion**, non commentée.
+- **Classer exigera les deux droits** — voir le message **et** écrire dans la card. `CRM-055` ne
+  vérifiait que le second, ce qui laissait classer chez soi un message illisible pour le lire
+  ensuite. Le trou est nommé avant d'être bouché.
+- **La pièce jointe saine devient téléchargeable**, et la preuve de refus n° 9 sera **révisée, non
+  retirée** — dixième occurrence du mécanisme de la décision 51. `pending`, `infected` et `skipped`
+  restent refusés à tous.
+- **Aucun rendu HTML** : le corps affiché est du texte. Injecter le HTML d'un expéditeur inconnu
+  lui offrirait scripts, images distantes et pistage à l'ouverture.
+- **Le seed enverra deux vrais messages** puis déclenchera une vraie relève : un écran vide ne
+  démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
+
 ### CRM-058 — Composition et réponse `[ ]`
 `queue_outbound_email`, `smtp_worker`, `Reply-To` de la card, fil respecté, envoi depuis la card
 ou depuis l'inbox par le même chemin.

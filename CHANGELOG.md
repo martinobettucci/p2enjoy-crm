@@ -13,6 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **`CRM-057` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §18, décision 327).
+  La question laissée ouverte par `CRM-054` — qui voit un message que personne n'a encore classé —
+  est tranchée **sans notion nouvelle** : la visibilité d'un non classé est celle de la **boîte** où
+  il a été vu, règle que `mail_message_occurrences` porte déjà. Un membre ordinaire n'en voit donc
+  aucun, limite nommée et figée par une assertion à venir.
+- **Un défaut de contrôle d'accès est documenté avant d'être corrigé** : `classify_message` ne
+  vérifiait que le droit d'écriture sur la card cible. Avec un écran qui expose les identifiants de
+  messages, un membre pourrait classer chez lui un message qu'il n'a pas le droit de lire, puis le
+  lire. Le classement exigera **les deux** droits.
+- **Le contrat de déploiement rattrape trois migrations** — 25, 26 et 27 — qui avaient été livrées
+  sans y être décrites, avec leurs dépendances d'ordre et leurs retours arrière.
+- `docs/DESIGN_SYSTEM.md` §5.4, `docs/SPEC-permissions-rls.md` §5, `docs/SCHEMA.md` §7 et
+  `docs/SPEC-seed.md` §2.19 sont mis en cohérence dans le même changement.
+
 ### Ajouté
 
 - **`CRM-056` tient ses trois preuves.** L'arborescence est vérifiée par un **client IMAP tiers**

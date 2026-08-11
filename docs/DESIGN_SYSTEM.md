@@ -171,6 +171,24 @@ Un message classé affiche la card à laquelle il appartient sous forme de pilul
 message non classé affiche l'action « Classer dans une card » et, le cas échéant, la suggestion
 proposée par le classement assisté, toujours présentée **comme une suggestion à confirmer**.
 
+**Livré par `CRM-057`, et voici les règles que l'écran tient** (le contenu et les droits sont dans
+`docs/SPEC-mail-subsystem.md` §18) :
+
+- **La pile sous 1024 px est une pile, pas trois panneaux rétrécis.** Un seul panneau est visible à
+  la fois, un bouton « Retour » remonte d'un cran, et le titre de l'écran dit où l'on se trouve.
+  Trois colonnes de 120 px ne montreraient ni un objet, ni un expéditeur, ni un corps.
+- **Le dossier retenu et le message retenu portent `aria-current`**, non une simple couleur : une
+  sélection qui ne s'annonce qu'en teinte n'existe pas pour un lecteur d'écran, et le §10 l'exige.
+- **L'arborescence est une liste de boutons, dépliable au clavier**, dans l'ordre du board. Chaque
+  nœud porte son nombre de messages **visibles par celui qui regarde**.
+- **Le corps du message est du texte**, jamais le HTML de l'expéditeur (§18.4). Il conserve ses
+  retours à la ligne et se replie sur les mots longs plutôt que de déborder.
+- **Une pièce jointe non saine n'a pas de lien** : elle affiche son statut d'analyse en toutes
+  lettres — « en cours d'analyse », « écartée par l'antivirus », « non analysée » — et le bouton de
+  téléchargement est **absent**, non désactivé. Un bouton grisé promet ce que le serveur refusera.
+- **Les quatre états du §5.8 sont traités** : chargement, erreur avec reprise, absence de message,
+  et absence de sélection — ce dernier étant l'état normal à l'arrivée sur l'écran, pas un vide.
+
 ### 5.5 Boutons
 
 | Variante | Style |

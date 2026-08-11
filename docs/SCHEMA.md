@@ -709,6 +709,11 @@ Un même message peut exister dans plusieurs boîtes (boîte système et boîte 
 
 Une pièce jointe n'est téléchargeable qu'en statut `clean`.
 
+**Livré par `CRM-057`** : jusque-là, le bucket `mail-attachments` ne portait **aucune** politique et
+refusait donc tout le monde. La politique de lecture de `storage.objects` n'ouvre que
+l'intersection « bucket `mail-attachments` » ∩ « pièce `clean` » ∩ « message visible »
+(`app.peut_voir_message`). Aucune écriture n'est ouverte : le dépôt reste le fait de `service_role`.
+
 ### `mail_outbox`
 File d'envoi persistante.
 
@@ -776,7 +781,8 @@ l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `au
 | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | Un **channel entier** change de workflow, et l'étape de **toutes** ses cards est remappée en un appel. `step_mapping` est un tableau JSON exact `{from_step_id,to_step_id}` couvrant chaque étape occupée une fois ; plusieurs sources peuvent converger. Les réponses sont refusées par défaut et détruites seulement sur opt-in. Rend `SETOF public.cards` (`docs/SPEC-change-channel-workflow.md`) | **livrée** — `CRM-019`, migration 20, décisions 263, 295 et 306 |
 | `app.scheduler_heartbeat_tick()` | Incrémente le heartbeat opérationnel puis ramène le job `pg_cron` à sa cadence nominale ; privée, sans argument, `search_path` vide, exécutable uniquement par le propriétaire PostgreSQL | **livrée** — `CRM-017`, `docs/SPEC-scheduler.md` |
 | `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
-| `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé |
+| `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé. **Révisée par `CRM-057`** : elle exige désormais **les deux** droits — voir le message **et** écrire dans la card. Le seul droit d'écriture aurait permis de classer chez soi un message qu'on n'a pas le droit de lire, puis de le lire (`docs/SPEC-mail-subsystem.md` §18.2) | **livrée** — `CRM-055`, migration 25 ; garde ajoutée par `CRM-057`, migration 29 |
+| `app.peut_voir_message(message_id)` | Visibilité d'un message : sa card s'il est classé, sa **boîte** s'il ne l'est pas — propriétaire du compte ou administrateur du workspace. Support des politiques de `mail_messages`, `mail_attachments` et du bucket `mail-attachments`. `SECURITY DEFINER`, `search_path` vide | **livrée** — `CRM-057`, migration 29 |
 
 Toutes les fonctions `SECURITY DEFINER` fixent `search_path` explicitement et sont accordées au
 seul rôle qui doit les appeler.
