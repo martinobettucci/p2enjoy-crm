@@ -97,6 +97,7 @@ class ReleveResponse(StrictModel):
     attachments: int
     attachments_infected: int
     filed: int
+    filed_retried: int
     renamed: int
 
 
@@ -473,6 +474,7 @@ def create_app(
             messages_new=resultat.messages_nouveaux,
             attachments_infected=resultat.pieces_infectees,
             filed=resultat.dossiers_crees,
+            filed_retried=resultat.rangements_repris,
             renamed=resultat.dossiers_renommes,
         )
         return ReleveResponse(
@@ -485,6 +487,7 @@ def create_app(
             attachments=resultat.pieces,
             attachments_infected=resultat.pieces_infectees,
             filed=resultat.dossiers_crees,
+            filed_retried=resultat.rangements_repris,
             renamed=resultat.dossiers_renommes,
         )
 

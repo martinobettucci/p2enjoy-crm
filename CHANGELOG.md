@@ -86,12 +86,20 @@ d'exécuter le code attendu.
     inventer une seconde, et porte sur tout le compte — pas seulement les dossiers surveillés du
     tour courant, puisqu'un message peut avoir été vu dans un dossier retiré de `watch_folders`
     depuis, sans avoir quitté la boîte pour autant.
+  - **La route interne `POST /internal/v1/inbound-accounts/{id}/poll` rend `filed_retried`**, distinct
+    de `filed` — le décompte des rangements neufs ne doit pas se confondre avec celui des reprises,
+    faute de quoi l'écran d'état du §20.7 mentirait sur ce qui vient de se passer.
   - Preuves : **12 assertions pgTAP** (suite complète **32 fichiers, 1933 assertions**, verte) et
     **5 assertions pytest** (suite complète **192 tests**, verte), non complaisantes — deux
     mutations (marquer le fait sans condition de succès) font rougir les deux assertions qui
-    protègent exactement cette règle.
-  - **Non exécuté, et `CRM-059` reste `[~]`** : preuve API, E2E `mail` d'une copie réellement
-    refusée puis reprise, écran d'état, backfill par lots et harnais
+    protègent exactement cette règle. **Round-trip réel exécuté sur la pile de développement** — la
+    première depuis que `CRM-059` existe (`docs/JOURNAL.md` décision 343) : un message déjà classé
+    et rangé par le seed voit son `filed_at` remis à nul pour simuler un rangement manqué passé, la
+    route de relève interne est appelée contre le VRAI Stalwart et la VRAIE base, et
+    `filed_retried: 1` est rendu tandis que `filed_at` redevient non nul en base.
+  - **Non exécuté, et `CRM-059` reste `[~]`** : preuve E2E `mail` par Playwright d'une copie
+    réellement refusée puis reprise (le round-trip ci-dessus est manuel, pas automatisé), preuve
+    d'API des refus d'autorisation, écran d'état, backfill par lots et harnais
     `scripts/verify-mail-resilience.sh`.
 
 - **`CRM-075` — l'écran d'administration des tracks et des channels.** Le geste le plus courant de
