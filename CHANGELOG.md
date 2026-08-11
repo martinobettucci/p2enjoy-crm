@@ -27,10 +27,10 @@ d'exécuter le code attendu.
     l'instant de l'écriture : une commande masquée sur cette foi cacherait un geste **permis**. Le
     refus du backend est traduit champ par champ, et la saisie est conservée.
   - **Aucune modale**, aucune suppression, aucun défaut de workflow présélectionné.
-  - **Un cinquième geste est livré et signalé** : le **désarchivage**, que l'énoncé de `CRM-075` ne
-    cite pas. Sans lui, « archiver reste réversible » est faux dans le produit. L'écart est consigné
-    en `docs/INCONSISTENCY_REPORT.md` **INC-090**, avec le coût exact de son retrait si le
-    responsable le juge hors périmètre.
+  - **Un cinquième geste est livré : le désarchivage**, que l'énoncé de `CRM-075` ne citait pas.
+    Sans lui, « archiver reste réversible » décrit une propriété de la base et non du produit.
+    **Arbitré par le responsable (INC-090, option 1A, décision 339)** : le geste reste dans l'unité,
+    dont l'énoncé est corrigé pour citer cinq verbes. INC-090 est close.
   - **Trois défauts réels trouvés par les preuves et corrigés dans le même changement** : un refus de
     déplacement calculé mais affiché nulle part ; une infobulle de commande désactivée qui annonçait
     « Déjà en tête de liste » alors que la cause était tout autre ; et la classe `size-10`, qui
@@ -71,6 +71,16 @@ d'exécuter le code attendu.
     `npm run typecheck`, `npm run test:unit` (675 tests, 30 fichiers) et `npm run build` verts.
   - **Non livré par ce changement** : l'écran lui-même, ses textes, sa route, ses preuves E2E et ses
     captures. `CRM-075` reste `[~]`.
+
+### Corrigé
+
+- **L'attribution du commit `e373900` est rétablie.** Il portait `Claude <noreply@anthropic.com>` au
+  lieu de l'identité du responsable, la configuration Git de l'environnement d'exécution écrasant
+  celle du dépôt — ce que `CLAUDE.md` §13 interdit. Corrigé **sur instruction explicite** par
+  `filter-branch` sur cinq commits : dates préservées, messages inchangés, **arbre du sommet
+  identique bit pour bit**, poussé par `--force-with-lease`. `docs/JOURNAL.md`, décision 340, qui
+  note aussi le remède durable manquant — un crochet `pre-commit` refusant une adresse non conforme,
+  qui n'appartient à aucune unité.
 
 ### Documentation
 

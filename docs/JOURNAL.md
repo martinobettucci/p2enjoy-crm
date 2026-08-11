@@ -10909,3 +10909,66 @@ l'exigeait déjà. Il n'y avait donc aucun arbitrage à éviter, seulement une m
 qui n'appartient pas à `CRM-075`. Le fait est noté ici parce que c'est la troisième fois qu'un état
 transmis d'une exécution à l'autre est plus vieux que le dépôt — INC-089, décision 337, et
 celle-ci : l'état réel se lit dans les documents, jamais dans le résumé qui les précède.
+
+### Décision 339 — Le désarchivage reste dans `CRM-075`, et l'énoncé est corrigé plutôt que le code
+
+**2026-08-11 — arbitrage explicite du responsable, sollicité par INC-090.**
+
+**La question.** L'écran d'administration livré le même jour permet de **désarchiver** un track ou un
+channel. L'énoncé de `CRM-075` ne cite que quatre verbes — créer, renommer, réordonner, archiver. Le
+geste avait été livré et **signalé** plutôt que tu (décision 338, point 3), avec trois options et le
+coût exact de son retrait.
+
+**La décision : option 1A — le désarchivage fait partie de l'unité.** Motifs retenus :
+
+- il n'introduit **aucune règle, aucune colonne, aucune politique** : c'est le même `UPDATE` sur
+  `archived_at`, à la même table, sous la même politique réservée aux administrateurs, déjà mesurée
+  par `docs/SPEC-tracks.md` §6 ligne *m* ;
+- le retirer recréerait **exactement** le défaut qu'INC-086 avait fait ouvrir : un administrateur qui
+  archive par erreur devrait reprendre la clé de service. La réversibilité serait alors une propriété
+  de la base, et non du produit ;
+- ce n'est pas la corbeille de `CRM-077`, qui porte rétention, dépendances visibles et effacement
+  définitif — l'archivage n'a aucun des trois.
+
+**Ce qui est corrigé, et ce qui ne l'est pas.** C'est l'**énoncé** de `CRM-075` qui est corrigé pour
+citer cinq verbes, pas le code, qui était déjà juste. Sa Definition of Done exige désormais le
+désarchivage dans le parcours E2E. INC-090 est **close** et rejoint la section « Clos » du registre :
+elle n'appelle aucun code, contrairement aux entrées qui y restent ouvertes jusqu'à leur preuve.
+
+**Règle générale qui se dégage, et qui vaut au-delà de ce cas.** Lorsqu'un énoncé d'unité et sa
+propre justification se contredisent — ici « quatre verbes » contre « archiver reste réversible » —,
+c'est la justification qui dit l'intention et l'énumération qui est incomplète. Le geste manquant est
+alors livré **et signalé**, jamais livré en silence ni omis au nom de la lettre.
+
+### Décision 340 — L'attribution du commit `e373900` est corrigée par réécriture d'historique
+
+**2026-08-11 — instruction explicite du responsable, exigée par `CLAUDE.md` §13.**
+
+**Le fait.** Le commit `e373900`, poussé par une exécution précédente, portait
+`Claude <noreply@anthropic.com>` comme auteur et committer, au lieu de
+`P2Enjoy <contact@p2enjoy.studio>`. La cause est mesurée et non supposée : la configuration Git du
+bac à sable d'exécution est initialisée avec l'identité de l'agent, et `CLAUDE.md` §13 interdit
+qu'un agent s'attribue un commit — « l'auteur et le committer sont toujours ceux configurés dans le
+dépôt pour le responsable ».
+
+**Ce qui a été tenté, et pourquoi ce fut une erreur.** Cette session a d'abord constaté le dépôt en
+`HEAD` détaché avec ce commit apparemment orphelin, et l'a amendé pour corriger l'attribution avant
+de le pousser. Un `git fetch` a ensuite montré qu'`origin/main` le **contenait déjà** : la référence
+distante locale était périmée, et l'amend réécrivait donc un commit **publié**. §13 réserve cette
+réécriture à une instruction explicite du responsable ; l'amend a été annulé par
+`git reset --hard origin/main`, arbres comparés et identiques.
+
+**La correction, faite sur instruction.** `git filter-branch --env-filter` sur la plage
+`e373900~1..HEAD`, réattribuant les cinq commits — dont quatre étaient déjà corrects, l'opération
+étant idempotente pour eux. Les **dates d'auteur et de committer sont préservées**, les messages
+inchangés, et l'arbre du sommet est **bit pour bit identique** (`54dfcc6`) : la réécriture ne touche
+que des métadonnées. Poussée par `--force-with-lease` ancrée sur le SHA attendu, qui aurait refusé si
+le distant avait bougé.
+
+**Condition qui rendait l'opération sûre, et qui est nommée :** le responsable a déclaré être seul
+sur `main`. Une copie locale tierce aurait exigé un `reset --hard`, cinq SHA ayant changé.
+
+**Ce qui protège l'avenir.** La configuration Git du dépôt est remise sur l'identité du responsable
+au début du travail, et non au moment du commit. Aucun garde-fou automatique ne l'impose encore : un
+crochet `pre-commit` refusant une adresse non conforme serait le remède durable, et il n'appartient
+à aucune unité — le fait est noté ici plutôt que corrigé au passage.

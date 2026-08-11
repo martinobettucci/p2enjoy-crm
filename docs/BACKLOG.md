@@ -5816,8 +5816,14 @@ un motif explicite.
 332. Elle est le **préalable** de `CRM-076` : un workflow s'affecte à un channel, qui vit dans un
 track.*
 
-Écrans d'administration de l'arborescence : **créer**, **renommer**, **réordonner** et **archiver**
-un track ; les mêmes gestes pour un channel, plus son rattachement à un track et son workflow.
+Écrans d'administration de l'arborescence : **créer**, **renommer**, **réordonner**, **archiver** et
+**désarchiver** un track ; les mêmes gestes pour un channel, plus son rattachement à un track et son
+workflow.
+
+*Le cinquième verbe a été ajouté le 2026-08-11 par arbitrage du responsable (INC-090, option 1A).
+L'énoncé d'origine n'en citait que quatre, alors qu'il justifiait l'absence de suppression par le
+fait qu'« archiver masque et reste réversible » : sans le désarchivage, cette phrase décrivait une
+propriété de la base et non du produit.*
 
 Le CRUD backend existe déjà et est prouvé depuis `CRM-020` et `CRM-021` — l'écriture y est réservée
 aux administrateurs du workspace, et `scripts/verify-tracks.sh` comme `verify-channels.sh` le
@@ -5835,10 +5841,10 @@ et rien d'autre. Une règle d'accès qui apparaîtrait ici serait le signe qu'el
   c'est une **aide d'interface** : le refus reste celui de la base, et il doit être prouvé hors
   interface (`CLAUDE.md` §10).
 
-**DoD** : E2E au clavier et à la souris — créer un track, le renommer, le réordonner, l'archiver,
-puis les mêmes gestes sur un channel ; captures aux quatre paliers ; refus du `viewer` et du membre
-mesuré **hors interface** ; seed inchangé après le passage du scénario ; harnais dédié non
-complaisant.
+**DoD** : E2E au clavier et à la souris — créer un track, le renommer, le réordonner, l'archiver, le
+désarchiver, puis les mêmes gestes sur un channel ; captures aux quatre paliers ; refus du `viewer`
+et du membre mesuré **hors interface** ; seed inchangé après le passage du scénario ; harnais dédié
+non complaisant.
 
 *Spécifiée avant d'être écrite* — `docs/SPEC-administration-arborescence.md`,
 `docs/DESIGN_SYSTEM.md` §5.13, `docs/JOURNAL.md` décision 338. Ce qui est **tranché par la
@@ -5850,10 +5856,10 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
 - **Réordonner écrit UNE position**, calculée par index fractionnaire — le milieu des deux voisines —
   et ne permute jamais deux lignes. Une permutation coûte deux `UPDATE` non atomiques dont le second
   peut échouer (§6.2).
-- **Le désarchivage est livré avec l'archivage**, bien que l'énoncé ci-dessus ne cite que quatre
-  verbes : sans lui, « archiver reste réversible » est faux dans le produit. Aucune règle, colonne ni
-  politique nouvelle — le même `UPDATE`. **Arbitrage attendu du responsable**, §11 limite 1, consigné
-  en `docs/INCONSISTENCY_REPORT.md` **INC-090** avec le coût exact de son retrait.
+- **Le désarchivage fait partie de l'unité** — **arbitré le 2026-08-11, option 1A** (INC-090,
+  `docs/JOURNAL.md` décision 339). Sans lui, « archiver reste réversible » est faux dans le produit.
+  Aucune règle, colonne ni politique nouvelle : le même `UPDATE`, sous la même politique. L'énoncé
+  ci-dessus est corrigé pour le citer, et INC-090 est **close**.
 - **Les commandes ne sont PAS masquées pour un non-administrateur.** L'énoncé ci-dessus dit
   « un `viewer` ne voit aucun de ces gestes » ; la spécification tient l'autre moitié de la phrase —
   « c'est une aide d'interface » — et écarte la première : un rôle lu au chargement peut être périmé

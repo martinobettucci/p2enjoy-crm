@@ -25,88 +25,13 @@ registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en
 preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
 réels d'abord — **INC-076**, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
 ensuite. **INC-089**, ouverte le même jour, est la seule exception : elle est née de la persistance
-de ces décisions et appelle un arbitrage. **INC-090** s'y ajoute le même jour, née de la livraison
-de `CRM-075` : elle appelle elle aussi un arbitrage.
+de ces décisions et appelle un arbitrage. **INC-090**, ouverte le même jour par la livraison de
+`CRM-075`, a été **tranchée dans la journée** (décision 339, option 1A) : le désarchivage fait partie
+de l'unité, et l'énoncé de `CRM-075` est corrigé pour le citer.
 
 ---
 
 ## Ouverts
-
-### INC-090 — `CRM-075` livre un cinquième geste que son énoncé ne cite pas : le désarchivage
-
-**Nature :** écart de périmètre assumé, livré et signalé, qui appartient au responsable et non à
-l'agent.
-**Relevé le :** 2026-08-11, en spécifiant `CRM-075` avant de l'écrire (`docs/JOURNAL.md`,
-décision 338, point 3).
-
-**Ce que l'énoncé dit.** `CRM-075` cite **quatre** verbes : « créer, renommer, réordonner et
-archiver un track ; les mêmes gestes pour un channel ». Il justifie par ailleurs l'absence de
-suppression ainsi : « archiver masque et reste **réversible** ».
-
-**La contradiction.** Un écran qui archive sans savoir désarchiver rend cette justification fausse
-**dans le produit**. L'administrateur qui archive un track par erreur devrait reprendre la clé de
-service pour revenir en arrière — c'est-à-dire exactement le défaut qu'INC-086 relève et que cette
-unité est censée refermer. La réversibilité serait alors une propriété de la **base**, pas du
-produit.
-
-**Ce qui a été fait, et pourquoi ce n'est pas une décision prise en silence.** Le geste est livré :
-une case « Afficher les archivés », éteinte par défaut, et une commande « Désarchiver » sur les
-lignes masquées. Il n'introduit **aucune règle, aucune colonne, aucune politique** — c'est le même
-`UPDATE` sur `archived_at`, à la même table, sous la même politique d'écriture réservée aux
-administrateurs, déjà mesurée par `docs/SPEC-tracks.md` §6 ligne *m*.
-
-**Ce que ce n'est pas.** La corbeille de `CRM-077`, qui porte une durée de rétention, des
-dépendances visibles et un effacement définitif réservé au parcours RGPD. L'archivage n'a aucun des
-trois.
-
-**Action attendue du responsable :** dire si ce cinquième geste reste dans `CRM-075`, ou s'il doit
-être retiré et rattaché à `CRM-077`. Le retrait coûte **une case à cocher et deux appels de
-fonction** — `archiverTrack` et `archiverChannel` prennent déjà un booléen, et la lecture prend déjà
-`inclureArchives`. Tant que l'arbitrage n'est pas rendu, le comportement reste celui qui est livré,
-et il est décrit dans `docs/manual.md` chapitre 5.1 comme un geste existant.
-
-
-### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse — **CLOSE**
-
-**Nature :** contradiction entre une donnée du seed et le serveur de messagerie de développement.
-**Relevé le :** 2026-08-11, en instrumentant le seed de `CRM-057` pour faire arriver du courrier.
-
-**Ce qui est mesuré**, contre le Stalwart de `CRM-050`, depuis le réseau Compose :
-
-| Principal authentifié | En-tête `From` soumis | Réponse du serveur |
-|---|---|---|
-| `bizdev@p2enjoy.test` | `bizdev@p2enjoy.test` | **accepté** |
-| `bizdev@p2enjoy.test` | `contact@p2enjoy.test` | **`501 5.5.4 You are not allowed to send from this address.`** |
-| `admin@p2enjoy.test` | `solene.ferrand@client.test` | **`501 5.5.4`** — même refus |
-
-**La contradiction.** `docs/SPEC-seed.md` §2.18 pose l'identité sortante « Envoi de Driss Lemoine »
-avec `smtp_username = bizdev@p2enjoy.test` et `from_address = contact@p2enjoy.test`, précisément
-pour démontrer que l'entrant et le sortant peuvent diverger (`docs/SPEC-mail-subsystem.md` §2.2).
-Le serveur de développement **refuse cette divergence** : un principal ne peut expédier que depuis
-ses propres adresses. L'identité seedée est donc valide côté produit et **inutilisable côté
-serveur** — ce qu'aucune preuve n'a pu constater jusqu'ici, `CRM-053` n'ayant testé que
-l'authentification SMTP, jamais une soumission.
-
-**Ce que cela n'invalide pas.** Le modèle du §2.2 reste juste : sur un serveur réel, un principal
-porte plusieurs adresses autorisées, et la divergence entrant/sortant est un cas d'usage courant.
-C'est le **provisionnement de développement** qui est incomplet : `contact@p2enjoy.test` n'est
-déclarée dans aucun principal.
-
-**Deux corrections possibles, et aucune n'est prise ici** :
-
-1. ajouter `contact@p2enjoy.test` à la liste `emails` du principal `bizdev@p2enjoy.test` dans
-   `stalwart-init` — le provisionnement le permet, et cela rend le seed conforme à son intention ;
-2. ramener `from_address` à `bizdev@p2enjoy.test` — mais la démonstration de la divergence, que la
-   Definition of Done de `CRM-053` réclame explicitement, serait perdue.
-
-**État. CLOSE par `CRM-058`** — correction n° 1, celle qui rend le seed conforme à son intention.
-`contact@p2enjoy.test` rejoint la liste `emails` du principal `bizdev@p2enjoy.test` dans
-`stalwart/provision.sh`. **Vérifié** : la soumission depuis `contact@` avec le principal `bizdev@`
-est désormais **acceptée**, là où elle rendait `501 5.5.4`. La divergence entrant/sortant du §2.2,
-que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de rester décorative.
-
-Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
-joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
 
 ### INC-089 — Une exécution concurrente de la routine a committé le travail d'une autre, sous son propre message
 
@@ -4331,6 +4256,95 @@ rejoué prouvent le même état : une exigence fonctionnelle dans chacun des deu
 ---
 
 ## Clos
+
+### INC-090 — `CRM-075` livre un cinquième geste que son énoncé ne cite pas : le désarchivage — **CLOSE par arbitrage**
+
+**Nature :** écart de périmètre assumé, livré et signalé, qui appartient au responsable et non à
+l'agent.
+**Relevé le :** 2026-08-11, en spécifiant `CRM-075` avant de l'écrire (`docs/JOURNAL.md`,
+décision 338, point 3).
+
+**Ce que l'énoncé dit.** `CRM-075` cite **quatre** verbes : « créer, renommer, réordonner et
+archiver un track ; les mêmes gestes pour un channel ». Il justifie par ailleurs l'absence de
+suppression ainsi : « archiver masque et reste **réversible** ».
+
+**La contradiction.** Un écran qui archive sans savoir désarchiver rend cette justification fausse
+**dans le produit**. L'administrateur qui archive un track par erreur devrait reprendre la clé de
+service pour revenir en arrière — c'est-à-dire exactement le défaut qu'INC-086 relève et que cette
+unité est censée refermer. La réversibilité serait alors une propriété de la **base**, pas du
+produit.
+
+**Ce qui a été fait, et pourquoi ce n'est pas une décision prise en silence.** Le geste est livré :
+une case « Afficher les archivés », éteinte par défaut, et une commande « Désarchiver » sur les
+lignes masquées. Il n'introduit **aucune règle, aucune colonne, aucune politique** — c'est le même
+`UPDATE` sur `archived_at`, à la même table, sous la même politique d'écriture réservée aux
+administrateurs, déjà mesurée par `docs/SPEC-tracks.md` §6 ligne *m*.
+
+**Ce que ce n'est pas.** La corbeille de `CRM-077`, qui porte une durée de rétention, des
+dépendances visibles et un effacement définitif réservé au parcours RGPD. L'archivage n'a aucun des
+trois.
+
+**Action attendue du responsable :** dire si ce cinquième geste reste dans `CRM-075`, ou s'il doit
+être retiré et rattaché à `CRM-077`. Le retrait coûte **une case à cocher et deux appels de
+fonction** — `archiverTrack` et `archiverChannel` prennent déjà un booléen, et la lecture prend déjà
+`inclureArchives`. Tant que l'arbitrage n'est pas rendu, le comportement reste celui qui est livré,
+et il est décrit dans `docs/manual.md` chapitre 5.1 comme un geste existant.
+
+**ARBITRÉ LE 2026-08-11 : option 1A — le désarchivage reste dans `CRM-075`.** Motif retenu par le
+responsable : le geste n'introduit **aucune règle, aucune colonne, aucune politique**, et le retirer
+recréerait précisément le défaut qu'INC-086 avait fait ouvrir — une réversibilité vraie en base et
+fausse dans le produit. L'énoncé de `CRM-075` est corrigé pour citer **cinq** verbes, et sa
+Definition of Done exige désormais le désarchivage dans le parcours E2E. `docs/JOURNAL.md`,
+décision 339.
+
+**Ce qui reste dû, et pourquoi l'entrée est close malgré tout.** Aucun code n'est dû : la
+contradiction était entre l'énoncé et la livraison, et c'est l'énoncé qui est corrigé. Les preuves
+E2E du geste restent à exécuter, mais elles relèvent de la Definition of Done de `CRM-075`, qui est
+`[~]`, et non de cette entrée.
+
+
+### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse — **CLOSE**
+
+**Nature :** contradiction entre une donnée du seed et le serveur de messagerie de développement.
+**Relevé le :** 2026-08-11, en instrumentant le seed de `CRM-057` pour faire arriver du courrier.
+
+**Ce qui est mesuré**, contre le Stalwart de `CRM-050`, depuis le réseau Compose :
+
+| Principal authentifié | En-tête `From` soumis | Réponse du serveur |
+|---|---|---|
+| `bizdev@p2enjoy.test` | `bizdev@p2enjoy.test` | **accepté** |
+| `bizdev@p2enjoy.test` | `contact@p2enjoy.test` | **`501 5.5.4 You are not allowed to send from this address.`** |
+| `admin@p2enjoy.test` | `solene.ferrand@client.test` | **`501 5.5.4`** — même refus |
+
+**La contradiction.** `docs/SPEC-seed.md` §2.18 pose l'identité sortante « Envoi de Driss Lemoine »
+avec `smtp_username = bizdev@p2enjoy.test` et `from_address = contact@p2enjoy.test`, précisément
+pour démontrer que l'entrant et le sortant peuvent diverger (`docs/SPEC-mail-subsystem.md` §2.2).
+Le serveur de développement **refuse cette divergence** : un principal ne peut expédier que depuis
+ses propres adresses. L'identité seedée est donc valide côté produit et **inutilisable côté
+serveur** — ce qu'aucune preuve n'a pu constater jusqu'ici, `CRM-053` n'ayant testé que
+l'authentification SMTP, jamais une soumission.
+
+**Ce que cela n'invalide pas.** Le modèle du §2.2 reste juste : sur un serveur réel, un principal
+porte plusieurs adresses autorisées, et la divergence entrant/sortant est un cas d'usage courant.
+C'est le **provisionnement de développement** qui est incomplet : `contact@p2enjoy.test` n'est
+déclarée dans aucun principal.
+
+**Deux corrections possibles, et aucune n'est prise ici** :
+
+1. ajouter `contact@p2enjoy.test` à la liste `emails` du principal `bizdev@p2enjoy.test` dans
+   `stalwart-init` — le provisionnement le permet, et cela rend le seed conforme à son intention ;
+2. ramener `from_address` à `bizdev@p2enjoy.test` — mais la démonstration de la divergence, que la
+   Definition of Done de `CRM-053` réclame explicitement, serait perdue.
+
+**État. CLOSE par `CRM-058`** — correction n° 1, celle qui rend le seed conforme à son intention.
+`contact@p2enjoy.test` rejoint la liste `emails` du principal `bizdev@p2enjoy.test` dans
+`stalwart/provision.sh`. **Vérifié** : la soumission depuis `contact@` avec le principal `bizdev@`
+est désormais **acceptée**, là où elle rendait `501 5.5.4`. La divergence entrant/sortant du §2.2,
+que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de rester décorative.
+
+Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
+joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
+
 
 ### INC-013 — Quatre des six fonctions d'autorisation dépendent de tables livrées deux chunks plus tard
 
