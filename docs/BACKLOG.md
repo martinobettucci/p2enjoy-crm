@@ -5712,6 +5712,15 @@ Ce qui est **déjà mesuré ou tranché** :
   à `IDLE` demandera sa propre mesure.
 - **`MAIL_SYNC_POLL_INTERVAL` est déclarée et consommée par rien** depuis `CRM-051` : une variable
   documentée que rien ne lit est une promesse tenue par personne. La boucle de veille la prend.
+  **LIVRÉ** — `mail-sync/src/mail_sync/veille.py`, spécifié avant le code en
+  `docs/SPEC-mail-subsystem.md` §20.10 (décision 341). La décision — quels comptes, dans quel ordre,
+  quel délai — est **pure** et se prouve **sans dormir une seule fois** ; seul le pilote attend, sur
+  un `threading.Event` qu'un arrêt interrompt. `0` désactive explicitement, les bornes sont 5 s et
+  1 h, et une valeur hors bornes **refuse le démarrage** au lieu d'être corrigée en silence.
+  Un compte en panne est journalisé — son **type**, jamais son texte — puis absorbé, et le tour
+  continue. **31 assertions pytest vertes** (25 sur la veille, 6 sur la configuration), non
+  complaisantes : quatre mutations — délai à fréquence fixe, texte de l'exception journalisé, panne
+  qui interrompt le tour, comptes sans secret non écartés — font toutes rougir la suite.
 - **Un refus ne se rejoue pas** : `auth_failed` et un destinataire refusé passent `failed`
   immédiatement. Seules les pannes de transport sont reprogrammées — rejouer un refus, c'est
   répéter une erreur en espérant un autre résultat.

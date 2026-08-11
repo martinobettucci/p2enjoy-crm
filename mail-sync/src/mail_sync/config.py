@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     #: enregistrée `skipped`, donc non téléchargeable, et reste visible (§4.3).
     MAIL_MAX_ATTACHMENT_MB: int = Field(default=25, ge=1, le=200)
 
+    # --- CRM-059 : la veille ------------------------------------------------------------------
+    #: Intervalle de la boucle de veille, en secondes. Déclarée depuis `CRM-051` et lue par RIEN
+    #: jusqu'ici (§20.1) : une variable documentée que rien ne lit est une promesse tenue par
+    #: personne.
+    #:
+    #: `0` DÉSACTIVE la veille — ce n'est pas « aussi vite que possible » (§20.10.5). Les bornes
+    #: sont portées par `normaliser_intervalle` et non par `Field`, parce que le zéro fait
+    #: exception aux deux : `ge=5` refuserait la désactivation, `ge=0` laisserait passer une
+    #: scrutation à la seconde. La validation ci-dessous délègue donc à la seule fonction qui
+    #: connaît les trois cas.
+    MAIL_SYNC_POLL_INTERVAL: int = 60
+
     @field_validator("MAIL_SYNC_INTERNAL_TOKEN")
     @classmethod
     def token_is_long_enough(cls, value: SecretStr) -> SecretStr:
@@ -80,6 +92,15 @@ class Settings(BaseSettings):
         if len(value.get_secret_value().strip()) < 16:
             raise ValueError("must contain at least 16 characters")
         return value
+
+    @field_validator("MAIL_SYNC_POLL_INTERVAL")
+    @classmethod
+    def poll_interval_is_zero_or_within_bounds(cls, value: int) -> int:
+        # L'import est local pour que `config` ne dépende pas de `veille`, qui journalise : la
+        # configuration doit pouvoir être refusée avant qu'aucun journal ne soit configuré.
+        from mail_sync.veille import normaliser_intervalle
+
+        return normaliser_intervalle(value)
 
     @field_validator("MAIL_SYNC_HOST")
     @classmethod

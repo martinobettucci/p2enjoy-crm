@@ -23,7 +23,29 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
+
+from mail_sync.veille import CompteAVeiller
+
+
+def _horodatage(brut: object) -> datetime | None:
+    """Lit un `timestamptz` rendu par PostgREST, ou rend `None` — `CRM-059`.
+
+    `None` n'est PAS un échec de lecture : c'est un compte jamais relevé, et le tri du §20.10.6
+    s'appuie dessus. Une valeur illisible est traitée de même — la veille la place alors en tête,
+    ce qui est le comportement sûr : elle sera relevée, pas oubliée.
+
+    `fromisoformat` de Python 3.11 accepte le `Z` final ; les versions antérieures ne
+    l'acceptent pas, et la substitution ci-dessous garde la lecture indépendante de ce détail.
+    """
+
+    if not isinstance(brut, str) or brut == "":
+        return None
+    try:
+        return datetime.fromisoformat(brut.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 class PostgrestError(RuntimeError):
@@ -169,6 +191,39 @@ class PostgrestClient:
             raise PostgrestError(erreur.code) from None
         except urllib.error.URLError:
             raise PostgrestError(0) from None
+
+    def lire_comptes_a_veiller(self) -> list[CompteAVeiller]:
+        """Les comptes que la boucle de veille doit relever — `CRM-059`, §20.10.6.
+
+        Le tri est demandé **au serveur** (`last_sync_at.asc.nullsfirst`) plutôt que refait en
+        mémoire : c'est la même règle que partout ailleurs dans ce projet — ce que la base sait
+        faire, le client ne le refait pas. `ordonner_comptes` le rejoue néanmoins, et ce n'est pas
+        une redondance : la décision doit rester vérifiable **sans base**, et un `Protocol` peut
+        être alimenté par une source qui ne trie pas.
+
+        `password_secret_id` n'est pas lue pour sa valeur — un identifiant de secret n'a rien à
+        faire dans ce service — mais pour sa seule PRÉSENCE : un compte sans secret ne peut pas
+        être relevé, et la route `poll` rend déjà `409` dans ce cas.
+        """
+
+        _, corps = self._rest(
+            "GET",
+            "/rest/v1/mail_inbound_accounts"
+            "?select=id,last_sync_at,password_secret_id"
+            "&order=last_sync_at.asc.nullsfirst",
+        )
+        lignes = json.loads(corps) if corps else []
+        comptes: list[CompteAVeiller] = []
+        for ligne in lignes:
+            brut = ligne.get("last_sync_at")
+            comptes.append(
+                CompteAVeiller(
+                    identifiant=str(ligne["id"]),
+                    derniere_releve=_horodatage(brut),
+                    secret_present=ligne.get("password_secret_id") is not None,
+                )
+            )
+        return comptes
 
     def lire_dossiers_surveilles(self, account_id: str) -> list[str]:
         """Les dossiers que l'exploitant a déclarés pour ce compte (§15.4).

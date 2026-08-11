@@ -124,3 +124,36 @@ def test_le_refus_de_configuration_ne_cite_jamais_la_valeur(
     assert rendered == expected
     assert str(value) not in rendered
 
+
+
+# --- CRM-059 : `MAIL_SYNC_POLL_INTERVAL` cesse d'être décorative -------------------------------
+# @verifies CRM-059 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §20.10.5 — zéro désactive, et
+#           les bornes sont appliquées à la configuration, pas seulement dans la boucle.
+
+
+def test_l_intervalle_de_veille_a_un_defaut_applique(tmp_path: Path) -> None:
+    settings = Settings(**valid_values(tmp_path))  # type: ignore[arg-type]
+    # Le défaut est une VEILLE ACTIVE : un service de messagerie qui ne relèverait rien tant qu'on
+    # ne le lui demande pas serait une boîte aux lettres qu'il faut aller ouvrir soi-même.
+    assert settings.MAIL_SYNC_POLL_INTERVAL == 60
+
+
+def test_zero_est_accepte_et_signifie_veille_desactivee(tmp_path: Path) -> None:
+    settings = Settings(**{**valid_values(tmp_path), "MAIL_SYNC_POLL_INTERVAL": 0})  # type: ignore[arg-type]
+    assert settings.MAIL_SYNC_POLL_INTERVAL == 0
+
+
+@pytest.mark.parametrize("valeur", [1, 4, 3601, -1])
+def test_un_intervalle_hors_bornes_refuse_le_demarrage(tmp_path: Path, valeur: int) -> None:
+    # La configuration est refusée AU DÉMARRAGE, et non corrigée en silence à la première boucle :
+    # un service qui démarre avec un réglage qu'il n'applique pas est un service qui ment.
+    with pytest.raises(ConfigurationError) as echec:
+        load_settings(**{**valid_values(tmp_path), "MAIL_SYNC_POLL_INTERVAL": valeur})
+    assert "MAIL_SYNC_POLL_INTERVAL" in str(echec.value)
+
+
+def test_le_refus_d_intervalle_ne_divulgue_pas_la_valeur(tmp_path: Path) -> None:
+    # Même discipline que partout dans ce fichier : le refus nomme la variable et la règle.
+    with pytest.raises(ConfigurationError) as echec:
+        load_settings(**{**valid_values(tmp_path), "MAIL_SYNC_POLL_INTERVAL": 99999})
+    assert "99999" not in str(echec.value)

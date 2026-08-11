@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-059` — la boucle de veille consomme enfin `MAIL_SYNC_POLL_INTERVAL`.** La variable était
+  déclarée dans `.env.example` et dans le `README.md` depuis `CRM-051`, et **lue par rien** : une
+  promesse tenue par personne. `mail-sync/src/mail_sync/veille.py` la prend, après que
+  `docs/SPEC-mail-subsystem.md` **§20.10** en a décrit la forme — spécification committée **avant**
+  le code (décision 341).
+  - **La décision est pure, l'attente ne l'est pas.** Quels comptes relever, dans quel ordre, quel
+    délai avant le tour suivant : des fonctions sans effet, **prouvées sans dormir une seule fois**.
+    Une preuve qui attendrait soixante secondes serait la temporisation arbitraire que `CLAUDE.md`
+    §18 proscrit.
+  - **Un fil d'arrière-plan, pas `asyncio`** — le service est synchrone de bout en bout. L'attente
+    s'appuie sur un `threading.Event` : un arrêt l'interrompt au lieu de retenir le conteneur.
+  - **Le délai ne se réduit pas de la durée du tour** : deux relèves du même compte ne se
+    chevauchent jamais, et une série de tours lents ne produit pas de rafale de rattrapage.
+  - **Un compte en panne n'arrête pas la veille** et ne masque pas les autres. L'absorption **n'est
+    pas un silence** : le journal porte l'identifiant du compte et le **type** de la panne, jamais
+    son texte, qui peut refléter un identifiant de connexion.
+  - **`0` désactive explicitement**, et toute autre valeur doit tenir entre **5 secondes et 1
+    heure** — hors bornes, le service **refuse de démarrer** plutôt que de corriger en silence.
+  - **La veille n'invente pas une seconde façon de relever** : elle appelle `relever_compte` avec
+    les mêmes arguments que la route interne de `CRM-054`, pour qu'aucun chemin ne diverge.
+  - Preuves : **31 assertions pytest** (suite complète **187 tests**, verts), non complaisantes —
+    quatre mutations font toutes rougir la suite. `README.md` et `.env.example` cessent d'annoncer
+    la variable comme « en attente de `CRM-054` ».
+  - **Non livré, et `CRM-059` reste `[ ]`** : le backfill par lots (§20.6), la reprise d'un
+    rangement manqué (§20.5), l'écran d'état (§20.7) et le harnais
+    `scripts/verify-mail-resilience.sh`. Les preuves pgTAP, API et E2E exigent la pile.
+
 - **`CRM-075` — l'écran d'administration des tracks et des channels.** Le geste le plus courant de
   l'administration d'un CRM — créer un track — avait un CRUD prouvé et **aucune surface** (INC-086).
   Il en a une : « Réglages ▸ Arborescence ». Créer, renommer, réordonner, archiver et désarchiver un
