@@ -1416,7 +1416,7 @@ Elle refuse, dans cet ordre, et chaque refus porte son code :
 |---|---|---|
 | `not_authenticated` | `42501` | aucune session |
 | `forbidden` | `42501` | pas de droit d'**écriture** sur la card : envoyer au nom d'une affaire, c'est y ajouter du contenu |
-| `identity_not_available` | `P0002` | l'identité n'existe pas, n'est pas celle de l'appelant, ou n'est pas l'identité de service d'un workspace dont il est administrateur |
+| `identity_not_available` | `42501` | l'identité n'existe pas, n'est pas celle de l'appelant, ou n'est pas l'identité de service d'un workspace dont il est administrateur. **Mesuré** : `P0002`, d'abord retenu, est traduit par PostgREST en **500** — un refus d'autorisation ne doit pas se présenter comme une panne de serveur |
 | `card_not_available` | `23514` | card archivée, en corbeille, ou d'un autre workspace que l'identité |
 | `recipient_required` | `23514` | aucun destinataire : un message sans destinataire n'est pas un message |
 | `quota_exceeded` | `23505` | le quota journalier de l'identité est atteint |

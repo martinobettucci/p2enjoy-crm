@@ -66,6 +66,13 @@ d'exécuter le code attendu.
 
 ### Sécurité
 
+- **LA PREUVE DE REFUS N° 12 EST ACQUISE**, et l'inventaire de `docs/SPEC-permissions-rls.md` §7
+  passe à « **onze acquises, une à moitié** ». Un membre n'emprunte pas l'identité de service du
+  workspace, une administratrice n'emprunte pas l'identité personnelle d'un collègue, et la clé de
+  service elle-même est refusée : un envoi part toujours au nom de quelqu'un. Mesuré hors interface.
+- **Un refus ne doit pas ressembler à une panne** : `identity_not_available` portait d'abord
+  `P0002`, que PostgREST traduit en **500**. Il porte désormais `42501`, donc `403` — un exploitant
+  n'ira pas chercher un incident là où le produit a simplement dit non.
 - **Un contournement du contrôle d'accès est fermé.** `classify_message` ne vérifiait que le droit
   d'écriture sur l'affaire de destination : un membre pouvait classer **chez lui** un message qu'il
   n'avait pas le droit de lire, puis le lire en toute légitimité. Le classement exige désormais les

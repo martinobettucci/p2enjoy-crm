@@ -686,7 +686,7 @@ Mesuré le 2026-08-05 sur la pile de développement seedée, avec les jetons ré
 | 9 | — | inventaire de `storage.buckets` | **aucun bucket**, aucune table de pièces jointes |
 | 10 | `admin` | `PATCH` puis `DELETE` de sa propre ligne `workspace_members` | `200` et `[]`, puis `204` ; le rôle relu par la clé de service vaut **toujours `admin`** |
 | 11 | anonyme | `GET` sur les **quinze** tables métier peuplées | `200` et `[]` sur chacune |
-| 12 | clé de service | `POST /rpc/queue_outbound_email` | `404`, `PGRST202` — **la fonction n'existe pas** |
+| 12 | membre / administratrice | `POST /rpc/queue_outbound_email` avec l'identité **d'autrui** | **ACQUISE par `CRM-058`** : `403`, `identity_not_available`. Un membre n'emprunte pas l'identité de service du workspace ; une administratrice n'emprunte pas l'identité **personnelle** d'un collègue. Mesuré hors interface avec de vrais jetons. La clé de service elle-même est refusée en `not_authenticated` : un envoi part toujours au nom de quelqu'un |
 
 Trois précautions gouvernent ce tableau, héritées des unités précédentes et rappelées ici parce
 qu'elles sont la condition de validité de l'ensemble :

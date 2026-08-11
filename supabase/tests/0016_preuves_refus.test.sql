@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(54);
+select plan(55);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -127,8 +127,10 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	63,
-	'SOIXANTE-TROIS politiques dans `public`, et pas une de plus — 62 avant CRM-056, plus l''UNIQUE '
+	64,
+	'SOIXANTE-QUATRE politiques dans `public`, et pas une de plus — 63 avant CRM-058, plus '
+	'l''UNIQUE politique de lecture de `mail_outbox`, qui suit la CARD : un envoi appartient à '
+	'l''affaire au nom de laquelle il part. Avant elle : 62 avant CRM-056, plus l''UNIQUE '
 	'politique de lecture de `mail_folder_map`, qui suit le COMPTE comme les occurrences. Avant '
 	'elle : 59 avant CRM-054, plus les TROIS de l''ingestion. Avant elles : '
 	'48 avant CRM-022, plus ses '
@@ -360,9 +362,19 @@ select ok(
 	'PREUVE N° 9, 3/3 : et elle est bornée au bucket des pièces jointes, statut `clean` compris — '
 	'`infected`, `pending` et `skipped` restent refusés à tous (CRM-057 §18.5)');
 
-select hasnt_function('public', 'queue_outbound_email',
-	'PREUVE N° 12 NON SATISFAISABLE : `queue_outbound_email` attend `CRM-058`. Envoyer avec une '
-	'identité qui ne vous appartient pas suppose une fonction d''envoi');
+-- ASSERTION RETOURNÉE PAR `CRM-058` (décision 51, onzième occurrence), ET LA PREUVE N° 12 EST
+-- **ACQUISE**. Elle figeait l'absence de la fonction d'envoi ; celle-ci existe, et le refus qu'elle
+-- annonçait est mesuré HORS INTERFACE par `e2e/api/envoi.spec.ts` : un membre qui emprunte
+-- l'identité de service du workspace reçoit `403 / identity_not_available`, et une administratrice
+-- qui emprunte l'identité PERSONNELLE d'un collègue reçoit le même refus.
+select has_function('public', 'queue_outbound_email',
+	'PREUVE N° 12 ACQUISE : `queue_outbound_email` existe, et refuse l''identité d''autrui');
+
+select ok(
+	(select prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname = 'public' and p.proname = 'queue_outbound_email'),
+	'PREUVE N° 12, 2/2 : la garde est `SECURITY DEFINER` — elle juge, elle ne se contente pas de '
+	'refléter les droits de l''appelant sur les tables');
 
 -- Ce que ces sept assertions signifient ensemble, dit une fois plutôt que sept : sur les douze
 -- preuves de `docs/SPEC-permissions-rls.md` §7, **cinq** portent sur des objets absents. `CRM-014`

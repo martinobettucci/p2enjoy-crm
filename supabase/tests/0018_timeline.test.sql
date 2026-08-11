@@ -157,8 +157,12 @@ select is(pg_temp.essayer_type('mail_received'), 'accepte',
 	'Le type `mail_received` est ACCEPTÉ depuis CRM-055 : un message qui entre dans une card est '
 	'un fait, et le taire laisserait un trou dans sa mémoire');
 
-select is(pg_temp.essayer_type('mail_sent'), 'refuse',
-	'Le type `mail_sent` reste REFUSÉ tant qu''aucun envoi n''existe (CRM-058)');
+-- RÉVISÉ PAR `CRM-058`, ET L'ANNONCE S'EST VÉRIFIÉE TELLE QUELLE. L'assertion figeait le refus
+-- « tant qu'aucun envoi n'existe » : l'envoi existe, et le type est accepté. Douzième type du
+-- vocabulaire, et onzième occurrence du mécanisme de la décision 51.
+select is(pg_temp.essayer_type('mail_sent'), 'accepte',
+	'Le type `mail_sent` est ACCEPTÉ depuis CRM-058 : un message qui part au nom d''une card est '
+	'un fait, au même titre que celui qui arrive');
 
 select is(pg_temp.essayer_type('commented'), 'refuse',
 	'Le type `commented` est REFUSÉ : un commentaire n''écrit AUCUN événement, le fil est unifié à '

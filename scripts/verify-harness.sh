@@ -270,9 +270,15 @@ PORT_RAPPORT=9323
 # `e2e/api/inbox.spec.ts` ajoute **9 scénarios** : 469 + 9 = **478**.
 # `e2e/ui/inbox.spec.ts` ajoute **6 scénarios** : 157 + 6 = **163**.
 # `SCENARIOS_MAIL` est inchangé : l'unité livre un écran, pas un protocole.
-FICHIERS_SQL_ATTENDUS=29
-ASSERTIONS_ATTENDUES=1884
-SCENARIOS_API=478
+# --- `CRM-058` ---------------------------------------------------------------------------------
+# `supabase/tests/0030_envoi_sortant.test.sql` ajoute **21 assertions**, et QUATRE suites
+# antérieures sont révisées : 0016 gagne une assertion — la preuve de refus n° 12 devient ACQUISE
+# et se dédouble —, 0018 et 0022 retournent leur témoin, 0019 en gagne une aussi. 1884 + 21 + 2 =
+# **1907**, valeur MESURÉE. `e2e/api/envoi.spec.ts` ajoute **8 scénarios** : 478 + 8 = **486**.
+# `e2e/mail/envoi.spec.ts` ajoute l'aller-retour complet : 38 + 1 = **39**.
+FICHIERS_SQL_ATTENDUS=30
+ASSERTIONS_ATTENDUES=1907
+SCENARIOS_API=486
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

@@ -38,7 +38,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(66);
+select plan(67);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -204,7 +204,7 @@ select ok(
 	'`auth.uid()` étant nul pour la clé de service (docs/SPEC-seed.md §2.16)');
 
 -- =============================================================================================
--- 2. Le vocabulaire courant compte DIX valeurs — docs/SPEC-cards.md §14.4
+-- 2. Le vocabulaire courant compte DOUZE valeurs — docs/SPEC-cards.md §14.4
 -- =============================================================================================
 
 select is(
@@ -213,21 +213,29 @@ select is(
 	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
 	'''channel_changed''::text, ''workflow_changed''::text, ''archived''::text, '
 	'''unarchived''::text, ''trashed''::text, ''restored''::text, ''field_changed''::text, '
-	'''mail_received''::text])))',
-	'Le `CHECK` compte ONZE valeurs : `CRM-055` ajoute `mail_received` sans retirer aucun des dix '
-	'précédents. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de figer un état '
-	'périmé — et c''est la troisième fois qu''il le fait');
+	'''mail_received''::text, ''mail_sent''::text])))',
+	'Le `CHECK` compte DOUZE valeurs : `CRM-058` ajoute `mail_sent` sans retirer aucune des onze '
+	'précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de figer un état '
+	'périmé — et c''est la quatrième fois qu''il le fait');
 
--- LE MÉCANISME EST RECONDUIT SUR LE TYPE SUIVANT. `mail_received` est accepté depuis `CRM-055` ;
--- `mail_sent` demeure refusé, et le jour où `CRM-058` l'écrira, la base le lui rappellera.
-select throws_ok(
+-- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
+-- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le
+-- type est accepté, et le garde-fou porte désormais sur le suivant.
+select lives_ok(
 	$$insert into public.card_events (card_id, workspace_id, type)
 	  values ('5eed0000-0000-4000-8000-0000000000c5',
 	          '5eed0000-0000-4000-8000-000000000001', 'mail_sent')$$,
+	'`mail_sent` est ACCEPTÉ depuis `CRM-058`, qui a étendu l''énumération dans la même migration '
+	'que son écriture — ce que cette assertion exigeait de lui');
+
+select throws_ok(
+	$$insert into public.card_events (card_id, workspace_id, type)
+	  values ('5eed0000-0000-4000-8000-0000000000c5',
+	          '5eed0000-0000-4000-8000-000000000001', 'mail_bounced')$$,
 	'23514',
 	null,
-	'`mail_sent` reste REFUSÉ par le `CHECK` : `CRM-058` devra étendre l''énumération dans la '
-	'même migration que son écriture, exactement comme `CRM-055` vient de le faire');
+	'`mail_bounced` reste REFUSÉ : le garde-fou suit le vocabulaire, il ne le devance pas. Le jour '
+	'où le produit traitera les rejets, il devra étendre l''énumération dans la même migration');
 
 -- =============================================================================================
 -- 3. Les huit vérifications, dans les DEUX SENS — docs/SPEC-workflow-engine.md §6.4

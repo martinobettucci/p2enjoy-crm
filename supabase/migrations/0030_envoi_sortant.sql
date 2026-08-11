@@ -205,7 +205,12 @@ begin
 	     or (i.owner_id is null and app.is_workspace_admin(i.workspace_id))
 	   );
 	if v_identite.id is null then
-		raise exception 'identity_not_available' using errcode = 'P0002';
+		-- `42501` ET NON `P0002`, ET C'EST MESURÉ : PostgREST traduit `P0002` en **500**, et un
+		-- refus d'autorisation qui se présente comme une panne de serveur enverrait l'exploitant
+		-- chercher un incident là où le produit a simplement dit non. Emprunter l'identité d'un
+		-- autre EST un refus d'autorisation ; le message le distingue de `forbidden`, qui porte
+		-- sur la card.
+		raise exception 'identity_not_available' using errcode = '42501';
 	end if;
 
 	select * into v_card

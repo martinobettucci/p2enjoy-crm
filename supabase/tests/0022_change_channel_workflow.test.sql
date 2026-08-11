@@ -403,12 +403,15 @@ select is((select workflow_id from public.channels where id =
 	'le channel vide retrouve son workflow initial');
 
 select pg_temp.redevenir_proprietaire();
+-- RÉVISÉ PAR `CRM-058` : le témoin était `mail_sent`, devenu un type LIVRÉ. S'en servir encore
+-- aurait mesuré le contraire de ce que le test dit mesurer. Le garde-fou porte sur un type que le
+-- produit n'a pas encore écrit.
 select throws_ok(
 	$$insert into public.card_events (card_id, workspace_id, type)
 	  values ('01900000-0000-4000-8000-0000000000a1',
-	          '5eed0000-0000-4000-8000-000000000001', 'mail_sent')$$,
-	'23514', null, 'mail_sent reste refusé : aucun type fantôme n''est ouvert. `mail_received`, '
-	'lui, est accepté depuis CRM-055 — le garde-fou suit le vocabulaire');
+	          '5eed0000-0000-4000-8000-000000000001', 'mail_bounced')$$,
+	'23514', null, 'un type fantôme reste refusé : `mail_received` et `mail_sent` sont acceptés '
+	'depuis CRM-055 et CRM-058 — le garde-fou suit le vocabulaire, il ne le devance pas');
 
 select * from finish();
 rollback;
