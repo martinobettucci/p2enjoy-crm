@@ -1,5 +1,6 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leurs états
 // @verifies CRM-075 (docs/BACKLOG.md) — index des réglages, et adresse de l'administration
+// @verifies CRM-059 (docs/BACKLOG.md) — adresse de l'écran d'état de la messagerie
 // @verifies docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (aucune page blanche)
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
 
@@ -12,6 +13,7 @@ import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
@@ -62,10 +64,16 @@ describe('table des routes', () => {
 		const route = ROUTES.find((candidate) => candidate.chemin === '/reglages')
 		expect(route).toBeDefined()
 		render(<MemoryRouter>{route!.rendu()}</MemoryRouter>)
-		// Un titre, et un lien réel vers la seule section livrée — `CRM-075`.
+		// Un titre, et un lien réel vers chacune des deux sections livrées — `CRM-075`, `CRM-059`.
 		expect(screen.getByRole('heading').textContent).toBe(fr['admin.settings.index.title'])
-		const lien = screen.getByRole('link', { name: new RegExp(fr['admin.settings.index.tree']) })
-		expect(lien.getAttribute('href')).toBe(CHEMIN_ADMIN_ARBORESCENCE)
+		const lienArborescence = screen.getByRole('link', {
+			name: new RegExp(fr['admin.settings.index.tree']),
+		})
+		expect(lienArborescence.getAttribute('href')).toBe(CHEMIN_ADMIN_ARBORESCENCE)
+		const lienMessagerie = screen.getByRole('link', {
+			name: new RegExp(fr['admin.settings.index.mail']),
+		})
+		expect(lienMessagerie.getAttribute('href')).toBe(CHEMIN_ETAT_MESSAGERIE)
 	})
 
 	it("l'administration ne figure PAS dans la table des routes, et son adresse est nommée", () => {
@@ -73,6 +81,12 @@ describe('table des routes', () => {
 		// exactement les entrées transverses (assertion ci-dessus), et l'écran est monté par `App`.
 		expect(ROUTES.map((route) => route.chemin)).not.toContain(CHEMIN_ADMIN_ARBORESCENCE)
 		expect(CHEMIN_ADMIN_ARBORESCENCE.startsWith('/reglages/')).toBe(true)
+	})
+
+	it("l'état de la messagerie ne figure PAS dans la table des routes, et son adresse est nommée", () => {
+		// Même patron que l'administration de l'arborescence, et pour la même raison.
+		expect(ROUTES.map((route) => route.chemin)).not.toContain(CHEMIN_ETAT_MESSAGERIE)
+		expect(CHEMIN_ETAT_MESSAGERIE.startsWith('/reglages/')).toBe(true)
 	})
 
 	it('la route /inbox rend son écran, chargé à la demande derrière un repli', async () => {

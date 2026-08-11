@@ -1,6 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
+// @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //
@@ -18,9 +19,11 @@ import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CARD,
+	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
+	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
 	ROUTES,
@@ -34,6 +37,10 @@ const RouteTrack = lazy(async () => ({ default: (await import('./RouteTrack')).R
  */
 const AdministrationArborescence = lazy(async () => ({
 	default: (await import('./AdministrationArborescence')).AdministrationArborescence,
+}))
+/** L'écran d'état de la messagerie de `CRM-059`, chargé à la demande pour la même raison. */
+const EtatMessagerie = lazy(async () => ({
+	default: (await import('./EtatMessagerie')).EtatMessagerie,
 }))
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
 
@@ -95,6 +102,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_ARBORESCENCE}>
 							<AdministrationArborescence />
+						</AppShell>
+					}
+				/>
+				{/* L'écran d'état de la messagerie — `CRM-059`. Même position que l'administration
+				    de l'arborescence : hors de la barre latérale, atteint depuis l'index des
+				    réglages (docs/SPEC-mail-subsystem.md §20.11.1). */}
+				<Route
+					path={CHEMIN_ETAT_MESSAGERIE}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_ETAT_MESSAGERIE}>
+							<EtatMessagerie />
 						</AppShell>
 					}
 				/>

@@ -446,6 +446,40 @@ export const fr = {
 	'live.admin.moved': 'Déplacé',
 	'live.admin.archived': 'Archivé',
 	'live.admin.unarchived': 'Désarchivé',
+
+	// --- État de la messagerie — CRM-059, docs/SPEC-mail-subsystem.md §20.11 --------------
+	'admin.settings.index.mail': 'État de la messagerie',
+	'admin.settings.index.mail.body':
+		'Dernière relève de chaque boîte entrante, dernier incident, file sortante en attente et en échec définitif.',
+
+	'admin.mail.title': 'État de la messagerie',
+	'admin.mail.aria': 'État des comptes de messagerie et de la file sortante',
+	'admin.mail.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.mail.noWorkspace.body': "Sans espace de travail, il n'y a pas de messagerie à superviser.",
+	'admin.mail.empty.title': 'Aucune boîte à superviser',
+	'admin.mail.empty.body':
+		"Aucun compte de messagerie entrante n'est visible avec ce compte.",
+	'admin.mail.error.title': "L'état de la messagerie n'a pas pu être chargé",
+	'admin.mail.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.mail.error.retry': 'Réessayer',
+
+	'admin.mail.counters.queued': "En attente d'envoi",
+	'admin.mail.counters.failed': 'Échecs définitifs',
+
+	'admin.mail.table.aria': 'Comptes de messagerie entrante',
+	'admin.mail.table.label': 'Boîte',
+	'admin.mail.table.lastSync': 'Dernière relève réussie',
+	'admin.mail.table.incident': 'Dernier incident',
+	'admin.mail.table.never': 'Jamais relevée',
+
+	// Dictionnaire fermé des six codes de `mail_inbound_accounts_erreur_code` (migration 0022) —
+	// jamais le texte du serveur distant (docs/SPEC-mail-subsystem.md §13.7, §20.11.4).
+	'admin.mail.incident.auth_failed': 'Authentification refusée',
+	'admin.mail.incident.host_unreachable': 'Hôte injoignable',
+	'admin.mail.incident.connection_refused': 'Connexion refusée',
+	'admin.mail.incident.tls_failed': 'Échec TLS',
+	'admin.mail.incident.timeout': 'Délai dépassé',
+	'admin.mail.incident.protocol_error': 'Erreur de protocole',
 } as const
 
 export type CleTraduction = keyof typeof fr

@@ -1,7 +1,9 @@
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
+// @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
+// @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
 // @spec docs/DAT.md §3.1 (« routes … relève de CRM-007 »)
 //
 // Chaque route rend un **état explicite**, jamais une page blanche : tant que les données
@@ -45,6 +47,17 @@ export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 
 /** Titre de la route d'administration, nommé comme celui de la page introuvable. */
 export const CLE_TITRE_ADMIN_ARBORESCENCE: CleTraduction = 'admin.tree.title'
+
+/**
+ * Adresse de l'écran d'état de la messagerie — `CRM-059`.
+ *
+ * Même patron que `CHEMIN_ADMIN_ARBORESCENCE` : hors de `ROUTES`, atteinte depuis l'index des
+ * réglages, montée par `App` avec sa propre coquille (docs/SPEC-mail-subsystem.md §20.11.1).
+ */
+export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
+
+/** Titre de l'écran d'état de la messagerie. */
+export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
 
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
@@ -93,6 +106,15 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.tree')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.tree.body')}</span>
+					</Link>
+				</li>
+				<li>
+					<Link
+						to={CHEMIN_ETAT_MESSAGERIE}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mail')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.mail.body')}</span>
 					</Link>
 				</li>
 			</ul>
