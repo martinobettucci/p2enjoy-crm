@@ -50,6 +50,7 @@ import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { FormulaireCard } from './FormulaireCard'
+import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { PanneauTimeline } from './PanneauTimeline'
 
 /** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
@@ -146,7 +147,12 @@ function ContenuCard({
 	return (
 		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<FormulaireCard modele={etat.donnees.modele} />
-			<PanneauTimeline
+			<div className="flex flex-col gap-4 min-w-0">
+				{/* ÉCRIRE DEPUIS LA CARD EMPRUNTE LE MÊME CHEMIN QUE DEPUIS L'INBOX (§19.6) : même
+				    composant, même garde. Le formulaire est posé AVANT le fil, là où l'on écrit —
+				    la mémoire de l'affaire se lit en dessous, comme les commentaires. */}
+				<FormulaireEnvoi idCard={etat.donnees.card.id} />
+				<PanneauTimeline
 				client={clientCrm}
 				idCard={etat.donnees.card.id}
 				idWorkspace={etat.donnees.card.workspace_id}
@@ -157,7 +163,8 @@ function ContenuCard({
 						? authentification.etat.utilisateur.id
 						: null
 				}
-			/>
+				/>
+			</div>
 		</div>
 	)
 }

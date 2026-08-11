@@ -342,7 +342,10 @@ SCENARIOS_API=486
 # les trois panneaux, la sélection annoncée par `aria-current`, le parcours entièrement au clavier,
 # la double visibilité d'un message classé, le tri d'un non classé relu par l'API, et les quatre
 # paliers. Valeur MESURÉE par l'exécution complète.
-SCENARIOS_UI=163
+# **167 depuis `CRM-058`** : `e2e/ui/envoi.spec.ts` livre les quatre scénarios de la composition —
+# écrire depuis la card, la saisie incomplète dite avant tout aller-retour, répondre depuis l'inbox
+# en visant la même affaire, et l'absence d'action de réponse sur un message non classé.
+SCENARIOS_UI=167
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

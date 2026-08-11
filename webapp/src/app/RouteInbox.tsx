@@ -39,7 +39,9 @@ import {
 	type PieceJointe,
 	type Selection,
 } from '../lib/inbox'
+import { objetDeReponse } from '../lib/envoi'
 import { clientCrm } from '../lib/supabase'
+import { FormulaireEnvoi } from './FormulaireEnvoi'
 
 /** Le panneau visible sous 1024 px. Sur grand écran, les trois sont montrés ensemble. */
 type Etage = 'dossiers' | 'liste' | 'message'
@@ -592,12 +594,14 @@ function PanneauMessage({
 	onRetour,
 	onReprise,
 	onClasse,
+	onRepondu,
 	visible,
 }: {
 	readonly etat: EtatAsync<MessageComplet | null>
 	readonly onRetour: () => void
 	readonly onReprise: () => void
 	readonly onClasse: () => void
+	readonly onRepondu: () => void
 	readonly visible: boolean
 }) {
 	return (
@@ -670,7 +674,21 @@ function PanneauMessage({
 
 					<footer className="border-t border-border pt-3">
 						{etat.donnees.cardId !== null ? (
-							<PiluleCard idCard={etat.donnees.cardId} />
+							<div className="flex flex-col gap-2">
+								<PiluleCard idCard={etat.donnees.cardId} />
+								{/* RÉPONDRE DEPUIS L'INBOX EMPRUNTE LE MÊME CHEMIN QUE DEPUIS LA CARD
+								    (§19.6) : même composant, même garde, seule la card diffère — ici,
+								    celle du message ouvert. Un message NON classé n'a pas d'affaire,
+								    donc pas d'adresse de retour : il faut d'abord le classer, et
+								    l'écran le dit au lieu d'offrir une action qui échouerait. */}
+								<FormulaireEnvoi
+									idCard={etat.donnees.cardId}
+									destinataire={etat.donnees.expediteurAdresse}
+									objet={objetDeReponse(etat.donnees.objet)}
+									repondA={etat.donnees.id}
+									onEnvoye={onRepondu}
+								/>
+							</div>
 						) : (
 							<div className="flex flex-col gap-2">
 								<p className="text-sm text-text-2">{t('inbox.message.unclassified')}</p>
@@ -757,6 +775,7 @@ export function RouteInbox() {
 					onRetour={() => setEtage('liste')}
 					onReprise={message.reprendre}
 					onClasse={apresClassement}
+					onRepondu={apresClassement}
 					visible={etage === 'message'}
 				/>
 			</div>

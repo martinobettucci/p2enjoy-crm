@@ -44,6 +44,8 @@ export type MessageListe = {
 	readonly classement: LigneMessage['classification']
 	readonly objet: string
 	readonly expediteur: string
+	/** L'adresse SEULE — le libellé porte « Nom <adresse> », qu'un champ « À » ne saurait pas lire. */
+	readonly expediteurAdresse: string
 	readonly recuLe: string
 }
 
@@ -82,6 +84,7 @@ export function projeterMessage(ligne: Pick<
 		classement: ligne.classification,
 		objet: ligne.subject !== null && ligne.subject.trim() !== '' ? ligne.subject : OBJET_ABSENT,
 		expediteur: nomAffiche(ligne.from_address, ligne.from_name),
+		expediteurAdresse: ligne.from_address,
 		recuLe: ligne.received_at,
 	}
 }

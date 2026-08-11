@@ -49,6 +49,12 @@ d'exécuter le code attendu.
   Un envoi réussi produit trois effets solidaires — file marquée, message archivé en `outbound`,
   timeline écrite —, et la timeline compte désormais **douze** types d'événements.
   Preuves : 1 scénario `mail` d'aller-retour complet, 10 tests de composition sans serveur.
+- **Composer et répondre depuis l'écran** — par le **même chemin de code** depuis la card et
+  depuis l'inbox, comme le §19.6 l'exige. Répondre pré-remplit le destinataire et l'objet, et cite
+  le message parent : c'est ce dont le worker tirera `In-Reply-To` et la chaîne `References`. Un
+  message non classé n'offre **pas** de réponse — sans affaire, il n'a pas d'adresse de retour, et
+  l'écran propose le classement à la place plutôt qu'une action qui échouerait.
+  L'écran annonce « mis en file », jamais « envoyé » : le worker n'a pas encore parlé.
 - **Le quota journalier cesse d'être une promesse.** Il se compte sur la journée UTC, **en vol
   compris**, et se vérifie deux fois : à la mise en file par politesse, à l'envoi par autorité.
 - **`CRM-057` — l'inbox globale est livrée.** Trois panneaux — dossiers, liste, message —, une
@@ -70,6 +76,11 @@ d'exécuter le code attendu.
   passe à « **onze acquises, une à moitié** ». Un membre n'emprunte pas l'identité de service du
   workspace, une administratrice n'emprunte pas l'identité personnelle d'un collègue, et la clé de
   service elle-même est refusée : un envoi part toujours au nom de quelqu'un. Mesuré hors interface.
+- **La liste des adresses d'expédition ne propose plus ce que la garde refuserait.** Mesuré : la
+  RLS ouvre la **lecture** des identités aux administrateurs sur tout le workspace — une règle de
+  supervision, pas d'usage —, si bien que l'écran proposait à une administratrice d'expédier au nom
+  d'un collègue, refusé au premier envoi. Le filtre est une aide d'interface ; la règle reste dans
+  la garde.
 - **Un refus ne doit pas ressembler à une panne** : `identity_not_available` portait d'abord
   `P0002`, que PostgREST traduit en **500**. Il porte désormais `42501`, donc `403` — un exploitant
   n'ira pas chercher un incident là où le produit a simplement dit non.
