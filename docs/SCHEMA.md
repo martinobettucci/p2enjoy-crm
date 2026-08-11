@@ -654,7 +654,7 @@ passe n'atteint jamais la table — il va dans Vault.
 | `from_name` | `text` | |
 | `signature_html` | `text` | |
 | `is_default` | `boolean` | une seule par utilisateur — index unique **partiel**, et un trigger **rabat** les autres au lieu de refuser (`CRM-053`, `docs/SPEC-mail-subsystem.md` §14.2) |
-| `daily_quota` | `integer` | garde-fou anti-abus — **créée sans consommateur** : l'envoi est dû par `CRM-058` |
+| `daily_quota` | `integer` | garde-fou anti-abus. **Révisée par `CRM-058`** : `NULL` = aucun plafond, un entier = le plafond du jour **UTC**, `0` = cette identité n'envoie pas. Le `not null default 0` d'origine interdisait tout envoi dès qu'un consommateur existait — mesuré |
 | `status`, `last_error` | | mêmes règles qu'au §12 des comptes entrants : écrites par le serveur seul, `last_error` portant l'un des six codes du §13.7 |
 | `last_checked_at` | `timestamptz` | dernier test de connexion, ajouté par `CRM-053` |
 
@@ -715,7 +715,9 @@ l'intersection « bucket `mail-attachments` » ∩ « pièce `clean` » ∩ « m
 (`app.peut_voir_message`). Aucune écriture n'est ouverte : le dépôt reste le fait de `service_role`.
 
 ### `mail_outbox`
-File d'envoi persistante.
+File d'envoi persistante. **Livrée par `CRM-058`** (migration 30). Aucune écriture par un client :
+`queue_outbound_email` est la seule porte, et elle oppose six refus (`docs/SPEC-mail-subsystem.md`
+§19.4). La lecture suit la card : un envoi appartient à l'affaire au nom de laquelle il part.
 
 | Colonne | Type | Contraintes |
 |---|---|---|
@@ -780,7 +782,9 @@ l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `au
 | `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | Changement de channel — donc potentiellement de **workflow** — avec remappage **explicite** de l'étape : aucun remappage automatique par clé de nœud. Rend `public.cards`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`**. Le droit d'écriture est exigé sur les **deux** channels. Huit refus : `card_not_found`, `forbidden`, `channel_not_found`, `same_channel`, `step_mapping_required`, `step_not_in_workflow`, `field_values_would_be_lost` (`docs/SPEC-workflow-engine.md` §6.4). Le paramètre `step_mapping` annoncé à l'origine par ce §9 désignait une **fonction différente**, désormais nommée `change_channel_workflow` — décision 263, INC-046 et INC-073 | **livrée** par `CRM-045`, **inchangée** |
 | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | Un **channel entier** change de workflow, et l'étape de **toutes** ses cards est remappée en un appel. `step_mapping` est un tableau JSON exact `{from_step_id,to_step_id}` couvrant chaque étape occupée une fois ; plusieurs sources peuvent converger. Les réponses sont refusées par défaut et détruites seulement sur opt-in. Rend `SETOF public.cards` (`docs/SPEC-change-channel-workflow.md`) | **livrée** — `CRM-019`, migration 20, décisions 263, 295 et 306 |
 | `app.scheduler_heartbeat_tick()` | Incrémente le heartbeat opérationnel puis ramène le job `pg_cron` à sa cadence nominale ; privée, sans argument, `search_path` vide, exécutable uniquement par le propriétaire PostgreSQL | **livrée** — `CRM-017`, `docs/SPEC-scheduler.md` |
-| `queue_outbound_email(...)` | Insertion contrôlée dans `mail_outbox` |
+| `queue_outbound_email(card_id, identity_id, to, subject, body_text, cc, in_reply_to_message_id)` | Seule porte de la file d'envoi. Six refus : `not_authenticated`, `forbidden` (droit d'**écriture** sur la card), `identity_not_available`, `card_not_available` (fermée **ou sans adresse**), `recipient_required`, `quota_exceeded`. `SECURITY DEFINER`, `search_path` vide | **livrée** — `CRM-058`, migration 30 |
+| `reserver_envois(limite)` / `marquer_envoi_reussi(...)` / `marquer_envoi_echoue(...)` | Ce que le worker appelle. La réservation est faite par la BASE dans la même instruction que la lecture (`skip locked`) : deux workers n'enverraient pas deux fois le même message. Le succès produit **trois effets solidaires** — file marquée, message archivé en `outbound`, timeline écrite. Réservées à `service_role` | **livrées** — `CRM-058`, migration 30 |
+| `app.envois_du_jour(identity_id)` | Envois de la journée UTC, **en vol compris** : compter les seuls `sent` laisserait mettre mille messages en file | **livrée** — `CRM-058`, migration 30 |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé. **Révisée par `CRM-057`** : elle exige désormais **les deux** droits — voir le message **et** écrire dans la card. Le seul droit d'écriture aurait permis de classer chez soi un message qu'on n'a pas le droit de lire, puis de le lire (`docs/SPEC-mail-subsystem.md` §18.2) | **livrée** — `CRM-055`, migration 25 ; garde ajoutée par `CRM-057`, migration 28 |
 | `app.peut_voir_message(message_id)` | Visibilité d'un message : sa card s'il est classé, sa **boîte** s'il ne l'est pas — propriétaire du compte ou administrateur du workspace. Support des politiques de `mail_messages`, `mail_attachments` et du bucket `mail-attachments`. `SECURITY DEFINER`, `search_path` vide | **livrée** — `CRM-057`, migration 28 |
 

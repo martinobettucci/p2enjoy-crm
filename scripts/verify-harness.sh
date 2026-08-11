@@ -355,7 +355,10 @@ SCENARIOS_UI=163
 # `CRM-050` — succès et `LIST` sur la boîte système, `auth_failed` après changement de secret,
 # `tls_failed` sur le certificat auto-signé, `connection_refused` faute de listener 993, compte
 # inconnu, et jeton exigé. Chaque scénario relit la BASE, pas seulement la réponse HTTP.
-SCENARIOS_MAIL=38
+# **39 depuis `CRM-058`** : `e2e/mail/envoi.spec.ts` ajoute l'ALLER-RETOUR complet — mise en file
+# par la vraie garde, soumission par le worker, réception dans la boîte du destinataire, réponse à
+# l'adresse du `Reply-To`, et retour de cette réponse dans la même card par la relève.
+SCENARIOS_MAIL=39
 
 failures=0
 checks=0

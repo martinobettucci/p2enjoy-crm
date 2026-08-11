@@ -39,6 +39,18 @@ from mail_sync.imap_probe import (
 DEFAULT_TIMEOUT_SECONDS = 30.0
 
 
+def classer_panne_smtp(exception: BaseException) -> str:
+    """Alias public de la traduction des pannes — employé par le worker d'envoi (`CRM-058`).
+
+    LA TRADUCTION EST LA MÊME QUE CELLE DU TEST DE CONNEXION, ET C'EST VOULU : un exploitant qui
+    lit `auth_failed` dans l'état d'une identité doit lire le même code lorsqu'un envoi échoue
+    pour la même raison. Deux vocabulaires pour une seule panne obligeraient à les rapprocher de
+    tête (docs/SPEC-mail-subsystem.md §13.7).
+    """
+
+    return _translate(exception)
+
+
 def _translate(exception: BaseException) -> str:
     """Traduit une panne SMTP en code stable.
 

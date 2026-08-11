@@ -395,3 +395,33 @@ class PostgrestClient:
             "mail_inbound_account_record_check",
             {"p_account_id": account_id, "p_status": status, "p_error": error},
         )
+
+    # --- Envoi sortant — `CRM-058` ------------------------------------------------------------
+
+    def reserver_envois(self, limite: int = 10) -> list[dict[str, Any]]:
+        """Réserve les envois à traiter et rend ce qu'il faut pour les composer (§19.5).
+
+        LA RÉSERVATION EST FAITE PAR LA BASE, dans la même instruction que la lecture : deux
+        workers qui liraient puis marqueraient séparément enverraient deux fois le même message.
+        """
+
+        return list(self._rpc("reserver_envois", {"p_limite": limite}) or [])
+
+    def marquer_envoi_reussi(
+        self, outbox_id: str, rfc822_message_id: str, references: list[str]
+    ) -> str:
+        """Marque l'envoi, archive le message et écrit la timeline — en une seule transaction."""
+
+        return self._rpc(
+            "marquer_envoi_reussi",
+            {
+                "p_outbox_id": outbox_id,
+                "p_rfc822_message_id": rfc822_message_id,
+                "p_references": references,
+            },
+        )
+
+    def marquer_envoi_echoue(self, outbox_id: str, code: str) -> None:
+        """Nomme l'échec par un CODE, jamais par le texte du serveur (§13.7)."""
+
+        self._rpc("marquer_envoi_echoue", {"p_outbox_id": outbox_id, "p_code": code})

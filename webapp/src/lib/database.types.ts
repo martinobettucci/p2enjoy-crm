@@ -797,10 +797,12 @@ export type Database = {
           classified_at: string | null
           classified_by: string | null
           created_at: string
+          direction: string
           from_address: string
           from_name: string | null
           id: string
           received_at: string
+          references_ids: string[]
           rfc822_message_id: string
           sent_at: string | null
           subject: string | null
@@ -816,10 +818,12 @@ export type Database = {
           classified_at?: string | null
           classified_by?: string | null
           created_at?: string
+          direction?: string
           from_address: string
           from_name?: string | null
           id?: string
           received_at?: string
+          references_ids?: string[]
           rfc822_message_id: string
           sent_at?: string | null
           subject?: string | null
@@ -835,10 +839,12 @@ export type Database = {
           classified_at?: string | null
           classified_by?: string | null
           created_at?: string
+          direction?: string
           from_address?: string
           from_name?: string | null
           id?: string
           received_at?: string
+          references_ids?: string[]
           rfc822_message_id?: string
           sent_at?: string | null
           subject?: string | null
@@ -872,7 +878,7 @@ export type Database = {
       mail_outbound_identities: {
         Row: {
           created_at: string
-          daily_quota: number
+          daily_quota: number | null
           from_address: string
           from_name: string | null
           id: string
@@ -893,7 +899,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          daily_quota?: number
+          daily_quota?: number | null
           from_address: string
           from_name?: string | null
           id?: string
@@ -914,7 +920,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          daily_quota?: number
+          daily_quota?: number | null
           from_address?: string
           from_name?: string | null
           id?: string
@@ -943,6 +949,118 @@ export type Database = {
           },
           {
             foreignKeyName: "mail_outbound_identities_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_outbox: {
+        Row: {
+          attachments: Json
+          attempts: number
+          body_text: string
+          card_id: string
+          cc_addrs: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          identity_id: string
+          in_reply_to_message_id: string | null
+          last_error: string | null
+          next_attempt_at: string
+          rfc822_message_id: string | null
+          sent_at: string | null
+          sent_message_id: string | null
+          status: string
+          subject: string | null
+          to_addrs: string[]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attachments?: Json
+          attempts?: number
+          body_text: string
+          card_id: string
+          cc_addrs?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity_id: string
+          in_reply_to_message_id?: string | null
+          last_error?: string | null
+          next_attempt_at?: string
+          rfc822_message_id?: string | null
+          sent_at?: string | null
+          sent_message_id?: string | null
+          status?: string
+          subject?: string | null
+          to_addrs: string[]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attachments?: Json
+          attempts?: number
+          body_text?: string
+          card_id?: string
+          cc_addrs?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity_id?: string
+          in_reply_to_message_id?: string | null
+          last_error?: string | null
+          next_attempt_at?: string
+          rfc822_message_id?: string | null
+          sent_at?: string | null
+          sent_message_id?: string | null
+          status?: string
+          subject?: string | null
+          to_addrs?: string[]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_outbox_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_outbox_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_outbox_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "mail_outbound_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_outbox_in_reply_to_message_id_fkey"
+            columns: ["in_reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_outbox_sent_message_id_fkey"
+            columns: ["sent_message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_outbox_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1597,6 +1715,18 @@ export type Database = {
         Args: { p_error?: string; p_identity_id: string; p_status: string }
         Returns: string
       }
+      marquer_envoi_echoue: {
+        Args: { p_code: string; p_outbox_id: string }
+        Returns: undefined
+      }
+      marquer_envoi_reussi: {
+        Args: {
+          p_outbox_id: string
+          p_references?: string[]
+          p_rfc822_message_id: string
+        }
+        Returns: string
+      }
       move_card: {
         Args: { card_id: string; comment?: string; to_step_id: string }
         Returns: {
@@ -1671,6 +1801,38 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      queue_outbound_email: {
+        Args: {
+          p_body_text?: string
+          p_card_id: string
+          p_cc?: string[]
+          p_identity_id: string
+          p_in_reply_to_message_id?: string
+          p_subject?: string
+          p_to: string[]
+        }
+        Returns: string
+      }
+      reserver_envois: {
+        Args: { p_limite?: number }
+        Returns: {
+          body_text: string
+          card_id: string
+          cc_addrs: string[]
+          from_address: string
+          identity_id: string
+          in_reply_to: string
+          outbox_id: string
+          references_ids: string[]
+          reply_to: string
+          smtp_host: string
+          smtp_port: number
+          smtp_security: string
+          smtp_username: string
+          subject: string
+          to_addrs: string[]
+        }[]
       }
       upsert_mail_inbound_account: {
         Args: {

@@ -35,6 +35,9 @@ type Expect<T extends true> = T
 // --- 1. Les tables du socle d'identité, et elles seules -----------------------------------------
 // docs/SCHEMA.md §1. Une table ajoutée sans régénération, ou régénérée sans que ce test soit
 // étendu, casse ici.
+//
+// RÉVISÉ PAR `CRM-058`, qui livre `mail_outbox` — la file d'envoi. Le client la LIT (la lecture
+// suit la card) et n'y écrit jamais : `queue_outbound_email` est la seule porte.
 
 type _tables = Expect<
   Equal<
@@ -53,6 +56,7 @@ type _tables = Expect<
     | 'mail_message_occurrences'
     | 'mail_messages'
     | 'mail_outbound_identities'
+    | 'mail_outbox'
     | 'profiles'
     | 'track_members'
     | 'tracks'
@@ -595,7 +599,10 @@ type _vueDerivationColonnes = Expect<
 // `CRM-057` ajoute `inbox_arborescence`, **appelable par le client** — contrairement aux deux
 // précédentes, réservées à `service_role`. C'est la première fonction de messagerie qu'un écran
 // appelle vraiment.
-type _lesDixSeptFonctions = Expect<
+// RÉVISÉ UNE NEUVIÈME FOIS PAR `CRM-058`, qui livre quatre fonctions d'envoi. UNE SEULE est
+// appelable par le client — `queue_outbound_email` : les trois autres sont le fait du worker et
+// réservées à `service_role`. Le type les voit, la base les refuse.
+type _lesVingtEtUneFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -606,6 +613,8 @@ type _lesDixSeptFonctions = Expect<
     | 'classify_message'
     | 'dossiers_a_renommer'
     | 'inbox_arborescence'
+    | 'marquer_envoi_echoue'
+    | 'marquer_envoi_reussi'
     | 'mail_folder_map_reparenter'
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
@@ -613,6 +622,8 @@ type _lesDixSeptFonctions = Expect<
     | 'mail_outbound_identity_record_check'
     | 'move_card'
     | 'move_card_to_channel'
+    | 'queue_outbound_email'
+    | 'reserver_envois'
     | 'upsert_mail_inbound_account'
     | 'upsert_mail_outbound_identity'
   >
@@ -786,7 +797,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesDixSeptFonctions,
+  _lesVingtEtUneFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

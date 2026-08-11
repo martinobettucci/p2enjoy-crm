@@ -41,6 +41,16 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-058` — le dos de l'envoi est livré, et l'aller-retour est prouvé de bout en bout.** Le
+  produit met un message en file par sa garde, son worker le soumet réellement en SMTP authentifié,
+  le destinataire le **reçoit dans sa boîte**, y répond à l'adresse que le produit a mise en
+  `Reply-To`, et la relève ramène cette réponse **dans la même affaire**. Rien n'est simulé : un
+  `Reply-To` faux rendrait ce scénario rouge.
+  Un envoi réussi produit trois effets solidaires — file marquée, message archivé en `outbound`,
+  timeline écrite —, et la timeline compte désormais **douze** types d'événements.
+  Preuves : 1 scénario `mail` d'aller-retour complet, 10 tests de composition sans serveur.
+- **Le quota journalier cesse d'être une promesse.** Il se compte sur la journée UTC, **en vol
+  compris**, et se vérifie deux fois : à la mise en file par politesse, à l'envoi par autorité.
 - **`CRM-057` — l'inbox globale est livrée.** Trois panneaux — dossiers, liste, message —, une
   **pile** sous 1024 px, une arborescence qui ne montre que ce qui porte du courrier, et
   « Non classés » toujours en tête, même à zéro. Un message classé se retrouve **des deux côtés** :
@@ -71,6 +81,11 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **`daily_quota` valait zéro, donc interdisait tout envoi.** `CRM-053` l'avait créée
+  `not null default 0` en écrivant qu'aucun consommateur n'existait ; dès qu'un consommateur a
+  existé, ce zéro a interdit **tout** envoi à **toutes** les identités — mesuré au premier appel de
+  la garde. `NULL` signifie désormais « aucun plafond », `0` garde son sens littéral, et les zéros
+  jamais configurés sont convertis.
 - **Trois défauts d'interface que seule l'observation pouvait montrer** (décision 328) : un bouton
   de flexbox qui refusait de rétrécir et débordait de son panneau en emportant son compteur hors de
   l'écran ; quatre classes d'espacement **inexistantes** — l'échelle du design system est fermée —

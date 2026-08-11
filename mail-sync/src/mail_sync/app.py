@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 
 from mail_sync import __version__
 from mail_sync.config import Settings
+from mail_sync.envoi import vider_la_file
 from mail_sync.imap_probe import probe_inbound_account
 from mail_sync.postgrest import PostgrestClient, PostgrestError
 from mail_sync.ingestion import relever_compte
@@ -66,6 +67,18 @@ class ConnectionTestResponse(StrictModel):
     error: str | None
     folders: int
     checked_at: str
+
+
+class EnvoiResponse(StrictModel):
+    """Ce qu'une passe du worker d'envoi a produit — des faits comptables, jamais un destinataire.
+
+    `reserved` peut dépasser `sent + failed` : un envoi réservé dont le worker meurt reste
+    `sending`, et c'est ce que `CRM-059` devra reprendre. Le compte le dit plutôt que de l'arrondir.
+    """
+
+    reserved: int
+    sent: int
+    failed: int
 
 
 class ReleveResponse(StrictModel):
@@ -469,6 +482,58 @@ def create_app(
             attachments_infected=resultat.pieces_infectees,
             filed=resultat.dossiers_crees,
             renamed=resultat.dossiers_renommes,
+        )
+
+    # --- Envoi sortant — `CRM-058` ------------------------------------------------------------
+    #
+    # ELLE EST DÉCLENCHÉE, COMME LA RELÈVE, et pour la même raison : une boucle permanente demande
+    # une supervision, un état visible et une reprise, que `CRM-059` revendique. Déclenchée, elle
+    # est observable et rejouable — ce qu'une preuve peut mesurer.
+    #
+    # ELLE EST IDEMPOTENTE PAR CONSTRUCTION : la réservation `sending` est faite par la BASE dans
+    # la même instruction que la lecture, si bien qu'une seconde passe ne reprend pas un envoi en
+    # cours. Un envoi déjà `sent` n'est pas archivé deux fois.
+    @application.post(
+        "/internal/v1/outbox/flush",
+        response_model=EnvoiResponse,
+        dependencies=[Depends(require_internal_token)],
+    )
+    def flush_outbox(request: Request, limit: int = 10) -> EnvoiResponse:
+        settings_courants: Settings = request.app.state.settings
+        client = PostgrestClient(
+            settings_courants.SUPABASE_URL,
+            settings_courants.SERVICE_ROLE_KEY.get_secret_value(),
+            timeout=60.0,
+        )
+
+        try:
+            resultat = vider_la_file(
+                client,
+                limite=max(1, min(limit, 100)),
+                delai=settings_courants.MAIL_SYNC_SMTP_TIMEOUT_SECONDS,
+                journal=lambda evenement, details: log_event(
+                    app_logger, logging.INFO, evenement, **details
+                ),
+            )
+        except PostgrestError as erreur:
+            log_event(
+                app_logger,
+                logging.ERROR,
+                "outbox_flush_failed",
+                postgrest_status=erreur.status_code,
+            )
+            raise HTTPException(status_code=502, detail="Base indisponible") from None
+
+        log_event(
+            app_logger,
+            logging.INFO,
+            "outbox_flushed",
+            reserved=resultat.reserves,
+            sent=resultat.envoyes,
+            failed=resultat.echoues,
+        )
+        return EnvoiResponse(
+            reserved=resultat.reserves, sent=resultat.envoyes, failed=resultat.echoues
         )
 
     @application.get(
