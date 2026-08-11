@@ -11018,3 +11018,48 @@ une promesse tenue par personne.
 d'un rangement manqué (§20.5), ni l'écran d'état (§20.7), qui restent dus à `CRM-059`. Elle ne
 touche pas non plus à `IDLE`, explicitement écarté par le §20.2 : la scrutation déclarée est
 observable et rejouable, la connexion permanente est un état de plus à superviser.
+
+### Décision 342 — `sync_state` porte une plage, et le premier contact ne descend pas la boîte
+
+**2026-08-11 — suite de `CRM-059`, toujours sans pile locale.**
+
+**Le fait mesuré.** `mail_sync/ingestion.py` exécute `imap.search(["ALL"])` à chaque relève, puis
+`fetch` sur tout ce que la recherche rend. La base dédoublonne, donc rien n'est dupliqué et la
+relève est bien idempotente — mais **le réseau paie la boîte entière à chaque tour**. Avec la boucle
+de veille livrée par la décision 341, une boîte de dix mille messages relevée toutes les minutes
+produirait dix mille `FETCH RFC822` par minute pour zéro message neuf. La veille rend donc urgent
+ce que la relève explicite rendait seulement coûteux.
+
+Ce n'était pas un défaut de `CRM-054` : `sync_state` n'avait alors aucun consommateur, et l'unité a
+livré ce qui était démontrable. C'est la dette que `CRM-059` solde.
+
+**Trois choix, écrits dans `docs/SPEC-mail-subsystem.md` §20.6 bis avant la première ligne de code :**
+
+1. **`sync_state` porte une PLAGE, et non un seul UID.** Le §20.6 écrivait « le plus petit UID déjà
+   rapatrié ». Un seul nombre ne suffit pas, pour une raison mécanique : le plancher dit jusqu'où
+   l'historique est descendu, mais pas où commence le courrier neuf. Il faudrait alors redemander à
+   chaque tour tout ce qui est au-dessus du plancher, c'est-à-dire refaire exactement ce qu'on
+   corrige. `{"uid_min", "uid_max"}` tient le contrat du §20.6 — `uid_min` est bien le plus petit
+   rapatrié — en le rendant exploitable.
+
+2. **Le premier contact descend le courrier DU JOUR, pas la boîte.** Sans état, `uid_max` est
+   inconnu et la passe courante ne peut pas s'écrire ; elle demande `SINCE <aujourd'hui>`. C'est le
+   point le plus contre-intuitif de la conception, et il est délibéré : descendre toute la boîte au
+   branchement ferait précisément ce que `backfill_months` sert à éviter, et le ferait **sans qu'on
+   l'ait demandé**, alors que le défaut de cette colonne est `0`. Ce qui précède le jour du
+   branchement **est** de l'historique, et l'historique ne descend que sur demande.
+
+3. **`backfill_months = 0` supprime la passe, il ne la borne pas à zéro mois.** Aucune recherche
+   `SINCE` n'est émise du tout, et `uid_min` ne bouge jamais. La nuance compte : une passe bornée à
+   zéro émettrait une requête inutile à chaque tour et par dossier.
+
+**Ce qui est nommé et non traité, plutôt que tu.** Un changement d'`UIDVALIDITY` invalide l'état
+enregistré : le dossier redescendrait son courant sans rien perdre — la base dédoublonne — mais son
+historique paraîtrait complet à tort. Traiter le cas demande d'invalider `sync_state` pour ce
+dossier, et cette décision appartient à une reprise qui saura la mesurer contre un serveur qui le
+fait réellement. La limite est écrite au §20.6 bis.6.
+
+**`LOT_BACKFILL = 200` n'est pas une mesure, et le document le dit.** C'est un ordre de grandeur
+choisi pour qu'un tour reste court devant un intervalle de veille de soixante secondes. `CLAUDE.md`
+§21 proscrit d'optimiser sans mesure ; il ne proscrit pas de choisir une borne, à condition de ne
+pas la présenter comme mesurée. Elle le sera le jour où une vraie boîte historique sera relevée.

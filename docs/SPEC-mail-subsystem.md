@@ -1566,6 +1566,92 @@ rejouer ne redescend pas ce qui l'a déjà été.
 `daily_quota` de `CRM-053`, ce zéro-là est **le bon choix par défaut** : importer dix ans d'archives
 sans qu'on l'ait demandé serait une décision prise à la place de l'exploitant.
 
+### 20.6 bis Le plan de relève, écrit avant d'être codé
+
+*`docs/JOURNAL.md` décision 342. Le §20.6 pose la règle ; ce chapitre pose l'algorithme, parce qu'un
+« lot d'historique borné » ne se code pas sans dire de quoi il est fait.*
+
+#### 20.6 bis.1 Ce que fait la relève aujourd'hui, et pourquoi c'est intenable
+
+MESURÉ dans `mail_sync/ingestion.py` : chaque relève exécute `imap.search(["ALL"])`, puis
+`imap.fetch` sur **tout** ce que la recherche rend. Le dédoublonnage de la base fait que rien n'est
+dupliqué — la relève est idempotente, et elle le restera —, mais **le réseau paie la boîte entière à
+chaque tour**. Sur une boîte de dix mille messages relevée toutes les minutes, c'est dix mille
+`FETCH RFC822` par minute pour zéro message neuf.
+
+Ce n'était pas un défaut de `CRM-054` : `sync_state` n'avait alors aucun consommateur, et l'unité
+livrait ce qui était démontrable. C'est la dette que ce chapitre solde.
+
+#### 20.6 bis.2 `sync_state` porte une PLAGE, et non un seul UID
+
+Le §20.6 écrit que `sync_state` « porte le plus petit UID déjà rapatrié par dossier ». Un seul UID ne
+suffit pas, et la raison est mécanique : connaître le plancher dit jusqu'où l'historique est
+descendu, mais **pas** où commence le courrier neuf. Il faudrait alors, à chaque tour, redemander
+tout ce qui est au-dessus du plancher — c'est-à-dire exactement le comportement qu'on veut corriger.
+
+`sync_state[<dossier>]` porte donc `{"uid_min": …, "uid_max": …}` : les bornes de la plage
+**contiguë** déjà rapatriée. Deux nombres au lieu d'un, et le contrat du §20.6 est tenu — `uid_min`
+est bien « le plus petit UID déjà rapatrié ».
+
+**La plage est contiguë par construction**, jamais par hypothèse : les deux passes ci-dessous ne
+peuvent que l'étendre par le haut ou par le bas, jamais créer de trou. Un dossier sans état est un
+dossier dont rien n'a été rapatrié, ce qui est différent d'un dossier vide.
+
+#### 20.6 bis.3 Deux passes, et le courrier du jour d'abord
+
+| Passe | Ce qu'elle demande | Bornée par |
+|---|---|---|
+| **Courante** | `UID SEARCH UID <uid_max+1>:*` | rien — le neuf est rare et doit descendre en entier |
+| **Historique** | `UID SEARCH SINCE <borne> UID 1:<uid_min-1>`, dont on ne garde que les **plus grands** | `LOT_BACKFILL` messages |
+
+**Le courrier du jour ne doit pas attendre que dix ans d'archives soient descendus** (§20.6). La
+passe courante est donc exécutée **la première**, et elle n'est pas bornée : borner le neuf ferait
+prendre du retard à une boîte active sans jamais le rattraper, puisque chaque tour en laisserait
+derrière lui.
+
+La passe d'historique descend **du plus récent vers le plus ancien** — les plus grands UID sous
+`uid_min` d'abord. L'inverse rapatrierait les archives les plus vieilles en premier, c'est-à-dire
+celles dont personne n'a besoin tout de suite.
+
+**`LOT_BACKFILL` vaut 200.** Ce n'est pas une mesure, et il est écrit ici que ce n'en est pas une :
+c'est un ordre de grandeur choisi pour qu'un tour reste court devant un intervalle de veille de
+soixante secondes. La valeur devra être mesurée le jour où une vraie boîte historique sera relevée ;
+d'ici là, elle est nommée plutôt que dissimulée.
+
+#### 20.6 bis.4 Premier contact : le courrier du jour, pas la boîte entière
+
+Sans état, `uid_max` est inconnu et la passe courante ne peut pas s'écrire. Elle demande alors
+`UID SEARCH SINCE <aujourd'hui>` : **le courrier du jour, et rien d'autre**.
+
+C'est le point le plus contre-intuitif du chapitre, et il est délibéré. Un premier contact qui
+descendrait toute la boîte ferait exactement ce que `backfill_months` sert à éviter, et le ferait
+**sans qu'on l'ait demandé** — alors que le défaut de `backfill_months` est `0`, c'est-à-dire
+« aucun historique ». Ce qui précède le jour du branchement **est** de l'historique, et
+l'historique ne descend que si l'exploitant l'a demandé.
+
+#### 20.6 bis.5 `backfill_months = 0` : aucune passe d'historique, jamais
+
+Zéro ne borne pas la profondeur à zéro mois : il **supprime la passe**. Aucune recherche `SINCE`
+n'est émise, `uid_min` ne bouge jamais, et l'état du dossier ne porte que la progression du courant.
+
+C'est le défaut, et le §20.6 dit pourquoi : « importer dix ans d'archives sans qu'on l'ait demandé
+serait une décision prise à la place de l'exploitant ».
+
+#### 20.6 bis.6 Ce que le plan ne fait pas
+
+- **Il ne comble aucun trou.** Si un message est supprimé puis un autre déposé avec un UID
+  intermédiaire — ce qu'un serveur IMAP conforme ne fait pas, les UID étant strictement croissants
+  par dossier —, le plan ne le verrait pas. La garantie repose sur `UIDVALIDITY`, non sur une
+  vérification du service.
+- **Il ne traite pas un changement d'`UIDVALIDITY`.** Lorsqu'un serveur réinitialise ses UID, l'état
+  enregistré désigne des messages qui n'existent plus. Le cas est **nommé et non traité** : il
+  demande d'invalider `sync_state` pour ce dossier, et cette décision appartient à une reprise qui
+  saura la mesurer. En attendant, un tel dossier redescend son courant sans rien perdre — la base
+  dédoublonne — mais son historique paraîtra complet à tort.
+- **Il ne borne pas la taille d'un lot en octets**, seulement en nombre de messages. Deux cents
+  messages porteurs de pièces jointes lourdes tiennent plus longtemps que deux cents messages nus ;
+  `MAIL_MAX_ATTACHMENT_MB` borne chaque pièce, pas le tour.
+
 ### 20.7 L'état affiché est conforme à la réalité
 
 La Definition of Done l'exige en ces termes : « état affiché conforme à la réalité ». Ce qui est
