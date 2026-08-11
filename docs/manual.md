@@ -48,7 +48,7 @@
 | 13 | L'inbox : dossiers, messages non classés, classement | `CRM-055`, `CRM-057` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
 | 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | À livrer |
-| 16 | Que faire quand un compte mail est en erreur | `CRM-059` | À livrer |
+| 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
 
 ### Administration
 
@@ -966,6 +966,44 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
 - L'édition des **workflows** eux-mêmes — étapes, transitions, questions — relève du chapitre 20.
 - Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
+
+## 6. Consulter l'état de la messagerie
+
+*Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
+`CRM-058` (file sortante) — cet écran n'en invente aucune.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
+
+**Qui.** Un administrateur de l'espace de travail voit **tous** les comptes de messagerie entrante
+du workspace, la boîte système comprise. Un membre ordinaire ne voit que **sa propre boîte**, s'il en
+possède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à
+superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver.
+
+**Ce que le tableau montre, par boîte :**
+
+- **Dernière relève réussie** — la date et l'heure du dernier relevé qui a abouti. Une boîte jamais
+  relevée l'annonce en toutes lettres : « Jamais relevée », et non une case vide.
+- **Dernier incident** — si la boîte est en échec, un texte compréhensible : « Authentification
+  refusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou
+  « Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre
+  serveur mail, qui peut contenir des détails de connexion.
+
+**Ce que les deux chiffres montrent :** le nombre de messages **en attente d'envoi** (mis en file ou
+en cours d'envoi) et le nombre d'**échecs définitifs** — un envoi qui a épuisé ses tentatives de
+reprise. Un membre ordinaire ne compte que la file des affaires qu'il a le droit de lire ; un
+administrateur compte celle de tout l'espace de travail.
+
+**Ce que cet écran ne fait pas.** Il **lit**, il n'agit pas : aucun bouton ne relance une relève,
+n'acquitte un incident ni ne modifie un réglage depuis cette page. La donnée est lue à l'ouverture ;
+rafraîchissez la page pour la mettre à jour.
+
+### 6.1 Ce qui n'est pas encore là
+
+- **Aucune alerte n'est envoyée** lorsqu'un compte tombe en erreur : cet écran est le seul endroit où
+  le constater. Une notification proactive relèverait d'une unité dédiée aux notifications.
+- **Aucune veille par IDLE** : la relève reste une scrutation régulière, dont l'intervalle se règle
+  par la variable d'environnement `MAIL_SYNC_POLL_INTERVAL` (opération d'exploitation, hors de cet
+  écran).
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

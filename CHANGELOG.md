@@ -167,9 +167,17 @@ d'exécuter le code attendu.
   §20.11.4), deux compteurs sobres pour la file sortante. Spécifié avant d'être écrit —
   `docs/SPEC-mail-subsystem.md` §20.11, décision 346.
   - Preuves : **45 assertions unitaires** (lecture + écran), `npm run typecheck` et `npm run build`
-    verts, aucune classe Tailwind absente du CSS produit.
-  - **Non livré par ce changement** : `e2e/api`, `e2e/ui`, captures, harnais
-    `scripts/verify-mail-resilience.sh`. `CRM-059` reste `[~]`.
+    verts, aucune classe Tailwind absente du CSS produit. `e2e/ui/etat-messagerie.spec.ts`
+    (**6 scénarios**, captures aux quatre paliers) et `e2e/api/comptes-entrants.spec.ts`
+    (**11 scénarios**, réutilisé de `CRM-052`) livrés et rejoués dans le même changement.
+    `docs/manual.md` chapitre 6.
+  - **`scripts/verify-mail-resilience.sh` est LIVRÉ** — **56 contrôles, aucune anomalie**, non
+    complaisant (trois dégradations réelles font rougir la suite avant restauration). Il rejoue
+    pytest sur `mail-sync/tests` (240 assertions), pgTAP sur `0031`/`0032`/`0033` (30 assertions),
+    l'API, l'E2E `mail` (coupure SMTP réelle) et l'E2E `ui` (écran d'état).
+  - **`CRM-059` reste `[~]`** : le seul écart nommé est la passe historique du backfill
+    (`docs/SPEC-mail-subsystem.md` §20.6 bis.3), jamais exercée par une relève réelle faute d'un
+    compte seedé avec `backfill_months > 0` — prouvée au niveau unitaire (pytest) seulement.
 
 ### Corrigé
 

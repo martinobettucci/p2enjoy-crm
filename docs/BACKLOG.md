@@ -5712,9 +5712,12 @@ Ce qui est **déjà mesuré ou tranché** :
   `sync_state` sous forme de **plage** `{uid_min, uid_max}` et non d'un seul UID. Un premier contact
   descend le **courrier du jour**, jamais la boîte entière. **48 assertions pytest vertes** — 39 sur
   le plan, 9 sur la relève, qui gagne ainsi son **premier test unitaire** —, non complaisantes :
-  cinq mutations font toutes rougir la suite. **Reste dû** : la progression n'est écrite qu'après un
-  rapatriement réel, mais le traitement d'un message par cette voie n'est prouvé que par `e2e/mail`,
-  qui n'a pas pu être exécuté ici.
+  cinq mutations font toutes rougir la suite. **Reste dû, et c'est le SEUL écart qui retient encore
+  cette unité en `[~]`** : `backfill_months` vaut `0` pour les trois comptes du seed (défaut
+  documenté, §20.6), si bien qu'aucune relève réelle n'a jamais déclenché la **passe historique**
+  (la seconde des deux passes du §20.6 bis.3, lot borné à 200). `e2e/mail/ingestion.spec.ts`
+  exerce la passe courante par une vraie relève, mais pas celle-là — il faudrait un compte seedé
+  avec `backfill_months > 0` et de l'historique réel dans sa boîte pour l'exercer de bout en bout.
 - **`IDLE` est annoncé, et ne sera PAS employé ici** : une connexion permanente par compte est un
   état de plus à superviser, là où une scrutation déclarée est observable et rejouable. Le passage
   à `IDLE` demandera sa propre mesure.
@@ -5748,9 +5751,7 @@ Ce qui est **déjà mesuré ou tranché** :
   dossiers surveillés du tour courant. **12 assertions pgTAP** (suite complète 1933, verte) et
   **5 assertions pytest** (suite complète 192, verte), non complaisantes : deux mutations — marquer
   le fait sans condition de succès — font rougir exactement les deux assertions qui protègent cette
-  règle. `docs/JOURNAL.md` décision 342. **Non exécuté** : preuve API et E2E `mail` d'une copie
-  réellement refusée puis reprise — exigent le harnais `scripts/verify-mail-resilience.sh`, encore
-  à écrire.
+  règle. `docs/JOURNAL.md` décision 342.
 - **Un défaut bloquant TOUT envoi a été trouvé et corrigé en tentant de rejouer la preuve
   ci-dessous** — `docs/JOURNAL.md` décision 347. `upsert_mail_outbound_identity` réinstallait
   `daily_quota = 0` (interdiction totale) à chaque appel sans plafond précisé, alors que la
@@ -5764,17 +5765,30 @@ Ce qui est **déjà mesuré ou tranché** :
   rejoué avec succès une fois le défaut ci-dessus corrigé et le seed réappliqué : **2 scénarios
   verts**, coupure et reprise, orphelin repris. `e2e/mail/envoi.spec.ts` (`CRM-058`) rejoué sans
   régression.
-- **L'écran d'état — §20.11, décision 346 — est LIVRÉ pour sa part lecture** :
-  `webapp/src/lib/mail-etat.ts` (deux lectures, aucune politique nouvelle) et
-  `webapp/src/app/EtatMessagerie.tsx` à `/reglages/messagerie`, index de réglages étendu. Tableau
-  des comptes conforme à `docs/DESIGN_SYSTEM.md` §5.9, dictionnaire fermé des six codes d'incident,
-  deux compteurs sobres sur la file sortante. **45 assertions vertes** (lib + écran + routage),
-  `npm run typecheck` et `npm run build` propres, aucune classe Tailwind absente du CSS produit
-  (`scripts/lib/classes-css.mjs`). **L'API de lecture d'un compte (« lisible par son propriétaire et
-  un administrateur, par personne d'autre ») était déjà prouvée par `e2e/api/comptes-entrants.spec.ts`
-  (`CRM-052`) et a été rejouée ici : 11 scénarios verts.** **Reste dû** : `e2e/ui/etat-messagerie.spec.ts`,
-  captures aux quatre paliers, `scripts/verify-mail-resilience.sh` — encore à écrire, et qui doit
-  rejouer l'ensemble des preuves de ce chapitre (pytest, pgTAP, API, E2E `mail`, E2E `ui`).
+- **L'écran d'état — §20.11, décision 346 — est LIVRÉ** : `webapp/src/lib/mail-etat.ts` (deux
+  lectures, aucune politique nouvelle) et `webapp/src/app/EtatMessagerie.tsx` à
+  `/reglages/messagerie`, index de réglages étendu. Tableau des comptes conforme à
+  `docs/DESIGN_SYSTEM.md` §5.9, dictionnaire fermé des six codes d'incident, deux compteurs sobres
+  sur la file sortante. **45 assertions unitaires** (lib + écran + routage). **L'API de lecture
+  d'un compte (« lisible par son propriétaire et un administrateur, par personne d'autre ») était
+  déjà prouvée par `e2e/api/comptes-entrants.spec.ts` (`CRM-052`) et a été rejouée ici : 11
+  scénarios verts, aucune règle inventée.** `e2e/ui/etat-messagerie.spec.ts` : **6 scénarios
+  verts** au clavier et à la souris, incident produit par la clé de service puis rendu au seed,
+  refus du non-administrateur mesuré par l'état vide. **Captures aux quatre paliers, observées** —
+  `docs/captures/CRM-059/`.
+- **Les six preuves du tableau §20.8 sont TOUTES vertes**, et le harnais qui les rejoue est LIVRÉ —
+  `scripts/verify-mail-resilience.sh`, **56 contrôles, aucune anomalie**, non complaisant : trois
+  dégradations réelles (le backoff cesse de progresser, sa borne disparaît, le filtre « en
+  attente » perd `sending`) font toutes rougir la suite avant restauration. pytest sur tout
+  `mail-sync/tests` (**240 assertions**), pgTAP sur `0031`/`0032`/`0033` (**30 assertions**), API
+  réutilisée de `CRM-052`, E2E `mail` (coupure SMTP réelle), E2E `ui` (écran d'état) — les cinq
+  rejoués dans le même passage.
+- **CE QUI RETIENT ENCORE CETTE UNITÉ EN `[~]`, ET RIEN D'AUTRE** : le seul écart nommé est celui du
+  premier alinéa — la passe historique du backfill (§20.6 bis.3, second passage) n'a jamais été
+  exercée par une relève réelle, faute d'un compte seedé avec `backfill_months > 0` et
+  d'historique dans sa boîte. Ni le tableau §20.8, ni le harnais ne l'exigent littéralement ; il
+  est nommé ici parce que la Definition of Done initiale de l'unité — « import historique par
+  lots » — ne serait autrement prouvée qu'au niveau unitaire, jamais de bout en bout.
 
 ---
 
