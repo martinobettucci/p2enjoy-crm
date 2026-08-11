@@ -5604,6 +5604,25 @@ ou depuis l'inbox par le même chemin.
 **DoD** : E2E `mail` d'aller-retour complet ; en-têtes de threading vérifiés sur le message reçu ;
 quota et refus testés.
 
+*Spécifiée avant d'être écrite* — `docs/SPEC-mail-subsystem.md` §19, `docs/JOURNAL.md` décision 330.
+Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémentation :
+
+- **Le serveur ne réécrit pas le `Message-ID`** : le produit choisit le sien et le mémorise, ce qui
+  fait de lui la charnière du fil pour la règle 2 du §4.4.
+- **Le `Reply-To` n'est vérifié par personne d'autre que nous** — il passe même vers une adresse de
+  card inexistante. Sa justesse est une responsabilité entière du produit.
+- **INC-087 est CLOSE** : un principal ne peut expédier que depuis ses propres adresses
+  (`501 5.5.4`, mesuré), et `contact@p2enjoy.test` rejoint le principal de Driss. La divergence
+  entrant/sortant promise depuis `CRM-053` devient applicable.
+- **Deux colonnes manquent à `mail_messages`** : `direction`, sans quoi un message écrit serait
+  montré comme reçu, et `references_ids`, sans quoi une réponse couperait le fil au deuxième
+  aller-retour.
+- **Le quota se compte sur la journée UTC**, sur les lignes `queued`, `sending` **et** `sent` :
+  compter les seuls envois réussis laisserait mettre mille messages en file. Il est vérifié deux
+  fois — à la mise en file par politesse, à l'envoi par autorité.
+- **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
+  et le dit.
+
 ### CRM-059 — Backfill, résilience, supervision `[ ]`
 Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché

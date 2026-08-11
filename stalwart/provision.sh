@@ -173,7 +173,15 @@ boite "systeme@$DOMAINE_CARDS" 'Boite systeme du workspace P2Enjoy SAS' \
 # Boîtes personnelles des deux comptes seedés qui correspondent. Farida Nowak (`viewer`) n'en a
 # pas : un `viewer` lit, il ne correspond pas (docs/JOURNAL.md décision 239).
 boite "admin@$DOMAINE_PERSO" 'Camille Aubert' "[\"admin@$DOMAINE_PERSO\"]"
-boite "bizdev@$DOMAINE_PERSO" 'Driss Lemoine' "[\"bizdev@$DOMAINE_PERSO\"]"
+# DEUX ADRESSES POUR DRISS, ET C'EST INC-087 QUI L'IMPOSE. Le seed lui donne une identité sortante
+# qui expédie depuis `contact@`, précisément pour démontrer que l'entrant et le sortant peuvent
+# diverger (docs/SPEC-mail-subsystem.md §2.2). Or MESURÉ : un principal ne peut expédier que depuis
+# ses propres adresses, et le serveur refuse tout autre `From` en
+# `501 5.5.4 You are not allowed to send from this address.` L'alias rend la divergence
+# applicable au lieu de la laisser décorative — et c'est le provisionnement qui était incomplet,
+# non le modèle.
+boite "bizdev@$DOMAINE_PERSO" 'Driss Lemoine' \
+	"[\"bizdev@$DOMAINE_PERSO\",\"contact@$DOMAINE_PERSO\"]"
 
 # --- 5. Contrôle de sortie ----------------------------------------------------------------------
 # Le script ne se déclare pas réussi parce qu'il n'a pas échoué : il relit ce qu'il a écrit.

@@ -10566,3 +10566,43 @@ les cinq scénarios redeviennent verts, et l'ont été à chaque exécution depu
 réelle : un `finally` qui supprime **par identifiant** ne nettoie rien lorsque l'identifiant n'a
 pas pu être lu. Elle appartient aux preuves de `CRM-043`, non à `CRM-057`, et elle est écrite ici
 plutôt que corrigée à la sauvette dans un chunk qui parle d'autre chose.
+
+### Décision 330 — Ce que le serveur ne fait pas à notre place
+
+**2026-08-11 — `CRM-058`, spécification écrite AVANT le code (CLAUDE.md §5).**
+
+**Quatre mesures, faites avant d'écrire une ligne**, contre le Stalwart de `CRM-050` :
+
+| Mesure | Résultat | Ce qu'elle décide |
+|---|---|---|
+| `Message-ID` choisi par l'expéditeur | **conservé** | Le produit choisit le sien et le mémorise : c'est la charnière du fil |
+| `Reply-To` vers une card **inexistante** | **transmis** | Sa justesse est notre responsabilité, pas une garantie du transport |
+| `In-Reply-To` / `References` | **transmis tels quels** | Le fil est ce que nous écrivons, ni plus ni moins |
+| `From` étranger au principal | **`501 5.5.4`** | INC-087 : le provisionnement était incomplet, pas le modèle |
+
+**La leçon commune** : le serveur transmet ce qu'on lui donne et ne vérifie presque rien. Chaque
+garantie que l'utilisateur attend — la réponse qui revient dans la bonne affaire, le fil qui ne se
+coupe pas — est une garantie **du produit**, à écrire et à prouver.
+
+**INC-087 est close par la correction n° 1.** `contact@p2enjoy.test` rejoint la liste `emails` du
+principal `bizdev@p2enjoy.test`. J'ai retenu cette voie plutôt que de ramener `from_address` à
+`bizdev@` : la seconde aurait fait disparaître la démonstration de divergence que la Definition of
+Done de `CRM-053` réclame explicitement, c'est-à-dire supprimé l'exigence au lieu de la satisfaire.
+Vérifié après correction : la soumission depuis `contact@` est acceptée.
+
+**Deux colonnes ajoutées à `mail_messages`, et le motif de chacune est un défaut évité** :
+`direction`, sans quoi un message que nous avons écrit s'afficherait comme reçu — et la règle 2
+pourrait rattacher une réponse à notre propre envoi comme s'il venait du correspondant ;
+`references_ids`, sans quoi une réponse ne citerait que son parent et un client de messagerie
+couperait le fil au deuxième aller-retour.
+
+**Le quota est vérifié deux fois, à dessein.** À la mise en file, pour que le refus soit immédiat et
+visible par celui qui écrit ; à l'envoi, parce que c'est le worker qui le dépense réellement et que
+plusieurs messages peuvent être acceptés avant que le premier ne parte. La règle est celle du
+worker ; celle du RPC est une politesse. Et il se compte sur les lignes **en vol autant que
+parties** : compter les seuls envois réussis laisserait mettre mille messages en file.
+
+**Ce que je refuse de livrer ici** : le backoff et la reprise après coupure. `CRM-059` les
+revendique nommément, et un backoff écrit à la va-vite ici serait défait par l'unité suivante.
+L'unité livre les colonnes qui les porteront et **une seule tentative** : un échec passe `failed` et
+le dit, il ne feint pas d'avoir été envoyé.

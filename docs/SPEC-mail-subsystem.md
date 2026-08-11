@@ -1348,3 +1348,128 @@ double visibilité exigée par la Definition of Done.
   un état faux dès la seconde session. Elle appartient à une unité qui la persistera.
 - **Aucun rôle de tri** (§18.1) : un membre ordinaire ne voit aucun non classé.
 - **Aucune suppression de message** depuis l'écran : la purge relève d'une unité RGPD.
+
+---
+
+## 19. Composition et réponse — `CRM-058`
+
+### 19.1 Ce que la mesure a établi
+
+**Mesuré le 2026-08-11 contre le Stalwart de `CRM-050`, depuis le réseau Compose :**
+
+| Mesure | Résultat |
+|---|---|
+| Soumission authentifiée depuis `systeme@crm.p2enjoy.test` | **acceptée** |
+| `Reply-To` vers une adresse de card **inexistante** | **transmis tel quel**, aucun contrôle |
+| `In-Reply-To` et `References` | **transmis tels quels** |
+| `Message-ID` choisi par l'expéditeur | **conservé**, jamais réécrit par le serveur |
+| `From` n'appartenant pas au principal authentifié | **`501 5.5.4 You are not allowed to send from this address.`** |
+| `Delivered-To` sur le message remis | présent ; `Return-Path` absent des en-têtes stockés |
+
+**Trois conséquences directes, et elles gouvernent la conception :**
+
+1. **Le produit choisit son propre `Message-ID` et le mémorise.** Puisque le serveur ne le réécrit
+   pas, l'identifiant écrit à l'envoi est celui que le destinataire citera dans sa réponse : c'est
+   la charnière du fil, et la règle 2 du §4.4 s'en sert sans rien deviner.
+2. **Le `Reply-To` n'est vérifié par personne d'autre que nous.** Le serveur transmet ce qu'on lui
+   donne, y compris une adresse de card qui n'existe pas. La justesse du `Reply-To` est donc une
+   responsabilité entière du produit, pas une garantie du transport.
+3. **Une identité sortante ne peut expédier que depuis une adresse de son principal** — c'est
+   **INC-087**, ouvert par `CRM-057` et **clos ici** : `contact@p2enjoy.test` est ajoutée à la
+   liste `emails` de `bizdev@p2enjoy.test` dans le provisionnement. La divergence entrant/sortant
+   du §2.2, que le seed promettait depuis `CRM-053`, devient **applicable** au lieu de rester
+   décorative. Le modèle était juste ; le provisionnement de développement était incomplet.
+
+### 19.2 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Livré** : la file persistante `mail_outbox`, la garde `queue_outbound_email`, le worker qui la
+consomme, le `Reply-To` de la card, les en-têtes de fil, l'archivage du message envoyé, le quota
+journalier, et la composition depuis la card **comme** depuis l'inbox — par le même chemin de code.
+
+**Non livré, et nommé** : le **backoff** et la reprise après coupure appartiennent à `CRM-059`,
+qui les revendique explicitement (« file persistante, backoff, états visibles »). L'unité livre les
+colonnes qui les porteront — `attempts`, `next_attempt_at`, `last_error` — et une seule tentative
+par message : un échec passe en `failed` et le **dit**, il ne feint pas d'avoir été envoyé.
+
+**La relève reste déclenchée** (§15.2) : le worker d'envoi l'est aussi, par une route interne. La
+veille permanente est une seule et même unité, `CRM-059`.
+
+### 19.3 Deux colonnes que `mail_messages` n'avait pas
+
+| Colonne | Pourquoi elle est nécessaire ici |
+|---|---|
+| `direction` (`inbound` / `outbound`) | Le §5 exige d'archiver le message **envoyé** dans la même table. Sans cette colonne, l'inbox et la card montreraient un message reçu là où il a été écrit, et la règle 2 pourrait rattacher une réponse à notre propre envoi comme s'il venait du correspondant |
+| `references_ids` (`text[]`) | Une réponse doit citer **toute** la chaîne, non le seul parent. Sans elle, le produit ne pourrait reconstituer que le dernier maillon, et un client de messagerie couperait le fil au deuxième aller-retour |
+
+`references_ids` est renseignée **à l'ingestion** comme à l'envoi. La règle 2 du §4.4 continue de
+recevoir `In-Reply-To` et `References` en paramètres : elle lit ce que le message porte, non ce que
+la base a retenu.
+
+### 19.4 La file, et qui peut y écrire
+
+`queue_outbound_email(p_card_id, p_identity_id, p_to, p_cc, p_subject, p_body_text,
+p_in_reply_to_message_id)` — `SECURITY DEFINER`, ouverte à `authenticated`.
+
+Elle refuse, dans cet ordre, et chaque refus porte son code :
+
+| Refus | Code | Motif |
+|---|---|---|
+| `not_authenticated` | `42501` | aucune session |
+| `forbidden` | `42501` | pas de droit d'**écriture** sur la card : envoyer au nom d'une affaire, c'est y ajouter du contenu |
+| `identity_not_available` | `P0002` | l'identité n'existe pas, n'est pas celle de l'appelant, ou n'est pas l'identité de service d'un workspace dont il est administrateur |
+| `card_not_available` | `23514` | card archivée, en corbeille, ou d'un autre workspace que l'identité |
+| `recipient_required` | `23514` | aucun destinataire : un message sans destinataire n'est pas un message |
+| `quota_exceeded` | `23505` | le quota journalier de l'identité est atteint |
+
+**Le quota est compté sur la JOURNÉE UTC en cours**, et porte sur les lignes `queued`, `sending` et
+`sent` — non sur les seules `sent`. Compter les envois réussis laisserait mettre en file mille
+messages qui partiraient tous : le quota protège le **serveur d'envoi**, pas la statistique.
+
+**Le contrôle a lieu DEUX fois, et ce n'est pas une redondance.** À la mise en file, pour que le
+refus soit immédiat et visible par celui qui écrit ; à l'envoi, parce que c'est le worker qui
+dépense réellement le quota, et que plusieurs messages peuvent avoir été acceptés avant que le
+premier ne parte. **La règle est celle du worker** ; celle du RPC est une politesse.
+
+### 19.5 Ce que le worker compose
+
+1. `From` = `from_address` de l'identité, `Reply-To` = **adresse de la card** ;
+2. `Message-ID` choisi par le produit, mémorisé dans `mail_outbox.sent_message_id` puis dans
+   `mail_messages` ;
+3. `In-Reply-To` = `rfc822_message_id` du parent, `References` = `references_ids` du parent **suivi
+   de** son `rfc822_message_id` — la chaîne complète, dans l'ordre ;
+4. envoi par soumission authentifiée, avec les identifiants tirés de Vault comme pour la relève ;
+5. au succès : `status = 'sent'`, archivage dans `mail_messages` en `direction = 'outbound'`,
+   `card_event` de type **`mail_sent'** — douzième type —, et dépôt dans le dossier IMAP de la card
+   lorsqu'il existe ;
+6. à l'échec : `attempts` incrémenté, `last_error` **assaini** — un code, jamais le texte du
+   serveur (§13.7) —, `status = 'failed'`.
+
+**Le `Reply-To` est ce qui ramène les réponses dans le CRM**, et la mesure du §19.1 rappelle qu'il
+n'est vérifié par personne d'autre : une card sans `email_local_part` ne doit donc jamais produire
+d'envoi, et la garde le refuse avant la file.
+
+### 19.6 Composer depuis la card ou depuis l'inbox
+
+**Le même chemin de code**, et la même RPC : seule la card sélectionnée diffère. Depuis la card,
+elle est connue ; depuis l'inbox, elle est celle du message ouvert — répondre à un message classé
+répond **dans son affaire**. Un message non classé ne se répond pas : il faut d'abord le classer,
+et l'écran le dit plutôt que d'offrir une action qui échouerait.
+
+### 19.7 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | Les six refus de la garde, le quota compté sur la journée UTC, l'invariant `direction`, le douzième type d'événement |
+| pytest | La composition des en-têtes de fil, sans serveur : `References` complet, `Reply-To` de la card, `Message-ID` mémorisé |
+| API | Hors interface : le refus d'écriture, l'identité d'autrui, la card archivée, le quota atteint |
+| E2E `mail` | **L'aller-retour complet** : le produit envoie, le destinataire **reçoit réellement**, répond au `Reply-To`, et la réponse est relevée puis **classée dans la même card** par la règle 1 |
+| E2E `ui` | Répondre depuis la card et depuis l'inbox, au clavier et à la souris |
+| Harnais | `scripts/verify-mail-envoi.sh`, non complaisant, avec son témoin |
+
+### 19.8 Limites nommées
+
+- **Aucun backoff, aucune reprise** : un échec est `failed` et le dit. `CRM-059`.
+- **Aucune pièce jointe à l'envoi** : la colonne `attachments` existe, rien ne l'alimente, et
+  l'absence est figée par une assertion.
+- **Aucune signature d'utilisateur** : le §5 la mentionne, aucune table ne la porte.
+- **Aucun envoi en masse** : la file est unitaire, et le quota la borne.

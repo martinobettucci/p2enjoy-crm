@@ -22,7 +22,7 @@ preuve, conformément à la règle ci-dessus.
 
 ## Ouverts
 
-### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse
+### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse — **CLOSE**
 
 **Nature :** contradiction entre une donnée du seed et le serveur de messagerie de développement.
 **Relevé le :** 2026-08-11, en instrumentant le seed de `CRM-057` pour faire arriver du courrier.
@@ -55,10 +55,14 @@ déclarée dans aucun principal.
 2. ramener `from_address` à `bizdev@p2enjoy.test` — mais la démonstration de la divergence, que la
    Definition of Done de `CRM-053` réclame explicitement, serait perdue.
 
-**État.** Ouvert. Le comportement reste inchangé : le seed de `CRM-057` expédie depuis
-`bizdev@p2enjoy.test`, seule adresse que le serveur accepte pour ce principal, et le dit. La
-correction appartient à `CRM-058`, qui livrera l'envoi et ne pourra pas l'éluder : c'est elle qui
-soumettra réellement du courrier au nom d'une identité sortante.
+**État. CLOSE par `CRM-058`** — correction n° 1, celle qui rend le seed conforme à son intention.
+`contact@p2enjoy.test` rejoint la liste `emails` du principal `bizdev@p2enjoy.test` dans
+`stalwart/provision.sh`. **Vérifié** : la soumission depuis `contact@` avec le principal `bizdev@`
+est désormais **acceptée**, là où elle rendait `501 5.5.4`. La divergence entrant/sortant du §2.2,
+que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de rester décorative.
+
+Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
+joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
 
 ### INC-086 — Tracks et channels n'ont aucune surface d'administration, et aucune unité n'en porte
 

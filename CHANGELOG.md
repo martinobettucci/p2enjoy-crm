@@ -15,6 +15,16 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **`CRM-058` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §19, décision 330),
+  sur quatre mesures faites contre le serveur réel : le `Message-ID` du produit est conservé, le
+  `Reply-To` n'est vérifié par personne d'autre que nous, les en-têtes de fil passent tels quels, et
+  un principal ne peut expédier que depuis ses propres adresses.
+- **INC-087 est CLOSE** : `contact@p2enjoy.test` rejoint le principal de Driss dans le
+  provisionnement, ce qui rend applicable la divergence entrant/sortant que le seed promettait
+  depuis `CRM-053`. Vérifié : la soumission depuis cette adresse est désormais acceptée.
+
+### Documentation
+
 - **`CRM-057` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §18, décision 327).
   La question laissée ouverte par `CRM-054` — qui voit un message que personne n'a encore classé —
   est tranchée **sans notion nouvelle** : la visibilité d'un non classé est celle de la **boîte** où
