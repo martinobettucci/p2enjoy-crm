@@ -848,6 +848,53 @@ of Done qu'elle contredit appartient à `CRM-011`, unité `[~]` elle aussi. La c
 **Lié à :** `CRM-011` (Definition of Done contredite), `CRM-043` (la colonne), `CRM-044`
 (`card_events.actor_id`, qui a tranché la même question dans l'autre sens), `CLAUDE.md` §11.
 
+**CONSTAT DU 2026-08-11 — cette entrée semble déjà réglée depuis deux jours, sans avoir été mise à
+jour.** La décision 336, rendue le même jour que ce constat, classe encore INC-076 comme le premier
+défaut réel à corriger — « un compte devenu indestructible dès qu'il a commenté ». Or l'**option 1**
+ci-dessus est déjà livrée : le commit `22996fd` (« Livre les identités d'équipe sûres », `CRM-022`,
+**2026-08-09**, donc antérieur de deux jours à la décision 336) porte, dans
+`supabase/migrations/0021_identites_et_memberships_surs.sql` :
+
+```sql
+alter table public.card_comments alter column author_id drop not null;
+-- … puis, si la contrainte n'était pas déjà « SET NULL » :
+alter table public.card_comments
+    add constraint card_comments_author_id_fkey
+    foreign key (author_id) references public.profiles(id) on delete set null;
+```
+
+**Trois preuves distinctes, toutes dans le même commit, pointent vers la même conclusion :**
+
+- `supabase/tests/0023_identites_et_memberships_surs.test.sql`, assertions **5** et **6**, mesurent
+  exactement la colonne et la FK décrites ci-dessus ; les assertions **81 à 83** insèrent un
+  commentaire, suppriment son auteur (`delete from auth.users …`) avec `lives_ok` — donc **sans**
+  l'erreur `23503` que ce rapport mesurait —, et vérifient que le commentaire survit avec
+  `author_id` devenu `null`. `CHANGELOG.md` (entrée `CRM-022`) revendique cette suite **84/84**.
+- `scripts/verify-seed.sh` a été modifié dans le même commit : son en-tête porte désormais « Un
+  compte seedé n'est plus supprimé : depuis `CRM-022`, ce geste détache légitimement l'auteur de ses
+  paroles historiques » (lignes 24-25), et le harnais ne contient plus de scénario de suppression
+  destructive d'un compte auteur de commentaires — cohérent avec un défaut qui n'existe plus.
+- `docs/BACKLOG.md`, entrée `CRM-011`, ligne « Suppression du compte » : le mot « (cascade) » y
+  était resté inexact — corrigé dans ce même changement pour dire « détachement,
+  `ON DELETE SET NULL` », qui est le comportement réellement prouvé.
+
+**Ce que ce constat N'établit PAS.** Cette lecture est **statique** — git, migrations, fichiers de
+test — faite depuis un environnement sans pile locale (pas de Docker, pas de PostgreSQL/Supabase
+disponibles dans ce bac à sable). **Rien n'a été rejoué ici** : ni `npm run test:sql`, ni
+`scripts/verify-seed.sh`, ni un véritable `DELETE /auth/v1/admin/users/<id>` contre une base
+seedée. Aucune régression n'est visible dans l'historique du fichier de migration depuis le
+2026-08-09 (`git log -S "on delete set null"` ne rend que ce seul commit), mais l'absence de
+régression VISIBLE dans le texte n'est pas une preuve d'exécution.
+
+**Action attendue du responsable, ou de la prochaine exécution disposant de la pile :** rejouer
+`npm run test:sql` (suite `0023`, assertions 5, 6, 81 à 83) et `scripts/verify-seed.sh` sur une base
+seedée fraîche, puis un `DELETE /auth/v1/admin/users/<id>` réel sur un compte ayant commenté. Si les
+trois sont verts, **clore cette entrée** et retirer INC-076 de la tête de liste de la décision 336 —
+l'ordre qu'elle fixe (« INC-076, puis INC-085/INC-075, puis INC-072 ») perd alors son premier terme,
+et l'exécution suivante devrait reprendre à INC-085/INC-075. Si l'un des trois échoue, ce constat
+est faux sur un point qui reste à identifier, et cette entrée doit rester ouverte avec la preuve de
+l'échec.
+
 ---
 
 ### INC-074 — La convergence d'INC-035 ne sait pas exprimer une définition qui avance avec les migrations

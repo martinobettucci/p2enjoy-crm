@@ -41,6 +41,14 @@ d'exécuter le code attendu.
   (un compte devenu indestructible dès qu'il a commenté, `500` sur toute base seedée), puis
   **INC-085/INC-075**, puis **INC-072** —, le lot documentaire ensuite. Il est le moins cher et ne
   répare rien.
+- **INC-076 : constat, non clôture.** Le premier défaut que la décision 336 place en tête —
+  « un compte devenu indestructible dès qu'il a commenté » — semble déjà corrigé depuis le
+  **2026-08-09** par `CRM-022` (`author_id` nullable, `ON DELETE SET NULL`, prouvé par les
+  assertions 5, 6, 81 à 83 de `supabase/tests/0023_identites_et_memberships_surs.test.sql`), deux
+  jours avant que la décision 336 ne le classe encore comme non corrigé — probable conséquence
+  d'INC-089, juste en dessous. La correction de `docs/BACKLOG.md` (`CRM-011`, le mot « cascade »
+  était inexact) est faite ; la clôture ne l'est pas, faute de pile locale pour rejouer la preuve
+  (décision 337).
 - **INC-089 ouverte** : une exécution concurrente de la routine a committé, à 16h58 et sous son
   propre message, les cinq documents d'arbitrage écrits par une autre — les décisions 333 à 336 sont
   intactes dans `d7b35d5` mais introuvables par son message, qui traite de la résilience d'envoi de

@@ -512,7 +512,15 @@ dans Inbucket ; captures observées.
       émettre d'email** — boîte vérifiée vide —, `recover` sur un compte existant produit un email
       réellement reçu, dont le lien ouvre une session ; nouveau mot de passe accepté, **ancien
       refusé**.
-- [x] **Suppression du compte** par l'API d'administration : aucun profil orphelin (cascade).
+- [x] **Suppression du compte** par l'API d'administration : aucun profil orphelin. **Correction
+      terminologique du 2026-08-11 (investigation INC-076) :** le mot « cascade » était inexact et
+      laissait croire qu'un commentaire disparaîtrait avec son auteur. Le geste réel, livré par
+      `CRM-022` (migration `0021_identites_et_memberships_surs.sql`, 2026-08-09), est un
+      **détachement** — `card_comments.author_id` devient nullable et sa FK porte
+      `ON DELETE SET NULL` — prouvé par les assertions 5, 6, 81 à 83 de
+      `supabase/tests/0023_identites_et_memberships_surs.test.sql`. Voir `docs/INCONSISTENCY_REPORT.md`
+      INC-076 pour ce que cette correction ne clôt pas : la preuve n'a pas été **rejouée** depuis un
+      poste disposant de la pile.
 - [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-011/` — moniteur Inbucket
       montrant le trafic SMTP réel, email d'invitation et email de réinitialisation ouverts et lus.
       C'est la seule vérification visuelle que cette unité rend possible, et c'est celle que sa

@@ -10803,3 +10803,39 @@ que la base fait) et `CRM-043` (qui porte la colonne `author_id not null` sans a
 Un chunk qui touche deux unités `[~]` est plus lourd qu'un chunk documentaire — c'est le prix d'une
 correction de fond, et l'arbitrage de la matrice est déjà rendu : `author_id` devient nullable avec
 `ON DELETE SET NULL`, comme les cinq autres clés vers `profiles` et comme `card_events.actor_id`.
+
+### Décision 337 — Le premier défaut de la décision 336 semble déjà corrigé, deux jours avant elle
+
+**2026-08-11 — investigation menée en reprenant le backlog, sans pile locale disponible.**
+
+**Le fait.** La décision 336, ci-dessus, ouvre sur « cinquante-huit entrées ouvertes » et fixe
+l'ordre de correction des trois défauts réels — INC-076 en tête. En relisant `CRM-011` et `CRM-043`
+avant de reprendre ce chunk, `git log -S "on delete set null" -- supabase/migrations/0021_identites_et_memberships_surs.sql`
+montre que le commit `22996fd` (« Livre les identités d'équipe sûres », `CRM-022`) porte **déjà**,
+depuis le **2026-08-09**, exactement l'option 1 de l'arbitrage que la décision 336 cite : la colonne
+`card_comments.author_id` nullable, sa FK avec `ON DELETE SET NULL`. Le même commit modifie
+`supabase/tests/0023_identites_et_memberships_surs.test.sql` (assertions 5, 6, 81 à 83 : suppression
+réelle de l'auteur avec `lives_ok`, commentaire conservé, auteur détaché) et `scripts/verify-seed.sh`
+(dont l'en-tête explique désormais pourquoi un compte auteur de commentaires n'est plus supprimé
+comme test destructif). `CHANGELOG.md`, dans l'entrée `CRM-022` déjà publiée dans ce fichier, revendique
+cette suite pgTAP **84/84**.
+
+**Ce que cela signifie, sous réserve.** La décision 336 a été écrite le même jour que ce constat,
+apparemment sans relire ce que `CRM-022` avait déjà livré deux jours plus tôt. Rien n'indique une
+mauvaise foi : c'est la conséquence directe et prévisible d'INC-089, ouverte juste au-dessus dans ce
+même document — un registre que plusieurs exécutions non sérialisées lisent et écrivent sans se
+voir finit par recommander de refaire ce qui est déjà fait.
+
+**Ce que cette décision ne fait PAS.** Elle **ne clôt pas** INC-076 : cette session tourne sans pile
+locale (pas de Docker), et n'a rejoué ni `npm run test:sql`, ni `scripts/verify-seed.sh`, ni un
+`DELETE /auth/v1/admin/users/<id>` réel. La lecture statique du code et des tests est cohérente et
+concordante sur trois sources indépendantes, mais ce n'est pas la preuve d'exécution que
+`CLAUDE.md` §17 exige pour fermer une entrée du registre. `docs/INCONSISTENCY_REPORT.md` porte le
+détail complet et la liste des preuves à rejouer.
+
+**Corollaire pour la suite de la décision 336.** Si la vérification confirme ce constat, l'ordre
+qu'elle fixe perd son premier terme et la prochaine exécution disposant de la pile devrait reprendre
+directement à INC-085/INC-075. Aucun autre travail n'a été engagé sur `CRM-059` ni sur `CRM-075`
+pendant cette session : le temps disponible est allé à cette vérification plutôt qu'à une nouvelle
+ligne de code sur une unité déjà en cours, conformément à `CLAUDE.md` §1 (« traiter une seule tâche
+cohérente à la fois »).
