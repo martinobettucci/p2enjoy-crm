@@ -5871,16 +5871,32 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
       **51 assertions vertes**, non complaisantes : trois mutations — garde du milieu strict retirée,
       filtre des archivés retiré, code HTTP testé avant le code PostgreSQL — ont été appliquées et
       ont bien fait rougir 3, 1 et 1 assertions avant restauration.
-- [ ] Écran, index de réglages, route, textes centralisés dans `webapp/src/i18n/fr.ts`.
-- [ ] `webapp/src/app/AdministrationArborescence.test.tsx` — états, formulaires, confirmation,
-      focus à l'ouverture et à la fermeture, commandes désactivées aux extrémités.
+- [x] Écran, index de réglages, route, textes centralisés dans `webapp/src/i18n/fr.ts`.
+      `/reglages` devient l'index des sections ; `/reglages/arborescence` est montée par `App` et
+      **hors de la table `ROUTES`**, qui doit couvrir exactement les entrées de la barre latérale —
+      patron déjà employé par `CHEMIN_CARD` et `CHEMIN_LISTE`. Écran chargé à la demande, **21 ko**
+      en paquet séparé. Deux clés devenues mortes (`route.settings.empty.*`) sont retirées.
+- [x] `webapp/src/app/AdministrationArborescence.test.tsx` — états, formulaires, confirmation,
+      focus à l'ouverture, commandes désactivées aux extrémités. **34 assertions vertes**, non
+      complaisantes : trois mutations — workflow par défaut présélectionné, archivage sans
+      confirmation, saisie vidée après un refus — font rougir 2, 3 et 1 assertions.
+      **Deux défauts réels trouvés par ces preuves, et corrigés** : (1) le refus d'un déplacement
+      impossible était calculé mais rendu **nulle part** hors formulaire — une erreur masquée au
+      sens de `CLAUDE.md` §18 ; (2) l'infobulle d'une commande désactivée annonçait « Déjà en tête
+      de liste » **y compris** quand la cause était des positions indistinctes — un message faux,
+      contre `docs/DESIGN_SYSTEM.md` §8.
+      **Un troisième défaut trouvé par `scripts/lib/classes-css.mjs`** : la classe `size-10`
+      n'existe pas — 40 px n'est pas dans l'échelle du §3 — et disparaissait **en silence**,
+      exactement le mode de défaillance que `docs/DESIGN_SYSTEM.md` §11 décrit.
 - [ ] `e2e/api/administration-arborescence.spec.ts` — refus du `viewer` et du `business_developer`
       **hors interface**, avec les jetons réels.
 - [ ] `e2e/ui/administration-arborescence.spec.ts` — les cinq gestes, track puis channel, clavier
       **et** souris ; épilogue rendant le seed à son état initial.
 - [ ] Captures aux quatre paliers, observées.
 - [ ] `scripts/verify-administration-arborescence.sh` — rejeu complet et non-complaisance.
-- [ ] `docs/manual.md` — chapitre d'administration de l'arborescence.
+- [x] `docs/manual.md` — chapitre 5, « Administrer l'arborescence », et l'entrée 18 du sommaire qui
+      cesse d'annoncer « à livrer ». Le chapitre nomme ce qui n'est pas encore prouvé.
+      `scripts/verify-manual.sh` n'a **pas** pu être rejoué : il exige la pile.
 - [ ] INC-086 : la limite « aucune surface d'administration » retirée de `docs/SPEC-tracks.md` §10.1
       et `docs/SPEC-channels.md` §10.2 **le jour où l'écran est prouvé**, pas avant.
 

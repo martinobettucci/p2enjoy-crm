@@ -1,5 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
+// @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
+// @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/DAT.md §3.1 (« routes … relève de CRM-007 »)
 //
 // Chaque route rend un **état explicite**, jamais une page blanche : tant que les données
@@ -30,6 +32,20 @@ export const CHEMIN_INBOX = '/inbox' as const
 
 const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).RouteInbox }))
 
+/**
+ * Adresse de l'administration de l'arborescence — `CRM-075`.
+ *
+ * Elle ne figure PAS dans `ROUTES`, et c'est une contrainte tenue par une assertion : cette table
+ * doit couvrir **exactement** les entrées de navigation transverses, sans orpheline dans un sens ni
+ * dans l'autre. L'administration n'est pas une entrée de la barre latérale — on y arrive par l'index
+ * des réglages —, elle suit donc le patron déjà employé par `CHEMIN_CARD` et `CHEMIN_LISTE` : une
+ * adresse nommée ici, montée par `App` avec sa propre coquille.
+ */
+export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
+
+/** Titre de la route d'administration, nommé comme celui de la page introuvable. */
+export const CLE_TITRE_ADMIN_ARBORESCENCE: CleTraduction = 'admin.tree.title'
+
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
 		chemin: '/',
@@ -49,13 +65,41 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		rendu: () => <EtatVide titre={t('route.today.empty.title')} corps={t('route.today.empty.body')} />,
 	},
 	{
+		// `CRM-075` remplace l'état vide de `CRM-007` par un **index des sections**. L'écran
+		// d'administration n'est pas placé ici : `CRM-070` et `CRM-076` amènent deux autres
+		// sections, et une adresse déjà partagée ne se déplace pas gratuitement
+		// (docs/SPEC-administration-arborescence.md §3.1).
 		chemin: '/reglages',
 		cleTitre: 'route.settings.title',
-		rendu: () => (
-			<EtatVide titre={t('route.settings.empty.title')} corps={t('route.settings.empty.body')} />
-		),
+		rendu: () => <IndexReglages />,
 	},
 ]
+
+
+/**
+ * Index des sections de réglages. Une seule entrée aujourd'hui, et c'est un état **exact** : la
+ * configuration de l'instance reste tenue par le fichier d'environnement du serveur, ce que la
+ * phrase de `CRM-007` disait déjà et qui reste vrai.
+ */
+export function IndexReglages() {
+	return (
+		<div className="flex flex-col gap-4 max-w-[60ch]">
+			<h2 className="text-h3">{t('admin.settings.index.title')}</h2>
+			<ul className="flex flex-col rounded-lg border border-border bg-surface">
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_ARBORESCENCE}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.tree')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.tree.body')}</span>
+					</Link>
+				</li>
+			</ul>
+			<p className="text-sm text-text-3">{t('admin.settings.instance')}</p>
+		</div>
+	)
+}
 
 /** Adresse inconnue : on nomme le problème et on offre un retour, jamais une page blanche. */
 export function PageIntrouvable() {

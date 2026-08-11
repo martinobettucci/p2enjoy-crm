@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-075` — l'écran d'administration des tracks et des channels.** Le geste le plus courant de
+  l'administration d'un CRM — créer un track — avait un CRUD prouvé et **aucune surface** (INC-086).
+  Il en a une : « Réglages ▸ Arborescence ». Créer, renommer, réordonner, archiver et désarchiver un
+  track comme un channel, avec le rattachement du channel à son track et le choix de son workflow.
+  - **`/reglages` devient l'index des sections**, `/reglages/arborescence` porte l'écran. L'écran est
+    chargé à la demande (**21 ko** en paquet séparé) et sa route est déclarée **hors** de la table
+    `ROUTES`, qui doit couvrir exactement les entrées de la barre latérale — patron déjà employé par
+    le détail d'une card et la vue liste.
+  - **Les commandes ne sont masquées pour personne.** Un rôle lu au chargement peut être périmé à
+    l'instant de l'écriture : une commande masquée sur cette foi cacherait un geste **permis**. Le
+    refus du backend est traduit champ par champ, et la saisie est conservée.
+  - **Aucune modale**, aucune suppression, aucun défaut de workflow présélectionné.
+  - **Trois défauts réels trouvés par les preuves et corrigés dans le même changement** : un refus de
+    déplacement calculé mais affiché nulle part ; une infobulle de commande désactivée qui annonçait
+    « Déjà en tête de liste » alors que la cause était tout autre ; et la classe `size-10`, qui
+    n'existe pas — 40 px n'étant pas dans l'échelle du §3 — et disparaissait **en silence**, le mode
+    de défaillance que `docs/DESIGN_SYSTEM.md` §11 décrit.
+  - **Une assertion existante a joué et a été révisée, non contournée** : `routes.test.tsx` exigeait
+    un état vide de chaque route, et `/reglages` a cessé d'en être un. Même mécanisme que la révision
+    de `CRM-057` pour l'inbox.
+  - Preuves : **34 assertions de rendu** montant le vrai écran, `npm run typecheck`,
+    `npm run test:unit` (**714 tests, 31 fichiers**), `npm run build` et le contrôle des classes CSS
+    réellement engendrées — tous verts. `docs/manual.md` gagne son chapitre 5.
+  - **Non exécuté, et l'unité reste `[~]`** : preuves d'API, E2E clavier et souris, captures aux
+    quatre paliers, et harnais dédié. Tous exigent la pile de développement, absente de
+    l'environnement où ce changement a été produit.
+
 - **`CRM-075` — la couche d'accès aux données de l'administration de l'arborescence.**
   `webapp/src/lib/administration-arborescence.ts` porte les trois lectures — tracks, channels d'un
   track, workflows affectables — et les huit écritures : créer, renommer, déplacer, archiver et

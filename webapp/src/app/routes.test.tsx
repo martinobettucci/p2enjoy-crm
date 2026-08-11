@@ -1,4 +1,5 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leurs états
+// @verifies CRM-075 (docs/BACKLOG.md) — index des réglages, et adresse de l'administration
 // @verifies docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (aucune page blanche)
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
 
@@ -9,7 +10,13 @@ import { MemoryRouter } from 'react-router'
 import { fr } from '../i18n'
 import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
-import { CHEMIN_INBOX, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
+import {
+	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_INBOX,
+	CLE_TITRE_INTROUVABLE,
+	PageIntrouvable,
+	ROUTES,
+} from './routes'
 
 afterEach(cleanup)
 
@@ -33,7 +40,14 @@ describe('table des routes', () => {
 	// et `/inbox` a cessé d'en être un le jour où la messagerie a été raccordée. La garantie, elle,
 	// ne change pas — aucune page blanche —, mais elle se vérifie désormais différemment selon que
 	// la route porte un écran ou attend encore le sien.
-	const ROUTES_EN_ATTENTE = ROUTES.filter((route) => route.chemin !== CHEMIN_INBOX)
+	//
+	// RÉVISÉ UNE SECONDE FOIS PAR `CRM-075`, ET L'ASSERTION AVAIT JOUÉ DE NOUVEAU : `/reglages`
+	// affichait « Aucun réglage modifiable », ce qui a cessé d'être vrai le jour où l'administration
+	// de l'arborescence est arrivée. La garantie ne change toujours pas — aucune page blanche — et
+	// la route rejoint la liste de celles qui portent un écran, avec sa propre assertion ci-dessous.
+	const ROUTES_EN_ATTENTE = ROUTES.filter(
+		(route) => route.chemin !== CHEMIN_INBOX && route.chemin !== '/reglages',
+	)
 
 	it.each(ROUTES_EN_ATTENTE.map((route) => [route.chemin, route] as const))(
 		'la route %s rend un état explicite',
@@ -43,6 +57,23 @@ describe('table des routes', () => {
 			expect(screen.getByRole('heading').textContent?.length).toBeGreaterThan(0)
 		},
 	)
+
+	it("la route /reglages rend l'index des sections, et non une page blanche", () => {
+		const route = ROUTES.find((candidate) => candidate.chemin === '/reglages')
+		expect(route).toBeDefined()
+		render(<MemoryRouter>{route!.rendu()}</MemoryRouter>)
+		// Un titre, et un lien réel vers la seule section livrée — `CRM-075`.
+		expect(screen.getByRole('heading').textContent).toBe(fr['admin.settings.index.title'])
+		const lien = screen.getByRole('link', { name: new RegExp(fr['admin.settings.index.tree']) })
+		expect(lien.getAttribute('href')).toBe(CHEMIN_ADMIN_ARBORESCENCE)
+	})
+
+	it("l'administration ne figure PAS dans la table des routes, et son adresse est nommée", () => {
+		// Elle n'est pas une entrée de la barre latérale : la table doit continuer de couvrir
+		// exactement les entrées transverses (assertion ci-dessus), et l'écran est monté par `App`.
+		expect(ROUTES.map((route) => route.chemin)).not.toContain(CHEMIN_ADMIN_ARBORESCENCE)
+		expect(CHEMIN_ADMIN_ARBORESCENCE.startsWith('/reglages/')).toBe(true)
+	})
 
 	it('la route /inbox rend son écran, chargé à la demande derrière un repli', async () => {
 		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_INBOX)

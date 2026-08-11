@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
+// @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //
@@ -15,15 +16,25 @@ import { AppShell } from './AppShell'
 import { FournisseurAuthentification, useAuthentification } from './Authentification'
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import {
+	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CARD,
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
+	CLE_TITRE_ADMIN_ARBORESCENCE,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
 	ROUTES,
 } from './routes'
 
 const RouteTrack = lazy(async () => ({ default: (await import('./RouteTrack')).RouteTrack }))
+/**
+ * L'écran d'administration de `CRM-075`, chargé à la demande comme l'inbox et le board : la
+ * plupart des sessions ne l'ouvrent pas, et il n'a pas à peser sur leur premier rendu
+ * (`CLAUDE.md` §21). MESURÉ : le paquet séparé pèse 21 ko.
+ */
+const AdministrationArborescence = lazy(async () => ({
+	default: (await import('./AdministrationArborescence')).AdministrationArborescence,
+}))
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
 
 /** État bref mais explicite pendant le téléchargement d'une route métier. */
@@ -75,6 +86,18 @@ function RoutesApplication() {
 				    la card, et son contenu dépend de son identifiant (`CRM-037`). Déclarée **après**
 				    les routes de track, dont elle prolonge le chemin. */}
 				<Route path={CHEMIN_CARD} element={<RouteCard />} />
+				{/* L'administration de l'arborescence — `CRM-075`. Elle porte la coquille commune et
+				    son titre est une clé de traduction, mais elle n'est pas une entrée de la barre
+				    latérale : on y arrive par l'index des réglages
+				    (docs/SPEC-administration-arborescence.md §3.1). */}
+				<Route
+					path={CHEMIN_ADMIN_ARBORESCENCE}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_ARBORESCENCE}>
+							<AdministrationArborescence />
+						</AppShell>
+					}
+				/>
 				<Route
 					path="*"
 					element={

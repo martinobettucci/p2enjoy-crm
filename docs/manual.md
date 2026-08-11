@@ -55,7 +55,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 17 | Inviter et gérer les membres | `CRM-070` | À livrer. **L'invitation est aujourd'hui une opération d'exploitation, pas un parcours produit** : un compte est créé par un **opérateur** disposant de la clé de service, hors de l'interface. Aucun écran n'existe, et aucun n'est promis avant `CRM-070`, à laquelle l'arbitrage du responsable rattache ce parcours ([`docs/JOURNAL.md`](JOURNAL.md), décision 256, INC-015) |
-| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021` | À livrer |
+| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075` | **Livré avec son écran, non encore vérifié visuellement** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive et désarchive un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression n'existe pas** : archiver masque et reste réversible. Ce qui manque est la preuve de bout en bout et les captures, qui exigent la pile de développement |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
@@ -898,6 +898,74 @@ le produit ne prétend pas que votre message est arrivé.
 **Ce qui n'est pas encore là.** Aucune pièce jointe à l'envoi, aucune signature automatique, aucune
 copie cachée. Un message qui échoue à partir est marqué en échec et le dit ; il n'est pas réessayé
 tout seul.
+
+
+## 5. Administrer l'arborescence : tracks et channels
+
+*Livré par `CRM-075` ; les règles d'accès sont celles de `CRM-020` et `CRM-021`, inchangées.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ».
+
+**Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Les autres membres
+voient l'arborescence — ils ont le droit de la lire — et leurs modifications sont refusées par le
+serveur avec le message « Seul un administrateur de cet espace de travail peut modifier
+l'arborescence. »
+
+**Les boutons ne sont pas masqués pour autant**, et c'est délibéré : votre rôle peut changer pendant
+que la page est ouverte, et cacher un bouton sur la foi d'un rôle lu à l'arrivée reviendrait à vous
+interdire un geste qui vous est peut-être permis. Le produit préfère vous montrer le refus réel.
+
+### 5.1 Un track
+
+- **Créer** : bouton « Nouveau track ». Le **slug** — l'identifiant qui apparaît dans l'adresse — est
+  proposé à partir du nom et reste modifiable tant que vous n'avez pas validé. Il n'accepte que des
+  minuscules, des chiffres et des tirets simples ; le formulaire le dit avant l'envoi, et le serveur
+  refuse un slug déjà pris dans l'espace de travail avec « Ce slug est déjà utilisé. »
+- **Renommer** : le crayon. Vous modifiez le nom, la couleur, l'icône et la description.
+  **Le slug ne se modifie pas depuis cet écran** : c'est l'adresse que vous partagez, et la changer
+  romprait les liens déjà transmis sans que rien ne les rattrape.
+- **Réordonner** : les flèches. Elles sont **désactivées** en tête et en fin de liste, et disent
+  pourquoi plutôt que de disparaître.
+- **Archiver** : la boîte. L'action demande une **confirmation** qui nomme le track. Un track archivé
+  disparaît de la barre latérale et de son adresse, **sans être supprimé**.
+- **Désarchiver** : cochez « Afficher les archivés » pour les faire réapparaître, puis utilisez la
+  flèche de restauration. Aucune confirmation n'est demandée : ce geste ne retire rien.
+
+**La suppression n'existe pas**, et ce n'est pas un oubli : le produit ne l'expose nulle part, et la
+base la refuse. Archiver est la façon de faire disparaître un track.
+
+**Archiver un track n'archive pas ses channels.** Ils restent dans l'état où ils étaient, et
+réapparaissent exactement tels quels si vous désarchivez le track.
+
+### 5.2 Un channel
+
+Dépliez un track avec le chevron : ses channels sont chargés à ce moment-là, et pas avant.
+
+Les mêmes cinq gestes s'appliquent, avec deux différences :
+
+- **L'ordre d'un channel se compte dans son track**, pas dans l'espace de travail entier ;
+- **choisir un workflow est obligatoire.** La liste ne propose que les workflows réellement
+  affectables : ceux de l'espace de travail entier, et ceux propres à ce track. Le workflow par
+  défaut est présenté en tête et signalé comme tel, **mais il n'est pas coché** — le produit ne
+  choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
+
+Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
+que le serveur refuserait.
+
+### 5.3 Quand un déplacement est indisponible sans être en bout de liste
+
+Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle
+l'explique : deux positions voisines sont **indistinctes**, et le déplacement ne changerait rien à
+l'ordre affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une
+telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
+
+### 5.4 Ce qui n'est pas encore là
+
+- Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
+  été rejoué : les deux exigent la pile de développement complète.
+- Le **déplacement d'un channel vers un autre track** n'est pas proposé.
+- L'édition des **workflows** eux-mêmes — étapes, transitions, questions — relève du chapitre 20.
+- Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

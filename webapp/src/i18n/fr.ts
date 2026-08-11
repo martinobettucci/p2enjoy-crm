@@ -1,7 +1,9 @@
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
 // @spec CRM-009 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
 // @spec CRM-022 (docs/BACKLOG.md) — noms, avatars, responsables, auteurs et acteurs
-// @spec docs/DESIGN_SYSTEM.md §5.12, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
+// @spec CRM-075 (docs/BACKLOG.md) — textes de l'administration de l'arborescence
+// @spec docs/DESIGN_SYSTEM.md §5.12, §5.13, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
+// @spec docs/SPEC-administration-arborescence.md §9 (chaque refus a son texte)
 //
 // **Toute** chaîne visible de l'application est ici, et nulle part ailleurs. Les libellés
 // métier — tracks, channels, nœuds, champs — sont des **données**, pas des traductions
@@ -151,8 +153,6 @@ export const fr = {
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',
 	'route.settings.title': 'Réglages',
-	'route.settings.empty.title': 'Aucun réglage modifiable',
-	'route.settings.empty.body': "La configuration de l'instance est tenue par le fichier d'environnement du serveur.",
 	'route.track.title': 'Track',
 	'route.track.notfound.title': 'Track introuvable',
 	'route.track.notfound.body':
@@ -350,6 +350,102 @@ export const fr = {
 	'live.comments.published': 'Commentaire publié',
 	'live.comments.edited': 'Commentaire modifié',
 	'live.comments.deleted': 'Commentaire supprimé',
+
+	// --- Administration de l'arborescence — CRM-075 --------------------------------------
+	// docs/SPEC-administration-arborescence.md, docs/DESIGN_SYSTEM.md §5.13.
+	'admin.settings.index.title': 'Sections de réglages',
+	'admin.settings.index.tree': "Arborescence : tracks et channels",
+	'admin.settings.index.tree.body':
+		"Créer, renommer, réordonner et archiver les tracks et les channels de l'espace de travail.",
+	'admin.settings.instance':
+		"La configuration de l'instance elle-même reste tenue par le fichier d'environnement du serveur.",
+
+	'admin.tree.title': "Administration de l'arborescence",
+	'admin.tree.aria': "Tracks et channels de l'espace de travail",
+	'admin.tree.showArchived': 'Afficher les archivés',
+	'admin.tree.archived': 'Archivé',
+	'admin.tree.channels.aria': 'Channels du track {track}',
+
+	'admin.tree.empty.title': 'Aucun track dans cet espace de travail',
+	'admin.tree.empty.body':
+		'Un track regroupe des channels, qui portent les affaires. Créez le premier pour commencer.',
+	'admin.tree.error.title': "L'arborescence n'a pas pu être chargée",
+	'admin.tree.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.tree.error.retry': 'Réessayer',
+	'admin.tree.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.tree.noWorkspace.body':
+		"Sans espace de travail, il n'y a pas d'arborescence à administrer.",
+
+	'admin.tree.channels.empty': "Ce track n'a aucun channel.",
+	'admin.tree.channels.error': 'Les channels de ce track n’ont pas pu être chargés.',
+
+	// Commandes de ligne.
+	'admin.action.expand': 'Déplier {nom}',
+	'admin.action.collapse': 'Replier {nom}',
+	'admin.action.up': 'Monter {nom}',
+	'admin.action.down': 'Descendre {nom}',
+	'admin.action.rename': 'Modifier {nom}',
+	'admin.action.archive': 'Archiver {nom}',
+	'admin.action.unarchive': 'Désarchiver {nom}',
+	'admin.action.newTrack': 'Nouveau track',
+	'admin.action.newChannel': 'Nouveau channel',
+	'admin.action.save': 'Enregistrer',
+	'admin.action.create': 'Créer',
+	'admin.action.cancel': 'Annuler',
+
+	'admin.move.disabled.top': 'Déjà en tête de liste',
+	'admin.move.disabled.bottom': 'Déjà en fin de liste',
+	'admin.move.impossible':
+		"Ce déplacement n'aurait aucun effet visible : deux positions voisines sont indistinctes. Le réordonnancement demande une renumérotation, qui n'est pas encore livrée.",
+
+	// Formulaires.
+	'admin.form.track.create': 'Nouveau track',
+	'admin.form.track.edit': 'Modifier le track',
+	'admin.form.channel.create': 'Nouveau channel',
+	'admin.form.channel.edit': 'Modifier le channel',
+	'admin.form.name': 'Nom',
+	'admin.form.slug': 'Slug',
+	'admin.form.slug.help': "Identifiant d'URL : minuscules, chiffres et tirets.",
+	'admin.form.slug.invalid':
+		'Ce slug ne respecte pas la forme attendue : minuscules, chiffres et tirets simples.',
+	'admin.form.slug.locked':
+		"Le slug ne se modifie pas depuis cet écran : c'est l'adresse partageable du track.",
+	'admin.form.color': 'Couleur',
+	'admin.form.icon': 'Icône',
+	'admin.form.description': 'Description',
+	'admin.form.workflow': 'Workflow',
+	'admin.form.workflow.choose': 'Choisir un workflow…',
+	'admin.form.workflow.default': '{nom} (par défaut)',
+	'admin.form.workflow.none':
+		"Aucun workflow n'est affectable à ce track. Un channel doit en suivre un ; créez d'abord un workflow global ou propre à ce track.",
+	'admin.form.workflow.loading': 'Chargement des workflows…',
+
+	// Confirmation d'archivage (docs/DESIGN_SYSTEM.md §6).
+	'admin.archive.confirm.track': 'Archiver le track « {nom} » ?',
+	'admin.archive.confirm.channel': 'Archiver le channel « {nom} » ?',
+	'admin.archive.confirm.body':
+		"Il sera masqué des écrans, sans être supprimé, et pourra être désarchivé. Les channels d'un track archivé ne sont pas archivés avec lui.",
+	'admin.archive.confirm.action': 'Archiver',
+
+	// Refus (docs/SPEC-administration-arborescence.md §9).
+	'admin.refus.forbidden':
+		"Seul un administrateur de cet espace de travail peut modifier l'arborescence.",
+	'admin.refus.slug-pris': 'Ce slug est déjà utilisé.',
+	'admin.refus.workflow-hors-track': "Ce workflow n'est pas affectable à ce track.",
+	'admin.refus.forme-refusee': 'Cette valeur a été refusée : vérifiez le nom et le slug.',
+	'admin.refus.reference-absente':
+		"Ce track n'existe plus, ou n'appartient pas à cet espace de travail.",
+	'admin.refus.network': "La requête n'a pas abouti. Réessayez.",
+	'admin.refus.unknown': "L'enregistrement a échoué.",
+	'admin.refus.sans-effet':
+		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cet objet, ou il a disparu.",
+
+	'live.admin.aria': "Annonces de l'administration",
+	'live.admin.created': 'Créé',
+	'live.admin.updated': 'Modifié',
+	'live.admin.moved': 'Déplacé',
+	'live.admin.archived': 'Archivé',
+	'live.admin.unarchived': 'Désarchivé',
 } as const
 
 export type CleTraduction = keyof typeof fr
