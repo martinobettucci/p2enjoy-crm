@@ -262,9 +262,17 @@ PORT_RAPPORT=9323
 # `e2e/mail/dossiers.spec.ts` ajoute **2 scénarios** — l'arborescence lue par un client IMAP tiers
 # — et `e2e/mail/roundcube-dossiers.spec.ts` **1**, l'observation visuelle que la Definition of
 # Done exige. 35 + 3 = **38**. `SCENARIOS_API` est inchangé : l'unité n'ajoute aucune route.
-FICHIERS_SQL_ATTENDUS=28
-ASSERTIONS_ATTENDUES=1861
-SCENARIOS_API=469
+# --- `CRM-057` ---------------------------------------------------------------------------------
+# `supabase/tests/0029_inbox_globale.test.sql` ajoute **22 assertions**, et DEUX suites antérieures
+# sont révisées sans changer de compte : 0016 gagne une assertion — la preuve de refus n° 9 porte
+# désormais sur le NOMBRE de politiques de stockage **et** sur leur portée —, tandis que 0026 voit
+# deux des siennes retournées. 1861 + 22 + 1 = **1884**, valeur MESURÉE.
+# `e2e/api/inbox.spec.ts` ajoute **9 scénarios** : 469 + 9 = **478**.
+# `e2e/ui/inbox.spec.ts` ajoute **6 scénarios** : 157 + 6 = **163**.
+# `SCENARIOS_MAIL` est inchangé : l'unité livre un écran, pas un protocole.
+FICHIERS_SQL_ATTENDUS=29
+ASSERTIONS_ATTENDUES=1884
+SCENARIOS_API=478
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -324,7 +332,11 @@ SCENARIOS_API=469
 # survol, et la garde qui interdit à ce fichier de mesurer avec la clé anonyme ce qu'il prétend
 # mesurer avec la clé de service. Aucun scénario n'y substitue de réponse.
 # Valeur MESURÉE par l'exécution complète : 157 scénarios verts, aucune erreur console.
-SCENARIOS_UI=157
+# **163 depuis `CRM-057`** : `e2e/ui/inbox.spec.ts` livre les six scénarios de l'inbox globale —
+# les trois panneaux, la sélection annoncée par `aria-current`, le parcours entièrement au clavier,
+# la double visibilité d'un message classé, le tri d'un non classé relu par l'API, et les quatre
+# paliers. Valeur MESURÉE par l'exécution complète.
+SCENARIOS_UI=163
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

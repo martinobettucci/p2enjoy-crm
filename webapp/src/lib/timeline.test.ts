@@ -59,24 +59,34 @@ describe('la requête émise', () => {
 })
 
 describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
-	it('range les dix types livrés dans exactement quatre familles d’événements', () => {
+	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT BIEN JOUÉ. Elle figeait « dix types, quatre
+	// familles » et est devenue rouge à l'arrivée du onzième : `mail_received`. Elle est révisée,
+	// non retirée — les cinq familles sont désormais toutes portées.
+	it('range les onze types livrés dans exactement cinq familles d’événements', () => {
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
-		expect([...familles].sort()).toEqual(['champs', 'cycle', 'etapes', 'organisation'])
+		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')
 		expect(TYPES_EVENEMENT).toContain('workflow_changed')
 		expect(familleDe('channel_changed')).toBe('organisation')
 		expect(familleDe('workflow_changed')).toBe('organisation')
 	})
 
-	it('déclare cinq familles, dont la discussion qui n’est portée par aucun type', () => {
+	// RÉVISÉE ELLE AUSSI : la discussion n'était portée par aucun TYPE — seuls les commentaires y
+	// tombaient. `CRM-057` y range le courrier reçu, parce qu'un message est une parole et non un
+	// fait de cycle de vie (docs/SPEC-mail-subsystem.md §18.6). La famille reste unique.
+	it('déclare cinq familles, dont la discussion que le courrier reçu porte désormais', () => {
 		expect([...FAMILLES]).toEqual(['discussion', 'etapes', 'champs', 'organisation', 'cycle'])
-		expect(TYPES_EVENEMENT.map(familleDe)).not.toContain('discussion')
+		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
+			'mail_received',
+		])
 	})
 
 	// Le repli est DOCUMENTÉ : la valeur vient du backend, et un type ne garantit jamais une
-	// valeur. Un événement inconnu doit rester VISIBLE — c'est une mémoire.
+	// valeur. Un événement inconnu doit rester VISIBLE — c'est une mémoire. Le témoin n'est plus
+	// `mail_received`, qui est désormais un type CONNU : s'en servir encore aurait mesuré autre
+	// chose que le repli.
 	it('replie un type inconnu sur le cycle de vie plutôt que de le perdre', () => {
-		expect(familleDe('mail_received')).toBe('cycle')
+		expect(familleDe('mail_sent')).toBe('cycle')
 		expect(familleDe('')).toBe('cycle')
 	})
 })

@@ -5525,10 +5525,60 @@ propageant le renommage du dossier ». **Les trois sont tenues.** L'unité reste
   pile de développement, et la détection est éprouvée sur un serveur simulé.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
-### CRM-057 — Inbox globale `[ ]`
+### CRM-057 — Inbox globale `[~]`
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.
 **DoD** : E2E ; captures aux quatre paliers ; message classé visible **à la fois** dans la card
 et dans l'inbox.
+
+- [x] **Les trois panneaux sont livrés** : dossiers, liste, message. Sous 1024 px, une **pile** —
+      un seul panneau visible, un bouton « Retour » par cran —, non trois colonnes rétrécies.
+- [x] **La question laissée ouverte par `CRM-054` est tranchée** : la visibilité d'un message non
+      classé est celle de la **boîte** où il a été vu. Aucune notion nouvelle — c'est la règle que
+      `mail_message_occurrences` porte depuis `CRM-054`.
+- [x] **UN DÉFAUT DE CONTRÔLE D'ACCÈS, ANTÉRIEUR, EST BOUCHÉ** : `classify_message` ne vérifiait
+      que le droit d'écriture sur la card cible. Un membre pouvait donc classer **chez lui** un
+      message qu'il n'avait pas le droit de lire, puis le lire. Le classement exige désormais les
+      **deux** droits, et le refus est mesuré hors interface avec un vrai jeton.
+- [x] **LA PREUVE DE REFUS N° 9 EST RÉVISÉE ET RENDUE CONCLUANTE** — dixième occurrence du
+      mécanisme de la décision 51. `CRM-054` mesurait le refus sur des objets **jamais déposés** :
+      « rien ne se télécharge » y était vrai aussi d'un bucket vide. Quatre objets sont désormais
+      réellement déposés ; la pièce **`clean` se télécharge** — témoin, contenu comparé — et
+      `infected`, `pending`, `skipped` sont refusées au **même** appelant.
+- [x] **Le HTML d'un expéditeur n'atteint jamais le DOM** : le corps est réduit en texte, et
+      l'absence de rendu HTML est **figée** par des tests, non commentée. Neuf tests éprouvent la
+      réduction sans navigateur, dont le retrait des scripts avec leur contenu.
+- [x] **Le seed fait ARRIVER deux vrais messages** (`docs/SPEC-seed.md` §2.19) : soumission SMTP
+      authentifiée puis relève réelle, `Message-ID` fixes. L'un est classé par la règle 1, l'autre
+      reste non classé. Rien n'est forgé en base.
+- [x] **Le fil d'une card nomme le courrier reçu** : `mail_received` cesse d'être un événement sans
+      détail et porte l'objet et l'expéditeur. Il rejoint la famille **discussion** — un message est
+      une parole. Les deux replis documentés qui l'annonçaient sont **révisés**, non retirés.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0029_inbox_globale.test.sql`, **22 assertions**.
+- [x] **Contrat d'API hors interface** : `e2e/api/inbox.spec.ts`, **9 scénarios**, témoin compris.
+- [x] **Parcours d'écran au clavier ET à la souris** : `e2e/ui/inbox.spec.ts`, **6 scénarios**, dont
+      la double visibilité exigée par la Definition of Done et les **quatre paliers**.
+- [x] **TROIS DÉFAUTS TROUVÉS PAR L'ŒIL, PAS PAR LES TESTS** (décision 328) : un bouton de flexbox
+      qui refusait de rétrécir et débordait du panneau ; quatre classes d'espacement **inexistantes**
+      — l'échelle est fermée — qui disparaissaient en silence et donnaient trois panneaux de 1000 px ;
+      une capture prise pendant la transition de la barre latérale.
+- [x] **Un `401` de moins dans la console** : la timeline ne demande les messages d'une card que si
+      son fil en porte un. La version précédente interrogeait `mail_messages` sur **toutes** les
+      fiches et laissait un refus dans la console de chaque preuve à session anonyme.
+- [x] **Harnais dédié** `scripts/verify-mail-inbox.sh` : **45 contrôles, aucune anomalie**, témoin
+      compris et **quatre** dégradations, dont les deux retraits qui portent la garantie du §18.4.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés** : 28 → **29** fichiers SQL,
+      1861 → **1884** assertions, 469 → **478** scénarios d'API, 157 → **163** scénarios d'interface.
+- [ ] **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058`.
+- [ ] **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client
+      donnerait un état faux dès la seconde session.
+- [ ] **Aucun rôle de tri** : un membre ordinaire ne voit **aucun** message non classé. L'absence
+      est **figée** par une assertion pgTAP et par un scénario d'API, à réviser le jour où un tel
+      rôle existera.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; captures aux quatre
+paliers ; message classé visible à la fois dans la card et dans l'inbox ». **Les trois sont
+tenues.** L'unité reste `[~]` pour les écarts ci-dessus, tous nommés et tous portés par une unité
+identifiée ou par une absence figée.
 
 *Spécifiée avant d'être écrite* — `docs/SPEC-mail-subsystem.md` §18, `docs/JOURNAL.md` décision 327.
 Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :

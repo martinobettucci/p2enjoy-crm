@@ -1513,6 +1513,10 @@ export type Database = {
         }
       }
       chemin_dossier_card: { Args: { p_card_id: string }; Returns: string }
+      chemin_dossier_entite: {
+        Args: { p_id: string; p_type: string }
+        Returns: string
+      }
       classer_message_automatiquement: {
         Args: {
           p_in_reply_to?: string
@@ -1534,9 +1538,31 @@ export type Database = {
         Returns: {
           actual_path: string
           entity_id: string
+          entity_type: string
           nouveau_chemin: string
+          profondeur: number
           requested_path: string
         }[]
+      }
+      inbox_arborescence: {
+        Args: never
+        Returns: {
+          card_id: string
+          card_title: string
+          channel_id: string
+          channel_name: string
+          nombre: number
+          track_id: string
+          track_name: string
+        }[]
+      }
+      mail_folder_map_reparenter: {
+        Args: {
+          p_account_id: string
+          p_ancien_prefixe: string
+          p_nouveau_prefixe: string
+        }
+        Returns: number
       }
       mail_inbound_account_credentials: {
         Args: { p_account_id: string }

@@ -23,7 +23,14 @@
 // parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais atteint par un
 // anonyme. Il MESURE la clôture d'INC-077 plutôt que de la déduire de la lecture d'un fichier.
 
-import { expect, test, type Page, type Route } from './fixtures'
+import {
+	ERREUR_RESSOURCE_HTTP,
+	autoriserErreursConsole,
+	expect,
+	test,
+	type Page,
+	type Route,
+} from './fixtures'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-047'
@@ -44,7 +51,7 @@ const etatVide = (page: Page) => page.getByTestId('etat-vide')
  */
 const LIBELLES = {
 	board: 'Aucun board à afficher',
-	inbox: 'Aucun message',
+	refus: 'Accès refusé',
 	journee: 'Rien pour aujourd’hui',
 	reglages: 'Aucun réglage modifiable',
 	trackIntrouvable: 'Track introuvable',
@@ -73,8 +80,31 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-accueil-1440', UNITE)
 	})
 
+	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT JOUÉ : `/inbox` rendait un état vide — « la
+	// messagerie n'est pas encore raccordée » —, et cette phrase a cessé d'être vraie le jour où
+	// l'écran a été livré. La promesse du manuel change avec lui : pour un visiteur anonyme, la
+	// messagerie n'est pas vide, elle est REFUSÉE, et l'écran le dit sans proposer de réessayer.
+	test('/inbox refuse la messagerie à un anonyme, et le dit (§4.15)', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await page.goto('/inbox')
+
+		await expect(page.getByTestId('etat-refus').first()).toContainText(LIBELLES.refus)
+		// Un refus n'est pas une panne : aucun « Réessayer » n'est offert, car un second essai
+		// donnerait la même réponse.
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+		await capturer(page, 'manuel-inbox-1440', UNITE)
+
+		// LES REFUS SONT CEUX QUE LE SCÉNARIO VIENT DE PROVOQUER, et ils sont consommés
+		// explicitement : PostgREST rend `401` à la clé anonyme, et le navigateur l'écrit dans sa
+		// console. Rien n'est filtré globalement (docs/JOURNAL.md décision 248).
+		// UN SEUL REFUS, ET C'EST MESURÉ : seule l'arborescence est demandée tant qu'aucun dossier
+		// n'est choisi. La liste et le message ne partent pas à la pêche d'un contenu que personne
+		// n'a demandé — un écran qui interroge le serveur trois fois pour un refus le dirait trois
+		// fois dans la console.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401]])
+	})
+
 	for (const [chemin, libelle, capture] of [
-		['/inbox', LIBELLES.inbox, 'manuel-inbox-1440'],
 		['/ma-journee', LIBELLES.journee, 'manuel-ma-journee-1440'],
 		['/reglages', LIBELLES.reglages, 'manuel-reglages-1440'],
 	] as const) {

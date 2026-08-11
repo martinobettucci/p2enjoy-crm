@@ -597,11 +597,23 @@ describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
 
 	// Le repli d'un type inconnu est DOCUMENTÉ : une mémoire ne cache pas ce qu'elle ne comprend
 	// pas. Le jour où `CRM-054` écrira `mail_received`, le fil le montrera.
+	// RÉVISÉ PAR `CRM-057` : le témoin était `mail_received`, qui est devenu un type CONNU et porte
+	// désormais son propre libellé. Continuer à s'en servir aurait mesuré le contraire de ce que le
+	// test dit mesurer. Le témoin est donc un type que le produit n'a pas encore livré.
 	it('montre un type inconnu plutôt que de le faire disparaître', async () => {
-		monter({ evenements: [evenement({ id: 'e1', type: 'mail_received' })] })
+		monter({ evenements: [evenement({ id: 'e1', type: 'mail_sent' })] })
 
 		await waitFor(() => {
 			expect(screen.getByText(fr['timeline.event.unknown'])).not.toBeNull()
+		})
+	})
+
+	// `CRM-057` §18.6 — le courrier reçu n'est plus un événement anonyme : il porte son libellé.
+	it('nomme le courrier reçu au lieu de le montrer sans détail', async () => {
+		monter({ evenements: [evenement({ id: 'e1', type: 'mail_received' })] })
+
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.mail_received'])).not.toBeNull()
 		})
 	})
 

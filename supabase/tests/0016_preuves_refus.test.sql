@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(53);
+select plan(54);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -338,15 +338,27 @@ select is(
 	false,
 	'PREUVE N° 9, 1/2 : le bucket des pièces jointes existe et il est PRIVÉ');
 
--- CE QUI PROTÈGE RÉELLEMENT, ET QUI N'EST PAS CE QU'ON CROIT : `storage.objects` accorde tous les
--- privilèges à `anon` et `authenticated` — défaut de Supabase, MESURÉ. La protection vient donc du
--- refus par défaut de la RLS et de l'ABSENCE de toute politique. `CRM-057` devra en écrire une
--- conditionnée à `av_status = 'clean'` ; écrite à la légère, elle ouvrirait aussi les `infected`.
+-- ASSERTION RETOURNÉE UNE SECONDE FOIS, PAR `CRM-057` (décision 51, dixième occurrence). Elle
+-- figeait l'ABSENCE de toute politique et annonçait ce qui la rendrait rouge : « CRM-057 devra en
+-- écrire une conditionnée à `av_status = 'clean'` ». L'annonce s'est vérifiée telle quelle.
+--
+-- CE QUI PROTÈGE RÉELLEMENT N'A PAS CHANGÉ : `storage.objects` accorde tous les privilèges à `anon`
+-- et `authenticated` — défaut de Supabase, MESURÉ —, et seule la RLS refuse. La politique livrée
+-- est donc UNIQUE et n'ouvre qu'une intersection : le bucket, le statut `clean`, et la visibilité
+-- du message porteur. Une seconde politique, si large soit-elle en apparence, ouvrirait le reste du
+-- stockage : c'est pourquoi l'assertion porte sur le NOMBRE autant que sur le contenu.
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'),
-	0,
-	'PREUVE N° 9, 2/2 : AUCUNE politique de lecture d''objet — c''est la RLS qui refuse, non les '
-	'privilèges, et CRM-057 devra conditionner la sienne au statut `clean`');
+	1,
+	'PREUVE N° 9, 2/2 : EXACTEMENT une politique d''objet, celle des pièces jointes saines — le '
+	'reste du stockage reste refusé par l''absence de politique');
+
+select ok(
+	(select qual from pg_policies
+	  where schemaname = 'storage' and tablename = 'objects'
+	    and policyname = 'mail_attachments_objets_lecture') like '%mail-attachments%',
+	'PREUVE N° 9, 3/3 : et elle est bornée au bucket des pièces jointes, statut `clean` compris — '
+	'`infected`, `pending` et `skipped` restent refusés à tous (CRM-057 §18.5)');
 
 select hasnt_function('public', 'queue_outbound_email',
 	'PREUVE N° 12 NON SATISFAISABLE : `queue_outbound_email` attend `CRM-058`. Envoyer avec une '

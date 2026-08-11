@@ -6,6 +6,7 @@
 // n'existent pas, l'état vide est le contenu légitime de l'écran, et il nomme ce qui manque.
 
 import { Link } from 'react-router'
+import { lazy } from 'react'
 import { EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -16,6 +17,19 @@ export type DescriptionRoute = {
 	readonly rendu: () => React.ReactElement
 }
 
+/**
+ * L'inbox est chargée à la demande, comme le board et le détail d'une card.
+ *
+ * MESURÉ : livrée dans le paquet principal, elle le portait de 481 à 503 ko, franchissant le seuil
+ * d'avertissement de l'outil de build. Un écran que la plupart des sessions n'ouvrent pas n'a pas à
+ * peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21). Le repli de `Suspense` est
+ * déjà posé par `App` : aucune page blanche n'apparaît pendant le téléchargement.
+ */
+/** Adresse de l'inbox globale, nommée pour que les preuves la distinguent des routes en attente. */
+export const CHEMIN_INBOX = '/inbox' as const
+
+const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).RouteInbox }))
+
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
 		chemin: '/',
@@ -23,9 +37,11 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		rendu: () => <EtatVide titre={t('route.board.empty.title')} corps={t('route.board.empty.body')} />,
 	},
 	{
-		chemin: '/inbox',
+		// L'inbox globale de `CRM-057` remplace l'état vide de `CRM-007` : la messagerie est
+		// raccordée, et l'écran montre désormais le courrier réellement reçu.
+		chemin: CHEMIN_INBOX,
 		cleTitre: 'route.inbox.title',
-		rendu: () => <EtatVide titre={t('route.inbox.empty.title')} corps={t('route.inbox.empty.body')} />,
+		rendu: () => <RouteInbox />,
 	},
 	{
 		chemin: '/ma-journee',

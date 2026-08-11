@@ -51,6 +51,7 @@ export const TYPES_EVENEMENT = [
 	'trashed',
 	'restored',
 	'field_changed',
+	'mail_received',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -75,14 +76,21 @@ const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	unarchived: 'cycle',
 	trashed: 'cycle',
 	restored: 'cycle',
+	// UN COURRIER EST UNE PAROLE, pas un fait de cycle de vie. Le ranger avec les commentaires
+	// répond à la même question — « qu'est-ce qui s'est dit sur cette affaire ? » — et évite une
+	// sixième bascule pour un seul type (`CRM-057`, docs/SPEC-mail-subsystem.md §18.6).
+	mail_received: 'discussion',
 }
 
 /**
  * Famille d'un type, avec un repli **documenté** vers `cycle`.
  *
- * La valeur vient du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`) : le
- * jour où `CRM-054` ajoutera `mail_received`, l'écran le rangera dans le cycle de vie plutôt que de
- * le faire disparaître du fil. Un événement inconnu doit rester **visible** — c'est une mémoire.
+ * La valeur vient du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`).
+ *
+ * L'ANNONCE S'EST VÉRIFIÉE : `CRM-055` a ajouté `mail_received`, et l'écran l'a rangé dans le cycle
+ * de vie plutôt que de le faire disparaître du fil. `CRM-057` le range désormais explicitement dans
+ * la **discussion** — un courrier est une parole. Le repli reste, pour le type d'après. Un
+ * événement inconnu doit rester **visible** : c'est une mémoire.
  */
 export function familleDe(type: string): Famille {
 	return FAMILLE_PAR_TYPE[type as TypeEvenement] ?? 'cycle'
@@ -173,6 +181,14 @@ export function compterParFamille(lignes: readonly LigneFil[]): Readonly<Record<
 export type LibellesFil = {
 	readonly etapes: ReadonlyMap<string, string>
 	readonly champs: ReadonlyMap<string, string>
+	/**
+	 * Objet et expéditeur des messages classés dans cette card — `CRM-057` §18.6.
+	 *
+	 * Absente tant que la fiche ne les a pas chargés, et incomplète lorsqu'un message n'est pas
+	 * lisible : l'événement retombe alors sur son libellé sans détail. La mémoire ne ment pas,
+	 * elle se tait.
+	 */
+	readonly messages?: ReadonlyMap<string, string>
 }
 
 export type ComptesFamille = Readonly<Record<Famille, number>>
@@ -216,6 +232,11 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		const champ = texte(ligne.payload['field_id'])
 		const nom = champ === null ? undefined : libelles.champs.get(champ)
 		return { detail: nom ?? null }
+	}
+	if (ligne.type === 'mail_received') {
+		const message = texte(ligne.payload['message_id'])
+		const resume = message === null ? undefined : libelles.messages?.get(message)
+		return { detail: resume ?? null }
 	}
 	return { detail: null }
 }

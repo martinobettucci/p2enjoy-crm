@@ -584,15 +584,29 @@ type _vueDerivationColonnes = Expect<
 // RÉVISÉ UNE SIXIÈME FOIS PAR `CRM-053`, qui livre les trois fonctions jumelles des sortantes.
 // Même remarque : deux d'entre elles sont **inaccessibles au client**, leur exécution étant
 // réservée à `service_role`.
-type _lesQuatorzeFonctions = Expect<
+//
+// RÉVISÉ UNE HUITIÈME FOIS PAR `CRM-057` — ET LA RÉVISION EN RATTRAPE UNE AUTRE, OMISE. `CRM-056`
+// avait livré `chemin_dossier_entite` et `mail_folder_map_reparenter` **sans régénérer les types**
+// versionnés : cette assertion serait donc devenue rouge dès la régénération suivante, exactement
+// comme elle est faite pour le faire. Elle a joué, avec un chunk de retard, et le retard est nommé
+// plutôt que corrigé en silence — `scripts/verify-types.sh` mesure cet écart, mais il n'appartient
+// pas au harnais global de `CRM-008`, qui ne l'exécute pas.
+//
+// `CRM-057` ajoute `inbox_arborescence`, **appelable par le client** — contrairement aux deux
+// précédentes, réservées à `service_role`. C'est la première fonction de messagerie qu'un écran
+// appelle vraiment.
+type _lesDixSeptFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
     | 'copy_workflow_to_track'
     | 'chemin_dossier_card'
+    | 'chemin_dossier_entite'
     | 'classer_message_automatiquement'
     | 'classify_message'
     | 'dossiers_a_renommer'
+    | 'inbox_arborescence'
+    | 'mail_folder_map_reparenter'
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
     | 'mail_outbound_identity_credentials'
@@ -602,6 +616,12 @@ type _lesQuatorzeFonctions = Expect<
     | 'upsert_mail_inbound_account'
     | 'upsert_mail_outbound_identity'
   >
+>
+
+// L'arborescence de l'inbox ne prend AUCUN argument, et c'est le contrat : elle rend ce que
+// l'appelant voit, jamais ce qu'on lui demande de voir (docs/SPEC-mail-subsystem.md §18.3).
+type _signatureArborescence = Expect<
+  Equal<Database['public']['Functions']['inbox_arborescence']['Args'], never>
 >
 
 // La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,
@@ -766,7 +786,8 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuatorzeFonctions,
+  _lesDixSeptFonctions,
+  _signatureArborescence,
   _signatureCopie,
   _retourCopie,
   _signatureDeplacement,

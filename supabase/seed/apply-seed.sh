@@ -1874,6 +1874,150 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" 
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
 
+# --- 8 nonies. Deux messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 ---------------
+#
+# L'INBOX GLOBALE NE SE DÉMONTRE PAS SUR UN ÉCRAN VIDE, et CLAUDE.md §8 interdit d'y suppléer par
+# une trace fabriquée : « un e-mail de démonstration doit être envoyé par le véritable mécanisme
+# d'envoi local ». Le seed n'écrit donc pas un message : il en FAIT ARRIVER un.
+#
+# DEUX MESSAGES, DEUX ÉTATS. L'un vise l'adresse d'une card et sera classé par la règle 1 du §4.4 ;
+# l'autre ne vise que la boîte système et restera NON CLASSÉ. Le premier démontre la double
+# visibilité — dans la card et dans l'inbox —, le second démontre le panneau « Non classés ».
+#
+# LES `Message-ID` SONT FIXES : le dédoublonnage du §4.2 fait le reste, un rejeu n'ajoute rien, et
+# les captures peuvent dépendre de ces deux objets.
+#
+# L'ORDRE EST « RELEVER, PUIS ENVOYER SI NÉCESSAIRE, PUIS RELEVER » : relever d'abord ingère ce qui
+# dormait déjà dans la boîte après une remise à zéro de la base, et évite d'en déposer un doublon.
+
+MAIL_SYNC_TOKEN=$(env_get "$ENV_FILE" MAIL_SYNC_INTERNAL_TOKEN)
+[ -n "$MAIL_SYNC_TOKEN" ] || die "MAIL_SYNC_INTERNAL_TOKEN est absente : la relève ne peut pas être
+        déclenchée, et les messages de démonstration ne peuvent pas exister."
+command -v docker >/dev/null 2>&1 || die "docker est introuvable : l'envoi réel et la relève réelle
+        passent par le conteneur mail-sync (docs/SPEC-seed.md §2.19). Aucune substitution n'est
+        prévue — un message forgé en base serait la trace fabriquée que CLAUDE.md §8 proscrit."
+
+MSGID_CLASSE='seed-inbox-classe@p2enjoy.test'
+MSGID_NON_CLASSE='seed-inbox-non-classe@p2enjoy.test'
+CARD_COURRIER=5eed0000-0000-4000-8000-0000000000c1   # Refonte du site vitrine
+
+compte_systeme=$(curl -s "$API/rest/v1/mail_inbound_accounts?select=id&imap_username=eq.systeme@$INBOUND_DOMAIN" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty')
+[ -n "$compte_systeme" ] || die "la boîte système n'a pas d'identifiant : le §2.17 vient pourtant
+        de la poser."
+
+adresse_card=$(curl -s "$API/rest/v1/cards?select=email_local_part&id=eq.$CARD_COURRIER" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '.[0].email_local_part // empty')
+[ -n "$adresse_card" ] || die "la card ${CARD_COURRIER: -2} n'a pas d'adresse : le trigger de la
+        migration 11 aurait dû la frapper."
+
+# La relève, déclenchée depuis le conteneur qui la porte. `-T` : pas de pseudo-terminal, sinon la
+# sortie est polluée par des retours chariot et `jq` ne lit plus rien.
+relever_boite() {
+	docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" -e COMPTE="$compte_systeme" mail-sync \
+		python -c '
+import os, urllib.error, urllib.request
+requete = urllib.request.Request(
+    "http://localhost:8080/internal/v1/inbound-accounts/" + os.environ["COMPTE"] + "/poll",
+    data=b"", method="POST")
+requete.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(requete, timeout=300) as reponse:
+        print(reponse.read().decode(), end="")
+except urllib.error.HTTPError as erreur:
+    print(erreur.read().decode(), end="")
+' 2>/dev/null
+}
+
+messages_seedes() {
+	curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length'
+}
+
+if [ "$(messages_seedes)" != 2 ]; then
+	releve=$(relever_boite)
+	echo "$releve" | jq -e '.account_id? != null' >/dev/null 2>&1 \
+		|| die "la relève n'a rien rendu d'exploitable : « $releve ». Le service mail-sync
+        est-il démarré ? (./runDev.sh)"
+fi
+
+if [ "$(messages_seedes)" != 2 ]; then
+	# LA SOUMISSION AUTHENTIFIÉE, seul chemin d'un message légitime (§15.4). Elle part du conteneur
+	# mail-sync parce qu'il est sur le réseau Compose et joint `stalwart` par son nom ; le port
+	# publié sur l'hôte servirait aussi, mais un seul mécanisme vaut mieux que deux.
+	#
+	# L'EXPÉDITEUR EST UNE BOÎTE LOCALE, ET C'EST MESURÉ : soumettre depuis `client.test` — ou même
+	# depuis `contact@p2enjoy.test` avec le principal `bizdev@` — est refusé net par le serveur en
+	# `501 5.5.4 You are not allowed to send from this address.`. Un principal n'expédie que depuis
+	# ses propres adresses. Le correspondant de démonstration est donc Driss, et non un prospect
+	# extérieur : le domaine `.test` n'est pas routable et aucun tiers n'existe sur cette pile.
+	# La divergence promise par l'identité sortante du §2.18 est de ce fait inapplicable ici :
+	# INC-087.
+	envoi=$(docker compose exec -T \
+		-e DEST_CARD="$adresse_card@$INBOUND_DOMAIN" \
+		-e DEST_SYSTEME="systeme@$INBOUND_DOMAIN" \
+		-e MDP="$MAILBOX_PASSWORD" \
+		-e MSGID_CLASSE="$MSGID_CLASSE" \
+		-e MSGID_NON_CLASSE="$MSGID_NON_CLASSE" \
+		mail-sync python -c '
+import os, smtplib
+from email.message import EmailMessage
+
+def composer(objet, destinataire, identifiant, corps):
+    message = EmailMessage()
+    message["From"] = "bizdev@p2enjoy.test"
+    message["To"] = destinataire
+    message["Subject"] = objet
+    message["Message-ID"] = "<" + identifiant + ">"
+    message.set_content(corps)
+    return message
+
+messages = [
+    composer("Demande de devis — refonte", os.environ["DEST_CARD"], os.environ["MSGID_CLASSE"],
+             "Bonjour,\n\nNous souhaitons un devis pour la refonte de notre site vitrine.\n\n"
+             "Merci d avance,\nSolène Ferrand"),
+    composer("Candidature spontanée", os.environ["DEST_SYSTEME"], os.environ["MSGID_NON_CLASSE"],
+             "Bonjour,\n\nJe vous adresse ma candidature spontanée pour un poste de développeur.\n\n"
+             "Cordialement,\nMalik Ferreira"),
+]
+session = smtplib.SMTP("stalwart", 587, timeout=60)
+session.ehlo()
+session.login("bizdev@p2enjoy.test", os.environ["MDP"])
+for message in messages:
+    session.send_message(message)
+session.quit()
+print("envoyes")
+' 2>&1) || die "l envoi des messages de démonstration a échoué : « $envoi »"
+	[ "${envoi##*$'\n'}" = "envoyes" ] || die "l envoi des messages de démonstration n a rien
+        confirmé : « $envoi »"
+
+	# La remise n'est pas instantanée : le serveur accepte, puis dépose. Cinq tentatives espacées
+	# valent mieux qu'un délai fixe, qui serait soit trop court, soit du temps perdu.
+	for _tentative in 1 2 3 4 5; do
+		relever_boite >/dev/null
+		[ "$(messages_seedes)" = 2 ] && break
+		sleep 3
+	done
+fi
+
+[ "$(messages_seedes)" = 2 ] || die "les deux messages de démonstration ne sont pas arrivés en base
+        après relève : l inbox globale serait vide, et le §2.19 ne serait pas tenu."
+
+etat_courrier=$(curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id,classification,card_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+classe=$(echo "$etat_courrier" | jq -r --arg m "<$MSGID_CLASSE>" \
+	'.[] | select(.rfc822_message_id == $m) | .card_id // "aucune"')
+non_classe=$(echo "$etat_courrier" | jq -r --arg m "<$MSGID_NON_CLASSE>" \
+	'.[] | select(.rfc822_message_id == $m) | .classification')
+[ "$classe" = "$CARD_COURRIER" ] || die "le message adressé à la card ${CARD_COURRIER: -2} n a pas
+        été classé par la règle 1 : card_id = « $classe ». Le seed ne force RIEN en base — c est
+        classer_message_automatiquement qui écrit, ou personne."
+[ "$non_classe" = unclassified ] || die "le message adressé à la seule boîte système est « $non_classe »
+        au lieu de « unclassified » : le panneau des non classés serait vide."
+info "Courrier : 2 messages réellement reçus — un classé sur ${CARD_COURRIER: -2} par la règle 1,"
+info "          un non classé pour le panneau de tri. Rien n a été forgé en base (§2.19)"
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

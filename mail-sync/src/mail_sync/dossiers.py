@@ -58,34 +58,72 @@ def creer_arborescence(imap, chemin: str) -> DossierCree:  # type: ignore[no-unt
     ré-encodé (§17.1).
     """
 
+    # LA LISTE EST LUE D'ABORD, ET C'EST UNE CORRECTION MESURÉE. La version précédente appelait
+    # `CREATE` sur chaque niveau à CHAQUE relève : le serveur répondait « Mailbox … already
+    # exists », l'erreur était avalée, mais la bibliothèque la journalisait en AVERTISSEMENT dès
+    # que le nom portait un caractère non ASCII — « An error occurred while decoding … in ASCII
+    # 'strict' mode ». Un fonctionnement normal ne doit pas produire d'avertissement (CLAUDE.md
+    # §20), et une erreur attendue à chaque passage finit par masquer celles qui ne le sont pas.
+    existants = _noms_existants(imap)
+    souscrits = _noms_souscrits(imap)
+
     for niveau in segments(chemin):
-        try:
-            imap.create_folder(niveau)
-        except Exception:  # noqa: BLE001
-            # Un dossier déjà présent rend une erreur chez la plupart des serveurs ; c'est l'état
-            # voulu, et s'y arrêter empêcherait toute seconde relève.
-            pass
+        if niveau not in existants and niveau.replace("&", "&-") not in existants:
+            try:
+                imap.create_folder(niveau)
+            except Exception:  # noqa: BLE001
+                # Une course entre deux relèves peut encore faire échouer la création ; c'est
+                # l'état voulu, et s'y arrêter empêcherait le classement du message en cours.
+                pass
         # CRÉER NE SUFFIT PAS : IL FAUT S'ABONNER. Mesuré dans Roundcube — un dossier créé mais
         # non abonné n'apparaît PAS dans la liste d'un client de messagerie, qui n'affiche par
         # défaut que les dossiers souscrits (RFC 3501 §6.3.6). L'arborescence existait donc côté
         # serveur et restait invisible pour l'utilisateur : un rangement que personne ne voit ne
         # range rien. Défaut trouvé par l'observation visuelle, pas par l'API.
-        try:
-            imap.subscribe_folder(niveau)
-        except Exception:  # noqa: BLE001
-            # Un serveur sans souscription — ou un dossier déjà souscrit — n'empêche pas le
-            # rangement : le dossier existe, et c'est le fait principal.
-            pass
+        #
+        # La souscription est vérifiée séparément de l'existence : un dossier créé AVANT cette
+        # correction existe sans être souscrit, et doit le devenir sans qu'on le recrée.
+        if niveau not in souscrits and niveau.replace("&", "&-") not in souscrits:
+            try:
+                imap.subscribe_folder(niveau)
+            except Exception:  # noqa: BLE001
+                # Un serveur sans souscription n'empêche pas le rangement : le dossier existe, et
+                # c'est le fait principal.
+                pass
 
     reel = chemin
     demande_normalise = chemin.replace("&", "&-")
-    for _drapeaux, _delimiteur, nom in imap.list_folders():
-        candidat = nom if isinstance(nom, str) else nom.decode("utf-8", errors="replace")
+    for candidat in _noms_existants(imap):
         if candidat in (chemin, demande_normalise):
             reel = candidat
             break
 
     return DossierCree(requested_path=chemin, actual_path=reel)
+
+
+def _texte(nom) -> str:  # type: ignore[no-untyped-def]
+    """Un nom de dossier, quelle que soit la forme rendue par la bibliothèque."""
+
+    return nom if isinstance(nom, str) else nom.decode("utf-8", errors="replace")
+
+
+def _noms_existants(imap) -> list[str]:  # type: ignore[no-untyped-def]
+    try:
+        return [_texte(nom) for _drapeaux, _delimiteur, nom in imap.list_folders()]
+    except Exception:  # noqa: BLE001
+        # Une liste illisible ne doit pas empêcher le classement : on retombe sur l'ancien
+        # comportement — tenter la création —, jamais sur un abandon silencieux.
+        return []
+
+
+def _noms_souscrits(imap) -> list[str]:  # type: ignore[no-untyped-def]
+    lister = getattr(imap, "list_sub_folders", None)
+    if lister is None:
+        return []
+    try:
+        return [_texte(nom) for _drapeaux, _delimiteur, nom in lister()]
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def copier_message(imap, dossier_source: str, uid: int, dossier_cible: str) -> bool:  # type: ignore[no-untyped-def]

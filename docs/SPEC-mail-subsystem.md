@@ -1319,6 +1319,13 @@ Leurs `Message-ID` sont **fixes** : rejouer le seed ne duplique rien, le dédoub
 charge, et les captures peuvent en dépendre. Le statut des comptes reste `pending` (§13.8) : la
 relève n'y touche pas.
 
+**Mesuré le 2026-08-11, et cela contraint l'expéditeur** : Stalwart refuse un `From` qui
+n'appartient pas au principal authentifié — `501 5.5.4 You are not allowed to send from this
+address.` —, y compris `contact@p2enjoy.test` soumis par `bizdev@p2enjoy.test`. Le correspondant de
+démonstration est donc une boîte locale. La même mesure établit que l'identité sortante seedée au
+§14.6, qui promet précisément cette divergence, est inapplicable sur la pile de développement :
+**INC-087**, à trancher par `CRM-058`, qui soumettra réellement du courrier.
+
 **Le second message rend le panneau « Non classés » démontrable**, et le premier rend démontrable la
 double visibilité exigée par la Definition of Done.
 

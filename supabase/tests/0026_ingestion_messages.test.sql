@@ -120,14 +120,16 @@ select is(
 	false,
 	'17 — et il est PRIVÉ : aucun objet n''est servi sans autorisation');
 
--- REFUS N° 9 : aucune politique de lecture n'existe sur les objets. Le téléchargement conditionné
--- au statut `clean` appartient à `CRM-057` ; en livrer une ici ouvrirait celui d'une pièce
--- `infected`.
+-- ASSERTION RETOURNÉE PAR `CRM-057` (décision 51). Elle figeait l'absence de toute politique et
+-- annonçait ce qui la rendrait rouge : « CRM-057 devra écrire une politique conditionnée à
+-- `av_status = 'clean'` ». C'est fait, et l'assertion est RÉVISÉE plutôt que retirée : elle porte
+-- désormais sur le nombre — EXACTEMENT une — parce qu'une seconde politique, si étroite soit-elle,
+-- ouvrirait une autre part du stockage sans que rien ne le dise.
 select is(
 	(select count(*)::int from pg_policies
 	  where schemaname = 'storage' and tablename = 'objects'),
-	0,
-	'18 — REFUS N° 9 : AUCUNE politique de lecture d''objet n''existe, pour personne');
+	1,
+	'18 — REFUS N° 9 RÉVISÉ : EXACTEMENT une politique d''objet, celle des pièces jointes saines');
 
 -- CE QUE LA MESURE A MONTRÉ, ET QUI VAUT D'ÊTRE ÉCRIT : `storage.objects` accorde **tous** les
 -- privilèges à `anon` et `authenticated` — c'est le défaut de Supabase. La protection ne vient
@@ -176,8 +178,8 @@ select is(
 	0,
 	'23 — REFUS N° 11 : anon n''a rien sur les trois tables');
 
--- La lecture SUIT LA CARD : un message non classé n'est lisible par personne à travers PostgREST,
--- faute d'un porteur de droit. L'inbox globale décidera qui voit les non classés — `CRM-057`.
+-- La lecture d'un message CLASSÉ suit toujours sa card. `CRM-057` y a ajouté le second titre de
+-- visibilité — la BOÎTE où le message a été vu —, sans retirer le premier.
 select is(
 	(select count(*)::int from pg_policies
 	  where schemaname = 'public' and tablename = 'mail_messages'
@@ -185,12 +187,16 @@ select is(
 	1,
 	'24 — la lecture d''un message suit le droit sur sa CARD');
 
+-- ASSERTION RÉVISÉE PAR `CRM-057`, ET LE MOTIF EST UN DÉFAUT QU'ELLE A RÉVÉLÉ : la politique des
+-- pièces jointes jugeait sur `card_id`, colonne NULLE tant que le message n'est pas classé. La
+-- pièce d'un message non classé était donc invisible à tous — y compris à celui qui doit le trier,
+-- et qui a précisément besoin de la voir pour décider. Elle suit désormais son MESSAGE.
 select is(
 	(select count(*)::int from pg_policies
 	  where schemaname = 'public' and tablename = 'mail_attachments'
-	    and qual like '%can_read_card%'),
+	    and qual like '%peut_voir_message%'),
 	1,
-	'25 — celle d''une pièce jointe aussi');
+	'25 — celle d''une pièce jointe suit son MESSAGE, qui suit sa card ou sa boîte (CRM-057 §18.1)');
 
 select is(
 	(select count(*)::int from pg_policies

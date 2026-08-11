@@ -39,6 +39,7 @@ import {
 	FolderSync,
 	PencilLine,
 	RotateCcw,
+	Mail,
 	Sparkles,
 	Trash2,
 	UserRoundCog,
@@ -60,6 +61,7 @@ import {
 	type NatureRefusPublication,
 	type ResultatGeste,
 } from '../lib/commentaires'
+import { lireMessagesDeCard } from '../lib/inbox'
 import type { ClientCrm } from '../lib/supabase'
 import {
 	FAMILLES,
@@ -97,13 +99,18 @@ const PRESENTATION: Readonly<
 	trashed: { cle: 'timeline.event.trashed', icone: Trash2, pastille: 'bg-hover text-text-3' },
 	restored: { cle: 'timeline.event.restored', icone: RotateCcw, pastille: 'bg-success-soft text-success' },
 	field_changed: { cle: 'timeline.event.field_changed', icone: PencilLine, pastille: 'bg-hover text-text-3' },
+	// `CRM-057` §18.6 — le fil cesse de montrer un événement sans détail : il nomme le courrier.
+	mail_received: { cle: 'timeline.event.mail_received', icone: Mail, pastille: 'bg-brand-soft text-brand' },
 }
 
 /**
  * Repli d'un type inconnu, **documenté** — même règle que la pilule de track du §5.5 bis : la
- * valeur vient du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`). Le
- * jour où `CRM-054` écrira `mail_received`, le fil le montrera comme un événement sans détail
- * plutôt que de le faire disparaître. Une mémoire ne cache pas ce qu'elle ne comprend pas.
+ * valeur vient du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`).
+ *
+ * L'ANNONCE S'EST VÉRIFIÉE, ET LE REPLI A JOUÉ. `CRM-055` a écrit `mail_received`, et le fil l'a
+ * montré comme un événement sans détail plutôt que de le faire disparaître. `CRM-057` le nomme
+ * désormais, avec son objet et son expéditeur (§18.6) : le repli redevient ce qu'il est, une
+ * garantie pour le type d'après. Une mémoire ne cache pas ce qu'elle ne comprend pas.
  */
 const REPLI = {
 	cle: 'timeline.event.unknown' as CleTraduction,
@@ -194,6 +201,10 @@ export function PanneauTimeline({
 	// Le coût — une requête de plus par événement de commentaire — est nommé au §14.13.
 	const [evenements, setEvenements] = useState<readonly LigneFil[]>([])
 	const [libellesEtapes, setLibellesEtapes] = useState<LibellesFil['etapes']>(new Map())
+	// Les messages classés dans cette card — `CRM-057` §18.6. Ils sont relus en même temps que les
+	// événements : un classement fait depuis l'inbox ajoute un `mail_received` que le fil doit
+	// pouvoir nommer sans attendre un rechargement complet.
+	const [libellesMessages, setLibellesMessages] = useState<ReadonlyMap<string, string>>(new Map())
 	// AUCUNE PERSISTANCE (`CLAUDE.md` §11) : ni `localStorage`, ni `sessionStorage`. L'état d'un
 	// filtre n'est pas nécessaire au fonctionnement, et repartir complet est la seule valeur qui
 	// ne cache jamais rien.
@@ -226,6 +237,41 @@ export function PanneauTimeline({
 			vivant = false
 		}
 	}, [client, idWorkflow])
+
+	// LA LECTURE N'A LIEU QUE S'IL Y A QUELQUE CHOSE À NOMMER. Une requête émise sur toutes les
+	// fiches serait doublement fautive : inutile sur les neuf dixièmes des cards, qui n'ont reçu
+	// aucun courrier, et bruyante pour un appelant sans droit — mesuré, elle laissait un `401`
+	// dans la console de chaque preuve d'interface à session anonyme, ce que `CRM-007` interdit.
+	const porteDuCourrier = useMemo(
+		() => evenements.some((ligne) => ligne.genre === 'evenement' && ligne.type === 'mail_received'),
+		[evenements],
+	)
+
+	useEffect(() => {
+		if (!porteDuCourrier) {
+			setLibellesMessages(new Map())
+			return
+		}
+		let vivant = true
+		void (async () => {
+			const messages = await lireMessagesDeCard(client, idCard)
+			if (!vivant) return
+			setLibellesMessages(
+				new Map(
+					[...messages].map(([identifiant, message]) => [
+						identifiant,
+						// L'OBJET PUIS L'EXPÉDITEUR, dans un seul libellé résolu : le §5.11 interdit de
+						// composer une phrase par concaténation à l'affichage, pas de nommer ici ce
+						// que la ligne désigne.
+						t('timeline.mail.summary', { objet: message.objet, expediteur: message.expediteur }),
+					]),
+				),
+			)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, idCard, porteDuCourrier])
 
 	const commentaires = etat.statut === 'pret' ? etat.donnees : []
 	const fil = useMemo(() => fusionnerFil(commentaires, evenements), [commentaires, evenements])
@@ -326,7 +372,7 @@ export function PanneauTimeline({
 				etat={etat}
 				lignes={visibles}
 				totalCharge={fil.length}
-				libelles={{ etapes: libellesEtapes, champs: libellesChamps }}
+				libelles={{ etapes: libellesEtapes, champs: libellesChamps, messages: libellesMessages }}
 				onReprise={reprendre}
 				idUtilisateur={idUtilisateur}
 				onModifier={(idCommentaire, corps) =>

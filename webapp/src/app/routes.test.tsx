@@ -2,13 +2,14 @@
 // @verifies docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (aucune page blanche)
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
 
+import { Suspense } from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { fr } from '../i18n'
 import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
-import { CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
+import { CHEMIN_INBOX, CLE_TITRE_INTROUVABLE, PageIntrouvable, ROUTES } from './routes'
 
 afterEach(cleanup)
 
@@ -27,7 +28,14 @@ describe('table des routes', () => {
 	})
 
 	// Aucune route ne doit être une page blanche (docs/DESIGN_SYSTEM.md §5.8).
-	it.each(ROUTES.map((route) => [route.chemin, route] as const))(
+	//
+	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT JOUÉ : elle exigeait un état VIDE de chaque route,
+	// et `/inbox` a cessé d'en être un le jour où la messagerie a été raccordée. La garantie, elle,
+	// ne change pas — aucune page blanche —, mais elle se vérifie désormais différemment selon que
+	// la route porte un écran ou attend encore le sien.
+	const ROUTES_EN_ATTENTE = ROUTES.filter((route) => route.chemin !== CHEMIN_INBOX)
+
+	it.each(ROUTES_EN_ATTENTE.map((route) => [route.chemin, route] as const))(
 		'la route %s rend un état explicite',
 		(_chemin, route) => {
 			render(<MemoryRouter>{route.rendu()}</MemoryRouter>)
@@ -35,6 +43,20 @@ describe('table des routes', () => {
 			expect(screen.getByRole('heading').textContent?.length).toBeGreaterThan(0)
 		},
 	)
+
+	it('la route /inbox rend son écran, chargé à la demande derrière un repli', async () => {
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_INBOX)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		// Le repli de `Suspense` est lui-même un état explicite : le téléchargement du module ne
+		// laisse à aucun moment un écran blanc.
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('route-inbox')).toBeTruthy()
+	})
 })
 
 describe('adresse inconnue', () => {

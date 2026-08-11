@@ -814,10 +814,53 @@ non analysé n'est pas un fichier sain.
 **Le nom d'un fichier reçu est nettoyé sans être perdu** : le produit affiche un nom sûr, et
 conserve le nom d'origine tel que l'expéditeur l'a écrit.
 
-**Ce que ces chapitres ne couvrent pas encore.** Aucun écran ne montre les messages : ils existent
-côté serveur, rattachés aux affaires, mais l'inbox et la fiche ne les affichent pas. L'envoi n'est
-pas livré non plus, ni la relève automatique — elle est déclenchée par l'exploitant. La suggestion
-par contact connu attend la fiche contact.
+**Ce que ces chapitres ne couvrent pas encore.** L'envoi n'est pas livré, ni la relève
+automatique — elle est déclenchée par l'exploitant. La suggestion par contact connu attend la
+fiche contact.
+
+### 4.15 L'inbox : lire et trier le courrier reçu
+
+*Écran « Inbox » de la barre latérale.*
+
+L'inbox montre **trois panneaux** : les dossiers à gauche, la liste des messages au milieu, le
+message lui-même à droite. Sous 1024 px de large, les trois deviennent une **pile** : on descend
+d'un panneau au suivant, et un bouton « Retour » remonte d'un cran.
+
+**Les dossiers.** « Non classés » vient toujours en premier, même quand il est vide : c'est
+l'entrée du travail de tri. Viennent ensuite les affaires qui portent du courrier, rangées sous
+leur track et leur channel. **Une affaire sans courrier n'apparaît pas** : l'inbox est une vue du
+courrier reçu, pas une seconde copie du board. Chaque ligne affiche le nombre de messages **que
+vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes nombres.
+
+**Qui voit quoi.** Un message déjà rangé dans une affaire se lit comme l'affaire : si vous pouvez
+la lire, vous lisez son courrier. Un message **non classé**, lui, n'appartient encore à aucune
+affaire : il est visible par le **propriétaire de la boîte** où il est arrivé, et par les
+**administrateurs** de l'espace de travail. Si votre panneau « Non classés » affiche zéro, ce n'est
+pas une panne : c'est qu'aucune boîte dont vous répondez n'a reçu de courrier en attente.
+
+**Lire un message.** L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,
+puis le corps du message. **Le corps est toujours affiché en texte**, jamais avec la mise en forme
+de l'expéditeur : un courrier venu de l'extérieur ne doit pas pouvoir exécuter quoi que ce soit
+dans votre navigateur, ni charger d'images qui signaleraient l'ouverture de votre message. Quand un
+message n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que le texte.
+
+**Les pièces jointes.** Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en
+cours d'analyse, écartée par l'antivirus ou non analysée n'en a **pas** : son état est écrit en
+toutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait.
+
+**Ranger un message.** Un message non classé propose « Classer dans une affaire ». Choisissez
+l'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la
+trace, et vous le retrouvez ensuite **des deux côtés** — dans l'affaire et sous son dossier dans
+l'inbox. Ranger exige le droit d'**écrire** sur l'affaire choisie, et celui de **voir** le message.
+Une affaire archivée ou en corbeille est refusée, avec son motif.
+
+**Tout se fait au clavier.** La tabulation parcourt les dossiers, la liste puis le message ;
+Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas
+seulement signalés par une couleur.
+
+**Ce qui n'est pas encore là.** On ne répond pas encore depuis l'inbox : l'envoi n'est pas livré.
+Il n'existe pas non plus de notion de « lu / non lu », ni de recherche : la liste montre les
+cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse de côté.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

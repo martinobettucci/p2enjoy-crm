@@ -176,9 +176,24 @@ select is(
 -- 4. Le classement manuel
 -- =============================================================================================
 
--- L'IDENTIFIANT EST RELEVÉ AVANT DE CHANGER DE RÔLE, et ce n'est pas une commodité : un message
--- NON CLASSÉ n'est lisible par personne à travers la RLS (`CRM-054`). Le lire depuis le rôle
--- `authenticated` rendrait `NULL`, et la fonction refuserait pour la mauvaise raison.
+-- RÉVISÉ PAR `CRM-057`, ET LA SUITE AVAIT RAISON D'ÉCHOUER. La sonde était un message sans aucune
+-- OCCURRENCE : il n'avait été vu dans aucune boîte. Tant que `classify_message` ne vérifiait que le
+-- droit d'écriture sur la card, cela passait ; depuis que classer exige aussi de VOIR le message
+-- (§18.2), un message que personne n'a jamais reçu nulle part n'est classable par personne — et
+-- c'est exactement la règle voulue.
+--
+-- La sonde reçoit donc une occurrence dans la boîte du workspace, comme tout message réellement
+-- relevé. Ce n'est pas un contournement de la garde : c'est la donnée qui manquait pour que la
+-- sonde ressemble à un vrai message.
+insert into public.mail_message_occurrences (message_id, account_id, folder, uid)
+select (select id from public.mail_messages where rfc822_message_id = '<auto-3@sonde.test>'),
+       a.id, 'INBOX', 90001
+  from public.mail_inbound_accounts a
+ where a.owner_id is null
+ limit 1;
+
+-- L'IDENTIFIANT EST RELEVÉ AVANT DE CHANGER DE RÔLE, et ce n'est pas une commodité : le lire
+-- depuis le rôle `authenticated` dépendrait de la politique qu'on s'apprête à éprouver.
 insert into pg_temp_ref
 select 'message_non_classe', id::text from public.mail_messages
  where rfc822_message_id = '<auto-3@sonde.test>';

@@ -22,6 +22,44 @@ preuve, conformément à la règle ci-dessus.
 
 ## Ouverts
 
+### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse
+
+**Nature :** contradiction entre une donnée du seed et le serveur de messagerie de développement.
+**Relevé le :** 2026-08-11, en instrumentant le seed de `CRM-057` pour faire arriver du courrier.
+
+**Ce qui est mesuré**, contre le Stalwart de `CRM-050`, depuis le réseau Compose :
+
+| Principal authentifié | En-tête `From` soumis | Réponse du serveur |
+|---|---|---|
+| `bizdev@p2enjoy.test` | `bizdev@p2enjoy.test` | **accepté** |
+| `bizdev@p2enjoy.test` | `contact@p2enjoy.test` | **`501 5.5.4 You are not allowed to send from this address.`** |
+| `admin@p2enjoy.test` | `solene.ferrand@client.test` | **`501 5.5.4`** — même refus |
+
+**La contradiction.** `docs/SPEC-seed.md` §2.18 pose l'identité sortante « Envoi de Driss Lemoine »
+avec `smtp_username = bizdev@p2enjoy.test` et `from_address = contact@p2enjoy.test`, précisément
+pour démontrer que l'entrant et le sortant peuvent diverger (`docs/SPEC-mail-subsystem.md` §2.2).
+Le serveur de développement **refuse cette divergence** : un principal ne peut expédier que depuis
+ses propres adresses. L'identité seedée est donc valide côté produit et **inutilisable côté
+serveur** — ce qu'aucune preuve n'a pu constater jusqu'ici, `CRM-053` n'ayant testé que
+l'authentification SMTP, jamais une soumission.
+
+**Ce que cela n'invalide pas.** Le modèle du §2.2 reste juste : sur un serveur réel, un principal
+porte plusieurs adresses autorisées, et la divergence entrant/sortant est un cas d'usage courant.
+C'est le **provisionnement de développement** qui est incomplet : `contact@p2enjoy.test` n'est
+déclarée dans aucun principal.
+
+**Deux corrections possibles, et aucune n'est prise ici** :
+
+1. ajouter `contact@p2enjoy.test` à la liste `emails` du principal `bizdev@p2enjoy.test` dans
+   `stalwart-init` — le provisionnement le permet, et cela rend le seed conforme à son intention ;
+2. ramener `from_address` à `bizdev@p2enjoy.test` — mais la démonstration de la divergence, que la
+   Definition of Done de `CRM-053` réclame explicitement, serait perdue.
+
+**État.** Ouvert. Le comportement reste inchangé : le seed de `CRM-057` expédie depuis
+`bizdev@p2enjoy.test`, seule adresse que le serveur accepte pour ce principal, et le dit. La
+correction appartient à `CRM-058`, qui livrera l'envoi et ne pourra pas l'éluder : c'est elle qui
+soumettra réellement du courrier au nom d'une identité sortante.
+
 ### INC-086 — Tracks et channels n'ont aucune surface d'administration, et aucune unité n'en porte
 
 **Nature :** règle produit sans écran pour la porter ; aucune unité du backlog ne la revendique.

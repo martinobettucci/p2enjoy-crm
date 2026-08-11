@@ -758,6 +758,14 @@ local ». Le seed **soumet donc réellement deux messages** en SMTP authentifié
 | Demande de devis — refonte | l'adresse de la card « Refonte du site vitrine » | **classé**, règle 1 | La double visibilité : dans la card **et** dans l'inbox |
 | Candidature spontanée | `systeme@crm.p2enjoy.test` seul | **non classé** | Le panneau « Non classés », et le classement à la main |
 
+**L'expéditeur est une boîte locale, et la mesure l'impose.** Soumettre depuis un domaine tiers —
+`solene.ferrand@client.test` — est refusé net par Stalwart :
+`501 5.5.4 You are not allowed to send from this address.` Un principal n'expédie que depuis ses
+propres adresses, et `.test` n'est pas routable : aucun correspondant extérieur n'existe sur cette
+pile. Le correspondant de démonstration est donc **Driss** (`bizdev@p2enjoy.test`). La même mesure
+a révélé que l'identité sortante du §2.18, qui expédie depuis `contact@p2enjoy.test`, est
+**inapplicable telle quelle** sur ce serveur : INC-087.
+
 **Leurs `Message-ID` sont fixes** — `<seed-inbox-classe@p2enjoy.test>` et
 `<seed-inbox-non-classe@p2enjoy.test>`. Le dédoublonnage du §4.2 fait le reste : rejouer le seed
 n'ajoute rien, et les captures peuvent dépendre de ces deux objets.

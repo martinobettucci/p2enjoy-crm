@@ -10,6 +10,10 @@ const ANOMALIES_PAR_PAGE = new WeakMap<Page, string[]>()
 
 export const ERREUR_RESSOURCE_HTTP = {
 	400: 'console.error: Failed to load resource: the server responded with a status of 400 (Bad Request)',
+	// `401` AJOUTÉ PAR `CRM-057` : PostgREST rend `401` — et non `403` — à la clé ANONYME sur une
+	// table ou une fonction dont `anon` n'a aucun privilège. Un visiteur non connecté qui ouvre
+	// l'inbox provoque donc ce refus, que l'écran présente comme un refus et non comme une panne.
+	401: 'console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)',
 	403: 'console.error: Failed to load resource: the server responded with a status of 403 (Forbidden)',
 	416: 'console.error: Failed to load resource: the server responded with a status of 416 (Range Not Satisfiable)',
 } as const

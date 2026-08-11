@@ -30,6 +30,31 @@ async function creerMessage(
 	return ligne!.id
 }
 
+/**
+ * Donne au message une OCCURRENCE dans la boîte du workspace — ajouté par `CRM-057`.
+ *
+ * Un message que la relève n'a vu nulle part n'existe pour personne : depuis que classer exige de
+ * VOIR le message (§18.2), un message sans occurrence n'est classable par quiconque. Ce n'est pas
+ * un contournement de la garde, c'est la donnée qui manquait pour que la sonde ressemble à un
+ * message réellement reçu.
+ */
+async function poserOccurrence(
+	request: import('@playwright/test').APIRequestContext,
+	message: string,
+): Promise<void> {
+	const comptes = await request.get(
+		`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null&limit=1`,
+		{ headers: enTetesService() },
+	)
+	const [compte] = (await comptes.json()) as { id: string }[]
+	expect(compte, 'la boîte système du seed est introuvable').toBeDefined()
+	const pose = await request.post(`${URL_API}/rest/v1/mail_message_occurrences`, {
+		headers: { ...enTetesService(), Prefer: 'return=minimal' },
+		data: { message_id: message, account_id: compte!.id, folder: 'INBOX', uid: 900001 },
+	})
+	expect(pose.status(), await pose.text()).toBe(201)
+}
+
 test.describe('classement manuel — ce que la pile consent', () => {
 	test('classer exige le droit d’ÉCRITURE, non celui de lecture', async ({ request }) => {
 		const identifiant = `<classe-${Date.now()}@preuves.test>`
@@ -65,20 +90,35 @@ test.describe('classement manuel — ce que la pile consent', () => {
 		}
 	})
 
-	test('un message classé devient lisible par qui lit la card, et il ne l’était pas avant', async ({
+	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT JOUÉ. Elle mesurait qu'un message non classé
+	// n'était lisible par PERSONNE, administratrice comprise — le contrat de `CRM-054`, qui laissait
+	// explicitement à l'unité suivante le soin de dire qui les voit. C'est fait : la visibilité d'un
+	// non classé suit désormais la BOÎTE où il a été vu (§18.1). Le scénario ne mesure donc plus
+	// « invisible pour tous », mais la bascule d'un titre de visibilité à l'autre.
+	test('un message classé change de titre de visibilité : de sa boîte à sa card', async ({
 		request,
 	}) => {
 		const identifiant = `<lisible-${Date.now()}@preuves.test>`
 		const message = await creerMessage(request, identifiant)
+		await poserOccurrence(request, message)
 		const jeton = await jetonDe('admin@p2enjoy.test')
+		const jetonMembre = await jetonDe('bizdev@p2enjoy.test')
 
 		try {
-			// AVANT : non classé, donc invisible — même pour l'administratrice (`CRM-054`).
+			// AVANT : l'administratrice le voit — la boîte du workspace est la sienne à ce titre.
 			const avant = await request.get(
 				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=id`,
 				{ headers: enTetesAuthentifies(jeton) },
 			)
-			expect((await avant.json()) as unknown[]).toHaveLength(0)
+			expect((await avant.json()) as unknown[]).toHaveLength(1)
+
+			// ET LE MEMBRE, LUI, NE LE VOIT PAS : il ne répond d'aucune boîte où ce message est
+			// arrivé, et aucun rôle de tri n'existe (§18.1). C'est le témoin du refus.
+			const avantMembre = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=id`,
+				{ headers: enTetesAuthentifies(jetonMembre) },
+			)
+			expect((await avantMembre.json()) as unknown[]).toHaveLength(0)
 
 			const classement = await request.post(`${URL_API}/rest/v1/rpc/classify_message`, {
 				headers: enTetesAuthentifies(jeton),
@@ -99,6 +139,14 @@ test.describe('classement manuel — ce que la pile consent', () => {
 			expect(lues[0]?.classification).toBe('manual')
 			// Le classement manuel a un AUTEUR, et il est journalisé (§16.3).
 			expect(lues[0]?.classified_by).toBe('5eed0000-0000-4000-8000-000000000011')
+
+			// APRÈS, POUR LE MEMBRE AUSSI : il lit la card, donc il lit son courrier. Le titre de
+			// visibilité a changé, et c'est tout l'objet du classement.
+			const apresMembre = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=id`,
+				{ headers: enTetesAuthentifies(jetonMembre) },
+			)
+			expect((await apresMembre.json()) as unknown[]).toHaveLength(1)
 
 			// L'événement de timeline est écrit : la card garde la mémoire du message reçu.
 			const evenements = await request.get(

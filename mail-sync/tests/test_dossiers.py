@@ -50,6 +50,7 @@ class FauxImap:
     def __init__(self, refuse_existants: bool = True) -> None:
         self.dossiers: list[str] = []
         self.souscrits: list[str] = []
+        self.creations: list[str] = []
         self.copies: list[tuple[str, int, str]] = []
         self.selectionne: str | None = None
         self.refuse_existants = refuse_existants
@@ -58,6 +59,7 @@ class FauxImap:
         self.souscrits.append(nom)
 
     def create_folder(self, nom: str) -> None:
+        self.creations.append(nom)
         if nom in self.dossiers and self.refuse_existants:
             raise RuntimeError("ALREADYEXISTS")
         # LE RÉ-ENCODAGE : `&` s'écrit `&-` en UTF-7 modifié (RFC 3501).
@@ -94,6 +96,58 @@ def test_un_dossier_deja_present_n_arrete_pas_la_creation() -> None:
     creer_arborescence(imap, "CRM/Track")
     resultat = creer_arborescence(imap, "CRM/Track")
     assert resultat.actual_path == "CRM/Track"
+
+
+def test_une_seconde_releve_ne_recree_AUCUN_dossier() -> None:
+    """LA CORRECTION MESURÉE : recréer un dossier existant à chaque relève faisait répondre au
+    serveur « Mailbox … already exists », et la bibliothèque journalisait un AVERTISSEMENT en
+    tentant de décoder ce message quand le nom portait un caractère non ASCII. Un fonctionnement
+    normal ne produit pas d'avertissement (CLAUDE.md §20)."""
+
+    imap = FauxImap()
+    creer_arborescence(imap, "CRM/Track/Channel")
+    creations_initiales = list(imap.creations)
+    assert creations_initiales == ["CRM", "CRM/Track", "CRM/Track/Channel"]
+
+    imap.creations.clear()
+    creer_arborescence(imap, "CRM/Track/Channel")
+    assert imap.creations == []
+
+
+def test_un_dossier_deja_SOUSCRIT_n_est_pas_re_souscrit() -> None:
+    """La souscription est vérifiée séparément de l'existence : un dossier créé avant la
+    correction existe sans être souscrit et doit le devenir, tandis qu'un dossier déjà souscrit
+    n'a pas à l'être une seconde fois à chaque relève."""
+
+    class ImapAvecSouscriptions(FauxImap):
+        def list_sub_folders(self) -> list[tuple[tuple[()], str, str]]:
+            return [((), "/", nom) for nom in self.souscrits]
+
+    imap = ImapAvecSouscriptions()
+    creer_arborescence(imap, "CRM/Track")
+    assert imap.souscrits == ["CRM", "CRM/Track"]
+
+    creer_arborescence(imap, "CRM/Track")
+    assert imap.souscrits == ["CRM", "CRM/Track"]
+
+
+def test_un_dossier_existant_mais_NON_souscrit_le_devient() -> None:
+    """Le cas de reprise : l'arborescence posée avant `CRM-056` existe côté serveur sans être
+    souscrite, donc invisible dans un client. Une relève suffit à la rendre visible, sans rien
+    recréer."""
+
+    class ImapAvecSouscriptions(FauxImap):
+        def list_sub_folders(self) -> list[tuple[tuple[()], str, str]]:
+            return [((), "/", nom) for nom in self.souscrits]
+
+    imap = ImapAvecSouscriptions()
+    imap.dossiers.extend(["CRM", "CRM/Track"])
+    imap.creations.clear()
+
+    creer_arborescence(imap, "CRM/Track")
+
+    assert imap.creations == []
+    assert imap.souscrits == ["CRM", "CRM/Track"]
 
 
 def test_le_message_est_COPIE_et_jamais_deplace() -> None:

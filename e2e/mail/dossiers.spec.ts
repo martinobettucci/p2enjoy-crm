@@ -77,14 +77,46 @@ c.logout()
 	return brut.split('\n').map((ligne) => ligne.trim()).filter(Boolean).sort()
 }
 
+/**
+ * L'ENCODEUR EST LE PENDANT DU DÉCODEUR, ET IL A MANQUÉ — défaut trouvé quand le seed de `CRM-057`
+ * a fait entrer du courrier dans une card dont le titre porte un tiret cadratin.
+ *
+ * `imaplib` transmet le nom de boîte tel quel et le serveur l'attend en **UTF-7 modifié**
+ * (RFC 3501) : un nom non ASCII lève `UnicodeEncodeError` avant même d'atteindre le réseau. La
+ * bibliothèque du produit — IMAPClient — encode toute seule ; la sonde doit donc parler la même
+ * langue (décision 324), sans quoi elle échoue là où le produit réussit.
+ */
+const ENCODEUR_UTF7 = `
+def encoder(nom):
+    sortie = []
+    tampon = ''
+    def vider():
+        nonlocal tampon
+        if tampon:
+            brut = base64.b64encode(tampon.encode('utf-16-be')).decode('ascii')
+            sortie.append('&' + brut.rstrip('=').replace('/', ',') + '-')
+            tampon = ''
+    for caractere in nom:
+        if caractere == '&':
+            vider()
+            sortie.append('&-')
+        elif 0x20 <= ord(caractere) <= 0x7E:
+            vider()
+            sortie.append(caractere)
+        else:
+            tampon += caractere
+    vider()
+    return ''.join(sortie)
+`
+
 function messagesDuDossier(chemin: string): number {
 	const brut = python(
 		`
-import imaplib, os
-
+import base64, imaplib, os
+${ENCODEUR_UTF7}
 c = imaplib.IMAP4('stalwart', 143)
 c.login('systeme@crm.p2enjoy.test', 'SeedDev2026Local')
-typ, data = c.select('"%s"' % os.environ['CHEMIN'], readonly=True)
+typ, data = c.select('"%s"' % encoder(os.environ['CHEMIN']), readonly=True)
 print(0 if typ != 'OK' else int(data[0]))
 c.logout()
 `,

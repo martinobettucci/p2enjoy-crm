@@ -45,12 +45,24 @@ test.describe('coquille', () => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
 
-		for (const libelle of ['Inbox', 'Ma journée', 'Réglages']) {
+		// RÉVISÉ PAR `CRM-057` : les trois routes transverses rendaient un état VIDE, et `/inbox` a
+		// cessé d'en être un le jour où la messagerie a été livrée. Pour un visiteur anonyme, elle
+		// n'est pas vide — elle est REFUSÉE. La garantie ne change pas : aucune route n'est une page
+		// blanche ; c'est la forme de l'état explicite qui diffère (docs/DESIGN_SYSTEM.md §5.8).
+		for (const [libelle, etat] of [
+			['Inbox', 'etat-refus'],
+			['Ma journée', 'etat-vide'],
+			['Réglages', 'etat-vide'],
+		] as const) {
 			await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle).click()
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText(libelle)
-			await expect(page.getByTestId('etat-vide')).toBeVisible()
+			await expect(page.getByTestId(etat).first()).toBeVisible()
 		}
 		await capturer(page, 'route-reglages-1440')
+
+		// LE REFUS DE L'INBOX EST CONSOMMÉ EXPLICITEMENT : PostgREST rend `401` à la clé anonyme,
+		// et le navigateur l'écrit dans sa console. Rien n'est filtré globalement (décision 248).
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401]])
 
 		await page.goto('/adresse-inexistante')
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page introuvable')

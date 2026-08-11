@@ -147,4 +147,11 @@
 	/* Largeur d'un squelette de texte court : c'est la forme du contenu attendu, pas un
 	   espacement — elle n'a donc pas sa place dans l'échelle fermée ci-dessus. */
 	--size-placeholder: 120px;
+	/* Largeurs des deux premiers panneaux de l'inbox (docs/DESIGN_SYSTEM.md §5.4, `CRM-057`).
+	   Ce sont des largeurs de COMPOSITION, pas des pas d'espacement : elles vivent ici, comme
+	   celle de la barre latérale, et non dans l'échelle fermée du §3. La liste est plus large que
+	   l'arborescence parce qu'elle porte trois lignes de texte par message — expéditeur, objet,
+	   date — quand l'arborescence n'en porte qu'une. */
+	--size-inbox-folders: 264px;
+	--size-inbox-list: 360px;
 }

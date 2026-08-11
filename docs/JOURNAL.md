@@ -10488,3 +10488,81 @@ CLAUDE.md §8 interdit d'y suppléer par une trace fabriquée. Le seed enverra d
 messages** par la soumission SMTP authentifiée, puis déclenchera une **vraie** relève. Cela ajoute
 une dépendance de Stalwart et de `mail-sync` à chaque exécution du seed — assumée, et bruyante en
 cas de panne : un seed qui saute discrètement une démonstration ment sur l'état du produit.
+
+### Décision 328 — Trois défauts que seule la capture pouvait montrer
+
+**2026-08-11 — `CRM-057`, à la vérification visuelle.**
+
+Les preuves étaient vertes — vingt-deux assertions pgTAP, neuf scénarios d'API, vingt-sept tests du
+module, six scénarios d'écran. Trois défauts leur ont pourtant échappé, et chacun a été trouvé en
+**regardant** les captures.
+
+**1. Un panneau qui déborde de son cadre.** « Refonte intranet Ville de Lyon » sortait du panneau
+des dossiers et emportait son compteur hors de l'écran. La cause n'est pas `truncate`, qui était
+bien posé sur le texte : c'est qu'un élément de flexbox a `min-width: auto` et **refuse de
+rétrécir sous la largeur de son contenu**. Mesuré : le bouton faisait 298 px dans un panneau de
+263. `min-w-0` sur le bouton — non sur son texte — a suffi. Aucun test n'aurait vu ce défaut :
+l'élément était présent, cliquable, focalisable, et son libellé exact.
+
+**2. L'échelle d'espacement est fermée, et le produit s'en souvient mieux que moi.** J'avais écrit
+`lg:w-72`, `lg:w-96`, `pl-7` et `pl-11`. Or `--spacing: initial` remet la gamme à zéro
+(`docs/DESIGN_SYSTEM.md` §3) : ces classes **n'existent pas** et disparaissent en silence, sans
+erreur de compilation ni avertissement. Les trois panneaux faisaient chacun 1000 px de large et
+débordaient de l'écran. Les largeurs de composition sont désormais deux jetons — `--size-inbox-folders`
+et `--size-inbox-list` —, comme celle de la barre latérale ; les retraits de l'arborescence suivent
+la gamme, 12, 24 et 48 px.
+
+**3. Une capture prise pendant une transition ne montre rien de réel.** Au palier 900 px, la barre
+latérale glisse hors champ ; la capture l'a saisie à mi-course, tiroir à moitié sorti et contenu
+décalé. Corrigé en attendant une **condition** — la boîte de la barre stable d'une mesure à
+l'autre — et non un délai arbitraire, que `CLAUDE.md` §18 proscrit.
+
+**Ce que ces trois défauts ont en commun** : ils ne produisent ni exception, ni assertion rouge, ni
+message dans la console. Ils produisent un écran laid, ou faux. C'est exactement le domaine que
+`CLAUDE.md` §16 réserve à l'œil, et la troisième fois de ce chunk qu'il rapporte — après le dossier
+IMAP invisible de la décision 326.
+
+**Un quatrième défaut, celui-là trouvé par une assertion figée.** `CRM-056` avait livré deux
+fonctions SQL **sans régénérer les types TypeScript versionnés**. L'assertion qui fige la liste des
+fonctions exposées est devenue rouge à la première régénération — avec un chunk de retard, faute
+que `scripts/verify-types.sh` appartienne au harnais global de `CRM-008`, qui ne l'exécute pas. Le
+retard est nommé plutôt que corrigé en silence.
+
+### Décision 329 — Un fonctionnement normal ne produit pas d'avertissement
+
+**2026-08-11 — trouvé par une preuve de `CRM-050`, causé par le seed de `CRM-057`.**
+
+**Le symptôme.** `e2e/mail/mail-sync.spec.ts` exige que le journal du service ne contienne que du
+`DEBUG` et de l'`INFO`. Il est devenu rouge dès que le seed a fait entrer du courrier dans une card
+dont le titre porte un tiret cadratin :
+
+```
+{"level":"WARNING","event":"An error occurred while decoding b\"Mailbox 'CRM/Conseil & IA/…/Assistant IA support — Nordis' already exists.\" in ASCII 'strict' mode…"}
+```
+
+**La cause, qui n'est pas celle qu'on lit.** Ce n'est pas le nom du dossier qui pose problème : le
+dossier existe, il est correct, et le message y est rangé. C'est que `creer_arborescence` appelait
+`CREATE` sur **chaque niveau à chaque relève**, y compris sur des dossiers déjà présents. Le serveur
+répondait « already exists » — une erreur attendue, avalée par le code —, et la bibliothèque
+journalisait un avertissement en tentant de décoder ce message d'erreur en ASCII.
+
+**La décision.** La liste des dossiers est lue **avant** de créer, et seuls les niveaux manquants
+sont créés. La souscription est vérifiée séparément, par `LSUB` : un dossier créé avant `CRM-056`
+existe sans être souscrit, et doit le devenir sans qu'on le recrée.
+
+**Pourquoi cela valait une correction, et pas une tolérance dans la preuve.** Une erreur attendue à
+chaque passage finit par masquer celles qui ne le sont pas ; c'est la définition même du bruit
+opérationnel que `CLAUDE.md` §20 proscrit. Et l'avertissement ne se déclenchait qu'en présence d'un
+caractère non ASCII — donc rarement en développement, systématiquement chez un client francophone.
+
+**Une conséquence heureuse** : la relève envoie désormais un `CREATE` de moins par niveau et par
+message, là où elle en émettait un à chaque passage sur toute l'arborescence.
+
+**Post-scriptum du 2026-08-11 — une fragilité de preuve, nommée.** Le harnais global a échoué une
+fois sur `e2e/ui/commentaires-gestes.spec.ts`, et l'unité en cours n'y était pour rien : un
+scénario interrompu avait laissé derrière lui un commentaire, et le scénario suivant — qui compte
+les cartes portant des actions d'auteur — en trouvait **deux** au lieu d'un. Le nettoyage retiré,
+les cinq scénarios redeviennent verts, et l'ont été à chaque exécution depuis. La fragilité est
+réelle : un `finally` qui supprime **par identifiant** ne nettoie rien lorsque l'identifiant n'a
+pas pu être lu. Elle appartient aux preuves de `CRM-043`, non à `CRM-057`, et elle est écrite ici
+plutôt que corrigée à la sauvette dans un chunk qui parle d'autre chose.

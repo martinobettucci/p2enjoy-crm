@@ -31,6 +31,64 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-057` — l'inbox globale est livrée.** Trois panneaux — dossiers, liste, message —, une
+  **pile** sous 1024 px, une arborescence qui ne montre que ce qui porte du courrier, et
+  « Non classés » toujours en tête, même à zéro. Un message classé se retrouve **des deux côtés** :
+  dans son affaire et sous son dossier. Le fil d'une card nomme désormais le courrier reçu — objet
+  et expéditeur — au lieu d'annoncer un événement sans détail.
+  Preuves : `scripts/verify-mail-inbox.sh` **45/45**, **22 assertions** pgTAP, 9 scénarios d'API
+  hors interface, 6 scénarios d'écran au clavier et à la souris, 27 tests du module, captures aux
+  quatre paliers observées. Compteurs : 29 fichiers SQL, 1884 assertions, 478 `api`, 163 `ui`.
+- **Le seed fait ARRIVER du courrier** : deux messages réellement soumis en SMTP authentifié puis
+  relevés, l'un classé par la règle 1, l'autre laissé au tri. Aucune trace n'est fabriquée en base.
+- **La pièce jointe saine devient téléchargeable**, et elle seule : `infected`, `pending` et
+  `skipped` restent refusées à tous, l'anonyme sur les quatre.
+
+### Sécurité
+
+- **Un contournement du contrôle d'accès est fermé.** `classify_message` ne vérifiait que le droit
+  d'écriture sur l'affaire de destination : un membre pouvait classer **chez lui** un message qu'il
+  n'avait pas le droit de lire, puis le lire en toute légitimité. Le classement exige désormais les
+  **deux** droits — voir le message, écrire dans l'affaire —, et le refus est mesuré hors interface
+  avec un vrai jeton. Le défaut existait depuis `CRM-055` ; c'est la spécification de l'écran qui
+  l'a mis en évidence.
+- **Le HTML d'un expéditeur n'atteint jamais le DOM.** Le corps d'un message est réduit en texte —
+  scripts et styles retirés avec leur contenu —, ce qui ferme l'exécution de scripts, le chargement
+  d'images distantes et le pistage à l'ouverture. L'absence de rendu HTML est figée par des tests.
+- **La preuve de refus n° 9 devient concluante.** Elle mesurait jusqu'ici l'impossibilité de
+  télécharger des objets **jamais déposés** — vrai aussi d'un bucket vide. Quatre objets sont
+  désormais réellement déposés, et la pièce saine sert de témoin.
+
+### Corrigé
+
+- **Trois défauts d'interface que seule l'observation pouvait montrer** (décision 328) : un bouton
+  de flexbox qui refusait de rétrécir et débordait de son panneau en emportant son compteur hors de
+  l'écran ; quatre classes d'espacement **inexistantes** — l'échelle du design system est fermée —
+  qui disparaissaient sans erreur et donnaient trois panneaux de 1000 px ; une capture prise
+  pendant la transition de la barre latérale.
+- **Un refus de plus dans la console, retiré.** La timeline demandait les messages d'une card sur
+  **toutes** les fiches, y compris sans session : chaque preuve d'interface anonyme y laissait un
+  `401`. Elle ne les demande plus que si le fil porte réellement un courrier.
+- **Le service journalisait un avertissement à chaque relève** dès qu'un dossier portait un
+  caractère non ASCII (décision 329). La cause n'était pas le nom : c'est que l'arborescence était
+  **recréée** à chaque passage, le serveur répondait « already exists », et la bibliothèque
+  journalisait en tentant de décoder cette erreur en ASCII. La liste des dossiers est désormais lue
+  avant toute création, et la souscription vérifiée séparément. Une erreur attendue à chaque
+  passage finit par masquer celles qui ne le sont pas.
+- **Une sonde IMAP qui ne savait pas encoder.** Le contrôle d'arborescence de `CRM-056` échouait
+  dès qu'un dossier portait un caractère non ASCII : `imaplib` transmet le nom tel quel et le
+  serveur l'attend en UTF-7 modifié. La sonde encode désormais comme la bibliothèque du produit.
+- **Les types TypeScript versionnés rattrapent deux fonctions** livrées par `CRM-056` sans
+  régénération. L'assertion qui fige la liste des fonctions exposées a joué — avec un chunk de
+  retard, `scripts/verify-types.sh` n'appartenant pas au harnais global.
+
+### Documentation
+
+- `docs/manual.md` gagne le chapitre **4.15**, « L'inbox : lire et trier le courrier reçu ».
+- **INC-087 ouvert** : l'identité sortante seedée expédie depuis une adresse que le serveur de
+  développement refuse au principal qui l'authentifie — mesuré. La correction appartient à
+  `CRM-058`, qui soumettra réellement du courrier.
+
 - **`CRM-056` tient ses trois preuves.** L'arborescence est vérifiée par un **client IMAP tiers**
   qui décode lui-même l'UTF-7 modifié, **observée dans Roundcube** avec ses vrais noms, et le
   renommage d'un track y déplace les trois niveaux d'un seul `RENAME`. Le message est **copié** et
