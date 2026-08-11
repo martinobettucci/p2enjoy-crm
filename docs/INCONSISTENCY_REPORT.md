@@ -25,11 +25,46 @@ registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en
 preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
 réels d'abord — **INC-076**, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
 ensuite. **INC-089**, ouverte le même jour, est la seule exception : elle est née de la persistance
-de ces décisions et appelle un arbitrage.
+de ces décisions et appelle un arbitrage. **INC-090** s'y ajoute le même jour, née de la livraison
+de `CRM-075` : elle appelle elle aussi un arbitrage.
 
 ---
 
 ## Ouverts
+
+### INC-090 — `CRM-075` livre un cinquième geste que son énoncé ne cite pas : le désarchivage
+
+**Nature :** écart de périmètre assumé, livré et signalé, qui appartient au responsable et non à
+l'agent.
+**Relevé le :** 2026-08-11, en spécifiant `CRM-075` avant de l'écrire (`docs/JOURNAL.md`,
+décision 338, point 3).
+
+**Ce que l'énoncé dit.** `CRM-075` cite **quatre** verbes : « créer, renommer, réordonner et
+archiver un track ; les mêmes gestes pour un channel ». Il justifie par ailleurs l'absence de
+suppression ainsi : « archiver masque et reste **réversible** ».
+
+**La contradiction.** Un écran qui archive sans savoir désarchiver rend cette justification fausse
+**dans le produit**. L'administrateur qui archive un track par erreur devrait reprendre la clé de
+service pour revenir en arrière — c'est-à-dire exactement le défaut qu'INC-086 relève et que cette
+unité est censée refermer. La réversibilité serait alors une propriété de la **base**, pas du
+produit.
+
+**Ce qui a été fait, et pourquoi ce n'est pas une décision prise en silence.** Le geste est livré :
+une case « Afficher les archivés », éteinte par défaut, et une commande « Désarchiver » sur les
+lignes masquées. Il n'introduit **aucune règle, aucune colonne, aucune politique** — c'est le même
+`UPDATE` sur `archived_at`, à la même table, sous la même politique d'écriture réservée aux
+administrateurs, déjà mesurée par `docs/SPEC-tracks.md` §6 ligne *m*.
+
+**Ce que ce n'est pas.** La corbeille de `CRM-077`, qui porte une durée de rétention, des
+dépendances visibles et un effacement définitif réservé au parcours RGPD. L'archivage n'a aucun des
+trois.
+
+**Action attendue du responsable :** dire si ce cinquième geste reste dans `CRM-075`, ou s'il doit
+être retiré et rattaché à `CRM-077`. Le retrait coûte **une case à cocher et deux appels de
+fonction** — `archiverTrack` et `archiverChannel` prennent déjà un booléen, et la lecture prend déjà
+`inclureArchives`. Tant que l'arbitrage n'est pas rendu, le comportement reste celui qui est livré,
+et il est décrit dans `docs/manual.md` chapitre 5.1 comme un geste existant.
+
 
 ### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse — **CLOSE**
 

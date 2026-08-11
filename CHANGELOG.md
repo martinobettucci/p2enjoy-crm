@@ -27,6 +27,10 @@ d'exécuter le code attendu.
     l'instant de l'écriture : une commande masquée sur cette foi cacherait un geste **permis**. Le
     refus du backend est traduit champ par champ, et la saisie est conservée.
   - **Aucune modale**, aucune suppression, aucun défaut de workflow présélectionné.
+  - **Un cinquième geste est livré et signalé** : le **désarchivage**, que l'énoncé de `CRM-075` ne
+    cite pas. Sans lui, « archiver reste réversible » est faux dans le produit. L'écart est consigné
+    en `docs/INCONSISTENCY_REPORT.md` **INC-090**, avec le coût exact de son retrait si le
+    responsable le juge hors périmètre.
   - **Trois défauts réels trouvés par les preuves et corrigés dans le même changement** : un refus de
     déplacement calculé mais affiché nulle part ; une infobulle de commande désactivée qui annonçait
     « Déjà en tête de liste » alors que la cause était tout autre ; et la classe `size-10`, qui

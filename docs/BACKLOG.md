@@ -5852,7 +5852,8 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
   peut échouer (§6.2).
 - **Le désarchivage est livré avec l'archivage**, bien que l'énoncé ci-dessus ne cite que quatre
   verbes : sans lui, « archiver reste réversible » est faux dans le produit. Aucune règle, colonne ni
-  politique nouvelle — le même `UPDATE`. **Arbitrage attendu du responsable**, §11 limite 1.
+  politique nouvelle — le même `UPDATE`. **Arbitrage attendu du responsable**, §11 limite 1, consigné
+  en `docs/INCONSISTENCY_REPORT.md` **INC-090** avec le coût exact de son retrait.
 - **Les commandes ne sont PAS masquées pour un non-administrateur.** L'énoncé ci-dessus dit
   « un `viewer` ne voit aucun de ces gestes » ; la spécification tient l'autre moitié de la phrase —
   « c'est une aide d'interface » — et écarte la première : un rôle lu au chargement peut être périmé
