@@ -5667,6 +5667,29 @@ Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché
 conforme à la réalité.
 
+*Spécifiée avant d'être écrite* — `docs/SPEC-mail-subsystem.md` §20, `docs/JOURNAL.md` décision 331.
+Ce qui est **déjà mesuré ou tranché** :
+
+- **`UID SEARCH SINCE` est honoré par le serveur** : le backfill est une sélection, pas un tri.
+  Rapatrier toute la boîte pour ignorer ce qui dépasse ferait payer au réseau ce que le serveur
+  sait faire.
+- **`IDLE` est annoncé, et ne sera PAS employé ici** : une connexion permanente par compte est un
+  état de plus à superviser, là où une scrutation déclarée est observable et rejouable. Le passage
+  à `IDLE` demandera sa propre mesure.
+- **`MAIL_SYNC_POLL_INTERVAL` est déclarée et consommée par rien** depuis `CRM-051` : une variable
+  documentée que rien ne lit est une promesse tenue par personne. La boucle de veille la prend.
+- **Un refus ne se rejoue pas** : `auth_failed` et un destinataire refusé passent `failed`
+  immédiatement. Seules les pannes de transport sont reprogrammées — rejouer un refus, c'est
+  répéter une erreur en espérant un autre résultat.
+- **Le backoff est géométrique ET borné** : 1, 4, 16, 64 minutes, puis `failed`. Sans progression,
+  un serveur en panne serait harcelé ; sans borne, un message adressé à un domaine disparu
+  resterait en file pour toujours.
+- **Un envoi `sending` depuis plus de dix minutes est orphelin** et repasse `queued`. Le seuil est
+  généreux à dessein : un envoi lent n'est pas un envoi mort, et reprendre trop tôt enverrait le
+  message deux fois.
+- **La dette de `CRM-056` est réglée ici** : un rangement manqué est repris à la relève suivante,
+  sans qu'il faille recevoir un nouveau message pour la déclencher.
+
 ---
 
 ## Chunk 5 — Extensions

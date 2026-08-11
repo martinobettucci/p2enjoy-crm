@@ -1473,3 +1473,130 @@ et l'écran le dit plutôt que d'offrir une action qui échouerait.
   l'absence est figée par une assertion.
 - **Aucune signature d'utilisateur** : le §5 la mentionne, aucune table ne la porte.
 - **Aucun envoi en masse** : la file est unitaire, et le quota la borne.
+
+---
+
+## 20. Backfill, résilience et supervision — `CRM-059`
+
+### 20.1 Ce que la mesure a établi
+
+**Mesuré le 2026-08-11 contre le Stalwart de `CRM-050` :**
+
+| Mesure | Résultat |
+|---|---|
+| `UID SEARCH SINCE <date>` | **honoré** — le serveur filtre, le service n'a rien à trier |
+| `UID FETCH` sur une liste d'UID | **honoré** — les lots sont possibles sans relire toute la boîte |
+| Capacités annoncées | `IMAP4rev2`, **`IDLE`**, `ESEARCH`, `WITHIN`, `UIDPLUS` |
+| `MAIL_SYNC_POLL_INTERVAL` | **déclarée, consommée par rien** — `README.md` la dit « en attente de `CRM-054` », qui ne l'a pas prise |
+
+**Trois conséquences :**
+
+1. **Le backfill est une SÉLECTION, pas un tri.** `SINCE` bornant côté serveur, la profondeur
+   `backfill_months` se traduit en une date et rien de plus. Rapatrier toute la boîte pour ignorer
+   ce qui dépasse ferait payer au réseau ce que le serveur sait faire.
+2. **La veille peut être permanente**, `IDLE` étant annoncé. Elle ne le sera pourtant **pas** ici :
+   voir §20.2.
+3. **`MAIL_SYNC_POLL_INTERVAL` cesse d'être décorative.** Une variable documentée que rien ne lit
+   est une promesse tenue par personne.
+
+### 20.2 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Livré** : le backoff exponentiel borné de la file d'envoi, la reprise d'un envoi orphelin, la
+reprise d'un rangement manqué — dette nommée de `CRM-056` —, le backfill par lots, la boucle de
+veille qui consomme `MAIL_SYNC_POLL_INTERVAL`, et l'état de chaque compte **conforme à la réalité**.
+
+**Non livré, et nommé** : la veille par **`IDLE`**. Le serveur l'annonce, mais elle suppose une
+connexion maintenue par compte, sa surveillance, et sa reprise — trois choses qu'une boucle de
+scrutation n'exige pas. Une scrutation à intervalle déclaré est **observable et rejouable** ; une
+connexion permanente est un état de plus à superviser. Le passage à `IDLE` est une optimisation qui
+demandera sa propre mesure : combien de comptes, quelle latence réellement gagnée.
+
+### 20.3 Le backoff, et pourquoi il n'existait pas avant
+
+`CRM-058` marquait un envoi échoué `failed` **à la première tentative**, et l'écrivait : « un échec
+passe `failed` et le dit ; il ne feint pas d'avoir été envoyé ». C'était honnête et insuffisant —
+un serveur d'envoi momentanément indisponible perdait le message.
+
+| Tentative | Délai avant la suivante |
+|---|---|
+| 1 | 1 minute |
+| 2 | 4 minutes |
+| 3 | 16 minutes |
+| 4 | 64 minutes |
+| 5 | **`failed` définitif** |
+
+**La progression est géométrique et BORNÉE**, et les deux comptent : sans progression, un serveur
+en panne serait harcelé toutes les minutes ; sans borne, un message adressé à un domaine qui
+n'existe plus resterait en file pour toujours, et l'exploitant croirait qu'il va partir.
+
+**UN REFUS N'EST PAS UNE PANNE, ET NE SE REJOUE PAS.** Un mot de passe faux (`auth_failed`), une
+adresse refusée (`sender_rejected`) ou un message refusé par le serveur ne deviendront pas justes
+en attendant : ces codes passent `failed` **immédiatement**. Seules les pannes de transport —
+`connection_refused`, `timeout`, `tls_failed`, `protocol_error` — sont rejouées. Rejouer un refus,
+c'est répéter une erreur en espérant un autre résultat.
+
+### 20.4 Un envoi orphelin, et pourquoi il faut le reprendre
+
+`reserver_envois` marque `sending` **avant** de soumettre. Si le worker meurt entre les deux, la
+ligne reste `sending` pour toujours : aucune passe ne la reprend, aucun statut ne la signale, et
+`CRM-058` le disait déjà — « `reserved` peut dépasser `sent + failed` ».
+
+Une ligne `sending` depuis plus de **dix minutes** est considérée orpheline et repasse `queued`,
+avec sa tentative comptée. **Le seuil est généreux à dessein** : un envoi lent n'est pas un envoi
+mort, et reprendre trop tôt enverrait le message deux fois.
+
+### 20.5 La reprise d'un rangement manqué — dette de `CRM-056`
+
+`CRM-056` tentait le rangement à la **première** vue d'un message et journalisait un refus sans le
+rejouer. La dette est réglée ici : un message classé dont aucune occurrence n'est rangée dans le
+dossier de sa card est **repris à la relève suivante**, sans qu'il faille recevoir un nouveau
+message pour déclencher la reprise.
+
+### 20.6 Le backfill par lots
+
+À la connexion d'une boîte, `backfill_months` fixe la profondeur. La relève traite la boîte
+courante **d'abord**, puis un lot d'historique borné — jamais l'inverse : le courrier du jour ne
+doit pas attendre que dix ans d'archives soient descendus.
+
+La progression vit dans `sync_state`, qui existe depuis `CRM-052` sans consommateur : elle porte le
+plus petit UID déjà rapatrié par dossier. **Reprendre est donc possible après une coupure**, et
+rejouer ne redescend pas ce qui l'a déjà été.
+
+**`backfill_months = 0` signifie « aucun historique », et c'est le défaut.** Contrairement au
+`daily_quota` de `CRM-053`, ce zéro-là est **le bon choix par défaut** : importer dix ans d'archives
+sans qu'on l'ait demandé serait une décision prise à la place de l'exploitant.
+
+### 20.7 L'état affiché est conforme à la réalité
+
+La Definition of Done l'exige en ces termes : « état affiché conforme à la réalité ». Ce qui est
+montré est donc **lu**, jamais supposé :
+
+| Fait montré | D'où il vient |
+|---|---|
+| Dernière relève réussie | `last_sync_at`, écrit par la relève elle-même |
+| Dernier incident | `status` et `last_error` — un **code**, jamais le texte du serveur (§13.7) |
+| Messages en attente d'envoi | comptés dans `mail_outbox`, statut `queued` ou `sending` |
+| Envois en échec définitif | comptés dans `mail_outbox`, statut `failed` |
+
+**SI LE SERVICE EST ARRÊTÉ, L'ÉCRAN LE DIT** (§7) plutôt que d'afficher un état figé qui passerait
+pour frais. Une dernière relève ancienne n'est pas un incident : c'est un fait, et l'écran donne sa
+date au lieu d'inventer un jugement.
+
+### 20.8 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pytest | Le backoff : progression, borne, et la distinction refus / panne — **sans serveur** |
+| pgTAP | La reprise d'un orphelin, le décompte des états, le seuil de dix minutes |
+| API | L'état d'un compte est lisible par son propriétaire et par un administrateur, par personne d'autre |
+| E2E `mail` | **Une coupure SMTP réelle** : le message n'est pas perdu, il est reprogrammé ; le serveur revenu, il part |
+| E2E `ui` | L'écran d'état montre ce que la base porte, y compris un incident |
+| Harnais | `scripts/verify-mail-resilience.sh`, non complaisant, avec son témoin |
+
+### 20.9 Limites nommées
+
+- **Aucune veille par `IDLE`** (§20.2) : la scrutation est déclarée, observable et rejouable.
+- **Aucune alerte sortante** : un compte en erreur est *visible*, il n'envoie ni courriel ni
+  notification — les notifications relèvent de leur propre unité.
+- **Aucun backfill de pièces jointes anciennes au-delà de la profondeur déclarée** : ce qui n'est
+  pas descendu n'est pas analysé, et l'écran ne prétend pas le contraire.

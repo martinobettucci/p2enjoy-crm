@@ -10606,3 +10606,41 @@ parties** : compter les seuls envois réussis laisserait mettre mille messages e
 revendique nommément, et un backoff écrit à la va-vite ici serait défait par l'unité suivante.
 L'unité livre les colonnes qui les porteront et **une seule tentative** : un échec passe `failed` et
 le dit, il ne feint pas d'avoir été envoyé.
+
+### Décision 331 — Rejouer une panne, jamais un refus
+
+**2026-08-11 — `CRM-059`, spécification écrite AVANT le code (CLAUDE.md §5).**
+
+**Quatre mesures d'abord**, contre le serveur réel : `UID SEARCH SINCE` est honoré, `UID FETCH` par
+lots aussi, `IDLE` est annoncé, et `MAIL_SYNC_POLL_INTERVAL` — documentée depuis `CRM-051` — n'est
+lue par personne.
+
+**La distinction qui gouverne tout le reste : une panne se rejoue, un refus non.** Un serveur
+injoignable reviendra ; un mot de passe faux, une adresse refusée, un message rejeté ne deviendront
+pas justes en attendant. Confondre les deux produit l'un ou l'autre de deux défauts symétriques :
+soit on perd un message qu'un simple délai aurait sauvé, soit on harcèle un serveur avec une erreur
+qu'il redira à l'identique. `CRM-058` marquait tout `failed` à la première tentative — honnête, et
+insuffisant. Le backoff ne s'applique donc qu'aux codes de transport.
+
+**Le backoff est borné, et la borne est aussi importante que la progression.** Sans progression, un
+serveur en panne est interrogé toutes les minutes. Sans borne, un message adressé à un domaine
+disparu reste en file indéfiniment, et l'exploitant croit qu'il finira par partir : une file qui ne
+bouge plus sans rien dire est pire qu'un refus — c'est déjà la leçon de `CRM-058`, appliquée dans
+l'autre sens.
+
+**`IDLE` est annoncé par le serveur, et je ne le prends pas.** Une veille par connexion permanente
+demande une connexion par compte, sa surveillance et sa reprise : trois états de plus à superviser,
+dans l'unité qui est précisément chargée de la supervision. Une scrutation à intervalle déclaré est
+observable, rejouable et mesurable. Le passage à `IDLE` sera une optimisation, avec sa propre mesure
+— combien de comptes, quelle latence réellement gagnée —, pas une élégance décidée d'avance.
+
+**Un zéro par défaut peut être le bon choix, contrairement au précédent.** `backfill_months = 0`
+signifie « aucun historique », et c'est juste : importer dix ans d'archives sans qu'on l'ait demandé
+serait une décision prise à la place de l'exploitant. Le `daily_quota = 0` de `CRM-053` était
+l'inverse — un défaut qui interdisait tout. Deux zéros, deux sens : c'est le **défaut sûr** qui les
+distingue, non la valeur.
+
+**La dette de `CRM-056` est réglée ici, et nommément.** Un rangement manqué était journalisé sans
+être rejoué ; il sera repris à la relève suivante, sans qu'il faille recevoir un nouveau message
+pour déclencher la reprise. Une dette nommée dans un backlog n'est réglée que le jour où une unité
+la revendique.

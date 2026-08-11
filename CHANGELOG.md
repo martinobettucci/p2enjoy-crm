@@ -15,6 +15,15 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **`CRM-059` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §20, décision 331),
+  sur quatre mesures : `UID SEARCH SINCE` est honoré — le backfill est une sélection, pas un tri —,
+  `IDLE` est annoncé mais ne sera pas employé, et `MAIL_SYNC_POLL_INTERVAL` est documentée depuis
+  `CRM-051` sans que rien ne la lise.
+- **La règle qui gouverne la reprise est écrite** : une panne se rejoue, un refus non. Le backoff —
+  1, 4, 16, 64 minutes, puis échec définitif — ne s'applique qu'aux codes de transport.
+
+### Documentation
+
 - **`CRM-058` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §19, décision 330),
   sur quatre mesures faites contre le serveur réel : le `Message-ID` du produit est conservé, le
   `Reply-To` n'est vérifié par personne d'autre que nous, les en-têtes de fil passent tels quels, et
