@@ -63,8 +63,9 @@ services:
   # --- Application des migrations applicatives -----------------------------------------------
   # Conteneur éphémère décrit par docs/DAT.md §3.2 : il rejoue en ordre les fichiers de
   # `supabase/migrations/`. Il s'exécute après GoTrue, dont le schéma `auth` est référencé par
-  # les migrations d'amorçage (`CRM-003`). Aucune migration n'est appliquée en production par ce
-  # chemin : docs/PROD_MIGRATIONS.md fait foi (docs/DAT.md §9).
+  # les migrations d'amorçage (`CRM-003`), et après `storage`, dont le schéma est référencé par
+  # `CRM-054` (`docs/JOURNAL.md` décision 342). Aucune migration n'est appliquée en production par
+  # ce chemin : docs/PROD_MIGRATIONS.md fait foi (docs/DAT.md §9).
   migrations-runner:
     container_name: p2enjoy-migrations
     image: postgres:17-alpine
@@ -73,6 +74,8 @@ services:
       db:
         condition: service_healthy
       auth:
+        condition: service_healthy
+      storage:
         condition: service_healthy
     volumes:
       - ./supabase/docker/migrations-runner/apply-migrations.sh:/usr/local/bin/apply-migrations.sh:ro,z
@@ -245,6 +248,12 @@ services:
   # Toujours en mode S3 : MinIO en développement, fournisseur réel en production
   # (docs/DAT.md §3.6, README.md §6). La transformation d'images est désactivée : aucune unité
   # livrée n'en dépend, et `imgproxy` serait un service de plus à superviser pour rien.
+  # `rest` N'EST PLUS UNE DÉPENDANCE DE DÉMARRAGE — mesuré (`docs/JOURNAL.md` décision 342).
+  # `storage` amorce son propre schéma (`storage.buckets` et le reste) par une migration interne
+  # qui ne parle qu'à `db`, jamais à `rest` ; `POSTGREST_URL` ci-dessous ne sert qu'aux requêtes
+  # PROXY à l'exécution, bien après le démarrage. L'attendre au démarrage fermait un cycle : `rest`
+  # attend `migrations-runner`, qui attendait `storage`, qui attendait `rest`. Un volume neuf ne
+  # convergeait donc JAMAIS sans intervention manuelle.
   storage:
     container_name: p2enjoy-storage
     image: supabase/storage-api:v1.60.4
@@ -252,8 +261,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      rest:
-        condition: service_started
     healthcheck:
       # 127.0.0.1 plutôt que « localhost » : le service n'écoute qu'en IPv4 — ses journaux
       # annoncent 127.0.0.1:5000 et l'adresse du réseau Compose, jamais `::`. Or `/etc/hosts` du

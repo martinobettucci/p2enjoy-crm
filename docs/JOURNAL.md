@@ -11063,3 +11063,64 @@ fait réellement. La limite est écrite au §20.6 bis.6.
 choisi pour qu'un tour reste court devant un intervalle de veille de soixante secondes. `CLAUDE.md`
 §21 proscrit d'optimiser sans mesure ; il ne proscrit pas de choisir une borne, à condition de ne
 pas la présenter comme mesurée. Elle le sera le jour où une vraie boîte historique sera relevée.
+
+### Décision 343 — La pile démarre enfin RÉELLEMENT, sur un volume neuf, sans intervention manuelle
+
+**2026-08-11 — reprise de `CRM-059`, cette fois avec Docker.**
+
+**Le point de départ.** Chaque session précédente qui a touché `CRM-059` l'a écrit noir sur blanc :
+« toujours sans pile locale ». `CLAUDE.md` §2 de la tâche planifiée dit pourtant que l'exécutant est
+root et doit démarrer `dockerd` lui-même. Cette session l'a fait, pour la première fois de bout en
+bout — et a rencontré, dans l'ordre, trois défauts que personne n'avait pu mesurer faute d'avoir
+jamais atteint ce point.
+
+**1. `mail-sync` ne se construit pas derrière ce proxy — mesuré, corrigé comme `npm_ca`.**
+`pip install` échoue en `SELF_SIGNED_CERT_IN_CHAIN` exactement comme `npm ci` (`CRM-015`, décision
+280), mais `mail-sync/Dockerfile` n'avait jamais reçu le même traitement : aucun secret `pip_ca`
+n'existait. Corrigé par le même contournement, au même endroit du fichier — un secret BuildKit
+FACULTATIF, monté puis effacé, qui règle `PIP_CERT` seulement quand il est présent :
+
+    docker build --secret id=pip_ca,src=/chemin/vers/ca.crt -f mail-sync/Dockerfile .
+
+Comme `npm_ca`, ce secret n'est câblé dans AUCUN fichier Compose : il se fournit à la main, exactement
+comme le contournement déjà décrit pour `webapp` dans la tâche planifiée. Une construction sans
+secret reste strictement inchangée — mesuré par une reconstruction sans cache des deux branches.
+
+**2. Un cycle de dépendances rendait tout amorçage à froid IMPOSSIBLE — mesuré, pas supposé.**
+`migrations-runner` applique `0024_ingestion_messages.sql`, qui écrit dans `storage.buckets`. Cette
+table n'existe pas tant que le service `storage` n'a pas joué SA PROPRE migration interne — ce que
+`docker exec p2enjoy-db psql -c '\dt storage.*'` a confirmé vide avant, peuplé après. Or `storage`
+attendait `rest: service_started`, et `rest` attendait `migrations-runner: service_completed_successfully`.
+**Le cycle : `migrations-runner` → `storage` → `rest` → `migrations-runner`.** Sur un volume
+Postgres neuf, aucune des trois conditions ne pouvait jamais s'ouvrir la première : ce n'est pas
+une course intermittente, c'est un verrou structurel, invisible tant que personne n'était parti
+d'un volume vide.
+
+Contournement constaté sur place, avant la correction : démarrer `storage` À LA MAIN
+(`docker start p2enjoy-storage`, qui ne dépend RÉELLEMENT que de `db` pour créer son propre schéma),
+laisser `migrations-runner` réussir, puis redémarrer `kong` — dont le résolveur DNS interne avait
+mis en cache un `rest` absent lors de sa toute première requête et ne le réinterrogeait plus. Ce
+contournement n'est plus nécessaire après la correction ci-dessous, et n'est consigné que pour
+mémoire si le symptôme réapparaît sous une autre forme.
+
+**La correction : rompre le cycle au bon endroit.** `storage` ne dépend plus de `rest` au
+DÉMARRAGE — mesuré : sa propre migration ne parle qu'à `db`, et `POSTGREST_URL` ne sert qu'aux
+requêtes PROXY, bien après. `migrations-runner`, lui, attend désormais `storage: service_healthy`
+en plus de `db` et `auth`. Le nouvel ordre : `db` → `storage` (crée son schéma) → `migrations-runner`
+(peut enfin écrire dans `storage.buckets`) → `rest` (peut enfin démarrer) → tout le reste. **Deux
+fichiers portaient la même dépendance** : `docker-compose.yml` la déclarait, mais
+`docker-compose.dev.yml` la RÉTABLISSAIT dans son propre bloc `depends_on` pour `storage` — Compose
+fusionne les clés `depends_on` entre fichiers, un retrait dans un seul des deux ne suffisait donc
+pas. Corrigés ensemble.
+
+**Preuve.** `./resetMe.sh --yes` sur un volume détruit échouait avant correction avec
+`dependency cycle detected: migrations-runner -> storage -> rest -> migrations-runner` — Compose
+lui-même refusait de démarrer, sans même tenter. Après correction, **deux exécutions consécutives
+de `./resetMe.sh --yes` depuis zéro** convergent seules : 20 conteneurs sains, `migrations-runner`
+sorti en `0`, seed appliqué en un seul passage, sans commande manuelle. C'est la première fois que
+cette pile démarre à froid sans intervention, depuis la création du projet.
+
+**Ce que cette décision ne fait pas.** Elle ne rejoue aucune preuve applicative — ce que la suite de
+cette session fait, sur cette pile enfin vivante. Elle ne câble pas `pip_ca` dans un fichier Compose,
+par symétrie délibérée avec `npm_ca` (décision 280) : les deux restent un geste d'exploitant, pas un
+réglage produit.

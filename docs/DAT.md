@@ -225,7 +225,13 @@ Source de vérité du produit. Contient :
 Les migrations sont appliquées au démarrage par le conteneur `migrations-runner`, qui rejoue en
 ordre lexicographique les fichiers de `supabase/migrations/`, une transaction par fichier, en
 s'arrêtant à la première erreur. Il démarre après GoTrue, dont le schéma `auth` est référencé dès
-les migrations d'amorçage, et `rest` attend qu'il se soit terminé avec succès.
+les migrations d'amorçage, et après `storage`, dont le schéma (`storage.buckets`, référencé par
+`CRM-054` depuis la migration 24) n'existe qu'une fois la migration interne du service jouée ;
+`rest` attend à son tour que `migrations-runner` se soit terminé avec succès. **Cet ordre casse un
+cycle mesuré** (`docs/JOURNAL.md` décision 342) : `storage` ne dépend plus de `rest` au démarrage —
+sa propre migration ne parle qu'à `db`, et `POSTGREST_URL` ne sert qu'aux requêtes proxy, bien après
+le démarrage —, faute de quoi `migrations-runner` → `storage` → `rest` → `migrations-runner`
+formait un verrou que Compose refuse même de tenter sur un volume neuf.
 
 Le rôle par défaut reste `postgres`. Une migration qui doit administrer un objet détenu par
 Supabase peut porter `-- @migration-role: supabase_admin` ; le runner n'autorise **que** ce rôle

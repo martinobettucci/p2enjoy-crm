@@ -258,6 +258,14 @@ Compose. Le fichier doit être régulier, lisible, non vide et contenir un bloc
 ancien `.env` : le build reste strictement inchangé. Le certificat reste sur l'hôte, n'est jamais
 copié dans le dépôt ou l'image et ne concerne pas la production.
 
+Le service `mail-sync` porte le même contournement pour `pip`, mais **sans variable
+d'environnement** — `docs/JOURNAL.md` décision 342 : `runDev.sh` ne le câble pas, et le geste reste
+manuel, à la construction directe de l'image :
+
+```bash
+docker build --secret id=pip_ca,src=/chemin/absolu/autorites.pem -f mail-sync/Dockerfile -t p2enjoy-crm-mail-sync .
+```
+
 Services exposés. Les ports ne sont publiés que sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut) :
 la pile de développement n'est pas destinée à être exposée sur le réseau.
 

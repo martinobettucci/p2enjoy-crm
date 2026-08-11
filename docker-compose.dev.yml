@@ -28,13 +28,14 @@ services:
 
   # Le stockage vise le MinIO local ; aucun compte S3 réel n'est requis en développement
   # (CLAUDE.md §3 : « aucun service cloud obligatoire lorsque son équivalent local peut être
-  # fourni »).
+  # fourni »). `rest` N'EST PLUS ICI, et c'est délibéré (docs/JOURNAL.md décision 342) : cette
+  # même liste RÉTABLISSAIT le cycle que la base venait de rompre — `depends_on` se FUSIONNE entre
+  # fichiers Compose, et cette dépendance-ci n'avait qu'à être omise ici pour disparaître pour de
+  # bon, ce qu'un simple retrait dans `docker-compose.yml` seul ne pouvait pas faire.
   storage:
     depends_on:
       db:
         condition: service_healthy
-      rest:
-        condition: service_started
       minio:
         condition: service_healthy
       minio-createbucket:
