@@ -1743,6 +1743,76 @@ L'ordre est celui de `last_sync_at` **croissante, les jamais relevés d'abord** 
 retard passe en tête. Trier par date de création ferait attendre un compte neuf derrière tous les
 anciens.
 
+### 20.11 L'écran d'état — sa forme, et ce qu'il n'invente pas
+
+*Écrit avant le code, `docs/JOURNAL.md` décision 346. Le §20.7 dit les faits à montrer ; ce
+chapitre dit où et comment.*
+
+#### 20.11.1 Une adresse dédiée, suivant le patron de `CRM-075`
+
+`/reglages/messagerie` porte l'écran, monté par `App` **hors de la table `ROUTES`** — même patron
+que `CHEMIN_ADMIN_ARBORESCENCE` : une adresse nommée, chargée à la demande, et l'index des
+réglages (`/reglages`) gagne une seconde entrée. Aucune modale, aucun onglet transverse : le §5.13
+a déjà tranché ce cas pour l'unique autre écran de la même famille.
+
+#### 20.11.2 Deux lectures, aucune règle nouvelle
+
+L'écran n'ouvre **aucune** politique : il lit ce que `CRM-052` et `CRM-058` ont déjà rendu
+lisible.
+
+- **Les comptes entrants** — `mail_inbound_accounts`, filtré par la RLS posée en `0022` : un
+  administrateur du workspace voit tous les comptes ; un membre ordinaire ne voit que le sien s'il
+  en possède un ; sans droit, la ligne n'apparaît simplement pas. L'écran ne recalcule rien : il
+  affiche exactement ce que la requête rend.
+- **La file sortante** — deux comptages sur `mail_outbox`, filtrés par `app.can_read_card` (RLS
+  de `0030`) : `status in ('queued','sending')` pour « en attente », `status = 'failed'` pour
+  « échec définitif ». Un membre ordinaire ne voit donc que la file des cards qu'il peut lire —
+  c'est la portée déjà tenue par `CRM-057`, pas une portée inventée ici.
+
+#### 20.11.3 Le tableau des comptes suit `docs/DESIGN_SYSTEM.md` §5.9
+
+Colonnes comparables — boîte, dernière relève, dernier incident — donc un `table`, pas une liste
+imbriquée : le §5.13 réserve ce patron aux objets dont les colonnes diffèrent par ligne, ce qui
+n'est pas le cas ici.
+
+| Colonne | Valeur | Vide quand |
+|---|---|---|
+| Boîte | `label` | jamais |
+| Dernière relève réussie | `last_sync_at`, date/heure locale, monospace à droite (§5.9) | `last_sync_at IS NULL` — « Jamais relevée » **en toutes lettres**, pas une cellule vide : l'absence de relève est un fait à nommer, pas une donnée manquante |
+| Dernier incident | `last_error` traduit par un dictionnaire fermé — voir §20.11.4 | `status <> 'error'` — cellule vide, §5.9 |
+
+#### 20.11.4 Le dictionnaire des six codes, fermé et centralisé
+
+`last_error` porte un des six codes de la contrainte `mail_inbound_accounts_erreur_code` (`0022`).
+L'écran ne les affiche jamais bruts — un code d'API n'est pas un texte pour un humain — et ne
+traduit rien d'autre que ces six valeurs : un septième code que la base rendrait serait un défaut
+de contrainte, pas un texte à deviner côté client. Les six clés vivent dans
+`webapp/src/i18n/fr.ts`, à côté des autres dictionnaires fermés du produit.
+
+#### 20.11.5 Les deux compteurs sont des chiffres nommés, pas une pilule
+
+« En attente d'envoi » et « Échecs définitifs » sont deux chiffres, chacun sous son libellé —
+même sobriété que les compteurs de colonne du board (§5.2 bis) : un chiffre grand, un libellé
+`--color-text-2` en dessous, sans pilule ni couleur de fond. Une couleur d'alerte sur le second
+serait une opinion que la spécification n'a pas tranchée : `docs/SPEC-mail-subsystem.md` §20.9
+dit déjà qu'un compte en échec n'envoie ni courriel ni notification, donc n'affiche pas non plus un
+signal d'urgence que rien ne vient étayer.
+
+#### 20.11.6 États systématiques
+
+Chargement (squelette de tableau), erreur (réseau ou refus, §5.8), vide (aucun compte visible —
+« Aucune boîte à superviser », sans action puisqu'en créer une n'appartient pas à cette unité),
+prêt. **SI LE SERVICE EST ARRÊTÉ, L'ÉCRAN LE DIT** (§20.7) : une relève ancienne n'est pas
+maquillée par un état "chargement" qui ne finirait jamais — c'est une donnée comme une autre,
+affichée telle quelle.
+
+#### 20.11.7 Ce que l'écran ne fait pas
+
+- **Aucune action** : ni relancer une relève, ni acquitter un incident, ni relever un secret.
+  Cet écran **lit**; agir dessus est hors DoD et hors spécification.
+- **Aucun flux temps réel** : la donnée est lue à l'ouverture, comme tous les autres écrans
+  d'administration du produit ; un rafraîchissement se fait en rechargeant l'écran.
+
 ### 20.8 Preuves exigées
 
 | Niveau | Preuve |

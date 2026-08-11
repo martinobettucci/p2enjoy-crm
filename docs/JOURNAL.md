@@ -11203,3 +11203,29 @@ ni `resetMe.sh` — limite nommée, pas oubliée : ce dépôt n'a pas d'autre po
 toute session, humaine ou automatisée. Elle ne réécrit aucun des trois commits déjà poussés sous la
 mauvaise identité, dont la correction reste soumise à l'instruction explicite du responsable que
 `CLAUDE.md` §13 exige.
+
+### Décision 346 — L'écran d'état de `CRM-059` : une adresse dédiée, deux lectures, aucune règle neuve
+
+**2026-08-11 — reprise de `CRM-059`, dette listée par le §20.8 de `docs/SPEC-mail-subsystem.md`.**
+
+**Le constat.** `CRM-059` livre déjà le backfill par lots, la boucle de veille et la reprise d'un
+rangement manqué — tous mesurés et journalisés par les décisions 341 et 342. Restent, listés par
+le §20.8 : l'écran d'état lui-même (« l'écran d'état montre ce que la base porte, y compris un
+incident »), et le harnais `scripts/verify-mail-resilience.sh`. Aucun des deux n'existe : une
+recherche dans `webapp/src` ne trouve ni route ni composant portant les faits du §20.7, et
+`scripts/` ne compte aucun fichier de ce nom.
+
+**La décision.** L'écran suit le patron déjà posé par `CRM-075` — une adresse dédiée
+`/reglages/messagerie`, hors de la table `ROUTES`, atteinte depuis l'index des réglages — plutôt
+qu'un nouvel onglet ou une modale, qu'aucune spécification du produit ne déclare. Il n'ouvre
+**aucune** politique nouvelle : il lit `mail_inbound_accounts` sous la RLS de `0022` et deux
+comptages sur `mail_outbox` sous la RLS de `0030`, exactement les portées déjà tenues par `CRM-052`
+et `CRM-057`. Le tableau des comptes suit le patron `docs/DESIGN_SYSTEM.md` §5.9 (colonnes
+comparables), pas la liste imbriquée de `CRM-075` (colonnes qui diffèrent par ligne) — les deux
+patrons coexistent pour des raisons différentes, nommées au chapitre. Le détail complet est écrit
+en `docs/SPEC-mail-subsystem.md` §20.11, **avant** le code, conformément à `CLAUDE.md` §5 et §17.
+
+**Ce que la décision refuse.** Aucune action depuis cet écran — relancer une relève, acquitter un
+incident — n'appartient à `CRM-059` : la Definition of Done ne demande qu'un état **lisible**, pas
+un centre de pilotage. L'ajouter maintenant inventerait un geste, et donc une règle d'autorisation,
+que rien n'a validée.

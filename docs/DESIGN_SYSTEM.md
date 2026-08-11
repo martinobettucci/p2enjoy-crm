@@ -543,6 +543,25 @@ quoi il a l'air.
   `--color-danger-soft` / `--color-danger-on-soft` avec `role="alert"`, placée **dans le formulaire
   concerné** et non en tête d'écran, pour que le refus soit lu près du champ qui l'a causé.
 
+### 5.14 État de la messagerie — `CRM-059`
+
+Ce que l'écran **lit** — deux requêtes, sous les RLS déjà posées par `CRM-052` et `CRM-058` — est
+spécifié en détail par `docs/SPEC-mail-subsystem.md` §20.11 ; les règles ci-dessous ne disent que
+de quoi il a l'air.
+
+- **Le tableau des comptes suit le §5.9**, pas le §5.13 : les colonnes sont les mêmes pour chaque
+  ligne (boîte, dernière relève, dernier incident), contrairement à l'arborescence où un track et
+  un channel ne portent pas les mêmes attributs.
+- **« Jamais relevée » est un texte, pas une cellule vide** : le §5.9 réserve la cellule vide à une
+  donnée qui n'existe pas pour cette ligne ; l'absence de relève est un fait à nommer.
+- **Les six codes d'incident sont traduits par un dictionnaire fermé**, jamais affichés bruts —
+  même principe que le classement des refus de `CRM-075` (§5.13, `docs/SPEC-mail-subsystem.md`
+  §20.11.4) : un code d'API n'est pas un texte pour un humain.
+- **Les deux compteurs de la file sortante sont un chiffre et un libellé**, sans pilule ni couleur
+  d'alerte — même sobriété que les compteurs de colonne du board (§5.2 bis). Aucune règle du
+  produit n'associe une urgence à un compte en échec ; l'écran n'en invente pas une.
+- **Aucune action, aucune modale** : l'écran lit, il n'agit pas — voir §20.11.7.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;
