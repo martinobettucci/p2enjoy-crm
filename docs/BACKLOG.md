@@ -5768,6 +5768,35 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
+### CRM-075 — Administration des tracks et des channels `[ ]`
+*Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
+332. Elle est le **préalable** de `CRM-076` : un workflow s'affecte à un channel, qui vit dans un
+track.*
+
+Écrans d'administration de l'arborescence : **créer**, **renommer**, **réordonner** et **archiver**
+un track ; les mêmes gestes pour un channel, plus son rattachement à un track et son workflow.
+
+Le CRUD backend existe déjà et est prouvé depuis `CRM-020` et `CRM-021` — l'écriture y est réservée
+aux administrateurs du workspace, et `scripts/verify-tracks.sh` comme `verify-channels.sh` le
+mesurent. **Cette unité ne livre donc aucune règle nouvelle** : elle livre la surface qui manquait,
+et rien d'autre. Une règle d'accès qui apparaîtrait ici serait le signe qu'elle a été inventée.
+
+**Points déjà tranchés, à ne pas rouvrir :**
+
+- **Aucune suppression.** Ni `tracks` ni `channels` n'exposent de `DELETE`, par décision de
+  `CRM-020` et `CRM-021` : archiver masque et reste réversible. L'écran ne proposera donc pas un
+  geste que la base refuse.
+- **Le réordonnancement écrit `position`**, colonne `numeric` prévue pour cela depuis `CRM-020` et
+  déjà alimentée par un trigger lorsqu'elle est omise.
+- **Un `viewer` ne voit aucun de ces gestes**, et un membre non administrateur non plus — mais
+  c'est une **aide d'interface** : le refus reste celui de la base, et il doit être prouvé hors
+  interface (`CLAUDE.md` §10).
+
+**DoD** : E2E au clavier et à la souris — créer un track, le renommer, le réordonner, l'archiver,
+puis les mêmes gestes sur un channel ; captures aux quatre paliers ; refus du `viewer` et du membre
+mesuré **hors interface** ; seed inchangé après le passage du scénario ; harnais dédié non
+complaisant.
+
 ### CRM-076 — Éditeur administrateur de workflows `[ ]`
 
 CRUD visuel complet des workflows, étapes, transitions, champs, règles et exigences, avec

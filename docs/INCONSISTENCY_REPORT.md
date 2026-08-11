@@ -64,7 +64,36 @@ que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de r
 Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
 joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
 
-### INC-086 — Tracks et channels n'ont aucune surface d'administration, et aucune unité n'en porte
+### INC-088 — La fiche d'une card reste en lecture seule au nom d'une entrée close
+
+**Nature :** limite dont le motif invoqué a disparu, sans que la limite soit levée.
+**Relevé le :** 2026-08-11, en même temps que l'arbitrage d'INC-086 et pour la même cause — l'essai
+du produit par le responsable.
+
+**Ce qui est constaté à l'écran.** La fiche d'une affaire affiche « Consultation seule :
+l'enregistrement des réponses n'est pas encore livré dans cette fiche », et aucun champ n'y est
+saisissable.
+
+**Ce que le backlog en dit.** `CRM-037` porte la limite « **Aucune écriture depuis l'écran** (§4.7),
+donc aucune preuve de saisie. **Relève d'INC-021.** »
+
+**La contradiction.** INC-021 — l'absence de session — est **close depuis `CRM-009`** : l'écran
+authentifie, la session est restaurée, et `CRM-043` publie des commentaires avec elle. Le motif
+invoqué par `CRM-037` n'existe donc plus. La limite, elle, subsiste, et personne ne l'a réexaminée.
+
+**Ce n'est pas la même chose qu'INC-086.** Là-bas, aucune unité ne portait le geste. Ici, l'unité
+existe (`CRM-036` livre `card_field_values`, ses politiques et sa validation ; `CRM-037` livre le
+rendu), et c'est leur jonction — l'écriture depuis l'écran — qui n'appartient à personne.
+
+**Ce que cela coûte à l'utilisateur** : un formulaire conditionnel complet, validé, prouvé côté
+base, qu'aucun utilisateur ne peut remplir. C'est la fonction centrale du produit.
+
+**Action attendue du responsable :** dire si l'écriture depuis la fiche rejoint `CRM-037` — dont la
+Definition of Done demande déjà « E2E (transition bloquée, **saisie**, transition réussie) », ce qui
+la désigne implicitement — ou fait l'objet d'une unité propre. Tant que ce n'est pas tranché, le
+comportement reste inchangé et la limite est nommée à l'écran plutôt que masquée.
+
+### INC-086 — Tracks et channels n'ont aucune surface d'administration, et aucune unité n'en porte — **CLOSE par arbitrage**
 
 **Nature :** règle produit sans écran pour la porter ; aucune unité du backlog ne la revendique.
 **Relevé le :** 2026-08-09, en remesurant les limites de `CRM-020` et `CRM-021`.
@@ -109,6 +138,13 @@ l'objet métier principal ».
 **Action attendue du responsable :** trancher entre ces trois options. Tant qu'elle n'est pas prise,
 `CRM-020` et `CRM-021` nomment cette absence comme limite explicite au lieu de la corriger au
 passage, et leur Definition of Done — « unitaire, API, E2E, captures » — reste satisfaite sans elle.
+
+**ARBITRÉ LE 2026-08-11 : option 2.** Le responsable a constaté l'absence en essayant le produit —
+« je ne peux rien toucher à l'existant, ni créer des tracks ni des channels » — et a retenu l'unité
+dédiée. Elle est créée sous le numéro **`CRM-075`**, placée **avant `CRM-076`** dont elle est le
+préalable : un workflow s'affecte à un channel, qui vit dans un track. L'entrée reste ici, close par
+la décision et non par la livraison : `CRM-075` porte désormais la dette, et c'est son passage à
+`[x]` qui la soldera. Voir `docs/JOURNAL.md` décision 332.
 
 **Lié à :** INC-066 (même motif, sur les workflows), INC-015 (l'invitation), INC-085 (une autre
 surface manquante trouvée le même jour), `CLAUDE.md` §4 (objet métier de premier rang).

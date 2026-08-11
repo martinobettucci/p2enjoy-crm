@@ -15,6 +15,16 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **INC-086 est arbitrée et close** : l'absence de toute surface d'administration des tracks et des
+  channels, constatée par le responsable **en essayant le produit**, reçoit une unité dédiée —
+  **`CRM-075`**, placée avant `CRM-076` dont elle est le préalable. Elle ne livrera **aucune règle
+  d'accès** : le CRUD et ses droits existent en base depuis `CRM-020` et `CRM-021`.
+- **INC-088 ouverte** : la fiche d'une affaire reste en lecture seule au nom d'INC-021, **close
+  depuis `CRM-009`**. Le motif invoqué a disparu sans que la limite soit levée — un formulaire
+  complet, validé et prouvé côté base, qu'aucun utilisateur ne peut remplir.
+
+### Documentation
+
 - **`CRM-059` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §20, décision 331),
   sur quatre mesures : `UID SEARCH SINCE` est honoré — le backfill est une sélection, pas un tri —,
   `IDLE` est annoncé mais ne sera pas employé, et `MAIL_SYNC_POLL_INTERVAL` est documentée depuis

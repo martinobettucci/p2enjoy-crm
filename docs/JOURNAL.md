@@ -10644,3 +10644,37 @@ distingue, non la valeur.
 être rejoué ; il sera repris à la relève suivante, sans qu'il faille recevoir un nouveau message
 pour déclencher la reprise. Une dette nommée dans un backlog n'est réglée que le jour où une unité
 la revendique.
+
+### Décision 332 — L'absence trouvée en essayant le produit, et non en lisant le code
+
+**2026-08-11 — arbitrage du responsable sur INC-086.**
+
+**Le constat vient de l'usage**, pas d'une relecture : « quand je teste je vois aucun bouton pour
+créer, pour modifier… je ne peux rien toucher à l'existant, ni créer des tracks ni des channels ».
+C'est exactement ce qu'INC-086 décrivait depuis le 2026-08-09, en attente d'arbitrage. Une entrée
+d'inconsistance qui décrit fidèlement ce qu'un utilisateur ressentira n'a de valeur que si elle est
+tranchée : celle-ci a attendu, et c'est l'essai du produit qui l'a rappelée.
+
+**L'arbitrage : option 2, une unité dédiée** — `CRM-075`, placée **avant** `CRM-076`. Le motif de
+l'ordre est celui d'INC-086 : un workflow s'affecte à un channel, qui vit dans un track. Livrer
+l'éditeur de workflows avant la surface qui crée les objets auxquels un workflow s'attache
+reviendrait à construire le premier étage sans le rez-de-chaussée.
+
+**Ce que cette unité NE livrera PAS, et c'est ce qui la rend petite** : aucune règle d'accès. Le
+CRUD est en base depuis `CRM-020` et `CRM-021`, l'écriture y est réservée aux administrateurs du
+workspace, et deux harnais le mesurent déjà. Une règle qui apparaîtrait dans `CRM-075` serait le
+signe qu'elle a été inventée à l'écran plutôt que reprise de la base — exactement ce que
+`CLAUDE.md` §10 proscrit.
+
+**Une seconde absence est constatée au passage, et elle n'est pas arbitrée.** La fiche d'une card
+affiche « Consultation seule : l'enregistrement des réponses n'est pas encore livré ». `CRM-037` la
+nomme comme limite en l'imputant à **INC-021** — or INC-021 est **close depuis `CRM-009`**, la
+session existant. Le motif invoqué a donc disparu sans que la limite soit levée : c'est le même
+mode de défaillance que celui d'INC-086, et il est consigné plutôt que corrigé au passage
+(INC-088).
+
+**Le planificateur, enfin.** La tâche récurrente de la session ne se déclenche que lorsque la
+session est **au repos** ; travaillant sans interruption, elle n'a jamais eu de fenêtre. Son
+intervalle passe de deux heures à vingt minutes, ce qui augmente le nombre d'occasions mais ne
+change pas la règle : une session occupée ne laisse pas passer de cron. Le fait est écrit ici pour
+qu'il ne soit pas redécouvert.
