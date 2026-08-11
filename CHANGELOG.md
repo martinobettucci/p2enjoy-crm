@@ -159,7 +159,31 @@ d'exécuter le code attendu.
   - **Non livré par ce changement** : l'écran lui-même, ses textes, sa route, ses preuves E2E et ses
     captures. `CRM-075` reste `[~]`.
 
+- **`CRM-059` — l'écran d'état de la messagerie lit les comptes et la file sortante.**
+  `/reglages/messagerie` (`webapp/src/app/EtatMessagerie.tsx`), atteint depuis l'index des réglages,
+  n'ouvre aucune politique nouvelle : il lit `mail_inbound_accounts` sous la RLS de `CRM-052` et
+  deux comptages sur `mail_outbox` sous celle de `CRM-058`. Tableau des comptes conforme à
+  `docs/DESIGN_SYSTEM.md` §5.9, dictionnaire fermé des six codes d'incident (`docs/SPEC-mail-subsystem.md`
+  §20.11.4), deux compteurs sobres pour la file sortante. Spécifié avant d'être écrit —
+  `docs/SPEC-mail-subsystem.md` §20.11, décision 346.
+  - Preuves : **45 assertions unitaires** (lecture + écran), `npm run typecheck` et `npm run build`
+    verts, aucune classe Tailwind absente du CSS produit.
+  - **Non livré par ce changement** : `e2e/api`, `e2e/ui`, captures, harnais
+    `scripts/verify-mail-resilience.sh`. `CRM-059` reste `[~]`.
+
 ### Corrigé
+
+- **`CRM-053`/`CRM-058` — `upsert_mail_outbound_identity` réinstallait `daily_quota = 0` à chaque
+  appel sans plafond précisé, bloquant tout envoi.** La migration `0030` avait posé `NULL` comme
+  défaut de la colonne (« aucun plafond »), mais n'avait jamais retouché la branche `INSERT` de son
+  unique chemin d'écriture, restée sur `coalesce(p_daily_quota, 0)` depuis `CRM-053`. MESURÉ en
+  tentant de rejouer `e2e/mail/resilience.spec.ts` pour `CRM-059` : chaque réapplication du seed
+  réinstallait silencieusement le zéro sur les deux identités sortantes du seed, et le premier envoi
+  échouait en `quota_exceeded`. Migration `0033` : une ligne changée, le reste de la fonction
+  recopié à l'identique. `supabase/tests/0033_quota_par_defaut.test.sql` (4 assertions) fixe la
+  garantie ; suite pgTAP complète rejouée, **1937 assertions vertes, aucune régression** ;
+  `e2e/mail/resilience.spec.ts` et `e2e/mail/envoi.spec.ts` rejoués après réapplication du seed.
+  `docs/JOURNAL.md`, décision 347.
 
 - **L'attribution du commit `e373900` est rétablie.** Il portait `Claude <noreply@anthropic.com>` au
   lieu de l'identité du responsable, la configuration Git de l'environnement d'exécution écrasant

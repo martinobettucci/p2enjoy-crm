@@ -5751,6 +5751,30 @@ Ce qui est **déjà mesuré ou tranché** :
   règle. `docs/JOURNAL.md` décision 342. **Non exécuté** : preuve API et E2E `mail` d'une copie
   réellement refusée puis reprise — exigent le harnais `scripts/verify-mail-resilience.sh`, encore
   à écrire.
+- **Un défaut bloquant TOUT envoi a été trouvé et corrigé en tentant de rejouer la preuve
+  ci-dessous** — `docs/JOURNAL.md` décision 347. `upsert_mail_outbound_identity` réinstallait
+  `daily_quota = 0` (interdiction totale) à chaque appel sans plafond précisé, alors que la
+  migration `0030` avait établi `NULL` (aucun plafond) comme défaut : sa branche `INSERT`, écrite
+  par `CRM-053` et jamais retouchée, gardait `coalesce(p_daily_quota, 0)`. Chaque réapplication du
+  seed — donc chaque exécution de cette tâche planifiée — réinstallait le blocage. **LIVRÉ** —
+  migration `0033`, une ligne changée. **4 assertions pgTAP** dédiées
+  (`supabase/tests/0033_quota_par_defaut.test.sql`), suite complète rejouée : **33 fichiers, 1937
+  assertions, aucune anomalie**.
+- **« Une coupure SMTP réelle » (§20.8) est PROUVÉE** — `e2e/mail/resilience.spec.ts`, déjà écrit,
+  rejoué avec succès une fois le défaut ci-dessus corrigé et le seed réappliqué : **2 scénarios
+  verts**, coupure et reprise, orphelin repris. `e2e/mail/envoi.spec.ts` (`CRM-058`) rejoué sans
+  régression.
+- **L'écran d'état — §20.11, décision 346 — est LIVRÉ pour sa part lecture** :
+  `webapp/src/lib/mail-etat.ts` (deux lectures, aucune politique nouvelle) et
+  `webapp/src/app/EtatMessagerie.tsx` à `/reglages/messagerie`, index de réglages étendu. Tableau
+  des comptes conforme à `docs/DESIGN_SYSTEM.md` §5.9, dictionnaire fermé des six codes d'incident,
+  deux compteurs sobres sur la file sortante. **45 assertions vertes** (lib + écran + routage),
+  `npm run typecheck` et `npm run build` propres, aucune classe Tailwind absente du CSS produit
+  (`scripts/lib/classes-css.mjs`). **L'API de lecture d'un compte (« lisible par son propriétaire et
+  un administrateur, par personne d'autre ») était déjà prouvée par `e2e/api/comptes-entrants.spec.ts`
+  (`CRM-052`) et a été rejouée ici : 11 scénarios verts.** **Reste dû** : `e2e/ui/etat-messagerie.spec.ts`,
+  captures aux quatre paliers, `scripts/verify-mail-resilience.sh` — encore à écrire, et qui doit
+  rejouer l'ensemble des preuves de ce chapitre (pytest, pgTAP, API, E2E `mail`, E2E `ui`).
 
 ---
 

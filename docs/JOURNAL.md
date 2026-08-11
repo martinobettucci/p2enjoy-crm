@@ -11229,3 +11229,42 @@ en `docs/SPEC-mail-subsystem.md` §20.11, **avant** le code, conformément à `C
 incident — n'appartient à `CRM-059` : la Definition of Done ne demande qu'un état **lisible**, pas
 un centre de pilotage. L'ajouter maintenant inventerait un geste, et donc une règle d'autorisation,
 que rien n'a validée.
+
+### Décision 347 — `upsert_mail_outbound_identity` réinstalle `daily_quota = 0` à chaque seed, et bloque tout envoi
+
+**2026-08-11 — reproduit en tentant de rejouer `e2e/mail/resilience.spec.ts` pour `CRM-059`.**
+
+**Le fait, mesuré.** `e2e/mail/resilience.spec.ts` échoue dès le premier appel de
+`queue_outbound_email` : `{"code":"23505","details":null,"hint":null,"message":"quota_exceeded"}`
+(le code est celui de l'exception levée par la garde, pas une contrainte d'unicité). Lecture des
+deux identités du seed fraîchement appliqué :
+`daily_quota = 0` pour « Identité de service » **et** pour « Envoi de Driss Lemoine » — alors que la
+décision documentée par la migration `0030` (§8 de son commentaire) dit explicitement : « `NULL` =
+aucun plafond, un entier = le plafond du jour UTC, `0` = cette identité n'envoie pas », et convertit
+les zéros existants en `NULL` **au moment de la migration**.
+
+**La cause.** `apply-seed.sh` (§8 octies) appelle `upsert_mail_outbound_identity` **sans**
+`p_daily_quota` — la valeur par défaut du paramètre, `null`, est censée s'appliquer. Mais la branche
+`INSERT` de la fonction, écrite par la migration `0023` et **jamais retouchée par la `0030`**, porte
+encore `coalesce(p_daily_quota, 0)` (ligne 320) : un appelant qui ne précise rien reçoit un `0`
+explicite, l'exact contraire de ce que la `0030` a établi comme défaut de la colonne. La branche
+`UPDATE`, elle, est correcte — `coalesce(p_daily_quota, i.daily_quota)` préserve la valeur
+existante. La `0030` a corrigé la colonne et les deux lecteurs (`queue_outbound_email`,
+`smtp_worker`), mais pas l'unique chemin d'écriture qu'elle revendique elle-même (§3 de la `0023`).
+
+**Portée du défaut.** Chaque réapplication du seed — donc chaque exécution de cette tâche planifiée,
+qui relève `./runDev.sh` puis `apply-seed.sh` — remet silencieusement `daily_quota` à `0` sur les
+deux identités sortantes, et bloque **tout** envoi jusqu'à correction manuelle. C'est le blocage
+mesuré ci-dessus, et il aurait empêché `CRM-058` et `CRM-059` de prouver leur aller-retour SMTP sur
+n'importe quel environnement rafraîchi depuis la `0030`.
+
+**La décision.** Migration `0033` : réinstalle `upsert_mail_outbound_identity` avec la ligne
+d'insertion corrigée en `p_daily_quota` (sans `coalesce`), pour que « rien de précisé » reste `NULL`
+au lieu de devenir `0`. `supabase/tests/0033_quota_par_defaut.test.sql` fixe la garantie par pgTAP,
+suite dédiée puisqu'aucune suite existante n'exerçait ce chemin d'écriture pour ce cas précis. Le
+correctif appartient à `CRM-053`/`CRM-058`, dont il corrige le chemin d'écriture ; il n'est pas
+renuméroté sous `CRM-059`, qui ne fait que le révéler.
+
+**Preuve.** Suite pgTAP verte avant/après (le test échoue sans le correctif, réussit avec).
+`e2e/mail/resilience.spec.ts` rejoué après correction et réapplication du seed —
+voir la suite de ce journal pour le résultat.
