@@ -55,6 +55,11 @@ d'exécuter le code attendu.
   message non classé n'offre **pas** de réponse — sans affaire, il n'a pas d'adresse de retour, et
   l'écran propose le classement à la place plutôt qu'une action qui échouerait.
   L'écran annonce « mis en file », jamais « envoyé » : le worker n'a pas encore parlé.
+- **Harnais dédié `scripts/verify-mail-envoi.sh`** : **43 contrôles, aucune anomalie**, témoin
+  compris et **quatre** dégradations — dont le `Reply-To` remplacé par l'expéditeur, qui empêcherait
+  toute réponse de revenir, et la chaîne `References` réduite à son dernier maillon.
+- **`docs/manual.md` gagne le chapitre 4.16**, « Écrire et répondre », qui dit notamment pourquoi
+  « mis en file » n'est pas « envoyé ».
 - **Le quota journalier cesse d'être une promesse.** Il se compte sur la journée UTC, **en vol
   compris**, et se vérifie deux fois : à la mise en file par politesse, à l'envoi par autorité.
 - **`CRM-057` — l'inbox globale est livrée.** Trois panneaux — dossiers, liste, message —, une

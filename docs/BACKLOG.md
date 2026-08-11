@@ -5598,11 +5598,50 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
 - **Le seed enverra deux vrais messages** puis déclenchera une vraie relève : un écran vide ne
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
-### CRM-058 — Composition et réponse `[ ]`
+### CRM-058 — Composition et réponse `[~]`
 `queue_outbound_email`, `smtp_worker`, `Reply-To` de la card, fil respecté, envoi depuis la card
 ou depuis l'inbox par le même chemin.
 **DoD** : E2E `mail` d'aller-retour complet ; en-têtes de threading vérifiés sur le message reçu ;
 quota et refus testés.
+
+- [x] **L'ALLER-RETOUR COMPLET EST PROUVÉ, SANS AUCUNE SUBSTITUTION** : le produit met en file par
+      sa vraie garde, son worker soumet réellement en SMTP authentifié, le destinataire **reçoit
+      dans sa boîte**, répond à l'adresse du `Reply-To`, et la relève ramène cette réponse **dans la
+      même card**. Un `Reply-To` faux rendrait ce scénario rouge.
+- [x] **La file `mail_outbox` et sa garde** : six refus, dans l'ordre où elle les oppose. Aucune
+      écriture n'est ouverte au client, ni dans la table, ni par les trois fonctions du worker.
+- [x] **Les trois effets d'un envoi réussi sont SOLIDAIRES** — file marquée, message archivé en
+      `outbound`, timeline écrite. Trois écritures séparées laisseraient, à la première coupure, un
+      message parti dont la card ne garde aucune trace.
+- [x] **La composition vit hors du réseau** : **10 tests** éprouvent sans serveur les trois
+      garanties que le transport ne tient pas — identifiant choisi, `Reply-To` de la card, chaîne
+      `References` complète et dédoublonnée.
+- [x] **Écrire depuis la card et répondre depuis l'inbox empruntent le MÊME composant** (§19.6).
+      Un message non classé n'offre pas de réponse : sans affaire, pas d'adresse de retour.
+- [x] **LA PREUVE DE REFUS N° 12 EST ACQUISE** : envoyer avec l'identité d'autrui est refusé, mesuré
+      hors interface. L'inventaire passe à « **onze acquises, une à moitié** ».
+- [x] **UN DÉFAUT DE `CRM-053` EST CORRIGÉ** : `daily_quota` valait `0` par défaut, ce qui
+      interdisait **tout** envoi dès qu'un consommateur existait. `NULL` signifie désormais « aucun
+      plafond » ; `0` garde son sens littéral.
+- [x] **INC-087 est CLOSE** : `contact@p2enjoy.test` rejoint le principal de Driss, ce qui rend
+      applicable la divergence entrant/sortant promise depuis `CRM-053`.
+- [x] **Un refus ne ressemble pas à une panne** : `identity_not_available` portait `P0002`, traduit
+      par PostgREST en **500**. Il porte `42501`, donc `403` — mesuré.
+- [x] **La liste des adresses d'expédition ne propose plus ce que la garde refuserait** : la RLS
+      ouvre la **lecture** aux administrateurs sur tout le workspace, ce qui est une règle de
+      supervision et non d'usage.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0030_envoi_sortant.test.sql`, **21 assertions**.
+- [x] **Contrat d'API hors interface** : `e2e/api/envoi.spec.ts`, **8 scénarios**.
+- [x] **Parcours d'écran** : `e2e/ui/envoi.spec.ts`, **4 scénarios**, deux captures observées.
+- [x] **Quatre témoins figés retournés** : trois annonçaient « `mail_sent` reste refusé », le
+      quatrième exigeait que l'énumération soit étendue dans la même migration que son écriture.
+- [ ] **Aucun backoff, aucune reprise** : un échec est `failed` et le dit. `CRM-059`.
+- [ ] **Aucune pièce jointe à l'envoi**, aucune signature, aucune copie cachée — absences figées.
+- [ ] **Harnais dédié `scripts/verify-mail-envoi.sh`** : dû avant le passage à `[x]`.
+
+*DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
+complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois
+sont tenues.** L'unité reste `[~]` pour les écarts ci-dessus.
 
 *Spécifiée avant d'être écrite* — `docs/SPEC-mail-subsystem.md` §19, `docs/JOURNAL.md` décision 330.
 Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémentation :

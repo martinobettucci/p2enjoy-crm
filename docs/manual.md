@@ -858,9 +858,46 @@ Une affaire archivée ou en corbeille est refusée, avec son motif.
 Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas
 seulement signalés par une couleur.
 
-**Ce qui n'est pas encore là.** On ne répond pas encore depuis l'inbox : l'envoi n'est pas livré.
-Il n'existe pas non plus de notion de « lu / non lu », ni de recherche : la liste montre les
-cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse de côté.
+**Ce qui n'est pas encore là.** Il n'existe pas de notion de « lu / non lu », ni de recherche : la
+liste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse
+de côté.
+
+### 4.16 Écrire et répondre
+
+*Depuis la fiche d'une affaire, ou depuis un message de l'inbox.*
+
+**Écrire depuis une affaire.** La fiche porte un bouton « Écrire un message ». Choisissez l'adresse
+d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
+objet et un message, puis « Mettre en file ».
+
+**Répondre depuis l'inbox.** Un message rangé dans une affaire porte un bouton « Répondre » : le
+destinataire et l'objet sont déjà remplis, et votre réponse reste rattachée à la conversation. Un
+message **non classé** n'offre pas de réponse : tant qu'il n'appartient à aucune affaire, il n'y a
+pas d'adresse à laquelle votre correspondant pourrait répondre. Classez-le d'abord.
+
+**Les réponses de votre correspondant reviennent dans l'affaire**, quelle que soit sa messagerie :
+le produit place dans chaque message qu'il envoie une adresse de retour qui pointe vers l'affaire.
+C'est écrit sous le formulaire, parce que cette adresse n'est pas la vôtre.
+
+**« Mis en file » n'est pas « envoyé ».** Le produit n'expédie pas au moment où vous validez : il
+inscrit votre message dans une file, qu'un service vide ensuite. Tant que ce service n'a pas parlé,
+le produit ne prétend pas que votre message est arrivé.
+
+**Ce que le produit peut refuser, et pourquoi :**
+
+| Refus | Ce qu'il faut faire |
+|---|---|
+| Vous ne pouvez pas écrire au nom de cette affaire | Demander le droit d'écriture sur son dossier |
+| Cette adresse d'expédition ne vous est pas attribuée | En choisir une autre dans la liste |
+| Cette affaire ne peut pas recevoir de réponse | Elle est archivée ou en corbeille : la restaurer d'abord |
+| Cette adresse a atteint son plafond du jour | Attendre le lendemain, ou demander un plafond plus haut |
+
+**Votre texte n'est jamais perdu** : un refus laisse le formulaire ouvert, avec ce que vous aviez
+écrit.
+
+**Ce qui n'est pas encore là.** Aucune pièce jointe à l'envoi, aucune signature automatique, aucune
+copie cachée. Un message qui échoue à partir est marqué en échec et le dit ; il n'est pas réessayé
+tout seul.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 
