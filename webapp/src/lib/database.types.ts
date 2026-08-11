@@ -970,6 +970,7 @@ export type Database = {
           in_reply_to_message_id: string | null
           last_error: string | null
           next_attempt_at: string
+          reserved_at: string | null
           rfc822_message_id: string | null
           sent_at: string | null
           sent_message_id: string | null
@@ -992,6 +993,7 @@ export type Database = {
           in_reply_to_message_id?: string | null
           last_error?: string | null
           next_attempt_at?: string
+          reserved_at?: string | null
           rfc822_message_id?: string | null
           sent_at?: string | null
           sent_message_id?: string | null
@@ -1014,6 +1016,7 @@ export type Database = {
           in_reply_to_message_id?: string | null
           last_error?: string | null
           next_attempt_at?: string
+          reserved_at?: string | null
           rfc822_message_id?: string | null
           sent_at?: string | null
           sent_message_id?: string | null
@@ -1662,6 +1665,18 @@ export type Database = {
           requested_path: string
         }[]
       }
+      etat_messagerie: {
+        Args: never
+        Returns: {
+          account_id: string
+          en_attente: number
+          en_echec: number
+          label: string
+          last_error: string
+          last_sync_at: string
+          status: string
+        }[]
+      }
       inbox_arborescence: {
         Args: never
         Returns: {
@@ -1813,6 +1828,14 @@ export type Database = {
           p_to: string[]
         }
         Returns: string
+      }
+      reprendre_envois_orphelins: {
+        Args: { p_seuil_minutes?: number }
+        Returns: number
+      }
+      reprogrammer_envoi: {
+        Args: { p_code: string; p_delai_secondes: number; p_outbox_id: string }
+        Returns: number
       }
       reserver_envois: {
         Args: { p_limite?: number }

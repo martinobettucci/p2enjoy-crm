@@ -1,15 +1,17 @@
 # @spec CRM-058 (docs/BACKLOG.md) — le worker qui vide la file d'envoi
-# @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.2 (ce que l'unité ne livre pas), §19.5 (ce que
-#       le worker compose), §19.8 (limites nommées)
-# @spec docs/JOURNAL.md décision 330
+# @spec CRM-059 (docs/BACKLOG.md) — la reprise d'une panne, et l'envoi orphelin
+# @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.5 (ce que le worker compose), §20.3 (le
+#       backoff et sa borne), §20.4 (l'envoi orphelin)
+# @spec docs/JOURNAL.md décisions 330 et 331
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. La garde est en base (`queue_outbound_email`), la
 # composition est dans `composition.py`, la traduction des pannes est dans `smtp_probe.py` : ici,
 # on réserve, on envoie, on rapporte.
 #
-# UNE SEULE TENTATIVE PAR MESSAGE, ET C'EST ASSUMÉ (§19.2). Le backoff et la reprise appartiennent
-# à `CRM-059`, qui les revendique nommément. Un échec passe `failed` et le DIT ; il ne reste pas
-# `queued` en silence — une file qui ne bouge plus sans rien dire est pire qu'un refus.
+# UNE PANNE SE REJOUE, UN REFUS NON — révisé par `CRM-059`, qui livre ce que `CRM-058` avait
+# nommément laissé de côté. Un serveur injoignable reviendra ; un mot de passe faux ne deviendra pas
+# juste en attendant. Un échec définitif passe `failed` et le DIT ; il ne reste pas `queued` en
+# silence — une file qui ne bouge plus sans rien dire est pire qu'un refus.
 
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import smtplib
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from .backoff import decider
 from .composition import Envoi, chaine_references, composer, destinataires, identifiant_message
 from .smtp_probe import classer_panne_smtp
 
@@ -30,6 +33,10 @@ class ResultatEnvoi:
     reserves: int = 0
     envoyes: int = 0
     echoues: int = 0
+    #: Envois reprogrammés après une PANNE — ils ne sont ni partis, ni perdus (`CRM-059` §20.3).
+    reprogrammes: int = 0
+    #: Envois orphelins repris d'un worker mort (§20.4).
+    orphelins: int = 0
 
 
 def _domaine(adresse: str) -> str:
@@ -69,10 +76,16 @@ def vider_la_file(
     """
 
     dire: Journal = journal if journal is not None else (lambda _evenement, _details: None)
+    # LES ORPHELINS D'ABORD : une ligne `sending` abandonnée par un worker mort ne se reprend
+    # jamais toute seule, et la réserver après coup la ferait passer dans la même passe.
+    orphelins = client.reprendre_envois_orphelins()
+    if orphelins:
+        dire("envois_orphelins_repris", {"count": orphelins})
     lignes = client.reserver_envois(limite)
     resultat = ResultatEnvoi(reserves=len(lignes))
     envoyes = 0
     echoues = 0
+    reprogrammes = 0
 
     for ligne in lignes:
         outbox_id = ligne["outbox_id"]
@@ -115,6 +128,17 @@ def vider_la_file(
                     pass
         except Exception as panne:  # noqa: BLE001
             code = classer_panne_smtp(panne)
+            # UNE PANNE SE REJOUE, UN REFUS NON (décision 331). La règle vit dans `backoff`, où
+            # elle s'éprouve sans serveur ; ici, on l'applique.
+            decision = decider(code, int(ligne.get("attempts") or 0) + 1)
+            if decision.rejouer:
+                client.reprogrammer_envoi(outbox_id, decision.code, decision.delai_secondes)
+                reprogrammes += 1
+                dire(
+                    "envoi_reprogramme",
+                    {"outbox_id": outbox_id, "code": code, "delai": decision.delai_secondes},
+                )
+                continue
             client.marquer_envoi_echoue(outbox_id, code)
             echoues += 1
             # LE CODE, JAMAIS LE TEXTE : un message d'erreur brut expose la version du serveur,
@@ -128,4 +152,10 @@ def vider_la_file(
         # `Message-ID` suffisent à retrouver un envoi.
         dire("envoi_reussi", {"outbox_id": outbox_id, "message_id": identifiant})
 
-    return ResultatEnvoi(reserves=resultat.reserves, envoyes=envoyes, echoues=echoues)
+    return ResultatEnvoi(
+        reserves=resultat.reserves,
+        envoyes=envoyes,
+        echoues=echoues,
+        reprogrammes=reprogrammes,
+        orphelins=orphelins,
+    )

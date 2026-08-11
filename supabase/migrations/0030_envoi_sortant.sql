@@ -341,7 +341,10 @@ returns table (
 	smtp_host      text,
 	smtp_port      integer,
 	smtp_security  text,
-	smtp_username  text
+	smtp_username  text,
+	-- LE COMPTE DE TENTATIVES EST RENDU, ET `CRM-059` EN A BESOIN : c'est lui qui décide du délai
+	-- de la prochaine, et de la borne au-delà de laquelle on cesse de rejouer (§20.3).
+	attempts       integer
 )
 language plpgsql
 security definer
@@ -368,7 +371,11 @@ begin
 			continue;
 		end if;
 
-		update public.mail_outbox set status = 'sending' where id = v_ligne.id;
+		-- `reserved_at` DIT QUAND, et `CRM-059` en juge l'âge : `updated_at` serait rajeunie par
+		-- la moindre écriture ultérieure (§20.4).
+		update public.mail_outbox
+		   set status = 'sending', reserved_at = now()
+		 where id = v_ligne.id;
 
 		return query
 		select v_ligne.id,
@@ -388,7 +395,8 @@ begin
 		       i.smtp_host,
 		       i.smtp_port,
 		       i.smtp_security,
-		       i.smtp_username
+		       i.smtp_username,
+		       v_ligne.attempts
 		  from public.mail_outbound_identities i
 		  join public.cards c on c.id = v_ligne.card_id
 		  join public.workspaces w on w.id = c.workspace_id

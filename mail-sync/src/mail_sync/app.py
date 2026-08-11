@@ -79,6 +79,10 @@ class EnvoiResponse(StrictModel):
     reserved: int
     sent: int
     failed: int
+    #: Reprogrammés après une PANNE — ni partis, ni perdus (`CRM-059` §20.3).
+    rescheduled: int = 0
+    #: Orphelins repris d'un worker mort (§20.4).
+    orphans: int = 0
 
 
 class ReleveResponse(StrictModel):
@@ -531,9 +535,14 @@ def create_app(
             reserved=resultat.reserves,
             sent=resultat.envoyes,
             failed=resultat.echoues,
+            rescheduled=resultat.reprogrammes,
         )
         return EnvoiResponse(
-            reserved=resultat.reserves, sent=resultat.envoyes, failed=resultat.echoues
+            reserved=resultat.reserves,
+            sent=resultat.envoyes,
+            failed=resultat.echoues,
+            rescheduled=resultat.reprogrammes,
+            orphans=resultat.orphelins,
         )
 
     @application.get(

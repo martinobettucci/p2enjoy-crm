@@ -50,6 +50,12 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-059` — une coupure SMTP ne perd plus de message.** Le backoff est livré : 1, 4, 16, 64
+  minutes, puis échec définitif. Il ne s'applique **qu'aux pannes de transport** — un mot de passe
+  faux ou une adresse refusée passent en échec immédiatement, parce qu'attendre ne les rendra pas
+  justes. Un envoi abandonné par un worker mort est repris au lieu de rester bloqué.
+  Preuves : **13 tests** de la règle sans serveur, **2 scénarios `mail`** avec une coupure réelle —
+  l'identité pointée vers un port fermé, puis rétablie.
 - **`CRM-058` — le dos de l'envoi est livré, et l'aller-retour est prouvé de bout en bout.** Le
   produit met un message en file par sa garde, son worker le soumet réellement en SMTP authentifié,
   le destinataire le **reçoit dans sa boîte**, y répond à l'adresse que le produit a mise en

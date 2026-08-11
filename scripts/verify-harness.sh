@@ -367,7 +367,10 @@ SCENARIOS_UI=167
 # **39 depuis `CRM-058`** : `e2e/mail/envoi.spec.ts` ajoute l'ALLER-RETOUR complet — mise en file
 # par la vraie garde, soumission par le worker, réception dans la boîte du destinataire, réponse à
 # l'adresse du `Reply-To`, et retour de cette réponse dans la même card par la relève.
-SCENARIOS_MAIL=39
+# **41 depuis `CRM-059`** : `e2e/mail/resilience.spec.ts` ajoute la COUPURE RÉELLE — l'identité
+# pointée vers un port fermé, le message reprogrammé plutôt que perdu, puis parti au retour du
+# serveur — et la reprise d'un envoi orphelin abandonné par un worker mort.
+SCENARIOS_MAIL=41
 
 failures=0
 checks=0

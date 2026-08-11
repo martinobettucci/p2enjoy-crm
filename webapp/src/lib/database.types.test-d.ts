@@ -602,7 +602,10 @@ type _vueDerivationColonnes = Expect<
 // RÉVISÉ UNE NEUVIÈME FOIS PAR `CRM-058`, qui livre quatre fonctions d'envoi. UNE SEULE est
 // appelable par le client — `queue_outbound_email` : les trois autres sont le fait du worker et
 // réservées à `service_role`. Le type les voit, la base les refuse.
-type _lesVingtEtUneFonctions = Expect<
+// RÉVISÉ UNE DIXIÈME FOIS PAR `CRM-059`, qui livre trois fonctions de résilience. Une seule est
+// appelable par le client — `etat_messagerie`, qui montre l'état RÉEL ; les deux autres sont le
+// fait du worker.
+type _lesVingtQuatreFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -612,6 +615,7 @@ type _lesVingtEtUneFonctions = Expect<
     | 'classer_message_automatiquement'
     | 'classify_message'
     | 'dossiers_a_renommer'
+    | 'etat_messagerie'
     | 'inbox_arborescence'
     | 'marquer_envoi_echoue'
     | 'marquer_envoi_reussi'
@@ -623,6 +627,8 @@ type _lesVingtEtUneFonctions = Expect<
     | 'move_card'
     | 'move_card_to_channel'
     | 'queue_outbound_email'
+    | 'reprendre_envois_orphelins'
+    | 'reprogrammer_envoi'
     | 'reserver_envois'
     | 'upsert_mail_inbound_account'
     | 'upsert_mail_outbound_identity'
@@ -797,7 +803,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtEtUneFonctions,
+  _lesVingtQuatreFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

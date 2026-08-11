@@ -421,6 +421,26 @@ class PostgrestClient:
             },
         )
 
+    def reprogrammer_envoi(self, outbox_id: str, code: str, delai_secondes: int) -> int:
+        """Remet un envoi en file après une PANNE, avec son délai (`CRM-059` §20.3)."""
+
+        return int(
+            self._rpc(
+                "reprogrammer_envoi",
+                {
+                    "p_outbox_id": outbox_id,
+                    "p_code": code,
+                    "p_delai_secondes": delai_secondes,
+                },
+            )
+            or 0
+        )
+
+    def reprendre_envois_orphelins(self, seuil_minutes: int = 10) -> int:
+        """Repasse `queued` les envois qu'un worker mort a laissés `sending` (§20.4)."""
+
+        return int(self._rpc("reprendre_envois_orphelins", {"p_seuil_minutes": seuil_minutes}) or 0)
+
     def marquer_envoi_echoue(self, outbox_id: str, code: str) -> None:
         """Nomme l'échec par un CODE, jamais par le texte du serveur (§13.7)."""
 
