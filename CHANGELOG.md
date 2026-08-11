@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-059` — la relève cesse de redescendre la boîte entière à chaque tour.** MESURÉ dans
+  `mail_sync/ingestion.py` : chaque relève exécutait `search(["ALL"])` puis `fetch` sur tout. La
+  base dédoublonnait, donc rien n'était dupliqué — mais avec la boucle de veille livrée juste avant,
+  une boîte de dix mille messages relevée toutes les minutes aurait produit dix mille `FETCH` par
+  minute pour zéro message neuf. `mail_sync/backfill.py` solde cette dette, après que
+  `docs/SPEC-mail-subsystem.md` **§20.6 bis** en a écrit l'algorithme (décision 342).
+  - **Deux passes, le courrier du jour d'abord** : le neuf n'est jamais borné, l'historique l'est à
+    200 messages par tour et par dossier, et il descend du plus récent vers le plus ancien.
+  - **`sync_state` porte une PLAGE** `{uid_min, uid_max}` et non un seul UID : le plancher dit
+    jusqu'où l'historique est descendu, pas où commence le courrier neuf. Sa lecture est
+    **tolérante** — une forme illisible est traitée comme vierge plutôt que de faire échouer la
+    relève d'un compte.
+  - **Un premier contact descend le courrier du jour, pas la boîte** : tout ce qui précède le
+    branchement est de l'historique, et l'historique ne descend que si l'exploitant l'a demandé.
+    `backfill_months = 0` — le défaut — **supprime la passe**, il ne la borne pas à zéro mois.
+  - **La progression n'est écrite qu'après un rapatriement réel**, et hors du `finally` de la
+    session IMAP : une relève qui échoue ne fait pas avancer le plancher.
+  - **Aucune migration** : `service_role` a déjà tous les privilèges sur la table, et la RPC de
+    secrets n'est pas élargie — lui faire porter deux colonnes de configuration élargirait la seule
+    voie par laquelle un secret sort de la base.
+  - Preuves : **48 assertions pytest** (suite complète **235 tests**, verts), dont le **premier test
+    unitaire de `relever_compte`**. Non complaisantes : cinq mutations font toutes rougir la suite.
+  - **Non traité et nommé** : un changement d'`UIDVALIDITY` invalide l'état enregistré — le dossier
+    redescendrait son courant sans rien perdre, mais son historique paraîtrait complet à tort
+    (§20.6 bis.6). `LOT_BACKFILL = 200` est un ordre de grandeur choisi, **pas une mesure**.
+
 - **`CRM-059` — la boucle de veille consomme enfin `MAIL_SYNC_POLL_INTERVAL`.** La variable était
   déclarée dans `.env.example` et dans le `README.md` depuis `CRM-051`, et **lue par rien** : une
   promesse tenue par personne. `mail-sync/src/mail_sync/veille.py` la prend, après que

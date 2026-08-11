@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import ssl
 from dataclasses import dataclass
 
@@ -31,6 +33,13 @@ from mail_sync.dossiers import (
     supporte_les_dossiers,
 )
 from mail_sync.mime_analyse import analyser
+from mail_sync.backfill import (
+    EtatDossier,
+    PlanDossier,
+    etendre,
+    planifier_dossier,
+    retenir_lot,
+)
 from mail_sync.postgrest import PostgrestClient
 
 
@@ -128,6 +137,45 @@ def ranger_dans_dossier(
     return copie
 
 
+def uids_a_relever(imap, plan: PlanDossier) -> list[int]:  # type: ignore[no-untyped-def]
+    """Traduit un plan en la liste d'UID à rapatrier, COURANT D'ABORD — `CRM-059`, §20.6 bis.3.
+
+    L'ordre de concaténation EST la règle du §20.6 : « la relève traite la boîte courante d'abord,
+    puis un lot d'historique borné — jamais l'inverse : le courrier du jour ne doit pas attendre que
+    dix ans d'archives soient descendus ». Une preuve l'observe sur la liste rendue.
+
+    Les deux recherches sont émises séparément parce qu'elles ne se combinent pas : l'une est bornée
+    par un UID, l'autre par une date ET un UID, et `UID SEARCH` ne sait pas exprimer leur union en
+    une passe. Deux recherches restent très inférieures à un `FETCH` de la boîte entière, qui est ce
+    que ce module remplace.
+    """
+
+    courants: list[int] = []
+    if plan.courante.depuis_uid is not None:
+        courants = [int(uid) for uid in imap.search(["UID", f"{plan.courante.depuis_uid}:*"])]
+    elif plan.courante.depuis_date is not None:
+        courants = [int(uid) for uid in imap.search(["SINCE", plan.courante.depuis_date])]
+
+    # `UID <n>:*` rend TOUJOURS au moins un message sur un dossier non vide — c'est une propriété
+    # d'IMAP, non un défaut : la plage est bornée par le plus grand UID existant lorsqu'il est
+    # inférieur à `n`. Les UID déjà connus sont donc écartés ici, faute de quoi le dernier message
+    # de la boîte serait refetché à chaque tour.
+    if plan.courante.depuis_uid is not None:
+        courants = [uid for uid in courants if uid >= plan.courante.depuis_uid]
+
+    anciens: list[int] = []
+    if plan.historique is not None:
+        trouves = imap.search(
+            ["SINCE", plan.historique.borne, "UID", f"1:{plan.historique.jusqu_uid}"]
+        )
+        anciens = retenir_lot(
+            [uid for uid in (int(u) for u in trouves) if uid <= plan.historique.jusqu_uid],
+            plan.historique.lot,
+        )
+
+    return sorted(courants) + anciens
+
+
 def relever_compte(
     *,
     journal=lambda _evenement, **_details: None,  # type: ignore[no-untyped-def]
@@ -199,6 +247,12 @@ def relever_compte(
                 )
                 renommes += 1
 
+        # LA PROGRESSION EST LUE UNE FOIS PAR RELÈVE, et non par dossier : c'est une seule ligne
+        # de `mail_inbound_accounts`, et la relire à chaque dossier ferait N requêtes pour une
+        # donnée qui ne change pas pendant le tour (`CRM-059`, §20.6 bis).
+        backfill_months, sync_state = client_base.lire_progression(compte.account_id)
+        progression_modifiee = False
+
         for dossier in dossiers:
             try:
                 imap.select_folder(dossier, readonly=True)
@@ -208,11 +262,26 @@ def relever_compte(
                 # d'une convention qui n'est pas universelle.
                 continue
 
-            uids = imap.search(["ALL"])
+            # `search(["ALL"])` A DISPARU ICI, et c'était la dette du §20.6 bis.1 : il redescendait
+            # la boîte entière à chaque tour. La base dédoublonnait, donc rien n'était dupliqué —
+            # mais le réseau payait dix mille `FETCH` par minute pour zéro message neuf dès que la
+            # boucle de veille de la décision 341 s'est mise à relever toute seule.
+            etat_dossier = EtatDossier.depuis_json(sync_state.get(dossier))
+            plan = planifier_dossier(
+                etat=etat_dossier,
+                aujourd_hui=date.today(),
+                backfill_months=backfill_months,
+            )
+            uids = uids_a_relever(imap, plan)
+            if not uids:
+                continue
+
+            uids_traites: list[int] = []
             for uid, donnees in imap.fetch(uids, ["RFC822"]).items():
                 brut = donnees.get(b"RFC822")
                 if not brut:
                     continue
+                uids_traites.append(int(uid))
                 vus += 1
                 analyse = analyser(brut)
 
@@ -295,11 +364,25 @@ def relever_compte(
                         sha256=piece.sha256,
                         av_status=verdict.statut,
                     )
+            # LA PROGRESSION N'EST ÉTENDUE QU'APRÈS le traitement du dossier, et avec les UID
+            # RÉELLEMENT rapatriés — `imap.fetch` peut en rendre moins que demandé si un message a
+            # été supprimé entre la recherche et la lecture. Enregistrer la liste demandée ferait
+            # croire à une plage descendue qui ne l'est pas, et le trou ne serait jamais comblé.
+            if uids_traites:
+                sync_state[dossier] = etendre(etat_dossier, uids_traites).vers_json()
+                progression_modifiee = True
     finally:
         try:
             imap.logout()
         except Exception:  # noqa: BLE001
             pass
+
+    # L'ÉCRITURE EST HORS DU `try` DE LA SESSION IMAP, et unique. Dans le `finally`, elle
+    # s'exécuterait aussi lorsqu'une exception traverse la relève — enregistrant une progression
+    # dont on ne sait pas si les messages ont été traités. Ici, une relève qui échoue ne fait pas
+    # avancer le plancher, et le tour suivant reprend où celui-ci s'était arrêté.
+    if progression_modifiee:
+        client_base.enregistrer_progression(compte.account_id, sync_state)
 
     return ResultatReleve(
         dossiers=len(dossiers),

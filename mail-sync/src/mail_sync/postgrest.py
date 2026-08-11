@@ -225,6 +225,46 @@ class PostgrestClient:
             )
         return comptes
 
+    def lire_progression(self, account_id: str) -> tuple[int, dict[str, Any]]:
+        """La profondeur d'historique déclarée et la progression par dossier — `CRM-059`, §20.6.
+
+        Lue par une requête REST et non par la RPC de secrets : `mail_inbound_account_credentials`
+        rend le mot de passe déchiffré, et lui faire porter deux colonnes de configuration
+        élargirait la seule voie par laquelle un secret sort de la base (§13.5). Une migration a
+        aussi été écartée — `service_role` a déjà tous les privilèges sur cette table, et changer
+        une RPC pour ce que `select` sait faire serait un contrat de plus à maintenir.
+
+        Un compte inconnu rend `(0, {})` : aucun historique, aucune progression. C'est le
+        comportement sûr — la relève descendra le courant du jour — et non une valeur trompeuse.
+        """
+
+        _, corps = self._rest(
+            "GET",
+            f"/rest/v1/mail_inbound_accounts?id=eq.{account_id}"
+            "&select=backfill_months,sync_state",
+        )
+        lignes = json.loads(corps) if corps else []
+        if not lignes:
+            return 0, {}
+        ligne = lignes[0]
+        etat = ligne.get("sync_state")
+        return int(ligne.get("backfill_months") or 0), etat if isinstance(etat, dict) else {}
+
+    def enregistrer_progression(self, account_id: str, sync_state: dict[str, Any]) -> None:
+        """Écrit la progression du backfill — `CRM-059`, §20.6 bis.2.
+
+        L'écriture porte `sync_state` SEULE. Un `PATCH` qui emporterait `last_sync_at` mêlerait deux
+        faits distincts : « jusqu'où ai-je descendu » et « quand ai-je relevé », que le §20.7
+        distingue précisément pour que l'écran d'état ne les confonde pas.
+        """
+
+        self._rest(
+            "PATCH",
+            f"/rest/v1/mail_inbound_accounts?id=eq.{account_id}",
+            {"sync_state": sync_state},
+            {"Prefer": "return=minimal"},
+        )
+
     def lire_dossiers_surveilles(self, account_id: str) -> list[str]:
         """Les dossiers que l'exploitant a déclarés pour ce compte (§15.4).
 

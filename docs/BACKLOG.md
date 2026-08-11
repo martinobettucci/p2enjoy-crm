@@ -5706,7 +5706,15 @@ Ce qui est **déjà mesuré ou tranché** :
 
 - **`UID SEARCH SINCE` est honoré par le serveur** : le backfill est une sélection, pas un tri.
   Rapatrier toute la boîte pour ignorer ce qui dépasse ferait payer au réseau ce que le serveur
-  sait faire.
+  sait faire. **LIVRÉ** — `mail-sync/src/mail_sync/backfill.py`, spécifié avant le code en
+  `docs/SPEC-mail-subsystem.md` §20.6 bis (décision 342). `search(["ALL"])` a disparu de la relève :
+  deux passes, le **courant d'abord** puis un lot d'historique borné à 200, la progression tenue par
+  `sync_state` sous forme de **plage** `{uid_min, uid_max}` et non d'un seul UID. Un premier contact
+  descend le **courrier du jour**, jamais la boîte entière. **48 assertions pytest vertes** — 39 sur
+  le plan, 9 sur la relève, qui gagne ainsi son **premier test unitaire** —, non complaisantes :
+  cinq mutations font toutes rougir la suite. **Reste dû** : la progression n'est écrite qu'après un
+  rapatriement réel, mais le traitement d'un message par cette voie n'est prouvé que par `e2e/mail`,
+  qui n'a pas pu être exécuté ici.
 - **`IDLE` est annoncé, et ne sera PAS employé ici** : une connexion permanente par compte est un
   état de plus à superviser, là où une scrutation déclarée est observable et rejouable. Le passage
   à `IDLE` demandera sa propre mesure.
