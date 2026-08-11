@@ -677,8 +677,14 @@ Message canonique, dédoublonné.
 | `card_id` | `uuid` | FK `cards`, nul tant que non classé |
 | `classification` | `text` | `CHECK (classification IN ('auto','manual','unclassified'))` |
 | `classified_by` | `uuid` | FK `profiles`, nul si automatique |
+| `filed_at` | `timestamptz` | quand le message a été COPIÉ dans le dossier de sa card — `CRM-059` §20.5, nul si non rangé ou rangement manqué |
 | `snoozed_until` | `timestamptz` | |
 | `search_tsv` | `tsvector` | index GIN |
+
+**Livré par `CRM-059`** : `messages_a_ranger(account_id)` rend les messages classés dont aucune
+occurrence n'a jamais été rangée, pour ce compte — une seule ligne par message, sa plus ancienne
+occurrence. `marquer_message_range(message_id)` ferme le fait après une copie IMAP réussie, jamais
+à la classification. Réservées à `service_role` — migration 32.
 
 Un message classé dans une card **reste** dans l'inbox globale : le classement renseigne
 `card_id`, il ne retire rien.

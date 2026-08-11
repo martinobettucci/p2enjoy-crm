@@ -5740,6 +5740,17 @@ Ce qui est **déjà mesuré ou tranché** :
   message deux fois.
 - **La dette de `CRM-056` est réglée ici** : un rangement manqué est repris à la relève suivante,
   sans qu'il faille recevoir un nouveau message pour la déclencher.
+  **LIVRÉ** — `mail_messages.filed_at` dit QUAND un message a été copié, jamais quand il a été
+  classé ; `messages_a_ranger` (migration 32) rend les messages classés et non rangés d'un compte,
+  avec l'occurrence la plus ancienne ; `marquer_message_range` ferme le fait uniquement après une
+  copie IMAP réussie. `mail_sync/ingestion.reprendre_rangements_manques` appelle la MÊME primitive
+  que la classification, sans en inventer une seconde, sur tout le compte — pas seulement les
+  dossiers surveillés du tour courant. **12 assertions pgTAP** (suite complète 1933, verte) et
+  **5 assertions pytest** (suite complète 192, verte), non complaisantes : deux mutations — marquer
+  le fait sans condition de succès — font rougir exactement les deux assertions qui protègent cette
+  règle. `docs/JOURNAL.md` décision 342. **Non exécuté** : preuve API et E2E `mail` d'une copie
+  réellement refusée puis reprise — exigent le harnais `scripts/verify-mail-resilience.sh`, encore
+  à écrire.
 
 ---
 

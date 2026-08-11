@@ -421,6 +421,27 @@ class PostgrestClient:
         resultat = self._rpc("dossiers_a_renommer", {"p_account_id": account_id})
         return list(resultat) if isinstance(resultat, list) else []
 
+    def messages_a_ranger(self, account_id: str) -> list[dict[str, Any]]:
+        """Les messages classés dont AUCUNE occurrence n'est rangée, pour ce compte — `CRM-059` §20.5.
+
+        La sélection vit en base (migration 32) : elle y a déjà accès à l'occurrence la plus
+        ancienne de chaque message, ce qu'une seconde requête depuis le service redemanderait pour
+        rien.
+        """
+
+        resultat = self._rpc("messages_a_ranger", {"p_account_id": account_id})
+        return list(resultat) if isinstance(resultat, list) else []
+
+    def marquer_message_range(self, message_id: str) -> None:
+        """Ferme le fait qu'un message a été COPIÉ dans le dossier de sa card — `CRM-059` §20.5.
+
+        Appelée UNIQUEMENT après une copie IMAP réussie : l'appeler à la classification enverrait
+        la relève suivante croire un rangement fait qui ne l'est pas, et plus personne ne le
+        reprendrait.
+        """
+
+        self._rpc("marquer_message_range", {"p_message_id": message_id})
+
     def enregistrer_dossier(
         self, *, account_id: str, entity_type: str, entity_id: str,
         requested_path: str, actual_path: str,

@@ -62,6 +62,7 @@ class ResultatReleve:
     pieces_infectees: int = 0
     dossiers_crees: int = 0
     dossiers_renommes: int = 0
+    rangements_repris: int = 0
 
 
 def chemin_de_depot(workspace_id: str, message_id: str, sha256: str) -> str:
@@ -176,6 +177,42 @@ def uids_a_relever(imap, plan: PlanDossier) -> list[int]:  # type: ignore[no-unt
     return sorted(courants) + anciens
 
 
+def reprendre_rangements_manques(
+    *,
+    imap,  # IMAPClient
+    client_base: PostgrestClient,
+    account_id: str,
+    journal=lambda _evenement, **_details: None,  # type: ignore[no-untyped-def]
+) -> int:
+    """Reprend les messages classés dont AUCUNE occurrence n'a jamais été rangée — `CRM-059` §20.5,
+    dette nommée de `CRM-056`.
+
+    `CRM-056` tentait le rangement à la PREMIÈRE vue d'un message et journalisait un refus sans le
+    rejouer : un dossier introuvable au moment du classement, ou une copie IMAP refusée, laissait
+    le message classé en base et absent de son dossier pour toujours. La sélection vit en base
+    (migration 32) ; ce qui vit ici est la SEULE décision qui appartient au service — appeler la
+    même primitive de copie que la classification, sans en inventer une seconde.
+    """
+
+    reprises = 0
+    for ligne in client_base.messages_a_ranger(account_id):
+        if ranger_dans_dossier(
+            imap=imap,
+            client_base=client_base,
+            account_id=account_id,
+            card_id=ligne["card_id"],
+            dossier_source=ligne["folder"],
+            uid=int(ligne["uid"]),
+        ):
+            client_base.marquer_message_range(ligne["message_id"])
+            reprises += 1
+        else:
+            # UN ÉCHEC N'EST PAS UN SILENCE (§13.7) : la relève suivante retentera, et l'événement
+            # dit qu'un rangement manque encore, sans jamais bloquer le tour en cours.
+            journal("rangement_repris_echoue", account_id=account_id)
+    return reprises
+
+
 def relever_compte(
     *,
     journal=lambda _evenement, **_details: None,  # type: ignore[no-untyped-def]
@@ -195,7 +232,7 @@ def relever_compte(
     donc rien de neuf, ce qui rend la preuve rejouable sans nettoyage.
     """
 
-    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = renommes = 0
+    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = renommes = reprises = 0
     imap = _connecter(compte, timeout)
     try:
         # LA CAPACITÉ EST RELUE APRÈS AUTHENTIFICATION (§15.1) : `IDLE` n'est pas annoncé avant, et
@@ -313,6 +350,10 @@ def relever_compte(
                             uid=int(uid),
                         ):
                             ranges += 1
+                            # LE FAIT EST FERMÉ ICI, PAS À LA CLASSIFICATION (`CRM-059` §20.5) :
+                            # une copie qui échoue doit rester reprenable, et la marquer avant de
+                            # savoir si elle a réussi masquerait l'échec à la relève suivante.
+                            client_base.marquer_message_range(message_id)
 
                 if client_base.enregistrer_occurrence(
                     message_id=message_id,
@@ -371,6 +412,15 @@ def relever_compte(
             if uids_traites:
                 sync_state[dossier] = etendre(etat_dossier, uids_traites).vers_json()
                 progression_modifiee = True
+
+        # LA REPRISE SUIT LA RELÈVE COURANTE, ET NE LA CONDITIONNE PAS (`CRM-059` §20.5) : elle
+        # porte sur TOUT le compte, pas seulement les dossiers surveillés de ce tour, puisqu'un
+        # message rangé la première fois peut avoir été vu dans un dossier retiré depuis de
+        # `watch_folders` sans que le message ait quitté la boîte pour autant.
+        if dossiers_utilisables:
+            reprises = reprendre_rangements_manques(
+                imap=imap, client_base=client_base, account_id=compte.account_id, journal=journal
+            )
     finally:
         try:
             imap.logout()
@@ -394,4 +444,5 @@ def relever_compte(
         pieces_infectees=infectees,
         dossiers_crees=ranges,
         dossiers_renommes=renommes,
+        rangements_repris=reprises,
     )

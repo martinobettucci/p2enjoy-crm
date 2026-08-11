@@ -64,9 +64,35 @@ d'exécuter le code attendu.
   - Preuves : **31 assertions pytest** (suite complète **187 tests**, verts), non complaisantes —
     quatre mutations font toutes rougir la suite. `README.md` et `.env.example` cessent d'annoncer
     la variable comme « en attente de `CRM-054` ».
-  - **Non livré, et `CRM-059` reste `[ ]`** : le backfill par lots (§20.6), la reprise d'un
-    rangement manqué (§20.5), l'écran d'état (§20.7) et le harnais
-    `scripts/verify-mail-resilience.sh`. Les preuves pgTAP, API et E2E exigent la pile.
+  - **Non livré à cette étape** : le backfill par lots (§20.6) et l'écran d'état (§20.7), livrés
+    séparément ci-dessous ou restant dus.
+
+- **`CRM-059` — la reprise d'un rangement manqué, dette nommée de `CRM-056`.** `CRM-056` tentait le
+  rangement à la PREMIÈRE vue d'un message et journalisait un refus sans le rejouer : un dossier
+  introuvable au moment du classement, ou une copie IMAP refusée, laissait le message classé en
+  base et absent de son dossier pour toujours. La dette est réglée — `docs/SPEC-mail-subsystem.md`
+  §20.5, migration 32, décision 342 (renumérotée depuis une collision avec une décision parallèle,
+  voir `docs/JOURNAL.md`).
+  - **`mail_messages.filed_at` dit QUAND un message a été COPIÉ**, jamais quand il a été classé —
+    nul pour un message non classé, ou classé mais dont le rangement a échoué. C'est ce second cas
+    que la relève suivante reprend, sans nouveau message pour le déclencher.
+  - **`messages_a_ranger(account_id)` vit en base**, pas dans le service : elle rend un message
+    classé et non rangé avec l'occurrence la PLUS ANCIENNE de ce compte, déterministe et
+    indépendante de l'ordre de retour du serveur.
+  - **`marquer_message_range` ferme le fait UNIQUEMENT après une copie IMAP réussie**, jamais à la
+    classification — la marquer avant de savoir si la copie a réussi masquerait un échec à la
+    relève suivante.
+  - **La reprise appelle la MÊME primitive que la classification** (`ranger_dans_dossier`), sans en
+    inventer une seconde, et porte sur tout le compte — pas seulement les dossiers surveillés du
+    tour courant, puisqu'un message peut avoir été vu dans un dossier retiré de `watch_folders`
+    depuis, sans avoir quitté la boîte pour autant.
+  - Preuves : **12 assertions pgTAP** (suite complète **32 fichiers, 1933 assertions**, verte) et
+    **5 assertions pytest** (suite complète **192 tests**, verte), non complaisantes — deux
+    mutations (marquer le fait sans condition de succès) font rougir les deux assertions qui
+    protègent exactement cette règle.
+  - **Non exécuté, et `CRM-059` reste `[~]`** : preuve API, E2E `mail` d'une copie réellement
+    refusée puis reprise, écran d'état, backfill par lots et harnais
+    `scripts/verify-mail-resilience.sh`.
 
 - **`CRM-075` — l'écran d'administration des tracks et des channels.** Le geste le plus courant de
   l'administration d'un CRM — créer un track — avait un CRUD prouvé et **aucune surface** (INC-086).
