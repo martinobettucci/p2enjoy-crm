@@ -5840,6 +5840,47 @@ puis les mêmes gestes sur un channel ; captures aux quatre paliers ; refus du `
 mesuré **hors interface** ; seed inchangé après le passage du scénario ; harnais dédié non
 complaisant.
 
+*Spécifiée avant d'être écrite* — `docs/SPEC-administration-arborescence.md`,
+`docs/DESIGN_SYSTEM.md` §5.13, `docs/JOURNAL.md` décision 338. Ce qui est **tranché par la
+spécification**, et n'a pas à être redécidé pendant l'implémentation :
+
+- **Deux adresses** : `/reglages` devient l'index des sections de réglages, `/reglages/arborescence`
+  porte l'écran. Motif : `CRM-070` et `CRM-076` amènent deux autres sections, et une adresse
+  partagée ne se déplace pas gratuitement (§3.1).
+- **Réordonner écrit UNE position**, calculée par index fractionnaire — le milieu des deux voisines —
+  et ne permute jamais deux lignes. Une permutation coûte deux `UPDATE` non atomiques dont le second
+  peut échouer (§6.2).
+- **Le désarchivage est livré avec l'archivage**, bien que l'énoncé ci-dessus ne cite que quatre
+  verbes : sans lui, « archiver reste réversible » est faux dans le produit. Aucune règle, colonne ni
+  politique nouvelle — le même `UPDATE`. **Arbitrage attendu du responsable**, §11 limite 1.
+- **Les commandes ne sont PAS masquées pour un non-administrateur.** L'énoncé ci-dessus dit
+  « un `viewer` ne voit aucun de ces gestes » ; la spécification tient l'autre moitié de la phrase —
+  « c'est une aide d'interface » — et écarte la première : un rôle lu au chargement peut être périmé
+  à l'instant de l'écriture, et une commande masquée sur cette foi cacherait un geste **permis**.
+  Même position que le composeur de commentaires (§10).
+- **Aucune modale** : le design system n'en déclare aucune, et `CRM-043` a déjà tranché ce cas.
+- **Le slug ne se modifie pas depuis l'écran**, alors que la base l'accepte. Ce n'est pas une règle
+  inventée mais une absence de geste, et elle est nommée (§5.3, §11 limite 5).
+
+**Definition of Done détaillée**, par preuve et par support :
+
+- [ ] `webapp/src/lib/administration-arborescence.ts` — lectures et six écritures, refus classés sur
+      le code PostgreSQL puis le code HTTP, `200`-zéro-ligne traité comme « sans effet ».
+- [ ] `webapp/src/lib/administration-arborescence.test.ts` — position calculée, dégénérescences,
+      proposition de slug, motif copié de la contrainte, classement de chaque refus, requêtes émises.
+- [ ] Écran, index de réglages, route, textes centralisés dans `webapp/src/i18n/fr.ts`.
+- [ ] `webapp/src/app/AdministrationArborescence.test.tsx` — états, formulaires, confirmation,
+      focus à l'ouverture et à la fermeture, commandes désactivées aux extrémités.
+- [ ] `e2e/api/administration-arborescence.spec.ts` — refus du `viewer` et du `business_developer`
+      **hors interface**, avec les jetons réels.
+- [ ] `e2e/ui/administration-arborescence.spec.ts` — les cinq gestes, track puis channel, clavier
+      **et** souris ; épilogue rendant le seed à son état initial.
+- [ ] Captures aux quatre paliers, observées.
+- [ ] `scripts/verify-administration-arborescence.sh` — rejeu complet et non-complaisance.
+- [ ] `docs/manual.md` — chapitre d'administration de l'arborescence.
+- [ ] INC-086 : la limite « aucune surface d'administration » retirée de `docs/SPEC-tracks.md` §10.1
+      et `docs/SPEC-channels.md` §10.2 **le jour où l'écran est prouvé**, pas avant.
+
 ### CRM-076 — Éditeur administrateur de workflows `[ ]`
 
 CRUD visuel complet des workflows, étapes, transitions, champs, règles et exigences, avec

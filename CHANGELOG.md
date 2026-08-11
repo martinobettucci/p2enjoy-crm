@@ -15,6 +15,20 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **`CRM-075` est spécifiée avant d'être écrite.** `docs/SPEC-administration-arborescence.md` décrit
+  l'écran d'administration des tracks et des channels — adresses, gestes, requêtes émises, refus
+  traduits, états —, et `docs/DESIGN_SYSTEM.md` **§5.13** en donne les règles visuelles. L'unité ne
+  livre **aucune règle backend nouvelle** : tout ce que l'écran exerce est déjà posé et prouvé par
+  `CRM-020`, `CRM-021` et `CRM-033`, et le §2 de la spécification cite chaque garantie avec l'endroit
+  où elle est mesurée. Cinq points que l'énoncé laissait ouverts sont tranchés (décision 338) :
+  `/reglages` devient un index et `/reglages/arborescence` porte l'écran ; réordonner écrit **une**
+  position par index fractionnaire et jamais une permutation en deux `UPDATE` ; le **désarchivage**
+  est livré avec l'archivage, sans quoi « archiver reste réversible » est faux dans le produit
+  (**arbitrage attendu du responsable**) ; les commandes ne sont **pas** masquées pour un
+  non-administrateur, un rôle lu au chargement pouvant être périmé à l'instant de l'écriture ;
+  aucune modale, le design system n'en déclarant aucune. **Aucun code n'est livré par ce
+  changement.**
+
 - **Le registre des contradictions n'a plus aucune question ouverte au responsable.** Les deux
   dernières entrées sans arbitrage sont tranchées : **INC-085** — qui recouvrait **INC-075**, le
   même défaut relevé deux fois à trois jours d'écart — et **INC-088**. Les cinquante-six autres

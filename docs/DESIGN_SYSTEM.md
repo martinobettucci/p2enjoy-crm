@@ -494,6 +494,55 @@ session n'existe, ces repères ne contiennent que le refus anonyme et détournen
 La couleur n'indique jamais seule un refus, tous les champs portent leur libellé visible, et
 l'ordre de tabulation suit l'ordre visuel : email, mot de passe, action.
 
+### 5.13 Administration de l'arborescence — `CRM-075`
+
+Première surface d'administration du produit. Ce que l'écran **fait** — gestes, requêtes, refus — est
+spécifié dans `docs/SPEC-administration-arborescence.md` ; les règles ci-dessous ne disent que de
+quoi il a l'air.
+
+- **Une arborescence est une liste imbriquée, pas un tableau.** Le §5.9 régit un tableau de données
+  — colonnes comparables, tri, balayage en diagonale. Ici les deux niveaux n'ont pas les mêmes
+  colonnes (un channel porte un workflow, un track une couleur et une icône), et les aligner
+  produirait des cellules vides porteuses d'aucune information. Le patron est donc `ul` / `li`
+  imbriqués, avec les hauteurs de ligne et les séparateurs du §5.9 — `--size-target`, bordure basse
+  `--color-border`, survol `--color-hover`, aucune zébrure.
+
+- **Le dépliage est un `button` portant `aria-expanded`**, distinct de tout autre élément
+  interactif de la ligne. Une ligne entièrement cliquable rendrait ambiguë la cible d'un clic qui
+  porte déjà cinq commandes.
+
+- **Le groupe d'actions d'une ligne est une barre de boutons discrets** (§5.5, taille compacte,
+  hauteur `--size-target` conservée), **toujours visibles** — jamais au survol seul. Le §5.10
+  autorise l'apparition au survol pour deux actions accompagnant une métadonnée ; ici les commandes
+  sont l'objet même de l'écran, et les masquer obligerait à survoler chaque ligne pour savoir ce que
+  l'on peut faire.
+
+- **Les commandes de réordonnancement sont désactivées aux extrémités, jamais masquées** (§8) : leur
+  `title` et leur nom accessible disent pourquoi. Une commande qui disparaît en tête de liste fait
+  sauter le groupe d'actions d'une ligne à l'autre, et l'œil perd la colonne.
+
+- **Les formulaires de création et de renommage, et la confirmation d'archivage, vivent dans le flux
+  du document** — à la place de la ligne concernée, ou sous l'en-tête pour une création. **Aucune
+  modale** : le §5 n'en déclare aucune, et `CRM-043` a déjà tranché ce cas (§5.10, « la confirmation
+  n'est pas une modale »). Une surface qui recouvre l'écran demanderait un piège de focus, une
+  gestion d'`Échap` et le voile `--color-veil` — trois mécanismes qu'aucune unité n'a spécifiés.
+
+- **Ouvrir un formulaire déplace le focus dans son premier champ**, et le fermer le rend à la
+  commande qui l'a ouvert. Sans le retour, activer « Annuler » au clavier laisse le focus sur un
+  bouton qui vient de disparaître — le défaut que le §5.10 a déjà trouvé par la preuve clavier.
+
+- **Un objet archivé porte une mention textuelle « Archivé »**, jamais une seule teinte ni une seule
+  opacité (§1). Sa ligne conserve la même hauteur : un archivé grisé et rétréci se lirait comme une
+  panne d'affichage.
+
+- **Le libellé d'un track conserve sa pilule** (§5.5 bis) — icône, couleur douce, texte à la
+  déclinaison lisible (§12.5). L'écran d'administration montre l'objet tel que la barre latérale le
+  montrera, sans quoi choisir une couleur reviendrait à choisir à l'aveugle.
+
+- **Les quatre états du §5.8 sont traités, plus le refus en écriture** : une alerte
+  `--color-danger-soft` / `--color-danger-on-soft` avec `role="alert"`, placée **dans le formulaire
+  concerné** et non en tête d'écran, pour que le refus soit lu près du champ qui l'a causé.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

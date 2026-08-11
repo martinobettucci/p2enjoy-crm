@@ -10839,3 +10839,73 @@ directement à INC-085/INC-075. Aucun autre travail n'a été engagé sur `CRM-0
 pendant cette session : le temps disponible est allé à cette vérification plutôt qu'à une nouvelle
 ligne de code sur une unité déjà en cours, conformément à `CLAUDE.md` §1 (« traiter une seule tâche
 cohérente à la fois »).
+
+### Décision 338 — Spécifier `CRM-075` avant d'écrire son écran, et nommer les cinq points que l'énoncé laissait ouverts
+
+**2026-08-11 — reprise du backlog, toujours sans pile locale (pas de démon Docker).**
+
+**Le point de départ.** `CRM-075` — administration des tracks et des channels — a été créée le même
+jour par la décision 332 (INC-086, option 2) et n'est pas commencée. Son énoncé est net sur ce qu'il
+faut livrer, et surtout sur ce qu'il ne faut **pas** inventer : « le CRUD backend existe déjà et est
+prouvé depuis `CRM-020` et `CRM-021` […] cette unité ne livre donc aucune règle nouvelle. Une règle
+d'accès qui apparaîtrait ici serait le signe qu'elle a été inventée. » C'est la contrainte la plus
+forte du travail, et elle est vérifiable ligne à ligne.
+
+**Ce qui est fait ici, et pourquoi rien d'autre.** `CLAUDE.md` §5 exige qu'une spécification validée
+soit écrite **et committée avant la première ligne de code**. `docs/SPEC-administration-arborescence.md`
+est donc écrite en premier, avec `docs/DESIGN_SYSTEM.md` §5.13 pour les règles visuelles, dans un
+commit documentaire dédié. Le code suivra dans son propre commit.
+
+**Cinq points que l'énoncé laissait ouverts, tranchés ici plutôt que pendant l'implémentation :**
+
+1. **Deux adresses, pas une.** `/reglages` affiche « Aucun réglage modifiable », ce que cette unité
+   rend faux. Plutôt que d'y placer l'écran, `/reglages` devient un index et
+   `/reglages/arborescence` porte l'administration. Motif : `CRM-070` et `CRM-076` amènent deux
+   autres sections, et déplacer plus tard une adresse déjà partagée coûte plus qu'un index d'une
+   entrée aujourd'hui.
+
+2. **Réordonner écrit UNE position, jamais deux.** Une permutation demande deux `UPDATE` non
+   atomiques dont le second peut échouer en laissant la liste dans un état que personne n'a voulu.
+   Le milieu de deux positions voisines — `position` est un `numeric` précisément pour cela
+   (`docs/SPEC-tracks.md` §3) — donne une écriture unique, atomique par construction, dont le refus
+   laisse la liste intacte. Le cas dégénéré (deux voisines de position égale, ou une première
+   position nulle) est **refusé et nommé**, jamais écrit à vide : écrire une valeur qui ne change
+   pas l'ordre affiché serait la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit.
+
+3. **Le désarchivage est livré, alors que l'énoncé ne cite que quatre verbes.** L'énoncé justifie
+   l'absence de suppression par « archiver masque et reste **réversible** ». Un écran qui archive
+   sans savoir désarchiver rend cette phrase fausse dans le produit : l'administrateur qui se trompe
+   doit reprendre la clé de service, c'est-à-dire exactement le défaut qu'INC-086 relève. Le geste
+   n'ajoute aucune règle — même `UPDATE`, même table, même politique — et ce n'est pas la corbeille
+   de `CRM-077`, qui porte rétention et effacement définitif. **L'écart est assumé et soumis à
+   l'arbitrage du responsable** (§11, limite 1) plutôt que pris en silence : il se retire en
+   supprimant une case et deux fonctions.
+
+4. **Les commandes ne sont pas masquées pour un non-administrateur**, contre la lettre de l'énoncé
+   (« un `viewer` ne voit aucun de ces gestes ») mais avec son esprit, qui ajoute aussitôt « mais
+   c'est une aide d'interface ». L'interface n'a aucun moyen fiable de connaître le rôle courant sans
+   le demander au serveur, et un rôle lu au chargement peut être périmé à l'instant de l'écriture :
+   une commande masquée sur cette foi cacherait un geste **permis**, là où une commande refusée
+   montre le refus réel. C'est déjà la position du composeur de commentaires
+   (`docs/DESIGN_SYSTEM.md` §5.10) ; deux réponses opposées à la même question dans le même produit
+   seraient pires que l'une ou l'autre.
+
+5. **Aucune modale.** Le §5 du design system n'en déclare aucune, et `CRM-043` a déjà tranché ce cas
+   en plaçant sa confirmation dans le flux du document. En inventer une ici demanderait un piège de
+   focus, une gestion d'`Échap` et le voile `--color-veil` — trois mécanismes que personne n'a
+   spécifiés, pour un écran qui n'en a pas besoin.
+
+**Ce que cette décision ne fait PAS, et ce qui reste dû.** Aucune preuve d'exécution n'est produite
+par ce commit : il est documentaire. Le code, ses tests unitaires, `typecheck` et `build` suivent ;
+les preuves d'API, E2E et les captures **ne peuvent pas** être produites dans cet environnement, qui
+n'a pas de démon Docker. `CRM-075` restera donc `[~]` avec la liste explicite de ce qui reste à
+rejouer sur le poste du responsable, et non `[x]`.
+
+**INC-088 n'est pas rouverte, et l'état d'où partait cette session était périmé.** La consigne
+d'exécution décrivait INC-088 comme « non tranchée », en demandant de ne pas l'arbitrer. Vérifié
+dans le registre et dans `CHANGELOG.md` : elle **est** arbitrée depuis la décision 334, le même
+jour — l'écriture depuis la fiche d'une affaire appartient à `CRM-037`, dont la Definition of Done
+l'exigeait déjà. Il n'y avait donc aucun arbitrage à éviter, seulement une mise en œuvre à faire,
+qui n'appartient pas à `CRM-075`. Le fait est noté ici parce que c'est la troisième fois qu'un état
+transmis d'une exécution à l'autre est plus vieux que le dépôt — INC-089, décision 337, et
+celle-ci : l'état réel se lit dans les documents, jamais dans le résumé qui les précède.
