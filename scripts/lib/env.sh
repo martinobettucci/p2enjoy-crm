@@ -52,6 +52,23 @@ info() { printf '  %s\n' "$*"; }
 warn() { printf '  \033[33mAVERTISSEMENT\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[31mERREUR\033[0m %s\n' "$*" >&2; exit 1; }
 
+# --- Crochets Git ---------------------------------------------------------------------------
+#
+# CLAUDE.md §13 : un agent ne s'attribue jamais un commit, et pourtant deux l'ont fait
+# (docs/JOURNAL.md décisions 340 et 344) — la configuration Git de chaque environnement
+# d'exécution automatisé est réinitialisée à l'identité de l'agent, et rien n'empêchait le commit
+# suivant. `.githooks/pre-commit` refuse un commit dont l'identité n'est pas celle du responsable ;
+# encore faut-il que Git sache le trouver. `core.hooksPath` est un réglage LOCAL au clone, jamais
+# versionné dans `.git/`, donc réglé ici plutôt que supposé.
+
+git_hooks_ensure() {
+	command -v git >/dev/null 2>&1 || return 0
+	[ -d "$REPO_ROOT/.git" ] || return 0
+	if [ "$(git -C "$REPO_ROOT" config --local core.hooksPath || true)" != ".githooks" ]; then
+		git -C "$REPO_ROOT" config --local core.hooksPath .githooks
+	fi
+}
+
 # --- Lecture d'un fichier d'environnement ------------------------------------------------------
 # Un fichier d'environnement n'est pas un script : il n'est jamais interprété par le shell, ce
 # qui casserait sur toute valeur contenant un espace ou un caractère spécial.

@@ -54,6 +54,8 @@ done
 
 # --- Amorçage ----------------------------------------------------------------------------------
 
+git_hooks_ensure
+
 if env_bootstrap_dev; then
 	:
 elif env_ensure_dev_completions; then

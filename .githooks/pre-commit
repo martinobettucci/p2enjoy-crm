@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# @spec CLAUDE.md §13 (Gestion Git — Attribution des commits, règle non négociable du responsable)
+# @spec docs/JOURNAL.md décisions 340 et 344 — deux commits poussés avec l'identité de l'agent
+#       d'exécution au lieu de celle du responsable, la seconde fois une heure après la première
+#       correction. Nommé comme remède durable par les deux, jamais écrit avant celui-ci.
+#
+# Refuse un commit dont l'auteur configuré n'est pas celui du responsable. La configuration Git de
+# chaque environnement d'exécution automatisé est réinitialisée à l'identité de l'agent ; ce
+# crochet est la seule barrière qui empêche cette identité d'atteindre un commit réel, plutôt que
+# de compter sur chaque session pour corriger sa configuration avant de committer.
+#
+# Installé par `./runDev.sh`, qui règle `core.hooksPath` sur ce répertoire (idempotent, sans effet
+# si déjà réglé). Un clone qui ne lance jamais `runDev.sh` n'est pas protégé — c'est une limite
+# nommée, pas un oubli : ce dépôt n'a pas d'autre point d'entrée commun à toutes les sessions.
+
+set -euo pipefail
+
+ADRESSE_ATTENDUE="contact@p2enjoy.studio"
+
+adresse_auteur=$(git config user.email || true)
+
+if [ "$adresse_auteur" != "$ADRESSE_ATTENDUE" ]; then
+	echo "refus : l'identité Git configurée n'est pas celle du responsable." >&2
+	echo "        attendue : $ADRESSE_ATTENDUE" >&2
+	echo "        actuelle : ${adresse_auteur:-<absente>}" >&2
+	echo "        CLAUDE.md §13 : un agent ne s'attribue jamais un commit. Corriger avec :" >&2
+	echo "          git config user.name \"P2Enjoy\"" >&2
+	echo "          git config user.email \"$ADRESSE_ATTENDUE\"" >&2
+	exit 1
+fi

@@ -11165,3 +11165,41 @@ et les 235 assertions pytest passent après rebase.
 aucun historique : les trois dépassent la tâche autorisée. Elle consigne, dans INC-089 et ici, un
 fait observé en direct plutôt qu'une hypothèse — ce que les décisions 337 et 338 avaient dû déduire
 d'un état périmé, celle-ci l'a vu se produire.
+
+### Décision 345 — Le crochet `pre-commit` nommé par les décisions 340 et 344 est enfin posé
+
+**2026-08-11 — cette exécution a reproduit le défaut qu'elle corrige.**
+
+**Le fait, constaté sur ses propres commits.** Trois commits poussés par cette session
+(`199aa6f`, `109e4fa`, `968ae8a`) portent `Claude <noreply@anthropic.com>` au lieu de
+`P2Enjoy <contact@p2enjoy.studio>` — exactement le défaut des décisions 340 et 340bis (344) : la
+configuration Git du bac à sable d'exécution porte l'identité de l'agent, et rien ne l'empêche
+d'atteindre un commit réel tant que la session ne corrige pas sa configuration LOCALE avant de
+committer. Corrigé pour la suite de cette session par `git config user.name/user.email` sur le
+dépôt local, comme la décision 340 le prescrivait déjà — mais prescrire ne suffit pas : c'est la
+**troisième** fois que le défaut se produit malgré deux décisions qui le documentent.
+
+**`199aa6f`, `109e4fa` et `968ae8a` ne sont PAS réécrits**, par la même prudence que la décision 344
+applique à `199aa6f` — une réécriture pendant qu'une autre exécution partage `main` risquerait de
+détruire un travail concurrent, et §13 réserve de toute façon cette réécriture à une instruction
+explicite du responsable, absente ici.
+
+**Le remède durable, nommé deux fois et jamais écrit, l'est maintenant.** `.githooks/pre-commit`
+refuse tout commit dont `git config user.email` n'est pas `contact@p2enjoy.studio`, avec un message
+qui dit quoi corriger sans jamais avoir besoin d'inspecter l'historique après coup.
+`scripts/lib/env.sh` porte `git_hooks_ensure()`, qui règle `core.hooksPath=.githooks` sur le dépôt
+LOCAL — un réglage qui ne vit jamais dans `.git/` versionné, donc qui doit être posé à chaque
+clone plutôt que supposé hérité. `./runDev.sh` et `./resetMe.sh` l'appellent tous deux, avant toute
+autre chose : ce sont les deux points d'entrée que `CLAUDE.md` §14 documente comme communs à toute
+session.
+
+**Preuve.** Un commit forcé avec l'identité `Claude <noreply@anthropic.com>` (`git -c user.name=…
+-c user.email=…`) est refusé par le crochet une fois `core.hooksPath` réglé ; le même commit avec
+l'identité `P2Enjoy <contact@p2enjoy.studio>` passe. Le commit de preuve a été retiré par
+`git reset --soft` avant de committer pour de bon — il ne reste dans aucun historique.
+
+**Ce que cette décision ne fait pas.** Elle ne protège pas un clone qui ne lance jamais `runDev.sh`
+ni `resetMe.sh` — limite nommée, pas oubliée : ce dépôt n'a pas d'autre point d'entrée commun à
+toute session, humaine ou automatisée. Elle ne réécrit aucun des trois commits déjà poussés sous la
+mauvaise identité, dont la correction reste soumise à l'instruction explicite du responsable que
+`CLAUDE.md` §13 exige.

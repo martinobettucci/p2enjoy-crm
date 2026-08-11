@@ -41,6 +41,8 @@ done
 
 # --- Gardes ------------------------------------------------------------------------------------
 
+git_hooks_ensure
+
 [ -f "$ENV_FILE" ] || die "fichier d'environnement $ENV_FILE absent : rien à réinitialiser. Lancez ./runDev.sh."
 
 env_validate
