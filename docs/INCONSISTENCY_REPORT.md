@@ -35,6 +35,46 @@ réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à
 
 ## Ouverts
 
+### INC-096 — Le registre d'images est injoignable : aucune preuve de pile n'est exécutable
+
+**Nature :** blocage de l'environnement d'exécution, extérieur au dépôt. **Nécessite une action
+humaine** — aucune session ne peut le contourner.
+**Relevé le :** 2026-08-12, pendant la mise en place des crochets Git (décision 358).
+
+Le démon Docker démarre normalement par la procédure de `docs/JOURNAL.md`
+(`dockerd --host=unix:///var/run/docker.sock`, puis `docker info` répond). Mais le cache d'images du
+conteneur est **vide** (`docker images` rend zéro ligne) et **aucune image ne se télécharge** :
+
+```
+docker pull postgres:17-alpine
+  → 429 Too Many Requests
+    sur HEAD https://registry-1.docker.io/v2/library/postgres/manifests/17-alpine
+```
+
+MESURÉ cinq fois, dont trois avec attente croissante (8 s, 16 s, 24 s), sur `postgres:17-alpine`
+comme sur les images Supabase que `runDev.sh` tire en premier. **Ce n'est pas un défaut
+d'authentification** : le point d'émission de jeton anonyme répond `200`
+(`https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/postgres:pull`).
+Il s'agit de la limite de tirage **anonyme** de Docker Hub, atteinte par l'adresse de sortie
+partagée de l'environnement.
+
+**Conséquence, non masquée :** `runDev.sh` s'arrête avant de démarrer le moindre service, et **toutes
+les preuves de pile sont hors d'atteinte** — `npm run test:sql`, `npm run e2e:api`, `npm run e2e:ui`,
+`npm run e2e:mail`, `supabase/seed/apply-seed.sh` et les harnais `scripts/verify-*.sh` qui exigent
+les services. Les unités qui en dépendent ne peuvent pas passer `[x]` et restent `[~]`. Les preuves
+sans pile restent exécutables et vertes : `npm run typecheck`, `npm run test:unit` (741 tests),
+`npm run build`, `scripts/verify-crochets-git.sh`.
+
+**Ce qui est attendu du responsable :** fournir des identifiants Docker Hub à l'environnement
+d'exécution, ou configurer un miroir de registre sur le démon. Rien n'est à corriger dans le dépôt.
+
+**Observation seconde, notée sans être corrigée :** ce conteneur exécute **Node v22.22.2**, alors que
+`package.json` exige `>=24` — `npm ci` le signale par `EBADENGINE` puis réussit, et `typecheck`,
+`test:unit` et `build` passent. Aucun changement n'est fait sur ce point : la version attendue est
+celle du `package.json`, et c'est l'environnement qui s'en écarte.
+
+---
+
 ### INC-095 — Le contrat de déploiement s'arrête à la migration 30, alors que le dépôt en compte 34
 
 **Nature :** dérive du contrat de déploiement par rapport à l'état réel du dépôt — exactement ce que

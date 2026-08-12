@@ -11784,6 +11784,21 @@ commit accepté sur `main` ; **non-régression de la décision 345** — l'ident
 refusée sur `main` ; push refusé vers `refs/heads/claude/*` sans qu'aucune référence n'apparaisse sur
 le distant ; push accepté de `main` vers `main` ; crochets exécutables et `core.hooksPath` réglé.
 
+**Le crochet a en outre été éprouvé sur le dépôt RÉEL, dans les deux sens :** il a refusé les
+commits égarés de la preuve fautive (ci-dessus), puis il a **laissé passer** le push légitime de
+`main` vers `refs/heads/main` qui a livré cette décision. La voie nominale n'est donc pas fermée,
+et ce n'est pas déduit d'un dépôt jetable.
+
+Preuves hors pile rejouées après le changement, toutes vertes : `npm run typecheck` (quatre projets
+TypeScript, aucune anomalie), `npm run test:unit` (**33 fichiers, 741 tests**), `npm run build`
+(bundle produit). Ces trois-là suffisent à établir que le changement n'introduit aucune régression
+applicative — ce qui est attendu, aucun fichier de l'application n'étant touché.
+
+**Traçabilité.** Les crochets ne reçoivent pas d'unité de backlog, et ce n'est pas un oubli : le
+`pre-commit` de la décision 345 n'en a pas non plus. Cette famille de changements est de la
+gouvernance du dépôt, tracée vers `CLAUDE.md` §13 et vers le journal, non vers une unité
+fonctionnelle. Inventer une unité pour l'occasion aurait faussé le décompte du backlog.
+
 ### Ce que cette décision ne fait pas
 
 Elle ne protège **pas** un clone qui n'a jamais lancé `runDev.sh` : `core.hooksPath` est un réglage
@@ -11792,10 +11807,42 @@ local, posé par `scripts/lib/env.sh`. C'est la limite déjà nommée par la dé
 
 ### Où reprendre
 
-La pile n'a **pas** pu être montée pendant cette session : les images ne se téléchargent pas, le
-registre Docker Hub rend **429 Too Many Requests** sur chacune (mesuré trois fois, avec attente
-croissante, sur `postgres:17-alpine` comme sur les images Supabase), et le cache d'images du
-conteneur est vide. Aucune preuve exigeant la pile n'a donc été rejouée cette heure-ci. **INC-072
-reste le point de reprise fixé par la décision 357**, et il reste en attente d'un arbitrage du
-responsable — ouvrir ou non la SUPPRESSION d'un commentaire aux `admin`, sans la modification —, qui
-ne sera pas tranché par une session.
+La pile n'a **pas** pu être montée pendant cette session, et la cause est extérieure au dépôt. Le
+démon Docker démarre normalement par la procédure connue (`dockerd --host=unix:///var/run/docker.sock`,
+`docker info` répond). Mais **aucune image ne se télécharge** : le cache du conteneur est vide
+(`docker images` rend zéro ligne) et le registre refuse chaque manifeste.
+
+```
+docker pull postgres:17-alpine
+  → 429 Too Many Requests sur HEAD https://registry-1.docker.io/v2/library/postgres/manifests/17-alpine
+```
+
+Mesuré cinq fois au total, dont trois avec attente croissante (8 s, 16 s, 24 s), sur
+`postgres:17-alpine` comme sur les images Supabase que `runDev.sh` tire en premier. Ce n'est pas un
+défaut d'authentification : le point d'émission de jeton anonyme répond `200`
+(`https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/postgres:pull`).
+C'est la **limite de tirage anonyme de Docker Hub**, atteinte par l'adresse de sortie partagée de
+l'environnement d'exécution.
+
+**Cela nécessite une action humaine** et ne peut pas être contourné depuis une session : il faut
+soit des identifiants Docker Hub fournis à l'environnement, soit un miroir de registre configuré sur
+le démon. Tant que ce point n'est pas réglé, **aucune exécution planifiée ne pourra rejouer les
+preuves de pile** — `npm run test:sql`, `e2e:api`, `e2e:ui`, `e2e:mail` et les harnais
+`scripts/verify-*.sh` qui exigent les services —, et les unités qui en dépendent resteront `[~]`.
+
+**INC-072 reste le point de reprise fixé par la décision 357**, et il est **déjà arbitré** — une
+première rédaction de cette entrée le disait en attente d'arbitrage, c'était faux, et la correction
+vaut d'être écrite parce que l'erreur aurait coûté une session de plus. Le texte historique de
+l'entrée INC-072 porte encore la formule « ce qui reste à arbitrer », mais l'en-tête du registre
+précise que cette formule y est l'état **au jour du constat** : `docs/ARBITRAGES.md` (ligne 61)
+tranche depuis le 2026-08-08 — **la suppression d'un commentaire est ouverte aux `admin`, auditée,
+sans la modification**. Ce qui est dû est donc une mise en œuvre et ses preuves, pas une décision.
+
+Ce qu'elle suppose, pour que la session suivante n'ait pas à le redécouvrir : une politique `UPDATE`
+supplémentaire restreinte à `deleted_at` (le sur-ensemble est explicitement refusé — modifier le
+commentaire d'autrui serait une falsification, décision 194), sa trace d'audit, la suite pgTAP, un
+E2E d'API prouvant le refus pour un non-`admin`, et une preuve d'interface. **Rien de tout cela n'a
+été écrit cette heure-ci**, précisément parce que rien n'en aurait été prouvable : une migration
+qu'on ne peut ni appliquer ni éprouver localement contreviendrait à `CLAUDE.md` §24, qui exige
+qu'elle soit reproductible localement. La livraison attend donc que le registre d'images redevienne
+joignable.
