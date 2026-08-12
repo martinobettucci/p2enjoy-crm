@@ -5961,8 +5961,18 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
       **Un troisième défaut trouvé par `scripts/lib/classes-css.mjs`** : la classe `size-10`
       n'existe pas — 40 px n'est pas dans l'échelle du §3 — et disparaissait **en silence**,
       exactement le mode de défaillance que `docs/DESIGN_SYSTEM.md` §11 décrit.
-- [ ] `e2e/api/administration-arborescence.spec.ts` — refus du `viewer` et du `business_developer`
-      **hors interface**, avec les jetons réels.
+- [x] `e2e/api/administration-arborescence.spec.ts` — refus du `viewer` et du `business_developer`
+      **hors interface**, avec les jetons réels, sur les **huit** écritures de l'écran. **16
+      scénarios verts**, rejoués sans régression sur les 502 scénarios de `npm run e2e:api`.
+      **Mesuré plutôt que supposé (CLAUDE.md §1)** : une première rédaction attendait `403` /
+      `42501` pour les huit écritures, par symétrie avec la création. Rejouée contre la pile réelle,
+      elle a échoué sur les douze scénarios de renommage, déplacement et archivage — la politique
+      `USING` de `tracks`/`channels` (migration `0003`) rend la ligne **invisible** au `UPDATE` d'un
+      non-administrateur, et PostgREST rend `200` avec un corps **vide**, jamais une erreur. C'est
+      exactement l'état « sans-effet » de `docs/SPEC-administration-arborescence.md` §9, que
+      `administration-arborescence.ts` classe à part de `forbidden` : l'écran affiche alors
+      `admin.refus.sans-effet`, pas un message de droit refusé. Le fichier a été corrigé pour
+      mesurer cette forme réelle plutôt que l'hypothèse initiale.
 - [ ] `e2e/ui/administration-arborescence.spec.ts` — les cinq gestes, track puis channel, clavier
       **et** souris ; épilogue rendant le seed à son état initial.
 - [ ] Captures aux quatre paliers, observées.

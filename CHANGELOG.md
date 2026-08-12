@@ -159,6 +159,23 @@ d'exécuter le code attendu.
   - **Non livré par ce changement** : l'écran lui-même, ses textes, sa route, ses preuves E2E et ses
     captures. `CRM-075` reste `[~]`.
 
+- **`CRM-075` — la preuve d'API des huit écritures, hors interface.**
+  `e2e/api/administration-arborescence.spec.ts` prouve, avec les jetons réels du `viewer` et du
+  `business_developer`, le refus de création, renommage, déplacement et archivage d'un track comme
+  d'un channel.
+  - **Deux formes de refus, mesurées et non supposées** : une création porte une ligne qui n'existe
+    pas encore, et `WITH CHECK` la refuse en `403` / `42501` à l'insertion. Un renommage, un
+    déplacement ou un archivage portent sur une ligne existante que la politique `USING` rend
+    **invisible** à un non-administrateur : PostgREST n'y trouve rien à modifier, et rend `200` avec
+    un corps **vide** — l'état « sans-effet » que `docs/SPEC-administration-arborescence.md` §9
+    nomme, jamais une erreur. Une première rédaction attendait `403` pour les huit écritures ; rejouée
+    contre la pile réelle, elle a échoué sur les douze scénarios d'`UPDATE` (`docs/JOURNAL.md`
+    décision 348).
+  - Preuves : **16 scénarios verts**, rejoués sans régression sur les **502 scénarios** de
+    `npm run e2e:api`.
+  - **Toujours non exécuté, et `CRM-075` reste `[~]`** : preuve E2E clavier et souris, captures aux
+    quatre paliers, harnais `scripts/verify-administration-arborescence.sh`, fermeture d'INC-086.
+
 - **`CRM-059` — l'écran d'état de la messagerie lit les comptes et la file sortante.**
   `/reglages/messagerie` (`webapp/src/app/EtatMessagerie.tsx`), atteint depuis l'index des réglages,
   n'ouvre aucune politique nouvelle : il lit `mail_inbound_accounts` sous la RLS de `CRM-052` et

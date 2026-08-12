@@ -11268,3 +11268,35 @@ renuméroté sous `CRM-059`, qui ne fait que le révéler.
 **Preuve.** Suite pgTAP verte avant/après (le test échoue sans le correctif, réussit avec).
 `e2e/mail/resilience.spec.ts` rejoué après correction et réapplication du seed —
 voir la suite de ce journal pour le résultat.
+
+### Décision 348 — Un `UPDATE` refusé à un non-administrateur n'est PAS un `403`, et une première preuve le supposait à tort
+
+**2026-08-12 — reprise de `CRM-075`, écriture de `e2e/api/administration-arborescence.spec.ts`.**
+
+**Le fait, mesuré contre la pile réelle et non déduit.** `docs/SPEC-administration-arborescence.md`
+§12 demande un scénario API qui prouve, avec les jetons réels du `viewer` et du `business_developer`,
+le refus des huit écritures que l'écran envoie — création, renommage, déplacement, archivage, pour
+un track puis pour un channel. Une première rédaction attendait `403` / `42501` pour les huit,
+par symétrie avec la création. Rejouée, elle a échoué sur les **douze** scénarios de renommage, de
+déplacement et d'archivage : la réponse mesurée est `200` avec un corps **vide**, jamais une erreur.
+
+**La cause, déjà écrite mais pas encore mesurée sous cet angle.** La politique `UPDATE` de `tracks`
+et `channels` (migration `0003`, ligne 271 : `using (app.is_workspace_admin(workspace_id))`) rend la
+ligne **invisible** à la clause `USING` pour un non-administrateur. PostgREST ne trouve alors aucune
+ligne à modifier : ce n'est pas un refus au sens d'une erreur de politique, c'est une absence de
+correspondance. Seule une **création** porte une ligne qui n'existe pas encore : c'est `WITH CHECK`
+qui échoue à l'insertion, et lui seul lève une erreur `42501`. C'est exactement l'état « sans-effet »
+que `docs/SPEC-administration-arborescence.md` §9 nomme et que `administration-arborescence.ts`
+(`executer`) classe à part de `forbidden` — l'écran affiche alors `admin.refus.sans-effet`
+(« Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cet objet, ou il a disparu. »),
+jamais le message de droit refusé.
+
+**La décision.** Le fichier de preuve est corrigé pour mesurer la forme réelle : `Prefer:
+return=representation` sur chaque `PATCH`, `200` attendu, corps `[]` attendu, ligne relue par la clé
+de service pour constater qu'elle n'a pas changé. **16 scénarios verts**, rejoués sans régression sur
+les 502 scénarios de `npm run e2e:api`.
+
+**Ce que cette décision ne fait pas.** Elle ne change aucune politique ni aucun comportement du
+produit — `CRM-075` ne livre aucune règle nouvelle (docs/SPEC-administration-arborescence.md §1), et
+ce défaut de preuve n'en est pas un du produit. Elle illustre `CLAUDE.md` §1 (« ne pas considérer une
+hypothèse comme un fait vérifié ») sur un cas concret plutôt que de le citer en principe.
