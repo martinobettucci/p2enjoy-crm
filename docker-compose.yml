@@ -443,6 +443,18 @@ services:
       context: .
       dockerfile: mail-sync/Dockerfile
     restart: unless-stopped
+    # @spec CRM-059 (docs/BACKLOG.md), docs/JOURNAL.md décision 351
+    # MESURÉ : sans cette garde, la boucle de veille démarre AVEC le conteneur — avant que `rest`
+    # (donc les migrations) ne réponde — et son premier tour journalise `veille_source_indisponible`
+    # en `WARNING` : une console qui doit rester silencieuse (§20.10, `e2e/mail/mail-sync.spec.ts`
+    # S3) ne l'est plus, sur un simple amorçage à froid. `kong` conditionne l'ACCÈS RÉSEAU, `rest`
+    # conditionne la DONNÉE — sa propre garde attend déjà `migrations-runner` — et les deux sont
+    # nécessaires : `kong` peut devenir sain avant que `rest` n'ait fini de migrer.
+    depends_on:
+      kong:
+        condition: service_healthy
+      rest:
+        condition: service_healthy
     read_only: true
     cap_drop:
       - ALL

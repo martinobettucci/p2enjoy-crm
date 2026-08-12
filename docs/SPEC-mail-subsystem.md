@@ -1821,6 +1821,7 @@ affichée telle quelle.
 | pgTAP | La reprise d'un orphelin, le décompte des états, le seuil de dix minutes |
 | API | L'état d'un compte est lisible par son propriétaire et par un administrateur, par personne d'autre |
 | E2E `mail` | **Une coupure SMTP réelle** : le message n'est pas perdu, il est reprogrammé ; le serveur revenu, il part |
+| E2E `mail` | **Le backfill par lots** : un premier contact ne descend que le jour, même avec de l'historique déjà présent et `backfill_months` l'autorisant ; la relève suivante le reprend |
 | E2E `ui` | L'écran d'état montre ce que la base porte, y compris un incident |
 | Harnais | `scripts/verify-mail-resilience.sh`, non complaisant, avec son témoin |
 

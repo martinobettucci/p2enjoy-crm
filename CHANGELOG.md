@@ -15,6 +15,24 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-059` passe `[x]` : la passe d'historique du backfill est désormais prouvée de bout en
+  bout.** Dernier écart nommé de l'unité — `e2e/mail/backfill.spec.ts` dépose de l'historique
+  RÉEL dans une boîte seedée par `APPEND` IMAP daté (RFC 3501 §6.3.11), porte `backfill_months`
+  à 6 par le vrai chemin d'écriture, puis envoie un message du jour par SMTP réel : le premier
+  contact ne descend QUE le jour, la relève suivante reprend l'historique intégralement, un
+  troisième appel confirme l'idempotence. `docs/JOURNAL.md` décision 352.
+  - **Corrigé au passage** (décision 351) : `mail-sync` ne déclarait `depends_on` ni sur `kong` ni
+    sur `rest` — sur un amorçage à froid, sa boucle de veille pouvait démarrer avant l'API et
+    journalisait `veille_source_indisponible` en `WARNING`, rendant `e2e/mail/mail-sync.spec.ts`
+    S3 rouge sans qu'aucun compte ne soit réellement en panne. `docker-compose.yml` attend
+    désormais les deux services sains.
+  - **Consignés, non corrigés** — INC-091 et INC-092 (`docs/INCONSISTENCY_REPORT.md`) : la veille
+    permanente de cette unité révèle qu'`e2e/mail/resilience.spec.ts` et
+    `e2e/mail/infrastructure.spec.ts` laissent un message réellement délivré dans une boîte seedée
+    sans jamais le retirer, ce qui finit par casser une garantie RLS figée à dessein
+    (`0029_inbox_globale.test.sql`, §18.1) — et qu'elle fait aussi, plus rarement, rougir
+    `mail-sync.spec.ts` S3 sur un échec ATTENDU d'`e2e/mail/comptes-entrants.spec.ts`. Hors du
+    périmètre de `CRM-059` : l'arbitrage revient au responsable.
 - **`CRM-059` — la relève cesse de redescendre la boîte entière à chaque tour.** MESURÉ dans
   `mail_sync/ingestion.py` : chaque relève exécutait `search(["ALL"])` puis `fetch` sur tout. La
   base dédoublonnait, donc rien n'était dupliqué — mais avec la boucle de veille livrée juste avant,

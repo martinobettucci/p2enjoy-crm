@@ -296,6 +296,13 @@ valeur, et termine le processus avec le code `78` avant toute écoute (décision
 exhaustif : `docs/SPEC-mail-subsystem.md` §12 ; preuves : `scripts/verify-mail-sync.sh` et
 `e2e/mail/mail-sync.spec.ts`.
 
+**Ordre de démarrage** (`docs/JOURNAL.md` décision 351) : `mail-sync` déclare `depends_on: kong`
+et `rest`, tous deux `condition: service_healthy`. Sa boucle de veille (§20.10) s'amorce avec le
+conteneur ; sans cette garde, son premier tour pouvait s'exécuter avant que l'API ne réponde et
+journalisait `veille_source_indisponible` en `WARNING` — une console censée rester silencieuse à
+l'amorçage (`e2e/mail/mail-sync.spec.ts` S3) pour une pile simplement pas encore prête, non pour
+un compte réellement en panne.
+
 **Choix : `pg_cron`, et non un ordonnanceur applicatif.** Arbitrage du responsable —
 `docs/JOURNAL.md`, décision 261, INC-012. **La décision 8 est renversée**, pas seulement corrigée
 dans son énoncé.

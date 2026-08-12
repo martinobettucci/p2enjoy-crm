@@ -33,6 +33,99 @@ de l'unité, et l'énoncé de `CRM-075` est corrigé pour le citer.
 
 ## Ouverts
 
+### INC-092 — La même veille permanente fait aussi rougir `mail-sync.spec.ts` S3 sur un échec ATTENDU d'une autre preuve
+
+**Nature :** même famille qu'INC-091 — la veille continue de `CRM-059` interagit avec une preuve
+antérieure qui ne l'anticipait pas —, mais la manifestation diffère : ici, un journal, pas une
+donnée.
+**Relevé le :** 2026-08-12, en rejouant `npm run e2e:mail` en boucle pour vérifier la décision 351.
+
+**Le fait.** `e2e/mail/mail-sync.spec.ts` S3 exige qu'AUCUNE ligne du journal du conteneur, depuis
+son tout premier démarrage, ne porte `WARNING`. `e2e/mail/comptes-entrants.spec.ts` (`CRM-052`)
+positionne DÉLIBÉRÉMENT un mot de passe faux sur le compte entrant de Driss, le temps de prouver
+que le test de connexion rend `auth_failed` (§13.7) — puis le restaure. Si la veille (§20.10) relève
+ce même compte PENDANT cette fenêtre, l'échec est réel, absorbé comme prévu, et journalisé en
+`WARNING` (`veille_compte_echoue`) — un comportement CORRECT du service, que S3 confond avec une
+anomalie parce qu'il ne distingue pas « le service a bien réagi à une panne réelle qu'un autre
+scénario a délibérément provoquée » de « le service est en défaut ». Mesuré intermittent : rouge
+une fois sur plusieurs rejeux de la suite complète, jamais en isolant `mail-sync.spec.ts` seul.
+
+**Ce que cette entrée ne fait pas.** Elle ne modifie ni `mail-sync.spec.ts`, ni
+`comptes-entrants.spec.ts` : choisir entre suspendre la veille pendant ce scénario, filtrer S3 sur
+les seuls événements qu'il connaît par avance, ou autre chose, est un choix de conception qui
+dépasse le dernier écart de `CRM-059` — objet de la présente session.
+
+**Action attendue du responsable :** trancher, avec INC-091, la même question de fond : comment les
+preuves qui provoquent une panne ou une pollution DÉLIBÉRÉE sur un compte seedé doivent coexister
+avec une veille qui, depuis `CRM-059`, ne s'arrête jamais.
+
+### INC-091 — La veille permanente de `CRM-059` transforme tout envoi de preuve vers une boîte seedée en message non classé permanent
+
+**Nature :** fuite de données de test, mesurée entre plusieurs unités — `CRM-059` (la boucle de
+veille), `e2e/mail/resilience.spec.ts` (`CRM-059`) et `e2e/mail/infrastructure.spec.ts` (`CRM-050`)
+— et qui casse une garantie RLS figée à dessein (`supabase/tests/0029_inbox_globale.test.sql`,
+assertion 9, §18.1).
+**Relevé le :** 2026-08-12, en vérifiant `CRM-059` (`scripts/verify-mail-resilience.sh`,
+`npm run e2e:mail`) et en écrivant `e2e/mail/backfill.spec.ts` pour son dernier écart.
+
+**Le fait, mesuré et non supposé (`CLAUDE.md` §1).** `npm run test:sql` a rendu
+`supabase/tests/0029_inbox_globale.test.sql` ROUGE — assertion 9, « ABSENCE FIGÉE : un membre
+ordinaire ne voit AUCUN non classé, faute de rôle de tri (§18.1) » — `have: 14`, `want: 0`. La
+requête, exécutée EN SESSION de Driss (`business_developer`), compte les lignes de
+`mail_messages` que la RLS lui rend visibles. Une relecture de la table a montré **19 lignes**
+`classification = 'unclassified'` en trop, au-delà des deux seules que le seed pose
+(`docs/SPEC-seed.md` §2.19) : des sujets « Coupure … », « Orphelin … » (les deux scénarios de
+`e2e/mail/resilience.spec.ts`) et « Preuve CRM-050 … » (`e2e/mail/infrastructure.spec.ts`, M2).
+
+**La cause, mesurée sur le code des deux preuves.** Les deux fichiers adressent RÉELLEMENT leurs
+messages de démonstration à une boîte SEEDÉE et RLS-visible :
+`resilience.spec.ts` à `bizdev@p2enjoy.test` (la boîte personnelle de Driss, `owner_id` non nul —
+« la visibilité suit la boîte », assertion 7 de la même suite pgTAP), `infrastructure.spec.ts` à
+la boîte système catch-all. Aucun des deux ne relève ce compte lui-même :
+
+- `resilience.spec.ts` supprime, dans son `finally`, la ligne `mail_messages` par un `DELETE …
+  subject=like.*objet*` — mais AVANT que le message n'ait jamais été relevé, puisque rien dans ce
+  fichier n'appelle `/internal/v1/inbound-accounts/{id}/poll`. Le `DELETE` réussit (`204`) en
+  n'effaçant **rien**, et le message RÉEL reste dans la boîte IMAP de Driss.
+- `infrastructure.spec.ts` (M2) ne nettoie ni la boîte ni la base.
+
+**Tant que rien ne relevait jamais ces deux comptes**, le message laissé en boîte restait inerte
+— jamais lu, jamais ingéré, jamais visible par personne. C'est exactement ce que `CRM-059`
+change : sa boucle de veille (§20.10) relève **tous** les comptes entrants en tâche de fond, en
+continu, `MAIL_SYNC_POLL_INTERVAL` après `MAIL_SYNC_POLL_INTERVAL`. Le message oublié finit donc
+toujours par être ingéré — plus tard, hors de la fenêtre du test qui l'a émis — et devient une
+ligne `mail_messages` permanente, non classée, RLS-visible par le propriétaire réel de la boîte.
+`CRM-059` ne fabrique aucune trace : il relève une boîte réelle, comme il doit le faire. Le défaut
+est en amont, dans deux preuves antérieures qui n'anticipaient pas qu'un jour, quelque chose les
+relèverait.
+
+**Ce qui a été fait ici, et ce qui ne l'a pas été.** La base de développement de cette session a
+été ramenée à l'état attendu par un ménage direct — dix-neuf lignes `mail_messages` orphelines
+supprimées, les messages IMAP correspondants (quatre chez Driss, six dans la boîte système)
+purgés, les deux messages légitimes du seed laissés intacts — pour que les preuves de CETTE
+exécution restent probantes. **Aucun fichier de preuve n'a été modifié** : corriger
+`resilience.spec.ts` et `infrastructure.spec.ts` dépasse la tâche autorisée (le dernier écart de
+`CRM-059`) et touche un choix qui n'appartient pas à l'agent — voir plus bas.
+
+**Trois options, et aucune n'appartient à l'agent :**
+
+1. **Chaque preuve qui adresse un envoi réel à une boîte seedée purge ce qu'elle y a déposé**,
+   dans son propre `finally`, par le même chemin IMAP que `e2e/mail/ingestion.spec.ts`
+   (`retirerDeLaBoite`) — le message ne doit jamais survivre à la fin du scénario qui l'a créé,
+   qu'il ait été relevé ou non.
+2. **Les preuves d'infrastructure et de résilience cessent d'adresser une boîte seedée
+   RLS-visible** et utilisent une adresse dédiée, jetable, hors de toute appartenance — au prix de
+   prouver un peu moins (la remise à une boîte réelle d'un membre reste alors non éprouvée par ces
+   deux fichiers).
+3. **La suite pgTAP `0029` cesse de compter la table entière** et vérifie la règle sur les seules
+   lignes qu'elle a elle-même posées — plus robuste à toute pollution externe, mais qui masquerait
+   qu'une fuite existe ailleurs plutôt que de la signaler.
+
+**Action attendue du responsable :** trancher entre ces options — ou une autre. Tant qu'elle ne
+l'est pas, toute session future qui relève longtemps une pile de développement (`CRM-059` la
+laisse tourner en continu) risque de revoir `0029` rougir, pour un motif qui n'a rien à voir avec
+son propre travail.
+
 ### INC-089 — Une exécution concurrente de la routine a committé le travail d'une autre, sous son propre message
 
 **Nature :** violation mesurée de `CLAUDE.md` §13 — « un commit ne doit contenir que des

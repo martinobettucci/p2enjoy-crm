@@ -1905,13 +1905,10 @@ CRUD, ordre, archivage, barre latérale.
       close : `app.can_read_track` existe, la politique de lecture la consulte, et un
       `track_members.access = 'none'` masque réellement le track. MESURÉ à l'API — la lectrice voit
       trois tracks sur quatre — et **à l'écran**, capture à l'appui.
-- [ ] **Aucune surface d'administration, et aucune unité n'en porte — INC-086.** Il n'existe ni
-      écran de création, ni de renommage, ni de réordonnancement, ni d'archivage d'un track. Le
-      CRUD est livré et prouvé **par l'API**, et l'écriture est réservée aux administrateurs : rien
-      n'est relâché. Mais le geste le plus courant de l'administration d'un CRM n'a **aucun
-      porteur** — `CRM-076` est l'éditeur de *workflows*, `CRM-077` leur corbeille. La Definition of
-      Done de cette unité — « unitaire, API, E2E, captures » — est satisfaite sans lui.
-      **Consigné, non résolu.**
+- [x] **~~Aucune surface d'administration, et aucune unité n'en porte.~~ `CRM-075` la livre —
+      INC-086 close.** L'écran de création, de renommage, de réordonnancement et d'archivage d'un
+      track existe désormais (`webapp/src/app/AdministrationArborescence.tsx`), au-dessus du même
+      CRUD déjà prouvé par l'API. `docs/JOURNAL.md` décision 349.
 
 *DoD adaptée, écarts explicites — **révisée le 2026-08-09**.* La Definition of Done exige « E2E,
 captures ». Les deux étaient livrés sur les seuls états qu'un appelant **anonyme** obtient — vide,
@@ -2078,11 +2075,10 @@ CRUD, ordre, archivage, onglets, débordement horizontal.
       consulte la première. MESURÉ : la lectrice voit quatre channels sur six, et « Prospection »
       lui reste ouvert alors que son track est fermé — la règle « le plus spécifique gagne »
       s'applique jusqu'au channel. Cette réouverture n'a en revanche **aucune surface** : INC-085.
-- [ ] **Aucune surface d'administration, et aucune unité n'en porte — INC-086.** Il n'existe ni
-      écran de création, ni de renommage, ni de réordonnancement, ni d'archivage d'un channel. Le
-      CRUD est livré et prouvé **par l'API**, l'écriture étant réservée aux administrateurs. La
-      Definition of Done de cette unité — « unitaire, API, E2E, captures » — est satisfaite sans
-      lui. **Consigné, non résolu.**
+- [x] **~~Aucune surface d'administration, et aucune unité n'en porte.~~ `CRM-075` la livre —
+      INC-086 close.** L'écran de création, de renommage, de réordonnancement et d'archivage d'un
+      channel existe désormais (`webapp/src/app/AdministrationArborescence.tsx`), au-dessus du
+      même CRUD déjà prouvé par l'API. `docs/JOURNAL.md` décision 349.
 
 *DoD adaptée, écarts explicites — **révisée le 2026-08-09**.* La Definition of Done exige « E2E,
 captures ». Les deux étaient livrés sur les seuls états qu'un appelant **anonyme** obtient : track
@@ -5696,7 +5692,7 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[~]`
+### CRM-059 — Backfill, résilience, supervision `[x]`
 Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché
 conforme à la réalité.
@@ -5712,12 +5708,13 @@ Ce qui est **déjà mesuré ou tranché** :
   `sync_state` sous forme de **plage** `{uid_min, uid_max}` et non d'un seul UID. Un premier contact
   descend le **courrier du jour**, jamais la boîte entière. **48 assertions pytest vertes** — 39 sur
   le plan, 9 sur la relève, qui gagne ainsi son **premier test unitaire** —, non complaisantes :
-  cinq mutations font toutes rougir la suite. **Reste dû, et c'est le SEUL écart qui retient encore
-  cette unité en `[~]`** : `backfill_months` vaut `0` pour les trois comptes du seed (défaut
-  documenté, §20.6), si bien qu'aucune relève réelle n'a jamais déclenché la **passe historique**
-  (la seconde des deux passes du §20.6 bis.3, lot borné à 200). `e2e/mail/ingestion.spec.ts`
-  exerce la passe courante par une vraie relève, mais pas celle-là — il faudrait un compte seedé
-  avec `backfill_months > 0` et de l'historique réel dans sa boîte pour l'exercer de bout en bout.
+  cinq mutations font toutes rougir la suite. **La passe d'historique elle-même est désormais
+  exercée de bout en bout** — `e2e/mail/backfill.spec.ts`, `docs/JOURNAL.md` décision 352 : trois
+  messages déposés par `APPEND` IMAP daté (RFC 3501 §6.3.11, la commande que le protocole prévoit
+  pour porter une date d'origine — mesuré, Stalwart la restitue fidèlement) dans la boîte de Driss,
+  `backfill_months` porté à 6 par le vrai chemin d'écriture, puis un message du jour envoyé par
+  SMTP réel. Le premier contact est mesuré pour NE PAS descendre l'historique, et la relève
+  suivante le reprend intégralement — la relève rejouée confirme l'idempotence.
 - **`IDLE` est annoncé, et ne sera PAS employé ici** : une connexion permanente par compte est un
   état de plus à superviser, là où une scrutation déclarée est observable et rejouable. Le passage
   à `IDLE` demandera sa propre mesure.
@@ -5783,12 +5780,21 @@ Ce qui est **déjà mesuré ou tranché** :
   `mail-sync/tests` (**240 assertions**), pgTAP sur `0031`/`0032`/`0033` (**30 assertions**), API
   réutilisée de `CRM-052`, E2E `mail` (coupure SMTP réelle), E2E `ui` (écran d'état) — les cinq
   rejoués dans le même passage.
-- **CE QUI RETIENT ENCORE CETTE UNITÉ EN `[~]`, ET RIEN D'AUTRE** : le seul écart nommé est celui du
-  premier alinéa — la passe historique du backfill (§20.6 bis.3, second passage) n'a jamais été
-  exercée par une relève réelle, faute d'un compte seedé avec `backfill_months > 0` et
-  d'historique dans sa boîte. Ni le tableau §20.8, ni le harnais ne l'exigent littéralement ; il
-  est nommé ici parce que la Definition of Done initiale de l'unité — « import historique par
-  lots » — ne serait autrement prouvée qu'au niveau unitaire, jamais de bout en bout.
+- **Un défaut d'amorçage a été trouvé et corrigé en vérifiant cette unité** — `docs/JOURNAL.md`
+  décision 351. `mail-sync` ne déclarait `depends_on` ni sur `kong` ni sur `rest` : sur un
+  amorçage à froid, la boucle de veille pouvait démarrer avant que l'API ne réponde, et son
+  premier tour journalisait `veille_source_indisponible` en `WARNING` — la console cessait alors
+  d'être silencieuse (§20.10, `e2e/mail/mail-sync.spec.ts` S3), sans que le compte soit réellement
+  en panne. **Corrigé** dans `docker-compose.yml` : `mail-sync` attend désormais `kong` et `rest`
+  sains. Rejoué deux fois sur un amorçage à froid : **zéro** `WARNING`, **42 scénarios** `e2e:mail`
+  verts à chaque passage.
+- **DERNIER ÉCART SOLDÉ** : la passe historique du backfill (§20.6 bis.3, second passage) est
+  désormais exercée par une relève réelle — voir l'alinéa `UID SEARCH SINCE` ci-dessus et
+  `docs/JOURNAL.md` décision 352. Deux défauts de fuite entre preuves, révélés au passage par
+  cette vérification, sont consignés sans être résolus — INC-091 et INC-092
+  (`docs/INCONSISTENCY_REPORT.md`) : ni l'un ni l'autre ne porte sur un comportement de `CRM-059`
+  elle-même — la veille permanente qu'elle livre est correcte —, et leur correction touche des
+  preuves étrangères à cette unité.
 
 ---
 
@@ -5813,7 +5819,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
-| CRM-075 | **Administration des tracks et des channels** | `[ ]` |
+| CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[ ]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[ ]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |

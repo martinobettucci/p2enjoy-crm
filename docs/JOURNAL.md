@@ -11397,3 +11397,128 @@ trois dégradations volontaires restent toutes vertes après ce correctif.
 déjà livrée et `[~]` pour une autre raison (le backfill). Le correctif est nommé ici comme celui de
 la décision 347 l'a été pour `daily_quota` : trouvé en vérifiant `CRM-075`, corrigeant un défaut de
 `CRM-059`.
+
+### Décision 351 — `mail-sync` n'attendait ni `kong` ni `rest` : la veille démarrait avant l'API, et le journalisait
+
+**2026-08-12 — mesuré en rejouant `npm run e2e:mail` sur un amorçage à froid, pour vérifier `CRM-059`.**
+
+**Le fait.** `docker logs p2enjoy-mail-sync`, relu depuis le tout premier démarrage de la session,
+portait UNE ligne `WARNING` — `veille_source_indisponible` — au tout premier tour de veille,
+horodatée à la seconde même où « Application startup complete » s'affiche. `e2e/mail/mail-sync.spec.ts`
+S3 (« la console opérationnelle reste silencieuse ») l'a rendue ROUGE : sa preuve relit tout
+l'historique du conteneur, pas seulement le tour courant.
+
+**La cause, mesurée dans `docker-compose.yml`.** Le service `mail-sync` ne déclarait aucun
+`depends_on` : son conteneur démarre dès que l'image est prête, sans attendre `kong` (passerelle
+réseau) ni `rest` (PostgREST, qui attend lui-même `migrations-runner`). Sa boucle de veille
+(§20.10) s'amorce AVEC le processus (`veille_demarree` dans `__main__.py`) et son premier tour peut
+donc s'exécuter avant que l'API ne réponde. `lire_comptes_a_veiller` échoue alors, la panne est
+absorbée par construction (`except Exception` volontaire, décision 341) et journalisée en
+`WARNING` — comportement correct pour un compte réellement en panne, mais faux ici : ce n'est pas
+le compte qui est indisponible, c'est la pile qui n'a pas fini de démarrer.
+
+**La décision.** `mail-sync` déclare désormais `depends_on: kong: condition: service_healthy` ET
+`rest: condition: service_healthy` — les deux, et non un seul : `kong` conditionne l'accès réseau,
+`rest` conditionne la donnée (elle-même postée sur `migrations-runner`), et `kong` peut devenir
+sain avant que `rest` n'ait fini de migrer (mesuré : `kong` ne dépend que de `functions`). Même
+motif que `stalwart-init` dépendant de `stalwart` — attendre la santé réelle plutôt que de
+découvrir la panne au premier usage.
+
+**Preuve.** `./runDev.sh --stop` puis `./runDev.sh` à froid : `docker logs p2enjoy-mail-sync | grep
+WARNING` rend **zéro** ligne, contre une avant le correctif. `npm run e2e:mail` rejoué deux fois de
+suite sur cet amorçage : **42 scénarios verts** à chaque passage, `mail-sync.spec.ts` S3 compris.
+`scripts/verify-mail-resilience.sh` rejoué : **56 contrôles, aucune anomalie**.
+
+**Ce que cette décision ne fait pas.** Elle ne change aucun comportement de la veille elle-même —
+seul l'ORDRE de démarrage des conteneurs change. Elle n'appartient à aucune unité en cours : trouvée
+en vérifiant `CRM-059`, comme les décisions 347 et 350 avant elle.
+
+### Décision 352 — Le dernier écart de `CRM-059` : le premier contact ne descend jamais l'historique, prouvé par un `APPEND` daté
+
+**2026-08-12 — même session que les décisions 350 et 351.**
+
+**Le point de départ.** `docs/BACKLOG.md` ne retenait plus qu'un seul écart sur `CRM-059` : la
+passe d'historique du backfill (§20.6 bis.3, second passage) n'avait jamais été exercée par une
+relève réelle, faute d'un compte seedé avec `backfill_months > 0` et d'historique réel dans sa
+boîte. `date.today()` (`mail_sync/ingestion.py`) n'étant pas injectable, la seule façon de dater cet
+historique sans attendre un vrai jour de calendrier est de le déposer par `APPEND` IMAP — la
+commande que le protocole prévoit précisément pour porter une date d'origine (RFC 3501 §6.3.11),
+celle qu'un outil de migration de boîte emploierait. Mesuré à la main avant d'écrire la preuve :
+Stalwart restitue fidèlement la date fournie à `FETCH INTERNALDATE`, et `SEARCH SINCE` la respecte
+— un message déposé aujourd'hui mais daté de 90 jours est correctement exclu d'une recherche
+« depuis aujourd'hui ».
+
+**La preuve.** `e2e/mail/backfill.spec.ts`, nouveau fichier : trois messages d'historique déposés
+par `APPEND` daté (90 jours) dans la boîte de Driss (`bizdev@p2enjoy.test`, seed `CRM-052`),
+`backfill_months` porté à 6 par le vrai chemin d'écriture (`upsert_mail_inbound_account`), puis un
+message du jour envoyé par SMTP réel. Le premier contact est mesuré pour NE PAS descendre
+l'historique — `messagesVus` ne le contient pas —, et la relève suivante le reprend intégralement.
+Un troisième appel confirme l'idempotence (`messages_new: 0`).
+
+**Deux défauts d'isolement trouvés en rendant la preuve rejouable, et corrigés dans le même
+fichier.** Un premier passage réussissait une fois, puis échouait au rejeu : `sync_state` de la
+boîte de Driss n'était restauré qu'à SA valeur lue en début de scénario, alors que la veille de
+`CRM-059` (décision 341) le fait progresser en tâche de fond entre deux exécutions — capturer puis
+« restaurer » une valeur déjà périmée n'est pas une restauration. Un second passage a révélé que la
+boîte de Driss n'est pas exclusive à ce scénario : `e2e/mail/resilience.spec.ts` lui adresse
+RÉELLEMENT des envois de démonstration sans jamais retirer le message IMAP livré (voir INC-091,
+ouverte dans le même passage) — un reliquat plus ancien que les messages de cette preuve faussait
+alors le premier contact. La correction retenue force `sync_state` ET `INBOX` à vierge EN ENTRÉE ET
+EN SORTIE du scénario, plutôt que de faire confiance à un état hérité : rejoué cinq fois de suite,
+dont deux fois au sein de la suite complète `npm run e2e:mail` (42 scénarios verts à chaque
+passage), le résultat est stable.
+
+**Fermeture.** `docs/SPEC-mail-subsystem.md` §20.8 gagne une ligne de preuve pour ce scénario.
+`docs/BACKLOG.md` retire le dernier écart nommé de `CRM-059`, qui passe `[x]`.
+
+### Décision 353 — INC-091 : la veille permanente de `CRM-059` révèle une fuite dormante dans deux preuves antérieures
+
+**2026-08-12 — trouvée en rejouant `npm run test:sql` pendant la vérification de la décision 352.**
+
+**Le fait.** `supabase/tests/0029_inbox_globale.test.sql`, assertion 9 — une garantie RLS figée à
+dessein (§18.1, « un membre ordinaire ne voit AUCUN non classé ») — a rendu `have: 14` au lieu de
+`want: 0`. Dix-neuf lignes `mail_messages` non classées, au-delà des deux seules du seed, portaient
+des sujets « Coupure … » et « Orphelin … » (`e2e/mail/resilience.spec.ts`) et « Preuve CRM-050 … »
+(`e2e/mail/infrastructure.spec.ts`).
+
+**La cause.** Les deux fichiers adressent réellement leurs messages à une boîte SEEDÉE et
+RLS-visible (celle de Driss, ou la boîte système) sans jamais relever ce compte eux-mêmes ; le
+message reste alors inerte dans la boîte IMAP, invisible de personne — jusqu'à ce que la boucle de
+veille de `CRM-059` (décision 341), qui relève désormais TOUS les comptes en continu, finisse par
+l'ingérer, bien après la fin du scénario qui l'a émis. `CRM-059` ne fabrique aucune trace ; il
+révèle une fuite qui dormait dans deux preuves plus anciennes, inoffensive tant que rien ne les
+relevait jamais.
+
+**La décision.** Consignée dans `docs/INCONSISTENCY_REPORT.md`, INC-091 : trois options possibles
+(purger la boîte dans chaque `finally`, comme `e2e/mail/ingestion.spec.ts` le fait déjà ; changer
+de destinataire pour une adresse hors appartenance ; ou faire porter `0029` sur ses seules lignes),
+aucune n'appartenant à l'agent — corriger deux preuves étrangères à `CRM-059` dépasse la tâche
+autorisée. La base de développement de cette session a été ramenée à l'état attendu par un ménage
+direct, documenté dans l'entrée, pour que les preuves de cette exécution restent probantes ;
+aucun fichier de preuve n'a été modifié.
+
+**Ce que cette décision ne fait pas.** Elle ne corrige ni `resilience.spec.ts` ni
+`infrastructure.spec.ts`. Elle nomme l'écart plutôt que de le résoudre en silence — `CLAUDE.md` §1.
+
+### Décision 354 — INC-092 : même famille qu'INC-091, cette fois sur un journal plutôt qu'une donnée
+
+**2026-08-12 — trouvée en rejouant `npm run e2e:mail` plusieurs fois de suite pour confirmer la
+décision 351.**
+
+**Le fait.** Sur un rejeu parmi plusieurs, `e2e/mail/mail-sync.spec.ts` S3 (« la console reste
+silencieuse ») a rougi sur `veille_compte_echoue` — pas `veille_source_indisponible` cette fois : un
+échec RÉEL et ATTENDU, provoqué par `e2e/mail/comptes-entrants.spec.ts` qui positionne
+délibérément un mot de passe faux sur le compte entrant de Driss le temps de prouver `auth_failed`
+(§13.7). La veille (§20.10), qui relève désormais ce compte en continu, l'a rencontré pendant cette
+fenêtre et l'a journalisé comme prévu — comportement correct du service, que S3 ne sait pas
+distinguer d'une anomalie.
+
+**La décision.** Consignée dans `docs/INCONSISTENCY_REPORT.md`, INC-092, plutôt que corrigée : elle
+touche deux fichiers de preuve étrangers au dernier écart de `CRM-059`, et la question de fond
+— comment une veille permanente coexiste avec des preuves qui provoquent une panne délibérée —
+rejoint celle d'INC-091. Non isolé, `mail-sync.spec.ts` seul reste vert à chaque rejeu ; c'est la
+suite complète, avec sa fenêtre de course, qui rougit parfois.
+
+**Ce que cette décision ne fait pas.** Elle ne modifie aucun des deux fichiers. `CRM-059` elle-même
+reste `[x]` : ni la veille ni son harnais dédié (`scripts/verify-mail-resilience.sh`, rejoué vert)
+ne sont en cause.
