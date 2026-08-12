@@ -52,12 +52,23 @@ test.describe('coquille', () => {
 		for (const [libelle, etat] of [
 			['Inbox', 'etat-refus'],
 			['Ma journée', 'etat-vide'],
-			['Réglages', 'etat-vide'],
 		] as const) {
 			await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle).click()
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText(libelle)
 			await expect(page.getByTestId(etat).first()).toBeVisible()
 		}
+
+		// RÉVISÉ PAR `CRM-075` : « Réglages » a cessé d'être un état vide le jour où
+		// l'administration de l'arborescence lui a donné une première section — `/reglages` est
+		// désormais l'INDEX de ces sections, pas une page sans contenu
+		// (docs/SPEC-administration-arborescence.md §3.1). L'assertion périmée n'avait jamais pu
+		// être rejouée contre la vraie pile depuis ce changement (docs/JOURNAL.md décision 343) ;
+		// mesurée ici pour la première fois, elle est corrigée plutôt que contournée.
+		await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle('Réglages').click()
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Réglages')
+		await expect(page.getByRole('heading', { name: 'Sections de réglages' })).toBeVisible()
+		await expect(page.getByRole('link', { name: /Arborescence : tracks et channels/ })).toBeVisible()
+		await expect(page.getByTestId('etat-vide')).toHaveCount(0)
 		await capturer(page, 'route-reglages-1440')
 
 		// LE REFUS DE L'INBOX EST CONSOMMÉ EXPLICITEMENT : PostgREST rend `401` à la clé anonyme,

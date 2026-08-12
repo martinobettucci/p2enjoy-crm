@@ -201,15 +201,26 @@ class PostgrestClient:
         une redondance : la décision doit rester vérifiable **sans base**, et un `Protocol` peut
         être alimenté par une source qui ne trie pas.
 
-        `password_secret_id` n'est pas lue pour sa valeur — un identifiant de secret n'a rien à
-        faire dans ce service — mais pour sa seule PRÉSENCE : un compte sans secret ne peut pas
-        être relevé, et la route `poll` rend déjà `409` dans ce cas.
+        `secret_id` n'est pas lue pour sa valeur — un identifiant de secret n'a rien à faire dans
+        ce service — mais pour sa seule PRÉSENCE : un compte sans secret ne peut pas être relevé,
+        et la route `poll` rend déjà `409` dans ce cas.
+
+        DÉFAUT RÉEL TROUVÉ EN EXÉCUTANT LA BOUCLE CONTRE LA VRAIE BASE, PAS EN LISANT LE CODE
+        (CLAUDE.md §1) : la colonne réelle de `mail_inbound_accounts` (migration `0024`) s'appelle
+        `secret_id`, jamais `password_secret_id` — un nom qui n'a jamais existé dans aucune
+        migration. PostgREST refusait donc CHAQUE tour avec `42703` (colonne inconnue), journalisé
+        en `veille_source_indisponible` : la boucle de veille livrée par `CRM-059` n'avait jamais
+        relevé un seul compte, `except Exception` (ci-dessus) absorbant l'échec sans jamais le
+        distinguer d'une base réellement injoignable. Les tests de `test_veille.py` ne l'attrapaient
+        pas : ils alimentent `SourceComptes` par un double qui n'interroge jamais PostgREST. C'est
+        la première fois que cette méthode s'exécute contre la vraie table (docs/JOURNAL.md
+        décision 343 : « aucune session précédente n'avait atteint ce point »).
         """
 
         _, corps = self._rest(
             "GET",
             "/rest/v1/mail_inbound_accounts"
-            "?select=id,last_sync_at,password_secret_id"
+            "?select=id,last_sync_at,secret_id"
             "&order=last_sync_at.asc.nullsfirst",
         )
         lignes = json.loads(corps) if corps else []
@@ -220,7 +231,7 @@ class PostgrestClient:
                 CompteAVeiller(
                     identifiant=str(ligne["id"]),
                     derniere_releve=_horodatage(brut),
-                    secret_present=ligne.get("password_secret_id") is not None,
+                    secret_present=ligne.get("secret_id") is not None,
                 )
             )
         return comptes

@@ -296,9 +296,11 @@ restaure et constate le retour au vert.
 
 ## 10. Limites connues
 
-1. **Aucune interface d'administration des tracks** : ni création, ni renommage, ni
-   réordonnancement, ni archivage depuis l'écran. Aucun écran d'administration ne porte ces gestes.
-   Le CRUD est prouvé par l'API, avec les jetons réels.
+1. ~~Aucune interface d'administration des tracks~~ — **livrée par `CRM-075`** (INC-086, arbitrage
+   du 2026-08-11, option 2) : « Réglages ▸ Arborescence » porte créer, renommer, réordonner,
+   archiver et désarchiver, prouvés au clavier et à la souris
+   (`docs/SPEC-administration-arborescence.md`). Cette limite est conservée barrée, comme trace de
+   ce qui a été vrai, plutôt que retirée en silence.
 2. **Aucun track visible dans l'interface**, pour la même raison : l'appelant est anonyme.
 3. **Les droits fins ne sont pas appliqués** (§5.3, INC-024) — `CRM-012`.
 4. **Le réordonnancement n'a pas de RPC dédiée** : réordonner, c'est écrire `position`. Une

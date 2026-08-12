@@ -11300,3 +11300,100 @@ les 502 scénarios de `npm run e2e:api`.
 produit — `CRM-075` ne livre aucune règle nouvelle (docs/SPEC-administration-arborescence.md §1), et
 ce défaut de preuve n'en est pas un du produit. Elle illustre `CLAUDE.md` §1 (« ne pas considérer une
 hypothèse comme un fait vérifié ») sur un cas concret plutôt que de le citer en principe.
+
+### Décision 349 — `CRM-075` ferme sa Definition of Done, et deux défauts réels le font au passage
+
+**2026-08-12 — la pile est restée debout depuis la décision 348, sur la même session.**
+
+**Le fait.** Le seul écart nommé de `CRM-075` était les preuves qui exigent la pile de
+développement : `e2e/ui/administration-arborescence.spec.ts`, les captures aux quatre paliers et
+`scripts/verify-administration-arborescence.sh`. La pile étant enfin debout (décision 343), les
+trois sont écrits et rejoués dans ce même passage : **8 scénarios UI verts** — deux parcours
+complets à la souris (track, puis channel), deux au clavier, quatre paliers — puis **27 contrôles
+verts** au harnais dédié, non complaisant sur trois dégradations réelles.
+
+**Premier défaut, trouvé en OBSERVANT LA CAPTURE À 390 PX, pas en lisant un test (`CLAUDE.md` §16).**
+Le groupe de commandes d'une ligne au nom long (« Formation ») débordait de la largeur de la liste
+des tracks, et le bouton « Archiver » disparaissait au bord — sans qu'aucun dégradé ne signale qu'il
+y avait plus à voir. La cause : `<main>` (`AppShell.tsx`) porte son propre `overflow-x-auto`, mais
+SANS la classe `.indique-debordement-x` que `docs/DESIGN_SYSTEM.md` §12.6 impose à tout conteneur
+dans ce cas — la décision qui a posé cette règle, en 2026-08-04, portait sur la barre d'onglets, et
+n'avait jamais été rejouée sur cette surface faute de l'avoir eue sous les yeux. **Corrigé** : les
+deux listes (tracks, channels de `AdministrationArborescence.tsx`) sont enveloppées dans un
+conteneur dédié qui porte cette classe — le même patron que la barre d'onglets, le board, la vue
+liste et le tableau de `CRM-059`, appliqué là où il manquait plutôt qu'inventé.
+
+**Deuxième défaut, une preuve UI jamais rejouée depuis qu'elle a cessé d'être vraie.**
+`e2e/ui/coquille.spec.ts` et `e2e/ui/manuel.spec.ts` attendaient encore, pour `/reglages`, l'état
+vide de `CRM-007` — remplacé par l'index des sections que `CRM-075` a livré. Aucune session
+précédente n'avait pu rejouer `npm run e2e:ui` contre la vraie pile depuis ce changement (décision
+343 : « toujours sans pile locale »), donc personne n'avait pu constater que ces deux fichiers
+avaient dérivé. Corrigés pour vérifier le contenu réel de l'index plutôt que contournés ;
+`docs/manual.md` §5 gagne la phrase qui manquait sur cet index, pour que le troisième document —
+le manuel — cesse lui aussi de promettre une phrase fausse.
+
+**Troisième défaut, trouvé au passage sans le chercher.** `e2e/ui/etat-messagerie.spec.ts`
+(`CRM-059`) recopiait l'identifiant du compte mail de Driss d'une exécution antérieure du seed.
+`mail_inbound_accounts.id` est un `gen_random_uuid()` sans littéral stable (contrairement aux
+tracks et channels du seed, préfixés `5eed0000-…`) : à la première réapplication réelle du seed
+pendant cette session, le test a échoué — le `PATCH` visait une ligne qui n'existe plus, et
+PostgREST l'a rendu comme « zéro ligne », pas comme une erreur. Corrigé pour filtrer par `label`,
+qui est un littéral du seed (`docs/SPEC-seed.md` §2.17) et ne change pas d'une exécution à l'autre.
+
+**Ce que cette décision ne fait pas.** Elle ne livre aucune règle nouvelle — les trois défauts sont
+des corrections de preuve ou de présentation, jamais d'autorisation. Elle ne réexécute pas les
+harnais de `CRM-020`/`CRM-021` (`verify-tracks.sh`, `verify-channels.sh`), déjà verts et hors du
+périmètre de cette unité (`docs/SPEC-administration-arborescence.md` §1).
+
+**Fermeture.** `docs/SPEC-tracks.md` §10 et `docs/SPEC-channels.md` §10 portent désormais leur
+limite barrée avec renvoi vers `CRM-075`, plutôt qu'effacée en silence — même convention que la
+limite déjà levée de `CRM-033`. INC-086 était close par arbitrage depuis le 2026-08-11 ; c'est
+maintenant la livraison qui la solde, comme l'entrée l'annonçait. `CRM-075` passe `[x]`.
+
+### Décision 350 — La boucle de veille de `CRM-059` n'avait jamais relevé un seul compte : `secret_id`, pas `password_secret_id`
+
+**2026-08-12 — mesuré en surveillant les journaux de `mail-sync` pendant la vérification de `CRM-075`.**
+
+**Le fait.** `docker logs p2enjoy-mail-sync` journalisait `veille_source_indisponible` (WARNING) à
+CHAQUE tour, depuis le tout premier démarrage de cette session. `executer_un_tour` (`veille.py`)
+absorbe cette panne par construction (§20.10.3, `except Exception` large et volontaire) : elle
+n'arrête jamais le service, et rien dans les preuves existantes ne la distingue d'une base
+réellement injoignable.
+
+**La cause, mesurée et non supposée (`CLAUDE.md` §1).** Un appel manuel à la même requête que
+`PostgrestClient.lire_comptes_a_veiller()` (`postgrest.py`) rend `{"code":"42703", "message":
+"column mail_inbound_accounts.password_secret_id does not exist"}`. La colonne réelle, posée par la
+migration `0024_ingestion_messages.sql`, s'appelle `secret_id` — `password_secret_id` n'a jamais
+existé dans aucune migration. Chaque tour de veille échouait donc à sa toute première ligne, depuis
+la livraison de `CRM-059` : la boucle promise par la décision 341 (« la variable documentée que rien
+ne lit, la boucle de veille la prend ») n'avait, en réalité, RELEVÉ AUCUN COMPTE, sur aucune
+exécution.
+
+**Pourquoi aucun test ne l'attrapait.** `mail-sync/tests/test_veille.py` alimente
+`executer_un_tour` par un double de `SourceComptes` qui n'appelle jamais `PostgrestClient` — il
+éprouve la DÉCISION de la veille (quel compte, dans quel ordre, comment absorber une panne), jamais
+sa SOURCE réelle. Aucun test n'exerçait `lire_comptes_a_veiller()` contre une base, réelle ou
+simulée. C'est la première fois que cette méthode s'exécute contre la vraie table
+(docs/JOURNAL.md décision 343 : « aucune session précédente n'avait atteint ce point »), et c'est
+cette première exécution qui révèle le défaut.
+
+**La décision.** `postgrest.py` est corrigé : `secret_id` remplace `password_secret_id`, dans la
+requête et dans la lecture du corps. `mail-sync/tests/test_postgrest.py` est créé — il n'existait
+aucun fichier de ce nom — et intercepte l'appel HTTP réel (`urllib.request.urlopen` remplacé par un
+double) pour fixer la colonne interrogée et la traduction de sa présence en `secret_present`. La
+mutation inverse (réintroduire `password_secret_id`) fait rougir le nouveau test avant d'être
+restaurée — non-complaisance mesurée, pas seulement énoncée.
+
+**Preuve.** Avant correction : `veille_source_indisponible` à chaque tour, `e2e/mail/mail-sync.spec.ts`
+(S3, console silencieuse) rouge sur un `WARNING` inattendu. Après correction et reconstruction de
+l'image : `veille_tour_termine` sans avertissement, **242 assertions pytest** (240 + 2 nouvelles),
+**41 scénarios `e2e:mail`** verts sur un conteneur reconstruit à neuf.
+
+**Non-régression confirmée.** `scripts/verify-mail-resilience.sh`, rejoué dans la foulée : **56
+contrôles, aucune anomalie** — les six preuves du §20.8, pgTAP, pytest (**242** assertions) et les
+trois dégradations volontaires restent toutes vertes après ce correctif.
+
+**Ce que cette décision ne fait pas.** Elle n'appartient à aucune unité en cours — `CRM-059` est
+déjà livrée et `[~]` pour une autre raison (le backfill). Le correctif est nommé ici comme celui de
+la décision 347 l'a été pour `daily_quota` : trouvé en vérifiant `CRM-075`, corrigeant un défaut de
+`CRM-059`.

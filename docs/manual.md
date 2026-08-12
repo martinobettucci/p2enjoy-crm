@@ -55,7 +55,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 17 | Inviter et gérer les membres | `CRM-070` | À livrer. **L'invitation est aujourd'hui une opération d'exploitation, pas un parcours produit** : un compte est créé par un **opérateur** disposant de la clé de service, hors de l'interface. Aucun écran n'existe, et aucun n'est promis avant `CRM-070`, à laquelle l'arbitrage du responsable rattache ce parcours ([`docs/JOURNAL.md`](JOURNAL.md), décision 256, INC-015) |
-| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075` | **Livré avec son écran, non encore vérifié visuellement** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive et désarchive un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression n'existe pas** : archiver masque et reste réversible. Ce qui manque est la preuve de bout en bout et les captures, qui exigent la pile de développement |
+| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive et désarchive un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression n'existe pas** : archiver masque et reste réversible |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
@@ -905,6 +905,12 @@ tout seul.
 *Livré par `CRM-075` ; les règles d'accès sont celles de `CRM-020` et `CRM-021`, inchangées.*
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ».
+
+**L'index.** Ouvrir « Réglages » affiche d'abord un INDEX des sections de réglages, sous le titre
+« Sections de réglages » — « Arborescence : tracks et channels » en est la première entrée. Ce
+n'est plus, depuis `CRM-075`, la page sans contenu qu'elle a été : chaque nouvelle section de
+réglages (permissions, workflows) y ajoutera sa propre entrée plutôt que de déplacer une adresse
+déjà partagée.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Les autres membres
 voient l'arborescence — ils ont le droit de la lire — et leurs modifications sont refusées par le

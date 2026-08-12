@@ -673,13 +673,25 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 		})()
 	}, [client, inclureArchives, tentative])
 
-	const rechargerChannels = useCallback(
-		async (idTrack: string) => {
+	/**
+	 * Recharge les channels d'UN track avec le filtre d'archives PASSÉ EN PARAMÈTRE, plutôt que lu
+	 * depuis l'état `inclureArchives` — nécessaire pour que le bascule de la case « Afficher les
+	 * archivés » (§6.4) puisse recharger un track déjà déplié avec la valeur qu'il vient de choisir,
+	 * sans attendre le rendu suivant : `setInclureArchives` est asynchrone, et un appel qui lirait
+	 * l'état capturerait encore l'ancienne valeur au moment où il s'exécute.
+	 */
+	const rechargerChannelsAvec = useCallback(
+		async (idTrack: string, inclure: boolean) => {
 			if (client === null) return
-			const lus = await lireChannelsAdministrables(client, idTrack, inclureArchives)
+			const lus = await lireChannelsAdministrables(client, idTrack, inclure)
 			setChannels((precedents) => ({ ...precedents, [idTrack]: lus }))
 		},
-		[client, inclureArchives],
+		[client],
+	)
+
+	const rechargerChannels = useCallback(
+		(idTrack: string) => rechargerChannelsAvec(idTrack, inclureArchives),
+		[rechargerChannelsAvec, inclureArchives],
 	)
 
 	const basculerDepli = useCallback(
@@ -693,6 +705,29 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 			})
 		},
 		[rechargerChannels],
+	)
+
+	/**
+	 * Bascule la case « Afficher les archivés » ET recharge les channels de tout track déjà déplié
+	 * avec la nouvelle valeur.
+	 *
+	 * DÉFAUT RÉEL TROUVÉ PAR LA PREUVE E2E, PAS À LA LECTURE : sans ce geste, un channel archivé
+	 * pendant qu'un track est ouvert disparaissait de la liste chargée en mémoire — filtrée par
+	 * `lireChannelsAdministrables` au moment de l'archivage, qui relit avec le filtre ALORS actif
+	 * (§9, dernière règle) —, et cocher la case ensuite ne rechargeait QUE la liste des tracks : rien
+	 * ne reliait le bascule de la case aux channels déjà en mémoire. Un utilisateur qui archivait un
+	 * channel puis cochait la case pour le retrouver ne le voyait jamais, exactement l'erreur
+	 * masquée que `CLAUDE.md` §18 proscrit.
+	 */
+	const basculerAfficherArchives = useCallback(
+		(inclure: boolean) => {
+			setInclureArchives(inclure)
+			for (const idTrack of deplies) {
+				setChannels((etat) => ({ ...etat, [idTrack]: enChargement() }))
+				void rechargerChannelsAvec(idTrack, inclure)
+			}
+		},
+		[deplies, rechargerChannelsAvec],
 	)
 
 	/** Ferme le formulaire, oublie le refus, et relit depuis le serveur (§9, dernière règle). */
@@ -802,7 +837,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 					<input
 						type="checkbox"
 						checked={inclureArchives}
-						onChange={(evenement) => setInclureArchives(evenement.target.checked)}
+						onChange={(evenement) => basculerAfficherArchives(evenement.target.checked)}
 						className="size-6 rounded-sm border border-border"
 					/>
 					{t('admin.tree.showArchived')}
@@ -852,7 +887,16 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 			{liste.length === 0 ? (
 				<EtatVide titre={t('admin.tree.empty.title')} corps={t('admin.tree.empty.body')} />
 			) : (
-				<ul className="flex flex-col rounded-lg border border-border bg-surface">
+				// DÉFAUT RÉEL TROUVÉ EN REGARDANT UNE CAPTURE À 390 PX (CLAUDE.md §16), PAS EN LISANT
+				// UN TEST — même mode de défaillance que la décision `docs/DESIGN_SYSTEM.md` §12.6 :
+				// le groupe de commandes d'une ligne au nom long (« Formation ») déborde de la
+				// largeur de la liste, et `<main>` (`AppShell.tsx`) porte son propre `overflow-x-auto`
+				// SANS l'indication — le bouton « Archiver » disparaissait au bord, sans qu'aucun
+				// dégradé ne signale qu'il y avait plus à voir. Le conteneur ci-dessous reprend
+				// exactement le patron déjà posé pour la barre d'onglets, le board, la vue liste et
+				// le tableau de `CRM-059`.
+				<div className="overflow-x-auto indique-debordement-x">
+					<ul className="flex flex-col rounded-lg border border-border bg-surface min-w-max">
 					{liste.map((track) => {
 						const archive = track.archived_at !== null
 						const deplie = deplies.includes(track.id)
@@ -1057,7 +1101,8 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 							</li>
 						)
 					})}
-				</ul>
+					</ul>
+				</div>
 			)}
 		</section>
 	)
@@ -1120,7 +1165,10 @@ function ListeChannels({
 
 	return (
 		<div className="pl-12 pr-3 pb-3 flex flex-col gap-2">
-			<ul aria-label={t('admin.tree.channels.aria', { track: track.name })} className="flex flex-col">
+			{/* Même correctif que la liste des tracks ci-dessus : conteneur dédié plutôt que de
+			 * s'en remettre à l'`overflow-x-auto` non indiqué de `<main>` (§12.6). */}
+			<div className="overflow-x-auto indique-debordement-x">
+			<ul aria-label={t('admin.tree.channels.aria', { track: track.name })} className="flex flex-col min-w-max">
 				{liste.length === 0 ? (
 					<li className="text-sm text-text-3 py-2">{t('admin.tree.channels.empty')}</li>
 				) : null}
@@ -1174,6 +1222,7 @@ function ListeChannels({
 					)
 				})}
 			</ul>
+			</div>
 
 			{ouverture.type === 'creation-channel' && ouverture.idTrack === track.id ? (
 				<FormulaireChannel

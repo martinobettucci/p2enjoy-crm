@@ -173,8 +173,47 @@ d'exécuter le code attendu.
     décision 348).
   - Preuves : **16 scénarios verts**, rejoués sans régression sur les **502 scénarios** de
     `npm run e2e:api`.
-  - **Toujours non exécuté, et `CRM-075` reste `[~]`** : preuve E2E clavier et souris, captures aux
-    quatre paliers, harnais `scripts/verify-administration-arborescence.sh`, fermeture d'INC-086.
+
+- **`CRM-075` ferme sa Definition of Done — l'écran est prouvé au clavier et à la souris.**
+  `e2e/ui/administration-arborescence.spec.ts` : les cinq gestes — créer, renommer, réordonner,
+  archiver, désarchiver — pour un track puis pour un channel, une fois à la souris et une fois
+  entièrement au clavier (focus atteint par `Tab`, jamais par `focus()`). **8 scénarios verts**,
+  captures aux quatre paliers dans `docs/captures/CRM-075/`, rejoués sans régression sur les
+  **181 scénarios** de `npm run e2e:ui`.
+  - **Un défaut réel trouvé en observant la capture à 390 px, pas en lisant un test**
+    (`CLAUDE.md` §16) : le groupe de commandes d'une ligne au nom long débordait de la liste, et
+    `<main>` (`AppShell.tsx`) porte son propre `overflow-x-auto` **sans** l'indication de
+    débordement que `docs/DESIGN_SYSTEM.md` §12.6 impose — le bouton « Archiver » disparaissait au
+    bord, sans aucun signal qu'il y avait plus à voir. Corrigé : les deux listes (tracks, channels)
+    portent désormais `.indique-debordement-x`, le même patron déjà employé par la barre d'onglets,
+    le board, la vue liste et le tableau de `CRM-059`.
+  - **Deux preuves transverses périmées depuis que `/reglages` a cessé d'être un état vide,
+    révélées ici pour la première fois** : `e2e/ui/coquille.spec.ts` et `e2e/ui/manuel.spec.ts`
+    n'avaient jamais pu être rejouées contre la vraie pile depuis ce changement. Corrigées ;
+    `docs/manual.md` §5 gagne la phrase qui manquait sur l'index des réglages.
+  - **Un troisième défaut, dans `e2e/ui/etat-messagerie.spec.ts` (`CRM-059`)** : l'identifiant du
+    compte mail de Driss y était recopié d'une exécution antérieure du seed, alors que
+    `mail_inbound_accounts.id` n'a aucun littéral stable. Corrigé pour filtrer par `label`.
+  - `scripts/verify-administration-arborescence.sh` est **LIVRÉ** — **27 contrôles, aucune
+    anomalie**, non complaisant (trois dégradations réelles font rougir la suite avant
+    restauration).
+  - INC-086 est soldée : `docs/SPEC-tracks.md` §10 et `docs/SPEC-channels.md` §10 portent leur
+    limite barrée avec renvoi vers cette unité. **`CRM-075` passe `[x]`.**
+
+- **`CRM-059` — la boucle de veille n'avait jamais relevé un seul compte, et le défaut est corrigé.**
+  `mail-sync/src/mail_sync/postgrest.py` interrogeait une colonne qui n'existe dans aucune
+  migration (`password_secret_id`) au lieu de la réelle (`secret_id`, migration `0024`) : chaque
+  tour de veille échouait dès sa première requête, absorbé silencieusement par la garde de
+  résilience du §20.10.3 et journalisé en `veille_source_indisponible`. **Trouvé en surveillant les
+  journaux du conteneur pendant la vérification de `CRM-075`** — la première fois que cette boucle
+  s'exécute contre la vraie base (`docs/JOURNAL.md` décision 343 : « aucune session précédente
+  n'avait atteint ce point »). Aucun test ne l'attrapait : `test_veille.py` alimente la décision par
+  un double qui n'appelle jamais `PostgrestClient`.
+  - Corrigé, et fixé par un nouveau fichier de preuve — `mail-sync/tests/test_postgrest.py`
+    (2 assertions) — qui intercepte l'appel HTTP réel plutôt que de le contourner par un double.
+  - Preuves : **242 assertions pytest** (240 + 2), **41 scénarios `e2e:mail`** verts sur un
+    conteneur reconstruit à neuf, `scripts/verify-mail-resilience.sh` rejoué sans régression
+    (**56 contrôles, aucune anomalie**). `docs/JOURNAL.md` décision 350.
 
 - **`CRM-059` — l'écran d'état de la messagerie lit les comptes et la file sortante.**
   `/reglages/messagerie` (`webapp/src/app/EtatMessagerie.tsx`), atteint depuis l'index des réglages,

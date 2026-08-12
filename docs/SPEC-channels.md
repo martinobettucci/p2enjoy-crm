@@ -473,8 +473,11 @@ constate le retour au vert.
    et `CRM-033`.~~ **Levée** : la clé étrangère composite est posée par `CRM-031`, la contrainte
    `NOT NULL` et la cohérence workflow ↔ track par `CRM-033`
    (`docs/SPEC-workflow-engine.md` §4.12).
-2. **Aucune interface d'administration des channels** : ni création, ni renommage, ni
-   réordonnancement, ni archivage depuis l'écran. Aucun écran d'administration ne porte ces gestes.
+2. ~~**Aucune interface d'administration des channels** : ni création, ni renommage, ni
+   réordonnancement, ni archivage depuis l'écran.~~ **Levée par `CRM-075`** (INC-086, arbitrage du
+   2026-08-11, option 2) : « Réglages ▸ Arborescence » porte les cinq gestes pour un channel comme
+   pour un track, plus le rattachement à son track et le choix de son workflow, prouvés au clavier
+   et à la souris (`docs/SPEC-administration-arborescence.md`).
 3. **Aucun channel visible dans l'interface**, pour la même raison : l'appelant est anonyme, et la
    route d'un track affiche donc son état « introuvable ».
 4. **Les droits fins sont appliqués depuis `CRM-012`** (§6.3) — INC-030 close. Ce qui reste dû

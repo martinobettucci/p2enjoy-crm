@@ -53,7 +53,8 @@ const LIBELLES = {
 	board: 'Aucun board à afficher',
 	refus: 'Accès refusé',
 	journee: 'Rien pour aujourd’hui',
-	reglages: 'Aucun réglage modifiable',
+	reglagesIndex: 'Sections de réglages',
+	reglagesArborescence: 'Arborescence : tracks et channels',
 	trackIntrouvable: 'Track introuvable',
 	cardIntrouvable: 'Card introuvable',
 	retour: "Revenir à l'accueil",
@@ -106,7 +107,6 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 
 	for (const [chemin, libelle, capture] of [
 		['/ma-journee', LIBELLES.journee, 'manuel-ma-journee-1440'],
-		['/reglages', LIBELLES.reglages, 'manuel-reglages-1440'],
 	] as const) {
 		test(`${chemin} rend l’état vide explicite que le manuel promet (§3.1)`, async ({ page }) => {
 			await page.setViewportSize({ width: 1440, height: 900 })
@@ -116,6 +116,23 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 			await capturer(page, capture, UNITE)
 		})
 	}
+
+	// RÉVISÉ PAR `CRM-075`, § 5 « L'index » : `/reglages` a cessé d'être un état vide le jour où
+	// l'administration de l'arborescence lui a donné une première section. L'assertion n'avait
+	// jamais pu être rejouée contre la vraie pile depuis ce changement (docs/JOURNAL.md décision
+	// 343) ; corrigée ici plutôt que contournée, pour un visiteur anonyme comme pour un membre —
+	// l'index ne lit aucune donnée protégée.
+	test('/reglages rend l’index des sections que le manuel promet (§5)', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await page.goto('/reglages')
+
+		await expect(page.getByRole('heading', { name: LIBELLES.reglagesIndex })).toBeVisible()
+		await expect(
+			page.getByRole('link', { name: new RegExp(LIBELLES.reglagesArborescence) }),
+		).toBeVisible()
+		await expect(etatVide(page)).toHaveCount(0)
+		await capturer(page, 'manuel-reglages-1440', UNITE)
+	})
 
 	test('un track du seed est « Track introuvable » pour un anonyme (§3.2 ter)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })

@@ -16,7 +16,19 @@ import { PALIERS, capturer } from './captures'
 const UNITE = 'CRM-059'
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
-const COMPTE_DRISS = 'fb0ae013-bf82-4d3c-a997-b1d8d21f0cfb'
+
+/**
+ * Le compte entrant de Driss est filtré par SON LABEL, jamais par un identifiant recopié.
+ *
+ * DÉFAUT RÉEL, MESURÉ EN REJOUANT CE FICHIER CONTRE UNE PILE FRAÎCHEMENT SEEDÉE (CLAUDE.md §1) :
+ * `supabase/seed/apply-seed.sh` crée les comptes entrants par `upsert_mail_inbound_account`, qui
+ * pose `id` à `gen_random_uuid()` — aucun littéral stable, contrairement aux tracks et channels du
+ * seed (préfixe `5eed0000-…`). Un identifiant recopié d'une exécution précédente du seed cesse donc
+ * de désigner quoi que ce soit à la suivante, et le `PATCH` ci-dessous devient silencieusement
+ * « zéro ligne » — ni un succès ni une erreur (§9 du même défaut que `CRM-075`). Le label, lui, est
+ * un littéral du seed (`docs/SPEC-seed.md` §2.17) : il ne change pas d'une exécution à l'autre.
+ */
+const LABEL_DRISS = 'Boîte de Driss Lemoine'
 
 async function connecter(page: Page, email: string): Promise<void> {
 	await page.goto('/connexion')
@@ -28,19 +40,23 @@ async function connecter(page: Page, email: string): Promise<void> {
 	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
 }
 
+function cheminCompteDriss(): string {
+	return `${URL_API}/rest/v1/mail_inbound_accounts?label=eq.${encodeURIComponent(LABEL_DRISS)}`
+}
+
 async function mettreDrissEnIncident(page: Page): Promise<void> {
-	const reponse = await page.request.patch(
-		`${URL_API}/rest/v1/mail_inbound_accounts?id=eq.${COMPTE_DRISS}`,
-		{
-			headers: { ...enTetesService(), Prefer: 'return=minimal' },
-			data: { status: 'error', last_error: 'auth_failed', last_sync_at: '2026-08-11T08:00:00Z' },
-		},
-	)
+	const reponse = await page.request.patch(cheminCompteDriss(), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { status: 'error', last_error: 'auth_failed', last_sync_at: '2026-08-11T08:00:00Z' },
+	})
 	expect([200, 204]).toContain(reponse.status())
+	// Le PATCH ci-dessus rend `200` avec un corps VIDE si le label ne désigne plus rien (§9) : une
+	// preuve qui l'ignorerait passerait au vert sur un incident qui n'a jamais été posé.
+	expect(await reponse.json(), `le compte « ${LABEL_DRISS} » doit exister dans le seed`).toHaveLength(1)
 }
 
 async function restaurerDriss(page: Page): Promise<void> {
-	await page.request.patch(`${URL_API}/rest/v1/mail_inbound_accounts?id=eq.${COMPTE_DRISS}`, {
+	await page.request.patch(cheminCompteDriss(), {
 		headers: { ...enTetesService(), Prefer: 'return=minimal' },
 		data: { status: 'pending', last_error: null, last_sync_at: null },
 	})

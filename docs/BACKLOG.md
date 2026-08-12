@@ -5877,7 +5877,7 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-075 — Administration des tracks et des channels `[ ]`
+### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
 332. Elle est le **préalable** de `CRM-076` : un workflow s'affecte à un channel, qui vit dans un
 track.*
@@ -5973,15 +5973,43 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
       `administration-arborescence.ts` classe à part de `forbidden` : l'écran affiche alors
       `admin.refus.sans-effet`, pas un message de droit refusé. Le fichier a été corrigé pour
       mesurer cette forme réelle plutôt que l'hypothèse initiale.
-- [ ] `e2e/ui/administration-arborescence.spec.ts` — les cinq gestes, track puis channel, clavier
-      **et** souris ; épilogue rendant le seed à son état initial.
-- [ ] Captures aux quatre paliers, observées.
-- [ ] `scripts/verify-administration-arborescence.sh` — rejeu complet et non-complaisance.
-- [x] `docs/manual.md` — chapitre 5, « Administrer l'arborescence », et l'entrée 18 du sommaire qui
-      cesse d'annoncer « à livrer ». Le chapitre nomme ce qui n'est pas encore prouvé.
-      `scripts/verify-manual.sh` n'a **pas** pu être rejoué : il exige la pile.
-- [ ] INC-086 : la limite « aucune surface d'administration » retirée de `docs/SPEC-tracks.md` §10.1
-      et `docs/SPEC-channels.md` §10.2 **le jour où l'écran est prouvé**, pas avant.
+- [x] `e2e/ui/administration-arborescence.spec.ts` — les cinq gestes, track puis channel, clavier
+      **et** souris ; épilogue rendant le seed à son état initial. **8 scénarios verts** : deux
+      parcours complets à la souris (track, puis channel), deux au clavier (focus atteint par
+      `Tab`, jamais par `focus()`), quatre paliers responsive. Rejoués sans régression sur les 181
+      scénarios de `npm run e2e:ui`.
+      **Un défaut réel trouvé en OBSERVANT LA CAPTURE à 390 px, pas en lisant un test** (CLAUDE.md
+      §16) : le groupe de commandes d'une ligne au nom long (« Formation ») débordait de la liste,
+      et `<main>` (`AppShell.tsx`) porte son propre `overflow-x-auto` **sans** l'indication du
+      débordement — le bouton « Archiver » disparaissait au bord, sans qu'aucun dégradé ne signale
+      qu'il y avait plus à voir. Même mode de défaillance que `docs/DESIGN_SYSTEM.md` §12.6, sur
+      une surface différente. **Corrigé** : les deux listes (tracks, channels) sont enveloppées
+      dans le conteneur `.indique-debordement-x` déjà partagé par la barre d'onglets, le board, la
+      vue liste et le tableau de `CRM-059` — aucune règle nouvelle, le patron existant appliqué là
+      où il manquait.
+      **Deux preuves transverses périmées, révélées ici pour la première fois** (`e2e/ui/coquille.spec.ts`,
+      `e2e/ui/manuel.spec.ts`) : elles attendaient encore l'état vide de `CRM-007` sur `/reglages`,
+      remplacé par l'index de cette unité. Aucune session précédente n'avait pu rejouer `e2e:ui`
+      contre la vraie pile depuis ce changement (`docs/JOURNAL.md` décision 343). Corrigées plutôt
+      que contournées ; `docs/manual.md` §5 gagne la phrase qui manquait sur l'index.
+      **Un troisième défaut, dans `e2e/ui/etat-messagerie.spec.ts` (`CRM-059`), trouvé au passage** :
+      l'identifiant du compte de Driss y était recopié d'une exécution antérieure du seed, alors que
+      `mail_inbound_accounts.id` est un `gen_random_uuid()` sans littéral stable — corrigé pour
+      filtrer par `label`, qui l'est.
+- [x] Captures aux quatre paliers, observées — `docs/captures/CRM-075/`.
+- [x] `scripts/verify-administration-arborescence.sh` — rejeu complet et non-complaisance. **27
+      contrôles, aucune anomalie** : traçabilité, captures, Vitest (lib et écran), API, UI (dont les
+      deux preuves transverses ci-dessus), puis trois dégradations réelles — garde du milieu strict
+      retirée, filtre des archivés retiré, code HTTP classé avant le code PostgreSQL — qui font
+      toutes rougir la suite avant restauration.
+- [x] `docs/manual.md` — chapitre 5, « Administrer l'arborescence », et l'entrée 18 du sommaire, qui
+      annonce désormais « Livré et vérifié ». `scripts/verify-manual.sh` reste à rejouer séparément
+      (harnais distinct, non exécuté dans ce passage).
+- [x] INC-086 : la limite « aucune surface d'administration » retirée de `docs/SPEC-tracks.md` §10
+      et `docs/SPEC-channels.md` §10, barrée avec renvoi vers cette unité plutôt qu'effacée en
+      silence — même convention que la limite déjà levée de `CRM-033` dans `SPEC-channels.md`.
+
+**TOUTES LES PREUVES DE LA DEFINITION OF DONE SONT VERTES. `CRM-075` PASSE `[x]`.**
 
 ### CRM-076 — Éditeur administrateur de workflows `[ ]`
 
