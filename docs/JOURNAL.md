@@ -11522,3 +11522,51 @@ suite complète, avec sa fenêtre de course, qui rougit parfois.
 **Ce que cette décision ne fait pas.** Elle ne modifie aucun des deux fichiers. `CRM-059` elle-même
 reste `[x]` : ni la veille ni son harnais dédié (`scripts/verify-mail-resilience.sh`, rejoué vert)
 ne sont en cause.
+
+### Décision 355 — INC-076 close : les trois preuves demandées par le constat du 2026-08-11 sont rejouées, vertes, sur une pile réelle
+
+**2026-08-12 — routine disposant enfin de la pile, reprenant l'entrée dans l'ordre fixé par la
+décision 336.**
+
+**Le point de départ.** Le constat statique du 2026-08-11 (`docs/INCONSISTENCY_REPORT.md`, INC-076)
+avait lu le commit `22996fd` (`CRM-022`, 2026-08-09) et conclu que `card_comments.author_id` porte
+désormais `ON DELETE SET NULL`, sans pouvoir le rejouer faute de pile. Il nommait trois preuves à
+exécuter avant de clore : la suite pgTAP `0023` (assertions 5, 6, 81 à 83), `scripts/verify-seed.sh`,
+et un véritable `DELETE /auth/v1/admin/users/<id>` sur un compte ayant commenté.
+
+**Les trois preuves, rejouées sur cette session :**
+
+- `npm run test:sql` — **33 fichiers, 1937 assertions, aucune anomalie**, dont
+  `supabase/tests/0023_identites_et_memberships_surs.test.sql`, **84 assertions**, qui couvre les
+  quatre citées.
+- `scripts/verify-seed.sh` — **55 contrôles, aucune anomalie**.
+- `DELETE /auth/v1/admin/users/5eed0000-0000-4000-8000-000000000012` (Driss Lemoine, auteur réel des
+  commentaires `d2` et `d4` du seed), à la clé de service, contre la pile réelle : **`HTTP 200`**, là
+  où le constat d'INC-076 mesurait `500` / `23503` avant `CRM-022`. Les deux commentaires
+  **survivent**, `author_id` devenu `null` sur les deux lignes ; le profil de Driss disparaît sans
+  laisser de ligne orpheline.
+
+**Le coût assumé, et sa restauration.** Le geste est réellement destructif : impossible à annuler
+par un simple rejeu du seed, qui **ne reconverge délibérément pas** le contenu ni l'auteur d'un
+commentaire existant (`supabase/seed/apply-seed.sh`, section « 8 quinquies », `resolution=ignore-
+duplicates` — un commentaire est une parole, non un paramètre, décision documentée dès `CRM-005`).
+Un rejeu du seed a bien recréé le compte de Driss au même identifiant fixe, mais `author_id` de `d2`
+et `d4` restait `null` — divergence mesurée, pas supposée. Une tentative de correction directe par
+`PATCH` a été refusée par le produit lui-même : `comment_immutable_column` sur `d2`
+(`CRM-013`, colonnes protégées), `comment_deleted` sur `d4` (un commentaire supprimé ne peut plus
+être ni modifié ni restauré) — la même garde qui protège un utilisateur réel protège aussi cette
+session contre sa propre preuve. Restauration menée par `./resetMe.sh --yes`, qui détruit le cluster
+et les volumes de la pile de développement puis rejoue seed et migrations à blanc : `scripts/verify-
+seed.sh` rejoué ensuite, **55/55**, `d2` de nouveau porté par Driss.
+
+**La décision.** INC-076 est **close** : les trois preuves demandées sont vertes, mesurées sur une
+pile réelle et non plus lues statiquement. `docs/INCONSISTENCY_REPORT.md` déplace l'entrée en
+« Clos » avec cette preuve, et l'ordre de la décision 336 (« INC-076, puis INC-085/INC-075, puis
+INC-072 ») perd son premier terme : **la prochaine exécution reprend à INC-085/INC-075**, comme le
+prévoyait déjà le constat du 2026-08-11.
+
+**Ce que cette décision ne fait pas.** Elle ne rouvre ni ne modifie `CRM-011` ni `CRM-043`, dont la
+Definition of Done citait déjà le comportement réel (`docs/BACKLOG.md`, entrée `CRM-011`, correction
+terminologique du 2026-08-11) ; elle ne fait que retirer la mention « la preuve n'a pas été rejouée
+depuis un poste disposant de la pile », désormais fausse. Elle ne touche à aucun fichier de code : le
+comportement était déjà correct depuis `CRM-022`, seule la preuve manquait.

@@ -15,6 +15,15 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **INC-076 close : suppression d'un compte auteur de commentaires, prouvée sur une pile réelle.**
+  Les trois preuves demandées par le constat statique du 2026-08-11 sont rejouées et vertes :
+  `npm run test:sql` (suite `0023`, **1937 assertions**, aucune anomalie), `scripts/verify-seed.sh`
+  (**55 contrôles**, aucune anomalie), et un véritable `DELETE /auth/v1/admin/users/<id>` sur le
+  compte de Driss Lemoine (auteur réel de deux commentaires du seed) — **`HTTP 200`**, les deux
+  commentaires survivant avec `author_id` devenu `null`. Aucun code modifié : le comportement était
+  déjà correct depuis `CRM-022` (2026-08-09), seule la preuve d'exécution manquait. `docs/JOURNAL.md`
+  décision 355 ; `docs/INCONSISTENCY_REPORT.md` INC-076 clôturée, l'ordre de la décision 336 reprend
+  désormais à INC-085/INC-075.
 - **`CRM-059` passe `[x]` : la passe d'historique du backfill est désormais prouvée de bout en
   bout.** Dernier écart nommé de l'unité — `e2e/mail/backfill.spec.ts` dépose de l'historique
   RÉEL dans une boîte seedée par `APPEND` IMAP daté (RFC 3501 §6.3.11), porte `backfill_months`

@@ -23,11 +23,13 @@ arbitrage — **INC-085** (qui recouvrait **INC-075**) et **INC-088** — sont t
 décisions **333** et **334**. **Aucune question n'est donc adressée au responsable dans ce
 registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en œuvre et une
 preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
-réels d'abord — **INC-076**, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
+réels d'abord — ~~INC-076~~, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
 ensuite. **INC-089**, ouverte le même jour, est la seule exception : elle est née de la persistance
 de ces décisions et appelle un arbitrage. **INC-090**, ouverte le même jour par la livraison de
 `CRM-075`, a été **tranchée dans la journée** (décision 339, option 1A) : le désarchivage fait partie
-de l'unité, et l'énoncé de `CRM-075` est corrigé pour le citer.
+de l'unité, et l'énoncé de `CRM-075` est corrigé pour le citer. **INC-076 est soldée le 2026-08-12**
+(décision 355) : les trois preuves demandées par son constat statique sont vertes sur une pile
+réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à INC-085/INC-075.**
 
 ---
 
@@ -862,7 +864,7 @@ track —, sans rien changer ni à la politique ni à la coquille (`docs/SPEC-se
 **Lié à :** INC-030 (close, dont la mesure de clôture est l'origine de ce point), INC-024, INC-021
 (aucun écran de connexion, donc aucun parcours réel pour l'observer), `docs/SPEC-permissions-rls.md`
 §3 ligne f, `docs/SPEC-seed.md` §9.7.
-### INC-076 — Supprimer un compte est devenu impossible dès qu'il a commenté, et trois preuves du seed le constatent sans le nommer
+### INC-076 — Supprimer un compte est devenu impossible dès qu'il a commenté, et trois preuves du seed le constatent sans le nommer — **CLOSE**
 
 **Nature :** régression de contrat entre deux unités, mesurée. **Antérieure à `CRM-045`**, relevée
 par son balayage de non-régression.
@@ -977,6 +979,17 @@ l'ordre qu'elle fixe (« INC-076, puis INC-085/INC-075, puis INC-072 ») perd al
 et l'exécution suivante devrait reprendre à INC-085/INC-075. Si l'un des trois échoue, ce constat
 est faux sur un point qui reste à identifier, et cette entrée doit rester ouverte avec la preuve de
 l'échec.
+
+**SOLDÉE LE 2026-08-12.** Les trois preuves ont été rejouées sur une pile réelle
+(`docs/JOURNAL.md` décision 355) : `npm run test:sql` — **1937 assertions, aucune anomalie**, dont
+les **84** de la suite `0023` ; `scripts/verify-seed.sh` — **55 contrôles, aucune anomalie** ;
+`DELETE /auth/v1/admin/users/5eed0000-0000-4000-8000-000000000012` (Driss Lemoine, auteur réel des
+commentaires `d2` et `d4` du seed) — **`HTTP 200`**, les deux commentaires survivant avec
+`author_id` devenu `null`. Le constat du 2026-08-11 est confirmé sur les trois points : rien n'était
+faux. La preuve elle-même a dû être restaurée par `./resetMe.sh --yes`, le seed ne reconvergeant
+délibérément pas le contenu d'un commentaire existant ; `scripts/verify-seed.sh` rejoué une seconde
+fois après restauration, de nouveau **55/55**. L'ordre de la décision 336 perd son premier terme :
+**la prochaine exécution reprend à INC-085/INC-075.**
 
 ---
 

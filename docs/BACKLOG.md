@@ -518,9 +518,11 @@ dans Inbucket ; captures observées.
       `CRM-022` (migration `0021_identites_et_memberships_surs.sql`, 2026-08-09), est un
       **détachement** — `card_comments.author_id` devient nullable et sa FK porte
       `ON DELETE SET NULL` — prouvé par les assertions 5, 6, 81 à 83 de
-      `supabase/tests/0023_identites_et_memberships_surs.test.sql`. Voir `docs/INCONSISTENCY_REPORT.md`
-      INC-076 pour ce que cette correction ne clôt pas : la preuve n'a pas été **rejouée** depuis un
-      poste disposant de la pile.
+      `supabase/tests/0023_identites_et_memberships_surs.test.sql`. **Rejouée sur une pile réelle le
+      2026-08-12** (`docs/JOURNAL.md` décision 355) : suite `0023` verte, `scripts/verify-seed.sh`
+      vert, et un véritable `DELETE /auth/v1/admin/users/<id>` sur le compte auteur de deux
+      commentaires du seed rend `200`, les deux commentaires survivant avec `author_id` devenu
+      `null`. `docs/INCONSISTENCY_REPORT.md` INC-076 est close.
 - [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-011/` — moniteur Inbucket
       montrant le trafic SMTP réel, email d'invitation et email de réinitialisation ouverts et lus.
       C'est la seule vérification visuelle que cette unité rend possible, et c'est celle que sa
@@ -4522,12 +4524,15 @@ prouvé hors interface avec les jetons réels des trois comptes.
 - [ ] **QUATRE DÉFAUTS DU BALAYAGE NE M'APPARTIENNENT PAS, ET AUCUN N'EST CORRIGÉ ICI.** Les
       corriger reviendrait à rouvrir trois unités pendant un passage consacré à une quatrième
       (`CLAUDE.md` §13). Chacun est mesuré, daté et nommé :
-      **(1) INC-076, la plus grave** — `card_comments.author_id` (`CRM-043`) n'a **aucune** action
+      **(1) ~~INC-076, la plus grave~~ — CLOSE depuis `CRM-022` (2026-08-09), preuve rejouée le
+      2026-08-12** — `card_comments.author_id` (`CRM-043`) n'a **aucune** action
       `ON DELETE`, là où les cinq autres clés vers `profiles` portent toutes `ON DELETE SET NULL`.
       Supprimer un compte qui a commenté rend `500` / `23503`. La Definition of Done de `CRM-011`
       affirme le contraire — « aucun profil orphelin (cascade) » —, et trois contrôles de
       `scripts/verify-seed.sh` échouent en le constatant sans le nommer. Un droit à l'effacement
-      que le schéma rend inexécutable (`CLAUDE.md` §11).
+      que le schéma rend inexécutable (`CLAUDE.md` §11). *Résolu par `CRM-022`, `author_id` nullable
+      avec `ON DELETE SET NULL` ; `docs/INCONSISTENCY_REPORT.md` INC-076 et `docs/JOURNAL.md`
+      décision 355 pour la preuve sur pile réelle.*
       **(2) `scripts/verify-commentaires.sh` est resté à `CRM-043`** : il cherche
       `PanneauCommentaires.tsx`, que `CRM-044` a **remplacé** par `PanneauTimeline.tsx`, et compte
       **438** tests unitaires là où `CRM-044` en a porté **467**. Quatre contrôles échouent, tous
