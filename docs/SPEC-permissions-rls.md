@@ -412,7 +412,9 @@ prédites.
 | a | `anon` lit `track_members` | `200` | `[]` — refus par zéro ligne, preuve n° 11 |
 | b | `admin` lit `track_members` | `200` | toutes les lignes du workspace |
 | c | `viewer` lit `track_members` | `200` | **ses propres lignes seulement** |
-| d | `viewer` lit un track sur lequel il porte `access = 'none'` | `200` | `[]` — **preuve n° 4** au niveau des tracks |
+| d | `viewer` lit un track sur lequel il porte `access = 'none'`, **et dont un channel lui est rouvert** | `200` | **la ligne** — transitivité du §3.3 bis, décision 333. Mesurait `[]` avant cet arbitrage : c'était INC-085 et INC-075 |
+| d' | `viewer` lit les **autres** channels de ce même track | `200` | `[]` — **preuve n° 4** : le track redevenu lisible n'ouvre rien de plus que le channel consenti |
+| d'' | `viewer` **écrit** sur ce même track | `200`/`204` | **aucune ligne touchée** — l'atteindre par un channel ne confère aucun droit d'écriture ; le refus d'un `UPDATE` filtre, il ne lève pas d'erreur (décision 106) |
 | e | `viewer` lit un channel sur lequel il porte `access = 'none'` | `200` | `[]` — **preuve n° 4** au niveau des channels |
 | f | `viewer` lit un channel rouvert par `channel_members.access = 'member'` sous un track fermé | `200` | la ligne — « le plus spécifique gagne » dans les deux sens |
 | g | `admin` porteur d'un `access = 'none'` lit ce même track | `200` | la ligne — un administrateur n'est jamais restreint |

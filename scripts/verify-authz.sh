@@ -423,6 +423,14 @@ fi
 #
 #     Les nombres attendus sont ceux du seed, et ils **discriminent** : le `viewer` est fermé sur
 #     un track par un droit fin, et cette fermeture se propage à ses channels et à ses cards.
+#
+#     RÉVISÉ PAR LA DÉCISION 333 (INC-085, INC-075). Le `viewer` attendait `3/4/8` — le track fermé
+#     lui étant invisible. Depuis l'arbitrage, un track est lisible dès qu'un de ses channels l'est
+#     (docs/SPEC-permissions-rls.md §3.3 bis) : il en voit donc `4`. Ce que ce triplet mesure y
+#     GAGNE en précision, et c'est pourquoi il n'est pas relâché — `4/4/8` dit que SEULS les tracks
+#     ont bougé : le `viewer` lit toujours 4 channels sur 6 et 8 cards sur 14. Un élargissement qui
+#     aurait déteint sur les channels ou les cards rendrait ce contrôle rouge, ce qui est
+#     exactement son office.
 
 MOT_DE_PASSE_SEED=SeedDev2026Local
 
@@ -452,7 +460,7 @@ compter() {
 # discriminer le viewer, qui n'en lit que huit, tandis que les deux rôles d'écriture lisent tout.
 for profil in "admin@p2enjoy.test:4/6/14" \
               "bizdev@p2enjoy.test:4/6/14" \
-              "viewer@p2enjoy.test:3/4/8"; do
+              "viewer@p2enjoy.test:4/4/8"; do
 	mail=${profil%%:*}
 	attendu=${profil#*:}
 	jeton=$(jeton_seed "$mail")

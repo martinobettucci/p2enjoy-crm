@@ -127,11 +127,20 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		})
 	}
 
-	test('le `viewer` seedé ne voit que trois tracks : son droit fin en masque un', async ({
+	test('le `viewer` seedé voit les quatre tracks : le quatrième par transitivité', async ({
 		request,
 	}) => {
-		// PREUVE DE REFUS N° 4 au niveau des tracks, sur les données **du seed** et non sur une
-		// fixture créée pour l'occasion : la restriction est permanente et opposable.
+		// RÉVISÉE PAR LA DÉCISION 333, ET NON SUPPRIMÉE. Cette preuve attendait TROIS tracks :
+		// « Conseil & IA » était masqué par `track_members.access = 'none'`, bien qu'un
+		// `channel_members.access = 'member'` rouvre son channel « Prospection » au même appelant.
+		// L'interface ne listant les channels qu'une fois un track ouvert, le droit accordé n'avait
+		// aucun chemin — INC-085 et INC-075. Depuis l'arbitrage, un track est lisible dès qu'un de
+		// ses channels l'est (docs/SPEC-permissions-rls.md §3.3 bis).
+		//
+		// Ce que cette preuve mesure encore, et qui est l'essentiel : la restriction n'a pas
+		// disparu, elle est devenue TRANSITIVE. Le track est rendu **uniquement** parce qu'un
+		// channel le rouvre — `scripts/verify-droits-fins.sh` et la suite pgTAP `0011` §6 bis
+		// prouvent qu'un track sans aucun channel lisible reste, lui, invisible.
 		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
 		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
 			headers: enTetesAuthentifies(jeton),
@@ -139,9 +148,20 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Track[]
-		expect(lignes.map((t) => t.slug)).toEqual(['studio-web', 'formation', TRACK_ARCHIVE])
-		// Le refus est **zéro ligne**, jamais une erreur (docs/SPEC-permissions-rls.md §7).
-		expect(lignes.map((t) => t.slug)).not.toContain('conseil-ia')
+		// Les quatre, dans l'ordre de `position` — c'est-à-dire exactement ce que voient
+		// l'administratrice et le `business_developer` ci-dessus. La différence entre les profils
+		// ne se lit plus au niveau des tracks, mais des channels.
+		expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE])
+
+		// LE DROIT FIN MORD TOUJOURS, et c'est là qu'il se mesure désormais : le track est rendu,
+		// mais il n'expose que le channel consenti. Le refus reste **zéro ligne**, jamais une
+		// erreur (docs/SPEC-permissions-rls.md §7).
+		const channels = await request.get(
+			`/rest/v1/channels?select=slug&track_id=eq.${TRACK_CONSEIL_ID}`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(channels.status()).toBe(200)
+		expect((await channels.json()) as { slug: string }[]).toEqual([{ slug: 'prospection' }])
 	})
 
 	test('l’administratrice porte le **même** droit fin, et voit pourtant les quatre', async ({

@@ -148,22 +148,64 @@ test.describe('D1 — lecture des droits fins (§4.2, lignes a, b, c)', () => {
 })
 
 test.describe('D2 — la lecture des tracks et des channels applique le droit fin (lignes d, e, f, g)', () => {
-	test('ligne d — le `viewer` ne voit pas le track sur lequel il porte `none`', async ({
+	test('ligne d — le `viewer` VOIT ce track, parce qu’un de ses channels lui est rouvert', async ({
 		request,
 	}) => {
-		// PREUVE DE REFUS N° 4, au niveau des tracks. La ligne existe — établi par la clé de
-		// service —, et l'appelant ne la voit pas.
+		// RÉVISÉE PAR LA DÉCISION 333, ET NON SUPPRIMÉE. Cette preuve attendait `[]` : le track
+		// portant `track_members.access = 'none'` restait invisible ALORS MÊME que son channel
+		// « Prospection » était rouvert au même appelant (ligne f, ci-dessous, toujours verte).
+		// L'interface ne listant les channels qu'une fois un track ouvert, le droit accordé
+		// n'avait aucun chemin — INC-085 et INC-075. La valeur attendue change parce que la RÈGLE
+		// a changé, pas parce que la preuve gênait : « le plus spécifique gagne » est désormais
+		// transitif (docs/SPEC-permissions-rls.md §3.3 bis).
 		const controle = await request.get(`/rest/v1/tracks?select=id&id=eq.${TRACK_CONSEIL}`, {
 			headers: enTetesService(),
 		})
 		expect((await controle.json()) as unknown[]).toHaveLength(1)
 
 		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
-		const reponse = await request.get(`/rest/v1/tracks?select=id&id=eq.${TRACK_CONSEIL}`, {
+		const reponse = await request.get(`/rest/v1/tracks?select=slug&id=eq.${TRACK_CONSEIL}`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as { slug: string }[]).toEqual([{ slug: 'conseil-ia' }])
+	})
+
+	test('ligne d’ — mais ce track ne lui ouvre AUCUN de ses autres channels', async ({
+		request,
+	}) => {
+		// PREUVE DE REFUS N° 4, DÉPLACÉE ET NON PERDUE. Elle se mesurait au niveau du track ; elle
+		// se mesure désormais là où elle reste vraie, et où elle est la plus utile : l'élargissement
+		// de la politique de `tracks` ne déteint pas sur celle des `channels`. Un track réapparu
+		// avec un seul onglet est une information exacte (§3.3 bis, deuxième tiret).
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const reponse = await request.get(
+			`/rest/v1/channels?select=slug&track_id=eq.${TRACK_CONSEIL}`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as { slug: string }[]).toEqual([{ slug: 'prospection' }])
+	})
+
+	test('ligne d’’ — et ne lui confère aucun droit d’écriture sur ce track', async ({
+		request,
+	}) => {
+		// DÉCISION 106 : le `USING` d'une politique `for update` FILTRE les lignes candidates. La
+		// commande réussit et n'en modifie aucune — aucune erreur n'est levée. Le refus se prouve
+		// donc en RELISANT, jamais par l'absence d'erreur. `Prefer: return=representation` rend le
+		// compte exact des lignes touchées, ce qu'un `204` ne distingue pas d'une modification.
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const reponse = await request.patch(`/rest/v1/tracks?id=eq.${TRACK_CONSEIL}`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: { name: 'Détourné' },
+		})
+		expect(reponse.status()).toBe(200)
 		expect(await reponse.json()).toEqual([])
+
+		const controle = await request.get(`/rest/v1/tracks?select=name&id=eq.${TRACK_CONSEIL}`, {
+			headers: enTetesService(),
+		})
+		expect((await controle.json()) as { name: string }[]).toEqual([{ name: 'Conseil & IA' }])
 	})
 
 	test('ligne e — et pas davantage les channels de ce track', async ({ request }) => {
@@ -296,11 +338,16 @@ test.describe('D3 — écriture des droits fins (§4.2, lignes h, i, j, j’)', 
 		)
 		expect((await controle.json()) as DroitFin[]).toEqual([{ access: 'none' }])
 
-		// Et l'effet du droit fin est toujours là.
-		const tracks = await request.get(`/rest/v1/tracks?select=id&id=eq.${TRACK_CONSEIL}`, {
-			headers: enTetesAuthentifies(jeton),
-		})
-		expect(await tracks.json()).toEqual([])
+		// Et l'effet du droit fin est toujours là. MESURÉ SUR LES CHANNELS DEPUIS LA DÉCISION 333 :
+		// le track lui-même est désormais visible par transitivité (ligne d), ce qui en fait un
+		// mauvais témoin de la restriction. Les channels de ce track qu'aucun droit fin ne rouvre,
+		// eux, restent invisibles — c'est là que le `none` mord encore, et c'est donc là qu'il se
+		// mesure.
+		const channelFerme = await request.get(
+			`/rest/v1/channels?select=id&id=eq.${CH_GRANDS_COMPTES}`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(await channelFerme.json()).toEqual([])
 	})
 })
 
