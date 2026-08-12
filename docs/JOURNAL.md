@@ -11846,3 +11846,59 @@ E2E d'API prouvant le refus pour un non-`admin`, et une preuve d'interface. **Ri
 qu'on ne peut ni appliquer ni éprouver localement contreviendrait à `CLAUDE.md` §24, qui exige
 qu'elle soit reproductible localement. La livraison attend donc que le registre d'images redevienne
 joignable.
+
+---
+
+## 2026-08-12 — Décision 359 : l'historique est soldé de ses trois derniers commits mal attribués
+
+### Décision 359 — Réécriture d'historique sur instruction explicite du responsable
+
+**Instruction.** Le responsable a demandé, en clair et pendant la session, de corriger l'historique
+et de tout ramener sur `main`. `CLAUDE.md` §13 réserve précisément la réécriture d'historique à ce
+cas : « un commit déjà poussé qui viole cette règle est corrigé par réécriture de l'historique, sur
+instruction explicite du responsable ». La condition est donc remplie, et elle ne l'était pas avant.
+
+**Mesure avant.** Sur les 52 commits de `main`, **trois** portaient `Claude <noreply@anthropic.com>`
+en auteur ET en committer, tous du 2026-08-11 :
+
+| Commit | Sujet |
+| --- | --- |
+| `199aa6f` | Corrige le cycle de dépendances qui empêchait tout amorçage à froid de la pile |
+| `109e4fa` | Reprend un rangement manqué à la relève suivante, dette de `CRM-056` |
+| `968ae8a` | Adapte la doublure de test du backfill à la reprise du rangement manqué |
+
+Ce sont les trois que la décision 344 avait constatés sans pouvoir les corriger, faute d'instruction.
+Aucun message de commit ne portait de trailer `Co-Authored-By`, de mention « Generated with » ni de
+signature d'outil : **la faute était entièrement dans l'identité**, vérifié par une recherche sur les
+corps de tous les commits.
+
+**Geste.** `git filter-branch --env-filter` sur `main`, réécrivant auteur et committer du seul motif
+`noreply@anthropic.com` vers `P2Enjoy <contact@p2enjoy.studio>`. Le filtre est conditionnel : il ne
+touche aucun commit déjà conforme. Un tag `sauvegarde-avant-reecriture` a été posé sur le sommet
+d'avant (`503fd32`) avant l'opération.
+
+**Vérifications, l'opération étant irréversible une fois poussée.**
+
+| Contrôle | Avant | Après |
+| --- | --- | --- |
+| Auteurs distincts sur `main` | 49 P2Enjoy + 3 Claude | **52 P2Enjoy, 0 autre** |
+| Committers distincts sur `main` | 49 P2Enjoy + 3 Claude | **52 P2Enjoy, 0 autre** |
+| Nombre de commits | 52 | **52** — aucun perdu, aucun ajouté |
+| Arbre du sommet | `503fd32^{tree}` | **identique**, comparé par `rev-parse` |
+| `git diff sauvegarde main` | — | **vide** |
+| Dates d'auteur des 3 commits | 21:31:43, 21:37:41, 21:39:56 | **inchangées à la seconde** |
+| Messages des 3 commits | — | **inchangés au caractère** |
+
+Seule l'identité a bougé. Les empreintes changent à partir du plus ancien commit réécrit, ce qui est
+la conséquence inévitable d'une réécriture et non un effet de bord à corriger.
+
+**La branche `claude/gallant-keller-9klqj4`.** Elle ne portait **aucun commit absent de `main`**
+(`git log main..origin/claude/gallant-keller-9klqj4` vide) : elle n'était qu'un pointeur laissé par
+le harnais d'exécution sur l'ancien sommet. Rien n'était donc à rebaser — le contenu était déjà
+intégralement sur `main` — et elle est supprimée, locale et distante, pour que le dépôt ne porte plus
+qu'une seule ligne d'historique.
+
+**Conséquence pour les clones existants.** Tout clone qui portait l'ancien `main` doit se réaligner
+par `git fetch origin && git reset --hard origin/main` : un `git pull` y produirait un historique
+dupliqué. Le dépôt n'ayant qu'une ligne de travail et des exécutions repartant d'un checkout neuf à
+chaque heure, le coût est nul en pratique.
