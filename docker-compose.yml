@@ -439,9 +439,17 @@ services:
   # privilège se tient dans le temps, pas seulement dans l'espace.
   mail-sync:
     container_name: p2enjoy-mail-sync
+    # @spec CRM-015 (docs/BACKLOG.md), docs/JOURNAL.md décision 356 — INC-093
+    # `mail-sync/Dockerfile` porte la branche facultative `pip_ca` depuis la décision 280, mais
+    # aucun fichier Compose ne la câblait : elle testait un montage absent et restait donc inerte,
+    # faisant échouer `./runDev.sh` derrière un proxy TLS à certificat interposé. Le secret est
+    # déclaré ici, avec le service, et non dans l'overlay de développement : la production
+    # construit la même image, derrière le même genre de proxy.
     build:
       context: .
       dockerfile: mail-sync/Dockerfile
+      secrets:
+        - pip_ca
     restart: unless-stopped
     # @spec CRM-059 (docs/BACKLOG.md), docs/JOURNAL.md décision 351
     # MESURÉ : sans cette garde, la boucle de veille démarre AVEC le conteneur — avant que `rest`
@@ -496,6 +504,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+secrets:
+  # @spec CRM-015 (docs/BACKLOG.md), docs/JOURNAL.md décisions 280 et 356
+  # Même construction que `npm_ca` dans `docker-compose.dev.yml` : `/dev/null` est une source vide
+  # acceptée par Compose et BuildKit, et le `Dockerfile` teste la **taille** du montage. Sans
+  # `PIP_CA_FILE`, la branche reste donc strictement inerte — c'est cette propriété qui rend le
+  # câblage acceptable jusqu'en production.
+  pip_ca:
+    file: "${PIP_CA_FILE:-/dev/null}"
 
 volumes:
   db-config:

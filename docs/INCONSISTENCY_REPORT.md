@@ -35,6 +35,61 @@ réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à
 
 ## Ouverts
 
+### INC-094 — Une seconde migration s'exécute sous `supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi
+
+**Nature :** dérive entre une migration livrée et prouvée, et le harnais qui énonce l'invariant la
+concernant. Le harnais est donc rouge **en permanence** depuis la livraison, et l'invariant qu'il
+défend n'est plus celui du produit.
+**Relevé le :** 2026-08-12, en établissant la ligne de base de `scripts/verify-scripts.sh` avant la
+correction d'INC-093.
+
+**Le fait, mesuré.** `scripts/verify-scripts.sh` (ligne 621) énonce que **`0018_pg_cron.sql` est la
+seule** migration portant un marqueur d'élévation, par une comparaison de chaîne exacte :
+
+```sh
+role_markers=$(grep -l '^-- @migration-role:' supabase/migrations/*.sql)
+if [ "$role_markers" = supabase/migrations/0018_pg_cron.sql ] && …
+```
+
+Or elles sont **deux** :
+
+```
+supabase/migrations/0018_pg_cron.sql
+supabase/migrations/0029_pieces_jointes_telechargeables.sql
+```
+
+`0029` porte `-- @migration-role: supabase_admin` **à dessein**, et son en-tête le justifie par une
+mesure : `storage.objects` appartient à `supabase_storage_admin`, dont `postgres` n'est pas membre,
+si bien que seul un superutilisateur peut y créer une politique (`CRM-057`, décision 327,
+`docs/SPEC-mail-subsystem.md` §18.5). La migration n'est donc pas en cause ; c'est l'invariant du
+harnais qui a cessé d'être vrai sans que personne ne le reformule.
+
+**Conséquence, et c'est elle qui compte.** Le contrôle rend `ECHEC` à chaque exécution depuis
+`CRM-057`. Un harnais durablement rouge cesse d'être lu : il ne défend plus rien, et il masque
+l'anomalie suivante qui s'ajouterait au même bilan. La ligne de base de cette session le confirme —
+**104 vérifications, 3 anomalies**, identiques avant et après un changement qui ne touche ni les
+migrations ni ce contrôle.
+
+**Ce que cette entrée ne fait pas, et pourquoi.** Elle ne modifie ni le harnais, ni `0029`. La
+correction n'est pas mécanique : elle demande de choisir **quel invariant le produit veut tenir**,
+et ce choix n'appartient pas à l'agent.
+
+1. **Une liste close, tenue à jour.** Le contrôle énumère les migrations autorisées à s'élever, et
+   toute nouvelle élévation devient un changement délibéré du harnais. Le plus strict ; c'est
+   l'intention d'origine, et elle vient de coûter une régression silencieuse.
+2. **Une règle plutôt qu'une liste.** Le contrôle vérifie que tout marqueur présent vaut exactement
+   `supabase_admin` et qu'aucun autre rôle n'apparaît, sans énumérer les fichiers. Robuste à
+   l'ajout légitime, mais il cesse d'alerter quand une migration s'élève sans nécessité.
+3. **Une justification obligatoire.** Toute migration élevée doit citer son motif mesuré en en-tête,
+   contrôlé par le harnais. Le plus fidèle à l'esprit du dépôt, le plus coûteux à écrire.
+
+**Action attendue du responsable :** trancher entre ces trois options. Tant qu'elle n'est pas prise,
+le comportement reste celui qui est mesuré ci-dessus, et l'anomalie est nommée dans la ligne de base
+plutôt que corrigée au passage.
+
+**Lié à :** `CRM-057`, `CRM-017`, décision 327, `docs/SPEC-mail-subsystem.md` §18.5, INC-083 et
+INC-093 (même famille : un correctif ou un invariant dont la portée n'a pas suivi ses appelants).
+
 ### INC-093 — Le contournement `pip_ca` de `mail-sync` existe dans son `Dockerfile`, mais aucun fichier Compose ne le câble
 
 **Nature :** contournement documenté et fonctionnel, rendu **inatteignable** par la commande qui en
@@ -79,8 +134,31 @@ proxy, ni `NPM_CA_FILE`, correctement câblé pour la webapp par la décision 28
 de portée** de cette décision, qui a traité `npm` et laissé `pip` derrière — `mail-sync/Dockerfile`
 n'existait pas encore lorsqu'elle a été rendue, et l'a rejointe plus tard sans son câblage.
 
-**Correction décidée — `docs/JOURNAL.md`, décision 356.** Voir l'entrée. L'entrée reste ouverte
-jusqu'à la livraison et son rejeu.
+**Correction décidée — `docs/JOURNAL.md`, décision 356.** Voir l'entrée.
+
+**Clôture, 2026-08-12 — livrée et rejouée dans la même session.** `docker-compose.yml` déclare
+désormais le secret `pip_ca` (source `${PIP_CA_FILE:-/dev/null}`) et le référence sous le `build:`
+du service `mail-sync` ; `env_require_dev_npm_ca_file` devient `env_require_dev_ca_file <VARIABLE>`,
+réclamée par `runDev.sh` et `resetMe.sh` pour `NPM_CA_FILE` **et** `PIP_CA_FILE`. Rejeu sur la pile
+réelle : `./runDev.sh` construit `mail-sync` sans erreur TLS, puis les **18 services** de
+l'assemblage de développement sont `healthy`, `mail-sync` compris. La branche reste inerte sans la
+variable, par la même construction `/dev/null` que `npm_ca`.
+
+**Non-régression établie par comparaison, et non supposée.** `scripts/verify-scripts.sh` rend
+**104 vérifications, 3 anomalies** — et rend **exactement les mêmes 104 vérifications et les mêmes
+3 anomalies** sur l'arbre remisé, c'est-à-dire avant ce changement. Le nombre de contrôles est
+inchangé : la garde renommée est toujours exercée. Les trois anomalies sont **antérieures et
+étrangères** à cette correction, deux d'entre elles tenant à l'environnement de la routine :
+
+- « `NPM_CA_FILE` accepte un fichier illisible » — la session s'exécute en `root` (`id -u` = 0),
+  pour qui `[ -r fichier ]` rend **vrai** même sur un `chmod 000` (mesuré). La garde est correcte ;
+  c'est le contrôle qui n'est pas satisfaisable sous cet uid.
+- « la reconstruction sans CA n'emprunte pas sa branche inactive » — ce contrôle reconstruit
+  délibérément l'image **sans** certificat pour prouver l'inertie de la branche ; derrière le proxy
+  à certificat interposé de cet environnement, `npm ci` échoue alors réellement. Le contrôle
+  suppose un réseau à chaîne TLS publique.
+- « marqueurs de rôle de migration inattendus : `supabase/migrations/0018_pg_cron.sql` » — défaut
+  réel, sans rapport avec le présent constat, **consigné séparément en INC-094**.
 
 **Lié à :** `CRM-015`, `CRM-051`, décision 280, INC-083 (même mode de défaillance : portée d'un
 correctif plus étroite que ses appelants).

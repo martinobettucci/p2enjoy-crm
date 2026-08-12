@@ -214,6 +214,7 @@ développement, ni protection contre l'effacement d'un environnement qui n'est p
 | Fichier d'environnement complet | les trois scripts | Refus si une variable à exemple non vide manque, est vide ou vaut encore `CHANGE_ME_*` ; une variable facultative à exemple vide peut être omise |
 | `P2ENJOY_ENV_PROFILE=dev` | `runDev.sh`, `resetMe.sh` | Refus d'agir sur un fichier décrivant un autre environnement |
 | `NPM_CA_FILE` non vide | `runDev.sh`, `resetMe.sh` | Refus avant Docker si le chemin n'est pas absolu ou ne désigne pas un fichier PEM régulier, lisible et non vide |
+| `PIP_CA_FILE` non vide | `runDev.sh`, `resetMe.sh` | Même garde, pour `pip install` dans l'image `mail-sync` (décision 356) |
 | `P2ENJOY_ENV_PROFILE=prod` | `runProd.sh` | Refus de démarrer la production avec les secrets du développement |
 | `APPLY_MIGRATIONS=false` | `runProd.sh` | Refus de démarrer si la production applique les migrations toute seule (`docs/PROD_MIGRATIONS.md`) |
 | Confirmation explicite | `resetMe.sh` | `oui` à la demande, ou `--yes` hors terminal interactif |
@@ -249,7 +250,7 @@ Sur un réseau qui interpose sa propre autorité TLS devant le registre npm, fou
 du paquet PEM de l'hôte — jamais son contenu — pour la construction de l'image Vite :
 
 ```bash
-NPM_CA_FILE=/chemin/absolu/autorites.pem ./runDev.sh
+NPM_CA_FILE=/chemin/absolu/autorites.pem PIP_CA_FILE=/chemin/absolu/autorites.pem ./runDev.sh
 ```
 
 La variable peut aussi vivre dans `.env`. Une valeur exportée par le shell prévaut, comme dans
@@ -549,7 +550,7 @@ preuves.
 | Jetons Supabase | `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` | Obligatoires, jamais versionnés. Les deux clés sont **dérivées** de `JWT_SECRET` |
 | API | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `KONG_HTTP_PORT` | Obligatoires |
 | Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
-| Build de développement | `NPM_CA_FILE` | Facultative. Chemin absolu d'un paquet PEM local pour `npm ci` derrière un proxy TLS ; vide ou absente, aucun effet |
+| Build de développement | `NPM_CA_FILE`, `PIP_CA_FILE` | Facultatives. Chemin absolu d'un paquet PEM local, pour `npm ci` dans l'image Vite et pour `pip install` dans l'image `mail-sync` derrière un proxy TLS ; vides ou absentes, aucun effet. Deux variables distinctes : les deux chaînes ne consomment pas le certificat de la même façon (décision 356) |
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_INTERNAL_TOKEN`, `MAIL_SYNC_LOG_LEVEL`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux variables `MAIL_SYNC_INTERNAL_TOKEN` et `MAIL_SYNC_LOG_LEVEL` le sont **depuis `CRM-051`** : le service refuse de démarrer sous 32 caractères de jeton. **`MAIL_SYNC_POLL_INTERVAL` est consommée depuis `CRM-059`** : elle règle l'intervalle de la boucle de veille, en secondes. `0` **désactive** la veille — la relève reste alors déclenchable par l'API interne — et toute autre valeur doit tenir entre **5 secondes et 1 heure**, bornes appliquées au démarrage et non corrigées en silence. `MAIL_MAX_ATTACHMENT_MB` l'est depuis `CRM-054` |
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |

@@ -439,6 +439,7 @@ conteneur d'intégration.
 | L'hôte peut effacer ce que la pile a écrit | `resetMe.sh` détruit le cluster PostgreSQL par un conteneur jetable ; `ensure_host_mountpoints` crée `node_modules` avant Compose, faute de quoi le démon le crée en `root` dans le dépôt de l'utilisateur |
 | Le contexte de build peut lire tout le dépôt sans fuite | Le `.dockerignore` racine exclut `.env`, `.git`, les dépendances et sorties générées, ainsi que `supabase/docker/volumes/` ; le `COPY . .` de l'image de développement ne reçoit donc ni secret local ni données PostgreSQL fermées en `0750` |
 | Le registre npm présente une chaîne TLS publique | `CRM-015` transporte comme secret BuildKit le fichier PEM externe désigné par `NPM_CA_FILE`, après validation avant Docker. Absent ou vide, `/dev/null` garde le build strictement inerte ; le secret ne persiste jamais dans l'image |
+| PyPI présente une chaîne TLS publique | Même dispositif pour l'image `mail-sync`, par le secret `pip_ca` et la variable `PIP_CA_FILE` (décision 356, INC-093). Le secret est déclaré dans `docker-compose.yml`, avec le service, et non dans l'overlay de développement : la production construit la même image. `${PIP_CA_FILE:-/dev/null}` garde la branche inerte par défaut |
 
 ## 4. Flux principaux
 

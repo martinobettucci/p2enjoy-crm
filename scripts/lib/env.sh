@@ -365,29 +365,35 @@ env_validate() {
 
 # Valeur réellement interpolée par Compose : une variable exportée par le shell prévaut sur le
 # fichier passé par `--env-file`, y compris lorsqu'elle est explicitement vide.
-env_effective_npm_ca_file() {
-	if [ "${NPM_CA_FILE+x}" = x ]; then
-		printf '%s' "$NPM_CA_FILE"
+env_effective_ca_file() {
+	local nom=$1
+	if [ "$(eval "printf '%s' \"\${$nom+x}\"")" = x ]; then
+		eval "printf '%s' \"\$$nom\""
 	else
-		env_get "$ENV_FILE" NPM_CA_FILE
+		env_get "$ENV_FILE" "$nom"
 	fi
 }
 
 # Refuse une configuration CA inutilisable avant toute requête au démon. Le certificat n'est
 # jamais affiché ni copié : seule sa forme de fichier PEM est vérifiée (décision 280).
-env_require_dev_npm_ca_file() {
-	local ca_file
-	ca_file=$(env_effective_npm_ca_file)
+#
+# @spec CRM-015 (docs/BACKLOG.md), docs/JOURNAL.md décision 356 — INC-093
+# Paramétrée par le nom de la variable : `NPM_CA_FILE` gouverne `npm ci` dans l'image Vite,
+# `PIP_CA_FILE` gouverne `pip install` dans l'image `mail-sync`. La garde est identique mot pour
+# mot pour les deux ; l'écrire deux fois aurait garanti qu'elles divergent.
+env_require_dev_ca_file() {
+	local nom=$1 ca_file
+	ca_file=$(env_effective_ca_file "$nom")
 	[ -z "$ca_file" ] && return 0
 	case "$ca_file" in
 		/*) ;;
-		*) die "NPM_CA_FILE doit être un chemin absolu vers un fichier PEM lisible ; valeur relative refusée." ;;
+		*) die "$nom doit être un chemin absolu vers un fichier PEM lisible ; valeur relative refusée." ;;
 	esac
-	[ -f "$ca_file" ] || die "NPM_CA_FILE ne désigne pas un fichier régulier lisible."
-	[ -r "$ca_file" ] || die "NPM_CA_FILE désigne un fichier qui n'est pas lisible."
-	[ -s "$ca_file" ] || die "NPM_CA_FILE désigne un fichier vide ; laissez plutôt la variable vide."
+	[ -f "$ca_file" ] || die "$nom ne désigne pas un fichier régulier lisible."
+	[ -r "$ca_file" ] || die "$nom désigne un fichier qui n'est pas lisible."
+	[ -s "$ca_file" ] || die "$nom désigne un fichier vide ; laissez plutôt la variable vide."
 	grep -q -- '-----BEGIN CERTIFICATE-----' "$ca_file" \
-		|| die "NPM_CA_FILE ne contient aucun bloc PEM BEGIN CERTIFICATE."
+		|| die "$nom ne contient aucun bloc PEM BEGIN CERTIFICATE."
 }
 
 # Impose le profil attendu. C'est la garde qui empêche de démarrer la production avec les

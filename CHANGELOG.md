@@ -13,6 +13,24 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **INC-093 close : le contournement TLS `pip_ca` de `mail-sync` est enfin câblé, et `runDev.sh`
+  remonte la pile derrière un proxy à certificat interposé.** `mail-sync/Dockerfile` portait la
+  branche facultative `--mount=type=secret,id=pip_ca` depuis la décision 280, mais **aucun fichier
+  Compose ne la câblait** : le service déclarait `build:` sans clé `secrets:`, la branche testait un
+  montage absent (`pip_ca: inactif`), `pip install` échouait en `CERTIFICATE_VERIFY_FAILED` et
+  `./runDev.sh` s'arrêtait avant de démarrer le moindre service — la pile entière indisponible pour
+  une seule image. `docker-compose.yml` déclare désormais le secret `pip_ca`, de source
+  `${PIP_CA_FILE:-/dev/null}`, et le référence sous le `build:` du service ; le secret est porté par
+  le fichier de base et non par l'overlay de développement, la production construisant la même
+  image. La garde de forme `env_require_dev_npm_ca_file` devient `env_require_dev_ca_file
+  <VARIABLE>`, paramétrée plutôt que dupliquée, et `runDev.sh` comme `resetMe.sh` la réclament pour
+  `NPM_CA_FILE` **et** `PIP_CA_FILE`. Rejeu mesuré : `mail-sync` se construit sans erreur TLS et les
+  **18 services** de l'assemblage de développement sont `healthy`. Sans la variable, la branche
+  reste strictement inerte. `docs/JOURNAL.md` décision 356 ; `README.md`, `.env.example` et
+  `docs/DAT.md` documentent la nouvelle variable facultative.
+
 ### Ajouté
 
 - **INC-076 close : suppression d'un compte auteur de commentaires, prouvée sur une pile réelle.**
