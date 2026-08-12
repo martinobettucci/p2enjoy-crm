@@ -35,6 +35,46 @@ réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à
 
 ## Ouverts
 
+### INC-095 — Le contrat de déploiement s'arrête à la migration 30, alors que le dépôt en compte 34
+
+**Nature :** dérive du contrat de déploiement par rapport à l'état réel du dépôt — exactement ce que
+`CLAUDE.md` §12 interdit en toutes lettres : « Ce fichier ne doit jamais dériver de l'état réel du
+projet. »
+**Relevé le :** 2026-08-12, en y inscrivant la migration `0034`.
+
+**Le fait, mesuré.** Le tableau « Migrations en attente » de `docs/PROD_MIGRATIONS.md` décrit les
+migrations 1 à 30. Le dépôt en contient **34**. Trois n'y ont **aucune ligne** :
+
+| Fichier | Unité qui l'a livrée |
+|---|---|
+| `supabase/migrations/0031_resilience_envoi.sql` | `CRM-059` |
+| `supabase/migrations/0032_reprise_rangement.sql` | `CRM-056` |
+| `supabase/migrations/0033_quota_par_defaut.sql` | `CRM-053` (correctif, décision 347) |
+
+**Pourquoi c'est grave, et pas seulement incomplet.** Ce document n'est pas un inventaire : c'est
+**la consigne qu'un humain applique en production**, dans l'ordre indiqué, une transaction par
+fichier. Trois migrations dépourvues d'objectif, de dépendances et de procédure de retour arrière
+sont trois migrations qu'un opérateur appliquera **sans savoir ce qu'elles font ni comment les
+annuler** — ou, pire, qu'il n'appliquera pas du tout, le tableau lui donnant à croire que le contrat
+s'arrête à la 30. `0033` est précisément un correctif de données (`daily_quota`), le genre de
+migration dont l'omission se paie en silence.
+
+**Ce que ce constat fait, et ne fait pas.** Le tableau reçoit une ligne d'attente explicite couvrant
+`0031` à `0033`, qui **nomme le trou plutôt que de le laisser invisible** et interdit leur
+application tant qu'il n'est pas comblé. Le contenu réel de ces trois lignes n'est pas rédigé ici :
+décrire l'objectif, les dépendances et surtout le **retour arrière** d'une migration qu'on n'a pas
+livrée, c'est deviner — et un retour arrière deviné est plus dangereux qu'un retour arrière absent,
+puisqu'il inspire confiance.
+
+**Action attendue du responsable :** faire compléter les trois lignes par les unités qui ont livré
+ces migrations — `CRM-059`, `CRM-056` et `CRM-053` —, chacune connaissant son objectif et sa
+réversibilité. Et, la cause étant systémique, décider si la Definition of Done doit être **contrôlée
+mécaniquement** : un harnais qui compare `supabase/migrations/*.sql` aux lignes du tableau et rougit
+sur tout écart aurait empêché les trois omissions, là où la règle écrite ne l'a pas fait.
+
+**Lié à :** `CLAUDE.md` §12 et §24, `CRM-059`, `CRM-056`, `CRM-053`, INC-094 (même famille : un
+invariant énoncé quelque part, et rien qui le vérifie).
+
 ### INC-094 — Une seconde migration s'exécute sous `supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi
 
 **Nature :** dérive entre une migration livrée et prouvée, et le harnais qui énonce l'invariant la

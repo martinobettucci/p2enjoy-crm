@@ -1,9 +1,10 @@
 -- @verifies CRM-012 (docs/BACKLOG.md) — droits fins par track et channel
--- @verifies docs/SPEC-permissions-rls.md §2.2 (matrice), §3.3 (fonctions can_*), §3.4 (appui),
---           §4.1 (politiques des tables de droits fins), §7 (preuves de refus n° 3, 4 et 11)
+-- @verifies docs/SPEC-permissions-rls.md §2.2 (matrice), §3.3 (fonctions can_*), §3.3 bis (la
+--           transitivité, décision 333), §3.4 (appui), §4.1 (politiques des tables de droits
+--           fins), §7 (preuves de refus n° 3, 4 et 11)
 -- @verifies docs/SCHEMA.md §1 (`track_members`, `channel_members`), §9 (fonctions)
 -- @verifies docs/SPEC-tracks.md §5.3 ; docs/SPEC-channels.md §6.3
--- @verifies docs/JOURNAL.md décisions 103, 104, 105 ; INC-013, INC-045
+-- @verifies docs/JOURNAL.md décisions 103, 104, 105, 333 ; INC-013, INC-045, INC-085, INC-075
 --
 -- Suite pgTAP de l'unité `CRM-012`. Elle prouve six choses :
 --
@@ -15,7 +16,8 @@
 --      assertions distinctes : une jointure interne rendrait la seconde verte et la première
 --      fausse, et une assertion unique n'aurait pas vu la différence ;
 --   4. les **politiques de lecture resserrées** de `tracks` et `channels`, y compris la
---      réouverture d'un channel sous un track fermé ;
+--      réouverture d'un channel sous un track fermé — et, depuis la décision 333, la
+--      **transitivité** qui rend enfin ce track atteignable (§6 bis) ;
 --   5. les **politiques des tables de droits fins** — §4.1, lecture par l'administration et par
 --      l'intéressé, écriture et suppression par l'administration seule ;
 --   6. ce qui **reste dû** : `app.can_read_card`, figée par une assertion d'absence.
@@ -30,7 +32,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(71);
+select plan(78);
 
 -- =============================================================================================
 -- 1. Les cinq fonctions existent, et avec la forme exigée
@@ -311,12 +313,18 @@ rollback to savepoint m_bizdev;
 savepoint p_viewer;
 select pg_temp.endosser('55550000-0000-4000-8000-00000000000c');
 
+-- RÉVISÉE PAR LA DÉCISION 333 (§3.3 bis), et non retirée. Cette assertion mesurait `1` : le
+-- `viewer` ne voyait que le track voisin, celui qui lui est fermé restant invisible **alors même
+-- qu'un de ses channels lui est rouvert**. C'était précisément le défaut d'INC-085 et d'INC-075 —
+-- un droit accordé sans aucun chemin pour l'exercer. La valeur attendue devient `2` parce que la
+-- RÈGLE a changé, non parce que la preuve gênait : « le plus spécifique gagne » est désormais
+-- transitif.
 select is(
 	(select count(*)::int from public.tracks
 	  where workspace_id = '55550000-0000-4000-8000-000000000001'),
-	1,
-	'le `viewer` ne voit qu''un des deux tracks de son workspace : la politique de `tracks` '
-	'applique bien le droit fin');
+	2,
+	'le `viewer` voit ses DEUX tracks : le voisin par héritage, et celui qui lui est fermé parce '
+	'qu''un de ses channels lui est rouvert (décision 333, §3.3 bis)');
 select is(
 	(select count(*)::int from public.channels
 	  where workspace_id = '55550000-0000-4000-8000-000000000001'),
@@ -328,6 +336,57 @@ select is(
 	  where id = '55550000-0000-4000-8000-0000000000c2'),
 	0,
 	'PREUVE DE REFUS N° 4, au niveau du channel : zéro ligne, et non une erreur');
+
+-- ---------------------------------------------------------------------------------------------
+-- 6 bis. La transitivité — décision 333, docs/SPEC-permissions-rls.md §3.3 bis
+-- ---------------------------------------------------------------------------------------------
+-- Ce que la reprise de `CRM-012` doit prouver, énuméré par le §3.3 bis et vérifié ici point par
+-- point : le track porteur est atteint, ses AUTRES channels restent fermés, rien n'y devient
+-- écrivable, et la fonction du §3.3 garde son contrat exact.
+
+select ok(app.track_has_readable_channel('55550000-0000-4000-8000-0000000000a1'),
+	'`app.track_has_readable_channel` est vraie sur le track fermé : son channel `c1` est rouvert');
+
+select ok(not app.track_has_readable_channel('55550000-0000-4000-8000-0000000000b1'),
+	'…et fausse sur le track du workspace B : la transitivité ne franchit pas le cloisonnement');
+
+select ok(not app.track_has_readable_channel('55550000-0000-4000-8000-00000000dead'),
+	'…et fausse sur un track inexistant : la fonction rend un booléen, jamais NULL (décision 102)');
+
+select is(
+	(select count(*)::int from public.tracks
+	  where id = '55550000-0000-4000-8000-0000000000a1'),
+	1,
+	'INC-085 et INC-075 CLOSES : le track fermé est désormais RENDU, et le droit accordé sur son '
+	'channel a enfin un chemin');
+
+-- Le §3.3 bis, deuxième tiret : l'ouverture d'un tel track n'affiche QUE les channels consentis.
+-- Aucune règle nouvelle ne le garantit — c'est la politique de `channels`, inchangée, qui filtre.
+-- L'assertion existe parce qu'un élargissement de `tracks` qui déteindrait sur `channels` serait
+-- exactement la régression que cette reprise doit exclure.
+select is(
+	(select count(*)::int from public.channels
+	  where track_id = '55550000-0000-4000-8000-0000000000a1'),
+	1,
+	'le track réapparu n''expose qu''UN seul de ses deux channels : celui qui est consenti');
+
+select is(
+	(select id from public.channels
+	  where track_id = '55550000-0000-4000-8000-0000000000a1'),
+	'55550000-0000-4000-8000-0000000000c1'::uuid,
+	'…et c''est bien `c1`, le channel rouvert, non `c2` resté fermé');
+
+-- Le §3.3 bis, troisième tiret : atteindre un track par l'un de ses channels ne confère AUCUN
+-- droit d'écriture. Le refus se prouve en relisant, jamais par l'absence d'erreur : le `USING`
+-- d'une politique `for update` FILTRE les lignes candidates — la commande réussit et n'en modifie
+-- aucune (décision 106, déjà mesurée par cette suite au §7).
+update public.tracks set name = 'Détourné'
+ where id = '55550000-0000-4000-8000-0000000000a1';
+
+select is(
+	(select name from public.tracks where id = '55550000-0000-4000-8000-0000000000a1'),
+	'Track DF 1',
+	'le track atteint par transitivité reste INÉCRIVABLE : son nom est intact après l''`update`');
 
 reset role;
 rollback to savepoint p_viewer;
