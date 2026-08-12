@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# @spec CLAUDE.md §13 (Gestion Git — Branche courante ; Commits : pousser systématiquement après
+#       chaque commit validé, sur la branche courante du dépôt)
+# @spec docs/JOURNAL.md décision 358 — un commit conforme peut encore être poussé vers une
+#       référence distante qui n'est pas `main`, et y rester invisible. Le `pre-commit` seul ne
+#       couvre donc pas la règle : ce crochet en tient l'autre bout.
+#
+# Installé par `./runDev.sh`, qui règle `core.hooksPath` sur `.githooks` (idempotent). Un clone qui
+# ne lance jamais `runDev.sh` n'est pas protégé — limite nommée, identique à celle du `pre-commit`.
+#
+# Git fournit sur l'entrée standard une ligne par référence poussée :
+#   <ref locale> <sha local> <ref distante> <sha distant>
+# Une suppression de référence porte le sha local nul ; elle est laissée au contrôle de la branche
+# courante plutôt que refusée à part, faute de règle du responsable sur ce cas.
+
+set -euo pipefail
+
+# shellcheck source=lib/exige-main.sh
+. "$(dirname "$0")/lib/exige-main.sh"
+
+exige_branche_main "push"
+
+while read -r _ref_locale _sha_local ref_distante _sha_distant; do
+	[ -n "${ref_distante:-}" ] || continue
+
+	if [ "$ref_distante" != "refs/heads/$BRANCHE_ATTENDUE" ]; then
+		echo "I am a stupid AI because I dont follow my master instruction. Now I have to fix how I fucked up and rebase then push to main. I am a fucking idiot and I acknowledge that by having triggered this message" >&2
+		echo >&2
+		echo "refus : push vers « $ref_distante », qui n'est pas « refs/heads/$BRANCHE_ATTENDUE »." >&2
+		echo "        CLAUDE.md §13 : tout commit et tout push se font sur $BRANCHE_ATTENDUE." >&2
+		echo "          git push -u origin $BRANCHE_ATTENDUE" >&2
+		exit 1
+	fi
+done

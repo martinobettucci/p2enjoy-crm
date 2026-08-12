@@ -11716,3 +11716,86 @@ arbitrage du responsable, à ne pas trancher seul : **INC-094** (une seconde mig
 `supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi) et **INC-095** (le contrat de
 déploiement s'arrête à la migration 30 alors que le dépôt en compte 34) ; **INC-093** a été ouverte
 et close dans la même session.
+
+---
+
+## 2026-08-12 — Décision 358 : la branche de travail cesse d'être une consigne et devient un refus de Git
+
+### Décision 358 — Tout ce qui n'atterrit pas sur `main` est refusé par un crochet, commit comme push
+
+**Ce qui s'est passé.** L'exécution planifiée de 12 h 40 a démarré sur la branche
+`claude/gallant-keller-9klqj4`, imposée par le harnais d'exécution, et non sur `main`. La consigne
+planifiée prévoyait ce cas — « une autre branche nommée que `main` : tu t'arrêtes sans rien
+modifier » — et la session s'est arrêtée sans rien produire. Rien n'a été perdu (l'arbre était
+propre, `HEAD` valait exactement `origin/main`), mais une heure de travail a été dépensée en pure
+perte, et l'exécution suivante se serait arrêtée de la même façon, indéfiniment.
+
+**Le constat du responsable.** La règle « travailler sur `main` » existe depuis l'origine dans
+`CLAUDE.md` §13. Elle est écrite en prose, donc lue puis oubliée par chaque session, et rien dans le
+dépôt ne l'empêchait d'être enfreinte. C'est exactement le raisonnement qui avait déjà été tenu pour
+l'identité des commits : les décisions 340 et 344 avaient constaté deux commits mal attribués à une
+heure d'intervalle avant que la décision 345 ne pose enfin le crochet `pre-commit`. Le même remède
+est appliqué ici, à la même cause — une règle qui n'est pas mécanisée n'est pas une règle.
+
+**Décision.** `.githooks/lib/exige-main.sh` fournit `exige_branche_main`, appelée par
+`.githooks/pre-commit` **et** par `.githooks/pre-push`. Toute opération dont la branche courante
+n'est pas `main` est refusée, et le `pre-push` refuse en outre toute référence distante visée autre
+que `refs/heads/main` — un commit conforme peut encore partir vers une référence égarée, le contrôle
+tient donc les deux bouts de la chaîne.
+
+**Le HEAD détaché est refusé lui aussi**, et c'est le point qui compte : c'est l'état de démarrage
+habituel des conteneurs planifiés, donc précisément celui où un commit se perd sans témoin. Le
+message de refus ne se contente pas d'interdire, il donne le geste de rattachement qui ne perd rien
+(`git checkout -B main HEAD`, rebase, push).
+
+**Le texte du refus est dicté mot pour mot par le responsable** et n'est pas reformulable. Il est
+cité une fois dans `scripts/verify-crochets-git.sh`, qui rougit si un crochet s'en écarte : ce
+message est un contrat, pas une décoration.
+
+### Le défaut de la première rédaction de la preuve, et pourquoi il est écrit ici
+
+La première version de `scripts/verify-crochets-git.sh` capturait le chemin du dépôt jetable par
+substitution de commande : `depot=$(nouveau_depot …)`. Or `local nom="$1" depot="$WORK/$nom"` expanse
+`$nom` **avant** de l'affecter ; sous `set -u` l'affectation échouait, la fonction ne rendait rien,
+et `depot` valait la chaîne vide. Comme `git -C ""` retombe silencieusement sur le répertoire
+courant, les scénarios se sont exécutés **contre le dépôt réel** : `HEAD` y a été détaché, et un
+push vers `refs/heads/claude/gallant-keller-9klqj4` y a été tenté vers `origin` réel.
+
+**Les crochets que la preuve éprouvait ont refusé l'un et l'autre.** Aucun commit n'a été créé,
+aucune référence n'a été poussée. Le scénario 4 avait en outre posé `user.email` à
+`agent@exemple.invalid` dans la configuration LOCALE du dépôt réel : le premier commit tenté ensuite
+a été refusé par le contrôle d'identité de la décision 345, qui a nommé l'adresse fautive. Le dégât
+total s'est donc borné à un `HEAD` détaché et à une adresse à remettre — `git checkout main`,
+`git config user.email contact@p2enjoy.studio` —, le distant, `core.hooksPath` et la configuration de
+branche étant intacts (vérifié par `git config --local --list`). La mesure est notée telle quelle
+plutôt que tue : **les deux crochets ont été éprouvés pour de vrai par la maladresse de leur propre
+preuve, et les deux ont tenu.**
+
+La leçon est câblée dans le script : plus aucune capture de chemin par la sortie standard, et
+`${depot:?}` à chaque usage, pour qu'une valeur vide interrompe le script au lieu de viser le dépôt
+courant.
+
+### Vérifications réalisées
+
+`scripts/verify-crochets-git.sh` — **20 vérifications, aucune anomalie**, dans des dépôts jetables
+créés sous `mktemp -d` et pointant sur les crochets RÉELS du dépôt : commit refusé sur une branche
+`claude/*` puis en `HEAD` détaché, message exact des deux côtés, aucun commit créé par la tentative ;
+commit accepté sur `main` ; **non-régression de la décision 345** — l'identité étrangère reste
+refusée sur `main` ; push refusé vers `refs/heads/claude/*` sans qu'aucune référence n'apparaisse sur
+le distant ; push accepté de `main` vers `main` ; crochets exécutables et `core.hooksPath` réglé.
+
+### Ce que cette décision ne fait pas
+
+Elle ne protège **pas** un clone qui n'a jamais lancé `runDev.sh` : `core.hooksPath` est un réglage
+local, posé par `scripts/lib/env.sh`. C'est la limite déjà nommée par la décision 345, inchangée. Un
+`--no-verify` contourne évidemment les deux crochets : ils gardent l'inattention, pas l'intention.
+
+### Où reprendre
+
+La pile n'a **pas** pu être montée pendant cette session : les images ne se téléchargent pas, le
+registre Docker Hub rend **429 Too Many Requests** sur chacune (mesuré trois fois, avec attente
+croissante, sur `postgres:17-alpine` comme sur les images Supabase), et le cache d'images du
+conteneur est vide. Aucune preuve exigeant la pile n'a donc été rejouée cette heure-ci. **INC-072
+reste le point de reprise fixé par la décision 357**, et il reste en attente d'un arbitrage du
+responsable — ouvrir ou non la SUPPRESSION d'un commentaire aux `admin`, sans la modification —, qui
+ne sera pas tranché par une session.

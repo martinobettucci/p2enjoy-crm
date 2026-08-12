@@ -55,6 +55,15 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le travail hors de `main` est désormais refusé par Git, au commit comme au push** (décision
+  358). `.githooks/lib/exige-main.sh` fournit un contrôle de branche appelé par `.githooks/pre-commit`
+  et par le nouveau `.githooks/pre-push` : une branche courante autre que `main`, un `HEAD` détaché,
+  ou une référence distante visée autre que `refs/heads/main` sont refusés, avec le message dicté par
+  le responsable et le geste de rattachement qui ne perd rien. La règle de `CLAUDE.md` §13 cesse
+  d'être une consigne en prose, oubliée par chaque session, comme la décision 345 l'avait fait pour
+  l'identité des commits — dont le contrôle n'est pas relâché. Preuve :
+  `scripts/verify-crochets-git.sh`, **20 vérifications**, aucune anomalie, dans des dépôts jetables.
+
 - **INC-076 close : suppression d'un compte auteur de commentaires, prouvée sur une pile réelle.**
   Les trois preuves demandées par le constat statique du 2026-08-11 sont rejouées et vertes :
   `npm run test:sql` (suite `0023`, **1937 assertions**, aucune anomalie), `scripts/verify-seed.sh`
