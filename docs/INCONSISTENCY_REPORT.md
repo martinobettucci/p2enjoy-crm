@@ -187,6 +187,10 @@ préalable : un workflow s'affecte à un channel, qui vit dans un track. L'entr�
 la décision et non par la livraison : `CRM-075` porte désormais la dette, et c'est son passage à
 `[x]` qui la soldera. Voir `docs/JOURNAL.md` décision 332.
 
+**SOLDÉE LE 2026-08-12.** `CRM-075` passe `[x]` : toutes les preuves de sa Definition of Done sont
+vertes (`docs/JOURNAL.md` décision 349). `docs/SPEC-tracks.md` §10 et `docs/SPEC-channels.md` §10
+portent leur limite barrée avec renvoi vers l'unité, plutôt qu'effacée en silence.
+
 **Lié à :** INC-066 (même motif, sur les workflows), INC-015 (l'invitation), INC-085 (une autre
 surface manquante trouvée le même jour), `CLAUDE.md` §4 (objet métier de premier rang).
 
