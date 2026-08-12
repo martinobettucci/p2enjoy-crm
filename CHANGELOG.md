@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **INC-085 et INC-075 closes, `CRM-012` passe `[x]` : un track est désormais lisible dès qu'un de
+  ses channels l'est.** Un `channel_members.access = 'member'` posé sous un track fermé rouvrait
+  bien le channel — le backend le rendait, une assertion pgTAP le prouvait — mais l'interface ne
+  liste les channels qu'une fois un track ouvert : **aucun geste de navigation n'y menait**, et
+  l'adresse saisie à la main rendait « Track introuvable ». Un droit accordé qui n'a pas de chemin
+  n'est pas un droit. `supabase/migrations/0034_lecture_track_transitive.sql` livre
+  `app.track_has_readable_channel(uuid)` et élargit `tracks_lecture_membre` à « le track est lisible
+  **ou** l'un de ses channels l'est » — « le plus spécifique gagne » devient **transitif**
+  (`docs/JOURNAL.md` décisions 333 et 357, `docs/SPEC-permissions-rls.md` §3.3 bis). Aucun
+  changement de schéma ; **aucun channel supplémentaire ouvert** et **aucun droit d'écriture
+  conféré**. Mesuré avant/après avec le jeton du `viewer` seedé : tracks rendus **3 → 4**, channels
+  **4 → 4 inchangés**, channels du track réapparu **« Prospection » seul**, `PATCH` du `viewer`
+  **zéro ligne touchée**, `insert … returning` d'administrateur **201** — le défaut de la
+  décision 107 n'est pas réintroduit. `npm run test:sql` **33 fichiers / 1944 assertions**,
+  `npm run e2e:api` **504/504**, `npm run e2e:ui` **182/182**, `scripts/verify-authz.sh` **35
+  contrôles**, `scripts/verify-seed.sh` **55 contrôles**, `npm run typecheck` — sans anomalie. Sept
+  captures observées dans `docs/captures/CRM-012/`, dont le track rendu avec son unique onglet aux
+  quatre paliers. Quatre preuves qui encodaient l'ancienne règle ont été **révisées en expliquant
+  pourquoi dans le fichier même**, aucune supprimée ni relâchée — le triplet du `viewer` de
+  `verify-authz.sh` passe de `3/4/8` à `4/4/8`, ce qui **dit strictement plus** : seuls les tracks
+  ont bougé.
+
 - **INC-093 close : le contournement TLS `pip_ca` de `mail-sync` est enfin câblé, et `runDev.sh`
   remonte la pile derrière un proxy à certificat interposé.** `mail-sync/Dockerfile` portait la
   branche facultative `--mount=type=secret,id=pip_ca` depuis la décision 280, mais **aucun fichier

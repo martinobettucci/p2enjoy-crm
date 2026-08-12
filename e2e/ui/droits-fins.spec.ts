@@ -17,8 +17,20 @@
 //   Farida Nowak    lectrice         track « Conseil & IA » : access = none
 //                                    channel « Prospection » : access = member
 //
-// Camille voit tout — « un administrateur n'est jamais restreint ». Farida ne voit pas le track,
-// et c'est le refus le plus spécifique qui l'emporte sur son appartenance au workspace.
+// Camille voit tout — « un administrateur n'est jamais restreint ».
+//
+// CE QUI A CHANGÉ, ET POURQUOI CES SCÉNARIOS SONT RÉVISÉS PLUTÔT QUE SUPPRIMÉS.
+//
+// Ils prouvaient que Farida NE VOIT PAS « Conseil & IA ». C'était vrai, et c'était le défaut :
+// son `channel_members.access = 'member'` sur « Prospection » rouvrait bien le channel — le
+// backend le rendait, une assertion pgTAP et la ligne f du §4.2 le prouvaient — mais la barre
+// d'onglets ne liste les channels qu'une fois un track ouvert (`docs/SPEC-channels.md` §5.1).
+// Aucun geste ne menait donc au channel consenti, et l'adresse saisie à la main rendait
+// « Track introuvable ». Un droit accordé qui n'a pas de chemin n'est pas un droit : INC-085 et
+// INC-075, tranchées par la décision 333.
+//
+// Ces scénarios prouvent désormais le contraire, et c'est exactement ce que le §3.3 bis demande
+// de montrer : « Conseil & IA » EST rendu à Farida, avec son SEUL onglet « Prospection ».
 //
 // CE QU'ILS NE PROUVENT PAS. Ils ne rejouent pas la matrice complète : c'est l'objet de
 // `supabase/tests/0011_droits_fins.test.sql` (71 assertions) et de `e2e/api/droits-fins.spec.ts`
@@ -30,6 +42,16 @@ import { MOT_DE_PASSE_SEED } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const RESTREINT = 'Conseil & IA'
+
+/** Le channel que `channel_members.access = 'member'` rouvre à Farida sous ce track fermé. */
+const CONSENTI = 'Prospection'
+
+// Les deux autres channels du même track. « Grands comptes » est actif et qu'aucun droit fin ne
+// rouvre : il est fermé par la politique. « Appels d'offres » est archivé dans le seed, donc absent
+// pour une raison DIFFÉRENTE — la barre d'onglets ne liste que les channels actifs. Les deux sont
+// vérifiés ensemble parce que l'onglet ne doit apparaître ni dans un cas ni dans l'autre, mais la
+// distinction est nommée ici pour qu'une preuve ne passe jamais pour deux règles.
+const FERMES_DU_TRACK = ['Grands comptes', "Appels d'offres"] as const
 
 // « Pipeline 2024 » n'y figure pas, et ce n'est pas un oubli : le track est archivé dans le seed,
 // et la barre latérale n'affiche que les tracks actifs (docs/SPEC-tracks.md §7). Le confondre avec
@@ -51,20 +73,43 @@ function tracksDeLaBarre(page: Page) {
 	return page.getByTestId('barre-laterale').getByRole('link')
 }
 
-test('Farida ne voit pas le track qui lui est fermé, et le vide n’est pas une erreur', async ({
+test('Farida voit le track fermé, parce qu’un de ses channels lui est rouvert', async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 1440, height: 900 })
 	await connecter(page, 'viewer@p2enjoy.test')
 
-	// Le track fermé est absent de la barre. Ce n'est pas un masquage d'interface : le backend
-	// ne l'a jamais rendu, et l'écran ne peut donc pas l'afficher.
-	await expect(tracksDeLaBarre(page).filter({ hasText: RESTREINT })).toHaveCount(0)
+	// Le track fermé est PRÉSENT dans la barre. Ce n'est pas un relâchement d'interface : le
+	// backend le rend désormais, parce que « le plus spécifique gagne » est devenu transitif.
+	await expect(tracksDeLaBarre(page).filter({ hasText: RESTREINT })).toHaveCount(1)
 	for (const visible of VISIBLES_DE_TOUS) {
 		await expect(tracksDeLaBarre(page).filter({ hasText: visible })).toHaveCount(1)
 	}
 
 	await capturer(page, 'droits-fins-lectrice-1440', 'CRM-012')
+})
+
+test('…et son ouverture n’expose que l’onglet consenti, à la souris', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 900 })
+	await connecter(page, 'viewer@p2enjoy.test')
+
+	// LE GESTE QUI MANQUAIT, et qui est tout l'objet de l'arbitrage : Farida ATTEINT son channel
+	// en cliquant, sans connaître d'adresse. C'est ce chemin, et non la règle backend, qui
+	// n'existait pas.
+	await tracksDeLaBarre(page).filter({ hasText: RESTREINT }).click()
+
+	const onglets = page.getByTestId('barre-onglets').getByRole('link')
+	await expect(onglets).toHaveCount(1)
+	await expect(onglets.first()).toHaveText(CONSENTI)
+
+	// Les deux autres channels du track restent fermés : l'élargissement de la politique de
+	// `tracks` ne déteint pas sur celle des `channels` (§3.3 bis, deuxième tiret). Un track
+	// réapparu avec un seul onglet est une information exacte, pas une anomalie d'affichage.
+	for (const ferme of FERMES_DU_TRACK) {
+		await expect(onglets.filter({ hasText: ferme })).toHaveCount(0)
+	}
+
+	await capturer(page, 'droits-fins-lectrice-track-rouvert-1440', 'CRM-012')
 })
 
 test('Camille porte le même refus et voit pourtant tout : un administrateur n’est jamais restreint', async ({
@@ -83,16 +128,34 @@ test('Camille porte le même refus et voit pourtant tout : un administrateur n�
 	await capturer(page, 'droits-fins-administratrice-1440', 'CRM-012')
 })
 
-test('le track fermé reste fermé quand Farida en saisit l’adresse directement', async ({ page }) => {
+test('l’adresse directe du track rend la même chose que le clic, et rien de plus', async ({
+	page,
+}) => {
 	await page.setViewportSize({ width: 1440, height: 900 })
 	await connecter(page, 'viewer@p2enjoy.test')
 
-	// Contourner la navigation ne contourne pas la règle : la route est atteinte, et le backend
-	// rend zéro ligne. L'écran nomme l'absence au lieu de rendre une page blanche.
+	// Ce scénario mesurait « Track introuvable » : c'était le symptôme le plus net d'INC-085, un
+	// droit accordé que même l'adresse exacte n'atteignait pas. Il mesure désormais que les deux
+	// chemins — le clic et l'adresse — mènent au même endroit, sans qu'aucun n'ouvre davantage.
 	await page.goto('/tracks/conseil-ia')
 
-	await expect(page.getByText('Track introuvable')).toBeVisible()
-	await expect(page.getByText(RESTREINT, { exact: true })).toHaveCount(0)
+	await expect(page.getByText('Track introuvable')).toHaveCount(0)
+
+	const onglets = page.getByTestId('barre-onglets').getByRole('link')
+	await expect(onglets).toHaveCount(1)
+	await expect(onglets.first()).toHaveText(CONSENTI)
+
+	// L'adresse d'un channel FERMÉ du même track, elle, reste refusée : atteindre le track ne
+	// contourne pas la politique des channels.
+	//
+	// MESURÉ, ET CE N'EST PAS CE QU'ON ATTENDRAIT : l'écran ne dit pas « channel introuvable »,
+	// il rend le MÊME état vide que « choisissez un channel ». C'est délibéré et documenté
+	// (`webapp/src/app/RouteTrack.tsx`, docs/SPEC-permissions-rls.md §7) — distinguer les deux
+	// renseignerait sur l'existence d'un channel refusé. La preuve vérifie donc les deux moitiés
+	// de cette règle : l'écran neutre est rendu, et le nom du channel fermé n'apparaît nulle part.
+	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await expect(page.getByText('Choisissez un channel')).toBeVisible()
+	await expect(page.getByText('Grands comptes')).toHaveCount(0)
 
 	await capturer(page, 'droits-fins-adresse-directe-1440', 'CRM-012')
 })
@@ -102,7 +165,7 @@ test('le track fermé reste fermé quand Farida en saisit l’adresse directemen
 // rendue éprouverait un `resize`, pas un palier.
 test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 	for (const palier of PALIERS) {
-		test(`${palier.nom} : la lectrice ne voit toujours pas le track fermé`, async ({ page }) => {
+		test(`${palier.nom} : la lectrice voit le track rouvert par son channel`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecter(page, 'viewer@p2enjoy.test')
 
@@ -112,7 +175,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 				await expect(page.getByTestId('barre-laterale')).toBeInViewport({ ratio: 0.99 })
 			}
 
-			await expect(tracksDeLaBarre(page).filter({ hasText: RESTREINT })).toHaveCount(0)
+			await expect(tracksDeLaBarre(page).filter({ hasText: RESTREINT })).toHaveCount(1)
 			await expect(tracksDeLaBarre(page).filter({ hasText: 'Studio web' })).toHaveCount(1)
 
 			const debordement = await page.evaluate(

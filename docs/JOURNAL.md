@@ -11620,3 +11620,99 @@ s'arrête avant ses appelants réels ne se distingue pas, à l'usage, d'un corre
 décision 280 a traité `npm` alors que `mail-sync/Dockerfile` n'existait pas encore ; l'image l'a
 rejointe plus tard en copiant la branche, sans le câblage qui la rend vivante. **Copier un
 contournement oblige à copier son câblage**, faute de quoi on copie un commentaire.
+
+### Décision 357 — INC-085 et INC-075 closes : « le plus spécifique gagne » devient transitif, et le droit accordé a enfin un chemin
+
+**2026-08-12 — routine horaire, reprenant l'ordre de la décision 336 là où la décision 355 l'avait
+laissé : « la prochaine exécution reprend à INC-085/INC-075 ».**
+
+**Le point de départ, reproduit avant d'être corrigé.** `CLAUDE.md` §18 demande de reproduire un
+défaut avant d'y toucher. Mesuré sur la pile réelle, avec le jeton de Farida Nowak obtenu par la
+véritable route de connexion :
+
+```
+GET /rest/v1/tracks    → Studio web, Formation, Pipeline 2024      (« Conseil & IA » ABSENT)
+GET /rest/v1/channels  → Refonte de site, Inter-entreprises, Prospection, Maintenance
+```
+
+« Prospection » est rendu, son track ne l'est pas. Le défaut d'INC-085 et d'INC-075, tel qu'ils le
+décrivaient, à la ligne près.
+
+**Ce qui a été livré.** `supabase/migrations/0034_lecture_track_transitive.sql` :
+`app.track_has_readable_channel(uuid)` — `STABLE`, `SECURITY DEFINER`, `search_path` vide, `EXECUTE`
+nommément accordé — et l'élargissement de `tracks_lecture_membre` à une disjonction : le track est
+lisible **ou** l'un de ses channels l'est. Rien d'autre. Aucun changement de schéma, aucune des trois
+fonctions `can_*` du §3.3 touchée, aucune politique de `channels` modifiée.
+
+**Deux choix de mise en œuvre, et leurs motifs.**
+
+*Une fonction plutôt qu'un `EXISTS` dans la politique.* Un `EXISTS (select 1 from public.channels …)`
+écrit directement dans le `USING` de `tracks` serait évalué avec les droits de l'appelant : la
+politique de lecture des `channels` s'appliquerait à cette sous-requête, et le prédicat dépendrait
+d'une SECONDE politique pour être juste. Cela marcherait aujourd'hui — `channels_lecture_membre`
+n'interroge pas `tracks`, donc aucune récursion — mais ferait reposer une règle sur un effet de
+bord : il suffirait qu'un jour la politique des `channels` consulte `tracks` pour obtenir la
+récursion croisée que le §3.4 conjure déjà par `SECURITY DEFINER`. La fonction énonce son prédicat
+explicitement et le lit sans RLS.
+
+*`app.can_read_channel` plutôt que `app.resolve_channel_access`.* La seconde aurait économisé une
+relecture de `channels` par ligne candidate. La première est retenue parce que le §3.3 bis la nomme
+et parce que c'est **elle** qui porte le contrat « ce channel est-il lisible ? » : réécrire son corps
+dans la nouvelle fonction aurait dupliqué la règle à un second endroit, où une évolution de l'une ne
+suivrait pas l'autre. Le §3.5 n'interdit que la relecture de la table **gouvernée**.
+
+**Le garde-fou de la décision 107, vérifié et non supposé.** La politique `SELECT` de `tracks`
+gouverne aussi le `RETURNING` d'un `INSERT`. La nouvelle fonction ne lit **jamais** `tracks` : elle
+interroge `channels`, table tierce que l'instruction gouvernée ne touche pas, et un track qui vient
+d'être créé n'a de toute façon aucun channel. MESURÉ : `insert … returning` d'administrateur rend
+**`201`**, et la preuve `D5` de `e2e/api/droits-fins.spec.ts` reste verte.
+
+**Les preuves, avant et après, sur la pile réelle.**
+
+```
+tracks rendus au viewer      3 → 4     « Conseil & IA » réapparaît
+channels rendus au viewer    4 → 4     INCHANGÉ — l'élargissement ne déteint pas
+channels du track réapparu   —   1     « Prospection » SEUL
+PATCH du viewer sur ce track —   []    zéro ligne touchée, nom relu « Conseil & IA »
+insert … returning (admin)   201 201   décision 107 non réintroduite
+```
+
+`npm run test:sql` **33 fichiers, 1944 assertions** ; `npm run e2e:api` **504/504** ;
+`npm run e2e:ui` **182/182** ; `scripts/verify-authz.sh` **35 contrôles** ; `scripts/verify-seed.sh`
+**55 contrôles** ; `npm run typecheck` — aucune anomalie.
+
+**Quatre preuves révisées, aucune supprimée, aucune relâchée.** C'est le point qui mérite d'être
+écrit, parce que c'est celui où l'on triche facilement. Chacune encodait la règle d'avant
+l'arbitrage, et chacune porte désormais, **dans le fichier même**, pourquoi sa valeur attendue
+change : `0011_droits_fins.test.sql` (l'assertion qui mesurait `1` track mesure `2`, plus sept
+assertions neuves au §6 bis), `e2e/api/droits-fins.spec.ts` (la ligne `d` s'inverse, et la preuve de
+refus n° 4 n'est pas perdue mais **déplacée** là où elle reste vraie — deux scénarios neufs `d'` et
+`d''`), `e2e/api/tracks.spec.ts`, et `scripts/verify-authz.sh` dont le triplet du `viewer` passe de
+`3/4/8` à `4/4/8`. Ce dernier illustre la règle : **on ne relâche pas un contrôle qui devient rouge,
+on l'affûte**. `4/4/8` dit strictement plus que `3/4/8` — il prouve que SEULS les tracks ont bougé,
+et rougirait si l'élargissement avait déteint sur les channels ou les cards.
+
+**La preuve d'interface, qui était l'objet même de l'arbitrage.** Le §3.3 bis exigeait de montrer
+« Conseil & IA » rendu à Farida avec son seul onglet « Prospection ». `e2e/ui/droits-fins.spec.ts`
+le montre, et ajoute le geste qui manquait : Farida **atteint son channel au clic**, sans connaître
+d'adresse. Sept captures produites et **observées** (`CLAUDE.md` §16), quatre paliers compris.
+
+**Un comportement mesuré au passage, et qui n'est pas un défaut.** L'adresse directe d'un channel
+fermé ne rend pas « channel introuvable » mais le **même** état vide que « choisissez un channel ».
+C'est délibéré et documenté dans `webapp/src/app/RouteTrack.tsx` : distinguer les deux renseignerait
+sur l'existence d'un channel refusé (§7). Ma première rédaction de la preuve attendait « Channel
+introuvable » et a rougi — l'écran avait raison, pas moi. La preuve vérifie désormais les deux
+moitiés de la règle : l'écran neutre est rendu, et le nom du channel fermé n'apparaît nulle part.
+
+**Ce que cette décision ne fait pas.** Elle ne touche ni la politique des `channels`, ni l'écriture
+des `tracks`, ni la navigation. Elle ne comble pas le cas « track fermé dont AUCUN channel n'est
+lisible » dans le seed — il n'y en a pas, et la suite pgTAP `0011` §6 bis le couvre sur ses propres
+fixtures plutôt que d'imposer une reprise du seed à `CRM-046`.
+
+**Où reprendre.** L'ordre de la décision 336 perd ses deux termes suivants : **la prochaine
+exécution reprend à INC-072** (la modération des commentaires, ouverte aux `admin` par un document
+et à personne par l'autre). Trois entrées ont été ouvertes pendant cette session et attendent un
+arbitrage du responsable, à ne pas trancher seul : **INC-094** (une seconde migration s'exécute sous
+`supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi) et **INC-095** (le contrat de
+déploiement s'arrête à la migration 30 alors que le dépôt en compte 34) ; **INC-093** a été ouverte
+et close dans la même session.

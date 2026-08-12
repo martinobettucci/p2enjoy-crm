@@ -504,12 +504,47 @@ fausse. Aucun comportement n'est modifié par ce constat.
    alors corriger `docs/SPEC-permissions-rls.md` §3.4 et retirer l'assertion pgTAP correspondante :
    c'est un changement de règle, pas d'interface.
 
-**Action attendue du responsable :** trancher entre ces trois options. Tant qu'elle n'est pas prise,
-le comportement reste celui qui est mesuré ci-dessus, et `CRM-012` le nomme comme limite explicite
-plutôt que de le corriger au passage.
+**Arbitrage rendu le 2026-08-11** — décision 333, option 1. **Livré et prouvé le 2026-08-12 : INC-085
+et INC-075 sont CLOSES**, par le même changement, comme la décision 333 l'avait annoncé.
+
+**Ce qui a été livré.** `supabase/migrations/0034_lecture_track_transitive.sql` — la fonction
+`app.track_has_readable_channel(uuid)` (`STABLE`, `SECURITY DEFINER`, `search_path` vide) et
+l'élargissement de `tracks_lecture_membre` à « le track est lisible **ou** l'un de ses channels
+l'est ». Aucun changement de schéma, aucune des trois fonctions `can_*` touchée.
+
+**Les preuves, mesurées sur la pile réelle avec le jeton du `viewer` seedé, avant puis après :**
+
+```
+tracks rendus      3 → 4    « Conseil & IA » réapparaît
+channels rendus    4 → 4    INCHANGÉ
+channels du track  —   1    « Prospection » SEUL, « Grands comptes » toujours fermé
+PATCH du track     —   []   zéro ligne touchée, nom relu intact : aucun droit d'écriture
+insert…returning   201 201  décision 107 non réintroduite
+```
+
+- `npm run test:sql` — **33 fichiers, 1944 assertions, aucune anomalie**, dont `0011` §6 bis, sept
+  assertions neuves, et celle qui mesurait `1` track révisée à `2` **en expliquant pourquoi dans le
+  fichier**.
+- `npm run e2e:api` — **504/504**, dont les lignes `d`, `d'` et `d''` neuves du §4.2 et la preuve
+  `D5` de la décision 107.
+- `npm run e2e:ui` — **182/182**, dont la preuve d'interface que le §3.3 bis exigeait : Farida
+  **atteint** son channel **au clic**, sans connaître d'adresse.
+- `scripts/verify-authz.sh` **35 contrôles**, `scripts/verify-seed.sh` **55 contrôles**,
+  `npm run typecheck` — sans anomalie. Le triplet du `viewer` passe de `3/4/8` à `4/4/8` : il n'est
+  pas relâché, il prouve que **seuls** les tracks ont bougé.
+
+**Captures produites ET OBSERVÉES** (`CLAUDE.md` §16), `docs/captures/CRM-012/` : le track rendu
+avec son unique onglet, aux quatre paliers, tiroir mobile compris, sans débordement horizontal.
+
+**Un comportement mesuré au passage, et qui n'est pas un défaut.** L'adresse directe d'un channel
+fermé (`/tracks/conseil-ia/grands-comptes`) ne rend pas « channel introuvable » mais le **même**
+état vide que « choisissez un channel ». C'est délibéré et documenté (`webapp/src/app/RouteTrack.tsx`,
+§7) : distinguer les deux renseignerait sur l'existence d'un channel refusé. La preuve d'interface
+vérifie donc les deux moitiés de la règle — l'écran neutre est rendu, et le nom du channel fermé
+n'apparaît nulle part.
 
 **Lié à :** INC-024 et INC-030 (les deux politiques de lecture que `CRM-012` a resserrées),
-`docs/SPEC-permissions-rls.md` §3.4, `docs/SPEC-channels.md` §5.1.
+`docs/SPEC-permissions-rls.md` §3.3 bis et §3.4, `docs/SPEC-channels.md` §5.1.
 
 ### INC-084 — Le parcours Chromium global est instable et son exécuteur écrit des avertissements — **CLOSE**
 
@@ -1027,9 +1062,21 @@ existe côté serveur et n'a aucun chemin côté produit.**
 par une preuve — le `viewer` lit bien les cards de `prospection` par son jeton, et ne lit pas son
 track —, sans rien changer ni à la politique ni à la coquille (`docs/SPEC-seed.md` §9.7).
 
-**Action attendue du responsable :** trancher entre les trois issues.
+**Arbitrage rendu le 2026-08-11** — décision 333, issue 1. **CLOSE le 2026-08-12**, par la même
+livraison qu'INC-085 : les deux entrées décrivaient le même défaut à trois jours d'écart, et une
+seule correction les ferme. **Les preuves sont détaillées sous INC-085**, dans la section « Clos » —
+elles ne sont pas dupliquées ici, précisément parce que le doublon est ce que ces deux entrées
+enseignent.
 
-**Lié à :** INC-030 (close, dont la mesure de clôture est l'origine de ce point), INC-024, INC-021
+**Ce que ce doublon a coûté, et la règle qu'il pose.** Le même fait a été relevé deux fois, à trois
+jours d'intervalle, par deux lectures différentes du produit — la spécification de `CRM-046` d'un
+côté, la preuve d'interface de `CRM-012` de l'autre. Un registre relu **par unité** plutôt que **par
+sujet** produit mécaniquement ce doublon : chaque unité y cherche ce qui la concerne, et personne
+n'y cherche ce qui ressemble à ce qu'il vient d'écrire. **Avant d'ouvrir une entrée, chercher le
+fait — pas l'unité.**
+
+**Lié à :** INC-085 (même défaut, même correction, mêmes preuves), INC-030 (close, dont la mesure de
+clôture est l'origine de ce point), INC-024, INC-021
 (aucun écran de connexion, donc aucun parcours réel pour l'observer), `docs/SPEC-permissions-rls.md`
 §3 ligne f, `docs/SPEC-seed.md` §9.7.
 ### INC-076 — Supprimer un compte est devenu impossible dès qu'il a commenté, et trois preuves du seed le constatent sans le nommer — **CLOSE**

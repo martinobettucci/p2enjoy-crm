@@ -584,7 +584,7 @@ comptes stables de `CRM-005` servent de profils et aucune donnée d'essai ne sub
 - **La fenêtre de grâce de 10 secondes** sur la rotation des jetons de rafraîchissement est
   documentée d'après le défaut de GoTrue ; sa borne exacte n'a pas été mesurée.
 
-### CRM-012 — Droits fins par track et channel `[~]`
+### CRM-012 — Droits fins par track et channel `[x]`
 Résolution « le plus spécifique gagne », administrateur jamais restreint.
 **DoD** : pgTAP sur la matrice de résolution ; preuves de refus n° 3, 4, 7 et 11 de
 `docs/SPEC-permissions-rls.md` §7.
@@ -662,13 +662,16 @@ Résolution « le plus spécifique gagne », administrateur jamais restreint.
       `docs/PROD_MIGRATIONS.md` §3 (migration 10), `docs/manual.md` §3.2 quater, `CHANGELOG.md`
       mis à jour dans le même changement.
 - [x] **~~Aucun écran, aucune capture, aucun test E2E d'interface.~~ INC-021 est close depuis
-      `CRM-009`, et la preuve est acquise** : `e2e/ui/droits-fins.spec.ts`, **7 scénarios verts**,
-      deux personnes réelles connectées **au clavier**. Farida Nowak ne voit pas « Conseil & IA »,
-      que son droit fin ferme ; Camille Aubert **porte la même ligne `access = 'none'`** et voit
-      pourtant les quatre tracks — « un administrateur n'est jamais restreint » devient une image,
-      pas une assertion. Saisir `/tracks/conseil-ia` à la main ne contourne rien : l'écran rend
-      « Track introuvable » sans révéler que le track existe. Six captures observées, dont les
-      quatre paliers, console silencieuse et aucun débordement horizontal.
+      `CRM-009`, et la preuve est acquise** : `e2e/ui/droits-fins.spec.ts`, **8 scénarios verts**,
+      deux personnes réelles connectées **au clavier**. RÉVISÉE PAR LA DÉCISION 333 : Farida Nowak
+      **voit** « Conseil & IA », parce qu'un de ses channels lui est rouvert, et **l'atteint au
+      clic** — c'est le geste qui manquait. Son ouverture n'expose que l'onglet « Prospection », les
+      autres channels du track restant fermés. Camille Aubert **porte la même ligne
+      `access = 'none'`** et voit les quatre tracks — « un administrateur n'est jamais restreint »
+      devient une image, pas une assertion. Saisir `/tracks/conseil-ia` à la main mène désormais au
+      même écran que le clic, et l'adresse d'un channel fermé rend l'état vide neutre sans révéler
+      son nom (§7). Sept captures observées, dont les quatre paliers, console silencieuse et aucun
+      débordement horizontal.
 - [x] **~~Preuve de refus n° 7 non acquise~~ — ACQUISE depuis `CRM-052`** sur les comptes
       **entrants** : avec le jeton réel d'un membre non administrateur, la boîte système et celle
       d'un collègue rendent **zéro ligne**, la contre-épreuve par la clé de service constatant que
@@ -680,7 +683,20 @@ Résolution « le plus spécifique gagne », administrateur jamais restreint.
 - [x] **~~Les politiques des tables d'identité ne sont pas écrites~~ — écrites depuis par
       `CRM-022`**, migration `0021_identites_et_memberships_surs.sql`. INC-014 est traitée là où
       elle devait l'être, et non par une unité qui touchait aux politiques par commodité.
-- [ ] **INC-085 est ARBITRÉE et non close — décision 333, cette unité est rouverte.** La politique
+- [x] **INC-085 et INC-075 CLOSES — décision 333, reprise livrée et prouvée le 2026-08-12.**
+      `supabase/migrations/0034_lecture_track_transitive.sql` livre
+      `app.track_has_readable_channel(uuid)` et élargit `tracks_lecture_membre` à « le track est
+      lisible **ou** l'un de ses channels l'est ». MESURÉ avec le jeton du `viewer` seedé, avant
+      puis après : tracks rendus **3 → 4**, channels rendus **4 → 4 (inchangé)**, channels du track
+      réapparu **« Prospection » seul**, `PATCH` du `viewer` sur ce track **zéro ligne touchée** et
+      nom relu intact, `insert … returning` d'administrateur **201** — la décision 107 n'est pas
+      réintroduite. `npm run test:sql` **33 fichiers / 1944 assertions**, `npm run e2e:api`
+      **504/504**, `npm run e2e:ui` **182/182**, `scripts/verify-authz.sh` **35 contrôles**,
+      `scripts/verify-seed.sh` **55 contrôles**, `npm run typecheck` — aucune anomalie. Le triplet
+      du `viewer` de `verify-authz.sh` passe de `3/4/8` à `4/4/8` : **seuls les tracks ont bougé**.
+      Quatre preuves qui encodaient l'ancienne règle ont été **révisées en expliquant pourquoi dans
+      le fichier même**, aucune supprimée ni relâchée.
+- [x] ~~**INC-085 est ARBITRÉE et non close — décision 333, cette unité est rouverte.** La politique
       de lecture de `tracks` s'élargit : un track redevient lisible dès qu'un de ses **channels**
       l'est, `app.can_read_channel` étant consultée sur les channels du track. « Le plus spécifique
       gagne » devient transitif, et l'ouverture d'un tel track n'affiche **que les channels
@@ -691,24 +707,27 @@ Résolution « le plus spécifique gagne », administrateur jamais restreint.
       `e2e/ui/droits-fins.spec.ts` — qui devra montrer « Conseil & IA » rendu à Farida avec son seul
       onglet « Prospection » —, `scripts/verify-droits-fins.sh` et `docs/SPEC-permissions-rls.md`
       §3.4. **Garde-fou de la décision 107 opposable** : les politiques évaluent les colonnes de la
-      ligne, jamais une relecture de la table, faute de quoi un `insert … returning` rendra `403`.
-- [ ] **Constat d'origine, conservé.** Farida porte aussi
+      ligne, jamais une relecture de la table, faute de quoi un `insert … returning` rendra `403`.~~
+- [x] ~~**Constat d'origine, conservé.** Farida porte aussi
       `channel_members.access = 'member'` sur « Prospection », channel du track qui lui est fermé.
       MESURÉ : l'API **rend** ce channel — la réouverture du plus spécifique fonctionne — mais
       **aucun geste de navigation n'y mène**, la barre d'onglets ne listant les channels qu'une
       fois un track ouvert. Un droit fin **accordé** est donc inexerçable là où un droit fin
       **retiré** est correctement observable. Ce n'est ni un défaut de RLS ni un masquage : c'est
       une surface manquante, et les trois options possibles changent soit la politique de lecture
-      des tracks, soit la navigation, soit la règle elle-même. **Consignée, non résolue.**
+      des tracks, soit la navigation, soit la règle elle-même. **Consignée, non résolue.**~~
+      **RÉSOLUE le 2026-08-12** : la surface manquante existe, le geste de navigation aussi.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur la matrice de
 résolution ; preuves de refus n° 3, 4, 7 et 11 ». La première est livrée, largement au-delà — la
 matrice est éprouvée sur des lignes réelles, ce que `CRM-010` ne pouvait pas faire. Les preuves
 n° 3, 4 et 11 sont acquises **au niveau des tracks et des channels**, la n° 4 au niveau des
 **cards** par `CRM-040`, et **la n° 7 depuis `CRM-052`** pour les comptes entrants. **Les quatre
-preuves de la Definition of Done sont donc tenues** ; seule INC-085 reste ouverte. **Depuis la
-décision 333, elle n'appelle plus un arbitrage mais un correctif** — l'élargissement de la politique
-de lecture des tracks —, ce qui rouvre cette unité au lieu de la laisser en attente.
+preuves de la Definition of Done sont donc tenues**. INC-085, dernier point ouvert, a été
+**arbitrée par la décision 333 puis livrée et prouvée le 2026-08-12** — l'élargissement de la
+politique de lecture des tracks, migration `0034` —, et INC-075 se ferme avec elle.
+
+**TOUTES LES PREUVES DE LA DEFINITION OF DONE SONT VERTES. `CRM-012` PASSE `[x]`.**
 
 *Limites nommées, non masquées.*
 
