@@ -11570,3 +11570,53 @@ Definition of Done citait déjà le comportement réel (`docs/BACKLOG.md`, entr�
 terminologique du 2026-08-11) ; elle ne fait que retirer la mention « la preuve n'a pas été rejouée
 depuis un poste disposant de la pile », désormais fausse. Elle ne touche à aucun fichier de code : le
 comportement était déjà correct depuis `CRM-022`, seule la preuve manquait.
+
+### Décision 356 — Un contournement que son appelant ne peut pas atteindre n'est pas livré
+
+**2026-08-12 — routine horaire, en montant la pile pour produire les preuves attendues d'INC-085.**
+
+**Le point de départ.** `./runDev.sh` échoue à la construction de l'image `mail-sync` :
+`pip install` ne peut pas vérifier le certificat de `pypi.org` derrière le proxy HTTPS à
+certificat interposé de cet environnement, et `runDev.sh` s'arrête avant de démarrer le moindre
+service. La pile entière est indisponible pour un défaut qui ne concerne qu'une image.
+
+**Le fait, et il n'est pas celui qu'on attend.** Le contournement existe **déjà**, au bon endroit :
+`mail-sync/Dockerfile` porte la branche facultative `--mount=type=secret,id=pip_ca` que la
+décision 280 a conçue pour `npm`, commentaire et commande d'exemple compris. Ce qui manque est son
+**câblage** : le service `mail-sync` de `docker-compose.yml` déclare `build:` sans clé `secrets:`,
+et aucun des trois fichiers Compose ne définit `pip_ca` — `docker-compose.dev.yml` ne définit que
+`npm_ca`. La branche teste donc toujours un montage absent et journalise `pip_ca: inactif`.
+
+**Mesuré, et non déduit.** La même image construite à la main avec le secret que le `Dockerfile`
+documente aboutit (`naming to docker.io/library/p2enjoy-mail-sync:essai  DONE`). Le `Dockerfile`
+est correct ; c'est Compose qui ne lui passe rien.
+
+**La décision : câbler `pip_ca` exactement comme `npm_ca`, et au même niveau que le service.**
+`docker-compose.yml` — et non l'overlay de développement — reçoit le secret, parce que c'est lui
+qui porte le service `mail-sync`, et parce que la production construit la même image derrière le
+même genre de proxy. Le secret reste **facultatif** et **inerte par défaut** : sa source est
+`${PIP_CA_FILE:-/dev/null}`, la même construction que `npm_ca`, dont le `Dockerfile` teste la
+taille. Sans proxy, rien ne change, et c'est la propriété qui rend le câblage acceptable en
+production.
+
+**Pourquoi pas `NPM_CA_FILE` réutilisée pour les deux.** Une seule variable aurait été plus courte
+et aurait menti sur deux points : elle nomme `npm`, et les deux chaînes n'ont ni le même format
+attendu ni la même raison de vivre — `npm config set cafile` d'un côté, `PIP_CERT` de l'autre. Une
+variable dédiée se documente honnêtement ; une variable détournée se découvre par surprise.
+
+**La garde de forme est étendue, pas dupliquée.** `env_require_dev_npm_ca_file` refusait déjà un
+chemin relatif, un fichier absent, illisible, vide ou dépourvu de bloc PEM. La même vérification
+vaut mot pour mot pour `PIP_CA_FILE` : elle devient paramétrée par le nom de la variable, et
+`runDev.sh` la réclame pour les deux. Écrire deux fois la même garde aurait garanti qu'elles
+divergent.
+
+**Ce que cette décision ne fait pas.** Elle ne touche ni `mail-sync/Dockerfile`, déjà correct, ni
+`webapp/Dockerfile`, ni le contenu de `mail-sync/requirements.txt`. Elle n'ajoute aucun certificat
+au dépôt : `PIP_CA_FILE` désigne un fichier **hors dépôt**, comme `NPM_CA_FILE`, et `.env` reste
+ignoré par Git.
+
+**La leçon, et elle est celle d'INC-083.** Un correctif livré au bon endroit mais dont la portée
+s'arrête avant ses appelants réels ne se distingue pas, à l'usage, d'un correctif absent. La
+décision 280 a traité `npm` alors que `mail-sync/Dockerfile` n'existait pas encore ; l'image l'a
+rejointe plus tard en copiant la branche, sans le câblage qui la rend vivante. **Copier un
+contournement oblige à copier son câblage**, faute de quoi on copie un commentaire.

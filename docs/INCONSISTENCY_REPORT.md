@@ -35,6 +35,56 @@ réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à
 
 ## Ouverts
 
+### INC-093 — Le contournement `pip_ca` de `mail-sync` existe dans son `Dockerfile`, mais aucun fichier Compose ne le câble
+
+**Nature :** contournement documenté et fonctionnel, rendu **inatteignable** par la commande qui en
+a besoin — `runDev.sh`. Même famille qu'INC-083 : un correctif livré au bon endroit, mais dont la
+portée s'arrête avant l'appelant réel.
+**Relevé le :** 2026-08-12, en montant la pile pour produire les preuves d'INC-085.
+
+**Le fait, mesuré.** `mail-sync/Dockerfile` porte depuis `CRM-015` (décision 280) la même branche
+facultative que `webapp/Dockerfile` : un secret BuildKit `pip_ca` qui, lorsqu'il est monté et non
+vide, exporte `PIP_CERT` avant `pip install`. Le commentaire du fichier donne même la commande
+`docker build --secret id=pip_ca,src=…`. Mais le service `mail-sync` de `docker-compose.yml`
+déclare `build:` **sans** clé `secrets:`, et aucun des trois fichiers Compose ne définit de secret
+`pip_ca` — seul `npm_ca` l'est, dans `docker-compose.dev.yml`. La branche est donc **inerte par
+construction** depuis un lancement par Compose.
+
+Derrière un proxy HTTPS à certificat interposé, `./runDev.sh` échoue en conséquence :
+
+```
+#14 … sh -eu -c 'if [ -s /run/secrets/pip_ca ] … '
+pip_ca: inactif
+WARNING: Retrying … SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED]
+         certificate verify failed: self-signed certificate in certificate chain'))
+ERROR: Could not find a version that satisfies the requirement fastapi==0.139.2
+target mail-sync: failed to solve: … exit code: 1
+```
+
+`runDev.sh` s'arrête là : **aucun** service ne démarre, alors que le défaut ne concerne qu'une
+image. La pile entière est donc indisponible, et avec elle toutes les preuves qui en dépendent.
+
+**Le contournement manuel fonctionne, et c'est ce qui localise le défaut.** La même image
+construite à la main avec le secret que le `Dockerfile` documente aboutit :
+
+```
+docker build --secret id=pip_ca,src=<bundle CA> -f mail-sync/Dockerfile .
+→ naming to docker.io/library/p2enjoy-mail-sync:essai  DONE
+```
+
+Le `Dockerfile` n'est donc pas en cause ; le câblage Compose manque.
+
+**Ce qui n'est pas en cause.** Ni les versions épinglées de `mail-sync/requirements.txt`, ni le
+proxy, ni `NPM_CA_FILE`, correctement câblé pour la webapp par la décision 280. C'est une **lacune
+de portée** de cette décision, qui a traité `npm` et laissé `pip` derrière — `mail-sync/Dockerfile`
+n'existait pas encore lorsqu'elle a été rendue, et l'a rejointe plus tard sans son câblage.
+
+**Correction décidée — `docs/JOURNAL.md`, décision 356.** Voir l'entrée. L'entrée reste ouverte
+jusqu'à la livraison et son rejeu.
+
+**Lié à :** `CRM-015`, `CRM-051`, décision 280, INC-083 (même mode de défaillance : portée d'un
+correctif plus étroite que ses appelants).
+
 ### INC-092 — La même veille permanente fait aussi rougir `mail-sync.spec.ts` S3 sur un échec ATTENDU d'une autre preuve
 
 **Nature :** même famille qu'INC-091 — la veille continue de `CRM-059` interagit avec une preuve
