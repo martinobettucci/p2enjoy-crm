@@ -15,7 +15,7 @@ d'exécuter le code attendu.
 
 ### Documentation
 
-- **Les 61 entrées ouvertes du registre reçoivent chacune une disposition** (décision 366),
+- **Les 61 entrées ouvertes du registre reçoivent chacune une disposition** (décision 367),
   présentées au responsable en treize lots et arbitrées une par une. Le filtre qui avait écarté
   cinquante-six d'entre elles comme « déjà tranchées » était posé par l'agent, pas par lui : une
   entrée arbitrée mais non livrée **est** un bloqueur pour qui lit le registre.

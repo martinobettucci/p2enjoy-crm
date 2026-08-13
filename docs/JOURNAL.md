@@ -12201,7 +12201,16 @@ applique celui-là à un service que la décision 12 n'avait pas examiné.
 
 **Rattachement :** `CRM-001`. INC-098 pour la description fausse de `VAULT_ENC_KEY`.
 
-### Décision 366 — Les soixante et une entrées ouvertes reçoivent chacune une disposition
+### Décision 367 — Les soixante et une entrées ouvertes reçoivent chacune une disposition
+
+*Écrite sous le numéro **366**, pris une heure plus tôt par « Un service sans consommateur n'est pas
+une réserve, c'est une dette » (retrait de Supavisor, INC-098). **Quatrième collision du document**,
+et la première commise par la session qui venait d'en documenter la cause — décisions 258, 360 et
+364. Renumérotée en **367** le 2026-08-13 selon la règle de la décision 360 : la 366 d'origine est
+citée par `README.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `docs/BACKLOG.md` et le registre ;
+celle-ci ne l'était que par deux renvois que la même session contrôle. Aucune référence n'est cassée.
+Cette occurrence est la meilleure démonstration possible que la garde de la décision 364 doit
+exister : une session qui vient d'écrire la règle l'a enfreinte dans l'heure.*
 
 **2026-08-13 — arbitrage du responsable, entrée par entrée, sur la totalité du registre.**
 

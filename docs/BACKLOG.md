@@ -5906,10 +5906,10 @@ pas un produit.
 
 ---
 
-## Plan de solde du registre — décision 366, 2026-08-13
+## Plan de solde du registre — décision 367, 2026-08-13
 
 Les **61 entrées ouvertes** ont chacune reçu une disposition du responsable, lot par lot. Ce tableau
-est le plan d'exécution ; le détail des motifs est dans `docs/JOURNAL.md`, décision 366, et les
+est le plan d'exécution ; le détail des motifs est dans `docs/JOURNAL.md`, décision 367, et les
 porteurs dans `docs/ARBITRAGES.md`.
 
 **Contrainte de tête — INC-096.** Le registre d'images est injoignable : aucune preuve de pile n'est

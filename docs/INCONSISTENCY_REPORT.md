@@ -125,6 +125,17 @@ n'est pas remplie ici : l'entrée renumérotée n'était citée nulle part, et l
 comme tel avant le geste. **Aucune référence n'est cassée**, et la note de renumérotation reste dans
 l'entrée. Appliquer le suffixe aurait conservé une ambiguïté qu'aucune contrainte n'imposait.
 
+**QUATRIÈME OCCURRENCE, le même jour, commise par la session qui venait d'écrire cette entrée.** La
+décision **367** a d'abord été écrite sous le numéro **366**, pris une heure plus tôt par « Un
+service sans consommateur n'est pas une réserve, c'est une dette » (retrait de Supavisor, INC-098).
+La règle de la décision 360 a été appliquée — la 366 d'origine étant citée par `README.md`,
+`docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `docs/BACKLOG.md` et ce registre, c'est la nouvelle qui a
+été renumérotée —, mais le fait vaut d'être écrit sans être adouci : **une session qui venait de
+documenter la cause l'a reproduite dans l'heure**, en relisant pourtant le compteur avant d'écrire.
+Entre la lecture et l'écriture, une exécution concurrente avait pris le numéro. C'est exactement le
+scénario que le verrou de la décision 364 doit rendre impossible, et c'est la démonstration que la
+discipline humaine ou machinale ne suffit pas ici.
+
 **Ce qui reste, et qui n'est pas corrigé ici :** la **cause**. Rien dans le dépôt n'empêche une
 écriture de reprendre un numéro déjà pris. C'est le point 1 d'INC-069, toujours ouvert — soit les
 décisions cessent d'être numérotées par un compteur global, soit une garde vérifie l'unicité avant
