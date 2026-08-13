@@ -325,6 +325,16 @@ $$;
 -- acceptés en file avant que le premier ne parte. Un envoi au-delà du quota passe `failed` avec son
 -- motif, il n'est pas silencieusement laissé en attente — une file qui ne bouge plus sans rien dire
 -- est pire qu'un refus.
+-- `CREATE OR REPLACE` NE PEUT PAS CHANGER UN TYPE DE RETOUR, et cette fonction en a changé : la
+-- colonne `attempts` a été ajoutée à ses colonnes de sortie pour que `CRM-059` puisse décider du
+-- délai de la prochaine tentative. PostgreSQL refuse alors net — `Row type defined by OUT
+-- parameters is different` —, et comme le `migrations-runner` rejoue TOUT le répertoire à chaque
+-- démarrage (`CRM-001`), la pile ne redémarrait plus du tout. MÊME DÉFAUT QUE `dossiers_a_renommer`
+-- à `CRM-056` (décision 325), et même correction : la fonction est retirée avant d'être reposée.
+-- Le `drop` est explicite plutôt qu'implicite : une signature qui change est un fait, pas un détail
+-- d'écriture.
+drop function if exists public.reserver_envois(integer);
+
 create or replace function public.reserver_envois(p_limite integer default 10)
 returns table (
 	outbox_id      uuid,
