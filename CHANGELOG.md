@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Le registre des contradictions ne conserve plus que ce qui est ouvert** (décision 361). Le texte
+  intégral des **36 entrées closes** est retiré de `docs/INCONSISTENCY_REPORT.md` et remplacé par un
+  index d'une ligne chacune — objet, date de clôture, unité qui l'a fermée, décision du journal.
+  **5 028 → 2 959 lignes**, INC-097 et l'index d'état compris. Chaque retrait a été précédé de
+  la vérification que la décision et la preuve existent ailleurs ; quatre entrées — INC-014, INC-075,
+  INC-085, INC-093 — étaient closes **dans leur corps sans que leur titre le dise**, et un tri sur
+  l'en-tête les aurait manquées.
+- **`docs/ARBITRAGES.md` applique enfin sa propre règle d'ouverture** — « une entrée disparaît d'ici
+  lorsque la décision est prise » —, jamais mise en œuvre jusqu'ici : **183 → 88 lignes**. La
+  photographie du 2026-08-06 et l'ordre d'exécution que trois décisions plus récentes avaient
+  renversé sont retirés ; une section nomme désormais **les sept entrées qui attendent réellement une
+  décision**, et l'ordre de solde de la décision 336 est mis à jour — INC-076 et INC-085/INC-075
+  étant closes, **INC-072 est le terme restant**.
+- **INC-097 ouverte, et sa correction appliquée** : `docs/JOURNAL.md` portait **deux décisions 340**,
+  troisième collision du document après les deux décisions 180. L'entrée non citée est renumérotée
+  **360** — la règle de la décision 258 impose le suffixe seulement lorsque les deux sont citées, ce
+  qui n'était pas le cas, et aucune référence n'est cassée. **La cause n'est pas traitée** : rien
+  n'empêche encore une écriture de reprendre un numéro déjà pris.
+
 ### Corrigé
 
 - **INC-085 et INC-075 closes, `CRM-012` passe `[x]` : un track est désormais lisible dès qu'un de

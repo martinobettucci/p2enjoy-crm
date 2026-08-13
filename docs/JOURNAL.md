@@ -11903,7 +11903,13 @@ par `git fetch origin && git reset --hard origin/main` : un `git pull` y produir
 dupliqué. Le dépôt n'ayant qu'une ligne de travail et des exécutions repartant d'un checkout neuf à
 chaque heure, le coût est nul en pratique.
 
-### Décision 340 — Vérifier la prémisse d'une preuve avant d'accuser le produit
+### Décision 360 — Vérifier la prémisse d'une preuve avant d'accuser le produit
+
+*Écrite sous le numéro **340**, déjà pris par « L'attribution du commit `e373900` est corrigée par
+réécriture d'historique ». Renumérotée en **360** le 2026-08-13, la collision étant la troisième du
+document après celle des deux décisions 180 (INC-069). La règle de la décision 258 — suffixer plutôt
+que renuméroter — vaut lorsque **les deux** entrées sont citées ; ici la 340 d'origine l'est six
+fois et celle-ci ne l'était pas encore. Aucune référence n'est donc cassée. Consigné en INC-097.*
 
 **2026-08-12 — `CRM-059`, sur une preuve rouge trouvée par le harnais global.**
 
@@ -11930,3 +11936,49 @@ au vert — elle l'était sans doute au moment où elle a été écrite. Entre-t
 rendue rouge sans que personne le voie, et c'est le harnais global qui l'a rattrapé. C'est
 exactement ce à quoi il sert, et la raison pour laquelle un compteur figé vaut mieux qu'un « le vert
 est vert ».
+
+### Décision 361 — Un registre qu'on relit chaque session ne garde que ce qui est ouvert
+
+**2026-08-13 — arbitrage du responsable sur le volume documentaire.**
+
+**La demande, et son motif.** « Pourquoi ne pas nettoyer — vraiment retirer du registre — les
+éléments clos dont l'arbitrage et la décision finale sont déjà reportés dans les fichiers de
+spécification et le backlog, pour réduire le coût de traitement ? » La mesure justifie la question :
+`docs/INCONSISTENCY_REPORT.md` comptait **5 028 lignes** pour **96 entrées**, dont **36 closes**
+occupant environ deux mille lignes — relues au début de chaque session, pour une information qui
+n'oriente plus aucun travail.
+
+**L'arbitrage : le texte intégral d'une entrée close est retiré du registre.** Il est remplacé par
+une ligne d'index — objet, date de clôture, unité ou reprise qui l'a fermée, décision du journal à
+lire. Le même geste est appliqué à `docs/ARBITRAGES.md`, dont la règle d'ouverture le prescrivait
+depuis toujours sans avoir jamais été appliquée.
+
+**La condition qui rend le retrait acceptable, et qui a été vérifiée entrée par entrée.** Une
+entrée n'est retirée que si sa décision et sa preuve existent ailleurs. Les trente-six closes ont
+été relues une à une : chacune cite une unité porteuse, un numéro de décision, ou les deux. Aucune
+n'a été retirée sur sa seule mention « CLOSE ». Quatre — INC-014, INC-075, INC-085, INC-093 — étaient
+d'ailleurs **closes dans leur corps sans que leur titre le dise**, et n'auraient pas été vues par un
+tri automatique sur l'en-tête.
+
+**Ce que le retrait ne détruit pas**, et c'est la raison pour laquelle il n'est pas une perte :
+la décision vit dans ce journal, numérotée et motivée ; la règle vit dans la spécification
+concernée ; la preuve vit dans la Definition of Done de l'unité, au backlog ; et le texte d'origine
+— mesure, options écartées, contre-épreuves — reste intégralement lisible dans l'historique Git,
+qui est fait pour cela. Un registre est un instrument de travail, pas une archive : l'archive existe
+déjà, en dessous.
+
+**Ce que cela coûte, dit sans le minimiser.** Un commentaire `@spec` qui cite une entrée close
+résout désormais vers une ligne d'index et non vers le constat détaillé. C'est un renvoi moins riche,
+mais toujours valide — et il indique où lire la suite. Les renvois par **numéro de ligne** vers
+`docs/ARBITRAGES.md`, eux, deviennent faux ; le journal en portait un, il est signalé dans le
+fichier plutôt que corrigé par réécriture d'une entrée chronologique.
+
+**Volume après le geste :** registre **5 028 → 2 959 lignes**, 61 entrées ouvertes conservées en
+entier — dont INC-097, ouverte pendant le nettoyage ; dossier d'arbitrage **183 → 88 lignes**, dont
+la photographie périmée du 2026-08-06 et un ordre d'exécution que trois décisions plus récentes
+avaient déjà renversé.
+
+**Règle posée pour la suite :** une entrée est retirée du registre **dans le changement qui la
+ferme**, pas lors d'une passe de nettoyage ultérieure. Une passe de nettoyage est le symptôme d'une
+règle qu'on n'applique pas au fil de l'eau — celle-ci était écrite en tête de `docs/ARBITRAGES.md`
+depuis le premier jour.

@@ -9,31 +9,126 @@ Une entrée est close lorsque la décision est prise, consignée dans `docs/JOUR
 comportement correctif est livré et prouvé** lorsqu'elle exige du code. La décision seule retire
 l'attente d'arbitrage ; elle ne transforme pas une correction due en fait acquis.
 
-**Arbitrage exhaustif du 2026-08-08.** Le responsable a délégué tous les choix suspendus. Les
-décisions 292 à 299 et la matrice de `docs/ARBITRAGES.md` tranchent chaque entrée encore en attente,
-y compris INC-002, INC-004, INC-006, INC-008, INC-011, INC-014, INC-018, INC-025 à INC-028,
-INC-034 à INC-041, INC-045, INC-046, INC-048, INC-049, INC-051 à INC-080 et INC-082. Le texte
-historique de chaque entrée conserve la mesure et les options d'origine ; toute formule
-« arbitrage attendu » y est désormais l'état **au jour du constat**, pas une question encore
-adressée au responsable. Les entrées restent dans « Ouverts » jusqu'à leur mise en œuvre et leur
-preuve, conformément à la règle ci-dessus.
+## Ce document ne conserve que ce qui est ouvert
 
-**Solde d'arbitrage du 2026-08-11.** Les deux seules entrées ouvertes qui n'avaient reçu aucun
-arbitrage — **INC-085** (qui recouvrait **INC-075**) et **INC-088** — sont tranchées par les
-décisions **333** et **334**. **Aucune question n'est donc adressée au responsable dans ce
-registre** : les cinquante-huit entrées ouvertes attendent toutes une **mise en œuvre et une
-preuve**, jamais une décision. L'ordre de solde est fixé par la décision **336** : les défauts
-réels d'abord — ~~INC-076~~, puis **INC-085/INC-075**, puis **INC-072** —, le lot documentaire
-ensuite. **INC-089**, ouverte le même jour, est la seule exception : elle est née de la persistance
-de ces décisions et appelle un arbitrage. **INC-090**, ouverte le même jour par la livraison de
-`CRM-075`, a été **tranchée dans la journée** (décision 339, option 1A) : le désarchivage fait partie
-de l'unité, et l'énoncé de `CRM-075` est corrigé pour le citer. **INC-076 est soldée le 2026-08-12**
-(décision 355) : les trois preuves demandées par son constat statique sont vertes sur une pile
-réelle. L'ordre perd son premier terme — **la prochaine exécution reprend à INC-085/INC-075.**
+**Politique d'archivage, arrêtée le 2026-08-13 par le responsable.** Le texte intégral d'une entrée
+close est **retiré de ce document** au lieu d'y rester. Le motif est mesuré : les entrées closes
+occupaient plus de la moitié d'un fichier de plus de cinq mille lignes, relu au début de chaque
+session, pour une information qui n'oriente plus aucun travail.
+
+Rien n'est perdu, et c'est la condition qui rend le retrait acceptable :
+
+- la **décision** vit dans `docs/JOURNAL.md`, numérotée, avec son motif ;
+- la **règle** qui en découle vit dans la spécification concernée, `docs/SCHEMA.md`,
+  `docs/DESIGN_SYSTEM.md` ou `docs/DAT.md` ;
+- la **preuve** vit dans la Definition of Done de l'unité porteuse, dans `docs/BACKLOG.md` ;
+- le **texte d'origine** — mesure, options écartées, contre-épreuves — reste intégralement lisible
+  dans l'historique Git, qui est fait pour cela.
+
+L'index ci-dessous garde une ligne par entrée close : de quoi la retrouver, savoir qui l'a fermée
+et où lire la décision. **Une entrée n'est retirée qu'après vérification que sa décision et sa
+preuve existent ailleurs** ; à défaut, elle reste ici en entier, close ou non.
+
+**Arbitrage exhaustif du 2026-08-08.** Le responsable a délégué tous les choix suspendus. Les
+décisions 292 à 299 et la matrice de `docs/ARBITRAGES.md` tranchent chaque entrée alors en attente.
+Le texte historique de chaque entrée conserve la mesure et les options d'origine ; toute formule
+« arbitrage attendu » y est l'état **au jour du constat**, pas une question encore adressée au
+responsable. Les entrées **restent ouvertes jusqu'à leur mise en œuvre et leur preuve**.
+
+**Solde d'arbitrage du 2026-08-11.** Les deux dernières entrées de la série 002 à 088 sans arbitrage
+— **INC-085**, qui recouvrait **INC-075**, et **INC-088** — sont tranchées par les décisions **333**
+et **334**. L'ordre de solde est fixé par la décision **336** : les défauts réels d'abord, le lot
+documentaire ensuite. Les entrées ouvertes depuis — **INC-089**, **INC-091**, **INC-092**,
+**INC-094**, **INC-095**, **INC-096** et **INC-097** — appellent chacune une décision ou une action,
+nommée en fin d'entrée. `docs/ARBITRAGES.md` §1 les regroupe.
+
+**État au 2026-08-13 :** 97 entrées ouvertes depuis l'origine, **36 closes** — index ci-dessous,
+texte dans l'historique Git — et **61 ouvertes**, conservées ici en entier.
+
+---
+
+## Clos — index
+
+Trente-six entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait, la
+date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
+
+| Entrée | Objet | Close le | Fermée par | Décision |
+|---|---|---|---|---|
+| INC-001 | Disponibilité de `supabase_vault` et `pg_cron` non vérifiée | 2026-08-03 | `CRM-004` | 23, 24 |
+| INC-003 | Transition « Réalisation → Perdu » non déclarée | 2026-08-09 | `CRM-005` | 259 |
+| INC-005 | Écart assumé : copie de workflow contre surcharge | 2026-08-07 | confirmation, aucun code | 266 |
+| INC-007 | `supabase/functions/` référencé sans composant correspondant | 2026-08-08 | `CRM-016` | 260 |
+| INC-012 | Le motif principal de la décision 8 démenti par la mesure | 2026-08-09 | `CRM-017` | 8, 261 |
+| INC-013 | Quatre fonctions d'autorisation dépendent de tables livrées deux chunks plus tard | 2026-08-05 | reprise `CRM-010` | 155, 156, 157 |
+| INC-014 | Aucune unité ne nommait l'écriture des politiques RLS des tables d'identité | 2026-08-09 | `CRM-022` | 294 |
+| INC-016 | Gabarits d'emails : chargement HTTP obligatoire, repli silencieux vers l'anglais | 2026-08-07 | `CRM-009` | 264 |
+| INC-020 | La DoD de `CRM-006` exigeait le build d'une webapp livrée par l'unité suivante | 2026-08-04 | `CRM-007` | — |
+| INC-021 | Aucune unité ne portait l'écran de connexion, que la DoD de `CRM-011` présuppose | 2026-08-07 | `CRM-009` | 253 |
+| INC-022 | `docs/DAT.md` §3.1 se contredisait sur la persistance de session | 2026-08-07 | `CRM-009` | 254 |
+| INC-023 | La DoD de `CRM-008` exigeait des commandes dont les sujets arrivent au chunk 4 | 2026-08-08 | `CRM-051`, `CRM-054` | 277 |
+| INC-024 | La politique de lecture des tracks ignorait les droits fins | 2026-08-04 | `CRM-012` | — |
+| INC-030 | La politique de lecture des channels ignorait les droits fins | 2026-08-04 | `CRM-012` | — |
+| INC-032 | `./runDev.sh` ne démarrait pas à froid derrière un proxy TLS interposé | 2026-08-07 | `CRM-015` | 255, 280 |
+| INC-042 | L'image de la webapp ne se construisait pas : registre npm derrière un proxy | 2026-08-07 | `CRM-015` | 255 |
+| INC-044 | Sans `ss` ni `netstat`, la garde de ports était silencieusement inerte | 2026-08-07 | reprise `CRM-002` | 257 |
+| INC-046 | Un channel occupé change de workflow par remappage atomique explicite | 2026-08-09 | `CRM-019` | 263 |
+| INC-047 | La sixième vérification de `move_card` lisait une table livrée après elle | 2026-08-05 | `CRM-036`, par exécution | 123, 126 |
+| INC-050 | Le §5.5 de `SPEC-workflow-engine` se contredisait sur `email_local_part` | 2026-08-05 | `CRM-013`, par exécution | 142 |
+| INC-061 | `verify-cards.sh` mesurait `test:sql` avant de retirer son propre jeu d'essai | 2026-08-09 | `CRM-040` | 296 |
+| INC-073 | Les gestes unitaire et pluriel sont deux fonctions distinctes | 2026-08-09 | `CRM-019` | 263, 306 |
+| INC-075 | Un channel consenti par le backend inatteignable par la navigation — doublon d'INC-085 | 2026-08-12 | reprise `CRM-012` | 333 |
+| INC-076 | Un compte devenait indestructible dès qu'il avait commenté | 2026-08-12 | `CRM-022`, prouvé par `CRM-045` | 336, 355 |
+| INC-077 | Les changements de contexte n'étaient pas nommés dans le fil | 2026-08-09 | `CRM-019` | 232, 298, 306 |
+| INC-078 | Quatre harnais du chunk 3 n'étaient inventoriés ni au README ni au DAT | 2026-08-09 | `CRM-019` | — |
+| INC-079 | La console d'administration de Stalwart non installable dans la routine | 2026-08-07 | `CRM-050` | 245, 257 |
+| INC-080 | Garde-fous du chunk 3 périmés ; le rejeu séquentiel n'était pas une mesure | 2026-08-09 | reprise des harnais | 296, 309 |
+| INC-081 | Les décisions récupérées d'une branche supprimée, rattachées et livrées | 2026-08-09 | `CRM-016` à `CRM-019` | 243 |
+| INC-083 | Vingt et un harnais autonomes contournaient la chaîne Node de `CRM-008` | 2026-08-07 | `CRM-008` | 278 |
+| INC-084 | Parcours Chromium instable, et avertissements dans la sortie utilisateur | 2026-08-07 | `CRM-015` | — |
+| INC-085 | Un channel rouvert sous un track fermé était lisible par l'API, inatteignable à l'écran | 2026-08-12 | reprise `CRM-012` | 333 |
+| INC-086 | Tracks et channels sans aucune surface d'administration, sans porteur | 2026-08-12 | `CRM-075` | 332, 349 |
+| INC-087 | L'identité sortante de Driss expédiait depuis une adresse refusée par le serveur | 2026-08-11 | `CRM-058` | — |
+| INC-090 | `CRM-075` livrait un cinquième geste que son énoncé ne citait pas : le désarchivage | 2026-08-11 | énoncé corrigé, aucun code | 338, 339 |
+| INC-093 | Le contournement `pip_ca` de `mail-sync` n'était câblé par aucun fichier Compose | 2026-08-12 | `CRM-051` | 356 |
 
 ---
 
 ## Ouverts
+
+### INC-097 — Deux décisions du journal portent le même numéro 340, troisième collision du document
+
+**Nature :** collision d'identifiants dans un document dont les numéros servent de références
+croisées. **Troisième occurrence**, après les deux décisions 180 (INC-069).
+**Relevée le :** 2026-08-13, pendant le nettoyage du registre décidé par la décision 361.
+
+**Le fait, mesuré.** `docs/JOURNAL.md` portait deux entrées « Décision 340 » :
+
+| Position | Titre | Cité par |
+|---|---|---|
+| l. 10943 | L'attribution du commit `e373900` est corrigée par réécriture d'historique | **six fois** — `CHANGELOG.md`, `docs/JOURNAL.md` (trois renvois), ce registre (deux renvois) |
+| dernière entrée | Vérifier la prémisse d'une preuve avant d'accuser le produit (`CRM-059`) | **jamais** |
+
+La seconde est en outre écrite **après** la décision 359 : le compteur n'a pas été relu avant
+l'écriture, exactement comme pour les deux décisions 180.
+
+**Correction appliquée, et pourquoi elle ne contredit pas la décision 258.** La seconde entrée est
+renumérotée en **360**. La règle d'INC-069 — suffixer `180 a` et `180 b` plutôt que renuméroter —
+a pour seul motif de ne casser aucune référence, « puisque les deux sont citées ». Cette condition
+n'est pas remplie ici : l'entrée renumérotée n'était citée nulle part, et le renvoi est vérifié
+comme tel avant le geste. **Aucune référence n'est cassée**, et la note de renumérotation reste dans
+l'entrée. Appliquer le suffixe aurait conservé une ambiguïté qu'aucune contrainte n'imposait.
+
+**Ce qui reste, et qui n'est pas corrigé ici :** la **cause**. Rien dans le dépôt n'empêche une
+écriture de reprendre un numéro déjà pris. C'est le point 1 d'INC-069, toujours ouvert — soit les
+décisions cessent d'être numérotées par un compteur global, soit une garde vérifie l'unicité avant
+le commit, comme le crochet de la décision 358 le fait déjà pour la branche et l'identité. Un
+crochet qui refuse un numéro de décision en double coûterait quelques lignes et fermerait
+définitivement une famille de défauts qui en est à sa troisième occurrence.
+
+**Lié à :** INC-069 (les deux décisions 180, même défaut, arbitrage rendu par la décision 258),
+INC-089 (exécutions concurrentes), INC-059, `docs/JOURNAL.md` décisions 258, 358 et 361.
+
+---
 
 ### INC-096 — Le registre d'images est injoignable : aucune preuve de pile n'est exécutable
 
@@ -115,6 +210,8 @@ sur tout écart aurait empêché les trois omissions, là où la règle écrite 
 **Lié à :** `CLAUDE.md` §12 et §24, `CRM-059`, `CRM-056`, `CRM-053`, INC-094 (même famille : un
 invariant énoncé quelque part, et rien qui le vérifie).
 
+---
+
 ### INC-094 — Une seconde migration s'exécute sous `supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi
 
 **Nature :** dérive entre une migration livrée et prouvée, et le harnais qui énonce l'invariant la
@@ -170,78 +267,7 @@ plutôt que corrigée au passage.
 **Lié à :** `CRM-057`, `CRM-017`, décision 327, `docs/SPEC-mail-subsystem.md` §18.5, INC-083 et
 INC-093 (même famille : un correctif ou un invariant dont la portée n'a pas suivi ses appelants).
 
-### INC-093 — Le contournement `pip_ca` de `mail-sync` existe dans son `Dockerfile`, mais aucun fichier Compose ne le câble
-
-**Nature :** contournement documenté et fonctionnel, rendu **inatteignable** par la commande qui en
-a besoin — `runDev.sh`. Même famille qu'INC-083 : un correctif livré au bon endroit, mais dont la
-portée s'arrête avant l'appelant réel.
-**Relevé le :** 2026-08-12, en montant la pile pour produire les preuves d'INC-085.
-
-**Le fait, mesuré.** `mail-sync/Dockerfile` porte depuis `CRM-015` (décision 280) la même branche
-facultative que `webapp/Dockerfile` : un secret BuildKit `pip_ca` qui, lorsqu'il est monté et non
-vide, exporte `PIP_CERT` avant `pip install`. Le commentaire du fichier donne même la commande
-`docker build --secret id=pip_ca,src=…`. Mais le service `mail-sync` de `docker-compose.yml`
-déclare `build:` **sans** clé `secrets:`, et aucun des trois fichiers Compose ne définit de secret
-`pip_ca` — seul `npm_ca` l'est, dans `docker-compose.dev.yml`. La branche est donc **inerte par
-construction** depuis un lancement par Compose.
-
-Derrière un proxy HTTPS à certificat interposé, `./runDev.sh` échoue en conséquence :
-
-```
-#14 … sh -eu -c 'if [ -s /run/secrets/pip_ca ] … '
-pip_ca: inactif
-WARNING: Retrying … SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED]
-         certificate verify failed: self-signed certificate in certificate chain'))
-ERROR: Could not find a version that satisfies the requirement fastapi==0.139.2
-target mail-sync: failed to solve: … exit code: 1
-```
-
-`runDev.sh` s'arrête là : **aucun** service ne démarre, alors que le défaut ne concerne qu'une
-image. La pile entière est donc indisponible, et avec elle toutes les preuves qui en dépendent.
-
-**Le contournement manuel fonctionne, et c'est ce qui localise le défaut.** La même image
-construite à la main avec le secret que le `Dockerfile` documente aboutit :
-
-```
-docker build --secret id=pip_ca,src=<bundle CA> -f mail-sync/Dockerfile .
-→ naming to docker.io/library/p2enjoy-mail-sync:essai  DONE
-```
-
-Le `Dockerfile` n'est donc pas en cause ; le câblage Compose manque.
-
-**Ce qui n'est pas en cause.** Ni les versions épinglées de `mail-sync/requirements.txt`, ni le
-proxy, ni `NPM_CA_FILE`, correctement câblé pour la webapp par la décision 280. C'est une **lacune
-de portée** de cette décision, qui a traité `npm` et laissé `pip` derrière — `mail-sync/Dockerfile`
-n'existait pas encore lorsqu'elle a été rendue, et l'a rejointe plus tard sans son câblage.
-
-**Correction décidée — `docs/JOURNAL.md`, décision 356.** Voir l'entrée.
-
-**Clôture, 2026-08-12 — livrée et rejouée dans la même session.** `docker-compose.yml` déclare
-désormais le secret `pip_ca` (source `${PIP_CA_FILE:-/dev/null}`) et le référence sous le `build:`
-du service `mail-sync` ; `env_require_dev_npm_ca_file` devient `env_require_dev_ca_file <VARIABLE>`,
-réclamée par `runDev.sh` et `resetMe.sh` pour `NPM_CA_FILE` **et** `PIP_CA_FILE`. Rejeu sur la pile
-réelle : `./runDev.sh` construit `mail-sync` sans erreur TLS, puis les **18 services** de
-l'assemblage de développement sont `healthy`, `mail-sync` compris. La branche reste inerte sans la
-variable, par la même construction `/dev/null` que `npm_ca`.
-
-**Non-régression établie par comparaison, et non supposée.** `scripts/verify-scripts.sh` rend
-**104 vérifications, 3 anomalies** — et rend **exactement les mêmes 104 vérifications et les mêmes
-3 anomalies** sur l'arbre remisé, c'est-à-dire avant ce changement. Le nombre de contrôles est
-inchangé : la garde renommée est toujours exercée. Les trois anomalies sont **antérieures et
-étrangères** à cette correction, deux d'entre elles tenant à l'environnement de la routine :
-
-- « `NPM_CA_FILE` accepte un fichier illisible » — la session s'exécute en `root` (`id -u` = 0),
-  pour qui `[ -r fichier ]` rend **vrai** même sur un `chmod 000` (mesuré). La garde est correcte ;
-  c'est le contrôle qui n'est pas satisfaisable sous cet uid.
-- « la reconstruction sans CA n'emprunte pas sa branche inactive » — ce contrôle reconstruit
-  délibérément l'image **sans** certificat pour prouver l'inertie de la branche ; derrière le proxy
-  à certificat interposé de cet environnement, `npm ci` échoue alors réellement. Le contrôle
-  suppose un réseau à chaîne TLS publique.
-- « marqueurs de rôle de migration inattendus : `supabase/migrations/0018_pg_cron.sql` » — défaut
-  réel, sans rapport avec le présent constat, **consigné séparément en INC-094**.
-
-**Lié à :** `CRM-015`, `CRM-051`, décision 280, INC-083 (même mode de défaillance : portée d'un
-correctif plus étroite que ses appelants).
+---
 
 ### INC-092 — La même veille permanente fait aussi rougir `mail-sync.spec.ts` S3 sur un échec ATTENDU d'une autre preuve
 
@@ -268,6 +294,8 @@ dépasse le dernier écart de `CRM-059` — objet de la présente session.
 **Action attendue du responsable :** trancher, avec INC-091, la même question de fond : comment les
 preuves qui provoquent une panne ou une pollution DÉLIBÉRÉE sur un compte seedé doivent coexister
 avec une veille qui, depuis `CRM-059`, ne s'arrête jamais.
+
+---
 
 ### INC-091 — La veille permanente de `CRM-059` transforme tout envoi de preuve vers une boîte seedée en message non classé permanent
 
@@ -335,6 +363,8 @@ exécution restent probantes. **Aucun fichier de preuve n'a été modifié** : c
 l'est pas, toute session future qui relève longtemps une pile de développement (`CRM-059` la
 laisse tourner en continu) risque de revoir `0029` rougir, pour un motif qui n'a rien à voir avec
 son propre travail.
+
+---
 
 ### INC-089 — Une exécution concurrente de la routine a committé le travail d'une autre, sous son propre message
 
@@ -406,6 +436,8 @@ réalité partagée avec d'autres exécutions planifiées. La réécriture du 20
 dommage — elle précède `199aa6f` d'une heure —, mais **toute réécriture ultérieure doit être
 considérée comme dangereuse** tant que ces exécutions ne sont pas sérialisées.
 
+---
+
 ### INC-088 — La fiche d'une card reste en lecture seule au nom d'une entrée close
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 334.** **L'écriture depuis la fiche rejoint `CRM-037`**, dont la Definition of Done exige déjà « E2E (transition bloquée, **saisie**, transition réussie) » : l'unité n'est pas élargie, elle est ramenée à son énoncé. Aucune unité n'est créée, aucune règle n'est inventée — `CRM-036` livre déjà la table, ses politiques et sa validation. Règle générale posée par la même décision : **toute limite qui cite une entrée du registre est réexaminée le jour où cette entrée est close**, dans le même changement que la clôture. L'entrée reste ouverte jusqu'à la livraison et la preuve.
@@ -436,230 +468,6 @@ base, qu'aucun utilisateur ne peut remplir. C'est la fonction centrale du produi
 Definition of Done demande déjà « E2E (transition bloquée, **saisie**, transition réussie) », ce qui
 la désigne implicitement — ou fait l'objet d'une unité propre. Tant que ce n'est pas tranché, le
 comportement reste inchangé et la limite est nommée à l'écran plutôt que masquée.
-
-### INC-086 — Tracks et channels n'ont aucune surface d'administration, et aucune unité n'en porte — **CLOSE par arbitrage**
-
-**Nature :** règle produit sans écran pour la porter ; aucune unité du backlog ne la revendique.
-**Relevé le :** 2026-08-09, en remesurant les limites de `CRM-020` et `CRM-021`.
-
-**Ce qui est mesuré, et qui n'est plus ce que le backlog dit.** Les deux unités portaient encore
-« aucun track n'est visible dans l'interface » et « aucun channel n'est visible dans l'interface »,
-au motif d'INC-021 — close depuis `CRM-009`. C'est faux aujourd'hui : la barre latérale liste les
-tracks consentis, la barre d'onglets liste les channels du track ouvert, et les droits fins y sont
-**opposables**, ce que `e2e/ui/droits-fins.spec.ts` montre en capture. Ces deux limites sont
-levées.
-
-**Ce qui reste vrai, et qui n'appartient à personne.** Il n'existe **aucun écran** pour créer,
-renommer, réordonner ou archiver un track ou un channel. Le CRUD est livré et prouvé par l'API —
-`CLAUDE.md` §10 l'exige de toute façon —, et l'écriture est réservée aux administrateurs du
-workspace. L'écran absent ne relâche donc rien ; il empêche seulement qu'un administrateur
-configure son produit autrement que par l'API et la clé de service.
-
-**Aucune unité ne le porte.** `CRM-076` est l'**éditeur de workflows** — étapes, transitions,
-champs, règles — et son énoncé ne mentionne ni track ni channel. `CRM-077` traite leur corbeille et
-leur restauration, ce qui suppose une surface de gestion sans la livrer. `CRM-070` traite les
-permissions fines et l'invitation. Le geste le plus courant de l'administration d'un CRM — créer un
-track — n'a donc pas de porteur.
-
-**C'est le même mode de défaillance qu'INC-066, un cran plus haut.** INC-066 constate que l'éditeur
-de workflow n'était rattaché à aucune unité, et la décision 299 lui a donné `CRM-076`. Le même
-raisonnement n'a pas été appliqué à l'objet métier de premier rang que `CLAUDE.md` §4 nomme
-pourtant explicitement : « pour les outils de gestion, privilégier une architecture centrée sur
-l'objet métier principal ».
-
-**Trois options, et aucune n'appartient à l'agent :**
-
-1. **Élargir `CRM-076`** aux tracks et aux channels : l'unité deviendrait « éditeur
-   d'administration » plutôt qu'« éditeur de workflows », au prix d'une unité déjà large.
-2. **Créer une unité dédiée** — CRUD des tracks et des channels, avec réordonnancement et
-   archivage — placée avant `CRM-076`, dont elle est le préalable naturel : un workflow s'affecte à
-   un channel, qui vit dans un track.
-3. **Acter que la configuration de l'arborescence reste une opération d'exploitation**, par l'API
-   et la clé de service, et l'écrire dans `docs/manual.md` comme l'invitation l'est restée
-   (INC-015). Un CRM où seul un opérateur peut créer un track n'est probablement pas un produit,
-   mais la décision revient au responsable.
-
-**Action attendue du responsable :** trancher entre ces trois options. Tant qu'elle n'est pas prise,
-`CRM-020` et `CRM-021` nomment cette absence comme limite explicite au lieu de la corriger au
-passage, et leur Definition of Done — « unitaire, API, E2E, captures » — reste satisfaite sans elle.
-
-**ARBITRÉ LE 2026-08-11 : option 2.** Le responsable a constaté l'absence en essayant le produit —
-« je ne peux rien toucher à l'existant, ni créer des tracks ni des channels » — et a retenu l'unité
-dédiée. Elle est créée sous le numéro **`CRM-075`**, placée **avant `CRM-076`** dont elle est le
-préalable : un workflow s'affecte à un channel, qui vit dans un track. L'entrée reste ici, close par
-la décision et non par la livraison : `CRM-075` porte désormais la dette, et c'est son passage à
-`[x]` qui la soldera. Voir `docs/JOURNAL.md` décision 332.
-
-**SOLDÉE LE 2026-08-12.** `CRM-075` passe `[x]` : toutes les preuves de sa Definition of Done sont
-vertes (`docs/JOURNAL.md` décision 349). `docs/SPEC-tracks.md` §10 et `docs/SPEC-channels.md` §10
-portent leur limite barrée avec renvoi vers l'unité, plutôt qu'effacée en silence.
-
-**Lié à :** INC-066 (même motif, sur les workflows), INC-015 (l'invitation), INC-085 (une autre
-surface manquante trouvée le même jour), `CLAUDE.md` §4 (objet métier de premier rang).
-
----
-
-### INC-085 — Un channel rouvert sous un track fermé est lisible par l'API, mais inatteignable à l'écran
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 333.** **Option 1 : un track redevient lisible dès qu'un de ses channels l'est** — la politique de lecture de `tracks` consultera `app.can_read_channel` sur les channels du track, et « le plus spécifique gagne » devient transitif. L'ouverture d'un tel track n'affiche **que les channels consentis**, ce que la politique de lecture des `channels` filtre déjà sans règle nouvelle. La même décision ferme **INC-075, qui décrit le même défaut** relevé trois jours plus tôt. Reprise de `CRM-012` (migration `0010_droits_fins.sql`) et de la matrice de `CRM-010`, sans réintroduire le défaut de la décision 107 — les politiques évaluent les colonnes de la ligne, jamais une relecture de la table. L'entrée reste ouverte jusqu'à la livraison et la preuve d'interface.
-
-**Nature :** écart entre une règle backend livrée et prouvée, et l'unique chemin de navigation que
-l'interface offre pour l'exercer.
-**Relevé le :** 2026-08-09, en produisant la preuve d'interface manquante de `CRM-012`.
-
-**Mesure sur la pile réelle, avec les jetons du seed.** Farida Nowak porte deux droits fins :
-`track_members.access = 'none'` sur « Conseil & IA », et `channel_members.access = 'member'` sur
-« Prospection », qui est un channel **de ce track**. La règle « le plus spécifique gagne » est
-appliquée exactement comme `docs/SPEC-permissions-rls.md` §3.4 la décrit :
-
-```
-GET /rest/v1/tracks    → Formation, Pipeline 2024, Studio web        (« Conseil & IA » absent)
-GET /rest/v1/channels  → Inter-entreprises, Maintenance, Prospection, Refonte de site
-```
-
-« Prospection » **est rendu**. Le backend fait donc ce qui est écrit, et
-`supabase/tests/0011_droits_fins.test.sql` le prouve déjà sous le nom « réouverture d'un channel
-sous un track fermé ».
-
-**La contradiction est côté interface.** La barre latérale liste les tracks, et la barre d'onglets
-ne liste les channels qu'**une fois un track ouvert** (`docs/SPEC-channels.md` §5.1 : la route est
-`/tracks/:slugTrack/:slugChannel`). Le track n'étant pas rendu à Farida, aucun geste de navigation
-ne mène à « Prospection » : ni la barre latérale, ni une adresse saisie à la main —
-`/tracks/conseil-ia` affiche « Track introuvable », capture à l'appui. Un droit fin **accordé** est
-donc invisible et inexerçable, alors qu'un droit fin **retiré** est correctement observable.
-
-**Ce qui n'est pas en cause.** Ce n'est ni un défaut de RLS, ni un masquage d'interface : l'écran
-affiche fidèlement ce que le backend lui rend. C'est une **surface manquante**, pas une règle
-fausse. Aucun comportement n'est modifié par ce constat.
-
-**Trois options, et aucune n'appartient à l'agent :**
-
-1. **Rendre le track lisible dès qu'un de ses channels l'est.** La politique de lecture de `tracks`
-   consulterait `app.can_read_channel` sur les channels du track. Le plus proche de l'intention —
-   « le plus spécifique gagne » — mais cela fait réapparaître dans la barre latérale un track dont
-   la plupart des channels restent fermés, et il faut alors décider ce que son ouverture affiche.
-2. **Offrir une surface qui ne passe pas par le track** : une entrée « Channels partagés avec moi »,
-   ou la recherche globale de `CRM-065`. Aucune unité du backlog ne la porte aujourd'hui.
-3. **Assumer que le droit fin de channel ne sert qu'à restreindre**, jamais à rouvrir. Il faudrait
-   alors corriger `docs/SPEC-permissions-rls.md` §3.4 et retirer l'assertion pgTAP correspondante :
-   c'est un changement de règle, pas d'interface.
-
-**Arbitrage rendu le 2026-08-11** — décision 333, option 1. **Livré et prouvé le 2026-08-12 : INC-085
-et INC-075 sont CLOSES**, par le même changement, comme la décision 333 l'avait annoncé.
-
-**Ce qui a été livré.** `supabase/migrations/0034_lecture_track_transitive.sql` — la fonction
-`app.track_has_readable_channel(uuid)` (`STABLE`, `SECURITY DEFINER`, `search_path` vide) et
-l'élargissement de `tracks_lecture_membre` à « le track est lisible **ou** l'un de ses channels
-l'est ». Aucun changement de schéma, aucune des trois fonctions `can_*` touchée.
-
-**Les preuves, mesurées sur la pile réelle avec le jeton du `viewer` seedé, avant puis après :**
-
-```
-tracks rendus      3 → 4    « Conseil & IA » réapparaît
-channels rendus    4 → 4    INCHANGÉ
-channels du track  —   1    « Prospection » SEUL, « Grands comptes » toujours fermé
-PATCH du track     —   []   zéro ligne touchée, nom relu intact : aucun droit d'écriture
-insert…returning   201 201  décision 107 non réintroduite
-```
-
-- `npm run test:sql` — **33 fichiers, 1944 assertions, aucune anomalie**, dont `0011` §6 bis, sept
-  assertions neuves, et celle qui mesurait `1` track révisée à `2` **en expliquant pourquoi dans le
-  fichier**.
-- `npm run e2e:api` — **504/504**, dont les lignes `d`, `d'` et `d''` neuves du §4.2 et la preuve
-  `D5` de la décision 107.
-- `npm run e2e:ui` — **182/182**, dont la preuve d'interface que le §3.3 bis exigeait : Farida
-  **atteint** son channel **au clic**, sans connaître d'adresse.
-- `scripts/verify-authz.sh` **35 contrôles**, `scripts/verify-seed.sh` **55 contrôles**,
-  `npm run typecheck` — sans anomalie. Le triplet du `viewer` passe de `3/4/8` à `4/4/8` : il n'est
-  pas relâché, il prouve que **seuls** les tracks ont bougé.
-
-**Captures produites ET OBSERVÉES** (`CLAUDE.md` §16), `docs/captures/CRM-012/` : le track rendu
-avec son unique onglet, aux quatre paliers, tiroir mobile compris, sans débordement horizontal.
-
-**Un comportement mesuré au passage, et qui n'est pas un défaut.** L'adresse directe d'un channel
-fermé (`/tracks/conseil-ia/grands-comptes`) ne rend pas « channel introuvable » mais le **même**
-état vide que « choisissez un channel ». C'est délibéré et documenté (`webapp/src/app/RouteTrack.tsx`,
-§7) : distinguer les deux renseignerait sur l'existence d'un channel refusé. La preuve d'interface
-vérifie donc les deux moitiés de la règle — l'écran neutre est rendu, et le nom du channel fermé
-n'apparaît nulle part.
-
-**Lié à :** INC-024 et INC-030 (les deux politiques de lecture que `CRM-012` a resserrées),
-`docs/SPEC-permissions-rls.md` §3.3 bis et §3.4, `docs/SPEC-channels.md` §5.1.
-
-### INC-084 — Le parcours Chromium global est instable et son exécuteur écrit des avertissements — **CLOSE**
-
-**Nature :** preuve E2E non déterministe et sortie utilisateur contraire à l'exigence zéro
-`warning`.
-**Relevé le :** 2026-08-07, pendant le rejeu de fermeture d'INC-083 et de `CRM-015`.
-
-**Mesure globale.** Après SQL 19/19 et API 410/410, `scripts/verify-harness.sh` rend **143/144**
-sur le projet UI. Le parcours « le retour à la card publie réellement le commentaire de
-l'administratrice » voit le texte dans la page, interroge immédiatement PostgREST puis reçoit un
-tableau dont la longueur n'est pas 1. Son `finally` nettoie la ligne et le reste du harnais se
-restaure ; verdict final **28 contrôles, 1 anomalie**.
-
-**Contre-mesure ciblée.** Le même scénario, exécuté **dix fois** de suite contre la pile réelle,
-rend 10/10. Ce résultat n'annule pas l'échec global : il localise un ordre d'attente trop faible.
-Le scénario attend le texte saisi dans la page, pas le signal utilisateur de fin de publication.
-Or seul le brouillon vidé et l'annonce « Commentaire publié » sont posés après le retour réussi de
-l'insertion. Une preuve qui relit l'API doit attendre ce point précis.
-
-**Avertissements reproductibles.** Chacune de ces dix exécutions écrit
-`Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set` dans le processus
-webServer puis dans les workers. Playwright force la couleur tandis que l'environnement de
-l'appelant exporte `NO_COLOR`; Node avertit avant le premier scénario. Ce n'est pas la console du
-navigateur — déjà stricte — mais c'est bien la console de la commande utilisateur, et elle ne peut
-pas être déclarée propre.
-
-**Correction décidée.** Le parcours de publication attend le brouillon vide et la région live
-« Commentaire publié » avant sa relecture hors interface. La configuration Playwright retire
-`NO_COLOR` de son propre environnement lorsque Playwright pilote les processus colorés, avant de
-lancer le webServer ou un worker. La preuve ciblée, la suite UI complète et le harnais global
-doivent ensuite rendre zéro échec et zéro ligne `Warning:`.
-
-**Clôture, 2026-08-07.** Le scénario attend désormais le champ vidé et la région live avant la
-relecture PostgREST ; dix répétitions rendent **10/10**. La configuration retire `NO_COLOR` dans
-son propre processus avant les enfants Playwright, sans modifier le shell parent. Le harnais
-global refuse explicitement tout `warning` de la sortie UI et rend **144/144 sans avertissement**,
-puis **28 contrôles sans anomalie** après ses six dégradations et leur restauration.
-
----
-
-### INC-083 — Vingt et un harnais autonomes contournent encore la chaîne Node de `CRM-008` — **CLOSE**
-
-**Nature :** preuve utilisateur inexécutable depuis le shell WSL réel ; portée trop étroite du
-correctif de la décision 278.
-**Relevé le :** 2026-08-07, pendant le parcours utilisateur final de `CRM-015`.
-
-**Mesure.** Après deux démarrages réels de la pile, sans puis avec `NPM_CA_FILE`,
-`scripts/verify-stack.sh` rend **50/50**. Lancé juste après depuis le même shell,
-`scripts/verify-webapp.sh` choisit pourtant `/mnt/c/Program Files/nodejs/npm` : `cmd.exe` refuse le
-chemin UNC, `vite` est introuvable, le build ne produit pas `webapp/dist`, et le harnais commence
-par **deux échecs**. Ce n'est pas une régression de la webapp : `scripts/verify-harness.sh` avait
-déjà sélectionné Node v24.14.1 / npm 11.11.0 Linux et rendu 28/28 sur la même machine.
-
-**Cause.** La décision 278 a livré un résolveur commun dans `scripts/lib/node.sh`, mais seul
-`scripts/verify-harness.sh` le charge. Une recherche des invocations effectives, hors commentaires,
-trouve **vingt-deux** harnais `scripts/verify-*.sh` qui exécutent `npm` ou `node`; vingt et un
-contournent encore le résolveur. Tous sont annoncés comme commandes autonomes dans le README ou
-constituent la preuve autonome d'une unité. Demander à l'utilisateur de corriger son `PATH` entre
-deux commandes ne rend pas ces actions exécutables.
-
-**Correction décidée.** Tout harnais shell autonome qui exécute Node ou npm charge
-`scripts/lib/node.sh` et appelle `node_toolchain_prepare` avant sa première mutation. Une preuve
-statique recense les invocations réelles et refuse tout nouveau harnais non protégé ; la preuve
-isolée du résolveur passe donc de quatre à cinq contrôles. `scripts/verify-webapp.sh` doit ensuite
-être rejoué depuis le `PATH` WSL défectueux d'origine, pas depuis un shell préparé à la main.
-
-**Portée.** Le correctif ne crée aucun alias npm, ne modifie pas le shell parent et ne change
-aucune logique métier. Il complète `CRM-008`; `CRM-015` ne pourra revendiquer son parcours final
-qu'une fois `verify-webapp.sh` redevenu réellement exécutable.
-
-**Clôture, 2026-08-07.** Les vingt et un points d'entrée chargent maintenant le résolveur avant
-leur première mutation. `scripts/verify-node-toolchain.sh` recense dynamiquement les **22**
-harnais Node/npm et rend **5/5**. Depuis le `PATH` WSL qui expose réellement `npm.exe`,
-`scripts/verify-webapp.sh` sélectionne Node v24.14.1 / npm 11.11.0 Linux et rend **42/42** ; le
-rejeu global rend ensuite **28/28**. Aucun alias, téléchargement ni changement du shell parent.
 
 ---
 
@@ -697,554 +505,6 @@ cas, les quatre constats de mesure ci-dessus sont à vérifier contre le code r�
 
 **En attendant :** rien n'est modifié dans `stalwart/`, et les décisions 249, 250 et 252 restent
 dans `docs/JOURNAL.md` telles qu'elles ont été rendues.
-
----
-
-### INC-081 — CLOSE — Les décisions récupérées sont toutes rattachées, livrées et prouvées
-
-**Nature :** décisions du responsable restées hors de `main`, désormais réinsérées ; l'écart qui
-subsiste est un écart **de mise en œuvre**, pas de trace.
-**Relevé le :** 2026-08-07, pendant la suppression des branches `claude/happy-goldberg-*`.
-
-**Le fait.** Quarante et une branches ont été poussées sur `origin` en violation de `CLAUDE.md`
-§13, qui interdit toute création de branche. Avant leur suppression, leur contenu a été comparé à
-`main`. Quarante ne portaient que des réimplémentations parallèles d'unités que `main` porte déjà.
-La branche `claude/happy-goldberg-qt5vfi` retenait en propre **dix-huit décisions du responsable,
-dont cinq arbitrages explicites**, ainsi que `docs/ARBITRAGES.md`.
-
-**Ce qui est fait.** Les dix-huit décisions sont **réinsérées dans `docs/JOURNAL.md`**, texte
-inchangé, sous les numéros **249 à 266**. La renumérotation était contrainte : les deux lignes
-avaient attribué les numéros 235 à 252 à des sujets différents — sur `main` le numéro 239 traite de
-la boîte mail du `viewer`, sur la branche il rattachait l'écran de connexion à `CRM-009`. Les
-numéros d'origine sont conservés en tête de chaque entrée et rappelés dans
-`docs/ARBITRAGES_RECUPERES.md`. `docs/ARBITRAGES.md` est également récupéré.
-
-**Ce qui reste ouvert, et c'est le seul objet de cette entrée.** La **mise en œuvre** de plusieurs
-de ces décisions n'est pas faite. Mesuré :
-
-- **Décision 262 — `require_fields` devient une table de liaison.** Non appliquée.
-  `docs/SCHEMA.md` décrit toujours `require_fields` en `uuid[]` et note qu'il ne peut porter
-  aucune intégrité référentielle, ce que cette décision renversait. Engage une migration,
-  `docs/SCHEMA.md`, `docs/DAT.md` et `docs/PROD_MIGRATIONS.md`.
-- **Décision 261 — l'ordonnancement passe à `pg_cron`**, qui renverse la décision 8.
-- **Décision 260 — les fonctions edge entrent au périmètre**, qui rouvre la décision 12.
-- **Décision 263 — `change_channel_workflow`** est un geste distinct, sans unité de backlog dédiée.
-
-Appliquées, vérifiées : les décisions **253** (unité de l'écran de connexion) et **254** (session en
-`sessionStorage`) le sont déjà par la décision 243 de `main` ; seule leur trace manquait. Les
-autres entrées n'ont pas été mesurées une à une.
-
-**Suite due.** Rattacher chaque mise en œuvre restante à une unité de `docs/BACKLOG.md`, puis
-clore cette entrée lorsque les quatre points ci-dessus sont livrés ou explicitement déclarés
-caducs par le responsable.
-
-**Mise à jour du 2026-08-08.** Les quatre points ont désormais une unité : `CRM-016` à `CRM-019`.
-Les fonctions edge (`CRM-016`) sont closes. L'ordonnancement `pg_cron` (`CRM-017`) et la table de
-liaison (`CRM-018`) sont implémentés mais restent `[~]` tant que leur preuve froide commune n'a pas
-été exécutée. `change_channel_workflow` (`CRM-019`) reste non commencé. La phrase « non appliquée »
-ci-dessus est donc le constat daté de l'ouverture, et non l'état courant ; INC-081 ne sera close
-qu'après les trois fermetures restantes.
-
-**Mise à jour du 2026-08-09.** La preuve froide commune est exécutée : `CRM-017` et `CRM-018` sont
-closes. Seule la mise en œuvre de `change_channel_workflow` (`CRM-019`) reste fonctionnellement
-absente avant la fermeture d'INC-081.
-
-**Mise à jour contractuelle du 2026-08-09.** `docs/SPEC-change-channel-workflow.md` fixe désormais
-la forme JSON détectant les doublons, l'exhaustivité exacte, l'administration, l'opt-in destructif,
-l'atomicité et l'événement. L'absence fonctionnelle reste ouverte jusqu'à la migration et ses
-preuves ; aucun point n'est déclaré clos par la seule rédaction.
-
-**Clôture mesurée le 2026-08-09.** `CRM-019`, dernier des quatre porteurs, est appliqué à froid par
-la migration 20 et prouvé par 59 assertions pgTAP, 14 scénarios API sous vrais JWT et un harnais
-23/23 qui exerce état legacy, OID, données intactes, six dégradations et une course réelle. Avec
-`CRM-016`, `CRM-017` et `CRM-018` déjà closes, les quatre mises en œuvre qui justifiaient l'entrée
-sont maintenant livrées. La récupération n'a plus de décision suspendue ni de code orphelin.
-
----
-
-## Clos — reprise d'INC-080 le 2026-08-09
-
-### INC-080 — Des garde-fous du chunk 3 sont périmés, et le rejeu séquentiel des harnais n'est pas un instrument de mesure valable — **CLOSE**
-
-**Nature :** deux points distincts, mesurés le même jour. (1) des garde-fous figés par des unités
-antérieures ont été rendus faux par une unité **ultérieure** qui ne les a pas révisés ; (2) les
-harnais du dépôt **interfèrent entre eux** lorsqu'ils sont rejoués à la suite, au point qu'une
-exécution séquentielle ne prouve plus rien.
-**Relevé le :** 2026-08-07, pendant le rejeu de non-régression de `CRM-050`.
-
----
-
-#### 1. Des garde-fous périmés, mesurés sur un état FROID
-
-Ces trois-là ont été mesurés **immédiatement après un seed appliqué sur une base saine**, avant
-tout rejeu de migration. Ils ne dépendent d'aucun ordre d'exécution :
-
-| Harnais | Anomalies | Ce qui est figé | Ce que la base porte |
-|---|---|---|---|
-| `scripts/verify-authz.sh` | 3 | `admin` et `bizdev` voient `4/6/9`, `viewer` voit `3/4/4` | `4/6/14` et `3/4/8` |
-| `scripts/verify-cards.sh` | 6 | « état du seed : `9/1/1/9` » | `14/1/1/14` |
-| `scripts/verify-board.sh` | 4 | `grands-comptes` porte 3 cards actives, occupant 2 étapes | 4 cards actives, 3 étapes |
-| `scripts/verify-preuves-refus.sh` | 2 | 41 politiques, 9 cards | 45 politiques, 14 cards |
-
-`verify-authz.sh` et `verify-preuves-refus.sh` ont été **re-mesurés après destruction complète du
-cluster et des volumes**, migrations rejouées et seed réappliqué : ils rendent respectivement 3 et
-2 anomalies, les mêmes. Le point est donc établi, et non déduit.
-
-`git log` donne la chronologie : `verify-authz.sh` n'a pas été touché depuis la reprise de
-`CRM-010` (commit `011ac2e`), et `CRM-046` — le jeu de démonstration complet, **quatorze cards** là
-où le seed socle en portait neuf — est venu **après**.
-
-**Un écart n'est pas un compteur, et ne se corrige pas en changeant un nombre :**
-
-- `scripts/verify-commentaires.sh` cherche `webapp/src/app/PanneauCommentaires.tsx` et son test.
-  **Ces deux fichiers n'existent plus** : `CRM-044` (commit `2575b89`) les a supprimés en fondant
-  le panneau des commentaires dans `PanneauTimeline.tsx`. Le harnais de `CRM-043` désigne donc un
-  composant que l'unité suivante a dissous, et personne ne l'a suivi.
-- `verify-board.sh`, `verify-liste.sh`, `verify-formulaire.sh` et `verify-webapp.sh` rendent
-  « des classes citées n'existent pas dans le CSS produit ». Ce contrôle ne parle d'aucun volume de
-  seed : il compare des classes utilitaires citées par le harnais au CSS réellement engendré par le
-  build.
-
-**Cause établie et correction décidée — décision 267.** La mesure du CSS produit sépare trois
-défauts réels d'un défaut du contrôleur :
-
-- `text-muted` et `placeholder:text-muted` demandent un jeton `muted` qui n'existe pas dans la
-  palette fermée ; le jeton sémantique existant est `text-3` ;
-- `sm:hidden` et `sm:inline` demandent un palier `sm` que le design system ne déclare pas ; le
-  premier palier autorisé est `md` ;
-- `before:content-['·']` est bien engendrée dans le CSS, mais le contrôleur n'échappe pas
-  l'apostrophe comme Tailwind dans son sélecteur ;
-- le contrôle des attributs visibles emploie en outre la plage non portable `À-ÿ`, que le `grep`
-  de l'environnement refuse avec `Invalid collation character`.
-
-Les composants passent aux jetons et paliers existants ; le contrôleur apprend l'échappement de
-l'apostrophe et emploie la classe POSIX `[[:alpha:]]`. La non-complaisance qui injecte une classe
-hors échelle reste obligatoire : le correctif ne peut donc pas rendre le garde-fou permissif.
-
-#### 2. Le rejeu séquentiel des harnais dégrade l'environnement qu'il mesure
-
-**MESURÉ, et c'est le point le plus important de cette entrée.** Vingt-six harnais ont été rejoués
-à la suite. À l'issue du rejeu, `p2enjoy-migrations` était **`exited (3)`**, sur :
-
-```
-psql:/migrations/0005_workflow_nodes_catalog.sql:175: ERROR:  deadlock detected
-DETAIL:  Process 35645 waits for AccessExclusiveLock … blocked by process 35647.
-```
-
-Plusieurs harnais rejouent des migrations, réappliquent le seed ou dégradent la base pour éprouver
-leur propre non-complaisance. Enchaînés, ils se marchent dessus : un harnais restaure un état que
-le suivant a déjà changé.
-
-**La preuve que ce n'est pas une théorie :** `scripts/verify-seed-demo.sh` rend **2 anomalies**
-pendant le rejeu séquentiel, et **62 contrôles, aucune anomalie** lorsqu'il est exécuté seul sur un
-état froid. Ses deux anomalies n'existaient pas ; elles ont été **fabriquées par le rejeu**.
-`verify-preuves-refus.sh`, lui, passe de 4 anomalies en séquence à **2** sur un état froid : deux
-réelles, deux fabriquées.
-
-**Conséquence directe** : le tableau de vingt-six lignes produit par une exécution séquentielle
-n'est **pas** une mesure de l'état du dépôt, et ne doit pas être lu comme telle. Les livraisons
-antérieures qui annoncent « les vingt-trois harnais rejoués » l'ont probablement fait dans les
-mêmes conditions.
-
-**Ce qui reste à arbitrer :**
-
-1. **Réviser les garde-fous périmés** — trois lignes de volumes, plus le chemin du composant
-   dissous par `CRM-044`. Mécanique, mais appartenant à quatre unités antérieures.
-2. ~~**Établir la cause des classes CSS absentes**~~ — **résolu par la décision 267** ; les causes
-   sont distinguées ci-dessus et leur correction est portée par le rejeu du harnais webapp.
-3. **Décider ce qu'est un rejeu de non-régression valable.** Soit chaque harnais est rendu
-   réellement indépendant — base recréée avant chacun —, soit le dépôt cesse de promettre un rejeu
-   global et nomme l'ordre, le coût et les précautions d'un balayage. L'état actuel donne une
-   couleur rouge à des harnais sains et une confiance imméritée à un balayage vert.
-
-**Ce que ce n'est pas.** Aucun de ces points ne vient de `CRM-050`, qui ne touche ni table, ni
-politique, ni seed de la base. Vérifié après reconstruction complète : cluster détruit, volumes
-détruits, migrations rejouées (`p2enjoy-migrations` `exited (0)`), seed réappliqué — la base porte
-14 cards et 45 politiques, `npm run test:sql` rend **1405 assertions sans anomalie**,
-`npm run test:unit` **488 tests**, `npm run e2e:mail` **16 scénarios**, et
-`scripts/verify-mail-infra.sh` **72 contrôles sans anomalie**.
-
-**Clôture mesurée le 2026-08-09.** Les harnais recensés ont été repris sous leur propriétaire :
-leurs compteurs suivent le seed courant, le panneau dissous est cherché sous
-`PanneauTimeline.tsx`, les classes sont comparées aux **172** utilitaires réellement produits et
-les lectures d'identité suivent les politiques de `CRM-022`. Le dernier défaut n'était pas un
-compteur : `verify-cards.sh` restaurait un suffixe manuel qui omettait la migration 20. Il appelle
-désormais le `migrations-runner` complet, de façon synchrone, puis compare l'empreinte et rejoue les
-suites globales (décision 309).
-
-Sur la même pile, sans remise à zéro opportuniste entre les commandes, la séquence ciblée rend :
-`verify-migrations` **25/25**, `verify-authz` **35/35**, `verify-cards` **46/46**,
-`verify-board` **56/56**, `verify-preuves-refus` **21/21**, `verify-commentaires` **46/46**,
-`verify-liste` **54/54**, `verify-formulaire` **27/27**, `verify-webapp` **42/42** et
-`verify-seed-demo` **69/69**. Aucun deadlock ni état de migration partiel ne subsiste. Après ce
-rejeu, la preuve globale reste verte : **23 fichiers / 1698 assertions pgTAP**, **444 API** et
-**145 UI Chromium**, avec console sans avertissement, erreur ni `pageerror`. La règle générale de
-restauration est fixée dans `docs/SPEC-test-harness.md` §3.5 ; les trois actions ouvertes au jour
-du constat sont donc livrées et prouvées.
-
-**Lié à :** `CRM-046` (l'unité qui a changé les volumes), `CRM-043` et `CRM-044` (le composant
-dissous), `CRM-010`, `CRM-040`, `CRM-041`, `CRM-014` (les unités qui portent les garde-fous),
-INC-055 (un harnais qui rejoue sa migration laisse la base dans un état que le runner ne produit
-jamais), INC-058 (une assertion qui compte une donnée qu'un autre harnais fait varier pendant
-qu'il l'exécute), INC-078 (même motif : une omission consignée plutôt que refermée au passage).
-
-## Clos — reprise de `CRM-050` le 2026-08-07
-
-### INC-079 — La console d'administration de Stalwart ne peut pas s'installer dans l'environnement de la routine — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 257.** Fermée par le même arbitrage qu'INC-044 : lecture de `/proc/net/tcp` en dernier recours, rattachée à `CRM-002`, prouvée dans les deux sens.
-
-**Nature :** dépendance réseau d'une image épinglée, non satisfaite par l'environnement
-d'exécution ; le composant démarre malgré tout.
-**Relevé le :** 2026-08-07, pendant la spécification de `CRM-050`.
-
-**MESURÉ.** Au premier démarrage, `stalwartlabs/stalwart:v0.13.4` tente de dépaqueter sa console
-web ; ne la trouvant pas dans l'image, il la télécharge depuis
-`https://github.com/stalwartlabs/webadmin/releases/latest/download/webadmin.zip`. Derrière le
-proxy de la routine, la requête échoue et **deux lignes `ERROR`** sont écrites à chaque
-démarrage :
-
-```
-ERROR Resource error … details = "Failed to unpack webadmin bundle"
-ERROR Configuration build error … "Failed to download webadmin: … error sending request"
-```
-
-**Ce qui n'est pas cassé.** Le serveur démarre, ouvre ses quatre listeners, authentifie, remet et
-sert IMAP. L'API de gestion `/api/*` — celle dont le provisionnement se sert — répond
-normalement : c'est la **console web** qui manque, pas l'API.
-
-**Questions instruites avant correction :**
-
-1. **Faut-il une console d'administration du serveur mail de développement ?** Roundcube est
-   l'outil de vérification visuelle retenu (`docs/SPEC-mail-subsystem.md` §11.5), et l'exploitation
-   passe par l'API. La console n'a peut-être aucun usage dans ce projet — auquel cas la désactiver
-   explicitement vaudrait mieux que de la laisser échouer.
-2. **Deux lignes `ERROR` à chaque démarrage sont un bruit qui use.** Une exploitation qui apprend à
-   ignorer un `ERROR` récurrent finit par ignorer le suivant. Si la console n'est pas voulue, ces
-   lignes ne doivent pas exister.
-3. **La dépendance n'est pas épinglée.** L'image télécharge `latest`. Sur un hôte au réseau ouvert,
-   deux démarrages à deux dates peuvent donc installer deux consoles différentes, ce qui heurte
-   `docs/DAT.md` §3.7 — « aucune image n'est suivie par un tag mouvant ». La règle vise les images ;
-   elle ne dit rien d'un composant qu'une image va chercher elle-même au démarrage.
-
-**Arbitrage retenu le 2026-08-07 — décision 245.** Le projet n'a pas
-besoin de la console : Roundcube porte la vérification visuelle et `/api/*` l'exploitation. Le
-premier démarrage doit importer, par le mécanisme natif de Stalwart, un petit bundle local
-versionné qui explique ce choix.
-
-**Clôture mesurée.** `./runDev.sh` a démarré un projet Docker jetable sur volume Stalwart neuf ;
-l'API, IMAP, SMTP, Roundcube et ClamAV ont été exercés. Le bundle local est servi, Chromium rend la
-page avec une console propre, et le journal Stalwart reste sans `ERROR` ni `WARN` **après** la
-soumission SMTP réelle. `verify-mail-infra.sh` rend 84/84, `e2e:mail` 16/16. Les volumes normaux
-n'ont pas été supprimés et la pile a été restaurée dessus.
-
-**Lié à :** INC-032 et INC-042 (le même motif — une dépendance réseau que l'environnement de la
-routine ne satisfait pas), `docs/DAT.md` §3.7, `CRM-050`.
-
-## Ouverts — suite
-
-### INC-078 — CLOSE — Les harnais du chunk 3 sont inventoriés dans README et DAT
-
-**Nature :** référence manquante entre un fichier livré et le document qui l'inventorie.
-**Relevé le :** 2026-08-06, pendant `CRM-047`, en ajoutant `scripts/verify-manual.sh` aux deux
-listes du `README.md`.
-
-Le `README.md` inventorie les harnais à deux endroits — la table des commandes du §5 et le bloc du
-§7. **MESURÉ** : quatre scripts livrés par des unités du chunk 3 n'apparaissent ni dans l'un, ni
-dans l'autre, ni dans `docs/DAT.md` :
-
-| Harnais | Unité qui l'a livré |
-|---|---|
-| `scripts/verify-formulaire.sh` | `CRM-037` |
-| `scripts/verify-commentaires.sh` | `CRM-043` |
-| `scripts/verify-timeline.sh` | `CRM-044` |
-| `scripts/verify-move-card-to-channel.sh` | `CRM-045` |
-
-Les scripts existent, sont exécutables et sont cités par leur unité de backlog : rien n'est cassé.
-Ce qui manque est le **chemin de découverte** — une personne qui lit le `README.md` pour savoir
-quelles preuves rejouer en manquera quatre, et croira l'inventaire complet parce qu'il en liste
-vingt autres.
-
-**Non résolue ici, et le motif est explicite.** `CRM-047` porte le manuel utilisateur, pas le
-`README.md`, et compléter quatre lignes appartenant à quatre autres unités mêlerait quatre sujets
-dans un commit qui n'en traite qu'un (`CLAUDE.md` §1 et §13). L'omission est donc **consignée**
-plutôt que refermée au passage. Elle se corrige en quatre lignes, dans un changement qui lui est
-propre.
-
-**Résolue le 2026-08-09 pendant la clôture autonome de `CRM-019`.** Les quatre scripts apparaissent
-désormais dans la table des commandes, le bloc rejouable et l'arbre du `README.md`, puis sont reliés
-aux surfaces qu'ils prouvent dans `docs/DAT.md`. Le nouveau
-`scripts/verify-change-channel-workflow.sh` est inventorié aux mêmes endroits : la correction ne
-recrée pas immédiatement la même omission pour l'unité qui la ferme. Présence et bit exécutable
-ont été relus sur les cinq fichiers.
-
-**Lié à :** `CRM-037`, `CRM-043`, `CRM-044`, `CRM-045`, `README.md` §5 et §7.
-
-### INC-077 — CLOSE — Les changements de contexte sont nommés dans le fil
-
-**Nature :** écart entre un type d'événement livré et prouvé côté serveur, et ce que l'interface
-sait en dire.
-**Relevé le :** 2026-08-06, pendant la spécification de `CRM-047`.
-
-`card_events.type` admet **neuf** valeurs, la contrainte de la table les énumère :
-
-```
-'created', 'moved', 'assigned', 'channel_changed', 'archived', 'unarchived', 'trashed',
-'restored', 'field_changed'
-```
-
-`webapp/src/app/PanneauTimeline.tsx` en déclare **huit**. `channel_changed` — le type écrit par
-`CRM-045` lorsqu'une affaire change de dossier — n'y figure pas.
-
-**MESURÉ le 2026-08-06, sur la base réelle :**
-
-| Type | Lignes |
-|---|---|
-| `created` | 14 |
-| `field_changed` | 35 |
-| `moved` | 18 |
-| `assigned` | 2 |
-| **`channel_changed`** | **2** |
-| `archived` | 1 |
-| `unarchived` | 1 |
-
-Le type n'est donc pas théorique : le jeu de démonstration en porte deux lignes. Le fil les affiche,
-et les affiche sous le libellé de repli `timeline.event.unknown` — **« Événement »**. Le lecteur
-voit qu'un fait a eu lieu, et n'apprend pas lequel.
-
-**Le repli n'est pas en cause.** Il est délibéré (`docs/DESIGN_SYSTEM.md` §5.11 : « aucun
-`undefined` n'atteint l'écran », « un libellé non résolu n'est pas une phrase tronquée »). Il est
-fait pour un type inconnu du client — pas pour un type que le produit écrit lui-même.
-
-**Constat associé, observé sur la capture** `docs/captures/CRM-047/manuel-evenement-sans-nom-1440.jpg` :
-le repli emprunte l'icône `Sparkles`, celle de `created`. Sa pastille reste neutre (`--color-hover`)
-là où `created` porte le vert, de sorte que les deux ne se confondent pas — mais l'icône, elle, est
-partagée. Le point est consigné avec le reste, non traité séparément : il disparaîtra avec le
-libellé, ou il devra être tranché avec lui.
-
-**Ce que trois documents disent, et qui ne s'accorde pas :**
-
-| Document | Ce qu'il dit |
-|---|---|
-| `docs/manual.md` ch. 7 *bis* (écrit par `CRM-045`) | « Le déplacement laisse une trace *changement de dossier* dans l'historique » |
-| `docs/DESIGN_SYSTEM.md` §5.11 | table des familles : `moved` → Étapes, `field_changed` → Champs, six types → Cycle de vie. **`channel_changed` n'y est pas** |
-| `webapp/src/app/PanneauTimeline.tsx` | huit types, repli générique pour le neuvième |
-
-**Trois questions, aucune tranchée** — et elles ne relèvent pas d'une unité documentaire :
-
-1. quel **libellé** ? « Dossier changé » dirait le fait ; « Rangée dans <channel> » exigerait de
-   résoudre un nom de channel que le fil ne charge pas aujourd'hui ;
-2. quelle **famille de filtre** ? Ce n'est ni une prise de parole, ni un franchissement d'étape, ni
-   un changement de champ. « Cycle de vie » l'accueillerait par défaut, ce qui ferait passer un
-   rangement pour un événement de cycle de vie ;
-3. quelle **pastille** ? Le §5.11 attribue une couleur par famille ; en ajouter une engage la règle,
-   pas seulement une icône.
-
-**Conséquence retenue en attendant l'arbitrage, au 2026-08-06 :** le comportement était resté
-inchangé, et `docs/manual.md` décrivait le repli réellement affiché. `e2e/ui/manuel.spec.ts`
-mesurait ce rendu pour devenir rouge le jour où un libellé serait livré.
-
-**Résolue le 2026-08-09 par `CRM-019`.** L'unité ajoute un dixième type de contexte et constitue
-donc le changement cohérent où fermer l'écart : `channel_changed` est rendu « Dossier changé »
-avec `FolderSync` et la pastille accent ; `workflow_changed` est rendu « Workflow modifié » avec
-`Workflow` et la pastille brand. Les deux rejoignent la famille « Organisation », distincte du
-cycle de vie comme l'impose la décision 298. Le fil ne résout
-pas les noms historiques du dossier ou du workflow et n'en affiche donc aucun — une information
-exacte mais sobre, conforme au reste de l'écran. La preuve d'interface substituée exige maintenant
-le libellé métier et interdit le repli « Événement » ainsi que les noms étrangers au fil.
-
-**Lié à :** `CRM-045` (l'unité qui écrit le type), `CRM-044` (l'unité qui rend le fil), `CRM-019`
-(résolution), `docs/JOURNAL.md` décisions 232 et 306.
-
-### INC-075 — Un channel consenti par le backend est inatteignable par la navigation du produit
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 333.** **Option 1 : la politique de lecture des tracks s'élargit** — un track redevient lisible dès qu'un de ses channels l'est. **Cette entrée et INC-085 décrivent le même défaut**, relevé deux fois à trois jours d'écart : le doublon est consigné par la décision 333, et une seule livraison les ferme toutes les deux. L'entrée reste ouverte jusqu'à cette livraison et sa preuve.
-
-**Nature :** écart entre une règle d'autorisation livrée et prouvée, et le parcours réellement
-possible dans l'interface.
-**Relevé le :** 2026-08-06, pendant la spécification de `CRM-046`.
-
-`docs/SPEC-permissions-rls.md` §3, ligne **f**, déclare — et `CRM-012` a livré — qu'un
-`channel_members.access = 'member'` posé **sous un track fermé** rouvre le channel : « le plus
-spécifique gagne », dans le sens contre-intuitif. INC-030 a été close sur cette mesure.
-
-Le seed exerce précisément ce cas : le `viewer` Farida Nowak porte `track_members.access = 'none'`
-sur `conseil-ia` **et** `channel_members.access = 'member'` sur `prospection`.
-
-**MESURÉ le 2026-08-06, avec le jeton réel du `viewer` :**
-
-| Lecture | Résultat |
-|---|---|
-| `GET /rest/v1/tracks` | `studio-web`, `formation`, `pipeline-2024` — **`conseil-ia` absent** |
-| `GET /rest/v1/channels` | `refonte`, `inter-entreprises`, **`prospection`**, `maintenance` |
-
-Le channel lui est donc bien consenti. Mais la coquille livrée par `CRM-021` résout le track
-**avant** ses channels — `lireTrackParSlug` filtre sur le slug puis `lireChannels` filtre sur
-`track_id` (`webapp/src/lib/channels.ts`). La route `/tracks/conseil-ia/prospection` rend donc
-« Track introuvable » à ce profil, et aucune barre latérale ne propose `conseil-ia`. **Le droit
-existe côté serveur et n'a aucun chemin côté produit.**
-
-**Ce que ce n'est pas :** ni un défaut de RLS — la politique fait exactement ce que le §3 prescrit
-—, ni un défaut d'affichage — l'interface reflète fidèlement ce que `tracks` lui rend.
-
-**Trois issues, aucune tranchée ici :**
-
-1. **La politique des tracks s'élargit** : un track redevient lisible dès qu'un de ses channels
-   l'est. Le « plus spécifique gagne » deviendrait alors transitif, ce qui touche `CRM-012` et la
-   matrice à 64 combinaisons de `CRM-010`.
-2. **La coquille cesse de passer par le track** : une route de channel qui résout le channel
-   d'abord. Cela engage `CRM-021` et la composition de la barre d'onglets.
-3. **Le cas est déclaré non pertinent** : un droit fin de channel sous un track fermé n'est pas un
-   parcours produit, et la ligne f ne décrit qu'une propriété de la fonction d'autorisation. Il
-   faudrait alors le dire dans `docs/SPEC-permissions-rls.md` §3, qui aujourd'hui ne le dit pas.
-
-**Comportement retenu en attendant l'arbitrage :** aucun. `CRM-046` **mesure** le cas et le fige
-par une preuve — le `viewer` lit bien les cards de `prospection` par son jeton, et ne lit pas son
-track —, sans rien changer ni à la politique ni à la coquille (`docs/SPEC-seed.md` §9.7).
-
-**Arbitrage rendu le 2026-08-11** — décision 333, issue 1. **CLOSE le 2026-08-12**, par la même
-livraison qu'INC-085 : les deux entrées décrivaient le même défaut à trois jours d'écart, et une
-seule correction les ferme. **Les preuves sont détaillées sous INC-085**, dans la section « Clos » —
-elles ne sont pas dupliquées ici, précisément parce que le doublon est ce que ces deux entrées
-enseignent.
-
-**Ce que ce doublon a coûté, et la règle qu'il pose.** Le même fait a été relevé deux fois, à trois
-jours d'intervalle, par deux lectures différentes du produit — la spécification de `CRM-046` d'un
-côté, la preuve d'interface de `CRM-012` de l'autre. Un registre relu **par unité** plutôt que **par
-sujet** produit mécaniquement ce doublon : chaque unité y cherche ce qui la concerne, et personne
-n'y cherche ce qui ressemble à ce qu'il vient d'écrire. **Avant d'ouvrir une entrée, chercher le
-fait — pas l'unité.**
-
-**Lié à :** INC-085 (même défaut, même correction, mêmes preuves), INC-030 (close, dont la mesure de
-clôture est l'origine de ce point), INC-024, INC-021
-(aucun écran de connexion, donc aucun parcours réel pour l'observer), `docs/SPEC-permissions-rls.md`
-§3 ligne f, `docs/SPEC-seed.md` §9.7.
-### INC-076 — Supprimer un compte est devenu impossible dès qu'il a commenté, et trois preuves du seed le constatent sans le nommer — **CLOSE**
-
-**Nature :** régression de contrat entre deux unités, mesurée. **Antérieure à `CRM-045`**, relevée
-par son balayage de non-régression.
-**Relevée le :** 2026-08-06.
-
-`CRM-011` a livré, et sa Definition of Done l'inscrit noir sur blanc : « **Suppression du compte**
-par l'API d'administration : aucun profil orphelin (cascade) ». `docs/JOURNAL.md` le confirme —
-« compte supprimé sans profil orphelin ».
-
-`CRM-043` a ensuite livré `public.card_comments` avec :
-
-```sql
-author_id uuid not null default auth.uid() references public.profiles (id)
-```
-
-**Sans aucune action `ON DELETE`**, là où les cinq autres clés vers `profiles` du schéma portent
-toutes `ON DELETE SET NULL` — `cards.owner_id`, `cards.created_by`, `card_field_values.updated_by`,
-`card_events.actor_id`. MESURÉ le 2026-08-06, sur la pile réelle, avec la clé de service :
-
-```
-DELETE /auth/v1/admin/users/<bizdev>   →   HTTP 500
-{"code":"23503","message":"update or delete on table \"profiles\" violates foreign key
- constraint \"card_comments_author_id_fkey\" on table \"card_comments\"",
- "detail":"Key is still referenced from table \"card_comments\"."}
-```
-
-Le seed fait de `bizdev@p2enjoy.test` l'auteur de **deux** commentaires : le compte est donc
-indestructible sur toute base seedée.
-
-**Trois contrôles de `scripts/verify-seed.sh` échouent en conséquence**, et ils échouaient déjà
-avant `CRM-045` — le script n'a pas été modifié depuis `CRM-005` :
-
-```
-ECHEC  mutation non appliquée : le compte est toujours présent, la suite ne prouverait rien
-ECHEC  le compte supprimé se connecte encore : la preuve n° 5 est complaisante
-ECHEC  un profil orphelin subsiste pour le compte détruit
-```
-
-Le troisième message est trompeur, et il vaut d'être relevé : le profil « subsiste » non parce que
-la cascade a échoué, mais parce que **la suppression n'a jamais eu lieu**. Le harnais rapporte un
-symptôme pour une cause.
-
-**Ce n'est pas seulement un défaut de preuve, c'est une règle de produit que personne n'a
-décidée** : un utilisateur qui a écrit un commentaire ne peut plus être supprimé. Sur un produit
-qui traite des données personnelles, cela heurte `CLAUDE.md` §11 — un droit à l'effacement que le
-schéma rend inexécutable.
-
-**Comportement laissé INCHANGÉ.** La colonne appartient à `CRM-043`, unité `[~]`, et la Definition
-of Done qu'elle contredit appartient à `CRM-011`, unité `[~]` elle aussi. La corriger depuis
-`CRM-045` reviendrait à rouvrir deux unités pendant un passage consacré à une troisième, ce que
-`CLAUDE.md` §13 interdit — et le choix n'est pas mécanique : `author_id` est `not null`, donc
-`ON DELETE SET NULL` **ne s'applique pas en l'état**.
-
-**Arbitrage attendu du responsable.** Trois options, et aucune n'est neutre :
-
-1. **rendre `author_id` nullable** et poser `ON DELETE SET NULL`, comme les cinq autres clés vers
-   `profiles`. Un commentaire survivrait à son auteur, anonyme — cohérent avec `CRM-044`, dont
-   `actor_id` fait déjà exactement cela, et avec la pierre tombale du §13.4 ;
-2. **poser `ON DELETE CASCADE`** : supprimer un compte effacerait ses commentaires. Cohérent avec
-   un droit à l'effacement, incohérent avec un fil de discussion dont des réponses perdraient leur
-   contexte ;
-3. **assumer la règle** — un auteur de commentaire n'est pas supprimable — et l'inscrire dans
-   `docs/SPEC-cards.md` §13 ainsi que dans la Definition of Done de `CRM-011`, qui affirme
-   aujourd'hui le contraire. Il faudrait alors traiter séparément la question du RGPD.
-
-**Lié à :** `CRM-011` (Definition of Done contredite), `CRM-043` (la colonne), `CRM-044`
-(`card_events.actor_id`, qui a tranché la même question dans l'autre sens), `CLAUDE.md` §11.
-
-**CONSTAT DU 2026-08-11 — cette entrée semble déjà réglée depuis deux jours, sans avoir été mise à
-jour.** La décision 336, rendue le même jour que ce constat, classe encore INC-076 comme le premier
-défaut réel à corriger — « un compte devenu indestructible dès qu'il a commenté ». Or l'**option 1**
-ci-dessus est déjà livrée : le commit `22996fd` (« Livre les identités d'équipe sûres », `CRM-022`,
-**2026-08-09**, donc antérieur de deux jours à la décision 336) porte, dans
-`supabase/migrations/0021_identites_et_memberships_surs.sql` :
-
-```sql
-alter table public.card_comments alter column author_id drop not null;
--- … puis, si la contrainte n'était pas déjà « SET NULL » :
-alter table public.card_comments
-    add constraint card_comments_author_id_fkey
-    foreign key (author_id) references public.profiles(id) on delete set null;
-```
-
-**Trois preuves distinctes, toutes dans le même commit, pointent vers la même conclusion :**
-
-- `supabase/tests/0023_identites_et_memberships_surs.test.sql`, assertions **5** et **6**, mesurent
-  exactement la colonne et la FK décrites ci-dessus ; les assertions **81 à 83** insèrent un
-  commentaire, suppriment son auteur (`delete from auth.users …`) avec `lives_ok` — donc **sans**
-  l'erreur `23503` que ce rapport mesurait —, et vérifient que le commentaire survit avec
-  `author_id` devenu `null`. `CHANGELOG.md` (entrée `CRM-022`) revendique cette suite **84/84**.
-- `scripts/verify-seed.sh` a été modifié dans le même commit : son en-tête porte désormais « Un
-  compte seedé n'est plus supprimé : depuis `CRM-022`, ce geste détache légitimement l'auteur de ses
-  paroles historiques » (lignes 24-25), et le harnais ne contient plus de scénario de suppression
-  destructive d'un compte auteur de commentaires — cohérent avec un défaut qui n'existe plus.
-- `docs/BACKLOG.md`, entrée `CRM-011`, ligne « Suppression du compte » : le mot « (cascade) » y
-  était resté inexact — corrigé dans ce même changement pour dire « détachement,
-  `ON DELETE SET NULL` », qui est le comportement réellement prouvé.
-
-**Ce que ce constat N'établit PAS.** Cette lecture est **statique** — git, migrations, fichiers de
-test — faite depuis un environnement sans pile locale (pas de Docker, pas de PostgreSQL/Supabase
-disponibles dans ce bac à sable). **Rien n'a été rejoué ici** : ni `npm run test:sql`, ni
-`scripts/verify-seed.sh`, ni un véritable `DELETE /auth/v1/admin/users/<id>` contre une base
-seedée. Aucune régression n'est visible dans l'historique du fichier de migration depuis le
-2026-08-09 (`git log -S "on delete set null"` ne rend que ce seul commit), mais l'absence de
-régression VISIBLE dans le texte n'est pas une preuve d'exécution.
-
-**Action attendue du responsable, ou de la prochaine exécution disposant de la pile :** rejouer
-`npm run test:sql` (suite `0023`, assertions 5, 6, 81 à 83) et `scripts/verify-seed.sh` sur une base
-seedée fraîche, puis un `DELETE /auth/v1/admin/users/<id>` réel sur un compte ayant commenté. Si les
-trois sont verts, **clore cette entrée** et retirer INC-076 de la tête de liste de la décision 336 —
-l'ordre qu'elle fixe (« INC-076, puis INC-085/INC-075, puis INC-072 ») perd alors son premier terme,
-et l'exécution suivante devrait reprendre à INC-085/INC-075. Si l'un des trois échoue, ce constat
-est faux sur un point qui reste à identifier, et cette entrée doit rester ouverte avec la preuve de
-l'échec.
-
-**SOLDÉE LE 2026-08-12.** Les trois preuves ont été rejouées sur une pile réelle
-(`docs/JOURNAL.md` décision 355) : `npm run test:sql` — **1937 assertions, aucune anomalie**, dont
-les **84** de la suite `0023` ; `scripts/verify-seed.sh` — **55 contrôles, aucune anomalie** ;
-`DELETE /auth/v1/admin/users/5eed0000-0000-4000-8000-000000000012` (Driss Lemoine, auteur réel des
-commentaires `d2` et `d4` du seed) — **`HTTP 200`**, les deux commentaires survivant avec
-`author_id` devenu `null`. Le constat du 2026-08-11 est confirmé sur les trois points : rien n'était
-faux. La preuve elle-même a dû être restaurée par `./resetMe.sh --yes`, le seed ne reconvergeant
-délibérément pas le contenu d'un commentaire existant ; `scripts/verify-seed.sh` rejoué une seconde
-fois après restauration, de nouveau **55/55**. L'ordre de la décision 336 perd son premier terme :
-**la prochaine exécution reprend à INC-085/INC-075.**
 
 ---
 
@@ -1299,61 +559,6 @@ l'a pas vu.
 **Lié à :** INC-035 (la convergence des clés étrangères, dont ce mécanisme est né), INC-056 (un
 défaut que seule une base froide pouvait révéler — celui-ci est l'exact symétrique : seule une base
 CHAUDE le révèle), `docs/JOURNAL.md` décision 219.
-
----
-
-### INC-073 — CLOSE — Les gestes unitaire et pluriel ont deux fonctions distinctes
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 263.** Le paramètre `step_mapping` du `docs/SCHEMA.md` §9 désignait bien une **seconde fonction**, désormais nommée `change_channel_workflow`. Mise en œuvre : `CRM-019`.
-
-**Nature :** contradiction entre spécifications, sur la signature d'une fonction.
-**Relevée le :** 2026-08-06, pendant la spécification de `CRM-045`.
-
-Les deux documents nomment `move_card_to_channel`, et n'en décrivent pas la même.
-
-| Source | Ce qu'elle annonce |
-|---|---|
-| `docs/SCHEMA.md` §9 | `move_card_to_channel(card_id, channel_id, **step_mapping**)` — « changement de channel avec remappage explicite **des étapes** » |
-| `docs/SPEC-workflow-engine.md` §6 | « l'appelant fournit **l'étape** de destination », au singulier, pour **une** card |
-
-`step_mapping` — au singulier grammatical mais désignant une *correspondance* — et « remappage des
-**étapes** », au pluriel, annoncent une table de correspondance : plusieurs étapes remappées en un
-appel. C'est la forme qu'aurait une fonction de déplacement **en lot**, ou une fonction qui
-changerait le workflow d'un channel entier en remappant l'étape de chacune de ses cards — soit
-précisément l'option 2 de l'arbitrage d'**INC-046**, qui n'est rattachée à aucune unité.
-
-Le §6 décrit l'autre fonction : **une** card, **une** étape de destination. Sa Definition of Done au
-backlog dit de même — « `move_card_to_channel` avec remappage explicite », et la preuve attendue est
-« remappage obligatoire », au singulier.
-
-**Comportement retenu — la lecture du §6**, et le motif est qu'elle est la plus faible : une
-fonction qui déplace une card ne préempte aucune décision, là où une fonction de lot trancherait
-INC-046 par implémentation plutôt que par arbitrage. Le paramètre est donc nommé `to_step_id`, par
-symétrie avec `move_card(card_id, **to_step_id**, comment)` livrée par `CRM-034`.
-
-**Ce qui a été corrigé :** la ligne de `docs/SCHEMA.md` §9, seule des deux sources à porter la
-signature minoritaire — la laisser ferait mentir le document de schéma sur une fonction livrée.
-
-**Ce qui reste à arbitrer :** si `step_mapping` exprimait bien l'intention d'un déplacement en lot,
-alors cette capacité **n'est portée par aucune unité du backlog**, et son absence n'était jusqu'ici
-visible que dans le nom d'un paramètre. Deux issues : confirmer que `CRM-045` livre le geste unitaire
-et que le lot n'est pas au périmètre ; ou ouvrir l'unité qui le porte, auquel cas elle rejoindrait
-naturellement l'option 2 d'INC-046 dont elle est la forme générale.
-
-**Mise à jour contractuelle du 2026-08-09.** La seconde issue a été retenue par la décision 263,
-rattachée à `CRM-019`, puis précisée avant code par la décision 306 et
-`docs/SPEC-change-channel-workflow.md`. `step_mapping` est un tableau d'objets exacts afin que les
-sources répétées ne soient pas normalisées silencieusement par JSONB. L'entrée reste ouverte
-jusqu'à la livraison et la preuve de la fonction distincte.
-
-**Clôture mesurée le 2026-08-09.** `move_card_to_channel(uuid,uuid,uuid,boolean)` reste intacte et
-son harnais historique rend 42/42 après restauration par la migration courante.
-`change_channel_workflow(uuid,uuid,jsonb,boolean) returns setof cards` existe séparément, conserve
-son OID au rejeu conforme et rend ses 59 assertions, 14 scénarios API et 23 contrôles ciblés verts.
-La signature plurielle n'est plus un nom sans implémentation.
-
-**Lié à :** INC-046 (le changement de workflow d'un channel peuplé, dont le lot serait la solution),
-`docs/SPEC-workflow-engine.md` §6.2 et §6.10, `docs/SCHEMA.md` §9.
 
 ---
 
@@ -1579,6 +784,8 @@ représentation d'un `numeric` doit être **mesurée** plutôt que supposée. La
 **Lié à :** `CRM-040` (`e2e/api/cards.spec.ts`), `CRM-041` (`webapp/src/lib/board.ts`, cumul du
 §7.3), `docs/SPEC-types.md` (« un type ne garantit jamais une valeur »).
 
+---
+
 ### INC-066 — L'éditeur de workflow est spécifié depuis `CRM-000` et n'est rattaché à aucune unité
 
 **Nature :** unité manquante ; une règle du produit n'a aucun porteur.
@@ -1778,116 +985,6 @@ mais la décision ne revient pas à l'agent, et INC-021 conditionne les trois.
 
 **Lié à :** INC-021 (aucun écran de connexion), INC-031 et INC-037 (le même motif sur d'autres
 objets), INC-053 (`user` et `contact` non résolus, donc rendus bruts).
-
----
-
-### INC-061 — `scripts/verify-cards.sh` mesure `npm run test:sql` avant de retirer son propre jeu d'essai, et une suite livrée après lui le dénonce — **CLOSE**
-
-**Nature :** défaut d'outillage de vérification, mesuré ; aucun comportement du produit en cause.
-**Relevé le :** 2026-08-05, pendant la reprise de `CRM-010`, par le rejeu des vingt-trois harnais.
-
-`scripts/verify-cards.sh` crée cinq cards de preuve, titrées `tst-crm040-%`, et les retire dans son
-`trap … EXIT`. Sa **section 10** rejoue `npm run test:sql`, `npm run e2e:api` et le reste — donc
-**avant** ce retrait. La base porte alors **14** cards au lieu des 9 du seed.
-
-Trois assertions de `supabase/tests/0015_colonnes_protegees.test.sql`, livrée par `CRM-013`
-**après** que cette section 10 a été écrite, comptent précisément les neuf cards du seed :
-
-```
-not ok 33 - les neuf cards du seed sont intactes …            have: 14  want: 9
-not ok 34 - et leurs neuf adresses ont toujours la forme générée   have: 14  want: 9
-not ok 35 - neuf adresses DISTINCTES …                            have: 14  want: 9
-```
-
-**MESURÉ :** `scripts/verify-cards.sh` rend « 45 contrôles, 1 en échec » de façon **reproductible**,
-et `npm run test:sql` lancé **immédiatement après** sa sortie rend « 1164 assertions, aucune
-anomalie ». L'écart n'est donc ni un défaut du produit, ni une régression : c'est le harnais qui se
-mesure lui-même en train de tenir son jeu d'essai.
-
-**Ce n'est pas INC-058, et ce n'est pas INC-055.** INC-058 décrit une assertion qui compte une donnée
-globale qu'un **autre** harnais fait varier pendant qu'il l'exécute ; ici, un seul harnais est en
-cause, et il se dénonce lui-même. INC-055 décrit une base laissée **dégradée en sortant** ; ici la
-base est correcte en sortant, c'est **pendant** que la mesure est faussée.
-
-**Correction connue, non appliquée.** Il suffirait de déplacer la section 10 après le retrait du jeu
-d'essai, ou de retirer les cards avant elle. `scripts/verify-cards.sh` est un livrable de `CRM-040`,
-unité `[~]` dont les preuves ont été validées ; le reprendre dans un commit consacré à `CRM-010`
-reviendrait à toucher les 45 contrôles d'une autre unité sans les rejouer sous la sienne
-(`CLAUDE.md` §13). **L'échec est nommé plutôt que masqué**, et il l'est ici plutôt que dans un
-commentaire du script.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. corriger `scripts/verify-cards.sh` sous `CRM-040`, en rejouant ses 45 contrôles ;
-2. poser dans `docs/SPEC-test-harness.md` une règle générale — « un harnais ne rejoue jamais les
-   suites globales tant qu'il tient un jeu d'essai » — et l'appliquer à tous les harnais qui en
-   créent un, par une unité de dette dédiée ;
-3. retirer la section 10 de `scripts/verify-cards.sh`, les suites globales étant déjà rejouées par
-   `npm run test:sql` et par le compte rendu de chaque unité.
-
-**SECONDE OCCURRENCE, MESURÉE LE 2026-08-05 PENDANT `CRM-041`, ET L'ENTRÉE S'AGGRAVE.** Le harnais
-rend désormais « 45 contrôles, **2** en échec » : `npm run test:sql` comme avant, et **`npm run
-e2e:api`** avec lui. La cause est identique et le second victime était prévisible — `CRM-041` livre
-`e2e/api/board.spec.ts`, dont trois scénarios comptent les cards de `grands-comptes` : trois actives,
-deux rangées, cinq en tout. Le jeu d'essai du harnais s'y ajoute, et les comptes ne tombent plus.
-
-Contre-épreuve **mesurée**, comme pour la première occurrence : la base porte **9** cards en sortant
-du harnais, `npm run e2e:api` lancé ensuite rend **332 scénarios, aucune anomalie**, et
-`npm run test:sql` **1164 assertions, aucune anomalie**. Ni le produit ni les preuves de `CRM-041`
-ne sont en cause.
-
-**Ce que la seconde occurrence apprend.** Le défaut ne concerne pas une suite en particulier : il
-frappera **toute** preuve future qui comptera des cards, et il en frappera d'autant plus que le
-produit avance. Les assertions de `CRM-041` **ne sont pas affaiblies** pour l'accommoder — compter
-les trois cards actives du seed est précisément ce qui rend la composition des colonnes vérifiable,
-et relâcher ce compte pour qu'un harnais fautif passe reviendrait à supprimer un test pour obtenir
-un vert (`CLAUDE.md` §26). L'arbitrage reste dû, et l'option 2 gagne en poids : la règle générale
-protégerait les preuves à venir, que l'option 1 ne protège pas.
-
-**TROISIÈME OCCURRENCE, MESURÉE LE 2026-08-05 PENDANT LE REJEU DES NEUF HARNAIS EN ATTENTE DE
-`CRM-042`, ET LA CAUSE EST ISOLÉE SANS LE HARNAIS.** Le harnais rend de nouveau « 45 contrôles,
-**2** en échec », `npm run test:sql` et `npm run e2e:api`. Cette fois la cause n'est pas déduite du
-harnais : elle est **reproduite hors de lui**. Les cinq cards de preuve ont été recréées par le
-**vrai chemin applicatif** — `POST /rest/v1/cards` avec le jeton réel de l'administratrice, cinq
-`201`, base portée à **14** cards —, les suites ont été mesurées dans cet état, puis les cards
-retirées. MESURÉ :
-
-```
-not ok 33 - les neuf cards du seed sont intactes …
-not ok 34 - et leurs neuf adresses ont toujours la forme générée …
-not ok 35 - neuf adresses DISTINCTES …
-11 failed, 347 passed  (npm run e2e:api)
-```
-
-**Onze scénarios d'API**, contre deux à la première occurrence et trois à la deuxième :
-`e2e/api/board.spec.ts` (2), `e2e/api/colonnes-protegees.spec.ts` (1) et surtout
-`e2e/api/liste-cards.spec.ts` (**7**) — les deux lectures de la vue liste, les deux filtres
-d'activité, la contre-épreuve des deux lignes de plus, et les cinq scénarios de la pagination et du
-`416`. Base ramenée à **9** cards, `npm run test:sql` rend ensuite **1164 assertions, aucune
-anomalie** et `npm run e2e:api` **358 scénarios, aucune anomalie**.
-
-**Ce que la troisième occurrence tranche.** La prédiction de la deuxième — « il frappera toute
-preuve future qui comptera des cards » — est **vérifiée** : la victime la plus atteinte est la
-preuve d'intégration dédiée de l'unité la plus récente, livrée après que l'entrée a été écrite. Le
-nombre de scénarios touchés a **quintuplé en deux unités**, et rien n'indique que cela s'arrête :
-toute unité qui lira des cards ajoutera ses propres victimes. **L'option 2 — poser la règle générale
-dans `docs/SPEC-test-harness.md` — est la seule qui protège les preuves à venir**, l'option 1 ne
-protégeant que le harnais fautif d'aujourd'hui. La correction n'est toujours **pas appliquée** :
-`scripts/verify-cards.sh` est un livrable de `CRM-040`, et le reprendre sous `CRM-042` reviendrait à
-toucher les 45 contrôles d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13).
-**Arbitrage attendu du responsable, pour la troisième fois.**
-
-**CLOSE le 2026-08-09, sous le propriétaire CRM-040.** La première campagne complète après la
-réparation du runner reproduit encore exactement les deux victimes : SQL et API rouges, alors que
-unitaires, types, build et UI passent. Le correctif applique l'arbitrage 296 sans toucher aux
-assertions métier : `menage` est exécuté et son absence de résidu est **mesurée avant** les suites
-globales ; le `trap` reste la sécurité d'interruption. La seconde campagne complète rend
-**46/46** : pgTAP dédié 92, trois dégradations mordantes, SQL **1698**, API **444**, UI **145** à
-console stricte, unitaires **564**, quatre compilations et build. La cause et les deux symptômes
-ont donc disparu ensemble, sans relâcher un seul compte du seed.
-
-**Lié à :** INC-055 et INC-060 (défauts d'outillage de la même famille), INC-058 (compteur perturbé
-par un harnais concurrent), `docs/JOURNAL.md` décisions 158 et 191.
 
 ---
 
@@ -2164,6 +1261,8 @@ sans généralisation implicite.
 **Lié à :** décision 20 (le runner ne tient aucun registre), `CRM-034` §2 (la protection de colonne),
 INC-049 (chevauchement de Definition of Done entre `CRM-034` et `CRM-013`).
 
+---
+
 ### INC-002 — Messages entrants sans `Message-ID`
 
 **Nature :** cas limite non tranché.
@@ -2182,39 +1281,6 @@ quatre critères seraient fusionnés. Jugé improbable, mais non nul.
 
 **Comportement en attendant :** proposition retenue par défaut dans
 `docs/SPEC-mail-subsystem.md` §4.2, en attente de validation du responsable.
-
----
-
-### INC-003 — Transition « Réalisation → Perdu » non déclarée — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 259.** La transition « Réalisation → Perdu » est ajoutée et le graphe du workflow par défaut est **relu en entier** : chaque étape doit avoir au moins une sortie. Interrogé sur l'origine de l'oubli, le responsable a répondu qu'il avait **listé des exemples** et attendait des propositions — l'oubli est celui de l'agent. Mise en œuvre : `CRM-005`, `CRM-046`.
-
-**Nature :** règle métier à confirmer.
-**Relevé le :** 2026-08-03.
-
-Le workflow par défaut déclare un passage vers « Perdu » depuis Prospection, Relance, Négociation
-et Signature, mais **pas** depuis Réalisation. Une affaire signée puis abandonnée en cours de
-réalisation n'a donc aucun chemin vers « Perdu ».
-
-**Deux lectures possibles :** soit c'est voulu — un projet signé qui échoue relève d'un autre
-traitement (avenant, litige) —, soit c'est un oubli.
-
-**Comportement en attendant :** transition non déclarée. Le workflow étant une donnée, un
-administrateur peut l'ajouter sans modification de code.
-
-**CLOSE le 2026-08-09 par `CRM-005`.** La transition est déclarée dans le contrat du seed —
-`Réalisation en cours → Perdu`, libellé « Marquer perdu », commentaire **exigé** comme les quatre
-autres. Le graphe passe de dix à **onze** transitions, et la copie dérivée l'hérite : les deux
-workflows en portent onze, mesuré après `./resetMe.sh`.
-
-Le graphe a été **relu en entier**, comme la décision 259 l'exigeait, et non seulement complété au
-point signalé. Résultat de la relecture : cinq étapes sur sept ont au moins une sortie ; les deux
-qui n'en ont pas sont `Livré` et `Perdu`, justifiées par leur issue — `won` et `lost` sont les deux
-fins du cycle, et une sortie y contredirait la notion d'issue. Aucun autre cul-de-sac n'existe.
-
-Douze harnais, spécifications et suites qui figeaient l'**absence** — « dix transitions », « quatre
-à motif » — vérifient désormais la **présence**. Une absence figée par des preuves est exactement ce
-qui rend un oubli durable : c'est le second enseignement de cette entrée.
 
 ---
 
@@ -2267,35 +1333,6 @@ de la pile livrée, sans que la routine puisse le constater.
 **Arbitrage attendu du responsable :** confirmer que la pile officielle épinglée convient, ou
 fournir les écarts de `starter.2025.12` à reporter. Tant que ce point est ouvert, aucune
 divergence n'est supposée ni inventée.
-
----
-
-### INC-007 — `supabase/functions/` référencé sans composant correspondant — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 260.** **Les fonctions edge entrent au périmètre ; la décision 12 est rouverte.** L'agent proposait de retirer la mention du `README.md` ; le responsable tranche l'inverse — livrer ce que le document annonce plutôt que faire disparaître la moitié qui gêne. Mise en œuvre : `CRM-016`.
-
-**Nature :** référence documentaire sans contrepartie architecturale.
-**Relevé le :** 2026-08-03, pendant `CRM-001`.
-
-`README.md` §10 annonce un répertoire `supabase/functions/` décrit comme « Edge functions Deno ».
-Or :
-
-- `docs/DAT.md` §3 ne liste **aucun** composant de fonctions edge ;
-- `docs/DAT.md` §6 n'expose **aucune** interface de ce type ;
-- **aucune** unité de `docs/BACKLOG.md` ne prévoit d'en écrire.
-
-**Mise en œuvre ouverte le 2026-08-07.** `docs/SPEC-edge-functions.md` fixe le contrat mesuré du
-service, de sa route, de son exemple et de ses preuves ; `CRM-016` passe alors `[~]`.
-
-**Clôture, 2026-08-08.** `functions` appartient aux assemblages commun et de production, le
-répertoire annoncé existe, Kong protège puis route `/functions/v1/`, et `example` est exécutée par
-un vrai worker. Après remise à zéro froide : Edge **13/13**, pile **55/55**, API **416/416**, UI
-**144/144**, harnais global **28/28**. La relecture différée des journaux reste vide sous la
-politique `oneshot`; aucune capture ni donnée seedée ne change. Le constat documentaire n'existe
-donc plus.
-
-**Arbitrage rendu :** les fonctions edge entrent au périmètre et reçoivent `CRM-016` ; la mention
-du `README.md` doit devenir la description du répertoire réellement livré, jamais être retirée.
 
 ---
 
@@ -2415,7 +1452,6 @@ posé les clés parce qu'elles étaient les candidates naturelles, ce que cette 
 aucune Definition of Done n'a été modifiée par le responsable. Le fait technique est acquis ; la
 décision documentaire ne l'est pas, et la déclarer close reviendrait à la prendre à sa place.
 
-
 ---
 
 ### INC-011 — `track_members` et `channel_members` sans `workspace_id`, contre la convention générale
@@ -2440,81 +1476,6 @@ beaucoup moins.
 
 **Arbitrage attendu du responsable :** trancher avant `CRM-012`, qui écrira les politiques de
 résolution des droits fins et fixera de fait la forme des requêtes.
-
----
-
-### INC-012 — Le motif principal de la décision 8 est démenti par la mesure — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 261.** **L'ordonnancement passe à `pg_cron` ; la décision 8 est renversée.** Une purge RGPD qui ne s'exécute pas est un manquement, pas un retard. Mise en œuvre : `CRM-017` ; `CRM-051` perd son sous-composant `scheduler`.
-
-**Nature :** motif de décision invalidé par un fait vérifié.
-**Relevé le :** 2026-08-03, en clôturant `CRM-004`.
-
-La décision 8 (`docs/JOURNAL.md`) place l'ordonnancement des relances, séquences, digests et
-purges dans `mail-sync` plutôt que dans `pg_cron`. Elle invoquait deux motifs :
-
-1. « sa présence dans l'image retenue n'est pas vérifiée » ;
-2. l'ordonnancement applicatif est testable par pytest sans manipuler la base.
-
-La mesure de `CRM-004` **dément le premier** : `pg_cron` 1.6.4 est présent dans
-`supabase/postgres:17.6.1.136`, préchargé par le serveur, installable, et il ordonnance
-réellement une tâche. Le second motif — la commodité de pytest — ne compense pas le risque d'une
-tâche de conformité arrêtée avec un service applicatif ; le responsable a donc renversé la
-décision 8 (décision 261).
-
-**Mise en œuvre ouverte le 2026-08-08.** `docs/SPEC-scheduler.md` fixe la première tâche réelle,
-son job nommé, sa sécurité et sa preuve pgTAP ; `CRM-017` passe `[~]`. Le constat restera ouvert
-jusqu'à une migration froide où `cron.job_run_details` et le heartbeat prouvent tous deux le
-passage effectif, sans réintroduire de `scheduler` applicatif. Les relances, digests et rétentions
-métier restent portés par les unités qui livrent leurs propres tables : aucun faux objet n'est
-créé pour fermer ce constat plus tôt.
-
-**CLOSE le 2026-08-09.** Deux resets froids ont rejoué la migration 18 sous son propriétaire réel.
-`cron.job_run_details` porte un passage `succeeded`, le heartbeat a avancé puis le job est revenu à
-`7 * * * *`. La suite dédiée rend **48/48**, `scripts/verify-scheduler.sh` **14/14** après
-dégradation réelle de commande, cadence et ACL, et la campagne globale **28/28**. Aucun
-ordonnanceur applicatif n'a été réintroduit.
-
----
-
-### INC-014 — Aucune unité ne nomme explicitement l'écriture des politiques RLS des tables d'identité
-
-**Nature :** référence manquante dans le découpage du backlog.
-**Relevé le :** 2026-08-03, pendant `CRM-010`.
-
-`docs/SPEC-permissions-rls.md` §4 spécifie les politiques de `profiles`, `workspaces` et
-`workspace_members` — lecture par les membres, écriture réservée à l'administrateur, et la règle
-« un administrateur ne peut pas se retirer son propre rôle s'il est le dernier ». Or aucune unité
-du backlog ne les porte nommément :
-
-- `CRM-010` livre les **fonctions**, pas les politiques ;
-- `CRM-012` est intitulée « Droits fins par track et channel » et sa Definition of Done vise les
-  preuves n° 3, 4, 7 et 11, qui concernent les cards et les comptes mail ;
-- `CRM-013` traite des **colonnes** protégées, dont aucune de ces trois tables.
-
-Le commentaire de `supabase/tests/0001_identite_et_cloisonnement.test.sql` annonce d'ailleurs ces
-politiques « jusqu'à `CRM-010` », ce que `CRM-010` ne fait pas — la mention a été corrigée en
-`CRM-012` dans le même changement, faute de meilleur candidat, mais **le rattachement lui-même
-n'est pas tranché**.
-
-**Comportement en attendant :** les trois tables restent en refus par défaut, comme les a laissées
-`CRM-003`. Aucune politique n'est écrite hors d'une unité qui la porte.
-
-**Conséquence pratique :** la preuve n° 10 du §7 — « dernier administrateur tente de se retirer
-son rôle » — n'est actuellement attribuée à aucune unité.
-
-**Arbitrage attendu du responsable :** rattacher explicitement les politiques des tables
-d'identité, ainsi que la preuve n° 10, à `CRM-012` ou à une unité dédiée.
-
-**CLOSE le 2026-08-09 par `CRM-022`.** L'unité dédiée décidée au journal 294 livre sept politiques
-exactes : deux sur `profiles`, une sur `workspaces`, quatre sur `workspace_members`. Les ACL
-n'accordent l'édition du profil propre que sur `full_name` et `avatar_url`; les memberships sont
-lisibles par l'équipe et mutables par ses administrateurs. Une contrainte différable refuse
-`last_workspace_admin` même si la suppression laisserait zéro membre, tout en autorisant rotation
-atomique et cascade du workspace. pgTAP rend **84/84**, l'API dédiée **5/5** plus **2/2** refus du
-dernier admin, le parcours Chromium réel traverse en-tête, board, liste et fiche avec les identités
-et avatars locaux, et le harnais ciblé rend **23/23** après sept dégradations. La campagne globale
-rend 23 fichiers / 1698 assertions, 444 API, 145 UI à console stricte, 16 mail et 564 unitaires.
 
 ---
 
@@ -2567,64 +1528,6 @@ un parcours produit livré.
 Lié à INC-014, **close depuis par `CRM-022`** : les politiques RLS des tables d'identité ont leur
 unité. La table et le geste éventuels d'invitation restent, eux, explicitement rattachés à
 `CRM-070`.
-
----
-
-### INC-016 — Gabarits d'emails : chargement HTTP obligatoire et repli silencieux vers l'anglais — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 264.** **Les gabarits d'emails sont servis en HTTP depuis la pile.** Exigence attachée, qui vaut au-delà de cette entrée : toute preuve portant sur un email vérifie son **contenu**, jamais sa seule présence. Mise en œuvre : `CRM-009`.
-
-**Contrat de résolution écrit — `docs/JOURNAL.md`, décision 269.** Le service interne commun
-`auth-templates`, ses quatre URL, ses sujets français et les preuves de contenu sont spécifiés dans
-`docs/SPEC-auth.md` §5.
-
-**CLOSE le 2026-08-07 par `CRM-009`.** Le service commun est sain et GoTrue dépend de lui ; les
-quatre gabarits français sont joignables. Le harnais obtient les vrais emails d'invitation et de
-réinitialisation par SMTP, exige leur sujet, leur phrase propre, le produit, le code et le lien,
-puis démontre qu'un GoTrue jetable privé du service retombe bien sur l'anglais que ce même
-validateur refuse : **62/62**. Dans Chromium, le destinataire ouvre Inbucket, lit le contenu
-français rendu, voit l'action contrastée, clique avec la souris et obtient sa session d'onglet ;
-capture observée dans `docs/captures/CRM-009/`.
-
-**Nature :** limite d'un composant tiers, contraire à une exigence générale.
-**Relevé le :** 2026-08-03, pendant `CRM-011`.
-
-Au moment du constat, le produit était en français tandis que les emails transactionnels partaient
-en **anglais**, avec les gabarits par défaut de GoTrue.
-
-**Mesure.** `supabase/gotrue:v2.189.0` ne sait charger un gabarit personnalisé que par **HTTP**. Un
-chemin de fichier n'est pas reconnu : la valeur est concaténée à `SITE_URL`, ce que la
-journalisation du service montre sans ambiguïté.
-
-```
-templatemailer: template type "invite":
-Get "http://localhost:5173file///etc/gotrue/templates/invite.html": no such host
-```
-
-**Le point qui compte : l'email est tout de même parti**, avec le gabarit anglais par défaut. La
-défaillance est donc **silencieuse du point de vue du destinataire**. Un email reçu ne prouve pas
-que le gabarit configuré a été employé — toute preuve future portant sur les gabarits devra
-vérifier le **contenu** de l'email, jamais sa seule présence.
-
-**Pourquoi ce n'était pas résolu lors du constat.** Servir les gabarits en HTTP demandait soit un service
-statique de plus dans les deux assemblages pour quatre fichiers, soit de les héberger dans la
-webapp — qui n'existe pas (`CRM-007`) et dont l'origine n'est de toute façon pas joignable depuis
-le réseau des conteneurs. Les deux débordent du périmètre de `CRM-011`.
-
-**Constat supplémentaire, relevé lors de la vérification visuelle.** Inbucket signale sur chacun
-des emails émis : « MIME problems detected — Plain Text from HTML: Message did not contain a
-text/plain part ». Les gabarits par défaut de GoTrue produisent donc un message **HTML seul**,
-sans variante texte. Deux conséquences, l'une pour le produit, l'autre pour les preuves : un
-message sans partie texte est un signal négatif pour la délivrabilité et gêne les clients en mode
-texte ; et la partie « texte » que lit `scripts/verify-auth.sh` est **reconstruite** par Inbucket
-à partir du HTML, elle n'est pas émise par GoTrue. Captures :
-`docs/captures/CRM-011/email-invitation-1280x800.jpg` et
-`docs/captures/CRM-011/email-reinitialisation-1280x800.jpg`.
-
-**Arbitrage exécuté :** décision 264, mise en œuvre et prouvée par `CRM-009`. Le constat MIME reste
-une limite distincte du composant épinglé : son interface interne ne reçoit qu'un corps et son
-client SMTP l'envoie par `SetBody("text/html", body)`. Un simple gabarit ne peut donc pas créer un
-multipart alternatif (`docs/SPEC-auth.md` §5.2).
 
 ---
 
@@ -2745,212 +1648,6 @@ aucun écran, aucun composant, aucun build. « Aucune webapp » reste vrai au se
 au sens du répertoire. À prendre en compte dans la réécriture attendue.
 
 ---
-
-## Clos — reprises du 2026-08-07
-
-### INC-005 — Écart assumé : copie de workflow contre surcharge — **CLOS**
-
-**Nature :** écart documenté à une convention générale.
-**Relevé le :** 2026-08-03. **Clos le :** 2026-08-07.
-
-`CLAUDE.md` §4 demande que « tout existe par défaut au niveau général, puis les contextes
-spécialisés ne définissent que leurs différences ». Le responsable a explicitement demandé de
-**copier** un workflow global dans un track pour l'y modifier, ce qui produit une duplication et
-non une surcharge.
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 266 : l'écart est confirmé.** L'instruction
-explicite du responsable prime (`CLAUDE.md` §26, priorité 2 sur priorité 8), et la compensation est
-en place et prouvée : l'origine reste connue (`derived_from_workflow_id`, `derived_at`) et la
-divergence est signalée. L'entrée était ouverte « pour information », en attente de cette
-confirmation ; elle est close.
-
----
-
-### INC-021 — Aucune unité ne porte l'écran de connexion, que la DoD de `CRM-011` présuppose — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 253.** **Option 2 : une unité dédiée, `CRM-009`**, insérée entre `CRM-007` et `CRM-008`. `docs/SPEC-auth.md` §9 avait retenu l'option 1 — rattacher l'écran à `CRM-011` — et est corrigé. Le comportement livré est conforme ; c'est le rattachement qui était faux.
-
-**Nature :** référence manquante entre `docs/BACKLOG.md` et lui-même.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-007`.
-
-La Definition of Done de `CRM-011` exige un « **E2E de connexion et de refus** ». Un tel parcours
-suppose un écran où l'on saisit une adresse et un mot de passe. Or :
-
-- `CRM-011` a livré et prouvé le **mécanisme** d'authentification, entièrement hors interface, et a
-  nommé l'absence d'écran comme la seule preuve qui lui manque ;
-- `CRM-007` livre le **squelette** de la webapp : mise en page, jetons, états. Son énoncé ne
-  mentionne ni formulaire de connexion, ni session, ni parcours d'authentification ;
-- `CRM-008` livre le **harnais** de tests, c'est-à-dire de quoi exécuter un E2E, pas de quoi en
-  avoir un à exécuter ;
-- aucune unité de `CRM-012` à `CRM-075` ne nomme cet écran.
-
-C'est le même mode de défaillance qu'INC-015, un cran plus bas : INC-015 constate que le parcours
-d'**invitation** n'a aucun composant pour le porter ; on constate ici que le parcours de
-**connexion** n'en a pas davantage. La différence est que l'invitation reste discutable — elle peut
-demeurer une opération d'exploitation — alors que la connexion ne l'est pas : sans elle, la webapp
-ne peut afficher que ce que la clé anonyme obtient, c'est-à-dire rien.
-
-**Conséquence mesurable, aujourd'hui :** la coquille livrée par `CRM-007` n'affiche que des états
-vides, non parce qu'elle est inachevée, mais parce que la RLS en refus par défaut rend `200` et
-`[]` à un appelant anonyme. C'est l'état réel du produit.
-
-**Comportement retenu :** `CRM-007` ne l'invente pas. Elle livre la coquille, traite l'état vide
-comme un état de premier rang, et **nomme** la limite dans `docs/SPEC-webapp.md` §15 et dans
-`docs/BACKLOG.md`. Aucun écran de connexion n'est écrit par anticipation : ce serait préempter un
-arbitrage et gonfler une unité au-delà de son énoncé.
-
-**Trois options d'arbitrage :**
-
-1. **Rattacher l'écran à `CRM-011`**, qui redeviendrait alors ouverte au sens plein, et dont la
-   Definition of Done serait enfin satisfaisable telle qu'elle est écrite.
-2. **Créer une unité dédiée** — connexion, déconnexion, session, garde de route — placée entre
-   `CRM-007` et `CRM-008`, ce qui rendrait `CRM-011` et `CRM-006` closes dans la foulée.
-3. **Élargir `CRM-007`**, ce qui reviendrait à faire porter par le squelette une fonctionnalité que
-   son énoncé ne mentionne pas.
-
-**Action attendue du responsable :** trancher entre ces trois options. L'option 2 a la préférence
-de rédaction — elle laisse chaque unité à son objet — mais la décision n'appartient pas à l'agent.
-Tant qu'elle n'est pas prise, `CRM-011` reste `[~]` avec sa preuve d'E2E manquante, et la webapp
-reste anonyme.
-
-**Arbitrage rendu le 2026-08-07 — décision 253 récupérée du responsable.** L'option 2 est retenue :
-une unité dédiée, `CRM-009`, entre `CRM-007` et `CRM-008`. Le rattachement transitoire à
-`CRM-011`, décidé à tort pendant que cette décision manquait de `main`, est corrigé dans le code,
-les preuves et l'architecture.
-
-**CLOSE le 2026-08-07 par `CRM-009`.** Huit scénarios navigateur obtiennent les vraies sessions
-GoTrue : refus, session d'onglet, fermeture du contexte, déconnexion, lecture, publication,
-déplacements autorisé/refusé et parcours destinataire depuis Inbucket. Les effets métier sont
-relus par l'API, les données nettoyées, l'URL du lien débarrassée de ses jetons et `localStorage`
-reste vide. INC-015 reste distincte ; les unités métier dépendantes sont réévaluées une par une.
-
-**Lié à :** INC-015 (invitation sans composant), INC-020 (build dû par `CRM-007`).
-
----
-
-### INC-022 — `docs/DAT.md` §3.1 se contredit sur la persistance de session — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 254.** **Option 2 : `sessionStorage`.** Catégorie 2 de `CLAUDE.md` §11, sans recueil de consentement : un `F5` ne déconnecte pas, la fermeture de l'onglet si. Aucune bannière, aucun registre de consentement, aucune persistance transverse.
-
-**Nature :** contradiction interne à `docs/DAT.md` §3.1, doublée d'une contradiction avec
-`CLAUDE.md` §11.
-**Relevé le :** 2026-08-04, en relisant `docs/DAT.md` après la livraison de `CRM-007`.
-
-Le même chapitre porte les deux affirmations, à quatre lignes d'intervalle :
-
-> - Authentification via `supabase-js` (GoTrue), **session persistée par la bibliothèque**.
-
-> - `src/lib/supabase.ts` — le client, typé par ce schéma, **sans persistance de session** tant
->   qu'aucun parcours de connexion n'existe (`CLAUDE.md` §11, `docs/JOURNAL.md` décision 44).
-
-La seconde décrit ce qui est livré et vérifié. La première décrit une intention, écrite avant
-qu'aucun code n'existe — et cette intention n'est pas neutre : le défaut de
-`@supabase/supabase-js` est d'écrire la session dans `localStorage`.
-
-`CLAUDE.md` §11 n'admet une donnée persistante sur l'appareil que si elle est « strictement
-nécessaire au fonctionnement demandé » ou « persistante avec consentement explicite lorsque ce
-consentement est requis ». Le DAT annonce donc, comme acquise, une écriture persistante dont ni le
-recueil du consentement ni le comportement en cas de refus ne sont décrits nulle part.
-
-**Pourquoi ce n'est pas résolu ici.** Ce n'est pas une coquille : c'est un arbitrage de
-conformité, et le trancher au passage reviendrait à décider seul de la posture RGPD du produit.
-`CRM-007` a fait le seul choix tenable en l'absence de parcours de connexion — ne rien écrire — et
-l'a prouvé par un contrôle E2E exigeant un `localStorage` vide. Cela ne répond pas à la question
-posée pour la suite.
-
-**Risque :** l'unité qui livrera la connexion peut lire `docs/DAT.md` §3.1, y voir la persistance
-présentée comme le comportement attendu, et laisser simplement le défaut de la bibliothèque
-s'appliquer. La posture de consentement du produit serait alors décidée par une valeur par défaut,
-en silence — ce que `CLAUDE.md` §11 interdit explicitement.
-
-**Action attendue du responsable :** trancher entre trois postures **avant** que l'écran de
-connexion ne soit écrit, puis corriger `docs/DAT.md` §3.1 :
-
-1. session en mémoire seule, reperdue à chaque rechargement — aucun consentement requis ;
-2. session en `sessionStorage`, limitée à l'onglet — catégorie 2 de `CLAUDE.md` §11 ;
-3. session persistante en `localStorage` avec consentement explicite, refus possible sans perdre
-   la connexion elle-même — catégorie 3.
-
-Cette contradiction est liée à **INC-021** : c'est la même unité manquante — l'écran de connexion —
-qui les porte toutes les deux.
-
-**Arbitrage rendu le 2026-08-07.** L'option 2 est retenue : session dans `sessionStorage`, limitée
-à l'onglet, avec repli mémoire lorsque ce stockage n'est pas disponible. Le contrat opposable est
-`docs/SPEC-auth.md` §9.2 et le DAT ne présente plus la persistance par défaut de la bibliothèque
-comme un acquis. Le point reste ouvert jusqu'à la preuve qu'aucune session n'est écrite dans
-`localStorage` et qu'un rechargement du même onglet conserve bien la session.
-
-**CLOSE le 2026-08-07.** Les tests unitaires éprouvent `sessionStorage` et son repli mémoire. Le
-parcours navigateur constate un `localStorage` vide, un jeton présent dans `sessionStorage`, la
-session encore active après rechargement, puis le jeton retiré après déconnexion.
-
----
-
-## Ouverts — suite
-
-### INC-023 — La Definition of Done de `CRM-008` exige des commandes dont les sujets arrivent au chunk 4 — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 277.** Le responsable retient l'option 2 : la DoD
-de `CRM-008` couvre les commandes dont le sujet existe ; `pytest mail-sync/tests` appartient à
-`CRM-051`. `e2e:mail`, devenu réel en `CRM-050`, reste la preuve des protocoles de cette unité ; le
-parcours mail du produit est dû par `CRM-054` et `CRM-058`. Aucun projet vide n'est créé.
-
-**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-008`.
-
-La Definition of Done de `CRM-008` tient en une phrase : « chaque commande du `README.md` §7
-s'exécute ; un test volontairement faux échoue bien ». Or `README.md` §7 énumère sept commandes,
-et deux d'entre elles n'ont **aucun sujet à exercer** avant le chunk 4 :
-
-- `pytest mail-sync/tests` suppose le service `mail-sync`, livré par `CRM-051` ;
-- `npm run e2e:mail` suppose Stalwart et un aller-retour d'email réel, livrés par `CRM-050` puis
-  `CRM-054`.
-
-C'est le même mode de défaillance qu'INC-020, où la DoD de `CRM-006` exigeait le build d'une webapp
-que l'unité suivante allait livrer, et qu'INC-013, où quatre fonctions d'autorisation attendaient
-des tables du chunk 3. La différence tient à l'ampleur : ici, l'écart n'est pas d'une unité mais de
-**deux chunks entiers**.
-
-**Pourquoi ce n'était pas résolu lors de l'implémentation de `CRM-008`.** Trois conduites étaient
-possibles, et deux étaient exclues par `CLAUDE.md` :
-
-1. **Déclarer les projets vides**, pour que les commandes « s'exécutent ». Ce serait une
-   déclaration mensongère de complétion (`CLAUDE.md` §26) : `pytest` sur un répertoire sans test
-   rend `5`, et un projet Playwright sans scénario rend `0` sans rien avoir exercé. Le dépôt a
-   déjà écrit ce refus en toutes lettres dans `e2e/playwright.config.ts` depuis `CRM-007`.
-2. **Fabriquer un `mail-sync/` minimal** pour avoir quelque chose à tester : c'est préempter
-   `CRM-051` et inventer du périmètre (`CLAUDE.md` §1).
-3. **Livrer ce qui est livrable et nommer le reste** : conduite retenue.
-
-**Ce qui était donc livré par `CRM-008`** : `npm run test:sql`, le projet Playwright `api` et ses
-fixtures de jetons réels, `npm run e2e:report`, et la preuve de non-complaisance sur chaque famille
-de tests. À cette date, `pytest` et `e2e:mail` restaient dus. Depuis, `e2e:mail` a été livré par
-`CRM-050` ; `pytest` reste dû exclusivement par `CRM-051` selon l'arbitrage ci-dessus.
-
-**Conséquence avant arbitrage sur l'état de l'unité :** `CRM-008` restait `[~]`. Elle ne pouvait
-pas passer `[x]` sans mentir sur deux des sept commandes de sa propre Definition of Done.
-
-**Trois options d'arbitrage examinées :**
-
-1. **Scinder `CRM-008`** en `CRM-008a` — harnais SQL et API, livrable maintenant et close — et
-   `CRM-008b` — harnais mail et pytest, rattachée au chunk 4. C'est l'option qui laisse chaque
-   unité à son objet, et elle a la préférence de rédaction.
-2. **Restreindre la Definition of Done de `CRM-008`** aux commandes dont le sujet existe, et faire
-   porter `pytest` par `CRM-051` et `e2e:mail` par `CRM-054`, dont les DoD les mentionnent déjà
-   toutes les deux. C'est l'option retenue ; elle rend la fermeture possible après rejeu complet
-   du périmètre, sans transformer l'arbitrage documentaire en preuve d'exécution.
-3. **Laisser `CRM-008` ouverte jusqu'au chunk 4**, ce qui la ferait traverser tout le chunk 3 en
-   `[~]` et contreviendrait à la règle 1 de `docs/MASTER_PLAN.md` §1 — « aucun `[~]` laissé
-   derrière soi ».
-
-**Motif confirmé par le responsable.** L'option 2 s'appuie sur un fait vérifiable et non sur une
-commodité : la DoD de `CRM-051` exige déjà « pytest unitaire », et celle
-de `CRM-054` « pytest unitaire et intégration contre Stalwart » ainsi que « E2E `mail` avec un
-email **réellement envoyé** ». Les deux commandes manquantes sont donc **déjà** couvertes par les
-unités qui livreront leur sujet ; les exiger aussi de `CRM-008` les compte deux fois.
-
-**Lié à :** INC-013 (fonctions d'autorisation en attente de tables), INC-020 (build dû par l'unité
-suivante, close).
 
 ### INC-025 — `docs/SCHEMA.md` §2 omet `created_at` et `updated_at`, que ses propres conventions exigent
 
@@ -3287,72 +1984,6 @@ troisième, sur `cards`, reste en place et deviendra rouge à `CRM-040`.
 
 ---
 
-### INC-032 — `./runDev.sh` ne peut pas démarrer à froid derrière un proxy TLS interposé — **CLOSE**
-
-**Nature :** chemin documenté inatteignable depuis le script de lancement.
-**Relevé le :** 2026-08-04, pendant l'intégration de `CRM-030` sur `main`.
-
-Sur un environnement neuf, `./runDev.sh` s'interrompt à la construction de l'image `webapp` :
-
-```
-npm error code SELF_SIGNED_CERT_IN_CHAIN
-npm error request to https://registry.npmjs.org/... failed,
-  reason: self-signed certificate in certificate chain
-```
-
-Le motif est connu et **anticipé par le dépôt** : `webapp/Dockerfile` §20–29 monte un secret de
-construction `npm_ca` précisément pour ce cas, et documente l'invocation attendue —
-`docker build --secret id=npm_ca,src=/chemin/vers/ca.crt`. Mais `docker-compose.dev.yml` ne déclare
-aucun `secrets:` dans la section `build:` du service `webapp`, et `runDev.sh` appelle
-`compose_dev up -d --wait` sans passer par `docker build`. Le chemin prévu existe donc, et **aucune
-commande du dépôt ne l'emprunte**.
-
-**Conséquence mesurée.** `./runDev.sh` sort en `1` sur toute machine dont le trafic HTTPS traverse
-un proxy présentant sa propre autorité — ce qui est le cas de l'environnement de la routine cloud,
-et le cas courant en entreprise. La pile complète est alors inaccessible, et avec elle **toutes**
-les preuves du projet, y compris celles qui n'ont rien à voir avec la webapp.
-
-**Contournement appliqué, et pourquoi il n'est pas la correction.** L'image a été construite à la
-main avec le secret, puis `runDev.sh` l'a réutilisée — `compose up` ne reconstruit pas une image
-présente. C'est un geste hors dépôt, que rien ne documente et que la prochaine exécution devra
-refaire.
-
-**Prédiction vérifiée, le 2026-08-04, pendant `CRM-032`.** La phrase ci-dessus disait « la prochaine
-exécution devra le refaire » ; elle a dû le refaire. Sur un conteneur neuf, `./runDev.sh` s'est
-arrêté exactement au même endroit, avec le même `SELF_SIGNED_CERT_IN_CHAIN`, et la pile n'a démarré
-qu'après un `docker build --secret id=npm_ca,src=…` lancé à la main. Le coût de l'entrée est donc
-récurrent, et non ponctuel : chaque exécution de la routine le paie avant de pouvoir produire la
-moindre preuve. L'arbitrage attendu ci-dessous n'en devient que plus concret.
-
-**Ce qui n'est pas fait, et pourquoi.** `docker-compose.dev.yml` et `runDev.sh` sont des livrables
-de `CRM-002` et de `CRM-007`, toutes deux `[x]`. Les corriger reviendrait à rouvrir deux unités
-vérifiées pendant un passage consacré à une troisième, et à toucher les preuves de `CRM-002`
-(`scripts/verify-scripts.sh`, 38 contrôles) dans un commit qui n'en traite pas — ce que
-`CLAUDE.md` §13 interdit. Le comportement reste donc **inchangé**.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. déclarer un secret de construction facultatif dans `docker-compose.dev.yml`, alimenté par une
-   variable `NPM_CA_FILE` documentée dans `.env.example` — la correction la plus fidèle à
-   l'intention du `Dockerfile`, au prix d'une variable de plus ;
-2. laisser le dépôt tel quel et **documenter** la construction manuelle dans `README.md` §6, en
-   assumant que l'amorçage n'est pas autonome derrière un proxy interposé, contre `CLAUDE.md` §3
-   (« l'environnement de développement doit être aussi autonome que possible ») ;
-3. rattacher la correction à une unité de dette dédiée, avec ses propres preuves.
-
-**Lié à :** `CLAUDE.md` §3 (autonomie de l'environnement de développement), `CLAUDE.md` §14
-(démarrage des services locaux).
-
-**Arbitrage et clôture, 2026-08-07.** Le responsable a retenu l'option 1 sous `CRM-015`
-(décisions 255 et 280). `docker-compose.dev.yml` transporte maintenant le paquet PEM externe
-désigné par `NPM_CA_FILE` jusqu'au secret `npm_ca`; absent ou vide, `/dev/null` garde le build
-inerte. `./runDev.sh` aboutit réellement sans puis avec le CA de l'hôte, sans construction
-manuelle : scripts **80/80**, pile **50/50**, webapp **42/42**, harnais **28/28**. Aucun certificat
-n'est versionné ou conservé dans l'image. INC-032 et INC-042 décrivaient les deux observations du
-même défaut ; elles sont closes par la même livraison.
-
----
-
 ### INC-033 — `require_fields` ne peut porter aucune intégrité référentielle, jamais
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 262.** **`require_fields` devient une table de liaison `(transition_id, field_id)`** : le modèle est corrigé, pas contourné. L'intégrité référentielle est le travail de la base, pas d'un nettoyage applicatif qu'un chemin de suppression oubliera. Mise en œuvre : `CRM-018`, qui rouvre `CRM-031` et `CRM-035`.
@@ -3517,6 +2148,7 @@ dû être réécrits —, et la configuration locale a été reposée à `P2Enjo
 avant toute écriture d'historique. Le coût reste **récurrent à chaque conteneur neuf**, et le
 correctif durable — script d'amorçage, ou variable d'environnement de l'environnement d'exécution —
 reste dû.
+
 ---
 
 ### INC-035 — Les clés étrangères des migrations `0003`, `0004` et `0005` sont idempotentes sans être convergentes
@@ -3878,80 +2510,6 @@ coût est celui d'un harnais de plus, à maintenir avec le contrat du seed.
 
 ---
 
-### INC-042 — L'image de la webapp ne se construit pas dans l'environnement de la routine : le registre npm est derrière un proxy à certificat interposé — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 255.** **Le secret de build `npm_ca` est câblé**, dans une unité à part entière : `CRM-015`. Onzième occurrence — c'est une mesure, pas une malchance —, et le coût réel est une **preuve perdue à chaque unité**. Contrainte non négociable : le certificat vient de l'environnement, jamais du dépôt, et l'assemblage reste inerte là où la variable est absente.
-
-**Contrat de mise en œuvre — décision 280.** `NPM_CA_FILE` porte uniquement un chemin PEM absolu
-et lisible ; Compose le remplace par `/dev/null` lorsqu'il est absent ou vide. `runDev.sh` valide
-la valeur effective avant Docker, y compris la priorité du shell sur `.env`. Les anciens `.env`
-peuvent omettre cette variable facultative. La fermeture exige deux builds sans cache, l'absence
-du secret et du `cafile` dans l'image finale, puis le lancement réel dans les deux configurations.
-
-**Clôture, 2026-08-07.** `CRM-015` câble `${NPM_CA_FILE:-/dev/null}` au secret BuildKit
-`npm_ca`, valide la valeur effective avant Docker et accepte les anciens `.env`. Les deux builds
-sans cache rendent les marqueurs `inactif` puis `actif`; l'image ne garde ni secret, ni `cafile`,
-ni `.npmrc` non vide. `./runDev.sh` aboutit réellement sans puis avec le paquet PEM de l'hôte.
-Preuves finales : scripts **80/80**, pile **50/50**, webapp **42/42**, harnais **28/28** dont UI
-**144/144 sans avertissement**. Aucun certificat n'est versionné ; aucune opération de production.
-
-**Nature :** obstacle d'environnement ; aucun fichier du dépôt n'est en cause.
-**Relevé le :** 2026-08-04, pendant `CRM-033`.
-
-`./runDev.sh --dev` échoue à la construction de l'image `webapp`, avant tout démarrage :
-
-```
-npm error code SELF_SIGNED_CERT_IN_CHAIN
-npm error request to https://registry.npmjs.org/… failed,
-            reason: self-signed certificate in certificate chain
-```
-
-L'environnement de la routine route tout le trafic HTTPS sortant par un proxy qui **interpose son
-propre certificat**, et fournit son autorité de certification à l'hôte. Le conteneur de construction,
-lui, ne l'a pas. `webapp/Dockerfile` a prévu exactement ce cas — il monte un secret facultatif
-`npm_ca` et le pose en `cafile` s'il est fourni — mais **aucun fichier Compose ne déclare ce
-secret** : le point d'entrée existe, rien ne le branche.
-
-**Contournement appliqué, et pourquoi il n'est pas la correction.** La pile a été démarrée **sans le
-service `webapp`**, en nommant les douze autres services. C'est sans effet sur les preuves : le
-projet Playwright `ui` démarre son **propre** serveur Vite sur l'hôte (`e2e/playwright.config.ts`),
-et le conteneur `webapp` ne sert qu'au confort de développement. Les 37 scénarios d'interface ont été
-exécutés et sont verts. Sur l'hôte, `npm ci` a exigé le même geste — `npm config set cafile` vers le
-paquet d'autorités du proxy — avant de réussir.
-
-Le geste n'est documenté nulle part et la prochaine exécution devra le refaire : même nature
-qu'INC-032 et INC-036, et **troisième** coût récurrent de cet environnement.
-
-**Ce qui n'est pas fait, et pourquoi.** Brancher le secret dans `docker-compose.dev.yml` ferait
-dépendre le fichier Compose d'un chemin propre à un environnement d'exécution particulier, et
-`docker-compose.dev.yml` est un livrable de `CRM-001` : le modifier pendant un passage consacré à une
-autre unité rouvrirait celle-là.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. déclarer dans `docker-compose.dev.yml` un secret de build `npm_ca` alimenté par une variable
-   d'environnement documentée et **vide par défaut**, de sorte qu'un poste sans proxy ne change pas
-   de comportement — l'option la plus proche de ce que le `Dockerfile` a déjà prévu ;
-2. documenter le contournement dans `README.md` et l'assumer comme une contrainte de l'hébergeur ;
-3. ne rien faire, la webapp conteneurisée n'étant nécessaire à aucune preuve — au prix d'un
-   `./runDev.sh` qui échoue par défaut dans cet environnement.
-
-**Lié à :** INC-032 et INC-036 (mêmes coûts récurrents), `webapp/Dockerfile` (le secret prévu),
-`docker-compose.dev.yml` (le service `webapp`).
-
-**Prédiction vérifiée, le 2026-08-04, pendant `CRM-035`.** L'entrée disait « la prochaine exécution
-devra le refaire » ; elle a dû le refaire. `./runDev.sh --dev` s'est arrêté au même endroit, avec le
-même `SELF_SIGNED_CERT_IN_CHAIN` — et l'on note au passage que `--dev`, qui écarte la webapp par
-`--scale webapp=0`, **ne dispense pas de la construire** : Compose bâtit l'image d'un service même
-lorsqu'il n'en démarre aucune instance. L'option documentée comme « sans la webapp » n'offre donc
-aucun contournement. La pile n'a démarré qu'après un
-`docker build --secret id=npm_ca,src=… -f webapp/Dockerfile -t p2enjoy-crm-webapp .` lancé à la
-main ; une fois l'image présente, `./runDev.sh` complet a rendu **quinze services**, `webapp`
-compris et sain. Quatrième exécution consécutive à payer ce coût, et première à obtenir le
-conteneur `webapp` réellement démarré.
-
----
-
 ### INC-043 — `CRM-034` précède de trois à dix unités toutes les tables dont sa garde a besoin
 
 **Nature :** contradiction d'ordonnancement entre `docs/MASTER_PLAN.md` §2,
@@ -4013,64 +2571,6 @@ avant celui-ci), INC-023 (une Definition of Done dont les sujets arrivent plus t
 
 ---
 
-### INC-044 — Sans `ss` ni `netstat`, la garde de ports est silencieusement inerte — **CLOSE**
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 257.** **La garde lit `/proc/net/tcp` en dernier recours.** Seule option qui ferme les deux entrées et rende la garde réellement protectrice plutôt qu'apparemment protectrice. Rattachement : `CRM-002`. Exigence : la lecture est prouvée **dans les deux sens**.
-
-**Nature :** garde livrée par `CRM-002` dont l'hypothèse d'outillage n'est pas vérifiée.
-**Relevé le :** 2026-08-04, pendant `CRM-035`, en rejouant les harnais après synchronisation.
-
-`scripts/lib/env.sh` a reçu, pendant ce passage et par une autre exécution de la routine, la garde
-`require_free_ports` et sa fonction de lecture `host_listening_ports`. Celle-ci essaie `ss`, puis
-`netstat`, et **ne dit rien si aucun des deux n'existe** :
-
-```sh
-host_listening_ports() {
-	if command -v ss >/dev/null 2>&1; then …
-	elif command -v netstat >/dev/null 2>&1; then …
-	fi
-}
-```
-
-MESURÉ sur l'hôte de la routine : ni `ss` ni `netstat` ne sont installés. La fonction rend donc
-**zéro ligne**, la garde conclut que tous les ports sont libres, et `./runDev.sh` démarre — ce qui
-s'est produit ici. Le contrôle 52 de `scripts/verify-scripts.sh`, qui compare un port dont Docker
-affirme qu'il est publié à la liste des ports en écoute, **échoue** : c'est lui qui a révélé le
-point, et il fonctionne exactement comme prévu.
-
-Le mode de défaillance est celui que `CLAUDE.md` §18 nomme « valeur par défaut trompeuse » : une
-liste vide ne signifie pas « aucun port pris », elle signifie « je ne sais pas ». Là où la garde
-devait remplacer un échec obscur de Compose par un refus explicite, elle rend le silence — sur un
-poste dépourvu des deux outils, le symptôme d'origine reviendrait à l'identique, et l'opérateur
-aurait de surcroît la garde comme preuve apparente que les ports vont bien.
-
-**Comportement retenu :** **inchangé**. `scripts/lib/env.sh` et `scripts/verify-scripts.sh` sont
-des livrables de `CRM-002`, `[x]` et vérifiée ; les corriger pendant un passage consacré à
-`CRM-035` rouvrirait cette unité et toucherait ses 52 contrôles dans un commit qui n'en traite pas
-(`CLAUDE.md` §13). Le contrôle en échec est **laissé en échec** et nommé dans le compte rendu :
-le masquer serait exactement ce que `CLAUDE.md` §18 interdit.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. faire **échouer bruyamment** `require_free_ports` lorsque aucun des deux outils n'est
-   disponible — le plus fidèle à son intention, au prix d'un prérequis de plus à documenter ;
-2. ajouter une troisième source de lecture qui ne dépend d'aucun paquet — `/proc/net/tcp` et
-   `/proc/net/tcp6` sont lisibles partout où le noyau est Linux, et donnent les ports en
-   hexadécimal ;
-3. accepter l'inertie et la **documenter** dans `README.md`, la garde n'étant qu'un confort.
-
-**Lié à :** `docs/JOURNAL.md` décision 99 (la garde et son intention), `CLAUDE.md` §18 (ne jamais
-masquer une erreur par une valeur par défaut trompeuse), INC-032, INC-036 et INC-042 (autres écarts
-entre l'hôte supposé et l'hôte réel).
-
-**CLOSE le 2026-08-07 par la reprise de `CRM-002`.** `host_listening_ports` essaie toujours `ss`,
-puis `netstat`, mais lit désormais `/proc/net/tcp` et `/proc/net/tcp6` si les deux outils manquent.
-La preuve force réellement ce dernier chemin : une socket ouverte par le harnais apparaît, puis le
-même port disparaît après l'arrêt et l'attente de son détenteur. La conversion IPv4/IPv6 et le
-filtrage du seul état `LISTEN` ont leur contre-épreuve déterministe. `verify-scripts.sh` : **64/64**.
-
----
-
 ### INC-045 — Aucun chapitre ne nommait les politiques de `track_members` et `channel_members`
 
 **Nature :** référence manquante dans `docs/SPEC-permissions-rls.md` §4.
@@ -4106,192 +2606,6 @@ large ; c'est un choix de produit, et il est réversible.
 INC-013, INC-014, INC-024 et INC-030.
 
 ---
-
-### INC-046 — CLOSE — Un channel occupé change de workflow par remappage atomique explicite
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 263.** **Le geste pluriel est retenu et nommé `change_channel_workflow`.** Le pluriel du `docs/SCHEMA.md` §9 n'était pas une erreur de rédaction : il décrivait une fonction que personne n'avait nommée. `move_card_to_channel` est retenue **inchangée**. Mise en œuvre : `CRM-019`.
-
-**Nature :** énoncé ambigu de `docs/SCHEMA.md` §5, dont la lecture structurelle produit une règle
-de produit non spécifiée.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-040`.
-
-`docs/SCHEMA.md` §5 décrit `cards.workflow_id` ainsi : « `FK`, non nul — **figé à la création, suit
-le channel** ». Deux exigences s'y lisent, qui ne demandent pas la même garde :
-
-1. « **suit le channel** » — le workflow d'une card est celui de son channel. Tenu en permanence par
-   la clé étrangère composite `(channel_id, workflow_id) → channels (id, workflow_id)` ;
-2. « **figé** » — la colonne ne peut pas être réécrite. Un gel littéral interdirait
-   `move_card_to_channel` (`CRM-045`), dont l'objet est précisément de changer `channel_id` **et**
-   `workflow_id` ensemble.
-
-`CRM-040` retient la lecture n° 1, qui est la plus faible et la seule qui ne préempte pas `CRM-045`.
-Ce n'est pas la contradiction relevée ici.
-
-**Ce qui est relevé est la conséquence de la clé composite, mesurée sur la sonde `sonde_c4` :**
-
-```
-ERROR:  update or delete on table "channels" violates foreign key constraint
-        "sonde_c4_wf_fk" on table "sonde_c4"
-DETAIL: Key (id, workflow_id)=(…) is still referenced from table "sonde_c4".
-```
-
-Autrement dit : **changer le `workflow_id` d'un channel qui porte au moins une card devient
-refusé**, en `23503`, donc `409` par l'API. La règle est défendable — repointer le workflow d'un
-channel sous des cards existantes les laisserait sur des étapes d'un graphe qu'elles ne suivent
-plus, et `CRM-045` prévoit un remappage **explicite** pour le cas voisin du changement de channel.
-Elle n'en est pas moins une **règle de produit que personne n'a décidée** : ni `docs/SPEC-channels.md`,
-ni `docs/SPEC-workflow-engine.md`, ni la Definition of Done de `CRM-021` ou de `CRM-033` ne
-l'énoncent. Aucune n'aborde le changement de workflow d'un channel déjà en service.
-
-**Comportement retenu :** la clé composite est posée, la règle émergente est **écrite** dans
-`docs/SPEC-cards.md` §2.4 et **figée par une assertion** de la suite pgTAP, qui constate le refus.
-L'alternative — remplacer la clé par un trigger `BEFORE INSERT` sur `cards` — laisserait la
-cohérence se rompre en silence à la première mise à jour d'un channel, ce qui est strictement pire
-qu'une règle non décidée mais visible.
-
-**Risque résiduel :** un administrateur qui souhaite légitimement changer le workflow d'un channel
-devra d'abord vider ce channel de ses cards. Aucune interface ne l'expose aujourd'hui (INC-021), et
-le message d'erreur est celui de PostgreSQL, non un message produit.
-
-**Ce n'est pas un risque théorique : le seed du projet l'exerce déjà, et MESURÉ il tombe.** Le
-channel `prospection` est le seul que le seed **repointe**, deux fois par exécution — la section 4
-le ramène au workflow global déclaré, la section 7 le rattache à la copie de portée track livrée par
-`CRM-032`. Une card posée dans ce channel, puis le seed rejoué : **échec, code de sortie `1`**, dès
-la section 4.
-
-```
-ERREUR création du channel prospection : code HTTP 409, attendu 200 201.
-  {"code":"23503","details":"Key (id, workflow_id)=(…31, 244bbfc6-…) is still referenced
-   from table \"cards\"", …}
-```
-
-Contre-épreuve mesurée : une card dans `grands-comptes`, dont le workflow ne change jamais, laisse
-le seed **vert**, code de sortie `0`, zéro erreur. Le conflit est donc **exactement** celui décrit
-ci-dessus, et pas un effet de bord plus large.
-
-**Ce que `CRM-040` en fait, et ce qu'elle refuse de faire.** Le seed de `CRM-040` **ne pose aucune
-card dans `prospection`**, ce qui le laisse convergent, et le motif est écrit dans
-`docs/SPEC-cards.md` §9.1 plutôt que tu. Deux corrections étaient possibles, toutes deux écartées :
-
-1. **rendre conditionnels les deux `PATCH` de convergence du seed**, pour qu'ils ne s'exécutent que
-   si la valeur diffère. Cela ne suffit pas : sur un rejeu, `prospection` est bien sur la copie, la
-   section 4 la ramène bien au global, et la valeur **diffère** réellement. Le geste resterait
-   nécessaire et resterait refusé ;
-2. **faire déplacer les cards par le seed** avant de repointer le channel, puis les ramener. C'est
-   écrire à la main ce que `CRM-045` doit livrer, dans un seed, sans garde ni événement — soit
-   exactement le « geste fabriqué » que `CLAUDE.md` §8 proscrit.
-
-Aucune des deux ne tranche l'arbitrage ci-dessous ; elles le contourneraient. Le comportement de
-`CRM-032` et de `CRM-033` reste donc **inchangé**, et la contradiction reste visible.
-
-**Conséquence à ne pas perdre de vue :** tant que la règle n'est pas arbitrée, le seed ne peut pas
-démontrer une card sur un **workflow dérivé**. La divergence de `CRM-032` reste donc démontrée par
-ses étapes et ses transitions, jamais par une card qui les emprunterait.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. **confirmer la règle** et l'inscrire dans `docs/SPEC-channels.md` — le changement de workflow
-   d'un channel occupé est refusé, et passe par le vidage ou par `CRM-045` card par card ;
-2. **prévoir un remappage de channel**, symétrique de `move_card_to_channel` : une RPC qui change le
-   workflow d'un channel **et** remappe l'étape de chacune de ses cards, dans la même transaction.
-   C'est une unité de backlog qui n'existe pas ;
-3. **relâcher la contrainte** en laissant les cards conserver leur ancien workflow, ce qui produirait
-   des cards dont le workflow diffère de celui de leur channel — l'exact contraire de « suit le
-   channel ».
-
-**Mise à jour contractuelle du 2026-08-09.** L'option 2 est retenue et entièrement définie dans
-`docs/SPEC-change-channel-workflow.md` : égalité exacte du mapping avec les étapes occupées,
-regroupement plusieurs-vers-une, cards archivées/corbeille incluses, réponses détruites seulement
-sur opt-in, clé différée uniquement dans la transaction et événement `workflow_changed`. Le risque
-résiduel ci-dessus reste le comportement du `PATCH` direct ; la fermeture fonctionnelle attend la
-migration et toutes ses preuves.
-
-**Clôture mesurée le 2026-08-09.** La migration 20 rend la clé différable mais initialement
-immédiate et livre la seule voie privilégiée qui la diffère. Le harnais lance simultanément la RPC
-et une insertion sous l'ancien workflow : l'insertion attend le verrou puis est refusée par la FK
-après le commit ; le channel et sa card sont entièrement remappés, aucune intruse ne subsiste et un
-seul `workflow_changed` est écrit. Le `PATCH` direct incohérent demeure refusé, mais le geste
-légitime de l'administrateur existe désormais sans vider le channel ni relâcher l'intégrité.
-
-**Lié à :** INC-029 (la colonne `workflow_id` de `channels`, différée puis livrée par `CRM-033`),
-INC-033 (une intégrité que le type interdit), INC-043 (`CRM-034` sans cible), `CRM-045`.
-
----
-
-### INC-047 — La sixième vérification de `move_card` lit une table que le plan livre après elle — **CLOSE**
-
-**Nature :** contradiction d'ordonnancement entre `docs/MASTER_PLAN.md` §2 et la Definition of Done
-de `CRM-034`.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-034`.
-
-`docs/SPEC-workflow-engine.md` §5 exige six vérifications. La sixième — « les champs requis de
-l'étape cible sont **renseignés** », message `missing_required_fields` portant la liste des clés —
-compare deux ensembles :
-
-- l'**ensemble exigé**, calculable dès aujourd'hui : les champs `required` de l'étape cible dans
-  `form_field_rules`, unis aux `require_fields` de la transition empruntée
-  (`docs/SPEC-form-composer.md` §3.5). Les deux tables existent depuis `CRM-035` ;
-- l'**ensemble renseigné**, qui n'a **aucune source**. `card_field_values` est le livrable de
-  `CRM-036`, unité que `docs/MASTER_PLAN.md` §2 place **après** `CRM-034`. MESURÉ le 2026-08-04 :
-  `to_regclass('public.card_field_values')` rend `NULL`.
-
-C'est la seconde occurrence du problème d'INC-043 : `CRM-034` précède les tables sur lesquelles elle
-opère. La première avait été réglée par le temps — `cards` est arrivée. Celle-ci ne le sera pas :
-`CRM-036` reste devant.
-
-**Les deux écritures possibles sont l'une destructrice, l'autre mensongère.**
-
-1. **Rien n'est renseigné, donc toute transition à ensemble exigé non vide est refusée.** Lecture
-   littérale, et MESURÉE destructrice : le seed déclare `required` sur `prospection`, `negociation`,
-   `signature` et `perdu`. Les entrées en négociation, en signature et les **quatre** transitions
-   « Marquer perdu » seraient refusées jusqu'à `CRM-036`. La garde interdirait le parcours qu'elle
-   garde, et `CRM-041` n'aurait plus rien à démontrer ;
-2. **Tout est renseigné, donc rien n'est vérifié** en le présentant comme vérifié. C'est le faux
-   vert que `CLAUDE.md` §17 proscrit nommément.
-
-**Comportement retenu :** la vérification n° 6 n'est **pas écrite**. `CRM-034` livre cinq
-vérifications sur six, l'unité reste `[~]`, et l'écart est **figé par une assertion** de
-`supabase/tests/0013_move_card.test.sql` : un déplacement vers une étape portant une règle
-`required` réussit aujourd'hui, et cette assertion deviendra **rouge** le jour où `CRM-036`
-livrera `card_field_values`. C'est le mécanisme employé par `CRM-040` pour la protection de colonne,
-qui a effectivement désigné son moment.
-
-**Conséquence à ne pas perdre de vue :** le message « liste des clés manquantes », que la Definition
-of Done de `CRM-034` nomme, n'existe pas. Il naîtra avec la vérification qu'il décrit.
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. **rattacher la vérification n° 6 à `CRM-036`**, dont la Definition of Done porte déjà « union
-   étape + transition » et « `hidden` non exigé » — c'est-à-dire, mot pour mot, la sémantique de
-   cette vérification. C'est l'option la plus simple, et la lecture la plus naturelle du backlog ;
-2. **déplacer `CRM-036` avant `CRM-034`** dans `docs/MASTER_PLAN.md` §2, ce qui n'est plus possible
-   sans rouvrir `CRM-034` une fois livrée ;
-3. **retirer la vérification n° 6 de la spécification** et faire porter l'obligation par
-   l'interface seule — écarté d'office : `CLAUDE.md` §10 interdit qu'une règle métier ne vive que
-   dans l'interface.
-
-**CLOSE LE 2026-08-05, PAR `CRM-036`.** L'arbitrage n'a jamais été rendu, et il n'avait pas à
-l'être : l'**option 1** ci-dessus n'est pas une décision de produit, c'est la lecture littérale de
-deux textes déjà écrits. La Definition of Done de `CRM-036` dans `docs/BACKLOG.md` énonce « union
-étape + transition » ; le §7.2 de `docs/SPEC-form-composer.md` énonce « champ `required` manquant →
-transition refusée ; champ `hidden` non exigé même si vide ; union étape + transition ». C'est, mot
-pour mot, la sémantique de la vérification n° 6. Livrer `CRM-036` sans l'écrire aurait amputé
-l'unité de ce que sa propre Definition of Done nomme (décision 123).
-
-**Le mécanisme de l'assertion figée a fonctionné.** Les deux preuves que `CRM-034` avait écrites
-pour devenir rouges ce jour-là — `hasnt_table('public','card_field_values')` et le scénario *M7* de
-`e2e/api/move-card.spec.ts` — le sont devenues, et ont été **retournées** : elles constatent
-désormais le refus, et leur jumelle constate l'acceptation une fois la valeur renseignée.
-
-**Ce que la n° 6 contrôle** est écrit au §6.7 de `docs/SPEC-form-composer.md`, et le message
-« liste des clés manquantes » que la Definition of Done de `CRM-034` nommait existe : il voyage dans
-le `DETAIL` du `raise`, mesuré exposé par PostgREST dans la clé `details` (décision 126).
-
-
----
-
-**Lié à :** INC-043 (`CRM-034` avant ses tables), INC-033 (`require_fields` sans intégrité),
-`CRM-036`, `CRM-037`.
 
 ### INC-048 — `move_card` exige un commentaire qu'elle ne peut conserver nulle part
 
@@ -4643,386 +2957,3 @@ référentielle), `CLAUDE.md` §8 (le seed est reproductible).
 **Close le 2026-08-09 par `CRM-018`.** La liaison est comptée séparément dans la source et dans la
 copie remappée ; aucun compte global ne dépend plus de l'âge de la base. Le reset froid et le seed
 rejoué prouvent le même état : une exigence fonctionnelle dans chacun des deux workflows.
-
----
-
-## Clos
-
-### INC-090 — `CRM-075` livre un cinquième geste que son énoncé ne cite pas : le désarchivage — **CLOSE par arbitrage**
-
-**Nature :** écart de périmètre assumé, livré et signalé, qui appartient au responsable et non à
-l'agent.
-**Relevé le :** 2026-08-11, en spécifiant `CRM-075` avant de l'écrire (`docs/JOURNAL.md`,
-décision 338, point 3).
-
-**Ce que l'énoncé dit.** `CRM-075` cite **quatre** verbes : « créer, renommer, réordonner et
-archiver un track ; les mêmes gestes pour un channel ». Il justifie par ailleurs l'absence de
-suppression ainsi : « archiver masque et reste **réversible** ».
-
-**La contradiction.** Un écran qui archive sans savoir désarchiver rend cette justification fausse
-**dans le produit**. L'administrateur qui archive un track par erreur devrait reprendre la clé de
-service pour revenir en arrière — c'est-à-dire exactement le défaut qu'INC-086 relève et que cette
-unité est censée refermer. La réversibilité serait alors une propriété de la **base**, pas du
-produit.
-
-**Ce qui a été fait, et pourquoi ce n'est pas une décision prise en silence.** Le geste est livré :
-une case « Afficher les archivés », éteinte par défaut, et une commande « Désarchiver » sur les
-lignes masquées. Il n'introduit **aucune règle, aucune colonne, aucune politique** — c'est le même
-`UPDATE` sur `archived_at`, à la même table, sous la même politique d'écriture réservée aux
-administrateurs, déjà mesurée par `docs/SPEC-tracks.md` §6 ligne *m*.
-
-**Ce que ce n'est pas.** La corbeille de `CRM-077`, qui porte une durée de rétention, des
-dépendances visibles et un effacement définitif réservé au parcours RGPD. L'archivage n'a aucun des
-trois.
-
-**Action attendue du responsable :** dire si ce cinquième geste reste dans `CRM-075`, ou s'il doit
-être retiré et rattaché à `CRM-077`. Le retrait coûte **une case à cocher et deux appels de
-fonction** — `archiverTrack` et `archiverChannel` prennent déjà un booléen, et la lecture prend déjà
-`inclureArchives`. Tant que l'arbitrage n'est pas rendu, le comportement reste celui qui est livré,
-et il est décrit dans `docs/manual.md` chapitre 5.1 comme un geste existant.
-
-**ARBITRÉ LE 2026-08-11 : option 1A — le désarchivage reste dans `CRM-075`.** Motif retenu par le
-responsable : le geste n'introduit **aucune règle, aucune colonne, aucune politique**, et le retirer
-recréerait précisément le défaut qu'INC-086 avait fait ouvrir — une réversibilité vraie en base et
-fausse dans le produit. L'énoncé de `CRM-075` est corrigé pour citer **cinq** verbes, et sa
-Definition of Done exige désormais le désarchivage dans le parcours E2E. `docs/JOURNAL.md`,
-décision 339.
-
-**Ce qui reste dû, et pourquoi l'entrée est close malgré tout.** Aucun code n'est dû : la
-contradiction était entre l'énoncé et la livraison, et c'est l'énoncé qui est corrigé. Les preuves
-E2E du geste restent à exécuter, mais elles relèvent de la Definition of Done de `CRM-075`, qui est
-`[~]`, et non de cette entrée.
-
-
-### INC-087 — L'identité sortante de Driss expédie depuis une adresse que le serveur lui refuse — **CLOSE**
-
-**Nature :** contradiction entre une donnée du seed et le serveur de messagerie de développement.
-**Relevé le :** 2026-08-11, en instrumentant le seed de `CRM-057` pour faire arriver du courrier.
-
-**Ce qui est mesuré**, contre le Stalwart de `CRM-050`, depuis le réseau Compose :
-
-| Principal authentifié | En-tête `From` soumis | Réponse du serveur |
-|---|---|---|
-| `bizdev@p2enjoy.test` | `bizdev@p2enjoy.test` | **accepté** |
-| `bizdev@p2enjoy.test` | `contact@p2enjoy.test` | **`501 5.5.4 You are not allowed to send from this address.`** |
-| `admin@p2enjoy.test` | `solene.ferrand@client.test` | **`501 5.5.4`** — même refus |
-
-**La contradiction.** `docs/SPEC-seed.md` §2.18 pose l'identité sortante « Envoi de Driss Lemoine »
-avec `smtp_username = bizdev@p2enjoy.test` et `from_address = contact@p2enjoy.test`, précisément
-pour démontrer que l'entrant et le sortant peuvent diverger (`docs/SPEC-mail-subsystem.md` §2.2).
-Le serveur de développement **refuse cette divergence** : un principal ne peut expédier que depuis
-ses propres adresses. L'identité seedée est donc valide côté produit et **inutilisable côté
-serveur** — ce qu'aucune preuve n'a pu constater jusqu'ici, `CRM-053` n'ayant testé que
-l'authentification SMTP, jamais une soumission.
-
-**Ce que cela n'invalide pas.** Le modèle du §2.2 reste juste : sur un serveur réel, un principal
-porte plusieurs adresses autorisées, et la divergence entrant/sortant est un cas d'usage courant.
-C'est le **provisionnement de développement** qui est incomplet : `contact@p2enjoy.test` n'est
-déclarée dans aucun principal.
-
-**Deux corrections possibles, et aucune n'est prise ici** :
-
-1. ajouter `contact@p2enjoy.test` à la liste `emails` du principal `bizdev@p2enjoy.test` dans
-   `stalwart-init` — le provisionnement le permet, et cela rend le seed conforme à son intention ;
-2. ramener `from_address` à `bizdev@p2enjoy.test` — mais la démonstration de la divergence, que la
-   Definition of Done de `CRM-053` réclame explicitement, serait perdue.
-
-**État. CLOSE par `CRM-058`** — correction n° 1, celle qui rend le seed conforme à son intention.
-`contact@p2enjoy.test` rejoint la liste `emails` du principal `bizdev@p2enjoy.test` dans
-`stalwart/provision.sh`. **Vérifié** : la soumission depuis `contact@` avec le principal `bizdev@`
-est désormais **acceptée**, là où elle rendait `501 5.5.4`. La divergence entrant/sortant du §2.2,
-que la Definition of Done de `CRM-053` réclame, devient applicable au lieu de rester décorative.
-
-Le seed de `CRM-057` continue d'expédier son courrier de démonstration depuis `bizdev@` : il ne
-joue pas une identité sortante, il simule un correspondant. Les deux faits ne se contredisent pas.
-
-
-### INC-013 — Quatre des six fonctions d'autorisation dépendent de tables livrées deux chunks plus tard
-
-**Nature :** contradiction d'ordonnancement entre `docs/SPEC-permissions-rls.md` §3,
-`docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
-**Relevé le :** 2026-08-03, pendant `CRM-010`.
-
-`CRM-010` doit livrer six fonctions. Quatre d'entre elles — `app.can_read_track`,
-`app.can_read_channel`, `app.can_write_channel`, `app.can_read_card` — reçoivent l'identifiant
-d'un track, d'un channel ou d'une card et doivent remonter jusqu'au workspace pour connaître le
-rôle de l'appelant. Ce chemin passe nécessairement par `tracks`, `channels` et `cards`, livrées
-par `CRM-020`, `CRM-021` et `CRM-040`, toutes placées dans le **chunk 3**, donc après.
-
-Ce n'est pas une difficulté d'écriture contournable : sans `tracks`, rien ne relie un
-`track_id` à un `workspace_id`. Le langage PL/pgSQL accepterait une fonction référençant une table
-absente — elle échouerait au premier appel, et aucune preuve ne pourrait être produite d'ici
-`CRM-020`. C'est exactement le même motif qu'INC-010, un cran plus loin : `CRM-003` avait dû se
-passer des clés étrangères, `CRM-010` doit se passer des jointures.
-
-**Comportement retenu :** `CRM-010` livre ce qui est démontrable aujourd'hui, et **rien de plus** :
-
-- `app.resolve_access(ws_role, track_access, channel_access)` — l'**algorithme** de résolution
-  du §2.2, isolé de toute table, donc éprouvé de façon exhaustive sur ses 64 combinaisons
-  d'entrées. C'est la seule partie qui porte une règle métier ; les quatre fonctions différées
-  n'auront plus qu'à lire leur ligne et l'appeler ;
-- `app.workspace_role`, `app.is_workspace_member`, `app.is_workspace_admin` — la résolution du
-  rôle de workspace, qui ne dépend que de `workspace_members`.
-
-Aucune table n'est créée par anticipation pour faire disparaître la contradiction : cela
-préempterait trois unités. La suite pgTAP **constate** l'absence des quatre fonctions
-(`hasnt_function`), de sorte qu'elle devienne rouge le jour où elles seront écrites sans que ces
-preuves soient étendues.
-
-**Risque résiduel :** aucun à ce stade — aucune politique ne les appelle, puisque `CRM-010` n'en
-pose aucune. Le risque naîtrait si `CRM-012` écrivait les politiques des tracks et des channels en
-supposant ces fonctions disponibles.
-
-**Conséquence sur l'état de l'unité :** `CRM-010` reste `[~]`. Ce n'est pas un défaut de
-réalisation mais une dépendance non satisfiable dans l'ordre actuel du plan.
-
-**Arbitrage attendu du responsable.** Trois options, à trancher **avant `CRM-012`**, qui écrira
-les politiques et figera la forme des requêtes :
-
-1. rattacher chacune des quatre fonctions à l'unité qui livre sa table — `can_read_track` à
-   `CRM-020`, `can_read_channel` et `can_write_channel` à `CRM-021`, `can_read_card` à `CRM-040` —
-   et l'inscrire dans leur Definition of Done ;
-2. déplacer `CRM-010` après `CRM-021` dans `docs/MASTER_PLAN.md` §2, au prix de livrer `tracks` et
-   `channels` avant le modèle d'autorisation, ce que le plan cherche précisément à éviter ;
-3. créer une unité distincte, par exemple `CRM-010b`, placée après `CRM-040`.
-
-**Mise à jour du 2026-08-04 — trois des quatre fonctions sont livrées par `CRM-012`, et le motif
-d'attente s'est éteint de lui-même pour elles.** L'arbitrage n'a pas été rendu ; quatre exécutions
-de la routine l'ont attendu et ont choisi une autre unité en le nommant (`docs/JOURNAL.md`,
-décisions au choix d'unité de `CRM-005`, `CRM-020`, `CRM-021` et `CRM-030`). Deux faits ont changé
-la situation :
-
-- **les tables existent.** `tracks` est livrée depuis `CRM-020`, `channels` depuis `CRM-021`. La
-  contradiction relevée ici — « la jointure n'a pas de table où aller » — ne vaut plus que pour
-  `can_read_card`, `cards` arrivant à `CRM-040` ;
-- **l'option 1 est devenue inapplicable pour ces trois fonctions.** Elle proposait de les rattacher
-  à `CRM-020` et `CRM-021` ; ces deux unités sont livrées et rouvrir leur périmètre pour y verser
-  une fonction écrite après elles contredirait `CLAUDE.md` §13.
-
-`CRM-012` les écrit donc, ce qui n'est pas une quatrième option inventée mais la lecture littérale
-de son titre — « droits fins par track et channel » — et de sa Definition of Done, qui exige la
-matrice de résolution et les preuves n° 3 et n° 4. **Le choix est nommé plutôt que tu** :
-`docs/JOURNAL.md`, décision 103.
-
-**Ce qui reste ouvert, et n'est pas tranché ici :**
-
-1. **`app.can_read_card`.** Toujours différée, et pour la raison d'origine : `cards` n'existe pas.
-   Elle sera écrite par l'unité qui livre la table, `CRM-040`, ou par une unité dédiée si le
-   responsable préfère. La suite pgTAP de `CRM-010` continue de constater son absence.
-2. **La Definition of Done de `CRM-010`.** Elle nomme six fonctions ; quatre lui échappent
-   désormais pour de bon. Faut-il la réécrire à quatre — les deux qu'elle livre plus
-   `resolve_access` et `workspace_role` —, ou la laisser porter une dette que d'autres unités
-   soldent ? `CRM-010` reste `[~]` tant que le point n'est pas tranché.
-
-Ces deux points sont désormais tranchés — voir la clôture ci-dessous.
-
-**CLOSE le 2026-08-05, par la reprise de `CRM-010`** (`docs/JOURNAL.md`, décisions 155, 156 et 157).
-Les deux points restés ouverts le sont pour deux raisons distinctes, et aucune n'est un arbitrage
-rendu à la place du responsable.
-
-1. **`app.can_read_card` est livrée** par `CRM-040` en même temps que `cards`, et
-   `app.can_write_card` par `CRM-036`. Le motif d'attente — « la jointure n'a pas de table où
-   aller » — n'existe plus pour aucune des quatre fonctions.
-2. **La Definition of Done de `CRM-010` n'est pas réécrite, et n'a plus à l'être.** La question
-   posée le 2026-08-03 supposait quatre fonctions **inécrivables** ; elles sont écrites. Le texte
-   qui nomme six fonctions est redevenu **satisfaisable tel qu'il est**, et le réduire à quatre
-   reviendrait à retirer de l'unité ce qu'elle nomme, au moment précis où cela cesse d'être
-   impossible. `CRM-010` a donc été reprise pour le satisfaire, en étendant ses **propres** preuves
-   aux quatre fonctions : la matrice complète à travers des lignes réelles, l'absence de récursion
-   sur `tracks`, `channels` et `cards`, et le recensement des fonctions `SECURITY DEFINER`
-   (`docs/SPEC-permissions-rls.md` §3.8).
-
-**Mesure de clôture :** `supabase/tests/0002_fonctions_autorisation.test.sql` passe de 128 à
-**153 assertions**, `scripts/verify-authz.sh` de 26 à **35 contrôles**, dont quatre dégradations
-qui n'existaient pas et qui font tomber la suite lorsque l'une des quatre fonctions est réécrite de
-travers. Aucune migration n'est modifiée : le produit est inchangé, ce sont ses preuves qui le
-rattrapent.
-
-**Ce que cette clôture ne tranchait pas alors :** INC-014 et la preuve de refus n° 10. Elles sont
-depuis closes par `CRM-022`.
-
----
-
-### INC-050 — Le §5.5 de `SPEC-workflow-engine` se contredisait sur `email_local_part`
-
-**Close le :** 2026-08-05, par l'unité `CRM-013`, **par exécution et non par arbitrage**.
-
-**Ce qui était en cause.** La prose du §5.5 rangeait `email_local_part` parmi ce qui « reste à
-`CRM-013` » — donc ouverte ; son bloc `GRANT` ne la listait pas — donc fermée. Le mécanisme étant
-exclusif par construction, les deux lectures ne pouvaient pas coexister. `CRM-034` a consigné sans
-résoudre et laissé la colonne ouverte, comme `CLAUDE.md` §5 l'impose.
-
-**Pourquoi aucun arbitrage n'était nécessaire.** Les deux branches proposées ne portaient que sur
-**l'attribution** — quelle unité ferme la colonne — et non sur le comportement final, identique des
-deux côtés : la colonne finit fermée. Exécuter `CRM-013` tranche l'attribution par l'énoncé de son
-propre backlog, « `current_step_id` et `email_local_part` non modifiables directement », sans rien
-décider à la place du responsable (`docs/JOURNAL.md`, décision 142).
-
-**Mesure.** `supabase/migrations/0014_colonnes_protegees.sql` retire `UPDATE` à `authenticated` sur
-cette colonne. L'état posé — douze colonnes ouvertes — coïncide **exactement** avec le bloc `GRANT`
-du §5.5. Preuves : `supabase/tests/0015_colonnes_protegees.test.sql` (41 assertions),
-`e2e/api/colonnes-protegees.spec.ts` (12 scénarios), `scripts/verify-colonnes-protegees.sh`
-(50 contrôles). Les trois garde-fous qui constataient la colonne ouverte ont été **retournés**, non
-retirés.
-
-**Portée générale, écrite parce qu'elle resservira :** une contradiction dont toutes les branches
-mènent au même état du produit n'est pas un arbitrage, c'est une question d'imputation — et
-l'exécution de l'unité nommée la résout. La distinguer d'un vrai arbitrage évite d'immobiliser une
-unité qui n'attend rien.
-
-**A laissé ouvert :** la dépendance d'ordre 12 → 14, réelle et mesurée, consignée dans
-`docs/PROD_MIGRATIONS.md` §3.
-
----
-
-### INC-024 — La politique de lecture des tracks ignore les droits fins, faute de `app.can_read_track`
-
-**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
-`CRM-020`.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-020`.
-
-`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `tracks`, une lecture gouvernée par
-`app.can_read_track`. Cette fonction est l'une des quatre différées par INC-013, dont l'arbitrage
-appartient au responsable et **reste ouvert**. `CRM-020` doit néanmoins livrer une politique de
-lecture : sans elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son
-CRUD, ni sa lecture, ni le cloisonnement entre workspaces.
-
-**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
-prouvée par `CRM-010`. Elle est donc **correcte mais incomplète** : elle cloisonne par workspace,
-elle n'applique aucun droit fin. Concrètement, un `track_members.access = 'none'` posé sur un track
-ne le masque pas encore.
-
-**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
-créer reviendrait à trancher l'option 1 d'INC-013 — « rattacher chacune des quatre fonctions à
-l'unité qui livre sa table » — à la place du responsable. La suite pgTAP de `CRM-010` constate
-d'ailleurs leur absence (`hasnt_function`) et deviendrait rouge si elles apparaissaient sans que
-ses preuves soient étendues.
-
-**Ce qui protège l'écart :** il est **figé par une assertion** et non par un commentaire. La suite
-`supabase/tests/0004_tracks.test.sql` pose une ligne `track_members` restrictive et constate que le
-track reste lisible, en nommant `CRM-012`. Le jour où la politique sera resserrée, l'assertion
-deviendra rouge et forcera sa révision (`docs/JOURNAL.md`, décision 51).
-
-**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un track n'aurait aucun effet.
-Aucune ligne `track_members` n'existe sur les bases du projet — le seed n'y écrit rien — et
-`CRM-012` est l'unité suivante du chunk 2 à traiter dès que ses tables existent. Le risque est donc
-borné à la fenêtre entre `CRM-020` et `CRM-012`.
-
-**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
-`app.can_read_track` et quand cette politique est resserrée.
-
-**Lié à :** INC-013 (quatre fonctions différées), INC-014 (aucune unité ne nomme les politiques des
-tables d'identité).
-
-**CLOSE le 2026-08-04 par `CRM-012`.** La politique de lecture de `tracks` s'appuie désormais sur
-`app.can_read_track`, qui applique les droits fins. MESURÉ : un `track_members.access = 'none'`
-posé sur le viewer lui masque le track — trois tracks visibles au lieu de quatre —, tandis que le
-même droit fin posé sur l'administratrice ne lui masque rien. L'assertion de
-`supabase/tests/0004_tracks.test.sql` qui figeait l'écart est **devenue rouge comme prévu** et a
-été révisée dans le même changement, non retirée (mécanisme de la décision 51).
-
----
-
-### INC-030 — La politique de lecture des channels ignore les droits fins, faute de `app.can_read_channel`
-
-**Nature :** écart entre `docs/SPEC-permissions-rls.md` §4 et la politique réellement livrée par
-`CRM-021`.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-021`.
-
-Jumelle d'INC-024, pour les channels.
-
-`docs/SPEC-permissions-rls.md` §4 prescrit, pour la table `channels`, une lecture gouvernée par
-`app.can_read_channel`, et une écriture par `app.can_write_channel` pour les tables filles.
-Ces deux fonctions sont parmi les quatre différées par INC-013, dont l'arbitrage appartient au
-responsable et **reste ouvert**. `CRM-021` doit néanmoins livrer une politique de lecture : sans
-elle, la table serait en refus par défaut et l'unité ne pourrait prouver ni son CRUD, ni sa lecture,
-ni le cloisonnement entre workspaces.
-
-**Comportement retenu :** la politique de lecture s'appuie sur `app.is_workspace_member`, livrée et
-prouvée par `CRM-010` — exactement le choix de `CRM-020` pour `tracks`. Elle est donc **correcte
-mais incomplète** : elle cloisonne par workspace, elle n'applique aucun droit fin. Un
-`channel_members.access = 'none'` posé sur un channel ne le masque pas encore.
-
-**Ce qui n'est pas fait, et pourquoi :** aucune des quatre fonctions `can_*` n'est écrite ici. Les
-créer reviendrait à trancher l'option 1 d'INC-013 à la place du responsable, et la suite pgTAP de
-`CRM-010` — qui constate leur absence par `hasnt_function` — deviendrait rouge.
-
-**Ce qui protège l'écart :** une assertion de `supabase/tests/0005_channels.test.sql` pose une ligne
-`channel_members` restrictive et constate que le channel reste lisible, en nommant `CRM-012`.
-
-**Risque résiduel :** un droit fin restrictif posé aujourd'hui sur un channel n'aurait aucun effet.
-Aucune ligne `channel_members` n'existe sur les bases du projet — le seed n'y écrit rien.
-
-**Action attendue du responsable :** trancher INC-013, ce qui décidera du même coup qui écrit
-`app.can_read_channel` et `app.can_write_channel`, et quand ces politiques sont resserrées.
-
-**Lié à :** INC-013, INC-024 (la même entrée pour `tracks`), INC-014.
-
-**CLOSE le 2026-08-04 par `CRM-012`.** La politique de lecture de `channels` s'appuie désormais sur
-`app.can_read_channel`, et `app.can_write_channel` est livrée avec elle. MESURÉ : un
-`channel_members.access = 'none'` masque le channel ; un `channel_members.access = 'member'` posé
-sous un track fermé le **rouvre**, ce qui est « le plus spécifique gagne » dans le sens
-contre-intuitif du §3.1. L'assertion de `supabase/tests/0005_channels.test.sql` qui figeait l'écart
-est devenue rouge et a été révisée dans le même changement.
-
----
-
-### INC-020 — La Definition of Done de `CRM-006` exige le build d'une webapp livrée par l'unité suivante
-
-**Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md` §2.
-**Relevé le :** 2026-08-03, pendant `CRM-006`.
-
-La DoD de `CRM-006` tient en deux exigences : « `npm run types:generate` régénère depuis le schéma
-local ; **build de la webapp vert** ». La seconde ne peut pas être satisfaite au moment où le plan
-demande cette unité : la webapp est l'objet de `CRM-007`, que `docs/MASTER_PLAN.md` §2.c place
-**après**. Il n'existe ni `index.html`, ni composant, ni configuration Vite à builder.
-
-C'est le même mode de défaillance qu'INC-009 — la DoD de `CRM-002` exigeait un seed livré trois
-unités plus tard — et qu'INC-013.
-
-**Comportement retenu :** `CRM-006` livre ce qui est démontrable, et le nomme :
-
-- `tsc --noEmit` en mode `strict` compile **réellement** les types livrés et leurs assertions.
-  C'est moins qu'un build — aucun bundle n'est produit, aucun plugin Vite n'est exercé — et c'est
-  dit comme tel dans `docs/BACKLOG.md` et dans `docs/SPEC-types.md` §9 ;
-- rien n'est fabriqué pour faire disparaître la contradiction : aucune webapp factice, aucun
-  `index.html` vide, aucune configuration Vite écrite par anticipation. Cela préempterait
-  `CRM-007`.
-
-**Risque résiduel :** faible et borné. Ce que `tsc` ne couvre pas est la résolution des modules
-telle que Vite l'appliquera — extension `.js` dans les imports, `moduleResolution`, alias. Le
-`tsconfig.json` de la racine est réglé en `moduleResolution: bundler`, qui est le mode d'un build
-Vite ; la confirmation reste due par `CRM-007`.
-
-**Conséquence sur l'état de l'unité :** `CRM-006` reste `[~]`, avec cette seule preuve manquante
-nommée noir sur blanc. Ce n'est pas un défaut de réalisation.
-
-**Action attendue du responsable :** aucune décision n'est requise — la preuve s'acquerra
-mécaniquement avec `CRM-007`, dont la Definition of Done doit alors **reprendre explicitement** la
-vérification du build avec les types générés importés, faute de quoi cette case resterait ouverte
-sans propriétaire.
-
-**Clôture, 2026-08-04.** `CRM-007` a livré la webapp et **repris explicitement la vérification**,
-comme cette entrée le demandait : `scripts/verify-webapp.sh` prouve que `npm run build` est vert,
-que `webapp/dist` est produit, et que le client comme la couche d'accès importent les types
-générés. La preuve va plus loin que ce qui était attendu : les types étant effacés à la
-compilation, le bundle n'en contient rien — ce qui établit qu'ils **contraignent** le code est un
-contrôle non complaisant, où une colonne inexistante fait échouer `npm run typecheck`. Le risque
-résiduel nommé ici — la résolution des modules telle que Vite l'applique — est levé par le même
-build. `CRM-006` passe `[x]`.
-
-### INC-001 — Disponibilité de `supabase_vault` et `pg_cron` non vérifiée
-
-**Close le :** 2026-08-03, par l'unité `CRM-004`.
-
-**Mesure :** l'image réellement épinglée par `docker-compose.yml`, `supabase/postgres:17.6.1.136`,
-fournit `supabase_vault` **0.3.1** — déjà installée et préchargée — et `pg_cron` **1.6.4**,
-disponible, préchargé et fonctionnel. Sorties de commande consignées dans `docs/JOURNAL.md`,
-section `CRM-004`. Preuves rejouables : `scripts/verify-vault.sh` (26 vérifications).
-
-**Décision :** Vault est retenu, le repli `pgcrypto` est abandonné (décision 23). `pg_cron` reste
-inutilisé, mais pour le seul motif de testabilité — voir INC-012, ouvert à cette occasion.
-
-**Conséquence non anticipée, désormais documentée :** la clé racine de Vault vit hors de `PGDATA`
-et devient une donnée de sauvegarde à part entière (décision 24, `docs/DAT.md` §10,
-`docs/PROD_MIGRATIONS.md`).
