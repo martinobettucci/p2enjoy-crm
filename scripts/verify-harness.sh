@@ -283,7 +283,11 @@ PORT_RAPPORT=9323
 # l'état exécuté avec les droits de l'appelant. 1907 + 14 = **1921**, valeur MESURÉE.
 FICHIERS_SQL_ATTENDUS=31
 ASSERTIONS_ATTENDUES=1921
-SCENARIOS_API=486
+# **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
+# preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
+# mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
+# (`--list`), non déduite d'une exécution : déduire reviendrait à supprimer le contrôle.
+SCENARIOS_API=504
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -350,7 +354,9 @@ SCENARIOS_API=486
 # **167 depuis `CRM-058`** : `e2e/ui/envoi.spec.ts` livre les quatre scénarios de la composition —
 # écrire depuis la card, la saisie incomplète dite avant tout aller-retour, répondre depuis l'inbox
 # en visant la même affaire, et l'absence d'action de réponse sur un message non classé.
-SCENARIOS_UI=167
+# **182 pour la même raison** : l'écran d'administration de l'arborescence et l'écran d'état de la
+# messagerie apportent leurs parcours, captures comprises. Valeur COMPTÉE par `--list`.
+SCENARIOS_UI=182
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
