@@ -5906,6 +5906,38 @@ pas un produit.
 
 ---
 
+## Plan de solde du registre — décision 366, 2026-08-13
+
+Les **61 entrées ouvertes** ont chacune reçu une disposition du responsable, lot par lot. Ce tableau
+est le plan d'exécution ; le détail des motifs est dans `docs/JOURNAL.md`, décision 366, et les
+porteurs dans `docs/ARBITRAGES.md`.
+
+**Contrainte de tête — INC-096.** Le registre d'images est injoignable : aucune preuve de pile n'est
+exécutable. Le responsable retient de **ne traiter que ce qui se prouve sans la pile**. Les lots
+marqués « pile » attendent que l'accès au registre soit rétabli, qui est une action hors dépôt.
+
+| Lot | Entrées | Disposition | Prouvable maintenant |
+|---|---|---|---|
+| A | INC-096 | action humaine hors dépôt : identifiants Docker Hub ou miroir de registre | — |
+| B | INC-094 | le contrôle des migrations élevées passe à la justification obligatoire | **oui** |
+| B | INC-091, INC-092 | chaque preuve purge par IMAP ce qu'elle dépose | pile |
+| C | INC-034, INC-059, INC-069, INC-089, INC-097 | verrou d'exécution concurrente et refus d'un numéro de décision déjà pris, dans `.githooks/pre-commit` | **oui**, dépôt jetable |
+| D | INC-006, INC-008, INC-017, INC-019 | corriger la documentation contre l'état réel, et clore | **oui** |
+| E | INC-095 | écrire les lignes des migrations 31 à 34 et poser la garde dans `verify-migrations.sh` | **oui** |
+| F | INC-015, INC-062, INC-066, INC-068, INC-088 | clore : la dette passe dans la DoD de `CRM-070`, `CRM-041`, `CRM-076`, `CRM-069`, `CRM-037` | **oui** |
+| G | INC-048, INC-052, INC-071, INC-072 | un chunk unique sur les commentaires : commentaire de transition conservé, blancs Unicode, énoncé de `CRM-043` aligné, suppression ouverte aux `admin` avec audit | pile |
+| H | INC-009, 010, 011, 025, 027, 029, 031, 033, 037, 039, 040, 041, 043, 045, 054 | clore les quinze **après vérification contre le code réel**, jamais sur déclaration | **oui** |
+| I+J | INC-035, 049, 051, 055, 056, 057, 058, 060, 064, 074 | reprise transverse des harnais ; volet statique (`@verifies`, propriété des preuves) faisable d'abord | partiel |
+| K | INC-002, INC-004, INC-018, INC-026, INC-036, INC-082 | clore comme faits établis, chacun inscrit dans sa spécification | **oui** |
+| L | INC-070 | détecteur de textes en dur : analyse AST, prouvée dans les deux sens | **oui** |
+| L | INC-028, INC-063, INC-065, INC-067 | jetons `*-on-soft`, `alert` réservé à l'erreur, redirection canonique de la card, parseur numérique partagé | pile |
+| M | INC-038, INC-053 | clore sur leur porteur, la répartition du §2.3 écrite dans le même geste | **oui** |
+
+**Aucune entrée n'est fermée par déclaration.** Le responsable a écarté, chaque fois qu'elle était
+offerte, l'issue qui aurait fait descendre le compteur sans rien réparer.
+
+---
+
 ## Dettes ouvertes par les arbitrages du 2026-08-13
 
 Ces quatre arbitrages (`docs/JOURNAL.md`, décisions **362 à 365**) ne créent **aucune unité** : ils

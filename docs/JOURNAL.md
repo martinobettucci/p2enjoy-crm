@@ -12200,3 +12200,52 @@ unité du backlog ». Supavisor ne l'était pas. La présente décision n'ajoute
 applique celui-là à un service que la décision 12 n'avait pas examiné.
 
 **Rattachement :** `CRM-001`. INC-098 pour la description fausse de `VAULT_ENC_KEY`.
+
+### Décision 366 — Les soixante et une entrées ouvertes reçoivent chacune une disposition
+
+**2026-08-13 — arbitrage du responsable, entrée par entrée, sur la totalité du registre.**
+
+**Ce qui a été mal fait avant cette décision, et qui la motive.** Le responsable a demandé à choisir
+sur **chaque** point ouvert. Deux réponses successives lui ont opposé que cinquante-six d'entre eux
+« n'étaient pas des questions » parce qu'un arbitrage antérieur les couvrait. C'était un filtre posé
+par l'agent, pas par lui : une entrée arbitrée mais non livrée **est** un bloqueur du point de vue de
+celui qui lit le registre, et le choix de la traiter, de l'assumer ou de la requalifier lui
+appartient. Les soixante et une entrées ont donc été présentées en treize lots, regroupées seulement
+lorsque le choix était littéralement le même, et chacune a reçu une disposition.
+
+**Contrainte de tête, qui commande tout le reste — lot A, INC-096.** Le registre d'images est
+injoignable : `runDev.sh` s'arrête avant de démarrer un service, et **aucune preuve de pile** n'est
+exécutable. Le responsable retient : **ne traiter que ce qui se prouve sans la pile**. Rien ne sera
+déclaré livré sans sa preuve, et aucune unité ne passera à `[x]` sur du code non éprouvé.
+
+| Lot | Entrées | Disposition retenue |
+|---|---|---|
+| **A** | INC-096 | seuls les lots prouvables **sans la pile** sont traités ; l'accès au registre d'images reste une action humaine |
+| **B** | INC-091, INC-092, INC-094 | **livrer les trois.** INC-094 se prouve sans la pile et part maintenant ; INC-091 et INC-092 exigent IMAP, donc le lot A |
+| **C** | INC-034, INC-059, INC-069, INC-089, INC-097 | **mécaniser** : verrou d'exécution concurrente et refus d'un numéro de décision déjà pris dans `.githooks/pre-commit`. Prouvable sans la pile |
+| **D** | INC-006, INC-008, INC-017, INC-019 | **corriger et clore les quatre.** Aucun code |
+| **E** | INC-095 | **écrire les quatre lignes du contrat et poser la garde**, en assumant explicitement l'écart avec la décision 365 — le responsable arbitre contre sa propre décision de la veille, en connaissance de cause, parce que trois unités `[~]` dépendent de la pile |
+| **F** | INC-015, INC-062, INC-066, INC-068, INC-088 | **clore : l'unité porte la dette.** `CRM-070`, `CRM-041`, `CRM-076`, `CRM-069`, `CRM-037`. Une exigence dans une DoD interdit le passage à `[x]` ; une entrée de registre, non |
+| **G** | INC-048, INC-052, INC-071, INC-072 | **livrer les quatre en un chunk** — même table, même migration, même suite pgTAP. Exige la pile |
+| **H** | INC-009, 010, 011, 025, 027, 029, 031, 033, 037, 039, 040, 041, 043, 045, 054 | **clore les quinze après vérification contre le code réel**, jamais sur la seule déclaration |
+| **I+J** | INC-035, 049, 051, 055, 056, 057, 058, 060, 064, 074 | **reprise transverse des harnais.** Exige la pile pour le rejeu |
+| **K** | INC-002, INC-004, INC-018, INC-026, INC-036, INC-082 | **clore comme faits établis**, chacun inscrit dans la spécification concernée |
+| **L** | INC-028, INC-063, INC-065, INC-067, INC-070 | **livrer les cinq**, un commit par nature. INC-070 se prouve sans navigateur |
+| **M** | INC-038, INC-053 | **clore sur leur porteur**, la répartition du §2.3 étant écrite dans le même geste |
+
+**Ce que le responsable a refusé, et il faut l'écrire parce que ce sont les issues faciles.** Il a
+écarté, à chaque fois qu'elle était offerte, l'option qui aurait fait descendre le compteur sans rien
+réparer : désarmer l'assertion 9 de `0029` qui a trouvé la fuite (lot B), clore les quatre écarts
+documentaires sans les corriger (lot D), clore les quinze du lot H sur la seule matrice sans
+revérifier, documenter les limites des harnais au lieu de les réparer (lot I+J). **Aucune entrée
+n'est fermée par déclaration.**
+
+**Ce que la vérification du lot H doit garder à l'esprit :** quatre entrées — INC-014, INC-075,
+INC-085 et INC-093 — étaient **closes depuis des jours sans que personne le sache**, et INC-076
+l'était depuis `CRM-022` alors que la décision 336 la classait encore premier défaut à corriger.
+L'état déclaré et l'état réel divergent dans ce registre ; une passe qui se contenterait de lire
+l'en-tête des entrées se tromperait dans les deux sens.
+
+**Ordre d'exécution qui découle du lot A.** Sans la pile : **D**, **H**, **K**, **F**, **M**, **E**,
+**C**, la moitié de **B** (INC-094), la partie statique de **L** (INC-070) et de **I+J**. Avec la
+pile, une fois INC-096 levée : le reste de **B**, **G**, **I+J**, **L**.

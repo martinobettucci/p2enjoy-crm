@@ -13,6 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Les 61 entrées ouvertes du registre reçoivent chacune une disposition** (décision 366),
+  présentées au responsable en treize lots et arbitrées une par une. Le filtre qui avait écarté
+  cinquante-six d'entre elles comme « déjà tranchées » était posé par l'agent, pas par lui : une
+  entrée arbitrée mais non livrée **est** un bloqueur pour qui lit le registre.
+- **Contrainte de tête, INC-096** : le registre d'images étant injoignable, aucune preuve de pile
+  n'est exécutable. Seuls les lots prouvables **sans la pile** sont traités — rien ne sera déclaré
+  livré sans sa preuve.
+- **Aucune entrée n'est fermée par déclaration.** À chaque lot, l'issue qui aurait fait descendre le
+  compteur sans rien réparer a été explicitement écartée : désarmer l'assertion qui a trouvé la
+  fuite, clore les écarts documentaires sans les corriger, valider les quinze entrées de
+  modélisation sur la seule matrice sans revérifier le code.
+- **`docs/BACKLOG.md` porte le plan d'exécution** — quels lots sont faisables aujourd'hui, lesquels
+  attendent la pile.
+
 ### Supprimé
 
 - **Le pooler de connexions Supavisor est retiré de la pile** (décision 366). Il était démarré,
