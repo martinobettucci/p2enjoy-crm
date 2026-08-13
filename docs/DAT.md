@@ -400,7 +400,6 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `rest` | `postgrest/postgrest:v14.12` | dev, prod |
 | `realtime` | `supabase/realtime:v2.102.3` | dev, prod |
 | `storage` | `supabase/storage-api:v1.60.4` | dev, prod |
-| `supavisor` | `supabase/supavisor:2.9.5` | dev, prod |
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
@@ -419,10 +418,19 @@ Deux familles de la distribution officielle restent **écartées** : `analytics`
 `ENABLE_IMAGE_TRANSFORMATION` à `false`). La décision 12 est renversée pour `functions` par la
 décision 260 ; son contrat d'activation appartient à `CRM-016` et à la décision 283.
 
+**`supavisor` a été retiré** par la décision 366, après avoir été livré avec `CRM-001`. Le pooler
+n'avait aucun consommateur : les quatre services qui parlent SQL ouvrent leur propre pool vers `db`
+en direct, `mail-sync` passe par PostgREST, et l'outillage SQL de l'hôte passe par
+`POSTGRES_DIRECT_PORT`. Partent avec lui la base interne `_supabase`, le schéma `_supavisor`, le
+mot de passe du rôle `pgbouncer` et les variables `POOLER_*` et `VAULT_ENC_KEY`. Le jour où un
+client SQL éphémère apparaîtrait — runtime edge attaquant la base directement, accès SQL externe
+en production — le pooler revient avec l'unité qui le réclame.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
-Realtime et Supavisor élèvent leur nombre de descripteurs de fichiers au démarrage. Le besoin est
-exprimé par `STACK_RLIMIT_NOFILE` (défaut `100000`) plutôt que laissé à un défaut de démon : un
+Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est
+exprimé par `STACK_RLIMIT_NOFILE` (défaut `10000`, ramené de `100000` par la décision 366 : la
+valeur haute était celle de Supavisor) plutôt que laissé à un défaut de démon : un
 hôte dont la limite dure est inférieure doit l'abaisser, faute de quoi ces deux services
 redémarrent en boucle (`docs/JOURNAL.md`, décision 14).
 
@@ -709,8 +717,8 @@ Les preuves sont rejouables : `scripts/verify-vault.sh`.
 | Développement | `docker-compose.yml` + `docker-compose.dev.yml` | Studio, Inbucket, Stalwart, Roundcube, MinIO, Vite en HMR, seed complet |
 | Production | `docker-compose.yml` + `docker-compose.prod.yml` | Caddy et TLS, images buildées, aucun outillage de développement, aucun seed |
 
-En production, **seul Caddy publie des ports** (`80` et `443`) : Kong, PostgreSQL et le pooler ne
-sont atteints que par le réseau interne de la pile. En développement, tous les ports sont publiés
+En production, **seul Caddy publie des ports** (`80` et `443`) : Kong n'est atteint que par le
+réseau interne de la pile, et aucun accès PostgreSQL n'est publié. En développement, tous les ports sont publiés
 sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut).
 
 Le stockage vise **S3 dans les deux environnements** — MinIO en développement, fournisseur réel en

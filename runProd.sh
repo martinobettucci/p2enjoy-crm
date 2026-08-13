@@ -85,7 +85,7 @@ echo
 say "Services publiés"
 info "https://${APP_DOMAIN}          webapp et API, TLS terminé par Caddy"
 info "http://${APP_DOMAIN}           redirigé vers https"
-info "Aucun autre port n'est publié : ni Kong, ni PostgreSQL, ni le pooler."
+info "Aucun autre port n'est publié : ni Kong, ni PostgreSQL."
 
 echo
 say "Après démarrage"

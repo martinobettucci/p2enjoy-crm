@@ -12178,12 +12178,15 @@ donne l'accès SQL de développement. `STACK_RLIMIT_NOFILE` reste, **mais son d�
 fait descendre garde sa valeur ; le changement ne fait qu'élargir l'ensemble des hôtes qui
 démarrent sans réglage.
 
-**La règle mécanisée, parce qu'une règle non mécanisée n'est pas une règle (décisions 345, 358,
-364, 365).** Le défaut de fond n'est pas Supavisor : c'est qu'une variable d'environnement puisse
-rester au contrat sans que rien ne la lise, et personne ne le remarque. `scripts/verify-scripts.sh`
-refuse désormais toute variable de `.env.example` sans consommateur dans le code ou les scripts.
-MESURÉ avant écriture du contrôle : **zéro variable orpheline aujourd'hui** sur les 100 et quelques
-du gabarit — le contrôle entre donc **vert**, comme l'exige la méthode de la décision 365.
+**La règle était déjà mécanisée, et c'est elle qui décide de `VAULT_ENC_KEY`.** Le contrôle n° 1 de
+`scripts/verify-scripts.sh` compare depuis l'origine les variables de `.env.example` à celles
+qu'interpolent les fichiers Compose, et **échoue** sur toute orpheline absente d'une liste
+`ALLOWED_ORPHANS` où chaque tolérance est nommée et justifiée. `VAULT_ENC_KEY` n'y figure pas :
+elle passait le contrôle uniquement parce que le service `supavisor` l'interpolait. Retirer le
+service sans retirer la variable rendrait donc le harnais **rouge** — le dépôt refuse de lui-même
+l'état intermédiaire. Rien n'est à ajouter ici ; il fallait seulement le constater avant d'écrire,
+ce que la première rédaction de cette décision n'avait pas fait : elle annonçait un contrôle neuf
+là où il en existait déjà un, meilleur.
 
 **Réversibilité.** Le retrait est un `git revert` : les cinq fichiers concernés sont repris tels
 quels de la distribution officielle et restent lisibles dans l'historique. Le jour où un

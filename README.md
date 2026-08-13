@@ -58,7 +58,7 @@ réellement créés côté serveur IMAP.
 | Couche | Technologie |
 |---|---|
 | Interface | React 19, Vite 8, TypeScript, Tailwind CSS 4, lucide-react, React Router 8 ; TanStack Query, react-hook-form, zod et dnd-kit viendront avec le métier qui les exige |
-| Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong, Supavisor) |
+| Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong) |
 | Règles métier | PostgreSQL : fonctions `SECURITY DEFINER` + Row Level Security |
 | Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP) ; ordonnancement durable par `pg_cron` |
 | Antivirus | ClamAV (pièces jointes entrantes) |
@@ -96,8 +96,7 @@ depuis son chemin UNC.
 ```
 
 C'est tout. Au premier lancement, `runDev.sh` crée `.env` à partir de `.env.example` et **tire au
-hasard** chaque secret : mot de passe PostgreSQL, `JWT_SECRET`, clés MinIO, secrets de Realtime et
-du pooler. `ANON_KEY` et `SERVICE_ROLE_KEY` sont dérivées du `JWT_SECRET` produit, sous forme de
+hasard** chaque secret : mot de passe PostgreSQL, `JWT_SECRET`, clés MinIO, secrets de Realtime. `ANON_KEY` et `SERVICE_ROLE_KEY` sont dérivées du `JWT_SECRET` produit, sous forme de
 jetons HS256 valides. **Aucune clé n'est reprise du dépôt** : deux postes n'ont jamais les mêmes.
 
 Le fichier est créé en mode `600` et n'est jamais versionné. Un `.env` existant n'est jamais
@@ -278,7 +277,6 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | Inbucket | http://localhost:54324 | Emails **transactionnels** (invitations, @mentions, relances, digest) | **disponible** |
 | MinIO | http://localhost:9001 | Console du stockage S3 local | **disponible** |
 | PostgreSQL | localhost:54322 | Accès SQL direct (pgTAP, outillage de migration) | **disponible** |
-| Pooler (Supavisor) | localhost:5432 · 6543 | Sessions et transactions poolées | **disponible** |
 | Webapp | http://127.0.0.1:5173 | L'application | **disponible** |
 | Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | **disponible** |
 | Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
@@ -554,7 +552,7 @@ preuves.
 | Build de développement | `NPM_CA_FILE`, `PIP_CA_FILE` | Facultatives. Chemin absolu d'un paquet PEM local, pour `npm ci` dans l'image Vite et pour `pip install` dans l'image `mail-sync` derrière un proxy TLS ; vides ou absentes, aucun effet. Deux variables distinctes : les deux chaînes ne consomment pas le certificat de la même façon (décision 356) |
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_INTERNAL_TOKEN`, `MAIL_SYNC_LOG_LEVEL`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux variables `MAIL_SYNC_INTERNAL_TOKEN` et `MAIL_SYNC_LOG_LEVEL` le sont **depuis `CRM-051`** : le service refuse de démarrer sous 32 caractères de jeton. **`MAIL_SYNC_POLL_INTERVAL` est consommée depuis `CRM-059`** : elle règle l'intervalle de la boucle de veille, en secondes. `0` **désactive** la veille — la relève reste alors déclenchable par l'API interne — et toute autre valeur doit tenir entre **5 secondes et 1 heure**, bornes appliquées au démarrage et non corrigées en silence. `MAIL_MAX_ATTACHMENT_MB` l'est depuis `CRM-054` |
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
-| Chiffrement | `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32, 32 et 16 caractères |
+| Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production |
@@ -717,10 +715,11 @@ Documentation de référence :
   l'exécution. Une contrainte `CHECK` ne survit pas non plus à la génération —
   `workspace_members.role` se type `string`, et seule la base refuse une valeur hors vocabulaire.
   Voir [`docs/SPEC-types.md`](docs/SPEC-types.md) §7.
-- **Descripteurs de fichiers.** Realtime et le pooler réclament `STACK_RLIMIT_NOFILE`
-  descripteurs (défaut `100000`). Sur un hôte dont la limite dure est inférieure — conteneur sans
-  `CAP_SYS_RESOURCE`, par exemple — ces deux services redémarrent en boucle tant que la variable
-  n'est pas abaissée. `./runDev.sh` détecte le cas lors de l'amorçage : il inscrit la limite dure
+- **Descripteurs de fichiers.** Realtime réclame `STACK_RLIMIT_NOFILE` descripteurs (défaut
+  `10000` ; il valait `100000` tant que le pooler Supavisor était de la pile, car c'était sa
+  demande à lui — décision 366). Sur un hôte dont la limite dure est inférieure — conteneur sans
+  `CAP_SYS_RESOURCE`, par exemple — le service redémarre en boucle tant que la variable n'est pas
+  abaissée. `./runDev.sh` détecte le cas lors de l'amorçage : il inscrit la limite dure
   réelle de l'hôte dans le `.env` produit et le signale. Un `.env` déjà existant n'est en revanche
   jamais corrigé, et la production ne bénéficie d'aucun ajustement automatique : le prérequis
   reste à vérifier avant le premier démarrage (`docs/PROD_MIGRATIONS.md` §4). La valeur par défaut

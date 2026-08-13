@@ -33,15 +33,23 @@ documentation à jour, commit poussé. **Aucune exception.**
 
 ## Chunk 2 — Infrastructure et socle d'identité
 
-### CRM-001 — Pile Supabase self-hosted `[x]`
+### CRM-001 — Pile Supabase self-hosted `[~]`
 Pile self-hosted à versions épinglées. Assemblage `docker-compose.yml` + overlays dev et prod.
 MinIO en dev, Storage sur S3.
 **DoD** : `docker compose up` démarre tous les services sains ; Kong répond ; Studio accessible en
 dev ; aucun service de développement présent en prod.
 
 - [x] Assemblage commun `docker-compose.yml` : `db`, `auth-templates`, `migrations-runner`,
-      `auth`, `rest`, `realtime`, `storage`, `functions`, `supavisor`, `kong`. Toutes les images
-      épinglées à une version exacte.
+      `auth`, `rest`, `realtime`, `storage`, `functions`, `kong`. Toutes les images épinglées à une
+      version exacte. **`supavisor` en a été retiré** le 2026-08-13 (décision 366) : le pooler
+      n'avait aucun consommateur.
+- [ ] **Démarrage à froid rejoué après le retrait du pooler.** Les preuves de démarrage et le
+      harnais ci-dessous datent d'un assemblage qui comportait encore `supavisor`, la base
+      `_supabase` et le mot de passe du rôle `pgbouncer`. Le retrait touche des scripts
+      d'initialisation qui ne rejouent qu'à la création du cluster : la seule preuve valable est
+      `./resetMe.sh` puis `./runDev.sh`, suivis de `scripts/verify-stack.sh` et de
+      `scripts/verify-scripts.sh`. **Non rejouée le 2026-08-13 : le démon Docker n'était pas
+      joignable depuis la distribution WSL de la session.** L'unité reste `[~]` jusque-là.
 - [x] Overlay `docker-compose.dev.yml` : Studio, `postgres-meta`, MinIO, Inbucket ; ports publiés
       sur l'interface de bouclage uniquement.
 - [x] Overlay `docker-compose.prod.yml` : Caddy, aucun outillage de développement, ni Kong ni

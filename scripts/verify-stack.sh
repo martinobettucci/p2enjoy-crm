@@ -62,7 +62,7 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 # --- 1. Santé des services de l'assemblage de développement ------------------------------------
 # Services de longue durée porteurs d'un healthcheck : doivent être `running` ET `healthy`.
 LONG_RUNNING_HEALTHY="p2enjoy-db p2enjoy-auth-templates p2enjoy-auth p2enjoy-rest realtime-dev.p2enjoy-realtime \
-p2enjoy-storage p2enjoy-functions p2enjoy-pooler p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
+p2enjoy-storage p2enjoy-functions p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
 p2enjoy-inbucket p2enjoy-webapp p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav"
 # Conteneurs éphémères : doivent s'être terminés avec le code 0.
 ONE_SHOT="p2enjoy-migrations p2enjoy-minio-createbucket p2enjoy-stalwart-init"

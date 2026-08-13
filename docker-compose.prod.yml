@@ -9,8 +9,9 @@
 # Inbucket et postgres-meta n'existent que dans `docker-compose.dev.yml`. Cet assemblage est
 # vérifié par `scripts/verify-stack.sh`, qui échoue si l'un d'eux réapparaît.
 #
-# Seul Caddy est joignable depuis l'extérieur. Kong et Supavisor ne publient plus aucun port :
-# ils ne sont atteints que par le réseau interne de la pile.
+# Seul Caddy est joignable depuis l'extérieur. Kong ne publie plus aucun port : il n'est atteint
+# que par le réseau interne de la pile. Aucun accès PostgreSQL n'est publié, ni direct, ni poolé
+# — le pooler a été retiré de la pile par la décision 366.
 
 services:
 
@@ -38,11 +39,6 @@ services:
   # production (docs/PROD_MIGRATIONS.md §2.3). Aucune valeur n'est codée en dur ici.
   storage:
     restart: always
-
-  # Le pooler reste interne : aucun accès PostgreSQL n'est publié depuis l'hôte.
-  supavisor:
-    restart: always
-    ports: !reset []
 
   # La passerelle n'est plus publiée : Caddy la joint par le réseau interne et termine TLS.
   kong:

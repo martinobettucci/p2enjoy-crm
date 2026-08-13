@@ -31,9 +31,7 @@ services:
       - ./supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
       - ./supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
       - ./supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      - ./supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
       - ./supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
-      - ./supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
       # PGDATA persisté entre les redémarrages ; détruit par `resetMe.sh` (CRM-002).
       - ./supabase/docker/volumes/db/data:/var/lib/postgresql/data:Z
       - db-config:/etc/postgresql-custom
@@ -235,10 +233,11 @@ services:
       METRICS_JWT_SECRET: ${JWT_SECRET}
       ERL_AFLAGS: -proto_dist inet_tcp
       DNS_NODES: "''"
-      # Nombre de descripteurs de fichiers réclamé au démarrage. Realtime et Supavisor
-      # échouent si la limite dure de l'hôte est inférieure : la valeur est donc explicite et
-      # ajustable, plutôt que dépendante d'un défaut de démon non documenté.
-      RLIMIT_NOFILE: ${STACK_RLIMIT_NOFILE:-100000}
+      # Nombre de descripteurs de fichiers réclamé au démarrage. Realtime échoue si la limite dure
+      # de l'hôte est inférieure : la valeur est donc explicite et ajustable, plutôt que dépendante
+      # d'un défaut de démon non documenté. Le défaut valait 100 000 tant que Supavisor était de la
+      # pile — c'était SA demande, pas celle de Realtime, qui en réclame 10 000 (décision 366).
+      RLIMIT_NOFILE: ${STACK_RLIMIT_NOFILE:-10000}
       APP_NAME: realtime
       SEED_SELF_HOST: "true"
       RUN_JANITOR: "true"
@@ -328,53 +327,6 @@ services:
       SUPABASE_URL: http://kong:8000
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
-
-  # --- Pooler de connexions ------------------------------------------------------------------
-  # Supavisor (README.md §2). Il publie l'accès PostgreSQL : le conteneur `db` n'expose aucun
-  # port dans l'assemblage commun.
-  supavisor:
-    container_name: p2enjoy-pooler
-    image: supabase/supavisor:2.9.5
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - ${POOLER_PROXY_PORT_SESSION}:5432
-      - ${POOLER_PROXY_PORT_TRANSACTION}:6543
-    volumes:
-      - ./supabase/docker/volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
-    healthcheck:
-      test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://127.0.0.1:4000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    environment:
-      PORT: 4000
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
-      CLUSTER_POSTGRES: "true"
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      VAULT_ENC_KEY: ${VAULT_ENC_KEY}
-      API_JWT_SECRET: ${JWT_SECRET}
-      METRICS_JWT_SECRET: ${JWT_SECRET}
-      REGION: local
-      ERL_AFLAGS: -proto_dist inet_tcp
-      # Voir la note du service `realtime` : même contrainte de descripteurs de fichiers.
-      RLIMIT_NOFILE: ${STACK_RLIMIT_NOFILE:-100000}
-      POOLER_TENANT_ID: ${POOLER_TENANT_ID}
-      POOLER_DEFAULT_POOL_SIZE: ${POOLER_DEFAULT_POOL_SIZE}
-      POOLER_MAX_CLIENT_CONN: ${POOLER_MAX_CLIENT_CONN}
-      POOLER_POOL_MODE: transaction
-      DB_POOL_SIZE: ${POOLER_DB_POOL_SIZE}
-    command:
-      - /bin/sh
-      - -c
-      - /app/bin/migrate && /app/bin/supavisor eval "$$(cat /etc/pooler/pooler.exs)" && /app/bin/server
 
   # --- Passerelle ----------------------------------------------------------------------------
   # Kong expose REST, Auth, Storage, Realtime et les fonctions edge sur un port unique

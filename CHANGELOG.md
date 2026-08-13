@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Supprimé
+
+- **Le pooler de connexions Supavisor est retiré de la pile** (décision 366). Il était démarré,
+  sondé et publié depuis `CRM-001` sans aucun consommateur : les quatre services qui parlent SQL
+  ouvrent leur propre pool vers la base en direct, `mail-sync` passe par PostgREST, l'outillage SQL
+  de l'hôte passe par `POSTGRES_DIRECT_PORT`, et la production ne lui publiait aucun port. Partent
+  avec lui la base interne `_supabase`, le schéma `_supavisor`, `pooler.exs`, le mot de passe du
+  rôle `pgbouncer` — le rôle appartient à l'image et y reste —, les deux ports publiés en
+  développement et la sonde correspondante du harnais.
+- **Six variables `POOLER_*` et `VAULT_ENC_KEY` quittent le contrat d'environnement.** Supavisor
+  était l'unique consommateur de `VAULT_ENC_KEY` ; le contrat de déploiement et le README la
+  décrivaient à tort comme la clé des secrets de messagerie, qui vivent en réalité dans le Vault de
+  la base (INC-098). Le contrôle n° 1 de `scripts/verify-scripts.sh`, qui refuse toute variable du
+  gabarit que rien n'interpole, imposait de lui-même ce retrait dans le même changement.
+
+### Modifié
+
+- **`STACK_RLIMIT_NOFILE` passe de `100000` à `10000`.** La valeur haute était la demande de
+  Supavisor ; Realtime en réclame 10 000. Un hôte dont la limite dure est plus basse continue d'être
+  détecté à l'amorçage. Le changement n'élargit que l'ensemble des hôtes qui démarrent sans réglage.
+- **`CRM-001` repasse à `[~]`.** Le retrait touche des scripts d'initialisation qui ne rejouent qu'à
+  la création du cluster PostgreSQL ; tant que le démarrage à froid et `scripts/verify-stack.sh`
+  n'ont pas été rejoués, la preuve de l'unité est périmée. Non rejoués le 2026-08-13 : le démon
+  Docker n'était pas joignable depuis la session.
+
 ### Documentation
 
 - **Plus aucune décision n'est suspendue dans le registre** (décisions 362 à 365). Les six entrées

@@ -136,8 +136,8 @@ jwt_hs256() {
 
 # --- Amorçage ----------------------------------------------------------------------------------
 
-# Descripteurs de fichiers réellement accordés par l'hôte. Realtime et le pooler redémarrent en
-# boucle si la valeur demandée dépasse la limite dure (docs/JOURNAL.md décision 14).
+# Descripteurs de fichiers réellement accordés par l'hôte. Realtime redémarre en boucle si la
+# valeur demandée dépasse la limite dure (docs/JOURNAL.md décisions 14 et 366).
 host_nofile_limit() {
 	local hard
 	hard=$(ulimit -Hn 2>/dev/null || echo unlimited)
@@ -168,9 +168,8 @@ env_bootstrap_dev() {
 	env_set "$ENV_FILE" JWT_SECRET "$jwt_secret"
 	env_set "$ENV_FILE" ANON_KEY "$(jwt_hs256 "$jwt_secret" anon)"
 	env_set "$ENV_FILE" SERVICE_ROLE_KEY "$(jwt_hs256 "$jwt_secret" service_role)"
-	# Longueurs imposées par les composants : 64, 32 et 16 caractères exactement.
+	# Longueurs imposées par les composants : 64, 16 et 32 caractères exactement.
 	env_set "$ENV_FILE" SECRET_KEY_BASE "$(gen_hex 32)"
-	env_set "$ENV_FILE" VAULT_ENC_KEY "$(gen_hex 16)"
 	env_set "$ENV_FILE" REALTIME_DB_ENC_KEY "$(gen_hex 8)"
 	env_set "$ENV_FILE" PG_META_CRYPTO_KEY "$(gen_hex 16)"
 
@@ -207,7 +206,7 @@ env_bootstrap_dev() {
 	if [ "$hard" -lt "$wanted" ]; then
 		env_set "$ENV_FILE" STACK_RLIMIT_NOFILE "$hard"
 		warn "STACK_RLIMIT_NOFILE abaissé de $wanted à $hard : limite dure de cet hôte."
-		warn "Sans cela, Realtime et le pooler redémarreraient en boucle (README.md §11)."
+		warn "Sans cela, Realtime redémarrerait en boucle (README.md §11)."
 	fi
 
 	info "Secrets tirés au hasard : aucun n'est repris du dépôt."

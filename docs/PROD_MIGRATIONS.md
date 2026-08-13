@@ -65,10 +65,9 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `POSTGRES_PASSWORD` | Mot de passe de la base | Oui |
 | `JWT_SECRET` | Signature des jetons | Oui |
 | `ANON_KEY`, `SERVICE_ROLE_KEY` | Clés d'API Supabase, dérivées de `JWT_SECRET` | Oui |
-| `SECRET_KEY_BASE` | Secret de session de Realtime et du pooler | Oui |
+| `SECRET_KEY_BASE` | Secret de session de Realtime | Oui |
 | `REALTIME_DB_ENC_KEY` | Chiffrement interne de Realtime | Oui |
 | `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL` | URL publiques | Oui |
-| `VAULT_ENC_KEY` | Chiffrement des secrets de messagerie | Oui |
 | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `GLOBAL_S3_PROTOCOL`, `GLOBAL_S3_FORCE_PATH_STYLE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `REGION` | Stockage des pièces jointes | Oui |
 | `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET`, `STORAGE_TENANT_ID`, `STORAGE_FILE_SIZE_LIMIT` | Paramétrage du service Storage | Oui |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Emails transactionnels (invitations, notifications) | Oui |
@@ -81,8 +80,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `APP_DOMAIN` | Domaine servi par Caddy | Oui |
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
 | `APPLY_MIGRATIONS` | Doit valoir `false` : aucune migration n'est appliquée automatiquement | Oui |
-| `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime et le pooler ; défaut `100000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
-| `POOLER_TENANT_ID`, `POOLER_DEFAULT_POOL_SIZE`, `POOLER_MAX_CLIENT_CONN`, `POOLER_DB_POOL_SIZE`, `POOLER_PROXY_PORT_SESSION`, `POOLER_PROXY_PORT_TRANSACTION` | Paramétrage du pooler | Oui |
+| `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
 
 **Deux variables du service `mail-sync` deviennent obligatoires avec `CRM-052`.** Le conteneur ne
 recevait pas `SERVICE_ROLE_KEY` tant qu'il ne consommait aucune table ; il la reçoit désormais, et
@@ -567,10 +565,18 @@ d'ouvrir l'application et de vérifier que **cet écran n'apparaît pas**.
 `WEBAPP_DEV_PORT`, également livrée par `CRM-007`, n'a **aucun effet en production** : elle ne sert
 qu'à l'overlay de développement.
 
-**Prérequis d'hôte à vérifier avant le premier démarrage.** Realtime et le pooler réclament
-`STACK_RLIMIT_NOFILE` descripteurs de fichiers (défaut `100000`). Si la limite dure de l'hôte est
-inférieure, les deux services redémarrent en boucle : contrôler `ulimit -Hn` et, le cas échéant,
+**Prérequis d'hôte à vérifier avant le premier démarrage.** Realtime réclame
+`STACK_RLIMIT_NOFILE` descripteurs de fichiers (défaut `10000`, ramené de `100000` par la
+décision 366 : la valeur haute était celle du pooler, retiré de la pile). Si la limite dure de
+l'hôte est inférieure, le service redémarre en boucle : contrôler `ulimit -Hn` et, le cas échéant,
 relever la limite du démon Docker ou abaisser la variable.
+
+**Deux variables disparaissent du contrat, et aucune opération n'en découle.** `VAULT_ENC_KEY` et
+les six `POOLER_*` étaient exigées pour le pooler Supavisor, retiré par la décision 366. La
+production n'ayant **jamais été déployée** (§1), il n'y a ni conteneur à arrêter, ni base
+`_supabase` à supprimer, ni secret à révoquer : ces variables n'ont simplement plus à être
+provisionnées. `VAULT_ENC_KEY` était de surcroît décrite ici comme la clé des secrets de
+messagerie, ce qu'elle n'a jamais été — voir INC-098.
 
 ## 5. Vérifications après déploiement
 

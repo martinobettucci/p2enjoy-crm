@@ -95,7 +95,7 @@ fi
 echo
 echo "2. Contenu du gabarit"
 
-SENSITIVE="POSTGRES_PASSWORD JWT_SECRET ANON_KEY SERVICE_ROLE_KEY SECRET_KEY_BASE VAULT_ENC_KEY
+SENSITIVE="POSTGRES_PASSWORD JWT_SECRET ANON_KEY SERVICE_ROLE_KEY SECRET_KEY_BASE
 REALTIME_DB_ENC_KEY PG_META_CRYPTO_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 S3_PROTOCOL_ACCESS_KEY_ID S3_PROTOCOL_ACCESS_KEY_SECRET MINIO_ROOT_USER MINIO_ROOT_PASSWORD"
 
@@ -200,8 +200,8 @@ if [ -f "$BOOT1" ]; then
 		fail "fichier amorcé en mode $perms (attendu 600)"
 	fi
 
-	# Longueurs imposées par Realtime, le pooler et postgres-meta : une erreur ici se traduit
-	# par un service qui refuse de démarrer.
+	# Longueurs imposées par Realtime et postgres-meta : une erreur ici se traduit par un service
+	# qui refuse de démarrer.
 	length_errors=""
 	check_len() {
 		local value
@@ -209,11 +209,10 @@ if [ -f "$BOOT1" ]; then
 		[ "${#value}" = "$2" ] || length_errors="$length_errors $1(${#value}≠$2)"
 	}
 	check_len SECRET_KEY_BASE 64
-	check_len VAULT_ENC_KEY 32
 	check_len REALTIME_DB_ENC_KEY 16
 	check_len PG_META_CRYPTO_KEY 32
 	if [ -z "$length_errors" ]; then
-		ok "longueurs imposées respectées : SECRET_KEY_BASE 64, VAULT_ENC_KEY 32, REALTIME_DB_ENC_KEY 16, PG_META_CRYPTO_KEY 32"
+		ok "longueurs imposées respectées : SECRET_KEY_BASE 64, REALTIME_DB_ENC_KEY 16, PG_META_CRYPTO_KEY 32"
 	else
 		fail "longueurs de secrets incorrectes :$length_errors"
 	fi
@@ -477,7 +476,7 @@ else
 fi
 
 PLACEHOLDER="$WORK/env.placeholder"
-sed 's/^VAULT_ENC_KEY=.*/VAULT_ENC_KEY=CHANGE_ME_VAULT_ENC_KEY/' "$BOOT1" > "$PLACEHOLDER"
+sed 's/^SECRET_KEY_BASE=.*/SECRET_KEY_BASE=CHANGE_ME_SECRET_KEY_BASE/' "$BOOT1" > "$PLACEHOLDER"
 if P2ENJOY_ENV_FILE="$PLACEHOLDER" ./runDev.sh --bootstrap >/dev/null 2>&1; then
 	fail "runDev.sh accepte un marqueur CHANGE_ME_ non remplacé"
 else
