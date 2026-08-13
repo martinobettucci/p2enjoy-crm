@@ -12116,3 +12116,84 @@ un harnais durablement rouge cesse d'être lu. Un contrôle n'entre au dépôt q
 
 **Rattachement :** `CRM-053`, `CRM-056` et `CRM-059` pour les lignes ; le contrôle rejoint
 `scripts/verify-migrations.sh`, dont c'est l'objet, et non `verify-scripts.sh`.
+
+### Décision 366 — Un service sans consommateur n'est pas une réserve, c'est une dette
+
+**2026-08-13 — demande du responsable, sur constat de l'agent.**
+
+**Le constat, établi par lecture du dépôt et non par mémoire.** Supavisor est démarré, sondé et
+publié depuis `CRM-001`, et **rien ne s'y connecte** :
+
+- les quatre services qui parlent SQL visent `db` en direct, pas le pooler — GoTrue
+  (`docker-compose.yml` ligne 131), PostgREST (ligne 193), Realtime (lignes 226-227) et Storage
+  (ligne 280) construisent tous leur URL sur `${POSTGRES_HOST}:${POSTGRES_PORT}` ;
+- `mail-sync` ne parle pas SQL du tout : il dépend de `kong` et de `rest`, et sa seule variable de
+  données est `POSTGREST_URL` ;
+- l'outillage SQL de l'hôte — pgTAP, `migrations-runner`, `psql` — passe par
+  `POSTGRES_DIRECT_PORT`, publié par l'overlay de développement sur `db` lui-même ;
+- aucun `depends_on` de l'assemblage ne nomme `supavisor` ;
+- en production, `docker-compose.prod.yml` fait `ports: !reset []` : le pooler n'y publie rien, et
+  aucun service ne le nomme. Il n'y est donc joignable **par personne**.
+
+Les seules occurrences de `POOLER_PROXY_PORT_SESSION` et `POOLER_PROXY_PORT_TRANSACTION` dans le
+dépôt sont les publications de ports elles-mêmes.
+
+**Ce que le pooler résout, et pourquoi ce problème n'existe pas ici.** Supavisor multiplexe un
+grand nombre de connexions clientes courtes sur un petit pool de connexions serveur. Le problème
+qu'il traite est celui des clients éphémères — fonctions serverless, runtimes edge démarrés à
+froid, un ORM par instance — qui épuisent `max_connections` bien avant le CPU. Les consommateurs
+SQL de cette pile sont l'exact inverse : quatre processus de longue durée qui ouvrent leur propre
+pool au démarrage et le gardent. Les faire passer par un pooler n'économiserait aucune connexion
+et ajouterait un saut réseau. Le chemin de données du produit est HTTP de bout en bout, par Kong
+et PostgREST.
+
+**Ce qu'il coûtait pendant ce temps.** Un conteneur de plus à démarrer et à superviser ; deux
+ports publiés en développement, donc deux occasions de collision sur un poste partagé ; une sonde
+de plus dans `scripts/verify-stack.sh` ; une base PostgreSQL entière (`_supabase`) et un schéma
+(`_supavisor`) créés à l'initialisation du cluster ; le mot de passe du rôle `pgbouncer` aligné sur
+`POSTGRES_PASSWORD` pour une `auth_query` que personne n'appelle ; six variables d'environnement
+au contrat de `.env.example` et de `docs/PROD_MIGRATIONS.md` ; et surtout **la moitié de la
+contrainte d'hôte de la décision 14** — c'est Supavisor, et lui seul, qui réclamait 100 000
+descripteurs de fichiers là où Realtime en demande 10 000.
+
+**La décision : retrait complet.** Partent avec le service `supavisor` :
+
+- `supabase/docker/volumes/pooler/pooler.exs` et `supabase/docker/volumes/db/pooler.sql` ;
+- `supabase/docker/volumes/db/_supabase.sql` : la base `_supabase` n'a pas d'autre consommateur.
+  Elle sert aussi à `analytics` dans la distribution officielle, écarté par la décision 12 ;
+- la ligne `ALTER USER pgbouncer` de `roles.sql`. Le rôle appartient à l'image `supabase/postgres`
+  et y reste ; ce qui disparaît est le mot de passe qu'on lui donnait, c'est-à-dire un compte de
+  connexion partageant `POSTGRES_PASSWORD` sans aucun client ;
+- les six variables `POOLER_*` ;
+- **`VAULT_ENC_KEY`**, dont Supavisor était l'unique consommateur. Voir INC-098 : le contrat de
+  déploiement et le README la décrivent comme la clé de chiffrement des secrets de messagerie, ce
+  qui est faux — ces secrets vivent dans le Vault **de la base**, écrit par
+  `vault.create_secret()` aux migrations 22, 23 et 33, et chiffré par la clé racine de PostgreSQL.
+  La supprimer corrige une description fausse en même temps qu'elle retire un secret orphelin.
+
+**Ce qui ne part pas, et pourquoi.** `SECRET_KEY_BASE` reste : Realtime l'utilise aussi
+(`docker-compose.yml` ligne 234). `POSTGRES_DIRECT_PORT` reste : c'est lui, et non le pooler, qui
+donne l'accès SQL de développement. `STACK_RLIMIT_NOFILE` reste, **mais son défaut passe de
+100 000 à 10 000** : la valeur haute était celle de Supavisor. Un hôte que `./runDev.sh` avait déjà
+fait descendre garde sa valeur ; le changement ne fait qu'élargir l'ensemble des hôtes qui
+démarrent sans réglage.
+
+**La règle mécanisée, parce qu'une règle non mécanisée n'est pas une règle (décisions 345, 358,
+364, 365).** Le défaut de fond n'est pas Supavisor : c'est qu'une variable d'environnement puisse
+rester au contrat sans que rien ne la lise, et personne ne le remarque. `scripts/verify-scripts.sh`
+refuse désormais toute variable de `.env.example` sans consommateur dans le code ou les scripts.
+MESURÉ avant écriture du contrôle : **zéro variable orpheline aujourd'hui** sur les 100 et quelques
+du gabarit — le contrôle entre donc **vert**, comme l'exige la méthode de la décision 365.
+
+**Réversibilité.** Le retrait est un `git revert` : les cinq fichiers concernés sont repris tels
+quels de la distribution officielle et restent lisibles dans l'historique. Le jour où un
+consommateur apparaît — un runtime edge qui attaquerait la base directement plutôt que par
+PostgREST, ou un accès SQL externe ouvert en production —, le pooler revient **avec son unité de
+backlog et son consommateur**, pas en réserve.
+
+**Ce que la décision 12 disait déjà.** Elle écarte `analytics`, `vector` et `imgproxy` au motif
+qu'« aucune unité ne les exige », et conclut que « chaque service présent est justifié par une
+unité du backlog ». Supavisor ne l'était pas. La présente décision n'ajoute pas un critère : elle
+applique celui-là à un service que la décision 12 n'avait pas examiné.
+
+**Rattachement :** `CRM-001`. INC-098 pour la description fausse de `VAULT_ENC_KEY`.

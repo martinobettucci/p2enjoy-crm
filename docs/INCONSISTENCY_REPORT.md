@@ -43,11 +43,12 @@ documentaire ensuite.
 **Solde d'arbitrage du 2026-08-13.** Les entrées ouvertes depuis — **INC-089**, **INC-091**,
 **INC-092**, **INC-094**, **INC-095** et **INC-097** — sont tranchées par les décisions **362 à
 365**. **INC-096** n'appelait pas un choix mais une action hors dépôt. **Aucune entrée de ce registre
-n'attend donc une décision du responsable** : les soixante et une entrées ouvertes attendent toutes
+n'attend donc une décision du responsable** : les soixante-deux entrées ouvertes attendent toutes
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
+**INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-13 :** 97 entrées ouvertes depuis l'origine, **36 closes** — index ci-dessous,
-texte dans l'historique Git — et **61 ouvertes**, conservées ici en entier.
+**État au 2026-08-13 :** 98 entrées ouvertes depuis l'origine, **36 closes** — index ci-dessous,
+texte dans l'historique Git — et **62 ouvertes**, conservées ici en entier.
 
 ---
 
@@ -2973,3 +2974,40 @@ référentielle), `CLAUDE.md` §8 (le seed est reproductible).
 **Close le 2026-08-09 par `CRM-018`.** La liaison est comptée séparément dans la source et dans la
 copie remappée ; aucun compte global ne dépend plus de l'âge de la base. Le reset froid et le seed
 rejoué prouvent le même état : une exigence fonctionnelle dans chacun des deux workflows.
+
+### INC-098 — `VAULT_ENC_KEY` est documentée comme la clé des secrets de messagerie, alors que seul le pooler la lisait
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 366.** La variable est retirée avec Supavisor, son
+unique consommateur. Mise en œuvre : `CRM-001`.
+
+**Nature :** description fausse d'une variable obligatoire, dans deux documents de référence.
+**Relevé le :** 2026-08-13, en instruisant le retrait du pooler.
+
+`docs/PROD_MIGRATIONS.md` §2 la présente comme « Chiffrement des secrets de messagerie », obligatoire
+en production, et `README.md` §9 la range parmi les clés de chiffrement à 32 caractères. Or la
+recherche de `VAULT_ENC_KEY` dans le dépôt ne rend **qu'une seule** consommation :
+`docker-compose.yml` ligne 362, dans le service `supavisor`. Aucun autre service, aucun script,
+aucune migration ne la lit.
+
+Les secrets de messagerie sont chiffrés par un mécanisme **entièrement distinct** : le Vault de
+Supabase, à l'intérieur de PostgreSQL, écrit par `vault.create_secret()` et
+`vault.update_secret()` aux migrations `0022`, `0023` et `0033`, et lu par
+`vault.decrypted_secrets`. Sa clé racine appartient à la base, pas à une variable de Compose.
+
+**Ce que cela dit de plus grave qu'une ligne de tableau.** Un opérateur qui lit le contrat de
+déploiement en conclut qu'une rotation de `VAULT_ENC_KEY` mettrait les mots de passe IMAP et SMTP
+hors d'atteinte, et qu'il faut la sauvegarder comme telle. Les deux conclusions sont fausses. Une
+variable mal décrite dans un contrat de déploiement est pire qu'une variable absente : elle oriente
+une manœuvre de production sur une prémisse inexistante, ce que `CLAUDE.md` §12 interdit
+précisément à ce document.
+
+**Comportement retenu :** la variable est **supprimée** — de `.env.example`, de son amorçage dans
+`scripts/lib/env.sh`, de ses contrôles dans `scripts/verify-scripts.sh`, du contrat de déploiement
+et du README. Rien n'est relâché : le chiffrement réel des secrets de messagerie est inchangé,
+puisqu'il n'a jamais dépendu d'elle.
+
+**Reste ouverte jusqu'à :** la preuve du démarrage à froid de la pile sans Supavisor et sans cette
+variable, `scripts/verify-stack.sh` rejoué au vert.
+
+**Lié à :** décision 366 (retrait du pooler), décision 14 (descripteurs de fichiers),
+`docs/SPEC-mail-subsystem.md` §2.3 (secrets et Vault), `CLAUDE.md` §12 (contrat de déploiement).
