@@ -19,20 +19,20 @@ en porte un, « `docs/ARBITRAGES.md` (ligne 61) » pour INC-072 — ne pointent 
 Le journal n'est pas réécrit : il est chronologique. Une ligne de la matrice se retrouve par son
 **numéro d'entrée**, jamais par sa position.
 
-## 1. Ce qui attend encore une décision
+## 1. Arbitrages du 2026-08-13
 
-Sept entrées, toutes ouvertes après le 2026-08-11, n'ont **aucun arbitrage rendu**. Chacune nomme en
-fin d'entrée ce qu'elle attend ; la colonne ci-dessous en donne la substance.
+**Plus rien n'attend une décision.** Les six questions ouvertes après le 2026-08-11 sont tranchées le **2026-08-13**
+par les décisions **362 à 365** ; INC-096 n'était pas un choix mais une action hors dépôt. Il ne
+reste donc, dans tout le registre, **aucune décision suspendue** — seulement du travail à
+implémenter, mesurer et fermer.
 
-| Entrée | Question | Nature |
+| Entrée | Décision rendue | Porteur |
 |---|---|---|
-| **INC-089** | Faut-il réécrire le commit qui a mélangé deux sujets, et la sérialisation de la routine doit-elle devenir une garde **vérifiable dans le dépôt** plutôt qu'un réglage de planificateur ? | méthode de travail |
-| **INC-091** | Comment une preuve qui dépose délibérément un message dans une boîte seedée coexiste-t-elle avec une veille permanente qui le relève ? | preuves ↔ `CRM-059` |
-| **INC-092** | Même question de fond qu'INC-091, sur une seconde preuve rendue rouge par la même veille | preuves ↔ `CRM-059` |
-| **INC-094** | Une seconde migration s'exécute sous `supabase_admin` et le contrôle n'en tolère qu'une : élargir le contrôle, restreindre la migration, ou nommer l'exception | migrations |
-| **INC-095** | Trois migrations livrées manquent au contrat de déploiement ; à faire compléter par `CRM-053`, `CRM-056` et `CRM-059`, et à empêcher structurellement | contrat de déploiement |
-| **INC-096** | Registre d'images injoignable : **action humaine hors dépôt** — identifiants Docker Hub ou miroir de registre. Rien à corriger ici | environnement |
-| **INC-097** | Collision de numéros de décision, **troisième occurrence** : la cause n'est pas traitée. Un crochet doit-il refuser un numéro déjà pris, comme celui de la décision 358 refuse une branche ? | méthode de travail |
+| **INC-091**, **INC-092** | chaque preuve purge **par IMAP** ce qu'elle a déposé dans une boîte seedée, dans son `finally` ; l'assertion 9 de `0029` **reste armée** sur la table entière (déc. 362) | reprise `e2e/mail/resilience.spec.ts`, `infrastructure.spec.ts` |
+| **INC-094** | toute migration élevée **cite son motif mesuré** en en-tête ; le harnais contrôle la justification au lieu d'énumérer les fichiers (déc. 363) | `scripts/verify-scripts.sh`, `docs/SCHEMA.md` |
+| **INC-089**, **INC-097** | le crochet `pre-commit` refuse un **numéro de décision déjà pris** et une **seconde exécution concurrente** ; le compteur global est conservé (déc. 364) | `.githooks/`, `scripts/verify-crochets-git.sh` |
+| **INC-095** | les unités porteuses écrivent leurs propres lignes ; un contrôle refuse toute migration absente du contrat, posé **avec** le contenu et jamais avant (déc. 365) | `CRM-053`, `CRM-056`, `CRM-059`, `scripts/verify-migrations.sh` |
+| **INC-096** | **action humaine hors dépôt** — identifiants Docker Hub ou miroir de registre sur le démon. Rien à corriger ici, et rien à décider | environnement d'exécution |
 
 ## 2. Matrice d'exécution des arbitrages du 2026-08-08
 
@@ -84,5 +84,7 @@ termes sont soldés.
 4. Le **lot documentaire** — INC-017, INC-019, INC-069 —, puis les mises en œuvre par unité porteuse.
 
 Le lot documentaire vient **après** les défauts réels, et non avant : il est le moins cher et ne
-répare rien. Les six entrées de la section 1, ouvertes depuis cette décision, s'intercalent selon ce
-même principe — INC-096 d'abord, puisqu'elle rend toute preuve de pile inexécutable.
+répare rien. Les entrées de la section 1, arbitrées le 2026-08-13, s'intercalent selon ce même
+principe : **INC-096 d'abord**, puisqu'elle rend toute preuve de pile inexécutable et qu'aucune des
+autres ne peut être prouvée avant elle ; puis INC-091/092 et INC-094, qui rendent deux harnais de
+nouveau lisibles ; puis INC-072, INC-095, et la garde d'INC-089/097.

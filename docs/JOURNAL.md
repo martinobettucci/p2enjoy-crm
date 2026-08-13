@@ -11982,3 +11982,137 @@ avaient déjà renversé.
 ferme**, pas lors d'une passe de nettoyage ultérieure. Une passe de nettoyage est le symptôme d'une
 règle qu'on n'applique pas au fil de l'eau — celle-ci était écrite en tête de `docs/ARBITRAGES.md`
 depuis le premier jour.
+
+### Décision 362 — Une preuve qui salit une boîte réelle la nettoie, et le détecteur reste armé
+
+**2026-08-13 — arbitrage du responsable sur INC-091 et INC-092.**
+
+**L'arbitrage : option 1.** Toute preuve qui adresse un envoi réel à une boîte seedée **purge ce
+qu'elle y a déposé**, dans son propre `finally`, par le même chemin IMAP que
+`e2e/mail/ingestion.spec.ts` (`retirerDeLaBoite`). Le message ne survit jamais au scénario qui l'a
+créé, **qu'il ait été relevé ou non**.
+
+**Le motif, et il tient en une phrase :** l'assertion 9 de `supabase/tests/0029_inbox_globale.test.sql`
+a fait exactement son travail. Elle comptait la table entière — `have: 14, want: 0` en session de
+Driss —, elle a vu une fuite que rien d'autre ne voyait, et la troisième option consistait à la
+rendre aveugle pour qu'elle cesse de le dire. `CLAUDE.md` §18 l'interdit : on ne corrige pas un
+défaut en désarmant le contrôle qui l'a trouvé. **Le détecteur reste armé, sur la table entière.**
+
+**Pourquoi pas la boîte jetable.** Elle rendait la fuite structurellement impossible, ce qui est
+séduisant. Elle coûtait ce que ces deux fichiers prouvent de plus précieux : la remise à la boîte
+**réelle** d'un membre, avec sa RLS et son propriétaire. Une preuve d'infrastructure qui n'atteint
+plus aucune boîte réelle prouve l'infrastructure de la preuve, pas celle du produit.
+
+**Ce que la mise en œuvre doit corriger, et qui n'est pas trivial.** Le `finally` de
+`e2e/mail/resilience.spec.ts` supprime aujourd'hui la ligne `mail_messages` par
+`DELETE … subject=like.*objet*` **avant tout relèvement** : il rend `204` en n'effaçant rien, et le
+message réel reste dans la boîte IMAP de Driss. Purger la **table** n'est pas purger la **boîte**.
+Les deux fichiers — `resilience.spec.ts` (`CRM-059`) et `infrastructure.spec.ts` (`CRM-050`) —
+doivent purger par IMAP, et une contre-épreuve doit montrer que la purge échoue bruyamment si le
+message n'y est pas.
+
+**Règle générale, au-delà de ces deux fichiers :** une preuve qui écrit dans un état partagé le
+restaure, et le restaure **par le chemin qui l'a sali**. C'est le principe déjà posé pour les
+harnais par la décision 296 — le ménage passe avant la mesure — appliqué au courrier.
+
+### Décision 363 — Une élévation de privilège se justifie, elle ne s'énumère pas
+
+**2026-08-13 — arbitrage du responsable sur INC-094.**
+
+**L'arbitrage : option 3.** Toute migration portant `-- @migration-role:` doit **citer son motif
+mesuré en en-tête**, et `scripts/verify-scripts.sh` contrôle la présence de cette justification au
+lieu d'énumérer les fichiers autorisés.
+
+**Le motif.** La liste close était l'invariant d'origine, et elle vient de coûter exactement ce
+qu'une liste coûte : `CRM-057` a livré `0029_pieces_jointes_telechargeables.sql` avec une élévation
+**légitime et documentée**, la liste ne l'a pas suivie, et le harnais est **rouge en permanence
+depuis**. Un harnais durablement rouge cesse d'être lu — il ne défend plus rien et masque l'anomalie
+suivante. Une règle sans énumération, elle, ne se périme pas, mais elle bénit toute élévation à
+venir : le privilège le plus dangereux du dépôt deviendrait le plus banal.
+
+**La justification obligatoire tient les deux bouts.** Elle ne se périme pas à chaque ajout
+légitime, et elle continue d'exiger que l'élévation soit *défendue*. Elle est en outre **déjà
+respectée dans les faits** : `0029` porte sa justification mesurée — `storage.objects` appartient à
+`supabase_storage_admin`, dont `postgres` n'est pas membre, si bien que seul un superutilisateur
+peut y créer une politique (décision 327, `docs/SPEC-mail-subsystem.md` §18.5) —, et `0018_pg_cron.sql`
+porte la sienne. L'arbitrage ne crée pas une exigence, il **promeut en règle une pratique déjà
+tenue**.
+
+**La limite, dite sans la masquer.** Le contrôle vérifie qu'un motif est écrit, jamais qu'il est
+vrai. C'est une garde contre l'élévation *distraite*, pas contre l'élévation *argumentée à tort* ;
+seule une relecture humaine attrape la seconde. Le dire est plus honnête que de laisser croire que
+le harnais tranche la nécessité d'un privilège.
+
+**Mise en œuvre :** `scripts/verify-scripts.sh` (le contrôle de la ligne 621 environ), et la
+convention écrite dans `docs/SCHEMA.md` avec les autres règles de migration. La ligne de base de
+104 vérifications / 3 anomalies doit retomber d'une anomalie, et une dégradation doit prouver que
+le contrôle refuse une migration élevée sans motif.
+
+### Décision 364 — Une règle qui n'est pas mécanisée n'est pas une règle, troisième application
+
+**2026-08-13 — arbitrage du responsable sur INC-089 et INC-097.**
+
+**L'arbitrage : étendre les crochets Git existants.** `.githooks/pre-commit` refuse déjà une branche
+autre que `main` (décision 358) et une identité non conforme (décision 345). Deux refus s'y
+ajoutent :
+
+1. **un numéro de décision déjà pris** dans `docs/JOURNAL.md` — la collision en est à sa
+   **troisième** occurrence : les deux décisions 180 (INC-069), puis les deux décisions 340
+   (INC-097, corrigée en 360 le jour même) ;
+2. **une seconde exécution concurrente** — un verrou daté, avec expiration, faute de quoi un
+   processus mort bloquerait le dépôt pour toujours.
+
+**Le motif est celui de la décision 358, appliqué une fois de plus à sa propre famille de défauts.**
+La sérialisation de la routine est décidée depuis le **2026-08-08** ; elle vit **hors du dépôt**,
+dans un réglage de planificateur, et trois entrées mesurent qu'elle n'est pas appliquée — INC-059
+(deux exécutions livrant `CRM-014` en parallèle), INC-089 (un commit emportant le travail d'une
+autre exécution sous son propre message), INC-097 (un numéro repris). Chacune a été découverte **par
+hasard, pendant un autre travail**. Une règle écrite en prose est lue puis oubliée par chaque
+session ; le crochet, lui, ne se fatigue pas.
+
+**Pourquoi pas l'abandon du compteur global**, qui traiterait pourtant la cause à la racine : plus de
+trois cent soixante décisions sont citées par leur numéro dans le backlog, le changelog, les
+spécifications et les commentaires `@spec` du code. La transition est un chantier à part entière, et
+un schéma **mixte** — anciens numéros, nouveaux identifiants dérivés de l'unité — serait moins
+lisible que le défaut qu'il corrige. L'option 1 d'INC-069 reste donc écartée, et le motif est écrit
+ici pour ne pas être redemandé.
+
+**Rattachement :** `.githooks/` et `scripts/verify-crochets-git.sh`, comme les décisions 345 et 358.
+**Aucune unité de backlog n'est créée** : les crochets relèvent de la méthode de travail, pas du
+produit, et le harnais qui les éprouve existe déjà. La preuve attendue est du même ordre que celle
+de la décision 358 — un dépôt jetable, `core.hooksPath` pointant vers les crochets réels, une
+collision de numéro **provoquée** et refusée, une seconde exécution **provoquée** et refusée, et la
+voie nominale démontrée encore ouverte.
+
+**Ce que cela ne ferme pas :** `INC-089` demandait aussi si le commit `d7b35d5` devait être réécrit.
+La question est éteinte par les faits — la décision 359 a réécrit l'historique sur instruction
+explicite, et le commit porte désormais un autre identifiant. Seule la garde restait due.
+
+### Décision 365 — Un contrat de déploiement se remplit par celui qui a décidé, pas par celui qui lit le SQL
+
+**2026-08-13 — arbitrage du responsable sur INC-095.**
+
+**L'arbitrage :** les unités porteuses complètent leurs propres lignes — **`CRM-053`, `CRM-056` et
+`CRM-059`** —, et **un contrôle refuse désormais toute migration absente de
+`docs/PROD_MIGRATIONS.md`**.
+
+**Le motif du premier terme.** Une ligne de contrat de déploiement énonce un **objectif**, des
+**dépendances** et une **réversibilité**. Ces trois choses ont été décidées par l'unité qui a écrit
+la migration ; les déduire après coup en lisant le SQL produirait une prose plausible et non
+vérifiée. Un contrat de déploiement **deviné** est pire qu'incomplet : il donne à l'humain qui
+l'applique en production une confiance qu'il n'a pas gagnée, et `CLAUDE.md` §9 fait de la production
+une source de vérité qu'on ne touche pas sur une hypothèse.
+
+**Le motif du second terme.** L'écart est **systémique et non accidentel** : quatre migrations
+d'affilée, livrées par trois unités différentes, ont manqué au document sans que rien ne le dise.
+Combler l'écart sans poser la garde garantit une cinquième omission. La garde est le même geste que
+celui des décisions 345, 358 et 364 — mécaniser ce que la prose demande.
+
+**Ordre d'application, et c'est un point de méthode.** La garde est posée **avec** le contenu, dans
+le même changement, jamais avant. La poser d'abord rendrait le harnais rouge jusqu'à ce que trois
+unités le comblent — c'est-à-dire reproduirait délibérément le défaut qu'INC-094 vient de décrire :
+un harnais durablement rouge cesse d'être lu. Un contrôle n'entre au dépôt que le jour où il peut
+être vert.
+
+**Rattachement :** `CRM-053`, `CRM-056` et `CRM-059` pour les lignes ; le contrôle rejoint
+`scripts/verify-migrations.sh`, dont c'est l'objet, et non `verify-scripts.sh`.

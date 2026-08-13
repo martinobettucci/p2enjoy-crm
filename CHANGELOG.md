@@ -15,6 +15,31 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **Plus aucune décision n'est suspendue dans le registre** (décisions 362 à 365). Les six entrées
+  ouvertes après le 2026-08-11 sont tranchées ; INC-096 n'appelait pas un choix mais une action hors
+  dépôt. Les **61 entrées ouvertes attendent toutes une mise en œuvre et une preuve**, jamais un
+  arbitrage.
+- **INC-091 et INC-092 — chaque preuve purge par IMAP ce qu'elle dépose** dans une boîte seedée, dans
+  son propre `finally`, qu'elle l'ait relevée ou non. **L'assertion 9 de `0029` reste armée sur la
+  table entière** : elle a vu une fuite que rien d'autre ne voyait, et la désarmer serait corriger le
+  défaut en supprimant son détecteur. Piège nommé pour la mise en œuvre : purger la **table** n'est
+  pas purger la **boîte** — le `finally` actuel de `resilience.spec.ts` rend `204` en n'effaçant rien.
+- **INC-094 — une élévation de privilège se justifie, elle ne s'énumère pas.** Toute migration portant
+  `-- @migration-role:` cite son motif mesuré en en-tête, et le harnais contrôle cette justification
+  au lieu d'énumérer les fichiers autorisés. La liste close avait rendu `verify-scripts.sh` rouge en
+  permanence depuis `CRM-057` — un harnais durablement rouge cesse d'être lu.
+- **INC-089 et INC-097 — la sérialisation devient une garde du dépôt.** Le crochet `pre-commit`
+  refusera un numéro de décision déjà pris et une seconde exécution concurrente. Le compteur global
+  est **conservé** : plus de trois cent soixante décisions sont citées par leur numéro, et un schéma
+  mixte serait moins lisible que le défaut.
+- **INC-095 — un contrat de déploiement se remplit par celui qui a décidé.** `CRM-053`, `CRM-056` et
+  `CRM-059` écrivent les lignes de leurs propres migrations ; un contrôle refusera toute migration
+  absente du contrat, posé **avec** le contenu et jamais avant.
+- **`docs/BACKLOG.md` nomme les porteurs** de ces quatre arbitrages dans une section dédiée. Aucune
+  unité n'est créée : le travail rejoint des unités existantes ou la méthode de travail.
+
+### Documentation
+
 - **Le registre des contradictions ne conserve plus que ce qui est ouvert** (décision 361). Le texte
   intégral des **36 entrées closes** est retiré de `docs/INCONSISTENCY_REPORT.md` et remplacé par un
   index d'une ligne chacune — objet, date de clôture, unité qui l'a fermée, décision du journal.

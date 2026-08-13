@@ -5898,6 +5898,25 @@ pas un produit.
 
 ---
 
+## Dettes ouvertes par les arbitrages du 2026-08-13
+
+Ces quatre arbitrages (`docs/JOURNAL.md`, décisions **362 à 365**) ne créent **aucune unité** : ils
+rattachent du travail à des unités existantes ou à la méthode de travail. Chacun reste ouvert au
+registre jusqu'à sa livraison **et sa preuve**.
+
+| Porteur | Ce qui est dû | Entrée |
+|---|---|---|
+| `CRM-059` — `e2e/mail/resilience.spec.ts` | purger **par IMAP** dans le `finally` le message déposé chez Driss. Le `DELETE … subject=like.*objet*` actuel vise la **table** avant tout relèvement, rend `204` et n'efface **rien** : le message réel survit dans la boîte | INC-091 |
+| `CRM-050` — `e2e/mail/infrastructure.spec.ts` | même geste sur la boîte système catch-all, que le scénario M2 ne nettoie pas | INC-091, INC-092 |
+| les deux ci-dessus | une **contre-épreuve** : la purge doit échouer bruyamment si le message n'est pas dans la boîte, faute de quoi elle serait complaisante comme l'est le `DELETE` actuel | INC-091 |
+| `scripts/verify-scripts.sh`, `docs/SCHEMA.md` | le contrôle des migrations élevées passe de l'**énumération** à la **justification obligatoire** en en-tête ; `0018` et `0029` la portent déjà. Une dégradation doit prouver qu'une migration élevée **sans motif** est refusée. La ligne de base 104/3 anomalies doit en perdre une | INC-094 |
+| `.githooks/`, `scripts/verify-crochets-git.sh` | deux refus de plus au `pre-commit` : un **numéro de décision déjà pris** dans `docs/JOURNAL.md`, et une **seconde exécution concurrente** (verrou daté, avec expiration). Preuve du même ordre que la décision 358 : dépôt jetable, collision **provoquée** et refusée, voie nominale démontrée encore ouverte | INC-089, INC-097 |
+| `CRM-053`, `CRM-056`, `CRM-059` | écrire dans `docs/PROD_MIGRATIONS.md` les lignes de **leurs** migrations 31 à 34 — objectif, dépendances, réversibilité. Elles ne se déduisent pas du SQL : c'est l'unité qui a décidé qui les connaît | INC-095 |
+| `scripts/verify-migrations.sh` | un contrôle refusant toute migration absente du contrat de déploiement, posé **avec** le contenu et **jamais avant** — un harnais rouge en attendant reproduirait INC-094 | INC-095 |
+| **hors dépôt** | INC-096 : identifiants Docker Hub ou miroir de registre sur le démon. Tant qu'elle n'est pas levée, **aucune preuve de pile n'est exécutable** et rien de ce tableau n'est prouvable | INC-096 |
+
+---
+
 ## Propositions arbitrées
 
 **Arbitrage autonome du responsable — `docs/JOURNAL.md`, décision 299.** Il n'existe plus de

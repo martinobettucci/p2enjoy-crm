@@ -38,9 +38,13 @@ responsable. Les entrées **restent ouvertes jusqu'à leur mise en œuvre et leu
 **Solde d'arbitrage du 2026-08-11.** Les deux dernières entrées de la série 002 à 088 sans arbitrage
 — **INC-085**, qui recouvrait **INC-075**, et **INC-088** — sont tranchées par les décisions **333**
 et **334**. L'ordre de solde est fixé par la décision **336** : les défauts réels d'abord, le lot
-documentaire ensuite. Les entrées ouvertes depuis — **INC-089**, **INC-091**, **INC-092**,
-**INC-094**, **INC-095**, **INC-096** et **INC-097** — appellent chacune une décision ou une action,
-nommée en fin d'entrée. `docs/ARBITRAGES.md` §1 les regroupe.
+documentaire ensuite.
+
+**Solde d'arbitrage du 2026-08-13.** Les entrées ouvertes depuis — **INC-089**, **INC-091**,
+**INC-092**, **INC-094**, **INC-095** et **INC-097** — sont tranchées par les décisions **362 à
+365**. **INC-096** n'appelait pas un choix mais une action hors dépôt. **Aucune entrée de ce registre
+n'attend donc une décision du responsable** : les soixante et une entrées ouvertes attendent toutes
+une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 
 **État au 2026-08-13 :** 97 entrées ouvertes depuis l'origine, **36 closes** — index ci-dessous,
 texte dans l'historique Git — et **61 ouvertes**, conservées ici en entier.
@@ -96,6 +100,8 @@ date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du jou
 ## Ouverts
 
 ### INC-097 — Deux décisions du journal portent le même numéro 340, troisième collision du document
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 364.** **La cause est mécanisée** : `.githooks/pre-commit` refusera un numéro de décision déjà pris dans `docs/JOURNAL.md`, et une seconde exécution concurrente. L'option 1 d'INC-069 — abandonner le compteur global — est **explicitement écartée** : plus de trois cent soixante décisions sont citées par leur numéro, et un schéma mixte serait moins lisible que le défaut. L'entrée reste ouverte jusqu'à la livraison des deux refus et de leur preuve dans `scripts/verify-crochets-git.sh`.
 
 **Nature :** collision d'identifiants dans un document dont les numéros servent de références
 croisées. **Troisième occurrence**, après les deux décisions 180 (INC-069).
@@ -172,6 +178,8 @@ celle du `package.json`, et c'est l'environnement qui s'en écarte.
 
 ### INC-095 — Le contrat de déploiement s'arrête à la migration 30, alors que le dépôt en compte 34
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 365.** **Les unités porteuses complètent leurs propres lignes** — `CRM-053`, `CRM-056`, `CRM-059` —, parce qu'objectif, dépendances et réversibilité ont été décidés par elles et ne se déduisent pas du SQL. **Un contrôle rejoint `scripts/verify-migrations.sh`** et refusera toute migration absente de `docs/PROD_MIGRATIONS.md`. Il est posé **avec** le contenu, dans le même changement, jamais avant : un harnais rouge en attendant reproduirait INC-094. L'entrée reste ouverte jusqu'aux quatre lignes et à la garde.
+
 **Nature :** dérive du contrat de déploiement par rapport à l'état réel du dépôt — exactement ce que
 `CLAUDE.md` §12 interdit en toutes lettres : « Ce fichier ne doit jamais dériver de l'état réel du
 projet. »
@@ -213,6 +221,8 @@ invariant énoncé quelque part, et rien qui le vérifie).
 ---
 
 ### INC-094 — Une seconde migration s'exécute sous `supabase_admin`, et le contrôle qui n'en tolère qu'une n'a pas suivi
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 363.** **Option 3 : la justification obligatoire.** Toute migration portant `-- @migration-role:` cite son motif mesuré en en-tête, et le harnais contrôle la présence de cette justification au lieu d'énumérer les fichiers autorisés. L'arbitrage ne crée pas une exigence : `0018` et `0029` portent déjà la leur, il **promeut en règle une pratique tenue**. Limite dite : le contrôle vérifie qu'un motif est écrit, jamais qu'il est vrai. Mise en œuvre : `scripts/verify-scripts.sh` et la convention dans `docs/SCHEMA.md`.
 
 **Nature :** dérive entre une migration livrée et prouvée, et le harnais qui énonce l'invariant la
 concernant. Le harnais est donc rouge **en permanence** depuis la livraison, et l'invariant qu'il
@@ -271,6 +281,8 @@ INC-093 (même famille : un correctif ou un invariant dont la portée n'a pas su
 
 ### INC-092 — La même veille permanente fait aussi rougir `mail-sync.spec.ts` S3 sur un échec ATTENDU d'une autre preuve
 
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 362**, avec INC-091 : **chaque preuve purge par IMAP ce qu'elle a déposé**, dans son propre `finally`. L'entrée reste ouverte jusqu'à la reprise des deux fichiers et à sa contre-épreuve.
+
 **Nature :** même famille qu'INC-091 — la veille continue de `CRM-059` interagit avec une preuve
 antérieure qui ne l'anticipait pas —, mais la manifestation diffère : ici, un journal, pas une
 donnée.
@@ -298,6 +310,8 @@ avec une veille qui, depuis `CRM-059`, ne s'arrête jamais.
 ---
 
 ### INC-091 — La veille permanente de `CRM-059` transforme tout envoi de preuve vers une boîte seedée en message non classé permanent
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 362.** **Option 1 : chaque preuve qui adresse un envoi réel à une boîte seedée purge ce qu'elle y a déposé**, dans son propre `finally`, par le chemin IMAP de `retirerDeLaBoite` — que le message ait été relevé ou non. **L'assertion 9 de `0029` reste armée sur la table entière** : elle a vu une fuite que rien d'autre ne voyait, et la désarmer serait corriger le défaut en supprimant son détecteur (`CLAUDE.md` §18). La boîte jetable est écartée : elle coûtait la remise à une boîte **réelle** de membre, qui est ce que ces preuves ont de plus précieux. Attention à la mise en œuvre — purger la **table** n'est pas purger la **boîte** : le `finally` actuel de `resilience.spec.ts` rend `204` en n'effaçant rien. L'entrée reste ouverte jusqu'à la reprise des deux fichiers et à sa contre-épreuve.
 
 **Nature :** fuite de données de test, mesurée entre plusieurs unités — `CRM-059` (la boucle de
 veille), `e2e/mail/resilience.spec.ts` (`CRM-059`) et `e2e/mail/infrastructure.spec.ts` (`CRM-050`)
@@ -367,6 +381,8 @@ son propre travail.
 ---
 
 ### INC-089 — Une exécution concurrente de la routine a committé le travail d'une autre, sous son propre message
+
+**Arbitrage rendu — `docs/JOURNAL.md`, décision 364.** **La sérialisation devient une garde vérifiable dans le dépôt** : `.githooks/pre-commit` refusera une seconde exécution concurrente, par un verrou daté avec expiration, et un numéro de décision déjà pris. La question de la réécriture de `d7b35d5` est **éteinte par les faits** — la décision 359 a réécrit l'historique sur instruction explicite du responsable, et le commit porte un autre identifiant. Seule la garde restait due ; l'entrée reste ouverte jusqu'à sa livraison et sa preuve.
 
 **Nature :** violation mesurée de `CLAUDE.md` §13 — « un commit ne doit contenir que des
 modifications liées » — par le mécanisme d'exécution lui-même, et non par une décision de rédaction.
