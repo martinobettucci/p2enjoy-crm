@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **Lot D soldé : quatre entrées closes, corrigées et non déclarées** (décision 367). Le registre
+  passe de 62 à **58 entrées ouvertes**.
+- **INC-019 — le bandeau du `README.md` est réécrit depuis l'état réel du backlog**, et distingue
+  désormais trois catégories que le lecteur confondait : livré **et vérifié** (`[x]`), écrit mais
+  **insuffisamment vérifié** (`[~]`), pas commencé (`[ ]`). Il annonce aussi INC-096 en tête, parce
+  qu'aucune preuve de pile n'est exécutable aujourd'hui. Règle posée : **ce bandeau se relit à
+  chaque livraison, au même titre que ce fichier**.
+- **INC-017 close** : la limite « `supabase_vault` et `pg_cron` non vérifiées » a bien disparu du
+  §11, constaté et non supposé.
+- **INC-008 close, et tranchée dans le sens des scripts** : `npm run stop`, `npm run db:migrate` et
+  `npm run db:seed` **n'existeront pas**. Deux façades pour un même geste font diverger la
+  documentation de l'une des deux ; le `package.json` reste borné à la chaîne Node. Les lignes « à
+  venir » correspondantes sont retirées du `README.md` §5 et de `docs/DAT.md` §13.
+- **INC-006 close** : la pile officielle épinglée est confirmée comme référence. La question de
+  l'origine est d'ailleurs devenue sans objet — la pile a divergé de la distribution officielle par
+  des décisions propres, dont le retrait de Supavisor.
+- **`README.md` §11 corrigé sur deux points mesurés faux** : l'administration de l'arborescence a
+  son écran depuis `CRM-075`, et la messagerie du produit n'est plus « rien ne la lit » mais
+  « écrite, et aucune de ses unités intégralement prouvée ».
+
+### Documentation
+
 - **Les 61 entrées ouvertes du registre reçoivent chacune une disposition** (décision 367),
   présentées au responsable en treize lots et arbitrées une par une. Le filtre qui avait écarté
   cinquante-six d'entre elles comme « déjà tranchées » était posé par l'agent, pas par lui : une

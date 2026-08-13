@@ -85,9 +85,12 @@ pytest et Playwright reste l'objet de `CRM-008`, et le seed celui de `CRM-005`.
 - L'obtention d'un certificat **ACME** n'est pas prouvée : la vérification de production a utilisé
   `APP_DOMAIN=localhost`, donc l'autorité interne de Caddy.
 - La production a été démarrée contre un **fournisseur S3 simulé**, faute de compte S3 réel.
-- La pile provient de la distribution self-hosted **officielle** de Supabase et non de
-  `../starter.2025.12/`, absent de l'environnement : voir `docs/INCONSISTENCY_REPORT.md`, INC-006,
-  **en attente d'arbitrage du responsable**.
+- La pile provient de la distribution self-hosted **officielle** de Supabase, versions épinglées,
+  et non de `../starter.2025.12/`, absent de l'environnement d'exécution. **Confirmé et clos le
+  2026-08-13 par le responsable (INC-006)** : la pile officielle épinglée convient, aucun écart de
+  `starter.2025.12` n'est à reporter. La pile a depuis divergé de la distribution officielle par
+  des décisions propres au projet — le retrait de Supavisor (décision 366) en est une —, ce qui rend
+  la question de l'origine définitivement close : la référence est désormais le dépôt lui-même.
 
 ### CRM-002 — Scripts de lancement et environnement `[x]`
 `runDev.sh`, `runProd.sh`, `resetMe.sh`, `.env.example` documentant **chaque** variable (rôle,

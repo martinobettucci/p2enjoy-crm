@@ -800,9 +800,12 @@ Le harnais consolidé valide avant toute mutation un couple Node Linux conforme 
 modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).
 `pytest mail-sync/tests` naît avec le service Python en `CRM-051` et ne fait pas partie de la DoD
 de `CRM-008` (décision 277, INC-023) : un exécuteur vide ne constitue pas un harnais.
-`npm run db:migrate` et
-`npm run db:seed` restent à venir : aucune façade `npm` des scripts de lancement n'est ajoutée
-(`docs/JOURNAL.md`, décision 38 ; INC-008).
+**Aucune façade `npm` ne double un script de lancement, et c'est définitif** (INC-008, close le
+2026-08-13 ; `docs/JOURNAL.md`, décision 38). `npm run db:migrate`, `npm run db:seed` et
+`npm run stop` avaient été annoncés : ils n'existent pas et ne seront pas ajoutés. Les migrations
+sont appliquées par le `migrations-runner` au démarrage, le seed par `supabase/seed/apply-seed.sh`,
+et l'arrêt par `./runDev.sh --stop`. Deux façades pour un même geste font diverger la documentation
+de l'une des deux ; le `package.json` reste borné à la chaîne Node — types, build, tests.
 
 Les trois scripts partagent `scripts/lib/env.sh`, qui porte la lecture du fichier
 d'environnement, son amorçage et ses gardes. Le fichier visé est `.env` à la racine, ou celui que

@@ -43,18 +43,20 @@ documentaire ensuite.
 **Solde d'arbitrage du 2026-08-13.** Les entrées ouvertes depuis — **INC-089**, **INC-091**,
 **INC-092**, **INC-094**, **INC-095** et **INC-097** — sont tranchées par les décisions **362 à
 365**. **INC-096** n'appelait pas un choix mais une action hors dépôt. **Aucune entrée de ce registre
-n'attend donc une décision du responsable** : les soixante-deux entrées ouvertes attendent toutes
+n'attend donc une décision du responsable** : les cinquante-huit entrées ouvertes attendent toutes
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-13 :** 98 entrées ouvertes depuis l'origine, **36 closes** — index ci-dessous,
-texte dans l'historique Git — et **62 ouvertes**, conservées ici en entier.
+**État au 2026-08-13, après le lot D :** 98 entrées ouvertes depuis l'origine, **40 closes** — index
+ci-dessous, texte dans l'historique Git — et **58 ouvertes**, conservées ici en entier. Les
+soixante et une entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis
+cinquante-huit avec la clôture du lot D.
 
 ---
 
 ## Clos — index
 
-Trente-six entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait, la
+Quarante entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait, la
 date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
 
 | Entrée | Objet | Close le | Fermée par | Décision |
@@ -62,11 +64,15 @@ date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du jou
 | INC-001 | Disponibilité de `supabase_vault` et `pg_cron` non vérifiée | 2026-08-03 | `CRM-004` | 23, 24 |
 | INC-003 | Transition « Réalisation → Perdu » non déclarée | 2026-08-09 | `CRM-005` | 259 |
 | INC-005 | Écart assumé : copie de workflow contre surcharge | 2026-08-07 | confirmation, aucun code | 266 |
+| INC-006 | Pile de référence `../starter.2025.12/` introuvable dans l'environnement | 2026-08-13 | confirmation du responsable, aucun code | 367 |
 | INC-007 | `supabase/functions/` référencé sans composant correspondant | 2026-08-08 | `CRM-016` | 260 |
+| INC-008 | Commandes `npm` annoncées sans `package.json` ; façade `npm` des scripts | 2026-08-13 | `README.md` §5, `docs/DAT.md` §13 | 38, 367 |
 | INC-012 | Le motif principal de la décision 8 démenti par la mesure | 2026-08-09 | `CRM-017` | 8, 261 |
 | INC-013 | Quatre fonctions d'autorisation dépendent de tables livrées deux chunks plus tard | 2026-08-05 | reprise `CRM-010` | 155, 156, 157 |
 | INC-014 | Aucune unité ne nommait l'écriture des politiques RLS des tables d'identité | 2026-08-09 | `CRM-022` | 294 |
 | INC-016 | Gabarits d'emails : chargement HTTP obligatoire, repli silencieux vers l'anglais | 2026-08-07 | `CRM-009` | 264 |
+| INC-017 | `README.md` §11 annonçait non vérifié ce que `CRM-004` avait mesuré | 2026-08-13 | report constaté effectif | 23, 367 |
+| INC-019 | Le bandeau d'état du `README.md` décrivait un dépôt dépassé par trois unités | 2026-08-13 | bandeau réécrit, relu à chaque livraison | 367 |
 | INC-020 | La DoD de `CRM-006` exigeait le build d'une webapp livrée par l'unité suivante | 2026-08-04 | `CRM-007` | — |
 | INC-021 | Aucune unité ne portait l'écran de connexion, que la DoD de `CRM-011` présuppose | 2026-08-07 | `CRM-009` | 253 |
 | INC-022 | `docs/DAT.md` §3.1 se contredisait sur la persistance de session | 2026-08-07 | `CRM-009` | 254 |
@@ -1332,75 +1338,6 @@ maximale des pièces jointes, analyse antivirale, aucune exécution de contenu.
 
 ---
 
-### INC-006 — Pile de référence `../starter.2025.12/` introuvable dans l'environnement d'exécution
-
-**Nature :** référence absente, contournée sans arbitrage.
-**Relevé le :** 2026-08-03, pendant `CRM-001`.
-
-`docs/BACKLOG.md` décrit `CRM-001` comme la « copie de la pile éprouvée
-(`../starter.2025.12/supabase/docker/`) », et `docs/JOURNAL.md` s'appuie sur son inspection. Or
-la routine cloud travaille sur un conteneur où **seul** le dépôt `p2enjoy-crm` est cloné : le
-répertoire voisin n'existe pas et n'est pas accessible.
-
-```
-$ ls -la /home/user/
-drwxr-xr-x 3 root root 4096 .
-drwxr-xr-x 5 root root 4096 ..
-drwxr-xr-x 4 root root 4096 p2enjoy-crm
-```
-
-**Comportement retenu :** la pile a été assemblée à partir de la distribution self-hosted
-**officielle** de Supabase (`supabase/supabase`, répertoire `docker/`), avec versions épinglées,
-et non à partir de la pile voisine. Les fichiers d'initialisation repris portent la mention de
-leur origine.
-
-**Risque résiduel :** si `../starter.2025.12/` contenait des adaptations maison (réglages
-PostgreSQL, correctifs, versions volontairement figées à un autre niveau), elles sont **absentes**
-de la pile livrée, sans que la routine puisse le constater.
-
-**Arbitrage attendu du responsable :** confirmer que la pile officielle épinglée convient, ou
-fournir les écarts de `starter.2025.12` à reporter. Tant que ce point est ouvert, aucune
-divergence n'est supposée ni inventée.
-
----
-
-### INC-008 — Commandes `npm` annoncées sans `package.json`, et `npm run stop` attribué à `CRM-002`
-
-**Nature :** contradiction entre la documentation et le périmètre des unités.
-**Relevé le :** 2026-08-03, pendant `CRM-002`.
-
-`README.md` annonçait `npm install` en §4 et `npm run stop` en §5, cette dernière marquée « à
-venir (`CRM-002`) » ; `docs/DAT.md` §13 la reprenait. Or :
-
-- le dépôt ne contient **aucun** `package.json`, et aucune unité du backlog ne dit lequel
-  l'introduit — `CRM-006` (types générés) et `CRM-007` (webapp) le supposent tous deux ;
-- `CRM-002` est décrite dans `docs/BACKLOG.md` comme livrant `runDev.sh`, `runProd.sh`,
-  `resetMe.sh` et `.env.example`. Rien n'y mentionne d'alias `npm`, et en créer un aurait exigé
-  d'introduire un `package.json` sans unité pour le porter.
-
-**Comportement retenu :** `CRM-002` livre l'arrêt propre là où il a du sens, sous forme d'options
-des scripts qu'elle produit — `./runDev.sh --stop` et `./runProd.sh --stop`. `README.md` §5 et
-`docs/DAT.md` §13 décrivent désormais ces commandes réellement exécutables, et la ligne
-`npm run stop` en a été retirée plutôt que laissée à décrire une commande inexistante.
-
-**Ce qui n'est pas tranché, et n'a pas été tranché ici :** quelle unité introduit `package.json`,
-et si le projet veut par-dessus les scripts une façade `npm` — `npm run stop`, `npm run dev` —
-qui les appelle. Les deux questions relèvent d'un arbitrage, pas d'un choix d'implémentation.
-
-**Arbitrage attendu du responsable :** rattacher `package.json` à une unité explicite, et dire si
-les alias `npm` doivent exister en doublon des scripts.
-
-**Mise à jour du 2026-08-03, pendant `CRM-006`.** La première question s'est tranchée d'elle-même :
-la Definition of Done de `CRM-006` nomme `npm run types:generate`, l'unité ne peut donc pas être
-livrée sans `package.json`. Il est introduit par elle (`docs/JOURNAL.md`, décision 38), **réduit
-aux seules commandes que cette DoD exige** — `types:generate`, `types:check`, `typecheck`.
-
-**La seconde question reste entière, et n'a pas été préemptée :** aucun alias `npm` des scripts
-existants n'a été ajouté. `npm run dev`, `npm run stop` et `npm run db:seed` — ce dernier annoncé
-par `docs/DAT.md` §13 — n'existent toujours pas. L'entrée reste **ouverte**.
-
----
-
 ### INC-009 — La Definition of Done de `CRM-002` dépend d'une unité planifiée bien après elle
 
 **Nature :** contradiction d'ordonnancement entre `docs/BACKLOG.md` et `docs/MASTER_PLAN.md`.
@@ -1559,34 +1496,6 @@ unité. La table et le geste éventuels d'invitation restent, eux, explicitement
 
 ---
 
-### INC-017 — `README.md` §11 annonce encore comme non vérifié ce que `CRM-004` a mesuré
-
-**Nature :** documentation en retard sur une décision déjà prise.
-**Relevé le :** 2026-08-03, pendant `CRM-011`, en relisant `README.md`.
-
-`README.md` §11 « Limites connues » porte toujours :
-
-> **Disponibilité de `supabase_vault` et `pg_cron` non vérifiée** dans l'image PostgreSQL
-> retenue. Un repli est documenté pour chacun (`pgcrypto` et ordonnanceur applicatif). Le point
-> sera tranché avant tout code de messagerie.
-
-Or `CRM-004` a mesuré les deux extensions dans l'image réellement épinglée, a clos INC-001 et a
-retenu Vault (décision 23). Le `README.md` avait bien été mis à jour en §5, §7 et §12 par cette
-unité, mais **pas** en §11.
-
-**Pourquoi ce n'est pas corrigé ici.** La ligne appartient au périmètre de `CRM-004` et non à
-celui de `CRM-011`. La modifier au passage mêlerait deux sujets dans un même commit, contre
-`CLAUDE.md` §13. Ce n'est pas non plus une contradiction à arbitrer : la décision est prise et
-documentée, seul son report dans ce paragraphe manque.
-
-**Risque :** un lecteur du seul `README.md` peut croire la question ouverte et refaire le travail
-de `CRM-004`.
-
-**Action attendue :** retirer ou reformuler cette limite dans `README.md` §11, dans un changement
-qui lui soit propre.
-
----
-
 ### INC-018 — L'API d'administration de GoTrue n'applique pas la politique de mot de passe
 
 **Arbitrage rendu — `docs/JOURNAL.md`, décision 265.** **Le chemin d'administration de GoTrue est interdit en production** et documenté comme une opération d'exploitation encadrée : un privilège ne dispense pas d'une règle. Mise en œuvre : `docs/PROD_MIGRATIONS.md` §7 et `docs/SPEC-auth.md` §4.1.
@@ -1636,44 +1545,6 @@ spécification, et le choix n'est pas neutre. Trois options s'offrent, aucune é
 **Arbitrage attendu du responsable :** trancher entre ces options avant que l'invitation ne
 devienne un parcours produit (INC-015), moment où le chemin d'administration cessera d'être
 réservé à un opérateur.
-
----
-
-### INC-019 — Le bandeau d'état du `README.md` décrit un dépôt que trois unités ont dépassé
-
-**Nature :** documentation en retard sur l'état réel.
-**Relevé le :** 2026-08-03, pendant `CRM-005`, en mettant à jour le `README.md`.
-
-Le bandeau « État d'avancement — lisez ceci en premier », en tête du `README.md`, porte encore :
-
-> En revanche, **le produit n'existe pas encore** : aucune migration
-> (`supabase/migrations/` est vide), aucune webapp, aucun service `mail-sync`.
-
-Deux de ces trois affirmations sont fausses depuis `CRM-003` : `supabase/migrations/` contient
-deux migrations appliquées et vérifiées, et le socle d'identité est en base. `CRM-005` y ajoute un
-seed. Seules « aucune webapp » et « aucun service `mail-sync` » restent exactes.
-
-C'est le même mode de défaillance qu'INC-017, à un autre endroit du même fichier : une unité met à
-jour les sections qu'elle touche et laisse le paragraphe de synthèse en arrière.
-
-**Pourquoi ce n'est pas corrigé ici.** Le bandeau relève de l'état global du dépôt, non du
-périmètre de `CRM-005`. Le réécrire au passage mêlerait deux sujets dans un même commit, contre
-`CLAUDE.md` §13 — c'est le raisonnement retenu pour INC-017, et il vaut ici à l'identique. Ce
-n'est pas non plus une contradiction à arbitrer : aucune décision n'est en jeu, seulement une mise
-à jour.
-
-**Risque :** un lecteur qui s'arrête au bandeau — ce que le bandeau lui demande explicitement de
-faire en premier — croit le dépôt vide de toute migration, et peut refaire le travail de `CRM-003`
-ou douter de la validité des unités suivantes.
-
-**Action attendue :** réécrire le bandeau à partir de l'état réel de `docs/BACKLOG.md`, dans un
-changement qui lui soit propre, et le traiter désormais comme une section à revoir à chaque
-livraison — au même titre que `CHANGELOG.md`.
-
-**Mise à jour du 2026-08-03, pendant `CRM-006`.** La troisième affirmation devient ambiguë à son
-tour : `webapp/` existe désormais, mais ne contient que les types générés et leurs assertions —
-aucun écran, aucun composant, aucun build. « Aucune webapp » reste vrai au sens du produit et faux
-au sens du répertoire. À prendre en compte dans la réécriture attendue.
 
 ---
 
@@ -2985,6 +2856,8 @@ référentielle), `CLAUDE.md` §8 (le seed est reproductible).
 **Close le 2026-08-09 par `CRM-018`.** La liaison est comptée séparément dans la source et dans la
 copie remappée ; aucun compte global ne dépend plus de l'âge de la base. Le reset froid et le seed
 rejoué prouvent le même état : une exigence fonctionnelle dans chacun des deux workflows.
+
+---
 
 ### INC-098 — `VAULT_ENC_KEY` est documentée comme la clé des secrets de messagerie, alors que seul le pooler la lisait
 

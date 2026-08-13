@@ -5,32 +5,43 @@ workflows à transitions contraintes, formulaires conditionnels par étape, et u
 intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 
 > **État d'avancement — lisez ceci en premier.**
-> Sont livrés et vérifiés : la **pile d'exécution** (`CRM-001`, `CRM-002`), les **migrations
-> d'amorçage** et leur refus par défaut (`CRM-003`), le **chiffrement des secrets** (`CRM-004`),
-> les **fonctions d'autorisation** (`CRM-010`), l'**authentification** (`CRM-011`), l'**écran de
-> connexion, la session d'onglet et les emails transactionnels français** (`CRM-009`), le **seed
-> socle** (`CRM-005`), les **types générés** (`CRM-006`), le **squelette de la webapp**
-> (`CRM-007`), le **harnais de tests** (`CRM-008`), les **tracks** (`CRM-020`), les **channels**
-> (`CRM-021`), le **catalogue de nœuds** (`CRM-030`), les **workflows** (`CRM-031`), leur **copie
-> vers un track** (`CRM-032`), la **cohérence workflow ↔ channel** (`CRM-033`), les **champs de
-> formulaire** (`CRM-035`), les **cards** (`CRM-040`), la **garde centrale `move_card`**
-> (`CRM-034`), les **valeurs de formulaire** (`CRM-036`) et les **identités d'équipe sûres**
-> (`CRM-022`).
-> Le runtime de **fonctions edge** est également livré (`CRM-016`) : la route
-> `/functions/v1/` traverse Kong, exige une clé d'API et exécute des workers Deno isolés sans
-> publier de port direct.
-> Le board, la vue liste, la fiche, les commentaires et l'historique sont également livrés. La
-> webapp possède désormais son **écran de connexion**, une session limitée à l'onglet et une
-> déconnexion réelle (`CRM-009`). Un utilisateur connecté peut consulter les données que la RLS
-> lui consent, publier un commentaire — puis **le corriger ou le supprimer**, l'écran offrant les
-> deux gestes à leur seul auteur — et déplacer une card. `move_card` porte ses **six** vérifications :
-> la sixième, « les champs requis de l'étape cible sont renseignés », est livrée par `CRM-036`, qui
-> a refermé INC-047.
+> *Ce bandeau est réécrit à partir de `docs/BACKLOG.md` à chaque livraison, au même titre que le
+> `CHANGELOG.md` — règle posée le 2026-08-13 en clôturant INC-019, qui constatait qu'il décrivait un
+> dépôt que trois unités avaient dépassé. Dernière relecture : **2026-08-13**.*
+>
+> **Ce qui est livré ET intégralement vérifié** (`[x]`) : les scripts de lancement (`CRM-002`), les
+> migrations d'amorçage (`CRM-003`), le chiffrement des secrets (`CRM-004`), le seed socle
+> (`CRM-005`), les types générés (`CRM-006`), le squelette de la webapp (`CRM-007`), le harnais de
+> tests (`CRM-008`), l'écran de connexion et la session d'onglet (`CRM-009`), les fonctions
+> d'autorisation (`CRM-010`), l'authentification (`CRM-011`), les **droits fins par track et
+> channel** (`CRM-012`), le secret de build npm (`CRM-015`), les fonctions edge (`CRM-016`),
+> l'ordonnancement `pg_cron` (`CRM-017`), `require_fields` en table de liaison (`CRM-018`),
+> `change_channel_workflow` (`CRM-019`), les tracks (`CRM-020`), les channels (`CRM-021`), les
+> identités d'équipe sûres (`CRM-022`), le board kanban (`CRM-041`), les commentaires (`CRM-043`),
+> la timeline unifiée (`CRM-044`), l'**administration des tracks et des channels** (`CRM-075`),
+> l'infrastructure mail de développement (`CRM-050`) et le service `mail-sync` (`CRM-051`).
+>
+> **Ce qui est écrit mais insuffisamment vérifié** (`[~]`) — le code existe, sa preuve n'est pas
+> complète, et il ne faut pas s'y fier sans lire l'unité : la pile elle-même (`CRM-001`), les
+> colonnes protégées (`CRM-013`), le harnais de preuves d'autorisation (`CRM-014`), le moteur de
+> workflow (`CRM-030` à `CRM-037`), les cards et la vue liste (`CRM-040`, `CRM-042`), le
+> déplacement entre channels (`CRM-045`), le seed de démonstration (`CRM-046`), le manuel
+> (`CRM-047`) et **toute la messagerie du produit** (`CRM-052` à `CRM-059`).
+>
+> **Ce qui n'est pas commencé** (`[ ]`) : l'éditeur de workflows (`CRM-076`), la corbeille
+> (`CRM-077`), le versionnement (`CRM-078`), l'onboarding (`CRM-079`), les sauvegardes (`CRM-080`),
+> le snooze (`CRM-081`) et les extensions du chunk 5 (`CRM-060` à `CRM-074`).
+>
+> **Une limite d'environnement à connaître avant tout.** Le registre d'images Docker est
+> actuellement injoignable depuis l'environnement de vérification : `./runDev.sh` s'arrête avant de
+> démarrer un service, et **aucune preuve de pile n'est exécutable** — ni `npm run test:sql`, ni
+> `e2e:api`, ni `e2e:ui`, ni `e2e:mail`, ni les harnais `scripts/verify-*.sh` qui exigent les
+> services. Voir `docs/INCONSISTENCY_REPORT.md`, INC-096. Cela ne dit rien de la qualité du code
+> livré ; cela dit que rien de neuf ne peut être **prouvé** tant que le point n'est pas levé.
+>
 > **Conséquence à connaître avant de lancer l'application** : sans session, l'interface conserve
 > les vrais états vides et de refus du backend. Après connexion, elle réutilise le même client avec
-> le jeton réel du compte ; aucune autorisation n'est calculée côté navigateur. Un membre lit le
-> nom de son workspace, ses memberships et les profils de son équipe ; l'en-tête, le board, la
-> liste, les commentaires et la timeline rendent ces identités sans exposer d'UUID technique.
+> le jeton réel du compte ; aucune autorisation n'est calculée côté navigateur.
 > Les commandes marquées « à venir » dans le tableau du §5 sont le **contrat** que
 > l'implémentation devra respecter, pas un état constaté.
 > L'état réel, unité par unité, est tenu dans [`docs/BACKLOG.md`](docs/BACKLOG.md) ; l'ordre
@@ -160,7 +171,6 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
 | `scripts/verify-authz.sh` | Rejoue les preuves des fonctions d'autorisation : suite pgTAP, idempotence, comportement sous PostgREST avec des jetons réels | **disponible** |
-| `npm run db:migrate` | Applique les migrations en attente | à venir (`CRM-003`) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
 | `scripts/verify-seed-demo.sh` | Rejoue les preuves du jeu de démonstration : étapes peuplées, workflow dérivé exercé, aucun channel actif vide, convergence | **disponible** |
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
@@ -169,7 +179,6 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-mail-infra.sh` | Rejoue les preuves de l'infrastructure mail de développement : configuration versionnée, placement des services, variables, domaines convergents, boîtes et rôles, IMAP réel, détection ClamAV, Roundcube | **disponible** |
 | `scripts/verify-mail-infra.sh --contre-epreuve` | Dégrade une **copie** des fichiers versionnés et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
-| `npm run db:seed` | Rejoue le seed de démonstration | à venir (INC-008, arbitrage ouvert) |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
 | `npm run types:check` | Vérifie que les types versionnés n'ont pas dérivé du schéma, sans rien réécrire | **disponible** |
 | `npm run typecheck` | `tsc --noEmit` sur les quatre projets : types générés, application, tests, outillage | **disponible** |
@@ -189,11 +198,15 @@ Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
 fichier jetable sans toucher à la configuration du poste.
 
-L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`. Le `npm run stop` annoncé
-dans les versions antérieures de ce document n'existe toujours pas : le `package.json` livré par
-`CRM-006` se limite aux commandes de types, et créer des alias des scripts trancherait en silence
-un point laissé à l'arbitrage — voir
-[`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-008.
+L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`.
+
+**Les scripts sont la façade canonique, et `npm` ne les double jamais** (INC-008, close le
+2026-08-13). Le `package.json` livré par `CRM-006` porte les commandes qui appartiennent réellement
+à la chaîne Node — types, build, tests — et rien d'autre. `npm run stop`, `npm run dev` au sens de
+la pile, `npm run db:migrate` et `npm run db:seed` ont été annoncés par des versions antérieures de
+ce document : **ils n'existent pas et n'existeront pas**. Deux façades pour un même geste font
+diverger la documentation de l'une des deux. Les migrations sont appliquées par le
+`migrations-runner` au démarrage de la pile, et le seed par `supabase/seed/apply-seed.sh`.
 
 Les commandes `docker compose` sous-jacentes restent utilisables directement :
 
@@ -685,17 +698,19 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **L'administration métier reste incomplète.** Tracks, channels, workflows, formulaires et cards
-  existent côté serveur ; le board, la liste, la fiche, les commentaires et la timeline permettent
-  déjà de les consulter et d'exercer les actions livrées. Les écrans de création et de
-  configuration, ainsi que la messagerie du produit, restent à implémenter. Voir
+- **L'administration métier est partielle.** L'arborescence — créer, renommer, réordonner,
+  archiver et désarchiver un track ou un channel — a son écran depuis `CRM-075`. Restent sans
+  surface : l'**éditeur de workflows** (`CRM-076`), la définition des **formulaires**, la
+  **corbeille** (`CRM-077`) et l'administration des **membres** (`CRM-070`). La **fiche d'une
+  affaire reste en lecture seule** : le formulaire conditionnel est rendu, validé et prouvé côté
+  base, mais l'enregistrement depuis l'écran est dû par `CRM-037` (INC-088). Voir
   [`docs/BACKLOG.md`](docs/BACKLOG.md) pour l'état exact unité par unité.
-- **La messagerie de développement existe, mais rien ne la lit.** Depuis `CRM-050`, Stalwart,
-  Roundcube et ClamAV démarrent avec la pile, et trois boîtes sont provisionnées. Depuis
-  `CRM-051`, le service `mail-sync` démarre lui aussi — mais **son socle ne se connecte à aucune
-  boîte** : ses workers IMAP et SMTP annoncent explicitement `waiting_for_configuration`, et les
-  comptes arrivent en `CRM-052`, l'ingestion en `CRM-054`. Ce qui est livré est le monde extérieur
-  et le processus qui l'écoutera, pas la fonctionnalité.
+- **La messagerie du produit est écrite, et aucune de ses unités n'est intégralement prouvée.**
+  Depuis `CRM-050` et `CRM-051` — les deux seules `[x]` de la chaîne — Stalwart, Roundcube, ClamAV
+  et le service `mail-sync` démarrent avec la pile. Les comptes entrants, les identités sortantes,
+  l'ingestion, le classement, les dossiers IMAP, l'inbox globale, la composition et le backfill
+  (`CRM-052` à `CRM-059`) sont **tous `[~]`** : le code existe, la preuve est incomplète. Ne pas
+  s'appuyer sur cette chaîne sans lire l'unité concernée dans le backlog.
 - **Stalwart n'expose volontairement aucune console web.** Sa racine HTTP sert une page locale
   explicative, sans téléchargement au démarrage. Tous ses protocoles et son API de gestion
   `/api/*` fonctionnent ; la vérification visuelle passe par Roundcube.
