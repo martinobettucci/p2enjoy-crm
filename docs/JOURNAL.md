@@ -11902,3 +11902,31 @@ qu'une seule ligne d'historique.
 par `git fetch origin && git reset --hard origin/main` : un `git pull` y produirait un historique
 dupliqué. Le dépôt n'ayant qu'une ligne de travail et des exécutions repartant d'un checkout neuf à
 chaque heure, le coût est nul en pratique.
+
+### Décision 340 — Vérifier la prémisse d'une preuve avant d'accuser le produit
+
+**2026-08-12 — `CRM-059`, sur une preuve rouge trouvée par le harnais global.**
+
+**Le symptôme.** `e2e/mail/backfill.spec.ts` échoue sur « un premier contact ne descend jamais
+l'historique » : trois archives de 90 jours arrivent en base dès la première relève, avec le
+courrier du jour.
+
+**Deux explications possibles, et il fallait trancher avant d'agir.** Soit le produit ne borne pas
+la fenêtre de sa première passe — défaut réel —, soit `APPEND` ne conserve pas la date passée
+demandée, auquel cas les trois « archives » seraient du courrier du jour aux yeux du serveur, et la
+preuve mesurerait le serveur plutôt que le produit. Corriger sans trancher aurait été soigner un
+symptôme au hasard.
+
+**Mesuré.** `APPEND` avec `Time2Internaldate(now - 90 j)` puis `FETCH INTERNALDATE` rend
+`"15-May-2026 13:42:56 +0000"`. **Le serveur conserve la date.** La prémisse de la preuve est juste.
+
+**Conséquence.** Le défaut est dans la première passe de relève, qui rapatrie toute la boîte au lieu
+de se borner au courrier courant. `CRM-059` repasse `[~]` : une unité dont une preuve de sa propre
+Definition of Done est rouge ne peut pas rester `[x]`, quelle que soit la quantité de travail déjà
+faite autour.
+
+**Ce que cet épisode dit du travail nocturne.** L'unité avait été déclarée `[x]` avec cette preuve
+au vert — elle l'était sans doute au moment où elle a été écrite. Entre-temps, quelque chose l'a
+rendue rouge sans que personne le voie, et c'est le harnais global qui l'a rattrapé. C'est
+exactement ce à quoi il sert, et la raison pour laquelle un compteur figé vaut mieux qu'un « le vert
+est vert ».

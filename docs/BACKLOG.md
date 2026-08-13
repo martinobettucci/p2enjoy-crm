@@ -5716,7 +5716,19 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[x]`
+### CRM-059 — Backfill, résilience, supervision `[~]`
+> **RÉTROGRADÉE DE `[x]` À `[~]` LE 2026-08-12, SUR PREUVE ROUGE.** Le scénario
+> `e2e/mail/backfill.spec.ts` — « un premier contact ne descend jamais l'historique, même déjà
+> présent et autorisé » — **échoue** : les trois archives de 90 jours descendent dès la première
+> relève, en même temps que le courrier du jour, alors que le §20.6 exige « la boîte courante
+> d'abord, puis un lot d'historique borné — jamais l'inverse ».
+>
+> **La prémisse de la preuve a été vérifiée avant d'accuser le produit** : mesuré le 2026-08-12,
+> Stalwart **conserve** l'`INTERNALDATE` passée d'un `APPEND` — un message déposé à 90 jours est
+> relu `15-May-2026`. La preuve mesure donc bien le produit, et non le serveur. Le défaut est dans
+> la première passe de relève, qui ne borne pas sa fenêtre.
+>
+> Une unité dont une preuve de sa propre Definition of Done est rouge ne peut pas rester `[x]`.
 Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché
 conforme à la réalité.
