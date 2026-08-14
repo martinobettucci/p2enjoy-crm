@@ -401,7 +401,12 @@ SCENARIOS_API=507
 # obtenu par une course réelle, les trois gestes au clavier seul, la capture du formulaire ouvert
 # et les quatre paliers du bloc des arêtes. 193 + 8 = **201**, valeur MESURÉE par l'exécution
 # complète (201 verts, 5,0 min).
-SCENARIOS_UI=201
+# **210 depuis la TROISIÈME tranche de `CRM-076`** (le 2026-08-14) : le même fichier gagne les neuf
+# scénarios des champs de formulaire — les cinq gestes à la souris confirmés en base, la déclaration
+# d'un champ à choix avec le refus de deux clés identiques que la base accepterait, le refus réel
+# d'une clé déjà prise, le parcours au clavier seul, la capture du formulaire ouvert et les quatre
+# paliers du bloc des champs. 201 + 9 = **210**, valeur MESURÉE par l'exécution complète.
+SCENARIOS_UI=210
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

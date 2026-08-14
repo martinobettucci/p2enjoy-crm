@@ -598,3 +598,326 @@ test.describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
 		})
 	}
 })
+
+// =============================================================================================
+// TROISIÈME TRANCHE — les champs du formulaire
+// @verifies docs/SPEC-workflow-engine.md §7 bis.10 (l'édition des champs), §7 bis.10.1 (lecture 5,
+//           archivés compris), §7 bis.10.2 (les cinq gestes sur la vraie base), §7 bis.10.3 (clé et
+//           type figés après la déclaration), §7 bis.10.4 (validation de forme, dont l'unicité des
+//           clés de choix), §7 bis.10.5 (refus d'une clé déjà prise, constaté et non simulé),
+//           §7 bis.10.8 (preuves attendues)
+// @verifies docs/SPEC-form-composer.md §2.4 (options), §2.6 (ordre), §2.7 (aucune suppression)
+// =============================================================================================
+//
+// MÊME DISCIPLINE QUE LES DEUX PREMIÈRES TRANCHES : chaque geste est joué par l'écran, puis
+// confirmé EN BASE par la clé de service. Les champs de preuve portent la clé préfixée `e2e-wf-`
+// et sont purgés dans le `finally` — le seed retrouve exactement ses sept champs.
+//
+// LE CHAMP ARCHIVÉ N'EST PAS CRÉÉ PAR LA PREUVE : le seed en pose un, `budget-previsionnel`, et
+// l'archivage se joue sur un champ de preuve pour ne pas déplacer l'état seedé.
+
+const CHEMIN_CHAMPS = `${URL_API}/rest/v1/form_fields`
+
+/** L'état d'un champ en base, lu par sa clé — la confirmation d'un geste d'écran. */
+async function champEnBase(
+	request: APIRequestContext,
+	cle: string,
+): Promise<{
+	id: string
+	key: string
+	label: string
+	type: string
+	options: Record<string, unknown>
+	help_text: string | null
+	position: number
+	archived_at: string | null
+} | null> {
+	const reponse = await request.get(
+		`${CHEMIN_CHAMPS}?select=id,key,label,type,options,help_text,position,archived_at&workflow_id=eq.${WORKFLOW_DEFAUT}&key=eq.${cle}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as readonly {
+		id: string
+		key: string
+		label: string
+		type: string
+		options: Record<string, unknown>
+		help_text: string | null
+		position: number
+		archived_at: string | null
+	}[]
+	return lignes[0] ?? null
+}
+
+/** Purge les champs de preuve, valeurs comprises : le seed doit retrouver ses sept champs. */
+async function purgerChamps(request: APIRequestContext): Promise<void> {
+	const lecture = await request.get(
+		`${CHEMIN_CHAMPS}?select=id&workflow_id=eq.${WORKFLOW_DEFAUT}&key=like.e2e-wf-*`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await lecture.json()) as readonly { id: string }[]
+	for (const ligne of lignes) {
+		await request.delete(`${URL_API}/rest/v1/card_field_values?field_id=eq.${ligne.id}`, {
+			headers: enTetesService(),
+		})
+		await request.delete(`${CHEMIN_CHAMPS}?id=eq.${ligne.id}`, { headers: enTetesService() })
+	}
+}
+
+/** Amène le bloc des champs à l'écran — il est le troisième, sous les étapes et les arêtes. */
+async function ouvrirBlocChamps(page: Page): Promise<void> {
+	await page.getByTestId('liste-champs').scrollIntoViewIfNeeded()
+	// Le seed pose sept champs, dont un archivé : c'est le contrat du §7 bis.10.8.
+	await expect(page.getByTestId('ligne-champ')).toHaveCount(7)
+	await expect(page.getByTestId('champ-archive')).toHaveCount(1)
+}
+
+test.describe('les cinq gestes sur les champs, à la souris (§7 bis.10.2)', () => {
+	test('un administrateur déclare, modifie, réordonne, archive et restaure un champ', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirBlocChamps(page)
+
+			// --- Déclarer -------------------------------------------------------------------------
+			await page.getByRole('button', { name: 'Déclarer un champ' }).click()
+			const formulaire = page.getByTestId('formulaire-champ')
+			await expect(formulaire).toBeVisible()
+			await formulaire.getByLabel('Clé').fill('e2e-wf-souris')
+			await formulaire.getByLabel('Libellé').fill('E2E Champ Souris')
+			await formulaire.getByLabel('Type').selectOption('number')
+			await formulaire.getByLabel('Texte d’aide').fill('Posé par la preuve.')
+			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(formulaire).toBeHidden()
+			await expect(page.getByTestId('ligne-champ')).toHaveCount(8)
+			// Le trigger a placé le champ EN FIN de formulaire : position 8, après les sept seedés.
+			const declare = await champEnBase(request, 'e2e-wf-souris')
+			expect(declare).toMatchObject({
+				label: 'E2E Champ Souris',
+				type: 'number',
+				help_text: 'Posé par la preuve.',
+				options: {},
+				archived_at: null,
+			})
+			expect(declare?.position).toBeGreaterThan(7)
+
+			// --- Modifier : le libellé et l'aide, jamais la clé ni le type (§7 bis.10.3) -----------
+			await page.getByRole('button', { name: 'Modifier le champ E2E Champ Souris' }).click()
+			const edition = page.getByTestId('formulaire-champ')
+			await expect(edition).toBeVisible()
+			// La clé et le type sont AFFICHÉS et non saisissables : deux textes qui disent pourquoi.
+			await expect(edition.getByTestId('champ-cle-figee')).toContainText('e2e-wf-souris')
+			await expect(edition.getByTestId('champ-type-fige')).toContainText('Nombre')
+			await expect(edition.getByLabel('Clé')).toHaveCount(0)
+			await expect(edition.getByLabel('Type')).toHaveCount(0)
+			await edition.getByLabel('Libellé').fill('E2E Champ Modifié')
+			await edition.getByLabel('Texte d’aide').fill('')
+			await edition.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(edition).toBeHidden()
+			// L'aide vidée est écrite à `null`, et la clé comme le type sont intacts EN BASE.
+			expect(await champEnBase(request, 'e2e-wf-souris')).toMatchObject({
+				label: 'E2E Champ Modifié',
+				type: 'number',
+				help_text: null,
+			})
+
+			// --- Réordonner ------------------------------------------------------------------------
+			const avant = await champEnBase(request, 'e2e-wf-souris')
+			await page.getByRole('button', { name: 'Monter E2E Champ Modifié' }).click()
+			await expect(page.getByTestId('liste-champs')).toBeVisible()
+			await expect
+				.poll(async () => (await champEnBase(request, 'e2e-wf-souris'))?.position)
+				.toBeLessThan(avant?.position ?? 0)
+
+			// --- Archiver, confirmation comprise ---------------------------------------------------
+			await page.getByRole('button', { name: 'Archiver le champ E2E Champ Modifié' }).click()
+			const confirmation = page.getByTestId('confirmation-archivage-champ')
+			await expect(confirmation).toBeVisible()
+			// La confirmation seule ne modifie rien : l'archivage n'a pas encore eu lieu.
+			expect((await champEnBase(request, 'e2e-wf-souris'))?.archived_at).toBeNull()
+			await confirmation.getByRole('button', { name: 'Archiver' }).click()
+			await expect(confirmation).toBeHidden()
+			await expect
+				.poll(async () => (await champEnBase(request, 'e2e-wf-souris'))?.archived_at)
+				.not.toBeNull()
+			// L'archivé reste dans la liste, nommé : c'est ce que la lecture 5 exige (§7 bis.10.1).
+			await expect(page.getByTestId('champ-archive')).toHaveCount(2)
+
+			// --- Restaurer -------------------------------------------------------------------------
+			await page.getByRole('button', { name: 'Restaurer le champ E2E Champ Modifié' }).click()
+			await expect
+				.poll(async () => (await champEnBase(request, 'e2e-wf-souris'))?.archived_at)
+				.toBeNull()
+			await expect(page.getByTestId('champ-archive')).toHaveCount(1)
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('un champ à choix se déclare avec ses choix, et deux clés identiques sont refusées AVANT l’envoi', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirBlocChamps(page)
+
+			await page.getByRole('button', { name: 'Déclarer un champ' }).click()
+			const formulaire = page.getByTestId('formulaire-champ')
+			await formulaire.getByLabel('Clé').fill('e2e-wf-choix')
+			await formulaire.getByLabel('Libellé').fill('E2E Origine')
+			await formulaire.getByLabel('Type').selectOption('select')
+			await expect(formulaire.getByTestId('editeur-choix')).toBeVisible()
+			await formulaire.getByRole('button', { name: 'Ajouter un choix' }).click()
+			await formulaire.getByRole('button', { name: 'Ajouter un choix' }).click()
+			const cles = formulaire.getByLabel('Clé du choix')
+			const libelles = formulaire.getByLabel('Libellé du choix')
+			await cles.nth(0).fill('salon')
+			await libelles.nth(0).fill('Salon')
+			await cles.nth(1).fill('salon')
+			await libelles.nth(1).fill('Salon bis')
+
+			// LA BASE ACCEPTERAIT CES DEUX CHOIX — mesuré `201` le 2026-08-14. L'écran est la seule
+			// garantie, et il refuse avant l'envoi (§7 bis.10.4).
+			await expect(
+				formulaire.getByText(
+					'Deux choix portent la même clé : les réponses seraient impossibles à distinguer.',
+				),
+			).toBeVisible()
+			await expect(formulaire.getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
+			expect(await champEnBase(request, 'e2e-wf-choix')).toBeNull()
+
+			await cles.nth(1).fill('site')
+			await libelles.nth(1).fill('Site web')
+			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(formulaire).toBeHidden()
+			const declare = await champEnBase(request, 'e2e-wf-choix')
+			expect(declare?.options).toEqual({
+				choices: [
+					{ key: 'salon', label: 'Salon' },
+					{ key: 'site', label: 'Site web' },
+				],
+			})
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('le refus d’une clé déjà prise vient de la base, et rien n’est créé', async ({
+		page,
+		request,
+	}) => {
+		// `budget` est une clé SEEDÉE : le refus est celui de l'unicité `(workflow_id, key)`, obtenu
+		// sans rien modifier — un refus ne touche à aucune ligne, c'est le seul geste de ces preuves
+		// autorisé à viser une clé du seed.
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirBlocChamps(page)
+
+		await page.getByRole('button', { name: 'Déclarer un champ' }).click()
+		const formulaire = page.getByTestId('formulaire-champ')
+		await formulaire.getByLabel('Clé').fill('budget')
+		await formulaire.getByLabel('Libellé').fill('E2E Doublon')
+		await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+		await expect(formulaire.getByText('Cette clé est déjà prise dans ce workflow.')).toBeVisible()
+		// Le `409` de l'unicité traverse la console : il est consommé ici, nommément, parce que le
+		// scénario vient de le provoquer ET de vérifier que l'écran l'explique (décision 248).
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
+		// Le seed est intact : sept champs, et `budget` porte toujours son libellé seedé.
+		await expect(page.getByTestId('ligne-champ')).toHaveCount(7)
+		expect(await champEnBase(request, 'budget')).toMatchObject({ label: 'Budget estimé' })
+	})
+})
+
+test.describe('les champs au clavier seul (§7 bis.10.6, docs/DESIGN_SYSTEM.md §8)', () => {
+	test('déclaration, modification et archivage se mènent sans souris', async ({ page, request }) => {
+		await purgerChamps(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirBlocChamps(page)
+
+			await tabVers(page, page.getByRole('button', { name: 'Déclarer un champ' }))
+			await page.keyboard.press('Enter')
+			const formulaire = page.getByTestId('formulaire-champ')
+			// Le focus entre dans le premier champ modifiable — la clé, à la déclaration.
+			await expect(formulaire.getByLabel('Clé')).toBeFocused()
+			await page.keyboard.type('e2e-wf-clavier')
+			await tabVers(page, formulaire.getByLabel('Libellé'))
+			await page.keyboard.type('E2E Champ Clavier')
+			await tabVers(page, formulaire.getByRole('button', { name: 'Enregistrer' }))
+			await page.keyboard.press('Enter')
+			await expect(formulaire).toBeHidden()
+			expect(await champEnBase(request, 'e2e-wf-clavier')).toMatchObject({
+				label: 'E2E Champ Clavier',
+				type: 'text',
+			})
+
+			await tabVers(page, page.getByRole('button', { name: 'Modifier le champ E2E Champ Clavier' }))
+			await page.keyboard.press('Enter')
+			const edition = page.getByTestId('formulaire-champ')
+			// À l'édition, le focus entre dans le LIBELLÉ : la clé n'y est plus qu'un texte.
+			await expect(edition.getByLabel('Libellé')).toBeFocused()
+			await page.keyboard.press('End')
+			await page.keyboard.type(' modifié')
+			await page.keyboard.press('Enter')
+			await expect(edition).toBeHidden()
+			expect(await champEnBase(request, 'e2e-wf-clavier')).toMatchObject({
+				label: 'E2E Champ Clavier modifié',
+			})
+
+			await tabVers(
+				page,
+				page.getByRole('button', { name: 'Archiver le champ E2E Champ Clavier modifié' }),
+			)
+			await page.keyboard.press('Enter')
+			const confirmation = page.getByTestId('confirmation-archivage-champ')
+			await expect(confirmation.getByRole('button', { name: 'Archiver' })).toBeFocused()
+			await page.keyboard.press('Enter')
+			await expect(confirmation).toBeHidden()
+			await expect
+				.poll(async () => (await champEnBase(request, 'e2e-wf-clavier'))?.archived_at)
+				.not.toBeNull()
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+})
+
+test.describe('captures du bloc des champs (CLAUDE.md §16)', () => {
+	test('le formulaire de déclaration ouvert est capturé, avec le champ archivé du seed', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirBlocChamps(page)
+		await capturer(page, 'workflows-champs-1440', UNITE)
+		await page.getByRole('button', { name: 'Déclarer un champ' }).click()
+		const formulaire = page.getByTestId('formulaire-champ')
+		await expect(formulaire).toBeVisible()
+		await formulaire.getByLabel('Type').selectOption('select')
+		await formulaire.getByRole('button', { name: 'Ajouter un choix' }).click()
+		await capturer(page, 'workflows-champs-formulaire-1440', UNITE)
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : le bloc des champs reste lisible, sans débordement`, async ({ page }) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirBlocChamps(page)
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+			await capturer(page, `workflows-champs-${palier.nom}`, UNITE)
+		})
+	}
+})
