@@ -47,8 +47,11 @@ n'attend donc une décision du responsable** : les cinquante-huit entrées ouver
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-14 :** 102 entrées ouvertes depuis l'origine, **43 closes** — index ci-dessous,
-texte dans l'historique Git — et **56 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les QUATRE entrées du lot G — INC-048, INC-052 et INC-071 par la migration 35, **INC-072 par le geste d'interface de la décision 376** —, plus **INC-100** et **INC-101**, relevées le 2026-08-14 pendant la reprise d'INC-072 et laissées intactes parce qu'elles appartiennent à d'autres unités, plus **INC-102**, relevée le même jour en rejouant le seed puis les preuves sur une base montée AVANT la livraison du lot G. **Le lot G est intégralement soldé.** Les soixante et une
+**État au 2026-08-14, après le lot I+J :** 103 entrées ouvertes depuis l'origine, **48 closes** —
+index ci-dessous, texte dans l'historique Git — et **55 ouvertes**, conservées ici en entier. Les
+deux nombres sont **comptés dans ce fichier** et non déduits du précédent : le lot I+J ferme
+**INC-099** et **INC-101**, et ouvre **INC-103**. Le décompte antérieur, conservé ci-dessous pour
+mémoire, portait ses propres écarts (INC-103) : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les QUATRE entrées du lot G — INC-048, INC-052 et INC-071 par la migration 35, **INC-072 par le geste d'interface de la décision 376** —, plus **INC-100** et **INC-101**, relevées le 2026-08-14 pendant la reprise d'INC-072 et laissées intactes parce qu'elles appartiennent à d'autres unités, plus **INC-102**, relevée le même jour en rejouant le seed puis les preuves sur une base montée AVANT la livraison du lot G. **Le lot G est intégralement soldé.** Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -63,8 +66,14 @@ preuve de pile exécutable » ne s'applique plus, tant que l'exécution reçoit 
 
 ## Clos — index
 
-Quarante-cinq entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
-la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
+**Quarante-huit** entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée
+constatait, la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à
+lire.
+
+**Ce nombre a été RECOMPTÉ le 2026-08-14, et non incrémenté** — voir INC-103 : les deux comptes que
+portait ce document, « 43 closes » en tête et « quarante-cinq » ici, désignaient tous deux un
+tableau qui en alignait **quarante-six**. Les valeurs publiées ici et en tête sont désormais les
+valeurs **comptées** dans le document lui-même.
 
 | Entrée | Objet | Close le | Fermée par | Décision |
 |---|---|---|---|---|
@@ -114,10 +123,64 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 | INC-048 | `move_card` exigeait un motif qu'elle ne conservait nulle part | 2026-08-14 | reprise `CRM-034`, migration 35 | 367, 374 |
 | INC-052 | « Un commentaire vide n'est pas un commentaire » ne refusait pas une tabulation | 2026-08-14 | reprise `CRM-034` et `CRM-036`, `app.btrim_blancs` | 367, 374 |
 | INC-071 | Trois documents se contredisaient sur ce qu'il faut pour commenter une card | 2026-08-14 | énoncé de `CRM-043` aligné, aucun code | 192, 367, 374 |
+| INC-099 | Les preuves d'arborescence laissaient quatre lignes derrière elles, et sept assertions d'autres suites en rougissaient | 2026-08-14 | reprise `CRM-075` — le `finally` purge au lieu d'archiver | 362, 377, 380 |
+| INC-101 | Les cinq garde-fous globaux de `verify-harness.sh` étaient périmés, et l'un d'eux n'avait jamais été juste | 2026-08-14 | reprise `CRM-008` — compteurs mesurés puis confrontés aux verts | 51, 377, 380 |
 
 ---
 
 ## Ouverts
+
+### INC-103 — Ce registre porte deux comptes de ses propres entrées closes, et aucun des deux ne correspondait au tableau
+
+**Nature :** compteur figé non maintenu par les livraisons qui le dépassent, **dans le document de
+suivi lui-même**. Même famille qu'INC-080 et INC-101, appliquée cette fois à la comptabilité du
+registre. **Relevée le :** 2026-08-14, pendant le lot I+J, en y inscrivant la clôture de deux
+entrées.
+
+**Le fait, mesuré avant toute modification** (`git show HEAD:docs/INCONSISTENCY_REPORT.md`) :
+
+| Endroit | Ce qui était écrit | Lignes réellement alignées | Écart |
+|---|---|---|---|
+| En-tête, « État au 2026-08-14 » | **43 closes** | 46 | −3 |
+| Intitulé de « Clos — index » | « **Quarante-cinq** entrées closes » | 46 | −1 |
+| En-tête, « et **56 ouvertes** » | 56 | **56** `### INC-` | conforme |
+
+Les deux premiers nombres se contredisent **entre eux** avant même de contredire le tableau : un
+document de suivi qui porte deux comptes différents de la même chose ne peut pas servir de source de
+vérité sur son propre état. Le troisième, lui, était juste — ce qui montre que le défaut n'est pas
+une négligence générale mais l'absence de recomptage à chaque clôture, exactement le mécanisme
+d'INC-101 sur `verify-harness.sh`.
+
+**Ce que la clôture d'une entrée demande aujourd'hui, et personne ne le fait en entier.** Retirer le
+texte, ajouter la ligne d'index, **puis** mettre à jour deux nombres situés dans deux paragraphes
+distincts, dont l'un est écrit en toutes lettres. Le dernier geste est celui qu'on oublie, et rien
+ne le rappelle : aucun harnais ne compare ces nombres au contenu du fichier.
+
+**Ce qui a été fait ici, et pourquoi ce n'est pas « corriger un défaut au passage ».** Les deux
+nombres sont **recomptés** — 48 closes, 55 ouvertes, cette entrée comprise —, non incrémentés depuis
+des valeurs fausses.
+Le lot I+J devait de toute façon les écrire pour inscrire ses deux clôtures, et publier sciemment un
+compte faux aurait été un mensonge de plus plutôt qu'une abstention. La **cause**, elle, est laissée
+intacte et c'est l'objet de cette entrée.
+
+**Ce qu'il faut faire :** cesser de tenir ce compte à la main. Deux issues, chiffrées :
+
+1. **Un contrôle dans un harnais existant** — `scripts/verify-scripts.sh` ou un contrôle dédié —
+   qui compte les lignes `| INC-` de l'index et les titres `### INC-` de la section « Ouverts », et
+   refuse tout écart avec les nombres publiés. Coût : quelques lignes. C'est la forme qu'INC-101
+   recommande pour les compteurs de campagne, et elle vaut ici pour la même raison.
+2. **Supprimer les nombres du texte** et laisser le tableau et les titres faire foi. Coût : nul.
+   Perte : la lecture d'un coup d'œil de l'état du registre, que la première ligne du document
+   offre aujourd'hui.
+
+Le choix entre « garder le nombre et le garder juste » et « ne plus l'écrire » appartient au
+responsable : il engage la lisibilité du document le plus relu du dépôt. **Aucun harnais n'est
+ajouté ici.**
+
+**Lié à :** INC-080 et INC-101 (garde-fous figés non maintenus), INC-100 (document qui se contredit
+lui-même), `docs/CloudWorker.md` §4.1 (ce registre est lu à chaque exécution).
+
+---
 
 ### INC-102 — Le seed ne peut PAS faire converger `…0d4` vers la modération sur une base déjà seedée, et il annonce pourtant sa convergence
 
@@ -193,55 +256,6 @@ Le choix engage la doctrine de convergence du seed, qui appartient au responsabl
 **Comportement laissé rigoureusement inchangé**, statut de `CRM-043` non modifié : la preuve est
 verte sur base fraîche, et l'écart mesuré ici porte sur le chemin de mise à jour.
 
-### INC-101 — Les quatre garde-fous globaux de `scripts/verify-harness.sh` sont périmés, et personne ne l'avait mesuré
-
-**Nature :** garde-fous figés non maintenus par les unités qui ont fait bouger les compteurs.
-**Relevée le :** 2026-08-14, pendant la reprise de `CRM-043` (INC-072), au premier rejeu du harnais
-global depuis plusieurs livraisons.
-
-**Le fait, MESURÉ** — `./scripts/verify-harness.sh`, exécuté après la livraison d'INC-072, sur une
-base sans résidu, avec Node 24 :
-
-| Compteur figé | Valeur attendue | Valeur mesurée | Écart |
-|---|---|---|---|
-| `FICHIERS_SQL_ATTENDUS` | 31 | **33** | +2 fichiers |
-| `ASSERTIONS_ATTENDUES` | 1921 | **1971** | +50 assertions |
-| `SCENARIOS_API` | 504 | **507** | +3 scénarios |
-| `SCENARIOS_UI` | 182 | **185** | +3 scénarios |
-| `SCENARIOS_MAIL` | 41 | **42** | +1 scénario |
-
-**Ce qui appartient à INC-072, et ce qui ne lui appartient pas.** La reprise d'INC-072 ajoute
-**2 assertions** pgTAP — l'audit du seed — et **3 scénarios d'interface** — la modération. Tout le
-reste de l'écart, soit **2 fichiers, 48 assertions, 3 scénarios d'API et 1 scénario de messagerie**,
-vient de livraisons antérieures qui n'ont pas rejoué ce harnais. Le compteur d'API et celui de
-messagerie étaient donc **déjà faux avant** cette session : `e2e:api` rendait 507 et `e2e:mail` 42
-sur la LIGNE DE BASE, établie avant toute modification.
-
-**Deux anomalies de plus, et elles ne sont pas de la même famille.** Les contrôles « `test:sql`
-reste rouge après restauration » et « `e2e:api` reste rouge après restauration » ne mesurent pas une
-restauration défaillante : le harnais exécute lui-même `e2e:ui`, donc
-`e2e/ui/administration-arborescence.spec.ts`, qui laisse **deux tracks et deux channels** derrière
-lui. C'est **INC-099**, constatée une seconde fois, dans un troisième harnais. Le nettoyage manuel
-de ces quatre lignes suffit à rendre `test:sql` vert — **33 fichiers, 1971 assertions, aucune
-anomalie** —, ce qui achève de démontrer que la cause est le résidu et non la restauration.
-
-**Comportement laissé INCHANGÉ.** `scripts/verify-harness.sh` appartient à `CRM-008`, et ses cinq
-compteurs sont des totaux de campagne : les réviser ici reviendrait à adopter les nombres de quatre
-autres unités sans rejouer leurs preuves sous leur unité, ce que `docs/CloudWorker.md` §3.1
-proscrit. Les compteurs propres à `CRM-043` ont été révisés, eux, dans
-`scripts/verify-commentaires.sh` et dans le même changement que le code.
-
-**Ce qu'il faut faire :** rejouer ce harnais sous `CRM-008` et réviser ses cinq constantes avec les
-valeurs mesurées, **puis** solder INC-099, sans quoi les deux contrôles de restauration resteront
-rouges au prochain rejeu quelle que soit la valeur des compteurs. L'ordre importe : réviser les
-compteurs d'abord donnerait un harnais qui échoue encore, et le faire croire cassé.
-
-**Leçon, et elle a un précédent exact.** INC-080 constatait déjà « garde-fous du chunk 3 périmés ».
-Un compteur figé qui n'est pas rejoué à chaque livraison ne garde plus rien : il finit par n'être
-qu'une valeur historique que la première exécution honnête rend rouge.
-
----
-
 ### INC-100 — Le chapitre 4.10 du manuel se contredit lui-même sur deux points déjà livrés
 
 **Nature :** documentation utilisateur dépassée par le produit, contradiction interne au même
@@ -268,140 +282,6 @@ les seuls points de modération**, et ces deux lignes ont été laissées telles
 **Ce qu'il faut faire :** retirer les deux affirmations de la liste du §4.10, sous l'unité qui les a
 rendues fausses, et relire la liste entière au même moment — un inventaire de manques qui n'est pas
 relu à chaque livraison devient un inventaire de mensonges.
-
----
-
-### INC-099 — Les preuves d'arborescence laissent quatre lignes derrière elles, et sept assertions d'autres suites en rougissent
-
-**Nature :** résidu d'une preuve dans une table partagée, qui rend rouge l'assertion de conformité
-du seed d'une AUTRE suite. **Même famille qu'INC-091**, sur une autre table et un autre harnais.
-**Relevé le :** 2026-08-14, pendant le lot G, sur une ligne de base établie AVANT toute modification.
-
-**Le fait, mesuré, et la chronologie compte.** Sur cette exécution, `npm run test:sql` a été joué
-**avant** toute modification du dépôt : **33 fichiers, 1944 assertions, aucune anomalie**. Puis
-`npm run e2e:ui` a été joué, vert lui aussi (**182 passed**). Rejoué ensuite, `test:sql` rend
-`0004_tracks.test.sql` **rouge sur deux assertions** :
-
-```
-not ok 75 - le seed pose quatre tracks dans le workspace de démonstration
-        have: 6   want: 4
-not ok 76 - l'un d'eux est archivé : l'état « archivé » est démontrable, pas seulement documenté
-```
-
-`public.tracks` porte alors six lignes au lieu de quatre :
-
-```
-5eed…0021 Conseil & IA      2026-08-14 14:52:56   (seed)
-5eed…0022 Studio web        2026-08-14 14:52:56   (seed)
-5eed…0023 Formation         2026-08-14 14:52:56   (seed)
-5eed…0024 Pipeline 2024     2026-08-14 14:52:56   (seed, archivé)
-2eb41de8… E2E Arbo Souris Renommé    2026-08-14 14:58:34   archivé
-85577b88… E2E Arbo Clavier Renommé   2026-08-14 14:58:38   archivé
-```
-
-Les deux horodatages tombent pendant la fenêtre de `npm run e2e:ui`, et les noms sont ceux que
-`e2e/ui/administration-arborescence.spec.ts` écrit en toutes lettres.
-
-**LA MÊME CHOSE SUR `channels`, et elle coûte SIX assertions de plus.** Le constat initial ne
-portait que sur `tracks`, parce que `test:sql` s'arrête là. `npm run e2e:api`, joué ensuite, a rendu
-**sept** scénarios rouges, dont six sur le seul compte des channels :
-
-```
-✘ channels.spec.ts       le seed a posé six channels, dont un archivé, sur trois tracks
-✘ channels.spec.ts       lignes c et d — admin lit les channels de son workspace
-✘ channels.spec.ts       lignes c et d — business_developer lit les channels de son workspace
-✘ channels.spec.ts       le viewer seedé ne voit que quatre channels
-✘ coherence-workflow.spec.ts  six channels rattachés, un seul suivant un workflow de portée track
-✘ workflows.spec.ts      INC-029 — les channels du seed sont tous rattachés
-```
-
-**ET DEUX CONTRÔLES DE PLUS SUR LE MANUEL.** `scripts/verify-manual.sh`, joué après une exécution
-de `e2e:ui`, rend **107 contrôles, 2 anomalies** :
-
-```
-ECHEC annexe A : Tracks archivés — le manuel dit « 1 », la base dit « 3 »
-ECHEC annexe A : Channels archivés — le manuel dit « 1 », la base dit « 3 »
-```
-
-Les quatre lignes résiduelles étant toutes **archivées** par leur scénario, elles gonflent
-exactement les deux grandeurs archivées de l'annexe A. Sur une base nettoyée, le même harnais rend
-**107 contrôles, aucune anomalie**. Le total des assertions que ce résidu fait rougir est donc de
-**neuf**, réparties sur trois harnais distincts.
-
-`public.channels` portait alors **huit** lignes : les six du seed, plus `E2E Canal Souris Renommé`
-et `E2E Canal Clavier Renommé`, créées elles aussi pendant la fenêtre de `e2e:ui`. Quatre lignes
-résiduelles au total — deux tracks et deux channels —, et la portée du défaut est donc **beaucoup
-plus large** que ce que le premier constat laissait croire : ce n'est pas une assertion isolée,
-c'est **l'ordre d'exécution des trois suites** qui décide de leur couleur.
-
-**La cause, lue dans le fichier et non supposée.** Le scénario appelle bien `supprimerParSlug`,
-mais **à l'entrée** — son commentaire le dit : « Nettoyage préalable : une exécution interrompue ne
-doit pas faire échouer celle-ci sur un `23505` ». Il n'y a **aucun `finally`** qui retire la ligne
-en sortie. Le scénario se termine par un désarchivage, puis un archivage, et la ligne reste. Deux
-scénarios sont concernés — la variante souris et la variante clavier —, ce qui donne exactement les
-deux lignes mesurées.
-
-**Pourquoi ce n'est pas un défaut du produit, et pourquoi il faut quand même le traiter.** Aucune
-règle métier n'est violée : un administrateur a le droit de créer un track. Ce qui est en cause est
-la **propriété de la preuve** — `docs/SPEC-test-harness.md` et INC-055 posent qu'un harnais part
-d'un état déterministe et le restaure. Un résidu qui survit rend rouge une assertion de conformité
-du seed **écrite pour être exacte**, et l'ordre d'exécution des suites devient significatif : jouées
-dans un sens, elles sont vertes ; dans l'autre, non. C'est précisément ce qu'INC-091 a coûté sur
-`mail_messages`, et l'arbitrage rendu là-bas — « chaque preuve purge ce qu'elle dépose, dans son
-propre `finally` » — s'énonce ici à l'identique.
-
-**Comportement laissé inchangé, conformément à `CLAUDE.md` §5 et `docs/CloudWorker.md` §3.1.** Le
-défaut est **étranger à l'unité de la session** (lot G, sur `card_comments` et `move_card`) : le
-corriger au passage toucherait `CRM-075` sans rejouer ses preuves sous son unité. L'assertion de
-`0004_tracks.test.sql` n'est **ni désarmée ni assouplie** : elle est le détecteur, exactement comme
-l'assertion 9 de `0029` l'a été pour INC-091.
-
-**Ce qui a été fait pour que les preuves du lot G restent lisibles.** Les quatre lignes résiduelles
-ont été retirées de la base de développement par une suppression ciblée sur leurs deux identifiants,
-geste d'exploitation sur un volume jetable, **consigné ici plutôt que tu**. Ce n'est pas une
-correction : la prochaine exécution de `npm run e2e:ui` les recréera.
-
-**Arbitrage attendu du responsable :** appliquer à `e2e/ui/administration-arborescence.spec.ts` la
-règle déjà rendue pour INC-091 — purge dans un `finally`, quel que soit le sort du scénario —, et
-décider si le contrôle doit être généralisé aux autres preuves qui écrivent dans des tables
-partagées, ce qu'un harnais de non-complaisance saurait mesurer.
-
-**REPRODUIT LE 2026-08-14, ET LA CAUSALITÉ CESSE D'ÊTRE UNE CHRONOLOGIE POUR DEVENIR UNE
-CONTRE-ÉPREUVE** (décision 377). Le constat d'origine reposait sur l'**ordre** des exécutions : vert
-avant, rouge après. Les deux sens ont cette fois été mesurés dans la même session, ce qui est une
-preuve d'une autre nature.
-
-1. `npm run test:sql` sur le seed frais, **avant** toute suite d'interface :
-   **33 fichiers, 1971 assertions, aucune anomalie**.
-2. `e2e:ui`, `e2e:api` puis `e2e:mail` joués. Rejoué, `test:sql` rend **deux** fichiers rouges —
-   `0004_tracks.test.sql` (`have: 6 want: 4`, puis `have: 3 want: 1`) et
-   `0029_inbox_globale.test.sql` (assertion 9, `have: 1 want: 0`, qui relève d'INC-091).
-3. Les **cinq** lignes résiduelles ont été nommées une à une avant tout geste :
-
-```
-b4e4db5f… E2E Arbo Souris Renommé    17:21:38  archivé   (tracks)
-302b1dcc… E2E Arbo Clavier Renommé   17:21:42  archivé   (tracks)
-18b5cc4b… E2E Canal Souris Renommé                       (channels)
-b5d62e6a… E2E Canal Clavier Renommé                      (channels)
-dc2a14b2… AllerRetour1786727909608   17:18:32            (mail_messages, non classé)
-```
-
-4. Les cinq retirées, **sans qu'aucune assertion ni aucun fichier du dépôt ne soit touché**,
-   `test:sql` rend de nouveau **1971 assertions, aucune anomalie**.
-
-Le résidu rougit, son retrait verdit, et rien d'autre n'a changé entre les deux mesures : ce n'est
-plus une corrélation d'horodatages. La prédiction de l'entrée — « la prochaine exécution de
-`npm run e2e:ui` les recréera » — est **vérifiée pour la deuxième fois**, sur un conteneur neuf.
-
-Le retrait des cinq lignes est, comme la fois précédente, un **geste d'exploitation sur un volume
-jetable**, consigné ici et non une correction : le comportement du dépôt est laissé **inchangé**, le
-défaut restant étranger à l'unité de la session (`CRM-043`). L'assertion de `0004_tracks.test.sql`
-n'est **ni désarmée ni assouplie** : elle reste le détecteur. Le coût est désormais **récurrent et
-mesuré à chaque exécution de la routine**, ce qui est l'argument le plus fort en faveur de
-l'arbitrage attendu ci-dessus.
-
-**Lié à :** INC-091 (même famille, table `mail_messages`), INC-055 et INC-057 (propriété et
-autonomie des harnais), `CRM-075` (porteur du scénario), `CRM-020` (porteur de l'assertion rouge).
 
 ---
 

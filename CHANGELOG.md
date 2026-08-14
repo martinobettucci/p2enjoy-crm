@@ -99,9 +99,44 @@ d'exécuter le code attendu.
   `e2e/ui/administration-arborescence.spec.ts` a fait passer `test:sql` au rouge après `e2e:ui`, puis
   après `verify-harness.sh`. Le nettoyage manuel des quatre lignes suffit à rendre la suite verte.
   Tout comptage `test:sql` publié après un `e2e:ui` est donc faux tant que l'entrée vit. Le défaut
-  appartient à `CRM-075` et reste intact.
+  appartient à `CRM-075` et reste intact. **Les deux constats ci-dessus sont soldés depuis, dans la
+  même section : voir « Lot I+J » sous *Corrigé*.** Ils sont conservés tels quels parce qu'ils
+  décrivent ce que la session du lot G a réellement mesuré et livré, et qu'une entrée de changelog
+  n'est pas réécrite après coup ; le renvoi évite qu'ils se lisent comme l'état courant.
 
 ### Corrigé
+
+- **Lot I+J : les preuves d'arborescence rendent la table dans l'état où elles l'ont trouvée, et
+  les cinq garde-fous globaux gardent de nouveau quelque chose** (ordre de reprise : décisions 377
+  et 379 ; forme retenue : décision 380). Deux entrées, deux unités, un seul lot — celui que la
+  décision 367 plaçait après le lot G.
+  - **INC-099 close** (`CRM-075`). Les quatre scénarios de
+    `e2e/ui/administration-arborescence.spec.ts` laissaient **deux tracks et deux channels**
+    derrière eux à chaque exécution. Ils avaient pourtant un `finally` : il **archivait** au lieu de
+    supprimer, au motif que « la suppression n'existe pas » — vrai du produit, sans effet sur ce
+    qu'une preuve doit rendre. Une ligne archivée reste une ligne. Le `finally` **purge** désormais
+    par slug, avec la clé de service, appliquant à la lettre la règle que la décision 362 avait
+    rendue pour INC-091 sur `mail_messages`. Le nettoyage d'entrée est conservé : il protège du
+    `23505` d'une exécution tuée avant son épilogue.
+  - **La correction est CONTRE-ÉPROUVÉE, pas seulement affirmée.** Avant : `e2e:ui` puis
+    `test:sql` rend `0004_tracks.test.sql` rouge sur deux assertions — `have: 6 want: 4`, puis
+    `have: 3 want: 1`. Après, sur le même conteneur et sans qu'aucune assertion ne soit touchée :
+    `test:sql` rend **33 fichiers, 1971 assertions, aucune anomalie**, y compris après les **trois**
+    projets Playwright joués à la suite. `e2e:api`, que le résidu faisait tomber à **496 verts et
+    11 rouges** lorsqu'il suivait `e2e:ui`, rend ses **507**.
+  - **L'assertion n'est ni désarmée ni assouplie** : elle reste le détecteur, et c'est elle qui a
+    prononcé la reproduction du défaut avant la correction.
+  - **INC-101 close** (`CRM-008`). Les cinq compteurs figés de `scripts/verify-harness.sh` étaient
+    périmés : `31 / 1921 / 504 / 182 / 41` contre **33 / 1971 / 507 / 185 / 42** mesurés. L'écart
+    est attribué fichier par fichier plutôt que constaté en bloc — deux suites pgTAP ajoutées
+    (`CRM-059`, `CRM-053`/`CRM-058`), quatre étendues (INC-085, lot G, `CRM-043`), trois scénarios
+    d'interface par le geste de modération, un scénario de messagerie par `backfill.spec.ts`.
+  - **Et une mesure que l'entrée n'avait pas faite : `SCENARIOS_API` n'a jamais été juste.** Les
+    trois autres compteurs avaient dérivé, dépassés par des livraisons postérieures. Celui-ci non :
+    depuis le commit qui a écrit `504`, **aucun scénario d'API n'a été ajouté ni retiré** — le seul
+    fichier modifié depuis l'a été par le *renommage* d'un scénario. Le compte déclaré était déjà de
+    507 à l'instant de l'écriture. Un compteur figé peut donc mentir sans qu'aucune livraison ne
+    l'ait dépassé, ce qui élargit la leçon d'INC-080.
 
 - **Lot G : le motif d'une transition est enfin conservé, « vide » s'entend des blancs Unicode, et
   la modération d'un commentaire devient possible et auditée** (arbitrage : décision 367 ; mise en

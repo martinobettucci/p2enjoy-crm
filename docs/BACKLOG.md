@@ -1573,6 +1573,26 @@ modifier. `docs/PROD_MIGRATIONS.md` est inchangé à dessein — ni schéma, ni 
 variable d'environnement du produit ne changent (`E2E_PROJETS` est un contrat interne entre
 `package.json` et la configuration Playwright, et n'a pas sa place dans `.env.example`).
 
+- [x] **INC-101 close le 2026-08-14 : les cinq garde-fous globaux gardent de nouveau quelque
+      chose** (lot I+J, décisions 377 et 380). Les compteurs figés portaient `31 / 1921 / 504 /
+      182 / 41` ; les valeurs **mesurées sur base seedée, avant toute modification du dépôt**, sont
+      `33 / 1971 / 507 / 185 / 42`. L'écart est **attribué fichier par fichier** dans le fichier
+      lui-même — deux suites pgTAP ajoutées, quatre étendues, trois scénarios d'interface, un de
+      messagerie —, et le compte se reconstitue à l'unité. Aucun contrôle ajouté, aucun retiré :
+      seule la ligne de comptage est remise à jour.
+- [x] **Et l'un des cinq n'avait JAMAIS été juste, ce qui élargit la leçon d'INC-080.** Les trois
+      autres avaient dérivé — des preuves ajoutées après eux. `SCENARIOS_API` non : depuis le commit
+      qui a écrit `504`, **aucun scénario d'API n'a été ajouté ni retiré**, le seul fichier
+      d'`e2e/api/` modifié depuis l'ayant été par le *renommage* d'un scénario. Le compte déclaré
+      était déjà de **507** à l'instant de l'écriture. Un compteur figé peut donc mentir sans
+      qu'aucune livraison ne l'ait dépassé.
+- [x] **Les trois compteurs de scénarios sont COMPTÉS par `--list`, puis CONFRONTÉS aux verts** :
+      507 déclarés / 507 verts, 185 / 185, 42 / 42. Les deux mesures coïncident ; un écart aurait
+      été un fait à consigner, pas un nombre à choisir.
+- [x] **Le harnais rejoué EN ENTIER après révision**, ses six dégradations comprises :
+      `scripts/verify-harness.sh` rend **28 contrôles, aucune anomalie**, restauration constatée.
+      C'est le juge d'INC-101, et il ne pouvait pas l'être tant que ses compteurs étaient périmés.
+
 *Limites nommées, non masquées.*
 
 - **`pytest mail-sync/tests` n'est pas livré et ne doit pas l'être ici** : décision 277. Il reste
@@ -6321,6 +6341,42 @@ spécification**, et n'a pas à être redécidé pendant l'implémentation :
       silence — même convention que la limite déjà levée de `CRM-033` dans `SPEC-channels.md`.
 
 **TOUTES LES PREUVES DE LA DEFINITION OF DONE SONT VERTES. `CRM-075` PASSE `[x]`.**
+
+- [x] **INC-099 close le 2026-08-14 : la preuve rend la table dans l'état où elle l'a trouvée**
+      (lot I+J, décisions 362 et 380). Les quatre scénarios de
+      `e2e/ui/administration-arborescence.spec.ts` laissaient **deux tracks et deux channels**
+      derrière eux. Ils avaient bien un `finally` — l'entrée du registre affirmait le contraire, et
+      la lecture du fichier l'a corrigée — mais il **archivait** au lieu de supprimer. Une ligne
+      archivée reste une ligne, et c'est même le résidu *archivé* qui faisait rougir la seconde
+      assertion. Le `finally` purge désormais par slug avec la clé de service, appliquant la règle
+      rendue par la décision 362 pour INC-091. Le nettoyage d'entrée est conservé : il protège du
+      `23505` d'une exécution tuée avant son épilogue.
+- [x] **Défaut REPRODUIT avant correction, puis CONTRE-ÉPROUVÉ après** — protocole `CLAUDE.md` §18,
+      sur le même conteneur et sans qu'aucune assertion ne soit touchée :
+
+      | Étape | tracks | archivés | channels | `test:sql` |
+      |---|---|---|---|---|
+      | seed frais | 4 | 1 | 6 | 33 fichiers, 1971 assertions |
+      | après le spec, AVANT correction | **6** | **3** | **8** | `0004` rouge : `have: 6 want: 4`, `have: 3 want: 1` |
+      | après le spec, APRÈS correction | 4 | 1 | 6 | 33 fichiers, 1971 assertions |
+
+- [x] **La contre-épreuve tient à l'échelle de la campagne, pas seulement du fichier** : `test:sql`
+      reste vert après `e2e:ui` **entier** (185 verts), puis après les **trois** projets Playwright
+      joués à la suite. Et `e2e:api`, que le résidu faisait tomber à 496 verts / 11 rouges lorsqu'il
+      suivait `e2e:ui` (décisions 378 et 379), rend ses **507**.
+- [x] **L'assertion de `0004_tracks.test.sql` n'est ni désarmée ni assouplie** : c'est elle qui a
+      prononcé la reproduction, et elle reste le détecteur.
+- [x] **Aucun changement d'interface, et la mesure le dit** : les quatre captures de
+      `docs/captures/CRM-075/` sont **identiques à l'octet près** après le rejeu — l'épilogue
+      n'agit qu'après le dernier geste observé. `arborescence-xl-1440.jpg` a été **regardée**
+      (`CLAUDE.md` §16) : trois tracks actifs, aucun résidu `E2E Arbo`, la commande « Nouveau
+      track », la case « Afficher les archivés » éteinte et les quatre actions par ligne.
+
+**Reste dû, et nommé : la GÉNÉRALISATION.** INC-099 demandait aussi « si le contrôle doit être
+généralisé aux autres preuves qui écrivent dans des tables partagées, ce qu'un harnais de
+non-complaisance saurait mesurer ». Ce point **n'est pas livré** : il engage toutes les suites du
+dépôt, pas `CRM-075`, et reste une question du responsable. `CRM-075` demeure `[x]` — l'unité livre
+ses gestes et ses preuves ; c'est la propriété transverse des harnais qui reste ouverte.
 
 ### CRM-076 — Éditeur administrateur de workflows `[ ]`
 
