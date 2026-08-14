@@ -130,6 +130,46 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-107 — Un seul `veille_compte_echoue` rend `mail-sync.spec.ts:210` rouge pour toute la vie du conteneur
+
+**Nature :** preuve qui juge un **historique** là où elle veut décrire un état. **Relevée le :**
+2026-08-14, par une session dont l'unité est `CRM-076`, à l'occasion de la campagne complète.
+
+**Le fait, mesuré :**
+
+| Ce qui est exécuté | Résultat |
+|---|---|
+| `npm run e2e:mail` seul, avant la campagne du harnais | **42/42** |
+| `scripts/verify-harness.sh`, contrôle 5 bis | `mail-sync.spec.ts:210` rouge, 41 passés |
+| `npm run e2e:mail` seul, **après** cette campagne | même échec, 41 passés |
+| `docker compose restart mail-sync` puis `npm run e2e:mail` | même échec, 41 passés |
+
+La preuve S3 lit `docker logs` du conteneur **en entier** et exige que chaque ligne porte un
+`level` dans `['DEBUG', 'INFO']`. Le journal en contient **une** hors de cette liste, et une seule :
+
+```
+{"timestamp":"2026-08-14T23:32:45.830Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+Elle est émise par `mail-sync/src/mail_sync/veille.py:180` lorsqu'un tour de veille échoue à relever
+**un** compte, pendant que la campagne `mail` manipule ce même compte. Un `docker restart` ne
+change rien : Docker conserve le journal d'un conteneur au travers de ses redémarrages, et seule
+sa recréation le vide. **L'échec est donc définitif pour la session**, quelle que soit la santé du
+service au moment où la preuve est rejouée.
+
+**Ce n'est pas causé par la session qui le relève.** L'unité est `CRM-076` ; le diff ne touche ni
+`mail-sync/`, ni `e2e/mail/`. `pytest mail-sync/tests` rend 242 verts, et les 41 autres scénarios
+`mail` sont verts.
+
+**Comportement laissé inchangé.** Deux corrections sont possibles et appartiennent à `CRM-051` :
+borner la lecture du journal à la fenêtre du scénario — `docker logs --since` —, ou isoler la
+veille de la campagne. La seconde question est plus intéressante que la première et n'est pas
+tranchée ici : **un tour de veille qui échoue pendant que la preuve manipule le compte est-il une
+anomalie du service, ou l'effet attendu de la preuve ?** Arbitrage demandé.
+
+**Lié à :** INC-105 et INC-099 (preuves non isolées de ce que les autres laissent), INC-106
+(le même harnais, un autre défaut), `CRM-051`.
+
 ### INC-106 — `verify-mail-sync.sh` déclare absents deux événements présents, parce que `grep -q` ferme le tuyau
 
 **Nature :** défaut du harnais, pas du service. **Relevé le :** 2026-08-14, par une session dont
@@ -227,8 +267,30 @@ vert tant que cette entrée est ouverte, et les autres contrôles du harnais —
 non-complaisance — sont verts. `scripts/verify-workflows.sh`, lui, rend **49 contrôles, aucune
 anomalie**.
 
+**Complément mesuré le 2026-08-14, même famille, cause enfin nommée.** Après une campagne
+interrompue, `commentaires-gestes.spec.ts` échoue **trois fois** et **même isolée** :
+`getByTestId('actions-commentaire')` rend 2 au lieu de 1. La lecture de `card_comments` par la clé
+de service montre pourquoi — un commentaire de trop, sur la card `…00c2`, écrit par l'auteur de la
+preuve :
+
+```
+00c2 | 0011 | 'Geste 1786750198221-32997'
+```
+
+`1786750198221` est l'horodatage du scénario qui l'a créé, à la seconde près pendant la campagne
+qui a échoué. Son `finally` n'a donc pas purgé — parce que le scénario avait déjà échoué —, et
+**réappliquer le seed ne le retire pas** (INC-102). Toute exécution ultérieure échoue alors sur le
+résidu de la précédente, ce qui donne à ce défaut son apparence de propagation. Résidu retiré à la
+main par la clé de service : la suite redevient **8/8** immédiatement, sans qu'aucun code ni
+aucune preuve ne soit modifié.
+
+Ce complément ne change pas ce qui est demandé : soit la preuve cible sa propre trace par un
+identifiant, soit son `finally` purge même après échec — deux corrections qui appartiennent à
+`CRM-043`.
+
 **Lié à :** INC-099 (une preuve rend la table dans l'état où elle l'a trouvée), INC-102 (le seed ne
-converge pas sur une base déjà seedée), `CRM-043`, `CRM-076`.
+converge pas sur une base déjà seedée), INC-107 (même famille, côté messagerie), `CRM-043`,
+`CRM-076`.
 
 ---
 
