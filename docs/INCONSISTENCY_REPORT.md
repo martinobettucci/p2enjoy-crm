@@ -130,6 +130,55 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-105 — Une preuve de `CRM-043` rend deux pierres tombales là où elle en attend une, et seulement dans la campagne complète
+
+**Nature :** preuve dépendante de l'état du fil, non isolée de ce que les autres scénarios de la
+campagne y laissent. **Relevée le :** 2026-08-14, par le harnais `scripts/verify-harness.sh` exécuté
+au titre de la deuxième tranche de `CRM-076`.
+
+**Le fait, mesuré quatre fois :**
+
+| Ce qui est exécuté | Base | Résultat |
+|---|---|---|
+| `npm run e2e:ui` complet | seed du début de session | **201/201** |
+| `e2e/ui/commentaires-gestes.spec.ts` seul | seed réappliqué | **8/8** |
+| `e2e/ui/commentaires-gestes.spec.ts` seul, après `npm run e2e:api` | seed réappliqué | **8/8** |
+| `npm run e2e:ui` complet | seed réappliqué | **200/1** |
+
+L'échec est toujours le même, `commentaires-gestes.spec.ts:181` :
+
+```
+strict mode violation: getByTestId('commentaire').getByText('Commentaire supprimé')
+resolved to 2 elements
+```
+
+Le scénario publie son commentaire, le supprime, puis affirme que **la** pierre tombale est
+visible. Dans la campagne complète, le fil en porte **deux** : la sienne, et une autre. La lecture
+de `card_comments` après coup n'en montre qu'une par card — la seconde n'existait donc que pendant
+la campagne, et le `finally` de son scénario l'a effacée avant qu'on puisse la nommer. **Son
+origine reste à établir**, et c'est précisément ce que cette entrée demande.
+
+**Ce n'est pas causé par la session qui la relève.** Le diff de la session ne touche que
+`administration-workflows*` (données, écran, preuves), `i18n/fr.ts` et `verify-harness.sh` : aucun
+fichier du fil de commentaires, aucune migration, aucune donnée de seed. Le fichier en échec n'est
+pas modifié d'une ligne.
+
+**Comportement laissé inchangé.** La correction appartient à `CRM-043` : soit la preuve cible sa
+propre pierre tombale par un identifiant plutôt que par le texte partagé, soit le scénario qui
+laisse la seconde est trouvé et rendu étanche. Trancher depuis une session dont l'unité est
+`CRM-076` reviendrait à réécrire la preuve d'une autre unité sans en connaître le contrat.
+
+**Conséquence sur le verdict de cette session :** `scripts/verify-harness.sh` ne peut pas rendre
+vert tant que cette entrée est ouverte, et les autres contrôles du harnais — `test:sql`,
+`e2e:api`, `e2e:mail`, `test:unit`, `typecheck`, `e2e:report`, les six dégradations de
+non-complaisance — sont verts. `scripts/verify-workflows.sh`, lui, rend **49 contrôles, aucune
+anomalie**.
+
+**Lié à :** INC-099 (une preuve rend la table dans l'état où elle l'a trouvée), INC-102 (le seed ne
+converge pas sur une base déjà seedée), `CRM-043`, `CRM-076`.
+
+---
+
 ### INC-104 — Le backlog compte « dix transitions dont quatre à motif » là où le seed en pose onze dont cinq
 
 **Nature :** chiffre figé dans un document de suivi, dépassé par une livraison ultérieure qui ne
