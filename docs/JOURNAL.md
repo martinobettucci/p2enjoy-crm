@@ -12438,3 +12438,40 @@ la veille, filtrer S3 sur les événements attendus, ou autre chose — appartie
 imputable est livrée et contre-éprouvée.
 
 **Rattachement :** `CRM-059`, INC-091 (close), INC-092 (ouverte). Décisions 238, 362, 368, 369, 370.
+
+### Décision 372 — Où reprendre, et ce que la levée d'INC-096 change pour les sessions suivantes
+
+**2026-08-14 — clôture de session.**
+
+**État mesuré à la fin de cette session.** 57 unités au backlog : **27 `[x]`**, **23 `[~]`**,
+**6 `[ ]`** — `CRM-059` ayant rejoint les closes. Registre : **57 entrées ouvertes** (58 avant, moins
+INC-091). Preuves transverses au vert sur pile complète : `test:sql` **33 fichiers / 1944
+assertions**, `e2e:mail` **42**, `pytest` **242**, `test:unit` **741**, `typecheck` et `build`.
+
+**Ce que la session suivante doit savoir sur l'environnement, et qui n'était écrit nulle part.**
+Trois obstacles ont coûté du temps ici et se reproduiront à l'identique :
+
+1. **`npm ci` n'est pas joué par `./runDev.sh` côté hôte.** Playwright échoue alors en
+   `ERR_MODULE_NOT_FOUND` sur `@playwright/test`. Installer avec le paquet CA :
+   `npm ci --cafile=/root/.ccr/ca-bundle.crt`.
+2. **Node 24 est exigé par les harnais `scripts/verify-*.sh`, et le conteneur démarre en Node 22.**
+   `nvm` est présent sous `/opt/nvm` : `nvm install 24` fonctionne, mais `nvm use` ne suffit pas —
+   `/usr/local/bin` précède dans le `PATH`. Préfixer explicitement :
+   `export PATH=/opt/nvm/versions/node/v24.19.0/bin:$PATH`.
+3. **Le navigateur fourni ne correspond pas à la version épinglée.** `/opt/pw-browsers` porte le
+   build **1194**, et `@playwright/test` 1.62.1 attend le **1234** : quatre scénarios Roundcube
+   échouent sur `Executable doesn't exist`. Le dépôt prévoit déjà `PLAYWRIGHT_CHROMIUM_PATH`
+   (décision 181) ; ici, `npx playwright install chromium-headless-shell` a suffi.
+
+**Où reprendre, dans l'ordre.** La décision 367 ordonne, la pile étant disponible : le reste de
+**B** (INC-092 — mais c'est un **choix de conception qui appartient au responsable**, à ne pas
+trancher seul), puis **G** (INC-048, INC-052, INC-071, INC-072 — un chunk unique sur les
+commentaires, même table et même suite pgTAP), puis **I+J**, puis **L**. Les lots sans pile encore
+dus restent **H**, **K**, **F**, **M**, **E** et **C**.
+
+**Priorité de fond, et elle n'a pas changé :** **23 unités `[~]`** contre 6 `[ ]`. Solder prime sur
+ouvrir. Une unité `[~]` dont le code est livré mais la preuve absente est une dette qui grandit, et
+la levée d'INC-096 retire précisément l'excuse qui la faisait grandir — les preuves de pile sont
+exécutables tant que le registre d'images répond.
+
+**Rattachement :** `CRM-059`, INC-091, INC-092, INC-096. Décisions 367, 369, 370, 371.
