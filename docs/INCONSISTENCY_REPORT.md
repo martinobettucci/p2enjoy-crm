@@ -47,8 +47,8 @@ n'attend donc une décision du responsable** : les cinquante-huit entrées ouver
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-14 :** 101 entrées ouvertes depuis l'origine, **43 closes** — index ci-dessous,
-texte dans l'historique Git — et **55 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les QUATRE entrées du lot G — INC-048, INC-052 et INC-071 par la migration 35, **INC-072 par le geste d'interface de la décision 376** —, plus **INC-100** et **INC-101**, relevées le 2026-08-14 pendant la reprise d'INC-072 et laissées intactes parce qu'elles appartiennent à d'autres unités. **Le lot G est intégralement soldé.** Les soixante et une
+**État au 2026-08-14 :** 102 entrées ouvertes depuis l'origine, **43 closes** — index ci-dessous,
+texte dans l'historique Git — et **56 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les QUATRE entrées du lot G — INC-048, INC-052 et INC-071 par la migration 35, **INC-072 par le geste d'interface de la décision 376** —, plus **INC-100** et **INC-101**, relevées le 2026-08-14 pendant la reprise d'INC-072 et laissées intactes parce qu'elles appartiennent à d'autres unités, plus **INC-102**, relevée le même jour en rejouant le seed puis les preuves sur une base montée AVANT la livraison du lot G. **Le lot G est intégralement soldé.** Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -118,6 +118,80 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 ---
 
 ## Ouverts
+
+### INC-102 — Le seed ne peut PAS faire converger `…0d4` vers la modération sur une base déjà seedée, et il annonce pourtant sa convergence
+
+**Nature :** convergence du seed impossible par construction sur une base antérieure, et **annoncée
+comme acquise** ; la preuve `0017` de l'unité en rougit.
+**Relevée le :** 2026-08-14, en rejouant le seed puis `npm run test:sql` sur une pile montée AVANT
+la livraison d'INC-072, c'est-à-dire sur le chemin de mise à jour d'un poste existant.
+
+**Le fait, MESURÉ.** La pile a été montée et seedée avec la version d'`apply-seed.sh` antérieure au
+commit `80214c8`, qui retirait `…0d4` avec la **clé de service**. `auth.uid()` y étant nul, la base
+porte donc :
+
+```
+id …0d4 | author_id …012 (Driss) | deleted_at renseignée | deleted_by NULL
+```
+
+Le seed a ensuite été rejoué avec la version livrée, celle qui retire `…0d4` avec le **jeton réel**
+de l'administratrice. Sortie observée :
+
+```
+d4 déjà retiré : rien à faire (convergence par état)
+```
+
+et `deleted_by` vaut toujours `NULL`. La ligne d'information finale du même seed affirme pourtant :
+
+```
+Celui de la card c4 est retiré par un TIERS : deleted_by diffère d'author_id (INC-072, décision 376)
+```
+
+**Ce qui en rougit.** `npm run test:sql` sur cette base, code courant, base sans autre résidu :
+
+```
+ECHEC supabase/tests/0017_commentaires.test.sql — 1 assertion(s) en échec sur 98
+  not ok 81 - …et il a été retiré par CAMILLE AUBERT, qui n'en est pas l'auteur
+      have: NULL
+      want: 5eed0000-0000-4000-8000-000000000011
+```
+
+et, dans `e2e/ui/commentaires-gestes.spec.ts`, le scénario « le commentaire retiré du seed se lit
+comme tel dans le fil » échoue sur la même cause, à l'assertion `deleted_by === PROFIL_CAMILLE`.
+**Les 32 autres suites pgTAP et les 7 autres scénarios du fichier sont verts** : le défaut est
+strictement celui-ci.
+
+**Pourquoi ce n'est PAS réparable par une écriture de plus.** La garde du seed est
+`if [ "$etat_d4" = 'null' ]`, donc elle ne se déclenche que sur une ligne encore vivante. La lever
+ne suffirait pas : le trigger `card_comments_avant_maj` lève `comment_deleted` sur **toute**
+écriture visant une ligne déjà supprimée, quel que soit le rôle, `service_role` compris. La pierre
+tombale est irréversible par conception (`docs/SPEC-cards.md` §13.4, et §13.13 point 6, qui la nomme
+explicitement comme telle). Aucun `PATCH` ne peut donc porter `deleted_by` après coup.
+
+**Ce que cela dit de plus gênant qu'une assertion rouge.** L'unité `CRM-043` lot G est close `[x]`
+et INC-072 avec elle, sur la foi d'une preuve qui n'est verte que sur une base **recréée**. Or ni
+`README.md`, ni `docs/SPEC-seed.md` §2.14, ni `docs/PROD_MIGRATIONS.md` n'indiquent qu'une base
+antérieure doit être recréée pour que le seed tienne sa promesse. Un poste existant rejoue le seed,
+le voit réussir, lit « retiré par un TIERS » — et sa suite `0017` est rouge sans que rien n'explique
+pourquoi. C'est exactement le cas que `CLAUDE.md` §8 vise en demandant que le seed **démontre** ce
+qu'il annonce.
+
+**Ce qui n'est PAS tranché ici, et pourquoi.** Trois issues sont possibles, et elles n'ont pas le
+même coût :
+
+1. **supprimer physiquement `…0d4` puis le réinsérer** lorsque `deleted_at` est renseignée et
+   `deleted_by` nulle, avant de le faire retirer par le jeton réel — `service_role` porte bien le
+   privilège `DELETE` (migration `0015`, `grant all privileges`). La convergence redevient totale,
+   au prix d'une destruction de ligne que le seed ne pratique nulle part ailleurs ;
+2. **documenter la limite** — une base seedée avant `80214c8` doit être recréée — dans
+   `docs/SPEC-seed.md` §2.14 et dans le contrat de déploiement, et laisser la garde telle quelle ;
+3. **borner l'assertion 81** à une base fraîche, ce qui affaiblirait une preuve pour accommoder un
+   état, et que ce registre ne recommande pas.
+
+Le choix engage la doctrine de convergence du seed, qui appartient au responsable
+(`docs/CloudWorker.md` §4.1 : une entrée qui attend un arbitrage ne se tranche pas soi-même).
+**Comportement laissé rigoureusement inchangé**, statut de `CRM-043` non modifié : la preuve est
+verte sur base fraîche, et l'écart mesuré ici porte sur le chemin de mise à jour.
 
 ### INC-101 — Les quatre garde-fous globaux de `scripts/verify-harness.sh` sont périmés, et personne ne l'avait mesuré
 

@@ -12982,3 +12982,67 @@ par indulgence.
 
 **Rattachement :** INC-072 (close), INC-099 (constatée à nouveau), INC-100 et INC-101 (nouvelles),
 INC-085 (sa règle). Unité `CRM-043`. Décisions 51, 194, 315, 333, 367, 374, 375, 376.
+
+### Décision 378 — Le lot G rejoué sur une base ANTÉRIEURE : ce qui tient, et la seule chose qui ne tient pas
+
+**2026-08-14 — session de vérification, sans unité nouvelle.** Cette session a démarré sur
+`CRM-043` lot G, l'a instruite, et a constaté en cours de route que la décision 377 la livrait
+depuis une exécution concurrente. Le travail engagé — module de rôle, prédicat de modération,
+classification du second `P0001` — s'est révélé **redondant** avec `80214c8` et a été abandonné
+plutôt que poussé en double : `git rebase` a d'ailleurs écarté de lui-même le commit de
+régénération des types, « patch contents already upstream ». Ce qui suit ne rapporte donc que ce
+qui n'existait pas déjà : **une mesure**.
+
+**La ligne de base a été établie AVANT toute modification** (`docs/CloudWorker.md` §2.4), pile
+complète et seed appliqué, sur le commit `9c8978e` : `test:sql` 33 fichiers / **1969** assertions,
+`test:unit` **744**, `e2e:api` **507**, `e2e:ui` **182**, `e2e:mail` **42**, `pytest` **242**,
+`typecheck` et `build`. **Tout vert**, à l'assertion près des chiffres des décisions 375 et 376.
+Deux dépendances d'environnement ont dû être posées avant de mesurer quoi que ce soit, et elles ne
+sont pas des défauts du dépôt : `node_modules` était absent — `npm ci --cafile=/root/.ccr/ca-bundle.crt` —,
+et le `.venv` de `pytest` aussi. Le navigateur reste celui de la **révision 1194** fournie par
+l'image, contre 1234 attendue, par `PLAYWRIGHT_CHROMIUM_PATH` : c'est la décision 181, inchangée.
+
+**Ce que la vérification confirme.** Sur le code de la décision 377, `test:unit` rend **770**,
+`typecheck` et `build` passent, et les **21 scénarios** des deux fichiers de commentaires sont
+verts, sauf un — voir plus bas. Les deux défauts déterministes rencontrés en chemin — la
+confirmation qui prend la place du corps et rend `carte` introuvable, et la substitution qui
+omettait `deleted_by` en la laissant à `undefined` — ont été diagnostiqués ici **et corrigés en
+amont** par `6a4337f`, avec le même remède au commentaire près. Rien n'est donc revendiqué à leur
+sujet ; leur double découverte, indépendante, vaut confirmation. Les deux captures du geste de
+modération ont été **produites et REGARDÉES** : confirmation distincte nommant la trace nominative,
+pierre tombale « Commentaire retiré par la modération » sans nom de modérateur, conformes au §5.10.
+Rejouée après correction, `fil-charge-1440.jpg` redevient **octet pour octet** la capture committée
+— la meilleure preuve que le composant était juste et la substitution fautive.
+
+**Ce que la vérification INFIRME, et c'est le seul apport de cette session.** La décision 377 écrit
+« Tout vert ». C'est exact **sur une base recréée**, et faux sur une base antérieure. Cette
+session-ci a monté et seedé la pile AVANT la livraison du lot G, c'est-à-dire sur le chemin de mise
+à jour d'un poste existant. Le seed rejoué avec la version livrée annonce
+`d4 déjà retiré : rien à faire (convergence par état)`, laisse `deleted_by` à `NULL`, et affirme
+malgré tout « retiré par un TIERS ». `npm run test:sql` rend alors **1 fichier en échec sur 33** :
+`0017_commentaires.test.sql`, assertion **81**, `have: NULL / want: …011`. Le scénario d'interface
+« le commentaire retiré du seed se lit comme tel dans le fil » tombe sur la même cause.
+
+Et ce n'est **pas réparable par une écriture de plus** : la garde ne se déclenche que sur une ligne
+vivante, et la lever ne servirait à rien puisque le trigger lève `comment_deleted` sur toute
+écriture visant une ligne déjà supprimée, `service_role` compris. La pierre tombale est
+irréversible par conception (§13.4, §13.13 point 6). C'est **INC-102**, consignée avec sa mesure et
+ses trois issues possibles — destruction et réinsertion de `…0d4`, documentation de la limite, ou
+bornage de l'assertion. Le choix engage la doctrine de convergence du seed : il appartient au
+responsable, et n'est pas tranché ici. **Comportement laissé inchangé, `CRM-043` laissée `[x]`** :
+sa preuve est verte sur base fraîche, et l'écart porte sur le chemin de mise à jour.
+
+**INC-099 a été constatée une fois de plus, et chiffrée autrement.** Les deux tracks
+`e2e-arbo-*` laissés par `e2e/ui/administration-arborescence.spec.ts` ne rougissent pas seulement
+`0004_tracks` (2 assertions) : ils rougissent aussi **11 scénarios de `e2e:api`** — `tracks`,
+`channels`, `coherence-workflow`, `workflows` —, tous des comptes de seed. L'ordre de la Definition
+of Done masque le défaut, `test:sql` passant avant `e2e:ui`. Rien n'est ajouté au registre :
+l'entrée existe et son porteur est nommé. Le résidu a été retiré à la main pour que les mesures
+ci-dessus soient honnêtes.
+
+**Où reprendre.** L'ordre de la décision 377 est inchangé et prime : **INC-101 puis INC-099**, sous
+`CRM-008` et `CRM-075`, lot **I+J**. **INC-102** s'y ajoute et attend un arbitrage du responsable
+avant toute mise en œuvre — ne pas la trancher seul.
+
+**Rattachement :** INC-102 (nouvelle), INC-099 (constatée à nouveau, chiffrée sur `e2e:api`),
+INC-072 (close en amont). Unité `CRM-043`, non modifiée. Décisions 181, 375, 376, 377.
