@@ -13135,8 +13135,19 @@ C'est exactement la fenêtre de course décrite par l'entrée : la veille a rele
 pendant que `comptes-entrants.spec.ts` y posait délibérément un mot de passe faux. Le service a
 **correctement** réagi ; c'est la preuve qui ne sait pas distinguer une panne provoquée d'un défaut.
 La décision 371 avait mesuré trois passages verts sans conclure à la correction ; ce passage rouge
-lui donne raison de ne pas l'avoir fait. Rien n'est modifié : la question de conception appartient
-au responsable.
+lui donne raison de ne pas l'avoir fait.
+
+**Et une seconde exécution, plus d'une heure après, a montré que le mot « intermittent » était le
+mauvais mot.** S3 est de nouveau rouge, et le journal porte toujours **une seule** ligne `WARNING` :
+**la même**, horodatée `17:20:15.145Z`. La fenêtre de course ne s'est pas rouverte — la première ne
+s'est jamais refermée. S3 lit le journal du conteneur **depuis son premier démarrage**, et ce
+journal est **cumulatif** : une fois la ligne écrite, elle compte pour toutes les exécutions
+suivantes. **La granularité du défaut n'est donc pas l'exécution, c'est le conteneur.** Cela
+réconcilie les mesures qui semblaient se contredire : trois passages verts n'étaient pas trois
+tirages heureux mais un conteneur épargné, et la rougeur d'ici n'est pas un tirage malheureux mais
+un conteneur marqué. Une issue s'ajoute aux trois que l'entrée proposait — borner la lecture de S3 à
+la fenêtre de l'exécution en cours —, et elle découle de la mesure, non d'une préférence. Rien n'est
+modifié : la question de conception appartient au responsable.
 
 **4. LES HARNAIS `scripts/verify-*.sh` SONT EXÉCUTABLES ICI, ET LA DÉCISION 378 LES CROIT
 INEXÉCUTABLES.** Elle écrit qu'ils « n'ont pas tourné » parce que l'image ne fournit que Node 22,
@@ -13210,6 +13221,18 @@ satisfaisait `toBeVisible()`, et les deux étaient **fausses à l'œil**. C'est 
 **Ce que cette session n'emporte pas.** Aucune correction d'INC-091, INC-092 ou INC-099 — trois
 défauts étrangers, dont deux attendent un arbitrage. Aucune résurrection ni suppression physique
 d'un commentaire, aucun `card_event` de modération : la timeline typée reste à `CRM-044`.
+
+**BILAN FINAL, APRÈS LIVRAISON, ET IL CONFIRME LE CHIFFRE DE LA DÉCISION 378 SUR INC-099.**
+`test:sql` **33 fichiers / 1971 assertions**, `test:unit` **770**, `e2e:ui` **185**, `e2e:api`
+**507**, `pytest` **242**, `typecheck`, `build`, `scripts/verify-commentaires.sh` **79 contrôles** —
+78 auparavant, la nouvelle capture entrant à son inventaire.
+
+Deux de ces chiffres n'ont été atteints qu'après retrait du résidu, et il faut le dire plutôt que de
+publier un total propre : joué **immédiatement après** `e2e:ui`, `e2e:api` rend **496 verts et 11
+rouges**. Les onze sont **exactement** ceux que la décision 378 nomme — `tracks`, `channels`,
+`coherence-workflow`, `workflows` —, tous des comptes de seed, aucun ne portant sur une règle. Les
+quatre lignes `E2E %` retirées, la même commande rend **507**. Le chiffre de la décision 378 est donc
+**reproduit à l'unité**, sur un autre conteneur et par une autre exécution.
 
 **Où reprendre.** `CRM-043` est **déjà close** par la décision 377, et cette session ne la rouvre
 pas : elle ajoute la seule capture qui manquait à sa vérification visuelle, ce qui **renforce** la

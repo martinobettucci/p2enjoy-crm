@@ -642,10 +642,31 @@ Trois passages verts n'avaient donc rien prouvé quant à la correction, comme l
 le disait elle-même — et ce passage rouge, sur la même journée et un autre conteneur, en donne la
 démonstration.
 
+**ET LE DÉFAUT N'EST PAS « INTERMITTENT » AU SENS OÙ CETTE ENTRÉE LE DIT : C'EST UN VERROU À SENS
+UNIQUE.** La même session a rejoué `npm run e2e:mail` une seconde fois, plus d'une heure après. S3
+est de nouveau rouge — et le journal du conteneur porte toujours **une seule** ligne `WARNING`,
+**exactement la même**, horodatée `17:20:15.145Z`. Ce n'est donc pas une seconde ouverture de la
+fenêtre de course : c'est la première qui n'a jamais cessé de compter.
+
+La cause est dans la façon dont S3 mesure. Il lit le journal du conteneur **depuis son tout premier
+démarrage** — l'entrée le dit elle-même — et le journal est **cumulatif**. Une fois la ligne écrite,
+elle y reste jusqu'à la destruction du conteneur. La course n'a donc besoin de s'ouvrir **qu'une
+fois** : après quoi S3 est rouge **à chaque exécution**, indéfiniment, sans qu'aucune course ne se
+reproduise.
+
+Cela réconcilie les mesures qui semblaient se contredire. Les trois passages verts du 2026-08-14
+n'étaient pas trois tirages heureux : c'était un conteneur où la fenêtre ne s'était **jamais**
+ouverte. Et la rougeur observée ici n'est pas plus « intermittente » : c'est un conteneur où elle
+s'est ouverte une fois. **La granularité du défaut n'est pas l'exécution, c'est le conteneur**, ce
+qui change la portée pratique de l'entrée : sur une machine de développement de longue vie, un seul
+passage malheureux rend S3 définitivement rouge jusqu'au prochain `docker compose down`.
+
 Rien n'est modifié : ni `mail-sync.spec.ts`, ni `comptes-entrants.spec.ts`, ni la veille. Le choix —
-suspendre la veille pendant ce scénario, restreindre S3 aux événements qu'il connaît par avance, ou
-autre chose — reste un **arbitrage du responsable**, et il est désormais adossé à une occurrence
-rouge datée plutôt qu'à un souvenir.
+suspendre la veille pendant ce scénario, restreindre S3 aux événements qu'il connaît par avance,
+borner sa lecture à la fenêtre de l'exécution en cours, ou autre chose — reste un **arbitrage du
+responsable**, et il est désormais adossé à une occurrence rouge datée **et à sa mécanique**, plutôt
+qu'à un souvenir. La dernière option n'existait pas dans la liste d'origine : elle découle
+directement de la mesure ci-dessus.
 
 ---
 
