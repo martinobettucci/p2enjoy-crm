@@ -753,6 +753,12 @@ function FormulaireEditionTransition({
 	const [libelle, setLibelle] = useState(transition.label ?? '')
 	const [motifExige, setMotifExige] = useState(transition.require_comment)
 
+	// Ouvrir un formulaire déplace le focus dans son premier champ (docs/DESIGN_SYSTEM.md §5.13),
+	// comme le formulaire de surcharge et le sélecteur d'ajout.
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+
 	const libelleInvalide = libelle !== '' && !libelleTransitionConforme(libelle)
 
 	return (

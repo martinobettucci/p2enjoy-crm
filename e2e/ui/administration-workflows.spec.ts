@@ -1,5 +1,8 @@
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, parcours d'interface
 // @verifies docs/SPEC-workflow-engine.md §7 bis.2 (adresse depuis l'index des réglages),
+//           §7 bis.9 (les arêtes : déclaration, modification, retrait sur la vraie base, refus
+//           d'unicité constaté par une course réelle), §7 bis.9.1 (groupement et culs-de-sac),
+//           §7 bis.9.3 (les arrivées offertes),
 //           §7 bis.3 (catalogue lu à l'ouverture du sélecteur), §7 bis.4 (les six gestes sur la
 //           vraie base, refus d'une étape occupée constaté et non simulé), §7 bis.6 (états,
 //           paliers, clavier), §2.5 (`0` n'est pas `NULL`), §3.5 (désignation de l'initiale)
@@ -187,7 +190,13 @@ test.describe('les six gestes, à la souris (docs/SPEC-workflow-engine.md §7 bi
 			await formulaire.getByLabel('Seuil de relance (jours)').fill('3')
 			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
 			await expect(formulaire).toBeHidden()
-			await expect(page.getByText('E2E Surchargée')).toBeVisible()
+			// PREUVE RESSERRÉE, ET LA RÈGLE A CHANGÉ : depuis le §7 bis.9.6, le bloc des transitions
+			// nomme ses groupes par le libellé de l'étape de départ, donc ce libellé apparaît deux
+			// fois dans le document. L'assertion vise la liste des étapes — ce qu'elle éprouve, la
+			// surcharge affichée après enregistrement, est inchangé.
+			await expect(
+				page.getByTestId('liste-etapes').getByText('E2E Surchargée'),
+			).toBeVisible()
 			// `0` est une SURCHARGE en base, pas une absence — le cœur du §2.5.
 			expect(await etapeEnBase(request, idNoeud)).toMatchObject({
 				label_override: 'E2E Surchargée',
@@ -359,4 +368,233 @@ test.describe('paliers responsive et captures', () => {
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
 		await capturer(page, 'workflows-refus-occupee-1440', UNITE)
 	})
+})
+
+// -------------------------------------------------------------------------------------------
+// Les arêtes du graphe — docs/SPEC-workflow-engine.md §7 bis.9
+// -------------------------------------------------------------------------------------------
+//
+// LE SEED N'EST PAS AMPUTÉ ICI NON PLUS, et la contrainte est plus douce que pour les étapes : une
+// arête se DÉCLARE puis se RETIRE, et la table retrouve exactement son état. Les preuves visent
+// donc une paire d'étapes seedées qu'AUCUNE arête ne relie — `Prospection → Négociation`, mesurée
+// absente du graphe du §3.9 —, et leur `finally` supprime par la paire, quel que soit le point
+// d'échec.
+//
+// Le refus d'unicité n'est PAS simulé : un second administrateur déclare l'arête par la clé de
+// service pendant que le formulaire est ouvert, puis l'écran envoie la sienne. C'est la course
+// réelle que le §7 bis.9.3 annonce — le filtre des arrivées offertes est une aide, pas une garde —,
+// et elle rend le vrai `23505` de la base.
+
+const ETAPE_NEGOCIATION = '5eed0000-0000-4000-8000-000000000063'
+const CHEMIN_TRANSITIONS = `${URL_API}/rest/v1/workflow_transitions`
+
+/** L'arête `Prospection → Négociation` en base, ou `null` : la confirmation d'un geste d'écran. */
+async function areteDePreuve(
+	request: APIRequestContext,
+): Promise<{ id: string; label: string | null; require_comment: boolean } | null> {
+	const reponse = await request.get(
+		`${CHEMIN_TRANSITIONS}?select=id,label,require_comment&from_step_id=eq.${ETAPE_INITIALE_SEED}&to_step_id=eq.${ETAPE_NEGOCIATION}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as readonly {
+		id: string
+		label: string | null
+		require_comment: boolean
+	}[]
+	return lignes[0] ?? null
+}
+
+/** Rend le graphe seedé à son état : l'arête de la preuve n'existe plus (INC-099). */
+async function purgerArete(request: APIRequestContext): Promise<void> {
+	await request.delete(
+		`${CHEMIN_TRANSITIONS}?from_step_id=eq.${ETAPE_INITIALE_SEED}&to_step_id=eq.${ETAPE_NEGOCIATION}`,
+		{ headers: enTetesService() },
+	)
+}
+
+test.describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
+	test('un administrateur déclare, modifie et retire une transition à la souris', async ({
+		page,
+		request,
+	}) => {
+		await purgerArete(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+
+			// Le graphe seedé est rendu groupé par étape de départ, culs-de-sac compris (§7 bis.9.1).
+			await expect(page.getByTestId('ligne-transition')).toHaveCount(11)
+			await expect(page.getByTestId('etape-sans-sortie')).toHaveCount(2)
+
+			// --- Déclarer --------------------------------------------------------------------
+			await page.getByRole('button', { name: 'Déclarer une transition' }).click()
+			const formulaire = page.getByTestId('formulaire-transition')
+			await expect(formulaire).toBeVisible()
+			await formulaire.getByLabel('Étape de départ').selectOption({ label: 'Prospection' })
+			// Les deux arrivées déjà déclarées depuis Prospection — Relance et Perdu — ne sont pas
+			// offertes, et Prospection non plus : le §7 bis.9.3, constaté sur le graphe réel.
+			const arrivees = formulaire.getByLabel('Étape d’arrivée')
+			await expect(arrivees.locator('option')).toHaveCount(4)
+			await expect(arrivees.locator('option', { hasText: 'Relance' })).toHaveCount(0)
+			await arrivees.selectOption({ label: 'Négociation' })
+			await formulaire.getByLabel('Libellé du bouton').fill('E2E Négocier directement')
+			await formulaire.getByLabel('Exiger un motif').check()
+			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(formulaire).toBeHidden()
+			await expect(page.getByTestId('ligne-transition')).toHaveCount(12)
+			// Confirmé EN BASE, pas seulement à l'écran.
+			expect(await areteDePreuve(request)).toMatchObject({
+				label: 'E2E Négocier directement',
+				require_comment: true,
+			})
+
+			// --- Modifier : vider le libellé le remet à `null`, le motif retombe --------------
+			await page
+				.getByRole('button', { name: 'Modifier la transition Prospection vers Négociation' })
+				.click()
+			const edition = page.getByTestId('formulaire-transition-edition')
+			await expect(edition).toBeVisible()
+			await edition.getByLabel('Libellé du bouton').fill('')
+			await edition.getByLabel('Exiger un motif').uncheck()
+			await edition.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(edition).toBeHidden()
+			expect(await areteDePreuve(request)).toMatchObject({ label: null, require_comment: false })
+
+			// --- Retirer : confirmation, puis la base ne porte plus l'arête -------------------
+			await page
+				.getByRole('button', { name: 'Retirer la transition Prospection vers Négociation' })
+				.click()
+			const confirmation = page.getByTestId('confirmation-retrait-transition')
+			await expect(confirmation).toContainText('Retirer la transition Prospection vers Négociation ?')
+			await confirmation.getByRole('button', { name: 'Retirer la transition' }).click()
+			await expect(confirmation).toBeHidden()
+			await expect(page.getByTestId('ligne-transition')).toHaveCount(11)
+			expect(await areteDePreuve(request)).toBeNull()
+		} finally {
+			await purgerArete(request)
+		}
+	})
+
+	test('une arête déclarée entre-temps par un autre administrateur est refusée par la base', async ({
+		page,
+		request,
+	}) => {
+		await purgerArete(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+
+			await page.getByRole('button', { name: 'Déclarer une transition' }).click()
+			const formulaire = page.getByTestId('formulaire-transition')
+			await formulaire.getByLabel('Étape de départ').selectOption({ label: 'Prospection' })
+			await formulaire.getByLabel('Étape d’arrivée').selectOption({ label: 'Négociation' })
+
+			// LE SECOND ADMINISTRATEUR, PENDANT QUE LE FORMULAIRE EST OUVERT. Le filtre des arrivées
+			// offertes a été calculé avant : l'unicité de la base est la seule garde qui reste.
+			const concurrent = await request.post(CHEMIN_TRANSITIONS, {
+				headers: { ...enTetesService(), Prefer: 'return=representation' },
+				data: {
+					workflow_id: WORKFLOW_DEFAUT,
+					workspace_id: WORKSPACE,
+					from_step_id: ETAPE_INITIALE_SEED,
+					to_step_id: ETAPE_NEGOCIATION,
+				},
+			})
+			expect(concurrent.status(), 'déclaration concurrente par la clé de service').toBe(201)
+
+			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(formulaire.getByTestId('workflows-refus')).toContainText(
+				'Cette transition est déjà déclarée.',
+			)
+			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
+
+			// Une seule arête existe : le refus n'a rien écrit, et l'écran n'a rien inventé.
+			const lecture = await request.get(
+				`${CHEMIN_TRANSITIONS}?select=id&from_step_id=eq.${ETAPE_INITIALE_SEED}&to_step_id=eq.${ETAPE_NEGOCIATION}`,
+				{ headers: enTetesService() },
+			)
+			expect(((await lecture.json()) as unknown[]).length).toBe(1)
+		} finally {
+			await purgerArete(request)
+		}
+	})
+
+	test('les trois gestes se mènent au clavier seul', async ({ page, request }) => {
+		await purgerArete(request)
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+
+			await tabVers(page, page.getByRole('button', { name: 'Déclarer une transition' }))
+			await page.keyboard.press('Enter')
+			const formulaire = page.getByTestId('formulaire-transition')
+			// Le focus entre DANS le formulaire à l'ouverture (docs/DESIGN_SYSTEM.md §5.13).
+			await expect(formulaire.getByLabel('Étape de départ')).toBeFocused()
+			await formulaire.getByLabel('Étape de départ').selectOption({ label: 'Prospection' })
+			await formulaire.getByLabel('Étape d’arrivée').selectOption({ label: 'Négociation' })
+			await tabVers(page, formulaire.getByLabel('Libellé du bouton'))
+			await page.keyboard.type('E2E Clavier')
+			await tabVers(page, formulaire.getByRole('button', { name: 'Enregistrer' }))
+			await page.keyboard.press('Enter')
+			await expect(formulaire).toBeHidden()
+			expect(await areteDePreuve(request)).toMatchObject({ label: 'E2E Clavier' })
+
+			await tabVers(
+				page,
+				page.getByRole('button', { name: 'Modifier la transition Prospection vers Négociation' }),
+			)
+			await page.keyboard.press('Enter')
+			const edition = page.getByTestId('formulaire-transition-edition')
+			await expect(edition.getByLabel('Libellé du bouton')).toBeFocused()
+			await page.keyboard.press('End')
+			await page.keyboard.type(' modifié')
+			// `Enter` soumet depuis un champ : le formulaire est un vrai `form`.
+			await page.keyboard.press('Enter')
+			await expect(edition).toBeHidden()
+			expect(await areteDePreuve(request)).toMatchObject({ label: 'E2E Clavier modifié' })
+
+			await tabVers(
+				page,
+				page.getByRole('button', { name: 'Retirer la transition Prospection vers Négociation' }),
+			)
+			await page.keyboard.press('Enter')
+			const confirmation = page.getByTestId('confirmation-retrait-transition')
+			// Le focus est posé sur la confirmation à l'ouverture : `Enter` confirme.
+			await expect(confirmation.getByRole('button', { name: 'Retirer la transition' })).toBeFocused()
+			await page.keyboard.press('Enter')
+			await expect(confirmation).toBeHidden()
+			expect(await areteDePreuve(request)).toBeNull()
+		} finally {
+			await purgerArete(request)
+		}
+	})
+
+	test('le formulaire de déclaration ouvert est capturé, et le graphe aux quatre paliers', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await page.getByTestId('groupes-transitions').scrollIntoViewIfNeeded()
+		await capturer(page, 'workflows-transitions-1440', UNITE)
+		await page.getByRole('button', { name: 'Déclarer une transition' }).click()
+		await expect(page.getByTestId('formulaire-transition')).toBeVisible()
+		await capturer(page, 'workflows-transitions-formulaire-1440', UNITE)
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : le bloc des transitions reste lisible, sans débordement`, async ({
+			page,
+		}) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await page.getByTestId('groupes-transitions').scrollIntoViewIfNeeded()
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+			await capturer(page, `workflows-transitions-${palier.nom}`, UNITE)
+		})
+	}
 })
