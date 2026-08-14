@@ -3981,7 +3981,7 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   autres captures et la vidéo `glisser-deposer.webm` n'ont pas été regardées** lors de ce rejeu :
   elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
-### CRM-043 — Commentaires `[~]`
+### CRM-043 — Commentaires `[x]`
 > **Repris par `CRM-044`** : le panneau que cette unité a livré est devenu le **fil unifié**, comme
 > le §5.10 du design system l'annonçait. `PanneauCommentaires.tsx` est renommé `PanneauTimeline.tsx`,
 > ses seize tests de composant sont conservés, et deux scénarios d'interface de `CRM-043` sont
@@ -4024,7 +4024,7 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       corrigée, l'**énoncé** du backlog est laissé intact et l'arbitrage demandé. **INC-072** : le
       §4 ouvre la modération aux `admin`, l'énoncé ne l'ouvre qu'à l'auteur ; l'**intersection** est
       livrée, et l'absence de modérateur est nommée.
-- [~] **LOT G — LA MODÉRATION EST LIVRÉE CÔTÉ SERVEUR, SON GESTE RESTE À FAIRE.** INC-072
+- [x] **LOT G — LA MODÉRATION EST LIVRÉE, SERVEUR PUIS ÉCRAN, ET INC-072 EST CLOSE.** INC-072
       (décisions 367 et 374, migration `0035`). Politique `card_comments_moderation` : un `admin`
       du workspace supprime un commentaire qu'il peut **lire** — `app.can_read_card` et non
       `app.can_write_card`, modérer ne dépendant pas d'un droit métier. La borne « supprimer sans
@@ -4056,6 +4056,39 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       l'administratrice. La règle a été **mesurée avant d'être décrite**, jetons réels à l'appui :
       falsification refusée par `comment_moderation_limitee`, retrait accepté avec
       `deleted_by` ≠ `author_id`, non-administrateur rendu à `200` et **zéro ligne**.
+- [x] **LE GESTE EST LIVRÉ ET PROUVÉ le 2026-08-14 — INC-072 CLOSE**, décision 376. Tout ce que la
+      ligne ci-dessus nommait comme manquant existe.
+      **Le rôle courant** est lu par `webapp/src/lib/roles.ts` dans `workspace_members`, filtré sur
+      `(workspace_id, user_id)` — MESURÉ : un anonyme reçoit `200` et `[]`, jamais un `401`, et
+      aucune requête n'est émise sans identifiant d'utilisateur. Le module **n'autorise rien** : la
+      politique `card_comments_moderation` tient la règle, un rôle inconnu de la contrainte devient
+      `null`, et le doute — chargement, erreur — ne vaut jamais permission (`CLAUDE.md` §10).
+      **UNE seule action** sur le commentaire d'un tiers, *Supprimer* ; *Modifier* n'est pas rendu,
+      pas même désactivé — un contrôle grisé annonce un droit temporairement indisponible, quand
+      celui-là ne le sera jamais. **Sa confirmation est distincte** de celle de l'auteur et nomme la
+      trace nominative. **La pierre tombale distingue** « retiré par la modération » de
+      « supprimé », en comparant `deleted_by` à `author_id` : une colonne d'audit que rien ne lit
+      n'audite rien. Le **nom** du modérateur reste hors de l'écran (§13.13, point 7).
+      **Deux défauts réels, trouvés en exécutant les preuves et non à la lecture.** Écrit
+      `!== null`, le prédicat lisait une colonne ABSENTE comme un retrait par un tiers : une pierre
+      tombale ordinaire s'annonçait « retirée par la modération » sur une réponse substituée.
+      Corrigé, figé par un test, la substitution rendue fidèle. Et `comment_moderation_limitee`
+      était rendu comme `comment_deleted` : deux `P0001` disaient deux choses opposées, et un
+      modérateur bloqué lisait que le commentaire était supprimé alors qu'il était vivant.
+      **Le seed retire `…0d4` avec le jeton RÉEL de l'administratrice** — `api_admin` remonte
+      au-dessus de la section 8 quinquies —, et deux assertions pgTAP l'exigent : `deleted_by` porte
+      Camille Aubert, et diffère d'`author_id`.
+      **Trois gardes figées de `scripts/verify-commentaires.sh` ont joué et sont RÉVISÉES, non
+      retirées** (mécanisme de la décision 51) : l'inventaire des politiques passe à quatre — le lot
+      G avait ajouté `card_comments_moderation` sans rejouer ce harnais, **resté rouge depuis** —,
+      le compte d'assertions de 84 à 98, et la restauration rejoue enfin la migration `0035`, sans
+      laquelle elle réinstallait une version antérieure du trigger.
+      **Preuves** : `test:unit` **770**, `test:sql` 33 fichiers / **1971** assertions, `e2e:api`
+      **507**, `e2e:ui` **185** — dont 3 scénarios de modération **sans aucune substitution** —,
+      `e2e:mail` **42**, `pytest` **242**, `typecheck`, `build`, `types:check`,
+      `scripts/verify-commentaires.sh` **78 contrôles**, `scripts/verify-manual.sh` **107**,
+      `scripts/verify-types.sh` **30**. **Trois captures observées** :
+      `moderation-confirmation-1440`, `moderation-pierre-tombale-1440`, `moderation-seed-1440`.
 - [x] **INC-071 est CLOSE le 2026-08-14**, par l'arbitrage de la décision 367
       (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
       sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`
@@ -4063,7 +4096,7 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       leur reste fermée, et la pierre tombale dit désormais qui l'a posée (`deleted_by`). La borne
       « supprimer sans modifier » est tenue par le **trigger** et non par la politique, qui n'a pas
       d'`OLD` — migration `0035`, `docs/SPEC-cards.md` §13.6. **INC-072 reste ouverte** faute du
-      geste d'interface, comme la ligne ci-dessus le nomme.
+      geste d'interface — écart comblé le même jour par la décision 376, et **INC-072 est close**.
 - [x] `docs/DESIGN_SYSTEM.md` §5.10 écrit dans le même changement : le panneau de commentaires est
       le **premier fil de discussion du produit**, et le §5.3 l'annonçait sans lui donner une seule
       règle visuelle. Ordre chronologique **croissant** — écrit explicitement pour que `CRM-044` ne

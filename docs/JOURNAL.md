@@ -12869,3 +12869,116 @@ pas attendre une unité qu'il ne porte pas (décision 374, inchangée).
 
 **Rattachement :** INC-072, INC-085 (sa règle), unité `CRM-043`. Décisions 194, 315, 333, 367, 374,
 375.
+
+### Décision 377 — INC-072 est close, le lot G est soldé, et trois harnais avaient cessé de garder
+
+**2026-08-14 — clôture de session.**
+
+**L'unité de la session était désignée, et elle est close.** La décision 375 nommait INC-072 comme
+la reprise, « la seule dette créée par cette session et la plus proche d'aboutir ». Elle est close :
+`CRM-043` passe `[x]`, et **le lot G est intégralement soldé** — quatre entrées sur quatre.
+
+**Ligne de base, établie AVANT toute modification** (`docs/CloudWorker.md` §2.4) : pile complète,
+**17 services `healthy`**, seed appliqué ; `test:sql` 33 fichiers / **1969** assertions, `test:unit`
+**744**, `e2e:api` **507**, `e2e:ui` **182**, `e2e:mail` **42**, `pytest` **242**, `typecheck`,
+`build`. Aux chiffres près, ceux de la décision 375 : rien n'avait dérivé entre les deux exécutions.
+Une exception, et elle compte pour la suite : **`npm run types:check` était ROUGE sur la ligne de
+base**, et l'écart portait sur quatre sources.
+
+**Ce que la session a livré.** Le détail est au backlog ; l'essentiel tient en une phrase — *un droit
+qui n'a pas de chemin n'est pas un droit*, et le chemin existe désormais. Le rôle courant est lu dans
+`workspace_members` sans jamais devenir une autorisation, l'action offerte sur le propos d'un tiers
+est unique, sa confirmation nomme la trace nominative, et la pierre tombale distingue un retrait par
+la modération d'une suppression par l'auteur.
+
+**DEUX DÉFAUTS RÉELS, TROUVÉS EN EXÉCUTANT LES PREUVES ET NON À LA LECTURE.** C'est le fait de
+méthode de la session, et il vaut plus que le compte de tests.
+
+1. **Le prédicat de modération accusait un innocent.** Écrit `ligne.deleted_by !== null`, il lisait
+   une colonne **absente** comme un retrait par un tiers : `undefined` est différent de `null` **et**
+   de tout `author_id`. `e2e/ui/commentaires.spec.ts` servait une réponse substituée sans la colonne,
+   et la pierre tombale de `…d3` — supprimée par son propre auteur — s'y annonçait « retirée par la
+   modération ». Une réponse dégradée ne doit accuser personne. Le prédicat couvre les deux valeurs,
+   un test unitaire fige le cas, et la substitution est rendue fidèle dans le même changement : une
+   réponse substituée qui n'a pas la forme du vrai backend prouve autre chose que ce qu'elle
+   prétend.
+2. **Une preuve attendait un texte que l'écran venait de retirer.** La confirmation **prend la
+   place** du corps (§5.10) : un scénario qui retrouvait la carte par `hasText` restait bloqué
+   trente secondes puis échouait dans son `finally`, en accusant l'API. Le scénario amène désormais
+   la confirmation elle-même dans le cadre.
+
+**TROIS HARNAIS AVAIENT CESSÉ DE GARDER, ET LE PREMIER ÉTAIT ROUGE DEPUIS LE LOT G.**
+
+- **`scripts/verify-commentaires.sh` était rouge depuis la migration `0035`**, et personne ne l'avait
+  vu : la session du lot G ne l'a pas rejoué, et son compte rendu ne le prétend pas non plus. Trois
+  gardes figées ont joué exactement comme elles sont faites pour le faire — l'inventaire des
+  politiques, qui ignorait `card_comments_moderation` ; le compte d'assertions, resté à 84 quand la
+  suite en portait 96 ; et surtout la **restauration**, qui rejouait `0015` puis `0021` sans `0035`
+  et réinstallait donc une version ANTÉRIEURE du trigger, laissant la suite `0017` rouge en accusant
+  le produit d'un défaut que le harnais venait d'introduire. Les trois sont **révisées, aucune
+  retirée** (mécanisme de la décision 51). Bilan après révision : **78 contrôles, aucune anomalie.**
+- **`scripts/verify-harness.sh` porte cinq compteurs globaux tous périmés — INC-101**, relevée et
+  **laissée intacte**. L'écart mesuré est de 2 fichiers, 50 assertions, 3 scénarios d'API, 3
+  d'interface et 1 de messagerie ; **2 assertions et 3 scénarios d'interface seulement sont de cette
+  session**. Les compteurs d'API et de messagerie étaient déjà faux **sur la ligne de base**. Les
+  réviser ici reviendrait à adopter les nombres de quatre autres unités sans rejouer leurs preuves
+  sous leur unité (`docs/CloudWorker.md` §3.1).
+- **`npm run types:check` était rouge, et il ne l'est plus.** La migration `0035` avait créé
+  `card_comments.deleted_by` **sans régénérer les types versionnés**, si bien que le compilateur
+  refusait la colonne dans le `select` du fil : l'unité ne pouvait pas être livrée sans régénérer.
+  Sur un fichier ENGENDRÉ, c'est le seul geste honnête — le corriger à la main pour la seule colonne
+  due l'aurait laissé dans un état qu'aucun générateur ne produit. La régénération importe trois
+  écarts **étrangers** : `mail_messages.filed_at`, la colonne `attempts` du retour de
+  `reserver_envois`, et deux fonctions du rangement réservées au worker. Aucun ne change un
+  comportement ; tous sont nommés. L'assertion figée du catalogue de fonctions a joué et est révisée
+  — onzième fois —, et `scripts/verify-types.sh` rend **30 contrôles, aucune anomalie**.
+
+**UN DÉFAUT D'ENVIRONNEMENT LEVÉ, ET IL NE TIENT QUE POUR CETTE SESSION.** Les harnais refusent de
+s'exécuter sous Node 22, que ce conteneur fournit, et la limite était « héritée, inchangée » depuis
+`CRM-034`. Elle n'était pas fatale : `/opt/nvm` est présent, et `nvm install 24` rapatrie
+**Node 24.19.0 / npm 11.17.0**. Il suffit ensuite d'exporter `NVM_DIR=/opt/nvm` pour que
+`node_toolchain_prepare` le trouve. **Aucun harnais n'avait donc jamais été exécuté sur cet hôte**,
+ce qui explique qu'aucun ne signalait ses compteurs périmés. Le geste est **hors dépôt** et devra
+être refait à chaque exécution, comme le démon Docker et l'arborescence Playwright.
+
+**INC-099 CONSTATÉE UNE SECONDE FOIS, DANS UN TROISIÈME HARNAIS, ET TOUJOURS PAS CORRIGÉE.** Les
+deux scénarios de `e2e/ui/administration-arborescence.spec.ts` ont laissé **deux tracks et deux
+channels**, et `test:sql` est passé au rouge sur `0004_tracks.test.sql` **après** `e2e:ui`, puis de
+nouveau après `verify-harness.sh`. Le nettoyage manuel des quatre lignes suffit à rendre la suite
+verte, ce qui achève de démontrer la cause. Le défaut appartient à `CRM-075` ; il reste intact.
+**Conséquence à retenir pour la prochaine exécution : tout comptage `test:sql` publié après un
+`e2e:ui` est faux tant qu'INC-099 vit.** Les chiffres ci-dessous valent sur une base nettoyée.
+
+**INC-100 relevée et laissée intacte** : la liste « Ce que le fil ne fait pas encore » du §4.10 du
+manuel affirme deux choses que le produit et le manuel lui-même démentent — « aucun nom d'auteur
+n'est affiché » (faux depuis `CRM-022`) et « le motif d'un déplacement n'est conservé nulle part »
+(faux depuis la migration `0035`). Le chapitre a été modifié **sur les seuls points de modération**.
+
+**Ce que la session a mesuré, après changement, sur pile complète et base nettoyée.** `test:sql` 33
+fichiers / **1971** assertions, `test:unit` **770**, `e2e:api` **507**, `e2e:ui` **185**, `e2e:mail`
+**42**, `pytest` **242**, `typecheck`, `build`, `types:check`, `verify-commentaires.sh` **78
+contrôles**, `verify-manual.sh` **107**, `verify-types.sh` **30**. Tout vert. **Trois captures
+produites ET REGARDÉES** — la confirmation de retrait, la pierre tombale de modération, et le
+commentaire modéré du seed sur *Refonte intranet Ville de Lyon*.
+
+**Où reprendre, dans l'ordre.**
+
+1. **INC-101 puis INC-099, dans cet ordre et sous leurs unités.** Réviser les cinq compteurs de
+   `scripts/verify-harness.sh` sous `CRM-008` avec les valeurs mesurées ci-dessus, **puis** solder
+   INC-099 sous `CRM-075` — un `finally` là où le nettoyage vit aujourd'hui à l'entrée du scénario.
+   L'ordre inverse laisserait le harnais global rouge et le ferait croire cassé. C'est exactement le
+   lot **I+J** — reprise transverse des harnais — que la décision 367 plaçait après le lot G, et
+   ces deux entrées lui donnent son contenu mesuré.
+2. Puis **L**. Les lots sans pile encore dus restent **H**, **K**, **F**, **M** et **E**, **C**.
+3. **INC-092** n'est toujours pas à trancher seul : c'est un choix de conception qui appartient au
+   responsable.
+
+**État du registre à la fin de cette session : 55 entrées ouvertes, 43 closes.** 54 au début, moins
+INC-072, plus INC-100 et INC-101.
+
+**Priorité de fond, inchangée :** solder prime sur ouvrir. Le backlog porte **23 unités `[~]`**
+contre 6 `[ ]` et **27 `[x]`** — `CRM-043` ayant quitté le lot des dettes par ses preuves, et non
+par indulgence.
+
+**Rattachement :** INC-072 (close), INC-099 (constatée à nouveau), INC-100 et INC-101 (nouvelles),
+INC-085 (sa règle). Unité `CRM-043`. Décisions 51, 194, 315, 333, 367, 374, 375, 376.

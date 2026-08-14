@@ -47,8 +47,8 @@ n'attend donc une décision du responsable** : les cinquante-huit entrées ouver
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-14 :** 100 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
-texte dans l'historique Git — et **55 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les trois entrées du lot G closes par la migration 35 — INC-048, INC-052 et INC-071 —, plus **INC-100**, relevée le 2026-08-14 pendant la reprise d'INC-072 et laissée intacte parce qu'elle appartient à deux autres unités. INC-072, quatrième du lot G, **reste ouverte** : sa règle est livrée et prouvée, son chemin d'interface est en cours de livraison (décision 376). Les soixante et une
+**État au 2026-08-14 :** 101 entrées ouvertes depuis l'origine, **43 closes** — index ci-dessous,
+texte dans l'historique Git — et **55 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les QUATRE entrées du lot G — INC-048, INC-052 et INC-071 par la migration 35, **INC-072 par le geste d'interface de la décision 376** —, plus **INC-100** et **INC-101**, relevées le 2026-08-14 pendant la reprise d'INC-072 et laissées intactes parce qu'elles appartiennent à d'autres unités. **Le lot G est intégralement soldé.** Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -99,6 +99,7 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 | INC-077 | Les changements de contexte n'étaient pas nommés dans le fil | 2026-08-09 | `CRM-019` | 232, 298, 306 |
 | INC-078 | Quatre harnais du chunk 3 n'étaient inventoriés ni au README ni au DAT | 2026-08-09 | `CRM-019` | — |
 | INC-079 | La console d'administration de Stalwart non installable dans la routine | 2026-08-07 | `CRM-050` | 245, 257 |
+| INC-072 | La modération d'un commentaire : règle ouverte aux `admin` avec audit, puis GESTE livré dans l'écran | 2026-08-14 | `CRM-043` — décisions 374 (serveur) puis 376 (écran) | 194, 367, 374, 376 |
 | INC-080 | Garde-fous du chunk 3 périmés ; le rejeu séquentiel n'était pas une mesure | 2026-08-09 | reprise des harnais | 296, 309 |
 | INC-081 | Les décisions récupérées d'une branche supprimée, rattachées et livrées | 2026-08-09 | `CRM-016` à `CRM-019` | 243 |
 | INC-083 | Vingt et un harnais autonomes contournaient la chaîne Node de `CRM-008` | 2026-08-07 | `CRM-008` | 278 |
@@ -117,6 +118,55 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 ---
 
 ## Ouverts
+
+### INC-101 — Les quatre garde-fous globaux de `scripts/verify-harness.sh` sont périmés, et personne ne l'avait mesuré
+
+**Nature :** garde-fous figés non maintenus par les unités qui ont fait bouger les compteurs.
+**Relevée le :** 2026-08-14, pendant la reprise de `CRM-043` (INC-072), au premier rejeu du harnais
+global depuis plusieurs livraisons.
+
+**Le fait, MESURÉ** — `./scripts/verify-harness.sh`, exécuté après la livraison d'INC-072, sur une
+base sans résidu, avec Node 24 :
+
+| Compteur figé | Valeur attendue | Valeur mesurée | Écart |
+|---|---|---|---|
+| `FICHIERS_SQL_ATTENDUS` | 31 | **33** | +2 fichiers |
+| `ASSERTIONS_ATTENDUES` | 1921 | **1971** | +50 assertions |
+| `SCENARIOS_API` | 504 | **507** | +3 scénarios |
+| `SCENARIOS_UI` | 182 | **185** | +3 scénarios |
+| `SCENARIOS_MAIL` | 41 | **42** | +1 scénario |
+
+**Ce qui appartient à INC-072, et ce qui ne lui appartient pas.** La reprise d'INC-072 ajoute
+**2 assertions** pgTAP — l'audit du seed — et **3 scénarios d'interface** — la modération. Tout le
+reste de l'écart, soit **2 fichiers, 48 assertions, 3 scénarios d'API et 1 scénario de messagerie**,
+vient de livraisons antérieures qui n'ont pas rejoué ce harnais. Le compteur d'API et celui de
+messagerie étaient donc **déjà faux avant** cette session : `e2e:api` rendait 507 et `e2e:mail` 42
+sur la LIGNE DE BASE, établie avant toute modification.
+
+**Deux anomalies de plus, et elles ne sont pas de la même famille.** Les contrôles « `test:sql`
+reste rouge après restauration » et « `e2e:api` reste rouge après restauration » ne mesurent pas une
+restauration défaillante : le harnais exécute lui-même `e2e:ui`, donc
+`e2e/ui/administration-arborescence.spec.ts`, qui laisse **deux tracks et deux channels** derrière
+lui. C'est **INC-099**, constatée une seconde fois, dans un troisième harnais. Le nettoyage manuel
+de ces quatre lignes suffit à rendre `test:sql` vert — **33 fichiers, 1971 assertions, aucune
+anomalie** —, ce qui achève de démontrer que la cause est le résidu et non la restauration.
+
+**Comportement laissé INCHANGÉ.** `scripts/verify-harness.sh` appartient à `CRM-008`, et ses cinq
+compteurs sont des totaux de campagne : les réviser ici reviendrait à adopter les nombres de quatre
+autres unités sans rejouer leurs preuves sous leur unité, ce que `docs/CloudWorker.md` §3.1
+proscrit. Les compteurs propres à `CRM-043` ont été révisés, eux, dans
+`scripts/verify-commentaires.sh` et dans le même changement que le code.
+
+**Ce qu'il faut faire :** rejouer ce harnais sous `CRM-008` et réviser ses cinq constantes avec les
+valeurs mesurées, **puis** solder INC-099, sans quoi les deux contrôles de restauration resteront
+rouges au prochain rejeu quelle que soit la valeur des compteurs. L'ordre importe : réviser les
+compteurs d'abord donnerait un harnais qui échoue encore, et le faire croire cassé.
+
+**Leçon, et elle a un précédent exact.** INC-080 constatait déjà « garde-fous du chunk 3 périmés ».
+Un compteur figé qui n'est pas rejoué à chaque livraison ne garde plus rien : il finit par n'être
+qu'une valeur historique que la première exécution honnête rend rouge.
+
+---
 
 ### INC-100 — Le chapitre 4.10 du manuel se contredit lui-même sur deux points déjà livrés
 
@@ -659,92 +709,6 @@ l'a pas vu.
 **Lié à :** INC-035 (la convergence des clés étrangères, dont ce mécanisme est né), INC-056 (un
 défaut que seule une base froide pouvait révéler — celui-ci est l'exact symétrique : seule une base
 CHAUDE le révèle), `docs/JOURNAL.md` décision 219.
-
----
-
-### INC-072 — La modération des commentaires : la règle est livrée, le geste n'existe pas encore dans le produit
-
-**Nature :** contradiction entre spécifications, sur l'étendue d'un droit.
-**Relevée le :** 2026-08-05, pendant `CRM-043`.
-
-`docs/SPEC-permissions-rls.md` §4 réserve la modification et la suppression d'un commentaire « à
-l'auteur **et aux `admin`** ». L'énoncé de `CRM-043` dans `docs/BACKLOG.md` ne mentionne que
-l'auteur : « édition et suppression par l'auteur ».
-
-**Comportement retenu — l'auteur seul**, c'est-à-dire l'**intersection** des deux énoncés (décision
-194). Elle n'ouvre rien que l'une ou l'autre source refuse, là où le sur-ensemble donnerait un
-pouvoir qu'un des deux documents ne donne pas. Le choix a un fond, et il n'est pas seulement
-prudentiel : **modifier** le commentaire d'autrui n'est pas de la modération mais une falsification
-— un administrateur pourrait faire dire à un commercial l'inverse de ce qu'il a écrit, sans autre
-trace que `edited_at`, et aucun document ne demande cela.
-
-**Conséquence nommée, non masquée :** aucun modérateur ne peut retirer un commentaire déplacé.
-
-**ARBITRAGE RENDU ET RÈGLE LIVRÉE, LE 2026-08-14 — L'ENTRÉE RESTE POURTANT OUVERTE.**
-
-La question posée ici — « faut-il ouvrir la **suppression** aux `admin`, sans la modification ? » —
-est tranchée par la décision **367** (lot G) : oui, avec audit. La mise en œuvre est la décision
-**374**, migration `0035` :
-
-- politique `card_comments_moderation` — un `admin` du workspace supprime un commentaire qu'il peut
-  **lire**. `app.can_read_card` et non `app.can_write_card` : modérer ne dépend pas d'un droit
-  métier ;
-- la borne « supprimer sans modifier » est portée par le **trigger**, seul endroit qui voie `OLD`,
-  `NEW` et `auth.uid()` ensemble. Une politique RLS n'a pas d'`OLD`, et le privilège de colonne est
-  attaché au rôle, que l'auteur et le modérateur partagent. Toute autre écriture d'un tiers rend
-  `comment_moderation_limitee` ;
-- l'audit est la colonne `deleted_by`, écrite par le trigger et fermée au client : `deleted_by`
-  différent d'`author_id` signale un retrait par un tiers.
-
-**Prouvé** — `supabase/tests/0017_commentaires.test.sql` : le modérateur supprime, le même
-modérateur ne modifie pas, la pierre tombale reste définitive pour lui aussi, un
-`business_developer` n'obtient rien et pas davantage une erreur, l'auteur est tracé lui aussi, et
-`deleted_by` n'est écrite par aucun client. Inventaire des politiques porté de 64 à 65 dans
-`0016_preuves_refus.test.sql`.
-
-**CE QUI RESTE DÛ, ET POURQUOI L'ENTRÉE N'EST PAS CLOSE.** Le produit n'offre **aucun geste** de
-modération : `webapp/src/app/PanneauTimeline.tsx` calcule `actionsOffertes = estAuteur && !supprime`,
-et un administrateur ne voit donc ni « Supprimer » ni rien d'autre sur le propos d'un tiers. C'est
-exactement la forme d'INC-085, dont la décision 333 a tiré la règle : **un droit qui n'a pas de
-chemin n'est pas un droit**. Clore ici ferait descendre le compteur sans que personne puisse modérer
-depuis le produit.
-
-**L'obstacle est nommé, et il n'est pas mince :** la webapp n'a aujourd'hui **aucune notion du rôle
-de workspace de l'utilisateur courant**. Les écrans d'administration ne se gardent pas eux-mêmes,
-ils laissent l'API refuser. Offrir « Supprimer » à tous et laisser le `USING` filtrer serait une
-**commande morte** pour la majorité des utilisateurs, ce que le §5.10 de `docs/DESIGN_SYSTEM.md`
-refuse — le composant écrit d'ailleurs en toutes lettres qu'« une pierre tombale n'offre aucun
-geste […] proposer le contraire serait une commande morte ». Il faut donc, dans l'ordre : lire le
-rôle courant, le porter jusqu'au panneau, n'offrir que **Supprimer** — jamais **Modifier** — sur le
-commentaire d'un tiers, l'éprouver en E2E d'interface et vérifier les captures.
-
-**LE SEED NE DÉMONTRE PAS ENCORE LA MODÉRATION, ET C'EST LE MÊME MANQUE.** Mesuré après la
-migration : le seed supprime bien `…0d4`, mais **par la clé de service**, dont `auth.uid()` est nul —
-`deleted_by` reste donc `NULL`, ce qui est le comportement juste (une suppression sans appelant
-identifié n'a personne à nommer) et ne montre rien de l'audit. Le cas idéal est pourtant **déjà dans
-le seed** : `…0d4` porte « Note interne publiée par erreur sur la mauvaise affaire », écrite par
-Driss Lemoine — c'est littéralement le propos qu'une administratrice retirerait. Le rendre
-démonstratif suppose d'exécuter cette suppression avec le jeton de Camille Aubert, donc de déplacer
-le bloc **après** l'obtention de `JETON_ADMIN`, et d'ajuster `docs/SPEC-seed.md` §2.14 ainsi que les
-assertions de `0017_commentaires.test.sql` qui comptent les pierres tombales. Ce n'est pas un geste
-séparé du précédent : le seed doit démontrer **ce que le produit sait faire**, et le produit ne sait
-pas encore modérer depuis son écran.
-
-**Reste à faire, précisément et dans cet ordre :** le rôle courant côté client ; l'action
-*Supprimer* — et **jamais** *Modifier* — sur le commentaire d'un tiers dans `PanneauTimeline.tsx` ;
-ses tests de composant ; un scénario `e2e/ui` où une administratrice retire le propos d'un tiers ;
-la vérification visuelle et ses captures observées ; la modération du seed sur `…0d4` avec les
-assertions correspondantes. La règle backend, elle, est **livrée et prouvée**.
-
-**CONCEPTION ÉCRITE ET COMMITTÉE LE 2026-08-14, AVANT LE CODE — décision 376.** Elle tranche les
-cinq points que la liste ci-dessus laissait ouverts : le rôle est lu dans `workspace_members` filtré
-sur `(workspace_id, user_id)` — MESURÉ : un anonyme reçoit `200` et `[]`, jamais un `401` ; l'action
-du tiers est **unique** ; sa confirmation est un texte distinct nommant la trace nominative ; la
-pierre tombale distingue « retiré par la modération » de « supprimé » en comparant `deleted_by` à
-`author_id`, faute de quoi la colonne d'audit ne serait lue par personne ; et le seed retire `…0d4`
-avec le jeton réel de l'administratrice. `docs/SPEC-cards.md` §13.10 à §13.14 et
-`docs/DESIGN_SYSTEM.md` §5.10 portent la règle. **L'entrée reste ouverte tant que les preuves ne
-sont pas vertes.**
 
 ---
 

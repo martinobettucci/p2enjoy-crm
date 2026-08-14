@@ -48,6 +48,43 @@ d'exécuter le code attendu.
     service dont `auth.uid()` est nul : `deleted_by` restait alors nul, et la pierre tombale ne
     démontrait que la destruction du corps. Le propos, « Note interne publiée par erreur sur la
     mauvaise affaire » écrit par Driss Lemoine, est le cas de modération exact du §13.6.
+  - **Deux défauts réels trouvés en exécutant les preuves, pas à la lecture.** Le prédicat de
+    modération, écrit `!== null`, lisait une colonne **absente** comme un retrait par un tiers :
+    une pierre tombale supprimée par son propre auteur s'annonçait « retirée par la modération » sur
+    une réponse substituée qui ne portait pas encore `deleted_by`. Une réponse dégradée ne doit
+    accuser personne. Et une preuve d'interface attendait indéfiniment un texte que la confirmation
+    venait de remplacer — la confirmation **prend la place** du corps.
+  - **`scripts/verify-commentaires.sh` était ROUGE depuis la migration `0035`, et personne ne
+    l'avait vu.** Trois gardes figées ont joué et sont **révisées, aucune retirée** : l'inventaire
+    des politiques ignorait `card_comments_moderation` ; le compte d'assertions restait à 84 quand la
+    suite en portait 96 ; et la restauration rejouait `0015` puis `0021` **sans `0035`**, donc
+    réinstallait une version antérieure du trigger et laissait la suite `0017` rouge — le harnais
+    accusait le produit d'un défaut qu'il venait lui-même d'introduire. Deux dégradations
+    volontaires s'ajoutent, dont le retrait de la seule politique de modération, que la migration
+    `0035` annonçait comme mesurable. Bilan : **78 contrôles, aucune anomalie.**
+  - **Les types versionnés sont régénérés, et `npm run types:check` redevient vert.** La migration
+    `0035` avait créé `card_comments.deleted_by` sans eux, et le compilateur refusait la colonne :
+    l'unité ne pouvait pas être livrée sans régénérer. La régénération importe trois écarts
+    **étrangers** — `mail_messages.filed_at`, la colonne `attempts` du retour de `reserver_envois`,
+    et deux fonctions du rangement réservées au worker —, tous nommés, aucun ne changeant un
+    comportement. L'assertion figée du catalogue de fonctions a joué et est révisée.
+- **INC-101 relevée, mesurée et NON corrigée** : les cinq compteurs globaux de
+  `scripts/verify-harness.sh` sont périmés — 33 fichiers / 1971 assertions contre 31 / 1921, 507
+  scénarios d'API contre 504, 185 d'interface contre 182, 42 de messagerie contre 41. **Deux
+  assertions et trois scénarios d'interface seulement** viennent de cette session ; les compteurs
+  d'API et de messagerie étaient déjà faux sur la ligne de base. Le harnais appartient à `CRM-008`,
+  et réviser ses totaux ici reviendrait à adopter les nombres de quatre autres unités sans rejouer
+  leurs preuves.
+- **INC-100 relevée, mesurée et NON corrigée** : la liste « Ce que le fil ne fait pas encore » du
+  §4.10 de `docs/manual.md` affirme deux choses que le produit **et le manuel lui-même** démentent —
+  « aucun nom d'auteur n'est affiché », faux depuis `CRM-022`, et « le motif d'un déplacement n'est
+  conservé nulle part », faux depuis la migration `0035`. Les deux lignes appartiennent à `CRM-022`
+  et à `CRM-034` ; le chapitre a été mis à jour sur les seuls points de modération.
+- **INC-099 constatée une seconde fois, dans un troisième harnais** : le résidu de
+  `e2e/ui/administration-arborescence.spec.ts` a fait passer `test:sql` au rouge après `e2e:ui`, puis
+  après `verify-harness.sh`. Le nettoyage manuel des quatre lignes suffit à rendre la suite verte.
+  Tout comptage `test:sql` publié après un `e2e:ui` est donc faux tant que l'entrée vit. Le défaut
+  appartient à `CRM-075` et reste intact.
 
 ### Corrigé
 
