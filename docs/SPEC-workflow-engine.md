@@ -2262,6 +2262,145 @@ est atteignable au clavier comme à la souris, et la console reste vierge.
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, workflow sans arête, formulaire de déclaration ouvert |
 | Seed | Le workflow par défaut du §3.9 suffit. **Mesuré sur la pile, 2026-08-14** : sept étapes, **onze** arêtes dont **cinq** à motif exigé, et deux étapes sans sortie — `Livré` et `Perdu`. Le workflow dérivé du §4.10 porte le même graphe |
 
+### 7 bis.10 Troisième tranche : l'édition des champs de formulaire
+
+Le §7 bis.7 nommait quatre manques ; la deuxième tranche en a levé un. Celui-ci lève la **moitié**
+du deuxième : les **champs** du formulaire d'un workflow — leur déclaration, leur libellé, leur
+aide, leurs options, leur ordre et leur archivage. La seconde moitié — la **grille champ × étape**
+des règles de visibilité (`docs/SPEC-form-composer.md` §3.1 et §5) — reste due, ainsi que la
+prévisualisation des effets. L'unité reste `[~]` tant qu'elles le sont.
+
+Comme la deuxième tranche, celle-ci ne touche NI au modèle NI aux autorisations :
+`form_fields` existe depuis `CRM-035` avec ses contraintes (`docs/SPEC-form-composer.md` §2.2, §2.4)
+et ses politiques (§2.7), déjà prouvées en pgTAP. Ce qui manquait était l'écran, et l'écran seul.
+**Aucune migration n'est écrite.**
+
+#### 7 bis.10.1 Ce que la troisième tranche lit
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 5 | `form_fields` | `workflow_id=eq.<workflow choisi>` | `position` | les champs du formulaire du workflow choisi |
+
+**Les champs archivés SONT rapportés**, à la différence du catalogue de nœuds de la lecture 3 qui
+exclut les siens côté serveur. La différence n'est pas une inconstance : un nœud archivé n'est plus
+**ajoutable**, et la lecture 3 sert précisément à offrir un choix ; un champ archivé, lui, est le
+seul état que le produit connaisse pour « retiré » — aucun privilège `DELETE` n'existe (§2.7 du
+composeur, **mesuré ci-dessous**). Le masquer rendrait le geste de restauration inatteignable et
+laisserait croire à une suppression qui n'a pas eu lieu.
+
+La lecture est émise **avec** celles des étapes et des arêtes, pour la même raison qu'au §7 bis.9.1 :
+les trois décrivent le même workflow, et toute écriture de l'un des trois blocs les rejoue toutes.
+
+#### 7 bis.10.2 Les cinq gestes de cette tranche
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Déclarer un champ** | `INSERT` dans `form_fields`, `position` **omise** | unicité `(workflow_id, key)` ; forme de la clé ; `type` dans la liste des quinze ; `options` objet ; `choices` non vide pour `select`/`multiselect` ; `currency` pour `money` |
+| **Modifier un champ** | `PATCH label`, `help_text`, `options` | libellé non vide, aide non vide si fournie, mêmes contraintes d'options |
+| **Réordonner** | `PATCH position` | `position` est un `numeric` où l'on insère entre deux voisines — `calculerDeplacement` de `CRM-075`, comme les étapes |
+| **Archiver** | `PATCH archived_at` à l'instant courant | rien : la colonne est libre, l'archivage n'est refusé par aucune garde |
+| **Restaurer** | `PATCH archived_at` à `NULL` | idem |
+
+**Aucun geste de suppression n'est offert, et ce n'est pas un oubli.** MESURÉ sur la pile le
+2026-08-14 : `DELETE /form_fields` avec le jeton réel de l'administratrice rend **`403` / `42501`**,
+avec le `hint` « Grant the required privileges […] GRANT DELETE ON public.form_fields ». Le §2.7 du
+composeur l'annonçait ; c'est désormais constaté. Un écran qui offrirait le geste ne produirait
+qu'un refus que l'administrateur ne peut pas lever, et effacerait — s'il aboutissait — des valeurs
+déjà saisies par les équipes.
+
+#### 7 bis.10.3 Ce que l'écran ne modifie PAS, et pourquoi c'est mesuré et non supposé
+
+Deux colonnes sont écrites à la déclaration et **jamais** ensuite, alors que la base accepte de les
+modifier. Chacune est un choix motivé, pas une limite technique.
+
+**La clé.** MESURÉ : `PATCH /form_fields {"key": …}` rend `200` et la ligne modifiée. L'écran ne
+l'offre pourtant pas. Le §2.5 du composeur fait de `key` l'identifiant **durable** : celui qu'un
+export, un filtre de vue sauvegardée et les messages d'erreur de `move_card` nomment. La renommer
+réécrit rétroactivement le sens de tout ce qui la cite, sans qu'aucune erreur ne le signale. Un
+champ dont la clé est mauvaise s'archive et se redéclare — deux gestes visibles plutôt qu'une
+mutation silencieuse.
+
+**Le type.** MESURÉ, et c'est la mesure décisive de cette tranche :
+
+1. un champ `text` reçoit la valeur `"une chaîne"` sur une card réelle — `201` ;
+2. `PATCH /form_fields {"type": "number"}` sur ce même champ — **`200`**, la base accepte ;
+3. la valeur `"une chaîne"` est **toujours en base**, inchangée : le trigger de validation du
+   §6.4 du composeur porte sur `card_field_values`, il ne revisite aucune ligne existante ;
+4. réécrire **la même valeur** est alors refusé — `P0001`, `invalid_field_value`, détail
+   « sonde-type attend un nombre, reçu string ».
+
+Autrement dit, changer le type d'un champ déjà rempli laisse en base des valeurs que le produit
+refuse désormais d'écrire, lisibles mais non réenregistrables, sans qu'aucun écran ne le dise. La
+conversion des valeurs existantes est un **plan de remappage**, exactement ce que `CRM-078` porte
+pour les workflows. Offrir le changement de type ici livrerait la moitié destructrice d'une
+fonctionnalité dont l'autre moitié n'existe pas. L'écran écrit le type à la déclaration et l'affiche
+ensuite en lecture seule, en nommant le motif à l'utilisateur.
+
+#### 7 bis.10.4 Validation de forme, et la seule qui ne soit pas un raccourci
+
+Le §7 bis.5 pose la règle : l'écran ne valide que ce dont la réponse est connue d'avance et dont
+l'erreur reste rattrapée par la base. Cinq contrôles en relèvent, tous adossés à un `CHECK` mesuré :
+
+| Contrôle | `CHECK` correspondant | Refus mesuré sans lui |
+|---|---|---|
+| clé au motif `^[a-z0-9]+(-[a-z0-9]+)*$` | `form_fields_key_check` | `23514` |
+| libellé non vide après `btrim` | `form_fields_label_check` | `23514` |
+| aide non vide si fournie | `form_fields_help_text_check` | `23514` |
+| `select`/`multiselect` : au moins un choix | `form_fields_choices_check` | `23514` |
+| `money` : devise `^[A-Z]{3}$` | `form_fields_currency_check` | `23514` |
+
+**Le sixième contrôle n'est PAS un raccourci, et c'est le seul de tout cet écran dans ce cas :
+l'unicité des clés de choix et la forme `{key, label}` de chaque entrée.** Le §2.4 du composeur
+l'annonce — un `CHECK` ne peut porter aucune sous-requête ni déplier un tableau `jsonb` — et la
+mesure le confirme : un `select` déclaré avec **deux choix de clé `a`** est accepté, `201`. Rien
+en base ne l'arrête. Ici l'écran n'économise pas un aller-retour, il tient une règle que personne
+d'autre ne tient, et sa preuve unitaire est la seule garantie du produit. Ce que cela **ne** rend
+pas, il faut l'écrire : une clé de choix dupliquée écrite par l'API directement reste possible, et
+seule la validation des valeurs (§6.5 du composeur) en subira la conséquence.
+
+**Un champ `select` naît avec au moins un choix**, conséquence assumée au §2.4 : la question et ses
+réponses partent du même formulaire, en une seule écriture.
+
+#### 7 bis.10.5 Les refus
+
+Les natures reprennent celles du §7 bis.4, avec le vocabulaire du formulaire :
+
+- `23505` est **« cette clé est déjà prise dans ce workflow »** — mesuré sur `budget` ;
+- `23514` est `forme-refusee`, et il recouvre **six** `CHECK` distincts : clé, libellé, aide, type
+  hors liste, `options` non objet, options manquantes de `select` ou de `money`. Le message nomme
+  les causes plutôt que d'en deviner une, comme au §7 bis.9.5 ;
+- `23503` reste « le workflow a disparu, ou n'appartient pas à ce workspace » : aucun retrait
+  n'existe ici, donc aucune lecture « occupée » de ce code n'est possible — même raisonnement
+  qu'au §7 bis.9.5, et même absence de paramètre `geste` ;
+- `200` avec **zéro ligne** est `sans-effet`. MESURÉ : `PATCH /form_fields` avec le jeton réel du
+  `business_developer` rend `200` et `[]` — le `USING` de la politique filtre la ligne avant la
+  mise à jour, sans lever d'erreur (§2.8 du composeur, ligne h).
+
+#### 7 bis.10.6 États, accessibilité et responsive
+
+Les champs sont un **troisième bloc**, sous les arêtes et dans la même colonne : on ne dessine pas
+le formulaire d'un workflow avant d'en avoir posé les étapes et les chemins. Le bloc rend les quatre
+états du §5.8 du design system ; un workflow sans champ dit ce que cela signifie pour ses cards ;
+un champ archivé est **nommé comme tel** et non grisé en silence ; chaque geste est atteignable au
+clavier comme à la souris ; la console reste vierge. Le §5.15 du design system porte les règles
+visuelles.
+
+#### 7 bis.10.7 Ce que cette tranche ne livre pas
+
+- la **grille champ × étape** des règles de visibilité (`docs/SPEC-form-composer.md` §3.1, §5) ;
+- les **exigences de transition** (`docs/SPEC-transition-required-fields.md`) ;
+- la **prévisualisation des effets** exigée par la Definition of Done de `CRM-076` ;
+- la **modification du type** d'un champ, qui suppose le plan de remappage de `CRM-078` (§7 bis.10.3).
+
+#### 7 bis.10.8 Preuves attendues de la troisième tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Lecture 5 émise avec ses colonnes et son ordre ; champs archivés conservés dans la liste ; validation de forme dans ses six cas — clé, libellé, aide, choix, devise, **et l'unicité des clés de choix que la base n'assure pas** ; `options` composé selon le type ; correspondance des refus, `23505` et `23514` compris |
+| Interface | Les cinq gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'une clé déjà prise constaté et non simulé |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, formulaire de déclaration ouvert, champ archivé visible |
+| Seed | Le formulaire du workflow par défaut suffit. **Mesuré sur la pile, 2026-08-14** : **sept** champs de positions 1 à 7, dont **un archivé** — `budget-previsionnel` —, six types distincts, `budget` portant sa devise et `source` ses quatre choix |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |

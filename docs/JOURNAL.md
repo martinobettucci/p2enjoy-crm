@@ -13613,3 +13613,53 @@ décrivent la Definition of Done d'unités closes ; arbitrage demandé.
 **Où reprendre.** `CRM-076` reste `[~]`. La tranche suivante est l'édition des **champs de
 formulaire** et de leurs règles (§7 bis.7), puis la **prévisualisation des effets**. Le choix
 d'unité obéit à la décision 382 : backlog d'abord, registre en consultation.
+
+### Décision 386 — CRM-076, troisième tranche : les champs du formulaire, et les deux colonnes que l'écran refuse de modifier
+
+**2026-08-14, suite de la décision 385 — entrée écrite et committée avant la première ligne de
+code (`CLAUDE.md` §5).**
+
+**L'unité de la session** est `CRM-076`, désignée par la dernière entrée du journal comme reprise
+en cours et par la décision 382 comme unité de construction. Le §7 bis.7 nommait quatre manques ;
+la deuxième tranche en a levé un. Celle-ci lève la **moitié** du deuxième : les **champs** du
+formulaire — déclaration, libellé, aide, options, ordre, archivage, restauration. La grille
+champ × étape des règles de visibilité et la prévisualisation restent dues, et l'unité reste `[~]`.
+
+**Ni modèle ni autorisations.** `form_fields` existe depuis `CRM-035` avec ses six `CHECK` et ses
+politiques, déjà prouvés en pgTAP. **Aucune migration n'est écrite.** Ce qui manquait était l'écran.
+
+**Trois mesures prises sur la pile avant d'écrire la spécification, et qui décident de l'écran.**
+
+La première : `DELETE /form_fields` avec le jeton réel de l'administratrice rend **`403` / `42501`**,
+`hint` « GRANT DELETE ON public.form_fields ». Le §2.7 du composeur l'annonçait ; c'est constaté.
+L'écran n'offre donc **aucun geste de suppression** — l'archivage est le seul retrait que le produit
+connaisse, et il se restaure.
+
+La deuxième décide de la colonne `type`, et c'est la mesure centrale de la tranche. Un champ `text`
+reçoit `"une chaîne"` sur une card réelle ; `PATCH {"type": "number"}` sur ce champ rend **`200`** ;
+la valeur texte est **toujours en base**, le trigger de validation ne portant que sur
+`card_field_values` et ne revisitant aucune ligne existante ; et réécrire **la même valeur** est
+alors refusé — `P0001`, « attend un nombre, reçu string ». Changer le type d'un champ rempli laisse
+donc des valeurs que le produit refuse désormais d'écrire, sans qu'aucun écran ne le dise. La
+conversion des valeurs est un plan de remappage, c'est-à-dire `CRM-078`. L'écran écrit le type à la
+déclaration et l'affiche ensuite en lecture seule, en nommant le motif.
+
+La troisième décide de `key` : `PATCH {"key": …}` rend `200`, et l'écran ne l'offre pas davantage.
+Le §2.5 du composeur en fait l'identifiant durable des exports, des filtres et des messages d'erreur
+de `move_card` ; la renommer réécrit rétroactivement ce que ces citations désignent, sans erreur.
+
+**Une validation d'écran qui n'est PAS un raccourci**, la première de tout cet éditeur : la base
+accepte un `select` portant **deux choix de clé `a`** — mesuré, `201`. Le §2.4 du composeur
+l'annonçait : un `CHECK` ne déplie pas un tableau `jsonb`. L'unicité des clés de choix et la forme
+`{key, label}` sont donc tenues par l'écran seul, et leur preuve unitaire est la seule garantie du
+produit. Ce que cela ne couvre pas est écrit : une écriture directe par l'API reste possible.
+
+**Preuves attendues avant de fermer la tranche** — §7 bis.10.8 : unitaires sur la lecture 5, la
+conservation des champs archivés, les six contrôles de forme dont l'unicité des clés de choix, la
+composition d'`options` par type et la correspondance des refus ; E2E sur la vraie base des cinq
+gestes à la souris et au clavier, chacun confirmé en base, avec le refus réel d'une clé déjà prise ;
+captures aux quatre paliers observées. Le seed suffit : sept champs de positions 1 à 7, dont un
+archivé, six types distincts, `budget` avec sa devise et `source` avec ses quatre choix.
+
+**Où reprendre après cette tranche.** `CRM-076` reste `[~]` : la grille champ × étape des règles de
+visibilité, les exigences de transition et la prévisualisation des effets restent dues.

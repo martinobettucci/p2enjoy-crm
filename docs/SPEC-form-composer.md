@@ -527,6 +527,13 @@ régler la visibilité de chaque couple en un seul écran, plutôt que champ par
 L'archivage d'un champ (`archived_at`) le retire des formulaires **sans supprimer les valeurs
 déjà saisies**, qui restent consultables dans la section repliée et dans l'export.
 
+**Où cet écran est spécifié, et ce qui en est livré.** L'éditeur est porté par `CRM-076`, et
+`docs/SPEC-workflow-engine.md` §7 bis le spécifie tranche par tranche. Le **§7 bis.10** couvre les
+champs eux-mêmes — déclaration, libellé, aide, options, ordre, archivage et restauration — ainsi que
+les deux colonnes que l'écran n'offre pas de modifier, `key` et `type`, avec la mesure qui motive
+chacune. La **grille champ × étape** décrite ci-dessus reste due par une tranche ultérieure de la
+même unité, et le §7 bis.10.7 la nomme explicitement plutôt que de la laisser croire livrée.
+
 ## 6. Valeurs et validation — `CRM-036`
 
 Ce chapitre a été **réécrit après mesure**, le 2026-08-05, sur la pile réelle : sondes créées puis
