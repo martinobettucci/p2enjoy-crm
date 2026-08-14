@@ -130,6 +130,40 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-104 — Le backlog compte « dix transitions dont quatre à motif » là où le seed en pose onze dont cinq
+
+**Nature :** chiffre figé dans un document de suivi, dépassé par une livraison ultérieure qui ne
+l'a pas maintenu — même famille qu'INC-080, INC-101 et INC-103. **Relevée le :** 2026-08-14, en
+écrivant les preuves de la deuxième tranche de `CRM-076`, qui avaient besoin du graphe réel.
+
+**Le fait, mesuré sur la pile seedée** (`docker compose exec db psql`, workflow par défaut
+`5eed0000-…-051` **et** workflow dérivé `c0eaacea-…`) :
+
+| Grandeur | Ce que `docs/BACKLOG.md` écrit deux fois (lignes 3605 et 3725) | Ce que la base porte |
+|---|---|---|
+| Étapes | sept | sept |
+| Transitions | **dix** | **onze** |
+| Transitions à motif exigé | **quatre** | **cinq** |
+| Étapes sans sortie | deux | deux — `Livré` et `Perdu` |
+
+**Cause probable, non vérifiée :** la décision 259 a déclaré `Réalisation en cours → Perdu` pour
+clore INC-003, avec le motif exigé comme les quatre autres « Marquer perdu ». Les deux phrases du
+backlog datent d'avant et n'ont pas été relues à cette occasion. Le chiffre n'est employé par aucun
+harnais — `scripts/verify-workflows.sh` interroge la base —, donc **rien n'a jamais rougi**.
+
+**Comportement laissé inchangé.** Ces deux phrases décrivent la Definition of Done de `CRM-041` et
+de `CRM-046`, unités closes qui ne sont pas celles de cette session : les corriger au passage
+reviendrait à retoucher la preuve écrite d'une unité fermée sans la rejouer. La correction demande
+l'arbitrage du responsable : soit les deux phrases sont mises au chiffre réel, soit elles sont
+datées comme un état passé.
+
+**Ce que cette session a fait à la place :** le §7 bis.9.7 de `docs/SPEC-workflow-engine.md`, écrit
+cette session, porte le chiffre **mesuré** et dit qu'il l'est.
+
+**Lié à :** INC-080, INC-101, INC-103 (compteurs figés), décision 259 (INC-003), `CRM-076`.
+
+---
+
 ### INC-103 — Ce registre porte deux comptes de ses propres entrées closes, et aucun des deux ne correspondait au tableau
 
 **Nature :** compteur figé non maintenu par les livraisons qui le dépassent, **dans le document de

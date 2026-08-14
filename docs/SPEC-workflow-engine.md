@@ -2260,7 +2260,7 @@ est atteignable au clavier comme à la souris, et la console reste vierge.
 | Unitaire | Groupement des arêtes par étape de départ dans l'ordre du graphe ; arête dont une extrémité a disparu de la liste des étapes ; arrivées possibles = étapes moins le départ moins les arrivées déjà déclarées ; libellé fourni blanc refusé, libellé vide valant `NULL` ; correspondance des refus, `23505` et `23503` compris |
 | Interface | Les trois gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'une arête déjà déclarée constaté et non simulé |
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, workflow sans arête, formulaire de déclaration ouvert |
-| Seed | Le workflow par défaut du §3.9 suffit : dix arêtes dont quatre à motif exigé, et deux étapes sans sortie |
+| Seed | Le workflow par défaut du §3.9 suffit. **Mesuré sur la pile, 2026-08-14** : sept étapes, **onze** arêtes dont **cinq** à motif exigé, et deux étapes sans sortie — `Livré` et `Perdu`. Le workflow dérivé du §4.10 porte le même graphe |
 
 ## 8. Vérification exigée
 
