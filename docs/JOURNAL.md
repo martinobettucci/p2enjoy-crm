@@ -13413,3 +13413,77 @@ projet.
 
 **Rattachement :** INC-099 (close), INC-101 (close), INC-103 (nouvelle), INC-091 et INC-092
 (mesurées, non modifiées). Unités `CRM-008` et `CRM-075`. Décisions 51, 80, 362, 367, 377, 378, 379.
+
+### Décision 381 — Le lot L commence par son seul contrôle : un détecteur qui lit la grammaire au lieu du texte
+
+**2026-08-14.** L'unité de cette session est le lot **L** de la décision 367 — INC-028, INC-063,
+INC-065, INC-067, INC-070 —, désigné comme reprise par la décision 380 : « la suite de l'ordre des
+décisions 367 et 377 est le lot L ». La disposition arbitrée est **livrer les cinq, un commit par
+nature**, et cette entrée est écrite et committée **avant la première ligne de code**
+(`CLAUDE.md` §5).
+
+**Ce qui n'est PAS tranché ici, et il faut l'écrire d'emblée.** Les cinq entrées portent chacune une
+rubrique « ce qui reste à arbitrer », et aucune de ces rubriques n'est tranchée par cette session :
+le responsable les a toutes tranchées en amont, dans les décisions **295** (montants, INC-067),
+**296** (contrôle statique, INC-070) et **298** (fil et formulaires INC-063, adresse canonique
+INC-065, couleurs INC-028). Ce qui est décidé ici est l'**ordre** des cinq gestes et la **forme**
+du premier, pas leur principe. Une entrée de registre dont l'arbitrage est rendu mais la livraison
+due n'est pas une question ouverte : c'est du travail dû.
+
+**Ordre retenu, et son motif.** INC-070 vient en premier parce qu'il est le seul des cinq à porter
+sur un **contrôle** plutôt que sur un comportement du produit, et parce que ce contrôle garde
+précisément les fichiers que les quatre autres vont modifier. Réparer la garde d'abord, puis
+travailler sous elle, est l'ordre qui donne aux quatre livraisons suivantes une mesure à laquelle
+se fier. L'inverse — livrer sous une garde dont on sait qu'elle rend un faux positif — obligerait à
+choisir, à chaque rouge, entre corriger le code et suspecter l'outil.
+
+**INC-070 — ce que la décision 296 impose, et ce qu'elle interdit.** Elle impose que « le détecteur
+de textes en dur utilise l'AST TypeScript déjà disponible, pas une expression régulière », et
+qu'« une fixture prouve à la fois qu'il détecte un vrai texte UI et qu'il ignore la branche
+structurelle d'un ternaire ». Elle interdit donc les deux issues faciles : élargir l'expression
+régulière — ce que l'entrée elle-même refusait, « affaiblir une garde pour accommoder une
+écriture » — et proscrire une forme d'écriture pour épargner l'outil, ce qui est la règle pratique
+que l'entrée avait posée faute de mieux.
+
+**La forme retenue.** Le détecteur devient une fonction qui prend une source et son chemin, la
+parse avec `ts.createSourceFile` en `ScriptKind.TSX`, et rend la liste des textes visibles trouvés
+avec leur ligne. Un texte visible est défini par la **grammaire** et non par un motif :
+
+1. un nœud `JsxText` qui n'est pas uniquement de l'espace ;
+2. une chaîne littérale rendue comme **enfant** de JSX — `<p>{'Bonjour'}</p>` ;
+3. la valeur littérale d'un attribut visible — `title`, `aria-label`, `placeholder`, `alt` —,
+   qu'elle soit écrite `="…"` ou `={'…'}`.
+
+Les deux dernières formes n'étaient pas vues par l'ancien contrôle : l'accolade lui suffisait à
+renoncer. Les ajouter n'est pas un élargissement de périmètre mais la conséquence directe du
+changement de méthode — une grammaire ne peut pas « ne pas savoir » qu'une chaîne rendue comme
+enfant de JSX est un texte visible. Le seuil de deux lettres consécutives est conservé tel quel :
+il écarte la ponctuation et les séparateurs, et il n'a jamais été la cause du faux positif.
+
+**Le `sansCommentaires` disparaît.** Il retirait les commentaires par deux expressions régulières
+avant de chercher le texte, parce qu'ils contiennent du français. Un analyseur syntaxique ne voit
+pas les commentaires : ce sont des trivia, ils ne sont pas des nœuds. Une couche entière du
+contrôle cesse donc d'exister, et c'est le meilleur indice que la méthode était le vrai sujet.
+
+**La fixture, et ce qu'elle doit pouvoir faire échouer.** Une source TSX écrite dans le fichier de
+preuve porte simultanément un vrai texte visible, un attribut visible littéral, une chaîne rendue
+comme enfant, et la forme `const etatVide = totalFiltre > 0 ? undefined : (` qui a mis l'ancien
+contrôle en défaut. La fixture affirme les deux sens : les textes visibles sont **tous** trouvés,
+et la queue du ternaire n'est **pas** dans le résultat. Un contrôle éprouvé dans un seul sens ne
+prouve rien : un détecteur qui ne trouve jamais rien passerait la moitié muette de cette fixture.
+
+**Les deux commentaires de composant qui deviennent faux.** `webapp/src/app/RouteTrack.tsx` et
+`webapp/src/app/PanneauTimeline.tsx` expliquent leur écriture en `if` par la limite de l'outil et
+citent la règle pratique d'INC-070. La limite étant levée, ces commentaires cessent d'être vrais et
+sont réécrits. **Le code, lui, n'est pas retouché** : la forme en `if` est de toute façon la plus
+lisible des deux — l'entrée le disait déjà —, et la réécrire en ternaire serait un changement sans
+autre motif que de démontrer qu'il est désormais permis.
+
+**Preuves attendues avant toute clôture d'INC-070 :** `test:unit` — qui porte le contrôle et sa
+fixture —, `typecheck`, `build`, puis la contre-épreuve qui décide réellement de l'entrée :
+**réintroduire la forme `? undefined : (` dans un composant réel et constater que le contrôle reste
+vert**, puis y glisser un vrai texte visible et constater qu'il rougit. Un détecteur ne se prouve
+pas en passant : il se prouve en refusant ce qu'il doit refuser.
+
+**Rattachement :** INC-070 (lot L), INC-028, INC-063, INC-065, INC-067 (lot L, dues). Unité
+`CRM-007`. Décisions 295, 296, 298, 367, 380.

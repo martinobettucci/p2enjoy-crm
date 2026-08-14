@@ -638,6 +638,14 @@ stables. Langue par défaut : français. Les libellés métier (tracks, channels
 des **données**, pas des traductions. Les mises en page tolèrent des textes 40 % plus longs que
 le français.
 
+Cette règle est **exécutable** : `webapp/src/i18n/i18n.test.ts` la fait échouer. Le contrôle lit
+l'**arbre syntaxique TypeScript** du composant, jamais son texte : un texte visible est un nœud
+`JsxText`, une chaîne littérale rendue comme enfant de JSX, ou la valeur littérale d'un attribut
+visible (`title`, `aria-label`, `placeholder`, `alt`). Une expression régulière ne sait pas faire
+cette distinction, et celle qui tenait ce rôle comptait la queue d'un ternaire — `? undefined : (`
+— pour un texte (INC-070, `docs/JOURNAL.md` décisions 296 et 381). **Aucune forme d'écriture n'est
+donc proscrite pour accommoder le contrôle**, ce qui était la contrepartie de l'ancienne version.
+
 ## 11. Implémentation
 
 - Les jetons sont déclarés une seule fois, en variables CSS sur `:root`, et exposés à Tailwind

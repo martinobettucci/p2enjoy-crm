@@ -378,6 +378,21 @@ barre latérale et des onglets s'ellipsent avec leur texte complet en `title`.
 **Preuve associée :** un contrôle du harnais échoue si un composant contient du texte visible écrit
 en dur, et un test unitaire échoue si le dictionnaire contient une clé morte.
 
+**Comment ce contrôle lit un composant, et pourquoi cela est spécifié.** Le détecteur analyse
+l'**arbre syntaxique TypeScript** du fichier — `ts.createSourceFile` en `ScriptKind.TSX`, la
+dépendance étant déjà celle qui compile le projet — et non son texte par expression régulière.
+Un texte visible est alors ce que la grammaire appelle ainsi : un nœud `JsxText`, ou une chaîne
+littérale rendue comme enfant de JSX, ou la valeur littérale d'un attribut visible (`title`,
+`aria-label`, `placeholder`, `alt`). Tout le reste — signatures génériques, comparaisons, queue
+d'un ternaire dont la branche est un fragment JSX — n'est pas un texte et ne peut pas être compté
+comme tel (`docs/JOURNAL.md`, décisions 296 et 381 ; INC-070).
+
+Le détecteur est lui-même éprouvé par une **fixture** : une source TSX qui porte à la fois un vrai
+texte visible, un attribut visible littéral et la forme `? undefined : (` qui mettait l'ancien
+contrôle en défaut. La fixture échoue si le détecteur cesse de voir le premier **ou** s'il se
+remet à voir le second. Un contrôle qu'aucune preuve ne met à l'épreuve dans les deux sens n'est
+pas une garde : c'est une opinion.
+
 ## 11. Stockage côté client
 
 `CLAUDE.md` §11 borne le stockage sur l'appareil. L'unité n'écrit **rien** en `localStorage` :
@@ -496,7 +511,10 @@ changer de fond. Seul `e2e:mail` reste dû, faute de Stalwart avant `CRM-050` �
 2. **Compilation** : `npm run typecheck` vert sur les quatre projets.
 3. **Jetons** : les valeurs de `docs/DESIGN_SYSTEM.md` §1 sont présentes dans le CSS produit ;
    aucune valeur hexadécimale hors `tokens.css` dans `webapp/src`.
-4. **Textes** : aucun texte visible en dur dans un composant.
+4. **Textes** : aucun texte visible en dur dans un composant, mesuré sur l'**arbre syntaxique**
+   du fichier et non sur son texte (§10). Le détecteur porte sa propre fixture, qui le met en
+   défaut dans les deux sens : elle échoue s'il cesse de voir un texte visible, et elle échoue
+   s'il compte de nouveau la queue structurelle d'un ternaire.
 5. **Unitaires** : `npm run test:unit` vert.
 6. **Intégration hors interface** : la requête que la coquille adresse à PostgREST est rejouée
    directement, avec la clé anonyme puis avec le **jeton réel** d'un compte seedé obtenu par la
