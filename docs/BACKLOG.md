@@ -3956,8 +3956,20 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
 > ses seize tests de composant sont conservés, et deux scénarios d'interface de `CRM-043` sont
 > ajustés — le libellé de la région et le texte de l'état vide. Aucune règle de cette unité ne
 > change ; ses captures sont **renouvelées** (`CLAUDE.md` §16).
-Rédaction libre par tout membre pouvant lire la card, édition et suppression par l'auteur.
+Rédaction par tout membre pouvant **écrire** sur le channel de la card, édition par l'auteur,
+suppression par l'auteur et par les `admin` du workspace, auditée.
 **DoD** : API (refus pour un `viewer`) ; E2E ; temps réel constaté.
+
+> **Énoncé corrigé le 2026-08-14 — INC-071 et INC-072 closes.** Il portait « rédaction libre par
+> tout membre pouvant **lire** la card, édition et suppression par l'auteur ». Les deux moitiés
+> étaient fausses, et différemment. La première **se contredisait elle-même** : un `viewer` peut
+> lire une card, et la Definition of Done ci-dessus exige la preuve de son **refus** — deux sources
+> sur trois disaient déjà « écriture », et c'est le comportement livré depuis la migration 15
+> (INC-071). La seconde était l'**intersection** que `CRM-043` avait livrée faute d'arbitrage, avec
+> sa conséquence nommée : aucun modérateur ne pouvait retirer un propos déplacé (INC-072).
+> L'arbitrage est rendu par la décision 367 (lot G) et mis en œuvre par la décision 374. Corriger
+> cet énoncé **ne change aucun code pour INC-071** ; INC-072 apporte une politique et une colonne
+> d'audit, livrées par la migration 35.
 
 - [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-cards.md` §13 : l'unité tenait
       en **deux lignes** au backlog, et trois documents la nommaient sans la décrire — le §5 de
@@ -3981,6 +3993,13 @@ Rédaction libre par tout membre pouvant lire la card, édition et suppression p
       corrigée, l'**énoncé** du backlog est laissé intact et l'arbitrage demandé. **INC-072** : le
       §4 ouvre la modération aux `admin`, l'énoncé ne l'ouvre qu'à l'auteur ; l'**intersection** est
       livrée, et l'absence de modérateur est nommée.
+- [x] **Les deux contradictions sont CLOSES le 2026-08-14**, par l'arbitrage de la décision 367
+      (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
+      sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`
+      existait déjà. **INC-072** : la suppression s'ouvre aux `admin` du workspace, la modification
+      leur reste fermée, et la pierre tombale dit désormais qui l'a posée (`deleted_by`). La borne
+      « supprimer sans modifier » est tenue par le **trigger** et non par la politique, qui n'a pas
+      d'`OLD` — migration `0035`, `docs/SPEC-cards.md` §13.6.
 - [x] `docs/DESIGN_SYSTEM.md` §5.10 écrit dans le même changement : le panneau de commentaires est
       le **premier fil de discussion du produit**, et le §5.3 l'annonçait sans lui donner une seule
       règle visuelle. Ordre chronologique **croissant** — écrit explicitement pour que `CRM-044` ne

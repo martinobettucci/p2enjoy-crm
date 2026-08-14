@@ -496,6 +496,7 @@ porte pas, et qui sont opposables :
 | `created_at` | `timestamptz` | non nul, défaut `now()` |
 | `edited_at` | `timestamptz` | posé par trigger quand le corps change, jamais par le client |
 | `deleted_at` | `timestamptz` | posé par trigger ; **irréversible**, et le corps est alors vidé |
+| `deleted_by` | `uuid` | nullable, FK `profiles` `ON DELETE SET NULL` ; posé par trigger avec `deleted_at` — **audit de la modération** (migration 35, décision 374) |
 
 **Commenter exige le droit d'ÉCRITURE sur le channel de la card, non le droit de lecture.** Cette
 ligne corrige une phrase de ce chapitre — « tout membre pouvant lire la card peut commenter » — que
@@ -504,9 +505,13 @@ deux, la seconde exigeant nommément la preuve du refus opposé à un `viewer`. 
 consignée en **INC-071** ; le comportement retenu est celui des deux sources concordantes, et le
 motif complet vit dans `docs/SPEC-cards.md` §13.6.
 
-La modification et la suppression sont réservées à **l'auteur**. Le §4 de
-`docs/SPEC-permissions-rls.md` y ajoute les `admin` : `CRM-043` livre l'intersection des deux
-énoncés et demande l'arbitrage — **INC-072**.
+**La modification est réservée à l'auteur ; la suppression lui est ouverte, ainsi qu'aux `admin` du
+workspace.** `CRM-043` avait livré l'intersection des deux énoncés — l'auteur seul pour les deux
+gestes — faute d'arbitrage, en nommant sa conséquence : aucun modérateur ne pouvait retirer un
+propos déplacé. L'arbitrage est rendu (décision 367, lot G) et mis en œuvre par la décision 374 :
+**INC-072 est close**. Modifier le propos d'autrui reste impossible à tous — c'est une falsification,
+non une modération —, la borne étant tenue par le **trigger**, qu'aucune politique RLS ne peut
+remplacer faute d'`OLD`. La suppression par un tiers est **auditée** par `deleted_by`.
 
 `updated_at` **n'est pas ajoutée**, seul écart assumé à la convention générale ci-dessous :
 `edited_at` et `deleted_at` nomment les deux seules évolutions possibles d'un commentaire, et les

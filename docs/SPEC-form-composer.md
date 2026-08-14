@@ -376,8 +376,10 @@ langages et vivent dans deux processus. Elle est donc rendue vérifiable par un 
 partagé** :
 
 - le tableau vit dans le code de l'interface, à côté du prédicat, et énumère les huit familles du
-  §6.6 — `null` SQL, `'null'::jsonb`, chaîne vide, chaîne d'espaces, tableau vide, et les contre-cas
-  `false`, `0`, `"0"` — plus les valeurs ordinaires de chaque type ;
+  §6.6 — `null` SQL, `'null'::jsonb`, chaîne vide, chaîne de blancs, tableau vide, et les contre-cas
+  `false`, `0`, `"0"` — plus les valeurs ordinaires de chaque type, et depuis la décision 374 les
+  blancs non-espaces qui séparaient les deux lectures : tabulation, saut de ligne, espace
+  insécable `U+00A0` et cadratin `U+2003` ;
 - le **test unitaire** de l'interface l'exerce contre le prédicat TypeScript ;
 - une **preuve d'API** écrit chacune de ces valeurs dans une vraie ligne `card_field_values`, par
   la vraie route, puis demande à `move_card` une transition qui **exige** ce champ, et relève si le
@@ -661,7 +663,7 @@ Une ligne présente ne suffit pas. Une valeur est **renseignée** lorsqu'elle n'
   **La colonne est nullable, et une mesure l'a imposé** : PostgREST convertit un `null` JSON en SQL
   `NULL` et ne sait produire `'null'::jsonb` par aucune écriture, si bien qu'une contrainte
   `NOT NULL` rendait un champ `money` impossible à vider. INC-054, décision 133 ;
-- une chaîne vide, ou faite de seuls espaces ;
+- une chaîne vide, ou faite de seuls **blancs** ;
 - un tableau vide.
 
 Tout le reste est renseigné, y compris `false`, `0` et `"0"` : une case décochée est une réponse,
@@ -672,6 +674,25 @@ Cette définition est portée par une fonction, `app.valeur_de_champ_est_vide(js
 expression recopiée dans chaque appelant : la sixième vérification de `move_card` et le rendu de
 `CRM-037` doivent en donner la **même** lecture, faute de quoi l'interface annoncerait passable une
 transition que la garde refuse.
+
+**« Blancs » veut dire Unicode, et ce mot a coûté un défaut avant d'être arbitré.** Ce paragraphe a
+d'abord écrit « faite de seuls **espaces** », et la fonction employait `btrim(valeur #>> '{}')`, qui
+à un seul argument ne retire que `U+0020`. MESURÉ contre la base réelle, par la vraie route et le
+vrai refus de `move_card` : une valeur réduite à `"\t"` ou `"\n"` était **renseignée** et satisfaisait
+un champ `required`. Le prédicat TypeScript, écrit avec `trim()`, disait l'inverse — exactement la
+divergence que le §4.3 existe pour interdire. La décision **165** avait alors corrigé le côté
+TypeScript en **reproduisant `btrim` fidèlement**, faute d'arbitrage sur la règle elle-même
+(INC-052).
+
+L'arbitrage est rendu par la décision **367** (lot G) et mis en œuvre par la décision **374** : la
+règle est **élargie aux blancs Unicode**, des deux côtés dans le même changement. L'ensemble retenu
+est exactement celui de `String.prototype.trim()` — `U+0009`, `U+000A`, `U+000B`, `U+000C`, `U+000D`,
+`U+0020`, `U+00A0`, `U+1680`, `U+2000` à `U+200A`, `U+2028`, `U+2029`, `U+202F`, `U+205F`, `U+3000`,
+`U+FEFF` — et il est porté **une seule fois** par `app.btrim_blancs(text)`, qu'appellent
+`app.valeur_de_champ_est_vide` et `move_card`. Le motif du choix est la convergence : cet ensemble
+étant déjà celui du navigateur, le prédicat de l'interface redevient `trim()` et **ne peut plus
+diverger par une réimplémentation**. La classe est énumérée en toutes lettres plutôt qu'écrite `\s`
+ou `[[:space:]]`, qui dépendent du `ctype` de l'instance.
 
 ### 6.7 La sixième vérification de `move_card`, et l'union qu'elle contrôle
 

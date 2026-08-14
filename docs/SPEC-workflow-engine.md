@@ -1052,6 +1052,7 @@ Les codes HTTP sont **mesurés** contre PostgREST `v14.12` selon la table du §4
 | 3 | L'étape cible existe et appartient au workflow de la card | `step_not_in_workflow` | `P0001` | `400` |
 | 4 | Une transition est déclarée de l'étape courante vers la cible | `transition_not_allowed` | `P0001` | `400` |
 | 5 | Le commentaire est fourni si la transition l'exige | `comment_required` | `P0001` | `400` |
+| 5 bis | Le commentaire fourni tient dans les bornes d'un commentaire — 10 000 caractères | `comment_too_long` | `P0001` | `400` |
 | 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields`, `DETAIL` portant les clés manquantes | `P0001` | `400` |
 
 **L'ordre des deux premières est une règle de discrétion, reprise du §4.3 et non réinventée.**
@@ -1073,19 +1074,28 @@ fonction n'ajoute aucune garantie : elle ajoute **un message** — `step_not_in_
 qu'une étape d'un autre workflow ne soit jamais rapportée comme une « transition non déclarée »,
 ce qui enverrait le client chercher une arête à créer là où le problème est ailleurs.
 
-**Un commentaire d'espaces n'est pas un commentaire.** `comment` est normalisé par
-`nullif(btrim(comment), '')` avant la vérification n° 5 : une chaîne d'espaces est refusée comme
-l'absence, sans quoi la règle « la raison d'une affaire perdue est exigée » se satisferait d'une
-barre d'espace.
+**Un commentaire de blancs n'est pas un commentaire.** `comment` est normalisé par
+`nullif(app.btrim_blancs(comment), '')` avant la vérification n° 5 : une chaîne de blancs est
+refusée comme l'absence, sans quoi la règle « la raison d'une affaire perdue est exigée » se
+satisferait d'une barre d'espace.
 
-**ET SEULEMENT D'ESPACES — MESURÉ APRÈS COUP, ET LE TITRE DE CE PARAGRAPHE A DÛ ÊTRE CORRIGÉ.** Il
-annonçait « un commentaire **vide** n'est pas un commentaire », ce que l'expression ci-dessus ne
-tient pas : `btrim(text)` à un seul argument ne retire **que des espaces**, et `btrim(E'\t\n ')`
-rend deux caractères. Une tabulation seule passe donc pour un motif. `btrim(comment, E' \t\r\n')`
-refuserait strictement davantage sans casser aucun usage légitime, mais élargir ce qu'une règle
-refuse est une décision de produit, non un détail d'implémentation : l'expression reste **inchangée**,
-l'écart est figé par une assertion de `supabase/tests/0013_move_card.test.sql`, et l'arbitrage est
-demandé en `docs/INCONSISTENCY_REPORT.md`, **INC-052**.
+**ET « BLANCS » VEUT DIRE UNICODE — ARBITRÉ LE 2026-08-14, APRÈS AVOIR ÉTÉ MESURÉ PUIS LAISSÉ
+OUVERT.** Ce paragraphe a porté pendant dix jours un titre plus large que son expression. Il
+annonçait « un commentaire **vide** n'est pas un commentaire » et spécifiait `btrim(comment)`, qui à
+un seul argument ne retire **que des espaces** : `btrim(E'\t\n ')` rend deux caractères, et une
+tabulation seule passait donc pour un motif d'affaire perdue. L'écart était figé par une assertion
+de `supabase/tests/0013_move_card.test.sql` et l'arbitrage demandé en **INC-052**. Il est rendu par
+la décision **367** (lot G) et mis en œuvre par la décision **374** : la règle est élargie, et
+l'assertion qui constatait le passage constate désormais le refus.
+
+**L'ensemble des blancs est celui de `String.prototype.trim()`**, porté une seule fois par
+`app.btrim_blancs(text)` : `U+0009`, `U+000A`, `U+000B`, `U+000C`, `U+000D`, `U+0020`, `U+00A0`,
+`U+1680`, `U+2000` à `U+200A`, `U+2028`, `U+2029`, `U+202F`, `U+205F`, `U+3000`, `U+FEFF`. Le motif
+du choix est la **convergence** exigée au §4.3 de `docs/SPEC-form-composer.md` : c'est déjà
+l'ensemble que le navigateur applique, donc le prédicat de l'interface peut se contenter d'appeler
+`trim()` et ne peut plus diverger par une réimplémentation. La classe est **énumérée en toutes
+lettres** plutôt qu'écrite `\s` ou `[[:space:]]`, qui dépendent du `ctype` de l'instance — une règle
+d'autorisation ne se règle pas par la configuration d'un serveur.
 
 ### 5.4 Ce qui est écrit en cas de succès, et ce qui ne peut pas l'être
 
@@ -1095,8 +1105,9 @@ demandé en `docs/INCONSISTENCY_REPORT.md`, **INC-052**.
 | `entered_step_at` ← `now()` | **oui** | `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card` |
 | `position` ← fin de la colonne d'arrivée | **oui** | voir ci-dessous |
 | `updated_at` | **oui**, par le trigger existant | `app.set_updated_at()`, `CRM-040` |
-| `card_event` de type `moved` | **non** | `card_events` n'existe pas — `CRM-044`. MESURÉ : `to_regclass` nul |
-| insertion du commentaire fourni | **non** | `card_comments` n'existe pas — `CRM-043`. MESURÉ : `to_regclass` nul |
+| `card_event` de type `moved` | **oui**, par le trigger de `CRM-044` | migration 16 : le trigger est sur la TABLE `cards`, non dans la fonction |
+| insertion du commentaire fourni | **oui**, depuis le 2026-08-14 | INC-048 close — décisions 367 (lot G) et 374. Voir ci-dessous |
+| `card_event` de type `commented` | **non** | `card_events` porte huit types, et la timeline des commentaires est due par `CRM-044` |
 | arrêt des cadences de relance | **non** | aucune table de cadence n'existe, et **aucune unité du backlog n'en porte** |
 
 **`position` est recalculée, et ce n'est pas un ajout de périmètre.** `docs/SPEC-cards.md` §2.6
@@ -1107,12 +1118,32 @@ board deviendrait arbitraire. Le trigger d'attribution de `CRM-040` est un `BEFO
 voit pas les déplacements. La card est donc placée **en fin** de la colonne d'arrivée, exactement
 comme une card qui y naîtrait.
 
-**Le commentaire fourni n'est aujourd'hui conservé nulle part, et c'est une perte que l'on nomme.**
-La vérification n° 5 l'exige, la fonction le contrôle, et rien ne l'écrit : `card_comments` est
-livrée par `CRM-043`. Un utilisateur qui motive une affaire perdue verra sa transition acceptée et
-son motif disparaître. C'est une conséquence de l'ordre du plan, pas un choix — consignée en
-`docs/INCONSISTENCY_REPORT.md`, **INC-048**, avec ses options. La taire aurait été plus confortable
-et strictement pire.
+**Le commentaire fourni est écrit dans `card_comments`, et la perte d'INC-048 est close.** Pendant
+neuf jours, la vérification n° 5 exigeait un motif que la fonction contrôlait et que rien
+n'écrivait : un utilisateur qui motivait une affaire perdue voyait sa transition acceptée et son
+motif disparaître. La cause bloquante — « `card_comments` n'existe pas » — a été levée par
+`CRM-043` le 2026-08-05 ; l'arbitrage a été rendu par la décision **367** et mis en œuvre par la
+décision **374**. Trois propriétés de cette écriture, qui font sa valeur :
+
+- **elle est transactionnelle.** L'insertion vit dans le corps de `move_card` : soit la card change
+  d'étape **et** le motif est conservé, soit ni l'un ni l'autre. Une écriture faite après coup par
+  le client ne donnerait pas cette garantie ;
+- **c'est un commentaire ORDINAIRE**, et non une donnée d'un genre à part. Il apparaît dans le fil
+  de la card, porte son auteur et sa date, et son auteur peut le corriger ou le retirer comme
+  n'importe quel autre. C'est le sens de l'arbitrage « vrai commentaire transactionnel » ;
+- **elle a lieu dès que le motif est FOURNI**, et non seulement lorsque la transition l'exige. Ne
+  l'écrire que sur les transitions `require_comment` créerait deux régimes pour un même paramètre,
+  et perdrait sans le dire le motif d'un déplacement volontairement commenté.
+
+**Ce que cette écriture emporte, et qu'il vaut mieux lire ici que découvrir.** Le motif étant un
+commentaire, il hérite des bornes du commentaire : le `CHECK` de la migration 15 borne le corps à
+**10 000 caractères**. Un motif plus long était auparavant accepté puis jeté ; il rendrait désormais
+une violation de contrainte opaque. La vérification **n° 5 bis** l'intercepte et rend
+`comment_too_long`.
+
+**Ce qu'elle n'emporte pas.** Aucun `card_event` de type `commented` : `card_events` porte huit
+types, et la timeline des commentaires appartient à `CRM-044`. Le motif est visible dans le **fil**,
+pas dans la timeline typée.
 
 ### 5.5 La protection de colonne, sans laquelle la garde ne garde rien
 

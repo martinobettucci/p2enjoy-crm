@@ -1065,6 +1065,7 @@ détail de card.
 | `created_at` | `timestamptz` | non nul, défaut `now()` |
 | `edited_at` | `timestamptz` | nul tant que le corps n'a pas changé, **posé par trigger** (§13.5) |
 | `deleted_at` | `timestamptz` | nul tant que le commentaire vit, **posé par trigger** (§13.4) |
+| `deleted_by` | `uuid` | nullable, FK `profiles (id)`, **posé par trigger** avec `deleted_at` — audit de la modération (§13.6, décision 374) |
 
 `updated_at` **n'est pas ajoutée**, et c'est un écart assumé à la convention générale de
 `docs/SCHEMA.md` : `edited_at` et `deleted_at` disent déjà, et plus précisément, ce qu'une colonne
@@ -1185,20 +1186,51 @@ Trois raisons : le §2.1 de `docs/SPEC-permissions-rls.md` définit le `viewer` 
 sources contre une, dont l'une est la Definition of Done elle-même. La phrase du §5 de
 `docs/SCHEMA.md` est **corrigée dans le même changement**, et l'écart consigné en INC-071.
 
-**Modification et suppression — l'auteur seul** (décision 194, INC-072). Le §4 y ajoute les
-`admin` ; le backlog ne le fait pas. `CRM-043` livre l'**intersection** des deux énoncés, qui
-n'ouvre rien que l'un ou l'autre refuse. Conséquence nommée et non masquée : **aucun modérateur ne
-peut retirer un commentaire déplacé**. L'arbitrage est demandé ; il porte sur une politique
-supplémentaire, non sur le modèle.
+**Modification — l'auteur seul, et cela ne bougera pas** (décision 194, INC-072). Le motif n'est pas
+prudentiel : **modifier** le commentaire d'autrui n'est pas de la modération mais une falsification.
+Un administrateur pourrait faire dire à un commercial l'inverse de ce qu'il a écrit, sans autre
+trace qu'un `edited_at`, et aucun document ne demande cela.
 
-**Les quatre politiques :**
+**Suppression — l'auteur, ET les `admin` du workspace, AVEC audit** (arbitrage de la décision 367,
+mise en œuvre par la décision 374, INC-072 close). `CRM-043` avait livré l'**intersection** des deux
+énoncés faute d'arbitrage, avec sa conséquence nommée : **aucun modérateur ne pouvait retirer un
+commentaire déplacé**. C'est cette conséquence que l'arbitrage lève, et elle seule.
+
+**La restriction « le modérateur supprime, il ne modifie pas » ne peut PAS être portée par la
+politique**, et c'est ce qui donne sa forme à la mise en œuvre. Une politique RLS n'a pas d'`OLD`
+dans son `WITH CHECK` : elle ne sait pas dire « tu peux écrire cette colonne, pas celle-là ». Le
+privilège de colonne ne le sait pas davantage — il est attaché au **rôle** `authenticated`, que
+l'auteur et le modérateur partagent. La barrière est donc posée dans le **trigger** du §13.5, seul
+endroit qui voit `OLD`, `NEW` et `auth.uid()` en même temps : un appelant qui n'est pas l'auteur ne
+peut faire qu'une chose, poser `deleted_at`. Toute autre écriture rend `comment_moderation_limitee`.
+**La politique ouvre, le trigger borne**, et les deux sont nécessaires.
+
+**L'audit est une colonne, `deleted_by`.** Une pierre tombale qui ne dit pas qui l'a posée n'est pas
+auditée. Elle est écrite par le trigger à `auth.uid()`, fermée au client comme `edited_at`, et rend
+la modération immédiatement lisible : un commentaire dont `deleted_by` **diffère** de `author_id` a
+été retiré par un tiers. Le choix d'une colonne plutôt que d'un `card_event` a un motif : la
+timeline typée appartient à `CRM-044`, et l'audit d'INC-072 ne doit pas attendre une unité qu'il ne
+porte pas.
+
+**Ce que l'ouverture n'emporte pas.** Aucune résurrection — la pierre tombale reste définitive pour
+tout le monde, `admin` compris. Aucune suppression physique — il n'existe toujours ni politique
+`for delete`, ni privilège `DELETE`.
+
+**Les cinq politiques :**
 
 | Opération | Rôles | Prédicat |
 |---|---|---|
 | `SELECT` | `anon`, `authenticated` | `app.can_read_card(card_id)` |
 | `INSERT` | `authenticated` | `app.can_write_card(card_id) and author_id = auth.uid()` |
-| `UPDATE` | `authenticated` | `USING` **et** `WITH CHECK` : `author_id = auth.uid() and app.can_write_card(card_id)` |
+| `UPDATE` — l'auteur | `authenticated` | `USING` **et** `WITH CHECK` : `author_id = auth.uid() and app.can_write_card(card_id)` |
+| `UPDATE` — la modération | `authenticated` | `USING` **et** `WITH CHECK` : `app.is_workspace_admin(workspace_id) and app.can_read_card(card_id)` |
 | `DELETE` | — | **aucune politique**, et **aucun privilège** : refus double (§13.7) |
+
+**La politique de modération juge sur `app.can_read_card`, non sur `app.can_write_card`.** Un
+administrateur de workspace dont le droit fin sur le channel est retombé à `viewer` doit pouvoir
+retirer un propos déplacé qu'il **voit** ; lui demander en plus le droit d'écrire reviendrait à
+faire dépendre la modération d'un droit métier qui n'a rien à voir avec elle. Il ne gagne pour
+autant aucun pouvoir d'écriture : le trigger ne lui laisse que `deleted_at`.
 
 `anon` reçoit `SELECT` pour le motif du §3.2 de `docs/SPEC-permissions-rls.md` : sans le privilège,
 un appelant sans jeton recevrait une **erreur de privilège** là où le comportement exigé par le §7
@@ -1234,7 +1266,8 @@ grant all privileges         on public.card_comments to service_role;
 **Deux colonnes ouvertes en mise à jour, et deux seulement.** `id`, `card_id`, `workspace_id`,
 `author_id`, `created_at` et `mentions` sont fermées par voie de conséquence : un commentaire ne
 change ni de card, ni d'auteur, ni de date de naissance. `edited_at` est fermée **et pourtant
-écrite**, par le trigger du §13.5.
+écrite**, par le trigger du §13.5. `deleted_by`, ajoutée par la décision 374, l'est de la même
+façon : fermée au client, écrite par le trigger.
 
 Le trigger de mise à jour **refuse** en outre tout changement de `card_id`, de `author_id` ou de
 `created_at` : c'est le refus double du §8.4 de la migration 13, appliqué aux colonnes plutôt qu'à
