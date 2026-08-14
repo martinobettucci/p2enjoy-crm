@@ -12545,3 +12545,119 @@ l'environnement qui s'en écarte.
 
 **Rattachement :** INC-096 (close). Décisions 367 (lot A), 369 (mesure contraire), 368 (prémisse de
 la mesure), 372 (obstacles d'environnement).
+
+### Décision 374 — Le lot G, écrit avant d'être codé : le motif devient un vrai commentaire, les blancs deviennent Unicode, et la modération devient auditée
+
+**2026-08-14 — spécification du chunk unique des commentaires, écrite et committée AVANT la
+première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1).**
+
+Le lot G de la décision 367 réunit quatre entrées — INC-048, INC-052, INC-071, INC-072 — parce
+qu'elles touchent la **même table**, la **même migration** et la **même suite pgTAP**. Les quatre
+sont **déjà arbitrées** ; cette décision ne rouvre aucun choix de produit. Elle écrit ce que
+l'arbitrage laisse ouvert : la **mise en œuvre**, et les conséquences qu'elle emporte.
+
+**G1 — INC-048 : `move_card` écrit le motif dans `card_comments`.**
+
+L'arbitrage retenu est « vrai commentaire transactionnel » (`docs/ARBITRAGES.md` §2). Le motif
+n'est donc ni un événement de timeline, ni une colonne à part : c'est un commentaire **ordinaire**,
+lisible dans le fil de la card et supprimable par son auteur, comme n'importe quel autre. Trois
+conséquences, qu'il vaut mieux écrire que découvrir :
+
+1. **Transactionnel au sens strict.** L'insertion est dans le corps de `move_card`, donc dans la
+   transaction du déplacement : soit la card bouge **et** le motif est écrit, soit ni l'un ni
+   l'autre. C'est précisément ce qu'INC-048 réclamait — « une donnée saisie qui n'est écrite nulle
+   part » — et une écriture faite après coup par le client ne le donnerait pas.
+
+2. **Le motif obéit aux bornes du commentaire, et il faut un message pour le dire.** Le `CHECK`
+   de la migration 15 borne le corps à **10 000 caractères**. Avant ce changement, un motif de
+   20 000 caractères était accepté puis **jeté** ; après, il heurterait la contrainte et rendrait
+   un `23514` opaque nommant `card_comments_body_check`, sur un appel à `move_card`. La fonction
+   lève donc `comment_too_long` **avant** d'insérer. Ce n'est pas une septième vérification : c'est
+   la n° 5 qui, le motif devenant un commentaire, en éprouve désormais la longueur comme elle en
+   éprouvait déjà la vacuité.
+
+3. **Le motif est écrit dès qu'il est FOURNI, et non seulement lorsqu'il est EXIGÉ.** Le §5.4 de
+   `docs/SPEC-workflow-engine.md` écrivait déjà « insertion du commentaire **s'il est fourni** ».
+   Ne l'écrire que sur les transitions `require_comment` créerait deux régimes pour un même
+   paramètre, et perdrait sans le dire le commentaire d'un déplacement volontairement motivé.
+
+**Ce que G1 n'emporte pas, et qui reste à `CRM-044`.** Aucun `card_event` de type `commented`
+n'est créé. La migration 16 énonce que `card_events` porte huit types et que la timeline des
+commentaires est due par `CRM-044` ; l'ajouter ici étendrait une unité qui ne le porte pas. Le
+motif est un commentaire, il apparaît donc dans le fil ; il n'apparaît pas dans la timeline typée,
+et c'est écrit plutôt que tu.
+
+**Aucun risque d'auteur nul, et le motif est mesuré, non supposé.** `card_comments.author_id` est
+`NOT NULL` et référence `profiles`. On pourrait craindre qu'un appel par la clé de service casse le
+déplacement. Il ne le peut pas : `move_card` refuse déjà `service_role` à sa **première** garde —
+`auth.uid()` y étant nul, `app.can_read_channel` est faux et la fonction rend `card_not_found`.
+C'est écrit dans `supabase/seed/apply-seed.sh` l. 1670, et le seed appelle donc `move_card` avec le
+jeton d'un administrateur réel. Tout appel qui atteint l'insertion porte un `auth.uid()` non nul.
+
+**G2 — INC-052 : « vide » devient « blancs Unicode », des DEUX côtés à la fois.**
+
+L'arbitrage est « blancs Unicode normalisés ». Le point délicat n'est pas la règle, c'est son
+**expression**, et INC-052 a déjà montré que la manquer produit un défaut réel : le §4.3 de
+`docs/SPEC-form-composer.md` exige que l'interface et la garde donnent la **même** lecture, et la
+décision 165 avait dû corriger le prédicat TypeScript pour reproduire `btrim` à la lettre.
+
+**L'ensemble retenu est exactement celui de `String.prototype.trim()`**, c'est-à-dire l'espace
+blanche Unicode augmentée des terminateurs de ligne : `U+0009`, `U+000A`, `U+000B`, `U+000C`,
+`U+000D`, `U+0020`, `U+00A0`, `U+1680`, `U+2000` à `U+200A`, `U+2028`, `U+2029`, `U+202F`,
+`U+205F`, `U+3000`, `U+FEFF`. Le motif du choix est la convergence : cet ensemble est **déjà** celui
+que le navigateur applique, et l'aligner dessus permet au prédicat TypeScript de redevenir
+`trim()` — donc de ne plus pouvoir diverger par une réimplémentation. C'est le sens inverse de la
+décision 165, rendu légitime par l'arbitrage qu'elle attendait.
+
+**Une seule définition en base, et non deux recopiées.** `app.btrim_blancs(text)` porte l'ensemble
+une fois ; `move_card` et `app.valeur_de_champ_est_vide` l'appellent. Recopier la classe de
+caractères aux deux endroits garantirait qu'elles divergent le jour où l'une bouge — c'est
+littéralement le défaut qu'INC-052 décrit sur deux appelants d'une même propriété.
+
+**Ni `\s`, ni la dépendance au `ctype`.** `[[:space:]]` et `\s` dépendent de la locale de la base :
+selon le `ctype`, `U+00A0` est ou n'est pas de l'espace. Une règle d'autorisation ne peut pas
+dépendre de la configuration d'une instance. La classe est donc **énumérée en toutes lettres**.
+
+**Trois preuves changent de sens, et elles sont RÉVISÉES, jamais retirées** (mécanisme de la
+décision 51, exigé par `docs/CloudWorker.md` §3.1). Les assertions qui **constataient** qu'une
+tabulation passe pour un motif, et qu'une valeur réduite à `"\t"` satisfait un champ `required`,
+constatent désormais le **refus**. Chacune porte sur place le motif de son retournement.
+
+**G3 — INC-071 : l'énoncé de `CRM-043` est aligné, et rien d'autre ne bouge.**
+
+Le comportement livré est le bon depuis la migration 15 — commenter exige `app.can_write_card` — et
+deux sources sur trois le disaient déjà. Ce qui reste faux est l'**énoncé** du backlog, qui
+promettait « tout membre pouvant lire la card » à côté d'une Definition of Done exigeant la preuve
+du **refus** opposé au `viewer`. L'arbitrage tranche pour l'écriture ; l'énoncé est donc corrigé.
+**Aucun code ne change**, et la preuve du refus existe déjà.
+
+**G4 — INC-072 : la suppression s'ouvre aux `admin`, la modification jamais, et la trace est une
+colonne.**
+
+L'arbitrage est « modération auditée » : la suppression ouverte aux `admin`, **sans** la
+modification. La décision 194 gardait l'intersection faute d'arbitrage ; son motif de fond est
+maintenu et il est même ce qui donne sa forme à la mise en œuvre — **modifier** le commentaire
+d'autrui n'est pas de la modération mais une falsification.
+
+**La restriction « suppression seulement » ne peut pas être portée par la politique.** Une politique
+RLS n'a pas d'`OLD` dans son `WITH CHECK` et ne sait donc pas dire « tu peux écrire cette colonne,
+pas celle-là ». Le privilège de colonne, lui, est attaché au **rôle** `authenticated`, que l'auteur
+et le modérateur partagent. La barrière est donc posée **dans le trigger** `card_comments_avant_maj`,
+seul endroit qui voit `OLD`, `NEW` et `auth.uid()` en même temps : un appelant qui n'est pas
+l'auteur ne peut faire qu'une chose, poser `deleted_at`. Toute autre écriture rend
+`comment_moderation_limitee`. La politique ouvre, le trigger borne, et les deux sont nécessaires.
+
+**L'audit est une colonne `deleted_by`, et non un événement.** Une pierre tombale qui ne dit pas qui
+l'a posée n'est pas auditée. `deleted_by` est écrite **par le trigger** à `auth.uid()`, fermée au
+client comme `edited_at` l'est déjà, et elle rend la modération immédiatement lisible : un
+commentaire dont `deleted_by` diffère de `author_id` a été retiré par un tiers. Le choix d'une
+colonne plutôt que d'un `card_event` a le même motif qu'en G1 — la timeline typée appartient à
+`CRM-044`, et l'audit d'INC-072 ne doit pas attendre une unité qu'il ne porte pas.
+
+**Ce que G4 n'ouvre pas.** Aucune résurrection : la pierre tombale reste définitive pour tout le
+monde, `admin` compris. Aucune suppression physique : il n'existe toujours aucune politique
+`for delete` ni aucun privilège `DELETE`.
+
+**Rattachement :** INC-048, INC-052, INC-071, INC-072 ; unités `CRM-034` (la garde), `CRM-036` et
+`CRM-037` (la définition de « renseigné »), `CRM-043` (la table). Décisions 51 (révision d'une
+assertion), 127, 165, 192, 193, 194, 196, 197, 367 (lot G).
