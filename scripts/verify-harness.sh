@@ -281,13 +281,44 @@ PORT_RAPPORT=9323
 # reprogrammation, le refus d'un délai nul, le refus de reprogrammer un envoi déjà parti,
 # l'assainissement du code d'erreur PAR LA BASE, le seuil de l'orphelin dans les deux sens, et
 # l'état exécuté avec les droits de l'appelant. 1907 + 14 = **1921**, valeur MESURÉE.
-FICHIERS_SQL_ATTENDUS=31
-ASSERTIONS_ATTENDUES=1921
+# --- INC-101, le 2026-08-14 : DEUX COMPTEURS QUI N'AVAIENT PLUS RIEN GARDÉ DEPUIS QUATRE
+# --- LIVRAISONS ---------------------------------------------------------------------------------
+# Le harnais rendait « vert mais 33 fichiers / 1971 assertions au lieu de 31 / 1921 » — c'est-à-dire
+# exactement ce qu'on lui demande — sans que la révision soit faite dans le même changement que les
+# preuves comptées. Le mécanisme de la décision 51 pour la onzième fois, et le précédent exact
+# d'INC-080. Les valeurs ci-dessous sont MESURÉES sur base seedée AVANT toute modification du dépôt
+# (`npm run test:sql` : 33 fichiers, 1971 assertions, aucune anomalie), et l'écart est ATTRIBUÉ
+# fichier par fichier plutôt que constaté en bloc :
+#
+#   `0032_reprise_rangement.test.sql`  +1 fichier, +12 assertions  `CRM-059`, dette de `CRM-056`
+#   `0033_quota_par_defaut.test.sql`   +1 fichier,  +4 assertions  `CRM-053` / `CRM-058`
+#   `0011_droits_fins.test.sql`         71 → 78,    +7 assertions  INC-085 / INC-075 (`CRM-012`)
+#   `0013_move_card.test.sql`           74 → 82,    +8 assertions  lot G (`CRM-034`)
+#   `0014_valeurs_champs.test.sql`      98 → 103,   +5 assertions  lot G (`CRM-036`)
+#   `0017_commentaires.test.sql`        84 → 98,   +14 assertions  lot G puis `CRM-043`
+#
+# 31 + 2 = **33** ; 1921 + 12 + 4 + 7 + 8 + 5 + 14 = **1971**. Le compte se reconstitue à l'unité :
+# aucune suite n'a été perdue en route, seul le compteur était resté en arrière. À NOTER, et c'est
+# une mesure et non une lecture du journal : `0032` existait DÉJÀ au commit qui a écrit 1921, dont
+# l'arbre porte 32 fichiers et 1933 assertions. Ce compteur-là était donc faux DÈS SON ÉCRITURE.
+FICHIERS_SQL_ATTENDUS=33
+ASSERTIONS_ATTENDUES=1971
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
 # (`--list`), non déduite d'une exécution : déduire reviendrait à supprimer le contrôle.
-SCENARIOS_API=504
+# --- INC-101, le 2026-08-14 : **507**, ET CE COMPTEUR-CI N'A JAMAIS ÉTÉ JUSTE ----------------------
+# Les trois autres compteurs révisés ici avaient DÉRIVÉ — des preuves ont été ajoutées après eux.
+# Celui-ci non, et c'est un fait d'une autre nature, mesuré et non déduit : depuis le commit qui a
+# écrit `504`, **aucun scénario d'API n'a été ajouté ni retiré**. Le seul fichier d'`e2e/api/`
+# modifié depuis est `move-card.spec.ts`, et son unique changement est le RENOMMAGE d'un scénario
+# (« le motif est TOUJOURS perdu » → « le motif reste hors du `payload` », lot G). Le compte
+# DÉCLARÉ était donc déjà de **507** à l'instant où `504` a été écrit : ce n'est pas une révision
+# omise, c'est un comptage faux. La leçon d'INC-101 s'en trouve élargie — un compteur figé peut
+# mentir sans qu'aucune livraison ne l'ait dépassé.
+# Valeur COMPTÉE par `--list` (507 tests dans 31 fichiers) puis CONFRONTÉE au nombre de scénarios
+# verts : les deux coïncident.
+SCENARIOS_API=507
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -356,7 +387,12 @@ SCENARIOS_API=504
 # en visant la même affaire, et l'absence d'action de réponse sur un message non classé.
 # **182 pour la même raison** : l'écran d'administration de l'arborescence et l'écran d'état de la
 # messagerie apportent leurs parcours, captures comprises. Valeur COMPTÉE par `--list`.
-SCENARIOS_UI=182
+# **185 depuis `CRM-043`** (INC-101, le 2026-08-14) : `e2e/ui/commentaires-gestes.spec.ts` passe de
+# **5 à 8 scénarios** déclarés avec le geste de modération du lot G — la confirmation, la pierre
+# tombale, et l'action unique opposée au commentaire d'un tiers. Aucun autre fichier d'`e2e/ui/` n'a
+# changé depuis, et le compte se reconstitue à l'unité : 182 + 3 = **185**.
+# Valeur COMPTÉE par `--list` (185 tests dans 17 fichiers), puis confrontée au nombre de verts.
+SCENARIOS_UI=185
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
@@ -381,7 +417,11 @@ SCENARIOS_UI=182
 # **41 depuis `CRM-059`** : `e2e/mail/resilience.spec.ts` ajoute la COUPURE RÉELLE — l'identité
 # pointée vers un port fermé, le message reprogrammé plutôt que perdu, puis parti au retour du
 # serveur — et la reprise d'un envoi orphelin abandonné par un worker mort.
-SCENARIOS_MAIL=41
+# **42** (INC-101, le 2026-08-14) : `e2e/mail/backfill.spec.ts` est le seul fichier de scénario
+# AJOUTÉ à `e2e/mail/` depuis, et il en déclare **1**. Aucun des dix autres n'a gagné ni perdu de
+# scénario : 41 + 1 = **42**. Valeur COMPTÉE par `--list` (42 tests dans 11 fichiers), puis
+# confrontée au nombre de verts.
+SCENARIOS_MAIL=42
 
 failures=0
 checks=0
