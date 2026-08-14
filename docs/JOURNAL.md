@@ -12258,3 +12258,36 @@ l'en-tête des entrées se tromperait dans les deux sens.
 **Ordre d'exécution qui découle du lot A.** Sans la pile : **D**, **H**, **K**, **F**, **M**, **E**,
 **C**, la moitié de **B** (INC-094), la partie statique de **L** (INC-070) et de **I+J**. Avec la
 pile, une fois INC-096 levée : le reste de **B**, **G**, **I+J**, **L**.
+
+### Décision 341 — Une preuve rouge mesurée sur une pile incomplète ne désigne pas encore un coupable
+
+**2026-08-14 — correction de la décision 340, avant d'écrire une ligne de code.**
+
+La décision 340 concluait que la première passe de relève ne bornait pas sa fenêtre. **Deux faits
+la remettent en cause, et il faut les écrire avant de corriger quoi que ce soit.**
+
+**Premier fait : la pile était incomplète pendant l'exécution qui a rendu la preuve rouge.**
+`docker compose ps` montrait alors `rest`, `mail-sync` et `webapp` **absents** — l'API répondait
+`000`. Un scénario `mail` qui interroge la route interne du service et relit la base par PostgREST
+ne mesure rien de fiable dans ces conditions. La mesure de l'`INTERNALDATE`, elle, reste valide :
+elle a été faite directement contre Stalwart, qui tournait.
+
+**Second fait : la relecture du code ne montre pas le défaut annoncé.**
+`planifier_dossier` traite bien le premier contact en `PasseCourante(depuis_date=aujourd_hui)`, et
+`uids_a_relever` émet bien `UID SEARCH SINCE <date>` dans cette branche. Le chemin qui aurait
+rapatrié toute la boîte — `search(["ALL"])` — a été retiré, et son retrait est commenté sur place.
+
+**Ce que j'ai fait de travers.** J'ai attribué une cause à partir d'une seule exécution, sans
+vérifier que l'environnement de cette exécution était sain. Vérifier la prémisse de la preuve — ce
+que la décision 340 a bien fait pour l'`INTERNALDATE` — ne suffit pas : il faut aussi vérifier la
+prémisse de la **mesure**.
+
+**Ce qui reste vrai, et pourquoi `CRM-059` reste `[~]`.** Une preuve qui a été vue rouge ne
+redevient verte que rejouée. Tant que `e2e/mail/backfill.spec.ts` n'a pas été rejouée sur une pile
+complète, l'unité ne peut pas revenir à `[x]` — mais le défaut qu'on lui impute reste **non
+établi**, et le backlog doit le dire ainsi plutôt que d'accuser le service.
+
+**Bloqué par une dépendance, et c'est une action humaine.** Le rejeu exige la pile, donc le démon
+Docker. Sur ce poste, le CLI est le pont WSL de Docker Desktop (`/Docker/host/bin/docker`) : il n'y
+a pas de `dockerd` dans la distribution, et le démon vit dans Docker Desktop côté Windows. Aucune
+commande de cette session ne peut le démarrer.

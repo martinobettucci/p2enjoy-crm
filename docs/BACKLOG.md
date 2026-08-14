@@ -5734,10 +5734,19 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 > relève, en même temps que le courrier du jour, alors que le §20.6 exige « la boîte courante
 > d'abord, puis un lot d'historique borné — jamais l'inverse ».
 >
-> **La prémisse de la preuve a été vérifiée avant d'accuser le produit** : mesuré le 2026-08-12,
-> Stalwart **conserve** l'`INTERNALDATE` passée d'un `APPEND` — un message déposé à 90 jours est
-> relu `15-May-2026`. La preuve mesure donc bien le produit, et non le serveur. Le défaut est dans
-> la première passe de relève, qui ne borne pas sa fenêtre.
+> **La prémisse de la preuve a été vérifiée** : mesuré le 2026-08-12, Stalwart **conserve**
+> l'`INTERNALDATE` passée d'un `APPEND` — un message déposé à 90 jours est relu `15-May-2026`. La
+> preuve mesure donc bien le produit, et non le serveur.
+>
+> **CORRIGÉ LE 2026-08-14 — LE COUPABLE N'EST PAS ÉTABLI** (décision 341). L'exécution qui a rendu
+> la preuve rouge s'est faite sur une pile **incomplète** : `rest`, `mail-sync` et `webapp` étaient
+> absents et l'API répondait `000`. Et la relecture du code ne montre pas le défaut annoncé —
+> `planifier_dossier` traite bien le premier contact en `SEARCH SINCE <aujourd'hui>`, et le
+> `search(["ALL"])` qui rapatriait toute la boîte a été retiré.
+>
+> Ce qui reste : une preuve vue rouge ne redevient verte que **rejouée**. L'unité reste donc `[~]`,
+> **bloquée par une dépendance** — le rejeu exige la pile, donc le démon Docker, qui sur ce poste
+> vit dans Docker Desktop côté Windows et **nécessite une action humaine** pour démarrer.
 >
 > Une unité dont une preuve de sa propre Definition of Done est rouge ne peut pas rester `[x]`.
 Import historique par lots, file persistante, backoff, états visibles.
