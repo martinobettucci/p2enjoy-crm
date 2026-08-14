@@ -129,6 +129,19 @@ describe('projection du fil (docs/DESIGN_SYSTEM.md §5.10)', () => {
 		expect(vivant?.retireParModeration).toBe(false)
 	})
 
+	// DÉFAUT RÉEL, TROUVÉ PAR UNE PREUVE ET NON À LA LECTURE (décision 376). Écrit `!== null`, le
+	// prédicat lisait une colonne ABSENTE comme un retrait par un tiers — `undefined` étant
+	// différent de `null` ET de tout `author_id`. `e2e/ui/commentaires.spec.ts` servait une réponse
+	// substituée sans `deleted_by`, et une pierre tombale ordinaire s'y annonçait « retirée par la
+	// modération ». Une réponse dégradée ne doit accuser personne.
+	it('ne voit AUCUNE modération quand la colonne est absente de la réponse', () => {
+		const sansColonne = { ...ligne({ id: 'a', body: '', deleted_at: '2026-08-05T11:00:00.000Z' }) }
+		delete (sansColonne as { deleted_by?: string | null }).deleted_by
+		const [projete] = projeterFil([sansColonne])
+		expect(projete?.supprime).toBe(true)
+		expect(projete?.retireParModeration).toBe(false)
+	})
+
 	it('porte la date de modification quand le corps a changé, et rien sinon', () => {
 		const fil = projeterFil([
 			ligne({ id: 'a' }),

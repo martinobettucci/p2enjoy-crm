@@ -110,9 +110,16 @@ export function projeterFil(lignes: readonly CommentaireLu[]): readonly Commenta
 			// auteur qui supprime son propre commentaire y est inscrit lui aussi (le trigger relève
 			// `auth.uid()` sans distinguer) ; c'est la DIFFÉRENCE avec `author_id` qui fait la
 			// modération (docs/SPEC-cards.md §13.6).
+			//
+			// `== null` COUVRE `undefined` AUTANT QUE `null`, ET CE N'EST PAS UN RAFFINEMENT DE
+			// STYLE. Écrit `!== null`, le prédicat lisait une colonne ABSENTE comme un retrait par
+			// un tiers : `undefined` est différent de `null` ET de tout `author_id`. Défaut réel,
+			// trouvé par `e2e/ui/commentaires.spec.ts` sur une réponse substituée qui ne portait
+			// pas encore la colonne — une pierre tombale ordinaire s'y annonçait « retirée par la
+			// modération ». Une réponse dégradée ne doit jamais accuser quelqu'un.
 			retireParModeration:
-				ligne.deleted_at !== null &&
-				ligne.deleted_by !== null &&
+				ligne.deleted_at != null &&
+				ligne.deleted_by != null &&
 				ligne.deleted_by !== ligne.author_id,
 		}))
 }

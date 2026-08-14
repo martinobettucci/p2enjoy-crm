@@ -336,7 +336,12 @@ test.describe('la modération, sur la vraie base (INC-072)', () => {
 			// La confirmation est DISTINCTE de celle de l'auteur, et nomme la trace nominative.
 			await expect(page.getByTestId('confirmation-moderation')).toBeVisible()
 			await expect(page.getByTestId('confirmation-suppression')).toHaveCount(0)
-			await carte.scrollIntoViewIfNeeded()
+			// LA CARTE N'EST PLUS RETROUVABLE PAR SON TEXTE, et c'est le comportement voulu : la
+			// confirmation PREND LA PLACE du corps (docs/DESIGN_SYSTEM.md §5.10). Réutiliser
+			// `carte`, filtrée par `hasText`, attendrait indéfiniment un texte qui n'est plus
+			// rendu — défaut trouvé en exécutant la preuve, pas à la lecture. On amène donc la
+			// confirmation elle-même dans le cadre.
+			await page.getByTestId('confirmation-moderation').scrollIntoViewIfNeeded()
 			await capturer(page, 'moderation-confirmation-1440', 'CRM-043')
 
 			// §6 : le premier clic DEMANDE. La base est relue pour le prouver.

@@ -81,6 +81,13 @@ const CHANNELS_SERVIS = [{ id: CHANNEL.id, name: 'Inter-entreprises', slug: CHAN
 /**
  * Trois commentaires servis, et chacun exerce un état du §13.10 : un vivant, un **modifié**, une
  * **pierre tombale** au corps vide. Leur forme est celle que PostgREST rend, colonnes comprises.
+ *
+ * `deleted_by` EST PORTÉE, ET C'EST UNE CORRECTION MESURÉE (décision 376). Omise, la colonne
+ * arrivait `undefined` dans le projeteur, qui la lisait comme un retrait par un TIERS : la pierre
+ * tombale de `d3` s'annonçait « retirée par la modération » alors que Driss Lemoine l'avait
+ * supprimée lui-même. C'est le prédicat qui a été corrigé — une réponse dégradée ne doit accuser
+ * personne —, et la substitution est rendue fidèle dans le même changement : une réponse
+ * substituée qui n'a pas la forme du vrai backend prouve autre chose que ce qu'elle prétend.
  */
 const COMMENTAIRES_SERVIS = [
 	{
@@ -91,6 +98,7 @@ const COMMENTAIRES_SERVIS = [
 		created_at: '2026-08-05T09:00:00+00:00',
 		edited_at: null,
 		deleted_at: null,
+		deleted_by: null,
 		auteur: {
 			id: '5eed0000-0000-4000-8000-000000000011',
 			full_name: 'Camille Aubert',
@@ -105,6 +113,7 @@ const COMMENTAIRES_SERVIS = [
 		created_at: '2026-08-05T10:00:00+00:00',
 		edited_at: '2026-08-05T10:30:00+00:00',
 		deleted_at: null,
+		deleted_by: null,
 		auteur: {
 			id: '5eed0000-0000-4000-8000-000000000012',
 			full_name: 'Driss Lemoine',
@@ -119,6 +128,10 @@ const COMMENTAIRES_SERVIS = [
 		created_at: '2026-08-05T11:00:00+00:00',
 		edited_at: null,
 		deleted_at: '2026-08-05T11:05:00+00:00',
+		// SUPPRIMÉE PAR SON AUTEUR : `deleted_by` égale `author_id`, et la mention reste donc
+		// « Commentaire supprimé ». Le retrait par un tiers est éprouvé sur la VRAIE base par
+		// `e2e/ui/commentaires-gestes.spec.ts`, et non sur une réponse fabriquée.
+		deleted_by: '5eed0000-0000-4000-8000-000000000012',
 		auteur: {
 			id: '5eed0000-0000-4000-8000-000000000012',
 			full_name: 'Driss Lemoine',

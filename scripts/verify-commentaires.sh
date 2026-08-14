@@ -60,6 +60,11 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0015_commentaires.sql
 MIGRATION_IDENTITES=supabase/migrations/0021_identites_et_memberships_surs.sql
+# La migration du lot G REDÉFINIT `app.card_comments_avant_maj()` et ajoute la politique de
+# modération. Rejouer 0015 puis 0021 sans elle réinstalle une version ANTÉRIEURE du trigger et perd
+# `card_comments_moderation` : la restauration laissait alors la suite 0017 rouge, et le harnais
+# accusait le produit d'un défaut qu'il venait lui-même d'introduire. MESURÉ le 2026-08-14.
+MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 TEST_SQL=supabase/tests/0017_commentaires.test.sql
 TEST_IDENTITES=supabase/tests/0023_identites_et_memberships_surs.test.sql
 SPEC_API=e2e/api/commentaires.spec.ts
@@ -139,7 +144,7 @@ DEPART=$(mktemp -d)
 empreinte_depart() { cp "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')"; }
 est_rendu_intact() { diff -q "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')" >/dev/null 2>&1; }
 
-for fichier in "$MIGRATION" "$TEST_SQL"; do
+for fichier in "$MIGRATION" "$MIGRATION_LOT_G" "$TEST_SQL"; do
 	[ -f "$fichier" ] && empreinte_depart "$fichier"
 done
 
@@ -181,9 +186,16 @@ else
 	fail "public.card_comments est ABSENTE"
 fi
 
+# RÉVISÉ À QUATRE LE 2026-08-14 (mécanisme de la décision 51). La migration `0035` du lot G a
+# ajouté `card_comments_moderation`, et ce contrôle est RESTÉ ROUGE depuis — la session qui a livré
+# la règle n'a pas rejoué ce harnais, et rien ne l'a dit. Il a joué exactement comme il est fait
+# pour le faire : la garde attrape l'ajout d'une politique que personne n'a déclarée ici.
+#
+# L'inventaire reste EXACT et non un minimum : ce qu'il protège est l'absence de toute politique
+# « for delete », et une comparaison de nombre laisserait passer une substitution.
 politiques=$(psql_db -c "select string_agg(policyname, ',' order by policyname) from pg_policies where schemaname='public' and tablename='card_comments'")
-if [ "$politiques" = 'card_comments_insertion,card_comments_lecture,card_comments_maj' ]; then
-	ok "trois politiques, et trois seulement : aucune « for delete » (§13.4)"
+if [ "$politiques" = 'card_comments_insertion,card_comments_lecture,card_comments_maj,card_comments_moderation' ]; then
+	ok "quatre politiques, et quatre seulement : aucune « for delete » (§13.4, §13.6)"
 else
 	fail "politiques inattendues sur card_comments : « $politiques »"
 fi
@@ -308,10 +320,12 @@ titre "4. Suites de preuves"
 
 if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/pgtap.log" 2>&1; then
 	assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap.log" | head -1 | grep -oE '[0-9]+')
-	if [ "${assertions:-0}" -eq 84 ]; then
-		ok "supabase/tests/0017_commentaires.test.sql — 84 assertions, aucune anomalie"
+	# RÉVISÉ À 98 LE 2026-08-14, EN DEUX FOIS ET D'UN SEUL GESTE : le lot G a porté la suite de 84
+	# à 96 sans rejouer ce harnais, et INC-072 y ajoute les deux assertions de l'audit du seed.
+	if [ "${assertions:-0}" -eq 98 ]; then
+		ok "supabase/tests/0017_commentaires.test.sql — 98 assertions, aucune anomalie"
 	else
-		fail "suite pgTAP verte mais ${assertions:-0} assertions au lieu de 84"
+		fail "suite pgTAP verte mais ${assertions:-0} assertions au lieu de 98"
 	fi
 else
 	fail_journal "supabase/tests/0017_commentaires.test.sql ÉCHOUE" "$TRAVAIL/pgtap.log"
@@ -560,14 +574,21 @@ degrader_et_verifier \
 
 # La restauration est CONSTATÉE, pas supposée. Rejouer 0015 seule réinstallerait sa version
 # historique de `app.card_comments_avant_maj()` et retirerait l'exception étroite au SET NULL de
-# CRM-022. Le suffixe 0021 est donc rejoué immédiatement, puis les DEUX suites sont exigées.
+# CRM-022. Le suffixe 0021 est donc rejoué immédiatement, PUIS 0035 — qui redéfinit le même trigger
+# une troisième fois et rétablit la politique de modération —, et les DEUX suites sont exigées.
+#
+# L'ORDRE EST CELUI DE LA LIVRAISON, ET IL N'EST PAS INDIFFÉRENT : chacune des trois migrations
+# remplace la fonction de la précédente. En omettre une revient à livrer une version antérieure du
+# produit, ce qui a été mesuré le 2026-08-14 — la suite 0017 restait rouge après « restauration ».
 titre "6. Restauration"
 
 if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 	-f - <"$MIGRATION" >"$TRAVAIL/rejeu.log" 2>&1 \
 	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-		-f - <"$MIGRATION_IDENTITES" >>"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "les migrations CRM-043 puis CRM-022 se rejouent dans l'ordre livré"
+		-f - <"$MIGRATION_IDENTITES" >>"$TRAVAIL/rejeu.log" 2>&1 \
+	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+		-f - <"$MIGRATION_LOT_G" >>"$TRAVAIL/rejeu.log" 2>&1; then
+	ok "les migrations CRM-043, CRM-022 puis le lot G se rejouent dans l'ordre livré"
 else
 	fail "le rejeu ordonné des migrations ÉCHOUE : voir $TRAVAIL/rejeu.log"
 fi
