@@ -13678,3 +13678,55 @@ archivé, six types distincts, `budget` avec sa devise et `source` avec ses quat
 
 **Où reprendre après cette tranche.** `CRM-076` reste `[~]` : la grille champ × étape des règles de
 visibilité, les exigences de transition et la prévisualisation des effets restent dues.
+
+### Décision 387 — CRM-076, troisième tranche livrée : les champs du formulaire, et la porte fermée sur le type
+
+**2026-08-14, suite de la décision 386 — entrée courte, comme la décision 382 l'exige.**
+
+**Livré.** Spec §7 bis.10 (committée avant le code), couche de données des champs (`lireChamps`,
+`choixDuChamp`, `deviseDuChamp`, `composerOptions`, six contrôles de forme, `classerRefusChamp` et
+les cinq écritures), bloc « Champs du formulaire » dans `AdministrationWorkflows.tsx`, 91 clés de
+traduction, chapitre **5 bis.4** de `docs/manual.md` et six règles au §5.15 de
+`docs/DESIGN_SYSTEM.md`. Aucune migration : `form_fields` et ses politiques datent de `CRM-035`.
+
+**Mesuré.** 885 tests unitaires (845 → 885), **210** scénarios `e2e:ui` (201 + 9), 507 `e2e:api`,
+42 `e2e:mail`, 242 `pytest` sans avertissement, `test:sql` **1971 assertions avant ET après** la
+campagne — aucun résidu —, `typecheck` et `build` verts, captures des quatre paliers et du
+formulaire regardées. `SCENARIOS_UI` porté à 210. Harnais : `verify-champs-formulaire.sh` **38
+contrôles**, `verify-workflows.sh` **49**, `verify-manual.sh` **109**, `verify-webapp.sh` **42**,
+tous sans anomalie. Pile : 16 services `healthy` (`./runDev.sh --dev`, la webapp conteneurisée
+étant remplacée par `npm run preview`), seed appliqué.
+
+**Ce que les trois mesures ont décidé, et qui n'était pas décidable sans elles.** `DELETE` sur
+`form_fields` rend `403`/`42501` même à l'administratrice : l'écran n'offre donc aucune
+suppression, seulement l'archivage et sa restauration. Le `type`, lui, est modifiable en base
+(`200`) mais laisse derrière lui des valeurs que le produit refuse ensuite de réécrire (`P0001`) —
+l'écran le fige donc après la déclaration et le dit en phrase, la conversion appartenant à
+`CRM-078`. Enfin, la base accepte deux choix de **même clé** (`201`) : l'unicité des clés de choix
+est la première règle de cet éditeur qui ne soit tenue par personne d'autre que l'écran, et sa
+preuve unitaire en est la seule garantie.
+
+**Deux obstacles d'environnement levés, tous deux hors dépôt.** `e2e:ui` a d'abord rendu 209/210 :
+l'unique échec — `authentification.spec.ts:161`, l'invitation — venait de ce que **rien ne servait
+`SITE_URL`** (port 5173), la pile ayant été démarrée par `./runDev.sh --dev`. Un `npm run preview`
+sur ce port a rendu la campagne **210/210**, et la même preuve passe désormais isolée. Le second
+obstacle est la porte Node 24 des harnais : la distribution officielle déposée sous
+`~/.nvm/versions/node/v24.11.1/` l'ouvre, exactement comme la décision 385 l'avait consigné — à
+refaire à chaque exécution tant que l'image ne porte pas Node 24. `PLAYWRIGHT_CHROMIUM_PATH` reste
+nécessaire (chromium-1194), y compris pour `e2e:mail`, dont quatre scénarios Roundcube échouent
+sans lui.
+
+**Relevé sans le corriger.** INC-106 : `scripts/verify-mail-sync.sh` déclare absents deux
+événements présents — `grep -q` sort à la première correspondance, `printf` reçoit `SIGPIPE`, et le
+`pipefail` du script transforme 141 en échec. Le contrôle échoue d'autant plus sûrement que la
+preuve est bonne. Défaut du harnais de `CRM-051`, isolé en deux commandes, arbitrage demandé.
+
+**Une session concurrente travaille sur le même dépôt.** Elle a poussé `280fad1` et `fa3da58`
+pendant celle-ci ; le travail a été rebasé sur place, l'unique conflit portant sur une capture
+binaire régénérée des deux côtés. Sa lecture de l'état — « les champs viennent d'être livrés par la
+session concurrente » — désigne les commits de cette session-ci.
+
+**Où reprendre.** `CRM-076` reste `[~]`. La tranche suivante est la **grille champ × étape** des
+règles de visibilité (`docs/SPEC-form-composer.md` §3.1 et §5), puis les **exigences de
+transition** et la **prévisualisation des effets**. Le choix d'unité obéit à la décision 382 :
+backlog d'abord, registre en consultation.

@@ -6443,9 +6443,51 @@ E2E et captures aux quatre paliers sans avertissement console.
       décision 259. Elles décrivent la DoD de `CRM-041` et `CRM-046`, unités closes : arbitrage
       demandé plutôt que retouche.
 
-**Reste dû sous cette unité (§7 bis.7)** : l'édition des champs de formulaire et de leurs règles,
-la prévisualisation des effets, et les preuves pgTAP/API dédiées à l'écran (les politiques du §3.7
-restent prouvées par `CRM-031`). L'unité reste `[~]` jusqu'à leur livraison.
+**Troisième tranche livrée et vérifiée, 2026-08-14** — les champs du formulaire
+(docs/SPEC-workflow-engine.md §7 bis.10) :
+
+- [x] Lecture 5 (`form_fields` filtrée par workflow, ordre `position`), émise **avec** celles des
+      étapes et des arêtes. Les champs **archivés sont rapportés**, à la différence du catalogue de
+      la lecture 3 : l'archivage est le seul retrait que le produit connaisse, et le masquer
+      rendrait la restauration inatteignable.
+- [x] Couche de données : `lireChamps`, `choixDuChamp`, `deviseDuChamp`, `composerOptions`, les
+      six contrôles de forme, `classerRefusChamp`, et les cinq écritures du §7 bis.10.2 — déclarer
+      (`position` **omise**, le trigger la calcule), modifier, déplacer, archiver, restaurer.
+      24 preuves unitaires ajoutées (`administration-workflows.test.ts`, 74 au total).
+- [x] **Aucun geste de suppression, et c'est MESURÉ** : `DELETE /form_fields` rend `403` / `42501`
+      avec le jeton réel de l'administratrice, `hint` « GRANT DELETE ON public.form_fields ». Le
+      §2.7 du composeur l'annonçait ; il est constaté.
+- [x] **La clé et le type ne sont pas modifiables depuis l'écran**, bien que la base l'accepte —
+      `200` dans les deux cas, mesuré. Le type est décisif : un champ `text` portant `"une chaîne"`
+      passe à `number` en `200`, la valeur **reste** en base, et sa réécriture est alors refusée
+      (`P0001`, « attend un nombre, reçu string »). La conversion est un plan de remappage, donc
+      `CRM-078`. L'écran affiche les deux en phrase, avec leur motif.
+- [x] **Le premier contrôle d'écran qui ne soit pas un raccourci** : la base accepte un `select`
+      portant deux choix de **même clé** — mesuré, `201`. L'unicité des clés de choix et la forme
+      `{key, label}` sont tenues par l'éditeur seul (`refusDesChoix`), et par ses preuves.
+- [x] Écran : bloc « Champs du formulaire » sous les transitions, clé en `code`, type traduit,
+      champ archivé **nommé** et restaurable, éditeur de choix structuré en deux colonnes, champ de
+      devise pour `money`. 16 preuves d'écran ajoutées (`AdministrationWorkflows.test.tsx`, 56 au
+      total), 91 clés de traduction.
+- [x] E2E sur la vraie base (`e2e/ui/administration-workflows.spec.ts`, 9 scénarios ajoutés,
+      25 au total) : les cinq gestes à la souris confirmés en base après chaque geste, la
+      déclaration d'un champ à choix avec le refus de deux clés identiques constaté **avant**
+      l'envoi, le refus réel d'une clé déjà prise (`23505`, `409` consommé), le parcours au clavier
+      seul, quatre paliers sans débordement, captures produites et **observées**. Les champs de
+      preuve sont préfixés `e2e-wf-` et purgés dans leur `finally` ; `test:sql` rejoué après la
+      campagne : **1971 assertions avant ET après**, aucun résidu.
+- [x] Documentation : `docs/manual.md` chapitre **5 bis.4**, `docs/DESIGN_SYSTEM.md` §5.15 complété
+      de six règles, `CHANGELOG.md` sous `[Non publié]`. `SCENARIOS_UI` porté à **210**.
+- [x] **Aucune migration** : `form_fields` et ses politiques datent de `CRM-035`.
+- [ ] **INC-106 relevée au passage, non corrigée** : `scripts/verify-mail-sync.sh` déclare absents
+      deux événements présents — `grep -q` ferme le tuyau, `printf` reçoit `SIGPIPE`, et le
+      `pipefail` du script en fait un échec. Défaut du harnais de `CRM-051`, arbitrage demandé.
+
+**Reste dû sous cette unité (§7 bis.10.7)** : la **grille champ × étape** des règles de visibilité
+(`docs/SPEC-form-composer.md` §3.1 et §5), les **exigences de transition**
+(`docs/SPEC-transition-required-fields.md`), la **prévisualisation des effets**, et les preuves
+pgTAP/API dédiées à l'écran (les politiques du §3.7 et du §2.7 restent prouvées par `CRM-031` et
+`CRM-035`). L'unité reste `[~]` jusqu'à leur livraison.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 
