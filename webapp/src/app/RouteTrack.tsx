@@ -412,10 +412,11 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	// message avant les filtres qui en étaient la cause, doublait l'action et laissait sous elle une
 	// carcasse de tableau — défaut trouvé en regardant une capture (décision 190).
 	//
-	// Écrit en `if` et non en ternaire : le contrôle de textes en dur de
-	// `webapp/src/i18n/i18n.test.ts` lit la queue d'un `? undefined : (` comme un nœud de texte
-	// littéral, et l'a réellement signalée. La limite de l'outil est consignée en INC-070 ; la
-	// forme choisie ici est de toute façon la plus lisible des deux.
+	// Écrit en `if` et non en ternaire. La contrainte qui l'imposait a disparu : le contrôle de
+	// textes en dur lisait la queue d'un `? undefined : (` comme un nœud de texte littéral, et il
+	// lit désormais l'arbre syntaxique du fichier, où cette queue n'est pas un texte (INC-070,
+	// close ; `docs/JOURNAL.md` décisions 296 et 381). La forme est conservée parce qu'elle est la
+	// plus lisible des deux, et non plus parce qu'un outil l'exige.
 	let etatVide: ReactNode = undefined
 	if (totalFiltre === 0) {
 		etatVide = (

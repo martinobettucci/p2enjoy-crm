@@ -696,9 +696,8 @@ function Commentaire({
 	// à l'utilisateur une règle fausse — et lui vaudrait un `comment_moderation_limitee`.
 	const moderationOfferte = !estAuteur && estAdminWorkspace && !commentaire.supprime
 
-	// Un seul élément, choisi par `CorpsCommentaire` en `if` successifs. INC-070 : une chaîne de
-	// ternaires dont les branches sont des fragments JSX ouverts par `(` place des identifiants
-	// sur une ligne que le contrôle de textes en dur lit comme un nœud de texte.
+	// Un seul élément, choisi par `CorpsCommentaire` en `if` successifs — pour la lisibilité, la
+	// contrainte d'outil qui l'imposait ayant été levée avec INC-070.
 
 	return (
 		// `group` : les actions apparaissent au survol de la carte **et** au focus clavier de l'une
@@ -798,11 +797,16 @@ function Commentaire({
 /**
  * Ce qu'un commentaire montre, selon le mode — en `if` successifs, jamais en chaîne de ternaires.
  *
- * La forme est imposée par INC-070 : le contrôle de textes en dur de `i18n.test.ts` lit la queue
- * d'un ternaire comme un nœud de texte visible. La règle pratique qu'il pose — « pas de ternaire
- * dont la branche est un fragment JSX ouvert par `(` » — est respectée ici plutôt que contournée
- * en élargissant l'expression régulière, ce qui affaiblirait une garde pour accommoder une
- * écriture (`CLAUDE.md` §18).
+ * Cette forme fut d'abord IMPOSÉE par INC-070 : le contrôle de textes en dur de `i18n.test.ts`
+ * lisait la queue d'un ternaire comme un nœud de texte visible, et la règle pratique qu'il posait
+ * — « pas de ternaire dont la branche est un fragment JSX ouvert par `(` » — était respectée ici
+ * plutôt que contournée en élargissant l'expression régulière, ce qui aurait affaibli une garde
+ * pour accommoder une écriture (`CLAUDE.md` §18).
+ *
+ * Le contrôle lit désormais l'arbre syntaxique et non le texte : la contrainte n'existe plus
+ * (`docs/JOURNAL.md` décisions 296 et 381). La forme est CONSERVÉE, parce qu'une chaîne de `if`
+ * qui rend quatre corps distincts se lit mieux qu'une chaîne de ternaires — la réécrire n'aurait
+ * eu d'autre motif que de démontrer qu'elle est de nouveau permise.
  */
 function CorpsCommentaire({
 	commentaire,
