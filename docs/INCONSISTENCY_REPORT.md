@@ -130,6 +130,59 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-106 — `verify-mail-sync.sh` déclare absents deux événements présents, parce que `grep -q` ferme le tuyau
+
+**Nature :** défaut du harnais, pas du service. **Relevé le :** 2026-08-14, par une session dont
+l'unité est `CRM-076` — le harnais a été exécuté au titre de la campagne complète, pas de l'unité.
+
+**Le fait, mesuré :**
+
+```
+$ bash scripts/verify-mail-sync.sh
+  ECHEC l'événement service_started est absent
+  ECHEC l'événement request_completed est absent
+  2 contrôle(s) en échec sur 61.
+
+$ docker logs p2enjoy-mail-sync | grep -c '"event":"service_started"'   → 6
+$ docker logs p2enjoy-mail-sync | grep -c '"event":"request_completed"' → 485
+```
+
+Les deux événements **sont** dans le journal, et le harnais dispose bien de ce journal : la trace
+`bash -x` montre `journaux` chargé de 130 227 octets, contenant les deux motifs, et le `grep`
+émis avec le bon motif.
+
+**La cause, isolée en deux commandes :**
+
+```
+$ bash -c 'set -uo pipefail; j=$(docker logs p2enjoy-mail-sync 2>&1);
+           printf "%s\n" "$j" | grep -q "\"event\":\"service_started\""; echo $?'   → 141
+$ bash -c 'set -uo pipefail; j=$(docker logs p2enjoy-mail-sync 2>&1 | head -50);
+           printf "%s\n" "$j" | grep -q "\"event\":\"service_started\""; echo $?'   → 0
+```
+
+`grep -q` sort **dès la première correspondance**. Sur un journal plus grand que le tampon du
+tuyau, `printf` reçoit alors `SIGPIPE` et rend 141 ; le `set -euo pipefail` de la ligne 46 propage
+ce 141 à la ligne 447, et `… && ok || fail` bascule sur `fail`. Le contrôle échoue **d'autant plus
+sûrement que la preuve est bonne** : plus le journal contient d'événements attendus, plus tôt
+`grep` ferme le tuyau.
+
+**Portée exacte.** Seuls les contrôles de la forme `printf … | grep -q <motif présent>` sont
+touchés — la boucle de la ligne 446. Les autres `grep -q` du même fichier cherchent une chaîne
+**absente** en nominal (jeton, `WARNING`, en-tête d'authentification) : `grep` lit alors tout le
+flux, aucun `SIGPIPE` n'a lieu, et leur verdict reste juste. Le même motif est à rechercher dans
+les autres harnais avant toute correction.
+
+**Ce n'est pas causé par la session qui le relève.** L'unité est `CRM-076` ; le diff ne touche ni
+`mail-sync/`, ni `scripts/verify-mail-sync.sh`, ni aucun journal. `pytest mail-sync/tests` rend
+**242 verts sans avertissement** sur la même pile, et les 59 autres contrôles du harnais sont verts.
+
+**Comportement laissé inchangé.** La correction appartient à `CRM-051`, qui porte ce harnais : elle
+tient probablement en un `grep -c` comparé à zéro, ou en un `|| true` explicite sur le `printf`,
+mais trancher la forme depuis une autre unité reviendrait à réécrire la preuve d'autrui. Arbitrage
+demandé.
+
+**Lié à :** `CRM-051`, INC-101 (garde-fous d'un harnais faux sans que rien ne le signale).
+
 ### INC-105 — Une preuve de `CRM-043` rend deux pierres tombales là où elle en attend une, et seulement dans la campagne complète
 
 **Nature :** preuve dépendante de l'état du fil, non isolée de ce que les autres scénarios de la
