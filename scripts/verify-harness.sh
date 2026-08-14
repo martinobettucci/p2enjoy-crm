@@ -392,7 +392,11 @@ SCENARIOS_API=507
 # tombale, et l'action unique opposée au commentaire d'un tiers. Aucun autre fichier d'`e2e/ui/` n'a
 # changé depuis, et le compte se reconstitue à l'unité : 182 + 3 = **185**.
 # Valeur COMPTÉE par `--list` (185 tests dans 17 fichiers), puis confrontée au nombre de verts.
-SCENARIOS_UI=185
+# **193 depuis `CRM-076`** (le 2026-08-14) : `e2e/ui/administration-workflows.spec.ts` livre les
+# huit scénarios de l'éditeur de workflows — les six gestes à la souris confirmés en base, le refus
+# réel d'une étape occupée, le parcours au clavier seul, les quatre paliers et leurs captures.
+# 185 + 8 = **193**, valeur MESURÉE par l'exécution complète (193 verts).
+SCENARIOS_UI=193
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

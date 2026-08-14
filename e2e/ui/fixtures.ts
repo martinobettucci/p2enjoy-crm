@@ -15,6 +15,10 @@ export const ERREUR_RESSOURCE_HTTP = {
 	// l'inbox provoque donc ce refus, que l'écran présente comme un refus et non comme une panne.
 	401: 'console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)',
 	403: 'console.error: Failed to load resource: the server responded with a status of 403 (Forbidden)',
+	// `409` AJOUTÉ PAR `CRM-076` : PostgREST rend `409 Conflict` sur une violation de clé
+	// étrangère — ici le `on delete restrict` d'une étape occupée par des cards, que l'écran
+	// présente comme le refus métier qu'il est (docs/SPEC-workflow-engine.md §7 bis.4).
+	409: 'console.error: Failed to load resource: the server responded with a status of 409 (Conflict)',
 	416: 'console.error: Failed to load resource: the server responded with a status of 416 (Range Not Satisfiable)',
 } as const
 

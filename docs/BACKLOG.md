@@ -6378,12 +6378,36 @@ non-complaisance saurait mesurer ». Ce point **n'est pas livré** : il engage t
 dépôt, pas `CRM-075`, et reste une question du responsable. `CRM-075` demeure `[x]` — l'unité livre
 ses gestes et ses preuves ; c'est la propriété transverse des harnais qui reste ouverte.
 
-### CRM-076 — Éditeur administrateur de workflows `[ ]`
+### CRM-076 — Éditeur administrateur de workflows `[~]`
 
 CRUD visuel complet des workflows, étapes, transitions, champs, règles et exigences, avec
 prévisualisation des effets et refus backend pour tout non-administrateur. **DoD** : chaque geste
 est clavier/souris, annulation des modifications non enregistrées, validation atomique, pgTAP/API,
 E2E et captures aux quatre paliers sans avertissement console.
+
+**Première tranche livrée et vérifiée, 2026-08-14** — la composition d'un workflow
+(docs/SPEC-workflow-engine.md §7 bis) :
+
+- [x] Route `/reglages/workflows` depuis l'index des réglages, chargée à la demande.
+- [x] Couche de données : les trois lectures du §7 bis.3, les six écritures du §7 bis.4 —
+      ajouter, déplacer, surcharger, retirer une surcharge (`null` envoyé, `0` distinct), désigner
+      l'initiale (éteindre avant d'allumer, §3.5), retirer. Réutilise l'ordonnancement de
+      `CRM-075`. 28 preuves unitaires (`webapp/src/lib/administration-workflows.test.ts`).
+- [x] Écran : liste des workflows (défaut choisi d'office), étapes dans l'ordre du graphe,
+      catalogue lu à l'ouverture du sélecteur et filtré des nœuds employés, formulaire de
+      surcharge repartant des surcharges portées, confirmation avant retrait, refus traduits,
+      commandes d'extrémité désactivées jamais masquées. 22 preuves d'écran
+      (`webapp/src/app/AdministrationWorkflows.test.tsx`).
+- [x] E2E sur la vraie base (`e2e/ui/administration-workflows.spec.ts`, 8 scénarios) : les six
+      gestes à la souris confirmés en base après chaque geste, ajout/surcharge/retrait au clavier
+      seul, refus réel d'une étape occupée (`on delete restrict`, 409 consommé), quatre paliers
+      sans débordement, captures produites et **observées**. Les preuves créent leur propre nœud
+      de catalogue préfixé `e2e-wf-` et purgent dans leur `finally` ; `test:sql` rejoué après la
+      campagne : 33 fichiers / 1971 assertions, aucun résidu.
+
+**Reste dû sous cette unité (§7 bis.7)** : l'édition des transitions, des champs de formulaire et
+de leurs règles, la prévisualisation des effets, et les preuves pgTAP/API dédiées à l'écran (les
+politiques du §3.7 restent prouvées par `CRM-031`). L'unité reste `[~]` jusqu'à leur livraison.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

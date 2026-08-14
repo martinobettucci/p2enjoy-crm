@@ -13504,3 +13504,27 @@ comporte du comportement doit pousser au moins un commit de code, sous peine d'�
 **Où reprendre :** `CRM-076`, éditeur administrateur de workflows — spec §7 bis committée, couche
 de données et 28 tests unitaires poussés (`f5d95d8`), écran en cours. La suite est l'écran, sa
 route `/reglages/workflows`, ses preuves E2E et ses captures.
+
+### Décision 383 — CRM-076, première tranche : la composition d'un workflow est livrée et prouvée
+
+**2026-08-14, suite de la décision 382 — entrée courte, comme elle l'exige.**
+
+**Livré.** Spec §7 bis de `docs/SPEC-workflow-engine.md`, couche de données
+(`administration-workflows.ts`), écran (`AdministrationWorkflows.tsx`), route
+`/reglages/workflows` dans l'index des réglages, 85 clés de traduction. INC-070 clos au passage
+(détecteur AST, trois contournements levés) — détail dans le CHANGELOG.
+
+**Mesuré.** 805 tests unitaires (750 → 805), 193 scénarios `e2e:ui` (185 + 8), `test:sql`
+1971 assertions avant ET après la campagne — aucun résidu —, `typecheck` et `build` verts,
+captures des quatre paliers regardées. `SCENARIOS_UI` porté à 193 dans `verify-harness.sh`.
+Pile : 17 services `healthy`, seed appliqué. Navigateur : Chromium fourni par
+`PLAYWRIGHT_CHROMIUM_PATH` (chromium-1194), la révision épinglée n'étant pas présente dans cet
+environnement.
+
+**Non rejoué cette session** : `e2e:api`, `e2e:mail`, `pytest`, `verify-harness.sh` complet —
+aucun de ces périmètres n'est touché par l'unité, mais le compteur UI révisé rend le juge à
+rejouer avant toute clôture d'unité qui l'exige.
+
+**Où reprendre.** `CRM-076` est `[~]` : la tranche suivante est l'édition des transitions
+(§7 bis.7), puis les champs et la prévisualisation. Le choix d'unité obéit désormais à la
+décision 382 : backlog d'abord, registre en consultation.

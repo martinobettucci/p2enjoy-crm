@@ -15,6 +15,36 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, première tranche — `CRM-076`**
+  (`docs/SPEC-workflow-engine.md` §7 bis). La règle portée depuis `CRM-000` — « l'éditeur de
+  workflow est réservé aux administrateurs » — cesse d'être un énoncé d'intention : la route
+  `/reglages/workflows`, atteinte depuis l'index des réglages, compose un workflow existant.
+  - **Six gestes contre la vraie base** : ajouter une étape depuis le catalogue actif (lu à
+    l'ouverture du sélecteur, filtré des nœuds déjà employés), monter/descendre par une seule
+    écriture de position, surcharger libellé, probabilité et seuil de relance, retirer une
+    surcharge en renvoyant `null` (`0` reste une valeur, §2.5), désigner l'étape initiale en
+    éteignant avant d'allumer (§3.5), retirer une étape après confirmation — le refus d'une
+    étape occupée venant du `on delete restrict`, traduit et nommé.
+  - **Aucun droit calculé côté client** : l'écran envoie, la base tranche, le refus est traduit.
+  - Preuves : 28 unitaires sur la couche de données, 22 sur l'écran monté, 8 scénarios E2E sur
+    pile réelle — souris, clavier seul, refus réel 409, quatre paliers, captures observées.
+    `test:sql` rejoué après la campagne : aucun résidu. Reste dû sous `CRM-076` : transitions,
+    champs, règles, prévisualisation (§7 bis.7).
+
+- **Le détecteur de textes en dur lit la grammaire, plus le texte — INC-070 close**
+  (décisions 296 et 381). `webapp/src/i18n/i18n.test.ts` parse chaque composant avec l'analyseur
+  TypeScript qui compile déjà le projet : un texte visible est un nœud `JsxText`, une chaîne
+  rendue comme enfant de JSX ou la valeur d'un attribut visible — les deux dernières formes
+  échappaient à l'ancienne expression régulière, qui comptait en revanche la queue d'un ternaire
+  pour un texte. Une fixture éprouve le détecteur **dans les deux sens**, et plus aucune forme
+  d'écriture du dépôt n'est imposée par l'outil : les trois contournements documentés
+  (`RouteTrack`, `PanneauTimeline`, `AdministrationArborescence`) sont levés.
+
+- **La routine horaire est réorientée : le produit d'abord** (décision 382, instruction du
+  responsable). `docs/CloudWorker.md` §4 : le registre d'incohérences n'est plus une file de
+  travail — l'unité d'une session vient du backlog dans l'ordre du plan, toute session avec du
+  comportement à livrer doit pousser du code, et la documentation redevient proportionnée.
+
 - **La modération d'un commentaire a enfin un geste dans le produit — INC-072 close**
   (conception : décision 376 ; règle serveur livrée le même jour par la décision 374). La règle
   existait, prouvée en pgTAP, et **personne ne pouvait s'en servir** : `PanneauTimeline.tsx`
