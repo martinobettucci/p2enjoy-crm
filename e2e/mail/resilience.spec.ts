@@ -13,12 +13,21 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { retirerDeLaBoite } from './protocoles'
 
 const CONTENEUR = 'p2enjoy-mail-sync'
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 const URL_API = urlApi()
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
+
+// LA BOÎTE VISÉE EST RÉELLE ET SEEDÉE — celle de Driss, `owner_id` non nul, donc RLS-visible.
+// C'est ce qui fait de ces deux scénarios les auteurs de la fuite d'INC-091 tant qu'ils ne
+// purgent que la table (décision 362) : la veille de `CRM-059` relève ce compte en continu.
+const DESTINATAIRE = 'bizdev@p2enjoy.test'
+const HOTE = lireEnv('DEV_BIND_ADDRESS')
+const PORT_IMAP = Number(lireEnv('STALWART_IMAP_PORT'))
+const MDP = lireEnv('STALWART_MAILBOX_PASSWORD')
 /** Port fermé sur l'hôte `stalwart` : la connexion est refusée immédiatement, sans attente. */
 const PORT_FERME = 1
 
@@ -86,7 +95,7 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 				data: {
 					p_card_id: CARD,
 					p_identity_id: identite,
-					p_to: ['bizdev@p2enjoy.test'],
+					p_to: [DESTINATAIRE],
 					p_subject: objet,
 					p_body_text: 'Message qui doit survivre à une coupure.',
 				},
@@ -165,6 +174,10 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 					data: { smtp_port: portOrigine },
 				})
 			}
+			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362. Le `DELETE` ci-dessous
+			// rend `204` en n'effaçant rien tant que le compte n'a pas été relevé ; c'est le
+			// message laissé dans la boîte RÉELLE que la veille remonterait au tour suivant.
+			await retirerDeLaBoite(HOTE, PORT_IMAP, DESTINATAIRE, MDP, objet)
 			await request.delete(`${URL_API}/rest/v1/mail_messages?subject=like.*${objet}*`, {
 				headers: enTetesService(),
 			})
@@ -195,7 +208,7 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 				data: {
 					p_card_id: CARD,
 					p_identity_id: service!.id,
-					p_to: ['bizdev@p2enjoy.test'],
+					p_to: [DESTINATAIRE],
 					p_subject: objet,
 					p_body_text: 'Message abandonné en vol.',
 				},
@@ -229,6 +242,9 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 			const [reprise] = (await apres.json()) as { status: string }[]
 			expect(reprise?.status).toBe('sent')
 		} finally {
+			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362. Ce scénario-ci envoie
+			// pour de bon : le message EST remis, et il resterait donc en boîte indéfiniment.
+			await retirerDeLaBoite(HOTE, PORT_IMAP, DESTINATAIRE, MDP, objet)
 			await request.delete(`${URL_API}/rest/v1/mail_messages?subject=like.*${objet}*`, {
 				headers: enTetesService(),
 			})

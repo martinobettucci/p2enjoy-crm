@@ -13,10 +13,49 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **`CRM-059` revient à `[x]` : la preuve rétrogradée le 2026-08-12 est verte au rejeu**
+  (décisions 369, 370). Le défaut annoncé — « le backfill descend tout l'historique dès la première
+  relève » — **n'existait pas dans le produit** : il avait été mesuré sur une pile où `rest`,
+  `mail-sync` et `webapp` étaient absents. Sur une pile complète (**17/17 `healthy`**, vérifiée
+  AVANT la mesure et non après coup), `e2e/mail/backfill.spec.ts` passe, `e2e:mail` passe entière
+  (**42**), `pytest` passe (**242**) et `scripts/verify-mail-resilience.sh` rend **56 contrôles sans
+  anomalie**, mutations de non-complaisance comprises.
+- **INC-091 close : deux preuves ne laissent plus de message dans une boîte réelle** (décision 371).
+  `e2e/mail/resilience.spec.ts` et `e2e/mail/infrastructure.spec.ts` purgent désormais la **boîte**
+  IMAP dans leur `finally`, et non plus seulement la table — un `DELETE` en base rend `204` sans
+  rien effacer tant que le compte n'a pas été relevé, et le message restait alors dans la boîte de
+  son destinataire, d'où la veille permanente de `CRM-059` le remontait en non classé. La fuite
+  avait été **reproduite et chiffrée** avant correction : six messages pour deux exécutions de la
+  suite, soit deux scénarios × deux passages pour chacun des deux fichiers.
+- **`npm run test:sql` redevient intégralement vert** : **33 fichiers, 1944 assertions**, dont les
+  22 de `0029_inbox_globale.test.sql`. L'assertion 9 — « un membre ordinaire ne voit AUCUN non
+  classé » — **reste armée sur la table entière** : elle avait vu une fuite que rien d'autre ne
+  voyait, et la désarmer aurait supprimé le détecteur au lieu de la cause.
+- **Cinquième collision de numéro de décision corrigée** : deux entrées « 341 » coexistaient depuis
+  le 2026-08-12. La moins citée est renumérotée en **368**, son unique renvoi mis à jour, aucune
+  référence cassée. Contrairement aux précédentes, celle-ci ne vient pas d'une exécution concurrente
+  mais d'une absence de relecture du compteur — le verrou du lot C ne l'aurait pas arrêtée.
+
+### Ajouté
+
+- **`retirerDeLaBoite` dans `e2e/mail/protocoles.ts`** : purge IMAP d'une boîte réelle par sujet,
+  écrite en `node:net` et **sans aucune bibliothèque** (décision 238). Elle balaie **tous** les
+  dossiers de la boîte, et non le seul `INBOX` — entre le dépôt et la purge, la veille a pu ranger
+  le message dans le dossier de sa card.
+
 ### Documentation
 
+- **INC-096 reçoit une mesure contraire, et reste pourtant ouverte** (décision 369) : le tirage
+  d'images réussit sur l'exécution du 2026-08-14, alors qu'il rendait `429` le 2026-08-12. L'entrée
+  n'est pas close parce que la limite de tirage **anonyme** de Docker Hub se recharge et dépend de
+  l'adresse de sortie partagée : une exécution qui passe ne prouve rien pour la suivante.
+- **INC-092 reste ouverte, et le lot B n'est pas soldé** : ce défaut est un **journal** et non une
+  donnée — un `WARNING` légitime qu'aucune purge n'empêche —, et trois rejeux verts de la suite
+  mesurent seulement que la course ne s'est pas produite.
 - **Lot D soldé : quatre entrées closes, corrigées et non déclarées** (décision 367). Le registre
-  passe de 62 à **58 entrées ouvertes**.
+  passe de 62 à **58 entrées ouvertes**, puis à **57** avec la clôture d'INC-091.
 - **INC-019 — le bandeau du `README.md` est réécrit depuis l'état réel du backlog**, et distingue
   désormais trois catégories que le lecteur confondait : livré **et vérifié** (`[x]`), écrit mais
   **insuffisamment vérifié** (`[~]`), pas commencé (`[ ]`). Il annonce aussi INC-096 en tête, parce

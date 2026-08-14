@@ -239,6 +239,57 @@ export async function clamd(
 }
 
 /**
+ * Retire d'une boîte RÉELLE tous les messages dont le sujet contient `motif`, dans TOUS ses
+ * dossiers, puis les expurge.
+ *
+ * @spec INC-091 (docs/INCONSISTENCY_REPORT.md) — arbitrage de `docs/JOURNAL.md` décision 362 :
+ *       « chaque preuve qui adresse un envoi réel à une boîte seedée purge ce qu'elle y a déposé,
+ *       dans son propre `finally`, par le chemin IMAP — que le message ait été relevé ou non ».
+ * @spec CRM-059 (docs/BACKLOG.md) — la boucle de veille §20.10 relève TOUS les comptes.
+ *
+ * POURQUOI CE N'EST PAS UN `DELETE` EN BASE, ET POURQUOI CETTE DISTINCTION EST LA TOTALITÉ DU
+ * DÉFAUT. Purger la **table** n'est pas purger la **boîte**. Un `DELETE` sur `mail_messages` rend
+ * `204` en n'effaçant **rien** tant que le compte n'a pas été relevé — et le message, lui, reste
+ * dans la boîte IMAP, d'où la veille permanente le remontera au tour suivant. C'est exactement la
+ * fuite qu'INC-091 a mesurée, et que l'assertion 9 de `0029_inbox_globale.test.sql` détecte.
+ *
+ * TOUS LES DOSSIERS, ET PAS SEULEMENT `INBOX`. Entre le dépôt et la purge, la veille a pu relever
+ * le message ET le ranger dans le dossier de sa card. Ne balayer qu'`INBOX` laisserait donc
+ * précisément les messages que le produit a le mieux traités.
+ */
+export async function retirerDeLaBoite(
+	hote: string,
+	port: number,
+	identifiant: string,
+	motDePasse: string,
+	motif: string,
+): Promise<void> {
+	const inventaire = await sessionImap(hote, port, identifiant, motDePasse, ['LIST "" "*"'])
+
+	// `* LIST (\HasNoChildren) "/" "INBOX"` — le nom est le dernier champ, entre guillemets.
+	const dossiers = [...inventaire.matchAll(/^\* LIST \([^)]*\) "[^"]*" "?([^"\r\n]+)"?/gm)].map(
+		(trouve) => trouve[1]!,
+	)
+
+	for (const dossier of dossiers) {
+		const recherche = await sessionImap(hote, port, identifiant, motDePasse, [
+			`SELECT "${dossier}"`,
+			`UID SEARCH HEADER "Subject" "${motif}"`,
+		])
+
+		const ligne = /^\* SEARCH([ \d]*)$/m.exec(recherche)
+		const uids = (ligne?.[1] ?? '').trim().split(/\s+/).filter(Boolean)
+		if (uids.length === 0) continue
+
+		await sessionImap(hote, port, identifiant, motDePasse, [
+			`SELECT "${dossier}"`,
+			`UID STORE ${uids.join(',')} +FLAGS (\\Deleted)`,
+			'EXPUNGE',
+		])
+	}
+}
+
+/**
  * Chaîne de test EICAR, assemblée à l'exécution.
  *
  * Elle n'existe donc **pas telle quelle** dans un fichier du dépôt : un antivirus qui analyserait

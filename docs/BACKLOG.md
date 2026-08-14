@@ -5727,7 +5727,7 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[~]`
+### CRM-059 — Backfill, résilience, supervision `[x]`
 > **RÉTROGRADÉE DE `[x]` À `[~]` LE 2026-08-12, SUR PREUVE ROUGE.** Le scénario
 > `e2e/mail/backfill.spec.ts` — « un premier contact ne descend jamais l'historique, même déjà
 > présent et autorisé » — **échoue** : les trois archives de 90 jours descendent dès la première
@@ -5782,6 +5782,35 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 > propre `finally`, par le chemin IMAP de `retirerDeLaBoite`. L'assertion 9 **reste armée sur la
 > table entière** — elle a vu une fuite que rien d'autre ne voyait, et la désarmer serait corriger
 > le défaut en supprimant son détecteur (`CLAUDE.md` §18).
+>
+> **INC-091 EST LIVRÉE ET CONTRE-ÉPROUVÉE LE MÊME JOUR ; L'UNITÉ REVIENT À `[x]`** (décision 371).
+> La fuite a d'abord été **reproduite et chiffrée** avant d'être corrigée : sur un conteneur neuf,
+> deux exécutions de `npm run e2e:mail` avaient laissé **exactement six** messages — « Coupure » ×2
+> et « Orphelin » ×2 (`resilience.spec.ts`), « Preuve CRM-050 » ×2 (`infrastructure.spec.ts`) —,
+> soit deux scénarios × deux passages par fichier. Le compte correspond à la cause, sans reste.
+>
+> `retirerDeLaBoite` est écrite dans `e2e/mail/protocoles.ts`, en `node:net` et **sans aucune
+> bibliothèque** (décision 238), et balaie **tous** les dossiers de la boîte et non le seul `INBOX`
+> — entre le dépôt et la purge, la veille a pu ranger le message dans le dossier de sa card.
+>
+> | Contre-épreuve | Résultat mesuré |
+> |---|---|
+> | `npm run test:sql` après purge des débris | **33 fichiers, 1944 assertions, aucune anomalie** — `0029` : 22 assertions |
+> | `npm run e2e:mail` rejouée avec la purge en place | **42 passed** |
+> | débris laissés en base par ce rejeu | **AUCUN** |
+> | débris laissés dans les deux boîtes IMAP réelles | **0** chez Driss, **0** dans la boîte système |
+> | `npm run test:sql` APRÈS ce rejeu | **1944 assertions, aucune anomalie** |
+>
+> C'est cette dernière ligne qui ferme l'entrée : la fuite ne revient pas après un cycle complet.
+> Nettoyer les débris sans corriger la cause aurait rendu `0029` vert au premier `test:sql` et
+> rouge au suivant.
+>
+> **CE QUI RESTE OUVERT, ET QUI N'EST PAS CETTE UNITÉ — INC-092.** Le lot B n'est pas soldé pour
+> autant : INC-092 est un **journal**, pas une donnée — un `WARNING` légitime produit quand la
+> veille relève le compte de Driss pendant que `comptes-entrants.spec.ts` y pose délibérément un
+> mot de passe faux. Aucune purge ne l'empêche. `e2e:mail` a été rejouée **trois fois** ce jour,
+> 42 verts à chaque passage, S3 compris : ce n'est pas une correction, c'est la mesure que la
+> fenêtre de course ne s'est pas ouverte. Le choix de conception appartient au responsable.
 Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché
 conforme à la réalité.

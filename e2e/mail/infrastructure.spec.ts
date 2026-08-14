@@ -12,8 +12,16 @@
 // connecter, déposer et relire, sur le serveur que `./runDev.sh` démarre.
 
 import { expect, test } from '@playwright/test'
-import { lireEnv } from '../env'
-import { EICAR, authentifierSmtp, clamd, sessionImap, soumettreSmtp } from './protocoles'
+import { lireEnv, urlApi } from '../env'
+import { enTetesService } from '../api/jetons'
+import {
+	EICAR,
+	authentifierSmtp,
+	clamd,
+	retirerDeLaBoite,
+	sessionImap,
+	soumettreSmtp,
+} from './protocoles'
 
 const HOTE = lireEnv('DEV_BIND_ADDRESS')
 const PORT_IMAP = Number(lireEnv('STALWART_IMAP_PORT'))
@@ -62,7 +70,9 @@ test.describe('M1 — les trois boîtes se connectent réellement en IMAP', () =
 })
 
 test.describe('M2 — le catch-all reçoit une adresse de card jamais déclarée', () => {
-	test('un message soumis en SMTP authentifié arrive dans la boîte système et se relit en IMAP', async () => {
+	test('un message soumis en SMTP authentifié arrive dans la boîte système et se relit en IMAP', async ({
+		request,
+	}) => {
 		// L'adresse est celle d'une card qui n'existe pas : c'est exactement ce que la boîte
 		// système doit attraper (docs/SPEC-mail-subsystem.md §2.1). Le jeton la rend unique à
 		// chaque exécution, de sorte qu'un rejeu ne relise pas le message du précédent.
@@ -71,48 +81,62 @@ test.describe('M2 — le catch-all reçoit une adresse de card jamais déclarée
 		const messageId = `<${jeton}@preuves.p2enjoy.test>`
 		const sujet = `Preuve CRM-050 ${jeton}`
 
-		const smtp = await soumettreSmtp(HOTE, PORT_SOUMISSION, {
-			identifiant: BOITES_PERSONNELLES[0]!,
-			motDePasse: MDP,
-			expediteur: BOITES_PERSONNELLES[0]!,
-			destinataire,
-			sujet,
-			messageId,
-			corps: "Corps de la preuve d'infrastructure.",
-		})
+		try {
+			const smtp = await soumettreSmtp(HOTE, PORT_SOUMISSION, {
+				identifiant: BOITES_PERSONNELLES[0]!,
+				motDePasse: MDP,
+				expediteur: BOITES_PERSONNELLES[0]!,
+				destinataire,
+				sujet,
+				messageId,
+				corps: "Corps de la preuve d'infrastructure.",
+			})
 
-		expect(smtp).toMatch(/^235 /m) // authentification acceptée
-		expect(smtp).toMatch(/^250 .*queued/im) // message accepté pour remise
+			expect(smtp).toMatch(/^235 /m) // authentification acceptée
+			expect(smtp).toMatch(/^250 .*queued/im) // message accepté pour remise
 
 		// MESURÉ : `SEARCH HEADER Message-ID "<jeton@domaine>"` ne trouve rien — Stalwart
 		// n'indexe pas les chevrons. La forme sans chevrons, elle, trouve. C'est un détail de
 		// serveur, et il est écrit ici plutôt que découvert deux fois.
 		const critere = `SEARCH HEADER "Message-ID" "${jeton}@preuves.p2enjoy.test"`
 
-		// La remise est asynchrone : la boîte est interrogée jusqu'à ce que le message
-		// apparaisse, plutôt qu'après une temporisation arbitraire (`CLAUDE.md` §18).
-		await expect
-			.poll(
-				async () => {
-					const imap = await sessionImap(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, [
-						'SELECT INBOX',
-						critere,
-					])
-					return /^\* SEARCH \d/m.test(imap)
-				},
-				{ timeout: 30_000, message: `Message ${messageId} jamais remis dans ${BOITE_SYSTEME}` },
-			)
-			.toBe(true)
+			// La remise est asynchrone : la boîte est interrogée jusqu'à ce que le message
+			// apparaisse, plutôt qu'après une temporisation arbitraire (`CLAUDE.md` §18).
+			await expect
+				.poll(
+					async () => {
+						const imap = await sessionImap(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, [
+							'SELECT INBOX',
+							critere,
+						])
+						return /^\* SEARCH \d/m.test(imap)
+					},
+					{ timeout: 30_000, message: `Message ${messageId} jamais remis dans ${BOITE_SYSTEME}` },
+				)
+				.toBe(true)
 
-		// La recherche dit qu'un message correspond ; la relecture dit **lequel**. L'en-tête est
-		// relu intact, sujet compris : c'est ce que `CRM-054` devra ingérer.
-		const relu = await sessionImap(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, [
-			'SELECT INBOX',
-			'FETCH 1:* (BODY[HEADER.FIELDS (SUBJECT MESSAGE-ID TO)])',
-		])
-		expect(relu).toContain(messageId)
-		expect(relu).toContain(sujet)
-		expect(relu).toContain(destinataire)
+			// La recherche dit qu'un message correspond ; la relecture dit **lequel**. L'en-tête est
+			// relu intact, sujet compris : c'est ce que `CRM-054` devra ingérer.
+			const relu = await sessionImap(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, [
+				'SELECT INBOX',
+				'FETCH 1:* (BODY[HEADER.FIELDS (SUBJECT MESSAGE-ID TO)])',
+			])
+			expect(relu).toContain(messageId)
+			expect(relu).toContain(sujet)
+			expect(relu).toContain(destinataire)
+		} finally {
+			// LA BOÎTE SYSTÈME EST SEEDÉE ET RELEVÉE EN CONTINU — INC-091, décision 362. Ce
+			// scénario ne nettoyait ni la boîte ni la base : chaque exécution y laissait un
+			// « Preuve CRM-050 … » que la veille de `CRM-059` remonte en non classé permanent.
+			await retirerDeLaBoite(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, sujet)
+
+			// LA BOÎTE NE SUFFIT PAS : entre la remise et la purge, la veille a pu relever le
+			// compte et créer la ligne. La retirer aussi, faute de quoi l'assertion 9 de
+			// `0029_inbox_globale.test.sql` la compterait — c'est elle qui mesure la fuite.
+			await request.delete(`${urlApi()}/rest/v1/mail_messages?subject=like.*${jeton}*`, {
+				headers: enTetesService(),
+			})
+		}
 	})
 
 	test('la soumission SMTP exige une authentification', async () => {

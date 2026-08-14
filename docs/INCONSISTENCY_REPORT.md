@@ -56,8 +56,8 @@ cinquante-huit avec la clôture du lot D.
 
 ## Clos — index
 
-Quarante entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait, la
-date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
+Quarante et une entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
+la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
 
 | Entrée | Objet | Close le | Fermée par | Décision |
 |---|---|---|---|---|
@@ -100,6 +100,7 @@ date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du jou
 | INC-086 | Tracks et channels sans aucune surface d'administration, sans porteur | 2026-08-12 | `CRM-075` | 332, 349 |
 | INC-087 | L'identité sortante de Driss expédiait depuis une adresse refusée par le serveur | 2026-08-11 | `CRM-058` | — |
 | INC-090 | `CRM-075` livrait un cinquième geste que son énoncé ne citait pas : le désarchivage | 2026-08-11 | énoncé corrigé, aucun code | 338, 339 |
+| INC-091 | La veille permanente de `CRM-059` transformait tout envoi de preuve vers une boîte seedée en non classé permanent | 2026-08-14 | reprise de `resilience.spec.ts` et `infrastructure.spec.ts`, purge IMAP | 362, 370, 371 |
 | INC-093 | Le contournement `pip_ca` de `mail-sync` n'était câblé par aucun fichier Compose | 2026-08-12 | `CRM-051` | 356 |
 
 ---
@@ -364,76 +365,19 @@ dépasse le dernier écart de `CRM-059` — objet de la présente session.
 preuves qui provoquent une panne ou une pollution DÉLIBÉRÉE sur un compte seedé doivent coexister
 avec une veille qui, depuis `CRM-059`, ne s'arrête jamais.
 
----
+**MESURE DU 2026-08-14, ET POURQUOI L'ENTRÉE RESTE OUVERTE ALORS QU'INC-091 SE FERME.** La purge
+IMAP livrée pour INC-091 (décision 371) **ne traite pas ce défaut-ci**, et il faut le dire
+explicitement plutôt que de laisser croire que le lot B est soldé : INC-091 était une **donnée**
+laissée dans une boîte, qu'une purge retire ; INC-092 est un **journal**, produit par une panne
+d'authentification réelle et délibérée que `comptes-entrants.spec.ts` provoque, et qu'aucune purge
+n'empêche. Le mot de passe faux sera toujours posé, la veille pourra toujours tomber dessus, et le
+`WARNING` restera légitime.
 
-### INC-091 — La veille permanente de `CRM-059` transforme tout envoi de preuve vers une boîte seedée en message non classé permanent
-
-**Arbitrage rendu — `docs/JOURNAL.md`, décision 362.** **Option 1 : chaque preuve qui adresse un envoi réel à une boîte seedée purge ce qu'elle y a déposé**, dans son propre `finally`, par le chemin IMAP de `retirerDeLaBoite` — que le message ait été relevé ou non. **L'assertion 9 de `0029` reste armée sur la table entière** : elle a vu une fuite que rien d'autre ne voyait, et la désarmer serait corriger le défaut en supprimant son détecteur (`CLAUDE.md` §18). La boîte jetable est écartée : elle coûtait la remise à une boîte **réelle** de membre, qui est ce que ces preuves ont de plus précieux. Attention à la mise en œuvre — purger la **table** n'est pas purger la **boîte** : le `finally` actuel de `resilience.spec.ts` rend `204` en n'effaçant rien. L'entrée reste ouverte jusqu'à la reprise des deux fichiers et à sa contre-épreuve.
-
-**Nature :** fuite de données de test, mesurée entre plusieurs unités — `CRM-059` (la boucle de
-veille), `e2e/mail/resilience.spec.ts` (`CRM-059`) et `e2e/mail/infrastructure.spec.ts` (`CRM-050`)
-— et qui casse une garantie RLS figée à dessein (`supabase/tests/0029_inbox_globale.test.sql`,
-assertion 9, §18.1).
-**Relevé le :** 2026-08-12, en vérifiant `CRM-059` (`scripts/verify-mail-resilience.sh`,
-`npm run e2e:mail`) et en écrivant `e2e/mail/backfill.spec.ts` pour son dernier écart.
-
-**Le fait, mesuré et non supposé (`CLAUDE.md` §1).** `npm run test:sql` a rendu
-`supabase/tests/0029_inbox_globale.test.sql` ROUGE — assertion 9, « ABSENCE FIGÉE : un membre
-ordinaire ne voit AUCUN non classé, faute de rôle de tri (§18.1) » — `have: 14`, `want: 0`. La
-requête, exécutée EN SESSION de Driss (`business_developer`), compte les lignes de
-`mail_messages` que la RLS lui rend visibles. Une relecture de la table a montré **19 lignes**
-`classification = 'unclassified'` en trop, au-delà des deux seules que le seed pose
-(`docs/SPEC-seed.md` §2.19) : des sujets « Coupure … », « Orphelin … » (les deux scénarios de
-`e2e/mail/resilience.spec.ts`) et « Preuve CRM-050 … » (`e2e/mail/infrastructure.spec.ts`, M2).
-
-**La cause, mesurée sur le code des deux preuves.** Les deux fichiers adressent RÉELLEMENT leurs
-messages de démonstration à une boîte SEEDÉE et RLS-visible :
-`resilience.spec.ts` à `bizdev@p2enjoy.test` (la boîte personnelle de Driss, `owner_id` non nul —
-« la visibilité suit la boîte », assertion 7 de la même suite pgTAP), `infrastructure.spec.ts` à
-la boîte système catch-all. Aucun des deux ne relève ce compte lui-même :
-
-- `resilience.spec.ts` supprime, dans son `finally`, la ligne `mail_messages` par un `DELETE …
-  subject=like.*objet*` — mais AVANT que le message n'ait jamais été relevé, puisque rien dans ce
-  fichier n'appelle `/internal/v1/inbound-accounts/{id}/poll`. Le `DELETE` réussit (`204`) en
-  n'effaçant **rien**, et le message RÉEL reste dans la boîte IMAP de Driss.
-- `infrastructure.spec.ts` (M2) ne nettoie ni la boîte ni la base.
-
-**Tant que rien ne relevait jamais ces deux comptes**, le message laissé en boîte restait inerte
-— jamais lu, jamais ingéré, jamais visible par personne. C'est exactement ce que `CRM-059`
-change : sa boucle de veille (§20.10) relève **tous** les comptes entrants en tâche de fond, en
-continu, `MAIL_SYNC_POLL_INTERVAL` après `MAIL_SYNC_POLL_INTERVAL`. Le message oublié finit donc
-toujours par être ingéré — plus tard, hors de la fenêtre du test qui l'a émis — et devient une
-ligne `mail_messages` permanente, non classée, RLS-visible par le propriétaire réel de la boîte.
-`CRM-059` ne fabrique aucune trace : il relève une boîte réelle, comme il doit le faire. Le défaut
-est en amont, dans deux preuves antérieures qui n'anticipaient pas qu'un jour, quelque chose les
-relèverait.
-
-**Ce qui a été fait ici, et ce qui ne l'a pas été.** La base de développement de cette session a
-été ramenée à l'état attendu par un ménage direct — dix-neuf lignes `mail_messages` orphelines
-supprimées, les messages IMAP correspondants (quatre chez Driss, six dans la boîte système)
-purgés, les deux messages légitimes du seed laissés intacts — pour que les preuves de CETTE
-exécution restent probantes. **Aucun fichier de preuve n'a été modifié** : corriger
-`resilience.spec.ts` et `infrastructure.spec.ts` dépasse la tâche autorisée (le dernier écart de
-`CRM-059`) et touche un choix qui n'appartient pas à l'agent — voir plus bas.
-
-**Trois options, et aucune n'appartient à l'agent :**
-
-1. **Chaque preuve qui adresse un envoi réel à une boîte seedée purge ce qu'elle y a déposé**,
-   dans son propre `finally`, par le même chemin IMAP que `e2e/mail/ingestion.spec.ts`
-   (`retirerDeLaBoite`) — le message ne doit jamais survivre à la fin du scénario qui l'a créé,
-   qu'il ait été relevé ou non.
-2. **Les preuves d'infrastructure et de résilience cessent d'adresser une boîte seedée
-   RLS-visible** et utilisent une adresse dédiée, jetable, hors de toute appartenance — au prix de
-   prouver un peu moins (la remise à une boîte réelle d'un membre reste alors non éprouvée par ces
-   deux fichiers).
-3. **La suite pgTAP `0029` cesse de compter la table entière** et vérifie la règle sur les seules
-   lignes qu'elle a elle-même posées — plus robuste à toute pollution externe, mais qui masquerait
-   qu'une fuite existe ailleurs plutôt que de la signaler.
-
-**Action attendue du responsable :** trancher entre ces options — ou une autre. Tant qu'elle ne
-l'est pas, toute session future qui relève longtemps une pile de développement (`CRM-059` la
-laisse tourner en continu) risque de revoir `0029` rougir, pour un motif qui n'a rien à voir avec
-son propre travail.
+`npm run e2e:mail` a été rejouée **trois fois** ce jour, suite complète, **42 scénarios verts à
+chaque passage**, S3 compris. **Ce n'est pas une preuve que le défaut est corrigé** — l'entrée le
+qualifiait déjà d'intermittent, « rouge une fois sur plusieurs rejeux » —, seulement la mesure que
+la fenêtre de course ne s'est pas ouverte sur ces trois exécutions. La question de conception reste
+entière et appartient toujours au responsable.
 
 ---
 

@@ -12386,3 +12386,55 @@ qui rend `204` **en n'effaçant rien**, puisque rien n'a encore relevé le compt
 reste dans la boîte de Driss, où la veille le retrouvera au tour suivant.
 
 **Rattachement :** `CRM-059`, INC-091, INC-092. Décisions 362 (arbitrage), 368 et 369.
+
+### Décision 371 — La fuite d'INC-091 est reproduite, chiffrée, corrigée à la cause, et contre-éprouvée
+
+**2026-08-14 — livraison de l'arbitrage de la décision 362, la pile étant enfin disponible.**
+
+**Reproduire avant de corriger (`CLAUDE.md` §18).** Le conteneur de cette session est un checkout
+neuf, aux volumes vierges : tout ce qui traînait en base y a donc été déposé **pendant** la session,
+ce qui rend la mesure exploitable. Après deux exécutions de `npm run e2e:mail`, `mail_messages`
+portait **exactement six** lignes étrangères au seed — « Coupure » ×2, « Orphelin » ×2 (les deux
+scénarios de `resilience.spec.ts`), « Preuve CRM-050 » ×2 (M2 de `infrastructure.spec.ts`). Deux
+scénarios × deux passages, pour chacun des deux fichiers : **le compte tombe juste, sans reste**. La
+cause décrite par INC-091 est donc établie par la mesure, et non retenue sur sa seule vraisemblance.
+
+**La correction porte sur la cause, à l'endroit exact où INC-091 la situait.** Le `finally` de ces
+preuves supprimait la **ligne en base** et croyait avoir nettoyé. Il n'avait rien nettoyé : tant que
+le compte n'a pas été relevé, le `DELETE` rend `204` sans effacer quoi que ce soit, et le message
+reste dans la boîte IMAP **réelle**, d'où la veille de `CRM-059` le remonte au tour suivant. La
+purge porte donc désormais sur la **boîte**, et la table n'est nettoyée qu'ensuite.
+
+**Deux choix de mise en œuvre, et leurs motifs.**
+
+**`node:net` plutôt que Python.** Le purgeur vit dans `e2e/mail/protocoles.ts`, écrit sur une socket
+comme tout ce module, **sans aucune bibliothèque** — c'est la décision 238, et l'introduire ici par
+un conteneur Python aurait ajouté une dépendance et un détour là où le module fait déjà le travail.
+Une copie locale supplémentaire aurait par ailleurs porté à trois le nombre de `retirerDeLaBoite`
+du dossier.
+
+**Tous les dossiers, et pas seulement `INBOX`.** Entre le dépôt du message et la purge, la veille a
+pu le relever **et** le ranger dans le dossier de sa card. Ne balayer qu'`INBOX` aurait donc laissé
+passer précisément les messages que le produit a le mieux traités — le cas le plus probable, pas le
+plus rare. Le purgeur énumère les dossiers par `LIST` et les traite tous.
+
+**Contre-épreuve, et c'est elle qui autorise la clôture.** Nettoyer les débris aurait suffi à rendre
+`0029` vert **une fois** ; c'est exactement le piège qu'il fallait éviter. La séquence exécutée est
+donc : purge des débris → `test:sql` **vert** (33 fichiers, 1944 assertions) → `npm run e2e:mail`
+rejouée **entière** avec la correction en place (**42 passed**) → relevé des débris laissés par ce
+rejeu : **aucun en base, zéro dans les deux boîtes IMAP** → `test:sql` **de nouveau vert**. Un cycle
+complet ne reproduit plus la fuite.
+
+**Ce que cette décision NE ferme PAS, et il faut le dire pour ne pas laisser croire le lot B soldé.**
+INC-092 reste ouverte, et la purge n'y peut rien : ce défaut-là est un **journal**, pas une donnée.
+`comptes-entrants.spec.ts` pose délibérément un mot de passe faux sur le compte de Driss ; si la
+veille relève ce compte pendant cette fenêtre, elle journalise un `WARNING` **correct**, que S3
+compte comme une anomalie. Trois rejeux de la suite complète sont verts ce jour, S3 compris — ce
+n'est pas une correction, seulement la mesure que la course ne s'est pas produite. Le choix — geler
+la veille, filtrer S3 sur les événements attendus, ou autre chose — appartient au responsable.
+
+**`CRM-059` revient à `[x]`.** Sa Definition of Done est intégralement prouvée sur pile complète
+(décision 370), la preuve qui l'avait fait rétrograder est verte, et la seule dette qui lui était
+imputable est livrée et contre-éprouvée.
+
+**Rattachement :** `CRM-059`, INC-091 (close), INC-092 (ouverte). Décisions 238, 362, 368, 369, 370.
