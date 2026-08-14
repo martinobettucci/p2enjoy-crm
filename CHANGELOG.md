@@ -15,6 +15,49 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **Lot G : le motif d'une transition est enfin conservé, « vide » s'entend des blancs Unicode, et
+  la modération d'un commentaire devient possible et auditée** (arbitrage : décision 367 ; mise en
+  œuvre : décision 374 ; migration `0035_commentaires_lot_g.sql`). Quatre entrées du registre
+  fermées ou avancées en un seul geste, parce qu'elles touchent une seule table.
+  - **INC-048 close.** `move_card` exigeait un motif, le contrôlait, et ne l'écrivait **nulle
+    part** : un utilisateur qui motivait une affaire perdue voyait sa transition acceptée et sa
+    raison disparaître. Le motif est désormais inséré dans `card_comments` **dans la transaction du
+    déplacement** — soit les deux, soit ni l'un ni l'autre — et **dès qu'il est fourni**, non
+    seulement lorsqu'il est exigé. Devenu un commentaire ordinaire, il en hérite les bornes : une
+    vérification **n° 5 bis** rend `comment_too_long` au-delà de 10 000 caractères, plutôt que de
+    laisser remonter une violation de contrainte illisible depuis un appel de fonction.
+  - **INC-052 close, aux deux endroits à la fois.** La normalisation employait `btrim` à un
+    argument, qui ne retire que l'espace `U+0020` : une **tabulation seule passait pour un motif**
+    d'affaire perdue, et une valeur réduite à `"\t"` satisfaisait un champ `required`.
+    `app.btrim_blancs(text)` porte désormais, **une seule fois**, la classe exacte de
+    `String.prototype.trim()` — énumérée en points de code, jamais `\s` ni `[[:space:]]`, qui
+    dépendent du `ctype` de l'instance. Conséquence la plus utile : le prédicat de l'interface cesse
+    d'être une réimplémentation de `btrim` et redevient un appel à `trim()`. La convergence exigée
+    par le §4.3 de `docs/SPEC-form-composer.md` tient **par construction**, et non plus par une
+    recopie que la décision 165 avait dû corriger après un défaut mesuré.
+  - **INC-071 close, sans une ligne de code.** L'énoncé de `CRM-043` promettait la rédaction à
+    « tout membre pouvant **lire** la card », à côté d'une Definition of Done exigeant la preuve du
+    **refus** opposé à un `viewer`. Le comportement livré était le bon depuis la migration 15 ;
+    c'est l'énoncé qui est corrigé.
+  - **INC-072 : la règle est livrée, le geste ne l'est pas encore.** La suppression d'un commentaire
+    s'ouvre aux `admin` du workspace — la modification leur reste fermée, réécrire le propos d'autrui
+    étant une falsification et non une modération. La borne est portée par le **trigger**, seul
+    endroit qui voie `OLD`, `NEW` et `auth.uid()` ensemble : une politique RLS n'a pas d'`OLD`, et
+    le privilège de colonne est attaché au rôle que l'auteur et le modérateur partagent. Le retrait
+    est **audité** par `card_comments.deleted_by`. **L'écran n'offre encore aucun geste de
+    modération** : `CRM-043` repasse `[~]` et l'entrée reste ouverte — un droit qui n'a pas de chemin
+    n'est pas un droit (leçon d'INC-085).
+  - Preuves rejouées sur pile complète : `test:sql` **33 fichiers / 1969 assertions**, `test:unit`
+    **744**, `e2e:api` **507**, `e2e:ui` **182**, `e2e:mail` **42**, `pytest` **242**,
+    `verify-manual.sh` **107 contrôles**, `typecheck` et `build`.
+- **INC-099 relevée, mesurée et NON corrigée** : deux scénarios de `e2e/ui/administration-arborescence.spec.ts`
+  créent un track et un channel, les archivent, et **ne les retirent jamais** — le nettoyage existe,
+  mais à l'entrée du scénario et non dans un `finally`. Les quatre lignes résiduelles font rougir
+  **neuf** assertions réparties sur trois harnais (`0004_tracks.test.sql`, `e2e:api` sur six
+  scénarios de comptage, `verify-manual.sh` sur deux grandeurs de l'annexe A), de sorte que l'ordre
+  d'exécution des suites décide de leur couleur. Même famille qu'INC-091, sur d'autres tables. Le
+  défaut est étranger à l'unité de la session : il est consigné avec sa mesure, et le comportement
+  est laissé inchangé.
 - **INC-096 close, et le lot A soldé : les preuves de pile sont de nouveau exécutables**
   (décision 373). Deux faits, tous deux mesurés. Le responsable a transmis **hors dépôt** un jeton
   d'accès Docker Hub, qui est exactement l'action humaine que l'entrée attendait depuis le

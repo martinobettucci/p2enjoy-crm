@@ -2684,6 +2684,22 @@ Les six vérifications de `docs/SPEC-workflow-engine.md` §5.
 **DoD** : pgTAP pour chacune des six ; preuves de refus n° 1 et 5 ; message d'erreur listant les
 clés manquantes.
 
+- [x] **LOT G — LE MOTIF EXIGÉ EST ENFIN CONSERVÉ, ET « VIDE » S'ENTEND DES BLANCS UNICODE.**
+      INC-048 et INC-052 sont **closes** (arbitrage : décision 367 ; mise en œuvre : décision 374 ;
+      migration `0035_commentaires_lot_g.sql`). `move_card` insère le motif fourni dans
+      `card_comments`, **dans sa propre transaction** — soit la card bouge et le motif est conservé,
+      soit ni l'un ni l'autre —, et dès qu'il est **fourni**, non seulement lorsqu'il est **exigé**.
+      Une vérification **n° 5 bis** borne sa longueur à 10 000 caractères par `comment_too_long`,
+      plutôt que de laisser remonter le `23514` de la contrainte de la migration 15. La
+      normalisation passe de `btrim(comment)` à `app.btrim_blancs(comment)`, dont la classe est
+      exactement celle de `String.prototype.trim()`, énumérée en points de code pour ne pas dépendre
+      du `ctype` de l'instance. **Prouvé** : `0013_move_card.test.sql` — cinq assertions figées
+      **retournées et non retirées** (décision 51), dont celle qui portait « CETTE ASSERTION DOIT
+      DEVENIR ROUGE le jour où l'arbitrage d'INC-052 est rendu » —, motif relu sur une vraie
+      transition avec son auteur, motif facultatif conservé lui aussi, borne de longueur éprouvée
+      des deux côtés (10 000 passe, 10 001 refusé), blancs non-ASCII refusés. `e2e/api/move-card.spec.ts`
+      mesure la même chose **par la vraie route**, et purge ce qu'elle écrit.
+
 - [x] **INC-043 EST CLOSE, ET LE BLOCAGE A ÉTÉ LEVÉ PAR `CRM-040`.** L'unité était `[ ]` parce que
       ses six vérifications portent toutes sur des **cards**, dont la table n'existait pas. Elle
       existe depuis `CRM-040`, qui l'a nommément constaté : « `CRM-034` est désormais débloquée : sa
@@ -2949,6 +2965,21 @@ rend le nettoyage automatique. **Mise en œuvre : `CRM-018`.**
 `card_field_values`, validation par type, union étape + transition.
 **DoD** : pgTAP (type incorrect refusé, `hidden` non exigé, règle ajoutée après coup
 n'invalidant pas l'existant).
+
+- [x] **LOT G — « RENSEIGNÉ » S'ÉLARGIT AUX BLANCS UNICODE, DES DEUX CÔTÉS À LA FOIS.** INC-052,
+      seconde occurrence, **close** (décisions 367 et 374). `app.valeur_de_champ_est_vide` employait
+      `btrim(valeur #>> '{}')`, qui ne retire que `U+0020` : une valeur réduite à `"\t"` était
+      **renseignée** et satisfaisait un champ `required`. Elle appelle désormais `app.btrim_blancs`.
+      Le §4.3 de `docs/SPEC-form-composer.md` exige que l'interface et la garde donnent la **même**
+      lecture : la décision 165 avait dû faire converger l'interface **vers** `btrim` faute
+      d'arbitrage ; la convergence se fait désormais dans l'autre sens et **par construction** —
+      `webapp/src/lib/valeur-renseignee.ts` cesse d'être une réimplémentation et appelle `trim()`,
+      dont la classe est celle qu'`app.btrim_blancs` énumère. Il n'y a donc **plus rien à maintenir
+      en double**. Cinq cas rejoignent le tableau partagé du §4.3, dont deux blancs **non-ASCII**
+      qu'un élargissement minimal `btrim(v, E' \t\r\n')` n'aurait pas couverts. **Prouvé** :
+      `0014_valeurs_champs.test.sql` (six assertions, contre-cas compris), le test unitaire du
+      prédicat **retourné et non retiré**, et la preuve d'API qui confronte les deux lectures aux
+      mêmes valeurs en base.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-form-composer.md` §6 réécrit en douze
       sous-chapitres : le §6 d'origine tenait en dix lignes, disait *où* la validation vit sans
@@ -3950,7 +3981,7 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
   autres captures et la vidéo `glisser-deposer.webm` n'ont pas été regardées** lors de ce rejeu :
   elles ont été restaurées telles quelles, et aucune affirmation nouvelle ne repose sur elles.
 
-### CRM-043 — Commentaires `[x]`
+### CRM-043 — Commentaires `[~]`
 > **Repris par `CRM-044`** : le panneau que cette unité a livré est devenu le **fil unifié**, comme
 > le §5.10 du design system l'annonçait. `PanneauCommentaires.tsx` est renommé `PanneauTimeline.tsx`,
 > ses seize tests de composant sont conservés, et deux scénarios d'interface de `CRM-043` sont
@@ -3993,13 +4024,32 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       corrigée, l'**énoncé** du backlog est laissé intact et l'arbitrage demandé. **INC-072** : le
       §4 ouvre la modération aux `admin`, l'énoncé ne l'ouvre qu'à l'auteur ; l'**intersection** est
       livrée, et l'absence de modérateur est nommée.
-- [x] **Les deux contradictions sont CLOSES le 2026-08-14**, par l'arbitrage de la décision 367
+- [~] **LOT G — LA MODÉRATION EST LIVRÉE CÔTÉ SERVEUR, SON GESTE RESTE À FAIRE.** INC-072
+      (décisions 367 et 374, migration `0035`). Politique `card_comments_moderation` : un `admin`
+      du workspace supprime un commentaire qu'il peut **lire** — `app.can_read_card` et non
+      `app.can_write_card`, modérer ne dépendant pas d'un droit métier. La borne « supprimer sans
+      modifier » est portée par le **trigger** et non par la politique, qui n'a pas d'`OLD` ; toute
+      autre écriture d'un tiers rend `comment_moderation_limitee`. L'audit est la colonne
+      `deleted_by`, écrite par le trigger et fermée au client. **Prouvé** :
+      `0017_commentaires.test.sql` — le modérateur supprime, le même ne modifie pas, le corps est
+      intact après le refus, la pierre tombale reste définitive pour lui aussi, un
+      `business_developer` n'obtient rien **et pas davantage une erreur**, l'auteur est tracé lui
+      aussi, `deleted_by` n'est écrite par aucun client ; inventaire des politiques porté de 64 à
+      65 dans `0016_preuves_refus.test.sql`. **CE QUI MANQUE, ET C'EST POURQUOI CETTE LIGNE EST
+      `[~]`** : le produit n'offre **aucun geste** de modération. `PanneauTimeline.tsx` calcule
+      `actionsOffertes = estAuteur && !supprime`, et la webapp n'a **aucune notion du rôle de
+      workspace** de l'utilisateur courant. C'est la forme d'INC-085 — un droit qui n'a pas de
+      chemin n'est pas un droit. Reste à livrer : le rôle courant côté client, l'action
+      *Supprimer* — et **jamais** *Modifier* — sur le commentaire d'un tiers, ses tests de
+      composant, un scénario `e2e/ui`, et la vérification visuelle.
+- [x] **INC-071 est CLOSE le 2026-08-14**, par l'arbitrage de la décision 367
       (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
       sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`
       existait déjà. **INC-072** : la suppression s'ouvre aux `admin` du workspace, la modification
       leur reste fermée, et la pierre tombale dit désormais qui l'a posée (`deleted_by`). La borne
       « supprimer sans modifier » est tenue par le **trigger** et non par la politique, qui n'a pas
-      d'`OLD` — migration `0035`, `docs/SPEC-cards.md` §13.6.
+      d'`OLD` — migration `0035`, `docs/SPEC-cards.md` §13.6. **INC-072 reste ouverte** faute du
+      geste d'interface, comme la ligne ci-dessus le nomme.
 - [x] `docs/DESIGN_SYSTEM.md` §5.10 écrit dans le même changement : le panneau de commentaires est
       le **premier fil de discussion du produit**, et le §5.3 l'annonçait sans lui donner une seule
       règle visuelle. Ordre chronologique **croissant** — écrit explicitement pour que `CRM-044` ne

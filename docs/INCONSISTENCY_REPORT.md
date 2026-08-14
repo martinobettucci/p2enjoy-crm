@@ -48,7 +48,7 @@ une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
 **État au 2026-08-14 :** 98 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
-texte dans l'historique Git — et **57 ouvertes**, conservées ici en entier — INC-099, relevée le 2026-08-14, s'ajoute aux 56. Les soixante et une
+texte dans l'historique Git — et **54 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les trois entrées du lot G closes par la migration 35 — INC-048, INC-052 et INC-071. INC-072, quatrième du lot, **reste ouverte** : sa règle est livrée et prouvée, son chemin d'interface ne l'est pas. Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -63,7 +63,7 @@ preuve de pile exécutable » ne s'applique plus, tant que l'exécution reçoit 
 
 ## Clos — index
 
-Quarante-deux entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
+Quarante-cinq entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
 la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
 
 | Entrée | Objet | Close le | Fermée par | Décision |
@@ -110,6 +110,9 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 | INC-091 | La veille permanente de `CRM-059` transformait tout envoi de preuve vers une boîte seedée en non classé permanent | 2026-08-14 | reprise de `resilience.spec.ts` et `infrastructure.spec.ts`, purge IMAP | 362, 370, 371 |
 | INC-093 | Le contournement `pip_ca` de `mail-sync` n'était câblé par aucun fichier Compose | 2026-08-12 | `CRM-051` | 356 |
 | INC-096 | Le registre d'images injoignable rendait toute preuve de pile inexécutable | 2026-08-14 | jeton Docker Hub fourni hors dépôt, et tirage séquentialisé | 369, 373 |
+| INC-048 | `move_card` exigeait un motif qu'elle ne conservait nulle part | 2026-08-14 | reprise `CRM-034`, migration 35 | 367, 374 |
+| INC-052 | « Un commentaire vide n'est pas un commentaire » ne refusait pas une tabulation | 2026-08-14 | reprise `CRM-034` et `CRM-036`, `app.btrim_blancs` | 367, 374 |
+| INC-071 | Trois documents se contredisaient sur ce qu'il faut pour commenter une card | 2026-08-14 | énoncé de `CRM-043` aligné, aucun code | 192, 367, 374 |
 
 ---
 
@@ -158,6 +161,19 @@ portait que sur `tracks`, parce que `test:sql` s'arrête là. `npm run e2e:api`,
 ✘ coherence-workflow.spec.ts  six channels rattachés, un seul suivant un workflow de portée track
 ✘ workflows.spec.ts      INC-029 — les channels du seed sont tous rattachés
 ```
+
+**ET DEUX CONTRÔLES DE PLUS SUR LE MANUEL.** `scripts/verify-manual.sh`, joué après une exécution
+de `e2e:ui`, rend **107 contrôles, 2 anomalies** :
+
+```
+ECHEC annexe A : Tracks archivés — le manuel dit « 1 », la base dit « 3 »
+ECHEC annexe A : Channels archivés — le manuel dit « 1 », la base dit « 3 »
+```
+
+Les quatre lignes résiduelles étant toutes **archivées** par leur scénario, elles gonflent
+exactement les deux grandeurs archivées de l'annexe A. Sur une base nettoyée, le même harnais rend
+**107 contrôles, aucune anomalie**. Le total des assertions que ce résidu fait rougir est donc de
+**neuf**, réparties sur trois harnais distincts.
 
 `public.channels` portait alors **huit** lignes : les six du seed, plus `E2E Canal Souris Renommé`
 et `E2E Canal Clavier Renommé`, créées elles aussi pendant la fenêtre de `e2e:ui`. Quatre lignes
@@ -617,39 +633,7 @@ CHAUDE le révèle), `docs/JOURNAL.md` décision 219.
 
 ---
 
-### INC-071 — Trois documents se contredisent sur ce qu'il faut pour commenter une card
-
-**Nature :** contradiction entre spécifications, sur une règle d'autorisation.
-**Relevée le :** 2026-08-05, pendant `CRM-043`.
-
-| Source | Ce qu'elle exige pour écrire un commentaire |
-|---|---|
-| `docs/SCHEMA.md` §5 | « Tout membre pouvant **lire** la card peut commenter : c'est la règle demandée » |
-| `docs/SPEC-permissions-rls.md` §4 | « **Écriture** sur le channel » |
-| `docs/BACKLOG.md`, `CRM-043` | Énoncé : « tout membre pouvant lire la card ». **Definition of Done : « API (refus pour un `viewer`) »** |
-
-L'énoncé de backlog **se contredit lui-même** : un `viewer` peut lire une card — le seed le démontre
-sur `…0c5` —, et la preuve exigée par sa propre Definition of Done est celle de son **refus**.
-
-**Comportement retenu — le droit d'ÉCRITURE** (`app.can_write_card`), motivé au §13.6 de
-`docs/SPEC-cards.md` et à la décision 192 du journal : deux sources concordantes contre une, dont
-l'une est la Definition of Done ; et le §2.1 de `docs/SPEC-permissions-rls.md` définit le `viewer`
-comme « consulte, **sans aucune écriture** », invariant qu'aucune table n'est autorisée à percer.
-
-**Ce qui a été corrigé :** la phrase de `docs/SCHEMA.md` §5, seule des trois sources à porter la
-règle minoritaire — la laisser ferait mentir le document de schéma sur une table qu'il décrit.
-
-**Ce qui reste à arbitrer :** l'**énoncé** de `CRM-043` dans `docs/BACKLOG.md` porte toujours la
-formulation corrigée, à côté d'une Definition of Done qui la contredit. Le réécrire serait réécrire
-la demande du responsable, ce qu'aucune unité ne fait d'elle-même. Deux issues possibles : corriger
-l'énoncé pour qu'il dise « tout membre pouvant écrire sur le channel », ou — si la lecture littérale
-était bien l'intention — rouvrir la règle, ce qui suppose alors de retirer de la Definition of Done
-la preuve du refus opposé au `viewer`, et d'accepter qu'un rôle défini « sans aucune écriture »
-écrive.
-
----
-
-### INC-072 — La modération des commentaires est ouverte aux `admin` par un document, à personne par l'autre
+### INC-072 — La modération des commentaires : la règle est livrée, le geste n'existe pas encore dans le produit
 
 **Nature :** contradiction entre spécifications, sur l'étendue d'un droit.
 **Relevée le :** 2026-08-05, pendant `CRM-043`.
@@ -667,10 +651,47 @@ trace que `edited_at`, et aucun document ne demande cela.
 
 **Conséquence nommée, non masquée :** aucun modérateur ne peut retirer un commentaire déplacé.
 
-**Ce qui reste à arbitrer :** faut-il ouvrir la **suppression** aux `admin`, sans la modification ?
-Rien n'est à défaire pour l'ajouter — une politique `UPDATE` supplémentaire, restreinte à
-`deleted_at`, suffirait —, mais la décision appartient au responsable : elle donne à un rôle le
-pouvoir de faire disparaître la parole d'un autre.
+**ARBITRAGE RENDU ET RÈGLE LIVRÉE, LE 2026-08-14 — L'ENTRÉE RESTE POURTANT OUVERTE.**
+
+La question posée ici — « faut-il ouvrir la **suppression** aux `admin`, sans la modification ? » —
+est tranchée par la décision **367** (lot G) : oui, avec audit. La mise en œuvre est la décision
+**374**, migration `0035` :
+
+- politique `card_comments_moderation` — un `admin` du workspace supprime un commentaire qu'il peut
+  **lire**. `app.can_read_card` et non `app.can_write_card` : modérer ne dépend pas d'un droit
+  métier ;
+- la borne « supprimer sans modifier » est portée par le **trigger**, seul endroit qui voie `OLD`,
+  `NEW` et `auth.uid()` ensemble. Une politique RLS n'a pas d'`OLD`, et le privilège de colonne est
+  attaché au rôle, que l'auteur et le modérateur partagent. Toute autre écriture d'un tiers rend
+  `comment_moderation_limitee` ;
+- l'audit est la colonne `deleted_by`, écrite par le trigger et fermée au client : `deleted_by`
+  différent d'`author_id` signale un retrait par un tiers.
+
+**Prouvé** — `supabase/tests/0017_commentaires.test.sql` : le modérateur supprime, le même
+modérateur ne modifie pas, la pierre tombale reste définitive pour lui aussi, un
+`business_developer` n'obtient rien et pas davantage une erreur, l'auteur est tracé lui aussi, et
+`deleted_by` n'est écrite par aucun client. Inventaire des politiques porté de 64 à 65 dans
+`0016_preuves_refus.test.sql`.
+
+**CE QUI RESTE DÛ, ET POURQUOI L'ENTRÉE N'EST PAS CLOSE.** Le produit n'offre **aucun geste** de
+modération : `webapp/src/app/PanneauTimeline.tsx` calcule `actionsOffertes = estAuteur && !supprime`,
+et un administrateur ne voit donc ni « Supprimer » ni rien d'autre sur le propos d'un tiers. C'est
+exactement la forme d'INC-085, dont la décision 333 a tiré la règle : **un droit qui n'a pas de
+chemin n'est pas un droit**. Clore ici ferait descendre le compteur sans que personne puisse modérer
+depuis le produit.
+
+**L'obstacle est nommé, et il n'est pas mince :** la webapp n'a aujourd'hui **aucune notion du rôle
+de workspace de l'utilisateur courant**. Les écrans d'administration ne se gardent pas eux-mêmes,
+ils laissent l'API refuser. Offrir « Supprimer » à tous et laisser le `USING` filtrer serait une
+**commande morte** pour la majorité des utilisateurs, ce que le §5.10 de `docs/DESIGN_SYSTEM.md`
+refuse — le composant écrit d'ailleurs en toutes lettres qu'« une pierre tombale n'offre aucun
+geste […] proposer le contraire serait une commande morte ». Il faut donc, dans l'ordre : lire le
+rôle courant, le porter jusqu'au panneau, n'offrir que **Supprimer** — jamais **Modifier** — sur le
+commentaire d'un tiers, l'éprouver en E2E d'interface et vérifier les captures.
+
+**Reste à faire, précisément :** le rôle courant côté client, le geste dans `PanneauTimeline.tsx`,
+ses tests de composant, un scénario `e2e/ui` où une administratrice retire le propos d'un tiers, et
+la vérification visuelle. La règle backend, elle, est **livrée et prouvée**.
 
 ---
 
@@ -2527,69 +2548,6 @@ INC-013, INC-014, INC-024 et INC-030.
 
 ---
 
-### INC-048 — `move_card` exige un commentaire qu'elle ne peut conserver nulle part
-
-**Nature :** perte de donnée utilisateur induite par l'ordre du plan.
-**Relevé le :** 2026-08-04, pendant la spécification de `CRM-034`.
-
-La vérification n° 5 de `docs/SPEC-workflow-engine.md` §5 exige un commentaire lorsque la transition
-le demande — dans le seed, les **quatre** transitions « Marquer perdu ». Le même paragraphe énonce
-qu'en cas de succès la fonction procède à l'« insertion du commentaire s'il est fourni » et à
-l'« écriture d'un `card_event` de type `moved` ».
-
-MESURÉ le 2026-08-04 : `to_regclass('public.card_comments')` et `to_regclass('public.card_events')`
-rendent tous deux `NULL`. Ces tables sont les livrables de `CRM-043` et de `CRM-044`, unités que
-`docs/MASTER_PLAN.md` §2 place après `CRM-034`.
-
-**Conséquence exacte :** un utilisateur qui motive une affaire perdue voit sa transition acceptée et
-**son motif disparaître**. Ce n'est pas une fonctionnalité différée, c'est une donnée saisie qui
-n'est écrite nulle part. Le déplacement lui-même ne laisse par ailleurs **aucune trace** : ni
-auteur, ni date, ni étape d'origine.
-
-**Comportement retenu :** le paramètre est conservé dans la signature — le retirer casserait la
-vérification n° 5, qui est dans la Definition of Done — et la perte est **écrite** dans
-`docs/SPEC-workflow-engine.md` §5.4, dans `docs/manual.md` et dans la Definition of Done de
-`CRM-034`, qui reste `[~]`. **Aucune table n'est créée par anticipation** : `card_comments` et
-`card_events` préempteraient `CRM-043` et `CRM-044`, et la règle du projet est constante depuis
-`CRM-035` (décision 92).
-
-**Arbitrage attendu du responsable.** Trois options :
-
-1. **accepter la perte temporaire** et livrer la garde maintenant, ce qui est le comportement
-   retenu par défaut ci-dessus, le déplacement gardé valant mieux qu'un déplacement libre ;
-2. **refuser toute transition exigeant un commentaire** tant que `card_comments` n'existe pas — ce
-   qui neutraliserait les quatre transitions vers `Perdu` du seed, exactement le défaut décrit en
-   INC-047 ;
-3. **avancer `CRM-043` et `CRM-044`** avant `CRM-034`, ce qui inverse l'ordre du chunk 3 et retarde
-   la seule garde du produit.
-
-**LA CAUSE BLOQUANTE EST LEVÉE, 2026-08-05, PAR `CRM-043` — ET LA PERTE SUBSISTE.**
-`public.card_comments` existe depuis la migration 15. L'argument qui fondait le « comportement
-retenu » ci-dessus — « aucune table n'est créée par anticipation » — n'a donc plus d'objet, et
-l'option 1 cesse d'être une acceptation *temporaire* : elle devient un choix par défaut que
-personne n'a pris.
-
-`CRM-043` **n'a pas** redéfini `move_card`, et le motif est de périmètre, non de faisabilité :
-la fonction est un livrable de `CRM-034`, et la reprendre sous une unité qui ne la porte pas
-toucherait ses six vérifications sans les rejouer sous la sienne (`CLAUDE.md` §13). Deux à trois
-lignes suffiraient pourtant — une insertion dans `card_comments` à l'intérieur de la fonction —,
-et c'est précisément ce qui rend l'arbitrage exigible plutôt que théorique.
-
-Quatre assertions ont été **révisées, non retirées** (mécanisme de la décision 51) : elles
-constataient l'absence de la table, elles constatent désormais la **perte elle-même** —
-`supabase/tests/0012_cards.test.sql`, `supabase/tests/0013_move_card.test.sql`,
-`supabase/tests/0014_valeurs_champs.test.sql` et `e2e/api/move-card.spec.ts`, cette dernière
-mesurant qu'une card déplacée avec un motif exigé et fourni ne porte **aucun** commentaire.
-
-**Ce qui reste à arbitrer est désormais plus étroit :** faut-il que `move_card` écrive le motif
-comme un commentaire ordinaire — donc lisible et supprimable par son auteur —, ou comme un
-événement de timeline que `CRM-044` portera, ou les deux ? Les trois options ci-dessus restent
-formellement ouvertes, mais seules la première et la troisième ont encore un sens.
-
-**Lié à :** INC-047 (même ordonnancement), `CRM-043` (**table livrée**), `CRM-044`.
-
----
-
 ### INC-049 — La preuve de refus n° 5 figure dans deux Definitions of Done à la fois
 
 **Nature :** chevauchement de périmètre entre `CRM-034` et `CRM-013`.
@@ -2666,65 +2624,6 @@ ou ajouter au seed un droit fin fermant un channel au `bizdev` — ce que le §5
 aujourd'hui, et qui n'apporterait aucune preuve que le `viewer` n'apporte déjà.
 
 **Lié à :** `docs/SPEC-seed.md` §2.11, `CRM-012`.
-
----
-
-### INC-052 — « Un commentaire vide n'est pas un commentaire » ne refuse pas une tabulation
-
-**Nature :** écart entre l'intention affichée d'une règle et l'expression qui la met en œuvre, les
-deux étant écrites dans la même spécification.
-**Relevé le :** 2026-08-04, pendant l'implémentation de `CRM-034`.
-
-`docs/SPEC-workflow-engine.md` §5.3 pose la règle sous un titre sans ambiguïté — « **Un commentaire
-vide n'est pas un commentaire** » — puis en spécifie l'expression **caractère pour caractère** :
-« `comment` est normalisé par `nullif(btrim(comment), '')` avant la vérification n° 5 : une chaîne
-d'espaces est refusée comme l'absence ».
-
-**MESURÉ :** `btrim(text)` à un seul argument ne retire **que des espaces**. `btrim(E'\t\n ')` rend
-deux caractères, `nullif(…, '')` ne les annule donc pas, et une tabulation seule **passe pour un
-motif d'affaire perdue**. La règle écrite est plus étroite que le titre qui l'annonce.
-
-L'implémentation est **fidèle à la spécification** : c'est la spécification qui dit deux choses
-d'ampleur différente. `btrim(comment, E' \t\r\n')` refuserait strictement davantage et ne casserait
-aucun usage légitime — un motif fait de blancs n'a aucune valeur pour personne.
-
-**Comportement retenu :** l'expression du §5.3 est reprise **inchangée**. Élargir ce que la règle
-refuse est une décision de produit, et la spécification l'a posée explicitement plutôt que par
-défaut : la trancher au moment de l'implémentation serait la résoudre implicitement, ce que
-`CLAUDE.md` §5 proscrit. L'écart est **figé par une assertion** de
-`supabase/tests/0013_move_card.test.sql`, qui constate qu'une tabulation passe et qui deviendra
-rouge le jour où l'arbitrage sera rendu.
-
-**Portée réelle, pour que l'arbitrage se fasse en connaissance de cause :** l'exposition est faible.
-Le seul cas atteint est un client qui envoie délibérément un commentaire fait de blancs non-espaces,
-et le produit ne perd aucune donnée — il enregistre une transition dont le motif est vide, ce qui
-est précisément ce que la n° 5 voulait empêcher. Rien ne dépend de cette valeur aujourd'hui, le
-commentaire n'étant conservé nulle part (INC-048).
-
-**SECONDE OCCURRENCE, relevée le 2026-08-05 pendant `CRM-037` — même propriété, autre appelant, et
-elle avait déjà produit un défaut.** `app.valeur_de_champ_est_vide(jsonb)` emploie
-`btrim(valeur #>> '{}') = ''`, et `docs/SPEC-form-composer.md` §6.6 l'annonce par « une chaîne vide,
-ou faite de seuls espaces ». MESURÉ contre la base réelle, par la vraie route et le vrai refus de
-`move_card` : une valeur réduite à `"\t"` ou `"\n"` est **renseignée**, et satisfait donc un champ
-`required`.
-
-Le prédicat TypeScript de `CRM-037` avait été écrit avec `String.prototype.trim()`, qui retire
-**toute** l'espace blanche : les deux lectures divergeaient sur ces valeurs, ce que le §4.3 existe
-précisément pour interdire. Le défaut a été reproduit puis corrigé — `docs/JOURNAL.md` décision 165,
-`webapp/src/lib/valeur-renseignee.ts` — en **reproduisant fidèlement `btrim`**, non en élargissant
-la règle.
-
-**Ce qui reste ouvert est donc inchangé et s'étend à un second endroit** : faut-il que le produit
-tienne pour vide une chaîne de blancs non-espaces ? La réponse vaudrait pour le §5.3 de
-`docs/SPEC-workflow-engine.md` **et** pour le §6.6 de `docs/SPEC-form-composer.md`, et la correction
-devrait alors bouger **des deux côtés à la fois** — la preuve d'API de `CRM-037` dénoncera un côté
-qui bougerait seul.
-
-**Arbitrage attendu du responsable :** élargir l'expression du §5.3 à `btrim(comment, E' \t\r\n')`
-et retourner l'assertion dans le même changement, ou confirmer que seuls les espaces sont refusés et
-corriger le titre du §5.3 pour qu'il n'annonce pas davantage.
-
-**Lié à :** INC-048 (le commentaire n'est conservé nulle part).
 
 ---
 

@@ -33,7 +33,7 @@
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et de **modification** : la fiche se lit, elle ne s'écrit pas |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
-| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger et supprimer sont réservés à l'auteur, et les deux gestes sont offerts par l'écran** — la suppression après confirmation, et elle est définitive. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
+| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur n'a pas encore de bouton**. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
@@ -331,8 +331,10 @@ travail livré, une affaire en « Prospect » peut passer en « Relance » ou ê
 pas sauter directement en « Négociation ». Le produit vous le dit, et il refuse.
 
 **Le cinquième explique une exigence que vous rencontrerez tôt.** Les quatre déplacements « Marquer
-perdu » du workflow livré exigent un motif. Un motif fait uniquement d'espaces est refusé comme
-l'absence de motif.
+perdu » du workflow livré exigent un motif. Un motif fait uniquement de **blancs** — espaces,
+tabulations, sauts de ligne, espaces insécables — est refusé comme l'absence de motif, et un motif
+de plus de 10 000 caractères l'est aussi : le motif est conservé comme un commentaire, et il en a
+les limites.
 
 **Le sixième est celui que vous rencontrerez le plus souvent.** Une affaire ne peut pas entrer dans
 une étape qui pose des questions obligatoires tant que ces questions n'ont pas de réponse. Le refus
@@ -352,10 +354,21 @@ est placée **en fin** de la colonne d'arrivée, sans bousculer l'ordre que vous
 1. **Le déplacement laisse une trace**, écrite par le serveur au moment où il a lieu : le fil de
    l'affaire affiche *Étape franchie*, avec les deux étapes (chapitre 4.10). Cette trace ne peut
    être ni fabriquée, ni corrigée, ni effacée.
-2. **Le motif que vous donnez, lui, n'est conservé nulle part.** Il est exigé, il est contrôlé, et
-   il disparaît. Un déplacement motivé est donc accepté, mais sa raison n'est **pas relisible** :
-   ni dans le fil, ni ailleurs. Si la raison compte, écrivez-la en commentaire (chapitre 4.10) —
-   c'est aujourd'hui le seul endroit où elle survit.
+2. **Le motif que vous donnez est conservé, et il l'est comme un commentaire.** Depuis le
+   2026-08-14, la raison que vous écrivez au moment du déplacement apparaît dans le fil de
+   l'affaire, signée de votre nom et datée, exactement comme si vous l'aviez publiée vous-même
+   (chapitre 4.10). Vous pouvez donc la corriger ou la retirer ensuite, comme n'importe lequel de
+   vos commentaires.
+
+   Trois précisions utiles. Le motif est enregistré **en même temps** que le déplacement : si l'un
+   échoue, l'autre n'a pas lieu, et vous ne verrez jamais une affaire déplacée sans sa raison. Un
+   motif est conservé **même lorsque le déplacement ne l'exigeait pas** — commenter un passage
+   d'étape volontairement est donc utile. Enfin, un motif est un commentaire : il fait au plus
+   **10 000 caractères**, et un motif fait uniquement d'espaces, de tabulations ou de tout autre
+   blanc est refusé comme s'il était absent.
+
+   Le motif n'apparaît pas dans la ligne d'historique *Étape franchie* : il vit **une seule fois**,
+   dans la discussion, et non recopié dans la trace.
 
 **Ce geste a désormais son écran** : le tableau kanban du chapitre 4.8, à la souris comme au
 clavier. La règle décrite ici lui préexiste et ne dépend pas de lui — c'est volontaire, l'interface
@@ -598,9 +611,17 @@ caractères**. Si la publication est refusée, **votre texte reste dans le champ
 à ressaisir. Après une publication réussie, le curseur **revient dans le champ**, prêt pour le
 message suivant — vous n'avez pas à retraverser la page pour reprendre la parole.
 
-**Corriger et supprimer vos commentaires.** Le serveur n'autorise la correction et la suppression
-d'un commentaire qu'à **son auteur**, et à personne d'autre — administrateur compris. Les deux
-gestes sont désormais offerts par l'écran.
+**Corriger et supprimer vos commentaires.** Le serveur n'autorise la **correction** d'un commentaire
+qu'à **son auteur**, et à personne d'autre — administrateur compris. C'est une règle de fond et non
+une précaution : réécrire le propos d'un autre ne serait pas de la modération, ce serait lui faire
+dire ce qu'il n'a pas dit. Les deux gestes de l'auteur sont offerts par l'écran.
+
+**La suppression, elle, est aussi ouverte aux administrateurs du workspace depuis le 2026-08-14** —
+afin qu'un propos déplacé puisse être retiré. Un administrateur peut **retirer** un commentaire, il
+ne peut pas le **modifier**, et le retrait laisse une trace nominative : le serveur enregistre qui
+a supprimé, et non seulement quand. **Ce retrait n'a pas encore de bouton dans l'écran** : la règle
+est en place et opposable côté serveur, le geste correspondant reste à livrer. Un administrateur
+qui doit retirer un propos aujourd'hui passe donc par un administrateur technique.
 
 Placez le pointeur sur **votre** commentaire, ou atteignez-le avec la touche `Tab` : deux actions
 apparaissent, *Modifier* et *Supprimer*. Elles ne s'affichent que sur vos propres commentaires,
