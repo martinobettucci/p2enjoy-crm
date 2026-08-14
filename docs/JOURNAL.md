@@ -13404,9 +13404,12 @@ du journal de `mail-sync`), **INC-102** (convergence du seed sur une base antér
 (comment tenir les comptes du registre). **INC-100** reste due sous `CRM-022` et `CRM-034`, et elle
 est peu coûteuse.
 
-**Registre à la fin de cette session : 55 entrées ouvertes, 48 closes.** Backlog : **933 `[x]`**,
-**2 `[~]`**, **58 `[ ]`** — inchangé en structure, les deux unités du lot étant déjà `[x]` et
-recevant ici leurs preuves manquantes plutôt qu'un changement de statut.
+**Registre à la fin de cette session : 55 entrées ouvertes, 48 closes.** Backlog, compté au niveau
+des UNITÉS et non des lignes de Definition of Done : **27 `[x]`**, **23 `[~]`**, **6 `[ ]`** — la
+structure est inchangée, les deux unités du lot étant déjà `[x]` et recevant ici les preuves qui
+leur manquaient plutôt qu'un changement de statut. La priorité de fond ne bouge pas non plus :
+**solder prime sur ouvrir**, et vingt-trois chantiers ouverts restent la dette principale du
+projet.
 
 **Rattachement :** INC-099 (close), INC-101 (close), INC-103 (nouvelle), INC-091 et INC-092
 (mesurées, non modifiées). Unités `CRM-008` et `CRM-075`. Décisions 51, 80, 362, 367, 377, 378, 379.
