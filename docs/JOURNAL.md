@@ -13040,6 +13040,19 @@ of Done masque le défaut, `test:sql` passant avant `e2e:ui`. Rien n'est ajouté
 l'entrée existe et son porteur est nommé. Le résidu a été retiré à la main pour que les mesures
 ci-dessus soient honnêtes.
 
+**Bilan final sur le code de `main`, résidu d'INC-099 retiré à la main au préalable.** `e2e:api`
+**507 verts**, `e2e:ui` **184 verts sur 185**, `test:unit` **770**, `typecheck`, `build`. L'unique
+échec restant, dans les deux campagnes, est **exactement INC-102** — le commentaire retiré du seed —
+et rien d'autre. La base a été rendue à son état de seed après mesure : 4 tracks, 6 channels,
+5 commentaires.
+
+**CE QUI N'A PAS PU ÊTRE EXÉCUTÉ, ET POURQUOI.** Les harnais `scripts/verify-*.sh` **n'ont pas
+tourné** dans cette session : ils exigent « un couple Node 24 / npm 11+ », et l'image ne fournit que
+Node 22 — `/opt` porte `node20`, `node21`, `node22`, et `nvm` n'a que `system`. Ce n'est pas un
+défaut du dépôt et rien n'est affirmé à leur sujet ; la décision 377, qui les a rejoués, reste la
+mesure de référence. `pytest` a en revanche été exécuté à la ligne de base — **242 verts** —, et le
+service `mail-sync` n'a pas bougé depuis.
+
 **Où reprendre.** L'ordre de la décision 377 est inchangé et prime : **INC-101 puis INC-099**, sous
 `CRM-008` et `CRM-075`, lot **I+J**. **INC-102** s'y ajoute et attend un arbitrage du responsable
 avant toute mise en œuvre — ne pas la trancher seul.
