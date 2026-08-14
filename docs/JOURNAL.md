@@ -12344,3 +12344,45 @@ sa mesure, et `CRM-059` peut revenir à `[x]`. Si elle rougit sur une pile saine
 il est dans le produit, et il faudra le corriger — pas le documenter.
 
 **Rattachement :** `CRM-059`, INC-096. Décisions 367 (ordre des lots) et 368 (prémisse de la mesure).
+
+### Décision 370 — La preuve rouge du 12 août est innocentée par le rejeu, et la seule dette restante est la fuite qu'elle a révélée
+
+**2026-08-14 — mesures de rejeu, pile complète vérifiée AVANT la preuve.**
+
+**Ce que le rejeu établit.** La leçon de la décision 368 a été appliquée à la lettre : la complétude
+de la pile a été vérifiée **avant** de mesurer, et non après coup. `docker compose ps` rendait
+**17/17 `healthy`**, seed appliqué. Sur cette pile, `e2e/mail/backfill.spec.ts` — le scénario
+rétrogradé le 12 août — **passe**. La suite mail entière passe (**42**), `pytest` passe (**242**), et
+`scripts/verify-mail-resilience.sh` rend **56 contrôles sans anomalie**, mutations de
+non-complaisance comprises.
+
+**Conclusion, et elle est étroite à dessein.** Le défaut annoncé le 12 août — « les trois archives de
+90 jours descendent dès la première relève » — **n'existe pas dans le produit**. Il a été mesuré sur
+une pile où `rest`, `mail-sync` et `webapp` étaient absents. La décision 368 avait raison de refuser
+d'accuser le service sur cette base, et le rejeu le confirme par la mesure et non par la relecture.
+
+**Ce que le rejeu ne permet PAS de conclure, et pourquoi l'unité ne repasse pas `[x]` aujourd'hui.**
+`npm run test:sql` reste **rouge sur un fichier** : `0029_inbox_globale.test.sql`, assertion 9,
+`have: 4` / `want: 0`. Il serait commode de la traiter comme un défaut étranger — c'est une suite de
+`CRM-057`, pas de `CRM-059`. **Ce serait faux.** INC-091 nomme la cause dans son titre : c'est la
+**boucle de veille de `CRM-059`** qui, relevant désormais tous les comptes, remonte en base des
+messages que deux preuves déposent dans une boîte IMAP **réelle** et ne retirent jamais. Avant cette
+boucle, ces messages restaient inertes ; l'unité n'a pas créé la négligence, elle l'a rendue visible
+et permanente. Une unité qui rend rouge une garantie RLS figée porte cette dette tant qu'elle n'est
+pas réglée.
+
+**Ce qui est livré ensuite, et sur quel arbitrage.** Aucun arbitrage nouveau n'est pris ici :
+la décision 362 a déjà tranché, et la seule chose qui lui manquait était la pile — que la décision
+369 vient de rendre disponible. Chaque preuve qui adresse un envoi réel à une boîte seedée purge ce
+qu'elle y a déposé, dans son propre `finally`, par le chemin IMAP de `retirerDeLaBoite`, **que le
+message ait été relevé ou non**. Deux fichiers sont concernés : `e2e/mail/resilience.spec.ts` (deux
+scénarios) et `e2e/mail/infrastructure.spec.ts` (M2). L'assertion 9 **reste armée sur la table
+entière** : elle est le détecteur qui a trouvé la fuite, et la désarmer serait supprimer la mesure
+plutôt que la cause (`CLAUDE.md` §18).
+
+**Piège de mise en œuvre, déjà nommé par INC-091 et à ne pas retraverser :** purger la **table**
+n'est pas purger la **boîte**. Le `finally` actuel supprime la ligne `mail_messages` par un `DELETE`
+qui rend `204` **en n'effaçant rien**, puisque rien n'a encore relevé le compte — et le message réel
+reste dans la boîte de Driss, où la veille le retrouvera au tour suivant.
+
+**Rattachement :** `CRM-059`, INC-091, INC-092. Décisions 362 (arbitrage), 368 et 369.

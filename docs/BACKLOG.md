@@ -5750,6 +5750,38 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 > vit dans Docker Desktop côté Windows et **nécessite une action humaine** pour démarrer.
 >
 > Une unité dont une preuve de sa propre Definition of Done est rouge ne peut pas rester `[x]`.
+>
+> **REJOUÉE ET VERTE LE 2026-08-14, SUR PILE COMPLÈTE VÉRIFIÉE AVANT LA MESURE** (décision 369).
+> La complétude a été établie **d'abord**, ce que l'exécution du 12 n'avait pas fait : `docker
+> compose ps` rendait **17 services sur 17 `healthy`** — le dix-huitième était Supavisor, retiré par
+> la décision 366 — et le seed a été appliqué (`apply-seed.sh`, `EXIT=0`). Puis :
+>
+> | Preuve | Résultat mesuré |
+> |---|---|
+> | `e2e/mail/backfill.spec.ts` (le scénario rouge du 12) | **1 passed** — « un premier contact ne descend jamais l'historique » |
+> | `npm run e2e:mail` (suite entière) | **42 passed** |
+> | `pytest mail-sync/tests` | **242 passed** |
+> | `scripts/verify-mail-resilience.sh` | **56 contrôles, aucune anomalie** — dont backoff, coupure SMTP réelle, écran d'état, et cinq mutations de non-complaisance qui rougissent bien |
+> | `npm run typecheck` / `test:unit` / `build` | verts — 741 tests unitaires |
+>
+> **La décision 368 est donc confirmée par la mesure** : la preuve rouge du 12 août était imputable
+> à l'environnement de sa mesure, non au produit. Le backfill borne bien sa première passe.
+>
+> **L'UNITÉ RESTE POURTANT `[~]`, ET POUR UNE SEULE RAISON QUI LUI APPARTIENT — INC-091.**
+> `npm run test:sql` rend **33 fichiers, 1 en échec** : `0029_inbox_globale.test.sql`, assertion 9,
+> « ABSENCE FIGÉE : un membre ordinaire ne voit AUCUN non classé » — `have: 4`, `want: 0`. Ce n'est
+> pas un défaut étranger que l'unité pourrait renvoyer ailleurs : INC-091 s'intitule « **la veille
+> permanente de `CRM-059`** transforme tout envoi de preuve vers une boîte seedée en message non
+> classé permanent ». La boucle de veille livrée par cette unité relève désormais tous les comptes,
+> et remonte ce que `e2e/mail/resilience.spec.ts` (`CRM-059`) et `e2e/mail/infrastructure.spec.ts`
+> (`CRM-050`) laissent dans une boîte IMAP **réelle** — leur `finally` supprime la ligne en base,
+> jamais le message dans la boîte, et rend donc `204` en n'effaçant rien.
+>
+> L'arbitrage est rendu depuis la décision 362 et n'attend que la pile, laquelle est là : chaque
+> preuve qui adresse un envoi réel à une boîte seedée **purge ce qu'elle y a déposé**, dans son
+> propre `finally`, par le chemin IMAP de `retirerDeLaBoite`. L'assertion 9 **reste armée sur la
+> table entière** — elle a vu une fuite que rien d'autre ne voyait, et la désarmer serait corriger
+> le défaut en supprimant son détecteur (`CLAUDE.md` §18).
 Import historique par lots, file persistante, backoff, états visibles.
 **DoD** : pytest sur le backoff ; coupure SMTP simulée sans perte de message ; état affiché
 conforme à la réalité.
