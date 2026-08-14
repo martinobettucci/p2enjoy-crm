@@ -4041,7 +4041,10 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       workspace** de l'utilisateur courant. C'est la forme d'INC-085 — un droit qui n'a pas de
       chemin n'est pas un droit. Reste à livrer : le rôle courant côté client, l'action
       *Supprimer* — et **jamais** *Modifier* — sur le commentaire d'un tiers, ses tests de
-      composant, un scénario `e2e/ui`, et la vérification visuelle.
+      composant, un scénario `e2e/ui`, la vérification visuelle, et **le seed** : `…0d4` porte
+      « Note interne publiée par erreur sur la mauvaise affaire », le cas de modération idéal, mais
+      le seed le supprime par la clé de service — `deleted_by` reste donc nul, ce qui est juste et
+      ne démontre rien.
 - [x] **INC-071 est CLOSE le 2026-08-14**, par l'arbitrage de la décision 367
       (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
       sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`

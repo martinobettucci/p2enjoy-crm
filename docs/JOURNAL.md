@@ -12661,3 +12661,95 @@ monde, `admin` compris. Aucune suppression physique : il n'existe toujours aucun
 **Rattachement :** INC-048, INC-052, INC-071, INC-072 ; unités `CRM-034` (la garde), `CRM-036` et
 `CRM-037` (la définition de « renseigné »), `CRM-043` (la table). Décisions 51 (révision d'une
 assertion), 127, 165, 192, 193, 194, 196, 197, 367 (lot G).
+
+### Décision 375 — Ce que le lot G a livré, ce qu'il n'a pas livré, et où reprendre
+
+**2026-08-14 — clôture de session.**
+
+**Ce que l'environnement a rendu possible, et qui ne l'était pas la veille.** INC-096 est **close**
+(décision 373) : le responsable a fourni un jeton Docker Hub hors dépôt, et la mesure a montré que
+le `429` venait aussi des tirages **parallèles** de `docker compose`, qu'un tirage séquentiel
+contourne. Pile complète — **17 services `healthy`**, seed appliqué —, vérifiée AVANT toute preuve
+selon la leçon de la décision 368.
+
+**Ligne de base, établie avant toute modification** (`docs/CloudWorker.md` §2.4) : `test:sql` 33
+fichiers / **1944** assertions, `test:unit` **741**, `e2e:api` **504**, `e2e:ui` **182**, `pytest`
+**242**, `typecheck` et `build`. Tout vert. Aucune anomalie mesurée après coup n'a donc pu être
+imputée à tort au changement.
+
+**L'unité de la session est le lot G**, désigné par la décision 372 comme la reprise dès la pile
+disponible, le reste de B — INC-092 — étant explicitement un choix qui appartient au responsable et
+qu'aucune session ne tranche seule.
+
+**Trois entrées sur quatre sont closes, et la quatrième ne l'est pas — c'est le fait principal.**
+
+- **INC-048 close.** `move_card` conserve le motif dans `card_comments`, dans sa propre transaction,
+  dès qu'il est **fourni** et non seulement lorsqu'il est **exigé**. Vérification **n° 5 bis** :
+  `comment_too_long` au-delà de 10 000 caractères, parce qu'un motif devenu commentaire hérite des
+  bornes du commentaire, et qu'une violation de contrainte remontée depuis un appel de fonction
+  serait exacte et illisible.
+- **INC-052 close, aux deux endroits.** `app.btrim_blancs(text)` porte une seule fois la classe de
+  `String.prototype.trim()`, énumérée en points de code. Le gain le plus durable n'est pas la règle
+  élargie : c'est que le prédicat TypeScript **cesse d'être une réimplémentation**. La convergence
+  du §4.3 tient désormais par construction, là où la décision 165 avait dû la rétablir après un
+  défaut mesuré.
+- **INC-071 close, sans une ligne de code.** L'énoncé de `CRM-043` est aligné sur le comportement
+  livré depuis la migration 15.
+- **INC-072 : la règle est livrée et prouvée, l'entrée RESTE OUVERTE.** La politique de modération,
+  la borne portée par le trigger et l'audit `deleted_by` existent et sont éprouvés dans les deux
+  sens. Mais `PanneauTimeline.tsx` calcule `actionsOffertes = estAuteur && !supprime`, et la webapp
+  n'a **aucune notion du rôle de workspace** de l'utilisateur courant : aucun administrateur ne peut
+  modérer depuis le produit. C'est la forme exacte d'INC-085, dont la décision 333 a tiré la règle —
+  **un droit qui n'a pas de chemin n'est pas un droit**. La clore ici aurait fait descendre le
+  compteur sans que personne ne puisse modérer.
+
+**Pourquoi le geste d'interface n'a pas été livré dans la foulée, et pourquoi ce n'est pas une
+paresse.** Offrir « Supprimer » à tous et laisser le `USING` filtrer aurait produit une **commande
+morte** pour la majorité des utilisateurs — ce que le composant refuse en toutes lettres à propos de
+la pierre tombale. Le faire proprement suppose de lire le rôle courant, de le porter jusqu'au
+panneau, de n'offrir que *Supprimer* et jamais *Modifier*, de l'éprouver en E2E et d'en observer les
+captures. C'est un chunk cohérent, et l'entamer à moitié aurait laissé une unité dans un état que
+rien ne décrit. `CRM-043` **repasse `[~]`**, l'écart est nommé, et la dette est visible.
+
+**Un défaut étranger, mesuré et laissé intact — INC-099.** Deux scénarios de
+`e2e/ui/administration-arborescence.spec.ts` créent un track et un channel, les archivent, et ne les
+retirent jamais : leur nettoyage existe mais vit **à l'entrée** du scénario, pas dans un `finally`.
+Les quatre lignes résiduelles font rougir **neuf** assertions sur **trois** harnais —
+`0004_tracks.test.sql`, six scénarios de comptage d'`e2e:api`, et deux grandeurs de l'annexe A dans
+`verify-manual.sh`. L'ordre d'exécution des suites décide donc de leur couleur. C'est la famille
+d'INC-091, sur d'autres tables, et l'arbitrage rendu là-bas s'y énonce à l'identique. Rien n'a été
+corrigé : le défaut appartient à `CRM-075`, et le corriger au passage l'aurait touchée sans rejouer
+ses preuves sous son unité.
+
+**Ce que la session a mesuré, après changement, sur pile complète.** `test:sql` 33 fichiers /
+**1969** assertions, `test:unit` **744**, `e2e:api` **507**, `e2e:ui` **182**, `e2e:mail` **42**,
+`pytest` **242**, `verify-manual.sh` **107 contrôles**, `typecheck`, `build`. Tout vert. Les
+comptages ci-dessus valent **sur une base sans résidu** : c'est précisément ce qu'INC-099 rend non
+évident, et il faut le dire plutôt que publier un chiffre qui dépend de l'ordre des suites.
+
+**Huit preuves ont été RÉVISÉES et aucune retirée** (mécanisme de la décision 51) : l'assertion
+d'INC-052 qui portait « CETTE ASSERTION DOIT DEVENIR ROUGE le jour où l'arbitrage est rendu » et qui
+l'est devenue, les trois constats d'INC-048 dans `0013`, `0014` et `0017`, la preuve d'API, le test
+unitaire du prédicat, l'inventaire des politiques porté de 64 à 65, et l'assertion de timeline — qui
+reste vraie, le motif étant conservé **une seule fois**, dans le fil, et non recopié dans un
+`payload`.
+
+**Où reprendre, dans l'ordre.**
+
+1. **Solder INC-072**, qui est la seule dette créée par cette session et la plus proche d'aboutir :
+   rôle courant côté client, action *Supprimer* sur le commentaire d'un tiers, tests de composant,
+   scénario `e2e/ui`, captures observées, et modération du seed sur `…0d4` — dont le texte, « Note
+   interne publiée par erreur sur la mauvaise affaire », est le cas de démonstration idéal.
+2. Puis l'ordre de la décision 367 reprend : **I+J** (reprise transverse des harnais), puis **L**.
+   Les lots sans pile encore dus restent **H**, **K**, **F**, **M**, **E** et **C**.
+3. **INC-092** n'est toujours pas à trancher seul : c'est un choix de conception qui appartient au
+   responsable.
+
+**État du registre à la fin de cette session : 54 entrées ouvertes, 45 closes.** 57 au début, moins
+INC-096, INC-048, INC-052 et INC-071, plus INC-099.
+
+**Priorité de fond, inchangée :** solder prime sur ouvrir. Le backlog porte **24 unités `[~]`** —
+`CRM-043` ayant rejoint le lot par honnêteté plutôt que par régression — contre 6 `[ ]`.
+
+**Rattachement :** INC-048, INC-052, INC-071 (closes), INC-072 (ouverte), INC-096 (close), INC-099
+(nouvelle). Unités `CRM-034`, `CRM-036`, `CRM-043`. Décisions 51, 165, 333, 367, 368, 372, 373, 374.

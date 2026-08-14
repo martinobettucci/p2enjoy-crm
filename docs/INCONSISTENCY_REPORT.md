@@ -689,9 +689,23 @@ geste […] proposer le contraire serait une commande morte ». Il faut donc, da
 rôle courant, le porter jusqu'au panneau, n'offrir que **Supprimer** — jamais **Modifier** — sur le
 commentaire d'un tiers, l'éprouver en E2E d'interface et vérifier les captures.
 
-**Reste à faire, précisément :** le rôle courant côté client, le geste dans `PanneauTimeline.tsx`,
-ses tests de composant, un scénario `e2e/ui` où une administratrice retire le propos d'un tiers, et
-la vérification visuelle. La règle backend, elle, est **livrée et prouvée**.
+**LE SEED NE DÉMONTRE PAS ENCORE LA MODÉRATION, ET C'EST LE MÊME MANQUE.** Mesuré après la
+migration : le seed supprime bien `…0d4`, mais **par la clé de service**, dont `auth.uid()` est nul —
+`deleted_by` reste donc `NULL`, ce qui est le comportement juste (une suppression sans appelant
+identifié n'a personne à nommer) et ne montre rien de l'audit. Le cas idéal est pourtant **déjà dans
+le seed** : `…0d4` porte « Note interne publiée par erreur sur la mauvaise affaire », écrite par
+Driss Lemoine — c'est littéralement le propos qu'une administratrice retirerait. Le rendre
+démonstratif suppose d'exécuter cette suppression avec le jeton de Camille Aubert, donc de déplacer
+le bloc **après** l'obtention de `JETON_ADMIN`, et d'ajuster `docs/SPEC-seed.md` §2.14 ainsi que les
+assertions de `0017_commentaires.test.sql` qui comptent les pierres tombales. Ce n'est pas un geste
+séparé du précédent : le seed doit démontrer **ce que le produit sait faire**, et le produit ne sait
+pas encore modérer depuis son écran.
+
+**Reste à faire, précisément et dans cet ordre :** le rôle courant côté client ; l'action
+*Supprimer* — et **jamais** *Modifier* — sur le commentaire d'un tiers dans `PanneauTimeline.tsx` ;
+ses tests de composant ; un scénario `e2e/ui` où une administratrice retire le propos d'un tiers ;
+la vérification visuelle et ses captures observées ; la modération du seed sur `…0d4` avec les
+assertions correspondantes. La règle backend, elle, est **livrée et prouvée**.
 
 ---
 
