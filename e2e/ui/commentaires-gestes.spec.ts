@@ -25,24 +25,44 @@
 // sont jamais touchés : `scripts/verify-commentaires.sh` les compte.
 
 import { expect, test, type Page } from './fixtures'
-import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import {
+	CLE_SERVICE,
+	MOT_DE_PASSE_SEED,
+	URL_API,
+	enTetesAuthentifies,
+	enTetesService,
+	jetonDe,
+} from '../api/jetons'
 import { capturer } from './captures'
 
 const CARD = '5eed0000-0000-4000-8000-0000000000c2'
 const ADRESSE = `/tracks/conseil-ia/grands-comptes/cards/${CARD}`
 const ADMIN = 'admin@p2enjoy.test'
+const BIZDEV = 'bizdev@p2enjoy.test'
+
+/** Les deux identifiants de profil du seed dont ce fichier a besoin — `docs/SPEC-seed.md` §2.3. */
+const PROFIL_CAMILLE = '5eed0000-0000-4000-8000-000000000011'
+const PROFIL_DRISS = '5eed0000-0000-4000-8000-000000000012'
+
+/** La card du seed qui porte le commentaire RETIRÉ PAR LA MODÉRATION — `…0d4` sur `…0c4`. */
+const CARD_MODEREE = '5eed0000-0000-4000-8000-0000000000c4'
+const ADRESSE_MODEREE = `/tracks/studio-web/refonte/cards/${CARD_MODEREE}`
+
+const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 
 type LigneCommentaire = {
 	readonly id: string
 	readonly body: string
 	readonly edited_at: string | null
 	readonly deleted_at: string | null
+	readonly deleted_by: string | null
+	readonly author_id: string | null
 }
 
-async function connecter(page: Page): Promise<void> {
+async function connecter(page: Page, adresse = ADMIN): Promise<void> {
 	await page.goto('/connexion')
 	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
+	await page.keyboard.type(adresse)
 	await page.keyboard.press('Tab')
 	await page.keyboard.type(MOT_DE_PASSE_SEED)
 	await page.keyboard.press('Enter')
@@ -64,7 +84,8 @@ async function relire(
 	texte: string,
 ): Promise<LigneCommentaire | undefined> {
 	const reponse = await request.get(
-		`${URL_API}/rest/v1/card_comments?card_id=eq.${CARD}&select=id,body,edited_at,deleted_at`,
+		`${URL_API}/rest/v1/card_comments?card_id=eq.${CARD}` +
+			'&select=id,body,edited_at,deleted_at,deleted_by,author_id',
 		{ headers: enTetesService() },
 	)
 	const lignes = (await reponse.json()) as LigneCommentaire[]
@@ -260,6 +281,166 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 		} finally {
 			await effacer(request, id)
 		}
+	})
+})
+
+// @verifies CRM-043 (docs/BACKLOG.md) — le geste de MODÉRATION, INC-072
+// @verifies docs/SPEC-cards.md §13.6 (l'admin supprime, ne modifie pas ; `deleted_by` audite),
+//           §13.10 (à qui le geste est offert), §13.11 (le seed démontre le retrait)
+// @verifies docs/DESIGN_SYSTEM.md §5.10 (action de modération, confirmation distincte)
+// @verifies docs/JOURNAL.md décision 376
+//
+// AUCUNE RÉPONSE N'EST SUBSTITUÉE ICI NON PLUS. Le commentaire du tiers est écrit par le JETON RÉEL
+// de Driss Lemoine — la politique d'insertion exige `author_id = auth.uid()`, la clé de service
+// n'aurait donc pas produit un propos d'autrui crédible —, retiré par la session réelle de Camille
+// Aubert depuis l'écran, et l'effet est relu par l'API avec la clé de service.
+test.describe('la modération, sur la vraie base (INC-072)', () => {
+	/** Publie un commentaire AVEC LE JETON DE DRISS, et rend son identifiant et son texte. */
+	async function publierCommeDriss(
+		request: import('@playwright/test').APIRequestContext,
+	): Promise<{ id: string; texte: string }> {
+		const texte = `Propos d’un tiers ${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
+		const jeton = await jetonDe(BIZDEV)
+		const reponse = await request.post(`${URL_API}/rest/v1/card_comments`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: { card_id: CARD, workspace_id: WORKSPACE, body: texte },
+		})
+		expect(reponse.status(), 'un business_developer peut écrire sur ce channel').toBe(201)
+		const [ligne] = (await reponse.json()) as LigneCommentaire[]
+		expect(ligne?.author_id, 'la ligne porte bien Driss pour auteur').toBe(PROFIL_DRISS)
+		return { id: ligne?.id ?? '', texte }
+	}
+
+	test('Camille retire le propos d’un tiers, et la base nomme le modérateur', async ({
+		page,
+		request,
+	}) => {
+		let id: string | undefined
+		try {
+			await page.setViewportSize({ width: 1440, height: 900 })
+			const { id: idPublie, texte } = await publierCommeDriss(request)
+			id = idPublie
+
+			await connecter(page, ADMIN)
+			await page.goto(ADRESSE)
+			const carte = page.getByTestId('commentaire').filter({ hasText: texte })
+			await expect(carte).toBeVisible()
+
+			// UNE SEULE ACTION, ET C'EST TOUTE LA RÈGLE (§13.6). « Modifier » n'est pas rendu :
+			// réécrire le propos d'autrui est une falsification, que le trigger refuse par
+			// `comment_moderation_limitee`.
+			await expect(carte.getByTestId('actions-moderation')).toHaveCount(1)
+			await expect(carte.getByRole('button', { name: 'Modifier' })).toHaveCount(0)
+			await carte.getByRole('button', { name: 'Supprimer' }).click()
+
+			// La confirmation est DISTINCTE de celle de l'auteur, et nomme la trace nominative.
+			await expect(page.getByTestId('confirmation-moderation')).toBeVisible()
+			await expect(page.getByTestId('confirmation-suppression')).toHaveCount(0)
+			await carte.scrollIntoViewIfNeeded()
+			await capturer(page, 'moderation-confirmation-1440', 'CRM-043')
+
+			// §6 : le premier clic DEMANDE. La base est relue pour le prouver.
+			expect((await relire(request, texte))?.deleted_at).toBeNull()
+
+			await page.getByRole('button', { name: 'Retirer définitivement' }).click()
+
+			// La pierre tombale dit qu'un TIERS est intervenu — la mention diffère de celle d'une
+			// suppression par l'auteur, et elle vient de la donnée.
+			await expect(
+				page.getByTestId('commentaire').getByText('Commentaire retiré par la modération'),
+			).toBeVisible()
+			await capturer(page, 'moderation-pierre-tombale-1440', 'CRM-043')
+
+			const parId = await request.get(
+				`${URL_API}/rest/v1/card_comments?id=eq.${id}` +
+					'&select=id,body,edited_at,deleted_at,deleted_by,author_id',
+				{ headers: enTetesService() },
+			)
+			const [ligne] = (await parId.json()) as LigneCommentaire[]
+			expect(ligne?.deleted_at, 'la pierre tombale est posée').not.toBeNull()
+			expect(ligne?.body, 'le corps est DÉTRUIT, pas caché').toBe('')
+			// L'AUDIT : le retrait est nominatif, et il n'est pas celui de l'auteur.
+			expect(ligne?.deleted_by, 'le modérateur est relevé par le trigger').toBe(PROFIL_CAMILLE)
+			expect(ligne?.author_id, 'l’auteur reste Driss').toBe(PROFIL_DRISS)
+			expect(ligne?.deleted_by).not.toBe(ligne?.author_id)
+			// La modération ne falsifie rien : `edited_at` reste vierge.
+			expect(ligne?.edited_at, 'un retrait ne « modifie » pas le propos').toBeNull()
+		} finally {
+			await effacer(request, id)
+		}
+	})
+
+	// MESURÉ sur la pile : un `business_developer` qui tenterait le `PATCH` reçoit `200` et zéro
+	// ligne. L'écran ne lui offre donc rien — une commande morte serait pire que rien (§5.10).
+	test('un business_developer ne se voit offrir AUCUNE action sur le propos d’un tiers', async ({
+		page,
+		request,
+	}) => {
+		let id: string | undefined
+		try {
+			await page.setViewportSize({ width: 1440, height: 900 })
+			// Le propos est celui de CAMILLE cette fois : Driss doit être un tiers vis-à-vis de lui.
+			const texte = `Propos de l’administratrice ${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
+			const jeton = await jetonDe(ADMIN)
+			const reponse = await request.post(`${URL_API}/rest/v1/card_comments`, {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: { card_id: CARD, workspace_id: WORKSPACE, body: texte },
+			})
+			expect(reponse.status()).toBe(201)
+			const [publie] = (await reponse.json()) as LigneCommentaire[]
+			id = publie?.id
+
+			await connecter(page, BIZDEV)
+			await page.goto(ADRESSE)
+			const carte = page.getByTestId('commentaire').filter({ hasText: texte })
+			await expect(carte).toBeVisible()
+
+			await expect(carte.getByTestId('actions-moderation')).toHaveCount(0)
+			await expect(carte.getByRole('button', { name: 'Supprimer' })).toHaveCount(0)
+			await expect(carte.getByRole('button', { name: 'Modifier' })).toHaveCount(0)
+
+			// LA RÈGLE EST AILLEURS, ET ON LE PROUVE SANS L'INTERFACE (`CLAUDE.md` §10) : le même
+			// geste, tenté avec le jeton réel de Driss, rend `200` et ZÉRO ligne.
+			const tentative = await request.patch(`${URL_API}/rest/v1/card_comments?id=eq.${id}`, {
+				headers: {
+					...enTetesAuthentifies(await jetonDe(BIZDEV)),
+					Prefer: 'return=representation',
+				},
+				data: { body: '', deleted_at: '2026-01-01T00:00:00Z' },
+			})
+			expect(tentative.status(), 'le `USING` filtre : ni erreur, ni effet').toBe(200)
+			expect((await tentative.json()) as unknown[], 'aucune ligne touchée').toHaveLength(0)
+			expect((await relire(request, texte))?.deleted_at, 'le propos est intact').toBeNull()
+		} finally {
+			await effacer(request, id)
+		}
+	})
+
+	// LE SEED DÉMONTRE LA MODÉRATION, ET L'ÉCRAN LE MONTRE — §13.11, décision 376. Sans cette
+	// preuve, la modération du seed serait invisible depuis le produit, et la colonne d'audit ne
+	// serait lue par personne.
+	test('le commentaire retiré du seed se lit comme tel dans le fil', async ({ page, request }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+
+		// L'état de la base est lu D'ABORD : si le seed n'avait pas modéré `…0d4`, l'assertion
+		// d'écran serait rouge sans qu'on sache pourquoi.
+		const reponse = await request.get(
+			`${URL_API}/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4` +
+				'&select=id,body,edited_at,deleted_at,deleted_by,author_id',
+			{ headers: enTetesService() },
+		)
+		const [ligne] = (await reponse.json()) as LigneCommentaire[]
+		expect(ligne?.deleted_by, 'le seed retire `…0d4` avec le jeton de Camille').toBe(PROFIL_CAMILLE)
+		expect(ligne?.author_id, 'l’auteur du propos est Driss').toBe(PROFIL_DRISS)
+
+		await connecter(page, ADMIN)
+		await page.goto(ADRESSE_MODEREE)
+		await expect(
+			page.getByTestId('commentaire').getByText('Commentaire retiré par la modération'),
+		).toBeVisible()
+		// §13.13, point 7 : l'écran dit qu'un tiers est intervenu, jamais qui.
+		await expect(page.getByTestId('commentaire').getByText('Camille Aubert')).toHaveCount(0)
+		await capturer(page, 'moderation-seed-1440', 'CRM-043')
 	})
 })
 

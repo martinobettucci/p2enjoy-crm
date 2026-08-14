@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNES_COMMENTAIRE,
+	SYMBOLE_MODERATION_LIMITEE,
 	LONGUEUR_MAX_CORPS,
 	classerRefusPublication,
 	filtreCanal,
@@ -39,6 +40,9 @@ function ligne(partiel: Partial<CommentaireLu> & { id: string }): CommentaireLu 
 		created_at: '2026-08-05T10:00:00.000Z',
 		edited_at: null,
 		deleted_at: null,
+		// `deleted_by` est nulle par défaut : c'est l'état d'un commentaire vivant, et celui
+		// d'une suppression par la clé de service, dont `auth.uid()` est nul.
+		deleted_by: null,
 		auteur: null,
 		...partiel,
 	}
@@ -80,6 +84,49 @@ describe('projection du fil (docs/DESIGN_SYSTEM.md §5.10)', () => {
 		expect(fil[1]?.supprime).toBe(true)
 		// La base ne porte plus de corps : ce n'est pas un contenu masqué, c'est un contenu détruit.
 		expect(fil[1]?.corps).toBe('')
+	})
+
+	// LA MODÉRATION SE LIT DANS LA DONNÉE, ET LES TROIS CONDITIONS COMPTENT — décision 376,
+	// docs/SPEC-cards.md §13.6. Le trigger relève `auth.uid()` dans `deleted_by` QUEL QUE SOIT
+	// l'appelant : l'auteur qui supprime son propre commentaire y est inscrit lui aussi. Ce n'est
+	// donc pas la présence de `deleted_by` qui fait la modération, c'est sa DIFFÉRENCE avec
+	// `author_id`.
+	it('distingue un retrait par un tiers d’une suppression par l’auteur', () => {
+		const [parLAuteur, parUnTiers, parLeService, vivant] = projeterFil([
+			ligne({
+				id: 'a',
+				body: '',
+				author_id: 'profil-1',
+				deleted_at: '2026-08-05T11:00:00.000Z',
+				deleted_by: 'profil-1',
+			}),
+			ligne({
+				id: 'b',
+				body: '',
+				author_id: 'profil-1',
+				deleted_at: '2026-08-05T12:00:00.000Z',
+				created_at: '2026-08-05T12:00:00.000Z',
+				deleted_by: 'profil-2',
+			}),
+			// La clé de service ne porte aucune revendication `sub` : `auth.uid()` y est nul, et il
+			// n'y a donc personne à nommer. C'est l'état du seed AVANT la décision 376, et il ne
+			// doit pas être annoncé comme une modération.
+			ligne({
+				id: 'c',
+				body: '',
+				author_id: 'profil-1',
+				deleted_at: '2026-08-05T13:00:00.000Z',
+				created_at: '2026-08-05T13:00:00.000Z',
+				deleted_by: null,
+			}),
+			ligne({ id: 'd', created_at: '2026-08-05T14:00:00.000Z', deleted_by: 'profil-2' }),
+		])
+		expect(parLAuteur?.retireParModeration).toBe(false)
+		expect(parUnTiers?.retireParModeration).toBe(true)
+		expect(parLeService?.retireParModeration).toBe(false)
+		// Une ligne VIVANTE ne peut pas être « retirée », même si la colonne portait une valeur.
+		expect(vivant?.supprime).toBe(false)
+		expect(vivant?.retireParModeration).toBe(false)
 	})
 
 	it('porte la date de modification quand le corps a changé, et rien sinon', () => {
@@ -151,6 +198,14 @@ describe('la lecture du fil (§13.10)', () => {
 	it('ne demande ni `workspace_id`, ni `mentions`', () => {
 		expect(COLONNES_COMMENTAIRE).not.toContain('workspace_id')
 		expect(COLONNES_COMMENTAIRE).not.toContain('mentions')
+	})
+
+	// `deleted_by` EST demandée — c'est ce qui distingue un retrait d'une suppression (§13.6) —
+	// mais elle n'est PAS embarquée en profil : le §13.13, point 7, arrête l'écran au fait, jamais
+	// au nom. Une seconde relation ici serait une divulgation qu'aucun document ne porte.
+	it('demande `deleted_by`, et ne l’embarque en aucun profil', () => {
+		expect(COLONNES_COMMENTAIRE).toContain('deleted_by')
+		expect(COLONNES_COMMENTAIRE).not.toContain('card_comments_deleted_by_fkey')
 	})
 
 	it('classe un refus du backend, et ne rend jamais un fil vide à la place', async () => {
@@ -352,5 +407,24 @@ describe('classification des refus de geste', () => {
 		expect(classerRefusGeste(403, '42501', 'denied').nature).toBe('forbidden')
 		expect(classerRefusGeste(undefined, undefined, 'coupure').nature).toBe('network')
 		expect(classerRefusGeste(500, undefined, 'boum').nature).toBe('unknown')
+	})
+
+	// DEUX `P0001` DISENT DEUX CHOSES OPPOSÉES — décision 376, INC-072. Le trigger de la migration
+	// `0035` lève `comment_moderation_limitee` lorsqu'un tiers tente autre chose qu'une
+	// suppression. Les confondre rendrait à un administrateur « ce commentaire a été supprimé »
+	// alors qu'il est vivant : c'est son GESTE qui est borné, pas la ligne qui est morte.
+	//
+	// Le symbole comparé est celui que `raise exception` place dans le `message` de PostgREST,
+	// jamais la phrase du `details` — MESURÉ le 2026-08-14 sur la pile réelle.
+	it('distingue `comment_moderation_limitee` de la pierre tombale', () => {
+		const refus = classerRefusGeste(400, 'P0001', SYMBOLE_MODERATION_LIMITEE)
+		expect(refus.nature).toBe('moderation')
+		expect(refus.detail).toBe(SYMBOLE_MODERATION_LIMITEE)
+	})
+
+	// Le repli reste la pierre tombale : un `P0001` inconnu de ce module ne doit pas être annoncé
+	// comme une borne de modération, qui décrirait un geste que l'appelant n'a pas tenté.
+	it('replie tout autre `P0001` sur la pierre tombale', () => {
+		expect(classerRefusGeste(400, 'P0001', 'comment_immutable_column').nature).toBe('supprime')
 	})
 })

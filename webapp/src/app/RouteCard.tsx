@@ -46,6 +46,7 @@ import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
+import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
@@ -101,6 +102,18 @@ function ContenuCard({
 	// tenue par la politique `UPDATE` de `card_comments` (`CLAUDE.md` §10). Le hook est appelé
 	// avant tout retour anticipé : l'ordre des hooks ne dépend jamais de l'état.
 	const authentification = useAuthentification()
+	const idUtilisateur =
+		authentification.etat.statut === 'authentifie' ? authentification.etat.utilisateur.id : null
+
+	// LE RÔLE DE WORKSPACE, POUR LA MÊME RAISON ET AVEC LA MÊME LIMITE — décision 376, INC-072. Il
+	// décide si le fil OFFRE le geste de modération, jamais s'il est permis : `card_comments_moderation`
+	// le tient. Comme ci-dessus, le hook précède tout retour anticipé.
+	//
+	// Le workspace vient de la card elle-même, et vaut donc `null` tant qu'elle n'est pas chargée :
+	// le rôle est lu par couple `(workspace_id, user_id)`, et il n'existe aucun rôle « global »
+	// dans le modèle. Sans identifiant d'utilisateur, aucune requête n'est émise.
+	const workspaceDeLaCard = etat.statut === 'pret' ? (etat.donnees.card?.workspace_id ?? null) : null
+	const role = useRoleWorkspace(clientCrm, workspaceDeLaCard, idUtilisateur)
 
 	// Pendant le chargement, la zone principale ne montre rien plutôt qu'un « introuvable »
 	// prématuré : annoncer l'absence avant d'avoir la réponse serait une valeur par défaut
@@ -158,11 +171,8 @@ function ContenuCard({
 				idWorkspace={etat.donnees.card.workspace_id}
 				idWorkflow={etat.donnees.card.workflow_id}
 				libellesChamps={libellesChamps(etat.donnees.modele)}
-				idUtilisateur={
-					authentification.etat.statut === 'authentifie'
-						? authentification.etat.utilisateur.id
-						: null
-				}
+				idUtilisateur={idUtilisateur}
+				estAdminWorkspace={estAdministrateur(role.etat)}
 				/>
 			</div>
 		</div>

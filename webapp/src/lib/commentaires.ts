@@ -30,15 +30,30 @@ import type { ClientCrm } from './supabase'
  * L'auteur est embarqué par la FK : nom et avatar arrivent dans la même requête. `author_id`
  * distingue un profil réellement supprimé (`null`) d'une relation momentanément illisible, sans
  * jamais rendre l'identifiant technique.
+ *
+ * `deleted_by` EST DEMANDÉE, ET SEULEMENT COMPARÉE (décision 376). Elle est ce qui distingue un
+ * commentaire retiré par un tiers d'un commentaire supprimé par son auteur (docs/SPEC-cards.md
+ * §13.6). Elle n'est **pas** embarquée en profil : le §13.13, point 7, écrit que l'écran dit
+ * qu'un tiers est intervenu, jamais qui — nommer le modérateur est une autre divulgation, qu'aucun
+ * document ne porte. Une colonne d'audit que rien ne lit n'audite rien ; une colonne d'audit
+ * affichée au-delà de ce qui est spécifié est une fuite.
  */
 export const COLONNES_COMMENTAIRE =
-	'id, card_id, author_id, body, created_at, edited_at, deleted_at, auteur:profiles!card_comments_author_id_fkey(id, full_name, avatar_url)'
+	'id, card_id, author_id, body, created_at, edited_at, deleted_at, deleted_by, auteur:profiles!card_comments_author_id_fkey(id, full_name, avatar_url)'
 
 export type CommentaireLu = Pick<
 	Database['public']['Tables']['card_comments']['Row'],
 	'id' | 'card_id' | 'author_id' | 'body' | 'created_at' | 'edited_at' | 'deleted_at'
 > & {
 	readonly auteur: ProfilAffiche | null
+	/**
+	 * Qui a posé la pierre tombale, ou `null`.
+	 *
+	 * Déclarée ici plutôt que reprise de `Row` : la colonne est née avec la migration `0035` et le
+	 * type généré la porte, mais l'exposer par `Pick` la ferait disparaître silencieusement du
+	 * contrat le jour où le générateur serait rejoué sur une base en retard.
+	 */
+	readonly deleted_by: string | null
 }
 
 /**
@@ -57,6 +72,14 @@ export type CommentaireAffiche = {
 	readonly creeLe: string
 	readonly modifieLe: string | null
 	readonly supprime: boolean
+	/**
+	 * Vrai lorsque la pierre tombale a été posée par quelqu'un d'autre que l'auteur.
+	 *
+	 * C'est un **booléen**, et non l'identifiant du modérateur : le §13.13 de `docs/SPEC-cards.md`,
+	 * point 7, arrête l'écran au fait. Il est faux si `deleted_by` est nul, ce qui est le cas d'une
+	 * suppression par la clé de service — `auth.uid()` y étant nul, il n'y a personne à nommer.
+	 */
+	readonly retireParModeration: boolean
 }
 
 /**
@@ -83,6 +106,14 @@ export function projeterFil(lignes: readonly CommentaireLu[]): readonly Commenta
 			creeLe: ligne.created_at,
 			modifieLe: ligne.edited_at,
 			supprime: ligne.deleted_at !== null,
+			// LES TROIS CONDITIONS SONT NÉCESSAIRES. `deleted_by` non nul seul ne suffit pas — un
+			// auteur qui supprime son propre commentaire y est inscrit lui aussi (le trigger relève
+			// `auth.uid()` sans distinguer) ; c'est la DIFFÉRENCE avec `author_id` qui fait la
+			// modération (docs/SPEC-cards.md §13.6).
+			retireParModeration:
+				ligne.deleted_at !== null &&
+				ligne.deleted_by !== null &&
+				ligne.deleted_by !== ligne.author_id,
 		}))
 }
 
@@ -117,6 +148,8 @@ export type NatureRefusPublication =
 	| 'invalide'
 	/** `P0001` `comment_deleted` : la pierre tombale est définitive (§13.4). */
 	| 'supprime'
+	/** `P0001` `comment_moderation_limitee` : un tiers ne peut que supprimer (§13.6). */
+	| 'moderation'
 	| 'network'
 	| 'unknown'
 
@@ -215,19 +248,46 @@ export type ResultatGeste =
 	| { readonly statut: 'refus'; readonly refus: RefusPublication }
 
 /**
- * Classe le refus d'un geste d'auteur.
+ * Symbole levé par le trigger lorsqu'un tiers tente autre chose qu'une suppression.
+ *
+ * CE N'EST PAS UNE LECTURE DE PHRASE HUMAINE, malgré les apparences. `raise exception
+ * 'comment_moderation_limitee'` place ce **nom** dans le champ `message` de PostgREST, où il est un
+ * identifiant de contrat au même titre que `23514` ou `P0001` ; la phrase explicative, elle, vit
+ * dans `details` et n'est lue par personne. Or c'est précisément `error.message` que les appelants
+ * de ce module transmettent depuis toujours sous le nom de `detail` — le paramètre porte le symbole,
+ * pas la prose. MESURÉ (décision 376) :
+ *
+ * ```
+ * {"code":"P0001","message":"comment_moderation_limitee",
+ *  "details":"Un tiers ne peut que supprimer un commentaire, jamais le modifier."}
+ * ```
+ */
+export const SYMBOLE_MODERATION_LIMITEE = 'comment_moderation_limitee'
+
+/**
+ * Classe le refus d'un geste sur un commentaire existant.
  *
  * `P0001` est ajouté aux natures : le trigger de la pierre tombale refuse toute écriture sur une
  * ligne déjà supprimée — `comment_deleted` (docs/SPEC-cards.md §13.4, lignes *l* et *m*). Le
  * confondre avec « une erreur est survenue » laisserait l'utilisateur réessayer indéfiniment un
  * geste que rien ne rendra possible.
+ *
+ * DEUX `P0001` DISENT DEUX CHOSES OPPOSÉES, ET LE CODE SEUL NE LES DISTINGUE PAS (décision 376).
+ * Depuis la migration `0035`, le même trigger lève aussi `comment_moderation_limitee` — « un tiers
+ * ne peut que supprimer ». Classer les deux sous « ce commentaire a été supprimé » rendrait à un
+ * administrateur un message faux : son commentaire est bien vivant, c'est son geste qui est borné.
+ * C'est la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit.
  */
 export function classerRefusGeste(
 	statutHttp: number | undefined,
 	code: string | undefined,
 	detail: string,
 ): RefusPublication {
-	if (code === 'P0001') return { nature: 'supprime', detail }
+	if (code === 'P0001') {
+		return detail === SYMBOLE_MODERATION_LIMITEE
+			? { nature: 'moderation', detail }
+			: { nature: 'supprime', detail }
+	}
 	return classerRefusPublication(statutHttp, code, detail)
 }
 

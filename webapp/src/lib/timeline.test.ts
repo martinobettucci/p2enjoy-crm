@@ -45,6 +45,7 @@ function commentaire(partiel: Partial<CommentaireAffiche> & { id: string }): Com
 		creeLe: '2026-08-05T10:00:00.000Z',
 		modifieLe: null,
 		supprime: false,
+		retireParModeration: false,
 		...partiel,
 	}
 }

@@ -126,11 +126,12 @@ const LIBELLES_FILTRES: Readonly<Record<Famille, CleTraduction>> = {
 	cycle: 'timeline.filter.cycle',
 }
 
-/** Traductions des quatre refus, écrites une fois — le composant n'en construit aucune. */
+/** Traductions des refus, écrites une fois — le composant n'en construit aucune. */
 const CLES_REFUS: Readonly<Record<NatureRefusPublication, Parameters<typeof t>[0]>> = {
 	forbidden: 'comments.refus.forbidden',
 	invalide: 'comments.refus.invalide',
 	supprime: 'comments.refus.supprime',
+	moderation: 'comments.refus.moderation',
 	network: 'comments.refus.network',
 	unknown: 'comments.refus.unknown',
 }
@@ -174,6 +175,17 @@ export type ProprietesPanneauTimeline = {
 	 * juge — y compris lorsque cette comparaison se trompe.
 	 */
 	readonly idUtilisateur: string | null
+	/**
+	 * Vrai si l'appelant est `admin` du workspace de la card — décision 376, INC-072.
+	 *
+	 * MÊME NATURE QUE `idUtilisateur`, ET MÊME LIMITE : ce n'est PAS un contrôle d'accès
+	 * (`CLAUDE.md` §10). La règle est tenue par la politique `card_comments_moderation`, qui juge
+	 * sur `app.is_workspace_admin` et `app.can_read_card`. Ce booléen ne sert qu'à ne pas offrir un
+	 * geste voué au néant : MESURÉ, un non-administrateur qui tenterait le `PATCH` recevrait `200`
+	 * et **zéro ligne**, soit un bouton qui ne dit rien et ne fait rien — la commande morte que le
+	 * §5.10 du design system refuse. Lorsqu'il se trompe, `sans-effet` le dit.
+	 */
+	readonly estAdminWorkspace: boolean
 }
 
 export function PanneauTimeline({
@@ -183,6 +195,7 @@ export function PanneauTimeline({
 	idWorkflow,
 	libellesChamps,
 	idUtilisateur,
+	estAdminWorkspace,
 }: ProprietesPanneauTimeline) {
 	const { etat, recharger, reprendre } = useFilCommentaires(client, idCard)
 	const [brouillon, setBrouillon] = useState('')
@@ -375,16 +388,21 @@ export function PanneauTimeline({
 				libelles={{ etapes: libellesEtapes, champs: libellesChamps, messages: libellesMessages }}
 				onReprise={reprendre}
 				idUtilisateur={idUtilisateur}
+				estAdminWorkspace={estAdminWorkspace}
 				onModifier={(idCommentaire, corps) =>
 					appliquer(
 						async () => await modifierCommentaire(client as ClientCrm, idCommentaire, corps),
 						'live.comments.edited',
 					)
 				}
-				onSupprimer={(idCommentaire) =>
+				onSupprimer={(idCommentaire, parModeration) =>
 					appliquer(
 						async () => await supprimerCommentaire(client as ClientCrm, idCommentaire),
-						'live.comments.deleted',
+						// L'ANNONCE SUIT LE GESTE, ET NON LA TABLE. Le `PATCH` est le même dans les
+						// deux cas ; ce que la personne vient de faire ne l'est pas. Annoncer
+						// « Commentaire supprimé » à un modérateur lui laisserait croire qu'il a
+						// perdu le sien (docs/DESIGN_SYSTEM.md §8).
+						parModeration ? 'live.comments.moderated' : 'live.comments.deleted',
 					)
 				}
 			/>
@@ -496,6 +514,7 @@ function Fil({
 	libelles,
 	onReprise,
 	idUtilisateur,
+	estAdminWorkspace,
 	onModifier,
 	onSupprimer,
 }: {
@@ -505,8 +524,9 @@ function Fil({
 	readonly libelles: LibellesFil
 	readonly onReprise: () => void
 	readonly idUtilisateur: string | null
+	readonly estAdminWorkspace: boolean
 	readonly onModifier: (idCommentaire: string, corps: string) => PromesseGeste
-	readonly onSupprimer: (idCommentaire: string) => PromesseGeste
+	readonly onSupprimer: (idCommentaire: string, parModeration: boolean) => PromesseGeste
 }) {
 	// Pendant le chargement, le fil ne montre rien plutôt qu'un « aucun événement » prématuré :
 	// annoncer l'absence avant d'avoir la réponse serait une valeur par défaut trompeuse
@@ -546,8 +566,11 @@ function Fil({
 							estAuteur={
 								idUtilisateur !== null && ligne.commentaire.auteurId === idUtilisateur
 							}
+							estAdminWorkspace={estAdminWorkspace}
 							onModifier={(corps) => onModifier(ligne.commentaire.id, corps)}
-							onSupprimer={() => onSupprimer(ligne.commentaire.id)}
+							onSupprimer={(parModeration) =>
+								onSupprimer(ligne.commentaire.id, parModeration)
+							}
 						/>
 					) : (
 						<Evenement ligne={ligne} libelles={libelles} />
@@ -638,13 +661,15 @@ type PromesseResultat = Promise<ResultatGeste>
 function Commentaire({
 	commentaire,
 	estAuteur,
+	estAdminWorkspace,
 	onModifier,
 	onSupprimer,
 }: {
 	readonly commentaire: CommentaireAffiche
 	readonly estAuteur: boolean
+	readonly estAdminWorkspace: boolean
 	readonly onModifier: (corps: string) => PromesseGeste
-	readonly onSupprimer: () => PromesseGeste
+	readonly onSupprimer: (parModeration: boolean) => PromesseGeste
 }) {
 	const auteurSupprime = commentaire.auteurId === null
 	const nom = auteurSupprime
@@ -658,6 +683,18 @@ function Commentaire({
 	// Une pierre tombale n'offre aucun geste : le trigger refuse toute écriture ultérieure
 	// (docs/SPEC-cards.md §13.4), et proposer le contraire serait une commande morte.
 	const actionsOffertes = estAuteur && !commentaire.supprime
+
+	// LA MODÉRATION EST LE GESTE D'UN TIERS, ET IL EST UNIQUE — décision 376, INC-072.
+	//
+	// `!estAuteur` n'est pas une redondance avec la ligne du dessus : un administrateur EST l'auteur
+	// de ses propres commentaires, et doit alors recevoir SES deux actions, non celle d'un
+	// modérateur. Les deux conditions sont donc mutuellement exclusives, et la confirmation qui
+	// s'ouvre n'est pas la même.
+	//
+	// « Supprimer », jamais « Modifier » : c'est la borne du trigger portée telle quelle par la
+	// forme (docs/SPEC-cards.md §13.6). Offrir les deux et laisser le serveur trancher enseignerait
+	// à l'utilisateur une règle fausse — et lui vaudrait un `comment_moderation_limitee`.
+	const moderationOfferte = !estAuteur && estAdminWorkspace && !commentaire.supprime
 
 	// Un seul élément, choisi par `CorpsCommentaire` en `if` successifs. INC-070 : une chaîne de
 	// ternaires dont les branches sont des fragments JSX ouverts par `(` place des identifiants
@@ -696,7 +733,7 @@ function Commentaire({
 						</span>
 					)}
 				</p>
-				{actionsOffertes && mode === 'lecture' ? (
+				{(actionsOffertes || moderationOfferte) && mode === 'lecture' ? (
 					<div
 						className={[
 							// `basis-full` : les actions occupent TOUTE la ligne suivante, elles ne
@@ -708,18 +745,24 @@ function Commentaire({
 							'opacity-0 transition-opacity duration-[var(--transition-duration-fast)]',
 							'group-hover:opacity-100 group-focus-within:opacity-100',
 						].join(' ')}
-						data-testid="actions-commentaire"
+						data-testid={moderationOfferte ? 'actions-moderation' : 'actions-commentaire'}
 					>
-						<Button
-							variante="discret"
-							taille="compacte"
-							onClick={() => {
-								setBrouillon(commentaire.corps)
-								setMode('edition')
-							}}
-						>
-							{t('comments.action.edit')}
-						</Button>
+						{/* « Modifier » n'existe QUE pour l'auteur. Le rendre désactivé pour un
+						    modérateur serait pire que l'omettre : un contrôle grisé annonce un
+						    droit temporairement indisponible, quand celui-ci ne le sera jamais
+						    (docs/DESIGN_SYSTEM.md §8). */}
+						{actionsOffertes ? (
+							<Button
+								variante="discret"
+								taille="compacte"
+								onClick={() => {
+									setBrouillon(commentaire.corps)
+									setMode('edition')
+								}}
+							>
+								{t('comments.action.edit')}
+							</Button>
+						) : null}
 						<Button variante="discret" taille="compacte" onClick={() => setMode('confirmation')}>
 							{t('comments.action.delete')}
 						</Button>
@@ -730,6 +773,7 @@ function Commentaire({
 			<CorpsCommentaire
 				commentaire={commentaire}
 				mode={mode}
+				parModeration={moderationOfferte}
 				brouillon={brouillon}
 				onBrouillon={setBrouillon}
 				enCours={enCours}
@@ -741,7 +785,7 @@ function Commentaire({
 				}}
 				onConfirmer={async () => {
 					setEnCours(true)
-					const applique = await onSupprimer()
+					const applique = await onSupprimer(moderationOfferte)
 					setEnCours(false)
 					if (applique) setMode('lecture')
 				}}
@@ -763,6 +807,7 @@ function Commentaire({
 function CorpsCommentaire({
 	commentaire,
 	mode,
+	parModeration,
 	brouillon,
 	onBrouillon,
 	enCours,
@@ -772,6 +817,8 @@ function CorpsCommentaire({
 }: {
 	readonly commentaire: CommentaireAffiche
 	readonly mode: 'lecture' | 'edition' | 'confirmation'
+	/** La confirmation à ouvrir : celle d'un retrait par un tiers, ou celle de l'auteur. */
+	readonly parModeration: boolean
 	readonly brouillon: string
 	readonly onBrouillon: (valeur: string) => void
 	readonly enCours: boolean
@@ -793,14 +840,29 @@ function CorpsCommentaire({
 	}
 
 	if (mode === 'confirmation') {
-		return <ConfirmationSuppression enCours={enCours} onConfirmer={onConfirmer} onAnnuler={onAnnuler} />
+		return (
+			<ConfirmationSuppression
+				parModeration={parModeration}
+				enCours={enCours}
+				onConfirmer={onConfirmer}
+				onAnnuler={onAnnuler}
+			/>
+		)
 	}
 
 	if (commentaire.supprime) {
 		// Il n'y a rien d'autre à afficher : la base ne porte plus de corps
 		// (docs/SPEC-cards.md §13.4). La place est TENUE — masquer la ligne ferait disparaître un
 		// tour de parole d'une conversation.
-		return <p className="text-base italic text-text-3">{t('comments.deleted')}</p>
+		//
+		// LA MENTION DIT SI UN TIERS EST INTERVENU, JAMAIS QUI (décision 376). Elle vient de la
+		// DONNÉE — `deleted_by` non nul et différent d'`author_id`, comparés dans
+		// `webapp/src/lib/commentaires.ts` —, jamais d'un calcul d'écran. Sans cette lecture, la
+		// colonne d'audit livrée par la migration `0035` ne serait lue par personne, et le seed
+		// modéré ne démontrerait rien de visible. Le nom du modérateur reste hors de l'écran :
+		// docs/SPEC-cards.md §13.13, point 7.
+		const cle = commentaire.retireParModeration ? 'comments.deleted.moderation' : 'comments.deleted'
+		return <p className="text-base italic text-text-3">{t(cle)}</p>
 	}
 
 	// `whitespace-pre-wrap` : le corps est du markdown STOCKÉ, rendu en TEXTE BRUT. L'interpréter
@@ -894,26 +956,47 @@ function FormulaireEdition({
  * commentaire qu'elle concerne — ce qui la rend aussi atteignable au clavier sans piège de focus.
  */
 function ConfirmationSuppression({
+	parModeration,
 	enCours,
 	onConfirmer,
 	onAnnuler,
 }: {
+	readonly parModeration: boolean
 	readonly enCours: boolean
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	// DEUX TEXTES, PAS UN SEUL (décision 376, docs/DESIGN_SYSTEM.md §5.10). Supprimer son propre
+	// commentaire et retirer celui d'un collègue n'engagent pas la même chose : le second nomme le
+	// propriétaire du propos ET la trace nominative laissée. Un texte unique obligerait à choisir
+	// entre taire cette trace au modérateur et alourdir le geste ordinaire de l'auteur.
+	//
+	// Les trois clés sont choisies ensemble et jamais composées : le §23 de `CLAUDE.md` interdit de
+	// construire une phrase par concaténation.
+	const cles: Readonly<Record<'titre' | 'corps' | 'action', CleTraduction>> = parModeration
+		? {
+				titre: 'comments.moderation.confirm.title',
+				corps: 'comments.moderation.confirm.body',
+				action: 'comments.moderation.confirm.action',
+			}
+		: {
+				titre: 'comments.delete.confirm.title',
+				corps: 'comments.delete.confirm.body',
+				action: 'comments.delete.confirm.action',
+			}
+
 	return (
 		<div
 			className="mt-2 rounded-sm bg-danger-soft px-3 py-2"
 			role="group"
-			aria-label={t('comments.delete.confirm.title')}
-			data-testid="confirmation-suppression"
+			aria-label={t(cles.titre)}
+			data-testid={parModeration ? 'confirmation-moderation' : 'confirmation-suppression'}
 		>
-			<p className="text-sm font-medium text-danger-on-soft">{t('comments.delete.confirm.title')}</p>
-			<p className="text-sm text-danger-on-soft">{t('comments.delete.confirm.body')}</p>
+			<p className="text-sm font-medium text-danger-on-soft">{t(cles.titre)}</p>
+			<p className="text-sm text-danger-on-soft">{t(cles.corps)}</p>
 			<div className="mt-2 flex items-center gap-2">
 				<Button variante="destructif" disabled={enCours} onClick={onConfirmer}>
-					{enCours ? t('comments.delete.deleting') : t('comments.delete.confirm.action')}
+					{enCours ? t('comments.delete.deleting') : t(cles.action)}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
 					{t('comments.delete.confirm.cancel')}

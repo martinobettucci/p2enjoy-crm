@@ -35,7 +35,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(96);
+select plan(98);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -530,6 +530,27 @@ select is(
 	'',
 	'…et son corps est VIDE : le seed ne fabrique pas la pierre tombale, il demande la suppression '
 	'et le produit la réalise (`CLAUDE.md` §8)');
+
+-- AJOUTÉE LE 2026-08-14 — décision 376, INC-072. Le seed retirait `…d4` avec la clé de service :
+-- `auth.uid()` y étant nul, `deleted_by` restait NULL, et la pierre tombale démontrait la
+-- destruction du corps mais jamais la MODÉRATION. Le retrait passe désormais par le jeton réel de
+-- l'administratrice, qui n'est pas l'auteur de la ligne : il traverse donc réellement la politique
+-- `card_comments_moderation` et la borne du trigger.
+--
+-- L'assertion porte sur l'IDENTITÉ du modérateur, et non sur « `deleted_by` non nul » : un auteur
+-- qui se supprime lui-même y est inscrit aussi, et la propriété qui fait la modération est la
+-- DIFFÉRENCE avec `author_id` (docs/SPEC-cards.md §13.6).
+select is(
+	(select deleted_by from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d4'),
+	'5eed0000-0000-4000-8000-000000000011'::uuid,
+	'…et il a été retiré par CAMILLE AUBERT, qui n''en est pas l''auteur : le seed démontre la '
+	'modération auditée, ce qu''un retrait par la clé de service ne pouvait pas faire');
+
+select isnt(
+	(select deleted_by from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d4'),
+	(select author_id  from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d4'),
+	'`deleted_by` DIFFÈRE d''`author_id` : c''est cette différence, et non la seule présence de la '
+	'colonne, qui distingue un retrait par un tiers d''une suppression par l''auteur');
 
 select is(
 	(select author_id from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d5'),

@@ -27,6 +27,7 @@ export type Database = {
           card_id: string
           created_at: string
           deleted_at: string | null
+          deleted_by: string | null
           edited_at: string | null
           id: string
           mentions: string[]
@@ -38,6 +39,7 @@ export type Database = {
           card_id: string
           created_at?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           edited_at?: string | null
           id?: string
           mentions?: string[]
@@ -49,6 +51,7 @@ export type Database = {
           card_id?: string
           created_at?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           edited_at?: string | null
           id?: string
           mentions?: string[]
@@ -68,6 +71,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cards"
             referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_comments_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -798,6 +808,7 @@ export type Database = {
           classified_by: string | null
           created_at: string
           direction: string
+          filed_at: string | null
           from_address: string
           from_name: string | null
           id: string
@@ -819,6 +830,7 @@ export type Database = {
           classified_by?: string | null
           created_at?: string
           direction?: string
+          filed_at?: string | null
           from_address: string
           from_name?: string | null
           id?: string
@@ -840,6 +852,7 @@ export type Database = {
           classified_by?: string | null
           created_at?: string
           direction?: string
+          filed_at?: string | null
           from_address?: string
           from_name?: string | null
           id?: string
@@ -1742,6 +1755,19 @@ export type Database = {
         }
         Returns: string
       }
+      marquer_message_range: {
+        Args: { p_message_id: string }
+        Returns: undefined
+      }
+      messages_a_ranger: {
+        Args: { p_account_id: string }
+        Returns: {
+          card_id: string
+          folder: string
+          message_id: string
+          uid: number
+        }[]
+      }
       move_card: {
         Args: { card_id: string; comment?: string; to_step_id: string }
         Returns: {
@@ -1840,6 +1866,7 @@ export type Database = {
       reserver_envois: {
         Args: { p_limite?: number }
         Returns: {
+          attempts: number
           body_text: string
           card_id: string
           cc_addrs: string[]

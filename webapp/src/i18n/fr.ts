@@ -315,6 +315,11 @@ export const fr = {
 	'comments.refus.network': "Le commentaire n'a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.",
 	'comments.refus.unknown': "Le commentaire n'a pas pu être publié.",
 	'comments.refus.supprime': 'Ce commentaire a été supprimé : il ne peut plus être modifié.',
+	// Le second `P0001` du trigger, distingué du premier (décision 376). Le message dit ce que
+	// l'appelant PEUT faire, et non seulement ce qui lui est refusé : un modérateur bloqué sans
+	// autre indication chercherait la panne là où il n'y en a pas.
+	'comments.refus.moderation':
+		"Le commentaire d'une autre personne ne peut pas être modifié. Vous pouvez seulement le retirer.",
 	// Actions de l'auteur — docs/DESIGN_SYSTEM.md §5.10. Le libellé de suppression nomme le
 	// caractère irréversible du geste plutôt que de le laisser à la confirmation seule.
 	'comments.action.edit': 'Modifier',
@@ -329,6 +334,18 @@ export const fr = {
 	'comments.delete.confirm.action': 'Supprimer définitivement',
 	'comments.delete.confirm.cancel': 'Conserver',
 	'comments.delete.deleting': 'Suppression…',
+	// Modération — docs/DESIGN_SYSTEM.md §5.10, docs/SPEC-cards.md §13.6. Le libellé de l'action est
+	// celui de l'auteur : c'est le MÊME geste, et lui inventer un mot de métier — « modérer »,
+	// « retirer » — obligerait l'utilisateur à deviner qu'ils désignent la même chose. La
+	// confirmation, elle, est DISTINCTE : elle nomme le propriétaire du propos et la trace laissée.
+	'comments.moderation.confirm.title': 'Retirer le commentaire d’une autre personne ?',
+	'comments.moderation.confirm.body':
+		'Le texte sera définitivement effacé et la place du commentaire restera visible dans le fil. '
+		+ 'Ce retrait sera enregistré sous votre nom.',
+	'comments.moderation.confirm.action': 'Retirer définitivement',
+	// La pierre tombale d'un retrait par un tiers, distinguée de celle d'une suppression par
+	// l'auteur. Le NOM du modérateur n'est pas nommé — docs/SPEC-cards.md §13.13, point 7.
+	'comments.deleted.moderation': 'Commentaire retiré par la modération',
 	'comments.geste.sans-effet':
 		"Ce commentaire n'est plus le vôtre, ou vous n'écrivez plus sur cette affaire : rien n'a été modifié.",
 	'timeline.actor': 'par {nom}',
@@ -350,6 +367,7 @@ export const fr = {
 	'live.comments.published': 'Commentaire publié',
 	'live.comments.edited': 'Commentaire modifié',
 	'live.comments.deleted': 'Commentaire supprimé',
+	'live.comments.moderated': 'Commentaire retiré',
 
 	// --- Administration de l'arborescence — CRM-075 --------------------------------------
 	// docs/SPEC-administration-arborescence.md, docs/DESIGN_SYSTEM.md §5.13.

@@ -21,7 +21,8 @@
 #   4. le schéma réellement en base porte ce que la spécification annonce : les trois politiques,
 #      les deux colonnes ouvertes en mise à jour et deux seulement, l'absence de privilège
 #      `DELETE`, l'appartenance à la publication de temps réel ;
-#   5. le seed porte ses cinq commentaires, dont un modifié et un supprimé au corps VIDE, et il
+#   5. le seed porte ses cinq commentaires, dont un modifié et un RETIRÉ PAR LA MODÉRATION au
+#      corps VIDE et à la trace nominative, et il
 #      converge — le rejeu ne change rien et ne lève aucun refus ;
 #   6. le panneau est livré : ses tests unitaires, sa preuve d'interface contre le BUILD DE
 #      PRODUCTION, ses captures aux quatre paliers, et le build lui-même ;
@@ -34,7 +35,7 @@
 # La phrase qui tenait ici — « il ne prouve aucune publication par un utilisateur connecté », la
 # webapp étant un appelant anonyme faute d'écran de connexion — n'a plus d'objet : INC-021 est
 # close par `CRM-009`. `e2e/ui/commentaires-gestes.spec.ts` ouvre une session réelle, ÉCRIT dans
-# `card_comments` par l'écran et relit l'effet par l'API avec la clé de service ; les cinq
+# `card_comments` par l'écran et relit l'effet par l'API avec la clé de service ; les huit
 # scénarios rendent le seed intact.
 #
 # `e2e/ui/commentaires.spec.ts` conserve ses substitutions de réponse, et c'est délibéré : elles
@@ -275,6 +276,19 @@ else
 	fail "d4 n'est plus une pierre tombale au corps vide : « $etat_d4 »"
 fi
 
+# RÉVISÉ LE 2026-08-14 — décision 376, INC-072. Le seed retirait `…d4` avec la clé de service, dont
+# `auth.uid()` est nul : `deleted_by` restait NULL, et le seed ne démontrait donc AUCUNE modération.
+# Le contrôle porte sur la DIFFÉRENCE entre `deleted_by` et `author_id`, et non sur la seule
+# présence de la colonne : un auteur qui se supprime lui-même y est inscrit aussi.
+audit_d4=$(psql_db -c "
+	select (deleted_by is not null and deleted_by is distinct from author_id)
+	  from public.card_comments where id='5eed0000-0000-4000-8000-0000000000d4'")
+if [ "$audit_d4" = t ]; then
+	ok "d4 est retiré par un TIERS, et la trace est nominative : deleted_by ≠ author_id (§13.6)"
+else
+	fail "d4 n'est plus une pierre tombale AUDITÉE : le seed cesse de démontrer la modération"
+fi
+
 if [ "$RAPIDE" = false ]; then
 	if "$SEED" >"$TRAVAIL/seed.log" 2>&1; then
 		ok "le seed se rejoue sans erreur — convergence par PRÉSENCE et par ÉTAT (§2.14)"
@@ -364,6 +378,26 @@ else
 	fail "le panneau ne rend pas complètement l'identité consentie de l'auteur"
 fi
 
+# LE GESTE DE MODÉRATION EST OFFERT, ET IL EST UNIQUE — décision 376, INC-072. Sans ce contrôle,
+# rien n'empêcherait une reprise d'offrir « Modifier » à un tiers : l'écran enseignerait alors une
+# règle que le trigger refuse, et le harnais resterait vert.
+if grep -qF 'moderationOfferte' "$COMPOSANT" \
+	&& grep -qF 'estAdminWorkspace' "$COMPOSANT" \
+	&& grep -qF 'comments.moderation.confirm.action' "$COMPOSANT" \
+	&& grep -qF 'comments.deleted.moderation' "$COMPOSANT"; then
+	ok "le panneau offre la modération, avec sa confirmation propre et sa pierre tombale (§13.10)"
+else
+	fail "le panneau n'offre plus le geste de modération : INC-072 rouverte en silence"
+fi
+
+# LE RÔLE N'EST PAS LU PAR LE COMPOSANT, et c'est la même séparation que pour l'ordre du fil : la
+# lecture vit dans `webapp/src/lib/roles.ts`, vérifiable sans navigateur.
+if grep -qF 'workspace_members' "$COMPOSANT"; then
+	fail "le composant lit lui-même workspace_members : la lecture appartient à lib/roles.ts"
+else
+	ok "le composant ne lit aucun rôle : il le reçoit (§13.10)"
+fi
+
 # LES DEUX GESTES DE L'AUTEUR N'ENVOIENT NI `edited_at`, NI `author_id`. Les deux colonnes sont
 # tenues par la base — l'une par le trigger du §13.5, l'autre par le défaut du §13.3 — et les
 # envoyer rendrait `403` : le privilège d'écriture est REFUSÉ au client sur `edited_at`. Le
@@ -398,7 +432,10 @@ if [ "$RAPIDE" = false ]; then
 	# une raison qui ne le regarde pas — il réclamait 564 quand la campagne en portait 585. Le
 	# compte propre aux commentaires est exigé à l'exactitude par les deux fichiers de test
 	# eux-mêmes ; ici, ce qui doit rester vrai est que rien n'a été PERDU.
-	UNIT_PLANCHER=585
+	# RÉVISÉ À 601 LE 2026-08-14 : `CRM-043` ajoute seize tests — la lecture du rôle de workspace
+	# (`webapp/src/lib/roles.test.ts`), la projection d'un retrait par un tiers, la distinction des
+	# deux `P0001`, et les huit tests de composant du geste de modération.
+	UNIT_PLANCHER=601
 	if npm run test:unit >"$TRAVAIL/unit.log" 2>&1; then
 		tests=$(grep -oE 'Tests +[0-9]+ passed' "$TRAVAIL/unit.log" | tail -1 | grep -oE '[0-9]+')
 		if [ "${tests:-0}" -ge "$UNIT_PLANCHER" ]; then
@@ -414,10 +451,13 @@ if [ "$RAPIDE" = false ]; then
 		npx playwright test --config e2e/playwright.config.ts --project=ui "$SPEC_UI" "$SPEC_UI_GESTES" \
 		>"$TRAVAIL/ui.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/ui.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 19 ]; then
-			ok "preuves d'interface — 19 scénarios contre le build de production, dont 5 gestes réels"
+		# RÉVISÉ À 22 LE 2026-08-14 (mécanisme de la décision 51) : `CRM-043` ajoute les trois
+		# scénarios de modération d'INC-072 — le retrait par l'administratrice, le
+		# `business_developer` qui ne se voit rien offrir, et la pierre tombale du seed.
+		if [ "${passes:-0}" -eq 22 ]; then
+			ok "preuves d'interface — 22 scénarios contre le build de production, dont 8 gestes réels"
 		else
-			fail "preuve d'interface verte mais ${passes:-0} scénarios au lieu de 19"
+			fail "preuve d'interface verte mais ${passes:-0} scénarios au lieu de 22"
 		fi
 	else
 		fail_journal "les preuves d'interface ÉCHOUENT" "$TRAVAIL/ui.log"
@@ -426,7 +466,8 @@ if [ "$RAPIDE" = false ]; then
 	for capture in fil-charge-1440 fil-vide-1440 refus-ecriture-1440 commentaire-long-390 \
 		panneau-xl-1440 panneau-lg-1152 panneau-md-900 panneau-sm-390 \
 		commentaire-actions-focus-1440 commentaire-edition-1440 commentaire-modifie-1440 \
-		commentaire-confirmation-1440 commentaire-supprime-1440; do
+		commentaire-confirmation-1440 commentaire-supprime-1440 \
+		moderation-confirmation-1440 moderation-pierre-tombale-1440 moderation-seed-1440; do
 		if [ -s "$CAPTURES/$capture.jpg" ]; then
 			ok "capture $capture.jpg produite"
 		else
@@ -491,6 +532,25 @@ degrader_et_verifier \
 	 create policy card_comments_maj on public.card_comments for update to authenticated
 	   using (author_id = auth.uid() and app.can_write_card(card_id))
 	   with check (author_id = auth.uid() and app.can_write_card(card_id))"
+
+# LA POLITIQUE DE MODÉRATION EST RETIRÉE SEULE, ET C'EST PRÉCISÉMENT CE QUE LA MIGRATION `0035`
+# ANNONÇAIT COMME MESURABLE : « la dégradation d'un harnais peut supprimer la politique de
+# modération SEULE et constater que l'auteur conserve son geste ». Un prédicat unique avec un OU ne
+# permettrait pas cette mesure — la justification de deux politiques distinctes est donc éprouvée,
+# et non seulement écrite.
+degrader_et_verifier \
+	"la politique de modération retirée — aucun admin ne pourrait plus retirer un propos (INC-072)" \
+	"drop policy card_comments_moderation on public.card_comments" \
+	"create policy card_comments_moderation on public.card_comments for update to authenticated
+	   using (app.is_workspace_admin(workspace_id) and app.can_read_card(card_id))
+	   with check (app.is_workspace_admin(workspace_id) and app.can_read_card(card_id))"
+
+# `app.can_read_card` PLUTÔT QUE `app.can_write_card` N'EST PAS DÉGRADÉ ICI, ET LE MOTIF EST
+# MESURÉ : Camille Aubert détient le droit d'écriture sur le channel de `…0d2`, si bien que la
+# substitution laisserait les assertions de 0017 VERTES. Une dégradation qui ne dégrade rien est
+# pire qu'absente — elle affirme une preuve qui n'existe pas. Éprouver cette moitié demanderait un
+# administrateur dont le droit fin est retombé à `viewer`, que le seed ne porte pas ; l'écart est
+# nommé plutôt que maquillé.
 
 degrader_et_verifier \
 	"le trigger de mise à jour retiré — la pierre tombale garderait son corps" \

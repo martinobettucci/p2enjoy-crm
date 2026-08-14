@@ -605,7 +605,22 @@ type _vueDerivationColonnes = Expect<
 // RÉVISÉ UNE DIXIÈME FOIS PAR `CRM-059`, qui livre trois fonctions de résilience. Une seule est
 // appelable par le client — `etat_messagerie`, qui montre l'état RÉEL ; les deux autres sont le
 // fait du worker.
-type _lesVingtQuatreFonctions = Expect<
+//
+// RÉVISÉ UNE ONZIÈME FOIS LE 2026-08-14, ET LE RETARD EST DE NOUVEAU NOMMÉ PLUTÔT QUE TU. La
+// reprise d'INC-072 (`CRM-043`, décision 376) avait besoin de `card_comments.deleted_by` dans les
+// types versionnés : la migration `0035` l'a créée sans les régénérer, et le compilateur refusait
+// la colonne dans le `select` du fil. MESURÉ AVANT TOUTE MODIFICATION — `npm run types:check` est
+// rouge **sur la ligne de base**, et l'écart porte sur QUATRE sources, dont trois étrangères à
+// cette unité : `mail_messages.filed_at`, la colonne `attempts` du retour de `reserver_envois`, et
+// les deux fonctions ci-dessous. Régénérer est le seul geste honnête sur un fichier ENGENDRÉ — le
+// corriger à la main pour la seule colonne due l'aurait laissé dans un état qu'aucun générateur ne
+// produit —, et cette assertion a joué exactement comme elle est faite pour le faire.
+//
+// Les deux nouvelles sont le fait du RANGEMENT, et **aucune n'est appelable par le client** :
+// `messages_a_ranger` et `marquer_message_range` sont réservées au worker `mail-sync`, comme
+// `dossiers_a_renommer`. Le type les voit, la base les refuse — c'est la limite que ce bloc
+// répète depuis la première révision. Le nom du type suit le compte : vingt-six.
+type _lesVingtSixFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -622,6 +637,8 @@ type _lesVingtQuatreFonctions = Expect<
     | 'mail_folder_map_reparenter'
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
+    | 'marquer_message_range'
+    | 'messages_a_ranger'
     | 'mail_outbound_identity_credentials'
     | 'mail_outbound_identity_record_check'
     | 'move_card'
@@ -803,7 +820,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtQuatreFonctions,
+  _lesVingtSixFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

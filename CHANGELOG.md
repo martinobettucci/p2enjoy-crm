@@ -13,6 +13,42 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **La modération d'un commentaire a enfin un geste dans le produit — INC-072 close**
+  (conception : décision 376 ; règle serveur livrée le même jour par la décision 374). La règle
+  existait, prouvée en pgTAP, et **personne ne pouvait s'en servir** : `PanneauTimeline.tsx`
+  calculait `actionsOffertes = estAuteur && !supprime`, et la webapp n'avait aucune notion du rôle
+  de workspace de l'utilisateur courant. C'est la forme d'INC-085 — *un droit qui n'a pas de chemin
+  n'est pas un droit*.
+  - **Le rôle courant est lu côté client**, dans `workspace_members` filtré sur
+    `(workspace_id, user_id)` — nouveau module `webapp/src/lib/roles.ts`. Ce n'est **pas** une
+    autorisation (`CLAUDE.md` §10) : la politique `card_comments_moderation` tient la règle, et le
+    doute — rôle en chargement, illisible, inconnu de la contrainte — ne vaut jamais permission.
+  - **Une seule action sur le commentaire d'un tiers : *Supprimer*.** Jamais *Modifier*, et pas
+    même désactivé — un contrôle grisé annonce un droit temporairement indisponible, quand
+    celui-ci ne le sera jamais. La forme porte ainsi la borne du trigger au lieu de la contredire.
+  - **Elle n'est offerte qu'à qui peut aboutir.** MESURÉ : un non-administrateur qui tenterait le
+    geste reçoit `200` et **zéro ligne**, soit un bouton qui ne dit rien et ne fait rien. Offrir
+    *Supprimer* à tous en laissant le `USING` filtrer aurait été plus court, et c'est ce que le
+    §5.10 du design system refuse déjà à propos de la pierre tombale.
+  - **Une confirmation distincte de celle de l'auteur** : elle nomme que le commentaire appartient
+    à quelqu'un d'autre, et que **le retrait sera enregistré sous votre nom**.
+  - **La pierre tombale dit si un tiers est intervenu** — « Commentaire retiré par la modération »
+    au lieu de « Commentaire supprimé ». La distinction vient de la donnée : `deleted_by` non nul
+    **et différent** d'`author_id`. Une colonne d'audit que rien ne lit n'audite rien. Le **nom** du
+    modérateur reste hors de l'écran : dire *qu'un tiers* a retiré un propos et dire *qui* l'a
+    retiré ne sont pas la même divulgation, et aucun document ne porte la seconde.
+  - **Deux `P0001` disaient deux choses opposées, et le classificateur n'en voyait qu'une.**
+    `comment_moderation_limitee` était rendu comme `comment_deleted` : un administrateur bloqué
+    lisait « ce commentaire a été supprimé » alors que le commentaire était vivant et que c'était
+    son geste qui était borné. Les deux natures sont désormais distinguées par le symbole levé,
+    jamais par une phrase humaine.
+  - **Le seed retire `…0d4` avec le jeton RÉEL de l'administratrice**, et non plus par la clé de
+    service dont `auth.uid()` est nul : `deleted_by` restait alors nul, et la pierre tombale ne
+    démontrait que la destruction du corps. Le propos, « Note interne publiée par erreur sur la
+    mauvaise affaire » écrit par Driss Lemoine, est le cas de modération exact du §13.6.
+
 ### Corrigé
 
 - **Lot G : le motif d'une transition est enfin conservé, « vide » s'entend des blancs Unicode, et

@@ -32,6 +32,7 @@ function ligne(partiel: Partial<CommentaireLu> & { id: string }): CommentaireLu 
 		created_at: '2026-08-05T10:00:00.000Z',
 		edited_at: null,
 		deleted_at: null,
+		deleted_by: null,
 		auteur: null,
 		...partiel,
 	}
@@ -207,6 +208,9 @@ function clientFactice({
 function monter(
 	options: Parameters<typeof clientFactice>[0] = {},
 	idUtilisateur: string | null = null,
+	// Par défaut, l'appelant n'est PAS administrateur : les scénarios existants mesurent alors
+	// exactement ce qu'ils mesuraient avant que la modération n'existe.
+	estAdminWorkspace = false,
 ) {
 	const { client, journal } = clientFactice(options)
 	render(
@@ -217,6 +221,7 @@ function monter(
 			idWorkflow="wf-1"
 			libellesChamps={new Map([['champ-1', 'Budget']])}
 			idUtilisateur={idUtilisateur}
+			estAdminWorkspace={estAdminWorkspace}
 		/>,
 	)
 	return journal
@@ -846,5 +851,171 @@ describe('les gestes de l’auteur (docs/DESIGN_SYSTEM.md §5.10)', () => {
 		await userEvent.click(screen.getByRole('button', { name: fr['comments.edit.save'] }))
 
 		expect(await screen.findByText(fr['comments.refus.supprime'])).not.toBeNull()
+	})
+})
+
+// @verifies CRM-043 (docs/BACKLOG.md) — le geste de modération, INC-072
+// @verifies docs/SPEC-cards.md §13.6 (l'admin supprime, ne modifie pas), §13.10 (à qui le geste
+//           est offert), §13.13 point 7 (le nom du modérateur reste hors de l'écran)
+// @verifies docs/DESIGN_SYSTEM.md §5.10 (action de modération, confirmation distincte)
+// @verifies docs/JOURNAL.md décision 376
+describe('la modération (docs/SPEC-cards.md §13.6, INC-072)', () => {
+	const DAUTRUI = { id: 'a', author_id: 'profil-1' }
+
+	// LE CŒUR DE L'UNITÉ. Avant la décision 376, `actionsOffertes = estAuteur && !supprime`
+	// n'offrait rien ici, et aucun administrateur ne pouvait modérer depuis le produit — la forme
+	// exacte d'INC-085 : un droit qui n'a pas de chemin n'est pas un droit.
+	it('offre au seul administrateur UNE action sur le commentaire d’autrui — Supprimer', async () => {
+		monter({ lignes: [ligne(DAUTRUI)] }, 'profil-2', true)
+		await screen.findByText('Un commentaire.')
+
+		expect(screen.getByRole('button', { name: fr['comments.action.delete'] })).not.toBeNull()
+		// « Modifier » n'est PAS rendu — même pas désactivé. Un contrôle grisé annonce un droit
+		// temporairement indisponible ; celui-ci ne le sera jamais (§13.6 : réécrire le propos
+		// d'autrui est une falsification, pas une modération).
+		expect(screen.queryByRole('button', { name: fr['comments.action.edit'] })).toBeNull()
+		expect(screen.getByTestId('actions-moderation')).not.toBeNull()
+	})
+
+	// MESURÉ sur la pile réelle le 2026-08-14 : un `business_developer` qui tenterait le geste
+	// reçoit `200` et ZÉRO ligne — donc une commande qui ne dit rien et ne fait rien. Le §5.10 du
+	// design system refuse déjà exactement cela à propos de la pierre tombale.
+	it('n’offre rien à un non-administrateur sur le commentaire d’autrui', async () => {
+		monter({ lignes: [ligne(DAUTRUI)] }, 'profil-2', false)
+		await screen.findByText('Un commentaire.')
+
+		expect(screen.queryByTestId('actions-moderation')).toBeNull()
+		expect(screen.queryByRole('button', { name: fr['comments.action.delete'] })).toBeNull()
+	})
+
+	// Un administrateur EST l'auteur de ses propres commentaires : il doit alors recevoir SES deux
+	// actions, non celle d'un modérateur. Les deux régimes sont mutuellement exclusifs.
+	it('rend à l’administrateur ses DEUX actions sur son propre commentaire', async () => {
+		monter({ lignes: [ligne({ id: 'a', author_id: 'profil-2' })] }, 'profil-2', true)
+		await screen.findByText('Un commentaire.')
+
+		expect(screen.getByRole('button', { name: fr['comments.action.edit'] })).not.toBeNull()
+		expect(screen.getByTestId('actions-commentaire')).not.toBeNull()
+		expect(screen.queryByTestId('actions-moderation')).toBeNull()
+	})
+
+	// La pierre tombale reste définitive POUR TOUT LE MONDE, `admin` compris — le trigger refuse
+	// toute écriture ultérieure, et la politique de modération ne l'ouvre pas davantage (§13.6).
+	it('n’offre aucune modération sur un commentaire déjà supprimé', async () => {
+		monter(
+			{
+				lignes: [
+					ligne({ ...DAUTRUI, body: '', deleted_at: '2026-08-05T12:00:00.000Z' }),
+				],
+			},
+			'profil-2',
+			true,
+		)
+		await screen.findByText(fr['comments.deleted'])
+
+		expect(screen.queryByTestId('actions-moderation')).toBeNull()
+	})
+
+	it('demande une confirmation DISTINCTE, qui nomme la trace nominative', async () => {
+		monter({ lignes: [ligne(DAUTRUI)] }, 'profil-2', true)
+		await screen.findByText('Un commentaire.')
+
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.action.delete'] }))
+
+		expect(await screen.findByTestId('confirmation-moderation')).not.toBeNull()
+		expect(screen.queryByTestId('confirmation-suppression')).toBeNull()
+		expect(screen.getByText(fr['comments.moderation.confirm.body'])).not.toBeNull()
+		expect(
+			screen.getByRole('button', { name: fr['comments.moderation.confirm.action'] }),
+		).not.toBeNull()
+	})
+
+	// §6 du design system : le premier clic DEMANDE, il ne retire pas. Le journal du client
+	// factice le prouve mieux que l'absence de changement à l'écran.
+	it('ne retire rien avant la confirmation, et pose les deux colonnes ensuite', async () => {
+		const journal = monter({ lignes: [ligne(DAUTRUI)] }, 'profil-2', true)
+		await screen.findByText('Un commentaire.')
+
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.action.delete'] }))
+		expect(journal.miseAJour).toBeUndefined()
+
+		await userEvent.click(
+			screen.getByRole('button', { name: fr['comments.moderation.confirm.action'] }),
+		)
+		// Le MÊME `PATCH` que celui de l'auteur : c'est le trigger qui distingue les deux gestes,
+		// pas le client (§13.6). `deleted_by` n'est jamais envoyée — elle est fermée au client.
+		expect(journal.miseAJour?.['body']).toBe('')
+		expect(journal.miseAJour?.['deleted_at']).toEqual(expect.any(String))
+		expect(journal.miseAJour?.['deleted_by']).toBeUndefined()
+	})
+
+	// La pierre tombale d'un retrait par un tiers se lit dans la DONNÉE : `deleted_by` non nul et
+	// différent d'`author_id`. Sans cette lecture, la colonne d'audit livrée par la migration
+	// `0035` ne serait lue par personne (décision 376).
+	it('nomme un retrait par la modération, sans nommer le modérateur', async () => {
+		monter(
+			{
+				lignes: [
+					ligne({
+						...DAUTRUI,
+						body: '',
+						deleted_at: '2026-08-05T12:00:00.000Z',
+						deleted_by: 'profil-2',
+					}),
+				],
+			},
+			'profil-2',
+			true,
+		)
+
+		expect(await screen.findByText(fr['comments.deleted.moderation'])).not.toBeNull()
+		expect(screen.queryByText(fr['comments.deleted'])).toBeNull()
+		// §13.13, point 7 : l'écran dit qu'un tiers est intervenu, jamais qui.
+		expect(screen.queryByText(/profil-2/)).toBeNull()
+	})
+
+	it('garde « Commentaire supprimé » quand l’auteur s’est supprimé lui-même', async () => {
+		monter(
+			{
+				lignes: [
+					ligne({
+						...DAUTRUI,
+						body: '',
+						deleted_at: '2026-08-05T12:00:00.000Z',
+						deleted_by: 'profil-1',
+					}),
+				],
+			},
+			'profil-2',
+			true,
+		)
+
+		expect(await screen.findByText(fr['comments.deleted'])).not.toBeNull()
+		expect(screen.queryByText(fr['comments.deleted.moderation'])).toBeNull()
+	})
+
+	// Le second `P0001` du trigger. Rendre ici le message de la pierre tombale serait faux : le
+	// commentaire est vivant, c'est le geste qui est borné (décision 376).
+	it('le refus `comment_moderation_limitee` a son propre message', async () => {
+		monter(
+			{
+				lignes: [ligne(DAUTRUI)],
+				miseAJour: {
+					error: { message: 'comment_moderation_limitee', code: 'P0001' },
+					status: 400,
+				},
+			},
+			'profil-2',
+			true,
+		)
+		await screen.findByText('Un commentaire.')
+
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.action.delete'] }))
+		await userEvent.click(
+			screen.getByRole('button', { name: fr['comments.moderation.confirm.action'] }),
+		)
+
+		expect(await screen.findByText(fr['comments.refus.moderation'])).not.toBeNull()
+		expect(screen.queryByText(fr['comments.refus.supprime'])).toBeNull()
 	})
 })

@@ -504,8 +504,9 @@ VALEURS_DERIVE=(
 #
 #   * deux auteurs sur `…0c1` font un FIL, ce qu'un commentaire isolé ne démontre pas ;
 #   * le troisième est MODIFIÉ : `edited_at` renseigné, état démontré et non seulement décrit ;
-#   * celui de `…0c4` est SUPPRIMÉ — pierre tombale, corps vide —, et il vit dans un channel d'un
-#     AUTRE track, pour que la suppression ne soit pas prouvée sur le seul channel déjà couvert ;
+#   * celui de `…0c4` est RETIRÉ PAR LA MODÉRATION — pierre tombale, corps vide, `deleted_by`
+#     différent d'`author_id` (INC-072, décision 376) —, et il vit dans un channel d'un AUTRE
+#     track, pour que le retrait ne soit pas prouvé sur le seul channel déjà couvert ;
 #   * celui de `…0c5` porte pour auteur Farida Nowak, `viewer` du workspace. Il est le TÉMOIN de la
 #     preuve de lecture : sans lui, « le viewer lit `200` et `[]` » serait vrai que la RLS refuse ou
 #     qu'elle autorise tout (décision 50). C'est la seule ligne du seed dont l'auteur ne pourrait
@@ -513,8 +514,8 @@ VALEURS_DERIVE=(
 #     seed le dit plutôt que de le maquiller.
 #
 # `workspace_id` n'est JAMAIS envoyé : le trigger de la migration 15 le dérive de la card, quelle
-# que soit la valeur fournie. `edited_at` et `deleted_at` non plus — ils sont posés par le produit,
-# dans les deux mises à jour conditionnelles de la section 8 quinquies.
+# que soit la valeur fournie. `edited_at`, `deleted_at` et `deleted_by` non plus — ils sont posés
+# par le produit, dans les deux mises à jour conditionnelles de la section 8 quinquies.
 #
 # id | card | auteur | corps
 COMMENTAIRES=(
@@ -1151,6 +1152,21 @@ JETON_ADMIN=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
 [ -n "$JETON_ADMIN" ] || die "connexion de l'administrateur seedé impossible : la copie ne peut pas
         être créée par la véritable route."
 
+# Rend le code HTTP d'un appel effectué avec le jeton RÉEL de l'administratrice.
+#
+# ELLE EST DÉFINIE ICI, ET NON PLUS À LA SECTION 8 SEXIES qui l'a introduite : la section 8
+# quinquies en a besoin depuis la décision 376 pour retirer `…d4` comme un modérateur le ferait.
+# La dupliquer aurait garanti que les deux copies divergent.
+api_admin() {
+	local method=$1 chemin=$2
+	shift 2
+	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$API$chemin" \
+		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+		-H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' \
+		"$@"
+}
+
 # L'état réel est relu AVANT toute écriture — décision 221. Trois questions, et leurs réponses
 # décident de tout ce qui suit : combien de copies existent, laquelle est conforme à son contrat, et
 # le channel la suit-il déjà.
@@ -1635,25 +1651,43 @@ else
 	info "d3 déjà modifié : rien à faire (convergence par état)"
 fi
 
-# --- L'état « supprimé », idem ------------------------------------------------------------------
+# --- L'état « retiré par la modération », posé par un MODÉRATEUR RÉEL --------------------------
+# docs/SPEC-cards.md §13.11, docs/SPEC-seed.md §2.14, décision 376, INC-072.
+#
 # La date envoyée est ignorée : le trigger pose `now()` et VIDE le corps. Le seed ne fabrique donc
-# aucune pierre tombale — il demande la suppression, et le produit la réalise.
+# aucune pierre tombale — il demande le retrait, et le produit le réalise.
+#
+# LE JETON RÉEL DE L'ADMINISTRATRICE, ET NON LA CLÉ DE SERVICE, ET C'EST TOUT L'INTÉRÊT DE LA
+# LIGNE. La clé de service ne porte aucune revendication `sub` : `auth.uid()` y est nul, le trigger
+# écrit donc `deleted_by = NULL`, et la pierre tombale démontre la destruction du corps mais JAMAIS
+# la modération. Or `…d4` porte « Note interne publiée par erreur sur la mauvaise affaire », écrite
+# par Driss Lemoine : c'est littéralement le propos qu'une administratrice retirerait, et le seul
+# geste qui le démontre est celui qu'un modérateur ferait.
+#
+# Camille Aubert n'est PAS l'auteur de `…d4`. Ce `PATCH` traverse donc réellement la politique
+# `card_comments_moderation` et la borne du trigger : il ne pose que `deleted_at`, et toute autre
+# écriture rendrait `comment_moderation_limitee`. Le seed éprouve ainsi la règle en l'appliquant.
 etat_d4=$(curl -s "$API/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4&select=deleted_at" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].deleted_at // "null"')
 
 if [ "$etat_d4" = 'null' ]; then
-	code=$(api PATCH '/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4' \
-		-H 'Prefer: return=representation' -d '{"deleted_at": "2026-08-04T15:00:00Z"}')
-	attendu "$code" "suppression du commentaire d4" 200
+	code=$(api_admin PATCH '/rest/v1/card_comments?id=eq.5eed0000-0000-4000-8000-0000000000d4' \
+		-H 'Prefer: return=representation' -d '{"body": "", "deleted_at": "2026-08-04T15:00:00Z"}')
+	attendu "$code" "retrait du commentaire d4 par la modération" 200
 	corps_d4=$(jq -r '.[0].body' "$CORPS")
-	[ "$corps_d4" = '' ] || die "d4 supprimé mais son corps n'est pas vide : « $corps_d4 »."
-	info "d4 supprimé : corps VIDÉ par le trigger, et la date envoyée ignorée au profit de now()"
+	[ "$corps_d4" = '' ] || die "d4 retiré mais son corps n'est pas vide : « $corps_d4 »."
+	auteur_du_retrait=$(jq -r '.[0].deleted_by // "null"' "$CORPS")
+	[ "$auteur_du_retrait" = '5eed0000-0000-4000-8000-000000000011' ] \
+		|| die "d4 retiré mais deleted_by vaut « $auteur_du_retrait » : le retrait n'a pas été fait
+        par l'administratrice, et le seed ne démontre alors AUCUNE modération (INC-072)."
+	info "d4 retiré par Camille Aubert : corps VIDÉ par le trigger, deleted_by relevé, date ignorée"
 else
-	info "d4 déjà supprimé : rien à faire (convergence par état)"
+	info "d4 déjà retiré : rien à faire (convergence par état)"
 fi
 
-info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
+info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un RETIRÉ PAR LA MODÉRATION — docs/SPEC-cards.md §13.11"
 info "Celui de la card c5 porte pour auteur le viewer : témoin de la preuve de lecture (décision 50)"
+info "Celui de la card c4 est retiré par un TIERS : deleted_by diffère d'author_id (INC-072, décision 376)"
 
 # --- 8 sexies. Événements de timeline — docs/SPEC-cards.md §14.11, docs/SPEC-seed.md §2.15 -----
 # LE SEED N'ÉCRIT AUCUN ÉVÉNEMENT, ET IL NE LE PEUT PAS. `card_events` n'accorde le privilège
@@ -1678,17 +1712,6 @@ info "Celui de la card c5 porte pour auteur le viewer : témoin de la preuve de 
 
 echo
 say "8 sexies. Événements de timeline"
-
-# Rend le code HTTP d'un appel effectué avec le jeton RÉEL de l'administratrice.
-api_admin() {
-	local method=$1 chemin=$2
-	shift 2
-	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$API$chemin" \
-		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
-		-H "Authorization: Bearer $JETON_ADMIN" \
-		-H 'Content-Type: application/json' \
-		"$@"
-}
 
 # Nombre d'événements d'un type déjà portés par une card, lu avec la clé de service.
 evenements_de() {
