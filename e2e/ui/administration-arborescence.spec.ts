@@ -10,10 +10,29 @@
 // `focus()` (même discipline que `e2e/ui/commentaires-gestes.spec.ts`). Aucune fonction interne
 // n'est appelée : chaque geste part d'un vrai clic ou d'une vraie frappe.
 //
-// Le scénario RESTE le seed à son état initial : il crée ses propres objets, sous des slugs
-// préfixés `e2e-arbo-` qui n'entrent en collision avec aucun slug seedé, et les archive en épilogue
-// — la suppression n'existant pas (docs/SPEC-administration-arborescence.md §12). L'épilogue passe
-// par la clé de service, en filet de sécurité, indépendamment du point où le scénario a pu échouer.
+// Le scénario REND le seed à son état initial : il crée ses propres objets, sous des slugs préfixés
+// `e2e-arbo-` et `e2e-canal-` qui n'entrent en collision avec aucun slug seedé, et les RETIRE en
+// épilogue. L'épilogue passe par la clé de service, en filet de sécurité, indépendamment du point où
+// le scénario a pu échouer.
+//
+// INC-099 — POURQUOI L'ÉPILOGUE SUPPRIME AU LIEU D'ARCHIVER. Il archivait, au motif que « la
+// suppression n'existe pas » (docs/SPEC-administration-arborescence.md §12). C'est vrai DU PRODUIT
+// — aucun écran, aucune route applicative n'efface un track ni un channel — et cela ne dit rien de
+// ce qu'une preuve doit rendre. Une ligne archivée reste une ligne : les quatre scénarios ci-dessous
+// laissaient donc DEUX tracks et DEUX channels derrière eux, ce qui rendait rouges les assertions
+// 75 et 76 de `supabase/tests/0004_tracks.test.sql` — « le seed pose quatre tracks », `have: 6
+// want: 4`, puis « l'un d'eux est archivé », `have: 3 want: 1`. La seconde est décisive : elle ne
+// rougirait pas si le résidu n'était pas précisément archivé.
+//
+// La règle appliquée ici est celle que la décision 362 a rendue pour INC-091, sur `mail_messages` :
+// chaque preuve purge ce qu'elle a déposé, dans son propre `finally`. Le geste employé n'est pas
+// un mécanisme neuf — `supprimerParSlug` était déjà appelée à l'ENTRÉE de chaque scénario, et par
+// la même clé de service ; seule sa place changeait. Le nettoyage d'entrée est conservé : il
+// protège du `23505` que laisserait une exécution tuée avant son `finally`.
+//
+// Ce que cela ne dit pas : la suppression n'est pas ouverte au produit, et aucune assertion de ce
+// fichier ne l'exerce comme un geste d'utilisateur. C'est un geste d'exploitation de la preuve sur
+// ses PROPRES lignes, jamais sur une ligne seedée — les slugs sont préfixés pour cela.
 
 import { expect, test, type Page } from './fixtures'
 import type { Locator } from '@playwright/test'
@@ -84,19 +103,12 @@ function listeChannels(page: Page, nomTrack: string): Locator {
 	return page.getByRole('list', { name: `Channels du track ${nomTrack}` })
 }
 
-/** Filet de sécurité : archive par slug avec la clé de service, quel que soit le point d'échec. */
-async function archiverParSlug(
-	request: import('@playwright/test').APIRequestContext,
-	chemin: string,
-	slug: string,
-): Promise<void> {
-	await request.patch(`${chemin}?slug=eq.${slug}`, {
-		headers: { ...enTetesService(), Prefer: 'return=minimal' },
-		data: { archived_at: '2026-08-12T00:00:00Z' },
-	})
-}
-
-/** Nettoyage préalable : une exécution interrompue ne doit pas faire échouer celle-ci sur un `23505`. */
+/** Purge par slug avec la clé de service (INC-099, règle de la décision 362).
+ *
+ * Employée DEUX fois par scénario, et pour deux motifs distincts :
+ *  - à l'entrée, pour qu'une exécution interrompue ne fasse pas échouer celle-ci sur un `23505` ;
+ *  - dans le `finally`, pour que la preuve rende la table dans l'état où elle l'a trouvée, quel que
+ *    soit son point d'échec. */
 async function supprimerParSlug(
 	request: import('@playwright/test').APIRequestContext,
 	chemin: string,
@@ -180,7 +192,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 			await expect(ligneArchivee.getByRole('button', { name: `Archiver ${nomRenomme}` })).toBeVisible()
 		} finally {
-			await archiverParSlug(request, CHEMIN_TRACKS, slug)
+			await supprimerParSlug(request, CHEMIN_TRACKS, slug)
 		}
 	})
 
@@ -246,7 +258,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await ligneArchivee.getByRole('button', { name: `Désarchiver ${nomRenomme}` }).click()
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 		} finally {
-			await archiverParSlug(request, CHEMIN_CHANNELS, slug)
+			await supprimerParSlug(request, CHEMIN_CHANNELS, slug)
 		}
 	})
 })
@@ -326,7 +338,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 			await page.keyboard.press('Enter')
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 		} finally {
-			await archiverParSlug(request, CHEMIN_TRACKS, slug)
+			await supprimerParSlug(request, CHEMIN_TRACKS, slug)
 		}
 	})
 
@@ -401,7 +413,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 			await page.keyboard.press('Enter')
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 		} finally {
-			await archiverParSlug(request, CHEMIN_CHANNELS, slug)
+			await supprimerParSlug(request, CHEMIN_CHANNELS, slug)
 		}
 	})
 })
