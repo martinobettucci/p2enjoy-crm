@@ -139,10 +139,13 @@ const CLES_REFUS: Readonly<Record<NatureRefusPublication, Parameters<typeof t>[0
 /**
  * Alias de la promesse rendue par un geste d'auteur.
  *
- * Il n'est pas décoratif : écrite `=> Promise<boolean>`, la signature fait un faux positif du
- * contrôle de textes en dur de `i18n.test.ts`, dont l'expression régulière voit un nœud JSX dans
- * la suite `>`…`<` (INC-070). `Authentification.tsx` emploie déjà ce contournement, et le nommer
- * ici évite d'affaiblir un contrôle qui rend par ailleurs service.
+ * Il fut d'abord un contournement : écrite `=> Promise<boolean>`, la signature faisait un faux
+ * positif du contrôle de textes en dur de `i18n.test.ts`, dont l'expression régulière voyait un
+ * nœud JSX dans la suite `>`…`<` (INC-070). Le contrôle lit désormais l'arbre syntaxique, et une
+ * signature générique n'y est pas un texte (`docs/JOURNAL.md` décisions 296 et 381).
+ *
+ * L'alias est CONSERVÉ, parce qu'il nomme la valeur de retour commune aux deux gestes d'auteur et
+ * se lit mieux que la signature répétée. Ce qui disparaît est la raison contrainte de l'écrire.
  */
 type PromesseGeste = Promise<boolean>
 

@@ -83,16 +83,17 @@ const AUCUNE: Ouverture = { type: 'aucune' }
 /**
  * Une écriture à exécuter, telle que `executer` la reçoit.
  *
- * Déclarée en **signature d'appel** plutôt qu'en `() => Promise<…>`, et c'est délibéré : le contrôle
- * « aucun texte visible en dur » de `i18n.test.ts` cherche un nœud JSX entre deux chevrons sur une
- * même ligne, et `=> Promise<ResultatEcriture>` en présente exactement la forme. Le contrôle avait
- * raison de se déclencher — il ne peut pas distinguer les deux —, et le contourner par une exception
- * dans le contrôle affaiblirait une garantie utile pour une gêne d'écriture. C'est donc le code qui
- * s'écrit autrement.
+ * ÉCRITE EN FLÈCHE, DE NOUVEAU. Elle avait été déclarée en signature d'appel parce que le contrôle
+ * « aucun texte visible en dur » de `i18n.test.ts` cherchait un nœud JSX entre deux chevrons sur une
+ * même ligne, et que `=> Promise<ResultatEcriture>` en présentait exactement la forme. Le contrôle
+ * avait raison de se déclencher — une expression régulière ne peut pas distinguer les deux —, et le
+ * contourner par une exception aurait affaibli une garde pour une gêne d'écriture.
+ *
+ * Le contrôle lit désormais l'arbre syntaxique, où une signature générique n'est pas un texte
+ * (INC-070, close ; `docs/JOURNAL.md` décisions 296 et 381). La contrainte disparue, la forme
+ * courante reprend sa place.
  */
-type ActionEcriture = {
-	(): Promise<ResultatEcriture>
-}
+type ActionEcriture = () => Promise<ResultatEcriture>
 
 /** Traduit un refus, ou l'absence d'effet, en un texte destiné à l'utilisateur (§9). */
 function texteRefus(refus: RefusEcriture): string {
