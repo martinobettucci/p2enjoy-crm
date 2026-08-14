@@ -13610,9 +13610,24 @@ d'édition d'une arête ne posait pas le focus dans son premier champ —, et co
 dont quatre à motif » là où le seed en pose **onze dont cinq** depuis la décision 259. Elles
 décrivent la Definition of Done d'unités closes ; arbitrage demandé.
 
-**Où reprendre.** `CRM-076` reste `[~]`. La tranche suivante est l'édition des **champs de
-formulaire** et de leurs règles (§7 bis.7), puis la **prévisualisation des effets**. Le choix
-d'unité obéit à la décision 382 : backlog d'abord, registre en consultation.
+**Le verdict du harnais complet, dit sans l'arrondir.** `scripts/verify-harness.sh` ne rend PAS
+vert : son contrôle 5 échoue sur `commentaires-gestes.spec.ts:181`, un fichier que cette session
+n'a pas touché, et l'échec est consigné en **INC-105** avec ses quatre mesures. Tous ses autres
+contrôles sont verts — `test:sql`, `e2e:api`, `e2e:mail`, `test:unit`, `typecheck`, `e2e:report`,
+et les six dégradations de non-complaisance. Le compteur `SCENARIOS_UI=201` reste la valeur juste :
+la campagne a rendu 201 verts avant que l'accumulation d'INC-105 ne se manifeste, et l'échec porte
+sur une assertion, pas sur un scénario manquant.
+
+**Une session concurrente a livré la troisième tranche pendant celle-ci.** Les commits `08ac1db`,
+`7712125` et `67ced59` — spécification, couche de données et écran des **champs de formulaire** —
+ont été poussés par un autre worker sur le même fichier. Le travail de cette session a été rebasé
+dessus, sans conflit, et l'arbre combiné a été revérifié : `typecheck` vert, **885** tests
+unitaires verts.
+
+**Où reprendre.** `CRM-076` reste `[~]`. Les champs de formulaire viennent d'être livrés par la
+session concurrente ; il reste la **prévisualisation des effets** (§7 bis.7) et les preuves
+pgTAP/API dédiées à l'écran. Le choix d'unité obéit à la décision 382 : backlog d'abord, registre
+en consultation.
 
 ### Décision 386 — CRM-076, troisième tranche : les champs du formulaire, et les deux colonnes que l'écran refuse de modifier
 
