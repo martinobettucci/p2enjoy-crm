@@ -13528,3 +13528,48 @@ rejouer avant toute clôture d'unité qui l'exige.
 **Où reprendre.** `CRM-076` est `[~]` : la tranche suivante est l'édition des transitions
 (§7 bis.7), puis les champs et la prévisualisation. Le choix d'unité obéit désormais à la
 décision 382 : backlog d'abord, registre en consultation.
+
+### Décision 384 — CRM-076, deuxième tranche : les arêtes du graphe deviennent éditables
+
+**2026-08-14, suite de la décision 383 — entrée écrite et committée avant la première ligne de
+code (`CLAUDE.md` §5).**
+
+**L'unité de la session** est `CRM-076`, désignée par la dernière entrée du journal comme reprise
+en cours, et par la décision 382 comme unité de construction. Son premier manque nommé au
+§7 bis.7 — l'édition des **transitions** — est ce que cette session livre. Les trois autres
+manques restent dus, et l'unité reste `[~]`.
+
+**Ce qui n'est PAS touché, et il faut l'écrire pour que la mesure soit interprétable.** Ni le
+modèle, ni les autorisations : `workflow_transitions` existe depuis `CRM-031` avec ses quatre
+contraintes du §3.4 et ses politiques du §3.7, déjà prouvées en pgTAP par `CRM-040`. **Aucune
+migration n'est écrite.** Ce qui manquait était l'écran, et l'écran seul.
+
+**Trois choix de conception, écrits au §7 bis.9 avant d'être codés.**
+
+Le premier est l'**ordre**. `workflow_transitions` ne porte pas la position des étapes ; PostgREST
+ne peut donc ordonner que sur des identifiants. La requête garde cet ordre, parce qu'il est stable,
+et l'ordre lisible — arêtes groupées par étape de départ, dans l'ordre du graphe — est composé par
+l'écran depuis les étapes déjà lues. Trier des UUID n'est pas un ordre pour un humain, et prétendre
+le contraire aurait donné un écran dont la liste change de forme à chaque rechargement.
+
+Le deuxième est que **retirer une arête n'a pas de refus métier**. Le `on delete restrict` qui
+protège une étape occupée vient de `cards.current_step_id` ; aucune colonne de `cards` ne désigne
+une transition. Le `23503` d'un retrait d'arête ne peut donc plus vouloir dire « occupée » comme au
+§7 bis.4 : il redevient « une des deux étapes n'existe plus ». Réutiliser sans réfléchir la
+classification de la première tranche aurait affiché à l'administrateur un obstacle qui n'existe
+pas. La confirmation avant retrait est conservée malgré l'absence de garde : une arête retirée est
+une porte fermée dans le parcours des cards.
+
+Le troisième est le **filtrage des choix offerts** : l'étape de départ est retirée de la liste
+d'arrivée, et les arrivées déjà déclarées depuis ce départ aussi. C'est l'équivalent exact du
+filtre des nœuds déjà employés — une aide d'interface, pas une garde ; le `CHECK` et l'unicité
+refuseraient de toute façon, et l'écran le montrerait.
+
+**Preuves attendues avant de fermer la tranche** — §7 bis.9.7 : unitaires sur le groupement, les
+arrivées possibles et la correspondance des refus ; E2E sur la vraie base des trois gestes à la
+souris et au clavier, chacun confirmé en base, avec le refus réel d'une arête déjà déclarée ;
+captures aux quatre paliers observées. Le seed du §3.9 suffit : dix arêtes dont quatre à motif
+exigé.
+
+**Où reprendre après cette tranche.** `CRM-076` reste `[~]` : les champs de formulaire et leurs
+règles, la prévisualisation des effets, et les preuves API dédiées à l'écran restent dus.

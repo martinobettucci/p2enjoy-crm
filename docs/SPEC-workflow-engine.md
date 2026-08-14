@@ -2134,7 +2134,8 @@ workflow sans étape dit ce qui manque, chaque geste est atteignable au clavier 
 
 ### 7 bis.7 Ce que cette tranche ne livre PAS, et qui reste dû sous `CRM-076`
 
-- l'édition des **transitions** — arêtes, libellés, motif exigé ;
+- l'édition des **transitions** — arêtes, libellés, motif exigé ; **livrée par la deuxième
+  tranche, spécifiée au §7 bis.9** ;
 - l'édition des **champs de formulaire**, de leurs règles et des exigences de transition ;
 - la **prévisualisation des effets** qu'exige la Definition of Done de l'unité ;
 - la création et la copie d'un workflow, qui restent des gestes d'API (§7 bis.1).
@@ -2151,6 +2152,115 @@ et avec leurs preuves.
 | Interface | Les six gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'une étape occupée constaté et non simulé |
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, workflow sans étape, sélecteur d'ajout ouvert, refus affiché |
 | Seed | Le workflow par défaut du §3.9 et sa copie dérivée du §4.10 suffisent : sept étapes, un nœud archivé au catalogue, une étape occupée par des cards |
+
+### 7 bis.9 Deuxième tranche : l'édition des transitions
+
+Le §7 bis.7 nommait quatre manques. Celui-ci en lève le premier : les **arêtes** du graphe, leur
+**libellé** et le **motif exigé**. Les trois autres restent dus, et l'unité reste `[~]` tant qu'ils
+le sont.
+
+Cette tranche ne touche NI au modèle, NI aux autorisations : `workflow_transitions` existe depuis
+`CRM-031` avec ses contraintes (§3.4) et ses politiques (§3.7), et elle est déjà prouvée en pgTAP
+par `CRM-040`. Ce qui manquait était l'écran. **Aucune migration n'est écrite.**
+
+#### 7 bis.9.1 Ce que la deuxième tranche lit
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 4 | `workflow_transitions` | `workflow_id=eq.<workflow choisi>` | `from_step_id`, puis `to_step_id` | les arêtes du workflow choisi |
+
+Une seule lecture s'ajoute aux trois du §7 bis.3, et elle est émise **avec** la lecture des étapes :
+un graphe dont on montrerait les nœuds sans les arêtes serait à moitié faux, et l'administrateur
+n'a pas à demander la seconde moitié.
+
+L'ordre de la requête est celui des **identifiants**, pas celui du graphe : PostgREST ordonne sur
+des colonnes de la table, et `workflow_transitions` ne porte pas la position des étapes. L'ordre
+lisible — les arêtes groupées par étape de départ, dans l'ordre du graphe — est donc **composé par
+l'écran** à partir des étapes déjà lues, par une fonction `grouperTransitions` prouvée
+unitairement. Un tri d'identifiants n'est pas un ordre pour un humain ; c'est un ordre stable, ce
+qui suffit à la requête.
+
+Les deux extrémités sont rendues par le **libellé d'étape** du §7 bis.3 — surcharge si elle existe,
+catalogue sinon — et non par leur identifiant. `libelleEtape` est réutilisée telle quelle : une
+arête qui nommerait ses étapes autrement que la liste juste au-dessus décrirait un autre graphe.
+
+#### 7 bis.9.2 Les trois gestes de cette tranche
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Déclarer une arête** | `INSERT` dans `workflow_transitions` | unicité `(workflow_id, from_step_id, to_step_id)` ; `from_step_id <> to_step_id` ; les deux clés composites interdisent de sortir du workflow (§3.4) |
+| **Modifier une arête** | `PATCH label`, `require_comment` | `label is null or btrim(label) <> ''` (§3.4) |
+| **Retirer une arête** | `DELETE` | rien ne la retient : **aucune card ne référence une transition**, contrairement à une étape |
+
+**Retirer une arête n'a pas de refus métier, et c'est une différence à écrire plutôt qu'à
+supposer.** Le `on delete restrict` qui protège une étape occupée vient de `cards.current_step_id`
+(§3.3) ; aucune colonne de `cards` ne désigne une transition. Le seul refus possible sur un retrait
+d'arête est donc celui de la politique — un non-administrateur —, et l'écran ne doit pas promettre
+à l'administrateur un obstacle qui n'existe pas. La confirmation avant retrait est **conservée**
+malgré cela : une arête retirée est une porte fermée dans le parcours des cards, et le geste est
+irréversible en un clic.
+
+**Le motif exigé est un `boolean`, pas un texte.** `require_comment` dit que `move_card` refusera
+le déplacement sans commentaire (§5) ; il ne dit pas lequel. L'écran l'expose en case à cocher, et
+son aide nomme l'effet réel sur le parcours plutôt que la colonne.
+
+**`label` vide vaut `NULL`, comme toute surcharge.** Le §3.4 le déclare facultatif : à défaut,
+l'interface d'une card affiche le libellé de l'étape d'arrivée (§7). Un champ vidé envoie donc
+`null` — la même règle que les surcharges du §7 bis.4, pour la même raison : `''` serait refusé par
+le `CHECK`, et omettre la clé rendrait le retrait impossible depuis l'écran.
+
+#### 7 bis.9.3 Ce que l'écran filtre, et pourquoi ce n'est pas une garde
+
+Le sélecteur de déclaration propose une étape de départ et une étape d'arrivée. Il en retire deux
+choix :
+
+1. **l'étape de départ elle-même** dans la liste d'arrivée — le `CHECK from_step_id <> to_step_id`
+   la refuserait ;
+2. **les arrivées déjà déclarées depuis ce départ** — l'unicité les refuserait.
+
+Ces deux filtres sont l'exact équivalent du filtre des nœuds déjà employés du §7 bis.4 : ils
+évitent d'offrir un choix dont la réponse est connue, ils ne remplacent aucune garde, et la base
+tranche de toute façon (`CLAUDE.md` §10). Lorsqu'une étape de départ n'a plus aucune arrivée
+possible, le formulaire le **dit** au lieu de présenter une liste vide.
+
+**Un workflow de moins de deux étapes ne peut porter aucune arête**, et l'écran l'annonce plutôt
+que d'ouvrir un formulaire dont les deux listes seraient inutilisables.
+
+#### 7 bis.9.4 Validation de forme
+
+Une seule, dans le même esprit que le §7 bis.5 : un libellé **fourni** n'est pas blanc. Les deux
+étapes sont choisies dans des listes, donc jamais absentes ni malformées ; `require_comment` est un
+booléen. Il n'y a rien d'autre dont la réponse soit connue d'avance.
+
+#### 7 bis.9.5 Les refus, et celui qui change de sens
+
+Les natures sont celles du §7 bis.4, à deux exceptions près qui viennent de ce que la table
+garantit :
+
+- `23505` est ici **« cette arête est déjà déclarée »** et non « ce nœud est déjà une étape » ;
+- `23503` ne peut plus vouloir dire « étape occupée » sur un retrait, puisque rien ne retient une
+  arête : il redevient uniformément « une des deux étapes n'existe plus », ce qui est exactement ce
+  qu'un administrateur voit lorsqu'un autre a retiré l'étape entre-temps.
+
+Le `CHECK` de la réflexivité et celui du libellé blanc partagent le SQLSTATE `23514` et sont tous
+deux rendus par `forme-refusee`, comme au §7 bis.4 : le message nomme les deux causes possibles
+plutôt que d'en deviner une.
+
+#### 7 bis.9.6 États, accessibilité et responsive
+
+Les arêtes sont un **second bloc** sous la liste des étapes, dans la même colonne : elles décrivent
+le même workflow et se lisent après ses étapes, pas à côté. Le bloc rend les quatre états du
+§5.8 du design system, un workflow sans arête dit ce que cela signifie pour ses cards, chaque geste
+est atteignable au clavier comme à la souris, et la console reste vierge.
+
+#### 7 bis.9.7 Preuves attendues de la deuxième tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Groupement des arêtes par étape de départ dans l'ordre du graphe ; arête dont une extrémité a disparu de la liste des étapes ; arrivées possibles = étapes moins le départ moins les arrivées déjà déclarées ; libellé fourni blanc refusé, libellé vide valant `NULL` ; correspondance des refus, `23505` et `23503` compris |
+| Interface | Les trois gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'une arête déjà déclarée constaté et non simulé |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, workflow sans arête, formulaire de déclaration ouvert |
+| Seed | Le workflow par défaut du §3.9 suffit : dix arêtes dont quatre à motif exigé, et deux étapes sans sortie |
 
 ## 8. Vérification exigée
 
