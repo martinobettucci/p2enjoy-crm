@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
+// @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
@@ -47,6 +48,17 @@ export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 
 /** Titre de la route d'administration, nommé comme celui de la page introuvable. */
 export const CLE_TITRE_ADMIN_ARBORESCENCE: CleTraduction = 'admin.tree.title'
+
+/**
+ * Adresse de l'éditeur de workflows — `CRM-076`.
+ *
+ * Même patron que `CHEMIN_ADMIN_ARBORESCENCE` : hors de `ROUTES`, atteinte depuis l'index des
+ * réglages, montée par `App` avec sa propre coquille (docs/SPEC-workflow-engine.md §7 bis.2).
+ */
+export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
+
+/** Titre de l'éditeur de workflows. */
+export const CLE_TITRE_ADMIN_WORKFLOWS: CleTraduction = 'admin.workflows.title'
 
 /**
  * Adresse de l'écran d'état de la messagerie — `CRM-059`.
@@ -106,6 +118,15 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.tree')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.tree.body')}</span>
+					</Link>
+				</li>
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_WORKFLOWS}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.workflows')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.workflows.body')}</span>
 					</Link>
 				</li>
 				<li>

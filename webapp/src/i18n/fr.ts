@@ -465,6 +465,88 @@ export const fr = {
 	'live.admin.archived': 'Archivé',
 	'live.admin.unarchived': 'Désarchivé',
 
+	// --- Éditeur de workflows — CRM-076, docs/SPEC-workflow-engine.md §7 bis ---------------
+	'admin.settings.index.workflows': 'Workflows : étapes et composition',
+	'admin.settings.index.workflows.body':
+		"Composer un workflow : choisir ses étapes dans le catalogue, les ordonner, surcharger leur libellé, leur probabilité et leur seuil de relance, et désigner l'étape initiale.",
+	'admin.workflows.title': 'Éditeur de workflows',
+	'admin.workflows.aria': "Workflows de l'espace de travail",
+	'admin.workflows.list.aria': 'Choisir un workflow',
+	'admin.workflows.steps.aria': 'Étapes de {workflow}',
+	'admin.workflows.default': 'Par défaut',
+	'admin.workflows.scope.global': 'Global',
+	'admin.workflows.scope.track': 'Propre à un track',
+	'admin.workflows.empty.title': "Aucun workflow dans cet espace de travail",
+	'admin.workflows.empty.body':
+		"Un workflow se crée par l'API ou par la copie vers un track ; cet écran compose les workflows existants.",
+	'admin.workflows.error.title': "Les workflows n'ont pas pu être chargés",
+	'admin.workflows.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.workflows.choose.title': 'Choisissez un workflow',
+	'admin.workflows.choose.body': 'Ses étapes apparaîtront ici, dans leur ordre.',
+	'admin.workflows.steps.empty': "Ce workflow n'a aucune étape.",
+	'admin.workflows.steps.empty.hint':
+		"Ajoutez une première étape depuis le catalogue : elle deviendra l'étape initiale si vous la désignez.",
+	'admin.workflows.steps.error': 'Les étapes de ce workflow n’ont pas pu être chargées.',
+	'admin.workflows.initial': 'Étape initiale',
+	'admin.workflows.initial.none':
+		"Ce workflow n'a aucune étape initiale : aucune card ne peut y entrer tant qu'elle n'est pas désignée.",
+	'admin.workflows.overridden': 'Libellé surchargé',
+	'admin.workflows.fromCatalog': 'Du catalogue : {libelle}',
+	'admin.workflows.probability': 'Probabilité : {valeur} %',
+	'admin.workflows.probability.default': 'Probabilité du catalogue',
+	'admin.workflows.stale': 'Relance après {valeur} j',
+	'admin.workflows.stale.default': 'Seuil du catalogue',
+
+	'admin.workflows.action.add': 'Ajouter une étape',
+	'admin.workflows.action.addNode': 'Ajouter {nom}',
+	'admin.workflows.action.override': 'Surcharger {nom}',
+	'admin.workflows.action.setInitial': 'Désigner {nom} comme étape initiale',
+	'admin.workflows.action.remove': 'Retirer {nom}',
+	'admin.workflows.catalogue.title': 'Nœuds ajoutables',
+	'admin.workflows.catalogue.empty':
+		'Tous les nœuds actifs du catalogue sont déjà des étapes de ce workflow.',
+	'admin.workflows.catalogue.loading': 'Chargement du catalogue…',
+	'admin.workflows.catalogue.error': 'Le catalogue n’a pas pu être chargé.',
+
+	'admin.workflows.form.override': 'Surcharges de {nom}',
+	'admin.workflows.form.label': 'Libellé surchargé',
+	'admin.workflows.form.label.help':
+		'Laisser vide reprend le libellé du catalogue. Une valeur blanche est refusée.',
+	'admin.workflows.form.probability': 'Probabilité (%)',
+	'admin.workflows.form.probability.help':
+		'De 0 à 100. Laisser vide reprend la probabilité du catalogue ; 0 est une valeur, pas une absence.',
+	'admin.workflows.form.probability.invalid': 'La probabilité doit être comprise entre 0 et 100.',
+	'admin.workflows.form.stale': 'Seuil de relance (jours)',
+	'admin.workflows.form.stale.help':
+		'Nombre entier de jours, strictement positif. Laisser vide reprend le seuil du catalogue.',
+	'admin.workflows.form.stale.invalid':
+		'Le seuil de relance doit être un nombre entier de jours strictement positif.',
+
+	'admin.workflows.remove.confirm': 'Retirer l’étape « {nom} » ?',
+	'admin.workflows.remove.confirm.body':
+		"Elle est retirée du workflow, et le nœud reste au catalogue. Une étape occupée par des cards ne peut pas être retirée : la base le refuse.",
+	'admin.workflows.remove.confirm.action': 'Retirer',
+
+	'admin.workflows.refus.forbidden':
+		'Seul un administrateur de cet espace de travail peut composer un workflow.',
+	'admin.workflows.refus.noeud-deja-employe': 'Ce nœud est déjà une étape de ce workflow.',
+	'admin.workflows.refus.etape-occupee':
+		"Cette étape porte des affaires : elle ne peut pas être retirée tant qu'elles l'occupent.",
+	'admin.workflows.refus.reference-absente':
+		"Ce workflow ou ce nœud n'existe plus, ou n'appartient pas à cet espace de travail.",
+	'admin.workflows.refus.forme-refusee':
+		'Cette valeur a été refusée : vérifiez le libellé, la probabilité et le seuil.',
+	'admin.workflows.refus.network': "La requête n'a pas abouti. Réessayez.",
+	'admin.workflows.refus.unknown': "L'enregistrement a échoué.",
+	'admin.workflows.refus.sans-effet':
+		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur ce workflow, ou l'étape a disparu.",
+
+	'live.workflows.added': 'Étape ajoutée',
+	'live.workflows.moved': 'Étape déplacée',
+	'live.workflows.overridden': 'Surcharges enregistrées',
+	'live.workflows.initial': 'Étape initiale désignée',
+	'live.workflows.removed': 'Étape retirée',
+
 	// --- État de la messagerie — CRM-059, docs/SPEC-mail-subsystem.md §20.11 --------------
 	'admin.settings.index.mail': 'État de la messagerie',
 	'admin.settings.index.mail.body':

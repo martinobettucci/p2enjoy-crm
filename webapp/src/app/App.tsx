@@ -1,6 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
+// @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
@@ -18,11 +19,13 @@ import { FournisseurAuthentification, useAuthentification } from './Authentifica
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
+	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
@@ -37,6 +40,10 @@ const RouteTrack = lazy(async () => ({ default: (await import('./RouteTrack')).R
  */
 const AdministrationArborescence = lazy(async () => ({
 	default: (await import('./AdministrationArborescence')).AdministrationArborescence,
+}))
+/** L'éditeur de workflows de `CRM-076`, chargé à la demande pour la même raison. */
+const AdministrationWorkflows = lazy(async () => ({
+	default: (await import('./AdministrationWorkflows')).AdministrationWorkflows,
 }))
 /** L'écran d'état de la messagerie de `CRM-059`, chargé à la demande pour la même raison. */
 const EtatMessagerie = lazy(async () => ({
@@ -102,6 +109,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_ARBORESCENCE}>
 							<AdministrationArborescence />
+						</AppShell>
+					}
+				/>
+				{/* L'éditeur de workflows — `CRM-076`. Même position que l'administration de
+				    l'arborescence : hors de la barre latérale, atteint depuis l'index des
+				    réglages (docs/SPEC-workflow-engine.md §7 bis.2). */}
+				<Route
+					path={CHEMIN_ADMIN_WORKFLOWS}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_WORKFLOWS}>
+							<AdministrationWorkflows />
 						</AppShell>
 					}
 				/>
