@@ -2057,6 +2057,101 @@ commencée ; le constat historique reste documenté dans `docs/INCONSISTENCY_REP
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, colonne vide, menu ouvert, card refusée ; **vidéo `.webm`** du glisser-déposer, produite par le harnais et observée |
 | Seed | **Étendu ensuite par `CRM-046`, et exercé dans son état courant** : `grands-comptes` porte quatre cards actives sur trois étapes d'un workflow de sept, une archivée et une en corbeille — de quoi démontrer les colonnes occupées, les colonnes vides et l'exclusion des cards rangées |
 
+## 7 bis. Interface : l'éditeur administrateur de workflows — `CRM-076`
+
+La cinquième règle d'origine de `CRM-000` — « L'éditeur de workflow est réservé aux administrateurs :
+sélection des nœuds, ordre, arêtes, surcharges, et champs de formulaire » — a traversé sept unités
+comme énoncé d'intention (§7.13, INC-066). `CRM-076` la livre. La décision 298 lui a rattaché
+l'éditeur complet ; ce chapitre spécifie ce que la **première tranche** livre, et nomme ce qu'elle
+ne livre pas.
+
+### 7 bis.1 Ce que l'éditeur est, et ce qu'il n'est pas
+
+L'éditeur est la **composition d'un workflow**, c'est-à-dire le choix des nœuds du catalogue qui en
+deviennent les étapes, leur ordre, et leurs surcharges. Il est au graphe ce que `CRM-075` est à
+l'arborescence : le seul écran d'où un administrateur configure son produit sans passer par l'API.
+
+Il **n'est pas** :
+
+- **une autorisation.** Comme `CRM-075`, il n'anticipe aucun refus : l'écran envoie, la base
+  tranche, et l'écran traduit le refus reçu (`CLAUDE.md` §10). Les politiques du §3.7 réservent déjà
+  l'écriture aux administrateurs du workspace, et elles sont prouvées hors interface ;
+- **un éditeur de transitions**, ni de champs, ni de règles. Les arêtes et le formulaire sont la
+  tranche suivante de `CRM-076` ; ce chapitre les nomme au §7 bis.7 plutôt que de les laisser
+  croire livrées ;
+- **un créateur de workflow.** Créer un workflow, le copier vers un track et le rendre par défaut
+  relèvent de `CRM-031` et `CRM-032`, livrés et prouvés par l'API. L'éditeur compose les workflows
+  **existants**.
+
+### 7 bis.2 Adresse, et comment on y arrive
+
+`/reglages/workflows`, hors de `ROUTES` et atteinte depuis l'index des réglages — le patron exact de
+`CHEMIN_ADMIN_ARBORESCENCE` (`CRM-075`), pour la même raison : ce n'est pas une entrée de la barre
+latérale.
+
+### 7 bis.3 Ce que l'écran lit, et en combien de requêtes
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 1 | `workflows` | aucun — la RLS borne au workspace | `is_default` décroissant, puis `name` | la liste de gauche |
+| 2 | `workflow_steps` + `workflow_nodes_catalog` embarqué | `workflow_id=eq.<workflow choisi>` | `position` | les étapes du workflow choisi |
+| 3 | `workflow_nodes_catalog` | `archived_at=is.null` | `position`, puis `label` | les nœuds ajoutables |
+
+La lecture 2 embarque le nœud plutôt que de le relire : le libellé affiché est
+`label_override` s'il existe, sinon celui du catalogue (§3.3, « une surcharge absente vaut prendre
+la valeur du catalogue »). La lecture 3 n'est émise qu'à l'ouverture du sélecteur d'ajout — un
+catalogue que personne ne consulte n'a pas à voyager.
+
+### 7 bis.4 Les gestes de cette tranche
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Ajouter une étape** | `INSERT` dans `workflow_steps` | unicité `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois ; `position` attribuée par trigger si omise (§3.3) |
+| **Réordonner** | `PATCH position` | l'ordre est une `numeric`, insérable entre deux voisines sans réécrire la suite (`CRM-075`, §6) |
+| **Surcharger** | `PATCH label_override`, `probability_override`, `stale_after_days` | non vide après `btrim`, 0 à 100, strictement positif (§3.3) |
+| **Retirer une surcharge** | `PATCH` à `NULL` | `NULL` vaut « prendre la valeur du catalogue », et **`0` n'est pas `NULL`** (§2.5, §3.3) |
+| **Désigner l'étape initiale** | `PATCH is_initial` | ce que la base peut garantir, et ce qu'elle ne peut pas, est écrit au §3.5 |
+| **Retirer une étape** | `DELETE` | `on delete restrict` depuis les cards : une étape occupée n'est pas supprimable, et le refus est celui de la base |
+
+**Aucune de ces règles n'est réécrite dans l'écran.** C'est la contrainte la plus forte de cette
+tranche, et elle est vérifiable ligne à ligne : chaque refus traduit vient du §2.5, du §3.3, du §3.5
+ou du §3.7. Le module de données réutilise `calculerDeplacement`, `positionEntre` et
+`classerRefusEcriture` de `CRM-075` plutôt que d'en écrire des jumeaux — l'ordre d'une étape dans un
+workflow et l'ordre d'un channel dans un track sont le même problème.
+
+### 7 bis.5 Validation de forme, et sa seule justification
+
+Comme au §8 de `docs/SPEC-administration-arborescence.md`, l'écran ne valide que ce dont la réponse
+est connue d'avance et dont l'erreur reste rattrapée par la base : surcharge de libellé non vide,
+probabilité de 0 à 100, ancienneté strictement positive. Elle économise un aller-retour ; elle ne
+remplace aucune garde.
+
+### 7 bis.6 États, accessibilité et responsive
+
+Les états de `docs/DESIGN_SYSTEM.md` §5.8 sont tous rendus — chargement, erreur, vide, succès —, un
+workflow sans étape dit ce qui manque, chaque geste est atteignable au clavier comme à la souris
+(§8), et la console reste vierge.
+
+### 7 bis.7 Ce que cette tranche ne livre PAS, et qui reste dû sous `CRM-076`
+
+- l'édition des **transitions** — arêtes, libellés, motif exigé ;
+- l'édition des **champs de formulaire**, de leurs règles et des exigences de transition ;
+- la **prévisualisation des effets** qu'exige la Definition of Done de l'unité ;
+- la création et la copie d'un workflow, qui restent des gestes d'API (§7 bis.1).
+
+Tant que ces quatre points sont dus, `CRM-076` reste `[~]`. L'unité ne passera à `[x]` qu'avec eux
+et avec leurs preuves.
+
+### 7 bis.8 Preuves attendues de `CRM-076`
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Composition de la liste d'étapes depuis les lignes lues ; libellé surchargé et non surchargé ; nœuds ajoutables = catalogue moins les nœuds déjà employés ; validation de forme dans ses trois cas, bornes comprises ; `0` distingué de `NULL` sur les deux surcharges numériques ; correspondance des refus |
+| API | Les trois lectures du §7 bis.3 hors interface avec le jeton réel de l'administratrice, et le **refus d'écriture** opposé au viewer sur chacun des six gestes, avec ses véritables droits |
+| Interface | Les six gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'une étape occupée constaté et non simulé |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, workflow sans étape, sélecteur d'ajout ouvert, refus affiché |
+| Seed | Le workflow par défaut du §3.9 et sa copie dérivée du §4.10 suffisent : sept étapes, un nœud archivé au catalogue, une étape occupée par des cards |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
