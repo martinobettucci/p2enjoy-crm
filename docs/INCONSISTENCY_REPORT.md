@@ -149,8 +149,30 @@ le commit, comme le crochet de la décision 358 le fait déjà pour la branche e
 crochet qui refuse un numéro de décision en double coûterait quelques lignes et fermerait
 définitivement une famille de défauts qui en est à sa troisième occurrence.
 
+**CINQUIÈME OCCURRENCE, relevée le 2026-08-14 : deux décisions 341.** Elle ne vient pas d'une
+exécution concurrente, contrairement à la quatrième — elle dormait dans le document **depuis le
+2026-08-12** sans que personne la voie, et c'est un fait nouveau sur la nature du défaut. Mesure :
+
+| Position | Titre | Cité par |
+|---|---|---|
+| l. 10976 | La boucle de veille est un fil, sa décision est pure, et son intervalle a des bornes | **huit fois** — `veille.py`, `__main__.py`, `ingestion.py`, `test_veille.py`, `verify-mail-resilience.sh`, `CHANGELOG.md`, `SPEC-mail-subsystem.md` §20.10, `BACKLOG.md` l. 5780 |
+| l. 12262 | Une preuve rouge mesurée sur une pile incomplète ne désigne pas encore un coupable | **une fois** — `BACKLOG.md` l. 5741 |
+
+La règle de la décision 360 s'applique sans ambiguïté : la seconde est renumérotée en **368**, son
+unique renvoi est mis à jour dans le même commit, et la note de renumérotation reste dans l'entrée.
+**Aucune référence n'est cassée.** La collision d'origine avait été commise par la session du
+2026-08-14 qui écrivait sa décision **sans relire le compteur** — le numéro 341 était pris depuis
+trois jours.
+
+**Ce que cette occurrence ajoute à l'entrée.** Les quatre premières pouvaient se lire comme un défaut
+de concurrence ; celle-ci est un simple défaut de relecture, et elle est passée **inaperçue pendant
+deux jours**. Le verrou d'exécution concurrente du lot C n'aurait donc **pas** suffi à l'arrêter :
+seul le second refus — celui d'un numéro de décision **déjà pris** — l'aurait fait. C'est un argument
+de plus pour livrer le lot C, et un avertissement sur ce qu'il faut en attendre : la garde doit porter
+sur l'unicité du numéro, pas seulement sur la concurrence.
+
 **Lié à :** INC-069 (les deux décisions 180, même défaut, arbitrage rendu par la décision 258),
-INC-089 (exécutions concurrentes), INC-059, `docs/JOURNAL.md` décisions 258, 358 et 361.
+INC-089 (exécutions concurrentes), INC-059, `docs/JOURNAL.md` décisions 258, 358, 361, 368 et 369.
 
 ---
 
@@ -186,6 +208,23 @@ sans pile restent exécutables et vertes : `npm run typecheck`, `npm run test:un
 
 **Ce qui est attendu du responsable :** fournir des identifiants Docker Hub à l'environnement
 d'exécution, ou configurer un miroir de registre sur le démon. Rien n'est à corriger dans le dépôt.
+
+**MESURE CONTRAIRE LE 2026-08-14 — LE REGISTRE RÉPOND, ET L'ENTRÉE RESTE POURTANT OUVERTE**
+(`docs/JOURNAL.md` décision 369). Sur l'exécution du 2026-08-14, le même tirage **réussit** :
+
+```
+docker pull postgres:17-alpine
+  → Status: Downloaded newer image for postgres:17-alpine   (EXIT=0)
+```
+
+Le cache était bien vide au départ (`docker images` : zéro ligne), l'image a donc réellement été
+téléchargée — ce n'est pas un cache résiduel. **L'entrée n'est pas close pour autant**, et c'est
+délibéré : le `429` mesuré le 2026-08-12 portait sur la limite de tirage **anonyme**, laquelle se
+recharge avec le temps et dépend de l'adresse de sortie **partagée** attribuée à l'exécution. Une
+exécution qui passe ne prouve pas que la suivante passera. Ce qui est établi est plus étroit, et il
+faut l'énoncer ainsi : **la contrainte de tête du lot A ne s'appliquait pas à la session du
+2026-08-14**, qui a donc pu exécuter des preuves de pile. Ce qui est attendu du responsable est
+inchangé — tant que le tirage dépend de la limite anonyme, le blocage peut revenir à toute heure.
 
 **Observation seconde, notée sans être corrigée :** ce conteneur exécute **Node v22.22.2**, alors que
 `package.json` exige `>=24` — `npm ci` le signale par `EBADENGINE` puis réussit, et `typecheck`,

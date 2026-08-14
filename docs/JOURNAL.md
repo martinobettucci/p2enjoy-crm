@@ -12259,7 +12259,17 @@ l'en-tête des entrées se tromperait dans les deux sens.
 **C**, la moitié de **B** (INC-094), la partie statique de **L** (INC-070) et de **I+J**. Avec la
 pile, une fois INC-096 levée : le reste de **B**, **G**, **I+J**, **L**.
 
-### Décision 341 — Une preuve rouge mesurée sur une pile incomplète ne désigne pas encore un coupable
+### Décision 368 — Une preuve rouge mesurée sur une pile incomplète ne désigne pas encore un coupable
+
+*Écrite sous le numéro **341**, pris le 2026-08-11 par « La boucle de veille est un fil, sa décision
+est pure, et son intervalle a des bornes » (l. 10976). **Cinquième collision du document**, après les
+deux 180 (INC-069), les deux 340 (INC-097) et les deux 366 (décision 367). Renumérotée en **368** le
+2026-08-14 selon la règle de la décision 360 : la 341 d'origine est citée **huit fois** —
+`mail-sync/src/mail_sync/veille.py`, `__main__.py`, `ingestion.py`, `mail-sync/tests/test_veille.py`,
+`scripts/verify-mail-resilience.sh`, `CHANGELOG.md`, `docs/SPEC-mail-subsystem.md` §20.10 et
+`docs/BACKLOG.md` l. 5780 ; celle-ci ne l'était que par un seul renvoi, `docs/BACKLOG.md` l. 5741,
+mis à jour dans le même commit. Aucune référence n'est cassée. **La garde du lot C n'est toujours pas
+livrée, et c'est précisément ce qu'elle aurait arrêté.***
 
 **2026-08-14 — correction de la décision 340, avant d'écrire une ligne de code.**
 
@@ -12291,3 +12301,46 @@ complète, l'unité ne peut pas revenir à `[x]` — mais le défaut qu'on lui i
 Docker. Sur ce poste, le CLI est le pont WSL de Docker Desktop (`/Docker/host/bin/docker`) : il n'y
 a pas de `dockerd` dans la distribution, et le démon vit dans Docker Desktop côté Windows. Aucune
 commande de cette session ne peut le démarrer.
+
+### Décision 369 — INC-096 est levée : le registre répond, et les preuves de pile redeviennent exécutables
+
+**2026-08-14 — mesure d'environnement, écrite avant d'exécuter la moindre preuve.**
+
+**Le fait, mesuré.** Le tirage d'images fonctionne dans cet environnement d'exécution :
+
+```
+docker pull postgres:17-alpine
+  → Status: Downloaded newer image for postgres:17-alpine
+  → EXIT=0
+```
+
+Le démon a été démarré par la procédure déjà consignée — `dockerd --host=unix:///var/run/docker.sock`
+en arrière-plan, `service docker start` restant inutilisable faute de `CAP_SYS_RESOURCE` —, et
+`docker info` a répondu **dès la première tentative**. Le cache d'images était bien vide au départ
+(`docker images` rendait zéro ligne), donc l'image a réellement été téléchargée : ce n'est pas un
+cache résiduel qui masquerait le blocage.
+
+**Ce que cela change, et ce que cela ne change pas.** INC-096 décrivait un `429 Too Many Requests`
+sur la limite de tirage **anonyme** de Docker Hub, atteinte par l'adresse de sortie **partagée** de
+l'environnement. C'est une limite qui se recharge avec le temps et qui dépend de l'adresse de sortie
+attribuée à l'exécution. La levée constatée ici vaut donc **pour cette exécution**, et n'est pas la
+preuve que le blocage ne reviendra pas : elle ne permet pas de clore INC-096 comme un défaut réparé,
+seulement de constater que la contrainte de tête du lot A **ne s'applique pas à cette session**.
+L'entrée reste ouverte, avec la mesure des deux côtés.
+
+**Conséquence sur l'ordre de travail.** La décision 367 ordonnait : « avec la pile, une fois INC-096
+levée : le reste de **B**, **G**, **I+J**, **L** ». Ces lots redeviennent atteignables. Mais ils ne
+priment pas sur ce que la décision 368 a laissé explicitement en attente : `CRM-059` est une unité
+**rétrogradée de `[x]` à `[~]` sur preuve rouge**, dont la seule dette est un **rejeu** que l'absence
+de démon rendait impossible. Solder une unité `[~]` prime sur en ouvrir une neuve, et une preuve vue
+rouge ne redevient verte que rejouée. **L'unité de cette session est donc `CRM-059`.**
+
+**Ce que le rejeu doit établir, et ce qu'il ne doit pas conclure trop vite.** La décision 368 a
+montré que la première mise en cause était bâtie sur une pile **incomplète** — `rest`, `mail-sync` et
+`webapp` absents, API à `000`. La leçon est retenue ici : **la complétude de la pile est vérifiée
+AVANT la preuve**, et non après coup. Si `e2e/mail/backfill.spec.ts` repasse verte sur une pile dont
+tous les services sont `healthy`, alors la preuve rouge du 12 août est imputable à l'environnement de
+sa mesure, et `CRM-059` peut revenir à `[x]`. Si elle rougit sur une pile saine, le défaut est réel,
+il est dans le produit, et il faudra le corriger — pas le documenter.
+
+**Rattachement :** `CRM-059`, INC-096. Décisions 367 (ordre des lots) et 368 (prémisse de la mesure).

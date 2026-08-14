@@ -5738,7 +5738,8 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 > l'`INTERNALDATE` passée d'un `APPEND` — un message déposé à 90 jours est relu `15-May-2026`. La
 > preuve mesure donc bien le produit, et non le serveur.
 >
-> **CORRIGÉ LE 2026-08-14 — LE COUPABLE N'EST PAS ÉTABLI** (décision 341). L'exécution qui a rendu
+> **CORRIGÉ LE 2026-08-14 — LE COUPABLE N'EST PAS ÉTABLI** (décision 368, écrite sous le numéro 341
+> et renumérotée le 2026-08-14). L'exécution qui a rendu
 > la preuve rouge s'est faite sur une pile **incomplète** : `rest`, `mail-sync` et `webapp` étaient
 > absents et l'API répondait `000`. Et la relecture du code ne montre pas le défaut annoncé —
 > `planifier_dossier` traite bien le premier contact en `SEARCH SINCE <aujourd'hui>`, et le
