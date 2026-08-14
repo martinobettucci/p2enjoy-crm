@@ -481,7 +481,8 @@ if [ "$RAPIDE" = false ]; then
 		panneau-xl-1440 panneau-lg-1152 panneau-md-900 panneau-sm-390 \
 		commentaire-actions-focus-1440 commentaire-edition-1440 commentaire-modifie-1440 \
 		commentaire-confirmation-1440 commentaire-supprime-1440 \
-		moderation-confirmation-1440 moderation-pierre-tombale-1440 moderation-seed-1440; do
+		moderation-actions-1440 moderation-confirmation-1440 moderation-pierre-tombale-1440 \
+		moderation-seed-1440; do
 		if [ -s "$CAPTURES/$capture.jpg" ]; then
 			ok "capture $capture.jpg produite"
 		else

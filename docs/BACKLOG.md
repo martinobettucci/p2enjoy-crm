@@ -4087,8 +4087,25 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       **507**, `e2e:ui` **185** — dont 3 scénarios de modération **sans aucune substitution** —,
       `e2e:mail` **42**, `pytest` **242**, `typecheck`, `build`, `types:check`,
       `scripts/verify-commentaires.sh` **78 contrôles**, `scripts/verify-manual.sh` **107**,
-      `scripts/verify-types.sh` **30**. **Trois captures observées** :
-      `moderation-confirmation-1440`, `moderation-pierre-tombale-1440`, `moderation-seed-1440`.
+      `scripts/verify-types.sh` **30**. **QUATRE captures observées** :
+      `moderation-actions-1440`, `moderation-confirmation-1440`, `moderation-pierre-tombale-1440`,
+      `moderation-seed-1440`.
+- [x] **LA RÈGLE CENTRALE ÉTAIT ÉPROUVÉE ET OBSERVÉE NULLE PART** (décision 379, `CLAUDE.md` §16).
+      *Une seule action sur le commentaire d'un tiers* est tenue depuis la livraison par deux
+      assertions — `actions-moderation` à **1**, `Modifier` à **0** — mais **aucune capture ne la
+      montrait** : `moderation-confirmation-1440` est prise **après** le clic, au moment où la
+      confirmation a déjà pris la place du corps (§5.10). Le dossier de captures était fourni, la
+      preuve verte, et la forme la plus visible de l'unité la seule que personne n'avait regardée.
+      `moderation-actions-1440.jpg` la fixe, prise **avant** le clic, et entre à l'inventaire du
+      harnais. **Et la capture a dénoncé deux défauts qu'elle seule pouvait voir** — septième
+      occurrence du mécanisme de la décision 202 : rendue sans survol, elle montrait une rangée
+      **vide**, les actions étant `opacity-0` jusqu'à `group-hover` ou `group-focus-within` ; rendue
+      après survol mais sans attendre le fondu, elle montrait un « Supprimer » **à demi
+      transparent**, `toBeVisible()` acceptant un élément `opacity-0` qui occupe une surface. Le
+      scénario attend désormais l'opacité **calculée** à `1` — une observation, non une
+      temporisation (`CLAUDE.md` §18). **Preuves rejouées** : `commentaires-gestes.spec.ts` **8
+      scénarios**, `e2e:ui` **185**, `scripts/verify-commentaires.sh` **79 contrôles**, `typecheck`,
+      `build`.
 - [x] **INC-071 est CLOSE le 2026-08-14**, par l'arbitrage de la décision 367
       (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
       sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`

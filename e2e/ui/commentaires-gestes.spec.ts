@@ -331,6 +331,39 @@ test.describe('la modération, sur la vraie base (INC-072)', () => {
 			// `comment_moderation_limitee`.
 			await expect(carte.getByTestId('actions-moderation')).toHaveCount(1)
 			await expect(carte.getByRole('button', { name: 'Modifier' })).toHaveCount(0)
+
+			// LA RÈGLE LA PLUS VISIBLE DE L'UNITÉ ÉTAIT LA SEULE QUE PERSONNE NE REGARDAIT
+			// (décision 379, `CLAUDE.md` §16). Les deux assertions ci-dessus la tiennent, mais
+			// aucune capture ne la montrait : la suivante est prise APRÈS le clic, au moment où la
+			// confirmation a déjà pris la place du corps (§5.10). L'état qui porte la règle — une
+			// action et une seule sur le commentaire d'un tiers — n'existait donc dans aucun
+			// dossier de captures. Celle-ci le fixe, et elle est prise AVANT le clic pour cette
+			// raison précise : une forme qu'aucune capture ne montre n'est pas vérifiée
+			// visuellement, elle est seulement affirmée.
+			//
+			// LE SURVOL N'EST PAS UN CONFORT DE MISE EN SCÈNE, IL EST LA CONDITION DE LA PREUVE, et
+			// la première version de cette capture l'a appris en ne montrant RIEN : les actions
+			// sont rendues `opacity-0` et révélées par `group-hover` ou `group-focus-within`
+			// (docs/DESIGN_SYSTEM.md §5.10). Sans survol, la capture fixait une rangée vide et
+			// prouvait le contraire de ce qu'elle prétend — défaut vu sur la capture, et sur elle
+			// seule. Le survol place donc l'écran dans le seul état où la règle est VISIBLE.
+			await carte.scrollIntoViewIfNeeded()
+			await carte.hover()
+
+			// `toBeVisible()` NE SUFFIT PAS ICI, et la deuxième version de la capture l'a appris à
+			// son tour : pour Playwright, un élément `opacity-0` occupant une surface EST visible.
+			// L'assertion passait donc pendant le fondu, et la capture fixait un « Supprimer »
+			// à demi transparent — lisible pour la machine, délavé pour l'œil. On attend donc que
+			// l'opacité RÉELLEMENT CALCULÉE atteigne 1. C'est une OBSERVATION de l'état de l'écran,
+			// et non une temporisation arbitraire, que `CLAUDE.md` §18 proscrit : rien n'est attendu
+			// pendant une durée choisie, c'est la fin du fondu qui est constatée.
+			const actions = carte.getByTestId('actions-moderation')
+			await expect
+				.poll(() => actions.evaluate((noeud) => getComputedStyle(noeud).opacity))
+				.toBe('1')
+			await expect(carte.getByRole('button', { name: 'Supprimer' })).toBeVisible()
+			await capturer(page, 'moderation-actions-1440', 'CRM-043')
+
 			await carte.getByRole('button', { name: 'Supprimer' }).click()
 
 			// La confirmation est DISTINCTE de celle de l'auteur, et nomme la trace nominative.

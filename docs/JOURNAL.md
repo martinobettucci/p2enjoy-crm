@@ -13174,8 +13174,38 @@ ne montre n'est pas vérifiée visuellement, elle est seulement affirmée.
 
 **Ce qui est livré :** une capture `moderation-actions-1440.jpg`, prise **avant** le clic, sur le
 commentaire de Driss vu par Camille, et son entrée à l'inventaire de `scripts/verify-commentaires.sh`.
-Aucune règle ne change, aucune assertion n'est ajoutée ni retirée : ce qui change est qu'on peut
-enfin **voir** ce que l'assertion affirme.
+Aucune règle ne change : ce qui change est qu'on peut enfin **voir** ce que l'assertion affirme.
+
+**ET LA CAPTURE A DÉNONCÉ DEUX DÉFAUTS QU'ELLE SEULE POUVAIT VOIR — septième occurrence du mécanisme
+de la décision 202.** Le motif est toujours le même, et il justifie à lui seul le §16 de
+`CLAUDE.md` : une preuve verte ne dit rien de ce que l'utilisateur a sous les yeux.
+
+**Premier défaut : la capture ne montrait RIEN.** Prise telle quelle, elle fixait une rangée
+**vide** à l'emplacement de l'action. Les actions sont rendues `opacity-0` et révélées par
+`group-hover` ou `group-focus-within` (§5.10 du design system) — un choix délibéré, dont la décision
+315 a même tiré le `basis-full` pour que des actions transparentes cessent de couper la métadonnée.
+Une capture prise hors survol **prouvait donc le contraire de ce qu'elle prétendait**. Le survol
+n'est pas une mise en scène : il est la condition d'existence de l'état à observer.
+
+**Second défaut, révélé par la correction du premier : `toBeVisible()` ne garantit pas qu'on voit.**
+Prise après survol, la capture montrait un « Supprimer » **à demi transparent**. Pour Playwright, un
+élément `opacity-0` qui occupe une surface non vide **est visible** — la visibilité y est une
+question de boîte, pas d'opacité. L'assertion passait donc pendant le fondu, et rien dans le
+scénario ne l'attendait. Le scénario observe désormais l'opacité **réellement calculée** jusqu'à
+`1` :
+
+```
+await expect.poll(() => actions.evaluate((n) => getComputedStyle(n).opacity)).toBe('1')
+```
+
+C'est une **observation de l'état de l'écran**, et non une temporisation arbitraire que le §18 de
+`CLAUDE.md` proscrit : aucune durée n'est choisie, c'est la fin du fondu qui est constatée. Une
+attente d'une seconde aurait rendu la même image et aurait été un défaut.
+
+**Ce que ces deux défauts disent du dossier de captures.** Ni l'un ni l'autre n'aurait été trouvé
+par une assertion : la première capture satisfaisait `actions-moderation` à 1, la seconde
+satisfaisait `toBeVisible()`, et les deux étaient **fausses à l'œil**. C'est exactement le cas que le
+§16 décrit, et la raison pour laquelle une capture doit être **regardée** et pas seulement produite.
 
 **Ce que cette session n'emporte pas.** Aucune correction d'INC-091, INC-092 ou INC-099 — trois
 défauts étrangers, dont deux attendent un arbitrage. Aucune résurrection ni suppression physique

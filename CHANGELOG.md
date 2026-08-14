@@ -68,6 +68,21 @@ d'exécuter le code attendu.
     **étrangers** — `mail_messages.filed_at`, la colonne `attempts` du retour de `reserver_envois`,
     et deux fonctions du rangement réservées au worker —, tous nommés, aucun ne changeant un
     comportement. L'assertion figée du catalogue de fonctions a joué et est révisée.
+- **La règle la plus visible de la modération est enfin OBSERVÉE, et pas seulement éprouvée**
+  (décision 379, `CLAUDE.md` §16). *Une seule action sur le commentaire d'un tiers* était tenue par
+  deux assertions — `actions-moderation` à 1, `Modifier` à 0 — et **ne figurait sur aucune capture** :
+  la seule qui aurait pu la montrer est prise **après** le clic, quand la confirmation a déjà pris la
+  place du corps. Une forme qu'aucune capture ne montre n'est pas vérifiée visuellement, elle est
+  seulement affirmée. Nouvelle capture `moderation-actions-1440.jpg`, prise avant le clic, et portée
+  à l'inventaire de `scripts/verify-commentaires.sh`.
+  - **Deux défauts de la capture elle-même, trouvés en la REGARDANT.** La première version ne
+    montrait **rien** : les actions sont rendues `opacity-0` et révélées par `group-hover` ou
+    `group-focus-within` (§5.10), si bien que la capture fixait une rangée vide et prouvait le
+    contraire de ce qu'elle prétendait. La seconde, prise après survol, montrait un « Supprimer »
+    **à demi transparent** : pour Playwright, un élément `opacity-0` qui occupe une surface **est**
+    visible, et `toBeVisible()` passait donc pendant le fondu. Le scénario attend désormais que
+    l'opacité **réellement calculée** atteigne `1` — une observation de l'état de l'écran, non une
+    temporisation arbitraire (`CLAUDE.md` §18).
 - **INC-101 relevée, mesurée et NON corrigée** : les cinq compteurs globaux de
   `scripts/verify-harness.sh` sont périmés — 33 fichiers / 1971 assertions contre 31 / 1921, 507
   scénarios d'API contre 504, 185 d'interface contre 182, 42 de messagerie contre 41. **Deux
