@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, deuxième tranche : les transitions — `CRM-076`**
+  (`docs/SPEC-workflow-engine.md` §7 bis.9). Le premier des quatre manques nommés au §7 bis.7 est
+  levé : les **arêtes** du graphe s'éditent depuis `/reglages/workflows`, sous la liste des étapes.
+  - **Le graphe est rendu groupé par étape de départ**, dans l'ordre des étapes et non celui des
+    identifiants — `workflow_transitions` ne porte pas la position des étapes, donc l'ordre
+    lisible est composé par l'écran depuis les étapes déjà lues. Une étape sans sortie garde son
+    groupe et l'annonce : « Aucune sortie : les cards s'y arrêtent. »
+  - **Trois gestes contre la vraie base** : déclarer une arête (les arrivées déjà déclarées et
+    l'étape de départ elle-même ne sont pas offertes — une aide d'interface, pas une garde),
+    modifier son libellé et son motif exigé, la retirer après confirmation. Un libellé vidé
+    redevient `null`, ce qui fait afficher le libellé de l'étape d'arrivée dans le menu d'une
+    affaire.
+  - **Le `23503` change de sens et le code le dit** : rien ne retient une arête — aucune colonne
+    de `cards` ne désigne une transition —, donc il ne peut plus vouloir dire « occupée » comme
+    sur une étape. `classerRefusTransition` n'a volontairement pas de paramètre `geste`.
+  - **Aucune migration** : `workflow_transitions` existe depuis `CRM-031` avec ses contraintes et
+    ses politiques. Ce qui manquait était l'écran.
+  - Preuves : 22 unitaires ajoutées sur la couche de données, 18 sur l'écran monté, 8 scénarios
+    E2E sur pile réelle — souris, clavier seul, quatre paliers, captures observées — dont le refus
+    d'unicité obtenu par une **course réelle** (un second administrateur déclare l'arête par la clé
+    de service pendant que le formulaire est ouvert). Reste dû sous `CRM-076` : champs de
+    formulaire, règles, prévisualisation des effets.
+  - Documentation : `docs/manual.md` gagne son **chapitre 5 bis**, absent jusqu'ici alors que la
+    première tranche avait déjà livré l'écran ; `docs/DESIGN_SYSTEM.md` §5.15 pose les règles
+    visuelles d'un graphe rendu en listes groupées.
+
 - **L'éditeur administrateur de workflows, première tranche — `CRM-076`**
   (`docs/SPEC-workflow-engine.md` §7 bis). La règle portée depuis `CRM-000` — « l'éditeur de
   workflow est réservé aux administrateurs » — cesse d'être un énoncé d'intention : la route

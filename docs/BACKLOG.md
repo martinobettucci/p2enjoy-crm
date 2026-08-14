@@ -6405,9 +6405,47 @@ E2E et captures aux quatre paliers sans avertissement console.
       de catalogue préfixé `e2e-wf-` et purgent dans leur `finally` ; `test:sql` rejoué après la
       campagne : 33 fichiers / 1971 assertions, aucun résidu.
 
-**Reste dû sous cette unité (§7 bis.7)** : l'édition des transitions, des champs de formulaire et
-de leurs règles, la prévisualisation des effets, et les preuves pgTAP/API dédiées à l'écran (les
-politiques du §3.7 restent prouvées par `CRM-031`). L'unité reste `[~]` jusqu'à leur livraison.
+**Deuxième tranche livrée et vérifiée, 2026-08-14** — les transitions
+(docs/SPEC-workflow-engine.md §7 bis.9) :
+
+- [x] Lecture 4 (`workflow_transitions` filtrée par workflow), émise **avec** celle des étapes :
+      un graphe dont on montrerait les nœuds sans les arêtes serait à moitié faux. L'ordre demandé
+      est celui des identifiants — la table ne porte pas la position des étapes — et l'ordre
+      lisible est composé par `grouperTransitions`.
+- [x] Couche de données : `lireTransitions`, `grouperTransitions`, `arriveesPossibles`,
+      `libelleTransitionConforme`, `classerRefusTransition`, et les trois écritures du §7 bis.9.2 —
+      déclarer, modifier (libellé et motif exigé, jamais une extrémité), retirer. 22 preuves
+      unitaires ajoutées (`webapp/src/lib/administration-workflows.test.ts`, 50 au total).
+- [x] `classerRefusTransition` **n'a pas de paramètre `geste`**, et c'est mesuré, pas supposé :
+      aucune colonne de `cards` ne désigne une transition, donc le `23503` d'un retrait d'arête ne
+      peut pas vouloir dire « occupée » comme sur une étape.
+- [x] Écran : bloc « Transitions déclarées » sous les étapes, groupes dans l'ordre du graphe,
+      culs-de-sac nommés, motif exigé en mention textuelle, libellé absent annoncé, formulaire de
+      déclaration à deux listes liées, édition du seul couple libellé/motif, confirmation avant
+      retrait. 18 preuves d'écran ajoutées (`AdministrationWorkflows.test.tsx`, 40 au total).
+- [x] E2E sur la vraie base (`e2e/ui/administration-workflows.spec.ts`, 8 scénarios ajoutés,
+      16 au total) : les trois gestes à la souris confirmés en base après chaque geste, les trois
+      au clavier seul, le refus d'unicité obtenu par une **course réelle** — un second
+      administrateur déclare l'arête par la clé de service pendant que le formulaire est ouvert —,
+      quatre paliers sans débordement, captures produites et **observées**. L'arête de preuve relie
+      deux étapes seedées qu'aucune arête ne joignait, et son `finally` la supprime : le seed
+      retrouve exactement son graphe.
+- [x] Documentation : `docs/manual.md` chapitre **5 bis**, absent jusqu'ici alors que la première
+      tranche avait livré l'écran ; `docs/DESIGN_SYSTEM.md` §5.15 (un graphe se rend en listes
+      groupées, pas en diagramme).
+- [x] **Aucune migration** : `workflow_transitions` et ses politiques datent de `CRM-031`.
+- [x] Deux preuves antérieures **révisées, non supprimées** : le libellé d'une étape apparaît
+      désormais deux fois à l'écran — dans sa ligne et comme titre de son groupe d'arêtes —, donc
+      une assertion unitaire et une assertion E2E de la première tranche sont resserrées sur la
+      liste des étapes. Le motif est écrit dans les deux fichiers.
+- [ ] **INC-104 relevée au passage, non corrigée** : deux phrases de ce document comptent « dix
+      transitions dont quatre à motif » là où le seed en pose **onze dont cinq** depuis la
+      décision 259. Elles décrivent la DoD de `CRM-041` et `CRM-046`, unités closes : arbitrage
+      demandé plutôt que retouche.
+
+**Reste dû sous cette unité (§7 bis.7)** : l'édition des champs de formulaire et de leurs règles,
+la prévisualisation des effets, et les preuves pgTAP/API dédiées à l'écran (les politiques du §3.7
+restent prouvées par `CRM-031`). L'unité reste `[~]` jusqu'à leur livraison.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

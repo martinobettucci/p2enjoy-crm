@@ -584,6 +584,47 @@ de quoi il a l'air.
   produit n'associe une urgence à un compte en échec ; l'écran n'en invente pas une.
 - **Aucune action, aucune modale** : l'écran lit, il n'agit pas — voir §20.11.7.
 
+### 5.15 Éditeur de workflows — `CRM-076`
+
+Deuxième surface d'administration, et la première à rendre un **graphe**. Ce que l'écran fait —
+lectures, gestes, refus — est spécifié par `docs/SPEC-workflow-engine.md` §7 bis ; les règles
+ci-dessous ne disent que de quoi il a l'air. Tout ce que le §5.13 pose pour l'arborescence vaut ici
+sans être répété : barre de boutons discrets toujours visibles, commandes désactivées jamais
+masquées, formulaires et confirmations dans le flux du document, focus entrant dans le premier
+champ, alerte de refus dans le bloc concerné.
+
+- **Le graphe se rend en listes groupées, pas en diagramme.** Un canevas de nœuds et d'arêtes
+  demanderait une mise en page automatique, un zoom, une navigation clavier à inventer et un
+  équivalent textuel pour les lecteurs d'écran — quatre mécanismes qu'aucune unité n'a spécifiés.
+  Le patron retenu est une `ol` d'étapes, chacune portant la `ul` de **ses sorties**. Il se lit à
+  la voix, se parcourt au clavier sans code supplémentaire, et dit la même chose.
+
+- **Le sens de lecture d'une arête est porté par un mot, pas par la seule flèche.** Chaque sortie
+  s'écrit « Vers <étape> » et non « <étape> » précédée d'une icône : l'icône `ArrowRight` est
+  décorative (`aria-hidden`), et une ligne dont le sens ne tiendrait qu'à elle serait ambiguë hors
+  contexte visuel.
+
+- **Une étape sans sortie porte une phrase, jamais un vide.** Un groupe vide se lirait comme un
+  défaut d'affichage ; le cul-de-sac est une information du graphe, et l'écran l'écrit.
+
+- **Le libellé d'une étape apparaît deux fois — dans sa ligne, puis comme titre de son groupe
+  d'arêtes — et c'est voulu.** Le bloc des transitions serait illisible s'il désignait ses groupes
+  autrement que la liste juste au-dessus. La conséquence pratique est pour les preuves : une
+  assertion sur un libellé d'étape se scope au bloc qu'elle vise.
+
+- **Le motif exigé est une mention textuelle** — « Motif exigé », pilule `--color-accent-soft` /
+  `--color-accent-on-soft` avec son icône —, jamais une teinte seule (§1). C'est une obligation
+  faite à l'utilisateur d'une affaire, pas une nuance décorative.
+
+- **Un libellé de bouton absent est nommé, pas laissé vide** : la ligne écrit « Libellé de l'étape
+  d'arrivée » en texte secondaire. Le §2.5 du moteur pose qu'une valeur absente veut dire « prendre
+  celle de l'objet parent » ; l'écran le dit au lieu de laisser croire à un oubli.
+
+- **Le bloc des arêtes est SOUS celui des étapes, dans la même colonne**, jamais à côté. Les deux
+  décrivent le même workflow et se lisent dans cet ordre : on ne relie pas des étapes qu'on n'a pas
+  encore choisies. Aux paliers étroits du §7, les lignes se replient et le groupe d'actions passe à
+  la ligne suivante — la hauteur `--size-target` des cibles est conservée.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

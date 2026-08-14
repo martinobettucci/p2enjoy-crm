@@ -134,10 +134,11 @@ connue. Une identité supprimée ne transforme jamais son UUID en libellé : un 
 sa place avec « Compte supprimé », tandis qu'un événement de service reste sans acteur affiché.
 
 **Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
-et la vue liste ; la discussion et l'historique vivent dans la fiche. En revanche, le catalogue de
-nœuds, les workflows, leur éditeur de formulaire et les droits d'accès n'ont toujours aucun écran
-d'administration. La connexion rend accessibles les surfaces déjà livrées ; elle ne fabrique pas
-les éditeurs encore absents.
+et la vue liste ; la discussion et l'historique vivent dans la fiche. L'arborescence a son écran
+d'administration (chapitre 5), et la **composition d'un workflow** — ses étapes et ses transitions —
+le sien (chapitre 5 bis). En revanche, le catalogue de nœuds, l'éditeur des questions d'un
+formulaire et les droits d'accès n'ont toujours aucun écran d'administration. La connexion rend
+accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents.
 
 ### 3.2 bis La section Tracks
 
@@ -1003,8 +1004,88 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 - Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
   été rejoué : les deux exigent la pile de développement complète.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
-- L'édition des **workflows** eux-mêmes — étapes, transitions, questions — relève du chapitre 20.
+- L'édition des **workflows** eux-mêmes relève du **chapitre 5 bis** pour leurs étapes et leurs
+  transitions ; les **questions** d'un formulaire n'ont, elles, toujours pas d'écran.
 - Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
+
+## 5 bis. Composer un workflow : ses étapes et ses transitions
+
+*Livré par `CRM-076` ; les règles d'accès sont celles de `CRM-031`, inchangées. Captures dans
+`docs/captures/CRM-076/`.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Workflows : étapes et composition ».
+
+**Ce que cet écran fait, et ce qu'il ne fait pas.** Il **compose** les workflows qui existent
+déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
+celle par laquelle les affaires entrent, et déclare les **transitions** qui relient les étapes.
+Il ne **crée** pas un workflow, ne le copie pas vers un track et ne le rend pas par défaut : ces
+trois gestes restent hors interface.
+
+**Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
+chapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
+serveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »
+
+### 5 bis.1 Choisir un workflow
+
+La colonne de gauche liste les workflows de l'espace de travail, celui **par défaut** en tête, et
+le premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou propre à un track.
+
+### 5 bis.2 Les étapes
+
+Les étapes s'affichent dans l'ordre du graphe, avec pour chacune sa probabilité et son seuil de
+relance — ceux du catalogue, ou ceux que vous avez surchargés.
+
+- **Ajouter** : « Ajouter une étape » ouvre le catalogue des nœuds encore disponibles. Un nœud déjà
+  employé par ce workflow n'y figure pas, un nœud archivé non plus. Lorsque tout le catalogue actif
+  est employé, l'écran le dit plutôt que d'afficher une liste vide.
+- **Ordonner** : les flèches montent et descendent une étape. Une flèche désactivée sans être en
+  bout de liste s'explique comme au §5.3.
+- **Surcharger** : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de
+  relance. **Un champ laissé vide veut dire « prendre la valeur du catalogue »**, et ce n'est pas
+  la même chose que zéro : une probabilité surchargée à `0` est une probabilité nulle voulue, que
+  l'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge.
+- **Désigner l'étape initiale** : le fanion. C'est par elle que les nouvelles affaires entrent. Un
+  workflow qui n'en a aucune l'annonce en tête de liste — aucune affaire ne peut y entrer tant
+  qu'elle n'est pas désignée.
+- **Retirer** : la corbeille, après confirmation. Une étape **occupée par des affaires** n'est pas
+  retirable : le serveur refuse, et l'écran nomme le refus. Retirer une étape ne supprime pas son
+  nœud du catalogue.
+
+### 5 bis.3 Les transitions
+
+Sous les étapes, le bloc « Transitions déclarées » montre le graphe : chaque étape y figure avec
+**ses sorties**, dans l'ordre du graphe. Une affaire ne peut aller que là où une transition la
+mène ; une étape sans sortie est un point d'arrivée, et l'écran l'écrit — « Aucune sortie : les
+cards s'y arrêtent » — plutôt que de la faire disparaître.
+
+Chaque sortie affiche l'étape d'arrivée, le **libellé du bouton** qui la déclenche depuis une
+affaire, et la mention **« Motif exigé »** lorsqu'un commentaire est obligatoire pour l'emprunter.
+
+- **Déclarer** : « Déclarer une transition » ouvre un formulaire à deux listes. La liste d'arrivée
+  ne propose ni l'étape de départ elle-même — une étape ne va pas vers elle-même — ni les arrivées
+  **déjà déclarées** depuis ce départ. Lorsqu'il ne reste aucune arrivée possible, le formulaire le
+  dit. Un workflow d'une seule étape ne peut porter aucune transition, et l'écran l'annonce.
+- **Le libellé du bouton est facultatif.** Laissé vide, le menu d'une affaire affiche le libellé de
+  l'étape d'arrivée. Une valeur composée uniquement d'espaces est refusée.
+- **Exiger un motif** : la case rend le commentaire obligatoire. Le déplacement d'une affaire par
+  cette transition sera refusé sans lui — c'est la règle décrite au §4.3, vue depuis son réglage.
+- **Modifier** : le crayon change le libellé et le motif exigé, jamais les deux extrémités. Changer
+  une extrémité, c'est une autre transition : déclarez-la, puis retirez l'ancienne.
+- **Retirer** : la corbeille, après confirmation. Rien ne retient une transition — contrairement à
+  une étape, aucune affaire ne la « porte » —, donc le retrait aboutit toujours si vous êtes
+  administrateur. Les deux étapes, elles, restent dans le workflow ; seule la porte entre elles se
+  ferme.
+
+Si un autre administrateur déclare la même transition pendant que votre formulaire est ouvert, le
+serveur refuse la vôtre et l'écran affiche « Cette transition est déjà déclarée. » Rien n'est écrit
+deux fois.
+
+### 5 bis.4 Ce qui n'est pas encore là
+
+- Les **questions du formulaire** d'un workflow, leurs règles et les **champs exigés** par une
+  transition n'ont pas d'écran : ils restent des gestes d'API.
+- La **prévisualisation des effets** d'une modification sur les affaires en cours n'est pas livrée.
+- **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
 
 ## 6. Consulter l'état de la messagerie
 
