@@ -115,7 +115,7 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 
 ## Ouverts
 
-### INC-099 — Les preuves d'arborescence laissent deux tracks derrière elles, et `0004_tracks.test.sql` en rougit
+### INC-099 — Les preuves d'arborescence laissent quatre lignes derrière elles, et sept assertions d'autres suites en rougissent
 
 **Nature :** résidu d'une preuve dans une table partagée, qui rend rouge l'assertion de conformité
 du seed d'une AUTRE suite. **Même famille qu'INC-091**, sur une autre table et un autre harnais.
@@ -146,6 +146,25 @@ not ok 76 - l'un d'eux est archivé : l'état « archivé » est démontrable, p
 Les deux horodatages tombent pendant la fenêtre de `npm run e2e:ui`, et les noms sont ceux que
 `e2e/ui/administration-arborescence.spec.ts` écrit en toutes lettres.
 
+**LA MÊME CHOSE SUR `channels`, et elle coûte SIX assertions de plus.** Le constat initial ne
+portait que sur `tracks`, parce que `test:sql` s'arrête là. `npm run e2e:api`, joué ensuite, a rendu
+**sept** scénarios rouges, dont six sur le seul compte des channels :
+
+```
+✘ channels.spec.ts       le seed a posé six channels, dont un archivé, sur trois tracks
+✘ channels.spec.ts       lignes c et d — admin lit les channels de son workspace
+✘ channels.spec.ts       lignes c et d — business_developer lit les channels de son workspace
+✘ channels.spec.ts       le viewer seedé ne voit que quatre channels
+✘ coherence-workflow.spec.ts  six channels rattachés, un seul suivant un workflow de portée track
+✘ workflows.spec.ts      INC-029 — les channels du seed sont tous rattachés
+```
+
+`public.channels` portait alors **huit** lignes : les six du seed, plus `E2E Canal Souris Renommé`
+et `E2E Canal Clavier Renommé`, créées elles aussi pendant la fenêtre de `e2e:ui`. Quatre lignes
+résiduelles au total — deux tracks et deux channels —, et la portée du défaut est donc **beaucoup
+plus large** que ce que le premier constat laissait croire : ce n'est pas une assertion isolée,
+c'est **l'ordre d'exécution des trois suites** qui décide de leur couleur.
+
 **La cause, lue dans le fichier et non supposée.** Le scénario appelle bien `supprimerParSlug`,
 mais **à l'entrée** — son commentaire le dit : « Nettoyage préalable : une exécution interrompue ne
 doit pas faire échouer celle-ci sur un `23505` ». Il n'y a **aucun `finally`** qui retire la ligne
@@ -168,7 +187,7 @@ corriger au passage toucherait `CRM-075` sans rejouer ses preuves sous son unit�
 `0004_tracks.test.sql` n'est **ni désarmée ni assouplie** : elle est le détecteur, exactement comme
 l'assertion 9 de `0029` l'a été pour INC-091.
 
-**Ce qui a été fait pour que les preuves du lot G restent lisibles.** Les deux lignes résiduelles
+**Ce qui a été fait pour que les preuves du lot G restent lisibles.** Les quatre lignes résiduelles
 ont été retirées de la base de développement par une suppression ciblée sur leurs deux identifiants,
 geste d'exploitation sur un volume jetable, **consigné ici plutôt que tu**. Ce n'est pas une
 correction : la prochaine exécution de `npm run e2e:ui` les recréera.

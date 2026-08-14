@@ -75,22 +75,34 @@ describe('« renseigné » donne la même lecture que app.valeur_de_champ_est_vi
 
 	it('le tableau de cas couvre les cinq façons d’être vide du §6.6', () => {
 		const vides = CAS_RENSEIGNE.filter((cas) => !cas.renseigne)
-		expect(vides).toHaveLength(4)
+		// Quatre jusqu'à l'arbitrage du lot G, huit depuis : la tabulation, le saut de ligne,
+		// l'espace insécable et le cadratin ont REJOINT les vides (INC-052, décision 374).
+		expect(vides).toHaveLength(8)
 		// `undefined` n'est pas une valeur `jsonb` : il est exercé par le test ci-dessus, et ne
 		// peut pas figurer dans un tableau que la preuve d'API écrit en base.
 		expect(vides.map((cas) => cas.nom)).toContain('null explicite')
 	})
 
-	it('la tabulation n’est PAS un espace pour `btrim` : la chaîne reste renseignée', () => {
-		// Décision 165, INC-052 seconde occurrence. MESURÉ contre la base réelle : `btrim(texte)`
-		// sans second argument ne retire que l'espace U+0020. Employer `String.prototype.trim()`
-		// ici ferait annoncer par l'interface une transition bloquée que la garde accepte — le
-		// défaut que le §4.3 existe pour rendre impossible, et qui a bien été livré avant d'être
-		// mesuré.
-		expect(estRenseigne('\t')).toBe(true)
-		expect(estRenseigne('\n')).toBe(true)
-		expect(estRenseigne(' \t ')).toBe(true)
+	it('une chaîne de blancs UNICODE est vide des deux côtés — INC-052, arbitrage rendu', () => {
+		// TEST RETOURNÉ, NON RETIRÉ (décision 51). Il s'appelait « la tabulation n'est PAS un
+		// espace pour `btrim` : la chaîne reste renseignée » et exigeait `true` sur les trois
+		// premières lignes. C'était fidèle à la base : `btrim(texte)` sans second argument ne
+		// retire que `U+0020`, et la décision 165 avait fait converger l'interface VERS ce
+		// comportement faute d'arbitrage sur la règle.
+		//
+		// L'arbitrage est rendu (décision 367, lot G) et mis en œuvre par la décision 374 :
+		// `app.btrim_blancs` retire les blancs Unicode, exactement ceux de `trim()`. Les deux
+		// lectures convergent donc toujours, mais sur la règle élargie.
+		expect(estRenseigne('\t')).toBe(false)
+		expect(estRenseigne('\n')).toBe(false)
+		expect(estRenseigne(' \t ')).toBe(false)
 		expect(estRenseigne('   ')).toBe(false)
+		// Deux blancs non-ASCII, que l'élargissement minimal `btrim(v, E' \\t\\r\\n')` n'aurait pas
+		// couverts : ils mesurent que l'arbitrage porte bien sur l'ensemble Unicode.
+		expect(estRenseigne('\u00A0')).toBe(false)
+		expect(estRenseigne('\u2003')).toBe(false)
+		// Et un texte ENTOURÉ de blancs reste renseigné : c'est un `btrim`, non une purge.
+		expect(estRenseigne('\u2003Salon\u00A0')).toBe(true)
 	})
 
 	it('faux, zéro et « 0 » sont renseignés : une case décochée est une réponse', () => {

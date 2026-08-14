@@ -50,6 +50,10 @@ const CARD_C2 = '5eed0000-0000-4000-8000-0000000000c2' // grands-comptes, étape
 const CARD_C3 = '5eed0000-0000-4000-8000-0000000000c3' // grands-comptes, étape 61
 const CARD_C5 = '5eed0000-0000-4000-8000-0000000000c5' // maintenance : bizdev rétrogradé en lecture
 const CARD_C6 = '5eed0000-0000-4000-8000-0000000000c6' // inter-entreprises, étape 61
+// Camille Aubert, administratrice — l'identité que `jetonAdmin` porte, et donc l'auteur attendu
+// du motif que `move_card` conserve depuis le lot G (INC-048, décision 374).
+const PROFIL_ADMIN = '5eed0000-0000-4000-8000-000000000011'
+
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
 const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
 const CARD_INCONNUE = '5eed0000-0000-4000-8000-0000000000ff'
@@ -618,25 +622,39 @@ test.describe('M5 — lignes j à l : le graphe devient opposable', () => {
 			expect(reponse.status()).toBe(200)
 			expect((await reponse.json()).current_step_id).toBe(ETAPE_PERDU)
 
-			// INC-048, RÉVISÉE À `CRM-043` ET TOUJOURS OUVERTE — mécanisme de la décision 51. La
-			// table `card_comments` EXISTE désormais : la cause bloquante — « elle n'existe pas » —
-			// est levée. Le motif fourni disparaît POURTANT toujours, `move_card` n'ayant pas été
-			// redéfinie : elle est un livrable de `CRM-034`, et `CRM-043` ne reprend pas les gardes
-			// d'une autre unité sans les rejouer sous la sienne (`CLAUDE.md` §13).
+			// INC-048, RÉVISÉE UNE TROISIÈME FOIS ET CLOSE — mécanisme de la décision 51.
 			//
-			// L'assertion mesure maintenant la PERTE elle-même, et non plus son alibi : la card
-			// déplacée ne porte aucun commentaire, alors qu'un motif vient d'être exigé et fourni.
+			// Premier état, à `CRM-034` : elle constatait que `card_comments` n'existait pas.
+			// Deuxième état, à `CRM-043` : la table existait et le motif disparaissait pourtant,
+			// `move_card` appartenant à une autre unité. Troisième état, ici : l'arbitrage est
+			// rendu (décision 367, lot G) et mis en œuvre sous l'unité qui porte la fonction
+			// (décision 374). Elle exigeait `toEqual([])` ; elle exige désormais le contraire.
+			//
+			// C'est la mesure FORTE de la clôture : le motif est relu PAR LA VRAIE ROUTE, sur la
+			// vraie base, après une transition réellement acceptée.
 			const commentaires = await request.get(
-				`/rest/v1/card_comments?card_id=eq.${CARD_C6}&select=id,body`,
+				`/rest/v1/card_comments?card_id=eq.${CARD_C6}&select=id,body,author_id`,
 				{ headers: enTetesService() },
 			)
 			expect(commentaires.status()).toBe(200)
+			const corps = ((await commentaires.json()) as { body: string; author_id: string }[])
 			expect(
-				await commentaires.json(),
-				'INC-048 : `card_comments` existe depuis `CRM-043`, et le motif fourni à `move_card` ' +
-					'est TOUJOURS perdu. L’arbitrage n’est plus théorique : il est exigible',
-			).toEqual([])
+				corps.map((ligne) => ligne.body),
+				'INC-048, CLOSE : le motif fourni à `move_card` est CONSERVÉ comme un commentaire ' +
+					'ordinaire. C’est exactement la perte que l’entrée décrivait depuis le 2026-08-04',
+			).toEqual(['Budget reporté en 2027'])
+			expect(
+				corps[0]?.author_id,
+				'INC-048 : et il porte l’AUTEUR DU GESTE. `move_card` étant `SECURITY DEFINER`, ' +
+					'la ligne serait née sans auteur si la fonction n’écrivait pas `auth.uid()`',
+			).toBe(PROFIL_ADMIN)
 		} finally {
+			// Le motif écrit par ce scénario est retiré de la table : une preuve restaure l'état
+			// dont elle est partie (INC-055), et le laisser fausserait les comptes des suites
+			// jouées après elle — c'est précisément le défaut relevé en INC-091 et INC-099.
+			await request.delete(`/rest/v1/card_comments?card_id=eq.${CARD_C6}`, {
+				headers: enTetesService(),
+			})
 			await remettre(request, CARD_C6, avant.current_step_id, avant.position)
 		}
 	})
@@ -765,9 +783,13 @@ test.describe('M7 — INC-047 CLOSE : la vérification n° 6 est livrée par `CR
 
 	// ASSERTION RETOURNÉE PAR `CRM-044` (décision 51). Elle constatait que la table n'existait pas ;
 	// elle constate désormais que la trace existe SANS que `move_card` ait été rouverte — le trigger
-	// vit sur `cards` (décision 203) — et que le `comment` de la fonction n'y atteint toujours rien
-	// (INC-048). Le contrat complet est exercé par `e2e/api/timeline.spec.ts`.
-	test('la trace du déplacement existe depuis CRM-044, et le motif est TOUJOURS perdu', async ({
+	// vit sur `cards` (décision 203) — et que le `comment` de la fonction n'atteint PAS le
+	// `payload`. Ce dernier point reste vrai APRÈS la clôture d'INC-048 (décision 374), et c'est
+	// délibéré : le motif est conservé comme un COMMENTAIRE, dans le fil de la card, non comme une
+	// donnée de timeline. `card_events` porte huit types et la timeline des commentaires appartient
+	// à `CRM-044` ; recopier le motif dans le `payload` en ferait une seconde source de vérité.
+	// Le contrat complet est exercé par `e2e/api/timeline.spec.ts`.
+	test('la trace du déplacement existe depuis CRM-044, et le motif reste hors du `payload`', async ({
 		request,
 	}) => {
 		const table = await request.get('/rest/v1/card_events?select=id,payload&type=eq.moved', {
@@ -779,7 +801,8 @@ test.describe('M7 — INC-047 CLOSE : la vérification n° 6 est livrée par `CR
 		expect(evenements.length).toBeGreaterThan(0)
 		expect(
 			evenements.every((e) => !('comment' in e.payload)),
-			'INC-048 : un `moved` porte le motif que `move_card` exige',
+			'INC-048, close mais délibérément bornée : un `moved` ne porte PAS le motif. Il vit dans ' +
+				'`card_comments`, une seule fois, et non recopié dans une trace typée',
 		).toBe(true)
 	})
 })

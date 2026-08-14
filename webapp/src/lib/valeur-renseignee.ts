@@ -19,7 +19,7 @@ import type { Json } from './database.types'
  *
  *   * aucune ligne (`undefined`) ;
  *   * `null` — SQL `NULL` comme `'null'::jsonb`, que PostgREST rend indistinguables (INC-054) ;
- *   * une chaîne vide, ou faite de seuls espaces ;
+ *   * une chaîne vide, ou faite de seuls **blancs Unicode** ;
  *   * un tableau vide.
  *
  * Tout le reste est renseigné, **y compris `false`, `0` et `"0"`** : une case décochée est une
@@ -34,31 +34,25 @@ export function estRenseigne(valeur: Json | undefined): boolean {
 }
 
 /**
- * Retire les espaces de tête et de fin — **et eux seuls**.
+ * Retire les **blancs** de tête et de fin, au sens d'`String.prototype.trim()`.
  *
- * Ce n'est **pas** `String.prototype.trim`, et l'écart est délibéré : la lecture qui fait foi est
- * celle de `app.valeur_de_champ_est_vide`, qui emploie `btrim(valeur #>> '{}')`. `btrim` sans
- * second argument retire les **espaces** (U+0020), jamais les tabulations ni les sauts de ligne,
- * là où `trim()` retire toute l'espace blanche Unicode.
+ * **Ce fut une réimplémentation, et ce n'en est plus une — INC-052, décision 374.** Jusqu'au
+ * 2026-08-14, ce module recopiait à la main le comportement de `btrim(texte)` sans second
+ * argument, qui ne retire que l'espace `U+0020`. Ce n'était pas une préférence : la lecture qui
+ * fait foi est celle d'`app.valeur_de_champ_est_vide`, et le §4.3 de `docs/SPEC-form-composer.md`
+ * exige que les deux donnent la **même** lecture. MESURÉ le 2026-08-05 contre la base réelle, par
+ * la vraie route et le vrai refus de `move_card` : une valeur réduite à `"\t"` était **renseignée**
+ * pour la garde, quand `trim()` la disait vide. La décision 165 avait donc fait converger
+ * l'interface **vers** la base, faute d'arbitrage sur la règle elle-même.
  *
- * MESURÉ le 2026-08-05 contre la base réelle, par la vraie route et le vrai refus de `move_card` :
- * une valeur réduite à `"\t"` ou `"\n"` est **renseignée** pour la garde et satisfait un champ
- * `required`. Écrit avec `trim()`, ce prédicat annonçait donc « champ vide, transition bloquée »
- * là où la garde acceptait — exactement le défaut que `docs/SPEC-form-composer.md` §4.3 existe
- * pour rendre impossible. Les deux cas sont dans le tableau partagé ci-dessous, et la preuve
- * d'API les confronte à la base.
- *
- * La propriété de `btrim` elle-même est celle d'INC-052, relevée à `CRM-034` sur le commentaire de
- * `move_card` : elle n'est **pas élargie ici**, elle est **reproduite fidèlement**. Élargir ce que
- * le produit tient pour vide est une décision de produit, et la trancher au moment de
- * l'implémentation serait la résoudre implicitement (`CLAUDE.md` §5).
+ * L'arbitrage est rendu — décision 367, lot G — et mis en œuvre par la décision 374 : la base
+ * s'élargit aux **blancs Unicode** via `app.btrim_blancs`, dont la classe est exactement celle de
+ * `trim()`. La convergence se fait donc désormais dans l'autre sens, et **par construction** : il
+ * n'y a plus de réimplémentation à maintenir, donc plus rien qui puisse diverger silencieusement.
+ * La preuve d'API confronte toujours les deux lectures aux mêmes valeurs.
  */
 function retirerEspaces(texte: string): string {
-	let debut = 0
-	let fin = texte.length
-	while (debut < fin && texte[debut] === ' ') debut += 1
-	while (fin > debut && texte[fin - 1] === ' ') fin -= 1
-	return texte.slice(debut, fin)
+	return texte.trim()
 }
 
 /**
@@ -95,11 +89,17 @@ export const CAS_RENSEIGNE: readonly CasRenseigne[] = [
 	{ nom: 'nombre ordinaire', valeur: 45000, renseigne: true, type: 'number' },
 	{ nom: 'texte ordinaire', valeur: 'Salon', renseigne: true, type: 'text' },
 	{ nom: 'texte entouré d’espaces', valeur: '  Salon  ', renseigne: true, type: 'text' },
-	// Les deux cas qui séparent `btrim` de `String.prototype.trim()` — décision 165, INC-052
-	// seconde occurrence. MESURÉ contre la base : `btrim(texte)` sans second argument ne retire
-	// que l'espace U+0020, jamais une tabulation ni un saut de ligne. Ces deux valeurs sont donc
-	// RENSEIGNÉES pour la garde, et satisfont un champ `required`.
-	{ nom: 'chaîne réduite à une tabulation', valeur: '\t', renseigne: true, type: 'text' },
-	{ nom: 'chaîne réduite à un saut de ligne', valeur: '\n', renseigne: true, type: 'text' },
+	// Les cas qui séparaient `btrim` de `String.prototype.trim()` — INC-052, RETOURNÉS par la
+	// décision 374 et non retirés. Ils valaient `renseigne: true` jusqu'à l'arbitrage du lot G :
+	// `btrim(texte)` sans second argument ne retirait que l'espace U+0020, et ces valeurs
+	// satisfaisaient un champ `required`. `app.btrim_blancs` retire désormais les blancs Unicode.
+	{ nom: 'chaîne réduite à une tabulation', valeur: '\t', renseigne: false, type: 'text' },
+	{ nom: 'chaîne réduite à un saut de ligne', valeur: '\n', renseigne: false, type: 'text' },
+	// Deux blancs NON-ASCII, que `btrim(v, E' \\t\\r\\n')` — l'élargissement minimal que la
+	// spécification citait comme option — n'aurait PAS retirés. Ils mesurent que l'arbitrage a
+	// porté sur l'ensemble Unicode.
+	{ nom: 'chaîne réduite à un espace insécable', valeur: '\u00A0', renseigne: false, type: 'text' },
+	{ nom: 'chaîne réduite à un cadratin', valeur: '\u2003', renseigne: false, type: 'text' },
+	{ nom: 'texte entouré de blancs Unicode', valeur: '\u2003Salon\u00A0', renseigne: true, type: 'text' },
 	{ nom: 'tableau non vide', valeur: ['choix-a'], renseigne: true, type: 'multiselect' },
 ] as const

@@ -552,12 +552,17 @@ select is(
 	0, '`card_events` n''est PAS publiée au temps réel : le fil se relit à l''ouverture de la card '
 	   '(§14.1)');
 
--- INC-048, troisième constat : le motif d'une transition n'est conservé nulle part, bien que sa
--- destination existe désormais DEUX fois.
+-- INC-048, CLOSE — et cette assertion reste VRAIE, ce qui n'est pas une survivance mais une borne.
+-- Le motif est désormais conservé (décision 374), comme un COMMENTAIRE dans le fil de la card, et
+-- non comme une donnée de timeline : `card_events` porte huit types, la timeline des commentaires
+-- appartient à `CRM-044`, et recopier le motif dans le `payload` en ferait une seconde source de
+-- vérité. La cause technique d'origine reste vraie elle aussi — un trigger posé sur `cards` ne voit
+-- pas les arguments de la fonction qui a fait l'`UPDATE`.
 select is(
 	(select count(*)::int from public.card_events where type = 'moved' and payload ? 'comment'),
-	0, 'INC-048 : le `comment` de `move_card` n''atteint PAS le `payload` — un trigger sur `cards` '
-	   'ne voit pas les arguments de la fonction qui a fait l''UPDATE');
+	0, 'INC-048, close mais BORNÉE : le `comment` de `move_card` n''atteint PAS le `payload`. Il '
+	   'est conservé dans `card_comments`, une seule fois — un trigger sur `cards` ne voit de '
+	   'toute façon pas les arguments de la fonction qui a fait l''UPDATE');
 
 select is(
 	(select count(*)::int from pg_proc
