@@ -1,7 +1,9 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première tranche
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
+//           tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les trois lectures, leurs filtres et leur ordre),
 //           §7 bis.4 (les six gestes et ce que la base garantit), §7 bis.5 (validation de forme),
-//           §7 bis.8 (preuves attendues, niveau unitaire)
+//           §7 bis.8 (preuves attendues, niveau unitaire), §7 bis.9 (deuxième tranche : les arêtes,
+//           leur groupement, leurs choix offerts et leurs refus), §3.4 (modèle des arêtes)
 // @verifies docs/SPEC-workflow-engine.md §2.5 (`0` n'est pas `NULL`), §3.3 (modèle `workflow_steps`,
 //           unicité `(workflow_id, node_id)`, surcharges facultatives), §3.5 (l'étape initiale)
 //
@@ -29,8 +31,18 @@ import {
 	probabiliteConforme,
 	retirerEtape,
 	surchargerEtape,
+	COLONNES_TRANSITION_ADMIN,
+	arriveesPossibles,
+	classerRefusTransition,
+	declarerTransition,
+	grouperTransitions,
+	libelleTransitionConforme,
+	lireTransitions,
+	modifierTransition,
+	retirerTransition,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
+	type TransitionAdministrable,
 } from './administration-workflows'
 import type { ClientCrm } from './supabase'
 
@@ -420,5 +432,247 @@ describe('les écritures de l’éditeur (§7 bis.4)', () => {
 	it('rend `sans-effet` sur `200` et zéro ligne, jamais `applique`', async () => {
 		const { client } = espionEcritures([ZERO_LIGNE])
 		expect((await deplacerEtape(client, 'e1', 2)).statut).toBe('sans-effet')
+	})
+})
+
+// =============================================================================================
+// DEUXIÈME TRANCHE — les arêtes du graphe
+// @verifies docs/SPEC-workflow-engine.md §7 bis.9.1 (lecture 4 et l'ordre composé),
+//           §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix offerts),
+//           §7 bis.9.4 (validation de forme), §7 bis.9.5 (les refus),
+//           §7 bis.9.7 (preuves attendues, niveau unitaire), §3.4 (modèle des arêtes)
+// =============================================================================================
+
+function transition(
+	partiel: Partial<TransitionAdministrable> & { id: string; from_step_id: string; to_step_id: string },
+): TransitionAdministrable {
+	return {
+		workflow_id: 'w1',
+		workspace_id: 'ws1',
+		label: null,
+		require_comment: false,
+		...partiel,
+	}
+}
+
+describe('la lecture des arêtes (§7 bis.9.1)', () => {
+	it('les arêtes sont filtrées par workflow et ordonnées de façon stable', async () => {
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireTransitions(client, 'w1')
+		expect(appel.table).toBe('workflow_transitions')
+		expect(appel.colonnes).toBe(COLONNES_TRANSITION_ADMIN)
+		expect(appel.filtres).toEqual([['workflow_id', 'w1']])
+		// L'ordre demandé est celui des identifiants : la table ne porte pas la position des
+		// étapes, et l'ordre du graphe est composé par `grouperTransitions`.
+		expect(appel.tris).toEqual([
+			['from_step_id', undefined],
+			['to_step_id', undefined],
+		])
+	})
+
+	it('une erreur de lecture est classée, jamais levée', async () => {
+		const { client } = espionLecture({ data: null, error: { message: 'boom' }, status: 500 })
+		const etat = await lireTransitions(client, 'w1')
+		expect(etat.statut).toBe('erreur')
+	})
+})
+
+describe('le groupement des arêtes par départ (§7 bis.9.1)', () => {
+	const e1 = etape({ id: 'e1', node_id: 'n1', position: 1 })
+	const e2 = etape({ id: 'e2', node_id: 'n2', position: 2 })
+	const e3 = etape({ id: 'e3', node_id: 'n3', position: 3 })
+
+	it('suit l’ordre des étapes, pas celui des arêtes reçues', () => {
+		const groupes = grouperTransitions(
+			[e1, e2, e3],
+			[transition({ id: 't1', from_step_id: 'e3', to_step_id: 'e1' })],
+		)
+		expect(groupes.map((groupe) => groupe.etape.id)).toEqual(['e1', 'e2', 'e3'])
+	})
+
+	// Le §3.9 en livre deux, et un graphe qui masquerait ses culs-de-sac cacherait précisément ce
+	// qu'un administrateur cherche.
+	it('une étape sans sortie garde son groupe, vide', () => {
+		const groupes = grouperTransitions([e1, e2], [])
+		expect(groupes.map((groupe) => groupe.sorties.length)).toEqual([0, 0])
+	})
+
+	it('les sorties d’une étape suivent l’ordre du graphe de leur arrivée', () => {
+		const groupes = grouperTransitions(
+			[e1, e2, e3],
+			[
+				transition({ id: 'vers-e3', from_step_id: 'e1', to_step_id: 'e3' }),
+				transition({ id: 'vers-e2', from_step_id: 'e1', to_step_id: 'e2' }),
+			],
+		)
+		expect(groupes[0]?.sorties.map((sortie) => sortie.id)).toEqual(['vers-e2', 'vers-e3'])
+	})
+
+	// Une étape retirée par un autre administrateur entre les deux lectures : la base a déjà
+	// supprimé l'arête en cascade, l'écran ne montre pas un fantôme jusqu'au rechargement.
+	it('une arête dont le départ a disparu n’est rattachée à personne', () => {
+		const groupes = grouperTransitions(
+			[e1, e2],
+			[transition({ id: 'orpheline', from_step_id: 'disparue', to_step_id: 'e2' })],
+		)
+		expect(groupes.flatMap((groupe) => groupe.sorties)).toEqual([])
+	})
+})
+
+describe('les arrivées déclarables (§7 bis.9.3)', () => {
+	const e1 = etape({ id: 'e1', node_id: 'n1', position: 1 })
+	const e2 = etape({ id: 'e2', node_id: 'n2', position: 2 })
+	const e3 = etape({ id: 'e3', node_id: 'n3', position: 3 })
+
+	it('retire le départ lui-même, que le `CHECK` refuserait', () => {
+		const possibles = arriveesPossibles([e1, e2, e3], [], 'e1')
+		expect(possibles.map((etape) => etape.id)).toEqual(['e2', 'e3'])
+	})
+
+	it('retire les arrivées déjà déclarées depuis ce départ, que l’unicité refuserait', () => {
+		const possibles = arriveesPossibles(
+			[e1, e2, e3],
+			[transition({ id: 't1', from_step_id: 'e1', to_step_id: 'e2' })],
+			'e1',
+		)
+		expect(possibles.map((etape) => etape.id)).toEqual(['e3'])
+	})
+
+	// L'unicité porte sur le TRIPLET : une arête `e2 → e3` ne retire pas `e3` des arrivées de `e1`.
+	it('ne retire pas une arrivée déclarée depuis une AUTRE étape', () => {
+		const possibles = arriveesPossibles(
+			[e1, e2, e3],
+			[transition({ id: 't1', from_step_id: 'e2', to_step_id: 'e3' })],
+			'e1',
+		)
+		expect(possibles.map((etape) => etape.id)).toEqual(['e2', 'e3'])
+	})
+
+	it('rend une liste vide lorsque toutes les arrivées sont déclarées', () => {
+		const possibles = arriveesPossibles(
+			[e1, e2],
+			[transition({ id: 't1', from_step_id: 'e1', to_step_id: 'e2' })],
+			'e1',
+		)
+		expect(possibles).toEqual([])
+	})
+})
+
+describe('la validation de forme d’une arête (§7 bis.9.4)', () => {
+	it('un libellé fourni blanc est refusé', () => {
+		expect(libelleTransitionConforme('   ')).toBe(false)
+		expect(libelleTransitionConforme('')).toBe(false)
+	})
+
+	it('un libellé fourni non blanc est accepté', () => {
+		expect(libelleTransitionConforme('Qualifier')).toBe(true)
+	})
+})
+
+describe('la classification des refus d’arête (§7 bis.9.5)', () => {
+	it('`23505` est l’arête déjà déclarée, jamais un slug pris', () => {
+		expect(classerRefusTransition(409, '23505', 'duplicate key').nature).toBe('arete-deja-declaree')
+	})
+
+	// Rien ne retient une arête : aucune colonne de `cards` ne désigne une transition, donc aucun
+	// retrait ne peut être refusé pour occupation — contrairement au `23503` d'une étape.
+	it('`23503` est toujours une extrémité absente, jamais une arête « occupée »', () => {
+		expect(classerRefusTransition(409, '23503', 'is not present in table').nature).toBe(
+			'reference-absente',
+		)
+	})
+
+	it('les deux `CHECK` du §3.4 rendent le même `forme-refusee`', () => {
+		expect(classerRefusTransition(400, '23514', 'workflow_transitions_distinct_check').nature).toBe(
+			'forme-refusee',
+		)
+		expect(classerRefusTransition(400, '23514', 'workflow_transitions_label_check').nature).toBe(
+			'forme-refusee',
+		)
+	})
+
+	it('le refus de la politique et l’absence de réseau restent distincts', () => {
+		expect(classerRefusTransition(403, undefined, 'denied').nature).toBe('forbidden')
+		expect(classerRefusTransition(undefined, undefined, 'offline').nature).toBe('network')
+		expect(classerRefusTransition(500, undefined, 'boom').nature).toBe('unknown')
+	})
+})
+
+describe('les trois écritures d’arête (§7 bis.9.2)', () => {
+	it('la déclaration envoie les deux extrémités, le libellé et le motif exigé', async () => {
+		const { client, appels } = espionEcritures([OK])
+		const resultat = await declarerTransition(client, {
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			idDepart: 'e1',
+			idArrivee: 'e2',
+			libelle: 'Qualifier',
+			motifExige: true,
+		})
+		expect(resultat.statut).toBe('applique')
+		expect(appels[0]?.table).toBe('workflow_transitions')
+		expect(appels[0]?.verbe).toBe('insert')
+		expect(appels[0]?.charge).toEqual({
+			workflow_id: 'w1',
+			workspace_id: 'ws1',
+			from_step_id: 'e1',
+			to_step_id: 'e2',
+			label: 'Qualifier',
+			require_comment: true,
+		})
+		// Sans `select()`, « zéro ligne touchée » serait indistinguable d'un succès.
+		expect(appels[0]?.colonnesRendues).toBe('id')
+	})
+
+	// `''` heurterait le `CHECK` du §3.4 ; omettre la clé rendrait le retrait impossible.
+	it('un libellé absent est envoyé à `null`, pas omis ni vidé en chaîne', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await declarerTransition(client, {
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			idDepart: 'e1',
+			idArrivee: 'e2',
+			libelle: null,
+			motifExige: false,
+		})
+		expect(appels[0]?.charge).toHaveProperty('label', null)
+	})
+
+	it('la modification n’écrit que le libellé et le motif, jamais une extrémité', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await modifierTransition(client, 't1', null, true)
+		expect(appels[0]?.verbe).toBe('update')
+		expect(appels[0]?.charge).toEqual({ label: null, require_comment: true })
+		expect(appels[0]?.filtres).toEqual([['id', 't1']])
+	})
+
+	it('le retrait supprime sur l’identifiant de l’arête', async () => {
+		const { client, appels } = espionEcritures([OK])
+		expect((await retirerTransition(client, 't1')).statut).toBe('applique')
+		expect(appels[0]?.verbe).toBe('delete')
+		expect(appels[0]?.filtres).toEqual([['id', 't1']])
+	})
+
+	it('une déclaration refusée par l’unicité est traduite, pas levée', async () => {
+		const { client } = espionEcritures([
+			{ data: null, error: { message: 'duplicate key value', code: '23505' }, status: 409 },
+		])
+		const resultat = await declarerTransition(client, {
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			idDepart: 'e1',
+			idArrivee: 'e2',
+			libelle: null,
+			motifExige: false,
+		})
+		expect(resultat).toEqual({
+			statut: 'refus',
+			refus: { nature: 'arete-deja-declaree', detail: 'duplicate key value' },
+		})
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne, ici aussi', async () => {
+		const { client } = espionEcritures([ZERO_LIGNE])
+		expect((await modifierTransition(client, 't1', 'Perdre', false)).statut).toBe('sans-effet')
 	})
 })

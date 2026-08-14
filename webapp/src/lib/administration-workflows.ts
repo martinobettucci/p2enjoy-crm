@@ -1,6 +1,8 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première tranche
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
+//       tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
-//       §7 bis.5 (validation de forme), §7 bis.7 (ce que cette tranche ne livre pas)
+//       §7 bis.5 (validation de forme), §7 bis.7 (ce que cette tranche ne livre pas),
+//       §7 bis.9 (deuxième tranche : l'édition des transitions), §3.4 (modèle des arêtes)
 // @spec docs/SPEC-workflow-engine.md §2.5 (probabilité et seuil : `0` n'est pas `NULL`),
 //       §3.3 (modèle `workflow_steps` et ses contraintes), §3.5 (l'étape initiale),
 //       §3.7 (écriture réservée à l'administrateur)
@@ -441,5 +443,270 @@ export async function designerEtapeInitiale(
 export async function retirerEtape(client: ClientCrm, idEtape: string): Promise<ResultatEtape> {
 	return executer('retrait', () =>
 		client.from('workflow_steps').delete().eq('id', idEtape).select('id'),
+	)
+}
+
+// =============================================================================================
+// DEUXIÈME TRANCHE — les arêtes du graphe
+// @spec docs/SPEC-workflow-engine.md §7 bis.9 (l'édition des transitions), §7 bis.9.1 (lecture 4
+//       et l'ordre composé), §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix offerts),
+//       §7 bis.9.4 (validation de forme), §7 bis.9.5 (les refus), §3.4 (modèle et contraintes)
+// =============================================================================================
+//
+// AUCUNE MIGRATION N'ACCOMPAGNE CETTE TRANCHE : `workflow_transitions` existe depuis `CRM-031`
+// avec ses quatre contraintes et ses politiques, et ce module ne fait que les employer.
+
+/** Une arête, telle que le bloc des transitions la présente. */
+export type TransitionAdministrable = Pick<
+	Database['public']['Tables']['workflow_transitions']['Row'],
+	'id' | 'workflow_id' | 'workspace_id' | 'from_step_id' | 'to_step_id' | 'label' | 'require_comment'
+>
+
+export const COLONNES_TRANSITION_ADMIN =
+	'id, workflow_id, workspace_id, from_step_id, to_step_id, label, require_comment'
+
+/**
+ * Les arêtes d'un workflow — lecture 4 du §7 bis.9.1.
+ *
+ * L'ORDRE DEMANDÉ EST CELUI DES IDENTIFIANTS, ET C'EST ASSUMÉ. PostgREST ordonne sur des colonnes
+ * de la table, et `workflow_transitions` ne porte pas la position des étapes : demander l'ordre du
+ * graphe ici est impossible sans embarquer les deux étapes et trier sur une ressource embarquée.
+ * L'ordre servi est donc simplement **stable**, ce qui suffit à une requête ; l'ordre lisible est
+ * composé par `grouperTransitions` depuis les étapes déjà lues.
+ */
+export async function lireTransitions(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly TransitionAdministrable[]>> {
+	try {
+		const reponse = await client
+			.from('workflow_transitions')
+			.select(COLONNES_TRANSITION_ADMIN)
+			.eq('workflow_id', idWorkflow)
+			.order('from_step_id')
+			.order('to_step_id')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(reponse.data as readonly TransitionAdministrable[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Les arêtes partant d'une étape, telles que l'écran les groupe. */
+export type GroupeTransitions = {
+	readonly etape: EtapeAdministrable
+	readonly sorties: readonly TransitionAdministrable[]
+}
+
+/**
+ * Groupe les arêtes par étape de départ, dans l'ordre du graphe — §7 bis.9.1.
+ *
+ * LES ÉTAPES SONT LA SOURCE DE L'ORDRE, PAS LES ARÊTES : la liste rendue suit `etapes`, qui arrive
+ * déjà triée par `position`. Une étape sans sortie apparaît donc avec un groupe **vide** plutôt que
+ * de disparaître — le §3.9 en livre deux, et un graphe qui masquerait ses culs-de-sac cacherait
+ * précisément ce qu'un administrateur cherche.
+ *
+ * UNE ARÊTE DONT LE DÉPART N'EST PAS DANS LA LISTE EST ÉCARTÉE. Ce n'est pas défensif sans motif :
+ * l'écran lit les étapes et les arêtes en deux requêtes, et une étape retirée par un autre
+ * administrateur entre les deux rendrait une arête orpheline. La rattacher à un départ inconnu
+ * afficherait une ligne que personne ne peut ni lire ni corriger ; la base, elle, a déjà supprimé
+ * l'arête en cascade (§3.4) — l'écran ne fait que ne pas montrer un fantôme jusqu'au rechargement.
+ */
+export function grouperTransitions(
+	etapes: readonly EtapeAdministrable[],
+	transitions: readonly TransitionAdministrable[],
+): readonly GroupeTransitions[] {
+	const parDepart = new Map<string, TransitionAdministrable[]>()
+	for (const transition of transitions) {
+		const sorties = parDepart.get(transition.from_step_id)
+		if (sorties === undefined) parDepart.set(transition.from_step_id, [transition])
+		else sorties.push(transition)
+	}
+	const rang = new Map(etapes.map((etape, index) => [etape.id, index]))
+	return etapes.map((etape) => ({
+		etape,
+		// Les sorties d'une étape suivent l'ordre du graphe de leur arrivée, par la même règle que
+		// les groupes eux-mêmes. Une arrivée absente de la liste ne peut pas exister ici : sa
+		// cascade l'aurait emportée, et l'ordre la placerait en fin plutôt que de la perdre.
+		sorties: (parDepart.get(etape.id) ?? [])
+			.slice()
+			.sort(
+				(gauche, droite) =>
+					(rang.get(gauche.to_step_id) ?? Number.MAX_SAFE_INTEGER) -
+					(rang.get(droite.to_step_id) ?? Number.MAX_SAFE_INTEGER),
+			),
+	}))
+}
+
+/**
+ * Les arrivées encore déclarables depuis une étape — §7 bis.9.3.
+ *
+ * Deux retraits, et aucun n'est une garde : l'étape de départ elle-même, que le
+ * `CHECK from_step_id <> to_step_id` refuserait, et les arrivées déjà déclarées, que l'unicité
+ * `(workflow_id, from_step_id, to_step_id)` refuserait. Ils évitent d'offrir un choix dont la
+ * réponse est connue d'avance (`CLAUDE.md` §10).
+ */
+export function arriveesPossibles(
+	etapes: readonly EtapeAdministrable[],
+	transitions: readonly TransitionAdministrable[],
+	idDepart: string,
+): readonly EtapeAdministrable[] {
+	const deja = new Set(
+		transitions
+			.filter((transition) => transition.from_step_id === idDepart)
+			.map((transition) => transition.to_step_id),
+	)
+	return etapes.filter((etape) => etape.id !== idDepart && !deja.has(etape.id))
+}
+
+/** Un libellé d'arête fourni n'est pas blanc (§3.4, `label is null or btrim(label) <> ''`). */
+export const libelleTransitionConforme = (libelle: string): boolean => libelle.trim() !== ''
+
+export type NatureRefusTransition =
+	/** `403`/`401` — `42501`. Seul un administrateur du workspace écrit (§3.7). */
+	| 'forbidden'
+	/** `23505` — l'unicité `(workflow_id, from_step_id, to_step_id)` : l'arête existe déjà. */
+	| 'arete-deja-declaree'
+	/** `23503` — une des deux étapes n'existe plus, ou n'appartient pas à ce workflow. */
+	| 'reference-absente'
+	/** `23514` — réflexivité, ou libellé blanc. Les deux `CHECK` du §3.4 partagent ce code. */
+	| 'forme-refusee'
+	| 'network'
+	| 'unknown'
+
+export type RefusTransition = {
+	readonly nature: NatureRefusTransition
+	readonly detail: string
+}
+
+/**
+ * Classe un refus d'écriture sur une arête.
+ *
+ * PAS DE PARAMÈTRE `geste`, ET C'EST LA DIFFÉRENCE AVEC `classerRefusEtape`. Là-bas, le même
+ * `23503` disait deux choses opposées selon que l'on retirait une étape — `on delete restrict`
+ * depuis les cards, « étape occupée » — ou que l'on écrivait ailleurs. Ici, **rien ne retient une
+ * arête** : aucune colonne de `cards` ne désigne une transition, donc aucun retrait ne peut être
+ * refusé pour occupation. Le `23503` redevient uniformément « une extrémité a disparu », et
+ * introduire un paramètre pour distinguer des cas qui n'existent pas ferait croire à une règle de
+ * plus (§7 bis.9.2).
+ */
+export function classerRefusTransition(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusTransition {
+	const base: RefusEcriture = classerRefusEcriture(statutHttp, code, detail)
+	switch (base.nature) {
+		case 'slug-pris':
+			return { nature: 'arete-deja-declaree', detail }
+		case 'workflow-hors-track':
+			return { nature: 'forme-refusee', detail }
+		default:
+			return { nature: base.nature, detail }
+	}
+}
+
+export type ResultatTransition =
+	| { readonly statut: 'applique' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusTransition }
+
+/** Enveloppe des écritures d'arête, jumelle de `executer` mais sur `RefusTransition`. */
+async function executerTransition(
+	appel: () => PromiseLike<{
+		error: { code?: string; message: string } | null
+		status: number
+		data: unknown[] | null
+	}>,
+): Promise<ResultatTransition> {
+	try {
+		const reponse = await appel()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusTransition(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'applique' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusTransition(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
+
+export type DeclarationTransition = {
+	readonly idWorkflow: string
+	readonly idWorkspace: string
+	readonly idDepart: string
+	readonly idArrivee: string
+	readonly libelle: string | null
+	readonly motifExige: boolean
+}
+
+/**
+ * Déclare une arête entre deux étapes du même workflow.
+ *
+ * `label` À `null` N'EST PAS UN CHAMP OMIS : le §3.4 le déclare facultatif, et « pas de libellé »
+ * veut dire « l'interface d'une card affichera le libellé de l'étape d'arrivée » (§7). Envoyer `''`
+ * heurterait le `CHECK` ; c'est la même règle que les surcharges du §7 bis.4.
+ */
+export async function declarerTransition(
+	client: ClientCrm,
+	declaration: DeclarationTransition,
+): Promise<ResultatTransition> {
+	return executerTransition(() =>
+		client
+			.from('workflow_transitions')
+			.insert({
+				workflow_id: declaration.idWorkflow,
+				workspace_id: declaration.idWorkspace,
+				from_step_id: declaration.idDepart,
+				to_step_id: declaration.idArrivee,
+				label: declaration.libelle,
+				require_comment: declaration.motifExige,
+			})
+			.select('id'),
+	)
+}
+
+/** Modifie le libellé et le motif exigé d'une arête. Les deux extrémités ne se modifient pas :
+ * changer une extrémité est une autre arête, et l'écran la fait déclarer puis retirer plutôt que
+ * de transformer silencieusement une porte en une autre. */
+export async function modifierTransition(
+	client: ClientCrm,
+	idTransition: string,
+	libelle: string | null,
+	motifExige: boolean,
+): Promise<ResultatTransition> {
+	return executerTransition(() =>
+		client
+			.from('workflow_transitions')
+			.update({ label: libelle, require_comment: motifExige })
+			.eq('id', idTransition)
+			.select('id'),
+	)
+}
+
+/**
+ * Retire une arête.
+ *
+ * Aucun refus métier n'est possible ici — voir `classerRefusTransition`. Le seul refus attendu est
+ * celui de la politique du §3.7, et il est traduit comme les autres.
+ */
+export async function retirerTransition(
+	client: ClientCrm,
+	idTransition: string,
+): Promise<ResultatTransition> {
+	return executerTransition(() =>
+		client.from('workflow_transitions').delete().eq('id', idTransition).select('id'),
 	)
 }
