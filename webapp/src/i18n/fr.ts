@@ -593,6 +593,96 @@ export const fr = {
 	'live.workflows.transition.updated': 'Transition modifiée',
 	'live.workflows.transition.removed': 'Transition retirée',
 
+	// --- Les champs du formulaire — troisième tranche, docs/SPEC-workflow-engine.md §7 bis.10 ---
+	'admin.workflows.fields.aria': 'Champs du formulaire de {workflow}',
+	'admin.workflows.fields.title': 'Champs du formulaire',
+	'admin.workflows.fields.intro':
+		'Les questions posées sur chaque affaire de ce workflow. Leur visibilité étape par étape n’est pas encore réglable depuis cet écran.',
+	'admin.workflows.fields.loading': 'Chargement des champs…',
+	'admin.workflows.fields.error': 'Les champs de ce workflow n’ont pas pu être chargés.',
+	'admin.workflows.fields.empty': 'Aucun champ dans ce formulaire',
+	'admin.workflows.fields.empty.hint':
+		'Les affaires de ce workflow n’ont aucune question à renseigner. Déclarez un premier champ pour en poser une.',
+	'admin.workflows.fields.archived': 'Archivé',
+
+	'admin.workflows.fields.action.declare': 'Déclarer un champ',
+	'admin.workflows.fields.action.edit': 'Modifier le champ {nom}',
+	'admin.workflows.fields.action.archive': 'Archiver le champ {nom}',
+	'admin.workflows.fields.action.restore': 'Restaurer le champ {nom}',
+
+	'admin.workflows.fields.form.declare': 'Nouveau champ',
+	'admin.workflows.fields.form.edit': 'Champ « {nom} »',
+	'admin.workflows.fields.form.key': 'Clé',
+	'admin.workflows.fields.form.key.help':
+		'Minuscules, chiffres et tirets simples. Elle identifie le champ dans les exports et les messages d’erreur, et ne se modifie plus ensuite.',
+	'admin.workflows.fields.form.key.invalid':
+		'La clé n’accepte que des minuscules, des chiffres et des tirets simples, sans tiret au début ni à la fin.',
+	'admin.workflows.fields.form.key.frozen':
+		'Clé : {cle}. Elle ne se modifie pas : les exports et les messages d’erreur la citent. Archivez ce champ et redéclarez-en un pour en changer.',
+	'admin.workflows.fields.form.label': 'Libellé',
+	'admin.workflows.fields.form.label.help': 'Le texte affiché au-dessus de la question, sur chaque affaire.',
+	'admin.workflows.fields.form.label.invalid': 'Le libellé ne peut pas être blanc.',
+	'admin.workflows.fields.form.type': 'Type',
+	'admin.workflows.fields.form.type.help':
+		'Il détermine ce qu’une réponse peut contenir. Il se choisit maintenant et ne se modifie plus ensuite.',
+	'admin.workflows.fields.form.type.frozen':
+		'Type : {type}. Il ne se modifie pas : les réponses déjà saisies resteraient dans l’ancien format, et aucune conversion n’existe encore.',
+	'admin.workflows.fields.form.help': 'Texte d’aide',
+	'admin.workflows.fields.form.help.help':
+		'Facultatif. Affiché sous la question pour expliquer ce qui est attendu.',
+	'admin.workflows.fields.form.help.invalid': 'Le texte d’aide ne peut pas être blanc : laissez-le vide.',
+	'admin.workflows.fields.form.currency': 'Devise',
+	'admin.workflows.fields.form.currency.help': 'Code de trois lettres, par exemple EUR.',
+	'admin.workflows.fields.form.currency.invalid':
+		'La devise s’écrit en trois lettres majuscules, par exemple EUR.',
+	'admin.workflows.fields.form.choices': 'Choix proposés',
+	'admin.workflows.fields.form.choices.help':
+		'Au moins un choix. La clé identifie la réponse et ne doit apparaître qu’une fois ; le libellé est ce que l’équipe lit.',
+	'admin.workflows.fields.form.choices.key': 'Clé du choix',
+	'admin.workflows.fields.form.choices.label': 'Libellé du choix',
+	'admin.workflows.fields.form.choices.add': 'Ajouter un choix',
+	'admin.workflows.fields.form.choices.remove': 'Retirer le choix {nom}',
+	'admin.workflows.fields.form.choices.invalid.aucun-choix':
+		'Un champ à choix a besoin d’au moins un choix.',
+	'admin.workflows.fields.form.choices.invalid.cle-vide': 'Chaque choix a besoin d’une clé.',
+	'admin.workflows.fields.form.choices.invalid.libelle-vide': 'Chaque choix a besoin d’un libellé.',
+	'admin.workflows.fields.form.choices.invalid.cle-dupliquee':
+		'Deux choix portent la même clé : les réponses seraient impossibles à distinguer.',
+
+	'admin.workflows.fields.archive.confirm': 'Archiver le champ « {nom} » ?',
+	'admin.workflows.fields.archive.confirm.body':
+		'Il disparaît des formulaires, les réponses déjà saisies sont conservées, et la restauration le remet en place. Le produit ne supprime aucun champ.',
+	'admin.workflows.fields.archive.confirm.action': 'Archiver',
+
+	// Les quinze types de docs/SPEC-form-composer.md §2.3.
+	'admin.workflows.fields.type.text': 'Texte court',
+	'admin.workflows.fields.type.textarea': 'Texte long',
+	'admin.workflows.fields.type.number': 'Nombre',
+	'admin.workflows.fields.type.money': 'Montant',
+	'admin.workflows.fields.type.date': 'Date',
+	'admin.workflows.fields.type.datetime': 'Date et heure',
+	'admin.workflows.fields.type.select': 'Choix unique',
+	'admin.workflows.fields.type.multiselect': 'Choix multiple',
+	'admin.workflows.fields.type.checkbox': 'Case à cocher',
+	'admin.workflows.fields.type.url': 'Adresse web',
+	'admin.workflows.fields.type.email': 'Adresse email',
+	'admin.workflows.fields.type.phone': 'Téléphone',
+	'admin.workflows.fields.type.user': 'Membre de l’espace',
+	'admin.workflows.fields.type.contact': 'Contact',
+	'admin.workflows.fields.type.file': 'Fichier',
+
+	'admin.workflows.refus.champ.cle-deja-prise': 'Cette clé est déjà prise dans ce workflow.',
+	'admin.workflows.refus.champ.reference-absente':
+		'Ce workflow n’existe plus, ou n’appartient pas à cet espace de travail.',
+	'admin.workflows.refus.champ.forme-refusee':
+		'Ce champ a été refusé : vérifiez la clé, le libellé, le texte d’aide, le type et ses options.',
+
+	'live.workflows.field.declared': 'Champ déclaré',
+	'live.workflows.field.updated': 'Champ modifié',
+	'live.workflows.field.moved': 'Champ déplacé',
+	'live.workflows.field.archived': 'Champ archivé',
+	'live.workflows.field.restored': 'Champ restauré',
+
 	// --- État de la messagerie — CRM-059, docs/SPEC-mail-subsystem.md §20.11 --------------
 	'admin.settings.index.mail': 'État de la messagerie',
 	'admin.settings.index.mail.body':

@@ -1,5 +1,5 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
-//       tranches
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
+//       troisième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.2 (adresse), §7 bis.3 (les trois lectures),
 //       §7 bis.4 (les six gestes), §7 bis.5 (validation de forme), §7 bis.6 (états,
 //       accessibilité, responsive), §2.5 (`0` n'est pas `NULL`), §3.3 (contraintes), §3.5
@@ -8,6 +8,12 @@
 //       (lecture 4 et l'ordre composé), §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix
 //       offerts), §7 bis.9.4 (validation de forme), §7 bis.9.6 (états et disposition),
 //       §3.4 (modèle des arêtes)
+// @spec docs/SPEC-workflow-engine.md §7 bis.10 (troisième tranche : les champs de formulaire),
+//       §7 bis.10.1 (lecture 5, archivés compris), §7 bis.10.2 (les cinq gestes),
+//       §7 bis.10.3 (clé et type non modifiables), §7 bis.10.4 (validation de forme),
+//       §7 bis.10.5 (les refus), §7 bis.10.6 (états et disposition)
+// @spec docs/SPEC-form-composer.md §2.3 (les quinze types), §2.4 (`options`), §2.5 (clé durable),
+//       §2.6 (ordre), §2.7 (aucun privilège `DELETE` : l'archivage tient lieu de retrait)
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.7 bis (case à cocher), §5.8 (états), §6
 //       (confirmation), §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
 //
@@ -22,6 +28,8 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import {
+	Archive,
+	ArchiveRestore,
 	ArrowDown,
 	ArrowRight,
 	ArrowUp,
@@ -37,6 +45,7 @@ import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
+import type { CleTraduction } from '../i18n/fr'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
 import {
@@ -46,9 +55,26 @@ import {
 	type Sens,
 } from '../lib/administration-arborescence'
 import {
+	TYPES_CHAMP,
+	aideChampConforme,
 	ajouterEtape,
 	ancienneteConforme,
+	archiverChamp,
 	arriveesPossibles,
+	choixDuChamp,
+	cleChampConforme,
+	composerOptions,
+	declarerChamp,
+	deplacerChamp,
+	deviseConforme,
+	deviseDuChamp,
+	estTypeAChoix,
+	estTypeMonetaire,
+	libelleChampConforme,
+	lireChamps,
+	modifierChamp,
+	refusDesChoix,
+	type RefusChoix,
 	declarerTransition,
 	deplacerEtape,
 	designerEtapeInitiale,
@@ -66,10 +92,14 @@ import {
 	retirerEtape,
 	retirerTransition,
 	surchargerEtape,
+	type ChampAdministrable,
+	type ChoixChamp,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
+	type RefusChamp,
 	type RefusEtape,
 	type RefusTransition,
+	type ResultatChamp,
 	type ResultatEtape,
 	type ResultatTransition,
 	type TransitionAdministrable,
@@ -128,6 +158,30 @@ function texteRefusTransition(refus: RefusTransition): string {
 }
 
 /**
+ * Traduit un refus d'écriture sur un champ (§7 bis.10.5).
+ *
+ * Le `23514` recouvre ici **six** `CHECK` — clé, libellé, aide, type, `options` objet, options du
+ * type —, et son message les nomme plutôt que d'en deviner un : l'écran ne sait pas lequel a
+ * déclenché, et prétendre le savoir désignerait souvent le mauvais champ.
+ */
+function texteRefusChamp(refus: RefusChamp): string {
+	switch (refus.nature) {
+		case 'forbidden':
+			return t('admin.workflows.refus.forbidden')
+		case 'cle-deja-prise':
+			return t('admin.workflows.refus.champ.cle-deja-prise')
+		case 'reference-absente':
+			return t('admin.workflows.refus.champ.reference-absente')
+		case 'forme-refusee':
+			return t('admin.workflows.refus.champ.forme-refusee')
+		case 'network':
+			return t('admin.workflows.refus.network')
+		case 'unknown':
+			return t('admin.workflows.refus.unknown')
+	}
+}
+
+/**
  * Ce qui est ouvert, et il n'y en a qu'un à la fois — le patron de `CRM-075` : un seul formulaire
  * ouvert évite la question qu'aucune spécification ne tranche, celle d'une saisie non enregistrée
  * quand une seconde s'ouvre. Les trois ouvertures d'arête entrent dans la MÊME variable que celles
@@ -142,11 +196,15 @@ type Ouverture =
 	| { readonly type: 'transition-declaration' }
 	| { readonly type: 'transition-edition'; readonly idTransition: string }
 	| { readonly type: 'transition-retrait'; readonly idTransition: string }
+	| { readonly type: 'champ-declaration' }
+	| { readonly type: 'champ-edition'; readonly idChamp: string }
+	| { readonly type: 'champ-archivage'; readonly idChamp: string }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
 
 type ActionEtape = () => Promise<ResultatEtape>
 type ActionTransition = () => Promise<ResultatTransition>
+type ActionChamp = () => Promise<ResultatChamp>
 
 /**
  * Alerte de refus, placée dans le bloc concerné et non en tête d'écran, pour que le refus soit lu
@@ -856,6 +914,432 @@ function LigneTransition({
 }
 
 // ---------------------------------------------------------------------------------------------
+// Les champs du formulaire — §7 bis.10
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Libellé traduit d'un type de champ (§2.3 du composeur).
+ *
+ * La table est ÉCRITE, non composée par interpolation : `t` n'accepte que des clés déclarées, et
+ * une clé fabriquée à l'exécution ferait perdre la garantie de la décision 43 — une clé inconnue
+ * doit être une erreur de compilation. Le repli sur la valeur brute reste nécessaire : `type` est
+ * un `text` en base, et rien n'empêche une écriture d'API d'y poser un quinzième type de demain.
+ */
+const LIBELLES_TYPE: Readonly<Record<string, CleTraduction>> = {
+	text: 'admin.workflows.fields.type.text',
+	textarea: 'admin.workflows.fields.type.textarea',
+	number: 'admin.workflows.fields.type.number',
+	money: 'admin.workflows.fields.type.money',
+	date: 'admin.workflows.fields.type.date',
+	datetime: 'admin.workflows.fields.type.datetime',
+	select: 'admin.workflows.fields.type.select',
+	multiselect: 'admin.workflows.fields.type.multiselect',
+	checkbox: 'admin.workflows.fields.type.checkbox',
+	url: 'admin.workflows.fields.type.url',
+	email: 'admin.workflows.fields.type.email',
+	phone: 'admin.workflows.fields.type.phone',
+	user: 'admin.workflows.fields.type.user',
+	contact: 'admin.workflows.fields.type.contact',
+	file: 'admin.workflows.fields.type.file',
+}
+
+function libelleType(type: string): string {
+	const cle = LIBELLES_TYPE[type]
+	return cle === undefined ? type : t(cle)
+}
+
+/** Les quatre refus de `refusDesChoix`, chacun avec sa clé déclarée — même motif que ci-dessus. */
+const MESSAGES_REFUS_CHOIX: Readonly<Record<Exclude<RefusChoix, null>, CleTraduction>> = {
+	'aucun-choix': 'admin.workflows.fields.form.choices.invalid.aucun-choix',
+	'cle-vide': 'admin.workflows.fields.form.choices.invalid.cle-vide',
+	'libelle-vide': 'admin.workflows.fields.form.choices.invalid.libelle-vide',
+	'cle-dupliquee': 'admin.workflows.fields.form.choices.invalid.cle-dupliquee',
+}
+
+/**
+ * Éditeur de la liste de choix d'un `select` ou d'un `multiselect`.
+ *
+ * IL EXISTE PARCE QUE LA BASE NE TIENT PAS CETTE RÈGLE. Le §2.4 du composeur ne garantit qu'un
+ * tableau `choices` non vide ; la forme `{key, label}` et l'unicité des clés ne sont tenues que
+ * par l'écran, et c'est mesuré — deux choix de même clé sont acceptés en `201`. La saisie est donc
+ * structurée en deux colonnes plutôt que libre : un JSON à écrire à la main rendrait la faute
+ * probable là où elle n'est rattrapée par personne.
+ */
+function EditeurChoix({
+	prefixe,
+	choix,
+	onChange,
+	erreur,
+	enCours,
+}: {
+	readonly prefixe: string
+	readonly choix: readonly ChoixChamp[]
+	readonly onChange: (choix: readonly ChoixChamp[]) => void
+	readonly erreur?: string
+	readonly enCours: boolean
+}) {
+	const idErreur = `${prefixe}-choix-erreur`
+	return (
+		<fieldset className="flex flex-col gap-2 rounded-sm border border-border p-3" data-testid="editeur-choix">
+			<legend className="text-sm text-text-2">{t('admin.workflows.fields.form.choices')}</legend>
+			<span className="text-sm text-text-3">{t('admin.workflows.fields.form.choices.help')}</span>
+			<ul className="flex flex-col gap-2">
+				{choix.map((entree, rang) => (
+					// Le rang est la seule identité disponible : deux entrées peuvent porter la même clé
+					// le temps d'une frappe, et c'est précisément l'état que le contrôle d'unicité doit
+					// pouvoir signaler sans que la liste se réordonne sous les doigts.
+					<li key={rang} className="flex flex-wrap items-end gap-2">
+						<div className="flex flex-col gap-1">
+							<label htmlFor={`${prefixe}-choix-cle-${rang}`} className="text-sm text-text-2">
+								{t('admin.workflows.fields.form.choices.key')}
+							</label>
+							<input
+								id={`${prefixe}-choix-cle-${rang}`}
+								value={entree.key}
+								onChange={(evenement) =>
+									onChange(
+										choix.map((autre, index) =>
+											index === rang ? { ...autre, key: evenement.target.value } : autre,
+										),
+									)
+								}
+								className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+							/>
+						</div>
+						<div className="flex flex-col gap-1">
+							<label htmlFor={`${prefixe}-choix-libelle-${rang}`} className="text-sm text-text-2">
+								{t('admin.workflows.fields.form.choices.label')}
+							</label>
+							<input
+								id={`${prefixe}-choix-libelle-${rang}`}
+								value={entree.label}
+								onChange={(evenement) =>
+									onChange(
+										choix.map((autre, index) =>
+											index === rang ? { ...autre, label: evenement.target.value } : autre,
+										),
+									)
+								}
+								className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+							/>
+						</div>
+						<Button
+							taille="compacte"
+							disabled={enCours}
+							aria-label={t('admin.workflows.fields.form.choices.remove', {
+								nom: entree.label.trim() === '' ? entree.key : entree.label,
+							})}
+							onClick={() => onChange(choix.filter((_, index) => index !== rang))}
+						>
+							<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+						</Button>
+					</li>
+				))}
+			</ul>
+			<div className="flex">
+				<Button
+					variante="secondaire"
+					taille="compacte"
+					disabled={enCours}
+					onClick={() => onChange([...choix, { key: '', label: '' }])}
+				>
+					<Plus aria-hidden="true" size={16} strokeWidth={2} />
+					{t('admin.workflows.fields.form.choices.add')}
+				</Button>
+			</div>
+			{erreur === undefined ? null : (
+				<span id={idErreur} role="alert" className="text-sm text-danger-on-soft">
+					{erreur}
+				</span>
+			)}
+		</fieldset>
+	)
+}
+
+type SaisieChamp = {
+	readonly cle: string
+	readonly libelle: string
+	readonly type: string
+	readonly aide: string
+	readonly choix: readonly ChoixChamp[]
+	readonly devise: string
+}
+
+/** La saisie d'édition repart du champ tel qu'il est, options comprises. */
+function saisieDepuisChamp(champ: ChampAdministrable): SaisieChamp {
+	return {
+		cle: champ.key,
+		libelle: champ.label,
+		type: champ.type,
+		aide: champ.help_text ?? '',
+		choix: choixDuChamp(champ),
+		devise: deviseDuChamp(champ),
+	}
+}
+
+/**
+ * Formulaire d'un champ — déclaration ET édition, le même.
+ *
+ * LA CLÉ ET LE TYPE SONT SAISIS À LA DÉCLARATION, PUIS AFFICHÉS EN LECTURE SEULE. Les deux motifs
+ * sont mesurés au §7 bis.10.3, et l'écran les DIT plutôt que de désactiver deux champs sans
+ * explication : une clé renommée réécrit rétroactivement ce que les exports désignent, et un type
+ * changé laisse en base des valeurs que le produit refuse ensuite de réécrire — la conversion
+ * appartient au plan de remappage de `CRM-078`.
+ */
+function FormulaireChamp({
+	champ,
+	refus,
+	enCours,
+	onValider,
+	onAnnuler,
+}: {
+	readonly champ: ChampAdministrable | null
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onValider: (saisie: SaisieChamp) => void
+	readonly onAnnuler: () => void
+}) {
+	const prefixe = useId()
+	const [saisie, setSaisie] = useState<SaisieChamp>(() =>
+		champ === null
+			? { cle: '', libelle: '', type: 'text', aide: '', choix: [], devise: 'EUR' }
+			: saisieDepuisChamp(champ),
+	)
+	const premierChamp = useRef<HTMLInputElement>(null)
+	const premierLibelle = useRef<HTMLInputElement>(null)
+
+	// Le focus entre dans le premier champ RÉELLEMENT modifiable : la clé à la déclaration, le
+	// libellé à l'édition où la clé n'est plus qu'un texte (docs/DESIGN_SYSTEM.md §5.13).
+	useEffect(() => {
+		if (champ === null) premierChamp.current?.focus()
+		else premierLibelle.current?.focus()
+	}, [champ])
+
+	const cleInvalide = saisie.cle !== '' && !cleChampConforme(saisie.cle)
+	const libelleInvalide = saisie.libelle !== '' && !libelleChampConforme(saisie.libelle)
+	const aideInvalide = !aideChampConforme(saisie.aide)
+	const aChoix = estTypeAChoix(saisie.type)
+	const monetaire = estTypeMonetaire(saisie.type)
+	const refusChoix = aChoix ? refusDesChoix(saisie.choix) : null
+	const deviseInvalide = monetaire && !deviseConforme(saisie.devise)
+	const complet =
+		saisie.cle !== '' &&
+		!cleInvalide &&
+		saisie.libelle.trim() !== '' &&
+		!libelleInvalide &&
+		!aideInvalide &&
+		refusChoix === null &&
+		!deviseInvalide
+
+	return (
+		<form
+			data-testid="formulaire-champ"
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				if (complet && !enCours) onValider(saisie)
+			}}
+		>
+			<h4 className="font-medium">
+				{champ === null
+					? t('admin.workflows.fields.form.declare')
+					: t('admin.workflows.fields.form.edit', { nom: champ.label })}
+			</h4>
+
+			{champ === null ? (
+				<ChampSurcharge
+					id={`${prefixe}-cle`}
+					libelle={t('admin.workflows.fields.form.key')}
+					valeur={saisie.cle}
+					onChange={(cle) => setSaisie((precedente) => ({ ...precedente, cle }))}
+					aide={t('admin.workflows.fields.form.key.help')}
+					refInterne={premierChamp}
+					{...(cleInvalide ? { erreur: t('admin.workflows.fields.form.key.invalid') } : {})}
+				/>
+			) : (
+				<p className="text-sm text-text-2" data-testid="champ-cle-figee">
+					{t('admin.workflows.fields.form.key.frozen', { cle: champ.key })}
+				</p>
+			)}
+
+			<ChampSurcharge
+				id={`${prefixe}-libelle`}
+				libelle={t('admin.workflows.fields.form.label')}
+				valeur={saisie.libelle}
+				onChange={(libelle) => setSaisie((precedente) => ({ ...precedente, libelle }))}
+				aide={t('admin.workflows.fields.form.label.help')}
+				refInterne={premierLibelle}
+				{...(libelleInvalide ? { erreur: t('admin.workflows.fields.form.label.invalid') } : {})}
+			/>
+
+			{champ === null ? (
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${prefixe}-type`} className="text-sm text-text-2">
+						{t('admin.workflows.fields.form.type')}
+					</label>
+					<select
+						id={`${prefixe}-type`}
+						value={saisie.type}
+						onChange={(evenement) =>
+							setSaisie((precedente) => ({ ...precedente, type: evenement.target.value }))
+						}
+						aria-describedby={`${prefixe}-type-aide`}
+						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+					>
+						{TYPES_CHAMP.map((type) => (
+							<option key={type} value={type}>
+								{libelleType(type)}
+							</option>
+						))}
+					</select>
+					<span id={`${prefixe}-type-aide`} className="text-sm text-text-3">
+						{t('admin.workflows.fields.form.type.help')}
+					</span>
+				</div>
+			) : (
+				<p className="text-sm text-text-2" data-testid="champ-type-fige">
+					{t('admin.workflows.fields.form.type.frozen', { type: libelleType(champ.type) })}
+				</p>
+			)}
+
+			{aChoix ? (
+				<EditeurChoix
+					prefixe={prefixe}
+					choix={saisie.choix}
+					enCours={enCours}
+					onChange={(choix) => setSaisie((precedente) => ({ ...precedente, choix }))}
+					{...(refusChoix === null ? {} : { erreur: t(MESSAGES_REFUS_CHOIX[refusChoix]) })}
+				/>
+			) : null}
+
+			{monetaire ? (
+				<ChampSurcharge
+					id={`${prefixe}-devise`}
+					libelle={t('admin.workflows.fields.form.currency')}
+					valeur={saisie.devise}
+					onChange={(devise) => setSaisie((precedente) => ({ ...precedente, devise }))}
+					aide={t('admin.workflows.fields.form.currency.help')}
+					{...(deviseInvalide ? { erreur: t('admin.workflows.fields.form.currency.invalid') } : {})}
+				/>
+			) : null}
+
+			<ChampSurcharge
+				id={`${prefixe}-aide`}
+				libelle={t('admin.workflows.fields.form.help')}
+				valeur={saisie.aide}
+				onChange={(aide) => setSaisie((precedente) => ({ ...precedente, aide }))}
+				aide={t('admin.workflows.fields.form.help.help')}
+				{...(aideInvalide ? { erreur: t('admin.workflows.fields.form.help.invalid') } : {})}
+			/>
+
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+					{t('admin.action.save')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</form>
+	)
+}
+
+/** Une ligne de champ : ce qu'il est, et les quatre commandes qui le gouvernent. */
+function LigneChamp({
+	champ,
+	liste,
+	enCours,
+	onDeplacer,
+	onOuvrirEdition,
+	onOuvrirArchivage,
+	onRestaurer,
+}: {
+	readonly champ: ChampAdministrable
+	readonly liste: readonly Ordonnable[]
+	readonly enCours: boolean
+	readonly onDeplacer: (sens: Sens) => void
+	readonly onOuvrirEdition: () => void
+	readonly onOuvrirArchivage: () => void
+	readonly onRestaurer: () => void
+}) {
+	const archive = champ.archived_at !== null
+	return (
+		<div
+			data-testid="ligne-champ"
+			className="flex flex-wrap items-center gap-2 min-h-[var(--size-target)]"
+		>
+			<span className="font-medium">{champ.label}</span>
+			<code className="rounded-sm bg-hover px-2 py-[2px] text-sm text-text-2">{champ.key}</code>
+			<span className="text-sm text-text-2" data-testid="champ-type">
+				{libelleType(champ.type)}
+			</span>
+			{/* Un champ archivé est NOMMÉ, jamais seulement grisé : la couleur seule ne dit rien
+			    (docs/DESIGN_SYSTEM.md §1), et l'archivage est le seul retrait du produit. */}
+			{archive ? (
+				<span
+					data-testid="champ-archive"
+					className="flex items-center gap-1 rounded-sm bg-accent-soft text-accent-on-soft px-2 py-[2px] text-sm"
+				>
+					<Archive aria-hidden="true" size={14} strokeWidth={2} />
+					{t('admin.workflows.fields.archived')}
+				</span>
+			) : null}
+			{champ.help_text === null ? null : (
+				<span className="text-sm text-text-3" data-testid="champ-aide">
+					{champ.help_text}
+				</span>
+			)}
+			<div className="ml-auto flex items-center gap-1">
+				<Button
+					taille="compacte"
+					disabled={enCours || !deplacementPossible(liste, champ.id, 'monter')}
+					aria-label={t('admin.action.up', { nom: champ.label })}
+					onClick={() => onDeplacer('monter')}
+				>
+					<ArrowUp aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					taille="compacte"
+					disabled={enCours || !deplacementPossible(liste, champ.id, 'descendre')}
+					aria-label={t('admin.action.down', { nom: champ.label })}
+					onClick={() => onDeplacer('descendre')}
+				>
+					<ArrowDown aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					taille="compacte"
+					disabled={enCours}
+					aria-label={t('admin.workflows.fields.action.edit', { nom: champ.label })}
+					onClick={onOuvrirEdition}
+				>
+					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				{archive ? (
+					<Button
+						taille="compacte"
+						disabled={enCours}
+						aria-label={t('admin.workflows.fields.action.restore', { nom: champ.label })}
+						onClick={onRestaurer}
+					>
+						<ArchiveRestore aria-hidden="true" size={16} strokeWidth={2} />
+					</Button>
+				) : (
+					<Button
+						taille="compacte"
+						disabled={enCours}
+						aria-label={t('admin.workflows.fields.action.archive', { nom: champ.label })}
+						onClick={onOuvrirArchivage}
+					>
+						<Archive aria-hidden="true" size={16} strokeWidth={2} />
+					</Button>
+				)}
+			</div>
+		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
 // L'écran
 // ---------------------------------------------------------------------------------------------
 
@@ -873,6 +1357,7 @@ export function AdministrationWorkflows({
 	const [transitions, setTransitions] =
 		useState<EtatAsync<readonly TransitionAdministrable[]>>(enChargement)
 	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudAjoutable[]>>(enChargement)
+	const [champs, setChamps] = useState<EtatAsync<readonly ChampAdministrable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
@@ -913,12 +1398,16 @@ export function AdministrationWorkflows({
 	const rechargerGraphe = useCallback(
 		async (idWorkflow: string) => {
 			if (client === null) return
-			const [lues, arretes] = await Promise.all([
+			// Les champs partent avec les étapes et les arêtes, par le §7 bis.10.1 : les trois décrivent
+			// le même workflow, et toute écriture de l'un des trois blocs les rejoue toutes.
+			const [lues, arretes, formulaire] = await Promise.all([
 				lireEtapes(client, idWorkflow),
 				lireTransitions(client, idWorkflow),
+				lireChamps(client, idWorkflow),
 			])
 			setEtapes(lues)
 			setTransitions(arretes)
+			setChamps(formulaire)
 		},
 		[client],
 	)
@@ -927,6 +1416,7 @@ export function AdministrationWorkflows({
 		if (client === null || idChoisi === null) return
 		setEtapes(enChargement)
 		setTransitions(enChargement)
+		setChamps(enChargement)
 		void rechargerGraphe(idChoisi)
 	}, [client, idChoisi, rechargerGraphe])
 
@@ -996,6 +1486,56 @@ export function AdministrationWorkflows({
 			}
 		},
 		[idChoisi, rechargerGraphe],
+	)
+
+	/**
+	 * Jumelle des deux précédentes pour les champs.
+	 *
+	 * Trois enveloppes pour trois vocabulaires de refus, et non une enveloppe générique : le
+	 * `23505` d'un champ dit « cette clé est déjà prise », celui d'une étape « ce nœud est déjà
+	 * employé », celui d'une arête « cette transition existe ». Les confondre afficherait un message
+	 * exact sur un objet qui n'est pas celui que l'administrateur vient de toucher.
+	 */
+	const executerChampFormulaire = useCallback(
+		async (action: ActionChamp, message: string) => {
+			if (idChoisi === null) return
+			setEnCours(true)
+			try {
+				const resultat = await action()
+				if (resultat.statut === 'refus') {
+					setRefus(texteRefusChamp(resultat.refus))
+					return
+				}
+				if (resultat.statut === 'sans-effet') {
+					setRefus(t('admin.workflows.refus.sans-effet'))
+					return
+				}
+				setRefus(null)
+				setOuverture(AUCUNE)
+				setAnnonce(message)
+				await rechargerGraphe(idChoisi)
+			} finally {
+				setEnCours(false)
+			}
+		},
+		[idChoisi, rechargerGraphe],
+	)
+
+	/** Déplace un champ dans le formulaire — même ordonnancement que les étapes (`CRM-075`). */
+	const deplacerLeChamp = useCallback(
+		(liste: readonly ChampAdministrable[], idChamp: string, sens: Sens) => {
+			if (client === null) return
+			const calcul = calculerDeplacement(liste, idChamp, sens)
+			if (calcul.statut !== 'calcule') {
+				setRefus(t('admin.move.impossible'))
+				return
+			}
+			void executerChampFormulaire(
+				() => deplacerChamp(client, idChamp, calcul.position),
+				t('live.workflows.field.moved'),
+			)
+		},
+		[client, executerChampFormulaire],
 	)
 
 	const deplacer = useCallback(
@@ -1398,6 +1938,161 @@ export function AdministrationWorkflows({
 															>
 																<Plus aria-hidden="true" size={16} strokeWidth={2} />
 																{t('admin.workflows.transitions.action.declare')}
+															</Button>
+														</div>
+													)}
+												</>
+											) : null}
+										</section>
+
+										{/* Les champs, TROISIÈME bloc et dans la même colonne : on ne dessine pas le
+										    formulaire d'un workflow avant d'en avoir posé les étapes et les chemins
+										    (§7 bis.10.6). */}
+										<section
+											aria-label={t('admin.workflows.fields.aria', { workflow: choisi.name })}
+											className="flex flex-col gap-3"
+										>
+											<div className="flex flex-col gap-1">
+												<h3 className="font-medium">{t('admin.workflows.fields.title')}</h3>
+												<p className="text-sm text-text-2">{t('admin.workflows.fields.intro')}</p>
+											</div>
+											{champs.statut === 'chargement' ? (
+												<SkeletonListe lignes={3} libelle={t('admin.workflows.fields.loading')} />
+											) : null}
+											{champs.statut === 'erreur' ? (
+												<EtatErreur
+													titre={t('admin.workflows.fields.error')}
+													corps={t('admin.workflows.error.body')}
+													libelleReprise={t('admin.tree.error.retry')}
+													onReprise={() => void rechargerGraphe(choisi.id)}
+												/>
+											) : null}
+											{champs.statut === 'pret' ? (
+												<>
+													{champs.donnees.length === 0 ? (
+														<EtatVide
+															titre={t('admin.workflows.fields.empty')}
+															corps={t('admin.workflows.fields.empty.hint')}
+														/>
+													) : (
+														<ol
+															data-testid="liste-champs"
+															className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-3"
+														>
+															{champs.donnees.map((champ) => (
+																<li key={champ.id} className="flex flex-col gap-2">
+																	<LigneChamp
+																		champ={champ}
+																		liste={champs.donnees}
+																		enCours={enCours}
+																		onDeplacer={(sens) =>
+																			deplacerLeChamp(champs.donnees, champ.id, sens)
+																		}
+																		onOuvrirEdition={() => {
+																			setRefus(null)
+																			setOuverture({ type: 'champ-edition', idChamp: champ.id })
+																		}}
+																		onOuvrirArchivage={() => {
+																			setRefus(null)
+																			setOuverture({ type: 'champ-archivage', idChamp: champ.id })
+																		}}
+																		onRestaurer={() =>
+																			void executerChampFormulaire(
+																				() => archiverChamp(client, champ.id, null),
+																				t('live.workflows.field.restored'),
+																			)
+																		}
+																	/>
+																	{ouverture.type === 'champ-edition' && ouverture.idChamp === champ.id ? (
+																		<FormulaireChamp
+																			champ={champ}
+																			refus={refus}
+																			enCours={enCours}
+																			onValider={(saisie) =>
+																				void executerChampFormulaire(
+																					() =>
+																						modifierChamp(
+																							client,
+																							champ.id,
+																							saisie.libelle.trim(),
+																							saisie.aide.trim() === '' ? null : saisie.aide.trim(),
+																							composerOptions(saisie.type, saisie.choix, saisie.devise),
+																						),
+																					t('live.workflows.field.updated'),
+																				)
+																			}
+																			onAnnuler={() => {
+																				setRefus(null)
+																				setOuverture(AUCUNE)
+																			}}
+																		/>
+																	) : null}
+																	{ouverture.type === 'champ-archivage' && ouverture.idChamp === champ.id ? (
+																		<ConfirmationRetrait
+																			marqueur="confirmation-archivage-champ"
+																			titre={t('admin.workflows.fields.archive.confirm', {
+																				nom: champ.label,
+																			})}
+																			corps={t('admin.workflows.fields.archive.confirm.body')}
+																			libelleAction={t('admin.workflows.fields.archive.confirm.action')}
+																			refus={refus}
+																			enCours={enCours}
+																			onConfirmer={() =>
+																				void executerChampFormulaire(
+																					// L'instant vient du client : PostgREST écrit ce qu'on lui
+																					// envoie, et c'est celui que l'écran affichera.
+																					() =>
+																						archiverChamp(client, champ.id, new Date().toISOString()),
+																					t('live.workflows.field.archived'),
+																				)
+																			}
+																			onAnnuler={() => {
+																				setRefus(null)
+																				setOuverture(AUCUNE)
+																			}}
+																		/>
+																	) : null}
+																</li>
+															))}
+														</ol>
+													)}
+													{ouverture.type === 'champ-declaration' ? (
+														<FormulaireChamp
+															champ={null}
+															refus={refus}
+															enCours={enCours}
+															onValider={(saisie) =>
+																void executerChampFormulaire(
+																	() =>
+																		declarerChamp(client, {
+																			idWorkflow: choisi.id,
+																			idWorkspace: choisi.workspace_id,
+																			cle: saisie.cle.trim(),
+																			libelle: saisie.libelle.trim(),
+																			type: saisie.type,
+																			aide: saisie.aide.trim() === '' ? null : saisie.aide.trim(),
+																			options: composerOptions(saisie.type, saisie.choix, saisie.devise),
+																		}),
+																	t('live.workflows.field.declared'),
+																)
+															}
+															onAnnuler={() => {
+																setRefus(null)
+																setOuverture(AUCUNE)
+															}}
+														/>
+													) : (
+														<div className="flex">
+															<Button
+																variante="primaire"
+																disabled={enCours}
+																onClick={() => {
+																	setRefus(null)
+																	setOuverture({ type: 'champ-declaration' })
+																}}
+															>
+																<Plus aria-hidden="true" size={16} strokeWidth={2} />
+																{t('admin.workflows.fields.action.declare')}
 															</Button>
 														</div>
 													)}

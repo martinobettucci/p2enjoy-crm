@@ -1,5 +1,5 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
-//           tranches
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
+//           troisième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les lectures et le catalogue à la demande),
 //           §7 bis.4 (les six gestes et leurs écritures), §7 bis.5 (validation de forme, `0`
 //           accepté), §7 bis.6 (états, clavier), §2.5 (`0` n'est pas `NULL`), §3.3 (libellé
@@ -7,6 +7,10 @@
 // @verifies docs/SPEC-workflow-engine.md §7 bis.9 (les arêtes du graphe), §7 bis.9.1 (les deux
 //           lectures ensemble), §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix offerts),
 //           §7 bis.9.6 (états et disposition), §3.4 (modèle des arêtes)
+// @verifies docs/SPEC-workflow-engine.md §7 bis.10 (les champs du formulaire), §7 bis.10.1
+//           (lecture 5, archivés compris), §7 bis.10.2 (les cinq gestes), §7 bis.10.3 (clé et type
+//           figés après la déclaration), §7 bis.10.4 (validation de forme), §7 bis.10.5 (refus)
+// @verifies docs/SPEC-form-composer.md §2.3 (types), §2.4 (options), §2.7 (aucune suppression)
 // @verifies docs/DESIGN_SYSTEM.md §5.7 bis (case à cocher), §5.8 (états), §6 (confirmation avant
 //           retrait), §8, §10
 //
@@ -114,6 +118,51 @@ const TRANSITIONS = [
 	},
 ]
 
+/**
+ * Trois champs, choisis pour que chaque règle du §7 bis.10 ait de quoi être éprouvée : un `money`
+ * avec sa devise, un `select` avec ses choix, et un champ **archivé** — le seul « retiré » que le
+ * produit connaisse. Leurs libellés ne recoupent aucun libellé d'étape : deux commandes de même nom
+ * accessible rendraient les assertions ambiguës (docs/DESIGN_SYSTEM.md §5.15).
+ */
+const CHAMPS = [
+	{
+		id: 'c-1',
+		workflow_id: 'wf-1',
+		workspace_id: 'ws-1',
+		key: 'budget',
+		label: 'Budget estimé',
+		type: 'money',
+		options: { currency: 'EUR' },
+		help_text: 'Montant hors taxes.',
+		position: 1,
+		archived_at: null,
+	},
+	{
+		id: 'c-2',
+		workflow_id: 'wf-1',
+		workspace_id: 'ws-1',
+		key: 'source',
+		label: 'Origine du contact',
+		type: 'select',
+		options: { choices: [{ key: 'salon', label: 'Salon' }, { key: 'site', label: 'Site web' }] },
+		help_text: null,
+		position: 2,
+		archived_at: null,
+	},
+	{
+		id: 'c-3',
+		workflow_id: 'wf-1',
+		workspace_id: 'ws-1',
+		key: 'note-ancienne',
+		label: 'Note interne',
+		type: 'textarea',
+		options: {},
+		help_text: null,
+		position: 3,
+		archived_at: '2026-03-15T09:00:00Z',
+	},
+]
+
 const CATALOGUE = [
 	{ ...NOEUD_PROSPECTION, position: 1 },
 	{
@@ -142,9 +191,11 @@ type Options = {
 	readonly workflows?: unknown[]
 	readonly etapes?: unknown[]
 	readonly transitions?: unknown[]
+	readonly champs?: unknown[]
 	readonly catalogue?: unknown[]
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
+	readonly erreurChamps?: { message: string; status: number }
 	readonly reponseEcriture?: {
 		data: unknown[] | null
 		error: { message: string; code?: string } | null
@@ -199,6 +250,7 @@ function clientFactice(options: Options = {}): {
 				if (table === 'workflow_transitions') {
 					return lecture(options.transitions ?? TRANSITIONS, options.erreurTransitions)
 				}
+				if (table === 'form_fields') return lecture(options.champs ?? CHAMPS, options.erreurChamps)
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -744,5 +796,266 @@ describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
 		await userEvent.keyboard('{Enter}')
 		await waitFor(() => expect(ecritures).toHaveLength(1))
 		expect(ecritures[0]).toMatchObject({ verbe: 'insert', charge: { from_step_id: 'e-2' } })
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.10 — Les champs du formulaire
+// ---------------------------------------------------------------------------------------------
+
+describe('le bloc des champs de formulaire (§7 bis.10)', () => {
+	it('lit `form_fields` avec les étapes et les arêtes, en une seule salve', async () => {
+		const { lectures } = monter()
+		await attendreEcran()
+		await waitFor(() => expect(lectures).toContain('form_fields'))
+		expect(lectures.filter((table) => table === 'form_fields')).toHaveLength(1)
+	})
+
+	it('montre chaque champ avec sa clé, son type traduit et son aide', async () => {
+		monter()
+		await attendreEcran()
+		const liste = await screen.findByTestId('liste-champs')
+		expect(within(liste).getByText('Budget estimé')).toBeTruthy()
+		expect(within(liste).getByText('budget')).toBeTruthy()
+		expect(within(liste).getByText('Montant')).toBeTruthy()
+		expect(within(liste).getByText('Montant hors taxes.')).toBeTruthy()
+		expect(within(liste).getByText('Choix unique')).toBeTruthy()
+	})
+
+	it('NOMME un champ archivé au lieu de le masquer ou de le griser seulement', async () => {
+		monter()
+		await attendreEcran()
+		const liste = await screen.findByTestId('liste-champs')
+		// Le champ archivé est bien rendu — la lecture ne l'exclut pas (§7 bis.10.1) —, il porte la
+		// mention « Archivé », et sa commande est la RESTAURATION, jamais une suppression.
+		expect(within(liste).getByText('Note interne')).toBeTruthy()
+		expect(within(liste).getAllByTestId('champ-archive')).toHaveLength(1)
+		expect(within(liste).getByRole('button', { name: 'Restaurer le champ Note interne' })).toBeTruthy()
+		expect(within(liste).queryByRole('button', { name: 'Archiver le champ Note interne' })).toBeNull()
+	})
+
+	it('montre un état vide nommé quand le formulaire n’a aucun champ', async () => {
+		monter({ champs: [] })
+		await attendreEcran()
+		expect(await screen.findByText('Aucun champ dans ce formulaire')).toBeTruthy()
+	})
+
+	it('montre un état d’erreur propre au bloc des champs', async () => {
+		monter({ erreurChamps: { message: 'boom', status: 500 } })
+		await attendreEcran()
+		expect(await screen.findByText('Les champs de ce workflow n’ont pas pu être chargés.')).toBeTruthy()
+	})
+
+	it('la déclaration envoie une insertion SANS `position`, options composées selon le type', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		await userEvent.type(within(formulaire).getByLabelText('Clé'), 'delai-reponse')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé'), 'Délai de réponse')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Type'), 'number')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'form_fields',
+			verbe: 'insert',
+			charge: {
+				workflow_id: 'wf-1',
+				workspace_id: 'ws-1',
+				key: 'delai-reponse',
+				label: 'Délai de réponse',
+				type: 'number',
+				help_text: null,
+				options: {},
+			},
+		})
+		expect(Object.keys(ecritures[0]?.charge ?? {})).not.toContain('position')
+	})
+
+	it('un type à choix fait apparaître l’éditeur de choix, et un `money` son champ de devise', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		expect(within(formulaire).queryByTestId('editeur-choix')).toBeNull()
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Type'), 'select')
+		expect(within(formulaire).getByTestId('editeur-choix')).toBeTruthy()
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Type'), 'money')
+		expect(within(formulaire).queryByTestId('editeur-choix')).toBeNull()
+		expect(within(formulaire).getByLabelText('Devise')).toBeTruthy()
+	})
+
+	it('REFUSE DEUX CHOIX DE MÊME CLÉ, que la base accepterait', async () => {
+		// §7 bis.10.4 : mesuré le 2026-08-14, un `select` portant deux choix de clé `a` est accepté
+		// en `201` par la base. Cet écran est la seule garantie du produit, et la preuve le montre
+		// dans les deux sens — le refus, puis la levée du refus.
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		await userEvent.type(within(formulaire).getByLabelText('Clé'), 'origine')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé'), 'Origine')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Type'), 'select')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Ajouter un choix' }))
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Ajouter un choix' }))
+		const cles = () => within(formulaire).getAllByLabelText('Clé du choix') as HTMLInputElement[]
+		const libelles = () => within(formulaire).getAllByLabelText('Libellé du choix') as HTMLInputElement[]
+		await userEvent.type(cles()[0] as HTMLInputElement, 'salon')
+		await userEvent.type(libelles()[0] as HTMLInputElement, 'Salon')
+		await userEvent.type(cles()[1] as HTMLInputElement, 'salon')
+		await userEvent.type(libelles()[1] as HTMLInputElement, 'Salon bis')
+		expect(
+			within(formulaire).getByText(
+				'Deux choix portent la même clé : les réponses seraient impossibles à distinguer.',
+			),
+		).toBeTruthy()
+		const enregistrer = within(formulaire).getByRole('button', { name: 'Enregistrer' }) as HTMLButtonElement
+		expect(enregistrer.disabled).toBe(true)
+		expect(ecritures).toHaveLength(0)
+		// La seconde clé corrigée lève le refus : un contrôle qui ne se laisse jamais satisfaire
+		// serait indistinguable d'un formulaire cassé.
+		await userEvent.clear(cles()[1] as HTMLInputElement)
+		await userEvent.type(cles()[1] as HTMLInputElement, 'site')
+		expect((within(formulaire).getByRole('button', { name: 'Enregistrer' }) as HTMLButtonElement).disabled).toBe(
+			false,
+		)
+	})
+
+	it('l’édition n’offre NI la clé NI le type, et son écriture ne les porte pas', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Modifier le champ Budget estimé' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		// Les deux sont AFFICHÉS — l'administrateur doit les lire — mais comme des textes qui disent
+		// pourquoi ils ne bougent pas, jamais comme des champs désactivés sans explication.
+		expect(within(formulaire).queryByLabelText('Clé')).toBeNull()
+		expect(within(formulaire).queryByLabelText('Type')).toBeNull()
+		expect(within(formulaire).getByTestId('champ-cle-figee').textContent).toContain('budget')
+		expect(within(formulaire).getByTestId('champ-type-fige').textContent).toContain('Montant')
+		// La devise du champ `money` est reprise telle qu'elle est portée, pas devinée.
+		expect((within(formulaire).getByLabelText('Devise') as HTMLInputElement).value).toBe('EUR')
+		await userEvent.clear(within(formulaire).getByLabelText('Libellé'))
+		await userEvent.type(within(formulaire).getByLabelText('Libellé'), 'Budget prévisionnel')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'form_fields',
+			verbe: 'update',
+			charge: { label: 'Budget prévisionnel', help_text: 'Montant hors taxes.', options: { currency: 'EUR' } },
+		})
+		expect(Object.keys(ecritures[0]?.charge ?? {})).not.toContain('key')
+		expect(Object.keys(ecritures[0]?.charge ?? {})).not.toContain('type')
+		expect(ecritures[0]?.filtres).toEqual([['id', 'c-1']])
+	})
+
+	it('l’édition d’un `select` reprend ses choix et les réécrit tels quels', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Modifier le champ Origine du contact' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		expect(within(formulaire).getAllByLabelText('Clé du choix')).toHaveLength(2)
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toMatchObject({
+			options: { choices: [{ key: 'salon', label: 'Salon' }, { key: 'site', label: 'Site web' }] },
+		})
+	})
+
+	it('l’archivage passe par une confirmation et écrit un instant, jamais un `delete`', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Archiver le champ Budget estimé' }))
+		const confirmation = await screen.findByTestId('confirmation-archivage-champ')
+		expect(ecritures).toHaveLength(0)
+		await userEvent.click(within(confirmation).getByRole('button', { name: 'Archiver' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.table).toBe('form_fields')
+		expect(ecritures[0]?.verbe).toBe('update')
+		expect(typeof (ecritures[0]?.charge as { archived_at?: unknown }).archived_at).toBe('string')
+		expect(ecritures[0]?.filtres).toEqual([['id', 'c-1']])
+	})
+
+	it('la restauration écrit `null` sans confirmation : elle ne perd rien', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Restaurer le champ Note interne' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toEqual({ archived_at: null })
+		expect(ecritures[0]?.filtres).toEqual([['id', 'c-3']])
+	})
+
+	it('déplacer un champ écrit UNE position, et les extrémités sont désactivées', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const liste = await screen.findByTestId('liste-champs')
+		const monterPremier = within(liste).getByRole('button', {
+			name: 'Monter Budget estimé',
+		}) as HTMLButtonElement
+		const descendreDernier = within(liste).getByRole('button', {
+			name: 'Descendre Note interne',
+		}) as HTMLButtonElement
+		expect(monterPremier.disabled).toBe(true)
+		expect(descendreDernier.disabled).toBe(true)
+		await userEvent.click(within(liste).getByRole('button', { name: 'Monter Origine du contact' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toEqual({ position: 0.5 })
+		expect(ecritures[0]?.filtres).toEqual([['id', 'c-2']])
+	})
+
+	it('traduit le refus d’une clé déjà prise reçu de la base', async () => {
+		monter({
+			reponseEcriture: {
+				data: null,
+				error: { message: 'duplicate key value', code: '23505' },
+				status: 409,
+			},
+		})
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		await userEvent.type(within(formulaire).getByLabelText('Clé'), 'budget')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé'), 'Doublon')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		expect(await screen.findByText('Cette clé est déjà prise dans ce workflow.')).toBeTruthy()
+	})
+
+	it('refuse une clé malformée avant l’aller-retour, et le dit', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		await userEvent.type(within(formulaire).getByLabelText('Clé'), 'Budget_Prev')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé'), 'Budget')
+		expect(
+			within(formulaire).getByText(
+				'La clé n’accepte que des minuscules, des chiffres et des tirets simples, sans tiret au début ni à la fin.',
+			),
+		).toBeTruthy()
+		expect(
+			(within(formulaire).getByRole('button', { name: 'Enregistrer' }) as HTMLButtonElement).disabled,
+		).toBe(true)
+		expect(ecritures).toHaveLength(0)
+	})
+
+	it('la déclaration d’un champ se mène au clavier seul', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const declarer = screen.getByRole('button', { name: 'Déclarer un champ' })
+		declarer.focus()
+		await userEvent.keyboard('{Enter}')
+		const formulaire = await screen.findByTestId('formulaire-champ')
+		// Le focus entre dans le premier champ réellement modifiable : la clé, à la déclaration.
+		expect(document.activeElement).toBe(within(formulaire).getByLabelText('Clé'))
+		await userEvent.keyboard('note-libre')
+		await userEvent.tab()
+		await userEvent.keyboard('Note libre')
+		const enregistrer = within(formulaire).getByRole('button', { name: 'Enregistrer' })
+		for (let pas = 0; pas < 10 && document.activeElement !== enregistrer; pas += 1) {
+			await userEvent.tab()
+		}
+		expect(document.activeElement).toBe(enregistrer)
+		await userEvent.keyboard('{Enter}')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({ verbe: 'insert', charge: { key: 'note-libre', label: 'Note libre' } })
 	})
 })
