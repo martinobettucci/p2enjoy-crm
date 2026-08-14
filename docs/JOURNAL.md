@@ -13726,6 +13726,25 @@ pendant celle-ci ; le travail a été rebasé sur place, l'unique conflit portan
 binaire régénérée des deux côtés. Sa lecture de l'état — « les champs viennent d'être livrés par la
 session concurrente » — désigne les commits de cette session-ci.
 
+**Le verdict du harnais complet, dit sans l'arrondir.** `scripts/verify-harness.sh` rend **28
+contrôles, 2 anomalies**, et aucune des deux n'appartient à cette unité. Ses autres contrôles sont
+verts, dont `test:sql`, `e2e:api` (507), les six dégradations de non-complaisance et la
+restauration qu'elles exigent.
+
+La première anomalie est `commentaires-gestes.spec.ts` (`CRM-043`). Sa cause est **enfin mesurée**
+et consignée en complément d'INC-105 : une campagne interrompue laisse en base un commentaire de
+preuve — `Geste 1786750198221-32997` sur la card `…00c2` —, le seed ne le retire pas (INC-102), et
+chaque exécution suivante échoue sur le résidu de la précédente. Résidu retiré par la clé de
+service : la suite redevient **8/8** sans qu'aucune ligne ne soit modifiée. La campagne complète
+rejouée ensuite rend **209/210**, l'unique échec restant étant une **course** de la même suite —
+l'écran affiche le corps modifié, la relecture immédiate en base rend encore l'ancien —, et cette
+suite repasse **8/8** isolée juste après. Deux défauts distincts, tous deux dans `CRM-043`.
+
+La seconde est `mail-sync.spec.ts:210`, consignée en **INC-107** : la preuve juge l'**historique
+complet** du conteneur, si bien qu'un unique `veille_compte_echoue` émis pendant la campagne la
+rend rouge pour tout le reste de la session — un `docker restart` ne vide pas le journal. Mesurée
+quatre fois, dont une avant la campagne où `e2e:mail` rendait **42/42**.
+
 **Où reprendre.** `CRM-076` reste `[~]`. La tranche suivante est la **grille champ × étape** des
 règles de visibilité (`docs/SPEC-form-composer.md` §3.1 et §5), puis les **exigences de
 transition** et la **prévisualisation des effets**. Le choix d'unité obéit à la décision 382 :
