@@ -15,6 +15,15 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **INC-096 close, et le lot A soldé : les preuves de pile sont de nouveau exécutables**
+  (décision 373). Deux faits, tous deux mesurés. Le responsable a transmis **hors dépôt** un jeton
+  d'accès Docker Hub, qui est exactement l'action humaine que l'entrée attendait depuis le
+  2026-08-12 ; le jeton n'entre ni dans le dépôt, ni dans un fichier d'exemple, ni dans un journal
+  committé. Et le `429 Too Many Requests` avait une **seconde cause, jusque-là non identifiée** :
+  `docker compose` tire les dix-huit images **en parallèle**, et c'est cette rafale qui atteint la
+  limite. Le même tirage relancé **seul** réussit ; un tirage **séquentiel avec temporisation
+  croissante** a rapatrié les dix-huit images sans un seul échec définitif. Une limite horaire
+  épuisée ne se contournerait pas ainsi.
 - **`CRM-059` revient à `[x]` : la preuve rétrogradée le 2026-08-12 est verte au rejeu**
   (décisions 369, 370). Le défaut annoncé — « le backfill descend tout l'historique dès la première
   relève » — **n'existait pas dans le produit** : il avait été mesuré sur une pile où `rest`,

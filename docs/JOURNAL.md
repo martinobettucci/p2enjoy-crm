@@ -12475,3 +12475,73 @@ la levée d'INC-096 retire précisément l'excuse qui la faisait grandir — les
 exécutables tant que le registre d'images répond.
 
 **Rattachement :** `CRM-059`, INC-091, INC-092, INC-096. Décisions 367, 369, 370, 371.
+
+### Décision 373 — INC-096 est close : le responsable a fourni les identifiants, et le `429` avait une seconde cause, mesurable
+
+**2026-08-14 — mesure d'environnement, écrite avant d'exécuter la moindre preuve.**
+
+**Le blocage est revenu, exactement comme la décision 369 avait prévenu qu'il pouvait revenir.**
+Au démarrage de cette session, `./runDev.sh` s'est arrêté sur :
+
+```
+Error response from daemon: unknown: failed to resolve reference
+"docker.io/supabase/storage-api:v1.60.4": unexpected status from HEAD request to
+https://registry-1.docker.io/v2/supabase/storage-api/manifests/v1.60.4: 429 Too Many Requests
+```
+
+Le cache d'images était vide (`docker images` : zéro ligne), et deux images au moins ont été
+« Interrupted » dans le même geste. La contrainte de tête du lot A s'appliquait donc de nouveau.
+
+**Première mesure, et elle contredit la lecture qu'on faisait du `429` depuis le 12 août.** Le même
+tirage, relancé **seul**, réussit immédiatement :
+
+```
+docker pull supabase/storage-api:v1.60.4  → Status: Downloaded newer image   (EXIT=0)
+docker pull postgres:17-alpine            → Status: Downloaded newer image   (EXIT=0)
+```
+
+Ce n'est donc pas seulement un quota horaire qui se recharge : `docker compose` tire les dix-huit
+images **en parallèle**, et c'est cette rafale de requêtes de manifeste qui atteint la limite. La
+preuve est faite par un tirage **séquentiel avec temporisation croissante** (10 s, 20 s, 30 s…), qui
+a rapatrié les **dix-huit images sans un seul échec définitif** : cinq images ont demandé deux ou
+trois essais, treize sont passées du premier coup. Une limite atteinte par la rafale se contourne en
+sériant ; une limite horaire épuisée ne se contournerait pas ainsi. La décision 369 avait raison de
+refuser de clore sur une exécution qui passe, mais la cause qu'elle supposait était **incomplète**.
+
+**Seconde mesure, et c'est elle qui clôt l'entrée : le responsable a fourni les identifiants.** Un
+jeton d'accès personnel Docker Hub a été transmis **hors dépôt**, pendant la session, ce qui est
+précisément l'action humaine qu'INC-096 attendait depuis le 12 août. Le nom de compte a été résolu
+contre le point d'émission de jeton du registre — `martinobettucci` rend `200`, deux autres candidats
+rendent `401` — puis :
+
+```
+docker login -u <compte> --password-stdin   → Login Succeeded
+```
+
+**Le jeton n'entre pas dans le dépôt**, ni en clair, ni dans un fichier d'exemple, ni dans un
+journal committé (`CLAUDE.md` §3 et §20). Il vit dans le magasin d'identifiants du démon, pour la
+durée du conteneur, et chaque exécution devra le recevoir de la même façon. Ce qui est écrit ici est
+le **mécanisme**, jamais la valeur.
+
+**Ce que cela change pour les sessions suivantes, et ce que cela ne change pas.** INC-096 demandait
+« des identifiants Docker Hub ou un miroir de registre » : c'est fait, et l'entrée est **close**. La
+limite authentifiée est très supérieure à la limite anonyme, mais elle n'est pas infinie ; le tirage
+séquentiel reste la bonne manière d'amorcer un cache vide, et il est consigné pour ne pas être
+redécouvert. Une exécution qui ne recevrait pas le jeton retombe sur la limite anonyme — ce n'est
+alors plus INC-096, c'est l'absence de transmission du jeton à cette exécution-là.
+
+**Pile debout, et vérifiée AVANT toute preuve** (leçon de la décision 368) : `docker compose ps`
+rend **17 services `healthy`**, les trois conteneurs à usage unique — `migrations`,
+`minio-createbucket`, `stalwart-init` — étant sortis normalement. `supabase/seed/apply-seed.sh` est
+appliqué.
+
+**Ce que le retrait du texte d'INC-096 ne doit pas emporter.** L'entrée portait une observation
+seconde, étrangère à son sujet : ce conteneur exécute **Node v22.22.2** alors que `package.json`
+exige `>=24`, et `npm ci` le signale par `EBADENGINE` avant de réussir. Elle n'est pas perdue — la
+décision 372 la consigne comme deuxième obstacle d'environnement, avec son contournement
+(`nvm install 24` sous `/opt/nvm`, puis préfixage explicite du `PATH`, `nvm use` ne suffisant pas).
+Rien n'est changé sur ce point : la version attendue est celle du `package.json`, et c'est
+l'environnement qui s'en écarte.
+
+**Rattachement :** INC-096 (close). Décisions 367 (lot A), 369 (mesure contraire), 368 (prémisse de
+la mesure), 372 (obstacles d'environnement).

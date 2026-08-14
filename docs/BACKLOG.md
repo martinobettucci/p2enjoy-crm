@@ -5986,13 +5986,16 @@ Les **61 entrées ouvertes** ont chacune reçu une disposition du responsable, l
 est le plan d'exécution ; le détail des motifs est dans `docs/JOURNAL.md`, décision 367, et les
 porteurs dans `docs/ARBITRAGES.md`.
 
-**Contrainte de tête — INC-096.** Le registre d'images est injoignable : aucune preuve de pile n'est
-exécutable. Le responsable retient de **ne traiter que ce qui se prouve sans la pile**. Les lots
-marqués « pile » attendent que l'accès au registre soit rétabli, qui est une action hors dépôt.
+**Contrainte de tête — INC-096, LEVÉE LE 2026-08-14.** Le registre d'images était injoignable :
+aucune preuve de pile n'était exécutable, et le responsable retenait de **ne traiter que ce qui se
+prouve sans la pile**. Le lot A est **soldé** : le responsable a transmis un jeton d'accès Docker
+Hub **hors dépôt**, et la décision 373 mesure que le `429` venait aussi des tirages **parallèles**
+de `docker compose`, qu'un tirage séquentiel avec temporisation contourne. Les lots marqués « pile »
+sont de nouveau atteignables, à condition que l'exécution reçoive le jeton.
 
 | Lot | Entrées | Disposition | Prouvable maintenant |
 |---|---|---|---|
-| A | INC-096 | action humaine hors dépôt : identifiants Docker Hub ou miroir de registre | — |
+| A | INC-096 | action humaine hors dépôt : identifiants Docker Hub ou miroir de registre | **soldé** le 2026-08-14, décision 373 |
 | B | INC-094 | le contrôle des migrations élevées passe à la justification obligatoire | **oui** |
 | B | INC-091, INC-092 | chaque preuve purge par IMAP ce qu'elle dépose | pile |
 | C | INC-034, INC-059, INC-069, INC-089, INC-097 | verrou d'exécution concurrente et refus d'un numéro de décision déjà pris, dans `.githooks/pre-commit` | **oui**, dépôt jetable |
@@ -6027,7 +6030,7 @@ registre jusqu'à sa livraison **et sa preuve**.
 | `.githooks/`, `scripts/verify-crochets-git.sh` | deux refus de plus au `pre-commit` : un **numéro de décision déjà pris** dans `docs/JOURNAL.md`, et une **seconde exécution concurrente** (verrou daté, avec expiration). Preuve du même ordre que la décision 358 : dépôt jetable, collision **provoquée** et refusée, voie nominale démontrée encore ouverte | INC-089, INC-097 |
 | `CRM-053`, `CRM-056`, `CRM-059` | écrire dans `docs/PROD_MIGRATIONS.md` les lignes de **leurs** migrations 31 à 34 — objectif, dépendances, réversibilité. Elles ne se déduisent pas du SQL : c'est l'unité qui a décidé qui les connaît | INC-095 |
 | `scripts/verify-migrations.sh` | un contrôle refusant toute migration absente du contrat de déploiement, posé **avec** le contenu et **jamais avant** — un harnais rouge en attendant reproduirait INC-094 | INC-095 |
-| **hors dépôt** | INC-096 : identifiants Docker Hub ou miroir de registre sur le démon. Tant qu'elle n'est pas levée, **aucune preuve de pile n'est exécutable** et rien de ce tableau n'est prouvable | INC-096 |
+| ~~**hors dépôt**~~ | ~~INC-096 : identifiants Docker Hub ou miroir de registre sur le démon~~ — **livré le 2026-08-14** : jeton transmis hors dépôt, tirage séquentiel consigné (décision 373). Les preuves de pile sont exécutables | INC-096, close |
 
 ---
 

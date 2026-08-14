@@ -47,16 +47,23 @@ n'attend donc une décision du responsable** : les cinquante-huit entrées ouver
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-13, après le lot D :** 98 entrées ouvertes depuis l'origine, **40 closes** — index
-ci-dessous, texte dans l'historique Git — et **58 ouvertes**, conservées ici en entier. Les
-soixante et une entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis
-cinquante-huit avec la clôture du lot D.
+**État au 2026-08-14 :** 98 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
+texte dans l'historique Git — et **56 ouvertes**, conservées ici en entier. Les soixante et une
+entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
+clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
+(décision 373).
+
+**Le lot A est soldé.** INC-096 exigeait « des identifiants Docker Hub ou un miroir de registre » :
+le responsable a transmis un jeton d'accès personnel **hors dépôt** le 2026-08-14, et la décision
+373 mesure en outre que le `429` venait pour partie des tirages **parallèles** de `docker compose`,
+qu'un tirage séquentiel avec temporisation contourne. La contrainte de tête qui rendait « aucune
+preuve de pile exécutable » ne s'applique plus, tant que l'exécution reçoit le jeton.
 
 ---
 
 ## Clos — index
 
-Quarante et une entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
+Quarante-deux entrées closes, texte retiré de ce document. Colonnes : ce que l'entrée constatait,
 la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du journal à lire.
 
 | Entrée | Objet | Close le | Fermée par | Décision |
@@ -102,6 +109,7 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 | INC-090 | `CRM-075` livrait un cinquième geste que son énoncé ne citait pas : le désarchivage | 2026-08-11 | énoncé corrigé, aucun code | 338, 339 |
 | INC-091 | La veille permanente de `CRM-059` transformait tout envoi de preuve vers une boîte seedée en non classé permanent | 2026-08-14 | reprise de `resilience.spec.ts` et `infrastructure.spec.ts`, purge IMAP | 362, 370, 371 |
 | INC-093 | Le contournement `pip_ca` de `mail-sync` n'était câblé par aucun fichier Compose | 2026-08-12 | `CRM-051` | 356 |
+| INC-096 | Le registre d'images injoignable rendait toute preuve de pile inexécutable | 2026-08-14 | jeton Docker Hub fourni hors dépôt, et tirage séquentialisé | 369, 373 |
 
 ---
 
@@ -174,63 +182,6 @@ sur l'unicité du numéro, pas seulement sur la concurrence.
 
 **Lié à :** INC-069 (les deux décisions 180, même défaut, arbitrage rendu par la décision 258),
 INC-089 (exécutions concurrentes), INC-059, `docs/JOURNAL.md` décisions 258, 358, 361, 368 et 369.
-
----
-
-### INC-096 — Le registre d'images est injoignable : aucune preuve de pile n'est exécutable
-
-**Nature :** blocage de l'environnement d'exécution, extérieur au dépôt. **Nécessite une action
-humaine** — aucune session ne peut le contourner.
-**Relevé le :** 2026-08-12, pendant la mise en place des crochets Git (décision 358).
-
-Le démon Docker démarre normalement par la procédure de `docs/JOURNAL.md`
-(`dockerd --host=unix:///var/run/docker.sock`, puis `docker info` répond). Mais le cache d'images du
-conteneur est **vide** (`docker images` rend zéro ligne) et **aucune image ne se télécharge** :
-
-```
-docker pull postgres:17-alpine
-  → 429 Too Many Requests
-    sur HEAD https://registry-1.docker.io/v2/library/postgres/manifests/17-alpine
-```
-
-MESURÉ cinq fois, dont trois avec attente croissante (8 s, 16 s, 24 s), sur `postgres:17-alpine`
-comme sur les images Supabase que `runDev.sh` tire en premier. **Ce n'est pas un défaut
-d'authentification** : le point d'émission de jeton anonyme répond `200`
-(`https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/postgres:pull`).
-Il s'agit de la limite de tirage **anonyme** de Docker Hub, atteinte par l'adresse de sortie
-partagée de l'environnement.
-
-**Conséquence, non masquée :** `runDev.sh` s'arrête avant de démarrer le moindre service, et **toutes
-les preuves de pile sont hors d'atteinte** — `npm run test:sql`, `npm run e2e:api`, `npm run e2e:ui`,
-`npm run e2e:mail`, `supabase/seed/apply-seed.sh` et les harnais `scripts/verify-*.sh` qui exigent
-les services. Les unités qui en dépendent ne peuvent pas passer `[x]` et restent `[~]`. Les preuves
-sans pile restent exécutables et vertes : `npm run typecheck`, `npm run test:unit` (741 tests),
-`npm run build`, `scripts/verify-crochets-git.sh`.
-
-**Ce qui est attendu du responsable :** fournir des identifiants Docker Hub à l'environnement
-d'exécution, ou configurer un miroir de registre sur le démon. Rien n'est à corriger dans le dépôt.
-
-**MESURE CONTRAIRE LE 2026-08-14 — LE REGISTRE RÉPOND, ET L'ENTRÉE RESTE POURTANT OUVERTE**
-(`docs/JOURNAL.md` décision 369). Sur l'exécution du 2026-08-14, le même tirage **réussit** :
-
-```
-docker pull postgres:17-alpine
-  → Status: Downloaded newer image for postgres:17-alpine   (EXIT=0)
-```
-
-Le cache était bien vide au départ (`docker images` : zéro ligne), l'image a donc réellement été
-téléchargée — ce n'est pas un cache résiduel. **L'entrée n'est pas close pour autant**, et c'est
-délibéré : le `429` mesuré le 2026-08-12 portait sur la limite de tirage **anonyme**, laquelle se
-recharge avec le temps et dépend de l'adresse de sortie **partagée** attribuée à l'exécution. Une
-exécution qui passe ne prouve pas que la suivante passera. Ce qui est établi est plus étroit, et il
-faut l'énoncer ainsi : **la contrainte de tête du lot A ne s'appliquait pas à la session du
-2026-08-14**, qui a donc pu exécuter des preuves de pile. Ce qui est attendu du responsable est
-inchangé — tant que le tirage dépend de la limite anonyme, le blocage peut revenir à toute heure.
-
-**Observation seconde, notée sans être corrigée :** ce conteneur exécute **Node v22.22.2**, alors que
-`package.json` exige `>=24` — `npm ci` le signale par `EBADENGINE` puis réussit, et `typecheck`,
-`test:unit` et `build` passent. Aucun changement n'est fait sur ce point : la version attendue est
-celle du `package.json`, et c'est l'environnement qui s'en écarte.
 
 ---
 
