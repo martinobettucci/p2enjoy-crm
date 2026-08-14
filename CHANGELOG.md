@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, troisième tranche : les champs du formulaire —
+  `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.10). La moitié du deuxième manque nommé au
+  §7 bis.7 est levée : les **questions** posées sur chaque affaire s'éditent depuis
+  `/reglages/workflows`, dans un troisième bloc sous les transitions.
+  - **Cinq gestes contre la vraie base** : déclarer un champ — clé, libellé, type, aide, options —,
+    modifier son libellé, son aide et ses options, le réordonner, l'archiver après confirmation et
+    le restaurer. Les champs archivés **restent dans la liste**, nommés comme tels.
+  - **Aucune suppression n'est offerte, et c'est mesuré** : `DELETE /form_fields` rend `403` /
+    `42501` même à l'administratrice — aucun privilège `DELETE` n'est accordé (`docs/SPEC-form-composer.md`
+    §2.7). L'archivage est le seul retrait du produit, et il conserve les réponses déjà saisies.
+  - **La clé et le type ne se modifient pas depuis l'écran**, alors que la base l'accepterait — les
+    deux mesures sont écrites au §7 bis.10.3. Changer le type d'un champ rempli laisse en base des
+    valeurs que le produit refuse ensuite de réécrire (`P0001`, « attend un nombre, reçu string »),
+    la validation ne revisitant aucune ligne existante : la conversion est un plan de remappage,
+    c'est-à-dire `CRM-078`. La clé, elle, est citée par les exports et les messages d'erreur de
+    `move_card`. L'écran affiche les deux en phrase, avec leur motif, plutôt qu'en champ grisé.
+  - **Le premier contrôle d'écran qui ne soit pas un raccourci** : la base accepte un `select`
+    portant deux choix de **même clé** — mesuré, `201` —, un `CHECK` ne pouvant pas déplier un
+    tableau `jsonb`. L'unicité des clés de choix et la forme `{key, label}` sont donc tenues par
+    l'éditeur seul, et par ses preuves.
+  - **Aucune migration** : `form_fields` et ses politiques datent de `CRM-035`.
+  - **Preuves** : 24 unitaires sur la couche de données, 16 sur l'écran, **9 scénarios E2E** sur la
+    vraie base — cinq gestes à la souris confirmés en base après chaque geste, refus réel d'une clé
+    déjà prise, parcours au clavier seul, quatre paliers et captures observées. `docs/manual.md`
+    chapitre 5 bis.4 et `docs/DESIGN_SYSTEM.md` §5.15 complétés dans le même changement.
+
 - **L'éditeur administrateur de workflows, deuxième tranche : les transitions — `CRM-076`**
   (`docs/SPEC-workflow-engine.md` §7 bis.9). Le premier des quatre manques nommés au §7 bis.7 est
   levé : les **arêtes** du graphe s'éditent depuis `/reglages/workflows`, sous la liste des étapes.

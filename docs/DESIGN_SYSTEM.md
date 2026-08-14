@@ -625,6 +625,35 @@ champ, alerte de refus dans le bloc concerné.
   encore choisies. Aux paliers étroits du §7, les lignes se replient et le groupe d'actions passe à
   la ligne suivante — la hauteur `--size-target` des cibles est conservée.
 
+**Les champs du formulaire — troisième tranche, `docs/SPEC-workflow-engine.md` §7 bis.10.** Un
+troisième bloc suit les arêtes dans la même colonne, par la même règle d'ordre : on ne dessine pas
+le formulaire d'un workflow avant d'en avoir posé les étapes et les chemins.
+
+- **La clé d'un champ se rend en `code`**, sur `--color-hover`, à côté de son libellé. C'est un
+  identifiant technique que les exports citent, et l'écrire dans la même graisse que le libellé
+  laisserait croire à un second nom lisible.
+
+- **Un champ archivé est NOMMÉ, jamais seulement grisé.** Il porte la pilule « Archivé »
+  `--color-accent-soft` / `--color-accent-on-soft` avec son icône `Archive`, et il **reste dans la
+  liste** à sa position. L'archivage est le seul retrait que le produit connaisse — aucune
+  suppression n'existe (§2.7 du composeur) —, donc le masquer rendrait la restauration
+  introuvable. La règle du §1 s'applique : la couleur seule ne dit rien, le mot le dit.
+
+- **Archiver et restaurer sont deux commandes distinctes, jamais une bascule.** `Archive` et
+  `ArchiveRestore` occupent la même place dans la barre d'actions, et une seule des deux est rendue
+  selon l'état. Leur `aria-label` nomme le geste ET le champ ; à la vue, c'est la pilule « Archivé »
+  de la ligne qui lève l'ambiguïté entre deux icônes proches.
+
+- **Un champ à choix édite ses choix dans un `fieldset`, jamais dans une zone de texte JSON.** Deux
+  colonnes — clé, libellé —, une commande de retrait par ligne, une commande d'ajout sous la liste.
+  Le motif n'est pas cosmétique : la base n'assure ni la forme `{key, label}` ni l'unicité des
+  clés, et une saisie libre rendrait la faute probable là où personne ne la rattrape.
+
+- **Une valeur qui ne se modifie plus se rend en PHRASE, jamais en champ désactivé.** La clé et le
+  type d'un champ existant s'écrivent « Clé : … Elle ne se modifie pas : … » en texte secondaire.
+  Un champ grisé pose la question « pourquoi ? » sans y répondre et invite à chercher le moyen de
+  le réactiver ; la phrase donne le motif et la manœuvre de remplacement.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

@@ -60,7 +60,7 @@
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
-| 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018` | **Livré côté serveur, sans écran.** Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Ce qui manque est l'écran : la grille champ × étape n'existe pas |
+| 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
 | 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche ; leur enregistrement depuis cette fiche n'est pas encore livré |
 | 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 12 bis | Ce que le produit fait d'un message reçu | `CRM-054`, `CRM-055` | **Livré côté serveur, sans écran** — voir le chapitre 4.14. Les messages sont relevés, rangés dans l'affaire à qui ils s'adressent, et une trace en apparaît dans son historique. Un message qu'on ne sait pas rattacher est conservé et reste « non classé » ; le ranger exige le droit d'**écrire** sur l'affaire. Une affaire archivée ne reçoit plus. Les pièces jointes sont **analysées** : une pièce n'est téléchargeable qu'une fois déclarée saine, et une pièce non analysée ne l'est pas davantage |
@@ -135,9 +135,10 @@ sa place avec « Compte supprimé », tandis qu'un événement de service reste 
 
 **Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
 et la vue liste ; la discussion et l'historique vivent dans la fiche. L'arborescence a son écran
-d'administration (chapitre 5), et la **composition d'un workflow** — ses étapes et ses transitions —
-le sien (chapitre 5 bis). En revanche, le catalogue de nœuds, l'éditeur des questions d'un
-formulaire et les droits d'accès n'ont toujours aucun écran d'administration. La connexion rend
+d'administration (chapitre 5), et la **composition d'un workflow** — ses étapes, ses transitions et
+les **questions de son formulaire** — le sien (chapitre 5 bis). En revanche, le catalogue de nœuds,
+la **visibilité question par étape** et les droits d'accès n'ont toujours aucun écran
+d'administration. La connexion rend
 accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents.
 
 ### 3.2 bis La section Tracks
@@ -1004,11 +1005,12 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 - Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
   été rejoué : les deux exigent la pile de développement complète.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
-- L'édition des **workflows** eux-mêmes relève du **chapitre 5 bis** pour leurs étapes et leurs
-  transitions ; les **questions** d'un formulaire n'ont, elles, toujours pas d'écran.
+- L'édition des **workflows** eux-mêmes relève du **chapitre 5 bis** pour leurs étapes, leurs
+  transitions et les **questions** de leur formulaire ; la visibilité d'une question étape par
+  étape n'a, elle, toujours pas d'écran.
 - Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
 
-## 5 bis. Composer un workflow : ses étapes et ses transitions
+## 5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire
 
 *Livré par `CRM-076` ; les règles d'accès sont celles de `CRM-031`, inchangées. Captures dans
 `docs/captures/CRM-076/`.*
@@ -1017,9 +1019,10 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
 **Ce que cet écran fait, et ce qu'il ne fait pas.** Il **compose** les workflows qui existent
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
-celle par laquelle les affaires entrent, et déclare les **transitions** qui relient les étapes.
-Il ne **crée** pas un workflow, ne le copie pas vers un track et ne le rend pas par défaut : ces
-trois gestes restent hors interface.
+celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
+définit les **questions du formulaire** posées sur chaque affaire. Il ne **crée** pas un workflow,
+ne le copie pas vers un track et ne le rend pas par défaut : ces trois gestes restent hors
+interface.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
 chapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
@@ -1080,10 +1083,42 @@ Si un autre administrateur déclare la même transition pendant que votre formul
 serveur refuse la vôtre et l'écran affiche « Cette transition est déjà déclarée. » Rien n'est écrit
 deux fois.
 
-### 5 bis.4 Ce qui n'est pas encore là
+### 5 bis.4 Les questions du formulaire
 
-- Les **questions du formulaire** d'un workflow, leurs règles et les **champs exigés** par une
-  transition n'ont pas d'écran : ils restent des gestes d'API.
+Sous les transitions, le bloc « Champs du formulaire » liste les **questions posées sur chaque
+affaire** de ce workflow, dans l'ordre où elles apparaissent sur la fiche (§4.7). Chaque ligne
+montre le libellé de la question, sa **clé** entre parenthèses techniques, son **type**, et son
+texte d'aide s'il en porte un.
+
+- **Déclarer** : « Déclarer un champ » ouvre le formulaire. Vous y saisissez une **clé**, un
+  **libellé** et un **type**. La clé n'accepte que des minuscules, des chiffres et des tirets
+  simples : c'est elle qui nomme la question dans les exports et dans les messages d'erreur. Une
+  clé déjà employée dans ce workflow est refusée — l'écran affiche « Cette clé est déjà prise dans
+  ce workflow. »
+- **Les types à choix** — « Choix unique » et « Choix multiple » — font apparaître la liste des
+  **choix proposés**. Chacun porte une clé et un libellé, et deux choix ne peuvent pas partager la
+  même clé : les réponses seraient impossibles à distinguer. Un champ à choix a besoin d'au moins
+  un choix pour être enregistré.
+- **Le type « Montant »** demande une **devise**, en trois lettres majuscules, par exemple `EUR`.
+- **Modifier** : le crayon change le **libellé**, le **texte d'aide** et, pour les types
+  concernés, les **choix** ou la **devise**. La clé et le type, eux, ne se modifient plus : la clé
+  est citée par les exports, et changer le type laisserait les réponses déjà saisies dans l'ancien
+  format. Pour en changer, archivez la question et déclarez-en une nouvelle.
+- **Réordonner** : les flèches déplacent la question dans le formulaire. L'ordre à l'écran est
+  celui que voient les équipes sur chaque affaire.
+- **Archiver** : la question disparaît des formulaires, **et les réponses déjà saisies sont
+  conservées**. C'est le seul retrait que le produit connaisse : aucune question n'est jamais
+  supprimée. Une question archivée reste dans la liste, marquée « Archivé », et le bouton de
+  restauration la remet en place.
+
+Comme partout ailleurs, l'écran ne décide d'aucun droit : si vous n'êtes pas administrateur de
+l'espace de travail, l'enregistrement est refusé par le serveur et l'écran vous le dit.
+
+### 5 bis.5 Ce qui n'est pas encore là
+
+- La **visibilité question par étape** — masquer une question sur certaines étapes, la rendre
+  obligatoire sur d'autres — n'a pas encore d'écran : c'est un geste d'API.
+- Les **champs exigés par une transition** n'ont pas d'écran non plus.
 - La **prévisualisation des effets** d'une modification sur les affaires en cours n'est pas livrée.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
 
