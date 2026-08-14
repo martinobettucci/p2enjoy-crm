@@ -40,7 +40,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(74);
+select plan(82);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -394,23 +394,56 @@ select throws_ok($$
 	'barre d''espace comme l''absence, sans quoi la règle « la raison d''une affaire perdue est '
 	'exigée » se satisferait de rien (§5.3)');
 
--- ÉCART MESURÉ, FIGÉ ET NON CORRIGÉ ICI — INC-052.
--- `btrim(text)` à un seul argument ne retire QUE des espaces : MESURÉ, `btrim(E'\t\n ')` rend deux
--- caractères, et `nullif(…, '')` ne les annule donc pas. Une tabulation seule passe pour un motif.
--- Le §5.3 spécifie l'expression `nullif(btrim(comment), '')` CARACTÈRE POUR CARACTÈRE et n'annonce
--- que le refus d'« une chaîne d'espaces » : l'implémentation lui est fidèle, et c'est la RÈGLE
--- ÉCRITE qui est plus étroite que son intention affichée — « un commentaire vide n'est pas un
--- commentaire ». L'élargir à `btrim(comment, E' \t\r\n')` refuserait davantage et ne casserait
--- aucun usage légitime, mais ce serait trancher une règle de produit que la spécification a posée
--- explicitement. `CLAUDE.md` §5 impose de consigner sans résoudre : le comportement reste inchangé,
--- l'écart est consigné en INC-052, et cette assertion le tient.
-select lives_ok($$
+-- ÉCART REFERMÉ — INC-052, ASSERTION RETOURNÉE ET NON RETIRÉE (mécanisme de la décision 51).
+--
+-- Elle disait, mot pour mot : « INC-052, ÉCART FIGÉ : une tabulation seule PASSE pour un
+-- commentaire […] CETTE ASSERTION DOIT DEVENIR ROUGE le jour où l'arbitrage d'INC-052 est rendu. »
+-- L'arbitrage est rendu — décision 367, lot G — et mis en œuvre par la décision 374 : la
+-- normalisation du §5.3 passe de `btrim(comment)` à `app.btrim_blancs(comment)`, dont la classe est
+-- exactement celle de `String.prototype.trim()`. La tabulation, le saut de ligne et l'espace ne
+-- laissent donc plus rien, et la n° 5 refuse comme elle refusait déjà la barre d'espace.
+--
+-- L'assertion est RETOURNÉE plutôt que supprimée parce qu'elle est le détecteur : c'est elle qui
+-- rougirait si la classe de blancs rétrécissait un jour.
+select throws_ok($$
 	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
 	                        '5eed0000-0000-4000-8000-000000000067', E'\t\n ') $$,
-	'INC-052, ÉCART FIGÉ : une tabulation seule PASSE pour un commentaire. `btrim` à un argument ne '
-	'retire que des espaces — MESURÉ, il en laisse deux ici. La spécification écrit cette '
-	'expression littéralement ; l''élargir serait trancher une règle de produit. CETTE ASSERTION '
-	'DOIT DEVENIR ROUGE le jour où l''arbitrage d''INC-052 est rendu');
+	'P0001', 'comment_required',
+	'INC-052, ÉCART REFERMÉ : une tabulation et un saut de ligne ne PASSENT plus pour un motif. '
+	'`app.btrim_blancs` retire les blancs UNICODE, là où `btrim` à un argument ne retirait que '
+	'l''espace U+0020. Cette assertion constatait le passage jusqu''à l''arbitrage du lot G ; elle '
+	'a été RETOURNÉE, non retirée, et c''est elle qui rougirait si la classe rétrécissait');
+
+-- MÊME RÈGLE, BLANCS QUE `btrim` N'AURAIT JAMAIS PU RETIRER. L'espace insécable U+00A0 et le
+-- cadratin U+2003 ne sont pas de l'ASCII : ils ne seraient pas davantage retirés par
+-- `btrim(comment, E' \t\r\n')`, l'élargissement que la spécification citait comme option minimale.
+-- Cette assertion mesure donc que l'arbitrage a bien porté sur l'ensemble UNICODE, et non sur les
+-- seuls blancs ASCII.
+select throws_ok($$
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	                        '5eed0000-0000-4000-8000-000000000067', E'  ') $$,
+	'P0001', 'comment_required',
+	'INC-052 : un motif fait d''un espace insécable et d''un cadratin est refusé lui aussi. '
+	'L''arbitrage porte sur les blancs UNICODE, non sur les seuls blancs ASCII');
+
+-- LA BORNE DE LONGUEUR — vérification n° 5 bis, INC-048, décision 374.
+-- Le motif devenant un commentaire ordinaire, il hérite du `CHECK` de la migration 15 : 10 000
+-- caractères au plus. Sans cette garde, un motif plus long remonterait un `23514` nommant
+-- `card_comments_body_check` sur un appel à `move_card` — exact, opaque, et impossible à rattacher
+-- au paramètre fautif.
+select throws_ok($$
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	                        '5eed0000-0000-4000-8000-000000000067', repeat('m', 10001)) $$,
+	'P0001', 'comment_too_long',
+	'N° 5 bis : un motif de plus de 10 000 caractères est refusé PAR SON NOM, et non par la '
+	'contrainte de `card_comments` qui remonterait un `23514` illisible depuis `move_card`');
+
+-- Et la borne est bien à 10 000, non à 9 999 : le cas limite passe.
+select lives_ok($$
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	                        '5eed0000-0000-4000-8000-000000000067', repeat('m', 10000)) $$,
+	'N° 5 bis : un motif de 10 000 caractères EXACTEMENT est accepté — la borne est celle du '
+	'`CHECK` de la migration 15, ni plus étroite, ni plus large');
 
 rollback to savepoint v5;
 
@@ -622,19 +655,73 @@ rollback to savepoint inc047;
 
 -- --- INC-048 : le commentaire fourni n'est conservé nulle part ---------------------------------
 
--- RÉVISÉE À `CRM-043`, NON RETIRÉE, ET LE DÉFAUT SUBSISTE. `card_comments` existe désormais : la
--- cause bloquante d'INC-048 — « la table n'existe pas » — est levée. Le motif d'une affaire perdue
--- disparaît POURTANT toujours, `move_card` n'ayant pas été redéfinie : elle est un livrable de
--- `CRM-034`, et `CRM-043` ne reprend pas les gardes d'une autre unité sans les rejouer sous la
--- sienne (`CLAUDE.md` §13). L'assertion mesure maintenant l'écart lui-même, et non plus son alibi.
+-- RÉVISÉE DEUX FOIS, JAMAIS RETIRÉE — mécanisme de la décision 51, et INC-048 est CLOSE.
+--
+-- Premier état, à `CRM-034` : elle constatait que `card_comments` n'existait pas. Deuxième état, à
+-- `CRM-043` : la table existait, et le motif disparaissait pourtant — elle mesurait l'écart plutôt
+-- que son alibi, en exigeant que `prosrc` NE cite PAS `card_comments`. Troisième état, ici :
+-- l'arbitrage du lot G est rendu (décision 367) et mis en œuvre (décision 374), la fonction écrit
+-- le motif, et l'assertion exige désormais l'inverse de ce qu'elle exigeait hier.
+--
+-- Lire la source d'une fonction est une mesure faible ; elle est conservée parce qu'elle nomme
+-- l'endroit exact du changement. La mesure FORTE — un motif réellement écrit et relisible — est
+-- faite juste en dessous, sur une vraie transition.
 select has_table('public', 'card_comments',
 	'INC-048 : `card_comments` EXISTE depuis `CRM-043` — la cause bloquante est levée');
 select ok(
-	(select prosrc not like '%card_comments%' from pg_proc
+	(select prosrc like '%card_comments%' from pg_proc
 	  where oid = 'public.move_card(uuid, uuid, text)'::regprocedure),
-	'INC-048 : et `move_card` n''écrit TOUJOURS PAS le commentaire qu''elle exige. La vérification '
-	'n° 5 le CONTRÔLE, rien ne l''ÉCRIT, et l''utilisateur qui motive une affaire perdue voit son '
-	'motif disparaître. L''arbitrage n''est plus théorique : il est EXIGIBLE');
+	'INC-048, CLOSE : `move_card` ÉCRIT le commentaire qu''elle exige. La vérification n° 5 le '
+	'contrôle et la fonction le CONSERVE, dans la même transaction que le déplacement');
+
+-- LA MESURE FORTE : le motif d'une affaire perdue est relisible après la transition.
+savepoint inc048_ecriture;
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select lives_ok($$
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	                        '5eed0000-0000-4000-8000-000000000067',
+	                        'Budget arbitré chez le concurrent.') $$,
+	'INC-048 : la transition qui EXIGE un motif est acceptée');
+
+select is(
+	(select body from public.card_comments
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c6'
+	    and body = 'Budget arbitré chez le concurrent.'),
+	'Budget arbitré chez le concurrent.',
+	'INC-048, CLOSE : le motif est CONSERVÉ dans `card_comments`, et non plus jeté. C''est '
+	'exactement la perte que l''entrée décrivait depuis le 2026-08-04');
+
+select is(
+	(select author_id from public.card_comments
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c6'
+	    and body = 'Budget arbitré chez le concurrent.'),
+	'5eed0000-0000-4000-8000-000000000011'::uuid,
+	'INC-048 : le motif porte l''AUTEUR DU GESTE, non le propriétaire de la fonction. '
+	'`move_card` est `SECURITY DEFINER` : sans écriture explicite d''`auth.uid()`, la ligne '
+	'serait née sans auteur');
+
+-- UN MOTIF FOURNI SANS ÊTRE EXIGÉ EST CONSERVÉ LUI AUSSI — §5.4, décision 374. Deux régimes pour
+-- un même paramètre perdraient sans le dire le motif d'un déplacement volontairement commenté.
+rollback to savepoint inc048_ecriture;
+savepoint inc048_facultatif;
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select lives_ok($$
+	select public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	                        '5eed0000-0000-4000-8000-000000000062',
+	                        'Relance acceptée par téléphone.') $$,
+	'INC-048 : une transition qui n''exige AUCUN motif accepte celui qu''on lui donne');
+
+select is(
+	(select count(*)::int from public.card_comments
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c3'
+	    and body = 'Relance acceptée par téléphone.'),
+	1,
+	'INC-048 : et elle le CONSERVE. Le §5.4 dit « insertion du commentaire s''il est fourni », '
+	'non « s''il est exigé »');
+
+rollback to savepoint inc048_facultatif;
 
 -- RÉVISÉE À `CRM-044`, NON RETIRÉE. Elle constatait l'absence de toute trace ; elle constate
 -- désormais que la trace existe SANS que `move_card` ait été rouverte : le trigger de la migration

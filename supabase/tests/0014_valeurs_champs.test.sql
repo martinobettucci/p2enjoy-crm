@@ -39,7 +39,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(98);
+select plan(103);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -770,12 +770,43 @@ select has_trigger('public', 'card_field_values', 'card_events_apres_ecriture_va
 	'(`CRM-044`), la table des valeurs ne conservant toujours AUCUN historique : `updated_by` est '
 	'écrasé à chaque écriture');
 
--- RÉVISÉE À `CRM-043`, NON RETIRÉE : la table existe, et le commentaire de `move_card` reste
--- perdu. Voir `supabase/tests/0013_move_card.test.sql`, où l'écart est mesuré sur la fonction
--- elle-même plutôt que sur l'absence de sa destination.
+-- RÉVISÉE UNE TROISIÈME FOIS, JAMAIS RETIRÉE — INC-048 est CLOSE (décisions 367 et 374). Elle
+-- constatait l'absence de la table, puis la perte malgré la table ; elle constate désormais que la
+-- fonction écrit. La mesure détaillée vit dans `supabase/tests/0013_move_card.test.sql`, sur une
+-- vraie transition ; ce qui reste ici est le lien entre les deux suites.
 select has_table('public', 'card_comments',
-	'INC-048 : `card_comments` existe depuis `CRM-043`, et le commentaire exigé par la cinquième '
-	'vérification de `move_card` n''est TOUJOURS conservé nulle part — l''écart a changé de nature, '
-	'pas de conséquence');
+	'INC-048 : `card_comments` existe depuis `CRM-043`');
+select ok(
+	(select prosrc like '%card_comments%' from pg_proc
+	  where oid = 'public.move_card(uuid, uuid, text)'::regprocedure),
+	'INC-048, CLOSE : le commentaire exigé par la cinquième vérification de `move_card` est '
+	'désormais CONSERVÉ. L''écart a changé de nature deux fois avant d''être refermé');
+
+-- INC-052, SECONDE OCCURRENCE — REFERMÉE. `app.valeur_de_champ_est_vide` employait
+-- `btrim(valeur #>> '{}')`, qui ne retire que `U+0020` : une valeur réduite à `"\t"` était
+-- RENSEIGNÉE et satisfaisait un champ `required`, là où le prédicat TypeScript de `CRM-037` la
+-- disait vide. La décision 165 avait dû faire converger l'interface VERS ce comportement, faute
+-- d'arbitrage. L'arbitrage est rendu (lot G, décision 367) : la fonction s'élargit aux blancs
+-- Unicode, et les deux lectures convergent dans l'autre sens.
+select ok(
+	app.valeur_de_champ_est_vide(to_jsonb(E'\t'::text)),
+	'INC-052, SECONDE OCCURRENCE REFERMÉE : une valeur réduite à une TABULATION est VIDE. Elle '
+	'était renseignée jusqu''à l''arbitrage du lot G, et satisfaisait un champ `required`');
+
+select ok(
+	app.valeur_de_champ_est_vide(to_jsonb(E'\u00A0\u2003'::text)),
+	'INC-052 : un espace insécable et un cadratin sont vides eux aussi. L''élargissement porte sur '
+	'les blancs UNICODE, non sur les seuls blancs ASCII que `btrim(v, E'' \t\r\n'')` aurait couverts');
+
+-- LES CONTRE-CAS NE BOUGENT PAS, et c'est la moitié qui donne sa valeur à l'élargissement : une
+-- fonction qui rendrait `true` partout serait verte sur les trois assertions ci-dessus.
+select ok(
+	not app.valeur_de_champ_est_vide(to_jsonb('0'::text)),
+	'INC-052 : `"0"` reste RENSEIGNÉ. Élargir les blancs ne touche pas aux contre-cas du §6.6');
+
+select ok(
+	not app.valeur_de_champ_est_vide(to_jsonb(E' Salon '::text)),
+	'INC-052 : un texte ENTOURÉ de blancs Unicode reste renseigné — c''est un `btrim`, pas une '
+	'suppression de tous les blancs');
 
 rollback;

@@ -117,8 +117,12 @@ select is(pg_temp.politiques('form_field_rules'),
 	'`form_field_rules` porte ses quatre politiques');
 
 select is(pg_temp.politiques('card_comments'),
-	array['card_comments_insertion', 'card_comments_lecture', 'card_comments_maj'],
-	'`card_comments` porte ses trois politiques et ne reste plus hors de l''inventaire nominal');
+	array['card_comments_insertion', 'card_comments_lecture', 'card_comments_maj',
+	      'card_comments_moderation'],
+	'`card_comments` porte ses QUATRE politiques et ne reste plus hors de l''inventaire nominal. '
+	'La quatrième est la modération du lot G (INC-072, décision 374) : elle est SÉPARÉE de '
+	'`card_comments_maj` pour qu''une dégradation puisse la retirer seule et constater que le '
+	'geste de l''auteur survit');
 
 select is(pg_temp.politiques('card_events'),
 	array['card_events_lecture'],
@@ -127,8 +131,11 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	64,
-	'SOIXANTE-QUATRE politiques dans `public`, et pas une de plus — 63 avant CRM-058, plus '
+	65,
+	'SOIXANTE-CINQ politiques dans `public`, et pas une de plus — 64 avant le lot G, plus '
+	'l''UNIQUE politique de MODÉRATION de `card_comments`, qui ouvre aux `admin` du workspace la '
+	'suppression d''un propos déplacé sans leur ouvrir sa modification (INC-072, décision 374). '
+	'Avant elle : 63 avant CRM-058, plus '
 	'l''UNIQUE politique de lecture de `mail_outbox`, qui suit la CARD : un envoi appartient à '
 	'l''affaire au nom de laquelle il part. Avant elle : 62 avant CRM-056, plus l''UNIQUE '
 	'politique de lecture de `mail_folder_map`, qui suit le COMPTE comme les occurrences. Avant '

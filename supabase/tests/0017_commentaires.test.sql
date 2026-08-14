@@ -35,7 +35,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(84);
+select plan(96);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -325,8 +325,9 @@ select is(
 	'ouverte, fût-ce le temps d''une instruction, à quiconque détient la clé anonyme');
 
 select policies_are('public', 'card_comments',
-	array['card_comments_lecture', 'card_comments_insertion', 'card_comments_maj'],
-	'TROIS politiques, et trois seulement : aucune `for delete` — supprimer, c''est poser '
+	array['card_comments_lecture', 'card_comments_insertion', 'card_comments_maj',
+	      'card_comments_moderation'],
+	'QUATRE politiques, et quatre seulement : aucune `for delete` — supprimer, c''est poser '
 	'`deleted_at` (§13.4)');
 
 -- --- 8.1 Le refus opposé au `viewer`, EXIGÉ NOMMÉMENT PAR LA DEFINITION OF DONE ----------------
@@ -429,6 +430,14 @@ $$, '42501', null,
 -- =============================================================================================
 
 select pg_temp.postgres();
+
+-- `deleted_by` est ÉCRITE par le trigger et FERMÉE au client, exactement comme `edited_at`
+-- (décision 197) : le privilège de colonne juge la cible du client, pas les affectations d'un
+-- trigger. MESURÉ ci-dessus — la colonne est renseignée alors qu'aucun `grant` ne la nomme.
+select ok(
+	not has_column_privilege('authenticated', 'public.card_comments', 'deleted_by', 'UPDATE'),
+	'INC-072 : `authenticated` n''a AUCUN privilège d''écriture sur `deleted_by`. L''audit ne se '
+	'falsifie pas : un modérateur ne peut pas signer son geste du nom d''un autre');
 
 select ok(not has_table_privilege('authenticated', 'public.card_comments', 'DELETE'),
 	'`authenticated` n''a AUCUN privilège `DELETE` : c''est la première des deux barrières, la '
@@ -551,15 +560,121 @@ select is(to_regclass('public.card_activities')::text, null,
 	'`card_activities` n''existe pas : le §5 de docs/SCHEMA.md la décrit, aucune unité du chunk 3 '
 	'ne la porte');
 
--- INC-048 : la cause bloquante est LEVÉE — `card_comments` existe — et le commentaire de
--- `move_card` reste pourtant perdu. `move_card` est un livrable de `CRM-034` ; le reprendre ici
--- toucherait ses gardes sans les rejouer sous son unité (`CLAUDE.md` §13). L'arbitrage est dû.
+-- --- 8.5 LA MODÉRATION — INC-072, arbitrage du lot G (décision 367), mise en œuvre 374 ---------
+--
+-- `CRM-043` avait livré l'INTERSECTION des deux énoncés — l'auteur seul pour modifier ET pour
+-- supprimer —, en nommant sa conséquence : aucun modérateur ne pouvait retirer un propos déplacé.
+-- L'arbitrage ouvre la SUPPRESSION aux `admin` du workspace, et elle seule.
+--
+-- Les assertions ci-dessous éprouvent les DEUX sens, faute de quoi elles seraient vertes sur une
+-- politique qui ouvrirait tout : le modérateur supprime, et le même modérateur ne modifie pas.
+--
+-- `…0d2` est écrit par Driss Lemoine (`…012`), `…0d1` par Camille Aubert (`…011`) : la modération
+-- s'exerce donc bien sur le propos d'un TIERS, et non sur celui de son auteur.
+
+select pg_temp.postgres();
+
+select has_column('public', 'card_comments', 'deleted_by',
+	'INC-072 : `deleted_by` existe — une pierre tombale qui ne dit pas qui l''a posée n''est pas '
+	'auditée (§13.6, décision 374)');
+
 select ok(
-	(select prosrc not like '%card_comments%' from pg_proc
+	(select count(*) = 1 from pg_policies
+	  where schemaname = 'public' and tablename = 'card_comments'
+	    and policyname = 'card_comments_moderation'),
+	'INC-072 : la politique `card_comments_moderation` existe. Elle est SÉPARÉE de '
+	'`card_comments_maj` — deux politiques permissives s''unissent par OU, et la dégradation d''un '
+	'harnais peut retirer la modération SEULE pour constater que le geste de l''auteur survit');
+
+-- Le refus de MODIFIER, opposé au modérateur. C'est la moitié qui donne sa valeur à l'ouverture.
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select throws_ok($$
+	update public.card_comments set body = 'Réécrit par l''administratrice.'
+	 where id = '5eed0000-0000-4000-8000-0000000000d2'
+$$, 'P0001', 'comment_moderation_limitee',
+	'INC-072 : une administratrice ne MODIFIE PAS le propos d''un tiers. Modifier le commentaire '
+	'd''autrui n''est pas de la modération mais une falsification (décision 194, motif maintenu). '
+	'Le refus vient du TRIGGER : une politique RLS n''a pas d''`OLD` et ne saurait pas le poser');
+
+select is(
+	(select body from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	'Démo faite le 3 août. Retour attendu sous quinzaine, relance calée.',
+	'INC-072 : et le corps est INTACT — le refus n''a rien laissé passer');
+
+-- L'ouverture, maintenant : la même administratrice SUPPRIME le même commentaire.
+update public.card_comments set deleted_at = now()
+ where id = '5eed0000-0000-4000-8000-0000000000d2';
+
+select isnt(
+	(select deleted_at from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	null,
+	'INC-072, OUVERTURE : une administratrice du workspace SUPPRIME le propos d''un tiers. C''est '
+	'exactement ce que `CRM-043` avait dû refuser faute d''arbitrage');
+
+select is(
+	(select body from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	'',
+	'…et la pierre tombale est VIDÉE comme n''importe quelle autre : la modération n''ouvre aucune '
+	'voie détournée pour réécrire un corps (décision 193)');
+
+select is(
+	(select deleted_by from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	'5eed0000-0000-4000-8000-000000000011'::uuid,
+	'INC-072, AUDIT : `deleted_by` porte l''administratrice, non l''auteur. C''est ce qui rend la '
+	'modération LISIBLE — `deleted_by` différent d''`author_id` signale un retrait par un tiers');
+
+select isnt(
+	(select deleted_by from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	(select author_id from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d2'),
+	'…et les deux colonnes DIFFÈRENT, ce qui est la lecture même de l''audit');
+
+-- La pierre tombale reste DÉFINITIVE, `admin` compris : aucune résurrection n'est ouverte.
+select throws_ok($$
+	update public.card_comments set deleted_at = null
+	 where id = '5eed0000-0000-4000-8000-0000000000d2'
+$$, 'P0001', 'comment_deleted',
+	'INC-072 : l''ouverture n''emporte AUCUNE résurrection. Une administratrice ne défait pas plus '
+	'une pierre tombale que son auteur');
+
+-- Un tiers qui n'est PAS administrateur n'obtient rien — et pas davantage une erreur : le `USING`
+-- des deux politiques filtre, et son écriture ne touche AUCUNE ligne (§13.6).
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
+
+update public.card_comments set deleted_at = now()
+ where id = '5eed0000-0000-4000-8000-0000000000d1';
+
+select is(
+	(select deleted_at from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d1'),
+	null,
+	'INC-072 : un `business_developer` ne modère PAS. L''ouverture est réservée aux `admin` du '
+	'workspace, et son `UPDATE` ne touche aucune ligne — sans erreur, comme le §13.6 l''exige');
+
+-- L'auteur qui supprime le sien est tracé lui aussi : `deleted_by` n'est pas réservée aux tiers.
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+update public.card_comments set deleted_at = now()
+ where id = '5eed0000-0000-4000-8000-0000000000d3';
+
+select is(
+	(select deleted_by from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d3'),
+	(select author_id from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000d3'),
+	'INC-072 : l''auteur qui supprime le sien est tracé LUI AUSSI, et `deleted_by` vaut alors '
+	'`author_id`. Une colonne renseignée seulement pour les tiers laisserait croire à une '
+	'modération là où il n''y a qu''un retrait ordinaire');
+
+select pg_temp.postgres();
+
+-- INC-048, CLOSE — assertion RETOURNÉE, non retirée (décision 51). Elle exigeait que `move_card`
+-- NE cite PAS `card_comments` : la cause bloquante était levée par cette migration, mais la
+-- fonction appartenait à `CRM-034` et l'arbitrage était dû. Il est rendu (décision 367) et mis en
+-- œuvre (décision 374), sous l'unité qui porte la fonction. La mesure forte — un motif réellement
+-- écrit et relu — vit dans `supabase/tests/0013_move_card.test.sql`, où sont les gardes.
+select ok(
+	(select prosrc like '%card_comments%' from pg_proc
 	  where oid = 'public.move_card(uuid, uuid, text)'::regprocedure),
-	'INC-048 : `move_card` n''écrit TOUJOURS PAS le commentaire qu''elle exige — la cause '
-	'bloquante est pourtant levée par cette migration. Elle appartient à `CRM-034`, et '
-	'l''arbitrage devient exigible plutôt que théorique');
+	'INC-048, CLOSE : `move_card` ÉCRIT désormais le commentaire qu''elle exige, dans la table que '
+	'cette migration avait livrée neuf jours plus tôt sans pouvoir l''y relier');
 
 select * from finish();
 rollback;

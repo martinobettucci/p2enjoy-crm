@@ -48,7 +48,7 @@ une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
 **État au 2026-08-14 :** 98 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
-texte dans l'historique Git — et **56 ouvertes**, conservées ici en entier. Les soixante et une
+texte dans l'historique Git — et **57 ouvertes**, conservées ici en entier — INC-099, relevée le 2026-08-14, s'ajoute aux 56. Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -114,6 +114,74 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 ---
 
 ## Ouverts
+
+### INC-099 — Les preuves d'arborescence laissent deux tracks derrière elles, et `0004_tracks.test.sql` en rougit
+
+**Nature :** résidu d'une preuve dans une table partagée, qui rend rouge l'assertion de conformité
+du seed d'une AUTRE suite. **Même famille qu'INC-091**, sur une autre table et un autre harnais.
+**Relevé le :** 2026-08-14, pendant le lot G, sur une ligne de base établie AVANT toute modification.
+
+**Le fait, mesuré, et la chronologie compte.** Sur cette exécution, `npm run test:sql` a été joué
+**avant** toute modification du dépôt : **33 fichiers, 1944 assertions, aucune anomalie**. Puis
+`npm run e2e:ui` a été joué, vert lui aussi (**182 passed**). Rejoué ensuite, `test:sql` rend
+`0004_tracks.test.sql` **rouge sur deux assertions** :
+
+```
+not ok 75 - le seed pose quatre tracks dans le workspace de démonstration
+        have: 6   want: 4
+not ok 76 - l'un d'eux est archivé : l'état « archivé » est démontrable, pas seulement documenté
+```
+
+`public.tracks` porte alors six lignes au lieu de quatre :
+
+```
+5eed…0021 Conseil & IA      2026-08-14 14:52:56   (seed)
+5eed…0022 Studio web        2026-08-14 14:52:56   (seed)
+5eed…0023 Formation         2026-08-14 14:52:56   (seed)
+5eed…0024 Pipeline 2024     2026-08-14 14:52:56   (seed, archivé)
+2eb41de8… E2E Arbo Souris Renommé    2026-08-14 14:58:34   archivé
+85577b88… E2E Arbo Clavier Renommé   2026-08-14 14:58:38   archivé
+```
+
+Les deux horodatages tombent pendant la fenêtre de `npm run e2e:ui`, et les noms sont ceux que
+`e2e/ui/administration-arborescence.spec.ts` écrit en toutes lettres.
+
+**La cause, lue dans le fichier et non supposée.** Le scénario appelle bien `supprimerParSlug`,
+mais **à l'entrée** — son commentaire le dit : « Nettoyage préalable : une exécution interrompue ne
+doit pas faire échouer celle-ci sur un `23505` ». Il n'y a **aucun `finally`** qui retire la ligne
+en sortie. Le scénario se termine par un désarchivage, puis un archivage, et la ligne reste. Deux
+scénarios sont concernés — la variante souris et la variante clavier —, ce qui donne exactement les
+deux lignes mesurées.
+
+**Pourquoi ce n'est pas un défaut du produit, et pourquoi il faut quand même le traiter.** Aucune
+règle métier n'est violée : un administrateur a le droit de créer un track. Ce qui est en cause est
+la **propriété de la preuve** — `docs/SPEC-test-harness.md` et INC-055 posent qu'un harnais part
+d'un état déterministe et le restaure. Un résidu qui survit rend rouge une assertion de conformité
+du seed **écrite pour être exacte**, et l'ordre d'exécution des suites devient significatif : jouées
+dans un sens, elles sont vertes ; dans l'autre, non. C'est précisément ce qu'INC-091 a coûté sur
+`mail_messages`, et l'arbitrage rendu là-bas — « chaque preuve purge ce qu'elle dépose, dans son
+propre `finally` » — s'énonce ici à l'identique.
+
+**Comportement laissé inchangé, conformément à `CLAUDE.md` §5 et `docs/CloudWorker.md` §3.1.** Le
+défaut est **étranger à l'unité de la session** (lot G, sur `card_comments` et `move_card`) : le
+corriger au passage toucherait `CRM-075` sans rejouer ses preuves sous son unité. L'assertion de
+`0004_tracks.test.sql` n'est **ni désarmée ni assouplie** : elle est le détecteur, exactement comme
+l'assertion 9 de `0029` l'a été pour INC-091.
+
+**Ce qui a été fait pour que les preuves du lot G restent lisibles.** Les deux lignes résiduelles
+ont été retirées de la base de développement par une suppression ciblée sur leurs deux identifiants,
+geste d'exploitation sur un volume jetable, **consigné ici plutôt que tu**. Ce n'est pas une
+correction : la prochaine exécution de `npm run e2e:ui` les recréera.
+
+**Arbitrage attendu du responsable :** appliquer à `e2e/ui/administration-arborescence.spec.ts` la
+règle déjà rendue pour INC-091 — purge dans un `finally`, quel que soit le sort du scénario —, et
+décider si le contrôle doit être généralisé aux autres preuves qui écrivent dans des tables
+partagées, ce qu'un harnais de non-complaisance saurait mesurer.
+
+**Lié à :** INC-091 (même famille, table `mail_messages`), INC-055 et INC-057 (propriété et
+autonomie des harnais), `CRM-075` (porteur du scénario), `CRM-020` (porteur de l'assertion rouge).
+
+---
 
 ### INC-097 — Deux décisions du journal portent le même numéro 340, troisième collision du document
 
