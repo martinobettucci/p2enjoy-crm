@@ -13487,3 +13487,20 @@ pas en passant : il se prouve en refusant ce qu'il doit refuser.
 
 **Rattachement :** INC-070 (lot L), INC-028, INC-063, INC-065, INC-067 (lot L, dues). Unité
 `CRM-007`. Décisions 295, 296, 298, 367, 380.
+
+### Décision 382 — Le registre cesse d'être une file de travail : le produit d'abord
+
+**2026-08-14, instruction directe du responsable, en session.** Constat mesuré sur les 51 commits
+visibles du clone : 17 commits de code, 27 de documentation seule, 7 de captures. Le responsable
+ordonne l'arrêt de ce régime. Cause identifiée : `docs/CloudWorker.md` §4 faisait du registre
+d'incohérences une file de travail et donnait priorité au « solde » sur la construction.
+
+**Ce qui change, écrit dans `docs/CloudWorker.md` §4.1, §4.2 et §4.2 bis :** l'unité d'une session
+se choisit dans le backlog, ordre du plan, comportement à livrer d'abord ; le registre n'est plus
+consulté que pour vérifier un blocage ou consigner une observation ; toute session dont l'unité
+comporte du comportement doit pousser au moins un commit de code, sous peine d'être déclarée en
+échec ; la documentation devient proportionnée — fin des bilans de bilans.
+
+**Où reprendre :** `CRM-076`, éditeur administrateur de workflows — spec §7 bis committée, couche
+de données et 28 tests unitaires poussés (`f5d95d8`), écran en cours. La suite est l'écran, sa
+route `/reglages/workflows`, ses preuves E2E et ses captures.

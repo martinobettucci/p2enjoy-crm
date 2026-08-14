@@ -653,41 +653,63 @@ C'est l'état réel des unités :
 
 Chaque unité porte sa Definition of Done.
 
-3. "docs/INCONSISTENCY_REPORT.md", section "Ouverts".
-
-Ce fichier contient notamment :
-
-- les défauts constatés ;
-- les arbitrages rendus mais pas encore livrés ;
-- les sujets qui attendent une décision humaine.
-
-Une entrée arbitrée mais non livrée est du travail dû.
-
-Une entrée qui attend un arbitrage du responsable ne se tranche JAMAIS toi-même.
-
-Tu ne fais qu'y consigner ce que tu observes.
-
-4. "docs/MASTER_PLAN.md".
+3. "docs/MASTER_PLAN.md".
 
 Il définit l'ordre d'exécution et la Definition of Done commune.
 
-### 4.2. COMMENT CHOISIR L'UNITÉ DE LA SESSION
+4. "docs/INCONSISTENCY_REPORT.md", section "Ouverts" — EN CONSULTATION SEULEMENT.
 
-Si le journal ou le registre désigne explicitement une reprise, tu la suis.
+Ce registre sert à DEUX choses, et à deux choses uniquement :
 
-Un ordre de solde décidé par un arbitrage prime sur ta propre appréciation.
+- vérifier si un défaut connu bloque l'unité que tu as choisie ;
+- y consigner ce que tu observes en travaillant.
 
-À défaut, solder une unité "[~]" prime sur l'ouverture d'une unité "[ ]".
+Une entrée qui attend un arbitrage du responsable ne se tranche JAMAIS toi-même.
 
-Une unité livrée mais non prouvée constitue une dette qui grandit.
+### 4.2. COMMENT CHOISIR L'UNITÉ DE LA SESSION — LE PRODUIT D'ABORD
 
-Le projet ne progresse pas en accumulant les chantiers ouverts.
+RÈGLE DU RESPONSABLE, 2026-08-14, non négociable : le registre d'incohérences
+N'EST PLUS une file de travail. Des dizaines de sessions l'ont traité comme
+telle, et le dépôt a reçu majoritairement des commits de documentation pendant
+que des écrans entiers du produit restaient non construits. C'est terminé.
 
-À défaut encore, prends la première unité "[ ]" dans l'ordre du plan.
+L'unité de la session se choisit AINSI, dans cet ordre :
+
+1. si la dernière entrée du journal désigne une reprise d'unité PRODUIT en
+   cours, tu la suis ;
+2. sinon, la première unité "[~]" du backlog dans l'ordre du plan dont il
+   reste du COMPORTEMENT à livrer — du code, un écran, une migration, un
+   parcours — et tu la fais avancer par du code ;
+3. sinon, la première unité "[ ]" dans l'ordre du plan.
+
+Une entrée du registre ne devient l'objet d'une session QUE dans deux cas :
+
+- elle bloque concrètement l'unité produit choisie — alors tu la traites
+  comme un préalable, dans la même session, et tu reviens à l'unité ;
+- le responsable a explicitement ordonné son traitement.
+
+« Solder » une unité "[~]" dont le code est livré mais dont il ne manque que
+des preuves reste utile, mais ne prime plus sur la construction : une session
+qui n'a que ce choix exécute les preuves manquantes SANS réécrire les
+documents autour, puis passe à une unité de construction s'il reste du temps.
 
 Une seule unité par session, menée aussi loin que possible.
 
 Mieux vaut une unité réellement close que trois unités entamées.
+
+### 4.2 bis. PROPORTION DU CODE ET DE LA DOCUMENTATION
+
+Chaque session dont l'unité comporte du comportement à livrer DOIT pousser au
+moins un commit de CODE — application, migration, test qui éprouve un
+comportement. Une session qui n'a produit que des commits de documentation,
+hors le cas d'un blocage réel consigné, est une session en échec, et son
+compte rendu doit le dire en ces termes.
+
+La documentation reste obligatoire (CLAUDE.md §5) mais elle est PROPORTIONNÉE :
+l'entrée de journal dit ce qui a été fait et où reprendre, en quelques
+paragraphes, pas en essai. Les longues analyses rétrospectives, les bilans
+chiffrés de bilans précédents et les relectures du registre pour lui-même
+sont interdits : ce temps appartient au produit.
 
 ### 4.3. COMMENT TERMINER LA SESSION
 
