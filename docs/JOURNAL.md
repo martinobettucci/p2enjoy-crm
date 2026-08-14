@@ -13573,3 +13573,43 @@ exigé.
 
 **Où reprendre après cette tranche.** `CRM-076` reste `[~]` : les champs de formulaire et leurs
 règles, la prévisualisation des effets, et les preuves API dédiées à l'écran restent dus.
+
+### Décision 385 — CRM-076, deuxième tranche livrée : les transitions, et la chaîne de vérification débloquée
+
+**2026-08-14, suite de la décision 384 — entrée courte, comme la décision 382 l'exige.**
+
+**Livré.** Spec §7 bis.9 (committée avant le code), couche de données des arêtes
+(`lireTransitions`, `grouperTransitions`, `arriveesPossibles`, `classerRefusTransition`, et les
+trois écritures), bloc « Transitions déclarées » dans `AdministrationWorkflows.tsx`, 42 clés de
+traduction, chapitre **5 bis** de `docs/manual.md` — absent jusqu'ici alors que la première
+tranche avait déjà livré l'écran — et `docs/DESIGN_SYSTEM.md` §5.15. Aucune migration : la table
+et ses politiques datent de `CRM-031`.
+
+**Mesuré.** 845 tests unitaires (805 → 845), **201** scénarios `e2e:ui` (193 + 8), 507 `e2e:api`,
+42 `e2e:mail`, 242 `pytest`, `test:sql` **1971 assertions avant ET après** la campagne — aucun
+résidu —, `typecheck` et `build` verts, captures des quatre paliers et du formulaire regardées.
+`SCENARIOS_UI` porté à 201 dans `verify-harness.sh`. Pile : 17 services `healthy`, seed appliqué.
+
+**Ce qui a été débloqué, et qui vaut pour toutes les sessions suivantes.** `scripts/verify-*.sh`
+refusait de s'exécuter depuis des sessions — « aucun couple Node 24 / npm 11+ Linux n'est
+utilisable » —, l'hôte ne portant que Node 22.22.2, et la limite était consignée comme héritée.
+Elle ne l'est plus : `scripts/lib/node.sh` cherche un Node de la majeure attendue **sous une racine
+nvm**, et il suffit de déposer la distribution officielle dans `~/.nvm/versions/node/v24.11.1/`
+pour que la porte s'ouvre. `scripts/verify-workflows.sh` rend alors **49 contrôles, aucune
+anomalie**. Rien n'est modifié dans le dépôt : l'installation est locale à la machine, à refaire à
+chaque exécution tant que l'image ne porte pas Node 24.
+
+**Deux preuves antérieures révisées, non supprimées.** Le libellé d'une étape apparaît désormais
+deux fois — dans sa ligne, et comme titre de son groupe d'arêtes, ce que le §7 bis.9.6 impose. Une
+assertion unitaire et une assertion E2E de la première tranche interrogeaient tout le document et
+sont devenues ambiguës : elles sont resserrées sur la liste des étapes, avec le motif écrit dans
+les deux fichiers. Un défaut réel a été trouvé par la preuve clavier au passage — le formulaire
+d'édition d'une arête ne posait pas le focus dans son premier champ —, et corrigé.
+
+**Relevé sans le corriger.** INC-104 : deux phrases de `docs/BACKLOG.md` comptent « dix transitions
+dont quatre à motif » là où le seed en pose **onze dont cinq** depuis la décision 259. Elles
+décrivent la Definition of Done d'unités closes ; arbitrage demandé.
+
+**Où reprendre.** `CRM-076` reste `[~]`. La tranche suivante est l'édition des **champs de
+formulaire** et de leurs règles (§7 bis.7), puis la **prévisualisation des effets**. Le choix
+d'unité obéit à la décision 382 : backlog d'abord, registre en consultation.
