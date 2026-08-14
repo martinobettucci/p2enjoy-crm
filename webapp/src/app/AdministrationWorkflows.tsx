@@ -1,10 +1,15 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première tranche
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
+//       tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.2 (adresse), §7 bis.3 (les trois lectures),
 //       §7 bis.4 (les six gestes), §7 bis.5 (validation de forme), §7 bis.6 (états,
 //       accessibilité, responsive), §2.5 (`0` n'est pas `NULL`), §3.3 (contraintes), §3.5
 //       (l'étape initiale)
-// @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.8 (états), §6 (confirmation), §8
-//       (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
+// @spec docs/SPEC-workflow-engine.md §7 bis.9 (deuxième tranche : les arêtes), §7 bis.9.1
+//       (lecture 4 et l'ordre composé), §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix
+//       offerts), §7 bis.9.4 (validation de forme), §7 bis.9.6 (états et disposition),
+//       §3.4 (modèle des arêtes)
+// @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.7 bis (case à cocher), §5.8 (états), §6
+//       (confirmation), §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -16,7 +21,17 @@
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, Flag, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import {
+	ArrowDown,
+	ArrowRight,
+	ArrowUp,
+	Flag,
+	MessageSquare,
+	Pencil,
+	Plus,
+	Trash2,
+	TriangleAlert,
+} from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -33,21 +48,31 @@ import {
 import {
 	ajouterEtape,
 	ancienneteConforme,
+	arriveesPossibles,
+	declarerTransition,
 	deplacerEtape,
 	designerEtapeInitiale,
+	grouperTransitions,
 	libelleEtape,
 	libelleSurchargeConforme,
+	libelleTransitionConforme,
 	lireCatalogueActif,
 	lireEtapes,
+	lireTransitions,
 	lireWorkflowsAdministrables,
+	modifierTransition,
 	noeudsAjoutables,
 	probabiliteConforme,
 	retirerEtape,
+	retirerTransition,
 	surchargerEtape,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
 	type RefusEtape,
+	type RefusTransition,
 	type ResultatEtape,
+	type ResultatTransition,
+	type TransitionAdministrable,
 	type WorkflowAdministrable,
 } from '../lib/administration-workflows'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -77,19 +102,51 @@ function texteRefus(refus: RefusEtape): string {
 }
 
 /**
+ * Traduit un refus d'écriture sur une **arête**.
+ *
+ * DEUX NATURES ONT LEUR PROPRE TEXTE ICI, et c'est le §7 bis.9.5 appliqué : `reference-absente`
+ * parle de deux étapes et non d'un nœud, et `forme-refusee` nomme les deux `CHECK` du §3.4 —
+ * réflexivité et libellé blanc — plutôt que la probabilité et le seuil, qui n'existent pas sur une
+ * arête. Réutiliser les textes des étapes aurait décrit à l'administrateur un refus qu'il n'a pas
+ * provoqué.
+ */
+function texteRefusTransition(refus: RefusTransition): string {
+	switch (refus.nature) {
+		case 'forbidden':
+			return t('admin.workflows.refus.forbidden')
+		case 'arete-deja-declaree':
+			return t('admin.workflows.refus.arete-deja-declaree')
+		case 'reference-absente':
+			return t('admin.workflows.refus.transition.reference-absente')
+		case 'forme-refusee':
+			return t('admin.workflows.refus.transition.forme-refusee')
+		case 'network':
+			return t('admin.workflows.refus.network')
+		case 'unknown':
+			return t('admin.workflows.refus.unknown')
+	}
+}
+
+/**
  * Ce qui est ouvert, et il n'y en a qu'un à la fois — le patron de `CRM-075` : un seul formulaire
  * ouvert évite la question qu'aucune spécification ne tranche, celle d'une saisie non enregistrée
- * quand une seconde s'ouvre.
+ * quand une seconde s'ouvre. Les trois ouvertures d'arête entrent dans la MÊME variable que celles
+ * des étapes, pour que la règle reste vraie d'un bloc à l'autre : ouvrir une transition ferme un
+ * formulaire de surcharge, et réciproquement.
  */
 type Ouverture =
 	| { readonly type: 'aucune' }
 	| { readonly type: 'ajout' }
 	| { readonly type: 'surcharge'; readonly idEtape: string }
 	| { readonly type: 'retrait'; readonly idEtape: string }
+	| { readonly type: 'transition-declaration' }
+	| { readonly type: 'transition-edition'; readonly idTransition: string }
+	| { readonly type: 'transition-retrait'; readonly idTransition: string }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
 
 type ActionEtape = () => Promise<ResultatEtape>
+type ActionTransition = () => Promise<ResultatTransition>
 
 /**
  * Alerte de refus, placée dans le bloc concerné et non en tête d'écran, pour que le refus soit lu
@@ -283,14 +340,26 @@ function FormulaireSurcharge({
 // Confirmation de retrait — dans le flux du document, jamais une modale
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Les textes sont REÇUS et non écrits ici : la confirmation sert deux retraits — une étape et une
+ * arête — dont les conséquences n'ont rien de commun. Une étape occupée par des cards peut être
+ * refusée par la base ; une arête ne l'est jamais (§7 bis.9.2), et promettre le même obstacle dans
+ * les deux cas décrirait une règle qui n'existe pas.
+ */
 function ConfirmationRetrait({
-	nom,
+	titre,
+	corps,
+	libelleAction,
+	marqueur,
 	refus,
 	enCours,
 	onConfirmer,
 	onAnnuler,
 }: {
-	readonly nom: string
+	readonly titre: string
+	readonly corps: string
+	readonly libelleAction: string
+	readonly marqueur: string
 	readonly refus: string | null
 	readonly enCours: boolean
 	readonly onConfirmer: () => void
@@ -302,11 +371,11 @@ function ConfirmationRetrait({
 	}, [])
 	return (
 		<div
-			data-testid="confirmation-retrait"
+			data-testid={marqueur}
 			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
 		>
-			<p className="font-medium">{t('admin.workflows.remove.confirm', { nom })}</p>
-			<p className="text-sm text-text-2">{t('admin.workflows.remove.confirm.body')}</p>
+			<p className="font-medium">{titre}</p>
+			<p className="text-sm text-text-2">{corps}</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
 				<button
@@ -316,7 +385,7 @@ function ConfirmationRetrait({
 					onClick={onConfirmer}
 					className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] rounded-sm px-4 font-medium bg-danger text-white hover:opacity-90 disabled:opacity-70"
 				>
-					{t('admin.workflows.remove.confirm.action')}
+					{libelleAction}
 				</button>
 				<Button variante="secondaire" onClick={onAnnuler}>
 					{t('admin.action.cancel')}
@@ -492,6 +561,295 @@ function LigneEtape({
 }
 
 // ---------------------------------------------------------------------------------------------
+// Les arêtes du graphe — §7 bis.9
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Case à cocher du §5.7 bis : une ligne de hauteur `--size-target`, la case à 24 px, le libellé
+ * servant de cible étendue par son `for`.
+ */
+function CaseMotif({
+	id,
+	valeur,
+	onChange,
+}: {
+	readonly id: string
+	readonly valeur: boolean
+	readonly onChange: (valeur: boolean) => void
+}) {
+	const idAide = `${id}-aide`
+	return (
+		<div className="flex flex-col gap-1">
+			<span className="flex items-center gap-2 min-h-[var(--size-target)]">
+				<input
+					id={id}
+					type="checkbox"
+					checked={valeur}
+					onChange={(evenement) => onChange(evenement.target.checked)}
+					aria-describedby={idAide}
+					className="size-6 rounded-sm border border-border"
+				/>
+				<label htmlFor={id} className="text-sm text-text-2">
+					{t('admin.workflows.transitions.form.requireComment')}
+				</label>
+			</span>
+			<span id={idAide} className="text-sm text-text-3">
+				{t('admin.workflows.transitions.form.requireComment.help')}
+			</span>
+		</div>
+	)
+}
+
+type SaisieTransition = {
+	readonly idDepart: string
+	readonly idArrivee: string
+	readonly libelle: string
+	readonly motifExige: boolean
+}
+
+/**
+ * Formulaire de déclaration d'une arête.
+ *
+ * LES DEUX LISTES SONT LIÉES : changer le départ recalcule les arrivées possibles, et l'arrivée
+ * choisie est abandonnée si elle n'en fait plus partie. Conserver une arrivée devenue impossible
+ * enverrait une écriture dont on connaît le refus — exactement ce que le §7 bis.9.3 évite.
+ */
+function FormulaireDeclarationTransition({
+	etapes,
+	transitions,
+	refus,
+	enCours,
+	onValider,
+	onAnnuler,
+}: {
+	readonly etapes: readonly EtapeAdministrable[]
+	readonly transitions: readonly TransitionAdministrable[]
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onValider: (saisie: SaisieTransition) => void
+	readonly onAnnuler: () => void
+}) {
+	const prefixe = useId()
+	const premier = useRef<HTMLSelectElement>(null)
+	const [idDepart, setIdDepart] = useState(() => etapes[0]?.id ?? '')
+	const [libelle, setLibelle] = useState('')
+	const [motifExige, setMotifExige] = useState(false)
+
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+
+	const possibles = arriveesPossibles(etapes, transitions, idDepart)
+	const [idArrivee, setIdArrivee] = useState(() => possibles[0]?.id ?? '')
+	const arriveeRetenue = possibles.some((etape) => etape.id === idArrivee)
+		? idArrivee
+		: (possibles[0]?.id ?? '')
+
+	const libelleInvalide = libelle !== '' && !libelleTransitionConforme(libelle)
+	const complet = arriveeRetenue !== '' && !libelleInvalide
+
+	return (
+		<form
+			data-testid="formulaire-transition"
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				if (complet && !enCours) {
+					onValider({ idDepart, idArrivee: arriveeRetenue, libelle, motifExige })
+				}
+			}}
+		>
+			<h4 className="font-medium">{t('admin.workflows.transitions.form.declare')}</h4>
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${prefixe}-depart`} className="text-sm text-text-2">
+					{t('admin.workflows.transitions.form.from')}
+				</label>
+				<select
+					id={`${prefixe}-depart`}
+					ref={premier}
+					value={idDepart}
+					onChange={(evenement) => setIdDepart(evenement.target.value)}
+					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+				>
+					{etapes.map((etape) => (
+						<option key={etape.id} value={etape.id}>
+							{libelleEtape(etape)}
+						</option>
+					))}
+				</select>
+			</div>
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${prefixe}-arrivee`} className="text-sm text-text-2">
+					{t('admin.workflows.transitions.form.to')}
+				</label>
+				{possibles.length === 0 ? (
+					<p role="status" data-testid="arrivees-epuisees" className="text-sm text-text-2">
+						{t('admin.workflows.transitions.form.to.empty')}
+					</p>
+				) : (
+					<select
+						id={`${prefixe}-arrivee`}
+						value={arriveeRetenue}
+						onChange={(evenement) => setIdArrivee(evenement.target.value)}
+						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+					>
+						{possibles.map((etape) => (
+							<option key={etape.id} value={etape.id}>
+								{libelleEtape(etape)}
+							</option>
+						))}
+					</select>
+				)}
+			</div>
+			<ChampSurcharge
+				id={`${prefixe}-libelle`}
+				libelle={t('admin.workflows.transitions.form.label')}
+				valeur={libelle}
+				onChange={setLibelle}
+				aide={t('admin.workflows.transitions.form.label.help')}
+				{...(libelleInvalide ? { erreur: t('admin.workflows.transitions.form.label.invalid') } : {})}
+			/>
+			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+					{t('admin.action.save')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</form>
+	)
+}
+
+/**
+ * Formulaire d'édition d'une arête : le libellé et le motif, jamais les extrémités.
+ *
+ * Changer une extrémité ferait d'une arête une autre arête. L'écran fait donc déclarer puis
+ * retirer, deux gestes visibles, plutôt que de transformer silencieusement une porte en une autre.
+ */
+function FormulaireEditionTransition({
+	transition,
+	depart,
+	arrivee,
+	refus,
+	enCours,
+	onValider,
+	onAnnuler,
+}: {
+	readonly transition: TransitionAdministrable
+	readonly depart: string
+	readonly arrivee: string
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onValider: (libelle: string, motifExige: boolean) => void
+	readonly onAnnuler: () => void
+}) {
+	const prefixe = useId()
+	const premier = useRef<HTMLInputElement>(null)
+	// La saisie repart de ce que l'arête PORTE : un libellé absent reste absent, et le pré-remplir
+	// avec le libellé de l'arrivée figerait une valeur que le §3.4 veut calculée à l'affichage.
+	const [libelle, setLibelle] = useState(transition.label ?? '')
+	const [motifExige, setMotifExige] = useState(transition.require_comment)
+
+	const libelleInvalide = libelle !== '' && !libelleTransitionConforme(libelle)
+
+	return (
+		<form
+			data-testid="formulaire-transition-edition"
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				if (!libelleInvalide && !enCours) onValider(libelle, motifExige)
+			}}
+		>
+			<h4 className="font-medium">
+				{t('admin.workflows.transitions.form.edit', { depart, arrivee })}
+			</h4>
+			<ChampSurcharge
+				id={`${prefixe}-libelle`}
+				libelle={t('admin.workflows.transitions.form.label')}
+				valeur={libelle}
+				onChange={setLibelle}
+				aide={t('admin.workflows.transitions.form.label.help')}
+				refInterne={premier}
+				{...(libelleInvalide ? { erreur: t('admin.workflows.transitions.form.label.invalid') } : {})}
+			/>
+			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				<Button type="submit" variante="primaire" disabled={libelleInvalide || enCours}>
+					{t('admin.action.save')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</form>
+	)
+}
+
+/** Une arête dans la liste des sorties d'une étape. */
+function LigneTransition({
+	transition,
+	depart,
+	arrivee,
+	enCours,
+	onOuvrirEdition,
+	onOuvrirRetrait,
+}: {
+	readonly transition: TransitionAdministrable
+	readonly depart: string
+	readonly arrivee: string
+	readonly enCours: boolean
+	readonly onOuvrirEdition: () => void
+	readonly onOuvrirRetrait: () => void
+}) {
+	return (
+		<div
+			data-testid="ligne-transition"
+			className="flex flex-wrap items-center gap-2 min-h-[var(--size-target)]"
+		>
+			<ArrowRight aria-hidden="true" size={16} strokeWidth={2} className="text-text-3" />
+			<span>{t('admin.workflows.transitions.toward', { arrivee })}</span>
+			<span className="text-sm text-text-2" data-testid="transition-libelle">
+				{transition.label === null
+					? t('admin.workflows.transitions.label.default')
+					: transition.label}
+			</span>
+			{transition.require_comment ? (
+				<span
+					data-testid="transition-motif"
+					className="flex items-center gap-1 rounded-sm bg-accent-soft text-accent-on-soft px-2 py-[2px] text-sm"
+				>
+					<MessageSquare aria-hidden="true" size={14} strokeWidth={2} />
+					{t('admin.workflows.transitions.requireComment')}
+				</span>
+			) : null}
+			<div className="ml-auto flex items-center gap-1">
+				<Button
+					taille="compacte"
+					disabled={enCours}
+					aria-label={t('admin.workflows.transitions.action.edit', { depart, arrivee })}
+					onClick={onOuvrirEdition}
+				>
+					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					taille="compacte"
+					disabled={enCours}
+					aria-label={t('admin.workflows.transitions.action.remove', { depart, arrivee })}
+					onClick={onOuvrirRetrait}
+				>
+					<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
 // L'écran
 // ---------------------------------------------------------------------------------------------
 
@@ -506,6 +864,8 @@ export function AdministrationWorkflows({
 	const [workflows, setWorkflows] = useState<EtatAsync<readonly WorkflowAdministrable[]>>(enChargement)
 	const [idChoisi, setIdChoisi] = useState<string | null>(null)
 	const [etapes, setEtapes] = useState<EtatAsync<readonly EtapeAdministrable[]>>(enChargement)
+	const [transitions, setTransitions] =
+		useState<EtatAsync<readonly TransitionAdministrable[]>>(enChargement)
 	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudAjoutable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
@@ -535,11 +895,24 @@ export function AdministrationWorkflows({
 		})()
 	}, [client, tentative])
 
-	const rechargerEtapes = useCallback(
+	/**
+	 * Les étapes ET les arêtes, ensemble.
+	 *
+	 * Le §7 bis.9.1 le pose : un graphe dont on montrerait les nœuds sans les arêtes serait à
+	 * moitié faux, et l'administrateur n'a pas à demander la seconde moitié. Les deux lectures
+	 * partent en parallèle — elles ne dépendent pas l'une de l'autre —, et toute écriture des deux
+	 * blocs les rejoue toutes les deux : retirer une étape emporte ses arêtes en cascade (§3.4), et
+	 * ne recharger que les étapes laisserait des arêtes fantômes à l'écran.
+	 */
+	const rechargerGraphe = useCallback(
 		async (idWorkflow: string) => {
 			if (client === null) return
-			const lues = await lireEtapes(client, idWorkflow)
+			const [lues, arretes] = await Promise.all([
+				lireEtapes(client, idWorkflow),
+				lireTransitions(client, idWorkflow),
+			])
 			setEtapes(lues)
+			setTransitions(arretes)
 		},
 		[client],
 	)
@@ -547,8 +920,9 @@ export function AdministrationWorkflows({
 	useEffect(() => {
 		if (client === null || idChoisi === null) return
 		setEtapes(enChargement)
-		void rechargerEtapes(idChoisi)
-	}, [client, idChoisi, rechargerEtapes])
+		setTransitions(enChargement)
+		void rechargerGraphe(idChoisi)
+	}, [client, idChoisi, rechargerGraphe])
 
 	// Le catalogue n'est lu qu'à l'ouverture du sélecteur (§7 bis.3, lecture 3).
 	useEffect(() => {
@@ -577,12 +951,45 @@ export function AdministrationWorkflows({
 				setRefus(null)
 				setOuverture(AUCUNE)
 				setAnnonce(message)
-				await rechargerEtapes(idChoisi)
+				await rechargerGraphe(idChoisi)
 			} finally {
 				setEnCours(false)
 			}
 		},
-		[idChoisi, rechargerEtapes],
+		[idChoisi, rechargerGraphe],
+	)
+
+	/**
+	 * Jumelle de `executer` pour les arêtes.
+	 *
+	 * Les deux ne diffèrent que par le **vocabulaire du refus** — `RefusEtape` contre
+	 * `RefusTransition` —, et c'est précisément ce qu'il ne faut pas confondre : le §7 bis.9.5 donne
+	 * au `23503` et au `23505` un autre sens ici. Une enveloppe générique sur le type du refus
+	 * aurait économisé dix lignes en rendant possible l'affichage du mauvais message.
+	 */
+	const executerArete = useCallback(
+		async (action: ActionTransition, message: string) => {
+			if (idChoisi === null) return
+			setEnCours(true)
+			try {
+				const resultat = await action()
+				if (resultat.statut === 'refus') {
+					setRefus(texteRefusTransition(resultat.refus))
+					return
+				}
+				if (resultat.statut === 'sans-effet') {
+					setRefus(t('admin.workflows.refus.sans-effet'))
+					return
+				}
+				setRefus(null)
+				setOuverture(AUCUNE)
+				setAnnonce(message)
+				await rechargerGraphe(idChoisi)
+			} finally {
+				setEnCours(false)
+			}
+		},
+		[idChoisi, rechargerGraphe],
 	)
 
 	const deplacer = useCallback(
@@ -684,7 +1091,7 @@ export function AdministrationWorkflows({
 										titre={t('admin.workflows.steps.error')}
 										corps={t('admin.workflows.error.body')}
 										libelleReprise={t('admin.tree.error.retry')}
-										onReprise={() => void rechargerEtapes(choisi.id)}
+										onReprise={() => void rechargerGraphe(choisi.id)}
 									/>
 								) : null}
 								{etapes.statut === 'pret' ? (
@@ -711,7 +1118,10 @@ export function AdministrationWorkflows({
 														<span>{t('admin.workflows.initial.none')}</span>
 													</p>
 												)}
-												<ol className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-3">
+												<ol
+												data-testid="liste-etapes"
+												className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-3"
+											>
 													{etapes.donnees.map((etape) => (
 														<li key={etape.id} className="flex flex-col gap-2">
 															<LigneEtape
@@ -753,7 +1163,12 @@ export function AdministrationWorkflows({
 															) : null}
 															{ouverture.type === 'retrait' && ouverture.idEtape === etape.id ? (
 																<ConfirmationRetrait
-																	nom={libelleEtape(etape)}
+																	marqueur="confirmation-retrait"
+																	titre={t('admin.workflows.remove.confirm', {
+																		nom: libelleEtape(etape),
+																	})}
+																	corps={t('admin.workflows.remove.confirm.body')}
+																	libelleAction={t('admin.workflows.remove.confirm.action')}
 																	refus={refus}
 																	enCours={enCours}
 																	onConfirmer={() =>
@@ -815,6 +1230,174 @@ export function AdministrationWorkflows({
 										{refus !== null && ouverture.type === 'aucune' ? (
 											<AlerteRefus message={refus} />
 										) : null}
+
+										{/* Les arêtes, SOUS les étapes et dans la même colonne : elles décrivent le même
+										    workflow et se lisent après ses étapes (§7 bis.9.6). */}
+										<section
+											aria-label={t('admin.workflows.transitions.aria', { workflow: choisi.name })}
+											className="flex flex-col gap-3"
+										>
+											<div className="flex flex-col gap-1">
+												<h3 className="font-medium">{t('admin.workflows.transitions.title')}</h3>
+												<p className="text-sm text-text-2">{t('admin.workflows.transitions.intro')}</p>
+											</div>
+											{transitions.statut === 'chargement' ? (
+												<SkeletonListe lignes={3} libelle={t('admin.workflows.transitions.loading')} />
+											) : null}
+											{transitions.statut === 'erreur' ? (
+												<EtatErreur
+													titre={t('admin.workflows.transitions.error')}
+													corps={t('admin.workflows.error.body')}
+													libelleReprise={t('admin.tree.error.retry')}
+													onReprise={() => void rechargerGraphe(choisi.id)}
+												/>
+											) : null}
+											{/* Une transition relie DEUX étapes : sous ce seuil, le formulaire aurait deux
+											    listes inutilisables, et l'écran le dit plutôt que de l'offrir (§7 bis.9.3). */}
+											{transitions.statut === 'pret' && etapes.donnees.length < 2 ? (
+												<p role="status" data-testid="transitions-trop-peu-etapes" className="text-sm text-text-2">
+													{t('admin.workflows.transitions.tooFewSteps')}
+												</p>
+											) : null}
+											{transitions.statut === 'pret' && etapes.donnees.length >= 2 ? (
+												<>
+													<ol
+														data-testid="groupes-transitions"
+														className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3"
+													>
+														{grouperTransitions(etapes.donnees, transitions.donnees).map((groupe) => (
+															<li key={groupe.etape.id} className="flex flex-col gap-1">
+																<span className="font-medium">{libelleEtape(groupe.etape)}</span>
+																{groupe.sorties.length === 0 ? (
+																	<span data-testid="etape-sans-sortie" className="text-sm text-text-2">
+																		{t('admin.workflows.transitions.none')}
+																	</span>
+																) : (
+																	<ul className="flex flex-col gap-1 pl-4">
+																		{groupe.sorties.map((sortie) => {
+																			const arrivee =
+																				etapes.donnees.find((etape) => etape.id === sortie.to_step_id) ?? null
+																			// L'arrivée est introuvable si une étape a disparu entre les deux
+																			// lectures : son identifiant vaut mieux qu'une ligne sans nom.
+																			const nomArrivee = arrivee === null ? sortie.to_step_id : libelleEtape(arrivee)
+																			const nomDepart = libelleEtape(groupe.etape)
+																			return (
+																				<li key={sortie.id} className="flex flex-col gap-2">
+																					<LigneTransition
+																						transition={sortie}
+																						depart={nomDepart}
+																						arrivee={nomArrivee}
+																						enCours={enCours}
+																						onOuvrirEdition={() => {
+																							setRefus(null)
+																							setOuverture({ type: 'transition-edition', idTransition: sortie.id })
+																						}}
+																						onOuvrirRetrait={() => {
+																							setRefus(null)
+																							setOuverture({ type: 'transition-retrait', idTransition: sortie.id })
+																						}}
+																					/>
+																					{ouverture.type === 'transition-edition' &&
+																					ouverture.idTransition === sortie.id ? (
+																						<FormulaireEditionTransition
+																							transition={sortie}
+																							depart={nomDepart}
+																							arrivee={nomArrivee}
+																							refus={refus}
+																							enCours={enCours}
+																							onValider={(libelle, motifExige) =>
+																								void executerArete(
+																									() =>
+																										modifierTransition(
+																											client,
+																											sortie.id,
+																											libelle.trim() === '' ? null : libelle.trim(),
+																											motifExige,
+																										),
+																									t('live.workflows.transition.updated'),
+																								)
+																							}
+																							onAnnuler={() => {
+																								setRefus(null)
+																								setOuverture(AUCUNE)
+																							}}
+																						/>
+																					) : null}
+																					{ouverture.type === 'transition-retrait' &&
+																					ouverture.idTransition === sortie.id ? (
+																						<ConfirmationRetrait
+																							marqueur="confirmation-retrait-transition"
+																							titre={t('admin.workflows.transitions.remove.confirm', {
+																								depart: nomDepart,
+																								arrivee: nomArrivee,
+																							})}
+																							corps={t('admin.workflows.transitions.remove.confirm.body')}
+																							libelleAction={t('admin.workflows.transitions.remove.confirm.action')}
+																							refus={refus}
+																							enCours={enCours}
+																							onConfirmer={() =>
+																								void executerArete(
+																									() => retirerTransition(client, sortie.id),
+																									t('live.workflows.transition.removed'),
+																								)
+																							}
+																							onAnnuler={() => {
+																								setRefus(null)
+																								setOuverture(AUCUNE)
+																							}}
+																						/>
+																					) : null}
+																				</li>
+																			)
+																		})}
+																	</ul>
+																)}
+															</li>
+														))}
+													</ol>
+													{ouverture.type === 'transition-declaration' ? (
+														<FormulaireDeclarationTransition
+															etapes={etapes.donnees}
+															transitions={transitions.donnees}
+															refus={refus}
+															enCours={enCours}
+															onValider={(saisie) =>
+																void executerArete(
+																	() =>
+																		declarerTransition(client, {
+																			idWorkflow: choisi.id,
+																			idWorkspace: choisi.workspace_id,
+																			idDepart: saisie.idDepart,
+																			idArrivee: saisie.idArrivee,
+																			libelle: saisie.libelle.trim() === '' ? null : saisie.libelle.trim(),
+																			motifExige: saisie.motifExige,
+																		}),
+																	t('live.workflows.transition.declared'),
+																)
+															}
+															onAnnuler={() => {
+																setRefus(null)
+																setOuverture(AUCUNE)
+															}}
+														/>
+													) : (
+														<div className="flex">
+															<Button
+																variante="primaire"
+																disabled={enCours}
+																onClick={() => {
+																	setRefus(null)
+																	setOuverture({ type: 'transition-declaration' })
+																}}
+															>
+																<Plus aria-hidden="true" size={16} strokeWidth={2} />
+																{t('admin.workflows.transitions.action.declare')}
+															</Button>
+														</div>
+													)}
+												</>
+											) : null}
+										</section>
 									</>
 								) : null}
 							</section>

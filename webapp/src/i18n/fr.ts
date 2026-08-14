@@ -468,7 +468,7 @@ export const fr = {
 	// --- Éditeur de workflows — CRM-076, docs/SPEC-workflow-engine.md §7 bis ---------------
 	'admin.settings.index.workflows': 'Workflows : étapes et composition',
 	'admin.settings.index.workflows.body':
-		"Composer un workflow : choisir ses étapes dans le catalogue, les ordonner, surcharger leur libellé, leur probabilité et leur seuil de relance, et désigner l'étape initiale.",
+		"Composer un workflow : choisir ses étapes dans le catalogue, les ordonner, surcharger leur libellé, leur probabilité et leur seuil de relance, désigner l'étape initiale, et déclarer les transitions qui relient les étapes.",
 	'admin.workflows.title': 'Éditeur de workflows',
 	'admin.workflows.aria': "Workflows de l'espace de travail",
 	'admin.workflows.list.aria': 'Choisir un workflow',
@@ -538,6 +538,49 @@ export const fr = {
 		'Cette valeur a été refusée : vérifiez le libellé, la probabilité et le seuil.',
 	'admin.workflows.refus.network': "La requête n'a pas abouti. Réessayez.",
 	'admin.workflows.refus.unknown': "L'enregistrement a échoué.",
+
+	// --- Les arêtes du graphe — deuxième tranche, docs/SPEC-workflow-engine.md §7 bis.9 -----
+	'admin.workflows.transitions.aria': 'Transitions de {workflow}',
+	'admin.workflows.transitions.title': 'Transitions déclarées',
+	'admin.workflows.transitions.intro':
+		"Une card ne peut aller que là où une transition la mène. Une étape sans sortie est un point d'arrivée.",
+	'admin.workflows.transitions.loading': 'Chargement des transitions…',
+	'admin.workflows.transitions.error': 'Les transitions de ce workflow n’ont pas pu être chargées.',
+	'admin.workflows.transitions.none': 'Aucune sortie : les cards s’y arrêtent.',
+	'admin.workflows.transitions.toward': 'Vers {arrivee}',
+	'admin.workflows.transitions.label.default': 'Libellé de l’étape d’arrivée',
+	'admin.workflows.transitions.requireComment': 'Motif exigé',
+	'admin.workflows.transitions.tooFewSteps':
+		'Une transition relie deux étapes : ajoutez-en une seconde avant d’en déclarer une.',
+
+	'admin.workflows.transitions.action.declare': 'Déclarer une transition',
+	'admin.workflows.transitions.action.edit': 'Modifier la transition {depart} vers {arrivee}',
+	'admin.workflows.transitions.action.remove': 'Retirer la transition {depart} vers {arrivee}',
+
+	'admin.workflows.transitions.form.declare': 'Nouvelle transition',
+	'admin.workflows.transitions.form.edit': 'Transition {depart} vers {arrivee}',
+	'admin.workflows.transitions.form.from': 'Étape de départ',
+	'admin.workflows.transitions.form.to': 'Étape d’arrivée',
+	'admin.workflows.transitions.form.to.empty':
+		'Toutes les arrivées possibles depuis cette étape sont déjà déclarées.',
+	'admin.workflows.transitions.form.label': 'Libellé du bouton',
+	'admin.workflows.transitions.form.label.help':
+		'Laisser vide affiche le libellé de l’étape d’arrivée dans le menu d’une card. Une valeur blanche est refusée.',
+	'admin.workflows.transitions.form.label.invalid': 'Le libellé ne peut pas être blanc.',
+	'admin.workflows.transitions.form.requireComment': 'Exiger un motif',
+	'admin.workflows.transitions.form.requireComment.help':
+		'Le déplacement d’une card par cette transition sera refusé sans commentaire.',
+
+	'admin.workflows.transitions.remove.confirm': 'Retirer la transition {depart} vers {arrivee} ?',
+	'admin.workflows.transitions.remove.confirm.body':
+		'Les cards ne pourront plus emprunter ce chemin. Les deux étapes restent dans le workflow.',
+	'admin.workflows.transitions.remove.confirm.action': 'Retirer la transition',
+
+	'admin.workflows.refus.arete-deja-declaree': 'Cette transition est déjà déclarée.',
+	'admin.workflows.refus.transition.reference-absente':
+		'Une des deux étapes n’existe plus dans ce workflow.',
+	'admin.workflows.refus.transition.forme-refusee':
+		'Cette transition a été refusée : une étape ne va pas vers elle-même, et un libellé fourni ne peut pas être blanc.',
 	'admin.workflows.refus.sans-effet':
 		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur ce workflow, ou l'étape a disparu.",
 
@@ -546,6 +589,9 @@ export const fr = {
 	'live.workflows.overridden': 'Surcharges enregistrées',
 	'live.workflows.initial': 'Étape initiale désignée',
 	'live.workflows.removed': 'Étape retirée',
+	'live.workflows.transition.declared': 'Transition déclarée',
+	'live.workflows.transition.updated': 'Transition modifiée',
+	'live.workflows.transition.removed': 'Transition retirée',
 
 	// --- État de la messagerie — CRM-059, docs/SPEC-mail-subsystem.md §20.11 --------------
 	'admin.settings.index.mail': 'État de la messagerie',

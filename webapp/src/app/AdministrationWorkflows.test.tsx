@@ -1,9 +1,14 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première tranche
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
+//           tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les lectures et le catalogue à la demande),
 //           §7 bis.4 (les six gestes et leurs écritures), §7 bis.5 (validation de forme, `0`
 //           accepté), §7 bis.6 (états, clavier), §2.5 (`0` n'est pas `NULL`), §3.3 (libellé
 //           surchargé), §3.5 (éteindre avant d'allumer)
-// @verifies docs/DESIGN_SYSTEM.md §5.8 (états), §6 (confirmation avant retrait), §8, §10
+// @verifies docs/SPEC-workflow-engine.md §7 bis.9 (les arêtes du graphe), §7 bis.9.1 (les deux
+//           lectures ensemble), §7 bis.9.2 (les trois gestes), §7 bis.9.3 (les choix offerts),
+//           §7 bis.9.6 (états et disposition), §3.4 (modèle des arêtes)
+// @verifies docs/DESIGN_SYSTEM.md §5.7 bis (case à cocher), §5.8 (états), §6 (confirmation avant
+//           retrait), §8, §10
 //
 // Ces preuves montent le **vrai** écran avec un client factice qui enregistre les requêtes émises,
 // le patron d'`AdministrationArborescence.test.tsx`. Le parcours connecté complet relève du projet
@@ -90,6 +95,25 @@ const ETAPES = [
 	},
 ]
 
+/**
+ * Une seule arête par défaut : `Prospection → Qualification fine`.
+ *
+ * Elle suffit à ce que le second groupe — `Qualification fine` — soit un cul-de-sac, ce que le
+ * §7 bis.9.1 exige de montrer, et à ce que `Prospection` n'ait plus aucune arrivée possible : les
+ * deux moitiés de la règle sont donc éprouvables sans jeu supplémentaire.
+ */
+const TRANSITIONS = [
+	{
+		id: 'tr-1',
+		workflow_id: 'wf-1',
+		workspace_id: 'ws-1',
+		from_step_id: 'e-1',
+		to_step_id: 'e-2',
+		label: null,
+		require_comment: false,
+	},
+]
+
 const CATALOGUE = [
 	{ ...NOEUD_PROSPECTION, position: 1 },
 	{
@@ -117,8 +141,10 @@ const CATALOGUE = [
 type Options = {
 	readonly workflows?: unknown[]
 	readonly etapes?: unknown[]
+	readonly transitions?: unknown[]
 	readonly catalogue?: unknown[]
 	readonly erreurWorkflows?: { message: string; status: number }
+	readonly erreurTransitions?: { message: string; status: number }
 	readonly reponseEcriture?: {
 		data: unknown[] | null
 		error: { message: string; code?: string } | null
@@ -170,6 +196,9 @@ function clientFactice(options: Options = {}): {
 				lectures.push(table)
 				if (table === 'workflows') return lecture(options.workflows ?? WORKFLOWS, options.erreurWorkflows)
 				if (table === 'workflow_steps') return lecture(options.etapes ?? ETAPES)
+				if (table === 'workflow_transitions') {
+					return lecture(options.transitions ?? TRANSITIONS, options.erreurTransitions)
+				}
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -259,12 +288,18 @@ describe('les lectures (§7 bis.3)', () => {
 // ---------------------------------------------------------------------------------------------
 
 describe('ce qu’une ligne d’étape montre (§3.3)', () => {
+	// PREUVE RÉVISÉE, ET LA RÈGLE A CHANGÉ : depuis le §7 bis.9.6, le bloc des transitions nomme
+	// ses groupes par le libellé de l'étape de départ, donc chaque libellé apparaît DEUX fois à
+	// l'écran. La version précédente interrogeait tout le document et échouait sur l'ambiguïté.
+	// Elle est resserrée sur la liste des étapes plutôt que supprimée : ce qu'elle éprouve — la
+	// surcharge l'emporte sur le catalogue — reste vrai et reste dû.
 	it('rend le libellé du catalogue sans surcharge, la surcharge sinon', async () => {
 		monter()
 		await attendreEcran()
-		expect(screen.getByText('Prospection')).toBeTruthy()
-		expect(screen.getByText('Qualification fine')).toBeTruthy()
-		expect(screen.queryByText('Qualification')).toBeNull()
+		const liste = within(screen.getByTestId('liste-etapes'))
+		expect(liste.getByText('Prospection')).toBeTruthy()
+		expect(liste.getByText('Qualification fine')).toBeTruthy()
+		expect(liste.queryByText('Qualification')).toBeNull()
 	})
 
 	it('marque l’étape initiale d’une mention textuelle, jamais d’une teinte seule', async () => {
@@ -453,5 +488,261 @@ describe('le formulaire de surcharge (§7 bis.5, §2.5)', () => {
 		expect((within(formulaire).getByLabelText('Libellé surchargé') as HTMLInputElement).value).toBe(
 			'Découverte',
 		)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.9 — Les arêtes du graphe
+// ---------------------------------------------------------------------------------------------
+
+describe('le bloc des transitions (§7 bis.9.1, §7 bis.9.6)', () => {
+	it('lit les arêtes avec les étapes, sans geste supplémentaire', async () => {
+		const { lectures } = monter()
+		await attendreEcran()
+		await waitFor(() => expect(lectures).toContain('workflow_transitions'))
+	})
+
+	it('groupe les sorties sous leur étape de départ, dans l’ordre du graphe', async () => {
+		monter()
+		await attendreEcran()
+		const groupes = within(await screen.findByTestId('groupes-transitions')).getAllByRole(
+			'listitem',
+			{},
+		)
+		// Le premier élément de liste est le groupe de `Prospection`, qui porte l'unique sortie.
+		expect(within(groupes[0] as HTMLElement).getByText('Vers Qualification fine')).toBeTruthy()
+	})
+
+	// Le §3.9 en livre deux, et un graphe qui masquerait ses culs-de-sac cacherait ce qu'un
+	// administrateur cherche.
+	it('une étape sans sortie le dit, elle ne disparaît pas', async () => {
+		monter()
+		await attendreEcran()
+		expect(await screen.findByTestId('etape-sans-sortie')).toBeTruthy()
+	})
+
+	it('une arête sans libellé annonce qu’elle prendra celui de l’arrivée', async () => {
+		monter()
+		await attendreEcran()
+		expect(await screen.findByText('Libellé de l’étape d’arrivée')).toBeTruthy()
+	})
+
+	it('le motif exigé est une mention textuelle, jamais une teinte seule', async () => {
+		monter({
+			transitions: [
+				{ ...TRANSITIONS[0], id: 'tr-2', require_comment: true, label: 'Qualifier' },
+			],
+		})
+		await attendreEcran()
+		expect(await screen.findByTestId('transition-motif')).toBeTruthy()
+		expect(screen.getByText('Qualifier')).toBeTruthy()
+	})
+
+	// Une transition relie DEUX étapes : sous ce seuil, offrir le formulaire serait offrir deux
+	// listes inutilisables.
+	it('un workflow d’une seule étape annonce qu’aucune transition n’est possible', async () => {
+		monter({ etapes: [ETAPES[0]], transitions: [] })
+		await attendreEcran()
+		expect(await screen.findByTestId('transitions-trop-peu-etapes')).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Déclarer une transition' })).toBeNull()
+	})
+
+	it('une erreur de lecture des arêtes est nommée dans son bloc, avec une reprise réelle', async () => {
+		monter({ erreurTransitions: { message: 'boom', status: 500 } })
+		await attendreEcran()
+		// Les étapes, elles, sont chargées : l'erreur est celle du SECOND bloc, et l'écran ne
+		// remplace pas tout le graphe par une page d'erreur pour une moitié manquante.
+		expect(screen.getAllByTestId('ligne-etape').length).toBeGreaterThan(0)
+		const erreur = await screen.findByText(
+			'Les transitions de ce workflow n’ont pas pu être chargées.',
+		)
+		expect(erreur).toBeTruthy()
+	})
+
+	it('un workflow sans aucune arête montre ses étapes en culs-de-sac', async () => {
+		monter({ transitions: [] })
+		await attendreEcran()
+		expect((await screen.findAllByTestId('etape-sans-sortie')).length).toBe(2)
+	})
+})
+
+describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
+	it('la déclaration envoie les deux extrémités, le libellé et le motif', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer une transition' }))
+		const formulaire = await screen.findByTestId('formulaire-transition')
+		// Le départ par défaut est la première étape ; on choisit explicitement la seconde, dont
+		// la seule arrivée possible est `Prospection`.
+		await userEvent.selectOptions(
+			within(formulaire).getByLabelText('Étape de départ'),
+			'e-2',
+		)
+		await userEvent.type(within(formulaire).getByLabelText('Libellé du bouton'), 'Revenir')
+		await userEvent.click(within(formulaire).getByLabelText('Exiger un motif'))
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transitions',
+			verbe: 'insert',
+			charge: {
+				workflow_id: 'wf-1',
+				workspace_id: 'ws-1',
+				from_step_id: 'e-2',
+				to_step_id: 'e-1',
+				label: 'Revenir',
+				require_comment: true,
+			},
+		})
+	})
+
+	// Le §7 bis.9.3 : l'étape de départ et les arrivées déjà déclarées ne sont pas offertes.
+	it('le sélecteur d’arrivée retire le départ et les arrivées déjà déclarées', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer une transition' }))
+		const formulaire = await screen.findByTestId('formulaire-transition')
+		// Départ `Prospection` : `Prospection` est exclue par le `CHECK`, `Qualification fine`
+		// par l'unicité — il ne reste rien, et le formulaire le DIT.
+		expect(within(formulaire).getByTestId('arrivees-epuisees')).toBeTruthy()
+		expect(within(formulaire).getByRole('button', { name: 'Enregistrer' }).hasAttribute('disabled')).toBe(
+			true,
+		)
+	})
+
+	it('changer le départ recalcule les arrivées offertes', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer une transition' }))
+		const formulaire = await screen.findByTestId('formulaire-transition')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Étape de départ'), 'e-2')
+		const arrivees = within(formulaire).getByLabelText('Étape d’arrivée') as HTMLSelectElement
+		expect(Array.from(arrivees.options).map((option) => option.value)).toEqual(['e-1'])
+	})
+
+	it('un libellé blanc est refusé avant d’être envoyé', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Déclarer une transition' }))
+		const formulaire = await screen.findByTestId('formulaire-transition')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Étape de départ'), 'e-2')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé du bouton'), '   ')
+		expect(within(formulaire).getByText('Le libellé ne peut pas être blanc.')).toBeTruthy()
+		expect(ecritures).toHaveLength(0)
+	})
+
+	it('la modification n’écrit que le libellé et le motif', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(
+			await screen.findByRole('button', {
+				name: 'Modifier la transition Prospection vers Qualification fine',
+			}),
+		)
+		const formulaire = await screen.findByTestId('formulaire-transition-edition')
+		await userEvent.type(within(formulaire).getByLabelText('Libellé du bouton'), 'Qualifier')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transitions',
+			verbe: 'update',
+			charge: { label: 'Qualifier', require_comment: false },
+			filtres: [['id', 'tr-1']],
+		})
+	})
+
+	// `''` heurterait le `CHECK` du §3.4 : vider le champ retire la surcharge par un `null`.
+	it('vider le libellé envoie `null`, pas une chaîne vide', async () => {
+		const { ecritures } = monter({
+			transitions: [{ ...TRANSITIONS[0], label: 'Qualifier' }],
+		})
+		await attendreEcran()
+		await userEvent.click(
+			await screen.findByRole('button', {
+				name: 'Modifier la transition Prospection vers Qualification fine',
+			}),
+		)
+		const formulaire = await screen.findByTestId('formulaire-transition-edition')
+		await userEvent.clear(within(formulaire).getByLabelText('Libellé du bouton'))
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toMatchObject({ label: null })
+	})
+
+	it('le retrait demande confirmation, puis supprime sur l’identifiant de l’arête', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(
+			await screen.findByRole('button', {
+				name: 'Retirer la transition Prospection vers Qualification fine',
+			}),
+		)
+		expect(ecritures).toHaveLength(0)
+		const confirmation = await screen.findByTestId('confirmation-retrait-transition')
+		await userEvent.click(within(confirmation).getByRole('button', { name: 'Retirer la transition' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transitions',
+			verbe: 'delete',
+			filtres: [['id', 'tr-1']],
+		})
+	})
+
+	it('annuler la confirmation n’écrit rien', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(
+			await screen.findByRole('button', {
+				name: 'Retirer la transition Prospection vers Qualification fine',
+			}),
+		)
+		const confirmation = await screen.findByTestId('confirmation-retrait-transition')
+		await userEvent.click(within(confirmation).getByRole('button', { name: 'Annuler' }))
+		expect(screen.queryByTestId('confirmation-retrait-transition')).toBeNull()
+		expect(ecritures).toHaveLength(0)
+	})
+
+	// Le §7 bis.9.5 : `23505` est ici « déjà déclarée », et le message le dit dans ces termes.
+	it('un refus d’unicité est traduit dans le vocabulaire des arêtes', async () => {
+		monter({
+			reponseEcriture: {
+				data: null,
+				error: { message: 'duplicate key value', code: '23505' },
+				status: 409,
+			},
+		})
+		await attendreEcran()
+		await userEvent.click(
+			await screen.findByRole('button', {
+				name: 'Modifier la transition Prospection vers Qualification fine',
+			}),
+		)
+		const formulaire = await screen.findByTestId('formulaire-transition-edition')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		expect(await screen.findByText('Cette transition est déjà déclarée.')).toBeTruthy()
+	})
+
+	// LA TABULATION EST LE VRAI SUJET, pas la touche Entrée : un formulaire dont le bouton
+	// d'enregistrement ne se rejoint pas au clavier est inutilisable, et c'est ce que le §8 du
+	// design system exige. Le nombre de tabulations n'est pas écrit en dur — il changerait au
+	// premier champ ajouté — mais borné, pour qu'un piège de focus fasse échouer la preuve.
+	it('la déclaration se mène au clavier seul, du bouton d’ouverture à l’enregistrement', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const declarer = screen.getByRole('button', { name: 'Déclarer une transition' })
+		declarer.focus()
+		await userEvent.keyboard('{Enter}')
+		const formulaire = await screen.findByTestId('formulaire-transition')
+		// Le focus est porté dans le premier champ à l'ouverture (docs/DESIGN_SYSTEM.md §5.13).
+		expect(document.activeElement).toBe(within(formulaire).getByLabelText('Étape de départ'))
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Étape de départ'), 'e-2')
+		const enregistrer = within(formulaire).getByRole('button', { name: 'Enregistrer' })
+		for (let pas = 0; pas < 8 && document.activeElement !== enregistrer; pas += 1) {
+			await userEvent.tab()
+		}
+		expect(document.activeElement).toBe(enregistrer)
+		await userEvent.keyboard('{Enter}')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({ verbe: 'insert', charge: { from_step_id: 'e-2' } })
 	})
 })
