@@ -47,8 +47,8 @@ n'attend donc une décision du responsable** : les cinquante-huit entrées ouver
 une mise en œuvre et une preuve. `docs/ARBITRAGES.md` §1 et §2 en donnent les porteurs, §3 l'ordre.
 **INC-098**, relevée le même jour, est tranchée dès son ouverture par la décision **366**.
 
-**État au 2026-08-14 :** 98 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
-texte dans l'historique Git — et **54 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les trois entrées du lot G closes par la migration 35 — INC-048, INC-052 et INC-071. INC-072, quatrième du lot, **reste ouverte** : sa règle est livrée et prouvée, son chemin d'interface ne l'est pas. Les soixante et une
+**État au 2026-08-14 :** 100 entrées ouvertes depuis l'origine, **42 closes** — index ci-dessous,
+texte dans l'historique Git — et **55 ouvertes**, conservées ici en entier : 56 après la clôture d'INC-096, plus INC-099 relevée le même jour, moins les trois entrées du lot G closes par la migration 35 — INC-048, INC-052 et INC-071 —, plus **INC-100**, relevée le 2026-08-14 pendant la reprise d'INC-072 et laissée intacte parce qu'elle appartient à deux autres unités. INC-072, quatrième du lot G, **reste ouverte** : sa règle est livrée et prouvée, son chemin d'interface est en cours de livraison (décision 376). Les soixante et une
 entrées de la décision 367 sont devenues soixante-deux avec INC-098, puis cinquante-huit avec la
 clôture du lot D, cinquante-sept avec INC-091 (décision 371) et cinquante-six avec INC-096
 (décision 373).
@@ -117,6 +117,35 @@ la date de clôture, l'unité ou la reprise qui l'a fermée, et la décision du 
 ---
 
 ## Ouverts
+
+### INC-100 — Le chapitre 4.10 du manuel se contredit lui-même sur deux points déjà livrés
+
+**Nature :** documentation utilisateur dépassée par le produit, contradiction interne au même
+document. **Relevée le :** 2026-08-14, pendant la reprise de `CRM-043` (INC-072), en rédigeant le
+chapitre voisin.
+
+La liste « Ce que le fil ne fait pas encore » du §4.10 de `docs/manual.md` porte deux affirmations
+que le produit dément, et que **le manuel lui-même dément ailleurs** :
+
+| Affirmation du §4.10 | Ce que le produit fait | Ce que le manuel dit ailleurs |
+|---|---|---|
+| « **Aucun nom d'auteur n'est affiché** : aucun nom de personne n'est aujourd'hui lisible dans le produit » | `PanneauTimeline.tsx` rend le nom et l'avatar de l'auteur, par la relation embarquée livrée par `CRM-022` | §3.2 : « les commentaires leur auteur et les événements leur acteur lorsque cette identité est connue » |
+| « **Le motif d'un déplacement n'est conservé nulle part.** L'écran le demande […] et il n'est enregistré ni dans le fil, ni ailleurs » | `move_card` conserve le motif dans `card_comments` depuis la migration `0035` (INC-048, décision 374) | §4.3 : « Le motif que vous donnez est conservé, et il l'est comme un commentaire » |
+
+**Mesure.** Les deux lignes sont des restes : la première date d'avant `CRM-022`, la seconde d'avant
+le lot G. Chacune a été corrigée dans **son** chapitre sans que la liste du §4.10 le soit.
+
+**Comportement laissé INCHANGÉ, et rien n'est corrigé au passage.** Les deux affirmations
+appartiennent à `CRM-022` et à `CRM-034` — ni l'une ni l'autre à INC-072, qui reprend le seul geste
+de modération. Les corriger ici toucherait deux unités sans rejouer leurs preuves sous leur unité,
+ce que `docs/CloudWorker.md` §3.1 proscrit. Le §4.10 a été modifié dans le même changement **sur
+les seuls points de modération**, et ces deux lignes ont été laissées telles quelles.
+
+**Ce qu'il faut faire :** retirer les deux affirmations de la liste du §4.10, sous l'unité qui les a
+rendues fausses, et relire la liste entière au même moment — un inventaire de manques qui n'est pas
+relu à chaque livraison devient un inventaire de mensonges.
+
+---
 
 ### INC-099 — Les preuves d'arborescence laissent quatre lignes derrière elles, et sept assertions d'autres suites en rougissent
 
@@ -706,6 +735,16 @@ pas encore modérer depuis son écran.
 ses tests de composant ; un scénario `e2e/ui` où une administratrice retire le propos d'un tiers ;
 la vérification visuelle et ses captures observées ; la modération du seed sur `…0d4` avec les
 assertions correspondantes. La règle backend, elle, est **livrée et prouvée**.
+
+**CONCEPTION ÉCRITE ET COMMITTÉE LE 2026-08-14, AVANT LE CODE — décision 376.** Elle tranche les
+cinq points que la liste ci-dessus laissait ouverts : le rôle est lu dans `workspace_members` filtré
+sur `(workspace_id, user_id)` — MESURÉ : un anonyme reçoit `200` et `[]`, jamais un `401` ; l'action
+du tiers est **unique** ; sa confirmation est un texte distinct nommant la trace nominative ; la
+pierre tombale distingue « retiré par la modération » de « supprimé » en comparant `deleted_by` à
+`author_id`, faute de quoi la colonne d'audit ne serait lue par personne ; et le seed retire `…0d4`
+avec le jeton réel de l'administratrice. `docs/SPEC-cards.md` §13.10 à §13.14 et
+`docs/DESIGN_SYSTEM.md` §5.10 portent la règle. **L'entrée reste ouverte tant que les preuves ne
+sont pas vertes.**
 
 ---
 

@@ -33,7 +33,7 @@
 | 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et de **modification** : la fiche se lit, elle ne s'écrit pas |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
-| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur n'a pas encore de bouton**. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
+| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
@@ -619,13 +619,25 @@ dire ce qu'il n'a pas dit. Les deux gestes de l'auteur sont offerts par l'écran
 **La suppression, elle, est aussi ouverte aux administrateurs du workspace depuis le 2026-08-14** —
 afin qu'un propos déplacé puisse être retiré. Un administrateur peut **retirer** un commentaire, il
 ne peut pas le **modifier**, et le retrait laisse une trace nominative : le serveur enregistre qui
-a supprimé, et non seulement quand. **Ce retrait n'a pas encore de bouton dans l'écran** : la règle
-est en place et opposable côté serveur, le geste correspondant reste à livrer. Un administrateur
-qui doit retirer un propos aujourd'hui passe donc par un administrateur technique.
+a supprimé, et non seulement quand.
 
 Placez le pointeur sur **votre** commentaire, ou atteignez-le avec la touche `Tab` : deux actions
 apparaissent, *Modifier* et *Supprimer*. Elles ne s'affichent que sur vos propres commentaires,
 parce qu'elles n'aboutiraient sur aucun autre.
+
+**Si vous êtes administrateur du workspace**, le commentaire d'une autre personne vous offre une
+action, et **une seule** : *Supprimer*. Vous n'y verrez jamais *Modifier* — réécrire le propos d'un
+collègue n'est pas de la modération, et le serveur le refuse quel que soit votre rôle. La demande de
+confirmation est différente de celle de vos propres commentaires : elle rappelle que le commentaire
+appartient à quelqu'un d'autre, et que **le retrait sera enregistré sous votre nom**.
+
+Un commentaire ainsi retiré affiche *Commentaire retiré par la modération*, là où celui que son
+auteur a supprimé lui-même affiche *Commentaire supprimé*. La distinction se lit donc sans avoir à
+demander à personne. **Le nom de la personne qui a retiré n'est pas affiché** : le produit dit qu'un
+tiers est intervenu, pas qui. La trace nominative existe côté serveur.
+
+Si vous n'êtes pas administrateur, le commentaire d'une autre personne ne vous offre aucune action :
+ce n'est pas un bouton masqué par prudence, c'est un geste qui n'aboutirait pas.
 
 *Modifier* remplace le texte par un champ, curseur placé à la fin, prêt à continuer votre phrase.
 *Enregistrer* applique la correction, *Annuler* l'abandonne sans rien changer. Un commentaire
@@ -670,8 +682,8 @@ n'apparaît qu'au prochain chargement.
   envoie aucune notification.
 - **La mise en forme n'est pas interprétée** : le texte est affiché tel qu'il a été saisi, retours à
   la ligne compris, sans gras ni liens cliquables.
-- **Aucun modérateur ne peut retirer le commentaire d'une autre personne**, pas même un
-  administrateur.
+- **Un retrait par la modération n'apparaît pas dans l'historique** : le fil montre la pierre
+  tombale du commentaire, il n'ajoute aucune ligne d'événement pour le retrait.
 
 Après connexion, le composeur publie réellement le commentaire si votre compte peut écrire dans
 le channel. Un profil en lecture seule reçoit un refus explicite et conserve son texte saisi.

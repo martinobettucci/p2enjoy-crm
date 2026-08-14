@@ -12753,3 +12753,119 @@ INC-096, INC-048, INC-052 et INC-071, plus INC-099.
 
 **Rattachement :** INC-048, INC-052, INC-071 (closes), INC-072 (ouverte), INC-096 (close), INC-099
 (nouvelle). Unités `CRM-034`, `CRM-036`, `CRM-043`. Décisions 51, 165, 333, 367, 368, 372, 373, 374.
+
+### Décision 376 — Le geste de modération : ce que l'écran doit apprendre, et ce qu'il ne doit surtout pas décider
+
+**2026-08-14 — spécification écrite et committée AVANT la première ligne de code** (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.1).
+
+**Le problème est nommé par la session précédente, et il n'a pas bougé.** La décision 375 a laissé
+INC-072 ouverte pour une raison précise : la règle de modération est livrée et prouvée côté serveur
+— politique `card_comments_moderation`, borne du trigger, colonne d'audit `deleted_by`, migration
+`0035` — mais `PanneauTimeline.tsx` calcule `actionsOffertes = estAuteur && !supprime`, et la webapp
+n'a **aucune notion du rôle de workspace** de l'utilisateur courant. C'est la forme d'INC-085, dont
+la décision 333 a tiré la règle : **un droit qui n'a pas de chemin n'est pas un droit.**
+
+**Ligne de base de la session, établie avant toute modification** (`docs/CloudWorker.md` §2.4) :
+pile complète — **17 services `healthy`**, seed appliqué —, `test:sql` 33 fichiers / **1969**
+assertions, `test:unit` **744**, `e2e:api` **507**, `e2e:ui` **182**, `e2e:mail` **42**, `pytest`
+**242**, `typecheck` et `build`. Tout vert. Les chiffres sont ceux de la décision 375, à
+l'assertion près : rien n'a dérivé entre les deux exécutions.
+
+**La règle a été MESURÉE avant d'être décrite, et non relue dans la migration.** Avec les jetons
+réels, sur la card `…0c2` :
+
+```
+bizdev publie                                     → 201
+admin PATCH {body}          (falsification)       → P0001 comment_moderation_limitee
+admin PATCH {body:'', deleted_at}                 → 200, deleted_by = …011, author_id = …012
+bizdev PATCH {body:'', deleted_at} sur `…d5`      → 200 et ZÉRO ligne
+```
+
+Les quatre lignes disent l'essentiel : la modération existe, elle est bornée à la suppression, elle
+est tracée, et un non-administrateur n'obtient **ni effet ni erreur**. C'est ce dernier point qui
+commande la forme de l'interface.
+
+**1. L'écran apprend le rôle courant, et il l'apprend d'une seule ligne.**
+
+`workspace_members`, filtrée sur `(workspace_id, user_id)`. MESURÉ : un membre lit les trois lignes
+de son workspace, un appelant anonyme reçoit **`200` et `[]`** — pas un `401`. La lecture est donc
+silencieuse dans la console même hors session, ce que `CRM-007` exige de toute requête de la
+webapp ; elle n'est néanmoins **pas émise** sans identifiant d'utilisateur, une requête dont on
+connaît d'avance la réponse vide étant un coût sans contrepartie (même raisonnement que
+`porteDuCourrier` au §14 de `docs/SPEC-cards.md`).
+
+Le rôle est lu **par workspace**, non une fois pour toutes : `workspace_members` porte une ligne par
+couple, et un utilisateur peut être administrateur ici et lecteur ailleurs. La card porte son
+`workspace_id` ; c'est lui qui sert de clé, et non un rôle « global » qui n'existe pas dans le
+modèle.
+
+**2. Ce rôle n'est PAS un contrôle d'accès, et le module le dit à sa première ligne** (`CLAUDE.md`
+§10). Il ne sert qu'à **ne pas offrir un geste voué au néant**. La règle est tenue par la politique
+`card_comments_moderation`, et le cas où l'écran se trompe — rôle retombé depuis le chargement — est
+déjà traité : le `PATCH` rend `200` et zéro ligne, que `appliquer` nomme `sans-effet` depuis la
+décision 315. Rien de nouveau n'est inventé pour ce cas ; c'est précisément parce qu'il est déjà
+traité que l'écran peut se permettre de proposer.
+
+**3. Pourquoi ne pas simplement offrir « Supprimer » à tout le monde et laisser le `USING` filtrer.**
+C'est l'option la plus courte, et elle est refusée. Un non-administrateur obtient `200` et zéro
+ligne — mesuré ci-dessus —, c'est-à-dire une commande qui ne dit rien et ne fait rien. Le §5.10 du
+design system refuse déjà exactement cela à propos de la pierre tombale : « un bouton qui ne peut
+pas aboutir est une commande morte ». Ce qui vaut pour un commentaire supprimé vaut pour un
+commentaire d'autrui.
+
+**4. « Supprimer » sans jamais « Modifier », et la forme le porte visiblement.** Sur le commentaire
+d'un tiers, l'administrateur ne reçoit **qu'une** action. Ce n'est pas un ajustement de confort :
+c'est la traduction fidèle de la borne du trigger, et la décision 194 en donne toujours le motif de
+fond — modifier le propos d'autrui n'est pas de la modération mais une falsification. Un écran qui
+offrirait les deux et laisserait le serveur trancher enseignerait à l'utilisateur une règle fausse.
+
+**5. La confirmation d'un retrait n'est PAS celle d'une suppression, et ce sont deux textes
+distincts.** Supprimer son propre commentaire et retirer celui d'un collègue n'engagent pas la même
+chose. La confirmation de modération nomme donc deux faits que l'autre n'a pas à nommer : le
+commentaire appartient à quelqu'un d'autre, et **le retrait sera enregistré sous votre nom**. Écrire
+un seul texte pour les deux gestes obligerait à choisir entre mentir par omission à l'auteur et
+alourdir inutilement son geste ordinaire.
+
+**6. La pierre tombale dit désormais si elle a été posée par un tiers — et c'est ce qui donne un
+sens au seed.** `deleted_by` est lue avec le fil, et comparée à `author_id` : différente et non
+nulle, le fil affiche « Commentaire retiré par la modération » au lieu de « Commentaire supprimé ».
+
+Le motif est le même que celui qui a fait exister la colonne (décision 374) : *une pierre tombale
+qui ne dit pas qui l'a posée n'est pas auditée.* Une colonne d'audit que **rien ne lit** est au même
+point, une case de plus dans une table. Et sans cette lecture, la modération du seed demandée par la
+décision 375 ne démontrerait toujours rien de visible — le reproche exact qu'elle adresse à l'état
+actuel de `…0d4`.
+
+**Le nom du modérateur n'est PAS affiché**, et l'écart est délibéré. `deleted_by` est un identifiant ;
+le nommer exigerait une seconde relation embarquée sur la même table, et surtout une décision
+d'exposition que ni le §13.6 ni le §5.10 ne portent : dire *qu'un tiers* a retiré un propos et dire
+*qui* l'a retiré ne sont pas la même divulgation. La trace nominative existe en base, elle est
+opposable, et l'écran s'arrête au fait. Point ouvert nommé au §13.13, non résolu implicitement.
+
+**7. Deux `P0001` disent deux choses opposées, et `classerRefusGeste` n'en voyait qu'une.**
+`comment_deleted` — « ce commentaire est supprimé, il ne peut plus être modifié » — et
+`comment_moderation_limitee` — « un tiers ne peut que supprimer » — arrivent avec le **même code**.
+Le classificateur rendait donc le message de la pierre tombale pour un refus de falsification. Ce
+n'est pas théorique : c'est ce que reçoit un administrateur dont l'écran, mal calculé, aurait offert
+« Modifier ». La nature `moderation` est ajoutée, distinguée par le **symbole** que la fonction lève
+— `comment_moderation_limitee` —, jamais par une phrase humaine : le `detail` reste ignoré, et seul
+le nom levé, qui est un identifiant de contrat au même titre que `23514`, est lu.
+
+**8. Le seed retire `…0d4` avec le JETON RÉEL de l'administratrice.** Aujourd'hui la clé de service
+le supprime : `auth.uid()` y est nul, `deleted_by` reste nul, et la décision 375 le dit —
+« c'est juste et ne démontre rien ». Le corps de `…0d4` est « Note interne publiée par erreur sur la
+mauvaise affaire », écrit par Driss : c'est le cas de modération idéal, et le seul geste qui le
+démontre est celui qu'un modérateur ferait. `api_admin` existe déjà pour les événements de la
+section 8 sexies ; sa définition remonte au-dessus de la section 8 quinquies, elle n'est pas
+dupliquée.
+
+La convergence est conservée telle quelle : la suppression reste **conditionnée par une relecture**
+de `deleted_at`, et un rejeu ne repasse pas par le `PATCH`.
+
+**Ce que cette unité n'emporte pas.** Aucune résurrection, aucune suppression physique, aucun
+`card_event` de modération — la timeline typée appartient à `CRM-044`, et l'audit d'INC-072 ne doit
+pas attendre une unité qu'il ne porte pas (décision 374, inchangée).
+
+**Rattachement :** INC-072, INC-085 (sa règle), unité `CRM-043`. Décisions 194, 315, 333, 367, 374,
+375.

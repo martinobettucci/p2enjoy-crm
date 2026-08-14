@@ -338,6 +338,12 @@ panneau est donc écrit comme la première voie d'un fil unifié, non comme un c
 - **Commentaire supprimé** : la place est **tenue**, le corps remplacé par « Commentaire supprimé »
   en italique `--color-text-2`. Il n'y a rien d'autre à afficher — la base ne porte plus de corps
   (`docs/SPEC-cards.md` §13.4). Le masquer ferait disparaître un tour de parole d'une conversation.
+
+  **Retiré par un tiers, la mention le dit** : « Commentaire retiré par la modération », même
+  forme, même teinte. La distinction vient de la donnée — `deleted_by` non nul et différent
+  d'`author_id` —, jamais d'un calcul d'écran. **Le nom du modérateur n'est pas affiché** : dire
+  *qu'un tiers* a retiré un propos et dire *qui* l'a retiré ne sont pas la même divulgation
+  (`docs/SPEC-cards.md` §13.13, point 7).
 - **Composeur** : `textarea` de trois lignes qui grandit avec le contenu, libellé visuellement
   masqué (§12.3), bouton primaire « Publier » désactivé tant que le champ est vide ou blanc. Il est
   **toujours rendu** : l'interface ne calcule aucun droit d'écriture, elle envoie et traduit le
@@ -375,6 +381,22 @@ panneau est donc écrit comme la première voie d'un fil unifié, non comme un c
   politique `UPDATE`, qui exige l'auteur **et** le droit d'écriture courant. Lorsque la comparaison
   se trompe — droit fin retombé depuis le chargement —, le backend rend `200` et **zéro ligne**, et
   l'écran le dit au lieu d'afficher une modification qui n'a pas eu lieu.
+- **Action de modération** : sur le commentaire d'**un tiers**, un `admin` du workspace reçoit
+  **une seule** action tertiaire — *Supprimer*. Jamais *Modifier*. La forme porte ici la règle du
+  backend au lieu de la contredire : le trigger ne laisse au tiers que la pose de la pierre tombale
+  (`docs/SPEC-cards.md` §13.6), et un écran qui offrirait les deux enseignerait une règle fausse.
+
+  **Elle n'est offerte qu'à qui peut aboutir.** L'écran lit le rôle courant dans
+  `workspace_members` ; ce n'est pas une autorisation — la politique `card_comments_moderation` la
+  tient —, c'est le refus d'une **commande morte**. MESURÉ : un non-administrateur qui tente le
+  geste reçoit `200` et zéro ligne, soit un bouton qui ne dit rien et ne fait rien, exactement ce
+  que la règle de la pierre tombale ci-dessus proscrit.
+
+  **La confirmation est un texte DISTINCT de celui de l'auteur.** Retirer le propos d'un collègue
+  et supprimer le sien n'engagent pas la même chose : la confirmation de modération nomme que le
+  commentaire appartient à quelqu'un d'autre, et que **le retrait sera enregistré sous votre nom**.
+  Un texte unique obligerait à choisir entre taire la trace au modérateur et alourdir le geste
+  ordinaire de l'auteur.
 - **Quatre états** (§5.8), et le vide dit « aucun commentaire pour le moment » — sans quoi un
   panneau vide serait indistinguable d'un panneau en panne.
 - **Sous 1024 px**, le panneau passe **sous** le formulaire, dans l'ordre du document : une

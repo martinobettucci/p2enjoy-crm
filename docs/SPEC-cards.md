@@ -1371,6 +1371,24 @@ reprendra ; le §5.10 du design system écrit ce que le panneau montre.
   commentaire vivant ou supprimé tant que le profil existe. Si le compte a été supprimé,
   `author_id` devient nul par `ON DELETE SET NULL` et le fil affiche « Compte supprimé » sans perdre
   la parole ni exposer d'identifiant technique.
+- **Un commentaire retiré par un tiers le dit** — « Commentaire retiré par la modération » au lieu de
+  « Commentaire supprimé ». La distinction se lit dans la donnée : `deleted_by` non nul et
+  **différent** d'`author_id` (§13.6). Une colonne d'audit que rien ne lit n'audite rien.
+  **Le nom du modérateur n'est pas affiché** : dire *qu'un tiers* a retiré un propos et dire *qui*
+  l'a retiré ne sont pas la même divulgation, et aucun document ne porte la seconde (§13.13, point
+  7). La trace nominative reste en base, opposable.
+- **Le geste de modération est offert au seul `admin` du workspace, et il est UNIQUE** — *Supprimer*,
+  jamais *Modifier* (décision 376). L'écran lit le rôle courant dans `workspace_members`, filtré sur
+  `(workspace_id, user_id)`. Ce n'est **pas** un contrôle d'accès (`CLAUDE.md` §10) : la règle est
+  tenue par `card_comments_moderation`, et le cas où l'écran se trompe — rôle retombé depuis le
+  chargement — est celui, déjà traité, du `200` rendant **zéro ligne**.
+
+  Offrir *Supprimer* à tous en laissant le `USING` filtrer aurait été plus court, et c'est refusé :
+  MESURÉ, un non-administrateur reçoit `200` et zéro ligne, donc une commande qui ne dit rien et ne
+  fait rien — ce que le §5.10 du design system refuse déjà à propos de la pierre tombale.
+
+  **La confirmation d'un retrait n'est pas celle d'une suppression** : elle nomme que le commentaire
+  appartient à quelqu'un d'autre, et que le retrait sera **enregistré sous le nom** du modérateur.
 - **Le composeur est toujours rendu**, et le refus vient du backend. L'interface ne calcule aucun
   droit : elle envoie, et traduit le `403` en « vous ne pouvez pas commenter cette affaire ». C'est
   `CLAUDE.md` §10 pris au mot — un bouton masqué n'est pas une autorisation.
@@ -1389,12 +1407,20 @@ API REST comme toute autre section (`docs/SPEC-seed.md` §2.14) :
 | `…0c1` *Refonte du site vitrine* | Camille Aubert (`admin`) | vivant | le cas nominal |
 | `…0c1` | Driss Lemoine (`business_developer`) | vivant | **deux auteurs sur une même card**, donc un fil |
 | `…0c1` | Camille Aubert | **modifié** | `edited_at` renseigné : l'état « modifié » est démontré, non seulement décrit |
-| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **supprimé** | la pierre tombale, corps vide, dans un channel d'un autre track |
+| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **retiré par la modération** | la pierre tombale, corps vide, dans un channel d'un autre track — **et l'audit** : retiré par Camille Aubert avec son jeton réel, `deleted_by` ≠ `author_id` |
 | `…0c5` *Support niveau 2* | Farida Nowak (`viewer`) | vivant | **le témoin du refus** : la ligne existe, écrite par la clé de service, et le `viewer` ne peut pas en écrire une seconde par l'API. Sans elle, le §13.8 e prouverait une lecture vide |
 
 Le commentaire de `…0c5` est **posé par la clé de service**, non par le `viewer` : le seed écrit ce
 que le produit refuserait, et le dit. C'est la seule ligne du seed dont l'auteur ne pourrait pas
 l'écrire lui-même, et elle existe pour que la lecture autorisée soit distinguable d'une table vide.
+
+**Le retrait de `…0d4` passe par le JETON RÉEL de l'administratrice, non par la clé de service**
+(décision 376). La clé de service ne porte aucune revendication `sub` : `auth.uid()` y est nul,
+`deleted_by` reste donc nul, et la pierre tombale ne démontre alors que la destruction du corps —
+jamais la modération. Le corps de `…0d4`, « Note interne publiée par erreur sur la mauvaise
+affaire », écrit par Driss Lemoine et retiré par Camille Aubert, est le cas de démonstration exact
+du §13.6, et le seul geste qui le produise est celui qu'un modérateur ferait (`CLAUDE.md` §8).
+La convergence est inchangée : le retrait reste **conditionné par une relecture** de `deleted_at`.
 
 `mentions` reste `'{}'` sur les cinq : rien ne l'alimente (§13.1).
 
@@ -1417,6 +1443,15 @@ règle est tenue par la politique `UPDATE`, qui exige l'auteur **et** le droit d
 Le cas où l'écran se trompe est traité explicitement — un `200` rendant **zéro ligne**, ligne *j*
 du §13.8, est affiché comme tel et jamais confondu avec un succès.
 
+**~~AUCUN GESTE DE MODÉRATION N'EST OFFERT PAR L'ÉCRAN.~~ Il l'est depuis le 2026-08-14**
+(décision 376, INC-072 close). La forme de l'écart était celle d'INC-085 — *un droit qui n'a pas de
+chemin n'est pas un droit* : la règle avait été livrée par la migration `0035` et prouvée en pgTAP
+sans qu'aucun administrateur puisse modérer depuis le produit. Ce qui est livré : le rôle courant lu
+dans `workspace_members`, l'action **unique** *Supprimer* sur le commentaire d'un tiers, sa
+confirmation propre, et la pierre tombale qui distingue un retrait par la modération d'une
+suppression par l'auteur. Ce qui ne l'est pas, délibérément : le **nom** du modérateur (§13.13,
+point 7).
+
 Outre le §13.1 : aucune pagination du fil — MESURÉ, cinq commentaires au seed, et le §12.6 a montré
 ce que coûte une pagination bâtie sans mesure ; aucune recherche dans les commentaires ; aucun
 `card_activities`, table voisine que `docs/SCHEMA.md` §5 décrit et qu'aucune unité du chunk 3 ne
@@ -1427,7 +1462,8 @@ porte.
 1. **Le markdown est stocké et rendu en texte brut.** `docs/SCHEMA.md` §5 dit « markdown » ; aucune
    unité ne porte son rendu, et le rendre exigerait une politique d'assainissement qu'aucun document
    n'écrit. Rendre du markdown reçu d'un tiers sans cette politique serait ouvrir une injection.
-2. **Aucune modération** (§13.6, INC-072).
+2. **~~Aucune modération~~ — livrée, serveur puis écran** (§13.6, §13.10, INC-072 close le
+   2026-08-14 par les décisions 374 puis 376).
 3. **Aucune notification de mention** (§13.1).
 4. **L'identité de l'auteur est livrée par `CRM-022`.** INC-014 est close ; la suppression d'un
    compte conserve le commentaire avec son repli « Compte supprimé ».
@@ -1442,16 +1478,26 @@ porte.
 6. **La pierre tombale est irréversible et le corps est détruit.** Aucun mécanisme de restauration
    n'est prévu, et aucune trace du corps supprimé ne subsiste. C'est le comportement voulu (§13.4) ;
    il est nommé ici pour qu'un besoin d'archivage légal ne le découvre pas après coup.
+7. **Le NOM du modérateur n'est pas affiché** (décision 376). Le fil dit qu'un commentaire a été
+   retiré par la modération, jamais par qui. Deux raisons, et la seconde compte plus que la
+   première : `deleted_by` est un identifiant, que nommer exigerait une seconde relation embarquée
+   sur la même table ; surtout, **dire *qu'un tiers* a retiré un propos et dire *qui* l'a retiré ne
+   sont pas la même divulgation**, et ni le §13.6 ni le §5.10 du design system ne portent la
+   seconde. La trace nominative existe en base et reste opposable. Point ouvert, comportement
+   inchangé, arbitrage non tranché ici.
+8. **Aucun `card_event` de modération.** Le retrait n'apparaît pas dans la timeline typée : elle
+   appartient à `CRM-044`, et l'audit d'INC-072 ne doit pas attendre une unité qu'il ne porte pas
+   (décision 374, inchangée). La pierre tombale du fil est la seule surface du fait.
 
 ### 13.14 Preuves attendues de `CRM-043`
 
 | Niveau | Preuves |
 |---|---|
 | pgTAP | Forme de la table, unicité ajoutée à `cards`, clé composite dans les deux sens, `CHECK` conditionnel du corps, trigger d'insertion (dérivation, défauts), trigger de mise à jour (`edited_at`, pierre tombale, refus de résurrection, colonnes gelées), quatre politiques, privilèges de colonne, appartenance à la publication, conformité du seed |
-| Unitaire | Projection du fil, ordre chronologique, classification des refus, état « modifié », état « supprimé », et le composant réel |
+| Unitaire | Projection du fil, ordre chronologique, classification des refus — **`comment_deleted` et `comment_moderation_limitee` distingués** —, état « modifié », état « supprimé », état « retiré par la modération », lecture du rôle de workspace, et le composant réel : l'action **unique** offerte au modérateur, aucune sur le commentaire d'un tiers pour un non-administrateur |
 | API | Les seize lignes du §13.8 avec les jetons réels, plus le **temps réel** : le témoin qui reçoit, et le `viewer` fermé qui ne reçoit rien |
-| E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais le panneau sans substitution, puis le fil, l'état vide, la pierre tombale, la mention « modifié » et le refus d'écriture, réponses substituées et **dit comme tel** |
-| Visuel | Captures aux paliers du §7 du design system : fil chargé, état vide, refus d'écriture, commentaire long |
+| E2E d'interface | Contre le **build de production** : l'anonyme qui n'atteint jamais le panneau sans substitution, puis le fil, l'état vide, la pierre tombale, la mention « modifié » et le refus d'écriture, réponses substituées et **dit comme tel**. **Sans aucune substitution** : l'administratrice retire le commentaire d'un tiers sur la vraie base, l'effet est relu par l'API — `deleted_by` ≠ `author_id` —, et un `business_developer` ne se voit offrir **aucune** action sur ce même commentaire |
+| Visuel | Captures aux paliers du §7 du design system : fil chargé, état vide, refus d'écriture, commentaire long, **confirmation de retrait et pierre tombale de modération** |
 | Harnais | `scripts/verify-commentaires.sh`, rejouable et **non complaisant** : chaque dégradation volontaire le fait réellement échouer |
 
 ---

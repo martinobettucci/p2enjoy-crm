@@ -585,7 +585,7 @@ motifs : `docs/SPEC-cards.md` §13.11.
 | `…0c1` *Refonte du site vitrine* | Camille Aubert (`admin`) | vivant | le cas nominal |
 | `…0c1` | Driss Lemoine (`business_developer`) | vivant | deux auteurs sur une même card, donc un **fil** |
 | `…0c1` | Camille Aubert | **modifié** | `edited_at` renseigné : l'état « modifié » est démontré, non seulement décrit |
-| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **supprimé** | la pierre tombale : `deleted_at` renseigné et **corps vide**, dans un channel d'un autre track |
+| `…0c4` *Refonte intranet Ville de Lyon* | Driss Lemoine | **retiré par la modération** | la pierre tombale : `deleted_at` renseigné et **corps vide**, dans un channel d'un autre track — **et l'audit** : `deleted_by` = Camille Aubert, différent d'`author_id` |
 | `…0c5` *Support niveau 2* | Farida Nowak (`viewer`) | vivant | le **témoin** de la preuve de lecture : le `viewer` lit ce qu'il ne peut pas écrire |
 
 Les identifiants suivent la convention du §4 : `5eed0000-0000-4000-8000-0000000000d1` à `…d5`.
@@ -596,11 +596,20 @@ Les identifiants suivent la convention du §4 : `5eed0000-0000-4000-8000-0000000
   refuserait. Elle est posée par la **clé de service**, comme toutes les autres lignes du seed, et
   elle existe pour que la lecture autorisée d'un `viewer` soit distinguable d'une table vide
   (décision 50) ;
-- l'état « modifié » et l'état « supprimé » sont obtenus par un **second appel** `PATCH` avec la
-  clé de service, qui traverse les **vrais triggers** : `edited_at` et `deleted_at` sont donc posés
-  par le produit, et le corps du commentaire supprimé est vidé par lui. Le seed ne fabrique aucune
-  trace (`CLAUDE.md` §8) — il ne pourrait d'ailleurs pas : les deux colonnes sont posées par
-  trigger, et une valeur envoyée y est ignorée.
+- l'état « modifié » et l'état « retiré » sont obtenus par un **second appel** `PATCH`, qui traverse
+  les **vrais triggers** : `edited_at` et `deleted_at` sont donc posés par le produit, et le corps
+  du commentaire supprimé est vidé par lui. Le seed ne fabrique aucune trace (`CLAUDE.md` §8) — il
+  ne pourrait d'ailleurs pas : les deux colonnes sont posées par trigger, et une valeur envoyée y
+  est ignorée.
+
+**Le retrait de `…0d4` emploie le JETON RÉEL de l'administratrice, et c'est le seul appel de cette
+section qui ne passe pas par la clé de service** (décision 376). Le motif est mesurable : la clé de
+service ne porte aucune revendication `sub`, `auth.uid()` y est nul, et `deleted_by` reste donc nul
+— la pierre tombale démontre alors la destruction du corps, jamais la **modération**. Le corps de
+`…0d4`, « Note interne publiée par erreur sur la mauvaise affaire », écrit par Driss Lemoine, est le
+cas de démonstration exact du §13.6 de `docs/SPEC-cards.md`, et le seul geste qui le produise est
+celui qu'un modérateur ferait. `api_admin`, déjà employée par le §2.15 pour les déplacements, sert
+ici aussi : sa définition remonte au-dessus de cette section plutôt que d'y être dupliquée.
 
 **La convergence de cette section ne s'écrit PAS comme les autres, et le motif est structurel.**
 Partout ailleurs le seed emploie `Prefer: resolution=merge-duplicates` : la ligne présente est

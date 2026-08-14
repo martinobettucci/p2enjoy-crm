@@ -4045,6 +4045,17 @@ suppression par l'auteur et par les `admin` du workspace, auditée.
       « Note interne publiée par erreur sur la mauvaise affaire », le cas de modération idéal, mais
       le seed le supprime par la clé de service — `deleted_by` reste donc nul, ce qui est juste et
       ne démontre rien.
+- [x] **Conception du geste de modération écrite et COMMITTÉE AVANT le code**, décision 376
+      (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1) : `docs/SPEC-cards.md` §13.10 à §13.14,
+      `docs/DESIGN_SYSTEM.md` §5.10, `docs/SPEC-seed.md` §2.14, `docs/manual.md` §4.10. Cinq points
+      tranchés — le rôle courant lu dans `workspace_members` filtré sur `(workspace_id, user_id)` et
+      **jamais** traité comme une autorisation ; l'action **unique** *Supprimer* sur le commentaire
+      d'un tiers ; une confirmation propre nommant la trace nominative ; la pierre tombale qui
+      distingue « retiré par la modération » de « supprimé » en lisant `deleted_by`, sans quoi la
+      colonne d'audit ne serait lue par personne ; le seed qui retire `…0d4` avec le jeton réel de
+      l'administratrice. La règle a été **mesurée avant d'être décrite**, jetons réels à l'appui :
+      falsification refusée par `comment_moderation_limitee`, retrait accepté avec
+      `deleted_by` ≠ `author_id`, non-administrateur rendu à `200` et **zéro ligne**.
 - [x] **INC-071 est CLOSE le 2026-08-14**, par l'arbitrage de la décision 367
       (lot G) et la mise en œuvre de la décision 374. **INC-071** : l'énoncé ci-dessus est aligné
       sur le comportement livré — aucun code ne change, et la preuve du refus opposé au `viewer`
