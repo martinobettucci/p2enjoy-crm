@@ -1,5 +1,5 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
-//           tranches
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
+//           troisième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les trois lectures, leurs filtres et leur ordre),
 //           §7 bis.4 (les six gestes et ce que la base garantit), §7 bis.5 (validation de forme),
 //           §7 bis.8 (preuves attendues, niveau unitaire), §7 bis.9 (deuxième tranche : les arêtes,
@@ -40,6 +40,22 @@ import {
 	lireTransitions,
 	modifierTransition,
 	retirerTransition,
+	COLONNES_CHAMP_ADMIN,
+	archiverChamp,
+	aideChampConforme,
+	choixDuChamp,
+	classerRefusChamp,
+	cleChampConforme,
+	composerOptions,
+	declarerChamp,
+	deplacerChamp,
+	deviseConforme,
+	deviseDuChamp,
+	libelleChampConforme,
+	lireChamps,
+	modifierChamp,
+	refusDesChoix,
+	type ChampAdministrable,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
 	type TransitionAdministrable,
@@ -674,5 +690,275 @@ describe('les trois écritures d’arête (§7 bis.9.2)', () => {
 	it('rend `sans-effet` sur `200` et zéro ligne, ici aussi', async () => {
 		const { client } = espionEcritures([ZERO_LIGNE])
 		expect((await modifierTransition(client, 't1', 'Perdre', false)).statut).toBe('sans-effet')
+	})
+})
+
+// =============================================================================================
+// TROISIÈME TRANCHE — les champs du formulaire
+// @verifies docs/SPEC-workflow-engine.md §7 bis.10 (l'édition des champs), §7 bis.10.1 (lecture 5
+//           et les champs archivés rapportés), §7 bis.10.2 (les cinq gestes), §7 bis.10.3 (clé et
+//           type non modifiables), §7 bis.10.4 (validation de forme, dont l'unicité des clés de
+//           choix que la base n'assure pas), §7 bis.10.5 (les refus), §7 bis.10.8 (preuves)
+// @verifies docs/SPEC-form-composer.md §2.2 (modèle), §2.3 (types), §2.4 (options), §2.6 (ordre)
+// =============================================================================================
+
+function champ(partiel: Partial<ChampAdministrable> & { id: string; key: string }): ChampAdministrable {
+	return {
+		workflow_id: 'w1',
+		workspace_id: 'ws1',
+		label: 'Un champ',
+		type: 'text',
+		options: {},
+		help_text: null,
+		position: 1,
+		archived_at: null,
+		...partiel,
+	}
+}
+
+describe('la lecture des champs (§7 bis.10.1)', () => {
+	it('demande les champs d’un workflow dans l’ordre des positions', async () => {
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireChamps(client, 'w1')
+		expect(appel.table).toBe('form_fields')
+		expect(appel.colonnes).toBe(COLONNES_CHAMP_ADMIN)
+		expect(appel.filtres).toEqual([['workflow_id', 'w1']])
+		expect(appel.tris.map(([colonne]) => colonne)).toEqual(['position'])
+	})
+
+	it('N’EXCLUT PAS les champs archivés, à la différence du catalogue', async () => {
+		// Le contraste est la preuve : `lireCatalogueActif` pose `archived_at is null` côté serveur,
+		// cette lecture-ci ne le pose pas. Un champ archivé est le seul « retiré » que le produit
+		// connaisse — `DELETE` rend `403`/`42501` —, et le masquer rendrait la restauration
+		// inatteignable (§7 bis.10.1).
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireChamps(client, 'w1')
+		expect(appel.filtres.map(([colonne]) => colonne)).not.toContain('archived_at')
+	})
+
+	it('rend les champs archivés tels que la base les sert', async () => {
+		const archive = champ({ id: 'c7', key: 'budget-previsionnel', archived_at: '2026-03-15T09:00:00Z' })
+		const { client } = espionLecture({ data: [archive], error: null, status: 200 })
+		const etat = await lireChamps(client, 'w1')
+		expect(etat.statut).toBe('pret')
+		expect(etat.statut === 'pret' ? etat.donnees.map((ligne) => ligne.key) : []).toEqual([
+			'budget-previsionnel',
+		])
+	})
+
+	it('classe une erreur de lecture plutôt que de la lever', async () => {
+		const { client } = espionLecture({ data: null, error: { message: 'coupure' }, status: 0 })
+		expect((await lireChamps(client, 'w1')).statut).toBe('erreur')
+	})
+})
+
+describe('les options d’un champ (§2.4)', () => {
+	it('lit les choix d’un `select`, et écarte les entrées sans clé', () => {
+		const avecChoix = champ({
+			id: 'c2',
+			key: 'source',
+			type: 'select',
+			options: {
+				choices: [
+					{ key: 'salon', label: 'Salon' },
+					{ label: 'Sans clé' },
+					{ key: '   ', label: 'Clé blanche' },
+					{ key: 'site', label: 'Site web' },
+				],
+			},
+		})
+		expect(choixDuChamp(avecChoix)).toEqual([
+			{ key: 'salon', label: 'Salon' },
+			{ key: 'site', label: 'Site web' },
+		])
+	})
+
+	it('replie le libellé manquant sur la clé plutôt que de rendre une entrée à moitié', () => {
+		const partiel = champ({ id: 'c2', key: 'source', type: 'select', options: { choices: [{ key: 'salon' }] } })
+		expect(choixDuChamp(partiel)).toEqual([{ key: 'salon', label: 'salon' }])
+	})
+
+	it('rend une liste vide si `options` n’est pas un objet, ou ne porte pas de tableau', () => {
+		expect(choixDuChamp(champ({ id: 'c1', key: 'a', options: null }))).toEqual([])
+		expect(choixDuChamp(champ({ id: 'c1', key: 'a', options: [1, 2] }))).toEqual([])
+		expect(choixDuChamp(champ({ id: 'c1', key: 'a', options: { choices: 'salon' } }))).toEqual([])
+	})
+
+	it('lit la devise d’un champ `money`, et rend la chaîne vide si elle manque', () => {
+		expect(deviseDuChamp(champ({ id: 'c1', key: 'budget', type: 'money', options: { currency: 'EUR' } }))).toBe(
+			'EUR',
+		)
+		expect(deviseDuChamp(champ({ id: 'c1', key: 'budget', type: 'money', options: {} }))).toBe('')
+	})
+
+	it('compose `options` selon le type, et n’y laisse rien d’étranger', () => {
+		expect(composerOptions('select', [{ key: ' salon ', label: ' Salon ' }], 'EUR')).toEqual({
+			choices: [{ key: 'salon', label: 'Salon' }],
+		})
+		expect(composerOptions('money', [{ key: 'salon', label: 'Salon' }], ' eur ')).toEqual({
+			currency: 'EUR',
+		})
+		// Un type sans exigence reçoit `{}` — envoyé, jamais omis : un `PATCH` qui omettrait la clé
+		// laisserait en place les `choices` d'une écriture antérieure.
+		expect(composerOptions('text', [{ key: 'salon', label: 'Salon' }], 'EUR')).toEqual({})
+	})
+})
+
+describe('la validation de forme des champs (§7 bis.10.4)', () => {
+	it('accepte une clé conforme et refuse les formes que `form_fields_key_check` refuse', () => {
+		expect(cleChampConforme('budget')).toBe(true)
+		expect(cleChampConforme('date-signature-prevue')).toBe(true)
+		expect(cleChampConforme('Budget')).toBe(false)
+		expect(cleChampConforme('budget_prev')).toBe(false)
+		expect(cleChampConforme('budget--prev')).toBe(false)
+		expect(cleChampConforme('-budget')).toBe(false)
+		expect(cleChampConforme('budget-')).toBe(false)
+		expect(cleChampConforme('')).toBe(false)
+	})
+
+	it('refuse un libellé blanc, et une aide blanche fournie — mais accepte l’aide absente', () => {
+		expect(libelleChampConforme('Budget estimé')).toBe(true)
+		expect(libelleChampConforme('   ')).toBe(false)
+		expect(aideChampConforme('')).toBe(true)
+		expect(aideChampConforme('Montant hors taxes.')).toBe(true)
+		expect(aideChampConforme('   ')).toBe(false)
+	})
+
+	it('exige trois majuscules pour la devise, en normalisant la casse et les espaces', () => {
+		expect(deviseConforme('EUR')).toBe(true)
+		expect(deviseConforme(' eur ')).toBe(true)
+		expect(deviseConforme('EU')).toBe(false)
+		expect(deviseConforme('EURO')).toBe(false)
+		expect(deviseConforme('')).toBe(false)
+	})
+
+	it('TIENT L’UNICITÉ DES CLÉS DE CHOIX, QUE LA BASE N’ASSURE PAS', () => {
+		// MESURÉ le 2026-08-14 : un `select` portant deux choix de clé `a` est accepté en `201` par
+		// la base — un `CHECK` ne déplie pas un tableau `jsonb` (§2.4). Ce contrôle est donc la seule
+		// garantie du produit, et non un aller-retour économisé.
+		expect(refusDesChoix([{ key: 'a', label: 'A' }, { key: 'a', label: 'Autre A' }])).toBe('cle-dupliquee')
+	})
+
+	it('refuse une liste vide, une clé blanche et un libellé blanc, et accepte une liste conforme', () => {
+		expect(refusDesChoix([])).toBe('aucun-choix')
+		expect(refusDesChoix([{ key: '  ', label: 'A' }])).toBe('cle-vide')
+		expect(refusDesChoix([{ key: 'a', label: '  ' }])).toBe('libelle-vide')
+		expect(refusDesChoix([{ key: 'a', label: 'A' }, { key: 'b', label: 'B' }])).toBe(null)
+	})
+})
+
+describe('les écritures sur un champ (§7 bis.10.2)', () => {
+	it('OMET `position` à la déclaration : le trigger la calcule en fin de formulaire', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await declarerChamp(client, {
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			cle: 'delai-reponse',
+			libelle: 'Délai de réponse',
+			type: 'number',
+			aide: null,
+			options: {},
+		})
+		expect(appels[0]?.table).toBe('form_fields')
+		expect(appels[0]?.verbe).toBe('insert')
+		expect(appels[0]?.charge).toEqual({
+			workflow_id: 'w1',
+			workspace_id: 'ws1',
+			key: 'delai-reponse',
+			label: 'Délai de réponse',
+			type: 'number',
+			help_text: null,
+			options: {},
+		})
+		expect(Object.keys(appels[0]?.charge ?? {})).not.toContain('position')
+	})
+
+	it('la modification n’écrit NI la clé NI le type', async () => {
+		// §7 bis.10.3 : la base accepte de modifier les deux — mesuré `200` —, et l'écran ne le fait
+		// pas. La clé est l'identifiant durable des exports ; le type laisserait en base des valeurs
+		// que le produit refuse ensuite de réécrire.
+		const { client, appels } = espionEcritures([OK])
+		await modifierChamp(client, 'c1', 'Budget estimé', 'Montant HT.', { currency: 'EUR' })
+		expect(appels[0]?.verbe).toBe('update')
+		expect(appels[0]?.charge).toEqual({
+			label: 'Budget estimé',
+			help_text: 'Montant HT.',
+			options: { currency: 'EUR' },
+		})
+		expect(Object.keys(appels[0]?.charge ?? {})).not.toContain('key')
+		expect(Object.keys(appels[0]?.charge ?? {})).not.toContain('type')
+		expect(appels[0]?.filtres).toEqual([['id', 'c1']])
+	})
+
+	it('l’aide vidée est envoyée à `null`, jamais omise', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await modifierChamp(client, 'c1', 'Budget estimé', null, {})
+		expect(appels[0]?.charge).toEqual({ label: 'Budget estimé', help_text: null, options: {} })
+	})
+
+	it('le déplacement n’écrit que la position calculée', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await deplacerChamp(client, 'c1', 2.5)
+		expect(appels[0]?.charge).toEqual({ position: 2.5 })
+		expect(appels[0]?.filtres).toEqual([['id', 'c1']])
+	})
+
+	it('l’archivage écrit un instant, la restauration écrit `null` — même écriture', async () => {
+		const { client, appels } = espionEcritures([OK, OK])
+		await archiverChamp(client, 'c1', '2026-08-14T10:00:00.000Z')
+		await archiverChamp(client, 'c1', null)
+		expect(appels[0]?.charge).toEqual({ archived_at: '2026-08-14T10:00:00.000Z' })
+		expect(appels[1]?.charge).toEqual({ archived_at: null })
+		// Aucun `delete` n'est jamais émis : le privilège n'existe pas (§2.7, mesuré `403`/`42501`).
+		expect(appels.map((appel) => appel.verbe)).toEqual(['update', 'update'])
+	})
+})
+
+describe('les refus d’écriture d’un champ (§7 bis.10.5)', () => {
+	it('traduit `23505` en clé déjà prise dans ce workflow', () => {
+		expect(classerRefusChamp(409, '23505', 'duplicate key value')).toEqual({
+			nature: 'cle-deja-prise',
+			detail: 'duplicate key value',
+		})
+	})
+
+	it('traduit les six `CHECK` en une seule nature de forme', () => {
+		for (const message of [
+			'violates check constraint "form_fields_key_check"',
+			'violates check constraint "form_fields_label_check"',
+			'violates check constraint "form_fields_help_text_check"',
+			'violates check constraint "form_fields_type_check"',
+			'violates check constraint "form_fields_options_objet_check"',
+			'violates check constraint "form_fields_choices_check"',
+		]) {
+			expect(classerRefusChamp(400, '23514', message).nature).toBe('forme-refusee')
+		}
+	})
+
+	it('traduit `42501` en refus d’autorisation, et `23503` en référence absente', () => {
+		expect(classerRefusChamp(403, '42501', 'permission denied').nature).toBe('forbidden')
+		expect(classerRefusChamp(409, '23503', 'foreign key').nature).toBe('reference-absente')
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne — le `USING` d’un non-administrateur', async () => {
+		// MESURÉ : `PATCH /form_fields` avec le jeton du `business_developer` rend `200` et `[]`.
+		const { client } = espionEcritures([ZERO_LIGNE])
+		expect((await modifierChamp(client, 'c1', 'Tentative', null, {})).statut).toBe('sans-effet')
+	})
+
+	it('classe une coupure réseau plutôt que de lever', async () => {
+		const client = {
+			from: () => ({
+				update: () => ({
+					eq: () => ({
+						select: () => {
+							throw new Error('coupure')
+						},
+					}),
+				}),
+			}),
+		} as unknown as ClientCrm
+		const resultat = await archiverChamp(client, 'c1', null)
+		expect(resultat.statut).toBe('refus')
 	})
 })

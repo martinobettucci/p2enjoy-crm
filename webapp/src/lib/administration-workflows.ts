@@ -1,8 +1,12 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première et deuxième
-//       tranches
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
+//       troisième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
 //       §7 bis.5 (validation de forme), §7 bis.7 (ce que cette tranche ne livre pas),
-//       §7 bis.9 (deuxième tranche : l'édition des transitions), §3.4 (modèle des arêtes)
+//       §7 bis.9 (deuxième tranche : l'édition des transitions), §3.4 (modèle des arêtes),
+//       §7 bis.10 (troisième tranche : l'édition des champs de formulaire)
+// @spec docs/SPEC-form-composer.md §2.2 (modèle `form_fields`), §2.3 (les quinze types),
+//       §2.4 (`options` et ce que la base n'y vérifie pas), §2.5 (la clé durable),
+//       §2.6 (ordre des champs), §2.7 (autorisations, aucun privilège `DELETE`)
 // @spec docs/SPEC-workflow-engine.md §2.5 (probabilité et seuil : `0` n'est pas `NULL`),
 //       §3.3 (modèle `workflow_steps` et ses contraintes), §3.5 (l'étape initiale),
 //       §3.7 (écriture réservée à l'administrateur)
@@ -708,5 +712,384 @@ export async function retirerTransition(
 ): Promise<ResultatTransition> {
 	return executerTransition(() =>
 		client.from('workflow_transitions').delete().eq('id', idTransition).select('id'),
+	)
+}
+
+// =============================================================================================
+// TROISIÈME TRANCHE — les champs du formulaire
+// @spec docs/SPEC-workflow-engine.md §7 bis.10 (l'édition des champs), §7 bis.10.1 (lecture 5 et
+//       les champs archivés rapportés), §7 bis.10.2 (les cinq gestes), §7 bis.10.3 (clé et type
+//       non modifiables, et les mesures qui le motivent), §7 bis.10.4 (validation de forme et la
+//       seule qui ne soit pas un raccourci), §7 bis.10.5 (les refus)
+// @spec docs/SPEC-form-composer.md §2.2 (modèle `form_fields`), §2.3 (les quinze types),
+//       §2.4 (ce qu'`options` doit porter), §2.5 (la clé durable), §2.6 (ordre des champs),
+//       §2.7 (autorisations, et l'absence de privilège `DELETE`)
+// =============================================================================================
+//
+// AUCUNE MIGRATION N'ACCOMPAGNE CETTE TRANCHE : `form_fields` existe depuis `CRM-035` avec ses six
+// `CHECK` et ses politiques, et ce module ne fait que les employer.
+
+/** Un champ, tel que le bloc du formulaire le présente. */
+export type ChampAdministrable = Pick<
+	Database['public']['Tables']['form_fields']['Row'],
+	'id' | 'workflow_id' | 'workspace_id' | 'key' | 'label' | 'type' | 'options' | 'help_text' | 'position' | 'archived_at'
+>
+
+export const COLONNES_CHAMP_ADMIN =
+	'id, workflow_id, workspace_id, key, label, type, options, help_text, position, archived_at'
+
+/**
+ * Les champs du formulaire d'un workflow — lecture 5 du §7 bis.10.1.
+ *
+ * LES CHAMPS ARCHIVÉS SONT RAPPORTÉS, à la différence du catalogue de `lireCatalogueActif` qui
+ * exclut les siens côté serveur. Ce n'est pas une inconstance : un nœud archivé n'est plus
+ * **ajoutable**, et cette lecture-là sert à offrir un choix ; un champ archivé, lui, est le seul
+ * état que le produit connaisse pour « retiré » — MESURÉ, `DELETE /form_fields` rend `403`/`42501`
+ * même à l'administratrice (§2.7). Le masquer rendrait la restauration inatteignable et ferait
+ * croire à une suppression qui n'a pas eu lieu.
+ */
+export async function lireChamps(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly ChampAdministrable[]>> {
+	try {
+		const reponse = await client
+			.from('form_fields')
+			.select(COLONNES_CHAMP_ADMIN)
+			.eq('workflow_id', idWorkflow)
+			.order('position')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(reponse.data as readonly ChampAdministrable[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les types, et ce que chacun exige — docs/SPEC-form-composer.md §2.3 et §2.4
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Les quinze types du §2.3, dans l'ordre où le sélecteur les propose.
+ *
+ * La liste est écrite ici plutôt que dérivée du type engendré : `form_fields.type` est un `text`
+ * porteur d'un `CHECK`, et le générateur de `CRM-006` ne voit pas les `CHECK` — il déclare `string`.
+ * Une liste tirée du type serait donc `string`, c'est-à-dire aucune liste. Elle est en revanche
+ * éprouvée contre la base par la preuve d'écran et par le refus `23514` d'un type hors liste.
+ */
+export const TYPES_CHAMP = [
+	'text',
+	'textarea',
+	'number',
+	'money',
+	'date',
+	'datetime',
+	'select',
+	'multiselect',
+	'checkbox',
+	'url',
+	'email',
+	'phone',
+	'user',
+	'contact',
+	'file',
+] as const
+
+export type TypeChamp = (typeof TYPES_CHAMP)[number]
+
+/** Les deux types dont la base EXIGE une liste de choix non vide (§2.4). */
+export const TYPES_A_CHOIX: readonly TypeChamp[] = ['select', 'multiselect']
+
+/** Le seul type dont la base EXIGE une devise (§2.4). */
+export const estTypeAChoix = (type: string): boolean => TYPES_A_CHOIX.includes(type as TypeChamp)
+export const estTypeMonetaire = (type: string): boolean => type === 'money'
+
+/** Une entrée de `options.choices`, telle que le §2.4 la décrit — `{key, label}`. */
+export type ChoixChamp = {
+	readonly key: string
+	readonly label: string
+}
+
+/**
+ * Les choix portés par un champ, lus depuis son `options` `jsonb`.
+ *
+ * `options` arrive typé `Json` : rien ne garantit sa forme côté TypeScript, et la base ne garantit
+ * que « objet » et « `choices` est un tableau non vide » (§2.4). Les entrées malformées sont donc
+ * ÉCARTÉES plutôt que rendues à moitié — une entrée sans clé ne peut désigner aucune valeur, et
+ * l'afficher dans l'éditeur inviterait à la conserver.
+ */
+export function choixDuChamp(champ: ChampAdministrable): readonly ChoixChamp[] {
+	const options = champ.options
+	if (options === null || typeof options !== 'object' || Array.isArray(options)) return []
+	const choix = (options as Record<string, unknown>).choices
+	if (!Array.isArray(choix)) return []
+	const retenus: ChoixChamp[] = []
+	for (const entree of choix) {
+		if (entree === null || typeof entree !== 'object' || Array.isArray(entree)) continue
+		const cle = (entree as Record<string, unknown>).key
+		const libelle = (entree as Record<string, unknown>).label
+		if (typeof cle !== 'string' || cle.trim() === '') continue
+		retenus.push({ key: cle, label: typeof libelle === 'string' ? libelle : cle })
+	}
+	return retenus
+}
+
+/** La devise portée par un champ `money` (§2.4), ou la chaîne vide si elle est absente. */
+export function deviseDuChamp(champ: ChampAdministrable): string {
+	const options = champ.options
+	if (options === null || typeof options !== 'object' || Array.isArray(options)) return ''
+	const devise = (options as Record<string, unknown>).currency
+	return typeof devise === 'string' ? devise : ''
+}
+
+/**
+ * Compose l'objet `options` à envoyer, selon le type.
+ *
+ * LES OPTIONS ÉTRANGÈRES AU TYPE NE SONT PAS RECOPIÉES, et c'est un choix : un champ passé de
+ * `select` à autre chose n'emporte pas ses choix. Le cas ne peut pas naître de l'écran — le type
+ * n'y est pas modifiable (§7 bis.10.3) — mais il peut naître d'une écriture d'API antérieure, et
+ * réémettre des `choices` sur un champ `text` ferait persister par l'éditeur une donnée que
+ * personne ne lit. `{}` est envoyé plutôt qu'omis, pour la même raison que le seed l'envoie : un
+ * `PATCH` qui omettrait la clé laisserait en place ce qu'il prétend remplacer.
+ */
+export function composerOptions(
+	type: string,
+	choix: readonly ChoixChamp[],
+	devise: string,
+): Record<string, unknown> {
+	if (estTypeAChoix(type)) {
+		return { choices: choix.map((entree) => ({ key: entree.key.trim(), label: entree.label.trim() })) }
+	}
+	if (estTypeMonetaire(type)) return { currency: devise.trim().toUpperCase() }
+	return {}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Validation de forme — docs/SPEC-workflow-engine.md §7 bis.10.4
+// ---------------------------------------------------------------------------------------------
+
+/** La clé d'un champ : minuscules, chiffres, tirets simples (§2.2, `form_fields_key_check`). */
+const MOTIF_CLE_CHAMP = /^[a-z0-9]+(-[a-z0-9]+)*$/
+export const cleChampConforme = (cle: string): boolean => MOTIF_CLE_CHAMP.test(cle)
+
+/** Le libellé d'un champ n'est pas vide après `btrim` (`form_fields_label_check`). */
+export const libelleChampConforme = (libelle: string): boolean => libelle.trim() !== ''
+
+/** L'aide est facultative, mais non blanche lorsqu'elle est fournie (`form_fields_help_text_check`). */
+export const aideChampConforme = (aide: string): boolean => aide === '' || aide.trim() !== ''
+
+/** La devise d'un champ `money` : trois majuscules (`form_fields_currency_check`). */
+const MOTIF_DEVISE = /^[A-Z]{3}$/
+export const deviseConforme = (devise: string): boolean => MOTIF_DEVISE.test(devise.trim().toUpperCase())
+
+/**
+ * Les choix d'un champ `select` ou `multiselect`.
+ *
+ * CE CONTRÔLE N'EST PAS UN RACCOURCI, et c'est le seul de tout cet éditeur dans ce cas. La base
+ * exige un tableau `choices` **non vide** et rien de plus : MESURÉ le 2026-08-14, un `select`
+ * portant DEUX choix de clé `a` est accepté en `201`. Le §2.4 l'annonçait — un `CHECK` ne déplie
+ * pas un tableau `jsonb` —, de sorte que la forme `{key, label}` et l'unicité des clés ne sont
+ * tenues que par cette fonction. Ce qu'elle ne couvre pas est écrit au §7 bis.10.4 : une écriture
+ * directe par l'API reste possible, et seule la validation des valeurs en subira la conséquence.
+ */
+export type RefusChoix = 'aucun-choix' | 'cle-vide' | 'libelle-vide' | 'cle-dupliquee' | null
+
+export function refusDesChoix(choix: readonly ChoixChamp[]): RefusChoix {
+	if (choix.length === 0) return 'aucun-choix'
+	const vues = new Set<string>()
+	for (const entree of choix) {
+		const cle = entree.key.trim()
+		if (cle === '') return 'cle-vide'
+		if (entree.label.trim() === '') return 'libelle-vide'
+		if (vues.has(cle)) return 'cle-dupliquee'
+		vues.add(cle)
+	}
+	return null
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les refus — docs/SPEC-workflow-engine.md §7 bis.10.5
+// ---------------------------------------------------------------------------------------------
+
+export type NatureRefusChamp =
+	/** `403`/`401` — `42501`. Seul un administrateur du workspace écrit (§2.7). */
+	| 'forbidden'
+	/** `23505` — l'unicité `(workflow_id, key)` : cette clé est déjà prise dans ce workflow. */
+	| 'cle-deja-prise'
+	/** `23503` — le workflow a disparu, ou n'appartient pas à ce workspace. */
+	| 'reference-absente'
+	/** `23514` — six `CHECK` distincts : clé, libellé, aide, type, `options` objet, options du type. */
+	| 'forme-refusee'
+	| 'network'
+	| 'unknown'
+
+export type RefusChamp = {
+	readonly nature: NatureRefusChamp
+	readonly detail: string
+}
+
+/**
+ * Classe un refus d'écriture sur un champ.
+ *
+ * PAS DE PARAMÈTRE `geste`, pour la raison exacte de `classerRefusTransition` : aucun retrait
+ * n'existe ici — le privilège `DELETE` n'est pas accordé —, donc aucun `23503` ne peut vouloir dire
+ * « occupé ». Il reste uniformément « le workflow a disparu » (§7 bis.10.5).
+ */
+export function classerRefusChamp(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusChamp {
+	const base: RefusEcriture = classerRefusEcriture(statutHttp, code, detail)
+	switch (base.nature) {
+		case 'slug-pris':
+			return { nature: 'cle-deja-prise', detail }
+		case 'workflow-hors-track':
+			return { nature: 'forme-refusee', detail }
+		default:
+			return { nature: base.nature, detail }
+	}
+}
+
+export type ResultatChamp =
+	| { readonly statut: 'applique' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusChamp }
+
+/** Enveloppe des écritures de champ, jumelle des deux précédentes sur `RefusChamp`. */
+async function executerChamp(
+	appel: () => PromiseLike<{
+		error: { code?: string; message: string } | null
+		status: number
+		data: unknown[] | null
+	}>,
+): Promise<ResultatChamp> {
+	try {
+		const reponse = await appel()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusChamp(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'applique' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusChamp(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les cinq écritures — docs/SPEC-workflow-engine.md §7 bis.10.2
+// ---------------------------------------------------------------------------------------------
+
+export type DeclarationChamp = {
+	readonly idWorkflow: string
+	readonly idWorkspace: string
+	readonly cle: string
+	readonly libelle: string
+	readonly type: string
+	readonly aide: string | null
+	readonly options: Record<string, unknown>
+}
+
+/**
+ * Déclare un champ dans le formulaire d'un workflow.
+ *
+ * `position` EST OMISE, et non envoyée à `null` comme pour une étape. MESURÉ le 2026-08-14 : un
+ * `POST` sans `position` rend `201` et une position en **fin** de formulaire — le trigger
+ * `BEFORE INSERT` du §2.6 la calcule dans la portée du workflow. L'assertion de type est nécessaire
+ * parce que le générateur de `CRM-006` ne voit pas les triggers et déclare la colonne obligatoire.
+ *
+ * `help_text` À `null` N'EST PAS UN CHAMP OMIS : « pas d'aide » est un état, et `''` serait refusé
+ * par `form_fields_help_text_check` — même règle que les surcharges du §7 bis.4.
+ */
+export async function declarerChamp(
+	client: ClientCrm,
+	declaration: DeclarationChamp,
+): Promise<ResultatChamp> {
+	return executerChamp(() =>
+		client
+			.from('form_fields')
+			.insert({
+				workflow_id: declaration.idWorkflow,
+				workspace_id: declaration.idWorkspace,
+				key: declaration.cle,
+				label: declaration.libelle,
+				type: declaration.type,
+				help_text: declaration.aide,
+				options: declaration.options as Database['public']['Tables']['form_fields']['Insert']['options'],
+			} as unknown as Database['public']['Tables']['form_fields']['Insert'])
+			.select('id'),
+	)
+}
+
+/**
+ * Modifie un champ : son libellé, son aide et ses options.
+ *
+ * NI LA CLÉ NI LE TYPE, et les deux motifs sont mesurés au §7 bis.10.3. La base accepte pourtant de
+ * modifier l'une comme l'autre — `200` dans les deux cas. La clé est l'identifiant durable que les
+ * exports et les messages d'erreur citent (§2.5) ; le type, lui, laisse derrière lui des valeurs que
+ * le produit refuse ensuite de réécrire, la validation ne revisitant aucune ligne existante. Un
+ * changement de type est un plan de remappage, c'est-à-dire `CRM-078`.
+ */
+export async function modifierChamp(
+	client: ClientCrm,
+	idChamp: string,
+	libelle: string,
+	aide: string | null,
+	options: Record<string, unknown>,
+): Promise<ResultatChamp> {
+	return executerChamp(() =>
+		client
+			.from('form_fields')
+			.update({
+				label: libelle,
+				help_text: aide,
+				options: options as Database['public']['Tables']['form_fields']['Update']['options'],
+			})
+			.eq('id', idChamp)
+			.select('id'),
+	)
+}
+
+/** Déplace un champ : une seule écriture, la position calculée par `calculerDeplacement`. */
+export async function deplacerChamp(
+	client: ClientCrm,
+	idChamp: string,
+	position: number,
+): Promise<ResultatChamp> {
+	return executerChamp(() =>
+		client.from('form_fields').update({ position }).eq('id', idChamp).select('id'),
+	)
+}
+
+/**
+ * Archive un champ, ou le restaure.
+ *
+ * C'EST LE SEUL RETRAIT QUE LE PRODUIT CONNAISSE. MESURÉ : `DELETE /form_fields` rend `403` et
+ * `42501` avec le jeton de l'administratrice, aucun privilège `DELETE` n'étant accordé (§2.7).
+ * L'archivage retire le champ des formulaires **sans supprimer les valeurs déjà saisies**, et il se
+ * défait par la même écriture avec `null` — un retrait réversible plutôt qu'une perte.
+ *
+ * L'instant est celui de l'appelant, non `now()` : PostgREST écrit ce qu'on lui envoie, et un
+ * horodatage calculé côté client est ce que l'écran affichera de toute façon.
+ */
+export async function archiverChamp(
+	client: ClientCrm,
+	idChamp: string,
+	instant: string | null,
+): Promise<ResultatChamp> {
+	return executerChamp(() =>
+		client.from('form_fields').update({ archived_at: instant }).eq('id', idChamp).select('id'),
 	)
 }
