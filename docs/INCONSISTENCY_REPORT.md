@@ -366,6 +366,40 @@ règle déjà rendue pour INC-091 — purge dans un `finally`, quel que soit le 
 décider si le contrôle doit être généralisé aux autres preuves qui écrivent dans des tables
 partagées, ce qu'un harnais de non-complaisance saurait mesurer.
 
+**REPRODUIT LE 2026-08-14, ET LA CAUSALITÉ CESSE D'ÊTRE UNE CHRONOLOGIE POUR DEVENIR UNE
+CONTRE-ÉPREUVE** (décision 377). Le constat d'origine reposait sur l'**ordre** des exécutions : vert
+avant, rouge après. Les deux sens ont cette fois été mesurés dans la même session, ce qui est une
+preuve d'une autre nature.
+
+1. `npm run test:sql` sur le seed frais, **avant** toute suite d'interface :
+   **33 fichiers, 1971 assertions, aucune anomalie**.
+2. `e2e:ui`, `e2e:api` puis `e2e:mail` joués. Rejoué, `test:sql` rend **deux** fichiers rouges —
+   `0004_tracks.test.sql` (`have: 6 want: 4`, puis `have: 3 want: 1`) et
+   `0029_inbox_globale.test.sql` (assertion 9, `have: 1 want: 0`, qui relève d'INC-091).
+3. Les **cinq** lignes résiduelles ont été nommées une à une avant tout geste :
+
+```
+b4e4db5f… E2E Arbo Souris Renommé    17:21:38  archivé   (tracks)
+302b1dcc… E2E Arbo Clavier Renommé   17:21:42  archivé   (tracks)
+18b5cc4b… E2E Canal Souris Renommé                       (channels)
+b5d62e6a… E2E Canal Clavier Renommé                      (channels)
+dc2a14b2… AllerRetour1786727909608   17:18:32            (mail_messages, non classé)
+```
+
+4. Les cinq retirées, **sans qu'aucune assertion ni aucun fichier du dépôt ne soit touché**,
+   `test:sql` rend de nouveau **1971 assertions, aucune anomalie**.
+
+Le résidu rougit, son retrait verdit, et rien d'autre n'a changé entre les deux mesures : ce n'est
+plus une corrélation d'horodatages. La prédiction de l'entrée — « la prochaine exécution de
+`npm run e2e:ui` les recréera » — est **vérifiée pour la deuxième fois**, sur un conteneur neuf.
+
+Le retrait des cinq lignes est, comme la fois précédente, un **geste d'exploitation sur un volume
+jetable**, consigné ici et non une correction : le comportement du dépôt est laissé **inchangé**, le
+défaut restant étranger à l'unité de la session (`CRM-043`). L'assertion de `0004_tracks.test.sql`
+n'est **ni désarmée ni assouplie** : elle reste le détecteur. Le coût est désormais **récurrent et
+mesuré à chaque exécution de la routine**, ce qui est l'argument le plus fort en faveur de
+l'arbitrage attendu ci-dessus.
+
 **Lié à :** INC-091 (même famille, table `mail_messages`), INC-055 et INC-057 (propriété et
 autonomie des harnais), `CRM-075` (porteur du scénario), `CRM-020` (porteur de l'assertion rouge).
 
@@ -585,6 +619,33 @@ chaque passage**, S3 compris. **Ce n'est pas une preuve que le défaut est corri
 qualifiait déjà d'intermittent, « rouge une fois sur plusieurs rejeux » —, seulement la mesure que
 la fenêtre de course ne s'est pas ouverte sur ces trois exécutions. La question de conception reste
 entière et appartient toujours au responsable.
+
+**LA FENÊTRE S'EST ROUVERTE LE 2026-08-14, ET LA PRUDENCE DE LA MESURE PRÉCÉDENTE EST JUSTIFIÉE**
+(décision 377). Sur un conteneur neuf, `npm run e2e:mail` rend **41 passés, 1 échec**, et l'échec est
+exactement S3 :
+
+```
+Expected value: "WARNING"     Received array: ["DEBUG", "INFO"]
+e2e/mail/mail-sync.spec.ts:221
+```
+
+Le journal du conteneur porte **une seule** ligne `WARNING`, et c'est celle que l'entrée décrit :
+
+```
+{"timestamp":"2026-08-14T17:20:15.145Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+Un seul événement, `veille_compte_echoue`, dans la fenêtre où `comptes-entrants.spec.ts` pose
+délibérément un mot de passe faux sur le compte entrant de Driss. **Le service a réagi correctement
+à une panne réelle qu'une autre preuve a provoquée** ; c'est S3 qui ne sait pas distinguer les deux.
+Trois passages verts n'avaient donc rien prouvé quant à la correction, comme la mesure du 2026-08-14
+le disait elle-même — et ce passage rouge, sur la même journée et un autre conteneur, en donne la
+démonstration.
+
+Rien n'est modifié : ni `mail-sync.spec.ts`, ni `comptes-entrants.spec.ts`, ni la veille. Le choix —
+suspendre la veille pendant ce scénario, restreindre S3 aux événements qu'il connaît par avance, ou
+autre chose — reste un **arbitrage du responsable**, et il est désormais adossé à une occurrence
+rouge datée plutôt qu'à un souvenir.
 
 ---
 
@@ -2270,6 +2331,17 @@ observation s'ajoute, et elle aggrave le constat : l'échec est **silencieux pou
 résumé** — `scripts/verify-webapp.sh` signalait « 10 anomalies » dont neuf « capture manquante », la
 cause réelle n'apparaissant qu'en lisant la sortie complète de Playwright. Les liens recréés, les 37
 scénarios et les deux harnais concernés sont repassés au vert.
+
+**Prédiction vérifiée une SEPTIÈME fois, le 2026-08-14, pendant `CRM-043`** (décision 377). Même
+révision `1194` fournie par le conteneur, même exécutable réclamé sous `chromium_headless_shell-1234`.
+La portée observée est cette fois **plus étroite, et l'entrée doit le dire** : ce ne sont pas les
+scénarios d'interface qui tombent, mais les **quatre** scénarios Roundcube de `npm run e2e:mail` —
+`e2e:ui` n'a pas été atteinte, le projet `ui` résolvant son navigateur par `chromium` et non par le
+*headless shell*. Le contournement retenu n'est plus l'arborescence de liens des occurrences
+précédentes mais celui de la décision 372, plus court et sans écriture hors dépôt :
+`npx playwright install chromium-headless-shell`, qui télécharge le build `1234` attendu. Les quatre
+scénarios repassent. Le coût reste **récurrent** — le conteneur suivant repartira du build `1194` —
+et l'arbitrage reste attendu.
 
 **Ce qui n'est pas fait, et pourquoi.** `e2e/playwright.config.ts` est un livrable de `CRM-008`,
 et y écrire un `executablePath` conditionnel reviendrait à rouvrir cette unité pendant un passage

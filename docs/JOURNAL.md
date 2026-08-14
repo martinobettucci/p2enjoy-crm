@@ -13059,3 +13059,144 @@ avant toute mise en œuvre — ne pas la trancher seul.
 
 **Rattachement :** INC-102 (nouvelle), INC-099 (constatée à nouveau, chiffrée sur `e2e:api`),
 INC-072 (close en amont). Unité `CRM-043`, non modifiée. Décisions 181, 375, 376, 377.
+### Décision 379 — Trois défauts d'environnement contre-éprouvés, un harnais que l'on disait inexécutable, et une règle que personne n'avait regardée
+
+**2026-08-14 — troisième exécution concurrente de la même journée, et il faut le dire d'emblée.**
+Cette session a démarré sur un checkout où `docs/JOURNAL.md` s'arrêtait à la décision 376 et où le
+backlog décrivait encore le geste de modération comme « restant à faire ». Elle a donc instruit sa
+clôture — et découvert au moment de pousser que les décisions **377** et **378** l'avaient déjà
+rendue, INC-072 close et `CRM-043` passée `[x]`. C'est la troisième fois qu'INC-089 se manifeste, et
+la garde de sérialisation qu'elle appelle n'existe toujours pas.
+
+**Ce qui est donc abandonné plutôt que poussé en double** : la clôture du lot G, la mise à `[x]` de
+l'unité et la correction du bloc « Limites nommées », tous livrés par la décision 377. Cette entrée
+ne conserve **que ce qui n'existe nulle part ailleurs** : quatre mesures, dont trois contredisent ou
+précisent ce que les entrées voisines affirment.
+
+**Ligne de base, établie avant toute modification** (`docs/CloudWorker.md` §2.4) : pile complète,
+**17 services `healthy`**, seed appliqué **sur une base neuve**. `test:sql` 33 fichiers / **1971**
+assertions, `test:unit` **770**, `e2e:api` **507**, `e2e:ui` **185**, `pytest` **242**, `typecheck`,
+`build`. Comparés à la décision 376 — 1969, 744, 507, 182, 242 —, les trois écarts sont
+**exactement** ce que le lot livré ajoute : +2 assertions pgTAP, +26 tests unitaires, +3 scénarios
+d'interface.
+
+**Cette ligne de base tranche accessoirement le doute laissé par la décision 378 sur INC-102.**
+Celle-ci mesure `0017_commentaires.test.sql` **rouge** à l'assertion 81 — `deleted_by` à `NULL` —
+sur une base **antérieure** au lot G. Ici, sur une base **recréée**, la même assertion est verte,
+`test:sql` rend ses 33 fichiers sans anomalie, et `scripts/verify-commentaires.sh` confirme
+`d4 est retiré par un TIERS, et la trace est nominative : deleted_by ≠ author_id`. Les deux mesures
+ne se contredisent pas : elles **délimitent** le défaut. INC-102 est bien un défaut du **chemin de
+mise à jour**, et non de la livraison — ce que la décision 378 supposait sans pouvoir le montrer,
+faute d'avoir les deux bases sous la main.
+
+**TROIS DÉFAUTS D'ENVIRONNEMENT REPRODUITS, AUCUN NOUVEAU, ET C'EST LA MESURE QUI LE DIT.**
+
+**1. INC-036, une septième fois.** `/opt/pw-browsers` porte le build **1194**, `@playwright/test`
+1.62.1 attend le **1234** : `e2e:mail` rouge sur ses quatre scénarios Roundcube,
+« Executable doesn't exist ». `npx playwright install chromium-headless-shell` suffit, comme la
+décision 372 l'avait consigné, et les quatre repassent. Le coût reste **récurrent** et l'arbitrage
+reste attendu.
+
+**2. INC-099 et INC-091 reproduits, et la causalité est cette fois ÉTABLIE PAR L'EXPÉRIENCE et non
+par la chronologie.** Le constat initial de la décision 375 reposait sur l'ordre des exécutions ;
+ici, les deux sens ont été mesurés. `test:sql` joué sur le seed frais : **1971 assertions, aucune
+anomalie**. Rejoué après `e2e:ui`, `e2e:api` et `e2e:mail`, il rend **deux** fichiers rouges :
+
+```
+0004_tracks.test.sql   not ok 75  have: 6  want: 4      (tracks résiduels)
+                       not ok 76  have: 3  want: 1      (dont archivés)
+0029_inbox_globale.test.sql  not ok 9  have: 1  want: 0 (message non classé résiduel)
+```
+
+Les lignes fautives ont été **nommées une à une**, et leurs horodatages tombent dans la fenêtre des
+suites :
+
+```
+b4e4db5f… E2E Arbo Souris Renommé    17:21:38  archivé
+302b1dcc… E2E Arbo Clavier Renommé   17:21:42  archivé
+18b5cc4b… E2E Canal Souris Renommé             (channels)
+b5d62e6a… E2E Canal Clavier Renommé            (channels)
+dc2a14b2… AllerRetour1786727909608   17:18:32  (mail_messages, non classé)
+```
+
+Les cinq retirées, `test:sql` rend de nouveau **1971 assertions, aucune anomalie**. C'est une
+**contre-épreuve**, pas une coïncidence : le résidu rougit, son retrait verdit. Le comportement est
+laissé inchangé — le défaut est étranger à cette unité —, et les deux entrées sont enrichies de
+cette mesure plutôt que corrigées au passage.
+
+**3. INC-092 reproduit, et il reste intermittent.** `e2e:mail` a rendu S3 rouge sur une **seule**
+ligne `WARNING` du journal de `mail-sync` :
+
+```
+{"timestamp":"2026-08-14T17:20:15.145Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+C'est exactement la fenêtre de course décrite par l'entrée : la veille a relevé le compte de Driss
+pendant que `comptes-entrants.spec.ts` y posait délibérément un mot de passe faux. Le service a
+**correctement** réagi ; c'est la preuve qui ne sait pas distinguer une panne provoquée d'un défaut.
+La décision 371 avait mesuré trois passages verts sans conclure à la correction ; ce passage rouge
+lui donne raison de ne pas l'avoir fait. Rien n'est modifié : la question de conception appartient
+au responsable.
+
+**4. LES HARNAIS `scripts/verify-*.sh` SONT EXÉCUTABLES ICI, ET LA DÉCISION 378 LES CROIT
+INEXÉCUTABLES.** Elle écrit qu'ils « n'ont pas tourné » parce que l'image ne fournit que Node 22,
+que `/opt` porte `node20`, `node21`, `node22`, et que « `nvm` n'a que `system` ». Ce dernier point
+est **exact au démarrage et faux ensuite** : `nvm` est bien présent sous `/opt/nvm`, mais il n'est
+pas chargé par le profil, et `/opt/nvm/versions/node/` **n'existe pas** tant qu'aucune version n'a
+été installée — ce qui donne l'apparence d'un `nvm` vide. Deux gestes suffisent, et ils ont été
+mesurés ici :
+
+```
+export NVM_DIR=/opt/nvm ; . /opt/nvm/nvm.sh   # sans NVM_DIR, le sourcing échoue silencieusement
+nvm install 24                                 # installe v24.19.0, npm 11.17.0
+export PATH=/opt/nvm/versions/node/v24.19.0/bin:$PATH   # `nvm use` ne suffit pas : /usr/local/bin précède
+```
+
+C'est très exactement la procédure que la décision 372 avait consignée, et elle fonctionne
+inchangée. `scripts/verify-commentaires.sh` a alors tourné **en entier**, et rend **78 contrôles,
+aucune anomalie** — y compris ses sept dégradations volontaires, dont le retrait de la politique
+`card_comments_moderation`, et sa restauration complète. La conclusion de la décision 378 — « rien
+n'est affirmé à leur sujet » — était la bonne posture ; ce qui la motivait n'était pas une limite de
+l'image mais un `nvm` non chargé.
+
+**CE QUI MANQUAIT VRAIMENT À L'UNITÉ, ET CE N'ÉTAIT PAS UNE ASSERTION.** La règle centrale de la
+décision 376 — **une seule action sur le commentaire d'un tiers, *Supprimer* et jamais *Modifier*** —
+est bien éprouvée : `commentaires-gestes.spec.ts` exige `actions-moderation` à **1** et `Modifier` à
+**0**. Mais elle n'était **observée nulle part**. Les trois captures de modération montrent la
+confirmation, la pierre tombale et le seed ; aucune ne montre l'état qui porte la règle, parce que
+la seule capture qui aurait pu le faire est prise **après** le clic, au moment où la confirmation a
+déjà pris la place du corps (décision 376, §5 du design system).
+
+C'est un écart au §16 de `CLAUDE.md`, et il est du genre qui se voit mal : la preuve est verte, le
+dossier de captures est fourni, et la règle la plus visible de l'unité est la seule que personne n'a
+regardée. La décision 376 écrit que « la forme le porte visiblement » ; une forme qu'aucune capture
+ne montre n'est pas vérifiée visuellement, elle est seulement affirmée.
+
+**Ce qui est livré :** une capture `moderation-actions-1440.jpg`, prise **avant** le clic, sur le
+commentaire de Driss vu par Camille, et son entrée à l'inventaire de `scripts/verify-commentaires.sh`.
+Aucune règle ne change, aucune assertion n'est ajoutée ni retirée : ce qui change est qu'on peut
+enfin **voir** ce que l'assertion affirme.
+
+**Ce que cette session n'emporte pas.** Aucune correction d'INC-091, INC-092 ou INC-099 — trois
+défauts étrangers, dont deux attendent un arbitrage. Aucune résurrection ni suppression physique
+d'un commentaire, aucun `card_event` de modération : la timeline typée reste à `CRM-044`.
+
+**Où reprendre.** `CRM-043` est **déjà close** par la décision 377, et cette session ne la rouvre
+pas : elle ajoute la seule capture qui manquait à sa vérification visuelle, ce qui **renforce** la
+clôture au lieu de la remettre en cause. Les preuves de l'unité ont toutes été rejouées vertes ici,
+sur base neuve, y compris `verify-commentaires.sh` que la décision 378 n'avait pas pu exécuter.
+
+L'ordre de reprise reste celui des décisions 377 et 378, et il n'est pas modifié : **INC-101 puis
+INC-099**, sous `CRM-008` et `CRM-075`, lot **I+J**. **INC-102** attend un arbitrage du responsable
+et ne se tranche pas seule ; la mesure ci-dessus la **borne** — défaut du chemin de mise à jour, pas
+de la livraison — sans la résoudre. INC-092, INC-099 et INC-036 restent **ouvertes**, avec la même
+question de fond : comment une preuve qui écrit dans une table partagée rend ce qu'elle a pris, et
+qui paie le coût récurrent d'un navigateur que l'image ne fournit pas.
+
+**Et INC-089 se manifeste une troisième fois.** Deux exécutions ont instruit la même unité en
+parallèle pendant que la troisième la livrait. Aucune n'a rien perdu — la clôture était poussée,
+celle-ci a été abandonnée à la lecture plutôt qu'écrite en double —, mais le travail dupliqué est
+réel et la garde de sérialisation appelée par la décision 364 reste **non livrée**.
+
+**Rattachement :** INC-036, INC-089, INC-091, INC-092, INC-099, INC-102. Unité `CRM-043`, close en
+amont et non rouverte. Décisions 364, 367, 371, 372, 375, 376, 377, 378.
