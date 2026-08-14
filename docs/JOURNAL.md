@@ -13253,3 +13253,59 @@ réel et la garde de sérialisation appelée par la décision 364 reste **non li
 
 **Rattachement :** INC-036, INC-089, INC-091, INC-092, INC-099, INC-102. Unité `CRM-043`, close en
 amont et non rouverte. Décisions 364, 367, 371, 372, 375, 376, 377, 378.
+
+### Décision 380 — Le lot I+J : deux compteurs de campagne périmés, et un `finally` qui archive au lieu de purger
+
+**2026-08-14.** L'unité de cette session est le lot **I+J**, désigné sans ambiguïté par les
+décisions 377 et 379 : **INC-101 puis INC-099**, dans cet ordre, sous `CRM-008` et `CRM-075`. Cette
+entrée est écrite et committée **avant la première ligne de code**, conformément à `CLAUDE.md` §5 :
+la forme retenue pour chacune des deux corrections est un arbitrage, et un arbitrage qui n'existe
+que dans le contexte d'un agent est un arbitrage perdu.
+
+**Ce que cette entrée ne décide pas.** Ni INC-101 ni INC-099 n'ouvrent une question neuve. La règle
+d'INC-099 est **déjà rendue** par la décision 362 pour INC-091 — « chaque preuve purge ce qu'elle a
+déposé, dans son propre `finally` » —, et INC-099 note elle-même qu'elle « s'énonce ici à
+l'identique ». La révision des compteurs d'INC-101 est, elle, une opération de maintenance dont la
+règle est écrite dans `scripts/verify-harness.sh` depuis `CRM-036` : les compteurs sont **figés et
+révisés dans le même changement que les preuves qu'ils comptent**, jamais déduits de l'exécution.
+Ce qui est décidé ici est donc la **forme** de deux gestes, pas leur principe.
+
+**INC-101 — ce qui sera fait, et ce qui ne le sera pas.** Les cinq constantes de
+`scripts/verify-harness.sh` seront portées aux valeurs **mesurées sur cette exécution**, et non
+recopiées depuis les décisions 377, 378 ou 379. Recopier serait exactement ce que le commentaire du
+fichier proscrit — adopter un nombre sans l'avoir compté. Les trois compteurs de scénarios seront
+établis par `playwright --list`, c'est-à-dire sur les scénarios **déclarés**, et confrontés ensuite
+au nombre de scénarios **verts** : les deux doivent coïncider, et l'écart, s'il existait, serait un
+fait à consigner plutôt qu'un nombre à choisir. Aucun contrôle n'est ajouté, aucun n'est retiré :
+l'unité `CRM-008` reste close, et seule sa ligne de comptage est remise à jour.
+
+**INC-099 — la cause exacte, et elle n'est pas celle que l'entrée décrit.** L'entrée écrit qu'« il
+n'y a aucun `finally` qui retire la ligne en sortie ». La lecture du fichier corrige ce point : les
+quatre scénarios de `e2e/ui/administration-arborescence.spec.ts` **ont** un `finally`, et ce
+`finally` appelle `archiverParSlug` — il pose `archived_at` au lieu de supprimer la ligne. Le
+filet de sécurité existe donc, mais il vise le mauvais état final : il garantit qu'aucune ligne
+active ne survit au scénario, pas qu'aucune ligne ne survit. C'est très exactement ce que mesurent
+les deux assertions rouges de `0004_tracks.test.sql` — « quatre tracks » **et** « l'un d'eux est
+archivé », `have: 6 want: 4` puis `have: 3 want: 1` : la seconde ne rougirait pas si le résidu
+n'était pas archivé.
+
+**La forme retenue :** le `finally` **supprime** par slug avec la clé de service, au lieu
+d'archiver. La suppression est déjà écrite et déjà exercée — `supprimerParSlug` est appelée à
+l'entrée de chacun des quatre scénarios depuis leur écriture —, ce qui borne le geste à un
+changement d'appel plutôt qu'à un mécanisme neuf. Le nettoyage d'entrée est **conservé** : il
+protège du `23505` d'une exécution tuée avant son `finally`, et sa présence n'a jamais été le
+défaut. Ce qui disparaît est `archiverParSlug`, devenue sans appelant.
+
+**Ce qui n'est pas fait, et pourquoi.** La généralisation du contrôle à toutes les preuves qui
+écrivent dans une table partagée reste une **question ouverte du responsable**, posée par INC-099
+elle-même ; elle n'est pas tranchée ici. L'assertion de `0004_tracks.test.sql` n'est **ni désarmée
+ni assouplie** : elle est le détecteur, et elle doit rester capable de rougir. INC-091 sur
+`mail_messages` appartient à `CRM-057` et à la décision 362 : elle n'est pas corrigée au passage.
+INC-092, INC-100 et INC-102 restent hors périmètre, la dernière attendant un arbitrage.
+
+**Preuves attendues avant toute clôture :** `test:sql` sur base seedée, `e2e:ui` puis `test:sql` de
+nouveau — la **contre-épreuve** qui décide d'INC-099 : sans le résidu, le second `test:sql` doit
+rendre le même compte que le premier —, puis `e2e:api`, `e2e:mail`, `test:unit`, `typecheck`,
+`build`, `pytest`, et enfin `scripts/verify-harness.sh` en entier, qui est le juge d'INC-101.
+
+**Rattachement :** INC-099, INC-101. Unités `CRM-008` et `CRM-075`. Décisions 362, 367, 377, 378, 379.
