@@ -13309,3 +13309,104 @@ rendre le même compte que le premier —, puis `e2e:api`, `e2e:mail`, `test:uni
 `build`, `pytest`, et enfin `scripts/verify-harness.sh` en entier, qui est le juge d'INC-101.
 
 **Rattachement :** INC-099, INC-101. Unités `CRM-008` et `CRM-075`. Décisions 362, 367, 377, 378, 379.
+
+**BILAN DE LA SESSION, MESURÉ APRÈS LIVRAISON — et il ferme les deux entrées du lot.**
+
+**1. INC-099 : le défaut a été REPRODUIT avant d'être corrigé, puis CONTRE-ÉPROUVÉ après.** Le
+protocole du §18 de `CLAUDE.md` a été tenu dans l'ordre, sur un seul conteneur, sans qu'aucune
+assertion ne soit touchée à aucun moment :
+
+| Étape | tracks | archivés | channels | `npm run test:sql` |
+|---|---|---|---|---|
+| seed frais, avant tout geste | 4 | 1 | 6 | 33 fichiers, 1971 assertions |
+| `administration-arborescence.spec.ts`, AVANT correction | **6** | **3** | **8** | `0004` rouge : `have: 6 want: 4`, puis `have: 3 want: 1` |
+| le même fichier, APRÈS correction | 4 | 1 | 6 | 33 fichiers, 1971 assertions |
+
+Les quatre lignes résiduelles ont été nommées avant tout geste — `E2E Arbo Souris Renommé`,
+`E2E Arbo Clavier Renommé`, `E2E Canal Souris Renommé`, `E2E Canal Clavier Renommé` — et elles ne
+réapparaissent plus. **La prédiction que l'entrée portait depuis son ouverture — « la prochaine
+exécution de `npm run e2e:ui` les recréera » — cesse d'être vraie**, et c'est la seule forme de
+clôture qui vaille pour une entrée de cette famille.
+
+**La cause exacte n'était pas celle que l'entrée décrivait, et il faut le dire.** INC-099 écrivait
+qu'« il n'y a aucun `finally` qui retire la ligne en sortie ». Il y en avait un, dans chacun des
+quatre scénarios : il appelait `archiverParSlug`. Le filet existait donc, mais il visait le mauvais
+état final. C'est **plus instructif** que l'absence supposée : une preuve peut avoir un épilogue,
+paraître discipliné, et ne rien restituer. La seconde assertion rouge le démontrait déjà sans que
+personne l'ait lue ainsi — « l'un d'eux est archivé », `have: 3 want: 1` ne rougit **que** parce que
+le résidu est précisément archivé.
+
+**2. La contre-épreuve tient à l'échelle de la campagne, et c'est ce qui la rend décisive.** Jouées
+à la suite sur la même base : `e2e:ui` **185 verts**, puis `test:sql` **1971 assertions, aucune
+anomalie** ; puis `e2e:api` **507 verts**, `e2e:mail` **42 verts**, puis `test:sql` de nouveau
+**1971, aucune anomalie**. Les décisions 378 et 379 mesuraient exactement l'inverse : `e2e:api`
+tombait à **496 verts et 11 rouges** lorsqu'il suivait `e2e:ui`, et `test:sql` rendait deux fichiers
+rouges après les trois projets. **Les onze rouges d'`e2e:api` disparaissent avec le résidu**, ce que
+ni la décision 378 ni la 379 n'avaient pu vérifier faute d'avoir la correction sous la main.
+
+**Et INC-091 ne s'est pas manifestée de cette exécution.** L'assertion 9 de `0029_inbox_globale`,
+que la décision 379 trouvait rouge après `e2e:mail`, est restée verte ici. La reprise de la décision
+362 — purge IMAP dans le `finally` — paraît donc tenir ; une exécution ne suffit pas à le conclure,
+et rien n'est affirmé au-delà de la mesure.
+
+**3. INC-101 : les cinq compteurs sont révisés, et l'un d'eux n'avait JAMAIS été juste.** Valeurs
+mesurées avant toute modification : `33 / 1971 / 507 / 185 / 42` contre `31 / 1921 / 504 / 182 / 41`.
+L'écart est attribué **fichier par fichier** dans `scripts/verify-harness.sh` plutôt que constaté en
+bloc — deux suites pgTAP ajoutées, quatre étendues, trois scénarios d'interface, un de messagerie —
+et le compte se reconstitue à l'unité.
+
+**La mesure que l'entrée n'avait pas faite, et qui élargit sa leçon.** INC-101 décrivait cinq
+compteurs « périmés », c'est-à-dire dépassés par des livraisons postérieures. C'est vrai de quatre
+d'entre eux. **`SCENARIOS_API` n'a jamais été juste** : depuis le commit qui a écrit `504` — et qui
+ne touchait *que* ce fichier —, aucun scénario d'API n'a été ajouté ni retiré, le seul fichier
+d'`e2e/api/` modifié depuis l'ayant été par le **renommage** d'un scénario. Le compte déclaré était
+donc déjà de **507** à l'instant de l'écriture. Un compteur figé peut mentir sans qu'aucune
+livraison ne l'ait dépassé : l'erreur de comptage est un mode de défaillance distinct de la dérive,
+et il échappe à la discipline « réviser dans le même changement » qui ne vise que la seconde. La
+parade est la même que celle qu'INC-101 recommande — compter par `--list`, puis **confronter** au
+nombre de verts, ce qui a été fait ici pour les trois projets : 507/507, 185/185, 42/42.
+
+**4. LE JUGE A ÉTÉ RENDU, ET IL EST VERT.** `scripts/verify-harness.sh` a tourné **en entier** —
+ce que ni la décision 378 ni la 379 n'avaient pu faire avec des compteurs faux : **28 contrôles,
+aucune anomalie**, ses six dégradations réelles comprises, restauration constatée. Ses cinq
+contrôles de compteurs passent avec les valeurs révisées. `scripts/verify-administration-arborescence.sh`
+rend **27 contrôles, aucune anomalie**, et laisse **zéro** track et **zéro** channel résiduels —
+mesuré en base après coup, puis `test:sql` rejoué vert derrière lui.
+
+**5. UN DÉFAUT TROUVÉ AU PASSAGE, CONSIGNÉ ET NON CORRIGÉ AU-DELÀ DU NÉCESSAIRE : INC-103.** En
+inscrivant les deux clôtures dans `docs/INCONSISTENCY_REPORT.md`, ce document s'est révélé porter
+**deux comptes différents de ses propres entrées closes** — « 43 closes » en tête, « quarante-cinq »
+dans l'intitulé de l'index — pour un tableau qui en alignait **quarante-six**. Le troisième nombre,
+celui des ouvertes, était juste. C'est le mécanisme d'INC-101 appliqué au registre lui-même, et la
+troisième fois que la famille se manifeste après INC-080. Les nombres ont été **recomptés** — 48
+closes, 55 ouvertes — parce que le lot devait de toute façon les écrire et qu'on ne publie pas
+sciemment un compte faux ; la **cause** est laissée intacte et documentée avec ses deux issues
+chiffrées, le choix appartenant au responsable.
+
+**BILAN COMPLET DES PREUVES, TOUTES EXÉCUTÉES SUR CETTE SESSION.** `test:sql` **33 fichiers / 1971
+assertions**, `test:unit` **770**, `e2e:ui` **185**, `e2e:api` **507**, `e2e:mail` **42**, `pytest`
+**242**, `typecheck` et `build` verts, `verify-harness.sh` **28 contrôles**,
+`verify-administration-arborescence.sh` **27 contrôles**. Aucune anomalie. Les quatre captures de
+`docs/captures/CRM-075/` sont **identiques à l'octet près** après le rejeu — la correction n'agit
+qu'après le dernier geste observé —, et `arborescence-xl-1440.jpg` a été **regardée**.
+
+**Ce que cette session n'emporte pas.** La **généralisation** demandée par INC-099 — un contrôle qui
+mesurerait, pour toutes les preuves écrivant dans une table partagée, qu'elles restituent ce
+qu'elles prennent — n'est pas livrée : elle engage toutes les suites du dépôt et reste une question
+du responsable. INC-091 n'est pas rouverte. INC-092, INC-100 et INC-102 sont hors périmètre, la
+dernière attendant un arbitrage qui ne se tranche pas seul.
+
+**Où reprendre.** Le lot **I+J est soldé** : INC-099 et INC-101 sont closes, toutes preuves jouées.
+La suite de l'ordre des décisions 367 et 377 est **le lot L**, puis les lots sans pile encore dus —
+**H**, **K**, **F**, **M**, **E** et **C**. Trois entrées appellent une décision du responsable
+avant toute mise en œuvre et ne doivent pas être tranchées seules : **INC-092** (fenêtre de lecture
+du journal de `mail-sync`), **INC-102** (convergence du seed sur une base antérieure) et **INC-103**
+(comment tenir les comptes du registre). **INC-100** reste due sous `CRM-022` et `CRM-034`, et elle
+est peu coûteuse.
+
+**Registre à la fin de cette session : 55 entrées ouvertes, 48 closes.** Backlog : **933 `[x]`**,
+**2 `[~]`**, **58 `[ ]`** — inchangé en structure, les deux unités du lot étant déjà `[x]` et
+recevant ici leurs preuves manquantes plutôt qu'un changement de statut.
+
+**Rattachement :** INC-099 (close), INC-101 (close), INC-103 (nouvelle), INC-091 et INC-092
+(mesurées, non modifiées). Unités `CRM-008` et `CRM-075`. Décisions 51, 80, 362, 367, 377, 378, 379.
