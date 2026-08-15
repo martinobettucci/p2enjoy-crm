@@ -14454,3 +14454,100 @@ inaccessibles (§3.3) — le compte que l'écran affiche avant de confirmer une 
 puis la couche de données et l'écran. Le seed doit être enrichi avant l'E2E : un channel et un track
 en corbeille, et un enfant sous parent en corbeille, sans quoi le refus livré ici n'a aucun cas de
 démonstration à l'écran.
+
+### Décision 401 — Une session concurrente a livré trois fois de suite l'unité en cours : ce qui reste de celle-ci, et ce qu'elle a mesuré
+
+**2026-08-15, session parallèle à celles des décisions 393 à 400.** Entrée écrite en fin de session
+parce que ce qu'elle a à consigner n'est pas une conception mais un **constat de course**, et deux
+mesures qui survivent à la collision.
+
+**Ce que cette session laisse au dépôt.** Un seul commit de code : `SCENARIOS_UI` porté de 219 à
+**241** dans `scripts/verify-harness.sh`, sur une mesure et non sur une addition d'annonces —
+`--list` compte 241 tests dans 18 fichiers, dont **56** pour `e2e/ui/administration-workflows.spec.ts`
+contre 34 à la quatrième tranche, et la campagne complète rend **241 verts en 5,4 min**. La
+décision 396 s'est appuyée sur cette valeur pour rendre verts `verify-webapp.sh` et
+`verify-champs-formulaire.sh`. S'y ajoute le commit des captures régénérées par la campagne.
+
+**Ce qu'elle a écrit puis JETÉ, et il faut le dire en ces termes.** Deux tranches complètes ont été
+construites puis écartées parce qu'une session concurrente les avait livrées pendant leur écriture :
+
+1. une **septième tranche de `CRM-076`** — les preuves API dédiées de l'éditeur — dont la décision
+   395 a livré la part qui comptait ;
+2. la **première tranche de `CRM-077`** — migration `0037`, colonnes `deleted_at` / `deleted_by`,
+   fermeture de `deleted_by` par retrait du privilège de TABLE, trigger d'audit, 24 assertions
+   pgTAP — livrée par le commit `6e47a3b` sous le nom `0037_corbeille.sql` pendant que la mienne
+   passait ses preuves.
+
+Le travail jeté l'a été proprement : les fichiers ont été retirés de l'arbre, et la base de
+développement rendue à l'état qu'attend la migration concurrente — trois triggers et une fonction
+supprimés, privilège de table rétabli — avant de rejouer `npm run test:sql`, qui rend **36 fichiers /
+2003 assertions, aucune anomalie** sur l'arbre fusionné. Aucune trace de la tranche écartée ne
+subsiste ni dans le dépôt ni dans la pile.
+
+**La leçon, pour les sessions suivantes.** Ce dépôt porte plusieurs workers simultanés, et le coût
+n'est pas le conflit Git — il se résout — mais la **duplication silencieuse** : deux sessions
+choisissent la même unité par la même règle du §4.2 de `docs/CloudWorker.md`, et la seconde ne
+l'apprend qu'en poussant. Un `git fetch origin main` **avant** d'écrire la première ligne d'une
+tranche, et non seulement avant de pousser, aurait épargné les deux tiers de cette session.
+
+**Deux mesures qui survivent, et qu'aucune autre entrée ne porte.**
+
+La première est un **inventaire de couverture**, et c'est une lacune plutôt qu'un défaut. L'éditeur
+de workflows émet **treize** écritures et un appel de fonction ; les politiques qu'il rencontre sont
+toutes prouvées, mais chacune depuis l'unité qui l'a livrée — `CRM-031`, `CRM-035`, `CRM-018`. Aucune
+preuve ne regarde l'éditeur comme un tout. MESURÉ avec les jetons réels du `business_developer`
+**et** du `viewer` : les cinq insertions rendent `403` / `42501` RLS ; les six modifications et
+retraits rendent **`204`, aucune ligne touchée** — la clause `using` ne présente aucune ligne, et
+PostgREST rend un succès vide. C'est exactement d'où vient le refus `sans-effet` des cinq
+classificateurs de l'écran. Une seule ligne échappe aux deux familles : `DELETE` sur `form_fields`
+rend `403` / `42501` de **privilège**, `hint` « GRANT DELETE ON public.form_fields », y compris à
+l'administratrice. `CRM-076` étant close, ce constat n'est pas rouvert ici ; il est écrit pour que la
+session qui touchera de nouveau à cet écran sache ce qui n'est pas couvert.
+
+La seconde complète la mesure de la décision 395 sur `previsualiser_exigence`. Cette décision avait
+constaté `1, 8` pour l'administratrice contre `1, 4` pour le `viewer` sur `date-signature-prevue` ×
+`Perdu`. Deux points s'y ajoutent, mesurés ici : sur `budget` × `Prospection`, l'administratrice et
+le `business_developer` rendent tous deux `3, 0` quand le `viewer` rend **`2, 0`** — l'égalité des
+deux premiers profils est la **contre-épreuve** de la divergence, ces deux-là voyant les quatre
+tracks ; et l'appel anonyme rend **`401`** / `42501` « permission denied for function », donc avant
+même d'atteindre le corps.
+
+**Un obstacle d'environnement NOUVEAU, différent de ceux des décisions 387, 391 et 396.** Lancer
+`npm run e2e:ui` avec `WEBAPP_PREVIEW_PORT=5173` échoue d'emblée sur « `http://127.0.0.1:5173` is
+already used » : `./runDev.sh` **sans** `--dev` publie le conteneur `p2enjoy-webapp` sur ce port, et
+`e2e/playwright.config.ts` pose `reuseExistingServer: false`. Or 5173 est le port de `SITE_URL`, dont
+dépend `authentification.spec.ts:161`. Le remède est `docker stop p2enjoy-webapp` avant la campagne,
+et il ne touche rien du dépôt : Playwright sert lui-même le build sur ce port. Les décisions
+précédentes avaient rencontré l'autre moitié du problème — le port par défaut 4173 — sans que le
+conteneur ne les gêne. À cela s'ajoutent, inchangés et à refaire à chaque exécution : la porte
+Node 24 ouverte en déposant la distribution officielle sous `~/.nvm/versions/node/v24.11.1/`, et
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. **`npm ci` n'est pas
+joué par `./runDev.sh`** : `node_modules/` était absent au démarrage, et `npm run build` échouait sur
+« vite: not found » tant qu'il n'avait pas été joué à la main, avec `npm config set cafile
+/root/.ccr/ca-bundle.crt`. Il en va de même de `pytest`, absent tant que
+`mail-sync/requirements-dev.txt` n'est pas installé dans un `.venv`.
+
+**Ce que la session a mesuré, et qui vaut ligne de base pour la suivante.** Sur l'arbre de départ —
+`origin/main` avant les six commits concurrents — : `typecheck`, `build` et `types:check` verts,
+`test:unit` **973/973** sur 36 fichiers, `test:sql` **34 / 1981**, `e2e:api` **507/507**, `e2e:ui`
+**241/241**, `e2e:mail` **42/42**, `pytest` **242**, `verify-harness.sh` **28 contrôles**,
+`verify-workflows.sh` **49**, `verify-champs-formulaire.sh` **38**, `verify-webapp.sh` **42**,
+`verify-formulaire.sh` **49 dont 1 en échec — INC-109, connue et qualifiée**. Sur l'arbre fusionné,
+les deux tranches de `CRM-077` comprises : `typecheck`, `build`, `types:check` verts, `test:unit`
+**973**, `test:sql` **36 / 2003**, `e2e:api` **513 verts et 1 rouge**, `e2e:ui` **241/241 en 5,4 min**. Ces derniers chiffres portent sur l'arbre
+**tel qu'il était à la décision 400** : la troisième tranche de `CRM-077` — le retrait des listes de
+ce qui est en corbeille, commit `7027e25` — a été poussée pendant la campagne d'interface et n'est
+donc PAS couverte par ces mesures. C'est à la session qui la porte de la mesurer.
+
+**L'unique rouge de `e2e:api` est INC-110, et sa ligne de base est établie plutôt que supposée.**
+`inbox.spec.ts:159` échoue sur `public.mail_attachments` **vide** — MESURÉ, `count(*) = 0`. La
+contre-épreuve a été faite dans les règles du §2.4 de `docs/CloudWorker.md` : le même scénario, rejoué
+isolément avec l'arbre de travail **remisé**, échoue à l'identique. La décision 397 avait déjà montré
+que le symptôme ne se reproduit pas sur une pile neuve : il tient à l'état accumulé par la session,
+non au dépôt.
+
+**Où reprendre.** `CRM-077` est `[~]`, ses deux premières tranches livrées par la session
+concurrente. La tranche suivante reste celle que la décision 400 désigne : l'**énumération** des
+enfants rendus inaccessibles (§3.3), puis la couche de données et l'écran, le seed enrichi devant
+précéder l'E2E. **Avant d'écrire quoi que ce soit, faire `git fetch origin main` et relire la
+dernière entrée de ce journal** : la tranche peut déjà être livrée.
