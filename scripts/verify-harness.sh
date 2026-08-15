@@ -418,7 +418,19 @@ SCENARIOS_API=507
 # base, le parcours au clavier seul, le compte des quinze règles seedées retrouvé après la campagne,
 # la capture de la grille et les quatre paliers. 210 + 9 = **219**, valeur MESURÉE par l'exécution
 # complète du fichier (34 verts) puis par la campagne entière.
-SCENARIOS_UI=219
+# **241 depuis les CINQUIÈME et SIXIÈME tranches de `CRM-076`** (le 2026-08-15) : les deux tranches
+# ont été livrées par des sessions concurrentes qui n'ont pas pu MESURER la campagne entière, et
+# elles ont laissé le compteur à 219 en le disant. Il est porté ici sur une mesure, jamais sur une
+# addition d'annonces : `--list` compte **241 tests dans 18 fichiers**, dont **56** pour
+# `e2e/ui/administration-workflows.spec.ts` contre 34 à la quatrième tranche, et la campagne
+# complète rend **241 verts en 5,4 min**. 219 + 22 = **241**. Les vingt-deux se répartissent en
+# treize pour les exigences de transition — les exigences seedées et leur origine, l'exigence de
+# règle sans commande de retrait, les deux gestes à la souris puis au clavier, les choix privés du
+# champ déjà exigé et de l'archivé, le refus `23505`, la liaison sans effet, le seed retrouvé, et
+# les quatre paliers — et neuf pour la prévisualisation des effets — les deux nombres mesurés
+# contre le seed, le renoncement vérifié par l'absence de ligne, la confirmation au clavier seul,
+# les quinze règles retrouvées, et les quatre paliers.
+SCENARIOS_UI=241
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
