@@ -16200,3 +16200,75 @@ et un s'arrêtent avant d'éprouver le produit.
 publication, aperçu de comparaison, aperçu du plan et bouton de restauration — et leurs captures
 observées (`CLAUDE.md` §16). **`CRM-078` reste `[~]`** : sa Definition of Done exige les écrans, et
 la quatrième tranche est désormais close sur ses preuves serveur.
+
+## 2026-08-15 — `CRM-078`, cinquième tranche : les écrans, et l'unité se ferme
+
+**L'unité de la session.** La dernière entrée du journal désignait la cinquième tranche de
+`CRM-078` — les écrans. Sa spécification n'existait pas : elle a été écrite après mesure sur la pile
+seedée, `docs/SPEC-workflow-engine.md` **§7 ter.14**, neuf sections, committée et poussée **avant**
+la première ligne de code, avec `docs/DESIGN_SYSTEM.md` §5.15 dans le même commit.
+
+**Ce qui est livré.** Un **sixième bloc** de l'éditeur de workflows, sous les exigences de
+transition et dans la même colonne : la liste des versions, la publication, l'aperçu de comparaison,
+l'aperçu du plan et la restauration. Aucune route nouvelle — une version appartient à un workflow,
+et le choisir est déjà le travail de la colonne de gauche. Le module `versions-workflow.ts` porte la
+lecture 8 et les quatre appels ; `BlocVersionsWorkflow.tsx` porte le rendu.
+
+**Rien n'est calculé dans le navigateur, et c'est la règle de fond de la tranche.** Le verdict
+`ready` d'un plan n'a qu'une formulation, celle de la base : chaque choix de destination
+**replanifie** plutôt que de recalculer le verdict à l'écran. Recompter aurait été une seconde
+formulation de la même règle, et le plan y aurait de surcroît été borné par ce que la RLS de
+l'appelant consent à lire (§7 ter.12.4).
+
+**Aucune destination n'est devinée, et l'écran le tient par sa forme.** Chaque étape retirée porte
+une liste déroulante dont la **première option est vide et se nomme** « Aucune instruction ».
+Pré-remplir la première étape de la version aurait été une supposition sur l'intention, contre la
+lecture littérale de la Definition of Done de l'unité.
+
+**Aucune commande n'est éteinte d'avance, y compris « Restaurer » sous un plan non applicable.** La
+garde est la vérification 7 du §7 ter.13.6, dont le `detail` nomme les affaires bloquées ; un bouton
+grisé aurait fait passer une règle de base pour une décision d'interface (`CLAUDE.md` §10). Le refus
+opposé à la lectrice est **constaté** par une preuve d'interface, avec son jeton réel.
+
+**Un écart est nommé plutôt que compensé : la concurrence optimiste n'est pas offerte depuis
+l'écran.** `expected_live_fingerprint` n'est pas transmis, et le motif est **mesuré** : aucune RPC
+publique ne rend l'empreinte vivante d'un workflow, le schéma `app` n'étant pas exposé par PostgREST
+— le §7 ter.13.10 l'avait déjà établi pour sa ligne c. Le produit n'est pas sans garde pour autant,
+la restauration rejouant le plan dans sa propre transaction. Exposer l'empreinte vivante est un
+geste serveur, qui aura son unité. Deux assertions unitaires figent l'absence de ce paramètre.
+
+**Une correction vient de l'observation d'une capture, et non d'un test.** La liste « Version à
+restaurer », étirée sur toute la colonne, se lisait comme un champ de saisie à côté des deux listes
+compactes de la comparaison. Elle garde désormais la largeur de son contenu.
+
+**Un défaut de double de test a été corrigé plutôt que contourné.** Le client factice de
+`AdministrationWorkflows.test.tsx` retombait sur le catalogue pour toute table non nommée : la
+lecture 8 recevait des lignes de catalogue, sans colonne de version. La branche `workflow_versions`
+est désormais explicite, et le module normalise ses colonnes — une ligne amputée ne rend jamais
+`undefined`, ce qu'une assertion éprouve.
+
+**Preuves exécutées — la campagne complète, et elle est verte.** `test:sql` **40 fichiers,
+2133 assertions, aucune anomalie** ; `e2e:api` **591/591** ; `e2e:ui` **275/275**, dont les 10
+scénarios neufs ; `e2e:mail` **42/42** ; `test:unit` **1099/1099** sur 40 fichiers, dont les 53
+neufs ; `python3 -m pytest mail-sync/tests` **242 passés** ; `typecheck` et `build` verts. Captures
+aux quatre paliers, versions et plan, produites **et observées** sous `docs/captures/CRM-078/`.
+
+**Ce qui n'a PAS pu être exécuté :** les `scripts/verify-*.sh`, pour la raison déjà mesurée — cet
+hôte n'offre que Node 22.22.2 et tous exigent Node 24 / npm 11+. Le refus survient à la première
+ligne, avant toute lecture du dépôt. Constat inchangé, et étranger à cette session.
+
+**`CRM-078` passe `[x]`.** Les cinq tranches sont livrées et prouvées, et sa Definition of Done —
+« aucune étape n'est devinée, aperçu exhaustif, application transactionnelle, retour arrière,
+pgTAP/API/E2E et captures » — est satisfaite. Un seul point reste ouvert et il ne relève pas de la
+DoD : `scripts/verify-versionnement.sh` n'est pas écrit, parce qu'aucun harnais n'est exécutable
+ici et qu'un harnais non éprouvé n'est pas une preuve.
+
+**Où reprendre.** L'unité suivante dans l'ordre du plan, `CRM-079` — onboarding guidé au premier
+lancement —, dont la spécification n'existe pas et devra être écrite et committée avant tout code.
+`CRM-080` et `CRM-081` restent `[ ]` derrière elle.
+
+**L'environnement, sans redécouverte.** `npm ci` reste nécessaire dans un checkout neuf, avec
+`npm config set cafile /root/.ccr/ca-bundle.crt`. `e2e:ui` exige
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`. `pytest` se lance par
+`python3 -m pytest mail-sync/tests`, après
+`pip install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements{,-dev}.txt`.

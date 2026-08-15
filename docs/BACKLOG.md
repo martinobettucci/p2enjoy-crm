@@ -6093,7 +6093,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[~]` |
-| CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |
+| CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
 | CRM-081 | Snooze des fils et des cards | `[ ]` |
@@ -7074,7 +7074,7 @@ livrer une destruction irréversible sans règle de conservation serait le contr
 conformité ; et la **visibilité de la corbeille** pour un membre ordinaire. Aucun n'est tranché
 ici.
 
-### CRM-078 — Versionnement des workflows `[~]`
+### CRM-078 — Versionnement des workflows `[x]`
 
 Versions immuables, comparaison de composition et plan explicite de remappage des cards avant
 activation. **DoD** : aucune étape n'est devinée, aperçu exhaustif, application transactionnelle,
@@ -7392,6 +7392,19 @@ Les preuves publient elles-mêmes ce qu'elles comparent, par la vraie RPC.
 que des données et des gestes serveur (`docs/SPEC-workflow-engine.md` §7 ter.9 et §7 ter.11.7).
 L'unité **ne peut pas** passer `[x]` avant la cinquième tranche, dont la Definition of Done exige
 l'aperçu et les captures.
+
+*Statut, 2026-08-15.* **`[x]`, les cinq tranches livrées et prouvées.** La cinquième livre les
+écrans que la Definition of Done exigeait — « aperçu exhaustif […] pgTAP/API/E2E et captures » — et
+la campagne complète a été rejouée après elle : `test:sql` **40 fichiers, 2133 assertions**,
+`e2e:api` **591/591**, `e2e:ui` **275/275** dont les 10 neufs, `e2e:mail` **42/42**,
+`test:unit` **1099/1099** sur 40 fichiers, `python3 -m pytest mail-sync/tests` **242 passés**,
+`typecheck` et `build` verts.
+
+*Écart nommé, et il ne relève PAS de la Definition of Done.* `scripts/verify-versionnement.sh`
+n'est **pas écrit**. Il serait désormais utile — les cinq tranches sont livrées —, mais aucun
+`verify-*.sh` n'est exécutable dans cet environnement, qui n'offre pas le couple Node 24 / npm 11+
+que tous exigent. Écrire un harnais que la session ne peut pas exécuter reviendrait à livrer une
+preuve non éprouvée, ce que `CLAUDE.md` §25 interdit. À écrire sur un hôte portant Node 24.
 
 *Preuves restant à exécuter pour cette unité.* **Aucune.** La première tranche redevient
 intégralement verte sur une base neuve — **31 assertions sur 31** — l'arbitrage de la **décision
