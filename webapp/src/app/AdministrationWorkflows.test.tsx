@@ -1,5 +1,5 @@
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
-//           troisième et quatrième tranches
+//           troisième, quatrième et cinquième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les lectures et le catalogue à la demande),
 //           §7 bis.4 (les six gestes et leurs écritures), §7 bis.5 (validation de forme, `0`
 //           accepté), §7 bis.6 (états, clavier), §2.5 (`0` n'est pas `NULL`), §3.3 (libellé
@@ -14,6 +14,11 @@
 //           (lecture 6, émise avec les trois autres), §7 bis.11.2 (les champs archivés écartés),
 //           §7 bis.11.3 (l'`upsert` et la suppression), §7 bis.11.4 (les quatre états d'une case),
 //           §7 bis.11.5 (les refus), §7 bis.11.6 (le vrai `table` et ses deux en-têtes)
+// @verifies docs/SPEC-workflow-engine.md §7 bis.12 (les exigences de transition), §7 bis.12.1
+//           (lecture 7, émise avec les quatre autres), §7 bis.12.2 (l'union effective et ses
+//           origines), §7 bis.12.3 (les deux gestes, sans `upsert`), §7 bis.12.4 (les choix
+//           refusés), §7 bis.12.5 (les refus), §7 bis.12.6 (états et disposition)
+// @verifies docs/SPEC-transition-required-fields.md §1 (l'union), §5.1 (la sixième garde)
 // @verifies docs/SPEC-form-composer.md §2.3 (types), §2.4 (options), §2.7 (aucune suppression),
 //           §3.1 (l'absence de règle vaut `visible`), §5 (un champ archivé n'est dans aucun formulaire)
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau sémantique, jamais simulé)
@@ -185,6 +190,16 @@ const REGLES = [
 	{ field_id: 'c-3', step_id: 'e-1', visibility: 'hidden' },
 ]
 
+/**
+ * Une exigence explicite, et une seule : `tr-1` exige « Origine du contact ».
+ *
+ * Le couple est choisi pour que l'union du §7 bis.12.2 soit éprouvable en entier sur la seule arête
+ * du jeu : « Budget estimé » y est exigé par la RÈGLE de l'étape d'arrivée `e-2`, « Origine du
+ * contact » par la TRANSITION, et aucun des deux ne l'est par les deux — ce dernier cas a son
+ * propre scénario, avec son propre jeu.
+ */
+const EXIGENCES = [{ transition_id: 'tr-1', field_id: 'c-2' }]
+
 const CATALOGUE = [
 	{ ...NOEUD_PROSPECTION, position: 1 },
 	{
@@ -215,11 +230,13 @@ type Options = {
 	readonly transitions?: unknown[]
 	readonly champs?: unknown[]
 	readonly regles?: unknown[]
+	readonly exigences?: unknown[]
 	readonly catalogue?: unknown[]
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
 	readonly erreurChamps?: { message: string; status: number }
 	readonly erreurRegles?: { message: string; status: number }
+	readonly erreurExigences?: { message: string; status: number }
 	readonly reponseEcriture?: {
 		data: unknown[] | null
 		error: { message: string; code?: string } | null
@@ -278,6 +295,9 @@ function clientFactice(options: Options = {}): {
 				}
 				if (table === 'form_fields') return lecture(options.champs ?? CHAMPS, options.erreurChamps)
 				if (table === 'form_field_rules') return lecture(options.regles ?? REGLES, options.erreurRegles)
+				if (table === 'workflow_transition_required_fields') {
+					return lecture(options.exigences ?? EXIGENCES, options.erreurExigences)
+				}
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -1252,5 +1272,217 @@ describe('la grille des règles de visibilité (§7 bis.11)', () => {
 		monter({ champs: [CHAMPS[2]] })
 		await attendreEcran()
 		expect((await screen.findByTestId('grille-impossible')).textContent).toContain('Aucun champ actif')
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.12 — Les exigences propres à une transition
+// ---------------------------------------------------------------------------------------------
+
+describe('les exigences de transition (§7 bis.12)', () => {
+	it('est lu AVEC les quatre autres lectures, jamais séparément', async () => {
+		// §7 bis.12.1 : une exigence n'a de sens qu'entre une arête et un champ du MÊME instant.
+		const { lectures } = monter()
+		await attendreEcran()
+		await waitFor(() =>
+			expect(lectures).toContain('workflow_transition_required_fields'),
+		)
+		expect(lectures.filter((table) => table === 'workflow_transition_required_fields')).toHaveLength(1)
+	})
+
+	it('réunit l’exigence venue de la RÈGLE et celle venue de la TRANSITION', async () => {
+		// La sixième garde de `move_card` exige les deux (§7 bis.12.2). N'afficher que la table
+		// écrirait « aucune exigence » là où la règle en impose déjà une.
+		monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const lignes = within(arete).getAllByTestId('ligne-exigence')
+		expect(lignes.map((ligne) => ligne.getAttribute('data-champ'))).toEqual(['budget', 'source'])
+		expect(lignes.map((ligne) => ligne.getAttribute('data-origine'))).toEqual([
+			'regle',
+			'transition',
+		])
+	})
+
+	it('n’offre AUCUNE commande de retrait sur une exigence venue d’une règle', async () => {
+		// Un `DELETE` sur une ligne qui n'existe pas rendrait `200` et zéro ligne, l'exigence
+		// restant imposée par `move_card`. L'écran renvoie à la grille plutôt que de le promettre.
+		monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const parRegle = within(arete)
+			.getAllByTestId('ligne-exigence')
+			.find((ligne) => ligne.getAttribute('data-origine') === 'regle')
+		expect(parRegle).toBeTruthy()
+		expect(within(parRegle as HTMLElement).queryByRole('button')).toBeNull()
+		expect(within(parRegle as HTMLElement).getByTestId('exigence-non-retirable')).toBeTruthy()
+	})
+
+	it('garde la commande de retrait quand la règle ET la transition exigent le champ', async () => {
+		monter({ exigences: [{ transition_id: 'tr-1', field_id: 'c-1' }] })
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const ligne = within(arete).getAllByTestId('ligne-exigence')[0] as HTMLElement
+		expect(ligne.getAttribute('data-origine')).toBe('les-deux')
+		expect(within(ligne).getByRole('button')).toBeTruthy()
+	})
+
+	it('exige un champ par un `insert` SIMPLE, sans résolution de conflit', async () => {
+		// MESURÉ : `resolution=merge-duplicates` rend `403`/`42501` faute du privilège `UPDATE`
+		// (§7 bis.12.3). L'`upsert` de la grille est impossible ici.
+		const { ecritures } = monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-exigence')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Exiger ce champ' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transition_required_fields',
+			verbe: 'insert',
+			charge: { transition_id: 'tr-1', field_id: 'c-1' },
+		})
+		expect(ecritures[0]?.options).toBeUndefined()
+	})
+
+	it('ne propose ni le champ déjà lié ni le champ archivé', async () => {
+		// §7 bis.12.4 : le premier serait refusé en `23505`, le second produirait une liaison sans
+		// effet — les deux mesurés.
+		monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-exigence')
+		const choix = within(formulaire).getByRole('combobox') as HTMLSelectElement
+		expect([...choix.options].map((option) => option.textContent)).toEqual(['Budget estimé'])
+	})
+
+	it('dit ce qu’une liaison ajoute quand la règle exige déjà le champ', async () => {
+		monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		expect(await screen.findByTestId('exigence-deja-par-regle')).toBeTruthy()
+	})
+
+	it('dit que les choix sont épuisés au lieu d’offrir une liste vide', async () => {
+		monter({
+			exigences: [
+				{ transition_id: 'tr-1', field_id: 'c-1' },
+				{ transition_id: 'tr-1', field_id: 'c-2' },
+			],
+		})
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		expect((await screen.findByTestId('exigences-choix-epuises')).textContent).toContain(
+			'déjà exigés',
+		)
+	})
+
+	it('retire une exigence par le couple complet, après confirmation', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const ligne = within(arete)
+			.getAllByTestId('ligne-exigence')
+			.find((item) => item.getAttribute('data-origine') === 'transition') as HTMLElement
+		await userEvent.click(within(ligne).getByRole('button'))
+		const confirmation = await screen.findByTestId('confirmation-retrait-exigence')
+		await userEvent.click(within(confirmation).getByRole('button', { name: 'Ne plus exiger' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transition_required_fields',
+			verbe: 'delete',
+			charge: null,
+		})
+		expect(ecritures[0]?.filtres).toEqual([
+			['transition_id', 'tr-1'],
+			['field_id', 'c-2'],
+		])
+	})
+
+	it('s’ajoute au clavier seul, sans jamais passer par la souris', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const commande = within(arete).getByRole('button', { name: 'Exiger un champ' })
+		commande.focus()
+		await userEvent.keyboard('{Enter}')
+		const formulaire = await screen.findByTestId('formulaire-exigence')
+		// Le focus est posé sur la liste à l'ouverture : le §7 bis.12.6 l'exige, faute de quoi il
+		// faudrait tabuler depuis le début du document pour atteindre le formulaire qu'on vient
+		// d'ouvrir.
+		expect(document.activeElement).toBe(within(formulaire).getByRole('combobox'))
+		// La tabulation atteint la commande d'envoi, comme dans les deux parcours clavier des
+		// tranches précédentes : `Entrée` depuis une liste déroulante n'envoie pas le formulaire.
+		const exiger = within(formulaire).getByRole('button', { name: 'Exiger ce champ' })
+		for (let pas = 0; pas < 8 && document.activeElement !== exiger; pas += 1) {
+			await userEvent.tab()
+		}
+		expect(document.activeElement).toBe(exiger)
+		await userEvent.keyboard('{Enter}')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.verbe).toBe('insert')
+	})
+
+	it('nomme la liaison vers un champ archivé, qui ne produit aucun effet', async () => {
+		monter({ exigences: [{ transition_id: 'tr-1', field_id: 'c-3' }] })
+		await attendreEcran()
+		const note = await screen.findByTestId('exigences-sans-effet')
+		expect(note.textContent).toContain('sans effet')
+	})
+
+	it('traduit `23505` en « déjà exigé » plutôt qu’en échec incompréhensible', async () => {
+		monter({
+			reponseEcriture: {
+				data: null,
+				error: { message: 'duplicate key value', code: '23505' },
+				status: 409,
+			},
+		})
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-exigence')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Exiger ce champ' }))
+		expect((await screen.findByRole('alert')).textContent).toContain('déjà exigé')
+	})
+
+	it('dit `sans-effet` quand la base rend zéro ligne', async () => {
+		monter({ reponseEcriture: { data: [], error: null, status: 200 } })
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const ligne = within(arete)
+			.getAllByTestId('ligne-exigence')
+			.find((item) => item.getAttribute('data-origine') === 'transition') as HTMLElement
+		await userEvent.click(within(ligne).getByRole('button'))
+		const confirmation = await screen.findByTestId('confirmation-retrait-exigence')
+		await userEvent.click(within(confirmation).getByRole('button', { name: 'Ne plus exiger' }))
+		expect(await screen.findByRole('alert')).toBeTruthy()
+	})
+
+	it('montre un état d’erreur repris quand les exigences ne se chargent pas', async () => {
+		monter({ erreurExigences: { message: 'boom', status: 500 } })
+		await attendreEcran()
+		expect(
+			await screen.findByText('Les exigences des transitions n’ont pas pu être chargées.'),
+		).toBeTruthy()
+	})
+
+	it('dit ce qui manque quand aucune transition n’est déclarée', async () => {
+		monter({ transitions: [], exigences: [] })
+		await attendreEcran()
+		expect((await screen.findByTestId('exigences-sans-transition')).textContent).toContain(
+			'Aucune transition déclarée',
+		)
+	})
+
+	it('dit ce qui manque quand aucun champ actif n’existe', async () => {
+		monter({ champs: [CHAMPS[2]], regles: [], exigences: [] })
+		await attendreEcran()
+		expect((await screen.findByTestId('exigences-sans-champ')).textContent).toContain(
+			'Aucun champ actif',
+		)
 	})
 })

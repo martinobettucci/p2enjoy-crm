@@ -705,6 +705,53 @@ export const fr = {
 	'admin.workflows.refus.regle.forme-refusee':
 		'Cette visibilité a été refusée : seuls « masqué », « affiché » et « exigé » existent.',
 
+	// --- Les exigences de transition — cinquième tranche, docs/SPEC-workflow-engine.md §7 bis.12 ---
+	'admin.workflows.requirements.aria': 'Exigences des transitions de {workflow}',
+	'admin.workflows.requirements.title': 'Champs exigés pour franchir une transition',
+	'admin.workflows.requirements.intro':
+		'Ce qu’une affaire doit avoir renseigné pour emprunter chaque chemin. Une exigence vient de la règle de l’étape d’arrivée, ou de la transition elle-même.',
+	'admin.workflows.requirements.loading': 'Chargement des exigences…',
+	'admin.workflows.requirements.error': 'Les exigences des transitions n’ont pas pu être chargées.',
+	'admin.workflows.requirements.none': 'Aucun champ exigé : ce chemin se franchit sans rien renseigner.',
+	'admin.workflows.requirements.noTransitions':
+		'Aucune transition déclarée : déclarez un chemin pour lui donner des exigences.',
+	'admin.workflows.requirements.noFields':
+		'Aucun champ actif : déclarez un champ, ou restaurez-en un, pour pouvoir l’exiger.',
+	'admin.workflows.requirements.origin.regle': 'exigé par la règle de l’étape d’arrivée',
+	'admin.workflows.requirements.origin.transition': 'exigé par cette transition',
+	'admin.workflows.requirements.origin.les-deux':
+		'exigé par la règle de l’étape d’arrivée et par cette transition',
+	'admin.workflows.requirements.origin.hint':
+		'Une exigence venue d’une règle se modifie dans la grille de visibilité ci-dessus.',
+	'admin.workflows.requirements.remove.aria': 'Ne plus exiger « {champ} » pour « {transition} »',
+	'admin.workflows.requirements.remove.confirm':
+		'Ne plus exiger « {champ} » pour « {transition} » ?',
+	'admin.workflows.requirements.remove.confirm.body':
+		'Le champ reste dans le formulaire. Il ne sera simplement plus obligatoire pour emprunter ce chemin.',
+	'admin.workflows.requirements.remove.confirm.action': 'Ne plus exiger',
+	'admin.workflows.requirements.action.add': 'Exiger un champ',
+	'admin.workflows.requirements.add.aria': 'Exiger un champ pour « {transition} »',
+	'admin.workflows.requirements.add.field': 'Champ à exiger',
+	'admin.workflows.requirements.add.submit': 'Exiger ce champ',
+	'admin.workflows.requirements.add.none':
+		'Tous les champs actifs sont déjà exigés pour cette transition.',
+	'admin.workflows.requirements.add.alreadyByRule':
+		'Ce champ est déjà exigé par la règle de l’étape d’arrivée : l’exiger ici ne change rien tant que cette règle ne change pas.',
+	'admin.workflows.requirements.void.one':
+		'Un champ archivé est exigé par cette transition sans effet : un champ archivé ne figure dans aucun formulaire. L’exigence est conservée et redevient effective s’il est restauré.',
+	'admin.workflows.requirements.void.many':
+		'{nombre} champs archivés sont exigés par cette transition sans effet : un champ archivé ne figure dans aucun formulaire. Les exigences sont conservées et redeviennent effectives s’ils sont restaurés.',
+
+	'admin.workflows.refus.exigence.deja-exige':
+		'Ce champ est déjà exigé par cette transition : quelqu’un vient probablement de le déclarer.',
+	'admin.workflows.refus.exigence.reference-absente':
+		'Cette transition ou ce champ n’existe plus, ou n’appartient pas à ce workflow.',
+	'admin.workflows.refus.exigence.workflow-different':
+		'Ce champ et cette transition n’appartiennent pas au même workflow.',
+
+	'live.workflows.requirement.added': 'Champ exigé',
+	'live.workflows.requirement.removed': 'Champ plus exigé',
+
 	'live.workflows.rule.set': 'Visibilité réglée',
 	'live.workflows.rule.reset': 'Visibilité rendue au défaut',
 

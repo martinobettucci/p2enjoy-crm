@@ -1,5 +1,5 @@
 // @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
-//       troisième et quatrième tranches
+//       troisième, quatrième et cinquième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.2 (adresse), §7 bis.3 (les trois lectures),
 //       §7 bis.4 (les six gestes), §7 bis.5 (validation de forme), §7 bis.6 (états,
 //       accessibilité, responsive), §2.5 (`0` n'est pas `NULL`), §3.3 (contraintes), §3.5
@@ -16,6 +16,13 @@
 //       §7 bis.11.1 (lecture 6), §7 bis.11.2 (la composition et les champs archivés écartés),
 //       §7 bis.11.3 (les deux gestes), §7 bis.11.4 (les quatre états d'une case),
 //       §7 bis.11.5 (les refus), §7 bis.11.6 (états, accessibilité et responsive)
+// @spec docs/SPEC-workflow-engine.md §7 bis.12 (cinquième tranche : les exigences de transition),
+//       §7 bis.12.1 (lecture 7 et sa jointure), §7 bis.12.2 (l'union effective et ses origines),
+//       §7 bis.12.3 (les deux gestes, et pourquoi le premier n'est pas un `upsert`),
+//       §7 bis.12.4 (ce que l'écran refuse de proposer), §7 bis.12.5 (les refus),
+//       §7 bis.12.6 (états, accessibilité et responsive)
+// @spec docs/SPEC-transition-required-fields.md §1 (l'union des deux ensembles), §2 (la table à
+//       deux colonnes), §4 (autorisations), §5.1 (la sixième garde de `move_card`)
 // @spec docs/SPEC-form-composer.md §2.3 (les quinze types), §2.4 (`options`), §2.5 (clé durable),
 //       §2.6 (ordre), §2.7 (aucun privilège `DELETE` : l'archivage tient lieu de retrait),
 //       §3.1 (les trois visibilités, et l'absence de règle qui vaut `visible`),
@@ -94,6 +101,17 @@ import {
 	type RegleAdministrable,
 	type ResultatRegle,
 	type Visibilite,
+	champsLiables,
+	exigencesEffectives,
+	exigencesSansEffet,
+	exigerChamp,
+	lireExigences,
+	retirerExigence,
+	type ExigenceAdministrable,
+	type ExigenceEffective,
+	type OrigineExigence,
+	type RefusExigence,
+	type ResultatExigence,
 	declarerTransition,
 	deplacerEtape,
 	designerEtapeInitiale,
@@ -224,6 +242,31 @@ function texteRefusRegle(refus: RefusRegle): string {
 }
 
 /**
+ * Le refus d'une exigence de transition — §7 bis.12.5.
+ *
+ * `23505` A ICI UN TEXTE PROPRE, à l'inverse exact de la règle de visibilité juste au-dessus : la
+ * grille règle ses cases par `upsert`, ce bloc ne le peut pas — MESURÉ, `403`/`42501` faute du
+ * privilège `UPDATE` que `CRM-018` n'accorde délibérément pas (§7 bis.12.3). Le `23505` est donc
+ * l'issue normale d'une course entre deux administrateurs, et le message le dit.
+ */
+function texteRefusExigence(refus: RefusExigence): string {
+	switch (refus.nature) {
+		case 'deja-exige':
+			return t('admin.workflows.refus.exigence.deja-exige')
+		case 'reference-absente':
+			return t('admin.workflows.refus.exigence.reference-absente')
+		case 'workflow-different':
+			return t('admin.workflows.refus.exigence.workflow-different')
+		case 'forbidden':
+			return t('admin.workflows.refus.forbidden')
+		case 'network':
+			return t('admin.workflows.refus.network')
+		case 'unknown':
+			return t('admin.workflows.refus.unknown')
+	}
+}
+
+/**
  * Ce qui est ouvert, et il n'y en a qu'un à la fois — le patron de `CRM-075` : un seul formulaire
  * ouvert évite la question qu'aucune spécification ne tranche, celle d'une saisie non enregistrée
  * quand une seconde s'ouvre. Les trois ouvertures d'arête entrent dans la MÊME variable que celles
@@ -241,6 +284,12 @@ type Ouverture =
 	| { readonly type: 'champ-declaration' }
 	| { readonly type: 'champ-edition'; readonly idChamp: string }
 	| { readonly type: 'champ-archivage'; readonly idChamp: string }
+	| { readonly type: 'exigence-ajout'; readonly idTransition: string }
+	| {
+			readonly type: 'exigence-retrait'
+			readonly idTransition: string
+			readonly idChamp: string
+	  }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
 
@@ -248,6 +297,7 @@ type ActionEtape = () => Promise<ResultatEtape>
 type ActionTransition = () => Promise<ResultatTransition>
 type ActionChamp = () => Promise<ResultatChamp>
 type ActionRegle = () => Promise<ResultatRegle>
+type ActionExigence = () => Promise<ResultatExigence>
 
 /**
  * Alerte de refus, placée dans le bloc concerné et non en tête d'écran, pour que le refus soit lu
@@ -1520,6 +1570,165 @@ function GrilleVisibilites({
 	)
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// Les exigences propres à une transition — §7 bis.12
+// ---------------------------------------------------------------------------------------------
+
+const LIBELLES_ORIGINE: Readonly<Record<OrigineExigence, CleTraduction>> = {
+	regle: 'admin.workflows.requirements.origin.regle',
+	transition: 'admin.workflows.requirements.origin.transition',
+	'les-deux': 'admin.workflows.requirements.origin.les-deux',
+}
+
+/**
+ * Une exigence effective, avec son origine.
+ *
+ * LA COMMANDE DE RETRAIT N'EST OFFERTE QUE SUR CE QUE CE BLOC ÉCRIT. Une exigence venue de la règle
+ * de l'étape d'arrivée se modifie dans la grille (§7 bis.11), et un bouton qui prétendrait la
+ * retirer ici enverrait un `DELETE` sur une ligne qui n'existe pas : `200`, zéro ligne, et une
+ * exigence toujours imposée par `move_card`. L'écran renvoie donc à la grille en une phrase, ce qui
+ * est la seule réponse vraie.
+ *
+ * `les-deux` GARDE SA COMMANDE : la liaison existe bel et bien et se retire, même si la règle
+ * continuera d'exiger le champ. Le libellé accessible nomme le champ ET la transition, faute de
+ * quoi une page portant onze arêtes offrirait des commandes indiscernables à la voix.
+ */
+function LigneExigence({
+	exigence,
+	nomTransition,
+	enCours,
+	onOuvrirRetrait,
+}: {
+	readonly exigence: ExigenceEffective
+	readonly nomTransition: string
+	readonly enCours: boolean
+	readonly onOuvrirRetrait: () => void
+}) {
+	const retirable = exigence.origine !== 'regle'
+	return (
+		<div
+			data-testid="ligne-exigence"
+			data-champ={exigence.champ.key}
+			data-origine={exigence.origine}
+			className="flex flex-wrap items-center gap-2"
+		>
+			<span>{exigence.champ.label}</span>
+			<code className="rounded-sm bg-hover px-1 text-sm text-text-2">{exigence.champ.key}</code>
+			<span className="text-sm text-text-2">{t(LIBELLES_ORIGINE[exigence.origine])}</span>
+			{retirable ? (
+				<button
+					type="button"
+					disabled={enCours}
+					onClick={onOuvrirRetrait}
+					aria-label={t('admin.workflows.requirements.remove.aria', {
+						champ: exigence.champ.label,
+						transition: nomTransition,
+					})}
+					className="inline-flex items-center gap-1 min-h-[var(--size-target)] rounded-sm px-2 text-sm hover:bg-hover disabled:opacity-70"
+				>
+					<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+					<span>{t('admin.workflows.requirements.remove.confirm.action')}</span>
+				</button>
+			) : (
+				<span data-testid="exigence-non-retirable" className="text-sm text-text-3">
+					{t('admin.workflows.requirements.origin.hint')}
+				</span>
+			)}
+		</div>
+	)
+}
+
+/**
+ * Formulaire d'ajout d'une exigence : UNE seule liste.
+ *
+ * La transition est déjà connue par la ligne qui l'ouvre ; la redemander dans une seconde liste
+ * ferait choisir deux fois ce que l'administrateur vient de désigner d'un clic.
+ *
+ * LA LISTE NE CONTIENT QUE DES CHOIX ACCEPTABLES (§7 bis.12.4) — ni champ archivé, dont la liaison
+ * n'aurait aucun effet, ni champ déjà lié, dont le refus est connu d'avance. Un champ déjà exigé par
+ * la règle de l'étape d'arrivée y reste, avec une phrase qui dit ce que la liaison ajoute : rien
+ * tant que la règle ne change pas.
+ */
+function FormulaireExigence({
+	champs,
+	dejaParRegle,
+	nomTransition,
+	refus,
+	enCours,
+	onValider,
+	onAnnuler,
+}: {
+	readonly champs: readonly ChampAdministrable[]
+	readonly dejaParRegle: ReadonlySet<string>
+	readonly nomTransition: string
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onValider: (idChamp: string) => void
+	readonly onAnnuler: () => void
+}) {
+	const prefixe = useId()
+	const premier = useRef<HTMLSelectElement>(null)
+	const [idChamp, setIdChamp] = useState(() => champs[0]?.id ?? '')
+
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+
+	const retenu = champs.some((champ) => champ.id === idChamp) ? idChamp : (champs[0]?.id ?? '')
+
+	return (
+		<form
+			data-testid="formulaire-exigence"
+			aria-label={t('admin.workflows.requirements.add.aria', { transition: nomTransition })}
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				if (retenu !== '' && !enCours) onValider(retenu)
+			}}
+		>
+			{champs.length === 0 ? (
+				<p role="status" data-testid="exigences-choix-epuises" className="text-sm text-text-2">
+					{t('admin.workflows.requirements.add.none')}
+				</p>
+			) : (
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${prefixe}-champ`} className="text-sm text-text-2">
+						{t('admin.workflows.requirements.add.field')}
+					</label>
+					<select
+						id={`${prefixe}-champ`}
+						ref={premier}
+						value={retenu}
+						onChange={(evenement) => setIdChamp(evenement.target.value)}
+						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+					>
+						{champs.map((champ) => (
+							<option key={champ.id} value={champ.id}>
+								{champ.label}
+							</option>
+						))}
+					</select>
+					{dejaParRegle.has(retenu) ? (
+						<p data-testid="exigence-deja-par-regle" className="text-sm text-text-2">
+							{t('admin.workflows.requirements.add.alreadyByRule')}
+						</p>
+					) : null}
+				</div>
+			)}
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				<Button type="submit" variante="primaire" disabled={champs.length === 0 || enCours}>
+					{t('admin.workflows.requirements.add.submit')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</form>
+	)
+}
+
 // ---------------------------------------------------------------------------------------------
 // L'écran
 // ---------------------------------------------------------------------------------------------
@@ -1540,6 +1749,8 @@ export function AdministrationWorkflows({
 	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudAjoutable[]>>(enChargement)
 	const [champs, setChamps] = useState<EtatAsync<readonly ChampAdministrable[]>>(enChargement)
 	const [regles, setRegles] = useState<EtatAsync<readonly RegleAdministrable[]>>(enChargement)
+	const [exigences, setExigences] =
+		useState<EtatAsync<readonly ExigenceAdministrable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
@@ -1580,19 +1791,23 @@ export function AdministrationWorkflows({
 	const rechargerGraphe = useCallback(
 		async (idWorkflow: string) => {
 			if (client === null) return
-			// Les champs partent avec les étapes et les arêtes, par le §7 bis.10.1, et les règles avec
-			// eux par le §7 bis.11.1 : les quatre décrivent le même workflow, une règle n'a de sens
-			// qu'entre un champ et une étape du MÊME instant, et toute écriture les rejoue toutes.
-			const [lues, arretes, formulaire, visibilites] = await Promise.all([
+			// Les champs partent avec les étapes et les arêtes, par le §7 bis.10.1, les règles avec eux
+			// par le §7 bis.11.1, et les exigences par le §7 bis.12.1 : les cinq décrivent le même
+			// workflow, une règle n'a de sens qu'entre un champ et une étape du MÊME instant, une
+			// exigence qu'entre une arête et un champ du même instant, et toute écriture les rejoue
+			// toutes.
+			const [lues, arretes, formulaire, visibilites, exigees] = await Promise.all([
 				lireEtapes(client, idWorkflow),
 				lireTransitions(client, idWorkflow),
 				lireChamps(client, idWorkflow),
 				lireRegles(client, idWorkflow),
+				lireExigences(client, idWorkflow),
 			])
 			setEtapes(lues)
 			setTransitions(arretes)
 			setChamps(formulaire)
 			setRegles(visibilites)
+			setExigences(exigees)
 		},
 		[client],
 	)
@@ -1603,6 +1818,7 @@ export function AdministrationWorkflows({
 		setTransitions(enChargement)
 		setChamps(enChargement)
 		setRegles(enChargement)
+		setExigences(enChargement)
 		void rechargerGraphe(idChoisi)
 	}, [client, idChoisi, rechargerGraphe])
 
@@ -1732,6 +1948,43 @@ export function AdministrationWorkflows({
 					return
 				}
 				setRefus(null)
+				setAnnonce(message)
+				await rechargerGraphe(idChoisi)
+			} finally {
+				setEnCours(false)
+			}
+		},
+		[idChoisi, rechargerGraphe],
+	)
+
+	/**
+	 * Jumelle des quatre précédentes pour les exigences de transition.
+	 *
+	 * Une cinquième enveloppe, pour la raison des quatre autres : le `23505` d'une exigence dit
+	 * « ce champ est déjà exigé », celui d'un champ « cette clé est déjà prise », celui d'une arête
+	 * « cette transition existe ». Les confondre afficherait un message exact sur un objet que
+	 * l'administrateur n'a pas touché.
+	 */
+	const executerExigenceTransition = useCallback(
+		async (action: ActionExigence, message: string) => {
+			if (idChoisi === null) return
+			setEnCours(true)
+			try {
+				const resultat = await action()
+				if (resultat.statut === 'refus') {
+					setRefus(texteRefusExigence(resultat.refus))
+					// UN `23505` RECHARGE QUAND MÊME, et c'est le §7 bis.12.3 appliqué : l'état voulu
+					// par l'administrateur est précisément celui que la base porte déjà, et le laisser
+					// à l'écran sans la ligne qui l'explique donnerait un refus incompréhensible.
+					if (resultat.refus.nature === 'deja-exige') await rechargerGraphe(idChoisi)
+					return
+				}
+				if (resultat.statut === 'sans-effet') {
+					setRefus(t('admin.workflows.refus.sans-effet'))
+					return
+				}
+				setRefus(null)
+				setOuverture(AUCUNE)
 				setAnnonce(message)
 				await rechargerGraphe(idChoisi)
 			} finally {
@@ -2424,6 +2677,247 @@ export function AdministrationWorkflows({
 														</>
 													)
 												})()
+											) : null}
+										</section>
+
+										{/* Les exigences de transition, CINQUIÈME bloc et dans la même colonne : on
+										    n'ajoute pas d'exigence propre à une arête avant d'avoir vu ce que les
+										    règles exigent déjà (§7 bis.12.6). */}
+										<section
+											aria-label={t('admin.workflows.requirements.aria', { workflow: choisi.name })}
+											className="flex flex-col gap-3"
+										>
+											<div className="flex flex-col gap-1">
+												<h3 className="font-medium">{t('admin.workflows.requirements.title')}</h3>
+												<p className="text-sm text-text-2">
+													{t('admin.workflows.requirements.intro')}
+												</p>
+											</div>
+											{exigences.statut === 'chargement' ? (
+												<SkeletonListe
+													lignes={3}
+													libelle={t('admin.workflows.requirements.loading')}
+												/>
+											) : null}
+											{exigences.statut === 'erreur' ? (
+												<EtatErreur
+													titre={t('admin.workflows.requirements.error')}
+													corps={t('admin.workflows.error.body')}
+													libelleReprise={t('admin.tree.error.retry')}
+													onReprise={() => void rechargerGraphe(choisi.id)}
+												/>
+											) : null}
+											{exigences.statut === 'pret' &&
+											champs.statut === 'pret' &&
+											regles.statut === 'pret' &&
+											transitions.statut === 'pret' ? (
+												transitions.donnees.length === 0 ? (
+													<p
+														role="status"
+														data-testid="exigences-sans-transition"
+														className="text-sm text-text-2"
+													>
+														{t('admin.workflows.requirements.noTransitions')}
+													</p>
+												) : champs.donnees.every((champ) => champ.archived_at !== null) ? (
+													<p
+														role="status"
+														data-testid="exigences-sans-champ"
+														className="text-sm text-text-2"
+													>
+														{t('admin.workflows.requirements.noFields')}
+													</p>
+												) : (
+													<ol
+														data-testid="liste-exigences"
+														className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3"
+													>
+														{/* Les arêtes sont parcourues dans l'ordre du graphe, celui du bloc
+														    des transitions : l'administrateur retrouve chaque arête à la
+														    place où il vient de la lire (§7 bis.12.6). */}
+														{grouperTransitions(etapes.donnees, transitions.donnees).flatMap(
+															(groupe) =>
+																groupe.sorties.map((sortie) => {
+																	const arrivee =
+																		etapes.donnees.find(
+																			(etape) => etape.id === sortie.to_step_id,
+																		) ?? null
+																	const nomArrivee =
+																		arrivee === null
+																			? sortie.to_step_id
+																			: libelleEtape(arrivee)
+																	// Le nom complet « départ vers arrivée » plutôt que le seul
+																	// libellé de l'arête : cinq arêtes du seed s'appellent toutes
+																	// « Marquer perdu », et un titre qui ne les distinguerait pas
+																	// rendrait le bloc illisible.
+																	const nomTransition = t(
+																		'admin.workflows.transitions.form.edit',
+																		{
+																			depart: libelleEtape(groupe.etape),
+																			arrivee: nomArrivee,
+																		},
+																	)
+																	const effectives = exigencesEffectives(
+																		sortie,
+																		champs.donnees,
+																		regles.donnees,
+																		exigences.donnees,
+																	)
+																	const sansEffet = exigencesSansEffet(
+																		sortie,
+																		champs.donnees,
+																		exigences.donnees,
+																	)
+																	const liables = champsLiables(
+																		sortie,
+																		champs.donnees,
+																		exigences.donnees,
+																	)
+																	const parRegle = new Set(
+																		effectives
+																			.filter((item) => item.origine !== 'transition')
+																			.map((item) => item.champ.id),
+																	)
+																	return (
+																		<li
+																			key={sortie.id}
+																			data-testid="transition-exigences"
+																			data-transition={sortie.id}
+																			className="flex flex-col gap-2"
+																		>
+																			<span className="font-medium">{nomTransition}</span>
+																			{effectives.length === 0 ? (
+																				<span
+																					data-testid="transition-sans-exigence"
+																					className="text-sm text-text-2"
+																				>
+																					{t('admin.workflows.requirements.none')}
+																				</span>
+																			) : (
+																				<ul className="flex flex-col gap-1 pl-4">
+																					{effectives.map((item) => (
+																						<li key={item.champ.id}>
+																							<LigneExigence
+																								exigence={item}
+																								nomTransition={nomTransition}
+																								enCours={enCours}
+																								onOuvrirRetrait={() => {
+																									setRefus(null)
+																									setOuverture({
+																										type: 'exigence-retrait',
+																										idTransition: sortie.id,
+																										idChamp: item.champ.id,
+																									})
+																								}}
+																							/>
+																						</li>
+																					))}
+																				</ul>
+																			)}
+																			{/* Une liaison vers un champ archivé n'a aucun effet, et le
+																			    taire laisserait croire à une exigence qui s'applique
+																			    (§7 bis.12.4). */}
+																			{sansEffet.length > 0 ? (
+																				<p
+																					data-testid="exigences-sans-effet"
+																					className="text-sm text-text-2"
+																				>
+																					{sansEffet.length === 1
+																						? t('admin.workflows.requirements.void.one')
+																						: t('admin.workflows.requirements.void.many', {
+																								nombre: String(sansEffet.length),
+																							})}
+																				</p>
+																			) : null}
+																			{ouverture.type === 'exigence-retrait' &&
+																			ouverture.idTransition === sortie.id ? (
+																				<ConfirmationRetrait
+																					marqueur="confirmation-retrait-exigence"
+																					titre={t(
+																						'admin.workflows.requirements.remove.confirm',
+																						{
+																							champ:
+																								champs.donnees.find(
+																									(champ) =>
+																										champ.id === ouverture.idChamp,
+																								)?.label ?? ouverture.idChamp,
+																							transition: nomTransition,
+																						},
+																					)}
+																					corps={t(
+																						'admin.workflows.requirements.remove.confirm.body',
+																					)}
+																					libelleAction={t(
+																						'admin.workflows.requirements.remove.confirm.action',
+																					)}
+																					refus={refus}
+																					enCours={enCours}
+																					onConfirmer={() =>
+																						void executerExigenceTransition(
+																							() =>
+																								retirerExigence(
+																									client,
+																									sortie.id,
+																									ouverture.type === 'exigence-retrait'
+																										? ouverture.idChamp
+																										: '',
+																								),
+																							t('live.workflows.requirement.removed'),
+																						)
+																					}
+																					onAnnuler={() => {
+																						setRefus(null)
+																						setOuverture(AUCUNE)
+																					}}
+																				/>
+																			) : null}
+																			{ouverture.type === 'exigence-ajout' &&
+																			ouverture.idTransition === sortie.id ? (
+																				<FormulaireExigence
+																					champs={liables}
+																					dejaParRegle={parRegle}
+																					nomTransition={nomTransition}
+																					refus={refus}
+																					enCours={enCours}
+																					onValider={(idChamp) =>
+																						void executerExigenceTransition(
+																							() => exigerChamp(client, sortie.id, idChamp),
+																							t('live.workflows.requirement.added'),
+																						)
+																					}
+																					onAnnuler={() => {
+																						setRefus(null)
+																						setOuverture(AUCUNE)
+																					}}
+																				/>
+																			) : (
+																				<div className="flex">
+																					<Button
+																						variante="secondaire"
+																						disabled={enCours}
+																						onClick={() => {
+																							setRefus(null)
+																							setOuverture({
+																								type: 'exigence-ajout',
+																								idTransition: sortie.id,
+																							})
+																						}}
+																					>
+																						<Plus
+																							aria-hidden="true"
+																							size={16}
+																							strokeWidth={2}
+																						/>
+																						{t('admin.workflows.requirements.action.add')}
+																					</Button>
+																				</div>
+																			)}
+																		</li>
+																	)
+																}),
+														)}
+													</ol>
+												)
 											) : null}
 										</section>
 									</>
