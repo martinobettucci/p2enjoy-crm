@@ -284,6 +284,21 @@ export function BlocCorbeilleCard({
 	const [phase, setPhase] = useState<PhaseGeste>('inactif')
 	const [message, setMessage] = useState<string | null>(null)
 	const commande = useRef<HTMLButtonElement>(null)
+	/**
+	 * Le focus est rendu APRÈS le rendu, et c'est un défaut trouvé par la preuve clavier.
+	 *
+	 * La commande est DÉMONTÉE tant que la confirmation est ouverte : appeler `focus()` depuis le
+	 * gestionnaire d'annulation vise une référence nulle, et le focus retombe sur le corps du
+	 * document — exactement ce que le §5.13 du design system interdit. L'intention est donc posée
+	 * ici, et honorée par l'effet ci-dessous quand la commande est de nouveau montée.
+	 */
+	const [focusARendre, setFocusARendre] = useState(false)
+
+	useEffect(() => {
+		if (phase !== 'inactif' || !focusARendre) return
+		commande.current?.focus()
+		setFocusARendre(false)
+	}, [focusARendre, phase])
 
 	const confirmer = useCallback(async () => {
 		if (client === null) return
@@ -311,7 +326,7 @@ export function BlocCorbeilleCard({
 		setMessage(null)
 		// Le focus revient à la commande qui a ouvert la confirmation : sans ce retour, annuler au
 		// clavier le laisserait sur un bouton qui vient de disparaître (docs/DESIGN_SYSTEM.md §5.13).
-		commande.current?.focus()
+		setFocusARendre(true)
 	}, [])
 
 	// Sans client configuré, l'application entière rend déjà l'écran de configuration manquante

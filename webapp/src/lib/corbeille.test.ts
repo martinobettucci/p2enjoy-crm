@@ -17,10 +17,12 @@ import {
 	COLONNE_ENFANT,
 	NOM_REFUS_PARENT,
 	OPTIONS_COMPTE,
+	classerRefusGeste,
 	classerRefusRestauration,
 	compterEnfantsInaccessibles,
 	composerEnumeration,
 	lireCorbeille,
+	mettreCardALaCorbeille,
 	restaurer,
 	trierParRetraitDecroissant,
 } from './corbeille'
@@ -473,5 +475,65 @@ describe('classerRefusRestauration', () => {
 		expect(classerRefusRestauration(401, undefined, 'refusé').nature).toBe('forbidden')
 		expect(classerRefusRestauration(undefined, undefined, 'coupure').nature).toBe('network')
 		expect(classerRefusRestauration(500, undefined, 'panne').nature).toBe('unknown')
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// Le GESTE de mise à la corbeille d'une AFFAIRE — huitième tranche, §4 ter
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies docs/SPEC-corbeille.md §4 ter.3 (les trois issues, mesurées avec les jetons réels),
+//           §4 ter.4 (le fil est écrit par le trigger, jamais par le client), §4 ter.6 (horodatage
+//           du client)
+
+describe('mettreCardALaCorbeille', () => {
+	it("n'écrit QUE `deleted_at`, sur la seule affaire visée, et demande la ligne (§4 ter.3)", async () => {
+		const { client, appels } = espionEcriture({ data: [{ id: 'c-1' }], error: null, status: 200 })
+		const resultat = await mettreCardALaCorbeille(client, 'c-1', () => '2026-08-15T12:00:00.000Z')
+
+		expect(appels).toEqual([
+			{ table: 'cards', charge: { deleted_at: '2026-08-15T12:00:00.000Z' }, filtres: [['id', 'c-1']] },
+		])
+		// `deleted_by` N'EST PAS dans la charge, et l'assertion est écrite EN NÉGATIF parce que c'est
+		// la seule forme qui attrape la régression : l'ajouter ferait refuser TOUTE l'écriture en
+		// `42501` — la colonne est fermée au client par le privilège de `0037` (§4 bis.5).
+		expect(Object.keys(appels[0]?.charge as object)).toEqual(['deleted_at'])
+		expect(resultat).toEqual({ statut: 'appliquee' })
+	})
+
+	it("n'écrit AUCUN événement de fil : le trigger le fait (§4 ter.4)", async () => {
+		const { client, appels } = espionEcriture({ data: [{ id: 'c-1' }], error: null, status: 200 })
+		await mettreCardALaCorbeille(client, 'c-1')
+
+		// MESURÉ : le `PATCH` fait naître une ligne `card_events` de type `trashed` portant l'acteur.
+		// Une écriture posée par le client serait une trace que rien ne garantit — et deux traces pour
+		// un seul geste.
+		expect(appels.map((appel) => appel.table)).toEqual(['cards'])
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne (§4 ter.3, décision 70)', async () => {
+		const { client } = espionEcriture({ data: [], error: null, status: 200 })
+		// MESURÉ avec le jeton réel de la lectrice sur l'affaire `Migration ERP Sogexia` : `200`, `[]`,
+		// et la ligne relue INCHANGÉE. L'annoncer comme un succès afficherait un retrait qui n'a pas
+		// eu lieu.
+		expect(await mettreCardALaCorbeille(client, 'c-1')).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('classe un refus de droit, sans jamais inspecter un code PostgreSQL (§4 ter.3)', async () => {
+		const { client } = espionEcriture({ data: null, error: { message: 'refusé' }, status: 403 })
+		expect(await mettreCardALaCorbeille(client, 'c-1')).toEqual({
+			statut: 'refus',
+			refus: { nature: 'forbidden', detail: 'refusé' },
+		})
+	})
+})
+
+describe('classerRefusGeste', () => {
+	it('classe sur le seul code HTTP, le geste ne traversant aucune garde nommée (§4 ter.3)', () => {
+		expect(classerRefusGeste(403, 'refusé').nature).toBe('forbidden')
+		expect(classerRefusGeste(401, 'refusé').nature).toBe('forbidden')
+		expect(classerRefusGeste(undefined, 'coupure').nature).toBe('network')
+		expect(classerRefusGeste(0, 'coupure').nature).toBe('network')
+		expect(classerRefusGeste(500, 'panne').nature).toBe('unknown')
 	})
 })
