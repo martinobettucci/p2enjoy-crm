@@ -14993,3 +14993,30 @@ l'archivage, et la limite est écrite au §7 plutôt que tue.
 **Où reprendre.** Après cette tranche : le geste pour une **affaire**, puis le harnais dédié
 `scripts/verify-corbeille.sh` que le backlog nomme toujours comme dû. Les trois points du §6
 attendent l'arbitrage du responsable et ne se tranchent pas en session.
+
+### Décision 407 — Une entrée du registre est retirée dès l'arbitrage, pas à la preuve ; l'agent tranche seul ce qu'il peut trancher
+
+**2026-08-15 — décision du responsable.** Deux règles remplacent la politique d'archivage du
+2026-08-13 pour `docs/INCONSISTENCY_REPORT.md` :
+
+1. **Retrait dès l'arbitrage rendu.** Une entrée est retirée du document dès que sa décision est
+   consignée ici, dans `docs/JOURNAL.md` — que la mise en œuvre correspondante soit ou non déjà
+   livrée et prouvée. L'ancienne règle exigeait les deux à la fois et laissait des dizaines
+   d'entrées déjà tranchées occuper le registre en attendant leur preuve. Le travail restant dû est
+   suivi ailleurs : `docs/ARBITRAGES.md` pour le porteur, `docs/BACKLOG.md` pour sa Definition of
+   Done.
+2. **Résolution locale d'abord.** Avant d'ouvrir une entrée, l'agent tente de trancher
+   l'incohérence par sa propre mesure et sa propre décision, et la consigne comme telle dans ce
+   journal — c'est déjà la pratique de la plupart des entrées existantes, sous la forme d'un
+   « comportement retenu ». Une entrée n'est ouverte, et l'arbitrage du responsable sollicité, que
+   lorsqu'il est **strictement nécessaire** : un choix de produit, d'architecture ou de sécurité
+   qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve
+   explicitement au responsable.
+
+**Appliqué le même jour.** Relecture intégrale des soixante-huit entrées alors en texte complet
+dans `docs/INCONSISTENCY_REPORT.md`. Cinquante-deux avaient déjà reçu un arbitrage — la quasi-
+totalité par la délégation exhaustive des décisions 292 à 299, le reste par une décision
+individuelle citée dans l'index du registre — et sont retirées, chacune avec sa ligne d'index.
+Seize n'en avaient reçu aucun et restent en texte complet. Trois de plus — INC-117 à INC-119 —,
+consignées par une session concurrente pendant la même fenêtre, rejoignent les ouvertes pour la
+même raison : `docs/INCONSISTENCY_REPORT.md` en donne la liste à jour, dix-neuf entrées au total.

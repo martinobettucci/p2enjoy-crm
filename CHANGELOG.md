@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **`docs/INCONSISTENCY_REPORT.md` change de règle de retrait, et cinquante-deux entrées en
+  sortent** (décision 407). Une entrée est désormais retirée dès que son arbitrage est consigné
+  dans `docs/JOURNAL.md`, que sa mise en œuvre soit ou non déjà livrée et prouvée — le travail
+  restant dû reste suivi par `docs/ARBITRAGES.md` et par `docs/BACKLOG.md`. L'agent tente en outre
+  de résoudre une incohérence par sa propre décision avant d'ouvrir une entrée, qui n'est réservée
+  qu'aux choix où l'arbitrage du responsable est strictement nécessaire. Cinquante-deux des
+  soixante-huit entrées alors en texte complet avaient déjà reçu un arbitrage et rejoignent
+  l'index ; dix-neuf restent ouvertes, trois de plus consignées entre-temps par une session
+  concurrente (INC-117 à INC-119).
+
 ### Ajouté
 
 - **La corbeille énumère ce qu'un geste rendrait inaccessible — `CRM-077`**
