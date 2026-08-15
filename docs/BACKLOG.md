@@ -6537,10 +6537,60 @@ E2E et captures aux quatre paliers sans avertissement console.
 - [ ] **INC-108 relevée au passage, non corrigée** : trois documents comptent « dix-sept règles » là
       où le seed en pose **quinze** par workflow. Arbitrage demandé.
 
-**Reste dû sous cette unité (§7 bis.11.7)** : les **exigences de transition**
-(`docs/SPEC-transition-required-fields.md`), la **prévisualisation des effets**, et les preuves
-pgTAP/API dédiées à l'écran (les politiques du §3.7 et du §2.7 restent prouvées par `CRM-031` et
-`CRM-035`). L'unité reste `[~]` jusqu'à leur livraison.
+**Cinquième tranche livrée, 2026-08-15** — les exigences de transition
+(docs/SPEC-workflow-engine.md §7 bis.12) :
+
+- [x] Lecture 7 (`workflow_transition_required_fields`), filtrée par **jointure interne**
+      `workflow_transitions!inner` : la table n'a que deux colonnes et ne dénormalise aucun
+      `workflow_id`. MESURÉ : la lecture sans filtre rend **les deux** liaisons du seed — la globale
+      et la dérivée —, et l'écran d'un workflow afficherait donc les exigences d'un autre.
+- [x] Couche de données : `lireExigencesTransition`, `exigencesEffectives`, `exigencesSansEffet`,
+      `champsLiables`, `classerRefusExigence`, et les deux écritures du §7 bis.12.3 — exiger par
+      `POST` simple, ne plus exiger par suppression du couple.
+- [x] **L'écriture N'EST PAS un `upsert`, à l'inverse de la tranche précédente, et c'est MESURÉ** :
+      `POST` d'un couple absent → `201` ; sans résolution → `409` / `23505` sur
+      `workflow_transition_required_fields_pkey` ; **avec** `resolution=merge-duplicates` →
+      **`403`** / `42501` (« GRANT UPDATE … TO authenticated ») ; `PATCH` → **`403`** / `42501`. La
+      migration de `CRM-018` n'accorde que `insert` et `delete`, parce que sa spécification §2 pose
+      qu'aucune valeur n'est mutable. Reprendre le patron de la grille aurait produit un `403`
+      incompréhensible sur le geste le plus courant du bloc.
+- [x] **Le bloc rend les exigences EFFECTIVES, pas la table** : la sixième garde de `move_card`
+      exige l'**union** des champs `required` par règle à l'étape d'arrivée et des champs liés à la
+      transition. MESURÉ : **six** règles `required` sur quatre étapes d'arrivée. Un écran qui
+      n'aurait montré que la table aurait écrit « aucune exigence » là où l'étape en impose trois.
+- [x] **Une exigence héritée d'une règle n'offre AUCUNE commande de retrait**, et le bloc renvoie à
+      la grille. Écart assumé à la règle « commande désactivée jamais masquée » du §5.13 : le geste
+      n'existe pas ici, il existe ailleurs, et un bouton grisé aurait suggéré un droit manquant.
+- [x] **Les champs archivés sont écartés des choix** : la base accepte pourtant la liaison (`201`
+      sur `…071 × …087`) alors que `move_card` filtre `archived_at is null`. Les liaisons existantes
+      ne sont pas supprimées et sont **nommées sans effet**.
+- [x] **Le vocabulaire des refus est mesuré, pas supposé** : `400`/`23514`
+      `required_field_workflow_mismatch` sur un croisement de workflows ; `409`/`23503` sur un
+      parent inconnu ; `403`/`42501` en insertion pour le `business_developer` ; et **`200` avec
+      `[]`** en `DELETE`, aussi bien pour le `business_developer` sur la liaison seedée — relue
+      intacte — que pour l'administratrice sur un couple inexistant. Les deux sont indiscernables
+      par la réponse : l'écran dit « rien n'a changé » sans prétendre savoir laquelle s'applique.
+- [x] Écran : cinquième bloc sous la grille, arêtes parcourues dans l'ordre du graphe, chacune
+      titrée « départ vers arrivée » — cinq arêtes du seed s'appellent toutes « Marquer perdu » —,
+      formulaire d'ajout dans le flux, confirmation nommant le champ et le chemin, 21 clés de
+      traduction.
+- [x] E2E sur la vraie base (`e2e/ui/administration-workflows.spec.ts`, 9 scénarios ajoutés + les
+      quatre paliers) : les exigences seedées rendues avec leur origine, l'exigence de règle sans
+      commande de retrait, les deux gestes à la souris puis au clavier seul confirmés en base, le
+      champ déjà exigé retiré des choix et l'archivé jamais proposé, le refus réel `23505` consommé,
+      la liaison sans effet nommée et conservée, le seed retrouvant ses **deux** liaisons.
+- [x] Documentation : `docs/manual.md` chapitre **5 bis.4 ter**, `docs/DESIGN_SYSTEM.md` §5.15
+      complété de six règles, `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Aucune migration** : `workflow_transition_required_fields`, ses trois triggers et ses trois
+      politiques datent de `CRM-018`.
+- [~] **Compteurs du harnais à porter** : `SCENARIOS_UI` de `scripts/verify-harness.sh` vaut encore
+      **219**, valeur de la quatrième tranche. Le compte réel de `e2e:ui` après cette tranche doit
+      être MESURÉ sur la pile, pas déduit, puis reporté.
+
+**Reste dû sous cette unité (§7 bis.12.7)** : la **prévisualisation des effets**, le réglage en
+**lot** d'une exigence sur plusieurs transitions, et les preuves pgTAP/API dédiées à l'écran (les
+politiques du §3.7, du §2.7 et de `CRM-018` restent prouvées par `CRM-031`, `CRM-035` et `CRM-018`).
+L'unité reste `[~]` jusqu'à leur livraison.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

@@ -15,6 +15,37 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, cinquième tranche : les exigences de transition —
+  `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.12). Le premier des deux manques nommés au
+  §7 bis.11.7 est levé : les **champs exigés pour franchir une transition**, livrés en base par
+  `CRM-018` et restés sans écran depuis, se règlent dans un cinquième bloc sous la grille.
+  - **Le bloc rend les exigences EFFECTIVES, pas la table.** La sixième garde de `move_card` exige
+    l'union des champs `required` par règle à l'étape d'arrivée et des champs liés à la transition,
+    restreinte aux champs non archivés. Un écran qui n'aurait montré que la table de liaison aurait
+    écrit « aucune exigence » là où l'étape d'arrivée en impose déjà. Chaque ligne porte son
+    origine — règle, transition, ou les deux.
+  - **Une exigence héritée d'une règle n'offre aucun retrait ici**, et le bloc renvoie à la grille :
+    deux écrans qui écriraient la même ligne se contrediraient.
+  - **L'écriture N'EST PAS un `upsert`, à l'inverse de la tranche précédente, et c'est mesuré** :
+    la migration de `CRM-018` n'accorde que `insert` et `delete` — sa spécification §2 pose
+    qu'aucune valeur n'est mutable —, si bien qu'un `POST` avec `resolution=merge-duplicates` rend
+    **`403`** / `42501` et un `PATCH` aussi. Le `POST` est donc simple, et son `23505` devient un
+    refus métier lisible — « déjà exigé » — au lieu d'un repli générique.
+  - **Les champs archivés sont écartés des choix**, la base acceptant pourtant la liaison (`201`)
+    alors que `move_card` la filtre : une liaison existante vers un champ archivé est **nommée sans
+    effet** et n'est pas supprimée.
+  - **La lecture est filtrée par jointure interne** `workflow_transitions!inner` : la table de
+    liaison ne dénormalise aucun `workflow_id`, et une lecture sans filtre rendrait les exigences
+    d'un autre workflow.
+  - **Aucune migration** : `workflow_transition_required_fields`, ses triggers et ses politiques
+    datent de `CRM-018`.
+  - **Preuves** : unitaires sur la couche de données et sur l'écran, **E2E sur la vraie base** — les
+    deux gestes à la souris et au clavier confirmés en base après coup, le retrait vérifié par
+    l'**absence** de ligne, l'exigence héritée affichée sans commande de retrait, le refus réel
+    `23505` consommé —, captures aux quatre paliers et formulaire ouvert, produites et observées.
+  - **INC-108 relevée, non corrigée** : trois documents comptent « dix-sept règles » là où le seed
+    en pose quinze par workflow. Arbitrage demandé.
+
 - **L'éditeur administrateur de workflows, quatrième tranche : la grille champ × étape —
   `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.11). La seconde moitié du deuxième manque
   nommé au §7 bis.10.7 est levée : la **visibilité de chaque champ à chaque étape** se règle depuis

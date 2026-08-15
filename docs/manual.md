@@ -1144,11 +1144,52 @@ Deux précisions que l'écran écrit lui-même sous le tableau :
 La grille se parcourt entièrement au clavier, chaque case annonçant la question **et** l'étape
 qu'elle règle.
 
+### 5 bis.4 ter Ce qu'il faut avoir rempli pour emprunter un chemin
+
+Sous la grille, le bloc « Champs exigés pour franchir une transition » reprend les chemins dans
+l'ordre du graphe et écrit, sous chacun, ce qu'une affaire doit avoir renseigné pour l'emprunter.
+
+Une exigence a **deux origines possibles**, et chaque ligne dit la sienne :
+
+- **exigé par la règle de l'étape d'arrivée** — la question est réglée sur « Exigé » dans la grille
+  ci-dessus, pour l'étape où ce chemin arrive. Elle vaut alors pour **tous** les chemins qui mènent
+  à cette étape ;
+- **exigé par cette transition** — la question n'est obligatoire que pour ce chemin-là, quels que
+  soient les réglages de l'étape d'arrivée ;
+- une même question peut porter **les deux** ; elle est alors écrite comme telle.
+
+Cette distinction commande ce que vous pouvez faire depuis ce bloc. Une exigence venue d'une règle
+**n'y porte aucune commande de retrait** : elle se modifie dans la grille, à la case correspondante.
+Retirer ici ce qui a été réglé là-haut vous aurait laissé croire à un effet que le formulaire
+n'aurait pas eu.
+
+Deux gestes seulement, tous deux confirmés en base :
+
+- **Exiger un champ** ouvre un court formulaire sous le chemin concerné. La liste ne propose que
+  des questions qu'il est utile d'exiger : celles déjà liées à ce chemin en sont retirées, et les
+  questions archivées n'y figurent jamais. Une question déjà exigée par la règle de l'étape
+  d'arrivée reste proposée, avec un avertissement qui dit ce qu'elle changera — rien, tant que
+  cette règle ne change pas.
+- **Ne plus exiger** demande une confirmation nommant la question et le chemin. Elle rappelle que la
+  question **reste dans le formulaire** : elle cesse seulement d'être obligatoire pour ce chemin.
+
+Deux précisions que l'écran écrit lui-même :
+
+- un chemin sans aucune exigence l'annonce en toutes lettres — « Aucun champ exigé » —, jamais par
+  une liste vide ;
+- une question **archivée** encore liée à un chemin est nommée **sans effet** : elle ne figure dans
+  aucun formulaire, donc elle n'est demandée nulle part. La liaison est conservée et redevient
+  effective si vous restaurez la question.
+
+Si un autre administrateur déclare la même exigence pendant que vous remplissez le formulaire,
+l'écran vous le dit — « Ce champ est déjà exigé par cette transition » — au lieu d'afficher une
+erreur technique.
+
 ### 5 bis.5 Ce qui n'est pas encore là
 
-- Les **champs exigés par une transition** — en plus de ceux exigés par l'étape d'arrivée — n'ont
-  pas d'écran : c'est un geste d'API.
 - La **prévisualisation des effets** d'une modification sur les affaires en cours n'est pas livrée.
+- Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
+  répète chemin par chemin.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
 
 ## 6. Consulter l'état de la messagerie

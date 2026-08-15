@@ -8,7 +8,8 @@ Contrat exécutable de `CRM-018`, issu de l'arbitrage du responsable qui remplac
 - Formulaires : `docs/SPEC-form-composer.md` §3.5 et §6.7.
 - Schéma : `docs/SCHEMA.md` §3 et §4.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §3 à §6.
-- État : livré et vérifié sur base froide le 2026-08-09.
+- État : livré et vérifié sur base froide le 2026-08-09. **Écran d'administration livré par `CRM-076`,
+  cinquième tranche, 2026-08-15** — son contrat est `docs/SPEC-workflow-engine.md` §7 bis.12.
 
 ---
 

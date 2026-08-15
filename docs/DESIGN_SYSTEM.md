@@ -682,6 +682,37 @@ visibilité de champs qu'on n'a pas déclarés.
   tableau**, pas dans l'option. Le §1 vaut ici : deux états qui produisent le même formulaire ne se
   distinguent pas par une nuance, ils se distinguent par une phrase.
 
+**Les exigences de transition — cinquième tranche, `docs/SPEC-workflow-engine.md` §7 bis.12.** Un
+cinquième bloc suit la grille dans la même colonne, par la même règle d'ordre : on n'ajoute pas
+d'exigence propre à une arête avant d'avoir vu ce que les règles exigent déjà.
+
+- **Ce bloc revient aux listes du §5.13, pas au `table` du §5.9**, et la différence de patron avec
+  la grille juste au-dessus est délibérée. La grille croise deux dimensions et chaque case a la
+  même forme ; ici chaque arête porte une liste de longueur libre, souvent vide, dont les entrées
+  n'ont pas toutes les mêmes commandes. Un tableau aurait eu autant de colonnes que la plus longue
+  liste, et des cellules vides partout ailleurs.
+
+- **Une arête est titrée « départ vers arrivée », jamais par son seul libellé.** Cinq arêtes du
+  workflow par défaut s'appellent toutes « Marquer perdu » : un titre qui ne les distinguerait pas
+  rendrait le bloc illisible, et le retrait porterait sur une arête que l'administrateur n'aurait
+  pas identifiée. La même composition sert dans le libellé accessible des deux commandes.
+
+- **L'origine d'une exigence est écrite sur sa ligne, jamais rendue par une teinte.** « exigé par la
+  règle de l'étape d'arrivée », « exigé par cette transition », ou les deux. Le §1 s'applique :
+  cette mention n'est pas une nuance, c'est ce qui détermine où l'exigence se modifie.
+
+- **Une exigence héritée d'une règle ne porte AUCUNE commande de retrait**, et le bloc écrit où elle
+  se modifie plutôt que d'exposer un bouton désactivé. C'est l'écart assumé à la règle du §5.13 —
+  commande désactivée jamais masquée : ici le geste n'existe pas à cet endroit, il existe ailleurs.
+  Un bouton grisé aurait suggéré un droit manquant ; la phrase de renvoi nomme le bon écran.
+
+- **Une liaison sans effet est NOMMÉE, comme le champ archivé du §5.15 ci-dessus.** Une exigence qui
+  porte sur une question archivée n'est demandée nulle part ; le bloc l'écrit sous l'arête, au
+  singulier ou au pluriel avec son compte, et ne la retire pas de la base.
+
+- **Une arête sans exigence porte une phrase, jamais un vide** — même règle que le cul-de-sac du
+  graphe plus haut : une liste vide se lirait comme un défaut d'affichage.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;
