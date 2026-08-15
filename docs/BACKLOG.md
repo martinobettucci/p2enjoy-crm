@@ -7000,10 +7000,48 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       coquille et l'écran tiennent deux copies de la même liste. Comportement inchangé, travail dû
       porté par `CRM-075` (`docs/JOURNAL.md` décision 421, `docs/ARBITRAGES.md` §1).
 
-- [ ] **Reste dû, dans cet ordre** : le geste de mise à la corbeille d'une **affaire** — sa surface
-      (board, vue liste ou formulaire) demande sa propre mesure, et sa confirmation ne portera aucune
-      énumération, une affaire n'ayant pas d'enfant au sens du §3.5 — puis le **harnais dédié**
-      `scripts/verify-corbeille.sh`.
+**Huitième tranche livrée, 2026-08-15 — le geste de mise à la corbeille d'une AFFAIRE**
+(`webapp/src/app/RouteCard.tsx`, `webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §4 ter,
+spécifié avant toute ligne de code) :
+
+- [x] **La surface est tranchée PAR MESURE, et deux candidates s'écartent sur une règle déjà écrite**
+      (§4 ter.1) : le menu d'une carte de board ne liste que les transitions déclarées
+      (`docs/DESIGN_SYSTEM.md` §5.1), et le tableau de la vue liste ne déclare aucune colonne
+      d'actions (§5.9). Reste la **route de détail**, seule surface où l'affaire est le sujet — même
+      raisonnement que pour le track et le channel, administrés en tant qu'objets.
+- [x] **La confirmation ne porte AUCUNE énumération** (§4 ter.2), ni la phrase « aucun objet ne
+      devient inaccessible » du §4 bis.3 : celle-ci rapporte une mesure qui a rendu zéro, et ici
+      aucune mesure n'a lieu — `compterEnfantsInaccessibles` n'accepte pas une affaire.
+- [x] **Le BUSINESS DEVELOPER RÉUSSIT le geste, là où il échoue sur un track** — MESURÉ avec les
+      jetons réels (§4 ter.3) : `cards_maj` porte `app.can_write_channel`, `tracks_maj_admin` exige
+      un rôle. Retirer une affaire est une écriture ordinaire sur son channel. La lectrice obtient
+      `200` et `[]`, la ligne relue **inchangée** — quatrième occurrence de la décision 70.
+- [x] **Après le geste, l'écran NOMME la corbeille** (§4 ter.5) : la route lit `deleted_at=is.null`
+      — MESURÉ —, et « Card introuvable » serait faux pour qui vient de la retirer. Bloc
+      `role="status"`, **deux** chemins — le channel, et la corbeille —, aucune annulation sur place.
+- [x] **Le fil enregistre le geste sans que le client écrive rien** (§4 ter.4) : le trigger de `0016`
+      fait naître un événement `trashed` portant son acteur. La charge ne porte que `deleted_at` ;
+      une charge portant `deleted_by` est refusée **entièrement**, en `42501`.
+- [x] **Un défaut trouvé par la preuve clavier, corrigé dans sa cause** : la commande est démontée
+      pendant la confirmation, si bien que rendre le focus à l'annulation visait une référence nulle.
+      Honoré par un effet, au remontage. `Button` déclare enfin sa `ref` (React 19).
+- [x] **Preuves exécutées sur l'arbre qui porte la tranche** : `typecheck` et `build` verts ;
+      `test:unit` **1042/1042** sur 39 fichiers dont 7 scénarios ajoutés ; `test:sql` **36 fichiers /
+      2004 assertions** ; `e2e:api` **536/536** dont 6 scénarios ajoutés ; `e2e:ui` **265/265** dont
+      7 scénarios ajoutés, console **VIERGE** ; `e2e:mail` **42/42** ; `pytest` **242** ;
+      `scripts/verify-manual.sh` **113 contrôles sans anomalie**.
+- [x] **Vérifié visuellement et OBSERVÉ** (`CLAUDE.md` §16) : la confirmation aux quatre paliers, le
+      bloc de succès et le refus « sans effet », dans `docs/captures/CRM-077/`, préfixés `card-`.
+- [x] **Le manuel gagne le chapitre 4.7 bis**, et le chapitre 5 ter cesse d'annoncer qu'une affaire
+      ne se retire d'aucun écran.
+- [ ] **Non exécutés, et nommés** : les `scripts/verify-*.sh` qui passent par `scripts/lib/node.sh`
+      — l'environnement de cette session fournit **Node 22**, le dépôt exige Node 24. Aucune de ces
+      preuves n'est annoncée comme verte.
+
+- [ ] **Reste dû** : le **harnais dédié** `scripts/verify-corbeille.sh`, qui rassemblerait les
+      preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
+      `webapp/src/app/Corbeille.test.tsx`, `webapp/src/app/RouteCard.test.tsx`,
+      `e2e/api/corbeille.spec.ts` et `e2e/ui/corbeille.spec.ts`.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

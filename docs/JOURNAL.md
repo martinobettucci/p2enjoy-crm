@@ -15526,3 +15526,62 @@ sa propre mesure et dont la confirmation ne portera aucune énumération ; puis 
 `scripts/verify-corbeille.sh`. Les trois points du §6 de la spécification — rétention, effacement
 définitif, visibilité pour un membre ordinaire — attendent l'arbitrage du responsable et ne se
 tranchent pas en session.
+
+### Décision 422 — Le geste d'une affaire vit sur sa fiche, et le business developer y réussit
+
+**2026-08-15 — huitième tranche de `CRM-077`, livrée et prouvée.**
+
+**La surface, tranchée par mesure et non par symétrie.** Le §4 bis.1 laissait l'affaire hors tranche
+en disant que sa surface « demande sa propre mesure ». Les trois candidates ont été regardées, et
+deux s'écartent d'elles-mêmes sur une règle **déjà écrite** : le menu d'une carte de board ne liste
+que les transitions déclarées — `docs/DESIGN_SYSTEM.md` §5.1 en fait « la garantie que l'interface ne
+propose jamais une action que le backend refuserait » —, et le tableau de la vue liste ne déclare
+aucune colonne d'actions (§5.9). Reste la **route de détail**, seule surface où l'affaire est le
+sujet. C'est le même raisonnement que pour le track et le channel, dont le geste vit là où ils sont
+administrés **en tant qu'objets**.
+
+**La mesure qui contredit un transport de règle, pour la troisième fois dans cette unité.** MESURÉ
+avec les jetons réels sur `Migration ERP Sogexia` : le **business developer RÉUSSIT** le geste, `200`
+et la ligne, `deleted_by` = `…012`. `cards_maj` porte `app.can_write_channel(channel_id)` là où
+`tracks_maj_admin` exige le rôle d'administrateur : retirer une affaire est une **écriture ordinaire
+sur son channel**, pas un geste d'administration. Reprendre le §4 bis.5 sans remesurer aurait fait
+écrire à la spécification que deux profils sur trois échouent, et probablement éteint une commande
+qui aboutit. La lectrice, elle, obtient `200` et `[]` — quatrième occurrence de la décision 70.
+
+**Le point qui décide de tout l'écran.** MESURÉ : `useContenuCard` lit `deleted_at=is.null`. Après le
+geste, la relecture rend **zéro ligne**, et l'écran retomberait sur « Card introuvable » — faux pour
+celui qui vient de la retirer, et exactement la « valeur par défaut trompeuse » de `CLAUDE.md` §18.
+Le succès rend donc un bloc dédié, `role="status"`, avec **deux** chemins : revenir au channel, et
+ouvrir la corbeille où l'affaire se restaure. Aucune annulation sur place : restaurer est le geste de
+l'écran de corbeille, avec ses trois issues et son refus nommé.
+
+**Le fil enregistre le geste, et le client n'écrit rien pour cela.** MESURÉ : le trigger de `0016`,
+dans sa forme de `0020`, fait naître un événement `trashed` portant son acteur, et `§5.11` du design
+system déclarait déjà la famille, l'icône et le libellé. La charge d'écriture ne porte donc que
+`deleted_at` — `deleted_by` reste fermée au client, et une charge qui la porterait est refusée
+**entièrement**, en `42501`.
+
+**Un défaut trouvé par la preuve clavier, corrigé dans sa cause.** La commande est **démontée** tant
+que la confirmation est ouverte : rendre le focus depuis le gestionnaire d'annulation visait une
+référence nulle, et le focus retombait sur le corps du document — ce que `docs/DESIGN_SYSTEM.md`
+§5.13 interdit. Le retour est désormais honoré par un effet, quand la commande est de nouveau
+montée. Au passage, `Button` **déclare** enfin sa `ref`, que React 19 lui transmettait déjà sans que
+le type l'autorise.
+
+**Deux constats ÉTRANGERS, mesurés et laissés inchangés** (doctrine du 2026-08-15, décision 407) :
+
+1. `scripts/verify-seed-demo.sh` rend **1 anomalie sur 69 contrôles** — sa preuve n° 13 exige encore
+   que la lectrice ne lise PAS le track `conseil-ia`. La décision 417 a déjà tranché cette famille
+   — « la preuve dit ce que la règle fait, pas ce qu'elle faisait » — mais ce harnais-là n'a pas été
+   révisé avec les autres. Aucun rapport avec cette tranche : la session n'a touché ni `supabase/`
+   ni `scripts/`. **Porteur : reprise transverse des harnais, `CRM-008`.**
+2. Cet environnement fournit **Node 22**, là où le dépôt exige Node 24 (`package.json`, `engines`).
+   Tous les `scripts/verify-*.sh` qui passent par `scripts/lib/node.sh` refusent donc de s'exécuter
+   — `verify-webapp`, `verify-cards`, `verify-timeline`, `verify-harness`,
+   `verify-administration-arborescence`, `verify-preuves-refus`. Ce n'est pas un défaut du produit,
+   et aucune de ces preuves n'a été annoncée comme exécutée.
+
+**Où reprendre.** Le harnais dédié `scripts/verify-corbeille.sh`, que le backlog nomme toujours comme
+dû et qui rassemblerait les preuves aujourd'hui dispersées entre quatre fichiers. Les trois points du
+§6 de la spécification — rétention, effacement définitif, visibilité pour un membre ordinaire —
+attendent l'arbitrage du responsable et ne se tranchent pas en session.
