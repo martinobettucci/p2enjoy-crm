@@ -7128,15 +7128,47 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       fonctions qui passent de vingt-sept à vingt-huit. Chacune porte son motif dans le fichier.
 - [x] `docs/SCHEMA.md` §3 et §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
       `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans le même changement.
-- [ ] **`docs/manual.md` n'est pas mis à jour, et c'est délibéré** : cette tranche ne livre aucun
-      geste utilisateur. Le chapitre du manuel naîtra avec l'écran de la cinquième tranche.
+- [x] **`docs/manual.md` — ligne 20 bis ajoutée au sommaire**, et le README porté à l'état réel.
+      La tranche ne livre aucun geste d'interface, mais le manuel énumère déjà ce qui n'existe que
+      côté serveur (lignes 22, 25 et 25 bis) : l'omettre aurait laissé croire que le versionnement
+      n'existe pas. La ligne dit ce que publier fait, ce que publier **ne fait pas** — les affaires
+      circulent toujours sur la structure vivante — et que publier reste un geste d'API. **Le
+      chapitre rédigé** naîtra avec l'écran de la cinquième tranche.
 - [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent dans
       deux fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq tranches
       livrées, comme `CRM-077` l'a montré.
 
-*Écart nommé.* **Aucun écran, aucune capture** dans cette tranche : elle ne livre que des données et
-un geste serveur (`docs/SPEC-workflow-engine.md` §7 ter.9). L'unité **ne peut pas** passer `[x]`
-avant la cinquième tranche, dont la Definition of Done exige l'aperçu et les captures.
+#### Deuxième tranche — comparaison de deux versions
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` **§7 ter.11** (huit
+      sections) : ce que la comparaison est et n'est pas, **l'identité est un identifiant et jamais
+      une ressemblance** — la règle qui tranche « aucune étape n'est devinée » —, le geste et ses
+      quatre refus dans l'ordre, la forme rendue, l'algorithme unique appelé six fois, les douze
+      lignes du contrat d'API, ce qui n'est pas livré, les preuves attendues. `docs/SCHEMA.md` §9
+      mis à jour dans le même commit documentaire, poussé **avant** la première ligne de code
+      (`CLAUDE.md` §5).
+- [ ] `supabase/migrations/0040_comparaison_versions_workflow.sql` :
+      `app.composition_collection_diff`, `public.compare_workflow_versions`, privilèges explicites
+      et révocation nommée d'`anon`.
+- [ ] **Test unitaire dédié** `supabase/tests/0038_comparaison_versions_workflow.test.sql` :
+      existence, `stable`, absence de `security definer`, privilèges et révocation ; les quatre
+      refus contre des comptes réels ; l'algorithme sur les six collections ; l'invariant
+      `identical` dans les deux sens ; l'ordre déterministe ; **une étape supprimée puis recréée
+      rend un retrait et un ajout**.
+- [ ] **Test d'intégration dédié, hors interface**
+      `e2e/api/comparaison-versions-workflow.spec.ts` : les douze lignes du §7 ter.11.6 avec les
+      jetons réels des trois profils.
+- [ ] `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md`,
+      `webapp/src/lib/database.types.ts` (régénéré) à mettre à jour dans le même changement.
+
+*Écart nommé.* **Aucun seed** dans cette tranche : la comparaison ne conserve rien, et publier une
+seconde version pour donner à comparer serait une donnée fabriquée pour la preuve (`CLAUDE.md` §8).
+Les preuves publient elles-mêmes ce qu'elles comparent, par la vraie RPC.
+
+*Écart nommé.* **Aucun écran, aucune capture** dans les deux premières tranches : elles ne livrent
+que des données et des gestes serveur (`docs/SPEC-workflow-engine.md` §7 ter.9 et §7 ter.11.7).
+L'unité **ne peut pas** passer `[x]` avant la cinquième tranche, dont la Definition of Done exige
+l'aperçu et les captures.
 
 *Preuves restant à exécuter pour cette unité.* Aucune pour la première tranche : toutes ses preuves
 sont exécutées et vertes. Les tranches 2 à 5 apportent les leurs.

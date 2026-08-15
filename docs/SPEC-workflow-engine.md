@@ -3069,6 +3069,198 @@ garde propre au seed.
 | Seed | Une version du workflow par défaut, publiée par la vraie RPC, convergente au rejeu |
 | Interface | **Aucune** — cette tranche ne livre aucun écran (§7 ter.9) |
 
+### 7 ter.11 Deuxième tranche — la comparaison de deux versions
+
+Chapitre écrit **avant la première ligne de code** de cette tranche (`CLAUDE.md` §5), après mesure
+sur la pile seedée. Les valeurs marquées MESURÉ ont été relevées en base.
+
+#### 7 ter.11.1 Ce que la comparaison est, et ce qu'elle n'est pas
+
+La première tranche conserve des documents ; elle ne les lit pas. Deux versions d'un même workflow
+sont aujourd'hui deux blocs `jsonb` de plusieurs milliers de caractères, et dire ce qui a changé
+entre les deux suppose de les parcourir à l'œil. La comparaison rend cette lecture au produit :
+**quelles étapes, arêtes, questions, règles et exigences ont été ajoutées, retirées ou modifiées**,
+et pour chaque modification, **quel attribut a changé, de quelle valeur à quelle valeur**.
+
+Ce qu'elle **n'est pas** :
+
+- ce n'est **pas** un plan de remappage des cards. Dire qu'une étape a disparu ne dit pas où
+  atterrissent les affaires qui s'y trouvent : c'est la troisième tranche, et elle a ses propres
+  refus ;
+- ce n'est **pas** une application. La comparaison ne modifie **rien** : elle est `stable`, elle
+  n'écrit aucune ligne, et publier, restaurer ou remapper restent des gestes distincts ;
+- ce n'est **pas** un rapprochement heuristique. **Aucune correspondance n'est devinée** — voir le
+  paragraphe suivant, qui est la règle de fond de cette tranche.
+
+#### 7 ter.11.2 L'identité est un identifiant, jamais une ressemblance
+
+La Definition of Done de `CRM-078` exige qu'**aucune étape ne soit devinée**. Cette exigence se
+tranche ici, dans la comparaison, et non plus loin : c'est elle qui décide si « Négociation »
+renommée en « Négociation commerciale » est **une** étape modifiée ou **deux** étapes, l'une retirée
+et l'autre ajoutée.
+
+La règle est donc énoncée une fois, et elle ne souffre aucune exception : **deux éléments sont le
+même élément si et seulement si leur identité est égale**, l'identité étant faite d'identifiants
+réels et d'eux seuls. Aucun libellé, aucune position, aucune distance de chaîne, aucune proximité de
+clé n'entre dans ce calcul. Le document canonique du §7 ter.2 porte les identifiants réels des
+objets vivants — c'est précisément ce qui rend cette règle applicable.
+
+| Collection | Identité |
+|---|---|
+| `workflow` | l'objet est unique dans le document ; les deux versions portant le même `workflow_id`, il est toujours apparié |
+| `steps` | `id` |
+| `transitions` | `id` |
+| `fields` | `id` |
+| `rules` | le couple `(field_id, step_id)` — la table n'a pas d'identifiant propre dans le document |
+| `required_fields` | le couple `(transition_id, field_id)` — même raison |
+
+Conséquence assumée et à dire au lecteur : une étape supprimée puis recréée à l'identique apparaît
+comme **un retrait et un ajout**, jamais comme un élément inchangé. C'est la vérité de la base — la
+seconde ligne n'est pas la première — et toute autre réponse serait une supposition.
+
+#### 7 ter.11.3 Le geste — `public.compare_workflow_versions`
+
+```
+public.compare_workflow_versions(
+  base_version_id   uuid,
+  target_version_id uuid
+) returns jsonb
+```
+
+`stable`, `search_path` vide, et **`security invoker`** — donc **sans** `security definer`, à la
+différence de `publish_workflow_version`. Ce choix est délibéré : la politique de lecture de
+`public.workflow_versions` (§7 ter.4) **est** déjà la règle d'autorisation exacte de ce geste. Une
+fonction `definer` devrait la réécrire dans son corps, et deux formulations de la même règle
+finissent toujours par diverger. Précédent du dépôt : `public.previsualiser_exigence` (§7 bis.13.3).
+
+Exécution accordée à `authenticated` et à `service_role` ; **révoquée de `public` et d'`anon`** —
+la révocation nommée est obligatoire, le `grant execute` par défaut de l'image portant sur `anon`
+aussi (§4.7, décision 80).
+
+Les vérifications, **dans cet ordre**, et ce que chacune rend :
+
+| # | Vérification | Refus | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
+| 2 | la version de base existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 3 | la version cible existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 4 | les deux versions portent le même `workflow_id` | `versions de workflows differents` | `P0001` | `400` |
+
+Les vérifications 2 et 3 rendent **le même message**, et une version d'un autre workspace rend ce
+même message qu'un identifiant inexistant : la RLS ne la donne pas à lire, `not found` s'ensuit, et
+la fonction n'est donc pas un oracle d'existence (§4.3). C'est aussi pourquoi elle n'a **aucun**
+contrôle de workspace écrit à la main : il serait redondant, et son absence est ici une garantie et
+non un oubli.
+
+La vérification 4 n'est pas un scrupule : deux versions de workflows distincts ne partagent aucun
+identifiant d'étape ni de champ. Leur comparaison rendrait « tout retiré, tout ajouté », un document
+volumineux et vide de sens que l'appelant prendrait pour une réponse.
+
+**Comparer une version à elle-même est ACCEPTÉ**, et rend `identical = true` avec toutes les
+collections vides. L'écran de la cinquième tranche en a besoin ; le refuser obligerait l'appelant à
+tester l'égalité avant d'appeler.
+
+**L'orientation est celle des arguments, et la fonction ne la corrige pas.** « Ajouté » signifie
+*présent dans la cible, absent de la base*. Passer la version la plus récente en base rend donc une
+comparaison exacte, mais lue à l'envers. Choisir le sens appartient à l'appelant, qui seul sait s'il
+regarde un historique ou un projet de restauration.
+
+#### 7 ter.11.4 Ce que la fonction rend
+
+Un objet `jsonb` à cinq clés de premier niveau :
+
+```
+{
+  "base":      { "version_id", "version_number", "published_at", "composition_fingerprint" },
+  "target":    { … les mêmes … },
+  "identical": true | false,
+  "summary":   { "added": n, "removed": n, "modified": n },
+  "changes":   {
+    "workflow":        { "modified": [ … ] },
+    "steps":           { "added": [ … ], "removed": [ … ], "modified": [ … ] },
+    "transitions":     { … }, "fields": { … }, "rules": { … }, "required_fields": { … }
+  }
+}
+```
+
+Forme d'un élément, uniforme dans les six collections :
+
+- **ajouté** et **retiré** : `{ "identity": { … }, "element": { … le document complet … } }`. Le
+  document entier est rendu, et non son seul identifiant : un écran doit pouvoir nommer l'étape
+  disparue, ce que l'objet vivant ne permet plus ;
+- **modifié** : `{ "identity": { … }, "attributes": [ { "name", "before", "after" }, … ] }`. Seuls
+  les attributs **réellement différents** figurent dans la liste, et un attribut apparu ou disparu
+  y figure avec `null` du côté où il manque.
+
+`changes.workflow` ne porte **que** `modified` : l'objet workflow existe des deux côtés par
+construction (vérification 4).
+
+**Tous les tableaux sont ordonnés**, par identité puis par nom d'attribut. Une fonction `stable` qui
+rendrait deux ordres différents pour la même paire rendrait toute assertion instable et toute
+comparaison d'écran clignotante.
+
+`identical` est vrai **si et seulement si** les deux empreintes sont égales. C'est un invariant, pas
+une commodité : l'empreinte est le condensé du document (§7 ter.2), donc deux empreintes égales
+imposent six collections vides, et deux empreintes différentes imposent au moins un écart. Les
+preuves l'éprouvent **dans les deux sens**.
+
+`summary` compte les éléments, non les attributs : une étape dont trois attributs changent compte
+pour **un** `modified`. Le workflow modifié compte pour un `modified` s'il porte au moins un
+attribut différent.
+
+#### 7 ter.11.5 Un seul algorithme, appelé six fois
+
+Le calcul est porté par `app.composition_collection_diff(base jsonb, target jsonb, identity_keys
+text[]) returns jsonb`, `immutable`, `search_path` vide, révoquée de `public` puis accordée aux
+trois rôles. Elle ne connaît **rien** aux workflows : elle reçoit deux tableaux d'objets et la liste
+des clés qui font l'identité, et rend `{ "added", "removed", "modified" }`.
+
+Écrire cinq comparaisons spécialisées aurait produit cinq occasions de diverger — c'est le défaut
+qu'a corrigé l'extraction du document canonique au §7 ter.2, et il n'est pas réintroduit ici. La clé
+`workflow` du document n'étant pas un tableau, elle est enveloppée dans un tableau d'un élément et
+passée au même algorithme, avec `id` pour identité.
+
+#### 7 ter.11.6 Contrat d'API attendu, à mesurer
+
+Les lignes ci-dessous sont le contrat que les preuves d'API de cette tranche doivent **observer**
+sur la pile, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=password`.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/compare_workflow_versions`, une version comparée à elle-même | `admin` | `200`, `identical` vrai, `summary` à zéro, six collections vides |
+| b | deux versions dont la seconde ajoute une étape | `admin` | `200`, `identical` faux, l'étape en `changes.steps.added`, son document complet rendu |
+| c | deux versions dont la seconde renomme une étape | `admin` | `200`, l'étape en `modified`, `attributes` portant le seul attribut changé, `before` et `after` exacts |
+| d | deux versions dont la seconde retire une transition | `admin` | `200`, la transition en `changes.transitions.removed` |
+| e | la même paire qu'en b, arguments **inversés** | `admin` | `200`, l'étape en `removed` et non en `added` — l'orientation est celle des arguments |
+| f | comparaison lue par un `viewer` du workspace | `viewer` | `200` — la comparaison est une lecture, elle suit la politique de lecture |
+| g | comparaison lue par un `business_developer` | `business_developer` | `200` |
+| h | `base_version_id` inexistant | `admin` | `400`, `P0001`, `version introuvable` |
+| i | `target_version_id` inexistant | `admin` | `400`, `P0001`, **le même message qu'en h** |
+| j | une version d'un autre workspace | `admin` | `400`, `P0001`, **le même message qu'en h** — preuve de refus n° 3 |
+| k | deux versions de workflows différents | `admin` | `400`, `P0001`, `versions de workflows differents` |
+| l | appel anonyme | anonyme | `401` — le privilège refuse avant la vérification 1 |
+
+#### 7 ter.11.7 Ce que cette tranche ne livre PAS
+
+- **aucun écran**, ni aperçu de comparaison ni liste des versions : cinquième tranche. Aucune
+  capture d'application n'est donc produite ici, et l'absence est nommée plutôt que compensée ;
+- **aucun plan de remappage**, **aucune application**, **aucun retour arrière** : tranches 3 et 4 ;
+- **aucune comparaison entre une version et la structure vivante**. Elle sera utile à l'écran de
+  publication, mais elle a ses propres refus — la structure vivante n'est pas une ligne lisible par
+  identifiant — et l'inventer ici l'aurait laissée sans spécification ;
+- **aucun seed** : la comparaison ne conserve rien. Une seconde version publiée par le seed pour
+  donner à comparer serait une donnée fabriquée pour la preuve, ce que `CLAUDE.md` §8 refuse ; les
+  preuves publient elles-mêmes ce qu'elles comparent, par la vraie RPC.
+
+#### 7 ter.11.8 Preuves attendues de la deuxième tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Existence, volatilité `stable`, absence de `security definer`, privilèges et **révocation d'`anon`** ; les quatre refus contre des comptes réels ; l'algorithme sur les six collections — ajout, retrait, modification d'attribut, couples d'identité de `rules` et `required_fields` ; l'invariant `identical` dans les deux sens ; l'ordre déterministe des tableaux ; **une étape supprimée puis recréée rend un retrait et un ajout**, jamais un inchangé |
+| API | Les douze lignes du §7 ter.11.6, hors interface, avec les jetons réels des trois profils |
+| Seed | **Aucun** (§7 ter.11.7) |
+| Interface | **Aucune** — cette tranche ne livre aucun écran |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
