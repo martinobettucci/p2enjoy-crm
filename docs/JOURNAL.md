@@ -16272,3 +16272,36 @@ lancement —, dont la spécification n'existe pas et devra être écrite et com
 `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`. `pytest` se lance par
 `python3 -m pytest mail-sync/tests`, après
 `pip install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements{,-dev}.txt`.
+
+## 2026-08-15 — Le blocage Node 24 n'en était pas un : `nvm` est là, la version manquait
+
+**Constat.** Plusieurs sessions ont consigné que « les `scripts/verify-*.sh` ne sont PAS exécutables
+dans cet environnement », trente et un des trente-neuf s'arrêtant sur *aucun couple Node 24 / npm 11+
+Linux n'est utilisable*, et l'ont classé blocage d'hôte. C'était une conclusion trop rapide.
+
+**Mesure.** `/opt/nvm` est installé. `nvm ls` ne connaissait que `system` — **v22.22.2** —, alors que
+le `.nvmrc` du dépôt demande **24**. `nvm install 24` télécharge `node-v24.19.0-linux-x64.tar.xz`
+depuis `nodejs.org` **à travers le proxy**, vérifie son `sha256sum` et rend `v24.19.0` /
+`npm 11.17.0`, en posant l'alias `default`. Après `nvm use`, `scripts/verify-workflows.sh` **franchit
+sa garde de version** et entre dans ses étapes, là où il s'arrêtait à sa première ligne.
+
+**Deux faits qui expliquent que le blocage ait tenu si longtemps.** Le message d'erreur des harnais
+dit « Exécutez « nvm use » puis relancez », ce qui est trompeur tant que la version n'est pas
+installée : `nvm use` échoue aussi. Et `nvm` **n'est pas un binaire** mais une fonction de shell :
+`timeout 600 nvm install 24` rend `timeout: failed to run command 'nvm'`, ce qui a pu passer pour
+une absence de `nvm`.
+
+**Décision.** La procédure rejoint `docs/CloudWorker.md` **§2.1 bis**, écrite comme celle de Docker
+au §2 — l'outil est présent, rien n'est prêt, c'est à la session de le faire —, avec l'obligation de
+sourcer `nvm` dans le même appel de shell que la commande, et celle d'installer Node 24 **avant**
+`npm ci`. La ligne du backlog qui déclarait `scripts/verify-versionnement.sh` inexécutable ici est
+corrigée : il reste à écrire, mais plus rien n'empêche de l'exécuter.
+
+**Ce qui n'a PAS été fait, et qu'il ne faut pas croire acquis.** Aucun `verify-*.sh` n'a été mené à
+son terme dans cette session : ils appellent `docker compose`, et le démon Docker s'était arrêté
+après la campagne. La levée du blocage porte donc sur la **garde de version**, constatée franchie,
+pas sur un verdict de harnais.
+
+**Où reprendre.** Inchangé : `CRM-079`. La prochaine session qui voudra un verdict de harnais
+installera Node 24 par le §2.1 bis, remontera la pile, et pourra alors mesurer les trente-neuf
+`verify-*.sh` pour la première fois.

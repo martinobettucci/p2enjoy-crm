@@ -434,6 +434,83 @@ CERTIFICATE_VERIFY_FAILED
 
 "runDev.sh" s'arrêterait alors avant de démarrer le moindre service.
 
+### 2.1 bis. NODE 24 : L'HÔTE A "nvm", MAIS PAS LA BONNE VERSION — INSTALLE-LA TOI-MÊME
+
+Comme pour Docker au §2, l'outil est là et rien n'est prêt : c'est à toi de le faire. Ne le
+redécouvre pas, tout ce qui suit est MESURÉ.
+
+L'hôte démarre sur **Node v22.22.2**, la version du système. Or le dépôt exige **Node 24 / npm 11+** :
+`.nvmrc` contient `24`, le "README.md" §7 nomme le couple, et **trente et un des trente-neuf**
+"scripts/verify-*.sh" refusent de s'exécuter sans lui. Leur refus tombe à la PREMIÈRE ligne, avant
+toute lecture du dépôt :
+
+```
+ERREUR : aucun couple Node 24 / npm 11+ Linux n'est utilisable. Exécutez « nvm use » puis relancez.
+```
+
+Ce message dit « exécutez nvm use », et c'est trompeur tant que la version n'est pas installée :
+"nvm use" échouerait, "nvm ls" ne connaissant que "system".
+
+"nvm" EST INSTALLÉ, dans :
+
+```
+/opt/nvm
+```
+
+**"nvm" n'est PAS un binaire, c'est une fonction de shell.** Elle n'existe donc pas tant que tu ne
+l'as pas sourcée, et elle n'est atteignable ni par "timeout", ni par "env", ni par "xargs" — MESURÉ :
+
+```
+timeout 600 nvm install 24
+=> timeout: failed to run command 'nvm': No such file or directory
+```
+
+La procédure, dans cet ordre, et dans UN SEUL appel de shell — l'état d'un shell ne survit pas d'une
+commande à l'autre :
+
+```
+export NVM_DIR=/opt/nvm
+. /opt/nvm/nvm.sh
+nvm install 24
+```
+
+MESURÉ : l'installation télécharge "node-v24.19.0-linux-x64.tar.xz" depuis "nodejs.org" à travers le
+proxy, vérifie son "sha256sum", et rend :
+
+```
+Now using node v24.19.0 (npm v11.17.0)
+```
+
+Elle pose aussi l'alias "default" sur 24, de sorte que les shells suivants n'ont plus qu'à sourcer
+"nvm" et à appeler :
+
+```
+nvm use
+```
+
+qui lit le ".nvmrc" du dépôt.
+
+**Toute commande qui dépend de Node doit être lancée dans un shell qui a sourcé "nvm"**, sans quoi
+elle retombe silencieusement sur la v22 du système :
+
+```
+export NVM_DIR=/opt/nvm ; . /opt/nvm/nvm.sh ; nvm use ; <ta commande>
+```
+
+Vérifie avant de conclure quoi que ce soit :
+
+```
+node -v   => v24.x
+npm -v    => 11.x
+```
+
+**Installe Node 24 AVANT "npm ci"**, et non après : les dépendances installées par une version le
+sont pour elle, et changer de version derrière expose à des modules natifs incompatibles.
+
+MESURÉ après l'installation : "scripts/verify-workflows.sh" **franchit la garde de version** et entre
+dans ses étapes, là où il s'arrêtait sur sa première ligne. Les harnais exigent en outre la pile
+debout — ils appellent "docker compose" —, donc §2 puis §2.2 avant eux.
+
 ### 2.2. DÉMARRAGE DE LA PILE
 
 Ensuite seulement :

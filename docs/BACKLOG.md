@@ -7401,10 +7401,11 @@ la campagne complète a été rejouée après elle : `test:sql` **40 fichiers, 2
 `typecheck` et `build` verts.
 
 *Écart nommé, et il ne relève PAS de la Definition of Done.* `scripts/verify-versionnement.sh`
-n'est **pas écrit**. Il serait désormais utile — les cinq tranches sont livrées —, mais aucun
-`verify-*.sh` n'est exécutable dans cet environnement, qui n'offre pas le couple Node 24 / npm 11+
-que tous exigent. Écrire un harnais que la session ne peut pas exécuter reviendrait à livrer une
-preuve non éprouvée, ce que `CLAUDE.md` §25 interdit. À écrire sur un hôte portant Node 24.
+n'est **pas écrit**. Il serait désormais utile, les cinq tranches étant livrées, et il est
+**désormais exécutable** : le blocage Node 24 est levé, `nvm install 24` posant `v24.19.0` /
+`npm 11.17.0` sur cet hôte (procédure mesurée et consignée dans `docs/CloudWorker.md` §2.1 bis, le
+2026-08-15). Il reste à écrire, et à écrire seulement une fois qu'une session peut réellement
+l'exécuter — un harnais non éprouvé n'est pas une preuve (`CLAUDE.md` §25).
 
 *Preuves restant à exécuter pour cette unité.* **Aucune.** La première tranche redevient
 intégralement verte sur une base neuve — **31 assertions sur 31** — l'arbitrage de la **décision
