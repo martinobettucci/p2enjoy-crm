@@ -192,7 +192,9 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Deux : INC-120 et INC-121**, consignées le 2026-08-15 (garde des élévations de privilège des migrations). Les
+**Trois : INC-120, INC-121 et INC-122**, consignées le 2026-08-15 (garde des élévations de privilège des
+migrations ; compteurs figés de `verify-preuves-refus.sh` ; identifiant non épinglé du workflow
+dérivé dans les preuves de `CRM-078`). Les
 dix-neuf entrées qui restaient en texte complet ont été **arbitrées le 2026-08-15
 par les décisions 408 à 419**, sur instruction du responsable de trancher automatiquement tout ce
 qui restait en suspens. Conformément à la règle de retrait de la décision 407, elles rejoignent
@@ -276,3 +278,55 @@ responsable désignera. **Action attendue :** trancher entre les deux remèdes.
 illisible` parce que l'agent est `root` et que `[ -r ]` reste vrai sur un `chmod 000`, et
 `la reconstruction sans CA n'emprunte pas sa branche inactive` parce que le proxy TLS interposé fait
 échouer une image reconstruite sans certificat.
+
+### INC-122 — Deux assertions de la première tranche de `CRM-078` s'appuient sur un identifiant que le seed n'épingle pas
+
+**Constatée le 2026-08-15**, pendant la deuxième tranche de `CRM-078` (comparaison de deux
+versions), sur une pile **fraîchement démarrée et seedée**. Le défaut est **ÉTRANGER** à la tranche
+en cours — elle n'ajoute qu'une migration et une suite nouvelles — et le comportement du produit est
+laissé **inchangé** (`CLAUDE.md` §1).
+
+**Ce qui est mesuré.** `supabase/tests/0037_versionnement_workflows.test.sql` rend **2 assertions en
+échec sur 31** :
+
+| Assertion | Attendu | Relevé |
+|---|---|---|
+| 3 — « empreinte du workflow dérivé INCHANGÉE par l'extraction du document » | `6e4faac6…c13a58d89` | `NULL` |
+| 28 — « un workflow archivé ne se photographie pas » | `P0001 workflow archive` | `P0001 workflow introuvable` |
+
+**La cause est unique, et elle n'est pas dans le produit.** Les deux assertions citent en dur
+l'identifiant `352d02ac-5564-437c-8c0b-c1b7484b9eba` comme étant celui du workflow dérivé
+« Cycle commercial — Conseil IA ». Or ce workflow n'est pas posé par le seed avec un identifiant
+épinglé : il est **engendré par `copy_workflow_to_track`**, qui appelle `gen_random_uuid()`. Sur la
+base de cette session, il porte `64a773fd-683f-4f5d-aeaa-41c254d79693`. L'identifiant écrit dans la
+suite est donc celui de la base sur laquelle elle a été rédigée, et **de nulle autre** : le workflow
+visé n'existe pas, `app.workflow_composition_document` rend `NULL`, et la RPC refuse en
+« introuvable » avant d'atteindre le contrôle d'archivage qu'elle voulait éprouver.
+
+**Ce n'est pas une régression, et la ligne de base est inutile pour l'établir** : la migration 40 et
+la suite 0038 de cette session n'écrivent ni ne lisent le workflow dérivé, et la cause est visible
+dans le texte même de la suite 0037.
+
+**Portée réelle du défaut.** L'assertion 3 est **structurellement irréparable en l'état** : elle fige
+une empreinte SHA-256 calculée sur un document qui **contient** les identifiants engendrés à la
+copie. Aucune valeur constante ne peut la satisfaire sur deux bases différentes. L'assertion 28, elle,
+se répare simplement — désigner le workflow dérivé par son nom, ou archiver un workflow créé par la
+suite elle-même.
+
+**Pourquoi ce n'est pas tranché en session.** Le remède de l'assertion 3 n'est pas une correction
+mécanique mais un **choix de contrat de preuve**, et deux voies s'opposent :
+
+1. **épingler l'identifiant du workflow dérivé dans le seed**, comme le seed épingle déjà tout le
+   reste (`5eed0000-…`). L'empreinte redevient alors constante et l'assertion garde tout son
+   pouvoir — au prix d'une copie qui ne passerait plus par le seul `copy_workflow_to_track`, ou qui
+   exigerait un paramètre d'identifiant que la RPC n'a pas ;
+2. **renoncer à figer l'empreinte du dérivé** et ne conserver la valeur figée que pour le workflow
+   par défaut, qui est épinglé. L'assertion perdrait ce qu'elle protégeait précisément : le fait
+   qu'une copie **dérivée** ne diverge pas en silence.
+
+Le premier remède touche le contrat du seed, le second affaiblit une preuve d'anti-régression posée
+délibérément. `CLAUDE.md` §26 réserve ce genre d'arbitrage au responsable.
+
+**Porteur de la mise en œuvre :** `CRM-078`, première tranche. **Action attendue :** trancher entre
+les deux remèdes. **Conséquence tant qu'il n'est pas tranché :** la première tranche de `CRM-078`
+n'est **pas** intégralement prouvée sur une base neuve, et son énoncé de backlog le dit désormais.
