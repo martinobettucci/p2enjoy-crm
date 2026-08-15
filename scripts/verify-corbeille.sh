@@ -124,18 +124,21 @@ for fichier in "${FICHIERS_CODE[@]}" "${FICHIERS_PREUVE[@]}"; do
 	if [ ! -f "$fichier" ]; then fail "$fichier est ABSENT"; fi
 done
 
+# Le chemin ENTIER est affiché, jamais le seul nom de base : `e2e/api/corbeille.spec.ts` et
+# `e2e/ui/corbeille.spec.ts` le partagent, et deux lignes identiques ne diraient pas laquelle des
+# deux a été contrôlée.
 for fichier in "${FICHIERS_CODE[@]}"; do
 	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@spec CRM-077'; then
-		ok "$(basename "$fichier") porte son commentaire @spec"
+		ok "$fichier porte son commentaire @spec"
 	else
-		fail "$(basename "$fichier") ne cite pas CRM-077 en tête de fichier"
+		fail "$fichier ne cite pas CRM-077 en tête de fichier"
 	fi
 done
 for fichier in "${FICHIERS_PREUVE[@]}"; do
 	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@verifies CRM-077'; then
-		ok "$(basename "$fichier") porte son commentaire @verifies"
+		ok "$fichier porte son commentaire @verifies"
 	else
-		fail "$(basename "$fichier") ne cite pas CRM-077"
+		fail "$fichier ne cite pas CRM-077"
 	fi
 done
 
@@ -188,7 +191,9 @@ vitest_fige() {
 	fichiers=$(grep -oE 'Test Files +[0-9]+ passed' "$journal" | tail -1 | grep -oE '[0-9]+' | tail -1)
 	tests=$(grep -oE 'Tests +[0-9]+ passed' "$journal" | tail -1 | grep -oE '[0-9]+' | tail -1)
 	if [ "${fichiers:-0}" -eq "$fichiers_attendus" ] && [ "${tests:-0}" -eq "$tests_attendus" ]; then
-		ok "vitest « $filtre » : ${fichiers} fichiers, ${tests} tests ($libelle)"
+		local mot=fichiers
+		[ "$fichiers" -eq 1 ] && mot=fichier
+		ok "vitest « $filtre » : ${fichiers} ${mot}, ${tests} tests ($libelle)"
 	else
 		fail "vitest « $filtre » vert mais les comptes ont changé : ${fichiers:-?} fichiers / ${tests:-?} tests au lieu de $fichiers_attendus / $tests_attendus — mettez le §5 bis.1 à jour dans le même changement"
 	fi
