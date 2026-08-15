@@ -537,6 +537,10 @@ Et pousse quand même tout travail cohérent effectué.
 
 ## 3. CE QUE TU DOIS FAIRE
 
+TA MISSION PRIMAIRE EST DE FAIRE AVANCER LE PRODUIT : des fonctionnalités réellement codées — écran, geste, règle métier, migration, API — livrées et prouvées. Tout le reste de cette section est un MOYEN au service de cette mission, jamais une fin en soi.
+
+Écrire et maintenir la documentation — spécification, journal, backlog, registre — est une OBLIGATION CONSTANTE et NON NÉGOCIABLE (CLAUDE.md §5). Ce n'est PAS le travail. C'est ce qui rend le travail traçable, reproductible et repris correctement par l'exécution suivante. Une session qui documente sans coder n'a pas rempli sa mission ; voir §4.2 et §4.2 bis, qui rendent cette règle vérifiable.
+
 Lis INTÉGRALEMENT "CLAUDE.md" à la racine et applique ses règles à la lettre.
 
 Elles priment sur tes habitudes.
@@ -552,7 +556,7 @@ docs/JOURNAL.md
 
 ainsi que les documents de "docs/" utiles à l'unité traitée.
 
-Objectif permanent : faire progresser "docs/BACKLOG.md" vers 100 %, sans exception à la Definition of Done et sans raccourci.
+Objectif permanent : livrer les fonctionnalités du produit que "docs/BACKLOG.md" énumère, jusqu'à ce que chacune soit "[x]", sans exception à la Definition of Done et sans raccourci. Le backlog n'est que la LISTE ; la mesure du travail réel est le produit livré et prouvé, jamais l'état du fichier seul.
 
 Traite UNE unité cohérente à la fois, séquentiellement.
 
@@ -742,18 +746,19 @@ Une session qui finit sans mettre à jour le journal et le backlog condamne pote
 
 Ta RÉPONSE FINALE n'est jamais un simple accusé de fin de tâche. C'est TOUJOURS un compte rendu complet de ce que la session a construit.
 
-Ce compte rendu est DISTINCT de l'entrée de "docs/JOURNAL.md" du point 1 ci-dessus, qui reste brève (§4.2 bis) et sert à l'exécution suivante. Le compte rendu final s'adresse au responsable et peut, lui, être détaillé.
+Ce compte rendu est DISTINCT de l'entrée de "docs/JOURNAL.md" du point 1 ci-dessus, qui reste brève (§4.2 bis) et sert à l'exécution suivante. Le compte rendu final s'adresse au responsable.
 
-Il couvre l'INTÉGRALITÉ de la session, pas seulement son dernier geste, et il met l'ACCENT PARTICULIER sur les fonctionnalités CODÉES — écran, geste, règle métier, migration, API — plutôt que sur le seul travail documentaire :
+Rédiger ce compte rendu est un geste de SYNTHÈSE, pas une nouvelle tâche de documentation : il rassemble ce que la session a déjà construit, mesuré et capturé, il n'ouvre aucune investigation nouvelle. La même règle qu'au §4.2 bis s'applique : ce temps appartient au produit, pas à la prose. Reste factuel et va à l'essentiel plutôt que de produire un essai.
 
-- ce qui a été construit et pourquoi, en langage clair, pas en jargon de commit ;
-- pour CHAQUE fonctionnalité d'interface livrée ou modifiée, les CAPTURES produites conformément à "CLAUDE.md" section 16 : jointes au compte rendu quand l'outillage de la session le permet, et sinon nommées explicitement par leur chemin sous "docs/captures/" pour qu'elles restent trouvables ;
-- les preuves réellement exécutées et leur résultat, avec les formulations du paragraphe 25 de "CLAUDE.md" — n'annonce jamais vérifié ce qui ne l'a pas été ;
-- ce qui reste "[~]" ou "[ ]", et pourquoi ;
-- les migrations, les entrées de "docs/INCONSISTENCY_REPORT.md" consignées, et tout arbitrage désormais attendu du responsable ;
-- le commit final et la confirmation que "origin/main" le porte.
+Il couvre l'INTÉGRALITÉ de la session, pas seulement son dernier geste. La HIÉRARCHIE est stricte, et l'ordre ci-dessous EST cette hiérarchie — les fonctionnalités CODÉES d'abord et avant tout, le reste ensuite, brièvement :
 
-Une session qui n'a livré AUCUN code reste soumise à ce compte rendu, et le dit explicitement (§4.2 bis) : l'absence de fonctionnalité codée doit être visible dans le compte rendu au même titre qu'une fonctionnalité livrée, jamais tue ni noyée dans le travail documentaire.
+1. **Les fonctionnalités CODÉES, en tête et en détail** — écran, geste, règle métier, migration, API livrés ou modifiés. Pour CHACUNE, en langage clair et pas en jargon de commit : ce qu'elle fait pour l'utilisateur, et les CAPTURES produites conformément à "CLAUDE.md" section 16 — jointes au compte rendu quand l'outillage de la session le permet, sinon nommées explicitement par leur chemin sous "docs/captures/" pour qu'elles restent trouvables. C'est le cœur du compte rendu ; le reste n'est que son contexte.
+2. Les preuves réellement exécutées et leur résultat, avec les formulations du paragraphe 25 de "CLAUDE.md" — n'annonce jamais vérifié ce qui ne l'a pas été.
+3. Ce qui reste "[~]" ou "[ ]", et pourquoi.
+4. En bref, sans développer : les migrations, les entrées de "docs/INCONSISTENCY_REPORT.md" consignées, et tout arbitrage désormais attendu du responsable.
+5. Le commit final et la confirmation que "origin/main" le porte.
+
+Une session qui n'a livré AUCUN code reste soumise à ce compte rendu, et le dit en PREMIÈRE ligne, sans détour : l'absence de fonctionnalité codée est l'information la plus importante de ce compte rendu-là, pas un fait noyé après le travail documentaire (§4.2 bis).
 
 ## 5. RÈGLE FINALE, AUCUNE EXCEPTION
 
