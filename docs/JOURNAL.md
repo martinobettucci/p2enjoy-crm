@@ -14196,6 +14196,17 @@ Chromium **1234**, l'image n'en fournissait que la **1194**, et toute la campagn
 sur `browserType.launch`. La révision attendue a été installée localement ; aucun fichier du dépôt
 n'a été modifié pour cela.
 
+**Un piège d'état à connaître avant de relancer `test:sql`.** Après avoir exécuté plusieurs
+`scripts/verify-*.sh`, `npm run test:sql` est passé de vert à **trois suites en échec** — `0013`,
+`0014`, `0017` —, dix assertions portant toutes sur le motif de `move_card`. La cause est mesurée et
+n'est PAS une régression du dépôt : la fonction en base avait perdu sa version du lot G, un harnais
+de non-complaisance ayant dégradé `move_card` sans pouvoir la restaurer. Contrôle décisif :
+`select prosrc … where proname='move_card'` ne contenait plus ni `comment_too_long` ni
+`btrim_blancs`. Remède : `docker compose up migrations-runner` puis `supabase/seed/apply-seed.sh`,
+après quoi `test:sql` rend de nouveau **34 fichiers / 1981 assertions, aucune anomalie**. Une session
+qui verrait ces trois suites rouges doit d'abord comparer la fonction en base à sa migration avant de
+conclure à une régression.
+
 **Où reprendre.** `CRM-076` reste `[~]`, mais **plus aucun comportement de sa Definition of Done
 n'est dû**. Restent : les preuves **API dédiées à l'écran**, le réglage en **lot** d'une exigence sur
 plusieurs transitions, et la **liste nominative** des affaires prévisualisées — les deux derniers
