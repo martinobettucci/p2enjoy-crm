@@ -7098,25 +7098,53 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       refus dans l'ordre, les autorisations, les quinze lignes du contrat d'API, le seed, ce qui
       n'est pas livré, les preuves attendues. `docs/SCHEMA.md` §3 et §9 mis à jour dans le même
       commit documentaire, poussé **avant** la première ligne de code (`CLAUDE.md` §5).
-- [~] `supabase/migrations/0039_versionnement_workflows.sql` : `app.workflow_composition_document`,
+- [x] `supabase/migrations/0039_versionnement_workflows.sql` : `app.workflow_composition_document`,
       `app.workflow_composition_fingerprint` réécrite en appelant, table `public.workflow_versions`,
-      trigger d'immuabilité, deux politiques RLS, privilèges explicites, RPC
-      `public.publish_workflow_version`.
-- [ ] **Test unitaire dédié** `supabase/tests/0037_versionnement_workflows.test.sql` : structure,
-      contraintes, unicité `(workflow_id, version_number)`, politiques présentes **et absentes**,
-      privilèges, refus de mise à jour sous `service_role`, cascade, cinq refus de la RPC contre
-      des comptes réels, **empreinte inchangée par l'extraction** figée sur les deux workflows du
-      seed.
-- [ ] **Test d'intégration dédié, hors interface** `e2e/api/versionnement-workflows.spec.ts` : les
-      quinze lignes du §7 ter.7 avec les jetons réels des trois profils ; preuves de refus n° 3 et
-      n° 11 au niveau des versions.
-- [ ] **Seed** : une version du workflow par défaut, publiée par la vraie RPC, convergente au rejeu.
-- [ ] `README.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `docs/manual.md`, `CHANGELOG.md` mis à
-      jour.
+      trigger d'immuabilité, l'UNIQUE politique RLS de lecture, privilèges explicites, RPC
+      `public.publish_workflow_version`. Appliquée et rejouée sur la pile réelle.
+- [x] **L'EXTRACTION DU DOCUMENT N'A PAS DÉPLACÉ L'EMPREINTE, et c'était le seul risque de
+      régression de cette migration.** `workflows.source_composition_fingerprint` porte des valeurs
+      figées et `workflow_derivations` les compare à l'empreinte courante : un changement d'ordre de
+      clés aurait fait diverger **toutes** les copies du produit sans qu'aucune n'ait bougé. Les
+      deux empreintes du seed relevées avant, constatées identiques après, et **figées en dur** dans
+      la suite pgTAP. Le contrat de déploiement exige le même relevé en production.
+- [x] **Test unitaire dédié** `supabase/tests/0037_versionnement_workflows.test.sql` :
+      **31 assertions, aucune anomalie** — structure, six contraintes de valeur, unicité
+      `(workflow_id, version_number)`, clé étrangère de couple, l'unique politique et l'absence des
+      trois autres, privilèges, refus de mise à jour opposable au **propriétaire de la base**,
+      cascade laissée possible, cinq refus de la RPC contre des comptes réels, et la publication qui
+      RÉUSSIT — sans quoi les refus seraient verts sur un produit où publier est impossible.
+- [x] **Test d'intégration dédié, hors interface** `e2e/api/versionnement-workflows.spec.ts` :
+      **14 scénarios**, les quinze lignes du §7 ter.7 avec les jetons réels des trois profils ;
+      preuves de refus n° 2, n° 3 et n° 11 au niveau des versions. Chaque refus est **relu en base**
+      avec la clé de service : un refus qui laisse une trace n'est pas un refus.
+- [x] **Seed** : une version du workflow par défaut, publiée par la vraie RPC avec le jeton réel de
+      l'administratrice. `published_by` est **vérifié** et non supposé. Convergent : deux passages
+      laissent une seule version, et c'est la cinquième vérification de la RPC qui l'assure, pas une
+      garde propre au seed.
+- [x] **Trois preuves figées ont rougi et ont été RÉVISÉES, jamais contournées** (mécanisme de la
+      décision 51) : le compteur global de politiques de `0016_preuves_refus.test.sql` (65 → 66) et
+      les deux énumérations de `webapp/src/lib/database.types.test-d.ts` — les tables, et les
+      fonctions qui passent de vingt-sept à vingt-huit. Chacune porte son motif dans le fichier.
+- [x] `docs/SCHEMA.md` §3 et §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
+      `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans le même changement.
+- [ ] **`docs/manual.md` n'est pas mis à jour, et c'est délibéré** : cette tranche ne livre aucun
+      geste utilisateur. Le chapitre du manuel naîtra avec l'écran de la cinquième tranche.
+- [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent dans
+      deux fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq tranches
+      livrées, comme `CRM-077` l'a montré.
 
 *Écart nommé.* **Aucun écran, aucune capture** dans cette tranche : elle ne livre que des données et
 un geste serveur (`docs/SPEC-workflow-engine.md` §7 ter.9). L'unité **ne peut pas** passer `[x]`
 avant la cinquième tranche, dont la Definition of Done exige l'aperçu et les captures.
+
+*Preuves restant à exécuter pour cette unité.* Aucune pour la première tranche : toutes ses preuves
+sont exécutées et vertes. Les tranches 2 à 5 apportent les leurs.
+
+*Constat étranger, consigné et laissé inchangé.* `scripts/verify-preuves-refus.sh` rend **4
+anomalies sur 26** — trois compteurs figés périmés de plusieurs unités, et neuf preuves de refus non
+écrites. L'antériorité est établie : le compteur pgTAP était figé à 65 et vert avant cette session,
+là où ce harnais en attend 55. **INC-121**, porteur `CRM-014`.
 
 ### CRM-079 — Onboarding guidé `[ ]`
 

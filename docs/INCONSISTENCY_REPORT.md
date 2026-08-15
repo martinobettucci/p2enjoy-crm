@@ -192,7 +192,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Une : INC-120**, consignée le 2026-08-15 (garde des élévations de privilège des migrations). Les
+**Deux : INC-120 et INC-121**, consignées le 2026-08-15 (garde des élévations de privilège des migrations). Les
 dix-neuf entrées qui restaient en texte complet ont été **arbitrées le 2026-08-15
 par les décisions 408 à 419**, sur instruction du responsable de trancher automatiquement tout ce
 qui restait en suspens. Conformément à la règle de retrait de la décision 407, elles rejoignent
@@ -201,6 +201,36 @@ dans `docs/ARBITRAGES.md` et dans la Definition of Done de l'unité porteuse.
 
 Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci-dessus : un choix
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
+
+### INC-121 — Trois compteurs figés de `verify-preuves-refus.sh` sont périmés de plusieurs unités
+
+**Constatée le 2026-08-15**, en marge de `CRM-078` (versionnement des workflows), par
+`scripts/verify-preuves-refus.sh` — **4 anomalies sur 26**. Le défaut est **ÉTRANGER** à l'unité de
+la session : le comportement reste **inchangé**, rien n'est corrigé au passage (`CLAUDE.md` §1).
+
+**Ce qui est mesuré**, et ce qui établit l'antériorité sans avoir besoin d'une ligne de base :
+
+| Contrôle | Attendu par le harnais | Relevé | Antériorité |
+|---|---|---|---|
+| politiques du schéma `public` | 55 | 66 | le compteur pgTAP de `0016_preuves_refus.test.sql` était figé à **65** et **vert** avant cette session : l'écart précède `CRM-078` d'au moins **dix** politiques, dont aucune n'est la sienne |
+| cards du seed | 14 | 15 | cette session n'a créé **aucune** card, et le seed en annonçait déjà 15 à son premier passage |
+| preuves de refus présentes dans le fichier | les douze | 9 manquantes | trois seulement sont écrites ; les neuf autres sont dues par `CRM-013` et `CRM-014`, unités `[~]` |
+
+**Ce que `CRM-078` y change, et il faut le dire** : sa politique de lecture de `workflow_versions`
+porte le relevé de 65 à 66. Elle **aggrave** un écart de dix, elle ne le crée pas — le harnais
+aurait rendu la même anomalie sans elle.
+
+**Pourquoi ce n'est pas tranché en session.** Ce n'est pas un choix qu'une mesure ne pourrait pas
+trancher : les trois nombres justes sont lisibles en base. C'est l'**étendue** du geste qui le place
+hors de cette session — le troisième contrôle n'est pas un compteur périmé mais une dette de preuve
+appartenant à deux unités distinctes, et remettre les trois à leur valeur courante sans traiter
+cette dette rendrait le harnais vert sur un produit dont neuf preuves de refus sur douze restent
+non écrites. C'est exactement le contournement destiné à verdir une preuve que `CLAUDE.md` §18
+interdit.
+
+**Porteur : `CRM-014`** (harnais de preuves d'autorisation), avec `CRM-013`. Le geste attendu est
+d'écrire les preuves dues **puis** de réaligner les trois compteurs sur la mesure, dans le même
+changement.
 
 ### INC-120 — La garde des élévations de privilège n'admet qu'une migration, et le dépôt en compte deux
 

@@ -15683,3 +15683,77 @@ la spécification — durée de rétention, effacement définitif et son parcour
 corbeille pour un membre ordinaire — attendent l'arbitrage du responsable, et la Definition of Done
 cite l'effacement définitif. La session suivante prend donc l'unité **suivante** du plan plutôt que
 de rouvrir celle-ci, et consigne au passage qu'`INC-120` attend un arbitrage.
+
+### Décision 425 — La première tranche du versionnement des workflows : une photographie immuable, et une forme canonique qui n'a plus qu'une définition
+
+**2026-08-15 — `CRM-078`, première tranche, livrée et prouvée.**
+
+**L'unité de la session, et pourquoi celle-là.** La tranche précédente a laissé `CRM-077` sans
+dette de construction et a désigné « l'unité suivante du plan ». `CRM-078` était `[ ]` et
+n'existait qu'en trois lignes de Definition of Done. Trois unités `[~]` la précèdent dans l'ordre
+du plan et ont été **mesurées** avant d'être écartées : `CRM-001` ne garde qu'une preuve de
+démarrage à froid, sans comportement à livrer ; `CRM-013` et `CRM-014` butent sur quatre tables que
+`CRM-052`, `CRM-053`, `CRM-072` et `CRM-073` n'ont pas encore livrées. `CRM-030` a été rouvert puis
+refermé au vu du code : sa garde d'archivage **est** livrée depuis `CRM-040` (migration 11), et son
+énoncé de backlog est le seul à ne pas l'avoir suivi.
+
+**L'unité est trop large pour une session, et le découpage est un artefact, pas une narration.**
+Cinq tranches sont écrites dans `docs/BACKLOG.md` — versions immuables, comparaison, plan de
+remappage, application transactionnelle, écrans — et committées avant tout code, avec la
+spécification complète du §7 ter de `docs/SPEC-workflow-engine.md` : contrat vérifiable, cinq refus
+dans leur ordre, quinze lignes d'API, rédigés **après mesure** sur la pile réelle.
+
+**Ce qui est livré.** `public.workflow_versions` conserve une photographie de structure — étapes,
+arêtes, champs, règles, exigences —, numérotée dans la portée du workflow, datée et attribuée.
+`public.publish_workflow_version` est le seul chemin qui l'écrit. **Publier ne change rien au
+comportement du produit** : `move_card` ne consulte aucune version, et les affaires circulent
+toujours sur la structure vivante. Une version est un témoin, pas une cible d'exécution.
+
+**L'immuabilité est un empilement de trois refus, et le troisième est le seul qui compte.** Aucune
+politique d'écriture et aucun privilège pour `anon` ni `authenticated` n'arrêtent `service_role`, à
+qui le projet accorde `all privileges` partout et que `mail-sync` porte. Un trigger `before update`
+refuse donc en `42501` jusque sous le propriétaire de la base — **mesuré**. Il ne porte
+délibérément **pas** sur `delete` : il s'exécuterait lors des suppressions en cascade et rendrait la
+suppression d'un workspace impossible, mode de défaillance d'INC-039.
+
+**Le risque réel de cette migration n'était pas la table, c'était l'extraction.**
+`app.workflow_composition_fingerprint` construisait un document `jsonb` canonique et n'en rendait
+que l'empreinte : le document était jeté. Il est extrait dans
+`app.workflow_composition_document`, dont l'empreinte devient l'appelant. Or
+`workflows.source_composition_fingerprint` porte des valeurs figées et la vue
+`public.workflow_derivations` les compare à l'empreinte courante : un changement d'ordre de clés
+aurait fait diverger **toutes** les copies du produit sans qu'aucune n'ait bougé. Les deux
+empreintes du seed ont été relevées **avant** l'extraction, constatées identiques **après**, et
+figées en dur dans la suite pgTAP. Le contrat de déploiement exige le même relevé avant et après
+application en production.
+
+**Trois preuves figées ont rougi comme elles devaient, et ont été RÉVISÉES et non contournées** —
+mécanisme de la décision 51, quatrième et cinquième occurrences : le compteur global de politiques
+de `0016_preuves_refus.test.sql` (65 → 66), l'énumération des tables et celle des fonctions de
+`webapp/src/lib/database.types.test-d.ts` (vingt-sept → vingt-huit). Chacune porte son motif dans
+le fichier lui-même.
+
+**Campagne complète, exécutée en fin de session** (`docs/CloudWorker.md` §2.3) : `typecheck` et
+`build` verts ; `test:unit` **1042/1042** ; `test:sql` **37 fichiers / 2035 assertions** ;
+`e2e:api` **550/550** ; `e2e:ui` **265/265**, console vierge ; `e2e:mail` **42/42** ; `pytest`
+**242** ; `types:check` vert après régénération ; `verify-workflows` **49/49**,
+`verify-catalogue` **39/39**, `verify-seed` **55/55**, `verify-types` **30/30**,
+`verify-migrations` **25/25**, `verify-node-toolchain` **5/5** — les six derniers rejoués **après**
+correction, les deux premiers ayant d'abord rougi sur `types:check` et l'ont été jusqu'au vert.
+
+**Un constat ÉTRANGER, mesuré, consigné et laissé inchangé.** `scripts/verify-preuves-refus.sh`
+rend **4 anomalies sur 26** : trois compteurs figés périmés de plusieurs unités, et une dette de
+preuve appartenant à `CRM-013` et `CRM-014`. L'antériorité est établie sans ligne de base — le
+compteur pgTAP était figé à 65 et vert avant cette session, quand ce harnais en attend 55 — et
+`CRM-078` n'y ajoute qu'une politique. **INC-121**, porteur `CRM-014`.
+
+**L'environnement, sans redécouverte.** `export NVM_DIR=/opt/nvm` puis `nvm install 24` posent Node
+`v24.19.0`, comme la décision 424 l'avait consigné ; `npm ci` exige `npm config set cafile
+/root/.ccr/ca-bundle.crt` ; `pytest` n'est pas installé et se pose par
+`pip install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements-dev.txt`.
+
+**Où reprendre.** La **deuxième tranche de `CRM-078`** : la comparaison de deux versions — quelles
+étapes, arêtes, champs et règles ont été ajoutés, retirés ou modifiés. Le document conservé la rend
+calculable, et sa spécification reste à écrire au §7 ter avant tout code. `CRM-078` reste `[~]` :
+son énoncé exige un aperçu exhaustif, une application transactionnelle et des captures, qui
+appartiennent aux tranches 3 à 5.
