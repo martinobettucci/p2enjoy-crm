@@ -14729,3 +14729,58 @@ suivante est l'**énumération** des enfants rendus inaccessibles (§3.3), avec 
 son compte, puis l'**écran** de corbeille (§4) et les niveaux API, E2E et visuel du §5. **Avant
 d'écrire, faire `git fetch origin main` et relire cette entrée** : le dépôt porte plusieurs workers,
 et les décisions 401 et 402 ont toutes deux payé le prix d'une tranche écrite en double.
+
+### Décision 404 — L'énumération compte ce que le geste retire DE PLUS, et PostgREST impose deux lectures plutôt qu'une jointure
+
+**2026-08-15.** La décision 403 laissait la tranche suivante de `CRM-077` désignée sans ambiguïté :
+l'**énumération** des enfants rendus inaccessibles (`docs/SPEC-corbeille.md` §3.3), avec la card qui
+lui donne son compte. C'est l'unité de cette session, et ce commit documentaire précède la première
+ligne de code (`CLAUDE.md` §5).
+
+**Ligne de base, mesurée sur une pile neuve avant toute écriture** — 17 services sains, seed
+appliqué : `typecheck`, `build`, `types:check` verts, `test:unit` **974/974** sur 36 fichiers,
+`test:sql` **36 fichiers / 2003 assertions**, `e2e:api` **vert**. Le rouge INC-110 de la décision 401
+ne se reproduit toujours pas sur une pile neuve, ce qui confirme une deuxième fois la décision 397.
+
+**Trois règles de comptage, et chacune répond à une question précise.** L'énumération d'un track
+compte ses channels non mis à la corbeille et les affaires de ces channels non mises à la corbeille ;
+celle d'un channel compte ses affaires. Un enfant **déjà** en corbeille n'est pas compté : il ne
+*devient* pas inaccessible, il l'est, et il porte sa propre entrée où il se restaure séparément. Un
+enfant **archivé** est compté, lui : l'archivage est réversible et le désarchivage est livré, si bien
+qu'un channel archivé est attendu de retour — mais plus si son track part à la corbeille. Enfin les
+affaires d'un channel lui-même en corbeille ne comptent pas pour le track : elles sont retenues un
+cran plus bas. Le compte d'un track répond donc à « que retire ce geste **de plus** que ce qui est
+déjà retiré », et non « combien de lignes descendent de ce track ».
+
+**La forme de la lecture est une mesure, pas une préférence.** MESURÉ :
+`GET /rest/v1/cards?select=id,channels!inner(id)` rend **`300`** et `PGRST201` — `cards` porte
+**deux** clés étrangères composites vers `channels`, `cards_channel_id_workflow_id_fkey` et
+`cards_channel_id_workspace_id_fkey`, et PostgREST refuse de choisir. Lever l'ambiguïté demanderait
+d'écrire un nom de contrainte dans la requête d'un écran ; `webapp/src/lib/inbox.ts` l'a déjà refusé
+pour cette relation exacte. L'énumération d'un track lit donc les identifiants de ses channels, puis
+**compte** les affaires de ces identifiants par `count=exact` — le nombre de channels étant la
+longueur de la première lecture, aucune requête ne s'ajoute pour lui.
+
+**Le compte est celui de l'appelant, et cela aussi est mesuré.** Les deux lectures passent par les
+politiques de `channels` et de `cards`. Sur le track `conseil-ia` : l'administratrice lit **3 channels
+et 7 affaires**, la lectrice **1 channel et 2 affaires**. C'est la cohérence du produit — « un refus
+de lecture est zéro ligne » — et cela interdit une seule chose, présenter ce compte comme une
+garantie d'exhaustivité. Le §3.5 le dit dans ces termes.
+
+**L'affaire `…0cf` est due maintenant, et son étape est choisie sur mesure.** Le §10.1 de
+`docs/SPEC-seed.md` l'avait annoncée sans la poser, faute d'écran pour la compter. Elle vit sous
+`dossiers-2023` — l'enfant vivant sous un parent en corbeille — et devient le **seul** cas de garde à
+DEUX niveaux du seed : channel vivant, track en corbeille. `livre` était exclue, `e2e/api/cards.spec.ts`
+posant comme préalable qu'aucune card active n'y demeure une fois `…0cd` archivée ; `perdu` l'était
+aussi, son étape **exigeant** `motif-perte` — l'affaire y serait née avec une fiche incomplète et le
+seed aurait démontré un manque. `negociation` n'exige rien et ne porte aucun compte figé hors de son
+channel.
+
+**Ce que la tranche coûte, et qui est assumé dans le même changement** : 14 affaires deviennent 15,
+12 actives deviennent 13, les affaires occupent six channels au lieu de cinq. Les preuves qui figent
+ces comptes sont révisées, aucune supprimée ni contournée, chacune avec son motif dans son fichier.
+
+**Où reprendre.** Après cette tranche, `CRM-077` reste `[~]` et il manque l'**écran** de corbeille
+(§4) avec ses niveaux E2E et visuel (§5). Les trois points ouverts du §6 — rétention, effacement
+définitif, visibilité pour un membre ordinaire — attendent toujours l'arbitrage du responsable et ne
+se tranchent pas en session.

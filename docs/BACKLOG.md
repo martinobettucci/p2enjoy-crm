@@ -6843,13 +6843,44 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       cette tranche** — un harnais qui rejoue une migration sans ses successeurs mesure un produit
       en arrière d'une arbitration, et laisse la base de développement ouverte.
 
-- [ ] **Reste dû** : l'**énumération** des enfants rendus inaccessibles (§3.3) ; l'**écran** de
-      corbeille (§4) ; et les niveaux API, E2E et visuel du §5 de la spécification. **Le seed n'est
-      plus le préalable manquant** : il est livré. La tranche qui construira l'énumération devra y
-      ajouter une **card** sous `dossiers-2023` — délibérément absente ici, une card posée
-      aujourd'hui n'étant comptée par aucun écran (`docs/SPEC-seed.md` §10.1) — et elle démontrera
-      du même coup la garde à **deux niveaux** de la deuxième tranche, dont aucune donnée ne porte
-      encore le cas : une affaire sous un channel vivant dont le track est en corbeille.
+**Cinquième tranche livrée, 2026-08-15 — l'énumération des enfants rendus inaccessibles**
+(`webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §3.5) :
+
+- [x] **Trois règles de comptage, et chacune répond à une question précise.** Un enfant DÉJÀ en
+      corbeille n'est pas compté — il ne *devient* pas inaccessible, il l'est, et il porte sa propre
+      entrée où il se restaure séparément. Un enfant ARCHIVÉ est compté, lui : l'archivage est
+      réversible et le désarchivage est livré, si bien que le retour attendu d'un channel archivé est
+      exactement ce que la mise à la corbeille de son track immobilise. Les affaires d'un channel
+      lui-même en corbeille ne comptent pas pour le track : elles sont retenues un cran plus bas. Le
+      compte d'un track répond donc à « que retire ce geste **de plus** que ce qui est déjà retiré ».
+- [x] **DEUX LECTURES, ET C'EST UNE MESURE** : `cards` porte deux clés étrangères composites vers
+      `channels`, et `select=id,channels!inner(id)` rend `300` / `PGRST201`. Lever l'ambiguïté
+      demanderait un nom de contrainte dans la requête d'un écran, ce que `inbox.ts` a déjà refusé
+      pour cette relation. Le nombre de channels est la longueur de la première lecture ; le compte
+      des affaires vient de `count=exact`, jamais des lignes, et une réponse aboutie **sans `count`
+      est une erreur**, pas un zéro.
+- [x] **Le compte est celui de l'appelant, et il est mesuré** : sur `conseil-ia`, l'administratrice
+      lit 3 channels et 7 affaires, la lectrice 1 et 2. Le §3.5 en tire la seule interdiction qui
+      compte — ce nombre n'est pas une garantie d'exhaustivité.
+- [x] **La composition n'écrit aucune phrase** : elle rend une liste ordonnée de lignes, omet celle
+      dont le compte est nul et n'en rend aucune quand rien ne devient inaccessible. Le singulier et
+      le pluriel restent deux clés du catalogue (`CLAUDE.md` §23) ; aucun module de `lib/` n'importe
+      les textes.
+- [x] **L'affaire `…0cf` sous `dossiers-2023`** (`docs/SPEC-seed.md` §10.4 bis), annoncée par la
+      quatrième tranche : elle donne son compte non nul à l'énumération et devient le **seul** cas de
+      garde à deux niveaux du seed — channel vivant, track en corbeille. Son étape est choisie sur
+      mesure : `livre` aurait faussé un préalable de `cards.spec.ts`, `perdu` exige `motif-perte`.
+- [x] **Comptes figés révisés, aucun supprimé ni contourné** : 14 affaires deviennent 15, 12 actives
+      13, six channels portent des affaires au lieu de cinq. Et deux comptes de l'annexe A du manuel,
+      **faux depuis la quatrième tranche** — MESURÉ « 3 tracks actifs » contre 4, « 5 channels
+      actifs » contre 7 —, sont réparés à leur cause : leurs requêtes ignoraient la corbeille et
+      comptaient comme actif un objet retiré. Deux grandeurs nouvelles la rendent visible.
+
+- [ ] **Reste dû** : l'**écran** de corbeille (§4), et les niveaux E2E et visuel du §5 de la
+      spécification, que l'absence d'écran laisse sans objet. Un **harnais dédié**
+      `scripts/verify-corbeille.sh` reste à écrire : les preuves de cette tranche vivent dans
+      `webapp/src/lib/corbeille.test.ts` et `e2e/api/corbeille.spec.ts`, aucun harnais ne les
+      rassemble encore.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

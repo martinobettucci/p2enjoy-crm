@@ -9,7 +9,9 @@ Contrat exécutable de `CRM-077` (`docs/BACKLOG.md`).
 - Schéma : `docs/SCHEMA.md`.
 - Design system : `docs/DESIGN_SYSTEM.md`.
 - Déploiement : `docs/PROD_MIGRATIONS.md`.
-- État : **spécifiée, non livrée.** Écrite avant toute ligne de code (`CLAUDE.md` §5).
+- État : **spécifiée, livrée en partie.** Écrite avant toute ligne de code (`CLAUDE.md` §5). Le
+  modèle (§3.2), la garde de restauration (§3.4), le retrait des listes (§3.3) et l'énumération
+  (§3.5) sont livrés ; l'écran (§4) ne l'est pas.
 
 ---
 
@@ -147,6 +149,72 @@ silencieusement toléré : une card rendue à un channel lui-même en corbeille 
 un endroit où personne ne la verrait. Le refus dit quoi restaurer d'abord.
 
 C'est une garde **backend**, pas une aide d'interface (`CLAUDE.md` §10).
+
+### 3.5 L'énumération, et ce qu'elle compte exactement
+
+Le §3.3 pose le principe : l'énumération **remplace** la descente de l'horodatage. Ce chapitre dit ce
+qu'elle compte, ce qu'elle ne compte pas, et comment elle se lit. Chaque règle a une mesure ou un
+motif ; aucune n'est une convention arbitraire.
+
+**Ce qu'elle compte.**
+
+| Objet visé | Enfants comptés |
+|---|---|
+| un track | ses **channels** qui ne sont pas eux-mêmes en corbeille, et les **affaires** de ces channels qui ne sont pas elles-mêmes en corbeille |
+| un channel | ses **affaires** qui ne sont pas elles-mêmes en corbeille |
+
+**Un enfant DÉJÀ en corbeille n'est pas compté.** Il ne *devient* pas inaccessible avec son parent :
+il l'est déjà, et il porte sa propre entrée dans la corbeille, où il se restaure séparément. Le
+compter le ferait apparaître deux fois et ferait dire au produit que le geste retire plus qu'il ne
+retire.
+
+**Un enfant ARCHIVÉ est compté, lui.** C'est la règle la moins évidente des trois, et c'est la seule
+qui dise la vérité : archiver est réversible — `docs/SPEC-administration-arborescence.md` livre le
+désarchivage pour cela même. Un channel archivé est donc attendu de retour au premier désarchivage ;
+si son track passe à la corbeille, ce retour n'a plus lieu. Ne pas le compter tairait exactement ce
+que le geste immobilise.
+
+**Les affaires d'un channel lui-même en corbeille ne sont pas comptées pour le track.** Elles sont
+déjà retenues par leur channel, un cran plus bas, et restaurer le track ne les rendrait pas. Le
+compte d'un track répond à une question précise — « que retire ce geste **de plus** que ce qui est
+déjà retiré » —, et non « combien de lignes descendent de ce track ».
+
+**L'énumération est ce que l'APPELANT peut lire, et cela se mesure.** Les deux lectures passent par
+les politiques de `channels` et de `cards` : le compte est donc celui du profil qui le demande, pas
+un inventaire d'autorité. MESURÉ le 2026-08-15 sur le track `conseil-ia` du seed : l'administratrice
+lit **3 channels et 7 affaires**, la lectrice **1 channel et 2 affaires** — les droits fins de
+`docs/SPEC-permissions-rls.md` §2.2 ferment le reste. C'est cohérent avec tout le produit — « un
+refus de lecture est zéro ligne » (§7) — et cela interdit une seule chose : présenter ce compte comme
+une garantie d'exhaustivité.
+
+**DEUX LECTURES, ET NON UNE JOINTURE EMBARQUÉE — c'est une mesure, non une préférence.** MESURÉ le
+2026-08-15 : `GET /rest/v1/cards?select=id,channels!inner(id)` rend **`300`** et `PGRST201`, « more
+than one relationship was found for 'cards' and 'channels' » — `cards` porte **deux** clés étrangères
+composites vers `channels`, `cards_channel_id_workflow_id_fkey` et
+`cards_channel_id_workspace_id_fkey`. Lever l'ambiguïté demanderait d'écrire un nom de contrainte
+dans la requête d'un écran, ce que `webapp/src/lib/inbox.ts` a déjà refusé pour la même relation.
+L'énumération d'un track lit donc **les identifiants de ses channels**, puis **compte** les affaires
+de ces identifiants ; le nombre de channels est la longueur de la première lecture, et n'appelle
+aucune requête de plus.
+
+**Le compte vient de `count=exact`, jamais des lignes.** L'écran affiche un nombre : rapporter les
+affaires pour les dénombrer côté client ferait transiter une liste non bornée pour afficher un
+entier — même position que `lireCompteursFileSortante` (`docs/SPEC-mail-subsystem.md` §20.11.7). Une
+réponse aboutie sans `count` est traitée comme une **erreur** et non comme un zéro : un contrat rompu
+n'est pas une corbeille vide.
+
+**Aucune seconde lecture lorsque le track ne porte aucun channel.** MESURÉ : `channel_id=in.()` rend
+`200` et `*/0`, la requête vide n'est donc pas un piège — la sauter est une requête épargnée dont on
+connaît d'avance la réponse, exactement comme `useContenuTrack` n'interroge pas `channels` pour un
+track absent (`docs/SPEC-channels.md` §5.1), et non le contournement d'un défaut.
+
+**La composition ne construit jamais une phrase par concaténation** (`CLAUDE.md` §23). L'énumération
+rendue à l'écran est une **liste ordonnée de lignes** — les channels d'abord, les affaires ensuite, du
+plus englobant au plus fin —, dont chaque ligne porte son propre texte complet et son compte
+substitué. Une ligne dont le compte est **zéro est omise** : « 0 channel » n'apprend rien et fait lire
+deux fois pour comprendre qu'il n'y a rien. Une énumération **entièrement vide ne rend aucune ligne**,
+et l'écran dit alors sa propre phrase, comme l'état vide du §4 — un tableau sans ligne n'est pas un
+état vide.
 
 ## 4. Ce que l'écran montre
 

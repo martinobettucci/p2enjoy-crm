@@ -1144,11 +1144,11 @@ Chacun démontre une chose que les autres ne démontrent pas :
 - **`…038` est le cas de refus du §3.4.** Il est en corbeille sous un parent en corbeille : sa
   restauration rend `parent_en_corbeille` (`P0001`), et le refus dit quoi restaurer d'abord.
 
-**Ce jeu ne porte volontairement AUCUNE card.** Le §3.3 prévoit que l'écran de suppression
-énumère les affaires rendues inaccessibles ; cette énumération n'existe pas encore, et une card
-posée ici ne serait comptée par aucun écran. Elle sera ajoutée par la tranche qui construit
-l'énumération, où son compte sera visible et donc vérifiable. Le dire ici évite qu'une session
-suivante la croie oubliée.
+**Une quatrième ligne s'y est ajoutée depuis, et le §10.4 bis la porte.** Ce jeu ne portait
+volontairement aucune card : le §3.3 prévoit que l'écran de suppression énumère les affaires rendues
+inaccessibles, cette énumération n'existait pas, et une card posée alors n'aurait été comptée par
+aucun écran. L'énumération est livrée (`docs/SPEC-corbeille.md` §3.5) ; l'affaire `…0cf` l'est donc
+aussi.
 
 ### 10.2 La corbeille est un GESTE, jamais une déclaration
 
@@ -1198,6 +1198,54 @@ tracks, dont un archivé », elle affirme désormais « cinq tracks, dont un arc
 corbeille** ». Un compte relâché en tolérance — « au moins quatre » — aurait rendu la preuve muette
 sur ce que cette tranche ajoute.
 
+### 10.4 bis L'affaire sous l'enfant vivant, et les deux niveaux qu'elle démontre
+
+*Ajoutée par la cinquième tranche de `CRM-077`, celle de l'énumération
+(`docs/SPEC-corbeille.md` §3.5).*
+
+Le §10.1 annonçait cette affaire et disait pourquoi elle ne pouvait pas venir plus tôt : « une card
+posée ici ne serait comptée par aucun écran ». L'énumération existe maintenant, son compte est donc
+visible, et l'affaire est due.
+
+| id | channel | étape | titre | état |
+|---|---|---|---|---|
+| `…0cf` | `…037` `dossiers-2023` | `negociation` | Reprise du dossier Marchand | **active** |
+
+**Elle est le seul cas de garde à DEUX niveaux du seed, et c'est sa raison d'être.** La deuxième
+tranche vérifie le channel **et** le track d'une affaire avant de la restaurer ; jusqu'ici, aucune
+donnée ne portait la situation où le premier niveau est vivant et le second en corbeille. `…0cf` la
+porte : son channel `…037` n'est pas en corbeille, son track `…025` l'est. Elle n'est pas elle-même en
+corbeille — il n'y a donc rien à restaurer —, mais **l'y mettre puis l'en sortir** rend
+`parent_en_corbeille` par le second niveau seul, ce qu'aucun autre objet du seed ne démontre.
+
+**Elle donne à l'énumération son compte non nul.** Sans elle, le track `…025` énumérait « 1 channel »
+et zéro affaire : la ligne des affaires étant omise quand son compte est nul
+(`docs/SPEC-corbeille.md` §3.5), la composition des deux lignes ensemble n'aurait jamais été
+démontrée sur la vraie base.
+
+**Son étape est `negociation`, et ce choix est mesuré plutôt qu'esthétique.** `livre` était exclue :
+`e2e/api/cards.spec.ts` pose comme préalable qu'après archivage de `…0cd` « plus aucune card ACTIVE »
+n'occupe cette étape, et une seconde affaire livrée aurait rendu ce préalable faux. `perdu` était
+exclue de son côté parce que son étape **exige** `motif-perte` : une affaire y naîtrait avec une fiche
+incomplète, et le seed démontrerait un manque au lieu d'une affaire. `negociation` n'exige rien et ne
+porte aucun compte figé hors de son propre channel.
+
+**Ce qu'elle coûte, et les révisions sont des renforcements.** Le contrat passe de **14 à 15
+affaires**, de **12 à 13 actives**, et les affaires occupent désormais **six** channels au lieu de
+cinq. Les preuves qui figent ces comptes sont **révisées, aucune n'est supprimée ni contournée**, et
+chacune porte son motif dans son fichier : `e2e/api/cards.spec.ts`, `e2e/api/timeline.spec.ts`,
+`e2e/api/colonnes-protegees.spec.ts`, `scripts/verify-colonnes-protegees.sh`,
+`scripts/verify-move-card.sh`, `scripts/verify-seed-demo.sh`, et l'annexe A de `docs/manual.md`, que
+`scripts/verify-manual.sh` compare à la base.
+
+**Deux comptes de l'annexe A étaient devenus faux DÈS la quatrième tranche, et cette tranche les
+répare.** MESURÉ avant toute modification : le manuel disait « 3 tracks actifs » et « 5 channels
+actifs » quand la base en portait **4** et **7**. La cause n'est pas un nombre périmé mais un
+**libellé devenu ambigu** : les requêtes de `scripts/verify-manual.sh` ne connaissaient que
+l'archivage, si bien qu'un objet en corbeille y était compté comme actif. Les deux requêtes excluent
+désormais `deleted_at`, et deux grandeurs nouvelles — « Tracks en corbeille », « Channels en
+corbeille » — rendent la corbeille visible dans l'inventaire au lieu de la fondre dans l'actif.
+
 ### 10.5 Preuves exigées
 
 | # | Scénario | Attendu |
@@ -1208,3 +1256,5 @@ sur ce que cette tranche ajoute.
 | 4 | Restaurer `…038` avec le jeton de l'administratrice | Refus `parent_en_corbeille` (`P0001`) |
 | 5 | Le seed est **rejouable** : second passage sans erreur | Cinq tracks, huit channels, `deleted_by` inchangés |
 | 6 | Une dérive est rattrapée : `…025` restauré à la main, seed rejoué | `…025` de nouveau en corbeille, `deleted_by` = `…011` |
+| 7 | L'affaire `…0cf` existe sous `…037`, active, à l'étape `negociation` | `deleted_at` et `archived_at` nuls |
+| 8 | L'énumération du track `…025` avec le jeton de l'administratrice | **1 channel et 1 affaire** — l'enfant en corbeille n'est pas compté |
