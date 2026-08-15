@@ -15,6 +15,29 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Deux versions d'un workflow se comparent — `CRM-078`, deuxième tranche**
+  (`supabase/migrations/0040_comparaison_versions_workflow.sql`,
+  `docs/SPEC-workflow-engine.md` §7 ter.11). La première tranche conservait des photographies ;
+  elle ne les lisait pas. Deux versions étaient deux blocs `jsonb` de plusieurs milliers de
+  caractères, et dire ce qui avait changé entre les deux supposait de les parcourir à l'œil.
+  - **La comparaison, en un appel.**
+    `POST /rest/v1/rpc/compare_workflow_versions` rend quelles étapes, arêtes, questions, règles et
+    exigences ont été **ajoutées, retirées ou modifiées**, et pour chaque modification **quel
+    attribut a changé, de quelle valeur à quelle valeur**. Un élément ajouté ou retiré est rendu
+    avec son document complet : un écran peut nommer l'étape disparue, que la base ne porte plus.
+  - **Aucune correspondance n'est devinée**, et c'est la règle de fond. Deux éléments sont le même
+    élément si et seulement si leur identité — faite d'identifiants réels et d'eux seuls — est
+    égale. Un renommage reste **une** étape modifiée ; une étape supprimée puis recréée à
+    l'identique rend **un retrait et un ajout**, jamais un inchangé.
+  - **Comparer est une lecture**, et rien d'autre : la fonction est `stable`, elle n'écrit aucune
+    ligne, et elle est `security invoker` — la politique de lecture des versions est déjà sa règle
+    d'autorisation exacte. Un `viewer` compare ; publier reste réservé aux administrateurs.
+  - **Quatre refus** : appelant non authentifié, version de base introuvable, version cible
+    introuvable — **le même message**, la fonction n'étant pas un oracle d'existence —, et deux
+    versions de workflows différents, qui rendraient « tout retiré, tout ajouté ».
+  - **Restent dus sous `CRM-078`** : le plan de remappage des cards, son application
+    transactionnelle et son retour arrière, et tout écran.
+
 - **Un workflow peut désormais garder trace de ce qu'il était — `CRM-078`, première tranche**
   (`supabase/migrations/0039_versionnement_workflows.sql`, `docs/SPEC-workflow-engine.md` §7 ter).
   Un workflow est une structure vivante : l'éditeur en change les étapes, les arêtes, les champs et

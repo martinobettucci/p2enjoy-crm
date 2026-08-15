@@ -7147,19 +7147,46 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       lignes du contrat d'API, ce qui n'est pas livré, les preuves attendues. `docs/SCHEMA.md` §9
       mis à jour dans le même commit documentaire, poussé **avant** la première ligne de code
       (`CLAUDE.md` §5).
-- [ ] `supabase/migrations/0040_comparaison_versions_workflow.sql` :
-      `app.composition_collection_diff`, `public.compare_workflow_versions`, privilèges explicites
-      et révocation nommée d'`anon`.
-- [ ] **Test unitaire dédié** `supabase/tests/0038_comparaison_versions_workflow.test.sql` :
-      existence, `stable`, absence de `security definer`, privilèges et révocation ; les quatre
-      refus contre des comptes réels ; l'algorithme sur les six collections ; l'invariant
-      `identical` dans les deux sens ; l'ordre déterministe ; **une étape supprimée puis recréée
-      rend un retrait et un ajout**.
-- [ ] **Test d'intégration dédié, hors interface**
-      `e2e/api/comparaison-versions-workflow.spec.ts` : les douze lignes du §7 ter.11.6 avec les
-      jetons réels des trois profils.
-- [ ] `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md`,
-      `webapp/src/lib/database.types.ts` (régénéré) à mettre à jour dans le même changement.
+- [x] `supabase/migrations/0040_comparaison_versions_workflow.sql` :
+      `app.composition_collection_diff` — l'algorithme, appelé **six fois** —,
+      `public.compare_workflow_versions`, privilèges explicites et révocation nommée d'`anon`.
+      Appliquée et rejouée sur la pile réelle.
+- [x] **UN SEUL ALGORITHME, ET C'EST UNE DÉCISION DE CONCEPTION.** Cinq comparaisons spécialisées
+      auraient produit cinq occasions de diverger — le défaut qu'avait corrigé l'extraction du
+      document canonique en migration 39, et qui n'est pas réintroduit ici. La clé `workflow`, qui
+      n'est pas un tableau, est enveloppée dans un tableau d'un élément et passée au même
+      algorithme.
+- [x] **`SECURITY INVOKER`, et non `definer`.** La politique de lecture de `workflow_versions` EST
+      déjà la règle d'autorisation exacte du geste ; une fonction `definer` devrait la réécrire dans
+      son corps, et deux formulations de la même règle finissent toujours par diverger. Conséquence
+      directe : **aucun contrôle de workspace n'est écrit à la main**, et son absence est une
+      garantie et non un oubli. Une assertion pgTAP fige `prosecdef = false`.
+- [x] **Test unitaire dédié** `supabase/tests/0038_comparaison_versions_workflow.test.sql` :
+      **31 assertions, aucune anomalie** — existence, `stable`, absence de `security definer`,
+      privilèges et révocation d'`anon` ; l'algorithme éprouvé hors de tout workflow sur trois
+      objets ; l'identité en COUPLE de `rules` ; les quatre refus contre des comptes réels ; le
+      geste qui RÉUSSIT sur deux versions publiées par la vraie RPC ; l'invariant `identical` dans
+      les deux sens ; l'ordre déterministe des tableaux ; et le `viewer` qui compare — sans quoi les
+      refus seraient verts sur un produit où personne ne peut comparer.
+- [x] **LA RÈGLE « AUCUNE ÉTAPE N'EST DEVINÉE » EST TRANCHÉE ICI, ET FIGÉE PAR DEUX ASSERTIONS**
+      (n° 12 et n° 13) : une étape **renommée** reste UNE étape modifiée, le libellé n'entrant pas
+      dans l'identité ; une étape **supprimée puis recréée** à l'identique rend un RETRAIT et un
+      AJOUT, jamais un inchangé. C'est la vérité de la base, et toute autre réponse serait une
+      supposition.
+- [x] **Test d'intégration dédié, hors interface**
+      `e2e/api/comparaison-versions-workflow.spec.ts` : **12 scénarios**, les douze lignes du
+      §7 ter.11.6 avec les jetons réels des trois profils. La ligne j — preuve de refus n° 3 — crée
+      un **second workspace réel**, absent du seed, y pose une version dont l'existence est
+      constatée avec la clé de service, et démonte le tout : sans cela, le refus serait vrai par
+      simple absence et ne prouverait rien (décision 50).
+- [x] **Une preuve figée a rougi et a été RÉVISÉE, jamais contournée** (mécanisme de la décision 51,
+      quatorzième occurrence) : l'énumération des fonctions de `webapp/src/lib/database.types.test-d.ts`
+      passe de vingt-huit à vingt-neuf, avec son motif écrit dans le fichier.
+- [x] `docs/SCHEMA.md` §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
+      `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans le même changement.
+- [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent
+      désormais dans quatre fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les
+      cinq tranches livrées, comme `CRM-077` l'a montré.
 
 *Écart nommé.* **Aucun seed** dans cette tranche : la comparaison ne conserve rien, et publier une
 seconde version pour donner à comparer serait une donnée fabriquée pour la preuve (`CLAUDE.md` §8).
@@ -7170,8 +7197,13 @@ que des données et des gestes serveur (`docs/SPEC-workflow-engine.md` §7 ter.9
 L'unité **ne peut pas** passer `[x]` avant la cinquième tranche, dont la Definition of Done exige
 l'aperçu et les captures.
 
-*Preuves restant à exécuter pour cette unité.* Aucune pour la première tranche : toutes ses preuves
-sont exécutées et vertes. Les tranches 2 à 5 apportent les leurs.
+*Preuves restant à exécuter pour cette unité.* Aucune pour la deuxième tranche : ses 31 assertions
+pgTAP et ses 12 scénarios d'API sont exécutés et verts. **La première tranche, elle, n'est PLUS
+intégralement verte sur une base neuve** : `0037_versionnement_workflows.test.sql` rend **2 échecs
+sur 31**, ses assertions 3 et 28 citant en dur l'identifiant du workflow **dérivé**, que le seed
+n'épingle pas — il est engendré par `copy_workflow_to_track`. Mesuré le 2026-08-15 sur une pile
+fraîchement seedée, et **INC-122** en porte les deux remèdes possibles, qui touchent l'un le contrat
+du seed et l'autre la force d'une preuve d'anti-régression : ils ne se tranchent pas en session.
 
 *Constat étranger, consigné et laissé inchangé.* `scripts/verify-preuves-refus.sh` rend **4
 anomalies sur 26** — trois compteurs figés périmés de plusieurs unités, et neuf preuves de refus non
