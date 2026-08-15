@@ -1459,6 +1459,78 @@ export type Database = {
           },
         ]
       }
+      workflow_versions: {
+        Row: {
+          composition: Json
+          composition_fingerprint: string
+          id: string
+          note: string | null
+          published_at: string
+          published_by: string | null
+          version_number: number
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          composition: Json
+          composition_fingerprint: string
+          id?: string
+          note?: string | null
+          published_at?: string
+          published_by?: string | null
+          version_number: number
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          composition?: Json
+          composition_fingerprint?: string
+          id?: string
+          note?: string | null
+          published_at?: string
+          published_by?: string | null
+          version_number?: number
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_versions_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_versions_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_versions_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_versions_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflows: {
         Row: {
           archived_at: string | null
@@ -1892,6 +1964,26 @@ export type Database = {
           a_l_entree: number
           sur_place: number
         }[]
+      }
+      publish_workflow_version: {
+        Args: { note?: string; target_workflow_id: string }
+        Returns: {
+          composition: Json
+          composition_fingerprint: string
+          id: string
+          note: string | null
+          published_at: string
+          published_by: string | null
+          version_number: number
+          workflow_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       queue_outbound_email: {
         Args: {

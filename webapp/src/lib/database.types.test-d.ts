@@ -38,6 +38,13 @@ type Expect<T extends true> = T
 //
 // RÉVISÉ PAR `CRM-058`, qui livre `mail_outbox` — la file d'envoi. Le client la LIT (la lecture
 // suit la card) et n'y écrit jamais : `queue_outbound_email` est la seule porte.
+//
+// RÉVISÉ PAR `CRM-078`, qui livre `workflow_versions` — les photographies immuables d'un workflow.
+// Le client la LIT et n'y écrit JAMAIS : `publish_workflow_version` est la seule porte, et la mise
+// à jour est refusée jusque sous la clé de service (docs/SPEC-workflow-engine.md §7 ter.4). Le
+// type généré, lui, expose `Insert` et `Update` comme pour n'importe quelle table : le générateur
+// ne lit ni les politiques, ni les privilèges, ni les triggers. C'est la même limite qu'INC-027,
+// et elle est nommée ici plutôt que laissée à la surprise du prochain lecteur.
 
 type _tables = Expect<
   Equal<
@@ -64,6 +71,7 @@ type _tables = Expect<
     | 'workflow_steps'
     | 'workflow_transition_required_fields'
     | 'workflow_transitions'
+    | 'workflow_versions'
     | 'workflows'
     | 'workspace_members'
     | 'workspaces'
@@ -636,7 +644,13 @@ type _vueDerivationColonnes = Expect<
 // worker. Elle est ajoutée, non contournée, et une propriété la distingue des vingt-six autres :
 // elle est `SECURITY INVOKER`, si bien que le nombre qu'elle rend est borné par la RLS de son
 // appelant (docs/SPEC-workflow-engine.md §7 bis.13.2). Vingt-six devient vingt-sept.
-type _lesVingtSeptFonctions = Expect<
+//
+// RÉVISÉ UNE TREIZIÈME FOIS PAR `CRM-078`, première tranche. La règle a changé de nouveau : la
+// migration `0039` ajoute `publish_workflow_version`, TROISIÈME fonction de ce fichier réellement
+// appelable par un écran sans être réservée au worker — même si l'écran, lui, ne viendra qu'à la
+// cinquième tranche. Elle est `SECURITY DEFINER` et vérifie donc le rôle elle-même, à la
+// différence de `previsualiser_exigence`. Vingt-sept devient vingt-huit.
+type _lesVingtHuitFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -658,6 +672,7 @@ type _lesVingtSeptFonctions = Expect<
     | 'mail_outbound_identity_credentials'
     | 'mail_outbound_identity_record_check'
     | 'move_card'
+    | 'publish_workflow_version'
     | 'move_card_to_channel'
     | 'previsualiser_exigence'
     | 'queue_outbound_email'
@@ -837,7 +852,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtSeptFonctions,
+  _lesVingtHuitFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,
