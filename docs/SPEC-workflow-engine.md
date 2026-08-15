@@ -3511,8 +3511,8 @@ sur la pile, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=
 
 | # | Appel | Profil | Attendu |
 |---|---|---|---|
-| a | `POST /rpc/plan_card_remapping` sur la version du seed, sans instruction | `admin` | `200`, `ready` vrai, `cards_unresolved` à zéro, **13** affaires au total, aucune étape retirée |
-| b | le même appel, la liste des affaires | `admin` | `200`, `cards.items` portant les treize affaires, dont l'archivée et celle en corbeille avec leur `state` |
+| a | `POST /rpc/plan_card_remapping` sur la version du seed, sans instruction | `admin` | `200`, `ready` vrai, `cards_unresolved` à zéro, aucune étape retirée, et `cards_total` **égal au compte lu par la clé de service** — la mesure de l'exhaustivité |
+| b | sur une fixture portant quatre affaires dont une archivée et une en corbeille | `admin` | `200`, `cards.items` portant les quatre, chacune avec son `state`, toutes `unchanged` |
 | c | plan contre une version **antérieure** à l'ajout d'une étape, les affaires ayant été déplacées sur la nouvelle | `admin` | `200`, `ready` **faux**, l'étape en `steps.removed`, les affaires en `unresolved` avec `target_step_id` nul |
 | d | le même plan avec une instruction couvrant l'étape retirée | `admin` | `200`, `ready` **vrai**, les affaires en `remapped` vers l'étape nommée |
 | e | `card_limit` à 1 sur un plan portant treize affaires | `admin` | `200`, `returned` 1, `total` 13, `truncated` vrai, et l'affaire rendue est bien la première de l'ordre du §7 ter.12.7 |
@@ -3529,6 +3529,11 @@ sur la pile, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=
 
 La ligne n est la contrepartie de la règle du §7 ter.12.4 : le message doit être **identique** à
 celui de m, sans quoi la fonction dirait à l'appelant qu'une version existe ailleurs.
+
+**Aucun compte du seed n'est figé en dur dans ces preuves.** La ligne a compare le `cards_total`
+rendu à l'administratrice au compte lu **par la clé de service**, laquelle ignore la RLS : c'est la
+mesure de l'exhaustivité, et elle reste juste au premier ajout du seed. Les lignes b à e portent sur
+une fixture créée et rendue par la preuve elle-même.
 
 #### 7 ter.12.10 Ce que cette tranche ne livre PAS
 
