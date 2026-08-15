@@ -2691,8 +2691,8 @@ propre à une arête avant d'avoir vu ce que les règles exigent déjà.
 
 #### 7 bis.12.7 Ce que cette tranche ne livre pas
 
-- la **prévisualisation des effets** exigée par la Definition of Done de `CRM-076` — dernier manque
-  de l'unité après cette tranche ;
+- la **prévisualisation des effets** exigée par la Definition of Done de `CRM-076` — **livrée par la
+  sixième tranche, spécifiée au §7 bis.13** ;
 - le réglage en **lot** d'une exigence sur plusieurs transitions, pour le motif du §7 bis.11.7 ;
 - toute modification de la règle d'une étape depuis ce bloc : elle appartient à la grille, et deux
   écrans qui écrivent la même ligne se contrediraient.
@@ -2705,6 +2705,127 @@ propre à une arête avant d'avoir vu ce que les règles exigent déjà.
 | Interface | Les deux gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le retrait vérifié par l'**absence** de ligne ; l'exigence héritée d'une règle affichée **sans** commande de retrait |
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, formulaire d'ajout ouvert, sans débordement de page |
 | Seed | Le workflow par défaut suffit. **Mesuré sur la pile, 2026-08-15** : **deux** liaisons en tout — une sur le workflow global (`Démarrer la réalisation` × `lien-proposition`) et une remappée sur la copie dérivée —, et **six** règles `required` sur quatre étapes d'arrivée. Les preuves écrivent sur des couples que le seed ne porte pas et les retirent dans leur `finally` : le seed retrouve exactement ses deux liaisons |
+
+### 7 bis.13 Sixième tranche : la prévisualisation des effets
+
+Dernier manque de `CRM-076`, et le seul point de sa Definition of Done qui ne soit ni une lecture
+ni une écriture : **avant** d'ajouter une exigence, l'administrateur doit voir ce qu'elle fera aux
+affaires déjà en cours.
+
+Deux gestes de l'éditeur, et deux seulement, peuvent **bloquer** une affaire existante :
+
+1. régler une case de la grille sur **« Exigé »** (§7 bis.11.3) ;
+2. **exiger un champ** sur une transition (§7 bis.12.3).
+
+Les autres gestes n'ont aucun effet de ce genre : « Masqué » et « Affiché » ne bloquent rien, le
+retrait d'une exigence ne fait que lever une contrainte, et le retrait d'une étape occupée est déjà
+refusé par la base (`on delete restrict`, §7 bis.4). La tranche porte donc sur ces deux gestes.
+
+#### 7 bis.13.1 Les deux effets, qui ne sont PAS le même nombre
+
+Une exigence ajoutée sur un couple champ × étape produit **deux** effets distincts, et l'écran les
+sépare parce que la base les traite différemment :
+
+- **sur place** — les affaires **déjà** à cette étape. Elles ne sont jamais chassées (§5.7) ; leur
+  fiche signalera un manque, sans bloquer sa lecture ;
+- **à l'entrée** — les affaires qui, depuis leur étape courante, empruntent un chemin **menant** à
+  cette étape, et dont le champ est vide. Celles-là seront refusées par la sixième garde de
+  `move_card` tant que le champ ne sera pas renseigné.
+
+Les deux nombres diffèrent, et pas d'un peu. MESURÉ sur le seed le 2026-08-15, workflow par défaut,
+pour le champ `date-signature-prevue` sur les sept étapes : `Prospection` rend **4 sur place** et
+**0 à l'entrée** — aucune arête ne mène à l'étape initiale ; `Signature` rend l'inverse, **0 sur
+place** et **1 à l'entrée** ; `Perdu` rend **1** et **8**. Un écran qui n'aurait rendu qu'un seul
+nombre aurait donc annoncé « aucun effet » sur deux étapes du workflow par défaut, alors que
+l'effet existait de l'autre côté.
+
+Une exigence ajoutée sur une **transition** n'a pas d'effet « sur place » : elle ne porte pas sur
+l'étape d'arrivée mais sur un chemin. Elle ne rend que le second nombre, restreint aux affaires
+situées à l'étape de **départ** de cette arête. MESURÉ : `date-signature-prevue` sur
+`Prospection → Perdu` rend **4**.
+
+#### 7 bis.13.2 Pourquoi le compte est fait par la BASE, et non par l'écran
+
+Trois raisons, chacune mesurée, et aucune n'est une préférence de style :
+
+1. **« Vide » est un contrat backend, et il est plus subtil qu'il n'y paraît.**
+   `app.valeur_de_champ_est_vide` traite `null` SQL, `'null'` JSON, la chaîne blanche et le tableau
+   vide, et son `btrim` porte sur **vingt-quatre** points de code d'espaces, Unicode compris
+   (`CRM-036`). Le réécrire en TypeScript dupliquerait la définition que `move_card` possède, et les
+   deux dériveraient sans que rien ne le signale.
+2. **La lecture serait non bornée.** Compter côté navigateur exigerait de charger toutes les
+   affaires du workflow et toutes leurs valeurs de champ. Le seed en porte 13 actives et 21
+   valeurs ; rien ne borne ces tables en production (`CLAUDE.md` §21).
+3. **Le compte doit être celui de ce que le lecteur a le droit de voir.** Une fonction
+   `security invoker` hérite de la RLS des tables lues, comme `etat_messagerie` et
+   `inbox_arborescence` avant elle. Un `security definer` aurait annoncé un nombre d'affaires que
+   son lecteur ne peut pas ouvrir.
+
+#### 7 bis.13.3 La fonction, son contrat et ses refus
+
+```
+public.previsualiser_exigence(
+  p_field_id      uuid,
+  p_step_id       uuid default null,
+  p_transition_id uuid default null
+) returns table (sur_place bigint, a_l_entree bigint)
+```
+
+`stable`, `security invoker`, `set search_path to ''`, `grant execute` au rôle `authenticated`.
+
+- **Exactement une** des deux cibles est fournie. Zéro ou deux lèvent `previsualisation_cible`
+  (`P0001`) : une prévisualisation sans cible compterait un ensemble que personne n'a demandé, et
+  deux cibles rendraient un nombre dont on ne saurait pas de quel geste il parle.
+- Un champ, une étape ou une transition **inconnus** ne lèvent pas : la fonction rend `0, 0`. Une
+  cible disparue entre la lecture de l'écran et l'appel est une course ordinaire, pas une erreur, et
+  l'écriture qui suit la signalera elle-même par son `23503`.
+- Les affaires **archivées** sont exclues des deux comptes : `move_card` refuse déjà de les déplacer
+  (`c.archived_at is null`, première garde). MESURÉ : le seed en porte **une**.
+- Un **champ archivé** rend `0, 0` : la sixième garde filtre `f.archived_at is null`, donc
+  l'exigence serait sans effet — c'est ce que le §7 bis.11 et le §7 bis.12 écrivent déjà de leur
+  côté.
+- Le compte « à l'entrée » **dédoublonne les affaires** : cinq arêtes du seed mènent à `Perdu`, et
+  une affaire qui en emprunte deux ne compte qu'une fois.
+
+Le corps reprend la sixième garde de `move_card` **mot pour mot** pour la partie qui définit
+« renseigné » — `not exists (… and not app.valeur_de_champ_est_vide(v.value))` —, et cette parenté
+est ce que la preuve pgTAP vérifie : la prévisualisation et le refus doivent porter le même verdict
+sur la même affaire.
+
+#### 7 bis.13.4 Ce que l'écran en fait
+
+- La prévisualisation est **demandée au moment du geste**, jamais chargée d'avance : quarante-deux
+  cases et une dizaine d'arêtes feraient autant d'appels pour des gestes qui n'auront pas lieu.
+- **Pour la grille**, la case réglée sur « Exigé » n'écrit pas immédiatement : elle ouvre une
+  confirmation qui porte les deux nombres, et la case reprend sa valeur précédente si
+  l'administrateur renonce. Les trois autres états restent **immédiats** — ils ne bloquent rien, et
+  leur imposer une confirmation aurait rendu la grille inutilisable.
+- **Pour les exigences de transition**, le nombre est affiché dans le formulaire d'ajout, sous le
+  choix du champ, dès qu'un champ est choisi : le formulaire existe déjà et porte son bouton de
+  validation, donc aucune confirmation supplémentaire n'est ajoutée.
+- **Zéro se dit en toutes lettres** — « aucune affaire en cours n'est concernée » —, jamais par
+  l'absence de phrase : un bloc muet se lirait comme un chargement qui n'a pas abouti.
+- L'échec de la prévisualisation **ne bloque pas le geste**. Le compte est une aide à la décision,
+  pas une garde ; la garde est dans `move_card`. L'écran écrit alors que l'effet n'a pas pu être
+  mesuré, et laisse valider.
+
+#### 7 bis.13.5 Ce que cette tranche ne livre pas
+
+- la prévisualisation des effets d'un **retrait** — retirer une exigence ne bloque aucune affaire,
+  et son seul effet est de lever une contrainte ;
+- la **liste nominative** des affaires concernées : un compte suffit à la décision, et une liste
+  demanderait une pagination, un filtre de lecture et un écran que rien n'a spécifié ;
+- le réglage en **lot**, toujours hors périmètre (§7 bis.11.7, §7 bis.12.7).
+
+#### 7 bis.13.6 Preuves attendues de la sixième tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | La fonction existe, `stable`, non `security definer`, exécutable par `authenticated` ; ses deux refus de cible ; les deux comptes sur des couples mesurés du seed ; l'affaire archivée exclue ; le champ archivé rendant `0, 0` ; le dédoublonnage des arêtes multiples ; **la parenté avec `move_card`** — une affaire comptée « à l'entrée » se voit bien refuser son déplacement par `missing_required_fields` une fois la règle posée |
+| Unitaire | L'appel RPC et ses paramètres ; la composition du message selon les deux nombres, dont le cas `0, 0` ; le repli lorsque l'appel échoue |
+| Interface | La confirmation ouverte par « Exigé » porte les deux nombres et n'écrit qu'après acceptation ; le renoncement rend la case à sa valeur précédente **et** n'écrit rien en base ; le formulaire d'exigence de transition affiche son compte au choix du champ |
+| Visuel | Captures aux quatre paliers, confirmation ouverte, sans débordement de page |
+| Seed | Le workflow par défaut suffit et n'est pas modifié : les comptes du §7 bis.13.1 sont ceux du seed |
 
 ## 8. Vérification exigée
 

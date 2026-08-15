@@ -13872,3 +13872,76 @@ sans commande de retrait ; captures aux quatre paliers observées.
 
 **Où reprendre après cette tranche.** `CRM-076` reste `[~]` : la **prévisualisation des effets**
 devient son dernier manque.
+
+### Décision 390 — CRM-076, sixième tranche : la prévisualisation des effets, et le compte que l'écran ne peut pas faire lui-même
+
+**2026-08-15, suite de la décision 389 — entrée écrite et committée avant la première ligne de
+code (`CLAUDE.md` §5).**
+
+**Ce que la session a d'abord trouvé, et réparé.** La session précédente a poussé le code, l'écran
+et les preuves de la cinquième tranche — les exigences de transition —, mais **pas** son commit
+documentaire : le manuel, le design system, le changelog et le backlog l'ignoraient encore, et le
+backlog annonçait toujours les exigences de transition comme dues. C'est réparé en premier, avant
+toute construction : chapitre **5 bis.4 ter** du manuel, six règles ajoutées au §5.15 du design
+system, entrée de changelog sous `[Non publié]`, et la tranche portée au backlog avec ses mesures.
+Un compteur reste en arrière et il est nommé plutôt que deviné : `SCENARIOS_UI` vaut encore **219**,
+valeur de la quatrième tranche.
+
+**L'unité de la session** est `CRM-076`, désignée comme reprise en cours par la dernière entrée du
+journal et par le backlog. Cette tranche lève son **dernier** manque de comportement : la
+**prévisualisation des effets**, seul point de la Definition of Done qui ne soit ni une lecture ni
+une écriture.
+
+**La ligne de base, établie avant toute modification.** Pile montée par `./runDev.sh` — 17 services
+`healthy`, `migrations-runner` sorti —, seed appliqué. `npm run typecheck` vert ; `npm run build`
+vert ; `npm run test:unit` **954/954** sur 36 fichiers ; `npm run test:sql` **33 fichiers, 1971
+assertions, aucune anomalie**. `npm run e2e:ui` sort en revanche **en échec avec 3 scénarios
+passés seulement** en 4,1 minutes, sur un arbre de travail dont le code est celui d'`origin/main` :
+l'anomalie est donc **antérieure** à cette session et étrangère à son unité. Elle est rejouée avec
+sa sortie complète conservée avant d'être qualifiée.
+
+**Quatre mesures prises sur la pile avant d'écrire la spécification, et qui décident de l'écran.**
+
+La première décide qu'il faut **deux** nombres et non un. Une exigence ajoutée sur un couple
+champ × étape produit deux effets que la base traite différemment : les affaires **déjà** à l'étape,
+qui ne sont jamais chassées mais dont la fiche signalera un manque, et les affaires qui ne pourront
+plus **entrer** dans l'étape. MESURÉ pour `date-signature-prevue` sur les sept étapes du workflow
+par défaut : `Prospection` rend **4 sur place** et **0 à l'entrée** — aucune arête ne mène à
+l'étape initiale —, `Signature` rend l'inverse, **0** et **1**, et `Perdu` rend **1** et **8**. Un
+écran qui n'aurait rendu qu'un seul nombre aurait annoncé « aucun effet » sur deux étapes du
+workflow par défaut alors que l'effet existait de l'autre côté.
+
+La deuxième décide que le compte est fait par la **base**. « Vide » est un contrat backend :
+`app.valeur_de_champ_est_vide` traite `null` SQL, `'null'` JSON, la chaîne blanche et le tableau
+vide, et son `btrim` porte sur **vingt-quatre** points de code d'espaces (`CRM-036`). Le réécrire en
+TypeScript aurait dupliqué la définition que `move_card` possède, et les deux auraient dérivé sans
+que rien ne le signale. S'y ajoutent une lecture non bornée — compter côté navigateur exigerait de
+charger toutes les affaires et toutes leurs valeurs — et la RLS : la fonction est `security
+invoker`, comme `etat_messagerie` et `inbox_arborescence`, pour ne jamais annoncer un nombre
+d'affaires que son lecteur ne peut pas ouvrir.
+
+La troisième donne le périmètre : sur les gestes de l'éditeur, **deux seulement** peuvent bloquer
+une affaire existante — régler une case sur « Exigé », et exiger un champ sur une transition.
+« Masqué » et « Affiché » ne bloquent rien, un retrait ne fait que lever une contrainte, et le
+retrait d'une étape occupée est déjà refusé par `on delete restrict`. La prévisualisation ne porte
+donc que sur ces deux gestes, et les autres restent immédiats : leur imposer une confirmation aurait
+rendu la grille inutilisable.
+
+La quatrième donne les exclusions, toutes reprises de la sixième garde de `move_card` : affaires
+archivées exclues — le seed en porte **une** —, champ archivé rendant `0, 0`, et dédoublonnage des
+affaires à l'entrée, cinq arêtes du seed menant à `Perdu`.
+
+**Une migration est écrite, et c'est le premier de cette unité.** `public.previsualiser_exigence`
+n'existe pas ; les cinq tranches précédentes n'en avaient besoin d'aucune. Elle est `stable`,
+`security invoker`, `search_path` vide, exécutable par `authenticated`, et refuse une cible absente
+ou double par `previsualisation_cible`.
+
+**Preuves attendues avant de fermer la tranche** — §7 bis.13.6 : pgTAP sur la forme de la fonction,
+ses deux refus, ses comptes mesurés, ses exclusions et **sa parenté avec `move_card`** ; unitaires
+sur l'appel et la composition du message, dont le cas `0, 0` et le repli en cas d'échec ; E2E sur la
+vraie base de la confirmation et du renoncement, vérifié par l'**absence** de ligne ; captures aux
+quatre paliers observées.
+
+**Où reprendre après cette tranche.** `CRM-076` n'aura plus de comportement dû : resteront les
+preuves pgTAP/API dédiées à l'écran et la qualification de l'échec `e2e:ui` constaté en ligne de
+base.
