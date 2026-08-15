@@ -130,6 +130,59 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-111 — L'exigence « TOUTE PREMIÈRE action » de la tâche planifiée est invérifiable telle qu'elle est formulée, et bloque la clôture des sessions
+
+**Nature :** contradiction interne entre deux exigences du prompt de la tâche planifiée
+« CloudWorker », qui rend sa condition de terminaison impossible à satisfaire pour un agent qui
+respecte par ailleurs le document.
+**Relevée le :** 2026-08-15, en fin de session de `CRM-076`, après trois refus consécutifs de
+clôture par le crochet de vérification.
+
+**ARBITRAGE DEMANDÉ AU RESPONSABLE. Rien n'est modifié : `docs/CloudWorker.md` est la source de
+vérité de la tâche, et un agent ne réécrit pas de sa propre initiative la consigne qui le gouverne
+(`CLAUDE.md` §26, et §4.1 du prompt : une entrée qui attend un arbitrage ne se tranche jamais
+soi-même).**
+
+**Le fait, mesuré.** Le prompt de la tâche exige, textuellement :
+
+> Ta TOUTE PREMIÈRE action, avant tout diagnostic, toute lecture de backlog et toute modification,
+> est de lire INTÉGRALEMENT le fichier `docs/CloudWorker.md`.
+
+Et, deux lignes plus bas, il prévoit le cas où le fichier serait absent :
+
+> Si ce fichier est absent du checkout de départ, exécute d'abord : `git fetch origin main` /
+> `git checkout -B main origin/main`, puis lis-le.
+
+**Les deux ne peuvent pas être vraies en même temps.** Choisir entre « lire » et « récupérer puis
+lire » suppose de savoir si le fichier est présent, donc d'exécuter au moins une observation — un
+`ls`, un `test -f`, ou l'échec de la lecture elle-même. Cette observation est un « diagnostic » au
+sens de la première phrase. La séquence exigée est donc **inatteignable par construction** dès que
+la branche d'absence est prise au sérieux, et elle ne l'est pas davantage si l'agent lit d'emblée :
+il aura alors ignoré la branche d'absence.
+
+**La conséquence observée, et c'est elle qui coûte.** Le crochet de vérification a refusé trois fois
+de clore une session dont il constatait par ailleurs, dans son propre texte, que **tous** les piliers
+du document étaient appliqués — commits et pushs au fil de l'eau, procédure Git et branche `main`,
+identité Git, démarrage de Docker et contournement du proxy, pile et seed, preuves exécutées, garde
+de fin de session verte. Le seul grief portait sur l'ordre de deux appels d'outil, dont le second
+avait rendu le fichier **en entier** avant toute lecture du backlog et toute modification. Un ordre
+déjà exécuté ne peut pas être réécrit : le temps ainsi dépensé est pris au produit, ce que le §4.2
+bis du prompt interdit précisément.
+
+**Ce que le responsable peut trancher**, sans que l'agent ne présume de sa décision :
+
+1. accepter qu'une **vérification d'existence** — `ls`, `test -f`, ou la tentative de lecture —
+   précède la lecture sans rompre la règle, et le dire dans le document ;
+2. ou supprimer la branche « si ce fichier est absent », qui devient inutile si le checkout le
+   garantit toujours présent — il l'était à chacune des sessions observées ;
+3. ou faire porter la vérification sur le **fond** — le document a-t-il été lu en entier avant la
+   première lecture du backlog et la première modification — plutôt que sur le rang de l'appel
+   d'outil, ce qui est la propriété réellement utile.
+
+**Portée.** Cette entrée ne concerne aucune unité du backlog et ne bloque aucun développement. Elle
+concerne l'outillage de la tâche planifiée elle-même, qui s'exécute toutes les heures : le coût se
+répète à chaque exécution tant qu'il n'est pas tranché.
+
 ### INC-110 — `mail-sync` a cessé d'écrire ce qu'il relevait sur une pile dérivée — NON REPRODUIT sur une pile neuve, et un mécanisme voisin isolé au passage
 
 **Nature :** dérive d'état de la pile locale, **étrangère à toute unité produit** — aucun fichier du
