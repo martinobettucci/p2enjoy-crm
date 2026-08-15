@@ -14019,3 +14019,31 @@ suivante doit faire.
 **Où reprendre.** `CRM-076` reste `[~]`. Les tranches cinq et six ayant été livrées en parallèle,
 son comportement dû est clos ; restent les preuves pgTAP/API dédiées à l'écran, et la
 qualification de l'échec de `verify-formulaire.sh` ci-dessus.
+
+### Décision 392 — L'échec de `verify-formulaire.sh` est qualifié : le contrôle ne dégrade plus rien
+
+**2026-08-15, complément à la décision 391, qui laissait ce point ouvert faute d'arbre stable.**
+
+La décision 391 consignait un échec de `scripts/verify-formulaire.sh` sans le qualifier, l'arbre
+portant alors deux tranches concurrentes en cours de livraison. Il est mesuré une seconde fois sur
+l'arbre stabilisé (`aeda2c0`), avec le même résultat, et la cause est trouvée : le contrôle de
+non-complaisance D2 bis remplace `retirerEspaces(valeur)` par `valeur.trim()` dans
+`webapp/src/lib/valeur-renseignee.ts`, or `retirerEspaces` **est** `texte.trim()` depuis la
+décision 374. La dégradation réécrit donc le code en lui-même, et aucune preuve ne peut rougir.
+
+Ce n'est pas un défaut du produit : le prédicat et la garde donnent la même lecture, et c'est le
+contrôle qui décrit un monde antérieur au lot G. Consigné en **INC-109** avec ses deux mesures et
+les trois issues possibles ; comportement laissé inchangé, arbitrage demandé — `verify-formulaire.sh`
+est le harnais de `CRM-037`, unité close.
+
+**Mesuré aussi, sur l'arbre stabilisé** : `e2e/ui/administration-workflows.spec.ts` rend **56
+scénarios verts**, les quatre de la grille compris. Les deux preuves de réglage de case avaient été
+révisées par la session concurrente — « Exigé » passe désormais par la confirmation de la sixième
+tranche —, avec leur motif écrit dans le fichier.
+
+**Une cause d'échec sans rapport avec le dépôt, à connaître pour les sessions suivantes.** Les
+scénarios de la grille ont d'abord échoué sur une console non vierge — `404` — et une écriture qui
+n'arrivait pas. Motif : la session concurrente avait poussé la migration
+`0036_previsualisation_exigence.sql` alors que la pile de cette session-ci datait d'avant. Une pile
+démarrée avant une migration poussée n'est pas une régression ; `docker compose up
+migrations-runner` puis un redémarrage de `rest` suffisent, et il faut y penser avant de conclure.

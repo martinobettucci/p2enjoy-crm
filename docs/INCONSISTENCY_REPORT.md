@@ -130,6 +130,65 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-109 — La dégradation « le prédicat revient à `trim()` » de `verify-formulaire.sh` ne dégrade plus rien depuis la décision 374
+
+**Nature :** contrôle de non-complaisance devenu **vide** parce que l'arbitrage qu'il surveillait a
+supprimé la divergence qu'il simulait. Le harnais le lit encore comme un échec du produit.
+**Relevée le :** 2026-08-15, en exécutant les harnais de fin de session de la quatrième tranche de
+`CRM-076`.
+
+**Le fait, mesuré deux fois** — une première pendant que deux tranches concurrentes étaient en
+cours de livraison, une seconde sur l'arbre stabilisé (`aeda2c0`), avec le même résultat :
+
+```
+scripts/verify-formulaire.sh  →  49 contrôles, 1 en échec
+ECHEC  COMPLAISANT : « le prédicat revient à trim(), et diverge de btrim »
+       et la preuve d'API reste verte
+```
+
+**Pourquoi la preuve d'API reste verte, et pourquoi c'est NORMAL.** Le contrôle D2 bis
+(`scripts/verify-formulaire.sh`) remplace, dans `webapp/src/lib/valeur-renseignee.ts` :
+
+```
+if (typeof valeur === 'string') return retirerEspaces(valeur).length > 0
+```
+
+par :
+
+```
+if (typeof valeur === 'string') return valeur.trim().length > 0
+```
+
+Or `retirerEspaces` **est** `texte.trim()` depuis la décision 374 : le lot G a élargi la base aux
+blancs Unicode via `app.btrim_blancs`, dont la classe est exactement celle de `trim()`, et le
+module a cessé de réimplémenter `btrim`. Le commentaire d'en-tête du fichier le dit déjà en toutes
+lettres — « la convergence se fait désormais par construction ; il n'y a plus de réimplémentation à
+maintenir, donc plus rien qui puisse diverger silencieusement ». La « dégradation » réécrit donc le
+code en **lui-même**, et aucune preuve ne peut rougir.
+
+**Ce n'est PAS un défaut du produit, et il ne faut pas le corriger comme tel.** Le prédicat et la
+garde donnent bien la même lecture ; c'est le contrôle qui décrit un monde antérieur à la décision
+374. Trois issues sont possibles, et aucune n'appartient à la session qui l'a relevée :
+
+1. retirer D2 bis, la divergence qu'il surveillait n'étant plus représentable ;
+2. le remplacer par une dégradation qui, elle, dégrade — par exemple `btrim` sans second argument,
+   c'est-à-dire l'état d'avant la décision 374 ;
+3. le conserver en le marquant explicitement comme attendu vert, ce qui reviendrait à supprimer sa
+   valeur de contrôle.
+
+La deuxième paraît la seule qui conserve l'intention du §4.3 du composeur, mais le choix demande
+l'arbitrage du responsable : `verify-formulaire.sh` est le harnais de `CRM-037`, unité close.
+
+**Comportement laissé inchangé.** Aucun fichier n'est modifié. Tant que ce point est ouvert,
+`scripts/verify-formulaire.sh` rend « 49 contrôles, 1 en échec » sans qu'aucun défaut de produit
+n'en soit la cause, et toute session qui l'exécute doit lire cette entrée avant de conclure à une
+régression.
+
+**Lié à :** décision 165 (convergence de l'interface vers la base), décision 367 et décision 374
+(lot G, `app.btrim_blancs`), `CRM-036`, `CRM-037`.
+
+---
+
 ### INC-108 — Trois documents comptent « dix-sept règles » de visibilité là où le seed en pose quinze
 
 **Nature :** chiffre figé dans une spécification et deux documents de suivi, dépassé par une
