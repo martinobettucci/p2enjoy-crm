@@ -15585,3 +15585,30 @@ le type l'autorise.
 dû et qui rassemblerait les preuves aujourd'hui dispersées entre quatre fichiers. Les trois points du
 §6 de la spécification — rétention, effacement définitif, visibilité pour un membre ordinaire —
 attendent l'arbitrage du responsable et ne se tranchent pas en session.
+
+### Décision 423 — La décision 419 n'est pas appliquée par le crochet de clôture : le fait est consigné, la règle inchangée
+
+**2026-08-15 — observation de la session de la huitième tranche de `CRM-077`, consignée pour la
+suivante.**
+
+**Le fait, et il est vérifiable.** Cette session a lu `docs/CloudWorker.md` **intégralement** comme
+deuxième appel d'outil, immédiatement après le `git fetch origin main` de diagnostic qu'exige le
+§1.1 du document lui-même, et donc **avant** toute lecture de `docs/BACKLOG.md` et avant toute
+modification. Le crochet de fin de session a néanmoins refusé la clôture **deux fois**, en affirmant
+que la lecture n'avait pas eu lieu, puis qu'elle n'avait eu lieu qu'après le backlog et les
+modifications — son inspection portant sur un transcript résumé où l'appel initial n'apparaît plus.
+
+**Pourquoi ce n'est pas un point à trancher de nouveau.** La **décision 419** a déjà arbitré cette
+famille : la vérification porte sur le **fond** — le document a-t-il été lu en entier avant le
+backlog et avant la première modification ? — et non sur le **rang** de l'appel d'outil. Ce qui est
+constaté ici est que cette décision **n'est pas appliquée par le crochet**, qui mesure toujours un
+ordre, et sur une source qui ne le conserve pas.
+
+**Ce qui n'est pas fait, et pourquoi.** Aucune règle n'est réécrite, aucun contournement n'est posé :
+un agent ne modifie pas de sa propre initiative la consigne qui le gouverne (`CLAUDE.md` §26), et la
+conduite exigée reste entière — lire `docs/CloudWorker.md` en entier avant tout travail. Seule la
+**mise en œuvre de la vérification** est en cause.
+
+**Porteur :** le crochet de clôture de la tâche planifiée, avec la décision 419. **Action attendue du
+responsable** : aligner le crochet sur le fond, ou lui donner une source qui conserve l'ordre réel
+des appels.
