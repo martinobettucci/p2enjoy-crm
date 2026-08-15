@@ -176,6 +176,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
 | `scripts/verify-manual.sh` | Rejoue les preuves du manuel utilisateur : chiffres de l'annexe A comparés à la base, captures citées, unités couvertes, libellés réels, absence de secret | **disponible** |
 | `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
+| `scripts/verify-corbeille.sh` | Rejoue les preuves de la corbeille et de la restauration : traçabilité, captures, pgTAP, Vitest, API et interface aux comptes figés, quatre dégradations réelles et restauration constatée | **disponible** |
+| `scripts/verify-corbeille.sh --rapide` | Omet Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
 | `scripts/verify-mail-infra.sh` | Rejoue les preuves de l'infrastructure mail de développement : configuration versionnée, placement des services, variables, domaines convergents, boîtes et rôles, IMAP réel, détection ClamAV, Roundcube | **disponible** |
 | `scripts/verify-mail-infra.sh --contre-epreuve` | Dégrade une **copie** des fichiers versionnés et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
@@ -481,6 +483,7 @@ scripts/verify-timeline.sh     # timeline : mémoire append-only, filtres et cap
 scripts/verify-move-card-to-channel.sh # déplacement entre channels et perte explicite (CRM-045)
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
 scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
+scripts/verify-corbeille.sh    # corbeille : modèle, garde, écran, gestes, non-complaisance (CRM-077)
 ```
 
 La cible courante de `scripts/verify-harness.sh` est **28 contrôles** : sélection de Node
@@ -603,6 +606,7 @@ Livré à ce jour :
 │   ├── verify-commentaires.sh  Preuves des commentaires et de leur panneau
 │   ├── verify-timeline.sh      Preuves de la timeline unifiée et de ses filtres
 │   ├── verify-move-card-to-channel.sh  Preuves du déplacement entre channels
+│   ├── verify-corbeille.sh     Preuves de la corbeille, de ses gestes et de sa restauration
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie

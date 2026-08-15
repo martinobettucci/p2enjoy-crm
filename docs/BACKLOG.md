@@ -7038,10 +7038,29 @@ spécifié avant toute ligne de code) :
       — l'environnement de cette session fournit **Node 22**, le dépôt exige Node 24. Aucune de ces
       preuves n'est annoncée comme verte.
 
-- [ ] **Reste dû** : le **harnais dédié** `scripts/verify-corbeille.sh`, qui rassemblerait les
-      preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
-      `webapp/src/app/Corbeille.test.tsx`, `webapp/src/app/RouteCard.test.tsx`,
-      `e2e/api/corbeille.spec.ts` et `e2e/ui/corbeille.spec.ts`.
+**Neuvième tranche livrée, 2026-08-15 — le harnais dédié** (`scripts/verify-corbeille.sh`,
+`docs/SPEC-corbeille.md` §5 bis, spécifié avant toute ligne de code) :
+
+- [x] **Un verdict unique là où les preuves étaient dispersées entre neuf fichiers** : traçabilité
+      des douze fichiers de l'unité, captures, les deux suites pgTAP, les deux filtres Vitest, les
+      scénarios d'API et le parcours d'interface. **39 contrôles, aucune anomalie**, MESURÉ sur la
+      pile démarrée et seedée.
+- [x] **Les comptes sont figés PAR PAIRE** — fichiers ET assertions, fichiers ET tests (décision
+      279) : `2 fichiers / 20 assertions` pgTAP, `2 fichiers / 39 tests` et `1 fichier / 7 tests`
+      Vitest, `22` scénarios d'API, `24` d'interface. Un compte qui **monte** est un écart au même
+      titre qu'un compte qui descend, et le §5 bis.1 se met à jour dans le même changement.
+- [x] **Quatre dégradations réelles, et les QUATRE sont vues** : le filtre `deleted_at=not.is.null`
+      de `lireTable`, l'omission des lignes à compte nul de `composerEnumeration`, la reconnaissance
+      de `parent_en_corbeille` par `classerRefusRestauration`, et la branche `sans-effet` de
+      `mettreCardALaCorbeille`. Chacune vise une règle dont la disparition serait **silencieuse en
+      production** — l'écran continuerait de s'afficher.
+- [x] **La restauration est CONSTATÉE octet à octet** contre un instantané pris avant la première
+      dégradation, jamais contre `HEAD` (`docs/SPEC-test-harness.md` §7.2 point 9) : le harnais doit
+      fonctionner dans un arbre portant une évolution légitime non encore committée.
+- [x] **Le harnais nomme ce qu'il NE prouve PAS** (§5 bis.3) : aucune politique d'autorisation n'y
+      est réécrite, aucun effacement définitif, aucune convergence de seed.
+- [x] **`README.md` porte la commande et son `--rapide`**, dans les trois listes qui énumèrent les
+      harnais.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

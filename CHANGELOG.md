@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une commande unique dit si la corbeille tient encore — `CRM-077`**
+  (`scripts/verify-corbeille.sh`, `docs/SPEC-corbeille.md` §5 bis). Les preuves de la corbeille
+  étaient dispersées entre **neuf fichiers** : aucune commande ne rendait un verdict d'ensemble.
+  - **Sept preuves rejouées en un passage** : la traçabilité des douze fichiers de l'unité, les
+    captures des quatre paliers, les deux suites de base de données, les tests du modèle, de l'écran
+    et de la fiche d'affaire, les scénarios d'API avec les jetons réels des trois profils, et le
+    parcours d'interface au clavier et à la souris.
+  - **Les comptes sont figés, fichiers ET assertions** : une suite entière qui disparaîtrait sans
+    faire baisser le nombre d'assertions serait vue, et l'inverse aussi.
+  - **Le harnais refuse d'être complaisant** : il retire réellement, une par une, quatre règles dont
+    la disparition serait invisible à l'écran — le filtre qui ne montre que ce qui est retiré,
+    l'omission des décomptes nuls, le refus nommé de restaurer sous un parent retiré, et la réponse
+    « sans effet » d'un retrait refusé en silence — et **exige que les tests rougissent** à chaque
+    fois. Les fichiers sont ensuite comparés **octet à octet** à leur état d'avant.
+  - `--rapide` omet les parcours navigateur, et **l'annonce dans sa sortie** plutôt que de le taire.
+
 - **Une affaire se met à la corbeille depuis sa fiche — `CRM-077`** (`webapp/src/app/RouteCard.tsx`,
   `webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §4 ter). Le geste existait pour un track et
   un channel ; **une affaire ne se retirait depuis aucun écran**.
