@@ -6947,39 +6947,63 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
       `webapp/src/app/Corbeille.test.tsx`, `e2e/api/corbeille.spec.ts` et
       `e2e/ui/corbeille.spec.ts`.
-- [ ] **Reste dû** : la ligne « Visuel » du §5 demande aussi une capture de **la confirmation portant
-      l'énumération**. Elle n'est PAS produite, et ce n'est pas un oubli : cette confirmation
-      appartient au **geste de mise à la corbeille**, que le §4.7 place délibérément hors de cet
-      écran — « on n'y retire rien, on y rend ». Le geste lui-même n'est livré nulle part : ni le
-      board, ni la vue liste, ni l'administration de l'arborescence n'offrent aujourd'hui de mettre
-      un objet à la corbeille. C'est la tranche suivante, et elle consommera l'énumération déjà
-      livrée par la cinquième.
+- [x] **La ligne « Visuel » du §5 demandait aussi une capture de la confirmation portant
+      l'énumération.** Elle n'appartenait pas à cette tranche : le §4.7 place le geste hors de
+      l'écran de corbeille — « on n'y retire rien, on y rend ». **Produite par la septième tranche**,
+      ci-dessous, aux quatre paliers.
 
-**Septième tranche EN COURS, 2026-08-15 — le geste de mise à la corbeille d'un track et d'un
-channel** (`docs/SPEC-corbeille.md` §4 bis, spécifié avant toute ligne de code) :
+**Septième tranche livrée, 2026-08-15 — le geste de mise à la corbeille d'un track et d'un channel**
+(`webapp/src/app/AdministrationArborescence.tsx`, `webapp/src/lib/administration-arborescence.ts`,
+`docs/SPEC-corbeille.md` §4 bis, `docs/DESIGN_SYSTEM.md` §5.13) :
 
-- [~] **Le geste vit dans `/reglages/arborescence`, à côté d'« Archiver »** (§4 bis.1) : le §4.7
+- [x] **Le geste vit dans `/reglages/arborescence`, à côté d'« Archiver »** (§4 bis.1) : le §4.7
       l'exclut de l'écran de corbeille, les trois états du §3.1 sont un seul vocabulaire, et cet
-      écran porte déjà la confirmation, la traduction des refus et la relecture après écriture.
-- [~] **Préalable MESURÉ, et il précède le geste** (§4 bis.2) : l'administration lit par ses propres
-      requêtes, que la troisième tranche n'a pas filtrées — `tracks?archived_at=is.null` rend
-      **quatre** tracks dont `Legacy 2023`, en corbeille. Le filtre `deleted_at=is.null` est ajouté
-      aux deux lectures, **séparé** de celui de l'archivage : la case « Afficher les archivés » ne
-      doit jamais ramener un objet en corbeille.
-- [~] **La confirmation porte l'énumération** de `compterEnfantsInaccessibles` (§4 bis.3) —
-      l'appelant que la cinquième tranche avait livré sans, et la capture que la ligne « Visuel »
-      du §5 réclamait. Un compte **en échec ne bloque pas** le geste : l'énumération est une
-      information, pas une garde, et le geste est réversible.
-- [~] **Les trois issues MESURÉES avec les jetons réels** (§4 bis.5) : l'administratrice obtient
+      écran porte déjà la confirmation, la traduction des refus et la relecture après écriture. La
+      commande reste offerte sur une ligne **archivée**, là où renommer et réordonner disparaissent :
+      elles n'ont aucun effet observable sur un objet masqué, le retrait en a un.
+- [x] **Préalable MESURÉ, refermé dans la même tranche** (§4 bis.2) : l'administration lit par ses
+      propres requêtes, que la troisième tranche n'avait pas filtrées — `tracks?archived_at=is.null`
+      rendait **quatre** tracks dont `Legacy 2023`, en corbeille. Le filtre `deleted_at=is.null` est
+      ajouté aux deux lectures, **séparé** de celui de l'archivage. **Quatre attentes unitaires
+      révisées**, aucune supprimée ni relâchée : la plus utile exige que la case « Afficher les
+      archivés » retire le filtre d'archivage ET conserve celui de corbeille.
+- [x] **La confirmation porte l'énumération** de `compterEnfantsInaccessibles` (§4 bis.3) —
+      l'appelant que la cinquième tranche avait livré sans, et la capture que la ligne « Visuel » du
+      §5 réclamait. Ses quatre états sont distincts, dont « n'a pas pu être mesuré », et **aucun
+      n'éteint la commande** : une énumération informe, elle n'autorise pas. Le type des états et le
+      choix singulier/pluriel sont **partagés** avec l'écran de corbeille
+      (`webapp/src/app/presentation-corbeille.ts`) plutôt que recopiés.
+- [x] **Les trois issues MESURÉES avec les jetons réels** (§4 bis.5) : l'administratrice obtient
       `200` et la ligne, `deleted_by` écrite par le trigger ; le business developer **et** la
       lectrice obtiennent `200` et `[]`, la ligne relue **inchangée** — troisième occurrence de la
-      décision 70 dans cette unité.
-- [~] **L'horodatage reste celui du client**, comme `archived_at` : le poser côté serveur
+      décision 70 dans cette unité. Une charge portant `deleted_by` est refusée **entièrement**, en
+      `42501`, et `deleted_at` n'est pas écrite non plus : le refus de privilège n'est pas partiel.
+- [x] **L'horodatage reste celui du client**, comme `archived_at` : le poser côté serveur
       remplacerait la date **fixe** des trois objets en corbeille du seed par l'instant du rejeu et
       emporterait la reproductibilité du jeu de démonstration. Limite nommée au §7, point 3.
-- [ ] **Hors tranche, et la couture est nommée** : le geste pour une **affaire**. Sa surface
-      demande sa propre mesure, et sa confirmation ne porte aucune énumération — une affaire n'a pas
-      d'enfant au sens du §3.5.
+- [x] **Un défaut d'affichage trouvé en REGARDANT une capture** (`CLAUDE.md` §16), qu'aucune
+      assertion n'aurait vu : la liste porte `min-w-max` pour son défilement horizontal, donc un
+      paragraphe ne s'y replie jamais, et le corps de la confirmation sortait de l'écran. Borné, et
+      la preuve mesure désormais que la confirmation tient dans le champ au palier de référence.
+- [x] **Preuves exécutées sur l'arbre qui porte la tranche** : `typecheck`, `types:check` et `build`
+      verts ; `test:unit` **1029/1029** sur 38 fichiers ; `test:sql` **36 fichiers / 2004
+      assertions** ; `e2e:api` **530/530** dont 9 scénarios ajoutés ; `e2e:ui` **258/258** dont 7
+      scénarios ajoutés, **console VIERGE** ; `e2e:mail` **42/42** ; `pytest` **242** ;
+      `scripts/verify-manual.sh` **113 contrôles sans anomalie**.
+- [x] **Vérifié visuellement et OBSERVÉ** : captures aux quatre paliers de la confirmation et de son
+      énumération, dans `docs/captures/CRM-077/`.
+- [x] **Le manuel gagne le chapitre 5 ter**, absent depuis la livraison de l'écran de corbeille, et
+      le chapitre 5 décrit le geste et ce qui le distingue de l'archivage.
+- [x] **Un constat ÉTRANGER mesuré et tranché sans passer par le registre** (doctrine du
+      2026-08-15) : la barre latérale garde un track que l'administration vient de retirer, jusqu'au
+      prochain chargement — MESURÉ à l'identique sur l'**archivage**, donc antérieur. Cause : la
+      coquille et l'écran tiennent deux copies de la même liste. Comportement inchangé, travail dû
+      porté par `CRM-075` (`docs/JOURNAL.md` décision 420, `docs/ARBITRAGES.md` §1).
+
+- [ ] **Reste dû, dans cet ordre** : le geste de mise à la corbeille d'une **affaire** — sa surface
+      (board, vue liste ou formulaire) demande sa propre mesure, et sa confirmation ne portera aucune
+      énumération, une affaire n'ayant pas d'enfant au sens du §3.5 — puis le **harnais dédié**
+      `scripts/verify-corbeille.sh`.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

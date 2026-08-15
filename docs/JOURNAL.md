@@ -15432,3 +15432,77 @@ que tu n'as pas exécutée » reste entier. Ce qui change est **quand** la campa
 produit un comportement que son esprit ne veut pas. Le §4.2 bis (le temps appartient au produit) et
 le §0 (rien n'existe tant que ce n'est pas poussé) sont les deux règles que cette décision rend enfin
 applicables ensemble.
+
+### Décision 420 — Le geste de mise à la corbeille est livré, et la coquille garde une copie que l'écran ne rafraîchit pas
+
+**2026-08-15.** Suite immédiate de la décision 406, qui posait le contrat de la septième tranche de
+`CRM-077` avant toute ligne de code. La tranche est livrée : « Mettre à la corbeille » existe pour un
+**track** et pour un **channel**, depuis `/reglages/arborescence`, avec sa confirmation portant
+l'énumération. La corbeille cesse d'être un écran que seul le seed pouvait remplir.
+
+**Le préalable annoncé était réel, et il a été refermé.** Les deux lectures de l'administration
+rendaient le track et le channel déjà en corbeille du seed — MESURÉ avant d'y toucher. Le filtre
+`deleted_at=is.null` est ajouté aux deux, **séparé** de celui de l'archivage, et quatre attentes
+unitaires antérieures sont RÉVISÉES en conséquence, aucune supprimée ni relâchée : la plus utile est
+celle qui exige désormais que la case « Afficher les archivés » retire le filtre d'archivage **et
+conserve** celui de corbeille.
+
+**Ce que les mesures ont ajouté au contrat écrit d'avance.** Trois points ne se déduisaient pas du
+§4 bis tel que la décision 406 l'avait posé, et chacun a laissé sa trace dans le code :
+
+1. **Une charge portant `deleted_by` est refusée ENTIÈREMENT, en `42501`** — pas seulement ignorée.
+   La preuve d'API relit la ligne pour constater que `deleted_at`, pourtant ouverte, n'a pas été
+   écrite non plus : le refus de privilège n'est pas partiel.
+2. **Le corps de la confirmation ne se replie pas tout seul.** La liste des tracks porte `min-w-max`
+   pour son défilement horizontal (`docs/DESIGN_SYSTEM.md` §12.6), si bien qu'un paragraphe placé
+   dedans s'étend indéfiniment : la confirmation, dont le corps est plus long que celui de
+   l'archivage, sortait de l'écran. Trouvé en **REGARDANT une capture** (`CLAUDE.md` §16), pas en
+   lisant un test — aucune assertion ne l'aurait vu. Corrigé par une borne de largeur sur le bloc,
+   et la preuve mesure désormais que la confirmation tient dans le champ au palier de référence.
+3. **Une capture prise après un redimensionnement ne montre pas le produit.** La première version des
+   captures aux quatre paliers redimensionnait la fenêtre en cours de scénario, et rendait un tiroir
+   de barre latérale laissé ouvert par le redimensionnement — un artefact de la preuve. Les quatre
+   captures partent maintenant d'un chargement à la bonne taille, comme le fait déjà le tableau de la
+   corbeille.
+
+**Un constat étranger, MESURÉ et tranché sans passer par le registre** (doctrine du 2026-08-15,
+décision 407) : la **barre latérale garde un track que l'administration vient de retirer**, jusqu'au
+prochain chargement de page. Mesuré sur l'**ARCHIVAGE** précisément pour ne pas l'imputer à la
+corbeille — « liens restants dans la barre = 1 après le geste, 0 après rechargement » —, donc
+antérieur à cette tranche. La cause n'est pas dans les requêtes, qui filtrent correctement : la
+coquille (`AppShell`) et l'écran tiennent **deux copies** de la liste des tracks, et une écriture de
+l'écran ne rafraîchit que la sienne. Le remède engage le contrat de la coquille et appartient à
+`CRM-075` ; le corriger depuis une tranche de corbeille aurait dépassé l'unité. Comportement laissé
+inchangé, travail dû inscrit dans `docs/ARBITRAGES.md` §1. La preuve d'interface **assertie donc la
+région d'administration**, pas la page entière, et le dit dans le fichier.
+
+**Preuves exécutées sur l'arbre qui porte la tranche.** `typecheck`, `types:check` et `build` verts ;
+`test:unit` **1029/1029** sur 38 fichiers — 16 assertions ajoutées, 4 révisées — ; `test:sql`
+**36 fichiers / 2004 assertions** ; `e2e:api` **530/530**, dont les **9 scénarios ajoutés** de
+`e2e/api/corbeille.spec.ts` ; `e2e:ui` **258/258**, dont les **7 scénarios ajoutés** de
+`e2e/ui/corbeille.spec.ts`, **console VIERGE** ; `e2e:mail` **42/42** ; `pytest` **242** ;
+`scripts/verify-manual.sh` **113 contrôles, aucune anomalie**. Captures aux quatre paliers et de la
+confirmation portant l'énumération, dans `docs/captures/CRM-077/`, **OBSERVÉES**.
+
+**Deux harnais rendent une anomalie, et c'est celle que la décision 409 a déjà tranchée.**
+`verify-tracks.sh --rapide` rend **2 anomalies** et `verify-channels.sh --rapide` **1**, toutes issues
+du même mécanisme : ils rejouent une migration antérieure à `0037`, laquelle rend le `UPDATE` de
+TABLE que `0037` révoque pour fermer `deleted_by`. **CONSTATÉ** ici que le mécanisme va plus loin
+qu'écrit : `verify-channels.sh` rejoue aussi `0010_droits_fins.sql`, ce qui retire la transitivité de
+`0034` et laisse **3 assertions de `0011_droits_fins.test.sql`** rouges après son passage. Rejouer le
+**préfixe complet** des migrations — le remède de la décision 409, et non le contournement partiel
+qu'elle proposait en attendant — rend `test:sql` à **36 fichiers / 2004 assertions** et `e2e:api` à
+**530/530**. Le contournement écrit dans `docs/ARBITRAGES.md` (« rejouer `0037` après ») est donc
+**insuffisant** : il répare le privilège, pas la politique.
+
+**Ce qui n'a pas été exécuté, et n'est pas annoncé vert** : les autres `scripts/verify-*.sh`, hors
+`verify-manual.sh`, `verify-tracks.sh` et `verify-channels.sh` — aucun ne porte sur la surface de
+cette tranche. `verify-webapp.sh` en particulier n'est pas rejoué : la décision 410 a tranché qu'il
+n'est pas un verdict de livraison pour l'interface, et `e2e:ui` seul l'est.
+
+**Où reprendre.** `CRM-077` reste `[~]`, et il lui manque **deux** choses, dans cet ordre : le geste
+de mise à la corbeille d'une **affaire**, dont la surface — board, vue liste ou formulaire — demande
+sa propre mesure et dont la confirmation ne portera aucune énumération ; puis le harnais dédié
+`scripts/verify-corbeille.sh`. Les trois points du §6 de la spécification — rétention, effacement
+définitif, visibilité pour un membre ordinaire — attendent l'arbitrage du responsable et ne se
+tranchent pas en session.
