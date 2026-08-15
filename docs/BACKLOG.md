@@ -7264,13 +7264,16 @@ que des données et des gestes serveur (`docs/SPEC-workflow-engine.md` §7 ter.9
 L'unité **ne peut pas** passer `[x]` avant la cinquième tranche, dont la Definition of Done exige
 l'aperçu et les captures.
 
-*Preuves restant à exécuter pour cette unité.* Aucune pour les deuxième et troisième tranches :
-leurs 31 et 37 assertions pgTAP, et leurs 12 et 15 scénarios d'API, sont exécutés et verts. **La première tranche, elle, n'est PLUS
-intégralement verte sur une base neuve** : `0037_versionnement_workflows.test.sql` rend **2 échecs
-sur 31**, ses assertions 3 et 28 citant en dur l'identifiant du workflow **dérivé**, que le seed
-n'épingle pas — il est engendré par `copy_workflow_to_track`. Mesuré le 2026-08-15 sur une pile
-fraîchement seedée, et **INC-122** en porte les deux remèdes possibles, qui touchent l'un le contrat
-du seed et l'autre la force d'une preuve d'anti-régression : ils ne se tranchent pas en session.
+*Preuves restant à exécuter pour cette unité.* **Aucune.** La première tranche redevient
+intégralement verte sur une base neuve — **31 assertions sur 31** — l'arbitrage de la **décision
+430** ayant été appliqué à ses assertions 3 et 28 : le workflow dérivé s'y désigne désormais **par
+son nom**, seule de ses propriétés que le seed fixe, et l'empreinte du dérivé est éprouvée par sa
+propriété **relative** — la fonction appelante rend exactement le condensé du document extrait —
+plutôt que comparée à une constante qu'aucune base ne reproduit. L'assertion 2 **garde** sa
+constante : l'identifiant du workflow par défaut est épinglé, et cette constante est la seule qui
+protège la FORME du document. Les deuxième et troisième tranches rendent 31 et 37 assertions pgTAP,
+et 12 et 15 scénarios d'API, tous verts. **INC-122 est close** : elle est retirée du registre par
+l'arbitrage, et sa mise en œuvre est livrée ici.
 
 *Constat étranger, consigné et laissé inchangé.* `scripts/verify-preuves-refus.sh` rend **4
 anomalies sur 26** — trois compteurs figés périmés de plusieurs unités, et neuf preuves de refus non

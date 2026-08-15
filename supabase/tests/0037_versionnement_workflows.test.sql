@@ -12,9 +12,12 @@
 -- 1. Que l'EXTRACTION du document canonique n'a rien changé. C'est la première assertion parce que
 --    c'est le seul risque de régression de cette migration : `workflows.source_composition_
 --    fingerprint` porte des valeurs figées, et la vue `workflow_derivations` les compare à
---    l'empreinte courante. Les deux empreintes du seed sont FIGÉES ici en dur. Si une écriture
---    future modifie l'ordre des clés ou le tri d'une collection, ces deux assertions rougissent
---    AVANT que toutes les copies du produit ne divergent en silence.
+--    l'empreinte courante. L'empreinte du workflow PAR DÉFAUT est figée ici en dur : si une écriture
+--    future modifie l'ordre des clés ou le tri d'une collection, cette assertion rougit AVANT que
+--    toutes les copies du produit ne divergent en silence. Celle du workflow DÉRIVÉ ne peut pas
+--    l'être — son identifiant est engendré à la copie et le document le contient —, et elle est
+--    éprouvée par sa propriété RELATIVE : la fonction appelante rend exactement le condensé du
+--    document extrait (arbitrage de la décision 430, INC-122).
 --
 -- 2. Que la table refuse l'écriture aux TROIS niveaux annoncés, et notamment que le trigger tient
 --    face à `service_role` — la seule des trois barrières qui ait ce pouvoir, et celle sans
@@ -65,10 +68,32 @@ select is(
 	'6b2f5f2adbadd48680d38b8d4bc19a004ff35881df654593e43d2eb4f577e7c8',
 	'2 — empreinte du workflow par défaut INCHANGÉE par l''extraction du document');
 
+-- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait
+-- en dur `352d02ac-…` comme identifiant du workflow DÉRIVÉ, et une empreinte constante. Or le seed
+-- n'épingle pas cet identifiant : il est engendré par `copy_workflow_to_track` et vaut une autre
+-- valeur à chaque base. L'assertion était donc rouge sur toute pile fraîchement seedée.
+--
+-- Deux corrections, et elles viennent du même raisonnement. Le workflow dérivé se désigne PAR SON
+-- NOM, seule de ses propriétés que le seed fixe. Et l'empreinte cesse d'être comparée à une
+-- CONSTANTE : ce que cette assertion affirme est une propriété RELATIVE — « l'extraction n'a pas
+-- déplacé l'empreinte » —, c'est-à-dire que la fonction appelante rend toujours exactement le
+-- condensé du document extrait. Les DEUX états sont donc mesurés et leur égalité exigée, ce qui
+-- reste vrai sur n'importe quelle base sans rien perdre du pouvoir d'anti-régression : le jour où
+-- quelqu'un modifierait l'un des deux sans l'autre, l'assertion rougirait.
+--
+-- L'assertion 2, elle, GARDE sa constante : l'identifiant du workflow par défaut est épinglé par le
+-- seed, et cette constante est la seule qui protège la FORME même du document — un changement
+-- d'ordre de clés déplacerait les deux membres de l'assertion 3 ensemble, et lui échapperait.
 select is(
-	app.workflow_composition_fingerprint('352d02ac-5564-437c-8c0b-c1b7484b9eba'),
-	'6e4faac608cc1d16fdb8db1b6ae9c8b2d4de7728204919d8ebd6166c13a58d89',
-	'3 — empreinte du workflow dérivé INCHANGÉE par l''extraction du document');
+	(select app.workflow_composition_fingerprint(w.id)
+	   from public.workflows w where w.name = 'Cycle commercial — Conseil IA'),
+	(select pg_catalog.encode(
+	          extensions.digest(
+	            pg_catalog.convert_to(app.workflow_composition_document(w.id)::text, 'UTF8'),
+	            'sha256'),
+	          'hex')
+	   from public.workflows w where w.name = 'Cycle commercial — Conseil IA'),
+	'3 — empreinte du workflow dérivé INCHANGÉE par l''extraction : la fonction rend le condensé du document');
 
 -- Le document porte les six clés du contrat, et rien d'autre : une clé ajoutée ou retirée
 -- changerait toutes les empreintes du produit.
@@ -246,12 +271,17 @@ select throws_ok(
 select pg_temp.redevenir_proprietaire();
 
 -- Refus 4 : un workflow archivé. Le dérivé est archivé pour la preuve, puis rendu par le rollback.
+-- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430 (INC-122), par le même geste qu'à l'assertion 3 : le
+-- workflow dérivé se désigne PAR SON NOM. Son identifiant est engendré par `copy_workflow_to_track`
+-- et le seed ne l'épingle pas — cité en dur, il n'archivait rien et la RPC rendait « workflow
+-- introuvable » là où la preuve attendait « workflow archive ».
 update public.workflows set archived_at = now()
- where id = '352d02ac-5564-437c-8c0b-c1b7484b9eba';
+ where name = 'Cycle commercial — Conseil IA';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select throws_ok(
-	$$select public.publish_workflow_version('352d02ac-5564-437c-8c0b-c1b7484b9eba')$$,
+	format($$select public.publish_workflow_version(%L)$$,
+		(select w.id from public.workflows w where w.name = 'Cycle commercial — Conseil IA')),
 	'P0001',
 	'workflow archive',
 	'28 — un workflow archivé ne se photographie pas');
