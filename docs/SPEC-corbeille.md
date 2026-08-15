@@ -243,15 +243,14 @@ tenue par une assertion de `routes.test.tsx`. Une quatrième surface d'administr
 exception, et l'écran est chargé à la demande comme les trois autres — la plupart des sessions ne
 l'ouvrent pas, et elle n'a pas à peser sur leur premier rendu (`CLAUDE.md` §21).
 
-### 4.2 Ce que l'écran lit — QUATRE lectures, et l'ambiguïté est MESURÉE sur les TROIS tables
+### 4.2 Ce que l'écran lit — TROIS lectures, dont l'embarquement doit être DÉSAMBIGUÏSÉ
 
-Trois lectures rapportent les entrées, une par table, filtrées `deleted_at=not.is.null` et ordonnées
-`deleted_at.desc` côté serveur. Une quatrième rapporte les **noms** des profils qui ont mis ces
-objets à la corbeille, sur les identifiants distincts collectés dans les trois premières.
+Trois lectures, une par table, filtrées `deleted_at=not.is.null` et ordonnées `deleted_at.desc` côté
+serveur. Chacune embarque le profil qui a retiré l'objet.
 
-**Pourquoi le nom de l'auteur n'est PAS lu par une jointure embarquée.** MESURÉ le 2026-08-15, avec
-le jeton réel de l'administratrice — `select=id,profiles(id)` rend **`300`** et `PGRST201` sur les
-**trois** tables, et pour **deux causes distinctes** :
+**L'embarquement anonyme est ambigu sur les TROIS tables, et c'est mesuré.** Le 2026-08-15, avec le
+jeton réel de l'administratrice, `select=id,profiles(id)` rend **`300`** et `PGRST201` partout — pour
+**deux causes distinctes** :
 
 | Table | Relations concurrentes rendues par PostgREST |
 |---|---|
@@ -259,16 +258,27 @@ le jeton réel de l'administratrice — `select=id,profiles(id)` rend **`300`** 
 | `tracks` | `tracks_deleted_by_fkey`, et la relation **plusieurs-à-plusieurs** passant par `track_members` |
 | `channels` | `channels_deleted_by_fkey`, et la relation **plusieurs-à-plusieurs** passant par `channel_members` |
 
-La seconde cause mérite d'être nommée, car elle se retrouvera : sur `tracks` et `channels`,
-`deleted_by` est la **seule** clé étrangère vers `profiles`, et l'embarquement est pourtant ambigu —
-la table d'appartenance suffit à créer la concurrence. Lever l'ambiguïté demanderait d'écrire un nom
-de contrainte dans la requête d'un écran, ce que `lireCardsClassables` (`inbox.ts`) a refusé une
-première fois et le §3.5 une deuxième. Une **lecture séparée de `profiles`** est la seule forme
-uniforme aux trois tables, et elle coûte **une** requête, quel que soit le nombre d'entrées.
+La seconde cause mérite d'être nommée, car elle surprend : sur `tracks` et `channels`, `deleted_by`
+est la **seule** clé étrangère vers `profiles`, et l'embarquement est pourtant ambigu — la table
+d'appartenance suffit à créer la concurrence. L'ambiguïté ne vient donc pas du nombre de clés
+étrangères, mais de ce que PostgREST compte aussi les relations plusieurs-à-plusieurs.
 
-**Aucune quatrième lecture lorsque aucune entrée ne porte d'auteur.** Même règle que le §3.5 pour les
-channels d'un track sans channel : une requête dont la réponse est connue d'avance est une requête
-épargnée, et non le contournement d'un défaut.
+**La levée d'ambiguïté est le NOM DE LA CONTRAINTE, et c'est la convention déjà établie du produit
+pour cette relation exacte.** `auteur:profiles!tracks_deleted_by_fkey(id, full_name)` — MESURÉ
+`200` sur les trois tables. C'est ce qu'écrivent déjà `colonnes-board.ts`, `colonnes-liste.ts` et
+`commentaires.ts` pour désigner un responsable ou un auteur (`profiles!cards_owner_id_fkey`,
+`profiles!card_comments_author_id_fkey`) : trois modules, une seule manière de nommer un profil
+embarqué.
+
+**Ce point contredit une première rédaction de ce chapitre, et la contradiction est instructive.**
+Le §3.5 a écrit qu'« un nom de contrainte dans la requête d'un écran » avait été refusé par
+`lireCardsClassables` (`inbox.ts`). C'est exact, mais cela portait sur la relation
+`cards` → `channels`, dont les clés étrangères sont **composites** — PostgREST ne les résout pas par
+le seul nom de colonne, et les nommer n'aurait rien réparé. Pour la relation vers `profiles`, la clé
+est simple, le nom de contrainte suffit, et le produit l'écrit depuis `CRM-041`. Généraliser le refus
+du §3.5 à toute relation aurait ajouté une lecture par écran contre une convention en place :
+**une règle mesurée dans un contexte ne se transporte pas dans un autre sans y être remesurée** —
+c'est la leçon qu'INC-113 avait déjà donnée à la quatrième tranche, sous une autre forme.
 
 **Ce que l'écran montre est ce que l'APPELANT peut lire**, et c'est mesuré : sur le seed,
 l'administratrice lit **1 track, 1 channel et 1 affaire** en corbeille ; la lectrice lit **1 track,

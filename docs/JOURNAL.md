@@ -14840,3 +14840,18 @@ est conservée telle quelle : le point 3 du §6 — la corbeille est-elle visibl
 
 **Où reprendre.** Après cette tranche : les preuves du §5 de la spécification, et le harnais dédié
 `scripts/verify-corbeille.sh` que la cinquième tranche a nommé comme restant dû.
+
+**Correction apportée dans la même session, avant la première ligne de code.** Le §4.2 que je venais
+d'écrire concluait à une **quatrième lecture séparée** de `profiles`, au motif que le §3.5 avait
+refusé « un nom de contrainte dans la requête d'un écran ». J'ai vérifié avant de coder, et la
+conclusion était FAUSSE : `auteur:profiles!tracks_deleted_by_fkey(id, full_name)` rend **`200`** sur
+les trois tables — MESURÉ —, et c'est déjà la convention du produit pour cette relation exacte, que
+`colonnes-board.ts`, `colonnes-liste.ts` et `commentaires.ts` écrivent depuis `CRM-041`.
+
+Le refus du §3.5 était exact **dans son contexte** : il portait sur `cards` → `channels`, dont les
+clés étrangères sont composites, et que nommer n'aurait pas réparées. Vers `profiles`, la clé est
+simple et le nom suffit. J'avais donc transporté une règle mesurée dans un contexte vers un autre
+sans la remesurer — exactement l'erreur qu'INC-113 avait consignée à la quatrième tranche, sous une
+autre forme, et elle se refait à une tranche d'intervalle. Le §4.2 est corrigé, l'écran fait **trois**
+lectures et non quatre, et la contradiction est écrite dans le chapitre lui-même plutôt que corrigée
+en silence.
