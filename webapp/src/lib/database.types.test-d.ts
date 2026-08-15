@@ -664,7 +664,15 @@ type _vueDerivationColonnes = Expect<
 // pour une raison qui lui est propre : son résultat n'est EXHAUSTIF que sous un administrateur,
 // qu'un droit fin ne restreint jamais, et c'est sa vérification 3 — non un emprunt de privilèges —
 // qui l'assure (docs/SPEC-workflow-engine.md §7 ter.12.4). Vingt-neuf devient trente.
-type _lesTrenteFonctions = Expect<
+//
+// RÉVISÉ UNE SEIZIÈME FOIS PAR `CRM-078`, quatrième tranche. La règle a changé de nouveau : la
+// migration `0042` ajoute `restore_workflow_version`, qui APPLIQUE le plan des trois précédentes.
+// Elle rompt avec elles sur un point, et le motif est mesuré : elle est `SECURITY DEFINER`, parce
+// que déplacer une affaire exige l'`UPDATE` sur `cards.current_step_id`, qu'aucun `authenticated`
+// ne détient — le privilège de colonne de `CRM-034` (docs/SPEC-workflow-engine.md §7 ter.13.6).
+// Elle rejoint donc la famille de `move_card` et de `change_channel_workflow`, non celle des
+// lectures. Trente devient trente et un.
+type _lesTrenteEtUneFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -690,6 +698,7 @@ type _lesTrenteFonctions = Expect<
     | 'publish_workflow_version'
     | 'move_card_to_channel'
     | 'plan_card_remapping'
+    | 'restore_workflow_version'
     | 'previsualiser_exigence'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
@@ -868,7 +877,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteFonctions,
+  _lesTrenteEtUneFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

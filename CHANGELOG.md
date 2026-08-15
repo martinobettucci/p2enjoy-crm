@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Restaurer une version de workflow** (`CRM-078`, quatrième tranche,
+  `docs/SPEC-workflow-engine.md` §7 ter.13). La RPC `public.restore_workflow_version` rend la
+  composition vivante d'un workflow égale à celle qu'une version a photographiée, **en une
+  transaction ou pas du tout**. Elle **rejoue le plan de remappage dans sa propre transaction** —
+  un plan pré-calculé n'est jamais accepté, la structure vivante ayant pu bouger — et ses huit
+  refus remontent tels quels : la règle de remappage n'est écrite qu'une fois.
+- **Le retour arrière est un point de retour publié**, et non un journal parallèle. Avant d'écrire,
+  la composition vivante est publiée comme version par la vraie RPC `publish_workflow_version` —
+  sauf lorsque la dernière version joue déjà ce rôle. Revenir en arrière est alors la restauration
+  elle-même appliquée à ce point : **le même code**, éprouvé par les mêmes preuves.
+- **Un champ surnuméraire est archivé, jamais supprimé.** MESURÉ : `form_fields` ne porte aucune
+  politique `delete` et `authenticated` n'a que `select`, `insert`, `update` ; supprimer un champ
+  pour rétablir une structure aurait détruit les saisies de `card_field_values`, qu'aucune version
+  ne conserve. La conséquence est rendue plutôt que masquée : `matches_version` dit si l'empreinte
+  obtenue égale celle de la version.
+- **L'identité du workflow n'est pas restaurée** — nom, portée, track, défaut et archivage sont le
+  placement et non la composition. Les restaurer aurait été un déménagement caché dans un
+  rétablissement.
+
 ### Documentation
 
 - **Le registre repasse à zéro entrée ouverte** (décisions 428 à 430). Les trois entrées consignées

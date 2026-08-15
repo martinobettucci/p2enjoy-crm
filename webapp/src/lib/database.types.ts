@@ -2038,6 +2038,14 @@ export type Database = {
           to_addrs: string[]
         }[]
       }
+      restore_workflow_version: {
+        Args: {
+          expected_live_fingerprint?: string
+          step_overrides?: Json
+          target_version_id: string
+        }
+        Returns: Json
+      }
       upsert_mail_inbound_account: {
         Args: {
           p_backfill_months?: number
