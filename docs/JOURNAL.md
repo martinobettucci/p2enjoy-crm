@@ -14047,3 +14047,82 @@ n'arrivait pas. Motif : la session concurrente avait poussé la migration
 `0036_previsualisation_exigence.sql` alors que la pile de cette session-ci datait d'avant. Une pile
 démarrée avant une migration poussée n'est pas une régression ; `docker compose up
 migrations-runner` puis un redémarrage de `rest` suffisent, et il faut y penser avant de conclure.
+
+### Décision 393 — CRM-076, cinquième tranche livrée : les exigences de transition, et l'écriture que la base REFUSE de faire en `upsert`
+
+**2026-08-15, session concurrente de celle des décisions 390 à 392.** L'entrée 389 avait été écrite
+et committée avant la première ligne de code ; celle-ci rend compte de ce qui a été livré, mesuré et
+révisé.
+
+**Ce que la tranche livre.** Le cinquième bloc de `/reglages/workflows` — les **champs exigés pour
+franchir une transition** —, livrés en base par `CRM-018` et jusque-là sans écran : lecture 7 avec
+sa jointure interne, `exigencesEffectives`, `exigencesSansEffet`, `champsLiables`,
+`classerRefusExigence`, `exigerChamp`, `retirerExigence`, et le bloc d'écran avec son formulaire
+d'ajout et sa confirmation de retrait. **Aucune migration.**
+
+**La mesure qui a décidé de l'écriture, et qui renverse le patron de la tranche précédente.** La
+grille du §7 bis.11 règle ses cases par `upsert`. Ici, l'`upsert` est **refusé** : `POST` avec
+`Prefer: resolution=merge-duplicates` rend **`403` / `42501`**, indice « GRANT UPDATE ON
+public.workflow_transition_required_fields TO authenticated », et `PATCH` le même. La cause est
+voulue : `CRM-018` n'accorde que `insert` et `delete`, sa spécification §2 posant qu'aucune valeur
+n'est mutable. L'écriture est donc un `POST` simple — `201` sur un couple absent, `409` / `23505`
+sur un couple existant —, et le `23505` devient un refus métier lisible, « déjà exigé », après
+lequel l'écran **recharge** : l'état voulu est celui que la base porte déjà. Reprendre le patron
+voisin aurait produit un `403` incompréhensible sur le geste le plus courant du bloc.
+
+**La mesure qui a décidé de ce que l'écran affiche.** La sixième garde de `move_card` exige
+l'**union** des champs `required` par règle à l'étape d'arrivée et des champs liés à la transition,
+restreinte aux champs non archivés. Un écran qui n'aurait montré que la table aurait écrit « aucune
+exigence » là où trois champs sont réellement imposés — MESURÉ : six règles `required` sur quatre
+étapes d'arrivée du seed. Chaque exigence porte donc son origine, et celle qui vient d'une règle
+n'offre **aucune** commande de retrait : un `DELETE` sur une ligne inexistante rendrait `200` et
+zéro ligne, l'exigence restant imposée.
+
+**Un défaut visuel trouvé par la capture, et corrigé.** La phrase qui renvoie à la grille était
+rendue sous **chaque** ligne : trois fois d'affilée sous « Négociation vers Signature », et deux
+lignes par exigence sous 390 px — davantage de place que les noms de champs qu'elle accompagnait.
+Elle est désormais rendue une fois par transition. Une règle en a été tirée dans
+`docs/DESIGN_SYSTEM.md` §5.15.
+
+**Trois preuves antérieures RÉVISÉES, non supprimées, et la mesure qui l'a exigé.** Les trois
+parcours clavier de l'éditeur — étapes, arêtes, champs — expiraient au bout des 30 s par défaut de
+Playwright pendant la campagne complète, et le premier laissait alors son champ de preuve en base :
+six scénarios suivants tombaient sur ce résidu. La cause n'est pas un plafond de tabulation trop
+bas : MESURÉ en instrumentant `tabVers`, les parcours coûtent **356**, **347** et **410** pressions,
+dont 161 au plus pour un seul appel, quand le plafond est de 260. C'est la **durée** — 27,8 s,
+28,7 s et 37 s à vide —, le cinquième bloc ayant allongé le tour du document que chacun fait deux
+fois. Le délai des trois est porté à 120 s, le motif et les chiffres écrits dans le fichier ; aucune
+assertion n'est touchée.
+
+**Ce qui a été mesuré sur la pile, après rétablissement complet.** `test:sql` **34 fichiers / 1981
+assertions**, `e2e:api` **507**, `e2e:ui` **241**, `e2e:mail` **42**, `test:unit` **973**, `pytest`
+**242**, `typecheck` et `build` verts. Captures des quatre paliers et du formulaire ouvert produites
+et **observées**.
+
+**Deux échecs qualifiés comme ÉTRANGERS à cette tranche, et leur mesure.** Ils sont apparus après
+l'application de la migration 36 par `docker compose up migrations-runner`, qui recrée les services
+dépendants sans rejouer les conteneurs d'initialisation : `e2e:api` échouait sur le dépôt d'une
+pièce jointe — `InvalidAccessKeyId`, MinIO —, et `e2e:ui` sur une poignée de main WebSocket en
+`502` vers `realtime`. Après `./runDev.sh` complet et réapplication du seed, les deux campagnes sont
+**vertes sans qu'aucune ligne n'ait changé** : la cause était la pile, pas le produit. Leçon pour la
+session suivante : appliquer une migration à chaud ne remplace pas un redémarrage de la pile.
+
+**Un résidu de campagne retiré, INC-105/INC-102 confirmée.** `commentaires-gestes.spec.ts` échouait
+sur un commentaire de preuve `Geste …` resté sur la card `…00c2` — six commentaires en base là où le
+seed en pose cinq. Retiré par la clé de service, la suite redevient verte. Le défaut reste celui de
+`CRM-043` et n'est pas corrigé ici.
+
+**Travail concurrent rencontré, et résolu sur place.** Une seconde session a livré la sixième
+tranche pendant celle-ci, en s'appuyant sur le bloc livré ici — elle y a d'ailleurs corrigé une
+boucle de rendu introduite par **son** effet de prévisualisation. Le rebase a été résolu dans le
+dépôt courant, sans branche : la documentation et les captures de la cinquième tranche étant déjà
+committées par elle, seule la révision des trois parcours clavier a été conservée de ce côté. Le
+report de `SCENARIOS_UI` à **241** ayant été fait des deux côtés avec la même valeur mesurée, le
+commit redondant a été abandonné plutôt que dupliqué.
+
+**Où reprendre.** `CRM-076` reste `[~]` pour la raison exacte que la décision 391 lui donne :
+aucun comportement de sa Definition of Done n'est dû — les six tranches sont livrées —, restent les
+**preuves API dédiées à l'écran**, le réglage en **lot** et la **liste nominative** des affaires
+prévisualisées, tous trois explicitement hors périmètre des tranches livrées. La campagne complète
+étant verte et le compteur porté, la clôture de l'unité est la première question de la session
+suivante.
