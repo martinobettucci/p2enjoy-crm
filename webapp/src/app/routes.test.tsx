@@ -13,6 +13,7 @@ import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
 	CLE_TITRE_INTROUVABLE,
@@ -47,8 +48,15 @@ describe('table des routes', () => {
 	// affichait « Aucun réglage modifiable », ce qui a cessé d'être vrai le jour où l'administration
 	// de l'arborescence est arrivée. La garantie ne change toujours pas — aucune page blanche — et
 	// la route rejoint la liste de celles qui portent un écran, avec sa propre assertion ci-dessous.
+	//
+	// RÉVISÉ UNE TROISIÈME FOIS PAR `CRM-079`, ET L'ASSERTION A JOUÉ UNE TROISIÈME FOIS : `/`
+	// rendait un état vide inconditionnel, ce qui a cessé d'être vrai le jour où le guide de
+	// démarrage est arrivé (docs/SPEC-onboarding.md §4.2). La règle a changé par arbitrage, la
+	// preuve est donc RÉVISÉE et non contournée : `/` rejoint les routes qui portent un écran, et
+	// son assertion propre ci-dessous vérifie qu'aucun de ses quatre cas n'est une page blanche.
 	const ROUTES_EN_ATTENTE = ROUTES.filter(
-		(route) => route.chemin !== CHEMIN_INBOX && route.chemin !== '/reglages',
+		(route) =>
+			route.chemin !== CHEMIN_INBOX && route.chemin !== '/reglages' && route.chemin !== '/',
 	)
 
 	it.each(ROUTES_EN_ATTENTE.map((route) => [route.chemin, route] as const))(
@@ -59,6 +67,17 @@ describe('table des routes', () => {
 			expect(screen.getByRole('heading').textContent?.length).toBeGreaterThan(0)
 		},
 	)
+
+	it('la route / rend le guide de démarrage, et non une page blanche — `CRM-079`', () => {
+		const route = ROUTES.find((candidate) => candidate.chemin === '/')
+		expect(route).toBeDefined()
+		render(<MemoryRouter>{route!.rendu()}</MemoryRouter>)
+		// Le premier rendu est celui du chargement des cinq mesures, et il est déjà explicite : un
+		// titre, une phrase, et un squelette par étape. L'état vide du board ne revient qu'une fois
+		// les cinq étapes accomplies, ce qu'éprouve `GuideDemarrage.test.tsx`.
+		expect(screen.getByTestId('guide-demarrage')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['onboarding.title'])
+	})
 
 	it("la route /reglages rend l'index des sections, et non une page blanche", () => {
 		const route = ROUTES.find((candidate) => candidate.chemin === '/reglages')
@@ -74,6 +93,13 @@ describe('table des routes', () => {
 			name: new RegExp(fr['admin.settings.index.mail']),
 		})
 		expect(lienMessagerie.getAttribute('href')).toBe(CHEMIN_ETAT_MESSAGERIE)
+		// `CRM-079` : le guide vient en PREMIER, un guide de démarrage se lisant avant les écrans
+		// qu'il présente (docs/SPEC-onboarding.md §4.3).
+		const lienGuide = screen.getByRole('link', {
+			name: new RegExp(fr['admin.settings.index.onboarding']),
+		})
+		expect(lienGuide.getAttribute('href')).toBe(CHEMIN_DEMARRAGE)
+		expect(screen.getAllByRole('link')[0]).toBe(lienGuide)
 	})
 
 	it("l'administration ne figure PAS dans la table des routes, et son adresse est nommée", () => {
