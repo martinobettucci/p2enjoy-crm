@@ -75,6 +75,12 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 		await expect(page.getByTestId('progression-demarrage')).toHaveText('4 étape(s) sur 5')
 		await expect(page.getByTestId('etape-messagerie')).toContainText('À faire')
+		// La phrase d'absence n'accompagne QUE l'étape à faire : sur une étape accomplie, elle
+		// contredirait « Fait » (défaut trouvé sur `guide-viewer-1440.jpg`).
+		await expect(page.getByTestId('etape-messagerie')).toContainText(
+			'Vous n’en voyez aucune pour le moment.',
+		)
+		await expect(page.getByTestId('etape-track')).not.toContainText('Vous n’en voyez aucun')
 
 		// AUCUN lien n'est éteint pour autant : l'écran visé porte son propre refus (§6.3).
 		await expect(page.getByTestId('lien-messagerie')).toHaveAttribute(

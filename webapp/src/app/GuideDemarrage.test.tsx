@@ -125,6 +125,16 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 		expect(ligne.textContent).toContain('Vous n’en voyez aucun pour le moment.')
 	})
 
+	it('n’écrit PAS la phrase d’absence sur une étape accomplie', async () => {
+		// Défaut TROUVÉ EN REGARDANT `docs/captures/CRM-079/guide-viewer-1440.jpg` : la ligne
+		// affichait « Fait » et « Vous n'en voyez aucun » l'une sous l'autre. Les deux textes
+		// étaient corrects séparément, et aucune assertion existante ne pouvait les opposer.
+		monter(<GuideDemarrage client={client(SEED_ADMIN)} />)
+		const ligne = await screen.findByTestId('etape-track')
+		await waitFor(() => expect(ligne.textContent).toContain('Fait'))
+		expect(ligne.textContent).not.toContain('Vous n’en voyez aucun')
+	})
+
 	it('nomme une étape non mesurable, et ne la laisse pas passer pour « à faire »', async () => {
 		monter(
 			<GuideDemarrage

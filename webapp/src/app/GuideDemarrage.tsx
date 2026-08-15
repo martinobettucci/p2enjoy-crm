@@ -43,6 +43,16 @@ type DescriptionEtape = {
 	readonly cle: CleEtapeDemarrage
 	readonly cleTitre: CleTraduction
 	readonly cleCorps: CleTraduction
+	/**
+	 * La phrase qui dit ce que l'appelant VOIT — rendue **uniquement** sur une étape à faire
+	 * (docs/SPEC-onboarding.md §6.2).
+	 *
+	 * TROUVÉ EN REGARDANT UNE CAPTURE, et non par un test : écrite d'abord dans `cleCorps`, elle
+	 * s'affichait sous « Fait » et la ligne se contredisait — « Vous n'en voyez aucun » sur une
+	 * étape accomplie. Aucune assertion ne pouvait l'attraper, les deux textes étant corrects
+	 * séparément.
+	 */
+	readonly cleVide: CleTraduction
 	readonly destination?: string
 	readonly cleAction?: CleTraduction
 }
@@ -52,11 +62,13 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cle: 'espace',
 		cleTitre: 'onboarding.step.espace.title',
 		cleCorps: 'onboarding.step.espace.body',
+		cleVide: 'onboarding.step.espace.vide',
 	},
 	{
 		cle: 'track',
 		cleTitre: 'onboarding.step.track.title',
 		cleCorps: 'onboarding.step.track.body',
+		cleVide: 'onboarding.step.track.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.track.action',
 	},
@@ -64,6 +76,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cle: 'channel',
 		cleTitre: 'onboarding.step.channel.title',
 		cleCorps: 'onboarding.step.channel.body',
+		cleVide: 'onboarding.step.channel.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.channel.action',
 	},
@@ -71,6 +84,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cle: 'affaire',
 		cleTitre: 'onboarding.step.affaire.title',
 		cleCorps: 'onboarding.step.affaire.body',
+		cleVide: 'onboarding.step.affaire.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.affaire.action',
 	},
@@ -78,6 +92,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cle: 'messagerie',
 		cleTitre: 'onboarding.step.messagerie.title',
 		cleCorps: 'onboarding.step.messagerie.body',
+		cleVide: 'onboarding.step.messagerie.vide',
 		destination: CHEMIN_ETAT_MESSAGERIE,
 		cleAction: 'onboarding.step.messagerie.action',
 	},
@@ -199,7 +214,7 @@ function LigneEtape({
 				<div className="flex flex-col gap-1 min-w-0">
 					<span className="font-medium">{t(description.cleTitre)}</span>
 					<span className="text-sm text-text-2">{t(description.cleCorps)}</span>
-					<StatutEtape etat={etat} onReprise={onReprise} />
+					<StatutEtape etat={etat} cleVide={description.cleVide} onReprise={onReprise} />
 				</div>
 			</div>
 			{description.destination === undefined || description.cleAction === undefined ? null : (
@@ -238,9 +253,11 @@ function MarqueurEtat({ etat }: { readonly etat: EtatAsync<EtapeDemarrage> }) {
  */
 function StatutEtape({
 	etat,
+	cleVide,
 	onReprise,
 }: {
 	readonly etat: EtatAsync<EtapeDemarrage>
+	readonly cleVide: CleTraduction
 	readonly onReprise: () => void
 }) {
 	if (etat.statut === 'chargement') {
@@ -264,7 +281,10 @@ function StatutEtape({
 	return estAccomplie(etat) ? (
 		<span className="text-sm font-medium text-success">{t('onboarding.step.done')}</span>
 	) : (
-		<span className="text-sm text-text-2">{t('onboarding.step.todo')}</span>
+		<span className="flex flex-col gap-1">
+			<span className="text-sm text-text-2">{t('onboarding.step.todo')}</span>
+			<span className="text-sm text-text-3">{t(cleVide)}</span>
+		</span>
 	)
 }
 

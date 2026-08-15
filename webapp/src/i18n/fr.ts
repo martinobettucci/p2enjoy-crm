@@ -1055,21 +1055,26 @@ export const fr = {
 	'onboarding.step.espace.title': 'Rejoindre un espace de travail',
 	'onboarding.step.espace.body':
 		'Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n’est lisible.',
+	'onboarding.step.espace.vide': 'Vous n’appartenez à aucun espace de travail visible.',
 	'onboarding.step.track.title': 'Créer un premier track',
 	'onboarding.step.track.body':
-		'Un track regroupe des activités proches — un métier, un marché, une équipe. Vous n’en voyez aucun pour le moment.',
+		'Un track regroupe des activités proches — un métier, un marché, une équipe.',
+	'onboarding.step.track.vide': 'Vous n’en voyez aucun pour le moment.',
 	'onboarding.step.track.action': 'Ouvrir l’administration de l’arborescence',
 	'onboarding.step.channel.title': 'Ouvrir un channel dans ce track',
 	'onboarding.step.channel.body':
 		'Un channel porte un workflow et ses étapes. C’est lui qui donne son board à vos affaires.',
+	'onboarding.step.channel.vide': 'Vous n’en voyez aucun pour le moment.',
 	'onboarding.step.channel.action': 'Créer un channel',
 	'onboarding.step.affaire.title': 'Créer une première affaire',
 	'onboarding.step.affaire.body':
 		'Une affaire avance d’étape en étape sur le board de son channel, et rassemble ses messages et ses commentaires.',
+	'onboarding.step.affaire.vide': 'Vous n’en voyez aucune pour le moment.',
 	'onboarding.step.affaire.action': 'Choisir un channel où créer l’affaire',
 	'onboarding.step.messagerie.title': 'Raccorder une boîte de réception',
 	'onboarding.step.messagerie.body':
-		'Une boîte relevée classe le courrier entrant dans les affaires. Vous n’en voyez aucune pour le moment.',
+		'Une boîte relevée classe le courrier entrant dans les affaires.',
+	'onboarding.step.messagerie.vide': 'Vous n’en voyez aucune pour le moment.',
 	'onboarding.step.messagerie.action': 'Voir l’état de la messagerie',
 
 	'live.workflows.version.published': 'Version publiée',
