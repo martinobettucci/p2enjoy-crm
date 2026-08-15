@@ -32,7 +32,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(67);
+select plan(68);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §2, docs/SPEC-channels.md §2.1
@@ -40,10 +40,15 @@ select plan(67);
 
 select has_table('public', 'channels', 'la table `public.channels` existe');
 
+-- PREUVE RÉVISÉE PAR `CRM-077`, NON AFFAIBLIE (décision 398, docs/SPEC-corbeille.md §3.2). La
+-- RÈGLE a changé : la corbeille couvre désormais les channels, qui n'avaient jusque-là que
+-- l'archivage. `deleted_at` et `deleted_by` s'ajoutent donc à la table, et `docs/SPEC-channels.md`
+-- §2.1 les porte dans le MÊME changement. Ce que l'assertion prouve est inchangé : la table porte
+-- EXACTEMENT les colonnes de sa spécification, ni plus ni moins.
 select columns_are(
 	'public', 'channels',
 	array['id', 'workspace_id', 'track_id', 'name', 'slug', 'description', 'workflow_id',
-	      'position', 'archived_at', 'created_at', 'updated_at'],
+	      'position', 'archived_at', 'created_at', 'updated_at', 'deleted_at', 'deleted_by'],
 	'`channels` porte exactement les colonnes de docs/SPEC-channels.md §2.1'
 );
 
@@ -397,8 +402,27 @@ select isnt(
 
 select table_privs_are('public', 'channels', 'anon', array['SELECT'],
 	'`anon` n''a que `SELECT` : un refus de lecture est zéro ligne, pas une erreur de privilège');
-select table_privs_are('public', 'channels', 'authenticated', array['SELECT', 'INSERT', 'UPDATE'],
+-- PREUVE RÉVISÉE PAR `CRM-077`, NON AFFAIBLIE (décision 398, docs/SPEC-corbeille.md §3.2).
+-- La RÈGLE a changé : `UPDATE` n'est plus accordé au niveau TABLE mais COLONNE PAR COLONNE, afin de
+-- fermer `deleted_by` au client — un audit qu'un client peut écrire n'est pas un audit. C'est le
+-- patron que `CRM-013` avait déjà posé sur `cards`, étendu ici pour que les trois tables de la
+-- corbeille se comportent identiquement.
+-- CE QUE CETTE ASSERTION PROUVE EST INCHANGÉ : aucune suppression physique n'est exposée. Le droit
+-- de mise à jour, lui, est désormais vérifié colonne par colonne par l'assertion qui suit — plus
+-- précise que la précédente, et non plus permissive.
+select table_privs_are('public', 'channels', 'authenticated', array['SELECT', 'INSERT'],
 	'`authenticated` n''a ni `DELETE` ni `TRUNCATE` : la suppression physique n''est pas exposée');
+
+-- `UPDATE` EST ACCORDÉ COLONNE PAR COLONNE, ET `deleted_by` EN EST EXCLUE. Sans cette assertion, la
+-- révision ci-dessus aurait desserré un contrôle au lieu de le déplacer.
+select is(
+	(select count(*)::int from information_schema.column_privileges
+	  where table_schema = 'public' and table_name = 'channels'
+	    and grantee = 'authenticated' and privilege_type = 'UPDATE'
+	    and column_name = 'deleted_by'),
+	0,
+	'`channels.deleted_by` n''est PAS modifiable par le client : l''audit de la corbeille est fermé au privilège');
+
 
 -- =============================================================================================
 -- 9. Autorisations éprouvées contre des comptes réels

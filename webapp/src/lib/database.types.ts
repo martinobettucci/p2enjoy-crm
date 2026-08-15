@@ -212,6 +212,7 @@ export type Database = {
           currency: string
           current_step_id: string
           deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           email_local_part: string
           entered_step_at: string
@@ -238,6 +239,7 @@ export type Database = {
           currency?: string
           current_step_id: string
           deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           email_local_part: string
           entered_step_at?: string
@@ -264,6 +266,7 @@ export type Database = {
           currency?: string
           current_step_id?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           email_local_part?: string
           entered_step_at?: string
@@ -309,6 +312,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workflow_steps"
             referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "cards_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "cards_owner_id_fkey"
@@ -366,6 +376,8 @@ export type Database = {
         Row: {
           archived_at: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           name: string
@@ -379,6 +391,8 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           name: string
@@ -392,6 +406,8 @@ export type Database = {
         Update: {
           archived_at?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           name?: string
@@ -403,6 +419,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "channels_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "channels_track_id_workspace_id_fkey"
             columns: ["track_id", "workspace_id"]
@@ -1152,6 +1175,8 @@ export type Database = {
           archived_at: string | null
           color: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           icon: string
           id: string
@@ -1165,6 +1190,8 @@ export type Database = {
           archived_at?: string | null
           color?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           icon?: string
           id?: string
@@ -1178,6 +1205,8 @@ export type Database = {
           archived_at?: string | null
           color?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           icon?: string
           id?: string
@@ -1188,6 +1217,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tracks_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tracks_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -1622,6 +1658,7 @@ export type Database = {
           currency: string
           current_step_id: string
           deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           email_local_part: string
           entered_step_at: string
@@ -1779,6 +1816,7 @@ export type Database = {
           currency: string
           current_step_id: string
           deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           email_local_part: string
           entered_step_at: string
@@ -1819,6 +1857,7 @@ export type Database = {
           currency: string
           current_step_id: string
           deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           email_local_part: string
           entered_step_at: string

@@ -63,6 +63,8 @@ liste, et celui auquel les droits fins de `channel_members` se rattachent.
 | `workflow_id` | `uuid` | **nullable, sans clé étrangère** — écart assumé, §2.5 | `docs/SCHEMA.md` §2 l'exige `non nul` avec FK. La table `workflows` n'existe pas encore : INC-029 |
 | `position` | `numeric` | non nul, attribuée par trigger si omise, **portée du track** | §3 |
 | `archived_at` | `timestamptz` | | §4 |
+| `deleted_at` | `timestamptz` | | **Corbeille** — `CRM-077`, `docs/SPEC-corbeille.md` §3.1. INDÉPENDANTE d'`archived_at` : archiver n'est pas supprimer |
+| `deleted_by` | `uuid` | FK `profiles` `ON DELETE SET NULL`, **fermée au client** | Qui a mis à la corbeille. Écrite par trigger et refusée au client PAR LE PRIVILÈGE : `UPDATE` est accordé colonne par colonne et l'exclut |
 | `created_at` | `timestamptz` | non nul, défaut `now()` | Conventions générales de `docs/SCHEMA.md` |
 | `updated_at` | `timestamptz` | non nul, défaut `now()`, maintenue par `app.set_updated_at()` | Idem |
 

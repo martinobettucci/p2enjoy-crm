@@ -307,8 +307,18 @@ PORT_RAPPORT=9323
 # `public.previsualiser_exigence`, ses deux refus de cible, ses deux comptes mesurés sur le seed,
 # l'union de ses arêtes, ses deux `0, 0` — champ archivé et cible inconnue —, et surtout sa parenté
 # avec `move_card`. 33 + 1 = **34** ; 1971 + 10 = **1981**. MESURÉ par `npm run test:sql`, non déduit.
-FICHIERS_SQL_ATTENDUS=34
-ASSERTIONS_ATTENDUES=1981
+#
+# --- `CRM-077`, première tranche, le 2026-08-15 ----------------------------------------------------
+# `0035_corbeille.test.sql` ajoute UNE suite et DOUZE assertions : la forme des trois colonnes,
+# l'audit fermé au client PAR LE PRIVILÈGE sur les trois tables — plus fort qu'un trigger, le refus
+# tombant avant toute politique —, l'audit renseigné par le trigger, figé sous une écriture tierce,
+# effacé à la restauration, et la corbeille qui RESTE lisible, propriété voulue que l'assertion fige.
+# 34 + 1 = **35** ; 1981 + 12 + 2 = **1995**. Les DEUX assertions supplémentaires viennent de la
+# révision de `0004_tracks` et `0005_channels` : leur contrôle de privilèges de table est devenu
+# un contrôle de privilège de COLONNE — `deleted_by` exclue —, plus précis et non plus permissif.
+# MESURÉ par `npm run test:sql`, non déduit.
+FICHIERS_SQL_ATTENDUS=35
+ASSERTIONS_ATTENDUES=1995
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

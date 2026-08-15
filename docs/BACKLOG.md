@@ -6726,9 +6726,40 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       les enfants emportés par le parent de ceux déjà en corbeille avant lui. L'énumération remplace
       la descente, et restaurer un enfant sous parent en corbeille est **refusé par une garde
       backend**, pas par une aide d'interface.
-- [ ] Migration, couche de données, écran, seed enrichi (un channel et un track en corbeille, et un
-      enfant sous parent en corbeille — sans eux le refus n'a aucun cas de démonstration), et les
-      cinq niveaux de preuves du §5 de la spécification.
+**Première tranche livrée, 2026-08-15 — le modèle** (`supabase/migrations/0037_corbeille.sql`) :
+
+- [x] `deleted_at` et `deleted_by` sur `tracks` et `channels`, `deleted_by` sur `cards` — FK
+      `profiles` `on delete set null`. **Aucune cascade touchée, aucune politique ajoutée, aucune
+      purge, aucun filtre de lecture** : les quatre abstentions sont motivées dans la migration.
+- [x] `app.corbeille_avant_ecriture()` — **une fonction pour les trois tables**, trois triggers :
+      elle écrit `deleted_by` côté serveur, la **fige** tant que la ligne reste en corbeille — sans
+      quoi une écriture ultérieure réattribuerait la suppression à qui passe par là —, l'efface à la
+      restauration — « supprimé par X » sur un objet vivant serait un mensonge de plus, pas une
+      trace de plus —, et laisse passer le détachement référentiel d'un profil supprimé par la porte
+      étroite d'INC-076.
+- [x] **L'audit est fermé au client PAR LE PRIVILÈGE, et c'est une mesure qui l'a imposé** : `cards`
+      portait déjà des droits colonne par colonne depuis `CRM-013`, si bien que sa nouvelle
+      `deleted_by` n'a hérité d'aucun `UPDATE` ; `tracks` et `channels` portaient un droit de TABLE,
+      et leur audit était donc écrivable par le client, le trigger seul s'y opposant. L'écart est
+      refermé en énumérant leurs colonnes. Deux tables protégées par le privilège et la troisième
+      par un trigger seul auraient été une asymétrie que personne ne retrouve en relisant.
+- [x] **12 assertions pgTAP** (`supabase/tests/0035_corbeille.test.sql`) : la forme, les trois refus
+      `42501` — un par table —, l'audit renseigné par le trigger, figé sous une écriture tierce,
+      effacé à la restauration, et la corbeille qui **reste lisible**, propriété voulue que
+      l'assertion fige pour qu'un futur masquage se voie ici d'abord. `test:sql` passe de 34/1981 à
+      **35 fichiers / 1995 assertions**.
+- [x] **Quatre preuves antérieures révisées, aucune supprimée ni contournée**, motif écrit dans
+      chaque fichier : les contrôles de privilèges de `0004_tracks` et `0005_channels` deviennent des
+      contrôles de privilège de **colonne** — plus précis, non plus permissifs — ; la liste de
+      colonnes de `0005_channels` s'étend, et `docs/SPEC-channels.md` §2.1 comme
+      `docs/SPEC-tracks.md` §2.1 la portent **dans le même changement** ; les deux assertions de
+      types figées suivent.
+- [x] `docs/PROD_MIGRATIONS.md` ligne 37, avec son retour arrière — dont l'étape facile à oublier :
+      restaurer le droit de table avant de retirer les colonnes.
+- [ ] **Reste dû** : couche de données, écran de corbeille, seed enrichi (un channel et un track en
+      corbeille, et un enfant sous parent en corbeille — sans eux le refus du §3.4 n'a aucun cas de
+      démonstration), la garde de restauration sous parent en corbeille (§3.4), l'énumération des
+      enfants (§3.3), et les niveaux API, unitaire, E2E et visuel du §5 de la spécification.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

@@ -55,6 +55,8 @@ latérale liste, et celui auquel les droits fins de `track_members` se rattachen
 | `icon` | `text` | non nul, défaut `'folder'`, `CHECK (icon ~ '^[a-z][a-z0-9-]*$')` | Nom d'icône Lucide en kebab-case ; §2.4 |
 | `position` | `numeric` | non nul, attribuée par trigger si omise | §3 |
 | `archived_at` | `timestamptz` | | §4 |
+| `deleted_at` | `timestamptz` | | **Corbeille** — `CRM-077`, `docs/SPEC-corbeille.md` §3.1. INDÉPENDANTE d'`archived_at` : archiver n'est pas supprimer |
+| `deleted_by` | `uuid` | FK `profiles` `ON DELETE SET NULL`, **fermée au client** | Qui a mis à la corbeille. Écrite par trigger et refusée au client PAR LE PRIVILÈGE : `UPDATE` est accordé colonne par colonne et l'exclut |
 | `created_at` | `timestamptz` | non nul, défaut `now()` | Conventions générales de `docs/SCHEMA.md` |
 | `updated_at` | `timestamptz` | non nul, défaut `now()`, maintenue par `app.set_updated_at()` | Idem |
 

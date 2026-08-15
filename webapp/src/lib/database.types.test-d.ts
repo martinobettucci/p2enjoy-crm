@@ -149,6 +149,10 @@ type _relationsChannelMembers = Expect<
 type _relationsChannels = Expect<
   Equal<
     Database['public']['Tables']['channels']['Relationships'][number]['foreignKeyName'],
+    // RÉVISÉ PAR `CRM-077` (décision 398) : la corbeille ajoute `deleted_by`, dont la clé étrangère
+    // vers `profiles` apparaît ici comme toute autre. Le cloisonnement composite décrit ci-dessus
+    // est INCHANGÉ — aucune clé simple sur `track_id` n'apparaît, et c'est ce que l'assertion garde.
+    | 'channels_deleted_by_fkey'
     | 'channels_track_id_workspace_id_fkey'
     | 'channels_workflow_id_workspace_id_fkey'
     | 'channels_workspace_id_fkey'
@@ -496,8 +500,13 @@ type _relationsWorkspaceMembers = Expect<
 type _tracksColonnes = Expect<
   Equal<
     keyof Tables<'tracks'>,
+    // RÉVISÉ PAR `CRM-077` (décision 398) : `deleted_at` et `deleted_by` s'ajoutent, et
+    // `docs/SPEC-tracks.md` §2.1 les porte dans le même changement. La règle prouvée est
+    // inchangée : le type liste EXACTEMENT les colonnes de la spécification.
     | 'archived_at'
     | 'color'
+    | 'deleted_at'
+    | 'deleted_by'
     | 'created_at'
     | 'description'
     | 'icon'
