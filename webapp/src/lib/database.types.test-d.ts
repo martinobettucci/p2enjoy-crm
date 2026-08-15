@@ -650,10 +650,18 @@ type _vueDerivationColonnes = Expect<
 // appelable par un écran sans être réservée au worker — même si l'écran, lui, ne viendra qu'à la
 // cinquième tranche. Elle est `SECURITY DEFINER` et vérifie donc le rôle elle-même, à la
 // différence de `previsualiser_exigence`. Vingt-sept devient vingt-huit.
-type _lesVingtHuitFonctions = Expect<
+//
+// RÉVISÉ UNE QUATORZIÈME FOIS PAR `CRM-078`, deuxième tranche. La règle a changé de nouveau : la
+// migration `0040` ajoute `compare_workflow_versions`, QUATRIÈME fonction de ce fichier appelable
+// par un écran sans être réservée au worker. Elle est `SECURITY INVOKER` comme
+// `previsualiser_exigence`, et c'est un choix documenté : la politique de lecture de
+// `workflow_versions` est déjà la règle d'autorisation exacte du geste
+// (docs/SPEC-workflow-engine.md §7 ter.11.3). Vingt-huit devient vingt-neuf.
+type _lesVingtNeufFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
+    | 'compare_workflow_versions'
     | 'copy_workflow_to_track'
     | 'chemin_dossier_card'
     | 'chemin_dossier_entite'
@@ -852,7 +860,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtHuitFonctions,
+  _lesVingtNeufFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

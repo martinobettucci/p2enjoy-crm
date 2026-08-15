@@ -51,18 +51,22 @@ type Comparaison = {
 	target: { version_id: string; version_number: number; composition_fingerprint: string }
 	identical: boolean
 	summary: { added: number; removed: number; modified: number }
-	changes: Record<
-		string,
-		{
-			added?: { identity: Record<string, string>; element: Record<string, unknown> }[]
-			removed?: { identity: Record<string, string>; element: Record<string, unknown> }[]
-			modified?: {
-				identity: Record<string, string>
-				attributes: { name: string; before: unknown; after: unknown }[]
-			}[]
-		}
-	>
+	changes: {
+		workflow: { modified: Modification[] }
+		steps: Collection
+		transitions: Collection
+		fields: Collection
+		rules: Collection
+		required_fields: Collection
+	}
 }
+
+type Element = { identity: Record<string, string>; element: Record<string, unknown> }
+type Modification = {
+	identity: Record<string, string>
+	attributes: { name: string; before: unknown; after: unknown }[]
+}
+type Collection = { added: Element[]; removed: Element[]; modified: Modification[] }
 
 /** Crée un workflow jetable par la clé de service et rend son identifiant. */
 async function workflowJetable(api: APIRequestContext, nom: string): Promise<string> {
@@ -147,7 +151,7 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 				'workflow',
 			])
 			for (const [nom, collection] of Object.entries(comparaison.changes)) {
-				expect(collection.modified, `${nom}.modified`).toEqual([])
+				expect((collection as { modified: Modification[] }).modified, `${nom}.modified`).toEqual([])
 			}
 		} finally {
 			await rendreLaBase(request, workflow)
@@ -174,7 +178,7 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 			expect(comparaison.identical).toBe(false)
 			expect(comparaison.summary).toEqual({ added: 1, removed: 0, modified: 0 })
 
-			const ajoutees = comparaison.changes.steps.added ?? []
+			const ajoutees = comparaison.changes.steps.added
 			expect(ajoutees).toHaveLength(1)
 			expect(ajoutees[0]!.identity).toEqual({ id: etape })
 			// Le document COMPLET, et non le seul identifiant : un écran doit pouvoir nommer
@@ -209,7 +213,7 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 			expect(reponse.status()).toBe(200)
 
 			const comparaison = (await reponse.json()) as Comparaison
-			const modifiees = comparaison.changes.steps.modified ?? []
+			const modifiees = comparaison.changes.steps.modified
 			// UNE étape modifiée, et non une retirée plus une ajoutée : l'identité est
 			// l'identifiant, jamais le libellé (§7 ter.11.2).
 			expect(modifiees).toHaveLength(1)
@@ -244,7 +248,7 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 			expect(reponse.status()).toBe(200)
 
 			const comparaison = (await reponse.json()) as Comparaison
-			const retirees = comparaison.changes.steps.removed ?? []
+			const retirees = comparaison.changes.steps.removed
 			expect(retirees).toHaveLength(1)
 			expect(retirees[0]!.identity).toEqual({ id: etape })
 			expect(comparaison.summary).toEqual({ added: 0, removed: 1, modified: 0 })
@@ -274,7 +278,7 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 
 			const comparaison = (await reponse.json()) as Comparaison
 			expect(comparaison.changes.steps.added).toEqual([])
-			expect((comparaison.changes.steps.removed ?? [])[0]!.identity).toEqual({ id: etape })
+			expect(comparaison.changes.steps.removed[0]!.identity).toEqual({ id: etape })
 			expect(comparaison.summary).toEqual({ added: 0, removed: 1, modified: 0 })
 		} finally {
 			await rendreLaBase(request, workflow)

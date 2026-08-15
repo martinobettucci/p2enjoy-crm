@@ -1772,6 +1772,10 @@ export type Database = {
         Args: { p_card_id: string; p_message_id: string }
         Returns: string
       }
+      compare_workflow_versions: {
+        Args: { base_version_id: string; target_version_id: string }
+        Returns: Json
+      }
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
