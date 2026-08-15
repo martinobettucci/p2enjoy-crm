@@ -172,7 +172,12 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 	// `prospection` à la copie de portée `track` de son propre track — cas accepté de la règle du
 	// §4.12, qui serait autrement documenté sans être démontrable. Elle est **resserrée** sur ce que
 	// cette unité-ci garantit : aucun channel sans workflow, et cinq sur six suivant le global.
-	test('INC-029 — les channels du seed sont tous rattachés, cinq au workflow par défaut', async ({
+	//
+	// RÉVISÉ DE NOUVEAU PAR `CRM-077` : les deux channels posés sous le track en corbeille
+	// (`docs/SPEC-seed.md` §10) naissent rattachés au workflow par défaut comme les autres — la
+	// contrainte `NOT NULL` de `CRM-033` ne connaît pas la corbeille. Sept sur huit suivent donc le
+	// global. Ce que l'assertion garantit est intact : aucun channel sans workflow.
+	test('INC-029 — les channels du seed sont tous rattachés, sept au workflow par défaut', async ({
 		request,
 	}) => {
 		const reponse = await request.get(
@@ -181,9 +186,9 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		)
 		expect(reponse.status()).toBe(200)
 		const channels = (await reponse.json()) as { id: string; workflow_id: string | null }[]
-		expect(channels).toHaveLength(6)
+		expect(channels).toHaveLength(8)
 		expect(channels.every((c) => c.workflow_id !== null)).toBe(true)
-		expect(channels.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(5)
+		expect(channels.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(7)
 	})
 })
 

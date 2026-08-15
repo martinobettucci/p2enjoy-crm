@@ -28,7 +28,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(79);
+select plan(80);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §2, docs/SPEC-tracks.md §2.1
@@ -523,11 +523,15 @@ rollback to savepoint avant_droit_fin;
 -- La suite s'exécute sur la base de développement, où le seed est appliqué. Ces assertions
 -- valent donc contrat opposable, comme celles de `0003_seed_socle.test.sql`.
 
+-- RÉVISÉ PAR `CRM-077`, non retiré : le seed pose désormais un CINQUIÈME track, `legacy-2023`, en
+-- corbeille (docs/SPEC-seed.md §10). Le compte est porté de quatre à cinq et la dimension ajoutée
+-- est ASSERTÉE plutôt que tolérée — « au moins quatre » aurait rendu cette assertion muette sur ce
+-- que la tranche ajoute.
 select is(
 	(select count(*)::int from public.tracks t
 	  where t.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
-	4,
-	'le seed pose quatre tracks dans le workspace de démonstration');
+	5,
+	'le seed pose cinq tracks dans le workspace de démonstration');
 
 select is(
 	(select count(*)::int from public.tracks t
@@ -536,11 +540,29 @@ select is(
 	1,
 	'l''un d''eux est archivé : l''état « archivé » est démontrable, pas seulement documenté');
 
+-- AJOUTÉE PAR `CRM-077`. Le pendant de l'assertion précédente pour le troisième état du §3.1 de
+-- `docs/SPEC-corbeille.md`. Elle vérifie AUSSI l'audit : un objet en corbeille sans `deleted_by`
+-- est un objet que le seed a déclaré au lieu de le retirer par un geste réel (§10.2), et l'écran
+-- de corbeille afficherait « retiré par — ».
+select is(
+	(select count(*)::int from public.tracks t
+	  where t.workspace_id = '5eed0000-0000-4000-8000-000000000001'
+	    and t.deleted_at is not null
+	    and t.deleted_by = '5eed0000-0000-4000-8000-000000000011'),
+	1,
+	'l''un d''eux est EN CORBEILLE, retiré par l''administratrice : l''audit est renseigné');
+
+-- RÉVISÉE PAR `CRM-077` : le filtre `archived_at is null` ne suffit plus à dire « actif ». Les deux
+-- états sont INDÉPENDANTS (docs/SPEC-corbeille.md §3.1), et `legacy-2023` n'est pas archivé — il
+-- est en corbeille. Sans ce second filtre, l'assertion mesurerait « non archivé » en croyant
+-- mesurer « actif », et c'est exactement la confusion que la troisième tranche a dû corriger dans
+-- `webapp/src/lib/tracks.ts`. La liste attendue est inchangée : c'est le prédicat qui se précise.
 select is(
 	(select string_agg(t.slug, ',' order by t.position)
 	   from public.tracks t
 	  where t.workspace_id = '5eed0000-0000-4000-8000-000000000001'
-	    and t.archived_at is null),
+	    and t.archived_at is null
+	    and t.deleted_at is null),
 	'conseil-ia,studio-web,formation',
 	'les tracks actifs du seed sortent dans l''ordre de leur `position`');
 

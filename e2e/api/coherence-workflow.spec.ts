@@ -140,7 +140,10 @@ async function remettreChannel(
 test.describe('K0 — le seed est dans l’état que le §4.12.7 déclare', () => {
 	// Condition de validité de tout ce qui suit (décision 50). Sans elle, « le workflow track est
 	// refusé ailleurs » serait vrai même si aucun workflow track n'existait.
-	test('six channels rattachés, un seul suivant un workflow de portée `track`', async ({
+	// RÉVISÉ PAR `CRM-077` : le seed pose deux channels de plus sous le track en corbeille
+	// (`docs/SPEC-seed.md` §10). Ce que ce scénario garantit est inchangé — aucun channel sans
+	// workflow, et un SEUL suivant la copie de portée `track` —, seul le compte total bouge.
+	test('huit channels rattachés, un seul suivant un workflow de portée `track`', async ({
 		request,
 	}) => {
 		const reponse = await request.get(
@@ -149,7 +152,7 @@ test.describe('K0 — le seed est dans l’état que le §4.12.7 déclare', () =
 		)
 		expect(reponse.status()).toBe(200)
 		const channels = (await reponse.json()) as Channel[]
-		expect(channels).toHaveLength(6)
+		expect(channels).toHaveLength(8)
 		expect(channels.every((c) => c.workflow_id !== null)).toBe(true)
 
 		const copie = await copieDuSeed(request)

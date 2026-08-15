@@ -33,6 +33,17 @@ const TRACK_FORMATION = '5eed0000-0000-4000-8000-000000000023'
 const CHANNELS_CONSEIL_ACTIFS = ['prospection', 'grands-comptes']
 const CHANNEL_ARCHIVE = 'appels-offres'
 
+/**
+ * Le channel EN CORBEILLE du seed, et son frère resté VIVANT — `CRM-077`, `docs/SPEC-seed.md` §10.
+ *
+ * Tous deux sont sous le track `legacy-2023`, lui-même en corbeille, et ils démontrent les deux
+ * situations que le §3.3 de `docs/SPEC-corbeille.md` distingue : l'un est horodaté et sa
+ * restauration est refusée, l'autre ne l'est PAS et n'est injoignable que parce que son track ne
+ * se résout plus.
+ */
+const CHANNEL_CORBEILLE = 'annexes-2023'
+const CHANNEL_ENFANT_VIVANT = 'dossiers-2023'
+
 const CHEMIN = '/rest/v1/channels'
 
 type Channel = {
@@ -42,6 +53,8 @@ type Channel = {
 	position: number
 	workflow_id: string | null
 	archived_at: string | null
+	/** `CRM-077` — corbeille. INDÉPENDANTE d'`archived_at` (`docs/SPEC-corbeille.md` §3.1). */
+	deleted_at: string | null
 	track_id: string
 	workspace_id: string
 }
@@ -98,23 +111,41 @@ async function retirerWorkspaceB(requete: APIRequestContext, workspaceId: string
 
 test.describe('C0 — la table contient réellement des lignes', () => {
 	// Condition de validité de tout ce qui suit (décision 50).
-	test('le seed a posé six channels, dont un archivé, sur trois tracks', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-077`, non retiré : le seed pose désormais DEUX channels de plus, sous le track
+	// `legacy-2023` lui-même en corbeille (`docs/SPEC-seed.md` §10). Le compte passe de six à huit
+	// et les tracks porteurs de trois à quatre. Les dimensions ajoutées sont ASSERTÉES plutôt que
+	// tolérées : ce scénario est la condition de validité de tout le fichier.
+	test('le seed a posé huit channels, dont un archivé et un en corbeille, sur quatre tracks', async ({
+		request,
+	}) => {
 		const reponse = await request.get(
-			`${CHEMIN}?select=slug,track_id,archived_at,workflow_id&workspace_id=eq.${WORKSPACE_SEED}`,
+			`${CHEMIN}?select=slug,track_id,archived_at,deleted_at,workflow_id&workspace_id=eq.${WORKSPACE_SEED}`,
 			{ headers: enTetesService() },
 		)
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Channel[]
-		expect(lignes).toHaveLength(6)
+		expect(lignes).toHaveLength(8)
 		expect(lignes.filter((c) => c.archived_at !== null)).toHaveLength(1)
-		expect(new Set(lignes.map((c) => c.track_id)).size).toBe(3)
+		expect(lignes.filter((c) => c.deleted_at !== null)).toHaveLength(1)
+		expect(lignes.find((c) => c.deleted_at !== null)?.slug).toBe(CHANNEL_CORBEILLE)
+		expect(new Set(lignes.map((c) => c.track_id)).size).toBe(4)
+		// L'ENFANT DU §3.3 N'EST PAS HORODATÉ, et c'est le point le plus facile à manquer :
+		// `dossiers-2023` est, en colonne, parfaitement vivant. Il n'est injoignable que parce que
+		// son track ne se résout plus. Descendre l'horodatage sur les enfants rendrait la
+		// restauration ambiguë — cette assertion serait la première à le dire.
+		expect(lignes.find((c) => c.slug === CHANNEL_ENFANT_VIVANT)?.deleted_at ?? null).toBeNull()
 		// INC-029 est SOLDÉE par `CRM-033` : `workflow_id` est désormais obligatoire, et aucun
 		// channel du seed n'est sans workflow. L'assertion « les six suivent le workflow par
 		// défaut », posée par `CRM-031`, est **révisée** et non supprimée : `prospection` suit
 		// depuis `CRM-033` la copie de portée `track` de son propre track, sans quoi le cas accepté
 		// le plus intéressant de la règle du §4.12 serait documenté sans être démontrable.
+		//
+		// RÉVISÉ DE NOUVEAU PAR `CRM-077` : les deux channels du track en corbeille naissent
+		// rattachés au workflow par défaut comme les autres — la contrainte `NOT NULL` de
+		// `CRM-033` ne connaît pas la corbeille. Sept sur huit suivent donc le global ; le
+		// huitième reste `prospection`, sur la copie de portée `track`.
 		expect(lignes.every((c) => c.workflow_id !== null)).toBe(true)
-		expect(lignes.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(5)
+		expect(lignes.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(7)
 		expect(lignes.filter((c) => c.workflow_id !== WORKFLOW_SEED)).toHaveLength(1)
 	})
 })
@@ -144,15 +175,17 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 
 			expect(reponse.status()).toBe(200)
 			const lignes = (await reponse.json()) as Channel[]
-			// Les six, archivé compris : c'est le **filtre de la barre d'onglets** qui masque
-			// l'archivé, pas la politique de lecture. Un administrateur doit pouvoir désarchiver.
-			expect(lignes).toHaveLength(6)
+			// Les huit, archivé ET mis en corbeille compris : c'est le **filtre de la barre
+			// d'onglets** qui masque, pas la politique de lecture. Un administrateur doit pouvoir
+			// désarchiver — et, depuis `CRM-077`, restaurer. La corbeille est une VUE, non une
+			// frontière de confidentialité (`docs/SPEC-corbeille.md` §2.2).
+			expect(lignes).toHaveLength(8)
 			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'admin.
 			expect(lignes.map((c) => c.slug)).toContain(CHANNEL_ARCHIVE)
 		})
 	}
 
-	test('le `viewer` seedé ne voit que quatre channels, dont un rouvert sous un track fermé', async ({
+	test('le `viewer` seedé ne voit que six channels, dont un rouvert sous un track fermé', async ({
 		request,
 	}) => {
 		// LE SCÉNARIO LE PLUS INSTRUCTIF DE CE FICHIER, et il porte sur les données du seed.
@@ -169,7 +202,19 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		// `refonte` et `maintenance` relèvent de `studio-web`, `inter-entreprises` de
 		// `formation` : aucun droit fin ne les vise. `prospection` est le seul channel de
 		// `conseil-ia` qui subsiste, et il ne subsiste que parce qu'un droit fin le rouvre.
-		expect(slugs).toEqual(['inter-entreprises', 'maintenance', 'prospection', 'refonte'])
+		//
+		// RÉVISÉ PAR `CRM-077` : `annexes-2023` et `dossiers-2023` s'y ajoutent. Aucun droit fin ne
+		// vise leur track `legacy-2023`, et la corbeille ne restreint PAS la lecture (§2.2) : le
+		// `viewer` les lit donc, comme il lit l'archivé des tracks qu'aucun droit fin ne ferme. Ce
+		// que ce scénario mesure — « le plus spécifique gagne, dans les deux sens » — est intact.
+		expect(slugs).toEqual([
+			'annexes-2023',
+			'dossiers-2023',
+			'inter-entreprises',
+			'maintenance',
+			'prospection',
+			'refonte',
+		])
 		// Les deux autres channels de `conseil-ia` restent masqués, l'archivé compris.
 		expect(slugs).not.toContain('grands-comptes')
 		expect(slugs).not.toContain(CHANNEL_ARCHIVE)

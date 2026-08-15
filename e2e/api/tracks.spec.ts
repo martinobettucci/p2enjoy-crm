@@ -29,6 +29,17 @@ const TRACKS_ACTIFS = ['conseil-ia', 'studio-web', 'formation']
 /** Le quatrième track du seed, archivé — il existe pour rendre l'état « archivé » démontrable. */
 const TRACK_ARCHIVE = 'pipeline-2024'
 
+/**
+ * Le cinquième track du seed, EN CORBEILLE — ajouté par `CRM-077` (`docs/SPEC-seed.md` §10).
+ *
+ * Il est rendu par les lectures ci-dessous exactement comme l'archivé, et c'est VOULU : le §2.2 de
+ * `docs/SPEC-corbeille.md` mesure que la corbeille n'est filtrée par AUCUNE politique. C'est une
+ * **vue**, non une frontière de confidentialité — sans quoi aucun écran de corbeille ne pourrait
+ * afficher ce qu'il doit restaurer. Ce sont les lectures de LISTES qui l'écartent, dans
+ * `webapp/src/lib/tracks.ts`, et non la politique.
+ */
+const TRACK_CORBEILLE = 'legacy-2023'
+
 /** Le track sur lequel le seed pose ses droits fins (`docs/SPEC-seed.md` §2.11). */
 const TRACK_CONSEIL_ID = '5eed0000-0000-4000-8000-000000000021'
 
@@ -42,6 +53,8 @@ type Track = {
 	icon: string
 	position: number
 	archived_at: string | null
+	/** `CRM-077` — corbeille. INDÉPENDANTE d'`archived_at` (`docs/SPEC-corbeille.md` §3.1). */
+	deleted_at: string | null
 	workspace_id: string
 }
 
@@ -79,15 +92,26 @@ async function poserWorkspaceB(
 test.describe('T0 — la table contient réellement des lignes', () => {
 	// Condition de validité de tout ce qui suit. Sans elle, « zéro ligne pour l'anonyme » serait
 	// vrai sur une table vide, et l'ensemble du fichier deviendrait tautologique (décision 50).
-	test('le seed a posé quatre tracks, dont un archivé', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-077`, non retiré : le seed pose désormais un CINQUIÈME track, en corbeille
+	// (`docs/SPEC-seed.md` §10). Le compte passe de quatre à cinq, et la dimension ajoutée est
+	// ASSERTÉE plutôt que tolérée — « au moins quatre » aurait rendu ce scénario muet sur ce que
+	// la tranche ajoute, alors qu'il est la condition de validité de tout le fichier.
+	test('le seed a posé cinq tracks, dont un archivé et un en corbeille', async ({ request }) => {
 		const reponse = await request.get(
-			`${CHEMIN}?select=slug,archived_at&workspace_id=eq.${WORKSPACE_SEED}`,
+			`${CHEMIN}?select=slug,archived_at,deleted_at&workspace_id=eq.${WORKSPACE_SEED}`,
 			{ headers: enTetesService() },
 		)
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Track[]
-		expect(lignes).toHaveLength(4)
+		expect(lignes).toHaveLength(5)
 		expect(lignes.filter((t) => t.archived_at !== null)).toHaveLength(1)
+		expect(lignes.filter((t) => t.deleted_at !== null)).toHaveLength(1)
+		// Les deux états sont INDÉPENDANTS (`docs/SPEC-corbeille.md` §3.1) : aucun track du seed
+		// n'est à la fois archivé et en corbeille, sans quoi les deux comptes ci-dessus pourraient
+		// désigner la même ligne et le contrat serait ambigu.
+		expect(
+			lignes.filter((t) => t.archived_at !== null && t.deleted_at !== null),
+		).toHaveLength(0)
 	})
 })
 
@@ -121,9 +145,16 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 			const lignes = (await reponse.json()) as Track[]
 			// Les quatre, archivé compris : c'est le **filtre de la barre latérale** qui masque
 			// l'archivé, pas la politique de lecture. Un administrateur doit pouvoir désarchiver.
-			expect(lignes).toHaveLength(4)
+			// RÉVISÉ PAR `CRM-077` : cinq, le track en corbeille compris. Il est rendu pour la même
+			// raison que l'archivé — c'est le filtre de la barre latérale qui masque, pas la
+			// politique —, et un administrateur doit pouvoir le restaurer.
+			expect(lignes).toHaveLength(5)
 			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'administrateur.
-			expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE])
+			expect(lignes.map((t) => t.slug)).toEqual([
+				...TRACKS_ACTIFS,
+				TRACK_ARCHIVE,
+				TRACK_CORBEILLE,
+			])
 		})
 	}
 
@@ -148,10 +179,16 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Track[]
-		// Les quatre, dans l'ordre de `position` — c'est-à-dire exactement ce que voient
+		// Les cinq, dans l'ordre de `position` — c'est-à-dire exactement ce que voient
 		// l'administratrice et le `business_developer` ci-dessus. La différence entre les profils
 		// ne se lit plus au niveau des tracks, mais des channels.
-		expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE])
+		//
+		// RÉVISÉ PAR `CRM-077` : le track en corbeille est rendu au `viewer` comme aux autres. La
+		// corbeille n'est PAS une frontière de confidentialité (`docs/SPEC-corbeille.md` §2.2), et
+		// le §6 de cette spécification laisse au responsable la question de savoir qui voit la
+		// corbeille. En l'absence d'arbitrage, la règle existante est conservée telle quelle, et ce
+		// scénario la fige : le jour où elle changera, il deviendra rouge ici d'abord.
+		expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE, TRACK_CORBEILLE])
 
 		// LE DROIT FIN MORD TOUJOURS, et c'est là qu'il se mesure désormais : le track est rendu,
 		// mais il n'expose que le channel consenti. Le refus reste **zéro ligne**, jamais une
@@ -181,7 +218,9 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
 			headers: enTetesAuthentifies(jeton),
 		})
-		expect((await reponse.json()) as Track[]).toHaveLength(4)
+		// RÉVISÉ PAR `CRM-077` : cinq depuis que le seed porte un track en corbeille. Ce que ce
+		// scénario mesure est inchangé — un administrateur n'est jamais restreint par un droit fin.
+		expect((await reponse.json()) as Track[]).toHaveLength(5)
 	})
 
 	test('l’ordre rendu par l’API est celui de `position`, pas celui de l’insertion', async ({
@@ -190,8 +229,14 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		// L'administratrice, et non plus le `viewer` : celui-ci ne voit plus les trois tracks
 		// actifs depuis `CRM-012`, et l'ordre se mesure sur une liste complète.
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		// RÉVISÉ PAR `CRM-077` : `archived_at=is.null` ne suffit plus à dire « actif ». Les deux
+		// états sont INDÉPENDANTS (`docs/SPEC-corbeille.md` §3.1), et `legacy-2023` n'est pas
+		// archivé — il est en corbeille. Sans ce second filtre, le scénario mesurerait
+		// « non archivé » en croyant mesurer « actif » : c'est exactement la confusion que la
+		// troisième tranche a dû corriger dans `webapp/src/lib/tracks.ts`. La liste attendue est
+		// inchangée ; c'est le prédicat qui se précise.
 		const reponse = await request.get(
-			`${CHEMIN}?select=slug,position&archived_at=is.null&order=position,name`,
+			`${CHEMIN}?select=slug,position&archived_at=is.null&deleted_at=is.null&order=position,name`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const lignes = (await reponse.json()) as Track[]
@@ -248,8 +293,10 @@ test.describe('T2 — écriture réservée aux administrateurs (lignes e, f, g)'
 		const cree = (await reponse.json()) as Track[]
 		expect(cree).toHaveLength(1)
 		const track = cree[0] as Track
-		// Le seed occupe les positions 1 à 4 : le nouveau track prend la suivante.
-		expect(Number(track.position)).toBe(5)
+		// RÉVISÉ PAR `CRM-077` : le seed occupe désormais les positions 1 à 5 — la cinquième est
+		// celle du track en corbeille, qui reste une ligne de la table et compte donc pour le
+		// trigger. Le nouveau track prend la suivante.
+		expect(Number(track.position)).toBe(6)
 		// Les défauts du modèle sont ceux de la spécification, pas ceux d'un composant.
 		expect(track.color).toBe('neutral')
 		expect(track.icon).toBe('folder')
