@@ -1108,3 +1108,103 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
 - **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la
   publication et un déplacement réel sont atteints avec les comptes de ce jeu, sans substitution.
 - **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, §9.7.
+
+---
+
+## 10. Le jeu de démonstration de la corbeille — `CRM-077`
+
+Le §9 comble les écrans vides. Ce chapitre comble un vide d'une autre nature : les migrations
+`0037` et `0038` ont livré la corbeille et sa garde de restauration, et **aucune donnée du seed ne
+les exerce**. Le §5 de `docs/SPEC-corbeille.md` le nomme dans sa ligne « Seed » : sans un track et
+un channel en corbeille, et sans un enfant sous parent en corbeille, le refus du §3.4 « n'a aucun
+cas de démonstration ».
+
+Trois sessions ont différé ce chapitre. Il est le **préalable** de l'écran du §4 de
+`docs/SPEC-corbeille.md` et de ses preuves E2E : un écran de corbeille n'a rien à afficher tant que
+la corbeille est vide de tout sauf d'une card.
+
+### 10.1 Les trois objets ajoutés
+
+| id | type | slug | nom | parent | état |
+|---|---|---|---|---|---|
+| `…025` | track | `legacy-2023` | Legacy 2023 | workspace | **en corbeille** |
+| `…037` | channel | `dossiers-2023` | Dossiers 2023 | track `…025` | **actif** |
+| `…038` | channel | `annexes-2023` | Annexes 2023 | track `…025` | **en corbeille** |
+
+Chacun démontre une chose que les autres ne démontrent pas :
+
+- **`…025` est le cas de restauration qui RÉUSSIT.** Son seul ascendant est le workspace, qui n'est
+  jamais en corbeille : rien ne s'oppose à son retour. Sans lui, la corbeille ne porterait que des
+  objets irrécupérables, et le produit ne démontrerait que son refus.
+- **`…037` est l'enfant du §3.3, et il ne porte AUCUN `deleted_at`.** C'est le point le plus facile
+  à manquer en relisant la base : ce channel est, en colonne, parfaitement vivant. Il est
+  injoignable parce que son track ne se résout plus (troisième tranche, `webapp/src/lib/tracks.ts`).
+  C'est précisément ce qui garde la restauration non ambiguë — restaurer `…025` le rend, sans que
+  quiconque ait eu à distinguer les enfants emportés de ceux déjà retirés.
+- **`…038` est le cas de refus du §3.4.** Il est en corbeille sous un parent en corbeille : sa
+  restauration rend `parent_en_corbeille` (`P0001`), et le refus dit quoi restaurer d'abord.
+
+**Ce jeu ne porte volontairement AUCUNE card.** Le §3.3 prévoit que l'écran de suppression
+énumère les affaires rendues inaccessibles ; cette énumération n'existe pas encore, et une card
+posée ici ne serait comptée par aucun écran. Elle sera ajoutée par la tranche qui construit
+l'énumération, où son compte sera visible et donc vérifiable. Le dire ici évite qu'une session
+suivante la croie oubliée.
+
+### 10.2 La corbeille est un GESTE, jamais une déclaration
+
+C'est la règle de ce chapitre, et elle a une mesure pour origine.
+
+`app.corbeille_avant_ecriture()` (migration `0037`) écrit `deleted_by` à partir de `auth.uid()`.
+**La clé de service ne porte aucune revendication `sub`** : un objet créé directement avec
+`deleted_at` renseigné par la clé de service naît donc en corbeille avec `deleted_by` **nul**, et
+l'audit ne documente rien. Pire, le trigger **fige** ensuite cette valeur tant que la ligne reste en
+corbeille : une fois né ainsi, l'objet ne retrouvera jamais son auteur.
+
+Les trois objets sont donc créés **actifs** par les sections ordinaires du seed, puis mis en
+corbeille par un `PATCH` portant **le jeton réel de l'administratrice**. C'est exactement le patron
+que la décision 376 a posé pour le commentaire retiré par la modération (INC-072) : le seed ne
+fabrique pas la trace d'un geste, il **fait** le geste et laisse le produit la produire
+(`CLAUDE.md` §8, « ne pas fabriquer artificiellement des traces »).
+
+Le seed VÉRIFIE ensuite que `deleted_by` vaut bien `…011` et échoue en le disant sinon. Sans cette
+vérification, une régression du trigger rendrait un seed vert et un audit muet.
+
+### 10.3 Convergence, et le piège qu'elle évite
+
+Les charges de création des tracks et des channels **n'envoient pas `deleted_at`**. Ce n'est pas un
+oubli, c'est la condition de la convergence : `Prefer: resolution=merge-duplicates` ne met à jour
+que les colonnes présentes dans la charge, si bien qu'un rejeu laisse l'état de corbeille
+intact et que le trigger fige l'audit.
+
+**Le piège, s'il fallait faire autrement.** Une charge qui enverrait `deleted_at: null` sur un objet
+actuellement en corbeille demanderait sa **restauration** à chaque rejeu. Pour `…038`, dont le
+parent est en corbeille, cette restauration serait **refusée** par la garde de la migration `0038`,
+et le seed échouerait au second passage. La règle du §10.2 n'est donc pas seulement plus honnête :
+c'est la seule qui converge.
+
+La mise en corbeille est elle-même **conditionnée par une relecture** de l'état réel, comme les
+deux allers-retours du §9.6 : si l'objet est déjà en corbeille, le seed ne récrit rien.
+
+### 10.4 Ce que ce chapitre coûte aux preuves existantes, et pourquoi c'est légitime
+
+Le contrat du seed change : quatre tracks deviennent **cinq**, six channels deviennent **huit**.
+Plusieurs preuves figent ces comptes et deviennent rouges. Elles sont **révisées, aucune n'est
+supprimée ni contournée**, et chacune porte son motif dans son propre fichier
+(`docs/CloudWorker.md` §3.1) : ce n'est pas une preuve qui se trompe, c'est la règle qu'elle
+constate qui a changé.
+
+Les révisions **renforcent** plutôt qu'elles n'assouplissent : là où une preuve affirmait « quatre
+tracks, dont un archivé », elle affirme désormais « cinq tracks, dont un archivé **et un en
+corbeille** ». Un compte relâché en tolérance — « au moins quatre » — aurait rendu la preuve muette
+sur ce que cette tranche ajoute.
+
+### 10.5 Preuves exigées
+
+| # | Scénario | Attendu |
+|---|---|---|
+| 1 | Le track `…025` existe, en corbeille, `deleted_by` = `…011` | Conforme |
+| 2 | Le channel `…038` existe, en corbeille, `deleted_by` = `…011` | Conforme |
+| 3 | Le channel `…037` existe et porte `deleted_at` **nul** — l'enfant du §3.3 n'est pas horodaté | `deleted_at is null` |
+| 4 | Restaurer `…038` avec le jeton de l'administratrice | Refus `parent_en_corbeille` (`P0001`) |
+| 5 | Le seed est **rejouable** : second passage sans erreur | Cinq tracks, huit channels, `deleted_by` inchangés |
+| 6 | Une dérive est rattrapée : `…025` restauré à la main, seed rejoué | `…025` de nouveau en corbeille, `deleted_by` = `…011` |

@@ -171,7 +171,7 @@ L'effacement définitif **n'a pas de commande** tant que le §6 n'est pas arbitr
 | Unitaire | La composition de l'énumération, le classement des refus, l'état vide |
 | E2E | Mise en corbeille d'une card, d'un channel et d'un track sur la vraie base, chacune confirmée **en base** ; restauration vérifiée par la valeur `NULL` relue ; refus réel de la restauration sous parent en corbeille ; parcours complet au clavier seul |
 | Visuel | Captures aux quatre paliers, dont l'état **vide** et la confirmation portant l'énumération |
-| Seed | Le seed porte déjà **une** card en corbeille (`Saisie erronée`) — MESURÉ. Il devra porter au moins un channel et un track en corbeille, ainsi qu'un enfant sous parent en corbeille, sans quoi le refus du §3.4 n'a aucun cas de démonstration |
+| Seed | Le seed porte déjà **une** card en corbeille (`Saisie erronée`) — MESURÉ. Il devra porter au moins un channel et un track en corbeille, ainsi qu'un enfant sous parent en corbeille, sans quoi le refus du §3.4 n'a aucun cas de démonstration. **LIVRÉ** par la quatrième tranche : `docs/SPEC-seed.md` §10 — track `legacy-2023` en corbeille, channel `annexes-2023` en corbeille sous lui, channel `dossiers-2023` actif sous lui. La corbeille y est posée par un **geste réel** de l'administratrice et non déclarée, faute de quoi `deleted_by` naîtrait nul (§10.2) |
 
 ## 6. Points ouverts — ARBITRAGE DU RESPONSABLE, non tranchés ici
 

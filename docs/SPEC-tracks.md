@@ -261,7 +261,7 @@ indisponible »).
 
 ## 8. Seed
 
-`docs/SPEC-seed.md` §2 est étendu de quatre tracks dans le workspace du seed, identifiants stables
+`docs/SPEC-seed.md` §2 est étendu de **cinq** tracks dans le workspace du seed, identifiants stables
 `5eed0000-0000-4000-8000-0000000000 2x` :
 
 | id | slug | nom | couleur | icône | position | état |
@@ -270,11 +270,18 @@ indisponible »).
 | `…022` | `studio-web` | Studio web | `success` | `layout-dashboard` | 2 | actif |
 | `…023` | `formation` | Formation | `accent` | `graduation-cap` | 3 | actif |
 | `…024` | `pipeline-2024` | Pipeline 2024 | `neutral` | `archive` | 4 | **archivé** |
+| `…025` | `legacy-2023` | Legacy 2023 | `neutral` | `folder` | 5 | **en corbeille** |
 
 Le quatrième existe pour que l'état « archivé » soit démontrable, et non seulement documenté
-(`CLAUDE.md` §8 : « couvrir les principaux états »). Les quatre couleurs couvrent quatre des cinq
-jetons ; `danger` est laissé libre, aucune activité ne se décrivant honnêtement comme « en
+(`CLAUDE.md` §8 : « couvrir les principaux états »). Les quatre premières couleurs couvrent quatre
+des cinq jetons ; `danger` est laissé libre, aucune activité ne se décrivant honnêtement comme « en
 danger » par défaut.
+
+**Le cinquième est ajouté par `CRM-077`** et il porte le troisième état du §3.1 de
+`docs/SPEC-corbeille.md` : **en corbeille**. Il reprend `neutral` plutôt que d'inaugurer `danger` —
+une activité retirée n'est pas une activité en danger, et le jeton dirait le contraire de ce que la
+corbeille signifie, à savoir un geste **réversible**. Son état n'est PAS déclaré dans sa charge de
+création : il est posé par un geste réel, motif au §10 de `docs/SPEC-seed.md`.
 
 Ils sont créés par **l'API REST avec la clé de service**, comme le workspace et les appartenances
 du seed socle (`docs/SPEC-seed.md` §3, décision 32), et l'écriture est **convergente** :

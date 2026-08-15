@@ -15,6 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le seed démontre enfin la corbeille — `CRM-077`** (`docs/SPEC-seed.md` §10). Les migrations
+  `0037` et `0038` avaient livré la corbeille et sa garde de restauration, et **aucune donnée ne les
+  exerçait** : la corbeille du seed ne contenait qu'une card, si bien que le refus de restaurer un
+  enfant sous parent en corbeille n'avait aucun cas de démonstration.
+  - **Trois objets, chacun démontrant ce que les autres ne démontrent pas** : le track
+    `legacy-2023` **en corbeille**, seul cas dont la restauration RÉUSSIT — son unique ascendant est
+    le workspace ; le channel `annexes-2023` **en corbeille sous lui**, dont la restauration est
+    refusée par `parent_en_corbeille` ; et le channel `dossiers-2023` **actif sous lui**, qui ne
+    porte **aucun `deleted_at`** et devient injoignable du seul fait que son track ne se résout
+    plus. Sans ce dernier, « enfant d'un parent en corbeille » passerait pour un état unique.
+  - **La corbeille est posée par un GESTE, jamais déclarée dans une charge de création.** La clé de
+    service ne porte aucune revendication `sub` : un objet né avec `deleted_at` renseigné par elle
+    porterait un `deleted_by` **nul**, que le trigger figerait ensuite. Les trois objets naissent
+    donc actifs, puis sont mis en corbeille avec le **jeton réel de l'administratrice** — le patron
+    déjà employé pour le commentaire retiré par la modération. Le seed vérifie l'auteur relevé et
+    échoue en le disant sinon.
+  - **Le rejeu du seed reste convergent**, et c'est ce qui dicte la règle précédente : une charge
+    qui enverrait `deleted_at: null` demanderait à chaque passage la restauration d'un objet dont le
+    parent est en corbeille — restauration que la base refuse, et le seed échouerait au second
+    passage.
+  - **Comptes du seed révisés dans le même changement, aucun contourné** : quatre tracks deviennent
+    cinq, six channels deviennent huit. Chaque preuve révisée porte son motif, et affirme désormais
+    « dont un archivé **et un en corbeille** » là où elle affirmait « dont un archivé ».
+
 - **La corbeille retire les objets des listes, et l'enfant d'un parent en corbeille devient
   inaccessible — `CRM-077`** (`docs/SPEC-corbeille.md` §3.1, §3.3 et §4). Les migrations `0037` et
   `0038` avaient posé le modèle et sa garde ; les écrans, eux, montraient encore un track ou un

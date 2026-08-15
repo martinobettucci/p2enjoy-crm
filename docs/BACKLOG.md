@@ -6798,14 +6798,39 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       supprimée —, `typecheck` vert, `build` vert, `e2e:ui` **241/241** sur l'arbre qui la porte.
       C'est la mesure que la décision 401 laissait explicitement à la session qui porte le commit.
 
-- [ ] **Reste dû** : **seed enrichi** (un channel et un track en corbeille, et un enfant sous parent
-      en corbeille) — il n'est encore posé par aucune tranche, et sans lui le refus `parent_en_corbeille`
-      comme le retrait des listes n'ont **aucun cas de démonstration** ; l'**énumération** des enfants
-      rendus inaccessibles (§3.3) ; l'**écran** de corbeille (§4) ; et les niveaux API, E2E et visuel
-      du §5 de la spécification. **Le seed est le préalable de tous les autres** : le poser coûtera la
-      révision de plusieurs comptes figés — `e2e/api/tracks.spec.ts` attend quatre tracks, et les
-      suites de channels comptent de même —, révisions légitimes puisque le contrat du seed change,
-      mais qui doivent être faites dans le même changement et rejouées.
+**Quatrième tranche livrée, 2026-08-15 — le seed enrichi** (`supabase/seed/apply-seed.sh`,
+`docs/SPEC-seed.md` §10) :
+
+- [x] **Trois objets, et chacun démontre ce que les deux autres ne démontrent pas** : le track
+      `legacy-2023` (`…025`) **en corbeille** — seul cas de restauration qui RÉUSSIT, son unique
+      ascendant étant le workspace ; le channel `annexes-2023` (`…038`) **en corbeille sous lui** —
+      cas de refus `parent_en_corbeille` du §3.4 ; le channel `dossiers-2023` (`…037`) **actif sous
+      lui** — l'enfant du §3.3, qui ne porte **aucun `deleted_at`** et n'est injoignable que parce
+      que son track ne se résout plus. Sans ce dernier, « enfant d'un parent en corbeille »
+      passerait pour un état unique.
+- [x] **La corbeille est un GESTE, jamais une déclaration**, et une mesure l'impose : la clé de
+      service ne porte aucune revendication `sub`, donc `auth.uid()` y est nul et un objet né avec
+      `deleted_at` renseigné par elle porte un `deleted_by` **nul** — que le trigger **fige**
+      ensuite. Les trois objets naissent donc actifs, puis sont mis en corbeille par le **jeton réel
+      de l'administratrice**, sur le patron de la décision 376 (INC-072). Le seed **vérifie**
+      `deleted_by = …011` et échoue en le disant sinon.
+- [x] **Les charges de création n'envoient pas `deleted_at`, et c'est la condition de la
+      convergence** : une charge qui enverrait `deleted_at: null` demanderait la **restauration** de
+      `…038` à chaque rejeu — restauration que la garde de `0038` **refuse**, et le seed échouerait
+      au second passage. La règle du §10.2 est la seule qui converge.
+- [x] **Comptes figés révisés, aucun supprimé ni contourné**, motif écrit dans chaque fichier :
+      quatre tracks deviennent **cinq**, six channels deviennent **huit**. Les révisions
+      **renforcent** — « quatre tracks dont un archivé » devient « cinq tracks dont un archivé **et
+      un en corbeille** » — plutôt que de relâcher le compte en tolérance, qui aurait rendu la
+      preuve muette sur ce que la tranche ajoute.
+
+- [ ] **Reste dû** : l'**énumération** des enfants rendus inaccessibles (§3.3) ; l'**écran** de
+      corbeille (§4) ; et les niveaux API, E2E et visuel du §5 de la spécification. **Le seed n'est
+      plus le préalable manquant** : il est livré. La tranche qui construira l'énumération devra y
+      ajouter une **card** sous `dossiers-2023` — délibérément absente ici, une card posée
+      aujourd'hui n'étant comptée par aucun écran (`docs/SPEC-seed.md` §10.1) — et elle démontrera
+      du même coup la garde à **deux niveaux** de la deuxième tranche, dont aucune donnée ne porte
+      encore le cas : une affaire sous un channel vivant dont le track est en corbeille.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

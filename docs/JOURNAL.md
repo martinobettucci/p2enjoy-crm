@@ -14608,3 +14608,67 @@ constateront — `e2e/api/tracks.spec.ts` attend **quatre** tracks, et les suite
 de même. Ce sont des révisions légitimes, le contrat du seed changeant, et non des contournements :
 chacune porte son motif dans son fichier. Viennent ensuite l'énumération des enfants rendus
 inaccessibles (§3.3), puis l'écran.
+
+### Décision 403 — Le seed démontre la corbeille, et la corbeille y est un geste plutôt qu'une déclaration
+
+**2026-08-15.** La décision 402 laissait un point qu'elle disait n'avoir « plus le droit d'être
+différé » : le **seed enrichi** de `CRM-077`. Trois sessions l'avaient reporté. C'est l'unité de
+celle-ci, et elle ne fait que cela.
+
+**Ce qui a été mesuré avant d'écrire.** Ligne de base sur l'arbre distant, pile neuve montée et
+seed appliqué : `typecheck`, `build` et `types:check` verts, `test:unit` **974/974** sur 36
+fichiers, `test:sql` **36 fichiers / 2003 assertions**, `e2e:api` **514/514**. Ce dernier chiffre
+mérite d'être noté : la décision 401 rapportait un rouge, INC-110 sur `inbox.spec.ts:159`, et il
+**ne se reproduit pas** ici. C'est la contre-épreuve de la décision 397, qui attribuait le symptôme
+à l'état accumulé par une session et non au dépôt : sur une pile neuve, la suite est intégralement
+verte.
+
+**La mesure qui a décidé de la forme de la tranche.** `app.corbeille_avant_ecriture()` écrit
+`deleted_by` depuis `auth.uid()`. La clé de service ne porte aucune revendication `sub` : un objet
+créé avec `deleted_at` déjà renseigné par elle naît en corbeille avec un `deleted_by` **nul**, et
+le trigger **fige** ensuite cette valeur tant que la ligne reste en corbeille. Un objet né ainsi ne
+retrouvera donc jamais son auteur. C'est vérifiable sur la donnée existante : la card
+`Saisie erronée`, seule occupante de la corbeille jusqu'ici, porte `deleted_by = NULL` — MESURÉ.
+
+D'où la règle de ce chapitre, écrite au §10.2 de `docs/SPEC-seed.md` : **la corbeille est un geste,
+jamais une déclaration**. Les trois objets naissent actifs, puis un `PATCH` portant le jeton réel de
+l'administratrice les met en corbeille, et le seed **vérifie** que `deleted_by` vaut `…011`. C'est
+le patron que la décision 376 avait posé pour le commentaire retiré par la modération (INC-072), et
+il vaut ici pour la même raison : le seed ne fabrique pas la trace d'un geste, il fait le geste.
+
+**Cette règle n'est pas seulement plus honnête, c'est la seule qui converge.** Une charge de
+création qui enverrait `deleted_at: null` demanderait, à chaque rejeu, la **restauration** de
+l'objet. Pour le channel `annexes-2023`, dont le parent est en corbeille, cette restauration est
+**refusée** par la garde de la migration `0038` : le seed échouerait à son second passage. Le piège
+est écrit au §10.3 pour qu'aucune session ne le retrouve par l'échec.
+
+**Pourquoi trois objets et pas un.** Un track en corbeille seul n'aurait démontré que la
+restauration qui réussit ; un channel en corbeille seul, que le refus. Il en faut trois pour
+séparer ce que le §3.3 distingue et qu'aucune donnée ne séparait : `dossiers-2023` reste **actif**
+et ne porte **aucun `deleted_at`** — il est injoignable du seul fait que son track ne se résout
+plus. C'est le point le plus facile à manquer en relisant la base, et c'est précisément ce qui rend
+la restauration non ambiguë.
+
+**Ce que la tranche NE pose pas, délibérément.** Aucune card sous le track en corbeille. Le §3.3
+prévoit que l'écran de suppression énumère les affaires rendues inaccessibles ; cette énumération
+n'existe pas encore, et une card posée aujourd'hui ne serait comptée par aucun écran. Elle
+appartient à la tranche qui construira l'énumération, et elle y démontrera du même coup la garde à
+**deux niveaux** de la deuxième tranche — une affaire sous un channel vivant dont le track est en
+corbeille —, cas qu'aucune donnée ne porte encore. C'est écrit au backlog pour qu'on ne la croie pas
+oubliée.
+
+**Contraintes d'environnement, à reposer à chaque exécution** — inchangées depuis les décisions 396
+et 402, et toutes rencontrées ici : l'hôte ne porte que Node 22 et `node_modules/` était **vide**,
+`./runDev.sh` ne jouant pas `npm ci` ; il faut déposer la distribution officielle sous
+`~/.nvm/versions/node/v24.11.1/` et poser `npm config set cafile /root/.ccr/ca-bundle.crt` avant
+`npm ci`, sans quoi `vite` et `vitest` restent introuvables. Un point de `docs/CloudWorker.md` §2.2
+est en revanche à corriger : il annonce **18** services `healthy`, alors que la pile en compte
+**17** en exécution plus **3** conteneurs à usage unique sortis en `0` — `p2enjoy-migrations`,
+`p2enjoy-minio-createbucket` et `p2enjoy-stalwart-init`. Attendre 18 conteneurs sains est une
+attente qui n'aboutit jamais.
+
+**Où reprendre.** `CRM-077` reste `[~]`. Le seed n'est plus le préalable manquant. La tranche
+suivante est l'**énumération** des enfants rendus inaccessibles (§3.3), avec la card qui lui donne
+son compte, puis l'**écran** de corbeille (§4) et les niveaux API, E2E et visuel du §5. **Avant
+d'écrire, faire `git fetch origin main` et relire cette entrée** : le dépôt porte plusieurs workers,
+et les décisions 401 et 402 ont toutes deux payé le prix d'une tranche écrite en double.

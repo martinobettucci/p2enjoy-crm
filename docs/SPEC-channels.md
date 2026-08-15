@@ -428,6 +428,8 @@ mesure puis détruit.
 | `…034` | `studio-web` | `refonte` | Refonte de site | 1 | actif |
 | `…035` | `studio-web` | `maintenance` | Maintenance | 2 | actif |
 | `…036` | `formation` | `inter-entreprises` | Inter-entreprises | 1 | actif |
+| `…037` | `legacy-2023` | `dossiers-2023` | Dossiers 2023 | 1 | **actif, sous parent en corbeille** |
+| `…038` | `legacy-2023` | `annexes-2023` | Annexes 2023 | 2 | **en corbeille** |
 
 Motifs de ce choix, et non d'un autre :
 
@@ -435,6 +437,13 @@ Motifs de ce choix, et non d'un autre :
   donne une barre à un seul onglet — un cas d'affichage réel, distinct de la barre vide ;
 - le track archivé `pipeline-2024` n'en porte **aucun** : un track masqué n'a pas à démontrer une
   barre d'onglets ;
+- les deux derniers sont ajoutés par `CRM-077` sous le track `legacy-2023`, lui-même **en
+  corbeille**, et ils démontrent les DEUX situations que le §3.3 de `docs/SPEC-corbeille.md`
+  distingue et qu'aucune donnée ne séparait jusque-là : `…037` reste **actif** et ne porte aucun
+  `deleted_at` — il devient injoignable parce que son track ne se résout plus, et c'est exactement
+  ce qui garde la restauration non ambiguë —, tandis que `…038` est lui-même **en corbeille**, de
+  sorte que sa restauration est refusée par `parent_en_corbeille` (§3.4). Un seul des deux aurait
+  laissé croire que « enfant d'un parent en corbeille » est un état unique ;
 - `…033` est **archivé** pour que l'état le soit aussi côté channels, et non seulement documenté
   (`CLAUDE.md` §8, « couvrir les principaux états ») ;
 - `prospection` existe dans `conseil-ia` **et** pourrait exister dans `studio-web` sans conflit :
