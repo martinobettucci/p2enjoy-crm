@@ -130,6 +130,50 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-110 — Après un rejeu des migrations, `mail-sync` ne sait plus écrire ce qu'il relève : `inbound_poll_write_failed`, et deux preuves deviennent rouges
+
+**Nature :** dérive d'état de la pile locale, **étrangère à toute unité produit** — aucun fichier du
+dépôt n'est en cause, et le comportement est laissé inchangé conformément à `CLAUDE.md` §18 et à
+`docs/CloudWorker.md` §3.1.
+**Relevée le :** 2026-08-15, en fin de session de la sixième tranche de `CRM-076`.
+
+**Le fait, mesuré.** Le worker relève bien le compte entrant — `inbound_account_polled`, `200` — mais
+l'écriture qui suit échoue : `{"level":"ERROR","event":"inbound_poll_write_failed"}`, et l'appel
+`POST /internal/v1/inbound-accounts/<id>/poll` rend **`502`**. Mesuré trois fois à une minute
+d'intervalle, et **un `docker compose restart mail-sync` ne le lève pas**. La conséquence est
+directe et vérifiable : `public.mail_attachments` est **vide** alors que `storage.objects` porte
+toujours ses **4** objets du bucket `mail-attachments`, et `public.mail_messages` n'a plus que
+**2** lignes.
+
+**Ce que cela rend rouge**, et rien d'autre :
+
+- `e2e/mail/ingestion.spec.ts:133` — `messages_new` est `undefined` là où la preuve attend `>= 1` ;
+- `e2e/api/inbox.spec.ts:159` — la pièce jointe `clean` n'existe plus, donc son téléchargement ne
+  peut pas être distingué de celui des trois autres états.
+
+**Ce qui établit que ce n'est PAS une régression du dépôt.** Ces deux preuves étaient **vertes plus
+tôt dans la même session**, sur le même arbre de travail : campagne complète du 2026-08-15,
+`e2e:api` **507/507** et `e2e:mail` **42/42**. Elles ne sont devenues rouges qu'**après** deux
+opérations de remise en état rendues nécessaires par un harnais de non-complaisance interrompu, qui
+avait laissé `move_card` dégradée en base : `docker compose up migrations-runner`, puis
+`supabase/seed/apply-seed.sh`. Le code applicatif n'a pas été touché entre les deux mesures.
+
+**Hypothèse non vérifiée, à ne pas confondre avec un fait.** Le rejeu des migrations réinstalle des
+objets dont le worker dépend — propriétaire, privilèges, ou secret de compte entrant relu du vault.
+La cause exacte n'a pas été isolée : l'événement `inbound_poll_write_failed` ne porte pas le détail
+de l'erreur d'écriture, ce qui est en soi une limite d'observabilité (`CLAUDE.md` §20) et le premier
+point à instrumenter.
+
+**Ce qu'il reste à faire, et par qui.** Une session disposant d'une pile neuve doit d'abord
+reproduire : monter la pile, constater `e2e:mail` vert, rejouer `migrations-runner` puis le seed, et
+constater si les deux preuves virent au rouge. Si oui, la cause est dans le rejeu et non dans un
+accident de cette session. Il faudra alors, dans l'ordre : donner un détail exploitable à
+`inbound_poll_write_failed`, puis corriger la cause. Tant que ce n'est pas fait, une session qui
+verrait ces deux preuves rouges ne doit pas conclure à une régression de son unité.
+
+**Arbitrage demandé :** aucun. L'entrée est un constat, et sa correction appartient au sous-système
+de messagerie, non à `CRM-076`.
+
 ### INC-109 — La dégradation « le prédicat revient à `trim()` » de `verify-formulaire.sh` ne dégrade plus rien depuis la décision 374
 
 **Nature :** contrôle de non-complaisance devenu **vide** parce que l'arbitrage qu'il surveillait a
