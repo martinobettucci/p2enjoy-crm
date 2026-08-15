@@ -10,8 +10,10 @@ Contrat exécutable de `CRM-077` (`docs/BACKLOG.md`).
 - Design system : `docs/DESIGN_SYSTEM.md`.
 - Déploiement : `docs/PROD_MIGRATIONS.md`.
 - État : **spécifiée, livrée en partie.** Écrite avant toute ligne de code (`CLAUDE.md` §5). Le
-  modèle (§3.2), la garde de restauration (§3.4), le retrait des listes (§3.3) et l'énumération
-  (§3.5) sont livrés ; l'écran (§4) ne l'est pas.
+  modèle (§3.2), la garde de restauration (§3.4), le retrait des listes (§3.3), l'énumération
+  (§3.5) et l'**écran** (§4) sont livrés. Reste dû : le **geste de mise à la corbeille**, qui n'est
+  offert par aucun écran — le §4.7 le place hors de la corbeille, et il n'existe encore ni sur le
+  board, ni sur la vue liste, ni sur l'administration de l'arborescence.
 
 ---
 

@@ -14893,3 +14893,49 @@ sans la remesurer — exactement l'erreur qu'INC-113 avait consignée à la quat
 autre forme, et elle se refait à une tranche d'intervalle. Le §4.2 est corrigé, l'écran fait **trois**
 lectures et non quatre, et la contradiction est écrite dans le chapitre lui-même plutôt que corrigée
 en silence.
+
+**Ce que la tranche a livré, et ce qu'elle a mesuré.** L'écran est livré :
+`webapp/src/app/Corbeille.tsx`, la route `/reglages/corbeille` hors de `ROUTES` comme les trois
+autres surfaces d'administration, `lireCorbeille` et `restaurer` dans le module, et le §5.16 du
+design system. **Preuves exécutées sur l'arbre qui porte la tranche** : `test:unit` **1013/1013**
+sur 38 fichiers, `test:sql` **36 fichiers / 2004 assertions**, `typecheck`, `build` et
+`types:check` verts, `e2e:api` **521/521**, `e2e:ui` **251/251** dont les 10 scénarios de
+`e2e/ui/corbeille.spec.ts`, **console VIERGE**. Captures aux quatre paliers et de l'état vide,
+OBSERVÉES.
+
+**Le `400` de la garde est déclaré, non tu.** Le refus `parent_en_corbeille` fait journaliser au
+navigateur un `Failed to load resource … 400`, et la fixture de la console en fait un échec par
+défaut. `autoriserErreursConsole` épingle la liste **exacte** des anomalies — un statut, un nombre
+ou un ordre différent échoue —, et le scénario a provoqué puis expliqué ce refus à la ligne
+précédente. C'est la discipline déjà employée pour le `409` d'une étape occupée, et non un filtre.
+
+**L'état vide ne s'atteint par aucun compte, et c'est structurel.** MESURÉ : les trois profils
+voient tous le track et le channel en corbeille. Le seed existe précisément pour démontrer la
+corbeille (§10 de `docs/SPEC-seed.md`), donc aucun compte réel ne peut rendre cet écran vide. La
+capture emploie une réponse substituée **nommée**, ce que le §12.5 du design system admet « pour
+isoler un état rare » et qui « ne remplace jamais le parcours connecté correspondant » — lequel est
+couvert par les cinq scénarios précédents.
+
+**Trois anomalies étrangères, consignées et NON corrigées.** INC-114 : la barre d'onglets rend
+« Aucun channel » sur les quatre écrans de réglages — la capture `CRM-059` antérieure porte la même
+ligne, le défaut est donc antérieur. INC-117 : `verify-webapp.sh` rend une anomalie E2E **différente
+à chaque exécution** sur un arbre identique — `timeline.spec.ts` puis `commentaires-gestes.spec.ts`
+—, là où `npm run e2e:ui` seul est vert à 251, la seconde exécution portant pourtant
+`WEBAPP_PREVIEW_PORT=5173`. C'est un avertissement direct pour les sessions suivantes : **ce harnais
+ne peut pas servir de verdict de livraison pour l'interface**, et le croire sur parole ferait
+conclure à une régression que `e2e:ui` dément. INC-118 : le scénario S3 de `mail-sync` lit le
+journal **cumulé** du conteneur, que les scénarios de `comptes-entrants` remplissent délibérément
+d'un `WARNING` ; `e2e:mail` rend donc 41/42, et rejouer S3 seul ne répare rien.
+
+**`pytest` n'a PAS été exécuté** : la collecte échoue sur `ModuleNotFoundError: No module named
+'mail_sync'`, l'environnement Python du service n'étant pas installé dans cette session. Ce n'est
+pas une preuve verte, c'est une preuve non exécutée, et elle est nommée comme telle.
+
+**Où reprendre.** `CRM-077` reste `[~]`, et il reste **deux** choses, écrites au backlog. D'abord le
+**geste de mise à la corbeille lui-même**, qui n'est livré NULLE PART : ni le board, ni la vue liste,
+ni l'administration de l'arborescence n'offrent aujourd'hui de retirer un objet. C'est la tranche
+suivante, et c'est elle qui consommera l'énumération livrée par la cinquième — la capture « la
+confirmation portant l'énumération » que réclame la ligne « Visuel » du §5 lui appartient, et c'est
+pourquoi elle n'est pas produite ici. Ensuite le harnais `scripts/verify-corbeille.sh`. Les trois
+points du §6 — rétention, effacement définitif, visibilité pour un membre ordinaire — attendent
+toujours l'arbitrage du responsable et ne se tranchent pas en session.

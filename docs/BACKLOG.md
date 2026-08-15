@@ -6892,11 +6892,65 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       n'est stable qu'à partir du deuxième rejeu du seed, ce qui rend `verify-seed-demo.sh` rouge
       sur une base fraîchement réinitialisée et vert ensuite.
 
+**Sixième tranche livrée, 2026-08-15 — l'écran** (`webapp/src/app/Corbeille.tsx`,
+`webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §4, `docs/DESIGN_SYSTEM.md` §5.16) :
+
+- [x] **TROIS lectures, dont l'embarquement doit être désambiguïsé, et la mesure est plus large que
+      celle du §3.5** : `select=id,profiles(id)` rend `300` / `PGRST201` sur les **trois** tables,
+      pour deux causes distinctes — trois clés étrangères sur `cards`, mais sur `tracks` et
+      `channels` la seule clé `deleted_by` concurrencée par la relation **plusieurs-à-plusieurs** des
+      tables d'appartenance. L'ambiguïté ne vient donc pas du nombre de clés étrangères. La levée est
+      le **nom de la contrainte**, convention déjà écrite par `colonnes-board.ts`, `colonnes-liste.ts`
+      et `commentaires.ts` pour cette relation exacte.
+- [x] **Une première rédaction du §4.2 concluait à une quatrième lecture séparée, et elle était
+      FAUSSE** : le refus du §3.5 portait sur `cards` → `channels`, dont les clés sont composites et
+      que nommer n'aurait pas réparées. La règle avait été transportée d'un contexte à l'autre sans
+      être remesurée — récidive du motif d'INC-113, une tranche plus tard. Corrigée **avant** la
+      première ligne de code, et la contradiction est écrite dans le chapitre lui-même.
+- [x] **L'auteur inconnu est NOMMÉ, jamais une cellule vide** (§4.3) : la card `Saisie erronée` porte
+      `deleted_by` **NUL** — MESURÉ —, née en corbeille sous la clé de service qui ne porte aucune
+      revendication `sub`, valeur ensuite figée par le trigger de `0037`. Le §5.9 réserve la cellule
+      vide à une donnée qui n'existe pas pour la ligne ; un auteur non enregistré est un fait.
+- [x] **Les TROIS issues de la restauration, toutes mesurées avec les jetons réels** : appliquée ;
+      refusée par la garde — `400`, `P0001`, `parent_en_corbeille`, avec le `details` qui dit quoi
+      restaurer d'abord ; et **sans effet** — la lectrice reçoit `200` et `[]`, la clause `USING`
+      filtrant la ligne avant la mise à jour (décision 70), le track relu **toujours en corbeille**.
+      `classerRefusRestauration` exige le NOM de l'exception avec le code, `P0001` étant le SQLSTATE
+      de tout `raise exception`.
+- [x] **L'écran n'anticipe AUCUN refus** : la commande « Restaurer » n'est éteinte sur aucune ligne,
+      y compris celle d'un channel sous parent en corbeille. La garde vit dans `0038` ; une commande
+      désactivée par l'interface ferait passer une règle de la base pour une décision d'écran, et se
+      tromperait dès qu'un autre utilisateur aurait restauré le parent entre le chargement et le clic.
+- [x] **L'état vide est le cas NORMAL et n'offre aucune action** — écart assumé avec le §5.8 : il n'y
+      a rien à faire d'une corbeille vide. Le succès relit la liste plutôt que de la corriger en
+      mémoire, c'est la base qui décide de ce que contient la corbeille.
+- [x] **Aucun effacement définitif, aucun vidage, aucune pagination** (§4.7) : le §6 n'est pas
+      arbitré. Une preuve unitaire garde cette porte fermée. Les deux limites assumées — pas de
+      pagination, tri croisé des trois tables côté client — sont écrites au §7 de la spécification.
+- [x] **Preuves exécutées sur l'arbre qui porte la tranche** : `test:unit` **1013/1013** sur 38
+      fichiers, `test:sql` **36 fichiers / 2004 assertions**, `typecheck`, `build` et `types:check`
+      verts, `e2e:api` **521/521**, `e2e:ui` **251/251** dont les **10 scénarios** de
+      `e2e/ui/corbeille.spec.ts`, console **VIERGE**.
+- [x] **Vérifié visuellement et OBSERVÉ** (`CLAUDE.md` §16) : captures aux quatre paliers et de
+      l'état vide, dans `docs/captures/CRM-077/`. L'état vide emploie une réponse substituée,
+      **nommée**, admise par le §12.5 du design system pour isoler un état rare — le seed existe
+      précisément pour démontrer la corbeille, et aucun des trois comptes ne peut donc l'atteindre.
+- [x] **Trois preuves pgTAP que la cinquième tranche laissait rouges ont été soldées d'abord** :
+      `0012_cards`, `0015_colonnes_protegees` et `0034_previsualisation_exigence` figeaient des
+      comptes que l'affaire `…0cf` déplace. La ligne de base de la session les mesurait en échec sur
+      l'arbre distant, avant toute modification.
+
 - [ ] **Reste dû** : un **harnais dédié** `scripts/verify-corbeille.sh`, qui rassemblerait les
       preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
-      `e2e/api/corbeille.spec.ts` et les fichiers de l'écran. `e2e:ui` n'a pas été rejoué sur
-      l'arbre fusionné par la session qui porte cette tranche : la session concurrente qui livre
-      l'écran le porte.
+      `webapp/src/app/Corbeille.test.tsx`, `e2e/api/corbeille.spec.ts` et
+      `e2e/ui/corbeille.spec.ts`.
+- [ ] **Reste dû** : la ligne « Visuel » du §5 demande aussi une capture de **la confirmation portant
+      l'énumération**. Elle n'est PAS produite, et ce n'est pas un oubli : cette confirmation
+      appartient au **geste de mise à la corbeille**, que le §4.7 place délibérément hors de cet
+      écran — « on n'y retire rien, on y rend ». Le geste lui-même n'est livré nulle part : ni le
+      board, ni la vue liste, ni l'administration de l'arborescence n'offrent aujourd'hui de mettre
+      un objet à la corbeille. C'est la tranche suivante, et elle consommera l'énumération déjà
+      livrée par la cinquième.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement
