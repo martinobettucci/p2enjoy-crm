@@ -3394,7 +3394,7 @@ Les vérifications, **dans cet ordre**, et ce que chacune rend :
 | # | Vérification | Refus | `SQLSTATE` | HTTP |
 |---|---|---|---|---|
 | 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
-| 2 | la version cible existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 2 | la version cible existe **et** l'appelant est membre de son workspace — `app.is_workspace_member` | `version introuvable` | `P0001` | `400` |
 | 3 | l'appelant est administrateur du workspace de la version — `app.is_workspace_admin` | `plan reserve aux administrateurs` | `42501` | `403` |
 | 4 | `card_limit` est compris entre 1 et 1000 | `limite invalide` | `P0001` | `400` |
 | 5 | `step_overrides`, s'il est fourni, est un tableau d'objets portant deux `uuid` valides | `remappage invalide` | `P0001` | `400` |
@@ -3711,20 +3711,44 @@ public.restore_workflow_version(
 ) returns jsonb
 ```
 
-`volatile`, `search_path` vide, et **`security invoker`** — comme `plan_card_remapping`.
+`volatile`, `search_path` vide, et **`security definer`** — à l'inverse des trois gestes précédents
+de ce chapitre.
 
-Ce choix demande une justification, puisque la fonction **écrit** là où le plan ne faisait que lire.
-MESURÉ : les tables de structure portent toutes leurs politiques d'écriture d'administrateur —
-`workflow_steps_insertion_admin`, `workflow_steps_maj_admin`, `workflow_steps_suppression_admin`, et
+**Ce choix a été retourné par la mesure, et le motif est écrit ici plutôt que corrigé en silence.**
+La première rédaction de ce paragraphe retenait `security invoker`, au motif — exact — que les tables
+de structure portent toutes leurs politiques d'écriture d'administrateur :
+`workflow_steps_insertion_admin`, `workflow_steps_maj_admin`, `workflow_steps_suppression_admin` et
 leurs équivalentes sur `workflow_transitions`, `form_fields`, `form_field_rules` et
-`workflow_transition_required_fields`. Un administrateur peut donc écrire **tout** ce que la
-restauration écrit, par les mêmes politiques que l'éditeur de `CRM-076`. Un `security definer`
-n'ouvrirait aucune porte de plus ; il retirerait seulement à ces politiques la charge de la preuve,
-et il faudrait alors réécrire la règle d'autorisation dans le corps de la fonction. La règle reste
-donc écrite **une seule fois**, dans les politiques.
+`workflow_transition_required_fields`. Un administrateur écrit en effet **toute la structure** par
+ces politiques, comme l'éditeur de `CRM-076`.
 
-Le même choix rend en outre le plan rejoué **exhaustif pour le bon motif** : c'est la vérification 3
-qui l'assure (§7 ter.12.4), et elle est reprise ici à l'identique.
+Mais la restauration n'écrit pas que la structure : elle **déplace des affaires**. Et MESURÉ le
+2026-08-15 sur la pile seedée, `authenticated` ne détient l'`UPDATE` sur `public.cards` que
+**colonne par colonne**, sur douze colonnes — `title`, `description`, `owner_id`, `amount`,
+`currency`, `probability_override`, `next_action`, `next_action_at`, `position`, `archived_at`,
+`deleted_at`, `snoozed_until`. **`current_step_id` n'en fait pas partie**, ni `workflow_id`, ni
+`channel_id`, ni `entered_step_at` : c'est le privilège de colonne posé par `CRM-034` qui ferme le
+`PATCH` direct d'une affaire (INC-046), et c'est exactement pourquoi `move_card`,
+`move_card_to_channel` et `change_channel_workflow` sont **toutes les trois** `security definer`.
+
+Un `security invoker` échouerait donc en `42501` sur la deuxième écriture, quel que soit
+l'appelant — y compris un administrateur. Restaurer déplace des affaires : le geste rejoint cette
+famille, et non celle des lectures.
+
+**Ce que ce choix oblige à écrire à la main, et qui n'est pas négociable.** Sous `security definer`,
+la RLS ne fait plus le travail de la vérification 2 : la fonction verrait une version de n'importe
+quel workspace. La vérification 2 porte donc explicitement `app.is_workspace_member`, comme
+`publish_workflow_version` la porte déjà (§7 ter.5, vérification 2), et rend `version introuvable`
+dans les deux cas. Sans cela, un identifiant d'autrui tomberait sur le refus d'administration et la
+fonction deviendrait l'oracle d'existence que tout ce chapitre refuse d'être.
+
+**Et le plan rejoué change de nature, ce qui doit être dit.** Appelé depuis un `security definer`
+dont le propriétaire est `postgres`, `plan_card_remapping` ne s'exécute plus sous la RLS de
+l'appelant : son exhaustivité ne repose plus sur la règle 2 d'`app.resolve_access` mais sur le
+propriétaire. Ce n'est pas une régression — le plan reste exhaustif, et sa vérification 3 refuse
+toujours un non-administrateur, `auth.uid()` étant inchangé. Mais **ce n'est plus pour son
+exhaustivité qu'il est rejoué ici** : c'est pour ses **huit refus** et pour son verdict `ready`,
+qui sont la seule formulation de la règle de remappage (§7 ter.13.2).
 
 Exécution accordée à `authenticated` et à `service_role` ; **révoquée de `public` et d'`anon`** — la
 révocation nommée est obligatoire (§4.7, décision 80).
@@ -3734,7 +3758,7 @@ Les vérifications, **dans cet ordre**, et ce que chacune rend :
 | # | Vérification | Refus | `SQLSTATE` | HTTP |
 |---|---|---|---|---|
 | 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
-| 2 | la version cible existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 2 | la version cible existe **et** l'appelant est membre de son workspace — `app.is_workspace_member` | `version introuvable` | `P0001` | `400` |
 | 3 | l'appelant est administrateur du workspace de la version | `restauration reservee aux administrateurs` | `42501` | `403` |
 | 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` | `400` |
 | 5 | `expected_live_fingerprint`, s'il est fourni, égale l'empreinte vivante | `structure modifiee depuis le plan` | `P0001` | `409` |
@@ -3744,6 +3768,7 @@ Les vérifications, **dans cet ordre**, et ce que chacune rend :
 
 La vérification 2 rend le même refus qu'une version d'un autre workspace, et précède la
 vérification 3 : la règle du §7 ter.12.4 est inchangée, la fonction n'est pas un oracle d'existence.
+Elle est ici écrite **à la main** et non déléguée à la RLS, pour le motif du paragraphe précédent.
 
 **La vérification 4 diffère de celle du plan, et c'est cohérent.** Planifier ne fait que lire, et le
 §7 ter.12.4 refuse explicitement d'interdire à un administrateur de regarder ce qu'une restauration
@@ -3878,7 +3903,7 @@ est aussi une manière de l'éprouver.
 
 | Niveau | Preuves |
 |---|---|
-| pgTAP | Existence, volatilité `volatile`, **absence de `security definer`**, privilèges et révocation d'`anon` ; les huit refus contre des comptes réels ; **le point de retour publié, puis restauré, rendant les identifiants d'origine** ; les affaires remappées comptées **en base** et leur événement `moved` ; le champ surnuméraire **archivé et non supprimé**, avec sa valeur saisie intacte ; l'empreinte après restauration égale à celle de la version ; `matches_version` **faux** lorsque le nom du workflow a changé ; l'ordre des écritures éprouvé par le cas qui échouerait sans lui — étape initiale déplacée, nœud réutilisé |
+| pgTAP | Existence, volatilité `volatile`, **`security definer` et propriétaire `postgres`**, privilèges et révocation d'`anon` ; **le refus opposé à un membre non administrateur d'un AUTRE workspace, qui doit rendre `version introuvable` et non le refus d'administration** — c'est la seule preuve qui éprouve que la vérification 2 a bien été écrite à la main ; les huit refus contre des comptes réels ; **le point de retour publié, puis restauré, rendant les identifiants d'origine** ; les affaires remappées comptées **en base** et leur événement `moved` ; le champ surnuméraire **archivé et non supprimé**, avec sa valeur saisie intacte ; l'empreinte après restauration égale à celle de la version ; `matches_version` **faux** lorsque le nom du workflow a changé ; l'ordre des écritures éprouvé par le cas qui échouerait sans lui — étape initiale déplacée, nœud réutilisé |
 | API | Les dix-huit lignes du §7 ter.13.10, hors interface, avec les jetons réels des trois profils ; preuve de refus n° 3 au niveau des versions |
 | Seed | **Aucun** (§7 ter.13.11) |
 | Interface | **Aucune** — cette tranche ne livre aucun écran |
