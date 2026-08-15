@@ -80,18 +80,26 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 			p_step_id: ETAPE_PROSPECTION,
 		})).toEqual({ sur_place: 4, a_l_entree: 0 })
 
-		// `Signature` rend l'INVERSE EXACT : personne sur place, une affaire empêchée d'entrer. Ces
-		// deux lignes ensemble sont la preuve qu'un seul nombre n'aurait pas suffi.
+		// `Signature` rend l'INVERSE EXACT : personne sur place, des affaires empêchées d'entrer.
+		// Ces deux lignes ensemble sont la preuve qu'un seul nombre n'aurait pas suffi.
+		//
+		// COMPTES RÉVISÉS PAR LA CINQUIÈME TRANCHE DE `CRM-077`, et la révision RENFORCE : l'affaire
+		// `…0cf` du seed occupe `Négociation` sans porter ce champ (`docs/SPEC-seed.md` §10.4 bis),
+		// et deux arêtes partent de cette étape — vers `Signature` et vers `Perdu`. Les deux comptes
+		// « à l'entrée » grandissent donc d'une unité, parce que le jeu porte une affaire de plus et
+		// non parce que la règle a changé. MESURÉ : la lectrice compte elle aussi une unité de plus
+		// — son droit fin sur `dossiers-2023` lui rend cette affaire —, et l'inégalité du P2 tient
+		// donc à l'identique, 5 contre 9 au lieu de 4 contre 8.
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_SIGNATURE,
-		})).toEqual({ sur_place: 0, a_l_entree: 1 })
+		})).toEqual({ sur_place: 0, a_l_entree: 2 })
 
 		// `Perdu` porte les deux à la fois.
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 8 })
+		})).toEqual({ sur_place: 1, a_l_entree: 9 })
 	})
 
 	test('une cible de TRANSITION ne compte que son chemin, jamais l’étape d’arrivée', async ({
@@ -125,8 +133,8 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		const vuParLAdmin = await effets(request, admin, couple)
 		const vuParLeViewer = await effets(request, viewer, couple)
 
-		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 8 })
-		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 4 })
+		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 9 })
+		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 5 })
 		// L'inégalité est écrite explicitement : si un jour la fonction passait en
 		// `security definer`, les deux nombres deviendraient égaux et cette assertion tomberait
 		// AVANT que quiconque ne s'aperçoive que le produit annonce des affaires interdites.
@@ -142,7 +150,7 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 8 })
+		})).toEqual({ sur_place: 1, a_l_entree: 9 })
 	})
 
 	test('l’appelant ANONYME est refusé par le privilège, avant toute politique', async ({

@@ -1508,7 +1508,11 @@ test.describe('la prévisualisation des effets sur la vraie base (§7 bis.13)', 
 			// étapes où l'autre effet existe (§7 bis.13.1).
 			const effets = page.getByTestId('effets-case')
 			await expect(effets).toContainText('1 affaire est déjà à cette étape')
-			await expect(effets).toContainText('9 affaires ne pourront plus entrer')
+			// DIX DEPUIS LA CINQUIÈME TRANCHE DE `CRM-077` : l'affaire `…0cf` du seed occupe
+			// `Négociation` (docs/SPEC-seed.md §10.4 bis), d'où part une arête vers `Perdu`. Le
+			// compte mesuré grandit d'une unité parce que le jeu de démonstration porte une affaire
+			// de plus, et non parce que la règle a changé.
+			await expect(effets).toContainText('10 affaires ne pourront plus entrer')
 
 			// RIEN N'EST ÉCRIT tant que la confirmation n'est pas acceptée : c'est la propriété que
 			// l'écran seul ne prouverait pas, et la base la tranche.

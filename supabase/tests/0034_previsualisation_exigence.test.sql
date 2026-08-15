@@ -81,7 +81,13 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011'::uuid);
 
 -- 5. LES DEUX NOMBRES NE SONT PAS LE MÊME, et c'est la mesure qui justifie l'écran. Le même champ
 --    `date-signature-prevue` rend 4/0 sur `Prospection` — aucune arête ne mène à l'étape initiale —
---    et 0/1 sur `Signature`, exactement l'inverse.
+--    et 0/2 sur `Signature`, exactement l'inverse.
+--
+--    RÉVISÉ PAR LA CINQUIÈME TRANCHE DE `CRM-077` : l'affaire `…0cf` du seed occupe `Négociation`
+--    sans porter ce champ (docs/SPEC-seed.md §10.4 bis), et `Négociation → Signature` comme
+--    `Négociation → Perdu` sont deux arêtes déclarées. Le compte « à l'entrée » de `Signature`
+--    passe donc de 1 à 2, et celui de `Perdu` de 8 à 9. La révision RENFORCE : ce sont les mêmes
+--    nombres, mesurés sur un seed qui porte une affaire de plus, et non une tolérance.
 select is(
 	(select array[sur_place, a_l_entree]
 	   from public.previsualiser_exigence(
@@ -108,7 +114,7 @@ select is(
 	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 2 à l''entrée — l''inverse exact');
 
 -- 7. LE COMPTE D'UNE ÉTAPE EST L'UNION DE SES ARÊTES. Cinq arêtes mènent à `Perdu` ; prises une à
---    une elles rendent 4, 2, 1, 0 et 1, et l'étape rend 8. L'assertion vérifie l'égalité, et non
+--    une elles rendent 4, 2, 2, 0 et 1, et l'étape rend 9. L'assertion vérifie l'égalité, et non
 --    une inégalité stricte : la contrainte `workflow_transitions_workflow_from_to_key` rend unique
 --    le couple (départ, arrivée) d'un workflow, si bien qu'AUCUNE affaire ne peut aujourd'hui être
 --    comptée deux fois. Le `count(distinct)` de la fonction est donc une défense qui ne change
@@ -124,7 +130,7 @@ select is(
 	   cross join lateral public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083', null, t.id) p
 	  where t.to_step_id = '5eed0000-0000-4000-8000-000000000067'),
-	'7 — le compte d''une étape est l''union de ses arêtes : 8 pour `Perdu`, comme la somme de ses cinq chemins');
+	'7 — le compte d''une étape est l''union de ses arêtes : 9 pour `Perdu`, comme la somme de ses cinq chemins');
 
 -- 8. LA PARENTÉ AVEC `move_card`, et c'est l'assertion qui donne sa valeur aux autres. La
 --    prévisualisation annonce 4 affaires bloquées sur `Prospection → Perdu` ; la règle est posée,

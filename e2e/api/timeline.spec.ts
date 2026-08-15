@@ -321,10 +321,10 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 
 	// --- Le seed, et ce qu'il démontre ---------------------------------------------------------
 
-	test('m — le seed a fait naître quatorze cards, et son histoire ne cesse plus de croître', async ({
+	test('m — le seed a fait naître quinze cards, et son histoire ne cesse plus de croître', async ({
 		request,
 	}) => {
-		// Les quatorze cards du seed sont ÉNUMÉRÉES, jamais filtrées par motif :
+		// Les quinze cards du seed sont ÉNUMÉRÉES, jamais filtrées par motif :
 		// `?card_id=like.5eed*`
 		// rend `404` sur une colonne `uuid` (INC-061, décision 199), et un filtre par exclusion
 		// compterait les cards d'essai des autres fichiers de preuve, qui s'exécutent dans la même
@@ -339,6 +339,9 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 			'5eed0000-0000-4000-8000-0000000000cc',
 			'5eed0000-0000-4000-8000-0000000000cd',
 			'5eed0000-0000-4000-8000-0000000000ce',
+			// `CRM-077`, cinquième tranche : l'affaire sous `dossiers-2023` (docs/SPEC-seed.md
+			// §10.4 bis). Elle naît comme les autres, donc elle s'inscrit comme les autres.
+			'5eed0000-0000-4000-8000-0000000000cf',
 		]
 		const tous = await request.get(
 			`${URL_API}${EVENEMENTS}?select=type,actor_id&card_id=in.(${CARDS_DU_SEED.join(',')})`,

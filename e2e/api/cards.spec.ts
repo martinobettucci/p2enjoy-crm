@@ -66,6 +66,9 @@ const CARDS_SEED = [
 	'5eed0000-0000-4000-8000-0000000000cc',
 	'5eed0000-0000-4000-8000-0000000000cd',
 	'5eed0000-0000-4000-8000-0000000000ce',
+	// `CRM-077`, cinquième tranche : l'affaire sous `dossiers-2023`, l'enfant vivant d'un track en
+	// corbeille (`docs/SPEC-seed.md` §10.4 bis).
+	'5eed0000-0000-4000-8000-0000000000cf',
 ] as const
 const FILTRE_SEED = `id=in.(${CARDS_SEED.join(',')})`
 
