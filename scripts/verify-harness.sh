@@ -317,8 +317,16 @@ PORT_RAPPORT=9323
 # révision de `0004_tracks` et `0005_channels` : leur contrôle de privilèges de table est devenu
 # un contrôle de privilège de COLONNE — `deleted_by` exclue —, plus précis et non plus permissif.
 # MESURÉ par `npm run test:sql`, non déduit.
-FICHIERS_SQL_ATTENDUS=35
-ASSERTIONS_ATTENDUES=1995
+#
+# --- `CRM-077`, deuxième tranche, le 2026-08-15 ----------------------------------------------------
+# `0036_corbeille_restauration.test.sql` ajoute UNE suite et HUIT assertions : les deux refus de
+# restauration sous parent en corbeille, le SECOND niveau — une affaire sous un channel vivant dont
+# le track est supprimé —, et surtout trois assertions qui prouvent que la garde NE refuse PAS ce
+# qu'elle ne doit pas. Une garde qui refuserait trop serait aussi fautive qu'une garde absente, et
+# c'est l'erreur la plus facile à commettre sur un trigger `before update`.
+# 35 + 1 = **36** ; 1995 + 8 = **2003**. MESURÉ par `npm run test:sql`, non déduit.
+FICHIERS_SQL_ATTENDUS=36
+ASSERTIONS_ATTENDUES=2003
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
