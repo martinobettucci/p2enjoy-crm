@@ -14322,3 +14322,49 @@ soit perdu silencieusement, une restauration atomique, un audit, des droits back
 captures. Deux points d'hygiène restent ouverts et ne bloquent personne : donner un détail
 exploitable à `inbound_poll_write_failed` (INC-110, point 1) et l'arbitrage d'INC-108 sur le compte
 des règles de visibilité.
+
+### Décision 398 — CRM-077 ouverte et spécifiée : la corbeille n'est pas un écran, c'est une colonne qui ne veut rien dire pour deux tables sur trois
+
+**2026-08-15, suite de la décision 397, même session.**
+
+**Pourquoi cette unité, et pourquoi maintenant.** `CRM-076` est close (décision 397). `CRM-077` est
+la première unité `[ ]` dans l'ordre du plan (§4.2 point 3 de `docs/CloudWorker.md`). Conformément à
+`CLAUDE.md` §5, la spécification est écrite et committée **avant la première ligne de code** :
+`docs/SPEC-corbeille.md`.
+
+**Quatre mesures prises sur la pile, et qui redéfinissent l'unité.**
+
+La première montre que l'unité n'est pas celle qu'on croit. `deleted_at` n'existe que sur `cards` et
+`card_comments` ; `tracks` et `channels` n'ont que l'**archivage**, alors que la Definition of Done
+les couvre explicitement. Le manque principal est donc un manque de **modèle**, pas d'écran.
+
+La deuxième interdit une correction réflexe. AUCUNE politique ne filtre `deleted_at` — MESURÉ,
+`pg_policies` rend zéro ligne, et `GET /rest/v1/cards?deleted_at=not.is.null` rend **`200`** et la
+card `Saisie erronée` avec le jeton de l'administratrice. On pourrait y voir une fuite et « fermer »
+la corbeille. Ce serait une faute : le §12 de `docs/SPEC-cards.md` filtre `deleted_at=is.null` dans
+les **listes**, et la corbeille est une **vue**, non une frontière de confidentialité. La rendre
+invisible rendrait tout écran de corbeille impossible à écrire. « Droits backend », dans cette DoD,
+porte donc sur les **écritures**.
+
+La troisième donne à la DoD son sens littéral. Les cascades sont physiques et totales :
+`tracks → channels → cards → commentaires, événements, valeurs de champ, file d'envoi` en `CASCADE`,
+messages et pièces jointes en `SET NULL`. Un `DELETE` sur un track emporterait tout cela sans un
+mot — c'est exactement « un objet enfant perdu silencieusement ». D'où deux règles posées : la
+corbeille n'efface **jamais** physiquement, et l'effacement définitif **énumère avant d'agir** au
+lieu de s'en remettre aux cascades qui sont précisément le mécanisme fautif.
+
+La quatrième tranche la question qui décide de l'écran : la mise en corbeille d'un parent **ne
+descend pas** sur ses enfants. Descendre l'horodatage rendrait la restauration ambiguë — rien ne
+distinguerait alors les enfants emportés par le parent de ceux déjà en corbeille avant lui, et le
+produit choisirait à la place de l'utilisateur, donc se tromperait. L'énumération remplace la
+descente, et restaurer un enfant sous parent en corbeille est **refusé par une garde backend**.
+
+**Trois points ne sont PAS tranchés, et ne le seront pas par un agent** : la durée de rétention —
+que `docs/SPEC-cards.md` §10 laissait déjà ouverte comme décision de conformité —, l'effacement
+définitif et son parcours RGPD, qui ne sera pas livré tant que la rétention n'est pas décidée, et la
+visibilité de la corbeille pour un membre ordinaire. Ils sont consignés au §6 de la spécification.
+
+**Où reprendre.** `CRM-077` est `[~]` : spécifiée, non livrée. La tranche suivante est la
+**migration** du §3.2 — `deleted_at` et `deleted_by` sur `tracks` et `channels`, `deleted_by` sur
+`cards` —, sa suite pgTAP, puis le seed enrichi : sans un channel et un track en corbeille et sans un
+enfant sous parent en corbeille, le refus du §3.4 n'a aucun cas de démonstration.

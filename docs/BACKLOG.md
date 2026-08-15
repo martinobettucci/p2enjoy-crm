@@ -6698,11 +6698,44 @@ plus haut comme « reste dû » — réglage en lot, liste nominative — n'appa
 of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, et relèveront d'une
 unité qui les portera.
 
-### CRM-077 — Corbeille et restauration `[ ]`
+### CRM-077 — Corbeille et restauration `[~]`
 
 Suppression logique et restauration de cards, tracks et channels avec dépendances visibles,
 durée de rétention et effacement définitif réservé au parcours RGPD. **DoD** : aucun objet enfant
 n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E et captures.
+
+**Spécifiée le 2026-08-15, non livrée** — `docs/SPEC-corbeille.md`, écrite avant toute ligne de code
+(`CLAUDE.md` §5) et fondée sur quatre mesures prises sur la pile :
+
+- [x] **`deleted_at` n'existe que sur `cards` et `card_comments`** : `tracks` et `channels` n'ont que
+      l'archivage, alors que la DoD les couvre. C'est le manque principal, et il appelle une
+      migration — `deleted_at`, plus `deleted_by` fermée au client et écrite par trigger, sur le
+      patron déjà éprouvé de `card_comments` (`CRM-043`).
+- [x] **La corbeille des cards n'est filtrée par AUCUNE politique**, et ce n'est PAS un défaut à
+      corriger au passage : MESURÉ, `GET /rest/v1/cards?deleted_at=not.is.null` rend `200` et la
+      card `Saisie erronée`. Le §12 de `docs/SPEC-cards.md` filtre `deleted_at=is.null` dans les
+      **listes** : la corbeille est une **vue**, non une frontière de confidentialité — et il le faut
+      bien, sans quoi aucun écran ne pourrait l'afficher ni la restaurer. « Droits backend » porte
+      donc sur les **écritures**, pas sur l'invisibilité.
+- [x] **Les cascades physiques perdent les enfants en silence** : `tracks → channels → cards →
+      commentaires, événements, valeurs, file d'envoi` en `CASCADE`, messages et pièces jointes en
+      `SET NULL`. D'où deux règles : la corbeille n'efface jamais physiquement, et l'effacement
+      définitif ÉNUMÈRE avant d'agir plutôt que de s'en remettre aux cascades.
+- [x] **La mise en corbeille d'un parent ne descend PAS sur ses enfants**, et le motif est
+      mesurable : descendre l'horodatage rendrait la restauration ambiguë — impossible de distinguer
+      les enfants emportés par le parent de ceux déjà en corbeille avant lui. L'énumération remplace
+      la descente, et restaurer un enfant sous parent en corbeille est **refusé par une garde
+      backend**, pas par une aide d'interface.
+- [ ] Migration, couche de données, écran, seed enrichi (un channel et un track en corbeille, et un
+      enfant sous parent en corbeille — sans eux le refus n'a aucun cas de démonstration), et les
+      cinq niveaux de preuves du §5 de la spécification.
+
+**Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
+la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement
+définitif** et son parcours RGPD, qui ne sera pas livré tant que la rétention n'est pas décidée —
+livrer une destruction irréversible sans règle de conservation serait le contraire d'une mesure de
+conformité ; et la **visibilité de la corbeille** pour un membre ordinaire. Aucun n'est tranché
+ici.
 
 ### CRM-078 — Versionnement des workflows `[ ]`
 
