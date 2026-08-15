@@ -14285,7 +14285,7 @@ restaurées : elles représentent l'état réellement exécuté de l'application
 laisser diverger ferait mentir le prochain diff.
 ### Décision 397 — CRM-076 est CLOSE : la campagne rejouée sur une pile neuve, et `down -v` qui n'efface pas ce qu'on croit
 
-**2026-08-15, suite de la décision 395, même session.**
+**2026-08-15, suite des décisions 395 et 396, même session.**
 
 **Ce qui restait, et qui est fait.** La décision 395 laissait `CRM-076` en `[~]` pour une seule
 raison, sans code : rejouer la campagne sur une **pile neuve**. C'est fait — `docker compose down -v`,
