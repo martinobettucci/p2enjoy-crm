@@ -15612,3 +15612,74 @@ conduite exigée reste entière — lire `docs/CloudWorker.md` en entier avant t
 **Porteur :** le crochet de clôture de la tâche planifiée, avec la décision 419. **Action attendue du
 responsable** : aligner le crochet sur le fond, ou lui donner une source qui conserve l'ordre réel
 des appels.
+
+### Décision 424 — Le harnais dédié de la corbeille, et la chaîne Node 24 rendue disponible dans cet environnement
+
+**2026-08-15 — neuvième tranche de `CRM-077`, livrée et prouvée.**
+
+**Ce qui manquait, et ce qui est livré.** La huitième tranche laissait `CRM-077` avec une seule
+dette de construction : le harnais dédié. Les preuves de l'unité étaient dispersées entre **neuf
+fichiers** — deux suites pgTAP, trois suites Vitest, deux fichiers Playwright — et **aucune commande
+ne rendait un verdict d'ensemble**. `scripts/verify-corbeille.sh` le rend : **39 contrôles, aucune
+anomalie**, sur la pile démarrée et seedée. Son contrat est écrit au **§5 bis** de
+`docs/SPEC-corbeille.md`, committé **avant** la première ligne de code (`CLAUDE.md` §5), après les
+mesures qu'il fige et non d'après un compte rendu antérieur.
+
+**Les comptes sont figés PAR PAIRE, et c'est la décision 279 appliquée à chaque famille** :
+`2 fichiers / 20 assertions` pgTAP, `2 fichiers / 39 tests` et `1 fichier / 7 tests` Vitest, `22`
+scénarios d'API, `24` d'interface. Un compte qui **monte** est traité comme un écart au même titre
+qu'un compte qui descend : sans cela, une suite ajoutée sans mise à jour du §5 bis.1 ferait dériver
+la spécification du dépôt en silence.
+
+**Les quatre dégradations sont VUES, et c'est le résultat qui comptait.** Le harnais retire
+réellement, une par une, quatre règles de `webapp/src/lib/corbeille.ts` dont la disparition serait
+**silencieuse en production** — le filtre `deleted_at=not.is.null`, l'omission des lignes à compte
+nul, la reconnaissance de `parent_en_corbeille`, la branche `sans-effet` du geste. Les quatre font
+rougir la suite unitaire : les preuves des tranches précédentes tiennent donc réellement ces règles,
+et ce n'était pas acquis d'avance. La restauration est **constatée octet à octet** contre un
+instantané pris avant la première dégradation, jamais contre `HEAD`
+(`docs/SPEC-test-harness.md` §7.2 point 9).
+
+**La contrainte d'environnement de la session précédente est LEVÉE.** La huitième tranche avait
+consigné que cet environnement fournit Node 22 là où le dépôt exige Node 24, et que **tous** les
+`scripts/verify-*.sh` passant par `scripts/lib/node.sh` refusaient donc de s'exécuter. Ce n'était
+pas une fatalité : `nvm` est présent sous `/opt/nvm` sans aucune version installée, et
+`nvm install 24` y pose Node `v24.19.0` / npm `11.17.0`, que `node_toolchain_prepare` sélectionne
+ensuite seul dès que `NVM_DIR=/opt/nvm` est exporté. **Aucun fichier du dépôt n'a été modifié pour
+cela.** Les harnais redeviennent exécutables dans cet environnement, ce que cette session a
+constaté en en rejouant trois. La session suivante n'a donc pas à répéter le constat : elle a deux
+gestes à poser en ouverture, `export NVM_DIR=/opt/nvm` et, pour Playwright,
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` — la porte que
+`docs/SPEC-test-harness.md` §4.4 bis a ouverte pour exactement ce cas, la révision fournie étant
+**1194** là où Playwright 1.62.1 épingle 1234.
+
+**Campagne complète, exécutée en fin de session et non en ouverture** (`docs/CloudWorker.md` §2.3) :
+`typecheck` et `build` verts ; `test:unit` **1042/1042** sur 39 fichiers ; `test:sql` **36 fichiers /
+2004 assertions** ; `e2e:api` **536/536** ; `e2e:ui` **265/265**, console **VIERGE** ; `e2e:mail`
+**42/42** ; `pytest` **242** ; `verify-corbeille.sh` **39/39** ; `verify-node-toolchain.sh` **5/5**,
+qui recense désormais **33** harnais Node/npm protégés, le nouveau compris ; `verify-manual.sh`
+**113 contrôles sans anomalie**.
+
+**Un constat ÉTRANGER, mesuré, consigné au registre et laissé inchangé.** `verify-scripts.sh` rend
+**3 anomalies sur 104**. Deux sont les artefacts d'environnement que `docs/CloudWorker.md` §2.4 nomme
+déjà — l'agent est `root`, donc `[ -r ]` reste vrai sur un `chmod 000` ; le proxy TLS fait échouer
+une image reconstruite sans certificat. La troisième est réelle et **antérieure de quatre jours** :
+la garde qui énumère les migrations autorisées à s'exécuter en superutilisateur n'admet que
+`0018_pg_cron.sql`, alors que `0029_pieces_jointes_telechargeables.sql` porte le même marqueur depuis
+`CRM-057`. La mesure montre que l'élévation de `0029` est légitime et minutieusement bornée — c'est
+la **preuve** qui n'a pas suivi. Elle n'est pourtant **pas** tranchée en session : élargir une liste
+blanche d'exécutions privilégiées relâche un contrôle d'autorisation backend, que `CLAUDE.md` §26
+réserve au responsable. D'où **INC-120**, avec ses deux remèdes possibles et leur différence.
+
+**Ce qui n'a pas été exécuté, et n'est pas annoncé vert** : les autres `scripts/verify-*.sh`, hors
+`verify-corbeille.sh`, `verify-node-toolchain.sh`, `verify-manual.sh` et `verify-scripts.sh`.
+`verify-harness.sh` en particulier n'est pas rejoué — il dure à lui seul l'essentiel d'une session,
+et ses comptes globaux figés sont connus pour être en retard sur le dépôt.
+
+**Où reprendre.** `CRM-077` n'a **plus de dette de construction** : le modèle, la garde, le retrait
+des listes, l'énumération, l'écran, les trois gestes et le harnais sont livrés et prouvés. L'unité
+reste `[~]` pour une seule raison, et elle ne se lève pas en session : les **trois points du §6** de
+la spécification — durée de rétention, effacement définitif et son parcours RGPD, visibilité de la
+corbeille pour un membre ordinaire — attendent l'arbitrage du responsable, et la Definition of Done
+cite l'effacement définitif. La session suivante prend donc l'unité **suivante** du plan plutôt que
+de rouvrir celle-ci, et consigne au passage qu'`INC-120` attend un arbitrage.

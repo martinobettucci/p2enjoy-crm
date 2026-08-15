@@ -7062,6 +7062,11 @@ spécifié avant toute ligne de code) :
 - [x] **`README.md` porte la commande et son `--rapide`**, dans les trois listes qui énumèrent les
       harnais.
 
+**L'unité n'a PLUS de dette de construction**, et reste `[~]` pour une seule raison, qui ne se lève
+pas en session : sa Definition of Done cite l'**effacement définitif**, lequel dépend des trois
+points ci-dessous. Toutes ses preuves sont exécutées et vertes, rassemblées par
+`scripts/verify-corbeille.sh` (**39/39**).
+
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement
 définitif** et son parcours RGPD, qui ne sera pas livré tant que la rétention n'est pas décidée —

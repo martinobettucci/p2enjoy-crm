@@ -192,7 +192,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Aucune.** Les dix-neuf entrées qui restaient en texte complet ont été **arbitrées le 2026-08-15
+**Une : INC-120**, consignée le 2026-08-15 (garde des élévations de privilège des migrations). Les
+dix-neuf entrées qui restaient en texte complet ont été **arbitrées le 2026-08-15
 par les décisions 408 à 419**, sur instruction du responsable de trancher automatiquement tout ce
 qui restait en suspens. Conformément à la règle de retrait de la décision 407, elles rejoignent
 l'index ci-dessus dès l'arbitrage rendu ; **la mise en œuvre de chacune reste due** et est suivie
@@ -200,3 +201,48 @@ dans `docs/ARBITRAGES.md` et dans la Definition of Done de l'unité porteuse.
 
 Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci-dessus : un choix
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
+
+### INC-120 — La garde des élévations de privilège n'admet qu'une migration, et le dépôt en compte deux
+
+**Constatée le 2026-08-15**, en marge de `CRM-077` (harnais de la corbeille), par
+`scripts/verify-scripts.sh` — **3 anomalies sur 104**, dont celle-ci. Le défaut est **ÉTRANGER** à
+l'unité de la session : le comportement reste **inchangé**, rien n'est corrigé au passage
+(`CLAUDE.md` §1).
+
+**Ce qui est mesuré.** Le contrôle de `scripts/verify-scripts.sh` (ligne 620) exige que
+`supabase/migrations/*.sql` ne contienne **exactement qu'un** fichier portant
+`-- @migration-role:`, et que ce soit `0018_pg_cron.sql`. Or `0029_pieces_jointes_telechargeables.sql`
+porte le même marqueur depuis `CRM-057` (2026-08-11, décision 327). Le contrôle est donc **rouge
+depuis quatre jours**, sans rapport avec cette session.
+
+**Pourquoi ce n'est PAS l'élévation qui est fautive.** La migration `0029` documente sa mesure :
+`storage.objects` appartient à `supabase_storage_admin`, dont `postgres` n'est pas membre ; seul
+`supabase_admin` peut y créer une politique. Elle se restreint d'ailleurs à cet unique objet et
+délègue son prédicat à la migration `0028`, exécutée sous `postgres`, **précisément pour qu'aucune
+fonction `SECURITY DEFINER` ne naisse sous un superutilisateur**. L'élévation est délibérée,
+minimale et motivée ; c'est la **preuve** qui n'a pas suivi.
+
+**Pourquoi cette entrée n'est pas tranchée en session, alors que la mesure paraît suffire.** Le
+contrôle en cause est une garde d'**élévation de privilège** : il énumère les migrations autorisées
+à s'exécuter en superutilisateur. L'élargir — même d'un fichier, même à raison — relâche un contrôle
+d'autorisation backend, que `CLAUDE.md` §26 réserve explicitement au responsable. Un agent qui
+étendrait de lui-même la liste blanche des exécutions privilégiées poserait le précédent qu'une
+garde de sécurité se met à jour pour redevenir verte.
+
+**Deux remèdes possibles, et ils ne se valent pas** — l'arbitrage porte sur ce choix :
+
+1. la garde devient une **liste blanche explicite** (`0018` et `0029`), chaque entrée justifiée dans
+   le fichier de preuve, et toute autre élévation reste refusée ;
+2. la garde vérifie une **propriété** plutôt qu'une liste : tout fichier marqué doit contenir le
+   `raise exception` de contrôle de `current_user` que portent déjà les deux migrations, ce qui
+   couvre les futures sans les énumérer — au prix d'une garde qui n'interdit plus une élévation
+   nouvelle, seulement une élévation non contrôlée.
+
+**Porteur de la mise en œuvre :** `CRM-002` (scripts et contrat d'environnement), ou l'unité que le
+responsable désignera. **Action attendue :** trancher entre les deux remèdes.
+
+**Les deux autres anomalies du même harnais ne sont PAS consignées ici** : `docs/CloudWorker.md`
+§2.4 les nomme déjà comme des artefacts de cet environnement — `NPM_CA_FILE accepte un fichier
+illisible` parce que l'agent est `root` et que `[ -r ]` reste vrai sur un `chmod 000`, et
+`la reconstruction sans CA n'emprunte pas sa branche inactive` parce que le proxy TLS interposé fait
+échouer une image reconstruite sans certificat.
