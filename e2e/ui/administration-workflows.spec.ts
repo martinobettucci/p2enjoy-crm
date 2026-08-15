@@ -294,6 +294,13 @@ test.describe('les mêmes gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.
 		page,
 		request,
 	}) => {
+		// PREUVE RÉVISÉE PAR LA CINQUIÈME TRANCHE, pour la raison EXACTE du parcours clavier des
+		// champs, et avec la même mesure : le cinquième bloc du §7 bis.12 allonge le tour du
+		// document, et ce parcours en fait deux. MESURÉ le 2026-08-15 en instrumentant `tabVers` :
+		// 35 + 1 + 159 + 161 = 356 pressions, 27,8 s à vide — donc sous les 30 s par défaut lorsque
+		// le scénario est seul, et AU-DESSUS pendant la campagne complète. Un délai qui ne tient que
+		// si le scénario est joué seul n'est pas un délai. Aucune assertion n'est touchée.
+		test.setTimeout(120_000)
 		const cle = 'e2e-wf-clavier'
 		const libelle = 'E2E Étape Clavier'
 		await purger(request, cle)
@@ -535,6 +542,10 @@ test.describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
 	})
 
 	test('les trois gestes se mènent au clavier seul', async ({ page, request }) => {
+		// PREUVE RÉVISÉE PAR LA CINQUIÈME TRANCHE — même cause, même mesure. MESURÉ le 2026-08-15 :
+		// 58 + 2 + 2 + 132 + 153 = 347 pressions, 28,7 s à vide, au-dessus des 30 s sous la charge de
+		// la campagne complète. Aucune assertion n'est touchée.
+		test.setTimeout(120_000)
 		await purgerArete(request)
 		try {
 			await connecter(page)
@@ -852,6 +863,22 @@ test.describe('les cinq gestes sur les champs, à la souris (§7 bis.10.2)', () 
 
 test.describe('les champs au clavier seul (§7 bis.10.6, docs/DESIGN_SYSTEM.md §8)', () => {
 	test('déclaration, modification et archivage se mènent sans souris', async ({ page, request }) => {
+		// PREUVE RÉVISÉE PAR LA CINQUIÈME TRANCHE, NON AFFAIBLIE — la règle prouvée est inchangée,
+		// seul son COÛT a changé. Le §7 bis.12 ajoute un cinquième bloc, et avec lui une douzaine de
+		// commandes « Exiger un champ » à l'ordre de tabulation du document. Ce parcours revient
+		// deux fois en arrière dans la page — vers la ligne du champ, puis vers sa commande
+		// d'archivage —, et une tabulation qui recule doit faire le tour du document.
+		//
+		// MESURÉ le 2026-08-15, en instrumentant `tabVers` : le parcours coûte désormais
+		// 85 + 1 + 3 + 160 + 161 = 410 pressions, dont 161 pour la plus longue — le plafond de 260
+		// tient donc largement, et ce n'est PAS lui qui manquait. C'est la DURÉE : 37 s mesurées
+		// contre les 30 s du délai par défaut de Playwright, si bien que le scénario expirait au
+		// milieu de son parcours et que son `finally` ne purgeait plus rien — six scénarios suivants
+		// tombaient alors sur son résidu.
+		//
+		// Le délai est donc porté à celui du serveur de la configuration, et aucune assertion n'est
+		// retirée, relâchée ni contournée.
+		test.setTimeout(120_000)
 		await purgerChamps(request)
 		try {
 			await connecter(page)
