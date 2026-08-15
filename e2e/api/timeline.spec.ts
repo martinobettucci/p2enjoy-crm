@@ -352,7 +352,9 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 		// mesure à cet instant-là —, mais une timeline enregistre TOUT, y compris ce que les
 		// dix-neuf autres fichiers de preuve font à la même pile. Le reste est donc borné par le
 		// bas, et cette croissance est elle-même une démonstration : la trace est réelle.
-		expect(evenements.filter((e) => e.type === 'created')).toHaveLength(14)
+		// QUINZE DEPUIS `CRM-077` : l'affaire `…0cf` du §10.4 bis de `docs/SPEC-seed.md` naît comme
+		// les autres, et sa naissance s'inscrit comme les autres.
+		expect(evenements.filter((e) => e.type === 'created')).toHaveLength(15)
 		expect(evenements.filter((e) => e.type === 'created' && e.actor_id !== null)).toHaveLength(0)
 		expect(evenements.filter((e) => e.type === 'field_changed').length).toBeGreaterThanOrEqual(21)
 		expect(evenements.filter((e) => e.type === 'moved').length).toBeGreaterThanOrEqual(2)

@@ -15,6 +15,27 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La corbeille énumère ce qu'un geste rendrait inaccessible — `CRM-077`**
+  (`webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §3.5). Mettre un parent à la corbeille ne
+  descend pas sur ses enfants ; c'est l'**énumération** qui remplace cette descente, et elle manquait.
+  - **Trois règles de comptage, et chacune répond à une question précise.** Un enfant **déjà** en
+    corbeille n'est pas compté : il ne *devient* pas inaccessible, il l'est, et il porte sa propre
+    entrée où il se restaure séparément. Un enfant **archivé** est compté, lui : l'archivage est
+    réversible, si bien que le retour attendu d'un objet archivé est exactement ce que la mise à la
+    corbeille de son parent immobilise. Les affaires d'un channel lui-même en corbeille ne comptent
+    pas pour le track : elles sont retenues un cran plus bas.
+  - **Le compte est celui de l'appelant**, les deux lectures passant par les politiques existantes :
+    sur le même track, l'administratrice lit trois channels et sept affaires, la lectrice un et
+    deux. Aucune politique n'est ouverte ni élargie ici.
+  - **Une affaire de démonstration sous l'enfant vivant** (`docs/SPEC-seed.md` §10.4 bis), annoncée
+    par la livraison précédente : elle donne son compte non nul à l'énumération et devient le seul
+    cas du jeu où la garde de restauration se déclenche par le **second** niveau d'ascendance — un
+    channel vivant dont le track est en corbeille.
+  - **Deux grandeurs de l'inventaire du manuel étaient devenues fausses** en même temps que la
+    corbeille arrivait aux tracks et aux channels : « tracks actifs » et « channels actifs » y
+    comptaient les objets retirés. Leurs mesures excluent désormais la corbeille, et deux grandeurs
+    nouvelles la montrent séparément.
+
 - **Le seed démontre enfin la corbeille — `CRM-077`** (`docs/SPEC-seed.md` §10). Les migrations
   `0037` et `0038` avaient livré la corbeille et sa garde de restauration, et **aucune donnée ne les
   exerçait** : la corbeille du seed ne contenait qu'une card, si bien que le refus de restaurer un

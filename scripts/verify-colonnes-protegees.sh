@@ -401,15 +401,18 @@ psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
 
 titre "6. Le seed, inchangé"
 
-[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "14" ] \
-	&& ok "les quatorze cards du seed sont intactes" \
+# QUINZE DEPUIS `CRM-077`, cinquième tranche : l'affaire `…0cf` du §10.4 bis de
+# `docs/SPEC-seed.md` porte l'énumération d'un track en corbeille. Le compte reste EXACT — une
+# tolérance « au moins quatorze » ne dirait plus rien d'une sonde oubliée.
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "15" ] \
+	&& ok "les quinze cards du seed sont intactes" \
 	|| fail "le nombre de cards seedées a changé : une sonde n'a pas été nettoyée"
-[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "14" ] \
-	&& ok "quatorze adresses DISTINCTES : l'index unique tient" \
+[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "15" ] \
+	&& ok "quinze adresses DISTINCTES : l'index unique tient" \
 	|| fail "des adresses seedées se répètent"
 [ "$(psql_db -c "select count(*) from public.cards
 	                  where id::text like '5eed%'
-	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "14" ] \
+	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "15" ] \
 	&& ok "…et toutes ont la forme générée : aucune n'a été réécrite par ce harnais" \
 	|| fail "au moins une adresse seedée n'a pas la forme générée"
 

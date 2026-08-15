@@ -22,7 +22,7 @@
 #   5. les deux cards du workflow dérivé désignent la COPIE, jamais le workflow global ;
 #   6. le formulaire dérivé porte 7 champs, 15 règles et 1 exigence, tous remappés ;
 #   7. les sept valeurs ajoutées existent, dont les trois valeurs de la copie ;
-#   8. les volumes : 14 cards, 12 actives, une archivée, une en corbeille ;
+#   8. les volumes : 15 cards, 13 actives, une archivée, une en corbeille ;
 #   9. 21 valeurs, 5 commentaires, au moins 41 événements ;
 #  10. le seed est REJOUABLE alors que des cards occupent « prospection » ;
 #  11. une dérive du rattachement de « prospection » est RATTRAPÉE ;
@@ -69,6 +69,9 @@ CARD_CB=5eed0000-0000-4000-8000-0000000000cb
 CARD_CC=5eed0000-0000-4000-8000-0000000000cc
 CARD_CD=5eed0000-0000-4000-8000-0000000000cd
 CARD_CE=5eed0000-0000-4000-8000-0000000000ce
+# `CRM-077`, cinquième tranche : l'affaire sous `dossiers-2023`, l'enfant vivant d'un track en
+# corbeille (docs/SPEC-seed.md §10.4 bis).
+CARD_CF=5eed0000-0000-4000-8000-0000000000cf
 CHAMP_LIEN=5eed0000-0000-4000-8000-000000000086
 CHAMP_MOTIF=5eed0000-0000-4000-8000-000000000084
 CARDS_SEED_SQL="'5eed0000-0000-4000-8000-0000000000c1',
@@ -80,7 +83,7 @@ CARDS_SEED_SQL="'5eed0000-0000-4000-8000-0000000000c1',
 	'5eed0000-0000-4000-8000-0000000000c7',
 	'5eed0000-0000-4000-8000-0000000000c8',
 	'5eed0000-0000-4000-8000-0000000000c9',
-	'$CARD_CA', '$CARD_CB', '$CARD_CC', '$CARD_CD', '$CARD_CE'"
+	'$CARD_CA', '$CARD_CB', '$CARD_CC', '$CARD_CD', '$CARD_CE', '$CARD_CF'"
 COMMENTAIRES_SEED_SQL="'5eed0000-0000-4000-8000-0000000000d1',
 	'5eed0000-0000-4000-8000-0000000000d2',
 	'5eed0000-0000-4000-8000-0000000000d3',
@@ -343,10 +346,16 @@ fi
 
 titre "4. Preuve n° 4 — tout channel ACTIF porte au moins une card active"
 
+# `archived_at is null` NE SUFFIT PLUS À DIRE « ACTIF » depuis que `CRM-077` a livré la corbeille
+# aux channels : un channel EN CORBEILLE n'est pas un channel actif, et exiger qu'il porte une card
+# active ferait échouer ce contrôle sur un objet que le produit a précisément retiré. Le filtre
+# `deleted_at is null` est AJOUTÉ, il ne remplace rien : les deux états sont indépendants
+# (docs/SPEC-corbeille.md §3.1).
 channels_vides=$(psql_db -c "
 	select coalesce(string_agg(ch.slug, ', ' order by ch.position), '')
 	  from channels ch
 	 where ch.archived_at is null
+	   and ch.deleted_at is null
 	   and not exists (
 	         select 1 from cards c
 	          where c.channel_id = ch.id
@@ -478,8 +487,8 @@ verifier_volume() {
 	fi
 }
 
-verifier_volume 'cards seedées'                14 "select count(*) from cards where id in ($CARDS_SEED_SQL)"
-verifier_volume 'cards seedées actives'        12 "select count(*) from cards where id in ($CARDS_SEED_SQL) and archived_at is null and deleted_at is null"
+verifier_volume 'cards seedées'                15 "select count(*) from cards where id in ($CARDS_SEED_SQL)"
+verifier_volume 'cards seedées actives'        13 "select count(*) from cards where id in ($CARDS_SEED_SQL) and archived_at is null and deleted_at is null"
 verifier_volume 'card seedée archivée'          1 "select count(*) from cards where id in ($CARDS_SEED_SQL) and archived_at is not null"
 verifier_volume 'card seedée en corbeille'      1 "select count(*) from cards where id in ($CARDS_SEED_SQL) and deleted_at is not null"
 verifier_volume 'valeurs seedées de formulaire' 21 "select count(*) from card_field_values where card_id in ($CARDS_SEED_SQL)"
@@ -496,7 +505,7 @@ verifier_volume 'commentaires seedés'            5 "select count(*) from card_c
 # card naît une fois. Le reste est vérifié en MINORANT sur ces mêmes identifiants, ce qui suffit à
 # prouver que le seed a bien produit ce qu'il annonce sans faire passer une card utilisateur pour
 # une preuve manquante.
-verifier_volume 'événements created seedés (un par card, invariant)' 14 "select count(*) from card_events where card_id in ($CARDS_SEED_SQL) and type = 'created'"
+verifier_volume 'événements created seedés (un par card, invariant)' 15 "select count(*) from card_events where card_id in ($CARDS_SEED_SQL) and type = 'created'"
 verifier_volume 'cards seedées sans événement created'                 0 "select count(*) from cards c where c.id in ($CARDS_SEED_SQL) and not exists (select 1 from card_events e where e.card_id = c.id and e.type = 'created')"
 verifier_volume 'cards seedées avec plus d’un created'                 0 "select count(*) from (select card_id from card_events where card_id in ($CARDS_SEED_SQL) and type = 'created' group by card_id having count(*) > 1) d"
 
@@ -517,8 +526,8 @@ verifier_minorant 'événements seedés assigned'       2 "select count(*) from 
 verifier_minorant 'événements seedés channel_changed' 2 "select count(*) from card_events where card_id in ($CARDS_SEED_SQL) and type = 'channel_changed'"
 
 # Ce que l'empreinte de reproductibilité ne compare PAS, elle le remplace par ces deux propriétés.
-verifier_volume 'adresses seedées à la forme générée' 14 "select count(*) from cards where id in ($CARDS_SEED_SQL) and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$'"
-verifier_volume 'adresses seedées distinctes'          14 "select count(distinct email_local_part) from cards where id in ($CARDS_SEED_SQL)"
+verifier_volume 'adresses seedées à la forme générée' 15 "select count(*) from cards where id in ($CARDS_SEED_SQL) and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$'"
+verifier_volume 'adresses seedées distinctes'          15 "select count(distinct email_local_part) from cards where id in ($CARDS_SEED_SQL)"
 
 # --- 12 et 13. Ce que chaque profil voit -------------------------------------------------------
 
@@ -531,7 +540,8 @@ for compte in admin bizdev viewer; do
 		continue
 	fi
 
-	channels=$(lire "$jeton" "/rest/v1/channels?select=id,slug&archived_at=is.null" | jq -r '.[] | .id + "|" + .slug')
+	# `deleted_at=is.null` pour le motif du contrôle 4 : un channel en corbeille n'est pas actif.
+	channels=$(lire "$jeton" "/rest/v1/channels?select=id,slug&archived_at=is.null&deleted_at=is.null" | jq -r '.[] | .id + "|" + .slug')
 	if [ -z "$channels" ]; then
 		fail "$compte : aucun channel actif lisible — la RLS ou le seed ont changé"
 		continue

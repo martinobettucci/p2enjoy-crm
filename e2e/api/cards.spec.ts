@@ -157,7 +157,11 @@ test.afterEach(async ({ request }) => {
 })
 
 test.describe('C0 — le seed est dans l’état que le §9 déclare', () => {
-	test('quatorze cards, dont une archivée et une en corbeille, toutes avec une adresse conforme', async ({
+	// QUINZE DEPUIS LA CINQUIÈME TRANCHE DE `CRM-077` : l'affaire `…0cf` est posée sous
+	// `dossiers-2023`, l'enfant vivant d'un track en corbeille, pour donner son compte non nul à
+	// l'énumération (`docs/SPEC-seed.md` §10.4 bis). Le compte est RENFORCÉ et non relâché — « au
+	// moins quatorze » n'aurait plus rien dit de ce que la tranche ajoute.
+	test('quinze cards, dont une archivée et une en corbeille, toutes avec une adresse conforme', async ({
 		request,
 	}) => {
 		const reponse = await request.get(`${CARDS}?${FILTRE_SEED}&select=*&order=id`, {
@@ -166,14 +170,14 @@ test.describe('C0 — le seed est dans l’état que le §9 déclare', () => {
 		expect(reponse.status()).toBe(200)
 		const cards = (await reponse.json()) as Card[]
 
-		expect(cards).toHaveLength(14)
+		expect(cards).toHaveLength(15)
 		expect(cards.filter((c) => c.archived_at !== null)).toHaveLength(1)
 		expect(cards.filter((c) => c.deleted_at !== null)).toHaveLength(1)
 		expect(cards.filter((c) => c.owner_id === null && c.amount === null)).toHaveLength(1)
 		expect(new Set(cards.map((c) => c.currency)).size).toBeGreaterThan(1)
 
 		for (const card of cards) expect(card.email_local_part).toMatch(FORME_ADRESSE)
-		expect(new Set(cards.map((c) => c.email_local_part)).size).toBe(14)
+		expect(new Set(cards.map((c) => c.email_local_part)).size).toBe(15)
 	})
 
 	test('CRM-046 — les deux cards de « prospection » suivent le workflow dérivé', async ({
@@ -395,7 +399,7 @@ test.describe('C5 — lecture : lignes o à q du §8.1', () => {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect(vu.status()).toBe(200)
-		expect(await vu.json()).toHaveLength(14)
+		expect(await vu.json()).toHaveLength(15)
 	})
 
 	test('q — PREUVE N° 11 : un anonyme lit zéro ligne, sans erreur', async ({ request }) => {

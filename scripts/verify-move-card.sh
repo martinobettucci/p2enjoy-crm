@@ -599,8 +599,10 @@ titre '7. Le seed est inchangé par cette unité'
 	&& ok 'les cinq transitions « Marquer perdu » à commentaire sont là — la donnée qui exerce la n° 5' \
 	|| fail 'le graphe seedé a changé : les cinq transitions à commentaire ne sont plus cinq'
 
-[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "14" ] \
-	&& ok 'les quatorze cards du seed sont là, aux étapes déclarées' \
+# QUINZE DEPUIS `CRM-077`, cinquième tranche (docs/SPEC-seed.md §10.4 bis) : l'affaire `…0cf`
+# occupe `negociation` sous `dossiers-2023`, et ne franchit aucune arête.
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "15" ] \
+	&& ok 'les quinze cards du seed sont là, aux étapes déclarées' \
 	|| fail 'le nombre de cards seedées a changé'
 
 [ "$(psql_db -c "select count(*) from public.workflow_transitions where from_step_id = '$ETAPE_RELANCE' and to_step_id = '$ETAPE_REALISATION' and workflow_id = '$WF_GLOBAL';")" = "0" ] \

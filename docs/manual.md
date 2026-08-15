@@ -1281,8 +1281,10 @@ ne bougent qu'avec le produit.
 |---|---|
 | Tracks actifs | 3 |
 | Tracks archivés | 1 |
-| Channels actifs | 5 |
+| Tracks en corbeille | 1 |
+| Channels actifs | 6 |
 | Channels archivés | 1 |
+| Channels en corbeille | 1 |
 | États du catalogue actifs | 7 |
 | États du catalogue archivés | 1 |
 | Workflows | 2 |
@@ -1291,8 +1293,8 @@ ne bougent qu'avec le produit.
 | Déplacements déclarés par le workflow général | 11 |
 | Questions du formulaire actives | 12 |
 | Questions du formulaire retirées | 2 |
-| Affaires | 14 |
-| Affaires actives | 12 |
+| Affaires | 15 |
+| Affaires actives | 13 |
 | Affaires archivées | 1 |
 | Affaires en corbeille | 1 |
 | Réponses de formulaire | 21 |

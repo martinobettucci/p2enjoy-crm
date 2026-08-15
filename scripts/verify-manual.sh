@@ -75,10 +75,18 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 # jointure entre le document et la base. Le changer d'un côté sans l'autre rend le contrôle rouge,
 # ce qui est le comportement voulu — une grandeur renommée en douce cesserait d'être vérifiée.
 GRANDEURS=(
-	"Tracks actifs|select count(*) from tracks where archived_at is null"
+	# `archived_at is null` NE SUFFIT PLUS À DIRE « ACTIF » depuis que `CRM-077` a livré la
+	# corbeille aux tracks et aux channels : un objet retiré y était compté comme actif, et les
+	# deux grandeurs sont devenues fausses le jour où le seed a posé un track et un channel en
+	# corbeille. Les deux requêtes excluent donc `deleted_at`, et DEUX GRANDEURS NOUVELLES rendent
+	# la corbeille visible dans l'inventaire au lieu de la fondre dans l'actif — les trois états
+	# de `docs/SPEC-corbeille.md` §3.1 sont indépendants, l'annexe les compte séparément.
+	"Tracks actifs|select count(*) from tracks where archived_at is null and deleted_at is null"
 	"Tracks archivés|select count(*) from tracks where archived_at is not null"
-	"Channels actifs|select count(*) from channels where archived_at is null"
+	"Tracks en corbeille|select count(*) from tracks where deleted_at is not null"
+	"Channels actifs|select count(*) from channels where archived_at is null and deleted_at is null"
 	"Channels archivés|select count(*) from channels where archived_at is not null"
+	"Channels en corbeille|select count(*) from channels where deleted_at is not null"
 	"États du catalogue actifs|select count(*) from workflow_nodes_catalog where archived_at is null"
 	"États du catalogue archivés|select count(*) from workflow_nodes_catalog where archived_at is not null"
 	"Workflows|select count(*) from workflows"

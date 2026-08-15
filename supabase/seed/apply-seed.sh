@@ -379,11 +379,21 @@ REGLES=(
 
 # Cards de démonstration — docs/SPEC-cards.md §9, docs/SPEC-seed.md §2.12.
 #
-# Douze cards sur le workflow **global**, réparties sur quatre channels et trois tracks, aux
-# **sept** étapes du graphe. Chaque état du cycle de vie est représenté par une donnée réelle : dix
+# Treize cards sur le workflow **global**, réparties sur cinq channels et quatre tracks, aux
+# **sept** étapes du graphe. Chaque état du cycle de vie est représenté par une donnée réelle : onze
 # actives, **une archivée**, **une en corbeille**. Sans ces deux dernières, les deux suppressions
 # douces de `docs/SPEC-cards.md` §4 seraient documentées sans être démontrables, ce que
 # `CLAUDE.md` §8 refuse.
+#
+# LA TREIZIÈME EST AJOUTÉE PAR LA CINQUIÈME TRANCHE DE `CRM-077` (docs/SPEC-seed.md §10.4 bis), et
+# elle n'est pas décorative non plus : `…0cf` vit sous `dossiers-2023`, l'enfant VIVANT d'un track
+# EN CORBEILLE. Elle donne son compte non nul à l'énumération du §3.5 de `docs/SPEC-corbeille.md` —
+# sans elle, le track `…025` énumérerait un channel et zéro affaire, et la composition des deux
+# lignes ne serait démontrée par aucune donnée — et elle est le SEUL cas de garde à deux niveaux du
+# seed : son channel est vivant, son track ne l'est pas. Son étape est `negociation` par mesure et
+# non par goût : `livre` aurait faussé le préalable de `e2e/api/cards.spec.ts` — « plus aucune card
+# ACTIVE » à cette étape une fois `…0cd` archivée —, et `perdu` EXIGE `motif-perte`, si bien que
+# l'affaire y serait née avec une fiche incomplète.
 #
 # LES TROIS DERNIÈRES SONT AJOUTÉES PAR `CRM-046` (docs/SPEC-seed.md §9.3), et aucune n'est
 # décorative : elles ferment les trois étapes que `CRM-040` laissait sans card active — MESURÉ le
@@ -433,6 +443,7 @@ CARDS=(
 	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000065|Portail adhérents — MGEN Loire|5eed0000-0000-4000-8000-000000000012|64000.00|EUR|1|Recetter le module de cotisations|2026-09-04T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000cd|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Socle analytique — Vertuo|5eed0000-0000-4000-8000-000000000011|210000.00|EUR|1|-|-|-|-'
 	'5eed0000-0000-4000-8000-0000000000ce|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000067|Cursus DevSecOps — Institut Berthier|5eed0000-0000-4000-8000-000000000012|31000.00|EUR|1|-|-|-|-'
+	'5eed0000-0000-4000-8000-0000000000cf|5eed0000-0000-4000-8000-000000000037|5eed0000-0000-4000-8000-000000000063|Reprise du dossier Marchand|5eed0000-0000-4000-8000-000000000012|22000.00|EUR|1|-|-|-|-'
 )
 
 # Cards du workflow DÉRIVÉ — docs/SPEC-seed.md §9.3 et §9.4, ajoutées par `CRM-046`.
@@ -2196,7 +2207,7 @@ info "Fixture de copie : 1, de portée track sur « Conseil & IA », créée par
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 info "Champs exigés par transition : 1 liaison globale et 1 dérivée remappée — CRM-018"
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
-info "Cards : $(( ${#CARDS[@]} + ${#CARDS_DERIVE[@]} )), dont une archivée et une en corbeille, sur CINQ channels — docs/SPEC-cards.md §9"
+info "Cards : $(( ${#CARDS[@]} + ${#CARDS_DERIVE[@]} )), dont une archivée et une en corbeille, sur SIX channels — docs/SPEC-cards.md §9"
 info "  dont ${#CARDS[@]} sur le workflow global, à ses SEPT étapes, et ${#CARDS_DERIVE[@]} sur le workflow dérivé — CRM-046, docs/SPEC-seed.md §9.3"
 info "Valeurs de formulaire : $(( ${#VALEURS[@]} + ${#VALEURS_DERIVE[@]} )) sur 11 cards, dont une vidée explicitement et 3 dérivées — docs/SPEC-form-composer.md §6.11"
 info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
