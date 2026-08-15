@@ -13805,3 +13805,70 @@ vérifié par l'**absence** de ligne ; captures aux quatre paliers observées.
 
 **Où reprendre après cette tranche.** `CRM-076` reste `[~]` : les exigences de transition et la
 prévisualisation des effets restent dues.
+
+### Décision 389 — CRM-076, cinquième tranche : les exigences de transition, et l'écriture qui ne peut PAS être un `upsert`
+
+**2026-08-15, suite de la décision 388 — entrée écrite et committée avant la première ligne de
+code (`CLAUDE.md` §5).**
+
+**L'unité de la session** est `CRM-076`, désignée comme reprise en cours par la dernière entrée du
+journal et par le backlog. Le §7 bis.11.7 nommait deux manques ; cette tranche lève le premier — les
+**exigences de transition** que `docs/SPEC-transition-required-fields.md` pose et que `CRM-018` a
+livrées en base sans jamais leur donner d'écran. La prévisualisation des effets reste due, et
+l'unité reste `[~]`.
+
+**Ni modèle ni autorisations.** `workflow_transition_required_fields` existe depuis `CRM-018` avec
+sa clé primaire à deux colonnes, ses deux clés étrangères en cascade, ses trois triggers de
+cohérence et ses trois politiques. **Aucune migration n'est écrite.**
+
+**Cinq mesures prises sur la pile avant d'écrire la spécification, et qui décident de l'écran.**
+
+La première renverse le patron de la tranche précédente, et c'est la mesure centrale. Sur le couple
+`…071 × …081`, absent du seed : `POST` → **`201`** ; le même `POST` sans résolution → **`409`**,
+`23505`, `workflow_transition_required_fields_pkey` ; le même `POST` **avec**
+`Prefer: resolution=merge-duplicates` → **`403`**, `42501`, indice « GRANT UPDATE ON
+public.workflow_transition_required_fields TO authenticated » ; `PATCH` → **`403`**, `42501`. La
+grille du §7 bis.11 réglait ses cases par `upsert` ; ici l'`upsert` est **refusé**, et pour une
+raison voulue : la migration de `CRM-018` n'accorde que `insert` et `delete`, parce que sa
+spécification §2 pose qu'aucune valeur n'est mutable — « modifier une liaison signifie la supprimer
+puis en créer une autre ». Un `upsert` PostgREST a besoin du privilège `UPDATE` pour sa branche de
+conflit. Reprendre le patron voisin aurait donc produit un `403` incompréhensible sur le geste le
+plus courant du bloc. L'écriture est un `POST` simple, et le `23505` devient un refus métier lisible
+— « déjà exigé » — au lieu du repli générique de la tranche précédente.
+
+La deuxième décide de ce que le bloc affiche, et elle vient du code de `move_card` plutôt que de la
+table : la sixième garde exige l'**union** des champs `required` par règle à l'étape d'arrivée et
+des champs liés à la transition, restreinte aux champs non archivés. Un écran qui n'aurait montré
+que la table aurait donc écrit « aucune exigence » là où l'étape d'arrivée en impose trois par
+règle. Le bloc rend les exigences **effectives**, chacune portant son origine, et n'offre le retrait
+que sur celles qui lui appartiennent. MESURÉ : six règles `required` sur quatre étapes d'arrivée.
+
+La troisième décide des choix proposés : la base **accepte** une liaison vers un champ archivé —
+`201` sur `…071 × …087` — alors que `move_card` filtre `archived_at is null`. La liaison serait donc
+sans aucun effet. Les champs archivés sont écartés des choix, les liaisons existantes ne sont pas
+supprimées, et l'écran nomme celles qu'il rend ainsi sans effet.
+
+La quatrième donne le filtre de la lecture 7 : la table n'a que deux colonnes, aucun `workflow_id`
+n'y est dénormalisé, et la lecture sans filtre rend **les deux** liaisons du seed — la globale et la
+dérivée. La jointure interne `workflow_transitions!inner` avec `transition.workflow_id=eq.…` rend
+`200` et la seule liaison du workflow choisi. Sans elle, l'écran d'un workflow afficherait les
+exigences d'un autre.
+
+La cinquième donne le vocabulaire des refus : `400`/`23514` `required_field_workflow_mismatch` sur
+un champ du workflow dérivé lié à une arête globale ; `409`/`23503` sur un parent inconnu ;
+`403`/`42501` « new row violates row-level security policy » avec le jeton réel du
+`business_developer` ; et surtout **`200` avec `[]`** en `DELETE`, aussi bien pour le
+`business_developer` sur la liaison seedée — relue intacte — que pour l'administratrice sur un
+couple inexistant. Les deux sont indiscernables par la réponse : l'écran dit « rien n'a changé »
+sans prétendre savoir laquelle des deux causes s'applique.
+
+**Le seed est retrouvé à l'identique après ces mesures** : deux liaisons, quinze règles.
+
+**Preuves attendues avant de fermer la tranche** — §7 bis.12.8 : unitaires sur la lecture 7 et sa
+jointure, l'union des exigences effectives et leurs origines, l'exclusion des champs archivés, les
+deux écritures et la correspondance des refus ; E2E sur la vraie base des deux gestes à la souris et
+au clavier, le retrait vérifié par l'**absence** de ligne, l'exigence héritée d'une règle affichée
+sans commande de retrait ; captures aux quatre paliers observées.
+
+**Où reprendre après cette tranche.** `CRM-076` reste `[~]` : la **prévisualisation des effets**
+devient son dernier manque.

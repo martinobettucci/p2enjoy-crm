@@ -2554,6 +2554,158 @@ visibilité de champs qu'on n'a pas déclarés.
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, grille défilant dans son conteneur sous 768 px, case ouverte |
 | Seed | Le formulaire du workflow par défaut suffit. **Mesuré sur la pile, 2026-08-15** : **quinze** règles — sept `hidden`, six `required`, deux `visible` — pour six champs actifs et sept étapes, soit vingt-sept couples sans règle. Les preuves écrivent sur des couples que le seed laisse par défaut et les rendent au défaut dans leur `finally` : le seed retrouve exactement ses quinze règles |
 
+### 7 bis.12 Cinquième tranche : les exigences propres à une transition
+
+Le §7 bis.11.7 nommait deux manques ; celui-ci lève le premier — les **exigences de transition** de
+`docs/SPEC-transition-required-fields.md`, livrées en base par `CRM-018` et jusqu'ici sans écran.
+La prévisualisation des effets reste due ; l'unité reste `[~]`.
+
+Comme les quatre tranches précédentes, celle-ci ne touche NI au modèle NI aux autorisations :
+`workflow_transition_required_fields` existe depuis `CRM-018` avec sa clé primaire à deux colonnes,
+ses deux clés étrangères en cascade, ses trois triggers de cohérence et ses trois politiques, déjà
+prouvés en pgTAP. **Aucune migration n'est écrite.**
+
+#### 7 bis.12.1 Ce que la cinquième tranche lit
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 7 | `workflow_transition_required_fields` | `transition.workflow_id=eq.<workflow choisi>` par jointure **interne** sur `workflow_transitions` | `transition_id`, `field_id` | les exigences propres aux arêtes du workflow choisi |
+
+**LE FILTRE PASSE PAR UNE JOINTURE, ET CE N'EST PAS UN CHOIX DE STYLE.** La table n'a que deux
+colonnes — `docs/SPEC-transition-required-fields.md` §2 explique pourquoi le workflow n'y est
+délibérément pas dénormalisé : il se déduit des deux parents, et un trigger garantit leur égalité.
+Il n'existe donc littéralement aucune colonne locale à filtrer. MESURÉ le 2026-08-15 : la jointure
+`workflow_transitions!inner` avec `transition.workflow_id=eq.…` rend `200` et la seule liaison
+globale, là où la lecture sans filtre rend **les deux** liaisons du seed — celle du workflow global
+et celle de sa copie dérivée. Sans le filtre, l'écran d'un workflow afficherait les exigences d'un
+autre.
+
+L'ordre demandé est celui des identifiants, pour la raison des lectures 4 et 6 : la table ne porte
+ni la position d'un champ ni celle d'une étape. L'écran n'en dépend pas — les exigences sont
+**indexées** par transition, et l'ordre lisible vient des listes déjà lues.
+
+La lecture est émise **avec** les quatre autres : une exigence n'a de sens qu'entre une arête et un
+champ du même instant, et toute écriture des cinq blocs les rejoue toutes.
+
+#### 7 bis.12.2 Ce que l'écran doit montrer, et que la table seule ne dit pas
+
+Une transition n'exige pas seulement les champs qu'elle nomme. La sixième garde de `move_card`
+(`docs/SPEC-transition-required-fields.md` §1 et §5.1) exige l'**union** de deux ensembles, et son
+code le dit mot pour mot :
+
+1. les champs dont la **règle vaut `required` à l'étape d'arrivée** — c'est-à-dire une colonne de la
+   grille du §7 bis.11 ;
+2. les champs **liés explicitement à la transition** — c'est-à-dire cette table.
+
+Le tout restreint aux champs **non archivés** du workflow.
+
+**UN ÉCRAN QUI NE MONTRERAIT QUE LA SECONDE MOITIÉ MENTIRAIT PAR OMISSION.** Un administrateur qui
+lit « cette transition n'exige aucun champ » alors que l'étape d'arrivée exige trois champs par
+règle se tromperait sur ce que le produit refusera à ses utilisateurs. Pire, il déclarerait une
+exigence explicite déjà obtenue par la règle, ajoutant une ligne sans effet observable.
+
+L'écran rend donc, pour chaque transition, ses exigences **effectives**, chacune portant son
+origine :
+
+- **par la règle de l'étape d'arrivée** : lecture seule ici, et l'écran renvoie à la grille, qui est
+  l'endroit où cela se règle. MESURÉ sur le seed le 2026-08-15 : six règles `required` réparties sur
+  quatre étapes d'arrivée ;
+- **par cette transition** : le seul ensemble que ce bloc écrit.
+
+Un champ peut relever des deux : il est alors nommé une fois, avec ses deux origines, car la base
+accepte parfaitement les deux et `move_card` ne l'exige qu'une fois.
+
+#### 7 bis.12.3 Les deux gestes, et pourquoi le premier N'EST PAS un `upsert`
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Exiger un champ** pour une transition | `POST` **simple**, sans résolution de conflit | clé primaire `(transition_id, field_id)`, deux clés étrangères, trigger de même workflow |
+| **Ne plus l'exiger** | `DELETE` sur le couple `(transition_id, field_id)` | politique de suppression réservée à l'administrateur |
+
+**LA TRANCHE PRÉCÉDENTE RÉGLAIT PAR `upsert` ; CELLE-CI NE LE PEUT PAS, ET C'EST MESURÉ.** Le
+2026-08-15, sur la pile seedée :
+
+1. `POST` d'un couple absent → **`201`** ;
+2. `POST` du **même couple**, sans résolution → **`409`**, `23505`,
+   `workflow_transition_required_fields_pkey` ;
+3. `POST` du même couple **avec** `Prefer: resolution=merge-duplicates` → **`403`**, `42501`,
+   `permission denied for table workflow_transition_required_fields`, avec pour indice
+   « GRANT UPDATE ON public.workflow_transition_required_fields TO authenticated » ;
+4. `PATCH` → **`403`**, `42501`, le même indice.
+
+La cause est dans la migration de `CRM-018`, et elle est **volontaire** : seuls `insert` et `delete`
+sont accordés à `authenticated`, jamais `update`. Le §2 de sa spécification en donne le motif —
+« aucune valeur mutable : modifier une liaison signifie la supprimer puis en créer une autre ». Un
+`upsert` PostgREST a besoin du privilège `UPDATE` pour sa branche de conflit ; il est donc refusé
+avant même d'atteindre la politique. Reprendre le patron de la tranche précédente aurait produit un
+`403` incompréhensible sur le geste le plus courant du bloc.
+
+Le `23505` n'est donc **pas** un défaut d'écran, mais l'état normal d'une course : un autre
+administrateur a déclaré la même exigence entre la lecture et le clic. L'écran le traduit par « déjà
+exigé » et **recharge**, plutôt que par une alerte d'échec — l'état voulu par l'administrateur est
+précisément celui que la base porte déjà. C'est l'inverse exact du §7 bis.11.5, où le même code ne
+pouvait pas apparaître.
+
+#### 7 bis.12.4 Ce que l'écran refuse de proposer, et pourquoi
+
+**Les champs archivés ne sont pas proposés**, comme ils sont écartés des lignes de la grille
+(§7 bis.11.2). MESURÉ le 2026-08-15 : la base **accepte** une liaison vers un champ archivé —
+`201` sur le couple `…071 × …087` —, mais la sixième garde de `move_card` filtre
+`f.archived_at is null` : la liaison ne produirait **aucun** effet. Offrir ce choix ferait déclarer
+une exigence qui ne s'appliquerait jamais. Les liaisons existantes vers un champ archivé ne sont
+pour autant pas supprimées — elles redeviennent effectives à la restauration du champ, exactement
+comme ses règles — et l'écran **nomme** celles qu'il rend ainsi sans effet plutôt que de les taire.
+
+**Les champs déjà liés ne sont pas proposés une seconde fois** : le couple serait refusé en `23505`,
+et proposer un choix dont on connaît le refus est une faute d'écran, pas une garantie.
+
+**Les champs d'un autre workflow ne sont pas proposables**, la liste ne portant que ceux du workflow
+choisi. Le refus existe néanmoins en base et reste traduit : MESURÉ, `400` / `23514` /
+`required_field_workflow_mismatch` sur un champ du workflow dérivé lié à une arête globale.
+
+#### 7 bis.12.5 Les refus
+
+| Reçu | Nature | Mesuré le 2026-08-15 |
+|---|---|---|
+| `409` / `23505` | `deja-exige` | `POST` d'un couple existant, clé `workflow_transition_required_fields_pkey` |
+| `409` / `23503` | `reference-absente` | `POST` d'un `field_id` inconnu, clé `…_field_id_fkey` — l'arête ou le champ a disparu entre deux lectures |
+| `400` / `23514` | `workflow-different` | `required_field_workflow_mismatch`, champ du workflow dérivé sur une arête globale |
+| `403` / `42501` | `forbidden` | `POST` avec le jeton réel du `business_developer` : « new row violates row-level security policy ». Le même code répond au `PATCH` et à l'`upsert` de l'administratrice, pour une autre cause — le privilège manquant — et le message générique convient aux deux |
+| `200` avec zéro ligne | `sans-effet` | `DELETE` du `business_developer` sur la liaison seedée : `200`, `[]`, liaison **relue intacte**. MESURÉ aussi sur un couple **inexistant** avec le jeton de l'administratrice : `200` et `[]` également — les deux sont indiscernables par la réponse seule, donc l'écran dit « rien n'a changé » sans prétendre savoir laquelle des deux causes s'applique |
+
+#### 7 bis.12.6 États, accessibilité et responsive
+
+Le bloc est le **cinquième**, sous la grille et dans la même colonne : on n'ajoute pas d'exigence
+propre à une arête avant d'avoir vu ce que les règles exigent déjà.
+
+- Les exigences se lisent **par transition**, groupées comme les arêtes du §7 bis.9.6 et dans le
+  même ordre : l'administrateur retrouve chaque arête à la place où il vient de la lire.
+- Chaque exigence effective **nomme son origine** en toutes lettres ; la commande de retrait n'est
+  offerte que sur les exigences propres à la transition, et l'origine « règle » renvoie à la grille
+  plutôt que d'offrir un bouton qui refuserait.
+- L'ajout est un formulaire à **une** liste — la transition est déjà connue par la ligne qui l'ouvre
+  —, fermable au clavier, dont la liste ne contient que des choix acceptables (§7 bis.12.4). Un
+  workflow dont tous les champs actifs sont déjà exigés le **dit** au lieu d'offrir une liste vide.
+- Le bloc rend les quatre états du §5.8 ; un workflow sans arête ou sans champ actif dit ce que cela
+  signifie ; tout est atteignable au clavier ; la console reste vierge.
+
+#### 7 bis.12.7 Ce que cette tranche ne livre pas
+
+- la **prévisualisation des effets** exigée par la Definition of Done de `CRM-076` — dernier manque
+  de l'unité après cette tranche ;
+- le réglage en **lot** d'une exigence sur plusieurs transitions, pour le motif du §7 bis.11.7 ;
+- toute modification de la règle d'une étape depuis ce bloc : elle appartient à la grille, et deux
+  écrans qui écrivent la même ligne se contrediraient.
+
+#### 7 bis.12.8 Preuves attendues de la cinquième tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Lecture 7 émise avec sa jointure interne, ses colonnes et son filtre ; union des exigences effectives par transition — origine `règle`, origine `transition`, et le champ qui porte les deux ; champs archivés exclus de l'union et des choix ; choix d'ajout privés des champs déjà liés ; les deux écritures, dont le `POST` **sans** résolution de conflit ; correspondance des refus, `23505`, `23503`, `23514`, `42501` et `sans-effet` compris |
+| Interface | Les deux gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le retrait vérifié par l'**absence** de ligne ; l'exigence héritée d'une règle affichée **sans** commande de retrait |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, formulaire d'ajout ouvert, sans débordement de page |
+| Seed | Le workflow par défaut suffit. **Mesuré sur la pile, 2026-08-15** : **deux** liaisons en tout — une sur le workflow global (`Démarrer la réalisation` × `lien-proposition`) et une remappée sur la copie dérivée —, et **six** règles `required` sur quatre étapes d'arrivée. Les preuves écrivent sur des couples que le seed ne porte pas et les retirent dans leur `finally` : le seed retrouve exactement ses deux liaisons |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
