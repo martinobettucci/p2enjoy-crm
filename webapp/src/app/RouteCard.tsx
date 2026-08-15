@@ -439,7 +439,7 @@ function AffaireRetiree({ cheminChannel }: { readonly cheminChannel: string | nu
 		<div
 			data-testid="affaire-retiree"
 			role="status"
-			className="mx-auto max-w-[72ch] flex flex-col gap-3 px-4 py-10 text-center"
+			className="mx-auto max-w-[72ch] flex flex-col gap-3 px-4 py-8 text-center"
 		>
 			<h2 className="text-h2">{t('card.trashed.title')}</h2>
 			<p className="text-text-2">{t('card.trashed.body')}</p>

@@ -16305,3 +16305,61 @@ pas sur un verdict de harnais.
 **Où reprendre.** Inchangé : `CRM-079`. La prochaine session qui voudra un verdict de harnais
 installera Node 24 par le §2.1 bis, remontera la pile, et pourra alors mesurer les trente-neuf
 `verify-*.sh` pour la première fois.
+
+## 2026-08-15 — Node 24 installé, les harnais rendent enfin un verdict, et deux classes CSS étaient muettes
+
+**Suite directe de l'entrée précédente.** Node 24 posé par `nvm` (§2.1 bis de `docs/CloudWorker.md`)
+et la pile remontée, les `scripts/verify-*.sh` ont été lancés pour la première fois dans cet
+environnement. Quatre ont rendu un verdict avant que la boucle ne soit arrêtée — chacun prend de
+seize à quatre cents secondes, et **les cinquante** demanderaient plusieurs heures :
+
+```
+OK   verify-administration-arborescence.sh   (95 s)
+KO   verify-auth.sh                          (16 s)   1 anomalie sur 62 contrôles
+KO   verify-authz.sh                         (32 s)   3 anomalies sur 35 contrôles
+KO   verify-board.sh                         (395 s)  2 anomalies
+```
+
+**Ces anomalies ne sont pas des régressions : ce sont des ATTENTES FIGÉES qui ont dérivé du seed**,
+et elles ont dérivé précisément parce que personne ne pouvait exécuter ces harnais. `verify-authz.sh`
+attend `4/6/14` tracks, channels et affaires là où le seed en pose `5/8/15` depuis `CRM-046`, et le
+même écart tombe sur **les trois profils à la fois**, ce qui exclut une erreur de droits. C'est le
+mécanisme qu'INC-121 avait déjà relevé sur `verify-preuves-refus.sh`.
+
+**DEUX CLASSES CSS ÉTAIENT CITÉES SANS EXISTER, ET LE PRODUIT LES PERDAIT EN SILENCE.** C'est
+`scripts/lib/classes-css.mjs`, appelé par `verify-board.sh`, qui les a nommées — le contrôle que le
+§11 de `docs/DESIGN_SYSTEM.md` décrit précisément pour ce risque, et qu'aucune session n'avait pu
+exécuter :
+
+```
+classes citées : 222
+classes absentes du CSS produit : pl-5 py-10
+```
+
+`--spacing-5` et `--spacing-10` n'existent pas — l'échelle du §3 est fermée à 4, 8, 12, 16, 24, 32,
+48 —, donc ni `pl-5` ni `py-10` n'étaient **engendrées du tout**. `RouteCard.tsx` rendait le bloc
+« affaire retirée » **sans aucun rembourrage vertical**, et la liste d'énumération de
+`AdministrationArborescence.tsx` **sans aucun retrait**. C'est exactement le défaut que le §11
+décrit — « une classe dont le jeton n'est pas déclaré n'est pas engendrée du tout, et en silence »,
+comme `min-w-0` en son temps.
+
+**Tranché par la mesure plutôt que porté au registre**, la doctrine du 2026-08-15 le demandant
+lorsqu'aucun arbitrage n'est nécessaire : les deux classes prennent la valeur **inférieure la plus
+proche de l'échelle fermée** — `py-10` → `py-8` (32 px), `pl-5` → `pl-4` (16 px). Aucune valeur
+intermédiaire n'est ajoutée à l'échelle : elle est fermée par le §3, et l'ouvrir pour deux
+occurrences rendrait le contrôle inutile.
+
+**Vérifications.** `node scripts/lib/classes-css.mjs webapp/src webapp/dist` rend désormais
+**« aucune classe manquante »** sur 220 classes citées. `typecheck` vert, `test:unit`
+**1099/1099**, `e2e:ui corbeille.spec.ts` **24/24**, captures régénérées et observées —
+`docs/captures/CRM-077/card-affaire-retiree.jpg` porte le bloc qui n'avait aucun rembourrage.
+
+**Ce qui reste dû, et qui n'est PAS fait ici.** Les quarante-six autres harnais n'ont pas été
+exécutés, et les attentes figées de `verify-auth.sh`, `verify-authz.sh` et `verify-board.sh` n'ont
+pas été mises à jour : ce sont des preuves d'autres unités, et les corriger au passage aurait dépassé
+la tâche autorisée (`CLAUDE.md` §3.1, `docs/CloudWorker.md` §3.1). Une session doit prendre ce sujet
+pour unité : exécuter les cinquante harnais, et réviser chaque attente figée **avec son motif dans le
+fichier** (mécanisme de la décision 51) plutôt que de l'aligner en silence sur ce que la base rend.
+
+**Où reprendre.** Inchangé pour le produit : `CRM-079`. Le rattrapage des cinquante harnais est un
+sujet distinct, désormais possible, et il vaut mieux qu'il soit une unité à lui seul.

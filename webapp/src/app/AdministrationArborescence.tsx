@@ -559,7 +559,7 @@ function EnumerationConfirmation({ enumeration }: { readonly enumeration: EtatEn
 	return (
 		<div className="flex flex-col gap-1">
 			<p className="text-sm text-text-2">{t('admin.trash.confirm.holds')}</p>
-			<ul className="list-disc pl-5 text-sm text-text-2">
+			<ul className="list-disc pl-4 text-sm text-text-2">
 				{enumeration.lignes.map((ligne) => (
 					<li key={ligne.type}>{texteLigneEnumeration(ligne)}</li>
 				))}
