@@ -1631,6 +1631,24 @@ describe('la prévisualisation des effets (§7 bis.13)', () => {
 		await waitFor(() => expect(ecritures).toHaveLength(1))
 	})
 
+	it('NE MESURE QU’UNE FOIS par champ choisi : le formulaire ouvert ne boucle pas', async () => {
+		// DÉFAUT MESURÉ ET CORRIGÉ LE 2026-08-15 (décision 390). L'effet du formulaire dépendait de la
+		// callback du parent, construite dans une boucle sur les arêtes et donc recréée à chaque
+		// rendu : il se rejouait à chaque rendu, chaque mesure provoquait un rendu de plus, et les
+		// appels RPC partaient sans fin. Cette preuve ÉCHOUE avant le correctif — le compte croît
+		// indéfiniment — et fixe la propriété : une mesure par champ choisi, pas une par rendu.
+		const { previsualisations } = monter()
+		await attendreEcran()
+		const boutons = await screen.findAllByRole('button', { name: 'Exiger un champ' })
+		await userEvent.click(boutons[0] as HTMLElement)
+		await screen.findByTestId('effets-exigence')
+		const apresOuverture = previsualisations.length
+		expect(apresOuverture).toBe(1)
+		// Laisse largement le temps à une boucle de se manifester.
+		await new Promise((resoudre) => setTimeout(resoudre, 150))
+		expect(previsualisations).toHaveLength(apresOuverture)
+	})
+
 	it('mesure aussi le champ proposé d’office dans le formulaire d’exigence d’une transition', async () => {
 		// Sans cela, le champ que validera un administrateur pressé serait le seul dont l'effet
 		// resterait inconnu.

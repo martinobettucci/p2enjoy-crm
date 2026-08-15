@@ -1825,9 +1825,18 @@ function FormulaireExigence({
 	// LA PRÉVISUALISATION SUIT LE CHAMP CHOISI, y compris celui que le formulaire propose d'office :
 	// sans cet effet, le premier champ de la liste serait le seul dont l'effet resterait inconnu,
 	// alors que c'est celui qu'un administrateur pressé validera (§7 bis.13.4).
+	//
+	// LA CALLBACK PASSE PAR UN `ref`, ET CE N'EST PAS UN ORNEMENT. Le parent la construit dans une
+	// boucle sur les arêtes : elle ne peut pas être mémoïsée, et son identité change à chaque
+	// rendu. La mettre dans les dépendances rendait l'effet à chaque rendu, donc une mesure à
+	// chaque rendu, donc un rendu de plus — une boucle infinie d'appels RPC, mesurée le 2026-08-15.
+	// L'effet ne dépend donc QUE du champ retenu, qui est la seule cause légitime d'une nouvelle
+	// mesure.
+	const choisirRef = useRef(onChoisir)
+	choisirRef.current = onChoisir
 	useEffect(() => {
-		if (retenu !== '') onChoisir(retenu)
-	}, [retenu, onChoisir])
+		if (retenu !== '') choisirRef.current(retenu)
+	}, [retenu])
 
 	return (
 		<form

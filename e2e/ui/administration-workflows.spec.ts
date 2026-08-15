@@ -997,6 +997,19 @@ async function ouvrirGrille(page: Page): Promise<void> {
 	await expect(page.getByTestId('grille-visibilites')).toBeVisible()
 }
 
+/**
+ * Confirme la pose d'une exigence depuis la grille — sixième tranche, §7 bis.13.4.
+ *
+ * ELLE ATTEND D'ABORD LA MESURE : cliquer avant que la prévisualisation ne soit rendue prouverait
+ * seulement que le bouton existe, et laisserait passer une confirmation muette.
+ */
+async function confirmerExigence(page: Page): Promise<void> {
+	await expect(page.getByTestId('confirmation-exigence-case')).toBeVisible()
+	await expect(page.getByTestId('effets-case')).toBeVisible()
+	await page.getByRole('button', { name: 'Exiger ce champ' }).click()
+	await expect(page.getByTestId('confirmation-exigence-case')).toHaveCount(0)
+}
+
 /** La case d'un couple, désignée par la clé du champ et l'identifiant de l'étape. */
 function caseDe(page: Page, cleChamp: string, idEtape: string): Locator {
 	return page.locator(`[data-testid="case-visibilite"][data-champ="${cleChamp}"][data-etape="${idEtape}"]`)
@@ -1041,7 +1054,12 @@ test.describe('la grille champ × étape sur la vraie base (§7 bis.11)', () => 
 			expect(await regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
 
 			// --- Régler : la règle n'existe pas encore, l'`upsert` insère ---------------------------
+			// PREUVE RÉVISÉE PAR LA SIXIÈME TRANCHE, NON CONTOURNÉE (décision 390) : « Exigé » est le
+			// seul des quatre états qui puisse bloquer une affaire, et il passe désormais par une
+			// confirmation portant la prévisualisation (§7 bis.13.4). La règle prouvée — l'`upsert`
+			// insère puis modifie le même couple — est inchangée ; seul le geste gagne une étape.
 			await cellule.selectOption('required')
+			await confirmerExigence(page)
 			await expect
 				.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU))
 				.toBe('required')
@@ -1072,6 +1090,10 @@ test.describe('la grille champ × étape sur la vraie base (§7 bis.11)', () => 
 			const cellule = caseDe(page, 'e2e-wf-grille-clavier', ETAPE_PERDU)
 			await tabVers(page, cellule)
 			await cellule.selectOption('required')
+			// RÉVISÉE PAR LA SIXIÈME TRANCHE : la confirmation reçoit le focus, donc « Entrée »
+			// suffit — le parcours reste mené au clavier SEUL, ce que cette preuve existe pour dire.
+			await expect(page.getByRole('button', { name: 'Exiger ce champ' })).toBeFocused()
+			await page.keyboard.press('Enter')
 			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBe('required')
 
 			await tabVers(page, cellule)
@@ -1425,6 +1447,181 @@ test.describe('les exigences de transition sur la vraie base (§7 bis.12)', () =
 		const lignes = (await reponse.json()) as readonly unknown[]
 		expect(lignes).toHaveLength(2)
 	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.13 — La prévisualisation des effets, sur la vraie base
+// ---------------------------------------------------------------------------------------------
+//
+// LES NOMBRES ATTENDUS SONT MESURÉS, PAS DEVINÉS. Un champ créé par la preuve n'a de valeur sur
+// AUCUNE affaire : toute affaire lui est donc « vide », et les comptes sont ceux des affaires du
+// seed. MESURÉ sur la pile le 2026-08-15 pour l'étape `Perdu` : **1** affaire sur place et **9** à
+// l'entrée ; pour l'arête `Prospection → Relance` : **4**.
+//
+// CES NOMBRES SONT LIÉS AU SEED, et c'est voulu : ils tomberaient si le seed changeait, et c'est
+// précisément ce qu'une preuve de prévisualisation doit détecter. Une assertion qui se serait
+// contentée de « un nombre est affiché » aurait été verte sur un compte faux.
+
+test.describe('la prévisualisation des effets sur la vraie base (§7 bis.13)', () => {
+	test('régler une case sur « Exigé » N’ÉCRIT RIEN, et annonce les deux effets mesurés', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-previs', 'E2E Prévisualisation')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-previs', ETAPE_PERDU)
+			await cellule.selectOption('required')
+
+			// La confirmation porte les DEUX nombres — un seul aurait annoncé « aucun effet » sur les
+			// étapes où l'autre effet existe (§7 bis.13.1).
+			const effets = page.getByTestId('effets-case')
+			await expect(effets).toContainText('1 affaire est déjà à cette étape')
+			await expect(effets).toContainText('9 affaires ne pourront plus entrer')
+
+			// RIEN N'EST ÉCRIT tant que la confirmation n'est pas acceptée : c'est la propriété que
+			// l'écran seul ne prouverait pas, et la base la tranche.
+			expect(await regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
+			// La case montre le choix en cours, pas l'état enregistré.
+			await expect(cellule).toHaveValue('required')
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('renoncer rend la case à sa valeur enregistrée, et la base reste intacte', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-renonce', 'E2E Renoncement')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-renonce', ETAPE_PERDU)
+			await cellule.selectOption('required')
+			await expect(page.getByTestId('confirmation-exigence-case')).toBeVisible()
+			await page.getByRole('button', { name: 'Annuler' }).click()
+
+			await expect(page.getByTestId('confirmation-exigence-case')).toHaveCount(0)
+			await expect(cellule).toHaveValue('defaut')
+			// L'ABSENCE DE LIGNE est la seule preuve du renoncement : l'affichage, lui, pourrait mentir.
+			expect(await regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('le formulaire d’exigence d’une transition annonce son compte, mesuré sur le chemin', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		await creerChampDePreuve(request, 'e2e-wf-previs-arete', 'E2E Prévisualisation Arête')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			await blocExigences(page, TRANSITION_RELANCER)
+				.getByRole('button', { name: 'Exiger un champ' })
+				.click()
+			const formulaire = page.getByTestId('formulaire-exigence')
+			await expect(formulaire).toBeVisible()
+			await formulaire.getByLabel('Champ à exiger').selectOption({ label: 'E2E Prévisualisation Arête' })
+
+			// La phrase d'une TRANSITION parle du chemin, pas de l'étape : une exigence d'arête ne
+			// bloque que ce chemin-là (§7 bis.13.4).
+			const effets = page.getByTestId('effets-exigence')
+			await expect(effets).toContainText('4 affaires ne pourront plus emprunter ce chemin')
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('une exigence sans effet le DIT en toutes lettres, jamais par un silence', async ({
+		page,
+		request,
+	}) => {
+		// `Prospection` est l'étape initiale : AUCUNE arête n'y mène, donc rien à l'entrée. Et le
+		// champ de preuve est posé sur une étape que le seed laisse vide d'affaires — `Signature`
+		// n'en porte aucune —, donc rien sur place non plus. MESURÉ le 2026-08-15.
+		await purgerChamps(request)
+		await creerChampDePreuve(request, 'e2e-wf-sans-effet', 'E2E Sans Effet')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-sans-effet', ETAPE_INITIALE_SEED)
+			await cellule.selectOption('required')
+			const effets = page.getByTestId('effets-case')
+			// `Prospection` porte quatre affaires : elles sont « sur place », et rien à l'entrée.
+			await expect(effets).toContainText('4 affaires sont déjà à cette étape')
+			await expect(effets).not.toContainText('ne pourront plus entrer')
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('confirmer écrit la règle, et le seed retrouve ses quinze règles après purge', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-confirme', 'E2E Confirmation')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-confirme', ETAPE_PERDU)
+			await cellule.selectOption('required')
+			await confirmerExigence(page)
+			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBe('required')
+		} finally {
+			await purgerChamps(request)
+		}
+		// La cascade emporte la règle avec le champ : le seed doit retrouver ses quinze.
+		const reponse = await request.get(
+			`${CHEMIN_REGLES}?select=field_id&workflow_id=eq.${WORKFLOW_DEFAUT}`,
+			{ headers: enTetesService() },
+		)
+		expect((await reponse.json()) as readonly unknown[]).toHaveLength(15)
+	})
+})
+
+test.describe('captures de la prévisualisation (CLAUDE.md §16)', () => {
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : la confirmation d’une exigence reste lisible, sans débordement`, async ({
+			page,
+			request,
+		}) => {
+			await purgerChamps(request)
+			await creerChampDePreuve(request, 'e2e-wf-capture-previs', 'E2E Capture Prévisualisation')
+			try {
+				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+				await connecter(page)
+				await ouvrirEditeur(page)
+				await ouvrirGrille(page)
+				await caseDe(page, 'e2e-wf-capture-previs', ETAPE_PERDU).selectOption('required')
+				await expect(page.getByTestId('effets-case')).toBeVisible()
+				const debordement = await page.evaluate(
+					() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+				)
+				expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+				await capturer(page, `workflows-previsualisation-${palier.nom}`, UNITE)
+			} finally {
+				await purgerChamps(request)
+			}
+		})
+	}
 })
 
 test.describe('captures des exigences de transition (CLAUDE.md §16)', () => {
