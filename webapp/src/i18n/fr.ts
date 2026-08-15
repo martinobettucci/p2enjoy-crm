@@ -686,12 +686,12 @@ export const fr = {
 	'admin.workflows.rules.error': 'Les règles de visibilité n’ont pas pu être chargées.',
 	'admin.workflows.rules.column.field': 'Champ',
 	'admin.workflows.rules.cell.aria': 'Visibilité de « {champ} » à l’étape « {etape} »',
-	'admin.workflows.rules.state.defaut': 'Par défaut (affiché)',
+	'admin.workflows.rules.state.defaut': 'Par défaut',
 	'admin.workflows.rules.state.hidden': 'Masqué',
 	'admin.workflows.rules.state.visible': 'Affiché',
 	'admin.workflows.rules.state.required': 'Exigé',
 	'admin.workflows.rules.note.default':
-		'« Par défaut » et « Affiché » produisent le même formulaire : le premier n’enregistre aucune règle, le second en enregistre une explicite.',
+		'« Par défaut » affiche le champ, comme « Affiché » : les deux produisent le même formulaire, le premier sans enregistrer aucune règle, le second en enregistrant une règle explicite.',
 	'admin.workflows.rules.note.archived.one':
 		'Un champ archivé n’apparaît pas dans cette grille : il ne figure dans aucun formulaire. Ses règles sont conservées et redeviennent effectives s’il est restauré.',
 	'admin.workflows.rules.note.archived.many':

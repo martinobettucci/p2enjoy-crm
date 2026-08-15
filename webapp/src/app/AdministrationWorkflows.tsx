@@ -1434,7 +1434,11 @@ function CaseVisibilite({
 				etape: libelleEtape(etape),
 			})}
 			onChange={(evenement) => onRegler(evenement.target.value as EtatCase)}
-			className="min-h-[var(--size-target)] w-full rounded-sm border border-border bg-surface px-2"
+			// La largeur minimale n'est pas cosmétique : sans elle, la case se rétrécit à la largeur de
+			// l'en-tête de sa colonne et son état devient illisible — « Par dé… », « Aff… » —, ce qui
+			// est précisément l'information que la grille existe pour montrer. Mesuré à la capture du
+			// 2026-08-15. Le tableau s'élargit donc, et défile dans son conteneur (§7 bis.11.6).
+			className="min-h-[var(--size-target)] w-full min-w-[8.5rem] rounded-sm border border-border bg-surface px-2"
 		>
 			{ETATS_CASE.map((valeur) => (
 				<option key={valeur} value={valeur}>

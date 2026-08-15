@@ -1149,7 +1149,7 @@ describe('la grille des règles de visibilité (§7 bis.11)', () => {
 		const grille = await screen.findByTestId('grille-visibilites')
 		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
 		expect([...premiere.options].map((option) => option.textContent)).toEqual([
-			'Par défaut (affiché)',
+			'Par défaut',
 			'Masqué',
 			'Affiché',
 			'Exigé',

@@ -129,8 +129,22 @@ async function ouvrirEditeur(page: Page): Promise<void> {
 	await expect(page.getByTestId('ligne-etape')).toHaveCount(7)
 }
 
-/** Avance le focus par `Tab` jusqu'à `cible` — jamais de `focus()` programmatique (§8). */
-async function tabVers(page: Page, cible: Locator, max = 120): Promise<void> {
+/**
+ * Avance le focus par `Tab` jusqu'à `cible` — jamais de `focus()` programmatique (§8).
+ *
+ * LE PLAFOND EST PASSÉ DE 120 À 260 LE 2026-08-15, ET C'EST UNE PREUVE RÉVISÉE, PAS UN
+ * CONTOURNEMENT. La quatrième tranche ajoute la grille du §7 bis.11 sous les trois blocs
+ * précédents : six champs actifs × sept étapes, soit **quarante-deux** listes déroulantes de plus
+ * dans l'ordre de tabulation du document. Le parcours complet est donc plus long qu'avant, et trois
+ * preuves clavier antérieures — étape, arête, champ — épuisaient leurs 120 pressions avant de
+ * revenir sur leur cible lorsqu'elles repartaient du milieu du cycle.
+ *
+ * Ce qui a changé est l'écran, pas la règle : chaque cible reste atteignable au clavier SEUL, sans
+ * piège de focus et sans ordre inversé, ce que ces preuves continuent de vérifier. Le plafond n'est
+ * qu'une garde contre une boucle infinie ; le rabaisser ferait échouer une preuve exacte, et le
+ * supprimer laisserait une preuve fausse tourner sans fin.
+ */
+async function tabVers(page: Page, cible: Locator, max = 260): Promise<void> {
 	for (let tentative = 0; tentative < max; tentative++) {
 		if (
 			await cible
@@ -918,6 +932,189 @@ test.describe('captures du bloc des champs (CLAUDE.md §16)', () => {
 			)
 			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
 			await capturer(page, `workflows-champs-${palier.nom}`, UNITE)
+		})
+	}
+})
+
+// =============================================================================================
+// QUATRIÈME TRANCHE — la grille champ × étape des règles de visibilité
+// @verifies docs/SPEC-workflow-engine.md §7 bis.11 (la grille), §7 bis.11.2 (les champs archivés
+//           écartés, les cases par défaut), §7 bis.11.3 (l'`upsert` et la suppression),
+//           §7 bis.11.4 (les quatre états, `visible` explicite non replié), §7 bis.11.6 (le vrai
+//           `table`, et son défilement propre), §7 bis.11.8 (preuves attendues)
+// @verifies docs/SPEC-form-composer.md §3.1 (l'absence de règle vaut `visible`), §5
+// =============================================================================================
+//
+// LE SEED N'EST JAMAIS MODIFIÉ, et la règle est ici plus stricte qu'ailleurs : le seed **compte**
+// ses quinze règles avant de reconstruire la copie du workflow. Chaque scénario règle donc les
+// cases d'un champ QUI LUI APPARTIENT — clé préfixée `e2e-wf-` —, et son `finally` supprime ce
+// champ : la cascade `ON DELETE CASCADE` de `form_field_rules` (§3.3 du composeur) emporte ses
+// règles avec lui, et le seed retrouve exactement ses quinze.
+
+const CHEMIN_REGLES = `${URL_API}/rest/v1/form_field_rules`
+
+/** L'étape seedée `Perdu`, dernière du graphe, et `Prospection`, la première. */
+const ETAPE_PERDU = '5eed0000-0000-4000-8000-000000000067'
+
+/** La visibilité d'un couple en base, ou `null` si aucune règle ne le porte — la confirmation. */
+async function regleEnBase(
+	request: APIRequestContext,
+	idChamp: string,
+	idEtape: string,
+): Promise<string | null> {
+	const reponse = await request.get(
+		`${CHEMIN_REGLES}?select=visibility&field_id=eq.${idChamp}&step_id=eq.${idEtape}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as readonly { visibility: string }[]
+	return lignes[0]?.visibility ?? null
+}
+
+/** Crée le champ PROPRE à la preuve par la clé de service, et rend son identifiant. */
+async function creerChampDePreuve(request: APIRequestContext, cle: string, libelle: string): Promise<string> {
+	const reponse = await request.post(CHEMIN_CHAMPS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: {
+			workflow_id: WORKFLOW_DEFAUT,
+			workspace_id: WORKSPACE,
+			key: cle,
+			label: libelle,
+			type: 'text',
+			options: {},
+		},
+	})
+	expect(reponse.status(), 'création du champ de preuve').toBe(201)
+	const lignes = (await reponse.json()) as readonly { id: string }[]
+	const id = lignes[0]?.id
+	expect(id).toBeTruthy()
+	return id as string
+}
+
+/** Amène la grille à l'écran — quatrième bloc, sous les champs. */
+async function ouvrirGrille(page: Page): Promise<void> {
+	await page.getByTestId('grille-visibilites').scrollIntoViewIfNeeded()
+	await expect(page.getByTestId('grille-visibilites')).toBeVisible()
+}
+
+/** La case d'un couple, désignée par la clé du champ et l'identifiant de l'étape. */
+function caseDe(page: Page, cleChamp: string, idEtape: string): Locator {
+	return page.locator(`[data-testid="case-visibilite"][data-champ="${cleChamp}"][data-etape="${idEtape}"]`)
+}
+
+test.describe('la grille champ × étape sur la vraie base (§7 bis.11)', () => {
+	test('la grille montre les six champs actifs, les sept étapes, et les règles seedées', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirGrille(page)
+
+		// Six lignes, pas sept : le champ archivé du seed — `budget-previsionnel` — est écarté
+		// (§7 bis.11.2), et la note le dit au lieu de laisser chercher une ligne absente.
+		await expect(page.getByTestId('ligne-grille')).toHaveCount(6)
+		await expect(page.getByTestId('grille-note-archives')).toContainText('Un champ archivé')
+		await expect(page.getByTestId('case-visibilite')).toHaveCount(42)
+
+		// Les trois états seedés, lus à l'écran : `hidden`, `required`, et le `visible` EXPLICITE
+		// que le §7 bis.11.4 interdit de replier sur le défaut.
+		await expect(caseDe(page, 'budget', '5eed0000-0000-4000-8000-000000000061')).toHaveValue('hidden')
+		await expect(caseDe(page, 'budget', '5eed0000-0000-4000-8000-000000000063')).toHaveValue('required')
+		await expect(caseDe(page, 'source', '5eed0000-0000-4000-8000-000000000062')).toHaveValue('visible')
+		// Et un couple que le seed laisse sans règle : la case vaut le défaut.
+		await expect(caseDe(page, 'source', '5eed0000-0000-4000-8000-000000000063')).toHaveValue('defaut')
+	})
+
+	test('un administrateur règle une case, la change, puis la rend au défaut', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-grille', 'E2E Grille Souris')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-grille', ETAPE_PERDU)
+			await expect(cellule).toHaveValue('defaut')
+			expect(await regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
+
+			// --- Régler : la règle n'existe pas encore, l'`upsert` insère ---------------------------
+			await cellule.selectOption('required')
+			await expect
+				.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU))
+				.toBe('required')
+			await expect(cellule).toHaveValue('required')
+
+			// --- Changer : le MÊME geste sur un couple existant, que seul l'`upsert` accepte --------
+			// Une insertion simple rendrait ici `409` / `23505` — mesuré le 2026-08-15 (§7 bis.11.3).
+			await cellule.selectOption('hidden')
+			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBe('hidden')
+
+			// --- Rendre au défaut : la ligne DISPARAÎT, ce que l'affichage seul ne prouverait pas ---
+			await cellule.selectOption('defaut')
+			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
+			await expect(cellule).toHaveValue('defaut')
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('les deux gestes se mènent au clavier seul', async ({ page, request }) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-grille-clavier', 'E2E Grille Clavier')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+
+			const cellule = caseDe(page, 'e2e-wf-grille-clavier', ETAPE_PERDU)
+			await tabVers(page, cellule)
+			await cellule.selectOption('required')
+			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBe('required')
+
+			await tabVers(page, cellule)
+			await cellule.selectOption('defaut')
+			await expect.poll(async () => regleEnBase(request, idChamp, ETAPE_PERDU)).toBeNull()
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('le seed retrouve ses quinze règles après le passage des preuves', async ({ request }) => {
+		// La cascade de `form_field_rules` emporte les règles d'un champ supprimé (§3.3 du composeur) :
+		// c'est ce que ce contrôle vérifie, et non l'écran. Le seed compte ses règles avant de
+		// reconstruire la copie du workflow — un résidu le ferait échouer à la prochaine application.
+		const reponse = await request.get(
+			`${CHEMIN_REGLES}?select=field_id&workflow_id=eq.${WORKFLOW_DEFAUT}`,
+			{ headers: enTetesService() },
+		)
+		const lignes = (await reponse.json()) as readonly unknown[]
+		expect(lignes).toHaveLength(15)
+	})
+})
+
+test.describe('captures de la grille (CLAUDE.md §16)', () => {
+	test('la grille est capturée, une case ouverte sur ses quatre états', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirGrille(page)
+		await capturer(page, 'workflows-grille-1440', UNITE)
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : la grille défile dans son conteneur, la page non`, async ({ page }) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirGrille(page)
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+			// §7 du design system : le tableau, LUI, défile — sept étapes ne tiennent pas sous 768 px.
+			await capturer(page, `workflows-grille-${palier.nom}`, UNITE)
 		})
 	}
 })
