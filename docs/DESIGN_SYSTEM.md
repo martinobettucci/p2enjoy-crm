@@ -743,6 +743,55 @@ n'ajoute pas de bloc : elle s'insère dans les deux gestes qui peuvent bloquer u
   garde est ailleurs (backend). Désactiver le bouton aurait fait passer un défaut de mesure pour un
   refus de droit.
 
+### 5.16 Corbeille — `CRM-077`
+
+Quatrième surface d'administration, et la première dont l'**état vide est le cas normal**. Ce que
+l'écran lit, envoie et refuse est spécifié par `docs/SPEC-corbeille.md` §4 ; les règles ci-dessous ne
+disent que de quoi il a l'air.
+
+- **Un tableau du §5.9, et non la liste imbriquée du §5.13.** La distinction est celle que le §5.14 a
+  déjà tranchée : ici les trois types d'entrée — track, channel, affaire — portent **exactement les
+  mêmes colonnes**, parce qu'on n'y montre pas ce qu'un objet *est* mais ce qui lui *est arrivé* : son
+  type, son nom, qui l'a retiré, quand, et ce qu'il retient. Une arborescence n'aurait rien à
+  imbriquer — un objet en corbeille n'est plus sous son parent, c'est tout le propos du §3.3.
+
+- **Le type est un mot, jamais une icône seule.** « Track », « Channel », « Affaire » en toutes
+  lettres dans sa propre colonne. Une icône seule demanderait une légende, et le §9 réserve les icônes
+  à l'accompagnement d'un libellé, jamais à son remplacement.
+
+- **La date de retrait est une donnée technique** : à droite, en chiffres tabulaires (§5.9, §2), au
+  même format court que la dernière relève du §5.14. Deux dates du même produit ne se lisent pas dans
+  deux formats.
+
+- **« Auteur inconnu » est un texte, pas une cellule vide.** Même règle que « Jamais relevée »
+  (§5.14), et elle a ici un cas réel dans le seed : un objet retiré par la clé de service naît sans
+  auteur, et un profil supprimé détache le sien. La cellule vide du §5.9 reste réservée à une donnée
+  qui n'existe pas pour la ligne ; un auteur non enregistré est un fait à nommer.
+
+- **La colonne d'énumération porte trois états distincts, et aucun ne se confond avec un autre** : un
+  compte, « en cours de mesure », et « n'a pas pu être mesuré ». C'est la règle que le §5.15 vient de
+  poser pour la prévisualisation d'exigence, et pour le même motif — un blanc se lirait comme un zéro.
+  Une affaire, qui n'a pas d'enfant, laisse la cellule **vide** : là, c'est bien une donnée qui
+  n'existe pas pour la ligne.
+
+- **La commande « Restaurer » est un bouton secondaire discret, toujours visible** (§5.13), jamais au
+  survol seul, et **jamais désactivée d'avance**. Un enfant sous parent en corbeille porte la même
+  commande que les autres : la garde est backend, et une commande éteinte par l'interface ferait
+  passer une règle de la base pour une décision d'écran (`CLAUDE.md` §10).
+
+- **Aucune confirmation avant de restaurer.** Le §6 exige une confirmation pour les actions
+  **destructives** ; restaurer ne l'est pas, et c'est même le geste qui répare. En demander une
+  banaliserait celle qui protège vraiment.
+
+- **Le refus s'affiche dans la ligne concernée**, alerte `--color-danger-soft` /
+  `--color-danger-on-soft` portant `role="alert"` — jamais en tête d'écran. Même ancrage que le §5.13 :
+  un refus se lit près de ce qui l'a causé. Le succès, lui, est un `role="status"` en tête de la
+  section, l'entrée ayant disparu du tableau.
+
+- **L'état vide n'offre AUCUNE action.** C'est l'écart avec le §5.8, qui prévoit « message et
+  action » : ici il n'y a rien à faire d'une corbeille vide, et un bouton y serait un chemin vers
+  nulle part. Le message dit que l'état est sain, pas qu'il manque quelque chose.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

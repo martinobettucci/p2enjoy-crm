@@ -14784,3 +14784,59 @@ ces comptes sont révisées, aucune supprimée ni contournée, chacune avec son 
 (§4) avec ses niveaux E2E et visuel (§5). Les trois points ouverts du §6 — rétention, effacement
 définitif, visibilité pour un membre ordinaire — attendent toujours l'arbitrage du responsable et ne
 se tranchent pas en session.
+
+### Décision 405 — L'écran de corbeille, et l'embarquement d'un auteur est ambigu sur les TROIS tables
+
+**2026-08-15.** La décision 404 laissait `CRM-077` avec une seule tranche désignée : l'**écran** de
+corbeille (`docs/SPEC-corbeille.md` §4) et les niveaux E2E et visuel du §5. C'est l'unité de cette
+session, et ce commit documentaire précède la première ligne de code (`CLAUDE.md` §5).
+
+**La ligne de base a rendu un rouge, et il appartenait à cette unité.** Pile neuve, seed appliqué :
+`typecheck` vert, `test:unit` **988/988** sur 37 fichiers, `e2e:api` vert — mais `test:sql`
+**3 fichiers en échec sur 36**. La cause est la cinquième tranche elle-même : l'affaire `…0cf`
+(`docs/SPEC-seed.md` §10.4 bis) porte le seed de 14 à 15 cards, et trois preuves pgTAP figeant ce
+compte n'ont pas été révisées avec elle — la session précédente a poussé son commit de code sans
+mener ses preuves jusqu'au bout. Ce n'est donc pas un défaut ÉTRANGER à consigner au registre, c'est
+la dette de l'unité en cours, et elle est soldée avant tout le reste : `0012_cards`,
+`0015_colonnes_protegees` et `0034_previsualisation_exigence` révisées avec leur motif dans chaque
+fichier, `test:sql` de nouveau **36 fichiers / 2004 assertions**. La troisième révision méritait
+d'être comprise plutôt que recomptée : `date-signature-prevue` × `Signature` rend 2 à l'entrée et non
+1 parce que `…0cf` est posée sur `Negociation`, d'où part une arête vers `Signature` — MESURÉ.
+
+**La mesure qui décide de la forme des lectures de l'écran, et elle est plus large que prévu.**
+L'écran doit dire QUI a mis chaque objet à la corbeille. MESURÉ avec le jeton réel de
+l'administratrice : `select=id,profiles(id)` rend **`300`** et `PGRST201` sur les **trois** tables —
+et pour deux causes distinctes. Sur `cards`, trois clés étrangères vers `profiles` se disputent
+l'embarquement (`created_by`, `deleted_by`, `owner_id`). Sur `tracks` et `channels`, `deleted_by` est
+la **seule** clé étrangère vers `profiles`, et l'embarquement est pourtant ambigu : la relation
+plusieurs-à-plusieurs passant par `track_members` et `channel_members` suffit à créer la concurrence.
+C'est le point que je n'aurais pas deviné en lisant les migrations, et il généralise la mesure du
+§3.5 au lieu de la répéter — l'ambiguïté ne vient pas du nombre de clés étrangères, elle vient de ce
+que PostgREST compte aussi les tables d'appartenance. Une **lecture séparée de `profiles`** sur les
+identifiants distincts est donc la seule forme uniforme aux trois tables, et elle coûte une requête
+quel que soit le nombre d'entrées.
+
+**Un auteur nul n'est pas une anomalie, c'est un état documenté du seed.** MESURÉ : la card
+`Saisie erronée` (`…0c9`) porte `deleted_by` **NUL** — née en corbeille sous la clé de service, qui ne
+porte aucune revendication `sub`, valeur ensuite **figée** par le trigger de `0037` (§10.2 de
+`docs/SPEC-seed.md`). Une seconde cause produira le même état, `on delete set null` détachant l'audit
+d'un profil supprimé (INC-076). L'écran écrit donc « Auteur inconnu » plutôt que de laisser un blanc :
+le §5.9 du design system réserve la cellule vide à une donnée qui n'existe pas pour la ligne, et un
+auteur non enregistré est un fait.
+
+**Les trois issues de la restauration sont mesurées, pas supposées.** Le refus de la garde rend
+`400`, code `P0001`, message `parent_en_corbeille` et un `details` nommant quoi restaurer d'abord —
+MESURÉ sur `…038` avec le jeton de l'administratrice. Le refus de DROIT, lui, ne rend aucune erreur :
+la lectrice qui tente de restaurer `…025` reçoit **`200` et `[]`**, la clause `USING` filtrant la
+ligne avant la mise à jour (décision 70), et le track reste en corbeille — relu pour le vérifier.
+« Sans effet » est donc une troisième issue que l'écran doit nommer, sous peine d'annoncer une
+restauration qui n'a pas eu lieu.
+
+**Ce que la corbeille montre est ce que l'appelant peut lire**, et cela aussi est mesuré :
+l'administratrice y voit 1 track, 1 channel et 1 affaire ; la lectrice 1 track, 1 channel et
+**0 affaire**, les droits fins lui fermant le channel de `Saisie erronée`. La règle existante du §2.2
+est conservée telle quelle : le point 3 du §6 — la corbeille est-elle visible d'un membre ordinaire ?
+— reste **non arbitré**, et une session ne le tranche pas.
+
+**Où reprendre.** Après cette tranche : les preuves du §5 de la spécification, et le harnais dédié
+`scripts/verify-corbeille.sh` que la cinquième tranche a nommé comme restant dû.

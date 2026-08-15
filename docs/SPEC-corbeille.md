@@ -230,6 +230,132 @@ chaque objet — un objet en corbeille n'a plus de place dans les listes où il 
 
 L'effacement définitif **n'a pas de commande** tant que le §6 n'est pas arbitré.
 
+Les chapitres qui suivent détaillent l'écran. *Écrits par la sixième tranche, avant sa première
+ligne de code (`CLAUDE.md` §5).* Chaque règle porte sa mesure ou son motif.
+
+### 4.1 L'adresse, et pourquoi elle est hors de la table des routes
+
+`/reglages/corbeille`, atteinte depuis l'**index des réglages**, et absente de `ROUTES`.
+
+C'est le patron déjà suivi par les trois autres surfaces d'administration — `CRM-075`, `CRM-076`,
+`CRM-059` : la table `ROUTES` couvre **exactement** les entrées de navigation transverses, contrainte
+tenue par une assertion de `routes.test.tsx`. Une quatrième surface d'administration ne fait pas
+exception, et l'écran est chargé à la demande comme les trois autres — la plupart des sessions ne
+l'ouvrent pas, et elle n'a pas à peser sur leur premier rendu (`CLAUDE.md` §21).
+
+### 4.2 Ce que l'écran lit — QUATRE lectures, et l'ambiguïté est MESURÉE sur les TROIS tables
+
+Trois lectures rapportent les entrées, une par table, filtrées `deleted_at=not.is.null` et ordonnées
+`deleted_at.desc` côté serveur. Une quatrième rapporte les **noms** des profils qui ont mis ces
+objets à la corbeille, sur les identifiants distincts collectés dans les trois premières.
+
+**Pourquoi le nom de l'auteur n'est PAS lu par une jointure embarquée.** MESURÉ le 2026-08-15, avec
+le jeton réel de l'administratrice — `select=id,profiles(id)` rend **`300`** et `PGRST201` sur les
+**trois** tables, et pour **deux causes distinctes** :
+
+| Table | Relations concurrentes rendues par PostgREST |
+|---|---|
+| `cards` | `cards_created_by_fkey`, `cards_deleted_by_fkey`, `cards_owner_id_fkey` — **trois** clés étrangères vers `profiles` |
+| `tracks` | `tracks_deleted_by_fkey`, et la relation **plusieurs-à-plusieurs** passant par `track_members` |
+| `channels` | `channels_deleted_by_fkey`, et la relation **plusieurs-à-plusieurs** passant par `channel_members` |
+
+La seconde cause mérite d'être nommée, car elle se retrouvera : sur `tracks` et `channels`,
+`deleted_by` est la **seule** clé étrangère vers `profiles`, et l'embarquement est pourtant ambigu —
+la table d'appartenance suffit à créer la concurrence. Lever l'ambiguïté demanderait d'écrire un nom
+de contrainte dans la requête d'un écran, ce que `lireCardsClassables` (`inbox.ts`) a refusé une
+première fois et le §3.5 une deuxième. Une **lecture séparée de `profiles`** est la seule forme
+uniforme aux trois tables, et elle coûte **une** requête, quel que soit le nombre d'entrées.
+
+**Aucune quatrième lecture lorsque aucune entrée ne porte d'auteur.** Même règle que le §3.5 pour les
+channels d'un track sans channel : une requête dont la réponse est connue d'avance est une requête
+épargnée, et non le contournement d'un défaut.
+
+**Ce que l'écran montre est ce que l'APPELANT peut lire**, et c'est mesuré : sur le seed,
+l'administratrice lit **1 track, 1 channel et 1 affaire** en corbeille ; la lectrice lit **1 track,
+1 channel et 0 affaire** — l'affaire `Saisie erronée` vit dans un channel que les droits fins lui
+ferment. La corbeille suit donc la lecture de l'objet, ce que le §2.2 constatait déjà, et le §6
+point 3 reste **non arbitré** : la règle existante est conservée telle quelle, ni étendue ni
+restreinte.
+
+### 4.3 L'auteur inconnu est un fait à NOMMER, jamais une cellule vide
+
+MESURÉ sur le seed : la card `Saisie erronée` (`…0c9`) porte `deleted_by` **NUL**. Ce n'est pas une
+anomalie, c'est la conséquence documentée du §10.2 de `docs/SPEC-seed.md` — elle est née en corbeille
+sous la clé de service, qui ne porte aucune revendication `sub`, et le trigger de `0037` a **figé**
+cette valeur. Une seconde cause produira le même état : `on delete set null` détache `deleted_by`
+lorsque le profil est supprimé (INC-076).
+
+Dans les deux cas, l'objet **a été** retiré par quelqu'un dont la trace manque. C'est un fait, et le
+§5.9 du design system réserve la cellule vide à « une donnée qui n'existe pas pour cette ligne ».
+L'écran écrit donc **« Auteur inconnu »**, exactement comme l'état de la messagerie écrit « Jamais
+relevée » plutôt que de laisser un blanc (§5.14).
+
+### 4.4 L'énumération d'une entrée parente — la MÊME requête que la confirmation
+
+Une entrée de type track ou channel porte le compte de ses enfants rendus inaccessibles, obtenu par
+`compterEnfantsInaccessibles` (§3.5) — **la même fonction, les mêmes filtres, les mêmes deux
+lectures** que l'écran de confirmation d'une mise à la corbeille. C'est ce que la ligne « API » du §5
+demande, et c'est aussi ce qui fait que la preuve d'API déjà livrée couvre les deux usages.
+
+Le coût est nommé plutôt que tu : **deux** requêtes par entrée de type track, **une** par entrée de
+type channel, **aucune** pour une affaire — une affaire n'a pas d'enfant au sens du §3.5. Les
+énumérations sont demandées en parallèle après la liste, et **une énumération en échec n'invalide pas
+la liste** : l'entrée reste affichée, seule sa colonne de compte dit qu'elle n'a pas pu être lue. Une
+liste entière perdue parce qu'un compte a échoué serait une panne plus grande que celle qu'on
+signale.
+
+### 4.5 La restauration, et ses TROIS issues
+
+L'écran envoie, puis traduit ce qu'il reçoit. Il **ne calcule jamais d'avance** si la restauration
+est possible : masquer la commande d'un enfant sous parent en corbeille ferait porter à l'interface
+une règle qui vit dans la base (`CLAUDE.md` §10, §3.4).
+
+| Issue | Ce que la pile rend | MESURÉ le 2026-08-15 |
+|---|---|---|
+| appliquée | `200` et la ligne | — |
+| **refusée par la garde** | `400`, code `P0001`, message `parent_en_corbeille`, `details` nommant quoi restaurer d'abord | `PATCH /channels?id=eq.…038` avec le jeton réel de l'administratrice |
+| **sans effet** | `200` et `[]` | `PATCH /tracks?id=eq.…025` avec le jeton réel de la **lectrice** — le track reste en corbeille, relu |
+
+**« Sans effet » n'est ni un succès ni une erreur**, et c'est la troisième issue que l'écran doit
+nommer : la clause `USING` de la politique filtre la ligne **avant** la mise à jour, PostgREST rend
+`200` et zéro ligne (décision 70), et rien n'a changé. La confondre avec un succès afficherait une
+restauration qui n'a pas eu lieu — le défaut que `ResultatEcriture` traite déjà pour l'arborescence.
+C'est pourquoi chaque écriture porte un `select()` : sans lui, PostgREST ne rend aucun corps et
+« zéro ligne touchée » serait indistinguable d'un succès.
+
+**Le refus `parent_en_corbeille` dit quoi restaurer d'abord**, et l'écran le dit avec ses propres
+mots, jamais avec le `details` du serveur : ce texte est écrit dans une migration, en français, mais
+il n'est pas un texte d'interface — même position que le dictionnaire fermé des codes d'incident du
+§20.11.4 de `docs/SPEC-mail-subsystem.md`.
+
+**Aucune confirmation n'est demandée avant de restaurer.** Restaurer est réversible — le geste
+inverse est précisément celui qui a rempli cet écran — et non destructeur. Une confirmation ne se
+justifie que devant une perte ; en exiger une ici l'aurait banalisée là où elle compte.
+
+### 4.6 Les quatre états, et l'état vide est le cas NORMAL
+
+Chargement, erreur, vide, succès (§5.8). L'état vide n'est pas un accident à cet endroit : une
+corbeille vide est le bon état d'un produit sain. « La corbeille est vide » est donc une **phrase**,
+jamais un tableau sans ligne, et elle n'offre aucune action — il n'y a rien à y faire.
+
+Le succès d'une restauration est annoncé par un message `role="status"` **et** par la disparition de
+la ligne : l'entrée restaurée quitte la corbeille, et la liste est relue plutôt que corrigée en
+mémoire — une liste recomposée localement finirait par diverger de la base, et c'est la base qui
+décide de ce que contient la corbeille.
+
+### 4.7 Ce que l'écran ne fait délibérément PAS
+
+- **Aucun effacement définitif**, ni par entrée ni en masse : le §6 n'est pas arbitré, et livrer une
+  destruction irréversible sans règle de conservation serait le contraire d'une mesure de conformité.
+- **Aucun « vider la corbeille »**, pour la même raison.
+- **Aucun filtre, aucun tri, aucune pagination.** La corbeille est ordonnée par date de retrait
+  décroissante et rendue en entier. C'est une **limite assumée**, pas un oubli : le jour où une
+  rétention sera arbitrée (§6 point 1), le volume deviendra borné par elle ; d'ici là, un workspace
+  qui retirerait des milliers d'objets ferait transiter une liste non bornée. La limite est portée au
+  §7.
+- **Aucune mise à la corbeille depuis cet écran** : on n'y retire rien, on y rend. Les gestes de
+  retrait vivent là où vivent les objets.
+
 ## 5. Preuves attendues
 
 | Niveau | Preuves |
@@ -253,3 +379,16 @@ L'effacement définitif **n'a pas de commande** tant que le §6 n'est pas arbitr
 3. **La corbeille est-elle visible d'un membre ordinaire, ou du seul administrateur ?** Le §2.2
    montre qu'aujourd'hui la lecture suit celle du channel. Étendre ou restreindre est une décision
    de produit ; en l'absence d'arbitrage, la règle existante est conservée telle quelle.
+
+## 7. Limites connues
+
+1. **La corbeille est rendue en entier, sans pagination** (§4.7). Bornée en pratique par le volume
+   d'un workspace de démonstration, elle ne l'est par aucune règle tant que la rétention du §6 n'est
+   pas arbitrée. Une pagination posée aujourd'hui devrait l'être sur trois tables et un tri commun
+   calculé côté client — un coût qui n'a pas de contrepartie tant que le volume n'est pas mesuré
+   comme un problème (`CLAUDE.md` §21, « ne pas optimiser sans mesure »).
+2. **Le tri croisé des trois tables est fait côté client.** Chaque lecture est ordonnée par le
+   serveur, mais leur **fusion** l'est en mémoire : `deleted_at` est présent sur chaque ligne, le tri
+   est donc exact, et il porte sur ce qui a déjà été rapporté. Une pagination serveur, si elle est un
+   jour due, demandera une vue SQL réunissant les trois tables — et c'est la même unité qui portera
+   les deux.
