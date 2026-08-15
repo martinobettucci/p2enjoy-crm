@@ -232,16 +232,29 @@ T_VIEWER=$(jeton_de "$MAIL_VIEWER")
 n_service=$(http GET "$API/rest/v1/tracks?select=id&workspace_id=eq.$WS_SEED" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" >/dev/null; \
 	jq -r 'length' < "$CORPS")
-[ "$n_service" = "4" ] \
-	&& ok "les quatre tracks du seed existent, vus par la clé de service" \
+# RÉVISÉ PAR `CRM-077` : cinq tracks depuis que le seed en pose un en corbeille
+# (docs/SPEC-seed.md §10). La corbeille ne restreint PAS la lecture (docs/SPEC-corbeille.md §2.2) :
+# tous les profils la voient, comme ils voient l'archivé.
+[ "$n_service" = "5" ] \
+	&& ok "les cinq tracks du seed existent, vus par la clé de service" \
 	|| fail "la clé de service ne voit que $n_service tracks : le seed est-il appliqué ?"
 
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "3" ] \
-	&& ok "PREUVE N° 4 — le \`viewer\` ne voit que 3 des 4 tracks : son droit fin en masque un" \
-	|| fail "le viewer voit $(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER") tracks, attendu 3"
+# RÉVISÉ PAR `CRM-077` : « 3 sur 4 » devient « 4 sur 5 ». Le track en corbeille est visible du
+# `viewer` comme de tous — la corbeille ne restreint pas la lecture (docs/SPEC-corbeille.md §2.2) —,
+# et le seul track qui lui reste masqué est toujours `conseil-ia`.
+#
+# CE COMPTE VAUT DANS LE CONTEXTE DE CE HARNAIS, ET C'EST À NOTER — INC-113. Le §3 ci-dessus rejoue
+# `0010_droits_fins.sql` SEULE, ce qui ramène la politique de `tracks` à sa version `CRM-012` et
+# retire la transitivité livrée par `0034_lecture_track_transitive.sql` (décision 333). Sur une base
+# à jour, ce même `viewer` voit les CINQ tracks, `prospection` lui rouvrant `conseil-ia`. Ce harnais
+# mesure donc un produit d'une arbitration en arrière, et ses comptes ne sont pas comparables à ceux
+# de `e2e/api/tracks.spec.ts`, qui en attend cinq.
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "4" ] \
+	&& ok "PREUVE N° 4 — le \`viewer\` ne voit que 4 des 5 tracks : son droit fin en masque un" \
+	|| fail "le viewer voit $(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER") tracks, attendu 4"
 
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_ADMIN")" = "4" ] \
-	&& ok "RÈGLE 2 — l'administratrice porte le **même** droit fin et voit les 4 : jamais restreinte" \
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_ADMIN")" = "5" ] \
+	&& ok "RÈGLE 2 — l'administratrice porte le **même** droit fin et voit les 5 : jamais restreinte" \
 	|| fail "l'administratrice est restreinte par un droit fin, ce que le §2.2 interdit"
 
 [ "$(lire "channels?select=id&id=eq.$CH_GRANDS_COMPTES" "$T_VIEWER")" = "0" ] \
@@ -308,7 +321,10 @@ psql_db -c "
 	create policy tracks_lecture_membre on public.tracks for select to anon, authenticated
 		using (app.is_workspace_member(workspace_id));
 " >/dev/null
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "4" ] \
+# RÉVISÉ PAR `CRM-077` : quatre devient cinq. La dégradation DISCRIMINE toujours — le `viewer` en
+# voit 4 sous la politique des droits fins et 5 sous `is_workspace_member` —, et ce contrôle prouve
+# donc bien que celui du §4 aurait échoué.
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "5" ] \
 	&& ok "DÉGRADATION 1 — la politique revenue à \`is_workspace_member\` rouvre le track masqué : "\
 "le contrôle du §4 aurait donc bien échoué" \
 	|| fail "la dégradation 1 n'a rien changé : le contrôle du §4 ne prouve pas ce qu'il annonce"
@@ -374,12 +390,12 @@ restaure=$(psql_db -c "
 "résolution est de nouveau tolérante à l'absence de ligne, et la lecture est de nouveau réservée" \
 	|| fail "restauration incomplète : « $restaure », attendu « fine/externe/admin »"
 
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "3" ] \
-	&& ok "et le refus est de nouveau opposé au \`viewer\` : 3 tracks sur 4" \
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "4" ] \
+	&& ok "et le refus est de nouveau opposé au \`viewer\` : 4 tracks sur 5" \
 	|| fail "après restauration, le viewer voit encore le track qui doit lui être masqué"
 
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_BIZDEV")" = "4" ] \
-	&& ok "et le \`business_developer\`, qu'aucun droit fin ne vise, voit de nouveau les quatre" \
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_BIZDEV")" = "5" ] \
+	&& ok "et le \`business_developer\`, qu'aucun droit fin ne vise, voit de nouveau les cinq" \
 	|| fail "après restauration, le business_developer reste fermé"
 
 titre "8. Non-régression des unités précédentes"

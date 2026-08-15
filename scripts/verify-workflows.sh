@@ -18,7 +18,7 @@
 #   4. les garanties structurelles sont mesurées en base : au plus une étape initiale, une
 #      transition qui ne sort pas de son workflow, l'ordre attribué dans la portée du workflow ;
 #   5. le seed est **convergent** : rejoué, il laisse un workflow, sept étapes, onze transitions
-#      dont quatre exigeant un commentaire, et six channels rattachés ;
+#      dont quatre exigeant un commentaire, et huit channels rattachés ;
 #   6. INC-031 est **constatée** : `cards` n'existe toujours pas, et aucun trigger ne prétend porter
 #      la garde d'archivage ;
 #   7. le contrat d'API du §3.8 est rejoué avec les jetons réels des trois profils seedés ;
@@ -349,10 +349,14 @@ exigences=$(psql_db -c "select count(*) from public.workflow_transition_required
 # track (docs/SPEC-workflow-engine.md §4.12.7), et le compte tombe donc à cinq. Le contrôle est
 # **resserré** plutôt que supprimé — il compte ce qui suit le workflow **par défaut**, et un second
 # contrôle vérifie qu'aucun channel n'est resté sans board.
-[ "$channels_rattaches" = "5" ] \
-	&& ok "INC-029 : cinq channels du seed suivent le workflow par défaut — le sixième suit la "\
+# Révisé de nouveau par `CRM-077` : les deux channels posés sous le track en corbeille
+# (docs/SPEC-seed.md §10) naissent rattachés au workflow par défaut comme les autres — la contrainte
+# `NOT NULL` de `CRM-033` ne connaît pas la corbeille. Le compte passe donc de cinq à sept, et le
+# huitième reste `prospection`, sur la copie de portée `track`.
+[ "$channels_rattaches" = "7" ] \
+	&& ok "INC-029 : sept channels du seed suivent le workflow par défaut — le huitième suit la "\
 "copie de portée \`track\` livrée par \`CRM-032\` et rattachée par \`CRM-033\`" \
-	|| fail "channels rattachés au workflow par défaut : $channels_rattaches, attendu 5"
+	|| fail "channels rattachés au workflow par défaut : $channels_rattaches, attendu 7"
 
 sans_board=$(psql_db -c "select count(*) from public.channels
                           where workspace_id = '$WS_SEED' and workflow_id is null;")

@@ -130,6 +130,47 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-113 — `verify-droits-fins.sh` rejoue `0010` SEULE et mesure donc un produit d'une arbitration en arrière, ses comptes divergeant de ceux de la suite d'API
+
+**Constaté le 2026-08-15** en révisant les comptes de ce harnais pour la quatrième tranche de
+`CRM-077`. **Étranger à cette tranche**, et de la même famille qu'INC-112 : un harnais rejoue une
+migration sans ses successeurs. Comportement du produit laissé inchangé
+(`docs/CloudWorker.md` §3.1).
+
+**Le mécanisme.** Le §3 du harnais éprouve l'idempotence en rejouant `MIGRATION_FILE`, c'est-à-dire
+`supabase/migrations/0010_droits_fins.sql`, **seule**. Or `0034_lecture_track_transitive.sql`
+(décision 333) REDÉFINIT ensuite la politique de lecture des tracks pour la rendre TRANSITIVE : un
+track est lisible dès qu'un de ses channels l'est. Rejouer `0010` seule ramène donc la politique à
+sa version `CRM-012` et **retire la transitivité** pour tout le reste de l'exécution.
+
+**MESURÉ**, en rejouant `0010` seule sur une base à jour puis en lisant avec le jeton réel du
+`viewer` :
+
+```
+politique après rejeu : (app.resolve_track_access(workspace_id, id) <> 'none')
+viewer voit            : pipeline-2024, legacy-2023, studio-web, formation   (4)
+```
+
+alors que sur une base à jour le même `viewer` voit les **cinq** tracks, `prospection` lui rouvrant
+`conseil-ia` par transitivité.
+
+**Conséquence, et c'est elle qui trompe.** Les comptes de ce harnais ne sont **pas comparables** à
+ceux de `e2e/api/tracks.spec.ts`, qui mesure le produit réel et en attend cinq. Deux preuves du
+dépôt affirment des nombres différents pour la même question, et rien dans les fichiers ne disait
+pourquoi. Ce n'est pas une contradiction du produit : c'est un harnais qui mesure un état qu'il a
+lui-même créé. Les comptes ont été portés à leur valeur MESURÉE DANS CE CONTEXTE — « 4 sur 5 » — et
+le motif est désormais écrit à l'endroit du contrôle.
+
+**Ce qu'il faut noter pour ne pas se tromper deux fois.** L'attente d'origine — « 3 sur 4 » — était
+**correcte** dans le contexte du harnais : seul le track ajouté par `CRM-077` la déplace à
+« 4 sur 5 ». La dégradation de non-complaisance associée reste elle aussi **discriminante** — 4 sous
+les droits fins, 5 sous `is_workspace_member` —, et continue donc de prouver ce qu'elle annonce.
+
+**Ce que la correction devra faire.** Rejouer le **préfixe complet** des migrations, comme le fait
+le `migrations-runner`, plutôt qu'un fichier isolé — même remède qu'INC-112, dont ce défaut est une
+seconde manifestation. En attendant, toute lecture de ce harnais doit savoir qu'il éprouve la
+politique de `CRM-012` et non celle de la décision 333.
+
 ### INC-112 — La restauration de `verify-tracks.sh` rejoue une migration ANTÉRIEURE à `0037` et ROUVRE l'audit de la corbeille qu'elle avait fermé
 
 **Constaté le 2026-08-15** en exécutant `scripts/verify-tracks.sh` pendant la quatrième tranche de
