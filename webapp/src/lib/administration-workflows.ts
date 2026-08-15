@@ -1,10 +1,13 @@
 // @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
-//       troisième et quatrième tranches
+//       troisième, quatrième et cinquième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
 //       §7 bis.5 (validation de forme), §7 bis.7 (ce que cette tranche ne livre pas),
 //       §7 bis.9 (deuxième tranche : l'édition des transitions), §3.4 (modèle des arêtes),
 //       §7 bis.10 (troisième tranche : l'édition des champs de formulaire),
-//       §7 bis.11 (quatrième tranche : la grille champ × étape des règles de visibilité)
+//       §7 bis.11 (quatrième tranche : la grille champ × étape des règles de visibilité),
+//       §7 bis.12 (cinquième tranche : les exigences propres à une transition)
+// @spec docs/SPEC-transition-required-fields.md §1 (l'union des deux ensembles),
+//       §2 (la table à deux colonnes), §4 (autorisations), §5.1 (la sixième garde de `move_card`)
 // @spec docs/SPEC-form-composer.md §2.2 (modèle `form_fields`), §2.3 (les quinze types),
 //       §2.4 (`options` et ce que la base n'y vérifie pas), §2.5 (la clé durable),
 //       §2.6 (ordre des champs), §2.7 (autorisations, aucun privilège `DELETE`),
@@ -1353,6 +1356,306 @@ export async function rendreAuDefaut(
 			.delete()
 			.eq('field_id', idChamp)
 			.eq('step_id', idEtape)
+			.select('field_id'),
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les exigences propres à une transition — docs/SPEC-workflow-engine.md §7 bis.12
+// ---------------------------------------------------------------------------------------------
+//
+// @spec CRM-076 (docs/BACKLOG.md) — cinquième tranche : les exigences de transition
+// @spec docs/SPEC-workflow-engine.md §7 bis.12 (lecture 7, union effective, deux gestes, refus)
+// @spec docs/SPEC-transition-required-fields.md §1 (l'union des deux ensembles), §2 (la table à
+//       deux colonnes, aucune valeur mutable), §4 (autorisations), §5.1 (`move_card`)
+//
+// AUCUNE MIGRATION N'ACCOMPAGNE CETTE TRANCHE : `workflow_transition_required_fields` existe depuis
+// `CRM-018` avec sa clé primaire à deux colonnes, ses deux clés étrangères en cascade, ses trois
+// triggers de cohérence et ses trois politiques.
+
+/** Une exigence propre à une arête, telle que la lecture 7 la rend. */
+export type ExigenceAdministrable = {
+	readonly transition_id: string
+	readonly field_id: string
+}
+
+export const COLONNES_EXIGENCE_ADMIN = 'transition_id, field_id'
+
+/**
+ * Les exigences propres aux arêtes d'un workflow — lecture 7 du §7 bis.12.1.
+ *
+ * LE FILTRE PASSE PAR UNE JOINTURE INTERNE, ET CE N'EST PAS UN CHOIX DE STYLE. La table n'a que
+ * deux colonnes : `docs/SPEC-transition-required-fields.md` §2 explique pourquoi le workflow n'y est
+ * délibérément pas dénormalisé — il se déduit des deux parents, et un trigger garantit leur égalité.
+ * Il n'existe donc aucune colonne locale à filtrer. MESURÉ le 2026-08-15 : la lecture SANS filtre
+ * rend les **deux** liaisons du seed, celle du workflow global et celle de sa copie dérivée ; la
+ * jointure `workflow_transitions!inner` avec `transition.workflow_id=eq.…` rend `200` et la seule
+ * liaison du workflow demandé. Sans elle, l'écran d'un workflow afficherait les exigences d'un
+ * autre.
+ *
+ * La jointure est demandée en `select` mais **écartée du résultat** : elle ne sert qu'à filtrer, et
+ * la rendre obligerait chaque appelant à ignorer une colonne qui ne dit rien de plus que le
+ * paramètre déjà connu.
+ */
+export async function lireExigences(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly ExigenceAdministrable[]>> {
+	try {
+		const reponse = await client
+			.from('workflow_transition_required_fields')
+			.select(`${COLONNES_EXIGENCE_ADMIN}, transition:workflow_transitions!inner(workflow_id)`)
+			.eq('transition.workflow_id', idWorkflow)
+			.order('transition_id')
+			.order('field_id')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lues = (reponse.data ?? []) as readonly { transition_id: string; field_id: string }[]
+		return pret(
+			lues.map((ligne) => ({ transition_id: ligne.transition_id, field_id: ligne.field_id })),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * L'origine d'une exigence effective — §7 bis.12.2.
+ *
+ * `regle` vient de la grille du §7 bis.11 : le champ porte `required` à l'étape d'ARRIVÉE de
+ * l'arête. `transition` vient de la table de liaison. `les-deux` existe parce que la base accepte
+ * parfaitement les deux et que `move_card` n'exige alors le champ qu'une fois : le taire ferait
+ * croire à une exigence retirable là où la règle continuerait de l'imposer.
+ */
+export type OrigineExigence = 'regle' | 'transition' | 'les-deux'
+
+export type ExigenceEffective = {
+	readonly champ: ChampAdministrable
+	readonly origine: OrigineExigence
+}
+
+/**
+ * Les exigences EFFECTIVES d'une arête — l'union du §7 bis.12.2.
+ *
+ * CE N'EST PAS LA TABLE DE LIAISON, ET C'EST TOUT LE POINT DE CE BLOC. La sixième garde de
+ * `move_card` (`docs/SPEC-transition-required-fields.md` §1 et §5.1) exige l'union des champs dont
+ * la règle vaut `required` à l'étape d'arrivée ET des champs liés à la transition, restreinte aux
+ * champs non archivés. Un écran qui n'aurait montré que la seconde moitié aurait écrit « aucune
+ * exigence » là où l'étape d'arrivée en impose trois par règle, et fait déclarer des liaisons sans
+ * effet observable.
+ *
+ * LES CHAMPS ARCHIVÉS SONT ÉCARTÉS, comme dans la garde elle-même (`f.archived_at is null`). MESURÉ
+ * le 2026-08-15 : la base ACCEPTE une liaison vers un champ archivé — `201` —, mais elle ne produit
+ * aucun effet. Elle n'est pas supprimée pour autant, et `exigencesSansEffet` la nomme.
+ *
+ * L'ordre est celui des champs, c'est-à-dire leur `position` : la table ne porte aucun ordre, et
+ * celui du formulaire est le seul que l'administrateur ait déjà sous les yeux.
+ */
+export function exigencesEffectives(
+	transition: TransitionAdministrable,
+	champs: readonly ChampAdministrable[],
+	regles: readonly RegleAdministrable[],
+	exigences: readonly ExigenceAdministrable[],
+): readonly ExigenceEffective[] {
+	const parRegle = new Set(
+		regles
+			.filter((regle) => regle.step_id === transition.to_step_id && regle.visibility === 'required')
+			.map((regle) => regle.field_id),
+	)
+	const parLiaison = new Set(
+		exigences.filter((lien) => lien.transition_id === transition.id).map((lien) => lien.field_id),
+	)
+	const effectives: ExigenceEffective[] = []
+	for (const champ of champs) {
+		if (champ.archived_at !== null) continue
+		const regle = parRegle.has(champ.id)
+		const liaison = parLiaison.has(champ.id)
+		if (!regle && !liaison) continue
+		effectives.push({ champ, origine: regle && liaison ? 'les-deux' : regle ? 'regle' : 'transition' })
+	}
+	return effectives
+}
+
+/**
+ * Les liaisons d'une arête qui ne produisent AUCUN effet — §7 bis.12.4.
+ *
+ * Une liaison vers un champ archivé reste en base et redevient effective à la restauration du champ,
+ * exactement comme ses règles. La taire laisserait un administrateur croire qu'une exigence
+ * s'applique. Une liaison dont le champ est introuvable dans la liste lue n'en fait pas partie : la
+ * cascade l'a déjà emportée, ou une lecture plus récente l'a vue disparaître.
+ */
+export function exigencesSansEffet(
+	transition: TransitionAdministrable,
+	champs: readonly ChampAdministrable[],
+	exigences: readonly ExigenceAdministrable[],
+): readonly ChampAdministrable[] {
+	const lies = new Set(
+		exigences.filter((lien) => lien.transition_id === transition.id).map((lien) => lien.field_id),
+	)
+	return champs.filter((champ) => champ.archived_at !== null && lies.has(champ.id))
+}
+
+/**
+ * Les champs qu'un administrateur peut encore lier à cette arête — §7 bis.12.4.
+ *
+ * DEUX EXCLUSIONS, ET AUCUNE N'EST COSMÉTIQUE : un champ archivé produirait une liaison sans effet
+ * (MESURÉ, `201` puis ignorée par `move_card`), et un champ déjà lié serait refusé en `23505`
+ * (MESURÉ). Proposer un choix dont on connaît le refus est une faute d'écran, pas une garantie.
+ *
+ * UN CHAMP DÉJÀ EXIGÉ PAR LA RÈGLE DE L'ÉTAPE D'ARRIVÉE RESTE PROPOSABLE, et c'est délibéré : la
+ * règle peut changer, la liaison est un engagement propre à ce chemin, et la base accepte les deux.
+ * L'écran dit ce que cette liaison ajoute — rien pour l'instant — plutôt que de trancher à la place
+ * de l'administrateur.
+ */
+export function champsLiables(
+	transition: TransitionAdministrable,
+	champs: readonly ChampAdministrable[],
+	exigences: readonly ExigenceAdministrable[],
+): readonly ChampAdministrable[] {
+	const lies = new Set(
+		exigences.filter((lien) => lien.transition_id === transition.id).map((lien) => lien.field_id),
+	)
+	return champs.filter((champ) => champ.archived_at === null && !lies.has(champ.id))
+}
+
+export type NatureRefusExigence =
+	/** `409` — `23505`. Un autre administrateur a déclaré la même exigence entre la lecture et le clic. */
+	| 'deja-exige'
+	/** `409` — `23503`. L'arête ou le champ a disparu entre deux lectures. */
+	| 'reference-absente'
+	/** `400` — `23514`, `required_field_workflow_mismatch`. Les deux parents ne partagent pas le workflow. */
+	| 'workflow-different'
+	/** `403`/`401` — `42501`. Seul un administrateur du workspace écrit (§4 de la spécification). */
+	| 'forbidden'
+	| 'network'
+	| 'unknown'
+
+export type RefusExigence = {
+	readonly nature: NatureRefusExigence
+	readonly detail: string
+}
+
+/**
+ * Classe un refus d'écriture sur une exigence.
+ *
+ * `23505` EST ICI UN REFUS MÉTIER LISIBLE, à l'inverse exact du §7 bis.11.5 où il ne pouvait pas
+ * apparaître. La grille réglait ses cases par `upsert` ; ce bloc ne le peut pas — MESURÉ le
+ * 2026-08-15, `Prefer: resolution=merge-duplicates` rend `403`/`42501` faute du privilège `UPDATE`,
+ * que `CRM-018` n'accorde délibérément pas. Le `23505` est donc l'issue normale d'une course, et
+ * « déjà exigé » dit exactement ce que la base porte.
+ *
+ * `23514` A ICI UNE AUTRE CAUSE QUE DANS LES QUATRE CLASSIFICATIONS PRÉCÉDENTES, ET UNE SEULE : il
+ * n'y a aucun `CHECK` de valeur sur cette table à deux colonnes, seulement les trois triggers de
+ * cohérence, qui lèvent tous `required_field_workflow_mismatch`. MESURÉ le 2026-08-15 : `400` /
+ * `required_field_workflow_mismatch` sur un champ du workflow dérivé lié à une arête globale.
+ *
+ * Les DEUX natures que `classerRefusEcriture` tire du `23514` sont donc repliées sur la même : ce
+ * classement générique cherche le nom `workflow_hors_track`, qui appartient à une autre contrainte
+ * et ne peut jamais apparaître ici. Laisser passer `forme-refusee` afficherait « la forme est
+ * refusée » là où aucune forme n'est en cause, sur la seule table de l'éditeur qui n'a pas de
+ * valeur à mettre en forme.
+ */
+export function classerRefusExigence(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusExigence {
+	const base: RefusEcriture = classerRefusEcriture(statutHttp, code, detail)
+	switch (base.nature) {
+		case 'slug-pris':
+			return { nature: 'deja-exige', detail }
+		case 'workflow-hors-track':
+		case 'forme-refusee':
+			return { nature: 'workflow-different', detail }
+		default:
+			return { nature: base.nature, detail }
+	}
+}
+
+export type ResultatExigence =
+	| { readonly statut: 'applique' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusExigence }
+
+/** Enveloppe des écritures d'exigence, jumelle des quatre précédentes sur `RefusExigence`. */
+async function executerExigence(
+	appel: () => PromiseLike<{
+		error: { code?: string; message: string } | null
+		status: number
+		data: unknown[] | null
+	}>,
+): Promise<ResultatExigence> {
+	try {
+		const reponse = await appel()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusExigence(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'applique' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusExigence(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
+
+/**
+ * Exige un champ pour une transition — premier geste du §7 bis.12.3.
+ *
+ * C'EST UN `POST` SIMPLE, ET SURTOUT PAS UN `upsert`. La tranche précédente réglait ses cases par
+ * `upsert` ; ici il est REFUSÉ, et pour une raison voulue : `CRM-018` n'accorde que `insert` et
+ * `delete` à `authenticated`, parce que sa spécification §2 pose qu'aucune valeur n'est mutable —
+ * « modifier une liaison signifie la supprimer puis en créer une autre ». Un `upsert` PostgREST a
+ * besoin du privilège `UPDATE` pour sa branche de conflit. MESURÉ le 2026-08-15 :
+ * `resolution=merge-duplicates` rend `403`/`42501` avec l'indice « GRANT UPDATE … », et `PATCH` le
+ * même. Reprendre le patron voisin aurait produit un `403` incompréhensible sur le geste le plus
+ * courant du bloc.
+ *
+ * AUCUN `workflow_id` NI `workspace_id` N'EST ENVOYÉ : la table n'en a pas (§2 de sa spécification),
+ * et le trigger déduit le workflow des deux parents.
+ */
+export async function exigerChamp(
+	client: ClientCrm,
+	idTransition: string,
+	idChamp: string,
+): Promise<ResultatExigence> {
+	return executerExigence(() =>
+		client
+			.from('workflow_transition_required_fields')
+			.insert({ transition_id: idTransition, field_id: idChamp })
+			.select('field_id'),
+	)
+}
+
+/**
+ * Retire une exigence propre à une transition — second geste du §7 bis.12.3.
+ *
+ * MESURÉ le 2026-08-15 : `200` et la ligne rendue avec le jeton de l'administratrice ; `200` et `[]`
+ * avec celui du `business_developer`, la liaison seedée restant intacte ; `200` et `[]` AUSSI avec
+ * le jeton de l'administratrice sur un couple inexistant. Les deux derniers sont indiscernables par
+ * la réponse seule : `sans-effet` dit « rien n'a changé » sans prétendre savoir laquelle des deux
+ * causes s'applique.
+ */
+export async function retirerExigence(
+	client: ClientCrm,
+	idTransition: string,
+	idChamp: string,
+): Promise<ResultatExigence> {
+	return executerExigence(() =>
+		client
+			.from('workflow_transition_required_fields')
+			.delete()
+			.eq('transition_id', idTransition)
+			.eq('field_id', idChamp)
 			.select('field_id'),
 	)
 }

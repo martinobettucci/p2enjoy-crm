@@ -1,5 +1,5 @@
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
-//           troisième et quatrième tranches
+//           troisième, quatrième et cinquième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les trois lectures, leurs filtres et leur ordre),
 //           §7 bis.4 (les six gestes et ce que la base garantit), §7 bis.5 (validation de forme),
 //           §7 bis.8 (preuves attendues, niveau unitaire), §7 bis.9 (deuxième tranche : les arêtes,
@@ -61,9 +61,18 @@ import {
 	lireRegles,
 	reglerVisibilite,
 	rendreAuDefaut,
+	COLONNES_EXIGENCE_ADMIN,
+	champsLiables,
+	classerRefusExigence,
+	exigencesEffectives,
+	exigencesSansEffet,
+	exigerChamp,
+	lireExigences,
+	retirerExigence,
 	type ChampAdministrable,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
+	type ExigenceAdministrable,
 	type RegleAdministrable,
 	type TransitionAdministrable,
 } from './administration-workflows'
@@ -1180,5 +1189,246 @@ describe('les refus d’écriture d’une règle (§7 bis.11.5)', () => {
 			}),
 		} as unknown as ClientCrm
 		expect((await rendreAuDefaut(client, 'c1', 'e1')).statut).toBe('refus')
+	})
+})
+
+// =============================================================================================
+// CINQUIÈME TRANCHE — les exigences propres à une transition
+// @verifies CRM-076 (docs/BACKLOG.md) — cinquième tranche
+// @verifies docs/SPEC-workflow-engine.md §7 bis.12.1 (lecture 7 et sa jointure interne),
+//           §7 bis.12.2 (l'union des exigences effectives et leurs origines),
+//           §7 bis.12.3 (les deux gestes, et pourquoi le premier n'est PAS un `upsert`),
+//           §7 bis.12.4 (ce que l'écran refuse de proposer), §7 bis.12.5 (les refus),
+//           §7 bis.12.8 (preuves attendues)
+// @verifies docs/SPEC-transition-required-fields.md §1 (l'union des deux ensembles),
+//           §2 (la table à deux colonnes, aucune valeur mutable), §5.1 (la sixième garde)
+// =============================================================================================
+
+function exigence(idTransition: string, idChamp: string): ExigenceAdministrable {
+	return { transition_id: idTransition, field_id: idChamp }
+}
+
+describe('la lecture des exigences de transition (§7 bis.12.1)', () => {
+	it('filtre par le workflow À TRAVERS une jointure interne, faute de colonne locale', async () => {
+		// La table n'a que deux colonnes (`docs/SPEC-transition-required-fields.md` §2) : aucun
+		// `workflow_id` n'y est dénormalisé. MESURÉ le 2026-08-15 : sans ce filtre, la lecture rend
+		// les DEUX liaisons du seed — la globale et la dérivée —, donc l'écran d'un workflow
+		// afficherait les exigences d'un autre.
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireExigences(client, 'w1')
+		expect(appel.table).toBe('workflow_transition_required_fields')
+		expect(appel.colonnes).toContain(COLONNES_EXIGENCE_ADMIN)
+		expect(appel.colonnes).toContain('workflow_transitions!inner')
+		expect(appel.filtres).toEqual([['transition.workflow_id', 'w1']])
+		expect(appel.tris).toEqual([
+			['transition_id', undefined],
+			['field_id', undefined],
+		])
+	})
+
+	it('écarte la jointure du résultat : elle sert à filtrer, pas à être rendue', async () => {
+		const { client } = espionLecture({
+			data: [{ transition_id: 't1', field_id: 'c1', transition: { workflow_id: 'w1' } }],
+			error: null,
+			status: 200,
+		})
+		const lues = await lireExigences(client, 'w1')
+		expect(lues.statut).toBe('pret')
+		if (lues.statut !== 'pret') return
+		expect(lues.donnees).toEqual([{ transition_id: 't1', field_id: 'c1' }])
+	})
+
+	it('rend une erreur classée plutôt que de lever', async () => {
+		const { client } = espionLecture({ data: null, error: { message: 'boum' }, status: 500 })
+		expect((await lireExigences(client, 'w1')).statut).toBe('erreur')
+	})
+})
+
+describe('les exigences EFFECTIVES d’une arête (§7 bis.12.2)', () => {
+	const budget = champ({ id: 'c1', key: 'budget', label: 'Budget', position: 1 })
+	const source = champ({ id: 'c2', key: 'source', label: 'Origine', position: 2 })
+	const lien = champ({ id: 'c3', key: 'lien', label: 'Lien', position: 3 })
+	const archive = champ({ id: 'c4', key: 'vieux', label: 'Ancien', position: 4, archived_at: '2026-01-01' })
+	const arete = transition({ id: 't1', from_step_id: 'e1', to_step_id: 'e2' })
+
+	it('réunit les DEUX ensembles de la sixième garde, pas la seule table de liaison', () => {
+		// `move_card` exige l'union des champs `required` à l'étape d'ARRIVÉE et des champs liés à
+		// la transition (`docs/SPEC-transition-required-fields.md` §1 et §5.1). N'afficher que la
+		// table écrirait « aucune exigence » là où la règle en impose déjà.
+		const effectives = exigencesEffectives(
+			arete,
+			[budget, source, lien],
+			[regle('c1', 'e2', 'required')],
+			[exigence('t1', 'c3')],
+		)
+		expect(effectives.map((item) => [item.champ.id, item.origine])).toEqual([
+			['c1', 'regle'],
+			['c3', 'transition'],
+		])
+	})
+
+	it('nomme `les-deux` le champ que la règle ET la liaison exigent', () => {
+		const effectives = exigencesEffectives(
+			arete,
+			[budget],
+			[regle('c1', 'e2', 'required')],
+			[exigence('t1', 'c1')],
+		)
+		expect(effectives).toEqual([{ champ: budget, origine: 'les-deux' }])
+	})
+
+	it('ne lit la règle qu’à l’étape d’ARRIVÉE, jamais à celle de départ', () => {
+		// Une règle `required` au départ n'exige rien pour franchir l'arête : la garde interroge
+		// `r.step_id = v_cible`. Confondre les deux exigerait un champ que la base n'exige pas.
+		expect(exigencesEffectives(arete, [budget], [regle('c1', 'e1', 'required')], [])).toEqual([])
+	})
+
+	it('ignore les visibilités qui n’exigent rien', () => {
+		expect(
+			exigencesEffectives(arete, [budget, source], [regle('c1', 'e2', 'hidden'), regle('c2', 'e2', 'visible')], []),
+		).toEqual([])
+	})
+
+	it('ignore la liaison d’une AUTRE arête', () => {
+		expect(exigencesEffectives(arete, [lien], [], [exigence('t2', 'c3')])).toEqual([])
+	})
+
+	it('écarte les champs archivés, comme la garde elle-même', () => {
+		// MESURÉ le 2026-08-15 : la base ACCEPTE une liaison vers un champ archivé (`201`), mais
+		// `move_card` filtre `f.archived_at is null` : elle ne produit aucun effet.
+		expect(
+			exigencesEffectives(arete, [archive], [regle('c4', 'e2', 'required')], [exigence('t1', 'c4')]),
+		).toEqual([])
+	})
+
+	it('rend les exigences dans l’ordre des champs, seul ordre déjà sous les yeux', () => {
+		const effectives = exigencesEffectives(
+			arete,
+			[budget, source, lien],
+			[regle('c3', 'e2', 'required')],
+			[exigence('t1', 'c2'), exigence('t1', 'c1')],
+		)
+		expect(effectives.map((item) => item.champ.id)).toEqual(['c1', 'c2', 'c3'])
+	})
+})
+
+describe('les liaisons SANS EFFET et les champs liables (§7 bis.12.4)', () => {
+	const actif = champ({ id: 'c1', key: 'budget', position: 1 })
+	const archive = champ({ id: 'c4', key: 'vieux', position: 4, archived_at: '2026-01-01' })
+	const arete = transition({ id: 't1', from_step_id: 'e1', to_step_id: 'e2' })
+
+	it('nomme la liaison vers un champ archivé plutôt que de la taire', () => {
+		expect(exigencesSansEffet(arete, [actif, archive], [exigence('t1', 'c4')])).toEqual([archive])
+	})
+
+	it('ne nomme rien lorsque le champ archivé n’est pas lié à CETTE arête', () => {
+		expect(exigencesSansEffet(arete, [actif, archive], [exigence('t2', 'c4')])).toEqual([])
+	})
+
+	it('ne propose ni un champ archivé ni un champ déjà lié', () => {
+		// Le premier produirait une liaison sans effet, le second serait refusé en `23505` — les
+		// deux mesurés. Proposer un choix dont on connaît le refus est une faute d'écran.
+		const autre = champ({ id: 'c2', key: 'source', position: 2 })
+		expect(champsLiables(arete, [actif, autre, archive], [exigence('t1', 'c1')])).toEqual([autre])
+	})
+
+	it('propose encore un champ déjà exigé par la règle de l’étape d’arrivée', () => {
+		// La règle peut changer ; la liaison est un engagement propre à ce chemin, et la base
+		// accepte les deux. L'écran dit ce que la liaison ajoute plutôt que de trancher.
+		expect(champsLiables(arete, [actif], []).map((item) => item.id)).toEqual(['c1'])
+	})
+})
+
+describe('les deux écritures d’une exigence (§7 bis.12.3)', () => {
+	it('exige un champ par un `insert` SIMPLE, sans aucune résolution de conflit', async () => {
+		// MESURÉ le 2026-08-15 : `Prefer: resolution=merge-duplicates` rend `403`/`42501` avec
+		// l'indice « GRANT UPDATE … », et `PATCH` le même. `CRM-018` n'accorde délibérément que
+		// `insert` et `delete` (sa spécification §2 : aucune valeur mutable). L'`upsert` de la
+		// quatrième tranche est donc IMPOSSIBLE ici, et l'emprunter produirait un `403`
+		// incompréhensible sur le geste le plus courant du bloc.
+		const { client, appels } = espionEcritures([OK])
+		await exigerChamp(client, 't1', 'c1')
+		expect(appels[0]?.table).toBe('workflow_transition_required_fields')
+		expect(appels[0]?.verbe).toBe('insert')
+		expect(appels[0]?.options).toBeUndefined()
+		expect(appels[0]?.charge).toEqual({ transition_id: 't1', field_id: 'c1' })
+	})
+
+	it('n’envoie NI `workflow_id` NI `workspace_id` : la table n’en a pas', async () => {
+		const { client, appels } = espionEcritures([OK])
+		await exigerChamp(client, 't1', 'c1')
+		expect(Object.keys(appels[0]?.charge ?? {})).toEqual(['transition_id', 'field_id'])
+	})
+
+	it('retire une exigence par le couple complet, jamais par la seule transition', async () => {
+		// Filtrer sur la seule transition retirerait TOUTES ses exigences en un clic destiné à une.
+		const { client, appels } = espionEcritures([OK])
+		await retirerExigence(client, 't1', 'c1')
+		expect(appels[0]?.verbe).toBe('delete')
+		expect(appels[0]?.filtres).toEqual([
+			['transition_id', 't1'],
+			['field_id', 'c1'],
+		])
+		expect(appels[0]?.colonnesRendues).toBe('field_id')
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne, sans prétendre en connaître la cause', async () => {
+		// MESURÉ : `200` et `[]` pour le `business_developer` sur la liaison seedée — relue intacte —
+		// ET pour l'administratrice sur un couple inexistant. Les deux sont indiscernables.
+		const { client } = espionEcritures([ZERO_LIGNE])
+		expect((await retirerExigence(client, 't1', 'c1')).statut).toBe('sans-effet')
+	})
+
+	it('classe une coupure réseau plutôt que de lever', async () => {
+		const client = {
+			from: () => ({
+				insert: () => ({
+					select: () => {
+						throw new Error('coupure')
+					},
+				}),
+			}),
+		} as unknown as ClientCrm
+		expect((await exigerChamp(client, 't1', 'c1')).statut).toBe('refus')
+	})
+})
+
+describe('les refus d’écriture d’une exigence (§7 bis.12.5)', () => {
+	it('traduit `23505` en « déjà exigé », refus métier lisible et non générique', () => {
+		// L'inverse exact du §7 bis.11.5, où ce code ne pouvait pas apparaître : ici l'`upsert` est
+		// refusé par la base, donc le `23505` est l'issue NORMALE d'une course entre deux
+		// administrateurs, et l'état voulu est déjà celui que la base porte.
+		expect(classerRefusExigence(409, '23505', 'duplicate key value')).toEqual({
+			nature: 'deja-exige',
+			detail: 'duplicate key value',
+		})
+	})
+
+	it('traduit `23514` en workflows différents — ici son unique cause', () => {
+		// La table à deux colonnes ne porte AUCUN `CHECK` de valeur : seuls les trois triggers de
+		// cohérence peuvent produire ce code. MESURÉ : `400` / `required_field_workflow_mismatch`.
+		expect(classerRefusExigence(400, '23514', 'required_field_workflow_mismatch').nature).toBe(
+			'workflow-different',
+		)
+	})
+
+	it('ne laisse JAMAIS passer « forme refusée » sur une table sans valeur à mettre en forme', () => {
+		// Le classement générique cherche le nom `workflow_hors_track`, qui appartient à une autre
+		// contrainte : sans ce repli, un `23514` d'un nom inattendu afficherait « la forme est
+		// refusée » là où aucune forme n'est en cause.
+		expect(classerRefusExigence(400, '23514', 'un nom de contrainte inattendu').nature).toBe(
+			'workflow-different',
+		)
+	})
+
+	it('traduit `23503` en référence absente et `42501` en refus d’autorisation', () => {
+		expect(classerRefusExigence(409, '23503', 'foreign key').nature).toBe('reference-absente')
+		expect(
+			classerRefusExigence(403, '42501', 'new row violates row-level security policy').nature,
+		).toBe('forbidden')
+	})
+
+	it('classe une coupure réseau sans jamais la confondre avec un refus métier', () => {
+		expect(classerRefusExigence(undefined, undefined, 'Failed to fetch').nature).toBe('network')
 	})
 })
