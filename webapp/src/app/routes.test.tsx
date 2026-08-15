@@ -68,15 +68,25 @@ describe('table des routes', () => {
 		},
 	)
 
-	it('la route / rend le guide de démarrage, et non une page blanche — `CRM-079`', () => {
+	it('la route / rend un état explicite SANS session, et n’interroge pas la base — §4.4', () => {
+		// RÉVISÉE UNE QUATRIÈME FOIS, ET LA RÈGLE A ENCORE CHANGÉ PAR ARBITRAGE — le §4.4 de
+		// `docs/SPEC-onboarding.md`, écrit après la mesure d'une régression réelle : monté sans
+		// session, `/` rendait le guide ET déclenchait les cinq comptages, dont celui des boîtes
+		// entrantes que la clé anonyme reçoit en `401`. La console de l'écran d'ARRIVÉE portait
+		// donc une erreur (`docs/SPEC-onboarding.md` §3.1, fait 3).
+		//
+		// Cette preuve monte la route SANS fournisseur d'authentification : le contexte est donc
+		// anonyme, exactement comme pour un visiteur sans session. Ce qu'elle exige est ce que le
+		// §4.4 promet — l'état vide EXISTANT de `CRM-007`, inchangé.
+		//
+		// Le cas connecté, ses quatre issues et l'absence de requête sont éprouvés par
+		// `GuideDemarrage.test.tsx`, qui déclare la session et compte les appels émis.
 		const route = ROUTES.find((candidate) => candidate.chemin === '/')
 		expect(route).toBeDefined()
 		render(<MemoryRouter>{route!.rendu()}</MemoryRouter>)
-		// Le premier rendu est celui du chargement des cinq mesures, et il est déjà explicite : un
-		// titre, une phrase, et un squelette par étape. L'état vide du board ne revient qu'une fois
-		// les cinq étapes accomplies, ce qu'éprouve `GuideDemarrage.test.tsx`.
-		expect(screen.getByTestId('guide-demarrage')).toBeTruthy()
-		expect(screen.getByRole('heading').textContent).toBe(fr['onboarding.title'])
+		expect(screen.getByTestId('etat-vide')).toBeTruthy()
+		expect(screen.queryByTestId('guide-demarrage')).toBeNull()
+		expect(screen.getByRole('heading').textContent).toBe(fr['route.board.empty.title'])
 	})
 
 	it("la route /reglages rend l'index des sections, et non une page blanche", () => {

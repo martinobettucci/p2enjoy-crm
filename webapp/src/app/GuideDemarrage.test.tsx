@@ -80,14 +80,14 @@ function monter(element: React.ReactElement) {
 
 describe('le guide, à son adresse — docs/SPEC-onboarding.md §4.1', () => {
 	it('rend les cinq étapes dans une liste ORDONNÉE', async () => {
-		monter(<GuideDemarrage client={client(NEUF)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		const liste = await screen.findByRole('list')
 		expect(liste.tagName).toBe('OL')
 		expect(await screen.findAllByRole('listitem')).toHaveLength(5)
 	})
 
 	it('est rendu MÊME intégralement accompli : c’est ce qui le rend relançable', async () => {
-		monter(<GuideDemarrage client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
 		await waitFor(() =>
 			expect(screen.getByTestId('progression-demarrage').textContent).toContain('5'),
@@ -96,12 +96,12 @@ describe('le guide, à son adresse — docs/SPEC-onboarding.md §4.1', () => {
 
 	it('est rendu MÊME masqué pour la session : l’adresse ignore la préférence', async () => {
 		globalThis.sessionStorage.setItem(CLE_PREFERENCE_DEMARRAGE_MASQUE, '1')
-		monter(<GuideDemarrage client={client(NEUF)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
 	})
 
 	it('n’offre PAS le masquage : la commande n’aurait aucun effet observable ici', async () => {
-		monter(<GuideDemarrage client={client(NEUF)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		await screen.findByTestId('guide-demarrage')
 		expect(screen.queryByTestId('masquer-guide')).toBeNull()
 	})
@@ -109,7 +109,7 @@ describe('le guide, à son adresse — docs/SPEC-onboarding.md §4.1', () => {
 
 describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md §5.17', () => {
 	it('écrit « Fait » sur une étape accomplie, et lui LAISSE son lien', async () => {
-		monter(<GuideDemarrage client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		const ligne = await screen.findByTestId('etape-track')
 		await waitFor(() => expect(ligne.textContent).toContain('Fait'))
 		// Une étape accomplie garde son chemin : on ajoute un second track après le premier.
@@ -117,7 +117,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	})
 
 	it('écrit « À faire » sur une étape non accomplie, sans affirmer que rien n’existe', async () => {
-		monter(<GuideDemarrage client={client(NEUF)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		const ligne = await screen.findByTestId('etape-track')
 		await waitFor(() => expect(ligne.textContent).toContain('À faire'))
 		// La phrase dit ce que l'appelant VOIT : le `viewer` seedé compte 5 channels là où la base
@@ -129,7 +129,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 		// Défaut TROUVÉ EN REGARDANT `docs/captures/CRM-079/guide-viewer-1440.jpg` : la ligne
 		// affichait « Fait » et « Vous n'en voyez aucun » l'une sous l'autre. Les deux textes
 		// étaient corrects séparément, et aucune assertion existante ne pouvait les opposer.
-		monter(<GuideDemarrage client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		const ligne = await screen.findByTestId('etape-track')
 		await waitFor(() => expect(ligne.textContent).toContain('Fait'))
 		expect(ligne.textContent).not.toContain('Vous n’en voyez aucun')
@@ -138,6 +138,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	it('nomme une étape non mesurable, et ne la laisse pas passer pour « à faire »', async () => {
 		monter(
 			<GuideDemarrage
+			sessionOuverte
 				client={client({ ...NEUF, tracks: { count: null, error: { message: 'panne' }, status: 500 } })}
 			/>,
 		)
@@ -151,6 +152,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	it('offre une reprise sur une PANNE, et aucune sur un REFUS', async () => {
 		const { unmount } = monter(
 			<GuideDemarrage
+			sessionOuverte
 				client={client({ ...NEUF, tracks: { count: null, error: { message: 'panne' }, status: 500 } })}
 			/>,
 		)
@@ -163,6 +165,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 		// promettrait un aboutissement que le backend a déjà refusé (§6.1).
 		monter(
 			<GuideDemarrage
+			sessionOuverte
 				client={client({
 					...NEUF,
 					mail_inbound_accounts: { count: null, error: { message: 'refus' }, status: 401 },
@@ -177,7 +180,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	})
 
 	it('n’éteint AUCUN lien, quel que soit l’état de l’étape — CLAUDE.md §10', async () => {
-		monter(<GuideDemarrage client={client(SEED_VIEWER)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
 		await screen.findByTestId('guide-demarrage')
 		for (const cle of ['track', 'channel', 'affaire', 'messagerie']) {
 			const lien = await screen.findByTestId(`lien-${cle}`)
@@ -187,7 +190,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	})
 
 	it('la première étape ne porte aucun lien : elle est accomplie par la connexion', async () => {
-		monter(<GuideDemarrage client={client(NEUF)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		await screen.findByTestId('etape-espace')
 		expect(screen.queryByTestId('lien-espace')).toBeNull()
 	})
@@ -195,12 +198,12 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 
 describe('la progression s’écrit en toutes lettres — §7', () => {
 	it('n’écrit aucun chiffre tant qu’une mesure est en vol', () => {
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		expect(screen.getByTestId('progression-demarrage').textContent).toContain('Mesure des étapes')
 	})
 
 	it('écrit le compte et le total une fois les cinq mesures rendues', async () => {
-		monter(<GuideDemarrage client={client(SEED_VIEWER)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
 		// admin : 5 sur 5 ; viewer : 4 sur 5, faute de voir une boîte entrante (§3.1, fait 2).
 		await waitFor(() =>
 			expect(screen.getByTestId('progression-demarrage').textContent).toBe('4 étape(s) sur 5'),
@@ -210,13 +213,13 @@ describe('la progression s’écrit en toutes lettres — §7', () => {
 
 describe('l’accueil et sa décision — §4.2', () => {
 	it('rend le guide tant qu’une étape reste à faire', async () => {
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
 		expect(screen.getByTestId('masquer-guide')).toBeTruthy()
 	})
 
 	it('rend l’état vide du board une fois les cinq étapes accomplies', async () => {
-		monter(<AccueilDemarrage client={client(SEED_ADMIN)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		expect(screen.getByTestId('etat-vide')).toBeTruthy()
 		// Rien à rouvrir : le guide n'a plus rien à enseigner.
@@ -225,14 +228,14 @@ describe('l’accueil et sa décision — §4.2', () => {
 
 	it('ne rend JAMAIS l’état vide pendant le chargement', () => {
 		// Sinon l'écran d'arrivée clignoterait et afficherait « aucun board » à qui en a.
-		monter(<AccueilDemarrage client={client(SEED_ADMIN)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		expect(screen.queryByTestId('etat-vide')).toBeNull()
 		expect(screen.getByTestId('guide-demarrage')).toBeTruthy()
 	})
 
 	it('masqué, il cède la place à l’état vide ET laisse un chemin de retour', async () => {
 		const utilisateur = userEvent.setup()
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		await utilisateur.click(await screen.findByTestId('masquer-guide'))
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		expect(screen.getByTestId('rouvrir-guide').getAttribute('href')).toBe('/demarrage')
@@ -240,12 +243,12 @@ describe('l’accueil et sa décision — §4.2', () => {
 
 	it('reste masqué au remontage : la préférence survit à un rechargement d’onglet', async () => {
 		const utilisateur = userEvent.setup()
-		const { unmount } = monter(<AccueilDemarrage client={client(NEUF)} />)
+		const { unmount } = monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		await utilisateur.click(await screen.findByTestId('masquer-guide'))
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		unmount()
 
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		await waitFor(() => expect(screen.getByTestId('rouvrir-guide')).toBeTruthy())
 		expect(screen.queryByTestId('guide-demarrage')).toBeNull()
 	})
@@ -254,7 +257,7 @@ describe('l’accueil et sa décision — §4.2', () => {
 describe('ce que le guide N’ÉCRIT PAS sur l’appareil — CLAUDE.md §11', () => {
 	it('n’écrit RIEN en `localStorage`, y compris après avoir été masqué', async () => {
 		const utilisateur = userEvent.setup()
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		await utilisateur.click(await screen.findByTestId('masquer-guide'))
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		expect(globalThis.localStorage.length).toBe(0)
@@ -262,7 +265,7 @@ describe('ce que le guide N’ÉCRIT PAS sur l’appareil — CLAUDE.md §11', (
 
 	it('écrit sa seule préférence en `sessionStorage`, sous une clé nommée', async () => {
 		const utilisateur = userEvent.setup()
-		monter(<AccueilDemarrage client={client(NEUF)} />)
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
 		await utilisateur.click(await screen.findByTestId('masquer-guide'))
 		await waitFor(() =>
 			expect(globalThis.sessionStorage.getItem(CLE_PREFERENCE_DEMARRAGE_MASQUE)).toBe('1'),
@@ -270,11 +273,76 @@ describe('ce que le guide N’ÉCRIT PAS sur l’appareil — CLAUDE.md §11', (
 	})
 
 	it('n’écrit AUCUNE progression : elle est mesurée, jamais mémorisée — §2', async () => {
-		monter(<GuideDemarrage client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		await waitFor(() =>
 			expect(screen.getByTestId('progression-demarrage').textContent).toBe('5 étape(s) sur 5'),
 		)
 		expect(globalThis.sessionStorage.length).toBe(0)
 		expect(globalThis.localStorage.length).toBe(0)
+	})
+})
+
+describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
+	/**
+	 * Un client qui COMPTE ses appels : la preuve porte sur l'absence de requête, et non sur
+	 * l'absence d'affichage. Un écran qui n'afficherait rien tout en interrogeant la base laisserait
+	 * le défaut intact — c'est précisément lui qui salissait la console de l'accueil.
+	 */
+	function clientEspion(): { readonly client: ClientCrm; appels: () => number } {
+		let appels = 0
+		const espion = {
+			from: () => {
+				appels += 1
+				const chaine = {
+					is: () => chaine,
+					then: (resoudre: (valeur: ReponseCompte) => unknown) =>
+						Promise.resolve(ok(0)).then(resoudre),
+				}
+				return { select: () => chaine }
+			},
+		} as unknown as ClientCrm
+		return { client: espion, appels: () => appels }
+	}
+
+	it('l’accueil rend l’état vide EXISTANT et n’interroge pas la base', async () => {
+		// DÉFAUT RÉEL, MESURÉ PAR LA CAMPAGNE : un visiteur sans session déclenchait les cinq
+		// comptages, et `mail_inbound_accounts` rendait `401` à la clé anonyme (§3.1, fait 3). Le
+		// navigateur écrivait alors une erreur dans la console de l'écran d'ARRIVÉE du produit.
+		const espion = clientEspion()
+		monter(<AccueilDemarrage sessionOuverte={false} client={espion.client} />)
+
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.queryByTestId('guide-demarrage')).toBeNull()
+		// L'état vide est celui de `CRM-007`, inchangé : il ne porte donc AUCUN lien de réouverture,
+		// qui n'aurait de sens que si le guide avait été masqué (§4.2, troisième ligne).
+		expect(screen.queryByTestId('rouvrir-guide')).toBeNull()
+		expect(espion.appels(), 'aucune des cinq mesures n’est émise sans session').toBe(0)
+	})
+
+	it('l’adresse du guide le rend QUAND MÊME, mais sans poser aucune question', async () => {
+		// §4.1 reste intact : `/demarrage` rend toujours le guide. Ce que le §4.4 lui retire est la
+		// mesure, pas l'écran — les cinq étapes restent en chargement, et rien n'est affirmé.
+		const espion = clientEspion()
+		monter(<GuideDemarrage sessionOuverte={false} client={espion.client} />)
+
+		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
+		expect(screen.getByTestId('progression-demarrage').textContent).toBe(
+			'Mesure des étapes en cours',
+		)
+		// Aucun chiffre n'est écrit : « 0 étape sur 5 » serait une affirmation non mesurée.
+		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 5')
+		expect(espion.appels(), 'aucune des cinq mesures n’est émise sans session').toBe(0)
+	})
+
+	it('la session ouverte rétablit les cinq mesures, et rien d’autre ne change', async () => {
+		// La garde est un INTERRUPTEUR, pas une extinction : la même surface, le même client, la
+		// seule session ouverte, et les cinq comptages repartent.
+		const espion = clientEspion()
+		monter(<GuideDemarrage sessionOuverte client={espion.client} />)
+
+		await waitFor(() =>
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 5'),
+		)
+		expect(espion.appels(), 'les cinq tables sont interrogées, une fois chacune').toBe(5)
 	})
 })

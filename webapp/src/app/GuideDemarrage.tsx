@@ -1,5 +1,6 @@
 // @spec CRM-079 (docs/BACKLOG.md) — guide de démarrage : l'écran
-// @spec docs/SPEC-onboarding.md §4 (où le guide vit), §5 (interruption et reprise),
+// @spec docs/SPEC-onboarding.md §4 (où le guide vit), §4.4 (aucune mesure sans session),
+//       §5 (interruption et reprise),
 //       §6 (états, et il y en a cinq), §7 (accessibilité et clavier)
 // @spec docs/DESIGN_SYSTEM.md §5.17 (de quoi l'écran a l'air), §5.8 (états), §8, §9
 //
@@ -12,6 +13,7 @@
 
 import { Circle, CircleCheck, CircleHelp } from 'lucide-react'
 import { Link } from 'react-router'
+import { useAuthentification } from './Authentification'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
@@ -303,10 +305,37 @@ export type ProprietesSurfaceDemarrage = {
 	/** Injecté par les preuves ; l'application emploie le client du produit. Patron déjà posé par
 	 * `Corbeille` et `AdministrationArborescence`. */
 	readonly client?: ClientCrm | null
+	/**
+	 * Même patron que `client`, et même statut : un point d'injection pour les preuves unitaires,
+	 * que l'application ne renseigne JAMAIS — elle laisse le contexte de session décider.
+	 *
+	 * Ce que ce drapeau commande est écrit au §4.4 de `docs/SPEC-onboarding.md` : tant que la
+	 * session n'est pas ouverte, AUCUNE mesure n'est émise.
+	 */
+	readonly sessionOuverte?: boolean
 }
 
-export function GuideDemarrage({ client = clientCrm }: ProprietesSurfaceDemarrage = {}) {
-	const { progression, recharger } = useDemarrage(client)
+/**
+ * La session est-elle ouverte ? Une seule formulation, partagée par les deux surfaces.
+ *
+ * `chargement` compte comme fermée : la session se restaure encore, et mesurer maintenant émettrait
+ * cinq requêtes sans jeton dont l'une est vouée au `401` (§4.4). Attendre coûte un rendu ; ne pas
+ * attendre salit la console de l'écran d'arrivée.
+ */
+function useSessionOuverte(declaree: boolean | undefined): boolean {
+	const { etat } = useAuthentification()
+	return declaree ?? etat.statut === 'authentifie'
+}
+
+export function GuideDemarrage({
+	client = clientCrm,
+	sessionOuverte,
+}: ProprietesSurfaceDemarrage = {}) {
+	const ouverte = useSessionOuverte(sessionOuverte)
+	// `useDemarrage(null)` n'émet rien et laisse les cinq étapes en chargement : c'est exactement ce
+	// que le §4.4 demande à `/demarrage` pour un visiteur sans session. L'adresse rend le guide
+	// QUAND MÊME — §4.1 est intact —, elle ne pose simplement aucune question à la base.
+	const { progression, recharger } = useDemarrage(ouverte ? client : null)
 	return <VueGuideDemarrage progression={progression} recharger={recharger} />
 }
 
@@ -316,11 +345,23 @@ export function GuideDemarrage({ client = clientCrm }: ProprietesSurfaceDemarrag
  * Quatre cas, et l'ordre compte. Le chargement passe AVANT tout : rendre l'état vide pendant que
  * les mesures sont en vol ferait clignoter l'écran d'arrivée et afficherait « aucun board » à qui
  * en a. Une seule mesure sert la décision et le rendu.
+ *
+ * Un CINQUIÈME cas les précède tous depuis le §4.4 : sans session ouverte, l'accueil rend l'état
+ * vide EXISTANT, celui de `CRM-007`, et n'émet aucune mesure. Le guide s'adresse à un compte qui
+ * se connecte ; à un visiteur sans session, « créez un premier track » nommerait le mauvais
+ * problème, quand la coquille lui dit déjà que son espace de travail est absent.
  */
-export function AccueilDemarrage({ client = clientCrm }: ProprietesSurfaceDemarrage = {}) {
-	const { progression, recharger } = useDemarrage(client)
+export function AccueilDemarrage({
+	client = clientCrm,
+	sessionOuverte,
+}: ProprietesSurfaceDemarrage = {}) {
+	const ouverte = useSessionOuverte(sessionOuverte)
+	const { progression, recharger } = useDemarrage(ouverte ? client : null)
 	const { masque, masquer } = useMasqueDemarrage()
 
+	if (!ouverte) {
+		return <EtatVide titre={t('route.board.empty.title')} corps={t('route.board.empty.body')} />
+	}
 	if (mesureEnCours(progression)) {
 		return <VueGuideDemarrage progression={progression} recharger={recharger} />
 	}
