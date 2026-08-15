@@ -16114,3 +16114,58 @@ répond mais `vite` est introuvable sans lui, et `npm run build` échoue alors s
 Il exige `npm config set cafile /root/.ccr/ca-bundle.crt`. Le reste est inchangé : `export
 NVM_DIR=/opt/nvm` puis `. /opt/nvm/nvm.sh`, et `PLAYWRIGHT_CHROMIUM_PATH` pour toute exécution
 Playwright.
+
+## 2026-08-15 — `CRM-078`, le harnais d'API de la quatrième tranche, et le `409` qu'il a fait apparaître
+
+**L'unité de la session.** La dernière entrée du journal désignait le seul écart de preuve de la
+quatrième tranche : `e2e/api/restauration-version-workflow.spec.ts`, non écrit. La spécification
+existait déjà (§7 ter.13.10) : elle n'a pas été réécrite, seulement précisée sur deux points mesurés,
+puis committée avant la première ligne de code.
+
+**Ce qui est livré.** Quatorze scénarios couvrant les dix-huit lignes du contrat d'API, avec les
+jetons réels des trois profils, hors interface. Ils passent tous.
+
+**LE HARNAIS A ATTRAPÉ UN DÉFAUT DE LA FONCTION LIVRÉE, et c'est exactement ce pour quoi il existe.**
+La vérification 5 — la concurrence optimiste — rendait **`400`** là où le §7 ter.13.6 exige `409`.
+pgTAP ne pouvait pas le voir : il éprouve un `SQLSTATE`, jamais un code HTTP. MESURÉ par une sonde
+`PT409` posée puis retirée sur la pile locale : PostgREST rend `400` pour tout `P0001`, et `409` pour
+un `SQLSTATE` de la forme `PT<statut>`, seul mécanisme par lequel une fonction choisit son code HTTP.
+Les deux exigences de la spécification étaient donc **inconciliables**, et personne ne l'avait vu
+parce que la seule preuve capable de le voir n'était pas écrite.
+
+**L'arbitrage a été rendu par la mesure plutôt que porté au registre**, la doctrine du 2026-08-15 le
+demandant lorsqu'une lecture est défendable seule. C'est le `SQLSTATE` qui cède : le `409` est
+**argumenté** dans la spécification — « la demande était valide, c'est l'état du monde qui a changé
+sous elle ; un `400` laisserait croire à une erreur de l'appelant » —, tandis que le `P0001` n'est
+argumenté nulle part, étant la valeur par défaut de `raise exception` écrite par symétrie avec les
+sept autres refus. Entre une exigence raisonnée et une valeur par défaut, la valeur par défaut
+s'efface. Message et `detail` inchangés. L'assertion 13 de la suite pgTAP a été **révisée avec son
+motif dans le fichier** (mécanisme de la décision 51, dix-septième occurrence), et la migration 42
+n'étant pas déployée, elle a été corrigée sur place plutôt que doublée d'une migration 43.
+
+**Deux points de rédaction du harnais, mesurés et non supposés.** PostgREST nomme **`details`** au
+pluriel le `detail` d'un `raise` : lire `detail` rendait `undefined` sur une erreur pourtant remplie,
+et la ligne e serait restée verte sur un refus muet. Et `form_fields_key_check` impose le kebab-case
+`^[a-z0-9]+(-[a-z0-9]+)*$` : une clé à tirets bas est refusée en `23514`.
+
+**Où chaque ligne se joue, et pourquoi.** Restaurer **publie** un point de retour, et une version est
+immuable. Jouées sur le workflow par défaut du seed, les lignes qui écrivent lui laisseraient deux
+versions de plus à chaque exécution. La ligne a — la seule qui n'écrit rien — reste donc sur la vraie
+version du seed et **relit le nombre de versions** pour prouver qu'elle ne laisse aucune trace ;
+toutes les autres se jouent sur un workflow jetable rendu dans un `finally`. Le §7 ter.13.10 porte
+cette règle et son motif.
+
+**Preuves exécutées.** `test:sql` **40 fichiers, 2133 assertions, aucune anomalie** — la suite 0040
+reste verte après révision de son assertion 13. `e2e:api` **591/591**, dont les 14 neufs.
+`test:unit` **1042/1042** sur 39 fichiers. `typecheck` et `build` verts. `pytest` **242 passés**.
+
+**L'environnement, deux faits à ne pas redécouvrir.** `npm ci` reste nécessaire dans un checkout
+neuf, avec `npm config set cafile /root/.ccr/ca-bundle.crt`. Et **`pytest` seul échoue** : le binaire
+du `PATH` (`/root/.local/bin/pytest`) n'a pas `pydantic`, et lancé depuis la racine il ignore le
+`pythonpath` du `pyproject.toml` de `mail-sync`. La commande qui marche est
+**`python3 -m pytest mail-sync/tests`**, celle du README.
+
+**Où reprendre.** La **cinquième tranche** de `CRM-078` : les écrans — liste des versions,
+publication, aperçu de comparaison, aperçu du plan et bouton de restauration — et leurs captures
+observées (`CLAUDE.md` §16). **`CRM-078` reste `[~]`** : sa Definition of Done exige les écrans, et
+la quatrième tranche est désormais close sur ses preuves serveur.
