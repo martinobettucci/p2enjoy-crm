@@ -909,6 +909,129 @@ export const fr = {
 		"Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte.",
 	'admin.trash.refus.network': "La requête n'a pas abouti. Réessayer relance la restauration.",
 	'admin.trash.refus.unknown': "La restauration a été refusée, sans raison exploitable.",
+
+	// --- Versions d'un workflow — CRM-078, docs/SPEC-workflow-engine.md §7 ter.14 ---------
+	'admin.workflows.versions.title': 'Versions',
+	'admin.workflows.versions.aria': 'Versions de {workflow}',
+	'admin.workflows.versions.intro':
+		'Une version photographie la composition du workflow à une date. Elle ne se modifie pas et ne se supprime pas.',
+	'admin.workflows.versions.loading': 'Chargement des versions',
+	'admin.workflows.versions.error': "Les versions de ce workflow n'ont pas pu être chargées.",
+	'admin.workflows.versions.empty': "Ce workflow n'a encore aucune version publiée.",
+	'admin.workflows.versions.column.number': 'Version',
+	'admin.workflows.versions.column.published': 'Publiée le',
+	'admin.workflows.versions.column.author': 'Par',
+	'admin.workflows.versions.column.note': 'Note',
+	'admin.workflows.versions.column.fingerprint': 'Empreinte',
+	'admin.workflows.versions.number': 'Version {numero}',
+	'admin.workflows.versions.author.unknown': 'Auteur inconnu',
+
+	'admin.workflows.versions.publish.title': 'Publier la composition actuelle',
+	'admin.workflows.versions.publish.note': 'Note (facultative)',
+	'admin.workflows.versions.publish.note.hint':
+		'Elle aide à retrouver une version ; elle ne change rien à la composition conservée.',
+	'admin.workflows.versions.publish.action': 'Publier une version',
+
+	'admin.workflows.versions.compare.title': 'Comparer deux versions',
+	'admin.workflows.versions.compare.hint':
+		'La comparaison dit ce que la cible ajoute, retire ou modifie par rapport à la base.',
+	'admin.workflows.versions.compare.base': 'Version de base',
+	'admin.workflows.versions.compare.target': 'Version cible',
+	'admin.workflows.versions.compare.action': 'Comparer',
+	'admin.workflows.versions.compare.running': 'Comparaison en cours',
+	'admin.workflows.versions.compare.identical':
+		'Les deux versions portent la même composition : rien ne les distingue.',
+	'admin.workflows.versions.compare.summary':
+		'{ajouts} ajout(s), {retraits} retrait(s), {modifications} modification(s).',
+	'admin.workflows.versions.compare.empty': "Rien n'a changé de ce côté.",
+	'admin.workflows.versions.collection.workflow': 'Workflow',
+	'admin.workflows.versions.collection.steps': 'Étapes',
+	'admin.workflows.versions.collection.transitions': 'Transitions',
+	'admin.workflows.versions.collection.fields': 'Champs de formulaire',
+	'admin.workflows.versions.collection.rules': 'Règles de visibilité',
+	'admin.workflows.versions.collection.required_fields': 'Champs exigés par une transition',
+	'admin.workflows.versions.change.ajout': 'Ajouté',
+	'admin.workflows.versions.change.retrait': 'Retiré',
+	'admin.workflows.versions.change.modification': 'Modifié',
+	'admin.workflows.versions.renamed': '{avant} → {apres}',
+	'admin.workflows.versions.attribute': '{attribut} : {avant} → {apres}',
+	'admin.workflows.versions.value.none': 'aucune valeur',
+
+	'admin.workflows.versions.plan.title': 'Prévoir une restauration',
+	'admin.workflows.versions.plan.hint':
+		'Le plan dit, affaire par affaire, où chacune atterrirait si cette version était restaurée.',
+	'admin.workflows.versions.plan.version': 'Version à restaurer',
+	'admin.workflows.versions.plan.action': 'Calculer le plan',
+	'admin.workflows.versions.plan.running': 'Calcul du plan en cours',
+	'admin.workflows.versions.plan.summary':
+		'{total} affaire(s) : {inchangees} inchangée(s), {remappees} remappée(s), {nonResolues} sans instruction.',
+	'admin.workflows.versions.plan.ready': 'Plus aucune affaire n’attend une décision.',
+	'admin.workflows.versions.plan.notReady':
+		'Des affaires attendent une instruction : la restauration sera refusée tant qu’il en reste.',
+	'admin.workflows.versions.plan.removed': 'Étapes retirées par cette restauration',
+	'admin.workflows.versions.plan.restored': 'Étapes rétablies par cette restauration',
+	'admin.workflows.versions.plan.restored.hint':
+		'Une étape rétablie revient vide : aucune affaire n’y est versée d’office.',
+	'admin.workflows.versions.plan.step.cards': '{total} affaire(s), dont {bloquees} sans instruction',
+	'admin.workflows.versions.plan.step.target': 'Destination des affaires de {etape}',
+	'admin.workflows.versions.plan.step.none': 'Aucune instruction',
+	'admin.workflows.versions.plan.cards': 'Affaires concernées',
+	'admin.workflows.versions.plan.cards.truncated': '{rendues} affaire(s) listées sur {total}.',
+	'admin.workflows.versions.plan.cards.all': '{total} affaire(s) listées.',
+	'admin.workflows.versions.plan.column.card': 'Affaire',
+	'admin.workflows.versions.plan.column.state': 'État',
+	'admin.workflows.versions.plan.column.resolution': 'Issue',
+	'admin.workflows.versions.plan.state.active': 'Active',
+	'admin.workflows.versions.plan.state.archived': 'Archivée',
+	'admin.workflows.versions.plan.state.deleted': 'En corbeille',
+	'admin.workflows.versions.plan.resolution.unchanged': 'Inchangée',
+	'admin.workflows.versions.plan.resolution.remapped': 'Remappée',
+	'admin.workflows.versions.plan.resolution.unresolved': 'Sans instruction',
+
+	'admin.workflows.versions.restore.action': 'Restaurer cette version',
+	'admin.workflows.versions.restore.confirm':
+		'Restaurer la version {numero} de ce workflow ?',
+	'admin.workflows.versions.restore.confirm.body':
+		'La composition actuelle est d’abord publiée comme point de retour, puis remplacée. Les affaires sont déplacées selon le plan ci-dessus.',
+	'admin.workflows.versions.restore.confirm.action': 'Restaurer',
+	'admin.workflows.versions.restore.running': 'Restauration en cours',
+	'admin.workflows.versions.restore.done': 'Version {numero} restaurée.',
+	'admin.workflows.versions.restore.rollback.published':
+		'Point de retour publié : version {numero}.',
+	'admin.workflows.versions.restore.rollback.existing':
+		'Point de retour : la version {numero}, qui jouait déjà ce rôle.',
+	'admin.workflows.versions.restore.counters':
+		'{affaires} affaire(s) déplacée(s) ; étapes créées {creees}, supprimées {supprimees}, modifiées {majes} ; champs créés {champsCrees}, désarchivés {desarchives}, archivés {archives}, modifiés {champsMajes}.',
+	'admin.workflows.versions.restore.matches': 'La composition obtenue est celle de la version.',
+	'admin.workflows.versions.restore.differs':
+		'La composition obtenue diffère de la version : le nom, la portée et les champs archivés ne sont pas restaurés.',
+
+	// Les refus, dictionnaire fermé (§7 ter.14.7) — jamais le message brut de la base.
+	'admin.workflows.versions.refus.composition-inchangee':
+		"La composition n'a pas changé depuis la dernière version : il n'y a rien à publier.",
+	'admin.workflows.versions.refus.workflow-archive':
+		'Ce workflow est archivé : il ne peut être ni publié ni restauré.',
+	'admin.workflows.versions.refus.introuvable':
+		"L'objet visé n'est plus lisible avec votre compte. Rechargez l'écran.",
+	'admin.workflows.versions.refus.administrateurs':
+		'Ce geste est réservé aux administrateurs de cet espace de travail.',
+	'admin.workflows.versions.refus.workflows-differents':
+		"Ces deux versions n'appartiennent pas au même workflow.",
+	'admin.workflows.versions.refus.plan-non-applicable':
+		'Des affaires attendent encore une instruction : la restauration a été refusée.',
+	'admin.workflows.versions.refus.structure-modifiee':
+		'La structure a changé depuis le plan. Recalculez-le avant de restaurer.',
+	'admin.workflows.versions.refus.remappage-refuse':
+		"L'instruction de remappage a été refusée : la destination choisie n'est pas admise.",
+	'admin.workflows.versions.refus.limite-invalide':
+		'La borne demandée pour la liste des affaires est hors des valeurs admises.',
+	'admin.workflows.versions.refus.generique':
+		'Le geste a été refusé, sans raison exploitable par cet écran.',
+
+	'live.workflows.version.published': 'Version publiée',
+	'live.workflows.version.compared': 'Comparaison rendue',
+	'live.workflows.version.planned': 'Plan rendu',
+	'live.workflows.version.restored': 'Version restaurée',
 } as const
 
 export type CleTraduction = keyof typeof fr

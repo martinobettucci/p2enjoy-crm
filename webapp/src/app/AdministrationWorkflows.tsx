@@ -41,7 +41,7 @@
 // d'ajout : l'unicité `(workflow_id, node_id)` refuserait l'insertion de toute façon, et il évite
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
 	Archive,
 	ArchiveRestore,
@@ -55,6 +55,7 @@ import {
 	Trash2,
 	TriangleAlert,
 } from 'lucide-react'
+import { BlocVersionsWorkflow } from './BlocVersionsWorkflow'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -2286,6 +2287,25 @@ export function AdministrationWorkflows({
 		[client, executer],
 	)
 
+	/**
+	 * Les libellés de la structure VIVANTE, par identifiant.
+	 *
+	 * Ils servent de TROISIÈME repli au nommage d'un élément de comparaison
+	 * (`docs/SPEC-workflow-engine.md` §7 ter.14.6). L'éditeur les a déjà chargés — étapes et
+	 * champs du workflow choisi — et les relire dans le bloc des versions serait une requête pour
+	 * une donnée déjà en mémoire.
+	 */
+	const libellesVivants = useMemo(() => {
+		const libelles = new Map<string, string>()
+		if (etapes.statut === 'pret') {
+			for (const etape of etapes.donnees) libelles.set(etape.id, libelleEtape(etape))
+		}
+		if (champs.statut === 'pret') {
+			for (const champ of champs.donnees) libelles.set(champ.id, champ.label)
+		}
+		return libelles
+	}, [champs, etapes])
+
 	// Un client absent est déjà traité par la coquille (`AppShell`, `EtatConfiguration`) : cet
 	// écran n'est jamais rendu sans client, et ses effets se contentent de ne rien lancer.
 	if (client === null) return null
@@ -3196,6 +3216,20 @@ export function AdministrationWorkflows({
 										</section>
 									</>
 								) : null}
+
+								{/* Les versions, SIXIÈME bloc et dernier de la colonne — `CRM-078`,
+								    docs/SPEC-workflow-engine.md §7 ter.14.2. Il est rendu même quand le
+								    workflow n'a aucune étape : publier une composition vide reste un
+								    geste que la base tranche, et le masquer ferait croire que le
+								    versionnement n'existe pas pour ce workflow. */}
+								<BlocVersionsWorkflow
+									client={client}
+									idWorkflow={choisi.id}
+									nomWorkflow={choisi.name}
+									structure={libellesVivants}
+									onStructureRestauree={() => void rechargerGraphe(choisi.id)}
+									onAnnonce={setAnnonce}
+								/>
 							</section>
 						)}
 					</div>

@@ -232,6 +232,8 @@ type Options = {
 	readonly regles?: unknown[]
 	readonly exigences?: unknown[]
 	readonly catalogue?: unknown[]
+	/** Lignes de la lecture 8 — les versions du workflow choisi (`CRM-078`, §7 ter.14.3). */
+	readonly versions?: unknown[]
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
 	readonly erreurChamps?: { message: string; status: number }
@@ -306,6 +308,10 @@ function clientFactice(options: Options = {}): {
 				if (table === 'workflow_transition_required_fields') {
 					return lecture(options.exigences ?? EXIGENCES, options.erreurExigences)
 				}
+				// LECTURE 8, ajoutée par `CRM-078` (§7 ter.14.3). Elle est routée EXPLICITEMENT :
+				// sans cette branche, la lecture des versions retombait sur le catalogue et
+				// rendait des lignes sans colonne de version — un double qui ment sur la forme.
+				if (table === 'workflow_versions') return lecture(options.versions ?? [])
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),

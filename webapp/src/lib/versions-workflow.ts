@@ -76,15 +76,18 @@ export async function lireVersions(
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
 		const lues = (reponse.data ?? []) as unknown as readonly LigneVersion[]
+		// Les colonnes sont NORMALISÉES et non recopiées : le type décrit ce que PostgREST rend,
+		// il ne le garantit pas (`docs/SPEC-types.md`). Une ligne amputée d'une colonne rendrait
+		// `undefined` à l'écran, ce que ce module s'interdit partout ailleurs.
 		return pret(
 			lues.map((ligne) => ({
-				id: ligne.id,
-				version_number: ligne.version_number,
-				note: ligne.note,
-				published_at: ligne.published_at,
-				composition_fingerprint: ligne.composition_fingerprint,
-				auteur: ligne.auteur?.full_name ?? null,
-				composition: ligne.composition,
+				id: texte(ligne.id) ?? '',
+				version_number: nombre(ligne.version_number),
+				note: texte(ligne.note),
+				published_at: texte(ligne.published_at) ?? '',
+				composition_fingerprint: texte(ligne.composition_fingerprint) ?? '',
+				auteur: texte(ligne.auteur?.full_name),
+				composition: ligne.composition ?? null,
 			})),
 		)
 	} catch (cause) {
