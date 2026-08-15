@@ -509,3 +509,181 @@ test.describe('paliers responsive de la confirmation du geste (docs/DESIGN_SYSTE
 		})
 	}
 })
+
+// ---------------------------------------------------------------------------------------------
+// Le geste de mise à la corbeille d'une AFFAIRE — huitième tranche, docs/SPEC-corbeille.md §4 ter
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies docs/SPEC-corbeille.md §4 ter.1 (le geste vit sur la route de détail), §4 ter.3 (les
+//           trois issues), §4 ter.5 (l'écran nomme la corbeille et ne dit pas « introuvable »)
+//
+// LA PREUVE CRÉE SON PROPRE OBJET, sous un titre préfixé `E2E Geste Affaire`, et le supprime dans
+// son `finally` : les comptes figés du seed (`0012_cards.test.sql`) dénonceraient une ligne laissée
+// derrière. Le channel est celui du seed — `formation / inter-entreprises` —, pour que la route de
+// détail existe réellement plutôt que d'être fabriquée.
+
+const CHEMIN_CARDS = `${URL_API}/rest/v1/cards`
+const TRACK_FORMATION = 'formation'
+const CANAL_INTER = 'inter-entreprises'
+const CHANNEL_INTER = '5eed0000-0000-4000-8000-000000000036'
+const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
+const TITRE_AFFAIRE = 'E2E Geste Affaire'
+
+async function supprimerAffaireJetable(page: Page): Promise<void> {
+	await page.request.delete(`${CHEMIN_CARDS}?title=like.${encodeURIComponent(TITRE_AFFAIRE)}*`, {
+		headers: enTetesService(),
+	})
+}
+
+/** Crée une affaire jetable ACTIVE dans un channel du seed, et rend son identifiant. */
+async function creerAffaireJetable(page: Page, suffixe: string): Promise<string> {
+	const reponse = await page.request.post(CHEMIN_CARDS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: {
+			workspace_id: WORKSPACE_SEED,
+			channel_id: CHANNEL_INTER,
+			workflow_id: WORKFLOW_GLOBAL,
+			current_step_id: ETAPE_PROSPECTION,
+			title: `${TITRE_AFFAIRE} ${suffixe}`,
+		},
+	})
+	expect(reponse.status(), await reponse.text()).toBe(201)
+	return ((await reponse.json()) as { id: string }[])[0]!.id
+}
+
+function adresseAffaire(id: string): string {
+	return `/tracks/${TRACK_FORMATION}/${CANAL_INTER}/cards/${id}`
+}
+
+test.describe('le geste de mise à la corbeille d’une affaire (§4 ter)', () => {
+	test('une affaire est retirée depuis sa fiche, constatée en base, et retrouvée dans la corbeille', async ({
+		page,
+	}) => {
+		await supprimerAffaireJetable(page)
+		try {
+			const idCard = await creerAffaireJetable(page, 'souris')
+			await connecter(page, ADMIN)
+			await page.goto(adresseAffaire(idCard))
+
+			// La commande vit en bas de la colonne GAUCHE, sous le formulaire (§4 ter.1).
+			await expect(page.getByTestId('geste-corbeille-card')).toBeVisible()
+			await page.getByRole('button', { name: 'Mettre à la corbeille' }).click()
+
+			const confirmation = page.getByTestId('confirmation-corbeille-card')
+			await expect(confirmation).toBeVisible()
+			// Elle NOMME l'affaire (§6 du design system) et ne porte AUCUNE énumération (§4 ter.2).
+			await expect(confirmation).toContainText(`${TITRE_AFFAIRE} souris`)
+			await expect(confirmation).not.toContainText('inaccessible')
+			await capturer(page, 'card-geste-confirmation', UNITE)
+
+			// La base n'a PAS bougé tant que la confirmation n'est pas validée.
+			expect(await deletedAt(page, 'cards', idCard)).toBeNull()
+
+			await page.getByTestId('confirmer-corbeille-card').click()
+
+			// L'écran NOMME la corbeille, et ne retombe pas sur « Card introuvable » (§4 ter.5).
+			const retiree = page.getByTestId('affaire-retiree')
+			await expect(retiree).toBeVisible()
+			await expect(retiree).toHaveAttribute('role', 'status')
+			await expect(page.getByText('Card introuvable')).toHaveCount(0)
+			await capturer(page, 'card-affaire-retiree', UNITE)
+
+			// L'EFFET EST CONSTATÉ EN BASE, jamais déduit de l'écran (`CLAUDE.md` §10).
+			expect(await deletedAt(page, 'cards', idCard)).not.toBeNull()
+
+			// Le second chemin du bloc mène à la corbeille, où l'affaire se retrouve par son nom.
+			await page.getByRole('link', { name: 'Ouvrir la corbeille' }).click()
+			await expect(
+				page.getByTestId('ligne-corbeille').filter({ hasText: `${TITRE_AFFAIRE} souris` }),
+			).toHaveCount(1)
+		} finally {
+			await supprimerAffaireJetable(page)
+		}
+	})
+
+	test('le geste se fait AU CLAVIER SEUL, de la commande au bloc de succès', async ({ page }) => {
+		await supprimerAffaireJetable(page)
+		try {
+			const idCard = await creerAffaireJetable(page, 'clavier')
+			await connecter(page, ADMIN)
+			await page.goto(adresseAffaire(idCard))
+
+			const commande = page.getByRole('button', { name: 'Mettre à la corbeille' })
+			await commande.focus()
+			await page.keyboard.press('Enter')
+
+			// LE FOCUS ENTRE DANS LA CONFIRMATION (docs/DESIGN_SYSTEM.md §5.13) : sans cela, il
+			// resterait sur une commande qui vient de disparaître.
+			const confirmer = page.getByTestId('confirmer-corbeille-card')
+			await expect(confirmer).toBeFocused()
+
+			// ANNULER REND LE FOCUS À LA COMMANDE — le défaut que la preuve unitaire a trouvé : la
+			// commande est démontée pendant la confirmation, et un `focus()` immédiat visait une
+			// référence nulle.
+			await page.keyboard.press('Tab')
+			await page.keyboard.press('Enter')
+			await expect(commande).toBeFocused()
+			expect(await deletedAt(page, 'cards', idCard)).toBeNull()
+
+			await page.keyboard.press('Enter')
+			await expect(page.getByTestId('confirmer-corbeille-card')).toBeFocused()
+			await page.keyboard.press('Enter')
+
+			await expect(page.getByTestId('affaire-retiree')).toBeVisible()
+			expect(await deletedAt(page, 'cards', idCard)).not.toBeNull()
+		} finally {
+			await supprimerAffaireJetable(page)
+		}
+	})
+
+	test('la LECTRICE reçoit « sans effet », et la base ne bouge pas (§4 ter.3)', async ({ page }) => {
+		await supprimerAffaireJetable(page)
+		try {
+			const idCard = await creerAffaireJetable(page, 'lectrice')
+			await connecter(page, VIEWER)
+			await page.goto(adresseAffaire(idCard))
+
+			// LA COMMANDE EST OFFERTE, et c'est le propos : la règle vit dans `cards_maj`, et
+			// l'éteindre d'avance ferait passer une décision de la base pour une décision d'écran.
+			await page.getByRole('button', { name: 'Mettre à la corbeille' }).click()
+			await page.getByTestId('confirmer-corbeille-card').click()
+
+			const refus = page.getByTestId('refus-corbeille-card')
+			await expect(refus).toBeVisible()
+			await expect(refus).toContainText('Aucune modification')
+			// Ni succès ni erreur : la confirmation reste ouverte, et la base est INCHANGÉE.
+			await expect(page.getByTestId('affaire-retiree')).toHaveCount(0)
+			expect(await deletedAt(page, 'cards', idCard)).toBeNull()
+			await capturer(page, 'card-geste-sans-effet', UNITE)
+		} finally {
+			await supprimerAffaireJetable(page)
+		}
+	})
+})
+
+test.describe('paliers responsive de la confirmation d’une affaire (docs/DESIGN_SYSTEM.md §7)', () => {
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : la confirmation de l’affaire reste lisible`, async ({ page }) => {
+			await supprimerAffaireJetable(page)
+			try {
+				const idCard = await creerAffaireJetable(page, palier.nom)
+				// La taille est fixée AVANT le chargement, comme pour la confirmation du §4 bis : la
+				// coquille décide de son repli de barre latérale au montage.
+				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+				await connecter(page, ADMIN)
+				await page.goto(adresseAffaire(idCard))
+				await page.getByRole('button', { name: 'Mettre à la corbeille' }).click()
+				await expect(page.getByTestId('confirmation-corbeille-card')).toBeVisible()
+
+				const debordePage = await page.evaluate(
+					() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+				)
+				expect(debordePage, 'la page ne défile pas horizontalement').toBe(false)
+
+				await capturer(page, `card-geste-confirmation-${palier.nom}`, UNITE)
+			} finally {
+				await supprimerAffaireJetable(page)
+			}
+		})
+	}
+})
