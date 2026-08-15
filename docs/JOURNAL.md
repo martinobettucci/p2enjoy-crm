@@ -13749,3 +13749,59 @@ quatre fois, dont une avant la campagne où `e2e:mail` rendait **42/42**.
 règles de visibilité (`docs/SPEC-form-composer.md` §3.1 et §5), puis les **exigences de
 transition** et la **prévisualisation des effets**. Le choix d'unité obéit à la décision 382 :
 backlog d'abord, registre en consultation.
+
+### Décision 388 — CRM-076, quatrième tranche : la grille champ × étape, et l'écriture qui ne dépend pas de ce qu'on a lu
+
+**2026-08-15, suite de la décision 387 — entrée écrite et committée avant la première ligne de
+code (`CLAUDE.md` §5).**
+
+**L'unité de la session** est `CRM-076`, désignée comme reprise en cours par la dernière entrée du
+journal et par le backlog. Le §7 bis.10.7 nommait quatre manques ; cette tranche lève la seconde
+moitié du deuxième — la **grille champ × étape** des règles de visibilité, que
+`docs/SPEC-form-composer.md` §3.1 pose et dont le §5 exige qu'elle se règle « en un seul écran ».
+Les exigences de transition et la prévisualisation des effets restent dues, et l'unité reste `[~]`.
+
+**Ni modèle ni autorisations.** `form_field_rules` existe depuis `CRM-035` avec ses trois clés
+composites, son `CHECK` de visibilité et ses quatre politiques. **Aucune migration n'est écrite.**
+
+**Quatre mesures prises sur la pile avant d'écrire la spécification, et qui décident de l'écran.**
+
+La première décide de la forme de l'écriture, et c'est la mesure centrale de la tranche. Sur le
+couple `…081 × …067`, absent du seed : `POST` → **`201`** ; `POST` du même couple avec
+`Prefer: resolution=merge-duplicates` → **`200`** ; le même `POST` **sans** cette résolution →
+**`409`**, `23505`, `form_field_rules_pkey` ; `PATCH` → `200`. Un écran qui choisirait entre
+insertion et modification d'après ce qu'il a lu prendrait donc le `409` dès qu'un autre
+administrateur a réglé la même case entre-temps. L'`upsert` est la seule des quatre formes qui soit
+indifférente à l'état lu, et la clé primaire `(field_id, step_id)` est ce qui le permet.
+
+La deuxième décide des lignes de la grille : la base **accepte** une règle sur un champ archivé —
+`201` sur `…087 × …067`. Un champ archivé n'apparaît pourtant dans aucun formulaire. La grille
+l'exclut donc de ses lignes, ne supprime aucune de ses règles, et écrit combien de champs sont
+ainsi retirés plutôt que de laisser chercher une ligne absente.
+
+La troisième décide de ce que l'écran fait d'un non-administrateur : le `business_developer` reçoit
+`403`/`42501` en insertion, mais **`200` et `[]`** en `PATCH` comme en `DELETE` sur une règle
+seedée — vérifiée intacte après coup. Le `USING` de la politique filtre la ligne avant l'écriture,
+sans lever d'erreur : `sans-effet` est ici le cas le plus fréquent, pas un cas limite.
+
+La quatrième donne le compte réel de la ligne de base : **quinze** règles sur le workflow par
+défaut — sept `hidden`, six `required`, deux `visible` — pour six champs actifs et sept étapes,
+soit **vingt-sept** couples sans règle. C'est ce qui interdit de composer la grille depuis les
+règles : une lecture par les règles perdrait les deux tiers des cases.
+
+**Une conséquence d'écran qui découle des deux `visible` seedées.** La case a **quatre** états, pas
+trois : `par défaut`, `masqué`, `affiché`, `exigé`. Replier `affiché` sur le défaut aurait affiché
+les deux règles seedées comme des absences, puis les aurait supprimées au premier réglage voisin.
+L'écran dit en revanche que les deux produisent le même formulaire — la différence est une intention
+consignée, pas un effet.
+
+**Relevé sans le corriger.** INC-108 : trois documents comptent « dix-sept règles » là où le seed
+en pose **quinze** par workflow. Arbitrage demandé.
+
+**Preuves attendues avant de fermer la tranche** — §7 bis.11.8 : unitaires sur la lecture 6, la
+composition de la grille et ses cases par défaut, l'`upsert` et son en-tête, la correspondance des
+refus ; E2E sur la vraie base des deux gestes à la souris et au clavier, le retour au défaut
+vérifié par l'**absence** de ligne ; captures aux quatre paliers observées.
+
+**Où reprendre après cette tranche.** `CRM-076` reste `[~]` : les exigences de transition et la
+prévisualisation des effets restent dues.

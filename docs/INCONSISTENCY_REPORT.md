@@ -130,6 +130,46 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-108 — Trois documents comptent « dix-sept règles » de visibilité là où le seed en pose quinze
+
+**Nature :** chiffre figé dans une spécification et deux documents de suivi, dépassé par une
+évolution ultérieure du seed qui ne l'a pas maintenu — même famille qu'INC-080, INC-101, INC-103 et
+INC-104. **Relevée le :** 2026-08-15, en établissant la ligne de base de la quatrième tranche de
+`CRM-076`, qui avait besoin du compte réel des règles.
+
+**Le fait, mesuré sur la pile seedée** (jeton réel de l'administratrice, `GET /form_field_rules`,
+seed appliqué le jour même) :
+
+| Grandeur | Ce que les documents écrivent | Ce que la base porte |
+|---|---|---|
+| Règles du workflow par défaut | **dix-sept** | **quinze** — sept `hidden`, six `required`, deux `visible` |
+| Règles du workflow dérivé | non chiffré | quinze, le même graphe |
+| Champs | sept dont un archivé | sept dont un archivé — conforme |
+| Règles de l'étape `Prospection` | cinq (`docs/SPEC-form-composer.md` §4.1) | cinq — conforme |
+
+Les trois phrases concernées : `docs/SPEC-form-composer.md` §4 (ligne 320), `docs/BACKLOG.md`
+(ligne 3163) et `docs/INCONSISTENCY_REPORT.md` (ligne 1291, dans une entrée close). Le tableau
+`REGLES` de `supabase/seed/apply-seed.sh` porte quinze entrées, et le seed vérifie lui-même
+l'égalité de ce compte avant de reconstruire la copie : la base ne peut donc pas en porter d'autres.
+
+**Cause probable, non vérifiée :** les trois phrases datent du 2026-08-05, où elles disent avoir été
+écrites « après mesure ». Le décompte détaillé du §4.1 — cinq règles sur `Prospection`, un champ
+sans règle — reste exact ; seul le total ne l'est plus. Une révision ultérieure du tableau `REGLES`
+paraît avoir retiré deux entrées sans relire les totaux cités ailleurs. Aucun harnais n'emploie ce
+chiffre — `scripts/verify-champs-formulaire.sh` interroge la base —, donc **rien n'a jamais rougi**.
+
+**Comportement laissé inchangé.** Ces phrases décrivent des unités closes, `CRM-035` et `CRM-037` ;
+les corriger au passage retoucherait la preuve écrite d'unités fermées sans les rejouer. La
+correction demande l'arbitrage du responsable : soit les trois phrases sont mises au chiffre réel,
+soit elles sont datées comme un état passé.
+
+**Ce que cette session a fait à la place :** le §7 bis.11 de `docs/SPEC-workflow-engine.md`, écrit
+cette session, porte le chiffre **mesuré** et dit qu'il l'est.
+
+**Lié à :** INC-080, INC-101, INC-103, INC-104 (compteurs figés), `CRM-035`, `CRM-037`, `CRM-076`.
+
+---
+
 ### INC-107 — Un seul `veille_compte_echoue` rend `mail-sync.spec.ts:210` rouge pour toute la vie du conteneur
 
 **Nature :** preuve qui juge un **historique** là où elle veut décrire un état. **Relevée le :**

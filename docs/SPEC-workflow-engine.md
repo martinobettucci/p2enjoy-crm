@@ -2401,6 +2401,159 @@ visuelles.
 | Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, formulaire de déclaration ouvert, champ archivé visible |
 | Seed | Le formulaire du workflow par défaut suffit. **Mesuré sur la pile, 2026-08-14** : **sept** champs de positions 1 à 7, dont **un archivé** — `budget-previsionnel` —, six types distincts, `budget` portant sa devise et `source` ses quatre choix |
 
+### 7 bis.11 Quatrième tranche : la grille champ × étape des règles de visibilité
+
+Le §7 bis.10.7 nommait quatre manques ; celui-ci en lève un, et c'est la **seconde moitié** du
+deuxième : les **règles de visibilité** que `docs/SPEC-form-composer.md` §3.1 pose et dont le §5 du
+même document exige qu'elles se règlent « en un seul écran, plutôt que champ par champ ». Les
+exigences de transition et la prévisualisation des effets restent dues ; l'unité reste `[~]`.
+
+Comme les deux tranches précédentes, celle-ci ne touche NI au modèle NI aux autorisations :
+`form_field_rules` existe depuis `CRM-035` avec ses trois clés composites, son `CHECK` de valeur et
+ses quatre politiques, déjà prouvés en pgTAP. Ce qui manquait était l'écran. **Aucune migration
+n'est écrite.**
+
+#### 7 bis.11.1 Ce que la quatrième tranche lit
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 6 | `form_field_rules` | `workflow_id=eq.<workflow choisi>` | `field_id`, `step_id` | les règles de visibilité du workflow choisi |
+
+L'ORDRE DEMANDÉ EST CELUI DES IDENTIFIANTS, pour la raison exacte de la lecture 4 (§7 bis.9.1) :
+la table ne porte ni la position d'un champ ni celle d'une étape, donc aucun tri lisible ne peut
+être demandé au serveur. Il n'en a pas besoin — la grille n'est jamais parcourue dans l'ordre des
+règles, elle est **indexée** par le couple (champ, étape) et son ordre vient des deux listes déjà
+lues.
+
+La lecture est émise **avec** celles des étapes, des arêtes et des champs, par le §7 bis.10.1 : une
+règle n'a de sens qu'entre un champ et une étape du même instant, et toute écriture des quatre
+blocs les rejoue toutes.
+
+#### 7 bis.11.2 La composition, qui ne part JAMAIS des règles
+
+Le §3.1 du composeur pose la règle de lecture et en donne le motif : « le formulaire d'une étape ne
+se lit **jamais** en listant les règles de cette étape, mais en listant les **champs du workflow**
+puis en appliquant les règles trouvées ». La grille est le même algorithme, en deux dimensions :
+
+1. les **lignes** sont les champs **non archivés**, dans l'ordre de leur `position` ;
+2. les **colonnes** sont les étapes, dans l'ordre du graphe — celui de la lecture 2 ;
+3. la **cellule** est la règle du couple si elle existe, et **le défaut sinon**.
+
+Une grille composée depuis les règles perdrait toutes les cases par défaut, c'est-à-dire la
+majorité : MESURÉ sur le seed le 2026-08-15, le workflow par défaut porte **quinze** règles pour
+**six** champs actifs × **sept** étapes, soit quarante-deux couples — vingt-sept cases sont donc des
+défauts, et une lecture par les règles n'en montrerait aucune.
+
+**Les champs ARCHIVÉS sont exclus des lignes, à la différence de la liste du §7 bis.10.1.** Ce n'est
+pas une inconstance de plus : la liste des champs sert à **restaurer** un champ archivé, et l'y
+masquer rendrait le geste inatteignable ; la grille, elle, décrit ce qu'un formulaire montre, et un
+champ archivé n'apparaît dans aucun formulaire (`docs/SPEC-form-composer.md` §5). Lui donner sept
+cases réglables ferait croire à un effet qui n'existe pas. Ses règles **ne sont pas supprimées** —
+MESURÉ le 2026-08-15, la base accepte une règle sur un champ archivé (`201`) et l'archivage n'en
+efface aucune — et elles redeviennent effectives dès sa restauration. L'écran écrit combien de
+champs sont ainsi retirés de la grille, plutôt que de laisser un administrateur chercher une ligne
+absente.
+
+#### 7 bis.11.3 Les deux gestes, et pourquoi le premier est un `upsert`
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Régler une case** sur `hidden`, `visible` ou `required` | `POST` avec `Prefer: resolution=merge-duplicates` | `CHECK visibility IN ('hidden','visible','required')` ; les trois clés composites du §3.3 du composeur |
+| **Rendre une case au défaut** | `DELETE` sur le couple `(field_id, step_id)` | la politique de suppression, ouverte aux règles et refusée aux champs (décision 96) |
+
+**Le réglage est UNE écriture, pas « insérer si absente, sinon modifier », et c'est mesuré.**
+Le 2026-08-15, sur la pile seedée :
+
+1. `POST` d'une règle absente → **`201`** ;
+2. `POST` du **même couple** avec `Prefer: resolution=merge-duplicates` → **`200`**, la ligne est
+   remplacée ;
+3. `POST` du même couple **sans** cette résolution → **`409`**, `23505`,
+   « duplicate key value violates unique constraint "form_field_rules_pkey" » ;
+4. `PATCH` du même couple → `200`.
+
+Un écran qui choisirait entre `POST` et `PATCH` d'après ce qu'il a lu prendrait donc le `409` dès
+qu'un autre administrateur a réglé la même case entre la lecture et le clic — un refus que
+l'utilisateur n'a pas provoqué et ne peut pas comprendre. L'`upsert` n'est pas une commodité :
+c'est la seule des quatre formes qui soit **indifférente à l'état lu**, et la clé primaire
+`(field_id, step_id)` du §3.2 est précisément ce qui la rend possible.
+
+**Le retour au défaut est un `DELETE`, et il n'a pas d'équivalent ailleurs dans cet éditeur.** Un
+champ ne se supprime pas — aucun privilège `DELETE` (§7 bis.10.2) —, une règle si : la décision 96
+l'écrit dans la migration elle-même, « une règle est la composition d'un formulaire, sans existence
+propre ». MESURÉ : `DELETE` par l'administratrice rend `200` et la ligne retirée.
+
+#### 7 bis.11.4 Les QUATRE états d'une case, et pourquoi `visible` n'est pas replié sur le défaut
+
+Le §3.1 du composeur donne trois visibilités et fait de **l'absence de règle** un quatrième état,
+qui vaut `visible`. L'écran rend donc quatre choix par case — `par défaut`, `masqué`, `affiché`,
+`exigé` — et non trois.
+
+Replier `affiché` sur `par défaut` aurait paru plus simple et aurait été **faux** : le seed pose
+deux règles `visible` explicites, et une grille à trois choix les afficherait comme des défauts,
+puis les supprimerait au premier réglage d'une autre case de la même ligne. Un écran ne doit pas
+effacer une ligne que l'administrateur n'a pas désignée.
+
+L'écran **dit** en revanche ce que la base fait de cette distinction : `par défaut` et `affiché`
+produisent le **même formulaire**, et leur différence est une intention consignée, non un effet. Le
+taire laisserait chercher une différence de comportement qui n'existe pas.
+
+#### 7 bis.11.5 Les refus
+
+Le vocabulaire est celui d'une règle, et deux natures du §7 bis.10.5 disparaissent faute de pouvoir
+être produites :
+
+- `23514` est `forme-refusee` et n'a **qu'une** cause ici, le `CHECK` de visibilité —
+  MESURÉ, `400` sur `visibility: "peut-etre"`. L'écran ne propose que les trois valeurs, de sorte
+  que ce refus ne peut venir que d'un état corrompu ou d'une écriture concurrente ;
+- `23503` est « le champ ou l'étape a disparu, ou n'appartient pas à ce workflow » — MESURÉ,
+  `409` sur un couple croisant deux workflows, la clé `form_field_rules_step_id_workflow_id_fkey`
+  répondant la première. C'est exactement ce que voit un administrateur dont le voisin vient de
+  retirer l'étape ;
+- `23505` **n'est pas traduit en refus métier** : il ne peut apparaître que si l'écran renonçait à
+  l'`upsert`, et le §7 bis.11.3 dit pourquoi il ne le fait pas. Il reste rendu par le message
+  générique plutôt que par une nature que rien ne doit produire ;
+- `403` / `42501` est `forbidden` — MESURÉ avec le jeton réel du `business_developer` sur une
+  insertion ;
+- `200` avec **zéro ligne** est `sans-effet`, et c'est ici le cas le plus fréquent d'un
+  non-administrateur : MESURÉ, le `business_developer` obtient `200` et `[]` aussi bien en `PATCH`
+  qu'en `DELETE` sur une règle seedée, qui reste intacte. Le `USING` de la politique filtre la ligne
+  avant l'écriture, sans lever d'erreur. Le confondre avec un succès afficherait un réglage qui n'a
+  pas eu lieu.
+
+#### 7 bis.11.6 États, accessibilité et responsive
+
+La grille est un **quatrième bloc**, sous les champs et dans la même colonne : on ne règle pas la
+visibilité de champs qu'on n'a pas déclarés.
+
+- **C'est un vrai tableau** — `table`, `thead`, `th scope="col"` pour les étapes, `th scope="row"`
+  pour les champs —, par le §5.9 du design system : une grille de `div` priverait un lecteur
+  d'écran de l'en-tête rappelé à chaque cellule, ce qui est ici la seule façon de savoir de quel
+  couple on parle.
+- **Chaque case est une liste déroulante** dont le libellé accessible nomme **le champ ET l'étape**,
+  jamais « visibilité » seul. Sept colonnes de cases anonymes seraient indéchiffrables à la voix.
+- **Le tableau défile dans son propre conteneur** (§7 du design system) : sept étapes ne tiennent
+  pas sous 768 px, et la page ne défile jamais horizontalement.
+- Le bloc rend les quatre états du §5.8 ; un workflow sans champ actif ou sans étape **dit** ce que
+  cela signifie plutôt que d'afficher un tableau vide ; chaque case est atteignable au clavier ; la
+  console reste vierge.
+
+#### 7 bis.11.7 Ce que cette tranche ne livre pas
+
+- les **exigences de transition** (`docs/SPEC-transition-required-fields.md`) ;
+- la **prévisualisation des effets** exigée par la Definition of Done de `CRM-076` ;
+- le réglage en **lot** d'une ligne ou d'une colonne entière : chaque case est une écriture, et
+  aucune écriture de lot n'est spécifiée. Une boucle de quarante-deux `POST` déguisée en un geste
+  laisserait, au premier refus, une grille à moitié réglée sans que rien ne le dise.
+
+#### 7 bis.11.8 Preuves attendues de la quatrième tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Lecture 6 émise avec ses colonnes et son filtre ; grille composée des champs **non archivés** × étapes, cases par défaut comprises ; règle d'un couple appliquée à la bonne case ; règle orpheline — champ ou étape absent — écartée ; les deux écritures, dont l'`upsert` et son en-tête `Prefer` ; correspondance des refus, `23514`, `23503`, `42501` et `sans-effet` compris |
+| Interface | Les deux gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le retour au défaut vérifié par l'**absence** de ligne, pas par l'affichage |
+| Visuel | Captures aux **quatre paliers** de `docs/DESIGN_SYSTEM.md` §7, grille défilant dans son conteneur sous 768 px, case ouverte |
+| Seed | Le formulaire du workflow par défaut suffit. **Mesuré sur la pile, 2026-08-15** : **quinze** règles — sept `hidden`, six `required`, deux `visible` — pour six champs actifs et sept étapes, soit vingt-sept couples sans règle. Les preuves écrivent sur des couples que le seed laisse par défaut et les rendent au défaut dans leur `finally` : le seed retrouve exactement ses quinze règles |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
