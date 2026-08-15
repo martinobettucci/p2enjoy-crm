@@ -90,13 +90,22 @@ select is(
 	array[4::bigint, 0::bigint],
 	'5 — `date-signature-prevue` × `Prospection` : 4 sur place, 0 à l''entrée');
 
+-- RÉVISÉE PAR `CRM-077`, cinquième tranche, et le motif est celui-là même que l'assertion mesure.
+-- `a_l_entree` compte les affaires qu'une arête amènerait sur l'étape ; l'affaire `…0cf`
+-- (docs/SPEC-seed.md §10.4 bis) est posée sur `Negociation`, d'où part une arête vers `Signature`.
+-- Elle est donc la SECONDE affaire à l'entrée, et le nombre passe de 1 à 2 — MESURÉ.
+--
+-- Ce n'est pas la fonction qui a changé, c'est la donnée qu'elle compte, et l'assertion continue
+-- d'affirmer ce qu'elle affirmait : les deux nombres NE SONT PAS le même, `sur_place` restant à 0
+-- quand `a_l_entree` ne l'est pas. C'est cette inversion, et non la valeur `1`, qui justifie
+-- l'écran de prévisualisation.
 select is(
 	(select array[sur_place, a_l_entree]
 	   from public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083',
 	        '5eed0000-0000-4000-8000-000000000064')),
-	array[0::bigint, 1::bigint],
-	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 1 à l''entrée — l''inverse exact');
+	array[0::bigint, 2::bigint],
+	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 2 à l''entrée — l''inverse exact');
 
 -- 7. LE COMPTE D'UNE ÉTAPE EST L'UNION DE SES ARÊTES. Cinq arêtes mènent à `Perdu` ; prises une à
 --    une elles rendent 4, 2, 1, 0 et 1, et l'étape rend 8. L'assertion vérifie l'égalité, et non

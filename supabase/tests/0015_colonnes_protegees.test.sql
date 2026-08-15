@@ -249,21 +249,27 @@ release savepoint p_insert;
 -- RÉVISÉES PAR `CRM-046` (décision 51) : le seed livrait NEUF cards, il en livre QUATORZE
 -- (docs/SPEC-seed.md §9.3). Les trois assertions gardent leur fonction — la protection de colonne
 -- ne doit toucher ni le nombre, ni la forme, ni l'unicité des adresses.
+--
+-- RÉVISÉES UNE SECONDE FOIS PAR `CRM-077`, cinquième tranche : l'affaire `…0cf`
+-- (docs/SPEC-seed.md §10.4 bis) porte le seed à QUINZE cards. AUCUNE des trois n'est retirée ni
+-- relâchée, et c'est le point : ce qu'elles surveillent — le nombre, la FORME générée, l'unicité —
+-- est exactement ce qu'un retrait de privilège pourrait abîmer sans que rien d'autre le dise. Une
+-- card ajoutée par une autre unité déplace leur compte ; elle ne change pas leur objet.
 select is(
 	(select count(*)::int from public.cards),
-	14,
-	'les quatorze cards du seed sont intactes : cette unité ne touche aucun contenu');
+	15,
+	'les quinze cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
 	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
-	14,
-	'et leurs quatorze adresses ont toujours la forme générée : aucune n''a été réécrite');
+	15,
+	'et leurs quinze adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards),
-	14,
-	'quatorze adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne l''a pas '
+	15,
+	'quinze adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne l''a pas '
 	'relâché');
 
 -- =============================================================================================

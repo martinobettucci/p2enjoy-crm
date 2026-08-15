@@ -492,11 +492,23 @@ select lives_ok($$
 -- QUATORZE — douze sur le workflow global, aux sept étapes, et deux sur le workflow dérivé
 -- (docs/SPEC-seed.md §9.3). L'assertion garde sa fonction : elle rendra rouge toute quinzième card
 -- ajoutée sans que le contrat soit réécrit.
+--
+-- RÉVISÉ UNE SECONDE FOIS PAR `CRM-077`, cinquième tranche : elle a fait exactement ce que la
+-- phrase ci-dessus annonçait. L'affaire `…0cf` (docs/SPEC-seed.md §10.4 bis) porte le compte à
+-- QUINZE, et l'assertion est rouge tant que le contrat n'est pas réécrit ici. Il l'est.
+-- L'affaire n'est pas décorative : elle est le seul cas de garde à DEUX niveaux du seed — son
+-- channel `dossiers-2023` est vivant, son track `legacy-2023` est en corbeille — et elle donne à
+-- l'énumération du §3.5 son compte d'affaires non nul.
+--
+-- Le compte reste EXACT, et n'est pas relâché en « au moins quatorze » : une borne inférieure
+-- rendrait la preuve muette sur ce que chaque tranche ajoute, ce qui est précisément la fonction
+-- qu'elle exerce ici pour la deuxième fois.
 select is(
 	(select count(*)::int from public.cards
 	  where id::text like '5eed0000-0000-4000-8000-0000000000c%'),
-	14,
-	'le seed livre QUATORZE cards, identifiants stables — docs/SPEC-cards.md §9, docs/SPEC-seed.md §9.3');
+	15,
+	'le seed livre QUINZE cards, identifiants stables — docs/SPEC-cards.md §9, docs/SPEC-seed.md '
+	'§9.3 et §10.4 bis');
 
 select is(
 	(select count(*)::int from public.cards
@@ -523,10 +535,13 @@ select isnt(
 	'au moins deux devises distinctes : sans quoi le défaut de colonne serait la seule valeur '
 	'jamais observée');
 
+-- Révisée avec le compte ci-dessus, et pour la même cause : l'affaire `…0cf` de la cinquième
+-- tranche de `CRM-077`. Ce que l'assertion vérifie n'a pas changé — l'unicité de l'adresse
+-- générée —, seul son compte suit le contrat du seed.
 select is(
 	(select count(distinct email_local_part)::int from public.cards where id::text like '5eed%'),
-	14,
-	'les quatorze adresses seedées sont distinctes');
+	15,
+	'les quinze adresses seedées sont distinctes');
 
 select is(
 	(select count(*)::int from public.cards where id::text like '5eed%'
