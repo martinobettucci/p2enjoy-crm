@@ -15,6 +15,46 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Avant de restaurer une version, le produit dit card par card où l'affaire atterrit —
+  `CRM-078`, troisième tranche** (`supabase/migrations/0041_plan_remappage_cards.sql`,
+  `docs/SPEC-workflow-engine.md` §7 ter.12). Restaurer une version rend le workflow égal à la
+  composition photographiée, donc les étapes créées **depuis** disparaissent — et des affaires s'y
+  trouvent. Une restauration muette sur ces affaires échouerait en base, ou pire, les déplacerait
+  sans que personne l'ait demandé.
+  - **Le plan, en un appel.** `POST /rest/v1/rpc/plan_card_remapping` rend, pour une version
+    cible : les étapes **retirées** et **rétablies**, un compte par résolution, et la liste des
+    affaires avec leur destination.
+  - **Aucune destination n'est devinée.** Une seule issue est automatique — `unchanged`, quand
+    l'étape existe des deux côtés avec le même identifiant, et la card ne bouge pas. Toute autre
+    destination vient d'un humain, par `step_overrides`, dont la forme est **celle déjà employée
+    par `change_channel_workflow`**. Une affaire sans instruction reste `unresolved`, et
+    `ready` est faux : le produit préfère dire « je ne sais pas » plutôt que choisir à la place de
+    l'administrateur.
+  - **Une étape rétablie n'est jamais proposée comme destination.** Elle est vide par construction,
+    et il aurait été tentant d'y verser les affaires des étapes retirées « puisqu'elle revient » :
+    ce serait une supposition sur l'intention. Elle est **nommée**, jamais choisie.
+  - **Les affaires archivées et celles en corbeille sont dans le plan.** Ce ne sont pas des lignes
+    disparues : elles portent un `current_step_id` réel et une clé étrangère opposable. Les exclure
+    aurait rendu un plan qui se dit complet et une restauration qui échoue sur une affaire que
+    personne ne regardait plus. Chacune porte son `state`.
+  - **La liste est bornée, et sa troncature est annoncée.** `card_limit` vaut 200 par défaut et
+    1000 au plus ; `total`, `returned` et `truncated` disent exactement ce qui manque. Les
+    **compteurs**, eux, portent toujours sur la totalité — un verdict qui dépendrait de la taille
+    de la page ne serait pas un verdict. L'ordre place les affaires **bloquantes en tête**, pour
+    qu'une troncature ne masque jamais ce qui empêche d'appliquer.
+  - **Réservé aux administrateurs, et c'est la condition de justesse du résultat.** `cards`
+    applique les droits fins dès sa politique de lecture ; un plan partiel serait pire qu'un refus.
+    MESURÉ sur la pile seedée : l'administratrice lit **13 affaires sur 13** malgré un
+    `track_members.access = 'none'` sur le track qui en porte six, là où la lectrice n'en lit que
+    **7 sur 13**.
+  - **Huit refus** : appelant non authentifié (`42501`), `version introuvable` — le même message
+    pour une version d'autrui que pour un identifiant inexistant —, `plan reserve aux
+    administrateurs` (`42501`), `limite invalide`, `remappage invalide`, `remappage ambigu`,
+    `origine de remappage inconnue` et `cible de remappage absente de la version`.
+  - **La fonction n'écrit rien** : elle est `STABLE`, ne réserve rien, et ne crée aucune table
+    temporaire. Appliquer le plan, et son retour arrière, restent la quatrième tranche ; les écrans
+    la cinquième.
+
 - **Deux versions d'un workflow se comparent — `CRM-078`, deuxième tranche**
   (`supabase/migrations/0040_comparaison_versions_workflow.sql`,
   `docs/SPEC-workflow-engine.md` §7 ter.11). La première tranche conservait des photographies ;

@@ -3322,6 +3322,12 @@ choisir ; elle n'est jamais choisie à sa place.
 
 `step_overrides` est un tableau `jsonb` d'objets `{ "from_step_id": uuid, "to_step_id": uuid }`.
 
+**C'est exactement la forme de `change_channel_workflow.step_mapping`** (`CRM-019`,
+`docs/SPEC-change-channel-workflow.md`), et ce n'est pas une coïncidence : les deux gestes disent la
+même chose — « les affaires de cette étape vont là » —, et deux formes différentes pour la même
+décision auraient obligé tout écran à traduire l'une dans l'autre. Le contrôle de forme reprend le
+même idiome, `pg_input_is_valid` plutôt qu'un `cast` sous `exception`.
+
 L'instruction porte sur une **étape**, jamais sur une card. Deux motifs, et le second est le seul
 qui compte :
 
