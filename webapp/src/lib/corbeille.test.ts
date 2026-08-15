@@ -15,9 +15,14 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNE_ENFANT,
+	NOM_REFUS_PARENT,
 	OPTIONS_COMPTE,
+	classerRefusRestauration,
 	compterEnfantsInaccessibles,
 	composerEnumeration,
+	lireCorbeille,
+	restaurer,
+	trierParRetraitDecroissant,
 } from './corbeille'
 import type { ClientCrm } from './supabase'
 
@@ -231,5 +236,242 @@ describe('composerEnumeration', () => {
 
 	it('rend AUCUNE ligne quand rien ne devient inaccessible : l’écran dit sa propre phrase (§4)', () => {
 		expect(composerEnumeration({ channels: 0, cards: 0 })).toEqual([])
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// Ce que l'écran LIT — §4.2, §4.3
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies docs/SPEC-corbeille.md §4.2 (les trois lectures et le nom de contrainte obligatoire),
+//           §4.3 (l'auteur inconnu), §4.5 (les trois issues de la restauration)
+//
+// L'ASSERTION LA PLUS UTILE DE CE BLOC EST CELLE QUI LIT LES COLONNES. Le nom de la contrainte
+// (`profiles!tracks_deleted_by_fkey`) n'est pas un détail de style : sans lui, PostgREST rend `300`
+// et `PGRST201` — MESURÉ sur les trois tables (§4.2). Une régression qui « simplifierait » la requête
+// en `profiles(full_name)` casserait l'écran à l'exécution, et seule cette assertion le dirait avant.
+
+type ReponseCorbeille = {
+	data: Record<string, unknown>[] | null
+	error: { message: string; code?: string } | null
+	status: number
+}
+
+type AppelLecture = {
+	table: string
+	colonnes: string
+	filtres: [string, string, unknown][]
+	tris: [string, unknown][]
+}
+
+/** Transport espion pour `lireCorbeille` : il enregistre `not`, `order` et les colonnes demandées. */
+function espionLecture(parTable: Readonly<Record<string, ReponseCorbeille>>): {
+	client: ClientCrm
+	appels: AppelLecture[]
+} {
+	const appels: AppelLecture[] = []
+	const client = {
+		from: (table: string) => ({
+			select: (colonnes: string) => {
+				const appel: AppelLecture = { table, colonnes, filtres: [], tris: [] }
+				appels.push(appel)
+				const chaine = {
+					not: (colonne: string, operateur: string, valeur: unknown) => {
+						appel.filtres.push([operateur, colonne, valeur])
+						return chaine
+					},
+					order: (colonne: string, options?: unknown) => {
+						appel.tris.push([colonne, options])
+						return chaine
+					},
+					then: (resoudre: (valeur: unknown) => unknown) =>
+						Promise.resolve(parTable[table]).then(resoudre),
+				}
+				return chaine
+			},
+		}),
+	} as unknown as ClientCrm
+	return { client, appels }
+}
+
+const VIDE: ReponseCorbeille = { data: [], error: null, status: 200 }
+
+describe('lireCorbeille', () => {
+	it('émet TROIS lectures nommant la contrainte, filtrées et triées côté serveur (§4.2)', async () => {
+		const { client, appels } = espionLecture({ tracks: VIDE, channels: VIDE, cards: VIDE })
+		await lireCorbeille(client)
+
+		expect(appels.map((appel) => appel.table)).toEqual(['tracks', 'channels', 'cards'])
+		for (const appel of appels) {
+			// Le filtre et le tri sont CÔTÉ SERVEUR : rapporter toute la table pour n'en garder
+			// qu'une part ferait transiter ce que l'écran ne montre pas.
+			expect(appel.filtres).toEqual([['is', 'deleted_at', null]])
+			expect(appel.tris).toEqual([['deleted_at', { ascending: false }]])
+			// SANS LE NOM DE LA CONTRAINTE, PostgREST rend 300 / PGRST201 — MESURÉ (§4.2).
+			expect(appel.colonnes).toContain('deleted_by_fkey')
+			expect(appel.colonnes).toMatch(/auteur:profiles!\w+_deleted_by_fkey\(full_name\)/)
+		}
+		// `cards` porte `title` là où les deux autres portent `name` : les colonnes ne sont pas
+		// factorisables, et l'assertion fige les deux écritures.
+		expect(appels[2]?.colonnes).toContain('title')
+		expect(appels[0]?.colonnes).toContain('name')
+	})
+
+	it("rend `null` pour un auteur non enregistré, et ne fabrique aucun texte (§4.3)", async () => {
+		const { client } = espionLecture({
+			tracks: VIDE,
+			channels: VIDE,
+			cards: {
+				// Le cas RÉEL du seed : `Saisie erronée`, née en corbeille sous la clé de service,
+				// dont `deleted_by` est nul et figé par le trigger (docs/SPEC-seed.md §10.2).
+				data: [{ id: 'c-9', title: 'Saisie erronée', deleted_at: '2026-04-02T11:00:00Z', auteur: null }],
+				error: null,
+				status: 200,
+			},
+		})
+		const resultat = await lireCorbeille(client)
+		expect(resultat).toEqual({
+			statut: 'pret',
+			donnees: [
+				{ type: 'card', id: 'c-9', nom: 'Saisie erronée', retireLe: '2026-04-02T11:00:00Z', retirePar: null },
+			],
+		})
+	})
+
+	it('fusionne les trois tables du plus récemment retiré au plus ancien (§4.2, §7)', async () => {
+		const { client } = espionLecture({
+			tracks: {
+				data: [{ id: 't-1', name: 'Legacy', deleted_at: '2026-07-20T14:30:00Z', auteur: { full_name: 'Camille' } }],
+				error: null,
+				status: 200,
+			},
+			channels: {
+				data: [{ id: 'ch-1', name: 'Annexes', deleted_at: '2026-08-01T09:00:00Z', auteur: { full_name: 'Camille' } }],
+				error: null,
+				status: 200,
+			},
+			cards: {
+				data: [{ id: 'c-9', title: 'Saisie', deleted_at: '2026-04-02T11:00:00Z', auteur: null }],
+				error: null,
+				status: 200,
+			},
+		})
+		const resultat = await lireCorbeille(client)
+		expect(resultat.statut).toBe('pret')
+		if (resultat.statut !== 'pret') return
+		expect(resultat.donnees.map((entree) => entree.id)).toEqual(['ch-1', 't-1', 'c-9'])
+		expect(resultat.donnees[0]?.retirePar).toBe('Camille')
+	})
+
+	it("met l'écran en erreur si UNE SEULE lecture échoue, sans afficher les autres (§4.2)", async () => {
+		const { client } = espionLecture({
+			tracks: VIDE,
+			channels: { data: null, error: { message: 'refusé' }, status: 403 },
+			cards: {
+				data: [{ id: 'c-9', title: 'Saisie', deleted_at: '2026-04-02T11:00:00Z', auteur: null }],
+				error: null,
+				status: 200,
+			},
+		})
+		const resultat = await lireCorbeille(client)
+		// Rendre les deux autres tables afficherait une corbeille AMPUTÉE que rien ne signalerait —
+		// la « valeur par défaut trompeuse » de CLAUDE.md §18.
+		expect(resultat).toEqual({ statut: 'erreur', erreur: { nature: 'forbidden', detail: 'refusé' } })
+	})
+})
+
+describe('trierParRetraitDecroissant', () => {
+	it('départage deux objets retirés au même instant par un ordre STABLE (§4.2)', () => {
+		const memeInstant = '2026-07-20T14:30:00Z'
+		const entrees = [
+			{ type: 'card' as const, id: 'c-1', nom: 'C', retireLe: memeInstant, retirePar: null },
+			{ type: 'track' as const, id: 't-1', nom: 'T', retireLe: memeInstant, retirePar: null },
+			{ type: 'channel' as const, id: 'ch-1', nom: 'H', retireLe: memeInstant, retirePar: null },
+		]
+		// Un ordre instable ferait sauter les lignes sous le curseur sans qu'aucune donnée n'ait
+		// changé : le tri est donc total, jamais partiel.
+		expect(trierParRetraitDecroissant(entrees).map((entree) => entree.id)).toEqual(['t-1', 'ch-1', 'c-1'])
+		expect(trierParRetraitDecroissant([...entrees].reverse()).map((entree) => entree.id)).toEqual([
+			't-1',
+			'ch-1',
+			'c-1',
+		])
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// La restauration et ses TROIS issues — §4.5
+// ---------------------------------------------------------------------------------------------
+
+type AppelEcriture = { table: string; charge: unknown; filtres: [string, unknown][] }
+
+function espionEcriture(reponse: ReponseCorbeille): { client: ClientCrm; appels: AppelEcriture[] } {
+	const appels: AppelEcriture[] = []
+	const client = {
+		from: (table: string) => ({
+			update: (charge: unknown) => {
+				const appel: AppelEcriture = { table, charge, filtres: [] }
+				appels.push(appel)
+				const chaine = {
+					eq: (colonne: string, valeur: unknown) => {
+						appel.filtres.push([colonne, valeur])
+						return chaine
+					},
+					select: () => chaine,
+					then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+				}
+				return chaine
+			},
+		}),
+	} as unknown as ClientCrm
+	return { client, appels }
+}
+
+describe('restaurer', () => {
+	it("n'écrit QUE `deleted_at`, sur le seul objet visé, et demande la ligne (§3.4, §4.5)", async () => {
+		const { client, appels } = espionEcriture({ data: [{ id: 't-1' }], error: null, status: 200 })
+		const resultat = await restaurer(client, 'track', 't-1')
+
+		expect(appels).toEqual([{ table: 'tracks', charge: { deleted_at: null }, filtres: [['id', 't-1']] }])
+		// `deleted_by` N'EST PAS écrite : le trigger de `0037` l'efface à la restauration, et la
+		// colonne est fermée au client par le privilège.
+		expect(Object.keys(appels[0]?.charge as object)).toEqual(['deleted_at'])
+		expect(resultat).toEqual({ statut: 'appliquee' })
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne — ni succès ni erreur (§4.5, décision 70)', async () => {
+		const { client } = espionEcriture({ data: [], error: null, status: 200 })
+		// MESURÉ : la lectrice qui tente de restaurer le track `…025` reçoit exactement cela, et le
+		// track reste en corbeille. L'annoncer comme un succès afficherait une restauration qui n'a
+		// pas eu lieu.
+		expect(await restaurer(client, 'track', 't-1')).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('nomme le refus de la garde, et le distingue du refus de droit (§4.5)', async () => {
+		const { client } = espionEcriture({
+			data: null,
+			error: { code: 'P0001', message: 'parent_en_corbeille' },
+			status: 400,
+		})
+		expect(await restaurer(client, 'channel', 'ch-1')).toEqual({
+			statut: 'refus',
+			refus: { nature: 'parent-en-corbeille', detail: 'parent_en_corbeille' },
+		})
+	})
+})
+
+describe('classerRefusRestauration', () => {
+	it('exige le NOM de l’exception avec le code, `P0001` étant générique (§4.5)', () => {
+		// `P0001` est le SQLSTATE de tout `raise exception` : le code seul ne dit pas QUELLE règle a
+		// refusé, et le prendre pour la garde attribuerait à celle-ci n'importe quel refus applicatif.
+		expect(classerRefusRestauration(400, 'P0001', NOM_REFUS_PARENT).nature).toBe('parent-en-corbeille')
+		expect(classerRefusRestauration(400, 'P0001', 'quota_journalier_depasse').nature).toBe('unknown')
+	})
+
+	it('classe sur le code HTTP quand aucun code PostgreSQL ne tranche', () => {
+		expect(classerRefusRestauration(403, undefined, 'refusé').nature).toBe('forbidden')
+		expect(classerRefusRestauration(401, undefined, 'refusé').nature).toBe('forbidden')
+		expect(classerRefusRestauration(undefined, undefined, 'coupure').nature).toBe('network')
+		expect(classerRefusRestauration(500, undefined, 'panne').nature).toBe('unknown')
 	})
 })

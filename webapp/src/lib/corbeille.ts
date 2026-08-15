@@ -1,7 +1,9 @@
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration : l'énumération des enfants rendus
-//       inaccessibles, cinquième tranche
-// @spec docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente de l'horodatage), §3.5 (ce
-//       qu'elle compte exactement, la forme des lectures, la composition), §4 (ce que l'écran montre)
+//       inaccessibles (cinquième tranche), puis ce que l'écran lit et écrit (sixième tranche)
+// @spec docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente de l'horodatage), §3.4 (la
+//       restauration refuse plutôt que de deviner), §3.5 (ce qu'elle compte exactement, la forme des
+//       lectures, la composition), §4.2 (les trois lectures de l'écran), §4.3 (l'auteur inconnu),
+//       §4.5 (les trois issues de la restauration)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 //
@@ -146,4 +148,277 @@ export function composerEnumeration(enumeration: EnumerationEnfants): readonly L
 	if (enumeration.channels > 0) lignes.push({ type: 'channels', compte: enumeration.channels })
 	if (enumeration.cards > 0) lignes.push({ type: 'cards', compte: enumeration.cards })
 	return lignes
+}
+
+// ---------------------------------------------------------------------------------------------
+// Ce que l'écran LIT — §4.2, §4.3
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Le type d'un objet retiré. Une somme fermée : l'écran en dérive le libellé, la table à écrire et
+ * la présence ou non d'une énumération, et un type ajouté sans traiter ces trois points ne
+ * compilerait pas.
+ */
+export type TypeObjetCorbeille = 'track' | 'channel' | 'card'
+
+/** Les trois tables, dans l'ordre où l'écran les lit. Exportée pour que les tests l'énumèrent. */
+export const TABLES_CORBEILLE = {
+	track: 'tracks',
+	channel: 'channels',
+	card: 'cards',
+} as const satisfies Readonly<Record<TypeObjetCorbeille, string>>
+
+/**
+ * Une entrée de la corbeille, telle que l'écran l'affiche.
+ *
+ * `retirePar` est `null` quand l'audit ne porte aucun auteur, et ce n'est PAS une anomalie : un
+ * objet mis à la corbeille par la clé de service naît sans `deleted_by` — elle ne porte aucune
+ * revendication `sub`, et le trigger de `0037` fige ensuite la valeur (docs/SPEC-seed.md §10.2) —,
+ * et `on delete set null` détache l'audit d'un profil supprimé (INC-076). MESURÉ sur le seed : la
+ * card `Saisie erronée` est dans ce cas. L'écran le NOMME (§4.3) ; ce module ne choisit pas le
+ * texte, il rapporte le fait.
+ */
+export type EntreeCorbeille = {
+	readonly type: TypeObjetCorbeille
+	readonly id: string
+	readonly nom: string
+	readonly retireLe: string
+	readonly retirePar: string | null
+}
+
+/**
+ * Colonnes réellement demandées, une écriture par table. Exportées pour que les tests comparent la
+ * requête émise à celle qui est spécifiée.
+ *
+ * LE NOM DE LA CONTRAINTE EST OBLIGATOIRE, ET C'EST MESURÉ. `select=id,profiles(id)` rend `300` et
+ * `PGRST201` sur les TROIS tables (§4.2) : sur `cards` parce que trois clés étrangères visent
+ * `profiles`, sur `tracks` et `channels` parce que la relation plusieurs-à-plusieurs des tables
+ * d'appartenance concurrence la seule clé `deleted_by`. Nommer la contrainte est la convention déjà
+ * établie du produit pour désigner un profil embarqué — `colonnes-board.ts`, `colonnes-liste.ts` et
+ * `commentaires.ts` l'écrivent de même.
+ *
+ * `cards` porte `title` là où les deux autres portent `name` : les colonnes ne sont donc pas
+ * factorisables, et les trois écritures restent séparées plutôt que composées par concaténation.
+ */
+export const COLONNES_CORBEILLE = {
+	track: 'id, name, deleted_at, auteur:profiles!tracks_deleted_by_fkey(full_name)',
+	channel: 'id, name, deleted_at, auteur:profiles!channels_deleted_by_fkey(full_name)',
+	card: 'id, title, deleted_at, auteur:profiles!cards_deleted_by_fkey(full_name)',
+} as const satisfies Readonly<Record<TypeObjetCorbeille, string>>
+
+/** Forme d'une ligne rapportée, quelle que soit la table. */
+type LigneCorbeille = {
+	readonly id: string
+	readonly name?: string | null
+	readonly title?: string | null
+	readonly deleted_at: string | null
+	readonly auteur: { readonly full_name: string } | null
+}
+
+/**
+ * Lit une table, et rend ses entrées.
+ *
+ * `deleted_at` est filtré `not.is.null` CÔTÉ SERVEUR, et l'ordre est celui du serveur lui aussi :
+ * rapporter toute la table pour n'en garder qu'une part ferait transiter ce que l'écran ne montre
+ * pas, et trier en mémoire ce que `order` sait faire déplacerait une décision d'ordre hors de la
+ * requête (même position que `lireTracksAdministrables`).
+ *
+ * Une ligne dont `deleted_at` est nul est **écartée** plutôt que rendue avec une date vide : elle
+ * n'est pas dans la corbeille, et la colonne est déclarée nullable par le type généré. Le cas est
+ * impossible sous le filtre ; le traiter coûte une ligne et évite d'afficher une entrée sans date.
+ */
+async function lireTable(
+	client: ClientCrm,
+	type: TypeObjetCorbeille,
+): Promise<EtatAsync<readonly EntreeCorbeille[]>> {
+	const reponse = await client
+		.from(TABLES_CORBEILLE[type])
+		.select(COLONNES_CORBEILLE[type])
+		.not('deleted_at', 'is', null)
+		.order('deleted_at', { ascending: false })
+	if (reponse.error !== null) {
+		return enErreur(classerErreur(reponse.status, reponse.error.message))
+	}
+	const entrees: EntreeCorbeille[] = []
+	for (const ligne of reponse.data as unknown as readonly LigneCorbeille[]) {
+		if (ligne.deleted_at === null) continue
+		entrees.push({
+			type,
+			id: ligne.id,
+			nom: ligne.title ?? ligne.name ?? '',
+			retireLe: ligne.deleted_at,
+			retirePar: ligne.auteur?.full_name ?? null,
+		})
+	}
+	return pret(entrees)
+}
+
+/**
+ * Toutes les entrées de la corbeille, les plus récemment retirées d'abord.
+ *
+ * TROIS LECTURES CONCURRENTES, ET UNE FUSION EN MÉMOIRE. Chaque lecture est ordonnée par le serveur ;
+ * leur fusion ne l'est pas, `deleted_at` étant porté par chaque ligne. Le tri est donc exact, et il
+ * porte sur ce qui a déjà été rapporté — la limite est nommée au §7 de la spécification, avec la
+ * pagination qu'elle appellera le jour où une rétention bornera le volume.
+ *
+ * UNE SEULE LECTURE EN ÉCHEC SUFFIT À METTRE L'ÉCRAN EN ERREUR. Rendre les deux autres tables
+ * afficherait une corbeille amputée que rien ne signalerait — la « valeur par défaut trompeuse » de
+ * `CLAUDE.md` §18. Un refus de LECTURE, lui, ne passe pas par là : il rend zéro ligne et non une
+ * erreur (docs/SPEC-permissions-rls.md §7), et c'est bien une corbeille vide pour cet appelant.
+ */
+export async function lireCorbeille(
+	client: ClientCrm,
+): Promise<EtatAsync<readonly EntreeCorbeille[]>> {
+	try {
+		const lectures = await Promise.all([
+			lireTable(client, 'track'),
+			lireTable(client, 'channel'),
+			lireTable(client, 'card'),
+		])
+		const entrees: EntreeCorbeille[] = []
+		for (const lecture of lectures) {
+			if (lecture.statut === 'erreur') return enErreur(lecture.erreur)
+			if (lecture.statut !== 'pret') continue
+			entrees.push(...lecture.donnees)
+		}
+		return pret(trierParRetraitDecroissant(entrees))
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Trie les entrées de la plus récemment retirée à la plus ancienne.
+ *
+ * Le tri est fait sur la CHAÎNE ISO 8601 rendue par PostgreSQL, dont l'ordre lexicographique est
+ * l'ordre chronologique tant que le fuseau est le même — ce qu'il est, `timestamptz` étant toujours
+ * rendu en UTC par PostgREST. À date égale, le type départage, pour que deux objets retirés dans le
+ * même geste ne changent pas de place d'un chargement à l'autre : un ordre instable ferait sauter
+ * les lignes sous le curseur sans qu'aucune donnée n'ait changé.
+ */
+export function trierParRetraitDecroissant(
+	entrees: readonly EntreeCorbeille[],
+): readonly EntreeCorbeille[] {
+	const ORDRE: Readonly<Record<TypeObjetCorbeille, number>> = { track: 0, channel: 1, card: 2 }
+	return [...entrees].sort((gauche, droite) => {
+		if (gauche.retireLe !== droite.retireLe) return gauche.retireLe < droite.retireLe ? 1 : -1
+		if (gauche.type !== droite.type) return ORDRE[gauche.type] - ORDRE[droite.type]
+		return gauche.id < droite.id ? -1 : gauche.id > droite.id ? 1 : 0
+	})
+}
+
+// ---------------------------------------------------------------------------------------------
+// Ce que l'écran ÉCRIT — §3.4, §4.5
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Nom de l'exception levée par la garde de `0038`, tel qu'il est écrit dans la migration.
+ *
+ * C'est la SEULE inspection de texte de ce module, et elle porte sur un nom d'exception — stable,
+ * écrit dans la migration, et vérifié par `throws_ok` dans `0036_corbeille_restauration.test.sql`.
+ * Le `details` qui l'accompagne, lui, est une phrase : il sert au diagnostic, jamais à l'affichage.
+ * Même position que `NOM_CONTRAINTE_WORKFLOW` dans `administration-arborescence.ts`.
+ */
+export const NOM_REFUS_PARENT = 'parent_en_corbeille'
+
+/**
+ * Les refus qu'une restauration peut recevoir.
+ *
+ * `parent-en-corbeille` est distingué de `forbidden` parce que les deux appellent des gestes
+ * OPPOSÉS : le premier dit « restaurez d'abord le parent », geste que l'utilisateur peut faire
+ * séance tenante sur ce même écran ; le second dit qu'il n'en a pas le droit. Les confondre sous
+ * « une erreur est survenue » serait la valeur par défaut trompeuse de `CLAUDE.md` §18.
+ */
+export type NatureRefusRestauration = 'parent-en-corbeille' | 'forbidden' | 'network' | 'unknown'
+
+export type RefusRestauration = {
+	readonly nature: NatureRefusRestauration
+	readonly detail: string
+}
+
+/**
+ * Classe un refus sur le CODE PostgreSQL d'abord, le code HTTP ensuite — la règle de `classerErreur`,
+ * reprise sans exception.
+ *
+ * MESURÉ le 2026-08-15 avec le jeton réel de l'administratrice : restaurer le channel `…038`, dont
+ * le track est en corbeille, rend `400` et `{"code":"P0001","message":"parent_en_corbeille"}`.
+ * `P0001` est le SQLSTATE générique de `raise exception` : il ne suffit pas à lui seul à identifier
+ * la garde, et le nom de l'exception est donc vérifié avec lui.
+ */
+export function classerRefusRestauration(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusRestauration {
+	if (code === 'P0001' && detail.includes(NOM_REFUS_PARENT)) {
+		return { nature: 'parent-en-corbeille', detail }
+	}
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'forbidden', detail }
+	if (statutHttp === undefined || statutHttp === 0) return { nature: 'network', detail }
+	return { nature: 'unknown', detail }
+}
+
+/**
+ * Les trois issues d'une restauration (§4.5).
+ *
+ * `sans-effet` n'est NI un succès NI une erreur, et c'est mesuré : la clause `USING` de la politique
+ * filtre la ligne avant la mise à jour, PostgREST rend `200` et zéro ligne (décision 70), et rien
+ * n'a changé. MESURÉ : la lectrice qui tente de restaurer le track `…025` reçoit `200` et `[]`, et
+ * le track est relu **toujours en corbeille**. La confondre avec un succès annoncerait une
+ * restauration qui n'a pas eu lieu.
+ */
+export type ResultatRestauration =
+	| { readonly statut: 'appliquee' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusRestauration }
+
+/**
+ * Restaure un objet : `deleted_at` à `NULL`, sur ce seul objet (§3.4).
+ *
+ * `deleted_by` N'EST PAS ÉCRITE ICI, et ce n'est pas un oubli : le trigger de `0037` l'efface à la
+ * restauration — « supprimé par X » sur un objet vivant serait un mensonge de plus, pas une trace de
+ * plus —, et la colonne est de toute façon fermée au client par le privilège.
+ *
+ * L'écran N'ANTICIPE RIEN : il envoie, puis traduit ce qu'il reçoit. Décider d'avance qu'une
+ * restauration est impossible ferait porter à l'interface une garde qui vit dans la base
+ * (`CLAUDE.md` §10) — et l'écran se tromperait dès qu'un autre utilisateur aurait restauré le parent
+ * entre le chargement de la liste et le clic.
+ *
+ * `select('id')` accompagne l'écriture précisément pour que « zéro ligne touchée » existe comme
+ * réponse : sans lui, PostgREST ne rend aucun corps et le refus de droit serait indistinguable d'un
+ * succès.
+ */
+export async function restaurer(
+	client: ClientCrm,
+	type: TypeObjetCorbeille,
+	id: string,
+): Promise<ResultatRestauration> {
+	try {
+		const reponse = await client
+			.from(TABLES_CORBEILLE[type])
+			.update({ deleted_at: null })
+			.eq('id', id)
+			.select('id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusRestauration(
+					reponse.status,
+					reponse.error.code,
+					reponse.error.message,
+				),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'appliquee' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusRestauration(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
 }

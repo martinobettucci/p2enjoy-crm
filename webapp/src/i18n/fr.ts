@@ -818,6 +818,63 @@ export const fr = {
 	'admin.mail.incident.tls_failed': 'Échec TLS',
 	'admin.mail.incident.timeout': 'Délai dépassé',
 	'admin.mail.incident.protocol_error': 'Erreur de protocole',
+
+	// --- Corbeille — CRM-077, docs/SPEC-corbeille.md §4 ---------------------------------------
+	'admin.settings.index.trash': 'Corbeille',
+	'admin.settings.index.trash.body':
+		'Tracks, channels et affaires retirés : qui les a retirés, quand, ce qu\'ils retiennent, et leur restauration.',
+
+	'admin.trash.title': 'Corbeille',
+	'admin.trash.aria': 'Objets mis à la corbeille',
+	'admin.trash.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.trash.noWorkspace.body': "Sans espace de travail, il n'y a pas de corbeille à consulter.",
+
+	'admin.trash.empty.title': 'La corbeille est vide',
+	'admin.trash.empty.body':
+		"Aucun track, channel ni affaire n'est actuellement retiré. Les objets mis à la corbeille apparaissent ici jusqu'à leur restauration.",
+
+	'admin.trash.error.title': "La corbeille n'a pas pu être chargée",
+	'admin.trash.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.trash.error.retry': 'Réessayer',
+
+	'admin.trash.table.aria': 'Objets retirés, du plus récemment retiré au plus ancien',
+	'admin.trash.table.type': 'Type',
+	'admin.trash.table.name': 'Nom',
+	'admin.trash.table.by': 'Retiré par',
+	'admin.trash.table.at': 'Retiré le',
+	'admin.trash.table.holds': 'Retient avec lui',
+	'admin.trash.table.action': 'Action',
+
+	// Le type est un MOT, jamais une icône seule (docs/DESIGN_SYSTEM.md §5.16).
+	'admin.trash.type.track': 'Track',
+	'admin.trash.type.channel': 'Channel',
+	'admin.trash.type.card': 'Affaire',
+
+	// L'auteur non enregistré est un FAIT à nommer, pas une cellule vide (§4.3).
+	'admin.trash.author.unknown': 'Auteur inconnu',
+
+	// Les trois états de la colonne d'énumération ne se confondent pas (docs/DESIGN_SYSTEM.md §5.16).
+	'admin.trash.holds.loading': 'En cours de mesure',
+	'admin.trash.holds.failed': "N'a pas pu être mesuré",
+	'admin.trash.holds.none': 'Rien de plus',
+	// Singulier et pluriel sont DEUX CLÉS, jamais une phrase concaténée (CLAUDE.md §23).
+	'admin.trash.holds.channels.one': '{compte} channel',
+	'admin.trash.holds.channels.many': '{compte} channels',
+	'admin.trash.holds.cards.one': '{compte} affaire',
+	'admin.trash.holds.cards.many': '{compte} affaires',
+
+	'admin.trash.restore': 'Restaurer',
+	'admin.trash.restore.aria': 'Restaurer {nom}',
+	'admin.trash.restore.running': 'Restauration en cours',
+	'admin.trash.restored': '{nom} a été restauré et ne figure plus dans la corbeille.',
+
+	// Les refus, un texte par geste attendu (§4.5).
+	'admin.trash.refus.parent': 'Son parent est lui-même en corbeille : restaurez-le d\'abord.',
+	'admin.trash.refus.forbidden': "Votre compte n'a pas le droit de restaurer cet objet.",
+	'admin.trash.refus.sansEffet':
+		"Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte.",
+	'admin.trash.refus.network': "La requête n'a pas abouti. Réessayer relance la restauration.",
+	'admin.trash.refus.unknown': "La restauration a été refusée, sans raison exploitable.",
 } as const
 
 export type CleTraduction = keyof typeof fr

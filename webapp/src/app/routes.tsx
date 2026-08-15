@@ -2,6 +2,7 @@
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
 // @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
+// @spec CRM-077 (docs/BACKLOG.md) — adresse de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
@@ -71,6 +72,19 @@ export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 /** Titre de l'écran d'état de la messagerie. */
 export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
 
+/**
+ * Adresse de la corbeille — `CRM-077`.
+ *
+ * Quatrième surface d'administration, et même patron que les trois autres : hors de `ROUTES`,
+ * atteinte depuis l'index des réglages, montée par `App` avec sa propre coquille
+ * (docs/SPEC-corbeille.md §4.1). La corbeille est une vue du workspace, et non un onglet de chaque
+ * objet — un objet en corbeille n'a plus de place dans les listes où il vivait.
+ */
+export const CHEMIN_CORBEILLE = '/reglages/corbeille' as const
+
+/** Titre de la corbeille. */
+export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
+
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
 		chemin: '/',
@@ -136,6 +150,15 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.mail')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.mail.body')}</span>
+					</Link>
+				</li>
+				<li>
+					<Link
+						to={CHEMIN_CORBEILLE}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.trash')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.trash.body')}</span>
 					</Link>
 				</li>
 			</ul>

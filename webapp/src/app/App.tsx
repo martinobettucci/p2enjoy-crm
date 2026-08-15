@@ -3,6 +3,7 @@
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
+// @spec CRM-077 (docs/BACKLOG.md) — route de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //
@@ -21,11 +22,13 @@ import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
+	CHEMIN_CORBEILLE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
 	CLE_TITRE_ADMIN_WORKFLOWS,
+	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
@@ -49,6 +52,8 @@ const AdministrationWorkflows = lazy(async () => ({
 const EtatMessagerie = lazy(async () => ({
 	default: (await import('./EtatMessagerie')).EtatMessagerie,
 }))
+/** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
+const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
 
 /** État bref mais explicite pendant le téléchargement d'une route métier. */
@@ -131,6 +136,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ETAT_MESSAGERIE}>
 							<EtatMessagerie />
+						</AppShell>
+					}
+				/>
+				{/* La corbeille — `CRM-077`. Même position que les trois autres surfaces
+				    d'administration : hors de la barre latérale, atteinte depuis l'index des
+				    réglages (docs/SPEC-corbeille.md §4.1). */}
+				<Route
+					path={CHEMIN_CORBEILLE}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_CORBEILLE}>
+							<Corbeille />
 						</AppShell>
 					}
 				/>
