@@ -1,5 +1,7 @@
 // @spec CRM-021 (docs/BACKLOG.md) — lecture des channels et résolution d'un track par son slug
 // @spec docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.1 (route d'un track), §4
+// @spec CRM-077 (docs/BACKLOG.md) — corbeille : docs/SPEC-corbeille.md §3.1 (les trois états),
+//       §3.3 (l'enfant d'un parent en corbeille est inaccessible sans être horodaté), §4
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 //
@@ -68,6 +70,11 @@ export type ContenuTrack = {
  * Le filtre `archived_at=is.null` vaut ici aussi : un track archivé est masqué, y compris quand
  * son adresse est saisie directement. Sans ce filtre, l'archivage ne serait qu'un masquage de la
  * barre latérale, contournable par l'URL (docs/SPEC-tracks.md §4).
+ *
+ * `deleted_at=is.null` s'y ajoute pour la corbeille (docs/SPEC-corbeille.md §3.1), et pour la même
+ * raison : sans lui, un track mis à la corbeille resterait ouvrable par son adresse, avec ses
+ * onglets et son board — le produit dirait « retiré » et montrerait le contraire. Le track rendu
+ * `null`, la page affiche son état d'absence, exactement comme pour un slug inconnu.
  */
 export async function lireTrackParSlug(
 	client: ClientCrm,
@@ -79,6 +86,7 @@ export async function lireTrackParSlug(
 			.select(COLONNES_TRACK_OUVERT)
 			.eq('slug', slug)
 			.is('archived_at', null)
+			.is('deleted_at', null)
 			.limit(1)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
@@ -90,7 +98,14 @@ export async function lireTrackParSlug(
 }
 
 /**
- * Les channels **non archivés** d'un track, dans l'ordre des onglets.
+ * Les channels **non archivés et non mis à la corbeille** d'un track, dans l'ordre des onglets.
+ *
+ * L'ENFANT D'UN PARENT EN CORBEILLE EST INACCESSIBLE SANS ÊTRE HORODATÉ (docs/SPEC-corbeille.md
+ * §3.3), et c'est ici que cette règle se réalise plutôt que par une descente d'horodatage : cette
+ * fonction n'est appelée qu'avec l'identifiant d'un track que `lireTrackParSlug` a consenti à
+ * rendre, et ce track ne peut donc pas être en corbeille. Descendre l'horodatage sur les enfants
+ * aurait rendu la restauration ambiguë — plus rien n'aurait distingué les channels emportés par
+ * leur track de ceux déjà en corbeille avant lui.
  *
  * Deux contraintes de la spécification sont portées par la requête elle-même :
  *
@@ -110,6 +125,7 @@ export async function lireChannels(
 			.select(COLONNES_CHANNEL)
 			.eq('track_id', trackId)
 			.is('archived_at', null)
+			.is('deleted_at', null)
 			.order('position')
 			.order('name')
 		if (reponse.error !== null) {

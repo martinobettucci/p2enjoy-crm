@@ -53,11 +53,16 @@ function clientQuiLeve(cause: unknown): ClientCrm {
 	return {
 		from: () => ({
 			select: () => ({
+				// Deux `is` enchaînés : l'archivage, puis la corbeille (CRM-077). Le double reflète
+				// la requête réelle — un double plus court passerait en `undefined is not a
+				// function` et accuserait le transport d'une erreur d'écriture du test.
 				is: () => ({
-					order: () => ({
-						order: () => {
-							throw cause
-						},
+					is: () => ({
+						order: () => ({
+							order: () => {
+								throw cause
+							},
+						}),
 					}),
 				}),
 			}),
@@ -89,7 +94,22 @@ describe('la requête émise porte les règles de docs/SPEC-tracks.md', () => {
 	it('masque les tracks archivés **côté serveur**, pas après coup', async () => {
 		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
 		await lireTracks(client)
-		expect(appel.filtres).toEqual([['archived_at', null]])
+		expect(appel.filtres[0]).toEqual(['archived_at', null])
+	})
+
+	// @verifies CRM-077 — docs/SPEC-corbeille.md §3.1 et §4
+	//
+	// LES DEUX FILTRES SONT SÉPARÉS, ET L'ASSERTION LE FIGE. Archiver et mettre à la corbeille sont
+	// deux états indépendants : un track archivé PUIS mis à la corbeille ne doit pas réapparaître le
+	// jour où on le désarchive. Un filtre unique — ou un `or` — aurait confondu les deux, et le
+	// produit n'aurait plus eu de moyen de les distinguer à l'écran de la corbeille.
+	it('retire aussi les tracks EN CORBEILLE, par un filtre distinct de l’archivage', async () => {
+		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
+		await lireTracks(client)
+		expect(appel.filtres).toEqual([
+			['archived_at', null],
+			['deleted_at', null],
+		])
 	})
 
 	it('trie par `position` puis par `name`, pour que l’ordre soit stable', async () => {

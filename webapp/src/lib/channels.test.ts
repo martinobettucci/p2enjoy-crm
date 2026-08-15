@@ -86,7 +86,12 @@ describe('lireTrackParSlug', () => {
 		expect(appel.egalites).toEqual([['slug', 'conseil-ia']])
 		// Sans ce filtre, l'archivage ne serait qu'un masquage de la barre latérale, contournable
 		// en saisissant l'adresse (docs/SPEC-tracks.md §4).
-		expect(appel.nuls).toEqual(['archived_at'])
+		//
+		// @verifies CRM-077 — docs/SPEC-corbeille.md §3.1 : `deleted_at` s'y ajoute, SÉPARÉMENT,
+		// pour la même raison. Sans lui, un track mis à la corbeille resterait ouvrable par son
+		// adresse, avec ses onglets et son board : le produit dirait « retiré » et montrerait le
+		// contraire.
+		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
 		expect(appel.limite).toBe(1)
 	})
 
@@ -123,7 +128,10 @@ describe('lireChannels', () => {
 		// Le filtre est côté serveur : rapporter les channels de tous les tracks pour n'en
 		// afficher qu'une barre ferait transiter des lignes que l'écran ne montrera jamais.
 		expect(appel.egalites).toEqual([['track_id', 't-1']])
-		expect(appel.nuls).toEqual(['archived_at'])
+		// @verifies CRM-077 — docs/SPEC-corbeille.md §3.3 : un channel en corbeille quitte la barre
+		// d'onglets. Ses enfants, eux, ne sont PAS horodatés — c'est ce filtre de liste, et non une
+		// descente d'horodatage, qui les rend inaccessibles.
+		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
 		// `position` puis `name` : deux channels de même position ne doivent pas s'échanger d'un
 		// chargement à l'autre (docs/SPEC-channels.md §3).
 		expect(appel.tris).toEqual(['position', 'name'])
@@ -165,11 +173,15 @@ describe('lireChannels', () => {
 			from: () => ({
 				select: () => ({
 					eq: () => ({
+						// Deux `is` enchaînés : l'archivage, puis la corbeille (CRM-077). Le double
+						// reflète la requête réelle.
 						is: () => ({
-							order: () => ({
-								order: () => {
-									throw new Error('socket fermée')
-								},
+							is: () => ({
+								order: () => ({
+									order: () => {
+										throw new Error('socket fermée')
+									},
+								}),
 							}),
 						}),
 					}),

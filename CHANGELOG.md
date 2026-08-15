@@ -15,6 +15,27 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La corbeille retire les objets des listes, et l'enfant d'un parent en corbeille devient
+  inaccessible — `CRM-077`** (`docs/SPEC-corbeille.md` §3.1, §3.3 et §4). Les migrations `0037` et
+  `0038` avaient posé le modèle et sa garde ; les écrans, eux, montraient encore un track ou un
+  channel mis à la corbeille.
+  - **Un filtre SÉPARÉ de l'archivage**, sur les trois lectures de listes — la barre latérale des
+    tracks, la résolution d'un track par son adresse, et la barre d'onglets des channels. Séparé, et
+    non fondu dans le filtre existant : archiver conserve un dossier clos, mettre à la corbeille
+    retire une erreur, et un track archivé PUIS mis à la corbeille ne doit pas réapparaître le jour
+    où on le désarchive.
+  - **L'adresse directe ne contourne plus rien.** Sans le filtre sur la résolution par slug, un
+    track en corbeille serait resté ouvrable en saisissant son URL, avec ses onglets et son board :
+    le produit aurait dit « retiré » et montré le contraire. Le track rendu `null`, la page affiche
+    son état d'absence, comme pour un slug inconnu.
+  - **L'enfant n'est pas horodaté, il est rendu inaccessible.** Un channel dont le track est en
+    corbeille ne porte aucun `deleted_at` : il devient injoignable parce que son track ne se résout
+    plus. C'est la règle du §3.3, et non un oubli — descendre l'horodatage aurait rendu la
+    restauration ambiguë, plus rien ne distinguant les enfants emportés par leur parent de ceux déjà
+    en corbeille avant lui.
+  - **La corbeille reste LISIBLE**, et c'est ce qui rendra l'écran de corbeille possible : le
+    retrait se joue à la lecture de liste, jamais par une politique qui masquerait les lignes.
+
 - **L'éditeur administrateur de workflows, sixième tranche : la prévisualisation des effets —
   `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.13). Le **dernier** manque de comportement de
   l'unité est levé : avant d'ajouter une exigence, l'administrateur voit ce qu'elle fera aux
