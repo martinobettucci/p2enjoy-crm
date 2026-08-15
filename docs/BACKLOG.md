@@ -6635,15 +6635,32 @@ E2E et captures aux quatre paliers sans avertissement console.
       écrit dans les fichiers ; et `_lesVingtSixFonctions` devient `_lesVingtSeptFonctions`.
 - [x] Documentation : `docs/manual.md` chapitre **5 bis.4 quater**, `docs/DESIGN_SYSTEM.md` §5.15
       complété de six règles, `CHANGELOG.md` sous `[Non publié]`, `docs/PROD_MIGRATIONS.md` ligne 36.
-- [~] **Compteur `SCENARIOS_UI` à porter** : la campagne complète doit être MESURÉE, puis le
-      compteur de `scripts/verify-harness.sh` porté à sa valeur réelle.
+- [x] **Compteur `SCENARIOS_UI` porté à 241, valeur MESURÉE** le 2026-08-15 par la campagne
+      complète — `npm run e2e:ui` **241 verts en 7,9 min** —, sur un arbre portant les six tranches
+      et après rétablissement complet de la pile. 219 + 22 : neuf scénarios pour les exigences de
+      transition, le reste pour la prévisualisation des effets.
+- [x] **Trois parcours clavier RÉVISÉS, non affaiblis, et la mesure qui l'a exigé** : les parcours
+      des étapes, des arêtes et des champs expiraient au bout des 30 s par défaut pendant la
+      campagne complète, et le premier laissait alors son champ de preuve en base — six scénarios
+      suivants tombaient sur ce résidu. La cause n'est PAS le plafond de tabulation : MESURÉ en
+      instrumentant `tabVers`, les parcours coûtent **356**, **347** et **410** pressions, dont 161
+      au plus pour un seul appel, quand le plafond est de 260. C'est la DURÉE — 27,8 s, 28,7 s et
+      37 s à vide —, le cinquième bloc ayant allongé le tour du document que chacun fait deux fois.
+      Délai porté à 120 s, motif et chiffres écrits dans le fichier, aucune assertion touchée.
 
 **Reste dû sous cette unité** : le réglage en **lot** d'une exigence sur plusieurs transitions
 (§7 bis.11.7, §7 bis.12.7), la **liste nominative** des affaires prévisualisées (§7 bis.13.5), et
 les preuves API dédiées à l'écran (les politiques du §3.7, du §2.7 et de `CRM-018` restent prouvées
 par `CRM-031`, `CRM-035` et `CRM-018`). **Aucun comportement de la Definition of Done ne reste dû** :
-l'unité est passée en revue pour clôture dès que la campagne complète est verte et le compteur
-porté. L'unité reste `[~]` jusque-là.
+les six tranches sont livrées.
+
+**Les deux conditions posées ci-dessus sont désormais remplies, et mesurées le 2026-08-15** : la
+campagne complète est verte — `test:sql` 34/1981, `e2e:api` 507, `e2e:ui` **241**, `e2e:mail` 42,
+`test:unit` 973, `pytest` 242, `typecheck` et `build` — et le compteur est porté. L'unité reste
+néanmoins `[~]`, et **le nommer précisément vaut mieux que la fermer** : les preuves API dédiées à
+l'écran ne sont pas écrites. Sa clôture est la première question de la session suivante, qui la
+tranchera en écrivant ces preuves ou en constatant, avec son motif, que les politiques déjà prouvées
+par `CRM-031`, `CRM-035` et `CRM-018` suffisent à la Definition of Done.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 
