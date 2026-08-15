@@ -9,6 +9,9 @@ venv/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+# `pip install -e mail-sync` engendre ces métadonnées dans l'arbre source : ce sont des sorties de
+# build, reconstruites à chaque installation et propres à la machine.
+*.egg-info/
 
 # --- Sorties de build ----------------------------------------------------
 dist/
