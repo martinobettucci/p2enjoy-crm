@@ -7,6 +7,7 @@
 # @spec CRM-032 (docs/BACKLOG.md) — copie du workflow vers un track, par la véritable RPC
 # @spec CRM-035 (docs/BACKLOG.md) — champs de formulaire et règles de visibilité
 # @spec CRM-018 (docs/BACKLOG.md) — champs exigés par une transition, avec intégrité référentielle
+# @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -2181,6 +2182,53 @@ info "Dossiers 2023 reste ACTIF sous un parent en corbeille : aucun deleted_at, 
 info "          du seul fait que son track ne se résout plus — docs/SPEC-corbeille.md §3.3"
 info "Corbeille : 1 track, 1 channel, 1 card — et 1 enfant vivant sous parent en corbeille (§10)"
 
+# --- 8 nonies. Une version publiée du workflow par défaut ---------------------------------------
+# @spec CRM-078 (docs/BACKLOG.md) — versionnement des workflows, première tranche
+# @spec docs/SPEC-workflow-engine.md §7 ter.8 (ce que le seed livre)
+#
+# Sans elle, `workflow_versions` resterait vide et aucune preuve de lecture n'aurait de ligne à
+# montrer : « l'API rend [] » serait vrai que la politique refuse ou qu'elle autorise tout, donc
+# sans valeur probante (décision 50).
+#
+# Publiée par la VÉRITABLE RPC et avec le jeton réel de l'administratrice, jamais par une insertion
+# directe — que les privilèges refusent de toute façon (`CLAUDE.md` §8). `published_by` porte donc
+# une personne réelle, ce qu'une écriture à la clé de service ne produirait pas.
+#
+# CONVERGENCE, et non simple idempotence : un second passage ne publie PAS de seconde version, la
+# composition étant inchangée. Ce n'est pas une garde propre au seed — c'est la cinquième
+# vérification de la RPC (§7 ter.5) qui l'assure, et le seed se contente de l'observer. Le refus
+# « composition inchangee » est donc un SUCCÈS attendu au rejeu, et toute autre erreur est fatale.
+#
+# Cette section vient APRÈS les étapes, les transitions, les champs, les règles et les exigences :
+# la photographie doit porter la composition complète, pas un état intermédiaire.
+say "Version publiée du workflow par défaut"
+
+reponse_version=$(curl -s -X POST "$API/rest/v1/rpc/publish_workflow_version" \
+	-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+	-H "Authorization: Bearer $JETON_ADMIN" \
+	-H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg wf "$WF_ID" \
+	      '{target_workflow_id: $wf, note: "Composition de référence livrée par le seed"}')")
+
+if [ "$(printf '%s' "$reponse_version" | jq -r '.version_number // empty')" != '' ]; then
+	info "Version $(printf '%s' "$reponse_version" | jq -r '.version_number') publiée par Camille Aubert"
+elif [ "$(printf '%s' "$reponse_version" | jq -r '.message // empty')" = 'composition inchangee' ]; then
+	info "Version déjà publiée et composition inchangée : rien à faire (seed convergent)"
+else
+	die "la publication d'une version du workflow par défaut a échoué : $reponse_version"
+fi
+
+# L'AUTEUR EST VÉRIFIÉ, ET NON SUPPOSÉ, pour la même raison que la corbeille au §10 : une version
+# publiée avec la clé de service porterait `published_by = null` et ne démontrerait aucun audit.
+auteur_version=$(curl -s "$API/rest/v1/workflow_versions?workflow_id=eq.$WF_ID&select=published_by&order=version_number.desc&limit=1" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '.[0].published_by // "null"')
+[ "$auteur_version" = "$ADMINISTRATRICE" ] || die "la dernière version du workflow par défaut porte
+        published_by = « $auteur_version » au lieu de l'administratrice. Le seed ne démontre alors
+        AUCUN auteur de publication (docs/SPEC-workflow-engine.md §7 ter.8). La cause la plus
+        probable est une publication effectuée avec la CLÉ DE SERVICE, qui ne porte aucune
+        revendication « sub »."
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -2204,6 +2252,7 @@ info "Channels : ${#CHANNELS[@]}, dont un archivé et un EN CORBEILLE, sur quatr
 info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
 info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
 info "Fixture de copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
+info "Versions de workflow : 1, publiée sur le workflow par défaut par la véritable RPC — docs/SPEC-workflow-engine.md §7 ter.8"
 info "Champs : ${#CHAMPS[@]}, dont un archivé, et ${#REGLES[@]} règles de visibilité sur le workflow global — docs/SPEC-form-composer.md §2.9"
 info "Champs exigés par transition : 1 liaison globale et 1 dérivée remappée — CRM-018"
 info "Droits fins : ${#DROITS_FINS[@]}, opposables depuis CRM-012 — docs/SPEC-seed.md §2.11"
