@@ -622,7 +622,81 @@ déjà portée au §7 point 3 et n'est pas dupliquée ici.
 | Unitaire | La composition de l'énumération, le classement des refus, l'état vide |
 | E2E | Mise en corbeille d'une card, d'un channel et d'un track sur la vraie base, chacune confirmée **en base** ; restauration vérifiée par la valeur `NULL` relue ; refus réel de la restauration sous parent en corbeille ; parcours complet au clavier seul |
 | Visuel | Captures aux quatre paliers, dont l'état **vide** et la confirmation portant l'énumération |
+| Harnais | Un harnais dédié rassemble ces preuves en un verdict unique et refuse d'être complaisant : contrat au **§5 bis** |
 | Seed | Le seed porte déjà **une** card en corbeille (`Saisie erronée`) — MESURÉ. Il devra porter au moins un channel et un track en corbeille, ainsi qu'un enfant sous parent en corbeille, sans quoi le refus du §3.4 n'a aucun cas de démonstration. **LIVRÉ** par la quatrième tranche : `docs/SPEC-seed.md` §10 — track `legacy-2023` en corbeille, channel `annexes-2023` en corbeille sous lui, channel `dossiers-2023` actif sous lui. La corbeille y est posée par un **geste réel** de l'administratrice et non déclarée, faute de quoi `deleted_by` naîtrait nul (§10.2) |
+
+## 5 bis. Le harnais dédié — `scripts/verify-corbeille.sh`
+
+*Chapitre écrit par la neuvième tranche, avant sa première ligne de code (`CLAUDE.md` §5). Tous les
+comptes cités ont été MESURÉS le 2026-08-15 sur la pile démarrée et seedée, et non lus dans un
+compte rendu antérieur.*
+
+Le §5 énumère les preuves attendues ; huit tranches les ont livrées, et elles sont aujourd'hui
+**dispersées entre neuf fichiers**. Aucune commande ne dit, en un verdict, si `CRM-077` tient encore.
+C'est ce que ce harnais ajoute — et rien d'autre : **il n'écrit aucune preuve nouvelle**, il rejoue
+celles qui existent et refuse de rendre vert quand l'une d'elles a cessé de mesurer quelque chose.
+
+### 5 bis.1 Ce que le harnais rejoue, et les comptes qu'il FIGE
+
+| # | Preuve | Fichiers | Attendu MESURÉ, figé |
+|---|---|---|---|
+| 1 | Traçabilité | les 6 fichiers de code et les 6 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
+| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, et les deux états dédiés du geste d'une affaire |
+| 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql` | **2 fichiers, 20 assertions** |
+| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 39 tests** |
+| 5 | Vitest — le geste sur la route de détail | `RouteCard.test.tsx` | **1 fichier, 7 tests** |
+| 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **22 scénarios** |
+| 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **24 scénarios** |
+
+**Les deux compteurs sont figés, pas seulement l'un des deux** — fichiers ET assertions pour pgTAP,
+fichiers ET tests pour Vitest. C'est la décision 279 : vérifier les seules assertions ne détecte pas
+la disparition d'une suite entière, et vérifier les seuls fichiers ne détecte pas la disparition de
+leur contenu. Un compte qui monte est aussi un écart : il se constate, et le chiffre du tableau
+ci-dessus se met à jour **dans le même changement** que la preuve ajoutée.
+
+### 5 bis.2 La non-complaisance — quatre dégradations, et pourquoi ces quatre-là
+
+Une commande qui rend `0` sans rien avoir exercé est pire qu'une commande absente
+(`docs/SPEC-test-harness.md` §1). Le harnais dégrade donc réellement `webapp/src/lib/corbeille.ts`,
+une règle à la fois, et **exige que la suite unitaire rougisse**. Chaque dégradation vise une règle
+dont la disparition serait **silencieuse en production** — l'écran continuerait de s'afficher :
+
+| Règle retirée | Ce que le produit ferait alors, sans rien signaler |
+|---|---|
+| le filtre `deleted_at=not.is.null` de `lireTable` (§4.2) | la corbeille listerait les objets **vivants** à côté des retirés, et proposerait de « restaurer » ce qui n'a jamais été retiré |
+| l'omission des lignes à compte nul de `composerEnumeration` (§3.5) | la confirmation afficherait « 0 channel », que le §3.5 exclut : deux lectures pour comprendre qu'il n'y a rien |
+| la reconnaissance de `parent_en_corbeille` par `classerRefusRestauration` (§4.5) | le refus nommé de la garde de `0038` retomberait en « unknown », et l'écran ne dirait plus **quoi restaurer d'abord** |
+| la branche `sans-effet` de `mettreCardALaCorbeille` (§4 ter.3) | un retrait filtré par la clause `USING` — `200` et `[]`, décision 70 — serait annoncé comme **fait** |
+
+**Une dégradation NON VUE est un échec du harnais, pas un détail.** Elle dit que la preuve censée
+tenir la règle ne la tient pas, et le remède est d'écrire la preuve manquante — jamais de retirer la
+dégradation.
+
+**La restauration est CONSTATÉE, pas supposée** : après le dernier tour, le harnais compare chaque
+fichier dégradé, octet à octet, à l'instantané pris **avant** la première dégradation, et rejoue la
+suite unitaire. La comparaison à `HEAD` est interdite (`docs/SPEC-test-harness.md` §7.2 point 9) :
+le harnais doit fonctionner dans un arbre portant une évolution légitime non encore committée.
+
+### 5 bis.3 Ce que ce harnais NE prouve PAS, et le dit
+
+- **Aucune règle d'autorisation n'y est réécrite.** Les politiques de `cards`, `tracks` et `channels`
+  sont celles de `CRM-040`, `CRM-020` et `CRM-021`, déjà prouvées par leurs harnais ; ce que
+  `CRM-077` y ajoute — les trois refus `42501` sur `deleted_by`, la garde `parent_en_corbeille` — est
+  prouvé par les deux suites pgTAP du tableau, rejouées ici et non redites.
+- **Aucun effacement définitif**, aucune rétention : le §6 n'est pas arbitré, et un harnais ne
+  tranche pas ce qu'une spécification laisse ouvert.
+- **La convergence du seed n'est pas rejouée.** Les trois objets en corbeille du seed sont la
+  matière des preuves d'API et d'interface ; leur convergence appartient à `verify-seed-demo.sh`.
+
+### 5 bis.4 Commande
+
+| Commande | Effet | Prérequis |
+|---|---|---|
+| `scripts/verify-corbeille.sh` | rejoue les sept preuves et les quatre dégradations | pile démarrée, seed appliqué, chaîne Node conforme à `.nvmrc` |
+| `scripts/verify-corbeille.sh --rapide` | omet Playwright — **annoncé dans la sortie**, jamais masqué | pile démarrée |
+
+Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et charge
+`scripts/lib/node.sh` avant son premier appel à `npm` (`docs/SPEC-test-harness.md` §7.1).
 
 ## 6. Points ouverts — ARBITRAGE DU RESPONSABLE, non tranchés ici
 
