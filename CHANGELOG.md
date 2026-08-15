@@ -15,6 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un workflow peut désormais garder trace de ce qu'il était — `CRM-078`, première tranche**
+  (`supabase/migrations/0039_versionnement_workflows.sql`, `docs/SPEC-workflow-engine.md` §7 ter).
+  Un workflow est une structure vivante : l'éditeur en change les étapes, les arêtes, les champs et
+  les règles à tout moment, et rien ne gardait trace de ce qu'il était hier. Une affaire ayant
+  circulé sous un graphe donné devenait illisible dès que ce graphe changeait.
+  - **Une photographie immuable, à la demande d'un administrateur.**
+    `POST /rest/v1/rpc/publish_workflow_version` fige la composition complète du workflow —
+    étapes, arêtes, champs, règles de visibilité, exigences de transition —, la numérote dans la
+    portée du workflow, la date et l'attribue à son auteur réel.
+  - **Immuable pour de bon, et pas seulement par convention** : aucune politique d'écriture, aucun
+    privilège pour `anon` ni `authenticated`, et un trigger qui refuse la mise à jour **y compris
+    sous la clé de service**. Une version réécrite en silence ne serait plus une preuve de rien.
+  - **Publier deux fois la même composition est refusé** : deux versions indiscernables rendraient
+    toute comparaison future inexploitable. Republier une composition identique à une version plus
+    **ancienne** reste accepté, après un aller-retour : une version dit « voici la structure à cette
+    date », pas « voici une structure jamais vue ».
+  - **Publier ne change rien au comportement du produit** : les affaires continuent de circuler sur
+    la structure vivante, et la garde de transition ne consulte aucune version. Une version est un
+    témoin, pas une cible d'exécution.
+  - **Le seed publie une version du workflow par défaut** par la véritable RPC, avec le jeton réel
+    de l'administratrice — `published_by` porte donc une personne, et le seed le vérifie plutôt que
+    de le supposer. Deux passages laissent une seule version.
+  - **Prouvé** : 31 assertions pgTAP, 14 scénarios d'API avec les jetons réels des trois profils.
+
 - **Une commande unique dit si la corbeille tient encore — `CRM-077`**
   (`scripts/verify-corbeille.sh`, `docs/SPEC-corbeille.md` §5 bis). Les preuves de la corbeille
   étaient dispersées entre **neuf fichiers** : aucune commande ne rendait un verdict d'ensemble.
@@ -3722,6 +3746,16 @@ d'exécuter le code attendu.
 - Les commandes `npm` annoncées sans `package.json` — dont `npm run stop`, attribué à `CRM-002` —
   sont consignées dans `docs/INCONSISTENCY_REPORT.md`, INC-008. L'arrêt propre passe par
   `./runDev.sh --stop` et `./runProd.sh --stop`.
+
+### Modifié
+
+- **La forme canonique de la composition d'un workflow n'a plus qu'une seule définition —
+  `CRM-078`.** `app.workflow_composition_fingerprint` construisait un document `jsonb` canonique et
+  n'en rendait que l'empreinte : le document était jeté. Il est extrait dans
+  `app.workflow_composition_document`, dont l'empreinte devient l'appelant. **La valeur rendue est
+  inchangée**, et deux assertions pgTAP figent les empreintes des deux workflows du seed pour qu'un
+  écart futur rougisse avant que toutes les copies du produit ne se déclarent divergentes.
+
 
 ## [Publié]
 

@@ -372,7 +372,12 @@ test.describe('N5 — l’immuabilité opposée à l’API (lignes m, n, o)', ()
 			`${VERSIONS}?workflow_id=eq.${WORKFLOW_SEED}&select=id,note&limit=1`,
 			{ headers: enTetesService() },
 		)
-		const [ligne] = (await avant.json()) as { id: string; note: string | null }[]
+		const lignes = (await avant.json()) as { id: string; note: string | null }[]
+		// Le seed publie une version du workflow par défaut (§7 ter.8) : son absence signalerait un
+		// seed non appliqué, et non un défaut d'immuabilité. La preuve le dit plutôt que de
+		// s'effondrer sur un index vide.
+		expect(lignes.length, 'le seed doit avoir publié une version du workflow par défaut').toBe(1)
+		const ligne = lignes[0]!
 
 		const reponse = await request.patch(`${VERSIONS}?id=eq.${ligne.id}`, {
 			headers: enTetesAuthentifies(jeton),
@@ -395,7 +400,9 @@ test.describe('N5 — l’immuabilité opposée à l’API (lignes m, n, o)', ()
 			`${VERSIONS}?workflow_id=eq.${WORKFLOW_SEED}&select=id&limit=1`,
 			{ headers: enTetesService() },
 		)
-		const [ligne] = (await avant.json()) as { id: string }[]
+		const lignes = (await avant.json()) as { id: string }[]
+		expect(lignes.length, 'le seed doit avoir publié une version du workflow par défaut').toBe(1)
+		const ligne = lignes[0]!
 
 		const reponse = await request.delete(`${VERSIONS}?id=eq.${ligne.id}`, {
 			headers: enTetesAuthentifies(jeton),

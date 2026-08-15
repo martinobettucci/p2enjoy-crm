@@ -131,8 +131,12 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	65,
-	'SOIXANTE-CINQ politiques dans `public`, et pas une de plus — 64 avant le lot G, plus '
+	66,
+	'SOIXANTE-SIX politiques dans `public`, et pas une de plus — 65 avant `CRM-078`, plus '
+	'l''UNIQUE politique de LECTURE de `workflow_versions` : une version publiée se lit par tout '
+	'membre du workspace et ne s''écrit par personne, l''insertion passant par une RPC '
+	'`security definer` et la mise à jour comme la suppression n''ayant AUCUNE politique '
+	'(docs/SPEC-workflow-engine.md §7 ter.4). Avant elle : 64 avant le lot G, plus '
 	'l''UNIQUE politique de MODÉRATION de `card_comments`, qui ouvre aux `admin` du workspace la '
 	'suppression d''un propos déplacé sans leur ouvrir sa modification (INC-072, décision 374). '
 	'Avant elle : 63 avant CRM-058, plus '
