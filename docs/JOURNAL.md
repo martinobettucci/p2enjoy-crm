@@ -14823,6 +14823,13 @@ restantes, l'une est INC-117 — déjà consignée par la session concurrente �
 **INC-119** : la dégradation « `CHECK` élargi à `mail_received` » est devenue un no-op, ce type étant
 légitime depuis la messagerie, si bien qu'un contrôle de non-complaisance ne mord plus.
 
+Deux derniers harnais ont rendu leur verdict après coup : `scripts/verify-webapp.sh` est **vert, 42
+contrôles sans anomalie** — c'est lui qui éprouve la couche webapp et la traçabilité de ses fichiers,
+`corbeille.ts` et sa preuve unitaire comprises —, et `scripts/verify-harness.sh` rend **25 contrôles
+verts sur 28**, ses trois rouges étant les rejeux de `test:sql`, `e2e:api` et `e2e:ui` sur une base
+que les harnais précédents avaient déjà dégradée. Ces trois suites ont été mesurées vertes séparément
+sur base propre ; aucun défaut de traçabilité `@spec` / `@verifies` n'a été relevé.
+
 ### Décision 405 — L'écran de corbeille, et l'embarquement d'un auteur est ambigu sur les TROIS tables
 
 **2026-08-15.** La décision 404 laissait `CRM-077` avec une seule tranche désignée : l'**écran** de
