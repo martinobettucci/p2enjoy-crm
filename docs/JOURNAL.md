@@ -14946,3 +14946,50 @@ confirmation portant l'énumération » que réclame la ligne « Visuel » du §
 pourquoi elle n'est pas produite ici. Ensuite le harnais `scripts/verify-corbeille.sh`. Les trois
 points du §6 — rétention, effacement définitif, visibilité pour un membre ordinaire — attendent
 toujours l'arbitrage du responsable et ne se tranchent pas en session.
+
+### Décision 406 — Le geste de mise à la corbeille, et l'administration montrait ce qu'elle allait permettre de retirer
+
+**2026-08-15.** La décision 405 laissait `CRM-077` avec deux restes explicitement ordonnés, et le
+premier est du COMPORTEMENT : le **geste de mise à la corbeille**, qui n'est offert par aucun écran.
+La corbeille ne peut donc se remplir que par le seed, et l'énumération livrée par la cinquième
+tranche n'a aucun appelant. C'est l'unité de cette session, et ce commit documentaire précède la
+première ligne de code (`CLAUDE.md` §5). Le chapitre §4 bis de `docs/SPEC-corbeille.md` porte le
+contrat.
+
+**La tranche est bornée au track et au channel, et la couture est nommée.** Leur geste vit dans
+`/reglages/arborescence`, à côté d'« Archiver » : le §4.7 l'exclut de l'écran de corbeille, les trois
+états du §3.1 sont un seul vocabulaire, et cet écran porte déjà la confirmation, la traduction des
+refus et la relecture après écriture. Celui d'une **affaire** vit sur une autre surface — board, vue
+liste ou formulaire —, ce choix demande sa propre mesure, et sa confirmation ne porterait aucune
+énumération, une affaire n'ayant pas d'enfant au sens du §3.5. Les livrer d'un coup aurait mêlé une
+décision de placement non mesurée à une tranche qui, pour les deux autres objets, n'en a aucune à
+prendre.
+
+**Un préalable est sorti de la mesure, et il n'était pas prévu.** MESURÉ avec le jeton réel de
+l'administratrice : `GET /rest/v1/tracks?select=id,name,deleted_at&archived_at=is.null` rend
+**quatre** tracks, dont `Legacy 2023` et son `deleted_at` renseigné ; les channels de ce track
+rendent `Annexes 2023`, en corbeille elle aussi. La troisième tranche avait filtré la barre latérale,
+la résolution par slug et la barre d'onglets — **pas l'administration**, qui lit par ses propres
+requêtes. L'écart précède le geste, mais devient intenable avec lui : l'écran proposerait « mettre à
+la corbeille » sur un objet qui l'a déjà reçu. Le filtre est ajouté aux deux lectures et reste
+**séparé** de celui de l'archivage, faute de quoi la case « Afficher les archivés » ramènerait des
+objets qui ne sont pas archivés.
+
+**Les trois issues du geste sont mesurées avant d'être écrites.** Sur le track `Formation` :
+l'administratrice obtient `200` et la ligne, avec `deleted_by` posée par le trigger de `0037` ; le
+business developer **et** la lectrice obtiennent `200` et `[]`, la ligne relue **inchangée** —
+`tracks_maj_admin` filtre par sa clause `USING` avant la mise à jour. C'est la troisième occurrence
+de la décision 70 dans cette unité, et l'écran dira « sans effet » plutôt que « c'est fait ».
+
+**Une règle transportée est une règle non mesurée, et celle-ci est tranchée dans l'autre sens.**
+`archiverTrack` porte en commentaire que l'horodatage « devra venir du serveur » le jour où une
+rétention en dépendra, et il aurait été facile de conclure que `deleted_at` doit l'être. La mesure
+dit le contraire pour aujourd'hui : le seed pose ses trois objets en corbeille à une date **fixe**,
+un horodatage serveur la remplacerait par l'instant du rejeu, et la reproductibilité du jeu de
+démonstration tomberait avec elle (`CLAUDE.md` §8). La rétention n'étant pas arbitrée (§6 point 1),
+aucune règle ne dépend encore de cette valeur : le geste garde l'horloge du client, comme
+l'archivage, et la limite est écrite au §7 plutôt que tue.
+
+**Où reprendre.** Après cette tranche : le geste pour une **affaire**, puis le harnais dédié
+`scripts/verify-corbeille.sh` que le backlog nomme toujours comme dû. Les trois points du §6
+attendent l'arbitrage du responsable et ne se tranchent pas en session.

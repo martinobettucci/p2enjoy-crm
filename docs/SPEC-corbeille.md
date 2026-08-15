@@ -11,9 +11,10 @@ Contrat exécutable de `CRM-077` (`docs/BACKLOG.md`).
 - Déploiement : `docs/PROD_MIGRATIONS.md`.
 - État : **spécifiée, livrée en partie.** Écrite avant toute ligne de code (`CLAUDE.md` §5). Le
   modèle (§3.2), la garde de restauration (§3.4), le retrait des listes (§3.3), l'énumération
-  (§3.5) et l'**écran** (§4) sont livrés. Reste dû : le **geste de mise à la corbeille**, qui n'est
-  offert par aucun écran — le §4.7 le place hors de la corbeille, et il n'existe encore ni sur le
-  board, ni sur la vue liste, ni sur l'administration de l'arborescence.
+  (§3.5) et l'**écran** (§4) sont livrés. Le **geste de mise à la corbeille** (§4 bis) est spécifié
+  pour un **track** et un **channel**, depuis `/reglages/arborescence`. Reste dû après lui : le même
+  geste pour une **affaire**, dont la surface — board, vue liste ou formulaire — demande sa propre
+  mesure (§4 bis.1).
 
 ---
 
@@ -368,6 +369,121 @@ décide de ce que contient la corbeille.
 - **Aucune mise à la corbeille depuis cet écran** : on n'y retire rien, on y rend. Les gestes de
   retrait vivent là où vivent les objets.
 
+## 4 bis. Le GESTE de mise à la corbeille — un track, un channel
+
+*Chapitre écrit par la septième tranche, avant sa première ligne de code (`CLAUDE.md` §5). Chaque
+règle porte sa mesure ou son motif.*
+
+Les six tranches précédentes ont livré le modèle, la garde, le retrait des listes, l'énumération et
+l'écran qui **rend** les objets. Le geste qui les y **met** n'existe nulle part : aucun écran du
+produit n'offre aujourd'hui de retirer un track, un channel ou une affaire. La corbeille est donc,
+pour un utilisateur, un écran qui ne peut se remplir que par le seed — et l'énumération de la
+cinquième tranche n'a aucun appelant.
+
+### 4 bis.1 Où le geste vit, et pourquoi il n'est pas dans la corbeille
+
+`/reglages/arborescence`, à côté d'« Archiver », sur la ligne du track et sur celle du channel.
+
+Trois motifs, dont un est une règle déjà écrite. **Le §4.7 place le geste hors de l'écran de
+corbeille** — « on n'y retire rien, on y rend ». **Les trois états du §3.1 sont un seul vocabulaire**,
+actif / archivé / en corbeille, et l'écran qui expose déjà la bascule entre les deux premiers est le
+seul endroit où le troisième se lit sans expliquer. Enfin cet écran porte déjà la confirmation, la
+traduction des refus et la relecture après écriture (`CRM-075`) : le geste n'invente aucun de ces
+trois mécanismes.
+
+**L'affaire (`card`) n'est PAS dans cette tranche, et la couture est nommée.** Son geste vit sur une
+autre surface — board, vue liste ou formulaire —, ce choix demande sa propre mesure, et sa
+confirmation ne porte **aucune** énumération : une affaire n'a pas d'enfant au sens du §3.5. Livrer
+les trois d'un coup aurait mêlé une décision de placement non mesurée à une tranche qui, pour le
+track et le channel, n'en a aucune à prendre.
+
+### 4 bis.2 L'administration montre AUJOURD'HUI ce qui est en corbeille — MESURÉ, et c'est le préalable
+
+MESURÉ le 2026-08-15 avec le jeton réel de l'administratrice :
+`GET /rest/v1/tracks?select=id,name,deleted_at&archived_at=is.null` rend **quatre** tracks, dont
+`Legacy 2023` et son `deleted_at` renseigné ; `GET /rest/v1/channels?track_id=eq.…025&archived_at=is.null`
+rend `Annexes 2023`, en corbeille elle aussi.
+
+La troisième tranche avait filtré la barre latérale, la résolution d'un track par son slug et la
+barre d'onglets ; **elle n'a pas filtré l'administration**, qui lit par ses propres requêtes. L'écart
+n'est pas une conséquence du geste, il le précède — mais il devient intenable avec lui : un écran qui
+offre « mettre à la corbeille » et continue d'afficher ce qui y est déjà proposerait le geste **sur
+un objet qui l'a déjà reçu**. Les deux lectures de l'administration portent donc désormais
+`deleted_at=is.null`, côté serveur.
+
+**Le filtre reste SÉPARÉ de celui de l'archivage**, comme au §3.3, et la case « Afficher les
+archivés » ne ramène **jamais** un objet en corbeille : fondre les deux prédicats ferait réapparaître
+sous une case intitulée « archivés » des objets qui ne le sont pas, et l'écran de corbeille perdrait
+l'exclusivité de ce qu'il montre.
+
+### 4 bis.3 Ce que la confirmation dit — l'énumération y trouve son appelant
+
+La confirmation est celle du §6 du design system, dans le flux du document comme celle de
+l'archivage, et elle porte **l'énumération** de `compterEnfantsInaccessibles` (§3.5) : « ce track
+porte 3 channels et 27 affaires ». C'est l'appelant que la cinquième tranche avait livré sans, et la
+capture que la ligne « Visuel » du §5 réclamait.
+
+Trois états, et le troisième est celui qui compte :
+
+| État du compte | Ce que la confirmation affiche | La commande de confirmation |
+|---|---|---|
+| en cours | l'attente, jamais un zéro provisoire | **disponible** |
+| mesuré, non nul | les lignes de `composerEnumeration` | disponible |
+| mesuré, nul | rien — aucune ligne, pas « 0 channel » (§3.5) | disponible |
+| **non mesurable** | il est dit que le compte n'a pas pu être lu | **disponible** |
+
+**Un compte en échec ne bloque pas le geste**, et ce n'est pas une facilité : l'énumération est une
+information, pas une garde. La refuser en bloquant donnerait à un compte la valeur d'une
+autorisation, alors que le §3.5 interdit explicitement de le présenter comme une garantie
+d'exhaustivité — et le geste est réversible, l'écran de corbeille étant précisément là pour cela. Un
+zéro provisoire pendant l'attente est le seul affichage exclu : il dirait « rien ne sera perdu » sur
+une mesure qui n'est pas revenue.
+
+### 4 bis.4 L'horodatage est celui du CLIENT, et la limite est nommée plutôt que tue
+
+`deleted_at` reçoit `new Date().toISOString()`, exactement comme `archived_at` depuis `CRM-075`.
+
+`archiverTrack` porte pourtant en commentaire que « le jour où une rétention en dépendra
+(`CRM-077`), elle devra venir du serveur ». Ce jour n'est pas venu, et le faire venir ici aurait un
+coût mesuré : le seed pose ses trois objets en corbeille à une date **fixe** (`2026-07-20T14:30:00Z`,
+MESURÉ), un horodatage posé par la base la remplacerait par l'instant du rejeu, et la reproductibilité
+du jeu de démonstration (`CLAUDE.md` §8) tomberait avec elle — comme les empreintes qui en dépendent.
+
+La valeur est donc **affichée et triée** par l'écran de corbeille sans être une référence de durée :
+aucune règle du produit n'en dépend tant que la rétention du §6 point 1 n'est pas arbitrée. Le jour
+où elle le sera, l'horodatage serveur sera décidé **avec sa migration** et avec la réponse au
+problème du seed. La limite est portée au §7.
+
+### 4 bis.5 Les trois issues du geste, toutes MESURÉES avec les jetons réels
+
+Le geste est une écriture, donc il traverse les politiques d'écriture existantes (§2.2). L'écran
+n'anticipe rien et traduit ce qu'il reçoit, comme pour la restauration (§4.5).
+
+| Issue | Ce que la pile rend | MESURÉ le 2026-08-15 sur le track `Formation` |
+|---|---|---|
+| appliquée | `200` et la ligne, `deleted_by` écrite **par le trigger** | l'administratrice : `deleted_at` posée, `deleted_by` = `…011` |
+| **sans effet** | `200` et `[]`, la ligne relue **inchangée** | le business developer **et** la lectrice : `deleted_at` reste `NULL` |
+| refusée | un code et un message traduits | aucun refus explicite n'existe sur ce chemin — voir ci-dessous |
+
+**Aucun des deux profils non administrateurs ne reçoit d'erreur**, et c'est la troisième occurrence
+de la décision 70 dans cette unité : `tracks_maj_admin` filtre la ligne par sa clause `USING` avant
+la mise à jour, PostgREST rend `200` et zéro ligne. L'écran dit donc « sans effet » — texte déjà
+livré par `CRM-075` — et non « c'est fait ». La branche « refusée » du tableau reste écrite parce
+qu'elle est atteignable par un refus de forme ou de transport, pas parce qu'un droit la produirait.
+
+**L'audit n'est pas écrit par l'écran** : `deleted_by` est fermée au client par le privilège de
+colonne de `0037`, et posée par le trigger. La charge d'écriture ne contient donc que `deleted_at` —
+l'y ajouter ferait refuser toute l'écriture en `42501`.
+
+### 4 bis.6 Ce que le geste ne fait délibérément PAS
+
+- **Il ne descend pas sur les enfants** (§3.3), et la confirmation le dit en les comptant plutôt
+  qu'en les touchant.
+- **Il n'archive pas au passage.** Les deux états sont indépendants (§3.1) : un track archivé mis à
+  la corbeille reste archivé, et le restaurer le rend archivé.
+- **Il n'est pas offert sur une ligne déjà en corbeille**, pour une raison qui n'est pas une règle
+  d'écran : après le §4 bis.2, une telle ligne n'est plus affichée du tout.
+
 ## 5. Preuves attendues
 
 | Niveau | Preuves |
@@ -404,3 +520,13 @@ décide de ce que contient la corbeille.
    est donc exact, et il porte sur ce qui a déjà été rapporté. Une pagination serveur, si elle est un
    jour due, demandera une vue SQL réunissant les trois tables — et c'est la même unité qui portera
    les deux.
+3. **`deleted_at` est horodatée par le CLIENT** (§4 bis.4), comme `archived_at` depuis `CRM-075`.
+   L'écran de corbeille l'affiche et trie dessus ; deux postes dont les horloges divergent peuvent
+   donc s'ordonner l'un par rapport à l'autre d'un écart égal à cette divergence. Aucune règle du
+   produit ne dépend de la valeur, seule sa nullité en décide, et la rétention qui en dépendrait n'est
+   pas arbitrée (§6 point 1). Le passage à un horodatage serveur appartient à cette décision, avec le
+   problème qu'il pose au seed : ses trois objets en corbeille portent une date **fixe**, sur laquelle
+   la reproductibilité du jeu de démonstration repose (`CLAUDE.md` §8).
+4. **Le geste de mise à la corbeille n'existe que pour un track et un channel** (§4 bis.1). Une
+   affaire ne se retire toujours d'aucun écran : le seul chemin est l'API. La couture est nommée au
+   §4 bis.1 et la tranche qui la reprend devra d'abord mesurer où ce geste vit.

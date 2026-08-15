@@ -6955,6 +6955,32 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       un objet à la corbeille. C'est la tranche suivante, et elle consommera l'énumération déjà
       livrée par la cinquième.
 
+**Septième tranche EN COURS, 2026-08-15 — le geste de mise à la corbeille d'un track et d'un
+channel** (`docs/SPEC-corbeille.md` §4 bis, spécifié avant toute ligne de code) :
+
+- [~] **Le geste vit dans `/reglages/arborescence`, à côté d'« Archiver »** (§4 bis.1) : le §4.7
+      l'exclut de l'écran de corbeille, les trois états du §3.1 sont un seul vocabulaire, et cet
+      écran porte déjà la confirmation, la traduction des refus et la relecture après écriture.
+- [~] **Préalable MESURÉ, et il précède le geste** (§4 bis.2) : l'administration lit par ses propres
+      requêtes, que la troisième tranche n'a pas filtrées — `tracks?archived_at=is.null` rend
+      **quatre** tracks dont `Legacy 2023`, en corbeille. Le filtre `deleted_at=is.null` est ajouté
+      aux deux lectures, **séparé** de celui de l'archivage : la case « Afficher les archivés » ne
+      doit jamais ramener un objet en corbeille.
+- [~] **La confirmation porte l'énumération** de `compterEnfantsInaccessibles` (§4 bis.3) —
+      l'appelant que la cinquième tranche avait livré sans, et la capture que la ligne « Visuel »
+      du §5 réclamait. Un compte **en échec ne bloque pas** le geste : l'énumération est une
+      information, pas une garde, et le geste est réversible.
+- [~] **Les trois issues MESURÉES avec les jetons réels** (§4 bis.5) : l'administratrice obtient
+      `200` et la ligne, `deleted_by` écrite par le trigger ; le business developer **et** la
+      lectrice obtiennent `200` et `[]`, la ligne relue **inchangée** — troisième occurrence de la
+      décision 70 dans cette unité.
+- [~] **L'horodatage reste celui du client**, comme `archived_at` : le poser côté serveur
+      remplacerait la date **fixe** des trois objets en corbeille du seed par l'instant du rejeu et
+      emporterait la reproductibilité du jeu de démonstration. Limite nommée au §7, point 3.
+- [ ] **Hors tranche, et la couture est nommée** : le geste pour une **affaire**. Sa surface
+      demande sa propre mesure, et sa confirmation ne porte aucune énumération — une affaire n'a pas
+      d'enfant au sens du §3.5.
+
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement
 définitif** et son parcours RGPD, qui ne sera pas livré tant que la rétention n'est pas décidée —
