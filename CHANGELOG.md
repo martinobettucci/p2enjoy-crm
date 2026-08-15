@@ -1479,8 +1479,8 @@ d'exécuter le code attendu.
   que la branche `claude/happy-goldberg-qt5vfi` retenait seule, dont cinq arbitrages explicites,
   reprennent leur place dans `docs/JOURNAL.md` sous les numéros 249 à 266, texte inchangé. La
   renumérotation était contrainte : les deux lignes avaient donné les numéros 235 à 252 à des
-  sujets différents. `docs/ARBITRAGES_RECUPERES.md` donne la correspondance, `docs/ARBITRAGES.md`
-  est récupéré. Depuis cette récupération, les fonctions edge sont closes et les mises en œuvre
+  sujets différents. La correspondance vit dans `docs/ARBITRAGES.md` (fusionnée depuis l'ancien
+  `docs/ARBITRAGES_RECUPERES.md` le 2026-08-15). Depuis cette récupération, les fonctions edge sont closes et les mises en œuvre
   `pg_cron` / table de liaison étaient écrites mais attendaient leur preuve froide ;
   `change_channel_workflow` restait alors à livrer. Ces trois suites sont désormais closes dans
   les entrées `CRM-017` à `CRM-019` ci-dessus.
