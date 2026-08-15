@@ -6583,9 +6583,8 @@ E2E et captures aux quatre paliers sans avertissement console.
       complété de six règles, `CHANGELOG.md` sous `[Non publié]`.
 - [x] **Aucune migration** : `workflow_transition_required_fields`, ses trois triggers et ses trois
       politiques datent de `CRM-018`.
-- [~] **Compteurs du harnais à porter** : `SCENARIOS_UI` de `scripts/verify-harness.sh` vaut encore
-      **219**, valeur de la quatrième tranche. Le compte réel de `e2e:ui` après cette tranche doit
-      être MESURÉ sur la pile, pas déduit, puis reporté.
+- [x] **Compteur du harnais porté** : `SCENARIOS_UI` passe de 219 à **241** avec la sixième
+      tranche, MESURÉ par une campagne complète verte le 2026-08-15 et non déduit.
 
 **Sixième tranche livrée, 2026-08-15** — la prévisualisation des effets
 (docs/SPEC-workflow-engine.md §7 bis.13), **dernier manque de comportement de l'unité** :
@@ -6647,6 +6646,9 @@ E2E et captures aux quatre paliers sans avertissement console.
       au plus pour un seul appel, quand le plafond est de 260. C'est la DURÉE — 27,8 s, 28,7 s et
       37 s à vide —, le cinquième bloc ayant allongé le tour du document que chacun fait deux fois.
       Délai porté à 120 s, motif et chiffres écrits dans le fichier, aucune assertion touchée.
+- [x] **La campagne complète du 2026-08-15, dans son détail** : `e2e:ui` **241/241**, `e2e:api`
+      **507/507**, `e2e:mail` **42/42**, `test:sql` **34 fichiers / 1981 assertions**, `test:unit`
+      **973**, `pytest` **242**, `typecheck` et `build` verts.
 
 **Reste dû sous cette unité** : le réglage en **lot** d'une exigence sur plusieurs transitions
 (§7 bis.11.7, §7 bis.12.7), la **liste nominative** des affaires prévisualisées (§7 bis.13.5), et

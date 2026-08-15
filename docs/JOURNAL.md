@@ -14126,3 +14126,79 @@ aucun comportement de sa Definition of Done n'est dû — les six tranches sont 
 prévisualisées, tous trois explicitement hors périmètre des tranches livrées. La campagne complète
 étant verte et le compteur porté, la clôture de l'unité est la première question de la session
 suivante.
+### Décision 394 — CRM-076, sixième tranche livrée : la prévisualisation des effets, et deux défauts que seule la campagne complète pouvait montrer
+
+**2026-08-15, suite des décisions 390 et 391.**
+
+**Ce qui a été livré.** La sixième tranche de `CRM-076` — la **prévisualisation des effets** —, qui
+était le **dernier manque de comportement** de la Definition of Done de l'unité. Avant d'ajouter une
+exigence, l'administrateur voit ce qu'elle fera aux affaires déjà en cours. La session a d'abord
+réparé le commit documentaire manquant de la cinquième tranche, poussée en code par la session
+précédente mais absente du manuel, du design system, du changelog et du backlog.
+
+**Ce qui a été mesuré, et qui décide de l'écran.** Une exigence produit **deux** effets que la base
+traite différemment, et les deux nombres ne se déduisent pas l'un de l'autre : pour
+`date-signature-prevue`, `Prospection` rend **4 sur place et 0 à l'entrée** — aucune arête ne mène à
+l'étape initiale —, `Signature` rend l'inverse **0 et 1**, `Perdu` rend **1 et 8**. Un écran à un
+seul nombre aurait annoncé « aucun effet » sur deux étapes du workflow par défaut.
+
+**La migration `0036`, première de l'unité**, livre `public.previsualiser_exigence` en lecture
+seule, `stable`, **`security invoker`**. Le compte est fait par la base pour trois raisons mesurées :
+« vide » est `app.valeur_de_champ_est_vide` et son `btrim` porte sur vingt-quatre points de code
+d'espaces, que réécrire en TypeScript aurait dupliqué le contrat de `move_card` ; compter côté
+navigateur aurait exigé une lecture non bornée ; et `invoker` borne le compte à ce que l'appelant a
+le droit de lire. Les dix assertions pgTAP prouvent la forme, les deux refus de cible, les comptes,
+les exclusions, et surtout la **parenté avec `move_card`** — la règle est posée, et une affaire
+comptée « à l'entrée » se voit réellement refuser son déplacement.
+
+**Une affirmation de la spécification démentie par la preuve, et corrigée plutôt que contournée.**
+Le §7 bis.13.3 annonçait un dédoublonnage des affaires à l'entrée. La contrainte
+`workflow_transitions_workflow_from_to_key` rend unique le couple (départ, arrivée) : aucune affaire
+ne peut aujourd'hui être comptée deux fois. La preuve constate donc l'**égalité** entre le compte
+d'une étape et la somme de ses arêtes — 8 = 4+2+1+0+1 — et la spécification dit désormais ce que la
+défense vaut, au lieu de prétendre observer un phénomène que le modèle rend impossible.
+
+**Deux défauts trouvés, et aucun des deux n'était visible en exécution isolée.**
+
+Le premier est le mien. L'effet du formulaire d'exigence dépendait d'une callback que le parent
+construit dans une boucle sur les arêtes, donc recréée à chaque rendu : l'effet se rejouait à chaque
+rendu, chaque mesure provoquait un rendu de plus, et les appels RPC partaient sans fin. Sept
+scénarios E2E tombaient en délai. Corrigé par un `ref`, et **fixé par une preuve unitaire qui compte
+les appels** — elle échoue avant le correctif.
+
+Le second est venu d'une session concurrente, qui a mesuré ce que cette session avait vu sans
+l'expliquer : trois parcours clavier dépassent le délai par défaut **sous la charge de la campagne
+complète** et non seuls, la cinquième tranche allongeant le tour du document. Son travail a été
+récupéré par rebase sur place.
+
+**Une erreur de méthode de cette session, consignée pour ne pas être refaite.** Une première
+campagne complète a été rendue rouge par ma faute : `npm run build` a été lancé pendant que
+`npm run preview` servait `webapp/dist`, ce qui a remplacé les fichiers d'actifs sous le serveur et
+fait échouer tout ce qui suivait. La campagne a été relancée sur un arbre au repos.
+
+**La campagne complète, verte, après rebase** : `e2e:ui` **241/241** — compteur `SCENARIOS_UI` porté
+de 219 à **241**, MESURÉ et non déduit —, `e2e:api` **507/507**, `e2e:mail` **42/42**, `test:sql`
+**34 fichiers / 1981 assertions**, `test:unit` **973**, `pytest` **242**, `typecheck` et `build`
+verts. Captures aux quatre paliers produites et **observées**.
+
+**Ce qui n'a PAS pu être exécuté dans cet environnement, et qui est nommé plutôt que tu.** Six
+harnais `scripts/verify-*.sh` — dont `verify-types`, `verify-functions`, `verify-workflows`,
+`verify-champs-formulaire` — exigent un couple **Node 24 / npm 11+** que l'image ne fournit pas
+(Node 22.22.2, npm 10.9.7) et qu'aucun `nvm` local ne peut installer. `verify-scripts.sh` rend
+**104 vérifications, 3 anomalies**, toutes étrangères à cette unité : deux sont les anomalies
+d'environnement que `docs/CloudWorker.md` §2.4 décrit — `root` lit un fichier `chmod 000`, et le
+proxy TLS fait échouer une reconstruction sans certificat —, la troisième est le défaut de marqueurs
+de rôle déjà consigné au registre. `verify-seed.sh` et
+`verify-transition-required-fields.sh` sont verts.
+
+**Une limitation d'environnement levée en cours de session** : Playwright 1.62.1 attend la révision
+Chromium **1234**, l'image n'en fournissait que la **1194**, et toute la campagne `e2e:ui` échouait
+sur `browserType.launch`. La révision attendue a été installée localement ; aucun fichier du dépôt
+n'a été modifié pour cela.
+
+**Où reprendre.** `CRM-076` reste `[~]`, mais **plus aucun comportement de sa Definition of Done
+n'est dû**. Restent : les preuves **API dédiées à l'écran**, le réglage en **lot** d'une exigence sur
+plusieurs transitions, et la **liste nominative** des affaires prévisualisées — les deux derniers
+explicitement hors périmètre depuis le §7 bis.11.7. La session suivante peut soit solder ces preuves
+et clore l'unité, soit ouvrir `CRM-077` — la corbeille et la restauration —, première unité `[ ]`
+dans l'ordre du plan.

@@ -430,6 +430,11 @@ SCENARIOS_API=507
 # les quatre paliers — et neuf pour la prévisualisation des effets — les deux nombres mesurés
 # contre le seed, le renoncement vérifié par l'absence de ligne, la confirmation au clavier seul,
 # les quinze règles retrouvées, et les quatre paliers.
+#
+# CE CONTRÔLE A JOUÉ DEUX FOIS DANS LA MÊME JOURNÉE, et les deux fois il a désigné un vrai défaut,
+# jamais un compteur à rafraîchir : une boucle de rendu du formulaire d'exigence, qui faisait partir
+# les appels RPC sans fin, puis trois parcours clavier dont le tour du document dépassait le délai
+# par défaut sous la charge de la campagne. Aucun des deux n'aurait été vu par une exécution isolée.
 SCENARIOS_UI=241
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
