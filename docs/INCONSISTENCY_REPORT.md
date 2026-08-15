@@ -130,6 +130,44 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-119 — La dégradation « CHECK élargi à `mail_received` » de `verify-timeline.sh` n'en est plus une : le type est LÉGITIME depuis la messagerie, et le contrôle de non-complaisance ne mord plus
+
+**Constaté le 2026-08-15** en rejouant `scripts/verify-timeline.sh` seul, sur une base sortie de
+`./resetMe.sh`, pendant la cinquième tranche de `CRM-077`. **Étranger à cette tranche** : aucun objet
+de la corbeille n'intervient. Comportement laissé inchangé (`docs/CloudWorker.md` §3.1).
+
+**Le mécanisme.** La section 6 du harnais éprouve ses propres preuves en dégradant réellement la
+base : chaque dégradation DOIT rendre un contrôle rouge, faute de quoi la preuve correspondante ne
+prouve rien. L'une d'elles élargit la contrainte `CHECK` de `public.card_events.type` au type
+`mail_received`, sur l'idée qu'annoncer une capacité inexistante doit se voir. Le harnais rapporte :
+
+```
+DÉGRADATION NON VUE : le CHECK élargi à mail_received — une capacité inexistante paraîtrait livrée
+```
+
+**MESURÉ** — la contrainte réelle, aujourd'hui :
+
+```
+CHECK (type = ANY (ARRAY['created','moved','assigned','channel_changed','workflow_changed',
+                         'archived','unarchived','trashed','restored','field_changed',
+                         'mail_received','mail_sent']))
+```
+
+et la base porte des lignes `mail_received` et `mail_sent`. La « dégradation » consiste donc à
+ajouter au `CHECK` un type qui s'y trouve déjà : c'est un **no-op**, et aucune preuve ne peut le
+voir. Le contrôle a été écrit quand la liste des types s'arrêtait avant la messagerie ; les unités
+`CRM-055` et `CRM-058` l'ont légitimement étendue, et la dégradation est devenue vide sans que
+personne ne la remplace.
+
+**Ce que la correction demandera** : choisir un type qui n'existe pas — un nom d'essai réservé à la
+preuve — plutôt qu'un type que le produit finira par livrer. Une dégradation dont la validité dépend
+de ce que le produit n'a pas encore livré se périme silencieusement, et c'est le mode de défaillance
+à corriger, pas seulement cette occurrence. **Porteur pressenti** : la reprise transverse des harnais
+(`CRM-008`).
+
+**Second constat de la même exécution, déjà couvert** : la preuve d'interface lancée par ce harnais
+échoue alors que `npm run e2e:ui` seul est vert — c'est INC-117, et rien n'est ajouté ici.
+
 ### INC-118 — Le scénario S3 de `mail-sync` lit le journal CUMULÉ du conteneur, et les scénarios qui provoquent un échec d'authentification le rendent donc rouge
 
 **Constaté le 2026-08-15** pendant la sixième tranche de `CRM-077`. **Étranger à cette tranche** :

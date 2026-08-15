@@ -6884,7 +6884,8 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       isolément et disparaissent après `./resetMe.sh` : ils tenaient à l'état accumulé par les
       harnais, non au dépôt. `scripts/verify-seed-demo.sh` n'est PAS vert, et son écart est nommé :
       INC-115 pour son contrôle n° 13, INC-116 pour ses empreintes et pour la base qu'il laisse
-      dégradée derrière lui.
+      dégradée derrière lui. `scripts/verify-timeline.sh`, rejoué SEUL sur une base propre, tombe de
+      5 anomalies à **2** — INC-117 et **INC-119**, toutes deux étrangères.
 - [x] **Deux constats ÉTRANGERS consignés plutôt que corrigés au passage** (`docs/CloudWorker.md`
       §3.1) : **INC-115**, une preuve qui exige que la lectrice ne lise pas un track que la
       réouverture par droit fin lui ouvre depuis `CRM-012` ; **INC-116**, l'empreinte du §9.8 qui

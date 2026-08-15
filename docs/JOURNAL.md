@@ -14815,6 +14815,14 @@ constats étrangers à la tranche en sont sortis et sont consignés — **INC-11
 que la lectrice ne lise pas un track que la réouverture par droit fin lui ouvre depuis `CRM-012`, et
 **INC-116**, l'empreinte du §9.8 qui n'est stable qu'à partir du deuxième rejeu du seed.
 
+**Une dernière mesure, prise sur une base propre pour ne pas conclure à tort.** `verify-timeline.sh`
+rendait **5** anomalies dans la campagne chaînée et n'en rend plus que **2** lancé seul après
+`./resetMe.sh` : sa convergence, sa suite pgTAP et sa suite d'API redeviennent vertes, ce qui
+confirme une troisième fois que l'état accumulé, et non le dépôt, portait la différence. Des deux
+restantes, l'une est INC-117 — déjà consignée par la session concurrente — et l'autre est
+**INC-119** : la dégradation « `CHECK` élargi à `mail_received` » est devenue un no-op, ce type étant
+légitime depuis la messagerie, si bien qu'un contrôle de non-complaisance ne mord plus.
+
 ### Décision 405 — L'écran de corbeille, et l'embarquement d'un auteur est ambigu sur les TROIS tables
 
 **2026-08-15.** La décision 404 laissait `CRM-077` avec une seule tranche désignée : l'**écran** de
