@@ -3836,6 +3836,14 @@ lorsqu'il est faux, `version_id` et `version_number` désignent la version qui j
 La clé n'est jamais nulle : il y a **toujours** un point vers lequel revenir, et le produit doit
 pouvoir le nommer.
 
+**Chaque compteur compte ce que SON instruction a écrit, et rien d'autre.** MESURÉ : supprimer une
+étape emporte ses arêtes et ses règles **en cascade** ; lorsque la restauration retire une étape,
+`transitions.deleted` rend donc `0` alors qu'une arête a bel et bien disparu. Ce n'est pas une
+lacune, c'est le seul comptage qui ne mente pas dans les deux sens : compter la cascade obligerait à
+la recompter ligne à ligne, et compter la ligne deux fois — une fois sous `steps`, une fois sous
+`transitions` — ferait lire deux suppressions là où l'administrateur n'en a demandé qu'une. Le
+compteur dit « voici ce que j'ai effacé moi-même » ; `fingerprint_after` dit le résultat.
+
 `fingerprint_after` est l'empreinte **recalculée après écriture**, jamais celle de la version
 recopiée. `matches_version` est vrai lorsque les deux coïncident. Il peut être faux **sans qu'aucune
 erreur n'ait eu lieu** — la clé `workflow` n'est pas restaurée (§7 ter.13.3), et un champ
@@ -3857,7 +3865,7 @@ geste **écrit** la structure de travail de tout un channel.
 | # | Appel | Profil | Attendu |
 |---|---|---|---|
 | a | `POST /rpc/restore_workflow_version` sur la version du seed, structure vivante inchangée | `admin` | `200`, tous les compteurs à zéro, `rollback_version.published` **faux**, `matches_version` vrai |
-| b | après ajout d'une étape et d'une arête, restauration de la version du seed | `admin` | `200`, `steps.deleted` 1, `transitions.deleted` ≥ 1, `rollback_version.published` **vrai** |
+| b | après ajout d'une étape et d'une arête, restauration de la version du seed | `admin` | `200`, `steps.deleted` 1, **`transitions.deleted` 0** — l'arête est partie en cascade avec son étape (§7 ter.13.8) —, `rollback_version.published` **vrai** |
 | c | l'empreinte vivante après b | clé de service | égale à `composition_fingerprint` de la version |
 | d | restauration du point de retour rendu en b | `admin` | `200`, l'étape et l'arête **réapparaissent** avec leurs identifiants d'origine — le retour arrière |
 | e | restauration d'une version antérieure à une étape portant des affaires, sans instruction | `admin` | `400`, `P0001`, `plan non applicable` |
