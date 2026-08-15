@@ -130,6 +130,38 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-114 — La barre d'onglets rend « Aucun channel » sur les quatre écrans de réglages, qui n'ont pourtant aucun track
+
+**Constaté le 2026-08-15** en observant les captures de la sixième tranche de `CRM-077`
+(`CLAUDE.md` §16). **Étranger à cette tranche** : le défaut préexiste sur les trois autres surfaces
+d'administration, et la corbeille ne fait que le porter à son tour. Comportement du produit laissé
+inchangé (`docs/CloudWorker.md` §3.1).
+
+**Le mécanisme.** La coquille `AppShell` monte la barre d'onglets des channels pour TOUTE route
+qu'elle enveloppe. Les routes de réglages n'ont ni track ni channel — leur adresse ne porte aucun
+`slugTrack` —, si bien que la barre rend son état vide, « Aucun channel », sous le fil d'Ariane.
+C'est un état vide **exact au sens du composant** et **dénué de sens à cet endroit** : un écran de
+réglages n'a pas à annoncer l'absence d'une chose qu'il ne montre pas.
+
+**MESURÉ**, sur les captures versionnées, à l'identique et au même endroit :
+
+```
+docs/captures/CRM-059/etat-messagerie-xl-1440.jpg   « Aucun channel »   (CRM-059, antérieure)
+docs/captures/CRM-077/corbeille-xl-1440.jpg         « Aucun channel »   (CRM-077, cette tranche)
+```
+
+Le défaut est donc antérieur à cette tranche et ne dépend d'aucune donnée.
+
+**Ce qu'il coûte.** Rien de fonctionnel : aucune commande n'est offerte, aucun refus n'est masqué.
+Il coûte une ligne de bruit en tête des quatre écrans d'administration, et il affaiblit la règle du
+§5.8 — un état vide doit **nommer ce qui manque**, or celui-ci nomme ce qui n'a jamais été demandé.
+
+**Arbitrage attendu.** Deux corrections sont possibles et elles n'ont pas le même périmètre : que
+`AppShell` ne monte la barre d'onglets que pour les routes qui portent un track, ou que la barre
+elle-même ne rende rien en l'absence de track plutôt que son état vide. La première touche la
+coquille de toutes les routes (`CRM-007`), la seconde le composant de `CRM-021`. Aucune ne se
+tranche depuis `CRM-077`, et aucune n'est appliquée ici.
+
 ### INC-113 — `verify-droits-fins.sh` rejoue `0010` SEULE et mesure donc un produit d'une arbitration en arrière, ses comptes divergeant de ceux de la suite d'API
 
 **Constaté le 2026-08-15** en révisant les comptes de ce harnais pour la quatrième tranche de
