@@ -16018,3 +16018,74 @@ une ligne par un identifiant que le seed n'épingle pas.
 
 **Porteur :** `CRM-078`, première tranche. Sa Definition of Done redevient atteignable sur une base
 neuve, ce qu'elle n'était pas.
+
+## 2026-08-15 — `CRM-078`, quatrième tranche : la restauration écrit, et le retour arrière est une version
+
+**L'unité de la session.** La dernière entrée du journal désignait la quatrième tranche de
+`CRM-078` — l'application transactionnelle du plan et son retour arrière — et notait que sa
+spécification restait à écrire avant tout code. C'est ce qui a été fait :
+`docs/SPEC-workflow-engine.md` **§7 ter.13**, douze sections, committé et poussé **avant** la
+première ligne de code.
+
+**Ce qui est livré.** `public.restore_workflow_version(target_version_id, step_overrides,
+expected_live_fingerprint)` rend la composition vivante d'un workflow égale à celle qu'une version a
+photographiée, en une transaction ou pas du tout. Elle **rejoue le plan dans sa propre transaction**
+plutôt que d'en accepter un pré-calculé — une structure vivante peut bouger entre les deux — et ses
+huit refus remontent tels quels : la règle de remappage n'est écrite qu'une fois.
+
+**Le retour arrière est un point de retour publié, et c'est la décision de conception de la
+tranche.** Conserver l'état d'avant dans une table dédiée aurait été une seconde forme de
+conservation d'une composition, à côté de `workflow_versions` qui existe pour cela ; deux mécanismes
+pour la même chose divergent toujours, et l'un des deux finit non testé. La composition vivante est
+donc publiée comme version **par la vraie RPC** avant toute écriture — sauf lorsque la dernière
+version joue déjà ce rôle, ce qu'assure la vérification 5 du §7 ter.5 et non une garde propre à la
+restauration. Revenir en arrière n'est alors pas un geste de plus : c'est la restauration
+elle-même appliquée à ce point, donc **le même code**, éprouvé par les mêmes preuves.
+
+**Le choix d'autorisation a été RETOURNÉ par la mesure, et le motif est écrit plutôt que corrigé en
+silence.** La première rédaction du §7 ter.13.6 retenait `security invoker`, au motif exact que les
+tables de structure portent toutes leurs politiques d'écriture d'administrateur. Mais la restauration
+ne fait pas qu'écrire la structure : elle **déplace des affaires**. MESURÉ : `authenticated` ne
+détient l'`UPDATE` sur `public.cards` que **colonne par colonne**, sur douze colonnes, et
+`current_step_id` n'en fait pas partie — le privilège de colonne de `CRM-034` qui ferme le `PATCH`
+direct (INC-046). Un `invoker` aurait échoué en `42501` sur la deuxième écriture, y compris pour un
+administrateur. La fonction rejoint donc `move_card`, `move_card_to_channel` et
+`change_channel_workflow`. Ce que ce choix oblige à écrire à la main est nommé et prouvé : sous
+`definer`, la RLS ne masque plus les versions d'autrui, donc la vérification 2 porte
+`app.is_workspace_member` — et l'assertion 10 est la **seule** qui l'éprouve, en créant un second
+workspace réel.
+
+**Deux points de mise en œuvre qui ont changé le code ou la spécification après mesure.** D'abord,
+un champ surnuméraire est **archivé et jamais supprimé** : `form_fields` ne porte aucune politique
+`delete`, `authenticated` n'a que `select`, `insert`, `update`, et `card_field_values` porte les
+saisies qu'aucune version ne conserve. Ce n'était pas une préférence de conception — c'est le schéma
+qui refuse depuis `CRM-035`. Ensuite, la mesure a démenti une ligne du contrat d'API : lorsqu'une
+étape est retirée, `transitions.deleted` rend **zéro** alors qu'une arête a bel et bien disparu, la
+cascade l'ayant emportée. La spécification a été corrigée et le motif du comptage par instruction
+écrit au §7 ter.13.8 ; l'assertion 25 le fige, et la 26 relit la base pour montrer que l'arête est
+bien partie.
+
+**Preuves exécutées.** `test:sql` **40 fichiers, 2133 assertions, aucune anomalie** — la suite neuve
+en rend 30, et `0037_versionnement_workflows.test.sql` est redevenu vert, l'arbitrage de la
+décision 430 ayant été appliqué par une session concurrente entre-temps. `test:unit` **1042/1042**
+sur 39 fichiers ; `e2e:api` **577/577** ; `typecheck` et `build` verts ; `types:check` vert après
+régénération, le diff ne portant que la fonction neuve.
+
+**Ce qui n'a PAS été exécuté, et qu'il ne faut pas croire vert** : `e2e:ui`, `e2e:mail`, `pytest` et
+les `scripts/verify-*.sh` n'ont pas été lancés faute de temps. Aucun ne touche la fonction livrée —
+elle n'est appelée par aucun écran, l'interface appartenant à la cinquième tranche — mais l'absence
+est nommée plutôt que compensée.
+
+**Où reprendre.** Deux choses, dans cet ordre. D'abord le **harnais d'API de la quatrième tranche**,
+`e2e/api/restauration-version-workflow.spec.ts` : les dix-huit lignes du §7 ter.13.10 avec les jetons
+réels des trois profils. C'est le seul écart de preuve de la tranche, et il attrape ce que pgTAP ne
+peut pas — le `401` de l'anonyme, le `409` de la concurrence optimiste, et le passage réel des
+arguments facultatifs par PostgREST. Ensuite la **cinquième tranche** : les écrans — liste des
+versions, publication, aperçu de comparaison, aperçu du plan et bouton de restauration — et leurs
+captures. **`CRM-078` reste `[~]`** : sa Definition of Done exige les écrans et leurs captures.
+
+**L'environnement, sans redécouverte.** `npm ci` est **nécessaire** dans un checkout neuf : `tsc`
+répond mais `vite` est introuvable sans lui, et `npm run build` échoue alors sur `vite: not found`.
+Il exige `npm config set cafile /root/.ccr/ca-bundle.crt`. Le reste est inchangé : `export
+NVM_DIR=/opt/nvm` puis `. /opt/nvm/nvm.sh`, et `PLAYWRIGHT_CHROMIUM_PATH` pour toute exécution
+Playwright.

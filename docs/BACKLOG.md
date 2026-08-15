@@ -7250,6 +7250,79 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       désormais dans six fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq
       tranches livrées, comme `CRM-077` l'a montré.
 
+#### Quatrième tranche — l'application transactionnelle et le retour arrière
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` **§7 ter.13** (douze
+      sections) : ce que l'application est et n'est pas, le plan rejoué dans la transaction, ce qui
+      est restauré et ce qui ne l'est pas, les champs jamais supprimés, le point de retour publié,
+      le geste et ses huit refus dans l'ordre, l'ordre des neuf écritures, la forme rendue, les
+      autorisations, les dix-huit lignes du contrat d'API, ce qui n'est pas livré, les preuves
+      attendues. `docs/SCHEMA.md` §9 mis à jour dans le même commit documentaire, poussé **avant**
+      la première ligne de code (`CLAUDE.md` §5).
+- [x] `supabase/migrations/0042_restauration_version_workflow.sql` :
+      `public.restore_workflow_version(uuid, jsonb, text)`, `volatile`, `security definer`,
+      propriétaire `postgres`, huit refus, privilèges explicites et révocation nommée d'`anon`.
+      Appliquée et rejouée sur la pile réelle.
+- [x] **LE PLAN EST REJOUÉ DANS LA TRANSACTION, JAMAIS TRANSMIS.** Un plan calculé six minutes plus
+      tôt décrit un monde qui n'existe peut-être plus. La fonction appelle `plan_card_remapping`
+      elle-même et exige `ready` ; ses huit refus **remontent tels quels**, avec leur message et
+      leur `SQLSTATE`. La règle de remappage n'est donc écrite qu'**une fois**.
+- [x] **LE RETOUR ARRIÈRE EST UN POINT DE RETOUR PUBLIÉ**, et non une seconde forme de conservation
+      d'une composition à côté de `workflow_versions`. La composition vivante est publiée par la
+      vraie RPC avant toute écriture — sauf lorsque la dernière version joue déjà ce rôle, ce
+      qu'assure la vérification 5 du §7 ter.5 et non une garde propre à la restauration. Revenir en
+      arrière est alors **le même code**, éprouvé par les mêmes preuves (assertions 28 à 30).
+- [x] **`SECURITY DEFINER`, ET C'EST LA MESURE QUI L'A IMPOSÉ**, contre la première rédaction de la
+      spécification qui retenait `invoker`. MESURÉ : `authenticated` ne détient l'`UPDATE` sur
+      `public.cards` que **colonne par colonne**, sur douze colonnes, et `current_step_id` n'en fait
+      pas partie — le privilège de colonne de `CRM-034`. Un `invoker` aurait échoué en `42501` sur
+      le déplacement des affaires, y compris pour un administrateur. La spécification a été
+      **corrigée et le motif écrit**, jamais changé en silence. Conséquence assumée et écrite à la
+      main : la vérification 2 porte `app.is_workspace_member`, la RLS ne masquant plus les versions
+      d'autrui — l'assertion 10 est la seule qui l'éprouve.
+- [x] **UN CHAMP SURNUMÉRAIRE EST ARCHIVÉ, JAMAIS SUPPRIMÉ.** MESURÉ : `form_fields` ne porte
+      **aucune politique `delete`** et `authenticated` n'a que `select`, `insert`, `update` ; la
+      suppression d'un champ n'existe pas dans ce produit. Le supprimer pour rétablir une structure
+      aurait détruit les saisies de `card_field_values`, qu'aucune version ne conserve.
+- [x] **L'IDENTITÉ DU WORKFLOW N'EST PAS RESTAURÉE** — nom, portée, track, défaut, archivage. Ce
+      sont le placement et l'identité, non la composition ; les rétablir aurait fait de la
+      restauration un déménagement. La conséquence est **rendue** et non masquée : `matches_version`
+      dit si l'empreinte obtenue égale celle de la version.
+- [x] **L'ORDRE DES NEUF ÉCRITURES EST IMPOSÉ PAR DES CONTRAINTES MESURÉES**, non par un goût de
+      séquence : `cards_current_step_id_workflow_id_fkey` est en `NO ACTION` — supprimer une étape
+      portant une affaire échoue en `23503`, et c'est ce fait seul qui rend le plan obligatoire ;
+      `workflow_steps_workflow_initial_uk` est un index unique **partiel**, d'où l'étape initiale
+      démise avant d'être rétablie ; `workflow_steps_workflow_id_node_id_key` veut qu'un nœud
+      n'apparaisse qu'une fois, d'où la suppression avant la création.
+- [x] **Test unitaire dédié** `supabase/tests/0040_restauration_version_workflow.test.sql` :
+      **30 assertions, aucune anomalie**. Une preuve d'écriture **relit la base** et ne se satisfait
+      jamais du document rendu : l'affaire relue sur son étape (22), l'étape et l'arête relues
+      absentes (24, 26), l'étape et l'arête revenues du point de retour relues **avec leurs
+      identifiants d'origine** (29). L'assertion 4 fige le fait qui impose le `definer`, sans quoi
+      la 3 serait vraie sans rien prouver ; l'assertion 10 crée un **second workspace réel** et
+      exige le même refus qu'un identifiant inexistant (décision 50) ; l'assertion 20 relit
+      l'affaire **après le refus** — un refus qui laisse une trace n'est pas un refus.
+- [x] **Une preuve figée a rougi et a été RÉVISÉE, jamais contournée** (mécanisme de la décision 51,
+      seizième occurrence) : l'énumération des fonctions de
+      `webapp/src/lib/database.types.test-d.ts` passe de trente à trente et une, avec son motif
+      écrit dans le fichier.
+- [x] `docs/SCHEMA.md` §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
+      `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans le même changement.
+- [ ] **Test d'intégration dédié `e2e/api/restauration-version-workflow.spec.ts` : NON ÉCRIT.**
+      Les dix-huit lignes du §7 ter.13.10 restent à observer avec les jetons réels des trois
+      profils. Ce que pgTAP ne peut pas attraper reste donc dû : le `401` de l'anonyme, le `409` de
+      la concurrence optimiste — éprouvé en pgTAP par son `SQLSTATE` mais pas par son code HTTP —,
+      et le fait que les arguments facultatifs traversent réellement PostgREST. **C'est le seul
+      écart de preuve de cette tranche.**
+- [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent
+      désormais dans huit fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq
+      tranches livrées, comme `CRM-077` l'a montré.
+
+*Écart nommé.* **Aucun seed** dans cette tranche non plus : la restauration ne conserve rien qu'une
+version ne conserve déjà, et fabriquer une divergence dans le seed pour donner une restauration à
+montrer serait une donnée fabriquée pour la preuve (`CLAUDE.md` §8). La suite pgTAP construit
+elle-même ce qu'elle restaure, par les vrais gestes, et rend le seed intact par `rollback`.
+
 *Écart nommé.* **Aucun seed** dans cette tranche non plus : le plan ne conserve rien, et publier une
 seconde version ou déplacer une affaire pour donner un plan bloqué à montrer serait une donnée
 fabriquée pour la preuve (`CLAUDE.md` §8). Les preuves construisent elles-mêmes ce qu'elles
