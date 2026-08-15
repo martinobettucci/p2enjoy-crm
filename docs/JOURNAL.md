@@ -15757,3 +15757,70 @@ compteur pgTAP était figé à 65 et vert avant cette session, quand ce harnais 
 calculable, et sa spécification reste à écrire au §7 ter avant tout code. `CRM-078` reste `[~]` :
 son énoncé exige un aperçu exhaustif, une application transactionnelle et des captures, qui
 appartiennent aux tranches 3 à 5.
+
+### Décision 426 — La comparaison de deux versions : l'identité est un identifiant, jamais une ressemblance
+
+**2026-08-15 — `CRM-078`, deuxième tranche, livrée et prouvée.**
+
+**L'unité de la session.** La décision 425 désignait explicitement la deuxième tranche de
+`CRM-078` — la comparaison de deux versions — et notait que sa spécification restait à écrire avant
+tout code. C'est ce qui a été fait : `docs/SPEC-workflow-engine.md` **§7 ter.11**, huit sections,
+committé et poussé **avant** la première ligne de code (`CLAUDE.md` §5).
+
+**Ce qui est livré.** `public.compare_workflow_versions(base, target)` rend, pour deux versions d'un
+même workflow, quelles étapes, arêtes, questions, règles et exigences ont été ajoutées, retirées ou
+modifiées, et pour chaque modification **quel attribut a changé, de quelle valeur à quelle valeur**.
+Un élément ajouté ou retiré est rendu **avec son document complet** : un écran peut nommer l'étape
+disparue, que la base ne porte plus. Le calcul est porté par `app.composition_collection_diff`, qui
+ne connaît rien aux workflows — **un seul algorithme, appelé six fois**, la clé `workflow` étant
+enveloppée dans un tableau d'un élément et passée au même code. Cinq comparaisons spécialisées
+auraient produit cinq occasions de diverger, exactement le défaut qu'avait corrigé l'extraction du
+document canonique en migration 39.
+
+**La décision de fond de cette tranche est la définition de l'identité.** La Definition of Done de
+`CRM-078` exige qu'« aucune étape ne soit devinée » : cette exigence se tranche **ici**, et nulle
+part ailleurs. Deux éléments sont le même élément **si et seulement si** leur identité est égale,
+l'identité étant faite d'identifiants réels et d'eux seuls — aucun libellé, aucune position, aucune
+distance de chaîne. Les deux conséquences sont figées par assertion : un renommage reste **une**
+étape modifiée ; une étape supprimée puis recréée à l'identique rend **un retrait et un ajout**,
+jamais un inchangé. La seconde coûte, et elle est assumée : c'est la vérité de la base, et toute
+autre réponse serait une supposition.
+
+**`SECURITY INVOKER`, et non `definer`, et ce n'est pas un oubli.** La politique de lecture de
+`workflow_versions` **est** déjà la règle d'autorisation exacte du geste. Une fonction `definer`
+devrait la réécrire dans son corps, et deux formulations de la même règle finissent toujours par
+diverger. Conséquence directe : **aucun contrôle de workspace n'est écrit à la main** dans la
+fonction — une version d'autrui n'est pas donnée à lire par la RLS, `not found` s'ensuit, et le
+refus est le **même** que pour un identifiant inexistant. Une assertion pgTAP fige
+`prosecdef = false` : le jour où quelqu'un ajouterait `security definer` pour « simplifier », la RPC
+rendrait les versions de tous les workspaces et rien d'autre ne le signalerait.
+
+**Campagne complète, exécutée en fin de session** (`docs/CloudWorker.md` §2.3) : `typecheck` et
+`build` verts ; `test:unit` **1042/1042** sur 39 fichiers ; `test:sql` **38 fichiers**, un seul en
+échec — voir ci-dessous ; `e2e:api` **562/562** ; `e2e:ui` **265/265** ; `e2e:mail` **42/42** ;
+`pytest` **242** ; `verify-types` **30/30**, `verify-migrations` **25/25**,
+`verify-node-toolchain` **5/5**. La suite de la tranche rend **31 assertions** et son harnais d'API
+**12 scénarios**, tous verts.
+
+**Un défaut ÉTRANGER à cette tranche, mesuré, consigné et laissé inchangé — INC-122.**
+`0037_versionnement_workflows.test.sql`, écrite par la tranche précédente, rend **2 échecs sur 31**
+sur une pile fraîchement seedée. Cause unique : ses assertions 3 et 28 citent en dur
+`352d02ac-…` comme identifiant du workflow **dérivé**, que le seed n'épingle pas — il est engendré
+par `copy_workflow_to_track` et vaut `64a773fd-…` sur cette base. Aucune ligne de base n'est
+nécessaire pour l'établir : la migration 40 et la suite 0038 ne lisent ni n'écrivent le workflow
+dérivé, et la cause est lisible dans le texte de la suite. L'assertion 3 est **structurellement
+irréparable en l'état** — elle fige une empreinte calculée sur un document qui contient les
+identifiants engendrés à la copie. Les deux remèdes possibles touchent l'un le contrat du seed,
+l'autre la force d'une preuve d'anti-régression : `CLAUDE.md` §26 les réserve au responsable.
+
+**L'environnement, sans redécouverte.** `export NVM_DIR=/opt/nvm` puis `nvm install 24` posent Node
+`v24.19.0` ; `npm ci` exige `npm config set cafile /root/.ccr/ca-bundle.crt` ; **toute** exécution
+Playwright exige `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` —
+oublié sur un premier passage d'`e2e:mail`, il fait rendre 4 échecs qui ne sont que l'absence du
+navigateur épinglé 1234, et non un défaut du produit.
+
+**Où reprendre.** La **troisième tranche de `CRM-078`** : le plan de remappage des cards, cœur de la
+Definition of Done — avant d'activer une version, dire card par card où elle atterrit, sans qu'aucune
+étape ne soit devinée. La comparaison livrée ici lui donne son socle : la règle d'identité y est déjà
+tranchée et prouvée. Sa spécification reste à écrire au §7 ter avant tout code. **INC-122 attend un
+arbitrage** et laisse la première tranche non intégralement verte sur une base neuve.
