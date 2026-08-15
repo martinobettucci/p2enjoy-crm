@@ -16155,15 +16155,34 @@ version du seed et **relit le nombre de versions** pour prouver qu'elle ne laiss
 toutes les autres se jouent sur un workflow jetable rendu dans un `finally`. Le §7 ter.13.10 porte
 cette règle et son motif.
 
-**Preuves exécutées.** `test:sql` **40 fichiers, 2133 assertions, aucune anomalie** — la suite 0040
-reste verte après révision de son assertion 13. `e2e:api` **591/591**, dont les 14 neufs.
-`test:unit` **1042/1042** sur 39 fichiers. `typecheck` et `build` verts. `pytest` **242 passés**.
+**Preuves exécutées — la campagne complète, et elle est verte.** `test:sql` **40 fichiers,
+2133 assertions, aucune anomalie** — la suite 0040 reste verte après révision de son assertion 13.
+`e2e:api` **591/591**, dont les 14 neufs. `e2e:ui` **265/265**. `e2e:mail` **42/42**.
+`test:unit` **1042/1042** sur 39 fichiers. `typecheck` et `build` verts.
+`python3 -m pytest mail-sync/tests` **242 passés**.
 
-**L'environnement, deux faits à ne pas redécouvrir.** `npm ci` reste nécessaire dans un checkout
-neuf, avec `npm config set cafile /root/.ccr/ca-bundle.crt`. Et **`pytest` seul échoue** : le binaire
-du `PATH` (`/root/.local/bin/pytest`) n'a pas `pydantic`, et lancé depuis la racine il ignore le
-`pythonpath` du `pyproject.toml` de `mail-sync`. La commande qui marche est
-**`python3 -m pytest mail-sync/tests`**, celle du README.
+**Ce qui n'a PAS pu être exécuté, et il ne faut pas le croire vert :** les `scripts/verify-*.sh`,
+bloqués par l'absence de Node 24 dans cet environnement (point 4 ci-dessous). Huit passent, trente
+et un s'arrêtent avant d'éprouver le produit.
+
+**L'environnement, quatre faits mesurés à ne pas redécouvrir.**
+
+1. `npm ci` reste nécessaire dans un checkout neuf, avec
+   `npm config set cafile /root/.ccr/ca-bundle.crt`.
+2. **`pytest` seul échoue** : le binaire du `PATH` (`/root/.local/bin/pytest`) n'a pas `pydantic`, et
+   lancé depuis la racine il ignore le `pythonpath` du `pyproject.toml` de `mail-sync`. La commande
+   qui marche est **`python3 -m pytest mail-sync/tests`**, celle du README.
+3. **`e2e:ui` exige `PLAYWRIGHT_CHROMIUM_PATH`**, faute de quoi les 265 scénarios échouent tous sur
+   « Executable doesn't exist » — Playwright cherche un `chromium_headless_shell-1234` absent. La
+   valeur mesurée est **`/opt/pw-browsers/chromium`**, lien vers
+   `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Avec elle : **265/265**.
+4. **Les `scripts/verify-*.sh` ne sont PAS exécutables dans cet environnement**, et c'est un
+   blocage, pas un échec de produit. Ils exigent un couple **Node 24 / npm 11+** ; l'hôte n'offre
+   que Node 22.22.2, `nvm ls` ne connaissant que `system`. Trente et un des trente-neuf harnais
+   s'arrêtent donc sur « aucun couple Node 24 / npm 11+ Linux n'est utilisable », **avant d'avoir
+   éprouvé quoi que ce soit du produit**. Les huit qui passent sont ceux qui n'en dépendent pas.
+   Aucun de ces trente et un verdicts ne dit quoi que ce soit du dépôt : ils sont à relancer sur un
+   hôte portant Node 24.
 
 **Où reprendre.** La **cinquième tranche** de `CRM-078` : les écrans — liste des versions,
 publication, aperçu de comparaison, aperçu du plan et bouton de restauration — et leurs captures
