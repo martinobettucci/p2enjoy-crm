@@ -6650,19 +6650,42 @@ E2E et captures aux quatre paliers sans avertissement console.
       **507/507**, `e2e:mail` **42/42**, `test:sql` **34 fichiers / 1981 assertions**, `test:unit`
       **973**, `pytest` **242**, `typecheck` et `build` verts.
 
-**Reste dû sous cette unité** : le réglage en **lot** d'une exigence sur plusieurs transitions
-(§7 bis.11.7, §7 bis.12.7), la **liste nominative** des affaires prévisualisées (§7 bis.13.5), et
-les preuves API dédiées à l'écran (les politiques du §3.7, du §2.7 et de `CRM-018` restent prouvées
-par `CRM-031`, `CRM-035` et `CRM-018`). **Aucun comportement de la Definition of Done ne reste dû** :
-les six tranches sont livrées.
+**Preuves API dédiées à l'écran — ÉCRITES ET VERTES, 2026-08-15.**
+`e2e/api/previsualisation-exigence.spec.ts`, **7 scénarios**, `SCENARIOS_API` porté de 507 à
+**514**. Elles couvrent le seul objet que la sixième tranche expose réellement au réseau,
+`previsualiser_exigence`, et prouvent hors interface ce qu'aucune autre preuve ne pouvait montrer :
 
-**Les deux conditions posées ci-dessus sont désormais remplies, et mesurées le 2026-08-15** : la
-campagne complète est verte — `test:sql` 34/1981, `e2e:api` 507, `e2e:ui` **241**, `e2e:mail` 42,
-`test:unit` 973, `pytest` 242, `typecheck` et `build` — et le compteur est porté. L'unité reste
-néanmoins `[~]`, et **le nommer précisément vaut mieux que la fermer** : les preuves API dédiées à
-l'écran ne sont pas écrites. Sa clôture est la première question de la session suivante, qui la
-tranchera en écrivant ces preuves ou en constatant, avec son motif, que les politiques déjà prouvées
-par `CRM-031`, `CRM-035` et `CRM-018` suffisent à la Definition of Done.
+- [x] **`security invoker` cesse d'être une déclaration d'intention** — sur le couple
+      `date-signature-prevue` × `Perdu`, l'administratrice reçoit **`1, 8`** et le `viewer`
+      **`1, 4`**, avec deux jetons réels obtenus par la véritable route de connexion. L'assertion
+      écrit l'inégalité : un passage en `security definer` la ferait tomber AVANT que le produit
+      n'annonce à quelqu'un des affaires qu'il ne peut pas ouvrir. Ni l'écran ni pgTAP ne peuvent
+      montrer cela — pgTAP endosse un rôle, il ne traverse pas PostgREST avec deux jetons.
+- [x] **L'anonyme est refusé par le PRIVILÈGE, avant toute politique** : `401` / `42501`
+      « permission denied for function », conséquence directe du `revoke … from anon` de `0036`.
+- [x] Les trois comptes mesurés du seed, la cible de transition qui ne compte que son chemin
+      (**4**, contre **8** pour l'étape d'arrivée qui agrège ses cinq chemins), les deux refus de
+      cible (`400` / `P0001` / `previsualisation_cible`) et les deux cas sans effet.
+
+**Reste dû sous cette unité** : le réglage en **lot** d'une exigence sur plusieurs transitions
+(§7 bis.11.7, §7 bis.12.7) et la **liste nominative** des affaires prévisualisées (§7 bis.13.5),
+tous deux explicitement hors périmètre depuis le §7 bis.11.7. Les politiques d'écriture des tables
+de l'éditeur restent prouvées par `CRM-031`, `CRM-035` et `CRM-018` — §3.7, §2.7 et la liaison de
+`CRM-018` —, et la sixième tranche n'en ajoute aucune, sa seule migration étant en lecture seule.
+**Aucun comportement de la Definition of Done ne reste dû** : les six tranches sont livrées, et
+leurs preuves API le sont désormais aussi.
+
+**Toutes les conditions posées ci-dessus sont remplies, et mesurées le 2026-08-15** : campagne
+complète verte — `test:sql` 34/1981, `e2e:api` **514** (507 + les 7 de la prévisualisation),
+`e2e:ui` **241**, `e2e:mail` 42, `test:unit` 973, `pytest` 242, `typecheck` et `build` —, compteurs
+`SCENARIOS_UI` et `SCENARIOS_API` portés sur mesure, et preuves API dédiées écrites.
+
+**L'unité reste néanmoins `[~]`, et l'écart est nommé plutôt que passé sous silence.** La campagne
+complète qui a rendu ces chiffres a été jouée AVANT la remise en état décrite par **INC-110** ; à la
+fin de la même session, `e2e/mail/ingestion.spec.ts:133` et `e2e/api/inbox.spec.ts:159` sont rouges
+sur un état de pile dérivé, pour une cause étrangère à cette unité et consignée. **Une campagne
+complète rejouée sur une pile neuve est la dernière preuve manquante** : elle seule autorise le
+passage à `[x]`. C'est la première tâche de la session suivante, et elle ne demande aucun code.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

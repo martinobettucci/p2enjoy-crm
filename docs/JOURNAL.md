@@ -14213,3 +14213,43 @@ plusieurs transitions, et la **liste nominative** des affaires prévisualisées 
 explicitement hors périmètre depuis le §7 bis.11.7. La session suivante peut soit solder ces preuves
 et clore l'unité, soit ouvrir `CRM-077` — la corbeille et la restauration —, première unité `[ ]`
 dans l'ordre du plan.
+
+### Décision 395 — CRM-076 : les preuves API de la prévisualisation, et le seul endroit où `security invoker` se prouve
+
+**2026-08-15, suite de la décision 394, même session.**
+
+**Ce qui manquait, et que j'avais créé moi-même.** La sixième tranche expose une fonction par
+PostgREST — `previsualiser_exigence` — sans aucune preuve d'API. La suite pgTAP prouve le calcul et
+l'application de la RLS en endossant un rôle ; elle ne traverse ni Kong ni PostgREST, et surtout
+elle ne montre pas **deux jetons réels recevant deux comptes différents**. Or c'est exactement là
+que le choix `security invoker` cesse d'être une déclaration d'intention.
+
+**La mesure, prise sur la pile.** Sur le couple `date-signature-prevue` × `Perdu`, l'administratrice
+reçoit **`1, 8`** et le `viewer` **`1, 4`**. Le `viewer` ne voit pas les mêmes affaires, donc il ne
+reçoit pas le même nombre. Un `security definer` lui aurait annoncé huit affaires bloquées quand il
+ne peut en ouvrir que quatre — un nombre invérifiable par lui, sur des affaires dont l'existence ne
+le regarde pas. `e2e/api/previsualisation-exigence.spec.ts` écrit cette **inégalité** comme
+assertion : si la fonction repassait un jour en `definer`, c'est elle qui tomberait, et avant tout
+dommage. S'y ajoutent le refus de l'anonyme par le PRIVILÈGE — `401`/`42501`, avant toute politique
+—, la cible de transition qui ne compte que son chemin (**4** contre **8** pour l'étape d'arrivée
+qui agrège ses cinq chemins), les deux refus de cible et les deux cas sans effet. **7 scénarios**,
+verts ; `SCENARIOS_API` porté de 507 à **514**, valeur mesurée.
+
+**Ce qui a échoué, et qui n'est pas de cette unité.** En fin de session, `e2e:api` rend
+**513 verts, 1 rouge** et `e2e:mail` **40 verts, 2 rouges**. Les deux mêmes causes, consignées :
+`e2e/api/inbox.spec.ts:159` et `e2e/mail/ingestion.spec.ts:133` tombent parce que
+`public.mail_attachments` est **vide** — le worker relève le compte mais échoue à écrire,
+`inbound_poll_write_failed` / `502`, trois fois de suite et sans qu'un redémarrage le lève. C'est
+**INC-110**, ouverte avec sa mesure. La preuve que ce n'est pas une régression : ces deux scénarios
+étaient **verts plus tôt dans la même session, sur le même arbre** — `e2e:api` 507/507 et
+`e2e:mail` 42/42 — et ne sont devenus rouges qu'après le `migrations-runner` et le re-seed rendus
+nécessaires par un harnais de non-complaisance interrompu. Le second rouge de `e2e:mail` est
+`mail-sync.spec.ts:210`, déjà décrit par **INC-107**. Aucune ligne du produit n'a été modifiée pour
+les faire passer, conformément au §3.1 de `docs/CloudWorker.md`.
+
+**Où reprendre.** `CRM-076` reste `[~]` pour une seule raison, et elle ne demande **aucun code** :
+rejouer la campagne complète sur une **pile neuve**. Si elle est verte, l'unité passe à `[x]` — plus
+aucun comportement ni aucune preuve ne lui manque. Si `e2e:mail` et `e2e:api` restent rouges aux
+deux mêmes endroits, la cause est bien celle d'INC-110 et appartient au sous-système de messagerie ;
+l'unité peut être close en le disant. Vient ensuite `CRM-077`, corbeille et restauration, première
+unité `[ ]` dans l'ordre du plan.

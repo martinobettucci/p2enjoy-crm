@@ -324,7 +324,16 @@ ASSERTIONS_ATTENDUES=1981
 # mentir sans qu'aucune livraison ne l'ait dépassé.
 # Valeur COMPTÉE par `--list` (507 tests dans 31 fichiers) puis CONFRONTÉE au nombre de scénarios
 # verts : les deux coïncident.
-SCENARIOS_API=507
+# --- `CRM-076`, sixième tranche, le 2026-08-15 -----------------------------------------------------
+# **514** : `e2e/api/previsualisation-exigence.spec.ts` ajoute **sept** scénarios, seul endroit du
+# harnais où `security invoker` cesse d'être une déclaration d'intention. MESURÉ : sur le couple
+# `date-signature-prevue` × `Perdu`, l'administratrice reçoit `1, 8` et le `viewer` `1, 4` — deux
+# jetons réels, deux comptes différents. Un `security definer` rendrait ces deux nombres égaux, et
+# c'est l'assertion d'inégalité qui tomberait alors, avant que le produit n'annonce à quiconque des
+# affaires qu'il n'a pas le droit d'ouvrir. S'y ajoutent le refus de l'anonyme par le PRIVILÈGE
+# (`401`/`42501`, avant toute politique), les deux refus de cible et les deux cas sans effet.
+# 507 + 7 = **514**.
+SCENARIOS_API=514
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
