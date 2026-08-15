@@ -7338,16 +7338,41 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       dictionnaire fermé des refus, les états et ce que la tranche ne livre pas, les preuves
       attendues. `docs/DESIGN_SYSTEM.md` §5.15 complété dans le même commit documentaire, poussé
       **avant** la première ligne de code (`CLAUDE.md` §5).
-- [ ] `webapp/src/lib/versions-workflow.ts` : la lecture 8, les quatre appels, la composition des
-      instructions de remappage, le nommage des éléments de comparaison, le dictionnaire de refus.
-- [ ] `webapp/src/app/AdministrationWorkflows.tsx` : le sixième bloc — liste des versions,
-      publication, aperçu de comparaison, aperçu du plan, restauration et sa confirmation.
-- [ ] **Test unitaire dédié** `webapp/src/lib/versions-workflow.test.ts`.
-- [ ] **Test E2E d'interface dédié** : les quatre gestes joués sur la vraie base, et le refus
-      opposé au `viewer` constaté et non simulé.
-- [ ] **Captures observées** aux quatre paliers de `docs/DESIGN_SYSTEM.md` §7.
-- [ ] `docs/manual.md` : le chapitre rédigé que la première tranche annonçait — « **Le chapitre
-      rédigé** naîtra avec l'écran de la cinquième tranche ».
+- [x] `webapp/src/lib/versions-workflow.ts` : la lecture 8 avec son profil embarqué, les quatre
+      appels, la lecture **défensive** des documents `jsonb` rendus — aucun `undefined` n'atteint
+      l'écran —, la composition des instructions de remappage, le nommage d'un élément en quatre
+      replis et le dictionnaire fermé de quinze refus.
+- [x] `webapp/src/app/BlocVersionsWorkflow.tsx`, monté par `AdministrationWorkflows.tsx` : le
+      sixième bloc — liste des versions, publication, aperçu de comparaison, aperçu du plan avec
+      ses listes de destination, restauration et sa confirmation dans le flux.
+- [x] **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE**, y compris « Restaurer » sous un plan non
+      applicable : la garde est la vérification 7 du §7 ter.13.6, et un bouton grisé ferait passer
+      une règle de base pour une décision d'interface (`CLAUDE.md` §10).
+- [x] **`expected_live_fingerprint` n'est pas transmis, et le motif est mesuré** : aucune RPC
+      publique ne rend l'empreinte vivante d'un workflow, le schéma `app` n'étant pas exposé par
+      PostgREST (§7 ter.13.10, ligne c). La garde n'est pas perdue — la restauration rejoue le plan
+      dans sa propre transaction. L'écart est nommé au §7 ter.14.8, et une assertion l'éprouve.
+- [x] **Test unitaire dédié** `webapp/src/lib/versions-workflow.test.ts` : **53 assertions** — la
+      lecture 8 avec ses colonnes, son filtre et son ordre réellement émis ; une ligne amputée qui
+      ne rend jamais `undefined` ; le choix par défaut, y compris à une seule version ; les quinze
+      messages du dictionnaire et son repli ; les quatre replis du nommage, identité composée
+      comprise ; l'instruction qu'une étape sans choix n'engendre pas. **Trois assertions écrites
+      en négatif** : `card_limit` et `expected_live_fingerprint` ne partent pas.
+- [x] **Test E2E d'interface dédié** `e2e/ui/versions-workflow.spec.ts` : **10 scénarios** sur la
+      vraie base — la liste du seed et son auteur nommé, le workflow dérivé sans version, la
+      publication refusée en `composition inchangee` **affichée**, la comparaison d'une version à
+      elle-même, le plan à treize affaires avec son verdict, et le **refus opposé à la lectrice
+      avec ses droits réels**, constaté et non simulé. Aucun scénario n'écrit dans le seed.
+- [x] **Captures observées** aux quatre paliers, versions et plan, sous `docs/captures/CRM-078/`.
+      **Une correction vient de cette observation** : la liste « Version à restaurer » garde la
+      largeur de son contenu — étirée sur toute la colonne, elle se lisait comme un champ de saisie.
+- [x] `docs/manual.md` **§5 bis.6 et §5 bis.7** : le chapitre rédigé que la première tranche
+      annonçait, et la ligne 20 bis du sommaire portée de « sans écran » à **livré**.
+      `CHANGELOG.md` et `docs/DESIGN_SYSTEM.md` §5.15 mis à jour dans le même changement.
+- [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent
+      désormais dans dix fichiers ; un verdict d'ensemble s'écrirait maintenant utilement, les cinq
+      tranches étant livrées — mais il n'est pas exécutable dans cet environnement, qui n'offre pas
+      le couple Node 24 / npm 11+ que tous les harnais exigent (`docs/JOURNAL.md`, 2026-08-15).
 
 *Écart nommé.* **Aucun seed** dans cette tranche non plus : la restauration ne conserve rien qu'une
 version ne conserve déjà, et fabriquer une divergence dans le seed pour donner une restauration à

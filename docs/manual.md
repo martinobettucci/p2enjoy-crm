@@ -60,7 +60,7 @@
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
-| 20 bis | Garder une photographie d'un workflow | `CRM-078` | **Partiellement livré côté serveur, sans écran.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Ce qui manque : **appliquer** ce plan et son **retour arrière**, et **tout écran** — publier, comparer et planifier restent des gestes d'API |
+| 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
 | 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
@@ -1299,6 +1299,66 @@ Deux précisions honnêtes :
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
+
+### 5 bis.6 Garder une photographie d'un workflow, et y revenir
+
+*Livré par `CRM-078`, cinquième tranche. Captures dans `docs/captures/CRM-078/`.*
+
+**Où.** Le bloc **Versions**, tout en bas de l'éditeur de workflows, sous les exigences de chemin.
+
+Un workflow change : ses étapes, ses transitions, ses questions et leurs règles se modifient à tout
+moment. Une **version** est une photographie datée, numérotée et signée de sa composition entière.
+Elle ne se modifie pas et ne se supprime pas — c'est tout son intérêt.
+
+**Le tableau des versions** liste, de la plus récente à la plus ancienne : son numéro, la date de
+publication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le
+condensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes
+lettres ; c'est le cas de la copie « Cycle commercial — Conseil IA » de l'espace de démonstration.
+
+**Publier une version** fige la composition actuelle. Une note facultative aide à la retrouver plus
+tard ; elle ne change rien à ce qui est conservé. Publier **ne change rien** au fonctionnement : les
+affaires continuent de circuler sur le workflow vivant, une version est un témoin, pas une cible.
+Publier deux fois de suite sans avoir rien modifié entre-temps est **refusé**, et l'écran l'écrit :
+deux versions identiques ne seraient distinguables par personne.
+
+**Comparer deux versions** dit ce que la version **cible** ajoute, retire ou modifie par rapport à
+la version de **base** — le sens est celui que vous choisissez dans les deux listes. Le résultat est
+rangé en six familles : le workflow lui-même, les étapes, les transitions, les questions, les règles
+de visibilité et les questions exigées par un chemin. Chaque élément est marqué *Ajouté*, *Retiré*
+ou *Modifié*, et une modification dit l'attribut concerné, sa valeur avant et sa valeur après.
+Comparer une version à elle-même est permis, et l'écran répond simplement que rien ne les distingue.
+
+**Prévoir une restauration** demande au produit, avant tout geste, où chaque affaire atterrirait si
+cette version était rétablie. Le plan dit combien d'affaires sont concernées, combien ne bougeraient
+pas, combien seraient déplacées et combien **attendent une instruction**. Les affaires **archivées**
+et celles **en corbeille** y figurent comme les autres : elles occupent une étape, elles aussi.
+
+Lorsque la restauration ferait disparaître une étape, celle-ci apparaît avec le nombre d'affaires
+qu'elle porte, et une liste déroulante vous demande **où les envoyer**. Le produit ne choisit jamais
+à votre place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne
+la choisit pas. Chaque choix relance le calcul du plan, et le verdict est mis à jour.
+
+**Restaurer** rétablit la composition photographiée, en une seule fois ou pas du tout. Avant toute
+écriture, le produit **publie la composition actuelle comme point de retour** : revenir en arrière
+est alors la même manœuvre, appliquée à cette nouvelle version. Le résultat reste affiché — le point
+de retour, le nombre d'affaires déplacées, les étapes et les questions créées, supprimées ou
+modifiées. Tant qu'une affaire attend une instruction, la restauration est **refusée** et le dit.
+
+**Ce qui n'est pas restauré, et le produit l'écrit** : le **nom** du workflow, sa portée, son track
+et son caractère par défaut. Ce sont son identité et son placement, pas sa composition. Une question
+devenue surnuméraire est **archivée**, jamais supprimée : les réponses déjà saisies sont conservées.
+
+**Qui peut le faire.** Publier, prévoir et restaurer sont réservés aux **administrateurs** de
+l'espace de travail. Les commandes restent visibles pour tout le monde — c'est le serveur qui
+refuse, et l'écran affiche son refus plutôt que de faire disparaître un bouton.
+
+### 5 bis.7 Ce qui n'est pas encore là, côté versions
+
+- La **liste des affaires** du plan est bornée à deux cents entrées, et l'écran écrit combien il en
+  montre sur combien. Cette borne n'est pas réglable depuis l'interface.
+- Aucune **purge** ni rétention : le nombre de versions ne fait que croître.
+- Une version ne porte **aucune commande de ligne** : elle ne se renomme pas, ne se supprime pas, et
+  sa note ne se modifie plus après coup.
 
 ## 5 ter. La corbeille : ce qui a été retiré, et comment le rendre
 

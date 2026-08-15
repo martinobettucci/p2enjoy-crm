@@ -15,6 +15,25 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les écrans du versionnement des workflows** (`CRM-078`, cinquième tranche,
+  `docs/SPEC-workflow-engine.md` §7 ter.14). Un sixième bloc, au bas de l'éditeur de workflows,
+  rend accessibles à un administrateur les quatre gestes que les tranches précédentes n'offraient
+  que par l'API : la **liste des versions** avec leur auteur nommé, la **publication** d'une
+  composition avec sa note facultative, l'**aperçu de comparaison** de deux versions rangé en six
+  familles, et l'**aperçu du plan** de restauration avec son verdict, ses compteurs et sa liste
+  d'affaires dont la troncature est écrite.
+- **Les instructions de remappage se saisissent sur les étapes retirées**, une liste déroulante par
+  étape, dont les destinations sont les étapes de la version — seul endroit où une étape que la base
+  ne porte plus est encore nommée. **Aucune destination n'est pré-remplie** : le produit ne devine
+  pas, et une étape sans instruction laisse le plan non applicable. Chaque choix **relance le calcul
+  du plan** plutôt que de recalculer le verdict dans le navigateur.
+- **Rien n'est calculé par l'écran, et aucune commande n'est éteinte d'avance.** « Restaurer » reste
+  offerte même lorsque le plan n'est pas applicable : la garde est la vérification 7 de la fonction,
+  et un bouton grisé ferait passer une règle de base pour une décision d'interface. Les refus de la
+  base sont traduits par un **dictionnaire fermé** de quinze messages, jamais affichés bruts.
+- **Le chapitre 5 bis.6 du manuel** décrit les quatre gestes, ce qui n'est pas restauré et pourquoi,
+  et ce qui reste hors interface. La ligne 20 bis du sommaire passe de « partiellement livré côté
+  serveur, sans écran » à **livré**.
 - **Restaurer une version de workflow** (`CRM-078`, quatrième tranche,
   `docs/SPEC-workflow-engine.md` §7 ter.13). La RPC `public.restore_workflow_version` rend la
   composition vivante d'un workflow égale à celle qu'une version a photographiée, **en une
