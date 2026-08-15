@@ -6483,8 +6483,61 @@ E2E et captures aux quatre paliers sans avertissement console.
       deux événements présents — `grep -q` ferme le tuyau, `printf` reçoit `SIGPIPE`, et le
       `pipefail` du script en fait un échec. Défaut du harnais de `CRM-051`, arbitrage demandé.
 
-**Reste dû sous cette unité (§7 bis.10.7)** : la **grille champ × étape** des règles de visibilité
-(`docs/SPEC-form-composer.md` §3.1 et §5), les **exigences de transition**
+**Quatrième tranche livrée et vérifiée, 2026-08-15** — la grille champ × étape
+(docs/SPEC-workflow-engine.md §7 bis.11) :
+
+- [x] Lecture 6 (`form_field_rules` filtrée par workflow, ordre des identifiants), émise **avec**
+      celles des étapes, des arêtes et des champs : une règle n'a de sens qu'entre un champ et une
+      étape du **même instant**. L'ordre des identifiants est assumé — la table ne porte ni la
+      position d'un champ ni celle d'une étape —, et la grille n'en dépend pas : elle est indexée
+      par le couple.
+- [x] Couche de données : `lireRegles`, `composerGrille`, `classerRefusRegle`, et les deux écritures
+      du §7 bis.11.3 — régler par `upsert`, rendre au défaut par suppression. 16 preuves unitaires
+      ajoutées (`administration-workflows.test.ts`, **90** au total).
+- [x] **La composition ne part JAMAIS des règles**, et le chiffre le justifie : MESURÉ le
+      2026-08-15, **quinze** règles pour six champs actifs × sept étapes, soit **vingt-sept** couples
+      sans règle. Une lecture par les règles perdrait les deux tiers de la grille.
+- [x] **Le réglage est un `upsert`, et c'est MESURÉ** : `POST` d'un couple absent → `201` ; le même
+      `POST` avec `resolution=merge-duplicates` → `200` ; **sans** cette résolution → `409` /
+      `23505` sur `form_field_rules_pkey` ; `PATCH` → `200`. Un écran qui choisirait d'après ce
+      qu'il a lu prendrait le `409` dès qu'un autre administrateur a réglé la même case entre-temps.
+- [x] **Quatre états par case, pas trois** : le seed pose deux règles `visible` **explicites**, et
+      les replier sur le défaut les aurait affichées comme des absences puis supprimées au premier
+      réglage voisin. L'écran écrit sous le tableau que les deux produisent le même formulaire.
+- [x] **Les champs archivés sont écartés des lignes**, à la différence de la liste du §7 bis.10.1 :
+      un champ archivé ne figure dans aucun formulaire. MESURÉ : la base accepte pourtant une règle
+      sur un champ archivé (`201`), et l'archivage n'en efface aucune — elles redeviennent
+      effectives à la restauration, ce que la note de l'écran dit.
+- [x] **Le `sans-effet` est ici le cas fréquent, et il est mesuré** : le `business_developer` reçoit
+      `403`/`42501` en insertion, mais **`200` et `[]`** en `PATCH` comme en `DELETE`, la règle
+      seedée restant intacte.
+- [x] Écran : quatrième bloc sous les champs, **vrai `table`** avec `th scope="col"` pour les étapes
+      et `th scope="row"` pour les champs (docs/DESIGN_SYSTEM.md §5.9), une liste déroulante par
+      case dont le libellé accessible nomme le champ **et** l'étape, largeur minimale de case,
+      défilement propre au tableau. 13 preuves d'écran ajoutées (`AdministrationWorkflows.test.tsx`,
+      **69** au total), 17 clés de traduction.
+- [x] E2E sur la vraie base (`e2e/ui/administration-workflows.spec.ts`, 9 scénarios ajoutés,
+      **34** au total) : la grille lue contre les trois états seedés dont le `visible` explicite, le
+      réglage puis le **changement** d'une même case — le geste que seul l'`upsert` accepte —, le
+      retour au défaut vérifié par l'**absence** de ligne en base, le parcours au clavier seul, les
+      quatre paliers sans débordement de page, captures produites et **observées**. Le champ de
+      preuve est préfixé `e2e-wf-` et purgé dans le `finally` : la cascade emporte ses règles, et un
+      scénario dédié vérifie que le seed retrouve ses **quinze** règles.
+- [x] **Une preuve antérieure révisée, non supprimée** : le plafond de tabulation de `tabVers` passe
+      de 120 à 260 pressions, motif écrit dans le fichier. La grille ajoute quarante-deux listes
+      déroulantes à l'ordre de tabulation du document, et trois preuves clavier antérieures
+      épuisaient leur plafond avant de revenir sur leur cible. La règle prouvée est inchangée.
+- [x] **Un défaut visuel trouvé par la capture, et corrigé** : au palier 1440, chaque case se
+      rétrécissait à la largeur de l'en-tête de sa colonne et son état devenait illisible — « Par
+      dé… », « Aff… » —, c'est-à-dire l'information même que la grille existe pour donner.
+- [x] Documentation : `docs/manual.md` chapitre **5 bis.4 bis**, `docs/DESIGN_SYSTEM.md` §5.15
+      complété de cinq règles, `docs/SPEC-form-composer.md` §5 mis à l'état livré, `CHANGELOG.md`
+      sous `[Non publié]`. `SCENARIOS_UI` porté à **219**.
+- [x] **Aucune migration** : `form_field_rules` et ses politiques datent de `CRM-035`.
+- [ ] **INC-108 relevée au passage, non corrigée** : trois documents comptent « dix-sept règles » là
+      où le seed en pose **quinze** par workflow. Arbitrage demandé.
+
+**Reste dû sous cette unité (§7 bis.11.7)** : les **exigences de transition**
 (`docs/SPEC-transition-required-fields.md`), la **prévisualisation des effets**, et les preuves
 pgTAP/API dédiées à l'écran (les politiques du §3.7 et du §2.7 restent prouvées par `CRM-031` et
 `CRM-035`). L'unité reste `[~]` jusqu'à leur livraison.

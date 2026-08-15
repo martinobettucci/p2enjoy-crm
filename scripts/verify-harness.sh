@@ -406,7 +406,13 @@ SCENARIOS_API=507
 # d'un champ à choix avec le refus de deux clés identiques que la base accepterait, le refus réel
 # d'une clé déjà prise, le parcours au clavier seul, la capture du formulaire ouvert et les quatre
 # paliers du bloc des champs. 201 + 9 = **210**, valeur MESURÉE par l'exécution complète.
-SCENARIOS_UI=210
+# **219 depuis la QUATRIÈME tranche de `CRM-076`** (le 2026-08-15) : le même fichier gagne les neuf
+# scénarios de la grille champ × étape — la grille lue contre les règles seedées, le réglage puis le
+# changement d'une même case par `upsert`, le retour au défaut vérifié par l'absence de ligne en
+# base, le parcours au clavier seul, le compte des quinze règles seedées retrouvé après la campagne,
+# la capture de la grille et les quatre paliers. 210 + 9 = **219**, valeur MESURÉE par l'exécution
+# complète du fichier (34 verts) puis par la campagne entière.
+SCENARIOS_UI=219
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

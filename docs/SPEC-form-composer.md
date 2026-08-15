@@ -531,8 +531,11 @@ déjà saisies**, qui restent consultables dans la section repliée et dans l'ex
 `docs/SPEC-workflow-engine.md` §7 bis le spécifie tranche par tranche. Le **§7 bis.10** couvre les
 champs eux-mêmes — déclaration, libellé, aide, options, ordre, archivage et restauration — ainsi que
 les deux colonnes que l'écran n'offre pas de modifier, `key` et `type`, avec la mesure qui motive
-chacune. La **grille champ × étape** décrite ci-dessus reste due par une tranche ultérieure de la
-même unité, et le §7 bis.10.7 la nomme explicitement plutôt que de la laisser croire livrée.
+chacune. La **grille champ × étape** décrite ci-dessus est livrée par le **§7 bis.11**, quatrième
+tranche : elle rend quatre états par case — l'absence de règle y est nommée « Par défaut » et se
+distingue d'un `visible` explicite —, écarte les champs archivés de ses lignes puisqu'ils ne
+figurent dans aucun formulaire, et règle une case par un `upsert` sur la clé primaire du §3.2. Les
+**exigences de transition** du §3.5 et la prévisualisation des effets restent dues.
 
 ## 6. Valeurs et validation — `CRM-036`
 

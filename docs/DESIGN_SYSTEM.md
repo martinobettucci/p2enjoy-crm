@@ -654,6 +654,34 @@ le formulaire d'un workflow avant d'en avoir posé les étapes et les chemins.
   Un champ grisé pose la question « pourquoi ? » sans y répondre et invite à chercher le moyen de
   le réactiver ; la phrase donne le motif et la manœuvre de remplacement.
 
+**La grille champ × étape — quatrième tranche, `docs/SPEC-workflow-engine.md` §7 bis.11.** Un
+quatrième bloc suit les champs dans la même colonne, par la même règle d'ordre : on ne règle pas la
+visibilité de champs qu'on n'a pas déclarés.
+
+- **C'est le §5.9 qui s'applique, pas le §5.13.** `table`, `thead`, `th scope="col"` pour les
+  étapes et `th scope="row"` pour les champs. Le motif du §5.9 vaut ici plus qu'ailleurs : l'état
+  d'une case ne se lit qu'en sachant de quel couple on parle, et une grille de `div` priverait un
+  lecteur d'écran de l'en-tête rappelé à chaque cellule.
+
+- **Le libellé accessible d'une case nomme le champ ET l'étape**, jamais « visibilité » seul. Sept
+  colonnes de listes anonymes seraient indéchiffrables à la voix, et l'en-tête de colonne ne suffit
+  pas : il est annoncé à l'entrée dans la cellule, pas au moment où le contrôle prend le focus.
+
+- **Une case porte une largeur minimale, et ce n'est pas cosmétique.** Sans elle, la liste se
+  rétrécit à la largeur de l'en-tête de sa colonne et son état devient illisible — « Par dé… »,
+  « Aff… » —, c'est-à-dire précisément l'information que la grille existe pour donner. Mesuré à la
+  capture du 2026-08-15. Le tableau s'élargit donc, et **défile dans son propre conteneur** (§7) ;
+  la première colonne reste collée à gauche pour que la ligne garde son nom.
+
+- **Aucun bouton d'enregistrement, et c'est une conséquence du modèle.** Une case est une ligne
+  entière de la base — la clé primaire est le couple —, donc chaque changement est déjà atomique et
+  il n'existe aucune saisie partielle à annuler. Un bouton par case ajouterait quarante-deux
+  commandes à un tableau qui en compte déjà quarante-deux.
+
+- **Un état par défaut se NOMME « Par défaut », et sa parenté avec « Affiché » s'écrit sous le
+  tableau**, pas dans l'option. Le §1 vaut ici : deux états qui produisent le même formulaire ne se
+  distinguent pas par une nuance, ils se distinguent par une phrase.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

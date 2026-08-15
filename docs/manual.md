@@ -1114,11 +1114,40 @@ texte d'aide s'il en porte un.
 Comme partout ailleurs, l'écran ne décide d'aucun droit : si vous n'êtes pas administrateur de
 l'espace de travail, l'enregistrement est refusé par le serveur et l'écran vous le dit.
 
+### 5 bis.4 bis La visibilité des questions, étape par étape
+
+Sous les questions, le bloc « Visibilité des champs, étape par étape » est une **grille** : une
+ligne par question, une colonne par étape, et sur chaque case ce que la question devient à cette
+étape-là.
+
+Quatre états par case :
+
+- **Par défaut** — aucune règle n'est enregistrée pour ce couple, et la question est **affichée** ;
+- **Masqué** — la question n'apparaît pas sur les affaires de cette étape, et n'y est pas demandée ;
+- **Affiché** — la question apparaît, facultative ;
+- **Exigé** — la question apparaît, et elle doit être renseignée **pour qu'une affaire entre dans
+  cette étape**. Une affaire déjà arrivée n'en est jamais chassée : le manque est signalé sur sa
+  fiche sans bloquer sa lecture.
+
+« Par défaut » et « Affiché » produisent le même formulaire. Le premier n'enregistre rien, le
+second enregistre une règle explicite ; la grille les distingue pour ne pas effacer une règle que
+vous n'avez pas désignée. Le choix part **dès que vous le faites** : il n'y a pas de bouton
+d'enregistrement, chaque case étant une règle à elle seule.
+
+Deux précisions que l'écran écrit lui-même sous le tableau :
+
+- une **question archivée n'apparaît pas** dans la grille — elle ne figure dans aucun formulaire.
+  Ses règles sont conservées et redeviennent effectives si vous la restaurez ;
+- sur un écran étroit, **le tableau défile de lui-même** vers la droite ; la page, elle, ne défile
+  jamais horizontalement.
+
+La grille se parcourt entièrement au clavier, chaque case annonçant la question **et** l'étape
+qu'elle règle.
+
 ### 5 bis.5 Ce qui n'est pas encore là
 
-- La **visibilité question par étape** — masquer une question sur certaines étapes, la rendre
-  obligatoire sur d'autres — n'a pas encore d'écran : c'est un geste d'API.
-- Les **champs exigés par une transition** n'ont pas d'écran non plus.
+- Les **champs exigés par une transition** — en plus de ceux exigés par l'étape d'arrivée — n'ont
+  pas d'écran : c'est un geste d'API.
 - La **prévisualisation des effets** d'une modification sur les affaires en cours n'est pas livrée.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
 

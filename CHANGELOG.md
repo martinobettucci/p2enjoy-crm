@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, quatrième tranche : la grille champ × étape —
+  `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.11). La seconde moitié du deuxième manque
+  nommé au §7 bis.10.7 est levée : la **visibilité de chaque champ à chaque étape** se règle depuis
+  `/reglages/workflows`, dans un quatrième bloc sous les champs, et « en un seul écran » comme
+  `docs/SPEC-form-composer.md` §5 l'exigeait.
+  - **Un vrai tableau** — une ligne par champ actif, une colonne par étape, une liste déroulante
+    par case dont le libellé accessible nomme le champ **et** l'étape. Il défile dans son propre
+    conteneur ; la page ne défile jamais horizontalement.
+  - **Quatre états par case, pas trois** : `Par défaut`, `Masqué`, `Affiché`, `Exigé`. L'absence de
+    règle vaut `visible` (§3.1 du composeur), mais une règle `visible` explicite existe aussi — le
+    seed en pose deux —, et replier l'une sur l'autre les aurait supprimées au premier réglage
+    voisin. L'écran écrit sous le tableau que les deux produisent le même formulaire.
+  - **Le réglage est un `upsert`, et c'est mesuré** : `POST` d'un couple absent rend `201`, le même
+    `POST` avec `resolution=merge-duplicates` rend `200` sur un couple existant, et **sans** cette
+    résolution il rend `409` / `23505`. Un écran qui choisirait entre insertion et modification
+    d'après ce qu'il a lu prendrait ce refus dès qu'un autre administrateur a réglé la même case
+    entre-temps. Le retour au défaut, lui, **supprime** la règle : c'est le seul `DELETE` de cet
+    éditeur de formulaire, et la décision 96 l'autorise là où un champ ne se supprime pas.
+  - **Les champs archivés sont écartés de la grille**, et une phrase le dit : ils ne figurent dans
+    aucun formulaire, leurs règles sont conservées et redeviennent effectives à leur restauration.
+  - **Aucune migration** : `form_field_rules` et ses politiques datent de `CRM-035`.
+  - **Preuves** : 16 unitaires sur la couche de données, 13 sur l'écran, **9 scénarios E2E** sur la
+    vraie base — les deux gestes à la souris et au clavier confirmés en base après coup, le retour
+    au défaut vérifié par l'**absence** de ligne, le compte des quinze règles seedées retrouvé
+    après la campagne, et les captures aux quatre paliers observées.
+
 - **L'éditeur administrateur de workflows, troisième tranche : les champs du formulaire —
   `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.10). La moitié du deuxième manque nommé au
   §7 bis.7 est levée : les **questions** posées sur chaque affaire s'éditent depuis
