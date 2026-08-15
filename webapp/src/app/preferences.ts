@@ -50,3 +50,51 @@ export function useReplisidebar(): {
 }
 
 export const CLE_PREFERENCE_REPLI = CLE_REPLI
+
+// ---------------------------------------------------------------------------------------------
+// Guide de démarrage masqué pour la session — `CRM-079`, docs/SPEC-onboarding.md §5
+// ---------------------------------------------------------------------------------------------
+//
+// Même support et même motif que le repli ci-dessus : catégorie 2 de `CLAUDE.md` §11, préférence
+// d'interface limitée à la session. Rien ne survit à la fermeture de l'onglet, et aucun
+// consentement n'a donc à être recueilli.
+//
+// C'est ce qui rend le guide « interrompable et relançable » sans persistance : masqué, il
+// disparaît de `/` pour la session ; `/demarrage` l'affiche quand même, toujours (§5).
+
+const CLE_DEMARRAGE_MASQUE = 'p2enjoy.demarrage.masque'
+
+function lireMasque(): boolean {
+	try {
+		return globalThis.sessionStorage?.getItem(CLE_DEMARRAGE_MASQUE) === '1'
+	} catch {
+		// Stockage d'onglet indisponible : le guide reste visible. Le défaut le plus utile est
+		// celui qui montre l'aide, pas celui qui la cache.
+		return false
+	}
+}
+
+function ecrireMasque(masque: boolean): void {
+	try {
+		globalThis.sessionStorage?.setItem(CLE_DEMARRAGE_MASQUE, masque ? '1' : '0')
+	} catch {
+		// Même raison qu'au repli : ne pas pouvoir mémoriser la préférence n'empêche pas de
+		// l'appliquer pour la vue courante.
+	}
+}
+
+export function useMasqueDemarrage(): {
+	readonly masque: boolean
+	readonly masquer: () => void
+} {
+	const [masque, setMasque] = useState<boolean>(lireMasque)
+
+	const masquer = useCallback(() => {
+		ecrireMasque(true)
+		setMasque(true)
+	}, [])
+
+	return { masque, masquer }
+}
+
+export const CLE_PREFERENCE_DEMARRAGE_MASQUE = CLE_DEMARRAGE_MASQUE

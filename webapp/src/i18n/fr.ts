@@ -1028,6 +1028,50 @@ export const fr = {
 	'admin.workflows.versions.refus.generique':
 		'Le geste a été refusé, sans raison exploitable par cet écran.',
 
+	// --- CRM-079, guide de démarrage (docs/SPEC-onboarding.md) -----------------------------------
+	//
+	// Les libellés d'étape non accomplie disent ce que L'APPELANT VOIT, jamais ce qui existe : le
+	// comptage est borné par les droits fins, et le `viewer` seedé compte 5 channels là où la base
+	// en porte 6 (§3.1 de la spécification). Écrire « aucun channel n'existe » serait faux.
+	'admin.settings.index.onboarding': 'Guide de démarrage',
+	'admin.settings.index.onboarding.body':
+		'Les cinq étapes du premier lancement, et où chacune se fait. Consultable à tout moment.',
+
+	'onboarding.title': 'Guide de démarrage',
+	'onboarding.intro':
+		'Cinq étapes pour rendre le CRM utilisable. Chacune renvoie vers l\'écran qui la réalise, et son état est mesuré à chaque affichage.',
+	'onboarding.progress': '{faites} étape(s) sur {total}',
+	'onboarding.progress.loading': 'Mesure des étapes en cours',
+	'onboarding.hide': 'Masquer le guide',
+	'onboarding.hide.help':
+		'Le guide disparaît de l\'accueil pour cette session. Il reste accessible depuis les réglages.',
+	'onboarding.reopen': 'Rouvrir le guide de démarrage',
+
+	'onboarding.step.loading': 'Mesure de l\'étape en cours',
+	'onboarding.step.done': 'Fait',
+	'onboarding.step.todo': 'À faire',
+	'onboarding.step.unmeasured': 'Cette étape n\'a pas pu être vérifiée',
+
+	'onboarding.step.espace.title': 'Rejoindre un espace de travail',
+	'onboarding.step.espace.body':
+		'Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n\'est lisible.',
+	'onboarding.step.track.title': 'Créer un premier track',
+	'onboarding.step.track.body':
+		'Un track regroupe des activités proches — un métier, un marché, une équipe. Vous n\'en voyez aucun pour le moment.',
+	'onboarding.step.track.action': 'Ouvrir l\'administration de l\'arborescence',
+	'onboarding.step.channel.title': 'Ouvrir un channel dans ce track',
+	'onboarding.step.channel.body':
+		'Un channel porte un workflow et ses étapes. C\'est lui qui donne son board à vos affaires.',
+	'onboarding.step.channel.action': 'Créer un channel',
+	'onboarding.step.affaire.title': 'Créer une première affaire',
+	'onboarding.step.affaire.body':
+		'Une affaire avance d\'étape en étape sur le board de son channel, et rassemble ses messages et ses commentaires.',
+	'onboarding.step.affaire.action': 'Choisir un channel où créer l\'affaire',
+	'onboarding.step.messagerie.title': 'Raccorder une boîte de réception',
+	'onboarding.step.messagerie.body':
+		'Une boîte relevée classe le courrier entrant dans les affaires. Vous n\'en voyez aucune pour le moment.',
+	'onboarding.step.messagerie.action': 'Voir l\'état de la messagerie',
+
 	'live.workflows.version.published': 'Version publiée',
 	'live.workflows.version.compared': 'Comparaison rendue',
 	'live.workflows.version.planned': 'Plan rendu',

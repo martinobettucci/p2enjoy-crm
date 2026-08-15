@@ -18,17 +18,20 @@ import { t } from '../i18n'
 import { AppShell } from './AppShell'
 import { FournisseurAuthentification, useAuthentification } from './Authentification'
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
+import { GuideDemarrage } from './GuideDemarrage'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
+	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
+	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	PageIntrouvable,
@@ -54,6 +57,12 @@ const EtatMessagerie = lazy(async () => ({
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
+/**
+ * Le guide de démarrage de `CRM-079`. Il n'est PAS chargé à la demande, contrairement aux quatre
+ * surfaces d'administration : `AccueilDemarrage` le rend déjà sur `/`, la toute première route
+ * ouverte après la connexion. Le différer ferait télécharger un second paquet pour du code que le
+ * paquet principal contient de toute façon.
+ */
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
 
 /** État bref mais explicite pendant le téléchargement d'une route métier. */
@@ -147,6 +156,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_CORBEILLE}>
 							<Corbeille />
+						</AppShell>
+					}
+				/>
+				{/* Le guide de démarrage — `CRM-079`, docs/SPEC-onboarding.md §4.1. Il est TOUJOURS
+				    rendu ici, même intégralement accompli et même masqué pour la session : c'est ce
+				    qui le rend relançable. */}
+				<Route
+					path={CHEMIN_DEMARRAGE}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_DEMARRAGE}>
+							<GuideDemarrage />
 						</AppShell>
 					}
 				/>

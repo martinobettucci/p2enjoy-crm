@@ -14,6 +14,7 @@
 import { Link } from 'react-router'
 import { lazy } from 'react'
 import { EtatVide } from '../components/ui/States'
+import { AccueilDemarrage } from './GuideDemarrage'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 
@@ -21,6 +22,27 @@ export type DescriptionRoute = {
 	readonly chemin: string
 	readonly cleTitre: CleTraduction
 	readonly rendu: () => React.ReactElement
+}
+
+// Les adresses elles-mêmes vivent désormais dans `chemins.ts`, module sans rendu — voir l'en-tête
+// de ce fichier-là pour le motif (`CRM-079` : éviter un cycle avec le guide de démarrage). Elles
+// sont RÉEXPORTÉES ici : aucun appelant existant n'est modifié.
+import {
+	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_WORKFLOWS,
+	CHEMIN_CORBEILLE,
+	CHEMIN_DEMARRAGE,
+	CHEMIN_ETAT_MESSAGERIE,
+	CHEMIN_INBOX,
+} from './chemins'
+
+export {
+	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_WORKFLOWS,
+	CHEMIN_CORBEILLE,
+	CHEMIN_DEMARRAGE,
+	CHEMIN_ETAT_MESSAGERIE,
+	CHEMIN_INBOX,
 }
 
 /**
@@ -31,65 +53,50 @@ export type DescriptionRoute = {
  * peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21). Le repli de `Suspense` est
  * déjà posé par `App` : aucune page blanche n'apparaît pendant le téléchargement.
  */
-/** Adresse de l'inbox globale, nommée pour que les preuves la distinguent des routes en attente. */
-export const CHEMIN_INBOX = '/inbox' as const
-
 const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).RouteInbox }))
 
 /**
- * Adresse de l'administration de l'arborescence — `CRM-075`.
+ * Titre de la route d'administration — `CRM-075`.
  *
- * Elle ne figure PAS dans `ROUTES`, et c'est une contrainte tenue par une assertion : cette table
- * doit couvrir **exactement** les entrées de navigation transverses, sans orpheline dans un sens ni
- * dans l'autre. L'administration n'est pas une entrée de la barre latérale — on y arrive par l'index
- * des réglages —, elle suit donc le patron déjà employé par `CHEMIN_CARD` et `CHEMIN_LISTE` : une
- * adresse nommée ici, montée par `App` avec sa propre coquille.
+ * Son adresse ne figure PAS dans `ROUTES`, et c'est une contrainte tenue par une assertion : cette
+ * table doit couvrir **exactement** les entrées de navigation transverses, sans orpheline dans un
+ * sens ni dans l'autre. L'administration n'est pas une entrée de la barre latérale — on y arrive
+ * par l'index des réglages —, elle suit donc le patron employé par `CHEMIN_CARD` et `CHEMIN_LISTE` :
+ * une adresse nommée dans `chemins.ts`, montée par `App` avec sa propre coquille.
  */
-export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
-
-/** Titre de la route d'administration, nommé comme celui de la page introuvable. */
 export const CLE_TITRE_ADMIN_ARBORESCENCE: CleTraduction = 'admin.tree.title'
 
-/**
- * Adresse de l'éditeur de workflows — `CRM-076`.
- *
- * Même patron que `CHEMIN_ADMIN_ARBORESCENCE` : hors de `ROUTES`, atteinte depuis l'index des
- * réglages, montée par `App` avec sa propre coquille (docs/SPEC-workflow-engine.md §7 bis.2).
- */
-export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
-
-/** Titre de l'éditeur de workflows. */
+/** Titre de l'éditeur de workflows — `CRM-076`, même patron (docs/SPEC-workflow-engine.md §7 bis.2). */
 export const CLE_TITRE_ADMIN_WORKFLOWS: CleTraduction = 'admin.workflows.title'
 
-/**
- * Adresse de l'écran d'état de la messagerie — `CRM-059`.
- *
- * Même patron que `CHEMIN_ADMIN_ARBORESCENCE` : hors de `ROUTES`, atteinte depuis l'index des
- * réglages, montée par `App` avec sa propre coquille (docs/SPEC-mail-subsystem.md §20.11.1).
- */
-export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
-
-/** Titre de l'écran d'état de la messagerie. */
+/** Titre de l'état de la messagerie — `CRM-059`, même patron (docs/SPEC-mail-subsystem.md §20.11.1). */
 export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
 
 /**
- * Adresse de la corbeille — `CRM-077`.
- *
- * Quatrième surface d'administration, et même patron que les trois autres : hors de `ROUTES`,
- * atteinte depuis l'index des réglages, montée par `App` avec sa propre coquille
- * (docs/SPEC-corbeille.md §4.1). La corbeille est une vue du workspace, et non un onglet de chaque
- * objet — un objet en corbeille n'a plus de place dans les listes où il vivait.
+ * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
+ * La corbeille est une vue du workspace, et non un onglet de chaque objet : un objet en corbeille
+ * n'a plus de place dans les listes où il vivait.
  */
-export const CHEMIN_CORBEILLE = '/reglages/corbeille' as const
-
-/** Titre de la corbeille. */
 export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
+
+/**
+ * Titre du guide de démarrage — `CRM-079`, `docs/SPEC-onboarding.md` §4.1.
+ *
+ * Même patron que les quatre surfaces d'administration. Le guide est **toujours** rendu à son
+ * adresse, même intégralement accompli et même masqué pour la session : c'est ce qui le rend
+ * **relançable**, exigence explicite de la Definition of Done de l'unité.
+ */
+export const CLE_TITRE_DEMARRAGE: CleTraduction = 'onboarding.title'
 
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
+		// `CRM-079` remplace l'état vide inconditionnel de `CRM-007` par l'accueil du guide de
+		// démarrage : tant qu'une étape reste à faire, l'écran d'arrivée enseigne au lieu de
+		// constater (docs/SPEC-onboarding.md §4.2). L'état vide reste le contenu légitime dès que
+		// les cinq étapes sont accomplies.
 		chemin: '/',
 		cleTitre: 'route.board.title',
-		rendu: () => <EtatVide titre={t('route.board.empty.title')} corps={t('route.board.empty.body')} />,
+		rendu: () => <AccueilDemarrage />,
 	},
 	{
 		// L'inbox globale de `CRM-057` remplace l'état vide de `CRM-007` : la messagerie est
@@ -125,6 +132,17 @@ export function IndexReglages() {
 		<div className="flex flex-col gap-4 max-w-[60ch]">
 			<h2 className="text-h3">{t('admin.settings.index.title')}</h2>
 			<ul className="flex flex-col rounded-lg border border-border bg-surface">
+				{/* Le guide vient en PREMIER — `CRM-079`, docs/SPEC-onboarding.md §4.3 : un guide de
+				    démarrage se lit avant les écrans qu'il présente. */}
+				<li>
+					<Link
+						to={CHEMIN_DEMARRAGE}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.onboarding')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.onboarding.body')}</span>
+					</Link>
+				</li>
 				<li>
 					<Link
 						to={CHEMIN_ADMIN_ARBORESCENCE}
