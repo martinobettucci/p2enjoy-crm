@@ -14253,3 +14253,33 @@ aucun comportement ni aucune preuve ne lui manque. Si `e2e:mail` et `e2e:api` re
 deux mêmes endroits, la cause est bien celle d'INC-110 et appartient au sous-système de messagerie ;
 l'unité peut être close en le disant. Vient ensuite `CRM-077`, corbeille et restauration, première
 unité `[ ]` dans l'ordre du plan.
+
+### Décision 394 — Les trois harnais que la décision 391 laissait en suspens sont rejoués et verts
+
+**2026-08-15, clôture de la session de la décision 393.**
+
+La décision 391 laissait trois harnais en échec et demandait explicitement à la session suivante de
+les qualifier. Ils sont rejoués ici sur un arbre stable — les six tranches de `CRM-076` présentes,
+la pile rétablie par un `./runDev.sh` complet, le seed réappliqué — et **aucun ne porte plus
+d'anomalie** :
+
+- `scripts/verify-workflows.sh` : **49 contrôles, aucune anomalie** ;
+- `scripts/verify-champs-formulaire.sh` : **38 contrôles, aucune anomalie** ;
+- `scripts/verify-webapp.sh` : **42 contrôles, aucune anomalie**, dégradations de non-complaisance
+  et restauration comprises.
+
+Les deux derniers échouaient sur `npm run e2e:ui`, dont le compte de scénarios avait changé sous
+eux : le report de `SCENARIOS_UI` à **241**, mesuré des deux côtés, les rend verts sans qu'aucune
+autre ligne ait été touchée. Le troisième, `verify-formulaire.sh`, a été qualifié par la décision
+392 de la session concurrente.
+
+**La porte Node 24 est rouverte de la même manière qu'à la décision 391**, et il faut le redire
+puisque rien dans le dépôt ne le retient : l'hôte ne porte que Node 22.22.2, et déposer la
+distribution officielle sous `~/.nvm/versions/node/v24.11.1/` suffit à ce que
+`scripts/lib/node.sh` la trouve. À refaire à chaque exécution tant que l'image ne porte pas Node 24.
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` reste nécessaire de
+même.
+
+**Les captures régénérées par les campagnes de cette session sont committées** plutôt que
+restaurées : elles représentent l'état réellement exécuté de l'application (`CLAUDE.md` §16), et les
+laisser diverger ferait mentir le prochain diff.
