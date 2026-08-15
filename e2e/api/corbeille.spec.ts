@@ -1,10 +1,14 @@
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille : l'énumération des enfants rendus inaccessibles,
-//           puis le GESTE de mise à la corbeille d'un track et d'un channel (septième tranche)
+//           le GESTE de mise à la corbeille d'un track et d'un channel (septième tranche), puis
+//           celui d'une AFFAIRE (huitième tranche)
 // @verifies docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente), §3.5 (les trois règles
 //           de comptage, la forme des lectures), §5 (ligne « API » : « l'énumération des enfants lue
 //           par la même requête que l'écran », « mise en corbeille et restauration avec les jetons
 //           RÉELS des trois profils »), §4 bis.2 (le filtre de l'administration), §4 bis.5 (les
 //           trois issues du geste)
+// @verifies docs/SPEC-corbeille.md §4 ter.3 (les trois issues du geste d'une affaire, et le
+//           business developer qui RÉUSSIT), §4 ter.4 (le fil enregistre le geste), §4 ter.5 (la
+//           route de détail ne rend plus l'affaire)
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec les jetons réels)
 //
@@ -41,6 +45,10 @@ const PREFIXE = 'ZZ énumération'
 const PREFIXE_GESTE = 'ZZ geste corbeille'
 /** L'administratrice du seed — c'est elle que le trigger de `0037` doit inscrire en `deleted_by`. */
 const PROFIL_ADMIN = '5eed0000-0000-4000-8000-000000000011'
+/** Le business developer, qui RÉUSSIT le geste sur une affaire et échoue sur un track (§4 ter.3). */
+const PROFIL_BIZDEV = '5eed0000-0000-4000-8000-000000000012'
+/** Channel que la LECTRICE lit — MESURÉ : elle y voit trois affaires du seed (§4 ter.3). */
+const CHANNEL_LU_PAR_LA_LECTRICE = '5eed0000-0000-4000-8000-000000000036'
 
 /**
  * Émet la PREMIÈRE lecture de l'énumération d'un track : les identifiants de ses channels qui ne
@@ -91,6 +99,7 @@ async function enumererTrack(
 
 async function menage(requete: APIRequestContext): Promise<void> {
 	await requete.delete(`${CARDS}?title=like.${PREFIXE}*`, { headers: enTetesService() })
+	await requete.delete(`${CARDS}?title=like.${PREFIXE_GESTE}*`, { headers: enTetesService() })
 	// Les channels d'abord : `tracks → channels` est en `CASCADE`, mais l'ordre explicite évite de
 	// faire dépendre le ménage d'une cascade que le §2.3 dit précisément ne jamais emprunter.
 	await requete.delete(`${CHANNELS}?name=like.${PREFIXE_GESTE}*`, { headers: enTetesService() })
@@ -427,5 +436,152 @@ test.describe('E5 — les lectures de l’administration excluent la corbeille (
 		const identifiants = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
 		expect(identifiants).toEqual([CHANNEL_VIVANT])
 		expect(identifiants).not.toContain(CHANNEL_CORBEILLE)
+	})
+})
+
+test.describe('E6 — le GESTE de mise à la corbeille d’une AFFAIRE (§4 ter.3)', () => {
+	/**
+	 * Crée une affaire jetable dans le channel `inter-entreprises`, par la clé de service.
+	 *
+	 * CE CHANNEL EST CHOISI, PAS PRIS AU HASARD : la lectrice le LIT — MESURÉ, elle y voit trois
+	 * affaires du seed. Sans cela, son `200` et `[]` serait vrai parce qu'elle ne voit pas la ligne,
+	 * et la preuve ne dirait rien du refus d'ÉCRITURE qu'elle prétend mesurer.
+	 */
+	async function cardJetable(requete: APIRequestContext, suffixe: string): Promise<string> {
+		const reponse = await requete.post(CARDS, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				channel_id: CHANNEL_LU_PAR_LA_LECTRICE,
+				workflow_id: WORKFLOW_GLOBAL,
+				current_step_id: ETAPE_PROSPECTION,
+				title: `${PREFIXE_GESTE} ${suffixe}`,
+			},
+		})
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		return ((await reponse.json()) as { id: string }[])[0]!.id
+	}
+
+	test('l’administratrice retire l’affaire, et `deleted_by` est posée PAR LE TRIGGER', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'admin')
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, CARDS, card)
+
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as unknown[]).toHaveLength(1)
+
+		const relecture = await request.get(`${CARDS}?id=eq.${card}&select=deleted_at,deleted_by`, {
+			headers: enTetesService(),
+		})
+		const [ligne] = (await relecture.json()) as {
+			deleted_at: string | null
+			deleted_by: string | null
+		}[]
+		expect(ligne?.deleted_at).not.toBeNull()
+		// L'écriture ne portait QUE `deleted_at` : l'audit vient du trigger de `0037`, la colonne
+		// étant fermée au client par le privilège.
+		expect(ligne?.deleted_by).toBe(PROFIL_ADMIN)
+	})
+
+	test('le BUSINESS DEVELOPER réussit, là où il échoue sur un track (§4 ter.3)', async ({
+		request,
+	}) => {
+		// C'EST LA PREUVE QUI DISTINGUE CETTE TRANCHE DE LA PRÉCÉDENTE. `cards_maj` porte
+		// `app.can_write_channel(channel_id)` ; `tracks_maj_admin` exige le rôle d'administrateur.
+		// Mettre une affaire à la corbeille est donc une écriture ordinaire sur son channel, et
+		// transporter ici la règle du §4 bis.5 aurait éteint une commande qui aboutit.
+		const card = await cardJetable(request, 'bizdev')
+		const reponse = await mettreALaCorbeille(request, jetonBizdev, CARDS, card)
+
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as unknown[]).toHaveLength(1)
+
+		const relecture = await request.get(`${CARDS}?id=eq.${card}&select=deleted_by`, {
+			headers: enTetesService(),
+		})
+		expect(((await relecture.json()) as { deleted_by: string | null }[])[0]?.deleted_by).toBe(
+			PROFIL_BIZDEV,
+		)
+	})
+
+	test('la LECTRICE obtient `200` et `[]`, et la ligne relue est INCHANGÉE (décision 70)', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'lectrice')
+
+		// CONTRE-ÉPREUVE D'ABORD : elle LIT bien cette affaire. Sans elle, le `[]` ci-dessous serait
+		// celui d'une ligne invisible, et ne prouverait rien du refus d'écriture.
+		const lecture = await request.get(`${CARDS}?id=eq.${card}&select=id`, {
+			headers: enTetesAuthentifies(jetonViewer),
+		})
+		expect((await lecture.json()) as unknown[]).toHaveLength(1)
+
+		const reponse = await mettreALaCorbeille(request, jetonViewer, CARDS, card)
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as unknown[]).toHaveLength(0)
+
+		const relecture = await request.get(`${CARDS}?id=eq.${card}&select=deleted_at,deleted_by`, {
+			headers: enTetesService(),
+		})
+		expect((await relecture.json()) as unknown[]).toEqual([{ deleted_at: null, deleted_by: null }])
+	})
+
+	test('une charge portant `deleted_by` est refusée ENTIÈREMENT, en `42501` (§4 bis.5)', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'privilege')
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, CARDS, card, {
+			deleted_at: '2026-08-15T10:00:00+00:00',
+			deleted_by: PROFIL_ADMIN,
+		})
+
+		expect(reponse.status()).toBe(403)
+		expect((await reponse.json()) as { code?: string }).toMatchObject({ code: '42501' })
+		// Le refus n'est PAS partiel : `deleted_at` n'est pas écrite non plus.
+		const relecture = await request.get(`${CARDS}?id=eq.${card}&select=deleted_at`, {
+			headers: enTetesService(),
+		})
+		expect((await relecture.json()) as unknown[]).toEqual([{ deleted_at: null }])
+	})
+
+	test('le geste fait naître un événement `trashed` porté par son acteur (§4 ter.4)', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'fil')
+		await mettreALaCorbeille(request, jetonAdmin, CARDS, card)
+
+		// L'ÉCRAN N'ÉCRIT AUCUN ÉVÉNEMENT : le trigger de `0016`, dans sa forme de `0020`, le fait.
+		// Cette preuve est ce qui autorise `mettreCardALaCorbeille` à n'écrire qu'une colonne.
+		const evenements = await request.get(
+			`/rest/v1/card_events?card_id=eq.${card}&select=type,actor_id&order=created_at.desc&limit=1`,
+			{ headers: enTetesService() },
+		)
+		expect((await evenements.json()) as unknown[]).toEqual([
+			{ type: 'trashed', actor_id: PROFIL_ADMIN },
+		])
+	})
+
+	test('après le geste, la lecture de la route de détail ne rend plus rien (§4 ter.5)', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'detail')
+		await mettreALaCorbeille(request, jetonAdmin, CARDS, card)
+
+		// C'est la mesure qui impose le bloc de succès de l'écran : `useContenuCard` lit
+		// `deleted_at=is.null`, et retomber sur « Card introuvable » mentirait à qui vient de la
+		// retirer.
+		const detail = await request.get(`${CARDS}?id=eq.${card}&select=id&deleted_at=is.null`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+		})
+		expect(detail.status()).toBe(200)
+		expect((await detail.json()) as unknown[]).toHaveLength(0)
+
+		// …et elle reste lisible SANS ce filtre : la corbeille est une vue, pas une frontière de
+		// confidentialité (§2.2). C'est la condition pour que l'écran de corbeille l'affiche.
+		const corbeille = await request.get(`${CARDS}?id=eq.${card}&select=id&deleted_at=not.is.null`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+		})
+		expect((await corbeille.json()) as unknown[]).toHaveLength(1)
 	})
 })
