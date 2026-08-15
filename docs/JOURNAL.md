@@ -13945,3 +13945,77 @@ quatre paliers observées.
 **Où reprendre après cette tranche.** `CRM-076` n'aura plus de comportement dû : resteront les
 preuves pgTAP/API dédiées à l'écran et la qualification de l'échec `e2e:ui` constaté en ligne de
 base.
+
+### Décision 391 — CRM-076, quatrième tranche livrée : la grille champ × étape, et la case que la capture a rendue illisible
+
+**2026-08-15, suite de la décision 388 — entrée courte, comme la décision 382 l'exige. Elle est
+numérotée 391 et non 390 parce qu'une session concurrente a pris ce numéro pendant celle-ci ; son
+objet est la tranche annoncée par la décision 388.**
+
+**Livré.** Spec §7 bis.11 (committée avant le code), couche de données des règles (`lireRegles`,
+`composerGrille`, `classerRefusRegle`, `reglerVisibilite`, `rendreAuDefaut`), quatrième bloc
+« Visibilité des champs, étape par étape » dans `AdministrationWorkflows.tsx`, 17 clés de
+traduction, chapitre **5 bis.4 bis** de `docs/manual.md` et cinq règles au §5.15 de
+`docs/DESIGN_SYSTEM.md`. Le §5 de `docs/SPEC-form-composer.md` passe de « reste due » à livrée.
+Aucune migration : `form_field_rules` et ses politiques datent de `CRM-035`.
+
+**Mesuré, sur l'arbre de cette tranche.** 914 tests unitaires (885 → 914 : 16 sur la couche de
+données, 13 sur l'écran), **219** scénarios `e2e:ui` — 210 + 9 —, 507 `e2e:api`, 42 `e2e:mail`,
+242 `pytest`, `test:sql` **1971 assertions avant ET après** la campagne, `typecheck` et `build`
+verts, captures des quatre paliers regardées. `scripts/verify-workflows.sh` : **49 contrôles,
+aucune anomalie**. `scripts/verify-manual.sh` : **109 contrôles, aucune anomalie**. Pile : 16
+services `healthy`, seed appliqué.
+
+**Ce que les quatre mesures ont décidé.** L'`upsert` d'abord : `POST` d'un couple absent rend
+`201`, le même `POST` avec `resolution=merge-duplicates` rend `200` sur un couple existant, et
+**sans** cette résolution il rend `409` / `23505`. Choisir entre insertion et modification d'après
+ce qu'on a lu prendrait donc ce refus dès qu'un autre administrateur a réglé la même case
+entre-temps ; l'`upsert` est la seule des quatre formes indifférente à l'état lu. Ensuite les
+champs archivés, que la base accepte pourtant de régler (`201`) et que la grille écarte de ses
+lignes en le disant. Puis le `sans-effet`, qui est ici le cas fréquent et non le cas limite : le
+`business_developer` reçoit `200` et `[]` en `PATCH` comme en `DELETE`. Enfin le compte réel —
+quinze règles pour quarante-deux couples —, qui interdit de composer la grille depuis les règles.
+
+**Deux corrections nées des preuves elles-mêmes, et c'est le point de la session.** La capture au
+palier 1440 montrait des cases tronquées — « Par dé… », « Aff… » —, c'est-à-dire l'information même
+que la grille existe pour donner : une largeur minimale est posée, et l'état « Par défaut » perd sa
+parenthèse au profit d'une phrase sous le tableau. Et le plafond de tabulation de `tabVers` passe
+de 120 à 260 pressions, motif écrit dans le fichier : la grille ajoute quarante-deux listes
+déroulantes à l'ordre de tabulation, et trois preuves clavier antérieures — étape, arête, champ —
+épuisaient leur plafond avant de revenir sur leur cible. La règle prouvée est inchangée ; c'est une
+preuve révisée, pas contournée.
+
+**Relevé sans le corriger.** INC-108 : trois documents comptent « dix-sept règles » là où le seed
+en pose **quinze** par workflow. Le décompte détaillé du §4.1 du composeur — cinq règles sur
+`Prospection` — reste exact ; seul le total ne l'est plus. Arbitrage demandé.
+
+**Un obstacle d'environnement, hors dépôt et identique à celui de la décision 387.** La campagne
+complète rend d'abord 218/219 : l'unique échec — `authentification.spec.ts:161`, l'invitation —
+vient de ce que le serveur de prévisualisation écoute le port **4173** par défaut alors que
+`SITE_URL` désigne le **5173**. `WEBAPP_PREVIEW_PORT=5173` rend la campagne **219/219**, et les
+trois harnais qui rendaient `ECHEC npm run e2e:ui` repassent avec cette variable —
+`verify-workflows.sh` l'a démontré. La porte Node 24 est rouverte comme d'habitude, la
+distribution officielle déposée sous `~/.nvm/versions/node/v24.11.1/`, et
+`PLAYWRIGHT_CHROMIUM_PATH` reste nécessaire.
+
+**Une session concurrente a livré les cinquième et sixième tranches pendant celle-ci** — décisions
+389 et 390, poussées pendant que les harnais de fin de session s'exécutaient. Le travail a été
+rebasé sur place à deux reprises, les conflits portant sur des captures binaires régénérées des
+deux côtés. **Conséquence à retenir pour la lecture des bilans de fin :** les derniers harnais de
+cette session ont éprouvé un arbre qui portait déjà deux tranches supplémentaires en cours de
+livraison, et `SCENARIOS_UI=219` y est nécessairement dépassé — cette valeur reste juste pour la
+quatrième tranche, et c'est à la session qui livre les suivantes de la porter. Les deux échecs
+alors constatés sont dans ce cas : `verify-champs-formulaire.sh` et `verify-webapp.sh` échouent sur
+`npm run e2e:ui`, dont le compte de scénarios a changé sous eux.
+
+**Un troisième échec relevé et NON qualifié, faute d'avoir pu établir sa ligne de base.**
+`scripts/verify-formulaire.sh` rend `49 contrôles, 1 en échec` : sa dégradation de
+non-complaisance « le prédicat revient à `trim()`, et diverge de `btrim` » laisse la preuve d'API
+verte. Ce contrôle ne porte sur aucun fichier de cette tranche, et l'arbre portait déjà deux
+tranches concurrentes au moment de la mesure : il n'est **pas** consigné au registre tant qu'une
+session n'a pas pu le rejouer sur un arbre stable. C'est la première vérification que la session
+suivante doit faire.
+
+**Où reprendre.** `CRM-076` reste `[~]`. Les tranches cinq et six ayant été livrées en parallèle,
+son comportement dû est clos ; restent les preuves pgTAP/API dédiées à l'écran, et la
+qualification de l'échec de `verify-formulaire.sh` ci-dessus.
