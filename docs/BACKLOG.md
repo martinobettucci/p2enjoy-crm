@@ -6756,10 +6756,32 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       types figées suivent.
 - [x] `docs/PROD_MIGRATIONS.md` ligne 37, avec son retour arrière — dont l'étape facile à oublier :
       restaurer le droit de table avant de retirer les colonnes.
-- [ ] **Reste dû** : couche de données, écran de corbeille, seed enrichi (un channel et un track en
-      corbeille, et un enfant sous parent en corbeille — sans eux le refus du §3.4 n'a aucun cas de
-      démonstration), la garde de restauration sous parent en corbeille (§3.4), l'énumération des
-      enfants (§3.3), et les niveaux API, unitaire, E2E et visuel du §5 de la spécification.
+**Deuxième tranche livrée, 2026-08-15 — la garde de restauration**
+(`supabase/migrations/0038_corbeille_restauration.sql`) :
+
+- [x] **Restaurer un enfant sous un parent en corbeille est REFUSÉ par la base**, `parent_en_corbeille`
+      (`P0001`) : le rendre là serait le rendre à un endroit où personne ne le verrait — l'utilisateur
+      aurait cliqué « restaurer », le produit aurait répondu « c'est fait », et rien n'aurait été
+      rendu. Le refus vit dans la base et non dans l'écran : ce qui empêche réellement un geste doit
+      valoir aussi pour une API, un script ou une intégration (`CLAUDE.md` §10).
+- [x] **Les DEUX niveaux sont vérifiés pour une affaire** — son channel **et** son track. Un seul
+      aurait laissé restaurer une affaire sous un channel vivant dont le track est supprimé,
+      c'est-à-dire à un endroit tout aussi introuvable, d'un cran plus haut.
+- [x] **La garde ne se déclenche QUE sur la transition « était en corbeille, ne l'est plus »** :
+      toute autre écriture passe sans lecture du parent. Interroger le parent à chaque mise à jour
+      aurait coûté une lecture par écriture pour une question qui ne se pose qu'une fois.
+- [x] **8 assertions pgTAP** (`supabase/tests/0036_corbeille_restauration.test.sql`), dont **trois
+      qui prouvent que la garde NE refuse PAS ce qu'elle ne doit pas** — modifier un objet en
+      corbeille, l'y remettre, et le restaurer une fois ses parents rendus dans l'ordre. Une garde
+      qui refuserait trop serait aussi fautive qu'une garde absente. `test:sql` passe de 35/1995 à
+      **36 fichiers / 2003 assertions**.
+- [x] **La garde vaut pour TOUS les rôles**, propriétaire et clé de service compris : c'est une règle
+      de cohérence, non d'autorisation. Consigné au contrat de déploiement, ligne 38, car un script
+      de reprise doit remonter l'arborescence des parents avant les enfants.
+
+- [ ] **Reste dû** : couche de données et écran de corbeille ; seed enrichi (un channel et un track
+      en corbeille, et un enfant sous parent en corbeille) ; l'**énumération** des enfants rendus
+      inaccessibles (§3.3) ; et les niveaux API, unitaire, E2E et visuel du §5 de la spécification.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

@@ -14416,3 +14416,41 @@ de restauration** : le refus, backend, de restaurer un enfant dont le parent est
 et l'énumération des enfants rendus inaccessibles (§3.3). Le seed doit être enrichi avant l'écran —
 un channel et un track en corbeille, et un enfant sous parent en corbeille —, sans quoi ce refus n'a
 aucun cas de démonstration.
+
+### Décision 400 — CRM-077, deuxième tranche : la garde de restauration, et la moitié de la preuve qui vérifie qu'elle NE refuse PAS
+
+**2026-08-15, suite de la décision 399, même session.**
+
+**Ce qui est livré.** La garde du §3.4 de `docs/SPEC-corbeille.md` : restaurer un enfant dont le
+parent est en corbeille est refusé par la base, `parent_en_corbeille`. C'est la conséquence directe
+du choix du §3.3 — mettre un parent à la corbeille ne descend pas sur ses enfants —, qui rend
+atteignable l'état « enfant en corbeille sous parent en corbeille ». Le restaurer seul l'aurait rendu
+à un endroit où personne ne le verrait : l'utilisateur aurait cliqué « restaurer », le produit aurait
+répondu « c'est fait », et rien n'aurait été rendu.
+
+**Deux niveaux pour une affaire, et ce n'est pas du zèle.** Une affaire pend à un channel, qui pend à
+un track. Ne vérifier que le channel aurait laissé restaurer une affaire sous un channel vivant dont
+le TRACK est supprimé — tout aussi introuvable, d'un cran plus haut. La preuve isole ce cas avec une
+fixture dédiée : un second channel jamais mis à la corbeille sous le même track.
+
+**La moitié de la preuve porte sur ce que la garde NE fait pas**, et c'est délibéré. Trois assertions
+vérifient qu'on peut toujours modifier un objet en corbeille, l'y remettre, et le restaurer une fois
+ses parents rendus. Une garde qui refuserait trop serait aussi fautive qu'une garde absente, et c'est
+l'erreur la plus facile à commettre sur un trigger `before update` : la garde ne s'arme donc que sur
+la transition « était en corbeille, ne l'est plus ».
+
+**Une propriété découverte en écrivant la preuve, et consignée au contrat de déploiement.** La garde
+s'applique à TOUS les rôles, propriétaire et clé de service compris — c'est une règle de cohérence,
+non d'autorisation. La première version de la preuve restaurait un channel par le propriétaire pour
+préparer son cas suivant, et s'est heurtée au refus : c'est le comportement correct, et la preuve a
+été restructurée plutôt que la garde affaiblie. Conséquence pratique, écrite ligne 38 du contrat : un
+script de reprise doit remonter l'arborescence des parents avant les enfants.
+
+**Mesuré :** `npm run test:sql` **36 fichiers / 2003 assertions, aucune anomalie**. Compteurs du
+harnais portés sur mesure.
+
+**Où reprendre.** `CRM-077` reste `[~]`. La tranche suivante est l'**énumération** des enfants rendus
+inaccessibles (§3.3) — le compte que l'écran affiche avant de confirmer une suppression de parent —,
+puis la couche de données et l'écran. Le seed doit être enrichi avant l'E2E : un channel et un track
+en corbeille, et un enfant sous parent en corbeille, sans quoi le refus livré ici n'a aucun cas de
+démonstration à l'écran.
