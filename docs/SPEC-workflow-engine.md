@@ -3261,6 +3261,292 @@ sur la pile, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=
 | Seed | **Aucun** (§7 ter.11.7) |
 | Interface | **Aucune** — cette tranche ne livre aucun écran |
 
+### 7 ter.12 Troisième tranche — le plan de remappage des cards
+
+Chapitre écrit **avant la première ligne de code** de cette tranche (`CLAUDE.md` §5), après mesure
+sur la pile seedée. Les valeurs marquées MESURÉ ont été relevées en base le 2026-08-15.
+
+#### 7 ter.12.1 Ce que le plan est, et ce qu'il n'est pas
+
+Restaurer une version dans la structure vivante — quatrième tranche — signifie rendre le workflow
+égal à la composition photographiée. Les étapes créées **depuis** la publication de cette version
+n'y figurent pas : elles disparaîtront. Or des affaires s'y trouvent, et
+`cards.current_step_id` est `not null` et lié par clé étrangère composite à une étape du workflow
+(`docs/SPEC-cards.md` §3.3). Une restauration qui ne dirait rien de ces affaires échouerait en base,
+ou pire, les déplacerait sans que personne l'ait demandé.
+
+Le plan répond à cela, et **à cela seulement** : avant toute restauration, dire **card par card où
+elle atterrit**, et nommer celles pour lesquelles la base ne le dit pas.
+
+Ce qu'il **n'est pas** :
+
+- ce n'est **pas** une application. Le plan est `stable`, il n'écrit **rien**, et il ne réserve
+  rien. Appliquer est la quatrième tranche, et rejouer le plan juste avant d'appliquer y sera
+  obligatoire — une structure vivante peut avoir bougé entre les deux ;
+- ce n'est **pas** une comparaison de versions. Le §7 ter.11 compare deux **photographies** ; le
+  plan confronte **une** photographie à la **structure vivante et aux affaires réelles** ;
+- ce n'est **pas** une heuristique. Le plan ne propose **aucune** destination : il constate celles
+  que l'identité impose, applique celles que l'appelant a explicitement données, et **refuse de
+  deviner** le reste. C'est la lecture littérale de « aucune étape n'est devinée » dans la
+  Definition of Done de `CRM-078`.
+
+#### 7 ter.12.2 Les trois issues d'une card, et la seule qui soit automatique
+
+Soit `V` l'ensemble des identifiants d'étapes de la version cible — la clé `steps` du document
+(§7 ter.2) —, et `L` celui des étapes vivantes du workflow.
+
+| Ensemble | Nom | Sens |
+|---|---|---|
+| `L \ V` | **étapes retirées** | vivantes aujourd'hui, absentes de la version : elles disparaîtront |
+| `V \ L` | **étapes rétablies** | présentes dans la version, disparues depuis : la restauration les recréera, avec leur identifiant d'origine que le document conserve |
+| `L ∩ V` | étapes conservées | de part et d'autre |
+
+Chaque card du workflow reçoit alors **exactement une** des trois résolutions :
+
+| Résolution | Condition | Destination |
+|---|---|---|
+| `unchanged` | `current_step_id ∈ V` | elle-même — la card ne bouge pas |
+| `remapped` | `current_step_id ∈ L \ V` **et** l'appelant a fourni une instruction pour cette étape | l'étape nommée par l'instruction |
+| `unresolved` | `current_step_id ∈ L \ V` **et** aucune instruction ne la couvre | **aucune**, et c'est la réponse |
+
+`unchanged` est la **seule** issue automatique, et elle l'est parce qu'elle ne suppose rien :
+l'étape existe des deux côtés, avec le même identifiant. Toute autre destination vient d'un humain.
+
+**Aucune étape rétablie n'est jamais proposée comme destination par défaut.** Une étape que la
+restauration ressuscite est vide par construction, et il serait tentant d'y verser les affaires des
+étapes retirées « puisqu'elle revient ». Ce serait une supposition sur l'intention, exactement ce
+que la Definition of Done interdit. Elle est **nommée** dans le plan, pour qu'un humain puisse la
+choisir ; elle n'est jamais choisie à sa place.
+
+#### 7 ter.12.3 Les instructions de remappage, et pourquoi elles portent sur les étapes
+
+`step_overrides` est un tableau `jsonb` d'objets `{ "from_step_id": uuid, "to_step_id": uuid }`.
+
+L'instruction porte sur une **étape**, jamais sur une card. Deux motifs, et le second est le seul
+qui compte :
+
+1. le volume — un workflow peut porter des milliers d'affaires sur une poignée d'étapes, et exiger
+   une instruction par affaire rendrait le geste inutilisable ;
+2. **la décision est de même grain que le fait.** Ce qui disparaît est une étape ; ce qu'un
+   administrateur décide est « les affaires de cette étape vont là ». Un remappage par card
+   laisserait croire à un tri, alors que rien dans la base ne distingue deux affaires de la même
+   étape.
+
+Une instruction par card reste possible plus tard, sous sa propre spécification, si le produit en
+montre le besoin. Elle n'est pas inventée ici.
+
+Les instructions sont **validées, jamais interprétées** (§7 ter.12.4) : une `from_step_id` qui ne
+disparaît pas est refusée plutôt que silencieusement appliquée, sans quoi le plan de restauration
+déplacerait des affaires que la restauration n'oblige pas à déplacer — un geste de masse caché dans
+un aperçu.
+
+#### 7 ter.12.4 Le geste — `public.plan_card_remapping`
+
+```
+public.plan_card_remapping(
+  target_version_id uuid,
+  step_overrides    jsonb   default null,
+  card_limit        integer default 200
+) returns jsonb
+```
+
+`stable`, `search_path` vide, et **`security invoker`** — comme `compare_workflow_versions`
+(§7 ter.11.3) et `previsualiser_exigence` (§7 bis.13.3), et **jamais** `security definer`.
+
+Ce choix demande ici une justification que les deux précédents ne demandaient pas, parce que
+**le plan doit être exhaustif ou il ne vaut rien** : un plan qui annoncerait « trois affaires
+concernées » là où quarante le sont ferait échouer la restauration après l'avoir déclarée sûre. Or
+`public.cards` applique les droits fins dès sa politique de lecture — `app.can_read_channel`. La
+question est donc : `security invoker` rend-il un plan **complet** ?
+
+Oui, et uniquement parce que le plan est réservé aux administrateurs (vérification 3). La règle 2 de
+`app.resolve_access` (`docs/SPEC-permissions-rls.md` §2.2) énonce qu'**un administrateur n'est jamais
+restreint**, et elle s'applique **avant** les droits fins. MESURÉ sur la pile seedée, et c'est la
+mesure qui tranche : le seed pose `track_members.access = 'none'` pour l'administratrice sur le track
+« Conseil & IA », dont le channel « Grands comptes » porte **six** des treize affaires du workflow
+par défaut ; l'administratrice en lit néanmoins **13 sur 13**, tandis que la lectrice n'en lit que
+**7 sur 13**.
+
+Deux conséquences, et il faut les dire ensemble :
+
+- appelé par une administratrice, le plan est **exhaustif**, sans qu'aucun `security definer` n'ait
+  eu à emprunter des droits ;
+- appelé par un membre ordinaire, il serait **partiel** — d'où la vérification 3, qui n'est pas une
+  formalité d'autorisation mais **la condition de justesse du résultat**.
+
+Une assertion pgTAP fige `prosecdef = false`, et une autre compte les treize affaires sous le compte
+réel de l'administratrice malgré son droit fin `none` : le jour où quelqu'un poserait
+`security definer` pour « simplifier », les deux règles diraient la même chose de deux façons, et
+elles finiraient par diverger.
+
+Exécution accordée à `authenticated` et à `service_role` ; **révoquée de `public` et d'`anon`** — la
+révocation nommée est obligatoire, le `grant execute` par défaut de l'image portant sur `anon` aussi
+(§4.7, décision 80).
+
+Les vérifications, **dans cet ordre**, et ce que chacune rend :
+
+| # | Vérification | Refus | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
+| 2 | la version cible existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 3 | l'appelant est administrateur du workspace de la version — `app.is_workspace_admin` | `plan reserve aux administrateurs` | `42501` | `403` |
+| 4 | `card_limit` est compris entre 1 et 1000 | `limite invalide` | `P0001` | `400` |
+| 5 | `step_overrides`, s'il est fourni, est un tableau d'objets portant deux `uuid` valides | `remappage invalide` | `P0001` | `400` |
+| 6 | aucune `from_step_id` n'apparaît deux fois | `remappage ambigu` | `P0001` | `400` |
+| 7 | chaque `from_step_id` est une étape **retirée** du workflow de la version | `origine de remappage inconnue` | `P0001` | `400` |
+| 8 | chaque `to_step_id` est une étape **de la version** | `cible de remappage absente de la version` | `P0001` | `400` |
+
+La vérification 2 rend le même refus qu'une version d'un autre workspace : la RLS ne la donne pas à
+lire, `not found` s'ensuit, et la fonction n'est pas un oracle d'existence (§4.3). Elle précède la
+vérification 3, faute de quoi le message d'administration révélerait l'existence d'une version
+d'autrui.
+
+`P0002` n'est employé nulle part : il est rendu en `500` par PostgREST (§4.4).
+
+**La vérification 7 est refusée et non ignorée, et c'est une décision.** Une instruction visant une
+étape qui survit à la restauration est soit une erreur de l'appelant, soit un déplacement de masse
+déguisé ; l'accepter en silence ferait du plan un geste d'écriture par procuration. Le refus est
+donc explicite, et il nomme l'étape en cause dans son `detail`.
+
+**Un workflow archivé n'est PAS un motif de refus.** Publier sur un workflow archivé est refusé
+(§7 ter.5, vérification 4) parce que publier écrit ; planifier ne fait que lire, et interdire à un
+administrateur de regarder ce qu'une restauration ferait n'aurait protégé personne. La quatrième
+tranche portera ses propres refus d'application.
+
+#### 7 ter.12.5 Quelles cards entrent dans le plan
+
+**Toutes les cards du workflow de la version, y compris les archivées et celles en corbeille.**
+
+Ce n'est pas un oubli de filtre, c'est la seule réponse juste : une card archivée et une card en
+corbeille portent l'une comme l'autre un `current_step_id` réel et une clé étrangère opposable
+(`docs/SPEC-cards.md` §4 — archiver et supprimer sont deux suppressions **douces**, aucune ligne ne
+disparaît). Les exclure rendrait un plan qui se dit complet et une restauration qui échoue en base
+sur une affaire que personne ne regardait plus.
+
+Chaque card porte donc son `state`, calculé dans cet ordre de priorité :
+
+| `state` | Condition |
+|---|---|
+| `deleted` | `deleted_at is not null` — la corbeille l'emporte, une card supprimée puis archivée reste supprimée |
+| `archived` | sinon, `archived_at is not null` |
+| `active` | sinon |
+
+MESURÉ sur la pile seedée : le workflow par défaut porte **13** affaires, dont **une archivée** à
+l'étape « Livré » et **une en corbeille** à l'étape « Prospection ». Une preuve les compte
+explicitement.
+
+#### 7 ter.12.6 Ce que la fonction rend
+
+Un objet `jsonb` à cinq clés de premier niveau :
+
+```
+{
+  "version": { "version_id", "version_number", "workflow_id", "published_at",
+               "composition_fingerprint" },
+  "ready":   true | false,
+  "summary": { "cards_total", "cards_unchanged", "cards_remapped", "cards_unresolved",
+               "steps_removed", "steps_restored" },
+  "steps":   {
+    "removed":  [ { "step_id", "label", "cards_total", "cards_unresolved",
+                    "target_step_id" | null } ],
+    "restored": [ { "step_id", "label" } ]
+  },
+  "cards":   { "total", "returned", "truncated", "limit",
+               "items": [ { "card_id", "title", "state", "channel_id",
+                            "current_step_id", "target_step_id" | null, "resolution" } ] }
+}
+```
+
+`ready` est vrai **si et seulement si** `summary.cards_unresolved = 0`. Il ne dit pas que la
+restauration réussira — la quatrième tranche a ses propres refus, et la structure vivante peut
+bouger entre le plan et son application ; il dit que **plus aucune affaire n'attend une décision
+humaine**.
+
+`label` d'une étape retirée est `coalesce(label_override, node_label)` **lu sur la structure
+vivante** ; celui d'une étape rétablie est lu **dans le document de la version**, seul endroit où il
+subsiste. C'est précisément à cela que sert la conservation du document entier (§7 ter.11.4) : un
+écran doit pouvoir nommer une étape que la base ne porte plus.
+
+**Les compteurs de `summary` et de `steps` portent sur la TOTALITÉ des affaires**, jamais sur la
+seule page rendue. Un plan dont le verdict dépendrait de la taille de la page ne serait pas un
+verdict.
+
+#### 7 ter.12.7 La liste des cards est bornée, et sa troncature est annoncée
+
+Compter est borné par le nombre d'étapes ; **lister ne l'est pas**. Un workflow peut porter des
+milliers d'affaires, et les rendre toutes serait une lecture non bornée que `CLAUDE.md` §21 refuse.
+
+La liste est donc limitée à `card_limit`, dont le défaut est **200** et le maximum **1000**
+(vérification 4). `cards.total` porte le compte réel, `cards.returned` le nombre rendu, et
+`cards.truncated` dit s'il manque quelque chose. **Une troncature silencieuse serait un mensonge** :
+elle ferait lire « voici les affaires concernées » là où il faut lire « en voici les deux cents
+premières ».
+
+**L'ordre est déterministe, et il place les blocages en tête** : `unresolved`, puis `remapped`, puis
+`unchanged` ; à résolution égale, par `current_step_id` puis par `card_id`. Ce n'est pas une
+commodité d'affichage. Si la liste est tronquée, ce qu'un humain doit voir en premier est
+**exactement ce qui l'empêche d'appliquer** ; un ordre par titre ou par date pourrait reléguer les
+seules affaires bloquantes au-delà de la coupure et rendre un plan qui a l'air sain.
+
+#### 7 ter.12.8 Autorisations
+
+| Opération | `anon` | `viewer` / `business_developer` | `admin` | `service_role` |
+|---|---|---|---|---|
+| `plan_card_remapping` | `401` — le privilège refuse | `403`, `42501` — vérification 3 | `200` | accordé |
+
+La lecture des versions suit `app.is_workspace_member` (§7 ter.6), mais **planifier est une
+prérogative d'administration** : le geste prépare une restauration, et son résultat n'est juste que
+sous le seul profil qui lit toutes les affaires (§7 ter.12.4).
+
+#### 7 ter.12.9 Contrat d'API attendu, à mesurer
+
+Les lignes ci-dessous sont le contrat que les preuves d'API de cette tranche doivent **observer**
+sur la pile, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=password`.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/plan_card_remapping` sur la version du seed, sans instruction | `admin` | `200`, `ready` vrai, `cards_unresolved` à zéro, **13** affaires au total, aucune étape retirée |
+| b | le même appel, la liste des affaires | `admin` | `200`, `cards.items` portant les treize affaires, dont l'archivée et celle en corbeille avec leur `state` |
+| c | plan contre une version **antérieure** à l'ajout d'une étape, les affaires ayant été déplacées sur la nouvelle | `admin` | `200`, `ready` **faux**, l'étape en `steps.removed`, les affaires en `unresolved` avec `target_step_id` nul |
+| d | le même plan avec une instruction couvrant l'étape retirée | `admin` | `200`, `ready` **vrai**, les affaires en `remapped` vers l'étape nommée |
+| e | `card_limit` à 1 sur un plan portant treize affaires | `admin` | `200`, `returned` 1, `total` 13, `truncated` vrai, et l'affaire rendue est bien la première de l'ordre du §7 ter.12.7 |
+| f | `card_limit` à 0 | `admin` | `400`, `P0001`, `limite invalide` |
+| g | `step_overrides` qui n'est pas un tableau | `admin` | `400`, `P0001`, `remappage invalide` |
+| h | deux instructions sur la même `from_step_id` | `admin` | `400`, `P0001`, `remappage ambigu` |
+| i | instruction dont la `from_step_id` est une étape **conservée** | `admin` | `400`, `P0001`, `origine de remappage inconnue` |
+| j | instruction dont la `to_step_id` est absente de la version | `admin` | `400`, `P0001`, `cible de remappage absente de la version` |
+| k | `POST /rpc/plan_card_remapping` | `business_developer` | `403`, `42501`, `plan reserve aux administrateurs` |
+| l | `POST /rpc/plan_card_remapping` | `viewer` | `403`, `42501`, **le même message qu'en k** |
+| m | version inexistante | `admin` | `400`, `P0001`, `version introuvable` |
+| n | version d'un autre workspace | `admin` | `400`, `P0001`, **le même message qu'en m** — preuve de refus n° 3 |
+| o | appel anonyme | anonyme | `401` — le privilège refuse avant la vérification 1 |
+
+La ligne n est la contrepartie de la règle du §7 ter.12.4 : le message doit être **identique** à
+celui de m, sans quoi la fonction dirait à l'appelant qu'une version existe ailleurs.
+
+#### 7 ter.12.10 Ce que cette tranche ne livre PAS
+
+- **aucune application, aucun retour arrière** : quatrième tranche. Le plan est `stable` et n'écrit
+  rien, pas même une réservation ;
+- **aucun écran**, ni liste des versions, ni aperçu du plan : cinquième tranche. Aucune capture
+  d'application n'est donc produite ici, et l'absence est nommée plutôt que compensée ;
+- **aucune instruction par card** : le remappage porte sur les étapes (§7 ter.12.3) ;
+- **aucun plan contre la structure vivante** prise comme cible — le plan confronte une version à la
+  structure vivante, jamais deux structures vivantes ;
+- **aucun seed** : le plan ne conserve rien, et publier une seconde version ou déplacer une affaire
+  pour donner un plan bloqué à montrer serait une donnée fabriquée pour la preuve, ce que
+  `CLAUDE.md` §8 refuse. Les preuves construisent elles-mêmes ce qu'elles planifient, par les vrais
+  gestes.
+
+#### 7 ter.12.11 Preuves attendues de la troisième tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Existence, volatilité `stable`, **absence de `security definer`**, privilèges et révocation d'`anon` ; les huit refus contre des comptes réels ; **l'exhaustivité sous droit fin `none`** — treize affaires comptées par l'administratrice malgré son `track_members.access = 'none'` ; les archivées et celles en corbeille présentes avec leur `state` ; `unchanged` sur une version égale à la structure vivante ; `unresolved` puis `remapped` sur une étape retirée ; `ready` dans les deux sens ; l'ordre déterministe et la troncature annoncée |
+| API | Les quinze lignes du §7 ter.12.9, hors interface, avec les jetons réels des trois profils ; preuve de refus n° 3 au niveau des versions |
+| Seed | **Aucun** (§7 ter.12.10) |
+| Interface | **Aucune** — cette tranche ne livre aucun écran |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
