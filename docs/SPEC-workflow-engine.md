@@ -3865,8 +3865,8 @@ geste **écrit** la structure de travail de tout un channel.
 | # | Appel | Profil | Attendu |
 |---|---|---|---|
 | a | `POST /rpc/restore_workflow_version` sur la version du seed, structure vivante inchangée | `admin` | `200`, tous les compteurs à zéro, `rollback_version.published` **faux**, `matches_version` vrai |
-| b | après ajout d'une étape et d'une arête, restauration de la version du seed | `admin` | `200`, `steps.deleted` 1, **`transitions.deleted` 0** — l'arête est partie en cascade avec son étape (§7 ter.13.8) —, `rollback_version.published` **vrai** |
-| c | l'empreinte vivante après b | clé de service | égale à `composition_fingerprint` de la version |
+| b | après ajout d'une étape et d'une arête, restauration de la version de référence | `admin` | `200`, `steps.deleted` 1, **`transitions.deleted` 0** — l'arête est partie en cascade avec son étape (§7 ter.13.8) —, `rollback_version.published` **vrai** |
+| c | l'empreinte vivante après b, republiée par la vraie RPC et relue en base | clé de service | égale à `composition_fingerprint` de la version |
 | d | restauration du point de retour rendu en b | `admin` | `200`, l'étape et l'arête **réapparaissent** avec leurs identifiants d'origine — le retour arrière |
 | e | restauration d'une version antérieure à une étape portant des affaires, sans instruction | `admin` | `400`, `P0001`, `plan non applicable` |
 | f | le même appel avec l'instruction qui lève le blocage | `admin` | `200`, `cards.remapped` égal au nombre d'affaires de l'étape retirée, relu **en base** |
@@ -3884,9 +3884,36 @@ geste **écrit** la structure de travail de tout un channel.
 | r | appel anonyme | anonyme | `401` — le privilège refuse avant la vérification 1 |
 
 **Aucune preuve ne restaure la structure du seed sans la rétablir.** Chaque scénario qui modifie la
-composition vivante repart de la version du seed, et l'ordre des preuves ne suppose jamais qu'un
+composition vivante repart de sa version de référence, et l'ordre des preuves ne suppose jamais qu'un
 scénario précédent a laissé la base propre : c'est la restauration elle-même qui la ramène, ce qui
 est aussi une manière de l'éprouver.
+
+**PRÉCISION APPORTÉE À LA RÉDACTION DU HARNAIS, 2026-08-15, ET LE MOTIF EST MESURÉ.** La première
+rédaction de ce tableau disait « la version du seed » aux lignes b, c et d. Or **restaurer publie un
+point de retour** (§7 ter.13.5) : jouées sur le workflow par défaut du seed, ces trois lignes lui
+laisseraient deux versions supplémentaires **à chaque exécution** — et une version est immuable, sans
+politique de suppression pour `authenticated` (§7 ter.4). Le harnais serait non idempotent, et le
+numéro de version du seed dériverait sans qu'aucun geste du produit ne l'ait voulu. C'est le même
+constat qui avait déjà écarté le workflow du seed des harnais des deuxième et troisième tranches.
+
+La règle est donc, et elle vaut pour toute preuve d'API de ce chapitre :
+
+- la ligne a **reste sur la vraie version du seed**, parce qu'elle **n'écrit rien** : structure
+  vivante inchangée, tous les compteurs à zéro et `rollback_version.published` **faux**. C'est
+  précisément le scénario qui doit être éprouvé sur la structure réelle du produit, et il ne laisse
+  aucune trace ;
+- **toute ligne qui écrit** — b, c, d, e, f, g, h, i, j, k, l, m, n, q — se joue sur un workflow
+  jetable créé par la preuve, avec sa version de référence publiée par la **vraie** RPC, et le
+  workflow est supprimé dans un `finally` : la cascade emporte versions, étapes, arêtes et champs.
+
+**La ligne c mesure l'empreinte vivante par un chemin INDÉPENDANT de la valeur rendue.** Comparer le
+`fingerprint_after` de la réponse à `composition_fingerprint` ne prouverait rien de plus que
+`matches_version`, qui est calculé à partir de lui : ce serait la fonction se relisant elle-même.
+`app.workflow_composition_fingerprint` n'est pas exposée par PostgREST — le schéma `app` ne l'est
+pas —, et il n'existe aucune RPC publique qui rende l'empreinte vivante. La mesure indépendante est
+donc **une republication par la vraie RPC** après la restauration, dont la ligne créée est relue en
+base **avec la clé de service** : `publish_workflow_version` recalcule l'empreinte par son propre
+chemin, et l'égalité des deux devient une vraie coïncidence et non une tautologie.
 
 #### 7 ter.13.11 Ce que cette tranche ne livre PAS
 
