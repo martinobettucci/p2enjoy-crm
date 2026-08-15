@@ -793,6 +793,60 @@ n'ajoute pas de bloc : elle s'insère dans les deux gestes qui peuvent bloquer u
   garde est ailleurs (backend). Désactiver le bouton aurait fait passer un défaut de mesure pour un
   refus de droit.
 
+**Les versions du workflow — `CRM-078`, cinquième tranche, `docs/SPEC-workflow-engine.md`
+§7 ter.14.** Un sixième bloc suit les exigences dans la même colonne, par la même règle d'ordre : on
+ne photographie pas une composition qu'on n'a pas composée. Ce que le bloc lit, envoie et refuse est
+spécifié là-bas ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **La liste des versions est un tableau du §5.9, pas la liste imbriquée du §5.13.** Les trois
+  colonnes — numéro, publication, note — sont les mêmes pour chaque ligne, et il n'y a rien à
+  imbriquer : une version n'a pas d'enfant. Le numéro et la date sont des **données techniques**
+  (§2), en monospace à chiffres tabulaires, alignées à droite comme au §5.9.
+
+- **Une version ne porte AUCUNE commande de ligne.** C'est l'écart assumé avec les cinq blocs
+  précédents de cet écran, et il vient du modèle : une version est immuable, sans mise à jour ni
+  suppression (`docs/SPEC-workflow-engine.md` §7 ter.4). Une barre d'actions grisée enseignerait un
+  geste qui n'existe pas. Les quatre gestes portent sur le **bloc**, pas sur la ligne.
+
+- **« Auteur inconnu » est un texte, pas une cellule vide** — la règle du §5.16, reprise sans
+  changement : un `published_by` détaché par la suppression d'un profil est un fait à nommer.
+
+- **L'empreinte n'est pas affichée en entier.** Soixante-quatre caractères hexadécimaux occuperaient
+  une colonne entière pour une donnée que personne ne lit à l'œil. Elle se rend **tronquée à douze
+  caractères en `code`**, la valeur entière portée par `title`, exactement comme une cellule en
+  ellipse du §5.9.
+
+- **La comparaison rend six collections, chacune titrée, et une collection vide est NOMMÉE.** « Rien
+  n'a changé de ce côté » est une phrase ; une liste vide se lirait comme un défaut de chargement —
+  même règle que le cul-de-sac du graphe ci-dessus. Lorsque `identical` est vrai, le bloc écrit une
+  seule phrase et **ne déroule pas** les six collections vides : il n'y a rien à parcourir.
+
+- **Un ajout, un retrait et une modification se distinguent par un mot, jamais par une seule
+  teinte** (§1). Ils portent en plus leur icône Lucide — `Plus`, `Minus`, `Pencil` — et une pilule
+  `--color-success-soft`, `--color-danger-soft`, `--color-hover` avec leur déclinaison lisible
+  (§12.5). Le mot reste le porteur de l'information.
+
+- **Un attribut modifié s'écrit « avant → après », en deux valeurs distinctes**, jamais en une
+  phrase construite par concaténation (§10). Une valeur absente d'un côté se rend « aucune valeur »
+  et non un blanc, qui se lirait comme une valeur vide.
+
+- **Le plan de remappage place les blocages EN TÊTE**, et l'ordre vient de la base
+  (§7 ter.12.7) : l'écran ne retrie pas. Les compteurs de `summary` sont écrits en toutes lettres
+  au-dessus de la liste, et la **troncature est écrite** — « 3 affaires listées sur 13 » —, jamais
+  laissée à deviner.
+
+- **Chaque étape retirée porte sa liste déroulante de destination, avec une option vide en tête**
+  qui se nomme « Aucune instruction ». Un `select` sans option vide forcerait un choix par défaut, ce
+  que le §7 ter.14.5 refuse : aucune destination n'est devinée.
+
+- **La confirmation de restauration est dans le flux du document, jamais en modale** — la règle du
+  §5.13 —, et son bouton d'action est **destructif** : le geste réécrit la structure et déplace des
+  affaires. Elle se distingue en cela de la confirmation d'exigence ci-dessus, qui n'efface rien.
+
+- **Le résultat d'une restauration reste affiché** : ses compteurs et le nom de son point de retour
+  sont la seule trace visible du geste, et les faire disparaître au rechargement du graphe
+  effacerait ce qu'on vient de faire.
+
 ### 5.16 Corbeille — `CRM-077`
 
 Quatrième surface d'administration, et la première dont l'**état vide est le cas normal**. Ce que

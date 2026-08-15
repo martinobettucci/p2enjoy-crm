@@ -7329,6 +7329,26 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       désormais dans huit fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq
       tranches livrées, comme `CRM-077` l'a montré.
 
+#### Cinquième tranche — les écrans
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` **§7 ter.14** (neuf
+      sections) : ce que les écrans sont et ne sont pas, l'adresse et le sixième bloc de l'éditeur,
+      la lecture 8 et son profil embarqué, les quatre gestes, les instructions de remappage saisies
+      sur les **étapes retirées**, le nommage d'un élément de comparaison en quatre replis, le
+      dictionnaire fermé des refus, les états et ce que la tranche ne livre pas, les preuves
+      attendues. `docs/DESIGN_SYSTEM.md` §5.15 complété dans le même commit documentaire, poussé
+      **avant** la première ligne de code (`CLAUDE.md` §5).
+- [ ] `webapp/src/lib/versions-workflow.ts` : la lecture 8, les quatre appels, la composition des
+      instructions de remappage, le nommage des éléments de comparaison, le dictionnaire de refus.
+- [ ] `webapp/src/app/AdministrationWorkflows.tsx` : le sixième bloc — liste des versions,
+      publication, aperçu de comparaison, aperçu du plan, restauration et sa confirmation.
+- [ ] **Test unitaire dédié** `webapp/src/lib/versions-workflow.test.ts`.
+- [ ] **Test E2E d'interface dédié** : les quatre gestes joués sur la vraie base, et le refus
+      opposé au `viewer` constaté et non simulé.
+- [ ] **Captures observées** aux quatre paliers de `docs/DESIGN_SYSTEM.md` §7.
+- [ ] `docs/manual.md` : le chapitre rédigé que la première tranche annonçait — « **Le chapitre
+      rédigé** naîtra avec l'écran de la cinquième tranche ».
+
 *Écart nommé.* **Aucun seed** dans cette tranche non plus : la restauration ne conserve rien qu'une
 version ne conserve déjà, et fabriquer une divergence dans le seed pour donner une restauration à
 montrer serait une donnée fabriquée pour la preuve (`CLAUDE.md` §8). La suite pgTAP construit

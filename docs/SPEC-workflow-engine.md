@@ -3958,6 +3958,216 @@ chemin, et l'égalité des deux devient une vraie coïncidence et non une tautol
 | Seed | **Aucun** (§7 ter.13.11) |
 | Interface | **Aucune** — cette tranche ne livre aucun écran |
 
+### 7 ter.14 Cinquième tranche — les écrans
+
+Chapitre écrit **avant la première ligne de code** de cette tranche (`CLAUDE.md` §5), après mesure
+sur la pile seedée. Les valeurs marquées MESURÉ ont été relevées en base le 2026-08-15.
+
+Les quatre tranches précédentes ont livré une photographie (§7 ter.3), sa comparaison (§7 ter.11),
+le plan de remappage (§7 ter.12) et son application transactionnelle (§7 ter.13). **Aucune n'a
+d'écran**, et chacune l'a nommé plutôt que de le compenser. Cette tranche les rend accessibles à un
+administrateur qui ne passe pas par l'API, et c'est elle qui permet à `CRM-078` de sortir de `[~]`.
+
+#### 7 ter.14.1 Ce que les écrans sont, et ce qu'ils ne sont pas
+
+Le versionnement se rend en **un sixième bloc de l'éditeur de workflows** (§7 bis), dans la même
+colonne et sous les exigences de transition. La règle d'ordre est celle des cinq blocs précédents :
+on ne photographie pas une composition qu'on n'a pas composée, et les quatre gestes portent tous sur
+le workflow que la colonne de gauche a déjà choisi.
+
+Ce bloc **n'est pas** :
+
+- **une autorisation.** La règle de `CRM-075` reprise mot pour mot : l'écran envoie, la base
+  tranche, l'écran traduit le refus reçu (`CLAUDE.md` §10). Publier, planifier et restaurer sont
+  réservés aux administrateurs par les vérifications 3 des §7 ter.5, §7 ter.12.4 et §7 ter.13.6,
+  déjà prouvées hors interface. **Aucune commande n'est éteinte d'avance** ;
+- **un éditeur de version.** Une version est immuable, par trois barrières empilées (§7 ter.4). Le
+  bloc n'offre ni renommage, ni suppression, ni modification de note : ces gestes n'existent pas
+  dans le produit, et les offrir grisés enseignerait une règle fausse ;
+- **un second moteur de comparaison ni de plan.** Rien n'est calculé dans le navigateur : le bloc
+  appelle les trois fonctions et met en forme ce qu'elles rendent. C'est la règle du §7 bis.13.2,
+  et elle vaut ici plus fort encore — un plan recalculé à l'écran serait borné par ce que la RLS de
+  l'appelant consent à lire, et annoncerait « trois affaires » là où quarante sont concernées
+  (§7 ter.12.4).
+
+#### 7 ter.14.2 Adresse
+
+`/reglages/workflows`, sixième bloc — **aucune route nouvelle**. Une version appartient à un
+workflow ; choisir le workflow est déjà le travail de la colonne de gauche (§7 bis.3, lecture 1), et
+une route propre obligerait à le choisir deux fois.
+
+#### 7 ter.14.3 Ce que l'écran lit, et en combien de requêtes
+
+Une lecture s'ajoute aux sept de l'éditeur :
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 8 | `workflow_versions` + `profiles` embarqué par `workflow_versions_published_by_fkey` | `workflow_id=eq.<workflow choisi>` | `version_number` **décroissant** | la liste des versions |
+
+L'ordre décroissant est celui de l'index posé par le §7 ter.3 — « toute lecture utile est *les
+versions de ce workflow, la plus récente d'abord* ».
+
+Le profil est **embarqué** et non relu : `published_by` est un `uuid`, et aucun `uuid` n'atteint
+l'écran (`CRM-022`). MESURÉ : `select=…,auteur:profiles!workflow_versions_published_by_fkey(full_name)`
+rend `Camille Aubert` sur la version du seed. Le nommage explicite de la clé étrangère est
+obligatoire, comme au §5.16 de `docs/DESIGN_SYSTEM.md` : sans lui PostgREST rend `300`. Un
+`published_by` nul — profil supprimé — rend `auteur` nul, et l'écran écrit « Auteur inconnu », la
+règle du §5.16 exactement.
+
+MESURÉ sur la pile seedée : le workflow par défaut porte **une** version, numéro `1`, note
+« Composition de référence livrée par le seed » ; le workflow dérivé n'en porte **aucune**. Les deux
+états sont donc atteignables sans fabriquer de donnée (`CLAUDE.md` §8).
+
+**Les trois autres appels ne sont PAS émis au chargement**, et c'est la règle du §7 bis.13.4
+reconduite : comparer, planifier et restaurer sont des **réponses à un geste**. Le plan lit toutes
+les affaires du workflow — MESURÉ : `cards_total` 13 sur le workflow par défaut du seed —, et le
+poser à chaque changement de workflow dépenserait cette lecture pour un geste qui n'aura pas lieu.
+
+#### 7 ter.14.4 Les quatre gestes
+
+| Geste | Appel | Ce que la base garantit déjà |
+|---|---|---|
+| **Publier** | `publish_workflow_version(target_workflow_id, note)` | les cinq refus du §7 ter.5, dont `composition inchangee` |
+| **Comparer** | `compare_workflow_versions(base_version_id, target_version_id)` | les quatre refus du §7 ter.11.3 |
+| **Planifier** | `plan_card_remapping(target_version_id, step_overrides, card_limit)` | les huit refus du §7 ter.12.4 |
+| **Restaurer** | `restore_workflow_version(target_version_id, step_overrides)` | les huit refus du plan **remontés tels quels**, plus les siens (§7 ter.13.6) |
+
+**Aucune de ces règles n'est réécrite dans l'écran**, et c'est la contrainte la plus forte du bloc.
+En particulier, l'écran **ne teste jamais lui-même si la composition a changé** avant d'offrir
+« Publier » : la vérification 5 du §7 ter.5 est la seule formulation de cette règle, et l'empreinte
+vivante n'est de toute façon lisible par aucun chemin public (§7 ter.13.10, mesure de la ligne c).
+L'écran envoie, et traduit `composition inchangee` si elle vient.
+
+**Publier** porte un champ de note facultatif. La note est `btrim`ée par la base et enregistrée
+`NULL` si elle est vide (§7 ter.5) : l'écran ne la valide donc pas, il n'y a aucune réponse connue
+d'avance à économiser (§7 bis.5). Le succès recharge la lecture 8 et **annonce** le numéro obtenu.
+
+**Comparer** porte deux listes déroulantes — base et cible — alimentées par la lecture 8. Défaut :
+cible = la version la plus récente, base = la précédente ; s'il n'existe qu'une version, les deux
+désignent la même, ce que le §7 ter.11.3 **accepte** explicitement et qui rend `identical` vrai.
+L'orientation est celle des arguments et la fonction ne la corrige pas (§7 ter.11.3) : l'écran
+l'écrit en toutes lettres — « ce que la cible ajoute, retire ou modifie par rapport à la base » —
+plutôt que de laisser le lecteur la deviner.
+
+**Planifier** porte une liste déroulante de version et rend le plan sous la forme du §7 ter.12.6.
+`card_limit` n'est **pas** offert à la saisie : le défaut de 200 est celui de la fonction, la
+troncature est annoncée par la base (`cards.truncated`), et un champ de plus n'apporterait rien à un
+administrateur qui cherche à savoir si sa restauration passe. MESURÉ : avec `card_limit` à 3 sur
+treize affaires, la base rend `returned` 3, `total` 13 et `truncated` vrai — l'écran écrit ces trois
+nombres, jamais seulement la liste.
+
+**Restaurer** part du plan **affiché**, et de lui seul : la commande n'est offerte que sous un plan
+déjà rendu, avec ses instructions de remappage saisies. Elle demande une confirmation (§6 du design
+system) : le geste écrit la structure de travail d'un channel entier et déplace des affaires. Le
+succès rend les compteurs du §7 ter.13.8, **nomme le point de retour** — numéro de version, et s'il
+a été publié par cet appel — et recharge à la fois la lecture 8 et le graphe entier de l'éditeur :
+restaurer réécrit étapes, arêtes, champs et règles, et ne recharger que les versions laisserait à
+l'écran une composition périmée.
+
+#### 7 ter.14.5 Les instructions de remappage se saisissent sur les ÉTAPES RETIRÉES
+
+C'est le point de conception de la tranche, et il découle du §7 ter.12.3 : les instructions portent
+sur les **étapes**, jamais sur les affaires.
+
+Le plan rend `steps.removed`, chaque entrée portant `step_id`, `label`, `cards_total`,
+`cards_unresolved` et `target_step_id`. L'écran rend **une liste déroulante par étape retirée**,
+dont les options sont les étapes de la **version** — lues dans `composition.steps` du document
+conservé, seul endroit où une étape que la base ne porte plus est encore nommée (§7 ter.12.6).
+Choisir une cible reconstitue une instruction `{ from_step_id, to_step_id }`, et **replanifie**.
+
+Trois règles, et chacune répond à un refus ou à une règle déjà écrite :
+
+- **replanifier après chaque choix, plutôt que de calculer le nouveau verdict à l'écran.** `ready`
+  est vrai si et seulement si `cards_unresolved` vaut zéro (§7 ter.12.6) ; le recalculer dans le
+  navigateur serait une seconde formulation de la même règle, et les deux finiraient par diverger.
+  L'appel est `stable` et borné par le nombre d'étapes ;
+- **une étape retirée sans instruction reste sans instruction** : l'écran ne pré-remplit **aucune**
+  cible. « Aucune destination n'est devinée » est la lecture littérale de la Definition of Done de
+  `CRM-078`, et proposer d'office la première étape de la version en ferait une supposition sur
+  l'intention ;
+- **la commande de restauration n'est jamais éteinte par l'écran**, même lorsque `ready` est faux.
+  Le §7 ter.13.6 porte la garde en vérification 7, avec un `detail` qui nomme les affaires non
+  résolues ; un bouton grisé ferait passer cette règle de base pour une décision d'interface
+  (`CLAUDE.md` §10, et §5.16 du design system pour le précédent). L'écran **écrit** que le plan
+  n'est pas applicable et laisse le geste partir.
+
+#### 7 ter.14.6 Nommer un élément de comparaison, sans jamais l'inventer
+
+L'identité d'un élément est un jeu d'identifiants — MESURÉ dans la migration 40 : `id` pour le
+workflow, les étapes, les arêtes et les champs ; le couple `(field_id, step_id)` pour les règles ;
+`(transition_id, field_id)` pour les champs requis. Aucun libellé n'y figure, et c'est voulu :
+l'identité est un identifiant, jamais une ressemblance (§7 ter.11.2).
+
+Le nom affiché vient donc, **dans cet ordre**, et l'écran s'arrête au premier disponible :
+
+1. pour un **ajout** ou un **retrait**, du document complet rendu par la fonction — MESURÉ sur la
+   composition du seed : une étape porte `label_override` et `node_label`, un champ porte `label`,
+   une arête porte `label`, le workflow porte `name`. C'est exactement à cela que sert la
+   conservation du document entier (§7 ter.11.4) : nommer ce que la base ne porte plus ;
+2. pour une **modification**, de l'attribut changé lorsqu'il est le libellé — `before` nomme
+   l'élément, `after` dit son nouveau nom ;
+3. à défaut, de la structure vivante déjà chargée par l'éditeur — étapes et champs sont en mémoire ;
+4. à défaut, de son identifiant, rendu en `code`.
+
+**Aucune phrase n'est construite par concaténation et aucun `undefined` n'atteint l'écran** (§5.11
+du design system, règle du libellé non résolu). Une identité composée — une règle, un champ requis —
+qui ne se résout pas rend ses deux identifiants, pas une phrase à trou.
+
+#### 7 ter.14.7 Les refus, traduits par un dictionnaire fermé
+
+Les quatre gestes rendent des messages `P0001`, des `42501` et un `PT409`. Ils sont traduits par un
+dictionnaire fermé, comme les six codes d'incident du §5.14 du design system et les refus d'écriture
+de `CRM-075` : un message d'API n'est pas un texte pour un humain.
+
+| Message rendu par la base | Geste | Ce que l'écran écrit |
+|---|---|---|
+| `composition inchangee` | publier | la composition n'a pas bougé depuis la dernière version |
+| `workflow archive` | publier, restaurer | le workflow est archivé |
+| `workflow introuvable`, `version introuvable` | les quatre | l'objet n'est plus lisible ; rechargez |
+| `publication reservee aux administrateurs`, `plan reserve aux administrateurs`, `restauration reservee aux administrateurs` | publier, planifier, restaurer | le geste est réservé aux administrateurs |
+| `versions de workflows differents` | comparer | les deux versions n'appartiennent pas au même workflow |
+| `plan non applicable` | restaurer | des affaires attendent encore une instruction |
+| `structure modifiee depuis le plan` | restaurer | la structure a changé, replanifiez |
+| `remappage invalide`, `remappage ambigu`, `origine de remappage inconnue`, `cible de remappage absente de la version` | planifier, restaurer | l'instruction de remappage a été refusée |
+| `limite invalide` | planifier | la borne demandée est hors des valeurs admises |
+| tout autre message | les quatre | un refus générique, **jamais le message brut** |
+
+Le `detail` de la base n'est pas affiché tel quel : il nomme des identifiants (§7 ter.13.6,
+vérification 7). Le refus est rendu dans le bloc qui l'a causé, jamais en tête d'écran (§5.13 du
+design system).
+
+#### 7 ter.14.8 États, accessibilité, responsive, et ce que la tranche ne livre PAS
+
+Les quatre états du §5.8 du design system sont rendus pour la lecture 8 — chargement, erreur avec
+reprise, vide (« ce workflow n'a aucune version »), et la liste. Les trois gestes qui rendent un
+document ont **leur propre état de chargement** : un bloc muet pendant qu'un plan se calcule se
+lirait comme un plan vide. Chaque geste est atteignable au clavier, les succès passent par la région
+`aria-live` déjà posée par l'éditeur, et la console reste vierge.
+
+Ce que cette tranche ne livre PAS :
+
+- **aucune concurrence optimiste depuis l'écran.** `expected_live_fingerprint` n'est pas transmis,
+  et le motif est mesuré et non choisi : aucune RPC publique ne rend l'empreinte vivante d'un
+  workflow, et le schéma `app` n'est pas exposé par PostgREST (§7 ter.13.10, ligne c). Le produit
+  n'est pas pour autant sans garde — la restauration **rejoue le plan dans sa propre transaction**
+  (§7 ter.13.2), ce qui est précisément la réponse au monde qui bouge. Exposer l'empreinte vivante
+  est un geste serveur, qui aura son unité et sa spécification ;
+- **aucun `card_limit` réglable** (§7 ter.14.4) ;
+- **aucune purge ni rétention de version** (§7 ter.13.11) ;
+- **aucun seed nouveau** : la version publiée par le §7 ter.8 suffit à montrer la liste, la
+  comparaison d'une version à elle-même et un plan `ready`. Publier une seconde version dans le seed
+  pour donner une comparaison plus riche à montrer serait une donnée fabriquée pour la preuve
+  (`CLAUDE.md` §8) ; les preuves publient elles-mêmes ce qu'elles comparent, par la vraie RPC.
+
+#### 7 ter.14.9 Preuves attendues de la cinquième tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Composition de la liste des versions depuis les lignes lues, auteur nul compris ; le choix par défaut des deux versions à comparer, y compris quand il n'y en a qu'une ; le nom d'un élément de comparaison dans les quatre cas du §7 ter.14.6, identité composée comprise ; la construction des instructions de remappage depuis les choix, et le fait qu'une étape sans choix n'en produit aucune ; la traduction de chaque message du §7 ter.14.7, et le repli générique |
+| Interface | Les quatre gestes joués sur la vraie base avec le compte de l'administratrice : la liste rendue, une publication refusée en `composition inchangee` **affichée**, une comparaison d'une version à elle-même rendant `identical`, un plan rendu avec ses compteurs. Le refus opposé au `viewer` sur la publication, **constaté et non simulé** |
+| Visuel | Captures aux quatre paliers de `docs/DESIGN_SYSTEM.md` §7, bloc des versions déployé, plan rendu, refus affiché |
+| Seed | La version du §7 ter.8 suffit (§7 ter.14.8) |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
