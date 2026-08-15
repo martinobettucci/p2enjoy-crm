@@ -594,7 +594,10 @@ export function BlocVersionsWorkflow({
 				<div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
 					<h4 className="font-medium">{t('admin.workflows.versions.plan.title')}</h4>
 					<p className="text-sm text-text-2">{t('admin.workflows.versions.plan.hint')}</p>
-					<span className="flex flex-col gap-1">
+					{/* La liste garde la largeur de son contenu, comme les deux listes de la
+					    comparaison juste au-dessus : étirée sur toute la colonne, elle se lisait
+					    comme un champ de saisie — vu sur la capture du 2026-08-15. */}
+					<span className="flex w-fit flex-col gap-1">
 						<label className="text-sm text-text-2" htmlFor={idChoixPlan}>
 							{t('admin.workflows.versions.plan.version')}
 						</label>
