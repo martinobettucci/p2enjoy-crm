@@ -130,6 +130,87 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-112 — La restauration de `verify-tracks.sh` rejoue une migration ANTÉRIEURE à `0037` et ROUVRE l'audit de la corbeille qu'elle avait fermé
+
+**Constaté le 2026-08-15** en exécutant `scripts/verify-tracks.sh` pendant la quatrième tranche de
+`CRM-077`. **Étranger à cette tranche** : il ne tient ni au seed ni aux preuves révisées, mais au
+couple formé par la section de non-complaisance du harnais et la migration `0037`, livrée par la
+PREMIÈRE tranche (décision 398). Le comportement est laissé inchangé, conformément au §3.1 de
+`docs/CloudWorker.md`.
+
+**Le mécanisme.** La section 7 de `scripts/verify-tracks.sh` dégrade réellement la base, vérifie que
+la suite pgTAP le voit, puis **restaure en rejouant les fichiers de migration versionnés** —
+`0003_tracks.sql` puis `0010_droits_fins.sql` (lignes 375-376). Le motif écrit est bon : ce sont les
+fichiers versionnés qui font autorité, non une commande inverse écrite à la main.
+
+Mais `0003_tracks.sql` accorde `UPDATE` au niveau **TABLE**. Or `0037_corbeille.sql` a précisément
+**révoqué** ce droit de table pour le rendre colonne par colonne, à l'exception de `deleted_by`,
+afin que l'audit de la corbeille soit fermé par le privilège et pas seulement par un trigger.
+Rejouer `0003` restaure donc le droit de table — et **rouvre `tracks.deleted_by` à l'écriture du
+client**.
+
+**MESURÉ**, juste après une exécution de `scripts/verify-tracks.sh` :
+
+```
+tracks.deleted_by UPDATE authenticated : UPDATE
+tracks UPDATE niveau TABLE             : UPDATE
+```
+
+alors que l'état attendu, et celui que rétablit un rejeu de `0037`, est `aucun` pour les deux. Les
+assertions 61 et 62 de `supabase/tests/0004_tracks.test.sql` le disent, et sont les deux anomalies
+que le harnais rapporte à la fin de son propre passage.
+
+**LA MESURE DIRECTE DU MÉCANISME**, isolée sur la base saine — un rejeu de `0037` puis un rejeu de
+`0003`, en lisant `relacl` de part et d'autre :
+
+```
+avant  authenticated=ar/postgres
+après  authenticated=arw/postgres
+```
+
+Le `w` — `UPDATE` au niveau TABLE — est **rendu par le rejeu de `0003`**. Il implique toutes les
+colonnes, `deleted_by` comprise, et annule donc exactement l'énumération colonne par colonne que
+`0037` avait posée. Cette mesure ne dépend d'aucune donnée : elle est indépendante du contenu des
+tables, et **antérieure à la quatrième tranche**, qui n'ajoute que des lignes.
+
+**Le même mécanisme frappe DEUX contrôles du harnais**, et non un seul :
+
+- la **section 2**, qui vérifie l'idempotence des migrations en comparant une empreinte de la table
+  avant et après rejeu : l'empreinte inclut `relacl`, donc elle diverge et le contrôle rend « le
+  rejeu a modifié la table » ;
+- la **section 7**, qui restaure ses dégradations par le même rejeu, et laisse donc la base ouverte.
+
+Le premier est le symptôme visible, le second est celui qui abîme la base.
+
+**Deux conséquences, et la seconde est la plus grave.** D'abord le harnais se déclare en anomalie
+sur son propre effet de bord, ce qui masque ses vraies mesures. Ensuite, et surtout, **il laisse la
+base de développement dans un état durablement dégradé** : l'audit de la corbeille y reste
+écrivable par le client jusqu'à ce que quelqu'un rejoue `0037`. Toute preuve exécutée après ce
+harnais mesure donc un produit affaibli sans le savoir.
+
+**Ce que la correction devra trancher, et qui dépasse une tranche de seed.** Rejouer les migrations
+versionnées pour restaurer est une bonne règle, mais elle n'est correcte que si l'on rejoue **le
+préfixe complet** jusqu'à la tête, ou si l'on rejoue en plus toutes les migrations postérieures qui
+touchent les mêmes objets. La liste en dur de deux fichiers ne peut pas rester juste : elle sera
+fausse de nouveau à la prochaine migration qui touchera `tracks`.
+
+**`scripts/verify-channels.sh` porte le MÊME défaut, et c'est MESURÉ et non supposé.** Le fichier en
+cause est `0004_channels.sql` — et non `0005`, qui porte le catalogue de nœuds. Même protocole, même
+résultat :
+
+```
+avant  authenticated=ar/postgres
+après  authenticated=arw/postgres
+```
+
+Le harnais rend « le rejeu a modifié quelque chose : l'empreinte diffère », et c'est sa **seule**
+anomalie sur 25 contrôles une fois les comptes du seed révisés par `CRM-077`. Les deux harnais sont
+donc rouges pour une seule et même cause, dans deux tables.
+
+**Contournement en attendant l'arbitrage** : rejouer `supabase/migrations/0037_corbeille.sql` après
+toute exécution de `scripts/verify-tracks.sh` **ou** de `scripts/verify-channels.sh`. Une seule
+réapplication suffit pour les deux tables, la migration les traitant ensemble.
+
 ### INC-111 — L'exigence « TOUTE PREMIÈRE action » de la tâche planifiée est invérifiable telle qu'elle est formulée, et bloque la clôture des sessions
 
 **Nature :** contradiction interne entre deux exigences du prompt de la tâche planifiée

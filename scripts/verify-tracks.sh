@@ -10,7 +10,8 @@
 #   1. la suite pgTAP `supabase/tests/0004_tracks.test.sql` est verte ;
 #   2. la migration est **rejouable** : réappliquée sur une base déjà migrée, elle réussit sans
 #      modifier la structure de la table, ses politiques ni ses privilèges ;
-#   3. le seed est **convergent** : rejoué, il laisse exactement quatre tracks, dont un archivé ;
+#   3. le seed est **convergent** : rejoué, il laisse exactement cinq tracks, dont un archivé et
+#      un en corbeille ;
 #   4. les scénarios d'API et d'interface sont verts (`npm run e2e:api`, `npm run e2e:ui`), ainsi
 #      que les tests unitaires et le build ;
 #   5. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
@@ -224,15 +225,29 @@ else
 	fail "le seed échoue au rejeu"
 fi
 
+# RÉVISÉ PAR `CRM-077` : le seed pose un CINQUIÈME track, en corbeille (docs/SPEC-seed.md §10).
+#
+# Le prédicat de `$ordre` gagne `deleted_at is null`, et c'est plus qu'un ajustement de compte :
+# `archived_at is null` ne suffit plus à dire « actif ». Les deux états sont INDÉPENDANTS
+# (docs/SPEC-corbeille.md §3.1), et `legacy-2023` n'est pas archivé — il est en corbeille. Sans ce
+# second filtre, ce contrôle mesurerait « non archivé » en croyant mesurer « actif ».
+#
+# La corbeille est ASSERTÉE, et non seulement soustraite du total : sans `$corbeille`, un seed qui
+# cesserait de mettre `legacy-2023` en corbeille laisserait ce harnais vert.
 total=$(psql_db -c "select count(*) from public.tracks where workspace_id = '$WS_SEED';")
 archives=$(psql_db -c "select count(*) from public.tracks where workspace_id = '$WS_SEED' and archived_at is not null;")
+corbeille=$(psql_db -c "select count(*) from public.tracks where workspace_id = '$WS_SEED'
+                         and deleted_at is not null
+                         and deleted_by = '5eed0000-0000-4000-8000-000000000011';")
 ordre=$(psql_db -c "select string_agg(slug, ',' order by position) from public.tracks
-                     where workspace_id = '$WS_SEED' and archived_at is null;")
+                     where workspace_id = '$WS_SEED' and archived_at is null and deleted_at is null;")
 
-[ "$total" = "4" ] && ok "quatre tracks après rejeu, sans doublon" \
-	|| fail "après rejeu du seed : $total tracks au lieu de 4"
+[ "$total" = "5" ] && ok "cinq tracks après rejeu, sans doublon" \
+	|| fail "après rejeu du seed : $total tracks au lieu de 5"
 [ "$archives" = "1" ] && ok "l'état « archivé » est réellement représenté" \
 	|| fail "tracks archivés : $archives au lieu de 1"
+[ "$corbeille" = "1" ] && ok "l'état « en corbeille » est représenté, et son audit est renseigné" \
+	|| fail "tracks en corbeille retirés par l'administratrice : $corbeille au lieu de 1"
 [ "$ordre" = "conseil-ia,studio-web,formation" ] && ok "l'ordre des tracks actifs est celui du contrat" \
 	|| fail "ordre inattendu : $ordre"
 
@@ -263,13 +278,28 @@ fi
 # voulu. Le contrôle est **retourné**, et son intention d'origine — un rôle en lecture seule lit
 # tout ce qu'un administrateur lit — est reportée sur le `business_developer`, qu'aucun droit fin
 # ne vise.
+#
+# RÉVISÉ DE NOUVEAU, et pour DEUX raisons distinctes qu'il faut séparer sous peine de croire que
+# `CRM-077` a changé une règle d'autorisation :
+#
+#   1. la DÉCISION 333 a rendu la lecture d'un track TRANSITIVE — un track est lisible dès qu'un de
+#      ses channels l'est. Farida Nowak porte bien `track_members.access = 'none'` sur `conseil-ia`,
+#      mais un `channel_members.access = 'member'` lui rouvre `prospection`, donc le track. Elle en
+#      voyait donc QUATRE et non trois depuis cet arbitrage : ce contrôle était rouge AVANT
+#      `CRM-077`, et son attente de trois était restée en arrière de la règle ;
+#   2. `CRM-077` ajoute le cinquième, en corbeille, que la lecture rend comme l'archivé — la
+#      corbeille n'est PAS une frontière de confidentialité (docs/SPEC-corbeille.md §2.2).
+#
+# La restriction n'a pas disparu, elle se mesure désormais au niveau des CHANNELS : c'est ce que
+# `scripts/verify-droits-fins.sh` et `e2e/api/tracks.spec.ts` établissent, et ce contrôle-ci ne
+# prétend plus le mesurer ici.
 code=$(http GET "$API/rest/v1/tracks?select=id" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $JETON_VIEWER")
 nb=$(jq 'length' "$CORPS" 2>/dev/null || echo 0)
-if [ "$code" = "200" ] && [ "$nb" = "3" ]; then
-	ok "ligne d — le viewer lit trois tracks sur quatre : son droit fin en masque un (CRM-012)"
+if [ "$code" = "200" ] && [ "$nb" = "5" ]; then
+	ok "ligne d — le viewer lit les cinq tracks : sa restriction se mesure sur les channels"
 else
-	fail "ligne d — le viewer obtient $code et $nb ligne(s), attendu 3"
+	fail "ligne d — le viewer obtient $code et $nb ligne(s), attendu 5"
 fi
 
 code=$(http POST "$API/rest/v1/tracks" -H "apikey: $ANON_KEY" \

@@ -12,7 +12,8 @@
 #      modifier la structure de la table, ses politiques ni ses privilèges ;
 #   3. le cloisonnement est garanti **en base** : un `workspace_id` incohérent avec le track est
 #      refusé, y compris à `postgres`, donc indépendamment de toute politique RLS ;
-#   4. le seed est **convergent** : rejoué, il laisse exactement six channels, dont un archivé,
+#   4. le seed est **convergent** : rejoué, il laisse exactement huit channels, dont un archivé,
+#      un en corbeille,
 #      répartis sur trois tracks, et tous rattachés au workflow par défaut depuis `CRM-031`
 #      (INC-029, dont la moitié « clé étrangère » est levée) ;
 #   5. les scénarios d'API et d'interface sont verts, ainsi que les tests unitaires et le build ;
@@ -245,15 +246,35 @@ tracks_porteurs=$(psql_db -c "select count(distinct track_id) from public.channe
 sans_workflow=$(psql_db -c "select count(*) from public.channels
                              where workspace_id = '$WS_SEED' and workflow_id is null;")
 ordre=$(psql_db -c "select string_agg(slug, ',' order by position) from public.channels
-                     where track_id = '$TRACK_CONSEIL' and archived_at is null;")
+                     where track_id = '$TRACK_CONSEIL' and archived_at is null and deleted_at is null;")
+# RÉVISÉ PAR `CRM-077` (docs/SPEC-seed.md §10). Deux channels de plus, sous le track `legacy-2023`
+# lui-même en corbeille, et le prédicat de `$ordre` gagne `deleted_at is null` : `archived_at is
+# null` ne suffit plus à dire « actif », les deux états étant INDÉPENDANTS
+# (docs/SPEC-corbeille.md §3.1).
+#
+# Les deux nouvelles mesures ne sont pas des soustractions du total : elles ASSERTENT ce que la
+# tranche ajoute. `$enfant_vivant` est la plus importante — elle fige le fait que la mise en
+# corbeille d'un parent ne DESCEND PAS sur ses enfants (§3.3), propriété sans laquelle la
+# restauration deviendrait ambiguë.
+corbeille=$(psql_db -c "select count(*) from public.channels
+                         where workspace_id = '$WS_SEED' and deleted_at is not null
+                           and deleted_by = '5eed0000-0000-4000-8000-000000000011';")
+enfant_vivant=$(psql_db -c "select count(*) from public.channels
+                             where id = '5eed0000-0000-4000-8000-000000000037'
+                               and deleted_at is not null;")
 
-[ "$total" = "6" ] && ok "six channels, ni plus ni moins" || fail "channels : $total, attendu 6"
+[ "$total" = "8" ] && ok "huit channels, ni plus ni moins" || fail "channels : $total, attendu 8"
 [ "$archives" = "1" ] && ok "un channel archivé, pour rendre l'état démontrable" \
 	|| fail "channels archivés : $archives, attendu 1"
-[ "$tracks_porteurs" = "3" ] && ok "répartis sur trois tracks" \
-	|| fail "tracks porteurs : $tracks_porteurs, attendu 3"
+[ "$corbeille" = "1" ] && ok "un channel en corbeille, son audit renseigné, sous un parent en corbeille" \
+	|| fail "channels en corbeille retirés par l'administratrice : $corbeille, attendu 1"
+[ "$enfant_vivant" = "0" ] \
+	&& ok "l'enfant du §3.3 n'est PAS horodaté : il n'est injoignable que par son track" \
+	|| fail "\`dossiers-2023\` porte un deleted_at alors qu'il doit rester vivant (§3.3)"
+[ "$tracks_porteurs" = "4" ] && ok "répartis sur quatre tracks" \
+	|| fail "tracks porteurs : $tracks_porteurs, attendu 4"
 [ "$sans_workflow" = "0" ] \
-	&& ok "INC-029 : les six channels portent désormais un \`workflow_id\` — \`CRM-031\` a livré la \
+	&& ok "INC-029 : les huit channels portent désormais un \`workflow_id\` — \`CRM-031\` a livré la \
 clé étrangère et le seed les rattache au workflow par défaut" \
 	|| fail "channels sans workflow : $sans_workflow, attendu 0 depuis \`CRM-031\`"
 [ "$ordre" = "prospection,grands-comptes" ] \
@@ -278,8 +299,11 @@ fi
 
 code=$(http GET "$API/rest/v1/channels?select=id" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $T_ADMIN")
-[ "$(jq -r 'length' < "$CORPS")" = "6" ] \
-	&& ok "ligne c — l'administrateur lit les six channels de son workspace" \
+# RÉVISÉ PAR `CRM-077` : huit, l'archivé ET le mis en corbeille compris. La corbeille est une VUE,
+# non une frontière de confidentialité (docs/SPEC-corbeille.md §2.2) — c'est le filtre de la barre
+# d'onglets qui masque, et un administrateur doit pouvoir restaurer ce qu'il ne voit plus.
+[ "$(jq -r 'length' < "$CORPS")" = "8" ] \
+	&& ok "ligne c — l'administrateur lit les huit channels de son workspace" \
 	|| fail "ligne c — l'administrateur lit $(jq -r 'length' < "$CORPS") channels"
 
 code=$(http POST "$API/rest/v1/channels" -H "apikey: $ANON_KEY" \
