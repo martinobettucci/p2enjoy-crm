@@ -14785,6 +14785,36 @@ ces comptes sont révisées, aucune supprimée ni contournée, chacune avec son 
 définitif, visibilité pour un membre ordinaire — attendent toujours l'arbitrage du responsable et ne
 se tranchent pas en session.
 
+**Preuves exécutées, et ce qu'elles ont coûté** — mesurées sur l'arbre qui porte la tranche, une fois
+fusionné avec les commits concurrents : `typecheck` et `build` verts, `types:check` vert, `test:unit`
+**1000/1000** sur 37 fichiers — douze assertions ajoutées par `corbeille.test.ts` —, `test:sql`
+**36 fichiers / 2004 assertions**, `e2e:api` **521/521** dont les sept scénarios de
+`e2e/api/corbeille.spec.ts`, `e2e:mail` vert, `scripts/verify-manual.sh` **111 contrôles sans
+anomalie** sur base propre, là où la ligne de base en portait **deux**. `scripts/verify-seed-demo.sh`
+n'est pas vert : ses trois contrôles d'écran vide sont réparés par l'affaire `…0cf` et par le filtre
+de corbeille ajouté à sa notion de « channel actif », mais son contrôle n° 13 (INC-115) et ses
+empreintes (INC-116) restent rouges, tous deux étrangers à la tranche. `e2e:ui` n'a pas été rejoué après la fusion :
+la session concurrente qui livre l'écran le porte, et cette tranche ne touche aucun écran.
+
+**Les comptes déplacés sont allés plus loin que prévu, et c'est la mesure qui l'a dit.** Aux comptes
+annoncés — quatorze affaires devenues quinze, douze actives treize — s'est ajoutée la
+**prévisualisation d'exigence** : `…0cf` occupe `Négociation`, d'où partent deux arêtes déclarées,
+si bien que le compte « à l'entrée » passe de 1 à 2 pour `Signature` et de 8 à 9 pour `Perdu`,
+lectrice comprise — 4 à 5, son droit fin sur `dossiers-2023` lui rendant cette affaire. L'inégalité
+entre l'administratrice et la lectrice, qui est la preuve du `security invoker`, tient à l'identique.
+Rien de tout cela n'était prévisible depuis le seul énoncé de la tranche ; c'est le rejeu des suites
+qui l'a rendu.
+
+**Une ligne de base fausse coûte une demi-session, et celle-ci l'a payée deux fois.** Premier piège :
+`PLAYWRIGHT_CHROMIUM_PATH` non exporté rend rouges tous les harnais qui ouvrent un navigateur, pour
+une cause d'environnement (INC-036) et non de dépôt. Second piège, plus insidieux : **plusieurs
+harnais dégradent la base et ne la réparent pas toujours**, si bien qu'un `e2e:api` rouge après eux
+ne mesure plus le dépôt. MESURÉ : les cinq échecs rapportés par une campagne complète passaient tous,
+isolément, et la suite est **intégralement verte** après un `./resetMe.sh` suivi du seed. Deux
+constats étrangers à la tranche en sont sortis et sont consignés — **INC-115**, une preuve qui exige
+que la lectrice ne lise pas un track que la réouverture par droit fin lui ouvre depuis `CRM-012`, et
+**INC-116**, l'empreinte du §9.8 qui n'est stable qu'à partir du deuxième rejeu du seed.
+
 ### Décision 405 — L'écran de corbeille, et l'embarquement d'un auteur est ambigu sur les TROIS tables
 
 **2026-08-15.** La décision 404 laissait `CRM-077` avec une seule tranche désignée : l'**écran** de

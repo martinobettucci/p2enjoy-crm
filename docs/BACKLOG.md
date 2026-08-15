@@ -6876,11 +6876,26 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       actifs » contre 7 —, sont réparés à leur cause : leurs requêtes ignoraient la corbeille et
       comptaient comme actif un objet retiré. Deux grandeurs nouvelles la rendent visible.
 
-- [ ] **Reste dû** : l'**écran** de corbeille (§4), et les niveaux E2E et visuel du §5 de la
-      spécification, que l'absence d'écran laisse sans objet. Un **harnais dédié**
-      `scripts/verify-corbeille.sh` reste à écrire : les preuves de cette tranche vivent dans
-      `webapp/src/lib/corbeille.test.ts` et `e2e/api/corbeille.spec.ts`, aucun harnais ne les
-      rassemble encore.
+- [x] **Preuves exécutées sur l'arbre fusionné** : `typecheck`, `build` et `types:check` verts,
+      `test:unit` **1000/1000** sur 37 fichiers, `test:sql` **36 fichiers / 2004 assertions**,
+      `e2e:api` **521/521** dont les sept scénarios de `e2e/api/corbeille.spec.ts`, `e2e:mail` vert,
+      `scripts/verify-manual.sh` **111 contrôles sans anomalie** sur une base propre — la ligne de
+      base en portait deux. Les cinq échecs qu'une campagne complète a rapportés passaient tous
+      isolément et disparaissent après `./resetMe.sh` : ils tenaient à l'état accumulé par les
+      harnais, non au dépôt. `scripts/verify-seed-demo.sh` n'est PAS vert, et son écart est nommé :
+      INC-115 pour son contrôle n° 13, INC-116 pour ses empreintes et pour la base qu'il laisse
+      dégradée derrière lui.
+- [x] **Deux constats ÉTRANGERS consignés plutôt que corrigés au passage** (`docs/CloudWorker.md`
+      §3.1) : **INC-115**, une preuve qui exige que la lectrice ne lise pas un track que la
+      réouverture par droit fin lui ouvre depuis `CRM-012` ; **INC-116**, l'empreinte du §9.8 qui
+      n'est stable qu'à partir du deuxième rejeu du seed, ce qui rend `verify-seed-demo.sh` rouge
+      sur une base fraîchement réinitialisée et vert ensuite.
+
+- [ ] **Reste dû** : un **harnais dédié** `scripts/verify-corbeille.sh`, qui rassemblerait les
+      preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
+      `e2e/api/corbeille.spec.ts` et les fichiers de l'écran. `e2e:ui` n'a pas été rejoué sur
+      l'arbre fusionné par la session qui porte cette tranche : la session concurrente qui livre
+      l'écran le porte.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

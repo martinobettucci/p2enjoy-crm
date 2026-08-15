@@ -130,6 +130,101 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-116 — L'empreinte de reproductibilité du §9.8 n'est stable qu'à partir du DEUXIÈME rejeu du seed, et `verify-seed-demo.sh` est donc rouge sur une base fraîchement réinitialisée
+
+**Constaté le 2026-08-15** en rejouant `scripts/verify-seed-demo.sh` sur une base sortie de
+`./resetMe.sh`, pendant la cinquième tranche de `CRM-077`. **Étranger à cette tranche** : la mesure
+ci-dessous ne fait intervenir aucun objet de la corbeille. Comportement laissé inchangé
+(`docs/CloudWorker.md` §3.1).
+
+**Le mécanisme.** Le §9.8 de `docs/SPEC-seed.md` promet qu'un rejeu du seed laisse l'empreinte
+inchangée, et le harnais en fait deux contrôles. Or la section d'aller-retour du seed — celle qui
+démontre `move_card` — **agit une fois** : sur une base seedée exactement une fois, le rejeu déplace
+réellement des cards et inscrit des événements ; à partir du rejeu suivant, elle ne fait plus rien.
+
+**MESURÉ**, sur une base sortie de `./resetMe.sh`, en comparant l'empreinte avant et après chaque
+rejeu :
+
+```
+rejeu n° 1 : +12 événements « moved » sur …0c2, …0c3 et …0c6 — empreinte MODIFIÉE
+rejeu n° 2 : aucun écart — empreinte STABLE
+```
+
+**Conséquence pratique, et elle explique des bilans contradictoires entre sessions.** Le harnais est
+rouge (« empreinte modifiée par le rejeu », « empreinte non rétablie ») quand il suit immédiatement
+une réinitialisation, et vert quand la base a déjà reçu deux passages du seed. Une session qui monte
+la pile puis applique le seed à la main obtient donc un résultat, et une session qui enchaîne sur
+`./resetMe.sh` en obtient un autre, sur le même dépôt.
+
+**Ce que la correction demandera, et pourquoi elle n'est pas faite ici** : soit la section
+d'aller-retour devient convergente dès le premier rejeu, soit le §9.8 cesse de promettre une
+stabilité qui n'existe qu'ensuite, et le harnais l'énonce. Les deux touchent `CRM-046`, pas la
+corbeille.
+
+**Second effet, mesuré au passage et de la même famille** : `verify-seed-demo.sh` **laisse la base
+dégradée** lorsqu'une de ses sections échoue, et le seed refuse alors de se rejouer. Deux refus ont
+été observés, l'un après l'autre :
+
+```
+la copie seedée porte une empreinte moderne mais sa source a divergé
+le workflow source porte des transitions étrangères au seed : aucune copie n'est reconstruite
+```
+
+Le second a été mesuré sur une base **sortie de `./resetMe.sh`** puis seedée une seconde fois : le
+workflow global y portait **12** transitions au lieu de 11, une arête laissée par une section de
+preuve. Un harnais lancé après celui-là mesure donc autre chose que le dépôt — `verify-manual.sh`,
+enchaîné derrière, a rapporté trois grandeurs fausses (12 déplacements, 12 affaires actives, 2
+archivées) qui étaient toutes les traces de la dégradation précédente, et non des écarts du manuel :
+seul, sur une base propre, il rend **111 contrôles sans anomalie**.
+
+**Conséquence de méthode, à retenir par toute session** : ces harnais ne se chaînent pas. Chacun
+mesure ce qu'il prétend mesurer sur une base propre, et sur elle seule. C'est le même mode de
+défaillance qu'INC-112 et INC-113, à une échelle plus large.
+
+### INC-115 — La preuve n° 13 de `verify-seed-demo.sh` exige que la lectrice NE lise PAS `conseil-ia`, alors que la réouverture par droit fin l'y autorise depuis `CRM-012`
+
+**Constaté le 2026-08-15** en établissant la ligne de base de la cinquième tranche de `CRM-077`.
+**Étranger à cette tranche** : il ne tient ni à la corbeille, ni au seed, ni aux comptes révisés.
+Comportement du produit laissé inchangé (`docs/CloudWorker.md` §3.1).
+
+**Le mécanisme.** La section 13 du harnais affirme, mot pour mot :
+
+```
+le viewer ne lit PAS le track « conseil-ia » — track_members.access = none
+```
+
+Or la politique de lecture réellement posée sur `public.tracks` est, MESURÉE dans `pg_policies` :
+
+```
+((app.resolve_track_access(workspace_id, id) <> 'none') OR app.track_has_readable_channel(id))
+```
+
+La seconde branche est la **réouverture par droit fin** — la ligne f du §3 de
+`docs/SPEC-permissions-rls.md` —, et le harnais l'éprouve lui-même deux contrôles plus bas : la
+lectrice lit bien le channel `prospection` et ses deux affaires. Un track dont un channel est
+lisible est donc lisible, sans quoi l'écran n'aurait aucun chemin vers ce channel.
+
+**MESURÉ**, avec le jeton réel de la lectrice, sur une pile fraîchement seedée :
+
+```
+resolve_track_access(conseil-ia)                 => none
+GET /rest/v1/tracks?id=eq.<conseil-ia>           => 1 ligne
+track_members : Camille none, Farida none
+```
+
+Les deux faits sont donc vrais en même temps, et ils ne se contredisent pas : `access = none` sur le
+track, lecture consentie par le channel.
+
+**Ce que le harnais dit lui-même de sa propre issue** : « INC-075 a changé de nature, le §9.7 doit
+être réécrit ». C'est exact — la conclusion à tirer est une réécriture du §9.7 de `docs/SPEC-seed.md`
+et de ce contrôle, pas une modification du produit. L'assertion doit devenir « la lectrice lit
+`conseil-ia` **par la réouverture**, alors que son accès direct au track vaut `none` », ce qui prouve
+davantage que la formulation actuelle.
+
+**Porteur pressenti** : la reprise `CRM-012` déjà nommée par la disposition d'INC-075 et d'INC-085.
+**Non traité ici** : la tranche en cours porte l'énumération de la corbeille, et corriger au passage
+une preuve d'une autre unité est exactement ce que le §3.1 de `docs/CloudWorker.md` interdit.
+
 ### INC-114 — La barre d'onglets rend « Aucun channel » sur les quatre écrans de réglages, qui n'ont pourtant aucun track
 
 **Constaté le 2026-08-15** en observant les captures de la sixième tranche de `CRM-077`
