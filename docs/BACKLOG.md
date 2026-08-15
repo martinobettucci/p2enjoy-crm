@@ -6587,10 +6587,63 @@ E2E et captures aux quatre paliers sans avertissement console.
       **219**, valeur de la quatrième tranche. Le compte réel de `e2e:ui` après cette tranche doit
       être MESURÉ sur la pile, pas déduit, puis reporté.
 
-**Reste dû sous cette unité (§7 bis.12.7)** : la **prévisualisation des effets**, le réglage en
-**lot** d'une exigence sur plusieurs transitions, et les preuves pgTAP/API dédiées à l'écran (les
-politiques du §3.7, du §2.7 et de `CRM-018` restent prouvées par `CRM-031`, `CRM-035` et `CRM-018`).
-L'unité reste `[~]` jusqu'à leur livraison.
+**Sixième tranche livrée, 2026-08-15** — la prévisualisation des effets
+(docs/SPEC-workflow-engine.md §7 bis.13), **dernier manque de comportement de l'unité** :
+
+- [x] **DEUX nombres, et la mesure qui l'impose** : les affaires **déjà** à l'étape — jamais
+      chassées (§5.7) — et celles qui ne pourront plus y **entrer**. MESURÉ le 2026-08-15 pour
+      `date-signature-prevue` sur les sept étapes : `Prospection` rend **4 et 0** — aucune arête ne
+      mène à l'étape initiale —, `Signature` rend l'inverse **0 et 1**, `Perdu` rend **1 et 8**. Un
+      seul nombre aurait annoncé « aucun effet » sur deux étapes du workflow par défaut.
+- [x] **Migration `0036`** : `public.previsualiser_exigence(uuid, uuid, uuid)`, `stable`,
+      **`security invoker`**, `search_path` vide, `execute` à `authenticated`. **Aucun changement de
+      schéma** : ni table, ni colonne, ni contrainte, ni politique. Contrat de déploiement mis à
+      jour (`docs/PROD_MIGRATIONS.md`, ligne 36).
+- [x] **Le compte est fait par la base, et les trois motifs sont mesurés** : « vide » est
+      `app.valeur_de_champ_est_vide` — vingt-quatre points de code d'espaces (`CRM-036`) —, le
+      réécrire en TypeScript aurait dupliqué le contrat de `move_card` ; compter côté navigateur
+      aurait exigé une lecture non bornée ; et `security invoker` borne le compte à ce que
+      l'appelant a le droit de lire, là où un `definer` aurait annoncé des affaires inaccessibles.
+- [x] **10 assertions pgTAP** (`supabase/tests/0034_previsualisation_exigence.test.sql`) dont
+      **la parenté avec `move_card`** : la règle est posée, et une affaire comptée « à l'entrée » se
+      voit réellement refuser son déplacement par `missing_required_fields`. Sans elle, le reste ne
+      prouverait que la cohérence de la fonction avec elle-même. `test:sql` passe de 33/1971 à
+      **34 fichiers / 1981 assertions**, `FICHIERS_SQL_ATTENDUS` et `ASSERTIONS_ATTENDUES` portés.
+- [x] **Le dédoublonnage est dit pour ce qu'il vaut, et non surestimé** :
+      `workflow_transitions_workflow_from_to_key` rend unique le couple (départ, arrivée), donc
+      aucune affaire ne peut être comptée deux fois aujourd'hui. La preuve constate l'**égalité**
+      entre le compte de l'étape et la somme de ses cinq arêtes — 8 = 4+2+1+0+1 — plutôt que de
+      prétendre observer un dédoublonnage que le modèle rend impossible.
+- [x] Couche de données : `previsualiserExigence`, `composerMessageEffets`, et les cinq messages —
+      dont `aucun-effet`, qui est une phrase et non un silence. `indisponible` n'est **pas** replié
+      sur zéro : un zéro inventé aurait rassuré à tort. 8 preuves unitaires.
+- [x] Écran : confirmation sous la grille pour le seul état « Exigé », les trois autres restant
+      immédiats ; case montrant le choix en cours ; compte affiché sous le choix du champ dans le
+      formulaire d'exigence de transition ; échec de mesure **non bloquant**. 13 preuves d'écran,
+      13 clés de traduction.
+- [x] **Un défaut trouvé par les preuves E2E, mesuré et corrigé** : l'effet du formulaire d'exigence
+      dépendait d'une callback recréée à chaque rendu — le parent la construit dans une boucle sur
+      les arêtes —, donc il se rejouait à chaque rendu et les appels RPC partaient sans fin. Sept
+      scénarios E2E tombaient en délai. Corrigé par un `ref`, et fixé par une preuve unitaire qui
+      compte les appels.
+- [x] E2E sur la vraie base (5 scénarios + les quatre paliers) : les deux nombres mesurés contre le
+      seed — 1 et 9 sur `Perdu` pour un champ neuf, 4 sur `Prospection → Relance` —, le renoncement
+      vérifié par l'**absence** de ligne, la confirmation au clavier seul, le seed retrouvant ses
+      quinze règles. Captures aux quatre paliers produites et **observées**.
+- [x] **Deux preuves antérieures révisées, non supprimées** : les deux scénarios qui réglaient une
+      case sur « Exigé » et attendaient une écriture immédiate passent par la confirmation, motif
+      écrit dans les fichiers ; et `_lesVingtSixFonctions` devient `_lesVingtSeptFonctions`.
+- [x] Documentation : `docs/manual.md` chapitre **5 bis.4 quater**, `docs/DESIGN_SYSTEM.md` §5.15
+      complété de six règles, `CHANGELOG.md` sous `[Non publié]`, `docs/PROD_MIGRATIONS.md` ligne 36.
+- [~] **Compteur `SCENARIOS_UI` à porter** : la campagne complète doit être MESURÉE, puis le
+      compteur de `scripts/verify-harness.sh` porté à sa valeur réelle.
+
+**Reste dû sous cette unité** : le réglage en **lot** d'une exigence sur plusieurs transitions
+(§7 bis.11.7, §7 bis.12.7), la **liste nominative** des affaires prévisualisées (§7 bis.13.5), et
+les preuves API dédiées à l'écran (les politiques du §3.7, du §2.7 et de `CRM-018` restent prouvées
+par `CRM-031`, `CRM-035` et `CRM-018`). **Aucun comportement de la Definition of Done ne reste dû** :
+l'unité est passée en revue pour clôture dès que la campagne complète est verte et le compteur
+porté. L'unité reste `[~]` jusque-là.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

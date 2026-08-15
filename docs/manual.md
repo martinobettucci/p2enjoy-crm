@@ -1185,9 +1185,43 @@ Si un autre administrateur déclare la même exigence pendant que vous remplisse
 l'écran vous le dit — « Ce champ est déjà exigé par cette transition » — au lieu d'afficher une
 erreur technique.
 
+### 5 bis.4 quater Ce qu'une exigence fera aux affaires en cours
+
+Rendre une question obligatoire est le seul réglage de cet écran qui puisse **empêcher** une affaire
+existante d'avancer. L'éditeur vous dit donc, **avant** d'enregistrer, ce que le réglage ferait.
+
+Quand vous passez une case de la grille à **« Exigé »**, rien n'est enregistré tout de suite : une
+confirmation s'ouvre sous le tableau et annonce **deux** nombres, qui ne se déduisent pas l'un de
+l'autre :
+
+- combien d'affaires sont **déjà** à cette étape — leur fiche signalera le manque, mais elles ne
+  sont **jamais** déplacées ni bloquées en lecture ;
+- combien d'affaires **ne pourront plus entrer** dans cette étape tant que la question sera vide.
+
+Les deux peuvent être très différents. Sur l'étape initiale, aucun chemin n'arrive : le second
+nombre est nul alors que le premier ne l'est pas. Sur une étape de fin, c'est souvent l'inverse.
+
+Tant que vous n'avez pas confirmé, **rien n'est écrit** : « Annuler » rend la case à son état
+enregistré. Les trois autres états — « Par défaut », « Masqué », « Affiché » — s'appliquent
+immédiatement comme avant : aucun d'eux ne bloque une affaire.
+
+Le formulaire **« Exiger un champ »** d'une transition affiche le même genre de nombre dès que vous
+choisissez une question, sous la liste : combien d'affaires ne pourront plus emprunter **ce
+chemin-là**. Une exigence de chemin ne concerne que lui, à la différence d'une case de la grille qui
+vaut pour toutes les entrées dans l'étape.
+
+Deux précisions honnêtes :
+
+- ces nombres comptent les affaires **que vous avez le droit de voir** ;
+- si la mesure échoue, l'écran le dit — « n'ont pas pu être mesurés » — et **laisse le geste
+  possible** : c'est une aide à la décision, pas une autorisation. Le contrôle réel reste appliqué
+  au moment où une affaire tente de changer d'étape.
+
 ### 5 bis.5 Ce qui n'est pas encore là
 
-- La **prévisualisation des effets** d'une modification sur les affaires en cours n'est pas livrée.
+- La prévisualisation ne montre **aucune liste nominative** des affaires concernées, seulement leur
+  nombre.
+- Retirer une exigence n'est pas prévisualisé : cela ne bloque rien, cela lève une contrainte.
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.

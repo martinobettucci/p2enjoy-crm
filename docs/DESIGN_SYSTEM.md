@@ -713,6 +713,36 @@ d'exigence propre à une arête avant d'avoir vu ce que les règles exigent déj
 - **Une arête sans exigence porte une phrase, jamais un vide** — même règle que le cul-de-sac du
   graphe plus haut : une liste vide se lirait comme un défaut d'affichage.
 
+**La prévisualisation des effets — sixième tranche, `docs/SPEC-workflow-engine.md` §7 bis.13.** Elle
+n'ajoute pas de bloc : elle s'insère dans les deux gestes qui peuvent bloquer une affaire.
+
+- **Seul le geste qui CONTRAINT demande une confirmation.** Régler une case sur « Exigé » ouvre une
+  confirmation ; « Par défaut », « Masqué » et « Affiché » restent immédiats. La règle générale est
+  celle du §6 — confirmer les gestes aux conséquences —, et son application ici est une mesure de
+  praticabilité : imposer une confirmation aux quarante-deux cases aurait rendu la grille
+  inutilisable pour des réglages dont aucun ne contraint personne.
+
+- **La confirmation d'une exigence n'est PAS teintée de danger.** Son bouton d'action est
+  `primaire`, jamais `danger` : poser une exigence n'efface rien, et la teinte de danger est
+  réservée à ce qui détruit (§1, §6). Elle se distingue en cela de `ConfirmationRetrait`, dont elle
+  ne réutilise pas le patron.
+
+- **La case en attente montre le choix EN COURS, pas l'état enregistré.** Sans cette surcharge, le
+  rendu contrôlé ramènerait la case à son état d'avant et la grille démentirait la confirmation
+  affichée juste en dessous.
+
+- **La confirmation se place SOUS le tableau, dans le flux.** Une case fait huit rem de large : y
+  loger deux boutons et deux phrases aurait disloqué la grille entière. C'est la même règle
+  d'ancrage que les autres confirmations de l'écran — dans le flux du document, jamais en modale.
+
+- **Un compte nul se NOMME.** « Aucune affaire en cours n'est concernée » est une phrase ; un bloc
+  muet se lirait comme une mesure qui n'a pas abouti. Et « en cours de mesure » se distingue de
+  « n'a pas pu être mesuré » : deux états, deux textes.
+
+- **Une mesure indisponible n'éteint jamais la commande.** Le compte est une aide à la décision, la
+  garde est ailleurs (backend). Désactiver le bouton aurait fait passer un défaut de mesure pour un
+  refus de droit.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

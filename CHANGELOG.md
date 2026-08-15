@@ -15,6 +15,40 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur administrateur de workflows, sixième tranche : la prévisualisation des effets —
+  `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.13). Le **dernier** manque de comportement de
+  l'unité est levé : avant d'ajouter une exigence, l'administrateur voit ce qu'elle fera aux
+  affaires déjà en cours.
+  - **DEUX nombres, et ils ne se déduisent pas l'un de l'autre** : les affaires **déjà** à l'étape —
+    jamais chassées, leur fiche signalera le manque — et celles qui **ne pourront plus y entrer**.
+    MESURÉ sur le seed pour `date-signature-prevue` : `Prospection` rend 4 et 0, `Signature` rend
+    l'inverse 0 et 1, `Perdu` rend 1 et 8. Un écran à un seul nombre aurait annoncé « aucun effet »
+    sur deux étapes du workflow par défaut.
+  - **Le compte est fait par la BASE, et c'est une décision motivée** : « vide » est
+    `app.valeur_de_champ_est_vide` — vingt-quatre points de code d'espaces (`CRM-036`) — et le
+    réécrire en TypeScript aurait dupliqué la définition que `move_card` possède ; compter côté
+    navigateur aurait exigé une lecture non bornée des affaires et de leurs valeurs ; et la fonction
+    est **`security invoker`**, si bien que le nombre annoncé est borné par la RLS de son lecteur.
+  - **Seul le geste qui contraint demande une confirmation.** « Exigé » ouvre une confirmation
+    portant les deux nombres et n'écrit **rien** avant acceptation ; « Par défaut », « Masqué » et
+    « Affiché » restent immédiats. Le formulaire d'exigence d'une transition affiche son compte sous
+    le choix du champ, sans confirmation supplémentaire.
+  - **Un échec de mesure ne bloque pas le geste**, et l'écran le dit : le compte est une aide à la
+    décision, la garde reste `move_card`.
+  - **Migration `0036`** : `public.previsualiser_exigence(uuid, uuid, uuid)`, en lecture seule,
+    sans aucun changement de schéma. Refuse un appel sans cible ou à deux cibles
+    (`previsualisation_cible`) ; rend `0, 0` sur un champ archivé ou une cible inconnue.
+  - **Un défaut trouvé et corrigé par les preuves** : l'effet du formulaire d'exigence dépendait
+    d'une callback recréée à chaque rendu, ce qui provoquait une boucle d'appels sans fin. Corrigé,
+    et fixé par une preuve unitaire qui compte les appels.
+  - **Preuves** : 10 assertions pgTAP dont la **parenté avec `move_card`** — une affaire comptée
+    « à l'entrée » se voit réellement refuser son déplacement —, unitaires sur l'appel et la
+    composition des messages, E2E sur la vraie base des deux gestes avec l'**absence** de ligne
+    comme preuve du renoncement, captures aux quatre paliers produites et observées.
+  - **Deux preuves antérieures révisées, non supprimées** : les deux scénarios qui réglaient une
+    case sur « Exigé » et attendaient une écriture immédiate passent désormais par la confirmation ;
+    le motif est écrit dans les fichiers. La règle prouvée est inchangée.
+
 - **L'éditeur administrateur de workflows, cinquième tranche : les exigences de transition —
   `CRM-076`** (`docs/SPEC-workflow-engine.md` §7 bis.12). Le premier des deux manques nommés au
   §7 bis.11.7 est levé : les **champs exigés pour franchir une transition**, livrés en base par
