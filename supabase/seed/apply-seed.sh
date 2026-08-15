@@ -106,15 +106,25 @@ COMPTES=(
 # opposable, et un ordre attribué par un effet de bord ne serait pas reproductible si l'ordre des
 # insertions changeait. Le trigger reste éprouvé par la suite pgTAP et par les scénarios d'API.
 #
+# LE CINQUIÈME EST EN CORBEILLE, ET SON ÉTAT N'EST PAS DÉCLARÉ ICI — `CRM-077`, docs/SPEC-seed.md
+# §10. Il naît **actif** comme les trois premiers, et la section 8 septies l'y met par un geste
+# réel. Déclarer `deleted_at` dans cette charge le ferait naître en corbeille avec un `deleted_by`
+# NUL — la clé de service ne porte aucune revendication `sub` —, et le trigger de la migration 37
+# figerait ensuite ce nul pour toujours. Son icône est `folder`, prise au catalogue de
+# `webapp/src/app/presentation-tracks.ts` : un nom hors catalogue tomberait sur le repli et le seed
+# démontrerait le repli au lieu du track. Sa couleur reste `neutral` et n'inaugure pas `danger` :
+# une activité retirée n'est pas une activité en danger, et la corbeille est réversible.
+#
 # id | slug | nom | couleur | icône | position | date d'archivage (ou « - »)
 TRACKS=(
 	'5eed0000-0000-4000-8000-000000000021|conseil-ia|Conseil & IA|brand|sparkles|1|-'
 	'5eed0000-0000-4000-8000-000000000022|studio-web|Studio web|success|layout-dashboard|2|-'
 	'5eed0000-0000-4000-8000-000000000023|formation|Formation|accent|graduation-cap|3|-'
 	'5eed0000-0000-4000-8000-000000000024|pipeline-2024|Pipeline 2024|neutral|archive|4|2026-01-15T09:00:00Z'
+	'5eed0000-0000-4000-8000-000000000025|legacy-2023|Legacy 2023|neutral|folder|5|-'
 )
 
-# Channels des tracks actifs — docs/SPEC-channels.md §8.
+# Channels des tracks actifs, et deux sous le track en corbeille — docs/SPEC-channels.md §8.
 #
 # Trois tracks actifs sur quatre en portent ; `formation` n'en porte qu'**un**, ce qui donne une
 # barre à un seul onglet — un cas d'affichage réel, distinct de la barre vide. Le track archivé
@@ -131,6 +141,21 @@ TRACKS=(
 # `position` est écrite explicitement, pour le même motif que les tracks : un ordre attribué par
 # effet de bord ne serait pas reproductible si l'ordre des insertions changeait.
 #
+# LES DEUX DERNIERS SONT SOUS LE TRACK EN CORBEILLE — `CRM-077`, docs/SPEC-seed.md §10. Ils
+# démontrent les DEUX situations que le §3.3 de `docs/SPEC-corbeille.md` distingue, et qu'aucune
+# donnée ne séparait :
+#
+#   * `dossiers-2023` reste ACTIF et ne porte AUCUN `deleted_at`. C'est le point le plus facile à
+#     manquer en relisant la base : en colonne, ce channel est parfaitement vivant. Il est
+#     injoignable parce que son track ne se résout plus (troisième tranche, webapp/src/lib/tracks.ts),
+#     et c'est précisément ce qui garde la restauration NON AMBIGUË — restaurer le track le rend,
+#     sans que quiconque ait eu à distinguer les enfants emportés de ceux déjà retirés ;
+#   * `annexes-2023` est lui-même EN CORBEILLE, de sorte que sa restauration rend
+#     `parent_en_corbeille` (garde de la migration 38). Son état n'est pas déclaré ici, pour le
+#     motif du §10.2 : la section 8 septies l'y met par un geste réel.
+#
+# Un seul des deux aurait laissé croire que « enfant d'un parent en corbeille » est un état unique.
+#
 # id | track | slug | nom | position | date d'archivage (ou « - »)
 CHANNELS=(
 	'5eed0000-0000-4000-8000-000000000031|5eed0000-0000-4000-8000-000000000021|prospection|Prospection|1|-'
@@ -139,6 +164,8 @@ CHANNELS=(
 	'5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000022|refonte|Refonte de site|1|-'
 	'5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000022|maintenance|Maintenance|2|-'
 	'5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000023|inter-entreprises|Inter-entreprises|1|-'
+	'5eed0000-0000-4000-8000-000000000037|5eed0000-0000-4000-8000-000000000025|dossiers-2023|Dossiers 2023|1|-'
+	'5eed0000-0000-4000-8000-000000000038|5eed0000-0000-4000-8000-000000000025|annexes-2023|Annexes 2023|2|-'
 )
 
 # Droits fins par track et par channel — docs/SPEC-seed.md §2.11, docs/SPEC-permissions-rls.md §2.2.
@@ -2045,6 +2072,104 @@ total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"
 
+# --- 8 decies. La corbeille, posée par un GESTE RÉEL — docs/SPEC-seed.md §10, CRM-077 ----------
+# @spec CRM-077 (docs/BACKLOG.md), docs/SPEC-corbeille.md §3.1 (les trois états), §3.3 (la mise en
+#       corbeille d'un parent ne descend pas), §3.4 (la restauration refuse plutôt que de deviner),
+#       §5 (ligne « Seed ») ; docs/SPEC-seed.md §10 ; docs/JOURNAL.md décision 403
+#
+# CE QUE CETTE SECTION COMBLE. Les migrations 37 et 38 ont livré la corbeille et sa garde de
+# restauration, et AUCUNE donnée du seed ne les exerçait : la corbeille ne contenait qu'une card, si
+# bien que le refus `parent_en_corbeille` n'avait aucun cas de démonstration et que l'écran du §4
+# n'aurait rien eu à afficher.
+#
+# POURQUOI UN GESTE, ET NON UNE DÉCLARATION DANS LA CHARGE DE CRÉATION. `app.corbeille_avant_ecriture()`
+# écrit `deleted_by` depuis `auth.uid()`. LA CLÉ DE SERVICE NE PORTE AUCUNE REVENDICATION `sub` :
+# un objet créé avec `deleted_at` déjà renseigné par elle naît en corbeille avec un `deleted_by`
+# **NUL**, et le trigger FIGE ensuite cette valeur tant que la ligne reste en corbeille — l'objet ne
+# retrouvera donc jamais son auteur. C'est vérifiable sur la donnée existante : la card
+# `Saisie erronée`, née en corbeille en section 8 ter, porte `deleted_by` nul.
+#
+# Les trois objets naissent donc ACTIFS dans les sections 3 et 4, et sont mis en corbeille ici avec
+# LE JETON RÉEL DE L'ADMINISTRATRICE. C'est le patron exact de la décision 376 pour le commentaire
+# retiré par la modération (INC-072) : le seed ne fabrique pas la trace d'un geste, il FAIT le geste
+# et laisse le produit la produire (`CLAUDE.md` §8).
+#
+# ET C'EST AUSSI LA SEULE FORME QUI CONVERGE. Les charges des sections 3 et 4 n'envoient pas
+# `deleted_at`, et `Prefer: resolution=merge-duplicates` ne met à jour que les colonnes présentes :
+# un rejeu laisse donc l'état de corbeille intact. Une charge qui enverrait `deleted_at: null`
+# demanderait au contraire la RESTAURATION de l'objet à chaque passage — et pour `annexes-2023`,
+# dont le parent est en corbeille, cette restauration est REFUSÉE par la garde de la migration 38 :
+# le seed échouerait à son second passage.
+#
+# CETTE SECTION VIENT EN DERNIER parce qu'elle applique un geste à des objets que les sections
+# précédentes ont créés, et qu'aucune section ne doit les rouvrir après elle. Elle exige `api_admin`,
+# définie en section 7.
+#
+# L'ORDRE EST ENFANT D'ABORD, PARENT ENSUITE. Il n'est imposé par aucune garde — seule la
+# restauration en pose une —, mais il est le MIROIR de l'ordre qu'un script de reprise devra suivre,
+# consigné au contrat de déploiement : remonter l'arborescence des parents avant les enfants.
+
+echo
+say "8 decies. La corbeille"
+
+# La date est la même pour les deux objets : ils sont retirés par le même geste, et deux dates
+# distinctes suggéreraient deux décisions distinctes.
+CORBEILLE_LE='2026-07-20T14:30:00Z'
+ADMINISTRATRICE='5eed0000-0000-4000-8000-000000000011'
+
+# table | id | libellé
+OBJETS_CORBEILLE=(
+	"channels|5eed0000-0000-4000-8000-000000000038|le channel « Annexes 2023 »"
+	"tracks|5eed0000-0000-4000-8000-000000000025|le track « Legacy 2023 »"
+)
+
+for ligne in "${OBJETS_CORBEILLE[@]}"; do
+	IFS='|' read -r table id libelle <<< "$ligne"
+
+	# CONVERGENCE PAR ÉTAT, comme les allers-retours de la section 8 sexies : l'état réel est relu
+	# AVANT d'écrire. Sans cette relecture, chaque rejeu récrirait `deleted_at` — sans dommage pour
+	# l'audit, que le trigger fige, mais en déplaçant `updated_at` sans qu'aucune décision n'ait
+	# été prise.
+	etat=$(curl -s "$API/rest/v1/$table?id=eq.$id&select=deleted_at,deleted_by" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+	deja=$(printf '%s' "$etat" | jq -r '.[0].deleted_at // "null"')
+
+	if [ "$deja" = 'null' ]; then
+		code=$(api_admin PATCH "/rest/v1/$table?id=eq.$id" \
+			-H 'Prefer: return=representation' \
+			-d "$(jq -nc --arg d "$CORBEILLE_LE" '{deleted_at: $d}')")
+		attendu "$code" "mise en corbeille de $libelle" 200
+		auteur=$(jq -r '.[0].deleted_by // "null"' "$CORPS")
+		info "$libelle mis en corbeille par Camille Aubert"
+	else
+		auteur=$(printf '%s' "$etat" | jq -r '.[0].deleted_by // "null"')
+		info "$libelle déjà en corbeille : rien à faire (convergence par état)"
+	fi
+
+	# L'AUDIT EST VÉRIFIÉ, ET NON SUPPOSÉ. Sans ce contrôle, une régression du trigger rendrait un
+	# seed vert et un audit muet : l'écran de corbeille afficherait « retiré par — », et le seed
+	# n'aurait rien démontré de ce qu'il est censé démontrer.
+	[ "$auteur" = "$ADMINISTRATRICE" ] || die "$libelle est en corbeille, mais deleted_by vaut
+        « $auteur » au lieu de l'administratrice. Le seed ne démontre alors AUCUN audit de
+        suppression (docs/SPEC-seed.md §10.2). La cause la plus probable est une mise en corbeille
+        effectuée avec la CLÉ DE SERVICE, qui ne porte aucune revendication « sub »."
+done
+
+# L'ENFANT DU §3.3 N'EST PAS HORODATÉ, et c'est une propriété qu'il faut ÉPROUVER plutôt que
+# croire : c'est elle qui garde la restauration non ambiguë. Si une tranche future descendait
+# l'horodatage sur les enfants, cette assertion serait la première à le dire.
+enfant_vivant=$(curl -s "$API/rest/v1/channels?id=eq.5eed0000-0000-4000-8000-000000000037&select=deleted_at" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '.[0].deleted_at // "null"')
+[ "$enfant_vivant" = 'null' ] || die "le channel « Dossiers 2023 » porte deleted_at = « $enfant_vivant »
+        alors qu'il doit rester VIVANT sous un parent en corbeille (docs/SPEC-corbeille.md §3.3).
+        La mise en corbeille d'un parent ne descend PAS sur ses enfants : descendre l'horodatage
+        rendrait la restauration ambiguë."
+
+info "Dossiers 2023 reste ACTIF sous un parent en corbeille : aucun deleted_at, injoignable"
+info "          du seul fait que son track ne se résout plus — docs/SPEC-corbeille.md §3.3"
+info "Corbeille : 1 track, 1 channel, 1 card — et 1 enfant vivant sous parent en corbeille (§10)"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -2063,8 +2188,8 @@ echo
 say "Seed appliqué"
 info "Espace de travail : $WS_NAME ($WS_SLUG)"
 info "Comptes : ${#COMPTES[@]}, un par rôle — mot de passe commun publié dans docs/SPEC-seed.md §2.3"
-info "Tracks : ${#TRACKS[@]}, dont un archivé — docs/SPEC-tracks.md §8"
-info "Channels : ${#CHANNELS[@]}, dont un archivé, répartis sur trois tracks — docs/SPEC-channels.md §8"
+info "Tracks : ${#TRACKS[@]}, dont un archivé et un EN CORBEILLE — docs/SPEC-tracks.md §8"
+info "Channels : ${#CHANNELS[@]}, dont un archivé et un EN CORBEILLE, sur quatre tracks — docs/SPEC-channels.md §8"
 info "Nœuds du catalogue : ${#NOEUDS[@]}, dont un archivé — docs/SPEC-workflow-engine.md §2.9"
 info "Workflow : 1, global et par défaut, ${#ETAPES[@]} étapes et ${#TRANSITIONS[@]} transitions — docs/SPEC-workflow-engine.md §3.9"
 info "Fixture de copie : 1, de portée track sur « Conseil & IA », créée par copy_workflow_to_track — docs/SPEC-workflow-engine.md §4.10"
