@@ -11,10 +11,9 @@ Contrat exécutable de `CRM-077` (`docs/BACKLOG.md`).
 - Déploiement : `docs/PROD_MIGRATIONS.md`.
 - État : **spécifiée, livrée en partie.** Écrite avant toute ligne de code (`CLAUDE.md` §5). Le
   modèle (§3.2), la garde de restauration (§3.4), le retrait des listes (§3.3), l'énumération
-  (§3.5) et l'**écran** (§4) sont livrés. Le **geste de mise à la corbeille** (§4 bis) est spécifié
-  pour un **track** et un **channel**, depuis `/reglages/arborescence`. Reste dû après lui : le même
-  geste pour une **affaire**, dont la surface — board, vue liste ou formulaire — demande sa propre
-  mesure (§4 bis.1).
+  (§3.5), l'**écran** (§4) et le **geste de mise à la corbeille** d'un **track** et d'un **channel**
+  (§4 bis) sont livrés. Le geste pour une **affaire** est spécifié au **§4 ter**, sur la surface que
+  ce chapitre mesure : la route de détail de la card.
 
 ---
 
@@ -484,6 +483,136 @@ l'y ajouter ferait refuser toute l'écriture en `42501`.
 - **Il n'est pas offert sur une ligne déjà en corbeille**, pour une raison qui n'est pas une règle
   d'écran : après le §4 bis.2, une telle ligne n'est plus affichée du tout.
 
+## 4 ter. Le GESTE de mise à la corbeille — une affaire
+
+*Chapitre écrit par la huitième tranche, avant sa première ligne de code (`CLAUDE.md` §5). Chaque
+règle porte sa mesure ou son motif, et toutes les mesures citées ont été prises le 2026-08-15 sur la
+pile seedée, avec les jetons réels des trois profils.*
+
+Le §4 bis.1 a délibérément laissé l'affaire hors de sa tranche, en nommant ce qui manquait : « son
+geste vit sur une autre surface — board, vue liste ou formulaire —, ce choix demande sa propre
+mesure ». Ce chapitre fait cette mesure et tranche. Aujourd'hui, une affaire ne se retire d'aucun
+écran : le seul chemin est l'API (§7 point 4).
+
+### 4 ter.1 Où le geste vit : la route de détail de l'affaire, et les deux autres surfaces sont écartées PAR MESURE
+
+`/tracks/:slugTrack/:slugChannel/cards/:idCard` — la route de détail, seule surface où l'affaire est
+le **sujet** et non une ligne parmi d'autres.
+
+Les trois surfaces candidates ont été regardées, et deux sont écartées pour une raison écrite
+ailleurs qu'ici :
+
+| Surface | Ce qu'elle porte aujourd'hui | Verdict |
+|---|---|---|
+| Carte de board | un **menu de transitions**, et `docs/DESIGN_SYSTEM.md` §5.1 pose qu'il liste « **uniquement les transitions déclarées** […] la garantie que l'interface ne propose jamais une action que le backend refuserait » | **écartée** : y glisser un geste destructeur romprait cette garantie écrite, et mêlerait un retrait à une liste d'étapes |
+| Vue liste | un tableau du §5.9 — une ligne de `--size-target`, **une seule ligne de texte par cellule**, la ligne entière **non cliquable**, « seul le titre est un lien, pour que la cible du clic soit la cible annoncée » | **écartée** : une commande destructive sur une ligne que l'on balaye en diagonale demanderait une colonne d'actions que le §5.9 ne déclare pas |
+| Route de détail | l'affaire entière, ses quatre états (`RouteCard.tsx`), et le **fil** qui enregistre le geste (§4 ter.4) | **retenue** |
+
+Le parallèle avec le §4 bis.1 est exact et c'est ce qui rend le choix vérifiable : le track et le
+channel ont reçu leur geste là où ils sont administrés **en tant qu'objets**, à côté d'« Archiver ».
+Une affaire n'a pas d'écran d'administration ; l'endroit où elle est un objet et non une tuile, c'est
+sa propre adresse.
+
+**Le geste vit dans la colonne GAUCHE, sous le formulaire**, dans le flux du document. La colonne
+droite porte le fil (`docs/DESIGN_SYSTEM.md` §5.10, §5.11), qui **raconte** ce qui est arrivé à
+l'affaire ; y placer un geste ferait agir depuis le récit.
+
+### 4 ter.2 La confirmation ne porte AUCUNE énumération, et ce n'est pas un allègement
+
+Une affaire n'a pas d'enfant au sens du §3.5 : `compterEnfantsInaccessibles` n'accepte que `track` et
+`channel`, et son type somme le dit — « un appelant qui se tromperait de table ne compilerait pas ».
+
+La confirmation nomme donc l'affaire par son titre et dit ce que le geste fait, sans compte et sans
+la phrase « aucun objet ne devient inaccessible » : cette phrase du §4 bis.3 répond à une mesure qui
+a eu lieu et rendu zéro. Ici, aucune mesure n'a lieu — écrire son résultat serait inventer une
+réponse à une question qui n'a pas été posée.
+
+Elle reste **dans le flux du document**, jamais une modale : c'est la règle du §5.13 du design
+system, déjà tenue par `CRM-043`, `CRM-075` et le §4 bis.3.
+
+### 4 ter.3 Les trois issues, MESURÉES — et le business developer RÉUSSIT, contrairement au track
+
+C'est la mesure qui distingue cette tranche de la précédente, et elle contredit ce qu'un transport
+de règle aurait conclu. Sur l'affaire `Migration ERP Sogexia` (`…0c2`, channel `…032`) :
+
+| Profil | Ce que la pile rend | Mesuré |
+|---|---|---|
+| administratrice | `200` et la ligne | `deleted_at` posée, `deleted_by` = `…011`, **écrite par le trigger** |
+| **business developer** | `200` et la ligne | `deleted_at` posée, `deleted_by` = `…012` — **le geste aboutit** |
+| lectrice | `200` et `[]` | la ligne relue **inchangée**, `deleted_at` toujours nulle |
+
+**Le motif est dans le prédicat, pas dans le rôle.** `cards_maj` porte
+`app.can_write_channel(channel_id)` (`docs/SPEC-cards.md` §6.1), là où `tracks_maj_admin` exige le
+rôle d'administrateur. Mettre une affaire à la corbeille est donc un geste **d'écriture ordinaire sur
+son channel**, comme la modifier — et non un geste d'administration. Conclure l'inverse depuis le
+§4 bis.5, où les deux profils non administrateurs échouaient, aurait transporté une règle mesurée
+dans un contexte vers un autre sans la remesurer : exactement le défaut qu'INC-113 et le §4.2 ont
+déjà relevé deux fois dans cette unité.
+
+**« Sans effet » reste la troisième issue**, et c'est la quatrième occurrence de la décision 70 dans
+`CRM-077` : la clause `USING` filtre la ligne avant la mise à jour, PostgREST rend `200` et zéro
+ligne. L'écran le nomme au lieu d'annoncer un retrait qui n'a pas eu lieu.
+
+**L'écran n'anticipe rien** (§4.5) : la commande est offerte à qui lit l'affaire, quel que soit son
+rôle. La règle vit dans la politique ; l'éteindre d'avance ferait passer une décision de la base pour
+une décision d'écran (`CLAUDE.md` §10), et se tromperait dès qu'un droit fin aurait changé depuis le
+chargement.
+
+### 4 ter.4 Le fil ENREGISTRE le geste, et le client n'écrit rien pour cela
+
+MESURÉ : le `PATCH` de l'administratrice fait naître dans `card_events` une ligne
+`type = 'trashed'`, `actor_id` = son profil. Le trigger existe depuis `0016` et sa forme actuelle
+depuis `0020` — `case when new.deleted_at is null then 'restored' else 'trashed' end` —, et
+`docs/DESIGN_SYSTEM.md` §5.11 déclare **déjà** la famille « Cycle de vie », son icône `Trash2` et son
+libellé `timeline.event.trashed` (« Affaire mise à la corbeille »).
+
+Trois conséquences, et aucune n'est du travail neuf :
+
+1. la charge d'écriture ne contient que `deleted_at` — comme au §4 bis.5, `deleted_by` est fermée au
+   client par le privilège de colonne de `0037` et l'y ajouter ferait refuser toute l'écriture en
+   `42501` ;
+2. l'écran **n'écrit aucun événement** : le fil est alimenté par la base, et un événement posé par le
+   client serait une trace que rien ne garantit ;
+3. l'événement est **lisible après restauration**, sur la route redevenue accessible. C'est la seule
+   forme d'historique du geste, et elle suffit.
+
+### 4 ter.5 Après le geste, l'écran DIT que l'affaire est à la corbeille — il ne dit pas « introuvable »
+
+MESURÉ, et c'est le point qui décide de tout ce chapitre : `useContenuCard` lit `cards` avec
+`deleted_at=is.null` (`webapp/src/lib/formulaire.ts`). Après le geste, la relecture rend **zéro
+ligne**, et l'écran retomberait sur son état « Affaire introuvable ».
+
+**Ce serait un mensonge**, et exactement la « valeur par défaut trompeuse » de `CLAUDE.md` §18 :
+l'affaire existe, elle vient d'être retirée par celui qui regarde, et elle se restaure depuis un
+écran livré. Le succès du geste rend donc un état **dédié**, qui :
+
+- nomme ce qui vient d'arriver, sous forme de `role="status"` (`docs/DESIGN_SYSTEM.md` §8) ;
+- offre **deux chemins**, et pas un seul : revenir au channel d'où l'on vient, et ouvrir la corbeille
+  où l'affaire se restaure. Un seul chemin obligerait à retrouver la corbeille de mémoire ;
+- **n'offre aucune annulation sur place.** Restaurer est le geste de l'écran de corbeille, avec ses
+  trois issues et son refus nommé (§4.5) ; en poser un raccourci ici dupliquerait une écriture dont
+  la garde de `0038` peut refuser une variante, sans le vocabulaire pour l'expliquer.
+
+Cet état est produit **sans relecture** : c'est le résultat du `PATCH` qui le décide, et une
+relecture ne rendrait rien à afficher. Il ne remplace pas l'état « introuvable », qui reste ce que
+voit celui qui ouvre l'adresse d'une affaire déjà retirée — il ne l'a pas retirée, il ne sait pas
+qu'elle existe, et lui dire l'inverse renseignerait un appelant sans droit sur l'existence d'une card
+(`RouteCard.tsx`, `docs/SPEC-permissions-rls.md` §7).
+
+### 4 ter.6 L'horodatage, et ce que le geste ne fait délibérément PAS
+
+`deleted_at` reçoit `new Date().toISOString()`, pour le motif entier du §4 bis.4 : la date **fixe**
+des objets en corbeille du seed, et la reproductibilité qui en dépend (`CLAUDE.md` §8). La limite est
+déjà portée au §7 point 3 et n'est pas dupliquée ici.
+
+- **Le geste n'archive pas au passage** : les deux états sont indépendants (§3.1), et une affaire
+  archivée mise à la corbeille reste archivée.
+- **Il est offert sur une affaire archivée** comme sur une affaire active — même règle qu'au
+  §4 bis.6, et l'écran de détail ne distingue pas les deux états aujourd'hui.
+- **Il n'y a aucun geste de masse**, aucune sélection multiple : le §4.7 n'en veut pas dans la
+  corbeille, et il n'y en a pas davantage ici.
+- **Aucune suppression physique**, jamais (§2.3, §2.4).
+
 ## 5. Preuves attendues
 
 | Niveau | Preuves |
@@ -527,6 +656,12 @@ l'y ajouter ferait refuser toute l'écriture en `42501`.
    pas arbitrée (§6 point 1). Le passage à un horodatage serveur appartient à cette décision, avec le
    problème qu'il pose au seed : ses trois objets en corbeille portent une date **fixe**, sur laquelle
    la reproductibilité du jeu de démonstration repose (`CLAUDE.md` §8).
-4. **Le geste de mise à la corbeille n'existe que pour un track et un channel** (§4 bis.1). Une
-   affaire ne se retire toujours d'aucun écran : le seul chemin est l'API. La couture est nommée au
-   §4 bis.1 et la tranche qui la reprend devra d'abord mesurer où ce geste vit.
+4. **Le geste d'une affaire n'existe que sur sa route de détail** (§4 ter.1). Ni le board ni la vue
+   liste ne l'offrent, et les deux motifs sont écrits : le menu d'une carte de board ne porte que les
+   transitions déclarées (`docs/DESIGN_SYSTEM.md` §5.1), et le tableau de la vue liste ne déclare
+   aucune colonne d'actions (§5.9). Retirer une affaire depuis l'une de ces deux vues demanderait
+   d'abord de leur ajouter une surface de commandes, ce qui est une décision qu'aucune unité ne
+   porte aujourd'hui.
+5. **Aucun geste de masse.** Ni sélection multiple, ni « vider », ni retrait en lot — sur aucune des
+   trois surfaces. Le volume que cela viserait est celui que la pagination du point 1 borne, et les
+   deux appartiennent à la même décision de rétention (§6 point 1).

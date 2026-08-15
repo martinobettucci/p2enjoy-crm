@@ -162,6 +162,33 @@ Deux colonnes sur grand écran, empilées sous 1024 px :
 L'adresse email de la card est affichée en monospace, avec une action de copie et une infobulle
 expliquant son usage.
 
+**Le geste de mise à la corbeille d'une affaire vit ici — `CRM-077`, `docs/SPEC-corbeille.md`
+§4 ter.** C'est la première commande d'écriture que cet écran porte, et les règles ci-dessous sont
+celles qu'elle introduit. Tout ce que le §5.13 pose pour l'arborescence vaut sans être répété :
+confirmation dans le flux du document, jamais en modale ; focus entrant dans la confirmation ;
+alerte de refus dans le bloc concerné.
+
+- **La commande est en bas de la colonne GAUCHE, sous le formulaire**, dans un bloc séparé par une
+  bordure haute `--color-border`. La colonne droite porte le fil (§5.10, §5.11) : elle **raconte** ce
+  qui est arrivé à l'affaire, et un geste qui agit n'appartient pas au récit. Le bloc est en bas
+  parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche.
+- **Bouton destructif de variante contour** (§5.5), icône `Trash2` — la même que la sixième commande
+  du §5.13, et pour la même raison : `Archive` dirait un autre état. Le libellé nomme le geste, pas
+  l'objet ; c'est la confirmation qui nomme l'affaire (§6).
+- **Sa confirmation ne porte AUCUNE énumération**, contrairement à celle du §5.13 : une affaire n'a
+  pas d'enfant, et les quatre états du compte n'y ont donc aucun objet. Elle n'écrit pas non plus
+  « aucun objet ne devient inaccessible » — cette phrase répond à une mesure, et ici aucune mesure
+  n'a lieu.
+- **Le succès remplace le contenu de l'écran, il ne le laisse pas mentir.** L'affaire quitte la
+  lecture de sa propre route — mesuré : elle est lue `deleted_at=is.null` —, et « Affaire
+  introuvable » serait faux pour celui qui vient de la retirer. Le bloc de succès porte
+  `role="status"` (§8), nomme l'état, et offre **deux** chemins : le channel, et la corbeille où
+  l'affaire se restaure. Aucune annulation sur place : restaurer est le geste du §5.16, avec ses
+  refus.
+- **La commande n'est jamais éteinte d'avance**, quel que soit le rôle — même règle que « Restaurer »
+  au §5.16. Mesuré : un business developer réussit ce geste là où il échoue sur un track, la
+  politique portant sur le droit d'écriture du channel et non sur un rôle.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des
