@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **`docs/CloudWorker.md` : la campagne de preuves quitte l'ouverture de session** (décision 420).
+  Le §2.3 ordonnait « la pile debout, tu DOIS exécuter les vraies preuves applicables » — huit
+  commandes plus tous les `verify-*.sh` — **avant** les chapitres qui disent quoi faire et comment
+  choisir l'unité. Sur une tâche horaire, quarante à soixante-dix minutes étaient dépensées à
+  mesurer un dépôt que la session n'avait pas encore modifié.
+- **La séquence est désormais écrite en une ligne au §0** : Git → pile → choisir l'unité → spéc
+  complète committée → coder → committer et pousser **au fil de l'eau, sans attendre d'avoir
+  prouvé** → prouver son unité → campagne complète en fin de session → boucle de correction.
+- **Un §3.2 neuf porte l'ordre de travail**, avec l'exception qui manquait : on ne réécrit **pas** la
+  spécification d'une unité `[~]` dont la spéc existe déjà et couvre le reste à livrer — on code.
+- **Le §4.3 porte une boucle de correction explicite** : corriger la cause, pousser la correction
+  immédiatement, rejouer la preuve concernée seule, la campagne une dernière fois seulement. Sortie
+  de boucle sans mensonge, et budget explicite si le temps manque.
+- **Le §2.4 devient un diagnostic** : la ligne de base ne s'établit que lorsqu'une preuve rougit, et
+  sur cette preuve seule.
+- **Rien n'est relâché** : aucune preuve supprimée, aucune Definition of Done allégée. Ce qui change
+  est **quand** la campagne s'exécute, pas **si**.
+
+### Documentation
+
 - **Le registre des contradictions est vide** (décisions 408 à 419). Les dix-neuf dernières entrées
   ouvertes sont arbitrées, sur instruction du responsable de trancher automatiquement tout ce qui
   restait en suspens, et retirées vers l'index — qui passe de **cent à cent dix-neuf**. Le document

@@ -18,7 +18,7 @@ Cette tâche s'exécute toutes les heures, et CHAQUE EXÉCUTION PART D'UN CHECKO
 
 En conséquence, et sans exception :
 
-- Committe et pousse au fil de l'eau, pas seulement à la fin : dès qu'un morceau cohérent tient debout, par exemple une spécification écrite, une migration qui s'applique ou une preuve qui passe, tu committes et tu pousses. Ta session peut être interrompue à tout instant.
+- Committe et pousse au fil de l'eau, pas seulement à la fin : dès qu'un morceau cohérent tient debout, par exemple une spécification écrite, une migration qui s'applique ou un écran qui rend, tu committes et tu pousses. **Tu n'attends PAS d'avoir prouvé pour pousser.** Ta session peut être interrompue à tout instant.
 - Ne termine JAMAIS ta session sur du travail non poussé.
 - Ne termine JAMAIS ta session sur une branche autre que "main".
 - Ne termine JAMAIS ta session en HEAD détaché.
@@ -52,6 +52,20 @@ git pull --rebase origin main
 Résous les conflits SUR PLACE, puis pousse.
 
 Ne renonce jamais à pousser, et ne contourne jamais un conflit par une branche.
+
+**L'ORDRE DE LA SESSION, EN UNE LIGNE**, détaillé au §3.2 et au §4.3 :
+
+```
+Git → Docker → pile + seed → choisir l'unité → lire et écrire la spéc COMPLÈTE → committer
+     → coder → committer et pousser au fil de l'eau → prouver SON unité
+     → [fin de session] campagne complète → boucle de correction → committer, pousser
+     → journal, backlog, garde Git, compte rendu
+```
+
+**La campagne complète de preuves ne s'exécute JAMAIS en ouverture de session.** Elle dure quarante à
+soixante-dix minutes ; lancée avant d'avoir choisi une unité, elle consomme la session entière pour
+mesurer un dépôt que tu n'as pas encore modifié. Elle est une opération de FIN, suivie d'une boucle
+de correction.
 
 ## 1. BRANCHE : QUEL QUE SOIT L'ÉTAT INITIAL, TU DOIS TRAVAILLER ET FINIR SUR "main"
 
@@ -448,38 +462,48 @@ docker compose ps
 
 Les 18 services doivent être "healthy" avant de lancer les preuves qui nécessitent la pile.
 
-### 2.3. PREUVES À EXÉCUTER
+**La pile debout, tu vas directement au §4 pour choisir ton unité, puis au §3.2 pour travailler.**
+Tu ne lances aucune preuve maintenant — voir le §2.3 juste en dessous, qui dit pourquoi.
 
-La pile debout, tu DOIS exécuter les vraies preuves applicables :
+### 2.3. LA PILE EST DEBOUT — TU NE LANCES AUCUNE PREUVE MAINTENANT
+
+**RÈGLE DU RESPONSABLE, 2026-08-15, NON NÉGOCIABLE.** La pile montée et seedée, tu passes
+IMMÉDIATEMENT au §4 pour choisir ton unité, puis au §3.2 pour travailler. **Tu ne lances PAS la
+campagne de preuves à l'ouverture de la session.**
+
+Le motif est mesuré : la campagne complète prend **quarante à soixante-dix minutes**. Lancée avant
+d'avoir choisi une unité, elle consomme la majorité d'une session d'une heure pour produire une
+information que tu n'utilises pas encore — et elle t'apprend l'état d'un dépôt que tu n'as pas
+modifié. Ce temps appartient au produit (§4.2 bis).
+
+Les preuves du dépôt sont, pour mémoire, et **elles s'exécutent aux moments définis au §3.2** :
 
 ```
-npm run test:sql
-npm run e2e:api
-npm run e2e:ui
-npm run e2e:mail
-npm run test:unit
-npm run typecheck
-npm run build
-pytest
-```
-
-ainsi que les harnais :
-
-```
+npm run test:sql        npm run e2e:api        npm run e2e:ui        npm run e2e:mail
+npm run test:unit       npm run typecheck      npm run build         pytest
 scripts/verify-*.sh
 ```
 
-Les captures des preuves d'interface sont produites ET OBSERVÉES conformément à "CLAUDE.md", section 16.
+Deux moments, et deux seulement :
 
-### 2.4. ÉTABLIS TOUJOURS UNE LIGNE DE BASE
+- **pendant le travail** — uniquement les preuves de TON unité : sa suite pgTAP, ses scénarios
+  d'API, son harnais dédié. Ciblées, courtes, rejouées autant de fois qu'il le faut ;
+- **en fin de session** — la campagne complète, une seule fois, suivie de la boucle de correction
+  du §4.3.
 
-Ne conclus jamais à une régression avant d'avoir établi la ligne de base.
+Les captures des preuves d'interface sont produites ET OBSERVÉES conformément à "CLAUDE.md",
+section 16.
 
-Plusieurs harnais peuvent rendre des anomalies PRÉEXISTANTES et étrangères à ton changement.
+### 2.4. LIGNE DE BASE — UNIQUEMENT QUAND UNE PREUVE ROUGIT
 
-Certaines sont liées à cet environnement.
+C'est une procédure de **diagnostic**, pas une procédure d'ouverture. Tu ne l'exécutes que lorsqu'une
+preuve est rouge et que tu t'apprêtes à conclure à une régression.
 
-Exemple : tu es "root", donc :
+Ne conclus JAMAIS à une régression avant d'avoir établi la ligne de base.
+
+Plusieurs harnais rendent des anomalies PRÉEXISTANTES et étrangères à ton changement.
+
+Certaines tiennent à cet environnement. Exemple : tu es "root", donc :
 
 ```
 [ -r fichier ]
@@ -491,21 +515,23 @@ peut être vrai même sur un fichier :
 chmod 000
 ```
 
-Le proxy peut également faire échouer certains contrôles qui reconstruisent une image SANS certificat.
+Le proxy peut également faire échouer certains contrôles qui reconstruisent une image SANS
+certificat.
 
-Pour comparer proprement :
+Pour comparer proprement, et **sur la seule preuve qui rougit** — jamais sur la campagne entière :
 
 ```
 git stash -u
 ```
 
-rejoue le harnais sur la ligne de base, puis :
+rejoue CE harnais sur la ligne de base, puis :
 
 ```
 git stash pop
 ```
 
-et compare les deux bilans.
+et compare les deux bilans. Si l'anomalie est présente des deux côtés, elle est préexistante :
+consigne-la au registre (§3.1) et poursuis ton unité.
 
 ### 2.5. SI LA PILE NE MONTE PAS
 
@@ -618,6 +644,52 @@ avec sa mesure.
 
 Laisse le comportement inchangé plutôt que de corriger ce défaut au passage.
 
+### 3.2. ORDRE DE TRAVAIL D'UNE SESSION — SPÉCIFIER, CODER, POUSSER, PUIS PROUVER
+
+**RÈGLE DU RESPONSABLE, 2026-08-15, NON NÉGOCIABLE.** Voici la séquence, et il n'y en a pas d'autre.
+Tu ne réordonnes rien, et tu ne remontes pas la campagne de preuves en tête de session.
+
+**1. Tu choisis ton unité** — §4.1 puis §4.2. Rien n'est écrit avant ce choix.
+
+**2. Tu lis les spécifications de l'unité, INTÉGRALEMENT.** Pas en diagonale, pas seulement le
+chapitre qui te paraît concerné : le document entier qui porte la fonctionnalité, plus
+`docs/DESIGN_SYSTEM.md` en entier si tu touches à l'interface (`CLAUDE.md` §4).
+
+**3. Tu écris la spécification COMPLÈTE de ce que tu vas coder, et tu la committes AVANT la première
+ligne de code.** Contrat vérifiable — comportements, refus, cas limites, contrat d'API ligne à ligne
+—, écrit après mesure sur la pile réelle et non d'après ton souvenir. Commit documentaire dédié,
+poussé. C'est `CLAUDE.md` §5, et c'est la règle qui protège le travail d'une session interrompue.
+
+> **UNIQUE EXCEPTION : tu reprends une fonctionnalité laissée incomplète.** Si l'unité est `[~]` et
+> que sa spécification EXISTE DÉJÀ et couvre ce que tu vas coder, tu ne la réécris pas. Tu la lis,
+> tu vérifies qu'elle décrit bien ce qui reste à livrer, et **tu passes directement au code**. Une
+> session qui réécrit une spécification déjà écrite pour se donner un commit documentaire est une
+> session en échec (§4.2 bis). Si en la lisant tu constates qu'elle est incomplète ou fausse sur le
+> reste à livrer, alors et alors seulement tu la complètes — sur ce point précis, pas en entier.
+
+**4. Tu codes.** Une unité cohérente à la fois, séquentiellement, avec ses commentaires `@spec` et
+`@verifies` écrits dans le même geste que le code.
+
+**5. Tu committes et tu pousses AU FIL DE L'EAU.** Dès qu'un morceau cohérent tient debout — une
+migration qui s'applique, un écran qui rend, un module qui compile —, tu committes et tu pousses.
+**Tu n'attends pas d'avoir prouvé pour pousser.** Une session interrompue à la minute 40 doit laisser
+derrière elle du code poussé, pas un arbre de travail perdu (§0).
+
+**6. Tu prouves TON unité, et elle seule, pendant que tu codes.** Sa suite pgTAP, ses scénarios
+d'API, son harnais dédié, ses captures. Ce sont des exécutions courtes et ciblées, que tu rejoues
+autant de fois que nécessaire. **Tu ne lances pas la campagne complète ici.**
+
+**7. En fin de session seulement, tu lances la campagne complète**, une fois — et tu entres dans la
+boucle de correction du §4.3.
+
+**Ce que cette séquence interdit explicitement**, parce que chacune de ces erreurs a été observée :
+
+- lancer `npm run test:sql`, `e2e:*` ou l'ensemble des `verify-*.sh` **avant d'avoir choisi une
+  unité** — quarante à soixante-dix minutes dépensées avant le premier geste utile ;
+- attendre que tout soit prouvé pour committer — une session interrompue ne laisse alors rien ;
+- coder une fonctionnalité neuve sans spécification écrite et committée d'abord ;
+- réécrire la spécification d'une unité `[~]` dont la spécification existe déjà, au lieu de coder.
+
 ## 4. COMMENT TU DÉTERMINES CE QU'IL RESTE À FAIRE
 
 Ce prompt ne contient DÉLIBÉRÉMENT aucun état du projet, et n'en contiendra jamais.
@@ -715,32 +787,61 @@ paragraphes, pas en essai. Les longues analyses rétrospectives, les bilans
 chiffrés de bilans précédents et les relectures du registre pour lui-même
 sont interdits : ce temps appartient au produit.
 
-### 4.3. COMMENT TERMINER LA SESSION
+### 4.3. COMMENT TERMINER LA SESSION — CAMPAGNE, PUIS BOUCLE DE CORRECTION
 
-Avant la fin de chaque session :
+C'est **ici**, et nulle part avant, que la campagne complète s'exécute. Ton code est déjà écrit,
+committé et poussé (§3.2, point 5) : ce qui suit ne peut donc plus rien te faire perdre.
 
-1. écris dans "docs/JOURNAL.md" une entrée datée disant :
+**1. Lance la campagne complète, une fois :**
+
+```
+npm run test:sql        npm run e2e:api        npm run e2e:ui        npm run e2e:mail
+npm run test:unit       npm run typecheck      npm run build         pytest
+scripts/verify-*.sh
+```
+
+**2. Entre dans la BOUCLE DE CORRECTION.** Tant qu'il reste une anomalie **imputable à ton
+changement** :
+
+1. isole la cause. Si tu t'apprêtes à conclure à une régression, établis d'abord la ligne de base
+   du §2.4 **sur cette preuve seule** — une anomalie présente des deux côtés du `git stash` est
+   préexistante, elle se consigne au registre (§3.1) et ne t'appartient pas ;
+2. corrige la CAUSE, jamais le symptôme. Aucun `try/catch` vide, aucune temporisation, aucun test
+   désactivé, aucun contournement destiné à verdir une preuve (§3.1) ;
+3. **committe et pousse la correction immédiatement**, sans attendre le tour de boucle suivant ;
+4. rejoue **la preuve concernée**, pas la campagne entière ;
+5. quand toutes les preuves ciblées sont vertes, rejoue la campagne complète une dernière fois pour
+   constater qu'aucune correction n'en a cassé une autre.
+
+**Sortie de boucle sans avoir tout verdi.** Si le temps manque ou si une anomalie te dépasse, tu
+sors — mais tu ne mens pas : l'unité reste `[~]`, l'écart est nommé précisément, et les preuves qui
+restent à exécuter sont listées. Une anomalie préexistante ou étrangère à ton unité n'est PAS un
+motif de rester en boucle : consigne-la et sors.
+
+**Budget.** Si la campagne complète dépasse le temps qui te reste, exécute d'abord les suites que
+ton changement touche, puis autant du reste que possible, et **dis exactement ce que tu n'as pas
+exécuté**. Une campagne partielle annoncée comme telle vaut mieux qu'une session qui ne pousse rien.
+
+**3. Écris dans "docs/JOURNAL.md" une entrée datée disant :**
 
    - ce que tu as mesuré ;
    - ce que tu as modifié ;
    - ce que tu as vérifié ;
    - ce qui a échoué ;
    - où tu t'arrêtes ;
-   - où l'exécution suivante doit reprendre ;
+   - où l'exécution suivante doit reprendre.
 
-2. mets "docs/BACKLOG.md" au véritable état de l'unité ;
+**4. Mets "docs/BACKLOG.md" au véritable état de l'unité**, et nomme précisément les preuves qui
+restent à exécuter.
 
-3. nomme précisément les preuves qui restent à exécuter ;
+**5. Committe ces mises à jour et pousse sur "origin/main".**
 
-4. committe ces mises à jour ;
+**6. Exécute la garde Git finale** (§0 et §5).
 
-5. pousse sur "origin/main" ;
+**7. Rédige et publie le compte rendu complet du §4.4**, une fois la garde du point 6 satisfaite.
 
-6. exécute la garde Git finale ;
-
-7. rédige et publie le compte rendu complet du §4.4, une fois la garde du point 6 satisfaite.
-
-Une session qui finit sans mettre à jour le journal et le backlog condamne potentiellement la suivante à redécouvrir l'état par elle-même.
+Une session qui finit sans mettre à jour le journal et le backlog condamne potentiellement la
+suivante à redécouvrir l'état par elle-même.
 
 ### 4.4. COMPTE RENDU FINAL DE SESSION, TOUJOURS, SANS EXCEPTION
 

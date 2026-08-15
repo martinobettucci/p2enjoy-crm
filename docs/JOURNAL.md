@@ -15372,3 +15372,63 @@ qu'elle soit révocable d'un mot.
 tout travail reste entière. Seule la manière de la vérifier change.
 
 **Porteur :** `docs/CloudWorker.md` et le crochet de vérification de fin de session.
+
+### Décision 420 — La campagne de preuves est une opération de fin de session, jamais d'ouverture
+
+**2026-08-15 — instruction explicite du responsable, après observation du comportement réel des
+sessions planifiées.**
+
+**Le constat, et il vient de l'usage.** « Parfois elle commence par lancer la suite de tests
+complète avant même de faire quoi que ce soit, et la suite peut être très longue — 40 à 70 minutes. »
+Ce n'est pas une dérive de l'agent : **c'est ce que `docs/CloudWorker.md` disait**. Le §2.3
+s'intitulait « PREUVES À EXÉCUTER » et posait, sans condition, « la pile debout, tu DOIS exécuter les
+vraies preuves applicables », suivi des huit commandes et de tous les `scripts/verify-*.sh`. Il était
+placé **avant** le §3 (ce qu'il faut faire) et le §4 (comment choisir l'unité). Un agent qui lit le
+document de haut en bas monte la pile, lance la campagne, et n'a encore rien décidé de faire. Le §2.4
+aggravait : « ÉTABLIS TOUJOURS UNE LIGNE DE BASE », avec un `git stash` / `stash pop` qui implique de
+**rejouer** la campagne.
+
+Sur une tâche qui s'exécute toutes les heures, cela consomme la session entière pour mesurer un
+dépôt que la session n'a pas encore modifié.
+
+**La séquence retenue, écrite au §0, détaillée au §3.2 et au §4.3 :**
+
+```
+Git → Docker → pile + seed → choisir l'unité → lire et écrire la spéc COMPLÈTE → committer
+     → coder → committer et pousser au fil de l'eau → prouver SON unité
+     → [fin de session] campagne complète → boucle de correction → committer, pousser
+     → journal, backlog, garde Git, compte rendu
+```
+
+**Quatre changements, et le motif de chacun.**
+
+1. **Le §2.3 ne lance plus rien.** Il renvoie au §4 pour choisir l'unité, puis au §3.2 pour
+   travailler, et nomme les deux seuls moments où les preuves s'exécutent : ciblées sur l'unité
+   pendant le travail, complètes en fin de session.
+2. **Le §2.4 devient un diagnostic.** La ligne de base ne s'établit que lorsqu'une preuve rougit et
+   qu'on s'apprête à conclure à une régression — et **sur cette preuve seule**, jamais sur la
+   campagne. Une anomalie présente des deux côtés du `stash` est préexistante : elle se consigne et
+   ne retient pas la session.
+3. **Un §3.2 neuf porte la séquence de travail.** Spécification lue **intégralement** et écrite
+   **complète** avant la première ligne de code, committée dans un commit documentaire dédié
+   (`CLAUDE.md` §5) — avec **une exception explicite** : lorsqu'on reprend une unité `[~]` dont la
+   spécification existe déjà et couvre le reste à livrer, on ne la réécrit pas, on code. Réécrire
+   une spécification déjà écrite pour se donner un commit documentaire est une session en échec
+   (§4.2 bis). Puis code, puis **commit et push au fil de l'eau sans attendre d'avoir prouvé** — une
+   session interrompue à la minute 40 doit laisser du code poussé, pas un arbre perdu.
+4. **Le §4.3 porte la campagne et une BOUCLE DE CORRECTION explicite** : isoler la cause, corriger la
+   cause et non le symptôme, **committer et pousser la correction immédiatement**, rejouer la preuve
+   concernée seule, et ne rejouer la campagne entière qu'une dernière fois pour constater qu'aucune
+   correction n'en a cassé une autre. Sortie de boucle sans mensonge : l'unité reste `[~]`, l'écart
+   est nommé, les preuves dues sont listées. Budget explicite : si le temps manque, les suites
+   touchées d'abord, et **dire exactement ce qui n'a pas été exécuté**.
+
+**Ce qui n'est pas relâché, et il faut le dire pour éviter la lecture inverse.** Aucune preuve n'est
+supprimée, aucune exigence de la Definition of Done n'est allégée, et « n'annonce jamais une preuve
+que tu n'as pas exécutée » reste entier. Ce qui change est **quand** la campagne s'exécute, pas
+**si**. Une unité ne passe toujours à `[x]` que si toutes ses preuves sont réellement vertes.
+
+**Lié à :** INC-111 et la décision 419 — même document, même famille : une consigne dont la lettre
+produit un comportement que son esprit ne veut pas. Le §4.2 bis (le temps appartient au produit) et
+le §0 (rien n'existe tant que ce n'est pas poussé) sont les deux règles que cette décision rend enfin
+applicables ensemble.
