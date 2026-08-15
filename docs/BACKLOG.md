@@ -6998,7 +6998,7 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       2026-08-15) : la barre latérale garde un track que l'administration vient de retirer, jusqu'au
       prochain chargement — MESURÉ à l'identique sur l'**archivage**, donc antérieur. Cause : la
       coquille et l'écran tiennent deux copies de la même liste. Comportement inchangé, travail dû
-      porté par `CRM-075` (`docs/JOURNAL.md` décision 420, `docs/ARBITRAGES.md` §1).
+      porté par `CRM-075` (`docs/JOURNAL.md` décision 421, `docs/ARBITRAGES.md` §1).
 
 - [ ] **Reste dû, dans cet ordre** : le geste de mise à la corbeille d'une **affaire** — sa surface
       (board, vue liste ou formulaire) demande sa propre mesure, et sa confirmation ne portera aucune

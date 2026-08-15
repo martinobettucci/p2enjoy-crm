@@ -15433,7 +15433,7 @@ produit un comportement que son esprit ne veut pas. Le §4.2 bis (le temps appar
 le §0 (rien n'existe tant que ce n'est pas poussé) sont les deux règles que cette décision rend enfin
 applicables ensemble.
 
-### Décision 420 — Le geste de mise à la corbeille est livré, et la coquille garde une copie que l'écran ne rafraîchit pas
+### Décision 421 — Le geste de mise à la corbeille est livré, et la coquille garde une copie que l'écran ne rafraîchit pas
 
 **2026-08-15.** Suite immédiate de la décision 406, qui posait le contrat de la septième tranche de
 `CRM-077` avant toute ligne de code. La tranche est livrée : « Mettre à la corbeille » existe pour un
@@ -15464,6 +15464,10 @@ conserve** celui de corbeille.
    de barre latérale laissé ouvert par le redimensionnement — un artefact de la preuve. Les quatre
    captures partent maintenant d'un chargement à la bonne taille, comme le fait déjà le tableau de la
    corbeille.
+
+*Numérotée 421 et non 420 : une session concurrente a poussé sa décision 420 pendant celle-ci, et
+un numéro d'ordre s'attribue en relisant le fichier, jamais en incrémentant le dernier lu — c'est le
+mode de défaillance d'INC-069, évité ici de justesse.*
 
 **Un constat étranger, MESURÉ et tranché sans passer par le registre** (doctrine du 2026-08-15,
 décision 407) : la **barre latérale garde un track que l'administration vient de retirer**, jusqu'au
@@ -15499,6 +15503,22 @@ qu'elle proposait en attendant — rend `test:sql` à **36 fichiers / 2004 asser
 `verify-manual.sh`, `verify-tracks.sh` et `verify-channels.sh` — aucun ne porte sur la surface de
 cette tranche. `verify-webapp.sh` en particulier n'est pas rejoué : la décision 410 a tranché qu'il
 n'est pas un verdict de livraison pour l'interface, et `e2e:ui` seul l'est.
+
+**Deux règles ont changé PENDANT cette session, et il faut le dire pour la suivante.**
+
+D'abord, `docs/CloudWorker.md` §2.3 interdit désormais la campagne de preuves à l'ouverture. Cette
+session l'avait lancée — la règle est arrivée par une session concurrente après son démarrage. La
+ligne de base ainsi obtenue a servi (elle a montré l'arbre distant vert avant toute modification),
+mais elle a coûté le temps que le §2.3 décrit, et elle ne doit plus être prise à l'ouverture.
+
+Ensuite, **`docs/CloudWorker.md` §3.1 et la doctrine du registre se contredisent**, et la
+contradiction est tranchée ici plutôt que laissée à la session suivante : le §3.1 envoie tout défaut
+étranger vers `docs/INCONSISTENCY_REPORT.md`, tandis que la doctrine posée le 2026-08-15 en tête de
+ce registre — décision 407 — réserve une entrée à ce qu'un agent **ne peut pas trancher seul**. La
+règle la plus récente ET la plus spécifique gouverne le contenu du registre : un défaut **mesuré**,
+dont le remède est identifié et le porteur nommé, se tranche, se consigne au journal et son travail
+restant part dans `docs/ARBITRAGES.md`. Le registre reste le canal des choix qui remontent à
+l'humain. C'est ce qui a été fait du constat de la barre latérale ci-dessus.
 
 **Où reprendre.** `CRM-077` reste `[~]`, et il lui manque **deux** choses, dans cet ordre : le geste
 de mise à la corbeille d'une **affaire**, dont la surface — board, vue liste ou formulaire — demande

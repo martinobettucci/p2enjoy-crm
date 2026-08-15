@@ -40,7 +40,7 @@ des questions.
 | **417** | INC-115 | réécrire le §9.7 de `docs/SPEC-seed.md` et la preuve n° 13 pour asserter la **réouverture** au lieu d'une absence | reprise `CRM-012` |
 | **418** | INC-110 | instrumenter `inbound_poll_write_failed` avec le détail assaini de l'erreur ; inscrire dans `docs/DAT.md` que `down -v` n'est pas une remise à zéro complète | `CRM-051`, `docs/DAT.md` |
 | **419** | INC-111 | la vérification de fin de session porte sur le **fond** — document lu en entier avant le backlog et avant toute modification — et non sur le rang de l'appel d'outil | `docs/CloudWorker.md` |
-| **420** | — (constat mesuré, tranché sans passer par le registre, doctrine du 2026-08-15) | la barre latérale et l'administration tiennent **deux copies** de la liste des tracks, et une écriture de l'écran ne rafraîchit que la sienne. MESURÉ sur l'ARCHIVAGE — le track reste dans la barre jusqu'au prochain chargement de page —, donc antérieur à la corbeille. **Règle** : une écriture qui change ce que la coquille affiche doit pouvoir l'invalider | `CRM-075` |
+| **421** | — (constat mesuré, tranché sans passer par le registre, doctrine du 2026-08-15) | la barre latérale et l'administration tiennent **deux copies** de la liste des tracks, et une écriture de l'écran ne rafraîchit que la sienne. MESURÉ sur l'ARCHIVAGE — le track reste dans la barre jusqu'au prochain chargement de page —, donc antérieur à la corbeille. **Règle** : une écriture qui change ce que la coquille affiche doit pouvoir l'invalider | `CRM-075` |
 
 **Bloqueur d'environnement, rappelé ici parce qu'il commande le reste.** Le registre d'images Docker
 a été injoignable (INC-096, arbitrée) : sans pile, aucune de ces mises en œuvre n'est **prouvable**,

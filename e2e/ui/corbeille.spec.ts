@@ -363,7 +363,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 			// elle, garde le track jusqu'au prochain chargement : elle lit sa propre copie dans
 			// `AppShell`, qu'aucune écriture de cet écran ne rafraîchit. MESURÉ à l'identique sur
 			// l'ARCHIVAGE de `CRM-075` — donc antérieur à cette tranche, et laissé inchangé :
-			// `docs/JOURNAL.md` décision 420, mise en œuvre due par `CRM-075` (`docs/ARBITRAGES.md`).
+			// `docs/JOURNAL.md` décision 421, mise en œuvre due par `CRM-075` (`docs/ARBITRAGES.md`).
 			// Assertir la page entière aurait rendu cette preuve rouge pour un défaut étranger, et
 			// l'aurait fait relâcher plus tard sans que personne sache pourquoi.
 			const administration = page.getByRole('region', {
@@ -401,7 +401,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 			await connecter(page, ADMIN)
 			await page.goto('/reglages/arborescence')
 			// Portée limitée à la région d'administration : la barre latérale rend le même nom, et
-			// c'est celui de l'écran qui nous intéresse ici (décision 420, ci-dessus).
+			// c'est celui de l'écran qui nous intéresse ici (décision 421, ci-dessus).
 			await expect(
 				page
 					.getByRole('region', { name: "Tracks et channels de l'espace de travail" })
