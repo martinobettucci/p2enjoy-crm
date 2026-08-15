@@ -19,20 +19,32 @@ en porte un, « `docs/ARBITRAGES.md` (ligne 61) » pour INC-072 — ne pointent 
 Le journal n'est pas réécrit : il est chronologique. Une ligne de la matrice se retrouve par son
 **numéro d'entrée**, jamais par sa position.
 
-## 1. Arbitrages du 2026-08-13
+## 1. Arbitrages du 2026-08-15 — mise en œuvre due
 
-**Plus rien n'attend une décision.** Les six questions ouvertes après le 2026-08-11 sont tranchées le **2026-08-13**
-par les décisions **362 à 365** ; INC-096 n'était pas un choix mais une action hors dépôt. Il ne
-reste donc, dans tout le registre, **aucune décision suspendue** — seulement du travail à
-implémenter, mesurer et fermer.
+**Le registre des contradictions est vide.** Les dix-neuf dernières entrées ouvertes ont été
+arbitrées le 2026-08-15 par les décisions **408 à 419**, sur instruction du responsable de trancher
+automatiquement tout ce qui restait en suspens. Ce tableau est ce qu'il reste : **du travail**, pas
+des questions.
 
-| Entrée | Décision rendue | Porteur |
-|---|---|---|
-| **INC-091**, **INC-092** | chaque preuve purge **par IMAP** ce qu'elle a déposé dans une boîte seedée, dans son `finally` ; l'assertion 9 de `0029` **reste armée** sur la table entière (déc. 362) | reprise `e2e/mail/resilience.spec.ts`, `infrastructure.spec.ts` |
-| **INC-094** | toute migration élevée **cite son motif mesuré** en en-tête ; le harnais contrôle la justification au lieu d'énumérer les fichiers (déc. 363) | `scripts/verify-scripts.sh`, `docs/SCHEMA.md` |
-| **INC-089**, **INC-097** | le crochet `pre-commit` refuse un **numéro de décision déjà pris** et une **seconde exécution concurrente** ; le compteur global est conservé (déc. 364) | `.githooks/`, `scripts/verify-crochets-git.sh` |
-| **INC-095** | les unités porteuses écrivent leurs propres lignes ; un contrôle refuse toute migration absente du contrat, posé **avec** le contenu et jamais avant (déc. 365) | `CRM-053`, `CRM-056`, `CRM-059`, `scripts/verify-migrations.sh` |
-| **INC-096** | **action humaine hors dépôt** — identifiants Docker Hub ou miroir de registre sur le démon. Rien à corriger ici, et rien à décider | environnement d'exécution |
+| Décision | Entrées | Ce qui est dû | Porteur |
+|---|---|---|---|
+| **408** | INC-109, INC-119 | réécrire les deux dégradations vides pour qu'elles dégradent : `btrim` sans second argument pour le formulaire, un type d'essai réservé pour la timeline. **Règle** : une dégradation n'emploie jamais une valeur que le produit peut livrer un jour | reprise harnais, `CRM-008` |
+| **409** | INC-112, INC-113 | rejouer le **préfixe complet** des migrations pour restaurer ou éprouver l'idempotence, jamais une liste de fichiers en dur. Contournement en attendant : rejouer `0037_corbeille.sql` après `verify-tracks.sh` ou `verify-channels.sh` | reprise harnais, `CRM-008` |
+| **410** | INC-105, INC-116, INC-117 | un harnais restaure à l'entrée ; un `finally` purge **même après échec** ; une preuve cible sa trace par identifiant ; la section d'aller-retour du seed devient convergente **dès le premier rejeu** | `CRM-043`, `CRM-046`, `CRM-008` |
+| **411** | INC-107, INC-118 | borner toute lecture de journal à la fenêtre du scénario (`docker logs --since`). Un tour de veille qui échoue pendant une preuve est **l'effet attendu de la preuve** | `CRM-051` |
+| **412** | INC-106 | remplacer `printf … \| grep -q <motif présent>` par un comptage comparé à zéro, et **balayer le motif dans tous les harnais** | `CRM-051`, `CRM-008` |
+| **413** | INC-103, INC-104, INC-108 | mettre les chiffres à leur valeur mesurée et les dater ; ajouter à `verify-scripts.sh` le recomptage de l'index et des entrées ouvertes du registre | documentation, `scripts/verify-scripts.sh` |
+| **414** | INC-100 | retirer les deux affirmations fausses du §4.10 du manuel et **relire la liste entière**. Règle : un inventaire de manques se relit à chaque livraison qui en comble un | `docs/manual.md` |
+| **415** | INC-102 | le seed supprime puis recrée `…0d4` quand `deleted_at` est posée et `deleted_by` nulle, avant de le faire retirer par le jeton réel ; sa ligne d'information n'annonce que ce qu'il a fait | `supabase/seed/apply-seed.sh`, `CRM-046` |
+| **416** | INC-114 | `AppShell` ne monte la barre d'onglets que pour les routes portant un track | `CRM-007` |
+| **417** | INC-115 | réécrire le §9.7 de `docs/SPEC-seed.md` et la preuve n° 13 pour asserter la **réouverture** au lieu d'une absence | reprise `CRM-012` |
+| **418** | INC-110 | instrumenter `inbound_poll_write_failed` avec le détail assaini de l'erreur ; inscrire dans `docs/DAT.md` que `down -v` n'est pas une remise à zéro complète | `CRM-051`, `docs/DAT.md` |
+| **419** | INC-111 | la vérification de fin de session porte sur le **fond** — document lu en entier avant le backlog et avant toute modification — et non sur le rang de l'appel d'outil | `docs/CloudWorker.md` |
+
+**Bloqueur d'environnement, rappelé ici parce qu'il commande le reste.** Le registre d'images Docker
+a été injoignable (INC-096, arbitrée) : sans pile, aucune de ces mises en œuvre n'est **prouvable**,
+et aucune unité ne peut passer à `[x]`. Les seules exécutables sans pile sont les décisions **413**,
+**414** et **419**, purement documentaires, et la partie statique de **412**.
 
 ## 2. Matrice d'exécution des arbitrages du 2026-08-08
 

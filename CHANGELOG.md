@@ -15,6 +15,37 @@ d'exécuter le code attendu.
 
 ### Documentation
 
+- **Le registre des contradictions est vide** (décisions 408 à 419). Les dix-neuf dernières entrées
+  ouvertes sont arbitrées, sur instruction du responsable de trancher automatiquement tout ce qui
+  restait en suspens, et retirées vers l'index — qui passe de **cent à cent dix-neuf**. Le document
+  tombe de **1 091 à 194 lignes**. Toute la dette restante est une dette de **mise en œuvre**,
+  suivie dans `docs/ARBITRAGES.md` §1 et dans le backlog.
+- **Douze décisions pour dix-neuf entrées**, parce que plusieurs partageaient un mode de défaillance
+  unique. Les quatre règles générales qui en sortent valent au-delà de leurs entrées :
+  - **une dégradation n'emploie jamais une valeur que le produit peut livrer un jour** (408) — deux
+    contrôles de non-complaisance étaient devenus des décors, l'un parce que `retirerEspaces` **est**
+    `trim()` depuis la décision 374, l'autre parce que `mail_received` est un type légitime depuis
+    la messagerie ;
+  - **un harnais rejoue le préfixe complet des migrations, jamais un fichier isolé** (409) —
+    `verify-tracks.sh` rouvrait `tracks.deleted_by` à l'écriture du client en restaurant par `0003`,
+    et laissait la base durablement dégradée pour toutes les preuves suivantes ;
+  - **une preuve décrit un état, jamais un historique** (411) — S3 lisait le journal du conteneur
+    depuis son démarrage, et une seule ligne `WARNING` volontairement provoquée par une autre preuve
+    le rendait rouge à vie ;
+  - **un chiffre publié est vérifié par un harnais ou daté comme un état passé** (413) — cinq
+    occurrences du même mécanisme, dont deux comptes contradictoires du registre sur lui-même.
+- **Les harnais ne se chaînent pas** (410) : chacun restaure à l'entrée, purge même après échec, et
+  cible sa propre trace par identifiant. La section d'aller-retour du seed devient convergente **dès
+  le premier rejeu**, plutôt que d'affaiblir la promesse du §9.8.
+- **Le seed converge ou se tait** (415) : il ne peut plus annoncer « retiré par un TIERS » sur une
+  base où il n'a rien retiré.
+- **Deux entrées sont fermées sans code** : INC-110, dont le symptôme n'est plus observable — on
+  instrumente et on ferme, plutôt que de laisser ouvert un fait qu'aucun travail ne peut faire
+  avancer —, et INC-111, dont la vérification portera désormais sur le fond de la consigne et non
+  sur le rang d'un appel d'outil.
+
+### Documentation
+
 - **`docs/INCONSISTENCY_REPORT.md` change de règle de retrait, et cinquante-deux entrées en
   sortent** (décision 407). Une entrée est désormais retirée dès que son arbitrage est consigné
   dans `docs/JOURNAL.md`, que sa mise en œuvre soit ou non déjà livrée et prouvée — le travail

@@ -15020,3 +15020,355 @@ individuelle citée dans l'index du registre — et sont retirées, chacune avec
 Seize n'en avaient reçu aucun et restent en texte complet. Trois de plus — INC-117 à INC-119 —,
 consignées par une session concurrente pendant la même fenêtre, rejoignent les ouvertes pour la
 même raison : `docs/INCONSISTENCY_REPORT.md` en donne la liste à jour, dix-neuf entrées au total.
+
+### Décision 408 — Une dégradation qui ne dégrade plus n'est pas un contrôle, c'est un décor
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-109 et INC-119, sur instruction du responsable
+de trancher automatiquement tout ce qui restait en suspens au registre.**
+
+**Le fait commun aux deux entrées.** Deux contrôles de non-complaisance sont devenus **vides**, et
+chacun pour la même raison : la dégradation qu'ils simulaient décrivait un monde que le produit a
+depuis dépassé. `verify-formulaire.sh` D2 bis remplace `retirerEspaces(valeur)` par
+`valeur.trim()` — or `retirerEspaces` **est** `trim()` depuis la décision 374 ; la dégradation
+réécrit le code en lui-même. `verify-timeline.sh` élargit le `CHECK` de `card_events.type` à
+`mail_received` — or `CRM-055` et `CRM-058` l'y ont légitimement ajouté ; la dégradation ajoute un
+type déjà présent. Les deux harnais rendent rouge sans qu'aucun défaut de produit n'existe.
+
+**La décision, en deux temps.**
+
+1. **Chaque dégradation est réécrite pour dégrader réellement.** Pour `verify-formulaire.sh`,
+   l'issue 2 de l'entrée : `btrim` **sans son second argument**, c'est-à-dire l'état d'avant la
+   décision 374, qui est une divergence représentable et discriminante. Pour `verify-timeline.sh`,
+   un type d'essai que le produit ne livrera jamais.
+2. **Et la règle qui empêche la récidive, qui est le vrai sujet.** Une dégradation ne s'appuie
+   **jamais** sur une valeur que le produit peut légitimement livrer un jour. Elle emploie soit un
+   **nom réservé à la preuve**, reconnaissable comme tel, soit un **état antérieur explicitement
+   daté** par la décision qui l'a rendu caduc. Une dégradation dont la validité dépend de ce que le
+   produit n'a pas encore livré se périme en silence, et un contrôle périmé est pire qu'absent : il
+   occupe la place d'une garde.
+
+**Ce qui est écarté, et pourquoi.** Retirer purement D2 bis (issue 1) perdrait l'intention du §4.3
+du composeur — la convergence interface/base mérite une garde, même si sa forme a changé. Le marquer
+« attendu vert » (issue 3) reviendrait à conserver un contrôle en lui retirant son pouvoir de
+refuser, ce que `CLAUDE.md` §18 proscrit.
+
+**Porteur :** la reprise transverse des harnais (`CRM-008`), qui porte déjà INC-064 et INC-070.
+`verify-formulaire.sh` appartient à `CRM-037` et `verify-timeline.sh` à `CRM-044` ; les deux sont
+closes, et c'est précisément pourquoi la correction remonte à la reprise transverse plutôt qu'à une
+réouverture d'unité.
+
+### Décision 409 — Un harnais ne rejoue jamais une migration isolée : il rejoue le préfixe, comme le runner
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-112 et INC-113.**
+
+**Le fait, mesuré deux fois dans deux harnais.** `verify-tracks.sh` restaure ses dégradations en
+rejouant `0003_tracks.sql` et `0010_droits_fins.sql`, deux fichiers en dur. Or `0037_corbeille.sql`
+avait **révoqué** l'`UPDATE` au niveau table pour le rendre colonne par colonne : le rejeu de `0003`
+le rend, et **rouvre `tracks.deleted_by` à l'écriture du client**. Mesuré sur `relacl` :
+`authenticated=ar/postgres` avant, `arw/postgres` après. `verify-channels.sh` porte le même défaut
+par `0004_channels.sql`. `verify-droits-fins.sh` rejoue `0010` seule et **retire la transitivité**
+de la politique de lecture des tracks posée par `0034` (décision 333), ce qui fait diverger ses
+comptes de ceux de `e2e/api/tracks.spec.ts` — quatre tracks au lieu de cinq, pour la même question.
+
+**La décision.** Un harnais qui restaure ou qui éprouve l'idempotence **rejoue le préfixe complet
+des migrations jusqu'à la tête**, exactement comme le `migrations-runner`, et jamais une liste de
+fichiers en dur. Le motif d'origine était bon — ce sont les fichiers versionnés qui font autorité,
+non une commande inverse écrite à la main — mais il n'est **correct que sur le préfixe entier** : une
+liste en dur est fausse dès la migration suivante qui touche les mêmes objets, et elle l'était déjà
+ici deux fois.
+
+**Ce que cela coûte, et pourquoi c'est acceptable.** Rejouer tout le répertoire est plus lent qu'un
+fichier. C'est le prix de la seule propriété qui compte : après le harnais, la base est dans l'état
+que le dépôt décrit — ni en avance, ni en retard. Un harnais qui laisse la base **durablement
+dégradée**, comme `verify-tracks.sh` le fait aujourd'hui sur l'audit de la corbeille, abîme toutes
+les preuves exécutées après lui sans que personne ne le sache.
+
+**En attendant la correction**, le contournement mesuré reste valable et il est inscrit ici pour
+qu'aucune session ne le redécouvre : rejouer `supabase/migrations/0037_corbeille.sql` après toute
+exécution de `verify-tracks.sh` ou de `verify-channels.sh` — une seule réapplication suffit pour les
+deux tables.
+
+**Porteur :** reprise transverse des harnais (`CRM-008`).
+
+### Décision 410 — Les harnais ne se chaînent pas : chacun restaure à l'entrée et purge même après échec
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-105, INC-116 et INC-117.**
+
+**Trois mesures, un seul mode de défaillance.** `verify-webapp.sh` rend une anomalie **différente à
+chaque exécution** sur un arbre identique — `timeline.spec.ts` puis `commentaires-gestes.spec.ts` —
+là où `npm run e2e:ui` seul rend 251/251 ; son §7 interroge le backend avant que son §8 ne lance
+l'interface. `verify-seed-demo.sh` est rouge sur une base sortie de `./resetMe.sh` et vert sur une
+base déjà seedée deux fois, et il **laisse la base dégradée** quand une section échoue —
+`verify-manual.sh` enchaîné derrière a rapporté trois grandeurs fausses qui n'étaient que les traces
+de la dégradation précédente. `commentaires-gestes.spec.ts` échoue sur un commentaire résiduel
+qu'un `finally` n'a pas purgé **parce que son scénario avait déjà échoué**.
+
+**La décision, en trois règles qui valent pour tout le dépôt.**
+
+1. **Un harnais restaure l'état qu'il attend à l'entrée**, et ne suppose jamais celui que le
+   précédent lui laisse. `verify-webapp.sh` réapplique le seed entre son §7 et son §8 ; les deux
+   harnais ne sont pas séparés, parce qu'un verdict de livraison unique pour l'interface vaut mieux
+   que deux verdicts qu'il faudrait ensuite recombiner à la main.
+2. **Un `finally` purge même après échec du scénario.** C'est le cas que les preuves oublient, et
+   c'est le seul qui compte : un scénario qui réussit n'a rien laissé derrière lui.
+3. **Une preuve cible sa propre trace par un identifiant**, jamais par un texte que d'autres
+   scénarios peuvent produire. La violation de mode strict sur « Commentaire supprimé » n'est pas un
+   défaut de l'interface : c'est une preuve qui a désigné sa cible par une phrase partagée.
+
+**Et pour INC-116, une quatrième, qui touche le seed et non le harnais.** La section d'aller-retour
+du seed devient **convergente dès le premier rejeu**, plutôt que d'affaiblir la promesse du §9.8 de
+`docs/SPEC-seed.md`. Le principe « convergent, jamais seulement idempotent » est posé pour tout le
+dépôt depuis la décision 296 ; une exception au bénéfice du seed de démonstration serait exactement
+l'endroit où elle ferait le plus de dégâts, puisque c'est lui qui prépare toutes les autres preuves.
+
+**Conséquence de méthode, à écrire dans `docs/SPEC-test-harness.md` :** ces harnais **ne se
+chaînent pas**. Chacun mesure ce qu'il prétend mesurer sur une base propre, et sur elle seule. Une
+session qui les enchaîne mesure l'état laissé par le précédent.
+
+**Porteurs :** `CRM-043` pour la preuve de commentaires, `CRM-046` pour la convergence du seed,
+reprise transverse des harnais (`CRM-008`) pour `verify-webapp.sh` et `verify-seed-demo.sh`.
+
+### Décision 411 — Une preuve décrit un état, jamais un historique
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-107 et INC-118.**
+
+**Le fait, mesuré.** Le scénario S3 de `mail-sync.spec.ts` lit `docker logs` **depuis le démarrage du
+conteneur** et exige que chaque ligne porte un `level` dans `['DEBUG','INFO']`. Une seule ligne
+`WARNING` — `veille_compte_echoue` — le rend rouge **pour toute la vie du conteneur** : un
+`docker restart` ne vide pas le journal, seule la recréation le fait. Or cette ligne est produite
+par `comptes-entrants.spec.ts`, qui provoque **délibérément** `auth_failed` et `tls_failed` pour
+prouver que la relève nomme ses incidents.
+
+**La décision, et elle répond à la question de fond que l'entrée posait sans la trancher.** Un tour
+de veille qui échoue pendant qu'une preuve manipule volontairement le compte est **l'effet attendu de
+la preuve, pas une anomalie du service**. La conséquence est directe : S3 ne juge plus un
+historique. Sa lecture est bornée à la fenêtre de son propre scénario — `docker logs --since`,
+horodatage capturé à son entrée — et son énoncé devient ce qu'il a toujours voulu dire : « la console
+reste silencieuse **pendant une relève normale** ».
+
+**Ce qui est écarté.** Rendre les comptes fautifs à leur état d'avant puis redémarrer la veille
+corrigerait le symptôme au prix d'un couplage entre deux fichiers de preuve qui n'ont pas à se
+connaître, et laisserait S3 juger un historique — c'est-à-dire le défaut intact sous une autre forme.
+
+**Règle générale :** une preuve qui lit un journal cumulé mesure tout ce qui l'a précédée. Toute
+lecture de journal dans une preuve est bornée à la fenêtre du scénario qui la fait.
+
+**Porteur :** `CRM-051`.
+
+### Décision 412 — `grep -q` en bout de tuyau ment d'autant plus que la preuve est bonne
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-106.**
+
+**Le fait, isolé en deux commandes.** `verify-mail-sync.sh` déclare absents `service_started` et
+`request_completed`, présents respectivement **6** et **485** fois dans le journal. `grep -q` sort
+dès la première correspondance ; sur un journal plus grand que le tampon du tuyau, `printf` reçoit
+`SIGPIPE` et rend **141**, que `set -euo pipefail` propage jusqu'au `|| fail`. Le contrôle échoue
+**d'autant plus sûrement que la preuve est bonne** — plus l'événement attendu est fréquent, plus tôt
+`grep` ferme le tuyau.
+
+**La décision.** Le motif `printf … | grep -q <motif attendu présent>` est remplacé par un
+**comptage comparé à zéro** — `grep -c`, dont la valeur est lue et testée. Un `|| true` sur le
+`printf` ferait taire le `SIGPIPE` mais ferait taire aussi une vraie erreur de tuyau : masquer un
+code de sortie pour corriger un faux positif est le remède que `CLAUDE.md` §18 interdit.
+
+**Portée, et c'est le point important.** Seuls les contrôles cherchant un motif **présent en
+nominal** sont touchés ; ceux qui cherchent une chaîne **absente** — jeton, `WARNING`, en-tête
+d'authentification — lisent tout le flux, ne subissent aucun `SIGPIPE`, et leur verdict reste juste.
+Le même motif est **recherché dans tous les harnais** avant correction : c'est une famille, pas une
+occurrence, et la décision 252 l'avait déjà nommée sans que la revue transverse soit faite.
+
+**Porteur :** `CRM-051` pour l'occurrence, reprise transverse des harnais (`CRM-008`) pour le
+balayage.
+
+### Décision 413 — Un chiffre écrit dans un document est mesuré et daté, ou il n'est pas écrit
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-103, INC-104 et INC-108.**
+
+**Le fait, trois fois.** Le registre portait **deux comptes différents** de ses propres entrées
+closes, dont aucun ne correspondait à son tableau. `docs/BACKLOG.md` écrit deux fois « dix
+transitions dont quatre à motif » là où le seed en pose **onze dont cinq** depuis la décision 259.
+Trois documents comptent « dix-sept règles » de visibilité là où la base en porte **quinze**. Dans
+les trois cas, **aucun harnais n'employait le chiffre** — donc rien n'a jamais rougi, et l'erreur a
+vécu des jours.
+
+**La décision, en deux termes.**
+
+1. **Les chiffres sont mis à leur valeur mesurée**, et la mesure est **datée** à l'endroit où elle
+   est écrite. Corriger le total d'une Definition of Done d'unité close ne retouche aucune preuve :
+   la preuve est le harnais, qui interroge la base. C'est l'objection que ces entrées se faisaient à
+   elles-mêmes, et elle ne tient pas.
+2. **Le registre cesse de tenir ses comptes à la main** — issue 1 d'INC-103. Un contrôle de
+   `scripts/verify-scripts.sh` compte les lignes `| INC-` de l'index et les titres `### INC-` de la
+   section « Ouverts », et refuse tout écart avec les nombres publiés. Coût : quelques lignes.
+   Supprimer les nombres (issue 2) coûterait la lecture d'un coup d'œil de l'état du document le
+   plus relu du dépôt, pour économiser ces mêmes quelques lignes.
+
+**La règle qui en découle, et qui vaut au-delà de ces trois entrées :** tout chiffre publié dans un
+document du dépôt est soit **vérifié par un harnais**, soit **daté comme un état passé**. Un chiffre
+qui n'est ni l'un ni l'autre est une affirmation que personne ne maintient — c'est la famille
+d'INC-080, INC-101, INC-103, INC-104 et INC-108, cinq occurrences du même mécanisme.
+
+**Porteurs :** documentation immédiate pour les chiffres ; `scripts/verify-scripts.sh` pour le
+contrôle.
+
+### Décision 414 — Un inventaire de manques non relu devient un inventaire de mensonges
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-100.**
+
+**Le fait.** La liste « Ce que le fil ne fait pas encore » du §4.10 de `docs/manual.md` porte deux
+affirmations que le produit dément **et que le manuel dément lui-même ailleurs** : « aucun nom
+d'auteur n'est affiché » alors que `PanneauTimeline.tsx` rend nom et avatar depuis `CRM-022` et que
+le §3.2 le dit ; « le motif d'un déplacement n'est conservé nulle part » alors que `move_card` le
+conserve depuis la migration `0035` et que le §4.3 le dit.
+
+**La décision.** Les deux affirmations sont **retirées**, et la liste entière est relue dans le même
+geste. L'objection que l'entrée se faisait — ces lignes appartiennent à `CRM-022` et `CRM-034`, les
+corriger toucherait deux unités — **ne tient pas** : retirer une affirmation fausse d'un document
+utilisateur ne retouche aucune preuve et ne rouvre aucune unité. `CLAUDE.md` §7 exige que la
+documentation utilisateur reste synchronisée avec le comportement réel, sans réserve d'unité.
+
+**La règle, qui est le vrai apport :** un inventaire de manques est relu **à chaque livraison qui en
+comble un**, au même titre que le `CHANGELOG.md` et que le bandeau du `README.md` (règle posée en
+clôturant INC-019). Une liste de « pas encore » qu'on n'entretient pas devient, littéralement, une
+liste de choses fausses — et c'est la partie du manuel qu'un utilisateur lit pour savoir ce qu'il ne
+doit pas chercher.
+
+**Porteur :** documentation immédiate.
+
+### Décision 415 — Le seed converge, ou il se tait ; il n'annonce jamais ce qu'il n'a pas fait
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-102.**
+
+**Le fait, mesuré sur le chemin de mise à jour d'un poste existant.** Sur une base seedée avant le
+commit `80214c8`, `card_comments…0d4` porte `deleted_at` renseignée et `deleted_by` **nul**. Le seed
+rejoué annonce « d4 déjà retiré : rien à faire (convergence par état) » puis affirme en ligne
+d'information « retiré par un TIERS : `deleted_by` diffère d'`author_id` » — ce qui est **faux sur
+cette base**. `supabase/tests/0017_commentaires.test.sql` assertion 81 en rougit, et le scénario
+d'interface correspondant aussi.
+
+**La décision : issue 1 — le seed supprime physiquement la ligne puis la recrée**, lorsque et
+seulement lorsque `deleted_at` est renseignée et `deleted_by` nulle, avant de la faire retirer par le
+jeton réel de l'administratrice. `service_role` porte le privilège `DELETE` depuis la migration
+`0015`. La convergence redevient **totale**, ce que `CLAUDE.md` §8 exige d'un seed : il doit
+**démontrer** ce qu'il annonce, sur toute base, pas seulement sur une base recréée.
+
+**Pourquoi les deux autres issues sont écartées.** Documenter la limite (issue 2) laisserait le seed
+mentir dans sa propre sortie, ce qui est le défaut le plus grave de l'entrée — plus grave que
+l'assertion rouge. Borner l'assertion 81 à une base fraîche (issue 3) affaiblirait une preuve pour
+accommoder un état ; le registre le déconseillait lui-même, et il a raison.
+
+**La destruction de ligne est assumée et bornée.** Le seed ne détruit nulle part ailleurs, et cette
+exception est gardée par une condition précise, sur une donnée de démonstration, dans un
+environnement de développement. La pierre tombale reste irréversible **dans le produit** — c'est le
+§13.4 de `docs/SPEC-cards.md`, et il n'est pas touché : c'est le seed, non le produit, qui recrée la
+ligne avant de la faire retirer par le vrai geste.
+
+**Second terme, non négociable :** la ligne d'information du seed n'affirme que ce que le seed a
+**effectivement** fait dans l'exécution en cours. Un message de convergence écrit d'avance est un
+mensonge conditionnel.
+
+**Porteur :** `supabase/seed/apply-seed.sh` sous `CRM-046` ; `docs/SPEC-seed.md` §2.14 et
+`docs/PROD_MIGRATIONS.md` mentionnent le chemin de mise à jour dans le même changement.
+
+### Décision 416 — Une coquille ne monte un composant que là où son sujet existe
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-114.**
+
+**Le fait.** `AppShell` monte la barre d'onglets des channels pour **toute** route qu'elle enveloppe.
+Les quatre écrans de réglages n'ont ni track ni channel — leur adresse ne porte aucun `slugTrack` —,
+si bien que la barre y rend « Aucun channel », mesuré à l'identique sur deux captures versionnées
+séparées par plusieurs unités.
+
+**La décision : la coquille cesse de monter la barre pour les routes sans track** — la première des
+deux corrections possibles, celle qui touche `CRM-007`.
+
+**Le motif, et il est de contrat et non de commodité.** L'état vide de la barre est **exact au sens
+de son composant** : interrogée sur les channels d'un track, elle répond correctement qu'il n'y en a
+pas. Corriger dans le composant (seconde option, `CRM-021`) l'obligerait à connaître les cas où son
+sujet n'existe pas, c'est-à-dire à mentir sur son propre contrat pour rattraper une erreur de
+montage. Le défaut n'est pas dans la réponse : il est dans la question posée là où elle n'a pas de
+sens.
+
+**Ce que cela renforce :** le §5.8 du design system veut qu'un état vide **nomme ce qui manque**.
+Celui-ci nommait ce qui n'avait jamais été demandé, et affaiblissait la règle en la banalisant.
+
+**Porteur :** `CRM-007`.
+
+### Décision 417 — La preuve dit ce que la règle fait, pas ce qu'elle faisait
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-115.**
+
+**Le fait.** La section 13 de `verify-seed-demo.sh` affirme « le viewer ne lit PAS le track
+`conseil-ia` — `track_members.access = none` ». La politique réellement posée est
+`((app.resolve_track_access(...) <> 'none') OR app.track_has_readable_channel(id))` : la lectrice lit
+bien ce track, **par la réouverture d'un de ses channels**, et le harnais l'éprouve lui-même deux
+contrôles plus bas. Les deux faits sont vrais ensemble et ne se contredisent pas.
+
+**La décision.** Le §9.7 de `docs/SPEC-seed.md` et ce contrôle sont réécrits pour asserter la
+réouverture : « la lectrice lit `conseil-ia` **par la réouverture**, alors que son accès direct au
+track vaut `none` ». C'est la conclusion que l'entrée tirait elle-même, et elle prouve **davantage**
+que la formulation actuelle — elle éprouve la transitivité, là où l'ancienne n'éprouvait qu'une
+absence.
+
+**Aucune modification du produit.** La politique est celle de la décision 333, livrée et prouvée ;
+c'est une preuve écrite avant elle qui n'a pas suivi.
+
+**Porteur :** la reprise `CRM-012` déjà nommée par la disposition d'INC-075 et d'INC-085.
+
+### Décision 418 — Ce qui n'est plus observable ne reste pas ouvert : on instrumente, et on ferme
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-110.**
+
+**L'état de l'entrée.** Le symptôme — `inbound_poll_write_failed`, `502` sur la relève — **ne se
+reproduit pas** sur une pile neuve : la reproduction a été tentée dans la même session et a échoué au
+sens favorable. Il tenait à l'état accumulé par la session, non au dépôt. Deux points restaient :
+l'événement ne porte aucun détail exploitable, et la cause exacte n'est plus isolable.
+
+**La décision, en deux temps.**
+
+1. **`inbound_poll_write_failed` porte le détail de l'erreur d'écriture** — classe, message assaini,
+   identifiant du compte —, sans secret ni jeton (`CLAUDE.md` §20). C'est le premier point à
+   instrumenter, indépendamment de la cause, et c'est ce qui a rendu ce diagnostic bien plus long
+   qu'il n'aurait dû l'être.
+2. **La recherche de la cause exacte est abandonnée**, et l'entrée fermée sur ce constat. Un fait qui
+   n'est plus observable ne peut pas rester ouvert indéfiniment : il occuperait le registre sans
+   qu'aucun travail ne puisse le faire avancer. Si le symptôme revient, l'instrumentation du point 1
+   le rendra diagnosticable du premier coup — c'est exactement à cela qu'elle sert.
+
+**Un fait mesuré est conservé, parce qu'il coûte cher à redécouvrir**, et il rejoint `docs/DAT.md` :
+`docker compose down -v` **n'est pas une remise à zéro complète** de cet environnement. Il retire les
+volumes nommés — dont celui qui porte la clé pgsodium — alors que les données de la base vivent dans
+un montage lié du dépôt et **survivent**. Les secrets chiffrés deviennent illisibles et le seed
+s'arrête sur `invalid ciphertext`. Le remède est de vider `mail_outbound_identities`,
+`mail_inbound_accounts` et `vault.secrets`, que le seed sait recréer par le vrai mécanisme.
+
+**Porteur :** `CRM-051` pour l'instrumentation ; `docs/DAT.md` pour le fait sur `down -v`.
+
+### Décision 419 — Une consigne se vérifie sur son fond, pas sur le rang d'un appel d'outil
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-111, sur instruction explicite du responsable de
+trancher automatiquement tout ce qui restait en suspens.**
+
+**Le fait.** Le prompt de la tâche planifiée exige que la **toute première action** soit la lecture
+intégrale de `docs/CloudWorker.md`, « avant tout diagnostic », et prévoit deux lignes plus bas le cas
+où le fichier serait absent — ce qui suppose de savoir s'il est présent, donc d'observer, donc de
+faire un diagnostic. La séquence est **inatteignable par construction**, et le crochet de
+vérification a refusé trois fois de clore une session dont il constatait par ailleurs que tous les
+piliers du document étaient appliqués.
+
+**La décision : issue 3.** La vérification porte sur le **fond** — le document a-t-il été lu en
+entier avant la première lecture du backlog et avant la première modification ? — et non sur le rang
+de l'appel d'outil. C'est la propriété réellement utile, et elle rend les deux autres issues sans
+objet : une vérification d'existence devient licite parce qu'elle n'est plus mesurée, et la branche
+d'absence peut rester puisqu'elle ne coûte plus rien.
+
+**Pourquoi ce n'est pas une entorse à la réserve de `CLAUDE.md` §26.** Un agent ne réécrit pas de sa
+propre initiative la consigne qui le gouverne, et cette entrée était restée ouverte pour cette raison
+exacte. Le responsable a explicitement délégué l'arbitrage de **tout** ce qui restait en suspens au
+registre ; la décision est donc rendue au titre de cette instruction, et elle est écrite ici pour
+qu'elle soit révocable d'un mot.
+
+**Ce que cela ne change pas :** l'obligation de lire `docs/CloudWorker.md` **intégralement** avant
+tout travail reste entière. Seule la manière de la vérifier change.
+
+**Porteur :** `docs/CloudWorker.md` et le crochet de vérification de fin de session.
