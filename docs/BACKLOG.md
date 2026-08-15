@@ -7188,6 +7188,73 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       désormais dans quatre fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les
       cinq tranches livrées, comme `CRM-077` l'a montré.
 
+#### Troisième tranche — le plan de remappage des cards
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` **§7 ter.12** (onze
+      sections) : ce que le plan est et n'est pas, les trois issues d'une card et **la seule qui
+      soit automatique**, les instructions portées par les étapes et non par les cards, le geste et
+      ses huit refus dans l'ordre, quelles cards entrent dans le plan, la forme rendue, la liste
+      bornée dont la troncature est annoncée, les autorisations, les quinze lignes du contrat
+      d'API, ce qui n'est pas livré, les preuves attendues. `docs/SCHEMA.md` §9 mis à jour dans le
+      même commit documentaire, poussé **avant** la première ligne de code (`CLAUDE.md` §5).
+- [x] `supabase/migrations/0041_plan_remappage_cards.sql` : `public.plan_card_remapping(uuid,
+      jsonb, integer)`, `stable`, `security invoker`, huit refus, privilèges explicites et
+      révocation nommée d'`anon`. Appliquée et rejouée sur la pile réelle.
+- [x] **AUCUNE DESTINATION N'EST DEVINÉE, et c'est la lecture littérale de la Definition of Done.**
+      Une seule issue est automatique — `unchanged`, quand l'étape existe des deux côtés avec le
+      même identifiant. Toute autre destination vient d'un humain, par `step_overrides`. Une
+      affaire sans instruction reste `unresolved` et `ready` est faux : le produit dit « je ne sais
+      pas » plutôt que de choisir à la place de l'administrateur.
+- [x] **UNE ÉTAPE RÉTABLIE EST NOMMÉE, JAMAIS CHOISIE.** Une étape que la restauration ressuscite
+      est vide par construction, et il aurait été tentant d'y verser les affaires des étapes
+      retirées « puisqu'elle revient » : ce serait une supposition sur l'intention. L'assertion 23
+      de la suite pgTAP la fige — l'étape rétablie est disponible, et les affaires bloquées le
+      restent.
+- [x] **`SECURITY INVOKER`, ET C'EST LA CONDITION DE JUSTESSE DU RÉSULTAT.** Un plan partiel est
+      pire qu'un refus : il ferait échouer une restauration après l'avoir déclarée sûre. Or `cards`
+      applique les droits fins dès sa politique de lecture. MESURÉ sur la pile seedée :
+      l'administratrice lit **13 affaires sur 13** malgré un `track_members.access = 'none'` sur le
+      track qui en porte six, là où la lectrice n'en lit que **7 sur 13**. L'exhaustivité vient donc
+      de la **vérification 3**, non d'un emprunt de privilèges — d'où le refus opposé aux deux
+      profils non administrateurs.
+- [x] **Les cards ARCHIVÉES et celles en CORBEILLE entrent dans le plan.** Ce ne sont pas des lignes
+      disparues : elles portent un `current_step_id` réel et une clé étrangère opposable
+      (`docs/SPEC-cards.md` §4). Les exclure aurait rendu un plan qui se dit complet et une
+      restauration qui échoue en base sur une affaire que personne ne regardait plus.
+- [x] **La liste est BORNÉE et sa troncature est ANNONCÉE**, les compteurs portant sur la totalité ;
+      et **l'ordre place les affaires bloquantes en tête**, sans quoi une troncature masquerait
+      exactement ce qui empêche d'appliquer.
+- [x] **Test unitaire dédié** `supabase/tests/0039_plan_remappage_cards.test.sql` :
+      **37 assertions, aucune anomalie** — existence, `stable`, absence de `security definer`,
+      privilèges et révocation d'`anon` ; l'exhaustivité mesurée sous droit fin `none`, et la
+      lectrice qui en lit strictement moins — sans quoi la première assertion serait vraie sans rien
+      prouver ; le cas nominal ; l'archivée et la corbeille avec leur `state` ; l'étape retirée,
+      l'instruction qui lève le blocage, l'étape rétablie jamais choisie ; les compteurs
+      indépendants de la borne et l'ordre des blocages ; les huit refus contre des comptes réels.
+      **Aucun compte du seed n'y est figé en dur** : les assertions comparent des comptes entre eux.
+- [x] **Test d'intégration dédié, hors interface** `e2e/api/plan-remappage-cards.spec.ts` :
+      **15 scénarios**, les quinze lignes du §7 ter.12.9 avec les jetons réels des trois profils.
+      La ligne n — preuve de refus n° 3 — crée un **second workspace réel**, absent du seed, y pose
+      une version dont l'existence est constatée avec la clé de service, et démonte le tout : sans
+      cela, le refus serait vrai par simple absence et ne prouverait rien (décision 50). Ces preuves
+      attrapent aussi ce que pgTAP ne peut pas : le `401` de l'anonyme, et le fait que les arguments
+      facultatifs `card_limit` et `step_overrides` traversent réellement PostgREST.
+- [x] **Une preuve figée a rougi et a été RÉVISÉE, jamais contournée** (mécanisme de la décision 51,
+      quinzième occurrence) : l'énumération des fonctions de
+      `webapp/src/lib/database.types.test-d.ts` passe de vingt-neuf à trente, avec son motif écrit
+      dans le fichier.
+- [x] `docs/SCHEMA.md` §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
+      `docs/manual.md` ligne 20 bis, `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans
+      le même changement.
+- [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent
+      désormais dans six fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq
+      tranches livrées, comme `CRM-077` l'a montré.
+
+*Écart nommé.* **Aucun seed** dans cette tranche non plus : le plan ne conserve rien, et publier une
+seconde version ou déplacer une affaire pour donner un plan bloqué à montrer serait une donnée
+fabriquée pour la preuve (`CLAUDE.md` §8). Les preuves construisent elles-mêmes ce qu'elles
+planifient, par les vrais gestes.
+
 *Écart nommé.* **Aucun seed** dans cette tranche : la comparaison ne conserve rien, et publier une
 seconde version pour donner à comparer serait une donnée fabriquée pour la preuve (`CLAUDE.md` §8).
 Les preuves publient elles-mêmes ce qu'elles comparent, par la vraie RPC.
@@ -7197,8 +7264,8 @@ que des données et des gestes serveur (`docs/SPEC-workflow-engine.md` §7 ter.9
 L'unité **ne peut pas** passer `[x]` avant la cinquième tranche, dont la Definition of Done exige
 l'aperçu et les captures.
 
-*Preuves restant à exécuter pour cette unité.* Aucune pour la deuxième tranche : ses 31 assertions
-pgTAP et ses 12 scénarios d'API sont exécutés et verts. **La première tranche, elle, n'est PLUS
+*Preuves restant à exécuter pour cette unité.* Aucune pour les deuxième et troisième tranches :
+leurs 31 et 37 assertions pgTAP, et leurs 12 et 15 scénarios d'API, sont exécutés et verts. **La première tranche, elle, n'est PLUS
 intégralement verte sur une base neuve** : `0037_versionnement_workflows.test.sql` rend **2 échecs
 sur 31**, ses assertions 3 et 28 citant en dur l'identifiant du workflow **dérivé**, que le seed
 n'épingle pas — il est engendré par `copy_workflow_to_track`. Mesuré le 2026-08-15 sur une pile
