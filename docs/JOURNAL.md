@@ -15879,13 +15879,37 @@ confort : tronquée, la liste doit montrer ce qui empêche d'appliquer, jamais u
 `pytest` **242** ; `types:check` vert après régénération. La suite de la tranche rend **37
 assertions** et son harnais d'API **15 scénarios**, tous verts.
 
-**Le seul échec de la campagne est INC-122, et il n'appartient pas à cette tranche.**
-`0037_versionnement_workflows.test.sql` rend toujours **2 échecs sur 31**, ses assertions 3 et 28
-citant en dur `352d02ac-…` comme identifiant du workflow **dérivé**, que le seed n'épingle pas — il
-vaut `a3907551-…` sur cette base, et une autre valeur à chaque seed. Aucune ligne de base n'est
-nécessaire : la migration 41 ne lit ni n'écrit le workflow dérivé, ni le document, ni l'empreinte.
-**INC-122 attend toujours un arbitrage** et laisse la première tranche non intégralement verte sur
-une base neuve.
+**INC-122 a été arbitrée pendant la session, et la décision 430 est appliquée ici.** Le premier
+passage de la campagne laissait `0037_versionnement_workflows.test.sql` à **2 échecs sur 31** — ses
+assertions 3 et 28 citant en dur `352d02ac-…` comme identifiant du workflow **dérivé**, qui vaut
+`a3907551-…` sur cette base et une autre valeur à chaque seed. Le responsable a tranché en cours de
+session : le dérivé se désigne **par son nom**, et l'assertion d'empreinte cesse de comparer à une
+constante pour mesurer sa propriété **relative** — la fonction appelante rend exactement le condensé
+du document extrait. C'est fait. L'assertion 2 **garde** sa constante, et son motif est écrit dans
+le fichier : l'identifiant du workflow par défaut est épinglé, et cette constante est la seule qui
+protège la FORME du document — un changement d'ordre de clés déplacerait les deux membres de
+l'assertion 3 ensemble et lui échapperait. **`test:sql` rend désormais 39 fichiers, 2103 assertions,
+aucune anomalie.**
+
+**Une régression de la session, détectée par un harnais et corrigée.** `scripts/verify-types.sh`
+compile le dépôt **tel qu'il est committé** et a rougi sur `e2e/api/plan-remappage-cards.spec.ts` :
+la version lue par déstructuration est possiblement absente, et son identifiant était lu sans garde.
+`npm run typecheck` avait été joué **avant** l'écriture de ce fichier, et ne pouvait donc pas
+l'attraper. Le contrôle est devenu une assertion de **longueur** plutôt qu'une simple vérité — le
+seed doit publier une version du workflow par défaut, et sans elle la ligne a serait restée verte
+sans rien prouver. Après correction : `verify-types` **30/30**, `verify-workflows` **49/49**,
+`verify-catalogue` **39/39**, `verify-migrations` **25/25**, `verify-seed` **55/55**,
+`verify-node-toolchain` **5/5**.
+
+**Deux constats ÉTRANGERS, mesurés et laissés inchangés.** `scripts/verify-board.sh` rend **2
+anomalies sur 56** : « les channels sont lus à plusieurs endroits » et « des classes citées
+n'existent pas dans le CSS produit ». L'antériorité est établie **sans ligne de base** — la session
+n'a touché **aucun** fichier `.tsx` ni `.css`, son seul diff sous `webapp/` portant sur
+`database.types.ts` régénéré et son fichier d'assertions de type. Les deux appartiennent à
+`CRM-041`. Et `scripts/verify-preuves-refus.sh` rend toujours **4 anomalies sur 26**, dette de
+preuve d'`INC-121`, porteur `CRM-014`, arbitrée par la décision 429 et dont la mise en œuvre reste
+due. Aucun des deux n'est ouvert au registre : sa doctrine le réserve aux choix qu'aucune mesure ne
+tranche, et ces trois-là sont mesurés.
 
 **L'environnement, sans redécouverte.** `export NVM_DIR=/opt/nvm` puis `nvm install 24` posent Node
 `v24.19.0` ; `npm ci` exige `npm config set cafile /root/.ccr/ca-bundle.crt` ; **toute** exécution
@@ -15899,7 +15923,8 @@ code, et elle devra dire au minimum : que le plan est **rejoué juste avant d'ap
 structure vivante ayant pu bouger entre les deux ; ce qu'il advient des transitions, des champs et
 des règles que la restauration recrée ou supprime ; et quels refus s'ajoutent à ceux du plan.
 **`CRM-078` reste `[~]`** : son énoncé exige l'application, le retour arrière, les écrans et leurs
-captures, qui appartiennent aux tranches 4 et 5.
+captures, qui appartiennent aux tranches 4 et 5. Ses trois premières tranches, elles, n'ont plus
+aucune preuve en attente.
 
 *Numérotées 427 à 429 à l'écriture ; une session concurrente avait pris 427 pour « Le plan de
 remappage » entre la lecture du compteur et l'écriture. Renumérotées en 428 à 430 au rebase, selon
