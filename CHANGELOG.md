@@ -34,6 +34,17 @@ d'exécuter le code attendu.
   placement et non la composition. Les restaurer aurait été un déménagement caché dans un
   rétablissement.
 
+### Corrigé
+
+- **La concurrence optimiste de la restauration rend enfin le `409` qu'elle annonçait**
+  (`CRM-078`, quatrième tranche). Lorsque `expected_live_fingerprint` est périmée, l'appel rendait
+  en pratique un `400` : PostgREST rend `400` pour tout `SQLSTATE` `P0001`, et seul un `SQLSTATE` de
+  la forme `PT<statut>` fait choisir son code HTTP à une fonction. La spécification exigeait
+  `P0001` **et** `409`, ce qui était inconciliable ; c'est le `SQLSTATE` qui a cédé, le code HTTP
+  étant le seul des deux qu'elle argumentait. Pour un écran, la différence n'est pas cosmétique :
+  un `400` dit « votre demande est mal formée », là où le `409` dit « votre demande était valide,
+  mais la structure a bougé — redemandez le plan ». Le message et le `detail` sont inchangés.
+
 ### Documentation
 
 - **Le registre repasse à zéro entrée ouverte** (décisions 428 à 430). Les trois entrées consignées

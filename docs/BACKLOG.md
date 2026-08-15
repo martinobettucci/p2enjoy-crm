@@ -7308,12 +7308,23 @@ menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
       écrit dans le fichier.
 - [x] `docs/SCHEMA.md` §9, `docs/DAT.md` §7, `docs/PROD_MIGRATIONS.md` §3, `CHANGELOG.md`,
       `webapp/src/lib/database.types.ts` (régénéré) mis à jour dans le même changement.
-- [ ] **Test d'intégration dédié `e2e/api/restauration-version-workflow.spec.ts` : NON ÉCRIT.**
-      Les dix-huit lignes du §7 ter.13.10 restent à observer avec les jetons réels des trois
-      profils. Ce que pgTAP ne peut pas attraper reste donc dû : le `401` de l'anonyme, le `409` de
-      la concurrence optimiste — éprouvé en pgTAP par son `SQLSTATE` mais pas par son code HTTP —,
-      et le fait que les arguments facultatifs traversent réellement PostgREST. **C'est le seul
-      écart de preuve de cette tranche.**
+- [x] **Test d'intégration dédié, hors interface** `e2e/api/restauration-version-workflow.spec.ts` :
+      **14 scénarios couvrant les dix-huit lignes** du §7 ter.13.10 avec les jetons réels des trois
+      profils. La ligne p — preuve de refus n° 3 — crée un **second workspace réel**, absent du seed,
+      y pose une version dont l'existence est constatée avec la clé de service, et démonte le tout
+      (décision 50). La ligne a reste sur la **vraie version du seed**, parce qu'elle n'écrit rien,
+      et **relit le nombre de versions** pour prouver qu'elle ne laisse aucune trace ; toute ligne
+      qui écrit se joue sur un workflow jetable rendu dans un `finally`, restaurer publiant un point
+      de retour que le seed conserverait à chaque exécution.
+- [x] **CE HARNAIS A ATTRAPÉ UN DÉFAUT QUE pgTAP NE POUVAIT PAS VOIR, et c'est sa justification.**
+      La vérification 5 rendait **`400`** là où le §7 ter.13.6 exige `409`. MESURÉ par une sonde
+      posée puis retirée sur la pile locale : PostgREST rend `400` pour tout `P0001`, et `409` pour
+      un `SQLSTATE` de la forme `PT<statut>`. Les deux exigences de la spécification — `P0001` et
+      `409` — étaient inconciliables. **Le `SQLSTATE` a cédé**, le code HTTP étant le seul des deux
+      que la spécification argumentait ; message et `detail` inchangés. L'assertion 13 de la suite
+      pgTAP, qui figeait `P0001`, a été **révisée avec son motif dans le fichier** (mécanisme de la
+      décision 51, dix-septième occurrence), et le §7 ter.13.6, le §7 ter.13.10 et
+      `docs/PROD_MIGRATIONS.md` portent la révision et son point de vérification.
 - [ ] **Aucun harnais dédié `scripts/verify-versionnement.sh`.** Les preuves de l'unité vivent
       désormais dans huit fichiers ; un verdict d'ensemble ne s'écrit utilement qu'une fois les cinq
       tranches livrées, comme `CRM-077` l'a montré.
