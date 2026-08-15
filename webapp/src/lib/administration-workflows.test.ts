@@ -75,6 +75,8 @@ import {
 	type ExigenceAdministrable,
 	type RegleAdministrable,
 	type TransitionAdministrable,
+	previsualiserExigence,
+	composerMessageEffets,
 } from './administration-workflows'
 import type { ClientCrm } from './supabase'
 
@@ -1430,5 +1432,126 @@ describe('les refus d’écriture d’une exigence (§7 bis.12.5)', () => {
 
 	it('classe une coupure réseau sans jamais la confondre avec un refus métier', () => {
 		expect(classerRefusExigence(undefined, undefined, 'Failed to fetch').nature).toBe('network')
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// La prévisualisation des effets — §7 bis.13
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-076 (docs/BACKLOG.md) — sixième tranche : la prévisualisation des effets
+// @verifies docs/SPEC-workflow-engine.md §7 bis.13.3 (contrat de l'appel), §7 bis.13.4 (ce que
+//           l'écran en fait, dont « zéro se dit en toutes lettres » et le repli sur échec)
+//
+// CE QUI EST PROUVÉ ICI EST LA MISE EN FORME, PAS LE COMPTE. Le compte appartient à la base et sa
+// justesse est prouvée par `supabase/tests/0034_previsualisation_exigence.test.sql`, contre le vrai
+// seed et contre `move_card`. Le doubler ici par un faux client reviendrait à prouver l'arithmétique
+// de la doublure.
+
+describe('la prévisualisation des effets (§7 bis.13)', () => {
+	/** Doublure minimale : rend ce qu'on lui donne, et retient les paramètres reçus. */
+	function clientPrevisualisation(
+		reponse: { data: unknown; error: unknown; status?: number },
+		recu?: { params?: Record<string, unknown>; nom?: string },
+	): ClientCrm {
+		return {
+			rpc: (nom: string, params: Record<string, unknown>) => {
+				if (recu !== undefined) {
+					recu.nom = nom
+					recu.params = params
+				}
+				return Promise.resolve(reponse)
+			},
+		} as unknown as ClientCrm
+	}
+
+	it('appelle `previsualiser_exigence` avec la SEULE cible fournie — une étape', async () => {
+		// §7 bis.13.3 : deux cibles lèvent `previsualisation_cible`. Le module ne doit donc jamais
+		// envoyer `p_transition_id` lorsqu'il vise une étape, fût-ce à `null` explicite.
+		const recu: { params?: Record<string, unknown>; nom?: string } = {}
+		await previsualiserExigence(
+			clientPrevisualisation({ data: [{ sur_place: 4, a_l_entree: 0 }], error: null }, recu),
+			'champ-1',
+			{ genre: 'etape', idEtape: 'etape-1' },
+		)
+		expect(recu.nom).toBe('previsualiser_exigence')
+		expect(recu.params).toEqual({ p_field_id: 'champ-1', p_step_id: 'etape-1' })
+		expect(Object.keys(recu.params ?? {})).not.toContain('p_transition_id')
+	})
+
+	it('appelle `previsualiser_exigence` avec la SEULE cible fournie — une transition', async () => {
+		const recu: { params?: Record<string, unknown>; nom?: string } = {}
+		await previsualiserExigence(
+			clientPrevisualisation({ data: [{ sur_place: 0, a_l_entree: 4 }], error: null }, recu),
+			'champ-1',
+			{ genre: 'transition', idTransition: 'arete-1' },
+		)
+		expect(recu.params).toEqual({ p_field_id: 'champ-1', p_transition_id: 'arete-1' })
+		expect(Object.keys(recu.params ?? {})).not.toContain('p_step_id')
+	})
+
+	it('rend les deux nombres tels que la base les a comptés', async () => {
+		const resultat = await previsualiserExigence(
+			clientPrevisualisation({ data: [{ sur_place: 1, a_l_entree: 8 }], error: null }),
+			'champ-1',
+			{ genre: 'etape', idEtape: 'perdu' },
+		)
+		expect(resultat).toEqual({ statut: 'mesure', effets: { surPlace: 1, aLEntree: 8 } })
+	})
+
+	it('rend `indisponible` sur un refus, et NE PRÉTEND JAMAIS zéro', async () => {
+		// La distinction est la raison d'être du type : un zéro inventé aurait rassuré à tort sur un
+		// geste qui bloque des affaires (§7 bis.13.4).
+		const resultat = await previsualiserExigence(
+			clientPrevisualisation({ data: null, error: { message: 'refus' }, status: 403 }),
+			'champ-1',
+			{ genre: 'etape', idEtape: 'etape-1' },
+		)
+		expect(resultat).toEqual({ statut: 'indisponible' })
+	})
+
+	it('rend `indisponible` sur une réponse vide — contrat rompu, pas un zéro', async () => {
+		const resultat = await previsualiserExigence(
+			clientPrevisualisation({ data: [], error: null }),
+			'champ-1',
+			{ genre: 'etape', idEtape: 'etape-1' },
+		)
+		expect(resultat).toEqual({ statut: 'indisponible' })
+	})
+
+	it('rend `indisponible` sur une coupure réseau, sans laisser fuir l’exception', async () => {
+		const client = {
+			rpc: () => {
+				throw new Error('coupure')
+			},
+		} as unknown as ClientCrm
+		expect(await previsualiserExigence(client, 'champ-1', { genre: 'etape', idEtape: 'e1' })).toEqual(
+			{ statut: 'indisponible' },
+		)
+	})
+
+	it('rend `indisponible` sans client configuré, et n’appelle rien', async () => {
+		expect(await previsualiserExigence(null, 'champ-1', { genre: 'etape', idEtape: 'e1' })).toEqual({
+			statut: 'indisponible',
+		})
+	})
+
+	it('compose les CINQ messages, dont « aucun effet » qui est une phrase et non un silence', () => {
+		expect(composerMessageEffets({ statut: 'indisponible' })).toEqual({ cle: 'indisponible' })
+		expect(
+			composerMessageEffets({ statut: 'mesure', effets: { surPlace: 0, aLEntree: 0 } }),
+		).toEqual({ cle: 'aucun-effet' })
+		// `Prospection` mesuré : 4 sur place, 0 à l'entrée — aucune arête ne mène à l'étape initiale.
+		expect(
+			composerMessageEffets({ statut: 'mesure', effets: { surPlace: 4, aLEntree: 0 } }),
+		).toEqual({ cle: 'sur-place', surPlace: 4 })
+		// `Signature` mesuré : l'inverse exact.
+		expect(
+			composerMessageEffets({ statut: 'mesure', effets: { surPlace: 0, aLEntree: 1 } }),
+		).toEqual({ cle: 'a-l-entree', aLEntree: 1 })
+		// `Perdu` mesuré : les deux à la fois.
+		expect(
+			composerMessageEffets({ statut: 'mesure', effets: { surPlace: 1, aLEntree: 8 } }),
+		).toEqual({ cle: 'les-deux', surPlace: 1, aLEntree: 8 })
 	})
 })

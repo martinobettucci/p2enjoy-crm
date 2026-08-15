@@ -620,7 +620,14 @@ type _vueDerivationColonnes = Expect<
 // `messages_a_ranger` et `marquer_message_range` sont réservées au worker `mail-sync`, comme
 // `dossiers_a_renommer`. Le type les voit, la base les refuse — c'est la limite que ce bloc
 // répète depuis la première révision. Le nom du type suit le compte : vingt-six.
-type _lesVingtSixFonctions = Expect<
+//
+// RÉVISÉ UNE DOUZIÈME FOIS PAR `CRM-076`, sixième tranche (décision 390). L'assertion est devenue
+// rouge parce que la RÈGLE a changé : la migration `0036` ajoute `previsualiser_exigence`, et
+// c'est la SECONDE fonction de ce fichier réellement appelable par un écran sans être réservée au
+// worker. Elle est ajoutée, non contournée, et une propriété la distingue des vingt-six autres :
+// elle est `SECURITY INVOKER`, si bien que le nombre qu'elle rend est borné par la RLS de son
+// appelant (docs/SPEC-workflow-engine.md §7 bis.13.2). Vingt-six devient vingt-sept.
+type _lesVingtSeptFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -643,6 +650,7 @@ type _lesVingtSixFonctions = Expect<
     | 'mail_outbound_identity_record_check'
     | 'move_card'
     | 'move_card_to_channel'
+    | 'previsualiser_exigence'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
     | 'reprogrammer_envoi'
@@ -820,7 +828,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtSixFonctions,
+  _lesVingtSeptFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

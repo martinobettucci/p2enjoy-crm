@@ -1659,3 +1659,104 @@ export async function retirerExigence(
 			.select('field_id'),
 	)
 }
+
+// ---------------------------------------------------------------------------------------------
+// La prévisualisation des effets — docs/SPEC-workflow-engine.md §7 bis.13
+// ---------------------------------------------------------------------------------------------
+//
+// @spec CRM-076 (docs/BACKLOG.md) — sixième tranche : la prévisualisation des effets
+// @spec docs/SPEC-workflow-engine.md §7 bis.13.1 (les DEUX effets), §7 bis.13.2 (le compte est
+//       fait par la base), §7 bis.13.3 (contrat et refus), §7 bis.13.4 (ce que l'écran en fait)
+//
+// RIEN N'EST COMPTÉ ICI. Le module APPELLE `previsualiser_exigence` et met en forme ce qu'elle
+// rend. Recompter côté navigateur aurait dupliqué `app.valeur_de_champ_est_vide` — vingt-quatre
+// points de code d'espaces —, exigé une lecture non bornée des affaires et de leurs valeurs, et
+// annoncé un nombre que la RLS de l'appelant ne recouvre pas nécessairement (§7 bis.13.2).
+
+/** Ce que la base rend pour un couple champ × cible, tel quel. */
+export type EffetsExigence = {
+	/** Affaires DÉJÀ à l'étape visée : leur fiche signalera un manque, sans les chasser (§5.7). */
+	readonly surPlace: number
+	/** Affaires qui ne pourraient plus entrer par un chemin menant à la cible. */
+	readonly aLEntree: number
+}
+
+/**
+ * Résultat d'une prévisualisation.
+ *
+ * `indisponible` N'EST PAS UNE ERREUR BLOQUANTE, et c'est une décision d'écran autant que de
+ * module (§7 bis.13.4) : le compte est une aide à la décision, jamais une garde — la garde est
+ * dans `move_card`. Un échec de prévisualisation laisse donc le geste possible, et l'écran écrit
+ * que l'effet n'a pas pu être mesuré plutôt que d'inventer un zéro rassurant.
+ */
+export type ResultatPrevisualisation =
+	| { readonly statut: 'mesure'; readonly effets: EffetsExigence }
+	| { readonly statut: 'indisponible' }
+
+/** Cible de la prévisualisation : une étape OU une transition, jamais les deux (§7 bis.13.3). */
+export type CiblePrevisualisation =
+	| { readonly genre: 'etape'; readonly idEtape: string }
+	| { readonly genre: 'transition'; readonly idTransition: string }
+
+/**
+ * Demande à la base ce qu'une exigence ferait aux affaires en cours.
+ *
+ * L'APPEL EST FAIT AU MOMENT DU GESTE, jamais d'avance : quarante-deux cases de grille et une
+ * dizaine d'arêtes feraient autant d'appels pour des gestes qui n'auront pas lieu (§7 bis.13.4).
+ *
+ * Les deux paramètres de cible sont exclusifs et la base le vérifie elle-même : le type
+ * `CiblePrevisualisation` empêche l'erreur à la compilation, et `previsualisation_cible` la
+ * rattraperait à l'exécution.
+ */
+export async function previsualiserExigence(
+	client: ClientCrm | null,
+	idChamp: string,
+	cible: CiblePrevisualisation,
+): Promise<ResultatPrevisualisation> {
+	if (client === null) return { statut: 'indisponible' }
+	try {
+		const reponse = await client.rpc('previsualiser_exigence', {
+			p_field_id: idChamp,
+			...(cible.genre === 'etape'
+				? { p_step_id: cible.idEtape }
+				: { p_transition_id: cible.idTransition }),
+		})
+		if (reponse.error !== null) return { statut: 'indisponible' }
+		// La fonction rend une ligne unique ; une réponse vide serait un contrat rompu, et le
+		// module refuse alors d'affirmer un zéro qu'il n'a pas lu.
+		const ligne = (reponse.data ?? [])[0]
+		if (ligne === undefined) return { statut: 'indisponible' }
+		return {
+			statut: 'mesure',
+			effets: { surPlace: Number(ligne.sur_place), aLEntree: Number(ligne.a_l_entree) },
+		}
+	} catch {
+		return { statut: 'indisponible' }
+	}
+}
+
+/**
+ * Ce que l'écran doit dire d'une prévisualisation, sous forme de clé et de nombres.
+ *
+ * LA COMPOSITION EST ICI, ET PAS DANS LE COMPOSANT, pour une raison de preuve : les six cas —
+ * indisponible, aucun effet, l'un des deux nombres seul, les deux — se prouvent alors sans monter
+ * un arbre React. Le composant ne fait plus que traduire la clé rendue.
+ *
+ * ZÉRO SE DIT EN TOUTES LETTRES (§7 bis.13.4) : `aucun-effet` est une phrase, jamais l'absence de
+ * phrase — un bloc muet se lirait comme un chargement qui n'a pas abouti.
+ */
+export type MessageEffets =
+	| { readonly cle: 'indisponible' }
+	| { readonly cle: 'aucun-effet' }
+	| { readonly cle: 'sur-place'; readonly surPlace: number }
+	| { readonly cle: 'a-l-entree'; readonly aLEntree: number }
+	| { readonly cle: 'les-deux'; readonly surPlace: number; readonly aLEntree: number }
+
+export function composerMessageEffets(resultat: ResultatPrevisualisation): MessageEffets {
+	if (resultat.statut === 'indisponible') return { cle: 'indisponible' }
+	const { surPlace, aLEntree } = resultat.effets
+	if (surPlace === 0 && aLEntree === 0) return { cle: 'aucun-effet' }
+	if (aLEntree === 0) return { cle: 'sur-place', surPlace }
+	if (surPlace === 0) return { cle: 'a-l-entree', aLEntree }
+	return { cle: 'les-deux', surPlace, aLEntree }
+}

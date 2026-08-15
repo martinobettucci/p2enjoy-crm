@@ -1843,6 +1843,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      previsualiser_exigence: {
+        Args: {
+          p_field_id: string
+          p_step_id?: string
+          p_transition_id?: string
+        }
+        Returns: {
+          a_l_entree: number
+          sur_place: number
+        }[]
+      }
       queue_outbound_email: {
         Args: {
           p_body_text?: string
