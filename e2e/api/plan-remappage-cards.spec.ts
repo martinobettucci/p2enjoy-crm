@@ -256,8 +256,11 @@ test.describe('N1 — le plan nominal, et l’exhaustivité (lignes a, b)', () =
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		expect(versions.status()).toBe(200)
-		const [version] = (await versions.json()) as { id: string }[]
-		expect(version, 'le seed publie une version du workflow par défaut (§7 ter.8)').toBeTruthy()
+		const publiees = (await versions.json()) as { id: string }[]
+		// `toHaveLength` et non une simple vérité : le seed DOIT publier une version du workflow par
+		// défaut (§7 ter.8), et sans elle cette ligne ne prouverait rien tout en restant verte.
+		expect(publiees, 'le seed publie une version du workflow par défaut (§7 ter.8)').toHaveLength(1)
+		const version = publiees[0] as { id: string }
 
 		const reponse = await planifier(request, jeton, version.id)
 		expect(reponse.status()).toBe(200)
