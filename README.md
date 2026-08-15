@@ -7,7 +7,7 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > **État d'avancement — lisez ceci en premier.**
 > *Ce bandeau est réécrit à partir de `docs/BACKLOG.md` à chaque livraison, au même titre que le
 > `CHANGELOG.md` — règle posée le 2026-08-13 en clôturant INC-019, qui constatait qu'il décrivait un
-> dépôt que trois unités avaient dépassé. Dernière relecture : **2026-08-13**.*
+> dépôt que trois unités avaient dépassé. Dernière relecture : **2026-08-15**.*
 >
 > **Ce qui est livré ET intégralement vérifié** (`[x]`) : les scripts de lancement (`CRM-002`), les
 > migrations d'amorçage (`CRM-003`), le chiffrement des secrets (`CRM-004`), le seed socle
@@ -19,17 +19,20 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 > `change_channel_workflow` (`CRM-019`), les tracks (`CRM-020`), les channels (`CRM-021`), les
 > identités d'équipe sûres (`CRM-022`), le board kanban (`CRM-041`), les commentaires (`CRM-043`),
 > la timeline unifiée (`CRM-044`), l'**administration des tracks et des channels** (`CRM-075`),
-> l'infrastructure mail de développement (`CRM-050`) et le service `mail-sync` (`CRM-051`).
+> l'**éditeur administrateur de workflows** (`CRM-076`), l'infrastructure mail de développement
+> (`CRM-050`), le service `mail-sync` (`CRM-051`) et le backfill et la supervision du mail
+> (`CRM-059`).
 >
 > **Ce qui est écrit mais insuffisamment vérifié** (`[~]`) — le code existe, sa preuve n'est pas
 > complète, et il ne faut pas s'y fier sans lire l'unité : la pile elle-même (`CRM-001`), les
 > colonnes protégées (`CRM-013`), le harnais de preuves d'autorisation (`CRM-014`), le moteur de
 > workflow (`CRM-030` à `CRM-037`), les cards et la vue liste (`CRM-040`, `CRM-042`), le
 > déplacement entre channels (`CRM-045`), le seed de démonstration (`CRM-046`), le manuel
-> (`CRM-047`) et **toute la messagerie du produit** (`CRM-052` à `CRM-059`).
+> (`CRM-047`), la messagerie du produit (`CRM-052` à `CRM-058`), la **corbeille et la restauration**
+> (`CRM-077`) et le **versionnement des workflows** (`CRM-078`, première tranche livrée : versions
+> immuables et publication ; comparaison, remappage et écrans encore dus).
 >
-> **Ce qui n'est pas commencé** (`[ ]`) : l'éditeur de workflows (`CRM-076`), la corbeille
-> (`CRM-077`), le versionnement (`CRM-078`), l'onboarding (`CRM-079`), les sauvegardes (`CRM-080`),
+> **Ce qui n'est pas commencé** (`[ ]`) : l'onboarding (`CRM-079`), les sauvegardes (`CRM-080`),
 > le snooze (`CRM-081`) et les extensions du chunk 5 (`CRM-060` à `CRM-074`).
 >
 > **Une limite d'environnement à connaître avant tout.** Le registre d'images Docker est
