@@ -1,12 +1,15 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
-//       troisième tranches
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
+//       troisième et quatrième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
 //       §7 bis.5 (validation de forme), §7 bis.7 (ce que cette tranche ne livre pas),
 //       §7 bis.9 (deuxième tranche : l'édition des transitions), §3.4 (modèle des arêtes),
-//       §7 bis.10 (troisième tranche : l'édition des champs de formulaire)
+//       §7 bis.10 (troisième tranche : l'édition des champs de formulaire),
+//       §7 bis.11 (quatrième tranche : la grille champ × étape des règles de visibilité)
 // @spec docs/SPEC-form-composer.md §2.2 (modèle `form_fields`), §2.3 (les quinze types),
 //       §2.4 (`options` et ce que la base n'y vérifie pas), §2.5 (la clé durable),
-//       §2.6 (ordre des champs), §2.7 (autorisations, aucun privilège `DELETE`)
+//       §2.6 (ordre des champs), §2.7 (autorisations, aucun privilège `DELETE`),
+//       §3.1 (les trois visibilités et le défaut), §3.2 (modèle `form_field_rules`),
+//       §5 (l'édition du formulaire en un seul écran)
 // @spec docs/SPEC-workflow-engine.md §2.5 (probabilité et seuil : `0` n'est pas `NULL`),
 //       §3.3 (modèle `workflow_steps` et ses contraintes), §3.5 (l'étape initiale),
 //       §3.7 (écriture réservée à l'administrateur)
@@ -1091,5 +1094,265 @@ export async function archiverChamp(
 ): Promise<ResultatChamp> {
 	return executerChamp(() =>
 		client.from('form_fields').update({ archived_at: instant }).eq('id', idChamp).select('id'),
+	)
+}
+
+// =============================================================================================
+// QUATRIÈME TRANCHE — la grille champ × étape des règles de visibilité
+// @spec docs/SPEC-workflow-engine.md §7 bis.11 (la grille), §7 bis.11.1 (lecture 6 et son ordre
+//       d'identifiants), §7 bis.11.2 (la composition, qui ne part jamais des règles),
+//       §7 bis.11.3 (les deux gestes, et pourquoi le réglage est un `upsert`),
+//       §7 bis.11.4 (les quatre états d'une case), §7 bis.11.5 (les refus)
+// @spec docs/SPEC-form-composer.md §3.1 (les trois visibilités et le défaut), §3.2 (modèle et clé
+//       primaire composite), §3.3 (les trois clés composites, mesurées), §5 (l'édition en un seul
+//       écran, et ce que l'archivage d'un champ fait de ses règles)
+// =============================================================================================
+//
+// AUCUNE MIGRATION N'ACCOMPAGNE CETTE TRANCHE : `form_field_rules` existe depuis `CRM-035` avec son
+// `CHECK` de visibilité, ses trois clés composites et ses quatre politiques.
+
+/** Une règle de visibilité, telle que la grille la consomme. */
+export type RegleAdministrable = Pick<
+	Database['public']['Tables']['form_field_rules']['Row'],
+	'field_id' | 'step_id' | 'visibility'
+>
+
+export const COLONNES_REGLE_ADMIN = 'field_id, step_id, visibility'
+
+/**
+ * Les règles de visibilité d'un workflow — lecture 6 du §7 bis.11.1.
+ *
+ * L'ORDRE DEMANDÉ EST CELUI DES IDENTIFIANTS, pour la raison exacte de `lireTransitions` : la table
+ * ne porte ni la position d'un champ ni celle d'une étape, donc aucun ordre lisible ne peut être
+ * demandé au serveur. La grille n'en a pas besoin — elle n'est jamais parcourue dans l'ordre des
+ * règles, elle est **indexée** par le couple, et son ordre vient des deux listes déjà lues.
+ */
+export async function lireRegles(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly RegleAdministrable[]>> {
+	try {
+		const reponse = await client
+			.from('form_field_rules')
+			.select(COLONNES_REGLE_ADMIN)
+			.eq('workflow_id', idWorkflow)
+			.order('field_id')
+			.order('step_id')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(reponse.data as readonly RegleAdministrable[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Les trois visibilités du §3.1, dans l'ordre croissant d'exigence où la case les propose. */
+export const VISIBILITES = ['hidden', 'visible', 'required'] as const
+
+export type Visibilite = (typeof VISIBILITES)[number]
+
+/**
+ * L'état d'une case : une des trois visibilités, ou le **défaut**.
+ *
+ * QUATRE ÉTATS, PAS TROIS, et le §7 bis.11.4 en donne le motif : l'absence de règle vaut `visible`
+ * (§3.1 du composeur), mais une règle `visible` explicite existe aussi — le seed en pose deux.
+ * Replier l'une sur l'autre afficherait ces deux règles comme des absences, puis les supprimerait
+ * au premier réglage voisin, c'est-à-dire effacerait une ligne que personne n'a désignée.
+ */
+export type EtatCase = Visibilite | 'defaut'
+
+export type CaseGrille = {
+	readonly etape: EtapeAdministrable
+	readonly etat: EtatCase
+}
+
+export type LigneGrille = {
+	readonly champ: ChampAdministrable
+	readonly cases: readonly CaseGrille[]
+}
+
+/** La clé d'indexation d'un couple. Les identifiants sont des `uuid` : aucun ne contient ` `. */
+const cleCouple = (idChamp: string, idEtape: string): string => `${idChamp} ${idEtape}`
+
+/**
+ * Compose la grille champ × étape — §7 bis.11.2.
+ *
+ * ELLE NE PART JAMAIS DES RÈGLES, et c'est la règle de lecture que le §3.1 du composeur pose pour
+ * le rendu d'un formulaire, appliquée en deux dimensions : les lignes sont les champs, les colonnes
+ * les étapes, et la règle n'est consultée qu'ensuite. MESURÉ sur le seed le 2026-08-15 : quinze
+ * règles pour six champs actifs × sept étapes, soit **vingt-sept** couples sans règle — une
+ * composition partant des règles perdrait les deux tiers de la grille.
+ *
+ * LES CHAMPS ARCHIVÉS SONT ÉCARTÉS DES LIGNES, à la différence de `lireChamps` qui les rapporte.
+ * La liste des champs sert à en **restaurer** un ; la grille décrit ce qu'un formulaire montre, et
+ * un champ archivé n'apparaît dans aucun formulaire (§5 du composeur). Ses règles ne sont pas
+ * touchées — MESURÉ, la base en accepte même de nouvelles sur un champ archivé — et redeviennent
+ * effectives dès sa restauration. L'écran dit combien de champs sont ainsi retirés.
+ *
+ * UNE RÈGLE ORPHELINE EST IGNORÉE plutôt que rendue : son champ ou son étape a disparu entre deux
+ * lectures, la base l'a déjà emportée en cascade (§3.3 du composeur), et aucune case ne peut
+ * l'accueillir.
+ */
+export function composerGrille(
+	champs: readonly ChampAdministrable[],
+	etapes: readonly EtapeAdministrable[],
+	regles: readonly RegleAdministrable[],
+): readonly LigneGrille[] {
+	const parCouple = new Map<string, Visibilite>()
+	for (const regle of regles) {
+		parCouple.set(cleCouple(regle.field_id, regle.step_id), regle.visibility as Visibilite)
+	}
+	return champs
+		.filter((champ) => champ.archived_at === null)
+		.map((champ) => ({
+			champ,
+			cases: etapes.map((etape) => ({
+				etape,
+				etat: parCouple.get(cleCouple(champ.id, etape.id)) ?? ('defaut' as const),
+			})),
+		}))
+}
+
+export type NatureRefusRegle =
+	/** `403`/`401` — `42501`. Seul un administrateur du workspace écrit (§3.7 du composeur). */
+	| 'forbidden'
+	/** `23503` — le champ ou l'étape a disparu, ou n'appartient pas à ce workflow. */
+	| 'reference-absente'
+	/** `23514` — le `CHECK` de visibilité, seule cause possible ici. */
+	| 'forme-refusee'
+	| 'network'
+	| 'unknown'
+
+export type RefusRegle = {
+	readonly nature: NatureRefusRegle
+	readonly detail: string
+}
+
+/**
+ * Classe un refus d'écriture sur une règle.
+ *
+ * `23505` N'EST PAS TRADUIT EN REFUS MÉTIER, et c'est la différence avec les trois classifications
+ * précédentes. Il ne peut naître que d'une insertion sans `resolution=merge-duplicates`, que
+ * `reglerVisibilite` n'émet jamais — MESURÉ le 2026-08-15 : `409` / `23505` sur
+ * `form_field_rules_pkey` dès que le couple existe. Lui donner une nature ferait croire à une règle
+ * de plus, là où le §7 bis.11.3 explique précisément pourquoi l'écran ne peut pas le rencontrer. Il
+ * est replié sur `unknown`, qui rend le message générique, et son détail reste lisible.
+ */
+export function classerRefusRegle(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusRegle {
+	const base: RefusEcriture = classerRefusEcriture(statutHttp, code, detail)
+	switch (base.nature) {
+		case 'slug-pris':
+			return { nature: 'unknown', detail }
+		case 'workflow-hors-track':
+			return { nature: 'forme-refusee', detail }
+		default:
+			return { nature: base.nature, detail }
+	}
+}
+
+export type ResultatRegle =
+	| { readonly statut: 'applique' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusRegle }
+
+/** Enveloppe des écritures de règle, jumelle des trois précédentes sur `RefusRegle`. */
+async function executerRegle(
+	appel: () => PromiseLike<{
+		error: { code?: string; message: string } | null
+		status: number
+		data: unknown[] | null
+	}>,
+): Promise<ResultatRegle> {
+	try {
+		const reponse = await appel()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusRegle(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'applique' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusRegle(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
+
+export type ReglageCase = {
+	readonly idChamp: string
+	readonly idEtape: string
+	readonly idWorkflow: string
+	readonly idWorkspace: string
+	readonly visibilite: Visibilite
+}
+
+/**
+ * Règle une case sur une des trois visibilités — premier geste du §7 bis.11.3.
+ *
+ * C'EST UN `upsert`, PAS UN CHOIX ENTRE INSERTION ET MODIFICATION, et les quatre mesures du
+ * 2026-08-15 le décident : `POST` d'un couple absent rend `201` ; le même `POST` avec
+ * `resolution=merge-duplicates` rend `200` sur un couple existant ; **sans** cette résolution il
+ * rend `409` / `23505` ; `PATCH` rend `200`. Un écran qui choisirait d'après ce qu'il a lu prendrait
+ * donc le `409` dès qu'un autre administrateur a réglé la même case entre la lecture et le clic —
+ * un refus que l'utilisateur n'a pas provoqué. L'`upsert` est la seule des quatre formes
+ * indifférente à l'état lu, et la clé primaire `(field_id, step_id)` du §3.2 est ce qui le permet.
+ *
+ * `onConflict` EST ÉCRIT PLUTÔT QUE DÉDUIT : PostgREST retomberait sur la clé primaire, mais la
+ * lire dans l'appel dit quel couple porte l'unicité sans avoir à ouvrir la migration.
+ */
+export async function reglerVisibilite(
+	client: ClientCrm,
+	reglage: ReglageCase,
+): Promise<ResultatRegle> {
+	return executerRegle(() =>
+		client
+			.from('form_field_rules')
+			.upsert(
+				{
+					field_id: reglage.idChamp,
+					step_id: reglage.idEtape,
+					workflow_id: reglage.idWorkflow,
+					workspace_id: reglage.idWorkspace,
+					visibility: reglage.visibilite,
+				},
+				{ onConflict: 'field_id,step_id' },
+			)
+			.select('field_id'),
+	)
+}
+
+/**
+ * Rend une case au défaut, c'est-à-dire retire sa règle — second geste du §7 bis.11.3.
+ *
+ * C'EST LE SEUL `DELETE` DE TOUT CET ÉDITEUR DE FORMULAIRE. Un champ ne se supprime pas — aucun
+ * privilège `DELETE` ne lui est accordé (§2.7 du composeur) —, une règle si : la décision 96 l'écrit
+ * dans la migration, « une règle est la composition d'un formulaire, sans existence propre ».
+ * MESURÉ : `200` et la ligne retirée avec le jeton de l'administratrice, `200` et `[]` avec celui du
+ * `business_developer`, la règle restant alors intacte.
+ */
+export async function rendreAuDefaut(
+	client: ClientCrm,
+	idChamp: string,
+	idEtape: string,
+): Promise<ResultatRegle> {
+	return executerRegle(() =>
+		client
+			.from('form_field_rules')
+			.delete()
+			.eq('field_id', idChamp)
+			.eq('step_id', idEtape)
+			.select('field_id'),
 	)
 }

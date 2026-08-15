@@ -1,5 +1,5 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
-//           troisième tranches
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
+//           troisième et quatrième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les trois lectures, leurs filtres et leur ordre),
 //           §7 bis.4 (les six gestes et ce que la base garantit), §7 bis.5 (validation de forme),
 //           §7 bis.8 (preuves attendues, niveau unitaire), §7 bis.9 (deuxième tranche : les arêtes,
@@ -55,9 +55,16 @@ import {
 	lireChamps,
 	modifierChamp,
 	refusDesChoix,
+	COLONNES_REGLE_ADMIN,
+	classerRefusRegle,
+	composerGrille,
+	lireRegles,
+	reglerVisibilite,
+	rendreAuDefaut,
 	type ChampAdministrable,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
+	type RegleAdministrable,
 	type TransitionAdministrable,
 } from './administration-workflows'
 import type { ClientCrm } from './supabase'
@@ -108,8 +115,10 @@ function espionLecture(reponse: Reponse): { client: ClientCrm; appel: AppelLectu
 
 type Ecriture = {
 	table?: string
-	verbe?: 'insert' | 'update' | 'delete'
+	verbe?: 'insert' | 'update' | 'delete' | 'upsert'
 	charge?: Record<string, unknown>
+	/** Les options d'un `upsert` — `onConflict` en porte le couple d'unicité (§7 bis.11.3). */
+	options?: Record<string, unknown>
 	filtres: [string, unknown][]
 	colonnesRendues?: string
 }
@@ -160,6 +169,12 @@ function espionEcritures(reponses: readonly Reponse[]): { client: ClientCrm; app
 				update: (charge: Record<string, unknown>) => {
 					appel.verbe = 'update'
 					appel.charge = charge
+					return chaineDe(appel)
+				},
+				upsert: (charge: Record<string, unknown>, options?: Record<string, unknown>) => {
+					appel.verbe = 'upsert'
+					appel.charge = charge
+					appel.options = options
 					return chaineDe(appel)
 				},
 				delete: () => {
@@ -960,5 +975,210 @@ describe('les refus d’écriture d’un champ (§7 bis.10.5)', () => {
 		} as unknown as ClientCrm
 		const resultat = await archiverChamp(client, 'c1', null)
 		expect(resultat.statut).toBe('refus')
+	})
+})
+
+// =============================================================================================
+// QUATRIÈME TRANCHE — la grille champ × étape des règles de visibilité
+// @verifies docs/SPEC-workflow-engine.md §7 bis.11.1 (lecture 6), §7 bis.11.2 (la composition),
+//           §7 bis.11.3 (les deux gestes et l'`upsert`), §7 bis.11.4 (les quatre états),
+//           §7 bis.11.5 (les refus), §7 bis.11.8 (preuves attendues)
+// @verifies docs/SPEC-form-composer.md §3.1 (l'absence de règle vaut `visible`), §3.2 (la clé
+//           primaire `(field_id, step_id)`), §5 (un champ archivé n'est dans aucun formulaire)
+// =============================================================================================
+
+function regle(idChamp: string, idEtape: string, visibilite: string): RegleAdministrable {
+	return { field_id: idChamp, step_id: idEtape, visibility: visibilite }
+}
+
+describe('la lecture des règles de visibilité (§7 bis.11.1)', () => {
+	it('demande les règles d’un workflow, ordonnées par identifiants', async () => {
+		// L'ordre des identifiants est assumé : la table ne porte ni la position d'un champ ni celle
+		// d'une étape (§7 bis.11.1). La grille n'est jamais parcourue dans cet ordre — elle est
+		// indexée par le couple —, mais un ordre stable évite deux réponses différentes.
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireRegles(client, 'w1')
+		expect(appel.table).toBe('form_field_rules')
+		expect(appel.colonnes).toBe(COLONNES_REGLE_ADMIN)
+		expect(appel.filtres).toEqual([['workflow_id', 'w1']])
+		expect(appel.tris.map(([colonne]) => colonne)).toEqual(['field_id', 'step_id'])
+	})
+
+	it('rend une erreur classée plutôt que de lever', async () => {
+		const { client } = espionLecture({ data: null, error: { message: 'boom' }, status: 500 })
+		expect((await lireRegles(client, 'w1')).statut).toBe('erreur')
+	})
+})
+
+describe('la composition de la grille (§7 bis.11.2)', () => {
+	const c1 = champ({ id: 'c1', key: 'budget', position: 1 })
+	const c2 = champ({ id: 'c2', key: 'source', position: 2 })
+	const e1 = etape({ id: 'e1', node_id: 'n1', position: 1 })
+	const e2 = etape({ id: 'e2', node_id: 'n2', position: 2 })
+
+	it('NE PART PAS DES RÈGLES : toute case sans règle vaut le défaut', () => {
+		// MESURÉ sur le seed le 2026-08-15 : quinze règles pour six champs actifs × sept étapes, soit
+		// vingt-sept couples sans règle. Une composition partant des règles perdrait les deux tiers
+		// de la grille (§3.1 du composeur, §7 bis.11.2).
+		const grille = composerGrille([c1, c2], [e1, e2], [regle('c1', 'e2', 'required')])
+		expect(grille.map((ligne) => ligne.cases.map((cellule) => cellule.etat))).toEqual([
+			['defaut', 'required'],
+			['defaut', 'defaut'],
+		])
+	})
+
+	it('rend une case par étape, dans l’ordre du graphe, et une ligne par champ, dans l’ordre des positions', () => {
+		const grille = composerGrille([c1, c2], [e1, e2], [])
+		expect(grille.map((ligne) => ligne.champ.id)).toEqual(['c1', 'c2'])
+		expect(grille[0]?.cases.map((cellule) => cellule.etape.id)).toEqual(['e1', 'e2'])
+	})
+
+	it('porte les trois visibilités telles quelles, `visible` explicite compris', () => {
+		// Le §7 bis.11.4 : `visible` n'est PAS replié sur le défaut. Le seed en pose deux, et les
+		// afficher comme des absences les ferait supprimer au premier réglage voisin.
+		const grille = composerGrille(
+			[c1],
+			[e1, e2],
+			[regle('c1', 'e1', 'visible'), regle('c1', 'e2', 'hidden')],
+		)
+		expect(grille[0]?.cases.map((cellule) => cellule.etat)).toEqual(['visible', 'hidden'])
+	})
+
+	it('ÉCARTE LES CHAMPS ARCHIVÉS DES LIGNES, sans toucher à leurs règles', () => {
+		// La liste des champs les rapporte pour permettre la restauration (§7 bis.10.1) ; la grille
+		// les écarte parce qu'un champ archivé n'apparaît dans aucun formulaire (§5 du composeur).
+		// MESURÉ : la base accepte pourtant une règle sur un champ archivé — `201`.
+		const archive = champ({ id: 'c3', key: 'budget-previsionnel', archived_at: '2026-08-01T00:00:00Z' })
+		const grille = composerGrille([c1, archive], [e1], [regle('c3', 'e1', 'required')])
+		expect(grille.map((ligne) => ligne.champ.id)).toEqual(['c1'])
+	})
+
+	it('ignore une règle orpheline plutôt que de fabriquer une case', () => {
+		// Son champ ou son étape a disparu entre deux lectures ; la base l'a déjà emportée en cascade
+		// (§3.3 du composeur), et aucune case ne peut l'accueillir.
+		const grille = composerGrille([c1], [e1], [regle('disparu', 'e1', 'hidden'), regle('c1', 'disparue', 'hidden')])
+		expect(grille[0]?.cases.map((cellule) => cellule.etat)).toEqual(['defaut'])
+	})
+
+	it('rend une grille vide sans champ actif, et des lignes sans case sans étape', () => {
+		expect(composerGrille([], [e1], [])).toEqual([])
+		expect(composerGrille([c1], [], [])[0]?.cases).toEqual([])
+	})
+})
+
+describe('les deux écritures d’une case (§7 bis.11.3)', () => {
+	it('RÈGLE PAR UN `upsert`, jamais par un choix entre insertion et modification', async () => {
+		// MESURÉ le 2026-08-15 : `POST` d'un couple absent rend `201` ; le même `POST` avec
+		// `resolution=merge-duplicates` rend `200` sur un couple existant ; SANS cette résolution il
+		// rend `409` / `23505` sur `form_field_rules_pkey`. Un écran qui choisirait d'après ce qu'il a
+		// lu prendrait ce `409` dès qu'un autre administrateur a réglé la même case entre-temps.
+		const { client, appels } = espionEcritures([OK])
+		await reglerVisibilite(client, {
+			idChamp: 'c1',
+			idEtape: 'e1',
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			visibilite: 'required',
+		})
+		expect(appels[0]?.table).toBe('form_field_rules')
+		expect(appels[0]?.verbe).toBe('upsert')
+		expect(appels[0]?.charge).toEqual({
+			field_id: 'c1',
+			step_id: 'e1',
+			workflow_id: 'w1',
+			workspace_id: 'ws1',
+			visibility: 'required',
+		})
+		expect(appels[0]?.options).toEqual({ onConflict: 'field_id,step_id' })
+	})
+
+	it('rend au défaut par un `DELETE` sur le couple, et par rien d’autre', async () => {
+		// C'est le SEUL `delete` de cet éditeur de formulaire : un champ ne se supprime pas (§2.7 du
+		// composeur, `403`/`42501` mesuré), une règle si (décision 96).
+		const { client, appels } = espionEcritures([OK])
+		await rendreAuDefaut(client, 'c1', 'e1')
+		expect(appels[0]?.table).toBe('form_field_rules')
+		expect(appels[0]?.verbe).toBe('delete')
+		expect(appels[0]?.filtres).toEqual([
+			['field_id', 'c1'],
+			['step_id', 'e1'],
+		])
+	})
+
+	it('les deux écritures demandent des lignes en retour, pour que `sans-effet` existe', async () => {
+		const { client, appels } = espionEcritures([OK, OK])
+		await reglerVisibilite(client, {
+			idChamp: 'c1',
+			idEtape: 'e1',
+			idWorkflow: 'w1',
+			idWorkspace: 'ws1',
+			visibilite: 'hidden',
+		})
+		await rendreAuDefaut(client, 'c1', 'e1')
+		expect(appels.map((appel) => appel.colonnesRendues)).toEqual(['field_id', 'field_id'])
+	})
+})
+
+describe('les refus d’écriture d’une règle (§7 bis.11.5)', () => {
+	it('traduit le `CHECK` de visibilité en refus de forme', () => {
+		// MESURÉ : `PATCH {"visibility":"peut-etre"}` rend `400` / `23514`,
+		// `form_field_rules_visibility_check`. C'est la seule cause possible de ce code ici.
+		expect(
+			classerRefusRegle(400, '23514', 'violates check constraint "form_field_rules_visibility_check"')
+				.nature,
+		).toBe('forme-refusee')
+	})
+
+	it('traduit `23503` en référence absente, et `42501` en refus d’autorisation', () => {
+		// MESURÉ : un couple croisant deux workflows rend `409` / `23503` sur
+		// `form_field_rules_step_id_workflow_id_fkey` ; le `business_developer` reçoit `403`/`42501`.
+		expect(classerRefusRegle(409, '23503', 'form_field_rules_step_id_workflow_id_fkey').nature).toBe(
+			'reference-absente',
+		)
+		expect(classerRefusRegle(403, '42501', 'row-level security policy').nature).toBe('forbidden')
+	})
+
+	it('NE DONNE PAS DE NATURE MÉTIER À `23505`, que l’écran ne peut pas provoquer', () => {
+		// L'`upsert` du §7 bis.11.3 le rend inatteignable ; lui donner un message ferait croire à une
+		// règle de plus. Son détail reste lisible.
+		expect(classerRefusRegle(409, '23505', 'form_field_rules_pkey')).toEqual({
+			nature: 'unknown',
+			detail: 'form_field_rules_pkey',
+		})
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne, en réglage COMME en retour au défaut', async () => {
+		// MESURÉ avec le jeton réel du `business_developer` : `200` et `[]` en `PATCH` comme en
+		// `DELETE`, la règle seedée restant intacte. C'est le cas le plus fréquent, pas un cas limite.
+		const { client } = espionEcritures([ZERO_LIGNE, ZERO_LIGNE])
+		expect(
+			(
+				await reglerVisibilite(client, {
+					idChamp: 'c1',
+					idEtape: 'e1',
+					idWorkflow: 'w1',
+					idWorkspace: 'ws1',
+					visibilite: 'hidden',
+				})
+			).statut,
+		).toBe('sans-effet')
+		expect((await rendreAuDefaut(client, 'c1', 'e1')).statut).toBe('sans-effet')
+	})
+
+	it('classe une coupure réseau plutôt que de lever', async () => {
+		const client = {
+			from: () => ({
+				delete: () => ({
+					eq: () => ({
+						eq: () => ({
+							select: () => {
+								throw new Error('coupure')
+							},
+						}),
+					}),
+				}),
+			}),
+		} as unknown as ClientCrm
+		expect((await rendreAuDefaut(client, 'c1', 'e1')).statut).toBe('refus')
 	})
 })
