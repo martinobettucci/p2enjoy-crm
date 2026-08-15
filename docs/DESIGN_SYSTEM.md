@@ -896,6 +896,48 @@ disent que de quoi il a l'air.
   action » : ici il n'y a rien à faire d'une corbeille vide, et un bouton y serait un chemin vers
   nulle part. Le message dit que l'état est sain, pas qu'il manque quelque chose.
 
+### 5.17 Guide de démarrage — `CRM-079`
+
+Première surface d'**accueil** du produit, et la seule dont le contenu est une liste de renvois vers
+d'autres écrans. Ce que le guide lit, mesure et refuse de deviner est spécifié par
+`docs/SPEC-onboarding.md` ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **Une `ol`, pas une liste de cartes.** Les étapes sont ordonnées — on ouvre un channel dans un
+  track, une affaire dans un channel —, et le patron des listes du §5.13 porte déjà cet ordre avec
+  ses hauteurs de ligne et ses séparateurs. Des cartes en grille, elles, ne se lisent dans aucun
+  ordre.
+
+- **L'état d'une étape est un MOT, jamais une icône ni une teinte seule** (§1). « Fait » accompagne
+  `CircleCheck` en `--color-success` ; une étape à faire porte `Circle` en `--color-text-3` et le
+  libellé de son action. Les deux icônes sont `aria-hidden` : elles doublent le texte, elles ne le
+  remplacent pas (§9).
+
+- **Une étape accomplie GARDE son lien**, elle ne devient pas une ligne morte. On ajoute un second
+  track après le premier, et éteindre le chemin dès la première réussite ferait du guide un écran
+  qui se referme derrière soi.
+
+- **La progression s'écrit en toutes lettres** — « 3 étapes sur 5 » —, et la barre qui l'accompagne
+  est `aria-hidden`. Une barre seule ne se lit ni à la voix, ni en cas de daltonisme, ni sur une
+  capture d'écran étroite. C'est la même règle qu'au §5.15 pour les compteurs de `summary` : le
+  chiffre est écrit, jamais laissé à deviner.
+
+- **Aucune surimpression, aucun voile, aucune bulle d'aide flottante.** Le §5 ne déclare aucune
+  modale — `CRM-043` puis `CRM-075` l'ont tranché deux fois —, et une visite guidée par surimpression
+  demanderait un piège de focus, une gestion d'`Échap` et un voile, trois mécanismes qu'aucune unité
+  n'a spécifiés. Le guide occupe la zone principale, dans le flux du document.
+
+- **« Masquer le guide » est un bouton secondaire, jamais une croix seule.** Une croix sans libellé
+  n'annonce ni ce qu'elle ferme ni pour combien de temps ; le libellé le dit, et la phrase sous le
+  bouton dit où le retrouver.
+
+- **Une étape non mesurable est NOMMÉE**, comme le compte manquant du §5.15 et de §5.16 : « cette
+  étape n'a pas pu être vérifiée » est une phrase, un blanc se lirait comme « à faire ». Elle
+  conserve son lien : une mesure indisponible n'est pas un refus de droit.
+
+- **Le guide ne s'affiche jamais à la place d'un chargement.** Tant qu'une mesure est en vol,
+  l'écran rend un squelette **par étape**, à la forme de la ligne attendue (§5.8) — jamais l'état
+  vide du board, qui écrirait « aucun board » à qui en a.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

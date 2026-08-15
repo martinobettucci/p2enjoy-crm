@@ -6094,7 +6094,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[~]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
-| CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
+| CRM-079 | Onboarding guidé au premier lancement | `[~]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
 | CRM-081 | Snooze des fils et des cards | `[ ]` |
 
@@ -7422,11 +7422,22 @@ anomalies sur 26** — trois compteurs figés périmés de plusieurs unités, et
 écrites. L'antériorité est établie : le compteur pgTAP était figé à 65 et vert avant cette session,
 là où ce harnais en attend 55. **INC-121**, porteur `CRM-014`.
 
-### CRM-079 — Onboarding guidé `[ ]`
+### CRM-079 — Onboarding guidé `[~]`
 
 Parcours du premier lancement fondé sur les vrais écrans déjà livrés, interrompable et relançable,
 sans tracker ni stockage persistant non consenti. **DoD** : clavier, mobile, reprise de session,
 états incomplets et console stricte prouvés ; aucun écran factice ne remplace une fonctionnalité.
+
+**Spécification écrite et committée avant tout code le 2026-08-15 : `docs/SPEC-onboarding.md`**,
+neuf sections, mesurée sur la pile seedée (§3.1), avec `docs/DESIGN_SYSTEM.md` §5.17 dans le même
+commit. Le principe qu'elle pose est le suivant, et il conditionne le reste : **la progression est
+une mesure, jamais un drapeau** — cinq comptages sur des tables déjà lues, aucun état persisté,
+aucune politique RLS ouverte.
+
+*Reste à livrer, et l'ordre est celui de la spécification.* Le module de mesure
+(`webapp/src/lib/demarrage.ts`, §3), l'écran (`GuideDemarrage`, §6 et §7), l'adresse `/demarrage`
+et l'entrée de l'index des réglages (§4), le rendu sur `/` (§4.2), puis les preuves du §8 —
+unitaires, E2E clavier et mobile, masquage et reprise, état non mesurable, captures observées.
 
 ### CRM-081 — Snooze des fils et des cards `[ ]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
