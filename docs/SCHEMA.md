@@ -362,6 +362,37 @@ Contrat complet : `docs/SPEC-transition-required-fields.md`.
 **État : livré et vérifié par `CRM-018`.** L'option d'un nettoyage applicatif est écartée : les
 deux cascades font de l'absence d'identifiant mort une propriété de la base.
 
+### `workflow_versions`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | PK, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | `NOT NULL`, FK vers `workspaces`, `ON DELETE CASCADE` |
+| `workflow_id` | `uuid` | `NOT NULL`, FK de couple `(workflow_id, workspace_id)` vers `workflows (id, workspace_id)`, `ON DELETE CASCADE` |
+| `version_number` | `integer` | `NOT NULL`, `> 0`, **unique par `workflow_id`** |
+| `composition` | `jsonb` | `NOT NULL`, objet — photographie canonique de la composition |
+| `composition_fingerprint` | `text` | `NOT NULL`, `^[0-9a-f]{64}$` |
+| `note` | `text` | facultatif, non vide après `btrim` |
+| `published_by` | `uuid` | FK vers `profiles`, `ON DELETE SET NULL` |
+| `published_at` | `timestamptz` | `NOT NULL`, `now()` |
+
+**Table immuable, et l'immuabilité est tenue à trois niveaux** : aucune politique RLS de mise à jour
+ni de suppression, aucun privilège d'écriture pour `anon` ni `authenticated`, et un trigger
+`before update` qui refuse en `42501` **y compris sous `service_role`**. Le trigger ne porte
+délibérément **pas** sur `delete` : il s'exécuterait lors des suppressions en cascade et rendrait la
+suppression d'un workspace impossible (mode de défaillance d'INC-039).
+
+Aucune colonne `updated_at` : une ligne immuable n'a pas de date de modification.
+
+Le contenu conservé est une photographie de **structure** — étapes, arêtes, champs, règles,
+exigences. Il ne contient **aucune card, aucune valeur de champ, aucune donnée personnelle**.
+
+Écriture par la seule RPC `public.publish_workflow_version` (§9). Contrat complet :
+`docs/SPEC-workflow-engine.md` §7 ter.
+
+**État : première tranche de `CRM-078`.** La comparaison de deux versions, le plan de remappage des
+cards et son application transactionnelle restent dus (`docs/SPEC-workflow-engine.md` §7 ter.9).
+
 ---
 
 ## 4. Formulaires conditionnels
@@ -798,6 +829,8 @@ l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `au
 | `app.envois_du_jour(identity_id)` | Envois de la journée UTC, **en vol compris** : compter les seuls `sent` laisserait mettre mille messages en file | **livrée** — `CRM-058`, migration 30 |
 | `classify_message(message_id, card_id)` | Classement manuel d'un message, journalisé. **Révisée par `CRM-057`** : elle exige désormais **les deux** droits — voir le message **et** écrire dans la card. Le seul droit d'écriture aurait permis de classer chez soi un message qu'on n'a pas le droit de lire, puis de le lire (`docs/SPEC-mail-subsystem.md` §18.2) | **livrée** — `CRM-055`, migration 25 ; garde ajoutée par `CRM-057`, migration 28 |
 | `app.peut_voir_message(message_id)` | Visibilité d'un message : sa card s'il est classé, sa **boîte** s'il ne l'est pas — propriétaire du compte ou administrateur du workspace. Support des politiques de `mail_messages`, `mail_attachments` et du bucket `mail-attachments`. `SECURITY DEFINER`, `search_path` vide | **livrée** — `CRM-057`, migration 28 |
+| `app.workflow_composition_document(workflow_id)` | Document `jsonb` **canonique** de la composition d'un workflow — six clés, chaque collection triée par identifiant. Extrait de `app.workflow_composition_fingerprint`, qui devient son appelant : la forme canonique n'a désormais qu'une seule définition. `STABLE`, `search_path` vide | **livrée** — `CRM-078`, migration 39 |
+| `publish_workflow_version(workflow_id, note)` | Fige une **photographie immuable** de la composition d'un workflow : numéro suivant dans la portée du workflow, document, empreinte, auteur. Sérialise sur la ligne du workflow (`for update`) avant de lire le numéro. Cinq refus : appelant non authentifié (`42501`), `workflow introuvable`, `publication reservee aux administrateurs` (`42501`), `workflow archive`, `composition inchangee`. `SECURITY DEFINER`, `search_path` vide, `EXECUTE` **révoqué nommément à `anon`** (`docs/SPEC-workflow-engine.md` §7 ter.5) | **livrée** — `CRM-078`, migration 39 |
 
 Toutes les fonctions `SECURITY DEFINER` fixent `search_path` explicitement et sont accordées au
 seul rôle qui doit les appeler.

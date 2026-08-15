@@ -2833,6 +2833,242 @@ sur la même affaire.
 | Visuel | Captures aux quatre paliers, confirmation ouverte, sans débordement de page |
 | Seed | Le workflow par défaut suffit et n'est pas modifié : les comptes du §7 bis.13.1 sont ceux du seed |
 
+## 7 ter. Versionnement des workflows — `CRM-078`
+
+Unité `CRM-078` du backlog. Ce chapitre est écrit **après mesure sur la pile réelle**, seedée, et
+non d'après un compte rendu antérieur. Toute ligne marquée MESURÉ a été observée en base ou par
+l'API avec les jetons réels des comptes seedés.
+
+### 7 ter.1 Ce que le versionnement est, et ce qu'il n'est pas
+
+Un workflow est une **structure vivante** : l'éditeur de `CRM-076` en modifie les étapes, les
+arêtes, les champs et les règles à tout moment, et rien ne garde trace de ce qu'il était hier. Une
+affaire qui a traversé « Prospection → Négociation » sous un graphe donné devient donc illisible dès
+que ce graphe change : ni l'historique ni l'analytique ne peuvent dire sous quelle composition la
+card a circulé.
+
+Le versionnement répond à cela, et **à cela seulement** : figer, à la demande d'un administrateur,
+une **photographie immuable** de la composition d'un workflow, numérotée, datée, attribuée, et
+comparable.
+
+Ce que le versionnement **n'est pas** :
+
+- ce n'est **pas** un mécanisme d'activation : publier une version ne change rien au comportement
+  du produit. Les cards continuent de circuler sur la structure vivante, et `move_card` ne consulte
+  aucune version. Une version est un **témoin**, pas une cible d'exécution ;
+- ce n'est **pas** un retour arrière : restaurer une version dans la structure vivante est un geste
+  distinct, avec son plan de remappage des cards, et il n'appartient pas à cette tranche (§7 ter.9) ;
+- ce n'est **pas** une copie : `copy_workflow_to_track` (§4) crée un **autre workflow**, qui vit sa
+  vie. Une version ne crée aucun workflow et n'est jamais empruntable par une card.
+
+### 7 ter.2 La composition, document canonique — et pourquoi elle existe déjà à moitié
+
+`CRM-032` a livré `app.workflow_composition_fingerprint(uuid)`, qui construit un document `jsonb`
+canonique — workflow, étapes, arêtes, champs, règles, exigences, chacun trié par identifiant — et
+n'en rend que l'empreinte SHA-256. **Le document lui-même est jeté.** Le versionnement a besoin des
+deux : du document pour le conserver, de l'empreinte pour comparer.
+
+La composition est donc **extraite** dans `app.workflow_composition_document(target_workflow_id uuid)
+returns jsonb`, et `app.workflow_composition_fingerprint` devient son appelant :
+
+```
+app.workflow_composition_fingerprint(id)
+  = encode(digest(convert_to(app.workflow_composition_document(id)::text, 'UTF8'), 'sha256'), 'hex')
+```
+
+**Exigence non négociable de cette extraction : l'empreinte rendue doit être identique, caractère
+pour caractère, à celle rendue avant l'extraction.** `workflows.source_composition_fingerprint`
+porte des valeurs figées par la copie, et la vue `public.workflow_derivations` compare l'empreinte
+courante à ces valeurs (§4.6). Une extraction qui changerait l'ordre des clés ou le tri d'une
+collection ferait diverger toutes les copies existantes sans qu'aucune n'ait bougé. MESURÉ avant
+extraction, sur la base seedée, et à figer par assertion :
+
+| Workflow | Empreinte |
+|---|---|
+| `Cycle commercial standard` (`5eed0000-…-000000000051`) | `6b2f5f2adbadd48680d38b8d4bc19a004ff35881df654593e43d2eb4f577e7c8` |
+| `Cycle commercial — Conseil IA` (`352d02ac-…`) | `6e4faac608cc1d16fdb8db1b6ae9c8b2d4de7728204919d8ebd6166c13a58d89` |
+
+Le document conservé est celui du §4.6 sans retrait ni ajout : six clés de premier niveau —
+`workflow`, `steps`, `transitions`, `fields`, `rules`, `required_fields`. Il contient les
+identifiants réels des objets vivants : une version sait donc désigner ce qu'elle photographiait,
+même après disparition de l'objet.
+
+**Ce que le document ne contient pas, et il faut le dire** : aucune card, aucune valeur de champ,
+aucune donnée personnelle. Une version est une photographie de **structure**. C'est ce qui la rend
+conservable sans limite de durée et hors du champ d'une purge RGPD portant sur les personnes.
+
+### 7 ter.3 Modèle — `public.workflow_versions`
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul, → `workspaces(id)` `on delete cascade` |
+| `workflow_id` | `uuid` | non nul, → `workflows(id, workspace_id)` `on delete cascade`, couple porté avec `workspace_id` |
+| `version_number` | `integer` | non nul, `> 0`, **unique par workflow** |
+| `composition` | `jsonb` | non nul, objet — `jsonb_typeof(composition) = 'object'` |
+| `composition_fingerprint` | `text` | non nul, `^[0-9a-f]{64}$` |
+| `note` | `text` | facultatif, non vide après `btrim` s'il est fourni |
+| `published_by` | `uuid` | → `public.profiles(id)` `on delete set null` — même convention que `cards.created_by` |
+| `published_at` | `timestamptz` | non nul, `now()` |
+
+**Aucune colonne `updated_at`, et c'est intentionnel** : une ligne immuable n'a pas de date de
+modification. En poser une laisserait croire que la mise à jour existe.
+
+La clé étrangère porte le **couple** `(workflow_id, workspace_id)` et non le seul `workflow_id`,
+comme toutes les tables filles du projet : elle interdit qu'une version soit rattachée à un workflow
+d'un autre workspace, ce qu'une clé simple laisserait passer.
+
+Index : la clé primaire, l'unicité `(workflow_id, version_number)`, et un index
+`(workflow_id, version_number desc)` — toute lecture utile est « les versions de ce workflow, la
+plus récente d'abord ».
+
+### 7 ter.4 L'immuabilité, et où elle est réellement tenue
+
+L'immuabilité n'est pas une intention, c'est un empilement de trois refus :
+
+1. **Aucune politique RLS de mise à jour ni de suppression.** La table n'en porte que deux : lecture
+   par les membres du workspace, insertion par personne. Sans politique, l'opération ne voit aucune
+   ligne ;
+2. **Aucun privilège d'écriture.** `revoke all … from anon, authenticated`, puis `grant select`
+   seul. `insert`, `update` et `delete` ne sont accordés à **personne** hors `service_role`, de
+   sorte que le refus se manifeste dès le privilège, comme pour le catalogue (§2.6) ;
+3. **Un trigger `before update` qui refuse en `42501`**, y compris sous `service_role` et sous
+   `postgres`. C'est la seule des trois barrières qui tienne face à la clé de service — et
+   `mail-sync` la porte. Une version modifiée en silence ne serait plus une preuve de rien.
+
+**Le trigger porte sur `update` et sur lui seul.** Un trigger `before delete` s'exécuterait aussi
+lors de la **suppression en cascade** d'un workspace ou d'un workflow, et rendrait cette suppression
+impossible — c'est exactement le mode de défaillance d'INC-039. La suppression directe est donc
+tenue par le privilège et par l'absence de politique ; la suppression en cascade reste possible,
+et elle est voulue : les versions d'un workflow disparu n'ont plus d'objet.
+
+MESURÉ, et c'est ce qui justifie le point 3 : `grant all privileges … to service_role` est le défaut
+de toutes les tables du projet ; sans le trigger, la clé de service réécrirait une composition
+publiée sans qu'aucune trace ne subsiste.
+
+### 7 ter.5 Le geste — `public.publish_workflow_version`
+
+```
+public.publish_workflow_version(
+  target_workflow_id uuid,
+  note               text default null
+) returns public.workflow_versions
+```
+
+`security definer`, `search_path` vide, `volatile`. Exécution accordée à `authenticated` et à
+`service_role` ; **révoquée de `public` et d'`anon`** — la révocation nommée est obligatoire, le
+`grant execute` par défaut de l'image portant sur `anon` aussi (§4.7, décision 80).
+
+**La fonction sérialise sur le workflow** avant toute lecture de composition :
+`select … from public.workflows where id = target_workflow_id for update`. Sans ce verrou, deux
+publications simultanées liraient le même `max(version_number)` et l'une des deux échouerait en
+`23505` — un `409` incompréhensible là où la bonne réponse est deux versions successives.
+
+Les vérifications, **dans cet ordre**, et ce que chacune rend :
+
+| # | Vérification | Refus | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
+| 2 | le workflow existe et appartient à un workspace de l'appelant | `workflow introuvable` | `P0001` | `400` |
+| 3 | l'appelant est administrateur de ce workspace — `app.is_workspace_admin` | `publication reservee aux administrateurs` | `42501` | `403` |
+| 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` | `400` |
+| 5 | la composition diffère de celle de la dernière version publiée | `composition inchangee` | `P0001` | `400` |
+
+La vérification 2 rend **le même refus** qu'un workflow d'un autre workspace : un identifiant
+inexistant et un identifiant appartenant à autrui sont indiscernables pour l'appelant, ce qui est la
+règle du projet (§4.3) et évite de transformer la fonction en oracle d'existence.
+
+`P0002` n'est employé nulle part : il est rendu en `500` par PostgREST (§4.4).
+
+**La vérification 5 est la règle de fond de cette unité.** Publier deux fois la même composition
+produirait deux versions indiscernables, et la comparaison entre versions deviendrait bruit. La
+comparaison porte sur l'**empreinte** de la dernière version, jamais sur le document — c'est
+exactement à cela que sert l'empreinte, et cela reste juste quand la composition grossit. Elle ne
+porte que sur la **dernière** version : republier une composition identique à une version plus
+ancienne, après un aller-retour, est **accepté**, et le numéro avance. Une version dit « voici la
+structure à cette date », pas « voici une structure jamais vue ».
+
+En cas de succès, la fonction insère `version_number = coalesce(max(version_number), 0) + 1` dans la
+portée du workflow, `published_by = auth.uid()`, et rend **la ligne complète**.
+
+`note` est facultative. Fournie, elle est `btrim`ée ; réduite au vide, elle est enregistrée `NULL`
+plutôt que refusée — la note est un confort, pas une donnée de contrôle.
+
+### 7 ter.6 Autorisations
+
+| Opération | `anon` | `viewer` / `business_developer` | `admin` | `service_role` |
+|---|---|---|---|---|
+| lire les versions | `200` et `[]` — refus n° 11 | `200`, celles de son workspace | `200` | `200` |
+| insérer directement | refusé (privilège) | refusé (privilège) | refusé (privilège) | accordé |
+| mettre à jour | refusé | refusé | refusé | **refusé par le trigger** |
+| supprimer directement | refusé | refusé | refusé | accordé |
+| `publish_workflow_version` | `401` | `403`, `42501` | `201`/`200` | accordé |
+
+La lecture suit `app.is_workspace_member`, comme `workflows` : une version décrit une structure
+d'organisation, pas une affaire. Les droits fins de track et de channel ne s'y appliquent pas, pour
+la même raison qu'au §2.7 — une version n'appartient à aucun track.
+
+### 7 ter.7 Contrat d'API attendu, à mesurer
+
+Les lignes ci-dessous constituent le contrat que les preuves d'API de cette tranche doivent
+**observer** sur la pile, avec les jetons réels obtenus par
+`POST /auth/v1/token?grant_type=password`. Elles ne sont pas annoncées mesurées tant qu'elles ne
+l'ont pas été.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/publish_workflow_version` sur le workflow par défaut | `admin` | `200`, version `1`, `published_by` = l'administrateur |
+| b | le même appel immédiatement rejoué | `admin` | `400`, `P0001`, `composition inchangee` |
+| c | le même appel après une modification de la composition | `admin` | `200`, version `2` |
+| d | `POST /rpc/publish_workflow_version` | `business_developer` | `403`, `42501` |
+| e | `POST /rpc/publish_workflow_version` | `viewer` | `403`, `42501` |
+| f | `POST /rpc/publish_workflow_version` | anonyme | `401` — le privilège refuse avant la vérification 1 |
+| g | `POST /rpc/publish_workflow_version` sur un identifiant inexistant | `admin` | `400`, `P0001`, `workflow introuvable` |
+| h | `POST /rpc/publish_workflow_version` sur le workflow d'un autre workspace | `admin` | `400`, `P0001`, **le même message qu'en g** |
+| i | `POST /rpc/publish_workflow_version` sur un workflow archivé | `admin` | `400`, `P0001`, `workflow archive` |
+| j | `GET /workflow_versions` | `viewer` | `200`, les versions de son workspace |
+| k | `GET /workflow_versions` | anonyme | `200` et `[]` — preuve de refus n° 11 |
+| l | `GET /workflow_versions` filtré sur un autre workspace | `admin` | `200` et `[]` — preuve de refus n° 3 |
+| m | `POST /workflow_versions` en écriture directe | `admin` | `403`, `permission denied` — le privilège manque |
+| n | `PATCH /workflow_versions` sur une version publiée | `admin` | `403`, `permission denied` — le privilège manque |
+| o | `DELETE /workflow_versions` | `admin` | `403`, `permission denied` — le privilège manque |
+
+La ligne h est la contrepartie de la règle du §7 ter.5 : le message doit être **identique** à celui
+de g, sans quoi la fonction dirait à l'appelant qu'un identifiant existe ailleurs.
+
+### 7 ter.8 Ce que le seed livre
+
+Le seed publie **une version du workflow par défaut**, par la véritable RPC et avec le jeton réel de
+l'administrateur — jamais par une insertion directe, que les privilèges refusent de toute façon
+(`CLAUDE.md` §8). Sans elle, aucun écran ni aucune preuve de lecture n'aurait de ligne à montrer.
+
+Le seed est **convergent et non seulement idempotent** : un second passage ne publie pas une
+deuxième version, la composition étant inchangée — c'est la vérification 5 qui l'assure, et non une
+garde propre au seed.
+
+### 7 ter.9 Ce que cette tranche ne livre PAS, et qui reste dû sous `CRM-078`
+
+- la **comparaison de deux versions** — quelles étapes, arêtes, champs et règles ont été ajoutés,
+  retirés ou modifiés. Le document conservé la rend calculable ; l'unité en portera le calcul et sa
+  restitution ;
+- le **plan de remappage des cards**, cœur de la Definition of Done : avant d'activer une version,
+  dire card par card où elle atterrit, sans qu'aucune étape ne soit devinée ;
+- l'**application transactionnelle** de ce plan, et son **retour arrière** ;
+- **tout écran** : ni liste des versions, ni bouton de publication, ni aperçu de comparaison. Cette
+  tranche est une fondation de données et de geste serveur. Aucune capture d'application n'est donc
+  produite ici, et l'absence est nommée plutôt que compensée ;
+- le **changement de type d'un champ**, que le §7 bis.10.3 renvoie explicitement à ce plan de
+  remappage.
+
+### 7 ter.10 Preuves attendues de la première tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Structure, contraintes de valeur, unicité `(workflow_id, version_number)`, clé étrangère de couple ; les deux politiques et **l'absence** des deux autres ; les privilèges ; le refus de mise à jour sous `service_role` par le trigger ; la suppression en cascade d'un workflow emportant ses versions ; les cinq refus de la RPC contre des comptes réels ; **l'empreinte inchangée par l'extraction du document**, figée sur les deux workflows du seed |
+| API | Les quinze lignes du §7 ter.7, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 3 et n° 11 au niveau des versions |
+| Seed | Une version du workflow par défaut, publiée par la vraie RPC, convergente au rejeu |
+| Interface | **Aucune** — cette tranche ne livre aucun écran (§7 ter.9) |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |

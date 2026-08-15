@@ -7074,11 +7074,49 @@ livrer une destruction irréversible sans règle de conservation serait le contr
 conformité ; et la **visibilité de la corbeille** pour un membre ordinaire. Aucun n'est tranché
 ici.
 
-### CRM-078 — Versionnement des workflows `[ ]`
+### CRM-078 — Versionnement des workflows `[~]`
 
 Versions immuables, comparaison de composition et plan explicite de remappage des cards avant
 activation. **DoD** : aucune étape n'est devinée, aperçu exhaustif, application transactionnelle,
 retour arrière, pgTAP/API/E2E et captures.
+
+**Découpage en tranches, posé le 2026-08-15.** L'unité est trop large pour une session : elle est
+menée par tranches, chacune livrée, prouvée et poussée avant la suivante.
+
+1. **Versions immuables et publication** — la fondation de données et le geste serveur ;
+2. **Comparaison de deux versions** — ajouts, retraits et modifications, calculés sur les documents
+   conservés ;
+3. **Plan de remappage des cards** — card par card, aucune étape devinée ;
+4. **Application transactionnelle et retour arrière** ;
+5. **Écrans** — liste des versions, publication, aperçu de comparaison, et leurs captures.
+
+#### Première tranche — versions immuables et publication
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-workflow-engine.md` **§7 ter** (dix
+      sections) : ce que le versionnement est et n'est pas, le document canonique et l'exigence
+      d'empreinte inchangée, le modèle, les trois barrières d'immuabilité, le geste et ses cinq
+      refus dans l'ordre, les autorisations, les quinze lignes du contrat d'API, le seed, ce qui
+      n'est pas livré, les preuves attendues. `docs/SCHEMA.md` §3 et §9 mis à jour dans le même
+      commit documentaire, poussé **avant** la première ligne de code (`CLAUDE.md` §5).
+- [~] `supabase/migrations/0039_versionnement_workflows.sql` : `app.workflow_composition_document`,
+      `app.workflow_composition_fingerprint` réécrite en appelant, table `public.workflow_versions`,
+      trigger d'immuabilité, deux politiques RLS, privilèges explicites, RPC
+      `public.publish_workflow_version`.
+- [ ] **Test unitaire dédié** `supabase/tests/0037_versionnement_workflows.test.sql` : structure,
+      contraintes, unicité `(workflow_id, version_number)`, politiques présentes **et absentes**,
+      privilèges, refus de mise à jour sous `service_role`, cascade, cinq refus de la RPC contre
+      des comptes réels, **empreinte inchangée par l'extraction** figée sur les deux workflows du
+      seed.
+- [ ] **Test d'intégration dédié, hors interface** `e2e/api/versionnement-workflows.spec.ts` : les
+      quinze lignes du §7 ter.7 avec les jetons réels des trois profils ; preuves de refus n° 3 et
+      n° 11 au niveau des versions.
+- [ ] **Seed** : une version du workflow par défaut, publiée par la vraie RPC, convergente au rejeu.
+- [ ] `README.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`, `docs/manual.md`, `CHANGELOG.md` mis à
+      jour.
+
+*Écart nommé.* **Aucun écran, aucune capture** dans cette tranche : elle ne livre que des données et
+un geste serveur (`docs/SPEC-workflow-engine.md` §7 ter.9). L'unité **ne peut pas** passer `[x]`
+avant la cinquième tranche, dont la Definition of Done exige l'aperçu et les captures.
 
 ### CRM-079 — Onboarding guidé `[ ]`
 
