@@ -15824,3 +15824,79 @@ Definition of Done — avant d'activer une version, dire card par card où elle 
 étape ne soit devinée. La comparaison livrée ici lui donne son socle : la règle d'identité y est déjà
 tranchée et prouvée. Sa spécification reste à écrire au §7 ter avant tout code. **INC-122 attend un
 arbitrage** et laisse la première tranche non intégralement verte sur une base neuve.
+
+### Décision 427 — Le plan de remappage : le produit dit « je ne sais pas » plutôt que de deviner
+
+**2026-08-15 — `CRM-078`, troisième tranche, livrée et prouvée.**
+
+**L'unité de la session.** La décision 426 désignait explicitement la troisième tranche de
+`CRM-078` — le plan de remappage des cards — et notait que sa spécification restait à écrire avant
+tout code. C'est ce qui a été fait : `docs/SPEC-workflow-engine.md` **§7 ter.12**, onze sections,
+committé et poussé **avant** la première ligne de code (`CLAUDE.md` §5).
+
+**Ce qui est livré.** `public.plan_card_remapping(target_version_id, step_overrides, card_limit)`
+dit, avant toute restauration d'une version, **card par card où l'affaire atterrit**. Trois issues,
+et **une seule est automatique** : `unchanged`, quand l'étape courante existe des deux côtés avec le
+même identifiant — elle ne suppose rien. Toute autre destination vient d'un humain, par
+`step_overrides`, dont la forme est celle déjà employée par `change_channel_workflow` (`CRM-019`).
+Une affaire sans instruction reste `unresolved`, et `ready` est faux.
+
+**La décision de fond est un refus de deviner, et il coûte.** Une étape **rétablie** — présente dans
+la version, disparue depuis, que la restauration recréera — est vide par construction, et il aurait
+été tentant d'y verser les affaires des étapes retirées « puisqu'elle revient ». Ce serait une
+supposition sur l'intention. Elle est **nommée** dans le plan, jamais choisie : l'assertion 23 fige
+exactement cela — l'étape rétablie est disponible, et les deux affaires bloquées le restent.
+
+**`SECURITY INVOKER`, et cette fois ce n'est pas seulement un choix d'autorisation : c'est la
+condition de justesse du résultat.** Un plan partiel est pire qu'un refus — il ferait échouer une
+restauration après l'avoir déclarée sûre. Or `public.cards` applique les droits fins dès sa
+politique de lecture. MESURÉ sur la pile seedée, et c'est la mesure qui a tranché la conception : le
+seed oppose `track_members.access = 'none'` à l'administratrice sur le track « Conseil & IA », dont
+le channel « Grands comptes » porte **six** des treize affaires du workflow par défaut ; elle en lit
+néanmoins **13 sur 13** — règle 2 d'`app.resolve_access` —, là où la lectrice n'en lit que **7 sur
+13**. Le plan est donc réservé aux administrateurs, et son exhaustivité vient de cette
+**vérification 3** plutôt que d'un emprunt de privilèges. Deux assertions le figent : `prosecdef =
+false`, et le compte de la lectrice **strictement inférieur** — sans cette seconde, la première
+serait vraie sans rien prouver.
+
+**Deux points de mise en œuvre qui ont changé le code après mesure.** D'abord, la première écriture
+matérialisait la résolution dans une table temporaire : c'était faux deux fois — une fonction
+`stable` peut être appelée par `GET` sous PostgREST, donc en transaction **lecture seule**, et le
+`create temporary table ... if not exists` aurait gardé des lignes d'un appel à l'autre dans la même
+transaction. Tout est réécrit en **une seule requête**, ce qui a aussi le mérite de n'écrire la
+règle de résolution qu'**une fois** — la compter d'un côté et la lister de l'autre aurait donné deux
+formulations vouées à diverger. Ensuite, les cards **archivées et en corbeille** sont dans le plan :
+ce ne sont pas des lignes disparues, elles portent un `current_step_id` réel et une clé étrangère
+opposable, et les exclure aurait rendu un plan qui se dit complet et une restauration qui échoue.
+
+**La liste est bornée et sa troncature annoncée**, les compteurs portant toujours sur la totalité ;
+et **l'ordre place les affaires bloquantes en tête**, ce qui est une propriété d'usage et non un
+confort : tronquée, la liste doit montrer ce qui empêche d'appliquer, jamais une affaire tranquille.
+
+**Campagne complète, exécutée en fin de session** (`docs/CloudWorker.md` §2.3) : `typecheck` et
+`build` verts ; `test:unit` **1042/1042** sur 39 fichiers ; `test:sql` **39 fichiers, un seul en
+échec** — voir ci-dessous ; `e2e:api` **577/577** ; `e2e:ui` **265/265** ; `e2e:mail` **42/42** ;
+`pytest` **242** ; `types:check` vert après régénération. La suite de la tranche rend **37
+assertions** et son harnais d'API **15 scénarios**, tous verts.
+
+**Le seul échec de la campagne est INC-122, et il n'appartient pas à cette tranche.**
+`0037_versionnement_workflows.test.sql` rend toujours **2 échecs sur 31**, ses assertions 3 et 28
+citant en dur `352d02ac-…` comme identifiant du workflow **dérivé**, que le seed n'épingle pas — il
+vaut `a3907551-…` sur cette base, et une autre valeur à chaque seed. Aucune ligne de base n'est
+nécessaire : la migration 41 ne lit ni n'écrit le workflow dérivé, ni le document, ni l'empreinte.
+**INC-122 attend toujours un arbitrage** et laisse la première tranche non intégralement verte sur
+une base neuve.
+
+**L'environnement, sans redécouverte.** `export NVM_DIR=/opt/nvm` puis `nvm install 24` posent Node
+`v24.19.0` ; `npm ci` exige `npm config set cafile /root/.ccr/ca-bundle.crt` ; **toute** exécution
+Playwright exige `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` ;
+`pytest` se pose par `pip install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements-dev.txt`.
+
+**Où reprendre.** La **quatrième tranche de `CRM-078`** : l'application transactionnelle du plan et
+son retour arrière. Le socle est posé — la règle d'identité est tranchée par la deuxième tranche, et
+la destination de chaque affaire par celle-ci. Sa spécification reste à écrire au §7 ter avant tout
+code, et elle devra dire au minimum : que le plan est **rejoué juste avant d'appliquer**, la
+structure vivante ayant pu bouger entre les deux ; ce qu'il advient des transitions, des champs et
+des règles que la restauration recrée ou supprime ; et quels refus s'ajoutent à ceux du plan.
+**`CRM-078` reste `[~]`** : son énoncé exige l'application, le retour arrière, les écrans et leurs
+captures, qui appartiennent aux tranches 4 et 5.
