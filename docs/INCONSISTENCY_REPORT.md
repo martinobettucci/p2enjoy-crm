@@ -60,7 +60,7 @@ restante est une dette de mise en œuvre, suivie dans `docs/ARBITRAGES.md` et da
 
 ## Retirées — index
 
-**Cent dix-neuf** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
+**Cent vingt-deux** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
 constatait, la date de l'arbitrage, qui en porte (ou en a porté) la mise en œuvre, et la ou les
 décisions de `docs/JOURNAL.md` à lire. Une mention « close » dans la colonne « Porteur » signale
 que l'implémentation est en outre livrée et prouvée ; son absence signifie que seul l'arbitrage est
@@ -187,6 +187,9 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-117 | `verify-webapp.sh` rendait une anomalie E2E différente à chaque exécution | 2026-08-15 | reprise transverse des harnais, `CRM-008` | 410 |
 | INC-118 | Le scénario S3 de `mail-sync` lisait le journal CUMULÉ du conteneur | 2026-08-15 | `CRM-051` | 411 |
 | INC-119 | La dégradation « CHECK élargi à `mail_received` » n'en était plus une | 2026-08-15 | reprise transverse des harnais, `CRM-008` | 408 |
+| INC-120 | La garde des élévations de privilège n'admettait qu'une migration, le dépôt en compte deux — **INC-094 rouverte** | 2026-08-15 | `CRM-002` — garde par propriété mécanique | 363, 428 |
+| INC-121 | Trois compteurs figés de `verify-preuves-refus.sh` périmés de plusieurs unités | 2026-08-15 | `CRM-014` et `CRM-013` (preuves dues), `CRM-008` (calcul des compteurs) | 413, 429 |
+| INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
 
 ---
 
@@ -201,132 +204,13 @@ qui restait en suspens. Conformément à la règle de retrait de la décision 40
 l'index ci-dessus dès l'arbitrage rendu ; **la mise en œuvre de chacune reste due** et est suivie
 dans `docs/ARBITRAGES.md` et dans la Definition of Done de l'unité porteuse.
 
+**Solde du 2026-08-15, troisième temps.** Trois entrées consignées par les sessions de `CRM-077` et
+`CRM-078` — **INC-120**, **INC-121** et **INC-122** — sont arbitrées par les décisions **428 à 430**
+et retirées. L'index passe à **cent vingt-deux**. **INC-120 était INC-094 rouverte** : un arbitrage
+rendu le 2026-08-13 et non livré a fini par être redemandé sous un numéro neuf, ce qui est la
+démonstration que la dette de mise en œuvre du §1 de `docs/ARBITRAGES.md` n'est pas une formalité.
+
+Aucune entrée n'est ouverte.
+
 Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci-dessus : un choix
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
-
-### INC-121 — Trois compteurs figés de `verify-preuves-refus.sh` sont périmés de plusieurs unités
-
-**Constatée le 2026-08-15**, en marge de `CRM-078` (versionnement des workflows), par
-`scripts/verify-preuves-refus.sh` — **4 anomalies sur 26**. Le défaut est **ÉTRANGER** à l'unité de
-la session : le comportement reste **inchangé**, rien n'est corrigé au passage (`CLAUDE.md` §1).
-
-**Ce qui est mesuré**, et ce qui établit l'antériorité sans avoir besoin d'une ligne de base :
-
-| Contrôle | Attendu par le harnais | Relevé | Antériorité |
-|---|---|---|---|
-| politiques du schéma `public` | 55 | 66 | le compteur pgTAP de `0016_preuves_refus.test.sql` était figé à **65** et **vert** avant cette session : l'écart précède `CRM-078` d'au moins **dix** politiques, dont aucune n'est la sienne |
-| cards du seed | 14 | 15 | cette session n'a créé **aucune** card, et le seed en annonçait déjà 15 à son premier passage |
-| preuves de refus présentes dans le fichier | les douze | 9 manquantes | trois seulement sont écrites ; les neuf autres sont dues par `CRM-013` et `CRM-014`, unités `[~]` |
-
-**Ce que `CRM-078` y change, et il faut le dire** : sa politique de lecture de `workflow_versions`
-porte le relevé de 65 à 66. Elle **aggrave** un écart de dix, elle ne le crée pas — le harnais
-aurait rendu la même anomalie sans elle.
-
-**Pourquoi ce n'est pas tranché en session.** Ce n'est pas un choix qu'une mesure ne pourrait pas
-trancher : les trois nombres justes sont lisibles en base. C'est l'**étendue** du geste qui le place
-hors de cette session — le troisième contrôle n'est pas un compteur périmé mais une dette de preuve
-appartenant à deux unités distinctes, et remettre les trois à leur valeur courante sans traiter
-cette dette rendrait le harnais vert sur un produit dont neuf preuves de refus sur douze restent
-non écrites. C'est exactement le contournement destiné à verdir une preuve que `CLAUDE.md` §18
-interdit.
-
-**Porteur : `CRM-014`** (harnais de preuves d'autorisation), avec `CRM-013`. Le geste attendu est
-d'écrire les preuves dues **puis** de réaligner les trois compteurs sur la mesure, dans le même
-changement.
-
-### INC-120 — La garde des élévations de privilège n'admet qu'une migration, et le dépôt en compte deux
-
-**Constatée le 2026-08-15**, en marge de `CRM-077` (harnais de la corbeille), par
-`scripts/verify-scripts.sh` — **3 anomalies sur 104**, dont celle-ci. Le défaut est **ÉTRANGER** à
-l'unité de la session : le comportement reste **inchangé**, rien n'est corrigé au passage
-(`CLAUDE.md` §1).
-
-**Ce qui est mesuré.** Le contrôle de `scripts/verify-scripts.sh` (ligne 620) exige que
-`supabase/migrations/*.sql` ne contienne **exactement qu'un** fichier portant
-`-- @migration-role:`, et que ce soit `0018_pg_cron.sql`. Or `0029_pieces_jointes_telechargeables.sql`
-porte le même marqueur depuis `CRM-057` (2026-08-11, décision 327). Le contrôle est donc **rouge
-depuis quatre jours**, sans rapport avec cette session.
-
-**Pourquoi ce n'est PAS l'élévation qui est fautive.** La migration `0029` documente sa mesure :
-`storage.objects` appartient à `supabase_storage_admin`, dont `postgres` n'est pas membre ; seul
-`supabase_admin` peut y créer une politique. Elle se restreint d'ailleurs à cet unique objet et
-délègue son prédicat à la migration `0028`, exécutée sous `postgres`, **précisément pour qu'aucune
-fonction `SECURITY DEFINER` ne naisse sous un superutilisateur**. L'élévation est délibérée,
-minimale et motivée ; c'est la **preuve** qui n'a pas suivi.
-
-**Pourquoi cette entrée n'est pas tranchée en session, alors que la mesure paraît suffire.** Le
-contrôle en cause est une garde d'**élévation de privilège** : il énumère les migrations autorisées
-à s'exécuter en superutilisateur. L'élargir — même d'un fichier, même à raison — relâche un contrôle
-d'autorisation backend, que `CLAUDE.md` §26 réserve explicitement au responsable. Un agent qui
-étendrait de lui-même la liste blanche des exécutions privilégiées poserait le précédent qu'une
-garde de sécurité se met à jour pour redevenir verte.
-
-**Deux remèdes possibles, et ils ne se valent pas** — l'arbitrage porte sur ce choix :
-
-1. la garde devient une **liste blanche explicite** (`0018` et `0029`), chaque entrée justifiée dans
-   le fichier de preuve, et toute autre élévation reste refusée ;
-2. la garde vérifie une **propriété** plutôt qu'une liste : tout fichier marqué doit contenir le
-   `raise exception` de contrôle de `current_user` que portent déjà les deux migrations, ce qui
-   couvre les futures sans les énumérer — au prix d'une garde qui n'interdit plus une élévation
-   nouvelle, seulement une élévation non contrôlée.
-
-**Porteur de la mise en œuvre :** `CRM-002` (scripts et contrat d'environnement), ou l'unité que le
-responsable désignera. **Action attendue :** trancher entre les deux remèdes.
-
-**Les deux autres anomalies du même harnais ne sont PAS consignées ici** : `docs/CloudWorker.md`
-§2.4 les nomme déjà comme des artefacts de cet environnement — `NPM_CA_FILE accepte un fichier
-illisible` parce que l'agent est `root` et que `[ -r ]` reste vrai sur un `chmod 000`, et
-`la reconstruction sans CA n'emprunte pas sa branche inactive` parce que le proxy TLS interposé fait
-échouer une image reconstruite sans certificat.
-
-### INC-122 — Deux assertions de la première tranche de `CRM-078` s'appuient sur un identifiant que le seed n'épingle pas
-
-**Constatée le 2026-08-15**, pendant la deuxième tranche de `CRM-078` (comparaison de deux
-versions), sur une pile **fraîchement démarrée et seedée**. Le défaut est **ÉTRANGER** à la tranche
-en cours — elle n'ajoute qu'une migration et une suite nouvelles — et le comportement du produit est
-laissé **inchangé** (`CLAUDE.md` §1).
-
-**Ce qui est mesuré.** `supabase/tests/0037_versionnement_workflows.test.sql` rend **2 assertions en
-échec sur 31** :
-
-| Assertion | Attendu | Relevé |
-|---|---|---|
-| 3 — « empreinte du workflow dérivé INCHANGÉE par l'extraction du document » | `6e4faac6…c13a58d89` | `NULL` |
-| 28 — « un workflow archivé ne se photographie pas » | `P0001 workflow archive` | `P0001 workflow introuvable` |
-
-**La cause est unique, et elle n'est pas dans le produit.** Les deux assertions citent en dur
-l'identifiant `352d02ac-5564-437c-8c0b-c1b7484b9eba` comme étant celui du workflow dérivé
-« Cycle commercial — Conseil IA ». Or ce workflow n'est pas posé par le seed avec un identifiant
-épinglé : il est **engendré par `copy_workflow_to_track`**, qui appelle `gen_random_uuid()`. Sur la
-base de cette session, il porte `64a773fd-683f-4f5d-aeaa-41c254d79693`. L'identifiant écrit dans la
-suite est donc celui de la base sur laquelle elle a été rédigée, et **de nulle autre** : le workflow
-visé n'existe pas, `app.workflow_composition_document` rend `NULL`, et la RPC refuse en
-« introuvable » avant d'atteindre le contrôle d'archivage qu'elle voulait éprouver.
-
-**Ce n'est pas une régression, et la ligne de base est inutile pour l'établir** : la migration 40 et
-la suite 0038 de cette session n'écrivent ni ne lisent le workflow dérivé, et la cause est visible
-dans le texte même de la suite 0037.
-
-**Portée réelle du défaut.** L'assertion 3 est **structurellement irréparable en l'état** : elle fige
-une empreinte SHA-256 calculée sur un document qui **contient** les identifiants engendrés à la
-copie. Aucune valeur constante ne peut la satisfaire sur deux bases différentes. L'assertion 28, elle,
-se répare simplement — désigner le workflow dérivé par son nom, ou archiver un workflow créé par la
-suite elle-même.
-
-**Pourquoi ce n'est pas tranché en session.** Le remède de l'assertion 3 n'est pas une correction
-mécanique mais un **choix de contrat de preuve**, et deux voies s'opposent :
-
-1. **épingler l'identifiant du workflow dérivé dans le seed**, comme le seed épingle déjà tout le
-   reste (`5eed0000-…`). L'empreinte redevient alors constante et l'assertion garde tout son
-   pouvoir — au prix d'une copie qui ne passerait plus par le seul `copy_workflow_to_track`, ou qui
-   exigerait un paramètre d'identifiant que la RPC n'a pas ;
-2. **renoncer à figer l'empreinte du dérivé** et ne conserver la valeur figée que pour le workflow
-   par défaut, qui est épinglé. L'assertion perdrait ce qu'elle protégeait précisément : le fait
-   qu'une copie **dérivée** ne diverge pas en silence.
-
-Le premier remède touche le contrat du seed, le second affaiblit une preuve d'anti-régression posée
-délibérément. `CLAUDE.md` §26 réserve ce genre d'arbitrage au responsable.
-
-**Porteur de la mise en œuvre :** `CRM-078`, première tranche. **Action attendue :** trancher entre
-les deux remèdes. **Conséquence tant qu'il n'est pas tranché :** la première tranche de `CRM-078`
-n'est **pas** intégralement prouvée sur une base neuve, et son énoncé de backlog le dit désormais.

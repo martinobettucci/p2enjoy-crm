@@ -42,6 +42,21 @@ des questions.
 | **419** | INC-111 | la vérification de fin de session porte sur le **fond** — document lu en entier avant le backlog et avant toute modification — et non sur le rang de l'appel d'outil | `docs/CloudWorker.md` |
 | **421** | — (constat mesuré, tranché sans passer par le registre, doctrine du 2026-08-15) | la barre latérale et l'administration tiennent **deux copies** de la liste des tracks, et une écriture de l'écran ne rafraîchit que la sienne. MESURÉ sur l'ARCHIVAGE — le track reste dans la barre jusqu'au prochain chargement de page —, donc antérieur à la corbeille. **Règle** : une écriture qui change ce que la coquille affiche doit pouvoir l'invalider | `CRM-075` |
 
+### Complément du 2026-08-15 — trois entrées de plus, dont une rouverte
+
+| Décision | Entrées | Ce qui est dû | Porteur |
+|---|---|---|---|
+| **428** | INC-120 (= **INC-094 rouverte**) | la garde des élévations cesse d'énumérer les fichiers : elle vérifie que tout fichier marqué porte le `raise exception` sur `current_user` **et** son motif mesuré en en-tête | `CRM-002` |
+| **429** | INC-121 | les deux compteurs de `verify-preuves-refus.sh` se **calculent** en base ; le troisième contrôle reste rouge et nomme les neuf preuves de refus dues | `CRM-008` (calcul), `CRM-014` et `CRM-013` (preuves) |
+| **430** | INC-122 | l'assertion « empreinte inchangée » mesure les deux états au lieu de comparer à une constante, et le workflow dérivé se désigne **par son nom** | `CRM-078`, première tranche |
+
+**Ce que la réouverture d'INC-094 enseigne, et qui vaut pour tout ce tableau.** Un arbitrage rendu et
+non livré finit par être **redemandé** : la décision 363 a tranché la garde des élévations le
+2026-08-13, personne ne l'a mise en œuvre, le harnais est resté rouge quatre jours, et une session
+de `CRM-077` a reconsigné le même fait sous INC-120. La dette listée ici n'est pas une formalité
+administrative — chaque ligne non soldée reviendra sous un numéro neuf, avec le temps de diagnostic
+qui va avec.
+
 **Bloqueur d'environnement, rappelé ici parce qu'il commande le reste.** Le registre d'images Docker
 a été injoignable (INC-096, arbitrée) : sans pile, aucune de ces mises en œuvre n'est **prouvable**,
 et aucune unité ne peut passer à `[x]`. Les seules exécutables sans pile sont les décisions **413**,

@@ -15900,3 +15900,121 @@ structure vivante ayant pu bouger entre les deux ; ce qu'il advient des transiti
 des règles que la restauration recrée ou supprime ; et quels refus s'ajoutent à ceux du plan.
 **`CRM-078` reste `[~]`** : son énoncé exige l'application, le retour arrière, les écrans et leurs
 captures, qui appartiennent aux tranches 4 et 5.
+
+*Numérotées 427 à 429 à l'écriture ; une session concurrente avait pris 427 pour « Le plan de
+remappage » entre la lecture du compteur et l'écriture. Renumérotées en 428 à 430 au rebase, selon
+la règle de la décision 360 — la 427 d'amont était déjà poussée et citée. **Cinquième collision du
+document**, et la garde de la décision 364 n'est toujours pas livrée.*
+
+### Décision 428 — Une garde d'élévation vérifie une propriété mécanique, jamais une liste de noms
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-120, sur instruction du responsable de résoudre
+automatiquement chaque incohérence du registre.**
+
+**Ce que personne n'a vu, et qui change la lecture de l'entrée.** INC-120 est **INC-094**, rouverte
+sous un numéro neuf. La décision **363** l'avait déjà tranchée le 2026-08-13 — « toute migration
+élevée cite son motif mesuré en en-tête ; le harnais contrôle la justification au lieu d'énumérer
+les fichiers ». Elle n'a pas été mise en œuvre, le harnais est resté rouge, et une session
+ultérieure a reconsigné le même fait. C'est la deuxième fois que la même garde périmée coûte une
+entrée de registre ; c'est aussi la démonstration qu'un arbitrage rendu et non livré finit par être
+redemandé.
+
+**L'arbitrage : remède 2, renforcé par la décision 363.** La garde de `scripts/verify-scripts.sh`
+cesse d'énumérer les fichiers autorisés. Elle vérifie deux **propriétés** de tout fichier portant
+`-- @migration-role:` :
+
+1. le fichier contient le `raise exception` de contrôle de `current_user` que `0018` et `0029`
+   portent déjà — c'est **mécanique**, donc réellement vérifiable ;
+2. le fichier porte en en-tête le **motif mesuré** de son élévation, exigence de la décision 363.
+
+**Pourquoi la liste blanche est refusée, alors qu'elle paraît la plus stricte.** Elle a été
+l'invariant d'origine, et elle a échoué exactement comme une liste échoue : `CRM-057` a livré `0029`
+avec une élévation **légitime, minimale et documentée**, la liste ne l'a pas suivie, et le contrôle
+est **rouge depuis quatre jours**. Un harnais durablement rouge cesse d'être lu — il ne défend plus
+rien et masque l'anomalie suivante. Une garde qu'il faut mettre à jour pour redevenir verte pose le
+précédent exact que l'entrée craignait d'ouvrir.
+
+**Ce que la propriété perd, et pourquoi c'est acceptable.** Elle n'interdit plus une élévation
+**nouvelle** ; elle interdit une élévation **non contrôlée**. C'est le bon partage : le dépôt ne peut
+pas décider à la place d'un auteur qu'une élévation future est illégitime, mais il peut exiger qu'elle
+soit gardée par un contrôle de `current_user` et justifiée par écrit. Le refus d'une élévation
+abusive reste le travail de la relecture humaine, et le §26 de `CLAUDE.md` n'exige pas davantage :
+aucun contrôle d'autorisation backend n'est relâché, c'est une garde de **conformité de migration**.
+
+**Porteur :** `CRM-002` (scripts et contrat d'environnement). L'entrée INC-094, retirée le
+2026-08-13, est ainsi close pour de bon avec celle-ci.
+
+### Décision 429 — Un compteur se calcule ; une preuve due reste rouge et se dit
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-121.**
+
+**Le fait.** `scripts/verify-preuves-refus.sh` rend 4 anomalies sur 26. Elles ne sont pas de même
+nature, et c'est tout le sujet :
+
+| Contrôle | Attendu | Relevé | Nature |
+|---|---|---|---|
+| politiques du schéma `public` | 55 | 66 | **compteur figé** |
+| cards du seed | 14 | 15 | **compteur figé** |
+| preuves de refus écrites | les douze | 9 manquantes | **dette de preuve** |
+
+**L'arbitrage, en deux termes qui ne se confondent pas.**
+
+1. **Les deux compteurs cessent d'être écrits : ils se calculent.** Le harnais compte les politiques
+   et les cards **en base**, à l'exécution, et compare à ce que le seed et les migrations déclarent —
+   au lieu de porter une constante que la livraison suivante périme. C'est la décision **413**
+   appliquée à un harnais plutôt qu'à un document : un chiffre qu'aucun mécanisme ne maintient est
+   une affirmation que personne ne maintient. La même relecture est due sur tout harnais portant un
+   compte en dur, et c'est la sixième occurrence de cette famille — INC-080, INC-101, INC-103,
+   INC-104, INC-108, INC-121.
+2. **La dette de preuve reste rouge, et c'est délibéré.** Neuf des douze preuves de refus ne sont pas
+   écrites ; elles sont dues par `CRM-013` et `CRM-014`, unités `[~]`. Le contrôle continue donc
+   d'échouer, et son message dit ce qu'il refuse : « neuf preuves de refus dues par `CRM-013` et
+   `CRM-014` ne sont pas écrites ». Réaligner ce troisième nombre serait rendre le harnais vert sur
+   un produit dont les trois quarts des preuves de refus n'existent pas — le contournement que
+   `CLAUDE.md` §18 interdit, et que l'entrée avait raison de refuser.
+
+**La règle générale que cela pose :** un harnais **distingue explicitement** un compteur périmé — qui
+se répare en calculant — d'une preuve due — qui reste rouge et se nomme. Confondre les deux mène soit
+à verdir un produit incomplet, soit à laisser un harnais rouge pour une raison qui n'apprend rien.
+
+**Porteurs :** `CRM-014` pour les preuves dues et le réalignement final, avec `CRM-013` ; la
+transformation des deux compteurs en calculs relève de la reprise transverse des harnais (`CRM-008`)
+et n'attend pas les preuves.
+
+### Décision 430 — Une empreinte « inchangée » se compare à elle-même, jamais à une constante
+
+**2026-08-15 — arbitrage rendu par l'agent sur INC-122.**
+
+**Le fait.** Deux assertions de `supabase/tests/0037_versionnement_workflows.test.sql` citent en dur
+l'identifiant `352d02ac-…` du workflow dérivé « Cycle commercial — Conseil IA ». Ce workflow n'est pas
+épinglé par le seed : il est **engendré** par `copy_workflow_to_track`, qui appelle
+`gen_random_uuid()`. L'identifiant écrit est donc celui de la base sur laquelle la suite a été
+rédigée, et de nulle autre. Sur une base neuve, l'assertion 3 rend `NULL` et l'assertion 28 échoue en
+« workflow introuvable » avant même d'atteindre le contrôle d'archivage qu'elle voulait éprouver.
+
+**L'arbitrage : aucun des deux remèdes proposés.** L'entrée offrait d'épingler l'identifiant dans le
+seed — ce qui touche le contrat de la copie —, ou de renoncer à figer l'empreinte du dérivé — ce qui
+retire une preuve d'anti-régression posée à dessein. Les deux paient un prix qu'il n'est pas
+nécessaire de payer, parce que **l'assertion n'a pas besoin d'une constante**.
+
+Son énoncé est « **empreinte du workflow dérivé INCHANGÉE par l'extraction du document** ». C'est une
+propriété **relative** : elle compare la même grandeur avant et après une opération. La forme juste
+est donc de mesurer l'empreinte, d'extraire le document, de remesurer, et d'exiger l'égalité des deux
+mesures. Aucune valeur figée n'entre dans le raisonnement, et la preuve devient valable sur
+**n'importe quelle** base — ce qu'une empreinte SHA-256 calculée sur un document contenant des
+identifiants engendrés ne pourra jamais être.
+
+**Et le workflow se désigne par son nom**, pas par un identifiant que le seed n'épingle pas. Cela
+répare l'assertion 28 par le même geste, et supprime la cause commune plutôt que ses deux symptômes.
+
+**Ce que cela ne coûte pas, et c'est le point.** La preuve garde **exactement** ce qu'elle
+protégeait : qu'une copie dérivée ne diverge pas en silence lorsqu'on en extrait le document de
+composition. Elle le protège même mieux, puisqu'elle cessera d'être verte par accident sur la seule
+base où elle a été écrite.
+
+**Règle générale :** une assertion qui affirme qu'une grandeur est **inchangée** mesure les deux
+états ; elle ne compare jamais un état à une constante écrite d'avance. Et aucune preuve ne désigne
+une ligne par un identifiant que le seed n'épingle pas.
+
+**Porteur :** `CRM-078`, première tranche. Sa Definition of Done redevient atteignable sur une base
+neuve, ce qu'elle n'était pas.

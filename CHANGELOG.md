@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Le registre repasse à zéro entrée ouverte** (décisions 428 à 430). Les trois entrées consignées
+  par les sessions de `CRM-077` et `CRM-078` sont arbitrées ; l'index passe à **cent vingt-deux**.
+- **INC-120 était INC-094 rouverte.** La garde des élévations de privilège avait déjà été tranchée
+  le 2026-08-13 par la décision 363 ; faute de mise en œuvre, le harnais est resté rouge quatre
+  jours et une session ultérieure a reconsigné le même fait sous un numéro neuf. La garde cesse
+  d'énumérer les fichiers autorisés : elle vérifie une **propriété mécanique** — le `raise exception`
+  sur `current_user` — et le motif mesuré en en-tête. Une liste blanche a déjà échoué une fois, pour
+  la raison même qui la rendait séduisante.
+- **INC-121 — un compteur se calcule, une preuve due reste rouge.** Les deux compteurs périmés de
+  `verify-preuves-refus.sh` sont remplacés par un comptage en base ; le troisième contrôle **reste
+  en échec** et nomme les neuf preuves de refus dues par `CRM-013` et `CRM-014`. Les réaligner
+  aurait verdi un produit dont les trois quarts des preuves de refus n'existent pas.
+- **INC-122 — une empreinte « inchangée » se compare à elle-même.** Aucun des deux remèdes proposés
+  n'est retenu : l'assertion n'a pas besoin d'une constante, elle mesure l'empreinte avant et après
+  l'extraction du document. Elle garde tout son pouvoir d'anti-régression et devient valable sur
+  n'importe quelle base ; le workflow dérivé se désigne par son nom, ce qui répare la seconde
+  assertion par le même geste.
+
 ### Ajouté
 
 - **Avant de restaurer une version, le produit dit card par card où l'affaire atterrit —
