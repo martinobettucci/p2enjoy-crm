@@ -6092,7 +6092,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
-| CRM-077 | Corbeille et restauration des objets métier | `[ ]` |
+| CRM-077 | Corbeille et restauration des objets métier | `[~]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
@@ -6779,9 +6779,33 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       de cohérence, non d'autorisation. Consigné au contrat de déploiement, ligne 38, car un script
       de reprise doit remonter l'arborescence des parents avant les enfants.
 
-- [ ] **Reste dû** : couche de données et écran de corbeille ; seed enrichi (un channel et un track
-      en corbeille, et un enfant sous parent en corbeille) ; l'**énumération** des enfants rendus
-      inaccessibles (§3.3) ; et les niveaux API, unitaire, E2E et visuel du §5 de la spécification.
+**Troisième tranche livrée, 2026-08-15 — les listes retirent ce qui est en corbeille**
+(`webapp/src/lib/tracks.ts`, `webapp/src/lib/channels.ts`) :
+
+- [x] **Les trois lectures de listes portent `deleted_at=is.null`** — barre latérale des tracks,
+      résolution d'un track par son **slug**, barre d'onglets des channels. Sans la deuxième, un
+      track en corbeille restait **ouvrable par son adresse**, avec ses onglets et son board : le
+      produit aurait dit « retiré » et montré le contraire.
+- [x] **Le filtre est SÉPARÉ de celui de l'archivage, et l'assertion unitaire le fige.** Les deux
+      états sont indépendants (§3.1) : les fondre en un seul prédicat ferait réapparaître au
+      désarchivage un objet mis à la corbeille, et l'écran de corbeille n'aurait plus de quoi les
+      distinguer.
+- [x] **L'enfant d'un parent en corbeille est rendu inaccessible sans être horodaté** (§3.3) : un
+      channel dont le track est en corbeille ne porte aucun `deleted_at`, il devient injoignable
+      parce que son track ne se résout plus. C'est ce qui garde la restauration non ambiguë.
+- [x] **Preuves exécutées sur cette tranche** : `test:unit` **974/974** (36 fichiers) — deux
+      assertions ajoutées et deux doubles de transport étendus à la requête réelle, aucune
+      supprimée —, `typecheck` vert, `build` vert, `e2e:ui` **241/241** sur l'arbre qui la porte.
+      C'est la mesure que la décision 401 laissait explicitement à la session qui porte le commit.
+
+- [ ] **Reste dû** : **seed enrichi** (un channel et un track en corbeille, et un enfant sous parent
+      en corbeille) — il n'est encore posé par aucune tranche, et sans lui le refus `parent_en_corbeille`
+      comme le retrait des listes n'ont **aucun cas de démonstration** ; l'**énumération** des enfants
+      rendus inaccessibles (§3.3) ; l'**écran** de corbeille (§4) ; et les niveaux API, E2E et visuel
+      du §5 de la spécification. **Le seed est le préalable de tous les autres** : le poser coûtera la
+      révision de plusieurs comptes figés — `e2e/api/tracks.spec.ts` attend quatre tracks, et les
+      suites de channels comptent de même —, révisions légitimes puisque le contrat du seed change,
+      mais qui doivent être faites dans le même changement et rejouées.
 
 **Trois points restent ouverts et appellent l'arbitrage du responsable** (§6 de la spécification) :
 la **durée de rétention**, que `docs/SPEC-cards.md` §10 laissait déjà ouverte ; l'**effacement

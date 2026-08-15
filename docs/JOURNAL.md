@@ -14551,3 +14551,60 @@ concurrente. La tranche suivante reste celle que la décision 400 désigne : l'*
 enfants rendus inaccessibles (§3.3), puis la couche de données et l'écran, le seed enrichi devant
 précéder l'E2E. **Avant d'écrire quoi que ce soit, faire `git fetch origin main` et relire la
 dernière entrée de ce journal** : la tranche peut déjà être livrée.
+
+### Décision 402 — La troisième tranche de `CRM-077` est mesurée par la session qui la porte, et le seed reste le préalable que trois sessions ont différé
+
+**2026-08-15, session concurrente de celles des décisions 399 à 401.**
+
+**Ce que cette session a d'abord perdu, et pourquoi c'est écrit ici.** Elle a livré, prouvé sur la
+pile et tenté de pousser deux tranches — le modèle de la corbeille puis la garde de restauration —
+qui venaient d'être poussées par une session concurrente, à quatre et huit minutes d'écart. Les deux
+conclusions coïncidaient jusqu'au mécanisme : mêmes colonnes, même `on delete set null`, même
+énumération des privilèges de colonne pour refermer l'asymétrie de `cards`, même refus nommé sur les
+deux niveaux d'ascendance d'une affaire. Le conflit a été résolu **sur place** conformément au §0 de
+`docs/CloudWorker.md` : l'arbre distant a été adopté tel quel, et le travail local écarté plutôt que
+réécrit par-dessus — la version poussée portait déjà ses preuves pgTAP et ses types générés, et la
+remplacer aurait cassé les siennes pour un gain nul.
+
+**La leçon, et elle est actionnable.** Deux workers qui lisent le même backlog choisissent la même
+unité, et le journal ne les départage qu'entre deux sessions, jamais pendant. Le seul moyen de ne pas
+refaire ce travail est de **relire `origin/main` avant chaque tranche, pas seulement au démarrage** —
+la décision 401 le demandait déjà, cette session le confirme par la mesure.
+
+**Ce qui est livré, et qui n'existait dans aucune des deux autres.** Les migrations `0037` et `0038`
+posaient le modèle et la garde ; les écrans, eux, montraient toujours un track ou un channel mis à la
+corbeille — aucune lecture de liste ne filtrait `deleted_at`. Les trois lectures le portent
+désormais : la barre latérale des tracks, la **résolution d'un track par son slug**, et la barre
+d'onglets des channels. La deuxième est celle qui compte le plus : sans elle, un track en corbeille
+restait ouvrable en saisissant son adresse, avec ses onglets et son board, et le produit aurait dit
+« retiré » en montrant le contraire.
+
+**Le filtre est SÉPARÉ de celui de l'archivage, et deux assertions unitaires le figent.** Les fondre
+en un prédicat unique aurait été plus court et faux : les deux états sont indépendants (§3.1), et un
+objet archivé **puis** mis à la corbeille serait réapparu au désarchivage. Les deux doubles de
+transport des tests ont été étendus à la requête réelle plutôt que contournés — un double trop court
+aurait rendu `undefined is not a function` et accusé le transport d'une erreur d'écriture du test.
+
+**Mesuré sur l'arbre qui porte la tranche**, ce que la décision 401 laissait explicitement à faire :
+`test:unit` **974/974** sur 36 fichiers, `typecheck` vert, `build` vert, `e2e:ui` **241/241 en
+7,5 min**. La ligne de base pgTAP de l'arbre distant a été rejouée avant toute modification :
+**36 fichiers / 2003 assertions, aucune anomalie**. Les captures régénérées par la campagne
+d'interface n'ont **pas** été committées : la session concurrente venait de committer les siennes,
+produites minutes plus tôt sur un arbre visuellement identique — aucun objet du seed n'étant en
+corbeille, la tranche ne change encore rien à l'écran — et les recommitter n'aurait ajouté que du
+bruit binaire et un conflit.
+
+**Contrainte d'environnement à reposer à chaque exécution**, inchangée depuis la décision 396 :
+l'hôte ne porte que Node 22, `npm ci` doit recevoir `--cafile=/root/.ccr/ca-bundle.crt` — sans quoi
+`vitest` et `vite` restent introuvables —, et déposer la distribution officielle sous
+`~/.nvm/versions/node/v24.11.1/` suffit à `scripts/lib/node.sh`.
+
+**Où reprendre, et ce point n'a plus le droit d'être différé.** Le **seed enrichi** — un track et un
+channel en corbeille, et un enfant sous parent en corbeille — est le préalable de tout ce qui reste :
+sans lui, ni le refus `parent_en_corbeille` ni le retrait des listes livré ici n'ont le moindre cas
+de démonstration, et l'écran du §4 n'aurait rien à afficher. Trois sessions l'ont maintenant reporté.
+Son coût est connu et doit être assumé dans le même changement : plusieurs comptes figés le
+constateront — `e2e/api/tracks.spec.ts` attend **quatre** tracks, et les suites de channels comptent
+de même. Ce sont des révisions légitimes, le contrat du seed changeant, et non des contournements :
+chacune porte son motif dans son fichier. Viennent ensuite l'énumération des enfants rendus
+inaccessibles (§3.3), puis l'écran.
