@@ -6822,7 +6822,20 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       quatre tracks deviennent **cinq**, six channels deviennent **huit**. Les révisions
       **renforcent** — « quatre tracks dont un archivé » devient « cinq tracks dont un archivé **et
       un en corbeille** » — plutôt que de relâcher le compte en tolérance, qui aurait rendu la
-      preuve muette sur ce que la tranche ajoute.
+      preuve muette sur ce que la tranche ajoute. Treize scénarios d'API, deux assertions pgTAP et
+      deux harnais révisés ; **trois assertions AJOUTÉES** : l'audit de l'objet en corbeille, et
+      l'enfant du §3.3 asserté NON horodaté. Deux révisions vont au-delà d'un compte —
+      `archived_at is null` ne suffisait plus à dire « actif », et plusieurs preuves mesuraient donc
+      « non archivé » en croyant mesurer « actif ».
+- [x] **Preuves exécutées sur l'arbre qui porte la tranche** : `test:sql` **36 fichiers / 2004
+      assertions**, `test:unit` **974/974**, `typecheck`, `build` et `types:check` verts, `e2e:api`
+      **514/514**, `e2e:ui` **241/241**, `e2e:mail` **42/42**, `pytest` **242**. Les six preuves du
+      §10.5 de `docs/SPEC-seed.md` sont vertes, y compris le refus `parent_en_corbeille` (`P0001`)
+      mesuré hors interface avec le jeton réel de l'administratrice, et la dérive rattrapée au rejeu.
+- [x] **Vérifié visuellement et OBSERVÉ** (`CLAUDE.md` §16), première fois que le filtre de la
+      troisième tranche a quelque chose à filtrer : la barre latérale rend **trois** tracks — ni
+      l'archivé ni celui en corbeille —, et `/tracks/legacy-2023` rend **« Track introuvable »** au
+      lieu du track. **Console VIERGE.** Captures : `docs/captures/CRM-077/`.
 
 - [ ] **Reste dû** : l'**énumération** des enfants rendus inaccessibles (§3.3) ; l'**écran** de
       corbeille (§4) ; et les niveaux API, E2E et visuel du §5 de la spécification. **Le seed n'est

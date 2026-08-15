@@ -14667,6 +14667,50 @@ est en revanche à corriger : il annonce **18** services `healthy`, alors que la
 `p2enjoy-minio-createbucket` et `p2enjoy-stalwart-init`. Attendre 18 conteneurs sains est une
 attente qui n'aboutit jamais.
 
+**Ce que la tranche a coûté aux preuves, et ce que les révisions ont GAGNÉ.** Quatre tracks
+devenus cinq et six channels devenus huit ont rendu rouges treize scénarios d'API, deux assertions
+pgTAP et deux harnais. Aucun n'a été supprimé ni contourné. Deux révisions valent mieux qu'un
+ajustement de compte, et elles sont le vrai gain de la tranche : `archived_at is null` ne suffisait
+plus à dire « actif », les deux états étant indépendants, si bien que plusieurs preuves mesuraient
+« non archivé » en croyant mesurer « actif » — exactement la confusion que la troisième tranche
+avait dû corriger dans le code. Trois assertions ont par ailleurs été AJOUTÉES : l'audit de l'objet
+en corbeille, et surtout le fait que l'enfant du §3.3 n'est PAS horodaté. Si une tranche future
+descendait l'horodatage sur les enfants, ces preuves-là le diraient les premières.
+
+**Le contrôle du `viewer` de `verify-tracks.sh` était rouge AVANT cette tranche**, et il faut le
+dire séparément sous peine de croire que `CRM-077` a touché une règle d'autorisation : il attendait
+trois tracks, alors que la décision 333 a rendu la lecture d'un track transitive et lui en donnait
+déjà quatre. La révision porte donc deux causes distinctes, écrites comme telles dans le fichier.
+
+**Mesures finales, sur l'arbre qui porte la tranche.** `test:sql` **36 fichiers / 2004 assertions**
+(2003 avant, l'assertion ajoutée fait la différence), `test:unit` **974/974** sur 36 fichiers,
+`typecheck`, `build` et `types:check` verts, `e2e:api` **514/514**, `e2e:ui` **241/241 en 7,4 min**,
+`e2e:mail` **42/42**, `pytest` **242**. `verify-tracks.sh --rapide` et `verify-channels.sh --rapide`
+ne portent plus qu'une seule anomalie chacun, et c'est la même : INC-112.
+
+**Vérification visuelle, faite sur la pile réelle et OBSERVÉE** (`CLAUDE.md` §16), et c'est la
+première fois que le filtre de la troisième tranche a quelque chose à filtrer : connectée en tant
+que Camille Aubert, la barre latérale rend **trois** tracks — ni `Pipeline 2024` archivé, ni
+`Legacy 2023` en corbeille —, et l'adresse directe `/tracks/legacy-2023` rend **« Track
+introuvable »** avec son état vide et son action de retour, et non le track. La **console est
+VIERGE**. Captures dans `docs/captures/CRM-077/`.
+
+**Un défaut ÉTRANGER trouvé en chemin, consigné et NON corrigé : INC-112.** La restauration des
+sections de non-complaisance de `verify-tracks.sh` et `verify-channels.sh` rejoue une migration
+antérieure à `0037`, laquelle rend le privilège `UPDATE` de TABLE que `0037` avait justement révoqué
+pour fermer `deleted_by`. MESURÉ sur les deux tables, `relacl` passant de `ar` à `arw`. Le défaut ne
+dépend d'aucune donnée, il est donc antérieur à cette tranche ; et il ne se contente pas de rendre
+le harnais rouge, il **laisse la base de développement ouverte** jusqu'au prochain rejeu de `0037`.
+
+**Deux pièges d'environnement à ne pas retrouver par l'échec.** D'abord, `docs/CloudWorker.md` §2.2
+annonce **18** services `healthy` : la pile en compte **17** en exécution, plus **3** conteneurs à
+usage unique sortis en `0`. Attendre 18 conteneurs sains est une attente qui n'aboutit jamais.
+Ensuite, la manœuvre du port 5173 de la décision 401 est INCOMPLÈTE telle qu'elle est écrite :
+arrêter `p2enjoy-webapp` ne suffit pas, il faut AUSSI poser `WEBAPP_PREVIEW_PORT=5173`, faute de
+quoi Playwright sert sur 4173 et plus personne ne sert `SITE_URL` —
+`authentification.spec.ts:161` rend alors `origin` à `null`. Mesuré ici : rouge sans la variable,
+vert avec.
+
 **Où reprendre.** `CRM-077` reste `[~]`. Le seed n'est plus le préalable manquant. La tranche
 suivante est l'**énumération** des enfants rendus inaccessibles (§3.3), avec la card qui lui donne
 son compte, puis l'**écran** de corbeille (§4) et les niveaux API, E2E et visuel du §5. **Avant
