@@ -1958,6 +1958,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      plan_card_remapping: {
+        Args: {
+          card_limit?: number
+          step_overrides?: Json
+          target_version_id: string
+        }
+        Returns: Json
+      }
       previsualiser_exigence: {
         Args: {
           p_field_id: string

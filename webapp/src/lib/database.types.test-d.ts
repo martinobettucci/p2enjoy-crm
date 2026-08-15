@@ -657,7 +657,14 @@ type _vueDerivationColonnes = Expect<
 // `previsualiser_exigence`, et c'est un choix documenté : la politique de lecture de
 // `workflow_versions` est déjà la règle d'autorisation exacte du geste
 // (docs/SPEC-workflow-engine.md §7 ter.11.3). Vingt-huit devient vingt-neuf.
-type _lesVingtNeufFonctions = Expect<
+//
+// RÉVISÉ UNE QUINZIÈME FOIS PAR `CRM-078`, troisième tranche. La règle a changé de nouveau : la
+// migration `0041` ajoute `plan_card_remapping`, CINQUIÈME fonction de ce fichier appelable par un
+// écran sans être réservée au worker. Elle est `SECURITY INVOKER` comme les deux précédentes, et
+// pour une raison qui lui est propre : son résultat n'est EXHAUSTIF que sous un administrateur,
+// qu'un droit fin ne restreint jamais, et c'est sa vérification 3 — non un emprunt de privilèges —
+// qui l'assure (docs/SPEC-workflow-engine.md §7 ter.12.4). Vingt-neuf devient trente.
+type _lesTrenteFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -682,6 +689,7 @@ type _lesVingtNeufFonctions = Expect<
     | 'move_card'
     | 'publish_workflow_version'
     | 'move_card_to_channel'
+    | 'plan_card_remapping'
     | 'previsualiser_exigence'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
@@ -860,7 +868,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesVingtNeufFonctions,
+  _lesTrenteFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,
