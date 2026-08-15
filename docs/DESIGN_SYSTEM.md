@@ -565,6 +565,26 @@ quoi il a l'air.
   `--color-danger-soft` / `--color-danger-on-soft` avec `role="alert"`, placée **dans le formulaire
   concerné** et non en tête d'écran, pour que le refus soit lu près du champ qui l'a causé.
 
+- **La mise à la corbeille est une SIXIÈME commande, distincte de l'archivage** — `CRM-077`,
+  `docs/SPEC-corbeille.md` §4 bis. Icône `Trash2`, même bouton discret compact que les cinq autres,
+  et surtout **pas la même que `Archive`** : les deux états sont indépendants (§3.1 de la
+  spécification), et une icône commune aurait dit le contraire.
+
+  - **Elle reste offerte sur une ligne archivée**, là où renommer et réordonner disparaissent. Le
+    motif est le même dans les deux sens : ces deux-là n'ont aucun effet observable sur un objet
+    masqué, alors que le retrait en a un — l'objet quitte cet écran pour la corbeille.
+  - **Sa confirmation est un bloc distinct de celle de l'archivage**, dans le flux du document comme
+    elle, mais avec sa propre question et son propre corps. Les fondre en une confirmation
+    paramétrée aurait laissé lire « archivé » et « retiré » comme un seul état.
+  - **La confirmation porte l'énumération de ce qui devient inaccessible** — « 3 channels »,
+    « 27 affaires » —, dans les quatre états du §5.15 : en cours de mesure, un compte, aucun objet,
+    et **n'a pas pu être mesuré**. Un blanc se lirait comme un zéro, et « 0 channel » se lit deux
+    fois pour comprendre qu'il n'y a rien.
+  - **Aucun de ces quatre états n'éteint la commande de confirmation.** L'énumération informe, elle
+    ne garde pas : la refuser sur un compte manquant donnerait à un nombre la valeur d'une
+    autorisation, alors que le compte est celui de l'appelant et n'a jamais prétendu à
+    l'exhaustivité.
+
 ### 5.14 État de la messagerie — `CRM-059`
 
 Ce que l'écran **lit** — deux requêtes, sous les RLS déjà posées par `CRM-052` et `CRM-058` — est

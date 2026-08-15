@@ -1,4 +1,9 @@
 // @verifies CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
+// @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le geste de mise à la
+//           corbeille d'un track et d'un channel, et le filtre que l'administration n'avait pas
+// @verifies docs/SPEC-corbeille.md §3.1 (les deux états sont indépendants), §4 bis.2 (le filtre
+//           ajouté, séparé de celui de l'archivage), §4 bis.4 (la charge ne porte que `deleted_at`),
+//           §4 bis.5 (les trois issues)
 // @verifies docs/SPEC-administration-arborescence.md §5.1 (proposition de slug), §6.2 (une seule
 //           écriture par déplacement, dégénérescences), §6.4 (voir les archivés), §7.2 (workflows
 //           affectables), §8 (validation de forme), §9 (classement des refus, `200`-zéro-ligne)
@@ -29,6 +34,8 @@ import {
 	lireChannelsAdministrables,
 	lireTracksAdministrables,
 	lireWorkflowsAffectables,
+	mettreChannelALaCorbeille,
+	mettreTrackALaCorbeille,
 	modifierChannel,
 	modifierTrack,
 	nomConforme,
@@ -378,19 +385,28 @@ describe('classerRefusEcriture — sur le code, jamais sur la phrase (§9)', () 
 // ---------------------------------------------------------------------------------------------
 
 describe('lireTracksAdministrables (§6.4)', () => {
-	it('filtre les archivés CÔTÉ SERVEUR et ordonne comme la barre latérale', async () => {
+	// LES DEUX ATTENTES DE FILTRES SONT RÉVISÉES PAR `CRM-077`, septième tranche, et aucune n'est
+	// relâchée : `deleted_at=is.null` s'AJOUTE à ce qu'elles figeaient. Motif MESURÉ le 2026-08-15 et
+	// écrit au §4 bis.2 de `docs/SPEC-corbeille.md` — cette lecture rendait quatre tracks, dont
+	// `Legacy 2023` en corbeille, la troisième tranche n'ayant pas filtré l'administration. La
+	// seconde attente est celle qui compte : elle exige que la case « Afficher les archivés » retire
+	// le filtre d'archivage ET CONSERVE celui de corbeille, les deux états étant indépendants (§3.1).
+	it('filtre les archivés ET la corbeille CÔTÉ SERVEUR, et ordonne comme la barre latérale', async () => {
 		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
 		await lireTracksAdministrables(client, false)
 		expect(appel.table).toBe('tracks')
 		expect(appel.colonnes).toBe(COLONNES_TRACK_ADMIN)
-		expect(appel.filtres).toEqual([['archived_at', null]])
+		expect(appel.filtres).toEqual([
+			['deleted_at', null],
+			['archived_at', null],
+		])
 		expect(appel.tris.map(([colonne]) => colonne)).toEqual(['position', 'name'])
 	})
 
-	it('retire le filtre — et lui seul — quand la case « afficher les archivés » est cochée', async () => {
+	it('retire le filtre d’archivage — et lui seul — quand la case est cochée : la corbeille reste exclue', async () => {
 		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
 		await lireTracksAdministrables(client, true)
-		expect(appel.filtres).toEqual([])
+		expect(appel.filtres).toEqual([['deleted_at', null]])
 		expect(appel.tris.map(([colonne]) => colonne)).toEqual(['position', 'name'])
 	})
 
@@ -409,22 +425,27 @@ describe('lireTracksAdministrables (§6.4)', () => {
 })
 
 describe('lireChannelsAdministrables (§3.2, §7.1)', () => {
-	it('filtre sur le track CÔTÉ SERVEUR : les channels des autres tracks ne transitent pas', async () => {
+	// Mêmes révisions, même motif : cette lecture rendait `Annexes 2023`, en corbeille (§4 bis.2).
+	it('filtre sur le track ET la corbeille CÔTÉ SERVEUR : rien d’autre ne transite', async () => {
 		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
 		await lireChannelsAdministrables(client, 't-1', false)
 		expect(appel.table).toBe('channels')
 		expect(appel.colonnes).toBe(COLONNES_CHANNEL_ADMIN)
 		expect(appel.filtres).toEqual([
 			['track_id', 't-1'],
+			['deleted_at', null],
 			['archived_at', null],
 		])
 		expect(appel.tris.map(([colonne]) => colonne)).toEqual(['position', 'name'])
 	})
 
-	it('conserve le filtre de track quand les archivés sont demandés', async () => {
+	it('conserve les filtres de track et de corbeille quand les archivés sont demandés', async () => {
 		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
 		await lireChannelsAdministrables(client, 't-1', true)
-		expect(appel.filtres).toEqual([['track_id', 't-1']])
+		expect(appel.filtres).toEqual([
+			['track_id', 't-1'],
+			['deleted_at', null],
+		])
 	})
 })
 
@@ -682,5 +703,48 @@ describe('aucune écriture ne lève', () => {
 			statut: 'refus',
 			refus: { nature: 'network', detail: 'coupure' },
 		})
+	})
+})
+
+describe('mettreTrackALaCorbeille et mettreChannelALaCorbeille (CRM-077, §4 bis)', () => {
+	it('écrit `deleted_at` sur le SEUL objet visé, et demande la ligne en retour', async () => {
+		const { client, appel } = espionEcriture(OK)
+		await mettreTrackALaCorbeille(client, 't-1', () => '2026-08-15T10:00:00.000Z')
+		expect(appel.table).toBe('tracks')
+		expect(appel.verbe).toBe('update')
+		expect(appel.filtres).toEqual([['id', 't-1']])
+		expect(appel.colonnesRendues).toBe('id')
+	})
+
+	// LA CHARGE EST FIGÉE À UNE SEULE CLÉ, et c'est la moitié utile de ce fichier pour ce geste :
+	// `deleted_by` est fermée au client par le privilège de colonne de `0037`, et l'ajouter ferait
+	// refuser TOUTE l'écriture en `42501` (§4 bis.5). `archived_at` n'y est pas non plus — les deux
+	// états sont indépendants (§3.1), et retirer un objet ne l'archive pas au passage.
+	it('n’envoie QUE `deleted_at` : ni l’audit, fermé au client, ni l’archivage', async () => {
+		const { client, appel } = espionEcriture(OK)
+		await mettreTrackALaCorbeille(client, 't-1', () => '2026-08-15T10:00:00.000Z')
+		expect(appel.charge).toEqual({ deleted_at: '2026-08-15T10:00:00.000Z' })
+	})
+
+	it('met un channel à la corbeille sur le même patron', async () => {
+		const { client, appel } = espionEcriture(OK)
+		await mettreChannelALaCorbeille(client, 'c-1', () => '2026-08-15T10:00:00.000Z')
+		expect(appel.table).toBe('channels')
+		expect(appel.charge).toEqual({ deleted_at: '2026-08-15T10:00:00.000Z' })
+		expect(appel.filtres).toEqual([['id', 'c-1']])
+	})
+
+	// MESURÉ le 2026-08-15 : le business developer et la lectrice reçoivent `200` et `[]`, la clause
+	// `USING` de `tracks_maj_admin` filtrant la ligne avant la mise à jour (décision 70). Ce n'est ni
+	// un succès ni une erreur, et le confondre avec un succès annoncerait un retrait qui n'a pas eu
+	// lieu — le défaut que `ResultatEcriture` traite déjà pour les autres gestes de cet écran.
+	it('rend `sans-effet` sur `200` et zéro ligne : le refus de DROIT ne lève aucune erreur', async () => {
+		const { client } = espionEcriture({ data: [], error: null, status: 200 })
+		expect(await mettreTrackALaCorbeille(client, 't-1')).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('classe un refus de transport plutôt que de laisser une exception remonter', async () => {
+		const resultat = await mettreChannelALaCorbeille(clientQuiLeve(new Error('coupure')), 'c-1')
+		expect(resultat).toEqual({ statut: 'refus', refus: { nature: 'network', detail: 'coupure' } })
 	})
 })

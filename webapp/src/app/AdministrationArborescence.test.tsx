@@ -1,4 +1,9 @@
 // @verifies CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le GESTE de mise à la
+//           corbeille d'un track et d'un channel, et sa confirmation portant l'énumération
+// @verifies docs/SPEC-corbeille.md §3.1 (les deux états sont indépendants), §4 bis.3 (les quatre
+//           états du compte, dont aucun n'éteint la commande), §4 bis.5 (l'issue « sans effet »),
+//           §4 bis.6 (le geste ne descend pas sur les enfants)
 // @verifies docs/SPEC-administration-arborescence.md §3.2 (channels chargés au dépliage seulement),
 //           §4 (les états), §5.1 (slug proposé puis libéré), §5.3 (slug non modifiable en édition),
 //           §6.2 (une seule écriture, refus nommé), §6.4 (afficher les archivés), §7.2 (workflow
@@ -98,6 +103,13 @@ type Options = {
 	readonly workspaces?: unknown[]
 	readonly erreurTracks?: { message: string; status: number }
 	readonly reponseEcriture?: { data: unknown[] | null; error: { message: string; code?: string } | null; status: number }
+	/**
+	 * Le compte d'affaires rendu par l'énumération de `CRM-077` (§4 bis.3).
+	 *
+	 * `null` reproduit le cas mesuré d'une réponse aboutie SANS `count`, que `corbeille.ts` traite en
+	 * erreur et non en zéro — c'est ce qui donne son sujet à l'état « n'a pas pu être mesuré ».
+	 */
+	readonly compteCards?: number | null
 }
 
 /**
@@ -111,12 +123,18 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 	const ecritures: Ecriture[] = []
 	const reponseEcriture = options.reponseEcriture ?? { data: [{ id: 'x' }], error: null, status: 200 }
 
-	const lecture = (data: unknown[], erreur?: { message: string; status: number }) => {
+	const lecture = (
+		data: unknown[],
+		erreur?: { message: string; status: number },
+		count?: number | null,
+	) => {
 		const resultat = erreur
-			? { data: null, error: { message: erreur.message }, status: erreur.status }
-			: { data, error: null, status: 200 }
+			? { data: null, error: { message: erreur.message }, status: erreur.status, count: null }
+			: { data, error: null, status: 200, count: count ?? null }
 		const chaine: Record<string, unknown> = {}
-		for (const methode of ['is', 'eq', 'or']) chaine[methode] = () => chaine
+		// `in` a été ajouté par `CRM-077` : l'énumération d'un track compte les affaires de SES
+		// channels, et sans lui la chaîne rompait au lieu de rendre une réponse.
+		for (const methode of ['is', 'eq', 'or', 'in', 'not']) chaine[methode] = () => chaine
 		chaine['order'] = () => chaine
 		chaine['then'] = (resoudre: (valeur: unknown) => unknown) => Promise.resolve(resultat).then(resoudre)
 		return chaine
@@ -138,6 +156,11 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 				if (table === 'workspaces') return lecture(options.workspaces ?? [WORKSPACE])
 				if (table === 'tracks') return lecture(options.tracks ?? TRACKS, options.erreurTracks)
 				if (table === 'channels') return lecture(options.channels ?? CHANNELS)
+				// L'énumération de `CRM-077` compte les affaires par `count=exact`, jamais par les
+				// lignes : le corps reste vide et c'est le compte qui porte l'information (§3.5).
+				if (table === 'cards') {
+					return lecture([], undefined, options.compteCards === undefined ? 7 : options.compteCards)
+				}
 				return lecture(options.workflows ?? WORKFLOWS)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -627,5 +650,142 @@ describe('robustesse', () => {
 		expect(screen.getByText('Conseil & IA')).toBeTruthy()
 		expect(erreurs).not.toHaveBeenCalled()
 		erreurs.mockRestore()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// CRM-077 §4 bis — Le geste de mise à la corbeille
+// ---------------------------------------------------------------------------------------------
+
+describe('le geste de mise à la corbeille (CRM-077, §4 bis)', () => {
+	it('offre la commande sur chaque track et sur chaque channel, sans consulter aucun rôle', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		expect(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' })).toBeTruthy()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		expect(
+			await screen.findByRole('button', { name: 'Mettre Prospection à la corbeille' }),
+		).toBeTruthy()
+	})
+
+	// LES DEUX ÉTATS SONT INDÉPENDANTS (§3.1) : une ligne archivée perd « renommer » et
+	// « réordonner », qui n'ont aucun effet observable sur un objet masqué — mais PAS le retrait, qui
+	// en a un : l'objet quitte cet écran pour la corbeille.
+	it('offre la commande AUSSI sur une ligne archivée, où renommer et réordonner ont disparu', async () => {
+		monter({
+			tracks: [{ ...TRACKS[0], archived_at: '2026-01-01T00:00:00Z' }],
+		})
+		await attendreTracks()
+		expect(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' })).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Désarchiver Conseil & IA' })).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Modifier Conseil & IA' })).toBeNull()
+	})
+
+	it('demande confirmation et n’écrit RIEN avant elle', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		expect(await screen.findByTestId('confirmation-corbeille')).toBeTruthy()
+		expect(ecritures).toEqual([])
+	})
+
+	it('porte l’ÉNUMÉRATION dans la confirmation, singulier et pluriel distincts (§4 bis.3)', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ channels: [CHANNELS[0]], compteCards: 1 })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		const confirmation = await screen.findByTestId('confirmation-corbeille')
+		expect(within(confirmation).getByText('1 channel')).toBeTruthy()
+		expect(within(confirmation).getByText('1 affaire')).toBeTruthy()
+	})
+
+	it('dit que rien ne devient inaccessible plutôt que d’afficher « 0 channel » (§3.5)', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ channels: [], compteCards: 0 })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		const confirmation = await screen.findByTestId('confirmation-corbeille')
+		expect(within(confirmation).getByText('Aucun objet ne devient inaccessible.')).toBeTruthy()
+		expect(within(confirmation).queryByText(/0 channel/)).toBeNull()
+	})
+
+	// UN COMPTE EN ÉCHEC NE BLOQUE PAS LE GESTE (§4 bis.3) : l'énumération est une information, pas
+	// une garde. Bloquer donnerait à un compte la valeur d'une autorisation, alors que le §3.5
+	// interdit de le présenter comme une garantie d'exhaustivité.
+	it('dit que le compte n’a pas pu être mesuré SANS éteindre la commande (§4 bis.3)', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter({ compteCards: null })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		const confirmation = await screen.findByTestId('confirmation-corbeille')
+		expect(await within(confirmation).findByText("N'a pas pu être mesuré")).toBeTruthy()
+		const bouton = within(confirmation).getByRole('button', { name: 'Mettre à la corbeille' })
+		expect(bouton.hasAttribute('disabled')).toBe(false)
+		await utilisateur.click(bouton)
+		await waitFor(() => expect(ecritures.length).toBe(1))
+	})
+
+	it('écrit `deleted_at` sur le track, et RIEN sur ses enfants (§3.3)', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		await utilisateur.click(
+			within(await screen.findByTestId('confirmation-corbeille')).getByRole('button', {
+				name: 'Mettre à la corbeille',
+			}),
+		)
+		await waitFor(() => expect(ecritures.length).toBe(1))
+		expect(ecritures[0]?.table).toBe('tracks')
+		expect(ecritures[0]?.verbe).toBe('update')
+		expect(Object.keys(ecritures[0]?.charge ?? {})).toEqual(['deleted_at'])
+	})
+
+	it('met un channel à la corbeille depuis son track déplié', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await utilisateur.click(
+			await screen.findByRole('button', { name: 'Mettre Prospection à la corbeille' }),
+		)
+		await utilisateur.click(
+			within(await screen.findByTestId('confirmation-corbeille')).getByRole('button', {
+				name: 'Mettre à la corbeille',
+			}),
+		)
+		await waitFor(() => expect(ecritures.length).toBe(1))
+		expect(ecritures[0]?.table).toBe('channels')
+		expect(Object.keys(ecritures[0]?.charge ?? {})).toEqual(['deleted_at'])
+	})
+
+	// MESURÉ le 2026-08-15 : le business developer et la lectrice reçoivent `200` et `[]`. L'écran
+	// dit « sans effet » et non « c'est fait » — troisième occurrence de la décision 70 dans
+	// `CRM-077` (§4 bis.5).
+	it('nomme « sans effet » quand la politique filtre la ligne : `200` et zéro ligne', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ reponseEcriture: { data: [], error: null, status: 200 } })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		await utilisateur.click(
+			within(await screen.findByTestId('confirmation-corbeille')).getByRole('button', {
+				name: 'Mettre à la corbeille',
+			}),
+		)
+		expect(await screen.findByRole('alert')).toBeTruthy()
+		expect(screen.getByTestId('confirmation-corbeille')).toBeTruthy()
+	})
+
+	it('annuler ferme la confirmation sans rien écrire', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Mettre Conseil & IA à la corbeille' }))
+		const confirmation = await screen.findByTestId('confirmation-corbeille')
+		await utilisateur.click(within(confirmation).getByRole('button', { name: 'Annuler' }))
+		await waitFor(() => expect(screen.queryByTestId('confirmation-corbeille')).toBeNull())
+		expect(ecritures).toEqual([])
 	})
 })

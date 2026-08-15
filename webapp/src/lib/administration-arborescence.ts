@@ -1,4 +1,9 @@
 // @spec CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
+// @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration, septième tranche : le GESTE de mise
+//       à la corbeille d'un track et d'un channel, et le filtre que l'administration n'avait pas
+// @spec docs/SPEC-corbeille.md §3.1 (les trois états, indépendants), §3.3 (le geste ne descend pas),
+//       §4 bis.2 (l'administration montrait ce qui est en corbeille — MESURÉ), §4 bis.4
+//       (l'horodatage du client, et sa limite), §4 bis.5 (les trois issues, mesurées)
 // @spec docs/SPEC-administration-arborescence.md §2 (ce que la base garantit déjà), §5 (créer et
 //       renommer), §6 (réordonner et archiver), §7 (les channels), §8 (validation de forme),
 //       §9 (les refus)
@@ -62,6 +67,13 @@ export const COLONNES_WORKFLOW_AFFECTABLE = 'id, name, scope, is_default'
  * défaut. Le filtre reste **côté serveur** dans les deux cas : lire toutes les lignes pour en
  * masquer la moitié dans le navigateur ferait transiter ce que l'écran ne montre pas.
  *
+ * LE FILTRE DE CORBEILLE EST INCONDITIONNEL, ET SÉPARÉ DE CELUI DE L'ARCHIVAGE
+ * (docs/SPEC-corbeille.md §4 bis.2). MESURÉ le 2026-08-15 avant de l'ajouter : cette lecture rendait
+ * **quatre** tracks, dont `Legacy 2023` et son `deleted_at` renseigné — la troisième tranche de
+ * `CRM-077` avait filtré la barre latérale, la résolution par slug et la barre d'onglets, pas
+ * l'administration, qui lit par ses propres requêtes. Les fondre en un seul prédicat ferait
+ * réapparaître, sous une case intitulée « archivés », des objets qui ne le sont pas (§3.1).
+ *
  * L'ordre reprend celui de `docs/SPEC-tracks.md` §3 — `position` puis `name` — sans quoi
  * l'administration classerait les tracks autrement que la barre latérale qu'elle configure.
  */
@@ -70,7 +82,7 @@ export async function lireTracksAdministrables(
 	inclureArchives: boolean,
 ): Promise<EtatAsync<readonly TrackAdministrable[]>> {
 	try {
-		const base = client.from('tracks').select(COLONNES_TRACK_ADMIN)
+		const base = client.from('tracks').select(COLONNES_TRACK_ADMIN).is('deleted_at', null)
 		const filtre = inclureArchives ? base : base.is('archived_at', null)
 		const reponse = await filtre.order('position').order('name')
 		if (reponse.error !== null) {
@@ -88,6 +100,9 @@ export async function lireTracksAdministrables(
  * Le filtre `track_id` est côté serveur, et le chargement n'a lieu qu'au dépliage de ce track
  * (docs/SPEC-administration-arborescence.md §3.2) : charger les channels des quatre tracks à
  * l'ouverture ferait transiter des lignes que l'écran ne montre pas.
+ *
+ * `deleted_at=is.null` pour la même raison que sur les tracks, et avec la même mesure : cette
+ * lecture rendait `Annexes 2023`, en corbeille (docs/SPEC-corbeille.md §4 bis.2).
  */
 export async function lireChannelsAdministrables(
 	client: ClientCrm,
@@ -95,7 +110,11 @@ export async function lireChannelsAdministrables(
 	inclureArchives: boolean,
 ): Promise<EtatAsync<readonly ChannelAdministrable[]>> {
 	try {
-		const base = client.from('channels').select(COLONNES_CHANNEL_ADMIN).eq('track_id', trackId)
+		const base = client
+			.from('channels')
+			.select(COLONNES_CHANNEL_ADMIN)
+			.eq('track_id', trackId)
+			.is('deleted_at', null)
 		const filtre = inclureArchives ? base : base.is('archived_at', null)
 		const reponse = await filtre.order('position').order('name')
 		if (reponse.error !== null) {
@@ -624,5 +643,57 @@ export async function archiverChannel(
 			.update({ archived_at: archive ? maintenant() : null })
 			.eq('id', id)
 			.select('id'),
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
+// La mise à la corbeille — `CRM-077`, docs/SPEC-corbeille.md §4 bis
+// ---------------------------------------------------------------------------------------------
+//
+// DEUX FONCTIONS, ET AUCUNE RESTAURATION ICI. Rendre un objet est le geste de l'écran de corbeille
+// (`corbeille.ts`, §4.5), qui a ses trois issues et son refus nommé. Une bascule `corbeille:boolean`
+// sur le patron de `archiverTrack` aurait mis deux gestes très différents sous une même signature :
+// l'un est offert par cet écran, l'autre par un autre, et l'un des deux peut être REFUSÉ par la
+// garde de `0038`.
+//
+// LA CHARGE NE CONTIENT QUE `deleted_at`. `deleted_by` est fermée au client par le privilège de
+// colonne de `0037` et posée par le trigger ; l'ajouter à la charge ferait refuser TOUTE l'écriture
+// en `42501` — c'est le mécanisme mesuré de `CRM-013`, appliqué ici à une autre colonne.
+//
+// L'HORODATAGE EST CELUI DU CLIENT, comme `archived_at`, et la limite est nommée au §7 point 3 de
+// `docs/SPEC-corbeille.md` plutôt que tue. `archiverTrack` annonce qu'il « devra venir du serveur »
+// le jour où une rétention en dépendra ; ce jour n'est pas venu (§6 point 1, non arbitré), et le
+// faire venir ici remplacerait la date FIXE des trois objets en corbeille du seed par l'instant du
+// rejeu — la reproductibilité du jeu de démonstration tomberait avec elle (`CLAUDE.md` §8).
+
+/**
+ * Met un track à la corbeille.
+ *
+ * Le geste ne descend PAS sur les channels ni sur les affaires (§3.3) : c'est l'énumération de
+ * `compterEnfantsInaccessibles` qui les compte, dans la confirmation, plutôt que de les toucher.
+ *
+ * MESURÉ le 2026-08-15 avec les jetons réels, sur le track `Formation` : l'administratrice obtient
+ * `200` et la ligne, `deleted_by` renseignée par le trigger ; le business developer et la lectrice
+ * obtiennent `200` et `[]`, la ligne relue INCHANGÉE — `tracks_maj_admin` filtre par sa clause
+ * `USING` avant la mise à jour (décision 70). `executer` rend donc `sans-effet`, que l'écran nomme.
+ */
+export async function mettreTrackALaCorbeille(
+	client: ClientCrm,
+	id: string,
+	maintenant: () => string = () => new Date().toISOString(),
+): Promise<ResultatEcriture> {
+	return executer(() =>
+		client.from('tracks').update({ deleted_at: maintenant() }).eq('id', id).select('id'),
+	)
+}
+
+/** Met un channel à la corbeille. Mêmes règles, mêmes issues, même mesure que pour un track. */
+export async function mettreChannelALaCorbeille(
+	client: ClientCrm,
+	id: string,
+	maintenant: () => string = () => new Date().toISOString(),
+): Promise<ResultatEcriture> {
+	return executer(() =>
+		client.from('channels').update({ deleted_at: maintenant() }).eq('id', id).select('id'),
 	)
 }

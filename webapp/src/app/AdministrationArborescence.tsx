@@ -1,4 +1,8 @@
 // @spec CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration, septième tranche : le GESTE de mise
+//       à la corbeille d'un track et d'un channel, et sa confirmation portant l'énumération
+// @spec docs/SPEC-corbeille.md §4 bis.1 (où le geste vit), §4 bis.3 (ce que la confirmation dit et
+//       ses quatre états de compte), §4 bis.5 (les trois issues), §4 bis.6 (ce qu'il ne fait pas)
 // @spec docs/SPEC-administration-arborescence.md §3.2 (composition), §4 (les états), §5 (créer et
 //       renommer), §6 (réordonner et archiver), §7 (les channels), §8 (validation de forme),
 //       §9 (les refus), §10 (ce que voit un non-administrateur)
@@ -22,6 +26,7 @@ import {
 	ChevronRight,
 	Pencil,
 	Plus,
+	Trash2,
 	TriangleAlert,
 	ArrowDown,
 	ArrowUp,
@@ -44,6 +49,8 @@ import {
 	lireChannelsAdministrables,
 	lireTracksAdministrables,
 	lireWorkflowsAffectables,
+	mettreChannelALaCorbeille,
+	mettreTrackALaCorbeille,
 	modifierChannel,
 	modifierTrack,
 	nomConforme,
@@ -57,7 +64,13 @@ import {
 	type TrackAdministrable,
 	type WorkflowAffectable,
 } from '../lib/administration-arborescence'
+import {
+	composerEnumeration,
+	compterEnfantsInaccessibles,
+	type CibleEnumeration,
+} from '../lib/corbeille'
 import { classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
+import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
 
@@ -74,9 +87,11 @@ type Ouverture =
 	| { readonly type: 'creation-track' }
 	| { readonly type: 'edition-track'; readonly id: string }
 	| { readonly type: 'archivage-track'; readonly id: string }
+	| { readonly type: 'corbeille-track'; readonly id: string }
 	| { readonly type: 'creation-channel'; readonly idTrack: string }
 	| { readonly type: 'edition-channel'; readonly id: string; readonly idTrack: string }
 	| { readonly type: 'archivage-channel'; readonly id: string; readonly idTrack: string }
+	| { readonly type: 'corbeille-channel'; readonly id: string; readonly idTrack: string }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
 
@@ -517,6 +532,97 @@ function ConfirmationArchivage({
 }
 
 // ---------------------------------------------------------------------------------------------
+// Confirmation de mise à la corbeille — CRM-077, docs/SPEC-corbeille.md §4 bis.3
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Les lignes de l'énumération, dans les quatre états que le §4 bis.3 distingue.
+ *
+ * AUCUN DES QUATRE N'ÉTEINT LA COMMANDE, et c'est la règle du chapitre : l'énumération est une
+ * information, pas une garde. La refuser en bloquant donnerait à un compte la valeur d'une
+ * autorisation, alors que le §3.5 interdit de le présenter comme une garantie d'exhaustivité — et le
+ * geste est réversible, l'écran de corbeille étant là pour cela.
+ *
+ * Le seul affichage exclu est un ZÉRO PROVISOIRE pendant l'attente : il dirait « rien ne sera
+ * perdu » sur une mesure qui n'est pas revenue (`docs/DESIGN_SYSTEM.md` §5.15).
+ */
+function EnumerationConfirmation({ enumeration }: { readonly enumeration: EtatEnumeration }) {
+	if (enumeration.statut === 'chargement') {
+		return <p className="text-sm text-text-3">{t('admin.trash.holds.loading')}</p>
+	}
+	if (enumeration.statut === 'echec') {
+		return <p className="text-sm text-text-3">{t('admin.trash.holds.failed')}</p>
+	}
+	if (enumeration.lignes.length === 0) {
+		return <p className="text-sm text-text-2">{t('admin.trash.confirm.holds.none')}</p>
+	}
+	return (
+		<div className="flex flex-col gap-1">
+			<p className="text-sm text-text-2">{t('admin.trash.confirm.holds')}</p>
+			<ul className="list-disc pl-5 text-sm text-text-2">
+				{enumeration.lignes.map((ligne) => (
+					<li key={ligne.type}>{texteLigneEnumeration(ligne)}</li>
+				))}
+			</ul>
+		</div>
+	)
+}
+
+/**
+ * Confirmation du geste, dans le flux du document comme celle de l'archivage (§3.2 de
+ * `docs/SPEC-administration-arborescence.md`) — jamais une modale.
+ *
+ * Elle est un COMPOSANT DISTINCT de `ConfirmationArchivage`, et non une variante paramétrée : elle
+ * porte l'énumération, sa question et son corps disent autre chose, et les deux états sont
+ * indépendants (§3.1). Les fondre aurait laissé croire qu'un objet retiré est un objet archivé.
+ */
+function ConfirmationCorbeille({
+	question,
+	enumeration,
+	refus,
+	enCours,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly question: string
+	readonly enumeration: EtatEnumeration
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	const premier = useRef<HTMLButtonElement>(null)
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+	return (
+		<div
+			data-testid="confirmation-corbeille"
+			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+		>
+			<p className="font-medium">{question}</p>
+			<p className="text-sm text-text-2">{t('admin.trash.confirm.body')}</p>
+			<EnumerationConfirmation enumeration={enumeration} />
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				<button
+					ref={premier}
+					type="button"
+					disabled={enCours}
+					onClick={onConfirmer}
+					className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] rounded-sm px-4 font-medium bg-danger text-white hover:opacity-90 disabled:opacity-70"
+				>
+					{t('admin.trash.confirm.action')}
+				</button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
 // Groupe de commandes d'une ligne
 // ---------------------------------------------------------------------------------------------
 
@@ -528,6 +634,7 @@ type ProprietesCommandes = {
 	readonly onDeplacer: (sens: Sens) => void
 	readonly onModifier: () => void
 	readonly onArchiver: () => void
+	readonly onCorbeille: () => void
 }
 
 /**
@@ -545,17 +652,41 @@ function CommandesLigne({
 	onDeplacer,
 	onModifier,
 	onArchiver,
+	onCorbeille,
 }: ProprietesCommandes) {
+	/**
+	 * La mise à la corbeille, offerte sur TOUTE ligne — archivée comprise.
+	 *
+	 * Les deux états sont indépendants (`docs/SPEC-corbeille.md` §3.1) : un objet archivé se retire,
+	 * et il reste archivé quand on le restaure. C'est le motif même qui retire les trois autres
+	 * commandes d'une ligne archivée qui impose de garder celle-ci — renommer ou réordonner un objet
+	 * masqué n'a « aucun effet observable » (§6.4), alors que le retirer en a un : il quitte cet
+	 * écran pour la corbeille.
+	 */
+	const commandeCorbeille = (
+		<Button
+			taille="compacte"
+			variante="discret"
+			onClick={onCorbeille}
+			aria-label={t('admin.action.trash', { nom })}
+		>
+			<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+		</Button>
+	)
+
 	if (archive) {
 		return (
-			<Button
-				taille="compacte"
-				variante="discret"
-				onClick={onArchiver}
-				aria-label={t('admin.action.unarchive', { nom })}
-			>
-				<ArchiveRestore aria-hidden="true" size={16} strokeWidth={2} />
-			</Button>
+			<>
+				<Button
+					taille="compacte"
+					variante="discret"
+					onClick={onArchiver}
+					aria-label={t('admin.action.unarchive', { nom })}
+				>
+					<ArchiveRestore aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				{commandeCorbeille}
+			</>
 		)
 	}
 
@@ -614,6 +745,7 @@ function CommandesLigne({
 			>
 				<Archive aria-hidden="true" size={16} strokeWidth={2} />
 			</Button>
+			{commandeCorbeille}
 		</>
 	)
 }
@@ -646,6 +778,11 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 	const [enCours, setEnCours] = useState(false)
 	const [annonce, setAnnonce] = useState('')
 	const [tentative, setTentative] = useState(0)
+	/**
+	 * L'énumération de la confirmation ouverte, et il n'y en a qu'une : `Ouverture` n'autorise qu'un
+	 * formulaire à la fois, donc un seul état suffit et aucune clé n'est à tenir à jour.
+	 */
+	const [enumeration, setEnumeration] = useState<EtatEnumeration>({ statut: 'chargement' })
 
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — la case des archivés change la requête.
@@ -762,6 +899,31 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 			}
 		},
 		[apres],
+	)
+
+	/**
+	 * Ouvre la confirmation de mise à la corbeille ET lance l'énumération (§4 bis.3).
+	 *
+	 * Le compte est demandé À L'OUVERTURE, pas au chargement de la liste : il coûte deux requêtes par
+	 * track et une par channel (§4.4), et la plupart des lignes ne seront jamais retirées. Un refus de
+	 * lecture ne se distingue pas ici d'un compte nul, et c'est voulu — `compterEnfantsInaccessibles`
+	 * rend ce que l'APPELANT peut lire (§3.5), jamais une garantie d'exhaustivité.
+	 */
+	const ouvrirCorbeille = useCallback(
+		(cible: CibleEnumeration, prochaine: Ouverture) => {
+			setRefus(null)
+			setOuverture(prochaine)
+			setEnumeration({ statut: 'chargement' })
+			if (client === null) return
+			void compterEnfantsInaccessibles(client, cible).then((compte) => {
+				setEnumeration(
+					compte.statut === 'pret'
+						? { statut: 'pret', lignes: composerEnumeration(compte.donnees) }
+						: { statut: 'echec' },
+				)
+			})
+		},
+		[client],
 	)
 
 	const deplacer = useCallback(
@@ -958,6 +1120,12 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 												}
 												setOuverture({ type: 'archivage-track', id: track.id })
 											}}
+											onCorbeille={() =>
+												ouvrirCorbeille({ type: 'track', id: track.id }, {
+													type: 'corbeille-track',
+													id: track.id,
+												})
+											}
 										/>
 									</span>
 								</div>
@@ -1010,6 +1178,27 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 												void executer(
 													() => archiverTrack(client, track.id, true),
 													t('live.admin.archived'),
+												)
+											}
+										/>
+									</div>
+								) : null}
+
+								{ouverture.type === 'corbeille-track' && ouverture.id === track.id ? (
+									<div className="px-3 pb-3">
+										<ConfirmationCorbeille
+											question={t('admin.trash.confirm.track', { nom: track.name })}
+											enumeration={enumeration}
+											refus={refus}
+											enCours={enCours}
+											onAnnuler={() => {
+												setRefus(null)
+												setOuverture(AUCUNE)
+											}}
+											onConfirmer={() =>
+												void executer(
+													() => mettreTrackALaCorbeille(client, track.id),
+													t('live.admin.trashed'),
 												)
 											}
 										/>
@@ -1097,6 +1286,21 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 												track.id,
 											)
 										}
+										enumeration={enumeration}
+										onCorbeille={(channel) =>
+											ouvrirCorbeille({ type: 'channel', id: channel.id }, {
+												type: 'corbeille-channel',
+												id: channel.id,
+												idTrack: track.id,
+											})
+										}
+										onConfirmerCorbeille={(channel) =>
+											void executer(
+												() => mettreChannelALaCorbeille(client, channel.id),
+												t('live.admin.trashed'),
+												track.id,
+											)
+										}
 									/>
 								) : null}
 							</li>
@@ -1128,6 +1332,10 @@ type ProprietesListeChannels = {
 	readonly onDeplacer: (liste: readonly Ordonnable[], id: string, sens: Sens) => void
 	readonly onArchiver: (channel: ChannelAdministrable) => void
 	readonly onConfirmerArchivage: (channel: ChannelAdministrable) => void
+	/** L'énumération de la confirmation ouverte, s'il y en a une : une seule à la fois (§4 bis.3). */
+	readonly enumeration: EtatEnumeration
+	readonly onCorbeille: (channel: ChannelAdministrable) => void
+	readonly onConfirmerCorbeille: (channel: ChannelAdministrable) => void
 }
 
 function ListeChannels({
@@ -1145,6 +1353,9 @@ function ListeChannels({
 	onDeplacer,
 	onArchiver,
 	onConfirmerArchivage,
+	enumeration,
+	onCorbeille,
+	onConfirmerCorbeille,
 }: ProprietesListeChannels) {
 	if (etat.statut === 'chargement') {
 		return (
@@ -1190,6 +1401,7 @@ function ListeChannels({
 										onDeplacer={(sens) => onDeplacer(liste, channel.id, sens)}
 										onModifier={() => onOuvrirEdition(channel)}
 										onArchiver={() => onArchiver(channel)}
+										onCorbeille={() => onCorbeille(channel)}
 									/>
 								</span>
 							</div>
@@ -1217,6 +1429,16 @@ function ListeChannels({
 									enCours={enCours}
 									onAnnuler={onAnnuler}
 									onConfirmer={() => onConfirmerArchivage(channel)}
+								/>
+							) : null}
+							{ouverture.type === 'corbeille-channel' && ouverture.id === channel.id ? (
+								<ConfirmationCorbeille
+									question={t('admin.trash.confirm.channel', { nom: channel.name })}
+									enumeration={enumeration}
+									refus={refus}
+									enCours={enCours}
+									onAnnuler={onAnnuler}
+									onConfirmer={() => onConfirmerCorbeille(channel)}
 								/>
 							) : null}
 						</li>

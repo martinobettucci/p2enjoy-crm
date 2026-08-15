@@ -405,6 +405,7 @@ export const fr = {
 	'admin.action.rename': 'Modifier {nom}',
 	'admin.action.archive': 'Archiver {nom}',
 	'admin.action.unarchive': 'Désarchiver {nom}',
+	'admin.action.trash': 'Mettre {nom} à la corbeille',
 	'admin.action.newTrack': 'Nouveau track',
 	'admin.action.newChannel': 'Nouveau channel',
 	'admin.action.save': 'Enregistrer',
@@ -445,6 +446,17 @@ export const fr = {
 		"Il sera masqué des écrans, sans être supprimé, et pourra être désarchivé. Les channels d'un track archivé ne sont pas archivés avec lui.",
 	'admin.archive.confirm.action': 'Archiver',
 
+	// Confirmation de mise à la corbeille — CRM-077, docs/SPEC-corbeille.md §4 bis.3.
+	// Elle est DISTINCTE de celle de l'archivage : les deux états sont indépendants (§3.1), et une
+	// phrase partagée aurait laissé croire qu'un objet retiré est un objet archivé.
+	'admin.trash.confirm.track': 'Mettre le track « {nom} » à la corbeille ?',
+	'admin.trash.confirm.channel': 'Mettre le channel « {nom} » à la corbeille ?',
+	'admin.trash.confirm.body':
+		"Il sera retiré des écrans sans être supprimé, et se restaure depuis la corbeille. Ses enfants ne sont pas mis à la corbeille avec lui : ils deviennent inaccessibles tant qu'il y reste.",
+	'admin.trash.confirm.holds': 'Deviennent inaccessibles avec lui :',
+	'admin.trash.confirm.holds.none': 'Aucun objet ne devient inaccessible.',
+	'admin.trash.confirm.action': 'Mettre à la corbeille',
+
 	// Refus (docs/SPEC-administration-arborescence.md §9).
 	'admin.refus.forbidden':
 		"Seul un administrateur de cet espace de travail peut modifier l'arborescence.",
@@ -464,6 +476,7 @@ export const fr = {
 	'live.admin.moved': 'Déplacé',
 	'live.admin.archived': 'Archivé',
 	'live.admin.unarchived': 'Désarchivé',
+	'live.admin.trashed': 'Mis à la corbeille',
 
 	// --- Éditeur de workflows — CRM-076, docs/SPEC-workflow-engine.md §7 bis ---------------
 	'admin.settings.index.workflows': 'Workflows : étapes et composition',

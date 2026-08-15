@@ -24,10 +24,10 @@ import {
 	lireCorbeille,
 	restaurer,
 	type EntreeCorbeille,
-	type LigneEnumeration,
 	type NatureRefusRestauration,
 	type TypeObjetCorbeille,
 } from '../lib/corbeille'
+import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 
 /** Le type est un MOT, jamais une icône seule (`docs/DESIGN_SYSTEM.md` §5.16). */
@@ -60,39 +60,12 @@ function formaterRetrait(horodatage: string): string {
 	return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(date)
 }
 
-/**
- * Le texte d'une ligne d'énumération, singulier et pluriel étant DEUX CLÉS distinctes du catalogue.
- *
- * Le module `lib/corbeille.ts` ne rend aucun texte : il rend un type et un compte, et le choix de la
- * clé appartient à l'écran (`CLAUDE.md` §23). Une phrase construite par concaténation figerait ici
- * l'ordre des mots du français.
- */
-function texteLigneEnumeration(ligne: LigneEnumeration): string {
-	const cle: CleTraduction =
-		ligne.type === 'channels'
-			? ligne.compte === 1
-				? 'admin.trash.holds.channels.one'
-				: 'admin.trash.holds.channels.many'
-			: ligne.compte === 1
-				? 'admin.trash.holds.cards.one'
-				: 'admin.trash.holds.cards.many'
-	return t(cle, { compte: String(ligne.compte) })
-}
-
 /** Clé d'identification d'une entrée : le type ET l'identifiant, deux tables pouvant les partager. */
 const cleEntree = (entree: EntreeCorbeille): string => `${entree.type}:${entree.id}`
 
-/**
- * L'énumération d'une entrée parente, dans ses trois états distincts (§4.4).
- *
- * Ils ne se confondent pas : un compte, « en cours de mesure », et « n'a pas pu être mesuré ». Un
- * blanc se lirait comme un zéro, et c'est la règle que `docs/DESIGN_SYSTEM.md` §5.15 a posée pour la
- * prévisualisation d'exigence.
- */
-type EtatEnumeration =
-	| { readonly statut: 'chargement' }
-	| { readonly statut: 'echec' }
-	| { readonly statut: 'pret'; readonly lignes: readonly LigneEnumeration[] }
+// Le type des trois états et le choix de la clé singulier/pluriel vivent désormais dans
+// `presentation-corbeille.ts` : la confirmation du geste de mise à la corbeille (§4 bis.3) affiche
+// exactement la même énumération, et deux copies auraient divergé sur le même fait.
 
 /** L'issue de la dernière restauration tentée sur une ligne. */
 type EtatRestauration =
