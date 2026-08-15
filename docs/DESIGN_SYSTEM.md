@@ -172,9 +172,12 @@ alerte de refus dans le bloc concerné.
   bordure haute `--color-border`. La colonne droite porte le fil (§5.10, §5.11) : elle **raconte** ce
   qui est arrivé à l'affaire, et un geste qui agit n'appartient pas au récit. Le bloc est en bas
   parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche.
-- **Bouton destructif de variante contour** (§5.5), icône `Trash2` — la même que la sixième commande
-  du §5.13, et pour la même raison : `Archive` dirait un autre état. Le libellé nomme le geste, pas
-  l'objet ; c'est la confirmation qui nomme l'affaire (§6).
+- **La commande qui OUVRE la confirmation est secondaire, pas destructive**, et porte l'icône
+  `Trash2` — la même que la sixième commande du §5.13, et pour la même raison : `Archive` dirait un
+  autre état. C'est le **bouton de la confirmation** qui est destructif plein (§5.5), exactement
+  comme au §5.13 : la teinte de danger annonce le geste qu'on est sur le point de commettre, pas
+  celui qu'on envisage. Le libellé nomme le geste, pas l'objet ; c'est la confirmation qui nomme
+  l'affaire (§6).
 - **Sa confirmation ne porte AUCUNE énumération**, contrairement à celle du §5.13 : une affaire n'a
   pas d'enfant, et les quatre états du compte n'y ont donc aucun objet. Elle n'écrit pas non plus
   « aucun objet ne devient inaccessible » — cette phrase répond à une mesure, et ici aucune mesure

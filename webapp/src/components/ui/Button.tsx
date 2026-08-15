@@ -7,7 +7,7 @@
 // (docs/DESIGN_SYSTEM.md §11) : les composants métier les composent, ils ne les redéfinissent
 // pas.
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 export type VarianteBouton = 'primaire' | 'secondaire' | 'destructif' | 'discret'
 
@@ -36,6 +36,16 @@ export type ProprietesBouton = ButtonHTMLAttributes<HTMLButtonElement> & {
 	readonly variante?: VarianteBouton
 	readonly taille?: TailleBouton
 	readonly children: ReactNode
+	/**
+	 * Référence vers le bouton rendu, DÉCLARÉE et non seulement transmise.
+	 *
+	 * React 19 passe `ref` comme une propriété ordinaire des composants de fonction : elle est déjà
+	 * reversée au `button` par l'étalement ci-dessous, mais `ButtonHTMLAttributes` ne la déclare pas,
+	 * et l'écrire sans ce type ne compilerait pas. Elle sert aux écrans qui doivent RENDRE le focus à
+	 * la commande ayant ouvert une confirmation (docs/DESIGN_SYSTEM.md §5.13) — sans quoi annuler au
+	 * clavier laisse le focus sur un bouton qui vient de disparaître.
+	 */
+	readonly ref?: Ref<HTMLButtonElement>
 }
 
 export function Button({

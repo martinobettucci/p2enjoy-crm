@@ -1,9 +1,11 @@
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration : l'énumération des enfants rendus
-//       inaccessibles (cinquième tranche), puis ce que l'écran lit et écrit (sixième tranche)
+//       inaccessibles (cinquième tranche), ce que l'écran lit et écrit (sixième tranche), puis le
+//       GESTE de mise à la corbeille d'une AFFAIRE (huitième tranche)
 // @spec docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente de l'horodatage), §3.4 (la
 //       restauration refuse plutôt que de deviner), §3.5 (ce qu'elle compte exactement, la forme des
 //       lectures, la composition), §4.2 (les trois lectures de l'écran), §4.3 (l'auteur inconnu),
-//       §4.5 (les trois issues de la restauration)
+//       §4.5 (les trois issues de la restauration), §4 ter.3 (les trois issues du geste d'une
+//       affaire), §4 ter.4 (le fil enregistre le geste), §4 ter.6 (l'horodatage du client)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 //
@@ -419,6 +421,102 @@ export async function restaurer(
 				undefined,
 				cause instanceof Error ? cause.message : String(cause),
 			),
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Le GESTE de mise à la corbeille d'une AFFAIRE — §4 ter
+// ---------------------------------------------------------------------------------------------
+//
+// POURQUOI ICI, ET NON DANS LE MODULE DE L'ÉCRAN. Le geste d'un track et d'un channel vit dans
+// `administration-arborescence.ts`, parce que l'écran qui le porte est celui de l'arborescence et
+// qu'il partage son enveloppe d'écriture. Une affaire n'a pas d'écran d'administration : sa surface
+// est sa route de détail (§4 ter.1), dont le module — `formulaire.ts` — compose un formulaire et
+// n'écrit rien. Le geste rejoint donc le domaine auquel il appartient, la corbeille, à côté de la
+// restauration qui l'annule. L'asymétrie est nommée plutôt que tue.
+//
+// LA CHARGE NE CONTIENT QUE `deleted_at`, comme au §4 bis.5 : `deleted_by` est fermée au client par
+// le privilège de colonne de `0037`, et l'y ajouter ferait refuser TOUTE l'écriture en `42501`.
+//
+// LE FIL N'EST PAS ÉCRIT ICI NON PLUS, et c'est MESURÉ (§4 ter.4) : le trigger de `0016`, dans sa
+// forme de `0020`, fait naître un événement `trashed` portant l'acteur. Un événement posé par le
+// client serait une trace que rien ne garantit.
+
+/**
+ * Les refus qu'un geste de mise à la corbeille peut recevoir.
+ *
+ * `parent-en-corbeille` n'y figure PAS, et c'est un fait du modèle plutôt qu'un oubli : la garde de
+ * `0038` juge une **restauration**, jamais un retrait. Offrir une nature qui ne peut pas survenir
+ * obligerait chaque appelant à traiter une branche morte.
+ */
+export type NatureRefusGeste = 'forbidden' | 'network' | 'unknown'
+
+export type RefusGeste = {
+	readonly nature: NatureRefusGeste
+	readonly detail: string
+}
+
+/**
+ * Classe un refus du geste sur le code HTTP.
+ *
+ * Aucun code PostgreSQL n'est inspecté, contrairement à `classerRefusRestauration` : le geste ne
+ * traverse ni garde nommée ni contrainte de forme — il écrit une colonne nullable sous la seule
+ * politique `cards_maj`, dont le refus est soit un `401`/`403`, soit `200` et zéro ligne (§4 ter.3).
+ */
+export function classerRefusGeste(statutHttp: number | undefined, detail: string): RefusGeste {
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'forbidden', detail }
+	if (statutHttp === undefined || statutHttp === 0) return { nature: 'network', detail }
+	return { nature: 'unknown', detail }
+}
+
+/**
+ * Les trois issues du geste (§4 ter.3), MESURÉES avec les jetons réels sur l'affaire
+ * `Migration ERP Sogexia` :
+ *
+ *   * l'administratrice ET le business developer obtiennent `200` et la ligne, `deleted_by` posée
+ *     par le trigger — le geste d'une affaire n'est PAS un geste d'administration, `cards_maj`
+ *     portant sur `app.can_write_channel` et non sur un rôle ;
+ *   * la lectrice obtient `200` et `[]`, la ligne relue INCHANGÉE — quatrième occurrence de la
+ *     décision 70 dans cette unité.
+ */
+export type ResultatGesteCorbeille =
+	| { readonly statut: 'appliquee' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusGeste }
+
+/**
+ * Met une affaire à la corbeille : `deleted_at` horodatée, sur cette seule ligne.
+ *
+ * L'HORODATAGE EST CELUI DU CLIENT (§4 ter.6, §4 bis.4) : le poser côté serveur remplacerait la date
+ * fixe des objets en corbeille du seed par l'instant du rejeu, et la reproductibilité du jeu de
+ * démonstration tomberait avec elle (`CLAUDE.md` §8). L'injection de `maintenant` existe pour que la
+ * preuve unitaire lise la charge émise, jamais pour déplacer la décision.
+ *
+ * `select('id')` accompagne l'écriture pour que « zéro ligne touchée » existe comme réponse : sans
+ * lui, PostgREST ne rend aucun corps et le refus silencieux d'une politique serait indistinguable
+ * d'un succès.
+ */
+export async function mettreCardALaCorbeille(
+	client: ClientCrm,
+	id: string,
+	maintenant: () => string = () => new Date().toISOString(),
+): Promise<ResultatGesteCorbeille> {
+	try {
+		const reponse = await client
+			.from('cards')
+			.update({ deleted_at: maintenant() })
+			.eq('id', id)
+			.select('id')
+		if (reponse.error !== null) {
+			return { statut: 'refus', refus: classerRefusGeste(reponse.status, reponse.error.message) }
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'appliquee' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusGeste(undefined, cause instanceof Error ? cause.message : String(cause)),
 		}
 	}
 }

@@ -178,6 +178,27 @@ export const fr = {
 	'route.card.nostep.title': 'Étape introuvable',
 	'route.card.nostep.body':
 		"Cette card désigne une étape que votre compte n'a pas le droit de lire : son formulaire ne peut pas être composé.",
+	// Le geste de mise à la corbeille d'une affaire — CRM-077, docs/SPEC-corbeille.md §4 ter.
+	// Le libellé de la commande nomme le GESTE, jamais l'objet : c'est la confirmation qui nomme
+	// l'affaire (docs/DESIGN_SYSTEM.md §5.3, §6).
+	'card.trash.action': 'Mettre à la corbeille',
+	'card.trash.confirm.title': "Mettre l'affaire « {titre} » à la corbeille ?",
+	'card.trash.confirm.body':
+		"Elle sera retirée du board, de la vue liste et de la recherche sans être supprimée, et se restaure depuis la corbeille.",
+	'card.trash.confirm.action': 'Mettre à la corbeille',
+	'card.trash.cancel': 'Annuler',
+	// « Sans effet » n'est ni un succès ni une erreur (§4 ter.3) : la politique a filtré la ligne
+	// avant la mise à jour, et l'écran le dit plutôt que d'annoncer un retrait qui n'a pas eu lieu.
+	'card.trash.noeffect': "Aucune modification : votre compte ne peut pas écrire dans cette affaire.",
+	'card.trash.refus.forbidden': "Votre compte n'a pas le droit de retirer cette affaire.",
+	'card.trash.refus.network': "La requête n'a pas abouti. Réessayer relance le retrait.",
+	'card.trash.refus.unknown': "Le retrait a été refusé, sans motif exploitable.",
+	'card.trashed.title': 'Affaire mise à la corbeille',
+	'card.trashed.body':
+		"Elle n'apparaît plus dans le channel et reste restaurable depuis la corbeille, où son nom et la date du retrait sont conservés.",
+	'card.trashed.channel': 'Revenir au channel',
+	'card.trashed.trash': 'Ouvrir la corbeille',
+
 	'route.notfound.title': 'Page introuvable',
 	'route.notfound.body': "Cette adresse ne correspond à aucun écran de l'application.",
 	'route.notfound.action': "Revenir à l'accueil",
