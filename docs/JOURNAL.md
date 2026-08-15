@@ -14368,3 +14368,51 @@ visibilité de la corbeille pour un membre ordinaire. Ils sont consignés au §6
 **migration** du §3.2 — `deleted_at` et `deleted_by` sur `tracks` et `channels`, `deleted_by` sur
 `cards` —, sa suite pgTAP, puis le seed enrichi : sans un channel et un track en corbeille et sans un
 enfant sous parent en corbeille, le refus du §3.4 n'a aucun cas de démonstration.
+
+### Décision 399 — CRM-077, première tranche : le modèle de la corbeille, et l'audit qu'un trigger seul ne suffisait pas à fermer
+
+**2026-08-15, suite de la décision 398, même session.**
+
+**Ce qui est livré.** La première tranche de `CRM-077` — le **modèle** —, spécifiée au §3.2 de
+`docs/SPEC-corbeille.md` et écrite après elle, jamais avant : `deleted_at` et `deleted_by` sur
+`tracks` et `channels`, `deleted_by` sur `cards` dont la corbeille existait sans audit depuis
+`CRM-040`. Une fonction `app.corbeille_avant_ecriture()` sert les **trois** tables, parce qu'elle ne
+nomme que les deux colonnes qu'elles partagent : la tripler aurait triplé la surface à réviser le
+jour où la règle change.
+
+**La mesure qui a changé la migration en cours de route, et c'est la plus utile de la tranche.**
+L'intention était « `deleted_by` fermée au client par un trigger ». En écrivant la preuve, la base a
+répondu autrement : `update public.cards set deleted_by = …` rend **`42501`, permission denied**,
+avant tout trigger et toute politique. Cause mesurée : `CRM-013` avait posé sur `cards` des droits
+**colonne par colonne**, et la nouvelle colonne n'a hérité d'aucun `UPDATE`. Contrôle de la même
+chose sur les deux autres tables : `tracks` et `channels` portaient un droit au niveau **TABLE**,
+donc leur `deleted_by` était bel et bien écrivable par le client, et le trigger était leur seule
+défense. Deux tables protégées par le privilège et la troisième par un trigger seul : une asymétrie
+que personne ne retrouve en relisant. La migration referme l'écart en énumérant leurs colonnes —
+PostgreSQL ne laisse pas retirer une colonne d'un privilège de table, l'énumération est la seule
+forme qui tienne, et son coût est écrit : toute colonne ajoutée plus tard devra être accordée
+explicitement.
+
+**Trois décisions de comportement, chacune motivée plutôt que subie.** L'audit est **figé** tant que
+la ligne reste en corbeille, sans quoi une écriture ultérieure quelconque réattribuerait la
+suppression à qui passe par là — prouvé sur `cards`, seule des trois dont la politique laisse écrire
+un profil différent de celui qui a supprimé. Il est **effacé** à la restauration : « supprimé par X »
+sur un objet vivant serait un mensonge de plus, pas une trace de plus, et la trace durable d'un
+geste appartient au journal d'événements. Et la corbeille **reste lisible**, ce qu'une assertion
+fige : si une politique venait un jour la masquer, tout écran de corbeille cesserait de fonctionner,
+et c'est là que cela se verrait d'abord.
+
+**Quatre preuves antérieures révisées, aucune supprimée ni contournée**, motif écrit dans chaque
+fichier : les contrôles de privilèges de `0004_tracks` et `0005_channels` deviennent des contrôles de
+privilège de **colonne**, la liste de colonnes de `0005_channels` s'étend — et `docs/SPEC-channels.md`
+§2.1 comme `docs/SPEC-tracks.md` §2.1 la portent **dans le même changement** —, et les deux
+assertions de types figées suivent.
+
+**Mesuré :** `npm run test:sql` **35 fichiers / 1995 assertions, aucune anomalie** ; `typecheck`
+vert ; `test:unit` **973**. Compteurs du harnais portés sur mesure.
+
+**Où reprendre.** `CRM-077` reste `[~]`. La tranche suivante est la **couche de données et la garde
+de restauration** : le refus, backend, de restaurer un enfant dont le parent est en corbeille (§3.4),
+et l'énumération des enfants rendus inaccessibles (§3.3). Le seed doit être enrichi avant l'écran —
+un channel et un track en corbeille, et un enfant sous parent en corbeille —, sans quoi ce refus n'a
+aucun cas de démonstration.
