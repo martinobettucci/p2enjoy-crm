@@ -130,7 +130,7 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
-### INC-110 — Après un rejeu des migrations, `mail-sync` ne sait plus écrire ce qu'il relève : `inbound_poll_write_failed`, et deux preuves deviennent rouges
+### INC-110 — `mail-sync` a cessé d'écrire ce qu'il relevait sur une pile dérivée — NON REPRODUIT sur une pile neuve, et un mécanisme voisin isolé au passage
 
 **Nature :** dérive d'état de la pile locale, **étrangère à toute unité produit** — aucun fichier du
 dépôt n'est en cause, et le comportement est laissé inchangé conformément à `CLAUDE.md` §18 et à
@@ -164,12 +164,34 @@ La cause exacte n'a pas été isolée : l'événement `inbound_poll_write_failed
 de l'erreur d'écriture, ce qui est en soi une limite d'observabilité (`CLAUDE.md` §20) et le premier
 point à instrumenter.
 
-**Ce qu'il reste à faire, et par qui.** Une session disposant d'une pile neuve doit d'abord
-reproduire : monter la pile, constater `e2e:mail` vert, rejouer `migrations-runner` puis le seed, et
-constater si les deux preuves virent au rouge. Si oui, la cause est dans le rejeu et non dans un
-accident de cette session. Il faudra alors, dans l'ordre : donner un détail exploitable à
-`inbound_poll_write_failed`, puis corriger la cause. Tant que ce n'est pas fait, une session qui
-verrait ces deux preuves rouges ne doit pas conclure à une régression de son unité.
+**LA REPRODUCTION A ÉTÉ TENTÉE DANS LA MÊME SESSION, ET ELLE A ÉCHOUÉ — au sens favorable.** La pile
+a été descendue puis remontée à neuf (`docker compose down -v`, `./runDev.sh`, seed appliqué), et
+`e2e/mail/ingestion.spec.ts` rend alors **3 scénarios verts**, `mail_attachments` se repeuplant
+normalement. Le symptôme **ne se reproduit donc pas sur une pile neuve** : il tenait à l'état
+accumulé par la session, non au dépôt ni au rejeu des migrations pris isolément.
+
+**Un mécanisme voisin a en revanche été isolé, et il est utile à connaître.** En descendant la pile,
+`docker compose down -v` retire les volumes NOMMÉS — dont celui qui porte la clé pgsodium — alors que
+les données de la base vivent dans un **montage lié du dépôt**,
+`./supabase/docker/volumes/db/data`, et **survivent**. Les secrets chiffrés avec l'ancienne clé
+deviennent alors illisibles, et le seed s'arrête sur
+`pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext` en configurant le premier compte
+entrant. MESURÉ. Le remède, ciblé et suffisant, est de vider les lignes que le seed sait recréer par
+le vrai mécanisme d'écriture — `mail_outbound_identities`, `mail_inbound_accounts`, `vault.secrets`
+— puis de réappliquer le seed, qui repart alors jusqu'au bout. **`down -v` n'est donc PAS une remise
+à zéro complète de cet environnement**, et le croire coûte une réparation manuelle.
+
+**Ce qu'il reste à faire.** Deux points subsistent, aucun ne bloquant :
+
+1. `inbound_poll_write_failed` ne porte **aucun détail exploitable** de l'erreur d'écriture, ce qui
+   a rendu ce diagnostic bien plus long qu'il n'aurait dû (`CLAUDE.md` §20). C'est le premier point
+   à instrumenter, indépendamment de la cause.
+2. La cause exacte de l'échec d'écriture observé en cours de session reste **non isolée** : elle
+   n'est plus observable, la pile ayant été renouvelée. Une session qui la reverrait doit capturer
+   les logs `mail-sync` AVANT toute remise en état.
+
+Tant que le point 1 n'est pas fait, une session qui verrait ces deux preuves rouges doit d'abord
+remonter une pile neuve avant de conclure à une régression de son unité.
 
 **Arbitrage demandé :** aucun. L'entrée est un constat, et sa correction appartient au sous-système
 de messagerie, non à `CRM-076`.

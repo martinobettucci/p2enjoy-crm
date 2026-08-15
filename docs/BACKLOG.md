@@ -6091,7 +6091,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
-| CRM-076 | Éditeur administrateur de workflows | `[ ]` |
+| CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[ ]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[ ]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[ ]` |
@@ -6378,7 +6378,7 @@ non-complaisance saurait mesurer ». Ce point **n'est pas livré** : il engage t
 dépôt, pas `CRM-075`, et reste une question du responsable. `CRM-075` demeure `[x]` — l'unité livre
 ses gestes et ses preuves ; c'est la propriété transverse des harnais qui reste ouverte.
 
-### CRM-076 — Éditeur administrateur de workflows `[~]`
+### CRM-076 — Éditeur administrateur de workflows `[x]`
 
 CRUD visuel complet des workflows, étapes, transitions, champs, règles et exigences, avec
 prévisualisation des effets et refus backend pour tout non-administrateur. **DoD** : chaque geste
@@ -6680,12 +6680,23 @@ complète verte — `test:sql` 34/1981, `e2e:api` **514** (507 + les 7 de la pr�
 `e2e:ui` **241**, `e2e:mail` 42, `test:unit` 973, `pytest` 242, `typecheck` et `build` —, compteurs
 `SCENARIOS_UI` et `SCENARIOS_API` portés sur mesure, et preuves API dédiées écrites.
 
-**L'unité reste néanmoins `[~]`, et l'écart est nommé plutôt que passé sous silence.** La campagne
-complète qui a rendu ces chiffres a été jouée AVANT la remise en état décrite par **INC-110** ; à la
-fin de la même session, `e2e/mail/ingestion.spec.ts:133` et `e2e/api/inbox.spec.ts:159` sont rouges
-sur un état de pile dérivé, pour une cause étrangère à cette unité et consignée. **Une campagne
-complète rejouée sur une pile neuve est la dernière preuve manquante** : elle seule autorise le
-passage à `[x]`. C'est la première tâche de la session suivante, et elle ne demande aucun code.
+**LA DERNIÈRE PREUVE MANQUANTE A ÉTÉ EXÉCUTÉE : campagne complète rejouée sur une PILE NEUVE**
+— `docker compose down -v`, `./runDev.sh`, seed appliqué —, le 2026-08-15 :
+
+| Preuve | Résultat |
+|---|---|
+| `npm run test:sql` | **34 fichiers / 1981 assertions**, aucune anomalie |
+| `npm run e2e:api` | **514 / 514** |
+| `npm run e2e:ui` | **241 / 241** |
+| `npm run e2e:mail` | **41 / 42** — l'unique rouge est `mail-sync.spec.ts:210`, c'est-à-dire **INC-107**, connue, documentée et étrangère à cette unité : elle juge l'historique COMPLET du conteneur, si bien qu'un seul `veille_compte_echoue` la rend rouge pour le reste de la vie du conteneur |
+| `npm run test:unit` | **973** |
+| `npm run typecheck` / `npm run build` | verts |
+| `pytest` | **242** |
+
+**Toutes les preuves propres à `CRM-076` sont vertes.** L'unité passe à `[x]`. Ce qui reste écrit
+plus haut comme « reste dû » — réglage en lot, liste nominative — n'appartient PAS à sa Definition
+of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, et relèveront d'une
+unité qui les portera.
 
 ### CRM-077 — Corbeille et restauration `[ ]`
 

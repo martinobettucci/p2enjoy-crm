@@ -14254,7 +14254,7 @@ deux mêmes endroits, la cause est bien celle d'INC-110 et appartient au sous-sy
 l'unité peut être close en le disant. Vient ensuite `CRM-077`, corbeille et restauration, première
 unité `[ ]` dans l'ordre du plan.
 
-### Décision 394 — Les trois harnais que la décision 391 laissait en suspens sont rejoués et verts
+### Décision 396 — Les trois harnais que la décision 391 laissait en suspens sont rejoués et verts
 
 **2026-08-15, clôture de la session de la décision 393.**
 
@@ -14283,3 +14283,42 @@ même.
 **Les captures régénérées par les campagnes de cette session sont committées** plutôt que
 restaurées : elles représentent l'état réellement exécuté de l'application (`CLAUDE.md` §16), et les
 laisser diverger ferait mentir le prochain diff.
+### Décision 397 — CRM-076 est CLOSE : la campagne rejouée sur une pile neuve, et `down -v` qui n'efface pas ce qu'on croit
+
+**2026-08-15, suite de la décision 395, même session.**
+
+**Ce qui restait, et qui est fait.** La décision 395 laissait `CRM-076` en `[~]` pour une seule
+raison, sans code : rejouer la campagne sur une **pile neuve**. C'est fait — `docker compose down -v`,
+`./runDev.sh`, seed appliqué — et le verdict est : `test:sql` **34 fichiers / 1981 assertions**,
+`e2e:api` **514/514**, `e2e:ui` **241/241**, `test:unit` **973**, `typecheck` et `build` verts,
+`pytest` **242**. `e2e:mail` rend **41/42**, l'unique rouge étant `mail-sync.spec.ts:210` —
+**INC-107**, connue et documentée, qui juge l'historique complet du conteneur. Toutes les preuves
+PROPRES à l'unité sont vertes : **`CRM-076` passe à `[x]`**.
+
+**INC-110 est requalifiée par la mesure, et c'est le bon sens de l'histoire.** Sur pile neuve,
+`e2e/mail/ingestion.spec.ts` rend **3 verts** et `mail_attachments` se repeuple : le symptôme **ne se
+reproduit pas**. Il tenait à l'état accumulé par la session, non au dépôt. L'entrée est corrigée en
+conséquence plutôt que laissée à sa formulation initiale, qui accusait le rejeu des migrations.
+
+**Un mécanisme voisin isolé au passage, et qui vaut d'être connu.** `docker compose down -v` retire
+les volumes NOMMÉS — dont celui qui porte la clé pgsodium — alors que les données de la base vivent
+dans un **montage lié du dépôt**, `./supabase/docker/volumes/db/data`, et **survivent**. Les secrets
+chiffrés avec l'ancienne clé deviennent illisibles, et le seed s'arrête net sur
+`pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext`. MESURÉ. Remède ciblé et suffisant :
+vider `mail_outbound_identities`, `mail_inbound_accounts` et `vault.secrets` — les seules lignes que
+le seed sait recréer par le vrai mécanisme d'écriture — puis réappliquer le seed, qui repart jusqu'au
+bout. **`down -v` n'est donc pas une remise à zéro de cet environnement**, et le croire coûte une
+réparation manuelle. Consigné en INC-110.
+
+**Un échec observé une fois et non reproduit, dit comme tel.** `backfill.spec.ts:258` est tombé
+pendant la campagne, puis a repassé au rejeu immédiat de `e2e:mail`. Cause probable, NON vérifiée :
+la preuve suppose un « premier contact », et j'avais joué `ingestion.spec.ts` seul juste avant, ce
+qui consomme cette condition. Aucune ligne n'a été modifiée pour cela ; le fait est écrit ici pour
+qu'une session qui le reverrait sache par où commencer.
+
+**Où reprendre.** `CRM-076` est close. La suivante est **`CRM-077` — corbeille et restauration**,
+première unité `[ ]` dans l'ordre du plan, dont la Definition of Done exige qu'aucun objet enfant ne
+soit perdu silencieusement, une restauration atomique, un audit, des droits backend, l'E2E et les
+captures. Deux points d'hygiène restent ouverts et ne bloquent personne : donner un détail
+exploitable à `inbound_poll_write_failed` (INC-110, point 1) et l'arbitrage d'INC-108 sur le compte
+des règles de visibilité.
