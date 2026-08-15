@@ -732,9 +732,28 @@ Avant la fin de chaque session :
 
 5. pousse sur "origin/main" ;
 
-6. exécute la garde Git finale.
+6. exécute la garde Git finale ;
+
+7. rédige et publie le compte rendu complet du §4.4, une fois la garde du point 6 satisfaite.
 
 Une session qui finit sans mettre à jour le journal et le backlog condamne potentiellement la suivante à redécouvrir l'état par elle-même.
+
+### 4.4. COMPTE RENDU FINAL DE SESSION, TOUJOURS, SANS EXCEPTION
+
+Ta RÉPONSE FINALE n'est jamais un simple accusé de fin de tâche. C'est TOUJOURS un compte rendu complet de ce que la session a construit.
+
+Ce compte rendu est DISTINCT de l'entrée de "docs/JOURNAL.md" du point 1 ci-dessus, qui reste brève (§4.2 bis) et sert à l'exécution suivante. Le compte rendu final s'adresse au responsable et peut, lui, être détaillé.
+
+Il couvre l'INTÉGRALITÉ de la session, pas seulement son dernier geste, et il met l'ACCENT PARTICULIER sur les fonctionnalités CODÉES — écran, geste, règle métier, migration, API — plutôt que sur le seul travail documentaire :
+
+- ce qui a été construit et pourquoi, en langage clair, pas en jargon de commit ;
+- pour CHAQUE fonctionnalité d'interface livrée ou modifiée, les CAPTURES produites conformément à "CLAUDE.md" section 16 : jointes au compte rendu quand l'outillage de la session le permet, et sinon nommées explicitement par leur chemin sous "docs/captures/" pour qu'elles restent trouvables ;
+- les preuves réellement exécutées et leur résultat, avec les formulations du paragraphe 25 de "CLAUDE.md" — n'annonce jamais vérifié ce qui ne l'a pas été ;
+- ce qui reste "[~]" ou "[ ]", et pourquoi ;
+- les migrations, les entrées de "docs/INCONSISTENCY_REPORT.md" consignées, et tout arbitrage désormais attendu du responsable ;
+- le commit final et la confirmation que "origin/main" le porte.
+
+Une session qui n'a livré AUCUN code reste soumise à ce compte rendu, et le dit explicitement (§4.2 bis) : l'absence de fonctionnalité codée doit être visible dans le compte rendu au même titre qu'une fonctionnalité livrée, jamais tue ni noyée dans le travail documentaire.
 
 ## 5. RÈGLE FINALE, AUCUNE EXCEPTION
 
