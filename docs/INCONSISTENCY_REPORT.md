@@ -130,6 +130,75 @@ valeurs **comptées** dans le document lui-même.
 
 ## Ouverts
 
+### INC-118 — Le scénario S3 de `mail-sync` lit le journal CUMULÉ du conteneur, et les scénarios qui provoquent un échec d'authentification le rendent donc rouge
+
+**Constaté le 2026-08-15** pendant la sixième tranche de `CRM-077`. **Étranger à cette tranche** :
+aucun fichier de mail ni aucun service n'est touché par elle — vérifié sur le diff complet de la
+session. Comportement laissé inchangé (`docs/CloudWorker.md` §3.1).
+
+**MESURÉ.** `npm run e2e:mail` rend **41 passés, 1 échec** :
+
+```
+e2e/mail/mail-sync.spec.ts:210  S3 — la console opérationnelle reste silencieuse
+  Expected value: "WARNING"      (attendu parmi ['DEBUG','INFO'])
+  Received array: ["DEBUG", "INFO"]
+```
+
+Et le journal du conteneur porte exactement **une** ligne `WARNING` :
+
+```
+{"timestamp":"2026-08-15T07:50:42.352Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+**Le mécanisme.** `comptes-entrants.spec.ts` provoque DÉLIBÉRÉMENT `auth_failed` et `tls_failed`
+pour prouver que la relève nomme ses incidents. La veille de `mail-sync` échoue alors sur ces
+comptes et journalise `veille_compte_echoue` en `WARNING` — ce qui est le comportement voulu. S3
+s'exécute ensuite et lit le journal **depuis le démarrage du conteneur** : il constate donc un
+avertissement que la suite elle-même vient de causer.
+
+**La preuve est juste, et l'échec aussi** : c'est leur COMBINAISON dans une même exécution qui est
+contradictoire. Rejouer S3 seul ne répare rien, le journal cumulé portant toujours la ligne — MESURÉ.
+
+**Arbitrage attendu.** Borner la lecture de S3 à la fenêtre de son propre scénario, ou rendre les
+comptes fautifs à leur état avant S3 et redémarrer la veille. La première est la plus proche de ce
+que la preuve veut dire — « la console reste silencieuse *pendant une relève normale* ». Aucune ne
+se tranche depuis `CRM-077`.
+
+### INC-117 — `verify-webapp.sh` rend une anomalie E2E DIFFÉRENTE à chaque exécution, là où `npm run e2e:ui` seul est intégralement vert
+
+**Constaté le 2026-08-15** pendant la sixième tranche de `CRM-077`. **Étranger à cette tranche** :
+les scénarios en échec ne la concernent pas, et le tableau ci-dessous montre qu'ils changent d'une
+exécution à l'autre sur un arbre IDENTIQUE. Comportement laissé inchangé
+(`docs/CloudWorker.md` §3.1).
+
+**MESURÉ**, trois exécutions consécutives sur le même arbre et la même pile :
+
+```
+npm run e2e:ui  (seul)                     251 passés / 0 échec
+scripts/verify-webapp.sh  (1re exécution)   1 anomalie — e2e/ui/timeline.spec.ts:184,200,220,230
+scripts/verify-webapp.sh  (2e exécution)    1 anomalie — e2e/ui/commentaires-gestes.spec.ts:265
+```
+
+La deuxième exécution portait pourtant `WEBAPP_PREVIEW_PORT=5173`, ce qui écarte le piège de port
+de la décision 402. **Deux fichiers différents, sur le même code** : ce n'est donc pas une preuve qui
+constate une règle fausse, c'est une preuve dont le résultat dépend de l'état laissé par ce qui
+l'a précédée.
+
+**L'hypothèse la plus probable, et elle n'est PAS vérifiée ici.** Le §7 du harnais — « intégration
+hors interface » — obtient un jeton réel et interroge le backend AVANT de lancer `e2e:ui` au §8. Les
+scénarios en échec sont ceux qui dépendent du focus ou de l'ordre d'un fil (`commentaires-gestes`,
+`timeline`), c'est-à-dire les plus sensibles à un état accumulé. C'est la même famille que la
+décision 397, qui attribuait déjà INC-110 à l'état accumulé par une session plutôt qu'au dépôt, et
+que la décision 403 a confirmée en rendant la suite verte sur une pile neuve.
+
+**Ce que cela coûte.** Le harnais ne peut pas servir de verdict de livraison pour l'interface tant
+que son résultat n'est pas reproductible : une session qui le croirait sur parole conclurait à une
+régression que `npm run e2e:ui` dément. C'est ce qui a failli arriver ici.
+
+**Arbitrage attendu.** Isoler le §8 de ce que le §7 laisse derrière lui — pile neuve, ou seed
+réappliqué entre les deux —, ou séparer les deux harnais. Aucune des deux ne se tranche depuis
+`CRM-077`, et aucune n'est appliquée ici.
+
 ### INC-116 — L'empreinte de reproductibilité du §9.8 n'est stable qu'à partir du DEUXIÈME rejeu du seed, et `verify-seed-demo.sh` est donc rouge sur une base fraîchement réinitialisée
 
 **Constaté le 2026-08-15** en rejouant `scripts/verify-seed-demo.sh` sur une base sortie de
