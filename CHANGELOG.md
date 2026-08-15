@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une affaire se met à la corbeille depuis sa fiche — `CRM-077`** (`webapp/src/app/RouteCard.tsx`,
+  `webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §4 ter). Le geste existait pour un track et
+  un channel ; **une affaire ne se retirait depuis aucun écran**.
+  - **« Mettre à la corbeille » en bas de la fiche d'une affaire**, sous son formulaire. Ni le
+    tableau kanban ni la vue liste ne l'offrent, et les deux motifs sont écrits : le menu d'une carte
+    du tableau ne présente que les déplacements déclarés par le workflow, et le tableau de la vue
+    liste ne déclare aucune colonne d'actions.
+  - **La confirmation nomme l'affaire et ne porte AUCUN décompte** : une affaire n'a pas d'objet qui
+    deviendrait inaccessible avec elle. Tant qu'elle n'est pas validée, rien n'est écrit.
+  - **Après le retrait, l'écran dit que l'affaire est à la corbeille**, et non « Card introuvable » —
+    ce serait faux pour qui vient de la retirer. Il offre **deux chemins** : revenir au channel, ou
+    ouvrir la corbeille pour l'y restaurer.
+  - **Le geste n'est PAS réservé aux administrateurs**, contrairement à celui d'un track. MESURÉ avec
+    les jetons réels : un business developer réussit, la règle portant sur le droit d'écriture du
+    channel. Une personne en lecture seule reçoit une réponse **sans effet**, que l'écran nomme.
+  - **L'historique de l'affaire enregistre le retrait**, avec son auteur et sa date, écrit par la
+    base seule — l'écran n'écrit que la date de retrait.
+  - **Le manuel gagne le chapitre 4.7 *bis***, et le chapitre de la corbeille cesse d'annoncer
+    qu'une affaire ne peut être retirée d'aucun écran.
+
 - **La corbeille se remplit enfin par un GESTE — `CRM-077`**
   (`webapp/src/app/AdministrationArborescence.tsx`, `docs/SPEC-corbeille.md` §4 bis). L'écran de
   corbeille et son énumération existaient ; **aucun écran ne permettait d'y mettre quoi que ce

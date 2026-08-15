@@ -35,6 +35,7 @@
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
+| 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
 
@@ -444,8 +445,51 @@ autant : chaque partie de l'écran reste soumise à ce que le serveur vous conse
 encore livré dans cette fiche. Les champs restent lisibles et sont désactivés — vous voyez ce que
 l'affaire porte, vous ne pouvez pas encore l'y modifier.
 
+**Un seul geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
+
 Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
 connexion, une card consentie ouvre sa fiche et son fil.
+
+### 4.7 bis Mettre une affaire à la corbeille
+
+*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`, préfixées `card-geste-`.*
+
+**Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
+corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
+liste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau ne présente que les
+déplacements que le workflow autorise, et une commande de retrait y serait d'une autre nature.
+
+**Ce que le produit demande avant d'agir.** Une confirmation, sous le formulaire, qui **nomme
+l'affaire** et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,
+sans être supprimée, et se restaure depuis la corbeille. Tant que vous n'avez pas confirmé, **rien
+n'est écrit**. « Annuler » referme la confirmation et vous rend le bouton — au clavier aussi.
+
+Contrairement au retrait d'un track ou d'un channel (chapitre 5), **aucun décompte n'accompagne la
+question** : une affaire ne porte pas d'objet qui deviendrait inaccessible avec elle.
+
+**Ce que vous voyez ensuite.** L'écran est remplacé par un message qui dit que l'affaire est à la
+corbeille, avec deux chemins : **revenir au channel**, ou **ouvrir la corbeille** pour l'y retrouver
+et la restaurer (chapitre 5 ter). Il ne dit pas « Card introuvable » : l'affaire existe, vous venez
+de la retirer.
+
+**Trois réponses sont possibles, et l'écran les distingue** :
+
+| Ce que vous voyez | Ce qui s'est passé |
+|---|---|
+| Le message « Affaire mise à la corbeille » | Le retrait est enregistré, et votre nom avec lui |
+| « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » | Votre compte lit l'affaire mais n'a pas le droit d'y écrire. **Rien n'a changé** |
+| « Votre compte n'a pas le droit de retirer cette affaire. » | Le serveur a refusé explicitement |
+
+**Le bouton reste offert même si votre compte ne peut pas aboutir**, et c'est voulu : la règle est
+celle du serveur, qui peut changer entre le moment où vous ouvrez la fiche et celui où vous cliquez.
+Un bouton éteint par l'écran ferait passer une règle du serveur pour une décision d'affichage.
+
+**Qui peut le faire.** Toute personne ayant le droit d'**écrire** sur l'onglet de l'affaire — ce
+n'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une
+personne en lecture seule obtient la deuxième réponse du tableau ci-dessus.
+
+**Le retrait est inscrit dans l'historique de l'affaire** (chapitre 4.10), sous « Cycle de vie »,
+avec son auteur et sa date. Vous le relisez après restauration.
 
 ### 4.8 Le tableau kanban d'un channel
 
@@ -1292,7 +1336,7 @@ pour un script ou une intégration qui tenterait la même chose.
 ### 5 ter.2 Ce que cet écran ne fait pas
 
 - **On n'y retire rien, on y rend.** Le geste de mise à la corbeille vit là où vivent les objets —
-  chapitre 5 pour un track et un channel.
+  chapitre 5 pour un track et un channel, chapitre 4.7 *bis* pour une affaire.
 - **Aucun effacement définitif, et aucun « vider la corbeille ».** La **durée de conservation** n'est
   pas arrêtée, et livrer une destruction irréversible avant d'avoir fixé une règle de conservation
   serait le contraire d'une garantie.
@@ -1301,8 +1345,8 @@ pour un script ou une intégration qui tenterait la même chose.
 
 ### 5 ter.3 Ce qui n'est pas encore là
 
-- Une **affaire** ne peut être mise à la corbeille depuis aucun écran ; elle peut en revanche être
-  **restaurée** depuis celui-ci.
+- Le retrait d'une **affaire** se fait depuis sa fiche (chapitre 4.7 *bis*), et non depuis le
+  tableau kanban ni la vue liste.
 - La **durée de conservation** et l'**effacement définitif** attendent une décision.
 - La corbeille suit aujourd'hui la lecture de l'objet. Savoir si un membre ordinaire doit y avoir
   accès, ou le seul administrateur, n'est pas tranché.
