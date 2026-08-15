@@ -55,7 +55,8 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 17 | Inviter et gérer les membres | `CRM-070` | À livrer. **L'invitation est aujourd'hui une opération d'exploitation, pas un parcours produit** : un compte est créé par un **opérateur** disposant de la clé de service, hors de l'interface. Aucun écran n'existe, et aucun n'est promis avant `CRM-070`, à laquelle l'arbitrage du responsable rattache ce parcours ([`docs/JOURNAL.md`](JOURNAL.md), décision 256, INC-015) |
-| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive et désarchive un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression n'existe pas** : archiver masque et reste réversible |
+| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
+| 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Partiellement livré, sans écran.** Le catalogue existe côté serveur — les états par lesquels une affaire passe, ceux du produit et les vôtres — et l'espace de travail est livré avec le sien (annexe A). Aucun écran ne permet encore de le consulter ni de le modifier : l'éditeur arrive avec le chapitre 20 (`CRM-031`) |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
@@ -971,18 +972,42 @@ interdire un geste qui vous est peut-être permis. Le produit préfère vous mon
   disparaît de la barre latérale et de son adresse, **sans être supprimé**.
 - **Désarchiver** : cochez « Afficher les archivés » pour les faire réapparaître, puis utilisez la
   flèche de restauration. Aucune confirmation n'est demandée : ce geste ne retire rien.
+- **Mettre à la corbeille** : la corbeille. L'action demande une **confirmation** qui nomme le track
+  et **dit ce qui devient inaccessible avec lui** : le nombre de ses channels, puis celui de leurs
+  affaires. Le track quitte
+  alors l'arborescence et se retrouve dans **Réglages ▸ Corbeille**, d'où il se restaure
+  (chapitre 5 ter).
 
-**La suppression n'existe pas**, et ce n'est pas un oubli : le produit ne l'expose nulle part, et la
-base la refuse. Archiver est la façon de faire disparaître un track.
+**La suppression définitive n'existe pas**, et ce n'est pas un oubli : le produit ne l'expose nulle
+part, et la base la refuse. Archiver masque ; mettre à la corbeille retire. Les deux sont
+réversibles, et **rien n'efface**.
+
+**Archiver et mettre à la corbeille sont deux états distincts**, et ils ne se remplacent pas :
+
+| | Archiver | Mettre à la corbeille |
+|---|---|---|
+| Ce que cela veut dire | dossier clos, que l'on conserve | erreur que l'on retire |
+| Où l'objet se retrouve | dans la même liste, en cochant « Afficher les archivés » | dans **Réglages ▸ Corbeille** |
+| Comment on revient en arrière | « Désarchiver » | « Restaurer », depuis la corbeille |
+| Confirmation demandée | oui | oui, **avec le décompte de ce qui devient inaccessible** |
+
+Un track archivé peut être mis à la corbeille, et il **reste archivé** : le restaurer le rend
+archivé, tel qu'il était.
 
 **Archiver un track n'archive pas ses channels.** Ils restent dans l'état où ils étaient, et
 réapparaissent exactement tels quels si vous désarchivez le track.
+
+**Mettre un track à la corbeille n'y met pas ses channels** non plus — et c'est la raison d'être du
+décompte de la confirmation. Ses channels et leurs affaires ne sont pas retirés : ils deviennent
+**inaccessibles** tant que le track reste dans la corbeille, et redeviennent joignables dès qu'il est
+restauré, exactement tels qu'ils étaient. C'est aussi pourquoi un channel dont le track est dans la
+corbeille **ne se restaure pas seul** : le produit vous demande de restaurer le track d'abord.
 
 ### 5.2 Un channel
 
 Dépliez un track avec le chevron : ses channels sont chargés à ce moment-là, et pas avant.
 
-Les mêmes cinq gestes s'appliquent, avec deux différences :
+Les mêmes six gestes s'appliquent, avec deux différences :
 
 - **L'ordre d'un channel se compte dans son track**, pas dans l'espace de travail entier ;
 - **choisir un workflow est obligatoire.** La liste ne propose que les workflows réellement
@@ -1002,6 +1027,10 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
 ### 5.4 Ce qui n'est pas encore là
 
+- Le geste de mise à la corbeille existe pour un **track** et un **channel**, pas pour une
+  **affaire** : une affaire ne se retire depuis aucun écran pour l'instant.
+- Un objet retiré **disparaît de cette liste immédiatement**, mais la barre latérale garde le track
+  jusqu'au prochain chargement de la page. Le même décalage existe depuis toujours pour l'archivage.
 - Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
   été rejoué : les deux exigent la pile de développement complète.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
@@ -1225,6 +1254,58 @@ Deux précisions honnêtes :
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
 - **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
+
+## 5 ter. La corbeille : ce qui a été retiré, et comment le rendre
+
+*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Corbeille ».
+
+**Ce que l'écran montre.** Un tableau des objets retirés — tracks, channels et affaires mêlés —, du
+plus récemment retiré au plus ancien. Chaque ligne dit son **type**, son **nom**, **qui** l'a
+retiré, **quand**, et **ce qu'il retient avec lui**.
+
+**Vous n'y voyez que ce que vous avez le droit de lire**, comme partout ailleurs dans le produit :
+une affaire d'un channel qui vous est fermé n'apparaît pas dans votre corbeille. Le nombre affiché
+dans « Retient avec lui » suit la même règle — c'est **votre** décompte, pas un inventaire complet.
+
+**« Auteur inconnu » n'est pas une anomalie.** Un objet peut avoir été retiré par un traitement
+technique plutôt que par une personne, ou par un compte supprimé depuis. Le produit le dit au lieu
+de laisser la case vide.
+
+### 5 ter.1 Restaurer
+
+Le bouton **Restaurer** de la ligne. Aucune confirmation n'est demandée : restaurer ne détruit rien,
+et le geste inverse est précisément celui qui a rempli cet écran.
+
+Trois réponses sont possibles, et l'écran les distingue :
+
+| Ce que vous voyez | Ce qui s'est passé |
+|---|---|
+| La ligne disparaît, un message confirme | L'objet est rendu, exactement dans l'état où il était |
+| « Son parent est lui-même en corbeille : restaurez-le d'abord. » | Le rendre seul l'aurait rendu **à un endroit invisible** — un channel dans un track retiré, une affaire dans un channel retiré |
+| « Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. » | Votre compte n'a pas le droit d'écrire sur cet objet. **Rien n'a changé** |
+
+**La deuxième réponse est une règle du serveur, pas une précaution de l'écran** : elle vaut aussi
+pour un script ou une intégration qui tenterait la même chose.
+
+### 5 ter.2 Ce que cet écran ne fait pas
+
+- **On n'y retire rien, on y rend.** Le geste de mise à la corbeille vit là où vivent les objets —
+  chapitre 5 pour un track et un channel.
+- **Aucun effacement définitif, et aucun « vider la corbeille ».** La **durée de conservation** n'est
+  pas arrêtée, et livrer une destruction irréversible avant d'avoir fixé une règle de conservation
+  serait le contraire d'une garantie.
+- **Aucun filtre, aucun tri, aucune pagination** : la corbeille est rendue en entier, la plus
+  récemment retirée d'abord.
+
+### 5 ter.3 Ce qui n'est pas encore là
+
+- Une **affaire** ne peut être mise à la corbeille depuis aucun écran ; elle peut en revanche être
+  **restaurée** depuis celui-ci.
+- La **durée de conservation** et l'**effacement définitif** attendent une décision.
+- La corbeille suit aujourd'hui la lecture de l'objet. Savoir si un membre ordinaire doit y avoir
+  accès, ou le seul administrateur, n'est pas tranché.
 
 ## 6. Consulter l'état de la messagerie
 

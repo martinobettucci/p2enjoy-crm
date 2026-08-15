@@ -13,6 +13,33 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **La corbeille se remplit enfin par un GESTE — `CRM-077`**
+  (`webapp/src/app/AdministrationArborescence.tsx`, `docs/SPEC-corbeille.md` §4 bis). L'écran de
+  corbeille et son énumération existaient ; **aucun écran ne permettait d'y mettre quoi que ce
+  soit**, et seul le jeu de démonstration pouvait la remplir.
+  - **« Mettre à la corbeille » sur un track et sur un channel**, depuis « Réglages ▸ Arborescence »,
+    à côté d'« Archiver » — et **distincte** d'elle : les deux états sont indépendants, un objet
+    archivé se retire et **reste archivé** quand on le restaure.
+  - **La confirmation dit ce qui devient inaccessible** avec l'objet retiré, en réutilisant
+    l'énumération livrée précédemment — c'est l'appelant qui lui manquait. Le décompte a quatre
+    états distincts, dont « n'a pas pu être mesuré », et **aucun n'empêche de confirmer** : une
+    énumération informe, elle n'autorise pas.
+  - **L'administration montrait ce qu'elle allait permettre de retirer.** MESURÉ avant d'y toucher :
+    ses deux lectures rendaient le track et le channel déjà en corbeille du jeu de démonstration, la
+    livraison précédente n'ayant filtré que la barre latérale, l'adresse d'un track et la barre
+    d'onglets. Le filtre est ajouté, **séparé** de celui de l'archivage — la case « Afficher les
+    archivés » ne ramène jamais un objet retiré.
+  - **Rien n'est deviné du droit d'écrire** : la commande est offerte à tout le monde, l'écriture
+    part, et le refus vient du serveur. MESURÉ avec les jetons réels : un membre non administrateur
+    reçoit une réponse **sans effet**, jamais une erreur, et l'écran le nomme au lieu d'annoncer un
+    retrait qui n'a pas eu lieu.
+  - **L'audit reste écrit par la base** : la demande ne porte que la date de retrait, et une demande
+    qui prétendrait désigner l'auteur est refusée en entier.
+  - **Le manuel gagne le chapitre de la corbeille**, qui manquait depuis la livraison de l'écran, et
+    celui de l'arborescence décrit le nouveau geste et ce qui le distingue de l'archivage.
+
 ### Documentation
 
 - **`docs/CloudWorker.md` : la campagne de preuves quitte l'ouverture de session** (décision 420).
