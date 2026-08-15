@@ -2,7 +2,7 @@
 // @verifies docs/SPEC-corbeille.md §3.4 (le refus nommé), §4.1 (l'adresse), §4.3 (l'auteur
 //           inconnu), §4.4 (l'énumération d'une entrée parente), §4.5 (les trois issues),
 //           §4.6 (les quatre états), §4.7 (aucun effacement définitif), §5 (lignes « E2E » et
-//           « Visuel »)
+//           « Visuel »), §4 bis (le GESTE de mise à la corbeille et sa confirmation)
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
 // @verifies docs/DESIGN_SYSTEM.md §5.16 (cette surface), §7 (paliers), §12.5 (réponse substituée)
 // @verifies CLAUDE.md §10 (une règle se prouve sur la vraie base), §16 (vérification visuelle)
@@ -251,4 +251,260 @@ test.describe("état vide (docs/DESIGN_SYSTEM.md §12.5)", () => {
 
 		await capturer(page, 'corbeille-etat-vide', UNITE)
 	})
+})
+
+// --- Le GESTE de mise à la corbeille — CRM-077 §4 bis -----------------------------------------
+//
+// L'ALLER-RETOUR COMPLET EST PROUVÉ SUR LA VRAIE BASE : un track créé pour la preuve est retiré
+// DEPUIS L'ÉCRAN d'administration, constaté en base, retrouvé dans la corbeille, puis restauré
+// depuis elle. Aucun des deux écrans n'est cru sur parole — chaque effet est relu hors interface.
+//
+// La preuve crée ses PROPRES objets sous un slug préfixé `e2e-geste-`, et les supprime dans son
+// `finally` avec la clé de service : c'est la règle d'INC-099, et elle interdit de laisser derrière
+// soi une ligne que les comptes figés du seed dénonceraient (`0004_tracks.test.sql`).
+
+const CHEMIN_TRACKS = `${URL_API}/rest/v1/tracks`
+const CHEMIN_CHANNELS = `${URL_API}/rest/v1/channels`
+const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
+const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
+
+async function supprimerParSlug(page: Page, chemin: string, slug: string): Promise<void> {
+	await page.request.delete(`${chemin}?slug=eq.${slug}`, { headers: enTetesService() })
+}
+
+/** Crée un track jetable ACTIF, et rend son identifiant. */
+async function creerTrackJetable(page: Page, slug: string, nom: string): Promise<string> {
+	const reponse = await page.request.post(CHEMIN_TRACKS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { workspace_id: WORKSPACE_SEED, name: nom, slug, color: 'neutral', icon: 'folder' },
+	})
+	expect(reponse.status(), await reponse.text()).toBe(201)
+	return ((await reponse.json()) as { id: string }[])[0]!.id
+}
+
+test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)', () => {
+	test('un track est retiré depuis l’administration, constaté en base, et retrouvé dans la corbeille', async ({
+		page,
+	}) => {
+		const slugTrack = 'e2e-geste-track'
+		const nomTrack = 'E2E Geste Track'
+		const slugChannel = 'e2e-geste-canal'
+		await supprimerParSlug(page, CHEMIN_CHANNELS, slugChannel)
+		await supprimerParSlug(page, CHEMIN_TRACKS, slugTrack)
+
+		try {
+			const idTrack = await creerTrackJetable(page, slugTrack, nomTrack)
+			// UN ENFANT VIVANT, pour que l'énumération de la confirmation ait quelque chose à dire :
+			// sans lui, la capture montrerait « Aucun objet ne devient inaccessible » et la ligne
+			// « Visuel » du §5 — « la confirmation portant l'énumération » — resterait sans sujet.
+			const cree = await page.request.post(CHEMIN_CHANNELS, {
+				headers: { ...enTetesService(), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					track_id: idTrack,
+					workflow_id: WORKFLOW_GLOBAL,
+					name: 'E2E Geste Canal',
+					slug: slugChannel,
+				},
+			})
+			expect(cree.status(), await cree.text()).toBe(201)
+
+			await connecter(page, ADMIN)
+			await page.goto('/reglages')
+			await page.getByRole('link', { name: /Arborescence : tracks et channels/ }).click()
+			await expect(page).toHaveURL(/\/reglages\/arborescence$/)
+			await expect(
+				page
+					.getByRole('region', { name: "Tracks et channels de l'espace de travail" })
+					.getByText(nomTrack, { exact: true }),
+			).toBeVisible()
+
+			// --- La confirmation, et son énumération -------------------------------------------
+			await page.getByRole('button', { name: `Mettre ${nomTrack} à la corbeille` }).click()
+			const confirmation = page.getByTestId('confirmation-corbeille')
+			await expect(confirmation).toContainText(`Mettre le track « ${nomTrack} » à la corbeille ?`)
+			// Le compte VIENT DE LA BASE : un channel vivant, aucune affaire — et « 1 channel » au
+			// singulier, deux clés distinctes du catalogue.
+			await expect(confirmation).toContainText('1 channel')
+			await expect(confirmation).not.toContainText('affaire')
+
+			// LA CONFIRMATION TIENT ENTIÈREMENT DANS LE CHAMP au palier de référence, et c'est ce
+			// contrôle qui a trouvé un vrai défaut : la liste porte `min-w-max` pour son débordement
+			// horizontal (§12.6), donc un paragraphe non borné ne se replie JAMAIS. Le corps de cette
+			// confirmation, plus long que celui de l'archivage, élargissait la liste et sortait de
+			// l'écran. La borne de largeur du composant est vérifiée ici plutôt que supposée.
+			const boite = await confirmation.boundingBox()
+			expect(boite!.x + boite!.width, 'la confirmation ne sort pas du champ').toBeLessThanOrEqual(
+				page.viewportSize()!.width,
+			)
+			await capturer(page, 'corbeille-geste-confirmation', UNITE)
+
+			// RIEN N'EST ÉCRIT AVANT LA CONFIRMATION, et c'est relu en base plutôt que supposé.
+			expect(await deletedAt(page, 'tracks', idTrack)).toBeNull()
+
+			await confirmation.getByRole('button', { name: 'Mettre à la corbeille' }).click()
+			await expect(confirmation).toBeHidden()
+
+			// --- L'effet, constaté EN BASE ------------------------------------------------------
+			await expect
+				.poll(async () => deletedAt(page, 'tracks', idTrack))
+				.not.toBeNull()
+			// L'enfant n'est PAS horodaté (§3.3) : c'est l'énumération qui le comptait, pas une
+			// descente de l'horodatage.
+			const enfants = await page.request.get(
+				`${CHEMIN_CHANNELS}?select=deleted_at&track_id=eq.${idTrack}`,
+				{ headers: enTetesService() },
+			)
+			expect((await enfants.json()) as unknown[]).toEqual([{ deleted_at: null }])
+
+			// --- L'écran d'administration ne le montre plus (§4 bis.2) --------------------------
+			//
+			// L'ASSERTION PORTE SUR LA RÉGION D'ADMINISTRATION, PAS SUR LA PAGE. La barre latérale,
+			// elle, garde le track jusqu'au prochain chargement : elle lit sa propre copie dans
+			// `AppShell`, qu'aucune écriture de cet écran ne rafraîchit. C'est INC-120, MESURÉ à
+			// l'identique sur l'ARCHIVAGE de `CRM-075` — donc antérieur à cette tranche, et laissé
+			// inchangé. Assertir la page entière aurait rendu cette preuve rouge pour un défaut
+			// étranger, et l'aurait fait relâcher plus tard sans que personne sache pourquoi.
+			const administration = page.getByRole('region', {
+				name: "Tracks et channels de l'espace de travail",
+			})
+			await expect(administration.getByText(nomTrack, { exact: true })).toHaveCount(0)
+			// …et la case « Afficher les archivés » ne le ramène pas : il n'est pas archivé (§3.1).
+			await page.getByLabel(/Afficher les archivés/).check()
+			await expect(administration.getByText(nomTrack, { exact: true })).toHaveCount(0)
+
+			// --- Il est dans la corbeille, avec son auteur --------------------------------------
+			await page.goto('/reglages/corbeille')
+			const ligne = page.getByRole('row', { name: new RegExp(nomTrack) })
+			await expect(ligne).toBeVisible()
+			await expect(ligne).toContainText('Track')
+			// L'auteur est celui du GESTE, écrit par le trigger : jamais « Auteur inconnu » ici.
+			await expect(ligne).not.toContainText('Auteur inconnu')
+
+			// --- Et il se restaure, ce qui referme l'aller-retour --------------------------------
+			await ligne.getByRole('button', { name: `Restaurer ${nomTrack}` }).click()
+			await expect.poll(async () => deletedAt(page, 'tracks', idTrack)).toBeNull()
+		} finally {
+			await supprimerParSlug(page, CHEMIN_CHANNELS, slugChannel)
+			await supprimerParSlug(page, CHEMIN_TRACKS, slugTrack)
+		}
+	})
+
+	test('le geste se fait AU CLAVIER SEUL, de la commande à la confirmation', async ({ page }) => {
+		const slug = 'e2e-geste-clavier'
+		const nom = 'E2E Geste Clavier'
+		await supprimerParSlug(page, CHEMIN_TRACKS, slug)
+
+		try {
+			const id = await creerTrackJetable(page, slug, nom)
+			await connecter(page, ADMIN)
+			await page.goto('/reglages/arborescence')
+			// Portée limitée à la région d'administration : la barre latérale rend le même nom, et
+			// c'est celui de l'écran qui nous intéresse ici (voir INC-120 plus bas).
+			await expect(
+				page
+					.getByRole('region', { name: "Tracks et channels de l'espace de travail" })
+					.getByText(nom, { exact: true }),
+			).toBeVisible()
+
+			// Le focus est atteint par `Tab`, jamais par `focus()` : Chromium ne pose
+			// `:focus-visible` que sur un focus réellement clavier (docs/DESIGN_SYSTEM.md §8).
+			const commande = page.getByRole('button', { name: `Mettre ${nom} à la corbeille` })
+			for (let tentative = 0; tentative < 120; tentative++) {
+				if (await commande.evaluate((element) => element === document.activeElement)) break
+				await page.keyboard.press('Tab')
+			}
+			await expect(commande).toBeFocused()
+			await page.keyboard.press('Enter')
+
+			// OUVRIR LA CONFIRMATION DÉPLACE LE FOCUS SUR SA PREMIÈRE COMMANDE (§5.13) : la valider
+			// se fait donc sans un seul `Tab` de plus.
+			const confirmation = page.getByTestId('confirmation-corbeille')
+			await expect(confirmation).toBeVisible()
+			await expect(confirmation.getByRole('button', { name: 'Mettre à la corbeille' })).toBeFocused()
+			await page.keyboard.press('Enter')
+
+			await expect.poll(async () => deletedAt(page, 'tracks', id)).not.toBeNull()
+		} finally {
+			await supprimerParSlug(page, CHEMIN_TRACKS, slug)
+		}
+	})
+
+	test('un channel se retire depuis son track déplié, sans emporter son track', async ({ page }) => {
+		const slugTrack = 'e2e-geste-parent'
+		const slugChannel = 'e2e-geste-enfant'
+		const nomTrack = 'E2E Geste Parent'
+		const nomChannel = 'E2E Geste Enfant'
+		await supprimerParSlug(page, CHEMIN_CHANNELS, slugChannel)
+		await supprimerParSlug(page, CHEMIN_TRACKS, slugTrack)
+
+		try {
+			const idTrack = await creerTrackJetable(page, slugTrack, nomTrack)
+			const cree = await page.request.post(CHEMIN_CHANNELS, {
+				headers: { ...enTetesService(), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					track_id: idTrack,
+					workflow_id: WORKFLOW_GLOBAL,
+					name: nomChannel,
+					slug: slugChannel,
+				},
+			})
+			const idChannel = ((await cree.json()) as { id: string }[])[0]!.id
+
+			await connecter(page, ADMIN)
+			await page.goto('/reglages/arborescence')
+			await page.getByRole('button', { name: `Déplier ${nomTrack}` }).click()
+			await page.getByRole('button', { name: `Mettre ${nomChannel} à la corbeille` }).click()
+
+			const confirmation = page.getByTestId('confirmation-corbeille')
+			await expect(confirmation).toContainText(`Mettre le channel « ${nomChannel} » à la corbeille ?`)
+			// Un channel sans affaire : la confirmation le DIT, plutôt que d'afficher « 0 affaire ».
+			await expect(confirmation).toContainText('Aucun objet ne devient inaccessible.')
+			await confirmation.getByRole('button', { name: 'Mettre à la corbeille' }).click()
+
+			await expect.poll(async () => deletedAt(page, 'channels', idChannel)).not.toBeNull()
+			expect(await deletedAt(page, 'tracks', idTrack)).toBeNull()
+			await expect(
+				page
+					.getByRole('region', { name: "Tracks et channels de l'espace de travail" })
+					.getByText(nomChannel, { exact: true }),
+			).toHaveCount(0)
+		} finally {
+			await supprimerParSlug(page, CHEMIN_CHANNELS, slugChannel)
+			await supprimerParSlug(page, CHEMIN_TRACKS, slugTrack)
+		}
+	})
+})
+
+test.describe('paliers responsive de la confirmation du geste (docs/DESIGN_SYSTEM.md §7)', () => {
+	// LA TAILLE DE FENÊTRE EST FIXÉE AVANT LE CHARGEMENT, comme pour le tableau ci-dessus et comme
+	// `etat-messagerie.spec.ts` : la coquille décide de son repli de barre latérale AU MONTAGE. Une
+	// première version redimensionnait la fenêtre après coup, dans le scénario de l'aller-retour, et
+	// les captures montraient un tiroir laissé ouvert par le redimensionnement — un artefact de la
+	// preuve, pas un état du produit. Trouvé en REGARDANT les captures (`CLAUDE.md` §16).
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : la confirmation du geste reste lisible`, async ({ page }) => {
+			const slug = `e2e-geste-palier-${palier.largeur}`
+			const nom = `E2E Geste ${palier.nom}`
+			await supprimerParSlug(page, CHEMIN_TRACKS, slug)
+			try {
+				await creerTrackJetable(page, slug, nom)
+				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+				await connecter(page, ADMIN)
+				await page.goto('/reglages/arborescence')
+				await page.getByRole('button', { name: `Mettre ${nom} à la corbeille` }).click()
+				await expect(page.getByTestId('confirmation-corbeille')).toBeVisible()
+
+				const debordePage = await page.evaluate(
+					() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+				)
+				expect(debordePage, 'la page ne défile pas horizontalement').toBe(false)
+
+				await capturer(page, `corbeille-geste-confirmation-${palier.nom}`, UNITE)
+			} finally {
+				await supprimerParSlug(page, CHEMIN_TRACKS, slug)
+			}
+		})
+	}
 })

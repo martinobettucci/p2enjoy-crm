@@ -598,7 +598,13 @@ function ConfirmationCorbeille({
 	return (
 		<div
 			data-testid="confirmation-corbeille"
-			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+			// `max-w-[72ch]` N'EST PAS UNE PRÉFÉRENCE DE MISE EN PAGE, c'est un correctif trouvé en
+			// REGARDANT une capture (`CLAUDE.md` §16). La liste des tracks porte `min-w-max` pour son
+			// débordement horizontal (§12.6), si bien qu'un paragraphe placé dedans ne se replie
+			// JAMAIS : le corps de cette confirmation, plus long que celui de l'archivage, élargissait
+			// le conteneur et sortait du champ. La borne rend au texte son repli sans toucher au
+			// conteneur, dont le débordement sert aux lignes de commandes.
+			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 max-w-[72ch]"
 		>
 			<p className="font-medium">{question}</p>
 			<p className="text-sm text-text-2">{t('admin.trash.confirm.body')}</p>

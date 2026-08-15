@@ -1,7 +1,10 @@
-// @verifies CRM-077 (docs/BACKLOG.md) — corbeille : l'énumération des enfants rendus inaccessibles
+// @verifies CRM-077 (docs/BACKLOG.md) — corbeille : l'énumération des enfants rendus inaccessibles,
+//           puis le GESTE de mise à la corbeille d'un track et d'un channel (septième tranche)
 // @verifies docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente), §3.5 (les trois règles
 //           de comptage, la forme des lectures), §5 (ligne « API » : « l'énumération des enfants lue
-//           par la même requête que l'écran »)
+//           par la même requête que l'écran », « mise en corbeille et restauration avec les jetons
+//           RÉELS des trois profils »), §4 bis.2 (le filtre de l'administration), §4 bis.5 (les
+//           trois issues du geste)
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec les jetons réels)
 //
@@ -32,7 +35,12 @@ const TRACK_SANS_CHANNEL = '5eed0000-0000-4000-8000-000000000024'
 
 const CHANNELS = '/rest/v1/channels'
 const CARDS = '/rest/v1/cards'
+const TRACKS = '/rest/v1/tracks'
 const PREFIXE = 'ZZ énumération'
+/** Préfixe des objets jetables du geste : ils sont créés ici, et retirés par `menage`. */
+const PREFIXE_GESTE = 'ZZ geste corbeille'
+/** L'administratrice du seed — c'est elle que le trigger de `0037` doit inscrire en `deleted_by`. */
+const PROFIL_ADMIN = '5eed0000-0000-4000-8000-000000000011'
 
 /**
  * Émet la PREMIÈRE lecture de l'énumération d'un track : les identifiants de ses channels qui ne
@@ -83,13 +91,49 @@ async function enumererTrack(
 
 async function menage(requete: APIRequestContext): Promise<void> {
 	await requete.delete(`${CARDS}?title=like.${PREFIXE}*`, { headers: enTetesService() })
+	// Les channels d'abord : `tracks → channels` est en `CASCADE`, mais l'ordre explicite évite de
+	// faire dépendre le ménage d'une cascade que le §2.3 dit précisément ne jamais emprunter.
+	await requete.delete(`${CHANNELS}?name=like.${PREFIXE_GESTE}*`, { headers: enTetesService() })
+	await requete.delete(`${TRACKS}?name=like.${PREFIXE_GESTE}*`, { headers: enTetesService() })
+}
+
+/** Crée un track jetable, ACTIF, par la clé de service. Rend son identifiant. */
+async function trackJetable(requete: APIRequestContext, suffixe: string): Promise<string> {
+	const reponse = await requete.post(TRACKS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: {
+			workspace_id: WORKSPACE_SEED,
+			name: `${PREFIXE_GESTE} ${suffixe}`,
+			slug: `zz-geste-corbeille-${suffixe}`,
+			color: 'neutral',
+			icon: 'folder',
+		},
+	})
+	expect(reponse.status(), await reponse.text()).toBe(201)
+	return ((await reponse.json()) as { id: string }[])[0]!.id
+}
+
+/** Émet EXACTEMENT l'écriture de `mettreTrackALaCorbeille` : `deleted_at`, et rien d'autre. */
+function mettreALaCorbeille(
+	requete: APIRequestContext,
+	jeton: string,
+	chemin: string,
+	id: string,
+	charge: Record<string, unknown> = { deleted_at: '2026-08-15T10:00:00+00:00' },
+) {
+	return requete.patch(`${chemin}?id=eq.${id}&select=id`, {
+		headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+		data: charge,
+	})
 }
 
 let jetonAdmin: string
+let jetonBizdev: string
 let jetonViewer: string
 
 test.beforeAll(async ({ request }) => {
 	jetonAdmin = await jetonDe('admin@p2enjoy.test')
+	jetonBizdev = await jetonDe('bizdev@p2enjoy.test')
 	jetonViewer = await jetonDe('viewer@p2enjoy.test')
 	await menage(request)
 })
@@ -193,5 +237,195 @@ test.describe('E3 — l’énumération vide', () => {
 		})
 		expect(reponse.status()).toBe(200)
 		expect(reponse.headers()['content-range']).toBe('*/0')
+	})
+})
+
+test.describe('E4 — le GESTE de mise à la corbeille, avec les jetons réels (§4 bis.5)', () => {
+	test('l’administratrice retire un track : `200`, la ligne, et `deleted_by` écrite par le trigger', async ({
+		request,
+	}) => {
+		const track = await trackJetable(request, 'admin')
+
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, TRACKS, track)
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as unknown[], 'la ligne touchée est rendue').toHaveLength(1)
+
+		// L'AUDIT EST RELU EN BASE, pas déduit du code HTTP : le client n'a envoyé que `deleted_at`,
+		// et c'est le trigger de `0037` qui doit avoir posé l'auteur (§4 bis.5).
+		const relecture = await request.get(`${TRACKS}?id=eq.${track}&select=deleted_at,deleted_by`, {
+			headers: enTetesService(),
+		})
+		const [ligne] = (await relecture.json()) as { deleted_at: string | null; deleted_by: string | null }[]
+		expect(ligne?.deleted_at).not.toBeNull()
+		expect(ligne?.deleted_by).toBe(PROFIL_ADMIN)
+	})
+
+	test('le business developer et la lectrice obtiennent `200` et `[]`, la ligne relue INCHANGÉE', async ({
+		request,
+	}) => {
+		const track = await trackJetable(request, 'refus')
+
+		for (const [nom, jeton] of [
+			['business_developer', jetonBizdev],
+			['viewer', jetonViewer],
+		] as const) {
+			const reponse = await mettreALaCorbeille(request, jeton, TRACKS, track)
+			expect(reponse.status(), `${nom} ne reçoit pas d'erreur`).toBe(200)
+			expect((await reponse.json()) as unknown[], `${nom} ne touche aucune ligne`).toHaveLength(0)
+		}
+
+		// LE REFUS EST CONSTATÉ PAR RELECTURE, et c'est la moitié qui compte : `200` et `[]` ne
+		// prouvent rien tant que la ligne n'a pas été relue inchangée (décision 70).
+		const relecture = await request.get(`${TRACKS}?id=eq.${track}&select=deleted_at,deleted_by`, {
+			headers: enTetesService(),
+		})
+		expect((await relecture.json()) as unknown[]).toEqual([{ deleted_at: null, deleted_by: null }])
+	})
+
+	test('une charge qui porte `deleted_by` est refusée ENTIÈREMENT, en `42501`', async ({ request }) => {
+		const track = await trackJetable(request, 'audit')
+
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, TRACKS, track, {
+			deleted_at: '2026-08-15T10:00:00+00:00',
+			deleted_by: PROFIL_ADMIN,
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code?: string }).code).toBe('42501')
+
+		// Et le refus n'est pas partiel : `deleted_at`, pourtant ouverte, n'a pas été écrite non plus.
+		const relecture = await request.get(`${TRACKS}?id=eq.${track}&select=deleted_at`, {
+			headers: enTetesService(),
+		})
+		expect((await relecture.json()) as unknown[]).toEqual([{ deleted_at: null }])
+	})
+
+	test('le geste ne descend PAS sur les enfants : le channel garde son `deleted_at` nul (§3.3)', async ({
+		request,
+	}) => {
+		const track = await trackJetable(request, 'enfants')
+		const cree = await request.post(CHANNELS, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				track_id: track,
+				workflow_id: WORKFLOW_GLOBAL,
+				name: `${PREFIXE_GESTE} enfant`,
+				slug: 'zz-geste-corbeille-enfant',
+			},
+		})
+		expect(cree.status(), await cree.text()).toBe(201)
+
+		// L'énumération voit l'enfant AVANT le geste : c'est ce nombre que la confirmation affiche.
+		expect(await enumererTrack(request, jetonAdmin, track)).toEqual({ channels: 1, cards: 0 })
+
+		expect((await mettreALaCorbeille(request, jetonAdmin, TRACKS, track)).status()).toBe(200)
+
+		const enfants = await request.get(`${CHANNELS}?select=deleted_at&track_id=eq.${track}`, {
+			headers: enTetesService(),
+		})
+		expect((await enfants.json()) as unknown[], 'l’enfant n’est pas horodaté').toEqual([
+			{ deleted_at: null },
+		])
+	})
+
+	test('un track ARCHIVÉ se retire, et reste archivé : les deux états sont indépendants (§3.1)', async ({
+		request,
+	}) => {
+		const track = await trackJetable(request, 'archive')
+		const archive = await request.patch(`${TRACKS}?id=eq.${track}&select=id`, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
+			data: { archived_at: '2026-08-01T00:00:00+00:00' },
+		})
+		expect(archive.status()).toBe(200)
+
+		expect((await mettreALaCorbeille(request, jetonAdmin, TRACKS, track)).status()).toBe(200)
+
+		const relecture = await request.get(`${TRACKS}?id=eq.${track}&select=archived_at,deleted_at`, {
+			headers: enTetesService(),
+		})
+		const [ligne] = (await relecture.json()) as { archived_at: string | null; deleted_at: string | null }[]
+		expect(ligne?.archived_at).not.toBeNull()
+		expect(ligne?.deleted_at).not.toBeNull()
+	})
+
+	test('un channel se retire par la même écriture, et son track n’est pas touché', async ({
+		request,
+	}) => {
+		const track = await trackJetable(request, 'channel')
+		const cree = await request.post(CHANNELS, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				track_id: track,
+				workflow_id: WORKFLOW_GLOBAL,
+				name: `${PREFIXE_GESTE} seul`,
+				slug: 'zz-geste-corbeille-seul',
+			},
+		})
+		const channel = ((await cree.json()) as { id: string }[])[0]!.id
+
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, CHANNELS, channel)
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as unknown[]).toHaveLength(1)
+
+		const relecture = await request.get(
+			`${CHANNELS}?id=eq.${channel}&select=deleted_at,deleted_by`,
+			{ headers: enTetesService() },
+		)
+		const [ligne] = (await relecture.json()) as { deleted_at: string | null; deleted_by: string | null }[]
+		expect(ligne?.deleted_by).toBe(PROFIL_ADMIN)
+
+		const parent = await request.get(`${TRACKS}?id=eq.${track}&select=deleted_at`, {
+			headers: enTetesService(),
+		})
+		expect((await parent.json()) as unknown[]).toEqual([{ deleted_at: null }])
+	})
+})
+
+test.describe('E5 — les lectures de l’administration excluent la corbeille (§4 bis.2)', () => {
+	// LA REQUÊTE ÉMISE EST CELLE DE `lireTracksAdministrables`, filtre pour filtre. Une preuve qui
+	// aurait interrogé la table sans les deux filtres aurait mesuré la base, pas l'écran.
+	test('la lecture des tracks ne rend PAS le track en corbeille du seed', async ({ request }) => {
+		const reponse = await request.get(
+			`${TRACKS}?select=id&deleted_at=is.null&archived_at=is.null&order=position&order=name`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+		const identifiants = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+		expect(identifiants).not.toContain(TRACK_CORBEILLE)
+
+		// CONTRE-ÉPREUVE : sans le filtre de corbeille, la MÊME lecture le rend. Sans elle, l'absence
+		// ci-dessus serait vraie même si le track avait disparu de la base.
+		const sansFiltre = await request.get(
+			`${TRACKS}?select=id&archived_at=is.null&order=position&order=name`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(((await sansFiltre.json()) as { id: string }[]).map((ligne) => ligne.id)).toContain(
+			TRACK_CORBEILLE,
+		)
+	})
+
+	test('la case « Afficher les archivés » conserve le filtre de corbeille (§3.1)', async ({
+		request,
+	}) => {
+		const reponse = await request.get(`${TRACKS}?select=id&deleted_at=is.null&order=position`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+		})
+		const identifiants = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+		expect(identifiants).not.toContain(TRACK_CORBEILLE)
+		// …et elle ramène bien l'ARCHIVÉ, sans quoi la case n'aurait plus d'effet du tout.
+		expect(identifiants).toContain(TRACK_SANS_CHANNEL)
+	})
+
+	test('la lecture des channels d’un track ne rend pas celui qui est en corbeille', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			`${CHANNELS}?select=id&track_id=eq.${TRACK_CORBEILLE}&deleted_at=is.null&archived_at=is.null`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const identifiants = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+		expect(identifiants).toEqual([CHANNEL_VIVANT])
+		expect(identifiants).not.toContain(CHANNEL_CORBEILLE)
 	})
 })
