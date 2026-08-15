@@ -27,7 +27,7 @@ import {
 	type EtapeDemarrage,
 	type ProgressionDemarrage,
 } from '../lib/demarrage'
-import { clientCrm } from '../lib/supabase'
+import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_DEMARRAGE, CHEMIN_ETAT_MESSAGERIE } from './chemins'
 import { useMasqueDemarrage } from './preferences'
 
@@ -279,8 +279,14 @@ function StatutEtape({
  * Il n'offre donc pas la commande de masquage — la poser depuis l'écran qui l'ignore n'aurait
  * aucun effet observable, et une commande sans effet est une commande morte.
  */
-export function GuideDemarrage() {
-	const { progression, recharger } = useDemarrage(clientCrm)
+export type ProprietesSurfaceDemarrage = {
+	/** Injecté par les preuves ; l'application emploie le client du produit. Patron déjà posé par
+	 * `Corbeille` et `AdministrationArborescence`. */
+	readonly client?: ClientCrm | null
+}
+
+export function GuideDemarrage({ client = clientCrm }: ProprietesSurfaceDemarrage = {}) {
+	const { progression, recharger } = useDemarrage(client)
 	return <VueGuideDemarrage progression={progression} recharger={recharger} />
 }
 
@@ -291,8 +297,8 @@ export function GuideDemarrage() {
  * les mesures sont en vol ferait clignoter l'écran d'arrivée et afficherait « aucun board » à qui
  * en a. Une seule mesure sert la décision et le rendu.
  */
-export function AccueilDemarrage() {
-	const { progression, recharger } = useDemarrage(clientCrm)
+export function AccueilDemarrage({ client = clientCrm }: ProprietesSurfaceDemarrage = {}) {
+	const { progression, recharger } = useDemarrage(client)
 	const { masque, masquer } = useMasqueDemarrage()
 
 	if (mesureEnCours(progression)) {
