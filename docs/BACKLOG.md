@@ -6837,6 +6837,12 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       l'archivé ni celui en corbeille —, et `/tracks/legacy-2023` rend **« Track introuvable »** au
       lieu du track. **Console VIERGE.** Captures : `docs/captures/CRM-077/`.
 
+- [x] **Harnais révisés** : `verify-workflows.sh` **42 contrôles sans anomalie** ;
+      `verify-seed.sh` vert ; `verify-tracks.sh`, `verify-channels.sh` et `verify-droits-fins.sh`
+      ne portent plus que **INC-112 / INC-113**, deux entrées ouvertes consignées et **étrangères à
+      cette tranche** — un harnais qui rejoue une migration sans ses successeurs mesure un produit
+      en arrière d'une arbitration, et laisse la base de développement ouverte.
+
 - [ ] **Reste dû** : l'**énumération** des enfants rendus inaccessibles (§3.3) ; l'**écran** de
       corbeille (§4) ; et les niveaux API, E2E et visuel du §5 de la spécification. **Le seed n'est
       plus le préalable manquant** : il est livré. La tranche qui construira l'énumération devra y

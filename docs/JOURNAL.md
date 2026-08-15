@@ -14702,6 +14702,19 @@ pour fermer `deleted_by`. MESURÉ sur les deux tables, `relacl` passant de `ar` 
 dépend d'aucune donnée, il est donc antérieur à cette tranche ; et il ne se contente pas de rendre
 le harnais rouge, il **laisse la base de développement ouverte** jusqu'au prochain rejeu de `0037`.
 
+**Les harnais, et une erreur d'analyse qu'il faut consigner parce qu'elle peut se refaire.**
+`verify-workflows.sh` rend **42 contrôles sans anomalie** après passage de cinq à sept channels sur
+le workflow par défaut. `verify-droits-fins.sh` a d'abord été révisé sur une valeur FAUSSE : ayant
+mesuré sur une base à jour que les trois profils voient cinq tracks, j'en ai conclu que son attente
+de « 3 sur 4 » était périmée depuis la décision 333 et je l'ai portée à cinq. C'était une erreur, et
+le harnais l'a dite en rendant quatre. Le motif est INC-113 : le harnais rejoue
+`0010_droits_fins.sql` SEULE, ce qui retire la transitivité livrée par `0034` et lui fait mesurer la
+politique de `CRM-012`. Son attente d'origine était donc **correcte dans son propre contexte**, et
+seule cette tranche la déplace — de « 3 sur 4 » à « 4 sur 5 ». La leçon est directement
+actionnable : **mesurer dans le contexte du harnais, pas seulement sur une base saine**, sans quoi
+on « corrige » une preuve juste. Deux entrées ouvertes en sortent, INC-112 et INC-113, qui sont deux
+manifestations d'une même cause — un harnais qui rejoue une migration sans ses successeurs.
+
 **Deux pièges d'environnement à ne pas retrouver par l'échec.** D'abord, `docs/CloudWorker.md` §2.2
 annonce **18** services `healthy` : la pile en compte **17** en exécution, plus **3** conteneurs à
 usage unique sortis en `0`. Attendre 18 conteneurs sains est une attente qui n'aboutit jamais.
