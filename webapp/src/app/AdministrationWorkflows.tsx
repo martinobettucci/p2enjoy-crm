@@ -1593,6 +1593,11 @@ const LIBELLES_ORIGINE: Readonly<Record<OrigineExigence, CleTraduction>> = {
  * `les-deux` GARDE SA COMMANDE : la liaison existe bel et bien et se retire, même si la règle
  * continuera d'exiger le champ. Le libellé accessible nomme le champ ET la transition, faute de
  * quoi une page portant onze arêtes offrirait des commandes indiscernables à la voix.
+ *
+ * LA PHRASE QUI RENVOIE À LA GRILLE N'EST PAS ICI, ET C'EST UNE CORRECTION MESURÉE À LA CAPTURE du
+ * 2026-08-15 : répétée sous chaque ligne, elle apparaissait trois fois d'affilée sous
+ * « Négociation vers Signature », et occupait sous 390 px deux lignes par exigence — davantage que
+ * les noms de champs qu'elle accompagnait. Elle est rendue UNE fois par transition, sous la liste.
  */
 function LigneExigence({
 	exigence,
@@ -1630,11 +1635,7 @@ function LigneExigence({
 					<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
 					<span>{t('admin.workflows.requirements.remove.confirm.action')}</span>
 				</button>
-			) : (
-				<span data-testid="exigence-non-retirable" className="text-sm text-text-3">
-					{t('admin.workflows.requirements.origin.hint')}
-				</span>
-			)}
+			) : null}
 		</div>
 	)
 }
@@ -2814,6 +2815,20 @@ export function AdministrationWorkflows({
 																					))}
 																				</ul>
 																			)}
+																			{/* La phrase qui renvoie à la grille est rendue UNE fois par
+																			    transition, et non sous chaque ligne : la capture du
+																			    2026-08-15 la montrait trois fois d'affilée sous une même
+																			    arête, et deux lignes par exigence sous 390 px. */}
+																			{effectives.some(
+																				(item) => item.origine !== 'transition',
+																			) ? (
+																				<p
+																					data-testid="exigences-note-regle"
+																					className="text-sm text-text-3"
+																				>
+																					{t('admin.workflows.requirements.origin.hint')}
+																				</p>
+																			) : null}
 																			{/* Une liaison vers un champ archivé n'a aucun effet, et le
 																			    taire laisserait croire à une exigence qui s'applique
 																			    (§7 bis.12.4). */}

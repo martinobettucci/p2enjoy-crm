@@ -3,6 +3,7 @@
 //           §7 bis.9 (les arêtes : déclaration, modification, retrait sur la vraie base, refus
 //           d'unicité constaté par une course réelle), §7 bis.9.1 (groupement et culs-de-sac),
 //           §7 bis.9.3 (les arrivées offertes),
+//           §7 bis.12 (cinquième tranche : les exigences propres à une transition),
 //           §7 bis.3 (catalogue lu à l'ouverture du sélecteur), §7 bis.4 (les six gestes sur la
 //           vraie base, refus d'une étape occupée constaté et non simulé), §7 bis.6 (états,
 //           paliers, clavier), §2.5 (`0` n'est pas `NULL`), §3.5 (désignation de l'initiale)
@@ -1115,6 +1116,343 @@ test.describe('captures de la grille (CLAUDE.md §16)', () => {
 			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
 			// §7 du design system : le tableau, LUI, défile — sept étapes ne tiennent pas sous 768 px.
 			await capturer(page, `workflows-grille-${palier.nom}`, UNITE)
+		})
+	}
+})
+
+// =============================================================================================
+// CINQUIÈME TRANCHE — les exigences propres à une transition
+// @verifies docs/SPEC-workflow-engine.md §7 bis.12 (les exigences de transition), §7 bis.12.2
+//           (l'union effective et ses origines, dont celle qui ne se retire pas ici),
+//           §7 bis.12.3 (le `POST` simple, l'`upsert` étant refusé par la base),
+//           §7 bis.12.4 (les choix écartés), §7 bis.12.5 (les refus), §7 bis.12.6 (disposition,
+//           clavier), §7 bis.12.8 (preuves attendues)
+// @verifies docs/SPEC-transition-required-fields.md §1 (l'union des deux ensembles), §5.1 (la
+//           sixième garde de `move_card`)
+// =============================================================================================
+//
+// LE SEED N'EST JAMAIS MODIFIÉ. Il porte DEUX liaisons — une globale et une dérivée — et les
+// recompte à chaque application. Chaque scénario exige donc un champ QUI LUI APPARTIENT, préfixé
+// `e2e-wf-`, sur une arête seedée ; son `finally` supprime le champ, et la cascade
+// `ON DELETE CASCADE` de `workflow_transition_required_fields` emporte la liaison avec lui.
+
+const CHEMIN_EXIGENCES = `${URL_API}/rest/v1/workflow_transition_required_fields`
+
+/** L'arête seedée `Relancer` (Prospection → Relance), que le seed laisse SANS aucune exigence. */
+const TRANSITION_RELANCER = '5eed0000-0000-4000-8000-000000000071'
+const NOM_RELANCER = 'Transition Prospection vers Relance'
+
+/** L'arête seedée `Démarrer la réalisation`, seule à porter une exigence dans le seed. */
+const TRANSITION_REALISATION = '5eed0000-0000-4000-8000-000000000074'
+
+/** Une liaison existe-t-elle en base ? La confirmation d'un geste d'écran, l'écran pouvant mentir. */
+async function exigenceEnBase(
+	request: APIRequestContext,
+	idTransition: string,
+	idChamp: string,
+): Promise<boolean> {
+	const reponse = await request.get(
+		`${CHEMIN_EXIGENCES}?select=field_id&transition_id=eq.${idTransition}&field_id=eq.${idChamp}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as readonly unknown[]
+	return lignes.length > 0
+}
+
+/** Amène le bloc des exigences à l'écran — cinquième bloc, sous la grille. */
+async function ouvrirExigences(page: Page): Promise<void> {
+	await page.getByTestId('liste-exigences').scrollIntoViewIfNeeded()
+	await expect(page.getByTestId('liste-exigences')).toBeVisible()
+}
+
+/** Le bloc d'une arête, désigné par son identifiant. */
+function blocExigences(page: Page, idTransition: string): Locator {
+	return page.locator(`[data-testid="transition-exigences"][data-transition="${idTransition}"]`)
+}
+
+test.describe('les exigences de transition sur la vraie base (§7 bis.12)', () => {
+	test('les exigences seedées sont rendues avec leur origine, règle comprise', async ({ page }) => {
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirExigences(page)
+
+		// Les onze arêtes du seed ont chacune leur bloc.
+		await expect(page.getByTestId('transition-exigences')).toHaveCount(11)
+
+		// `Démarrer la réalisation` porte la SEULE liaison explicite du workflow global — mesurée le
+		// 2026-08-15 —, et l'étape d'arrivée `Réalisation` ne porte aucune règle `required` : son
+		// unique exigence vient donc de la transition.
+		const realisation = blocExigences(page, TRANSITION_REALISATION)
+		const lienProposition = realisation.locator('[data-testid="ligne-exigence"][data-champ="lien-proposition"]')
+		await expect(lienProposition).toHaveAttribute('data-origine', 'transition')
+
+		// `Relancer` arrive sur `Relance`, que le seed laisse sans aucune règle `required` : aucune
+		// exigence, et l'écran le DIT au lieu de laisser une liste vide.
+		await expect(
+			blocExigences(page, TRANSITION_RELANCER).getByTestId('transition-sans-exigence'),
+		).toBeVisible()
+
+		// L'union du §7 bis.12.2, prouvée sur une arête que le seed n'a pas liée : `Passer en
+		// signature` arrive sur `Signature`, où TROIS champs portent `required` — mesuré. Aucune
+		// liaison ne les déclare, et pourtant `move_card` les exige.
+		const signature = blocExigences(page, '5eed0000-0000-4000-8000-000000000073')
+		await expect(signature.getByTestId('ligne-exigence')).toHaveCount(3)
+		for (const origine of await signature
+			.getByTestId('ligne-exigence')
+			.evaluateAll((lignes) => lignes.map((ligne) => ligne.getAttribute('data-origine')))) {
+			expect(origine, 'une exigence venue de la seule règle').toBe('regle')
+		}
+	})
+
+	test('une exigence venue d’une règle n’offre AUCUNE commande de retrait', async ({ page }) => {
+		// Un `DELETE` sur une ligne qui n'existe pas rendrait `200` et zéro ligne, l'exigence restant
+		// imposée par la sixième garde. L'écran renvoie à la grille plutôt que de le promettre.
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirExigences(page)
+		const signature = blocExigences(page, '5eed0000-0000-4000-8000-000000000073')
+		const premiere = signature.getByTestId('ligne-exigence').first()
+		await expect(premiere.getByRole('button')).toHaveCount(0)
+		// La phrase qui renvoie à la grille est rendue UNE fois pour les trois exigences de cette
+		// arête : répétée par ligne, elle apparaissait trois fois d'affilée (capture du 2026-08-15).
+		await expect(signature.getByTestId('exigences-note-regle')).toHaveCount(1)
+	})
+
+	test('un administrateur exige un champ puis ne l’exige plus, à la souris', async ({
+		page,
+		request,
+	}) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-exigence', 'E2E Exigence Souris')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			const bloc = blocExigences(page, TRANSITION_RELANCER)
+			expect(await exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(false)
+
+			// --- Exiger : un `POST` SIMPLE, l'`upsert` étant refusé faute de privilège `UPDATE` ----
+			await bloc.getByRole('button', { name: 'Exiger un champ' }).click()
+			const formulaire = page.getByTestId('formulaire-exigence')
+			await formulaire.getByLabel('Champ à exiger').selectOption({ label: 'E2E Exigence Souris' })
+			await formulaire.getByRole('button', { name: 'Exiger ce champ' }).click()
+			await expect
+				.poll(async () => exigenceEnBase(request, TRANSITION_RELANCER, idChamp))
+				.toBe(true)
+
+			// L'exigence apparaît, et son origine est bien la TRANSITION, pas une règle.
+			const ligne = bloc.locator('[data-testid="ligne-exigence"][data-champ="e2e-wf-exigence"]')
+			await expect(ligne).toHaveAttribute('data-origine', 'transition')
+
+			// --- Ne plus exiger : la ligne DISPARAÎT de la base, ce que l'affichage ne prouve pas ---
+			await ligne.getByRole('button').click()
+			await page
+				.getByTestId('confirmation-retrait-exigence')
+				.getByRole('button', { name: 'Ne plus exiger' })
+				.click()
+			await expect
+				.poll(async () => exigenceEnBase(request, TRANSITION_RELANCER, idChamp))
+				.toBe(false)
+			await expect(ligne).toHaveCount(0)
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('un champ déjà exigé n’est plus proposé, et le champ archivé du seed jamais', async ({
+		page,
+		request,
+	}) => {
+		// §7 bis.12.4 : le premier serait refusé en `23505`, le second produirait une liaison sans
+		// effet — les deux mesurés le 2026-08-15.
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-choix', 'E2E Exigence Choix')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			const bloc = blocExigences(page, TRANSITION_RELANCER)
+			await bloc.getByRole('button', { name: 'Exiger un champ' }).click()
+			const liste = page.getByTestId('formulaire-exigence').getByLabel('Champ à exiger')
+			const avant = await liste.locator('option').allTextContents()
+			expect(avant, 'le champ de preuve est proposé').toContain('E2E Exigence Choix')
+			expect(avant, 'le champ ARCHIVÉ du seed ne l’est jamais').not.toContain(
+				'Budget prévisionnel',
+			)
+
+			await liste.selectOption({ label: 'E2E Exigence Choix' })
+			await page.getByTestId('formulaire-exigence').getByRole('button', { name: 'Exiger ce champ' }).click()
+			await expect.poll(async () => exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(true)
+
+			// Rouvert, le formulaire ne propose plus le champ qui vient d'être lié.
+			await bloc.getByRole('button', { name: 'Exiger un champ' }).click()
+			const apres = await page
+				.getByTestId('formulaire-exigence')
+				.getByLabel('Champ à exiger')
+				.locator('option')
+				.allTextContents()
+			expect(apres).not.toContain('E2E Exigence Choix')
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('une exigence déclarée entre-temps par un autre administrateur est refusée par la base', async ({
+		page,
+		request,
+	}) => {
+		// LE REFUS EST OBTENU PAR UNE COURSE RÉELLE, jamais simulé : la clé de service déclare la
+		// même liaison pendant que le formulaire est ouvert. C'est exactement le `23505` que
+		// l'`upsert` de la quatrième tranche évitait et que celle-ci ne PEUT PAS éviter (§7 bis.12.3).
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-course', 'E2E Exigence Course')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			const bloc = blocExigences(page, TRANSITION_RELANCER)
+			await bloc.getByRole('button', { name: 'Exiger un champ' }).click()
+			const formulaire = page.getByTestId('formulaire-exigence')
+			await formulaire.getByLabel('Champ à exiger').selectOption({ label: 'E2E Exigence Course' })
+
+			// Le second administrateur passe devant.
+			const course = await request.post(CHEMIN_EXIGENCES, {
+				headers: enTetesService(),
+				data: { transition_id: TRANSITION_RELANCER, field_id: idChamp },
+			})
+			expect(course.status(), 'la course est réellement gagnée par l’autre écriture').toBe(201)
+
+			await formulaire.getByRole('button', { name: 'Exiger ce champ' }).click()
+			await expect(page.getByTestId('workflows-refus')).toContainText('déjà exigé')
+			// Le `409` est le refus ATTENDU de cette course, et non une anomalie : il est déclaré
+			// comme dans le scénario jumeau des arêtes, jamais toléré globalement.
+			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
+
+			// L'écran RECHARGE malgré le refus : l'état voulu est celui que la base porte déjà, et le
+			// laisser invisible rendrait le refus incompréhensible (§7 bis.12.3).
+			await expect(
+				bloc.locator('[data-testid="ligne-exigence"][data-champ="e2e-wf-course"]'),
+			).toBeVisible()
+			expect(await exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(true)
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('les deux gestes se mènent au clavier seul', async ({ page, request }) => {
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-exig-clavier', 'E2E Exigence Clavier')
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			const bloc = blocExigences(page, TRANSITION_RELANCER)
+			const ouvrir = bloc.getByRole('button', { name: 'Exiger un champ' })
+			await tabVers(page, ouvrir)
+			await page.keyboard.press('Enter')
+
+			const formulaire = page.getByTestId('formulaire-exigence')
+			// Le focus entre dans la liste à l'ouverture (§7 bis.12.6).
+			await expect(formulaire.getByLabel('Champ à exiger')).toBeFocused()
+			await formulaire.getByLabel('Champ à exiger').selectOption({ label: 'E2E Exigence Clavier' })
+			const exiger = formulaire.getByRole('button', { name: 'Exiger ce champ' })
+			await tabVers(page, exiger)
+			await page.keyboard.press('Enter')
+			await expect.poll(async () => exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(true)
+
+			const ligne = bloc.locator('[data-testid="ligne-exigence"][data-champ="e2e-wf-exig-clavier"]')
+			await tabVers(page, ligne.getByRole('button'))
+			await page.keyboard.press('Enter')
+			const confirmer = page
+				.getByTestId('confirmation-retrait-exigence')
+				.getByRole('button', { name: 'Ne plus exiger' })
+			await tabVers(page, confirmer)
+			await page.keyboard.press('Enter')
+			await expect.poll(async () => exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(false)
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('une liaison vers un champ archivé est NOMMÉE sans effet, et n’est pas supprimée', async ({
+		page,
+		request,
+	}) => {
+		// MESURÉ le 2026-08-15 : la base ACCEPTE la liaison (`201`), mais `move_card` filtre
+		// `archived_at is null` — elle ne produit aucun effet (§7 bis.12.4).
+		await purgerChamps(request)
+		const idChamp = await creerChampDePreuve(request, 'e2e-wf-archive', 'E2E Exigence Archivée')
+		try {
+			const pose = await request.post(CHEMIN_EXIGENCES, {
+				headers: enTetesService(),
+				data: { transition_id: TRANSITION_RELANCER, field_id: idChamp },
+			})
+			expect(pose.status()).toBe(201)
+			const archivage = await request.patch(`${CHEMIN_CHAMPS}?id=eq.${idChamp}`, {
+				headers: enTetesService(),
+				data: { archived_at: '2026-08-15T10:00:00Z' },
+			})
+			expect(archivage.status()).toBe(204)
+
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+
+			const bloc = blocExigences(page, TRANSITION_RELANCER)
+			// Elle n'est PAS comptée comme exigence effective…
+			await expect(
+				bloc.locator('[data-testid="ligne-exigence"][data-champ="e2e-wf-archive"]'),
+			).toHaveCount(0)
+			// … et elle est nommée plutôt que tue.
+			await expect(bloc.getByTestId('exigences-sans-effet')).toContainText('sans effet')
+			// La liaison reste en base : elle redevient effective à la restauration du champ.
+			expect(await exigenceEnBase(request, TRANSITION_RELANCER, idChamp)).toBe(true)
+		} finally {
+			await purgerChamps(request)
+		}
+	})
+
+	test('le seed retrouve ses deux liaisons après le passage des preuves', async ({ request }) => {
+		// La cascade emporte les liaisons d'un champ supprimé : c'est ce que ce contrôle vérifie, et
+		// non l'écran. Un résidu ferait échouer la prochaine application du seed.
+		const reponse = await request.get(`${CHEMIN_EXIGENCES}?select=field_id`, {
+			headers: enTetesService(),
+		})
+		const lignes = (await reponse.json()) as readonly unknown[]
+		expect(lignes).toHaveLength(2)
+	})
+})
+
+test.describe('captures des exigences de transition (CLAUDE.md §16)', () => {
+	test('le formulaire d’ajout ouvert est capturé', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await ouvrirExigences(page)
+		await blocExigences(page, TRANSITION_RELANCER)
+			.getByRole('button', { name: 'Exiger un champ' })
+			.click()
+		await expect(page.getByTestId('formulaire-exigence')).toBeVisible()
+		await capturer(page, 'workflows-exigences-formulaire-1440', UNITE)
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : le bloc des exigences reste lisible, sans débordement`, async ({
+			page,
+		}) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await ouvrirExigences(page)
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+			await capturer(page, `workflows-exigences-${palier.nom}`, UNITE)
 		})
 	}
 })

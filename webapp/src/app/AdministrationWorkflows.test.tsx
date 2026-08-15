@@ -1315,7 +1315,9 @@ describe('les exigences de transition (§7 bis.12)', () => {
 			.find((ligne) => ligne.getAttribute('data-origine') === 'regle')
 		expect(parRegle).toBeTruthy()
 		expect(within(parRegle as HTMLElement).queryByRole('button')).toBeNull()
-		expect(within(parRegle as HTMLElement).getByTestId('exigence-non-retirable')).toBeTruthy()
+		// La phrase qui renvoie à la grille est rendue UNE fois pour l'arête, jamais par ligne :
+		// répétée, elle occupait plus de place que les noms de champs (capture du 2026-08-15).
+		expect(within(arete).getAllByTestId('exigences-note-regle')).toHaveLength(1)
 	})
 
 	it('garde la commande de retrait quand la règle ET la transition exigent le champ', async () => {
