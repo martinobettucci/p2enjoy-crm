@@ -597,7 +597,7 @@ export const fr = {
 	'admin.workflows.fields.aria': 'Champs du formulaire de {workflow}',
 	'admin.workflows.fields.title': 'Champs du formulaire',
 	'admin.workflows.fields.intro':
-		'Les questions posées sur chaque affaire de ce workflow. Leur visibilité étape par étape n’est pas encore réglable depuis cet écran.',
+		'Les questions posées sur chaque affaire de ce workflow. Leur visibilité étape par étape se règle dans la grille ci-dessous.',
 	'admin.workflows.fields.loading': 'Chargement des champs…',
 	'admin.workflows.fields.error': 'Les champs de ce workflow n’ont pas pu être chargés.',
 	'admin.workflows.fields.empty': 'Aucun champ dans ce formulaire',
@@ -676,6 +676,37 @@ export const fr = {
 		'Ce workflow n’existe plus, ou n’appartient pas à cet espace de travail.',
 	'admin.workflows.refus.champ.forme-refusee':
 		'Ce champ a été refusé : vérifiez la clé, le libellé, le texte d’aide, le type et ses options.',
+
+	// --- La grille champ × étape — quatrième tranche, docs/SPEC-workflow-engine.md §7 bis.11 ---
+	'admin.workflows.rules.aria': 'Règles de visibilité de {workflow}',
+	'admin.workflows.rules.title': 'Visibilité des champs, étape par étape',
+	'admin.workflows.rules.intro':
+		'Ce que chaque champ devient à chaque étape. Un champ exigé doit être renseigné pour qu’une affaire entre dans l’étape.',
+	'admin.workflows.rules.loading': 'Chargement des règles de visibilité…',
+	'admin.workflows.rules.error': 'Les règles de visibilité n’ont pas pu être chargées.',
+	'admin.workflows.rules.column.field': 'Champ',
+	'admin.workflows.rules.cell.aria': 'Visibilité de « {champ} » à l’étape « {etape} »',
+	'admin.workflows.rules.state.defaut': 'Par défaut (affiché)',
+	'admin.workflows.rules.state.hidden': 'Masqué',
+	'admin.workflows.rules.state.visible': 'Affiché',
+	'admin.workflows.rules.state.required': 'Exigé',
+	'admin.workflows.rules.note.default':
+		'« Par défaut » et « Affiché » produisent le même formulaire : le premier n’enregistre aucune règle, le second en enregistre une explicite.',
+	'admin.workflows.rules.note.archived.one':
+		'Un champ archivé n’apparaît pas dans cette grille : il ne figure dans aucun formulaire. Ses règles sont conservées et redeviennent effectives s’il est restauré.',
+	'admin.workflows.rules.note.archived.many':
+		'{nombre} champs archivés n’apparaissent pas dans cette grille : ils ne figurent dans aucun formulaire. Leurs règles sont conservées et redeviennent effectives s’ils sont restaurés.',
+	'admin.workflows.rules.noFields':
+		'Aucun champ actif : déclarez un champ, ou restaurez-en un, pour régler sa visibilité.',
+	'admin.workflows.rules.noSteps': 'Aucune étape : ajoutez une étape pour régler la visibilité des champs.',
+
+	'admin.workflows.refus.regle.reference-absente':
+		'Ce champ ou cette étape n’existe plus, ou n’appartient pas à ce workflow.',
+	'admin.workflows.refus.regle.forme-refusee':
+		'Cette visibilité a été refusée : seuls « masqué », « affiché » et « exigé » existent.',
+
+	'live.workflows.rule.set': 'Visibilité réglée',
+	'live.workflows.rule.reset': 'Visibilité rendue au défaut',
 
 	'live.workflows.field.declared': 'Champ déclaré',
 	'live.workflows.field.updated': 'Champ modifié',

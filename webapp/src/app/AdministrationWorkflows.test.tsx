@@ -1,5 +1,5 @@
-// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
-//           troisième tranches
+// @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
+//           troisième et quatrième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les lectures et le catalogue à la demande),
 //           §7 bis.4 (les six gestes et leurs écritures), §7 bis.5 (validation de forme, `0`
 //           accepté), §7 bis.6 (états, clavier), §2.5 (`0` n'est pas `NULL`), §3.3 (libellé
@@ -10,7 +10,13 @@
 // @verifies docs/SPEC-workflow-engine.md §7 bis.10 (les champs du formulaire), §7 bis.10.1
 //           (lecture 5, archivés compris), §7 bis.10.2 (les cinq gestes), §7 bis.10.3 (clé et type
 //           figés après la déclaration), §7 bis.10.4 (validation de forme), §7 bis.10.5 (refus)
-// @verifies docs/SPEC-form-composer.md §2.3 (types), §2.4 (options), §2.7 (aucune suppression)
+// @verifies docs/SPEC-workflow-engine.md §7 bis.11 (la grille champ × étape), §7 bis.11.1
+//           (lecture 6, émise avec les trois autres), §7 bis.11.2 (les champs archivés écartés),
+//           §7 bis.11.3 (l'`upsert` et la suppression), §7 bis.11.4 (les quatre états d'une case),
+//           §7 bis.11.5 (les refus), §7 bis.11.6 (le vrai `table` et ses deux en-têtes)
+// @verifies docs/SPEC-form-composer.md §2.3 (types), §2.4 (options), §2.7 (aucune suppression),
+//           §3.1 (l'absence de règle vaut `visible`), §5 (un champ archivé n'est dans aucun formulaire)
+// @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau sémantique, jamais simulé)
 // @verifies docs/DESIGN_SYSTEM.md §5.7 bis (case à cocher), §5.8 (états), §6 (confirmation avant
 //           retrait), §8, §10
 //
@@ -28,8 +34,10 @@ afterEach(cleanup)
 
 type Ecriture = {
 	table: string
-	verbe: 'insert' | 'update' | 'delete'
+	verbe: 'insert' | 'update' | 'delete' | 'upsert'
 	charge: Record<string, unknown> | null
+	/** Les options d'un `upsert` : `onConflict` porte le couple d'unicité (§7 bis.11.3). */
+	options?: Record<string, unknown>
 	filtres: [string, unknown][]
 }
 
@@ -163,6 +171,20 @@ const CHAMPS = [
 	},
 ]
 
+/**
+ * Deux règles seulement, sur quatre couples possibles — deux champs actifs × deux étapes.
+ *
+ * C'est délibéré : la grille doit rendre **deux cases par défaut**, et le §7 bis.11.2 en fait la
+ * moitié du contrat. Une des deux règles est un `visible` explicite, que le §7 bis.11.4 interdit de
+ * replier sur le défaut. La troisième porte sur le champ **archivé** : elle ne doit apparaître
+ * nulle part, sans être supprimée pour autant.
+ */
+const REGLES = [
+	{ field_id: 'c-1', step_id: 'e-2', visibility: 'required' },
+	{ field_id: 'c-2', step_id: 'e-1', visibility: 'visible' },
+	{ field_id: 'c-3', step_id: 'e-1', visibility: 'hidden' },
+]
+
 const CATALOGUE = [
 	{ ...NOEUD_PROSPECTION, position: 1 },
 	{
@@ -192,10 +214,12 @@ type Options = {
 	readonly etapes?: unknown[]
 	readonly transitions?: unknown[]
 	readonly champs?: unknown[]
+	readonly regles?: unknown[]
 	readonly catalogue?: unknown[]
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
 	readonly erreurChamps?: { message: string; status: number }
+	readonly erreurRegles?: { message: string; status: number }
 	readonly reponseEcriture?: {
 		data: unknown[] | null
 		error: { message: string; code?: string } | null
@@ -225,10 +249,12 @@ function clientFactice(options: Options = {}): {
 
 	const ecriture = (
 		table: string,
-		verbe: 'insert' | 'update' | 'delete',
+		verbe: 'insert' | 'update' | 'delete' | 'upsert',
 		charge: Record<string, unknown> | null,
+		options?: Record<string, unknown>,
 	) => {
 		const enregistree: Ecriture = { table, verbe, charge, filtres: [] }
+		if (options !== undefined) enregistree.options = options
 		ecritures.push(enregistree)
 		const chaine: Record<string, unknown> = {}
 		chaine['eq'] = (colonne: string, valeur: unknown) => {
@@ -251,10 +277,13 @@ function clientFactice(options: Options = {}): {
 					return lecture(options.transitions ?? TRANSITIONS, options.erreurTransitions)
 				}
 				if (table === 'form_fields') return lecture(options.champs ?? CHAMPS, options.erreurChamps)
+				if (table === 'form_field_rules') return lecture(options.regles ?? REGLES, options.erreurRegles)
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
 			update: (charge: Record<string, unknown>) => ecriture(table, 'update', charge),
+			upsert: (charge: Record<string, unknown>, options?: Record<string, unknown>) =>
+				ecriture(table, 'upsert', charge, options),
 			delete: () => ecriture(table, 'delete', null),
 		}),
 	} as unknown as ClientCrm
@@ -1057,5 +1086,171 @@ describe('le bloc des champs de formulaire (§7 bis.10)', () => {
 		await userEvent.keyboard('{Enter}')
 		await waitFor(() => expect(ecritures).toHaveLength(1))
 		expect(ecritures[0]).toMatchObject({ verbe: 'insert', charge: { key: 'note-libre', label: 'Note libre' } })
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.11 — La grille champ × étape des règles de visibilité
+// ---------------------------------------------------------------------------------------------
+
+describe('la grille des règles de visibilité (§7 bis.11)', () => {
+	it('lit les règles AVEC les étapes, les arêtes et les champs, à l’ouverture', async () => {
+		// §7 bis.11.1 : une règle n'a de sens qu'entre un champ et une étape du même instant.
+		const { lectures } = monter()
+		await attendreEcran()
+		await waitFor(() => expect(lectures).toContain('form_field_rules'))
+	})
+
+	it('rend un VRAI tableau : une colonne par étape, une ligne par champ actif', async () => {
+		// docs/DESIGN_SYSTEM.md §5.9 — `th scope="col"` pour les étapes, `th scope="row"` pour les
+		// champs. Une grille de `div` priverait un lecteur d'écran de l'en-tête rappelé à chaque case.
+		monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		expect(grille.tagName).toBe('TABLE')
+		const colonnes = within(grille).getAllByRole('columnheader').map((entete) => entete.textContent)
+		expect(colonnes).toEqual(['Champ', 'Prospection', 'Qualification fine'])
+		const lignes = within(grille).getAllByRole('rowheader').map((entete) => entete.textContent)
+		expect(lignes).toEqual(['Budget estimé', 'Origine du contact'])
+	})
+
+	it('ÉCARTE LE CHAMP ARCHIVÉ de la grille, et dit pourquoi', async () => {
+		// §7 bis.11.2 : la liste des champs le rapporte pour le restaurer, la grille l'écarte parce
+		// qu'il n'apparaît dans aucun formulaire. Ses règles ne sont pas supprimées pour autant.
+		monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		expect(within(grille).queryByText('Note interne')).toBe(null)
+		expect(screen.getByTestId('grille-note-archives').textContent).toContain(
+			'Un champ archivé n’apparaît pas dans cette grille',
+		)
+	})
+
+	it('rend le défaut sur les couples sans règle, et les visibilités écrites sur les autres', async () => {
+		// §7 bis.11.2 et §3.1 du composeur : l'absence de règle vaut `visible`, et une composition
+		// partant des règles perdrait ces cases.
+		monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const cases = within(grille).getAllByTestId('case-visibilite') as HTMLSelectElement[]
+		expect(cases.map((liste) => [liste.dataset['champ'], liste.dataset['etape'], liste.value])).toEqual([
+			['budget', 'e-1', 'defaut'],
+			['budget', 'e-2', 'required'],
+			['source', 'e-1', 'visible'],
+			['source', 'e-2', 'defaut'],
+		])
+	})
+
+	it('NE REPLIE PAS `visible` SUR LE DÉFAUT, et propose quatre états', async () => {
+		// §7 bis.11.4 : le seed pose deux `visible` explicites ; les afficher comme des absences les
+		// ferait supprimer au premier réglage voisin.
+		monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		expect([...premiere.options].map((option) => option.textContent)).toEqual([
+			'Par défaut (affiché)',
+			'Masqué',
+			'Affiché',
+			'Exigé',
+		])
+		expect(screen.getByTestId('grille-note-defaut').textContent).toContain('le même formulaire')
+	})
+
+	it('nomme le champ ET l’étape dans le libellé accessible de chaque case', async () => {
+		// §7 bis.11.6 : sept colonnes de listes anonymes seraient indéchiffrables à la voix.
+		monter()
+		await attendreEcran()
+		expect(
+			await screen.findByLabelText('Visibilité de « Budget estimé » à l’étape « Qualification fine »'),
+		).toBeTruthy()
+	})
+
+	it('RÈGLE UNE CASE PAR UN `upsert` portant le couple d’unicité', async () => {
+		// §7 bis.11.3 : le `409`/`23505` mesuré interdit de choisir entre insertion et modification
+		// d'après ce qu'on a lu.
+		const { ecritures } = monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		await userEvent.selectOptions(premiere, 'hidden')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'form_field_rules',
+			verbe: 'upsert',
+			charge: {
+				field_id: 'c-1',
+				step_id: 'e-1',
+				workflow_id: 'wf-1',
+				workspace_id: 'ws-1',
+				visibility: 'hidden',
+			},
+			options: { onConflict: 'field_id,step_id' },
+		})
+	})
+
+	it('REND UNE CASE AU DÉFAUT PAR UNE SUPPRESSION, filtrée sur le couple', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const deuxieme = within(grille).getAllByTestId('case-visibilite')[1] as HTMLSelectElement
+		await userEvent.selectOptions(deuxieme, 'defaut')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({ table: 'form_field_rules', verbe: 'delete', charge: null })
+		expect(ecritures[0]?.filtres).toEqual([
+			['field_id', 'c-1'],
+			['step_id', 'e-2'],
+		])
+	})
+
+	it('se règle au clavier seul', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		premiere.focus()
+		expect(document.activeElement).toBe(premiere)
+		await userEvent.selectOptions(premiere, ['required'])
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({ verbe: 'upsert', charge: { visibility: 'required' } })
+	})
+
+	it('dit `sans-effet` quand la base rend zéro ligne — le `USING` d’un non-administrateur', async () => {
+		// MESURÉ : le `business_developer` reçoit `200` et `[]` en `PATCH` comme en `DELETE`.
+		monter({ reponseEcriture: { data: [], error: null, status: 200 } })
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		await userEvent.selectOptions(premiere, 'hidden')
+		expect(await screen.findByRole('alert')).toBeTruthy()
+	})
+
+	it('traduit le refus d’autorisation reçu de la base', async () => {
+		monter({
+			reponseEcriture: {
+				data: null,
+				error: { message: 'row-level security policy', code: '42501' },
+				status: 403,
+			},
+		})
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		await userEvent.selectOptions(premiere, 'hidden')
+		expect(await screen.findByRole('alert')).toBeTruthy()
+	})
+
+	it('montre un état d’erreur repris quand les règles ne se chargent pas', async () => {
+		monter({ erreurRegles: { message: 'boom', status: 500 } })
+		await attendreEcran()
+		expect(
+			await screen.findByText('Les règles de visibilité n’ont pas pu être chargées.'),
+		).toBeTruthy()
+	})
+
+	it('dit ce qui manque quand aucun champ actif n’existe, plutôt que d’afficher un tableau vide', async () => {
+		monter({ champs: [CHAMPS[2]] })
+		await attendreEcran()
+		expect((await screen.findByTestId('grille-impossible')).textContent).toContain('Aucun champ actif')
 	})
 })

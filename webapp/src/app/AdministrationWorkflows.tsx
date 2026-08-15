@@ -1,5 +1,5 @@
-// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième et
-//       troisième tranches
+// @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
+//       troisième et quatrième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.2 (adresse), §7 bis.3 (les trois lectures),
 //       §7 bis.4 (les six gestes), §7 bis.5 (validation de forme), §7 bis.6 (états,
 //       accessibilité, responsive), §2.5 (`0` n'est pas `NULL`), §3.3 (contraintes), §3.5
@@ -12,8 +12,16 @@
 //       §7 bis.10.1 (lecture 5, archivés compris), §7 bis.10.2 (les cinq gestes),
 //       §7 bis.10.3 (clé et type non modifiables), §7 bis.10.4 (validation de forme),
 //       §7 bis.10.5 (les refus), §7 bis.10.6 (états et disposition)
+// @spec docs/SPEC-workflow-engine.md §7 bis.11 (quatrième tranche : la grille champ × étape),
+//       §7 bis.11.1 (lecture 6), §7 bis.11.2 (la composition et les champs archivés écartés),
+//       §7 bis.11.3 (les deux gestes), §7 bis.11.4 (les quatre états d'une case),
+//       §7 bis.11.5 (les refus), §7 bis.11.6 (états, accessibilité et responsive)
 // @spec docs/SPEC-form-composer.md §2.3 (les quinze types), §2.4 (`options`), §2.5 (clé durable),
-//       §2.6 (ordre), §2.7 (aucun privilège `DELETE` : l'archivage tient lieu de retrait)
+//       §2.6 (ordre), §2.7 (aucun privilège `DELETE` : l'archivage tient lieu de retrait),
+//       §3.1 (les trois visibilités, et l'absence de règle qui vaut `visible`),
+//       §5 (l'édition du formulaire en un seul écran)
+// @spec docs/DESIGN_SYSTEM.md §5.9 (tableau de données : sémantique jamais simulée), §7 (paliers,
+//       et le tableau qui défile dans son propre conteneur)
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.7 bis (case à cocher), §5.8 (états), §6
 //       (confirmation), §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
 //
@@ -75,6 +83,17 @@ import {
 	modifierChamp,
 	refusDesChoix,
 	type RefusChoix,
+	VISIBILITES,
+	composerGrille,
+	lireRegles,
+	reglerVisibilite,
+	rendreAuDefaut,
+	type EtatCase,
+	type LigneGrille,
+	type RefusRegle,
+	type RegleAdministrable,
+	type ResultatRegle,
+	type Visibilite,
 	declarerTransition,
 	deplacerEtape,
 	designerEtapeInitiale,
@@ -182,6 +201,29 @@ function texteRefusChamp(refus: RefusChamp): string {
 }
 
 /**
+ * Le refus d'une règle de visibilité — §7 bis.11.5.
+ *
+ * DEUX NATURES DE MOINS que pour un champ, et c'est mesuré : `23505` ne peut pas naître de l'écran,
+ * qui règle une case par un `upsert` (§7 bis.11.3), et aucun `23503` ne peut vouloir dire
+ * « occupé » puisqu'aucune ligne n'en retient une autre. `unknown` recouvre donc le premier, avec
+ * son message générique.
+ */
+function texteRefusRegle(refus: RefusRegle): string {
+	switch (refus.nature) {
+		case 'forbidden':
+			return t('admin.workflows.refus.forbidden')
+		case 'reference-absente':
+			return t('admin.workflows.refus.regle.reference-absente')
+		case 'forme-refusee':
+			return t('admin.workflows.refus.regle.forme-refusee')
+		case 'network':
+			return t('admin.workflows.refus.network')
+		case 'unknown':
+			return t('admin.workflows.refus.unknown')
+	}
+}
+
+/**
  * Ce qui est ouvert, et il n'y en a qu'un à la fois — le patron de `CRM-075` : un seul formulaire
  * ouvert évite la question qu'aucune spécification ne tranche, celle d'une saisie non enregistrée
  * quand une seconde s'ouvre. Les trois ouvertures d'arête entrent dans la MÊME variable que celles
@@ -205,6 +247,7 @@ const AUCUNE: Ouverture = { type: 'aucune' }
 type ActionEtape = () => Promise<ResultatEtape>
 type ActionTransition = () => Promise<ResultatTransition>
 type ActionChamp = () => Promise<ResultatChamp>
+type ActionRegle = () => Promise<ResultatRegle>
 
 /**
  * Alerte de refus, placée dans le bloc concerné et non en tête d'écran, pour que le refus soit lu
@@ -1340,6 +1383,140 @@ function LigneChamp({
 }
 
 // ---------------------------------------------------------------------------------------------
+// La grille champ × étape — §7 bis.11
+// ---------------------------------------------------------------------------------------------
+
+/** Les quatre états d'une case, dans l'ordre où la liste déroulante les propose (§7 bis.11.4). */
+const ETATS_CASE: readonly EtatCase[] = ['defaut', ...VISIBILITES]
+
+const LIBELLES_ETAT: Readonly<Record<EtatCase, CleTraduction>> = {
+	defaut: 'admin.workflows.rules.state.defaut',
+	hidden: 'admin.workflows.rules.state.hidden',
+	visible: 'admin.workflows.rules.state.visible',
+	required: 'admin.workflows.rules.state.required',
+}
+
+/**
+ * Une case de la grille.
+ *
+ * LE LIBELLÉ ACCESSIBLE NOMME LE CHAMP **ET** L'ÉTAPE, jamais « visibilité » seul : sept colonnes de
+ * listes anonymes seraient indéchiffrables à la voix, et l'en-tête de colonne ne suffit pas — un
+ * lecteur d'écran l'annonce à l'entrée dans la cellule, pas au moment où le contrôle prend le focus
+ * (docs/DESIGN_SYSTEM.md §5.9, §8).
+ *
+ * LE RÉGLAGE PART AU CHANGEMENT, sans bouton d'enregistrement. Une case est une ligne entière de la
+ * base — la clé primaire est le couple (§3.2 du composeur) —, donc chaque changement est déjà
+ * atomique et il n'existe aucune saisie partielle à annuler. Un bouton par case ajouterait
+ * quarante-deux commandes à un tableau qui en compte déjà quarante-deux.
+ */
+function CaseVisibilite({
+	champ,
+	etape,
+	etat,
+	enCours,
+	onRegler,
+}: {
+	readonly champ: ChampAdministrable
+	readonly etape: EtapeAdministrable
+	readonly etat: EtatCase
+	readonly enCours: boolean
+	readonly onRegler: (etat: EtatCase) => void
+}) {
+	return (
+		<select
+			data-testid="case-visibilite"
+			data-champ={champ.key}
+			data-etape={etape.id}
+			value={etat}
+			disabled={enCours}
+			aria-label={t('admin.workflows.rules.cell.aria', {
+				champ: champ.label,
+				etape: libelleEtape(etape),
+			})}
+			onChange={(evenement) => onRegler(evenement.target.value as EtatCase)}
+			className="min-h-[var(--size-target)] w-full rounded-sm border border-border bg-surface px-2"
+		>
+			{ETATS_CASE.map((valeur) => (
+				<option key={valeur} value={valeur}>
+					{t(LIBELLES_ETAT[valeur])}
+				</option>
+			))}
+		</select>
+	)
+}
+
+/**
+ * Le tableau des règles de visibilité.
+ *
+ * C'EST UN VRAI `table`, avec ses deux niveaux d'en-tête — `th scope="col"` pour les étapes,
+ * `th scope="row"` pour les champs. Le §5.9 du design system l'impose et le motif vaut ici plus
+ * qu'ailleurs : une grille de `div` priverait un lecteur d'écran de l'en-tête rappelé à chaque
+ * cellule, c'est-à-dire de la seule façon de savoir de quel couple on parle.
+ *
+ * IL DÉFILE DANS SON PROPRE CONTENEUR (§7 du design system) : sept étapes ne tiennent pas sous
+ * 768 px, et la page ne défile jamais horizontalement.
+ */
+function GrilleVisibilites({
+	grille,
+	enCours,
+	onRegler,
+}: {
+	readonly grille: readonly LigneGrille[]
+	readonly enCours: boolean
+	readonly onRegler: (champ: ChampAdministrable, etape: EtapeAdministrable, etat: EtatCase) => void
+}) {
+	const etapes = grille[0]?.cases.map((cellule) => cellule.etape) ?? []
+	return (
+		<div className="overflow-x-auto rounded-lg border border-border bg-surface">
+			<table data-testid="grille-visibilites" className="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th
+							scope="col"
+							className="sticky left-0 bg-surface px-3 py-2 text-left font-medium text-text-2 border-b border-border"
+						>
+							{t('admin.workflows.rules.column.field')}
+						</th>
+						{etapes.map((etape) => (
+							<th
+								key={etape.id}
+								scope="col"
+								className="px-3 py-2 text-left font-medium text-text-2 border-b border-border whitespace-nowrap"
+							>
+								{libelleEtape(etape)}
+							</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{grille.map((ligne) => (
+						<tr key={ligne.champ.id} data-testid="ligne-grille">
+							<th
+								scope="row"
+								className="sticky left-0 bg-surface px-3 py-2 text-left font-normal border-b border-border whitespace-nowrap"
+							>
+								{ligne.champ.label}
+							</th>
+							{ligne.cases.map((cellule) => (
+								<td key={cellule.etape.id} className="px-2 py-2 border-b border-border">
+									<CaseVisibilite
+										champ={ligne.champ}
+										etape={cellule.etape}
+										etat={cellule.etat}
+										enCours={enCours}
+										onRegler={(etat) => onRegler(ligne.champ, cellule.etape, etat)}
+									/>
+								</td>
+							))}
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
 // L'écran
 // ---------------------------------------------------------------------------------------------
 
@@ -1358,6 +1535,7 @@ export function AdministrationWorkflows({
 		useState<EtatAsync<readonly TransitionAdministrable[]>>(enChargement)
 	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudAjoutable[]>>(enChargement)
 	const [champs, setChamps] = useState<EtatAsync<readonly ChampAdministrable[]>>(enChargement)
+	const [regles, setRegles] = useState<EtatAsync<readonly RegleAdministrable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
@@ -1398,16 +1576,19 @@ export function AdministrationWorkflows({
 	const rechargerGraphe = useCallback(
 		async (idWorkflow: string) => {
 			if (client === null) return
-			// Les champs partent avec les étapes et les arêtes, par le §7 bis.10.1 : les trois décrivent
-			// le même workflow, et toute écriture de l'un des trois blocs les rejoue toutes.
-			const [lues, arretes, formulaire] = await Promise.all([
+			// Les champs partent avec les étapes et les arêtes, par le §7 bis.10.1, et les règles avec
+			// eux par le §7 bis.11.1 : les quatre décrivent le même workflow, une règle n'a de sens
+			// qu'entre un champ et une étape du MÊME instant, et toute écriture les rejoue toutes.
+			const [lues, arretes, formulaire, visibilites] = await Promise.all([
 				lireEtapes(client, idWorkflow),
 				lireTransitions(client, idWorkflow),
 				lireChamps(client, idWorkflow),
+				lireRegles(client, idWorkflow),
 			])
 			setEtapes(lues)
 			setTransitions(arretes)
 			setChamps(formulaire)
+			setRegles(visibilites)
 		},
 		[client],
 	)
@@ -1417,6 +1598,7 @@ export function AdministrationWorkflows({
 		setEtapes(enChargement)
 		setTransitions(enChargement)
 		setChamps(enChargement)
+		setRegles(enChargement)
 		void rechargerGraphe(idChoisi)
 	}, [client, idChoisi, rechargerGraphe])
 
@@ -1519,6 +1701,78 @@ export function AdministrationWorkflows({
 			}
 		},
 		[idChoisi, rechargerGraphe],
+	)
+
+	/**
+	 * Jumelle des trois précédentes pour les règles de visibilité.
+	 *
+	 * Une quatrième enveloppe, et non une générique : le vocabulaire du refus est le seul point où
+	 * les quatre blocs diffèrent, et c'est exactement ce qu'il ne faut pas confondre (§7 bis.11.5).
+	 *
+	 * ELLE NE FERME AUCUNE OUVERTURE, à la différence des trois autres : régler une case n'ouvre
+	 * rien, et fermer un formulaire de champ resté ouvert ailleurs ferait disparaître une saisie que
+	 * l'administrateur n'a pas abandonnée.
+	 */
+	const executerRegleVisibilite = useCallback(
+		async (action: ActionRegle, message: string) => {
+			if (idChoisi === null) return
+			setEnCours(true)
+			try {
+				const resultat = await action()
+				if (resultat.statut === 'refus') {
+					setRefus(texteRefusRegle(resultat.refus))
+					return
+				}
+				if (resultat.statut === 'sans-effet') {
+					setRefus(t('admin.workflows.refus.sans-effet'))
+					return
+				}
+				setRefus(null)
+				setAnnonce(message)
+				await rechargerGraphe(idChoisi)
+			} finally {
+				setEnCours(false)
+			}
+		},
+		[idChoisi, rechargerGraphe],
+	)
+
+	/**
+	 * Règle une case, ou la rend au défaut.
+	 *
+	 * LES DEUX GESTES SONT DERRIÈRE LE MÊME CONTRÔLE parce qu'ils répondent à la même question — que
+	 * montre ce champ à cette étape ? —, et le §7 bis.11.3 les sépare à l'écriture : trois valeurs
+	 * partent en `upsert`, le défaut part en suppression.
+	 */
+	const reglerLaCase = useCallback(
+		(
+			idWorkflow: string,
+			idWorkspace: string,
+			champ: ChampAdministrable,
+			etape: EtapeAdministrable,
+			etat: EtatCase,
+		) => {
+			if (client === null) return
+			if (etat === 'defaut') {
+				void executerRegleVisibilite(
+					() => rendreAuDefaut(client, champ.id, etape.id),
+					t('live.workflows.rule.reset'),
+				)
+				return
+			}
+			void executerRegleVisibilite(
+				() =>
+					reglerVisibilite(client, {
+						idChamp: champ.id,
+						idEtape: etape.id,
+						idWorkflow,
+						idWorkspace,
+						visibilite: etat as Visibilite,
+					}),
+				t('live.workflows.rule.set'),
+			)
+		},
+		[client, executerRegleVisibilite],
 	)
 
 	/** Déplace un champ dans le formulaire — même ordonnancement que les étapes (`CRM-075`). */
@@ -2097,6 +2351,75 @@ export function AdministrationWorkflows({
 														</div>
 													)}
 												</>
+											) : null}
+										</section>
+
+										{/* Les règles de visibilité, QUATRIÈME bloc et dans la même colonne : on ne règle
+										    pas la visibilité de champs qu'on n'a pas déclarés (§7 bis.11.6). */}
+										<section
+											aria-label={t('admin.workflows.rules.aria', { workflow: choisi.name })}
+											className="flex flex-col gap-3"
+										>
+											<div className="flex flex-col gap-1">
+												<h3 className="font-medium">{t('admin.workflows.rules.title')}</h3>
+												<p className="text-sm text-text-2">{t('admin.workflows.rules.intro')}</p>
+											</div>
+											{regles.statut === 'chargement' ? (
+												<SkeletonListe lignes={3} libelle={t('admin.workflows.rules.loading')} />
+											) : null}
+											{regles.statut === 'erreur' ? (
+												<EtatErreur
+													titre={t('admin.workflows.rules.error')}
+													corps={t('admin.workflows.error.body')}
+													libelleReprise={t('admin.tree.error.retry')}
+													onReprise={() => void rechargerGraphe(choisi.id)}
+												/>
+											) : null}
+											{regles.statut === 'pret' && champs.statut === 'pret' ? (
+												(() => {
+													// La grille se compose ici, une seule fois par rendu : les trois listes
+													// viennent du même instant (§7 bis.11.1), et la recomposer par cellule
+													// referait quarante-deux fois le même index.
+													const grille = composerGrille(champs.donnees, etapes.donnees, regles.donnees)
+													const archives = champs.donnees.filter(
+														(champ) => champ.archived_at !== null,
+													).length
+													if (grille.length === 0 || etapes.donnees.length === 0) {
+														return (
+															<p role="status" data-testid="grille-impossible" className="text-sm text-text-2">
+																{grille.length === 0
+																	? t('admin.workflows.rules.noFields')
+																	: t('admin.workflows.rules.noSteps')}
+															</p>
+														)
+													}
+													return (
+														<>
+															<GrilleVisibilites
+																grille={grille}
+																enCours={enCours}
+																onRegler={(champ, etape, etat) =>
+																	reglerLaCase(choisi.id, choisi.workspace_id, champ, etape, etat)
+																}
+															/>
+															{/* Le défaut et « Affiché » produisent le MÊME formulaire : le taire
+															    laisserait chercher une différence de comportement qui n'existe
+															    pas (§7 bis.11.4). */}
+															<p className="text-sm text-text-2" data-testid="grille-note-defaut">
+																{t('admin.workflows.rules.note.default')}
+															</p>
+															{archives > 0 ? (
+																<p className="text-sm text-text-2" data-testid="grille-note-archives">
+																	{archives === 1
+																		? t('admin.workflows.rules.note.archived.one')
+																		: t('admin.workflows.rules.note.archived.many', {
+																				nombre: String(archives),
+																			})}
+																</p>
+															) : null}
+														</>
+													)
+												})()
 											) : null}
 										</section>
 									</>
