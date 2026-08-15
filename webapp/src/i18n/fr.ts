@@ -749,6 +749,30 @@ export const fr = {
 	'admin.workflows.refus.exigence.workflow-different':
 		'Ce champ et cette transition n’appartiennent pas au même workflow.',
 
+	// --- La prévisualisation des effets — sixième tranche, docs/SPEC-workflow-engine.md §7 bis.13 ---
+	'admin.workflows.effets.loading': 'Mesure des effets sur les affaires en cours…',
+	// « Zéro se dit en toutes lettres » (§7 bis.13.4) : un bloc muet se lirait comme un chargement
+	// qui n'a pas abouti.
+	'admin.workflows.effets.aucun': 'Aucune affaire en cours n’est concernée.',
+	'admin.workflows.effets.indisponible':
+		'Les effets sur les affaires en cours n’ont pas pu être mesurés. Le geste reste possible.',
+	'admin.workflows.effets.surPlace.one':
+		'1 affaire est déjà à cette étape : sa fiche signalera le manque, sans la déplacer.',
+	'admin.workflows.effets.surPlace.many':
+		'{nombre} affaires sont déjà à cette étape : leur fiche signalera le manque, sans les déplacer.',
+	'admin.workflows.effets.aLEntree.one':
+		'1 affaire ne pourra plus entrer dans cette étape tant que ce champ sera vide.',
+	'admin.workflows.effets.aLEntree.many':
+		'{nombre} affaires ne pourront plus entrer dans cette étape tant que ce champ sera vide.',
+	'admin.workflows.effets.transition.one':
+		'1 affaire ne pourra plus emprunter ce chemin tant que ce champ sera vide.',
+	'admin.workflows.effets.transition.many':
+		'{nombre} affaires ne pourront plus emprunter ce chemin tant que ce champ sera vide.',
+	'admin.workflows.effets.confirm.title': 'Exiger « {champ} » à l’étape « {etape} » ?',
+	'admin.workflows.effets.confirm.body':
+		'Le champ devra être renseigné pour qu’une affaire entre dans cette étape. Les affaires déjà arrivées n’en sont jamais chassées.',
+	'admin.workflows.effets.confirm.action': 'Exiger ce champ',
+
 	'live.workflows.requirement.added': 'Champ exigé',
 	'live.workflows.requirement.removed': 'Champ plus exigé',
 

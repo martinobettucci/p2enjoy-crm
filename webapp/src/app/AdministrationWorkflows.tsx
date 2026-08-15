@@ -94,6 +94,9 @@ import {
 	composerGrille,
 	lireRegles,
 	reglerVisibilite,
+	previsualiserExigence,
+	composerMessageEffets,
+	type MessageEffets,
 	rendreAuDefaut,
 	type EtatCase,
 	type LigneGrille,
@@ -1513,10 +1516,19 @@ function CaseVisibilite({
 function GrilleVisibilites({
 	grille,
 	enCours,
+	surcharge,
 	onRegler,
 }: {
 	readonly grille: readonly LigneGrille[]
 	readonly enCours: boolean
+	/**
+	 * La case dont le réglage attend une confirmation (§7 bis.13.4).
+	 *
+	 * ELLE MONTRE LE CHOIX EN COURS, et non la valeur enregistrée. Sans cette surcharge, la case
+	 * serait immédiatement ramenée à son état d'avant par le rendu contrôlé, et l'administrateur
+	 * lirait une confirmation portant sur un état que la grille dément juste au-dessus.
+	 */
+	readonly surcharge: { readonly idChamp: string; readonly idEtape: string; readonly etat: EtatCase } | null
 	readonly onRegler: (champ: ChampAdministrable, etape: EtapeAdministrable, etat: EtatCase) => void
 }) {
 	const etapes = grille[0]?.cases.map((cellule) => cellule.etape) ?? []
@@ -1556,7 +1568,13 @@ function GrilleVisibilites({
 									<CaseVisibilite
 										champ={ligne.champ}
 										etape={cellule.etape}
-										etat={cellule.etat}
+										etat={
+											surcharge !== null &&
+											surcharge.idChamp === ligne.champ.id &&
+											surcharge.idEtape === cellule.etape.id
+												? surcharge.etat
+												: cellule.etat
+										}
 										enCours={enCours}
 										onRegler={(etat) => onRegler(ligne.champ, cellule.etape, etat)}
 									/>
@@ -1570,6 +1588,128 @@ function GrilleVisibilites({
 	)
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// La prévisualisation des effets — §7 bis.13
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Rend en une phrase ce qu'une exigence ferait aux affaires en cours.
+ *
+ * LA COMPOSITION N'EST PAS ICI : `composerMessageEffets` la fait dans le module, et ce composant ne
+ * traduit que la clé rendue. Les six cas se prouvent alors sans monter d'arbre React (§7 bis.13.4).
+ *
+ * `chemin` distingue les deux cibles. Une exigence d'étape bloque à l'ENTRÉE de l'étape, quel que
+ * soit le chemin emprunté ; une exigence de transition ne bloque QUE ce chemin-là. Les deux
+ * phrases ne peuvent donc pas être la même, et un texte commun aurait décrit une règle plus large
+ * que celle qui s'applique.
+ */
+function EffetsExiges({
+	message,
+	chemin,
+	marqueur,
+}: {
+	readonly message: MessageEffets | null
+	readonly chemin: 'etape' | 'transition'
+	readonly marqueur: string
+}) {
+	if (message === null) {
+		return (
+			<p role="status" data-testid={`${marqueur}-chargement`} className="text-sm text-text-2">
+				{t('admin.workflows.effets.loading')}
+			</p>
+		)
+	}
+	const lignes: string[] = []
+	if (message.cle === 'indisponible') lignes.push(t('admin.workflows.effets.indisponible'))
+	if (message.cle === 'aucun-effet') lignes.push(t('admin.workflows.effets.aucun'))
+	if (message.cle === 'sur-place' || message.cle === 'les-deux') {
+		lignes.push(
+			message.surPlace === 1
+				? t('admin.workflows.effets.surPlace.one')
+				: t('admin.workflows.effets.surPlace.many', { nombre: String(message.surPlace) }),
+		)
+	}
+	if (message.cle === 'a-l-entree' || message.cle === 'les-deux') {
+		const nombre = message.aLEntree
+		if (chemin === 'transition') {
+			lignes.push(
+				nombre === 1
+					? t('admin.workflows.effets.transition.one')
+					: t('admin.workflows.effets.transition.many', { nombre: String(nombre) }),
+			)
+		} else {
+			lignes.push(
+				nombre === 1
+					? t('admin.workflows.effets.aLEntree.one')
+					: t('admin.workflows.effets.aLEntree.many', { nombre: String(nombre) }),
+			)
+		}
+	}
+	return (
+		<div data-testid={marqueur} className="flex flex-col gap-1">
+			{lignes.map((ligne) => (
+				<p key={ligne} role="status" className="text-sm text-text-2">
+					{ligne}
+				</p>
+			))}
+		</div>
+	)
+}
+
+/**
+ * Confirmation d'une case réglée sur « Exigé », porteuse de la prévisualisation.
+ *
+ * ELLE N'EMPRUNTE PAS `ConfirmationRetrait` : son bouton n'est pas `danger`. Poser une exigence
+ * n'efface rien — le §6 du design system réserve la teinte de danger aux gestes destructifs, et
+ * l'employer ici aurait dit « vous allez perdre quelque chose » là où la seule conséquence est une
+ * contrainte de plus.
+ *
+ * ELLE NE BLOQUE PAS SUR LA PRÉVISUALISATION. Le compte est une aide à la décision, jamais une
+ * garde — la garde est `move_card` (§7 bis.13.4) : la validation reste possible pendant la mesure
+ * comme après son échec.
+ */
+function ConfirmationExigence({
+	champ,
+	etape,
+	message,
+	refus,
+	enCours,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly champ: string
+	readonly etape: string
+	readonly message: MessageEffets | null
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	return (
+		<div
+			data-testid="confirmation-exigence-case"
+			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+		>
+			<p className="font-medium">{t('admin.workflows.effets.confirm.title', { champ, etape })}</p>
+			<p className="text-sm text-text-2">{t('admin.workflows.effets.confirm.body')}</p>
+			<EffetsExiges message={message} chemin="etape" marqueur="effets-case" />
+			{refus === null ? null : <AlerteRefus message={refus} />}
+			<div className="flex gap-2">
+				{/* `autoFocus` plutôt qu'un `ref` : `Button` n'expose pas de `ref`, et le §11 du design
+				    system interdit à un composant métier de redéfinir un style de base — recopier un
+				    `<button>` primaire ici pour porter un `ref` aurait dupliqué la variante. Le focus
+				    entrant est la règle du §5.13, déjà tenue par les autres confirmations. */}
+				<Button variante="primaire" autoFocus disabled={enCours} onClick={onConfirmer}>
+					{t('admin.workflows.effets.confirm.action')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</div>
+	)
+}
 
 // ---------------------------------------------------------------------------------------------
 // Les exigences propres à une transition — §7 bis.12
@@ -1657,6 +1797,8 @@ function FormulaireExigence({
 	nomTransition,
 	refus,
 	enCours,
+	effets,
+	onChoisir,
 	onValider,
 	onAnnuler,
 }: {
@@ -1665,6 +1807,8 @@ function FormulaireExigence({
 	readonly nomTransition: string
 	readonly refus: string | null
 	readonly enCours: boolean
+	readonly effets: MessageEffets | null
+	readonly onChoisir: (idChamp: string) => void
 	readonly onValider: (idChamp: string) => void
 	readonly onAnnuler: () => void
 }) {
@@ -1677,6 +1821,13 @@ function FormulaireExigence({
 	}, [])
 
 	const retenu = champs.some((champ) => champ.id === idChamp) ? idChamp : (champs[0]?.id ?? '')
+
+	// LA PRÉVISUALISATION SUIT LE CHAMP CHOISI, y compris celui que le formulaire propose d'office :
+	// sans cet effet, le premier champ de la liste serait le seul dont l'effet resterait inconnu,
+	// alors que c'est celui qu'un administrateur pressé validera (§7 bis.13.4).
+	useEffect(() => {
+		if (retenu !== '') onChoisir(retenu)
+	}, [retenu, onChoisir])
 
 	return (
 		<form
@@ -1715,6 +1866,9 @@ function FormulaireExigence({
 							{t('admin.workflows.requirements.add.alreadyByRule')}
 						</p>
 					) : null}
+					{/* Sous le choix du champ, et non dans une confirmation supplémentaire : le
+					    formulaire porte déjà son bouton de validation (§7 bis.13.4). */}
+					<EffetsExiges message={effets} chemin="transition" marqueur="effets-exigence" />
 				</div>
 			)}
 			{refus === null ? null : <AlerteRefus message={refus} />}
@@ -1755,6 +1909,23 @@ export function AdministrationWorkflows({
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
+	/**
+	 * La case dont le réglage sur « Exigé » attend une confirmation, et les effets mesurés pour
+	 * elle (§7 bis.13.4).
+	 *
+	 * `effetsCase` vaut `null` PENDANT la mesure, et porte ensuite une clé — y compris
+	 * `indisponible`. Les deux se distinguent à l'écran : « en cours de mesure » n'est pas
+	 * « n'a pas pu être mesuré ».
+	 */
+	const [exigenceEnAttente, setExigenceEnAttente] = useState<{
+		readonly idWorkflow: string
+		readonly idWorkspace: string
+		readonly champ: ChampAdministrable
+		readonly etape: EtapeAdministrable
+	} | null>(null)
+	const [effetsCase, setEffetsCase] = useState<MessageEffets | null>(null)
+	/** Les effets du champ actuellement choisi dans un formulaire d'exigence de transition. */
+	const [effetsExigence, setEffetsExigence] = useState<MessageEffets | null>(null)
 	const [annonce, setAnnonce] = useState('')
 	const [tentative, setTentative] = useState(0)
 
@@ -1934,23 +2105,28 @@ export function AdministrationWorkflows({
 	 * rien, et fermer un formulaire de champ resté ouvert ailleurs ferait disparaître une saisie que
 	 * l'administrateur n'a pas abandonnée.
 	 */
+	// ELLE REND `true` SUR SUCCÈS, et c'est la sixième tranche qui l'exige : la confirmation d'une
+	// case « Exigé » ne doit se fermer QUE si la règle est réellement écrite. Se fermer sur un refus
+	// aurait effacé le message expliquant pourquoi rien n'a changé. Les autres appelants ignorent
+	// ce retour, leur geste n'ouvrant rien à refermer.
 	const executerRegleVisibilite = useCallback(
-		async (action: ActionRegle, message: string) => {
-			if (idChoisi === null) return
+		async (action: ActionRegle, message: string): Promise<boolean> => {
+			if (idChoisi === null) return false
 			setEnCours(true)
 			try {
 				const resultat = await action()
 				if (resultat.statut === 'refus') {
 					setRefus(texteRefusRegle(resultat.refus))
-					return
+					return false
 				}
 				if (resultat.statut === 'sans-effet') {
 					setRefus(t('admin.workflows.refus.sans-effet'))
-					return
+					return false
 				}
 				setRefus(null)
 				setAnnonce(message)
 				await rechargerGraphe(idChoisi)
+				return true
 			} finally {
 				setEnCours(false)
 			}
@@ -2011,6 +2187,19 @@ export function AdministrationWorkflows({
 			etat: EtatCase,
 		) => {
 			if (client === null) return
+			// « EXIGÉ » EST LE SEUL DES QUATRE ÉTATS QUI PUISSE BLOQUER UNE AFFAIRE (§7 bis.13).
+			// Il passe donc par une confirmation portant la prévisualisation ; les trois autres
+			// restent immédiats, et leur imposer une confirmation aurait rendu la grille
+			// inutilisable pour quarante-deux cases dont aucune ne contraint personne.
+			if (etat === 'required') {
+				setExigenceEnAttente({ idWorkflow, idWorkspace, champ, etape })
+				setEffetsCase(null)
+				setRefus(null)
+				void previsualiserExigence(client, champ.id, { genre: 'etape', idEtape: etape.id }).then(
+					(resultat) => setEffetsCase(composerMessageEffets(resultat)),
+				)
+				return
+			}
 			if (etat === 'defaut') {
 				void executerRegleVisibilite(
 					() => rendreAuDefaut(client, champ.id, etape.id),
@@ -2032,6 +2221,27 @@ export function AdministrationWorkflows({
 		},
 		[client, executerRegleVisibilite],
 	)
+
+	/** Confirme la case en attente : c'est ICI, et nulle part avant, que la règle est écrite. */
+	const confirmerLExigenceDeCase = useCallback(() => {
+		if (client === null || exigenceEnAttente === null) return
+		const { idWorkflow, idWorkspace, champ, etape } = exigenceEnAttente
+		void executerRegleVisibilite(
+			() =>
+				reglerVisibilite(client, {
+					idChamp: champ.id,
+					idEtape: etape.id,
+					idWorkflow,
+					idWorkspace,
+					visibilite: 'required',
+				}),
+			t('live.workflows.rule.set'),
+		).then((ecrite) => {
+			if (!ecrite) return
+			setExigenceEnAttente(null)
+			setEffetsCase(null)
+		})
+	}, [client, exigenceEnAttente, executerRegleVisibilite])
 
 	/** Déplace un champ dans le formulaire — même ordonnancement que les étapes (`CRM-075`). */
 	const deplacerLeChamp = useCallback(
@@ -2656,10 +2866,39 @@ export function AdministrationWorkflows({
 															<GrilleVisibilites
 																grille={grille}
 																enCours={enCours}
+																surcharge={
+																	exigenceEnAttente === null
+																		? null
+																		: {
+																				idChamp: exigenceEnAttente.champ.id,
+																				idEtape: exigenceEnAttente.etape.id,
+																				etat: 'required',
+																			}
+																}
 																onRegler={(champ, etape, etat) =>
 																	reglerLaCase(choisi.id, choisi.workspace_id, champ, etape, etat)
 																}
 															/>
+															{/* La confirmation est SOUS le tableau, dans le flux : une case porte
+															    une liste déroulante de huit rem, et y loger deux boutons et deux
+															    phrases aurait disloqué la grille entière (§7 bis.13.4). */}
+															{exigenceEnAttente === null ? null : (
+																<ConfirmationExigence
+																	champ={exigenceEnAttente.champ.label}
+																	etape={libelleEtape(exigenceEnAttente.etape)}
+																	message={effetsCase}
+																	refus={refus}
+																	enCours={enCours}
+																	onConfirmer={confirmerLExigenceDeCase}
+																	onAnnuler={() => {
+																		// RIEN N'A ÉTÉ ÉCRIT : renoncer se borne à oublier la case en
+																		// attente, et la grille reprend l'état que la base porte.
+																		setExigenceEnAttente(null)
+																		setEffetsCase(null)
+																		setRefus(null)
+																	}}
+																/>
+															)}
 															{/* Le défaut et « Affiché » produisent le MÊME formulaire : le taire
 															    laisserait chercher une différence de comportement qui n'existe
 															    pas (§7 bis.11.4). */}
@@ -2894,6 +3133,16 @@ export function AdministrationWorkflows({
 																					nomTransition={nomTransition}
 																					refus={refus}
 																					enCours={enCours}
+																					effets={effetsExigence}
+																					onChoisir={(idChamp) => {
+																						setEffetsExigence(null)
+																						void previsualiserExigence(client, idChamp, {
+																							genre: 'transition',
+																							idTransition: sortie.id,
+																						}).then((resultat) =>
+																							setEffetsExigence(composerMessageEffets(resultat)),
+																						)
+																					}}
 																					onValider={(idChamp) =>
 																						void executerExigenceTransition(
 																							() => exigerChamp(client, sortie.id, idChamp),
@@ -2902,6 +3151,7 @@ export function AdministrationWorkflows({
 																					}
 																					onAnnuler={() => {
 																						setRefus(null)
+																						setEffetsExigence(null)
 																						setOuverture(AUCUNE)
 																					}}
 																				/>

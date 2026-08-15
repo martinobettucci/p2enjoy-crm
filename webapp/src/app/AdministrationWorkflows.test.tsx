@@ -242,6 +242,12 @@ type Options = {
 		error: { message: string; code?: string } | null
 		status: number
 	}
+	/** Réponse de `previsualiser_exigence` (§7 bis.13). Absente = un couple sans effet. */
+	readonly previsualisation?: {
+		data: unknown[] | null
+		error: { message: string } | null
+		status: number
+	}
 }
 
 /** Client factice : il rend les données voulues et **enregistre** les écritures reçues. */
@@ -249,9 +255,11 @@ function clientFactice(options: Options = {}): {
 	client: ClientCrm
 	ecritures: Ecriture[]
 	lectures: string[]
+	previsualisations: { nom: string; params: Record<string, unknown> }[]
 } {
 	const ecritures: Ecriture[] = []
 	const lectures: string[] = []
+	const previsualisations: { nom: string; params: Record<string, unknown> }[] = []
 	const reponseEcriture = options.reponseEcriture ?? { data: [{ id: 'x' }], error: null, status: 200 }
 
 	const lecture = (data: unknown[], erreur?: { message: string; status: number }) => {
@@ -306,9 +314,22 @@ function clientFactice(options: Options = {}): {
 				ecriture(table, 'upsert', charge, options),
 			delete: () => ecriture(table, 'delete', null),
 		}),
+		// `previsualiser_exigence` est la SEULE fonction que cet écran appelle (§7 bis.13.2). Le
+		// défaut est un couple sans effet : une preuve qui ne parle pas de prévisualisation n'a pas
+		// à déclarer de nombres, et « aucune affaire concernée » est la phrase la plus neutre.
+		rpc: (nom: string, params: Record<string, unknown>) => {
+			previsualisations.push({ nom, params })
+			return Promise.resolve(
+				options.previsualisation ?? {
+					data: [{ sur_place: 0, a_l_entree: 0 }],
+					error: null,
+					status: 200,
+				},
+			)
+		},
 	} as unknown as ClientCrm
 
-	return { client, ecritures, lectures }
+	return { client, ecritures, lectures, previsualisations }
 }
 
 function monter(options: Options = {}) {
@@ -1223,6 +1244,11 @@ describe('la grille des règles de visibilité (§7 bis.11)', () => {
 		])
 	})
 
+	// PREUVE RÉVISÉE PAR LA SIXIÈME TRANCHE, NON SUPPRIMÉE (décision 390). Elle réglait la case sur
+	// « Exigé » et attendait une écriture immédiate ; le §7 bis.13.4 fait désormais passer ce seul
+	// état par une confirmation portant la prévisualisation. La RÈGLE prouvée est inchangée — une
+	// case se règle au clavier seul —, et l'état retenu devient « Masqué », qui ne bloque aucune
+	// affaire et reste donc immédiat. Le chemin « Exigé » au clavier a sa propre preuve plus bas.
 	it('se règle au clavier seul', async () => {
 		const { ecritures } = monter()
 		await attendreEcran()
@@ -1230,9 +1256,9 @@ describe('la grille des règles de visibilité (§7 bis.11)', () => {
 		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
 		premiere.focus()
 		expect(document.activeElement).toBe(premiere)
-		await userEvent.selectOptions(premiere, ['required'])
+		await userEvent.selectOptions(premiere, ['hidden'])
 		await waitFor(() => expect(ecritures).toHaveLength(1))
-		expect(ecritures[0]).toMatchObject({ verbe: 'upsert', charge: { visibility: 'required' } })
+		expect(ecritures[0]).toMatchObject({ verbe: 'upsert', charge: { visibility: 'hidden' } })
 	})
 
 	it('dit `sans-effet` quand la base rend zéro ligne — le `USING` d’un non-administrateur', async () => {
@@ -1486,5 +1512,137 @@ describe('les exigences de transition (§7 bis.12)', () => {
 		expect((await screen.findByTestId('exigences-sans-champ')).textContent).toContain(
 			'Aucun champ actif',
 		)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §7 bis.13 — La prévisualisation des effets
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-076 (docs/BACKLOG.md) — sixième tranche : la prévisualisation des effets
+// @verifies docs/SPEC-workflow-engine.md §7 bis.13.4 (ce que l'écran en fait : confirmation sur le
+//           seul état bloquant, renoncement sans écriture, compte dans le formulaire d'exigence,
+//           zéro dit en toutes lettres, échec non bloquant)
+
+describe('la prévisualisation des effets (§7 bis.13)', () => {
+	/** Règle la première case sur « Exigé » et rend la grille. */
+	async function viserExige(options: Options = {}) {
+		const factice = monter(options)
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		await userEvent.selectOptions(premiere, 'required')
+		return { ...factice, premiere }
+	}
+
+	it('N’ÉCRIT RIEN sur « Exigé » : elle demande d’abord ce que cela ferait', async () => {
+		const { ecritures, previsualisations } = await viserExige({
+			previsualisation: { data: [{ sur_place: 4, a_l_entree: 0 }], error: null, status: 200 },
+		})
+		expect(await screen.findByTestId('confirmation-exigence-case')).toBeTruthy()
+		expect(ecritures).toHaveLength(0)
+		expect(previsualisations).toEqual([
+			{ nom: 'previsualiser_exigence', params: { p_field_id: 'c-1', p_step_id: 'e-1' } },
+		])
+	})
+
+	it('laisse les TROIS AUTRES ÉTATS immédiats : eux ne bloquent aucune affaire', async () => {
+		// Le contraire aurait imposé une confirmation à quarante-deux cases dont aucune ne contraint
+		// personne, et rendu la grille inutilisable (§7 bis.13.4).
+		const { ecritures, previsualisations } = monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		await userEvent.selectOptions(premiere, 'visible')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(screen.queryByTestId('confirmation-exigence-case')).toBe(null)
+		expect(previsualisations).toHaveLength(0)
+	})
+
+	it('montre le choix EN COURS dans la case, et non l’état enregistré', async () => {
+		// Sans cette surcharge, la case reviendrait à son état d'avant et démentirait la
+		// confirmation affichée juste en dessous.
+		const { premiere } = await viserExige()
+		await screen.findByTestId('confirmation-exigence-case')
+		expect(premiere.value).toBe('required')
+	})
+
+	it('RENONCER n’écrit rien et rend la case à sa valeur enregistrée', async () => {
+		const { ecritures, premiere } = await viserExige()
+		await screen.findByTestId('confirmation-exigence-case')
+		await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+		await waitFor(() => expect(screen.queryByTestId('confirmation-exigence-case')).toBe(null))
+		expect(ecritures).toHaveLength(0)
+		expect(premiere.value).toBe('defaut')
+	})
+
+	it('CONFIRMER écrit la règle « Exigé », et alors seulement', async () => {
+		const { ecritures } = await viserExige()
+		await screen.findByTestId('confirmation-exigence-case')
+		await userEvent.click(screen.getByRole('button', { name: 'Exiger ce champ' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'form_field_rules',
+			verbe: 'upsert',
+			charge: { field_id: 'c-1', step_id: 'e-1', visibility: 'required' },
+		})
+	})
+
+	it('mène le chemin « Exigé » AU CLAVIER SEUL, du choix à la confirmation', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		const grille = await screen.findByTestId('grille-visibilites')
+		const premiere = within(grille).getAllByTestId('case-visibilite')[0] as HTMLSelectElement
+		premiere.focus()
+		await userEvent.selectOptions(premiere, ['required'])
+		// Le focus entre dans la confirmation : le bouton d'action est atteint sans souris (§5.13).
+		const action = await screen.findByRole('button', { name: 'Exiger ce champ' })
+		await waitFor(() => expect(document.activeElement).toBe(action))
+		await userEvent.keyboard('{Enter}')
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+	})
+
+	it('dit les DEUX NOMBRES quand les deux existent, et jamais un seul', async () => {
+		// Mesuré sur le seed pour `date-signature-prevue` × `Perdu` : 1 sur place, 8 à l'entrée.
+		await viserExige({
+			previsualisation: { data: [{ sur_place: 1, a_l_entree: 8 }], error: null, status: 200 },
+		})
+		const effets = await screen.findByTestId('effets-case')
+		expect(effets.textContent).toContain('1 affaire est déjà à cette étape')
+		expect(effets.textContent).toContain('8 affaires ne pourront plus entrer')
+	})
+
+	it('DIT ZÉRO EN TOUTES LETTRES, jamais par un silence', async () => {
+		await viserExige({
+			previsualisation: { data: [{ sur_place: 0, a_l_entree: 0 }], error: null, status: 200 },
+		})
+		const effets = await screen.findByTestId('effets-case')
+		expect(effets.textContent).toContain('Aucune affaire en cours n’est concernée.')
+	})
+
+	it('un échec de mesure NE BLOQUE PAS le geste, et le dit', async () => {
+		// Le compte est une aide à la décision, jamais une garde : la garde est `move_card`.
+		const { ecritures } = await viserExige({
+			previsualisation: { data: null, error: { message: 'refus' }, status: 500 },
+		})
+		const effets = await screen.findByTestId('effets-case')
+		expect(effets.textContent).toContain('n’ont pas pu être mesurés')
+		await userEvent.click(screen.getByRole('button', { name: 'Exiger ce champ' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+	})
+
+	it('mesure aussi le champ proposé d’office dans le formulaire d’exigence d’une transition', async () => {
+		// Sans cela, le champ que validera un administrateur pressé serait le seul dont l'effet
+		// resterait inconnu.
+		const { previsualisations } = monter({
+			previsualisation: { data: [{ sur_place: 0, a_l_entree: 4 }], error: null, status: 200 },
+		})
+		await attendreEcran()
+		const boutons = await screen.findAllByRole('button', { name: 'Exiger un champ' })
+		await userEvent.click(boutons[0] as HTMLElement)
+		const effets = await screen.findByTestId('effets-exigence')
+		expect(effets.textContent).toContain('4 affaires ne pourront plus emprunter ce chemin')
+		expect(previsualisations[0]?.params).toHaveProperty('p_transition_id')
+		expect(previsualisations[0]?.params).not.toHaveProperty('p_step_id')
 	})
 })
