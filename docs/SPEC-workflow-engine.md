@@ -3558,6 +3558,331 @@ une fixture créée et rendue par la preuve elle-même.
 | Seed | **Aucun** (§7 ter.12.10) |
 | Interface | **Aucune** — cette tranche ne livre aucun écran |
 
+### 7 ter.13 Quatrième tranche — l'application transactionnelle du plan, et son retour arrière
+
+Chapitre écrit **avant la première ligne de code** de cette tranche (`CLAUDE.md` §5), après mesure
+sur la pile seedée. Les valeurs marquées MESURÉ ont été relevées en base le 2026-08-15.
+
+#### 7 ter.13.1 Ce que l'application est, et ce qu'elle n'est pas
+
+Les trois premières tranches ont conservé une photographie (§7 ter.3), su la comparer (§7 ter.11) et
+su dire où chaque affaire atterrirait (§7 ter.12). Aucune n'écrit. Cette tranche est celle qui
+**écrit** : elle rend la composition vivante du workflow égale à celle que la version a photographiée,
+et elle le fait **en une transaction, ou pas du tout**.
+
+Ce qu'elle **n'est pas** :
+
+- ce n'est **pas** une activation. Le §7 ter.1 dit qu'une version est un témoin et non une cible
+  d'exécution, et cela reste vrai : après la restauration, les cards circulent toujours sur la
+  structure vivante — c'est **cette structure** qui a changé, pas la manière dont on la parcourt ;
+- ce n'est **pas** un déplacement métier. Une affaire remappée ne franchit **aucune arête** : elle
+  est déposée par une décision d'administration. Aucune règle de transition, aucun champ requis,
+  aucun commentaire exigé ne s'applique — exactement comme `change_channel_workflow` (`CRM-019`),
+  pour la même raison, et le trigger `card_events_apres_maj` écrit un événement `moved` sans que
+  cette fonction ait à en fabriquer un ;
+- ce n'est **pas** un « annuler » de l'éditeur. L'éditeur de `CRM-076` défait un geste ; la
+  restauration rétablit un **état** publié, daté et attribué ;
+- ce n'est **pas** une suppression de la version. Restaurer ne consomme pas la photographie : elle
+  reste lisible, et rien n'interdit de la restaurer deux fois.
+
+#### 7 ter.13.2 Le plan est REJOUÉ dans la transaction, et c'est la règle de fond
+
+Le §7 ter.12.1 l'annonçait : « rejouer le plan juste avant d'appliquer y sera obligatoire — une
+structure vivante peut avoir bougé entre les deux ».
+
+Un plan calculé à 14 h 03 et appliqué à 14 h 09 décrit un monde qui n'existe peut-être plus : un
+autre administrateur a pu créer une étape, en supprimer une, ou déplacer une affaire. Appliquer un
+plan périmé, c'est appliquer une décision prise sur des faits faux.
+
+La restauration **appelle donc `public.plan_card_remapping` elle-même**, dans sa propre transaction,
+avec les `step_overrides` que l'appelant lui donne, et **exige que le plan rendu soit `ready`**.
+Elle n'accepte aucun plan pré-calculé : un plan transmis par l'appelant serait une affirmation sur
+l'état de la base, et une affirmation ne se vérifie pas moins cher qu'elle ne se recalcule.
+
+**Conséquence directe, et elle est voulue : les huit refus du §7 ter.12.4 sont ceux de la
+restauration.** `remappage invalide`, `remappage ambigu`, `origine de remappage inconnue`,
+`cible de remappage absente de la version` remontent tels quels, avec leur message et leur
+`SQLSTATE`. Les réécrire aurait donné deux formulations de la même règle, qui finissent toujours par
+diverger — c'est le défaut qu'a corrigé l'extraction du document canonique en §7 ter.2, et il n'est
+pas réintroduit ici.
+
+**La concurrence est tenue par un verrou, comme pour publier.** La fonction sérialise sur le
+workflow — `select … from public.workflows where id = … for update` — **avant** de rejouer le plan.
+Sans ce verrou, deux restaurations simultanées liraient la même structure vivante et la seconde
+écraserait la première sans le savoir. C'est le même geste qu'au §7 ter.5, pour le même motif.
+
+L'appelant peut en outre transmettre `expected_live_fingerprint` : l'empreinte de la structure
+vivante **telle qu'il l'a vue** lorsqu'il a demandé le plan. Fournie, elle est comparée à l'empreinte
+courante, et une divergence est un refus. C'est une concurrence **optimiste**, facultative et non
+imposée : un écran responsable la fournira, un script d'administration pourra s'en passer.
+
+#### 7 ter.13.3 Ce que la restauration touche, et ce qu'elle ne touche pas
+
+Le document canonique porte six clés (§7 ter.2). La restauration en écrit **cinq** :
+
+| Clé | Restaurée ? |
+|---|---|
+| `steps` | oui |
+| `transitions` | oui |
+| `fields` | oui, **sans jamais supprimer** (§7 ter.13.4) |
+| `rules` | oui |
+| `required_fields` | oui |
+| `workflow` | **non** |
+
+**La clé `workflow` n'est pas restaurée, et c'est une décision.** Elle porte `name`, `scope`,
+`track_id`, `is_default` et `archived_at` : l'**identité** et le **placement** du workflow, non sa
+composition. Rétablir `track_id` déménagerait le workflow d'un track à l'autre ; rétablir
+`is_default` désignerait un autre workflow par défaut du workspace ; rétablir `archived_at`
+désarchiverait. Aucun de ces trois gestes n'est une restauration de composition, et chacun a — ou
+aura — son propre geste, avec ses propres refus. Une restauration qui les emporterait au passage
+serait un déménagement caché dans un rétablissement.
+
+La conséquence est dite plutôt que masquée : **après une restauration, l'empreinte vivante peut
+différer de celle de la version** si le nom du workflow a changé depuis. La fonction rend
+l'empreinte obtenue et un booléen `matches_version` qui le dit (§7 ter.13.8). Un produit qui
+prétendrait à l'égalité sans la mesurer mentirait.
+
+#### 7 ter.13.4 Les champs ne sont JAMAIS supprimés, et ce n'est pas un choix de prudence
+
+Un champ créé **depuis** la publication ne figure pas dans la version. La lecture naïve de
+« rendre le workflow égal à la photographie » voudrait qu'il disparaisse. **Il ne disparaît pas :
+il est archivé.**
+
+Deux motifs, et le second retire toute discussion :
+
+1. `card_field_values` porte les **saisies** des utilisateurs. `docs/SPEC-form-composer.md` §5 et la
+   migration `0009` l'énoncent : « les valeurs saisies survivent à l'archivage ; les effacer par
+   cascade serait une perte de données silencieuse ». Supprimer un champ pour rétablir une structure
+   détruirait des données métier qu'aucune version ne conserve — le document canonique ne porte
+   **aucune** valeur (§7 ter.2) ;
+2. **MESURÉ sur la pile seedée, et c'est la mesure qui tranche** : `public.form_fields` ne porte
+   **aucune politique `delete`** — `form_fields_lecture_membre`, `form_fields_insertion_admin`,
+   `form_fields_maj_admin`, et rien d'autre — et `authenticated` n'a que `SELECT`, `INSERT`,
+   `UPDATE`. La suppression d'un champ **n'existe pas** dans ce produit. Le point 1 n'est donc pas
+   une préférence de conception : c'est le schéma qui refuse, depuis `CRM-035`.
+
+Symétriquement, un champ **présent dans la version et archivé depuis** est **désarchivé** :
+`archived_at` repasse à `NULL`. C'est bien la restauration de son état photographié, et elle ne perd
+rien.
+
+Un champ présent dans la version et **absent de la base** — cas qu'aucun geste du produit ne peut
+produire aujourd'hui, la suppression n'existant pas — est **recréé** avec son identifiant d'origine,
+que le document conserve.
+
+Les autres collections n'ont pas ce problème et sont donc restaurées **exactement**, suppressions
+comprises : une arête, une règle de visibilité ou un champ requis ne portent **aucune donnée
+utilisateur**. Les supprimer ne détruit que de la structure, et c'est précisément ce qu'on demande.
+
+#### 7 ter.13.5 Le retour arrière est un point de retour PUBLIÉ, et non un journal parallèle
+
+La Definition of Done exige « application transactionnelle, retour arrière ». Deux lectures
+s'offraient, et la seconde est retenue :
+
+1. **conserver l'état d'avant dans une table dédiée** — `workflow_restorations`, avec le document
+   d'avant et un geste d'annulation. C'est **refusé** : ce serait une seconde forme de conservation
+   d'une composition, à côté de `workflow_versions` qui existe pour cela. Deux mécanismes pour la
+   même chose divergent toujours, et l'un des deux finit non testé ;
+2. **publier la composition vivante comme une version, avant d'écrire.** C'est retenu. Le retour
+   arrière n'est alors **pas un geste de plus** : c'est la restauration elle-même, appliquée au point
+   de retour. Rien n'est inventé, et le mécanisme d'annulation est **le même code**, donc éprouvé par
+   les mêmes preuves.
+
+Le point de retour est publié par `public.publish_workflow_version` — la vraie RPC, jamais une
+insertion directe que les privilèges refusent de toute façon (§7 ter.4) —, avec une `note` qui dit ce
+qu'il est. Il est publié **si et seulement si** la composition vivante diffère de la dernière version
+publiée : lorsqu'elles sont égales, cette dernière version **est** déjà le point de retour, et en
+publier une seconde indiscernable est exactement ce que la vérification 5 du §7 ter.5 interdit.
+
+La fonction rend `rollback_version`, l'identifiant et le numéro du point de retour — ou `null`
+lorsqu'il n'y avait rien à publier, **avec** dans ce cas le numéro de la version qui joue ce rôle.
+
+**La transactionnalité, elle, n'a pas besoin d'être construite** : une fonction PL/pgSQL s'exécute
+dans la transaction de l'appel, et toute exception défait l'ensemble. Ce qui doit être construit,
+c'est l'**ordre** des écritures (§7 ter.13.7), sans quoi la transaction échouerait sur ses propres
+contraintes au lieu d'aboutir.
+
+#### 7 ter.13.6 Le geste — `public.restore_workflow_version`
+
+```
+public.restore_workflow_version(
+  target_version_id         uuid,
+  step_overrides            jsonb default null,
+  expected_live_fingerprint text  default null
+) returns jsonb
+```
+
+`volatile`, `search_path` vide, et **`security invoker`** — comme `plan_card_remapping`.
+
+Ce choix demande une justification, puisque la fonction **écrit** là où le plan ne faisait que lire.
+MESURÉ : les tables de structure portent toutes leurs politiques d'écriture d'administrateur —
+`workflow_steps_insertion_admin`, `workflow_steps_maj_admin`, `workflow_steps_suppression_admin`, et
+leurs équivalentes sur `workflow_transitions`, `form_fields`, `form_field_rules` et
+`workflow_transition_required_fields`. Un administrateur peut donc écrire **tout** ce que la
+restauration écrit, par les mêmes politiques que l'éditeur de `CRM-076`. Un `security definer`
+n'ouvrirait aucune porte de plus ; il retirerait seulement à ces politiques la charge de la preuve,
+et il faudrait alors réécrire la règle d'autorisation dans le corps de la fonction. La règle reste
+donc écrite **une seule fois**, dans les politiques.
+
+Le même choix rend en outre le plan rejoué **exhaustif pour le bon motif** : c'est la vérification 3
+qui l'assure (§7 ter.12.4), et elle est reprise ici à l'identique.
+
+Exécution accordée à `authenticated` et à `service_role` ; **révoquée de `public` et d'`anon`** — la
+révocation nommée est obligatoire (§4.7, décision 80).
+
+Les vérifications, **dans cet ordre**, et ce que chacune rend :
+
+| # | Vérification | Refus | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | l'appelant est authentifié — `auth.uid()` non nul | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
+| 2 | la version cible existe et est lisible par l'appelant | `version introuvable` | `P0001` | `400` |
+| 3 | l'appelant est administrateur du workspace de la version | `restauration reservee aux administrateurs` | `42501` | `403` |
+| 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` | `400` |
+| 5 | `expected_live_fingerprint`, s'il est fourni, égale l'empreinte vivante | `structure modifiee depuis le plan` | `P0001` | `409` |
+| 6 | les huit refus de `plan_card_remapping`, **remontés tels quels** | leurs messages | leurs `SQLSTATE` | `400`/`403` |
+| 7 | le plan rejoué est `ready` | `plan non applicable` | `P0001` | `400` |
+| 8 | chaque étape rétablie désigne un nœud de catalogue existant | `noeud de catalogue introuvable` | `P0001` | `400` |
+
+La vérification 2 rend le même refus qu'une version d'un autre workspace, et précède la
+vérification 3 : la règle du §7 ter.12.4 est inchangée, la fonction n'est pas un oracle d'existence.
+
+**La vérification 4 diffère de celle du plan, et c'est cohérent.** Planifier ne fait que lire, et le
+§7 ter.12.4 refuse explicitement d'interdire à un administrateur de regarder ce qu'une restauration
+ferait sur un workflow archivé. Restaurer **écrit** : un workflow archivé est un workflow qu'on a
+sorti du service, et le réécrire en silence n'a pas de sens. Le refus est ici, et pas là-bas.
+
+**La vérification 5 est la seule qui rende `409`**, et c'est le code juste : la demande était valide,
+c'est l'état du monde qui a changé sous elle. Un `400` laisserait croire à une erreur de l'appelant.
+
+**La vérification 7 ne se contente pas d'un compteur.** Son `detail` nomme le nombre d'affaires non
+résolues **et** les étapes retirées qui les portent : un refus qui dirait seulement « plan non
+applicable » obligerait l'appelant à redemander le plan pour savoir quoi corriger.
+
+**La vérification 8 existe parce qu'une étape rétablie porte un `node_id`**, et que
+`workflow_steps` le lie au catalogue par une clé `on delete restrict`. MESURÉ : le catalogue ne porte
+lui non plus **aucune politique `delete`**, donc le cas ne peut pas se produire par un geste du
+produit ; il le pourrait par une purge d'administration. Le contrôle explicite rend alors un refus
+lisible plutôt qu'un `23503` brut, comme le veut `CLAUDE.md` §20.
+
+#### 7 ter.13.7 L'ordre des écritures, et pourquoi il n'est pas commutatif
+
+Chaque étape de cet ordre est imposée par une contrainte **mesurée**, non par un goût de séquence.
+
+| # | Écriture | Ce qui l'impose |
+|---|---|---|
+| 1 | publier le point de retour | il doit photographier la structure **d'avant** (§7 ter.13.5) |
+| 2 | déplacer les affaires des étapes retirées vers leur cible | MESURÉ : `cards_current_step_id_workflow_id_fkey` est `NO ACTION` — supprimer une étape qui porte encore une affaire échoue en `23503`. C'est ce fait, et lui seul, qui rend le plan obligatoire |
+| 3 | `is_initial` remis à faux sur toutes les étapes vivantes | MESURÉ : `workflow_steps_workflow_initial_uk`, index unique **partiel** sur `(workflow_id) where is_initial`. Rétablir l'étape initiale de la version avant d'avoir défait l'actuelle échoue en `23505` |
+| 4 | supprimer les étapes retirées | leur suppression emporte en cascade leurs arêtes et leurs règles, ce qui allège les étapes 6 et 7 |
+| 5 | créer les étapes rétablies, puis mettre à jour les étapes conservées | `workflow_steps_workflow_id_node_id_key` : un nœud n'apparaît qu'une fois par workflow. Une étape rétablie peut réclamer le nœud d'une étape retirée — d'où la suppression **avant** la création |
+| 6 | arêtes : supprimer, créer, mettre à jour | leurs deux extrémités doivent exister, donc après les étapes |
+| 7 | champs : désarchiver, recréer, mettre à jour, **archiver** les surnuméraires | jamais de suppression (§7 ter.13.4) |
+| 8 | règles de visibilité : supprimer, créer, mettre à jour | elles lient un champ **et** une étape, donc après les deux |
+| 9 | champs requis : supprimer, créer | ils lient une arête et un champ, donc après les deux |
+
+**Aucune ligne n'est détruite puis recréée à l'identique.** Vider une collection pour la réécrire
+serait plus court à écrire et faux à l'usage : les identifiants survivraient peut-être, mais les
+`created_at` seraient réécrits, les cascades emporteraient des lignes filles que la restauration
+devrait ensuite deviner, et une arête reconstruite serait une arête nouvelle pour tout ce qui la
+référence. La restauration **différencie** : ce qui doit disparaître, ce qui doit naître, ce qui doit
+changer — et ce qui ne doit rien faire ne subit rien.
+
+#### 7 ter.13.8 Ce que la fonction rend
+
+Un objet `jsonb` :
+
+```
+{
+  "version":          { "version_id", "version_number", "workflow_id",
+                        "composition_fingerprint" },
+  "rollback_version": { "version_id", "version_number", "published" } ,
+  "cards":            { "remapped" },
+  "steps":            { "created", "deleted", "updated" },
+  "transitions":      { "created", "deleted", "updated" },
+  "fields":           { "created", "unarchived", "archived", "updated" },
+  "rules":            { "created", "deleted", "updated" },
+  "required_fields":  { "created", "deleted" },
+  "fingerprint_after": "…",
+  "matches_version":   true | false
+}
+```
+
+`rollback_version.published` dit si le point de retour a été **publié par cet appel** (§7 ter.13.5) ;
+lorsqu'il est faux, `version_id` et `version_number` désignent la version qui jouait déjà ce rôle.
+La clé n'est jamais nulle : il y a **toujours** un point vers lequel revenir, et le produit doit
+pouvoir le nommer.
+
+`fingerprint_after` est l'empreinte **recalculée après écriture**, jamais celle de la version
+recopiée. `matches_version` est vrai lorsque les deux coïncident. Il peut être faux **sans qu'aucune
+erreur n'ait eu lieu** — la clé `workflow` n'est pas restaurée (§7 ter.13.3), et un champ
+surnuméraire archivé reste dans le document avec son `archived_at`. Rendre ce booléen plutôt que de
+prétendre à l'égalité est la seule réponse honnête, et une assertion l'éprouve **dans les deux
+sens**.
+
+#### 7 ter.13.9 Autorisations
+
+| Opération | `anon` | `viewer` / `business_developer` | `admin` | `service_role` |
+|---|---|---|---|---|
+| `restore_workflow_version` | `401` — le privilège refuse | `403`, `42501` — vérification 3 | `200` | accordé |
+
+Restaurer est une prérogative d'administration, pour un motif plus fort encore que planifier : le
+geste **écrit** la structure de travail de tout un channel.
+
+#### 7 ter.13.10 Contrat d'API attendu, à mesurer
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/restore_workflow_version` sur la version du seed, structure vivante inchangée | `admin` | `200`, tous les compteurs à zéro, `rollback_version.published` **faux**, `matches_version` vrai |
+| b | après ajout d'une étape et d'une arête, restauration de la version du seed | `admin` | `200`, `steps.deleted` 1, `transitions.deleted` ≥ 1, `rollback_version.published` **vrai** |
+| c | l'empreinte vivante après b | clé de service | égale à `composition_fingerprint` de la version |
+| d | restauration du point de retour rendu en b | `admin` | `200`, l'étape et l'arête **réapparaissent** avec leurs identifiants d'origine — le retour arrière |
+| e | restauration d'une version antérieure à une étape portant des affaires, sans instruction | `admin` | `400`, `P0001`, `plan non applicable` |
+| f | le même appel avec l'instruction qui lève le blocage | `admin` | `200`, `cards.remapped` égal au nombre d'affaires de l'étape retirée, relu **en base** |
+| g | après f, la timeline des affaires déplacées | clé de service | un événement `moved` par affaire, écrit par le trigger et non par la fonction |
+| h | restauration d'une version dont un champ a été ajouté depuis | `admin` | `200`, `fields.archived` 1, `fields.created` 0, et le champ **existe toujours** avec son `archived_at` |
+| i | `expected_live_fingerprint` périmée | `admin` | `409`, `P0001`, `structure modifiee depuis le plan` |
+| j | `expected_live_fingerprint` exacte | `admin` | `200` |
+| k | `step_overrides` qui n'est pas un tableau | `admin` | `400`, `P0001`, `remappage invalide` — le refus du plan, remonté tel quel |
+| l | instruction dont la `to_step_id` est absente de la version | `admin` | `400`, `P0001`, `cible de remappage absente de la version` |
+| m | `POST /rpc/restore_workflow_version` | `business_developer` | `403`, `42501`, `restauration reservee aux administrateurs` |
+| n | `POST /rpc/restore_workflow_version` | `viewer` | `403`, `42501`, **le même message qu'en m** |
+| o | version inexistante | `admin` | `400`, `P0001`, `version introuvable` |
+| p | version d'un autre workspace | `admin` | `400`, `P0001`, **le même message qu'en o** — preuve de refus n° 3 |
+| q | workflow archivé | `admin` | `400`, `P0001`, `workflow archive` |
+| r | appel anonyme | anonyme | `401` — le privilège refuse avant la vérification 1 |
+
+**Aucune preuve ne restaure la structure du seed sans la rétablir.** Chaque scénario qui modifie la
+composition vivante repart de la version du seed, et l'ordre des preuves ne suppose jamais qu'un
+scénario précédent a laissé la base propre : c'est la restauration elle-même qui la ramène, ce qui
+est aussi une manière de l'éprouver.
+
+#### 7 ter.13.11 Ce que cette tranche ne livre PAS
+
+- **aucun écran** : la liste des versions, le bouton de publication, l'aperçu de comparaison et
+  l'aperçu du plan appartiennent à la cinquième tranche. Aucune capture d'application n'est donc
+  produite ici, et l'absence est nommée plutôt que compensée ;
+- **aucune restauration de l'identité du workflow** — nom, portée, track, défaut, archivage
+  (§7 ter.13.3) ;
+- **aucune suppression de champ**, ni ici ni ailleurs : elle n'existe pas dans ce produit
+  (§7 ter.13.4) ;
+- **aucune purge de versions** : restaurer ne supprime rien, et le nombre de versions ne fait que
+  croître. Une politique de rétention, si elle devient nécessaire, aura sa propre unité ;
+- **aucun seed** : la restauration ne conserve rien qu'une version ne conserve déjà, et fabriquer une
+  divergence dans le seed pour donner une restauration à montrer serait une donnée fabriquée pour la
+  preuve (`CLAUDE.md` §8). Les preuves construisent elles-mêmes ce qu'elles restaurent, par les
+  vrais gestes ;
+- **aucun changement de type de champ** : le §7 bis.10.3 le renvoyait à ce plan de remappage. Il n'y
+  entre pas — le plan porte sur les **étapes** (§7 ter.12.3), et le remappage des **valeurs** d'un
+  champ dont le type change est un autre problème, qui aura sa propre spécification.
+
+#### 7 ter.13.12 Preuves attendues de la quatrième tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Existence, volatilité `volatile`, **absence de `security definer`**, privilèges et révocation d'`anon` ; les huit refus contre des comptes réels ; **le point de retour publié, puis restauré, rendant les identifiants d'origine** ; les affaires remappées comptées **en base** et leur événement `moved` ; le champ surnuméraire **archivé et non supprimé**, avec sa valeur saisie intacte ; l'empreinte après restauration égale à celle de la version ; `matches_version` **faux** lorsque le nom du workflow a changé ; l'ordre des écritures éprouvé par le cas qui échouerait sans lui — étape initiale déplacée, nœud réutilisé |
+| API | Les dix-huit lignes du §7 ter.13.10, hors interface, avec les jetons réels des trois profils ; preuve de refus n° 3 au niveau des versions |
+| Seed | **Aucun** (§7 ter.13.11) |
+| Interface | **Aucune** — cette tranche ne livre aucun écran |
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
