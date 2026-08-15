@@ -147,6 +147,48 @@ une aide au démarrage qui suit l'utilisateur partout devient un bandeau qu'on a
 avant les écrans qu'il présente. Elle porte le même patron que les quatre autres : titre, phrase
 d'explication, cible `--size-target`.
 
+### 4.4 Aucune mesure sans session — et le défaut mesuré qui l'impose
+
+**Ajouté le 2026-08-15, après mesure de la campagne complète.** Les §4.1 et §4.2 ci-dessus
+décrivaient les deux surfaces sans distinguer l'appelant. Une fois le guide monté sur `/`, la
+campagne a rendu **une régression réelle**, et elle n'était pas un défaut de preuve :
+
+```
+console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)
+```
+
+Un visiteur **non connecté** qui ouvre `/` déclenchait les cinq comptages. Quatre aboutissent —
+`200` et zéro ligne, le refus par défaut — mais `mail_inbound_accounts` **refuse la clé anonyme**
+par `401` (§3.1, fait 3). Le navigateur écrivait donc une erreur dans la console sur l'écran
+d'arrivée du produit, là où le dépôt exige une console vierge.
+
+**La règle, et elle vaut pour les deux surfaces :** tant que l'état d'authentification n'est pas
+`authentifie`, **aucune mesure n'est émise**.
+
+| État de session | `/` | `/demarrage` |
+|---|---|---|
+| `chargement` — la session se restaure | l'état vide existant, sans mesure | le guide en chargement, sans mesure |
+| `anonyme` | l'état vide existant, **inchangé** | le guide, ses cinq étapes en chargement, sans mesure |
+| `authentifie` | le §4.2, sans changement | le §4.1, sans changement |
+
+Trois motifs, et le premier suffirait :
+
+1. **La mesure serait fausse.** Le guide écrit ce que l'appelant voit (§3.1, fait 1). Un visiteur
+   sans session ne voit rien, non parce que son espace est vide, mais parce qu'il n'est pas
+   connecté. Lui afficher « créez un premier track » nommerait le mauvais problème : ce que la
+   coquille lui dit déjà — espace absent, aucun track — est le message exact.
+2. **Le §1 le disait déjà.** « Un compte **qui se connecte** pour la première fois arrive sur `/` ».
+   L'onboarding s'adresse à une session, et l'étape 1 est « accomplie par la connexion » (§3).
+3. **Une console salie n'est pas un état d'écran.** Le §6.1 traite le refus reçu par une session
+   qui expire — un cas rare, provoqué, et que l'écran explique. Il ne justifie pas d'émettre une
+   requête vouée au refus à chaque ouverture de l'accueil par un visiteur.
+
+Ce n'est pas une règle d'autorisation déplacée dans l'interface (`CLAUDE.md` §10) : rien n'est
+autorisé ni refusé ici, et aucun rôle n'est interrogé. C'est le **choix de ne pas poser une
+question dont l'appelant ne peut pas être le sujet**. Les politiques restent seules juges de ce
+que la session, une fois ouverte, obtient — et le §6.1 garde son traitement du refus reçu en cours
+de session.
+
 ## 5. Interruption et reprise — ce qui est stocké, et où
 
 | Donnée | Support | Catégorie `CLAUDE.md` §11 |
