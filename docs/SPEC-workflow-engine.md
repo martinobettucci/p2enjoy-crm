@@ -3761,7 +3761,7 @@ Les vérifications, **dans cet ordre**, et ce que chacune rend :
 | 2 | la version cible existe **et** l'appelant est membre de son workspace — `app.is_workspace_member` | `version introuvable` | `P0001` | `400` |
 | 3 | l'appelant est administrateur du workspace de la version | `restauration reservee aux administrateurs` | `42501` | `403` |
 | 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` | `400` |
-| 5 | `expected_live_fingerprint`, s'il est fourni, égale l'empreinte vivante | `structure modifiee depuis le plan` | `P0001` | `409` |
+| 5 | `expected_live_fingerprint`, s'il est fourni, égale l'empreinte vivante | `structure modifiee depuis le plan` | `PT409` | `409` |
 | 6 | les huit refus de `plan_card_remapping`, **remontés tels quels** | leurs messages | leurs `SQLSTATE` | `400`/`403` |
 | 7 | le plan rejoué est `ready` | `plan non applicable` | `P0001` | `400` |
 | 8 | chaque étape rétablie désigne un nœud de catalogue existant | `noeud de catalogue introuvable` | `P0001` | `400` |
@@ -3777,6 +3777,21 @@ sorti du service, et le réécrire en silence n'a pas de sens. Le refus est ici,
 
 **La vérification 5 est la seule qui rende `409`**, et c'est le code juste : la demande était valide,
 c'est l'état du monde qui a changé sous elle. Un `400` laisserait croire à une erreur de l'appelant.
+
+**Et c'est le seul refus dont le `SQLSTATE` n'est pas `P0001` — révision du 2026-08-15, imposée par
+la mesure.** La première rédaction de ce tableau exigeait `P0001` **et** `409`. MESURÉ par une sonde
+posée puis retirée sur la pile locale : PostgREST rend **`400`** pour tout `P0001`, et **`409`** pour
+un `SQLSTATE` de la forme `PT<statut>` — le seul mécanisme par lequel une fonction choisit son code
+HTTP. Les deux exigences étaient donc inconciliables, et le refus rendait `400` en pratique : le
+harnais d'API de la quatrième tranche l'a constaté avant qu'aucune session ne l'ait remarqué.
+
+**C'est le `SQLSTATE` qui cède, et le motif se lit dans le texte même de cette section.** Le `409` y
+est **argumenté** — un `400` mentirait à l'appelant sur la nature de l'échec. Le `P0001` ne l'est
+nulle part : c'est la valeur par défaut de `raise exception`, écrite par symétrie avec les sept
+autres lignes. Entre une exigence raisonnée et une valeur par défaut, c'est la valeur par défaut qui
+s'efface. Le message et le `detail` sont inchangés — seul le véhicule du statut change —, et
+l'assertion pgTAP qui figeait `P0001` a été **révisée avec son motif dans le fichier**, jamais
+contournée.
 
 **La vérification 7 ne se contente pas d'un compteur.** Son `detail` nomme le nombre d'affaires non
 résolues **et** les étapes retirées qui les portent : un refus qui dirait seulement « plan non
@@ -3872,7 +3887,7 @@ geste **écrit** la structure de travail de tout un channel.
 | f | le même appel avec l'instruction qui lève le blocage | `admin` | `200`, `cards.remapped` égal au nombre d'affaires de l'étape retirée, relu **en base** |
 | g | après f, la timeline des affaires déplacées | clé de service | un événement `moved` par affaire, écrit par le trigger et non par la fonction |
 | h | restauration d'une version dont un champ a été ajouté depuis | `admin` | `200`, `fields.archived` 1, `fields.created` 0, et le champ **existe toujours** avec son `archived_at` |
-| i | `expected_live_fingerprint` périmée | `admin` | `409`, `P0001`, `structure modifiee depuis le plan` |
+| i | `expected_live_fingerprint` périmée | `admin` | `409`, `PT409`, `structure modifiee depuis le plan` — le seul refus dont le `SQLSTATE` n'est pas `P0001`, et c'est ce qui produit le `409` (§7 ter.13.6) |
 | j | `expected_live_fingerprint` exacte | `admin` | `200` |
 | k | `step_overrides` qui n'est pas un tableau | `admin` | `400`, `P0001`, `remappage invalide` — le refus du plan, remonté tel quel |
 | l | instruction dont la `to_step_id` est absente de la version | `admin` | `400`, `P0001`, `cible de remappage absente de la version` |

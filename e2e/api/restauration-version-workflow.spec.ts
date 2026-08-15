@@ -80,7 +80,12 @@ type Restauration = {
 	matches_version: boolean
 }
 
-type Refus = { code: string; message: string; detail?: string | null }
+/**
+ * La forme d'erreur de PostgREST. La clé est `details` au PLURIEL — le `detail` du `raise` de
+ * PostgreSQL y arrive sous ce nom, et lire `detail` rendrait `undefined` sur une erreur pourtant
+ * bien remplie.
+ */
+type Refus = { code: string; message: string; details?: string | null }
 
 /** Crée un workflow jetable par la clé de service et rend son identifiant. */
 async function workflowJetable(api: APIRequestContext, nom: string): Promise<string> {
@@ -441,7 +446,8 @@ test.describe('N3 — le plan rejoué, son refus et son instruction (lignes e, f
 			expect(e.message).toBe('plan non applicable')
 			// Le `detail` NOMME ce qu'il faut corriger : un refus qui dirait seulement « plan non
 			// applicable » obligerait l'appelant à redemander le plan (§7 ter.13.6, vérification 7).
-			expect(e.detail ?? '').toContain('Née après')
+			expect(e.details ?? '').toContain('Née après')
+			expect(e.details ?? '').toContain('2 affaire(s) sans destination')
 
 			// LE REFUS N'A RIEN ÉCRIT : l'affaire est relue sur son étape d'origine. Un refus qui
 			// laisse une trace n'est pas un refus.
@@ -508,7 +514,9 @@ test.describe('N4 — le champ surnuméraire est ARCHIVÉ, jamais supprimé (lig
 					id: champ,
 					workflow_id: f.workflow,
 					workspace_id: WORKSPACE_SEED,
-					key: `tst_restauration_${champ.slice(0, 8)}`,
+					// MESURÉ : `form_fields_key_check` impose le kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`
+					// (migration 9). Une clé à tirets bas est refusée en `23514`.
+					key: `tst-restauration-${champ.slice(0, 8)}`,
 					label: 'Champ né après la version',
 					type: 'text',
 					options: {},
@@ -559,7 +567,12 @@ test.describe('N5 — la concurrence optimiste, et son code HTTP (lignes i, j)',
 			// erreur de l'appelant (§7 ter.13.6, vérification 5).
 			expect(reponse.status()).toBe(409)
 			const corps = (await reponse.json()) as Refus
-			expect(corps.code).toBe('P0001')
+			// LE `SQLSTATE` EST `PT409`, ET C'EST CE HARNAIS QUI L'A IMPOSÉ. La première rédaction de
+			// la fonction levait `P0001` comme ses sept autres refus, et rendait donc `400` : mesuré
+			// ici, puisque pgTAP ne voit jamais un code HTTP. Seul un `SQLSTATE` de la forme
+			// `PT<statut>` fait choisir son code à une fonction, et c'est le `409` que la
+			// spécification argumente (§7 ter.13.6).
+			expect(corps.code).toBe('PT409')
 			expect(corps.message).toBe('structure modifiee depuis le plan')
 		} finally {
 			await rendreLaBase(request, f.workflow, f.channel)

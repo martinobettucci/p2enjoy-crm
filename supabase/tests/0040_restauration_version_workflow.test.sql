@@ -194,8 +194,14 @@ select throws_ok(
 		(select id from public.workflow_versions
 		  where workflow_id = (select wf from t_ctx) order by version_number limit 1),
 		'0000000000000000000000000000000000000000000000000000000000000000'),
-	'P0001', 'structure modifiee depuis le plan',
-	'13. empreinte vivante périmée : la concurrence optimiste refuse');
+	-- PREUVE FIGÉE RÉVISÉE, JAMAIS CONTOURNÉE (mécanisme de la décision 51). Cette assertion figeait
+	-- `P0001`. MESURÉ le 2026-08-15 : PostgREST rend HTTP 400 pour tout `P0001`, et le §7 ter.13.6
+	-- exige un `409` — le seul refus de la fonction à en exiger un, parce que la demande était valide
+	-- et que c'est le monde qui a changé sous elle. Seul un SQLSTATE de la forme `PT<statut>` produit
+	-- ce code. Le SQLSTATE cède donc, le code HTTP argumenté par la spécification étant conservé ;
+	-- `e2e/api/restauration-version-workflow.spec.ts` ligne i mesure le `409` que pgTAP ne voit pas.
+	'PT409', 'structure modifiee depuis le plan',
+	'13. empreinte vivante périmée : la concurrence optimiste refuse en PT409, qui rend le 409');
 
 select throws_ok(
 	format('select public.restore_workflow_version(%L, %L)',

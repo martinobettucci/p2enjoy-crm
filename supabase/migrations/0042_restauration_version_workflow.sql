@@ -164,10 +164,22 @@ begin
 	-- 5. Concurrence OPTIMISTE et facultative : l'appelant dit l'empreinte vivante telle qu'il l'a
 	--    vue en demandant le plan. Une divergence n'est pas une erreur de l'appelant — c'est l'état
 	--    du monde qui a changé sous lui —, d'où le `409` et non le `400`.
+	--
+	--    LE SQLSTATE EST `PT409`, ET C'EST LA MESURE QUI L'A IMPOSÉ. La première rédaction levait
+	--    `P0001`, comme les sept autres refus. MESURÉ le 2026-08-15 par une sonde posée puis retirée
+	--    sur la pile locale : PostgREST rend **HTTP 400** pour tout `P0001`, et **HTTP 409** pour un
+	--    SQLSTATE de la forme `PT<statut>`. Les deux exigences du §7 ter.13.6 — « `P0001` » et
+	--    « `409` » — étaient donc inconciliables, et le refus rendait `400` en pratique.
+	--    Ce qui est ARGUMENTÉ dans la spécification est le code HTTP : « la demande était valide,
+	--    c'est l'état du monde qui a changé sous elle ; un `400` laisserait croire à une erreur de
+	--    l'appelant ». Le `P0001` n'y est argumenté nulle part — c'est la valeur par défaut de
+	--    `raise exception`, écrite par symétrie. C'est donc lui qui cède, et la colonne SQLSTATE du
+	--    §7 ter.13.6 a été révisée avec son motif plutôt que le `409` abandonné en silence.
+	--    Le message et le `detail` sont inchangés : seul le véhicule du statut change.
 	if expected_live_fingerprint is not null
 	   and expected_live_fingerprint <> empreinte_avant then
 		raise exception 'structure modifiee depuis le plan'
-			using errcode = 'P0001',
+			using errcode = 'PT409',
 			      detail  = 'la composition vivante a change depuis le calcul du plan',
 			      hint    = 'redemandez le plan avant d''appliquer';
 	end if;
