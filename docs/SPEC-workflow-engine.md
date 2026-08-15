@@ -2784,8 +2784,14 @@ public.previsualiser_exigence(
 - Un **champ archivé** rend `0, 0` : la sixième garde filtre `f.archived_at is null`, donc
   l'exigence serait sans effet — c'est ce que le §7 bis.11 et le §7 bis.12 écrivent déjà de leur
   côté.
-- Le compte « à l'entrée » **dédoublonne les affaires** : cinq arêtes du seed mènent à `Perdu`, et
-  une affaire qui en emprunte deux ne compte qu'une fois.
+- Le compte « à l'entrée » compte des **affaires**, non des couples affaire × arête. La défense est
+  un `count(distinct)`, et il faut dire ce qu'elle vaut : la contrainte
+  `workflow_transitions_workflow_from_to_key` rend unique le couple (départ, arrivée) d'un
+  workflow, si bien qu'aucune affaire ne peut aujourd'hui être comptée deux fois. MESURÉ sur les
+  cinq arêtes menant à `Perdu` : prises une à une elles rendent 4, 2, 1, 0 et 1, et l'étape rend
+  **8** — l'union est exactement la somme. Le `distinct` ne change donc rien tant que cette
+  contrainte tient, et la preuve constate cette **égalité** plutôt que de prétendre observer un
+  dédoublonnage que le modèle rend impossible.
 
 Le corps reprend la sixième garde de `move_card` **mot pour mot** pour la partie qui définit
 « renseigné » — `not exists (… and not app.valeur_de_champ_est_vide(v.value))` —, et cette parenté

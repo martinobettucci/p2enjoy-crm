@@ -301,8 +301,14 @@ PORT_RAPPORT=9323
 # aucune suite n'a été perdue en route, seul le compteur était resté en arrière. À NOTER, et c'est
 # une mesure et non une lecture du journal : `0032` existait DÉJÀ au commit qui a écrit 1921, dont
 # l'arbre porte 32 fichiers et 1933 assertions. Ce compteur-là était donc faux DÈS SON ÉCRITURE.
-FICHIERS_SQL_ATTENDUS=33
-ASSERTIONS_ATTENDUES=1971
+#
+# --- `CRM-076`, sixième tranche, le 2026-08-15 -----------------------------------------------------
+# `0034_previsualisation_exigence.test.sql` ajoute UNE suite et DIX assertions : la forme de
+# `public.previsualiser_exigence`, ses deux refus de cible, ses deux comptes mesurés sur le seed,
+# l'union de ses arêtes, ses deux `0, 0` — champ archivé et cible inconnue —, et surtout sa parenté
+# avec `move_card`. 33 + 1 = **34** ; 1971 + 10 = **1981**. MESURÉ par `npm run test:sql`, non déduit.
+FICHIERS_SQL_ATTENDUS=34
+ASSERTIONS_ATTENDUES=1981
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
