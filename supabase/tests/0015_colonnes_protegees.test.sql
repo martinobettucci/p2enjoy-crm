@@ -255,22 +255,28 @@ release savepoint p_insert;
 -- relâchée, et c'est le point : ce qu'elles surveillent — le nombre, la FORME générée, l'unicité —
 -- est exactement ce qu'un retrait de privilège pourrait abîmer sans que rien d'autre le dise. Une
 -- card ajoutée par une autre unité déplace leur compte ; elle ne change pas leur objet.
+--
+-- RÉVISÉES UNE TROISIÈME FOIS PAR `CRM-046`, tranche 2 : les vingt-six cards de volume de
+-- `docs/SPEC-seed.md` §9.11 portent le seed à QUARANTE ET UNE cards. Même raison, et elle vaut la
+-- peine d'être redite : le compte suit le contrat du seed, l'OBJET de l'assertion ne bouge pas.
+-- Sur quarante et une adresses, l'unicité de la colonne générée est d'ailleurs éprouvée sur un
+-- échantillon presque trois fois plus grand qu'avant.
 select is(
 	(select count(*)::int from public.cards),
-	15,
-	'les quinze cards du seed sont intactes : cette unité ne touche aucun contenu');
+	41,
+	'les quarante et une cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
 	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
-	15,
-	'et leurs quinze adresses ont toujours la forme générée : aucune n''a été réécrite');
+	41,
+	'et leurs quarante et une adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards),
-	15,
-	'quinze adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne l''a pas '
-	'relâché');
+	41,
+	'quarante et une adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
+	'l''a pas relâché');
 
 -- =============================================================================================
 -- 6. Ce qui reste dû à `CRM-013`, et la cible `card_events` désormais livrée

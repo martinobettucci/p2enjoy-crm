@@ -88,13 +88,20 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011'::uuid);
 --    `Négociation → Perdu` sont deux arêtes déclarées. Le compte « à l'entrée » de `Signature`
 --    passe donc de 1 à 2, et celui de `Perdu` de 8 à 9. La révision RENFORCE : ce sont les mêmes
 --    nombres, mesurés sur un seed qui porte une affaire de plus, et non une tolérance.
+--
+--    RÉVISÉ PAR `CRM-046` TRANCHE 2, ET L'INVERSION EST PRÉSERVÉE À DESSEIN. Les vingt-six cards
+--    de volume de `docs/SPEC-seed.md` §9.11 portent les comptes à 11/0 sur `Prospection` et 0/8
+--    sur `Signature`. Le fait que ces assertions démontrent — `sur_place` nul là où `a_l_entree`
+--    ne l'est pas, et l'exact inverse une étape plus tôt — est INTACT, et il l'est parce que le
+--    seed s'interdit de poser du volume sur `Signature` précisément pour cela (§9.11.3). Les
+--    nombres suivent la donnée ; la propriété, elle, ne se négocie pas.
 select is(
 	(select array[sur_place, a_l_entree]
 	   from public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083',
 	        '5eed0000-0000-4000-8000-000000000061')),
-	array[4::bigint, 0::bigint],
-	'5 — `date-signature-prevue` × `Prospection` : 4 sur place, 0 à l''entrée');
+	array[11::bigint, 0::bigint],
+	'5 — `date-signature-prevue` × `Prospection` : 11 sur place, 0 à l''entrée');
 
 -- 6. Ce n'est pas la fonction qui a changé, c'est la donnée qu'elle compte : l'assertion continue
 --    d'affirmer ce qu'elle affirmait — les deux nombres NE SONT PAS le même, `sur_place` restant à 0
@@ -104,11 +111,11 @@ select is(
 	   from public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083',
 	        '5eed0000-0000-4000-8000-000000000064')),
-	array[0::bigint, 2::bigint],
-	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 2 à l''entrée — l''inverse exact');
+	array[0::bigint, 8::bigint],
+	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 8 à l''entrée — l''inverse exact');
 
--- 7. LE COMPTE D'UNE ÉTAPE EST L'UNION DE SES ARÊTES. Cinq arêtes mènent à `Perdu` ; prises une à
---    une elles rendent 4, 2, 2, 0 et 1, et l'étape rend 9. L'assertion vérifie l'égalité, et non
+-- 7. LE COMPTE D'UNE ÉTAPE EST L'UNION DE SES ARÊTES. Cinq arêtes mènent à `Perdu`, et l'étape en
+--    rend 29 depuis `CRM-046` tranche 2. L'assertion vérifie l'égalité, et non
 --    une inégalité stricte : la contrainte `workflow_transitions_workflow_from_to_key` rend unique
 --    le couple (départ, arrivée) d'un workflow, si bien qu'AUCUNE affaire ne peut aujourd'hui être
 --    comptée deux fois. Le `count(distinct)` de la fonction est donc une défense qui ne change
@@ -124,7 +131,7 @@ select is(
 	   cross join lateral public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083', null, t.id) p
 	  where t.to_step_id = '5eed0000-0000-4000-8000-000000000067'),
-	'7 — le compte d''une étape est l''union de ses arêtes : 9 pour `Perdu`, comme la somme de ses cinq chemins');
+	'7 — le compte d''une étape est l''union de ses arêtes : 29 pour `Perdu`, comme la somme de ses cinq chemins');
 
 -- 8. LA PARENTÉ AVEC `move_card`, et c'est l'assertion qui donne sa valeur aux autres. La
 --    prévisualisation annonce 4 affaires bloquées sur `Prospection → Perdu` ; la règle est posée,

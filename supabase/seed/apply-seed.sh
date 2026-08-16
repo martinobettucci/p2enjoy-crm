@@ -466,11 +466,17 @@ CARDS=(
 # `grands-comptes` — charger le second réécrirait les onze captures du board de `CRM-041` et les
 # douze de `CRM-042` sans rien démontrer de plus.
 #
-# CINQ ÉTAPES SUR SEPT, ET L'EXCLUSION EST UNE RÈGLE (§9.11.3) : `realisation` et `perdu` sont
-# exclues. MESURÉ : la transition `signature → realisation` exige `lien-proposition`, et l'étape
-# `perdu` exige `motif-perte`. Une card posée là sans sa valeur décrirait un franchissement que
-# `move_card` aurait REFUSÉ — la trace fabriquée que CLAUDE.md §8 proscrit. Les deux étapes portent
-# déjà leur card de démonstration, `…0cc` et `…0ce`, avec les valeurs que leur position exige.
+# QUATRE ÉTAPES SUR SEPT, ET CHAQUE EXCLUSION EST UNE RÈGLE MESURÉE (§9.11.3).
+#
+#   * `realisation` et `perdu` : la transition `signature → realisation` exige `lien-proposition`,
+#     et l'étape `perdu` exige `motif-perte`. Une card posée là sans sa valeur décrirait un
+#     franchissement que `move_card` aurait REFUSÉ — la trace fabriquée que CLAUDE.md §8 proscrit.
+#     Les deux portent déjà leur card de démonstration, `…0cc` et `…0ce`, avec leurs valeurs ;
+#   * `signature` : le seed y démontre, et lui seul, que `previsualiser_exigence` rend ZÉRO affaire
+#     « sur place » quand elle en rend plusieurs « à l'entrée » — l'inversion exacte du compte de
+#     `Prospection`, qui est le fait justifiant l'écran de prévisualisation
+#     (`supabase/tests/0034_previsualisation_exigence.test.sql`, assertions 5 et 6). Y poser du
+#     volume effacerait cette démonstration sans rien apporter à celle-ci.
 #
 # UNE SEULE porte les données longues, `…d001` : titre de 128 caractères, prochaine action de 134 —
 # exactement les longueurs que les réponses substituées de `CRM-042` servent aujourd'hui. Son titre
@@ -483,12 +489,18 @@ CARDS=(
 # Aucune valeur de formulaire, aucun commentaire, aucun événement écrit à la main : elles démontrent
 # un VOLUME et une LONGUEUR, pas une règle de formulaire (§9.11.5).
 #
+# AUCUNE NE CUMULE « SANS RESPONSABLE » ET « SANS MONTANT », et c'est une contrainte MESURÉE, non
+# une préférence : `supabase/tests/0012_cards.test.sql` démontre le caractère nullable des deux
+# colonnes par l'UNICITÉ d'une telle card dans le seed. `…d004` et `…d015` sont donc sans
+# responsable mais AVEC montant — la cellule « Responsable » vide reste démontrée dans le volume,
+# et l'assertion de `CRM-040` garde l'objet qu'elle s'était donné.
+#
 # id | channel | étape | titre | responsable | montant | devise | position | prochaine action | échéance | archivage | corbeille
 CARDS_VOLUME=(
 	'5eed0000-0000-4000-8000-00000000d001|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Astreinte 24/7 et supervision applicative du portail client de la Ville de Lyon — reconduction sous engagement de niveau garanti|5eed0000-0000-4000-8000-000000000013|142000.00|EUR|2|Consolider le relevé complet des incidents des douze derniers mois et présenter le plan de remédiation au comité de pilotage du client|2026-09-18T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d002|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Renouvellement TMA — Clinique Saint-Ambroise|5eed0000-0000-4000-8000-000000000013|18400.00|EUR|3|Chiffrer le lot astreinte|2026-09-02T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d003|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Correctifs de sécurité — extranet Perrin|5eed0000-0000-4000-8000-000000000012|7200.00|EUR|4|Planifier la fenêtre de mise en production|2026-08-29T14:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d004|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Supervision applicative — Groupe Vallier|-|-|EUR|5|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d004|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Supervision applicative — Groupe Vallier|-|5400.00|EUR|5|-|-|-|-'
 	'5eed0000-0000-4000-8000-00000000d005|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Maintenance évolutive — boutique Havas Nord|5eed0000-0000-4000-8000-000000000011|11900.00|EUR|6|Recueillir les besoins de la saison 2027|2026-10-06T10:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d006|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Reprise de dette technique — API Sogexia|5eed0000-0000-4000-8000-000000000012|26500.00|EUR|7|Cadrer le périmètre avec l’architecte|2026-09-24T09:30:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d007|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Contrat TMA 2026 — Mairie de Vaulx|5eed0000-0000-4000-8000-000000000013|33000.00|EUR|1|Relancer le service juridique|2026-09-08T09:00:00Z|-|-'
@@ -501,11 +513,11 @@ CARDS_VOLUME=(
 	'5eed0000-0000-4000-8000-00000000d014|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Migration base de données — MGEN Loire|5eed0000-0000-4000-8000-000000000011|54000.00|EUR|3|Trancher la fenêtre de bascule|2026-10-02T07:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d015|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Audit de performance — portail Meunier|-|8300.00|EUR|4|-|-|-|-'
 	'5eed0000-0000-4000-8000-00000000d016|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Plan de reprise d’activité — Institut Berthier|5eed0000-0000-4000-8000-000000000012|61500.00|EUR|5|Faire valider le RTO par la direction|2026-10-20T10:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d017|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|TMA annuelle — Fédération sportive du Rhône|5eed0000-0000-4000-8000-000000000013|24800.00|EUR|1|Faire signer l’avenant de reconduction|2026-09-05T09:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d018|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Veille de vulnérabilités — Atelier Meunier|5eed0000-0000-4000-8000-000000000011|6900.00|EUR|2|Recueillir la signature électronique|2026-09-12T09:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d019|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Optimisation du cache — site Havas Nord|5eed0000-0000-4000-8000-000000000012|12300.00|EUR|3|-|-|-|-'
-	'5eed0000-0000-4000-8000-00000000d020|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Reprise du parc de tests — Groupe Vallier|5eed0000-0000-4000-8000-000000000013|19700.00|EUR|4|Confirmer le périmètre de la recette|2026-09-26T14:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d021|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Maintenance corrective — application Lorris|5eed0000-0000-4000-8000-000000000011|8800.00|EUR|5|Obtenir le bon de commande|2026-10-09T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d017|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|TMA annuelle — Fédération sportive du Rhône|5eed0000-0000-4000-8000-000000000013|24800.00|EUR|6|Faire signer l’avenant de reconduction|2026-09-05T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d018|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Veille de vulnérabilités — Atelier Meunier|5eed0000-0000-4000-8000-000000000011|6900.00|EUR|6|Recueillir la signature électronique|2026-09-12T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d019|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Optimisation du cache — site Havas Nord|5eed0000-0000-4000-8000-000000000012|12300.00|EUR|6|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d020|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Reprise du parc de tests — Groupe Vallier|5eed0000-0000-4000-8000-000000000013|19700.00|EUR|8|Confirmer le périmètre de la recette|2026-09-26T14:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d021|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Maintenance corrective — application Lorris|5eed0000-0000-4000-8000-000000000011|8800.00|EUR|7|Obtenir le bon de commande|2026-10-09T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d022|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Correctif majeur livré — extranet Sogexia|5eed0000-0000-4000-8000-000000000012|15400.00|EUR|1|-|-|-|-'
 	'5eed0000-0000-4000-8000-00000000d023|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Montée de version livrée — portail de Vaulx|5eed0000-0000-4000-8000-000000000013|29600.00|EUR|2|-|-|-|-'
 	'5eed0000-0000-4000-8000-00000000d024|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Reprise d’incident livrée — Saint-Ambroise|5eed0000-0000-4000-8000-000000000011|4200.00|EUR|3|-|-|-|-'

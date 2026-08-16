@@ -31,9 +31,11 @@
 # procédé endossé par docs/DESIGN_SYSTEM.md §12.5 — et le contrat de lecture, lui, est prouvé hors
 # interface par `e2e/api/liste-cards.spec.ts` avec le jeton réel de l'administratrice.
 #
-# Il ne prouve **aucun comportement au-delà de 25 lignes contre la base réelle** : le seed ne porte
-# pas de channel de plus de quatre cards actives. La seconde page est prouvée contre une réponse
-# substituée, et par la mesure directe de l'`offset` sur la pile. Le manque appartient à `CRM-046`.
+# Il prouve depuis le 2026-08-16 le comportement **au-delà de 25 lignes contre la base réelle** :
+# `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11) porte `maintenance` à **27** cards actives, et la
+# card `…d001` à 128 caractères de titre. Les états chargés de l'écran restent substitués faute
+# d'écran connecté dans ce harnais, mais la seconde page et les données longues sont désormais des
+# faits de la base, mesurés ici et éprouvés par `e2e/api/liste-cards.spec.ts`.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -197,20 +199,39 @@ else
 	fail "$sans_montant card sans montant au lieu de 1 : nullslast n'est plus démontré"
 fi
 
-# Le seed ne porte AUCUNE donnée longue : le fait est mesuré et figé, plutôt que supposé (§12.11).
+# LES DEUX CONTRÔLES QUI SUIVENT ONT ÉTÉ RETOURNÉS, ET LE MOTIF EST ÉCRIT ICI.
+#
+# Ils assèraient jusqu'au 2026-08-16 une ABSENCE : « le seed ne porte aucune donnée longue » et
+# « aucun channel ne dépasse une page ». Cette absence était la raison pour laquelle les données
+# longues et la seconde page ne se prouvaient que contre des réponses SUBSTITUÉES, et le manque
+# était renvoyé à `CRM-046`. Sa tranche 2 l'a comblé — `docs/SPEC-seed.md` §9.11, vingt-six cards
+# dans `maintenance`.
+#
+# La règle a donc changé par arbitrage, et les deux contrôles sont RÉVISÉS, jamais retirés
+# (`CLAUDE.md` §18) : ils assèrent désormais la PRÉSENCE de ce qu'ils niaient. Un seed qui
+# reperdrait son volume ou ses données longues les fait mordre à nouveau, dans l'autre sens.
+
+# La card `…d001` du seed porte 128 caractères de titre et 134 de prochaine action (§9.11.4).
 plus_long=$(psql_db -c "select coalesce(max(length(title)), 0) from public.cards")
-if [ "${plus_long:-0}" -lt 40 ]; then
-	ok "le titre le plus long du seed fait $plus_long caractères : les données longues sont servies (§12.11)"
+if [ "${plus_long:-0}" -ge 120 ]; then
+	ok "le titre le plus long du seed fait $plus_long caractères : les données longues sont RÉELLES (docs/SPEC-seed.md §9.11.4)"
 else
-	fail "le seed porte désormais un titre de $plus_long caractères : le §12.11 doit être revu"
+	fail "le titre le plus long ne fait que $plus_long caractères : le seed a reperdu ses données longues (§9.11.4)"
 fi
 
-# Aucun channel de plus de 25 cards : la seconde page est prouvée contre une réponse substituée.
-plus_gros=$(psql_db -c "select coalesce(max(n), 0) from (select count(*) n from public.cards where archived_at is null and deleted_at is null group by channel_id) c")
-if [ "${plus_gros:-0}" -le 25 ]; then
-	ok "aucun channel ne dépasse une page ($plus_gros cards au plus) : le §12.11 dit vrai"
+plus_longue_action=$(psql_db -c "select coalesce(max(length(next_action)), 0) from public.cards")
+if [ "${plus_longue_action:-0}" -ge 120 ]; then
+	ok "la prochaine action la plus longue fait $plus_longue_action caractères (§9.11.4)"
 else
-	fail "un channel porte $plus_gros cards : la seconde page est désormais démontrable en réel"
+	fail "la prochaine action la plus longue ne fait que $plus_longue_action caractères (§9.11.4)"
+fi
+
+# Un channel de plus de 25 cards actives : la seconde page est démontrable CONTRE LA BASE RÉELLE.
+plus_gros=$(psql_db -c "select coalesce(max(n), 0) from (select count(*) n from public.cards where archived_at is null and deleted_at is null group by channel_id) c")
+if [ "${plus_gros:-0}" -gt 25 ]; then
+	ok "un channel porte $plus_gros cards actives : la seconde page est démontrable en réel (§9.11.2)"
+else
+	fail "aucun channel ne dépasse une page ($plus_gros cards au plus) : le seed a reperdu son volume (§9.11.2)"
 fi
 
 # --- 3. Ce que la liste NE fait PAS -------------------------------------------------------------

@@ -460,10 +460,23 @@ select lives_ok($$
 -- L'archivage est fait ICI, sous un POINT DE SAUVEGARDE annulé aussitôt après : sans lui, il
 -- fausserait la section 10, qui compte « exactement une card archivée » dans le seed. Défaut réel
 -- trouvé en exécutant — l'état posé pour une assertion ne doit pas fuir dans les suivantes.
+--
+-- RÉVISÉ UNE SECONDE FOIS PAR `CRM-046` TRANCHE 2, ET LA RÉVISION PORTE SUR LA FORME, PAS SUR
+-- L'OBJET. Le préalable désignait `…0cd` PAR SON IDENTIFIANT, ce qui liait la suite au nombre de
+-- cards que le seed pose sur `livre` : les cinq cards de volume de `docs/SPEC-seed.md` §9.11 y
+-- vivent désormais aussi, et l'archivage d'une seule ne posait plus le préalable. Il est écrit
+-- PAR PRÉDICAT — « toute card active sur `livre` » —, forme qui dit ce que la propriété exige au
+-- lieu d'énumérer l'état d'un seed. Aucune assertion n'est relâchée : celle qui suit compte
+-- toujours ZÉRO card active, et c'est elle qui rend `lives_ok` concluant.
 savepoint archivage_livre;
 
 update public.cards set archived_at = now()
- where id = '5eed0000-0000-4000-8000-0000000000cd';
+ where archived_at is null
+   and deleted_at is null
+   and current_step_id in (
+       select s.id from public.workflow_steps s
+         join public.workflow_nodes_catalog n on n.id = s.node_id
+        where n.key = 'livre');
 
 select is(
 	(select count(*)::int from public.cards c
@@ -471,7 +484,7 @@ select is(
 	   join public.workflow_nodes_catalog n on n.id = s.node_id
 	  where n.key = 'livre' and c.archived_at is null and c.deleted_at is null),
 	0,
-	'préalable posé : plus aucune card ACTIVE sur `livre`, les deux qui y vivent sont archivées');
+	'préalable posé : plus aucune card ACTIVE sur `livre`, toutes celles qui y vivent sont archivées');
 
 select lives_ok($$
 	update public.workflow_nodes_catalog set archived_at = now() where key = 'livre' $$,
@@ -538,10 +551,14 @@ select isnt(
 -- Révisée avec le compte ci-dessus, et pour la même cause : l'affaire `…0cf` de la cinquième
 -- tranche de `CRM-077`. Ce que l'assertion vérifie n'a pas changé — l'unicité de l'adresse
 -- générée —, seul son compte suit le contrat du seed.
+--
+-- RÉVISÉE UNE FOIS DE PLUS PAR `CRM-046` TRANCHE 2 : les vingt-six cards de volume de
+-- `docs/SPEC-seed.md` §9.11 portent le seed à QUARANTE ET UNE. L'unicité est éprouvée sur un
+-- échantillon presque trois fois plus grand, ce qui la rend plus probante, pas moins.
 select is(
 	(select count(distinct email_local_part)::int from public.cards where id::text like '5eed%'),
-	15,
-	'les quinze adresses seedées sont distinctes');
+	41,
+	'les quarante et une adresses seedées sont distinctes');
 
 select is(
 	(select count(*)::int from public.cards where id::text like '5eed%'
