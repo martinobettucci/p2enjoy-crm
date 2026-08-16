@@ -16444,3 +16444,31 @@ d'arrière-plan **meurt avec elle** : le lancer par `setsid nohup … & disown`,
 tombe en cours de session et `db` doit être relancé. `e2e:mail` exige
 `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` au même titre qu'`e2e:ui` — sans lui, quatre
 scénarios Roundcube échouent sur « Executable doesn't exist ».
+
+### 2026-08-16, complément — les `verify-*.sh` sont exécutables ici, et ce n'était pas la version de Node
+
+**Constat, et il corrige une conclusion que plusieurs sessions ont tenue.** Le §2.1 bis avait levé
+le blocage de Node 24. Il en restait deux, tous deux **extérieurs au dépôt**, et tous deux mesurés
+ici pour la première fois :
+
+1. **le navigateur.** Sans `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`, tout scénario
+   d'interface d'un harnais meurt sur `browserType.launch` — un `chromium_headless_shell` que
+   l'hôte ne porte pas —, **avant la moindre assertion**. `npm run e2e:ui` reçoit ce chemin ; les
+   harnais ne le posent pas eux-mêmes ;
+2. **le port 4173.** La configuration pose `reuseExistingServer: false`. Un `vite preview` laissé
+   par une série interrompue fait échouer l'étape entière sur `is already used`.
+
+**Contre-épreuve.** `scripts/verify-administration-arborescence.sh` passe de `27 contrôles, 3 en
+échec` à **`27 contrôles, aucune anomalie`** une fois les deux conditions réunies — sans qu'une
+seule ligne du dépôt ait changé entre les deux exécutions. Le harnais neuf de l'unité,
+`scripts/verify-onboarding.sh`, rend lui aussi **`27 contrôles, aucune anomalie`**, sa
+non-complaisance couvrant la garde de session du §4.4.
+
+**Décision.** La procédure rejoint `docs/CloudWorker.md` **§2.1 ter**, écrite comme le §2.1 bis :
+mesurée, sans redécouverte, avec son budget — ces harnais rejouent des suites E2E complètes,
+plusieurs dépassent quatre minutes, il y en a **cinquante**, et la série entière ne tient pas dans
+une session d'une heure.
+
+**Ce qui n'est PAS acquis.** Seuls deux harnais ont rendu leur verdict dans les conditions
+correctes. Les quarante-huit autres restent à mesurer, et aucun verdict antérieur obtenu sans ces
+deux conditions ne doit être lu comme une régression ni comme une preuve (INC-123).

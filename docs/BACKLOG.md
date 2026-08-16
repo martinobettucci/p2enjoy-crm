@@ -7456,11 +7456,16 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
 
 *L'unité reste `[~]`, et voici exactement ce qui manque à sa Definition of Done.*
 
-- [ ] **`scripts/verify-onboarding.sh` n'est pas écrit.** Il est désormais possible : la procédure
-      `nvm` du §2.1 bis de `docs/CloudWorker.md` installe Node 24, et `verify-webapp.sh` s'est
-      exécuté vert ce jour. Les sessions précédentes ne pouvaient exécuter aucun harnais.
-- [ ] **`docs/manual.md` ne décrit pas le parcours du premier lancement.** Un manuel qui ignore un
-      écran livré est un défaut (`CLAUDE.md` §7).
+- [x] **`scripts/verify-onboarding.sh` est écrit ET EXÉCUTÉ** — `27 contrôles, aucune anomalie`,
+      mesuré le 2026-08-16. Sa section de non-complaisance couvre notamment la garde du §4.4 :
+      « la garde de session saute — l'accueil mesurerait sans session et salirait la console ». Il
+      constate en outre la restauration **octet à octet** de `GuideDemarrage.tsx` et de
+      `demarrage.ts` après ses dégradations.
+      *Deux conditions d'hôte, mesurées et consignées au §2.1 ter de `docs/CloudWorker.md` :*
+      `export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`, et **aucun `vite preview`
+      résiduel sur le port 4173**. Sans elles ce harnais rend des échecs qui ne disent rien du
+      produit (INC-123).
+- [x] **`docs/manual.md` décrit le parcours du premier lancement**, livré le 2026-08-16.
 - [ ] **Le cas « espace de travail neuf » n'a pas de preuve d'interface.** Le seed accomplit les
       cinq étapes pour l'administratrice, et seul le `viewer` laisse voir une étape à faire : un
       compte sans aucun objet visible reste à construire pour éprouver l'écran d'un vrai premier
