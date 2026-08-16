@@ -1108,6 +1108,120 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
 - **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la
   publication et un déplacement réel sont atteints avec les comptes de ce jeu, sans substitution.
 - **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, §9.7.
+- **~~Ni volume, ni donnée longue.~~** Le manque est réel et il est mesuré au §9.11 ; il est fermé
+  par la tranche que ce §9.11 spécifie.
+
+### 9.11 Le volume et les données longues — tranche 2 de `CRM-046`
+
+**Ce qui manque, mesuré le 2026-08-16 sur la pile de développement**, seed appliqué :
+
+| Manque | Mesure |
+|---|---|
+| **Aucune donnée longue** | Le titre le plus long du seed fait **36** caractères ; la prochaine action la plus longue, **34** |
+| **Aucune seconde page** | Le channel le plus chargé, `grands-comptes`, porte **4** cards actives, là où la vue liste pagine à **25** lignes (`LIGNES_PAR_PAGE`) |
+
+Ces deux manques n'appartiennent pas à la vue liste : `CRM-042` les a nommés à sa clôture et les a
+renvoyés ici, où ils sont dus. Ils sont aujourd'hui **prouvés contre des réponses substituées**
+(`docs/DESIGN_SYSTEM.md` §12.5) et contre une mesure directe de l'`offset`. Une substitution prouve
+que l'écran réagit à une réponse **donnée** ; elle ne prouve pas que la base rend celle-là, ni
+qu'un utilisateur du jeu de démonstration rencontre jamais le cas.
+
+#### 9.11.1 Le channel porteur, et pourquoi ce n'est pas `grands-comptes`
+
+Le volume est posé dans **`maintenance`** (`5eed0000-0000-4000-8000-000000000035`, track
+« Studio web », route `/tracks/studio-web/maintenance/liste`).
+
+Deux motifs, et le second est mesuré :
+
+- **la vraisemblance** : un channel de maintenance porte structurellement beaucoup d'affaires
+  simultanées, là où un channel de grands comptes en porte peu et de gros montants ;
+- **le coût sur les preuves existantes** : `grands-comptes` est cité par **29** fichiers de preuves,
+  de captures et de code ; `maintenance` par **6**. Charger le premier réécrirait les onze captures
+  du board de `CRM-041` et les douze de `CRM-042` sans rien démontrer de plus.
+
+#### 9.11.2 Le compte, et pourquoi vingt-sept
+
+**Vingt-six cards sont ajoutées**, portant `maintenance` de **1** à **27** cards actives.
+
+Vingt-sept et non vingt-six : à vingt-six, la seconde page ne porterait qu'**une** ligne, et une
+page d'une ligne ne se distingue pas d'une erreur d'un rang au bord de la plage — précisément le
+défaut que le §12.6 de `docs/SPEC-cards.md` classe sous le `416`. À vingt-sept, la première page
+est **pleine** — vingt-cinq lignes —, la seconde en porte **deux**, et le total affiché est
+vérifiable à l'œil.
+
+#### 9.11.3 Les étapes retenues, et les deux qui sont exclues
+
+Les vingt-six cards se répartissent sur **cinq** des sept étapes du workflow global :
+`prospection`, `relance`, `negociation`, `signature` et `livre`.
+
+**`realisation` et `perdu` sont exclues, et l'exclusion est une règle, pas un oubli.** Mesuré : la
+transition `signature → realisation` **exige** `lien-proposition`
+(`workflow_transition_required_fields`), et l'étape `perdu` exige `motif-perte`. Une card posée à
+l'une de ces deux étapes sans sa valeur décrirait un franchissement que `move_card` aurait refusé —
+la trace fabriquée que `CLAUDE.md` §8 proscrit. Les deux étapes portent déjà leur card de
+démonstration, `…0cc` et `…0ce`, avec les valeurs que leur position exige (§9.3) : le volume n'a
+rien à y ajouter.
+
+Aucune valeur de formulaire n'est posée sur les vingt-six. Elles démontrent un **volume** et une
+**longueur**, pas une règle de formulaire ; les règles sont démontrées par les onze cards qui
+portent les vingt et une valeurs du §9.6.
+
+#### 9.11.4 La card de données longues
+
+**Une seule** des vingt-six porte les données longues, et elle est nommée `…d001` :
+
+- **titre de 128 caractères** ;
+- **prochaine action de 134 caractères**.
+
+Ces deux longueurs ne sont pas choisies : ce sont **exactement** celles que les réponses substituées
+de `CRM-042` servent aujourd'hui (`docs/SPEC-cards.md` §12.11). Les captures `liste-donnees-longues-1440`
+et `liste-donnees-longues-390` cessent donc de dépendre d'une substitution sans changer ce qu'elles
+montrent.
+
+Son titre commence par **« A »**, ce qui la place en **première page** du tri par défaut — `title`
+ascendant, `docs/SPEC-cards.md` §12.4. Une donnée longue reléguée en seconde page ne serait pas
+capturable sans un geste de pagination, et la capture ne montrerait pas ce qu'elle prétend.
+
+#### 9.11.5 Identifiants et convergence
+
+Les vingt-six identifiants sont **stables** et déclarés dans le script, comme le §4 l'exige :
+`5eed0000-0000-4000-8000-00000000d001` à `…d026`. La famille `d0…` est neuve et ne recouvre aucune
+des familles existantes — `…0c1` à `…0cf` pour les cards du §9.3.
+
+Elles naissent par le **vrai chemin** : `POST /rest/v1/cards` avec la clé de service et
+`Prefer: resolution=merge-duplicates`, comme les quinze autres. `email_local_part` n'est jamais
+envoyé — le trigger de la migration 0011 le frappe, et il reste stable d'un rejeu à l'autre (§9.8).
+`position` est écrite explicitement.
+
+Aucun commentaire, aucun événement de timeline n'est ajouté : `card_events` reçoit le `created`
+que le trigger écrit, et rien d'autre. Le §9.6 compte les événements **en minorant** depuis la
+décision 226, et ce compte reste vrai.
+
+#### 9.11.6 Ce que cette tranche coûte aux preuves existantes, et pourquoi c'est légitime
+
+Trois preuves **doivent** devenir rouges, et elles sont **révisées, jamais retirées** (`CLAUDE.md`
+§18, `docs/CloudWorker.md` §3.1) :
+
+- `scripts/verify-liste.sh` figeait « le titre le plus long du seed fait moins de 40 caractères » et
+  « aucun channel ne porte plus de 25 cards ». Ces deux contrôles **assèrent l'absence** que cette
+  tranche comble : ils sont retournés, et assèrent désormais la **présence**, avec le motif écrit
+  dans le fichier ;
+- toute assertion figeant un **compte global de cards** est révisée à sa nouvelle valeur mesurée.
+
+Une preuve qui devient rouge parce que la règle a changé par arbitrage est révisée avec son motif ;
+elle n'est ni supprimée, ni contournée.
+
+#### 9.11.7 Preuves exigées
+
+1. le seed appliqué deux fois de suite rend le **même** état — convergence, §9.8 ;
+2. `maintenance` porte **27** cards actives, mesurées en base ;
+3. le titre le plus long du seed fait **128** caractères, la prochaine action la plus longue **134** ;
+4. la **seconde page** de `/tracks/studio-web/maintenance/liste` est atteinte contre la pile réelle
+   avec le jeton réel de l'administratrice, et porte **deux** lignes ;
+5. le rang immédiatement suivant rend le `416` que le §12.6 classe ;
+6. les captures de données longues sont produites **et observées** à 1440 et à 390 px, sur la
+   donnée **réelle** ;
+7. `scripts/verify-liste.sh` rejoué, ses deux contrôles retournés compris.
 
 ---
 

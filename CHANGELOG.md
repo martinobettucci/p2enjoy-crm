@@ -15,6 +15,16 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Spécification de la tranche « volume et données longues » du jeu de démonstration**
+  (`CRM-046`, `docs/SPEC-seed.md` §9.11, sept sous-chapitres). Écrite **après mesure sur la pile
+  réelle** : le titre le plus long du seed fait **36** caractères, la prochaine action la plus
+  longue **34**, et le channel le plus chargé porte **4** cards actives là où la vue liste pagine
+  à 25. Les données longues et la seconde page de `CRM-042` sont donc, à ce jour, prouvées contre
+  des réponses substituées seulement. Le contrat pose vingt-six cards dans `maintenance` — vingt-sept
+  actives, une première page pleine et une seconde page de deux lignes —, dont une portant un titre
+  de 128 caractères et une prochaine action de 134, et **exclut** les étapes `realisation` et
+  `perdu`, dont les exigences de transition rendraient toute card sans valeur une trace fabriquée.
+
 - **Le parcours « transition bloquée → saisie → transition réussie » est éprouvé de bout en bout,
   sur une session réelle** (`CRM-037`, `docs/SPEC-form-composer.md` §4 quater). Les trois gestes
   existaient et étaient prouvés séparément, mais chacun contre des **réponses réseau substituées** :
