@@ -17143,6 +17143,14 @@ que le champ ne soit pas visible d'emblée.
 `e2e/ui/board.spec.ts` **24 scénarios** (22 avant), tous verts sur la pile réelle. Une capture
 produite **et observée**, `docs/captures/CRM-037/reprise-deplacement-refuse-1440.jpg`.
 
+**Le harnais de l'unité rend 51 contrôles, 1 en échec — et ce n'est PAS une régression.** Le
+contrôle rouge est celui des classes CSS, et la classe manquante est `text-text-1`, citée par
+`webapp/src/app/AdministrationWorkflows.tsx:2298`. Ligne de base établie sans `git stash`, par
+`git log -S` : elle est introduite par `fe846f5`, la tranche d'interface de `CRM-032`, **antérieure**
+à cette session — et elle est **déjà consignée en INC-130**, au même diagnostic. Comportement laissé
+inchangé : ce fichier est un livrable de `CRM-076`. Les classes de cette tranche, elles, sont bien
+engendrées : le contrôle ne relève qu'une absence sur 227.
+
 **Où reprendre.** `CRM-037` reste `[~]` pour **une seule** raison, et elle est réduite par rapport à
 l'entrée précédente : le parcours de la Definition of Done est désormais **atteignable en trois
 écrans**, chacun prouvé séparément, mais aucun scénario E2E ne les **enchaîne sur une session
