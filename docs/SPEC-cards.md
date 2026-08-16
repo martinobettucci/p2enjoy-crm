@@ -1939,3 +1939,203 @@ Outre le §14.1 :
 | E2E d'interface | Contre le **build de production** : l'anonyme qui n'obtient rien sans substitution, puis le fil unifié, ses filtres, son état vide par filtre, réponses substituées et **dit comme tel** |
 | Visuel | Captures aux paliers du §7 du design system : fil complet, fil filtré, état vide d'un filtre, fil long |
 | Harnais | `scripts/verify-timeline.sh`, rejouable et **non complaisant** : chaque dégradation volontaire — privilège d'écriture rendu, trigger retiré, `CHECK` élargi, politique de lecture ouverte, immuabilité levée — le fait réellement échouer |
+
+---
+
+## 15. Interface : l'en-tête de la fiche d'affaire — `CRM-040`
+
+Ce chapitre n'existait pas. Le §1.2 rangeait « toute interface » hors du périmètre de `CRM-040` au
+motif d'INC-021 — « exige une session, donc un écran de connexion, qu'aucune unité ne porte ». **Ce
+motif a disparu** : INC-021 est close depuis `CRM-009`, la fiche existe depuis `CRM-037`
+(`webapp/src/app/RouteCard.tsx`), et trois documents nomment depuis lors le même reste avec les
+mêmes mots — `docs/DESIGN_SYSTEM.md` §5.3 (« les champs d'entête (titre, responsable, montant,
+prochaine action) »), `docs/SPEC-form-composer.md` §446 (« les champs d'en-tête de la card
+(`CRM-040`) restent dus par leurs unités ») et `docs/SPEC-manual.md` §183 (« seuls les champs
+d'en-tête manquent »). Trois renvois, aucun contrat : ce chapitre l'écrit.
+
+Il est écrit **après mesure de la pile réelle** — PostgREST `v14.12`, PostgreSQL
+`supabase/postgres:17.6.1.136`, le seed en base —, le 2026-08-16, et non de mémoire. Chaque fait
+cité « MESURÉ » ci-dessous a été observé avec les jetons réels des comptes seedés.
+
+### 15.1 Ce que la tranche livre, et ce qu'elle ne livre pas
+
+Elle livre **la lecture** : l'en-tête de la fiche montre ce qu'une affaire est — son titre, son
+responsable, son montant, sa prochaine action et son échéance — et son **adresse email**, avec
+l'action de copie et l'explication d'usage que `docs/DESIGN_SYSTEM.md` §5.3 exige depuis `CRM-000`.
+Aucune de ces six données n'atteint aujourd'hui l'écran : la fiche ouvre directement sur le
+formulaire conditionnel, et le titre n'est visible que dans l'en-tête d'application.
+
+Elle **ne livre pas l'écriture de ces champs**, et l'écart est nommé plutôt que masqué. MESURÉ, le
+rôle `authenticated` porte bien le privilège `UPDATE` sur les six colonnes concernées — `title`,
+`owner_id`, `amount`, `currency`, `next_action`, `next_action_at` —, donc **rien en base ne bloque
+la tranche suivante** : ce qui manque est le geste d'interface, ses refus et ses preuves, soit un
+volume comparable au §4 bis du composeur de formulaire. Le livrer à moitié serait pire que
+l'annoncer.
+
+Elle ne livre pas davantage : la création d'une affaire (aucun écran ne la porte), l'archivage
+(§4 en donne l'état, aucun geste ne l'écrit), ni la corbeille — livrée, elle, par `CRM-077` et déjà
+présente en bas de la même colonne.
+
+### 15.2 Où l'en-tête vit, et pourquoi au-dessus du formulaire
+
+Le §5.3 du design system range dans la colonne GAUCHE « le formulaire conditionnel […] et les
+champs d'entête ». L'en-tête se place **au-dessus** du formulaire, et non en dessous :
+
+- il dit **ce qu'est** l'affaire, là où le formulaire dit ce qu'on en sait. On lit l'identité avant
+  le dossier ;
+- le geste de mise à la corbeille (`CRM-077`) occupe déjà le bas de cette colonne, séparé par une
+  bordure haute. Insérer l'en-tête entre le formulaire et lui mettrait une identité entre un
+  dossier et son retrait ;
+- la reprise d'un déplacement refusé (§4 ter de `docs/SPEC-form-composer.md`) déplace le focus vers
+  le **premier champ exigé** du formulaire et l'amène au centre. Un en-tête placé au-dessus est
+  franchi par ce défilement sans le gêner ; placé en dessous, il aurait été poussé hors de vue.
+
+L'ordre de la colonne gauche est donc, de haut en bas : **en-tête**, formulaire, bloc de corbeille.
+
+### 15.3 Ce que l'en-tête lit, et en combien de requêtes
+
+**Aucune requête supplémentaire.** La fiche lit déjà sa card par `lireCard`
+(`webapp/src/lib/formulaire.ts`) ; la tranche **élargit ce `select`** au lieu d'en émettre un
+second. Les colonnes ajoutées sont `amount`, `currency`, `next_action`, `next_action_at`,
+`archived_at`, plus deux relations embarquées.
+
+**Le responsable vient d'une relation embarquée, et son nom doit être désambiguïsé.** MESURÉ, un
+`profiles(full_name)` nu est refusé en `PGRST201` :
+
+```
+"code":"PGRST201" … "hint":"Try changing 'profiles' to one of …"
+  cards_created_by_fkey  cards_deleted_by_fkey  cards_owner_id_fkey
+```
+
+Trois clés étrangères de `cards` désignent `profiles` — `owner_id`, `created_by`, `deleted_by` —, et
+PostgREST refuse de choisir. La relation s'écrit donc **par le nom de sa contrainte** :
+`profiles!cards_owner_id_fkey(id, full_name, avatar_url)`. MESURÉ, elle rend l'objet du profil sur
+la card `c2` (« Driss Lemoine ») et **`null`** sur la card `c6`, qui n'a pas de responsable.
+
+**L'adresse complète est composée à l'écran, jamais lue en colonne.** Le §3.5 pose que
+`email_local_part || '@' || workspaces.inbound_domain` est une **dérivation** et n'est pas stockée.
+La fiche embarque donc `workspaces(inbound_domain)` — relation non ambiguë, une seule clé étrangère
+— dans le même `select`. MESURÉ : `workspaces` est lisible par un membre, y compris par le `viewer`
+(`inbound_domain` rendu), et rend **zéro ligne** à un appelant anonyme. Ce dernier point ne change
+rien à l'écran : sans session, la card elle-même est déjà `null` et la fiche rend « affaire
+introuvable » (`CRM-037`).
+
+**Le domaine peut manquer sans que la card manque.** C'est le cas d'un appelant qui obtiendrait la
+card sans le workspace ; l'écran ne compose alors **aucune** adresse et n'affiche pas non plus la
+partie locale seule — une adresse tronquée serait une adresse fausse, et la copier enverrait un mail
+nulle part. Le bloc écrit à la place que l'adresse n'est pas disponible (§15.7).
+
+### 15.4 Les six données, et comment chacune se rend
+
+| Donnée | Source | Rendu | Absente |
+|---|---|---|---|
+| Titre | `cards.title` | `h2`, titre de niveau 2 du §2 du design system. Non nul par contrainte (§2.3) | ne peut pas l'être |
+| Responsable | `profiles!cards_owner_id_fkey` | avatar 32 px (`CRM-022`) **suivi du nom écrit** ; l'avatar est alors décoratif | « Aucun responsable », en toutes lettres |
+| Montant | `cards.amount`, `cards.currency` | **donnée technique** (§2 du design system) : monospace, chiffres tabulaires, formaté par `Intl.NumberFormat` en `fr-FR` avec le code devise | la ligne entière est absente |
+| Prochaine action | `cards.next_action` | texte courant | la ligne entière est absente |
+| Échéance | `cards.next_action_at` | **donnée technique**, date courte, à côté de la prochaine action | l'échéance seule est omise, la prochaine action reste |
+| Adresse email | `email_local_part` + `workspaces.inbound_domain` | `code`, monospace, avec l'action de copie du §15.5 | mention d'indisponibilité (§15.3) |
+
+**Une donnée absente n'est jamais un tiret.** La règle du §5.9 du design system — « ni tiret, ni
+“—”, ni “non renseigné” » — vaut pour une **cellule** de tableau, où la colonne dit déjà de quoi il
+s'agit. Ici il n'y a pas de colonne : une ligne « Montant » vide se lirait comme un défaut
+d'affichage. La règle retenue est donc **l'omission de la ligne entière** pour le montant et la
+prochaine action, et une **phrase** pour le responsable — parce que « personne n'en est
+responsable » est un fait de l'affaire, là qu'« aucun montant » n'en est pas un : une affaire sans
+montant chiffré est le cas ordinaire d'un début de qualification.
+
+**Le montant n'est pas formaté en devise « native ».** `Intl.NumberFormat('fr-FR', { style:
+'currency', currency })` lèverait `RangeError` sur un code que le navigateur ne connaît pas, et la
+base ne contraint que la **forme** du code, jamais sa liste réelle (§2.1). Le rendu emploie donc le
+format numérique à deux décimales, suivi du code devise **dans son propre élément** — jamais accolé
+par un nœud de texte nu, défaut « Discussion1 » mesuré au §5.11 du design system.
+
+**Une affaire archivée est NOMMÉE dans son en-tête.** `archived_at` est lue et rend la pilule
+« Archivé » `--color-accent-soft` / `--color-accent-on-soft` avec son icône `Archive`, exactement
+comme un champ archivé (§5.15 du design system) et un nœud archivé (§5.18). MESURÉ, la card `c8`
+« Contrat cadre 2025 » du seed porte `archived_at` et **reste lisible** par sa route : sans cette
+mention, l'écran d'une affaire close serait indistinguable de celui d'une affaire en cours.
+
+### 15.5 L'action de copie, et ce qu'elle promet
+
+Le §5.3 du design system exige « une action de copie et une infobulle expliquant son usage ». Trois
+décisions, chacune motivée :
+
+1. **C'est un `button`, pas un lien `mailto:`.** L'adresse d'une card n'est pas une adresse à
+   laquelle on écrit depuis son client : c'est celle qu'on **donne** à un tiers ou qu'on met en
+   copie pour que le fil de l'affaire reçoive le message (§3.1). Un `mailto:` ouvrirait un
+   composeur, geste que personne n'a demandé.
+2. **L'explication d'usage est un texte, pas seulement un `title`.** Une infobulle native
+   n'apparaît ni au clavier, ni au toucher. La phrase — « mettez cette adresse en copie : les
+   messages rejoignent le fil de l'affaire » — est écrite **sous** l'adresse, en 13 px
+   `--color-text-3`, à la place et dans la graduation du texte d'aide du §5.7. Le `title` est
+   conservé **en plus**, pour la souris.
+3. **La confirmation remplace le libellé de la commande, et rien d'autre ne bouge.** « Copié » se
+   substitue à « Copier l'adresse » pendant deux secondes, dans une région `role="status"` (§8) ;
+   le bouton conserve sa largeur minimale pour que la ligne ne se décale pas. C'est la règle du
+   §5.7 ter — « la confirmation remplace l'envoi, elle ne s'y ajoute pas » — appliquée à un geste
+   de lecture.
+
+**L'échec de la copie est dit, jamais tu.** `navigator.clipboard` n'existe pas dans tout contexte —
+un document non sécurisé n'y a pas droit, et la permission peut être refusée. Le geste **rend alors
+un refus** : « la copie n'a pas abouti, sélectionnez l'adresse pour la copier ». Un bouton qui ne
+fait rien en silence est la « simulation de succès » que `CLAUDE.md` §18 interdit.
+
+**La commande n'est pas rendue lorsqu'il n'y a pas d'adresse à copier** (§15.3) — une commande sans
+objet est une commande morte (§5.10 du design system).
+
+### 15.6 Accessibilité
+
+- L'en-tête est une `section` portant `aria-labelledby` vers son `h2` — le titre de l'affaire.
+  C'est le **seul** `h2` de la colonne gauche à ce jour, et aucun niveau n'est sauté : `AppShell`
+  porte le `h1` de la route.
+- Chaque donnée est un couple **terme / valeur** dans une `dl` : le libellé « Responsable »,
+  « Montant », « Prochaine action » est lu avec sa valeur, et non comme un texte flottant.
+- L'avatar est **décoratif** (`decoratif`), le nom étant écrit à côté : sans quoi un lecteur
+  d'écran annoncerait deux fois la même personne (`docs/SPEC-identite.md` §7).
+- La commande de copie porte un nom accessible complet — « Copier l'adresse email de l'affaire » —
+  et non le seul mot « Copier », qui ne dirait pas ce qui est copié hors contexte visuel.
+- Cible ≥ 40 px, anneau de focus du §8, et l'issue du geste annoncée par `role="status"`.
+
+### 15.7 États
+
+L'en-tête n'a **ni état de chargement, ni état d'erreur propres** : il est rendu par la même route
+que le formulaire, à partir de la **même** réponse. Tant que la card n'est pas là, la fiche entière
+ne rend rien ; si elle est refusée ou absente, la fiche rend déjà « affaire introuvable ». Lui
+donner des états à lui serait inventer un chargement qui n'a pas lieu.
+
+Trois états lui appartiennent en propre, et ils portent tous sur une **donnée** :
+
+| État | Rendu |
+|---|---|
+| Aucun responsable (`owner_id` nul, ou profil détaché) | « Aucun responsable » |
+| Adresse non composable (domaine du workspace absent) | « Adresse indisponible », **aucune** commande de copie |
+| Affaire archivée | pilule « Archivé » à côté du titre |
+
+### 15.8 Traçabilité et internationalisation
+
+Aucun texte visible n'est écrit en dur : toutes les clés vivent dans `webapp/src/i18n/fr.ts`, sous
+le préfixe `card.header.*`, et `webapp/src/i18n/i18n.test.ts` fait échouer toute violation
+(§10 du design system). Les libellés d'affaire — titre, prochaine action — sont des **données**, pas
+des traductions.
+
+### 15.9 Points ouverts propres à l'en-tête
+
+1. **L'écriture des six champs n'est pas livrée** (§15.1). Les privilèges existent ; le geste, ses
+   refus et ses preuves restent dus. Ce n'est pas un blocage, c'est une tranche.
+2. **`probability_override` n'est pas affichée.** Le §5.3 du design system ne la nomme pas parmi les
+   champs d'en-tête, et l'ajouter sans qu'aucun document la demande inventerait une règle de
+   produit.
+3. **L'échéance n'est pas qualifiée.** Une `next_action_at` dépassée se rend comme les autres, sans
+   teinte ni mention « en retard » : le seuil de relance est une décision de produit que personne
+   n'a prise, et `health_score` — qui la porterait — n'est jamais alimentée (§2.9).
+
+### 15.10 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | **Aucune suite dédiée** : la tranche ne livre ni table, ni fonction, ni politique. Les colonnes qu'elle lit sont déjà couvertes par `supabase/tests/0012_cards.test.sql` |
+| Unitaire | Composition de l'adresse et son absence, formatage du montant et de l'échéance, et le composant réel — responsable présent et absent, montant présent et absent, affaire archivée, copie réussie et copie refusée |
+| API | Les faits mesurés du §15.3 rejoués : l'ambiguïté `PGRST201`, la relation désambiguïsée, l'embarquement du domaine, et le refus anonyme |
+| E2E d'interface | Contre le **build de production**, sur une session réelle : l'en-tête d'une affaire du seed avec ses six données, l'affaire sans responsable ni montant, et l'affaire archivée |
+| Visuel | Captures observées aux paliers du §7 du design system |

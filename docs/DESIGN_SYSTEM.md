@@ -192,6 +192,56 @@ alerte de refus dans le bloc concerné.
   au §5.16. Mesuré : un business developer réussit ce geste là où il échoue sur un track, la
   politique portant sur le droit d'écriture du channel et non sur un rôle.
 
+### 5.3 bis En-tête de la fiche d'affaire — `CRM-040`
+
+Le §5.3 nomme depuis `CRM-000` « les champs d'entête (titre, responsable, montant, prochaine
+action) » et « l'adresse email de la card […] en monospace, avec une action de copie et une
+infobulle expliquant son usage ». Rien ne les rendait : la fiche livrée par `CRM-037` ouvrait
+directement sur le formulaire. Ce que l'en-tête **lit** et **compose** est spécifié dans
+`docs/SPEC-cards.md` §15 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **Il est EN HAUT de la colonne gauche, au-dessus du formulaire.** L'identité de l'affaire se lit
+  avant son dossier, et le bas de cette colonne est déjà pris par le geste de retrait (§5.3). Ordre
+  de la colonne : en-tête, formulaire, bloc de corbeille.
+
+- **Une donnée absente n'est PAS une ligne vide, et pas davantage un tiret.** La cellule vide du
+  §5.9 vaut pour un tableau, où la colonne dit de quoi il s'agit ; ici la ligne entière disparaît
+  pour le montant et la prochaine action. Le responsable fait exception et porte une **phrase** —
+  « Aucun responsable » : n'avoir personne à qui s'adresser est un fait de l'affaire, alors qu'une
+  affaire sans montant chiffré est le cas ordinaire d'un début de qualification.
+
+- **Les données sont un couple terme / valeur, dans une `dl`.** « Montant » lu seul, puis un nombre
+  lu seul, ne dit pas que l'un qualifie l'autre. C'est la même exigence que le libellé résolvant
+  vers son contrôle au §5.7, transposée à une lecture.
+
+- **Montant et échéance sont des données techniques** (§2) : monospace, chiffres tabulaires. Le
+  code devise occupe **son propre élément** — jamais un nœud de texte accolé au nombre, défaut
+  « Discussion1 » mesuré au §5.11.
+
+- **L'avatar du responsable est décoratif ici**, à 32 px comme au §5.1, parce que le nom est écrit
+  juste à côté. Un avatar portant son nom accessible en plus du nom visible ferait annoncer deux
+  fois la même personne.
+
+- **L'adresse est un `code`, et son explication est un TEXTE.** L'« infobulle » du §5.3 ne peut pas
+  être seulement un `title` : une infobulle native n'apparaît ni au clavier, ni au toucher. La
+  phrase d'usage est écrite sous l'adresse, en 13 px `--color-text-3`, dans la graduation du texte
+  d'aide du §5.7 ; le `title` est conservé **en plus**, pour la souris.
+
+- **La confirmation de copie remplace le libellé de la commande**, deux secondes, dans une région
+  `role="status"` — la règle du §5.7 ter, « la confirmation remplace l'envoi, elle ne s'y ajoute
+  pas », appliquée à un geste de lecture. Le bouton garde une largeur minimale pour que la ligne ne
+  se décale pas, et **son échec est dit** : une copie refusée par le navigateur rend une alerte,
+  jamais un silence.
+
+- **Aucune commande de copie lorsqu'il n'y a pas d'adresse à copier**, et l'écran écrit alors
+  « Adresse indisponible ». Une commande sans objet est une commande morte (§5.10) ; une adresse
+  amputée de son domaine serait pire, elle serait fausse.
+
+- **Une affaire archivée porte la pilule « Archivé »** `--color-accent-soft` /
+  `--color-accent-on-soft` avec son icône `Archive`, à côté du titre — la règle du §5.15 pour un
+  champ archivé et du §5.18 pour un nœud, reprise sans changement. Sans elle, la fiche d'une affaire
+  close serait indistinguable de celle d'une affaire en cours.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des
