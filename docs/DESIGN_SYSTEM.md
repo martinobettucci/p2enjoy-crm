@@ -329,6 +329,46 @@ découlent, et elles valent pour tout champ du produit adoptant ce mode.
 Aucune couleur nouvelle : `--color-success` sert déjà aux pilules du §5.6, et le couple
 danger/danger-soft aux erreurs du §5.7.
 
+### 5.7 quater Champ exigé par un déplacement refusé — `CRM-037`
+
+Le §5.7 signale un champ « obligatoire pour la transition en cours » par un astérisque et la mention
+« requis pour passer à *<étape>* ». Il en manquait un second cas, que `CRM-041` a rendu possible : un
+déplacement **refusé** pour champs manquants, dont l'utilisateur reprend la saisie sur la fiche
+(`docs/SPEC-form-composer.md` §4 ter). Ce que cet écran **choisit** de mettre en évidence est
+spécifié là-bas ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **La mise en évidence emploie `--color-brand`, jamais `--color-danger`.** Le champ est *demandé*,
+  il n'est pas *fautif* : la teinte de danger est celle de l'erreur de saisie (§5.7) et du refus
+  d'écriture (§5.7 ter), et l'employer ici dirait que la valeur est mauvaise là où elle est
+  seulement absente. Un liseré **gauche de 3 px** `--color-brand` sur une surface `--color-surface`,
+  `--radius-sm`, rembourrage 12 px. C'est le liseré de la carte de board (§5.1) tourné d'un quart de
+  tour, et aucun jeton n'est ajouté.
+
+- **Le liseré n'informe pas, il accompagne.** L'information est portée par une **mention en toutes
+  lettres**, 13 px `--color-brand`, précédée de l'icône Lucide `ArrowRightLeft` en `aria-hidden` —
+  la même que la famille « Étapes » du fil (§5.11), puisque c'est le même geste qui est en cause.
+  Le §1 s'applique sans exception : une couleur ne porte jamais seule une information.
+
+- **La mention du §5.7 n'est pas remplacée, elle s'ajoute.** Un champ peut être obligatoire à l'étape
+  courante *et* exigé par le déplacement demandé ; les deux phrases sont vraies et disent deux choses
+  différentes. C'est la règle du §5.7 ter sur la coexistence de l'alerte de manque et de l'alerte de
+  refus, appliquée aux mentions.
+
+- **Le premier champ exigé prend le focus à l'arrivée**, et son bloc est amené au centre. Faire
+  défiler sans déplacer le focus laisserait l'utilisateur au clavier en tête de page : le §8 ne
+  connaît pas d'exception à la parité souris / clavier. Le geste ne se produit **qu'une fois par
+  adresse** — un défilement qui reprendrait la main pendant la saisie serait un vol de focus — et
+  respecte `prefers-reduced-motion` (§6).
+
+- **Aucune bannière en tête de formulaire.** Le §5.13 et le §5.16 ont déjà tranché deux fois que le
+  message se lit près de ce qu'il concerne ; une liste récapitulative en tête dirait une seconde fois
+  ce que chaque champ dit déjà, et éloignerait l'information du contrôle à remplir.
+
+- **La commande qui mène ici est un LIEN, pas un bouton**, et elle vit dans le bandeau de refus du
+  board (`docs/SPEC-workflow-engine.md` §7.10). Elle change d'adresse : en faire un bouton lui
+  retirerait le clic du milieu, le nouvel onglet et la copie de l'adresse, que le §12.1 a déjà
+  retenus comme le motif de préférer un lien à un contrôle.
+
 ### 5.8 États systématiques
 
 Toute vue traite explicitement : chargement (squelettes, pas de spinner plein écran), vide

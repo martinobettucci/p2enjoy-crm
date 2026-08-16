@@ -430,8 +430,13 @@ Les quatre états systématiques du §5.8 du design system sont traités par l'�
 (squelettes), vide (« aucun champ pour cette étape »), erreur (message et reprise), card
 introuvable ou non consentie (état explicite, jamais une page blanche).
 
-Le **défilement jusqu'au premier champ concerné** appartient au geste de transition, qui n'existe
-pas encore : il est nommé au §4.7 plutôt qu'implémenté sans rien à quoi le rattacher.
+~~Le **défilement jusqu'au premier champ concerné** appartient au geste de transition, qui n'existe
+pas encore : il est nommé au §4.7 plutôt qu'implémenté sans rien à quoi le rattacher.~~
+
+**LIVRÉ — voir le §4 ter, tranche du 2026-08-16.** Le geste de transition existe depuis `CRM-041`,
+et son refus est le déclencheur que ce paragraphe attendait. La mise en évidence des champs
+concernés et le défilement jusqu'au premier y sont spécifiés en neuf sous-chapitres, avec la
+quatrième destination du §4.2 que la mesure a imposée.
 
 ### 4.6 L'écran hôte, et pourquoi c'est une route
 
@@ -729,6 +734,188 @@ lecture et la saisie — un refus que l'utilisateur n'a pas provoqué.
 - **Aucune reprise hors ligne, aucun brouillon** : une saisie non enregistrée est perdue si l'onglet
   se ferme. Le produit n'a aucun mécanisme de brouillon, et en inventer un ici dépasserait l'unité.
 
+### 4 ter. Reprendre un déplacement refusé — `CRM-037`
+
+Le §4.5 pose depuis `CRM-000` une phrase que rien n'a jamais mise en œuvre :
+
+> Lorsqu'une transition est refusée pour champs manquants, l'interface met en évidence les
+> champs concernés et fait défiler jusqu'au premier.
+
+Elle était restée lettre morte pour une raison écrite au §4.7 — « aucune transition », donc aucun
+geste déclencheur. **Ce motif a disparu** : `CRM-041` livre le board et son glisser-déposer, qui
+appelle `move_card` et en rend le refus. Le §4.4 l'avait d'ailleurs prévu — « Ils apparaîtront
+lorsque l'interface proposera les transitions — `CRM-041` ». C'est cette tranche.
+
+Ce chapitre est le contrat vérifiable de cette phrase. Il est écrit **après mesure** sur la pile
+réelle, seed appliqué, avec le jeton réel de l'administratrice.
+
+#### 4 ter.1 Ce que le geste est, et ce qu'il n'est pas
+
+Le geste part du **refus**, jamais de la fiche. Le bandeau de refus du board (§7.10 du moteur), et
+lui seul lorsqu'il porte `missing_required_fields`, offre une commande qui ouvre la fiche de
+l'affaire en lui **transmettant les champs que la garde a nommés**. La fiche les rend saisissables,
+les met en évidence et défile jusqu'au premier.
+
+Ce que le geste n'est pas :
+
+- ce n'est pas un **rejeu** du déplacement. La fiche n'appelle pas `move_card`, et rien ne repart
+  automatiquement une fois les champs renseignés : l'utilisateur revient au board et refait son
+  geste. Rejouer une écriture qu'il n'a pas redemandée serait une décision d'écran ;
+- ce n'est pas une **garde**. Les champs restent exigés par `move_card`, qui les recontrôlera. Ce
+  chapitre ne livre que le chemin vers eux ;
+- ce n'est pas une **lecture de plus**. La fiche ne relit ni la transition, ni l'étape de
+  destination : tout ce qu'elle sait du refus lui vient de son adresse.
+
+#### 4 ter.2 Le transport est l'adresse, et pourquoi
+
+Les clés voyagent dans la **chaîne de requête** de la route de la card (§4.6) :
+
+```
+/tracks/:slugTrack/:slugChannel/cards/:idCard?exiges=cle1,cle2,cle3
+```
+
+Trois motifs, et aucun n'est stylistique :
+
+- la commande du bandeau est alors un **vrai lien** — clic du milieu, nouvel onglet, copie de
+  l'adresse. Un état passé par la navigation programmée n'aurait rien de tout cela ;
+- l'adresse **survit au rechargement**. Un état interne disparaîtrait à `F5`, et la mise en évidence
+  avec lui, sans que rien ne le dise ;
+- l'adresse est **la seule mémoire** de cet écran. La fiche ignore tout du déplacement demandé :
+  écrire ce qu'elle sait dans son adresse, c'est le rendre inspectable plutôt que caché.
+
+Le paramètre ne divulgue rien : une clé de champ n'est lisible que par un membre du workspace, et
+la fiche elle-même reste soumise à ses politiques. Une adresse portant `exiges` sur une card que
+l'appelant ne voit pas rend « Affaire introuvable », comme sans le paramètre.
+
+#### 4 ter.3 La clé, jamais le libellé — et l'ordre est celui de la garde
+
+`move_card` rapporte les **clés** dans son `DETAIL` (décision 126), séparées par `, `, ordonnées
+`f.position, f.key` — `supabase/migrations/0019_transition_required_fields.sql`. MESURÉ sur la pile
+réelle, seed appliqué :
+
+| Affaire, étape | Destination | `details` rendu |
+|---|---|---|
+| `…0000c1` « Refonte du site vitrine », `Relance` | `Négociation` | `budget` |
+| `…0000c1` « Refonte du site vitrine », `Relance` | `Perdu` | `motif-perte` |
+| `…0000cf` « Reprise du dossier Marchand », `Négociation` | `Signature` | `budget, date-signature-prevue, decideur-identifie` |
+
+L'adresse porte donc **les clés**, dans **cet ordre**, et rien d'autre. Deux conséquences :
+
+- la clé est stable par workflow (§2.5), là où un libellé dépend de la donnée et changerait
+  l'adresse au premier renommage ;
+- l'ordre du `DETAIL` est `position, key`, c'est-à-dire **exactement** celui dont le formulaire
+  ordonne ses champs (§2.6). « Le premier » du §4.5 est donc sans ambiguïté le premier de la page,
+  et non un premier qu'il faudrait recalculer.
+
+#### 4 ter.4 Un champ exigé est rendu SAISISSABLE, même si sa règle le cache — le fait qui commande tout
+
+C'est la décision structurante de cette tranche, et elle est imposée par une mesure, non préférée.
+
+MESURÉ sur le seed, en croisant les cards, leurs transitions atteignables et les règles de leur
+étape de destination : **dix-neuf couples (affaire, transition) sont refusables pour champs
+manquants**. Dans **dix** d'entre eux, le champ manquant est `motif-perte`, dont la règle à l'étape
+de départ est `hidden`.
+
+Or la composition du §4.2 range un champ `hidden` **non renseigné** dans **aucune** de ses trois
+destinations : il n'est ni dans le formulaire de l'étape, ni dans la section repliée — celle-ci ne
+retient que les champs `hidden` ou archivés **qui portent une valeur**. Un tel champ n'est donc
+rendu **nulle part**.
+
+Sans règle nouvelle, le geste du §4 ter.1 serait un **cul-de-sac** dans dix cas sur dix-neuf : le
+refus nommerait « Motif de la perte », le lien ouvrirait la fiche, et la fiche ne montrerait pas ce
+champ. Marquer une affaire perdue serait impossible depuis l'interface.
+
+**Règle posée : un champ dont la clé figure dans `exiges` rejoint le formulaire de l'étape
+courante, saisissable, quelle que soit sa règle de visibilité.** C'est une **quatrième destination**
+au §4.2, et elle est nommée ici plutôt que laissée à l'interprétation du composant.
+
+Bornes de cette règle, toutes explicites :
+
+- **elle ne s'applique qu'aux champs non archivés.** Un champ archivé ne se saisit plus (§2.5), et
+  la garde elle-même l'exclut — `f.archived_at is null`. Une clé archivée dans l'adresse est donc
+  impossible par le chemin normal, et elle est **ignorée** si elle y figure quand même ;
+- **elle ne change pas l'ordre des champs.** Le champ rejoint la liste à sa position naturelle
+  (§2.6), il ne remonte pas en tête. La même fiche doit se lire pareil quel que soit le chemin par
+  lequel on y arrive ; le défilement du §4 ter.6 se charge d'atteindre le premier ;
+- **elle ne s'applique pas à la section repliée.** Un champ exigé qui portait déjà une valeur ne
+  peut pas être manquant, donc ne peut pas figurer dans `exiges` ; le cas ne se présente que par une
+  adresse écrite à la main, et le champ reste alors en lecture seule là où il est ;
+- **elle ne crée aucun droit.** Le contrôle est rendu ; l'écriture reste soumise aux politiques de
+  `card_field_values` (§6.9), et un refus s'affiche comme au §4 bis.7.
+
+#### 4 ter.5 Ce que l'écran dit, et ce qu'il ne dit pas
+
+Un champ exigé par le déplacement porte la mention **« exigé par le déplacement que vous avez
+demandé »**, distincte de celle du §4.4.
+
+Elle est distincte parce que le §4.4 fait dire « requis pour passer à *<étape courante>* », et que
+pour ces champs-là **ce serait faux** : ils ne sont pas exigés par l'étape où l'affaire se trouve,
+mais par celle où l'on a voulu la mener.
+
+Les deux mentions **coexistent** lorsque le champ est dans les deux cas — sa règle le rend `required`
+à l'étape courante *et* le déplacement l'exige. C'est le précédent du §4 bis.9 : deux phrases vraies
+qui disent deux choses différentes ne s'excluent pas.
+
+**L'étape de destination n'est PAS nommée.** L'adresse ne la porte pas, et la déduire demanderait
+une lecture que le §4 ter.1 s'interdit. Écrire « pour passer à Perdu » sans en avoir la donnée
+serait une invention ; la mention dit donc ce qu'elle sait — qu'un déplacement a été demandé — et
+rien de plus. Écart nommé au §4 ter.9.
+
+Les règles visuelles de la mise en évidence sont dans `docs/DESIGN_SYSTEM.md` §5.7 quater : ce
+document dit **quels** champs sont concernés, l'autre dit **de quoi ils ont l'air**.
+
+#### 4 ter.6 Le défilement, et pourquoi il emporte le focus
+
+À l'arrivée sur la fiche, le **premier** champ exigé — premier au sens du §4 ter.3 — reçoit le
+focus, et son bloc est amené au centre de la fenêtre.
+
+**Le focus, et pas seulement le défilement.** Faire défiler sans déplacer le focus laisserait
+l'utilisateur au clavier en tête de page : il verrait le champ sans pouvoir le saisir, et sa
+première tabulation le ramènerait au début du document. Le §8 du design system exige la parité entre
+les deux modes ; le §4.5 dit « fait défiler », et le tenir au clavier c'est déplacer le focus.
+
+**Une seule fois par adresse.** Le geste ne se rejoue ni à chaque rendu, ni après une écriture — un
+défilement qui reprendrait la main pendant que l'on saisit serait un vol de focus. Il se rejoue en
+revanche si l'adresse change, `exiges` compris : c'est alors une **autre** demande.
+
+**`prefers-reduced-motion` est respecté** (§6 du design system) : le défilement est immédiat lorsque
+la préférence est posée, animé sinon.
+
+#### 4 ter.7 Une clé qui ne désigne rien est ignorée, et ce n'est pas un masquage
+
+Une clé de `exiges` qui ne correspond à aucun champ du workflow — ou à un champ archivé — n'ajoute
+rien à l'écran et ne produit aucune erreur.
+
+Ce n'est pas la « valeur par défaut trompeuse » que `CLAUDE.md` §18 interdit, et la distinction
+mérite d'être écrite : une telle clé ne peut venir **que** d'une adresse composée à la main, puisque
+la garde ne nomme que des champs existants et non archivés. Inventer un champ pour honorer une clé
+inconnue, ou rendre un état d'erreur sur une adresse bricolée, apprendrait à l'utilisateur quelque
+chose de faux sur son workflow. Le formulaire rend ce qui existe.
+
+Un `exiges` vide, absent ou entièrement composé de clés inconnues rend donc **exactement** la fiche
+ordinaire — ni mise en évidence, ni défilement.
+
+#### 4 ter.8 Accessibilité
+
+| Exigence | Ce qui la rend vérifiable |
+|---|---|
+| La mention est liée au champ | élément cité par l'`aria-describedby` du contrôle, comme l'aide et l'alerte du §4.5 |
+| Le champ manquant reste annoncé invalide | `aria-invalid="true"`, inchangé par rapport au §4.5 |
+| Le premier champ exigé est atteignable au clavier | il **porte le focus** à l'arrivée (§4 ter.6) |
+| La mise en évidence ne repose pas sur la couleur | la mention est un texte, le liseré ne fait que l'accompagner (`docs/DESIGN_SYSTEM.md` §1) |
+| L'arrivée est annoncée | la mention du premier champ est lue par le déplacement du focus ; aucune région `aria-live` n'est ajoutée, le focus portant déjà l'annonce |
+
+#### 4 ter.9 Ce que cette tranche ne livre pas
+
+- **L'étape de destination n'est pas nommée** dans la mention (§4 ter.5). La porter dans l'adresse
+  ou la relire depuis la fiche est possible ; ni l'un ni l'autre n'est fait ici, et l'écart est
+  écrit plutôt que comblé au passage.
+- **Aucun rejeu du déplacement** après saisie (§4 ter.1). L'utilisateur revient au board.
+- **Aucun retour au board** automatique, et aucun lien de retour ajouté : la fiche en porte déjà un
+  (§4 ter du dossier corbeille, bloc de succès) et l'onglet du channel reste dans la barre.
+- **Aucune mise en évidence depuis la vue liste** (`CRM-042`) : elle ne porte aucun geste de
+  transition, donc aucun refus à reprendre.
+
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
 - **~~Aucune écriture.~~ L'écriture appartient à `CRM-037`** — décision 334, INC-088. Le motif
@@ -741,10 +928,11 @@ lecture et la saisie — un refus que l'utilisateur n'a pas provoqué.
   Les contrôles du formulaire de l'étape courante sont saisissables, chaque champ s'enregistre pour
   lui-même, et le bandeau « Consultation seule » a disparu avec la livraison — comme cet alinéa
   l'annonçait. Les champs de la **section repliée** restent en lecture seule (§4 bis.1).
-- **Aucune transition.** Le menu des transitions déclarées et le glisser-déposer sont `CRM-041`.
-  Sans eux, ni les champs exigés par les liaisons de transition (§4.4), ni la mise en évidence
-  consécutive à un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste
-  déclencheur.
+- **Aucune transition depuis la fiche**, et c'est inchangé : le menu des transitions déclarées et le
+  glisser-déposer sont `CRM-041`, sur le board. *État réel depuis le 2026-08-16* : le geste existe
+  donc **ailleurs**, et son refus est repris par la fiche — la mise en évidence des champs concernés
+  et le défilement jusqu'au premier (§4.5) sont **livrés**, spécifiés au §4 ter. Ce que la fiche ne
+  porte toujours pas, c'est le geste de transition lui-même.
 - **Aucun parcours E2E « transition bloquée → saisie → transition réussie »**, que la Definition of
   Done de `CRM-037` exige : il suppose les deux points ci-dessus. INC-062, arbitrage attendu.
 - **Aucune résolution de `user`, `contact` ni `file`** : le §6.5 ne les résout pas non plus
