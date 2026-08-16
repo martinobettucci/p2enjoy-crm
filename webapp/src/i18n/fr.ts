@@ -200,6 +200,38 @@ export const fr = {
 	// le refus nomme la manœuvre de remplacement.
 	'card.header.email.failed':
 		"La copie n'a pas abouti : sélectionnez l'adresse pour la copier à la main.",
+	// L'ÉCRITURE des six champs d'en-tête — CRM-040, docs/SPEC-cards.md §15 bis,
+	// docs/DESIGN_SYSTEM.md §5.3 ter.
+	'card.header.edit.open': 'Modifier',
+	// Le nom accessible nomme CE QU'ELLE MODIFIE : « Modifier » seul ne dirait pas quoi, hors
+	// contexte visuel (§15 bis.9).
+	'card.header.edit.open.aria': "Modifier les informations de l'affaire",
+	// « Terminer » et non « Enregistrer » : chaque champ a DÉJÀ écrit sa valeur (§5.7 ter), et
+	// promettre une écriture qui a eu lieu ferait croire qu'elle restait à faire.
+	'card.header.edit.close': 'Terminer',
+	'card.header.edit.title': 'Titre',
+	'card.header.edit.currency': 'Devise',
+	'card.header.edit.deadline': 'Échéance',
+	'card.header.edit.owner.none': 'Aucun responsable',
+	'card.header.edit.owner.loading': 'Chargement des membres…',
+	// Une liste que l'on n'a pas pu lire est NOMMÉE, jamais vide en silence : un sélecteur sans
+	// option se lirait comme un workspace sans membre.
+	'card.header.edit.owner.failed': "La liste des membres n'a pas pu être lue.",
+	'card.header.edit.saving': 'Enregistrement…',
+	'card.header.edit.saved': 'Enregistré',
+	// LES SIX ISSUES DE REFUS, dictionnaire fermé classé sur le code HTTP et le SQLSTATE
+	// (§15 bis.7) — jamais le message du serveur, qui n'est pas un texte pour un humain.
+	//
+	// « Sans effet » n'est NI un succès NI une erreur : la politique a filtré la ligne avant la
+	// mise à jour, et le serveur rend 200 avec zéro ligne. C'est MESURÉ avec le jeton du lecteur.
+	'card.header.edit.refus.noeffect':
+		"Rien n'a été enregistré : votre compte ne peut pas modifier cette affaire.",
+	'card.header.edit.refus.invalid': 'Cette valeur ne convient pas à ce champ.',
+	'card.header.edit.refus.notfound':
+		"Cette personne n'est plus membre de l'espace de travail : rouvrez la liste.",
+	'card.header.edit.refus.forbidden': "L'enregistrement a été refusé.",
+	'card.header.edit.refus.network': "La connexion a échoué : réessayez.",
+	'card.header.edit.refus.unknown': "L'enregistrement a échoué.",
 	// Le geste de mise à la corbeille d'une affaire — CRM-077, docs/SPEC-corbeille.md §4 ter.
 	// Le libellé de la commande nomme le GESTE, jamais l'objet : c'est la confirmation qui nomme
 	// l'affaire (docs/DESIGN_SYSTEM.md §5.3, §6).
