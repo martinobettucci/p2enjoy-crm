@@ -8179,9 +8179,30 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
 
 ### CRM-081 — Snooze des fils et des cards `[ ]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
-collision avec l'administration de l'arborescence. Son objet n'est pas modifié ici : elle reste
-décrite par sa seule ligne de la table du chunk 5, comme les autres unités de ce chunk qui n'ont
-pas encore d'énoncé détaillé.*
+collision avec l'administration de l'arborescence.*
+
+Mettre une affaire — puis un fil de messagerie — en sommeil jusqu'à une échéance, et l'en sortir.
+**DoD** : le geste et son retour sont gardés en base ; une affaire en sommeil sort des vues par
+défaut et reste atteignable par un filtre explicite ; le fil de l'affaire porte la trace des deux
+gestes ; refus mesurés avec les jetons réels ; captures observées.
+
+**Découpage en deux tranches**, écrit avant la première ligne de code
+(`docs/SPEC-cards.md` §16.1) :
+
+- **tranche 1 — la règle, sa garde et sa trace** : `snooze_card`, `wake_card`, fermeture en
+  écriture directe de `cards.snoozed_until`, événements `snoozed` et `woken`, suite pgTAP et
+  contrat d'API. Aucune surface ;
+- **tranche 2 — l'écran et les fils** : geste dans la fiche et le menu de card, pastille, filtre du
+  board et de la vue liste, libellés de timeline, seed démontrable, puis le sommeil des fils de
+  messagerie, qu'aucune colonne ne porte aujourd'hui (`docs/SPEC-cards.md` §16.10).
+
+- [x] **Spécification écrite avant tout code**, `docs/SPEC-cards.md` §16, en dix sous-chapitres
+      opposables et **après mesure** sur la pile réelle : les 41 cards du seed portent
+      `snoozed_until` nulle, la colonne est **ouverte** en écriture à `authenticated` par la
+      migration 14, et `card_events.type` compte douze valeurs. Commit documentaire dédié, poussé
+      avant la première ligne de code.
+- [ ] **Tranche 1** : migration, suite pgTAP dédiée, preuve d'API dédiée, harnais rejouable.
+- [ ] **Tranche 2** : écran, filtre des vues, seed, captures observées, fils de messagerie.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

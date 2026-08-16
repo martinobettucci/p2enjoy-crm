@@ -2425,3 +2425,172 @@ Aucun texte visible n'est écrit en dur : les clés vivent sous `card.header.edi
 | API | Les quinze lignes du §15 bis.8 rejouées avec les jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater inchangée |
 | E2E d'interface | Contre le **build de production**, sur une session réelle : ouvrir l'édition, corriger le titre, renseigner un montant sur une affaire qui n'en a pas, changer le responsable et **constater l'événement `assigned` dans le fil**, et le refus mesuré du `viewer` |
 | Visuel | Captures observées aux paliers du §7 du design system, en lecture et en édition |
+
+## 16. Mise en sommeil d'une affaire — `CRM-081`
+
+Écrit **après mesure** sur la pile réellement exécutée le 2026-08-16, et non d'après le souvenir de
+la colonne. Ce chapitre est le contrat de la **première tranche** de `CRM-081` : la règle, sa garde
+et sa trace, toutes trois en base et par l'API. L'écran vient après, et le §16.10 dit ce qu'il devra
+porter.
+
+### 16.1 Ce que la tranche livre, et ce qu'elle ne livre pas
+
+Livré :
+
+- **deux gestes**, `public.snooze_card(uuid, timestamptz)` et `public.wake_card(uuid)`, seuls
+  chemins par lesquels `cards.snoozed_until` prend et perd sa valeur ;
+- la **fermeture en écriture directe** de `cards.snoozed_until` pour `authenticated`, qui devient
+  un constat du serveur au sens du §4.4 de `docs/SPEC-permissions-rls.md` ;
+- **deux événements de fil**, `snoozed` et `woken`, écrits par un trigger de table et par lui seul,
+  comme les douze valeurs déjà livrées (§14.4) ;
+- la **définition opposable** de « en sommeil », et le fait qu'aucune tâche planifiée n'est
+  nécessaire pour en sortir (§16.2).
+
+Non livré, et nommé plutôt que suggéré :
+
+- **aucun écran** : ni le geste, ni la pastille, ni le filtre du board et de la vue liste. Une card
+  en sommeil reste aujourd'hui visible partout où elle l'était (§16.10) ;
+- **aucun sommeil de fil de messagerie** : l'énoncé du chunk 5 nomme « les fils et les cards ». Les
+  fils vivent dans `mail_messages` (`docs/SPEC-mail-subsystem.md` §17), n'ont aucune colonne pour
+  le porter, et une seconde tranche leur est due ;
+- **aucun réveil planifié**, et ce n'est pas un manque : le §16.2 rend la question sans objet ;
+- **aucun seed** : les 41 cards du seed portent `snoozed_until` nulle — MESURÉ. Poser une affaire
+  en sommeil dans les données de démonstration n'a d'intérêt que le jour où un écran le montre,
+  et ce sera la tranche 2 (`CLAUDE.md` §8).
+
+### 16.2 Ce que « en sommeil » signifie, et pourquoi aucun réveil planifié n'est écrit
+
+Une card est **en sommeil** si `snoozed_until` est non nulle **et** strictement postérieure à
+`now()`. La sortie du sommeil est donc **implicite** : le temps passe, le prédicat devient faux, et
+la card redevient ordinaire sans qu'aucune écriture n'ait eu lieu.
+
+C'est la raison pour laquelle aucune tâche `pg_cron` n'est ajoutée (`CRM-017`). Une tâche qui
+remettrait la colonne à `NULL` à l'échéance produirait exactement le même prédicat, au prix d'une
+écriture par card, d'un événement de fil que personne n'a demandé et d'une fenêtre pendant laquelle
+la base dirait « en sommeil » pour une échéance dépassée.
+
+Conséquence à connaître : `snoozed_until` **conserve une date passée**. Elle dit « cette affaire a
+été mise en sommeil jusqu'au … », ce qui est une information, et non un état résiduel à nettoyer.
+`wake_card` la remet à `NULL` ; le temps, lui, ne l'efface pas.
+
+### 16.3 Le geste `snooze_card`, et les refus dans l'ordre où la garde les oppose
+
+```
+public.snooze_card(card_id uuid, until timestamptz) returns public.cards
+```
+
+`security definer`, `search_path` vidé, propriétaire `postgres` — mêmes raisons qu'au §5 de
+`docs/SPEC-workflow-engine.md` pour `move_card` : la colonne est fermée en écriture, donc la
+fonction doit détenir un privilège que l'appelant n'a pas, et elle vérifie elle-même le droit.
+
+| Ordre | Refus | Code | HTTP | Motif |
+|---|---|---|---|---|
+| 1 | `card_not_found` | `P0001` | `400` | La card n'existe pas, n'est pas **active** (§5), ou son channel n'est pas lisible de l'appelant. Une card invisible est **absente**, jamais « interdite » : répondre « interdit » confirmerait son existence (règle de discrétion du §4.3 de `docs/SPEC-permissions-rls.md`) |
+| 2 | `forbidden` | `42501` | `403` | L'appelant lit le channel mais n'y écrit pas — `app.can_write_channel`. C'est la **preuve de refus n° 1** du §7 de `docs/SPEC-permissions-rls.md`, exercée par un geste de plus |
+| 3 | `snooze_date_required` | `P0001` | `400` | `until` est `NULL`. Une mise en sommeil sans échéance serait un archivage, geste qui existe déjà et qui n'est pas celui-ci |
+| 4 | `snooze_date_in_past` | `P0001` | `400` | `until <= now()`. Le prédicat du §16.2 rendrait la card **immédiatement** hors sommeil : l'écriture serait acceptée et sans effet observable, ce que `CLAUDE.md` §18 proscrit sous le nom de succès simulé |
+
+L'ordre est celui de la garde et il est opposable : une card archivée d'un channel qu'on ne lit pas
+rend `card_not_found`, jamais `forbidden`.
+
+Une card **déjà en sommeil** est acceptée : la nouvelle échéance remplace l'ancienne, et le fil en
+porte un second `snoozed`. Reporter une échéance est un geste ordinaire, non une erreur.
+
+La fonction rend **la ligne mise à jour**, type composite `public.cards`, comme `move_card` — la
+garde n° 1 ayant réussi, l'appelant a le droit de la lire.
+
+### 16.4 Le geste `wake_card`, et son idempotence assumée
+
+```
+public.wake_card(card_id uuid) returns public.cards
+```
+
+Mêmes gardes n° 1 et n° 2, dans le même ordre, et aucun refus propre. Sur une card dont
+`snoozed_until` est déjà `NULL`, la fonction **ne fait rien** : elle ne refuse pas, et elle
+n'engendre **aucun** événement de fil. Un réveil sans sommeil n'est pas une erreur du demandeur ;
+c'est un état déjà atteint.
+
+Cette idempotence est une décision, pas un effet de bord : deux onglets ouverts sur la même affaire
+ne doivent pas produire deux traces pour un seul réveil.
+
+### 16.5 La trace est écrite par un trigger, jamais par la fonction
+
+`public.card_events` n'accorde **aucun** privilège d'écriture, `service_role` compris (§14). La
+trace ne peut donc pas être écrite par `snooze_card` : elle l'est par un trigger
+`AFTER UPDATE OF snoozed_until` sur `public.cards`, qui appelle `app.card_event_ecrire` comme les
+cinq triggers de `CRM-044`.
+
+Placer la trace sur la **table** et non dans la fonction a une conséquence voulue : une écriture de
+`snoozed_until` par la clé de service — le seed, un correctif d'exploitation — laisse elle aussi sa
+trace. C'est le même choix qu'au §14 pour `owner_id`, et il est ce qui rend le fil complet.
+
+| Transition de `snoozed_until` | Événement | `payload` |
+|---|---|---|
+| `NULL` → date, ou date → autre date | `snoozed` | `{"until": "<nouvelle échéance>"}` |
+| date → `NULL` | `woken` | `{"from": "<échéance abandonnée>"}` |
+| valeur inchangée | **aucun** | — |
+
+Le vocabulaire de `card_events.type` passe de douze à **quatorze** valeurs. La contrainte est
+**convergée** et non recréée : cette migration devient la dernière autorité sur
+`card_events_type_check`, comme la migration 30 l'était (INC-074).
+
+Le `payload` ne porte **aucun libellé** — ni titre de card, ni nom d'utilisateur —, règle du §14.6
+inchangée.
+
+### 16.6 Qui peut mettre en sommeil
+
+Le droit d'écriture sur le channel, et rien d'autre : `app.can_write_channel`. Aucun droit propre au
+responsable de l'affaire n'est inventé — le §2.2 de `docs/SPEC-permissions-rls.md` ne connaît pas
+cette notion, et l'introduire ici la rendrait incohérente avec les six gestes déjà livrés.
+
+Un administrateur du workspace n'est jamais restreint (règle 2 du §2.2). Un `viewer` est refusé par
+la garde n° 2, et c'est mesuré par la preuve d'API.
+
+### 16.7 La colonne se ferme, et une assertion figée doit être retournée
+
+MESURÉ le 2026-08-16 : `has_column_privilege('authenticated','public.cards','snoozed_until','update')`
+rend `t`. La colonne fait partie des **douze** ouvertes par la migration 14, et
+`supabase/tests/0015_colonnes_protegees.test.sql` l'énumère nommément — « `snoozed_until` reste
+ouverte ».
+
+Cette assertion devient fausse par **arbitrage**, non par régression : la valeur cesse d'être une
+saisie libre pour devenir le constat d'un geste gardé. Elle est donc **retournée avec son motif
+écrit dans le fichier**, jamais retirée — mécanisme de la décision 51, appliqué ici pour ce qu'il
+est : une preuve périmée par une règle nouvelle (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1).
+
+Les onze autres colonnes ouvertes restent ouvertes, et la suite continue de les énumérer une à une.
+
+### 16.8 Contrat d'API, mesuré
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| 1 | `POST /rest/v1/rpc/snooze_card` sur une affaire active de son channel, échéance future | administratrice | `200`, objet JSON unique, `snoozed_until` égale à l'échéance |
+| 2 | idem, échéance passée | administratrice | `400`, `snooze_date_in_past` |
+| 3 | idem, `until` absent | administratrice | `400`, `snooze_date_required` |
+| 4 | idem sur une card d'un channel qu'elle ne lit pas | lectrice | `400`, `card_not_found` |
+| 5 | idem sur une card qu'elle lit sans y écrire | lectrice | `403`, `forbidden` |
+| 6 | `PATCH /rest/v1/cards?id=eq.…` avec `snoozed_until` | administratrice | `403`, privilège refusé — la colonne est fermée |
+| 7 | `POST /rest/v1/rpc/wake_card` sur la card mise en sommeil | administratrice | `200`, `snoozed_until` nulle |
+| 8 | `POST /rest/v1/rpc/wake_card` sur une card qui ne dort pas | administratrice | `200`, aucun événement `woken` de plus |
+| 9 | Le fil de la card après les gestes | administratrice | un `snoozed` puis un `woken`, dans cet ordre, `payload` portant l'échéance |
+
+### 16.9 Preuves exigées de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Suite dédiée : la forme des deux fonctions, leur `security definer` et leur propriétaire, les quatre refus de `snooze_card`, l'idempotence de `wake_card`, le vocabulaire à quatorze valeurs, le trigger et ses deux événements, la fermeture de la colonne et l'ouverture **inchangée** des onze autres |
+| API | Les neuf lignes du §16.8 rejouées avec les jetons réels des profils seedés, chaque refus **relisant la ligne** pour la constater inchangée |
+| E2E d'interface | **Aucune** : la tranche ne livre aucune surface. Elle est due par la tranche 2, avec ses captures |
+| Visuel | **Aucune vérification visuelle**, pour la même raison |
+
+### 16.10 Ce que la tranche 2 devra porter
+
+- le geste dans l'en-tête de la fiche et dans le menu de la card, avec ses échéances usuelles ;
+- une **pastille** disant qu'une affaire dort et jusqu'à quand ;
+- le **filtre** du board et de la vue liste : une affaire en sommeil sort des vues par défaut et
+  reste atteignable par un filtre explicite — sans quoi la mettre en sommeil ne change rien pour
+  l'utilisateur ;
+- les deux événements dans la timeline, avec leur libellé ;
+- le seed, qui devra poser au moins une affaire en sommeil et une affaire dont le sommeil est
+  échu, faute de quoi l'écran ne serait démontrable ni dans un état, ni dans l'autre ;
+- le sommeil des **fils** de messagerie, qui n'a aujourd'hui aucune colonne pour le porter.
