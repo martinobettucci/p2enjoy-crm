@@ -204,7 +204,7 @@ select ok(
 	'`auth.uid()` étant nul pour la clé de service (docs/SPEC-seed.md §2.16)');
 
 -- =============================================================================================
--- 2. Le vocabulaire courant compte DOUZE valeurs — docs/SPEC-cards.md §14.4
+-- 2. Le vocabulaire courant compte QUATORZE valeurs — docs/SPEC-cards.md §14.4 et §16.5
 -- =============================================================================================
 
 select is(
@@ -213,10 +213,10 @@ select is(
 	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
 	'''channel_changed''::text, ''workflow_changed''::text, ''archived''::text, '
 	'''unarchived''::text, ''trashed''::text, ''restored''::text, ''field_changed''::text, '
-	'''mail_received''::text, ''mail_sent''::text])))',
-	'Le `CHECK` compte DOUZE valeurs : `CRM-058` ajoute `mail_sent` sans retirer aucune des onze '
-	'précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de figer un état '
-	'périmé — et c''est la quatrième fois qu''il le fait');
+	'''mail_received''::text, ''mail_sent''::text, ''snoozed''::text, ''woken''::text])))',
+	'Le `CHECK` compte QUATORZE valeurs : `CRM-081` ajoute `snoozed` et `woken` sans retirer '
+	'aucune des douze précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de '
+	'figer un état périmé — et c''est la CINQUIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le
@@ -714,10 +714,11 @@ select is(
 	(select count(*) from information_schema.column_privileges
 	  where table_schema = 'public' and table_name = 'cards'
 	    and grantee = 'authenticated' and privilege_type = 'UPDATE'),
-	12::bigint,
-	'DOUZE colonnes ouvertes, et pas une de plus : l''énumération est celle de `CRM-013`. Cette '
-	'assertion échouerait si une migration future y faisait rentrer `channel_id` — le seul rempart '
-	'd''un privilège que plus aucune migration ne pose (décision 214)');
+	11::bigint,
+	'ONZE colonnes ouvertes, et pas une de plus : l''énumération est celle de `CRM-013`, MOINS '
+	'`snoozed_until` que `CRM-081` a fermée (docs/SPEC-cards.md §16.7). Cette assertion '
+	'échouerait si une migration future y faisait rentrer `channel_id` — le seul rempart d''un '
+	'privilège que plus aucune migration ne pose (décision 214)');
 
 select ok(
 	has_column_privilege('service_role', 'public.cards', 'channel_id', 'update'),

@@ -179,8 +179,12 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'next_action', '
 	'`next_action` reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
 	'`next_action_at` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
-	'`snoozed_until` reste modifiable');
+-- ASSERTION RETOURNÉE À `CRM-081` (décision 51) : elle constatait « `snoozed_until` reste
+-- modifiable ». La migration 44 la FERME — la valeur devient le constat d'un geste gardé,
+-- `public.snooze_card` et `public.wake_card` (docs/SPEC-cards.md §16.7). La preuve est révisée,
+-- jamais retirée, et le motif est écrit ici.
+select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
+	'`snoozed_until` est FERMÉE depuis `CRM-081` : `move_card` n''est pas la seule garde de colonne');
 select ok(has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
 	'`archived_at` reste modifiable : archiver reste un geste du client');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),

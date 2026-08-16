@@ -582,16 +582,17 @@ select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
 	'porte SIX vérifications sur six depuis `CRM-036`, qui a apporté `card_field_values` et '
 	'refermé INC-047');
 
--- RÉVISÉE À `CRM-044`, NON RETIRÉE — mécanisme de la décision 51, ONZIÈME occurrence. Elle
--- constatait que `cards` ne portait aucun trigger d'événement ; elle constate désormais qu'elle en
--- porte DEUX, et que ni l'un ni l'autre n'appartient à `CRM-040` : ils sont posés par la migration
--- 16, sur la table, et non dans une RPC (décision 203).
+-- RÉVISÉE À `CRM-044`, PUIS À `CRM-081`, NON RETIRÉE — mécanisme de la décision 51. Elle
+-- constatait que `cards` ne portait aucun trigger d'événement ; elle en constatait ensuite DEUX ;
+-- elle en constate désormais TROIS, `CRM-081` ajoutant `card_events_apres_maj_sommeil` par la
+-- migration 44. Aucun n'appartient à `CRM-040`, et tous sont posés sur la TABLE et non dans une
+-- RPC (décision 203, docs/SPEC-cards.md §16.5).
 select is(
 	(select array_agg(tgname order by tgname)::text from pg_trigger
 	  where tgrelid = 'public.cards'::regclass and not tgisinternal
 	    and tgname like 'card_events%'),
-	'{card_events_apres_insertion,card_events_apres_maj}',
-	'`cards` porte les DEUX triggers de timeline de `CRM-044` — sur la TABLE, non dans une RPC : '
+	'{card_events_apres_insertion,card_events_apres_maj,card_events_apres_maj_sommeil}',
+	'`cards` porte les TROIS triggers de timeline de `CRM-044` et `CRM-081` — sur la TABLE, non dans une RPC : '
 	'`owner_id`, `archived_at` et `deleted_at` s''écrivent par un PATCH qu''aucune fonction ne '
 	'médie (décision 203)');
 -- RÉVISÉE À `CRM-043`, NON RETIRÉE — mécanisme de la décision 51, dixième occurrence. Elle
