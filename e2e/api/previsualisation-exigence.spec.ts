@@ -78,10 +78,18 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PROSPECTION,
-		})).toEqual({ sur_place: 4, a_l_entree: 0 })
+		})).toEqual({ sur_place: 11, a_l_entree: 0 })
 
 		// `Signature` rend l'INVERSE EXACT : personne sur place, des affaires empêchées d'entrer.
 		// Ces deux lignes ensemble sont la preuve qu'un seul nombre n'aurait pas suffi.
+		//
+		// COMPTES RÉVISÉS UNE SECONDE FOIS PAR `CRM-046` TRANCHE 2, ET L'INÉGALITÉ TIENT. Les
+		// vingt-six cards de volume (`docs/SPEC-seed.md` §9.11) portent les comptes de
+		// l'administratrice à 11/0 sur `Prospection`, 0/8 sur `Signature` et 1/29 sur `Perdu`, et
+		// ceux de la lectrice à 1/25 — quatre affaires de moins, ce sont celles de `grands-comptes`,
+		// dont son track lui est fermé. L'INVERSION que ces trois lignes démontrent est intacte, et
+		// elle l'est parce que le seed s'interdit de poser du volume sur `Signature` précisément
+		// pour cela (`docs/SPEC-seed.md` §9.11.3). Les nombres suivent la donnée ; la propriété non.
 		//
 		// COMPTES RÉVISÉS PAR LA CINQUIÈME TRANCHE DE `CRM-077`, et la révision RENFORCE : l'affaire
 		// `…0cf` du seed occupe `Négociation` sans porter ce champ (`docs/SPEC-seed.md` §10.4 bis),
@@ -93,13 +101,13 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_SIGNATURE,
-		})).toEqual({ sur_place: 0, a_l_entree: 2 })
+		})).toEqual({ sur_place: 0, a_l_entree: 8 })
 
 		// `Perdu` porte les deux à la fois.
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 9 })
+		})).toEqual({ sur_place: 1, a_l_entree: 29 })
 	})
 
 	test('une cible de TRANSITION ne compte que son chemin, jamais l’étape d’arrivée', async ({
@@ -114,9 +122,9 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		// `sur_place` est TOUJOURS nul pour une transition : elle ne porte pas sur une étape.
 		expect(parChemin.sur_place).toBe(0)
 		// Et son compte est strictement inférieur à celui de l'étape d'arrivée, qui agrège ses cinq
-		// chemins : 4 contre 8. Un écran qui aurait confondu les deux cibles aurait doublé l'effet
+		// chemins : 11 contre 29. Un écran qui aurait confondu les deux cibles aurait doublé l'effet
 		// annoncé sur le geste le plus courant du bloc des exigences.
-		expect(parChemin.a_l_entree).toBe(4)
+		expect(parChemin.a_l_entree).toBe(11)
 	})
 })
 
@@ -133,8 +141,8 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		const vuParLAdmin = await effets(request, admin, couple)
 		const vuParLeViewer = await effets(request, viewer, couple)
 
-		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 9 })
-		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 5 })
+		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 29 })
+		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 25 })
 		// L'inégalité est écrite explicitement : si un jour la fonction passait en
 		// `security definer`, les deux nombres deviendraient égaux et cette assertion tomberait
 		// AVANT que quiconque ne s'aperçoive que le produit annonce des affaires interdites.
@@ -150,7 +158,7 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 9 })
+		})).toEqual({ sur_place: 1, a_l_entree: 29 })
 	})
 
 	test('l’appelant ANONYME est refusé par le privilège, avant toute politique', async ({

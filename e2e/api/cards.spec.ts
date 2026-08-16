@@ -524,6 +524,12 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 		// colonne vide (docs/SPEC-seed.md §9.3). La propriété reste vraie et reste à prouver — le
 		// seed ne la sert simplement plus toute faite, et le scénario construit l'état qu'il
 		// éprouve, puis le rend.
+		//
+		// RÉVISÉ UNE SECONDE FOIS PAR `CRM-046` TRANCHE 2, ET SUR LA FORME : le préalable
+		// archivait la seule card active CONNUE, `…0cd`, ce qui liait le scénario au nombre de
+		// cards que le seed pose sur `livre`. Les cards de volume de `docs/SPEC-seed.md` §9.11 y
+		// vivent désormais aussi. Le préalable archive donc TOUTE card active de l'étape, et les
+		// rend toutes ensuite : il dit ce que la propriété exige, au lieu d'énumérer un seed.
 		const seuleCard = await relire(request, CARD_ARCHIVEE)
 		expect(seuleCard!.archived_at).not.toBeNull()
 
@@ -532,8 +538,16 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 		})
 		const [noeud] = (await noeuds.json()) as { id: string }[]
 
-		// Préalable : la seule card ACTIVE de cette étape est archivée le temps du scénario.
-		const misEnPlace = await request.patch(`${CARDS}?id=eq.${CARD_LIVREE}`, {
+		// Préalable : TOUTES les cards actives de cette étape sont archivées le temps du scénario.
+		const actives = await request.get(
+			`${CARDS}?select=id&current_step_id=eq.${ETAPE_LIVRE}&archived_at=is.null&deleted_at=is.null`,
+			{ headers: enTetesService() },
+		)
+		const aRendre = ((await actives.json()) as { id: string }[]).map((c) => c.id)
+		expect(aRendre.length, 'l’étape doit porter des cards actives, sinon le scénario est vide')
+			.toBeGreaterThan(0)
+
+		const misEnPlace = await request.patch(`${CARDS}?id=in.(${aRendre.join(',')})`, {
 			headers: enTetesService(),
 			data: { archived_at: '2026-05-01T09:00:00Z' },
 		})
@@ -562,7 +576,7 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 			})
 			expect([200, 204]).toContain(restauration.status())
 
-			const rendue = await request.patch(`${CARDS}?id=eq.${CARD_LIVREE}`, {
+			const rendue = await request.patch(`${CARDS}?id=in.(${aRendre.join(',')})`, {
 				headers: enTetesService(),
 				data: { archived_at: null },
 			})
