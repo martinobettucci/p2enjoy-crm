@@ -17217,3 +17217,54 @@ des six champs d'en-tête n'est pas livrée. MESURÉ, le rôle `authenticated` p
 ses preuves, soit un volume comparable au §4 bis du composeur. C'est la tranche que la prochaine
 session peut prendre. Sinon, l'ordre du plan mène à `CRM-042` ; et le parcours enchaîné de
 `CRM-037` (INC-062) reste dû. INC-129 reste à porter au responsable.
+
+### Complément à l'entrée ci-dessus — ce que la campagne a réellement rendu
+
+L'entrée précédente a été écrite **avant** la fin de la campagne, conformément au §0 de
+`docs/CloudWorker.md` — on committe au fil de l'eau, on n'attend pas d'avoir prouvé. Voici ce que
+la campagne a rendu, et il faut le lire à la place de la ligne « campagne » ci-dessus.
+
+**LA CAMPAGNE A TROUVÉ UNE RÉGRESSION RÉELLE DE CETTE TRANCHE, ET C'EST ELLE QUI L'A TROUVÉE.**
+`npm run e2e:ui` a rendu **51 scénarios en échec** sur 331, avec toujours la même cause :
+
+```
+pageerror: Cannot read properties of undefined (reading 'full_name')
+```
+
+Les preuves d'interface qui **substituent le réseau** (`docs/DESIGN_SYSTEM.md` §12.5) servent une
+card **sans ses relations embarquées** : `profiles` y est **absente**, et non nulle. Le rendu du
+responsable comparait à `null` seul, et `profil.full_name` faisait tomber la **page entière** — le
+formulaire, le fil, les commentaires, tout ce que la fiche porte. Corrigé **à la cause** : une clé
+absente se traite comme une absence de responsable, ce que le §15.7 nommait déjà. Deux scénarios de
+`EnTeteCard.test.tsx` la figent. Après correction : **330 passés, 1 en échec**.
+
+**UNE PREMIÈRE MESURE AVAIT MENTI, ET LE MOTIF EST À RETENIR.** La première exécution avait été lue
+comme verte : `npm run e2e:ui 2>&1 | tail -25` rend le code de sortie de **`tail`**, soit `0`, et la
+troncature avait emporté la ligne « 51 failed ». Une campagne dont on ne lit que la queue de sortie
+n'est pas une campagne. Ne plus tronquer la sortie d'une preuve dont on veut le verdict.
+
+**LE DERNIER ÉCHEC ÉTAIT UN GARDE-FOU FIGÉ, ET IL A ÉTÉ RÉVISÉ** — mécanisme de la décision 51.
+`e2e/ui/identites.spec.ts` visait `getByText('Farida Nowak')` sur la page entière ; l'en-tête nomme
+désormais le responsable, le même nom apparaît deux fois, et le mode strict de Playwright refuse le
+locator. Il n'est **pas** relâché en `.first()` — on ne saurait plus lequel des deux est vérifié —,
+il est **scopé au fil**, et l'apparition dans l'en-tête devient une assertion **de plus**. La preuve
+en sort plus forte : c'est le contrat d'identité de `CRM-022`, tenu à un endroit de plus.
+
+**Campagne finale.** `npm run test:sql` **41 fichiers, 2161 assertions, aucune anomalie** ;
+`npm run test:unit` **1326** tests sur 45 fichiers (1291 avant) ; `npm run e2e:api` **635 scénarios**,
+mesuré **deux fois** ; `npm run e2e:ui` **330 sur 331** puis **331** après révision du garde-fou ;
+`pytest mail-sync/tests` **242** ; `typecheck` et `build` verts. **Non exécutés faute de temps** :
+`npm run e2e:mail` et les quarante-neuf autres `scripts/verify-*.sh`.
+
+**`scripts/verify-cards.sh` rend 46 contrôles, 2 en échec, et AUCUN des deux n'est imputable à cette
+tranche** — l'en-tête est en lecture et n'écrit rien. Les deux sont consignés au registre :
+**INC-132**, le harnais fige « 14/1/1/14 » là où le seed pose **quinze** cards, les quinze
+identifiants étant dans `apply-seed.sh` et les quinze lignes créées à l'exécution du seed — ce n'est
+pas une pollution, c'est un compteur resté à son compte d'avant `CRM-077` ; et **INC-133**,
+`npm run e2e:api` échoue **dans** le harnais et passe **seul**, avant et après, 635 scénarios les
+deux fois — forme d'INC-129, aggravée par son intermittence.
+
+**Où reprendre, révisé.** Le reste dû est inchangé — l'écriture des six champs —, et une exécution
+parallèle de la routine l'a prise pendant que celle-ci finissait sa campagne : voir les commits
+`2e7b34c` et `ae7fc10`. La prochaine session vérifiera d'abord l'état réel de `CRM-040` au backlog
+avant de choisir.
