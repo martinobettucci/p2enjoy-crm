@@ -22,7 +22,7 @@
 // Definition of Done exige : il suppose une session et un contrôle de transition, dus par
 // `CRM-041`. C'est INC-062, et l'absence est nommée plutôt que maquillée.
 
-import { expect, test } from './fixtures'
+import { autoriserErreursConsole, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
@@ -171,13 +171,45 @@ const CHANNELS_SERVIS = [
 	{ id: 'ch-2', name: 'Intra-entreprise', slug: 'intra-entreprise', position: 2 },
 ]
 
+/**
+ * Ce que la route des valeurs répond à une **écriture** — §4 bis.
+ *
+ * Par défaut, le `201` d'une ligne créée que la mesure du §4 bis.10 relève. Les scénarios de refus
+ * substituent la réponse, ce qui est le seul moyen d'éprouver dans le navigateur un refus dont la
+ * cause est une politique RLS : l'appelant du harnais est anonyme, et son refus arriverait avant
+ * même que le formulaire ne soit chargé (docs/DESIGN_SYSTEM.md §12.5).
+ */
+type ReponseEcriture = { readonly status: number; readonly corps: unknown }
+
+const ECRITURE_ACCEPTEE: ReponseEcriture = { status: 201, corps: [{ field_id: 'f-source' }] }
+
 /** Sert les sept réponses du chargement, à la forme exacte de ce que PostgREST rend. */
-async function servirFormulaire(page: import('@playwright/test').Page): Promise<void> {
+async function servirFormulaire(
+	page: import('@playwright/test').Page,
+	ecriture: ReponseEcriture = ECRITURE_ACCEPTEE,
+): Promise<void> {
 	const servir = (corps: unknown) => (route: import('@playwright/test').Route) =>
 		route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(corps) })
 	// `card_field_values` avant `cards` : le motif `**/rest/v1/cards*` capturerait aussi
 	// `card_field_values`, et la première route déclarée l'emporte dans Playwright.
-	await page.route(ROUTE_VALEURS, servir(VALEURS_SERVIES))
+	//
+	// LA MÉTHODE EST DISTINGUÉE, et elle ne peut pas ne pas l'être : la lecture et l'écriture
+	// partagent la même adresse depuis que la saisie est livrée. Servir la liste des valeurs en
+	// réponse à un `POST` ferait passer une écriture pour un succès sans jamais éprouver son code.
+	await page.route(ROUTE_VALEURS, (route) => {
+		if (route.request().method() === 'POST') {
+			return route.fulfill({
+				status: ecriture.status,
+				contentType: 'application/json',
+				body: JSON.stringify(ecriture.corps),
+			})
+		}
+		return route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify(VALEURS_SERVIES),
+		})
+	})
 	await page.route(ROUTE_CHAMPS, servir(CHAMPS_SERVIS))
 	await page.route(ROUTE_REGLES, servir(REGLES_SERVIES))
 	await page.route(ROUTE_ETAPES, servir(ETAPE_SERVIE))
@@ -283,18 +315,185 @@ test.describe('formulaire chargé (réponse réseau substituée, docs/DESIGN_SYS
 		await capturer(page, 'formulaire-autres-etapes-1440', 'CRM-037')
 	})
 
-	test('aucun contrôle n’est saisissable, et l’écran explique pourquoi (§4.7)', async ({ page }) => {
+	// UN GARDE-FOU FIGÉ A ÉTÉ RÉVISÉ ICI, ET LE MOTIF EST ÉCRIT DANS LE FICHIER — mécanisme de la
+	// décision 51. Ce scénario exigeait « aucun contrôle saisissable » et le bandeau qui explique
+	// pourquoi. Il avait raison quand il a été écrit : aucune écriture n'était livrée, et son motif
+	// était INC-021, close depuis `CRM-009`. La décision 334 (INC-088) a levé la limite, le §4 bis
+	// spécifie la saisie, et le scénario est **retourné** sur les mêmes contrôles plutôt que
+	// supprimé.
+	test('les contrôles sont saisissables, et plus aucun bandeau ne prétend le contraire (§4 bis)', async ({
+		page,
+	}) => {
 		await servirFormulaire(page)
 		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
 
-		await expect(page.getByTestId('formulaire-lecture-seule')).toContainText('pas encore livré')
+		await expect(page.getByTestId('formulaire-lecture-seule')).toHaveCount(0)
 
 		const controles = page.getByTestId('formulaire-card').locator('input, textarea, select')
 		const nombre = await controles.count()
 		expect(nombre, 'des contrôles sont bien rendus, pas seulement du texte').toBeGreaterThan(0)
 		for (let rang = 0; rang < nombre; rang += 1) {
-			await expect(controles.nth(rang)).toBeDisabled()
+			await expect(controles.nth(rang)).toBeEnabled()
 		}
+	})
+})
+
+test.describe('la saisie depuis la fiche (§4 bis)', () => {
+	test('choisir une valeur écrit sur `card_field_values`, et la charge porte les cinq colonnes', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirFormulaire(page)
+		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+
+		const attendue = page.waitForRequest(
+			(requete) =>
+				requete.method() === 'POST' && requete.url().includes('/rest/v1/card_field_values'),
+		)
+		await page.locator('#champ-source').selectOption('salon')
+		const requete = await attendue
+
+		expect(
+			requete.url(),
+			'l’unicité est celle de la clé primaire du §6.2, écrite plutôt que déduite',
+		).toContain('on_conflict=card_id%2Cfield_id')
+		expect(requete.headers()['prefer'] ?? '').toContain('resolution=merge-duplicates')
+		expect(JSON.parse(requete.postData() ?? '{}')).toMatchObject({
+			card_id: CARD,
+			field_id: 'f-source',
+			workflow_id: 'wf-1',
+			workspace_id: '5eed0000-0000-4000-8000-000000000001',
+			value: 'salon',
+		})
+		// `updated_by` n'est pas envoyée : la trace faisant foi vient du serveur (§4 bis.4).
+		expect(Object.keys(JSON.parse(requete.postData() ?? '{}'))).not.toContain('updated_by')
+	})
+
+	test('l’enregistrement est CONFIRMÉ à l’écran, et l’alerte d’exigence disparaît sans rechargement', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirFormulaire(page)
+		await page.goto(ADRESSE)
+
+		await expect(page.getByTestId('alerte-source')).toBeVisible()
+		await page.locator('#champ-source').selectOption('salon')
+
+		const etat = page.getByTestId('etat-source')
+		await expect(etat).toBeVisible()
+		await expect(etat).toHaveAttribute('role', 'status')
+		await expect(etat).toContainText('Enregistré')
+		// §4 bis.8 : le modèle est mis à jour EN PLACE, sans rejouer les cinq requêtes du chargement.
+		await expect(page.getByTestId('alerte-source')).toHaveCount(0)
+		await expect(page.locator('#champ-source')).toHaveAttribute('aria-invalid', 'false')
+
+		await capturer(page, 'formulaire-saisie-enregistree-1440', 'CRM-037')
+	})
+
+	test('une saisie de texte n’écrit qu’à la PERTE DU FOCUS, jamais à la frappe (§4 bis.3)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page)
+		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+
+		const ecritures: string[] = []
+		page.on('request', (requete) => {
+			if (requete.method() === 'POST' && requete.url().includes('/rest/v1/card_field_values')) {
+				ecritures.push(requete.url())
+			}
+		})
+
+		// La case à cocher est le seul contrôle **texte-libre-adjacent** de ce jeu servi ; la frappe
+		// se fait donc sur la liste, dont l'écriture part au changement. Le contrôle éprouvé ici est
+		// la case, dont on vérifie qu'un simple focus ne déclenche rien.
+		await page.locator('#champ-decideur-identifie').focus()
+		await page.locator('#champ-source').focus()
+		await page.waitForTimeout(200)
+		expect(ecritures, 'le focus seul n’écrit rien').toHaveLength(0)
+
+		await page.locator('#champ-decideur-identifie').check()
+		await page.waitForTimeout(200)
+		expect(ecritures, 'une case à cocher écrit au changement').toHaveLength(1)
+	})
+
+	test('un refus est montré PRÈS du champ, sans effacer la saisie ni le texte du serveur', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirFormulaire(page, {
+			status: 400,
+			corps: {
+				code: 'P0001',
+				message: 'invalid_field_value',
+				details: 'source attend une clé de choices',
+				hint: null,
+			},
+		})
+		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+
+		await page.locator('#champ-source').selectOption('salon')
+
+		const refus = page.getByTestId('refus-source')
+		await expect(refus).toBeVisible()
+		await expect(refus).toHaveAttribute('role', 'alert')
+		await expect(refus).toContainText('ne convient pas')
+		// Le texte du serveur n'est JAMAIS rendu tel quel (`CLAUDE.md` §20).
+		await expect(refus).not.toContainText('invalid_field_value')
+		await expect(refus).not.toContainText('choices')
+
+		// La saisie reste à l'écran, et le champ est signalé invalide (§4 bis.6).
+		await expect(page.locator('#champ-source')).toHaveValue('salon')
+		await expect(page.locator('#champ-source')).toHaveAttribute('aria-invalid', 'true')
+		// L'alerte d'exigence et le refus COEXISTENT, et les deux sont cités (§4 bis.9).
+		const decrit = (await page.locator('#champ-source').getAttribute('aria-describedby')) ?? ''
+		expect(decrit.split(' ')).toContain('champ-source-alerte')
+		expect(decrit.split(' ')).toContain('champ-source-refus')
+
+		await capturer(page, 'formulaire-saisie-refusee-1440', 'CRM-037')
+
+		// Le `400` du serveur laisse une trace dans la console du navigateur, que rien ne peut
+		// supprimer : c'est le transport qui l'écrit. Elle est CONSOMMÉE ici, une par une et par son
+		// texte exact, plutôt que filtrée globalement — la console reste dans le verdict.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
+	})
+
+	test('un refus de droit d’écriture nomme le droit, et le contrôle reste utilisable', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, {
+			status: 403,
+			corps: {
+				code: '42501',
+				message: 'new row violates row-level security policy for table "card_field_values"',
+				details: null,
+				hint: null,
+			},
+		})
+		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+
+		await page.locator('#champ-source').selectOption('salon')
+		await expect(page.getByTestId('refus-source')).toContainText("droit d'écrire")
+		// Le contrôle N'EST PAS éteint : la règle vit dans la politique RLS, et l'écran montre le
+		// refus plutôt que de l'anticiper (`CLAUDE.md` §10, §4 bis.7).
+		await expect(page.locator('#champ-source')).toBeEnabled()
+
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+	})
+
+	test('la section repliée reste en lecture seule : aucun contrôle n’y est rendu (§4 bis.1)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page)
+		await page.goto(ADRESSE)
+
+		const section = page.getByTestId('autres-etapes')
+		await section.locator('summary').click()
+		await expect(section.locator('input, textarea, select')).toHaveCount(0)
 	})
 })
 
