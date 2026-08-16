@@ -4,6 +4,9 @@
 //           mesurés, dont la garde d'archivage), §2 bis.6 (validation de forme), §2 bis.9
 //           (lignes « Interface » et « Visuel »)
 // @verifies docs/SPEC-workflow-engine.md §2.5 (`0` n'est pas `NULL`), §2.6 (la garde)
+// @verifies docs/SPEC-workflow-engine.md §2 ter.2 (extrémités et infobulles), §2 ter.3 (l'archivé
+//           ne se déplace pas mais compte comme voisine), §2 ter.7 (lignes « Interface » et
+//           « Visuel »)
 // @verifies docs/DESIGN_SYSTEM.md §5.18 (cette surface), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §10 (la garde est backend, constatée et non simulée), §16 (vérification
 //           visuelle), §22 (accessibilité clavier)
@@ -78,6 +81,43 @@ function archivageDe(lignes: readonly { archived_at: string | null }[]): string 
 	const [ligne] = lignes
 	if (ligne === undefined) throw new Error('la ligne relue est introuvable')
 	return ligne.archived_at
+}
+
+/** L'ordre que le seed pose, `position` de `1` à `8` — l'archivé en dernier (§2.9). */
+const ORDRE_SEED = [
+	'prospection',
+	'relance',
+	'negociation',
+	'signature',
+	'realisation',
+	'livre',
+	'perdu',
+	'qualification',
+]
+
+/**
+ * Les positions réellement en base, par clé.
+ *
+ * Elle sert DEUX fois, et pour deux raisons distinctes : à constater l'effet d'un déplacement — un
+ * réordonnancement purement local passerait toute assertion d'écran sans qu'aucune ligne n'ait
+ * bougé —, et à mémoriser l'état d'entrée pour le restituer en épilogue.
+ */
+async function lirePositions(page: Page): Promise<Record<string, number>> {
+	const reponse = await page.request.get(`${CHEMIN_CATALOGUE}?select=key,position`, {
+		headers: enTetesService(),
+	})
+	const lignes = (await reponse.json()) as { key: string; position: string | number }[]
+	return Object.fromEntries(lignes.map((ligne) => [ligne.key, Number(ligne.position)]))
+}
+
+/** Rend au seed les positions que le scénario a changées. */
+async function restituerPositions(page: Page, positions: Record<string, number>): Promise<void> {
+	for (const [cle, position] of Object.entries(positions)) {
+		await page.request.patch(`${CHEMIN_CATALOGUE}?key=eq.${cle}`, {
+			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+			data: { position },
+		})
+	}
 }
 
 async function ouvrirCatalogue(page: Page): Promise<void> {
@@ -359,5 +399,103 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 		await expect(formulaire.getByTestId('valider-noeud')).toBeEnabled()
 
 		await capturer(page, 'catalogue-formulaire-1440', UNITE)
+	})
+
+	test('monter et descendre un nœud, à la souris puis au clavier (§2 ter)', async ({ page }) => {
+		// L'ORDRE DU SEED EST RESTITUÉ EN ÉPILOGUE, quel que soit le point où le scénario s'arrête :
+		// `scripts/verify-seed.sh` et `scripts/verify-catalogue.sh` comptent les positions `1` à `8`,
+		// et une preuve oublieuse les ferait rougir ailleurs sans que rien ne dise pourquoi.
+		const initiales = await lirePositions(page)
+		try {
+			await connecter(page)
+			await ouvrirCatalogue(page)
+
+			const cles = async (): Promise<string[]> =>
+				page.getByTestId('ligne-noeud').evaluateAll((lignes) =>
+					lignes.map((ligne) => ligne.getAttribute('data-noeud') ?? ''),
+				)
+
+			// L'ordre de départ est celui du seed, `position` croissante (§2.9).
+			expect(await cles()).toEqual(ORDRE_SEED)
+
+			// --- Descendre `prospection` À LA SOURIS ------------------------------------------
+			// Le nœud choisi est celui que le seed OCCUPE de quatre affaires actives : son archivage
+			// est refusé, son déplacement ne l'est pas (§2 ter.4 b). L'écran ne le sait pas d'avance
+			// et n'a pas à le savoir — c'est la base qui tranche, et elle accepte.
+			const prospection = page.locator('[data-testid="ligne-noeud"][data-noeud="prospection"]')
+			await prospection.getByTestId('descendre-noeud').click()
+			await expect(page.getByTestId('ligne-noeud').first()).toHaveAttribute(
+				'data-noeud',
+				'relance',
+			)
+			expect(await cles()).toEqual([
+				'relance',
+				'prospection',
+				'negociation',
+				'signature',
+				'realisation',
+				'livre',
+				'perdu',
+				'qualification',
+			])
+			// AUCUN REFUS N'EST AFFICHÉ : le déplacement d'un nœud occupé passe.
+			await expect(page.getByTestId('refus-catalogue')).toHaveCount(0)
+
+			// L'EFFET EST RELU EN BASE : un réordonnancement purement local passerait l'assertion
+			// ci-dessus sans qu'aucune position n'ait bougé.
+			const apresSouris = await lirePositions(page)
+			expect(apresSouris['prospection']).toBeGreaterThan(apresSouris['relance'] ?? 0)
+			expect(apresSouris['prospection']).toBeLessThan(apresSouris['negociation'] ?? 0)
+
+			// --- Remonter `prospection` AU CLAVIER --------------------------------------------
+			// `CLAUDE.md` §22 : chaque geste est atteignable au clavier. La commande reçoit le focus
+			// puis « Entrée », sans jamais passer par la souris.
+			await prospection.getByTestId('monter-noeud').focus()
+			await expect(prospection.getByTestId('monter-noeud')).toBeFocused()
+			await page.keyboard.press('Enter')
+			await expect(page.getByTestId('ligne-noeud').first()).toHaveAttribute(
+				'data-noeud',
+				'prospection',
+			)
+			expect(await cles()).toEqual(ORDRE_SEED)
+
+			const apresClavier = await lirePositions(page)
+			expect(apresClavier['prospection']).toBeLessThan(apresClavier['relance'] ?? 0)
+
+			await capturer(page, 'catalogue-ordre-1440', UNITE)
+		} finally {
+			await restituerPositions(page, initiales)
+		}
+	})
+
+	test('les commandes d’ordre sont désactivées aux extrémités et absentes des archivés (§2 ter.3)', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await ouvrirCatalogue(page)
+
+		const premiere = page.locator('[data-testid="ligne-noeud"][data-noeud="prospection"]')
+		const derniere = page.locator('[data-testid="ligne-noeud"][data-noeud="qualification"]')
+
+		// DÉSACTIVÉES, JAMAIS MASQUÉES (docs/DESIGN_SYSTEM.md §5.18, §8) : une commande qui disparaît
+		// en tête de liste fait sauter le groupe d'actions d'une ligne à l'autre.
+		await expect(premiere.getByTestId('monter-noeud')).toBeDisabled();
+		await expect(premiere.getByTestId('descendre-noeud')).toBeEnabled();
+		// Et l'infobulle DIT POURQUOI, au lieu de laisser un bouton gris sans explication.
+		await expect(premiere.getByTestId('monter-noeud')).toHaveAttribute(
+			'title',
+			'Déjà en tête de liste',
+		)
+
+		// LA LIGNE ARCHIVÉE NE PORTE AUCUNE COMMANDE D'ORDRE, comme elle ne porte pas « Modifier » :
+		// le geste n'a aucun effet observable sur un nœud que les sélecteurs d'étape ignorent déjà.
+		// Elle reste en revanche comptée comme voisine par le calcul — c'est ce que le test unitaire
+		// du module fige, et c'est pourquoi `perdu`, dernière ligne ACTIVE, peut encore descendre.
+		await expect(derniere.getByTestId('pilule-archive')).toBeVisible()
+		await expect(derniere.getByTestId('monter-noeud')).toHaveCount(0)
+		await expect(derniere.getByTestId('descendre-noeud')).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="ligne-noeud"][data-noeud="perdu"]').getByTestId('descendre-noeud'),
+		).toBeEnabled()
 	})
 })
