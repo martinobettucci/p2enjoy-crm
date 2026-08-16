@@ -144,6 +144,25 @@ select has_trigger('public', 'cards', 'card_events_apres_maj_sommeil',
 -- 4. Les quatre refus de `snooze_card`, dans l'ordre — docs/SPEC-cards.md §16.3
 -- =============================================================================================
 
+-- LES COMPTES D'ÉVÉNEMENTS SONT DES DELTAS, ET LA MESURE L'A IMPOSÉ. Ils étaient absolus — « le
+-- fil porte UN `snoozed` » —, ce qui liait cette suite à l'état du seed plutôt qu'à la propriété
+-- qu'elle éprouve. `CRM-081` tranche 2 a endort deux affaires du seed, dont `…0c1` : le compte
+-- absolu est devenu faux sans qu'aucune règle ait changé. C'est la troisième occurrence de cette
+-- famille dans l'unité, après `0012_cards.test.sql` et `e2e/api/cards.spec.ts` — un préalable qui
+-- fige un VOLUME au lieu d'une propriété. L'assertion est RÉVISÉE, avec son motif, jamais retirée
+-- (décision 51) : ce qu'elle doit prouver est que le trigger écrit UN événement de plus, ce qui
+-- reste vrai quel que soit ce que le fil portait avant.
+create temporary table sommeil_avant as
+select
+	(select count(*)::int from public.card_events
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c1' and type = 'snoozed') as snoozed,
+	(select count(*)::int from public.card_events
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c1' and type = 'woken') as woken;
+
+-- La référence se relit sous les rôles ENDOSSÉS par la suite : sans ce `grant`, la lecture rend
+-- « permission denied » et l'assertion mesurerait un droit au lieu d'un compte.
+grant select on sommeil_avant to public;
+
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
@@ -188,20 +207,27 @@ select is(
 
 select is(
 	(select count(*)::int from public.card_events e
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'),
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed')
+	  - (select snoozed from sommeil_avant),
 	1,
-	'Le fil porte UN `snoozed`, écrit par le trigger de table');
+	'Le fil porte UN `snoozed` DE PLUS, écrit par le trigger de table');
 
+-- LE DERNIER `snoozed`, ET NON « le » `snoozed` : même motif que les deltas ci-dessus. Le seed
+-- endort désormais cette affaire, si bien que le fil en porte un antérieur ; l'événement que ce
+-- bloc éprouve est celui que l'appel qui précède vient d'écrire.
 select is(
 	(select (e.payload->>'until')::timestamptz from public.card_events e
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'),
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'
+	  order by e.created_at desc, e.id desc limit 1),
 	'2099-01-01T00:00:00Z'::timestamptz,
 	'Le `payload` porte l''échéance');
 
 select is(
-	(select array_agg(k order by k) from public.card_events e,
-	        lateral jsonb_object_keys(e.payload) k
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'),
+	(select array_agg(k order by k) from
+	   (select e.payload from public.card_events e
+	     where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'
+	     order by e.created_at desc, e.id desc limit 1) dernier,
+	   lateral jsonb_object_keys(dernier.payload) k),
 	array['until'],
 	'Et RIEN d''autre : aucun libellé, règle du §14.6 inchangée');
 
@@ -214,7 +240,8 @@ select is(
 
 select is(
 	(select count(*)::int from public.card_events e
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed'),
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'snoozed')
+	  - (select snoozed from sommeil_avant),
 	2,
 	'Le report écrit un SECOND `snoozed` : c''est un geste, non une erreur');
 
@@ -229,9 +256,10 @@ select is(
 
 select is(
 	(select count(*)::int from public.card_events e
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'woken'),
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'woken')
+	  - (select woken from sommeil_avant),
 	1,
-	'Le fil porte UN `woken`, `payload` nommant l''échéance abandonnée');
+	'Le fil porte UN `woken` DE PLUS, `payload` nommant l''échéance abandonnée');
 
 select lives_ok($$
 	select public.wake_card('5eed0000-0000-4000-8000-0000000000c1') $$,
@@ -239,7 +267,8 @@ select lives_ok($$
 
 select is(
 	(select count(*)::int from public.card_events e
-	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'woken'),
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c1' and e.type = 'woken')
+	  - (select woken from sommeil_avant),
 	1,
 	'Et n''écrit AUCUN second événement : deux onglets ouverts sur la même affaire ne produisent '
 	'pas deux traces pour un seul réveil (§16.4)');
