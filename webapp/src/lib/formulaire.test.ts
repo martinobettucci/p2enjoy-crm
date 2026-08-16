@@ -10,9 +10,14 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	appliquerEcriture,
 	CAS_RENSEIGNE,
+	classerRefusValeur,
 	composerFormulaire,
 	estRenseigne,
+	memeValeur,
+	MESSAGE_VALEUR_INVALIDE,
+	normaliserSaisie,
 	VISIBILITE_PAR_DEFAUT,
 	type ChampFormulaire,
 	type RegleVisibilite,
@@ -223,5 +228,134 @@ describe('champ exigé et manquant (§4.4)', () => {
 			etape: ETAPE,
 		})
 		expect(modele.clesManquantes).toEqual([])
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// La saisie depuis la fiche — docs/SPEC-form-composer.md §4 bis
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-037 (docs/BACKLOG.md) — la saisie depuis la fiche
+// @verifies docs/SPEC-form-composer.md §4 bis.3 (une écriture seulement si la valeur a changé),
+//           §4 bis.4 (normalisation par type, aucun `trim`), §4 bis.5 (vider),
+//           §4 bis.7 (dictionnaire fermé des refus), §4 bis.8 (mise à jour en place)
+
+describe('normalisation d’une saisie (§4 bis.4)', () => {
+	it('un montant et un nombre partent en NOMBRE, jamais en chaîne', () => {
+		expect(normaliserSaisie('money', '45000')).toBe(45000)
+		expect(normaliserSaisie('number', '12')).toBe(12)
+	})
+
+	it('une case à cocher part en BOOLÉEN, et décochée vaut `false` — jamais vide', () => {
+		expect(normaliserSaisie('checkbox', true)).toBe(true)
+		expect(normaliserSaisie('checkbox', false)).toBe(false)
+	})
+
+	it('une liste multiple part en TABLEAU, et le tableau vide vaut vide (§6.6)', () => {
+		expect(normaliserSaisie('multiselect', ['salon', 'site'])).toEqual(['salon', 'site'])
+		expect(normaliserSaisie('multiselect', [])).toBeNull()
+	})
+
+	it('toute autre saisie vide vaut `null` : vider est une écriture, pas une suppression (§4 bis.5)', () => {
+		expect(normaliserSaisie('text', '')).toBeNull()
+		expect(normaliserSaisie('money', '')).toBeNull()
+		expect(normaliserSaisie('select', '')).toBeNull()
+	})
+
+	it('AUCUN `trim` : la base porte ce que l’utilisateur a saisi (§4 bis.4)', () => {
+		// La chaîne de blancs est **vide au sens de « renseigné »** — c'est une règle de lecture, et
+		// les deux lectures restent cohérentes sans que l'écriture ait à rogner quoi que ce soit.
+		expect(normaliserSaisie('text', '   ')).toBe('   ')
+		expect(estRenseigne(normaliserSaisie('text', '   '))).toBe(false)
+		expect(normaliserSaisie('textarea', ' deux\n  lignes ')).toBe(' deux\n  lignes ')
+	})
+
+	it('un nombre non convertible reste une chaîne plutôt que de devenir `NaN`', () => {
+		// `JSON.stringify(NaN)` rend `null`, donc « vidé » : une saisie serait silencieusement
+		// effacée. Elle part telle quelle, et c'est le trigger de `CRM-036` qui la refuse.
+		expect(normaliserSaisie('money', 'douze mille')).toBe('douze mille')
+	})
+})
+
+describe('une écriture n’est émise que si la valeur a changé (§4 bis.3)', () => {
+	it('aucune ligne et « vidé explicitement » sont la MÊME réponse', () => {
+		expect(memeValeur(undefined, null)).toBe(true)
+		expect(memeValeur(null, null)).toBe(true)
+	})
+
+	it('reconnaît l’égalité d’un tableau reconstruit, et la différence réelle', () => {
+		expect(memeValeur(['salon'], ['salon'])).toBe(true)
+		expect(memeValeur(['salon'], ['site'])).toBe(false)
+		expect(memeValeur(45000, 45001)).toBe(false)
+		expect(memeValeur(false, null)).toBe(false)
+	})
+})
+
+describe('classement des refus d’écriture (§4 bis.7)', () => {
+	it('400 + invalid_field_value est le refus du trigger de validation', () => {
+		expect(classerRefusValeur(400, MESSAGE_VALEUR_INVALIDE).nature).toBe('invalid')
+	})
+
+	it('403 et 401 sont le refus de la politique d’écriture', () => {
+		expect(classerRefusValeur(403, 'new row violates row-level security policy').nature).toBe('forbidden')
+		expect(classerRefusValeur(401, 'JWT expired').nature).toBe('forbidden')
+	})
+
+	it('une absence de réponse est une panne de transport, jamais un refus', () => {
+		expect(classerRefusValeur(undefined, 'Failed to fetch').nature).toBe('network')
+	})
+
+	it('un 400 qui n’est PAS `invalid_field_value` ne se fait pas passer pour lui', () => {
+		// Le classement porte sur le `message`, identifiant stable de la migration `0013`, jamais
+		// sur le `details`, qui est une phrase susceptible de changer sans préavis.
+		expect(classerRefusValeur(400, 'invalid input syntax for type uuid').nature).toBe('unknown')
+	})
+})
+
+describe('mise à jour du modèle après écriture (§4 bis.8)', () => {
+	const modeleInitial = () =>
+		composerFormulaire({
+			champs: CHAMPS,
+			regles: [{ field_id: 'f-source', step_id: ETAPE.id, visibility: 'required' }],
+			valeurs: [],
+			etape: ETAPE,
+		})
+
+	it('renseigner un champ exigé le retire des clés manquantes, sans relecture', () => {
+		const apres = appliquerEcriture(modeleInitial(), 'f-source', 'salon')
+		expect(apres.clesManquantes).toEqual([])
+		const resolu = apres.champs.find((champ) => champ.champ.id === 'f-source')
+		expect(resolu?.renseigne).toBe(true)
+		expect(resolu?.manquant).toBe(false)
+	})
+
+	it('vider un champ exigé le fait REVENIR dans les clés manquantes', () => {
+		const renseigne = appliquerEcriture(modeleInitial(), 'f-source', 'salon')
+		const vide = appliquerEcriture(renseigne, 'f-source', null)
+		expect(vide.clesManquantes).toEqual(['source'])
+	})
+
+	it('« renseigné » est recalculé par le MÊME prédicat que la composition (§4.3)', () => {
+		// Une chaîne de blancs est vide : si l'écriture recopiait un drapeau au lieu de recalculer,
+		// le champ passerait pour renseigné et l'écran annoncerait passable une transition que la
+		// garde refuse.
+		const apres = appliquerEcriture(modeleInitial(), 'f-source', '   ')
+		expect(apres.clesManquantes).toEqual(['source'])
+	})
+
+	it('la section repliée n’est pas touchée : aucun de ses champs n’est modifiable (§4 bis.1)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: [{ field_id: 'f-motif', step_id: ETAPE.id, visibility: 'hidden' }],
+			valeurs: [{ field_id: 'f-motif', value: 'Budget gelé.' }],
+			etape: ETAPE,
+		})
+		const apres = appliquerEcriture(modele, 'f-source', 'salon')
+		expect(apres.autresEtapes).toEqual(modele.autresEtapes)
+	})
+
+	it('la visibilité ne dépend pas de la valeur, et ne bouge donc pas', () => {
+		const apres = appliquerEcriture(modeleInitial(), 'f-source', 'salon')
+		expect(apres.champs.find((champ) => champ.champ.id === 'f-source')?.visibilite).toBe('required')
 	})
 })
