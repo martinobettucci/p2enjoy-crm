@@ -1251,7 +1251,147 @@ changement — c'est le mécanisme de la décision 51, et sa cinquième occurren
 | pgTAP | Existence, volatilité, `search_path` et privilèges de la fonction et de la vue ; copie complète des étapes et des transitions ; arêtes remappées ; surcharges et positions préservées ; `is_default` forcé ; lignage renseigné ; les quatre refus du §4.3 éprouvés contre des comptes réels ; **absence de `form_fields`**, figée pour devenir rouge à `CRM-035` |
 | API | Les seize lignes du §4.9, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 2 et n° 11 au niveau de la copie |
 | Seed | La copie du §4.10, créée par le véritable appel RPC, convergente |
-| Interface | **Aucune** — la mention de divergence exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
+| Interface | **Livrée par le §4 bis.** La ligne du tableau ci-dessus disait « aucune », et son motif — INC-021, la webapp appelant anonyme — a disparu : INC-021 est close depuis `CRM-009`, et l'éditeur est venu avec `CRM-076`. L'historique est conservé au §4 bis.1 |
+
+## 4 bis. Interface : la mention de divergence — `CRM-032`
+
+Le §4.1 exige depuis l'origine que « l'interface signale la situation ». La Definition of Done de
+`CRM-032` le redit : « mention de divergence visible dans l'interface ». Ni l'une ni l'autre
+n'était livrable au moment de l'unité — la webapp était un appelant **anonyme**, faute d'écran de
+connexion (INC-021), et aucun écran d'administration n'existait. **Les deux motifs ont disparu** :
+INC-021 est close depuis `CRM-009`, et l'éditeur de workflows est livré depuis `CRM-076`. Ce
+chapitre est écrit **après mesure** sur la pile seedée, le 2026-08-16, avec les jetons réels des
+profils du seed ; les valeurs citées aux §4 bis.3 et §4 bis.6 sont ces mesures.
+
+### 4 bis.1 Ce que la mention est, et ce qu'elle n'est pas
+
+La mention est une **phrase de contexte**, rendue sur le workflow choisi de l'éditeur lorsque ce
+workflow est une **copie**. Elle dit d'où il vient, et si la source a changé depuis.
+
+Elle n'est **pas** un geste : rien ne se réapplique, rien ne se resynchronise, aucun bouton
+n'écrit. Le §4.1 est explicite — « sans jamais réappliquer automatiquement » —, et la copie est une
+divergence assumée. Un écran qui offrirait « remettre à jour depuis la source » livrerait une
+opération que ni la base ni la spécification ne connaissent.
+
+Elle n'est pas non plus une **comparaison**. Le §4.1 écrit que l'interface « propose de comparer » ;
+cette tranche ne le livre pas, et le motif est mesuré plutôt que supposé :
+`public.compare_workflow_versions` (§7 ter, `CRM-078`) compare deux **versions publiées**, jamais
+deux workflows vivants, et une copie comme sa source peuvent n'avoir aucune version. Comparer une
+copie à sa source demanderait une seconde fonction, c'est-à-dire une unité. L'écart est nommé ici et
+reporté au §4 bis.7 plutôt que contourné par un rapprochement approximatif dans le navigateur.
+
+### 4 bis.2 Où la mention se trouve
+
+**En tête de la colonne de droite, au-dessus du bloc des étapes**, dans le flux du document.
+
+C'est la seule place qui tienne : la mention porte sur le workflow **entier**, pas sur une de ses
+étapes ni sur une de ses arêtes, et la colonne de droite est ce qui décrit le workflow choisi. La
+placer dans la liste de gauche l'aurait répétée sur chaque ligne ou réduite à une pilule, c'est-à-dire
+à une teinte — ce que `docs/DESIGN_SYSTEM.md` §1 refuse pour une information de cette portée.
+
+Un workflow qui n'est pas une copie **ne rend rien du tout** : aucune place vide, aucun libellé
+« aucune origine ». L'absence d'origine est le cas normal — le seed livre deux workflows dont un
+seul est une copie —, et un état vide nommé sur le cas normal ajouterait du bruit à chaque écran.
+C'est l'écart assumé au §5.8 du design system, et il est écrit au §4 bis.5.
+
+### 4 bis.3 Ce que l'écran lit — lecture 9
+
+Une requête, et une seule :
+
+```
+GET /rest/v1/workflow_derivations?workflow_id=eq.<choisi>
+    &select=workflow_id,name,derived_at,source_workflow_id,source_name,
+            source_archived_at,source_modified_at,source_modified_since_copy
+```
+
+La vue du §4.6 porte déjà le verdict ; l'écran ne recalcule **aucune** empreinte et ne compare
+aucune date lui-même. `source_modified_since_copy` est la seule colonne qui dit s'il y a divergence,
+et le §4.6 pose pourquoi : `source_modified_at` n'a jamais pu porter ce verdict, une suppression
+dans la source ne lui transmettant aucune date.
+
+**MESURÉ le 2026-08-16, jeton réel de l'administratrice seedée :**
+
+| Appel | Rendu |
+|---|---|
+| la copie du seed (`Cycle commercial — Conseil IA`) | `200`, **une** ligne, `source_name` = `Cycle commercial standard`, `source_modified_since_copy` = `false` |
+| le workflow par défaut, qui n'est pas une copie | `200` et `[]` |
+| la même lecture, jeton du `viewer` | `200`, la **même** ligne — la vue est en lecture pour tout membre du workspace (§4.7) |
+| la même lecture, anonyme | `200` et `[]` (preuve de refus n° 11, déjà figée par le §4.9) |
+
+La lecture part **avec le graphe** (`rechargerGraphe`), et non dans un effet séparé : la mention
+décrit le même workflow au même instant que ses étapes, et une mention lue à un autre instant que
+le graphe qu'elle surplombe pourrait décrire un état que l'écran ne montre pas.
+
+### 4 bis.4 Ce que la mention écrit, et dans quel ordre
+
+Trois phrases au plus, dans cet ordre, et jamais construites par concaténation (§10 du design
+system) :
+
+1. **L'origine, toujours** : « Ce workflow dérive de *X*. » — `source_name`.
+2. **Le verdict, toujours** :
+   - `source_modified_since_copy` faux → « La source n'a pas changé depuis la copie du *jj/mm/aaaa
+     hh:mm*. » (`derived_at`) ;
+   - vrai → « La source a changé depuis la copie du *jj/mm/aaaa hh:mm*. Les modifications ne sont
+     pas reportées automatiquement. »
+3. **L'archivage de la source, seulement s'il a lieu** : « Cette source est archivée. »
+   (`source_archived_at`). Le fait est utile : une source archivée ne se copie plus (§4.3), et un
+   administrateur qui cherche à recopier doit savoir pourquoi il ne peut pas.
+
+**Aucune date de modification n'est affichée**, et c'est une décision, non un oubli. La tentation
+serait d'écrire « modifiée depuis le *jj/mm/aaaa* » avec `source_modified_at`, comme le §4.1
+l'esquissait. Le §4.6 l'interdit en pratique : cette date **n'inclut pas les suppressions**, de
+sorte qu'une source dont on a retiré une étape est déclarée divergente par l'empreinte, sans que
+`source_modified_at` ait bougé. Afficher une date antérieure à la copie à côté de la phrase « la
+source a changé » ferait mentir l'écran sur la nature du changement. La date affichée est donc celle
+de la **copie**, qui est exacte et qui situe la divergence.
+
+**Le signal est réversible, et l'écran ne prétend pas le contraire.** MESURÉ : une surcharge de
+libellé posée sur une étape de la source allume `source_modified_since_copy`, et **la retirer
+l'éteint** — l'empreinte redevient identique. La phrase parle donc de l'état courant de la source,
+jamais d'un historique des modifications, qu'aucune colonne ne porte.
+
+### 4 bis.5 États, accessibilité et responsive
+
+- **Pendant la lecture, rien n'est rendu.** Écart assumé au §5.8 du design system : un squelette
+  annoncerait à chaque ouverture une information qui, dans le cas normal, n'arrivera jamais — la
+  majorité des workflows ne sont pas des copies. Le graphe, lui, porte déjà son squelette.
+- **Une lecture en erreur est NOMMÉE, en une ligne discrète** : « L'origine de ce workflow n'a pas pu
+  être lue. » Le silence ferait passer une panne pour l'absence d'origine, c'est-à-dire pour une
+  information. Elle ne porte pas de commande de reprise : la reprise du bloc des étapes, juste en
+  dessous, recharge le graphe entier, cette lecture comprise.
+- La mention est un `p` `role="status"` : elle apparaît après le choix d'un workflow, et un
+  lecteur d'écran doit l'entendre sans avoir à la chercher. Elle n'est pas `role="alert"` — ce n'est
+  ni une erreur ni un refus.
+- Elle porte l'icône `GitBranch` en décoratif (`aria-hidden`), jamais seule porteuse de sens (§9), et
+  les jetons `--color-hover` / `--color-text-2` lorsque rien n'a changé, `--color-accent-soft` /
+  `--color-accent-on-soft` lorsque la source a changé — la même teinte que « Motif exigé » et que
+  l'alerte d'étape initiale absente du même écran, qui signalent comme elle un fait à connaître sans
+  être une erreur.
+- Aux paliers étroits du §7, les phrases se replient ; aucune ne tient sur une ligne à 390 px, et
+  aucune n'est tronquée.
+
+### 4 bis.6 Ce que cette tranche n'écrit PAS
+
+Aucune écriture. La vue est en lecture seule, et le §4.6 l'a mesuré deux fois : aucun privilège
+d'écriture n'est accordé, et PostgreSQL refuse de toute façon la réécriture d'une vue qui joint deux
+tables (`55000`, rendu `500` par PostgREST). L'écran n'expose donc **aucune** commande sur la
+mention : il n'y a pas de bouton grisé à justifier, il n'y a pas de geste.
+
+### 4 bis.7 Ce qui reste dû après cette tranche
+
+- **La comparaison copie ↔ source**, que le §4.1 esquisse. Elle demande une fonction que le produit
+  n'a pas (§4 bis.1). Reste due, et nommée dans la Definition of Done de `CRM-032`.
+- **Rien d'autre.** La mention livrée est ce que la Definition of Done exigeait : « mention de
+  divergence visible dans l'interface ».
+
+### 4 bis.8 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | La composition de la mention à partir d'une ligne de la vue : les trois cas — pas de divergence, divergence, source archivée —, et l'absence de mention lorsque la lecture est vide |
+| Composant | L'écran rend la mention sur un workflow copié, ne rend **rien** sur un workflow qui n'en est pas un, et nomme l'erreur de lecture |
+| E2E | Le parcours réel : choisir la copie du seed, lire la mention ; modifier la source par la clé de service, recharger, constater la phrase de divergence ; restaurer la source |
+| Visuelle | Captures du bloc dans ses deux états, aux paliers du §7 |
 
 ### 4.12 Contrainte d'affectation — `CRM-033`
 
