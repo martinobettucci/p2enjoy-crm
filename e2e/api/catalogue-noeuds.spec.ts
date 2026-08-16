@@ -508,3 +508,85 @@ test.describe('N5 — bornes des valeurs, éprouvées par l’API', () => {
 		}
 	})
 })
+
+// -----------------------------------------------------------------------------------------------
+// N6 — la garde d'archivage d'un nœud occupé, hors interface
+// -----------------------------------------------------------------------------------------------
+// @verifies CRM-030 (docs/BACKLOG.md) — le refus mesuré du §2 bis.5, ligne 1
+// @verifies docs/SPEC-workflow-engine.md §2.6 (la garde, livrée par `CRM-040`), §2 bis.5 (les deux
+//           `42501` ne disent pas la même chose), §2 bis.9 (ligne « API »)
+//
+// LE §2.6 A LONGTEMPS DIT QUE CETTE GARDE N'ÉTAIT PAS LIVRABLE, et le §2.10 qu'aucune preuve ne
+// pouvait la tenir : ses tables n'existaient pas. Elles existent, la garde est posée par la
+// migration 11, et ce bloc est la preuve d'API qui manquait. Il ne mesure pas la migration — la
+// suite pgTAP de `CRM-040` le fait — mais ce que l'APPELANT reçoit, puisque c'est cela seul que
+// l'écran d'administration peut traduire.
+
+test.describe("N6 — l'archivage d'un nœud occupé est refusé (§2.6, §2 bis.5)", () => {
+	test("refus `403` / `42501` portant `node_occupied` et le nombre d'affaires actives", async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const reponse = await request.patch(`${CHEMIN}?key=eq.prospection`, {
+			headers: {
+				...enTetesAuthentifies(jeton),
+				'Content-Type': 'application/json',
+				Prefer: 'return=representation',
+			},
+			data: { archived_at: '2026-08-16T10:00:00Z' },
+		})
+		expect(reponse.status()).toBe(403)
+		const corps = (await reponse.json()) as { code: string; message: string }
+		expect(corps.code).toBe('42501')
+		// LE JETON EST CE QUE L'ÉCRAN LIT pour séparer ce refus de celui de la RLS, qui porte le même
+		// SQLSTATE. Un renommage côté base rendrait ce contrôle rouge — et c'est le but : sans lui,
+		// l'écran retomberait silencieusement sur « vous n'avez pas le droit », c'est-à-dire sur un
+		// message qui n'appelle aucune manœuvre.
+		expect(corps.message).toContain('node_occupied')
+		expect(corps.message).toMatch(/\d+ card\(s\) active\(s\)/)
+
+		// LA LIGNE EST RELUE : le refus n'a rien archivé.
+		const relu = await request.get(`${CHEMIN}?key=eq.prospection&select=archived_at`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(((await relu.json()) as { archived_at: string | null }[])[0]?.archived_at).toBeNull()
+	})
+
+	test("un nœud LIBRE s'archive, et se rétablit : la garde ne bloque que l'occupation", async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const cle = `api-libre-${Date.now()}`
+		try {
+			await request.post(CHEMIN, {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: { workspace_id: WORKSPACE_SEED, key: cle, label: 'Nœud libre' },
+			})
+			const archivage = await request.patch(`${CHEMIN}?key=eq.${cle}`, {
+				headers: {
+					...enTetesAuthentifies(jeton),
+					'Content-Type': 'application/json',
+					Prefer: 'return=representation',
+				},
+				data: { archived_at: '2026-08-16T10:00:00Z' },
+			})
+			expect(archivage.status()).toBe(200)
+			expect(((await archivage.json()) as Noeud[])[0]?.archived_at).not.toBeNull()
+
+			// LE DÉSARCHIVAGE N'EST JAMAIS GARDÉ (§2.6) : la contre-épreuve est ici, sur un nœud qui
+			// vient précisément d'être archivé.
+			const retour = await request.patch(`${CHEMIN}?key=eq.${cle}`, {
+				headers: {
+					...enTetesAuthentifies(jeton),
+					'Content-Type': 'application/json',
+					Prefer: 'return=representation',
+				},
+				data: { archived_at: null },
+			})
+			expect(retour.status()).toBe(200)
+			expect(((await retour.json()) as Noeud[])[0]?.archived_at).toBeNull()
+		} finally {
+			await retirerNoeud(request, cle)
+		}
+	})
+})
