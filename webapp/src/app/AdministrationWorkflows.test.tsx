@@ -234,6 +234,10 @@ type Options = {
 	readonly catalogue?: unknown[]
 	/** Lignes de la lecture 8 — les versions du workflow choisi (`CRM-078`, §7 ter.14.3). */
 	readonly versions?: unknown[]
+	/** Le workspace courant et les tracks affectables — `CRM-031`, §3 bis.3, lecture 4. */
+	readonly workspaces?: unknown[]
+	readonly tracks?: unknown[]
+	readonly erreurTracks?: { message: string; status: number }
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
 	readonly erreurChamps?: { message: string; status: number }
@@ -251,6 +255,15 @@ type Options = {
 		status: number
 	}
 }
+
+/** Le workspace courant — `CRM-031`, §3 bis.3 : il n'est pas saisi, il est lu. */
+const WORKSPACES = [{ id: 'ws-1', name: 'P2Enjoy', slug: 'p2enjoy' }]
+
+/** Les tracks affectables sous la portée `track` — §3 bis.3, lecture 4. */
+const TRACKS = [
+	{ id: 'tr-1', name: 'Conseil & IA' },
+	{ id: 'tr-2', name: 'Studio web' },
+]
 
 /** Client factice : il rend les données voulues et **enregistre** les écritures reçues. */
 function clientFactice(options: Options = {}): {
@@ -312,6 +325,12 @@ function clientFactice(options: Options = {}): {
 				// sans cette branche, la lecture des versions retombait sur le catalogue et
 				// rendait des lignes sans colonne de version — un double qui ment sur la forme.
 				if (table === 'workflow_versions') return lecture(options.versions ?? [])
+				// Les deux lectures de la CRÉATION (`CRM-031`, §3 bis.3) sont routées explicitement,
+				// pour la raison exacte qui a valu à `workflow_versions` de l'être : sans ces
+				// branches, elles retombaient sur le catalogue et rendaient des nœuds là où l'écran
+				// attend un workspace et des tracks.
+				if (table === 'workspaces') return lecture(options.workspaces ?? WORKSPACES)
+				if (table === 'tracks') return lecture(options.tracks ?? TRACKS, options.erreurTracks)
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -1668,5 +1687,151 @@ describe('la prévisualisation des effets (§7 bis.13)', () => {
 		expect(effets.textContent).toContain('4 affaires ne pourront plus emprunter ce chemin')
 		expect(previsualisations[0]?.params).toHaveProperty('p_transition_id')
 		expect(previsualisations[0]?.params).not.toHaveProperty('p_step_id')
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// La création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-031 (docs/BACKLOG.md) — création d'un workflow depuis l'éditeur d'administration
+// @verifies docs/SPEC-workflow-engine.md §3 bis.2 (le geste rendu deux fois, dont l'état vide),
+//           §3 bis.3 (les trois champs, la lecture 4 à l'ouverture), §3 bis.4 (validation de
+//           forme), §3 bis.5 (les refus traduits), §3 bis.6 (les trois effets d'un succès),
+//           §3 bis.8 (preuves attendues, niveau composant)
+// @verifies docs/DESIGN_SYSTEM.md §5.15 (la création d'un workflow : le sélecteur absent et non
+//           grisé, aucune case « par défaut », la liste relue)
+//
+// L'ÉTAT VIDE EST LA PREUVE QUE SEUL CE NIVEAU PEUT RENDRE. La table du seed n'est jamais vide —
+// le workspace y porte deux workflows —, et la vider pour un scénario E2E casserait toutes les
+// autres suites. C'est écrit au §3 bis.8, et c'est pourquoi ce cas vit ici.
+
+describe('la création d’un workflow (§3 bis)', () => {
+	it('l’état vide PORTE le geste : sans lui, un workspace neuf est un cul-de-sac', async () => {
+		monter({ workflows: [] })
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		const commande = screen.getByRole('button', { name: 'Nouveau workflow' })
+		await userEvent.click(commande)
+		expect(await screen.findByTestId('workflows-formulaire-creation')).toBeTruthy()
+	})
+
+	it('la liste peuplée porte le même geste, au-dessus d’elle', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		expect(await screen.findByTestId('workflows-formulaire-creation')).toBeTruthy()
+	})
+
+	it('les tracks ne sont PAS lus tant que le formulaire n’est pas ouvert', async () => {
+		const { lectures } = monter()
+		await attendreEcran()
+		expect(lectures).not.toContain('tracks')
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		await screen.findByTestId('workflows-formulaire-creation')
+		await waitFor(() => expect(lectures).toContain('tracks'))
+	})
+
+	it('le sélecteur de track est ABSENT sous la portée globale, et apparaît sous la portée track', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		// Absent, et non désactivé : `docs/DESIGN_SYSTEM.md` §5.15.
+		expect(within(formulaire).queryByLabelText('Track')).toBeNull()
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Portée'), 'track')
+		expect(await within(formulaire).findByLabelText('Track')).toBeTruthy()
+	})
+
+	it('la commande reste éteinte tant que le nom est vide, puis s’allume', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		const creer = within(formulaire).getByRole('button', { name: 'Créer' })
+		expect(creer.hasAttribute('disabled')).toBe(true)
+		await userEvent.type(within(formulaire).getByLabelText('Nom'), 'Cycle neuf')
+		expect(creer.hasAttribute('disabled')).toBe(false)
+	})
+
+	it('la portée `track` sans track choisi éteint la commande — la seconde condition du §3 bis.4', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		await userEvent.type(within(formulaire).getByLabelText('Nom'), 'Cycle du track')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Portée'), 'track')
+		const creer = within(formulaire).getByRole('button', { name: 'Créer' })
+		expect(creer.hasAttribute('disabled')).toBe(true)
+		await userEvent.selectOptions(await within(formulaire).findByLabelText('Track'), 'tr-2')
+		expect(creer.hasAttribute('disabled')).toBe(false)
+	})
+
+	it('l’envoi insère dans `workflows`, sans `is_default` et sans `track_id` sous la portée globale', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		await userEvent.type(within(formulaire).getByLabelText('Nom'), 'Cycle neuf')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(ecritures.some((e) => e.table === 'workflows')).toBe(true))
+		const ecrite = ecritures.find((e) => e.table === 'workflows')
+		expect(ecrite?.verbe).toBe('insert')
+		expect(ecrite?.charge).toEqual({
+			workspace_id: 'ws-1',
+			name: 'Cycle neuf',
+			scope: 'global',
+			track_id: null,
+		})
+	})
+
+	it('aucune case « par défaut » n’est offerte — elle échouerait en 23505 (§3 bis.1)', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		expect(within(formulaire).queryByRole('checkbox')).toBeNull()
+	})
+
+	it('un succès referme le formulaire et RELIT la liste (§3 bis.6)', async () => {
+		const { lectures } = monter({ reponseEcriture: { data: [{ id: 'wf-2' }], error: null, status: 201 } })
+		await attendreEcran()
+		const avant = lectures.filter((table) => table === 'workflows').length
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		await userEvent.type(within(formulaire).getByLabelText('Nom'), 'Cycle neuf')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(screen.queryByTestId('workflows-formulaire-creation')).toBeNull())
+		// La relecture est la seule chose qui prouve que la ligne existe côté base : une insertion
+		// optimiste afficherait un workflow que personne n'a relu.
+		await waitFor(() =>
+			expect(lectures.filter((table) => table === 'workflows').length).toBeGreaterThan(avant),
+		)
+	})
+
+	it('un refus 42501 est NOMMÉ dans le formulaire, qui reste ouvert', async () => {
+		monter({
+			reponseEcriture: {
+				data: null,
+				error: { message: 'row-level security', code: '42501' },
+				status: 403,
+			},
+		})
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		await userEvent.type(within(formulaire).getByLabelText('Nom'), 'Cycle refusé')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		const alerte = await within(formulaire).findByRole('alert')
+		expect(alerte.textContent).toContain("Vous n'avez pas le droit de créer un workflow")
+		expect(screen.getByTestId('workflows-formulaire-creation')).toBeTruthy()
+	})
+
+	it('un workspace sans track NOMME l’absence au lieu d’offrir une liste vide', async () => {
+		monter({ tracks: [] })
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Nouveau workflow' }))
+		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
+		await userEvent.selectOptions(within(formulaire).getByLabelText('Portée'), 'track')
+		expect(await screen.findByTestId('workflows-sans-track')).toBeTruthy()
 	})
 })

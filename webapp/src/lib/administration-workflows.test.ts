@@ -31,7 +31,11 @@ import {
 	probabiliteConforme,
 	retirerEtape,
 	surchargerEtape,
+	COLONNES_TRACK_AFFECTABLE,
 	COLONNES_TRANSITION_ADMIN,
+	creationWorkflowConforme,
+	creerWorkflow,
+	lireTracksAffectables,
 	arriveesPossibles,
 	classerRefusTransition,
 	declarerTransition,
@@ -1553,5 +1557,157 @@ describe('la prévisualisation des effets (§7 bis.13)', () => {
 		expect(
 			composerMessageEffets({ statut: 'mesure', effets: { surPlace: 1, aLEntree: 8 } }),
 		).toEqual({ cle: 'les-deux', surPlace: 1, aLEntree: 8 })
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// La création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-031 (docs/BACKLOG.md) — création d'un workflow depuis l'éditeur d'administration
+// @verifies docs/SPEC-workflow-engine.md §3 bis.3 (la quatrième lecture et ses filtres),
+//           §3 bis.4 (validation de forme, ses deux conditions), §3 bis.5 (la correspondance des
+//           refus mesurés), §3 bis.8 (preuves attendues, niveau unitaire), §3.2 (cohérence de
+//           portée `scope` / `track_id`, et `is_default` au plus un par workspace)
+
+describe('la lecture des tracks affectables (§3 bis.3, lecture 4)', () => {
+	it('demande deux colonnes, écarte les archivés, trie par position, et NE filtre PAS le workspace', async () => {
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireTracksAffectables(client)
+		expect(appel.table).toBe('tracks')
+		expect(appel.colonnes).toBe(COLONNES_TRACK_AFFECTABLE)
+		expect(appel.filtres).toEqual([['archived_at', null]])
+		expect(appel.tris).toEqual([['position', undefined]])
+		// Le filtre de workspace est celui de la RLS. L'écrire ici laisserait croire que
+		// l'interface protège quelque chose — `CLAUDE.md` §10.
+		expect(appel.filtres.some(([colonne]) => colonne === 'workspace_id')).toBe(false)
+	})
+
+	it('une erreur de lecture est rendue classée, jamais levée', async () => {
+		const { client } = espionLecture({
+			data: null,
+			error: { message: 'indisponible' },
+			status: 503,
+		})
+		const etat = await lireTracksAffectables(client)
+		expect(etat.statut).toBe('erreur')
+	})
+})
+
+describe('la validation de forme de la création (§3 bis.4)', () => {
+	const base = { idWorkspace: 'ws1', nom: 'Cycle neuf', portee: 'global', idTrack: null } as const
+
+	it('un nom renseigné et une portée globale suffisent', () => {
+		expect(creationWorkflowConforme(base)).toBe(true)
+	})
+
+	it('un nom vide ou entièrement blanc est refusé — `workflows_name_check` teste `btrim`', () => {
+		expect(creationWorkflowConforme({ ...base, nom: '' })).toBe(false)
+		expect(creationWorkflowConforme({ ...base, nom: '   ' })).toBe(false)
+	})
+
+	it('la portée `track` sans track choisi est refusée, avec track elle passe', () => {
+		expect(creationWorkflowConforme({ ...base, portee: 'track', idTrack: null })).toBe(false)
+		expect(creationWorkflowConforme({ ...base, portee: 'track', idTrack: 't1' })).toBe(true)
+	})
+
+	it('un track choisi sous la portée globale ne rend PAS la saisie non conforme', () => {
+		// La forme reste valide : c'est `creerWorkflow` qui écarte le track, et non la validation.
+		// Les confondre ferait de l'oubli du track une condition d'envoi, alors qu'il est une
+		// normalisation — voir le test suivant.
+		expect(creationWorkflowConforme({ ...base, idTrack: 't1' })).toBe(true)
+	})
+})
+
+describe('l’écriture de création (§3 bis.1, §3.2)', () => {
+	it('insère dans `workflows`, `trim`e le nom, et rend l’identifiant créé', async () => {
+		const { client, appels } = espionEcritures([{ data: [{ id: 'w-neuf' }], error: null, status: 201 }])
+		const resultat = await creerWorkflow(client, {
+			idWorkspace: 'ws1',
+			nom: '  Cycle neuf  ',
+			portee: 'global',
+			idTrack: null,
+		})
+		const appel = appels[0]
+		expect(appel?.table).toBe('workflows')
+		expect(appel?.verbe).toBe('insert')
+		expect(appel?.charge).toEqual({
+			workspace_id: 'ws1',
+			name: 'Cycle neuf',
+			scope: 'global',
+			track_id: null,
+		})
+		expect(appel?.colonnesRendues).toBe('id')
+		expect(resultat).toEqual({ statut: 'applique', id: 'w-neuf' })
+	})
+
+	it('`is_default` n’est JAMAIS envoyé — il échouerait en 23505 sur tout workspace ayant son défaut', async () => {
+		const { client, appels } = espionEcritures([{ data: [{ id: 'w' }], error: null, status: 201 }])
+		await creerWorkflow(client, {
+			idWorkspace: 'ws1',
+			nom: 'Cycle neuf',
+			portee: 'global',
+			idTrack: null,
+		})
+		expect(Object.keys(appels[0]?.charge ?? {})).not.toContain('is_default')
+	})
+
+	it('la portée `track` envoie le track choisi', async () => {
+		const { client, appels } = espionEcritures([{ data: [{ id: 'w' }], error: null, status: 201 }])
+		await creerWorkflow(client, {
+			idWorkspace: 'ws1',
+			nom: 'Cycle du track',
+			portee: 'track',
+			idTrack: 't1',
+		})
+		expect(appels[0]?.charge).toMatchObject({ scope: 'track', track_id: 't1' })
+	})
+
+	it('la portée `global` FORCE `track_id` à null, même si un track résiduel est fourni', async () => {
+		// C'est la mesure du §3 bis.5 : `scope = 'global'` avec un `track_id` rend `400` / `23514`
+		// sur `workflows_scope_track_check`. L'écran oublie déjà le track à la bascule ; le module
+		// ne s'y fie pas, parce qu'un état d'interface n'est pas un contrat.
+		const { client, appels } = espionEcritures([{ data: [{ id: 'w' }], error: null, status: 201 }])
+		await creerWorkflow(client, {
+			idWorkspace: 'ws1',
+			nom: 'Cycle neuf',
+			portee: 'global',
+			idTrack: 't1',
+		})
+		expect(appels[0]?.charge).toMatchObject({ scope: 'global', track_id: null })
+	})
+
+	it('zéro ligne écrite rend `sans-effet`, et non un succès', async () => {
+		const { client } = espionEcritures([ZERO_LIGNE])
+		const resultat = await creerWorkflow(client, {
+			idWorkspace: 'ws1',
+			nom: 'Cycle neuf',
+			portee: 'global',
+			idTrack: null,
+		})
+		expect(resultat).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('les trois refus mesurés au §3 bis.5 sont classés par leur code SQL', async () => {
+		const cas = [
+			{ code: '42501', statut: 403, attendu: 'forbidden' },
+			{ code: '23514', statut: 400, attendu: 'forme-refusee' },
+			{ code: '23503', statut: 409, attendu: 'reference-absente' },
+		] as const
+		for (const { code, statut, attendu } of cas) {
+			const { client } = espionEcritures([
+				{ data: null, error: { code, message: `refus ${code}` }, status: statut },
+			])
+			const resultat = await creerWorkflow(client, {
+				idWorkspace: 'ws1',
+				nom: 'Cycle neuf',
+				portee: 'global',
+				idTrack: null,
+			})
+			expect(resultat).toEqual({
+				statut: 'refus',
+				refus: { nature: attendu, detail: `refus ${code}` },
+			})
+		}
 	})
 })
