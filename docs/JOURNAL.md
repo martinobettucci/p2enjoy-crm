@@ -17484,3 +17484,51 @@ cette session, la convergence n'étant vérifiée que par trois applications suc
 même cluster. Les compteurs de `scripts/verify-harness.sh` sont par ailleurs mesurés **en retard de
 loin plus que cette tranche** — 2003 assertions déclarées contre 2161, 514 scénarios d'API contre
 658 — dérive antérieure et étrangère, à ne pas corriger sous une unité qui ne la porte pas.
+
+## 2026-08-16 — `CRM-046` tranche 2, suite : l'écran regarde enfin la vraie donnée
+
+**Point de départ.** L'entrée précédente — écrite par l'exécution de l'heure d'avant, sur cette même
+unité — se termine par un écart nommé sans détour : « les captures `liste-donnees-longues-{1440,390}`
+de `CRM-042` proviennent toujours de réponses **substituées** et devraient être refaites sur la
+donnée réelle, ce qui suppose un scénario d'interface **connecté** sur la vue liste ». La donnée
+existait donc déjà en base ; ce qui manquait était l'écran qui la regarde. C'est la reprise d'unité
+que le §4.2 du prompt commande de suivre, et la spécification `docs/SPEC-seed.md` §9.11 couvrant
+déjà ce qui restait à livrer, elle n'a pas été réécrite (§3.2, exception).
+
+**Ce qui est livré, et pourquoi ce n'est pas cosmétique.** Le bloc « données longues » de
+`e2e/ui/liste-cards.spec.ts` posait deux routes et servait une card fabriquée. Il ne pose plus
+**aucune** route : connexion au clavier avec le compte de l'administratrice, ouverture de
+`/tracks/studio-web/maintenance/liste`, et **relecture dans l'écran** des deux longueurs — l'attribut
+`title` du lien pour le titre, celui de la cinquième cellule pour la prochaine action. Les nombres
+128 et 134 ne sont pas recopiés d'une fixture : ils sont comparés à ce que la pile a rendu. La
+fixture `CARD_LONGUE` est **retirée**, non gardée « au cas où » : une substitution laissée en place
+laisse croire qu'elle reste nécessaire.
+
+**Un troisième scénario, que ni l'API ni la substitution ne pouvaient rendre.** La seconde page était
+prouvée deux fois — par le `Range` mesuré contre la pile (six scénarios d'API de l'exécution
+précédente) et par une réponse substituée dans l'écran. Aucune des deux ne prouvait que le **bouton**
+du produit, appuyé sur une base réelle de vingt-sept affaires, amène à une seconde page qui porte
+réellement deux lignes. Il le fait : première page pleine à 25, `page=2` dans l'adresse, deux lignes,
+« Page suivante » inactif au bout de la plage, aucun état d'erreur.
+
+**Un défaut trouvé en exécutant le seed, et qui appartient bien à cette tranche.** Le récapitulatif
+final annonçait « Cards : 15 » alors que la base en porte **41** : la somme ignorait `CARDS_VOLUME`,
+ajouté à la section 8 ter ter sans être compté trois cents lignes plus bas. Le contrat affiché par
+le seed mentait sur le seed lui-même. Corrigé, avec une ligne dédiée nommant les vingt-six affaires
+de volume.
+
+**Mesuré.** `e2e/ui/liste-cards.spec.ts` : 27 → **28 scénarios**, aucune anomalie.
+`scripts/verify-liste.sh` : **72 contrôles, 1 en échec** — `text-text-1` cité par
+`AdministrationWorkflows.tsx`, **INC-130**, livrable de `CRM-076`, mesuré identique par les trois
+exécutions précédentes ; aucun fichier de `webapp/` n'est touché ici, l'anomalie est **préexistante
+et étrangère**. Trois captures produites **et observées** : la liste annonce « Affaires : 27 » et
+tronque le titre de 128 caractères sur une seule ligne, le palier 390 ne déborde pas, et
+`docs/captures/CRM-046/liste-seconde-page-1440.jpg` montre « Page 2 sur 2 » avec ses deux affaires.
+
+**Où reprendre.** Des deux écarts que l'entrée précédente laissait à `CRM-046`, **le premier est
+fermé**. Reste le second, inchangé : `scripts/verify-seed-demo.sh` et `./resetMe.sh` n'ont pas été
+rejoués, la convergence n'étant vérifiée que par des applications successives du seed sur le même
+cluster — **preuve n° 1 du §9.11.7 partiellement acquise**. Les compteurs de
+`scripts/verify-harness.sh` restent en retard, dérive antérieure et étrangère. Une prochaine
+exécution peut solder cette convergence à froid, ou prendre `CRM-014`, dont l'énoncé de backlog est
+mesuré faux depuis deux entrées.
