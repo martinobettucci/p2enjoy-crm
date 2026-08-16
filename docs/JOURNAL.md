@@ -16786,14 +16786,16 @@ jamais vide — le workspace y porte deux workflows —, et la vider pour un sc�
 casserait toutes les autres suites. Le cas vit donc dans le test de composant, avec une lecture
 rendue vide. C'est la seule preuve de cette tranche qu'aucun autre niveau ne pouvait porter.
 
-**Campagne de fin de session.** `test:sql` **40 fichiers, 2133 assertions** ; `test:unit`
+**Campagne de fin de session.** `scripts/verify-workflows.sh` — le harnais de l'unité —
+**49 contrôles, aucune anomalie**, ses quatre dégradations réelles comprises, et il rejoue lui-même
+sept suites. Relevés séparément pour leur compte : `test:sql` **40 fichiers, 2133 assertions** ; `test:unit`
 **1204/1204** sur 43 fichiers (1181 avant) ; `e2e:api` **612/612** (602 avant) ; `e2e:ui`
 **302/302** (295 avant), console vierge ; `typecheck`, `types:check` et `build` verts. Six
 captures produites **et observées** sous `docs/captures/CRM-031/`. Les captures des autres unités,
 réécrites par le rejeu des suites d'interface, ont été **regardées puis restaurées** : celle du
 catalogue montrait le survol laissé par le pilote Playwright, artefact non déterministe déjà relevé
 aux trois unités précédentes. **Non exécutés, faute de temps** : `pytest`, `e2e:mail`, et les
-`scripts/verify-*.sh` autres que celui des workflows.
+`scripts/verify-*.sh` autres que celui des workflows — quarante-neuf harnais restent à rejouer.
 
 **Où reprendre.** `CRM-031` reste `[~]` pour **un seul** manque, et il n'appartient pas à l'unité :
 la contrainte `NOT NULL` de `channels.workflow_id`, qui revient à `CRM-033` — laquelle l'a d'ailleurs

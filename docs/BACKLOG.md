@@ -2556,7 +2556,10 @@ E2E de création ; captures de l'éditeur.
 - [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-031/`, six captures — les
       quatre paliers, la portée propre à un track avec sa commande éteinte, et le succès montrant le
       workflow neuf **choisi** avec son bloc d'étapes vide.
-- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets.
+- [x] **Build vert**, `npm run typecheck` et `npm run types:check` verts. Harnais de l'unité
+      `scripts/verify-workflows.sh` rejoué : **49 contrôles, aucune anomalie**, ses quatre
+      dégradations réelles comprises. Campagne : `test:sql` **2133 assertions**, `test:unit`
+      **1204/1204**, `e2e:api` **612/612**, `e2e:ui` **302/302**.
 - [x] `docs/SPEC-workflow-engine.md` §3 bis (neuf sous-chapitres) et §3.10, `docs/DESIGN_SYSTEM.md`
       §5.15, `docs/manual.md` chapitre 5 bis.0, 5 bis.5 et §3.2, `CHANGELOG.md` mis à jour dans le
       même changement.
