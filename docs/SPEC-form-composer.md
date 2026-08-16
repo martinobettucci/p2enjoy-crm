@@ -916,6 +916,101 @@ ordinaire — ni mise en évidence, ni défilement.
 - **Aucune mise en évidence depuis la vue liste** (`CRM-042`) : elle ne porte aucun geste de
   transition, donc aucun refus à reprendre.
 
+### 4 quater. Le parcours enchaîné, sur session réelle — contrat de la preuve qui reste due
+
+La Definition of Done de `CRM-037` exige depuis l'origine « transition bloquée → saisie →
+transition réussie ». Les trois gestes sont livrés et prouvés **séparément** : le refus et sa
+commande de reprise par `CRM-041` (§4 ter.1), la saisie par le §4 bis, la réussite par la garde de
+`move_card`. Ce qui manquait est leur **enchaînement sur une session réelle**, sans réponse
+réseau substituée — c'est le reste d'INC-062, et ce chapitre en est le contrat vérifiable.
+
+Il est écrit **après mesure** sur la pile réelle, seed appliqué, avec le jeton réel de
+l'administratrice, le 2026-08-16. Rien ici n'est prédit.
+
+#### 4 quater.1 Pourquoi la substitution ne pouvait pas suffire
+
+Les preuves d'interface du §4 ter et du §4 bis substituent le réseau, procédé endossé par
+`docs/DESIGN_SYSTEM.md` §12.5. Une réponse substituée prouve que l'écran **réagit correctement à
+une réponse donnée** ; elle ne prouve pas que le serveur rend cette réponse-là, ni que l'écriture
+que l'écran émet suffit à lever le refus que la garde oppose. Trois jonctions ne sont vérifiables
+que sans substitution :
+
+1. la **clé** que la garde met dans `details` est exactement celle que l'adresse de reprise
+   transporte, et exactement celle qu'un champ du formulaire porte ;
+2. la ligne que le §4 bis écrit dans `card_field_values` est exactement celle que la garde relit
+   pour juger « renseigné » (§4.3) ;
+3. le second déplacement, celui qui suit la saisie, **réussit réellement**, et la base porte la
+   nouvelle étape.
+
+Chacune est une frontière entre deux composants qu'une substitution remplace précisément par
+l'hypothèse à prouver.
+
+#### 4 quater.2 Le support du parcours, et pourquoi une card fabriquée
+
+Le seed ne place aucune card à l'étape *Signature* du workflow global — il n'a pas à en placer une,
+et la modifier appartiendrait à `CRM-046`. La preuve **fabrique** sa card avec la clé de service,
+au même motif que la preuve n° 3 de `CRM-014` fabrique son second workspace, et la **détruit** dans
+un `finally`. Elle porte un titre préfixé `tst-crm037`, reconnaissable dans le seed comme dans une
+capture.
+
+Support mesuré :
+
+| Élément | Identifiant | Mesuré |
+|---|---|---|
+| Channel | `…0032`, *Grands comptes*, track *Conseil IA* | board `/tracks/conseil-ia/grands-comptes` |
+| Workflow | `…0051`, *Cycle commercial standard* | celui du channel |
+| Étape de départ | `…0064`, *Signature* | `lien-proposition` n'y porte **aucune** règle, donc `visible` (§4.2) |
+| Étape d'arrivée | `…0065`, *Réalisation en cours* | aucune règle `required` propre |
+| Champ exigé | `…0086`, `lien-proposition`, type `url` | exigé par la **transition**, pas par l'étape |
+
+#### 4 quater.3 Contrat mesuré du parcours, hors interface
+
+Quatre appels, mesurés le 2026-08-16 avec le jeton réel de l'administratrice :
+
+| # | Geste | Mesuré |
+|---|---|---|
+| a | `move_card(card, …0065)` sans valeur | `400`, `P0001`, `missing_required_fields`, `details` = `lien-proposition` |
+| b | `upsert card_field_values` sur `(card, …0086)` | `201`, la ligne créée |
+| c | `move_card(card, …0065)` après *b* | `200`, la card rendue, `current_step_id` = `…0065` |
+| d | relecture de `cards` avec le jeton de l'administratrice | `current_step_id` = `…0065` |
+
+La ligne *b* exige **quatre** colonnes et non trois : `workspace_id` **et** `workflow_id` sont
+`not null`, et l'omission du second rend `400` / `23502`. C'est ce que l'écran envoie déjà (§4
+bis.4) ; la preuve le constate au lieu de le supposer.
+
+#### 4 quater.4 Ce que le parcours doit enchaîner à l'écran
+
+Dans un seul scénario, une seule session, une seule page :
+
+1. connexion par le **formulaire réel** ;
+2. board du channel, la card fabriquée visible dans la colonne *Signature* ;
+3. déplacement vers *Réalisation en cours* — le bandeau de refus paraît, il porte la **clé**
+   `missing_required_fields`, et les champs manquants sont nommés par leur **libellé** ;
+4. la card est **revenue** dans sa colonne d'origine (§7.9 du moteur) ;
+5. la commande de reprise est suivie **au clic** ; l'adresse atteinte porte
+   `?exiges=lien-proposition` ;
+6. la fiche rend le champ **exigé**, il porte le focus, et sa mention est visible ;
+7. la valeur est saisie **au clavier**, et l'enregistrement est confirmé à l'écran ;
+8. la ligne est relue **hors interface** avec le jeton du même profil ;
+9. retour au board, le déplacement est rejoué, et la région d'annonces confirme la réussite ;
+10. la base est relue **hors interface** : l'étape est la nouvelle.
+
+Les points 8 et 10 sont ce qui distingue cette preuve d'une preuve d'écran : un affichage confirmé
+n'est pas une écriture confirmée.
+
+**Console stricte.** Le refus du point 3 est un `400` réel : c'est la **seule** erreur console que
+le scénario admet, consommée là où elle est provoquée (`autoriserErreursConsole`). Aucune autre
+n'est tolérée, et le second déplacement n'en produit aucune.
+
+#### 4 quater.5 Ce que ce parcours ne prouve toujours pas
+
+- **Le glisser-déposer réel** n'est pas le geste employé au point 3 : le board offre aussi un menu
+  de transitions au clavier (`CRM-041`, §7.8), et c'est lui que la preuve emprunte. Le
+  glisser-déposer est éprouvé par `e2e/ui/board.spec.ts` contre des réponses substituées ; les
+  enchaîner tous deux ferait de ce scénario deux preuves dans une. L'écart est nommé, pas comblé.
+- **Un seul champ exigé**, celui que le seed pose. Le cas de plusieurs clés est éprouvé par le
+  §4 ter contre des réponses substituées.
+
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
 - **~~Aucune écriture.~~ L'écriture appartient à `CRM-037`** — décision 334, INC-088. Le motif
@@ -933,8 +1028,12 @@ ordinaire — ni mise en évidence, ni défilement.
   donc **ailleurs**, et son refus est repris par la fiche — la mise en évidence des champs concernés
   et le défilement jusqu'au premier (§4.5) sont **livrés**, spécifiés au §4 ter. Ce que la fiche ne
   porte toujours pas, c'est le geste de transition lui-même.
-- **Aucun parcours E2E « transition bloquée → saisie → transition réussie »**, que la Definition of
-  Done de `CRM-037` exige : il suppose les deux points ci-dessus. INC-062, arbitrage attendu.
+- **~~Aucun parcours E2E « transition bloquée → saisie → transition réussie »~~, LIVRÉ le
+  2026-08-16.** L'alinéa disait « il suppose les deux points ci-dessus » ; les deux sont levés — le
+  geste de transition existe sur le board (`CRM-041`), et son refus est repris par la fiche (§4
+  ter). Le parcours est désormais **enchaîné sur une session réelle**, sans réponse substituée, et
+  son contrat est le §4 quater. **INC-062 perd son objet** : ce qu'elle portait était l'attente
+  d'un arbitrage sur une preuve inatteignable, et elle est devenue atteignable.
 - **Aucune résolution de `user`, `contact` ni `file`** : le §6.5 ne les résout pas non plus
   (INC-053). Le rendu affiche leur valeur brute plutôt qu'un nom qu'il ne peut pas obtenir.
 
@@ -1307,13 +1406,14 @@ Tableau d'origine, conservé :
 | E2E | Transition bloquée avec message compréhensible, saisie du champ, transition réussie ; champ d'une autre étape visible en lecture seule |
 | Visuel | Formulaire à chaque étape, état d'erreur, section repliée, rendu sur mobile |
 
-**Ce que ce tableau suppose, et qui n'existe pas.** « Transition bloquée », « saisie » et
+**Ce que ce tableau supposait, et qui existe depuis.** « Transition bloquée », « saisie » et
 « transition réussie » sont trois gestes d'un utilisateur **connecté** devant un contrôle de
-transition. Le premier manque par INC-021, le second et le troisième par `CRM-041`, ordonnée
-**après** cette unité. La première ligne n'est donc pas atteignable, et le constat est porté par
-**INC-062** plutôt que contourné.
+transition. Le premier manquait par INC-021, **close depuis `CRM-009`** ; le second et le troisième
+par `CRM-041`, **livrée depuis**. La première ligne est donc atteignable, et elle est **livrée le
+2026-08-16** : le parcours enchaîné du §4 quater, sur une session réelle et sans réponse
+substituée. Le motif d'INC-062 a disparu avec l'obstacle qu'elle constatait.
 
-Ce qui est atteignable, et exigé de `CRM-037` :
+Ce qui est exigé de `CRM-037`, l'énoncé d'origine désormais **entièrement couvert** :
 
 | Niveau | Preuves attendues |
 |---|---|
@@ -1321,6 +1421,7 @@ Ce qui est atteignable, et exigé de `CRM-037` :
 | API | Le tableau de cas du §4.3 écrit dans de vraies lignes `card_field_values` par la vraie route, chaque valeur confrontée au refus `missing_required_fields` de `move_card` : la lecture SQL de « renseigné » et la lecture TypeScript sont comparées sur les mêmes valeurs |
 | E2E | La route du §4.6 atteinte par un appelant **anonyme** : elle rend l'état « card introuvable », qui est le refus réel du backend ; puis, **la réponse réseau substituée** — procédé endossé par `docs/DESIGN_SYSTEM.md` §12.5 —, le formulaire chargé, sa section repliée ouverte au clavier, son état d'exigence, et les quatre paliers du §7 du design system |
 | E2E (§4.6 bis) | La route du §4.6 demande réellement les channels de son track porteur — requête filtrée sur `track_id`, archivés exclus — et, la réponse substituée, la barre d'onglets porte ces channels avec l'onglet du channel de l'adresse marqué `aria-current="page"` ; anonyme, elle affiche l'état vide, qui est le refus réel du backend |
+| E2E (§4 quater) | **Le parcours enchaîné, sans aucune substitution** : connexion réelle, refus du déplacement, reprise suivie au clic, saisie au clavier, second déplacement réussi, avec **deux relectures hors interface** — la valeur écrite, puis l'étape de la card. Console stricte, la seule erreur admise étant le `400` du refus |
 | Visuel | Captures des états ci-dessus, produites depuis l'application réellement construite et servie, **observées** avant livraison |
 
 ## 8. Points ouverts
