@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un workflow copié dit d'où il vient, et si sa source a changé depuis** (`CRM-032`,
+  `docs/SPEC-workflow-engine.md` §4 bis, `docs/DESIGN_SYSTEM.md` §5.15). La copie d'un workflow
+  vers un track est une divergence assumée : modifier l'original ne se propage pas. La donnée qui
+  porte ce fait — la vue `workflow_derivations` et son empreinte de composition — existait depuis
+  `CRM-032`, mais rien ne l'affichait, l'unité étant alors suspendue à l'absence d'écran
+  d'administration authentifié. L'éditeur de workflows écrit désormais, en tête du workflow
+  choisi : « Ce workflow dérive de *X*. », puis « La source n'a pas changé depuis la copie du
+  *jj/mm/aaaa hh:mm*. » ou « La source a changé depuis la copie du *…*. Les modifications ne sont
+  pas reportées automatiquement. », et « Cette source est archivée. » lorsque c'est le cas. Un
+  workflow qui n'est la copie de personne ne rend **rien** — c'est le cas normal. La mention ne
+  porte **aucune commande** : ni resynchronisation ni comparaison n'existent dans le produit, et un
+  bouton grisé enseignerait un geste qui n'existe pas. La date affichée est celle de la **copie**,
+  jamais celle de la modification : cette dernière ne voit pas les suppressions dans la source, et
+  l'afficher ferait mentir l'écran. Preuves : 11 assertions unitaires, 8 scénarios de composant,
+  3 scénarios d'interface — dont un qui **provoque réellement** la divergence en modifiant la
+  source puis la restaure — et 3 captures observées.
+
 - **Un workflow se crée depuis l'éditeur d'administration** (`CRM-031`,
   `docs/SPEC-workflow-engine.md` §3 bis, `docs/DESIGN_SYSTEM.md` §5.15). L'éditeur livré par
   `CRM-076` composait les workflows existants et renvoyait leur création à l'API : l'état vide de

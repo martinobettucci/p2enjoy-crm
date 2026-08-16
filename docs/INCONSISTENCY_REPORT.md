@@ -435,3 +435,59 @@ ajoutant une purge à ce seul scénario masquerait la cause au lieu de la lever.
 **Conséquence à connaître** : `scripts/verify-harness.sh` compte cet échec parmi ses anomalies, en
 plus des trois compteurs figés d'INC-125. Un verdict à quatre anomalies sur ce harnais s'explique
 donc entièrement par deux entrées ouvertes, et non par l'unité en cours.
+
+### INC-129 — `verify-copie-workflow.sh` REJOUE la migration 19 et RAMÈNE `move_card` à son état d'avant la migration 35
+
+*Relevé le 2026-08-16 pendant `CRM-032`, unité d'interface. Étranger à cette unité : le changement
+de la session ne touche aucun `.sql`, aucun script et aucun seed — vérifié par
+`git diff <base>..HEAD --stat -- supabase/ scripts/`, qui rend une sortie vide.*
+
+**Mesure.** `npm run test:sql` rend **40 fichiers, 2133 assertions, aucune anomalie** avant
+`scripts/verify-copie-workflow.sh`, et **3 fichiers en échec** après lui :
+
+```
+0013_move_card.test.sql        — 8 assertions en échec sur 82
+0014_valeurs_champs.test.sql   — 1 assertion en échec sur 103
+0017_commentaires.test.sql     — 1 assertion en échec sur 98
+```
+
+L'assertion la plus lisible est celle de `0017` :
+
+```
+select ok((select prosrc like '%card_comments%' from pg_proc
+            where oid = 'public.move_card(uuid, uuid, text)'::regprocedure), …)
+```
+
+Elle rend `f` après le harnais, `t` avant.
+
+**Cause, isolée.** Le harnais restaure ses trois dégradations réelles en rejouant **un seul fichier**
+— `MIGRATION_FILE=supabase/migrations/0019_transition_required_fields.sql`, aux lignes 184, 201, 481
+et 509. Or `public.move_card(uuid, uuid, text)` est redéfinie par **cinq** migrations, dont `0019`
+n'est pas la dernière :
+
+```
+0012_move_card.sql  0013_valeurs_champs.sql  0017_move_card_to_channel.sql
+0019_transition_required_fields.sql  0035_commentaires_lot_g.sql
+```
+
+Rejouer `0019` seul réinstalle donc la version de `move_card` **d'avant** `0035`, c'est-à-dire celle
+qui n'écrit pas le commentaire qu'elle exige — la régression que `0035` avait précisément fermée
+(INC-048). Rien ne le signale : le harnais rend `35 contrôles, 2 en échec` en imputant l'échec aux
+suites, non à sa propre restauration.
+
+**Le seed ne répare pas.** `supabase/seed/apply-seed.sh` a été rejoué : il sort en `0`, et les trois
+fichiers restent rouges. Le seed pose des données, pas des fonctions.
+
+**Réparation appliquée à la base locale, aucun fichier du dépôt modifié** : rejeu de
+`supabase/migrations/0035_commentaires_lot_g.sql`, après quoi `prosrc like '%card_comments%'` rend
+de nouveau `t` et `npm run test:sql` rend **40 fichiers, 2133 assertions, aucune anomalie**.
+
+**Portée probable au-delà de ce harnais.** Tout harnais qui rejoue une migration intermédiaire pour
+restaurer une dégradation expose le même défaut dès qu'une migration ultérieure redéfinit le même
+objet. Le contrôle ne peut pas être « le fichier se rejoue sans erreur » : il doit être « l'objet
+restauré est celui de la DERNIÈRE migration qui le définit ».
+
+**Comportement laissé inchangé, et arbitrage demandé.** Deux options s'offrent, et aucune n'est
+tranchée ici : rejouer la **chaîne complète** des migrations après une dégradation, ou faire porter à
+chaque harnais la liste des fichiers qui redéfinissent les objets qu'il touche. La première est sûre
+et lente ; la seconde est rapide et se périme au premier ajout de migration. Le responsable tranche.
