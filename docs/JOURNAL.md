@@ -17251,7 +17251,8 @@ il est **scopé au fil**, et l'apparition dans l'en-tête devient une assertion 
 en sort plus forte : c'est le contrat d'identité de `CRM-022`, tenu à un endroit de plus.
 
 **Campagne finale.** `npm run test:sql` **41 fichiers, 2161 assertions, aucune anomalie** ;
-`npm run test:unit` **1326** tests sur 45 fichiers (1291 avant) ; `npm run e2e:api` **635 scénarios**,
+`npm run test:unit` **1324** tests sur 45 fichiers (1291 avant), puis **1368** au dernier
+rejeu, l'arbre portant alors aussi la tranche d'écriture de l'exécution parallèle ; `npm run e2e:api` **635 scénarios**,
 mesuré **deux fois** ; `npm run e2e:ui` **330 sur 331** puis **331** après révision du garde-fou ;
 `pytest mail-sync/tests` **242** ; `typecheck` et `build` verts. **Non exécutés faute de temps** :
 `npm run e2e:mail` et les quarante-neuf autres `scripts/verify-*.sh`.
