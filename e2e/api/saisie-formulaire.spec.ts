@@ -52,6 +52,9 @@ const CARD_C6 = '5eed0000-0000-4000-8000-0000000000c6'
 const MOTIF_SEED = 'Budget gelé jusqu’au prochain exercice.'
 const SOURCE_SEED = 'prospection'
 
+/** L'administratrice du seed : `apply-seed.sh` §8 quater pose `updated_by` sur chaque valeur. */
+const AUTEUR_SEED = '5eed0000-0000-4000-8000-000000000011'
+
 const VALEURS = '/rest/v1/card_field_values'
 
 type Valeur = { card_id: string; field_id: string; value: unknown; updated_by: string | null }
@@ -313,6 +316,12 @@ test.describe('S3 — la saisie et la garde lisent la même donnée', () => {
 					workflow_id: WORKFLOW_GLOBAL,
 					workspace_id: WORKSPACE_SEED,
 					value: valeur,
+					// `updated_by` FAIT PARTIE DE LA VALEUR SEEDÉE, et l'omettre a réellement cassé
+					// `supabase/tests/0014_valeurs_champs.test.sql` : son assertion 93 compte les
+					// valeurs du seed **par leur auteur**, et une restauration sans auteur en
+					// laissait cinq sur sept. Un harnais qui laisse la base dégradée en sortant est
+					// exactement ce qu'INC-129 décrit ; celui-ci restaure la ligne ENTIÈRE.
+					updated_by: AUTEUR_SEED,
 				},
 			})
 		}
