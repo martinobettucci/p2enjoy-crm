@@ -2403,10 +2403,12 @@ une preuve d'interface au lieu d'en tenir lieu.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-031 — Workflows, étapes, transitions `[~]`
-*Reste `[~]` pour **un seul** manque, et il n'appartient pas à cette unité : la contrainte `NOT NULL`
-de `channels.workflow_id`, qui revient à `CRM-033`. L'éditeur, l'E2E de création et les captures que
-la Definition of Done exigeait sont livrés et prouvés — voir plus bas.*
+### CRM-031 — Workflows, étapes, transitions `[x]`
+*Close le 2026-08-16. Le dernier manque — la contrainte `NOT NULL` de `channels.workflow_id`, qui
+n'appartenait pas à cette unité — a été livré par `CRM-033` et **mesuré en base** :
+`attnotnull` vaut `t`, et aucune ligne de `channels` ne porte un `workflow_id` nul. L'éditeur,
+l'E2E de création et les captures que la Definition of Done exigeait sont livrés et prouvés — voir
+plus bas.*
 Éditeur d'administration ; workflow par défaut du seed conforme au graphe spécifié.
 **DoD** : pgTAP (étape initiale unique, unicité `(workflow, nœud)`, transitions distinctes) ;
 E2E de création ; captures de l'éditeur.
@@ -2563,8 +2565,12 @@ E2E de création ; captures de l'éditeur.
 - [x] `docs/SPEC-workflow-engine.md` §3 bis (neuf sous-chapitres) et §3.10, `docs/DESIGN_SYSTEM.md`
       §5.15, `docs/manual.md` chapitre 5 bis.0, 5 bis.5 et §3.2, `CHANGELOG.md` mis à jour dans le
       même changement.
-- [ ] **La contrainte `NOT NULL` de `channels.workflow_id` n'est pas posée** (INC-029, ci-dessus) :
-      elle revient à `CRM-033`. **Bloquée par une frontière d'unité, pas par un défaut.**
+- [x] **La contrainte `NOT NULL` de `channels.workflow_id` est posée, et la mesure le constate.**
+      Elle revenait à `CRM-033`, qui l'a livrée depuis dans
+      `supabase/migrations/0008_coherence_workflow_channel.sql` §3. MESURÉ le 2026-08-16 sur la pile
+      seedée : `pg_attribute.attnotnull` vaut `t` pour `public.channels.workflow_id`, et
+      `select count(*) from public.channels where workflow_id is null` rend `0`. INC-029 est soldée
+      pour cette unité, et le dernier manque de `CRM-031` avec elle.
 
 *DoD adaptée, écarts explicites — LE PARAGRAPHE CI-DESSOUS EST HISTORIQUE, et il est conservé parce
 qu'il dit pourquoi ces preuves ont manqué si longtemps. La Definition of Done exigeait un « E2E de
