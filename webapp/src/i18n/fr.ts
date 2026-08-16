@@ -214,6 +214,11 @@ export const fr = {
 	'form.other.summary': "Informations d'autres étapes",
 	'form.other.readonly': "Ces champs ne sont pas demandés à l'étape courante : ils sont consultables, pas modifiables.",
 
+	// --- Reprise d'un déplacement refusé (docs/SPEC-form-composer.md §4 ter) ---------------
+	// L'étape de DESTINATION n'est pas nommée : l'adresse ne la porte pas, et l'inventer serait une
+	// invention (§4 ter.5, §4 ter.9).
+	'form.demanded': 'Exigé par le déplacement que vous avez demandé',
+
 	// --- Saisie depuis la fiche (docs/SPEC-form-composer.md §4 bis) ------------------------
 	'form.save.saving': 'Enregistrement…',
 	'form.save.saved': 'Enregistré',
@@ -238,6 +243,7 @@ export const fr = {
 	'board.comment.submit': 'Déplacer',
 	'board.comment.cancel': 'Annuler',
 	'board.refusal.dismiss': 'Fermer',
+	'board.refusal.fill': 'Renseigner ces champs',
 	'board.refusal.card_not_found':
 		"Cette affaire n'est plus accessible. Rechargez le board pour voir son état réel.",
 	'board.refusal.forbidden': "Votre compte n'a pas le droit d'écrire dans ce channel.",

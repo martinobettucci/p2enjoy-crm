@@ -69,6 +69,20 @@ const TONS_KIND: Readonly<Record<string, TonBadge>> = {
 const CLASSES_COLONNE = 'w-[288px] shrink-0 snap-start flex flex-col gap-3 min-w-0'
 
 /**
+ * Le lien de reprise du bandeau de refus — variante **secondaire** du §5.5, portée par un lien.
+ *
+ * Les couleurs sont posées explicitement : le bandeau écrit en `--color-danger-on-soft`, et un
+ * lien qui en hériterait se lirait comme une partie du message d'erreur plutôt que comme le geste
+ * qui le répare. La cible reste ≥ 40 px (§8), comme pour tout lien-commande du produit.
+ */
+const CLASSES_REPRISE = [
+	'inline-flex items-center justify-center self-start',
+	'min-h-[var(--size-target)] px-4 rounded-sm',
+	'bg-surface text-ink border border-border font-medium',
+	'transition-colors duration-[var(--transition-duration-fast)] hover:bg-hover',
+].join(' ')
+
+/**
  * Un montant se rend en **donnée technique** (docs/DESIGN_SYSTEM.md §2 et §5.7 bis) : monospace,
  * chiffres tabulaires. Le formatage est délégué à `Intl`, jamais construit par concaténation —
  * la place du symbole et le séparateur des milliers sont des règles de langue, pas de composant.
@@ -117,7 +131,13 @@ export function Board({
 	const [idGlissee, setIdGlissee] = useState<string | null>(null)
 	const [cibleSurvolee, setCibleSurvolee] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState<string | null>(null)
-	const [refus, setRefus] = useState<RefusDeplacement | null>(null)
+	// Le refus voyage AVEC l'affaire qu'il concerne : le bandeau doit composer l'adresse de sa
+	// fiche pour offrir la reprise de la saisie (docs/SPEC-form-composer.md §4 ter.1), et le board
+	// n'a aucune sélection courante à laquelle se raccrocher.
+	const [refus, setRefus] = useState<{
+		readonly idCard: string
+		readonly refus: RefusDeplacement
+	} | null>(null)
 	const [annonce, setAnnonce] = useState('')
 	/** Transition en attente de motif (§7.8) : le geste est suspendu, la card n'a pas bougé. */
 	const [motifAttendu, setMotifAttendu] = useState<{
@@ -161,7 +181,7 @@ export function Board({
 			// Retour arrière **exact** : la liste d'avant le geste, jamais une reconstruction
 			// (docs/DESIGN_SYSTEM.md §6, docs/SPEC-workflow-engine.md §7.9).
 			onCards(avant)
-			setRefus(resultat.refus)
+			setRefus({ idCard, refus: resultat.refus })
 			setAnnonce(t('live.board.refused'))
 		},
 		[cards, client, libellesChamps, onCards],
@@ -200,7 +220,13 @@ export function Board({
 	return (
 		<div className="flex flex-col gap-3 min-h-0">
 			<LiveRegion libelle={t('live.board.aria')} message={annonce} />
-			{refus === null ? null : <BandeauRefus refus={refus} onFermer={() => setRefus(null)} />}
+			{refus === null ? null : (
+				<BandeauRefus
+					refus={refus.refus}
+					cheminReprise={cheminReprise(slugTrack, slugChannel, refus.idCard, refus.refus)}
+					onFermer={() => setRefus(null)}
+				/>
+			)}
 			{motifAttendu === null ? null : (
 				<SaisieMotif
 					transition={motifAttendu.transition}
@@ -624,11 +650,35 @@ function SaisieMotif({
  * Un message inconnu n'est pas absorbé : le libellé générique est suivi du message brut du
  * backend. Un refus muet ferait croire à un défaut d'interface.
  */
+/**
+ * L'adresse de reprise de la saisie — `docs/SPEC-form-composer.md` §4 ter.2.
+ *
+ * `null` dès que la reprise n'aurait aucun objet : un refus d'une autre nature, ou un refus pour
+ * champs manquants dont le `DETAIL` n'a rendu **aucune** clé. Offrir un lien vers une fiche sans
+ * rien à y mettre en évidence serait une commande morte (docs/DESIGN_SYSTEM.md §5.16).
+ *
+ * Les clés sont encodées : elles viennent de la base, et le §2.5 du composeur ne leur interdit
+ * aucun caractère.
+ */
+export function cheminReprise(
+	slugTrack: string,
+	slugChannel: string,
+	idCard: string,
+	refus: RefusDeplacement,
+): string | null {
+	if (refus.cle !== 'missing_required_fields') return null
+	if (refus.clesManquantes.length === 0) return null
+	const exiges = encodeURIComponent(refus.clesManquantes.join(','))
+	return `/tracks/${slugTrack}/${slugChannel}/cards/${idCard}?exiges=${exiges}`
+}
+
 function BandeauRefus({
 	refus,
+	cheminReprise: chemin,
 	onFermer,
 }: {
 	readonly refus: RefusDeplacement
+	readonly cheminReprise: string | null
 	readonly onFermer: () => void
 }) {
 	return (
@@ -652,6 +702,15 @@ function BandeauRefus({
 					<code data-testid="refus-brut" className="text-text-2">
 						{refus.brut}
 					</code>
+				)}
+				{/* LA REPRISE DE LA SAISIE — docs/SPEC-form-composer.md §4 ter.1, §4 ter.2. C'est un
+				    LIEN et non un bouton (docs/DESIGN_SYSTEM.md §5.7 quater) : il change d'adresse,
+				    et en faire un contrôle lui retirerait le clic du milieu, le nouvel onglet et la
+				    copie de l'adresse. */}
+				{chemin === null ? null : (
+					<Link to={chemin} data-testid="reprendre-saisie" className={CLASSES_REPRISE}>
+						{t('board.refusal.fill')}
+					</Link>
 				)}
 			</div>
 			<Button variante="discret" onClick={onFermer} data-testid="fermer-refus" className="ml-auto">

@@ -51,13 +51,13 @@
 
 import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
-import { useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
+import { lireClesExigees, useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
@@ -100,7 +100,13 @@ const CLE_TITRE_CARD: CleTraduction = 'route.card.title'
 
 export function RouteCard() {
 	const { slugTrack, slugChannel, idCard } = useParams()
-	const { etat, recharger } = useContenuCard(clientCrm, idCard)
+	// LES CHAMPS EXIGÉS PAR UN DÉPLACEMENT REFUSÉ — docs/SPEC-form-composer.md §4 ter.2. L'adresse
+	// est le seul transport : elle survit au rechargement, fait du bandeau du board un vrai lien,
+	// et rend inspectable ce que la fiche sait du refus. Aucune requête n'en dépend — les champs
+	// sont déjà tous lus pour le workflow, la clé n'entre que dans la composition.
+	const [parametres] = useSearchParams()
+	const clesExigees = lireClesExigees(parametres.get('exiges'))
+	const { etat, recharger } = useContenuCard(clientCrm, idCard, clesExigees)
 	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack)
 
 	const card = etat.statut === 'pret' ? etat.donnees.card : null

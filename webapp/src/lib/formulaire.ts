@@ -89,6 +89,13 @@ export type ChampResolu = {
 	readonly renseigne: boolean
 	/** Exigé pour entrer dans l'étape courante, et donc **manquant** s'il n'est pas renseigné. */
 	readonly manquant: boolean
+	/**
+	 * Nommé par le refus d'un déplacement, et rendu saisissable pour cette raison (§4 ter.4).
+	 *
+	 * C'est une propriété du **chemin d'arrivée**, jamais de la donnée : le même champ, ouvert
+	 * sans `exiges` dans l'adresse, ne la porte pas.
+	 */
+	readonly exigeParDeplacement: boolean
 }
 
 /**
@@ -105,6 +112,14 @@ export type ModeleFormulaire = {
 	readonly autresEtapes: readonly ChampResolu[]
 	/** Clés des champs exigés et non renseignés, ordonnées par `position` (§4.4). */
 	readonly clesManquantes: readonly string[]
+	/**
+	 * Clés RETENUES parmi celles que l'adresse portait, dans l'ordre du formulaire (§4 ter.3).
+	 *
+	 * Elle diffère de ce que l'adresse portait : une clé inconnue ou archivée est **ignorée**
+	 * (§4 ter.7). C'est cette liste, et non celle de l'adresse, qui désigne « le premier champ »
+	 * du défilement — sans quoi une adresse bricolée ferait viser un champ que rien ne rend.
+	 */
+	readonly clesExigeesRetenues: readonly string[]
 }
 
 /**
@@ -123,11 +138,14 @@ export function composerFormulaire({
 	regles,
 	valeurs,
 	etape,
+	clesExigees = [],
 }: {
 	readonly champs: readonly ChampFormulaire[]
 	readonly regles: readonly RegleVisibilite[]
 	readonly valeurs: readonly ValeurChamp[]
 	readonly etape: EtapeCourante
+	/** Clés nommées par le refus d'un déplacement, telles que l'adresse les porte (§4 ter.2). */
+	readonly clesExigees?: readonly string[]
 }): ModeleFormulaire {
 	const parChamp = new Map<string, Json>()
 	for (const valeur of valeurs) parChamp.set(valeur.field_id, valeur.value)
@@ -138,6 +156,7 @@ export function composerFormulaire({
 		visibilites.set(regle.field_id, lireVisibilite(regle.visibility))
 	}
 
+	const exigees = new Set(clesExigees)
 	const ordonnes = [...champs].sort((a, b) => a.position - b.position)
 	const actifs: ChampResolu[] = []
 	const autres: ChampResolu[] = []
@@ -147,20 +166,31 @@ export function composerFormulaire({
 		const valeur = parChamp.has(champ.id) ? parChamp.get(champ.id) : undefined
 		const renseigne = estRenseigne(valeur ?? undefined)
 		const archive = champ.archived_at !== null
+		// LA QUATRIÈME DESTINATION DU §4 ter.4, et elle est imposée par une mesure : sur le seed,
+		// `motif-perte` est `hidden` à l'étape de départ dans DIX des dix-neuf couples
+		// (affaire, transition) refusables, et un champ `hidden` non renseigné n'est rendu NULLE
+		// PART par les trois destinations du §4.2. Sans cette règle, le refus nommerait un champ
+		// que la fiche ne montre pas, et marquer une affaire perdue serait impossible.
+		//
+		// L'archivage garde sa primauté (§5, §4 ter.4) : la garde exclut déjà les champs archivés,
+		// une clé archivée ne peut donc venir que d'une adresse écrite à la main.
+		const exigeParDeplacement = !archive && exigees.has(champ.key)
 
 		// Un champ archivé ne revient jamais dans le formulaire, quelle que soit sa règle (§5) :
 		// exiger ou proposer un champ que l'archivage a retiré serait une impasse d'interface.
-		if (archive || visibilite === 'hidden') {
+		if (archive || (visibilite === 'hidden' && !exigeParDeplacement)) {
 			// Sans valeur, il n'y a rien à conserver : un champ masqué et vide n'a pas de place
 			// dans la section repliée, qui existe pour ne perdre **aucune donnée saisie** (§4.2).
 			if (renseigne) {
-				autres.push({ champ, visibilite, valeur, renseigne, manquant: false })
+				autres.push({ champ, visibilite, valeur, renseigne, manquant: false, exigeParDeplacement: false })
 			}
 			continue
 		}
 
+		// `manquant` reste la lecture du §4.4 — exigé par l'étape COURANTE et vide —, et n'absorbe
+		// pas l'exigence du déplacement : les deux mentions sont distinctes et coexistent (§4 ter.5).
 		const manquant = visibilite === 'required' && !renseigne
-		actifs.push({ champ, visibilite, valeur, renseigne, manquant })
+		actifs.push({ champ, visibilite, valeur, renseigne, manquant, exigeParDeplacement })
 	}
 
 	return {
@@ -168,7 +198,32 @@ export function composerFormulaire({
 		champs: actifs,
 		autresEtapes: autres,
 		clesManquantes: actifs.filter((resolu) => resolu.manquant).map((resolu) => resolu.champ.key),
+		// Ordonnée par le formulaire, non par l'adresse : les deux ordres coïncident par
+		// construction (§4 ter.3), et se fier à celui de l'adresse ferait dépendre le défilement
+		// d'une chaîne que l'utilisateur peut réécrire.
+		clesExigeesRetenues: actifs
+			.filter((resolu) => resolu.exigeParDeplacement)
+			.map((resolu) => resolu.champ.key),
 	}
+}
+
+/**
+ * Les clés portées par `?exiges=` de l'adresse (§4 ter.2), nettoyées.
+ *
+ * Séparateur `,`, espaces retirés, entrées vides écartées, doublons réduits — une adresse est un
+ * texte que l'utilisateur peut réécrire, et le module ne suppose jamais qu'elle est bien formée.
+ * Ce qui reste n'est PAS validé ici : c'est la composition qui écarte les clés inconnues et
+ * archivées (§4 ter.7), parce qu'elle seule connaît les champs.
+ */
+export function lireClesExigees(brut: string | null | undefined): readonly string[] {
+	if (brut === null || brut === undefined) return []
+	const retenues: string[] = []
+	for (const entree of brut.split(',')) {
+		const cle = entree.trim()
+		if (cle.length === 0 || retenues.includes(cle)) continue
+		retenues.push(cle)
+	}
+	return retenues
 }
 
 /**
@@ -310,6 +365,13 @@ export async function lireValeurs(
 export function useContenuCard(
 	client: ClientCrm | null,
 	idCard: string | undefined,
+	/**
+	 * Clés nommées par le refus d'un déplacement (§4 ter.2), telles que l'adresse les porte.
+	 *
+	 * Elle entre dans la **composition**, jamais dans une requête : les champs sont déjà tous lus
+	 * pour le workflow, et un filtre serveur de plus ne rapporterait rien de neuf.
+	 */
+	clesExigees: readonly string[] = [],
 ): {
 	readonly etat: EtatAsync<ContenuCard>
 	readonly recharger: () => void
@@ -365,11 +427,15 @@ export function useContenuCard(
 						regles: resultatRegles.donnees,
 						valeurs: resultatValeurs.donnees,
 						etape: resultatEtape.donnees,
+						clesExigees,
 					}),
 				}),
 			)
 		})()
-	}, [client, idCard, tentative])
+		// `clesExigees` est reconstruite à chaque rendu par la lecture de l'adresse : la dépendance
+		// porte donc sur sa forme TEXTUELLE, faute de quoi l'effet se rejouerait sans fin.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [client, idCard, tentative, clesExigees.join(',')])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)
@@ -561,6 +627,10 @@ export function resoudreApresEcriture(resolu: ChampResolu, valeur: Json): ChampR
 		valeur,
 		renseigne,
 		manquant: resolu.visibilite === 'required' && !renseigne,
+		// L'exigence du déplacement vient du CHEMIN D'ARRIVÉE, pas de la valeur (§4 ter.4) : la
+		// renseigner ne l'annule pas. L'effacer ferait disparaître la mise en évidence sous les
+		// doigts de celui qui vient de saisir, et l'écran cesserait de dire pourquoi il l'a menée là.
+		exigeParDeplacement: resolu.exigeParDeplacement,
 	}
 }
 
@@ -584,5 +654,7 @@ export function appliquerEcriture(
 		champs,
 		autresEtapes: modele.autresEtapes,
 		clesManquantes: champs.filter((resolu) => resolu.manquant).map((resolu) => resolu.champ.key),
+		// Inchangée par une écriture : elle décrit ce que l'adresse a demandé, pas ce qui est saisi.
+		clesExigeesRetenues: modele.clesExigeesRetenues,
 	}
 }

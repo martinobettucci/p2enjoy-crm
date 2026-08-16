@@ -315,6 +315,14 @@ export type RefusDeplacement = {
 	readonly cle: MessageRefus | typeof REFUS_ANONYME | null
 	/** Libellés des champs manquants, dans l'ordre du `DETAIL`. Vide pour les autres refus. */
 	readonly champsManquants: readonly string[]
+	/**
+	 * Les **clés** des mêmes champs, dans le même ordre — ce que le `DETAIL` porte réellement.
+	 *
+	 * Le libellé est ce qui se lit ; la clé est ce qui se transporte. La reprise de la saisie
+	 * (`docs/SPEC-form-composer.md` §4 ter.3) désigne les champs par leur clé, stable par workflow,
+	 * là où un libellé changerait l'adresse au premier renommage.
+	 */
+	readonly clesManquantes: readonly string[]
 	/** Message brut du backend, affiché **en plus** lorsque `cle` est `null` (§7.10). */
 	readonly brut: string
 }
@@ -343,15 +351,18 @@ export function classerRefus(
 		return {
 			cle: connu,
 			champsManquants: cles.map((cle) => libelles.get(cle) ?? cle),
+			clesManquantes: cles,
 			brut: message,
 		}
 	}
-	if (connu !== undefined) return { cle: connu, champsManquants: [], brut: message }
+	if (connu !== undefined)
+		return { cle: connu, champsManquants: [], clesManquantes: [], brut: message }
 	// Le privilège d'exécution refusé n'est pas un message de la garde : c'est PostgreSQL qui
 	// répond avant elle. Il est reconnu par son `SQLSTATE`, jamais par le texte du message, qui
 	// dépend de la version du serveur (docs/SPEC-workflow-engine.md §7.10).
-	if (code === '42501') return { cle: REFUS_ANONYME, champsManquants: [], brut: message }
-	return { cle: null, champsManquants: [], brut: message }
+	if (code === '42501')
+		return { cle: REFUS_ANONYME, champsManquants: [], clesManquantes: [], brut: message }
+	return { cle: null, champsManquants: [], clesManquantes: [], brut: message }
 }
 
 // --- Optimisme et retour arrière (§7.9) ----------------------------------------------------

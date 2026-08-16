@@ -20,9 +20,14 @@
 //
 // Les champs de la **section repliée** restent en lecture seule : le §4.2 les y range précisément
 // parce que l'étape courante ne les demande pas (§4 bis.1).
+//
+// LA REPRISE D'UN DÉPLACEMENT REFUSÉ EST LIVRÉE DEPUIS LE 2026-08-16 — §4 ter. Les champs que la
+// garde a nommés arrivent par l'adresse, sont rendus SAISISSABLES même si leur règle les cache à
+// l'étape courante (§4 ter.4), portent leur propre mention et leur liseré, et le premier prend le
+// focus. Ce composant ne décide toujours rien : c'est `composerFormulaire` qui a résolu tout cela.
 
-import { CircleCheck, Info, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { ArrowRightLeft, CircleCheck, Info, TriangleAlert } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { t, type CleTraduction } from '../i18n'
 import {
 	appliquerEcriture,
@@ -56,6 +61,15 @@ const MESSAGES_REFUS_VALEUR: Readonly<Record<NatureRefusValeur, CleTraduction>> 
 	network: 'form.save.refus.network',
 	unknown: 'form.save.refus.unknown',
 }
+
+/**
+ * Le bloc d'un champ exigé par le déplacement demandé — docs/DESIGN_SYSTEM.md §5.7 quater.
+ *
+ * `--color-brand` et non `--color-danger` : le champ est **demandé**, il n'est pas **fautif**. La
+ * teinte de danger appartient à l'erreur de saisie (§5.7) et au refus d'écriture (§5.7 ter) ;
+ * l'employer ici dirait que la valeur est mauvaise là où elle est seulement absente.
+ */
+const CLASSES_EXIGE = 'border-l-[3px] border-brand bg-surface rounded-sm p-3'
 
 /** Les quatre états d'un champ du §4 bis.6. */
 type EtatEcriture =
@@ -95,6 +109,35 @@ export function FormulaireCard({
 	useEffect(() => setModele(modeleCharge), [modeleCharge])
 
 	const [etats, setEtats] = useState<Readonly<Record<string, EtatEcriture>>>({})
+
+	// LE DÉFILEMENT ET LE FOCUS DU §4 ter.6, et ils ne se produisent QU'UNE FOIS PAR DEMANDE.
+	//
+	// La signature est la liste des clés RETENUES : deux adresses qui désignent les mêmes champs
+	// existants sont la même demande, et une clé inconnue ne doit pas rejouer le geste (§4 ter.7).
+	// Sans ce garde-fou, chaque rendu — donc chaque frappe enregistrée — reprendrait le focus à
+	// celui qui saisit.
+	const demandeHonoree = useRef<string | null>(null)
+	const signature = modele.clesExigeesRetenues.join(',')
+	useEffect(() => {
+		if (signature === '') return
+		if (demandeHonoree.current === signature) return
+		demandeHonoree.current = signature
+		const premiere = modele.clesExigeesRetenues[0]
+		if (premiere === undefined) return
+		const controle = document.getElementById(`champ-${premiere}`)
+		if (controle === null) return
+		// Le focus AVANT le défilement : le §4 ter.6 pose que faire défiler sans déplacer le focus
+		// laisserait l'utilisateur au clavier en tête de page. Le navigateur amène déjà l'élément
+		// focalisé à l'écran ; le défilement explicite ne fait que le CENTRER, ce qui montre le
+		// libellé et la mention au-dessus du contrôle plutôt que le contrôle seul en bord de fenêtre.
+		controle.focus()
+		// `prefers-reduced-motion` respecté (docs/DESIGN_SYSTEM.md §6). `matchMedia` peut manquer
+		// hors navigateur : son absence vaut « aucune préférence », jamais une erreur.
+		const sobre = typeof window.matchMedia === 'function'
+			? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			: false
+		controle.scrollIntoView({ block: 'center', behavior: sobre ? 'auto' : 'smooth' })
+	}, [signature, modele.clesExigeesRetenues])
 
 	const enregistrer = useCallback(
 		async (resolu: ChampResolu, valeur: Json) => {
@@ -180,18 +223,20 @@ function ChampSaisie({
 	readonly ecrituresPossibles: boolean
 	readonly onEnregistrer: (resolu: ChampResolu, valeur: Json) => Promise<void>
 }) {
-	const { champ, visibilite, manquant } = resolu
+	const { champ, visibilite, manquant, exigeParDeplacement } = resolu
 	const idControle = `champ-${champ.key}`
 	const idAide = `${idControle}-aide`
 	const idAlerte = `${idControle}-alerte`
 	const idEtat = `${idControle}-etat`
 	const idRefus = `${idControle}-refus`
+	const idExige = `${idControle}-exige`
 
 	const enRefus = etat.phase === 'refus'
 	const confirme = etat.phase === 'enregistre'
 	const annonce = etat.phase === 'envoi' || confirme
 	const decrit = [
 		champ.help_text === null ? '' : idAide,
+		exigeParDeplacement ? idExige : '',
 		manquant ? idAlerte : '',
 		annonce ? idEtat : '',
 		enRefus ? idRefus : '',
@@ -209,7 +254,11 @@ function ChampSaisie({
 	)
 
 	return (
-		<div data-testid={`champ-${champ.key}`} className="flex flex-col gap-1">
+		<div
+			data-testid={`champ-${champ.key}`}
+			{...(exigeParDeplacement ? { 'data-exige': 'true' } : {})}
+			className={['flex flex-col gap-1', exigeParDeplacement ? CLASSES_EXIGE : ''].join(' ').trim()}
+		>
 			<label htmlFor={idControle} className="text-sm text-text-2">
 				{champ.label}
 				{visibilite === 'required' ? (
@@ -228,6 +277,21 @@ function ChampSaisie({
 			{visibilite === 'required' ? (
 				<p data-testid={`requis-${champ.key}`} className="text-sm text-text-3">
 					{t('form.required.reason')} {etape}
+				</p>
+			) : null}
+
+			{/* La mention du §4 ter.5. Elle S'AJOUTE à celle du §4.4 plutôt que de la remplacer : un
+			    champ peut être obligatoire à l'étape courante ET exigé par le déplacement demandé,
+			    et les deux phrases sont vraies — c'est le précédent du §4 bis.9. L'étape de
+			    DESTINATION n'est pas nommée : l'adresse ne la porte pas (§4 ter.9). */}
+			{exigeParDeplacement ? (
+				<p
+					id={idExige}
+					data-testid={`exige-${champ.key}`}
+					className="flex items-center gap-1 text-sm text-brand"
+				>
+					<ArrowRightLeft aria-hidden="true" size={14} strokeWidth={2} className="shrink-0" />
+					<span>{t('form.demanded')}</span>
 				</p>
 			) : null}
 
