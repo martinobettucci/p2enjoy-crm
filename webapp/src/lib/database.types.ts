@@ -2050,6 +2050,42 @@ export type Database = {
         }
         Returns: Json
       }
+      snooze_card: {
+        Args: { card_id: string; until: string }
+        Returns: {
+          amount: number | null
+          archived_at: string | null
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          current_step_id: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          email_local_part: string
+          entered_step_at: string
+          health_score: number | null
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          owner_id: string | null
+          position: number
+          probability_override: number | null
+          search_tsv: unknown
+          snoozed_until: string | null
+          title: string
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       upsert_mail_inbound_account: {
         Args: {
           p_backfill_months?: number
@@ -2083,6 +2119,42 @@ export type Database = {
           p_workspace_id: string
         }
         Returns: string
+      }
+      wake_card: {
+        Args: { card_id: string }
+        Returns: {
+          amount: number | null
+          archived_at: string | null
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          current_step_id: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          email_local_part: string
+          entered_step_at: string
+          health_score: number | null
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          owner_id: string | null
+          position: number
+          probability_override: number | null
+          search_tsv: unknown
+          snoozed_until: string | null
+          title: string
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
