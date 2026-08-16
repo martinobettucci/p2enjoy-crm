@@ -15,7 +15,8 @@
 // passer une règle de base pour une décision d'interface (`CLAUDE.md` §10).
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { History, Minus, Pencil, Plus, RotateCcw } from 'lucide-react'
+import { History, Plus, RotateCcw } from 'lucide-react'
+import { ListeCollections } from './CollectionsComparees'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur } from '../components/ui/States'
@@ -35,8 +36,6 @@ import {
 	type CleCollection,
 	type Comparaison,
 	type AffairePlan,
-	type ElementCompare,
-	type NomElement,
 	type PlanRemappage,
 	type RefusVersion,
 	type Restauration,
@@ -71,11 +70,6 @@ const CLES_COLLECTION: Readonly<Record<CleCollection, CleTraduction>> = {
 	required_fields: 'admin.workflows.versions.collection.required_fields',
 }
 
-const CLES_GENRE: Readonly<Record<ElementCompare['genre'], CleTraduction>> = {
-	ajout: 'admin.workflows.versions.change.ajout',
-	retrait: 'admin.workflows.versions.change.retrait',
-	modification: 'admin.workflows.versions.change.modification',
-}
 
 const CLES_ETAT: Readonly<Record<AffairePlan['state'], CleTraduction>> = {
 	active: 'admin.workflows.versions.plan.state.active',
@@ -124,97 +118,22 @@ function AlerteRefus({ message, marqueur }: { readonly message: string; readonly
 	)
 }
 
-/** Le nom d'un élément comparé, dans les trois formes que le module peut rendre (§7 ter.14.6). */
-function NomCompare({ nom }: { readonly nom: NomElement }) {
-	if (nom.genre === 'libelle') return <span className="font-medium">{nom.texte}</span>
-	if (nom.genre === 'renomme') {
-		return (
-			<span className="font-medium">
-				{t('admin.workflows.versions.renamed', { avant: nom.avant, apres: nom.apres })}
-			</span>
-		)
-	}
-	// Dernier repli : les identifiants, en `code`. Mieux vaut un identifiant qu'une phrase à trou.
-	return (
-		<span className="flex flex-wrap gap-1">
-			{nom.valeurs.map((valeur) => (
-				<code key={valeur} className="rounded-sm bg-hover px-1 text-sm">
-					{valeur}
-				</code>
-			))}
-		</span>
-	)
-}
-
-const ICONES_GENRE = { ajout: Plus, retrait: Minus, modification: Pencil } as const
-const TONS_GENRE = {
-	ajout: 'bg-success-soft text-success-on-soft',
-	retrait: 'bg-danger-soft text-danger-on-soft',
-	modification: 'bg-hover text-text-2',
-} as const
-
-function LigneElement({ element }: { readonly element: ElementCompare }) {
-	const Icone = ICONES_GENRE[element.genre]
-	return (
-		<li className="flex flex-col gap-1 py-1">
-			<span className="flex flex-wrap items-center gap-2">
-				<span
-					className={[
-						'inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium',
-						TONS_GENRE[element.genre],
-					].join(' ')}
-				>
-					<Icone aria-hidden="true" size={14} strokeWidth={2} />
-					{t(CLES_GENRE[element.genre])}
-				</span>
-				<NomCompare nom={element.nom} />
-			</span>
-			{element.attributs.length > 0 ? (
-				<ul className="flex flex-col gap-1 pl-4 text-sm text-text-2">
-					{element.attributs.map((attribut) => (
-						<li key={attribut.nom}>
-							{t('admin.workflows.versions.attribute', {
-								attribut: attribut.nom,
-								avant: attribut.avant ?? t('admin.workflows.versions.value.none'),
-								apres: attribut.apres ?? t('admin.workflows.versions.value.none'),
-							})}
-						</li>
-					))}
-				</ul>
-			) : null}
-		</li>
-	)
-}
-
 /**
- * Les six collections d'une comparaison.
+ * Les six collections d'une comparaison de versions.
  *
- * Une collection vide est NOMMÉE (`docs/DESIGN_SYSTEM.md` §5.15) : une liste vide se lirait comme
- * un défaut de chargement. Lorsque les deux versions sont identiques, l'appelant n'affiche pas ce
- * bloc du tout — il n'y a rien à parcourir.
+ * LE RENDU N'EST PLUS ÉCRIT ICI : il est partagé avec la comparaison copie ↔ source de `CRM-032`
+ * (`ListeCollections`, `docs/SPEC-workflow-engine.md` §4 quater.4). Les deux comparaisons rendent
+ * la même forme de `changes`, et deux rendus divergeraient au premier ajustement visuel. L'ordre et
+ * la liste restent d'ici : cette comparaison en rend six, l'autre cinq.
  */
 function Collections({ comparaison }: { readonly comparaison: Comparaison }) {
 	return (
-		<ul data-testid="comparaison-collections" className="flex flex-col gap-3">
-			{COLLECTIONS.map((cle) => {
-				const collection = comparaison.collections.find((entree) => entree.cle === cle)
-				const elements = collection?.elements ?? []
-				return (
-					<li key={cle} className="flex flex-col gap-1">
-						<h5 className="font-medium">{t(CLES_COLLECTION[cle])}</h5>
-						{elements.length === 0 ? (
-							<p className="text-sm text-text-2">{t('admin.workflows.versions.compare.empty')}</p>
-						) : (
-							<ul className="flex flex-col">
-								{elements.map((element) => (
-									<LigneElement key={element.cle} element={element} />
-								))}
-							</ul>
-						)}
-					</li>
-				)
-			})}
-		</ul>
+		<ListeCollections
+			collections={comparaison.collections}
+			ordre={COLLECTIONS}
+			libelles={CLES_COLLECTION}
+			marqueur="comparaison-collections"
+		/>
 	)
 }
 

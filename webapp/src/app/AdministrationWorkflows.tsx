@@ -41,7 +41,7 @@
 // d'ajout : l'unicité `(workflow_id, node_id)` refuserait l'insertion de toute façon, et il évite
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
 	Archive,
 	ArchiveRestore,
@@ -50,6 +50,7 @@ import {
 	ArrowUp,
 	Flag,
 	GitBranch,
+	GitCompare,
 	MessageSquare,
 	Pencil,
 	Plus,
@@ -57,6 +58,7 @@ import {
 	TriangleAlert,
 } from 'lucide-react'
 import { BlocVersionsWorkflow } from './BlocVersionsWorkflow'
+import { ListeCollections } from './CollectionsComparees'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -80,6 +82,7 @@ import {
 	arriveesPossibles,
 	choixDuChamp,
 	cleChampConforme,
+	comparerAvecSource,
 	composerMentionDivergence,
 	composerOptions,
 	declarerChamp,
@@ -130,6 +133,11 @@ import {
 	creerWorkflow,
 	lireCatalogueActif,
 	lireDerivation,
+	structureNaturelle,
+	COLLECTIONS_SOURCE,
+	type CleCollectionSource,
+	type ComparaisonSource,
+	type RefusComparaisonSource,
 	lireEtapes,
 	lireTracksAffectables,
 	lireTransitions,
@@ -2118,13 +2126,27 @@ function formaterCopie(horodatage: string): string {
  * L'ERREUR, ELLE, EST NOMMÉE. Le silence ferait passer une panne de lecture pour l'absence
  * d'origine, c'est-à-dire pour une information.
  *
- * AUCUNE COMMANDE N'Y FIGURE, pas même grisée : la copie est une divergence assumée, et ni
- * « resynchroniser » ni « comparer » n'existent dans le produit (§4 bis.1, §4 bis.6).
+ * AUCUNE COMMANDE D'ÉCRITURE N'Y FIGURE, pas même grisée : la copie est une divergence assumée, et
+ * « resynchroniser » n'existe nulle part dans le produit (§4.1, §4 bis.6).
+ *
+ * LA COMMANDE « COMPARER » Y FIGURE DEPUIS `CRM-032`, dernière tranche (§4 quater.2). Elle est
+ * rendue par `CommandeComparaison` juste sous les phrases, dans ce même bloc : la comparaison porte
+ * sur le workflow entier, exactement comme la mention. Elle ne contredit pas la règle ci-dessus —
+ * elle ne écrit rien, la fonction appelée étant `stable` (§4 ter.7).
  */
 function MentionDivergence({
 	derivation,
+	commande,
 }: {
 	readonly derivation: EtatAsync<DerivationWorkflow | null>
+	/**
+	 * Le bloc de la comparaison, rendu DANS la mention et seulement lorsqu'elle l'est.
+	 *
+	 * Il est reçu en propriété plutôt que composé ici : la mention ne connaît ni le client, ni la
+	 * structure vivante, ni les gestes qui périment un résultat (§4 quater.4). Le passer garde ce
+	 * composant dans son rôle — dire d'où vient un workflow — et laisse l'écran décider du reste.
+	 */
+	readonly commande: ReactNode
 }) {
 	if (derivation.statut === 'erreur') {
 		return (
@@ -2165,8 +2187,132 @@ function MentionDivergence({
 					</span>
 				)}
 				{mention.sourceArchivee ? <span>{t('admin.workflows.derived.sourceArchived')}</span> : null}
+				{commande}
 			</span>
 		</p>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Le geste « comparer à la source » — CRM-032, docs/SPEC-workflow-engine.md §4 quater
+// ---------------------------------------------------------------------------------------------
+
+/** Un texte par refus du §4 ter.5. Le repli générique en fait partie, il n'est pas un vide. */
+const CLES_REFUS_COMPARAISON: Readonly<Record<RefusComparaisonSource, CleTraduction>> = {
+	authentification: 'admin.workflows.compareSource.refus.authentification',
+	'workflow-introuvable': 'admin.workflows.compareSource.refus.workflow-introuvable',
+	'workflow-non-derive': 'admin.workflows.compareSource.refus.workflow-non-derive',
+	'source-introuvable': 'admin.workflows.compareSource.refus.source-introuvable',
+	generique: 'admin.workflows.compareSource.refus.generique',
+}
+
+/** Les cinq collections rendues, et leurs intitulés — ceux du bloc des versions, non redéfinis. */
+const CLES_COLLECTION_SOURCE: Readonly<Record<CleCollectionSource, CleTraduction>> = {
+	steps: 'admin.workflows.versions.collection.steps',
+	transitions: 'admin.workflows.versions.collection.transitions',
+	fields: 'admin.workflows.versions.collection.fields',
+	rules: 'admin.workflows.versions.collection.rules',
+	required_fields: 'admin.workflows.versions.collection.required_fields',
+}
+
+/**
+ * La commande « comparer à la source » et son résultat — §4 quater.2, §4 quater.4, §4 quater.6.
+ *
+ * ELLE N'EST RENDUE QUE LÀ OÙ LA MENTION L'EST, c'est-à-dire sur une copie. Le refus n° 3 du
+ * §4 ter.5 — `workflow non derive` — est donc INATTEIGNABLE depuis l'écran, et c'est voulu :
+ * l'interface ne rend pas atteignable un refus qu'elle sait éviter. Il reste éprouvé hors interface
+ * (§4 ter.8, ligne d), et traduit ici — un refus reçu et non classé s'afficherait en générique.
+ *
+ * LE BOUTON EST RENDU MÊME QUAND LA SOURCE N'A PAS CHANGÉ (§4 quater.2) :
+ * `source_modified_since_copy` dit que la SOURCE a bougé, jamais que la copie s'en écarte. Une copie
+ * modifiée dont la source est intacte diverge pourtant, et n'offrir la comparaison que sur le signal
+ * cacherait exactement ce cas.
+ *
+ * IL N'EST PAS RÉSERVÉ À L'ADMINISTRATEUR, à la différence de tous les autres gestes de cet éditeur.
+ * Comparer est une lecture, et un `viewer` obtient le même document (§4 ter.8, ligne b) : le masquer
+ * poserait dans l'interface une règle que la base ne pose pas (`CLAUDE.md` §10).
+ */
+function CommandeComparaison({
+	source,
+	comparaison,
+	refus,
+	enCours,
+	onComparer,
+}: {
+	readonly source: string
+	readonly comparaison: ComparaisonSource | null
+	readonly refus: RefusComparaisonSource | null
+	readonly enCours: boolean
+	readonly onComparer: () => void
+}) {
+	return (
+		<span className="flex flex-col gap-2 pt-1">
+			<span className="flex flex-wrap items-center gap-2">
+				<Button
+					variante="discret"
+					disabled={enCours}
+					aria-busy={enCours}
+					aria-label={t('admin.workflows.compareSource.aria', { source })}
+					data-testid="comparer-source"
+					onClick={onComparer}
+				>
+					<GitCompare aria-hidden="true" size={16} strokeWidth={2} />
+					{t('admin.workflows.compareSource.action')}
+				</Button>
+				{/* Le libellé du bouton ne change PAS pendant l'appel (§4 quater.4) : une commande qui se
+				    renomme sous le doigt fait douter de ce qui a été pressé. C'est cette phrase qui
+				    porte l'attente. */}
+				{enCours ? (
+					<span data-testid="comparaison-source-encours" className="text-sm">
+						{t('admin.workflows.compareSource.running')}
+					</span>
+				) : null}
+			</span>
+
+			{refus !== null ? (
+				<span
+					role="alert"
+					data-testid="refus-comparaison-source"
+					className="flex items-start gap-2 rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
+				>
+					{t(CLES_REFUS_COMPARAISON[refus])}
+				</span>
+			) : null}
+
+			{comparaison !== null && comparaison.identique ? (
+				<span data-testid="comparaison-source-identique" className="text-sm">
+					{t('admin.workflows.compareSource.identical')}
+				</span>
+			) : null}
+
+			{comparaison !== null && !comparaison.identique ? (
+				<span data-testid="comparaison-source-resultat" className="flex flex-col gap-2">
+					<span className="font-medium">{t('admin.workflows.compareSource.title')}</span>
+					<span data-testid="comparaison-source-resume" className="text-sm">
+						{t('admin.workflows.compareSource.summary', {
+							ajouts: String(comparaison.resume.ajouts),
+							retraits: String(comparaison.resume.retraits),
+							modifications: String(comparaison.resume.modifications),
+						})}
+					</span>
+					<ListeCollections
+						collections={comparaison.collections}
+						ordre={COLLECTIONS_SOURCE}
+						libelles={CLES_COLLECTION_SOURCE}
+						marqueur="comparaison-source-collections"
+					/>
+				</span>
+			) : null}
+
+			{/* L'EN-TÊTE NON COMPARÉ EST ÉCRIT, JAMAIS TU (§4 quater.4). Rendre un intitulé
+			    « Workflow » toujours vide enseignerait qu'on a regardé et que c'est identique, ce
+			    qui est faux : le §4 ter.3 l'exclut du document, la copie ne le copiant pas. */}
+			{comparaison !== null ? (
+				<span data-testid="comparaison-source-entete" className="text-sm">
+					{t('admin.workflows.compareSource.headerExcluded')}
+				</span>
+			) : null}
+		</span>
 	)
 }
 
@@ -2194,6 +2340,16 @@ export function AdministrationWorkflows({
 		useState<EtatAsync<readonly ExigenceAdministrable[]>>(enChargement)
 	/** La dérivation du workflow choisi — CRM-032, §4 bis.3. `null` veut dire « pas une copie ». */
 	const [derivation, setDerivation] = useState<EtatAsync<DerivationWorkflow | null>>(enChargement)
+	/**
+	 * Le résultat de la comparaison copie ↔ source — CRM-032, §4 quater.
+	 *
+	 * IL VIT DANS L'ÉCRAN ET NON DANS LA MENTION, précisément pour pouvoir être EFFACÉ par les
+	 * gestes de l'éditeur (§4 quater.4). Un document de comparaison décrit un instant ; le laisser
+	 * après une modification de la structure en ferait une affirmation périmée que rien ne signale.
+	 */
+	const [comparaisonSource, setComparaisonSource] = useState<ComparaisonSource | null>(null)
+	const [refusComparaison, setRefusComparaison] = useState<RefusComparaisonSource | null>(null)
+	const [comparaisonEnCours, setComparaisonEnCours] = useState(false)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
@@ -2368,6 +2524,15 @@ export function AdministrationWorkflows({
 			setRegles(visibilites)
 			setExigences(exigees)
 			setDerivation(origine)
+			// LE RÉSULTAT DE LA COMPARAISON EST EFFACÉ ICI, ET C'EST LA PLACE JUSTE — CRM-032,
+			// §4 quater.4. Cette fonction est rappelée après chaque geste qui réécrit la structure —
+			// ajouter une étape, déclarer une arête, archiver un champ — et à chaque changement de
+			// workflow. Un document de comparaison décrit un instant ; le laisser à l'écran après une
+			// modification en ferait une affirmation périmée que rien ne signale, et exigerait de
+			// l'utilisateur qu'il se souvienne de ce qu'il a fait depuis. Même règle que le plan de
+			// remappage du §7 ter.14.5.
+			setComparaisonSource(null)
+			setRefusComparaison(null)
 		},
 		[client],
 	)
@@ -2382,6 +2547,50 @@ export function AdministrationWorkflows({
 		setDerivation(enChargement)
 		void rechargerGraphe(idChoisi)
 	}, [client, idChoisi, rechargerGraphe])
+
+	/**
+	 * Compare la copie choisie à sa source vivante — lecture 10 du §4 quater.3.
+	 *
+	 * L'APPEL PART SUR PRESSION, ET JAMAIS AVEC LE GRAPHE, à la différence de la lecture 9 de la
+	 * mention. Le motif est mesuré au §4 ter : la fonction projette deux documents canoniques
+	 * complets et les compare cinq fois. La faire partir à chaque ouverture d'un workflow copié
+	 * ferait payer ce calcul à qui ne la demande pas, pour une réponse qui, dans le cas normal, tient
+	 * en un mot. La mention DÉCRIT le workflow affiché ; la comparaison répond à une question posée.
+	 *
+	 * LA TABLE DE NOMMAGE EST CELLE DE LA STRUCTURE VIVANTE DÉJÀ CHARGÉE, indexée par clés
+	 * naturelles (§4 quater.5). La relire serait une requête pour rien.
+	 */
+	const comparerALaSource = useCallback(async () => {
+		if (client === null || idChoisi === null) return
+		setComparaisonEnCours(true)
+		setRefusComparaison(null)
+		try {
+			const structure = structureNaturelle(
+				etapes.statut === 'pret' ? etapes.donnees : [],
+				champs.statut === 'pret' ? champs.donnees : [],
+			)
+			const issue = await comparerAvecSource(client, idChoisi, structure)
+			if (issue.statut === 'refus') {
+				// Le résultat précédent est effacé avec le refus : le garder à côté d'une alerte
+				// laisserait croire qu'il décrit encore l'état courant.
+				setComparaisonSource(null)
+				setRefusComparaison(issue.refus)
+				return
+			}
+			setComparaisonSource(issue.donnees)
+			setAnnonce(
+				issue.donnees.identique
+					? t('admin.workflows.compareSource.identical')
+					: t('admin.workflows.compareSource.summary', {
+							ajouts: String(issue.donnees.resume.ajouts),
+							retraits: String(issue.donnees.resume.retraits),
+							modifications: String(issue.donnees.resume.modifications),
+						}),
+			)
+		} finally {
+			setComparaisonEnCours(false)
+		}
+	}, [client, idChoisi, etapes, champs])
 
 	// Le catalogue n'est lu qu'à l'ouverture du sélecteur (§7 bis.3, lecture 3).
 	useEffect(() => {
@@ -2804,7 +3013,22 @@ export function AdministrationWorkflows({
 								    docs/SPEC-workflow-engine.md §4 bis.2 : elle porte sur le workflow ENTIER,
 								    pas sur une de ses étapes, et cette colonne est ce qui décrit le workflow
 								    choisi. */}
-								<MentionDivergence derivation={derivation} />
+								<MentionDivergence
+									derivation={derivation}
+									commande={
+										<CommandeComparaison
+											source={
+												derivation.statut === 'pret'
+													? (composerMentionDivergence(derivation.donnees)?.source ?? '')
+													: ''
+											}
+											comparaison={comparaisonSource}
+											refus={refusComparaison}
+											enCours={comparaisonEnCours}
+											onComparer={() => void comparerALaSource()}
+										/>
+									}
+								/>
 								{etapes.statut === 'chargement' ? (
 									<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
 								) : null}

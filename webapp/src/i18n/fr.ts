@@ -562,6 +562,31 @@ export const fr = {
 	'admin.workflows.derived.sourceArchived': 'Cette source est archivée.',
 	'admin.workflows.derived.error': "L'origine de ce workflow n'a pas pu être lue.",
 
+	// Le geste « comparer à la source » — CRM-032, docs/SPEC-workflow-engine.md §4 quater.
+	// Le libellé du bouton ne change PAS pendant l'appel (§4 quater.4) : une commande qui se renomme
+	// sous le doigt fait douter de ce qui a été pressé. C'est la phrase à côté qui porte l'attente.
+	'admin.workflows.compareSource.action': 'Comparer à la source',
+	'admin.workflows.compareSource.aria': 'Comparer ce workflow à sa source « {source} »',
+	'admin.workflows.compareSource.running': 'Comparaison en cours',
+	'admin.workflows.compareSource.title': 'Écart avec la source',
+	'admin.workflows.compareSource.identical': 'Cette copie est identique à sa source.',
+	'admin.workflows.compareSource.summary':
+		'{ajouts} ajout(s), {retraits} retrait(s), {modifications} modification(s).',
+	'admin.workflows.compareSource.empty': "Rien n'a changé de ce côté.",
+	// L'en-tête non comparé est ÉCRIT, jamais tu (§4 quater.4) : rendre un intitulé « Workflow »
+	// toujours vide enseignerait qu'on a regardé et que c'est identique, ce qui est faux.
+	'admin.workflows.compareSource.headerExcluded':
+		"Le nom, la portée et le track ne sont pas comparés : la copie ne les reprend pas de sa source.",
+	'admin.workflows.compareSource.refus.authentification':
+		'Cette comparaison demande une session ouverte.',
+	'admin.workflows.compareSource.refus.workflow-introuvable':
+		"Ce workflow n'est plus lisible. Rechargez l'écran.",
+	'admin.workflows.compareSource.refus.workflow-non-derive':
+		"Ce workflow n'est la copie d'aucun autre.",
+	'admin.workflows.compareSource.refus.source-introuvable':
+		"La source de ce workflow n'est plus lisible.",
+	'admin.workflows.compareSource.refus.generique': "La comparaison n'a pas abouti.",
+
 	'admin.workflows.overridden': 'Libellé surchargé',
 	'admin.workflows.fromCatalog': 'Du catalogue : {libelle}',
 	'admin.workflows.probability': 'Probabilité : {valeur} %',
