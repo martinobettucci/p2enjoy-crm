@@ -1776,6 +1776,10 @@ export type Database = {
         Args: { base_version_id: string; target_version_id: string }
         Returns: Json
       }
+      compare_workflow_with_source: {
+        Args: { workflow_id: string }
+        Returns: Json
+      }
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string

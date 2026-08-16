@@ -672,11 +672,19 @@ type _vueDerivationColonnes = Expect<
 // ne détient — le privilège de colonne de `CRM-034` (docs/SPEC-workflow-engine.md §7 ter.13.6).
 // Elle rejoint donc la famille de `move_card` et de `change_channel_workflow`, non celle des
 // lectures. Trente devient trente et un.
-type _lesTrenteEtUneFonctions = Expect<
+//
+// RÉVISÉ UNE DIX-SEPTIÈME FOIS PAR `CRM-032`, dernière tranche. La règle a changé de nouveau : la
+// migration `0043` ajoute `compare_workflow_with_source`, SIXIÈME fonction de ce fichier appelable
+// par un écran sans être réservée au worker. Elle est `SECURITY INVOKER` pour le motif déjà écrit
+// pour `compare_workflow_versions` — la politique de lecture de `workflows` est déjà la règle
+// d'autorisation exacte du geste (docs/SPEC-workflow-engine.md §4 ter.4) — et elle est `STABLE` :
+// le §4.1 interdit toute réapplication automatique. Trente et un devient trente-deux.
+type _lesTrenteDeuxFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
     | 'compare_workflow_versions'
+    | 'compare_workflow_with_source'
     | 'copy_workflow_to_track'
     | 'chemin_dossier_card'
     | 'chemin_dossier_entite'
@@ -877,7 +885,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteEtUneFonctions,
+  _lesTrenteDeuxFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

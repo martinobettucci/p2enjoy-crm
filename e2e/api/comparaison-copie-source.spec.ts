@@ -67,6 +67,16 @@ type Comparaison = {
 	}
 }
 
+/**
+ * Premier élément d'une liste, avec l'échec NOMMÉ plutôt qu'un `undefined` propagé. Le dépôt
+ * compile sous `noUncheckedIndexedAccess` : une déstructuration muette rendrait un diagnostic
+ * illisible le jour où la fixture attendue n'existe pas.
+ */
+function premier<T>(liste: T[], quoi: string): T {
+	expect(liste.length, `aucun élément : ${quoi}`).toBeGreaterThan(0)
+	return liste[0] as T
+}
+
 /** La copie du seed, retrouvée par son lignage et jamais par un identifiant écrit en dur. */
 async function copieDuSeed(api: APIRequestContext): Promise<string> {
 	const reponse = await api.get(
@@ -76,7 +86,7 @@ async function copieDuSeed(api: APIRequestContext): Promise<string> {
 	expect(reponse.status(), 'lecture de la copie du seed').toBe(200)
 	const lignes = (await reponse.json()) as { id: string }[]
 	expect(lignes.length, 'le seed porte une copie du workflow par défaut').toBe(1)
-	return lignes[0].id
+	return premier(lignes, 'la copie du seed').id
 }
 
 /**
@@ -259,7 +269,10 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 				`${STEPS}?workflow_id=eq.${copie}&select=id,node_id,position&order=position.asc&limit=1`,
 				{ headers: enTetesService() },
 			)
-			const [etape] = (await etapes.json()) as { id: string; node_id: string; position: number }[]
+			const etape = premier(
+				(await etapes.json()) as { id: string; node_id: string; position: number }[],
+				'la première étape de la copie jetable',
+			)
 
 			const modification = await request.patch(`${STEPS}?id=eq.${etape.id}`, {
 				headers: enTetesService(),
@@ -271,7 +284,7 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 
 			expect(comparaison.identical).toBe(false)
 			expect(comparaison.summary.modified).toBe(1)
-			const [modifiee] = comparaison.changes.steps.modified
+			const modifiee = premier(comparaison.changes.steps.modified, 'une étape modifiée')
 			expect(modifiee.identity).toEqual({ node_id: etape.node_id })
 			expect(modifiee.attributes).toEqual([
 				{ name: 'position', before: etape.position, after: etape.position + 100 },
@@ -291,7 +304,10 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 				`${STEPS}?workflow_id=eq.${copie}&is_initial=eq.false&select=id,node_id&order=position.desc&limit=1`,
 				{ headers: enTetesService() },
 			)
-			const [etape] = (await etapes.json()) as { id: string; node_id: string }[]
+			const etape = premier(
+				(await etapes.json()) as { id: string; node_id: string }[],
+				'une étape non initiale de la copie jetable',
+			)
 
 			const suppression = await request.delete(`${STEPS}?id=eq.${etape.id}`, {
 				headers: enTetesService(),
@@ -318,7 +334,10 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 				`/rest/v1/workflow_transitions?workflow_id=eq.${copie}&select=id,label&order=id.asc&limit=1`,
 				{ headers: enTetesService() },
 			)
-			const [arc] = (await arcs.json()) as { id: string; label: string | null }[]
+			const arc = premier(
+				(await arcs.json()) as { id: string; label: string | null }[],
+				'une arête de la copie jetable',
+			)
 
 			const modification = await request.patch(`/rest/v1/workflow_transitions?id=eq.${arc.id}`, {
 				headers: enTetesService(),
@@ -328,7 +347,7 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 
 			const comparaison = await comparer(request, jeton, copie)
 
-			const [modifiee] = comparaison.changes.transitions.modified
+			const modifiee = premier(comparaison.changes.transitions.modified, 'une arête modifiée')
 			// L'identité est le couple de nœuds, et non un identifiant local : c'est ce qui rend la
 			// comparaison possible entre deux workflows qui n'en partagent aucun (§4 ter.2).
 			expect(Object.keys(modifiee.identity).sort()).toEqual(['from_node_id', 'to_node_id'])
@@ -353,7 +372,10 @@ test.describe('N3 — chaque forme d’écart, avec l’identité juste (lignes 
 				`/rest/v1/form_fields?workflow_id=eq.${copie}&select=id,key&order=position.asc&limit=1`,
 				{ headers: enTetesService() },
 			)
-			const [champ] = (await champs.json()) as { id: string; key: string }[]
+			const champ = premier(
+				(await champs.json()) as { id: string; key: string }[],
+				'un champ de la copie jetable',
+			)
 
 			const modification = await request.patch(`/rest/v1/form_fields?id=eq.${champ.id}`, {
 				headers: enTetesService(),
