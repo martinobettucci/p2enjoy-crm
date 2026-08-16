@@ -1684,3 +1684,169 @@ test.describe('captures des exigences de transition (CLAUDE.md §16)', () => {
 		})
 	}
 })
+
+// ---------------------------------------------------------------------------------------------
+// La création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-031 (docs/BACKLOG.md) — création d'un workflow depuis l'éditeur d'administration
+// @verifies docs/SPEC-workflow-engine.md §3 bis.2 (où le geste se trouve), §3 bis.3 (les trois
+//           champs et la lecture 4), §3 bis.4 (validation de forme), §3 bis.6 (les trois effets
+//           d'un succès), §3 bis.8 (preuves attendues, niveaux interface et visuel), §3.5 (le
+//           brouillon : un workflow neuf n'a aucune étape)
+// @verifies docs/DESIGN_SYSTEM.md §5.15 (le sélecteur de track absent, la liste relue), §7
+//           (paliers), §8 (accessibilité clavier)
+//
+// LE GESTE EST JOUÉ DEUX FOIS — à la souris, puis entièrement au clavier —, et la ligne créée est
+// CONFIRMÉE EN BASE par une lecture de service : l'écran peut mentir, la table non.
+//
+// CHAQUE SCÉNARIO PURGE CE QU'IL A DÉPOSÉ, dans son `finally`, sous un nom préfixé
+// `e2e-workflow-` (règle d'INC-099 et décision 362). Sans cette purge, deux workflows résiduels
+// rendraient rouges les assertions de compte de `supabase/tests/0007_workflows.test.sql` et la
+// première assertion de `W0` de `e2e/api/workflows.spec.ts`, qui comptent ce que le seed pose.
+
+const CHEMIN_WORKFLOWS = `${URL_API}/rest/v1/workflows`
+const NOM_CREE = 'e2e-workflow-cree'
+const NOM_CREE_CLAVIER = 'e2e-workflow-clavier'
+
+/** Lit le workflow créé par son nom, avec la clé de service — la confirmation du geste d'écran. */
+async function workflowEnBase(
+	request: APIRequestContext,
+	nom: string,
+): Promise<{ id: string; scope: string; track_id: string | null; is_default: boolean } | null> {
+	const reponse = await request.get(
+		`${CHEMIN_WORKFLOWS}?select=id,scope,track_id,is_default&name=eq.${encodeURIComponent(nom)}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as readonly {
+		id: string
+		scope: string
+		track_id: string | null
+		is_default: boolean
+	}[]
+	return lignes[0] ?? null
+}
+
+async function purgerWorkflow(request: APIRequestContext, nom: string): Promise<void> {
+	await request.delete(`${CHEMIN_WORKFLOWS}?name=eq.${encodeURIComponent(nom)}`, {
+		headers: enTetesService(),
+	})
+}
+
+test.describe('CRM-031 — créer un workflow depuis l’éditeur (§3 bis)', () => {
+	test('à la souris : le workflow est créé, choisi, et son bloc d’étapes est VIDE', async ({
+		page,
+		request,
+	}) => {
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+
+			await page.getByRole('button', { name: 'Nouveau workflow' }).click()
+			const formulaire = page.getByTestId('workflows-formulaire-creation')
+			await expect(formulaire).toBeVisible()
+			// Le sélecteur de track est ABSENT sous la portée globale, non grisé (§5.15).
+			await expect(formulaire.getByLabel('Track')).toHaveCount(0)
+
+			await formulaire.getByLabel('Nom').fill(NOM_CREE)
+			await formulaire.getByRole('button', { name: 'Créer' }).click()
+
+			// Effet 1 et 2 du §3 bis.6 : la liste est relue, et le workflow créé devient le choisi.
+			await expect(formulaire).toBeHidden()
+			await expect(page.getByRole('button', { name: new RegExp(NOM_CREE) })).toHaveAttribute(
+				'aria-current',
+				'true',
+			)
+			// Le brouillon du §3.5, MONTRÉ plutôt que raconté : il naît sans aucune étape.
+			await expect(page.getByText("Ce workflow n'a aucune étape.")).toBeVisible()
+
+			const enBase = await workflowEnBase(request, NOM_CREE)
+			expect(enBase, 'la ligne existe réellement en base').not.toBeNull()
+			expect(enBase?.scope).toBe('global')
+			expect(enBase?.track_id).toBeNull()
+			expect(enBase?.is_default).toBe(false)
+
+			await capturer(page, 'workflows-creation-succes-1440', 'CRM-031')
+		} finally {
+			await purgerWorkflow(request, NOM_CREE)
+		}
+	})
+
+	test('la portée « Propre à un track » fait APPARAÎTRE le sélecteur, et le track part avec', async ({
+		page,
+		request,
+	}) => {
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await page.getByRole('button', { name: 'Nouveau workflow' }).click()
+			const formulaire = page.getByTestId('workflows-formulaire-creation')
+
+			await formulaire.getByLabel('Nom').fill(NOM_CREE)
+			await expect(formulaire.getByLabel('Track')).toHaveCount(0)
+			await formulaire.getByLabel('Portée').selectOption('track')
+			const track = formulaire.getByLabel('Track')
+			await expect(track).toBeVisible()
+
+			// La commande reste éteinte tant qu'aucun track n'est choisi — §3 bis.4, seconde condition.
+			await expect(formulaire.getByRole('button', { name: 'Créer' })).toBeDisabled()
+			await capturer(page, 'workflows-creation-portee-track-1440', 'CRM-031')
+
+			await track.selectOption({ label: 'Conseil & IA' })
+			await expect(formulaire.getByRole('button', { name: 'Créer' })).toBeEnabled()
+			await formulaire.getByRole('button', { name: 'Créer' }).click()
+
+			await expect(formulaire).toBeHidden()
+			const enBase = await workflowEnBase(request, NOM_CREE)
+			expect(enBase?.scope).toBe('track')
+			expect(enBase?.track_id).toBe('5eed0000-0000-4000-8000-000000000021')
+		} finally {
+			await purgerWorkflow(request, NOM_CREE)
+		}
+	})
+
+	test('entièrement au clavier : focus atteint par Tab, jamais par focus()', async ({
+		page,
+		request,
+	}) => {
+		try {
+			await connecter(page)
+			await ouvrirEditeur(page)
+
+			const commande = page.getByRole('button', { name: 'Nouveau workflow' })
+			await tabVers(page, commande)
+			await page.keyboard.press('Enter')
+
+			const formulaire = page.getByTestId('workflows-formulaire-creation')
+			await expect(formulaire).toBeVisible()
+			// Le focus ENTRE dans le premier champ à l'ouverture (§3 bis.7) : la frappe suivante y
+			// va sans qu'aucun `Tab` ne soit nécessaire, et c'est ce que cette ligne mesure.
+			await expect(formulaire.getByLabel('Nom')).toBeFocused()
+			await page.keyboard.type(NOM_CREE_CLAVIER)
+
+			await tabVers(page, formulaire.getByRole('button', { name: 'Créer' }))
+			await page.keyboard.press('Enter')
+
+			await expect(formulaire).toBeHidden()
+			const enBase = await workflowEnBase(request, NOM_CREE_CLAVIER)
+			expect(enBase, 'la ligne créée au clavier existe en base').not.toBeNull()
+		} finally {
+			await purgerWorkflow(request, NOM_CREE_CLAVIER)
+		}
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : le formulaire de création tient, sans débordement`, async ({ page }) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page)
+			await ouvrirEditeur(page)
+			await page.getByRole('button', { name: 'Nouveau workflow' }).click()
+			await expect(page.getByTestId('workflows-formulaire-creation')).toBeVisible()
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+			await capturer(page, `workflows-creation-${palier.nom}`, 'CRM-031')
+		})
+	}
+})
