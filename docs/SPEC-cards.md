@@ -2585,7 +2585,7 @@ Les onze autres colonnes ouvertes restent ouvertes, et la suite continue de les 
 
 ### 16.10 Ce que la tranche 2 devra porter
 
-- le geste dans l'en-tête de la fiche et dans le menu de la card, avec ses échéances usuelles ;
+- le geste dans l’en-tête de la fiche et dans le menu de la card, avec ses échéances usuelles ;
 - une **pastille** disant qu'une affaire dort et jusqu'à quand ;
 - le **filtre** du board et de la vue liste : une affaire en sommeil sort des vues par défaut et
   reste atteignable par un filtre explicite — sans quoi la mettre en sommeil ne change rien pour
@@ -2594,3 +2594,149 @@ Les onze autres colonnes ouvertes restent ouvertes, et la suite continue de les 
 - le seed, qui devra poser au moins une affaire en sommeil et une affaire dont le sommeil est
   échu, faute de quoi l'écran ne serait démontrable ni dans un état, ni dans l'autre ;
 - le sommeil des **fils** de messagerie, qui n'a aujourd'hui aucune colonne pour le porter.
+
+### 16.11 Tranche 2 a — le sommeil se voit et se pilote depuis la fiche
+
+Le §16.10 énumère six choses. Elles ne tiennent pas dans une seule tranche, et les livrer à moitié
+chacune ne donnerait aucun état démontrable. Ce sous-chapitre est le contrat de la **tranche 2 a**,
+écrit avant sa première ligne de code : le geste, sa pastille, ses deux libellés de fil et son seed.
+Le filtre du board et de la vue liste est la **tranche 2 b** (§16.12) ; le sommeil des fils de
+messagerie la **tranche 2 c**.
+
+#### Ce que la tranche livre
+
+- la lecture de `cards.snoozed_until` par la fiche d'affaire, colonne qu'aucun écran ne demandait ;
+- une **pastille** à côté du titre, « En sommeil jusqu'au … », lorsque l'affaire dort ;
+- un **geste** dans l'en-tête : mettre en sommeil, avec quatre échéances usuelles et une échéance
+  choisie, puis réveiller ;
+- les deux événements `snoozed` et `woken` **nommés dans la timeline**, avec leur détail ;
+- le **seed** : une affaire en sommeil et une affaire dont le sommeil est échu.
+
+#### Ce qu'elle ne livre pas, et qui est nommé plutôt que suggéré
+
+- **aucun filtre** : une affaire en sommeil reste visible dans le board et dans la vue liste. La
+  DoD de `CRM-081` n'est donc pas tenue par cette tranche, et l'unité reste `[~]` ;
+- **aucun geste dans le menu de la carte du board** : la fiche est le seul chemin ;
+- **aucun sommeil de fil de messagerie**.
+
+#### 16.11.1 « En sommeil » se calcule à la lecture, jamais à l'écriture
+
+Le prédicat est celui du §16.2, transposé sans changement : `snoozed_until` non nulle **et**
+strictement postérieure à l'instant de rendu. Une échéance **passée** n'est donc pas un sommeil,
+et l'écran ne la montre pas — la colonne conserve sa valeur (§16.2), mais elle ne dit plus que
+l'affaire dort.
+
+Conséquence assumée : la pastille disparaît **sans rechargement** seulement au prochain rendu. Le
+produit n'installe aucune minuterie pour la faire disparaître à la seconde près ; une échéance de
+sommeil se compte en jours, et un `setInterval` sur l'écran le plus ouvert du produit coûterait
+plus que la précision qu'il achète.
+
+L'instant de comparaison est **injectable**, faute de quoi aucune preuve ne pourrait éprouver les
+deux côtés du prédicat sans dépendre de l'heure de son exécution.
+
+#### 16.11.2 La pastille
+
+Elle vit à côté du titre, comme la pilule « Archivé » du §5.3 bis, et les deux coexistent : une
+affaire peut être archivée **et** endormie, et masquer l'une derrière l'autre perdrait un fait.
+
+Elle porte l'échéance en **date courte**, au même format que celle de la prochaine action (§15.4) :
+deux dates du même produit ne se lisent pas dans deux formats. Une valeur que `Date` ne sait pas
+lire fait disparaître la pastille plutôt que d'écrire « Invalid Date » — même règle qu'au §15.4.
+
+#### 16.11.3 Le geste, et les quatre échéances usuelles
+
+La commande est rendue dans l'en-tête, à côté de « Modifier ». Elle a **deux visages**, et un seul
+est rendu à la fois :
+
+| État de l'affaire | Commande | Ce qu'elle fait |
+|---|---|---|
+| Éveillée | « Mettre en sommeil » | ouvre le panneau des échéances |
+| Endormie | « Réveiller » | appelle `wake_card` **directement**, sans panneau |
+
+Le panneau porte quatre échéances usuelles et une échéance choisie :
+
+| Libellé | Échéance émise |
+|---|---|
+| Demain | `now` + 1 jour |
+| Dans trois jours | `now` + 3 jours |
+| La semaine prochaine | `now` + 7 jours |
+| Le mois prochain | `now` + 30 jours |
+| *(champ)* | l'instant saisi, converti en ISO 8601 |
+
+Les quatre usuelles sont **des jours ajoutés à l'instant courant**, jamais des dates calées sur un
+début de journée : « demain à la même heure » est une promesse que le produit tient, là où
+« demain à 9 h » inventerait une heure de bureau que personne n'a spécifiée.
+
+« Le mois prochain » vaut trente jours et non « le même quantième du mois suivant » : le second
+n'existe pas pour le 31 janvier, et la règle de repli serait une décision de produit que personne
+n'a prise.
+
+**Aucune garde de saisie ne double la base** (§5.3 ter) : une échéance passée est **envoyée**, et
+c'est `snooze_date_in_past` qui la refuse. Le champ n'a ni `min`, ni `required`.
+
+#### 16.11.4 Les issues du geste, dictionnaire fermé
+
+Classées sur le **code HTTP et le message** que le §16.3 oppose, jamais sur un texte de serveur
+libre.
+
+| Issue | Origine | Ce que l'écran dit |
+|---|---|---|
+| `endormie` | `200` sur `snooze_card` | l'échéance, dans la pastille |
+| `reveillee` | `200` sur `wake_card` | la pastille disparaît |
+| `echeance-requise` | `400`, `snooze_date_required` | « Une échéance est nécessaire. » |
+| `echeance-passee` | `400`, `snooze_date_in_past` | « L'échéance doit être future. » |
+| `introuvable` | `400`, `card_not_found` | « Cette affaire n'est plus disponible. » |
+| `refus` | `403`, `forbidden` | « Vous ne pouvez pas modifier cette affaire. » |
+| `reseau` | aucune réponse | « La demande n'a pas abouti. » |
+| `inconnu` | tout le reste | l'écran ne prétend pas savoir |
+
+La commande **n'est jamais éteinte d'avance**, quel que soit le rôle (§5.3 ter) : la règle vit dans
+`app.can_write_channel`, et un bouton grisé ferait passer une décision de la base pour une décision
+d'écran (`CLAUDE.md` §10). Un lecteur seul l'ouvre, appuie, et lit le refus.
+
+**La ligne rendue par la fonction est la source de la mise à jour**, jamais la saisie : `snooze_card`
+rend le type composite `public.cards` (§16.3), et l'écran met `snoozed_until` à jour en place à
+partir de ce que le serveur a rendu.
+
+#### 16.11.5 Les deux événements dans la timeline
+
+`snoozed` et `woken` rejoignent les onze types que l'écran connaît, et le vocabulaire de
+`webapp/src/lib/timeline.ts` passe de onze à **treize** — `mail_sent`, quatorzième valeur du `CHECK`
+depuis la migration 44, n'est écrit par aucun trigger et reste hors de cette tranche.
+
+Ils appartiennent à la famille **`cycle`** : « qu'est devenue cette affaire ? » est exactement la
+question qu'ils répondent, et une sixième bascule pour deux types contredirait le §5.11.
+
+Leur **détail** est l'échéance, lue dans le `payload` — `until` pour `snoozed`, `from` pour `woken`
+— et rendue en date courte. C'est le seul cas où le fil lit une valeur du `payload` plutôt qu'un
+libellé résolu, et l'écart est motivé : une **date** n'est pas un libellé qui pourrait changer de
+sens (§14.6) ; c'est la valeur même du fait. Une date illisible rend un détail absent, jamais une
+phrase tronquée (§14.10).
+
+#### 16.11.6 Le seed
+
+Deux affaires du seed portent désormais un `snoozed_until`, écrit par la clé de service — donc
+tracé par le trigger du §16.5, ce qui est la démonstration même de ce que ce trigger promet :
+
+| Affaire | `snoozed_until` | Ce qu'elle démontre |
+|---|---|---|
+| une affaire active de `prospection` | `now() + 10 jours` | la pastille, et le geste « Réveiller » |
+| une autre affaire active | `now() - 2 jours` | une échéance **échue** : aucune pastille, la colonne conserve pourtant sa valeur (§16.2) |
+
+Les deux échéances sont **relatives à l'instant du seed**, jamais des dates fixes : une date fixe
+cesserait d'être future au bout de quelques semaines, et la première affaire cesserait de démontrer
+quoi que ce soit.
+
+#### 16.11.7 Preuves exigées de la tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Le prédicat des deux côtés de l'échéance avec un instant injecté, les quatre échéances usuelles, la conversion de la saisie, le classement des huit issues, le détail des deux événements et leur famille |
+| E2E d'interface | La fiche d'une affaire endormie du seed porte sa pastille ; le geste de réveil la fait disparaître et le fil porte `woken` ; la mise en sommeil par une échéance usuelle la fait apparaître ; une échéance passée saisie est **refusée par la base** et l'écran le dit |
+| Visuel | Captures de la fiche endormie, du panneau ouvert et du refus d'échéance passée, observées conformément à `CLAUDE.md` §16 |
+
+#### 16.12 Tranche 2 b — le filtre du board et de la vue liste
+
+Non écrite, et non commencée. Elle porte ce que le §16.10 nomme au troisième point : une affaire en
+sommeil sort des vues par défaut et reste atteignable par un filtre explicite. Sa spécification est
+due avant sa première ligne de code.

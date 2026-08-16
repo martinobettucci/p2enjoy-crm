@@ -286,6 +286,47 @@ qui remplace l'envoi, contrôle jamais désactivé, refus qui n'efface pas la sa
 - **Une affaire archivée reste modifiable, et sa pilule ne devient pas un verrou.** MESURÉ, la base
   accepte l'écriture ; éteindre les contrôles ferait passer un état pour un refus qui n'existe pas.
 
+### 5.3 quater Mise en sommeil d'une affaire — `CRM-081`
+
+Ce que le geste envoie, refuse et trace est spécifié dans `docs/SPEC-cards.md` §16 et §16.11 ; les
+règles ci-dessous ne disent que de quoi il a l'air.
+
+- **La pastille « En sommeil » vit à côté du titre, avec la pilule « Archivé », et les deux
+  coexistent.** Fond `--color-brand-soft`, texte `--color-brand`, icône `Moon`, `rounded-full` —
+  la forme du §5.6, avec le jeton de la marque plutôt que celui de l'accent, qui dit déjà
+  « archivé ». Une affaire peut être archivée **et** endormie ; masquer l'une derrière l'autre
+  perdrait un fait.
+
+- **Elle porte l'échéance, jamais le seul mot « En sommeil ».** « Jusqu'à quand » est la moitié de
+  l'information : sans elle, la pastille dit qu'il faut aller chercher la date ailleurs.
+
+- **Une échéance échue n'est pas un sommeil, et l'écran ne montre rien.** La colonne conserve sa
+  valeur (`docs/SPEC-cards.md` §16.2), mais une affaire dont l'échéance est passée est une affaire
+  ordinaire. Aucun état « sommeil expiré » n'est inventé.
+
+- **Deux visages, un seul rendu à la fois.** « Mettre en sommeil » (icône `Moon`) sur une affaire
+  éveillée, « Réveiller » (icône `Sun`) sur une affaire endormie. Secondaire compacte, à côté de
+  « Modifier », dans la graduation du §5.5.
+
+- **Le réveil n'ouvre aucun panneau et ne demande aucune confirmation.** Il n'a pas de paramètre, et
+  il est réversible d'un geste. Une confirmation pour un geste réversible sans perte est un obstacle,
+  non une sécurité.
+
+- **La mise en sommeil ouvre un panneau sous l'en-tête**, jamais une modale : quatre échéances
+  usuelles en boutons discrets, puis un champ d'échéance choisie et son bouton. La bascule est celle
+  du §5.3 ter — le panneau remplace la commande, il ne s'y ajoute pas —, et `Échap` le referme en
+  rendant le focus à la commande.
+
+- **Aucune garde de saisie ne double la base** (§5.3 ter, sans changement) : le champ d'échéance n'a
+  ni `min` ni `required`. Une échéance passée est **envoyée**, refusée par `snooze_date_in_past`, et
+  le refus est écrit sous le champ en `role="alert"`, comme au §5.7.
+
+- **La commande n'est jamais éteinte d'avance**, quel que soit le rôle. Un lecteur seul l'ouvre,
+  appuie, et lit « Vous ne pouvez pas modifier cette affaire. »
+
+- **Les deux événements du fil sont de la famille « Cycle de vie »** (§5.11), et leur détail est
+  l'échéance en date courte. Aucune sixième bascule n'est ajoutée pour deux types.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des
