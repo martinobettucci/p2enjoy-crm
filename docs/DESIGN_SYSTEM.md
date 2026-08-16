@@ -871,6 +871,32 @@ choisit l'objet qu'elle crée.
   devient le workflow **choisi**. L'ordre de la liste — défaut d'abord, puis le nom — vient de la
   base ; une insertion optimiste le contredirait le temps d'un rendu.
 
+**La mention de divergence — `CRM-032`, `docs/SPEC-workflow-engine.md` §4 bis.** Elle n'ajoute pas de
+bloc dans la colonne de droite : elle s'écrit **au-dessus du bloc des étapes**, en tête de ce qui
+décrit le workflow choisi.
+
+- **C'est une phrase, jamais une pilule.** L'origine d'un workflow et l'état de sa source ne tiennent
+  pas dans un mot, et le §1 vaut : une information de cette portée ne se rend pas par une teinte.
+  Elle emprunte la forme de l'alerte « aucune étape initiale » du même écran — icône décorative,
+  texte, `--color-accent-soft` / `--color-accent-on-soft` — lorsque la source a changé, et les
+  jetons neutres `--color-hover` / `--color-text-2` lorsqu'elle n'a pas changé. Deux états, deux
+  teintes, et le mot porte l'information dans les deux cas.
+
+- **Un workflow sans origine ne rend RIEN**, pas même un état vide nommé. C'est l'écart assumé au
+  §5.8 : n'être la copie de personne est le cas normal — le seed livre deux workflows dont un seul
+  est une copie —, et un état vide sur le cas normal serait du bruit à chaque ouverture de l'écran.
+  Le §5.8 garde toute sa force là où le vide est un manque ; ici il n'en est pas un.
+
+- **Aucune commande.** Aucun « resynchroniser », aucun « comparer », pas même grisé : la copie est
+  une divergence assumée, et le geste n'existe nulle part dans le produit
+  (`docs/SPEC-workflow-engine.md` §4 bis.1). C'est la règle du §5.15 sur les exigences héritées,
+  appliquée à un bloc entier — un bouton grisé enseignerait un geste qui n'existe pas.
+
+- **La date affichée est celle de la COPIE, pas celle de la modification.** La date de dernière
+  modification de la source ne voit pas les suppressions (`docs/SPEC-workflow-engine.md` §4.6) :
+  l'afficher à côté de « la source a changé » ferait mentir l'écran. Le §12.5 vaut ici sous une
+  autre forme — on n'affiche pas une donnée approchante parce qu'elle est disponible.
+
 ### 5.16 Corbeille — `CRM-077`
 
 Quatrième surface d'administration, et la première dont l'**état vide est le cas normal**. Ce que
