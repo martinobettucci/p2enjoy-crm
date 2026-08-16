@@ -17081,3 +17081,72 @@ exporté comme le §2.1 ter de `docs/CloudWorker.md` le prescrit, les cinq scén
 `CRM-041` (le geste de transition, qui refermerait INC-062 **et** la Definition of Done de
 `CRM-037`), ou solder les cases mesurées fausses de `CRM-033`, `CRM-035` et `CRM-036` — leurs écrans
 existent, seules leurs preuves d'interface manquent. INC-129 reste à porter au responsable.
+
+## 2026-08-16 — `CRM-037` : la phrase du §4.5 que personne n'avait pu tenir, et dix cas sur dix-neuf
+
+**Point de départ.** L'entrée précédente laissait `CRM-037` `[~]` en imputant son reste à INC-062 —
+« le parcours exige un contrôle de transition, dû par `CRM-041` ». Or `CRM-041` est `[x]` : le
+board, son glisser-déposer et le refus de `move_card` existent. Le motif avait survécu à sa cause,
+exactement comme la limite « aucune écriture » de la tranche précédente. Le reste réellement dû
+était donc la phrase que le §4.5 porte depuis `CRM-000` sans que rien ne la tienne : « lorsqu'une
+transition est refusée pour champs manquants, l'interface met en évidence les champs concernés et
+fait défiler jusqu'au premier ». Spécification écrite et committée **avant** la première ligne de
+code : `docs/SPEC-form-composer.md` §4 ter, neuf sous-chapitres, plus `docs/DESIGN_SYSTEM.md`
+§5.7 quater.
+
+**LE FAIT QUI COMMANDE TOUT, ET IL N'AVAIT JAMAIS ÉTÉ RELEVÉ.** Mesuré en croisant, sur le seed, les
+cards, leurs transitions atteignables et les règles de leur étape de destination : **dix-neuf**
+couples (affaire, transition) sont refusables pour champs manquants, et dans **dix** d'entre eux le
+champ nommé est `motif-perte`, dont la règle à l'étape de départ est `hidden`. Or la composition du
+§4.2 range un champ masqué **et vide** dans **aucune** de ses trois destinations — la section
+repliée ne retient que les masqués qui portent une valeur. Le refus nommait donc un champ que la
+fiche ne rendait **nulle part** : le geste aurait été un cul-de-sac dans dix cas sur dix-neuf, et
+marquer une affaire perdue était impossible depuis l'interface. D'où la **quatrième destination**
+du §4 ter.4 — un champ nommé par le refus rejoint le formulaire, saisissable, quelle que soit sa
+règle —, bornée par l'archivage, qui garde sa primauté.
+
+**Trois décisions méritent d'être retrouvées.** La première : **le transport est l'adresse**,
+`?exiges=cle1,cle2`, et non un état de navigation. Trois motifs, aucun stylistique — le bandeau du
+board devient un **vrai lien** (clic du milieu, nouvel onglet, copie), l'état survit au
+rechargement, et ce que la fiche sait du refus devient inspectable plutôt que caché. La deuxième :
+**la clé, jamais le libellé**. Mesuré sur la pile réelle, `move_card` rend
+`details: "budget, date-signature-prevue, decideur-identifie"` — clés, séparateur `, `, ordre
+`position, key`, c'est-à-dire **celui du formulaire** : « le premier » du §4.5 est donc sans
+ambiguïté le premier de la page, sans recalcul. La troisième : **le focus, et pas seulement le
+défilement** ; faire défiler sans déplacer le focus laisserait l'utilisateur au clavier en tête de
+page, et le §8 du design system ne connaît pas d'exception à la parité souris / clavier. Une seule
+fois par adresse — le rejouer volerait le focus pendant la saisie.
+
+**Ce que l'écran ne dit PAS, et il fallait l'écrire.** La mention est « exigé par le déplacement que
+vous avez demandé » et ne nomme **pas** l'étape de destination : l'adresse ne la porte pas, et la
+relire contredirait le §4 ter.1, qui interdit toute lecture de plus. Écrire « pour passer à Perdu »
+sans en avoir la donnée serait une invention. Elle **s'ajoute** à la mention du §4.4 plutôt que de
+la remplacer, un champ pouvant être requis à l'étape courante *et* exigé par le déplacement — c'est
+le précédent du §4 bis.9 sur la coexistence des deux alertes.
+
+**Un garde-fou figé a échoué comme prévu, et a été révisé** — mécanisme de la décision 51,
+vingtième occurrence : l'assertion exhaustive de `webapp/src/lib/board.test.ts` figeait la forme
+entière de `RefusDeplacement`, qui porte désormais les clés en plus des libellés. Elle n'est **pas**
+relâchée en `toMatchObject` — son exhaustivité est ce qui la rend utile —, elle est mise à jour,
+motif écrit dans le fichier.
+
+**Une garde de capacité, et pourquoi ce n'en est pas un masquage.** `scrollIntoView` n'est pas
+implémentée par jsdom, où les preuves de composant s'exécutent : mesuré, son appel y lève et faisait
+tomber six scénarios. L'appel est conditionné à l'existence de la fonction, avec son motif dans le
+code — le focus posé juste avant amène **déjà** l'élément à l'écran dans un vrai navigateur, ce que
+la ligne ajoute est le **centrage**, et son absence en test ne cache aucun défaut du produit. Le
+défilement réel est éprouvé sur Chromium par `toBeInViewport`, à hauteur de fenêtre réduite pour
+que le champ ne soit pas visible d'emblée.
+
+**Campagne de fin de session.** `npm run test:unit` **1291** tests sur 43 fichiers (1273 avant) ;
+`typecheck` et `build` verts ; `e2e/ui/formulaire.spec.ts` **26 scénarios** (19 avant) et
+`e2e/ui/board.spec.ts` **24 scénarios** (22 avant), tous verts sur la pile réelle. Une capture
+produite **et observée**, `docs/captures/CRM-037/reprise-deplacement-refuse-1440.jpg`.
+
+**Où reprendre.** `CRM-037` reste `[~]` pour **une seule** raison, et elle est réduite par rapport à
+l'entrée précédente : le parcours de la Definition of Done est désormais **atteignable en trois
+écrans**, chacun prouvé séparément, mais aucun scénario E2E ne les **enchaîne sur une session
+réelle** sans réponse substituée. C'est ce qui reste d'INC-062, et c'est ce qu'une prochaine session
+peut prendre. Sinon, l'ordre du plan mène à `CRM-040` ; et les cases de `CRM-033`, `CRM-035` et
+`CRM-036` restent mesurées fausses — leurs écrans existent, livrés par les unités d'administration,
+seules leurs preuves d'interface manquent. INC-129 reste à porter au responsable.
