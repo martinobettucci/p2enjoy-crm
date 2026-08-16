@@ -6094,7 +6094,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[~]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
-| CRM-079 | Onboarding guidé au premier lancement | `[~]` |
+| CRM-079 | Onboarding guidé au premier lancement | `[x]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
 | CRM-081 | Snooze des fils et des cards | `[ ]` |
 
@@ -7423,7 +7423,7 @@ anomalies sur 26** — trois compteurs figés périmés de plusieurs unités, et
 écrites. L'antériorité est établie : le compteur pgTAP était figé à 65 et vert avant cette session,
 là où ce harnais en attend 55. **INC-121**, porteur `CRM-014`.
 
-### CRM-079 — Onboarding guidé `[~]`
+### CRM-079 — Onboarding guidé `[x]`
 
 Parcours du premier lancement fondé sur les vrais écrans déjà livrés, interrompable et relançable,
 sans tracker ni stockage persistant non consenti. **DoD** : clavier, mobile, reprise de session,
@@ -7454,7 +7454,7 @@ l'administratrice, elle compte **zéro** boîte entrante là où le seed en port
 `scripts/verify-webapp.sh` **42 contrôles sans anomalie**. Captures aux quatre paliers plus
 l'accompli, le masqué et le non mesurable, produites **et observées** sous `docs/captures/CRM-079/`.
 
-*L'unité reste `[~]`, et voici exactement ce qui manque à sa Definition of Done.*
+*Les trois manques de la Definition of Done sont soldés. L'unité est close le 2026-08-16.*
 
 - [x] **`scripts/verify-onboarding.sh` est écrit, exécuté et vert — 2026-08-16.** **27 contrôles,
       aucune anomalie.** Son contrat est spécifié **avant son code** au §8 bis de
@@ -7487,10 +7487,23 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
       le masquage est limité à la session sans rien écrire durablement sur l'appareil. Écrit
       d'après les libellés réels du catalogue. Sommaire mis à jour.
       *`scripts/verify-manual.sh` **117 contrôles sans anomalie**, contre 113 avant le chapitre.*
-- [ ] **Le cas « espace de travail neuf » n'a pas de preuve d'interface.** Le seed accomplit les
-      cinq étapes pour l'administratrice, et seul le `viewer` laisse voir une étape à faire : un
-      compte sans aucun objet visible reste à construire pour éprouver l'écran d'un vrai premier
-      lancement.
+- [x] **Le cas « espace de travail neuf » est éprouvé — 2026-08-16.** Le onzième scénario de
+      `e2e/ui/demarrage.spec.ts` monte un workspace **sans aucun objet** et son compte `admin` avec
+      la clé de service, ouvre l'accueil avec le **jeton réel** de ce compte, et constate l'état que
+      le §1 décrit : « 1 étape(s) sur 5 », la première accomplie par la connexion, les quatre autres
+      à faire avec leur phrase d'absence et leurs liens jamais éteints.
+      *Il établit la distinction du §6.2 que rien n'éprouvait* : les quatre étapes sont **à faire**
+      et non « non mesurable », `mail_inbound_accounts` rendant `200` et zéro pour une session
+      ouverte — le `401` du §3.1 est celui de la clé **anonyme**. Contrat écrit au **§8 ter** de
+      `docs/SPEC-onboarding.md` et committé **avant le code**.
+      **Le seed n'est PAS étendu, et c'est une décision motivée** : `CRM-005` pose « un workspace »
+      et le contrôle n° 1 de `scripts/verify-seed.sh` échoue sur tout second workspace en base. La
+      preuve fabrique son espace et le détruit, suivant le second terme de `docs/SPEC-seed.md` §8
+      et le précédent de `scripts/verify-authz.sh`. Le démontage **constate** qu'il ne reste qu'un
+      workspace — `scripts/verify-seed.sh` rend **55 contrôles, aucune anomalie** après le passage.
+      *`scripts/verify-onboarding.sh` **28 contrôles, aucune anomalie**, ses cinq dégradations
+      toujours vues ; `e2e:ui` **286/286**, console vierge ; capture
+      `docs/captures/CRM-079/guide-espace-neuf-1440.jpg` produite et **observée**.*
 
 ### CRM-081 — Snooze des fils et des cards `[ ]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la

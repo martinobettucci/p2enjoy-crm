@@ -15,6 +15,17 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le guide de démarrage est éprouvé sur un espace de travail réellement vide** (`CRM-079`,
+  `docs/SPEC-onboarding.md` §8 ter). C'est l'écran du **vrai premier lancement**, celui d'un compte
+  dont l'espace ne porte encore aucun objet : « 1 étape(s) sur 5 », la première accomplie par la
+  connexion, les quatre autres à faire avec la phrase qui dit ce que l'appelant **voit**, et leurs
+  liens jamais éteints. Aucune preuve d'interface ne montrait cet état, que le seed ne porte pas.
+  Il établit au passage la distinction du §6.2 que rien n'éprouvait : les quatre étapes sont
+  **à faire** et non « non mesurable », `mail_inbound_accounts` rendant `200` et zéro pour une
+  session ouverte — le `401` connu est celui de la clé **anonyme**.
+  **Le seed n'est pas étendu** : `CRM-005` pose « un workspace » et `scripts/verify-seed.sh` le
+  vérifie ; la preuve fabrique son espace vide et le détruit, puis **constate** qu'il ne reste
+  qu'un workspace en base. `CRM-079` est **close**.
 - **Le harnais dédié du guide de démarrage** (`CRM-079`, `scripts/verify-onboarding.sh`,
   `docs/SPEC-onboarding.md` §8 bis). Il rassemble en une commande les preuves que le §8 laissait
   dispersées entre cinq fichiers — traçabilité, captures, Vitest, API, interface — et **fige les

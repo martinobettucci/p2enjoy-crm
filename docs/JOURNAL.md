@@ -16526,3 +16526,51 @@ seule, et c'est par elle que la prochaine session ferme `CRM-079`.
 **L'environnement, sans redécouverte.** Deux conditions, et les deux sont nécessaires pour les
 harnais qui appellent Playwright : `export NVM_DIR=/opt/nvm ; . /opt/nvm/nvm.sh ; nvm use` dans le
 **même** appel de shell, et `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` (INC-123).
+
+## 2026-08-16 — `CRM-079` fermée : l'écran du premier lancement, éprouvé sur un espace réellement vide
+
+**Point de départ.** La dernière entrée nommait **un seul** manque à la Definition of Done de
+`CRM-079` : le cas « espace de travail neuf » n'avait aucune preuve d'interface. Elle ajoutait que
+l'éprouver « demande un compte sans aucun objet visible, donc une addition au seed ». **Cette
+dernière conclusion est fausse, et la mesure l'a montrée avant qu'une ligne soit écrite.**
+
+**Le seed n'est PAS étendu, et le motif est dans le dépôt.** `CRM-005` pose « un workspace », et le
+contrôle n° 1 de `scripts/verify-seed.sh` échoue sur tout second workspace en base — il fige
+`workspaces:1`. Étendre le seed aurait tranché seul un invariant documenté ET prouvé, pour le
+confort d'une preuve. `docs/SPEC-seed.md` §8 laisse d'ailleurs le choix ouvert en deux termes
+— « soit étendre le seed, soit continuer de fabriquer ses propres comptes » — et le second a déjà
+son précédent : `scripts/verify-authz.sh` crée et détruit ses propres workspaces depuis `CRM-010`.
+La preuve suit ce chemin.
+
+**Ce que la mesure du 2026-08-16 a établi, et qu'aucun raisonnement n'aurait donné.** Un compte
+`admin` d'un workspace sans aucun objet, ses cinq comptages émis comme le guide les émet :
+`workspaces` rend `200` et **1**, les quatre autres tables rendent `200` et **0**. La cinquième
+étape est donc **à faire**, et non « non mesurable » : le `401` du §3.1 est celui de la clé
+**anonyme**, pas d'une session ouverte sur un espace vide. C'est la distinction du §6.2, et rien ne
+l'éprouvait. Contrat écrit au **§8 ter** de `docs/SPEC-onboarding.md` et **committé avant le code**.
+
+**Ce qui est livré.** Le onzième scénario de `e2e/ui/demarrage.spec.ts` monte le workspace vide et
+son compte avec la clé de service, ouvre l'accueil avec le **jeton réel** de ce compte, et constate
+« 1 étape(s) sur 5 », la première accomplie par la connexion, les quatre autres à faire avec leur
+phrase d'absence et leurs liens **jamais éteints**. Le démontage supprime le workspace — ce qui
+cascade sur l'appartenance, mesuré — puis le compte, et **constate** qu'il ne reste qu'un workspace
+en base. Sans ce dernier contrôle, une preuve oublieuse ferait rougir `verify-seed.sh` dans une
+autre suite, là où plus rien ne dirait pourquoi.
+
+**Preuves exécutées.** `scripts/verify-onboarding.sh` **28 contrôles, aucune anomalie** — les cinq
+dégradations toujours VUES, restauration constatée octet à octet ; `scripts/verify-seed.sh`
+**55 contrôles, aucune anomalie**, l'invariant d'un seul workspace intact après le passage du
+scénario ; `e2e:ui` **286/286** (285 avant), console vierge ; `e2e:api` **597/597** ;
+`test:unit` **1148/1148** sur 42 fichiers ; `typecheck` et `build` verts. Capture
+`docs/captures/CRM-079/guide-espace-neuf-1440.jpg` produite **et observée** : elle montre la barre
+latérale « Aucun track », le fil « Aucun channel » et les quatre étapes à faire à la suite — le seul
+état où le guide en rend quatre, donc le seul où sa lisibilité à ce titre s'observe.
+
+**Environnement, un fait à ne pas redécouvrir.** `runDev.sh` monte la pile mais **n'installe pas**
+les dépendances Node de la racine : `npx playwright` échoue alors sur
+`Cannot find package '@playwright/test'`, ce qui ne dit rien du produit. `npm ci
+--cafile=/root/.ccr/ca-bundle.crt` avant toute preuve Playwright.
+
+**Où reprendre.** `CRM-079` est **close**. La prochaine session prend l'unité suivante du plan
+— `CRM-080`, sauvegardes chiffrées et restauration prouvée, `[ ]` — ou la première `[~]` restante
+dans l'ordre du plan.
