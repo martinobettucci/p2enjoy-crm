@@ -1006,6 +1006,14 @@ consenti par le backend et **inatteignable par la navigation du produit**. Les c
 montre. Consigné en **INC-075**, sans résolution implicite : corriger cela engage soit la politique
 des tracks, soit la coquille, et ni l'un ni l'autre n'appartient à `CRM-046`.
 
+> **CE CAS EST CLOS DEPUIS, ET LE PARAGRAPHE CI-DESSUS DÉCRIT L'ÉTAT D'ALORS.** La **décision 333**
+> a tranché — « un droit qui n'a pas de chemin n'est pas un droit » —, et la migration
+> `0034_lecture_track_transitive.sql` a rendu la lecture d'un track **transitive** : un track est
+> lisible dès que l'un au moins de ses channels l'est. Le `viewer` lit donc désormais `conseil-ia`
+> **et** `prospection`, et un chemin de navigation mène à son droit fin. INC-075 et son doublon
+> INC-085 sont closes. La preuve n° 13 de `scripts/verify-seed-demo.sh` a été **révisée en
+> conséquence** le 2026-08-16, avec son motif écrit dans le fichier.
+
 ### 9.8 Convergence et reproductibilité
 
 La Definition of Done exige que « `resetMe.sh` reproduise exactement le même état ». Deux
@@ -1079,12 +1087,12 @@ Exécutées **hors interface**, contre l'API réelle et la base, par
 | 10 | Le seed est **rejouable avec des cards dans `prospection`** : second passage, sortie `0` | Aucune écriture en sections 4 et 7, aucun `23503` |
 | 11 | Une dérive **réparable** de la copie — nom, défaut, archivage — est rattrapée | Le seed la ramène à son contrat, même avec des cards dans `prospection` (décision 225) |
 | 12 | Pour chacun des **trois** profils, tout channel actif lisible rend ≥ 1 card active | Conforme |
-| 13 | Le `viewer` lit les cards de `prospection` par son droit fin, **et** ne lit pas son track | INC-075, mesuré et figé |
+| 13 | Le `viewer` lit les cards de `prospection` par son droit fin, **et** lit son track par transitivité | Décision 333 : révisée le 2026-08-16, INC-075 close |
 | 14 | Empreinte reproductible du §9.8 **avant** et **après** une reconstruction à froid | Empreintes égales |
 | 14 bis | Les adresses de card ont la **forme** générée et sont **distinctes** | 14 et 14 — ce qui remplace la comparaison de leur valeur |
 
 Le harnais doit être **non complaisant** : sa sévérité est éprouvée en faussant réellement le jeu —
-une card archivée, une valeur vidée, le rattachement de `prospection` que l'on tente de défaire — et
+toutes les cards actives d'une étape archivées, une valeur vidée, le rattachement de `prospection` que l'on tente de défaire — et
 en exigeant qu'il échoue à chaque fois, puis en constatant la restauration.
 
 **La restauration porte sur l'ÉTAT, jamais sur la mémoire.** Archiver puis désarchiver une card,
@@ -1107,7 +1115,9 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
 - **Aucun second workspace, aucun compte extérieur** : inchangé depuis le §8.
 - **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la
   publication et un déplacement réel sont atteints avec les comptes de ce jeu, sans substitution.
-- **Un channel consenti par le backend reste inatteignable par la navigation** : INC-075, §9.7.
+- **~~Un channel consenti par le backend reste inatteignable par la navigation.~~** INC-075 est
+  **close** par la décision 333 et la migration `0034` : la lecture d'un track est transitive, le
+  droit fin a désormais son chemin (§9.7).
 - **~~Ni volume, ni donnée longue.~~** Le manque est réel et il est mesuré au §9.11 ; il est fermé
   par la tranche que ce §9.11 spécifie.
 
