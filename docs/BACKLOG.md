@@ -3596,19 +3596,54 @@ accessibilité des erreurs vérifiée.
       étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
       destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
       seed ne pose pas et qu'inventer ici dépasserait l'unité. Le fait est nommé, pas contourné.
-- [ ] **L'ÉCRITURE DEPUIS L'ÉCRAN APPARTIENT À CETTE UNITÉ — INC-088, décision 334.** La limite
-      « aucune écriture depuis l'écran » (§4.7) s'imputait à **INC-021**, close depuis `CRM-009` :
-      le motif invoqué avait disparu sans que la limite soit réexaminée, et la fiche affiche encore
-      « Consultation seule : l'enregistrement des réponses n'est pas encore livré dans cette fiche ».
-      L'unité n'est pas élargie, elle est **ramenée à son énoncé** : sa Definition of Done exige
-      depuis l'origine « E2E (transition bloquée, **saisie**, transition réussie) ». Aucune règle
-      n'est inventée — `CRM-036` livre déjà `card_field_values`, ses politiques et sa validation ;
-      il ne manque que le chemin vers elles. Reste dû : la saisie, son refus backend mesuré **hors
-      interface** pour un profil sans droit d'écriture, les captures aux quatre paliers, le retrait
-      du bandeau « Consultation seule » et la mise à jour de `docs/manual.md`.
+- [x] **L'ÉCRITURE DEPUIS L'ÉCRAN EST LIVRÉE — INC-088, décision 334, tranche du 2026-08-16.** La
+      limite « aucune écriture depuis l'écran » (§4.7) s'imputait à **INC-021**, close depuis
+      `CRM-009` : le motif invoqué avait disparu sans que la limite soit réexaminée. L'unité n'a pas
+      été élargie, elle a été **ramenée à son énoncé** : sa Definition of Done exige depuis l'origine
+      « E2E (transition bloquée, **saisie**, transition réussie) ». Aucune règle n'est inventée —
+      `CRM-036` livrait déjà `card_field_values`, ses politiques et sa validation ; il manquait le
+      chemin vers elles.
+      - [x] **Spécification écrite et committée AVANT la première ligne de code**,
+            `docs/SPEC-form-composer.md` §4 bis en onze sous-chapitres, rédigée **après mesure** sur
+            la pile réelle — codes HTTP et `SQLSTATE` relevés à la main avec les jetons réels —, plus
+            `docs/DESIGN_SYSTEM.md` §5.7 ter, six règles visuelles. Commit documentaire dédié, poussé.
+      - [x] **Le grain de l'écriture est MESURÉ, pas préféré** : un lot est une transaction, et
+            `e2e/api/saisie-formulaire.spec.ts` §S2 constate qu'une seule valeur invalide empêche
+            l'enregistrement de **toutes** les autres. Un bouton unique perdrait une saisie correcte à
+            cause d'une saisie voisine, et n'aurait qu'un refus global à montrer là où le §4.5 exige
+            une erreur **par champ**.
+      - [x] `webapp/src/lib/formulaire.ts` : normalisation par type, égalité des valeurs, classement
+            fermé des refus, `upsert` sur `(card_id, field_id)`, résolution en place après écriture.
+            `webapp/src/app/FormulaireCard.tsx` : contrôles saisissables, quatre états par champ,
+            refus près du champ, bandeau « Consultation seule » retiré.
+      - [x] **`updated_by` n'est pas écrite, et l'écart est nommé plutôt que comblé au passage** :
+            MESURÉ, le rôle `authenticated` porte le privilège et aucun trigger ne la dérive, mais la
+            renseigner depuis le client serait une déclaration et non une preuve. La trace faisant foi
+            est l'`actor_id` de `card_events`, posé depuis la session — la preuve d'API le constate.
+            Le combler suppose un trigger, donc une migration, donc `CRM-036`.
+      - [x] **Refus backend mesuré HORS INTERFACE pour un profil sans droit d'écriture** : le
+            `viewer` **voit** la card et reçoit `403` / `42501`, la ligne relue **inchangée** — ligne
+            `e` du §4 bis.10. Les sept lignes du contrat sont rejouées, `e2e:api saisie-formulaire`
+            **13 scénarios, aucune anomalie**.
+      - [x] **Preuves unitaires** : `webapp/src/lib/formulaire.test.ts` et
+            `webapp/src/app/FormulaireCard.test.tsx`. `npm run test:unit` **1273** tests (1243 avant).
+      - [x] **Preuves d'interface** : `e2e/ui/formulaire.spec.ts`, six scénarios de saisie ajoutés —
+            charge émise, confirmation, alerte d'exigence disparue sans rechargement, moment de
+            l'écriture, refus de validation et refus de droit, section repliée restée en lecture
+            seule. **19 scénarios verts, console vierge**, les deux erreurs de transport des refus
+            étant consommées une par une par `autoriserErreursConsole`.
+      - [x] **DEUX GARDE-FOUS FIGÉS ONT ÉCHOUÉ COMME PRÉVU, ET ONT ÉTÉ RÉVISÉS** — mécanisme de la
+            décision 51. Les deux exigeaient « aucun contrôle saisissable » et le bandeau qui
+            l'explique, l'un en composant, l'autre en E2E ; les deux avaient raison quand ils ont été
+            écrits. Ils sont **retournés** en preuves de la saisie, sur les mêmes contrôles, motif
+            écrit dans chaque fichier.
+      - [x] **Captures produites ET OBSERVÉES** : `docs/captures/CRM-037/formulaire-saisie-enregistree-1440.jpg`
+            et `formulaire-saisie-refusee-1440.jpg`, plus les quatre paliers réécrits et regardés.
+      - [x] `docs/manual.md` chapitre 4.7 et sommaire, `CHANGELOG.md` mis à jour dans le même
+            changement.
   *Énoncé d'origine, conservé pour la trace : « **Aucune écriture depuis l'écran** (§4.7), donc
-  aucune preuve de saisie. Relève d'INC-021. » La limite reste vraie à l'écran ; c'est son **motif**
-  qui est caduc, pas son constat.*
+  aucune preuve de saisie. Relève d'INC-021. » Le constat était vrai ; son motif était caduc, et la
+  livraison a suivi la décision.*
 - [ ] **Le défilement jusqu'au premier champ concerné** (§4.5) n'est pas livré : il appartient au
       geste de transition, qui n'existe pas. Même cause qu'INC-062.
 
