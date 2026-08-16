@@ -690,3 +690,52 @@ exact est figé par des tests unitaires de composant écrits par la tranche de r
 La corriger suppose de trancher ce qu'elle doit dire quand l'étape exigeante est l'étape courante —
 « Requis à cette étape » ? le silence ? — puis de réviser les preuves qui la figent, ce qui dépasse
 la tranche autorisée ici. Le comportement est laissé **inchangé**. Arbitrage attendu.
+
+## Consigné le 2026-08-16 — un constat de preuve, étranger à `CRM-037`
+
+### INC-135 — la preuve S3 de `mail-sync` juge l'HISTORIQUE COMPLET du conteneur, et un seul avertissement transitoire la condamne jusqu'à recréation
+
+**Mesuré le 2026-08-16**, pile debout et seedée, pendant la campagne de fin de session.
+`npm run e2e:mail` rend **41 passés, 1 en échec** :
+
+```
+S3 — la console opérationnelle reste silencieuse
+  Expected value: "WARNING"   Received array: ["DEBUG", "INFO"]
+```
+
+La ligne fautive est unique dans tout le journal du conteneur :
+
+```
+{"timestamp":"2026-08-16T12:45:52.445Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+**Le mécanisme est mesuré dans les deux sens, et c'est lui qui importe.** La preuve lit
+`docker logs p2enjoy-mail-sync`, c'est-à-dire **tout** ce que le conteneur a émis depuis sa
+création, et non l'état courant du service :
+
+| Geste | Mesuré |
+|---|---|
+| `npm run e2e:mail` sur un conteneur ayant émis un `WARNING` plus tôt | **1 en échec**, reproduit une seconde fois à l'identique |
+| `docker compose up -d --force-recreate mail-sync`, journal vidé (`0` `WARNING`) | S3 seul : **1 passé** |
+
+Un incident **transitoire** — ici une relève d'un compte entrant qui a échoué une fois pendant que
+les scénarios voisins manipulaient les mêmes boîtes — condamne donc S3 pour **toute la durée de vie
+du conteneur**, y compris pour des exécutions ultérieures qui n'ont plus rien à voir. La preuve ne
+mesure plus « la console reste silencieuse », mais « aucun incident n'a eu lieu depuis le dernier
+`docker compose up` ».
+
+**Un second fait, trouvé en cherchant la cause.** La ligne d'avertissement ne porte **ni**
+`account_id`, **ni** `panne`, alors que `mail-sync/src/mail_sync/veille.py:180` passe les deux au
+journal. L'avertissement est donc, en l'état, **indiagnosticable** : il dit qu'une relève a échoué,
+jamais laquelle ni pourquoi.
+
+**Étranger à `CRM-037`.** Ligne de base établie sans `git stash`, par inspection du diff : la
+session ne touche **aucun** fichier de `mail-sync/` ni de `e2e/mail/` — son diff est fait de
+`docs/`, de `CHANGELOG.md`, d'un fichier de `e2e/ui/` et de captures —, et `git log` ne montre
+aucun commit sur ces deux répertoires ce jour-là.
+
+**Non corrigé.** `e2e/mail/mail-sync.spec.ts` est un livrable de `CRM-051`, complété par `CRM-059`,
+et les deux corrections possibles supposent un arbitrage : borner la lecture du journal à la fenêtre
+du scénario — ce qui affaiblit la preuve —, ou tenir l'avertissement pour un défaut réel à
+corriger dans la veille — ce qui suppose d'abord de savoir laquelle des relèves échoue, donc de
+réparer les champs manquants du journal. Comportement laissé **inchangé**. Arbitrage attendu.
