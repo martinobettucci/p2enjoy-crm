@@ -642,6 +642,11 @@ dépend de ce qu'un autre contrôle a laissé derrière lui. La différence, et 
 que celui-ci est **intermittent** : un rouge qui ne se reproduit pas à l'identique ne peut pas
 servir de mesure.
 
+**Une troisième exécution, le même jour, rend `e2e:api` VERT dans le harnais** — 46 contrôles, 1 en
+échec, celui d'INC-132 seul. L'intermittence est donc confirmée dans les deux sens : la suite passe
+parfois pendant le harnais, et échoue parfois. Un rouge qui n'est pas reproductible ne peut servir
+ni de mesure, ni de garde.
+
 **Ce que ce constat NE dit PAS** : que le produit soit en défaut. Les 635 scénarios passent sur la
 base réelle, deux fois, encadrant le harnais. **Non corrigé** : diagnostiquer une intermittence
 demande d'instrumenter la séquence de dégradation et de restauration du harnais, ce qui dépasse la
