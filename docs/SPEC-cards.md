@@ -2737,6 +2737,176 @@ quoi que ce soit.
 
 #### 16.12 Tranche 2 b — le filtre du board et de la vue liste
 
-Non écrite, et non commencée. Elle porte ce que le §16.10 nomme au troisième point : une affaire en
-sommeil sort des vues par défaut et reste atteignable par un filtre explicite. Sa spécification est
-due avant sa première ligne de code.
+Écrit **après mesure** sur la pile réellement exécutée le 2026-08-16, et committé avant la première
+ligne de code de la tranche. Ce sous-chapitre porte ce que le §16.10 nomme au troisième point, et
+qui est le dernier écart de la Definition of Done de `CRM-081` : **une affaire en sommeil sort des
+vues par défaut et reste atteignable par un filtre explicite**. Sans lui, mettre une affaire en
+sommeil ne change rien pour l'utilisateur — la tranche 2 a le disait déjà de sa propre limite.
+
+##### Ce que la tranche livre
+
+- les deux vues d'un channel — le **board** et la **vue liste** — **masquent par défaut** les
+  affaires en sommeil ;
+- une **bascule explicite**, portée par l'adresse, les ramène dans les deux vues ;
+- une **pastille compacte** marque une affaire endormie rendue visible, sans quoi « afficher »
+  reviendrait à noyer ;
+- les **états vides** cessent de mentir quand tout ce qui reste dort.
+
+##### Ce qu'elle ne livre pas, et qui est nommé plutôt que suggéré
+
+- **aucun geste dans le menu de la carte du board** : la fiche reste le seul chemin pour endormir
+  ou réveiller (écart hérité de la tranche 2 a, inchangé) ;
+- **aucun sommeil de fil de messagerie** : tranche 2 c ;
+- **aucun mode « seules les affaires en sommeil »** : la Definition of Done demande qu'elles soient
+  *atteignables*, pas qu'elles aient leur propre écran. Un troisième état serait un périmètre
+  inventé (`CLAUDE.md` §1). MESURÉ pourtant, pour le jour où il serait demandé :
+  `snoozed_until=gt.<instant>` rend la seule endormie de `prospection`.
+
+##### 16.12.1 Le prédicat est celui du §16.2, et il ne change pas de définition en route
+
+« En sommeil » vaut « `snoozed_until` non nulle **et** strictement postérieure à l'instant ». Le
+filtre des vues masque donc exactement ces lignes, et son complément — ce que les vues montrent par
+défaut — est la négation stricte :
+
+```
+snoozed_until IS NULL  OU  snoozed_until <= instant
+```
+
+**Une échéance échue n'est pas un sommeil** (§16.11.1) : une affaire dont l'échéance est passée
+reste visible partout, sans bascule et sans pastille. MESURÉ le 2026-08-16 sur le seed, avec la clé
+de service, `channel_id=eq.…032` (`grands-comptes`) :
+
+| Requête | Lignes | `Content-Range` |
+|---|---|---|
+| actives, sans filtre de sommeil | 4 | `0-3/4` |
+| actives, `or=(snoozed_until.is.null,snoozed_until.lte.<instant>)` | 4, dont `Refonte du site vitrine` (échéance `-2 j`) | `0-3/4` |
+
+et sur `channel_id=eq.…031` (`prospection`), qui porte l'affaire réellement endormie :
+
+| Requête | Lignes | `Content-Range` |
+|---|---|---|
+| actives, sans filtre de sommeil | 2, dont `Cadrage data — Groupe Vallier` (échéance `+10 j`) | `0-1/2` |
+| actives, avec le filtre | 1 | `0-0/1` |
+
+Le total suit le filtre, et c'est la propriété que la vue liste exige (§12.5).
+
+##### 16.12.2 L'instant de comparaison est celui du client, et il est envoyé au serveur
+
+PostgREST n'évalue aucune fonction dans un filtre de requête : `snoozed_until=lte.now()` compare à
+la chaîne « now() », pas à l'heure du serveur. Deux chemins existaient, et le second est écarté avec
+son motif :
+
+1. **l'instant du client, envoyé comme valeur** — un `toISOString()`, MESURÉ accepté par PostgREST
+   avec ses millisecondes (`2026-08-16T17:23:59.000Z`) comme sans elles ;
+2. une **vue SQL ou un RPC** qui appliquerait `now()` côté serveur — écarté : il faudrait une
+   migration, une politique de lecture propre et un second chemin de lecture pour les cards, pour
+   une règle qui **n'est pas une règle d'accès**.
+
+Ce point est le seul de la tranche qui mérite d'être défendu, et il l'est ainsi : **le sommeil range,
+il n'autorise pas**. La RLS décide de ce qu'un appelant a le droit de lire (`CLAUDE.md` §10) ; le
+sommeil décide seulement de ce qui encombre sa vue. Un appelant qui fausserait l'instant envoyé ne
+verrait rien qu'il n'ait déjà le droit de voir — il retrouverait ses propres affaires endormies,
+exactement ce que la bascule lui offre d'un clic. Aucun contrôle d'autorisation n'est donc déplacé
+côté client, et le §10 de `CLAUDE.md` reste tenu.
+
+Conséquence assumée : une horloge de poste décalée décale la frontière du sommeil d'autant. Une
+échéance de sommeil se compte en jours (§16.11.1) ; quelques minutes d'écart ne changent aucun
+verdict observable.
+
+##### 16.12.3 Le board filtre à la composition, la liste filtre au serveur — et ce n'est pas une inconséquence
+
+| Vue | Où le filtre s'applique | Motif |
+|---|---|---|
+| **Vue liste** | dans la **requête**, avant `Range` | elle pagine et elle compte. Un filtre appliqué après la pagination ne verrait que les 25 lignes rapportées, et le total afficherait un nombre de pages qui n'existe pas — c'est mot pour mot la règle du §12.5 |
+| **Board** | dans le **module de composition**, sur les cards déjà lues | il ne pagine pas : il lit déjà **toutes** les cards actives du channel en une requête (§7.2 de `docs/SPEC-workflow-engine.md`). Filtrer au serveur y coûterait une requête de plus à chaque bascule et ferait **perdre le nombre d'affaires masquées**, dont l'état vide du §16.12.6 a besoin |
+
+L'argument qui impose le serveur pour `archived_at` et `deleted_at` — « ne pas faire diverger
+l'écran de la garde » — **ne se transporte pas ici** : « active » est la première vérification de
+`move_card`, tandis que le sommeil n'est la garde de rien. Une card endormie se déplace, s'édite et
+se commente exactement comme une autre.
+
+Les deux chemins emploient la **même** fonction `estEnSommeil` et le **même** instant injectable
+(§16.11.1) : le board l'appelle, la vue liste en écrit la négation dans sa requête. Une seule
+définition, deux traductions, et la preuve unitaire les tient toutes deux.
+
+##### 16.12.4 La bascule vit dans l'adresse, et elle se propage d'une vue à l'autre
+
+Un cinquième paramètre rejoint les quatre du §12.2, avec la même clôture — toute valeur inconnue se
+replie sur le défaut, et le défaut n'est jamais écrit dans l'adresse :
+
+| Clé | Valeurs | Défaut |
+|---|---|---|
+| `sommeil` | `visibles` | absent, c'est-à-dire **masquées** |
+
+**Le défaut est « masquées », et c'est la Definition of Done elle-même** : « sort des vues par
+défaut ». Une adresse nue ouvre donc un board et une liste sans les affaires endormies.
+
+**Le paramètre est le même pour les deux vues, et la bascule board ↔ liste le conserve** — elle
+seule, jamais le tri, la recherche, l'étape ni la page : ceux-là n'ont aucun sens sur un board, et
+les traîner écrirait dans l'adresse d'une vue des paramètres que l'autre ignore. Un utilisateur qui
+a demandé à voir les affaires endormies ne redemande pas à chaque changement de vue.
+
+##### 16.12.5 « Effacer les filtres » efface celui-ci aussi
+
+L'action de la vue liste ramène l'adresse à son état nu : étape, recherche **et** sommeil reprennent
+leur défaut. Elle apparaît dès que **l'un** des trois s'en écarte — donc, désormais, sur une liste
+dont la seule différence est que les affaires endormies y sont visibles.
+
+C'est la lecture la plus prévisible : « effacer les filtres » rend la vue par défaut, et la vue par
+défaut ne montre pas les affaires en sommeil.
+
+##### 16.12.6 Les états vides cessent de mentir
+
+**Le défaut masque, donc un écran vide n'est plus la preuve d'un channel vide.** MESURÉ sur le seed :
+`prospection` porte deux affaires actives dont une dort ; un channel dont toutes les affaires
+dormiraient afficherait aujourd'hui « Aucune affaire dans ce channel », ce qui serait **faux**.
+
+| Vue | Situation | Ce que l'écran dit |
+|---|---|---|
+| Liste | total nul, mode **masquées**, aucun autre filtre | « Aucune affaire éveillée dans ce channel », et l'action **« Afficher les affaires en sommeil »** |
+| Liste | total nul, mode **visibles**, aucun autre filtre | l'état vide existant, inchangé : il n'y a réellement aucune affaire |
+| Liste | total nul, un autre filtre posé | l'état vide filtré existant, inchangé |
+| Board | aucune carte rendue, **et** au moins une affaire masquée | « Toutes les affaires de ce channel sont en sommeil », et la même action |
+| Board | aucune carte rendue, aucune masquée | l'état vide existant, inchangé |
+
+**Aucune requête supplémentaire n'est émise pour cela**, et c'est ce qui rend la règle acceptable :
+le board connaît le nombre de masquées puisqu'il les a lues (§16.12.3), et la liste ne prétend rien
+savoir de plus que ce qu'elle a — « aucune affaire **éveillée** » est vrai dans les deux cas, qu'il
+en dorme ou non. Un second comptage à chaque page pour distinguer les deux cas serait une requête
+payée sur tous les chargements pour un cas de bord.
+
+##### 16.12.7 Une affaire endormie rendue visible est MARQUÉE
+
+Sans marque, la bascule ne ferait que noyer l'affaire endormie parmi les autres.
+
+- **Board** : la carte porte la pastille compacte sous son titre, à côté de la pastille
+  d'ancienneté ;
+- **Vue liste** : la cellule « Affaire » porte la même pastille après le lien, `shrink-0`, le titre
+  gardant son ellipse et la ligne sa hauteur d'une seule ligne de texte (§12.7).
+
+La pastille est celle du §5.3 quater du design system, en **version compacte** : icône `Moon` et
+échéance en **date courte**, sans le mot « En sommeil » que la place ne permet pas — le nom
+accessible, lui, porte la phrase entière. Ses règles visuelles vivent au §5.3 quinquies du design
+system, écrit dans le même changement.
+
+Une échéance que `Date` ne sait pas lire fait disparaître la pastille plutôt que d'écrire
+« Invalid Date » — même règle qu'au §16.11.2, et une affaire dont l'échéance est illisible n'est de
+toute façon pas en sommeil au sens du prédicat.
+
+##### 16.12.8 Ce que le compte de colonne et le cumul deviennent
+
+Le compteur d'une colonne de board et son cumul de montants portent sur les cartes **rendues** :
+une affaire masquée n'y entre pas. Une colonne annonce ce qu'elle montre, sinon son compteur
+désignerait des cartes introuvables à l'œil.
+
+De même, le total de la vue liste est celui des lignes filtrées (§12.5, inchangé) : il varie donc
+avec la bascule, et c'est la propriété attendue.
+
+##### 16.12.9 Preuves exigées de la tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Le repli et la clôture du paramètre `sommeil` dans les deux sens (lecture d'adresse, écriture, omission du défaut) ; le filtre de la requête de page dans les deux modes ; la composition du board dans les deux modes, avec le compte des masquées ; les deux côtés de l'échéance avec un instant injecté ; la conservation du paramètre par la bascule de vue |
+| API | Les deux modes rejoués **avec les jetons réels** sur les deux channels du seed : `prospection` rend 1 ligne sur 2 en mode masqué et 2 sur 2 en mode visible ; `grands-comptes` rend ses 4 lignes dans les deux modes, l'échéance échue n'étant pas un sommeil. Le total du `Content-Range` est constaté à chaque fois |
+| E2E d'interface | Le board de `prospection` ne montre pas l'affaire endormie du seed ; la bascule la ramène **avec sa pastille** ; la vue liste du même channel fait de même et son total passe de 1 à 2 ; l'affaire à l'échéance échue de `grands-comptes` est présente dans les deux modes et **sans** pastille ; le paramètre survit au passage board → liste |
+| Visuel | Captures des deux modes, board et vue liste, plus la pastille compacte au palier étroit, observées conformément à `CLAUDE.md` §16 |

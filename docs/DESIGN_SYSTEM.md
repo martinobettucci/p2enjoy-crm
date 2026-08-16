@@ -327,6 +327,37 @@ règles ci-dessous ne disent que de quoi il a l'air.
 - **Les deux événements du fil sont de la famille « Cycle de vie »** (§5.11), et leur détail est
   l'échéance en date courte. Aucune sixième bascule n'est ajoutée pour deux types.
 
+### 5.3 quinquies Le sommeil dans le board et dans la vue liste — `CRM-081`
+
+Ce que le filtre masque, ramène et compte est spécifié dans `docs/SPEC-cards.md` §16.12 ; les règles
+ci-dessous ne disent que de quoi il a l'air.
+
+- **La bascule est une case à cocher étiquetée, pas un bouton à deux états.** « Afficher les
+  affaires en sommeil » se lit sans avoir à deviner ce que l'état courant signifie, là où un bouton
+  unique laisse toujours l'ambiguïté entre « ce que je fais » et « ce qui est ». Elle porte
+  l'icône `Moon` du §5.3 quater et respecte la cible de 40 px du §8.
+
+- **Elle vit dans la barre de filtres de la vue liste, et dans une barre de même rôle au-dessus des
+  colonnes du board.** Le board n'avait aucune barre : celle-ci n'en est pas une de plus, c'est la
+  première, et elle ne porte que ce contrôle. Comme la barre de filtres du §5.9, elle reste **rendue
+  y compris sur un écran vide** — elle est la cause possible de ce vide, et la masquer priverait
+  l'utilisateur du seul geste qui l'en sort.
+
+- **La pastille compacte porte l'icône et la date, jamais le mot seul.** Sur une carte de board et
+  dans une ligne de tableau, la place n'admet pas « En sommeil jusqu'au 26/08/2026 » : la pastille
+  rend `Moon` suivie de la date courte, et la phrase entière devient son **nom accessible**. Mêmes
+  jetons qu'au §5.3 quater — `--color-brand-soft` et `--color-brand`, `rounded-full` —, en taille
+  `text-xs` : c'est la même information, elle doit se reconnaître d'une vue à l'autre.
+
+- **La densité du tableau ne bouge pas.** La pastille est `shrink-0` après le lien de la colonne
+  « Affaire » ; le titre garde son ellipse et la ligne garde sa hauteur d'une seule ligne de texte
+  (§5.9). Une pastille qui ferait passer une ligne sur deux lignes contredirait la densité
+  maîtrisée que ce tableau tient depuis `CRM-042`.
+
+- **Un état vide dû au sommeil porte son action.** « Aucune affaire éveillée dans ce channel » et
+  « Toutes les affaires de ce channel sont en sommeil » offrent le geste qui les lève, selon le
+  patron du §5.8 ; comme lui, l'action n'est alors **pas répétée** dans la barre.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des
