@@ -599,3 +599,232 @@ test.describe('W5 — ce qu’aucun client ne peut faire (§3.8, ligne p)', () =
 		}
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// N8 — La création d'un workflow, les dix lignes du §3 bis.5
+// ---------------------------------------------------------------------------------------------
+//
+// @verifies CRM-031 (docs/BACKLOG.md) — création d'un workflow depuis l'éditeur d'administration
+// @verifies docs/SPEC-workflow-engine.md §3 bis.5 (les dix refus mesurés le 2026-08-16),
+//           §3 bis.1 (`is_default` non exposé), §3 bis.3 (`workspace_id` non saisi),
+//           §3 bis.8 (preuves attendues, niveau API), §3.2 (modèle et cohérence de portée)
+// @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+//
+// CES SCÉNARIOS CONTOURNENT L'ÉCRAN, et deux d'entre eux ne pourraient pas en venir : le
+// `workspace_id` n'est pas saisi et `is_default` n'est pas exposé (§3 bis.1, §3 bis.3). C'est
+// exactement pourquoi ils vivent ici : une règle prouvée seulement par l'interface n'est pas
+// prouvée (`CLAUDE.md` §10).
+//
+// CHAQUE REFUS RELIT LA TABLE avec la clé de service pour constater qu'aucune ligne n'a été
+// écrite. Sans cette relecture, un `403` rendu APRÈS une écriture réussie serait indiscernable
+// d'un refus — et c'est la différence entre une politique qui protège et une qui se plaint.
+
+test.describe('N8 — la création d’un workflow (§3 bis.5)', () => {
+	const TRACK_CONSEIL = '5eed0000-0000-4000-8000-000000000021'
+	const NOM_ESSAI = 'e2e-api-creation-workflow'
+
+	/** Compte les lignes portant ce nom, avec la clé de service : un refus doit en laisser zéro. */
+	async function compter(requete: APIRequestContext, nom: string): Promise<number> {
+		const reponse = await requete.get(`${WF}?select=id&name=eq.${encodeURIComponent(nom)}`, {
+			headers: enTetesService(),
+		})
+		return ((await reponse.json()) as unknown[]).length
+	}
+
+	async function purger(requete: APIRequestContext, nom: string): Promise<void> {
+		await requete.delete(`${WF}?name=eq.${encodeURIComponent(nom)}`, { headers: enTetesService() })
+	}
+
+	test.afterEach(async ({ request }) => {
+		await purger(request, NOM_ESSAI)
+		await purger(request, `${NOM_ESSAI}-track`)
+		await purger(request, 'Cycle commercial standard-homonyme')
+	})
+
+	test('a — l’administratrice crée un workflow global : 201, sans défaut et sans track', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: {
+				...enTetesAuthentifies(jeton),
+				'Content-Type': 'application/json',
+				Prefer: 'return=representation',
+			},
+			data: { workspace_id: WORKSPACE_SEED, name: NOM_ESSAI, scope: 'global' },
+		})
+		expect(reponse.status()).toBe(201)
+		const cree = ((await reponse.json()) as Workflow[])[0]!
+		expect(cree.scope).toBe('global')
+		expect(cree.track_id).toBeNull()
+		// « Au plus un vrai par workspace » (§3.2) : le défaut du seed existe déjà, et la création
+		// ne le dispute pas — la colonne vaut faux par défaut de colonne, pas par calcul de l'écran.
+		expect(cree.is_default).toBe(false)
+	})
+
+	test('b — l’administratrice crée un workflow propre à un track : 201, track renseigné', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: {
+				...enTetesAuthentifies(jeton),
+				'Content-Type': 'application/json',
+				Prefer: 'return=representation',
+			},
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				name: `${NOM_ESSAI}-track`,
+				scope: 'track',
+				track_id: TRACK_CONSEIL,
+			},
+		})
+		expect(reponse.status()).toBe(201)
+		expect(((await reponse.json()) as Workflow[])[0]!.track_id).toBe(TRACK_CONSEIL)
+	})
+
+	test('c — le business developer est refusé en 42501, et RIEN n’est écrit', async ({ request }) => {
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workspace_id: WORKSPACE_SEED, name: NOM_ESSAI, scope: 'global' },
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('d — le viewer est refusé en 42501, et RIEN n’est écrit', async ({ request }) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workspace_id: WORKSPACE_SEED, name: NOM_ESSAI, scope: 'global' },
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('e et f — la cohérence de portée est refusée des DEUX côtés, en 23514', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		// `track` sans track : la moitié que l'écran prévient par sa validation de forme.
+		const sansTrack = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workspace_id: WORKSPACE_SEED, name: NOM_ESSAI, scope: 'track' },
+		})
+		expect(sansTrack.status()).toBe(400)
+		expect(((await sansTrack.json()) as { code: string }).code).toBe('23514')
+
+		// `global` AVEC un track : la moitié que l'écran prévient en OUBLIANT le track à la bascule,
+		// et que `creerWorkflow` refait de son côté. Sans cette mesure, rien ne dirait que l'oubli
+		// sert à quelque chose.
+		const avecTrack = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				name: NOM_ESSAI,
+				scope: 'global',
+				track_id: TRACK_CONSEIL,
+			},
+		})
+		expect(avecTrack.status()).toBe(400)
+		expect(((await avecTrack.json()) as { code: string }).code).toBe('23514')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('g — un nom entièrement blanc est refusé en 23514 : `workflows_name_check` teste `btrim`', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { workspace_id: WORKSPACE_SEED, name: '   ', scope: 'global' },
+		})
+		expect(reponse.status()).toBe(400)
+		expect(((await reponse.json()) as { code: string }).code).toBe('23514')
+	})
+
+	test('h — un track d’un autre workspace est refusé en 23503 par la clé COMPOSITE', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				name: NOM_ESSAI,
+				scope: 'track',
+				track_id: '00000000-0000-4000-8000-0000000000ff',
+			},
+		})
+		expect(reponse.status()).toBe(409)
+		const corps = (await reponse.json()) as { code: string; message: string }
+		expect(corps.code).toBe('23503')
+		// Le NOM de la contrainte est ce qui prouve que la clé est composite : une clé simple vers
+		// `tracks (id)` laisserait passer un track de B sous un workspace A (§3.2).
+		expect(corps.message).toContain('workflows_track_id_workspace_id_fkey')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('i — un `workspace_id` étranger est refusé en 42501 : c’est le `WITH CHECK`', async ({
+		request,
+	}) => {
+		// NON ATTEIGNABLE DEPUIS L'ÉCRAN — le workspace n'est pas saisi (§3 bis.3). C'est
+		// précisément pourquoi cette ligne est mesurée ici, et non par un scénario d'interface.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: {
+				workspace_id: '00000000-0000-4000-8000-0000000000aa',
+				name: NOM_ESSAI,
+				scope: 'global',
+			},
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('j — `is_default` vrai est refusé en 23505 par l’index unique partiel', async ({ request }) => {
+		// NON ATTEIGNABLE DEPUIS L'ÉCRAN — la case n'existe pas (§3 bis.1), et c'est CE refus qui
+		// justifie qu'elle n'existe pas : elle échouerait sur tout workspace ayant déjà son défaut.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				name: NOM_ESSAI,
+				scope: 'global',
+				is_default: true,
+			},
+		})
+		expect(reponse.status()).toBe(409)
+		const corps = (await reponse.json()) as { code: string; message: string }
+		expect(corps.code).toBe('23505')
+		expect(corps.message).toContain('workflows_workspace_default_uk')
+		expect(await compter(request, NOM_ESSAI)).toBe(0)
+	})
+
+	test('k — un nom DÉJÀ PORTÉ est ACCEPTÉ : aucune unicité ne pèse sur `name`', async ({
+		request,
+	}) => {
+		// Figé exprès. Le §3.2 ne demande aucune unicité de nom, et deux workflows homonymes sont
+		// un choix d'administration. Sans cette mesure, une unicité ajoutée un jour passerait
+		// inaperçue jusqu'au premier refus en production — et l'écran, qui ne la prévient pas,
+		// afficherait un refus qu'aucune de ses validations n'annonce.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.post(WF, {
+			headers: {
+				...enTetesAuthentifies(jeton),
+				'Content-Type': 'application/json',
+				Prefer: 'return=representation',
+			},
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				name: 'Cycle commercial standard-homonyme',
+				scope: 'global',
+			},
+		})
+		expect(reponse.status()).toBe(201)
+	})
+})
