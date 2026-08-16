@@ -1924,7 +1924,14 @@ describe('comparerAvecSource — lecture 10 (§4 quater.3)', () => {
 		// `workflow` est exclue du document naturalisé : `name`, `scope`, `track_id`, `is_default` et
 		// `archived_at` sont précisément ce que la copie ne copie pas. La rendre déclarerait
 		// divergente toute copie dès sa naissance.
-		expect(issue.donnees.collections.some((collection) => collection.cle === 'workflow')).toBe(false)
+		//
+		// LA COMPARAISON PASSE PAR `string`, ET CE N'EST PAS UNE COMMODITÉ : le type de `cle` ne
+		// contient PAS `'workflow'`, et `tsc` refuse la comparaison directe comme sans recouvrement.
+		// Ce refus est lui-même une preuve — l'exclusion est tenue par le type autant que par la
+		// valeur —, mais il empêcherait de vérifier la valeur RENDUE, seule à parler du document
+		// réel. Les deux gardes sont donc conservées : celle du compilateur, et celle-ci.
+		const cles: readonly string[] = issue.donnees.collections.map((collection) => collection.cle)
+		expect(cles).not.toContain('workflow')
 	})
 
 	it('`identique` est LU du document, jamais recalculé depuis les compteurs', async () => {
