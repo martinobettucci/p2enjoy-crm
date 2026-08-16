@@ -15,6 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un workflow copié peut enfin dire EN QUOI il s'écarte de sa source** (`CRM-032`,
+  `docs/SPEC-workflow-engine.md` §4 ter, migration 43). Le §4 bis disait **qu'**une source avait
+  changé ; il ne disait pas **quoi**. La nouvelle RPC `compare_workflow_with_source(workflow_id)`
+  rend, pour une copie donnée, quelles étapes, arêtes, questions, règles et exigences la
+  distinguent de sa source vivante — et pour chaque modification, quel attribut a changé, de quelle
+  valeur à quelle valeur. Elle est `STABLE` et **n'écrit rien** : le §4.1 interdit toute
+  réapplication automatique, et comparer n'est pas resynchroniser. `SECURITY INVOKER`, comme
+  `compare_workflow_versions` et pour le même motif : la politique de lecture de `workflows` est
+  déjà la règle d'autorisation exacte du geste, et deux formulations d'une même règle finissent par
+  diverger. Un `viewer` compare donc, et obtient le même document qu'un administrateur.
+  **La comparaison de `CRM-078` ne pouvait pas servir**, et ce n'est pas une opinion : une copie ne
+  partage **aucun** identifiant de composition avec sa source — mesuré, zéro étape commune sur la
+  copie du seed —, de sorte qu'un appariement par identifiant rendrait « sept étapes retirées, sept
+  ajoutées » sur deux workflows rigoureusement identiques. L'appariement se fait donc sur **les
+  clés naturelles qui ont servi au remappage** : `node_id` pour une étape, le couple de nœuds pour
+  une arête, `key` pour un champ. Conséquence assumée et figée par une preuve : renommer un champ
+  dans la copie rend **un retrait et un ajout**, jamais une modification. L'algorithme de
+  différence de `CRM-078` est réutilisé tel quel, appelé cinq fois, plutôt que réécrit. Quatre
+  refus : appelant non authentifié, `workflow introuvable` — le même message pour un identifiant
+  inventé et pour un workflow d'un autre workspace, la fonction n'étant pas un oracle
+  d'existence —, `workflow non derive`, et `source introuvable`. **Aucun écran** : le geste
+  d'interface qui appellera cette comparaison reste dû, et la mention du §4 bis demeure sans
+  commande.
+
 - **Un workflow copié dit d'où il vient, et si sa source a changé depuis** (`CRM-032`,
   `docs/SPEC-workflow-engine.md` §4 bis, `docs/DESIGN_SYSTEM.md` §5.15). La copie d'un workflow
   vers un track est une divergence assumée : modifier l'original ne se propage pas. La donnée qui
