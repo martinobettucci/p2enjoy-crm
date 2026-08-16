@@ -6768,7 +6768,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[x]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
-| CRM-081 | Snooze des fils et des cards | `[ ]` |
+| CRM-081 | Snooze des fils et des cards | `[~]` |
 
 *`CRM-075` désignait « Snooze des fils et des cards » jusqu'au 2026-08-11. La décision 332 a créé
 l'administration de l'arborescence sous ce numéro sans voir qu'il était pris — même mode de
@@ -8244,22 +8244,60 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       preuves de la tranche vivent dans la suite pgTAP et la preuve d'API, toutes deux exécutées et
       vertes ; ce qui manque est la **dégradation volontaire** qui établirait qu'elles ne sont pas
       complaisantes.
-- [ ] **Aucun écran, aucune capture, aucune vérification visuelle** : la tranche ne livre aucune
-      surface, et l'affaire en sommeil reste visible partout où elle l'était. **C'est l'écart
-      principal de l'unité**, et il est l'objet de la tranche 2 (§16.10).
-- [ ] **Aucun seed** : les 41 cards du seed portent `snoozed_until` nulle. Poser une affaire
-      endormie n'a d'intérêt que le jour où un écran le montre — tranche 2.
+- [x] **L'écran du sommeil est livré — tranche 2 a**, spécifiée `docs/SPEC-cards.md` §16.11 et
+      committée avant sa première ligne de code, `docs/DESIGN_SYSTEM.md` §5.3 quater pour la forme.
+      La tranche 2 est découpée en trois : la fiche et son geste (2 a, livrée), le filtre du board
+      et de la vue liste (2 b, §16.12, **non écrite**), le sommeil des fils (2 c).
+- [x] **Le module `webapp/src/lib/sommeil-card.ts`** porte le prédicat avec son instant
+      **injectable**, les quatre échéances usuelles, la conversion d'une saisie `datetime-local`,
+      le dictionnaire fermé des huit issues et les deux appels de RPC. **31 assertions unitaires**,
+      dont les DEUX côtés de l'échéance et l'instant exact, qui n'est pas un sommeil.
+- [x] **La fiche porte la pastille et le geste à deux visages** : « En sommeil jusqu'au … » à côté
+      de la pilule d'archivage — les deux coexistent —, « Mettre en sommeil » ouvrant un panneau,
+      « Réveiller » appelant la fonction sans panneau ni confirmation. La commande n'est jamais
+      éteinte d'avance : un lecteur seul l'ouvre, appuie, et lit le refus. **10 scénarios de
+      composant**, 43 au total sur le fichier.
+- [x] **AUCUNE GARDE DE SAISIE NE DOUBLE LA BASE** : une échéance passée est **envoyée**, refusée
+      par `snooze_date_in_past`, et le refus est écrit sous le champ sans effacer la saisie —
+      mesuré dans le navigateur réel, le `400` étant consommé nommément par la preuve.
+- [x] **Le fil nomme les deux gestes** : `snoozed` et `woken` rejoignent le vocabulaire de l'écran,
+      porté de onze à **treize**. `mail_sent`, quatorzième valeur du `CHECK`, reste dehors : aucun
+      trigger ne l'écrit. Leur détail est l'échéance en date courte, seul cas où le fil lit une
+      valeur du `payload` — une date n'est pas un libellé qui pourrait changer de sens.
+- [x] **Le seed pose deux affaires** : une endormie à dix jours, une au sommeil **échu** à deux
+      jours. Échéances relatives à l'instant du seed, jamais fixes ; écriture par la clé de service,
+      donc tracée par le trigger de table ; **convergence par état** — deux applications
+      successives mesurées, la seconde n'écrit rien.
+- [x] **Preuve E2E d'interface** : `e2e/ui/sommeil-card.spec.ts`, **6 scénarios** sans aucune
+      substitution — la pastille et son échéance, l'échéance échue qui ne produit rien, le réveil
+      puis la remise en sommeil vérifiés **après rechargement** donc contre la base, le refus
+      d'échéance passée, les deux libellés du fil, et les quatre paliers sans débordement. **Huit
+      captures** sous `docs/captures/CRM-081/`, produites et observées.
+- [x] **UNE PREUVE DE LA TRANCHE 1 A ÉTÉ RÉVISÉE, ET LE DÉFAUT ÉTAIT LE MIEN** :
+      `0042_snooze_cards.test.sql` comptait les événements du fil en ABSOLU, ce qui la liait au
+      volume du seed plutôt qu'à la propriété éprouvée. Le seed endormant désormais sa card cobaye,
+      elle est devenue rouge. Corrigée en **deltas** contre une référence prise avant les gestes,
+      motifs écrits dans le fichier. Quatrième occurrence de cette famille dans l'unité.
+- [ ] **AUCUN FILTRE : une affaire en sommeil ne sort d'aucune vue.** Le board et la vue liste la
+      montrent comme avant, et aucun filtre explicite ne la ramène. **C'est l'écart principal qui
+      reste**, il porte deux des cinq exigences de la DoD, et il est l'objet de la tranche 2 b,
+      dont la spécification est **due avant sa première ligne de code** (§16.12).
+- [ ] **Aucun geste dans le menu de la carte du board** : la fiche est le seul chemin.
 - [ ] **Aucun sommeil de fil de messagerie** : l'énoncé nomme « les fils et les cards », et les
-      fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2.
+      fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2 c.
+- [ ] **`scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh` non rejoués** :
+      interrompus par le budget de la session du 2026-08-16, ils sont les deux harnais que cette
+      tranche touche le plus directement. À exécuter en priorité par la prochaine exécution.
 - [ ] **Les compteurs de `scripts/verify-harness.sh` ne sont pas révisés ici** : ils sont mesurés
       **en retard de bien plus que cette tranche** depuis deux exécutions — dérive antérieure et
       étrangère, que corriger sous cette unité reviendrait à solder une autre (`CLAUDE.md` §13).
 
-*DoD adaptée, écarts explicites.* La Definition of Done demande cinq choses. **Deux sont tenues** :
-le geste et son retour sont gardés en base, et le fil porte la trace des deux gestes ; les refus
-sont mesurés avec les jetons réels. **Trois restent dues, toutes par la tranche 2** : une affaire
-en sommeil ne sort d'aucune vue, aucun filtre explicite ne la ramène, et aucune capture n'existe.
-L'unité reste donc `[~]`, et l'écart est nommé plutôt que masqué.
+*DoD adaptée, écarts explicites — révisée le 2026-08-16 après la tranche 2 a.* La Definition of
+Done demande cinq choses. **Trois sont tenues** : le geste et son retour sont gardés en base ; le
+fil porte la trace des deux gestes, et l'écran la nomme ; les refus sont mesurés avec les jetons
+réels, et les captures sont produites et observées. **Deux restent dues, toutes deux par la
+tranche 2 b** : une affaire en sommeil ne sort d'aucune vue par défaut, et aucun filtre explicite
+ne la ramène. L'unité reste donc `[~]`, et l'écart est nommé plutôt que masqué.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

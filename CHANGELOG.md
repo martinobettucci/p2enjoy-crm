@@ -15,6 +15,20 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le sommeil d'une affaire se voit et se pilote depuis sa fiche** (`CRM-081` tranche 2 a,
+  `docs/SPEC-cards.md` §16.11). La tranche 1 avait posé la règle en base sans aucune surface : une
+  affaire endormie restait indistinguable d'une autre. L'en-tête porte désormais une **pastille**
+  « En sommeil jusqu'au … » à côté de la pilule d'archivage — les deux coexistent —, et un geste à
+  deux visages : « Mettre en sommeil » ouvre un panneau de quatre échéances usuelles — demain, dans
+  trois jours, la semaine prochaine, le mois prochain — et d'une échéance choisie ; « Réveiller »
+  appelle la fonction directement, sans panneau ni confirmation, le geste étant réversible. Une
+  échéance **échue** n'est pas un sommeil : la colonne conserve sa valeur, l'écran ne montre rien,
+  et aucun état « sommeil expiré » n'est inventé. Aucune garde de saisie ne double la base — une
+  échéance passée est **envoyée**, refusée par la base, et le refus est écrit sous le champ. Le fil
+  de l'affaire nomme les deux gestes, « Affaire mise en sommeil » et « Affaire réveillée », avec
+  leur échéance. Le seed pose deux affaires de démonstration, l'une endormie et l'autre au sommeil
+  échu, sans quoi l'écran ne serait démontrable dans aucun des deux états.
+
 - **Une affaire peut être mise en sommeil, et le geste est gardé** (`CRM-081` tranche 1,
   `docs/SPEC-cards.md` §16). `cards.snoozed_until` existait depuis `CRM-040` sans geste, sans règle
   et sans lecteur, ouverte en écriture libre à tout membre. Deux RPC la prennent en charge —

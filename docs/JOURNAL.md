@@ -17649,3 +17649,70 @@ cause que celui de `e2e:ui` ci-dessus et **ne se reproduit pas** sur pile au rep
 mail-sync/tests`, et les quarante-neuf autres `scripts/verify-*.sh` — la série entière ne tient pas
 dans une session (§2.1 ter du prompt). Aucun fichier de `mail-sync/`, de `e2e/mail/` ni de la
 chaîne de stockage n'est touché par cette session.
+
+## 2026-08-16 — `CRM-081` tranche 2 a : le sommeil cesse d'être invisible
+
+**Point de départ.** L'entrée précédente désignait explicitement la reprise : la tranche 1 de
+`CRM-081` avait livré la règle, sa garde et sa trace, et nommait son écart principal — **aucun
+écran**. Le §16.10 énumérait ce que la tranche 2 devait porter, mais en liste d'intentions, non en
+contrat opposable. Les six points ne tiennent pas dans une session ; le §16.11 a donc été écrit,
+committé et poussé **avant la première ligne de code**, et découpe la tranche 2 en trois : la fiche
+et son geste (2 a, cette session), le filtre du board et de la vue liste (2 b), le sommeil des fils
+de messagerie (2 c).
+
+**Ce que la session livre.** Un module `webapp/src/lib/sommeil-card.ts` — le prédicat « en sommeil »
+avec un instant **injectable**, les quatre échéances usuelles, la conversion d'une saisie
+`datetime-local`, le dictionnaire fermé des huit issues, les deux appels de RPC. L'en-tête de la
+fiche porte la pastille et le geste à deux visages. La fiche lit `snoozed_until`, qui reste fermée
+en écriture. Le fil nomme `snoozed` et `woken` — treize types, `mail_sent` restant hors du
+vocabulaire de l'écran parce qu'aucun trigger ne l'écrit. Le seed endort deux affaires.
+
+**Trois décisions valent d'être retenues.** La première : l'instant du prédicat est un paramètre, et
+c'est ce qui rend les deux côtés de l'échéance éprouvables — une fixture de date fixe cesserait
+d'être future au bout de quelques semaines, et la preuve changerait de verdict sans que le produit
+ait bougé. La deuxième : le seed converge **par état** et non par valeur — une affaire déjà dans
+l'état voulu n'est pas réécrite, sans quoi chaque rejeu poserait un `snoozed` de plus et les
+empreintes d'événements dériveraient à chaque application. Mesuré dans les deux sens : deux
+applications successives, la seconde n'écrit rien. La troisième : le seed écrit par la **clé de
+service**, ce qui démontre le trigger de table du §16.5 — la trace ne dépend pas du chemin.
+
+**Ce que la campagne a corrigé, et c'était MON défaut.** `npm run test:sql` a rendu
+`0042_snooze_cards.test.sql` rouge : la suite comptait les événements du fil en **absolu** — « le
+fil porte UN `snoozed` » —, et le seed endort désormais la card qu'elle prend pour cobaye. C'est la
+**quatrième occurrence** de la même famille dans cette unité, après `0012_cards.test.sql`,
+`e2e/api/cards.spec.ts` et la dégradation N1 de `verify-seed-demo.sh` : *un préalable qui fige un
+VOLUME au lieu d'une propriété est lié à l'état du seed, pas à ce qu'il éprouve.* Corrigé en
+deltas contre une référence prise avant les gestes, les deux assertions de `payload` ciblant le
+DERNIER événement plutôt que le seul. Une leçon à retenir pour la tranche 2 b : toute preuve qui
+compte des lignes du seed doit compter un **écart**.
+
+**Où reprendre.** `CRM-081` reste `[~]`, et son écart est nommé : la DoD exige qu'une affaire en
+sommeil **sorte des vues par défaut** et reste atteignable par un filtre explicite. Ce n'est pas
+livré — le board et la vue liste ne filtrent pas —, et c'est la **tranche 2 b**, dont la
+spécification reste à écrire (§16.12). Restent aussi dus le harnais `scripts/verify-snooze.sh`, le
+geste dans le menu de la carte du board, et le sommeil des fils de messagerie. Les écarts hérités
+sont inchangés : la convergence à froid de `CRM-046`, l'énoncé de `CRM-014`, et les compteurs de
+`scripts/verify-harness.sh`.
+
+### Complément — ce que la campagne a rendu
+
+**Vertes, sans anomalie** : `npm run test:unit` **1413 tests** sur 46 fichiers — 1368 avant cette
+session, les 45 de plus étant les siens ; `npm run typecheck`, `npm run types:check` et
+`npm run build` ; `npm run test:sql` **42 fichiers, 2191 assertions** après correction ;
+`npm run e2e:api` **667 scénarios** — **INC-136 ne se reproduit pas** sur cette pile reconstruite,
+le dépôt de la pièce jointe MinIO passe ; `npm run e2e:ui` **347 scénarios** — 341 avant, les six de
+plus étant `e2e/ui/sommeil-card.spec.ts` ; `npm run e2e:mail` **42 scénarios** ;
+`scripts/verify-seed-demo.sh` **69 contrôles, aucune anomalie**.
+
+**`scripts/verify-cards.sh --rapide` : 39 contrôles, 1 en échec** — « état du seed : 15/1/1/15,
+attendu 14/1/1/14 ». C'est **INC-132**, mesurée identique par l'exécution précédente : préexistante
+et étrangère.
+
+**Non exécutés, et dits comme tels** : `pytest mail-sync/tests` — l'environnement virtuel
+`.venv/` n'existe pas sur ce checkout neuf et sa création n'a pas été tentée, aucun fichier de
+`mail-sync/` n'étant touché ; `scripts/verify-timeline.sh` et
+`scripts/verify-colonnes-protegees.sh`, **interrompus par le budget** après dix minutes — ils
+rejouent des suites E2E complètes et sont les deux harnais que ce changement touche le plus
+directement ; les quarante-six autres `scripts/verify-*.sh`. Une prochaine exécution devrait
+commencer par ces deux-là.
+
