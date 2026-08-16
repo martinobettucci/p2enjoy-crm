@@ -1379,8 +1379,10 @@ mention : il n'y a pas de bouton grisé à justifier, il n'y a pas de geste.
 
 ### 4 bis.7 Ce qui reste dû après cette tranche
 
-- **La comparaison copie ↔ source**, que le §4.1 esquisse. Elle demande une fonction que le produit
-  n'a pas (§4 bis.1). Reste due, et nommée dans la Definition of Done de `CRM-032`.
+- **La comparaison copie ↔ source**, que le §4.1 esquisse. Elle demandait une fonction que le
+  produit n'avait pas (§4 bis.1). **Spécifiée et livrée au §4 ter** — `compare_workflow_with_source`.
+  Ce qui reste dû après elle est le **geste d'interface** qui l'appelle : la mention du §4 bis
+  demeure sans commande, comme le §4 bis.6 l'exige.
 - **Rien d'autre.** La mention livrée est ce que la Definition of Done exigeait : « mention de
   divergence visible dans l'interface ».
 
@@ -1392,6 +1394,195 @@ mention : il n'y a pas de bouton grisé à justifier, il n'y a pas de geste.
 | Composant | L'écran rend la mention sur un workflow copié, ne rend **rien** sur un workflow qui n'en est pas un, et nomme l'erreur de lecture |
 | E2E | Le parcours réel : choisir la copie du seed, lire la mention ; modifier la source par la clé de service, recharger, constater la phrase de divergence ; restaurer la source |
 | Visuelle | Captures du bloc dans ses deux états, aux paliers du §7 |
+
+## 4 ter. La comparaison copie ↔ source — `CRM-032`
+
+Ce chapitre est le dernier dû de `CRM-032`. Le §4.1 promet que l'interface « propose de comparer »,
+et le §4 bis.7 nomme cette comparaison comme le seul reste après la mention de divergence. Le §4 bis
+dit **qu'**une source a changé ; ce chapitre dit **quoi**.
+
+Il est écrit **après mesure** sur la pile seedée du 2026-08-16, et non de mémoire : les documents
+canoniques de la copie du seed et de sa source ont été projetés à la main dans une transaction
+annulée, l'absence de reste constatée (`pg_proc` vide de toute fonction `sonde*`), et les index
+uniques qui fondent chaque clé naturelle relevés dans `pg_indexes`.
+
+### 4 ter.1 Pourquoi `compare_workflow_versions` ne peut pas servir
+
+`CRM-078` a livré `public.compare_workflow_versions`, et sa règle de fond est que **l'identité est
+un identifiant, jamais une ressemblance** (§7 ter.11.2). Cette règle est juste entre deux versions
+d'un **même** workflow, qui partagent leurs identifiants.
+
+Entre une copie et sa source, elle est inapplicable, et la mesure le montre : **zéro** étape de la
+copie du seed partage son identifiant avec une étape de la source — `count(*) = 0` sur la jointure
+par `id`. Appelée telle quelle, la comparaison rendrait « sept étapes retirées, sept ajoutées » sur
+deux workflows rigoureusement identiques. Ce serait un document volumineux et faux.
+
+La copie ne conserve **aucun** identifiant de composition de sa source ; c'est le §4.5 qui l'exige,
+et une assertion de `CRM-032` le fige. Comparer copie et source suppose donc de les apparier sur
+**les clés naturelles qui ont servi au remappage**, et sur elles seules. Comparer sur autre chose
+serait comparer sur une base dont la copie n'a jamais été construite.
+
+### 4 ter.2 Les clés naturelles, et l'index unique qui fonde chacune
+
+Chaque clé d'appariement est celle du §4.5, et chacune est adossée à un index unique **relevé en
+base**, non supposé :
+
+| Collection | Identité | Index unique qui la garantit |
+|---|---|---|
+| `steps` | `node_id` | `workflow_steps_workflow_id_node_id_key` |
+| `transitions` | le couple `(from_node_id, to_node_id)` | `workflow_transitions_workflow_from_to_key` |
+| `fields` | `key` | `form_fields_workflow_id_key_key` |
+| `rules` | le couple `(field_key, node_id)` | dérivée des deux précédentes |
+| `required_fields` | le triplet `(from_node_id, to_node_id, field_key)` | dérivée des deux précédentes |
+
+`node_id` est un **identifiant réel** — celui du catalogue de nœuds, partagé par les deux workflows
+puisqu'ils vivent dans le même workspace. La règle de `CRM-078` est donc respectée pour les étapes,
+les transitions, les règles et les exigences.
+
+`fields.key` est le seul appariement qui repose sur une clé **métier**. L'écart est assumé et
+motivé : `key` est exactement ce que la copie remappe (§4.5), et un champ n'a pas d'autre invariant
+partagé entre les deux workflows. Le renommer dans la copie est donc **un retrait et un ajout**, pas
+une modification — même conséquence assumée qu'au §7 ter.11.2, et figée par une assertion.
+
+### 4 ter.3 Le document naturalisé
+
+`app.workflow_composition_naturel(workflow_id uuid) returns jsonb` rend les cinq collections du
+document canonique (§7 ter.2) ré-exprimées en clés naturelles. Elle est `stable`, `search_path`
+vide, et **n'écrit rien**.
+
+Deux règles la définissent :
+
+1. **Tout identifiant local disparaît.** `id`, `workflow_id`, `from_step_id`, `to_step_id`,
+   `field_id`, `step_id`, `transition_id` ne figurent pas dans le document naturalisé : ils n'ont
+   aucun sens partagé entre deux workflows, et les laisser ferait diverger deux compositions
+   identiques.
+2. **Les attributs que la copie ne copie PAS sont exclus.** Le §4.5 les nomme : `scope`, `track_id`,
+   `is_default`, le `name` du workflow et son `archived_at`. Les inclure ferait déclarer divergente
+   toute copie **dès sa naissance**, ce qui est faux et rendrait la fonction inutilisable sur son
+   cas d'emploi principal. La collection `workflow` du document canonique est donc **absente** du
+   document naturalisé, et le §4 ter.7 dit ce que cela laisse dehors.
+
+Les attributs comparés sont ceux que la copie copie, et eux seuls :
+
+| Collection | Attributs comparés |
+|---|---|
+| `steps` | `node_key`, `position`, `is_initial`, `label_override`, `probability_override`, `stale_after_days` |
+| `transitions` | `label`, `require_comment` |
+| `fields` | `type`, `label`, `options`, `position`, `help_text`, `archived_at` |
+| `rules` | `visibility` |
+| `required_fields` | aucun — l'exigence **est** son identité : elle existe ou elle n'existe pas |
+
+`node_key` figure comme **attribut** et non comme identité : un nœud du catalogue renommé ne doit
+pas transformer une étape en un retrait suivi d'un ajout.
+
+**Mesuré** : les documents naturalisés de la copie du seed et de sa source sont **égaux**. Une copie
+que personne n'a touchée et dont la source n'a pas bougé se compare donc à l'identique, ce qui est
+la seule réponse acceptable.
+
+### 4 ter.4 Le geste
+
+```
+compare_workflow_with_source(workflow_id uuid) returns jsonb
+```
+
+`security invoker`, `stable`, `search_path` vide. Le choix de `invoker` reprend le motif écrit au
+§7 ter.11.2 pour `compare_workflow_versions` : **la politique de lecture de `public.workflows` est
+déjà la règle d'autorisation exacte de ce geste**. Une fonction `definer` devrait la réécrire dans
+son corps, et deux formulations d'une même règle finissent par diverger. Conséquence directe et
+voulue : aucun contrôle de workspace n'est écrit à la main — un workflow d'un autre workspace n'est
+pas donné à lire par la RLS, et le refus rendu est **le même** que pour un identifiant inexistant.
+La fonction n'est donc pas un oracle d'existence.
+
+Un seul argument : la **copie**. La source n'est pas un paramètre, elle est lue dans
+`derived_from_workflow_id`. Passer les deux permettrait de comparer deux workflows sans lien, ce que
+ce chapitre ne spécifie pas et que rien ne demande.
+
+L'algorithme est `app.composition_collection_diff`, livré par `CRM-078` et appelé **cinq** fois.
+Aucune comparaison spécialisée n'est écrite : cinq occasions de diverger sont exactement le défaut
+que l'extraction de cet algorithme a corrigé.
+
+### 4 ter.5 Les refus, dans l'ordre
+
+| # | Condition | Exception | `SQLSTATE` | HTTP (§4.4) |
+|---|---|---|---|---|
+| 1 | appelant non authentifié | `authentification requise` | `42501` | `403`, et `401` pour l'anonyme, refusé par le privilège avant tout |
+| 2 | la copie n'existe pas, ou n'est pas lisible | `workflow introuvable` | `P0001` | `400` |
+| 3 | le workflow n'est la copie de personne | `workflow non derive` | `P0001` | `400` |
+| 4 | la source n'existe plus, ou n'est pas lisible | `source introuvable` | `P0001` | `400` |
+
+Le refus n° 3 est le cas **normal** pour la grande majorité des workflows : n'être la copie de
+personne est l'état ordinaire (§4 bis.5). Il est un refus et non une réponse vide, parce que
+comparer un workflow à une source qui n'existe pas n'a pas de résultat, fût-il vide.
+
+Le refus n° 4 est atteignable malgré `on delete set null` : la clé étrangère met `NULL` quand la
+source est **supprimée**, mais la source peut être devenue illisible pour l'appelant sans avoir
+disparu. Les deux chemins mènent à un refus, jamais à un document trompeur.
+
+### 4 ter.6 Ce que la fonction rend
+
+```json
+{
+  "workflow":  { "workflow_id": "…", "name": "…" },
+  "source":    { "workflow_id": "…", "name": "…", "archived_at": null },
+  "identical": true,
+  "summary":   { "added": 0, "removed": 0, "modified": 0 },
+  "changes":   { "steps": {…}, "transitions": {…}, "fields": {…},
+                 "rules": {…}, "required_fields": {…} }
+}
+```
+
+L'orientation est fixe et écrite : **la source est la base, la copie est la cible**. « Ajouté »
+signifie donc « présent dans la copie, absent de la source ». C'est le sens que l'utilisateur
+attend — il regarde sa copie et demande en quoi elle s'écarte de son origine.
+
+`identical` vaut vrai **si et seulement si** les cinq collections sont vides. À la différence de
+`compare_workflow_versions`, il ne peut pas être fondé sur les empreintes : l'empreinte du §4.6
+condense le document canonique **identifiants locaux compris**, et ceux de deux workflows distincts
+diffèrent toujours. Deux empreintes différentes ne disent donc rien ici, et s'y fier serait une
+fausse preuve. L'invariant est éprouvé **dans les deux sens** par les preuves.
+
+`summary` compte les **éléments**, non les attributs : une étape dont trois attributs changent
+compte pour un seul `modified`. Tous les tableaux sont ordonnés par identité, puis par nom
+d'attribut — une fonction `stable` qui rendrait deux ordres pour la même paire rendrait toute
+assertion instable et tout écran clignotant.
+
+### 4 ter.7 Ce que la fonction ne fait PAS
+
+- **Elle n'écrit rien**, et elle est `stable`. Aucune resynchronisation, aucune réapplication : le
+  §4.1 l'interdit explicitement — « sans jamais réappliquer automatiquement ».
+- **Elle ne compare pas l'en-tête du workflow** — nom, portée, track, défaut, archivage. Le §4 ter.3
+  dit pourquoi : ces attributs sont ceux que la copie ne copie pas, et les comparer rendrait
+  divergente toute copie neuve. Un renommage de la copie n'est donc **pas** un écart, ce qui est
+  cohérent avec le `new_name` du §4.2.
+- **Elle ne dit pas si la source a changé depuis la copie.** C'est le rôle de
+  `source_modified_since_copy` (§4.6), et les deux questions sont distinctes : une copie peut être
+  identique à sa source alors même que celle-ci a changé — si la copie a reçu les mêmes changements.
+- **Aucun écran n'est livré par cette tranche**, et l'écart est nommé : la mention du §4 bis reste
+  sans commande, comme le §4 bis.6 l'exige. Le geste « comparer » de l'interface est dû, et il
+  restera dû après cette tranche.
+
+### 4 ter.8 Contrat d'API attendu
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| a | `POST /rpc/compare_workflow_with_source` sur la copie du seed | `admin` | `200`, `identical` vrai, les trois compteurs à zéro |
+| b | idem | `viewer` | `200` et le **même** document — comparer est une lecture |
+| c | idem | anonyme | `401` — refus par le privilège, avant tout contrôle |
+| d | sur le workflow par défaut, qui n'est la copie de personne | `admin` | `400`, message `workflow non derive` |
+| e | sur un identifiant inexistant | `admin` | `400`, message `workflow introuvable` |
+| f | sur un workflow d'un **autre** workspace | `admin` | `400`, message `workflow introuvable` — jamais un refus qui révèle l'existence |
+| g | une étape de la copie voit sa `position` changée | `admin` | `identical` faux, un `modified` sur `steps`, l'attribut `position` nommé avec son avant et son après |
+| h | une étape retirée de la copie | `admin` | un `removed` sur `steps`, identité `node_id` |
+| i | une transition de la source voit son `label` changé | `admin` | un `modified` sur `transitions`, identité le couple de nœuds |
+| j | un champ renommé dans la copie | `admin` | un `removed` **et** un `added` sur `fields` — jamais un `modified` |
+
+### 4 ter.9 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Existence, volatilité, `search_path` et privilèges des deux fonctions ; le document naturalisé égal entre la copie du seed et sa source ; l'absence de tout identifiant local ; les quatre refus contre des comptes réels ; l'invariant `identical` dans les deux sens ; le renommage d'un champ rendu en retrait + ajout |
+| API | Les dix lignes du §4 ter.8, hors interface, avec les jetons réels des trois profils, chaque dégradation étant **défaite** et l'état d'origine constaté |
+| Interface | **Aucune** — cette tranche ne livre pas d'écran, et le §4 ter.7 le nomme |
 
 ### 4.12 Contrainte d'affectation — `CRM-033`
 
