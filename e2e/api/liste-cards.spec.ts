@@ -38,6 +38,14 @@ import {
 /** Identifiants du seed, mesurés en base le 2026-08-05 (docs/SPEC-seed.md, docs/SPEC-cards.md §9). */
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
+/**
+ * Le channel de VOLUME, posé par `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11). Il porte 27 cards
+ * actives là où tous les autres en portent moins de cinq : c'est le seul du seed dont la vue liste
+ * ait une SECONDE page, et le seul qui porte des données longues.
+ */
+const CHANNEL_MAINTENANCE = '5eed0000-0000-4000-8000-000000000035'
+/** La card aux données longues du §9.11.4 : 128 caractères de titre, 134 de prochaine action. */
+const CARD_DONNEES_LONGUES = '5eed0000-0000-4000-8000-00000000d001'
 const CHANNEL_INTER_ENTREPRISES = '5eed0000-0000-4000-8000-000000000036'
 const CHANNEL_PROSPECTION = '5eed0000-0000-4000-8000-000000000031'
 /** Le seul channel du seed sans aucune affaire depuis `CRM-046` : il est ARCHIVÉ. */
@@ -493,5 +501,109 @@ test.describe('la représentation de `cards.amount` — INC-067', () => {
 		for (const ligne of lignes) {
 			expect(typeof ligne.amount).toBe('number')
 		}
+	})
+})
+
+
+// --- La SECONDE page et les DONNÉES LONGUES, contre la base réelle ----------------------------
+//
+// CE QUE CE BLOC CHANGE, ET IL FAUT LE DIRE. Jusqu'au 2026-08-16, la seconde page et les données
+// longues n'étaient prouvées QUE contre des réponses substituées (`docs/DESIGN_SYSTEM.md` §12.5),
+// le seed ne portant aucun channel de plus de quatre cards actives ni aucun titre de plus de 36
+// caractères. Une substitution prouve que l'écran réagit à une réponse DONNÉE ; elle ne prouve pas
+// que la pile rende celle-là. `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11) comble le manque, et
+// ces scénarios sont ce que la substitution ne pouvait pas rendre.
+
+test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11)', () => {
+	const adresse =
+		`${CARDS}?select=id,title,next_action&channel_id=eq.${CHANNEL_MAINTENANCE}` +
+		`&${FILTRES_ACTIVES}&${ORDRE_TITRE}`
+
+	/** Mesuré en base après application du seed (§9.11.2). */
+	const ACTIVES_MAINTENANCE = 27
+
+	test('le channel porte plus d’une page, et le total est EXACT', async ({ request }) => {
+		const reponse = await request.get(adresse, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-0' },
+		})
+		expect(reponse.status()).toBe(206)
+		expect(reponse.headers()['content-range']).toBe(`0-0/${ACTIVES_MAINTENANCE}`)
+		expect(ACTIVES_MAINTENANCE).toBeGreaterThan(LIGNES_PAR_PAGE)
+	})
+
+	test('la PREMIÈRE page est pleine : exactement 25 lignes', async ({ request }) => {
+		const reponse = await request.get(adresse, {
+			headers: {
+				...enTetesAuthentifies(jetonAdmin),
+				Prefer: 'count=exact',
+				Range: `0-${LIGNES_PAR_PAGE - 1}`,
+			},
+		})
+		expect(reponse.status()).toBe(206)
+		expect(((await reponse.json()) as { id: string }[]).length).toBe(LIGNES_PAR_PAGE)
+	})
+
+	// LA PREUVE QUE LA SUBSTITUTION NE POUVAIT PAS RENDRE : une seconde page réellement servie.
+	test('la SECONDE page existe et porte DEUX lignes, distinctes de la première', async ({
+		request,
+	}) => {
+		const premiere = await request.get(adresse, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Range: `0-${LIGNES_PAR_PAGE - 1}` },
+		})
+		const seconde = await request.get(adresse, {
+			headers: {
+				...enTetesAuthentifies(jetonAdmin),
+				Prefer: 'count=exact',
+				Range: `${LIGNES_PAR_PAGE}-${2 * LIGNES_PAR_PAGE - 1}`,
+			},
+		})
+		expect(seconde.status()).toBe(206)
+		expect(seconde.headers()['content-range']).toBe(
+			`${LIGNES_PAR_PAGE}-${ACTIVES_MAINTENANCE - 1}/${ACTIVES_MAINTENANCE}`,
+		)
+
+		const lignes1 = ((await premiere.json()) as { id: string }[]).map((c) => c.id)
+		const lignes2 = ((await seconde.json()) as { id: string }[]).map((c) => c.id)
+		expect(lignes2.length).toBe(ACTIVES_MAINTENANCE - LIGNES_PAR_PAGE)
+		// L'ordre TOTAL du §12.4 : aucune affaire n'est servie deux fois, donc aucune n'est omise.
+		expect(new Set([...lignes1, ...lignes2]).size).toBe(ACTIVES_MAINTENANCE)
+	})
+
+	test('le rang qui suit la SECONDE page rend le `416` que le module classe', async ({
+		request,
+	}) => {
+		const reponse = await request.get(adresse, {
+			headers: {
+				...enTetesAuthentifies(jetonAdmin),
+				Prefer: 'count=exact',
+				Range: `${ACTIVES_MAINTENANCE + 1}-${ACTIVES_MAINTENANCE + 1}`,
+			},
+		})
+		expect(reponse.status()).toBe(416)
+		expect(((await reponse.json()) as { code?: string }).code).toBe(CODE_PAGE_INEXISTANTE)
+	})
+})
+
+test.describe('les données longues, contre la base réelle (docs/SPEC-seed.md §9.11.4)', () => {
+	test('le seed porte un titre de 128 caractères et une action de 134', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARDS}?select=title,next_action&id=eq.${CARD_DONNEES_LONGUES}`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+		const [card] = (await reponse.json()) as { title: string; next_action: string }[]
+		expect(card!.title.length).toBe(128)
+		expect(card!.next_action.length).toBe(134)
+	})
+
+	// Elle doit se trouver en PREMIÈRE page du tri par défaut, faute de quoi la capture des données
+	// longues ne serait pas atteignable sans un geste de pagination (§9.11.4).
+	test('elle tombe en PREMIÈRE page du tri par défaut', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARDS}?select=id&channel_id=eq.${CHANNEL_MAINTENANCE}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			{ headers: { ...enTetesAuthentifies(jetonAdmin), Range: `0-${LIGNES_PAR_PAGE - 1}` } },
+		)
+		const ids = ((await reponse.json()) as { id: string }[]).map((c) => c.id)
+		expect(ids).toContain(CARD_DONNEES_LONGUES)
 	})
 })
