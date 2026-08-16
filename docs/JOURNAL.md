@@ -16472,3 +16472,57 @@ une session d'une heure.
 **Ce qui n'est PAS acquis.** Seuls deux harnais ont rendu leur verdict dans les conditions
 correctes. Les quarante-huit autres restent à mesurer, et aucun verdict antérieur obtenu sans ces
 deux conditions ne doit être lu comme une régression ni comme une preuve (INC-123).
+## 2026-08-16 — `CRM-079` : le harnais que le §9 interdisait, et le manuel qui manquait
+
+**Point de départ.** La dernière entrée désignait `CRM-079` comme reprise, et le backlog nommait
+exactement trois manques à sa Definition of Done : le harnais dédié, le chapitre de manuel, et une
+preuve d'interface sur un espace de travail neuf. Le code de l'unité était livré et prouvé par les
+sessions du 2026-08-15 ; cette session n'en a donc réécrit aucune ligne.
+
+**Deux des trois manques sont soldés.**
+
+**Le harnais.** Le §9 de `docs/SPEC-onboarding.md` interdisait `scripts/verify-onboarding.sh` tant
+qu'aucun `verify-*.sh` ne serait exécutable ici. Ce motif a disparu — `nvm install 24` pose
+`v24.19.0` / `npm 11.17.0` (`docs/CloudWorker.md` §2.1 bis) —, donc la limite est **levée avec son
+motif écrit**, pas effacée. Le contrat du harnais est écrit au **§8 bis** et **committé avant sa
+première ligne de code** : comptes figés avec leur date de mesure, les cinq dégradations et la règle
+que chacune attaque, ce que le harnais ne prouve pas, et la restauration octet à octet. Verdict :
+**27 contrôles, aucune anomalie**.
+
+Deux choix méritent d'être retrouvés. **Aucun compte pgTAP n'est figé** : `CRM-079` n'ajoute aucune
+migration et n'ouvre aucune politique, ses cinq lectures étant régies par `CRM-020`, `CRM-021`,
+`CRM-040`, `CRM-022` et `CRM-052` — les rejouer ici mesurerait le travail d'autres unités. Et la
+quatrième dégradation était d'abord **INAPPLICABLE**, ce que le harnais a **dit** au lieu de la
+compter verte : un `&` dans le remplacement est substitué par `sed` avec le motif entier, si bien
+que le contrôle `grep -qF` qui suit cherchait une chaîne jamais écrite. Toute dégradation portant un
+`&` a ce défaut ; la reformulation sans `&` est écrite dans le fichier.
+
+**Le manuel.** Le chapitre **1 bis** manquait alors que l'écran est livré (`CLAUDE.md` §7). Il dit
+les cinq étapes et où chacune se fait, puis les trois points qu'un utilisateur ne peut pas deviner :
+l'état est mesuré à chaque affichage — supprimer le dernier track décoche l'étape —, le guide
+rapporte ce que le **compte voit** et non ce qui existe, et le masquage ne survit pas à l'onglet.
+`verify-manual.sh` passe de 113 à **117 contrôles sans anomalie**.
+
+**Campagne.** `verify-onboarding.sh` **27/27** ; `verify-manual.sh` **117/117** ;
+`verify-node-toolchain.sh` **5/5**, recensant désormais **34** harnais Node/npm protégés, le nouveau
+compris ; `test:unit` **1148/1148** sur 42 fichiers ; `typecheck` et `build` verts ;
+`e2e/api/demarrage.spec.ts` **6/6** et `e2e/ui/demarrage.spec.ts` **10/10**, console vierge, rejoués
+par le harnais. **Non exécutés, faute de temps** : `test:sql`, `e2e:api` et `e2e:ui` complets,
+`e2e:mail`, `pytest`, et les quarante-six autres `verify-*.sh` — cette session n'a modifié aucune
+ligne de code applicatif, aucune migration et aucun test existant.
+
+**Un constat étranger, mesuré et NON corrigé.** `verify-scripts.sh` rend **3 anomalies sur 104**,
+compte **inchangé** par rapport à la mesure du 2026-08-15 : deux sont les artefacts d'environnement
+que `docs/CloudWorker.md` §2.4 nomme déjà — `root` lit un `chmod 000`, le proxy TLS fait échouer une
+image reconstruite sans certificat — et la troisième est **INC-120**, déjà consignée et réservée à
+l'arbitrage du responsable.
+
+**Où reprendre.** `CRM-079` reste `[~]` pour **un seul** manque, nommé : le cas « espace de travail
+neuf » n'a aucune preuve d'interface. Le seed accomplit les cinq étapes pour l'administratrice, et
+seul le `viewer` laisse voir une étape à faire ; éprouver un vrai premier lancement demande un
+compte sans aucun objet visible, donc une addition au seed — c'est une unité de travail à elle
+seule, et c'est par elle que la prochaine session ferme `CRM-079`.
+
+**L'environnement, sans redécouverte.** Deux conditions, et les deux sont nécessaires pour les
+harnais qui appellent Playwright : `export NVM_DIR=/opt/nvm ; . /opt/nvm/nvm.sh ; nvm use` dans le
+**même** appel de shell, et `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` (INC-123).

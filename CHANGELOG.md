@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le harnais dédié du guide de démarrage** (`CRM-079`, `scripts/verify-onboarding.sh`,
+  `docs/SPEC-onboarding.md` §8 bis). Il rassemble en une commande les preuves que le §8 laissait
+  dispersées entre cinq fichiers — traçabilité, captures, Vitest, API, interface — et **fige les
+  fichiers autant que les tests**, un compte qui monte étant un écart au même titre qu'un compte
+  qui descend. **27 contrôles, aucune anomalie.** Son contrat a été écrit et committé **avant sa
+  première ligne de code**.
+- **Le harnais est non complaisant** : il dégrade réellement les deux fichiers de l'unité — filtre
+  de corbeille, refus du `count` absent, seuil d'accomplissement, maintien du guide sur une étape
+  non mesurable, garde de session — et exige que la suite unitaire rougisse à chaque fois. La
+  restauration est **constatée octet à octet** contre un instantané pris avant, jamais contre
+  `HEAD`. Une dégradation d'abord inapplicable a été **signalée comme telle plutôt que comptée
+  verte**, puis corrigée.
+- **Le chapitre 1 *bis* du manuel** décrit le parcours du premier lancement : les cinq étapes, où
+  chacune se fait, le fait que leur état est **mesuré à chaque affichage** et jamais mémorisé, que
+  le guide rapporte ce que le compte **voit** et non ce qui existe, et que le masquage est limité à
+  la session sans rien écrire durablement sur l'appareil. Le sommaire gagne sa ligne.
 - **Les écrans du versionnement des workflows** (`CRM-078`, cinquième tranche,
   `docs/SPEC-workflow-engine.md` §7 ter.14). Un sixième bloc, au bas de l'éditeur de workflows,
   rend accessibles à un administrateur les quatre gestes que les tranches précédentes n'offraient

@@ -7456,16 +7456,37 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
 
 *L'unité reste `[~]`, et voici exactement ce qui manque à sa Definition of Done.*
 
-- [x] **`scripts/verify-onboarding.sh` est écrit ET EXÉCUTÉ** — `27 contrôles, aucune anomalie`,
-      mesuré le 2026-08-16. Sa section de non-complaisance couvre notamment la garde du §4.4 :
-      « la garde de session saute — l'accueil mesurerait sans session et salirait la console ». Il
-      constate en outre la restauration **octet à octet** de `GuideDemarrage.tsx` et de
-      `demarrage.ts` après ses dégradations.
-      *Deux conditions d'hôte, mesurées et consignées au §2.1 ter de `docs/CloudWorker.md` :*
+- [x] **`scripts/verify-onboarding.sh` est écrit, exécuté et vert — 2026-08-16.** **27 contrôles,
+      aucune anomalie.** Son contrat est spécifié **avant son code** au §8 bis de
+      `docs/SPEC-onboarding.md` : comptes figés avec leur date de mesure, ce qu'il ne prouve pas, et
+      la restauration constatée octet à octet contre un instantané pris avant — jamais contre `HEAD`.
+      Il fige les **fichiers autant que les tests** (décision 279) : Vitest **2 fichiers / 43
+      tests**, API **6 scénarios**, UI **10 scénarios**, **9 captures**. Il **ne fige aucun compte
+      pgTAP**, et c'est une propriété de l'unité, pas un oubli : `CRM-079` n'ajoute aucune migration
+      et n'ouvre aucune politique — les cinq lectures sont régies par `CRM-020`, `CRM-021`,
+      `CRM-040`, `CRM-022` et `CRM-052`, prouvées par leurs propres suites.
+      **Il est NON COMPLAISANT** : cinq dégradations réelles des deux fichiers de l'unité, chacune
+      attaquant une règle nommée — le filtre de corbeille (§3), le refus du `count` absent (§3.2),
+      le seuil d'accomplissement et le maintien du guide sur une étape non mesurable (§6.2), et la
+      garde de session (§4.4) : « la garde de session saute — l'accueil mesurerait sans session et
+      salirait la console ». **Les cinq sont vues**, et la restauration **octet à octet** de
+      `demarrage.ts` comme de `GuideDemarrage.tsx` est constatée après chacune. La quatrième était
+      d'abord **INAPPLICABLE**, et le harnais l'a dit au lieu de la compter verte : un `&` dans le
+      remplacement est substitué par `sed` avec le motif entier, si bien que le contrôle qui suit
+      cherchait une chaîne jamais écrite. Corrigée, motif écrit dans le fichier.
+      *Deux conditions d'hôte, mesurées et consignées au §2.1 ter de `docs/CloudWorker.md`* :
       `export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`, et **aucun `vite preview`
-      résiduel sur le port 4173**. Sans elles ce harnais rend des échecs qui ne disent rien du
+      résiduel sur le port 4173**. Sans elles, ce harnais rend des échecs qui ne disent rien du
       produit (INC-123).
-- [x] **`docs/manual.md` décrit le parcours du premier lancement**, livré le 2026-08-16.
+      *`scripts/verify-node-toolchain.sh` **5/5**, et il recense désormais **34** harnais Node/npm
+      protégés, le nouveau compris.*
+- [x] **`docs/manual.md` décrit le parcours du premier lancement — chapitre 1 *bis*, 2026-08-16.**
+      Les cinq étapes et où chacune se fait, puis les trois points qu'un utilisateur ne peut pas
+      deviner : l'état est **mesuré à chaque affichage** et non mémorisé — supprimer le dernier
+      track décoche l'étape —, le guide rapporte ce que le compte **voit** et non ce qui existe, et
+      le masquage est limité à la session sans rien écrire durablement sur l'appareil. Écrit
+      d'après les libellés réels du catalogue. Sommaire mis à jour.
+      *`scripts/verify-manual.sh` **117 contrôles sans anomalie**, contre 113 avant le chapitre.*
 - [ ] **Le cas « espace de travail neuf » n'a pas de preuve d'interface.** Le seed accomplit les
       cinq étapes pour l'administratrice, et seul le `viewer` laisse voir une étape à faire : un
       compte sans aucun objet visible reste à construire pour éprouver l'écran d'un vrai premier
