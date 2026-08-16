@@ -1,6 +1,8 @@
 // @verifies CRM-030 (docs/BACKLOG.md) — catalogue de nœuds : lecture, écriture, ordre, archivage
 // @verifies docs/SPEC-workflow-engine.md §2.8 (contrat d'API mesuré, lignes a à m), §2.4 (ordre),
 //           §2.5 (bornes), §2.6 (archivage), §2.7 (autorisations), §2.9 (seed)
+// @verifies docs/SPEC-workflow-engine.md §2 ter.4 (contrat d'API du réordonnancement, lignes a, b,
+//           c), §2 ter.7 (ligne « API »)
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves de refus n° 2, n° 3 et n° 11)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
@@ -588,5 +590,123 @@ test.describe("N6 — l'archivage d'un nœud occupé est refusé (§2.6, §2 bis
 		} finally {
 			await retirerNoeud(request, cle)
 		}
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// N7 — le réordonnancement, §2 ter.4
+// ---------------------------------------------------------------------------------------------
+//
+// LES TROIS LIGNES DU §2 ter.4, ET LA DEUXIÈME EST LA RAISON D'ÊTRE DE CE BLOC. La garde du §2.6
+// est un trigger `BEFORE UPDATE` posé sur TOUTE la table : rien dans son nom ne dit qu'un
+// déplacement y échappe. Elle ne se réveille qu'au passage d'`archived_at` de `NULL` à une valeur.
+// Ce fait est ici MESURÉ sur `prospection`, que le seed occupe de quatre affaires actives — le seul
+// nœud du seed sur lequel la question se pose — plutôt que lu dans le corps de la fonction.
+//
+// Sans ce scénario, un resserrement futur de la garde — un `if` élargi à toute mise à jour — rendrait
+// le catalogue immobile, et l'écran afficherait « des affaires en cours se trouvent encore sur ce
+// nœud » pour un simple déplacement. Aucune autre preuve ne l'annoncerait.
+//
+// CHAQUE SCÉNARIO RESTITUE LA POSITION QU'IL A CHANGÉE, dans son `finally` : le seed pose les
+// positions `1` à `8`, `scripts/verify-seed.sh` et `scripts/verify-catalogue.sh` les comptent, et
+// une preuve oublieuse les ferait rougir ailleurs sans que rien ne dise pourquoi.
+
+test.describe('N7 — réordonnancement (§2 ter.4)', () => {
+	/** Relit une position à la clé de service : elle constate l'état, elle ne prouve aucun refus. */
+	async function positionDe(requete: APIRequestContext, cle: string): Promise<number> {
+		const reponse = await requete.get(`${CHEMIN}?key=eq.${cle}&select=position`, {
+			headers: enTetesService(),
+		})
+		const [ligne] = (await reponse.json()) as { position: number }[]
+		if (ligne === undefined) throw new Error(`nœud introuvable : ${cle}`)
+		return ligne.position
+	}
+
+	/** Rend au seed la position qu'un scénario a changée. */
+	async function restituerPosition(
+		requete: APIRequestContext,
+		cle: string,
+		position: number,
+	): Promise<void> {
+		await requete.patch(`${CHEMIN}?key=eq.${cle}`, {
+			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+			data: { position },
+		})
+	}
+
+	test('a — un administrateur écrit une position FRACTIONNAIRE, et `numeric` la conserve', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const initiale = await positionDe(request, 'relance')
+		try {
+			const reponse = await request.patch(`${CHEMIN}?key=eq.relance`, {
+				headers: {
+					...enTetesAuthentifies(jeton),
+					'Content-Type': 'application/json',
+					Prefer: 'return=representation',
+				},
+				data: { position: 1.5 },
+			})
+			expect(reponse.status()).toBe(200)
+			// LA FRACTION EST LE POINT. `position` est `numeric` et non `integer` précisément pour
+			// qu'un nœud s'insère entre deux autres sans renuméroter la liste (§2.4). Le jour où la
+			// colonne deviendrait entière, `1.5` serait arrondi et l'ordre calculé par
+			// `calculerDeplacement` deviendrait faux en silence — ce contrôle le dirait.
+			expect(Number(((await reponse.json()) as Noeud[])[0]?.position)).toBe(1.5)
+			expect(await positionDe(request, 'relance')).toBe(1.5)
+		} finally {
+			await restituerPosition(request, 'relance', initiale)
+		}
+	})
+
+	test('b — DÉPLACER UN NŒUD OCCUPÉ EST ACCEPTÉ : la garde du §2.6 ne garde que l’archivage', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		const initiale = await positionDe(request, 'prospection')
+		try {
+			// La contre-épreuve du bloc N6, sur LE MÊME nœud et avec LE MÊME jeton : l'archivage y est
+			// refusé en `403`, le déplacement passe en `200`. Les deux mesures côte à côte établissent
+			// que la garde discrimine sur la colonne écrite, et non sur l'occupation seule.
+			const reponse = await request.patch(`${CHEMIN}?key=eq.prospection`, {
+				headers: {
+					...enTetesAuthentifies(jeton),
+					'Content-Type': 'application/json',
+					Prefer: 'return=representation',
+				},
+				data: { position: 2.5 },
+			})
+			expect(reponse.status()).toBe(200)
+			const corps = (await reponse.json()) as Noeud[]
+			expect(corps).toHaveLength(1)
+			expect(Number(corps[0]?.position)).toBe(2.5)
+			// Et le nœud est bien resté ACTIF : le déplacement n'a pas touché `archived_at`.
+			expect(corps[0]?.archived_at).toBeNull()
+		} finally {
+			await restituerPosition(request, 'prospection', initiale)
+		}
+	})
+
+	test('c — un `viewer` reçoit `200` et `[]`, et la ligne relue est INCHANGÉE', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const initiale = await positionDe(request, 'negociation')
+
+		const reponse = await request.patch(`${CHEMIN}?key=eq.negociation`, {
+			headers: {
+				...enTetesAuthentifies(jeton),
+				'Content-Type': 'application/json',
+				Prefer: 'return=representation',
+			},
+			data: { position: 99 },
+		})
+		// La ligne h du §2.8, reconduite sur cette colonne : le `USING` ne refuse pas la ligne, il la
+		// rend invisible, et l'`UPDATE` réussit alors sur zéro ligne. Constater l'absence d'erreur
+		// conclurait ici que l'écriture a réussi.
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+		expect(await positionDe(request, 'negociation')).toBe(initiale)
 	})
 })
