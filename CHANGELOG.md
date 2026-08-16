@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le catalogue de nœuds a son écran d'administration** (`CRM-030`,
+  `docs/SPEC-workflow-engine.md` §2 bis, `docs/DESIGN_SYSTEM.md` §5.18). Cinquième surface
+  d'administration, atteinte par « Réglages ▸ Catalogue de nœuds ». Elle liste le catalogue entier
+  — **les nœuds archivés compris, à leur place** —, crée un nœud, en modifie le libellé, le type, la
+  couleur, la probabilité et le seuil de relance, l'archive et le rétablit. La **clé ne se modifie
+  pas**, et l'écran le dit en phrase plutôt qu'en champ grisé : la comparabilité analytique repose
+  sur elle. Les deux valeurs numériques sont facultatives, et un champ laissé vide arrive en base à
+  `NULL` — jamais à `0`, qui est une valeur du produit et non son absence.
+- **Le refus d'archiver un nœud occupé est traduit avec son compte d'affaires** (`CRM-030`,
+  `docs/SPEC-workflow-engine.md` §2 bis.5). La commande n'est jamais éteinte d'avance : l'écran
+  envoie, la base refuse, et l'alerte écrit combien d'affaires en cours occupent le nœud avec la
+  manœuvre à faire. Ce refus partage son `SQLSTATE` avec celui de la RLS ; les confondre aurait fait
+  lire un refus **rattrapable** comme un refus de droit.
+
+### Corrigé
+
+- **Le §2.6 de `docs/SPEC-workflow-engine.md` décrivait comme « non livrable » une garde livrée
+  depuis `CRM-040`.** La garde d'archivage d'un nœud occupé est posée par la migration 11 depuis le
+  2026-08-08 ; le chapitre écrit en août 2026 n'avait pas été relu. Le texte d'origine est conservé
+  pour son motif, et la mesure du 2026-08-16 est ajoutée. Sa preuve d'API — le refus reçu et sa
+  contre-épreuve sur un nœud libre — manquait aussi : elle est écrite.
+
 - **Le guide de démarrage est éprouvé sur un espace de travail réellement vide** (`CRM-079`,
   `docs/SPEC-onboarding.md` §8 ter). C'est l'écran du **vrai premier lancement**, celui d'un compte
   dont l'espace ne porte encore aucun objet : « 1 étape(s) sur 5 », la première accomplie par la

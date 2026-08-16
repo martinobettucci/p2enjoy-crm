@@ -2257,7 +2257,20 @@ telle.
       `docs/SPEC-permissions-rls.md` §4 et §7, `docs/SPEC-seed.md` §2.7 et §4, `docs/DAT.md` §7 et
       §8, `docs/PROD_MIGRATIONS.md` §3 et §5, `docs/manual.md` §3.2 et sommaire,
       `docs/MASTER_PLAN.md` §3, `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **Le refus d'archivage d'un nœud occupé n'est pas livré.** Son chemin est
+- [x] **LE REFUS D'ARCHIVAGE D'UN NŒUD OCCUPÉ EST LIVRÉ, ET IL L'ÉTAIT DEPUIS `CRM-040`.** Le
+      constat ci-dessous décrivait l'état du 2026-08-04 ; la migration `0011_cards.sql` pose la
+      garde `workflow_nodes_catalog_refuser_archivage_occupe` avec la table qui manquait
+      (décision 111), et l'assertion d'absence de la suite pgTAP est devenue rouge ce jour-là,
+      exactement comme elle avait été écrite pour le faire. **Mesuré le 2026-08-16** avec le jeton
+      réel de l'administratrice : `PATCH archived_at` sur `prospection` rend `403`, `42501` et
+      `node_occupied : 4 card(s) active(s) se trouvent encore sur ce nœud` ; le même appel sur un
+      nœud libre rend `200`, et le désarchivage n'est jamais refusé. La **preuve d'API manquait**
+      malgré tout, et elle est écrite : `e2e/api/catalogue-noeuds.spec.ts` §N6, deux scénarios — le
+      refus reçu avec sa ligne relue inchangée, et sa contre-épreuve sur un nœud libre. Le §2.6 de
+      `docs/SPEC-workflow-engine.md` est corrigé dans le même changement, son texte d'origine
+      conservé pour son motif.
+- [ ] ~~**Le refus d'archivage d'un nœud occupé n'est pas livré.**~~ *(état du 2026-08-04, ci-dessus)*
+      Son chemin est
       `cards.current_step_id → workflow_steps.node_id → workflow_nodes_catalog.id` : il traverse
       `workflow_steps` (`CRM-031`) et `cards` (`CRM-040`). Mesuré : les trois tables rendent `NULL`
       à `to_regclass`. Mesuré aussi, et c'est ce qui a tranché : PostgreSQL **accepte la création**
@@ -2267,26 +2280,72 @@ telle.
       `hasnt_table` et un contrôle du harnais qui deviendront rouges le jour où les tables
       apparaîtront.
       **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
-- [ ] **Aucun E2E d'administration, aucune capture d'application.** Le catalogue n'a **aucun
-      écran** et n'en aura pas avant l'éditeur de workflow de `CRM-031` : il n'existe rien à
-      regarder, et rien à administrer depuis une interface. La webapp reste de surcroît un appelant
-      **anonyme**, faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Le CRUD est
-      livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon.
-      **Cette preuve est bloquée par une dépendance et par un arbitrage, pas par un défaut de
-      l'unité.**
+- [x] **L'ÉCRAN D'ADMINISTRATION EST LIVRÉ, ET L'E2E QUE LA DEFINITION OF DONE EXIGE AVEC LUI.**
+      Les deux motifs de l'absence — INC-021 et « aucun écran » — sont tombés : INC-021 est close
+      depuis `CRM-009`, et le second n'était pas un motif, c'était l'absence elle-même.
+      **Spécification écrite avant le code et committée d'abord** : `docs/SPEC-workflow-engine.md`
+      §2 bis, neuf sections, écrites après mesure sur la pile réelle — chaque code et chaque message
+      du §2 bis.5 observé le 2026-08-16, jamais supposé. `docs/DESIGN_SYSTEM.md` §5.18 porte ses
+      règles visuelles.
+- [x] **Cinquième surface d'administration, et la première dont l'objet est une liste plate** :
+      `webapp/src/app/AdministrationCatalogue.tsx` et `webapp/src/lib/administration-catalogue.ts`,
+      à `/reglages/catalogue`, atteinte depuis l'index des réglages. Une **seule lecture**, sans
+      aucun filtre : ni `workspace_id`, que la RLS borne déjà, ni `archived_at` — l'écart avec la
+      lecture 3 du §7 bis.3, et c'est lui qui rend le rétablissement d'un nœud atteignable.
+- [x] **Quatre gestes** : créer, modifier, archiver, rétablir. La **clé n'est pas modifiable**, et
+      ce n'est pas la base qui le refuse — l'écran ne l'expose pas, parce que le §2.1 fonde la
+      comparabilité analytique sur elle. Elle se rend en **phrase**, jamais en champ désactivé
+      (`docs/DESIGN_SYSTEM.md` §5.15, §5.18).
+- [x] **`0` N'EST PAS `NULL`, ET LA PREUVE LE CONSTATE EN BASE.** Un champ numérique laissé vide
+      arrive à `NULL` : un `Number('')` valant `0`, une lecture naïve aurait écrit « 0 jour » — un
+      seuil qui signalerait toute affaire dès son arrivée (§2.5). Le scénario d'interface relit la
+      ligne créée et exige `default_stale_after_days === null`.
+- [x] **Les deux `42501` sont séparés, et c'est le seul endroit du produit où le message d'une
+      exception est lu.** La garde porte `node_occupied`, la RLS porte `row-level security policy`.
+      Les confondre aurait fait lire un refus **rattrapable** — déplacez les affaires — comme un
+      refus de droit. Le classement porte sur le **jeton**, pas sur la phrase française, et deux
+      preuves le figent : le test unitaire et le scénario d'API §N6.
+- [x] **Test unitaire dédié** : `webapp/src/lib/administration-catalogue.test.ts`, **20 cas**. Les
+      deux plus utiles sont écrits **en négatif** — la lecture n'émet aucun filtre, la modification
+      n'écrit jamais `key` —, parce qu'une régression qui ajouterait l'un ou l'autre ne changerait
+      la forme d'aucune valeur.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/administration-catalogue.spec.ts`, **7 scénarios,
+      verts, console vierge**, sur la vraie base et le vrai seed, **aucune réponse substituée**. Les
+      gestes sont joués à la souris **et** au clavier, chaque effet est **relu en base** après coup,
+      et le refus d'un nœud occupé est obtenu en tentant réellement d'archiver `prospection`, que le
+      seed occupe de quatre affaires actives. Le scénario purge ce qu'il dépose dans son `finally`
+      et **restitue** l'archivage du nœud `qualification` à sa date exacte, sans quoi
+      `scripts/verify-catalogue.sh` rougirait ailleurs sans que rien ne dise pourquoi.
+- [x] **Captures produites ET observées** : `docs/captures/CRM-030/catalogue-liste-{xl-1440,
+      lg-1152, md-900, sm-390}.jpg`, `catalogue-refus-occupe-1440.jpg`,
+      `catalogue-formulaire-1440.jpg`. Observées : la pilule de couleur, la clé en `code`, le type
+      en toutes lettres, la pilule « Archivé » sur `qualification` et le « Rétablir » qui remplace
+      les deux autres commandes, l'alerte de refus dans le flux avec son compte, et le repli des
+      lignes à 390 px sans débordement horizontal de la page.
+- [x] **Le manuel dit l'écran** : chapitre 5 *quater*, cinq sections, et la ligne 19 du sommaire
+      passe de « partiellement livré, sans écran » à « livré et vérifié ».
+- [ ] **RESTE DÛ : le réordonnancement du catalogue.** `position` est une `numeric` et le geste
+      serait un `PATCH`, mais le §2 le note depuis l'origine — « le réordonnancement du catalogue
+      n'a pas d'opération atomique ». `calculerDeplacement` de `CRM-075` couvrirait le cas courant ;
+      il reste à prouver, et il n'est **pas livré à moitié**. C'est le seul manque nommé au
+      §2 bis.8, et c'est lui qui maintient l'unité en `[~]`.
 
-*DoD adaptée, écarts explicites.* La Definition of Done exige « E2E d'administration ». Aucun n'est
-livré, et aucun ne pouvait l'être : cette unité ne livre ni écran ni parcours. Ses preuves sont
-unitaires (pgTAP) et d'intégration (PostgREST, jetons réels, hors interface), ce que la nature
-d'une table de référence commande. **Aucune vérification visuelle** pour la même raison — et non
-parce qu'elle aurait été omise.
+*DoD adaptée, écarts explicites — RÉVISÉE LE 2026-08-16.* Le paragraphe qui suivait disait que
+« E2E d'administration » ne pouvait pas être livré, cette unité ne livrant ni écran ni parcours.
+**Les deux termes ont cessé d'être vrais** : l'écran est livré, l'E2E d'administration l'est avec
+lui, et la vérification visuelle a eu lieu. Les preuves unitaires (pgTAP) et d'intégration
+(PostgREST, jetons réels, hors interface) restent celles de la table ; elles s'ajoutent désormais à
+une preuve d'interface au lieu d'en tenir lieu.
 
 *Limites nommées, non masquées.*
 
-- **La garde d'archivage manque** (INC-031, ci-dessus). Ce qui manque n'est pas la règle — elle est
-  écrite au §2.6 — mais la jointure qui remonte d'un nœud à ses cards.
-- **Aucune donnée du catalogue ne peut apparaître dans l'interface tant qu'INC-021 n'est pas
-  tranchée.** Quatrième unité consécutive du chunk 3 à buter sur le même obstacle.
+- ~~**La garde d'archivage manque**~~ — livrée par `CRM-040`, mesurée et prouvée le 2026-08-16.
+- ~~**Aucune donnée du catalogue ne peut apparaître dans l'interface tant qu'INC-021 n'est pas
+  tranchée.**~~ — INC-021 close par `CRM-009` ; l'écran est livré.
+- **Le réordonnancement reste le seul manque de l'unité** (§2 bis.8).
+- **L'occupation d'un nœud n'est pas affichée avant le geste** : le compte demanderait une jointure
+  que PostgREST n'expose pas au client, et l'anticiper serait un contrôle d'interface là où la base
+  en tient un. Le nombre est rendu par le refus lui-même.
 - **L'administration du catalogue est une opération d'exploitation**, pas un parcours produit —
   même nature qu'INC-015 pour l'invitation et que les constats de `CRM-020` et `CRM-021`.
 - **Sur les douze preuves de refus de `docs/SPEC-permissions-rls.md` §7**, les n° 2, 3 et 11 sont

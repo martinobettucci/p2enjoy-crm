@@ -195,7 +195,9 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trois ouvertes à ce jour : INC-123, INC-124 et INC-125**, consignées par les deux sessions `CRM-079` du
+**Quatre ouvertes à ce jour : INC-123, INC-124, INC-125 et INC-126** — la dernière consignée le
+2026-08-16 par la session `CRM-030` (la proposition de clé perd la ligature « œ »). Les trois
+premières, consignées par les deux sessions `CRM-079` du
 2026-08-15 (navigateur absent pour les scénarios Roundcube ; `WARNING` de `mail-sync` interdit par
 la preuve S3). Les trois précédentes — **INC-120, INC-121 et INC-122**, consignées le 2026-08-15 (garde des élévations de privilège des
 migrations ; compteurs figés de `verify-preuves-refus.sh` ; identifiant non épinglé du workflow
@@ -345,3 +347,36 @@ répétition.
 passage. Les remettre à jour sans traiter la cause — la révision qui n'est due à personne —
 reviendrait à repousser la même dérive d'une poignée d'unités. Le porteur est `CRM-008`, l'unité du
 harnais de tests.
+
+---
+
+### INC-126 — la proposition de clé est inutilisable pour tout libellé portant « œ »
+
+*Porteur : `CRM-075` (`proposerSlug`). Mesuré le 2026-08-16 par la session `CRM-030`, dans la preuve
+d'interface du catalogue de nœuds.*
+
+`proposerSlug` propose un slug depuis un nom : elle décompose en NFD, retire les diacritiques, puis
+remplace tout ce qui n'est ni lettre latine ni chiffre par un tiret. **Mesuré** : « Nœud de preuve »
+rend `n-ud-de-preuve`.
+
+La cause est écrite au §5.1 de `docs/SPEC-administration-arborescence.md` — « ce qui n'est pas
+décomposable n'est pas translittéré » — et la mesure la confirme : `'œ'.normalize('NFD')` rend `'œ'`,
+la **ligature** n'étant pas une lettre accentuée. Le comportement est donc conforme à sa
+spécification. Ce qui n'y avait pas été vu, c'est sa portée : « œ » n'est pas un caractère exotique
+en français — *nœud*, *cœur*, *sœur*, *manœuvre*, *œuvre* —, et le premier objet que l'écran neuf
+propose de nommer s'appelle précisément « nœud ».
+
+**La conséquence n'est pas une faute**, et c'est ce qui rend l'entrée utile plutôt qu'urgente : le
+champ reste modifiable, la contrainte `key_check` accepte `n-ud-de-preuve`, et la proposition n'a
+jamais été qu'une commodité. Ce que le produit livre est une proposition **silencieusement
+dégradée** : rien ne signale à l'utilisateur que la clé proposée a perdu une lettre.
+
+**Comportement laissé inchangé** (`docs/CloudWorker.md` §3.1). Le défaut appartient à `CRM-075`, qui
+porte `proposerSlug`, et le corriger au passage depuis `CRM-030` toucherait les tracks et les
+channels — dont les slugs sont des **adresses partagées** (`/tracks/:slug`), là où la clé d'un nœud
+ne l'est pas. La preuve d'interface de `CRM-030` **constate** la valeur mesurée au lieu de choisir
+un libellé qui l'éviterait : le jour où la translittération des ligatures sera ajoutée, cette
+assertion rougira et désignera l'endroit à mettre à jour.
+
+**Ce que ce n'est pas** : une demande d'arbitrage. Ajouter `œ → oe`, `æ → ae` et `ß → ss` à la
+normalisation est un choix que la mesure tranche seule ; il reste à faire, sous son unité porteuse.

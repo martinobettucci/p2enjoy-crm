@@ -16585,3 +16585,55 @@ inchangé, porteur `CRM-008`.
 **Où reprendre.** `CRM-079` est **close**. La prochaine session prend l'unité suivante du plan
 — `CRM-080`, sauvegardes chiffrées et restauration prouvée, `[ ]` — ou la première `[~]` restante
 dans l'ordre du plan.
+
+## 2026-08-16 — `CRM-030` : l'écran du catalogue, et une garde livrée que trois documents disaient absente
+
+**Point de départ.** La dernière entrée fermait `CRM-079` et renvoyait à « l'unité suivante du plan
+ou la première `[~]` restante dans l'ordre du plan ». C'est `CRM-030` : `CRM-001`, `CRM-013` et
+`CRM-014` la précèdent mais leurs manques sont **bloqués par des dépendances** — des tables qui
+n'existent pas —, tandis que `CRM-030` portait deux manques de **comportement**.
+
+**Le premier manque n'en était plus un, et la mesure l'a montré avant qu'une ligne soit écrite.**
+Le backlog, le §2.6 de `docs/SPEC-workflow-engine.md` et l'en-tête de `scripts/verify-catalogue.sh`
+disaient tous trois que le refus d'archiver un nœud occupé n'était pas livrable, ses tables
+n'existant pas. **Il est livré depuis `CRM-040`** : `supabase/migrations/0011_cards.sql` pose
+`workflow_nodes_catalog_refuser_archivage_occupe`, et la suite pgTAP du catalogue le NOMME déjà —
+l'assertion d'absence, écrite pour devenir rouge ce jour-là, l'était devenue et avait été révisée.
+Seule la prose ne l'avait pas suivie. Mesuré le 2026-08-16 : `PATCH archived_at` sur `prospection`
+rend `403`, `42501`, `node_occupied : 4 card(s) active(s) se trouvent encore sur ce nœud`. Ce qui
+manquait réellement était la **preuve d'API** du refus, écrite ici (§N6, deux scénarios).
+
+**Le second manque était l'écran, et c'est l'unité de la session.** Spécification écrite après
+mesure et **committée avant la première ligne de code** — `docs/SPEC-workflow-engine.md` §2 bis,
+`docs/DESIGN_SYSTEM.md` §5.18. Cinquième surface d'administration, à `/reglages/catalogue` : une
+seule lecture sans aucun filtre — ni `workspace_id`, que la RLS borne, ni `archived_at`, dont
+l'absence est ce qui rend le rétablissement atteignable —, quatre gestes, et la clé rendue en
+phrase parce que le §2.1 fonde la comparabilité analytique sur elle.
+
+**Deux décisions méritent d'être retrouvées.** La première : **les deux `42501` sont séparés sur le
+message**, ce qui fait de ce module le seul endroit du produit où le texte d'une exception est lu.
+`classerRefusEcriture` les range ensemble sous `forbidden`, ce qui est exact du point de vue du
+code et faux du point de vue de l'utilisateur — l'un se rattrape en déplaçant des affaires, l'autre
+ne se rattrape pas. Le classement porte sur le **jeton** `node_occupied`, pas sur la phrase, et deux
+preuves le figent. La seconde : **un compte absent ne devient jamais `0`**. « 0 affaire occupe ce
+nœud » serait la contradiction exacte du refus qu'on affiche ; la phrase sans compte est une clé
+distincte.
+
+**Preuves exécutées.** `test:unit` **1172/1172** sur 43 fichiers, dont les 20 cas neufs ;
+`typecheck` vert sur les quatre projets ; `e2e/ui/administration-catalogue.spec.ts` **7/7**, console
+vierge, gestes joués à la souris et au clavier, chaque effet relu en base ;
+`e2e/api/catalogue-noeuds.spec.ts` **27/27** (25 avant). Captures aux quatre paliers plus le refus
+et le formulaire, **produites et observées**.
+
+**Un constat étranger, mesuré et NON corrigé — INC-126.** `proposerSlug` rend `n-ud-de-preuve` pour
+« Nœud de preuve » : la **ligature** « œ » n'est pas décomposable en NFD, elle tombe donc dans le
+remplacement générique. Conforme à sa spécification, et sans portée mesurée jusqu'ici — « œ » n'est
+pas exotique en français, et le premier objet que l'écran neuf propose de nommer s'appelle « nœud ».
+Le défaut appartient à `CRM-075`, dont les slugs sont des adresses partagées là où la clé d'un nœud
+ne l'est pas. La preuve d'interface **constate** la valeur mesurée au lieu de choisir un libellé qui
+l'éviterait : la translittération ajoutée un jour la rendra rouge.
+
+**Où reprendre.** `CRM-030` reste `[~]` pour **un seul** manque, nommé au §2 bis.8 : le
+**réordonnancement** du catalogue. `calculerDeplacement` et `positionEntre` de `CRM-075` couvrent le
+calcul ; ce qui reste est la commande, son E2E et sa capture. C'est une demi-session, et c'est par
+elle que `CRM-030` se ferme.
