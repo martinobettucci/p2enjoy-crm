@@ -336,6 +336,15 @@ session n'ajoute **aucune** suite pgTAP et **aucun** scénario d'API : les deux 
 sont entièrement étrangers. Elle ajoute **un** scénario d'interface, soit 1 des 45 du troisième :
 l'anomalie était déjà là à 285, et le resterait sans ce commit.
 
+**MESURE DE PLUS, LE 2026-08-16, PAR LA SESSION `CRM-037` DU PARCOURS ENCHAÎNÉ.** Campagne complète
+sur pile debout et seedée : `test:sql` **41 fichiers, 2161 assertions**, `e2e:api` **652
+scénarios**, `e2e:ui` **340 scénarios** — les trois vertes. Les trois garde-fous restent donc figés
+à 36 / 2003, 514 et 241, et l'écart s'est **creusé** depuis la mesure ci-dessus, sans qu'aucune
+régression soit en cause. Cette session ajoute **2** des 99 scénarios d'interface d'écart :
+l'anomalie serait là à 338 sans ce commit. **Rien n'est corrigé** : ces compteurs sont sous
+arbitrage ici même, et les relever au passage reviendrait à verdir un garde-fou sans que personne
+n'ait décidé qui doit le tenir à jour — ce qui est précisément la question posée.
+
 **INC-101, close le 2026-08-14, portait exactement ce constat** — « les cinq garde-fous globaux de
 `verify-harness.sh` étaient périmés ». Le mode de défaillance s'est donc reproduit en deux jours,
 ce qui est l'information utile ici : ces compteurs sont révisés par une session qui les remarque,
