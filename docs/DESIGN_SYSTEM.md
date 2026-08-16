@@ -242,6 +242,50 @@ directement sur le formulaire. Ce que l'en-tête **lit** et **compose** est spé
   champ archivé et du §5.18 pour un nœud, reprise sans changement. Sans elle, la fiche d'une affaire
   close serait indistinguable de celle d'une affaire en cours.
 
+### 5.3 ter Édition des champs d'en-tête — `CRM-040`
+
+Le §5.3 bis dit de quoi l'en-tête a l'air en **lecture**. Ce que la tranche d'écriture envoie, refuse
+et mesure est spécifié dans `docs/SPEC-cards.md` §15 bis ; les règles ci-dessous ne disent que de
+quoi elle a l'air. Tout ce que le §5.7 ter pose pour un champ qui s'enregistre pour lui-même vaut ici
+sans être répété : mention d'état sous le champ, trois mentions jamais deux à la fois, confirmation
+qui remplace l'envoi, contrôle jamais désactivé, refus qui n'efface pas la saisie.
+
+- **L'en-tête BASCULE entre lecture et édition ; il ne porte pas six contrôles en permanence.**
+  L'identité de l'affaire se lit avant son dossier (§5.3 bis), et six contrôles permanents feraient
+  ouvrir la fiche sur deux formulaires empilés. La bascule résout en outre ce que l'édition en place
+  ne résout pas : une donnée absente n'a **pas de ligne** en lecture, et n'aurait donc aucun endroit
+  où être saisie. En édition, les six contrôles sont tous rendus, vides compris.
+
+- **La commande est « Modifier », secondaire compacte, icône `PencilLine`** — celle de la famille
+  « Champs » du fil (§5.11), puisque c'est le même genre de fait. Elle porte `aria-expanded`, et son
+  nom accessible nomme ce qu'elle modifie : « Modifier les informations de l'affaire ».
+
+- **Aucun bouton d'enregistrement, et une commande « Terminer » qui n'envoie rien.** C'est le §5.7
+  ter appliqué à l'en-tête : chaque champ écrit sa propre valeur dès qu'elle est arrêtée. « Terminer »
+  revient à la lecture, elle ne valide pas — la nommer « Enregistrer » promettrait une écriture qui a
+  déjà eu lieu.
+
+- **Le focus entre dans le premier contrôle à l'ouverture, et revient à la commande à la fermeture**
+  (§5.13). Les deux défauts que cette règle évite ont été mesurés au §5.10 par la preuve clavier.
+
+- **La commande n'est jamais éteinte d'avance, quel que soit le rôle** — la règle du §5.3 et du
+  §5.16. MESURÉ, un lecteur seul reçoit `200` et **zéro ligne** : ni un succès, ni une erreur. L'écran
+  le dit en toutes lettres, exactement comme l'issue « sans effet » du §5.3. Annoncer « Enregistré »
+  sur zéro ligne serait la simulation de succès que `CLAUDE.md` §18 interdit.
+
+- **Le montant et la devise sont deux contrôles distincts, côte à côte**, et deux écritures
+  distinctes. La devise est un champ de trois caractères, jamais une liste fermée : la base ne
+  contraint que la **forme** du code, et en fermer une à l'écran interdirait une devise qu'elle
+  accepte — le motif qui interdit déjà `style: 'currency'` au rendu (§5.3 bis).
+
+- **Aucune garde de saisie ne double une contrainte de la base.** Pas de `required` sur le titre, pas
+  de `min` sur le montant : un titre vide et un montant négatif sont **envoyés**, et c'est la base qui
+  tranche (`CLAUDE.md` §10). Un montant négatif est d'ailleurs mesuré **accepté** — le refuser à
+  l'écran poserait une règle de produit que personne n'a prise.
+
+- **Une affaire archivée reste modifiable, et sa pilule ne devient pas un verrou.** MESURÉ, la base
+  accepte l'écriture ; éteindre les contrôles ferait passer un état pour un refus qui n'existe pas.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des

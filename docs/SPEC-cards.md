@@ -2139,3 +2139,285 @@ des traductions.
 | API | Les faits mesurés du §15.3 rejoués : l'ambiguïté `PGRST201`, la relation désambiguïsée, l'embarquement du domaine, et le refus anonyme |
 | E2E d'interface | Contre le **build de production**, sur une session réelle : l'en-tête d'une affaire du seed avec ses six données, l'affaire sans responsable ni montant, et l'affaire archivée |
 | Visuel | Captures observées aux paliers du §7 du design system |
+
+## 15 bis. Écrire les six champs d'en-tête — `CRM-040`
+
+Ce chapitre est écrit **avant la première ligne de code** de la tranche qui livre l'écriture, et
+**après mesure** sur la pile réelle le 2026-08-16 : jetons obtenus par la route de connexion réelle
+des trois comptes seedés, `PATCH` sur `/rest/v1/cards` avec les cards `…0000c6` et `…0000c8`, codes
+HTTP et `SQLSTATE` relevés à la main, état du seed restauré après chaque mesure. Les valeurs citées
+ne sont pas supposées.
+
+Il existe parce que le §15.1 posait « elle ne livre pas l'écriture de ces champs » en nommant
+l'écart plutôt qu'en le masquant, et que le §15.9.1 le désignait comme « une tranche, pas un
+blocage ». Aucune règle métier n'est créée ici : `CRM-040` livre déjà la table, ses politiques et
+ses privilèges de colonne, et `CRM-013` a fermé les deux colonnes qui devaient l'être. Ce chapitre
+décrit **le chemin vers elles**, et rien d'autre.
+
+### 15 bis.1 Ce que le geste est, et ce qu'il n'est pas
+
+Le geste est : **corriger, depuis la fiche, l'une des six données d'en-tête d'une affaire** — son
+titre, son responsable, son montant, sa devise, sa prochaine action et l'échéance de celle-ci.
+
+Il n'est pas :
+
+- une transition — `current_step_id` est **fermée par privilège** (mesure `j` du §15 bis.8) et
+  appartient à `move_card` (`CRM-034`) ;
+- une modification de l'adresse — `email_local_part` est fermée par le même mécanisme (`CRM-013`) ;
+- la saisie d'un champ de formulaire — c'est le §4 bis de `docs/SPEC-form-composer.md`, geste
+  distinct sur une table distincte ;
+- la création d'une affaire, ni son archivage, ni sa mise à la corbeille — la première n'a aucun
+  écran, la deuxième aucun geste, la troisième est livrée par `CRM-077` en bas de la même colonne.
+
+Les six colonnes sont celles que le §15.1 nomme, et la mesure confirme qu'elles sont **exactement**
+celles que `authenticated` peut écrire parmi les données d'en-tête. `description`,
+`probability_override`, `position` et `snoozed_until` sont ouvertes en base mais **hors de cette
+tranche** : aucune n'atteint l'en-tête en lecture (§15.4), et livrer l'écriture d'une donnée que
+l'écran ne montre pas inventerait une règle de produit.
+
+### 15 bis.2 Un champ, une écriture — et la mesure qui l'impose
+
+L'écriture est **par champ**, comme au §4 bis.2 du composeur, et ici la mesure est plus contraignante
+encore : **chaque colonne a son refus propre, et ils ne se ressemblent pas**.
+
+```
+title = ""                    => 400  23514  cards_title_check
+currency = "eur"              => 400  23514  cards_currency_check
+next_action_at = "pas-une-date" => 400  22007  invalid input syntax for type timestamp with time zone
+owner_id = <uuid inconnu>     => 409  23503  cards_owner_id_fkey
+```
+
+Un `PATCH` portant plusieurs colonnes est **une seule instruction** : une devise mal formée ferait
+échouer le titre saisi en même temps, et l'écran n'aurait qu'un refus global là où le §5.7 du design
+system exige l'erreur **au niveau du champ**. MESURÉ, le lot fonctionne — `{"amount":1234.5,
+"currency":"USD"}` rend `200` — ; ce n'est pas une impossibilité technique, c'est une perte
+d'attribution que le produit refuse.
+
+Écrire champ par champ rend en outre chaque écriture **indépendante** : un refus sur la devise laisse
+le titre enregistré, ce qui est le comportement honnête.
+
+### 15 bis.3 Le moment de l'écriture
+
+| Contrôle | Déclencheur |
+|---|---|
+| titre, montant, devise, prochaine action, échéance | **perte du focus** (`blur`), et seulement si la valeur a changé |
+| responsable | **changement** (`change`) — c'est une liste |
+
+La règle et son motif sont ceux du §4 bis.3, sans changement : écrire à chaque caractère produirait
+une requête par touche, et pour le responsable un événement `assigned` par touche dans le fil de
+`CRM-044` (§15 bis.6). Le changement pour la liste : sa valeur est complète dès qu'elle est choisie.
+
+**Aucune écriture n'est émise si la valeur n'a pas changé**, la comparaison portant sur la valeur
+**normalisée** (§15 bis.4) et non sur le texte saisi.
+
+### 15 bis.4 Ce qui est écrit, et sous quelle forme
+
+| Donnée | Colonne | Ce qui est envoyé | Vidé |
+|---|---|---|---|
+| Titre | `title` | la chaîne **sans `trim`** | impossible : la contrainte le refuse (§15 bis.5) |
+| Responsable | `owner_id` | l'`uuid` choisi | `null` — « Aucun responsable » est une option de la liste |
+| Montant | `amount` | un **nombre** JSON | `null` |
+| Devise | `currency` | trois lettres **en majuscules** | impossible : la colonne est `NOT NULL` (mesure `g`) |
+| Prochaine action | `next_action` | la chaîne sans `trim` | `null` |
+| Échéance | `next_action_at` | l'horodatage rendu par le contrôle | `null` |
+
+**Sans `trim`, et c'est la décision du §4 bis.4 reprise sans changement** : rogner à l'écriture ferait
+diverger ce que l'utilisateur voit de ce que la base porte. La différence avec le composeur est que
+`cards_title_check` **refuse** une chaîne de blancs — mesuré, `"   "` rend `23514` comme `""` —, si
+bien que l'écran n'a pas à décider ce qu'une telle saisie signifie : la base le décide, et le refus
+est montré.
+
+**La devise est mise en majuscules par l'écran, et ce n'est pas une validation.** MESURÉ, `"eur"`
+est refusé en `23514` : la contrainte porte sur la **forme**, trois lettres majuscules. Passer la
+saisie en majuscules épargne un refus que l'utilisateur ne comprendrait pas — il a bien tapé sa
+devise — sans jamais décider à la place de la base : une saisie de quatre lettres reste envoyée, et
+son refus reste montré.
+
+**Aucune liste fermée de devises.** La base ne contraint que la forme du code, jamais sa liste
+réelle (§2.1) : en fermer une à l'écran interdirait une devise que la base accepte. C'est le motif
+qui interdit déjà `style: 'currency'` au rendu (§15.4), vu depuis l'écriture.
+
+**`updated_at` n'est pas écrite** : MESURÉ, le trigger l'avance de lui-même à chaque `PATCH`
+(`11:28:29.131417+00:00` observé après la mesure `a`). L'écrire depuis le client serait une seconde
+version de la même information, qui pourrait la contredire — c'est le motif du §4 bis.4 pour
+`updated_by`.
+
+### 15 bis.5 Ce que le produit N'invente PAS
+
+Trois refus appartiennent à la base et **ne sont pas anticipés par l'écran** :
+
+1. **Un titre vide n'est pas rattrapé côté écran.** Aucun `required` HTML, aucune garde de saisie :
+   la contrainte `cards_title_check` est la règle, et une garde d'interface qui la doublerait ferait
+   passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10). Le contrôle envoie, la
+   base refuse, l'écran dit le refus.
+2. **Un montant négatif est ACCEPTÉ.** MESURÉ, `{"amount":-500}` rend `200` : `amount` n'est pas
+   contraint en signe, limite déjà nommée par le §10 et **figée par une assertion**. L'écran ne pose
+   donc aucun `min` : refuser un négatif à l'écran serait une règle de produit que personne n'a
+   prise, et le §10 dit exactement cela.
+3. **Une affaire archivée reste modifiable.** MESURÉ, `PATCH` sur `…0000c8` rend `200`. L'écran
+   **n'éteint rien** : la pilule « Archivé » du §15.4 dit l'état, elle ne le transforme pas en refus
+   que la base ne prononce pas.
+
+### 15 bis.6 Le responsable, et la seule écriture qui laisse une trace
+
+**La liste des membres est lue, et pas devinée.** L'option « Aucun responsable » plus une entrée par
+membre du workspace de l'affaire :
+
+```
+GET /rest/v1/workspace_members?select=user_id,role,profiles(id,full_name,avatar_url)
+                              &workspace_id=eq.<workspace de la card>
+```
+
+MESURÉ : la relation `profiles` n'est **pas** ambiguë ici — une seule clé étrangère de
+`workspace_members` la désigne —, et s'écrit donc simplement, à la différence de celle de `cards`
+(§15.3). Elle rend les trois membres du seed à l'`admin` **comme au `viewer`** (§3.3 de
+`docs/SPEC-identite.md` : le nom d'un collègue est une donnée d'équipe), et `[]` à un appelant
+anonyme.
+
+**Elle n'est émise qu'à l'ouverture de l'édition**, jamais au chargement de la fiche. L'en-tête est
+d'abord une lecture (§15.1) ; charger la liste des membres pour un geste que la plupart des visites
+ne font pas serait une requête gratuite sur l'écran le plus ouvert du produit.
+
+**Le nom affiché après un changement vient de cette liste, jamais d'une relecture.** La
+représentation rendue par le `PATCH` ne porte pas la relation embarquée : relire la card entière pour
+un nom déjà en main serait un aller-retour gratuit, et le §4 bis.8 a déjà tranché ce cas.
+
+**Changer le responsable est la SEULE des six écritures qui laisse une trace dans le fil**, et c'est
+mesuré, non supposé :
+
+```
+{"type":"assigned",
+ "payload":{"from_owner_id":null,"to_owner_id":"…000012"},
+ "actor_id":"…000011"}
+```
+
+Le titre, le montant, la devise, la prochaine action et l'échéance n'engendrent **aucun** événement :
+la mesure a relu `card_events` après chacune et n'y a trouvé que l'`assigned` ci-dessus. Ce n'est
+**pas** un écart à corriger dans cette tranche — les dix types livrés par `CRM-044` sont ce que le
+§14.4 énumère, et en ajouter un demanderait un trigger, donc une migration, donc `CRM-044`. L'écart
+est **nommé** ici (§15 bis.10, point 2) plutôt que comblé au passage.
+
+`actor_id` est posé par le serveur à partir de la session réelle : l'écran ne le fournit jamais.
+
+### 15 bis.7 Les issues, dictionnaire fermé — et la quatrième n'est pas un refus
+
+Cinq issues, classées sur le code HTTP et le `SQLSTATE`, **jamais** sur le message du serveur.
+
+| Issue | Mesure | Ce que l'écran dit |
+|---|---|---|
+| `enregistree` | `200` **et au moins une ligne** rendue | « Enregistré » (§5.7 ter) |
+| `sans-effet` | `200` **et zéro ligne** | le droit d'écrire sur cette affaire manque |
+| `invalide` | `400`, `23514` ou `22007` | la valeur ne convient pas à ce champ |
+| `introuvable` | `409`, `23503` | la personne choisie n'est plus membre — rouvrir la liste |
+| `refus` | `403`, `42501` | l'enregistrement a échoué (colonne fermée : hors du geste, §15 bis.1) |
+| `reseau` | aucune réponse | la connexion a échoué, réessayer |
+| `inconnu` | tout le reste | l'enregistrement a échoué |
+
+**LA QUATRIÈME LIGNE EST LA DÉCOUVERTE DE CETTE MESURE, et elle contredit ce qu'on attendait.** Le
+`viewer` qui **voit** une affaire et tente d'en écrire le titre ne reçoit **pas** `403` :
+
+```
+PATCH /rest/v1/cards?id=eq.…0000c6   (jeton réel du viewer)
+=> 200   []
+```
+
+La politique `cards_maj` filtre par sa clause `USING` **avant** la mise à jour : aucune ligne n'est
+candidate, aucune erreur n'est levée, et PostgREST rend un tableau vide. C'est exactement la
+troisième issue du geste de mise à la corbeille (`docs/SPEC-corbeille.md` §4 ter.3), et le produit la
+traite de la même façon : **ni un succès, ni une erreur d'application**, mais un état que l'écran
+nomme. Annoncer « Enregistré » sur zéro ligne serait la « simulation de succès » que `CLAUDE.md` §18
+interdit — et c'est le piège que cette mesure a évité.
+
+**La conséquence sur la forme de la requête est obligatoire** : le `PATCH` porte
+`Prefer: return=representation`, sans quoi PostgREST rend `204` et **aucun corps**, et les deux
+premières issues deviendraient indistinguables.
+
+**L'écran n'éteint aucune commande d'avance en fonction du rôle**, exactement comme le geste de mise
+à la corbeille (§5.3 du design system) et la saisie de valeur (§4 bis.7) : la règle vit dans la
+politique RLS, et le refus est **montré**, jamais anticipé.
+
+### 15 bis.8 Contrat d'API, mesuré
+
+Quinze lignes, mesurées le 2026-08-16 sur la pile réelle avant d'être écrites. L'état du seed a été
+restauré après la série.
+
+| # | Appelant | Geste | Mesuré |
+|---|---|---|---|
+| a | `admin` | `PATCH title` sur `…0000c6` | `200`, la ligne modifiée, `updated_at` avancé par trigger |
+| b | `viewer` | `PATCH title` sur une affaire qu'il **voit** | **`200` et zéro ligne** — jamais `403` |
+| c | `bizdev` | `PATCH title` | `200`, la ligne modifiée — la politique porte sur le droit d'écriture du channel, pas sur un rôle |
+| d | `admin` | `title = ""` | `400`, `23514`, `cards_title_check` |
+| e | `admin` | `title = "   "` | `400`, `23514` — la base traite les blancs comme le vide |
+| f | `admin` | `amount = -500` | **`200`** — aucune contrainte de signe (§10) |
+| g | `admin` | `currency = null` | `400`, `23502` — colonne `NOT NULL` |
+| h | `admin` | `currency = "eur"` ou `"EURO"` | `400`, `23514`, `cards_currency_check` |
+| i | `admin` | `next_action_at = "pas-une-date"` | `400`, `22007` |
+| j | `admin` | `owner_id` = `uuid` inconnu | `409`, `23503`, `cards_owner_id_fkey` |
+| k | `admin` | `current_step_id` | `403`, `42501` — privilège de colonne (`CRM-034`) |
+| l | `admin` | `email_local_part` | `403`, `42501` — privilège de colonne (`CRM-013`) |
+| m | `admin` | les quatre colonnes nullables à `null` | `200`, vidées |
+| n | `admin` | changement d'`owner_id` | `200`, **et un événement `assigned`** portant `from_owner_id`, `to_owner_id` et l'`actor_id` réel |
+| o | `admin` | `PATCH` sur l'affaire **archivée** `…0000c8` | `200` — l'archivage ne ferme pas l'écriture |
+
+### 15 bis.9 Interface, accessibilité et états
+
+**L'en-tête bascule entre lecture et édition ; il ne porte pas six contrôles en permanence.** Le
+motif est celui du §15.2 : l'en-tête dit **ce qu'est** l'affaire, là où le formulaire dit ce qu'on en
+sait. Six contrôles permanents en feraient un second formulaire au-dessus du formulaire, et la fiche
+ouvrirait sur deux formulaires empilés.
+
+La bascule résout en outre un problème que l'édition en place ne résout pas : **une donnée absente
+n'a pas de ligne** (§15.4). Le montant d'une affaire qui n'en a pas, la prochaine action d'une
+affaire qui n'en a pas, ne sont rendus **nulle part** — et sans mode d'édition, il n'existerait aucun
+endroit où les saisir. En édition, les six contrôles sont **tous** rendus, vides compris. C'est la
+quatrième destination du §4 ter.4 du composeur, transposée : un champ que la lecture omet reste
+saisissable.
+
+Le geste porte donc :
+
+- une commande **« Modifier »** dans l'en-tête, secondaire compacte, icône `PencilLine` — celle de la
+  famille « Champs » du fil (§5.11), puisque c'est le même genre de fait ;
+- en édition, **aucun bouton d'enregistrement** : chaque champ écrit sa propre valeur (§5.7 ter), et
+  une commande **« Terminer »** revient à la lecture sans rien envoyer ;
+- **le focus entre dans le premier contrôle** à l'ouverture et **revient à la commande** à la
+  fermeture — la règle du §5.13, dont le §5.10 a déjà mesuré les deux défauts qu'elle évite.
+
+Accessibilité, en plus du §15.6 qui reste entier :
+
+| Exigence | Ce qui la rend vérifiable |
+|---|---|
+| Chaque contrôle porte un libellé **visible** | `label` / `for`, jamais un `placeholder` seul (§5.7) |
+| L'envoi et la confirmation sont annoncés | un `role="status"` par champ, cité par son `aria-describedby` |
+| Le refus est annoncé et lié | un `role="alert"` par champ, cité par le même `aria-describedby` |
+| Le champ refusé est signalé | `aria-invalid="true"` sur le contrôle |
+| Le mode courant est annoncé | `aria-expanded` sur la commande « Modifier » |
+
+Les états sont ceux du §4 bis.6, repris sans changement : `inactif`, `envoi`, `enregistre`, `refus` —
+le contrôle **n'est jamais désactivé** pendant l'envoi (un contrôle désactivé perd le focus, §5.13),
+et **un refus n'efface pas la saisie**.
+
+Aucun texte visible n'est écrit en dur : les clés vivent sous `card.header.edit.*` dans
+`webapp/src/i18n/fr.ts`.
+
+### 15 bis.10 Ce que cette tranche ne livre pas
+
+1. **Aucune création d'affaire**, aucun archivage, aucun changement d'étape : trois gestes distincts,
+   deux d'entre eux fermés par privilège (§15 bis.1).
+2. **Aucun événement de fil pour cinq des six écritures.** MESURÉ (§15 bis.6) : seul `owner_id`
+   engendre un `assigned`. Modifier un montant ou une échéance ne laisse aucune trace dans la
+   timeline. L'écart est nommé, non comblé : le combler suppose un trigger, donc une migration, donc
+   `CRM-044`.
+3. **Aucune écriture de `description`, `probability_override`, `position` ni `snoozed_until`**, bien
+   que la base les ouvre : aucune n'atteint l'en-tête en lecture (§15 bis.1).
+4. **Aucune reprise hors ligne, aucun brouillon** : une saisie non enregistrée est perdue si l'onglet
+   se ferme, comme au §4 bis.11.
+
+### 15 bis.11 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | **Aucune suite dédiée** : la tranche ne livre ni table, ni fonction, ni politique. Les colonnes qu'elle écrit et leurs privilèges sont déjà couverts par `supabase/tests/0012_cards.test.sql` et `supabase/tests/0015_colonnes_protegees.test.sql` |
+| Unitaire | La normalisation des six saisies, le classement des sept issues du §15 bis.7 — **y compris `200` et zéro ligne** —, et le composant réel en lecture et en édition |
+| API | Les quinze lignes du §15 bis.8 rejouées avec les jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater inchangée |
+| E2E d'interface | Contre le **build de production**, sur une session réelle : ouvrir l'édition, corriger le titre, renseigner un montant sur une affaire qui n'en a pas, changer le responsable et **constater l'événement `assigned` dans le fil**, et le refus mesuré du `viewer` |
+| Visuel | Captures observées aux paliers du §7 du design system, en lecture et en édition |
