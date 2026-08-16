@@ -195,7 +195,9 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trois : INC-120, INC-121 et INC-122**, consignées le 2026-08-15 (garde des élévations de privilège des
+**Une seule ouverte à ce jour : INC-123**, consignée le 2026-08-15 par la session `CRM-079` (la
+preuve S3 du sous-système mail durcit un incident d'environnement en échec permanent). Les trois
+précédentes — **INC-120, INC-121 et INC-122**, consignées le 2026-08-15 (garde des élévations de privilège des
 migrations ; compteurs figés de `verify-preuves-refus.sh` ; identifiant non épinglé du workflow
 dérivé dans les preuves de `CRM-078`). Les
 dix-neuf entrées qui restaient en texte complet ont été **arbitrées le 2026-08-15
@@ -210,7 +212,35 @@ et retirées. L'index passe à **cent vingt-deux**. **INC-120 était INC-094 rou
 rendu le 2026-08-13 et non livré a fini par être redemandé sous un numéro neuf, ce qui est la
 démonstration que la dette de mise en œuvre du §1 de `docs/ARBITRAGES.md` n'est pas une formalité.
 
-Aucune entrée n'est ouverte.
+### INC-123 — la preuve S3 du sous-système mail durcit un incident d'environnement en échec permanent
+
+*Consignée le 2026-08-15 par la session `CRM-079`, et ÉTRANGÈRE à cette unité.*
+
+`e2e/mail/mail-sync.spec.ts` §S3 relit **tout** le journal du conteneur `mail-sync` depuis son
+démarrage et exige que chaque ligne porte `DEBUG` ou `INFO`. Mesuré ce jour : la suite rend
+**41/42**, la ligne fautive étant
+`{"level":"WARNING","service":"mail-sync","event":"veille_source_indisponible"}`, horodatée à la
+minute exacte où le démon Docker de la session s'est arrêté et où le conteneur `db` est tombé.
+
+Le service a donc **bien fonctionné** — il a signalé que sa source était indisponible, ce qui est
+précisément ce qu'un journal doit faire. La preuve, elle, ne distingue pas un avertissement **émis
+par un défaut du produit** d'un avertissement **émis par une panne de l'environnement**, et reste
+rouge jusqu'au prochain redémarrage du conteneur.
+
+**Ligne de base établie** (`docs/CloudWorker.md` §2.4) : `git diff` entre le point de départ de la
+session et `HEAD`, restreint à `mail-sync/`, `e2e/mail/`, `supabase/` et aux fichiers Compose, est
+**vide**. Aucun fichier de ces composants n'a été modifié, et l'anomalie n'est imputable à aucun
+changement de cette session.
+
+**Ce qui n'a PAS été fait, et pourquoi.** Redémarrer le conteneur aurait vidé son journal et rendu
+la preuve verte, sans rien corriger : c'est le contournement destiné à verdir une preuve que
+`docs/CloudWorker.md` §3.1 interdit. Le geste utile — borner S3 à la fenêtre du scénario, ou
+distinguer les événements d'indisponibilité de source — modifie une preuve d'une autre unité et
+dépasse le périmètre autorisé ici.
+
+**Arbitrage attendu du responsable** : S3 doit-elle ignorer `veille_source_indisponible`, ou ne
+lire que les lignes postérieures au début du scénario ? Porteur pressenti : l'unité propriétaire du
+sous-système mail.
 
 Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci-dessus : un choix
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.

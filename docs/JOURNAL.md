@@ -16364,67 +16364,75 @@ fichier** (mécanisme de la décision 51) plutôt que de l'aligner en silence su
 **Où reprendre.** Inchangé pour le produit : `CRM-079`. Le rattrapage des cinquante harnais est un
 sujet distinct, désormais possible, et il vaut mieux qu'il soit une unité à lui seul.
 
-## 2026-08-16 — `CRM-079` : la preuve hors interface, et une régression que seule la campagne a vue
+## 2026-08-15 — `CRM-079`, première livraison : le guide de démarrage
 
-**L'unité de la session.** La dernière entrée du journal désignait `CRM-079`, dont la spécification
-et le code étaient déjà poussés par une exécution interrompue : le module de mesure, l'écran, ses
-deux surfaces et ses preuves unitaires. L'exception du §3.2 de `docs/CloudWorker.md` s'appliquait —
-spécification existante et suffisante —, la session est donc allée directement au code et aux
-preuves manquantes du §8.
+**L'unité de la session.** La dernière entrée désignait `CRM-079`, dont la spécification n'existait
+pas. Elle a été écrite après mesure sur la pile seedée — `docs/SPEC-onboarding.md`, neuf sections —
+et committée **avant la première ligne de code**, avec `docs/DESIGN_SYSTEM.md` §5.17 dans le même
+commit.
 
-**Une exécution concurrente travaillait la même unité.** Écrit avant d'avoir mesuré l'état distant,
-un fichier de preuves d'interface a rencontré au `push` un `e2e/ui/demarrage.spec.ts` déjà poussé,
-plus complet que le sien sur l'état non mesurable. Il a été **abandonné plutôt que fusionné**
-(`CLAUDE.md` §1 : ne pas remplacer une solution existante fonctionnelle), et la session s'est
-reportée sur la seule ligne du §8 que le distant ne portait pas : les cinq comptages **hors
-interface**. Leçon opérationnelle : `git fetch` avant d'écrire, pas seulement avant de pousser.
+**Le principe, et il conditionne tout le reste : la progression est une MESURE, jamais un drapeau.**
+Cinq comptages `HEAD` sur des tables déjà lues — `workspaces`, `tracks`, `channels`, `cards`,
+`mail_inbound_accounts` —, aucun état persisté, aucune politique RLS ouverte. Supprimer le dernier
+track décoche l'étape correspondante, et rien n'est à migrer ni à réparer. Le seul choix mémorisé
+est le masquage du guide sur l'accueil, en `sessionStorage` (`CLAUDE.md` §11, catégorie 2).
 
-**Ce qui est livré.** `e2e/api/demarrage.spec.ts`, six scénarios, qui établissent ce qu'un écran ne
-peut pas établir sur lui-même — un écran interrogé sur ce qu'il affiche répondrait la même chose si
-l'écart était fabriqué côté client. Les trois faits du §3.1 deviennent des assertions : la lectrice
-compte moins de channels et d'affaires que l'administratrice sur la même base ; elle compte **zéro**
-boîte entrante là où le seed en porte trois ; `mail_inbound_accounts` est la **seule** des cinq
-tables à refuser la clé anonyme. Les filtres y sont **recopiés de la spécification** et non importés
-du module : une preuve qui importerait `FILTRES_ETAPES_DEMARRAGE` serait verte quel que soit le
-filtre écrit dans le produit.
+**Ce qui est livré.** Le module de mesure `webapp/src/lib/demarrage.ts` ; l'écran `GuideDemarrage`
+et ses deux surfaces — `/demarrage`, qui rend le guide TOUJOURS, et `/`, qui le rend tant qu'une
+étape reste à faire puis rend l'état vide du board ; l'entrée en tête de l'index des réglages.
+`webapp/src/app/chemins.ts` est né du besoin d'éviter un cycle `routes → guide → routes`.
 
-**La campagne complète a rendu une régression réelle, et c'est le fait marquant de la session.**
-Onze scénarios d'interface de cinq fichiers étrangers à l'unité — coquille, tracks, channels,
-authentification, manuel — échouaient sur deux symptômes : `/` ne rendait plus `etat-vide`, et la
-console portait `401 (Unauthorized)`. La cause était unique : le guide, monté sur `/`, mesurait
-**même sans session**, et le comptage des boîtes entrantes est le seul des cinq que la clé anonyme
-reçoit en refus (§3.1, fait 3). Le produit salissait donc la console de son écran d'arrivée.
+**Trois faits MESURÉS le 2026-08-15 ont façonné le produit, et aucun souvenir ne les aurait donnés.**
+Un comptage n'est pas un inventaire : le `viewer` seedé compte 5 channels et 9 affaires là où la base
+en porte 6 et 14, et l'écran écrit donc ce que l'appelant VOIT. Il ne voit aucune boîte entrante
+alors que trois existent : sa cinquième étape reste à faire, ce qui est correct et nommé comme
+limite. Enfin `mail_inbound_accounts` répond **401** à la clé anonyme là où les quatre autres tables
+rendent `200` et zéro ligne — c'est ce fait, tiré trop tard, qui a produit le seul défaut réel de la
+session.
 
-La correction a suivi l'ordre du §3.2 : le §4.4 de `docs/SPEC-onboarding.md` a été **écrit et
-committé avant** la première ligne de code. Tant que la session n'est pas ouverte — `chargement`
-compris —, aucune mesure n'est émise ; `/` rend l'état vide **existant** de `CRM-007`, inchangé, et
-`/demarrage` reste rendu, simplement sans poser de question. Ce n'est pas une règle d'autorisation
-déplacée dans l'interface : rien n'est autorisé ni refusé, aucun rôle n'est interrogé, c'est le
-choix de ne pas poser une question dont l'appelant ne peut pas être le sujet.
+**Le défaut, et comment il a été trouvé.** La campagne complète a rendu **vingt-six scénarios
+rouges** : mesurer sans session écrivait une erreur `401` dans la console d'un visiteur non
+connecté, sur la page d'accueil. Le guide ne mesure donc plus qu'avec une session, et rend sinon
+l'état vide du board — `docs/SPEC-onboarding.md` §4.4 porte la règle et son motif. Une session
+concurrente a trouvé et corrigé le même défaut à la même heure ; les deux corrections ont été
+fondues à la main sur `main`, sans branche.
 
-Deux preuves ont été **révisées et non contournées**, la règle ayant changé par arbitrage :
-`routes.test.tsx` — pour la quatrième fois de son histoire, et l'assertion a joué à chaque fois — et
-les vingt-trois montages de `GuideDemarrage.test.tsx`, qui déclarent désormais leur session. Trois
-assertions neuves prouvent le §4.4 par un client **espion** qui compte les appels : l'absence de
-requête, et non l'absence d'affichage. Un écran muet qui interrogerait quand même la base aurait
-laissé le défaut intact.
+**Un second défaut est venu d'une CAPTURE, pas d'un test.** `guide-viewer-1440.jpg` montrait une
+ligne portant « Fait » et « Vous n'en voyez aucun pour le moment. » l'une sous l'autre. Les deux
+textes étaient corrects séparément, et aucune assertion ne pouvait les opposer. La phrase d'absence
+est descendue dans l'état « à faire », où la spécification la plaçait déjà.
 
-**Preuves exécutées.** `test:unit` **1148/1148** ; `typecheck` et `build` verts ; `test:sql`
-**40 fichiers, 2133 assertions** ; `e2e:api` **597/597**, plus les 6 neufs ; `e2e:ui` **285/285**
-après correction, contre 11 échecs avant ; `pytest` **242 passés**. Captures observées.
+**Une preuve d'une autre unité a été RÉVISÉE, jamais contournée.** `routes.test.tsx` exigeait un état
+vide de la route `/`. La règle a changé par arbitrage ; le commentaire du fichier dit désormais les
+deux contenus de cette route, et la garantie qu'il éprouve — aucune page blanche — n'a pas bougé.
 
-**Ce qui n'a PAS été mené à terme, et il faut le savoir.** Les `scripts/verify-*.sh` — cinquante
-sur cet hôte — ont été lancés pour la première fois avec Node 24 et la pile debout, mais la série
-n'a pas rendu son verdict dans le temps de la session : le premier harnais dépassait déjà cinq
-minutes. Ce n'est plus un blocage de version, c'est un **budget**.
+**Preuves exécutées.** `test:sql` **40 fichiers, 2133 assertions, aucune anomalie** ; `e2e:api`
+**597/597** ; `e2e:ui` **285/285**, dont les 10 neufs ; `test:unit` **1148/1148** sur 42 fichiers ;
+`python3 -m pytest mail-sync/tests` **242 passés** ; `typecheck` et `build` verts, sans avertissement
+de taille. Captures aux quatre paliers, plus l'accompli, le masqué et le non mesurable, produites
+**et observées** sous `docs/captures/CRM-079/`.
 
-**Deux constats étrangers consignés.** **INC-123** : cinq scénarios de `e2e:mail` échouent avant
-toute assertion, l'hôte ne portant pas le `chromium_headless_shell` qu'exige la version épinglée de
-Playwright — `36 passés, 6 échoués`. **INC-124** : la preuve S3 de `mail-sync.spec.ts` interdit tout
-`WARNING` alors que le service en journalise deux qui sont corrects. Aucun des deux n'est imputable
-à cette unité, et le comportement est laissé inchangé.
+**`scripts/verify-webapp.sh` a été exécuté, et rend 42 contrôles sans anomalie.** C'est une première
+depuis plusieurs sessions : la procédure `nvm` du §2.1 bis de `docs/CloudWorker.md`, écrite par une
+session concurrente ce jour, installe réellement Node v24.19.0 / npm 11.17.0 et lève le blocage que
+les entrées précédentes classaient en blocage d'hôte. Le contrôle de classes CSS de ce harnais
+couvre le composant neuf.
 
-**Où reprendre.** `CRM-079` reste `[~]` pour une seule raison, nommée : `scripts/verify-onboarding.sh`
-n'est pas écrit, et la série des `verify-*.sh` n'a pas rendu son bilan. Tout le comportement de la
-spécification est livré et prouvé. La prochaine session écrit ce harnais — elle **peut** désormais
-l'exécuter —, mène la série à son terme, puis ferme l'unité et passe à `CRM-080`.
+**Ce qui n'est PAS vert, et ne m'appartient pas.** `e2e:mail` rend **41/42** : la preuve S3 relit tout
+le journal du conteneur `mail-sync` depuis son démarrage et y trouve un `WARNING`
+`veille_source_indisponible`, horodaté à la minute où le démon Docker de la session s'est arrêté.
+Ligne de base établie : le `diff` de la session sur `mail-sync/`, `e2e/mail/`, `supabase/` et les
+fichiers Compose est **vide**. Consigné en **INC-123** ; le conteneur n'a pas été redémarré pour
+verdir la preuve.
+
+**Où reprendre.** `CRM-079` reste `[~]`. Restent à écrire : `scripts/verify-onboarding.sh`, désormais
+possible puisque les harnais s'exécutent sur Node 24 ; la mise à jour de `docs/manual.md` pour le
+parcours du premier lancement ; et une preuve d'interface du cas « espace de travail neuf », que le
+seed n'offre pas — les cinq étapes y sont accomplies, et seul le `viewer` laisse voir une étape à
+faire.
+
+**L'environnement, deux faits à ne pas redécouvrir.** Le démon Docker lancé depuis une commande
+d'arrière-plan **meurt avec elle** : le lancer par `setsid nohup … & disown`, faute de quoi la pile
+tombe en cours de session et `db` doit être relancé. `e2e:mail` exige
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` au même titre qu'`e2e:ui` — sans lui, quatre
+scénarios Roundcube échouent sur « Executable doesn't exist ».
