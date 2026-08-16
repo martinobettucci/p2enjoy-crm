@@ -15,6 +15,37 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **On peut enfin répondre aux questions d'une affaire depuis sa fiche** (`CRM-037`,
+  `docs/SPEC-form-composer.md` §4 bis, `docs/DESIGN_SYSTEM.md` §5.7 ter). Le §4.7 posait « aucune
+  écriture depuis l'écran » **en invoquant INC-021**, close depuis `CRM-009` : la limite avait
+  survécu à son motif. La décision 334 la lève et ramène l'unité à sa Definition of Done d'origine,
+  qui exige depuis toujours la **saisie**. Aucune règle métier n'est créée : `CRM-036` livrait déjà
+  la table, ses politiques et sa validation ; il manquait le chemin vers elles.
+  **Aucun bouton « Enregistrer » : chaque question s'écrit pour elle-même** — perte du focus pour
+  les saisies, changement pour les cases et les listes. Ce n'est pas un goût d'interface, c'est une
+  mesure : un lot est une transaction, et le scénario `S2` de la preuve d'API constate qu'une seule
+  valeur invalide empêche l'enregistrement de **toutes** les autres. Un écran à bouton unique
+  perdrait donc une saisie correcte à cause d'une saisie voisine, et n'aurait qu'un refus global à
+  montrer là où le §4.5 exige une erreur **par champ**.
+  **Quatre états par question** : rien, « Enregistrement… », « Enregistré », ou le refus, lu sous la
+  question et pris à un dictionnaire fermé — jamais le texte du serveur. **Un refus n'efface pas la
+  saisie** : elle reste à l'écran avec son explication, c'est la valeur enregistrée qui ne bouge
+  pas. **Le contrôle n'est jamais éteint**, ni pendant l'envoi — un contrôle désactivé perd le focus
+  du clavier —, ni selon le rôle : la règle vit dans la politique RLS, et l'écran montre le refus
+  plutôt que de l'anticiper.
+  **Répondre à une question obligatoire fait disparaître son alerte sans rechargement**, et la vider
+  la fait revenir : « renseigné » est recalculé par le **même** prédicat que le chargement, celui
+  que la garde de `move_card` partage. **Vider est une écriture, pas une suppression** — personne ne
+  supprime une valeur. **La section repliée reste en lecture seule** : elle porte des réponses que
+  l'étape courante ne demande pas.
+  **`updated_by` n'est pas renseignée, et c'est mesuré** : la colonne est ouverte en écriture au
+  rôle authentifié et aucun trigger ne la dérive, mais la remplir depuis le client serait une
+  déclaration, pas une preuve. La trace faisant foi de l'auteur vient du serveur — l'`actor_id` de
+  `card_events`, posé depuis la session réelle, et la preuve d'API le constate.
+  Le bandeau « Consultation seule » a disparu avec la livraison. `CRM-037` reste `[~]` : le parcours
+  « transition bloquée → saisie → transition réussie » exige un contrôle de transition, dû par
+  `CRM-041` (INC-062).
+
 - **L'éditeur de workflows offre enfin le geste « Comparer à la source »** (`CRM-032`,
   `docs/SPEC-workflow-engine.md` §4 quater, `docs/DESIGN_SYSTEM.md` §5.15). Le §4.1 le promettait
   depuis l'origine ; la fonction existait depuis la tranche précédente, mais aucun écran ne

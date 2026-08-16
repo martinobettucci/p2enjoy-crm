@@ -31,7 +31,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, en consultation seule** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et de **modification** : la fiche se lit, elle ne s'écrit pas |
+| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, et ses réponses s'y saisissent** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et la modification des champs d'**en-tête** — titre, responsable, montant, prochaine action ; les **réponses au formulaire**, elles, se saisissent depuis la fiche depuis le 2026-08-16 |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
@@ -65,7 +65,7 @@
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
 | 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
-| 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche ; leur enregistrement depuis cette fiche n'est pas encore livré |
+| 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche, et **s'y enregistrent** : chaque question s'écrit pour elle-même, dit ce qu'elle a fait, et montre son refus sous elle |
 | 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
 | 12 bis | Ce que le produit fait d'un message reçu | `CRM-054`, `CRM-055` | **Livré côté serveur, sans écran** — voir le chapitre 4.14. Les messages sont relevés, rangés dans l'affaire à qui ils s'adressent, et une trace en apparaît dans son historique. Un message qu'on ne sait pas rattacher est conservé et reste « non classé » ; le ranger exige le droit d'**écrire** sur l'affaire. Une affaire archivée ne reçoit plus. Les pièces jointes sont **analysées** : une pièce n'est téléchargeable qu'une fois déclarée saine, et une pièce non analysée ne l'est pas davantage |
 | 25 bis | Écrire depuis une autre adresse que celle où l'on reçoit | `CRM-053` | **Livré côté serveur, sans écran** — voir le chapitre 4.13. Recevoir et expédier sont deux choses distinctes : une personne peut relever `bizdev@` et écrire depuis `contact@`, et l'espace de démonstration le montre. Une adresse par défaut existe toujours, et en déclarer une nouvelle **déplace** la marque au lieu d'exiger qu'on retire l'ancienne. L'adresse d'expédition est vérifiée à l'enregistrement, puisque c'est la seule donnée que vos destinataires verront. Le quota quotidien peut être déclaré mais **n'est appliqué par rien** tant que l'envoi n'est pas livré |
@@ -510,11 +510,27 @@ track et un onglet, mais **rien ne les confronte à l'affaire elle-même**. Une 
 serait faux afficherait la bonne affaire sous les mauvais onglets. Aucun droit n'est contourné pour
 autant : chaque partie de l'écran reste soumise à ce que le serveur vous consent.
 
-**Cet écran est en consultation seule, et il le dit.** L'enregistrement des réponses n'est pas
-encore livré dans cette fiche. Les champs restent lisibles et sont désactivés — vous voyez ce que
-l'affaire porte, vous ne pouvez pas encore l'y modifier.
+**Vous pouvez répondre aux questions depuis cette fiche.** Chaque question s'enregistre **pour
+elle-même**, et il n'y a aucun bouton « Enregistrer » : votre réponse part dès qu'elle est arrêtée —
+quand vous quittez un champ de saisie, ou dès que vous cochez une case ou choisissez dans une liste.
 
-**Un seul geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
+- **Ce que l'écran vous dit.** « Enregistrement… » pendant l'envoi, puis **« Enregistré »** sous la
+  question concernée. Si la réponse est refusée, un message rouge apparaît **sous cette question**,
+  et il explique le refus : soit la valeur ne convient pas au type de la question, soit vous n'avez
+  pas le droit d'écrire sur cet onglet.
+- **Un refus n'efface jamais ce que vous avez saisi.** Votre texte reste à l'écran avec son
+  explication ; c'est la réponse **enregistrée** qui n'a pas changé.
+- **Répondre à une question obligatoire fait disparaître son alerte** immédiatement, sans recharger
+  la page. La vider la fait réapparaître : une réponse effacée redevient une réponse manquante.
+- **Effacer une réponse est une modification, pas une suppression.** Videz le champ, ou choisissez
+  « — Aucun choix — » dans une liste : la question redevient sans réponse.
+- **La section repliée reste en lecture seule.** Elle rassemble des réponses que l'étape courante ne
+  demande pas ; les modifier depuis là n'aurait pas de sens.
+- **Rien n'est enregistré tant que le serveur ne l'a pas accepté**, et le droit d'écrire est vérifié
+  par le serveur, jamais seulement par l'écran. Une personne en lecture seule voit les questions et
+  reçoit un refus explicite si elle tente d'y répondre.
+
+**Un second geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
 
 Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
 connexion, une card consentie ouvre sa fiche et son fil.
@@ -870,7 +886,6 @@ opération d'exploitation et non un parcours produit.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
   serveur l'applique (chapitre 4.11), mais aucun bouton ne le propose.
-- **L'enregistrement d'une réponse depuis l'écran** (chapitre 4.7).
 - **Le responsable et les étiquettes sur une carte** : le nom d'une personne n'est aujourd'hui
   lisible par personne, et le produit préfère ne rien afficher plutôt qu'un identifiant technique.
 - **Les documents** : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré
