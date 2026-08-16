@@ -2608,10 +2608,10 @@ depuis une colonne tableau. La colonne est remplacée par une table de liaison
 qu'après elle.
 
 ### CRM-032 — Copie d'un workflow vers un track `[~]`
-*Reste `[~]` pour **un seul** manque, et il n'est plus celui d'hier : la **comparaison** copie ↔
-source, que le §4.1 esquisse. La « mention de divergence visible dans l'interface » que la
-Definition of Done exigeait est **livrée et prouvée** depuis le 2026-08-16 — voir la tranche
-d'interface plus bas.*
+*Reste `[~]` pour **un seul** manque, et il n'est plus celui d'hier : le **geste d'interface** qui
+appelle la comparaison. La « mention de divergence visible dans l'interface » que la Definition of
+Done exigeait est **livrée et prouvée** depuis le 2026-08-16, et la **comparaison** copie ↔ source
+du §4.1 l'est depuis le même jour — voir les deux tranches plus bas.*
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.
 **DoD** : pgTAP (copie complète des étapes, transitions et champs ; lignage renseigné) ; E2E ;
 mention de divergence visible dans l'interface.
@@ -2739,6 +2739,72 @@ mention de divergence visible dans l'interface.
       trois suites pgTAP sans que rien ne le signale. Étranger à cette unité, qui ne touche aucun
       `.sql`. Base locale réparée par rejeu de `0035` ; arbitrage demandé au registre.
 
+- [x] **LA COMPARAISON COPIE ↔ SOURCE EST LIVRÉE ET PROUVÉE** (2026-08-16,
+      `docs/SPEC-workflow-engine.md` §4 ter, migration 43). Le §4 bis disait **qu'**une source avait
+      changé ; il ne disait pas **quoi**. `public.compare_workflow_with_source(workflow_id)` rend,
+      pour une copie donnée, quelles étapes, arêtes, questions, règles et exigences la distinguent de
+      sa source vivante, et pour chaque modification quel attribut a changé, de quelle valeur à
+      quelle valeur. `STABLE` et **n'écrit rien** : le §4.1 interdit toute réapplication automatique.
+- [x] **Spécification écrite après mesure et committée AVANT la première ligne de code** :
+      `docs/SPEC-workflow-engine.md` §4 ter, neuf sous-chapitres. Commit documentaire dédié, poussé.
+- [x] **LA COMPARAISON DE `CRM-078` NE POUVAIT PAS SERVIR, ET CE N'EST PAS UNE OPINION.**
+      `compare_workflow_versions` pose que l'identité est un identifiant ; entre une copie et sa
+      source, la règle est inapplicable. MESURÉ : `count(*) = 0` sur la jointure des étapes par `id`.
+      Appelée telle quelle, elle rendrait « sept étapes retirées, sept ajoutées » sur deux workflows
+      rigoureusement identiques. L'appariement se fait donc sur **les clés naturelles qui ont servi
+      au remappage** (§4.5) — `node_id`, le couple de nœuds, `key` —, chacune adossée à un index
+      unique **relevé dans `pg_indexes`** et non supposé.
+- [x] **L'algorithme n'est pas réécrit** : `app.composition_collection_diff`, livré par `CRM-078`,
+      est appelé **cinq** fois. Cinq comparaisons spécialisées seraient cinq occasions de diverger.
+- [x] **L'en-tête du workflow est EXCLU, et ce n'est pas un oubli** : `name`, `scope`, `track_id`,
+      `is_default` et `archived_at` sont précisément ce que la copie **ne copie pas**. Les comparer
+      déclarerait divergente toute copie **dès sa naissance**, c'est-à-dire sur son cas d'emploi
+      principal.
+- [x] **`identical` n'est PAS fondé sur les empreintes**, à la différence de
+      `compare_workflow_versions` : l'empreinte du §4.6 condense le document canonique identifiants
+      locaux compris, et ceux de deux workflows distincts diffèrent toujours. S'y fier serait une
+      fausse preuve. Le verdict est pris sur les cinq collections, et sur elles seules.
+- [x] **`SECURITY INVOKER`, et c'est un choix** : la politique de lecture de `public.workflows` est
+      déjà la règle d'autorisation exacte du geste. Conséquence voulue — aucun contrôle de workspace
+      n'est écrit à la main, et un workflow d'un autre workspace rend le **même** message qu'un
+      identifiant inventé : la fonction n'est pas un oracle d'existence.
+- [x] **Test unitaire dédié** : `supabase/tests/0041_comparaison_copie_source.test.sql`,
+      **28 assertions, aucune anomalie** — volatilité, `search_path`, privilèges et absence de
+      `security definer` ; l'appariement par identifiant démontré inapplicable ; le document
+      naturalisé sans identifiant local et **égal** entre la copie du seed et sa source ; les quatre
+      formes d'écart avec l'identité juste ; et **les quatre refus** éprouvés contre des comptes
+      réels, dont la source devenue illisible.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/comparaison-copie-source.spec.ts`,
+      **10 scénarios**, avec les jetons réels de l'administratrice, du `viewer` et de l'anonyme. Les
+      dix lignes du contrat d'API du §4 ter.8 y sont rejouées. Les copies de preuve naissent de la
+      **vraie RPC de copie** et sont détruites dans un `finally` ; le seed est rendu intact —
+      constaté, deux workflows et un workspace après la suite.
+- [x] **Un `viewer` compare, et obtient le MÊME document.** Sans cette ligne, les refus seraient
+      tout aussi verts sur un produit où personne ne peut comparer.
+- [x] **Le renommage d'un champ rend un RETRAIT et un AJOUT**, jamais un `modified` — conséquence
+      assumée du §4 ter.2, `key` étant la clé d'appariement, et figée par une assertion pgTAP **et**
+      un scénario d'API.
+- [x] **Un garde-fou figé a échoué comme prévu, et a été RÉVISÉ** : la liste des fonctions exposées
+      de `webapp/src/lib/database.types.test-d.ts` passe de trente et une à trente-deux, le motif
+      écrit dans le fichier. Mécanisme de la décision 51, dix-septième occurrence. Types régénérés,
+      `npm run types:check` vert.
+- [x] **Campagne** : `test:sql` **41 fichiers, 2161 assertions** (2133 avant) ; `test:unit`
+      **1223/1223**, inchangé — cette tranche ne livre aucun code de webapp ; `e2e:api` **622/622**
+      (612 avant) ; `e2e:ui` **305/305**, inchangé ; `typecheck`, `types:check` et `build` verts.
+      `scripts/verify-copie-workflow.sh --rapide` **28 contrôles, aucune anomalie**.
+- [x] **Aucune capture, et ce n'est PAS un renoncement** : cette tranche ne livre aucun écran, il
+      n'y a donc rien à observer. L'écart est nommé au §4 ter.7.
+- [x] **INC-129 reproduite, et un fait ajouté au diagnostic** : le harnais de l'unité s'est déclaré
+      vert à 28 contrôles **en laissant la base cassée** — `test:sql` rejoué derrière est passé de
+      2161 assertions vertes à 3 fichiers en échec. Son propre bilan ne peut donc pas servir
+      d'indice. Base réparée par rejeu de `0035`, aucun fichier du dépôt modifié, arbitrage toujours
+      demandé.
+- [ ] **LE GESTE D'INTERFACE RESTE DÛ, ET C'EST LE DERNIER MANQUE DE L'UNITÉ.** Le §4.1 promet que
+      l'interface « propose de comparer ». La fonction est livrée et prouvée ; aucun écran ne
+      l'appelle. La mention du §4 bis demeure **sans commande**, comme le §4 bis.6 l'exige tant que
+      le geste n'existe pas. Ce qui reste à construire : un bouton « comparer » dans l'éditeur de
+      workflows, à côté de la mention, et la surface qui rend les cinq collections — plus ses
+      preuves de composant, d'interface et ses captures.
 - [ ] *(historique, conservé pour dire pourquoi cette preuve a manqué si longtemps)* **Aucun écran,
       aucune mention de divergence affichée, aucune capture.** La Definition of Done
       exige que la divergence soit « visible dans l'interface ». Elle suppose un écran
