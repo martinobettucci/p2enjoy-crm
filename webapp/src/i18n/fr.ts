@@ -572,7 +572,10 @@ export const fr = {
 	'admin.workflows.compareSource.identical': 'Cette copie est identique à sa source.',
 	'admin.workflows.compareSource.summary':
 		'{ajouts} ajout(s), {retraits} retrait(s), {modifications} modification(s).',
-	'admin.workflows.compareSource.empty': "Rien n'a changé de ce côté.",
+	// Une collection vide est nommée par la clé du bloc des versions, `…versions.compare.empty` :
+	// le rendu des collections est PARTAGÉ entre les deux comparaisons (`CollectionsComparees`), et
+	// une seconde phrase pour dire la même chose ferait diverger deux écrans qui doivent se lire
+	// pareil. C'est aussi ce qui a fait retirer d'ici une clé jumelle restée sans emploi.
 	// L'en-tête non comparé est ÉCRIT, jamais tu (§4 quater.4) : rendre un intitulé « Workflow »
 	// toujours vide enseignerait qu'on a regardé et que c'est identique, ce qui est faux.
 	'admin.workflows.compareSource.headerExcluded':

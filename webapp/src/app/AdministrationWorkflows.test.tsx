@@ -236,6 +236,8 @@ type Options = {
 	readonly versions?: unknown[]
 	/** Lignes de la lecture 9 — la dérivation du workflow choisi (`CRM-032`, §4 bis.3). */
 	readonly derivations?: unknown[]
+	/** Document rendu par `compare_workflow_with_source` — lecture 10 (`CRM-032`, §4 quater.3). */
+	readonly comparaisonSource?: { data: unknown; error: { message: string } | null }
 	readonly erreurDerivation?: { message: string; status: number }
 	/** Le workspace courant et les tracks affectables — `CRM-031`, §3 bis.3, lecture 4. */
 	readonly workspaces?: unknown[]
@@ -348,11 +350,17 @@ function clientFactice(options: Options = {}): {
 				ecriture(table, 'upsert', charge, options),
 			delete: () => ecriture(table, 'delete', null),
 		}),
-		// `previsualiser_exigence` est la SEULE fonction que cet écran appelle (§7 bis.13.2). Le
-		// défaut est un couple sans effet : une preuve qui ne parle pas de prévisualisation n'a pas
-		// à déclarer de nombres, et « aucune affaire concernée » est la phrase la plus neutre.
+		// L'ÉCRAN APPELLE DEUX FONCTIONS DEPUIS `CRM-032`, et le transport route donc sur le NOM.
+		// `previsualiser_exigence` (§7 bis.13.2) était la seule ; `compare_workflow_with_source`
+		// (§4 quater.3) l'a rejointe. Un transport qui rendrait la même réponse aux deux ferait
+		// passer un couple d'effets pour un document de comparaison.
 		rpc: (nom: string, params: Record<string, unknown>) => {
 			previsualisations.push({ nom, params })
+			if (nom === 'compare_workflow_with_source') {
+				return Promise.resolve(
+					options.comparaisonSource ?? { data: null, error: { message: 'workflow introuvable' } },
+				)
+			}
 			return Promise.resolve(
 				options.previsualisation ?? {
 					data: [{ sur_place: 0, a_l_entree: 0 }],
@@ -1921,11 +1929,25 @@ describe('la mention de divergence (§4 bis)', () => {
 		expect(erreur.textContent).toContain("L'origine de ce workflow n'a pas pu être lue.")
 	})
 
-	it('la mention ne porte AUCUNE commande — ni resynchroniser, ni comparer (§4 bis.6)', async () => {
+	// GARDE-FOU RÉVISÉ le 2026-08-16, mécanisme de la décision 51. Cette assertion exigeait
+	// ZÉRO bouton dans la mention, et elle avait raison au moment où elle a été écrite : aucune
+	// fonction ne savait alors comparer une copie à sa source vivante, et un bouton aurait enseigné
+	// un geste inexistant. `compare_workflow_with_source` est livrée depuis le §4 ter, et le
+	// §4 ter.7 nommait le geste d'interface comme le seul reste — livré au §4 quater. Ce qui est
+	// vérifié ici est donc resserré sur la partie qui n'a JAMAIS dépendu de cette fonction :
+	// **aucune commande d'ÉCRITURE**. Elle n'est pas supprimée, elle est rendue exacte.
+	it('la mention ne porte aucune commande d’ÉCRITURE, et une seule commande en tout (§4 bis.6, §4 quater.2)', async () => {
 		monter({ derivations: [{ ...DERIVATION[0], source_modified_since_copy: true }] })
 		await attendreEcran()
 		const mention = await screen.findByTestId('mention-divergence')
-		expect(mention.querySelectorAll('button').length).toBe(0)
+		const boutons = [...mention.querySelectorAll('button')]
+		// Une seule, et c'est la comparaison — qui ne écrit rien, la fonction étant `stable`.
+		expect(boutons).toHaveLength(1)
+		expect(boutons[0]?.getAttribute('data-testid')).toBe('comparer-source')
+		// Rien qui resynchronise : le §4.1 l'interdit explicitement, et cette partie de la règle
+		// tient toujours.
+		expect(mention.textContent).not.toContain('resynchronis')
+		expect(mention.textContent).not.toContain('Remettre à jour')
 		expect(mention.querySelectorAll('a').length).toBe(0)
 	})
 
@@ -1934,5 +1956,198 @@ describe('la mention de divergence (§4 bis)', () => {
 		await attendreEcran()
 		const mention = await screen.findByTestId('mention-divergence')
 		expect(mention.getAttribute('role')).toBe('status')
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §4 quater — le geste « comparer à la source »
+// @verifies CRM-032 (docs/BACKLOG.md) — geste d'interface de la comparaison copie ↔ source
+// @verifies docs/SPEC-workflow-engine.md §4 quater.2 (où le geste se trouve, et le refus n° 3
+//           rendu inatteignable), §4 quater.3 (l'appel part sur PRESSION et non avec le graphe),
+//           §4 quater.4 (les trois états, les cinq collections, l'en-tête écrit),
+//           §4 quater.6 (les refus rendus dans le bloc, sans effacer la mention),
+//           §4 quater.9 (preuves attendues, niveau composant)
+// ---------------------------------------------------------------------------------------------
+
+/** Le document mesuré sur la copie du seed : identique à sa source (§4 quater.3). */
+const COMPARAISON_IDENTIQUE = {
+	data: {
+		workflow: { workflow_id: 'wf-1', name: 'Cycle commercial — Conseil IA' },
+		source: { workflow_id: 'wf-source', name: 'Cycle commercial standard', archived_at: null },
+		identical: true,
+		summary: { added: 0, removed: 0, modified: 0 },
+		changes: {
+			steps: { added: [], removed: [], modified: [] },
+			transitions: { added: [], removed: [], modified: [] },
+			fields: { added: [], removed: [], modified: [] },
+			rules: { added: [], removed: [], modified: [] },
+			required_fields: { added: [], removed: [], modified: [] },
+		},
+	},
+	error: null,
+}
+
+/** La même copie, une étape déplacée — forme mesurée le 2026-08-16 (§4 quater.5). */
+const COMPARAISON_DIVERGENTE = {
+	data: {
+		...COMPARAISON_IDENTIQUE.data,
+		identical: false,
+		summary: { added: 0, removed: 0, modified: 1 },
+		changes: {
+			...COMPARAISON_IDENTIQUE.data.changes,
+			steps: {
+				added: [],
+				removed: [],
+				modified: [
+					{
+						identity: { node_id: 'noeud-1' },
+						attributes: [{ name: 'position', before: 1, after: 42 }],
+					},
+				],
+			},
+		},
+	},
+	error: null,
+}
+
+describe('le geste « comparer à la source » (§4 quater)', () => {
+	it('la commande est rendue sur une copie, et l’appel ne part PAS avec le graphe (§4 quater.3)', async () => {
+		const { previsualisations } = monter({
+			derivations: DERIVATION,
+			comparaisonSource: COMPARAISON_IDENTIQUE,
+		})
+		await attendreEcran()
+		await screen.findByTestId('mention-divergence')
+
+		// L'appel n'a pas été émis au chargement : la fonction projette deux documents canoniques
+		// complets, et la faire partir à chaque ouverture ferait payer ce calcul à qui ne la
+		// demande pas.
+		expect(
+			previsualisations.some((appel) => appel.nom === 'compare_workflow_with_source'),
+		).toBe(false)
+
+		await userEvent.click(screen.getByTestId('comparer-source'))
+		await waitFor(() =>
+			expect(
+				previsualisations.filter((appel) => appel.nom === 'compare_workflow_with_source'),
+			).toHaveLength(1),
+		)
+	})
+
+	it('un workflow qui n’est la copie de personne ne porte PAS la commande (§4 quater.2)', async () => {
+		// Conséquence directe : le refus n° 3 du §4 ter.5 — `workflow non derive` — est
+		// INATTEIGNABLE depuis l'écran. Il reste éprouvé hors interface (§4 ter.8, ligne d).
+		monter({ comparaisonSource: COMPARAISON_IDENTIQUE })
+		await attendreEcran()
+		await waitFor(() => expect(screen.queryByTestId('squelette')).toBeNull())
+		expect(screen.queryByTestId('mention-divergence')).toBeNull()
+		expect(screen.queryByTestId('comparer-source')).toBeNull()
+	})
+
+	it('la commande est rendue MÊME quand la source n’a pas changé (§4 quater.2)', async () => {
+		// `source_modified_since_copy` dit que la SOURCE a bougé, jamais que la copie s'en écarte.
+		// Une copie modifiée dont la source est intacte diverge pourtant.
+		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_DIVERGENTE })
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.getAttribute('data-divergente')).toBe('non')
+		expect(screen.getByTestId('comparer-source')).toBeTruthy()
+
+		await userEvent.click(screen.getByTestId('comparer-source'))
+		// Et elle rend bien un écart, alors que la mention dit « la source n'a pas changé ».
+		expect(await screen.findByTestId('comparaison-source-resultat')).toBeTruthy()
+	})
+
+	it('une copie identique écrit UNE phrase, et ne déroule aucune collection (§4 quater.4)', async () => {
+		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_IDENTIQUE })
+		await attendreEcran()
+		await userEvent.click(await screen.findByTestId('comparer-source'))
+
+		expect((await screen.findByTestId('comparaison-source-identique')).textContent).toContain(
+			'Cette copie est identique à sa source.',
+		)
+		expect(screen.queryByTestId('comparaison-source-collections')).toBeNull()
+	})
+
+	it('un écart écrit les compteurs, les CINQ collections et l’attribut modifié (§4 quater.4)', async () => {
+		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_DIVERGENTE })
+		await attendreEcran()
+		await userEvent.click(await screen.findByTestId('comparer-source'))
+
+		const resume = await screen.findByTestId('comparaison-source-resume')
+		expect(resume.textContent).toContain('0 ajout(s), 0 retrait(s), 1 modification(s).')
+
+		const collections = await screen.findByTestId('comparaison-source-collections')
+		const intitules = [...collections.querySelectorAll('h5')].map((titre) => titre.textContent)
+		expect(intitules).toEqual([
+			'Étapes',
+			'Transitions',
+			'Champs de formulaire',
+			'Règles de visibilité',
+			'Champs exigés par une transition',
+		])
+		// L'en-tête N'EST PAS une collection rendue : la copie ne le copie pas (§4 ter.3).
+		expect(intitules).not.toContain('Workflow')
+		// L'attribut modifié s'écrit « avant → après », jamais en une phrase concaténée.
+		expect(collections.textContent).toContain('position')
+		expect(collections.textContent).toContain('1')
+		expect(collections.textContent).toContain('42')
+	})
+
+	it('l’en-tête non comparé est ÉCRIT, jamais tu (§4 quater.4)', async () => {
+		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_IDENTIQUE })
+		await attendreEcran()
+		await userEvent.click(await screen.findByTestId('comparer-source'))
+
+		expect((await screen.findByTestId('comparaison-source-entete')).textContent).toContain(
+			'Le nom, la portée et le track ne sont pas comparés',
+		)
+	})
+
+	it('un refus est NOMMÉ dans le bloc, et n’efface pas la mention (§4 quater.6)', async () => {
+		monter({
+			derivations: DERIVATION,
+			comparaisonSource: { data: null, error: { message: 'source introuvable' } },
+		})
+		await attendreEcran()
+		await userEvent.click(await screen.findByTestId('comparer-source'))
+
+		const refus = await screen.findByTestId('refus-comparaison-source')
+		expect(refus.getAttribute('role')).toBe('alert')
+		expect(refus.textContent).toContain("La source de ce workflow n'est plus lisible.")
+		// L'origine du workflow reste vraie même quand la comparaison échoue.
+		expect(screen.getByTestId('mention-divergence').textContent).toContain(
+			'Ce workflow dérive de « Cycle commercial standard ».',
+		)
+		expect(screen.queryByTestId('comparaison-source-resultat')).toBeNull()
+	})
+
+	it('le résultat est EFFACÉ par un geste qui réécrit la structure (§4 quater.4)', async () => {
+		// Un document de comparaison décrit un instant. Le laisser après une modification en ferait
+		// une affirmation périmée que rien ne signale.
+		const factice = monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_DIVERGENTE })
+		await attendreEcran()
+		await userEvent.click(await screen.findByTestId('comparer-source'))
+		await screen.findByTestId('comparaison-source-resultat')
+
+		// Un geste réel de l'éditeur : désigner une étape initiale recharge le graphe.
+		// L'étape DÉJÀ initiale porte une commande désactivée : c'est une autre qu'il faut désigner.
+		const initiales = screen
+			.getAllByRole('button', { name: /comme étape initiale/ })
+			.filter((bouton) => !bouton.hasAttribute('disabled'))
+		expect(initiales.length).toBeGreaterThan(0)
+		await userEvent.click(initiales[0] as HTMLElement)
+		await waitFor(() => expect(factice.ecritures.length).toBeGreaterThan(0))
+
+		await waitFor(() => expect(screen.queryByTestId('comparaison-source-resultat')).toBeNull())
+	})
+
+	it('la commande porte un `aria-label` qui nomme le geste ET la source (§4 quater.7)', async () => {
+		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_IDENTIQUE })
+		await attendreEcran()
+		const bouton = await screen.findByTestId('comparer-source')
+		expect(bouton.getAttribute('aria-label')).toBe(
+			'Comparer ce workflow à sa source « Cycle commercial standard »',
+		)
 	})
 })

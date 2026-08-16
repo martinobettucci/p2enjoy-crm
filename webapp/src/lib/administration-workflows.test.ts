@@ -15,6 +15,8 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNES_DERIVATION,
+	comparerAvecSource,
+	structureNaturelle,
 	COLONNES_ETAPE_ADMIN,
 	COLONNES_NOEUD_AJOUTABLE,
 	COLONNES_WORKFLOW_ADMIN,
@@ -1822,5 +1824,270 @@ describe('composerMentionDivergence — §4 bis.4', () => {
 		expect(composerMentionDivergence(sansNom)?.source).toBe('wf-source')
 		const blanc = { ...ligne, source_name: '   ' }
 		expect(composerMentionDivergence(blanc)?.source).toBe('wf-source')
+	})
+})
+
+// =============================================================================================
+// LE GESTE « COMPARER À LA SOURCE » — CRM-032, dernière tranche
+// @verifies CRM-032 (docs/BACKLOG.md) — copie d'un workflow vers un track, geste d'interface de la
+//           comparaison copie ↔ source
+// @verifies docs/SPEC-workflow-engine.md §4 quater.3 (lecture 10 : l'appel émis et son argument),
+//           §4 quater.4 (les cinq collections, les compteurs, `identical`),
+//           §4 quater.5 (le nommage et la table indexée par clés naturelles),
+//           §4 quater.6 (les quatre refus classés sur le message),
+//           §4 quater.9 (preuves attendues, niveau unitaire)
+// @verifies docs/SPEC-workflow-engine.md §4 ter.6 (ce que la fonction rend), §4 ter.3 (l'en-tête
+//           exclu du document naturalisé)
+// =============================================================================================
+//
+// LES DOCUMENTS DE CE BLOC SONT DES RELEVÉS, PAS DES INVENTIONS. Ils reprennent la forme mesurée
+// contre PostgREST le 2026-08-16 et consignée au §4 quater.5 : une entrée `added`/`removed` porte
+// `element` ET `identity` ; une entrée `modified` porte `identity` ET `attributes`, mais **pas**
+// `element`. Un test écrit sur une forme supposée serait vert contre une base qui rend autre chose.
+
+describe('comparerAvecSource — lecture 10 (§4 quater.3)', () => {
+	/** Transport espion de la RPC : il retient le nom appelé et les arguments transmis. */
+	function espionComparaison(reponse: { data: unknown; error: { message: string } | null }): {
+		client: ClientCrm
+		appels: { nom: string; params: Record<string, unknown> }[]
+	} {
+		const appels: { nom: string; params: Record<string, unknown> }[] = []
+		const client = {
+			rpc: (nom: string, params: Record<string, unknown>) => {
+				appels.push({ nom, params })
+				return {
+					then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+				}
+			},
+		} as unknown as ClientCrm
+		return { client, appels }
+	}
+
+	/** Le document EXACT rendu par la copie du seed, mesuré le 2026-08-16 : `identical` vrai. */
+	const documentIdentique = {
+		workflow: { workflow_id: 'wf-copie', name: 'Cycle commercial — Conseil IA' },
+		source: {
+			workflow_id: 'wf-source',
+			name: 'Cycle commercial standard',
+			archived_at: null,
+		},
+		identical: true,
+		summary: { added: 0, removed: 0, modified: 0 },
+		changes: {
+			steps: { added: [], removed: [], modified: [] },
+			transitions: { added: [], removed: [], modified: [] },
+			fields: { added: [], removed: [], modified: [] },
+			rules: { added: [], removed: [], modified: [] },
+			required_fields: { added: [], removed: [], modified: [] },
+		},
+	}
+
+	it('appelle la fonction du §4 ter.4 avec le SEUL identifiant de la copie', async () => {
+		const { client, appels } = espionComparaison({ data: documentIdentique, error: null })
+		await comparerAvecSource(client, 'wf-copie', new Map())
+
+		expect(appels).toHaveLength(1)
+		expect(appels[0]?.nom).toBe('compare_workflow_with_source')
+		// La source n'est PAS un paramètre : elle est lue dans `derived_from_workflow_id` (§4 ter.4).
+		// Passer les deux permettrait de comparer deux workflows sans lien.
+		expect(appels[0]?.params).toEqual({ workflow_id: 'wf-copie' })
+	})
+
+	it('rend les deux bornes, le verdict et les compteurs du document mesuré', async () => {
+		const { client } = espionComparaison({ data: documentIdentique, error: null })
+		const issue = await comparerAvecSource(client, 'wf-copie', new Map())
+
+		expect(issue.statut).toBe('ok')
+		if (issue.statut !== 'ok') return
+		expect(issue.donnees.copie).toEqual({
+			workflow_id: 'wf-copie',
+			nom: 'Cycle commercial — Conseil IA',
+			archiveLe: null,
+		})
+		expect(issue.donnees.source.nom).toBe('Cycle commercial standard')
+		expect(issue.donnees.identique).toBe(true)
+		expect(issue.donnees.resume).toEqual({ ajouts: 0, retraits: 0, modifications: 0 })
+	})
+
+	it('rend CINQ collections, et jamais celle de l’en-tête (§4 ter.3)', async () => {
+		const { client } = espionComparaison({ data: documentIdentique, error: null })
+		const issue = await comparerAvecSource(client, 'wf-copie', new Map())
+
+		if (issue.statut !== 'ok') throw new Error('comparaison refusée')
+		expect(issue.donnees.collections.map((collection) => collection.cle)).toEqual([
+			'steps',
+			'transitions',
+			'fields',
+			'rules',
+			'required_fields',
+		])
+		// `workflow` est exclue du document naturalisé : `name`, `scope`, `track_id`, `is_default` et
+		// `archived_at` sont précisément ce que la copie ne copie pas. La rendre déclarerait
+		// divergente toute copie dès sa naissance.
+		expect(issue.donnees.collections.some((collection) => collection.cle === 'workflow')).toBe(false)
+	})
+
+	it('`identique` est LU du document, jamais recalculé depuis les compteurs', async () => {
+		// La base tient le verdict sur les cinq collections et sur elles seules (§4 ter.6). Le
+		// recalculer ici serait une seconde formulation d'une règle qui n'existe qu'en base — et ce
+		// test le figerait dans le mauvais sens si le module le recalculait.
+		const contradictoire = { ...documentIdentique, identical: false }
+		const { client } = espionComparaison({ data: contradictoire, error: null })
+		const issue = await comparerAvecSource(client, 'wf-copie', new Map())
+
+		if (issue.statut !== 'ok') throw new Error('comparaison refusée')
+		expect(issue.donnees.identique).toBe(false)
+		expect(issue.donnees.resume).toEqual({ ajouts: 0, retraits: 0, modifications: 0 })
+	})
+
+	it('met en forme une MODIFICATION telle que la base la rend — sans clé `element`', async () => {
+		// Forme MESURÉE le 2026-08-16 sur une copie jetable dont une étape a vu sa `position` et sa
+		// `label_override` changer : `identity` et `attributes`, mais pas `element`.
+		const document = {
+			...documentIdentique,
+			identical: false,
+			summary: { added: 0, removed: 0, modified: 1 },
+			changes: {
+				...documentIdentique.changes,
+				steps: {
+					added: [],
+					removed: [],
+					modified: [
+						{
+							identity: { node_id: 'noeud-prospection' },
+							attributes: [
+								{ name: 'label_override', before: null, after: 'Étape renommée' },
+								{ name: 'position', before: 1, after: 42 },
+							],
+						},
+					],
+				},
+			},
+		}
+		const { client } = espionComparaison({ data: document, error: null })
+		// La structure vivante nomme le nœud : table indexée par la clé NATURELLE (§4 quater.5).
+		const issue = await comparerAvecSource(
+			client,
+			'wf-copie',
+			new Map([['noeud-prospection', 'Prospection']]),
+		)
+
+		if (issue.statut !== 'ok') throw new Error('comparaison refusée')
+		expect(issue.donnees.resume.modifications).toBe(1)
+		const etapes = issue.donnees.collections.find((collection) => collection.cle === 'steps')
+		expect(etapes?.elements).toHaveLength(1)
+		const element = etapes?.elements[0]
+		expect(element?.genre).toBe('modification')
+		// Le renommage est lisible dans les attributs : c'est le DEUXIÈME repli du §7 ter.14.6, et il
+		// passe avant la structure vivante.
+		expect(element?.nom).toEqual({ genre: 'renomme', avant: '', apres: 'Étape renommée' })
+		expect(element?.attributs).toEqual([
+			{ nom: 'label_override', avant: null, apres: 'Étape renommée' },
+			{ nom: 'position', avant: '1', apres: '42' },
+		])
+	})
+
+	it('nomme un RETRAIT par `node_key` quand la structure vivante ne le porte pas', async () => {
+		// C'est le cas qui a motivé la révision du garde-fou de CRM-078 (§4 quater.5) : une étape
+		// présente dans la source et ABSENTE de la copie n'est, par construction, pas dans la
+		// structure vivante de cette dernière. Sans `node_key`, elle se rendrait par un UUID.
+		const document = {
+			...documentIdentique,
+			identical: false,
+			summary: { added: 0, removed: 1, modified: 0 },
+			changes: {
+				...documentIdentique.changes,
+				steps: {
+					added: [],
+					modified: [],
+					removed: [
+						{
+							element: {
+								node_id: 'noeud-prospection',
+								node_key: 'prospection',
+								position: 1,
+								is_initial: true,
+								label_override: null,
+								stale_after_days: null,
+								probability_override: null,
+							},
+							identity: { node_id: 'noeud-prospection' },
+						},
+					],
+				},
+			},
+		}
+		const { client } = espionComparaison({ data: document, error: null })
+		const issue = await comparerAvecSource(client, 'wf-copie', new Map())
+
+		if (issue.statut !== 'ok') throw new Error('comparaison refusée')
+		const etapes = issue.donnees.collections.find((collection) => collection.cle === 'steps')
+		expect(etapes?.elements[0]?.genre).toBe('retrait')
+		expect(etapes?.elements[0]?.nom).toEqual({ genre: 'libelle', texte: 'prospection' })
+	})
+
+	it('classe les QUATRE refus du §4 ter.5 sur le message, jamais sur le code HTTP', async () => {
+		// Les quatre partagent `P0001`, donc `400` (§4.4) : le code ne les sépare pas.
+		const attendus = [
+			['authentification requise', 'authentification'],
+			['workflow introuvable', 'workflow-introuvable'],
+			['workflow non derive', 'workflow-non-derive'],
+			['source introuvable', 'source-introuvable'],
+			['une panne inconnue', 'generique'],
+		] as const
+		for (const [message, nature] of attendus) {
+			const { client } = espionComparaison({ data: null, error: { message } })
+			const issue = await comparerAvecSource(client, 'wf-copie', new Map())
+			expect(issue).toEqual({ statut: 'refus', refus: nature })
+		}
+	})
+
+	it('un document illisible est un refus NOMMÉ, jamais un succès muet', async () => {
+		// La base a répondu, mais l'écran n'a rien à montrer. Rendre un objet vide afficherait une
+		// comparaison qui n'a pas eu lieu.
+		const { client } = espionComparaison({ data: { workflow: null, source: null }, error: null })
+		expect(await comparerAvecSource(client, 'wf-copie', new Map())).toEqual({
+			statut: 'refus',
+			refus: 'generique',
+		})
+	})
+})
+
+describe('structureNaturelle — la table de nommage (§4 quater.5)', () => {
+	it('indexe les étapes par `node_id` et les champs par `key`, jamais par identifiant de ligne', () => {
+		// C'est ce que porte `identity` dans le document naturalisé (§4 ter.2). Une table indexée par
+		// l'identifiant de ligne, comme celle du bloc des versions, n'y résoudrait rien.
+		const etape = {
+			id: 'ligne-etape',
+			workflow_id: 'wf',
+			workspace_id: 'ws',
+			node_id: 'noeud-prospection',
+			position: 1,
+			label_override: 'Prospection surchargée',
+			probability_override: null,
+			stale_after_days: null,
+			is_initial: true,
+			node: null,
+		}
+		const champ = {
+			id: 'ligne-champ',
+			workflow_id: 'wf',
+			workspace_id: 'ws',
+			key: 'budget',
+			label: 'Budget estimé',
+			type: 'money',
+			options: null,
+			help_text: null,
+			position: 1,
+			archived_at: null,
+		}
+		const table = structureNaturelle([etape], [champ])
+
+		expect(table.get('noeud-prospection')).toBe('Prospection surchargée')
+		expect(table.get('budget')).toBe('Budget estimé')
+		// Les identifiants de LIGNE n'y figurent pas : ils n'ont aucun sens partagé entre deux
+		// workflows, et le document naturalisé n'en porte aucun.
+		expect(table.has('ligne-etape')).toBe(false)
+		expect(table.has('ligne-champ')).toBe(false)
 	})
 })
