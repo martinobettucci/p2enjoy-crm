@@ -108,8 +108,13 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'next_action', '
 	'`next_action` reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
 	'`next_action_at` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
-	'`snoozed_until` reste ouverte');
+-- ASSERTION RETOURNÉE (décision 51, mécanisme du `docs/CloudWorker.md` §3.1) : cette suite
+-- constatait « `snoozed_until` reste ouverte ». `CRM-081` la FERME — la valeur cesse d'être une
+-- saisie libre pour devenir le constat d'un geste gardé, `public.snooze_card` et
+-- `public.wake_card` (docs/SPEC-cards.md §16.7). La preuve n'est ni retirée ni contournée : elle
+-- asserte désormais la règle nouvelle, motif écrit ici.
+select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
+	'`snoozed_until` est FERMÉE depuis `CRM-081` : elle s''écrit par `snooze_card` et `wake_card`');
 select ok(has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
 	'`archived_at` reste ouverte : l''archivage est une suppression douce, pas une transition');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),
@@ -120,9 +125,10 @@ select is(
 	(select count(*)::int from information_schema.column_privileges
 	  where table_schema = 'public' and table_name = 'cards'
 	    and grantee = 'authenticated' and privilege_type = 'UPDATE'),
-	12,
-	'DOUZE colonnes ouvertes, ni onze ni treize : le compte exact rend visible aussi bien une '
-	'fermeture de trop qu''une réouverture à la main');
+	11,
+	'ONZE colonnes ouvertes depuis `CRM-081`, ni dix ni douze : le compte exact rend visible aussi '
+	'bien une fermeture de trop qu''une réouverture à la main. Il valait DOUZE jusqu''à la '
+	'fermeture de `snoozed_until` (docs/SPEC-cards.md §16.7)');
 
 -- Les colonnes fermées par conséquence du mécanisme, reconduites de `CRM-034`.
 select ok(not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
