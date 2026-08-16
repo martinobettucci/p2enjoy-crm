@@ -21,6 +21,7 @@ import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import { GuideDemarrage } from './GuideDemarrage'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
@@ -29,6 +30,7 @@ import {
 	CHEMIN_LISTE,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
+	CLE_TITRE_ADMIN_CATALOGUE,
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_DEMARRAGE,
@@ -50,6 +52,10 @@ const AdministrationArborescence = lazy(async () => ({
 /** L'éditeur de workflows de `CRM-076`, chargé à la demande pour la même raison. */
 const AdministrationWorkflows = lazy(async () => ({
 	default: (await import('./AdministrationWorkflows')).AdministrationWorkflows,
+}))
+/** L'administration du catalogue de `CRM-030`, chargée à la demande pour la même raison. */
+const AdministrationCatalogue = lazy(async () => ({
+	default: (await import('./AdministrationCatalogue')).AdministrationCatalogue,
 }))
 /** L'écran d'état de la messagerie de `CRM-059`, chargé à la demande pour la même raison. */
 const EtatMessagerie = lazy(async () => ({
@@ -134,6 +140,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_WORKFLOWS}>
 							<AdministrationWorkflows />
+						</AppShell>
+					}
+				/>
+				{/* L'administration du catalogue de nœuds — `CRM-030`. Même position que les
+				    autres surfaces d'administration : hors de la barre latérale, atteinte depuis
+				    l'index des réglages (docs/SPEC-workflow-engine.md §2 bis.2). */}
+				<Route
+					path={CHEMIN_ADMIN_CATALOGUE}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_CATALOGUE}>
+							<AdministrationCatalogue />
 						</AppShell>
 					}
 				/>

@@ -29,6 +29,7 @@ export type DescriptionRoute = {
 // sont RÉEXPORTÉES ici : aucun appelant existant n'est modifié.
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CORBEILLE,
 	CHEMIN_DEMARRAGE,
@@ -38,6 +39,7 @@ import {
 
 export {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CORBEILLE,
 	CHEMIN_DEMARRAGE,
@@ -68,6 +70,12 @@ export const CLE_TITRE_ADMIN_ARBORESCENCE: CleTraduction = 'admin.tree.title'
 
 /** Titre de l'éditeur de workflows — `CRM-076`, même patron (docs/SPEC-workflow-engine.md §7 bis.2). */
 export const CLE_TITRE_ADMIN_WORKFLOWS: CleTraduction = 'admin.workflows.title'
+
+/**
+ * Titre de l'administration du catalogue de nœuds — `CRM-030`, même patron
+ * (docs/SPEC-workflow-engine.md §2 bis.2).
+ */
+export const CLE_TITRE_ADMIN_CATALOGUE: CleTraduction = 'admin.catalog.title'
 
 /** Titre de l'état de la messagerie — `CRM-059`, même patron (docs/SPEC-mail-subsystem.md §20.11.1). */
 export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
@@ -159,6 +167,18 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.workflows')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.workflows.body')}</span>
+					</Link>
+				</li>
+				{/* Le catalogue vient APRÈS les workflows — `CRM-030`,
+				    docs/SPEC-workflow-engine.md §2 bis.2 : on découvre l'éditeur avant le
+				    vocabulaire qu'il emploie. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_CATALOGUE}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.catalog')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.catalog.body')}</span>
 					</Link>
 				</li>
 				<li>

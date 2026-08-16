@@ -910,6 +910,91 @@ export const fr = {
 	'admin.trash.refus.network': "La requête n'a pas abouti. Réessayer relance la restauration.",
 	'admin.trash.refus.unknown': "La restauration a été refusée, sans raison exploitable.",
 
+	// --- Catalogue de nœuds — CRM-030, docs/SPEC-workflow-engine.md §2 bis ---------------------
+	'admin.settings.index.catalog': 'Catalogue de nœuds',
+	'admin.settings.index.catalog.body':
+		"Les états qu'une affaire peut occuper dans cet espace de travail : leur nom, leur type, leur couleur et leurs valeurs par défaut.",
+
+	'admin.catalog.title': 'Catalogue de nœuds',
+	'admin.catalog.aria': 'Catalogue de nœuds du workspace',
+	'admin.catalog.intro':
+		"Un nœud est un état qu'une affaire peut occuper. Les workflows en composent leurs étapes ; sa clé est ce sur quoi l'analytique s'appuie, et elle ne se modifie pas.",
+	'admin.catalog.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.catalog.noWorkspace.body': "Sans espace de travail, il n'y a pas de catalogue à administrer.",
+
+	'admin.catalog.empty.title': 'Aucun nœud dans ce catalogue',
+	'admin.catalog.empty.body':
+		"Aucun workflow ne peut être composé tant qu'aucun état n'est déclaré. Créez le premier nœud pour commencer.",
+
+	'admin.catalog.error.title': "Le catalogue n'a pas pu être chargé",
+	'admin.catalog.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.catalog.error.retry': 'Réessayer',
+
+	// Le type est un MOT, jamais une teinte (docs/DESIGN_SYSTEM.md §5.18).
+	'admin.catalog.kind.open': 'Ouvert',
+	'admin.catalog.kind.won': 'Gagné',
+	'admin.catalog.kind.lost': 'Perdu',
+
+	'admin.catalog.color.brand': 'Bleu',
+	'admin.catalog.color.success': 'Vert',
+	'admin.catalog.color.accent': 'Jaune',
+	'admin.catalog.color.danger': 'Rouge',
+	'admin.catalog.color.neutral': 'Neutre',
+
+	// La valeur et son unité dans un seul texte traduit, jamais concaténées (CLAUDE.md §23).
+	'admin.catalog.probability.value': '{valeur} %',
+	'admin.catalog.stale.value': '{valeur} j',
+	'admin.catalog.archived': 'Archivé',
+
+	'admin.catalog.create': 'Nouveau nœud',
+	'admin.catalog.edit': 'Modifier',
+	'admin.catalog.edit.aria': 'Modifier le nœud {nom}',
+	'admin.catalog.archive': 'Archiver',
+	'admin.catalog.archive.aria': 'Archiver le nœud {nom}',
+	'admin.catalog.archive.confirm':
+		'Archiver « {nom} » ? Il ne sera plus proposé aux workflows, et vous pourrez le rétablir ici.',
+	'admin.catalog.archive.confirmAction': 'Archiver ce nœud',
+	'admin.catalog.unarchive': 'Rétablir',
+	'admin.catalog.unarchive.aria': 'Rétablir le nœud {nom}',
+	'admin.catalog.save': 'Enregistrer',
+	'admin.catalog.cancel': 'Annuler',
+
+	'admin.catalog.form.createTitle': 'Nouveau nœud',
+	'admin.catalog.form.editTitle': 'Modifier le nœud',
+	'admin.catalog.field.label': 'Libellé',
+	'admin.catalog.field.key': 'Clé',
+	'admin.catalog.field.keyFixed':
+		'Clé : {cle}. Elle ne se modifie pas : archivez ce nœud et créez-en un autre.',
+	'admin.catalog.field.kind': 'Type',
+	'admin.catalog.field.color': 'Couleur',
+	'admin.catalog.field.probability': 'Probabilité par défaut',
+	'admin.catalog.field.stale': 'Seuil de relance',
+	'admin.catalog.field.optional':
+		"Probabilité et seuil de relance sont facultatifs. Laissés vides, le nœud ne se prononce pas — ce qui n'est pas la même chose que zéro.",
+
+	'admin.catalog.created': 'Le nœud {nom} a été créé.',
+	'admin.catalog.updated': 'Le nœud {nom} a été modifié.',
+	'admin.catalog.archived.done': 'Le nœud {nom} a été archivé.',
+	'admin.catalog.unarchived': 'Le nœud {nom} a été rétabli.',
+
+	// Les refus mesurés du §2 bis.5. Le nœud occupé porte SON NOMBRE, et un compte absent ne
+	// devient jamais zéro : deux clés, jamais une phrase concaténée (CLAUDE.md §23).
+	'admin.catalog.refus.occupied.one':
+		"{compte} affaire en cours se trouve encore sur ce nœud : déplacez-la avant de l'archiver.",
+	'admin.catalog.refus.occupied.many':
+		"{compte} affaires en cours se trouvent encore sur ce nœud : déplacez-les avant de l'archiver.",
+	'admin.catalog.refus.occupied.unknown':
+		"Des affaires en cours se trouvent encore sur ce nœud : déplacez-les avant de l'archiver.",
+	'admin.catalog.refus.forbidden': "Votre compte n'a pas le droit de modifier le catalogue.",
+	'admin.catalog.refus.keyTaken': 'Cette clé est déjà employée dans cet espace de travail.',
+	'admin.catalog.refus.shape':
+		'Une valeur saisie a été refusée : la clé doit être en minuscules, chiffres et tirets, la probabilité de 0 à 100 et le seuil strictement positif.',
+	'admin.catalog.refus.missing': "L'espace de travail visé n'existe plus.",
+	'admin.catalog.refus.sansEffet':
+		"Rien n'a été modifié : ce nœud n'est pas modifiable avec votre compte.",
+	'admin.catalog.refus.network': "La requête n'a pas abouti. Réessayer relance l'enregistrement.",
+	'admin.catalog.refus.unknown': "L'écriture a été refusée, sans raison exploitable.",
+
 	// --- Versions d'un workflow — CRM-078, docs/SPEC-workflow-engine.md §7 ter.14 ---------
 	'admin.workflows.versions.title': 'Versions',
 	'admin.workflows.versions.aria': 'Versions de {workflow}',

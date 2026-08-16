@@ -19,6 +19,9 @@ export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 /** Éditeur de workflows — `CRM-076`. */
 export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
 
+/** Administration du catalogue de nœuds — `CRM-030`, `docs/SPEC-workflow-engine.md` §2 bis.2. */
+export const CHEMIN_ADMIN_CATALOGUE = '/reglages/catalogue' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 
