@@ -17391,3 +17391,29 @@ exigeraient sept affaires que le seed ne pose pas — c'est `CRM-046`. INC-062 p
 La prochaine session peut prendre `CRM-046` (qui débloquerait aussi les données longues et la
 seconde page de `CRM-042`), ou reprendre `CRM-014`, dont le backlog est mesuré faux ci-dessus.
 INC-129, INC-131, INC-132, INC-133 et désormais INC-134 attendent l'arbitrage du responsable.
+
+### Complément — ce que la campagne de fin de session a rendu
+
+Écrit après coup, l'entrée ci-dessus ayant été committée avant la fin de la campagne (§0 de
+`docs/CloudWorker.md`).
+
+**Vertes, sans anomalie** : `npm run test:sql` **41 fichiers, 2161 assertions** ;
+`npm run test:unit` **1368 tests** sur 45 fichiers ; `npm run typecheck` et `npm run build` ;
+`npm run e2e:api` **652 scénarios** ; `npm run e2e:ui` **340 scénarios** — 338 avant cette session,
+les deux de plus étant les siens ; `.venv/bin/python -m pytest mail-sync/tests` **242 tests**.
+`scripts/verify-formulaire.sh`, le harnais de l'unité : **51 contrôles, 1 en échec**, et c'est
+`text-text-1` cité par `AdministrationWorkflows.tsx` — **INC-130**, livrable de `CRM-076`, mesuré
+identique par l'exécution précédente et inchangé ici.
+
+**MA COMMANDE `pytest` ÉTAIT FAUSSE, ET ELLE A RENDU UN ROUGE QUI NE DISAIT RIEN DU PRODUIT.**
+`python3 -m pytest` sur le Python de l'hôte rend « No module named pytest » : le dépôt attend un
+`.venv` à la racine, ce que `README.md` §7 documente et que j'avais lu trop vite. Amorcé, la suite
+rend **242 tests verts**. À retenir : un rouge d'outillage se distingue d'un rouge de produit avant
+d'être compté comme une anomalie.
+
+**`npm run e2e:mail` est le seul rouge réel, et il est étranger à cette session** — consigné en
+**INC-135**, avec sa mesure dans les deux sens : la preuve S3 juge l'**historique complet** du
+conteneur `mail-sync`, si bien qu'un avertissement transitoire la condamne jusqu'à recréation. Sur
+conteneur recréé, S3 seule passe. Le rejeu complet a rendu **40 passés, 2 en échec**, le second en
+amont — une intermittence de l'ingestion — dont S3 n'est que la conséquence. Aucun fichier de
+`mail-sync/` ni de `e2e/mail/` n'est touché par cette session.
