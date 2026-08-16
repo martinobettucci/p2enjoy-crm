@@ -463,3 +463,67 @@ describe('état vide', () => {
 		expect(screen.getByTestId('formulaire-vide')).toBeDefined()
 	})
 })
+
+// @verifies CRM-037 (docs/BACKLOG.md) — reprise d'un déplacement refusé, geste d'interface
+// @verifies docs/SPEC-form-composer.md §4 ter.4 (rendu saisissable), §4 ter.5 (les deux mentions),
+//           §4 ter.6 (le défilement emporte le focus), §4 ter.8 (accessibilité)
+// @verifies docs/DESIGN_SYSTEM.md §5.7 quater (mise en évidence, liseré, focus)
+describe('champs exigés par un déplacement refusé (§4 ter)', () => {
+	function monterExige(clesExigees: readonly string[], valeurs: readonly ValeurChamp[] = []) {
+		const modele = composerFormulaire({ champs: CHAMPS, regles: REGLES, valeurs, etape: ETAPE, clesExigees })
+		const factice = clientFactice()
+		render(<FormulaireCard modele={modele} {...CARD} client={factice.client} />)
+		return factice
+	}
+
+	it("le champ `hidden` nommé par le refus devient SAISISSABLE, là où il n'était rendu nulle part", () => {
+		// Sans reprise, `motif-perte` est `hidden` et vide : ni dans le formulaire, ni dans la
+		// section repliée. C'est le cas mesuré sur dix des dix-neuf couples refusables du seed.
+		monter()
+		expect(screen.queryByTestId('champ-motif-perte')).toBeNull()
+		cleanup()
+		monterExige(['motif-perte'])
+		const controle = screen.getByLabelText('Motif de la perte')
+		expect(controle).toBeInstanceOf(HTMLTextAreaElement)
+		expect((controle as HTMLTextAreaElement).disabled).toBe(false)
+	})
+
+	it('il porte sa mention, en toutes lettres et non par une seule teinte (§5.7 quater)', () => {
+		monterExige(['motif-perte'])
+		const mention = screen.getByTestId('exige-motif-perte')
+		expect(mention.textContent).toContain('Exigé par le déplacement')
+	})
+
+	it('la mention est citée par aria-describedby du contrôle (§4 ter.8)', () => {
+		monterExige(['motif-perte'])
+		const controle = screen.getByLabelText('Motif de la perte')
+		expect((controle.getAttribute('aria-describedby') ?? '').split(' ')).toContain(
+			'champ-motif-perte-exige',
+		)
+	})
+
+	it('les DEUX mentions coexistent lorsque le champ est aussi requis à l’étape (§4 ter.5)', () => {
+		monterExige(['source'])
+		expect(screen.getByTestId('requis-source').textContent).toContain('Prospection')
+		expect(screen.getByTestId('exige-source')).not.toBeNull()
+	})
+
+	it('un champ non nommé par le refus ne porte NI mention NI mise en évidence', () => {
+		monterExige(['motif-perte'])
+		expect(screen.queryByTestId('exige-source')).toBeNull()
+		expect(screen.getByTestId('champ-source').getAttribute('data-exige')).toBeNull()
+		expect(screen.getByTestId('champ-motif-perte').getAttribute('data-exige')).toBe('true')
+	})
+
+	it('le PREMIER champ exigé prend le focus : le défilement se tient aussi au clavier (§4 ter.6)', () => {
+		// `source` est en position 2, `motif-perte` en position 4 : le premier au sens du §4 ter.3.
+		monterExige(['motif-perte', 'source'])
+		expect(document.activeElement).toBe(screen.getByLabelText(/Origine du contact/))
+	})
+
+	it('sans `exiges`, aucun focus n’est volé et aucune mise en évidence n’apparaît', () => {
+		monter()
+		expect(document.activeElement).toBe(document.body)
+		expect(screen.queryByTestId('exige-source')).toBeNull()
+	})
+})

@@ -136,7 +136,14 @@ export function FormulaireCard({
 		const sobre = typeof window.matchMedia === 'function'
 			? window.matchMedia('(prefers-reduced-motion: reduce)').matches
 			: false
-		controle.scrollIntoView({ block: 'center', behavior: sobre ? 'auto' : 'smooth' })
+		// GARDE DE CAPACITÉ, ET NON MASQUAGE D'ERREUR (CLAUDE.md §18) : `scrollIntoView` n'est pas
+		// implémentée par jsdom, où les preuves de composant s'exécutent — MESURÉ, son appel y lève.
+		// Le focus posé juste au-dessus amène DÉJÀ l'élément à l'écran dans un vrai navigateur ; ce
+		// que cette ligne ajoute est le CENTRAGE, et son absence en test ne cache aucun défaut du
+		// produit. Le défilement réel est éprouvé par `e2e/ui/formulaire.spec.ts`, sur Chromium.
+		if (typeof controle.scrollIntoView === 'function') {
+			controle.scrollIntoView({ block: 'center', behavior: sobre ? 'auto' : 'smooth' })
+		}
 	}, [signature, modele.clesExigeesRetenues])
 
 	const enregistrer = useCallback(
