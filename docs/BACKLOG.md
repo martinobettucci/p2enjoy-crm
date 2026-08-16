@@ -5533,10 +5533,24 @@ démontrable depuis le seed.
 - [~] **`scripts/verify-liste.sh` rend 72 contrôles, 1 en échec**, et l'échec est **étranger** :
       `text-text-1`, **INC-130**, livrable de `CRM-076`, mesuré identique par les deux exécutions
       précédentes. Aucun fichier de `webapp/` n'est touché par cette tranche.
-- [ ] **Les captures `liste-donnees-longues-{1440,390}` de `CRM-042` proviennent TOUJOURS de
-      réponses substituées.** La donnée réelle existe désormais ; les refaire suppose un scénario
-      d'interface **connecté** sur la vue liste. La forme est acquise — `e2e/ui/identites.spec.ts`
-      en est la démonstration —, le scénario reste à écrire.
+- [x] **~~Les captures `liste-donnees-longues-{1440,390}` de `CRM-042` proviennent TOUJOURS de
+      réponses substituées.~~ LE SCÉNARIO CONNECTÉ EST ÉCRIT, ET LES TROIS CAPTURES SONT PRISES SUR
+      LA DONNÉE RÉELLE** (2026-08-16, exécution suivante). Le bloc « données longues » de
+      `e2e/ui/liste-cards.spec.ts` ne pose plus **aucune** route : il se connecte au clavier avec le
+      compte de l'administratrice, ouvre `/tracks/studio-web/maintenance/liste`, et **relit dans
+      l'écran** les deux longueurs que la base porte — 128 et 134 caractères, jamais recopiées d'une
+      fixture. La fixture `CARD_LONGUE` est **retirée** plutôt que gardée « au cas où ».
+      Un **troisième** scénario franchit la seconde page **par le bouton du produit** : première
+      page pleine à 25 lignes, seconde page de deux lignes, « Page suivante » inactif au bout, aucun
+      état d'erreur. `e2e/ui/liste-cards.spec.ts` : 27 → **28 scénarios**, aucune anomalie.
+      Captures **observées** : `docs/captures/CRM-042/liste-donnees-longues-1440.jpg` (« Affaires :
+      27 », le titre long tronqué sur une seule ligne), `…-390.jpg`, et
+      `docs/captures/CRM-046/liste-seconde-page-1440.jpg` (« Page 2 sur 2 », deux affaires).
+      **Preuves n° 4 et n° 6 du §9.11.7 acquises.**
+- [x] **Un défaut du récapitulatif du seed, trouvé en l'exécutant** : la ligne « Cards : … »
+      additionnait `CARDS` et `CARDS_DERIVE` en ignorant `CARDS_VOLUME`, et annonçait donc **15**
+      cards là où la base en porte **41**. Le compte inclut désormais les vingt-six affaires de
+      volume, et une ligne dédiée les nomme.
 - [ ] **`scripts/verify-seed-demo.sh` et `./resetMe.sh` n'ont pas été rejoués** : la convergence
       n'est vérifiée que par trois applications successives du seed sur le même cluster, non par une
       reconstruction à froid. **Preuve n° 1 du §9.11.7 partiellement acquise.**

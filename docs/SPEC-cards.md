@@ -993,14 +993,18 @@ inchangé.
    lire s'il n'est pas explicitement exposé. PostgREST l'expose ; une fixture de test qui l'oublie
    fait rendre `count: null` à `supabase-js`, et l'écran affiche alors « Chargement impossible » —
    ce qui est le comportement voulu face à un total manquant (§12.6). Mesuré en exécutant.
-4. **Le seed ne porte aucune donnée longue.** MESURÉ : le titre le plus long du seed fait
-   **36 caractères**, la prochaine action la plus longue **34**. La Definition of Done
-   exige un « comportement avec données longues vérifié en capture » : la capture est produite
-   contre une **réponse substituée** (`docs/DESIGN_SYSTEM.md` §12.5), et le manque appartient au
-   seed de démonstration, `CRM-046`.
-5. **Le seed ne porte aucun channel de plus de 25 cards.** MESURÉ : quatre cards actives au maximum
-   dans un channel. La seconde page se prouve donc, elle aussi, contre une réponse substituée et
-   par la mesure directe du `Range` sur la pile réelle. Même destinataire : `CRM-046`.
+4. **~~Le seed ne porte aucune donnée longue.~~ FERMÉ le 2026-08-16 par `CRM-046` tranche 2.** Le
+   point disait vrai à l'écriture — titre le plus long **36 caractères**, prochaine action **34** —,
+   et la capture était alors produite contre une **réponse substituée**
+   (`docs/DESIGN_SYSTEM.md` §12.5). Le seed porte désormais `…d001`, **128** caractères de titre et
+   **134** de prochaine action (`docs/SPEC-seed.md` §9.11.4), et les deux captures
+   `liste-donnees-longues-{1440,390}` sont prises sur une session **connectée**, sans aucune
+   substitution.
+5. **~~Le seed ne porte aucun channel de plus de 25 cards.~~ FERMÉ par la même tranche.** Le point
+   disait vrai à l'écriture — quatre cards actives au maximum. `maintenance` en porte désormais
+   **27** (`docs/SPEC-seed.md` §9.11.2) : la première page est pleine, la seconde porte deux lignes,
+   et elle est franchie **par le bouton du produit** dans `e2e/ui/liste-cards.spec.ts`, en plus de
+   la mesure directe du `Range` dans `e2e/api/liste-cards.spec.ts`.
 6. **`amount` voyage en nombre JSON** — MESURÉ une quatrième fois ici, `typeof amount === 'number'`,
    valeur `15500`. C'est INC-067, ouverte par `CRM-041` : `e2e/api/cards.spec.ts` le déclare en
    **chaîne**. Ce chapitre **ne tranche pas** et ne modifie aucun comportement ; il ajoute une

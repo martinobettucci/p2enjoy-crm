@@ -15,6 +15,16 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La vue liste prouve ses données longues et sa seconde page dans l'écran réel** (`CRM-046`
+  tranche 2, `docs/SPEC-seed.md` §9.11.7 preuves n° 4 et n° 6). Les deux scénarios de données
+  longues de `e2e/ui/liste-cards.spec.ts` servaient une affaire **fabriquée sur le réseau**, le seed
+  n'en portant aucune ; ils se connectent désormais au clavier avec le compte de l'administratrice,
+  ouvrent « Studio web / Maintenance » et **relisent dans l'écran** les longueurs que la base porte —
+  128 et 134 caractères. Un troisième scénario franchit la **seconde page par le bouton du produit**
+  et constate ses deux affaires, « Page suivante » devenant inactif au bout de la plage. Trois
+  captures observées, dont `docs/captures/CRM-046/liste-seconde-page-1440.jpg`. Le récapitulatif du
+  seed, qui annonçait quinze cards là où la base en porte quarante et une, compte enfin le volume.
+
 - **Spécification de la tranche « volume et données longues » du jeu de démonstration**
   (`CRM-046`, `docs/SPEC-seed.md` §9.11, sept sous-chapitres). Écrite **après mesure sur la pile
   réelle** : le titre le plus long du seed fait **36** caractères, la prochaine action la plus
