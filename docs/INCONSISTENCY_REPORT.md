@@ -739,3 +739,19 @@ et les deux corrections possibles supposent un arbitrage : borner la lecture du 
 du scénario — ce qui affaiblit la preuve —, ou tenir l'avertissement pour un défaut réel à
 corriger dans la veille — ce qui suppose d'abord de savoir laquelle des relèves échoue, donc de
 réparer les champs manquants du journal. Comportement laissé **inchangé**. Arbitrage attendu.
+
+**Complément mesuré le même jour, et il désigne la CAUSE du `WARNING`.** Rejeu complet sur le
+conteneur recréé : **40 passés, 2 en échec**, et le second échec est **en amont** de S3 —
+`e2e/mail/ingestion.spec.ts:133`, « le message est ingéré, sa pièce infectée détectée » :
+
+```
+expect(premiere['messages_new']).toBeGreaterThanOrEqual(1)   Received: undefined
+```
+
+La relève n'a rien rapporté, la veille a donc journalisé son `veille_compte_echoue`, et S3 — qui
+lit tout l'historique — est tombé **par conséquence**. Les deux échecs n'en font qu'un : une
+intermittence de l'ingestion, et une preuve qui la propage à une seconde. Le premier rejeu de la
+journée avait vu l'inverse — ingestion **verte** et S3 rouge sur un `WARNING` plus ancien —, ce qui
+confirme l'intermittence dans les deux sens. **Cela renforce l'arbitrage demandé** : tant que S3
+juge l'historique, elle transforme toute intermittence voisine en second rouge, et masque laquelle
+des deux preuves a réellement quelque chose à dire.
