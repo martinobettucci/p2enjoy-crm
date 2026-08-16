@@ -16735,3 +16735,70 @@ committer qu'après sa sortie, ou nommer les chemins un par un.
 **Non exécutés, faute de temps** : les quarante-neuf autres `scripts/verify-*.sh`. Le harnais dédié
 de l'unité, `scripts/verify-catalogue.sh`, est vert à **39 contrôles**, et il rejoue lui-même
 `test:sql`, `test:unit`, `typecheck`, `types:check`, `build`, `e2e:api` et `e2e:ui`.
+
+## 2026-08-16 — `CRM-031` : la création d'un workflow, et un état vide qui était un cul-de-sac
+
+**Point de départ.** L'entrée précédente fermait `CRM-030` et renvoyait à la première unité `[~]`
+ou `[ ]` restante dans l'ordre du plan. `CRM-001`, `CRM-013` et `CRM-014` la précèdent mais leurs
+manques restent bloqués par des tables absentes. Vient `CRM-031`, dont la Definition of Done exige
+un « E2E de création » et des « captures de l'éditeur » depuis l'origine, tous deux différés au
+motif d'INC-021 — la webapp sans écran de connexion. **INC-021 est close depuis `CRM-009`**, et
+l'éditeur est venu avec `CRM-076` : le motif du différé n'existait plus.
+
+**Ce que la mesure a montré avant d'écrire une ligne.** L'éditeur de `CRM-076` compose tout —
+étapes, arêtes, champs, règles, exigences, versions — et **ne crée rien**. Il l'écrit lui-même au
+§7 bis.1, où « un créateur de workflow » figure parmi ce qu'il n'est pas, en renvoyant le geste à
+`CRM-031`. Le manque n'était donc pas documentaire, contrairement au cas de `CRM-030` la veille :
+`grep` sur `creerWorkflow` ne rendait rien, et l'état vide de l'écran écrivait « Un workflow se
+crée par l'API » — c'est-à-dire renvoyait l'administrateur à un outil qu'il n'a pas.
+
+**Le défaut réel, et il n'était pas celui que le backlog nommait.** Le §3.2 pose qu'« un workspace
+neuf n'a aucun workflow ». L'état vide de l'écran était donc **l'état d'ouverture d'un espace de
+travail neuf**, et il n'offrait aucune issue. Un écran d'administration dont l'état vide est un
+cul-de-sac est un défaut, pas une sobriété : c'est ce qui a fait rendre le geste **deux fois** —
+au-dessus de la liste peuplée, et dans l'état vide — et ce qui a valu à `docs/DESIGN_SYSTEM.md`
+§5.15 une règle nouvelle, qui vaudra aux surfaces d'administration suivantes.
+
+**Spécification écrite après mesure et committée avant la première ligne de code.**
+`docs/SPEC-workflow-engine.md` §3 bis, neuf sous-chapitres, plus quatre règles visuelles au
+§5.15. Les dix refus du §3 bis.5 sont des mesures faites sur la pile seedée avec les jetons réels
+des trois profils, et les trois lignes créées pour les obtenir ont été détruites, le compte des
+workflows constaté revenu à deux.
+
+**Deux décisions méritent d'être retrouvées.** La première : **la bascule de portée oublie le
+track choisi, ET le module refait ce geste de son côté.** `scope = 'global'` avec un `track_id`
+résiduel rend `400` / `23514` sur `workflows_scope_track_check` — mesuré. L'écran seul aurait
+suffi ; il ne suffit pas, parce qu'un état d'interface n'est pas un contrat, et les deux moitiés
+sont figées séparément — test unitaire pour la normalisation, scénario d'API pour ce qu'elle
+évite. La seconde : **`is_default` n'est pas exposé, et le motif est un refus mesuré**. La case
+échouerait en `23505` sur l'index unique partiel dès qu'un défaut existe, c'est-à-dire dans le cas
+normal. Ce refus est prouvé par l'API **précisément parce que l'écran ne peut pas le produire**,
+comme le `workspace_id` étranger : deux lignes du §3 bis.5 que seule une preuve hors interface
+atteint, ce que `CLAUDE.md` §10 exige de toute façon.
+
+**Un fait figé exprès.** Un nom déjà porté par un autre workflow est **accepté en `201`** : aucune
+unicité ne pèse sur `name`, et le §3.2 n'en demande aucune. Sans cette mesure, une unicité ajoutée
+un jour passerait inaperçue jusqu'au premier refus en production — que l'écran, qui ne la prévient
+pas, afficherait sans qu'aucune de ses validations ne l'annonce.
+
+**L'état vide se prouve au niveau COMPOSANT, et c'est un choix écrit.** La table du seed n'est
+jamais vide — le workspace y porte deux workflows —, et la vider pour un scénario d'interface
+casserait toutes les autres suites. Le cas vit donc dans le test de composant, avec une lecture
+rendue vide. C'est la seule preuve de cette tranche qu'aucun autre niveau ne pouvait porter.
+
+**Campagne de fin de session.** `test:sql` **40 fichiers, 2133 assertions** ; `test:unit`
+**1204/1204** sur 43 fichiers (1181 avant) ; `e2e:api` **612/612** (602 avant) ; `e2e:ui`
+**302/302** (295 avant), console vierge ; `typecheck`, `types:check` et `build` verts. Six
+captures produites **et observées** sous `docs/captures/CRM-031/`. Les captures des autres unités,
+réécrites par le rejeu des suites d'interface, ont été **regardées puis restaurées** : celle du
+catalogue montrait le survol laissé par le pilote Playwright, artefact non déterministe déjà relevé
+aux trois unités précédentes. **Non exécutés, faute de temps** : `pytest`, `e2e:mail`, et les
+`scripts/verify-*.sh` autres que celui des workflows.
+
+**Où reprendre.** `CRM-031` reste `[~]` pour **un seul** manque, et il n'appartient pas à l'unité :
+la contrainte `NOT NULL` de `channels.workflow_id`, qui revient à `CRM-033` — laquelle l'a d'ailleurs
+posée depuis, sa migration `0008` la portant. **Le premier geste de la prochaine session est de
+vérifier cette contrainte en base** : si elle y est, `CRM-031` se ferme en une mesure et un trait
+de plume, et la session enchaîne sur l'unité suivante. `CRM-032` est celle-là : son manque de
+comportement est réel et mesuré — aucune mention de divergence n'est affichée nulle part, `grep`
+sur « divergen » ne rendant rien dans `webapp/src`.
