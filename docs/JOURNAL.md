@@ -16804,3 +16804,66 @@ vérifier cette contrainte en base** : si elle y est, `CRM-031` se ferme en une 
 de plume, et la session enchaîne sur l'unité suivante. `CRM-032` est celle-là : son manque de
 comportement est réel et mesuré — aucune mention de divergence n'est affichée nulle part, `grep`
 sur « divergen » ne rendant rien dans `webapp/src`.
+
+## 2026-08-16 — `CRM-032` : la divergence, enfin dite à l'écran, et un harnais qui défaisait une migration
+
+**Point de départ.** L'entrée précédente demandait, comme premier geste, de vérifier en base la
+contrainte `NOT NULL` de `channels.workflow_id` — dernier manque de `CRM-031`, et frontière d'unité
+plutôt que défaut. Mesuré sur la pile seedée : `pg_attribute.attnotnull` rend `t`, et
+`select count(*) from public.channels where workflow_id is null` rend `0`. `CRM-031` est **close**,
+en une mesure et un commit.
+
+**L'unité de la session, et pourquoi elle avait du comportement à livrer.** `CRM-032` exigeait depuis
+l'origine une « mention de divergence visible dans l'interface », et ne l'avait jamais eue : la
+webapp était un appelant anonyme (INC-021) et aucun écran d'administration n'existait. **Les deux
+motifs ont disparu** — INC-021 close par `CRM-009`, éditeur livré par `CRM-076`. `grep` sur
+« divergen » ne rendait rien dans `webapp/src` : le manque était bien du code, pas de la prose.
+
+**Spécification écrite après mesure, committée avant la première ligne de code.**
+`docs/SPEC-workflow-engine.md` §4 bis, huit sous-chapitres, plus quatre règles au §5.15 du design
+system. Les quatre lignes du contrat de lecture sont des mesures faites avec les jetons réels :
+la copie du seed rend une ligne, le workflow par défaut rend `[]`, le `viewer` voit la **même**
+ligne, l'anonyme rend `[]`.
+
+**Deux décisions méritent d'être retrouvées.** La première : **la date affichée est celle de la
+copie, jamais celle de la modification**. `source_modified_at` était disponible et tentante ; le
+§4.6 pose qu'elle ne voit pas les suppressions dans la source, de sorte qu'une source amputée est
+déclarée divergente par l'empreinte **sans que cette date ait bougé**. L'afficher à côté de « la
+source a changé » aurait fait mentir l'écran. La seconde : **un workflow qui n'est la copie de
+personne ne rend rien du tout**, pas même un état vide nommé — écart assumé au §5.8, motivé par le
+fait que n'être la copie de personne est le cas normal.
+
+**La réversibilité du signal est une mesure, pas une hypothèse.** Une surcharge posée sur une étape
+de la source allume `source_modified_since_copy` ; la retirer l'**éteint**, l'empreinte redevenant
+identique. La preuve d'interface fait exactement cela, dans cet ordre, et rend la table dans l'état
+où elle l'a trouvée.
+
+**Campagne de fin de session.** `test:sql` **40 fichiers, 2133 assertions** ; `test:unit`
+**1223/1223** sur 43 fichiers (1204 avant) ; `e2e:api` **612/612** ; `e2e:ui` **305/305** (302
+avant), console vierge ; `typecheck`, `types:check`, `build` verts. `verify-copie-workflow.sh
+--rapide` **28 contrôles, aucune anomalie**. Trois captures produites **et observées** sous
+`docs/captures/CRM-032/`. Les captures des autres unités, réécrites par le rejeu des suites
+d'interface, ont été **regardées puis restaurées** — celle de `CRM-076` a servi de contrôle : le
+workflow par défaut n'y porte aucune mention, ce qui est l'effet attendu du changement sur les
+écrans voisins.
+
+**UN DÉFAUT RÉEL TROUVÉ PAR LA CAMPAGNE, ÉTRANGER À L'UNITÉ — INC-129.** Le harnais complet a rendu
+`35 contrôles, 2 en échec` alors que les mêmes suites étaient vertes seules quelques minutes plus
+tôt. Cause isolée : `scripts/verify-copie-workflow.sh` restaure ses dégradations en rejouant **la
+seule** migration `0019`, or `public.move_card` est redéfinie par **cinq** migrations et `0019`
+n'est pas la dernière — rejouer `0019` réinstalle donc la version d'avant `0035`, celle qui n'écrit
+pas le commentaire qu'elle exige, et trois suites pgTAP rougissent sans que rien ne le signale. Le
+seed ne répare pas : il pose des données, pas des fonctions. Base locale réparée par rejeu de
+`0035`, aucun fichier du dépôt modifié, arbitrage demandé au registre. La leçon vaut au-delà de ce
+harnais : le contrôle ne peut pas être « le fichier se rejoue sans erreur », il doit être « l'objet
+restauré est celui de la DERNIÈRE migration qui le définit ».
+
+**Non exécutés, faute de temps** : `pytest`, `e2e:mail`, et les `scripts/verify-*.sh` autres que
+celui de la copie — quarante-neuf harnais restent à rejouer.
+
+**Où reprendre.** `CRM-032` reste `[~]` pour **un seul** manque, et c'est désormais la
+**comparaison** copie ↔ source du §4.1 : `public.compare_workflow_versions` compare deux versions
+publiées, jamais deux workflows vivants, et la comparer demanderait une seconde fonction — donc une
+unité. La prochaine session prend la première unité `[~]` ou `[ ]` restante dans l'ordre du plan
+ayant du COMPORTEMENT à livrer, et INC-129 est à porter au responsable pour arbitrage avant de
+toucher aux harnais.

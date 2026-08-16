@@ -2608,6 +2608,10 @@ depuis une colonne tableau. La colonne est remplacée par une table de liaison
 qu'après elle.
 
 ### CRM-032 — Copie d'un workflow vers un track `[~]`
+*Reste `[~]` pour **un seul** manque, et il n'est plus celui d'hier : la **comparaison** copie ↔
+source, que le §4.1 esquisse. La « mention de divergence visible dans l'interface » que la
+Definition of Done exigeait est **livrée et prouvée** depuis le 2026-08-16 — voir la tranche
+d'interface plus bas.*
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.
 **DoD** : pgTAP (copie complète des étapes, transitions et champs ; lignage renseigné) ; E2E ;
 mention de divergence visible dans l'interface.
@@ -2694,7 +2698,49 @@ mention de divergence visible dans l'interface.
       `docs/SPEC-seed.md` §2.9, `docs/DAT.md` §7 et §8, `docs/PROD_MIGRATIONS.md` §3,
       `docs/manual.md` chapitre 21 et §3.2, `README.md` §5, `CHANGELOG.md` mis à jour dans le même
       changement.
-- [ ] **Aucun écran, aucune mention de divergence affichée, aucune capture.** La Definition of Done
+- [x] **LA MENTION DE DIVERGENCE EST LIVRÉE ET PROUVÉE** (2026-08-16, `docs/SPEC-workflow-engine.md`
+      §4 bis, `docs/DESIGN_SYSTEM.md` §5.15). Le paragraphe ci-dessous est **historique** : il disait
+      « aucun écran, aucune mention affichée, aucune capture », et son motif — INC-021, la webapp
+      appelant anonyme — a disparu, INC-021 étant close depuis `CRM-009` et l'éditeur venu avec
+      `CRM-076`. L'éditeur écrit désormais, en tête du workflow choisi, d'où il dérive et si sa
+      source a changé depuis. Un workflow qui n'est la copie de personne ne rend **rien** : c'est le
+      cas normal, et l'écart au §5.8 du design system est écrit au §4 bis.5.
+- [x] **Spécification de la tranche écrite après mesure et committée AVANT la première ligne de
+      code** : `docs/SPEC-workflow-engine.md` §4 bis, huit sous-chapitres, plus quatre règles
+      visuelles au §5.15 du design system. Les quatre lignes du contrat de lecture du §4 bis.3 sont
+      des mesures faites sur la pile seedée avec les jetons réels — dont celui du `viewer`, qui voit
+      la même ligne, et l'anonyme, qui rend `[]`.
+- [x] **Le verdict vient de `source_modified_since_copy`, et de rien d'autre.** L'écran ne compare
+      aucune date et ne recalcule aucune empreinte. Le §4.6 l'impose : `source_modified_at` ne voit
+      pas les suppressions dans la source. C'est aussi pourquoi la date affichée est celle de la
+      **copie** — l'autre ferait mentir l'écran sur la nature du changement.
+- [x] **Aucune écriture, et aucune commande** : ni « resynchroniser », ni « comparer », pas même
+      grisée. La vue est fermée deux fois (§4.6), et un bouton grisé enseignerait un geste qui
+      n'existe nulle part dans le produit.
+- [x] **Test unitaire dédié** : 11 assertions dans `webapp/src/lib/administration-workflows.test.ts`
+      — la requête réellement émise, l'absence de filtre de workspace, la liste vide rendue `null`,
+      le verdict pris à la seule colonne qui le porte, et le repli du nom de source absent.
+- [x] **Preuve de composant dédiée** : 8 scénarios dans `webapp/src/app/AdministrationWorkflows.test.tsx`
+      — les trois phrases, le workflow sans origine qui ne rend **rien**, l'erreur de lecture nommée,
+      l'absence de commande, et le `role="status"`.
+- [x] **Preuve d'interface dédiée** : 3 scénarios dans `e2e/ui/administration-workflows.spec.ts`,
+      dont un qui **provoque réellement** la divergence — une surcharge posée sur une étape de la
+      source par la clé de service, la phrase constatée, puis la source restaurée et le signal
+      constaté **éteint**, la table rendue dans l'état où elle a été trouvée (INC-099).
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-032/`, trois captures —
+      la mention à jour et la mention divergente à 1440 px, et le repli à 390 px sans débordement.
+- [x] **Campagne** : `test:sql` **40 fichiers, 2133 assertions** ; `test:unit` **1223/1223** sur 43
+      fichiers (1204 avant) ; `e2e:api` **612/612** ; `e2e:ui` **305/305** (302 avant), console
+      vierge ; `typecheck`, `types:check` et `build` verts. `scripts/verify-copie-workflow.sh
+      --rapide` **28 contrôles, aucune anomalie**, ses trois dégradations réelles comprises.
+- [x] **Un défaut trouvé pendant la campagne, mesuré, consigné, et NON corrigé ici** : INC-129 —
+      `scripts/verify-copie-workflow.sh` restaure ses dégradations en rejouant la seule migration
+      `0019`, ce qui **ramène `move_card` à son état d'avant la migration `0035`** et fait rougir
+      trois suites pgTAP sans que rien ne le signale. Étranger à cette unité, qui ne touche aucun
+      `.sql`. Base locale réparée par rejeu de `0035` ; arbitrage demandé au registre.
+
+- [ ] *(historique, conservé pour dire pourquoi cette preuve a manqué si longtemps)* **Aucun écran,
+      aucune mention de divergence affichée, aucune capture.** La Definition of Done
       exige que la divergence soit « visible dans l'interface ». Elle suppose un écran
       d'administration authentifié, et la webapp reste un appelant **anonyme** faute d'écran de
       connexion — **INC-021, en attente d'arbitrage**. Ce qui est livré est la **donnée** qui
