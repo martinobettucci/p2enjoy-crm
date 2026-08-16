@@ -16619,11 +16619,23 @@ preuves le figent. La seconde : **un compte absent ne devient jamais `0`**. « 0
 nœud » serait la contradiction exacte du refus qu'on affiche ; la phrase sans compte est une clé
 distincte.
 
-**Preuves exécutées.** `test:unit` **1172/1172** sur 43 fichiers, dont les 20 cas neufs ;
-`typecheck` vert sur les quatre projets ; `e2e/ui/administration-catalogue.spec.ts` **7/7**, console
-vierge, gestes joués à la souris et au clavier, chaque effet relu en base ;
-`e2e/api/catalogue-noeuds.spec.ts` **27/27** (25 avant). Captures aux quatre paliers plus le refus
-et le formulaire, **produites et observées**.
+**Campagne de fin de session.** `scripts/verify-catalogue.sh` **39 contrôles, aucune anomalie**, et
+il rejoue lui-même les sept suites : `test:sql` **40 fichiers, 2133 assertions**, `test:unit`
+**1172/1172** sur 43 fichiers, `typecheck`, `types:check` et `build` verts, `e2e:api` **599/599**
+(597 avant) et `e2e:ui` **293/293** (286 avant), console vierge. Les trois dernières ont été
+rejouées séparément pour leur compte. Captures aux quatre paliers plus le refus et le formulaire,
+**produites et observées**. **Non exécutés, faute de temps** : `pytest`, `e2e:mail`, et les
+quarante-neuf autres `scripts/verify-*.sh`.
+
+**Deux anomalies rencontrées, isolées, corrigées.** La première : `npm run typecheck` rougissait sur
+les deux preuves neuves — un index de tableau n'est pas une garantie de présence sous la garde
+stricte. Corrigée par deux accesseurs qui **nomment** l'absence, jamais par une assertion non nulle
+qui aurait tu le seul cas que ces preuves existent pour attraper. La seconde : `test:sql` a rendu
+**5 fichiers en échec** — `0004_tracks`, `0029_inbox_globale`, `0038`, `0039`, `0040` —, tous
+étrangers aux tables de cette unité. **Ligne de base établie sans `git stash` : la session ne touche
+aucun `.sql`**, et `supabase/seed/apply-seed.sh` rejoué rend les 40 fichiers verts. C'était une
+dérive d'ÉTAT de la base laissée par les campagnes E2E, pas une régression — le mode de défaillance
+qu'INC-105 et INC-117 décrivent.
 
 **Un constat étranger, mesuré et NON corrigé — INC-126.** `proposerSlug` rend `n-ud-de-preuve` pour
 « Nœud de preuve » : la **ligature** « œ » n'est pas décomposable en NFD, elle tombe donc dans le

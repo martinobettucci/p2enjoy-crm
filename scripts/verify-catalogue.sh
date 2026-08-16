@@ -16,9 +16,10 @@
 #      rétablie par un rejeu, et non laissée manquante (décision 57) ;
 #   4. le seed est **convergent** : rejoué, il laisse exactement huit nœuds, dont un archivé, les
 #      cinq jetons du design system exercés et les deux nœuds terminaux sans seuil de relance ;
-#   5. INC-031 est **constatée** : `cards`, dont dépend la garde d'archivage, n'existe toujours pas
-#      — `workflow_steps` a été livrée par `CRM-031` —, et aucun trigger ne prétend porter cette
-#      garde ;
+#   5. la **garde d'archivage** est constatée présente : `cards` et `workflow_steps` existent, et le
+#      trigger `workflow_nodes_catalog_refuser_archivage_occupe` est nommé, non déduit. Ce contrôle
+#      attendait l'ABSENCE de ces objets jusqu'à `CRM-040` ; il a été retourné avec elle, et ce
+#      commentaire l'avait suivi avec deux jours de retard (`CRM-030`, 2026-08-16) ;
 #   6. le contrat d'API est rejoué avec les jetons réels des trois profils seedés ;
 #   7. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
 #      échouer, et la restauration est constatée, pas supposée.
@@ -26,16 +27,15 @@
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais ne prouve pas, et le dit.
 # ---------------------------------------------------------------------------------------------
-# Il ne prouve rien d'une interface : le catalogue de nœuds n'a **aucun écran**, et n'en aura pas
-# avant l'éditeur de workflow de `CRM-031`. Il n'y a donc ni test E2E d'interface, ni capture
-# d'application à produire — non par renoncement, mais parce qu'il n'existe rien à regarder. La
-# webapp, de surcroît, est un appelant anonyme faute d'écran de connexion
-# (`docs/INCONSISTENCY_REPORT.md`, INC-021).
+# LES DEUX PARAGRAPHES QUI TENAIENT ICI DÉCRIVAIENT L'ÉTAT DU 2026-08-04, et aucun des deux n'est
+# plus vrai. Ils disaient que le catalogue n'avait aucun écran — il en a un depuis `CRM-030`,
+# `webapp/src/app/AdministrationCatalogue.tsx`, prouvé par `e2e/ui/administration-catalogue.spec.ts`
+# — et que le refus d'archivage d'un nœud occupé n'était pas prouvable — il l'est depuis `CRM-040`,
+# et `e2e/api/catalogue-noeuds.spec.ts` §N6 le mesure.
 #
-# Il ne prouve pas non plus le refus d'archivage d'un nœud occupé, exigé par la Definition of Done :
-# `cards` n'existe pas (INC-031), et `workflow_steps` seule ne suffit pas à dire qu'un nœud est
-# occupé. Ce que le harnais fait, c'est **vérifier que cette absence est toujours vraie** — le jour
-# où elle cessera de l'être, le contrôle 5 tombera, comme il l'a fait à `CRM-031`.
+# Ce que ce harnais ne prouve toujours pas, et le dit : le **réordonnancement** du catalogue, seul
+# manque restant de `CRM-030` (`docs/SPEC-workflow-engine.md` §2 bis.8). Les suites qu'il rejoue
+# — `e2e:ui` comprise — couvrent l'écran ; aucun contrôle propre à ce fichier ne l'exerce.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
