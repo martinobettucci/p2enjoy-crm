@@ -72,6 +72,8 @@ CARD_CE=5eed0000-0000-4000-8000-0000000000ce
 # `CRM-077`, cinquième tranche : l'affaire sous `dossiers-2023`, l'enfant vivant d'un track en
 # corbeille (docs/SPEC-seed.md §10.4 bis).
 CARD_CF=5eed0000-0000-4000-8000-0000000000cf
+# L'étape « Livré » du workflow global, seule étape que la dégradation N1 vide entièrement.
+ETAPE_LIVRE=5eed0000-0000-4000-8000-000000000066
 CHAMP_LIEN=5eed0000-0000-4000-8000-000000000086
 CHAMP_MOTIF=5eed0000-0000-4000-8000-000000000084
 CARDS_SEED_SQL="'5eed0000-0000-4000-8000-0000000000c1',
@@ -561,7 +563,21 @@ for compte in admin bizdev viewer; do
 	fi
 done
 
-titre "13. Preuve n° 13 — INC-075, mesurée et figée"
+# --- 13. Le droit fin du viewer, et le CHEMIN qui y mène ---------------------------------------
+#
+# PREUVE RÉVISÉE LE 2026-08-16, PARCE QUE LA RÈGLE A CHANGÉ PAR ARBITRAGE — jamais parce qu'elle
+# gênait (`docs/CloudWorker.md` §3.1, `CLAUDE.md` §18).
+#
+# Elle figeait INC-075 : le viewer lisait le channel « prospection » par droit fin, mais PAS le
+# track qui le porte, si bien qu'aucun geste de navigation n'y menait. La **décision 333** a tranché
+# — « un droit qui n'a pas de chemin n'est pas un droit » — et la migration
+# `0034_lecture_track_transitive.sql` a rendu la lecture d'un track TRANSITIVE : un track est
+# lisible dès que l'un au moins de ses channels l'est. INC-075 et son doublon INC-085 sont closes
+# par cette décision.
+#
+# La preuve dit donc désormais l'inverse de ce qu'elle disait, et c'est le produit qui a changé,
+# pas l'exigence : le droit fin est toujours là, et il a maintenant son chemin.
+titre "13. Preuve n° 13 — le droit fin du viewer, et son chemin (décision 333)"
 
 jeton_viewer=$(jeton_de viewer)
 if [ -n "$jeton_viewer" ]; then
@@ -569,10 +585,10 @@ if [ -n "$jeton_viewer" ]; then
 	voit_channel=$(lire "$jeton_viewer" "/rest/v1/channels?select=id&id=eq.$CH_PROSPECTION" | jq -r 'length')
 	voit_cards=$(lire "$jeton_viewer" "/rest/v1/cards?select=id&channel_id=eq.$CH_PROSPECTION&archived_at=is.null&deleted_at=is.null" | jq -r 'length')
 
-	if [ "$voit_track" = '0' ]; then
-		ok "le viewer ne lit PAS le track « conseil-ia » — track_members.access = none"
+	if [ "$voit_track" = '1' ]; then
+		ok "le viewer lit le track « conseil-ia » PAR TRANSITIVITÉ, malgré track_members.access = none"
 	else
-		fail "le viewer lit le track « conseil-ia » : INC-075 a changé de nature, le §9.7 doit être réécrit"
+		fail "le viewer ne lit pas « conseil-ia » : la lecture transitive de la décision 333 a cessé de fonctionner"
 	fi
 
 	if [ "$voit_channel" = '1' ]; then
@@ -582,7 +598,7 @@ if [ -n "$jeton_viewer" ]; then
 	fi
 
 	if [ "${voit_cards:-0}" -ge 2 ]; then
-		ok "le viewer lit les $voit_cards cards de « prospection » par son droit fin — et aucun écran ne l'y mène (INC-075)"
+		ok "le viewer lit les $voit_cards cards de « prospection » par son droit fin, et un chemin l'y mène"
 	else
 		fail "le viewer ne lit que ${voit_cards:-0} card(s) de « prospection », deux attendues"
 	fi
@@ -695,8 +711,26 @@ else
 			-H 'Content-Type: application/json' -d "$2"
 	}
 
-	# N1 — la seule card active de l'étape « Livré » est archivée. Le contrôle n° 2 doit la voir.
-	patch_service "cards?id=eq.$CARD_CD" '{"archived_at": "2026-08-06T00:00:00Z"}'
+	# N1 — TOUTES les cards actives de l'étape « Livré » sont archivées. Le contrôle n° 2 doit le voir.
+	#
+	# DÉGRADATION RÉVISÉE LE 2026-08-16, ET LE MOTIF EST UN DÉFAUT DE FORME DE CETTE DÉGRADATION.
+	# Elle archivait UNE card désignée par son identifiant, « …0cd », et se croyait suffisante parce
+	# que l'étape n'en portait qu'une. Elle était donc liée au NOMBRE de cards du seed, non à la
+	# propriété qu'elle éprouve. La tranche 2 de `CRM-046` (`docs/SPEC-seed.md` §9.11) a posé du
+	# volume sur cette étape : la dégradation ne vidait plus rien, et le contrôle n° 2 restait vert
+	# sans rien prouver — exactement la complaisance que ce bloc existe pour détecter.
+	#
+	# Elle porte désormais sur un PRÉDICAT — toute card active de l'étape —, et le seed les rend
+	# toutes. Le compte d'écritures attendu par N6 en découle, il n'est pas recopié.
+	cards_livre=$(psql_db -c "
+		select count(*)
+		  from cards c
+		  join workflow_steps s on s.id = c.current_step_id
+		  join workflow_nodes_catalog n on n.id = s.node_id
+		 where s.workflow_id = '$WF_GLOBAL' and n.key = 'livre'
+		   and c.archived_at is null and c.deleted_at is null")
+	patch_service "cards?current_step_id=eq.$ETAPE_LIVRE&archived_at=is.null&deleted_at=is.null" \
+		'{"archived_at": "2026-08-06T00:00:00Z"}'
 	vides_degrade=$(psql_db -c "
 		select coalesce(string_agg(n.key, ', ' order by s.position), '')
 		  from workflow_steps s
@@ -707,7 +741,7 @@ else
 		          where c.current_step_id = s.id
 		            and c.archived_at is null and c.deleted_at is null)")
 	if [ "$vides_degrade" = 'livre' ]; then
-		ok "N1 : « …0cd » archivée, l'étape « livre » redevient vide — le contrôle n° 2 mord"
+		ok "N1 : les $cards_livre cards actives de « livre » archivées, l'étape redevient vide — le contrôle n° 2 mord"
 	else
 		fail "N1 : l'étape « livre » n'est pas signalée vide (« ${vides_degrade:-rien} ») : le contrôle n° 2 est complaisant"
 	fi
@@ -753,21 +787,25 @@ else
 		fail "N5 : état NON rétabli — attendu $reference_hors_evenements, lu $restaure. La base reste dégradée."
 	fi
 
+	# N6 — chaque card archivée puis désarchivée pèse DEUX écritures, et la valeur vidée puis
+	# remplie en pèse deux : le compte attendu se DÉDUIT du nombre de cards dégradées, il n'est pas
+	# recopié. Une constante figée ici redeviendrait fausse au prochain volume posé sur « livre ».
+	attendus=$(( 2 * cards_livre + 2 ))
 	evenements_apres=$(psql_db -c 'select count(*) from card_events')
 	ecart=$(( evenements_apres - evenements_avant_degradation ))
-	if [ "$ecart" -eq 4 ]; then
-		ok "N6 : la timeline a inscrit les $ecart écritures — archived, unarchived, deux field_changed"
+	if [ "$ecart" -eq "$attendus" ]; then
+		ok "N6 : la timeline a inscrit les $ecart écritures — $cards_livre archived, autant d'unarchived, deux field_changed"
 	else
-		fail "N6 : $ecart événement(s) inscrit(s), 4 attendus : la timeline ne voit pas tout ce qui se passe"
+		fail "N6 : $ecart événement(s) inscrit(s), $attendus attendus : la timeline ne voit pas tout ce qui se passe"
 	fi
 
 	types_ecart=$(psql_db -c "
 		select coalesce(string_agg(distinct type, ','), '')
-		  from (select type from card_events order by created_at desc limit 4) d")
+		  from (select type from card_events order by created_at desc limit $attendus) d")
 	if [ "$types_ecart" = 'archived,field_changed,unarchived' ]; then
-		ok "N7 : les quatre derniers événements sont bien ceux des dégradations ($types_ecart)"
+		ok "N7 : les $attendus derniers événements sont bien ceux des dégradations ($types_ecart)"
 	else
-		fail "N7 : les quatre derniers événements sont « $types_ecart », inattendu"
+		fail "N7 : les $attendus derniers événements sont « $types_ecart », inattendu"
 	fi
 fi
 
