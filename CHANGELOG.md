@@ -25,6 +25,18 @@ d'exécuter le code attendu.
   captures observées, dont `docs/captures/CRM-046/liste-seconde-page-1440.jpg`. Le récapitulatif du
   seed, qui annonçait quinze cards là où la base en porte quarante et une, compte enfin le volume.
 
+### Corrigé
+
+- **Deux preuves du harnais du jeu de démonstration révisées, aucune retirée** (`CRM-046`,
+  `scripts/verify-seed-demo.sh`, désormais **69 contrôles sans anomalie**). Sa dégradation
+  volontaire n° 1 vidait l'étape « Livré » en archivant **une** affaire désignée par son
+  identifiant : le volume posé par la même unité l'avait rendue muette, et le contrôle qu'elle
+  devait faire mordre restait vert sans rien prouver. Elle archive maintenant **toute** affaire
+  active de l'étape, et les comptes d'écritures attendus s'en déduisent. Sa preuve n° 13 figeait le
+  fait qu'un lecteur ne voyait pas le track portant le channel ouvert par son droit fin : la
+  décision 333 a tranché l'inverse et rendu la lecture d'un track transitive, la preuve dit
+  désormais la règle en vigueur, et `docs/SPEC-seed.md` §9.7 cesse d'annoncer INC-075 comme ouverte.
+
 - **Spécification de la tranche « volume et données longues » du jeu de démonstration**
   (`CRM-046`, `docs/SPEC-seed.md` §9.11, sept sous-chapitres). Écrite **après mesure sur la pile
   réelle** : le titre le plus long du seed fait **36** caractères, la prochaine action la plus

@@ -17532,3 +17532,42 @@ cluster — **preuve n° 1 du §9.11.7 partiellement acquise**. Les compteurs de
 `scripts/verify-harness.sh` restent en retard, dérive antérieure et étrangère. Une prochaine
 exécution peut solder cette convergence à froid, ou prendre `CRM-014`, dont l'énoncé de backlog est
 mesuré faux depuis deux entrées.
+
+### Complément — ce que la campagne de fin de session a rendu, et les deux preuves qu'elle a fait réviser
+
+**Vertes, sans anomalie** : `npm run test:sql` **41 fichiers, 2161 assertions** ; `npm run test:unit`
+**1368 tests** sur 45 fichiers ; `npm run typecheck` et `npm run build` ; `npm run e2e:api` **658
+scénarios** ; `npm run e2e:ui` **341 scénarios** — 340 avant cette session, le scénario de plus étant
+le sien ; `npm run e2e:mail` **42 scénarios** ; `.venv/bin/python -m pytest mail-sync/tests` **242
+tests**. `scripts/verify-liste.sh` : **72 contrôles, 1 en échec** — `text-text-1`, INC-130,
+préexistante et étrangère.
+
+**`scripts/verify-seed-demo.sh` a rendu quatre anomalies, et TROIS N'EN ÉTAIENT PAS.** Deux — les
+empreintes des preuves n° 10 et 11 — venaient d'un résidu laissé par la campagne E2E qui venait de
+s'achever : le premier rejeu du seed *réparait* cet état, si bien que l'empreinte d'avant et celle
+d'après ne pouvaient pas coïncider. Mesuré dans les deux sens : sur base convergée, un rejeu ne
+déplace plus rien — `diff` vide sur les événements et sur les quinze cards du §9.8 —, et le second
+passage du harnais ne les rend plus. À retenir : **une empreinte prise juste après une suite E2E ne
+mesure pas la convergence du seed**, elle mesure ce que la suite a laissé.
+
+**La troisième était réelle, et c'était un défaut de MA propre unité.** La dégradation N1 vidait
+l'étape « Livré » en archivant **une** card désignée par son identifiant, `…0cd`. Elle ne tenait que
+parce que l'étape n'en portait qu'une : le volume de la tranche 2 en a posé sept, la dégradation ne
+vidait plus rien, et le contrôle n° 2 restait **vert sans rien prouver** — la complaisance même que
+ce bloc existe pour détecter. C'est la troisième occurrence de cette famille dans la même tranche,
+après `0012_cards.test.sql` et `e2e/api/cards.spec.ts` : **un préalable qui désigne une ligne par son
+identifiant est lié au volume du seed, pas à la propriété qu'il éprouve.** Corrigée par prédicat, et
+les comptes d'événements de N6 et N7 se déduisent désormais du nombre de cards dégradées — 7 cards,
+16 écritures — au lieu d'être figés à quatre.
+
+**La quatrième était une preuve périmée par un arbitrage, et elle est RÉVISÉE, pas contournée.** La
+preuve n° 13 exigeait que le viewer ne lise **pas** le track `conseil-ia` — INC-075, « un droit sans
+chemin ». La **décision 333** a tranché l'inverse et la migration `0034_lecture_track_transitive.sql`
+a rendu la lecture d'un track transitive ; INC-075 et INC-085 sont closes depuis. Le harnais figeait
+donc l'état d'avant l'arbitrage. Il asserte maintenant la transitivité, motif écrit dans le fichier,
+et `docs/SPEC-seed.md` §9.7 cesse d'annoncer une incohérence fermée. **Résultat : 69 contrôles,
+aucune anomalie.**
+
+**Non exécuté, et dit comme tel** : les quarante-neuf autres `scripts/verify-*.sh` — la série
+entière ne tient pas dans une session (§2.1 ter) —, et `./resetMe.sh`, dont la reconstruction à
+froid reste la seule forme forte de la preuve n° 1 du §9.11.7.

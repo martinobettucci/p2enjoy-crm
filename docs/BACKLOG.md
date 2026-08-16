@@ -5551,9 +5551,22 @@ démontrable depuis le seed.
       additionnait `CARDS` et `CARDS_DERIVE` en ignorant `CARDS_VOLUME`, et annonçait donc **15**
       cards là où la base en porte **41**. Le compte inclut désormais les vingt-six affaires de
       volume, et une ligne dédiée les nomme.
-- [ ] **`scripts/verify-seed-demo.sh` et `./resetMe.sh` n'ont pas été rejoués** : la convergence
-      n'est vérifiée que par trois applications successives du seed sur le même cluster, non par une
-      reconstruction à froid. **Preuve n° 1 du §9.11.7 partiellement acquise.**
+- [x] **`scripts/verify-seed-demo.sh` REJOUÉ : 69 contrôles, aucune anomalie** (2026-08-16,
+      exécution suivante) — dont les preuves n° 10 et 11, qui rejouent le seed et exigent une
+      empreinte inchangée, et les sept dégradations de non-complaisance. **Il a fallu réviser deux
+      de ses preuves pour cela, et aucune n'a été retirée** : la dégradation **N1** vidait l'étape
+      « Livré » en archivant **une** card désignée par son identifiant — liée au nombre de cards du
+      seed, non à la propriété éprouvée —, et le volume de cette tranche l'avait rendue muette, le
+      contrôle n° 2 restant vert **sans plus rien prouver**. Elle porte désormais sur un
+      **prédicat**, et les comptes attendus par N6 et N7 se **déduisent** du nombre de cards
+      dégradées (7 cards → 16 écritures) au lieu d'être figés à quatre. La preuve n° **13** figeait
+      INC-075 — « le viewer ne lit PAS le track » —, que la **décision 333** et la migration
+      `0034_lecture_track_transitive.sql` ont renversée : elle asserte maintenant la lecture
+      **transitive**, motif écrit dans le fichier, et `docs/SPEC-seed.md` §9.7 dit enfin l'état réel.
+- [ ] **`./resetMe.sh` n'a toujours PAS été rejoué** : la convergence reste vérifiée par des
+      applications successives du seed sur le même cluster, jamais par une reconstruction à froid.
+      **Preuve n° 1 du §9.11.7 partiellement acquise**, et preuve n° 14 sous sa forme forte non
+      rejouée depuis la tranche 1.
 - [ ] **Les compteurs de `scripts/verify-harness.sh` sont en retard, et de bien plus que cette
       tranche** : 2003 assertions déclarées contre **2161** mesurées, 514 scénarios d'API contre
       **658**. Dérive **antérieure et étrangère** ; la corriger sous une unité qui ne la porte pas
