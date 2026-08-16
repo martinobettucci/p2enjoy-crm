@@ -23,6 +23,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 1 | Se connecter, récupérer son mot de passe | `CRM-011` | **Partiellement livré** — connexion, session d'onglet et déconnexion sont disponibles ; la récupération du mot de passe reste hors interface |
+| 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
 
@@ -107,6 +108,73 @@ Dans l'environnement de développement seedé, les trois comptes de démonstrati
 **Ce qui reste hors interface.** La récupération du mot de passe est appliquée et prouvée côté
 serveur, mais aucun écran ne la porte encore. L'invitation demeure une opération d'exploitation :
 la webapp ne détient jamais la clé de service nécessaire (INC-015).
+
+## 1 bis. Le guide de démarrage : par où commencer
+
+*Livré par `CRM-079`. Décrit l'application réellement exécutée ; captures dans
+`docs/captures/CRM-079/`.*
+
+À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
+place le **Guide de démarrage**, une liste de **cinq étapes** qui mènent chacune vers l'écran qui
+la réalise.
+
+Les cinq étapes, dans l'ordre :
+
+| Étape | Ce qu'elle établit | Où elle se fait |
+|---|---|---|
+| Rejoindre un espace de travail | Votre compte appartient à un espace | Aucun écran : elle est accomplie par votre connexion |
+| Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
+| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | Réglages ▸ Arborescence |
+| Créer une première affaire | Un board a quelque chose à montrer | Réglages ▸ Arborescence, puis le channel choisi |
+| Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
+
+### 1 bis.1 L'état d'une étape est mesuré, jamais mémorisé
+
+Une étape n'est pas « cochée » : à **chaque affichage**, le produit compte ce que votre compte voit
+réellement, et en déduit l'état. Trois conséquences directes, et elles sont voulues :
+
+- supprimer votre dernier track **décoche** l'étape correspondante ; rien ne prétend qu'elle est
+  faite parce qu'elle l'a été un jour ;
+- une étape marquée **Fait** garde son lien : accompli ne veut pas dire terminé, et rien n'empêche
+  d'ajouter un second track ;
+- rien n'est enregistré sur votre appareil, et aucune progression n'est stockée sur le serveur.
+
+Chaque état est écrit **en toutes lettres** — *Fait*, *À faire* — à côté de son icône, et la
+progression est une phrase, « 3 étape(s) sur 5 », jamais une barre seule.
+
+### 1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
+
+Une étape non accomplie écrit « **Vous n'en voyez aucun pour le moment** », et le mot est choisi :
+le guide rapporte ce que **votre compte** voit, jamais ce qui existe dans l'espace. Deux personnes
+n'ont donc pas nécessairement le même guide — un compte en lecture seule peut ne voir aucune boîte
+de réception là où l'espace en porte trois, et sa cinquième étape restera « à faire ». Ce n'est pas
+un défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner.
+
+Aucun lien n'est jamais éteint, quel que soit votre rôle. Les écrans vers lesquels le guide renvoie
+portent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués.
+
+Lorsqu'une étape **n'a pas pu être mesurée** — une coupure réseau, une session expirée —, sa ligne
+le dit (« Cette étape n'a pas pu être vérifiée ») et propose de **réessayer**, ce qui relance
+réellement les cinq mesures. Les quatre autres étapes restent lisibles : une mesure manquante n'en
+efface aucune.
+
+### 1 bis.3 Le masquer, et le retrouver
+
+Le bouton **Masquer le guide** le retire de l'accueil **pour cette session** et rend la place au
+board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil.
+
+Le guide vit aussi à son adresse propre, `/demarrage`, et **Réglages ▸ Guide de démarrage** le
+place en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.
+C'est ce qui le rend relançable.
+
+Le masquage survit au **rechargement** de l'onglet, et disparaît quand l'onglet se ferme. C'est
+délibéré : cette préférence d'affichage ne justifie aucun stockage durable sur votre appareil, et
+le produit n'en écrit aucun.
+
+**Ce qui reste hors du guide.** Il **lit et renvoie** ; il ne crée ni track, ni channel, ni
+affaire, et il n'existe aucune création assistée « en trois clics » qui doublerait les écrans
+réels. Aucune étape ne mesure votre workflow : un channel naît avec le workflow par défaut, et
+l'éditeur reste accessible depuis les réglages (chapitre 5 *bis*).
 
 ## 3. Naviguer : barre latérale, onglets, états
 
