@@ -549,6 +549,54 @@ test.describe('refus de la garde, et retour arrière (§7.9, §7.10)', () => {
 		await capturer(page, 'board-champs-manquants-1440', 'CRM-041')
 	})
 
+	// @verifies CRM-037 (docs/BACKLOG.md) — le DÉPART du geste de reprise
+	// @verifies docs/SPEC-form-composer.md §4 ter.1 (le geste part du refus), §4 ter.2 (le
+	//           transport est l'adresse), §4 ter.3 (la clé, jamais le libellé)
+	// @verifies docs/DESIGN_SYSTEM.md §5.7 quater (la commande est un LIEN, pas un bouton)
+	test('le refus offre la reprise de la saisie, et son adresse porte les CLÉS', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirBoard(page)
+		await servirDeplacement(page, {
+			ok: false,
+			erreur: {
+				code: 'P0001',
+				message: 'missing_required_fields',
+				details: 'lien-proposition',
+				hint: null,
+			},
+		})
+		await page.goto(ADRESSE)
+
+		await carte(page, CARD_C3).dragTo(colonne(page, RELANCE))
+		const reprise = page.getByTestId('reprendre-saisie')
+		await expect(reprise).toBeVisible()
+		// Un LIEN, et non un bouton : il change d'adresse, et le §5.7 quater retient le clic du
+		// milieu, le nouvel onglet et la copie de l'adresse comme motifs.
+		expect(await reprise.evaluate((noeud) => noeud.tagName)).toBe('A')
+		const adresse = new URL(await reprise.evaluate((noeud) => (noeud as HTMLAnchorElement).href))
+		expect(adresse.pathname, 'la fiche de l’affaire refusée').toContain(`/cards/${CARD_C3}`)
+		// La CLÉ, jamais le libellé : le bandeau affiche « Lien vers la proposition », l'adresse
+		// porte `lien-proposition`. Un libellé changerait l'adresse au premier renommage (§4 ter.3).
+		expect(adresse.searchParams.get('exiges')).toBe('lien-proposition')
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
+	})
+
+	test('un refus d’une AUTRE nature n’offre aucune reprise : elle n’aurait aucun objet', async ({
+		page,
+	}) => {
+		await servirBoard(page)
+		await servirDeplacement(page, {
+			ok: false,
+			erreur: { code: 'P0001', message: 'transition_not_allowed', details: null, hint: null },
+		})
+		await page.goto(ADRESSE)
+
+		await carte(page, CARD_C3).dragTo(colonne(page, RELANCE))
+		await expect(page.getByTestId('refus-deplacement')).toBeVisible()
+		await expect(page.getByTestId('reprendre-saisie')).toHaveCount(0)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
+	})
+
 	test('un refus inconnu n’est pas absorbé : le message brut est montré', async ({ page }) => {
 		await servirBoard(page)
 		await servirDeplacement(page, {
