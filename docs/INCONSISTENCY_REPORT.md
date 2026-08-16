@@ -256,6 +256,19 @@ est donc bien absent, mais l'hôte porte un navigateur utilisable et la variable
 Ce qui reste dû à `CRM-008` n'est pas un navigateur : c'est que la commande `e2e:mail` porte ce
 chemin elle-même, comme `e2e:ui` le fait, plutôt que de dépendre de l'environnement de l'appelant.
 
+**Portée réelle, mesurée le 2026-08-16 en lançant la série des `verify-*.sh` : elle dépasse
+largement `e2e:mail`.** Le même échec frappe **tout harnais qui lance un navigateur sans
+`PLAYWRIGHT_CHROMIUM_PATH`**. `scripts/verify-administration-arborescence.sh` rend ainsi
+`27 contrôles, 3 en échec` — parcours d'interface, coquille, manuel —, et le journal des trois
+étapes ne contient **aucune assertion produit** : les treize scénarios meurent tous sur
+`browserType.launch`. Les mêmes fichiers passent `72/72` quand ils sont lancés avec
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`, ce que `npm run e2e:ui` reçoit et que les
+harnais ne posent pas eux-mêmes.
+
+**Conséquence à retenir, et c'est la plus importante : un verdict de `verify-*.sh` obtenu sans
+cette variable ne dit RIEN du produit.** Il ne doit être lu ni comme une régression, ni comme une
+preuve. Toute session qui exécute ces harnais sur cet hôte exporte la variable d'abord.
+
 ### INC-124 — `mail-sync` journalise un `WARNING` légitime que la preuve S3 interdit
 
 *Porteur : `CRM-054` (console opérationnelle de `mail-sync`). Mesuré le 2026-08-16.*
