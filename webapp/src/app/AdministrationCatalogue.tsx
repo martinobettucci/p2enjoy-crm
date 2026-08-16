@@ -2,6 +2,8 @@
 // @spec docs/SPEC-workflow-engine.md §2 bis.1 (ce que l'écran est), §2 bis.2 (l'adresse),
 //       §2 bis.3 (la lecture unique), §2 bis.4 (les quatre gestes), §2 bis.5 (les refus mesurés),
 //       §2 bis.6 (validation de forme), §2 bis.7 (états, accessibilité)
+// @spec docs/SPEC-workflow-engine.md §2 ter.2 (le calcul, réutilisé et non réécrit), §2 ter.3 (la
+//       liste sur laquelle il porte, archivés compris), §2 ter.5 (les refus du déplacement)
 // @spec docs/DESIGN_SYSTEM.md §5.18 (cette surface), §5.13 (formulaires dans le flux, focus),
 //       §5.8 (états systématiques), §5.6 et §12.5 (pilules), §9 (icônes)
 // @spec CLAUDE.md §10 (la garde est backend), §23 (aucune phrase construite par concaténation)
@@ -13,17 +15,24 @@
 // chargement et le clic.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Archive, ArchiveRestore, Pencil, Plus } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Pencil, Plus } from 'lucide-react'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
-import { proposerSlug, slugConforme } from '../lib/administration-arborescence'
+import {
+	calculerDeplacement,
+	proposerSlug,
+	slugConforme,
+	type Deplacement,
+	type Sens,
+} from '../lib/administration-arborescence'
 import {
 	archiverNoeud,
 	COULEURS_NOEUD,
 	creerNoeud,
+	deplacerNoeud,
 	lireCatalogueAdministrable,
 	lireSaisieNumerique,
 	modifierNoeud,
@@ -224,6 +233,37 @@ export function AdministrationCatalogue({
 		[recharger],
 	)
 
+	/**
+	 * Monter ou descendre un nœud — §2 ter.
+	 *
+	 * LA LISTE PASSÉE EST CELLE QUI EST AFFICHÉE, archivés compris (§2 ter.3) : c'est la seule qui
+	 * corresponde à ce que l'administrateur voit. Calculer sur la seule sous-liste active ferait
+	 * franchir une ligne archivée d'un seul clic, ou produirait une position égale à la sienne.
+	 *
+	 * LE CALCUL PRÉCÈDE L'ÉCRITURE, et un calcul impossible n'écrit RIEN : l'écran nomme
+	 * l'impossibilité au lieu d'envoyer une valeur sans effet, ce que `CLAUDE.md` §18 proscrit sous
+	 * le nom de « valeur par défaut trompeuse ». Le cas double la désactivation de la commande, qui
+	 * repose sur le même calcul — il n'est donc pas atteignable à la souris, mais il le reste par
+	 * tout autre chemin, et c'est pour cela qu'il est traité.
+	 */
+	const deplacer = useCallback(
+		(liste: readonly NoeudCatalogue[], noeud: NoeudCatalogue, sens: Sens) => {
+			if (client === null) return
+			const calcul = calculerDeplacement(liste, noeud.id, sens)
+			if (calcul.statut !== 'calcule') {
+				setOuverture(AUCUNE)
+				setRefus(t('admin.move.impossible'))
+				return
+			}
+			void appliquer(
+				() => deplacerNoeud(client, noeud.id, calcul.position),
+				'admin.catalog.moved',
+				noeud.label,
+			)
+		},
+		[appliquer, client],
+	)
+
 	if (client === null) {
 		return (
 			<EtatVide
@@ -272,6 +312,25 @@ export function AdministrationCatalogue({
 				</button>
 			</div>
 
+			{/*
+			 * Un refus qui n'appartient à AUCUN bloc — celui d'un déplacement impossible (§2 ter.5),
+			 * ou d'un déplacement resté sans effet — est affiché ici.
+			 *
+			 * Le patron vient de `AdministrationArborescence`, où il a été ajouté APRÈS un défaut
+			 * réel : `setRefus` était appelé pour un déplacement refusé, mais l'alerte n'était rendue
+			 * que dans les formulaires. Le refus était calculé, correct, et invisible — l'erreur
+			 * masquée de `CLAUDE.md` §18. Il est repris ici plutôt que redécouvert.
+			 */}
+			{refus !== null && ouverture.quoi === 'aucune' && (
+				<p
+					role="alert"
+					data-testid="refus-catalogue"
+					className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm"
+				>
+					{refus}
+				</p>
+			)}
+
 			{ouverture.quoi === 'creation' && (
 				<FormulaireNoeud
 					titre={t('admin.catalog.form.createTitle')}
@@ -311,10 +370,12 @@ export function AdministrationCatalogue({
 						<LigneNoeud
 							key={noeud.id}
 							noeud={noeud}
+							liste={noeuds}
 							ouverture={ouverture}
 							saisie={saisie}
 							enCours={enCours}
 							refus={refus}
+							onDeplacer={(sens) => deplacer(noeuds, noeud, sens)}
 							onOuvrirModification={(depuis) => {
 								setSaisie(saisieDepuis(noeud))
 								ouvrir({ quoi: 'modification', id: noeud.id }, depuis)
@@ -403,10 +464,12 @@ const CLASSES_CHAMP = [
  */
 function LigneNoeud({
 	noeud,
+	liste,
 	ouverture,
 	saisie,
 	enCours,
 	refus,
+	onDeplacer,
 	onOuvrirModification,
 	onOuvrirArchivage,
 	onDesarchiver,
@@ -416,10 +479,13 @@ function LigneNoeud({
 	onConfirmerArchivage,
 }: {
 	readonly noeud: NoeudCatalogue
+	/** La liste AFFICHÉE, archivés compris : c'est sur elle que le déplacement se calcule (§2 ter.3). */
+	readonly liste: readonly NoeudCatalogue[]
 	readonly ouverture: Ouverture
 	readonly saisie: Saisie
 	readonly enCours: boolean
 	readonly refus: string | null
+	readonly onDeplacer: (sens: Sens) => void
 	readonly onOuvrirModification: (depuis: HTMLButtonElement) => void
 	readonly onOuvrirArchivage: (depuis: HTMLButtonElement) => void
 	readonly onDesarchiver: () => void
@@ -477,6 +543,18 @@ function LigneNoeud({
 				)}
 
 				<span className="ml-auto flex items-center gap-1">
+					{/* Les commandes d'ordre viennent EN TÊTE du groupe, avant « Modifier » — la
+					    disposition du §5.13, reprise telle quelle au §5.18. Comme « Modifier », elles
+					    disparaissent sur une ligne archivée (§2 ter.3) ; la ligne archivée reste en
+					    revanche comptée comme voisine par le calcul, puisqu'elle occupe une place. */}
+					{!archive && (
+						<CommandesOrdre
+							noeud={noeud}
+							liste={liste}
+							enCours={enCours}
+							onDeplacer={onDeplacer}
+						/>
+					)}
 					{/* Modifier disparaît sur un nœud archivé : le geste n'a aucun effet observable sur
 					    un nœud masqué des sélecteurs, exactement comme au §5.13 pour un objet archivé. */}
 					{!archive && (
@@ -567,6 +645,70 @@ function LigneNoeud({
 				</div>
 			)}
 		</li>
+	)
+}
+
+/**
+ * Les deux commandes d'ordre d'une ligne — §2 ter, `docs/DESIGN_SYSTEM.md` §5.18.
+ *
+ * ELLES SONT DÉSACTIVÉES AUX EXTRÉMITÉS, JAMAIS MASQUÉES (§8) : une commande qui disparaît en tête
+ * de liste fait sauter le groupe d'actions d'une ligne à l'autre, et l'œil perd la colonne.
+ *
+ * ICÔNE SEULE, nom accessible par `aria-label` : c'est la disposition du §5.13, et à 390 px deux
+ * libellés de plus feraient déborder la barre d'actions d'une ligne qui en porte déjà trois.
+ */
+function CommandesOrdre({
+	noeud,
+	liste,
+	enCours,
+	onDeplacer,
+}: {
+	readonly noeud: NoeudCatalogue
+	readonly liste: readonly NoeudCatalogue[]
+	readonly enCours: boolean
+	readonly onDeplacer: (sens: Sens) => void
+}) {
+	const monter = calculerDeplacement(liste, noeud.id, 'monter')
+	const descendre = calculerDeplacement(liste, noeud.id, 'descendre')
+
+	/**
+	 * Pourquoi la commande est indisponible — §8 : « les états désactivés restent lisibles et
+	 * expliquent pourquoi l'action est indisponible ».
+	 *
+	 * LES DEUX CAUSES APPELLENT DEUX PHRASES DIFFÉRENTES, et les confondre serait un message faux :
+	 * une ligne dont les voisines portent la même position n'est PAS « déjà en tête de liste ». Le
+	 * défaut a été trouvé par la preuve sur l'arborescence, pas à la lecture ; il n'est pas refait ici.
+	 */
+	const explication = (deplacement: Deplacement, extremite: CleTraduction): string | undefined => {
+		if (deplacement.statut === 'calcule') return undefined
+		return deplacement.cause === 'extremite' ? t(extremite) : t('admin.move.impossible')
+	}
+
+	return (
+		<>
+			<button
+				type="button"
+				data-testid="monter-noeud"
+				disabled={monter.statut !== 'calcule' || enCours}
+				onClick={() => onDeplacer('monter')}
+				aria-label={t('admin.catalog.moveUp.aria', { nom: noeud.label })}
+				title={explication(monter, 'admin.move.disabled.top')}
+				className={CLASSES_BOUTON_DISCRET}
+			>
+				<ArrowUp aria-hidden="true" className="size-4" />
+			</button>
+			<button
+				type="button"
+				data-testid="descendre-noeud"
+				disabled={descendre.statut !== 'calcule' || enCours}
+				onClick={() => onDeplacer('descendre')}
+				aria-label={t('admin.catalog.moveDown.aria', { nom: noeud.label })}
+				title={explication(descendre, 'admin.move.disabled.bottom')}
+				className={CLASSES_BOUTON_DISCRET}
+			>
+				<ArrowDown aria-hidden="true" className="size-4" />
+			</button>
+		</>
 	)
 }
 

@@ -956,6 +956,11 @@ export const fr = {
 	'admin.catalog.archive.confirmAction': 'Archiver ce nœud',
 	'admin.catalog.unarchive': 'Rétablir',
 	'admin.catalog.unarchive.aria': 'Rétablir le nœud {nom}',
+	// Les commandes d'ordre du §2 ter : icône seule, nom accessible ici (docs/DESIGN_SYSTEM.md
+	// §5.18). Les DEUX causes d'indisponibilité réemploient `admin.move.*`, déjà écrites pour
+	// l'arborescence : ce sont les mêmes phrases pour la même arithmétique.
+	'admin.catalog.moveUp.aria': 'Monter le nœud {nom}',
+	'admin.catalog.moveDown.aria': 'Descendre le nœud {nom}',
 	'admin.catalog.save': 'Enregistrer',
 	'admin.catalog.cancel': 'Annuler',
 
@@ -976,6 +981,7 @@ export const fr = {
 	'admin.catalog.updated': 'Le nœud {nom} a été modifié.',
 	'admin.catalog.archived.done': 'Le nœud {nom} a été archivé.',
 	'admin.catalog.unarchived': 'Le nœud {nom} a été rétabli.',
+	'admin.catalog.moved': 'Le nœud {nom} a été déplacé.',
 
 	// Les refus mesurés du §2 bis.5. Le nœud occupé porte SON NOMBRE, et un compte absent ne
 	// devient jamais zéro : deux clés, jamais une phrase concaténée (CLAUDE.md §23).

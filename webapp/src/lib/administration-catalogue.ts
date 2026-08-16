@@ -2,6 +2,8 @@
 //       écrit
 // @spec docs/SPEC-workflow-engine.md §2 bis.3 (la lecture unique, archivés compris), §2 bis.4 (les
 //       quatre gestes), §2 bis.5 (les cinq refus mesurés), §2 bis.6 (validation de forme)
+// @spec docs/SPEC-workflow-engine.md §2 ter.1 (le réordonnancement est une écriture d'une colonne),
+//       §2 ter.4 (son contrat d'API mesuré), §2 ter.5 (ses refus, aucun nouveau)
 // @spec docs/SPEC-workflow-engine.md §2.3 (la clé stable), §2.5 (probabilité et seuil, `0` ≠ `NULL`),
 //       §2.6 (la garde d'archivage), §2.7 (autorisations)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
@@ -383,5 +385,33 @@ export async function archiverNoeud(
 			.update({ archived_at: archive ? new Date().toISOString() : null })
 			.eq('id', id)
 			.select('id'),
+	)
+}
+
+/**
+ * Déplace un nœud : écrit la position que `calculerDeplacement` de `CRM-075` a calculée (§2 ter.2).
+ *
+ * UNE COLONNE, UNE LIGNE, UNE ÉCRITURE. La liste entière n'est jamais renumérotée : `position` est
+ * une `numeric` précisément pour qu'un nœud s'insère entre deux autres sans toucher aux voisins
+ * (§2.4). Le calcul n'est pas fait ici — il est fait par l'appelant, sur la liste AFFICHÉE, et cette
+ * fonction ne connaît que son résultat.
+ *
+ * ELLE NE PEUT PAS RECEVOIR `node_occupied`, ET RIEN ICI NE L'EXCLUT. La garde du §2.6 est un
+ * trigger `BEFORE UPDATE` sur toute la table, mais elle ne se déclenche qu'au passage d'`archived_at`
+ * de `NULL` à une valeur. **Mesuré le 2026-08-16** (§2 ter.4 b) : déplacer `prospection`, que le seed
+ * occupe de quatre affaires actives, rend `200`. Le classement reste malgré tout celui de
+ * `classerRefusCatalogue`, qui garde ce cas : écarter d'avance un refus que la base pourrait un jour
+ * rendre serait un contrôle d'interface (`CLAUDE.md` §10).
+ *
+ * Un `viewer` reçoit `200` et zéro ligne — le `USING` de la politique filtre la ligne —, ce que
+ * `executer` traduit en `sans-effet` (§2 ter.4 c). Jamais un succès.
+ */
+export async function deplacerNoeud(
+	client: ClientCrm,
+	id: string,
+	position: number,
+): Promise<ResultatCatalogue> {
+	return executer(() =>
+		client.from('workflow_nodes_catalog').update({ position }).eq('id', id).select('id'),
 	)
 }
