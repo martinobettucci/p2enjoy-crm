@@ -16407,7 +16407,10 @@ vide de la route `/`. La règle a changé par arbitrage ; le commentaire du fich
 deux contenus de cette route, et la garantie qu'il éprouve — aucune page blanche — n'a pas bougé.
 
 **Preuves exécutées.** `test:sql` **40 fichiers, 2133 assertions, aucune anomalie** ; `e2e:api`
-**597/597** ; `e2e:ui` **285/285**, dont les 10 neufs ; `test:unit` **1148/1148** sur 42 fichiers ;
+**597/597**, dont les **6** de `e2e/api/demarrage.spec.ts`, qui établissent hors interface les trois
+faits du §3.1 ; `e2e:ui` **285/285**, dont les 10 neufs ; `test:unit` **1148/1148** sur 42 fichiers,
+dont les **24** de `GuideDemarrage.test.tsx` — les dernières prouvant le §4.4 par l'**absence de
+requête** émise, et non par l'absence d'affichage ;
 `python3 -m pytest mail-sync/tests` **242 passés** ; `typecheck` et `build` verts, sans avertissement
 de taille. Captures aux quatre paliers, plus l'accompli, le masqué et le non mesurable, produites
 **et observées** sous `docs/captures/CRM-079/`.
@@ -16424,6 +16427,11 @@ le journal du conteneur `mail-sync` depuis son démarrage et y trouve un `WARNIN
 Ligne de base établie : le `diff` de la session sur `mail-sync/`, `e2e/mail/`, `supabase/` et les
 fichiers Compose est **vide**. Consigné en **INC-123** ; le conteneur n'a pas été redémarré pour
 verdir la preuve.
+
+**Deux sessions ont travaillé la même unité en parallèle, et le dépôt porte le meilleur des deux.**
+La preuve d'API hors interface et les assertions comptant les requêtes émises viennent de l'autre
+session ; l'exécution de `scripts/verify-webapp.sh` sur Node 24 et le défaut trouvé sur capture
+viennent de celle-ci. Les collisions ont été résolues sur place, sur `main`, sans branche.
 
 **Où reprendre.** `CRM-079` reste `[~]`. Restent à écrire : `scripts/verify-onboarding.sh`, désormais
 possible puisque les harnais s'exécutent sur Node 24 ; la mise à jour de `docs/manual.md` pour le

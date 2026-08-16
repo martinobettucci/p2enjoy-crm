@@ -7442,10 +7442,15 @@ La règle du §4.4 — **aucune mesure sans session** — a été ajoutée en co
 anonyme reçoit `401` sur `mail_inbound_accounts`, et mesurer sans session écrivait une erreur dans
 la console de l'accueil d'un visiteur.
 
-*Preuves exécutées.* 22 assertions unitaires d'écran et 19 de module ; `test:unit` **1148/1148** ;
-`e2e:ui` **285/285**, dont les 10 scénarios de `e2e/ui/demarrage.spec.ts` — clavier seul, mobile,
-masquage et reprise après rechargement, `localStorage` vide, étape non mesurable et reprise réelle ;
-`test:sql` **2133 assertions** ; `e2e:api` **597/597** ; `typecheck` et `build` verts ;
+*Preuves exécutées.* **24** assertions unitaires d'écran et **19** de module ; `test:unit`
+**1148/1148** ; `e2e:ui` **285/285**, dont les 10 scénarios de `e2e/ui/demarrage.spec.ts` — clavier
+seul, mobile, masquage et reprise après rechargement, `localStorage` vide, étape non mesurable et
+reprise réelle ; **`e2e/api/demarrage.spec.ts` 6/6**, qui établit HORS INTERFACE les trois faits du
+§3.1 que l'écran ne peut pas établir seul — la lectrice compte moins de channels et d'affaires que
+l'administratrice, elle compte **zéro** boîte entrante là où le seed en porte trois, et
+`mail_inbound_accounts` est la **seule** des cinq tables à refuser la clé anonyme ;
+`test:sql` **2133 assertions** ; `e2e:api` **597/597** ; `pytest` **242 passés** ; `typecheck` et
+`build` verts ;
 `scripts/verify-webapp.sh` **42 contrôles sans anomalie**. Captures aux quatre paliers plus
 l'accompli, le masqué et le non mesurable, produites **et observées** sous `docs/captures/CRM-079/`.
 
