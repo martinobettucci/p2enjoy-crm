@@ -47,6 +47,19 @@ type Appel = {
  * Transport espion : il enregistre chaque appel — table, verbe, charge, filtres et ordres — et rend
  * la réponse fournie. La chaîne est **thenable**, comme `supabase-js` le permet.
  */
+/**
+ * Le premier appel enregistré, ou un échec qui le NOMME.
+ *
+ * `appels[0]!` passerait le typage sans rien dire le jour où aucun appel n'est émis — c'est-à-dire
+ * exactement le défaut qu'une preuve de requête doit attraper. L'accès explicite échoue avec une
+ * phrase lisible plutôt qu'un `Cannot read properties of undefined`.
+ */
+function premierAppel(appels: readonly Appel[]): Appel {
+	const appel = appels[0]
+	if (appel === undefined) throw new Error('aucune requête émise')
+	return appel
+}
+
 function espion(reponse: Reponse): { client: ClientCrm; appels: Appel[] } {
 	const appels: Appel[] = []
 	const chainePour = (appel: Appel) => {
@@ -103,11 +116,14 @@ describe('lireCatalogueAdministrable', () => {
 		const resultat = await lireCatalogueAdministrable(client)
 
 		expect(appels).toHaveLength(1)
-		expect(appels[0]).toMatchObject({ table: 'workflow_nodes_catalog', colonnes: COLONNES_NOEUD })
+		expect(premierAppel(appels)).toMatchObject({
+			table: 'workflow_nodes_catalog',
+			colonnes: COLONNES_NOEUD,
+		})
 		// AUCUN filtre : ni `workspace_id` — la RLS le borne (§2.7) —, ni `archived_at` — les nœuds
 		// archivés doivent apparaître, sinon leur rétablissement serait introuvable.
-		expect(appels[0].filtres).toEqual([])
-		expect(appels[0].ordres).toEqual([
+		expect(premierAppel(appels).filtres).toEqual([])
+		expect(premierAppel(appels).ordres).toEqual([
 			['position', { ascending: true }],
 			['label', { ascending: true }],
 		])
@@ -257,8 +273,8 @@ describe('creerNoeud', () => {
 		})
 
 		expect(resultat).toEqual({ statut: 'applique' })
-		expect(appels[0]).toMatchObject({ table: 'workflow_nodes_catalog', verbe: 'insert' })
-		expect(appels[0].charge).toEqual({
+		expect(premierAppel(appels)).toMatchObject({ table: 'workflow_nodes_catalog', verbe: 'insert' })
+		expect(premierAppel(appels).charge).toEqual({
 			workspace_id: WORKSPACE,
 			// Les blancs de bord sont retirés : `key_check` refuserait la clé, et `label_check`
 			// accepterait un libellé à espaces que personne n'a voulu.
@@ -303,16 +319,16 @@ describe('modifierNoeud', () => {
 			seuilRelance: lireSaisieNumerique('14'),
 		})
 
-		expect(appels[0]).toMatchObject({ table: 'workflow_nodes_catalog', verbe: 'update' })
-		expect(appels[0].charge).not.toHaveProperty('key')
-		expect(appels[0].charge).toEqual({
+		expect(premierAppel(appels)).toMatchObject({ table: 'workflow_nodes_catalog', verbe: 'update' })
+		expect(premierAppel(appels).charge).not.toHaveProperty('key')
+		expect(premierAppel(appels).charge).toEqual({
 			label: 'Prospection',
 			kind: 'open',
 			color: 'neutral',
 			default_probability: 10,
 			default_stale_after_days: 14,
 		})
-		expect(appels[0].filtres).toEqual([['eq', 'id', NOEUD]])
+		expect(premierAppel(appels).filtres).toEqual([['eq', 'id', NOEUD]])
 	})
 
 	/**
@@ -337,11 +353,11 @@ describe('archiverNoeud', () => {
 	it('écrit un horodatage pour archiver, et `null` pour rétablir', async () => {
 		const archivage = espion({ data: [{ id: NOEUD }], error: null, status: 200 })
 		await archiverNoeud(archivage.client, NOEUD, true)
-		expect(typeof archivage.appels[0].charge?.archived_at).toBe('string')
+		expect(typeof premierAppel(archivage.appels).charge?.archived_at).toBe('string')
 
 		const retablissement = espion({ data: [{ id: NOEUD }], error: null, status: 200 })
 		await archiverNoeud(retablissement.client, NOEUD, false)
-		expect(retablissement.appels[0].charge).toEqual({ archived_at: null })
+		expect(premierAppel(retablissement.appels).charge).toEqual({ archived_at: null })
 	})
 
 	it('remonte la garde du §2.6 avec son compte, sans la confondre avec un refus de droit', async () => {

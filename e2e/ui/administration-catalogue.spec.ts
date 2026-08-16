@@ -68,6 +68,18 @@ async function restaurerArchivageDuSeed(page: Page): Promise<void> {
 	})
 }
 
+/**
+ * L'horodatage d'archivage d'une ligne relue, ou un échec qui NOMME l'absence de ligne.
+ *
+ * Un `[0]!` passerait le typage sans rien dire le jour où la lecture rend un tableau vide —
+ * c'est-à-dire précisément le cas qu'une relecture existe pour attraper.
+ */
+function archivageDe(lignes: readonly { archived_at: string | null }[]): string | null {
+	const [ligne] = lignes
+	if (ligne === undefined) throw new Error('la ligne relue est introuvable')
+	return ligne.archived_at
+}
+
 async function ouvrirCatalogue(page: Page): Promise<void> {
 	await page.goto('/reglages/catalogue')
 	await expect(page.getByTestId('liste-catalogue')).toBeVisible()
@@ -167,15 +179,16 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 				default_stale_after_days: number | null
 				position: string
 			}[]
-			expect(creeEnBase.label).toBe('Nœud de preuve')
-			expect(creeEnBase.color).toBe('accent')
-			expect(Number(creeEnBase.default_probability)).toBe(35)
+			expect(creeEnBase).toBeDefined()
+			expect(creeEnBase?.label).toBe('Nœud de preuve')
+			expect(creeEnBase?.color).toBe('accent')
+			expect(Number(creeEnBase?.default_probability)).toBe(35)
 			// LE CHAMP LAISSÉ VIDE VAUT `NULL`. C'est l'assertion que ce scénario existe pour tenir :
 			// un `Number('')` valant `0`, une régression écrirait « 0 jour » — un seuil qui
 			// signalerait toute affaire dès son arrivée (§2.5).
-			expect(creeEnBase.default_stale_after_days).toBeNull()
+			expect(creeEnBase?.default_stale_after_days).toBeNull()
 			// La position est attribuée par le trigger : le nœud est en fin de liste (§2.4).
-			expect(Number(creeEnBase.position)).toBeGreaterThan(8)
+			expect(Number(creeEnBase?.position)).toBeGreaterThan(8)
 
 			// --- La modification, entièrement au clavier -------------------------------------
 			await ligne.getByTestId('modifier-noeud').click()
@@ -195,9 +208,9 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 				{ headers: enTetesService() },
 			)
 			const [reluEnBase] = (await relu.json()) as { key: string; label: string }[]
-			expect(reluEnBase.label).toBe('Nœud renommé au clavier')
+			expect(reluEnBase?.label).toBe('Nœud renommé au clavier')
 			// LA CLÉ N'A PAS BOUGÉ : l'écran ne l'expose pas, et la modification ne l'écrit pas (§2.1).
-			expect(reluEnBase.key).toBe(CLE_PREUVE)
+			expect(reluEnBase?.key).toBe(CLE_PREUVE)
 		} finally {
 			await purgerNoeudsDePreuve(page)
 		}
@@ -232,7 +245,7 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 				`${CHEMIN_CATALOGUE}?key=eq.${CLE_PREUVE}&select=archived_at`,
 				{ headers: enTetesService() },
 			)
-			expect(((await apres.json()) as { archived_at: string | null }[])[0].archived_at).not.toBeNull()
+			expect(archivageDe((await apres.json()) as { archived_at: string | null }[])).not.toBeNull()
 
 			// --- Le retour : AUCUNE confirmation, le geste qui répare n'en demande pas (§5.18) ---
 			await ligne.getByTestId('desarchiver-noeud').click()
@@ -241,7 +254,7 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 				`${CHEMIN_CATALOGUE}?key=eq.${CLE_PREUVE}&select=archived_at`,
 				{ headers: enTetesService() },
 			)
-			expect(((await rendu.json()) as { archived_at: string | null }[])[0].archived_at).toBeNull()
+			expect(archivageDe((await rendu.json()) as { archived_at: string | null }[])).toBeNull()
 		} finally {
 			await purgerNoeudsDePreuve(page)
 		}
@@ -274,7 +287,7 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 			`${CHEMIN_CATALOGUE}?key=eq.prospection&select=archived_at`,
 			{ headers: enTetesService() },
 		)
-		expect(((await relu.json()) as { archived_at: string | null }[])[0].archived_at).toBeNull()
+		expect(archivageDe((await relu.json()) as { archived_at: string | null }[])).toBeNull()
 
 		await capturer(page, 'catalogue-refus-occupe-1440', UNITE)
 
@@ -303,7 +316,7 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 				`${CHEMIN_CATALOGUE}?key=eq.${NOEUD_ARCHIVE.cle}&select=archived_at`,
 				{ headers: enTetesService() },
 			)
-			expect(((await relu.json()) as { archived_at: string | null }[])[0].archived_at).toBeNull()
+			expect(archivageDe((await relu.json()) as { archived_at: string | null }[])).toBeNull()
 		} finally {
 			// SANS CETTE RESTITUTION, `scripts/verify-catalogue.sh` rougirait sur son quatrième
 			// contrôle — « huit nœuds, dont un archivé » —, et rien dans cette suite ne dirait
