@@ -3644,8 +3644,68 @@ accessibilité des erreurs vérifiée.
   *Énoncé d'origine, conservé pour la trace : « **Aucune écriture depuis l'écran** (§4.7), donc
   aucune preuve de saisie. Relève d'INC-021. » Le constat était vrai ; son motif était caduc, et la
   livraison a suivi la décision.*
-- [ ] **Le défilement jusqu'au premier champ concerné** (§4.5) n'est pas livré : il appartient au
-      geste de transition, qui n'existe pas. Même cause qu'INC-062.
+- [x] **~~Le défilement jusqu'au premier champ concerné (§4.5) n'est pas livré~~ — LIVRÉ, tranche
+      du 2026-08-16.** Le motif invoqué — « il appartient au geste de transition, qui n'existe
+      pas » — a **disparu** : `CRM-041` livre le board, son glisser-déposer et le refus de
+      `move_card`. Le §4.4 l'avait d'ailleurs annoncé, « ils apparaîtront lorsque l'interface
+      proposera les transitions ».
+      - [x] **Spécification écrite et committée AVANT la première ligne de code**,
+            `docs/SPEC-form-composer.md` §4 ter en neuf sous-chapitres, plus
+            `docs/DESIGN_SYSTEM.md` §5.7 quater, six règles visuelles. Rédigée **après mesure** sur
+            la pile réelle, seed appliqué, avec le jeton réel de l'administratrice. Commit
+            documentaire dédié, poussé.
+      - [x] **UN FAIT MESURÉ COMMANDE TOUTE LA CONCEPTION, et il n'avait jamais été relevé** : sur
+            le seed, **dix-neuf** couples (affaire, transition) sont refusables pour champs
+            manquants, et dans **dix** d'entre eux le champ nommé est `motif-perte`, dont la règle
+            à l'étape de départ est `hidden`. Or un champ masqué et **vide** n'appartient à aucune
+            des trois destinations du §4.2 — la section repliée ne retient que les masqués qui
+            portent une valeur. Le refus désignait donc un champ que la fiche ne rendait **nulle
+            part**, et marquer une affaire perdue était impossible depuis l'interface. D'où la
+            **quatrième destination** du §4 ter.4, bornée par l'archivage.
+      - [x] **Refus mesurés par l'API réelle**, jetons de l'administratrice :
+            `…0000c1` `Relance` → `Perdu` rend `details: "motif-perte"` ; → `Négociation` rend
+            `"budget"` ; `…0000cf` `Négociation` → `Signature` rend
+            `"budget, date-signature-prevue, decideur-identifie"` — séparateur `, `, ordre
+            `position, key`, c'est-à-dire **celui du formulaire**. « Le premier » du §4.5 est donc
+            sans ambiguïté le premier de la page.
+      - [x] `webapp/src/lib/formulaire.ts` : `clesExigees` dans la composition,
+            `exigeParDeplacement` sur le champ résolu, `clesExigeesRetenues` sur le modèle,
+            `lireClesExigees` pour l'adresse. `webapp/src/lib/board.ts` : le refus porte désormais
+            les **clés** en plus des libellés. `webapp/src/app/Board.tsx` : le lien de reprise, et
+            `cheminReprise` qui rend `null` quand la reprise n'aurait aucun objet.
+            `webapp/src/app/RouteCard.tsx` : lecture de `?exiges=`. `webapp/src/app/FormulaireCard.tsx` :
+            mention, liseré, focus et défilement.
+      - [x] **Le focus, et pas seulement le défilement** (§4 ter.6) : faire défiler sans déplacer le
+            focus laisserait l'utilisateur au clavier en tête de page. Une seule fois par adresse —
+            le rejouer volerait le focus pendant la saisie —, et `prefers-reduced-motion` respecté.
+      - [x] **Preuves unitaires** : huit scénarios de composition (§4 ter.3 à §4 ter.7) et quatre de
+            lecture de l'adresse dans `webapp/src/lib/formulaire.test.ts` ; huit scénarios de rendu
+            dans `webapp/src/app/FormulaireCard.test.tsx`. `npm run test:unit` **1291** tests
+            (1273 avant), 43 fichiers.
+      - [x] **Preuves d'interface sur la pile réelle** : `e2e/ui/formulaire.spec.ts` gagne **sept**
+            scénarios — dont celui qui constate le champ absent **sans** le paramètre, et celui qui
+            vérifie par `toBeInViewport` que le champ atteint est réellement visible sans geste de
+            l'utilisateur —, `e2e/ui/board.spec.ts` en gagne **deux**, qui éprouvent le DÉPART du
+            geste : le lien est un `A`, son adresse porte la **clé** et non le libellé, et un refus
+            d'une autre nature n'offre aucune reprise. **26 et 24 scénarios verts.**
+      - [x] **Un garde-fou figé a échoué comme prévu, et a été révisé** — mécanisme de la
+            décision 51. L'assertion exhaustive de `webapp/src/lib/board.test.ts` figeait la forme
+            entière de `RefusDeplacement`, qui porte une liste de plus. Elle n'est pas relâchée en
+            `toMatchObject` : son exhaustivité est ce qui la rend utile, et le motif est écrit dans
+            le fichier.
+      - [x] **Vérification visuelle réellement observée** :
+            `docs/captures/CRM-037/reprise-deplacement-refuse-1440.jpg` — les deux champs exigés
+            portent leur liseré et leur mention, « Motif de la perte » est saisissable là où rien ne
+            le rendait, et le premier porte l'anneau de focus.
+      - [x] `npm run typecheck` vert sur les quatre projets, `npm run build` vert.
+      - [x] `docs/manual.md` §4.7, `CHANGELOG.md` mis à jour dans le même changement.
+- [ ] **LE PARCOURS COMPLET DE LA DEFINITION OF DONE RESTE DÛ — INC-062, inchangée.**
+      « Transition bloquée → saisie → transition réussie » est désormais atteignable **en trois
+      écrans** — le board refuse, la fiche reçoit la saisie, le board rejoue —, et chacun des trois
+      gestes est prouvé séparément. Ce qui manque est **un scénario E2E qui les enchaîne sur une
+      session réelle**, sans réponse substituée. Il n'est pas écrit ici, et l'écart est nommé plutôt
+      que compensé : les preuves d'interface de cette tranche substituent le réseau
+      (`docs/DESIGN_SYSTEM.md` §12.5), ce que le §4 ter éprouve étant le rendu, pas la garde.
 
 *DoD adaptée, écarts explicites.* **Aucun test pgTAP dédié** : cette unité ne livre ni table, ni
 fonction, ni politique — son objet est un rendu. La règle de base qu'elle doit respecter,

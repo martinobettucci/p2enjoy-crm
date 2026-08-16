@@ -15,6 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un déplacement refusé pour réponses manquantes se reprend depuis la fiche de l'affaire**
+  (`CRM-037`, `docs/SPEC-form-composer.md` §4 ter, `docs/DESIGN_SYSTEM.md` §5.7 quater). Le §4.5
+  posait depuis `CRM-000` que « l'interface met en évidence les champs concernés et fait défiler
+  jusqu'au premier » ; la phrase était restée lettre morte faute de geste déclencheur, et
+  `CRM-041` l'a livré. Le bandeau de refus du board porte désormais un lien **« Renseigner ces
+  champs »** qui ouvre la fiche en lui transmettant, **dans son adresse**, les clés que `move_card`
+  a nommées — un vrai lien, donc partageable et résistant au rechargement.
+  **La règle qui commande tout est imposée par une mesure, pas préférée** : sur le seed, dix-neuf
+  couples (affaire, transition) sont refusables pour champs manquants, et dans **dix** d'entre eux
+  le champ nommé est `motif-perte`, dont la règle à l'étape de départ est `hidden`. Or un champ
+  masqué et vide n'est rendu par **aucune** des trois destinations du §4.2 : le refus désignait donc
+  un champ que la fiche ne montrait nulle part, et marquer une affaire perdue était impossible
+  depuis l'interface. Un champ nommé par le refus rejoint désormais le formulaire, saisissable,
+  quelle que soit sa règle — **quatrième destination**, bornée par l'archivage, qui garde sa
+  primauté.
+  **Le premier champ concerné prend le focus**, pas seulement le défilement : faire défiler sans
+  déplacer le focus laisserait l'utilisateur au clavier en tête de page. Le geste ne se produit
+  qu'une fois par adresse — le rejouer volerait le focus pendant la saisie — et respecte
+  `prefers-reduced-motion`. La mise en évidence emploie `--color-brand` et **non** `--color-danger` :
+  le champ est demandé, il n'est pas fautif.
+  **Ce qui n'est pas fait est écrit** : l'étape de destination n'est pas nommée dans la mention —
+  l'adresse ne la porte pas, et l'inventer serait une invention —, et le déplacement n'est **pas
+  rejoué** après saisie.
+
 - **On peut enfin répondre aux questions d'une affaire depuis sa fiche** (`CRM-037`,
   `docs/SPEC-form-composer.md` §4 bis, `docs/DESIGN_SYSTEM.md` §5.7 ter). Le §4.7 posait « aucune
   écriture depuis l'écran » **en invoquant INC-021**, close depuis `CRM-009` : la limite avait

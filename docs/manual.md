@@ -530,6 +530,29 @@ quand vous quittez un champ de saisie, ou dès que vous cochez une case ou chois
   par le serveur, jamais seulement par l'écran. Une personne en lecture seule voit les questions et
   reçoit un refus explicite si elle tente d'y répondre.
 
+**Quand un déplacement vous a été refusé, la fiche vous emmène aux questions qui manquent.**
+
+Sur le board, déplacer une affaire peut être refusé parce que des réponses obligatoires manquent
+(chapitre 4.8). Le message de refus les nomme, et il porte désormais un lien **« Renseigner ces
+champs »**. Il ouvre la fiche de l'affaire, et cette fiche :
+
+- **affiche les questions concernées, même celles que l'étape courante ne montre pas d'habitude.**
+  C'est le point important : une question comme « Motif de la perte » est normalement masquée tant
+  que l'affaire n'est pas perdue, et elle n'apparaissait donc nulle part au moment où on vous la
+  demandait. Elle est maintenant affichée et **saisissable**, parce que le déplacement l'exige ;
+- **les met en évidence** par un liseré bleu et la mention **« Exigé par le déplacement que vous
+  avez demandé »**, écrite en toutes lettres à côté de la question ;
+- **vous amène directement à la première**, qui reçoit le curseur : vous pouvez saisir sans chercher
+  ni faire défiler, y compris au clavier.
+
+Une question déjà obligatoire à l'étape courante garde sa mention « Requis pour passer à … » **en
+plus** : les deux phrases disent des choses différentes, et les deux sont vraies.
+
+*Ce que ce lien ne fait pas :* il **ne rejoue pas** le déplacement. Une fois les réponses saisies,
+revenez au board et refaites votre geste. Et la mention ne nomme pas l'étape vers laquelle vous
+vouliez aller : la fiche ne la connaît pas, et le produit préfère ne rien dire plutôt que de
+deviner.
+
 **Un second geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
 
 Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
