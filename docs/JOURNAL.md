@@ -17337,3 +17337,57 @@ nouvelle preuve d'API figent désormais l'état — et l'absence de card sur wor
 seed (INC-046). Une prochaine session peut donc prendre `CRM-013`, ou suivre l'ordre du plan vers
 `CRM-042`. Le parcours enchaîné de `CRM-037` (INC-062) reste dû. INC-129, INC-131, INC-132 et
 INC-133 attendent l'arbitrage du responsable.
+
+## 2026-08-16 — `CRM-037` : la preuve qu'aucune substitution ne pouvait rendre
+
+**Point de départ.** La dernière entrée désignait la reprise : « le parcours enchaîné de `CRM-037`
+(INC-062) reste dû ». Avant d'y aller, les autres candidates ont été mesurées plutôt que supposées,
+et trois se sont révélées vides de comportement : `CRM-013` reste bloquée par `CRM-072` et
+`CRM-073`, dont les tables n'existent toujours pas ; **`CRM-014` ne l'est plus, mais son backlog le
+dit encore** — ses preuves n° 6, 7, 9 et 12 sont acquises depuis, et le fichier pgTAP l'assère là
+où l'énoncé de backlog annonce « quatre preuves hors d'atteinte ». Aucune n'a été corrigée ici :
+c'est l'écart d'une autre unité, et le relever au passage aurait remplacé l'unité de la session.
+
+**Ce que la substitution ne pouvait pas prouver, et c'est le cœur de la tranche.** Les trois gestes
+du parcours étaient livrés et prouvés **séparément**, chacun contre des réponses réseau substituées
+(`docs/DESIGN_SYSTEM.md` §12.5). Une substitution prouve que l'écran réagit correctement à une
+réponse **donnée** ; elle ne prouve pas que le serveur rend celle-là. Trois jonctions restaient donc
+sans preuve, et chacune est précisément l'hypothèse qu'une substitution remplace : la clé que la
+garde met dans `details` est-elle celle que l'adresse de reprise transporte et celle qu'un champ
+porte ; la ligne qu'écrit la fiche est-elle celle que la garde relit ; le second déplacement
+réussit-il **réellement**. Le §4 quater de `docs/SPEC-form-composer.md` est le contrat de ces trois
+jonctions, écrit après mesure sur la pile et **committé avant la première ligne de test**.
+
+**LA CONTRE-ÉPREUVE A TROUVÉ DEUX FAITS QUE LE PARCOURS SEUL AURAIT LAISSÉS PASSER.** Elle était
+écrite pour une raison simple : sans elle, le seul passage sur la fiche pourrait passer pour la
+cause de la réussite. Sa **première** écriture visait la chaîne vide, et elle a échoué —
+
+```
+400  P0001  invalid_field_value : « lien-proposition attend une adresse http(s) »
+```
+
+Sur un champ `url`, la chaîne vide **n'est pas exprimable** : la validation de `CRM-036` la refuse
+avant que la garde soit consultée. « Vide » s'écrit donc `null`. Réécrite ainsi, la contre-épreuve
+établit le fait qui compte : une ligne `card_field_values` **présente mais sans valeur** ne lève pas
+le refus. **La garde lit la valeur, pas l'existence de la ligne** — c'est le prédicat « renseigné »
+du §4.3, éprouvé de bout en bout pour la première fois. Les deux faits sont figés par la preuve et
+écrits au §4 quater.3 bis.
+
+**Un constat trouvé par l'ŒIL, et non par un test — INC-134.** La capture de la fiche, observée
+comme `CLAUDE.md` §16 l'exige, montre trois champs portant « Requis pour passer à **Signature** » sur
+une affaire **déjà** à l'étape Signature. Ni la règle ni la garde ne sont en défaut, et le parcours
+le prouve — seul `lien-proposition` bloque, exigé par la transition. C'est un énoncé d'interface.
+**Comportement laissé inchangé** : son texte est figé par des preuves de composant, et trancher ce
+qu'il doit dire quand l'étape exigeante est l'étape courante dépasse cette tranche.
+
+**Une capture qui ne montrait rien, corrigée.** La première capture de la réussite montrait la
+colonne `Signature` **vidée**, la colonne d'arrivée étant hors de la fenêtre : le board défile
+horizontalement. Une capture d'un vide n'est pas une preuve de déplacement. Le scénario amène
+désormais la colonne d'arrivée à l'écran et y constate l'affaire avant de capturer.
+
+**Où reprendre.** `CRM-037` reste `[~]` pour **un seul** écart, et il n'appartient plus à l'unité :
+la Definition of Done demande « captures de **chaque étape** », il en existe trois, et les sept
+exigeraient sept affaires que le seed ne pose pas — c'est `CRM-046`. INC-062 perd son objet.
+La prochaine session peut prendre `CRM-046` (qui débloquerait aussi les données longues et la
+seconde page de `CRM-042`), ou reprendre `CRM-014`, dont le backlog est mesuré faux ci-dessus.
+INC-129, INC-131, INC-132, INC-133 et désormais INC-134 attendent l'arbitrage du responsable.
