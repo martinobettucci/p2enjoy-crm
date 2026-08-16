@@ -17619,3 +17619,33 @@ peut la prendre directement, sa spécification étant déjà écrite. Restent au
 `scripts/verify-snooze.sh` et le sommeil des fils de messagerie. Les écarts hérités sont inchangés :
 la convergence à froid de `CRM-046`, l'énoncé de `CRM-014`, et les compteurs de
 `scripts/verify-harness.sh`, en retard de bien plus que cette tranche.
+
+### Complément — ce que la campagne de fin de session a rendu, et un rouge que J'AI provoqué
+
+**Vertes, sans anomalie** : `npm run test:sql` **42 fichiers, 2191 assertions** ; `npm run test:unit`
+**1368 tests** sur 45 fichiers ; `npm run typecheck`, `npm run types:check` et `npm run build` ;
+`e2e/api/snooze.spec.ts` **9 scénarios**, verts au premier rejeu.
+
+**`npm run e2e:api` : 667 scénarios, 666 passés, 1 en échec** — le dépôt de la pièce jointe saine de
+`e2e/api/inbox.spec.ts` §18.5, refusé par **MinIO** avec `InvalidAccessKeyId`. Reproduit en rejouant
+le seul scénario. Étranger à la tranche, qui ne touche ni le stockage ni la messagerie : consigné en
+**INC-136**, arbitrage demandé.
+
+**`npm run e2e:ui` : 341 scénarios, 340 passés, 1 en échec — ET LA CAUSE EST MA PROPRE MÉTHODE.**
+Le palier `sm-390` de `administration-arborescence.spec.ts` a échoué parce que j'ai rejoué le seed
+**pendant** que la suite tournait, pour diagnostiquer un autre harnais : le rejeu a trouvé le
+workflow source porteur de transitions écrites par la suite en cours et s'est arrêté, laissant
+l'arborescence dans un état que le scénario ne connaît pas. Pile au repos, seed réappliqué, le
+palier est **vert** (4 scénarios responsive, aucun échec). À retenir, et c'est la même famille que
+la leçon de l'entrée précédente sur les empreintes : **une preuve et un seed ne se rejouent pas en
+parallèle**, sans quoi le verdict ne dit rien du produit.
+
+**`scripts/verify-cards.sh --rapide` : 39 contrôles, 1 en échec** — « état du seed : 15/1/1/15,
+attendu 14/1/1/14 », c'est **INC-132**, préexistante et étrangère. Le second échec observé au
+premier passage — « le seed échoue au rejeu : la convergence n'est pas acquise » — avait la même
+cause que celui de `e2e:ui` ci-dessus et **ne se reproduit pas** sur pile au repos.
+
+**Non exécutés, et dits comme tels** : `npm run e2e:mail`, `.venv/bin/python -m pytest
+mail-sync/tests`, et les quarante-neuf autres `scripts/verify-*.sh` — la série entière ne tient pas
+dans une session (§2.1 ter du prompt). Aucun fichier de `mail-sync/`, de `e2e/mail/` ni de la
+chaîne de stockage n'est touché par cette session.
