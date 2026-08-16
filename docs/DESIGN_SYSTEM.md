@@ -923,6 +923,14 @@ décrit le workflow choisi.
   l'écran après une modification en ferait une affirmation périmée que rien ne signale — même règle
   que le plan de remappage du §7 ter.14.5.
 
+- **Le résultat repose sur sa propre surface `--color-bg`, à l'intérieur de la mention**, et cette
+  règle vient de l'OBSERVATION des captures (`CLAUDE.md` §16), pas d'une intention. La mention porte
+  `--color-hover` lorsque la source n'a pas changé ; or la pilule « Modifié » porte ce **même**
+  jeton. Rendue à même la mention, elle perdait sa forme et se confondait avec le fond, là où
+  « Ajouté » et « Retiré » gardaient la leur. Le mot restait lisible — le §1 était tenu —, mais les
+  trois genres cessaient d'être distingués pareillement. C'est la limite d'une pilule neutre : elle
+  n'existe que par contraste avec ce qui la porte.
+
 - **L'en-tête non comparé est ÉCRIT, pas tu.** Les cinq collections rendues n'incluent pas le nom,
   la portée ni le track — la copie ne les copie pas (§4 ter.3). Afficher un intitulé « Workflow »
   toujours vide enseignerait qu'on a regardé et que c'est identique ; l'écran écrit donc une ligne

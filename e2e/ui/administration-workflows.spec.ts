@@ -1922,8 +1922,13 @@ test.describe('la mention de divergence (§4 bis)', () => {
 			await expect(mention).toHaveAttribute('data-divergente', 'oui')
 			await expect(mention).toContainText('La source a changé depuis la copie du')
 			await expect(mention).toContainText('ne sont pas reportées automatiquement')
-			// La mention n'offre AUCUN geste : ni resynchroniser, ni comparer (§4 bis.6).
-			await expect(mention.getByRole('button')).toHaveCount(0)
+			// GARDE-FOU RÉVISÉ le 2026-08-16, mécanisme de la décision 51. Cette ligne exigeait
+			// ZÉRO bouton, et elle avait raison quand elle a été écrite : aucune fonction ne savait
+			// alors comparer une copie à sa source vivante. `compare_workflow_with_source` est
+			// livrée depuis le §4 ter, et son geste d'interface au §4 quater. Ce qui reste vérifié
+			// est la partie qui n'en a jamais dépendu : aucune commande d'ÉCRITURE, aucun lien.
+			await expect(mention.getByRole('button')).toHaveCount(1)
+			await expect(mention.getByTestId('comparer-source')).toBeVisible()
 			await expect(mention.getByRole('link')).toHaveCount(0)
 			await capturer(page, 'divergence-signalee-1440', 'CRM-032')
 		} finally {
@@ -1957,5 +1962,174 @@ test.describe('la mention de divergence (§4 bis)', () => {
 		)
 		expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
 		await capturer(page, 'divergence-a-jour-390', 'CRM-032')
+	})
+})
+
+// -------------------------------------------------------------------------------------------
+// Le geste « comparer à la source » — `CRM-032`, docs/SPEC-workflow-engine.md §4 quater
+// @verifies CRM-032 (docs/BACKLOG.md) — geste d'interface de la comparaison copie ↔ source
+// @verifies docs/SPEC-workflow-engine.md §4 quater.2 (où le geste se trouve, et l'absence de
+//           commande sur un workflow sans origine), §4 quater.3 (lecture 10 sur pression),
+//           §4 quater.4 (les trois états, les cinq collections, l'en-tête écrit),
+//           §4 quater.9 (preuves attendues, niveaux E2E et visuel)
+// @verifies docs/DESIGN_SYSTEM.md §5.15 (la commande vit dans la mention), §7 (paliers)
+// -------------------------------------------------------------------------------------------
+//
+// L'ÉCART EST PROVOQUÉ POUR DE VRAI, PUIS DÉFAIT, comme celui de la mention. Le seed livre une
+// copie IDENTIQUE à sa source — la comparaison rend donc « identique », ce qui est le cas normal et
+// ne prouverait rien seul. La preuve dégrade ensuite **la copie** par la clé de service, recompare
+// par l'écran, constate l'écart NOMMÉ avec son attribut et ses deux valeurs, puis restaure
+// exactement la valeur d'origine et constate le retour à l'identique. Règle d'INC-099 : la table
+// est rendue dans l'état où elle a été trouvée.
+//
+// LA COPIE EST DÉGRADÉE ICI, ET NON LA SOURCE — c'est la différence avec la preuve de la mention
+// juste au-dessus, et elle est voulue : le §4 ter.7 pose que les deux questions sont distinctes.
+// Dégrader la copie laisse `source_modified_since_copy` à `false` et fait pourtant diverger la
+// comparaison, ce qui éprouve la règle du §4 quater.2 — la commande est offerte même quand la
+// mention dit que la source n'a pas changé.
+
+test.describe('le geste « comparer à la source » (§4 quater)', () => {
+	/** L'étape de la COPIE dont la position sera dégradée, retrouvée par son lignage. */
+	async function etapeDeLaCopie(
+		request: APIRequestContext,
+	): Promise<{ id: string; position: number }> {
+		const copies = await request.get(
+			`${URL_API}/rest/v1/workflows?select=id&name=eq.${encodeURIComponent(COPIE_SEED)}`,
+			{ headers: enTetesService() },
+		)
+		expect(copies.status()).toBe(200)
+		const idCopie = (await copies.json())[0]?.id as string
+		expect(idCopie, 'la copie du seed est présente').toBeTruthy()
+
+		const etapes = await request.get(
+			`${CHEMIN_ETAPES}?select=id,position&workflow_id=eq.${idCopie}&order=position&limit=1`,
+			{ headers: enTetesService() },
+		)
+		expect(etapes.status()).toBe(200)
+		const premiere = (await etapes.json())[0] as { id: string; position: number }
+		expect(premiere, 'la copie porte au moins une étape').toBeTruthy()
+		return premiere
+	}
+
+	test('la copie du seed se compare à sa source et se déclare identique', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+
+		// Le workflow par défaut n'est la copie de personne : AUCUNE commande (§4 quater.2). C'est ce
+		// qui rend le refus n° 3 du §4 ter.5 inatteignable depuis l'écran.
+		await expect(page.getByTestId('comparer-source')).toHaveCount(0)
+
+		await choisirWorkflow(page, COPIE_SEED)
+		const bouton = page.getByTestId('comparer-source')
+		await expect(bouton).toBeVisible()
+		// La commande vit DANS la mention, et n'ouvre pas de bloc à elle (§4 quater.2).
+		await expect(page.getByTestId('mention-divergence').getByTestId('comparer-source')).toBeVisible()
+
+		await bouton.click()
+		await expect(page.getByTestId('comparaison-source-identique')).toContainText(
+			'Cette copie est identique à sa source.',
+		)
+		// Identique : les cinq collections ne sont pas déroulées, il n'y a rien à parcourir.
+		await expect(page.getByTestId('comparaison-source-collections')).toHaveCount(0)
+		// L'en-tête non comparé est ÉCRIT, jamais tu (§4 quater.4).
+		await expect(page.getByTestId('comparaison-source-entete')).toContainText(
+			'Le nom, la portée et le track ne sont pas comparés',
+		)
+		await capturer(page, 'comparaison-source-identique-1440', 'CRM-032')
+	})
+
+	test('dégrader la copie fait apparaître l’écart nommé, le restaurer le fait disparaître', async ({
+		page,
+		request,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		const etape = await etapeDeLaCopie(request)
+
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await choisirWorkflow(page, COPIE_SEED)
+		await page.getByTestId('comparer-source').click()
+		await expect(page.getByTestId('comparaison-source-identique')).toBeVisible()
+
+		try {
+			const mutation = await request.patch(`${CHEMIN_ETAPES}?id=eq.${etape.id}`, {
+				headers: enTetesService(),
+				data: { position: 42 },
+			})
+			expect(mutation.status(), 'la position est déplacée dans la COPIE').toBe(204)
+
+			await page.reload()
+			await choisirWorkflow(page, COPIE_SEED)
+			// La mention dit toujours que la SOURCE n'a pas changé — et pourtant la copie diverge.
+			// C'est exactement le cas que le §4 quater.2 refuse de cacher.
+			await expect(page.getByTestId('mention-divergence')).toHaveAttribute(
+				'data-divergente',
+				'non',
+			)
+
+			await page.getByTestId('comparer-source').click()
+			const resultat = page.getByTestId('comparaison-source-resultat')
+			await expect(resultat).toBeVisible()
+			await expect(page.getByTestId('comparaison-source-resume')).toContainText('1 modification(s)')
+
+			// L'écart est NOMMÉ : la collection, l'attribut, et les deux valeurs.
+			const collections = page.getByTestId('comparaison-source-collections')
+			await expect(collections).toContainText('Étapes')
+			await expect(collections).toContainText('position')
+			await expect(collections).toContainText('42')
+			// L'en-tête n'est jamais une collection rendue (§4 ter.3).
+			await expect(collections.getByRole('heading', { name: 'Workflow', exact: true })).toHaveCount(0)
+			await capturer(page, 'comparaison-source-divergente-1440', 'CRM-032')
+		} finally {
+			const restauration = await request.patch(`${CHEMIN_ETAPES}?id=eq.${etape.id}`, {
+				headers: enTetesService(),
+				data: { position: etape.position },
+			})
+			expect(restauration.status(), 'la copie est rendue à son état seedé').toBe(204)
+		}
+
+		// Restaurée, la copie redevient identique : l'écart n'était pas une fatalité d'affichage.
+		await page.reload()
+		await choisirWorkflow(page, COPIE_SEED)
+		await page.getByTestId('comparer-source').click()
+		await expect(page.getByTestId('comparaison-source-identique')).toBeVisible()
+	})
+
+	test('un geste de l’éditeur EFFACE le résultat, qui décrirait sinon un état périmé', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await choisirWorkflow(page, COPIE_SEED)
+		await page.getByTestId('comparer-source').click()
+		await expect(page.getByTestId('comparaison-source-identique')).toBeVisible()
+
+		// Changer de workflow suffit : le résultat ne décrit plus le workflow affiché.
+		//
+		// LE CHOIX EST SCOPÉ À LA LISTE DE GAUCHE, et ce n'est pas un détail de sélecteur : depuis
+		// le §4 quater, l'`aria-label` de la commande nomme la SOURCE (« Comparer ce workflow à sa
+		// source « Cycle commercial standard » »), de sorte qu'un sélecteur global sur ce nom
+		// désigne désormais deux boutons. Le scoper dit ce que la preuve veut réellement presser.
+		await page
+			.getByRole('navigation')
+			.getByRole('button', { name: /Cycle commercial standard/ })
+			.click()
+		await expect(page.getByTestId('comparaison-source-identique')).toHaveCount(0)
+	})
+
+	test('le résultat tient au palier étroit, sans débordement', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 780 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await choisirWorkflow(page, COPIE_SEED)
+		await page.getByTestId('comparer-source').click()
+		await expect(page.getByTestId('comparaison-source-identique')).toBeVisible()
+		const debordement = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+		)
+		expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+		await capturer(page, 'comparaison-source-identique-390', 'CRM-032')
 	})
 })

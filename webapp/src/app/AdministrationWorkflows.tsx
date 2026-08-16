@@ -2285,8 +2285,18 @@ function CommandeComparaison({
 				</span>
 			) : null}
 
+			{/* LE RÉSULTAT REPOSE SUR SA PROPRE SURFACE, ET C'EST UNE CORRECTION VENUE DE
+			    L'OBSERVATION DES CAPTURES (`CLAUDE.md` §16). La mention porte le jeton
+			    `--color-hover` lorsque la source n'a pas changé ; or la pilule « Modifié » du
+			    §5.15 porte ce MÊME jeton. Rendue à l'intérieur, elle perdait sa forme et se
+			    confondait avec le fond. Le mot restait lisible — le §1 était donc tenu —, mais la
+			    pilule ne se distinguait plus des deux autres. La poser sur `--color-bg` rend aux
+			    trois genres la distinction que le design system leur donne. */}
 			{comparaison !== null && !comparaison.identique ? (
-				<span data-testid="comparaison-source-resultat" className="flex flex-col gap-2">
+				<span
+					data-testid="comparaison-source-resultat"
+					className="flex flex-col gap-2 rounded-sm bg-bg px-3 py-2 text-text-1"
+				>
 					<span className="font-medium">{t('admin.workflows.compareSource.title')}</span>
 					<span data-testid="comparaison-source-resume" className="text-sm">
 						{t('admin.workflows.compareSource.summary', {
