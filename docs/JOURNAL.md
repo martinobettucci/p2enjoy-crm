@@ -16363,3 +16363,68 @@ fichier** (mécanisme de la décision 51) plutôt que de l'aligner en silence su
 
 **Où reprendre.** Inchangé pour le produit : `CRM-079`. Le rattrapage des cinquante harnais est un
 sujet distinct, désormais possible, et il vaut mieux qu'il soit une unité à lui seul.
+
+## 2026-08-16 — `CRM-079` : la preuve hors interface, et une régression que seule la campagne a vue
+
+**L'unité de la session.** La dernière entrée du journal désignait `CRM-079`, dont la spécification
+et le code étaient déjà poussés par une exécution interrompue : le module de mesure, l'écran, ses
+deux surfaces et ses preuves unitaires. L'exception du §3.2 de `docs/CloudWorker.md` s'appliquait —
+spécification existante et suffisante —, la session est donc allée directement au code et aux
+preuves manquantes du §8.
+
+**Une exécution concurrente travaillait la même unité.** Écrit avant d'avoir mesuré l'état distant,
+un fichier de preuves d'interface a rencontré au `push` un `e2e/ui/demarrage.spec.ts` déjà poussé,
+plus complet que le sien sur l'état non mesurable. Il a été **abandonné plutôt que fusionné**
+(`CLAUDE.md` §1 : ne pas remplacer une solution existante fonctionnelle), et la session s'est
+reportée sur la seule ligne du §8 que le distant ne portait pas : les cinq comptages **hors
+interface**. Leçon opérationnelle : `git fetch` avant d'écrire, pas seulement avant de pousser.
+
+**Ce qui est livré.** `e2e/api/demarrage.spec.ts`, six scénarios, qui établissent ce qu'un écran ne
+peut pas établir sur lui-même — un écran interrogé sur ce qu'il affiche répondrait la même chose si
+l'écart était fabriqué côté client. Les trois faits du §3.1 deviennent des assertions : la lectrice
+compte moins de channels et d'affaires que l'administratrice sur la même base ; elle compte **zéro**
+boîte entrante là où le seed en porte trois ; `mail_inbound_accounts` est la **seule** des cinq
+tables à refuser la clé anonyme. Les filtres y sont **recopiés de la spécification** et non importés
+du module : une preuve qui importerait `FILTRES_ETAPES_DEMARRAGE` serait verte quel que soit le
+filtre écrit dans le produit.
+
+**La campagne complète a rendu une régression réelle, et c'est le fait marquant de la session.**
+Onze scénarios d'interface de cinq fichiers étrangers à l'unité — coquille, tracks, channels,
+authentification, manuel — échouaient sur deux symptômes : `/` ne rendait plus `etat-vide`, et la
+console portait `401 (Unauthorized)`. La cause était unique : le guide, monté sur `/`, mesurait
+**même sans session**, et le comptage des boîtes entrantes est le seul des cinq que la clé anonyme
+reçoit en refus (§3.1, fait 3). Le produit salissait donc la console de son écran d'arrivée.
+
+La correction a suivi l'ordre du §3.2 : le §4.4 de `docs/SPEC-onboarding.md` a été **écrit et
+committé avant** la première ligne de code. Tant que la session n'est pas ouverte — `chargement`
+compris —, aucune mesure n'est émise ; `/` rend l'état vide **existant** de `CRM-007`, inchangé, et
+`/demarrage` reste rendu, simplement sans poser de question. Ce n'est pas une règle d'autorisation
+déplacée dans l'interface : rien n'est autorisé ni refusé, aucun rôle n'est interrogé, c'est le
+choix de ne pas poser une question dont l'appelant ne peut pas être le sujet.
+
+Deux preuves ont été **révisées et non contournées**, la règle ayant changé par arbitrage :
+`routes.test.tsx` — pour la quatrième fois de son histoire, et l'assertion a joué à chaque fois — et
+les vingt-trois montages de `GuideDemarrage.test.tsx`, qui déclarent désormais leur session. Trois
+assertions neuves prouvent le §4.4 par un client **espion** qui compte les appels : l'absence de
+requête, et non l'absence d'affichage. Un écran muet qui interrogerait quand même la base aurait
+laissé le défaut intact.
+
+**Preuves exécutées.** `test:unit` **1148/1148** ; `typecheck` et `build` verts ; `test:sql`
+**40 fichiers, 2133 assertions** ; `e2e:api` **597/597**, plus les 6 neufs ; `e2e:ui` **285/285**
+après correction, contre 11 échecs avant ; `pytest` **242 passés**. Captures observées.
+
+**Ce qui n'a PAS été mené à terme, et il faut le savoir.** Les `scripts/verify-*.sh` — cinquante
+sur cet hôte — ont été lancés pour la première fois avec Node 24 et la pile debout, mais la série
+n'a pas rendu son verdict dans le temps de la session : le premier harnais dépassait déjà cinq
+minutes. Ce n'est plus un blocage de version, c'est un **budget**.
+
+**Deux constats étrangers consignés.** **INC-123** : cinq scénarios de `e2e:mail` échouent avant
+toute assertion, l'hôte ne portant pas le `chromium_headless_shell` qu'exige la version épinglée de
+Playwright — `36 passés, 6 échoués`. **INC-124** : la preuve S3 de `mail-sync.spec.ts` interdit tout
+`WARNING` alors que le service en journalise deux qui sont corrects. Aucun des deux n'est imputable
+à cette unité, et le comportement est laissé inchangé.
+
+**Où reprendre.** `CRM-079` reste `[~]` pour une seule raison, nommée : `scripts/verify-onboarding.sh`
+n'est pas écrit, et la série des `verify-*.sh` n'a pas rendu son bilan. Tout le comportement de la
+spécification est livré et prouvé. La prochaine session écrit ce harnais — elle **peut** désormais
+l'exécuter —, mène la série à son terme, puis ferme l'unité et passe à `CRM-080`.

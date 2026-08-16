@@ -7435,10 +7435,47 @@ commit. Le principe qu'elle pose est le suivant, et il conditionne le reste : **
 une mesure, jamais un drapeau** — cinq comptages sur des tables déjà lues, aucun état persisté,
 aucune politique RLS ouverte.
 
-*Reste à livrer, et l'ordre est celui de la spécification.* Le module de mesure
-(`webapp/src/lib/demarrage.ts`, §3), l'écran (`GuideDemarrage`, §6 et §7), l'adresse `/demarrage`
-et l'entrée de l'index des réglages (§4), le rendu sur `/` (§4.2), puis les preuves du §8 —
-unitaires, E2E clavier et mobile, masquage et reprise, état non mesurable, captures observées.
+**Tout le comportement de la spécification est livré**, dans l'ordre qu'elle pose : le module de
+mesure (`webapp/src/lib/demarrage.ts`, §3), l'écran et ses deux surfaces (`GuideDemarrage.tsx`,
+§4.1, §4.2, §6, §7), l'adresse `/demarrage` et l'entrée de l'index des réglages (§4.1, §4.3), et le
+rendu sur `/` (§4.2).
+
+**Un cinquième cas s'est ajouté le 2026-08-16, mesuré et non prévu : `docs/SPEC-onboarding.md`
+§4.4 — aucune mesure sans session.** La campagne complète a rendu une régression réelle et non un
+défaut de preuve : un visiteur **non connecté** qui ouvrait `/` déclenchait les cinq comptages, et
+`mail_inbound_accounts` refuse la clé anonyme par `401` (§3.1, fait 3). La console de l'écran
+d'ARRIVÉE du produit portait donc une erreur, ce que le dépôt interdit. Le §4.4 a été écrit et
+committé **avant** la correction ; les deux surfaces n'émettent plus rien tant que la session n'est
+pas ouverte, et `/` rend alors l'état vide **existant** de `CRM-007`, inchangé. `/demarrage` reste
+rendu — le §4.1 est intact —, simplement sans poser de question.
+
+*Preuves exécutées le 2026-08-16, sur la pile seedée.* `test:unit` **1148/1148** sur 42 fichiers,
+dont les **24** de `GuideDemarrage.test.tsx` — les trois derniers comptent les appels émis et
+prouvent le §4.4 par l'**absence de requête**, non par l'absence d'affichage. `e2e:ui`
+**285/285**, dont les **10** de `e2e/ui/demarrage.spec.ts` : clavier seul, masquage, reprise après
+rechargement, `/demarrage` rendu malgré le masquage, état non mesurable, `localStorage` vide,
+quatre paliers, console vierge. `e2e/api/demarrage.spec.ts` **6/6**, qui établit **hors interface**
+ce que l'écran ne peut pas établir seul — les trois faits du §3.1 sont désormais des assertions :
+la lectrice compte moins de channels et d'affaires que l'administratrice, elle compte **zéro** boîte
+entrante là où le seed en porte trois, et `mail_inbound_accounts` est la **seule** des cinq tables
+à refuser la clé anonyme (`401` contre `200` et zéro ligne). `test:sql` **40 fichiers, 2133
+assertions**, `e2e:api` **597/597**, `pytest` **242 passés**, `typecheck` et `build` verts.
+**Neuf captures** sous `docs/captures/CRM-079/`, produites depuis l'application exécutée et
+**observées** (`CLAUDE.md` §16) : accueil de la lectrice, guide intégralement accompli, étape non
+mesurable, accueil masqué, et les quatre paliers.
+
+*Constats étrangers, consignés et laissés inchangés.* **INC-123** — cinq scénarios de `e2e:mail`
+(`roundcube*.spec.ts`) échouent avant toute assertion, l'hôte ne portant pas le
+`chromium_headless_shell` qu'exige la version épinglée de Playwright. **INC-124** — la preuve S3 de
+`mail-sync.spec.ts` interdit tout `WARNING`, alors que le service en journalise deux qui sont
+corrects (un renommage de dossier IMAP refusé). Ni l'un ni l'autre n'est imputable à cette unité.
+
+*L'unité reste `[~]`, et l'écart est nommé.* Les `scripts/verify-*.sh` n'ont pas tous rendu leur
+verdict dans la session, et **aucun `scripts/verify-onboarding.sh` n'est écrit** — le §9 de la
+spécification le réservait à une session capable de l'exécuter, ce qui est désormais possible
+(Node 24 installé par `nvm`). C'est la seule preuve manquante de la Definition of Done ; tout le
+reste — clavier, mobile, reprise de session, états incomplets, console stricte, aucun écran factice
+— est exécuté et vert.
 
 ### CRM-081 — Snooze des fils et des cards `[ ]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
