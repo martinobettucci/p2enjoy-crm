@@ -476,3 +476,184 @@ describe("ce que l'écran montre APRÈS une écriture confirmée", () => {
 		)
 	})
 })
+
+// @verifies CRM-081 (docs/BACKLOG.md) — mise en sommeil d'une affaire, tranche 2 a
+// @verifies docs/SPEC-cards.md §16.11.1 (le prédicat et son instant injectable),
+//           §16.11.2 (la pastille), §16.11.3 (les deux visages de la commande),
+//           §16.11.4 (les issues montrées) ; docs/DESIGN_SYSTEM.md §5.3 quater
+describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
+	const MAINTENANT = new Date('2026-08-16T12:00:00Z')
+
+	/** Un client réduit aux deux RPC, qui NOTE ce qui lui a été demandé. */
+	function clientSommeil(
+		reponse: { status: number; error: { message: string } | null; data: unknown },
+	): { client: ClientCrm; appels: { nom: string; arguments: Record<string, unknown> }[] } {
+		const appels: { nom: string; arguments: Record<string, unknown> }[] = []
+		const client = {
+			rpc: async (nom: string, args: Record<string, unknown>) => {
+				appels.push({ nom, arguments: args })
+				return reponse
+			},
+			from: () => ({
+				select: () => {
+					const chaine: Record<string, unknown> = {}
+					chaine['eq'] = () => chaine
+					chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+						Promise.resolve({ data: [], error: null, status: 200 }).then(resoudre)
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		return { client, appels }
+	}
+
+	it("porte la pastille et son échéance quand l'affaire dort", () => {
+		const { client } = clientSommeil({ status: 200, error: null, data: null })
+		render(
+			<EnTeteCard
+				card={card({ snoozed_until: '2026-08-26T12:00:00+00:00' })}
+				client={client}
+				maintenant={MAINTENANT}
+			/>,
+		)
+		expect(screen.getByTestId('entete-card-sommeil').textContent).toContain('26/08/2026')
+		// DEUX VISAGES, UN SEUL RENDU : la commande d'endormissement disparaît.
+		expect(screen.getByTestId('entete-card-reveiller')).toBeTruthy()
+		expect(screen.queryByTestId('entete-card-endormir')).toBeNull()
+	})
+
+	it("ne porte AUCUNE pastille quand l'échéance est échue, colonne pourtant renseignée (§16.2)", () => {
+		const { client } = clientSommeil({ status: 200, error: null, data: null })
+		render(
+			<EnTeteCard
+				card={card({ snoozed_until: '2026-08-14T12:00:00+00:00' })}
+				client={client}
+				maintenant={MAINTENANT}
+			/>,
+		)
+		expect(screen.queryByTestId('entete-card-sommeil')).toBeNull()
+		expect(screen.getByTestId('entete-card-endormir')).toBeTruthy()
+	})
+
+	it("la pastille d'archivage et celle de sommeil COEXISTENT", () => {
+		const { client } = clientSommeil({ status: 200, error: null, data: null })
+		render(
+			<EnTeteCard
+				card={{
+					...card({ snoozed_until: '2026-08-26T12:00:00+00:00' }),
+					archived_at: '2026-03-31T16:00:00+00:00',
+				}}
+				client={client}
+				maintenant={MAINTENANT}
+			/>,
+		)
+		expect(screen.getByTestId('entete-card-archivee')).toBeTruthy()
+		expect(screen.getByTestId('entete-card-sommeil')).toBeTruthy()
+	})
+
+	it("une échéance usuelle envoie une date FUTURE, et la pastille naît de la ligne rendue", async () => {
+		const { client, appels } = clientSommeil({
+			status: 200,
+			error: null,
+			data: { id: 'card-1', snoozed_until: '2026-08-19T12:00:00+00:00' },
+		})
+		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
+		screen.getByTestId('entete-card-endormir').click()
+		// Le panneau naît d'une mise à jour d'état : il est ATTENDU, jamais supposé rendu au retour
+		// du clic — c'est la même règle que la bascule d'édition plus haut dans ce fichier.
+		await screen.findByTestId('entete-card-panneau-sommeil')
+		screen.getByTestId('entete-card-sommeil-troisjours').click()
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]?.nom).toBe('snooze_card')
+		expect(String(appels[0]?.arguments['until'])).toBe('2026-08-19T12:00:00.000Z')
+		// LA LIGNE RENDUE EST LA SOURCE, jamais la saisie : la pastille porte 19/08, ce que le
+		// serveur a répondu, et non une date recomposée par l'écran.
+		await waitFor(() =>
+			expect(screen.getByTestId('entete-card-sommeil').textContent).toContain('19/08/2026'),
+		)
+	})
+
+	it("ENVOIE une échéance passée plutôt que de la refuser, et MONTRE le refus de la base", async () => {
+		const { client, appels } = clientSommeil({
+			status: 400,
+			error: { message: 'snooze_date_in_past' },
+			data: null,
+		})
+		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
+		screen.getByTestId('entete-card-endormir').click()
+		await screen.findByTestId('entete-card-panneau-sommeil')
+		fireEvent.change(screen.getByTestId('entete-card-sommeil-echeance'), {
+			target: { value: '2020-01-01T09:00' },
+		})
+		screen.getByTestId('entete-card-sommeil-envoyer').click()
+		await waitFor(() => expect(appels).toHaveLength(1))
+		const mention = await screen.findByTestId('entete-card-sommeil-mention')
+		expect(mention.textContent).toContain('future')
+		// LE REFUS N'EFFACE PAS LA SAISIE : le panneau reste ouvert pour la corriger.
+		expect(screen.getByTestId('entete-card-panneau-sommeil')).toBeTruthy()
+		expect(screen.queryByTestId('entete-card-sommeil')).toBeNull()
+	})
+
+	it("une saisie VIDE est envoyée telle quelle : c'est la base qui exige l'échéance", async () => {
+		const { client, appels } = clientSommeil({
+			status: 400,
+			error: { message: 'snooze_date_required' },
+			data: null,
+		})
+		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
+		screen.getByTestId('entete-card-endormir').click()
+		await screen.findByTestId('entete-card-panneau-sommeil')
+		screen.getByTestId('entete-card-sommeil-envoyer').click()
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]?.arguments['until']).toBeNull()
+		expect((await screen.findByTestId('entete-card-sommeil-mention')).textContent).toContain(
+			'échéance est nécessaire',
+		)
+	})
+
+	it("le réveil appelle `wake_card` SANS panneau, et la pastille disparaît", async () => {
+		const { client, appels } = clientSommeil({
+			status: 200,
+			error: null,
+			data: { id: 'card-1', snoozed_until: null },
+		})
+		render(
+			<EnTeteCard
+				card={card({ snoozed_until: '2026-08-26T12:00:00+00:00' })}
+				client={client}
+				maintenant={MAINTENANT}
+			/>,
+		)
+		screen.getByTestId('entete-card-reveiller').click()
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]?.nom).toBe('wake_card')
+		await waitFor(() => expect(screen.queryByTestId('entete-card-sommeil')).toBeNull())
+		expect(screen.getByTestId('entete-card-endormir')).toBeTruthy()
+	})
+
+	it("montre le refus d'un lecteur seul, la commande n'ayant jamais été éteinte d'avance", async () => {
+		const { client } = clientSommeil({
+			status: 403,
+			error: { message: 'forbidden' },
+			data: null,
+		})
+		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
+		const commande = screen.getByTestId('entete-card-endormir') as HTMLButtonElement
+		expect(commande.disabled, "la règle vit dans la base, pas dans l'écran").toBe(false)
+		commande.click()
+		await screen.findByTestId('entete-card-panneau-sommeil')
+		screen.getByTestId('entete-card-sommeil-demain').click()
+		expect((await screen.findByTestId('entete-card-sommeil-mention')).textContent).toContain(
+			'ne pouvez pas modifier',
+		)
+	})
+
+	it('`Échap` referme le panneau sans rien envoyer', async () => {
+		const { client, appels } = clientSommeil({ status: 200, error: null, data: null })
+		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
+		screen.getByTestId('entete-card-endormir').click()
+		fireEvent.keyDown(await screen.findByTestId('entete-card-panneau-sommeil'), { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByTestId('entete-card-panneau-sommeil')).toBeNull())
+		expect(appels).toHaveLength(0)
+	})
+})
