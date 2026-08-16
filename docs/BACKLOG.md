@@ -2166,7 +2166,7 @@ telle.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
-### CRM-030 — Catalogue de nœuds `[~]`
+### CRM-030 — Catalogue de nœuds `[x]`
 `workflow_nodes_catalog`, catalogue initial de sept nœuds, refus d'archivage d'un nœud occupé.
 **DoD** : pgTAP sur le refus d'archivage ; E2E d'administration ; seed conforme au tableau de
 `docs/SPEC-workflow-engine.md` §2.
@@ -2269,7 +2269,9 @@ telle.
       refus reçu avec sa ligne relue inchangée, et sa contre-épreuve sur un nœud libre. Le §2.6 de
       `docs/SPEC-workflow-engine.md` est corrigé dans le même changement, son texte d'origine
       conservé pour son motif.
-- [ ] ~~**Le refus d'archivage d'un nœud occupé n'est pas livré.**~~ *(état du 2026-08-04, ci-dessus)*
+- [x] ~~**Le refus d'archivage d'un nœud occupé n'est pas livré.**~~ *(état du 2026-08-04, ci-dessus ;
+      la case passe à `[x]` le 2026-08-16 — ce qu'elle décrivait EST livré, et un `[ ]` sous une unité
+      close aurait continué de dire le contraire)*
       Son chemin est
       `cards.current_step_id → workflow_steps.node_id → workflow_nodes_catalog.id` : il traverse
       `workflow_steps` (`CRM-031`) et `cards` (`CRM-040`). Mesuré : les trois tables rendent `NULL`

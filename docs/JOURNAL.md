@@ -16649,3 +16649,60 @@ l'éviterait : la translittération ajoutée un jour la rendra rouge.
 **réordonnancement** du catalogue. `calculerDeplacement` et `positionEntre` de `CRM-075` couvrent le
 calcul ; ce qui reste est la commande, son E2E et sa capture. C'est une demi-session, et c'est par
 elle que `CRM-030` se ferme.
+
+## 2026-08-16 — `CRM-030` close : le réordonnancement du catalogue, et une garde qui ne garde qu'une colonne
+
+**Point de départ.** L'entrée précédente fermait la tranche de l'écran du catalogue et nommait **un
+seul** manque restant à `CRM-030`, au §2 bis.8 : le réordonnancement. Elle l'estimait à une
+demi-session, et c'est l'unité de celle-ci.
+
+**La spécification n'existait pas, elle a donc été écrite avant le code.** Le §2 bis.8 ne faisait que
+nommer le manque ; l'exception du §3.2 du prompt — « reprendre une spécification qui existe déjà » —
+ne s'appliquait pas. `docs/SPEC-workflow-engine.md` §2 ter, sept sections, écrites après mesure sur
+la pile réelle et committées dans un commit documentaire dédié, poussé avant la première ligne de
+code, avec la règle visuelle de `docs/DESIGN_SYSTEM.md` §5.18.
+
+**La mesure qui a payé la lecture de la migration, et qu'aucun raisonnement n'aurait donnée.** La
+garde `node_occupied` de `CRM-040` est un trigger **`BEFORE UPDATE` posé sur toute la table** : rien
+dans son nom ne dit qu'un déplacement y échappe, et un catalogue immobile aurait été un défaut
+plausible. Elle ne se réveille qu'au passage d'`archived_at` de `NULL` à une valeur — c'est écrit
+dans son corps, et c'est précisément le défaut qu'INC-031 redoutait. **Mesuré plutôt que lu** :
+`PATCH position` sur `prospection`, que le seed occupe de quatre affaires actives, rend `200`, avec
+le même jeton et sur le même nœud dont l'archivage rend `403`. Les deux mesures côte à côte
+établissent que la garde discrimine sur la **colonne écrite** et non sur l'occupation. Une preuve
+d'API les fige toutes les deux (§N6 et §N7) : sans elle, un resserrement futur du `if` rendrait le
+catalogue immobile et l'écran afficherait « des affaires en cours se trouvent encore sur ce nœud »
+pour un simple déplacement, sans qu'aucune preuve ne l'annonce.
+
+**La décision structurante de la tranche : le calcul porte sur la liste AFFICHÉE, archivés compris.**
+Un nœud archivé reste dans la liste à sa position (`docs/DESIGN_SYSTEM.md` §5.18), donc il est
+visible entre deux actifs. Calculer sur la seule sous-liste active aurait fait franchir cette ligne
+d'un seul clic, ou produit une position égale à la sienne — le cas `positions-indistinctes` que le
+calcul de `CRM-075` existe pour attraper. Le nœud archivé, lui, ne se déplace pas : ses flèches ne
+sont pas rendues, comme « Modifier ». Il **compte comme voisine sans être déplaçable**, et les deux
+moitiés de cette règle sont figées séparément — par le test unitaire pour le calcul, par le scénario
+d'interface pour l'absence de commandes.
+
+**Ce qui est livré.** `deplacerNoeud` écrit **une colonne sur une ligne** ; la liste n'est jamais
+renumérotée, ce à quoi la colonne `numeric` sert depuis `CRM-020`. `calculerDeplacement`,
+`positionEntre` et `positionAvant` de `CRM-075` sont réutilisés, jamais dupliqués. L'écran porte deux
+flèches par ligne active, en tête du groupe d'actions, désactivées aux extrémités avec **deux
+infobulles distinctes** — « déjà en tête de liste » n'est pas « les positions ne se distinguent
+plus ». L'alerte d'un refus qui n'appartient à aucun bloc est rendue au-dessus de la liste : le
+patron vient de `AdministrationArborescence`, où il avait été ajouté après un défaut réel — le refus
+d'un déplacement impossible y était calculé, correct et **invisible**. Il est repris plutôt que
+redécouvert.
+
+**Campagne de fin de session.** `scripts/verify-catalogue.sh` **39 contrôles, aucune anomalie**, et
+il rejoue lui-même sept suites. Relevés séparément pour leur compte : `test:sql` **40 fichiers,
+2133 assertions** ; `test:unit` **1181/1181** sur 43 fichiers (1172 avant) ; `e2e:api` **602/602**
+(599 avant) ; `e2e:ui` **295/295** (293 avant), console vierge ; `typecheck`, `types:check` et
+`build` verts. Capture `docs/captures/CRM-030/catalogue-ordre-1440.jpg` produite **et observée**,
+les six autres renouvelées : les deux flèches viennent avant « Modifier » sans faire sauter le
+groupe d'actions d'une ligne à l'autre, « Monter » est visiblement éteint sur la première ligne, la
+ligne archivée ne porte que « Rétablir », et le repli à 390 px est **identique à la ligne de base**
+— comparé à la capture d'avant, extraite du commit précédent.
+
+**Où reprendre.** `CRM-030` est **close**. La prochaine session prend la première unité `[~]` ou
+`[ ]` restante dans l'ordre du plan — `CRM-080`, sauvegardes chiffrées et restauration prouvée,
+était le renvoi de l'avant-dernière entrée.
