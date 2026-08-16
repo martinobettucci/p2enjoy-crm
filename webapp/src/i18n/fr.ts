@@ -206,14 +206,22 @@ export const fr = {
 	// --- Formulaire conditionnel (docs/SPEC-form-composer.md §4) ---------------------------
 	'form.title': 'Formulaire de la card',
 	'form.step.prefix': 'Étape courante :',
-	'form.readonly':
-		"Consultation seule : l'enregistrement des réponses n'est pas encore livré dans cette fiche.",
 	'form.empty': 'Aucun champ à afficher pour cette étape.',
 	'form.required.sr': '(champ requis)',
 	'form.required.reason': 'Requis pour passer à',
 	'form.missing': "Ce champ est requis et n'est pas renseigné.",
 	'form.select.none': '— Aucun choix —',
 	'form.other.summary': "Informations d'autres étapes",
+	'form.other.readonly': "Ces champs ne sont pas demandés à l'étape courante : ils sont consultables, pas modifiables.",
+
+	// --- Saisie depuis la fiche (docs/SPEC-form-composer.md §4 bis) ------------------------
+	'form.save.saving': 'Enregistrement…',
+	'form.save.saved': 'Enregistré',
+	'form.save.refus.invalid': "Cette valeur ne convient pas au type de ce champ. Elle n'a pas été enregistrée.",
+	'form.save.refus.forbidden':
+		"Vous n'avez pas le droit d'écrire sur ce channel. La valeur n'a pas été enregistrée.",
+	'form.save.refus.network': "La connexion a échoué : la valeur n'a pas été enregistrée. Réessayez.",
+	'form.save.refus.unknown': "L'enregistrement a échoué. Réessayez.",
 
 	// --- Board kanban (docs/SPEC-workflow-engine.md §7) ------------------------------------
 	'board.aria': 'Board du channel',

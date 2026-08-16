@@ -9,7 +9,8 @@
 //       l'objet), §8 (role="status", cibles ≥ 40 px), §9 (icônes Lucide)
 // @spec docs/SPEC-cards.md §13.10 (le panneau) ; docs/DESIGN_SYSTEM.md §5.10
 // @spec docs/SPEC-form-composer.md §4.6 (l'écran hôte, et pourquoi c'est une route),
-//       §4.6 bis (ce que la coquille montre autour du formulaire), §4.5 (états)
+//       §4.6 bis (ce que la coquille montre autour du formulaire), §4.5 (états),
+//       §4 bis.4 (les identifiants que l'écriture d'une valeur exige)
 // @spec docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.4 (toute route portant un
 //       `slugTrack` l'alimente par le même chargeur)
 // @spec docs/DESIGN_SYSTEM.md §4 (onglets : les channels du track courant), §5.3 (détail de card),
@@ -208,7 +209,16 @@ function ContenuCard({
 	return (
 		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<div className="flex flex-col gap-6 min-w-0">
-				<FormulaireCard modele={etat.donnees.modele} />
+				{/* LES TROIS IDENTIFIANTS VIENNENT DE LA CARD DÉJÀ CHARGÉE (§4 bis.4) : l'écriture
+				    d'une valeur les exige tous — clé primaire, charnière des clés composites et
+				    colonne dénormalisée pour la RLS —, et les relire serait une requête pour une
+				    donnée en main. */}
+				<FormulaireCard
+					modele={etat.donnees.modele}
+					idCard={etat.donnees.card.id}
+					idWorkflow={etat.donnees.card.workflow_id}
+					idWorkspace={etat.donnees.card.workspace_id}
+				/>
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
 				    droite RACONTE ce qui est arrivé à l'affaire, et un geste qui agit n'appartient pas
 				    au récit. En bas, parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche. */}
