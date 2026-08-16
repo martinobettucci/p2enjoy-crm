@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
+import type { ProfilAffiche } from './identites'
 import type { ClientCrm } from './supabase'
 import { estRenseigne } from './valeur-renseignee'
 
@@ -62,8 +63,21 @@ export const COLONNES_VALEUR = 'field_id, value'
 // `workspace_id` est demandée depuis `CRM-043` : le panneau de commentaires doit l'envoyer à
 // l'insertion, le générateur de types déclarant la colonne obligatoire faute de voir le trigger
 // qui la dérive (docs/JOURNAL.md décision 200). L'écran ne l'affiche pas.
+//
+// LES CINQ COLONNES ET LES DEUX RELATIONS DE L'EN-TÊTE — CRM-040, docs/SPEC-cards.md §15.3. Elles
+// élargissent CE `select` plutôt que d'en émettre un second : la fiche lit déjà sa card, et une
+// requête de plus pour une donnée de la même ligne serait un aller-retour gratuit.
+//
+// La relation du responsable est nommée par sa CONTRAINTE, et ce n'est pas une préférence de
+// style. MESURÉ, un `profiles(full_name)` nu est refusé en `PGRST201` : trois clés étrangères de
+// `cards` désignent `profiles` — `owner_id`, `created_by`, `deleted_by` —, et PostgREST refuse de
+// choisir. Celle du workspace n'est pas ambiguë et s'écrit donc simplement.
+//
+// ELLE EST ÉCRITE D'UN SEUL TENANT, et ce n'est pas un choix de mise en forme : une concaténation
+// `'a' + 'b'` rend le type `string`, et `supabase-js` cesse alors d'inférer la forme de la réponse
+// — MESURÉ, `lireCard` retombait sur `GenericStringError`. Le littéral doit rester entier.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workflow_id, workspace_id, current_step_id, email_local_part'
+	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain)'
 
 /** L'étape courante, telle que la mention « requis pour passer à <étape> » a besoin de la nommer. */
 export type EtapeCourante = {
@@ -71,11 +85,35 @@ export type EtapeCourante = {
 	readonly label: string
 }
 
-/** La card portant le formulaire, telle que l'écran a besoin de la connaître. */
+/**
+ * La card portant le formulaire, telle que l'écran a besoin de la connaître.
+ *
+ * Les deux relations embarquées ne sont pas des colonnes de `Row` : elles sont **jointes** par le
+ * `select` ci-dessus, et se déclarent donc à part. Chacune vaut `null` pour une raison qui lui est
+ * propre — pas de responsable pour la première, workspace non consenti pour la seconde
+ * (docs/SPEC-cards.md §15.3) —, et l'en-tête traite les deux cas.
+ *
+ * `inbound_domain` est NULLABLE en base, fait relevé par le compilateur et non supposé : un
+ * workspace sans domaine entrant est un état licite, et l'adresse d'une card n'est alors pas
+ * composable. C'est la troisième raison, avec le refus et l'absence, de ne rendre aucune adresse.
+ */
 export type CardOuverte = Pick<
 	Database['public']['Tables']['cards']['Row'],
-	'id' | 'title' | 'workflow_id' | 'workspace_id' | 'current_step_id' | 'email_local_part'
->
+	| 'id'
+	| 'title'
+	| 'workflow_id'
+	| 'workspace_id'
+	| 'current_step_id'
+	| 'email_local_part'
+	| 'amount'
+	| 'currency'
+	| 'next_action'
+	| 'next_action_at'
+	| 'archived_at'
+> & {
+	readonly profiles: ProfilAffiche | null
+	readonly workspaces: { readonly inbound_domain: string | null } | null
+}
 
 /**
  * Un champ **résolu** pour l'étape courante : ce que le composant rend, sans avoir à recroiser

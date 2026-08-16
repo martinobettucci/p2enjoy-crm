@@ -178,6 +178,28 @@ export const fr = {
 	'route.card.nostep.title': 'Étape introuvable',
 	'route.card.nostep.body':
 		"Cette card désigne une étape que votre compte n'a pas le droit de lire : son formulaire ne peut pas être composé.",
+	// Les champs d'en-tête de la fiche d'affaire — CRM-040, docs/SPEC-cards.md §15.
+	// Les libellés d'affaire — titre, prochaine action — sont des DONNÉES, pas des traductions
+	// (docs/DESIGN_SYSTEM.md §10) : seuls les termes de la liste vivent ici.
+	'card.header.owner': 'Responsable',
+	// « Aucun responsable » est une PHRASE et non une ligne omise (§5.3 bis) : n'avoir personne à
+	// qui s'adresser est un fait de l'affaire.
+	'card.header.owner.none': 'Aucun responsable',
+	'card.header.amount': 'Montant',
+	'card.header.nextaction': 'Prochaine action',
+	'card.header.archived': 'Archivé',
+	'card.header.email.copy': "Copier l'adresse",
+	'card.header.email.copied': 'Copié',
+	'card.header.email.copy.aria': "Copier l'adresse email de l'affaire",
+	// L'explication d'usage est un TEXTE, pas seulement un `title` : une infobulle native
+	// n'apparaît ni au clavier, ni au toucher (§15.5).
+	'card.header.email.hint':
+		"Mettez cette adresse en copie : les messages rejoignent le fil de l'affaire.",
+	'card.header.email.unavailable': 'Adresse indisponible',
+	// Un bouton qui ne ferait rien en silence serait une simulation de succès (CLAUDE.md §18) :
+	// le refus nomme la manœuvre de remplacement.
+	'card.header.email.failed':
+		"La copie n'a pas abouti : sélectionnez l'adresse pour la copier à la main.",
 	// Le geste de mise à la corbeille d'une affaire — CRM-077, docs/SPEC-corbeille.md §4 ter.
 	// Le libellé de la commande nomme le GESTE, jamais l'objet : c'est la confirmation qui nomme
 	// l'affaire (docs/DESIGN_SYSTEM.md §5.3, §6).

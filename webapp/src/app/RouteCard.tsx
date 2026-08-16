@@ -1,4 +1,6 @@
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
+// @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche, en haut de la colonne gauche
+// @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit, et pourquoi au-dessus du formulaire)
 // @spec CRM-043 (docs/BACKLOG.md) — colonne de droite : le panneau de commentaires
 // @spec CRM-077 (docs/BACKLOG.md) — huitième tranche : le GESTE de mise à la corbeille d'une affaire
 // @spec docs/SPEC-corbeille.md §4 ter.1 (où le geste vit, et les deux surfaces écartées),
@@ -22,9 +24,12 @@
 // d'onglets n'avait aucun hôte.
 //
 // LA COLONNE DE DROITE EST LIVRÉE PAR `CRM-043` : le **panneau de commentaires**
-// (docs/DESIGN_SYSTEM.md §5.10). Elle n'est pas encore la timeline unifiée que le §5.3 décrit —
-// `CRM-044` y fondra les transitions, les activités et les emails —, et les champs d'en-tête de la
-// card (`CRM-040`) restent dus par leur unité.
+// (docs/DESIGN_SYSTEM.md §5.10), que `CRM-044` a fondu dans la timeline unifiée.
+//
+// LES CHAMPS D'EN-TÊTE SONT LIVRÉS PAR `CRM-040` (docs/SPEC-cards.md §15), en HAUT de la colonne
+// gauche : titre, responsable, montant, prochaine action et son échéance, plus l'adresse email de
+// l'affaire et son action de copie. Leur ÉCRITURE reste due — les privilèges existent, le geste
+// non (§15.1).
 //
 // La card est désignée par son **identifiant** et non par un slug : `docs/SPEC-cards.md` ne lui en
 // donne aucun, et son `email_local_part` est délibérément non devinable — en faire une adresse
@@ -62,6 +67,7 @@ import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
+import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { PanneauTimeline } from './PanneauTimeline'
@@ -215,6 +221,11 @@ function ContenuCard({
 	return (
 		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<div className="flex flex-col gap-6 min-w-0">
+				{/* L'EN-TÊTE EST EN HAUT DE CETTE COLONNE — CRM-040, docs/SPEC-cards.md §15.2. Il dit ce
+				    QU'EST l'affaire, là où le formulaire dit ce qu'on en sait ; et le bas de la colonne
+				    est déjà pris par le geste de retrait. Placé en dessous, il aurait de plus été poussé
+				    hors de vue par le défilement de la reprise d'un déplacement refusé (§4 ter). */}
+				<EnTeteCard card={etat.donnees.card} />
 				{/* LES TROIS IDENTIFIANTS VIENNENT DE LA CARD DÉJÀ CHARGÉE (§4 bis.4) : l'écriture
 				    d'une valeur les exige tous — clé primaire, charnière des clés composites et
 				    colonne dénormalisée pour la RLS —, et les relire serait une requête pour une
