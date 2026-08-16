@@ -16867,3 +16867,66 @@ publiées, jamais deux workflows vivants, et la comparer demanderait une seconde
 unité. La prochaine session prend la première unité `[~]` ou `[ ]` restante dans l'ordre du plan
 ayant du COMPORTEMENT à livrer, et INC-129 est à porter au responsable pour arbitrage avant de
 toucher aux harnais.
+
+## 2026-08-16 — `CRM-032` : comparer une copie à sa source, quand aucun identifiant n'est partagé
+
+**Point de départ.** L'entrée précédente fermait la mention de divergence et laissait `CRM-032`
+`[~]` pour **un seul** manque : la comparaison copie ↔ source du §4.1, qui « demanderait une seconde
+fonction ». Les unités qui la précèdent dans le plan ont été mesurées avant d'être écartées, et deux
+mesures méritent d'être retrouvées, parce qu'elles contredisent le backlog. `CRM-013` : sur ses
+« quatre tables absentes », `mail_inbound_accounts` et `mail_outbound_identities` **existent**
+désormais, et `secret_id` y est déjà fermé aux rôles applicatifs — il ne lui reste donc que des
+preuves, plus du comportement. `CRM-034` : ses trois manques de comportement — vérification n° 6,
+motif non conservé (INC-048), absence de `card_event` `moved` — sont **tous livrés** en base ; ses
+cases restent ouvertes à tort. `CRM-032` est bien la première unité `[~]` du plan dont il reste du
+comportement.
+
+**Le fait qui commande toute la conception, et il est mesuré.** La comparaison de `CRM-078`,
+`compare_workflow_versions`, pose que l'identité est un identifiant. Entre une copie et sa source,
+cette règle est inapplicable : `count(*) = 0` sur la jointure des étapes par `id`. Appelée telle
+quelle, elle rendrait « sept étapes retirées, sept ajoutées » sur deux workflows rigoureusement
+identiques. L'appariement se fait donc sur **les clés naturelles qui ont servi au remappage**
+(§4.5) — `node_id`, le couple de nœuds, `key` —, chacune adossée à un index unique relevé dans
+`pg_indexes` et non supposé. L'algorithme, lui, n'est pas réécrit : `app.composition_collection_diff`
+est appelé cinq fois.
+
+**Deux décisions méritent d'être retrouvées.** La première : **l'en-tête du workflow est exclu de la
+comparaison, et ce n'est pas un oubli.** `name`, `scope`, `track_id`, `is_default` et `archived_at`
+sont précisément ce que la copie **ne copie pas** (§4.5) ; les comparer déclarerait divergente toute
+copie **dès sa naissance**, c'est-à-dire sur son cas d'emploi principal. La seconde : **`identical`
+ne peut pas être fondé sur les empreintes**, à la différence de `compare_workflow_versions`.
+L'empreinte du §4.6 condense le document canonique identifiants locaux compris, et ceux de deux
+workflows distincts diffèrent toujours ; s'y fier serait une fausse preuve. Le verdict est pris sur
+les cinq collections, et sur elles seules.
+
+**Ce que la comparaison ne répond PAS, et il fallait l'écrire.** Elle ne dit pas si la source a
+changé depuis la copie — c'est `source_modified_since_copy` (§4.6). Les deux questions sont
+distinctes : une copie peut être identique à sa source alors que celle-ci a changé, si la copie a
+reçu les mêmes changements.
+
+**Un garde-fou figé a échoué comme prévu, et a été révisé** — mécanisme de la décision 51,
+dix-septième occurrence : la liste des fonctions exposées de `database.types.test-d.ts` passe de
+trente et une à trente-deux, avec le motif écrit dans le fichier.
+
+**Campagne de fin de session.** `test:sql` **41 fichiers, 2161 assertions** (2133 avant), dont 28
+pour cette unité ; `test:unit` **1223/1223** sur 43 fichiers, inchangé — cette tranche ne livre
+aucun code de webapp ; `e2e:api` **622/622** (612 avant), dont 10 d'ici ; `e2e:ui` **305/305**,
+inchangé, cette tranche ne livrant aucun écran ; `typecheck`, `types:check` et `build` verts.
+`scripts/verify-copie-workflow.sh --rapide` **28 contrôles, aucune anomalie**. **Aucune capture**,
+et ce n'est pas un renoncement : il n'y a rien à voir, le geste d'interface restant dû (§4 ter.7).
+
+**INC-129 REPRODUITE, ET UN FAIT AJOUTÉ AU DIAGNOSTIC.** Le harnais de l'unité s'est déclaré vert à
+28 contrôles **en laissant la base cassée** : `test:sql`, rejoué derrière, est passé de 2161
+assertions vertes à 3 fichiers en échec. Son propre bilan ne peut donc pas servir d'indice. Base
+réparée par rejeu de `0035`, 2161 assertions redevenues vertes, aucun fichier du dépôt modifié.
+L'arbitrage reste demandé.
+
+**Non exécutés, faute de temps** : `pytest`, `e2e:mail`, et les `scripts/verify-*.sh` autres que
+celui de la copie — quarante-neuf harnais restent à rejouer.
+
+**Où reprendre.** `CRM-032` reste `[~]` pour **un seul** manque, et c'est désormais le **geste
+d'interface** : un bouton « comparer » dans l'éditeur de workflows, à côté de la mention du §4 bis,
+et l'écran qui rend les cinq collections. La fonction est là, prouvée, et attend son écran. La
+prochaine session peut prendre cela — c'est du produit visible — ou, si elle préfère avancer dans
+l'ordre du plan, corriger d'abord les cases de `CRM-013` et de `CRM-034` que cette session a
+mesurées fausses.

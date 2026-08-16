@@ -491,3 +491,15 @@ restauré est celui de la DERNIÈRE migration qui le définit ».
 tranchée ici : rejouer la **chaîne complète** des migrations après une dégradation, ou faire porter à
 chaque harnais la liste des fichiers qui redéfinissent les objets qu'il touche. La première est sûre
 et lente ; la seconde est rapide et se périme au premier ajout de migration. Le responsable tranche.
+
+**REPRODUITE UNE SECONDE FOIS, LE 2026-08-16, PAR `CRM-032`.** Le harnais a été lancé en `--rapide`
+en fin de session, et il a rendu **28 contrôles, aucune anomalie** — ses trois dégradations réelles
+comprises, et sa restauration « constatée ». `npm run test:sql`, rejoué immédiatement après, est
+alors passé de **41 fichiers, 2161 assertions, aucune anomalie** à **41 fichiers, 3 en échec**.
+Base locale réparée par un simple rejeu de `supabase/migrations/0035_commentaires_lot_g.sql`, après
+quoi les 2161 assertions sont redevenues vertes.
+
+Cette seconde mesure ajoute un fait au diagnostic : **le harnais se déclare vert en laissant la base
+cassée**. Son propre bilan ne peut donc pas servir d'indice, et seule une suite exécutée APRÈS lui
+révèle le dégât. Toute session qui lance `verify-copie-workflow.sh` doit rejouer `0035` derrière,
+ou rejouer `test:sql` pour constater. L'arbitrage reste demandé, et le comportement inchangé.
