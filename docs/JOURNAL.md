@@ -16571,6 +16571,17 @@ les dépendances Node de la racine : `npx playwright` échoue alors sur
 `Cannot find package '@playwright/test'`, ce qui ne dit rien du produit. `npm ci
 --cafile=/root/.ccr/ca-bundle.crt` avant toute preuve Playwright.
 
+**Un constat étranger, mesuré et NON corrigé — INC-125.** `scripts/verify-harness.sh` rend
+**28 contrôles, 3 anomalies**, et les trois sont ses propres comptes figés, périmés : 36/2003
+assertions pgTAP au lieu de **40/2133**, 514 scénarios d'API au lieu de **597**, 241 scénarios
+d'interface au lieu de **286**. Les trois suites sont VERTES ; le harnais le dit lui-même. Rien
+n'est imputable à cette session, et la mesure suffit à l'établir sans `git stash` : elle n'ajoute
+aucune suite pgTAP et aucun scénario d'API, et son unique scénario d'interface pèse 1 des 45 du
+troisième écart. **INC-101, close le 2026-08-14, portait déjà exactement ce constat** — la dérive
+s'est reproduite en deux jours, parce que ces compteurs sont révisés par la session qui les
+remarque et non par la Definition of Done des unités qui les font bouger. Comportement laissé
+inchangé, porteur `CRM-008`.
+
 **Où reprendre.** `CRM-079` est **close**. La prochaine session prend l'unité suivante du plan
 — `CRM-080`, sauvegardes chiffrées et restauration prouvée, `[ ]` — ou la première `[~]` restante
 dans l'ordre du plan.

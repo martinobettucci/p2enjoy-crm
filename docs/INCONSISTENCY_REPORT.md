@@ -195,7 +195,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Deux ouvertes à ce jour : INC-123 et INC-124**, consignées par les deux sessions `CRM-079` du
+**Trois ouvertes à ce jour : INC-123, INC-124 et INC-125**, consignées par les deux sessions `CRM-079` du
 2026-08-15 (navigateur absent pour les scénarios Roundcube ; `WARNING` de `mail-sync` interdit par
 la preuve S3). Les trois précédentes — **INC-120, INC-121 et INC-122**, consignées le 2026-08-15 (garde des élévations de privilège des
 migrations ; compteurs figés de `verify-preuves-refus.sh` ; identifiant non épinglé du workflow
@@ -217,11 +217,12 @@ qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 r�
 
 ---
 
-## Consignées le 2026-08-16 — deux constats étrangers à `CRM-079`
+## Consignées le 2026-08-16 — trois constats étrangers à `CRM-079`
 
-Les deux suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrangers à l'unité de la
-session**, et le comportement est laissé **inchangé**. Aucun des deux ne demande d'arbitrage : ce
-sont des faits à porter par leur unité, pas des choix à trancher.
+Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrangers à l'unité de la
+session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
+sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
+consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
 ### INC-123 — l'hôte de vérification ne porte pas le navigateur qu'exige `@playwright/test` 1.62.1
 
@@ -312,3 +313,35 @@ survenu », alors qu'un renommage refusé est un fait d'exploitation que la cons
 **Ce qui reste à trancher appartient à `CRM-054`**, et non à cette session : soit la preuve admet
 `WARNING` en nommant les événements attendus, soit le service cesse de renommer un dossier déjà
 présent. Le comportement est laissé **strictement inchangé** en attendant.
+
+### INC-125 — les trois garde-fous globaux de `verify-harness.sh` ont de nouveau dérivé, et INC-101 l'avait déjà dit
+
+**Mesuré le 2026-08-16**, pile debout et seedée, sur un arbre dont le travail de la session est
+committé. `scripts/verify-harness.sh` rend **28 contrôles, 3 anomalies**, et les trois sont des
+comptes figés que les unités livrées depuis n'ont pas mis à jour :
+
+| Garde-fou | Valeur figée | Valeur réelle mesurée | Écart |
+|---|---|---|---|
+| `FICHIERS_SQL_ATTENDUS` / `ASSERTIONS_ATTENDUES` | 36 / 2003 | **40 / 2133** | +4 fichiers, +130 assertions |
+| `SCENARIOS_API` | 514 | **597** | +83 scénarios |
+| `SCENARIOS_UI` | 241 | **286** | +45 scénarios |
+
+**Les trois suites sont VERTES.** Le harnais le dit lui-même — « vert mais N au lieu de M » : il ne
+dénonce aucune régression du produit, seulement sa propre péremption.
+
+**Ce n'est PAS imputable à `CRM-079`, et la mesure le montre sans recours au `git stash`.** La
+session n'ajoute **aucune** suite pgTAP et **aucun** scénario d'API : les deux premiers écarts lui
+sont entièrement étrangers. Elle ajoute **un** scénario d'interface, soit 1 des 45 du troisième :
+l'anomalie était déjà là à 285, et le resterait sans ce commit.
+
+**INC-101, close le 2026-08-14, portait exactement ce constat** — « les cinq garde-fous globaux de
+`verify-harness.sh` étaient périmés ». Le mode de défaillance s'est donc reproduit en deux jours,
+ce qui est l'information utile ici : ces compteurs sont révisés par une session qui les remarque,
+et non par la Definition of Done des unités qui les font bouger. C'est la même dette de mise en
+œuvre que le §1 de `docs/ARBITRAGES.md` décrit, et c'est ce qui distingue cette entrée d'une simple
+répétition.
+
+**Comportement laissé inchangé** (`docs/CloudWorker.md` §3.1) : aucun compteur n'est corrigé au
+passage. Les remettre à jour sans traiter la cause — la révision qui n'est due à personne —
+reviendrait à repousser la même dérive d'une poignée d'unités. Le porteur est `CRM-008`, l'unité du
+harnais de tests.
