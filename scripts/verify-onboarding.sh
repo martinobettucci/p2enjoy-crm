@@ -12,7 +12,7 @@
 # Ce que ce harnais prouve.
 # ---------------------------------------------------------------------------------------------
 #   1. les sept fichiers de l'unité portent leur traçabilité ;
-#   2. les neuf captures : les quatre paliers, plus les cinq états qui n'existent qu'une fois ;
+#   2. les dix captures : les quatre paliers, plus les six états qui n'existent qu'une fois ;
 #   3. Vitest : le module de mesure et l'écran, fichiers ET tests figés (décision 279) ;
 #   4. l'API : les trois faits du §3.1 hors interface, jetons réels des trois profils ;
 #   5. l'UI : clavier seul, mobile, masquage et reprise, console stricte ;
@@ -61,7 +61,7 @@ CAPTURES=docs/captures/CRM-079
 VITEST_FICHIERS_ATTENDUS=2
 VITEST_TESTS_ATTENDUS=43
 API_SCENARIOS_ATTENDUS=6
-UI_SCENARIOS_ATTENDUS=10
+UI_SCENARIOS_ATTENDUS=11
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -139,7 +139,8 @@ titre "2. Captures observées (CLAUDE.md §16)"
 # Les quatre paliers du §7 du design system, puis les cinq états qui n'existent qu'une fois :
 # l'accueil portant le guide, l'accueil une fois le guide masqué, le guide intégralement accompli,
 # le guide vu par la LECTRICE — seul compte que le seed laisse avec une étape à faire (§3.1,
-# fait 2) — et l'étape non mesurable du §6.2.
+# fait 2) —, l'étape non mesurable du §6.2, et l'ESPACE DE TRAVAIL NEUF du §8 ter : le seul état
+# où quatre étapes sont à faire à la suite, et le seul que le seed ne porte pas.
 for palier in xl-1440 lg-1152 md-900 sm-390; do
 	if [ -f "$CAPTURES/guide-$palier.jpg" ]; then
 		ok "capture guide $palier livrée"
@@ -148,7 +149,7 @@ for palier in xl-1440 lg-1152 md-900 sm-390; do
 	fi
 done
 for capture in accueil-guide-1440 accueil-masque-1440 guide-accompli-1440 guide-viewer-1440 \
-	guide-non-mesurable-1440; do
+	guide-non-mesurable-1440 guide-espace-neuf-1440; do
 	if [ -f "$CAPTURES/$capture.jpg" ]; then
 		ok "capture $capture livrée"
 	else

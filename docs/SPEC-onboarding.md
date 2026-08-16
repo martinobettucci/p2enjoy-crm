@@ -296,8 +296,11 @@ au même titre qu'un compte qui descend.
 |---|---|---|
 | Vitest, filtre `demarrage` | **2 fichiers, 43 tests** | 2026-08-16 |
 | `e2e/api/demarrage.spec.ts` | **6 scénarios** | 2026-08-16 |
-| `e2e/ui/demarrage.spec.ts` | **10 scénarios** | 2026-08-16 |
-| Captures sous `docs/captures/CRM-079/` | **9** — quatre paliers, plus cinq états | 2026-08-16 |
+| `e2e/ui/demarrage.spec.ts` | **11 scénarios** | 2026-08-16 |
+| Captures sous `docs/captures/CRM-079/` | **10** — quatre paliers, plus six états | 2026-08-16 |
+
+*Le onzième scénario et la dixième capture sont ceux du §8 ter, ajoutés le 2026-08-16 dans le même
+changement que ces comptes.*
 
 Aucun compte pgTAP n'est figé, et c'est une propriété de l'unité, pas un oubli : `CRM-079`
 **n'ajoute aucune migration** et n'ouvre aucune politique (§3). Ses cinq lectures sont régies par
