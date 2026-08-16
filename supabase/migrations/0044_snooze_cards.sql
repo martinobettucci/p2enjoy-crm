@@ -274,9 +274,10 @@ comment on function public.wake_card(uuid) is
 -- Les deux fonctions sont ouvertes à `authenticated` : le droit réel est vérifié DANS la fonction,
 -- en base (CLAUDE.md §10). `anon` n'en reçoit aucun — un appelant anonyme n'a ni card, ni channel.
 
--- MESURÉ en écrivant la suite pgTAP : `revoke ... from public` ne suffit PAS. `anon` conserve un
--- `EXECUTE` propre, posé par les privilèges par défaut de la distribution Supabase sur le schéma
--- `public` — la suite l'a constaté rouge avant que ce `revoke` nominatif soit écrit. Un refus
+-- `revoke ... from public` ne suffit PAS dans le schéma `public` : `anon` conserve un `EXECUTE`
+-- propre, posé par les `ALTER DEFAULT PRIVILEGES` de la distribution. La règle est écrite depuis
+-- la décision 80 (docs/SCHEMA.md §9) ; la suite pgTAP de cette unité l'a REMESURÉE en rendant
+-- rouge son assertion sur `anon` avant que ce `revoke` nominatif soit écrit. Un refus
 -- serait certes opposé plus loin, `auth.uid()` étant nulle pour un anonyme, mais une garde qui
 -- s'en remet à une seconde garde n'en est pas une.
 revoke all on function public.snooze_card(uuid, timestamptz) from public, anon;

@@ -679,7 +679,13 @@ type _vueDerivationColonnes = Expect<
 // pour `compare_workflow_versions` — la politique de lecture de `workflows` est déjà la règle
 // d'autorisation exacte du geste (docs/SPEC-workflow-engine.md §4 ter.4) — et elle est `STABLE` :
 // le §4.1 interdit toute réapplication automatique. Trente et un devient trente-deux.
-type _lesTrenteDeuxFonctions = Expect<
+// RÉVISÉ UNE DIX-HUITIÈME FOIS PAR `CRM-081`, tranche 1. La règle a changé de nouveau : la
+// migration `0044` ajoute `snooze_card` et `wake_card`, DEUX fonctions appelables par un écran.
+// Elles sont `SECURITY DEFINER` et rejoignent la famille de `move_card` : elles écrivent
+// `cards.snoozed_until`, que `CRM-081` vient de fermer à `authenticated` — une fonction qui ne
+// prêterait pas ses privilèges ne pourrait plus rien écrire (docs/SPEC-cards.md §16.3, §16.7).
+// Trente-deux devient trente-quatre.
+type _lesTrenteQuatreFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -707,6 +713,7 @@ type _lesTrenteDeuxFonctions = Expect<
     | 'move_card_to_channel'
     | 'plan_card_remapping'
     | 'restore_workflow_version'
+    | 'snooze_card'
     | 'previsualiser_exigence'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
@@ -714,6 +721,7 @@ type _lesTrenteDeuxFonctions = Expect<
     | 'reserver_envois'
     | 'upsert_mail_inbound_account'
     | 'upsert_mail_outbound_identity'
+    | 'wake_card'
   >
 >
 
@@ -885,7 +893,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteDeuxFonctions,
+  _lesTrenteQuatreFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

@@ -192,10 +192,10 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 			await request.get(`${URL_API}${filDe(CARD_FERMEE)}`, { headers: enTetesService() })
 		).json()) as Evenement[]
 		expect(fil.map((e) => e.type)).toEqual(['created', 'snoozed', 'snoozed', 'woken'])
-		expect(new Date(String(fil[1].payload.until)).toISOString()).toBe(
+		expect(new Date(String(fil.at(1)?.payload.until)).toISOString()).toBe(
 			new Date(ECHEANCE).toISOString(),
 		)
-		expect(new Date(String(fil[3].payload.from)).toISOString()).toBe(
+		expect(new Date(String(fil.at(3)?.payload.from)).toISOString()).toBe(
 			new Date(ECHEANCE_REPORTEE).toISOString(),
 		)
 	})
