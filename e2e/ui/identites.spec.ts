@@ -54,7 +54,19 @@ test('Camille parcourt le board, la liste et la fiche avec toutes les identités
 
 	await ligne.getByRole('link', { name: CARD_SUPPORT }).click()
 	await expect(page.getByRole('heading', { name: 'Historique et discussion' })).toBeVisible()
-	await expect(page.getByText('Farida Nowak', { exact: true })).toBeVisible()
+	// ASSERTION RÉVISÉE LE 2026-08-16, ET LE MOTIF EST ÉCRIT ICI — mécanisme de la décision 51.
+	// Elle visait `getByText('Farida Nowak')` sur la page entière, et l'en-tête de la fiche
+	// (`CRM-040`, docs/SPEC-cards.md §15.4) nomme désormais le RESPONSABLE : le même nom apparaît
+	// deux fois, et le mode strict de Playwright refuse le locator. Elle n'est pas relâchée en
+	// `.first()`, ce qui reviendrait à ne plus savoir LEQUEL des deux est vérifié : elle est
+	// **scopée au fil**, et l'apparition dans l'en-tête devient une assertion de plus. La preuve
+	// en sort plus forte — c'est le même contrat d'identité de `CRM-022`, tenu à un endroit de plus.
+	await expect(
+		page.getByTestId('commentaire').getByText('Farida Nowak', { exact: true }),
+	).toBeVisible()
+	await expect(
+		page.getByTestId('entete-card-responsable').getByText('Farida Nowak', { exact: true }),
+	).toBeVisible()
 	await expect(page.getByText('par Camille Aubert', { exact: true }).first()).toBeVisible()
 	await expect(page.getByText('Compte supprimé', { exact: true })).toHaveCount(0)
 	await expect(page.getByText('Auteur indisponible', { exact: true })).toHaveCount(0)
@@ -72,7 +84,11 @@ test('Camille parcourt le board, la liste et la fiche avec toutes les identités
 		.poll(async () => (await page.getByTestId('barre-laterale').boundingBox())?.x ?? 0)
 		.toBeLessThan(-200)
 	await page.keyboard.press('End')
-	await expect(page.getByText('Farida Nowak', { exact: true })).toBeVisible()
+	// Même révision qu'au palier large, et pour la même cause : le nom vit désormais aux deux
+	// endroits. Au palier étroit, c'est le fil qui doit rester atteignable après `End`.
+	await expect(
+		page.getByTestId('commentaire').getByText('Farida Nowak', { exact: true }),
+	).toBeVisible()
 	const debordement = await page.evaluate(
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 	)
