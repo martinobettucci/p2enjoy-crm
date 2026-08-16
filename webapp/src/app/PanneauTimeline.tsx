@@ -40,7 +40,9 @@ import {
 	PencilLine,
 	RotateCcw,
 	Mail,
+	Moon,
 	Sparkles,
+	Sun,
 	Trash2,
 	UserRoundCog,
 	Workflow,
@@ -101,6 +103,10 @@ const PRESENTATION: Readonly<
 	field_changed: { cle: 'timeline.event.field_changed', icone: PencilLine, pastille: 'bg-hover text-text-3' },
 	// `CRM-057` §18.6 — le fil cesse de montrer un événement sans détail : il nomme le courrier.
 	mail_received: { cle: 'timeline.event.mail_received', icone: Mail, pastille: 'bg-brand-soft text-brand' },
+	// `CRM-081` §16.11.5 — les deux gestes du sommeil. Leur détail est l'échéance en date courte,
+	// résolue par `resoudreDetail` : le fil nomme jusqu'à quand l'affaire a dormi.
+	snoozed: { cle: 'timeline.event.snoozed', icone: Moon, pastille: 'bg-brand-soft text-brand' },
+	woken: { cle: 'timeline.event.woken', icone: Sun, pastille: 'bg-accent-soft text-ink' },
 }
 
 /**

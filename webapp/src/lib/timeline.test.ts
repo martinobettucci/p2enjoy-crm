@@ -63,7 +63,13 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT BIEN JOUÉ. Elle figeait « dix types, quatre
 	// familles » et est devenue rouge à l'arrivée du onzième : `mail_received`. Elle est révisée,
 	// non retirée — les cinq familles sont désormais toutes portées.
-	it('range les onze types livrés dans exactement cinq familles d’événements', () => {
+	//
+	// RÉVISÉE À NOUVEAU PAR `CRM-081`, tranche 2 a : `snoozed` et `woken` portent le vocabulaire de
+	// l'écran à TREIZE (docs/SPEC-cards.md §16.11.5). Le compte est révisé avec son motif écrit
+	// ici, jamais retiré (décision 51) : c'est un arbitrage, non une régression. Les cinq familles
+	// restent cinq, et c'est précisément ce que cette assertion garde.
+	it('range les treize types livrés dans exactement cinq familles d’événements', () => {
+		expect(TYPES_EVENEMENT).toHaveLength(13)
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
 		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')
@@ -227,6 +233,37 @@ describe('la résolution des libellés (§14.6)', () => {
 			libelles,
 		)
 		expect(detail.detail).toBeNull()
+	})
+
+	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` (§16.11.5) : une date n'est pas un libellé
+	// qui pourrait changer de sens demain, c'est la valeur même du fait.
+	it('rend l’échéance en date courte pour `snoozed` et pour `woken`', () => {
+		expect(
+			resoudreDetail(
+				ligne({ id: 'e-s', type: 'snoozed', payload: { until: '2026-08-26T12:00:00Z' } }),
+				libelles,
+			).detail,
+		).toBe('26/08/2026')
+		expect(
+			resoudreDetail(
+				ligne({ id: 'e-w', type: 'woken', payload: { from: '2026-09-04T08:00:00Z' } }),
+				libelles,
+			).detail,
+		).toBe('04/09/2026')
+	})
+
+	it('rend un détail ABSENT plutôt qu’« Invalid Date » quand l’échéance est illisible', () => {
+		expect(
+			resoudreDetail(ligne({ id: 'e-s2', type: 'snoozed', payload: { until: 'demain' } }), libelles)
+				.detail,
+		).toBeNull()
+		expect(resoudreDetail(ligne({ id: 'e-w2', type: 'woken', payload: {} }), libelles).detail)
+			.toBeNull()
+	})
+
+	it('les deux gestes du sommeil sont des faits de CYCLE DE VIE (§16.11.5)', () => {
+		expect(familleDe('snoozed')).toBe('cycle')
+		expect(familleDe('woken')).toBe('cycle')
 	})
 
 	it('ne rend aucun détail pour les types qui n’en ont pas', () => {

@@ -44,6 +44,7 @@ import {
 	formaterEcheanceSommeil,
 	mettreEnSommeil,
 	reveiller,
+	type CleEcheanceUsuelle,
 	type IssueSommeil,
 } from '../lib/sommeil-card'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -68,6 +69,20 @@ const CLE_ENDORMIR: CleTraduction = 'card.sleep.open'
 const CLE_REVEILLER: CleTraduction = 'card.sleep.wake'
 const CLE_SOUMETTRE: CleTraduction = 'card.sleep.submit'
 const CLE_ANNULER: CleTraduction = 'card.sleep.cancel'
+
+/**
+ * Les libellés des quatre échéances usuelles, NOMMÉS et non composés par interpolation.
+ *
+ * Une clé construite en `` `card.sleep.preset.${cle}` `` ne se retrouverait pas par le contrôle de
+ * clés mortes du dictionnaire, qui cherche le littéral : les quatre passeraient pour mortes, et une
+ * clé réellement morte s'y cacherait sans être vue.
+ */
+const CLE_PRESET: Readonly<Record<CleEcheanceUsuelle, CleTraduction>> = {
+	demain: 'card.sleep.preset.demain',
+	troisjours: 'card.sleep.preset.troisjours',
+	semaine: 'card.sleep.preset.semaine',
+	mois: 'card.sleep.preset.mois',
+}
 
 /** Les six issues du §16.11.4 que l'écran met en mots ; les deux succès n'en ont pas besoin. */
 const MENTION_SOMMEIL: Readonly<Record<Exclude<IssueSommeil, 'endormie' | 'reveillee'>, CleTraduction>> = {
@@ -927,7 +942,7 @@ function BlocSommeil({
 								data-testid={`entete-card-sommeil-${usuelle.cle}`}
 								onClick={() => void envoyer(echeanceUsuelle(usuelle.jours, maintenant))}
 							>
-								{t(`card.sleep.preset.${usuelle.cle}` as CleTraduction)}
+								{t(CLE_PRESET[usuelle.cle])}
 							</Button>
 						))}
 					</div>
