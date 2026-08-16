@@ -887,10 +887,47 @@ décrit le workflow choisi.
   est une copie —, et un état vide sur le cas normal serait du bruit à chaque ouverture de l'écran.
   Le §5.8 garde toute sa force là où le vide est un manque ; ici il n'en est pas un.
 
-- **Aucune commande.** Aucun « resynchroniser », aucun « comparer », pas même grisé : la copie est
-  une divergence assumée, et le geste n'existe nulle part dans le produit
-  (`docs/SPEC-workflow-engine.md` §4 bis.1). C'est la règle du §5.15 sur les exigences héritées,
-  appliquée à un bloc entier — un bouton grisé enseignerait un geste qui n'existe pas.
+- **Aucune resynchronisation.** Pas de « remettre à jour depuis la source », pas même grisé : la
+  copie est une divergence assumée, et ce geste-là n'existe nulle part dans le produit
+  (`docs/SPEC-workflow-engine.md` §4.1, qui l'interdit explicitement). C'est la règle du §5.15 sur
+  les exigences héritées, appliquée à un bloc entier — un bouton grisé enseignerait un geste qui
+  n'existe pas.
+
+  **RÈGLE RÉVISÉE le 2026-08-16, et le motif est écrit.** Cette puce interdisait aussi « comparer »,
+  et elle avait raison de le faire : au moment où elle a été posée, aucune fonction ne savait
+  comparer une copie à sa source vivante, exactement comme la mention elle-même était impossible
+  tant que la webapp était un appelant anonyme (INC-021). **Le motif a disparu** :
+  `compare_workflow_with_source` est livrée et prouvée depuis le §4 ter, et le §4 ter.7 nomme le
+  geste d'interface comme le seul reste. L'interdiction portait sur un geste inexistant, pas sur un
+  principe ; elle tombe avec l'inexistence. Ce qui demeure est la partie qui n'a jamais dépendu de
+  la fonction : **aucune écriture**.
+
+- **La commande « comparer » vit DANS la mention, et n'ouvre pas de bloc à elle**
+  (`docs/SPEC-workflow-engine.md` §4 quater.2). La comparaison porte sur le workflow entier, comme
+  la mention ; lui donner un bloc propre dans la colonne de droite la ferait concurrencer le bloc
+  des versions, qui parle d'autre chose — de versions publiées, que ni la copie ni sa source n'ont
+  forcément.
+
+- **Elle est rendue même lorsque la source n'a pas changé**, et ce n'est pas une symétrie gratuite :
+  le signal de divergence dit que la **source** a bougé, jamais que la copie s'en écarte. Une copie
+  modifiée dont la source est intacte diverge pourtant, et n'offrir la comparaison que sur le signal
+  cacherait précisément ce cas.
+
+- **Elle n'est PAS réservée à l'administrateur**, à la différence de tous les autres gestes de cet
+  éditeur : comparer est une lecture, et un `viewer` obtient le même document (§4 ter.8, ligne b).
+  La masquer poserait dans l'interface une règle que la base ne pose pas — ce que `CLAUDE.md` §10
+  refuse dans les deux sens, pas seulement dans celui du laxisme.
+
+- **Le résultat s'efface dès qu'il devient faux** : au changement de workflow, et à tout geste de
+  l'éditeur qui réécrit la structure. Un document de comparaison décrit un instant ; le laisser à
+  l'écran après une modification en ferait une affirmation périmée que rien ne signale — même règle
+  que le plan de remappage du §7 ter.14.5.
+
+- **L'en-tête non comparé est ÉCRIT, pas tu.** Les cinq collections rendues n'incluent pas le nom,
+  la portée ni le track — la copie ne les copie pas (§4 ter.3). Afficher un intitulé « Workflow »
+  toujours vide enseignerait qu'on a regardé et que c'est identique ; l'écran écrit donc une ligne
+  qui dit ce qui n'a pas été regardé. C'est le §12.5 sous une autre forme : on ne laisse pas croire
+  à une mesure qu'on n'a pas faite.
 
 - **La date affichée est celle de la COPIE, pas celle de la modification.** La date de dernière
   modification de la source ne voit pas les suppressions (`docs/SPEC-workflow-engine.md` §4.6) :

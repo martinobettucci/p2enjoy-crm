@@ -1584,6 +1584,199 @@ assertion instable et tout écran clignotant.
 | API | Les dix lignes du §4 ter.8, hors interface, avec les jetons réels des trois profils, chaque dégradation étant **défaite** et l'état d'origine constaté |
 | Interface | **Aucune** — cette tranche ne livre pas d'écran, et le §4 ter.7 le nomme |
 
+## 4 quater. Interface : le geste « comparer à la source » — `CRM-032`
+
+Ce chapitre est le **dernier dû** de `CRM-032`. Le §4.1 promet depuis l'origine que l'interface
+« propose de comparer » ; le §4 bis a livré la mention **sans commande**, et son §4 bis.7 a nommé le
+geste comme le seul reste ; le §4 ter a livré la fonction `compare_workflow_with_source` et son
+§4 ter.7 a redit, en toutes lettres, que « le geste "comparer" de l'interface est dû, et il restera
+dû après cette tranche ». Il ne l'est plus après celle-ci.
+
+Il est écrit **après mesure** sur la pile seedée du 2026-08-16, et non de mémoire : les quatre
+lignes du §4 quater.3 et les formes de document du §4 quater.5 sont des relevés faits contre
+PostgREST avec le jeton réel de l'administratrice seedée, sur une copie jetable créée par la
+**vraie** RPC de copie puis détruite — le seed rendu à ses deux workflows, constaté.
+
+### 4 quater.1 Ce que le geste est, et ce qu'il n'est pas
+
+C'est **une commande et un résultat**, rattachés à la mention de divergence du §4 bis, sur le
+workflow choisi de l'éditeur lorsque ce workflow est une **copie**.
+
+Il **répond à une question que la mention pose sans y répondre**. Le §4 bis dit *qu'*une source a
+changé ; il ne dit pas *quoi*. Le §4 ter l'a mesuré : la fonction rend, pour une copie donnée,
+quelles étapes, arêtes, questions, règles et exigences la distinguent de sa source vivante.
+
+Il n'est **pas** une réapplication. Rien ne se resynchronise, rien ne se réécrit : le §4.1 est
+explicite — « sans jamais réappliquer automatiquement » —, et la fonction appelée est `stable` et
+**n'écrit rien** (§4 ter.7). L'écran ne livre donc aucune commande d'écriture, et n'en grise aucune.
+
+Il n'est pas non plus une **comparaison de versions**. Le bloc du §7 ter.14 compare deux versions
+publiées d'un **même** workflow ; celui-ci compare deux workflows **vivants** dont l'un dérive de
+l'autre. Les deux coexistent dans la même colonne sans se confondre, et le §4 quater.2 dit pourquoi
+ils ne sont pas fondus en un seul bloc.
+
+### 4 quater.2 Où le geste se trouve
+
+**Dans la mention de divergence elle-même**, en tête de la colonne de droite, au-dessus du bloc des
+étapes — c'est-à-dire à la place que le §4 bis.2 a fixée pour la mention, et sans en ouvrir une
+autre.
+
+C'est la seule place qui tienne, et pour la raison même qui a fixé celle de la mention : la
+comparaison porte sur le workflow **entier**, pas sur une de ses étapes. La rattacher au bloc des
+versions (§7 ter.14) l'aurait placée sous un titre qui parle de versions publiées, alors qu'elle
+n'en lit aucune — une copie comme sa source peuvent n'avoir jamais été publiées, et c'est
+précisément ce que le §4 bis.1 relevait pour écarter `compare_workflow_versions`.
+
+**La commande n'existe que là où la mention existe.** Un workflow qui n'est la copie de personne ne
+rend rien du tout — ni mention, ni bouton, ni état vide nommé (§4 bis.2). Le refus n° 3 du §4 ter.5,
+`workflow non derive`, devient donc **inatteignable depuis l'écran** : il n'y a pas de commande à
+presser sur un workflow qui n'en porte pas. Il reste éprouvé hors interface (§4 ter.8, ligne d), et
+c'est la place juste — l'interface ne rend pas atteignable un refus qu'elle sait éviter.
+
+**Le bouton est rendu même lorsque la source n'a pas changé.** C'est délibéré, et ce n'est pas une
+symétrie gratuite : `source_modified_since_copy` dit que la **source** a bougé, jamais que la copie
+s'en écarte, et le §4 ter.7 pose que les deux questions sont distinctes. Une copie **modifiée** dont
+la source est intacte affiche « La source n'a pas changé » et diverge pourtant : n'offrir la
+comparaison que sur le signal de divergence cacherait exactement ce cas.
+
+### 4 quater.3 Ce que l'écran appelle — lecture 10
+
+Un appel, et un seul, émis **sur pression du bouton** et jamais au chargement :
+
+```
+POST /rest/v1/rpc/compare_workflow_with_source   { "workflow_id": "<le workflow choisi>" }
+```
+
+Il n'accompagne PAS `rechargerGraphe`, à la différence de la lecture 9 du §4 bis.3. Le motif est
+mesuré au §4 ter : la fonction projette deux documents canoniques complets et les compare cinq fois.
+La faire partir à chaque ouverture d'un workflow copié ferait payer ce calcul à qui ne la demande
+pas, pour une réponse qui, dans le cas normal, tient en un mot — la copie du seed rend `identical`
+vrai. Le §4 bis.3 attachait la mention au graphe parce qu'elle **décrit** le workflow affiché ; la
+comparaison, elle, répond à une question posée.
+
+**MESURÉ le 2026-08-16, jeton réel de l'administratrice seedée :**
+
+| Appel | Rendu |
+|---|---|
+| la copie du seed (`Cycle commercial — Conseil IA`) | `200`, `identical` vrai, `summary` à `{0, 0, 0}`, `source.name` = `Cycle commercial standard` |
+| le workflow par défaut, qui n'est la copie de personne | `400`, `P0001`, message `workflow non derive` — **inatteignable depuis l'écran** (§4 quater.2) |
+| un identifiant inexistant | `400`, `P0001`, message `workflow introuvable` |
+| le même appel, anonyme | `401` — refusé par le privilège avant tout contrôle |
+
+### 4 quater.4 Ce que l'écran rend
+
+Trois états, et trois seulement, dans le prolongement de la mention :
+
+1. **Avant toute pression** : la mention seule, et le bouton. Aucun résultat, aucun cadre vide.
+2. **Pendant l'appel** : le bouton est désactivé et l'écran écrit « Comparaison en cours », comme le
+   fait déjà le bloc des versions (§7 ter.14.6). Le libellé du bouton ne change pas — une commande
+   qui se renomme sous le doigt fait douter de ce qui a été pressé.
+3. **Après** : soit une phrase — « Cette copie est identique à sa source. » —, soit les compteurs
+   de `summary` en toutes lettres suivis des **cinq** collections.
+
+**Le résultat reste affiché jusqu'à ce qu'il devienne faux.** Il est effacé lorsque l'utilisateur
+choisit un autre workflow, et **lorsqu'un geste de l'éditeur réécrit la structure** — ajouter une
+étape, déclarer une arête, archiver un champ. Le motif est le même que celui du §7 ter.14.5 pour le
+plan de remappage : un document de comparaison décrit un instant, et le laisser à l'écran après une
+modification en ferait une affirmation périmée que rien ne signale. Le laisser exigerait de
+l'utilisateur qu'il se souvienne de ce qu'il a fait depuis.
+
+**Les cinq collections, et non six.** La collection `workflow` du document de `CRM-078` est
+**absente** ici, et ce n'est pas un oubli d'affichage : le §4 ter.3 l'exclut du document naturalisé,
+parce que `name`, `scope`, `track_id`, `is_default` et `archived_at` sont précisément ce que la copie
+ne copie pas. Rendre un intitulé « Workflow » toujours vide enseignerait qu'on a regardé l'en-tête et
+qu'il est identique, ce qui est faux : on ne l'a pas regardé. L'écran écrit donc, sous les cinq
+collections, une ligne qui le dit — « Le nom, la portée et le track ne sont pas comparés. »
+
+**Une collection vide est NOMMÉE**, jamais laissée vide : c'est la règle déjà posée au §5.15 du
+design system pour la comparaison de versions, et elle vaut ici sans changement. Lorsque `identical`
+est vrai, les cinq collections **ne sont pas déroulées** — il n'y a rien à parcourir.
+
+### 4 quater.5 Comment un élément est nommé — mesuré, et ce que la mesure impose
+
+Le document rendu ne se nomme pas tout seul, et la forme exacte a été **relevée** plutôt que
+supposée :
+
+| Genre | Clés présentes dans l'entrée | Mesuré |
+|---|---|---|
+| `added`, `removed` | `element` **et** `identity` | `{"element": {"node_id": …, "node_key": "prospection", "position": 1, …}, "identity": {"node_id": …}}` |
+| `modified` | `identity` **et** `attributes` — **pas** `element` | `{"identity": {"node_id": …}, "attributes": [{"name": "position", "before": 1, "after": 42}]}` |
+
+Les quatre replis du §7 ter.14.6 sont repris **sans être réécrits**, et l'ordre est le leur : le
+libellé porté par le document, puis le renommage lisible dans les attributs, puis la structure
+vivante déjà chargée par l'éditeur, puis les identifiants bruts. Deux conséquences propres à cette
+tranche, et les deux viennent de la mesure :
+
+- **La table de structure est indexée par les clés NATURELLES**, jamais par les identifiants locaux :
+  `node_id` pour une étape, `key` pour un champ. C'est ce que porte `identity` — le §4 ter.2 l'a
+  fixé —, et une table indexée par l'identifiant de ligne, comme celle du §7 ter.14.6, n'y
+  résoudrait rien. Les deux espaces de clés ne se heurtent pas : un `node_id` est un UUID, une clé
+  de champ est un slug.
+- **`node_key` devient un repli de nommage**, placé **après** les libellés lisibles et **avant** les
+  identifiants bruts. Sans lui, une étape présente dans la source et absente de la copie — donc
+  introuvable dans la structure vivante de la copie — se rendrait par un UUID, alors que le document
+  porte `"prospection"`. C'est une clé technique, et elle est rendue comme telle, en `code` : le
+  §5.15 le pose déjà pour la clé d'un champ.
+
+Ce dernier point **révise un garde-fou** de `CRM-078` — mécanisme de la décision 51 : la liste des
+clés de libellé est commune aux deux comparaisons, et l'étendre change ce que la comparaison de
+versions nomme dans son dernier repli. Le changement ne peut qu'améliorer ce repli — il ne
+s'applique que là où le nommage rendait déjà des identifiants bruts —, et le motif est écrit dans le
+fichier lui-même.
+
+### 4 quater.6 Les refus, et lesquels l'écran peut réellement rencontrer
+
+Les quatre refus du §4 ter.5 sont traduits, mais **deux seulement sont atteignables depuis l'écran**,
+et le tableau le dit plutôt que de laisser croire à une couverture uniforme :
+
+| # | Refus | Atteignable depuis l'écran ? |
+|---|---|---|
+| 1 | `authentification requise` / `401` | **Non** — l'éditeur est derrière la connexion (`CRM-009`) |
+| 2 | `workflow introuvable` | **Oui** — la copie a été supprimée, ou son track fermé à l'appelant, entre le chargement et la pression |
+| 3 | `workflow non derive` | **Non** — la commande n'existe pas sur un workflow sans origine (§4 quater.2) |
+| 4 | `source introuvable` | **Oui** — la source a été supprimée, ou est devenue illisible, depuis la copie |
+
+Un refus est rendu **dans le bloc de la mention**, en alerte, jamais en modale — la règle du §5.13
+du design system. Il n'efface pas la mention : l'origine du workflow reste vraie même quand la
+comparaison échoue.
+
+**Un `viewer` compare.** La fonction est `security invoker` et sa règle est celle de la lecture de
+`public.workflows` (§4 ter.4) ; le §4 ter.8 l'a mesuré ligne b — le `viewer` obtient le **même**
+document. La commande n'est donc **pas** réservée à l'administrateur, à la différence de tous les
+autres gestes de cet éditeur. La masquer aux non-administrateurs poserait dans l'interface une règle
+que la base ne pose pas, ce que `CLAUDE.md` §10 refuse dans les deux sens.
+
+### 4 quater.7 États, accessibilité et responsive
+
+- Le résultat est un `section` porteur d'un titre, annoncé par une région `aria-live` polie — celle
+  que l'éditeur pose déjà. Il n'est pas `role="alert"` : ce n'est ni une erreur ni un refus.
+- Le bouton porte un `aria-label` qui nomme le geste **et** la source, la seule pression possible
+  étant sur le workflow choisi.
+- Pendant l'appel, le bouton est **désactivé et non masqué** — règle du §5.13 — et son état est
+  porté par `aria-busy` en plus de la phrase.
+- Un ajout, un retrait et une modification se distinguent par **un mot**, jamais par une seule
+  teinte (§1 du design system) ; les pilules et les icônes sont celles du §5.15, sans redéfinition.
+- Aux paliers étroits du §7, les valeurs « avant → après » se replient sur deux lignes ; aucune
+  n'est tronquée, et la table de collections défile horizontalement plutôt que de déborder la page.
+
+### 4 quater.8 Ce que cette tranche ne livre PAS
+
+- **Aucune écriture**, et aucune resynchronisation : le §4.1 l'interdit, et la fonction appelée est
+  `stable`. Ce point n'est pas rouvert.
+- **Aucune comparaison entre deux workflows quelconques.** La source n'est pas un paramètre de
+  l'écran, comme elle n'est pas un paramètre de la fonction (§4 ter.4).
+- **Aucune comparaison de l'en-tête** — nom, portée, track, défaut, archivage. Le §4 ter.7 le pose,
+  et le §4 quater.4 dit comment l'écran l'avoue au lieu de le taire.
+
+### 4 quater.9 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | L'appel réellement émis et son argument ; la mise en forme du document mesuré au §4 quater.5 — les cinq collections, les compteurs, `identical` ; le nommage par `node_key` lorsque la structure vivante ne porte pas l'élément ; la table de structure indexée par clés naturelles |
+| Composant | Le bouton rendu sur une copie et **absent** sur un workflow sans origine ; les trois états du §4 quater.4 ; le refus nommé sans effacer la mention ; le résultat effacé par un changement de workflow |
+| E2E | Le parcours réel : choisir la copie du seed, presser « Comparer à la source », lire « identique » ; dégrader la copie par la clé de service, recomparer, lire l'écart nommé ; restaurer et constater le retour à l'identique |
+| Visuelle | Captures des deux résultats — identique et divergent — aux paliers du §7 |
+
 ### 4.12 Contrainte d'affectation — `CRM-033`
 
 Un channel suit un workflow `global` de son workspace, **ou** un workflow `track` rattaché à son
