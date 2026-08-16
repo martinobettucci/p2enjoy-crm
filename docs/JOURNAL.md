@@ -16996,3 +16996,88 @@ resynchronisation, l'en-tête non comparé. La prochaine session prend la premi�
 `[ ]` restante dans l'ordre du plan ayant du COMPORTEMENT à livrer ; l'entrée du 2026-08-16 a
 mesuré que les cases de `CRM-013` et de `CRM-034` sont fausses et méritent d'être corrigées.
 INC-129 reste à porter au responsable pour arbitrage avant de toucher aux harnais.
+
+## 2026-08-16 — `CRM-037` : la saisie depuis la fiche, et une limite qui avait survécu à son motif
+
+**Point de départ.** L'entrée précédente laissait `CRM-032` close et renvoyait à « la première unité
+`[~]` ou `[ ]` restante dans l'ordre du plan ayant du COMPORTEMENT à livrer ». Le balayage a montré
+que les cases « aucun écran » de `CRM-033`, `CRM-035` et `CRM-036` sont **fausses** — l'affectation
+d'un workflow à un channel vit dans `AdministrationArborescence`, la grille champ × étape dans le
+§7 bis.11 de l'éditeur —, et que leur reste est de la preuve, pas du comportement. La première unité
+dont il restait un GESTE à construire est `CRM-037`, dont le backlog nommait précisément ce geste :
+**l'écriture depuis l'écran**, décision 334, INC-088.
+
+**Le fait qui commande la tranche.** Le §4.7 posait « aucune écriture depuis l'écran » **en
+invoquant INC-021**, close depuis `CRM-009`. La limite avait survécu à son motif sans que personne
+la réexamine, et la fiche affichait encore « Consultation seule ». L'unité n'a pas été élargie : sa
+Definition of Done exige la **saisie** depuis l'origine. La spécification n'existait pas — le §4.7
+la refusait explicitement —, elle a donc été écrite et committée **avant la première ligne de code** :
+`docs/SPEC-form-composer.md` §4 bis, onze sous-chapitres, plus six règles au §5.7 ter du design
+system.
+
+**Une décision est prise par la MESURE, et non par goût.** Le grain de l'écriture : un champ, une
+écriture, sans bouton d'enregistrement global. Le motif n'est pas ergonomique — un lot est une
+**transaction**, et `e2e/api/saisie-formulaire.spec.ts` §S2 le constate : deux valeurs envoyées
+ensemble dont une seule est invalide, et **aucune** n'est enregistrée. Un écran à bouton unique
+perdrait donc une saisie correcte à cause d'une saisie voisine, et n'aurait qu'un refus global à
+montrer là où le §4.5 exige une erreur par champ — le `details` du serveur nomme bien le champ
+fautif, mais le produit n'affiche jamais le texte du serveur.
+
+**Deux autres décisions méritent d'être retrouvées.** La première : **aucun `trim` à l'écriture**.
+Le §6.6 fait d'une chaîne de blancs une valeur vide au sens de « renseigné » ; c'est une règle de
+**lecture**. Rogner à l'écriture ferait diverger ce que l'utilisateur voit de ce que la base porte,
+et effacerait une indentation dans une zone de texte. MESURÉ : la base accepte `'   '`, `estRenseigne`
+la dit vide, l'écran marque le champ manquant — les trois lectures restent cohérentes. La seconde :
+**`updated_by` n'est pas écrite**. MESURÉ, le rôle `authenticated` porte le privilège sur cette
+colonne et aucun trigger ne la dérive ; la renseigner depuis le client serait une **déclaration**,
+pas une preuve. La trace faisant foi existe déjà et vient du serveur — l'`actor_id` de `card_events`,
+posé par `app.card_event_ecrire` depuis la session réelle, et la ligne `f` du contrat le constate.
+Le combler suppose un trigger, donc une migration, donc `CRM-036` : l'écart est nommé, pas comblé au
+passage.
+
+**DEUX GARDE-FOUS FIGÉS ONT ÉCHOUÉ COMME PRÉVU, ET ONT ÉTÉ RÉVISÉS** — mécanisme de la décision 51,
+vingtième et vingt et unième occurrences. Les deux exigeaient « aucun contrôle saisissable » et le
+bandeau qui l'explique, l'un en composant, l'autre en E2E. Ils sont **retournés** en preuves de la
+saisie, sur les mêmes contrôles, motif écrit dans chaque fichier.
+
+**UN DÉFAUT RÉEL DE MON PROPRE HARNAIS, TROUVÉ PAR LA CAMPAGNE.** La restauration du seed de
+`e2e/api/saisie-formulaire.spec.ts` omettait `updated_by`, et l'assertion 93 de
+`0014_valeurs_champs.test.sql` — qui compte les valeurs du seed **par leur auteur** — en trouvait
+cinq sur sept. C'est la forme d'INC-129 : un harnais qui laisse la base dégradée en sortant. Corrigé
+à la cause : la restauration réécrit la ligne **entière**.
+
+**UNE DÉGRADATION DU HARNAIS ÉTAIT DEVENUE COMPLAISANTE, ET LE HARNAIS L'A DIT LUI-MÊME.**
+`verify-formulaire.sh` D2 bis remplaçait `retirerEspaces(valeur)` par `valeur.trim()` pour constater
+la divergence d'avec `btrim`. La décision 374 a élargi la base aux blancs Unicode et fait de
+`retirerEspaces` exactement `texte.trim()` : la substitution était devenue une **identité**. Elle est
+**révisée**, pas supprimée — elle vise désormais l'autre sens, un prédicat qui ne retire plus que
+`U+0020`, et elle mord de nouveau. Deux dégradations de la saisie ont été ajoutées ; le harnais rend
+**51 contrôles, 1 en échec**, et cet échec est INC-130.
+
+**UNE CORRECTION VENUE DU CONTRÔLE DE CLASSES, ET DEUX FAITS QU'IL A SÉPARÉS.** `mt-0.5` n'existe pas
+dans l'échelle fermée du §3 et n'était **pas engendré** — le défaut exact que le §5.7 bis décrit,
+invisible à l'œil comme aux tests. Et `enregistre`, une valeur de phase écrite dans une condition à
+l'intérieur d'un attribut `className`, que le contrôle relevait comme une classe : les deux
+graduations de la mention d'état sont désormais nommées hors du JSX. Le troisième relevé,
+`text-text-1`, est **antérieur** à cette session — `git log -L` le date du commit `fe846f5`, la
+tranche d'interface de `CRM-032` — et il est consigné en **INC-130** sans être corrigé, son fichier
+étant un livrable de `CRM-076`.
+
+**Campagne de fin de session, complète.** `test:sql` **41 fichiers, 2161 assertions** ; `test:unit`
+**1273** sur 43 fichiers (1243 avant) ; `e2e:api` **635** (622 avant) ; `e2e:ui` **315** (305 avant),
+console vierge ; `e2e:mail` **42** ; `pytest mail-sync/tests` **242** ; `typecheck` et `build` verts.
+`scripts/verify-formulaire.sh` **51 contrôles, 1 en échec** (INC-130, préexistante). **Deux captures
+produites ET OBSERVÉES** sous `docs/captures/CRM-037/` — saisie enregistrée, saisie refusée —, plus
+les quatre paliers regardés. **Non exécutés faute de temps** : les cinquante autres
+`scripts/verify-*.sh`.
+
+**Un fait d'environnement, contraire à INC-123.** Avec `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`
+exporté comme le §2.1 ter de `docs/CloudWorker.md` le prescrit, les cinq scénarios Roundcube de
+`e2e:mail` passent : **42 sur 42**. Le blocage d'INC-123 ne se reproduit pas sur cet hôte.
+
+**Où reprendre.** `CRM-037` reste `[~]` pour **une seule** raison, inchangée : le parcours
+« transition bloquée → saisie → transition réussie » exige un **contrôle de transition**, dû par
+`CRM-041` — INC-062. La saisie, elle, est livrée et prouvée. La prochaine session peut prendre
+`CRM-041` (le geste de transition, qui refermerait INC-062 **et** la Definition of Done de
+`CRM-037`), ou solder les cases mesurées fausses de `CRM-033`, `CRM-035` et `CRM-036` — leurs écrans
+existent, seules leurs preuves d'interface manquent. INC-129 reste à porter au responsable.
