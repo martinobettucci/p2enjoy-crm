@@ -8,6 +8,7 @@
 # @spec CRM-035 (docs/BACKLOG.md) — champs de formulaire et règles de visibilité
 # @spec CRM-018 (docs/BACKLOG.md) — champs exigés par une transition, avec intégrité référentielle
 # @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
+# @spec CRM-081 (docs/BACKLOG.md) — deux affaires en sommeil, dont une échue (docs/SPEC-cards.md §16.11.6)
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -2339,6 +2340,75 @@ auteur_version=$(curl -s "$API/rest/v1/workflow_versions?workflow_id=eq.$WF_ID&s
         AUCUN auteur de publication (docs/SPEC-workflow-engine.md §7 ter.8). La cause la plus
         probable est une publication effectuée avec la CLÉ DE SERVICE, qui ne porte aucune
         revendication « sub »."
+
+# --- 8 duodecies. Sommeil de démonstration — docs/SPEC-cards.md §16.11.6 ------------------------
+# @spec CRM-081 (docs/BACKLOG.md) — mise en sommeil d'une affaire, tranche 2 a
+#
+# Deux affaires portent une échéance de sommeil, faute de quoi l'écran de la tranche 2 a ne serait
+# démontrable ni dans un état, ni dans l'autre : une base où toutes les cards ont `snoozed_until`
+# nulle ne montre jamais la pastille.
+#
+# LES ÉCHÉANCES SONT RELATIVES À L'INSTANT DU SEED, jamais des dates fixes (§16.11.6) : une date
+# fixe cesserait d'être future au bout de quelques semaines, et la première affaire cesserait de
+# démontrer quoi que ce soit.
+#
+# L'ÉCRITURE PASSE PAR LA CLÉ DE SERVICE, et c'est la démonstration même du §16.5 : la trace est
+# posée par un trigger de TABLE, si bien que même une écriture de service laisse ses `snoozed` au
+# fil de l'affaire. Un seed qui appellerait `snooze_card` avec un jeton d'administratrice
+# prouverait la fonction ; celui-ci prouve que la trace ne dépend pas du chemin.
+#
+# CONVERGENCE PAR ÉTAT, comme la corbeille de la section 8 decies : l'état réel est relu AVANT
+# d'écrire, et n'est réécrit que s'il ne correspond plus à ce que la ligne doit démontrer. Sans
+# cette relecture, chaque rejeu poserait une échéance neuve, donc un `snoozed` de plus au fil —
+# le seed cesserait d'être convergent, et les empreintes d'événements dériveraient à chaque
+# application.
+#
+# id | état voulu | décalage en jours | libellé
+SOMMEILS=(
+	"5eed0000-0000-4000-8000-0000000000ca|endormie|10|« Cadrage data — Groupe Vallier », en sommeil"
+	"5eed0000-0000-4000-8000-0000000000c1|echue|-2|« Refonte du site vitrine », sommeil échu"
+)
+
+echo
+say "8 duodecies. Sommeil de démonstration"
+
+for ligne in "${SOMMEILS[@]}"; do
+	IFS='|' read -r id etat jours libelle <<< "$ligne"
+
+	actuel=$(curl -s "$API/rest/v1/cards?id=eq.$id&select=snoozed_until" 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" 		| jq -r '.[0].snoozed_until // "null"')
+
+	# Le prédicat est celui du §16.2, appliqué ici plutôt que déduit : « en sommeil » vaut
+	# « non nulle ET future ». Une ligne déjà dans l'état voulu n'est pas réécrite.
+	if [ "$actuel" = 'null' ]; then
+		conforme='non'
+	elif [ "$(date -u -d "$actuel" +%s 2>/dev/null || echo 0)" -gt "$(date -u +%s)" ]; then
+		conforme=$([ "$etat" = 'endormie' ] && echo 'oui' || echo 'non')
+	else
+		conforme=$([ "$etat" = 'echue' ] && echo 'oui' || echo 'non')
+	fi
+
+	if [ "$conforme" = 'oui' ]; then
+		info "$libelle : déjà dans l'état voulu, rien à faire (convergence par état)"
+		continue
+	fi
+
+	echeance=$(date -u -d "$jours days" +%Y-%m-%dT%H:%M:%SZ)
+	code=$(api PATCH "/rest/v1/cards?id=eq.$id" 		-H 'Prefer: return=representation' 		-d "$(jq -nc --arg d "$echeance" '{snoozed_until: $d}')")
+	attendu "$code" "sommeil de $libelle" 200
+	info "$libelle jusqu'au $echeance"
+done
+
+# LA TRACE EST VÉRIFIÉE, ET NON SUPPOSÉE, pour la même raison que l'audit de la corbeille : sans ce
+# contrôle, une régression du trigger de la migration 44 rendrait un seed vert et un fil muet, et
+# la timeline de la tranche 2 a n'aurait rien à nommer.
+traces=$(curl -s "$API/rest/v1/card_events?type=eq.snoozed&select=id" 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "${traces:-0}" -ge 2 ] || die "les deux affaires portent une échéance de sommeil, mais card_events
+        ne compte que « ${traces:-0} » événement(s) « snoozed ». Le trigger de table de la migration
+        44 est la seule source de cette trace (docs/SPEC-cards.md §16.5) : le seed ne démontre alors
+        AUCUNE trace de sommeil."
+
+info "Sommeil : 2 affaires — une endormie, une dont l'échéance est échue — docs/SPEC-cards.md §16.11.6"
+
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
