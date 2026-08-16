@@ -101,20 +101,21 @@ test.describe('les gestes (§7 ter.14.4)', () => {
 		await expect(page.getByTestId('comparaison-collections')).toHaveCount(0)
 	})
 
-	test('le plan rend les treize affaires du workflow, et se dit applicable', async ({ page }) => {
+	test('le plan rend les trente-neuf affaires du workflow, et se dit applicable', async ({ page }) => {
 		await connecter(page, ADMIN)
 		await ouvrirEditeur(page)
 
 		await page.getByTestId('planifier-restauration').click()
 		const plan = page.getByTestId('plan-remappage')
 		await expect(plan).toBeVisible()
-		// MESURÉ : treize affaires, toutes inchangées, aucune étape retirée — la structure vivante
-		// est celle de la version. Le verdict vient de la base, jamais d'un calcul d'écran.
-		await expect(plan).toContainText('13 affaire(s)')
+		// MESURÉ : trente-neuf affaires depuis `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11),
+		// toutes inchangées, aucune étape retirée — la structure vivante est celle de la version.
+		// Le verdict vient de la base, jamais d'un calcul d'écran, et le compte suit la donnée.
+		await expect(plan).toContainText('39 affaire(s)')
 		await expect(page.getByTestId('plan-verdict')).toContainText('Plus aucune affaire')
 		await expect(page.getByTestId('etapes-retirees')).toHaveCount(0)
 		// La troncature est écrite dans les deux cas : ici, la liste est entière.
-		await expect(page.getByTestId('plan-troncature')).toContainText('13 affaire(s) listées')
+		await expect(page.getByTestId('plan-troncature')).toContainText('39 affaire(s) listées')
 	})
 })
 

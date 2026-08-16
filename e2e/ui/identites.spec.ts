@@ -41,7 +41,13 @@ test('Camille parcourt le board, la liste et la fiche avec toutes les identités
 	await page.getByRole('link', { name: 'Studio web' }).click()
 	await page.getByRole('link', { name: 'Maintenance' }).click()
 	await expect(page.getByRole('link', { name: CARD_SUPPORT })).toBeVisible()
-	const avatarBoard = page.getByRole('img', { name: 'Responsable : Farida Nowak' })
+	// ASSERTION RÉVISÉE PAR `CRM-046` TRANCHE 2, POUR LA MÊME RAISON QUE CELLE DE LA FICHE
+	// ci-dessous : elle visait l'avatar de Farida sur la PAGE ENTIÈRE, et les vingt-six cards de
+	// volume de `docs/SPEC-seed.md` §9.11 en font vivre dix dans ce channel — `strict mode
+	// violation`, dix éléments. Elle est portée sur la CARTE du parcours, ce qu'elle voulait dire
+	// depuis le début : c'est l'affaire visitée dont le responsable est nommé et figuré.
+	const carteBoard = page.getByTestId('carte-card').filter({ hasText: CARD_SUPPORT })
+	const avatarBoard = carteBoard.getByRole('img', { name: 'Responsable : Farida Nowak' })
 	await expect(avatarBoard).toBeVisible()
 	await expect(avatarBoard).toHaveAttribute('src', '/avatars/farida-nowak.svg')
 	await capturer(page, 'identites-board-1440', 'CRM-022')

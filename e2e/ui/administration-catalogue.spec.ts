@@ -40,7 +40,7 @@ const CHEMIN_CATALOGUE = `${URL_API}/rest/v1/workflow_nodes_catalog`
 /** La clé du nœud que la preuve fabrique, préfixée pour ne heurter aucune clé du seed. */
 const CLE_PREUVE = 'e2e-noeud-catalogue'
 
-/** Le nœud du seed occupé par quatre affaires actives — §2 bis.9, ligne « Seed ». */
+/** Le nœud du seed occupé par ONZE affaires actives depuis `CRM-046` §9.11 — §2 bis.9, « Seed ». */
 const NOEUD_OCCUPE = 'Prospection'
 
 /** Le seul nœud archivé du seed, et sa date, que l'épilogue restitue à l'octet près. */
@@ -318,7 +318,10 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 		await expect(alerte).toBeVisible()
 		// LE NOMBRE VIENT DU MESSAGE DE LA BASE, jamais d'un comptage d'écran : le seed pose quatre
 		// affaires actives sur ce nœud, et une cinquième les ferait toutes deux changer ensemble.
-		await expect(alerte).toContainText('4 affaires en cours')
+		// RÉVISÉ PAR `CRM-046` TRANCHE 2 : les cards de volume de `docs/SPEC-seed.md` §9.11
+		// occupent elles aussi `prospection`, qui en porte ONZE actives. Le compte suit la donnée ;
+		// ce que le scénario démontre — le refus vient de la base ET porte son compte — est intact.
+		await expect(alerte).toContainText('11 affaires en cours')
 		await expect(alerte).toContainText('déplacez-les')
 
 		// LA LIGNE EST RELUE : le refus n'a rien archivé, et une preuve qui se contenterait de
