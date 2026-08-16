@@ -63,6 +63,8 @@ function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step
 		currency: 'EUR',
 		next_action: null,
 		entered_step_at: MAINTENANT.toISOString(),
+		// Défaut du jeu d'essai : une affaire qui n'a jamais dormi (`CRM-081` tranche 2 b).
+		snoozed_until: null,
 		email_local_part: 'c-00000000',
 		owner_id: null,
 		responsable: null,

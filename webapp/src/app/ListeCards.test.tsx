@@ -39,6 +39,8 @@ function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {
 		next_action: null,
 		next_action_at: null,
 		current_step_id: 's2',
+		// Défaut du jeu d'essai : une affaire qui n'a jamais dormi (`CRM-081` tranche 2 b).
+		snoozed_until: null,
 		owner_id: null,
 		responsable: null,
 		...partiel,

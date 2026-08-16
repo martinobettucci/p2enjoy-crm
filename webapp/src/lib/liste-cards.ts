@@ -4,6 +4,9 @@
 //       §12.4 (le tri, et pourquoi il doit être TOTAL), §12.5 (les filtres),
 //       §12.6 (la pagination et le `416`), §12.9 (états systématiques)
 // @spec docs/SPEC-cards.md §2.7 (recherche plein texte), §5 (« active »)
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la vue liste masque les affaires en sommeil
+// @spec docs/SPEC-cards.md §16.12.1 (le prédicat d'exclusion), §16.12.2 (l'instant du client),
+//       §16.12.3 (pourquoi la liste filtre au SERVEUR), §16.12.4 (le cinquième paramètre d'adresse)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.9 (tableau)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
@@ -20,10 +23,26 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 import { lireEtapes, resoudreEtape, type EtapeBoard } from './board'
 import { CODE_PAGE_INEXISTANTE, COLONNES_CARD_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
 import type { Database } from './database.types'
+import {
+	CLE_URL_SOMMEIL,
+	MODE_SOMMEIL_PAR_DEFAUT,
+	VALEUR_URL_SOMMEIL_VISIBLES,
+	filtreExclusionSommeil,
+	lireModeSommeil,
+	type ModeSommeil,
+} from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
 import type { ClientCrm } from './supabase'
 
 export { CODE_PAGE_INEXISTANTE, COLONNES_CARD_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
+export {
+	CLE_URL_SOMMEIL,
+	MODE_SOMMEIL_PAR_DEFAUT,
+	VALEUR_URL_SOMMEIL_VISIBLES,
+	filtreExclusionSommeil,
+	lireModeSommeil,
+	type ModeSommeil,
+} from './filtre-sommeil'
 
 // --- Le tri (§12.4) --------------------------------------------------------------------------
 
@@ -92,6 +111,13 @@ export type ParametresListe = {
 	readonly recherche: string
 	/** Rang de page, **au moins 1**. Le bornage par le total est fait à part (§12.6). */
 	readonly page: number
+	/**
+	 * Les affaires en sommeil sont-elles montrées ? Défaut : **non** (§16.12.4).
+	 *
+	 * C'est un filtre comme les deux autres, à ceci près que son défaut n'est pas « tout montrer » :
+	 * la Definition of Done de `CRM-081` exige qu'une affaire en sommeil sorte des vues par défaut.
+	 */
+	readonly sommeil: ModeSommeil
 }
 
 export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
@@ -100,6 +126,7 @@ export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
 	etape: null,
 	recherche: '',
 	page: 1,
+	sommeil: MODE_SOMMEIL_PAR_DEFAUT,
 }
 
 /** Les noms des paramètres dans l'adresse. Déclarés une fois : les preuves les importent. */
@@ -109,6 +136,7 @@ export const CLES_URL = {
 	etape: 'etape',
 	recherche: 'q',
 	page: 'page',
+	sommeil: CLE_URL_SOMMEIL,
 } as const
 
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -142,6 +170,7 @@ export function lireParametres(recherche: URLSearchParams): ParametresListe {
 		etape: etapeDemandee !== null && FORME_UUID.test(etapeDemandee) ? etapeDemandee : null,
 		recherche: (recherche.get(CLES_URL.recherche) ?? '').trim(),
 		page: Number.isFinite(pageDemandee) && pageDemandee >= 1 ? pageDemandee : 1,
+		sommeil: lireModeSommeil(recherche.get(CLES_URL.sommeil)),
 	}
 }
 
@@ -160,6 +189,9 @@ export function ecrireParametres(parametres: ParametresListe): URLSearchParams {
 	if (parametres.etape !== null) sortie.set(CLES_URL.etape, parametres.etape)
 	if (parametres.recherche !== '') sortie.set(CLES_URL.recherche, parametres.recherche)
 	if (parametres.page > 1) sortie.set(CLES_URL.page, String(parametres.page))
+	// Le défaut « masquées » ne s'écrit jamais : la vue par défaut reste l'adresse la plus courte
+	// (§16.12.4), et `?sommeil=masquees` ne dirait rien de plus que l'adresse nue.
+	if (parametres.sommeil === 'visibles') sortie.set(CLES_URL.sommeil, VALEUR_URL_SOMMEIL_VISIBLES)
 	return sortie
 }
 
@@ -202,6 +234,9 @@ export type CardListe = Pick<
 	| 'next_action_at'
 	| 'current_step_id'
 	| 'owner_id'
+	// Lue depuis la tranche 2 b de `CRM-081`, pour la **marque** d'une affaire endormie rendue
+	// visible (§16.12.7). Le filtre, lui, s'applique au serveur et n'en a pas besoin.
+	| 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
 }
@@ -270,7 +305,17 @@ export async function lirePageCards(
 	{
 		channelId,
 		parametres,
-	}: { readonly channelId: string; readonly parametres: ParametresListe },
+		maintenant = new Date(),
+	}: {
+		readonly channelId: string
+		readonly parametres: ParametresListe
+		/**
+		 * L'instant qui départage le sommeil, **injectable** pour la même raison qu'au §16.11.1 :
+		 * sans lui, aucune preuve ne pourrait éprouver les deux côtés de l'échéance sans dépendre de
+		 * l'heure à laquelle elle s'exécute.
+		 */
+		readonly maintenant?: Date
+	},
 ): Promise<EtatAsync<ContenuListe>> {
 	try {
 		let requete = client
@@ -279,6 +324,12 @@ export async function lirePageCards(
 			.eq('channel_id', channelId)
 			.is('archived_at', null)
 			.is('deleted_at', null)
+		// LE FILTRE DU SOMMEIL EST AU SERVEUR, comme les deux autres et pour la même raison (§12.5,
+		// §16.12.3) : la vue liste pagine et compte. Appliqué après la pagination, il ne verrait que
+		// les 25 lignes rapportées, et le total annoncerait des pages qui n'existent pas.
+		if (parametres.sommeil !== 'visibles') {
+			requete = requete.or(filtreExclusionSommeil(maintenant))
+		}
 		if (parametres.etape !== null) requete = requete.eq('current_step_id', parametres.etape)
 		if (parametres.recherche !== '') {
 			// `plfts` et non `ilike` : `search_tsv` est une colonne générée `STORED` indexée en GIN
@@ -336,7 +387,7 @@ export function usePageCards(
 	// réponse périmée écraser une réponse plus récente — le tri et la page changent au clic.
 	const courant = useRef(0)
 
-	const { tri, sens, etape, recherche, page } = parametres
+	const { tri, sens, etape, recherche, page, sommeil } = parametres
 
 	useEffect(() => {
 		if (client === null || channelId === undefined) return
@@ -345,7 +396,10 @@ export function usePageCards(
 		void (async () => {
 			const resultat = await lirePageCards(client, {
 				channelId,
-				parametres: { tri, sens, etape, recherche, page },
+				parametres: { tri, sens, etape, recherche, page, sommeil },
+				// L'instant est pris AU MOMENT DE LA LECTURE, jamais au rendu : un `new Date()` calculé
+				// dans le corps du composant changerait à chaque rendu et relancerait l'effet en boucle.
+				maintenant: new Date(),
 			})
 			if (rang !== courant.current) return
 			if (resultat.statut === 'pret' && resultat.donnees.nature === 'page') {
@@ -353,7 +407,7 @@ export function usePageCards(
 			}
 			setEtat(resultat)
 		})()
-	}, [client, channelId, tri, sens, etape, recherche, page, tentative])
+	}, [client, channelId, tri, sens, etape, recherche, page, sommeil, tentative])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)

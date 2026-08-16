@@ -24,9 +24,14 @@
  *
  * Le responsable est embarqué par la FK : la colonne « Responsable » rend désormais avatar et
  * nom sans requête par ligne. Une card sans `owner_id` garde une cellule réellement vide.
+ *
+ * `snoozed_until` a rejoint la liste avec la tranche 2 b de `CRM-081`. La ligne ne l'affiche pas
+ * telle quelle : elle en tire la **pastille compacte** d'une affaire endormie rendue visible par la
+ * bascule (docs/SPEC-cards.md §16.12.7). Le filtre, lui, s'applique au serveur et n'a pas besoin
+ * que la colonne soit rapportée — c'est la marque qui l'exige.
  */
 export const COLONNES_CARD_LISTE =
-	'id, title, amount, currency, next_action, next_action_at, current_step_id, owner_id, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
+	'id, title, amount, currency, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
 
 /**
  * Nombre de lignes d'une page.

@@ -3,7 +3,10 @@
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.3 (composition des colonnes),
 //       §7.4 (contenu d'une carte), §7.5 (transitions atteignables), §7.9 (optimisme et retour
 //       arrière), §7.10 (les sept refus), §5.2 (signature et valeur de retour de `move_card`)
-// @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §5 (« active »)
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : le board masque les affaires en sommeil
+// @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §5 (« active »), §16.12.3 (le board
+//       filtre à la composition, et pourquoi), §16.12.6 (le compte des masquées), §16.12.8 (ce que
+//       le compteur et le cumul deviennent)
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne de board)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 //
@@ -26,7 +29,9 @@ import {
 	COLONNES_TRANSITION,
 } from './colonnes-board'
 import type { Database } from './database.types'
+import { MODE_SOMMEIL_PAR_DEFAUT, type ModeSommeil } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
+import { estEnSommeil } from './sommeil-card'
 import type { ClientCrm } from './supabase'
 
 /** Les cinq jetons de couleur que `workflow_nodes_catalog.color` accepte (docs/SCHEMA.md §4). */
@@ -83,6 +88,9 @@ export type CardBoard = Pick<
 	| 'entered_step_at'
 	| 'email_local_part'
 	| 'owner_id'
+	// Lue depuis la tranche 2 b de `CRM-081` : le board masque les affaires en sommeil et marque
+	// celles qu'il montre (docs/SPEC-cards.md §16.12).
+	| 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
 }
@@ -139,8 +147,16 @@ export type ColonneBoard = {
 
 export type ModeleBoard = {
 	readonly colonnes: readonly ColonneBoard[]
-	/** Nombre total de cards actives, pour l'état vide du board entier. */
+	/** Nombre total de cards **rendues**, pour l'état vide du board entier. */
 	readonly nombreCards: number
+	/**
+	 * Nombre de cards écartées par le filtre du sommeil (docs/SPEC-cards.md §16.12.6).
+	 *
+	 * Il est **connu sans requête supplémentaire** : le board lit déjà toutes les cards actives du
+	 * channel, et c'est précisément ce qui permet à son état vide de dire « toutes les affaires de
+	 * ce channel sont en sommeil » plutôt que « aucune affaire », qui serait faux.
+	 */
+	readonly nombreEnSommeilMasquees: number
 }
 
 const MILLISECONDES_PAR_JOUR = 24 * 60 * 60 * 1000
@@ -259,16 +275,26 @@ export function composerBoard({
 	cards,
 	transitions,
 	maintenant,
+	modeSommeil = MODE_SOMMEIL_PAR_DEFAUT,
 }: {
 	readonly etapes: readonly EtapeBoard[]
 	readonly cards: readonly CardBoard[]
 	readonly transitions: readonly TransitionLue[]
 	readonly maintenant: Date
+	/** Défaut : les affaires en sommeil sont **masquées** (docs/SPEC-cards.md §16.12.4). */
+	readonly modeSommeil?: ModeSommeil
 }): ModeleBoard {
 	const index = indexerTransitions(etapes, transitions)
 	const ordonnees = [...etapes].sort((gauche, droite) => gauche.position - droite.position)
+	// LE FILTRE S'APPLIQUE ICI, ET NON AU SERVEUR (§16.12.3) : le board ne pagine pas et lit déjà
+	// toutes les cards actives du channel en une requête. Le porter dans la requête coûterait une
+	// lecture de plus à chaque bascule et ferait perdre le nombre de masquées, dont l'état vide a
+	// besoin. L'argument qui impose le serveur pour « active » ne se transporte pas : le sommeil
+	// n'est la garde de rien — une affaire endormie se déplace et s'édite comme une autre.
+	const dort = (card: CardBoard) => estEnSommeil(card.snoozed_until, maintenant)
+	const visibles = modeSommeil === 'visibles' ? cards : cards.filter((card) => !dort(card))
 	const colonnes = ordonnees.map((etape) => {
-		const siennes = cards
+		const siennes = visibles
 			.filter((card) => card.current_step_id === etape.id)
 			.sort(
 				(gauche, droite) =>
@@ -283,9 +309,18 @@ export function composerBoard({
 	})
 	return {
 		colonnes,
-		nombreCards: cards.filter((card) =>
+		// Le compte porte sur les cards **rendues** (§16.12.8) : une colonne, et le board entier,
+		// annoncent ce qu'ils montrent. Un compteur qui inclurait les masquées désignerait des
+		// cartes introuvables à l'œil.
+		nombreCards: visibles.filter((card) =>
 			ordonnees.some((etape) => etape.id === card.current_step_id),
 		).length,
+		nombreEnSommeilMasquees:
+			modeSommeil === 'visibles'
+				? 0
+				: cards.filter(
+						(card) => dort(card) && ordonnees.some((etape) => etape.id === card.current_step_id),
+					).length,
 	}
 }
 
