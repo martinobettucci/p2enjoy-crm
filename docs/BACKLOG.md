@@ -8177,7 +8177,7 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
       toujours vues ; `e2e:ui` **286/286**, console vierge ; capture
       `docs/captures/CRM-079/guide-espace-neuf-1440.jpg` produite et **observée**.*
 
-### CRM-081 — Snooze des fils et des cards `[ ]`
+### CRM-081 — Snooze des fils et des cards `[~]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
 collision avec l'administration de l'arborescence.*
 
@@ -8201,8 +8201,65 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       `snoozed_until` nulle, la colonne est **ouverte** en écriture à `authenticated` par la
       migration 14, et `card_events.type` compte douze valeurs. Commit documentaire dédié, poussé
       avant la première ligne de code.
-- [ ] **Tranche 1** : migration, suite pgTAP dédiée, preuve d'API dédiée, harnais rejouable.
-- [ ] **Tranche 2** : écran, filtre des vues, seed, captures observées, fils de messagerie.
+- [x] **La migration est livrée** : `supabase/migrations/0044_snooze_cards.sql` — les deux RPC
+      `SECURITY DEFINER`, le trigger `card_events_apres_maj_sommeil` et sa fonction, le vocabulaire
+      de `card_events` porté de douze à **quatorze** valeurs par convergence — cette migration en
+      devient la dernière autorité —, et le **retrait** à `authenticated` du privilège `UPDATE` sur
+      `cards.snoozed_until`. Appliquée et rejouée sans erreur.
+- [x] **LA COLONNE ÉTAIT OUVERTE, ET C'EST CE QUI RENDAIT LA GARDE INUTILE.** MESURÉ avant :
+      `has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update')` rend `t`.
+      Sans la fermer, les quatre refus auraient été contournables par un `PATCH`, et la
+      fonctionnalité n'aurait été qu'une suggestion. Après : `f`, et le `PATCH` rend `403` —
+      mesuré par l'API.
+- [x] **Aucun réveil planifié n'est écrit, et ce n'est pas un manque** : « en sommeil » est défini
+      comme « non nulle ET future » (§16.2), donc la sortie est implicite. Une tâche `pg_cron` qui
+      remettrait la colonne à `NULL` produirait le même prédicat au prix d'une écriture par card et
+      d'un événement que personne n'a demandé.
+- [x] **La trace est écrite par un trigger de TABLE, jamais par les fonctions** : `card_events`
+      n'accorde aucun privilège d'écriture, `service_role` compris. Conséquence voulue — une
+      écriture de la colonne par la clé de service laisse elle aussi sa trace.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0042_snooze_cards.test.sql`, **30 assertions,
+      aucune anomalie** — la forme des deux fonctions, `anon` nommément exclu, les quatre refus
+      dans l'ordre **et leurs succès correspondants**, la règle de discrétion éprouvée avec le
+      **même** profil dans les deux cas, le report qui écrit un second `snoozed`, et l'idempotence
+      du réveil.
+- [x] **Preuve d'API dédiée** : `e2e/api/snooze.spec.ts`, **9 scénarios** avec les jetons réels de
+      l'administratrice et de la lectrice — les neuf lignes du contrat du §16.8. Les gestes sont
+      joués sur **deux cards d'essai** détruites en fin de fichier : un fil est append-only, et les
+      poser sur une card seedée déplacerait les empreintes de convergence du seed.
+- [x] **UN `revoke ... from public` NE SUFFIT PAS, ET LA SUITE L'A REMESURÉ** : `anon` conservait
+      son `EXECUTE`, posé par les privilèges par défaut de la distribution. La règle est écrite
+      depuis la décision 80 ; l'assertion pgTAP l'a rendue rouge avant que le `revoke` nominatif
+      soit écrit.
+- [x] **Quatre témoins figés retournés**, avec leur motif écrit dans le fichier (décision 51) :
+      « `cards` porte les DEUX triggers de timeline » devient TROIS, « `snoozed_until` reste
+      ouverte » et « reste modifiable » deviennent « est fermée » dans deux suites, le `CHECK`
+      compte QUATORZE valeurs, et le compte des colonnes ouvertes passe de douze à **onze**.
+- [x] **Contrat de types révisé dans le même changement** : `database.types.ts` régénéré,
+      `database.types.test-d.ts` constate **trente-quatre** fonctions, `npm run types:check` vert.
+- [x] `docs/SPEC-cards.md` §16, `docs/SCHEMA.md` §5 et §9, `docs/PROD_MIGRATIONS.md` §3
+      (migration 44 et ses vérifications obligatoires), `CHANGELOG.md`, `docs/JOURNAL.md` mis à
+      jour dans le même changement.
+- [ ] **Aucun harnais rejouable `scripts/verify-snooze.sh`** : dû avant le passage à `[x]`. Les
+      preuves de la tranche vivent dans la suite pgTAP et la preuve d'API, toutes deux exécutées et
+      vertes ; ce qui manque est la **dégradation volontaire** qui établirait qu'elles ne sont pas
+      complaisantes.
+- [ ] **Aucun écran, aucune capture, aucune vérification visuelle** : la tranche ne livre aucune
+      surface, et l'affaire en sommeil reste visible partout où elle l'était. **C'est l'écart
+      principal de l'unité**, et il est l'objet de la tranche 2 (§16.10).
+- [ ] **Aucun seed** : les 41 cards du seed portent `snoozed_until` nulle. Poser une affaire
+      endormie n'a d'intérêt que le jour où un écran le montre — tranche 2.
+- [ ] **Aucun sommeil de fil de messagerie** : l'énoncé nomme « les fils et les cards », et les
+      fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2.
+- [ ] **Les compteurs de `scripts/verify-harness.sh` ne sont pas révisés ici** : ils sont mesurés
+      **en retard de bien plus que cette tranche** depuis deux exécutions — dérive antérieure et
+      étrangère, que corriger sous cette unité reviendrait à solder une autre (`CLAUDE.md` §13).
+
+*DoD adaptée, écarts explicites.* La Definition of Done demande cinq choses. **Deux sont tenues** :
+le geste et son retour sont gardés en base, et le fil porte la trace des deux gestes ; les refus
+sont mesurés avec les jetons réels. **Trois restent dues, toutes par la tranche 2** : une affaire
+en sommeil ne sort d'aucune vue, aucun filtre explicite ne la ramène, et aucune capture n'existe.
+L'unité reste donc `[~]`, et l'écart est nommé plutôt que masqué.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

@@ -17571,3 +17571,51 @@ aucune anomalie.**
 **Non exécuté, et dit comme tel** : les quarante-neuf autres `scripts/verify-*.sh` — la série
 entière ne tient pas dans une session (§2.1 ter) —, et `./resetMe.sh`, dont la reconstruction à
 froid reste la seule forme forte de la preuve n° 1 du §9.11.7.
+
+## 2026-08-16 — `CRM-081` tranche 1 : `snoozed_until` cesse d'être une place réservée
+
+**Point de départ, et pourquoi cette unité.** L'entrée précédente laissait deux reprises possibles,
+toutes deux sans comportement à livrer : la convergence à froid de `CRM-046` — une preuve — et une
+correction d'énoncé pour `CRM-014`. Les unités `[~]` qui les précèdent dans l'ordre du plan ont
+été mesurées plutôt que supposées, et aucune ne portait de code dû : `CRM-001` attend un démarrage
+à froid, `CRM-013` bute sur des tables qui n'existent pas, `CRM-033` et `CRM-034` voient leurs
+écarts comblés depuis (l'écran d'administration existe, INC-048 est close par la migration 35), et
+les harnais que `CRM-058` et `CRM-077` déclarent « dus » sont **présents dans `scripts/`**. La
+session a donc pris la première unité `[ ]` de l'ordre du plan, `CRM-081`, qui n'avait jusqu'ici
+qu'une ligne de la table du chunk 5.
+
+**Ce qui était réellement là, et qui n'était pas une fonctionnalité.** `cards.snoozed_until` existe
+depuis `CRM-040`. MESURÉ : les 41 cards du seed la portent nulle, aucun écran ne l'écrit ni ne la
+lit, et la migration 14 l'**ouvre en écriture directe** à tout membre. Une colonne qu'un client
+écrit librement et que personne ne lit est une place réservée, pas un geste.
+
+**Ce que la tranche livre.** Deux RPC `SECURITY DEFINER` — `snooze_card` et `wake_card` —, la
+fermeture de la colonne, et deux événements de fil écrits par un **trigger de table**. La
+spécification `docs/SPEC-cards.md` §16 a été écrite après mesure et **committée avant la première
+ligne de code**.
+
+**Deux décisions valent d'être retenues.** La première : « en sommeil » est défini comme « non nulle
+ET future », ce qui rend **inutile tout réveil planifié** — le temps suffit à en sortir, là où une
+tâche `pg_cron` produirait le même prédicat au prix d'une écriture par card et d'un événement que
+personne n'a demandé. La seconde : la colonne devait être **fermée**, sans quoi les quatre refus
+auraient été contournables par un `PATCH` et la garde n'aurait rien gardé. Cette fermeture est
+l'endroit où la tranche cesse d'être cosmétique.
+
+**Ce que la mesure a corrigé.** `revoke ... from public` ne retire pas l'`EXECUTE` propre d'`anon`
+dans le schéma `public` : la règle est écrite depuis la décision 80, la suite pgTAP l'a rendue
+rouge, et le `revoke` est devenu nominatif. Quatre témoins figés par des unités précédentes sont
+devenus faux **par arbitrage** et ont été RÉVISÉS avec leur motif dans le fichier, jamais retirés.
+
+**Mesuré.** `supabase/tests/0042_snooze_cards.test.sql` **30 assertions** ; `npm run test:sql`
+**42 fichiers, 2191 assertions, aucune anomalie** ; `e2e/api/snooze.spec.ts` **9 scénarios**, verts
+au premier rejeu ; `npm run test:unit` **1368 tests** ; `npm run typecheck`, `npm run types:check`
+et `npm run build` verts.
+
+**Où reprendre.** `CRM-081` est `[~]`, et son écart principal est nommé : **aucun écran**. Une
+affaire mise en sommeil reste visible partout où elle l'était — le board et la vue liste ne la
+filtrent pas —, aucune pastille ne la signale, et le seed n'en pose aucune. C'est la tranche 2, dont
+le contenu exact est écrit au §16.10, et c'est du comportement à livrer : une prochaine exécution
+peut la prendre directement, sa spécification étant déjà écrite. Restent aussi dus le harnais
+`scripts/verify-snooze.sh` et le sommeil des fils de messagerie. Les écarts hérités sont inchangés :
+la convergence à froid de `CRM-046`, l'énoncé de `CRM-014`, et les compteurs de
+`scripts/verify-harness.sh`, en retard de bien plus que cette tranche.

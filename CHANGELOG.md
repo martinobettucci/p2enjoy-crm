@@ -15,6 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une affaire peut être mise en sommeil, et le geste est gardé** (`CRM-081` tranche 1,
+  `docs/SPEC-cards.md` §16). `cards.snoozed_until` existait depuis `CRM-040` sans geste, sans règle
+  et sans lecteur, ouverte en écriture libre à tout membre. Deux RPC la prennent en charge —
+  `snooze_card(card_id, until)` et `wake_card(card_id)` —, et la colonne est **retirée** des
+  écritures directes : elle devient le constat d'un geste, non une saisie. Quatre refus, dans
+  l'ordre où la garde les oppose : une affaire archivée, en corbeille ou invisible est **absente**
+  plutôt qu'interdite ; un lecteur reçoit `403` ; une échéance manquante ou passée est refusée —
+  une échéance passée serait acceptée sans effet observable, le sommeil étant défini comme « non
+  nul ET futur ». Cette définition rend inutile tout réveil planifié : le temps suffit à en sortir.
+  Le fil de l'affaire porte deux événements nouveaux, `snoozed` et `woken`, écrits par un trigger
+  de table — une écriture par la clé de service laisse donc elle aussi sa trace. Preuves :
+  `supabase/tests/0042_snooze_cards.test.sql` (**30 assertions**) et `e2e/api/snooze.spec.ts`
+  (**9 scénarios**, jetons réels). **Aucun écran** : la mise en sommeil ne se voit pas encore dans
+  le board ni dans la vue liste, et l'affaire y reste visible — tranche 2 (§16.10).
+
 - **La vue liste prouve ses données longues et sa seconde page dans l'écran réel** (`CRM-046`
   tranche 2, `docs/SPEC-seed.md` §9.11.7 preuves n° 4 et n° 6). Les deux scénarios de données
   longues de `e2e/ui/liste-cards.spec.ts` servaient une affaire **fabriquée sur le réseau**, le seed
