@@ -577,7 +577,16 @@ dépasse `CRM-040` et vaudrait pour tout contrôle de date du produit.
 
 **Conséquence pour les captures** : celles produites par le harnais montreront ce gabarit américain
 tant que la locale de Chromium n'est pas fixée. Ce n'est pas un défaut du produit, et une capture
+
 qui le montre n'est pas fausse — elle montre le harnais.
+**L'ÉCART PRÉEXISTE À LA TRANCHE QUI L'A FAIT VOIR, et la ligne de base est établie sans `git
+stash`.** En regardant `docs/captures/CRM-040/entete-card-xl-1440.jpg`, le champ « Date de signature
+prévue » du **formulaire** — livré par `CRM-037`, `webapp/src/app/FormulaireCard.tsx`, et étranger à
+cette tranche — porte exactement le même gabarit `mm/dd/yyyy`. Le contrôle d'échéance de l'en-tête
+n'a donc rien introduit : il a rendu visible un comportement que le produit portait déjà partout où
+il emploie un contrôle de date natif. L'arbitrage attendu porte en conséquence sur **tous** ces
+contrôles, non sur le seul champ de `CRM-040`.
+
 ## Consignés le 2026-08-16 — deux constats du harnais, étrangers à `CRM-040`
 
 Les deux sont rendus par `scripts/verify-cards.sh`, le harnais de l'unité, exécuté en fin de
