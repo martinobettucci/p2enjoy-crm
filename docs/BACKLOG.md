@@ -2607,11 +2607,14 @@ depuis une colonne tableau. La colonne est remplacée par une table de liaison
 `(transition_id, field_id)`. **Mise en œuvre : `CRM-018`.** Cette unité ne pourra être close
 qu'après elle.
 
-### CRM-032 — Copie d'un workflow vers un track `[~]`
-*Reste `[~]` pour **un seul** manque, et il n'est plus celui d'hier : le **geste d'interface** qui
-appelle la comparaison. La « mention de divergence visible dans l'interface » que la Definition of
-Done exigeait est **livrée et prouvée** depuis le 2026-08-16, et la **comparaison** copie ↔ source
-du §4.1 l'est depuis le même jour — voir les deux tranches plus bas.*
+### CRM-032 — Copie d'un workflow vers un track `[x]`
+*CLOSE le 2026-08-16. Les trois exigences de la Definition of Done sont livrées ET prouvées : la
+copie et son lignage (pgTAP + E2E), la « mention de divergence visible dans l'interface », et le
+geste qui l'accompagne. Le dernier manque — le **geste d'interface** appelant la comparaison — est
+livré par la quatrième tranche plus bas (`docs/SPEC-workflow-engine.md` §4 quater). Ce que l'unité
+ne livre PAS est nommé au §4 quater.8, et n'est réclamé par aucune de ses cases : aucune écriture,
+aucune resynchronisation — le §4.1 les interdit —, et l'en-tête du workflow non comparé, la copie
+ne le copiant pas.*
 `copy_workflow_to_track` avec traçabilité d'origine et signalement de divergence.
 **DoD** : pgTAP (copie complète des étapes, transitions et champs ; lignage renseigné) ; E2E ;
 mention de divergence visible dans l'interface.
@@ -2816,6 +2819,73 @@ mention de divergence visible dans l'interface.
       exigences sont remappés sans identifiant partagé ; ajout, modification et suppression source
       allument le signal de divergence. Ce point rouvre les preuves de `CRM-032` jusqu'au parcours
       froid de `CRM-018`.
+
+- [x] **LE GESTE D'INTERFACE EST LIVRÉ ET PROUVÉ, ET `CRM-032` EST CLOSE** (2026-08-16,
+      `docs/SPEC-workflow-engine.md` §4 quater). Le §4.1 promettait depuis l'origine que l'interface
+      « propose de comparer » ; le §4 bis.7 puis le §4 ter.7 ont nommé ce geste comme le seul reste.
+      L'éditeur porte désormais, dans la mention de divergence et sur une copie seulement, la
+      commande « Comparer à la source » et le document qu'elle rend : cinq collections, les
+      compteurs, et pour chaque modification l'attribut nommé avec son avant et son après.
+- [x] **Spécification écrite après mesure et committée AVANT la première ligne de code** :
+      `docs/SPEC-workflow-engine.md` §4 quater, neuf sous-chapitres, plus onze règles au §5.15 du
+      design system. Les quatre lignes du contrat de lecture et les deux formes de document sont des
+      relevés faits contre PostgREST avec le jeton réel de l'administratrice, sur une copie jetable
+      créée par la **vraie** RPC de copie puis détruite — le seed rendu à ses deux workflows,
+      constaté. Commit documentaire dédié, poussé.
+- [x] **L'APPEL PART SUR PRESSION, JAMAIS AVEC LE GRAPHE**, à la différence de la lecture 9 de la
+      mention. La fonction projette deux documents canoniques complets et les compare cinq fois ; la
+      faire partir à chaque ouverture ferait payer ce calcul à qui ne la demande pas, pour une
+      réponse qui, dans le cas normal, tient en un mot. La mention DÉCRIT le workflow affiché ; la
+      comparaison répond à une question posée.
+- [x] **La commande est rendue MÊME quand la source n'a pas changé**, et ce n'est pas une symétrie
+      gratuite : `source_modified_since_copy` dit que la SOURCE a bougé, jamais que la copie s'en
+      écarte. Une copie modifiée dont la source est intacte diverge pourtant, et la preuve E2E
+      éprouve exactement ce cas en dégradant **la copie**, pas la source.
+- [x] **Le refus n° 3 du §4 ter.5 est rendu INATTEIGNABLE depuis l'écran**, et c'est voulu : la
+      commande n'existe pas sur un workflow sans origine. L'interface ne rend pas atteignable un
+      refus qu'elle sait éviter. Il reste éprouvé hors interface (§4 ter.8, ligne d).
+- [x] **La commande n'est PAS réservée à l'administrateur**, à la différence de tous les autres
+      gestes de cet éditeur : comparer est une lecture, et un `viewer` obtient le même document
+      (§4 ter.8, ligne b). La masquer poserait dans l'interface une règle que la base ne pose pas.
+- [x] **Le rendu des collections est PARTAGÉ, jamais recopié** :
+      `webapp/src/app/CollectionsComparees.tsx`, et `composerCollections` extraite côté module. Les
+      deux comparaisons du produit rendent la même forme de `changes` ; deux rendus divergeraient au
+      premier ajustement visuel. Même motif que l'extraction d'`app.composition_collection_diff`.
+- [x] **La table de nommage est indexée par les CLÉS NATURELLES** — `node_id`, `key` — et non par
+      les identifiants de ligne : le document naturalisé n'en porte aucun (§4 ter.3).
+- [x] **Un garde-fou de `CRM-078` révisé, motif écrit dans le fichier** : `node_key` rejoint les
+      clés de libellé, en **dernière** position. Sans lui, une étape présente dans la source et
+      absente de la copie se rendait par un UUID. La place en fin de liste rend le changement sûr —
+      elle n'est consultée que là où le nommage rendait déjà des identifiants bruts.
+- [x] **Deux garde-fous figés ont échoué comme prévu, et ont été RÉVISÉS** — décision 51,
+      dix-huitième et dix-neuvième occurrences. Les deux exigeaient « aucun bouton dans la mention »,
+      l'un en composant, l'autre en E2E, et les deux avaient raison quand ils ont été écrits : aucune
+      fonction ne savait alors comparer. Resserrés sur « aucune commande d'ÉCRITURE », non supprimés.
+- [x] **Tests unitaires dédiés** : 9 tests dans `webapp/src/lib/administration-workflows.test.ts`,
+      écrits sur les documents RÉELLEMENT mesurés — une entrée `modified` porte `identity` et
+      `attributes` mais **pas** `element`. L'appel émis et son unique argument, les cinq collections
+      sans celle de l'en-tête, `identique` lu du document et non recalculé (éprouvé par un document
+      volontairement contradictoire), le nommage par `node_key`, et les quatre refus.
+- [x] **Preuves de composant dédiées** : 8 scénarios dans
+      `webapp/src/app/AdministrationWorkflows.test.tsx` — la commande absente sur un workflow sans
+      origine, l'appel qui ne part pas au chargement, les trois états, l'en-tête écrit, le refus
+      nommé sans effacer la mention, et le résultat effacé par un geste réel de l'éditeur.
+- [x] **Preuves d'interface dédiées** : 4 scénarios dans `e2e/ui/administration-workflows.spec.ts`,
+      dont un qui **dégrade réellement la copie** par la clé de service, constate l'écart nommé avec
+      son attribut et ses deux valeurs, puis restaure et constate le retour à l'identique (INC-099).
+- [x] **Vérification visuelle réellement observée, ET ELLE A TROUVÉ UN DÉFAUT QUE RIEN D'AUTRE
+      N'AURAIT TROUVÉ** : `docs/captures/CRM-032/`, trois captures. Toutes les preuves étaient
+      vertes ; la capture de l'état divergent montrait pourtant que la pilule « Modifié » **avait
+      perdu sa forme**, portant le jeton `--color-hover` exactement comme la mention qui la
+      contenait, quand « Ajouté » et « Retiré » gardaient la leur. Le mot restait lisible — le §1
+      était tenu, aucune assertion ne pouvait rougir — mais les trois genres cessaient d'être
+      distingués pareillement. Corrigé : le résultat repose sur sa propre surface `--color-bg`,
+      règle écrite au §5.15.
+- [x] **Le garde-fou des clés mortes a servi** : une clé de traduction ajoutée pour la collection
+      vide faisait doublon, le rendu partagé nommant déjà ce cas. **Retirée**, pas employée de force.
+- [x] **Campagne** : `test:sql` **41 fichiers, 2161 assertions, aucune anomalie** ; `test:unit`
+      **1243/1243** sur 43 fichiers (1223 avant) ; `e2e:api` **622/622** ; `typecheck` et `build`
+      verts ; les 4 scénarios E2E de l'unité verts sur la pile réelle.
 
 *DoD adaptée, écarts explicites.* La Definition of Done exige un « E2E » et une « mention de
 divergence visible dans l'interface ». Aucun n'est livré, et aucun ne pouvait l'être : cette unité

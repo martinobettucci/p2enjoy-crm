@@ -16930,3 +16930,69 @@ et l'écran qui rend les cinq collections. La fonction est là, prouvée, et att
 prochaine session peut prendre cela — c'est du produit visible — ou, si elle préfère avancer dans
 l'ordre du plan, corriger d'abord les cases de `CRM-013` et de `CRM-034` que cette session a
 mesurées fausses.
+
+## 2026-08-16 — `CRM-032` : le geste d'interface de la comparaison, et une pilule invisible
+
+**Point de départ.** L'entrée précédente laissait `CRM-032` `[~]` pour **un seul** manque, nommé
+sans ambiguïté : le **geste d'interface**. `compare_workflow_with_source` était livrée et prouvée,
+et le §4 ter.7 écrivait que « le geste "comparer" de l'interface est dû, et il restera dû après
+cette tranche ». C'est cette tranche-là. La spécification n'existait pas — les §4 bis.7 et §4 ter.7
+la reportaient explicitement —, elle a donc été écrite et committée **avant** la première ligne de
+code : `docs/SPEC-workflow-engine.md` §4 quater, neuf sous-chapitres, plus onze règles au §5.15 du
+design system.
+
+**Trois décisions méritent d'être retrouvées.** La première : **l'appel part sur pression, jamais
+avec le graphe**, à la différence de la lecture 9 de la mention. Le motif n'est pas l'économie de
+principe — la fonction projette deux documents canoniques complets et les compare cinq fois, et le
+cas normal (la copie du seed) rend `identical` vrai. La mention **décrit** le workflow affiché ; la
+comparaison **répond à une question posée**. La deuxième : **la commande est rendue même quand la
+source n'a pas changé**, parce que `source_modified_since_copy` dit que la SOURCE a bougé, jamais
+que la copie s'en écarte — une copie modifiée dont la source est intacte diverge pourtant, et la
+preuve E2E éprouve exactement ce cas en dégradant **la copie**. La troisième : **le résultat est
+effacé dans `rechargerGraphe`**, donc à tout geste qui réécrit la structure ; un document de
+comparaison décrit un instant.
+
+**Un fait mesuré a commandé le nommage.** Les entrées `added`/`removed` portent `element` **et**
+`identity` ; les entrées `modified` portent `identity` et `attributes` mais **pas** `element`. Et
+le document naturalisé ne porte **aucun** identifiant local : l'identité d'une étape y est son
+`node_id`, celle d'un champ sa `key`. La table de nommage du bloc des versions, indexée par
+identifiant de ligne, n'y résolvait donc rien — d'où `structureNaturelle`, indexée par clés
+naturelles. Garde-fou de `CRM-078` révisé au passage, motif écrit dans le fichier : `node_key`
+rejoint les clés de libellé, en **dernière** position, ce qui ne peut que remplacer un UUID par une
+clé lisible.
+
+**Le rendu des collections est désormais PARTAGÉ** — `webapp/src/app/CollectionsComparees.tsx`. Les
+deux comparaisons du produit rendent exactement la même forme de `changes` ; le recopier aurait posé
+deux écrans divergeant au premier ajustement visuel. Même motif côté module (`composerCollections`
+extraite) et côté base (`app.composition_collection_diff`, §4 ter.4).
+
+**DEUX GARDE-FOUS FIGÉS ONT ÉCHOUÉ COMME PRÉVU, ET ONT ÉTÉ RÉVISÉS** — mécanisme de la décision 51,
+dix-huitième et dix-neuvième occurrences. Les deux exigeaient « aucun bouton dans la mention », l'un
+en composant, l'autre en E2E, et les deux avaient raison quand ils ont été écrits : aucune fonction
+ne savait alors comparer. Ils sont **resserrés** sur la partie qui n'en a jamais dépendu — aucune
+commande d'ÉCRITURE, rien qui resynchronise — et non supprimés.
+
+**UNE CORRECTION VENUE DE L'OBSERVATION DES CAPTURES, ET ELLE N'AURAIT PAS ÉTÉ TROUVÉE AUTREMENT.**
+Toutes les preuves étaient vertes. La capture 1440 de l'état divergent montre pourtant que la pilule
+« Modifié » **avait perdu sa forme** : elle porte le jeton `--color-hover`, exactement celui de la
+mention qui la contenait, quand « Ajouté » et « Retiré » gardaient la leur. Le mot restait lisible —
+le §1 était donc tenu, et aucune assertion ne pouvait rougir — mais les trois genres cessaient
+d'être distingués pareillement. Le résultat repose désormais sur sa propre surface `--color-bg`.
+C'est précisément ce que `CLAUDE.md` §16 attend d'une vérification visuelle : ce qu'aucun test ne
+formule.
+
+**Le garde-fou des clés mortes a servi, lui aussi** : une clé de traduction ajoutée pour la
+collection vide était en doublon, le rendu partagé nommant déjà ce cas. Elle a été **retirée**,
+pas employée de force.
+
+**Campagne de fin de session.** `test:sql` **41 fichiers, 2161 assertions, aucune anomalie** ;
+`test:unit` **1243/1243** sur 43 fichiers (1223 avant) ; `e2e:api` **622/622** ; `typecheck` et
+`build` verts. Les quatre scénarios E2E de l'unité sont verts sur la pile réelle. Trois captures
+produites **et observées** sous `docs/captures/CRM-032/`.
+
+**Où reprendre.** `CRM-032` est **close** : la mention, la comparaison et son geste d'interface sont
+livrés et prouvés, et le §4 quater.8 nomme ce que la tranche ne livre pas — aucune écriture, aucune
+resynchronisation, l'en-tête non comparé. La prochaine session prend la première unité `[~]` ou
+`[ ]` restante dans l'ordre du plan ayant du COMPORTEMENT à livrer ; l'entrée du 2026-08-16 a
+mesuré que les cases de `CRM-013` et de `CRM-034` sont fausses et méritent d'être corrigées.
+INC-129 reste à porter au responsable pour arbitrage avant de toucher aux harnais.
