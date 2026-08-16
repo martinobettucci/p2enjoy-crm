@@ -9,10 +9,11 @@
 // éprouverait jsdom plutôt que le produit. Le geste réel est éprouvé sur Chromium par
 // `e2e/ui/entete-card.spec.ts`.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EnTeteCard } from './EnTeteCard'
 import type { CardOuverte } from '../lib/formulaire'
+import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
 
@@ -186,5 +187,289 @@ describe('une réponse qui ne porte pas les relations embarquées', () => {
 	it("traite un workspace ABSENT comme une adresse indisponible", () => {
 		render(<EnTeteCard card={sansRelations()} copier={copieQuiReussit} />)
 		expect(screen.getByTestId('entete-card-adresse-absente')).toBeTruthy()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// L'ÉDITION des six champs — docs/SPEC-cards.md §15 bis
+//
+// @verifies docs/SPEC-cards.md §15 bis.2 (une colonne par écriture), §15 bis.3 (le moment),
+//           §15 bis.6 (la liste des membres, lue à l'ouverture seulement),
+//           §15 bis.7 (« sans effet » n'est pas un succès), §15 bis.9 (états et accessibilité)
+// @verifies docs/DESIGN_SYSTEM.md §5.3 ter (bascule, focus, commande jamais éteinte)
+// ---------------------------------------------------------------------------------------------
+
+type EcritureEntete = { readonly charge: Record<string, unknown> }
+
+/**
+ * Client factice : il enregistre les écritures reçues et rend la réponse voulue.
+ *
+ * Il n'imite pas PostgREST — il rapporte ce que le composant a ÉMIS, ce qui est exactement ce qu'une
+ * preuve unitaire peut établir. Que le serveur accepte réellement cette charge, et qu'il rende bien
+ * `200` et zéro ligne au lecteur seul, est prouvé contre la vraie route par
+ * `e2e/api/entete-card-ecriture.spec.ts`.
+ */
+function clientEntete(
+	reponse: { data: unknown[] | null; error: { code: string; message: string } | null; status: number } = {
+		data: [
+			{
+				id: 'card-1',
+				title: 'Migration ERP Sogexia',
+				owner_id: 'p-1',
+				amount: 125000,
+				currency: 'EUR',
+				next_action: 'Obtenir le cadrage technique',
+				next_action_at: '2026-08-20T09:00:00+00:00',
+			},
+		],
+		error: null,
+		status: 200,
+	},
+	membres: unknown[] = [{ user_id: 'p-2', profiles: { id: 'p-2', full_name: 'Camille Aubert' } }],
+): { client: ClientCrm; ecritures: EcritureEntete[] } {
+	const ecritures: EcritureEntete[] = []
+	const client = {
+		from: (table: string) => ({
+			update: (charge: Record<string, unknown>) => {
+				ecritures.push({ charge })
+				const chaine: Record<string, unknown> = {}
+				chaine['eq'] = () => chaine
+				chaine['select'] = () => chaine
+				chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+					Promise.resolve(reponse).then(resoudre)
+				return chaine
+			},
+			select: () => {
+				const chaine: Record<string, unknown> = {}
+				chaine['eq'] = () => chaine
+				chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+					Promise.resolve(
+						table === 'workspace_members'
+							? { data: membres, error: null, status: 200 }
+							: { data: [], error: null, status: 200 },
+					).then(resoudre)
+				return chaine
+			},
+		}),
+	} as unknown as ClientCrm
+	return { client, ecritures }
+}
+
+async function ouvrirEdition(surcharge: Partial<CardOuverte> = {}, factice = clientEntete()) {
+	render(<EnTeteCard card={card(surcharge)} copier={copieQuiReussit} client={factice.client} />)
+	screen.getByTestId('entete-card-modifier').click()
+	await waitFor(() => expect(screen.getByTestId('entete-card-edition')).toBeTruthy())
+	return factice
+}
+
+describe("la bascule entre lecture et édition", () => {
+	it("n'affiche aucun contrôle tant que l'édition n'est pas ouverte", () => {
+		render(<EnTeteCard card={card()} copier={copieQuiReussit} client={clientEntete().client} />)
+		expect(screen.queryByTestId('entete-card-edition')).toBeNull()
+		expect(screen.queryByTestId('entete-title')).toBeNull()
+	})
+
+	// LA COMMANDE N'EST JAMAIS ÉTEINTE D'AVANCE, quel que soit le rôle : la règle vit dans la
+	// politique, et une commande grisée ferait passer une décision de la base pour une décision
+	// d'écran (CLAUDE.md §10).
+	it("offre la commande sans jamais la désactiver", () => {
+		render(<EnTeteCard card={card()} copier={copieQuiReussit} client={clientEntete().client} />)
+		const commande = screen.getByTestId('entete-card-modifier') as HTMLButtonElement
+		expect(commande.disabled).toBe(false)
+	})
+
+	it("rend les six contrôles à l'ouverture, y compris ceux dont la lecture omet la ligne", async () => {
+		await ouvrirEdition({ amount: null, next_action: null, next_action_at: null })
+		// La lecture ne rendrait NI le montant NI la prochaine action : sans le mode d'édition, il
+		// n'existerait aucun endroit où les saisir (§5.3 ter).
+		for (const champ of ['title', 'owner_id', 'amount', 'currency', 'next_action', 'next_action_at']) {
+			expect(screen.getByTestId(`entete-${champ}`)).toBeTruthy()
+		}
+	})
+
+	it("porte le focus dans le premier contrôle à l'ouverture (§5.13)", async () => {
+		await ouvrirEdition()
+		expect(document.activeElement).toBe(screen.getByTestId('entete-title'))
+	})
+
+	it("rend le focus à la commande en terminant, et non au corps du document", async () => {
+		await ouvrirEdition()
+		screen.getByTestId('entete-card-terminer').click()
+		await waitFor(() => expect(screen.queryByTestId('entete-card-edition')).toBeNull())
+		expect(document.activeElement).toBe(screen.getByTestId('entete-card-modifier'))
+	})
+
+	it("n'émet AUCUNE écriture en terminant : chaque champ a déjà écrit sa valeur", async () => {
+		const factice = await ouvrirEdition()
+		screen.getByTestId('entete-card-terminer').click()
+		await waitFor(() => expect(screen.queryByTestId('entete-card-edition')).toBeNull())
+		expect(factice.ecritures).toHaveLength(0)
+	})
+})
+
+describe("l'écriture d'un champ d'en-tête", () => {
+	it("n'émet QU'UNE colonne par requête (§15 bis.2)", async () => {
+		const factice = await ouvrirEdition()
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'Migration ERP — phase 2' } })
+		fireEvent.blur(controle)
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		expect(Object.keys(factice.ecritures[0]!.charge)).toEqual(['title'])
+	})
+
+	it("n'émet RIEN si la valeur n'a pas changé (§15 bis.3)", async () => {
+		const factice = await ouvrirEdition()
+		const controle = screen.getByTestId('entete-title')
+		fireEvent.focus(controle)
+		fireEvent.blur(controle)
+		expect(factice.ecritures).toHaveLength(0)
+	})
+
+	it('met la devise en majuscules avant de l’émettre', async () => {
+		const factice = await ouvrirEdition()
+		const controle = screen.getByTestId('entete-currency') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'chf' } })
+		fireEvent.blur(controle)
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		expect(factice.ecritures[0]!.charge).toEqual({ currency: 'CHF' })
+	})
+
+	it("écrit le responsable au CHANGEMENT, sans attendre la perte du focus", async () => {
+		const factice = await ouvrirEdition()
+		fireEvent.change(screen.getByTestId('entete-owner_id'), { target: { value: 'p-2' } })
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		expect(factice.ecritures[0]!.charge).toEqual({ owner_id: 'p-2' })
+	})
+
+	it('confirme par une région annoncée, liée au contrôle', async () => {
+		await ouvrirEdition()
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'Autre titre' } })
+		fireEvent.blur(controle)
+		const etat = await screen.findByTestId('entete-title-etat')
+		expect(etat.getAttribute('role')).toBe('status')
+		expect(controle.getAttribute('aria-describedby')).toContain('entete-title-etat')
+	})
+})
+
+describe("les issues qui ne sont pas des enregistrements", () => {
+	// LA MESURE QUI COMMANDE LE GESTE : le lecteur seul reçoit 200 et ZÉRO ligne, jamais 403.
+	// Annoncer « Enregistré » ici serait la simulation de succès que CLAUDE.md §18 interdit.
+	it("dit « rien n'a été enregistré » sur 200 avec zéro ligne, et n'annonce PAS un succès", async () => {
+		const factice = clientEntete({ data: [], error: null, status: 200 })
+		await ouvrirEdition({}, factice)
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'Tentative' } })
+		fireEvent.blur(controle)
+		const refus = await screen.findByTestId('entete-title-refus')
+		expect(refus.getAttribute('role')).toBe('alert')
+		expect(refus.textContent).toContain("Rien n'a été enregistré")
+		expect(screen.queryByTestId('entete-title-etat')).toBeNull()
+	})
+
+	it("laisse la saisie à l'écran après un refus, et ne la rejette jamais", async () => {
+		const factice = clientEntete({
+			data: null,
+			error: { code: '23514', message: 'violates check constraint' },
+			status: 400,
+		})
+		await ouvrirEdition({}, factice)
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: '   ' } })
+		fireEvent.blur(controle)
+		await screen.findByTestId('entete-title-refus')
+		expect(controle.value).toBe('   ')
+		expect(controle.getAttribute('aria-invalid')).toBe('true')
+	})
+
+	it("ne désactive JAMAIS le contrôle pendant l'envoi (§5.7 ter)", async () => {
+		await ouvrirEdition()
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'Autre' } })
+		fireEvent.blur(controle)
+		expect(controle.disabled).toBe(false)
+	})
+
+	it("nomme l'échec de la liste des membres plutôt que de rendre un sélecteur vide", async () => {
+		const factice = clientEntete(undefined, [])
+		const client = {
+			from: (table: string) =>
+				table === 'workspace_members'
+					? {
+							select: () => {
+								const chaine: Record<string, unknown> = {}
+								chaine['eq'] = () => chaine
+								chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+									Promise.resolve({
+										data: null,
+										error: { message: 'panne' },
+										status: 500,
+									}).then(resoudre)
+								return chaine
+							},
+						}
+					: (factice.client as unknown as { from: (t: string) => unknown }).from(table),
+		} as unknown as ClientCrm
+		render(<EnTeteCard card={card()} copier={copieQuiReussit} client={client} />)
+		screen.getByTestId('entete-card-modifier').click()
+		const echec = await screen.findByTestId('entete-membres-echec')
+		expect(echec.getAttribute('role')).toBe('alert')
+	})
+})
+
+describe("ce que l'écran montre APRÈS une écriture confirmée", () => {
+	it("met la lecture à jour depuis la ligne RENDUE par le serveur, pas depuis la saisie", async () => {
+		// Le serveur rend un titre DIFFÉRENT de la saisie : c'est le sien qui doit paraître.
+		const factice = clientEntete({
+			data: [
+				{
+					id: 'card-1',
+					title: 'Titre normalisé par la base',
+					owner_id: null,
+					amount: 999,
+					currency: 'EUR',
+					next_action: null,
+					next_action_at: null,
+				},
+			],
+			error: null,
+			status: 200,
+		})
+		await ouvrirEdition({}, factice)
+		const controle = screen.getByTestId('entete-title') as HTMLInputElement
+		fireEvent.change(controle, { target: { value: 'ce que je tape' } })
+		fireEvent.blur(controle)
+		await screen.findByTestId('entete-title-etat')
+		screen.getByTestId('entete-card-terminer').click()
+		await waitFor(() =>
+			expect(screen.getByTestId('entete-card').textContent).toContain('Titre normalisé par la base'),
+		)
+	})
+
+	it("détache le responsable quand le serveur rend owner_id à null", async () => {
+		const factice = clientEntete({
+			data: [
+				{
+					id: 'card-1',
+					title: 'Migration ERP Sogexia',
+					owner_id: null,
+					amount: 125000,
+					currency: 'EUR',
+					next_action: null,
+					next_action_at: null,
+				},
+			],
+			error: null,
+			status: 200,
+		})
+		await ouvrirEdition({}, factice)
+		fireEvent.change(screen.getByTestId('entete-owner_id'), { target: { value: '' } })
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		screen.getByTestId('entete-card-terminer').click()
+		await waitFor(() =>
+			expect(screen.getByTestId('entete-card-responsable').textContent).toContain(
+				'Aucun responsable',
+			),
+		)
 	})
 })

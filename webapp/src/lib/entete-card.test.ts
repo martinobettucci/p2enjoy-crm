@@ -7,7 +7,15 @@
 // navigateur ni rendu, et c'est ce qui les rend lisibles quand ils échouent.
 
 import { describe, expect, it } from 'vitest'
-import { composerAdresseCard, estArchivee, formaterEcheance, formaterMontant } from './entete-card'
+import {
+	classerEcritureEntete,
+	composerAdresseCard,
+	estArchivee,
+	formaterEcheance,
+	formaterMontant,
+	normaliserSaisieEntete,
+} from './entete-card'
+import { pourControleDateHeure } from '../app/EnTeteCard'
 import type { CardOuverte } from './formulaire'
 
 function card(surcharge: Partial<CardOuverte> = {}): CardOuverte {
@@ -100,5 +108,134 @@ describe("l'archivage", () => {
 
 	it('reconnaît une affaire en cours', () => {
 		expect(estArchivee(card())).toBe(false)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// L'ÉCRITURE des six champs — docs/SPEC-cards.md §15 bis
+//
+// @verifies CRM-040 (docs/BACKLOG.md) — écriture des champs d'en-tête
+// @verifies docs/SPEC-cards.md §15 bis.4 (normalisation des six saisies),
+//           §15 bis.6 (la liste des membres), §15 bis.7 (dictionnaire fermé des sept issues),
+//           §15 bis.8 (contrat d'API mesuré, lignes b, d, f, h, i, j)
+// ---------------------------------------------------------------------------------------------
+
+describe("normalisation d'une saisie d'en-tête", () => {
+	it('met la devise en majuscules, parce que la base refuse les minuscules en 23514', () => {
+		expect(normaliserSaisieEntete('currency', 'eur')).toBe('EUR')
+	})
+
+	it("n'écarte PAS une devise de quatre lettres : c'est la base qui tranche (§15 bis.5)", () => {
+		expect(normaliserSaisieEntete('currency', 'euro')).toBe('EURO')
+	})
+
+	it('transmet un titre de blancs tel quel, sans trim — la base le refuse en 23514', () => {
+		expect(normaliserSaisieEntete('title', '   ')).toBe('   ')
+	})
+
+	it('transmet un titre vide tel quel, et ne le convertit jamais en null', () => {
+		expect(normaliserSaisieEntete('title', '')).toBe('')
+	})
+
+	it('convertit un montant en NOMBRE, jamais en chaîne', () => {
+		expect(normaliserSaisieEntete('amount', '48000.5')).toBe(48000.5)
+	})
+
+	it('accepte un montant NÉGATIF : aucune contrainte de signe, MESURÉ 200 (§15 bis.5)', () => {
+		expect(normaliserSaisieEntete('amount', '-500')).toBe(-500)
+	})
+
+	it('garde zéro comme montant, et ne le confond pas avec une absence', () => {
+		expect(normaliserSaisieEntete('amount', '0')).toBe(0)
+	})
+
+	it('vide un montant par null, jamais par zéro', () => {
+		expect(normaliserSaisieEntete('amount', '')).toBeNull()
+	})
+
+	it("rend la CHAÎNE d'un montant non convertible, et jamais NaN — que JSON change en null", () => {
+		expect(normaliserSaisieEntete('amount', 'douze mille')).toBe('douze mille')
+	})
+
+	it('vide la prochaine action, son échéance et le responsable par null', () => {
+		expect(normaliserSaisieEntete('next_action', '')).toBeNull()
+		expect(normaliserSaisieEntete('next_action_at', '')).toBeNull()
+		expect(normaliserSaisieEntete('owner_id', '')).toBeNull()
+	})
+
+	it("ne rogne pas la prochaine action : rogner à l'écriture ferait diverger l'écran de la base", () => {
+		expect(normaliserSaisieEntete('next_action', '  relancer la DSI  ')).toBe('  relancer la DSI  ')
+	})
+})
+
+describe("classement d'une écriture d'en-tête", () => {
+	it('200 avec une ligne rendue est un enregistrement', () => {
+		expect(classerEcritureEntete(200, null, 1)).toBe('enregistree')
+	})
+
+	// LA MESURE QUI COMMANDE TOUT LE GESTE : le viewer reçoit 200 et ZÉRO ligne, jamais 403.
+	// Sans ce cas, l'écran annoncerait « Enregistré » à qui n'a rien écrit (CLAUDE.md §18).
+	it("200 avec ZÉRO ligne est « sans effet », et surtout pas un succès (mesure b)", () => {
+		expect(classerEcritureEntete(200, null, 0)).toBe('sans-effet')
+	})
+
+	it('23514 en 400 est une valeur invalide — titre vide, devise mal formée (mesures d, e, h)', () => {
+		expect(classerEcritureEntete(400, '23514', 0)).toBe('invalide')
+	})
+
+	it("22007 en 400 est une valeur invalide — échéance illisible (mesure i)", () => {
+		expect(classerEcritureEntete(400, '22007', 0)).toBe('invalide')
+	})
+
+	it('23502 en 400 est une valeur invalide — devise vidée sur une colonne NOT NULL (mesure g)', () => {
+		expect(classerEcritureEntete(400, '23502', 0)).toBe('invalide')
+	})
+
+	it("23503 en 409 nomme un responsable qui n'est plus membre (mesure j)", () => {
+		expect(classerEcritureEntete(409, '23503', 0)).toBe('introuvable')
+	})
+
+	it('42501 en 403 est un refus de privilège — colonne fermée (mesures k, l)', () => {
+		expect(classerEcritureEntete(403, '42501', 0)).toBe('refus')
+	})
+
+	it("l'absence de réponse est un défaut de réseau, jamais un refus", () => {
+		expect(classerEcritureEntete(undefined, null, 0)).toBe('reseau')
+	})
+
+	it("un code inattendu ne se déguise pas : l'interface ne prétend pas savoir", () => {
+		expect(classerEcritureEntete(418, 'ZZZZZ', 0)).toBe('inconnu')
+		expect(classerEcritureEntete(500, null, 0)).toBe('inconnu')
+	})
+
+	it('classe sur le CODE, jamais sur le message — un texte de serveur peut changer sans préavis', () => {
+		// Le même SQLSTATE sous deux codes HTTP ne rend pas la même issue : c'est le couple qui décide.
+		expect(classerEcritureEntete(400, '23503', 0)).toBe('inconnu')
+	})
+})
+
+describe("valeur d'un contrôle datetime-local", () => {
+	it("rend la chaîne vide pour une échéance absente, jamais « Invalid Date »", () => {
+		expect(pourControleDateHeure(null)).toBe('')
+	})
+
+	it("rend la chaîne vide pour un horodatage illisible", () => {
+		expect(pourControleDateHeure('pas-une-date')).toBe('')
+	})
+
+	// L'HEURE LOCALE ET NON UN `slice` DE LA CHAÎNE ISO : la base rend un timestamptz en UTC, et
+	// couper la chaîne afficherait l'heure UTC, décalant l'échéance de l'écart de fuseau.
+	it("rend les composantes LOCALES au format que le contrôle accepte", () => {
+		const attendu = new Date('2026-08-20T09:00:00+00:00')
+		const deux = (nombre: number) => String(nombre).padStart(2, '0')
+		expect(pourControleDateHeure('2026-08-20T09:00:00+00:00')).toBe(
+			`${attendu.getFullYear()}-${deux(attendu.getMonth() + 1)}-${deux(attendu.getDate())}T${deux(attendu.getHours())}:${deux(attendu.getMinutes())}`,
+		)
+	})
+
+	it("ne porte ni seconde ni fuseau : le contrôle n'accepte que AAAA-MM-JJTHH:MM", () => {
+		expect(pourControleDateHeure('2026-08-20T09:00:00+00:00')).toMatch(
+			/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/,
+		)
 	})
 })
