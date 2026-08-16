@@ -219,7 +219,7 @@ qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 r�
 
 ---
 
-## Consignées le 2026-08-16 — trois constats étrangers à `CRM-079`
+## Consignées le 2026-08-16 — trois constats étrangers à `CRM-079`, puis INC-126 et INC-127
 
 Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrangers à l'unité de la
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
@@ -380,3 +380,27 @@ assertion rougira et désignera l'endroit à mettre à jour.
 
 **Ce que ce n'est pas** : une demande d'arbitrage. Ajouter `œ → oe`, `æ → ae` et `ß → ss` à la
 normalisation est un choix que la mesure tranche seule ; il reste à faire, sous son unité porteuse.
+
+### INC-127 — le `README.md` annonce « 40 cas » de `pytest` là où la suite en compte 242
+
+*Porteur : `CRM-008` (documentation des preuves) et `CRM-051` (le sujet de la suite). Mesuré le
+2026-08-16 par la session `CRM-030`, en exécutant la campagne de fin de session.*
+
+Le `README.md` écrit deux fois le même compte figé : ligne 399, « pytest, 40 tests du service
+mail-sync — aucune pile requise », et dans l'arborescence du dépôt, « tests/ pytest — 40 cas, sans
+pile ». **Mesuré** : `.venv/bin/python -m pytest mail-sync/tests` rend **242 passed**, en une
+seconde, sans pile — le reste de la phrase est donc exact, seul le nombre a dérivé.
+
+La suite est **verte** : ce n'est pas une régression, c'est un compteur que les unités qui l'ont fait
+monter n'ont pas révisé. **C'est exactement le mode de défaillance qu'INC-125 décrit** pour les trois
+garde-fous de `scripts/verify-harness.sh`, et qu'INC-101 avait déjà décrit avant elle : un nombre
+recopié dans un document est révisé par la session qui le remarque, jamais par la Definition of Done
+de l'unité qui le fait bouger. La troisième occurrence en deux jours, sur un troisième support.
+
+**Comportement laissé inchangé, et le chiffre aussi** (`docs/CloudWorker.md` §3.1) : le défaut est
+étranger à `CRM-030`, qui n'ajoute ni ne retire aucun cas `pytest`. Le corriger ici réparerait une
+mesure sans réparer le mécanisme qui la laisse dériver.
+
+**Ce que ce n'est pas** : une demande d'arbitrage. Le remède est celui qu'INC-125 attend déjà — que
+les comptes vivent dans un harnais qui les recalcule, ou qu'une unité les inscrive à sa Definition
+of Done. Il se décide une fois, pour les trois supports à la fois.
