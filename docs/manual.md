@@ -501,8 +501,28 @@ trouve**, et à droite son **historique et sa discussion** (chapitre 4.10).
 - la mention **« Archivé »** lorsque l'affaire est archivée (chapitre 4.4). Sa fiche reste
   consultable, et cette mention est ce qui la distingue d'une affaire en cours.
 
-**Ces champs se lisent, ils ne se modifient pas encore** : aucun écran ne porte leur saisie. Le
-formulaire de l'étape, lui, s'enregistre bien question par question.
+**Ces six champs se modifient depuis la fiche.** Le bouton **« Modifier »**, à droite du titre,
+bascule l'en-tête en saisie : les six champs y apparaissent **tous**, y compris ceux qui n'étaient
+pas affichés faute de valeur — c'est ainsi que l'on renseigne le montant d'une affaire qui n'en
+avait pas.
+
+Quelques points à connaître :
+
+- **il n'y a aucun bouton d'enregistrement.** Chaque champ enregistre sa propre valeur dès que vous
+  le quittez ; le responsable, lui, s'enregistre dès que vous le choisissez dans la liste. Une
+  mention sous le champ vous dit « Enregistrement… » puis « Enregistré » ;
+- **« Terminer » referme la saisie et n'envoie rien** — tout a déjà été enregistré ;
+- **le titre ne peut pas être vide**, et la devise doit s'écrire en trois lettres (« EUR », « CHF »).
+  Si vous saisissez autre chose, l'écran vous dit que la valeur ne convient pas et **conserve votre
+  saisie** : rien n'est effacé à votre place ;
+- **si votre compte n'a pas le droit de modifier cette affaire**, le bouton reste proposé — c'est
+  volontaire —, mais l'écran vous répond « Rien n'a été enregistré : votre compte ne peut pas
+  modifier cette affaire ». Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été
+  refusée ;
+- **changer le responsable apparaît dans l'historique** de l'affaire (chapitre 4.10), sous la forme
+  « Responsable modifié ». Les autres champs ne laissent pas de trace dans ce fil.
+
+Le formulaire de l'étape, lui, s'enregistre de la même façon, question par question.
 
 Ce que vous y voyez :
 

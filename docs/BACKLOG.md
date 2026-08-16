@@ -3987,12 +3987,69 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
             Regardées une à une ; à 390 px l'en-tête se replie sans débordement horizontal.
       - [x] `docs/manual.md` §4.7 réécrit et §4.6 corrigé, `CHANGELOG.md` mis à jour dans le même
             changement.
-- [ ] **L'ÉCRITURE DES SIX CHAMPS D'EN-TÊTE RESTE DUE, et rien en base ne la bloque.** MESURÉ, le
-      rôle `authenticated` porte le privilège `UPDATE` sur `title`, `owner_id`, `amount`,
-      `currency`, `next_action` et `next_action_at` : ce qui manque est le geste d'interface, ses
-      refus et ses preuves, soit un volume comparable au §4 bis du composeur de formulaire
-      (`docs/SPEC-cards.md` §15.1). L'écart est **nommé plutôt que compensé** ; c'est une tranche,
-      pas un blocage.
+- [x] **~~L'ÉCRITURE DES SIX CHAMPS D'EN-TÊTE RESTE DUE~~ — LIVRÉE le 2026-08-16.** La case disait
+      « rien en base ne la bloque, ce qui manque est le geste » ; c'était exact, et c'est ce geste
+      qui est livré. Spécification rédigée et committée **avant la première ligne de code** :
+      `docs/SPEC-cards.md` §15 bis, onze sous-chapitres, plus neuf règles au §5.3 ter du design
+      system — écrite après mesure sur la pile réelle, quinze lignes de contrat relevées à la main.
+      - [x] **L'en-tête BASCULE entre lecture et édition**, et ce n'est pas un choix de forme : une
+            donnée absente n'a **pas de ligne** en lecture (§15.4), si bien que six contrôles
+            permanents auraient fait ouvrir la fiche sur deux formulaires empilés, tandis qu'une
+            édition en place n'aurait offert **aucun endroit** où saisir le montant d'une affaire
+            qui n'en a pas. En édition, les six contrôles sont tous rendus, vides compris — la
+            quatrième destination du §4 ter.4 du composeur, transposée.
+      - [x] **UNE COLONNE PAR ÉCRITURE, et la mesure l'impose** (§15 bis.2) : chaque colonne a son
+            refus propre — `23514` pour le titre et la devise, `22007` pour l'échéance, `23503` pour
+            le responsable. Le lot **fonctionne**, MESURÉ `200` ; ce n'est pas une impossibilité
+            technique, c'est une perte d'attribution que le produit refuse. Aucun bouton
+            d'enregistrement (§5.7 ter) ; « Terminer » n'envoie rien.
+      - [x] **LA DÉCOUVERTE DE LA MESURE, ET ELLE COMMANDE TOUT LE GESTE** : un lecteur seul qui
+            écrit ne reçoit **pas** `403`. La clause `USING` de `cards_maj` filtre avant la mise à
+            jour, et PostgREST rend **`200` avec zéro ligne**. Le `PATCH` porte donc
+            `Prefer: return=representation` — sans corps, succès et refus seraient indistinguables
+            —, et le classement des issues lit le **nombre de lignes** autant que le code HTTP.
+            Annoncer « Enregistré » ici aurait été la simulation de succès de `CLAUDE.md` §18 ;
+            l'écran dit « rien n'a été enregistré », comme l'issue « sans effet » de `CRM-077`.
+      - [x] **AUCUNE GARDE DE SAISIE NE DOUBLE UNE CONTRAINTE DE LA BASE** (§15 bis.5) : ni
+            `required` sur le titre, ni `min` sur le montant. MESURÉ, un montant **négatif est
+            accepté** — aucune contrainte de signe n'existe (§10) —, et l'assertion `f` de la preuve
+            d'API **fige** cette absence : elle rougira le jour où une décision de produit la posera.
+            La commande n'est jamais éteinte d'avance quel que soit le rôle, et une affaire
+            **archivée reste modifiable**, MESURÉ.
+      - [x] **La liste des responsables n'est lue qu'à l'OUVERTURE de l'édition** (§15 bis.6),
+            jamais au chargement de la fiche : une requête pour un geste que la plupart des visites
+            ne font pas serait gratuite sur l'écran le plus ouvert du produit. Le nom affiché après
+            un changement vient de cette liste, jamais d'une relecture — la représentation rendue
+            par l'écriture ne porte pas la relation embarquée.
+      - [x] **UNE SEULE DES SIX ÉCRITURES LAISSE UNE TRACE AU FIL**, et c'est mesuré : `owner_id`
+            engendre un `assigned` dont l'`actor_id` est posé par le serveur. Le titre, le montant,
+            la devise, la prochaine action et l'échéance n'engendrent **aucun** événement. L'écart
+            est **nommé** (§15 bis.10) et non comblé : le combler suppose un trigger, donc une
+            migration, donc `CRM-044`.
+      - [x] **Preuves unitaires** : `webapp/src/lib/entete-card.test.ts` **38 cas** (13 avant) — la
+            normalisation des six saisies, les sept issues du dictionnaire fermé, et la valeur
+            **locale** du contrôle d'échéance — et `webapp/src/app/EnTeteCard.test.tsx`
+            **34 scénarios** (17 avant), dont la mise à jour de la lecture depuis la ligne **rendue
+            par le serveur**, établie en faisant rendre au serveur un titre différent de la saisie.
+      - [x] **Preuve d'API dédiée** : `e2e/api/entete-card-ecriture.spec.ts`, **17 scénarios**, les
+            quinze lignes du contrat du §15 bis.8 rejouées avec les jetons réels des trois profils
+            seedés. Chaque refus **relit la ligne** avec la clé de service pour la constater
+            inchangée. Les lignes `k` et `l` **figent** les deux colonnes fermées par privilège :
+            leur passage à `200` signalerait une migration qui les rouvre en silence.
+      - [x] **Preuve d'interface sur session réelle, SANS AUCUNE RÉPONSE SUBSTITUÉE** :
+            `e2e/ui/entete-card-ecriture.spec.ts`, **7 scénarios**. Le titre corrigé est constaté
+            après **rechargement** de la page, et non par l'état d'écran ; le refus du lecteur seul
+            est constaté **dans la base** par une relecture. Les deux `400` provoqués sont consommés
+            nommément par `autoriserErreursConsole` : la console reste un verdict.
+      - [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-040/`, **cinq
+            captures** de l'édition — les quatre paliers et le refus. Regardées une à une ; à 390 px
+            le montant et la devise se replient sans débordement horizontal.
+      - [x] **INC-131 consigné** : le gabarit du contrôle d'échéance suit la locale du **navigateur**
+            — `mm/dd/yyyy` sous le Chromium du harnais —, qu'aucun attribut HTML ne force. La
+            **valeur** est composée sur les composantes locales de `Date`, un `slice` de la chaîne
+            ISO décalant toute échéance de l'écart de fuseau. Comportement inchangé, arbitrage
+            attendu.
+      - [x] `docs/manual.md` §4.7 réécrit, `CHANGELOG.md` mis à jour dans le même changement.
 - [ ] **La protection de colonne de `current_step_id` et d'`email_local_part` n'est pas livrée.**
       C'est mot pour mot la Definition of Done de `CRM-013`, unité `[ ]` distincte, désormais
       **partiellement débloquée** — deux de ses six cibles existent. Le trigger **génère** l'adresse ;
@@ -4005,15 +4062,27 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur la génération et
 l'unicité de `email_local_part` ; E2E ; captures ». La première est livrée, largement au-delà — la
 génération, l'unicité, la valeur du client ignorée, et le fait que ce soit l'**index** et non la
-boucle qui garantisse. **Les deux dernières le sont depuis le 2026-08-16** : sept scénarios
-d'interface sur session réelle et six captures observées, portés par les champs d'en-tête de la
-fiche (`docs/SPEC-cards.md` §15). L'unité reste `[~]` pour une seule raison, nommée ci-dessus :
-**l'écriture** de ces champs n'est pas livrée.
+boucle qui garantisse. **Les deux dernières le sont depuis le 2026-08-16** : quatorze scénarios
+d'interface sur session réelle — sept en lecture, sept en écriture — et onze captures observées,
+portés par les champs d'en-tête de la fiche (`docs/SPEC-cards.md` §15 et §15 bis).
+
+**L'unité reste `[~]`, et pour deux écarts qui ne lui appartiennent pas.** Le premier est la
+protection de colonne de `current_step_id` et d'`email_local_part`, qui est mot pour mot la
+Definition of Done de `CRM-013` — unité `[ ]` distincte ; deux assertions de la preuve d'API la
+figent désormais côté écriture d'en-tête. Le second est l'absence de card sur un workflow dérivé
+dans le seed (INC-046). **Tout ce que `CRM-040` devait livrer en propre est livré et prouvé.**
 
 *Limites nommées, non masquées.*
 
 - ~~**Aucun écran.** Dixième unité consécutive à buter sur INC-021.~~ **Levée** : la fiche porte son
-  en-tête depuis le 2026-08-16, INC-021 étant close depuis `CRM-009`.
+  en-tête depuis le 2026-08-16, INC-021 étant close depuis `CRM-009`, et son **écriture** depuis le
+  même jour.
+- **Cinq des six écritures ne laissent aucune trace au fil** — seul `owner_id` engendre un
+  `assigned`, MESURÉ. Modifier un montant ou une échéance est invisible dans la timeline. Le combler
+  suppose un trigger, donc une migration, donc `CRM-044` (`docs/SPEC-cards.md` §15 bis.10).
+- **`description`, `probability_override`, `position` et `snoozed_until` ne s'écrivent pas** depuis
+  l'écran, bien que la base les ouvre : aucune n'atteint l'en-tête en lecture, et livrer l'écriture
+  d'une donnée que l'écran ne montre pas inventerait une règle de produit.
 - **`move_card` n'existe pas** : `current_step_id` s'écrit directement par un `PATCH`, et une card
   peut franchir une transition non déclarée. La seule garde qui tienne aujourd'hui est structurelle —
   l'étape doit appartenir au workflow de la card. `CRM-034` est désormais **débloquée** : sa cible

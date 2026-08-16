@@ -15,6 +15,25 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les six champs d'en-tête d'une affaire se MODIFIENT depuis sa fiche** (`CRM-040`,
+  `docs/SPEC-cards.md` §15 bis, `docs/DESIGN_SYSTEM.md` §5.3 ter). L'en-tête livré plus tôt les
+  montrait sans permettre de les corriger ; l'écart était nommé — « rien en base ne la bloque, ce
+  qui manque est le geste ». Une commande « Modifier » bascule l'en-tête en édition : titre,
+  responsable, montant, devise, prochaine action et échéance y sont **tous** rendus, y compris ceux
+  dont la lecture omet la ligne — sans ce mode, il n'existerait aucun endroit où saisir le montant
+  d'une affaire qui n'en a pas.
+  Chaque champ **écrit sa propre valeur** dès qu'elle est arrêtée, sans bouton d'enregistrement :
+  chaque colonne ayant son refus propre, un envoi groupé ferait échouer le titre saisi à cause d'une
+  devise mal formée. La liste des responsables n'est lue qu'à l'ouverture de l'édition, jamais au
+  chargement de la fiche.
+  **La commande n'est jamais éteinte d'avance, quel que soit le rôle.** Un lecteur seul l'ouvre,
+  écrit, et lit « rien n'a été enregistré » — mesuré, la politique rend `200` avec **zéro ligne** et
+  non un refus : annoncer « Enregistré » aurait été une simulation de succès. Aucune garde de saisie
+  ne double une contrainte de la base : un titre vide et un montant négatif sont envoyés, et c'est
+  la base qui tranche — le second est d'ailleurs accepté, aucune contrainte de signe n'existant.
+  Changer le responsable est la seule des six écritures qui laisse une trace dans le fil, un
+  événement `assigned` posé par le serveur ; l'écart est nommé et non comblé au passage.
+
 - **La fiche d'une affaire montre enfin ce qu'elle EST : son responsable, son montant, sa prochaine
   action et son adresse email** (`CRM-040`, `docs/SPEC-cards.md` §15, `docs/DESIGN_SYSTEM.md`
   §5.3 bis). Le §5.3 du design system nommait ces champs depuis `CRM-000` et rien ne les rendait :
