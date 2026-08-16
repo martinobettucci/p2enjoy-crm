@@ -16706,3 +16706,32 @@ ligne archivée ne porte que « Rétablir », et le repli à 390 px est **identi
 **Où reprendre.** `CRM-030` est **close**. La prochaine session prend la première unité `[~]` ou
 `[ ]` restante dans l'ordre du plan — `CRM-080`, sauvegardes chiffrées et restauration prouvée,
 était le renvoi de l'avant-dernière entrée.
+
+### Complément du 2026-08-16 — la fin de campagne, et un rétablissement
+
+**Trois suites de plus, exécutées après la première rédaction de cette entrée.** `pytest
+mail-sync/tests` **242 passés** en une seconde, sans pile — l'environnement Python n'existait pas
+sur cet hôte et a été créé selon le `README.md` §7. `npm run e2e:mail` **41 passés, 1 en échec**.
+`scripts/verify-harness.sh` **28 contrôles, 4 anomalies**.
+
+**Les quatre anomalies du harnais des harnais s'expliquent entièrement par deux entrées ouvertes du
+registre, et aucune n'appartient à cette session.** Trois sont les compteurs figés d'**INC-125**, que
+l'arithmétique suffit à établir : `FICHIERS_SQL_ATTENDUS`/`ASSERTIONS_ATTENDUES` valent `36`/`2003`
+pour un mesuré de `40`/`2133` — la session n'ajoute **aucun** `.sql` ; `SCENARIOS_API` vaut `514`
+pour `602`, dont **trois** viennent d'ici ; `SCENARIOS_UI` vaut `241` pour `295`, dont **deux**. La
+quatrième est la suite `mail` rouge, consignée en **INC-128** : son scénario en échec **passe seul**,
+la suite ne porte aucune occurrence du catalogue, et le mode — une dérive d'état laissée par les
+scénarios voisins — est celui d'INC-105 et d'INC-117.
+
+**Un défaut de cette session, trouvé et corrigé.** `scripts/verify-harness.sh` éprouve sa
+non-complaisance en **dégradant réellement** `supabase/tests/0003_seed_socle.test.sql` — « P2Enjoy
+SAS » y devient « P2Enjoy SARL » — puis en le restaurant. Un `git add -A` lancé **pendant** cette
+fenêtre a committé le fichier muté, et l'a poussé. Le fait a été vu au `git status` suivant, la
+valeur juste rétablie et poussée dans un commit dédié, et `npm run test:sql` rejoué : **40 fichiers,
+2133 assertions, aucune anomalie**, dont 32 pour ce fichier. **La leçon est reproductible et vaut
+d'être écrite** : tant qu'un harnais non complaisant tourne, `git add -A` ramasse ses mutations. Ne
+committer qu'après sa sortie, ou nommer les chemins un par un.
+
+**Non exécutés, faute de temps** : les quarante-neuf autres `scripts/verify-*.sh`. Le harnais dédié
+de l'unité, `scripts/verify-catalogue.sh`, est vert à **39 contrôles**, et il rejoue lui-même
+`test:sql`, `test:unit`, `typecheck`, `types:check`, `build`, `e2e:api` et `e2e:ui`.
