@@ -195,7 +195,10 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Quatre ouvertes à ce jour : INC-123, INC-124, INC-125 et INC-126** — la dernière consignée le
+**Cinq ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126 et INC-136** — la dernière
+consignée le 2026-08-16 par la session `CRM-081` (le dépôt d'un objet Storage rend
+`InvalidAccessKeyId` sur un cluster fraîchement créé). **Quatre ouvertes auparavant : INC-123,
+INC-124, INC-125 et INC-126** — la dernière consignée le
 2026-08-16 par la session `CRM-030` (la proposition de clé perd la ligature « œ »). Les trois
 premières, consignées par les deux sessions `CRM-079` du
 2026-08-15 (navigateur absent pour les scénarios Roundcube ; `WARNING` de `mail-sync` interdit par
@@ -755,3 +758,32 @@ journée avait vu l'inverse — ingestion **verte** et S3 rouge sur un `WARNING`
 confirme l'intermittence dans les deux sens. **Cela renforce l'arbitrage demandé** : tant que S3
 juge l'historique, elle transforme toute intermittence voisine en second rouge, et masque laquelle
 des deux preuves a réellement quelque chose à dire.
+
+## Consigné le 2026-08-16 — un constat d'environnement, étranger à `CRM-081`
+
+### INC-136 — le dépôt d'un objet par l'API Storage rend `InvalidAccessKeyId` sur un cluster fraîchement créé
+
+**Mesuré le 2026-08-16**, pile montée depuis zéro dans un conteneur neuf, seed appliqué.
+`npm run e2e:api` rend **666 passés, 1 en échec**, et l'échec est le dépôt de la pièce jointe saine
+de `e2e/api/inbox.spec.ts` §18.5 :
+
+```
+Error: {"statusCode":"403","error":"The Access Key Id you provided does not exist in our records.",
+        "message":"InvalidAccessKeyId"}
+expect(received).toContain(expected)
+Received array: [200, 201]
+```
+
+Le refus vient de **MinIO**, non du produit : le service `storage` présente à MinIO une clé
+d'accès que le cluster fraîchement créé ne connaît pas. Reproduit à l'identique en rejouant le seul
+scénario.
+
+**Étranger à `CRM-081`** : la tranche livrée ne touche ni `storage`, ni MinIO, ni `mail_attachments`
+— elle porte sur `cards.snoozed_until`, ses deux RPC et un trigger de `card_events`. Aucun fichier
+de `mail-sync/`, de `e2e/mail/` ni de la chaîne de stockage n'est modifié.
+
+**Comportement laissé inchangé, et arbitrage demandé.** Deux lectures s'offrent, et aucune n'est
+tranchée ici : soit les identifiants MinIO du service `storage` ne sont pas convergents à la
+création du cluster — auquel cas c'est un défaut d'amorçage que `CRM-001` porterait —, soit la
+preuve suppose un état de MinIO que ni `runDev.sh` ni le seed n'établissent, auquel cas c'est la
+preuve qui doit poser son préalable. Le responsable tranche.
