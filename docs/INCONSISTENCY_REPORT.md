@@ -503,3 +503,46 @@ Cette seconde mesure ajoute un fait au diagnostic : **le harnais se déclare ver
 cassée**. Son propre bilan ne peut donc pas servir d'indice, et seule une suite exécutée APRÈS lui
 révèle le dégât. Toute session qui lance `verify-copie-workflow.sh` doit rejouer `0035` derrière,
 ou rejouer `test:sql` pour constater. L'arbitrage reste demandé, et le comportement inchangé.
+
+---
+
+## Consignée le 2026-08-16 — un constat étranger à `CRM-037`
+
+Elle suit la doctrine du §1 : elle est **mesurée**, elle est **étrangère à l'unité de la session**,
+et le comportement est laissé **inchangé**. Elle ne demande aucun arbitrage : c'est un fait à porter
+par son unité, pas un choix à trancher.
+
+### INC-130 — une classe citée par l'éditeur de workflows n'existe pas dans le CSS produit
+
+*Porteur : `CRM-076` (éditeur de workflows). Mesuré le 2026-08-16 par la campagne de `CRM-037`.*
+
+`scripts/verify-formulaire.sh` contrôle que chaque classe citée par le rendu existe réellement dans
+le CSS produit — une classe dont le jeton n'est pas déclaré n'est **pas engendrée, en silence**
+(`docs/DESIGN_SYSTEM.md` §11). Sur 227 classes relevées dans `webapp/src`, **une** manque :
+
+```
+classes absentes du CSS produit : text-text-1
+webapp/src/app/AdministrationWorkflows.tsx:2298
+```
+
+L'échelle des neutres du §1 du design system nomme `--color-text`, `--color-text-2` et
+`--color-text-3` ; **`text-text-1` n'existe pas**. Le bloc concerné rend donc son texte dans la
+couleur héritée, et non dans celle que le code déclare. Le mot reste lisible — aucune assertion ne
+pouvait rougir —, c'est exactement le défaut que le §5.7 bis décrit : un rendu qui perd
+**silencieusement** ce qu'il croyait poser.
+
+**Origine datée, et non supposée** : `git log -L 2298,2298` sur ce fichier rend le commit `fe846f5`
+du 2026-08-16 07:52 UTC — la tranche d'interface de `CRM-032`, **antérieure** à cette session. La
+ligne de base est donc établie sans `git stash` : la classe manquait avant que cette session
+n'écrive quoi que ce soit.
+
+**Comportement laissé inchangé.** `AdministrationWorkflows.tsx` est un livrable de `CRM-076`, et le
+corriger ici rouvrirait cette unité (`CLAUDE.md` §13). La correction tient en un caractère —
+`text-text-1` → `text-text` ou `text-text-2` selon l'intention du bloc —, et c'est précisément
+pourquoi elle doit être faite **par l'unité qui sait laquelle des deux était voulue**.
+
+**Deux défauts du même genre ont été trouvés et corrigés dans le même passage**, ceux-là imputables
+à cette session : `mt-0.5`, absent de l'échelle fermée du §3, et `enregistre` — une valeur de phase
+écrite dans une condition à l'intérieur d'un attribut `className`, que le contrôle relevait comme
+une classe. Les deux sont corrigés à la cause, le second en nommant les deux graduations hors du
+JSX.

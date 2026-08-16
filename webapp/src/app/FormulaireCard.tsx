@@ -66,6 +66,12 @@ type EtatEcriture =
 
 const INACTIF: EtatEcriture = { phase: 'inactif' }
 
+// Les deux graduations de la mention d'état (docs/DESIGN_SYSTEM.md §5.7 ter), nommées HORS du JSX.
+// Le contrôle de classes du harnais relève les chaînes citées dans un attribut `className` : une
+// condition écrite là y ferait passer une valeur de phase pour une classe absente du CSS produit.
+const CLASSES_ETAT_ENVOI = 'text-sm text-text-3'
+const CLASSES_ETAT_CONFIRME = 'flex items-center gap-1 text-sm text-success' 
+
 export type ProprietesFormulaireCard = {
 	readonly modele: ModeleFormulaire
 	readonly idCard: string
@@ -182,7 +188,8 @@ function ChampSaisie({
 	const idRefus = `${idControle}-refus`
 
 	const enRefus = etat.phase === 'refus'
-	const annonce = etat.phase === 'envoi' || etat.phase === 'enregistre'
+	const confirme = etat.phase === 'enregistre'
+	const annonce = etat.phase === 'envoi' || confirme
 	const decrit = [
 		champ.help_text === null ? '' : idAide,
 		manquant ? idAlerte : '',
@@ -247,13 +254,9 @@ function ChampSaisie({
 					id={idEtat}
 					role="status"
 					data-testid={`etat-${champ.key}`}
-					className={
-						etat.phase === 'enregistre'
-							? 'flex items-center gap-1 text-sm text-success'
-							: 'text-sm text-text-3'
-					}
+					className={confirme ? CLASSES_ETAT_CONFIRME : CLASSES_ETAT_ENVOI}
 				>
-					{etat.phase === 'enregistre' ? (
+					{confirme ? (
 						<>
 							<CircleCheck aria-hidden="true" size={14} strokeWidth={2} />
 							<span>{t('form.save.saved')}</span>
@@ -416,7 +419,7 @@ function SectionAutresEtapes({ champs }: { readonly champs: readonly ChampResolu
 				{t('form.other.summary')}
 			</summary>
 			<p className="flex items-start gap-2 px-3 pt-2 text-sm text-text-3">
-				<Info aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-0.5" />
+				<Info aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-1" />
 				<span>{t('form.other.readonly')}</span>
 			</p>
 			<dl className="flex flex-col gap-2 px-3 py-2">

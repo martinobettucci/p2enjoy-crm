@@ -341,14 +341,39 @@ else
 		'	if (Array.isArray(valeur)) return valeur.length > 0
 	if (valeur === false) return false' api
 
-	# D2 bis — le prédicat revient à `String.prototype.trim()`. Ce n'est pas une dégradation
-	# théorique : c'est **l'état du code livré le 2026-08-05**, corrigé par la décision 165 après
-	# mesure contre la base. `btrim` ne retire que l'espace U+0020, `trim()` retire toute l'espace
-	# blanche : une valeur réduite à une tabulation est renseignée pour la garde et vide pour une
-	# interface écrite avec `trim()`. Seule la confrontation à la BASE peut l'attraper.
-	degradation "le prédicat revient à trim(), et diverge de btrim" "$PREDICAT" \
+	# D2 bis — RÉVISÉE LE 2026-08-16, ET LE MOTIF EST ÉCRIT ICI (CLAUDE.md §18, mécanisme de la
+	# décision 51). Cette dégradation remplaçait `retirerEspaces(valeur)` par `valeur.trim()` et
+	# constatait la divergence d'avec `btrim`, qui ne retirait alors que l'espace U+0020. La règle a
+	# changé par ARBITRAGE — décision 367, lot G, mise en œuvre par la décision 374 : la base s'est
+	# élargie aux blancs Unicode via `app.btrim_blancs`, dont la classe est exactement celle de
+	# `trim()`, et `retirerEspaces` EST désormais `texte.trim()`. La substitution était donc devenue
+	# une identité : elle ne pouvait plus rien faire rougir, et le harnais la déclarait complaisante
+	# — ce qu'elle était.
+	#
+	# Elle est RÉVISÉE, pas supprimée, et elle mord de nouveau parce qu'elle vise l'autre sens : le
+	# prédicat revient à l'ancien `btrim` sans second argument, qui ne retire que l'espace U+0020.
+	# Une valeur réduite à une TABULATION est alors renseignée pour l'interface et vide pour la
+	# garde — la divergence exacte que le §4.3 interdit, et que seule la confrontation à la BASE
+	# peut attraper.
+	degradation "le prédicat ne retire plus que U+0020, et diverge de btrim_blancs" "$PREDICAT" \
 		"	if (typeof valeur === 'string') return retirerEspaces(valeur).length > 0" \
-		"	if (typeof valeur === 'string') return valeur.trim().length > 0" api
+		"	if (typeof valeur === 'string') return valeur.replace(/^ +| +\$/g, '').length > 0" api
+
+	# D2 ter — LA SAISIE, AJOUTÉE PAR LA TRANCHE DU 2026-08-16 (docs/SPEC-form-composer.md §4 bis).
+	# L'écriture cesse de comparer la valeur à ce que la base porte : chaque perte de focus repart
+	# alors en requête, donc en événement `field_changed` dans le fil de `CRM-044`, et le §4 bis.3
+	# tombe. C'est une régression qu'aucune assertion visuelle ne verrait — l'écran resterait
+	# identique.
+	degradation "une écriture part même quand la valeur n'a pas changé (§4 bis.3 nié)" "$MODULE" \
+		"	return JSON.stringify(avant === undefined ? null : avant) === JSON.stringify(apres)" \
+		"	return false" unit
+
+	# D2 quater — la normalisation par type disparaît, et tout part en chaîne. Le §4 bis.4 tombe :
+	# un montant deviendrait `\"45000\"`, que le trigger de `CRM-036` refuse. La preuve unitaire le
+	# voit sur la charge émise, sans attendre le refus du serveur.
+	degradation "la normalisation par type disparaît (§4 bis.4 nié)" "$MODULE" \
+		"	if (type === 'number' || type === 'money') {" \
+		"	if (false) {" unit
 
 	# D3 — la composition se met à lire les règles au lieu des champs : le champ sans règle
 	# disparaît de l'écran, et c'est exactement le défaut que le §4.1 interdit.
