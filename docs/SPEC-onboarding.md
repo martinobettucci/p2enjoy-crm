@@ -273,6 +273,76 @@ d'après un rôle lu côté client ferait passer une règle de base pour une dé
 Aucune preuve ne substitue une réponse réseau pour simuler une étape accomplie : les étapes sont
 accomplies par les **données seedées**, qui portent déjà tracks, channels, affaires et boîtes.
 
+## 8 bis. Contrat du harnais dédié — `scripts/verify-onboarding.sh`
+
+**Ajouté le 2026-08-16.** Le §9 déclarait qu'aucun harnais ne serait écrit tant qu'aucun
+`scripts/verify-*.sh` ne serait exécutable dans l'environnement de vérification. **Ce blocage est
+levé** : `nvm install 24` pose `v24.19.0` / `npm 11.17.0` sur cet hôte, procédure mesurée et
+consignée dans `docs/CloudWorker.md` §2.1 bis et `docs/JOURNAL.md` du 2026-08-15. Le motif du §9
+ayant disparu, le harnais est dû — et il est écrit ici avant d'être codé.
+
+Il rassemble ce que les preuves du §8 laissent dispersé entre cinq fichiers, et il n'ajoute aucune
+règle : un harnais qui trancherait ce que ce document laisse ouvert serait une seconde
+spécification, concurrente et non arbitrée.
+
+### 8 bis.1 Les comptes figés
+
+Le harnais fige les **fichiers ET les tests**, jamais les seules assertions : vérifier un total
+d'assertions ne détecte pas la disparition d'une suite entière (décision 279). Ces comptes se
+mettent à jour **dans le même changement** que la preuve ajoutée — un compte qui monte est un écart
+au même titre qu'un compte qui descend.
+
+| Grandeur | Valeur figée | Mesurée le |
+|---|---|---|
+| Vitest, filtre `demarrage` | **2 fichiers, 43 tests** | 2026-08-16 |
+| `e2e/api/demarrage.spec.ts` | **6 scénarios** | 2026-08-16 |
+| `e2e/ui/demarrage.spec.ts` | **10 scénarios** | 2026-08-16 |
+| Captures sous `docs/captures/CRM-079/` | **9** — quatre paliers, plus cinq états | 2026-08-16 |
+
+Aucun compte pgTAP n'est figé, et c'est une propriété de l'unité, pas un oubli : `CRM-079`
+**n'ajoute aucune migration** et n'ouvre aucune politique (§3). Ses cinq lectures sont régies par
+les politiques de `CRM-020`, `CRM-021`, `CRM-040`, `CRM-022` et `CRM-052`, prouvées par leurs
+propres suites. Le harnais qui rejouerait ces suites mesurerait le travail d'autres unités.
+
+### 8 bis.2 Non-complaisance — cinq dégradations réelles
+
+Un harnais qui rend vert sans rien exercer est pire qu'une commande absente
+(`docs/SPEC-test-harness.md` §1). Le harnais dégrade donc réellement les deux fichiers de l'unité,
+et **exige que la suite unitaire rougisse** à chaque fois. Une dégradation NON VUE est un échec du
+harnais : le remède est alors d'écrire la preuve manquante, jamais de retirer la dégradation.
+
+| # | Ce qui est dégradé | La règle que la dégradation attaque |
+|---|---|---|
+| 1 | le filtre `deleted_at` des tracks (`FILTRES_ETAPES_DEMARRAGE`) | §3 : une étape accomplie par un objet en corbeille se dirait accomplie par ce qu'aucun écran ne montre |
+| 2 | le refus du `count` absent (`mesurerEtape`) | §3.2 : une réponse aboutie sans `count` est un contrat rompu, jamais un zéro |
+| 3 | le seuil d'accomplissement (`estAccomplie`) | §6.2 : une étape est accomplie **dès la première ligne visible**, pas avant |
+| 4 | la prise en compte du non-mesurable (`resteUneEtape`) | §6.2 : le guide ne se retire pas sur un accomplissement qu'il n'a pas constaté |
+| 5 | la garde de session (`GuideDemarrage`, `ouverte ? client : null`) | §4.4 : tant que la session n'est pas ouverte, **aucune mesure n'est émise** |
+
+La cinquième porte sur l'écran et non sur le module : c'est là que vit la garde, et c'est le défaut
+réel qu'une campagne a mesuré (§4.4).
+
+### 8 bis.3 Ce que ce harnais NE prouve PAS, et le dit
+
+- **Aucune règle d'autorisation n'est réécrite ici.** Les politiques des cinq tables appartiennent
+  aux unités qui les portent. Ce que `CRM-079` ajoute — cinq lectures, aucune écriture — est
+  éprouvé hors interface par `e2e/api/demarrage.spec.ts`, avec les jetons réels des trois profils.
+- **Aucune convergence du seed.** Elle appartient à `scripts/verify-seed-demo.sh`. Les écarts
+  mesurés du `viewer` (§3.1) sont **le fait du backend**, et le harnais les constate sans les
+  corriger.
+- **Aucune observation visuelle.** Le harnais constate que les neuf captures **existent** ; les
+  regarder reste un geste humain (`CLAUDE.md` §16), qu'aucun script ne remplace.
+- **La formulation par défaut de la garde de session** — `etat.statut === 'authentifie'` — n'est
+  pas atteinte par la dégradation n° 5, les preuves unitaires injectant `sessionOuverte`. Elle est
+  éprouvée par le parcours d'interface, console stricte, sur une page réellement chargée.
+
+### 8 bis.4 Restauration constatée, jamais supposée
+
+L'instantané des fichiers dégradés est pris **avant** la première dégradation, et la restauration
+s'y compare **octet à octet**. La comparaison à `HEAD` est interdite
+(`docs/SPEC-test-harness.md` §7.2, point 9) : le harnais doit fonctionner dans un arbre portant une
+évolution légitime non encore committée, et ne doit ni la déclarer résiduelle, ni la remplacer.
+
 ## 9. Limites connues
 
 - **Le `viewer` ne verra jamais la cinquième étape accomplie** (§3.1, fait 2). Le guide dit ce que
@@ -282,7 +352,11 @@ accomplies par les **données seedées**, qui portent déjà tracks, channels, a
   d'avance pour tout le monde. L'éditeur reste atteignable par l'index des réglages.
 - **Le guide ne mesure pas la qualité de ce qu'il compte** : un track vide accomplit l'étape 2.
   Compter la profondeur reviendrait à noter le travail de l'utilisateur.
-- **Aucun `scripts/verify-onboarding.sh`** n'est écrit tant qu'aucun harnais du dépôt n'est
-  exécutable dans l'environnement de vérification — les trente-neuf existants exigent un couple
-  Node 24 / npm 11+ absent (`docs/JOURNAL.md`, 2026-08-15). Écrire un harnais qu'aucune session ne
-  peut exécuter livrerait une preuve non éprouvée, ce que `CLAUDE.md` §25 interdit.
+- ~~**Aucun `scripts/verify-onboarding.sh`** n'est écrit tant qu'aucun harnais du dépôt n'est
+  exécutable dans l'environnement de vérification~~ — **limite levée le 2026-08-16**, et le motif
+  qui la portait a disparu plutôt que d'avoir été contourné : les harnais exigeaient un couple
+  Node 24 / npm 11+ qu'on croyait absent de l'hôte, et `nvm install 24` le pose
+  (`docs/CloudWorker.md` §2.1 bis). Le harnais est spécifié au **§8 bis** et livré. La règle qui
+  l'interdisait reste vraie et intacte : un harnais qu'aucune session ne peut exécuter livrerait
+  une preuve non éprouvée (`CLAUDE.md` §25) — c'est bien pour cela qu'il n'est écrit qu'une fois
+  exécutable, et son verdict est consigné avec lui.
