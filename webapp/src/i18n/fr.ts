@@ -511,8 +511,36 @@ export const fr = {
 	'admin.workflows.scope.global': 'Global',
 	'admin.workflows.scope.track': 'Propre à un track',
 	'admin.workflows.empty.title': "Aucun workflow dans cet espace de travail",
+	// L'état vide portait « un workflow se crée par l'API » : c'était vrai jusqu'à CRM-031, dont le
+	// §3 bis livre le geste ici. Un état vide d'écran d'administration doit porter l'issue qui le
+	// comble (docs/DESIGN_SYSTEM.md §5.15), et non renvoyer à un outil que l'administrateur n'a pas.
 	'admin.workflows.empty.body':
-		"Un workflow se crée par l'API ou par la copie vers un track ; cet écran compose les workflows existants.",
+		"Créez le premier workflow de cet espace de travail : il naîtra sans étape, et cet écran servira à le composer. La copie vers un track reste un geste d'API.",
+
+	// La création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis.
+	'admin.workflows.create.action': 'Nouveau workflow',
+	'admin.workflows.create.title': 'Nouveau workflow',
+	'admin.workflows.create.name': 'Nom',
+	'admin.workflows.create.scope': 'Portée',
+	'admin.workflows.create.scope.global': 'Global',
+	'admin.workflows.create.scope.track': 'Propre à un track',
+	'admin.workflows.create.scope.help':
+		"Un workflow global est disponible pour tous les tracks ; un workflow propre à un track n'est proposé qu'aux channels de ce track.",
+	'admin.workflows.create.track': 'Track',
+	'admin.workflows.create.track.choose': 'Choisir un track…',
+	'admin.workflows.create.track.loading': 'Chargement des tracks…',
+	'admin.workflows.create.track.none':
+		"Aucun track n'existe encore dans cet espace de travail. Un workflow propre à un track en demande un ; créez-le depuis l'administration de l'arborescence.",
+	'admin.workflows.create.track.error': 'Les tracks n’ont pas pu être chargés.',
+	'admin.workflows.create.empty':
+		"Il naîtra sans étape : ajoutez-les ensuite depuis cet écran, et désignez celle par laquelle une affaire commence.",
+	'admin.workflows.create.done': 'Le workflow « {nom} » est créé. Il n’a encore aucune étape.',
+	'admin.workflows.refus.creation.forbidden':
+		"Vous n'avez pas le droit de créer un workflow dans cet espace de travail.",
+	'admin.workflows.refus.creation.forme-refusee':
+		'La base a refusé ces valeurs : un nom ne peut pas être vide, et une portée propre à un track en exige un.',
+	'admin.workflows.refus.creation.reference-absente':
+		"Le track choisi n'existe plus, ou n'appartient pas à cet espace de travail.",
 	'admin.workflows.error.title': "Les workflows n'ont pas pu être chargés",
 	'admin.workflows.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
 	'admin.workflows.choose.title': 'Choisissez un workflow',

@@ -16,8 +16,11 @@
 // @spec docs/SPEC-workflow-engine.md §2.5 (probabilité et seuil : `0` n'est pas `NULL`),
 //       §3.3 (modèle `workflow_steps` et ses contraintes), §3.5 (l'étape initiale),
 //       §3.7 (écriture réservée à l'administrateur)
+// @spec CRM-031 (docs/BACKLOG.md) — création d'un workflow, §3 bis de la même spécification :
+//       §3 bis.1 (ce que le geste est et n'est pas), §3 bis.3 (les trois champs, la lecture 4),
+//       §3 bis.4 (validation de forme), §3 bis.5 (les dix refus mesurés), §3.2 (modèle)
 // @spec docs/SPEC-permissions-rls.md §4 (écriture réservée à l'administrateur)
-// @spec docs/DESIGN_SYSTEM.md §5.8 (états systématiques)
+// @spec docs/DESIGN_SYSTEM.md §5.8 (états systématiques), §5.15 (la création d'un workflow)
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE, exactement comme celui de `CRM-075` dont il reprend le patron.
 // Chaque refus traduit ici est déjà posé et mesuré par `CRM-030` ou `CRM-031` : l'écran envoie, la
@@ -1759,4 +1762,146 @@ export function composerMessageEffets(resultat: ResultatPrevisualisation): Messa
 	if (aLEntree === 0) return { cle: 'sur-place', surPlace }
 	if (surPlace === 0) return { cle: 'a-l-entree', aLEntree }
 	return { cle: 'les-deux', surPlace, aLEntree }
+}
+
+// ---------------------------------------------------------------------------------------------
+// La création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis
+// ---------------------------------------------------------------------------------------------
+//
+// @spec CRM-031 (docs/BACKLOG.md) — création d'un workflow depuis l'éditeur d'administration
+// @spec docs/SPEC-workflow-engine.md §3 bis.1 (ce que le geste est et n'est pas), §3 bis.3 (les
+//       trois champs et la quatrième lecture), §3 bis.4 (validation de forme), §3 bis.5 (les dix
+//       refus mesurés), §3.2 (modèle `workflows` et la cohérence de portée)
+// @spec docs/DESIGN_SYSTEM.md §5.15 (la création d'un workflow)
+//
+// LE GESTE ÉCRIT UNE LIGNE, ET RIEN D'AUTRE. Le workflow naît **vide** : c'est le brouillon du
+// §3.5, structurellement valide et inutilisable tant qu'aucune étape initiale n'existe. Fabriquer
+// une étape par complaisance inventerait une composition que personne n'a demandée.
+
+/** Un track du workspace, tel que le sélecteur de portée le présente — lecture 4 du §3 bis.3. */
+export type TrackAffectable = Pick<Database['public']['Tables']['tracks']['Row'], 'id' | 'name'>
+
+export const COLONNES_TRACK_AFFECTABLE = 'id, name'
+
+/**
+ * Les tracks du workspace — lecture 4 du §3 bis.3, émise à l'ouverture du formulaire et non au
+ * chargement de l'écran.
+ *
+ * Aucun filtre `workspace_id` : la RLS le borne déjà, et l'écrire laisserait croire que la lecture
+ * est protégée par lui (`CLAUDE.md` §10). Les tracks archivés sont écartés — proposer d'attacher un
+ * workflow neuf à un track retiré offrirait un choix que personne ne veut faire.
+ */
+export async function lireTracksAffectables(
+	client: ClientCrm,
+): Promise<EtatAsync<readonly TrackAffectable[]>> {
+	try {
+		const reponse = await client
+			.from('tracks')
+			.select(COLONNES_TRACK_AFFECTABLE)
+			.is('archived_at', null)
+			.order('position')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(reponse.data as readonly TrackAffectable[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Les deux portées du §3.2, et il n'y en a pas d'autre. */
+export const PORTEES_WORKFLOW = ['global', 'track'] as const
+
+export type PorteeWorkflow = (typeof PORTEES_WORKFLOW)[number]
+
+export type CreationWorkflow = {
+	readonly idWorkspace: string
+	readonly nom: string
+	readonly portee: PorteeWorkflow
+	/** Le track choisi. Ignoré sous la portée `global` — voir `creerWorkflow`. */
+	readonly idTrack: string | null
+}
+
+/**
+ * Validation de FORME du §3 bis.4, et elle ne remplace aucune garde.
+ *
+ * Deux conditions seulement, celles dont la réponse est connue d'avance et dont l'erreur reste
+ * rattrapée par la base : un nom non vide après `btrim` (`workflows_name_check`, mesuré en `23514`)
+ * et un track choisi sous la portée `track` (`workflows_scope_track_check`, mesuré en `23514`).
+ * Tout le reste part et se fait refuser.
+ */
+export function creationWorkflowConforme(creation: CreationWorkflow): boolean {
+	if (creation.nom.trim() === '') return false
+	if (creation.portee === 'track' && creation.idTrack === null) return false
+	return true
+}
+
+/**
+ * Les refus que la création peut opposer — §3 bis.5.
+ *
+ * Le vocabulaire de `classerRefusEcriture` est repris tel quel plutôt que renommé : `forbidden`,
+ * `forme-refusee` et `reference-absente` disent ici exactement ce qu'ils disent ailleurs. Le
+ * `23505` de l'index unique partiel `workflows_workspace_default_uk` n'est **pas atteignable depuis
+ * l'écran**, `is_default` n'étant pas exposé (§3 bis.1) ; il retomberait sur `slug-pris`, nature
+ * qui ne veut rien dire ici, et c'est pourquoi la preuve d'API le mesure au lieu de l'écran.
+ */
+export type RefusCreationWorkflow = RefusEcriture
+
+export type ResultatCreationWorkflow =
+	/** Le succès porte l'identifiant : l'écran en fait le workflow choisi (§3 bis.6). */
+	| { readonly statut: 'applique'; readonly id: string }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusCreationWorkflow }
+
+/**
+ * Crée un workflow.
+ *
+ * `track_id` EST FORCÉ À `null` SOUS LA PORTÉE `global`, et ce n'est pas une précaution
+ * décorative : le §3.2 pose que « `scope = 'global'` exige `track_id` nul », et la mesure du
+ * §3 bis.5 rend `400` / `23514` sur la contrainte `workflows_scope_track_check` lorsqu'un
+ * `track_id` résiduel accompagne une portée globale. L'écran oublie déjà le track à la bascule ;
+ * le module ne s'y fie pas et refait le geste, parce qu'un état d'interface n'est pas un contrat.
+ *
+ * `is_default` N'EST PAS ENVOYÉ. Sa valeur par défaut est fausse (§3.2), et l'envoyer à vrai
+ * échouerait en `23505` sur tout workspace ayant déjà son défaut — c'est-à-dire le cas normal.
+ *
+ * Le nom est `trim`é : un nom entouré d'espaces passerait le `CHECK`, qui teste `btrim`, et
+ * s'afficherait ensuite décalé dans une liste dont il serait le seul élément à l'être.
+ */
+export async function creerWorkflow(
+	client: ClientCrm,
+	creation: CreationWorkflow,
+): Promise<ResultatCreationWorkflow> {
+	try {
+		const reponse = await client
+			.from('workflows')
+			.insert({
+				workspace_id: creation.idWorkspace,
+				name: creation.nom.trim(),
+				scope: creation.portee,
+				track_id: creation.portee === 'track' ? creation.idTrack : null,
+			})
+			.select('id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusEcriture(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		const lignes = (reponse.data ?? []) as readonly { id: string }[]
+		// `select('id')` accompagne l'écriture précisément pour que ce comptage existe : sans lui,
+		// PostgREST ne rend aucun corps et « zéro ligne écrite » serait indistinguable d'un succès.
+		const premiere = lignes[0]
+		if (premiere === undefined) return { statut: 'sans-effet' }
+		return { statut: 'applique', id: premiere.id }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusEcriture(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
 }

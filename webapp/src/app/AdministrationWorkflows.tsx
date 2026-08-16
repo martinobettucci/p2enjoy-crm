@@ -123,8 +123,12 @@ import {
 	libelleEtape,
 	libelleSurchargeConforme,
 	libelleTransitionConforme,
+	PORTEES_WORKFLOW,
+	creationWorkflowConforme,
+	creerWorkflow,
 	lireCatalogueActif,
 	lireEtapes,
+	lireTracksAffectables,
 	lireTransitions,
 	lireWorkflowsAdministrables,
 	modifierTransition,
@@ -137,16 +141,20 @@ import {
 	type ChoixChamp,
 	type EtapeAdministrable,
 	type NoeudAjoutable,
+	type PorteeWorkflow,
 	type RefusChamp,
+	type RefusCreationWorkflow,
 	type RefusEtape,
 	type RefusTransition,
 	type ResultatChamp,
 	type ResultatEtape,
 	type ResultatTransition,
+	type TrackAffectable,
 	type TransitionAdministrable,
 	type WorkflowAdministrable,
 } from '../lib/administration-workflows'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { lireWorkspaces } from '../lib/workspaces'
 
 // ---------------------------------------------------------------------------------------------
 // Refus et ouvertures
@@ -168,6 +176,30 @@ function texteRefus(refus: RefusEtape): string {
 		case 'network':
 			return t('admin.workflows.refus.network')
 		case 'unknown':
+			return t('admin.workflows.refus.unknown')
+	}
+}
+
+/**
+ * Traduit un refus de CRÉATION d'un workflow — CRM-031, §3 bis.5.
+ *
+ * Trois natures y ont un texte propre, et ce sont les trois que l'écran peut réellement produire :
+ * `42501` quand le profil n'écrit pas, `23514` quand le nom est blanc ou que la portée et le track
+ * se contredisent, `23503` quand le track choisi a disparu. `slug-pris` et `workflow-hors-track`
+ * appartiennent au vocabulaire de `CRM-075` et ne veulent rien dire ici : elles retombent sur le
+ * texte générique plutôt que de nommer une faute que l'administrateur n'a pas commise.
+ */
+function texteRefusCreation(refus: RefusCreationWorkflow): string {
+	switch (refus.nature) {
+		case 'forbidden':
+			return t('admin.workflows.refus.creation.forbidden')
+		case 'forme-refusee':
+			return t('admin.workflows.refus.creation.forme-refusee')
+		case 'reference-absente':
+			return t('admin.workflows.refus.creation.reference-absente')
+		case 'network':
+			return t('admin.workflows.refus.network')
+		default:
 			return t('admin.workflows.refus.unknown')
 	}
 }
@@ -404,6 +436,171 @@ function ChampSurcharge({
 				</span>
 			)}
 		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Formulaire de création d'un workflow — CRM-031, docs/SPEC-workflow-engine.md §3 bis
+// ---------------------------------------------------------------------------------------------
+
+type SaisieCreation = {
+	readonly nom: string
+	readonly portee: PorteeWorkflow
+	readonly idTrack: string | null
+}
+
+const CREATION_VIERGE: SaisieCreation = { nom: '', portee: 'global', idTrack: null }
+
+type ProprietesFormulaireCreation = {
+	readonly tracks: EtatAsync<readonly TrackAffectable[]>
+	readonly refus: string | null
+	readonly enCours: boolean
+	readonly onValider: (saisie: SaisieCreation) => void
+	readonly onAnnuler: () => void
+}
+
+/**
+ * Le formulaire de création — §3 bis.3.
+ *
+ * LE SÉLECTEUR DE TRACK N'EST PAS GRISÉ SOUS LA PORTÉE GLOBALE, IL EST ABSENT
+ * (`docs/DESIGN_SYSTEM.md` §5.15). Un `select` désactivé poserait la question « pourquoi ? » là où
+ * la portée juste au-dessus y répond déjà.
+ *
+ * LA BASCULE DE `track` VERS `global` OUBLIE LE TRACK CHOISI. Sans cet oubli, un `track_id`
+ * résiduel partirait avec une portée `global`, que le §3.2 refuse — mesuré `400` / `23514` sur
+ * `workflows_scope_track_check`. Le module refait ce geste de son côté : un état d'interface n'est
+ * pas un contrat.
+ */
+function FormulaireCreationWorkflow({
+	tracks,
+	refus,
+	enCours,
+	onValider,
+	onAnnuler,
+}: ProprietesFormulaireCreation) {
+	const prefixe = useId()
+	const [saisie, setSaisie] = useState<SaisieCreation>(CREATION_VIERGE)
+	const premier = useRef<HTMLInputElement | null>(null)
+
+	// Le focus entre dans le premier champ à l'ouverture (docs/DESIGN_SYSTEM.md §5.13) : un
+	// formulaire qui s'ouvre sans prendre le focus oblige à le chercher au clavier.
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+
+	const conforme = creationWorkflowConforme({
+		idWorkspace: 'forme-seule',
+		nom: saisie.nom,
+		portee: saisie.portee,
+		idTrack: saisie.idTrack,
+	})
+	const aucunTrack = tracks.statut === 'pret' && tracks.donnees.length === 0
+
+	return (
+		<form
+			data-testid="workflows-formulaire-creation"
+			aria-label={t('admin.workflows.create.title')}
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				if (!conforme || enCours) return
+				onValider(saisie)
+			}}
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+		>
+			<h3 className="text-h3">{t('admin.workflows.create.title')}</h3>
+			{refus === null ? null : <AlerteRefus message={refus} />}
+
+			<ChampSurcharge
+				id={`${prefixe}-nom`}
+				libelle={t('admin.workflows.create.name')}
+				valeur={saisie.nom}
+				onChange={(nom) => setSaisie((precedente) => ({ ...precedente, nom }))}
+				aide={t('admin.workflows.create.empty')}
+				refInterne={premier}
+			/>
+
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${prefixe}-portee`} className="text-sm text-text-2">
+					{t('admin.workflows.create.scope')}
+				</label>
+				<select
+					id={`${prefixe}-portee`}
+					value={saisie.portee}
+					onChange={(evenement) => {
+						const portee = evenement.target.value as PorteeWorkflow
+						setSaisie((precedente) => ({
+							...precedente,
+							portee,
+							// L'oubli du track : voir la note de tête de ce composant.
+							idTrack: portee === 'track' ? precedente.idTrack : null,
+						}))
+					}}
+					aria-describedby={`${prefixe}-portee-aide`}
+					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+				>
+					{PORTEES_WORKFLOW.map((portee) => (
+						<option key={portee} value={portee}>
+							{portee === 'global'
+								? t('admin.workflows.create.scope.global')
+								: t('admin.workflows.create.scope.track')}
+						</option>
+					))}
+				</select>
+				<span id={`${prefixe}-portee-aide`} className="text-sm text-text-3">
+					{t('admin.workflows.create.scope.help')}
+				</span>
+			</div>
+
+			{saisie.portee === 'track' ? (
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${prefixe}-track`} className="text-sm text-text-2">
+						{t('admin.workflows.create.track')}
+					</label>
+					{tracks.statut === 'chargement' ? (
+						<span className="text-sm text-text-3">{t('admin.workflows.create.track.loading')}</span>
+					) : null}
+					{tracks.statut === 'erreur' ? (
+						<span role="alert" className="text-sm text-danger-on-soft">
+							{t('admin.workflows.create.track.error')}
+						</span>
+					) : null}
+					{aucunTrack ? (
+						<p data-testid="workflows-sans-track" className="text-sm text-text-3">
+							{t('admin.workflows.create.track.none')}
+						</p>
+					) : null}
+					{tracks.statut === 'pret' && tracks.donnees.length > 0 ? (
+						<select
+							id={`${prefixe}-track`}
+							value={saisie.idTrack ?? ''}
+							onChange={(evenement) =>
+								setSaisie((precedente) => ({
+									...precedente,
+									idTrack: evenement.target.value === '' ? null : evenement.target.value,
+								}))
+							}
+							className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+						>
+							<option value="">{t('admin.workflows.create.track.choose')}</option>
+							{tracks.donnees.map((track) => (
+								<option key={track.id} value={track.id}>
+									{track.name}
+								</option>
+							))}
+						</select>
+					) : null}
+				</div>
+			) : null}
+
+			<div className="flex flex-wrap gap-2">
+				<Button type="submit" variante="primaire" disabled={!conforme || enCours}>
+					{t('admin.action.create')}
+				</Button>
+				<Button type="button" variante="discret" onClick={onAnnuler}>
+					{t('admin.action.cancel')}
+				</Button>
+			</div>
+		</form>
 	)
 }
 
@@ -1938,6 +2135,19 @@ export function AdministrationWorkflows({
 	const [effetsExigence, setEffetsExigence] = useState<MessageEffets | null>(null)
 	const [annonce, setAnnonce] = useState('')
 	const [tentative, setTentative] = useState(0)
+	/**
+	 * La création d'un workflow — CRM-031, §3 bis.
+	 *
+	 * Son état est SÉPARÉ de `ouverture`, `refus` et `enCours`, qui appartiennent aux gestes du
+	 * workflow CHOISI. La création n'en a aucun : elle est rendue quand la liste est vide, c'est-à-dire
+	 * quand aucun workflow n'est choisi, et partager l'état afficherait le refus d'une composition
+	 * dans un formulaire qui ne compose rien.
+	 */
+	const [creationOuverte, setCreationOuverte] = useState(false)
+	const [tracks, setTracks] = useState<EtatAsync<readonly TrackAffectable[]>>(enChargement)
+	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
+	const [refusCreation, setRefusCreation] = useState<string | null>(null)
+	const [creationEnCours, setCreationEnCours] = useState(false)
 
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — le patron de `CRM-075`.
@@ -1960,6 +2170,88 @@ export function AdministrationWorkflows({
 			}
 		})()
 	}, [client, tentative])
+
+	// Le workspace courant — CRM-031, §3 bis.3. Il n'est PAS saisi : le laisser saisir offrirait un
+	// champ dont toute autre valeur est refusée en `42501`, mesuré au §3 bis.5. Il est lu comme
+	// `AdministrationArborescence` le lit, par la même fonction.
+	useEffect(() => {
+		if (client === null) return
+		let vivant = true
+		void (async () => {
+			const espaces = await lireWorkspaces(client)
+			if (!vivant || espaces.statut !== 'pret') return
+			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, tentative])
+
+	// Les tracks ne sont lus qu'à l'ouverture du formulaire (§3 bis.3, lecture 4) : une liste que
+	// personne ne consulte n'a pas à voyager, exactement comme le catalogue de la lecture 3.
+	useEffect(() => {
+		if (client === null || !creationOuverte) return
+		let vivant = true
+		setTracks(enChargement)
+		void (async () => {
+			const lus = await lireTracksAffectables(client)
+			if (!vivant) return
+			setTracks(lus)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, creationOuverte])
+
+	/** Ouvre le formulaire en repartant d'un refus effacé : un refus survivant à la fermeture
+	 *  s'afficherait sur une saisie neuve qui ne l'a pas causé. */
+	const ouvrirLaCreation = useCallback(() => {
+		setRefusCreation(null)
+		setCreationOuverte(true)
+	}, [])
+
+	const fermerLaCreation = useCallback(() => {
+		setRefusCreation(null)
+		setCreationOuverte(false)
+	}, [])
+
+	/**
+	 * Crée un workflow — §3 bis.6, et ses trois effets sont dans cet ordre.
+	 *
+	 * LA LISTE EST RELUE, JAMAIS COMPLÉTÉE LOCALEMENT. La relecture est la seule chose qui prouve
+	 * que la ligne existe côté base, et l'ordre `is_default` décroissant puis `name` place le
+	 * nouveau workflow là où il doit être — ce qu'une insertion optimiste ne saurait pas faire.
+	 */
+	const creerLeWorkflow = useCallback(
+		async (saisie: SaisieCreation) => {
+			if (client === null || idWorkspace === null) return
+			setCreationEnCours(true)
+			setRefusCreation(null)
+			const resultat = await creerWorkflow(client, {
+				idWorkspace,
+				nom: saisie.nom,
+				portee: saisie.portee,
+				idTrack: saisie.idTrack,
+			})
+			setCreationEnCours(false)
+			if (resultat.statut === 'refus') {
+				setRefusCreation(texteRefusCreation(resultat.refus))
+				return
+			}
+			if (resultat.statut === 'sans-effet') {
+				// Zéro ligne écrite n'est ni un succès ni une erreur : le dire est la seule façon de
+				// ne pas afficher une création qui n'a pas eu lieu.
+				setRefusCreation(t('admin.workflows.refus.unknown'))
+				return
+			}
+			const lus = await lireWorkflowsAdministrables(client, false)
+			setWorkflows(lus)
+			setIdChoisi(resultat.id)
+			setCreationOuverte(false)
+			setAnnonce(t('admin.workflows.create.done', { nom: saisie.nom.trim() }))
+		},
+		[client, idWorkspace],
+	)
 
 	/**
 	 * Les étapes ET les arêtes, ensemble.
@@ -2332,16 +2624,57 @@ export function AdministrationWorkflows({
 				/>
 			) : null}
 
+			{/* L'ÉTAT VIDE PORTE LE GESTE QUI LE COMBLE — docs/DESIGN_SYSTEM.md §5.15, §3 bis.2.
+			    C'est le cas d'un workspace neuf (§3.2, « un workspace neuf n'a aucun workflow »), et
+			    c'est le seul où le geste est indispensable : sans lui, l'écran est un cul-de-sac. */}
 			{workflows.statut === 'pret' && workflows.donnees.length === 0 ? (
-				<EtatVide
-					titre={t('admin.workflows.empty.title')}
-					corps={t('admin.workflows.empty.body')}
-				/>
+				<div className="flex flex-col gap-3">
+					<EtatVide
+						titre={t('admin.workflows.empty.title')}
+						corps={t('admin.workflows.empty.body')}
+						action={
+							creationOuverte ? undefined : (
+								<Button variante="primaire" onClick={() => ouvrirLaCreation()}>
+									<Plus aria-hidden="true" size={16} strokeWidth={2} />
+									{t('admin.workflows.create.action')}
+								</Button>
+							)
+						}
+					/>
+					{creationOuverte ? (
+						<FormulaireCreationWorkflow
+							tracks={tracks}
+							refus={refusCreation}
+							enCours={creationEnCours}
+							onValider={(saisie) => void creerLeWorkflow(saisie)}
+							onAnnuler={() => fermerLaCreation()}
+						/>
+					) : null}
+				</div>
 			) : null}
 
 			{workflows.statut === 'pret' && workflows.donnees.length > 0 ? (
 				<div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-					<nav aria-label={t('admin.workflows.list.aria')} className="lg:w-[280px] lg:shrink-0">
+					<nav
+						aria-label={t('admin.workflows.list.aria')}
+						className="flex flex-col gap-3 lg:w-[280px] lg:shrink-0"
+					>
+						{/* La création s'ancre AU-DESSUS de la liste, là où se choisit l'objet qu'elle
+						    crée (docs/DESIGN_SYSTEM.md §5.15), et dans le flux du document. */}
+						{creationOuverte ? (
+							<FormulaireCreationWorkflow
+								tracks={tracks}
+								refus={refusCreation}
+								enCours={creationEnCours}
+								onValider={(saisie) => void creerLeWorkflow(saisie)}
+								onAnnuler={() => fermerLaCreation()}
+							/>
+						) : (
+							<Button variante="secondaire" onClick={() => ouvrirLaCreation()}>
+								<Plus aria-hidden="true" size={16} strokeWidth={2} />
+								{t('admin.workflows.create.action')}
+							</Button>
+						)}
 						<ul className="flex flex-col rounded-lg border border-border bg-surface">
 							{workflows.donnees.map((workflow) => (
 								<li key={workflow.id}>
