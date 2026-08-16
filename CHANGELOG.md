@@ -25,6 +25,16 @@ d'exécuter le code attendu.
   de 128 caractères et une prochaine action de 134, et **exclut** les étapes `realisation` et
   `perdu`, dont les exigences de transition rendraient toute card sans valeur une trace fabriquée.
 
+- **Le jeu de démonstration porte enfin du volume et des données longues** (`CRM-046` tranche 2,
+  `docs/SPEC-seed.md` §9.11). Vingt-six cards dans « Maintenance », qui passe de 1 à **27** affaires
+  actives : la vue liste y a une **première page pleine** de 25 lignes et une **seconde page** de
+  deux, et l'une des affaires porte un titre de 128 caractères et une prochaine action de 134. La
+  seconde page et les données longues cessent d'être prouvées contre des réponses substituées : six
+  scénarios de `e2e/api/liste-cards.spec.ts` les établissent avec le jeton réel de l'administratrice,
+  et deux captures les montrent sur une session réellement connectée. Le seed s'interdit désormais
+  de poser du volume sur l'étape « Signature » : mesuré, cela détruisait l'inversion de comptes que
+  l'écran de prévisualisation des exigences démontre.
+
 - **Le parcours « transition bloquée → saisie → transition réussie » est éprouvé de bout en bout,
   sur une session réelle** (`CRM-037`, `docs/SPEC-form-composer.md` §4 quater). Les trois gestes
   existaient et étaient prouvés séparément, mais chacun contre des **réponses réseau substituées** :

@@ -17417,3 +17417,70 @@ conteneur `mail-sync`, si bien qu'un avertissement transitoire la condamne jusqu
 conteneur recréé, S3 seule passe. Le rejeu complet a rendu **40 passés, 2 en échec**, le second en
 amont — une intermittence de l'ingestion — dont S3 n'est que la conséquence. Aucun fichier de
 `mail-sync/` ni de `e2e/mail/` n'est touché par cette session.
+
+## 2026-08-16 — `CRM-046` tranche 2 : le volume et les données longues cessent d'être substitués
+
+**Point de départ.** L'entrée précédente désignait deux reprises possibles, et `CRM-046` était la
+seule à porter du comportement : `CRM-014` n'attend plus qu'une correction d'énoncé. Le manque était
+nommé par `CRM-042` à sa clôture et renvoyé ici — « le seed ne démontre ni les données longues, ni
+la seconde page ». Re-mesuré avant d'écrire quoi que ce soit : titre le plus long **36** caractères,
+prochaine action **34**, channel le plus chargé **4** cards actives contre **25** lignes par page.
+La spécification `docs/SPEC-seed.md` §9.11 a été écrite après cette mesure et committée avant la
+première ligne de code.
+
+**Ce qui est livré.** Vingt-six cards dans `maintenance`, qui passe de 1 à **27** actives : première
+page pleine, seconde page de deux lignes, et une card portant **128** caractères de titre et **134**
+de prochaine action. Le corps de boucle de la section 8 ter du seed est extrait en
+`poser_card_globale` plutôt que recopié.
+
+**DEUX CHOIX DE PLACEMENT ONT ÉTÉ DICTÉS PAR LA MESURE, ET C'EST LE CŒUR DE LA TRANCHE.** Le premier :
+`maintenance` plutôt que `grands-comptes`, cité par six fichiers de preuves contre vingt-neuf —
+charger le second aurait réécrit les onze captures du board et les douze de la liste sans rien
+démontrer de plus. Le second, trouvé **en exécutant** : poser du volume sur `signature` faisait
+passer `previsualiser_exigence` de `0/2` à `5/7`, et **détruisait l'inversion** que quatre preuves
+démontrent — `sur_place` nul là où `a_l_entree` ne l'est pas, ce qui est le fait justifiant l'écran
+de prévisualisation. Les cinq cards ont été redistribuées, et l'interdiction est désormais une règle
+écrite du seed (§9.11.3) plutôt qu'un effet de bord heureux. `realisation` et `perdu` étaient déjà
+exclues pour une autre raison mesurée : leurs exigences de transition rendraient toute card sans
+valeur une trace fabriquée.
+
+**UN DÉFAUT DE FORME DANS DEUX PREUVES, RÉVÉLÉ PAR LE VOLUME.** `0012_cards.test.sql` et
+`e2e/api/cards.spec.ts` posaient le même préalable — « plus aucune card active sur `livre` » — en
+archivant **une card désignée par son identifiant**. Ils étaient donc liés au nombre de cards que le
+seed pose sur cette étape, et non à la propriété qu'ils éprouvent. Les deux archivent désormais
+**toute** card active de l'étape, par prédicat, et les rendent toutes. Aucune assertion n'est
+relâchée : le compte attendu reste zéro.
+
+**Treize assertions révisées, aucune retirée**, chacune avec son motif écrit dans le fichier : trois
+comptes de cards (41), les comptes de prévisualisation (11/0, 0/8, 1/29 pour l'administratrice, 1/25
+pour la lectrice), le refus d'archivage du catalogue (11 affaires), le plan de remappage (39
+affaires), et l'avatar de la responsable dans `identites.spec.ts`, cherché sur la page entière là où
+dix cards le rendaient ambigu — porté sur la carte du parcours, ce que l'assertion voulait dire.
+Les deux contrôles de `verify-liste.sh` qui figeaient l'**absence** de volume et de données longues
+sont **retournés** et assèrent leur **présence**.
+
+**Campagne de fin de session.** `npm run test:sql` **41 fichiers, 2161 assertions** ;
+`npm run test:unit` **1368 tests** ; `typecheck` et `build` verts ; `npm run e2e:api` **658
+scénarios** (652 + 6 neufs) ; `npm run e2e:ui` **340 scénarios** ; `npm run e2e:mail` **42
+scénarios** — INC-135 ne s'est pas reproduite ; `.venv/bin/python -m pytest mail-sync/tests` **242
+tests**. `scripts/verify-liste.sh` **72 contrôles, 1 en échec** : `text-text-1`, INC-130, livrable
+de `CRM-076`, mesuré identique par les deux exécutions précédentes et **étranger** à cette tranche —
+aucun fichier de `webapp/` n'est touché.
+
+**Deux captures produites ET OBSERVÉES, sur une session réellement connectée** — `identites.spec.ts`
+se connecte par le formulaire et ne substitue rien. `docs/captures/CRM-022/identites-liste-1440.jpg`
+montre « Affaires : 27 », la card longue en tête du tri par défaut, son titre et sa prochaine action
+tenant chacun sur **une** ligne avec leur ellipse, et la cellule « Responsable » **vide** de l'affaire
+sans responsable. `docs/captures/CRM-022/identites-board-1440.jpg` montre la répartition
+Prospection 8 / Relance 7 / Négociation 6 et la colonne `Signature` disant « Aucune affaire à cette
+étape » — l'état vide délibéré du §9.11.3. Aucun débordement horizontal, aucune ligne déformée.
+
+**Où reprendre.** `CRM-046` reste `[~]` pour deux écarts nommés, aucun n'appartenant au seed
+lui-même : les captures `liste-donnees-longues-{1440,390}` de `CRM-042` proviennent toujours de
+réponses **substituées** et devraient être refaites sur la donnée réelle, ce qui suppose un scénario
+d'interface **connecté** sur la vue liste — la forme existe, `e2e/ui/identites.spec.ts` en est la
+démonstration ; et `scripts/verify-seed-demo.sh` ainsi que `./resetMe.sh` n'ont **pas** été rejoués
+cette session, la convergence n'étant vérifiée que par trois applications successives du seed sur le
+même cluster. Les compteurs de `scripts/verify-harness.sh` sont par ailleurs mesurés **en retard de
+loin plus que cette tranche** — 2003 assertions déclarées contre 2161, 514 scénarios d'API contre
+658 — dérive antérieure et étrangère, à ne pas corriger sous une unité qui ne la porte pas.

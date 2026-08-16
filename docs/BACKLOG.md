@@ -5482,8 +5482,68 @@ démontrable depuis le seed.
       distinctes désormais — l'une compare deux états du même cluster, l'autre deux
       reconstructions —, et la valeur est remplacée par sa **forme** et son **unicité**, vérifiées
       par deux contrôles dédiés.
-- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les seize unités précédentes.
-      **Dix-septième unité consécutive.**
+- [ ] **~~INC-021 conditionne le passage en `[x]`.~~ INC-021 est close depuis `CRM-009` et
+      `CRM-011`**, et la tranche 2 ci-dessous le démontre : deux captures de cette unité sont prises
+      sur une session **réellement connectée**, sans aucune substitution.
+
+**Tranche 2 — le volume et les données longues (2026-08-16).**
+
+- [x] **Spécification écrite après mesure et committée avant la première ligne de code**,
+      `docs/SPEC-seed.md` §9.11, sept sous-chapitres. MESURÉ avant d'écrire : titre le plus long
+      **36** caractères, prochaine action **34**, channel le plus chargé **4** cards actives contre
+      **25** lignes par page. Commit documentaire dédié, poussé.
+- [x] **LE JEU EST LIVRÉ** : vingt-six cards dans `maintenance`, qui passe de 1 à **27** actives.
+      MESURÉ après application : **41** cards, première page **pleine** à 25 lignes, seconde page de
+      **deux** lignes, titre le plus long **128** caractères et prochaine action **134**.
+- [x] **DEUX CHOIX DE PLACEMENT DICTÉS PAR LA MESURE, ET NON PAR LE GOÛT.** `maintenance` plutôt que
+      `grands-comptes` — six fichiers de preuves le citent contre vingt-neuf ; et **aucun volume sur
+      `signature`**, trouvé en exécutant : y poser des cards faisait passer `previsualiser_exigence`
+      de `0/2` à `5/7` et **détruisait l'inversion** que quatre preuves démontrent. L'interdiction
+      est écrite au §9.11.3. `realisation` et `perdu` restent exclues, leurs exigences de transition
+      rendant toute card sans valeur une trace fabriquée (`CLAUDE.md` §8).
+- [x] **UN DÉFAUT DE FORME DANS DEUX PREUVES, RÉVÉLÉ PAR LE VOLUME.**
+      `supabase/tests/0012_cards.test.sql` et `e2e/api/cards.spec.ts` posaient leur préalable — « plus
+      aucune card active sur `livre` » — en archivant **une card désignée par son identifiant** :
+      liées au nombre de cards du seed, non à la propriété éprouvée. Les deux archivent désormais
+      **toute** card active de l'étape, par prédicat, et les rendent toutes.
+- [x] **Test d'intégration dédié** : six scénarios ajoutés à `e2e/api/liste-cards.spec.ts` avec le
+      jeton réel de l'administratrice — total exact de 27, première page pleine, **seconde page de
+      deux lignes sans aucun doublon**, `416` au rang suivant, 128 et 134 caractères mesurés, et la
+      card longue **en première page** du tri par défaut. C'est ce qu'une réponse substituée ne
+      pouvait pas rendre.
+- [x] **Treize assertions révisées, AUCUNE retirée ni relâchée**, chacune avec son motif dans le
+      fichier : trois comptes de cards (41), les comptes de prévisualisation (11/0, 0/8, 1/29 pour
+      l'administratrice, 1/25 pour la lectrice), le refus d'archivage du catalogue (11 affaires), le
+      plan de remappage (39 affaires), et l'avatar de la responsable de `identites.spec.ts`, porté
+      sur la carte du parcours. Les **deux contrôles de `scripts/verify-liste.sh` qui figeaient
+      l'ABSENCE** de volume et de données longues sont **retournés** et assèrent leur présence ; un
+      troisième mesure la prochaine action la plus longue.
+- [x] **Vérification visuelle réellement observée, sur une session CONNECTÉE** :
+      `docs/captures/CRM-022/identites-liste-1440.jpg` — « Affaires : 27 », la card longue en tête,
+      son titre et sa prochaine action tenant chacun sur **une** ligne avec leur ellipse, la cellule
+      « Responsable » **vide** de l'affaire sans responsable, aucun débordement horizontal ; et
+      `docs/captures/CRM-022/identites-board-1440.jpg` — Prospection 8 / Relance 7 / Négociation 6,
+      et `Signature` disant « Aucune affaire à cette étape ».
+- [x] **Campagne complète verte** : `npm run test:sql` **2161 assertions** sur 41 fichiers,
+      `npm run test:unit` **1368 tests**, `typecheck` et `build`, `npm run e2e:api` **658
+      scénarios**, `npm run e2e:ui` **340 scénarios**, `npm run e2e:mail` **42 scénarios**,
+      `pytest mail-sync/tests` **242 tests**.
+- [x] `docs/SPEC-seed.md` §9.10 et §9.11, `CHANGELOG.md`, `docs/JOURNAL.md` mis à jour dans le même
+      changement que le code et les preuves.
+- [~] **`scripts/verify-liste.sh` rend 72 contrôles, 1 en échec**, et l'échec est **étranger** :
+      `text-text-1`, **INC-130**, livrable de `CRM-076`, mesuré identique par les deux exécutions
+      précédentes. Aucun fichier de `webapp/` n'est touché par cette tranche.
+- [ ] **Les captures `liste-donnees-longues-{1440,390}` de `CRM-042` proviennent TOUJOURS de
+      réponses substituées.** La donnée réelle existe désormais ; les refaire suppose un scénario
+      d'interface **connecté** sur la vue liste. La forme est acquise — `e2e/ui/identites.spec.ts`
+      en est la démonstration —, le scénario reste à écrire.
+- [ ] **`scripts/verify-seed-demo.sh` et `./resetMe.sh` n'ont pas été rejoués** : la convergence
+      n'est vérifiée que par trois applications successives du seed sur le même cluster, non par une
+      reconstruction à froid. **Preuve n° 1 du §9.11.7 partiellement acquise.**
+- [ ] **Les compteurs de `scripts/verify-harness.sh` sont en retard, et de bien plus que cette
+      tranche** : 2003 assertions déclarées contre **2161** mesurées, 514 scénarios d'API contre
+      **658**. Dérive **antérieure et étrangère** ; la corriger sous une unité qui ne la porte pas
+      reviendrait à s'attribuer la mesure d'autrui.
 
 *Definition of Done tenue.* Elle demandait « `resetMe.sh` reproduit exactement le même état ;
 chaque fonctionnalité livrée est démontrable depuis le seed ». **Les deux sont mesurées** : la
