@@ -214,3 +214,58 @@ Aucune entrée n'est ouverte.
 
 Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci-dessus : un choix
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
+
+---
+
+## Consignées le 2026-08-16 — deux constats étrangers à `CRM-079`
+
+Les deux suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrangers à l'unité de la
+session**, et le comportement est laissé **inchangé**. Aucun des deux ne demande d'arbitrage : ce
+sont des faits à porter par leur unité, pas des choix à trancher.
+
+### INC-123 — l'hôte de vérification ne porte pas le navigateur qu'exige `@playwright/test` 1.62.1
+
+*Porteur : `CRM-008` (harnais de preuves). Mesuré le 2026-08-16, campagne complète.*
+
+Cinq scénarios de `npm run e2e:mail` — `roundcube.spec.ts` (4) et `roundcube-dossiers.spec.ts` (1) —
+échouent **avant d'exécuter la moindre assertion**, en 2 ms :
+
+```
+browserType.launch: Executable doesn't exist at
+/opt/pw-browsers/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+```
+
+L'hôte fournit `/opt/pw-browsers/chromium_headless_shell-1194`, et la version épinglée en attend
+`-1234`. Les scénarios d'interface de `npm run e2e:ui` ne sont pas touchés : ils reçoivent
+`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`, tandis que ces cinq-là lancent leur propre
+navigateur sans ce chemin.
+
+**Antériorité établie.** Le défaut est indépendant de tout code du dépôt : il porte sur un binaire
+absent du système de fichiers, et il se manifeste identiquement avant et après le changement de la
+session, qui n'a touché que `webapp/src/app/GuideDemarrage.tsx` et deux fichiers de preuve.
+`npm run e2e:mail` rend **36 passés, 6 échoués**, dont ces cinq.
+
+**Rien n'est modifié.** Ni la version épinglée, ni le chemin des navigateurs : changer l'un ou
+l'autre pour verdir ici toucherait le contrat de preuve de tout le dépôt sur la foi d'un seul hôte.
+
+### INC-124 — `mail-sync` journalise un `WARNING` légitime que la preuve S3 interdit
+
+*Porteur : `CRM-054` (console opérationnelle de `mail-sync`). Mesuré le 2026-08-16.*
+
+`e2e/mail/mail-sync.spec.ts:210` — « chaque ligne est un JSON borné, sans secret ni avertissement » —
+exige que **tout** niveau journalisé soit `DEBUG` ou `INFO`. Le service en produit deux autres :
+
+```
+{"level":"WARNING","service":"mail-sync","event":"An error occurred while decoding
+ b\"Mailbox 'CRM/Studio web (renomm\\xc3\\xa9 …)' already exists.\" in ASCII 'strict' mode…"}
+{"level":"WARNING","service":"mail-sync","event":"folder_rename_refused"}
+```
+
+Les deux lignes sont **correctes** : un dossier IMAP déjà présent est refusé, et le service le dit
+sans exposer aucun secret — le jeton n'apparaît nulle part, ce que la suite vérifie par ailleurs.
+C'est l'assertion qui est trop étroite : elle confond « aucun avertissement » avec « aucun incident
+survenu », alors qu'un renommage refusé est un fait d'exploitation que la console DOIT porter.
+
+**Ce qui reste à trancher appartient à `CRM-054`**, et non à cette session : soit la preuve admet
+`WARNING` en nommant les événements attendus, soit le service cesse de renommer un dossier déjà
+présent. Le comportement est laissé **strictement inchangé** en attendant.
