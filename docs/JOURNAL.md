@@ -17269,3 +17269,71 @@ deux fois — forme d'INC-129, aggravée par son intermittence.
 parallèle de la routine l'a prise pendant que celle-ci finissait sa campagne : voir les commits
 `2e7b34c` et `ae7fc10`. La prochaine session vérifiera d'abord l'état réel de `CRM-040` au backlog
 avant de choisir.
+
+## 2026-08-16 — `CRM-040` : la tranche d'écriture, et le refus qui ne dit pas son nom
+
+**Point de départ.** L'entrée précédente désignait la reprise : « `CRM-040` reste `[~]` pour **une
+seule** raison, et elle est nommée : l'**écriture** des six champs d'en-tête n'est pas livrée ».
+C'est cette tranche. Le §15 de `docs/SPEC-cards.md` spécifiait la lecture et **pas** l'écriture ;
+l'exception du §3.2 de `docs/CloudWorker.md` ne s'appliquait donc pas, et la spécification a été
+écrite et committée avant la première ligne de code : `docs/SPEC-cards.md` §15 bis, onze
+sous-chapitres, plus neuf règles au §5.3 ter du design system.
+
+**LA MESURE QUI A CHANGÉ LA CONCEPTION, et elle a été faite avant d'écrire.** Un lecteur seul qui
+tente d'écrire le titre d'une affaire qu'il **voit** ne reçoit pas `403` :
+
+```
+PATCH /rest/v1/cards?id=eq.…0000c6   (jeton réel du viewer)
+=> 200   []
+```
+
+La clause `USING` de `cards_maj` filtre **avant** la mise à jour : aucune ligne n'est candidate,
+aucune erreur n'est levée. Un écran qui aurait lu le seul code HTTP aurait annoncé « Enregistré » à
+qui n'a rien écrit — la simulation de succès de `CLAUDE.md` §18, dans sa forme la plus difficile à
+voir, puisque tout est vert. Deux conséquences en découlent, et aucune n'aurait été trouvée après
+coup : le `PATCH` porte `Prefer: return=representation` — sans corps, succès et refus seraient
+indistinguables —, et le classement des issues lit le **nombre de lignes** autant que le code. C'est
+l'issue « sans effet » de `docs/SPEC-corbeille.md` §4 ter.3, rencontrée une seconde fois sur une
+autre table.
+
+**Trois autres décisions méritent d'être retrouvées.** La première : **la bascule lecture / édition,
+imposée par une règle de lecture**. Le §15.4 fait disparaître la ligne d'une donnée absente ; il
+n'existerait donc **aucun endroit** où saisir le montant d'une affaire qui n'en a pas. Six contrôles
+permanents auraient de leur côté fait ouvrir la fiche sur deux formulaires empilés, contre le §15.2.
+En édition, les six sont tous rendus, vides compris — la quatrième destination du §4 ter.4 du
+composeur, transposée. La deuxième : **une colonne par écriture**, parce que chaque colonne a son
+refus propre — `23514` pour le titre et la devise, `22007` pour l'échéance, `23503` pour le
+responsable. Le lot **fonctionne**, mesuré `200` ; ce n'est pas une impossibilité technique, c'est
+une perte d'attribution que le produit refuse. La troisième : **aucune garde de saisie ne double une
+contrainte de la base** — un titre vide et un montant négatif sont **envoyés**. Le second est
+d'ailleurs mesuré **accepté** : aucune contrainte de signe n'existe, et l'assertion `f` de la preuve
+d'API fige cette absence.
+
+**Deux faits trouvés par le compilateur, et non à l'exécution.** `{ [champ]: valeur }` ne compile
+pas : le type généré déclare `title` et `currency` non nullables, et une clé calculée réduit l'objet
+entier à un index `never`. Le `switch` qui remplace la clé calculée fait donc porter au compilateur
+ce que la base porte déjà. Second fait, trouvé en relisant ce `switch` : `Number('douze mille')`
+rend `NaN`, que `JSON.stringify` transforme silencieusement en `null` — donc un montant **vidé** là
+où l'utilisateur croyait le corriger. Une saisie non convertible n'est plus émise du tout, et rend
+l'issue que la base rendrait.
+
+**Ce que la tranche NE livre pas, et c'est mesuré.** Changer le responsable engendre un événement
+`assigned` ; le titre, le montant, la devise, la prochaine action et l'échéance n'en engendrent
+**aucun**. La preuve d'API l'établit en comptant les événements avant et après. L'écart est nommé au
+§15 bis.10 plutôt que comblé : le combler suppose un trigger, donc une migration, donc `CRM-044`.
+
+**Campagne de fin de session.** `npm run test:sql` **2161 assertions** sur 41 fichiers ;
+`npm run test:unit` **1368 tests** sur 45 fichiers (1324 avant) ; `typecheck` et `build` verts ;
+`npm run e2e:api` **652 scénarios** ; `npm run e2e:ui` **338 scénarios** ; `npm run e2e:mail`
+**42 scénarios** ; `pytest mail-sync/tests` **242 tests**. Aucune anomalie. Cinq captures produites
+**et observées**. `scripts/verify-cards.sh` rend **46 contrôles, 1 en échec** — le compteur de cards
+du seed, consigné en **INC-132** par l'exécution concurrente de cette même heure, et étranger à
+cette tranche.
+
+**Où reprendre.** `CRM-040` reste `[~]`, mais **plus pour rien qui lui appartienne** : les deux
+écarts restants sont la protection de colonne de `current_step_id` et d'`email_local_part` — mot
+pour mot la Definition of Done de `CRM-013`, unité `[ ]` distincte, dont deux assertions de la
+nouvelle preuve d'API figent désormais l'état — et l'absence de card sur workflow dérivé dans le
+seed (INC-046). Une prochaine session peut donc prendre `CRM-013`, ou suivre l'ordre du plan vers
+`CRM-042`. Le parcours enchaîné de `CRM-037` (INC-062) reste dû. INC-129, INC-131, INC-132 et
+INC-133 attendent l'arbitrage du responsable.

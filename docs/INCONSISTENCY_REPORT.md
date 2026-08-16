@@ -577,8 +577,8 @@ dépasse `CRM-040` et vaudrait pour tout contrôle de date du produit.
 
 **Conséquence pour les captures** : celles produites par le harnais montreront ce gabarit américain
 tant que la locale de Chromium n'est pas fixée. Ce n'est pas un défaut du produit, et une capture
-
 qui le montre n'est pas fausse — elle montre le harnais.
+
 **L'ÉCART PRÉEXISTE À LA TRANCHE QUI L'A FAIT VOIR, et la ligne de base est établie sans `git
 stash`.** En regardant `docs/captures/CRM-040/entete-card-xl-1440.jpg`, le champ « Date de signature
 prévue » du **formulaire** — livré par `CRM-037`, `webapp/src/app/FormulaireCard.tsx`, et étranger à
