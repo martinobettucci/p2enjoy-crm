@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-workflow-engine.md §2 bis.3 (la lecture unique, archivés compris),
 //           §2 bis.4 (les quatre gestes), §2 bis.5 (les cinq refus mesurés), §2 bis.6 (validation
 //           de forme), §2 bis.9 (ligne « Unitaire »)
+// @verifies docs/SPEC-workflow-engine.md §2 ter.1 (une colonne, une ligne), §2 ter.2 (le calcul),
+//           §2 ter.3 (les archivés comptés comme voisines), §2 ter.4 (le contrat mesuré),
+//           §2 ter.5 (les refus), §2 ter.6 (positions indistinctes), §2 ter.7 (ligne « Unitaire »)
 // @verifies docs/SPEC-workflow-engine.md §2.3 (la clé stable), §2.4 (position attribuée),
 //           §2.5 (`0` n'est pas `NULL`), §2.6 (la garde d'archivage)
 // @verifies CLAUDE.md §10 (l'écran n'anticipe aucun refus), §18 (aucune valeur par défaut trompeuse)
@@ -20,6 +23,7 @@ import {
 	classerRefusCatalogue,
 	compterAffairesOccupantes,
 	creerNoeud,
+	deplacerNoeud,
 	lireCatalogueAdministrable,
 	lireSaisieNumerique,
 	modifierNoeud,
@@ -27,6 +31,7 @@ import {
 	seuilRelanceConforme,
 	valeurNumeriqueEnvoyee,
 } from './administration-catalogue'
+import { calculerDeplacement } from './administration-arborescence'
 import type { ClientCrm } from './supabase'
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -373,6 +378,123 @@ describe('archiverNoeud', () => {
 		expect(resultat).toMatchObject({
 			statut: 'refus',
 			refus: { nature: 'noeud-occupe', affairesActives: 4 },
+		})
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// Le réordonnancement — §2 ter
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Le catalogue tel que le seed le pose, réduit aux deux colonnes dont le calcul a besoin, et
+ * ARCHIVÉS COMPRIS (§2 ter.3) : `qualification` porte la position `8`, comme en base.
+ *
+ * Les positions sont entières et distinctes, donc tout déplacement a un milieu strict — c'est la
+ * ligne « Seed » du §2 ter.7, vérifiée ici plutôt que supposée.
+ */
+const CATALOGUE_SEED = [
+	{ id: 'n1', position: 1 },
+	{ id: 'n2', position: 2 },
+	{ id: 'n3', position: 3 },
+	{ id: 'n8-archive', position: 8 },
+] as const
+
+describe('deplacerNoeud', () => {
+	it("n'écrit QUE `position`, sur UNE seule ligne (§2 ter.1)", async () => {
+		const { client, appels } = espion({ data: [{ id: NOEUD }], error: null, status: 200 })
+		const resultat = await deplacerNoeud(client, NOEUD, 1.5)
+
+		expect(appels).toHaveLength(1)
+		// La charge est comparée en ÉGALITÉ, pas en `toMatchObject` : c'est la seule forme qui
+		// attrape une colonne ajoutée par mégarde. Réécrire `label` ou `archived_at` au passage d'un
+		// déplacement changerait la donnée sans que personne ne l'ait demandé.
+		expect(premierAppel(appels).charge).toEqual({ position: 1.5 })
+		expect(premierAppel(appels).verbe).toBe('update')
+		expect(premierAppel(appels).filtres).toEqual([['eq', 'id', NOEUD]])
+		expect(resultat).toEqual({ statut: 'applique' })
+	})
+
+	it('conserve la fraction que le calcul a produite — `numeric` ne l’arrondit pas (§2 ter.4 a)', async () => {
+		const { client, appels } = espion({ data: [{ id: NOEUD }], error: null, status: 200 })
+		await deplacerNoeud(client, NOEUD, 2.5)
+		expect(premierAppel(appels).charge).toEqual({ position: 2.5 })
+	})
+
+	it('rend `sans-effet` sur `200` et zéro ligne — le refus du `viewer` (§2 ter.4 c)', async () => {
+		const { client } = espion({ data: [], error: null, status: 200 })
+		expect(await deplacerNoeud(client, NOEUD, 3)).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('classe un `42501` de la RLS en `forbidden`, jamais en nœud occupé (§2 ter.5)', async () => {
+		const { client } = espion({
+			data: null,
+			error: { code: '42501', message: 'new row violates row-level security policy' },
+			status: 403,
+		})
+		expect(await deplacerNoeud(client, NOEUD, 3)).toMatchObject({
+			statut: 'refus',
+			refus: { nature: 'forbidden' },
+		})
+	})
+})
+
+describe('calculerDeplacement sur le catalogue — §2 ter.2 et §2 ter.3', () => {
+	it('monte un nœud du milieu entre les deux positions qui le précèdent', () => {
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n3', 'monter')).toEqual({
+			statut: 'calcule',
+			position: 1.5,
+		})
+	})
+
+	it('descend un nœud en prenant une position entre la suivante et l’après-suivante', () => {
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n1', 'descendre')).toEqual({
+			statut: 'calcule',
+			position: 2.5,
+		})
+	})
+
+	it('refuse de monter la première ligne, et de descendre la dernière (§2 ter.2, extrémités)', () => {
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n1', 'monter')).toEqual({
+			statut: 'impossible',
+			cause: 'extremite',
+		})
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n8-archive', 'descendre')).toEqual({
+			statut: 'impossible',
+			cause: 'extremite',
+		})
+	})
+
+	it('COMPTE LE NŒUD ARCHIVÉ COMME VOISINE (§2 ter.3)', () => {
+		// `n2` descend d'un cran : sa borne haute est la position de l'ARCHIVÉ, `8`, et le milieu vaut
+		// `5.5`. Sur une liste privée de l'archivé, `n2` serait l'avant-dernière et la même commande
+		// rendrait `4` — `n3` étant alors la dernière. Les deux valeurs sont légitimes ; une seule
+		// correspond à la liste que l'administrateur a sous les yeux.
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n2', 'descendre')).toEqual({
+			statut: 'calcule',
+			position: 5.5,
+		})
+		// Et `n3` est la DERNIÈRE ligne active sans l'être dans la liste affichée : elle descend
+		// encore, en queue, sur `suivante + 1`. Sans l'archivé dans la liste, elle rendrait
+		// `extremite` — la ligne visible à l'écran serait franchie sans un mot, ou pas franchissable.
+		expect(calculerDeplacement(CATALOGUE_SEED, 'n3', 'descendre')).toEqual({
+			statut: 'calcule',
+			position: 9,
+		})
+	})
+
+	it('nomme `positions-indistinctes` quand deux voisines partagent une position (§2 ter.6)', () => {
+		// Deux administrateurs qui déplacent en même temps produisent ce cas, et le §2 bis.3 départage
+		// alors sur `label`. Le geste suivant ne doit pas écrire une valeur qui ne changerait rien.
+		const egales = [
+			{ id: 'a', position: 4 },
+			{ id: 'b', position: 4 },
+			{ id: 'c', position: 4 },
+			{ id: 'd', position: 9 },
+		] as const
+		expect(calculerDeplacement(egales, 'c', 'monter')).toEqual({
+			statut: 'impossible',
+			cause: 'positions-indistinctes',
 		})
 	})
 })
