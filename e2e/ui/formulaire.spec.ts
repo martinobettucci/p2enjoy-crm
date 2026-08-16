@@ -187,6 +187,10 @@ const ECRITURE_ACCEPTEE: ReponseEcriture = { status: 201, corps: [{ field_id: 'f
 async function servirFormulaire(
 	page: import('@playwright/test').Page,
 	ecriture: ReponseEcriture = ECRITURE_ACCEPTEE,
+	// Les valeurs sont surchargeables depuis la reprise d'un déplacement refusé (§4 ter) : elle
+	// s'éprouve sur un `motif-perte` SANS valeur, cas où les trois destinations du §4.2 ne le
+	// rendent nulle part. Le défaut reste celui du seed, qui lui en donne une.
+	valeurs: readonly unknown[] = VALEURS_SERVIES,
 ): Promise<void> {
 	const servir = (corps: unknown) => (route: import('@playwright/test').Route) =>
 		route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(corps) })
@@ -207,7 +211,7 @@ async function servirFormulaire(
 		return route.fulfill({
 			status: 200,
 			contentType: 'application/json',
-			body: JSON.stringify(VALEURS_SERVIES),
+			body: JSON.stringify(valeurs),
 		})
 	})
 	await page.route(ROUTE_CHAMPS, servir(CHAMPS_SERVIS))
@@ -589,4 +593,93 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			await capturer(page, `formulaire-${palier.nom}`, 'CRM-037')
 		})
 	}
+})
+
+// @verifies CRM-037 (docs/BACKLOG.md) — reprise d'un déplacement refusé, sur la pile réelle
+// @verifies docs/SPEC-form-composer.md §4 ter.2 (le transport est l'adresse), §4 ter.4 (rendu
+//           saisissable même si la règle le cache), §4 ter.5 (la mention), §4 ter.6 (le
+//           défilement emporte le focus), §4 ter.7 (une clé inconnue est ignorée)
+// @verifies docs/DESIGN_SYSTEM.md §5.7 quater ; CLAUDE.md §16 (vérification visuelle)
+test.describe('reprendre un déplacement refusé depuis la fiche (§4 ter)', () => {
+	/** Le seed sans valeur pour `motif-perte` : le champ `hidden` que rien ne rend (§4 ter.4). */
+	const SANS_MOTIF = [{ field_id: 'f-previsionnel', value: 72000 }]
+
+	test('sans le paramètre, le champ `hidden` et vide n’est rendu NULLE PART (§4.2)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(ADRESSE)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+		await expect(page.getByTestId('champ-motif-perte')).toHaveCount(0)
+		// Ni dans la section repliée : elle ne retient que les champs masqués QUI PORTENT une valeur.
+		await expect(page.getByTestId('autre-motif-perte')).toHaveCount(0)
+	})
+
+	test('nommé par l’adresse, il devient saisissable et porte sa mention (§4 ter.4, §4 ter.5)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(`${ADRESSE}?exiges=motif-perte`)
+		const bloc = page.getByTestId('champ-motif-perte')
+		await expect(bloc).toBeVisible()
+		await expect(bloc).toHaveAttribute('data-exige', 'true')
+		await expect(page.getByTestId('exige-motif-perte')).toContainText('Exigé par le déplacement')
+		const controle = page.locator('#champ-motif-perte')
+		await expect(controle).toBeEditable()
+		// La mention est citée par le contrôle, comme l'aide et l'alerte du §4.5 (§4 ter.8).
+		expect((await controle.getAttribute('aria-describedby')) ?? '').toContain(
+			'champ-motif-perte-exige',
+		)
+	})
+
+	test('le PREMIER champ exigé porte le focus, dans l’ordre du formulaire (§4 ter.3, §4 ter.6)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		// L'adresse les donne à l'envers : `source` est en position 2, `motif-perte` en position 4.
+		// Le focus doit aller au premier du FORMULAIRE, jamais au premier de la chaîne.
+		await page.goto(`${ADRESSE}?exiges=motif-perte,source`)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+		await expect(page.locator('#champ-source')).toBeFocused()
+	})
+
+	test('le champ atteint est réellement VISIBLE dans la fenêtre, sans geste de l’utilisateur', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 600 })
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(`${ADRESSE}?exiges=motif-perte`)
+		// C'est le défilement du §4 ter.6, éprouvé par son EFFET plutôt que par l'appel : la
+		// hauteur réduite garantit que le champ, en quatrième position, n'est pas visible d'emblée.
+		await expect(page.getByTestId('exige-motif-perte')).toBeInViewport()
+		await expect(page.locator('#champ-motif-perte')).toBeFocused()
+	})
+
+	test('une clé qui ne désigne rien rend la fiche ORDINAIRE, sans erreur (§4 ter.7)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(`${ADRESSE}?exiges=champ-inexistant`)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+		await expect(page.locator('[data-exige="true"]')).toHaveCount(0)
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+	})
+
+	test('un champ archivé nommé par l’adresse reste hors du formulaire (§4 ter.4)', async ({
+		page,
+	}) => {
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(`${ADRESSE}?exiges=budget-previsionnel`)
+		await expect(page.getByTestId('formulaire-card')).toBeVisible()
+		await expect(page.getByTestId('champ-budget-previsionnel')).toHaveCount(0)
+		await expect(page.locator('[data-exige="true"]')).toHaveCount(0)
+	})
+
+	test('capture de l’écran de reprise, observée (CLAUDE.md §16)', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await servirFormulaire(page, ECRITURE_ACCEPTEE, SANS_MOTIF)
+		await page.goto(`${ADRESSE}?exiges=source,motif-perte`)
+		await expect(page.getByTestId('exige-motif-perte')).toBeVisible()
+		await capturer(page, 'reprise-deplacement-refuse-1440', 'CRM-037')
+	})
 })
