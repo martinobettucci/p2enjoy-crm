@@ -546,3 +546,35 @@ pourquoi elle doit être faite **par l'unité qui sait laquelle des deux était 
 écrite dans une condition à l'intérieur d'un attribut `className`, que le contrôle relevait comme
 une classe. Les deux sont corrigés à la cause, le second en nommant les deux graduations hors du
 JSX.
+
+### INC-131 — le gabarit du contrôle d'échéance suit la locale du NAVIGATEUR, jamais celle du produit
+
+**Constaté le 2026-08-16**, en regardant `docs/captures/CRM-040/entete-card-edition-xl-1440.jpg`
+(`CLAUDE.md` §16) — pas en lisant un test : aucune assertion ne pouvait le voir.
+
+Le contrôle d'échéance de l'en-tête (`input type="datetime-local"`, `docs/SPEC-cards.md` §15 bis)
+affiche son gabarit vide en **`mm/dd/yyyy, --:-- --`**, c'est-à-dire au format américain, alors que
+le produit est français (`docs/DESIGN_SYSTEM.md` §10) et que toutes ses autres dates sont rendues en
+`fr-FR` par `Intl.DateTimeFormat`.
+
+**Le motif est mesuré, et il est hors du dépôt.** Le gabarit d'un contrôle de date natif est choisi
+par le **navigateur**, d'après la locale de l'utilisateur : aucun attribut HTML ne le force, et
+`lang="fr"` sur le document ne l'atteint pas. Ici c'est Chromium lancé par le harnais, dont la
+locale par défaut est `en-US` — `e2e/playwright.config.ts` n'en fixe aucune. Dans un navigateur
+configuré en français, le même contrôle rend `jj/mm/aaaa`.
+
+**La valeur, elle, n'est pas concernée** : elle est écrite et lue en `AAAA-MM-JJTHH:MM`, format
+imposé par la spécification HTML et indépendant de la locale, et `webapp/src/app/EnTeteCard.tsx`
+(`pourControleDateHeure`) la compose à partir des composantes **locales** de `Date` — un `slice` de
+la chaîne ISO décalerait toute échéance de l'écart de fuseau, et quatre cas unitaires le figent.
+
+**Comportement laissé inchangé, et deux issues sont possibles.** La première est de n'en rien faire :
+l'utilisateur réel voit le format de **son** navigateur, ce qui est le comportement attendu d'un
+contrôle natif. La seconde est de remplacer le contrôle natif par une saisie composée, ce qui
+demanderait un composant de date au design system — que personne n'a spécifié, et dont
+`docs/DESIGN_SYSTEM.md` §5.7 ne dit rien. **Arbitrage attendu du responsable** : la seconde issue
+dépasse `CRM-040` et vaudrait pour tout contrôle de date du produit.
+
+**Conséquence pour les captures** : celles produites par le harnais montreront ce gabarit américain
+tant que la locale de Chromium n'est pas fixée. Ce n'est pas un défaut du produit, et une capture
+qui le montre n'est pas fausse — elle montre le harnais.
