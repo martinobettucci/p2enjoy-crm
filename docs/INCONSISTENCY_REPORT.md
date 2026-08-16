@@ -404,3 +404,34 @@ mesure sans réparer le mécanisme qui la laisse dériver.
 **Ce que ce n'est pas** : une demande d'arbitrage. Le remède est celui qu'INC-125 attend déjà — que
 les comptes vivent dans un harnais qui les recalcule, ou qu'une unité les inscrive à sa Definition
 of Done. Il se décide une fois, pour les trois supports à la fois.
+
+### INC-128 — `e2e/mail/dossiers.spec.ts` échoue dans sa suite complète et passe seul
+
+*Porteur : `CRM-056` (l'arborescence IMAP). Mesuré le 2026-08-16 par la session `CRM-030`, dans la
+campagne de fin de session.*
+
+**Mesuré, deux fois et dans cet ordre** : `npm run e2e:mail` rend **41 passés, 1 en échec** — le
+scénario « renommer un TRACK renomme son dossier et emporte ses enfants », ligne 266 ; le **même
+scénario relancé seul**, par `-g`, rend **1 passé** en 4 secondes. La différence n'est donc pas dans
+le scénario, elle est dans ce que les scénarios qui le précèdent laissent derrière eux.
+
+**Ce n'est pas imputable à cette session, et la ligne de base n'a pas eu à être fabriquée pour
+l'établir.** La suite `mail` ne porte **aucune** occurrence de `catalogue`,
+`workflow_nodes_catalog` ni `administration-catalogue` — vérifié par recherche —, et les cinq
+fichiers de code que la session modifie sont tous ceux de l'écran du catalogue. Aucun chemin ne relie
+les deux.
+
+**C'est le mode de défaillance qu'INC-105 et INC-117 décrivent déjà** : une dérive d'ÉTAT laissée par
+les scénarios voisins, et non une régression du produit. La session `CRM-030` du même jour l'avait
+rencontrée sur `test:sql`, où un rejeu de `supabase/seed/apply-seed.sh` avait rendu les 40 fichiers
+verts. Ce qui est nouveau ici est le support : c'est la première fois que le mode est mesuré sur la
+suite `mail`, où l'état partagé n'est pas seulement la base mais **l'arborescence IMAP de Stalwart**.
+
+**Comportement laissé inchangé** (`docs/CloudWorker.md` §3.1) : le défaut est étranger à `CRM-030`,
+et le traiter demanderait de savoir lequel des scénarios précédents laisse le dossier dans un état
+qui empêche le renommage — une investigation qui appartient à `CRM-056`. Le corriger au passage en
+ajoutant une purge à ce seul scénario masquerait la cause au lieu de la lever.
+
+**Conséquence à connaître** : `scripts/verify-harness.sh` compte cet échec parmi ses anomalies, en
+plus des trois compteurs figés d'INC-125. Un verdict à quatre anomalies sur ce harnais s'explique
+donc entièrement par deux entrées ouvertes, et non par l'unité en cours.
