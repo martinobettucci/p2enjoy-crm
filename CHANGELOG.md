@@ -15,6 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La fiche d'une affaire montre enfin ce qu'elle EST : son responsable, son montant, sa prochaine
+  action et son adresse email** (`CRM-040`, `docs/SPEC-cards.md` §15, `docs/DESIGN_SYSTEM.md`
+  §5.3 bis). Le §5.3 du design system nommait ces champs depuis `CRM-000` et rien ne les rendait :
+  la fiche livrée par `CRM-037` ouvrait directement sur le formulaire, et le titre n'était visible
+  que dans l'en-tête d'application. Le motif écrit partout — « exige une session, INC-021 » — avait
+  survécu à sa cause de neuf unités, INC-021 étant close depuis `CRM-009`.
+  L'en-tête est en **haut** de la colonne gauche, au-dessus du formulaire : on lit l'identité d'une
+  affaire avant son dossier, et le bas de cette colonne est déjà pris par le geste de retrait.
+  **Une donnée absente n'est jamais un tiret** : la ligne du montant et celle de la prochaine action
+  disparaissent entièrement, tandis que le responsable absent porte une **phrase** — n'avoir
+  personne à qui s'adresser est un fait de l'affaire, là où une affaire sans montant chiffré est le
+  cas ordinaire d'un début de qualification. Une affaire **archivée** porte sa pilule « Archivé » à
+  côté de son titre, sans quoi sa fiche serait indistinguable de celle d'une affaire en cours.
+  **L'adresse email est composée à l'écran, jamais lue en colonne** — `email_local_part` vient de
+  la card, le domaine du workspace de la relation embarquée —, et sans domaine **aucune** adresse
+  n'est rendue : une adresse amputée ne serait pas incomplète, elle serait fausse. La commande de
+  copie appelle réellement le presse-papiers, remplace son libellé par « Copié » deux secondes, et
+  **dit son échec** avec la manœuvre de remplacement lorsque le navigateur la refuse.
+  Aucune requête supplémentaire : le `select` que la fiche émettait déjà est élargi. La relation du
+  responsable est nommée par sa contrainte — mesuré, un `profiles(full_name)` nu est refusé en
+  `PGRST201`, trois clés étrangères de `cards` désignant `profiles`.
+  **L'écriture de ces six champs reste due** : les privilèges existent en base, le geste
+  d'interface non (§15.1).
+
 - **Un déplacement refusé pour réponses manquantes se reprend depuis la fiche de l'affaire**
   (`CRM-037`, `docs/SPEC-form-composer.md` §4 ter, `docs/DESIGN_SYSTEM.md` §5.7 quater). Le §4.5
   posait depuis `CRM-000` que « l'interface met en évidence les champs concernés et fait défiler

@@ -3939,13 +3939,60 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
       `docs/SPEC-seed.md` §2.12, `docs/DAT.md` §5, `docs/PROD_MIGRATIONS.md` §3 (migration 11),
       `docs/manual.md` chapitre 4 et §3.2, `docs/MASTER_PLAN.md` §3, `CHANGELOG.md` mis à jour dans
       le même changement.
-- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La Definition of Done exige
-      « E2E ; captures ». La webapp reste un appelant **anonyme** faute d'écran de connexion —
-      **INC-021, en attente d'arbitrage** —, et une card est par construction invisible à un
-      anonyme : il n'existe **aucune** vérification visuelle sensée à produire tant que l'arbitrage
-      n'est pas rendu. Les règles sont livrées et prouvées **en base et par l'API**, ce que
-      `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
-      défaut de l'unité.**
+- [x] **~~Aucun écran, aucune capture, aucun test E2E d'interface~~ — LES CHAMPS D'EN-TÊTE SONT
+      LIVRÉS, le 2026-08-16.** Cette case invoquait INC-021, **close depuis `CRM-009`** : le motif
+      avait survécu à sa cause de neuf unités, exactement comme la limite « aucune écriture » de
+      `CRM-037`. Trois documents nommaient depuis le même reste avec les mêmes mots —
+      `docs/DESIGN_SYSTEM.md` §5.3, `docs/SPEC-form-composer.md` §446, `docs/SPEC-manual.md` §183 —
+      sans qu'aucun contrat ne l'écrive. Spécification rédigée et committée **avant la première
+      ligne de code** : `docs/SPEC-cards.md` §15, dix sous-chapitres, plus neuf règles au §5.3 bis
+      du design system.
+      - [x] **`webapp/src/app/EnTeteCard.tsx`, en HAUT de la colonne gauche** (§15.2) : titre,
+            responsable, montant et devise, prochaine action et échéance, adresse email de
+            l'affaire. Aucune de ces six données n'atteignait l'écran auparavant.
+      - [x] **AUCUNE REQUÊTE SUPPLÉMENTAIRE** : le `select` que la fiche émettait déjà est élargi
+            (§15.3). **La relation du responsable est nommée par sa contrainte, et c'est une
+            mesure** : `profiles(full_name)` nu est refusé en `PGRST201`, trois clés étrangères de
+            `cards` désignant `profiles`. Le littéral du `select` reste **d'un seul tenant** — une
+            concaténation rend le type `string` et `supabase-js` cesse d'inférer la forme de la
+            réponse, mesuré à la compilation.
+      - [x] **L'adresse est COMPOSÉE, jamais lue en colonne** (§3.5) : le domaine vient de la
+            relation `workspaces` embarquée. **Sans domaine, aucune adresse n'est rendue** — une
+            adresse amputée ne serait pas incomplète, elle serait fausse, et la copier enverrait un
+            message nulle part. `inbound_domain` est **nullable**, fait relevé par le compilateur
+            et non supposé : c'est la troisième raison, avec le refus et l'absence.
+      - [x] **Une donnée absente n'est jamais un tiret** (§5.3 bis) : la ligne du montant et celle
+            de la prochaine action **disparaissent**, le responsable absent porte une **phrase**.
+            La cellule vide du §5.9 vaut pour un tableau, où la colonne dit de quoi il s'agit ; ici
+            une ligne vide se lirait comme un défaut d'affichage.
+      - [x] **Une affaire archivée est NOMMÉE** : pilule « Archivé » à côté du titre, comme un champ
+            archivé (§5.15) et un nœud archivé (§5.18). La card `…00c8` du seed l'éprouve.
+      - [x] **La copie appelle réellement le presse-papiers, et son échec est DIT** : « Copié »
+            remplace le libellé deux secondes, un refus du navigateur rend une phrase nommant la
+            manœuvre de remplacement. Un bouton silencieux serait la « simulation de succès » que
+            `CLAUDE.md` §18 interdit.
+      - [x] **Preuves unitaires** : 13 cas de composition dans `webapp/src/lib/entete-card.test.ts`
+            — dont zéro comme montant, un code devise inconnu que `style: 'currency'` ferait lever
+            en `RangeError`, et une date illisible — et 15 scénarios de rendu dans
+            `webapp/src/app/EnTeteCard.test.tsx`. `npm run test:unit` **1324** tests sur 45 fichiers
+            (1291 avant).
+      - [x] **Preuves d'interface sur la pile réelle, SANS AUCUNE RÉPONSE SUBSTITUÉE** :
+            `e2e/ui/entete-card.spec.ts`, **7 scénarios** sur une session réelle et trois affaires
+            du seed. L'ordre des trois blocs de la colonne gauche est **constaté dans le DOM** par
+            `compareDocumentPosition` — une inversion serait invisible à une assertion de présence
+            —, la copie relit le **presse-papiers** et non le libellé du bouton, et la cible est
+            mesurée à 40 px sur le rendu réel.
+      - [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-040/`, **six
+            captures** — les quatre paliers du §7, l'affaire archivée et l'affaire sans responsable.
+            Regardées une à une ; à 390 px l'en-tête se replie sans débordement horizontal.
+      - [x] `docs/manual.md` §4.7 réécrit et §4.6 corrigé, `CHANGELOG.md` mis à jour dans le même
+            changement.
+- [ ] **L'ÉCRITURE DES SIX CHAMPS D'EN-TÊTE RESTE DUE, et rien en base ne la bloque.** MESURÉ, le
+      rôle `authenticated` porte le privilège `UPDATE` sur `title`, `owner_id`, `amount`,
+      `currency`, `next_action` et `next_action_at` : ce qui manque est le geste d'interface, ses
+      refus et ses preuves, soit un volume comparable au §4 bis du composeur de formulaire
+      (`docs/SPEC-cards.md` §15.1). L'écart est **nommé plutôt que compensé** ; c'est une tranche,
+      pas un blocage.
 - [ ] **La protection de colonne de `current_step_id` et d'`email_local_part` n'est pas livrée.**
       C'est mot pour mot la Definition of Done de `CRM-013`, unité `[ ]` distincte, désormais
       **partiellement débloquée** — deux de ses six cibles existent. Le trigger **génère** l'adresse ;
@@ -3958,12 +4005,15 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur la génération et
 l'unicité de `email_local_part` ; E2E ; captures ». La première est livrée, largement au-delà — la
 génération, l'unicité, la valeur du client ignorée, et le fait que ce soit l'**index** et non la
-boucle qui garantisse. **Les deux dernières n'existent pas**, faute d'écran, et l'absence est nommée
-plutôt que compensée par une preuve de substitution.
+boucle qui garantisse. **Les deux dernières le sont depuis le 2026-08-16** : sept scénarios
+d'interface sur session réelle et six captures observées, portés par les champs d'en-tête de la
+fiche (`docs/SPEC-cards.md` §15). L'unité reste `[~]` pour une seule raison, nommée ci-dessus :
+**l'écriture** de ces champs n'est pas livrée.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Dixième unité consécutive à buter sur INC-021.
+- ~~**Aucun écran.** Dixième unité consécutive à buter sur INC-021.~~ **Levée** : la fiche porte son
+  en-tête depuis le 2026-08-16, INC-021 étant close depuis `CRM-009`.
 - **`move_card` n'existe pas** : `current_step_id` s'écrit directement par un `PATCH`, et une card
   peut franchir une transition non déclarée. La seule garde qui tienne aujourd'hui est structurelle —
   l'étape doit appartenir au workflow de la card. `CRM-034` est désormais **débloquée** : sa cible

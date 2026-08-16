@@ -477,14 +477,32 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 - **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
   vous aviez le droit d'écrire là où elle se trouvait.
 
-### 4.7 La fiche d'une affaire : son formulaire, et ce qu'il montre
+### 4.7 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent
 
-*Livrée par `CRM-037`. Captures dans `docs/captures/CRM-037/`.*
+*Livrée par `CRM-037`, son en-tête par `CRM-040`. Captures dans `docs/captures/CRM-037/` et
+`docs/captures/CRM-040/`.*
 
 Une affaire s'ouvre à l'adresse `/tracks/<track>/<onglet>/cards/<identifiant de l'affaire>`. Cet
-écran affiche à gauche le **formulaire de l'étape où l'affaire se trouve**, et à droite son
-**historique et sa discussion** (chapitre 4.10). Ce qui n'y figure pas encore : les **champs
-d'en-tête** — titre, responsable, montant, prochaine action —, qui n'ont aucun écran de saisie.
+écran affiche à gauche **l'en-tête de l'affaire** puis le **formulaire de l'étape où elle se
+trouve**, et à droite son **historique et sa discussion** (chapitre 4.10).
+
+**L'en-tête, en haut de la colonne de gauche**, dit ce que l'affaire *est* :
+
+- son **titre** ;
+- son **responsable**, avec son avatar. Lorsqu'aucune personne n'en est responsable, l'écran l'écrit
+  — « Aucun responsable » — plutôt que de laisser un blanc ;
+- son **montant** et sa devise, lorsqu'un montant est renseigné. Sinon la ligne n'apparaît pas : une
+  affaire qui débute n'est pas encore chiffrée, et un tiret se lirait comme une valeur ;
+- sa **prochaine action** et son échéance, aux mêmes conditions ;
+- son **adresse email** (chapitre 4.2), avec le bouton **« Copier l'adresse »** et la phrase qui en
+  dit l'usage. Le bouton confirme la copie par « Copié » pendant deux secondes ; si votre navigateur
+  la refuse — cela arrive hors connexion sécurisée —, l'écran vous dit de sélectionner l'adresse à
+  la main plutôt que de faire comme si la copie avait eu lieu ;
+- la mention **« Archivé »** lorsque l'affaire est archivée (chapitre 4.4). Sa fiche reste
+  consultable, et cette mention est ce qui la distingue d'une affaire en cours.
+
+**Ces champs se lisent, ils ne se modifient pas encore** : aucun écran ne porte leur saisie. Le
+formulaire de l'étape, lui, s'enregistre bien question par question.
 
 Ce que vous y voyez :
 
@@ -904,13 +922,14 @@ opération d'exploitation et non un parcours produit.
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
 - **La recherche sur tout l'espace de travail** : la recherche de la vue liste est bornée au channel
   ouvert.
-- **La création et la modification d'une affaire** : aucun écran ne les porte, ni depuis le tableau,
-  ni depuis la fiche.
+- **La création d'une affaire, et la modification de ses champs d'en-tête** : la fiche **montre**
+  désormais le titre, le responsable, le montant et la prochaine action (chapitre 4.7), mais aucun
+  écran ne permet encore de les saisir ni de les corriger.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
   serveur l'applique (chapitre 4.11), mais aucun bouton ne le propose.
-- **Le responsable et les étiquettes sur une carte** : le nom d'une personne n'est aujourd'hui
-  lisible par personne, et le produit préfère ne rien afficher plutôt qu'un identifiant technique.
+- **Les étiquettes sur une carte du tableau** : elles ne sont pas portées par le produit. Le
+  responsable, lui, est lisible sur la fiche depuis le chapitre 4.7.
 - **Les documents** : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré
   (chapitre 4.10).
 - **Le score de santé** : la colonne existe, rien ne l'alimente.

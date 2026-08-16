@@ -17158,3 +17158,62 @@ réelle** sans réponse substituée. C'est ce qui reste d'INC-062, et c'est ce q
 peut prendre. Sinon, l'ordre du plan mène à `CRM-040` ; et les cases de `CRM-033`, `CRM-035` et
 `CRM-036` restent mesurées fausses — leurs écrans existent, livrés par les unités d'administration,
 seules leurs preuves d'interface manquent. INC-129 reste à porter au responsable.
+
+## 2026-08-16 — `CRM-040` : le motif « INC-021 » avait survécu de neuf unités à sa cause
+
+**Point de départ.** L'entrée précédente proposait trois reprises ; l'ordre du plan (§3.d) mène à
+`CRM-040`, `[~]` depuis sa livraison. Sa case ouverte disait « aucun écran, aucune capture, aucun
+test E2E d'interface », au motif que « la webapp reste un appelant **anonyme** faute d'écran de
+connexion — INC-021 ». Or INC-021 est close depuis `CRM-009`, et la fiche existe depuis `CRM-037`.
+**Troisième occurrence du même mécanisme en trois sessions** : une limite écrite avec son motif, le
+motif levé par une unité ultérieure, et la limite qui reste parce que personne ne la relit.
+
+**Ce qui manquait réellement, et trois documents le disaient déjà.** `docs/DESIGN_SYSTEM.md` §5.3
+nomme depuis `CRM-000` « les champs d'entête (titre, responsable, montant, prochaine action) » et
+« l'adresse email de la card […] en monospace, avec une action de copie » ;
+`docs/SPEC-form-composer.md` §446 écrit que « les champs d'en-tête de la card (`CRM-040`) restent
+dus » ; `docs/SPEC-manual.md` §183 que « seuls les champs d'en-tête manquent ». Trois renvois,
+aucun contrat. Spécification écrite et committée **avant la première ligne de code** :
+`docs/SPEC-cards.md` §15, dix sous-chapitres, plus `docs/DESIGN_SYSTEM.md` §5.3 bis.
+
+**Deux faits mesurés commandent la lecture, et aucun n'était supposé.** Le premier :
+`profiles(full_name)` nu est refusé en **`PGRST201`** — trois clés étrangères de `cards` désignent
+`profiles` (`owner_id`, `created_by`, `deleted_by`), et PostgREST refuse de choisir. La relation
+s'écrit donc par le nom de sa contrainte. Le second, trouvé à la **compilation** et non à
+l'exécution : `COLONNES_CARD_FORMULAIRE` écrite en `'a' + 'b'` rend le type `string`, et
+`supabase-js` cesse alors d'inférer la forme de la réponse — `lireCard` retombait sur
+`GenericStringError`. Le littéral doit rester d'un seul tenant, et le motif est écrit dans le
+fichier pour que personne ne le « mette en forme » plus tard. Troisième fait, du même compilateur :
+`workspaces.inbound_domain` est **nullable**, ce qu'aucun document ne disait.
+
+**Trois décisions méritent d'être retrouvées.** La première : **sans domaine, aucune adresse**, et
+surtout pas la partie locale seule. Une adresse amputée n'est pas incomplète, elle est **fausse** —
+la copier enverrait un message nulle part, ce qui est la valeur par défaut trompeuse de
+`CLAUDE.md` §18. La deuxième : **une donnée absente n'est pas un tiret**, et la règle diverge selon
+la donnée. La cellule vide du §5.9 vaut pour un tableau, où la colonne dit de quoi il s'agit ; ici
+la ligne du montant et celle de la prochaine action **disparaissent**, tandis que le responsable
+absent porte une **phrase** — n'avoir personne à qui s'adresser est un fait de l'affaire, là où une
+affaire sans montant chiffré est le cas ordinaire d'un début de qualification. La troisième :
+`Intl.NumberFormat` **sans** `style: 'currency'`, parce que la base ne contraint que la *forme* du
+code devise et jamais sa liste réelle (§2.1) : un code inconnu lèverait `RangeError` et ferait
+tomber l'écran entier pour une devise saisie. Le code occupe son propre élément, jamais un nœud de
+texte accolé — défaut « Discussion1 » de la décision 212.
+
+**Une preuve qui regarde le produit et non l'écran.** L'ordre des trois blocs de la colonne gauche
+est ce que le §15.2 décide, et une inversion serait invisible à toute assertion de présence : elle
+est donc constatée dans le DOM par `compareDocumentPosition`. De même, le scénario de copie relit
+le **presse-papiers** de Chromium, pas le libellé du bouton — la permission est accordée par le
+contexte —, et la hauteur de la cible est mesurée sur le rendu réel plutôt que déclarée.
+
+**Campagne de fin de session.** `npm run test:unit` **1324** tests sur 45 fichiers (1291 avant) ;
+`npm run typecheck` et `npm run build` verts. `e2e/ui/entete-card.spec.ts` **7 scénarios verts**,
+sans aucune réponse substituée. **Six captures produites ET OBSERVÉES** sous `docs/captures/CRM-040/`
+— les quatre paliers, l'affaire archivée, l'affaire sans responsable. Le reste de la campagne est
+consigné avec son résultat dans le compte rendu de session.
+
+**Où reprendre.** `CRM-040` reste `[~]` pour **une seule** raison, et elle est nommée : **l'écriture**
+des six champs d'en-tête n'est pas livrée. MESURÉ, le rôle `authenticated` porte le privilège
+`UPDATE` sur les six colonnes — rien en base ne la bloque, ce qui manque est le geste, ses refus et
+ses preuves, soit un volume comparable au §4 bis du composeur. C'est la tranche que la prochaine
+session peut prendre. Sinon, l'ordre du plan mène à `CRM-042` ; et le parcours enchaîné de
+`CRM-037` (INC-062) reste dû. INC-129 reste à porter au responsable.
