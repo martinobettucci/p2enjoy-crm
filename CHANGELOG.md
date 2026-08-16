@@ -23,6 +23,18 @@ d'exécuter le code attendu.
   pas**, et l'écran le dit en phrase plutôt qu'en champ grisé : la comparabilité analytique repose
   sur elle. Les deux valeurs numériques sont facultatives, et un champ laissé vide arrive en base à
   `NULL` — jamais à `0`, qui est une valeur du produit et non son absence.
+- **Le catalogue de nœuds se réordonne depuis son écran** (`CRM-030`,
+  `docs/SPEC-workflow-engine.md` §2 ter, `docs/DESIGN_SYSTEM.md` §5.18, `docs/manual.md`
+  §5 *quater*.5). Deux flèches par ligne active la font monter ou descendre d'un cran, à la souris
+  comme au clavier ; chaque clic écrit une seule position sur une seule ligne, la liste n'étant
+  jamais renumérotée. Les flèches sont **éteintes aux extrémités et jamais masquées**, avec une
+  infobulle qui distingue « déjà en tête de liste » de « les positions ne se distinguent plus » —
+  deux causes que confondre aurait rendu un message faux. Un nœud **archivé** ne se déplace pas mais
+  **garde sa place**, et le calcul le compte comme voisine : c'est la liste affichée qui fait foi,
+  pas une sous-liste que personne ne voit. Le calcul de `CRM-075` est réutilisé, jamais dupliqué.
+  **Mesuré** : déplacer un nœud qu'occupent des affaires actives est **accepté** — la garde du §2.6
+  ne se déclenche qu'à l'archivage —, et un `viewer` reçoit `200` et zéro ligne, sa position relue
+  inchangée. C'était le dernier manque de `CRM-030`.
 - **Le refus d'archiver un nœud occupé est traduit avec son compte d'affaires** (`CRM-030`,
   `docs/SPEC-workflow-engine.md` §2 bis.5). La commande n'est jamais éteinte d'avance : l'écran
   envoie, la base refuse, et l'alerte écrit combien d'affaires en cours occupent le nœud avec la

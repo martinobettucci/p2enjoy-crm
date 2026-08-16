@@ -59,7 +59,7 @@
 | 17 | Inviter et gérer les membres | `CRM-070` | À livrer. **L'invitation est aujourd'hui une opération d'exploitation, pas un parcours produit** : un compte est créé par un **opérateur** disposant de la clé de service, hors de l'interface. Aucun écran n'existe, et aucun n'est promis avant `CRM-070`, à laquelle l'arbitrage du responsable rattache ce parcours ([`docs/JOURNAL.md`](JOURNAL.md), décision 256, INC-015) |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
-| 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. **Réordonner** le catalogue reste un geste d'API |
+| 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
@@ -1533,9 +1533,24 @@ combien d'affaires en cours l'occupent, et vous demande de les déplacer d'abord
 serveur : la commande reste offerte, et c'est en la déclenchant que vous obtenez le compte exact.
 Les affaires archivées ou mises à la corbeille ne comptent pas.
 
-### 5 quater.5 Ce qui n'est pas encore là
+### 5 quater.5 Réordonner le catalogue
 
-- **Réordonner** le catalogue : l'ordre est celui de création, et le modifier reste un geste d'API.
+Les deux flèches en tête des commandes d'une ligne la font monter ou descendre d'un cran. Chaque
+clic écrit l'ordre immédiatement : il n'y a rien à valider.
+
+- La flèche est **éteinte** quand le geste n'a nulle part où aller — sur la première ligne pour
+  « monter », sur la dernière pour « descendre ». Survolez-la : elle dit pourquoi.
+- Un nœud **archivé** ne se déplace pas, et ne porte donc aucune flèche. Il **garde sa place** dans
+  la liste, et les nœuds actifs le franchissent normalement.
+- Cet ordre est celui de l'écran et celui des listes où l'on choisit un nœud. Il ne change **rien**
+  aux affaires en cours, ni aux workflows déjà composés : réordonner le vocabulaire ne réordonne
+  aucun parcours.
+
+Le geste reste possible sur un nœud que des affaires occupent — contrairement à l'archivage.
+Déplacer un état dans la liste ne déplace aucune affaire.
+
+### 5 quater.6 Ce qui n'est pas encore là
+
 - **Supprimer** un nœud n'existe pas, et n'est pas prévu : l'archivage tient lieu de retrait.
 - Le nombre d'affaires posées sur un nœud n'est **pas affiché à l'avance** ; il apparaît dans le
   refus d'archivage.

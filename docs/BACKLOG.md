@@ -2324,11 +2324,45 @@ telle.
       lignes à 390 px sans débordement horizontal de la page.
 - [x] **Le manuel dit l'écran** : chapitre 5 *quater*, cinq sections, et la ligne 19 du sommaire
       passe de « partiellement livré, sans écran » à « livré et vérifié ».
-- [ ] **RESTE DÛ : le réordonnancement du catalogue.** `position` est une `numeric` et le geste
-      serait un `PATCH`, mais le §2 le note depuis l'origine — « le réordonnancement du catalogue
-      n'a pas d'opération atomique ». `calculerDeplacement` de `CRM-075` couvrirait le cas courant ;
-      il reste à prouver, et il n'est **pas livré à moitié**. C'est le seul manque nommé au
-      §2 bis.8, et c'est lui qui maintient l'unité en `[~]`.
+- [x] **LE RÉORDONNANCEMENT EST LIVRÉ, ET C'ÉTAIT LE DERNIER MANQUE DE L'UNITÉ.**
+      **Spécification écrite après mesure et committée avant la première ligne de code** :
+      `docs/SPEC-workflow-engine.md` §2 ter, sept sections, plus la règle visuelle de
+      `docs/DESIGN_SYSTEM.md` §5.18. Deux commandes par ligne active — `ArrowUp`, `ArrowDown`, en
+      tête du groupe d'actions —, et `deplacerNoeud` écrit **une colonne sur une ligne** : la liste
+      n'est jamais renumérotée. `calculerDeplacement`, `positionEntre` et `positionAvant` de
+      `CRM-075` sont **réutilisés et non dupliqués**.
+- [x] **LE CALCUL PORTE SUR LA LISTE AFFICHÉE, ARCHIVÉS COMPRIS** (§2 ter.3), et c'est le choix
+      structurant de la tranche. Un nœud archivé reste dans la liste à sa position ; calculer sur la
+      seule sous-liste active ferait franchir cette ligne visible d'un seul clic, ou produirait une
+      position égale à la sienne. Le nœud archivé, lui, **ne se déplace pas** — ses flèches ne sont
+      pas rendues, comme « Modifier » — mais **compte comme voisine**. Le test unitaire fige les deux
+      moitiés de la règle.
+- [x] **UNE MESURE QUI N'ALLAIT PAS DE SOI, ET QU'UNE PREUVE D'API FIGE** : la garde
+      `node_occupied` est un trigger `BEFORE UPDATE` posé sur **toute** la table, mais elle ne se
+      réveille qu'au passage d'`archived_at` de `NULL` à une valeur. **Mesuré le 2026-08-16** :
+      déplacer `prospection`, que le seed occupe de quatre affaires actives, rend `200` — avec le
+      même jeton et sur le même nœud dont l'archivage rend `403`. Sans ce contrôle, un resserrement
+      futur de la garde rendrait le catalogue immobile et l'écran afficherait « des affaires en cours
+      se trouvent encore sur ce nœud » pour un simple déplacement, sans qu'aucune preuve ne
+      l'annonce.
+- [x] **Preuves unitaires** : `webapp/src/lib/administration-catalogue.test.ts`, **29 cas** (20
+      auparavant). L'écriture est comparée en **égalité stricte** et non en correspondance partielle
+      — la seule forme qui attrape une colonne ajoutée par mégarde à un déplacement.
+- [x] **Preuve d'API** : `e2e/api/catalogue-noeuds.spec.ts` §N7, trois scénarios, **30 scénarios**
+      sur le fichier (27 auparavant). Les trois lignes du §2 ter.4, chacune restituant la position
+      qu'elle a changée.
+- [x] **Preuve d'interface** : `e2e/ui/administration-catalogue.spec.ts`, deux scénarios, **9
+      scénarios** sur le fichier (7 auparavant), console vierge. Descente **à la souris**, remontée
+      **au clavier**, positions **relues en base** après chaque geste — un réordonnancement purement
+      local passerait toute assertion d'écran. Extrémités éteintes avec leur infobulle, ligne
+      archivée sans commande d'ordre, ordre du seed restitué en épilogue.
+- [x] **Capture produite ET observée** : `docs/captures/CRM-030/catalogue-ordre-1440.jpg`, plus les
+      six captures existantes renouvelées. Observé : les deux flèches viennent avant « Modifier »
+      sans faire sauter le groupe d'actions d'une ligne à l'autre, « Monter » est visiblement éteint
+      sur la première ligne, la ligne archivée ne porte que « Rétablir », et le repli à 390 px est
+      celui de la ligne de base.
+- [x] **Le manuel dit le geste** : chapitre 5 *quater*.5, et la ligne 19 du sommaire cesse de dire
+      que réordonner « reste un geste d'API ».
 
 *DoD adaptée, écarts explicites — RÉVISÉE LE 2026-08-16.* Le paragraphe qui suivait disait que
 « E2E d'administration » ne pouvait pas être livré, cette unité ne livrant ni écran ni parcours.
