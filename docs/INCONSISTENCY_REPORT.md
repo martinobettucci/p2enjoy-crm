@@ -578,3 +578,62 @@ dépasse `CRM-040` et vaudrait pour tout contrôle de date du produit.
 **Conséquence pour les captures** : celles produites par le harnais montreront ce gabarit américain
 tant que la locale de Chromium n'est pas fixée. Ce n'est pas un défaut du produit, et une capture
 qui le montre n'est pas fausse — elle montre le harnais.
+## Consignés le 2026-08-16 — deux constats du harnais, étrangers à `CRM-040`
+
+Les deux sont rendus par `scripts/verify-cards.sh`, le harnais de l'unité, exécuté en fin de
+session. Aucun des deux n'est imputable à la tranche livrée — l'en-tête de la fiche est en
+**lecture** et n'écrit rien. Le comportement est laissé inchangé.
+
+### INC-132 — `verify-cards.sh` attend quatorze cards, et le seed en pose quinze
+
+**Mesuré le 2026-08-16**, sur la base fraîchement seedée par `supabase/seed/apply-seed.sh` :
+
+```
+ECHEC état du seed : « 15/1/1/15 », attendu « 14/1/1/14 »
+```
+
+Le contrôle du §8 du harnais (`scripts/verify-cards.sh:459`) fige `14/1/1/14`. **Le seed pose
+quinze cards** : `…00c1` à `…00cf`, les quinze identifiants étant présents dans
+`supabase/seed/apply-seed.sh` et les quinze lignes en base, toutes créées à l'exécution du seed —
+aucune n'est le résidu d'une preuve.
+
+**Ce n'est donc pas une pollution de la base, c'est un compteur qui a dérivé.** La quinzième est
+`…00cf` « Reprise du dossier Marchand », l'affaire née en corbeille que `docs/SPEC-seed.md` §10.4 bis
+décrit et que `CRM-077` a ajoutée : le seed a grandi, le harnais qui le vérifie est resté à son
+compte d'avant. C'est la forme d'INC-125 — un garde-fou dont le nombre n'a pas suivi ce qu'il
+compte —, appliquée cette fois au seed lui-même.
+
+**Ce que la dérive coûte** : le contrôle échoue à chaque exécution, et un harnais qui rend toujours
+un rouge connu cesse d'être lu. Il ne dit d'ailleurs plus rien de ce qu'il prétend vérifier : la
+convergence du seed, elle, est bonne — une archivée, une en corbeille, quinze adresses distinctes.
+
+**Non corrigé** : `scripts/verify-cards.sh` est un livrable de `CRM-040`, mais le nombre attendu est
+un **contrat de seed** que `docs/SPEC-seed.md` porte, et le relever au passage reviendrait à
+ajuster un garde-fou pour le verdir sans que personne n'ait vérifié que quinze est bien le compte
+dû. Arbitrage attendu : porter le compteur à quinze, ou nommer la quinzième card comme un écart.
+
+### INC-133 — `npm run e2e:api` échoue DANS `verify-cards.sh` et passe seul, deux fois de suite
+
+**Mesuré le 2026-08-16**, dans l'ordre :
+
+```
+npm run e2e:api  (seul)                → 635 passed
+scripts/verify-cards.sh (1re exécution) → 46 contrôles, 1 en échec — e2e:api OK
+scripts/verify-cards.sh (2e exécution)  → 46 contrôles, 2 en échec — ECHEC npm run e2e:api
+npm run e2e:api  (seul, après)          → 635 passed
+```
+
+La suite passe **avant** et **après** le harnais, et échoue **pendant** — et pas à chaque fois.
+Le harnais dégrade volontairement la base pour éprouver ses trois refus, puis restaure ; la suite
+d'API qu'il enchaîne tombe donc dans une fenêtre où l'état n'est pas celui que ses scénarios
+supposent, ou dans une restauration incomplète.
+
+**C'est la forme d'INC-129**, déjà consignée sur un autre harnais : une preuve dont le verdict
+dépend de ce qu'un autre contrôle a laissé derrière lui. La différence, et elle aggrave le cas, est
+que celui-ci est **intermittent** : un rouge qui ne se reproduit pas à l'identique ne peut pas
+servir de mesure.
+
+**Ce que ce constat NE dit PAS** : que le produit soit en défaut. Les 635 scénarios passent sur la
+base réelle, deux fois, encadrant le harnais. **Non corrigé** : diagnostiquer une intermittence
+demande d'instrumenter la séquence de dégradation et de restauration du harnais, ce qui dépasse la
+tranche autorisée. Arbitrage attendu.
