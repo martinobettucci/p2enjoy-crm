@@ -37,6 +37,9 @@ import { classerRefusEcriture, type RefusEcriture } from './administration-arbor
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
+// La mise en forme des collections d'une comparaison vient de `CRM-078` et n'est pas réécrite : les
+// deux comparaisons du produit rendent la même forme de `changes` (§4 quater.5).
+import { composerCollections, type ElementCompare } from './versions-workflow'
 
 // ---------------------------------------------------------------------------------------------
 // Ce que l'écran lit — docs/SPEC-workflow-engine.md §7 bis.3
@@ -2001,5 +2004,222 @@ export function composerMentionDivergence(
 		divergente: derivation.source_modified_since_copy === true,
 		sourceArchivee: derivation.source_archived_at !== null,
 		copieLe: derivation.derived_at,
+	}
+}
+
+// =============================================================================================
+// LE GESTE « COMPARER À LA SOURCE » — `CRM-032`, dernière tranche
+// @spec CRM-032 (docs/BACKLOG.md) — copie d'un workflow vers un track, geste d'interface de la
+//       comparaison copie ↔ source
+// @spec docs/SPEC-workflow-engine.md §4 quater.1 (ce que le geste est et n'est pas),
+//       §4 quater.3 (lecture 10, mesurée, émise sur pression et non avec le graphe),
+//       §4 quater.4 (les trois états et les cinq collections),
+//       §4 quater.5 (le nommage, et la table indexée par clés naturelles),
+//       §4 quater.6 (les quatre refus, dont deux seulement sont atteignables),
+//       §4 quater.8 (ce que la tranche ne livre pas)
+// @spec docs/SPEC-workflow-engine.md §4 ter.4 (le geste), §4 ter.5 (les refus), §4 ter.6 (ce que
+//       la fonction rend), §4 ter.3 (le document naturalisé et l'en-tête exclu)
+// @spec docs/DESIGN_SYSTEM.md §5.15 (la mention de divergence, règle des commandes révisée)
+// =============================================================================================
+//
+// AUCUNE MIGRATION, ET AUCUNE ÉCRITURE : `public.compare_workflow_with_source` existe depuis
+// `CRM-032` (migration 43), elle est `stable` et n'écrit rien (§4 ter.7). Ce module l'appelle et met
+// en forme ce qu'elle rend.
+//
+// LA MISE EN FORME DES COLLECTIONS N'EST PAS RÉÉCRITE : `composerCollections` vient de `CRM-078`,
+// les deux comparaisons du produit rendant la MÊME forme de `changes` (mesuré, §4 quater.5). Deux
+// mises en forme seraient deux occasions de diverger.
+
+/**
+ * Les CINQ collections de la comparaison copie ↔ source, dans l'ordre où l'écran les rend.
+ *
+ * `workflow` EST ABSENTE, et ce n'est pas un oubli : le §4 ter.3 l'exclut du document naturalisé,
+ * `name`, `scope`, `track_id`, `is_default` et `archived_at` étant précisément ce que la copie ne
+ * copie pas. Les comparer déclarerait divergente toute copie dès sa naissance. L'écran écrit ce
+ * qu'il ne compare pas plutôt que de rendre un intitulé toujours vide (§4 quater.4).
+ */
+export const COLLECTIONS_SOURCE = [
+	'steps',
+	'transitions',
+	'fields',
+	'rules',
+	'required_fields',
+] as const
+
+export type CleCollectionSource = (typeof COLLECTIONS_SOURCE)[number]
+
+/** Une borne de la comparaison : la copie, ou sa source. */
+export type BorneWorkflow = {
+	readonly workflow_id: string
+	readonly nom: string
+	/** Renseigné pour la source seule ; la copie n'en porte pas dans le document (§4 ter.6). */
+	readonly archiveLe: string | null
+}
+
+export type ComparaisonSource = {
+	readonly copie: BorneWorkflow
+	readonly source: BorneWorkflow
+	readonly identique: boolean
+	readonly resume: {
+		readonly ajouts: number
+		readonly retraits: number
+		readonly modifications: number
+	}
+	readonly collections: readonly {
+		readonly cle: CleCollectionSource
+		readonly elements: readonly ElementCompare[]
+	}[]
+}
+
+/**
+ * Les quatre refus du §4 ter.5, classés sur le MESSAGE que la base lève, jamais sur le code HTTP.
+ *
+ * Les quatre partagent `P0001` et donc `400` (§4.4) : le code ne les sépare pas, seul le message le
+ * fait. C'est la règle déjà retenue par `classerRefusVersion` de `CRM-078`, et les messages sont
+ * ceux que la migration 43 écrit — sans accent, tels quels.
+ *
+ * DEUX DE CES REFUS SONT INATTEIGNABLES DEPUIS L'ÉCRAN, et le §4 quater.6 le dit plutôt que de
+ * laisser croire à une couverture uniforme : `authentification requise`, l'éditeur étant derrière la
+ * connexion, et `workflow non derive`, la commande n'existant pas sur un workflow sans origine. Ils
+ * sont traduits tout de même — un refus reçu et non classé s'afficherait en message générique — et
+ * ils restent éprouvés hors interface (§4 ter.8, lignes c et d).
+ */
+export type RefusComparaisonSource =
+	| 'authentification'
+	| 'workflow-introuvable'
+	| 'workflow-non-derive'
+	| 'source-introuvable'
+	| 'generique'
+
+const MESSAGES_COMPARAISON_SOURCE: Readonly<Record<string, RefusComparaisonSource>> = {
+	'authentification requise': 'authentification',
+	'workflow introuvable': 'workflow-introuvable',
+	'workflow non derive': 'workflow-non-derive',
+	'source introuvable': 'source-introuvable',
+}
+
+export function classerRefusComparaisonSource(
+	message: string | null | undefined,
+): RefusComparaisonSource {
+	if (message === null || message === undefined) return 'generique'
+	return MESSAGES_COMPARAISON_SOURCE[message.trim().toLowerCase()] ?? 'generique'
+}
+
+export type IssueComparaisonSource =
+	| { readonly statut: 'ok'; readonly donnees: ComparaisonSource }
+	| { readonly statut: 'refus'; readonly refus: RefusComparaisonSource }
+
+/**
+ * La table de nommage, indexée par les clés NATURELLES — §4 quater.5.
+ *
+ * ELLE N'EST PAS CELLE DU BLOC DES VERSIONS, et la différence est la seule subtilité de ce module.
+ * Le §7 ter.14.6 indexe la structure vivante par l'identifiant de ligne, parce que le document
+ * canonique des versions porte des identifiants locaux. Le document NATURALISÉ du §4 ter.3 n'en
+ * porte aucun : l'identité d'une étape y est son `node_id`, celle d'un champ sa `key`. Une table
+ * indexée par l'identifiant de ligne n'y résoudrait donc rien, et le nommage se rabattrait
+ * systématiquement sur des identifiants bruts.
+ *
+ * Les deux espaces de clés cohabitent sans se heurter : un `node_id` est un UUID, une clé de champ
+ * est un slug (`form_fields_key_check`, §2.2 du composeur).
+ */
+export function structureNaturelle(
+	etapes: readonly EtapeAdministrable[],
+	champs: readonly ChampAdministrable[],
+): ReadonlyMap<string, string> {
+	const table = new Map<string, string>()
+	for (const etape of etapes) table.set(etape.node_id, libelleEtape(etape))
+	for (const champ of champs) table.set(champ.key, champ.label)
+	return table
+}
+
+function lireBorneWorkflow(brut: unknown): BorneWorkflow | null {
+	if (brut === null || typeof brut !== 'object' || Array.isArray(brut)) return null
+	const borne = brut as Record<string, unknown>
+	const identifiant = borne['workflow_id']
+	if (typeof identifiant !== 'string' || identifiant === '') return null
+	const nom = borne['nom'] ?? borne['name']
+	const archive = borne['archived_at']
+	return {
+		workflow_id: identifiant,
+		nom: typeof nom === 'string' ? nom : '',
+		archiveLe: typeof archive === 'string' ? archive : null,
+	}
+}
+
+const nombreOu0 = (valeur: unknown): number => (typeof valeur === 'number' ? valeur : 0)
+
+/**
+ * Met en forme le document rendu par `compare_workflow_with_source` (§4 ter.6).
+ *
+ * `identique` EST LU DU DOCUMENT, jamais recalculé depuis les compteurs. La base le tient sur les
+ * cinq collections et sur elles seules (§4 ter.6), et le recalculer ici serait une seconde
+ * formulation d'une règle qui n'existe qu'en base — précisément ce que ce module s'interdit partout.
+ */
+export function composerComparaisonSource(
+	brut: unknown,
+	structure: ReadonlyMap<string, string>,
+): ComparaisonSource | null {
+	if (brut === null || typeof brut !== 'object' || Array.isArray(brut)) return null
+	const document = brut as Record<string, unknown>
+	const copie = lireBorneWorkflow(document['workflow'])
+	const source = lireBorneWorkflow(document['source'])
+	if (copie === null || source === null) return null
+	const resume = document['summary']
+	const compteurs =
+		resume !== null && typeof resume === 'object' && !Array.isArray(resume)
+			? (resume as Record<string, unknown>)
+			: null
+	const changements =
+		document['changes'] !== null &&
+		typeof document['changes'] === 'object' &&
+		!Array.isArray(document['changes'])
+			? (document['changes'] as Record<string, unknown>)
+			: null
+
+	return {
+		copie,
+		source,
+		identique: document['identical'] === true,
+		resume: {
+			ajouts: nombreOu0(compteurs?.['added']),
+			retraits: nombreOu0(compteurs?.['removed']),
+			modifications: nombreOu0(compteurs?.['modified']),
+		},
+		collections: composerCollections(changements, COLLECTIONS_SOURCE, structure),
+	}
+}
+
+/**
+ * Compare une copie à sa source vivante — lecture 10 du §4 quater.3.
+ *
+ * UN SEUL ARGUMENT, ET C'EST CELUI DE LA FONCTION : la source n'est pas un paramètre, elle est lue
+ * dans `derived_from_workflow_id` (§4 ter.4). Passer les deux permettrait de comparer deux workflows
+ * sans lien, ce que rien ne spécifie.
+ *
+ * AUCUN DROIT N'EST CALCULÉ ICI. La fonction est `security invoker` et sa règle est celle de la
+ * lecture de `public.workflows` : un `viewer` compare et obtient le même document (§4 ter.8, ligne
+ * b). Réserver l'appel à l'administrateur poserait dans l'interface une règle que la base ne pose
+ * pas (`CLAUDE.md` §10).
+ */
+export async function comparerAvecSource(
+	client: ClientCrm,
+	idWorkflow: string,
+	structure: ReadonlyMap<string, string>,
+): Promise<IssueComparaisonSource> {
+	try {
+		const reponse = await client.rpc('compare_workflow_with_source', { workflow_id: idWorkflow })
+		if (reponse.error !== null) {
+			return { statut: 'refus', refus: classerRefusComparaisonSource(reponse.error.message) }
+		}
+		const donnees = composerComparaisonSource(reponse.data, structure)
+		// Un document que le module ne sait pas lire n'est pas un succès muet : la base a répondu,
+		// mais l'écran n'a rien à montrer, et le dire vaut mieux que rendre un objet vide.
+		if (donnees === null) return { statut: 'refus', refus: 'generique' }
+		return { statut: 'ok', donnees }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusComparaisonSource(cause instanceof Error ? cause.message : String(cause)),
+		}
 	}
 }

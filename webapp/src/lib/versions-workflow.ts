@@ -328,8 +328,21 @@ export type Comparaison = {
 	readonly collections: readonly CollectionCompare[]
 }
 
-/** Les clés du document qui portent un libellé lisible, par ordre de préférence. */
-const CLES_LIBELLE = ['label_override', 'node_label', 'label', 'name', 'title', 'key'] as const
+/**
+ * Les clés du document qui portent un libellé lisible, par ordre de préférence.
+ *
+ * `node_key` A ÉTÉ AJOUTÉE EN DERNIER, ET C'EST UNE RÉVISION MOTIVÉE — mécanisme de la décision 51,
+ * `docs/SPEC-workflow-engine.md` §4 quater.5. La comparaison copie ↔ source rend un document
+ * NATURALISÉ dont les étapes ne portent ni `node_label` ni `key`, mais `node_key` : une étape
+ * présente dans la source et absente de la copie — donc introuvable dans la structure vivante de
+ * cette dernière — se rendait par un UUID brut alors que le document portait `"prospection"`.
+ *
+ * La place en FIN de liste est ce qui rend le changement sûr pour `CRM-078` : elle n'est consultée
+ * que là où toutes les autres ont échoué, c'est-à-dire là où le nommage rendait déjà des
+ * identifiants bruts. Elle ne peut donc que remplacer un UUID par une clé lisible, jamais changer un
+ * libellé déjà juste.
+ */
+const CLES_LIBELLE = ['label_override', 'node_label', 'label', 'name', 'title', 'key', 'node_key'] as const
 
 /** Les attributs dont le changement RENOMME l'élément, et permet donc de le nommer (§7 ter.14.6). */
 const ATTRIBUTS_LIBELLE = new Set<string>(['label_override', 'node_label', 'label', 'name', 'title'])
@@ -428,20 +441,27 @@ function lireBorne(brut: unknown): BorneComparaison | null {
 	}
 }
 
-/** Met en forme le document rendu par `compare_workflow_versions` (§7 ter.11.4). */
-export function composerComparaison(
-	brut: unknown,
+/**
+ * Met en forme le `changes` d'un document de comparaison, quelles que soient ses collections.
+ *
+ * ELLE EST PARTAGÉE PAR LES DEUX COMPARAISONS DU PRODUIT, et c'est délibéré : celle des versions
+ * (§7 ter.11.4) et celle de la copie ↔ sa source (§4 ter.6) rendent EXACTEMENT la même forme de
+ * `changes` — mesuré, `docs/SPEC-workflow-engine.md` §4 quater.5 — et n'en diffèrent que par leurs
+ * bornes et par la liste de leurs collections. Deux mises en forme seraient deux occasions de
+ * diverger, exactement le défaut que l'extraction d'`app.composition_collection_diff` a corrigé
+ * côté base (§4 ter.4).
+ *
+ * `modified` NE PORTE PAS `element`, et le nommage en dépend : la mesure du §4 quater.5 le montre —
+ * une modification porte `identity` et `attributes`, jamais `element`. `nommerElement` reçoit donc
+ * `null` et se rabat sur le renommage lisible, puis sur la structure vivante, puis sur les
+ * identifiants.
+ */
+export function composerCollections<C extends string>(
+	changements: Readonly<Record<string, unknown>> | null,
+	collections: readonly C[],
 	structure: ReadonlyMap<string, string>,
-): Comparaison | null {
-	const document = objet(brut)
-	if (document === null) return null
-	const base = lireBorne(document['base'])
-	const cible = lireBorne(document['target'])
-	if (base === null || cible === null) return null
-	const resume = objet(document['summary'])
-	const changements = objet(document['changes'])
-
-	const collections = COLLECTIONS.map((cle) => {
+): readonly { readonly cle: C; readonly elements: readonly ElementCompare[] }[] {
+	return collections.map((cle) => {
 		const collection = objet(changements?.[cle])
 		const elements: ElementCompare[] = []
 		for (const [genre, source] of [
@@ -464,6 +484,22 @@ export function composerComparaison(
 		}
 		return { cle, elements }
 	})
+}
+
+/** Met en forme le document rendu par `compare_workflow_versions` (§7 ter.11.4). */
+export function composerComparaison(
+	brut: unknown,
+	structure: ReadonlyMap<string, string>,
+): Comparaison | null {
+	const document = objet(brut)
+	if (document === null) return null
+	const base = lireBorne(document['base'])
+	const cible = lireBorne(document['target'])
+	if (base === null || cible === null) return null
+	const resume = objet(document['summary'])
+	const changements = objet(document['changes'])
+
+	const collections = composerCollections(changements, COLLECTIONS, structure)
 
 	return {
 		base,
