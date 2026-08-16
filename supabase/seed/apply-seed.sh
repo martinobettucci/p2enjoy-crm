@@ -447,6 +447,72 @@ CARDS=(
 	'5eed0000-0000-4000-8000-0000000000cf|5eed0000-0000-4000-8000-000000000037|5eed0000-0000-4000-8000-000000000063|Reprise du dossier Marchand|5eed0000-0000-4000-8000-000000000012|22000.00|EUR|1|-|-|-|-'
 )
 
+# --- Cards de VOLUME et de DONNÉES LONGUES — docs/SPEC-seed.md §9.11, `CRM-046` tranche 2 -------
+#
+# Vingt-six cards dans le seul channel `maintenance`, qui passe de 1 à VINGT-SEPT cards actives.
+#
+# CE QU'ELLES FERMENT, ET LE MANQUE EST MESURÉ (§9.11, 2026-08-16, pile réelle) : le titre le plus
+# long du seed faisait 36 caractères, la prochaine action la plus longue 34, et le channel le plus
+# chargé portait 4 cards actives là où la vue liste pagine à 25 lignes. Les données longues et la
+# seconde page de `CRM-042` n'étaient donc démontrables que contre des réponses SUBSTITUÉES.
+#
+# VINGT-SEPT ET NON VINGT-SIX : à vingt-six, la seconde page ne porterait qu'une ligne, et une page
+# d'une ligne ne se distingue pas d'une erreur d'un rang au bord de la plage — le cas même que le
+# §12.6 de docs/SPEC-cards.md classe sous le 416. À vingt-sept, la première page est pleine, la
+# seconde en porte deux.
+#
+# `maintenance` ET NON `grands-comptes` (§9.11.1) : un channel de maintenance porte structurellement
+# beaucoup d'affaires simultanées, et il est cité par SIX fichiers de preuves contre VINGT-NEUF pour
+# `grands-comptes` — charger le second réécrirait les onze captures du board de `CRM-041` et les
+# douze de `CRM-042` sans rien démontrer de plus.
+#
+# CINQ ÉTAPES SUR SEPT, ET L'EXCLUSION EST UNE RÈGLE (§9.11.3) : `realisation` et `perdu` sont
+# exclues. MESURÉ : la transition `signature → realisation` exige `lien-proposition`, et l'étape
+# `perdu` exige `motif-perte`. Une card posée là sans sa valeur décrirait un franchissement que
+# `move_card` aurait REFUSÉ — la trace fabriquée que CLAUDE.md §8 proscrit. Les deux étapes portent
+# déjà leur card de démonstration, `…0cc` et `…0ce`, avec les valeurs que leur position exige.
+#
+# UNE SEULE porte les données longues, `…d001` : titre de 128 caractères, prochaine action de 134 —
+# exactement les longueurs que les réponses substituées de `CRM-042` servent aujourd'hui. Son titre
+# commence par « A », ce qui la place en PREMIÈRE page du tri par défaut (`title` ascendant) : une
+# donnée longue reléguée en seconde page ne serait pas capturable sans un geste de pagination.
+#
+# `position` tient compte de l'existant : `…0c5` occupe déjà la position 1 de l'étape `prospection`
+# dans ce channel, les cards de volume y commencent donc à 2. Les quatre autres étapes sont vides.
+#
+# Aucune valeur de formulaire, aucun commentaire, aucun événement écrit à la main : elles démontrent
+# un VOLUME et une LONGUEUR, pas une règle de formulaire (§9.11.5).
+#
+# id | channel | étape | titre | responsable | montant | devise | position | prochaine action | échéance | archivage | corbeille
+CARDS_VOLUME=(
+	'5eed0000-0000-4000-8000-00000000d001|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Astreinte 24/7 et supervision applicative du portail client de la Ville de Lyon — reconduction sous engagement de niveau garanti|5eed0000-0000-4000-8000-000000000013|142000.00|EUR|2|Consolider le relevé complet des incidents des douze derniers mois et présenter le plan de remédiation au comité de pilotage du client|2026-09-18T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d002|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Renouvellement TMA — Clinique Saint-Ambroise|5eed0000-0000-4000-8000-000000000013|18400.00|EUR|3|Chiffrer le lot astreinte|2026-09-02T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d003|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Correctifs de sécurité — extranet Perrin|5eed0000-0000-4000-8000-000000000012|7200.00|EUR|4|Planifier la fenêtre de mise en production|2026-08-29T14:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d004|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Supervision applicative — Groupe Vallier|-|-|EUR|5|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d005|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Maintenance évolutive — boutique Havas Nord|5eed0000-0000-4000-8000-000000000011|11900.00|EUR|6|Recueillir les besoins de la saison 2027|2026-10-06T10:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d006|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Reprise de dette technique — API Sogexia|5eed0000-0000-4000-8000-000000000012|26500.00|EUR|7|Cadrer le périmètre avec l’architecte|2026-09-24T09:30:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d007|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Contrat TMA 2026 — Mairie de Vaulx|5eed0000-0000-4000-8000-000000000013|33000.00|EUR|1|Relancer le service juridique|2026-09-08T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d008|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Hébergement infogéré — Éditions Bertrand|5eed0000-0000-4000-8000-000000000011|21750.00|EUR|2|Obtenir la validation budgétaire|2026-09-15T11:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d009|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Sauvegardes externalisées — Cabinet Lorris|5eed0000-0000-4000-8000-000000000012|9400.00|EUR|3|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d010|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Mise à niveau PHP — intranet Duchamp|5eed0000-0000-4000-8000-000000000013|13600.00|EUR|4|Confirmer la date de gel des développements|2026-09-30T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d011|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Support de niveau 3 — plateforme Nordis|5eed0000-0000-4000-8000-000000000011|47000.00|CHF|5|Arbitrer le volume d’heures mensuel|2026-10-13T08:30:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d012|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Refonte du monitoring — Vertuo|5eed0000-0000-4000-8000-000000000012|38900.00|EUR|1|Négocier la reprise de l’outillage existant|2026-09-11T15:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d013|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Astreinte week-end — Transports Béranger|5eed0000-0000-4000-8000-000000000013|16250.00|EUR|2|Ajuster la grille de pénalités|2026-09-19T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d014|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Migration base de données — MGEN Loire|5eed0000-0000-4000-8000-000000000011|54000.00|EUR|3|Trancher la fenêtre de bascule|2026-10-02T07:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d015|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Audit de performance — portail Meunier|-|8300.00|EUR|4|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d016|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000063|Plan de reprise d’activité — Institut Berthier|5eed0000-0000-4000-8000-000000000012|61500.00|EUR|5|Faire valider le RTO par la direction|2026-10-20T10:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d017|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|TMA annuelle — Fédération sportive du Rhône|5eed0000-0000-4000-8000-000000000013|24800.00|EUR|1|Faire signer l’avenant de reconduction|2026-09-05T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d018|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Veille de vulnérabilités — Atelier Meunier|5eed0000-0000-4000-8000-000000000011|6900.00|EUR|2|Recueillir la signature électronique|2026-09-12T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d019|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Optimisation du cache — site Havas Nord|5eed0000-0000-4000-8000-000000000012|12300.00|EUR|3|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d020|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Reprise du parc de tests — Groupe Vallier|5eed0000-0000-4000-8000-000000000013|19700.00|EUR|4|Confirmer le périmètre de la recette|2026-09-26T14:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d021|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000064|Maintenance corrective — application Lorris|5eed0000-0000-4000-8000-000000000011|8800.00|EUR|5|Obtenir le bon de commande|2026-10-09T09:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d022|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Correctif majeur livré — extranet Sogexia|5eed0000-0000-4000-8000-000000000012|15400.00|EUR|1|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d023|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Montée de version livrée — portail de Vaulx|5eed0000-0000-4000-8000-000000000013|29600.00|EUR|2|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d024|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Reprise d’incident livrée — Saint-Ambroise|5eed0000-0000-4000-8000-000000000011|4200.00|EUR|3|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d025|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Automatisation des sauvegardes — Duchamp|5eed0000-0000-4000-8000-000000000012|17100.00|EUR|4|-|-|-|-'
+	'5eed0000-0000-4000-8000-00000000d026|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000066|Tableau de bord de supervision livré — Nordis|5eed0000-0000-4000-8000-000000000013|22400.00|EUR|5|-|-|-|-'
+)
+
 # Cards du workflow DÉRIVÉ — docs/SPEC-seed.md §9.3 et §9.4, ajoutées par `CRM-046`.
 #
 # Elles vivent dans `prospection`, seul channel rattaché à la copie de portée `track`. Sans elles,
@@ -1486,7 +1552,17 @@ info "de channel rouvre ce que le droit de track ferme. Camille Aubert (admin) v
 echo
 say "8 ter. Cards"
 
-for ligne in "${CARDS[@]}"; do
+# Poser UNE card du workflow global à partir d'une ligne de contrat.
+#
+# Extraite du corps de boucle par `CRM-046` tranche 2 (docs/SPEC-seed.md §9.11) : la section
+# 8 ter ter pose vingt-six cards de plus, avec exactement le même contrat et exactement la même
+# écriture. Recopier le corps aurait créé deux chemins d'écriture divergents pour une même table —
+# le premier défaut que corrigerait la première évolution du contrat.
+poser_card_globale() {
+	local ligne="$1"
+	local id channel etape titre owner montant devise position action echeance archive corbeille
+	local owner_json montant_json action_json echeance_json archive_json corbeille_json charge code etat
+
 	IFS='|' read -r id channel etape titre owner montant devise position action echeance archive corbeille <<< "$ligne"
 
 	[ "$owner"     = '-' ] && owner_json='null'     || owner_json=$(jq -nc --arg v "$owner" '$v')
@@ -1518,10 +1594,33 @@ for ligne in "${CARDS[@]}"; do
 	else                               etat='active'
 	fi
 	printf '  %-36s %-10s %s\n' "${titre:0:36}" "$etat" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
+}
+
+for ligne in "${CARDS[@]}"; do
+	poser_card_globale "$ligne"
 done
 
 info "Cards du workflow global : ${#CARDS[@]}, aux SEPT étapes, dont une archivée et une en corbeille"
 info "— docs/SPEC-cards.md §9, étendu par CRM-046 (docs/SPEC-seed.md §9.3)."
+
+
+# --- 8 ter ter. Volume et données longues — docs/SPEC-seed.md §9.11 ----------------------------
+# Ajoutée par `CRM-046` tranche 2. Même contrat, même écriture, même fonction que la section 8 ter :
+# ces cards ne sont pas d'une autre nature, elles sont simplement NOMBREUSES et l'une d'elles est
+# LONGUE. Le motif de chaque choix — le channel, le compte de vingt-sept, les cinq étapes, la card
+# `…d001` — est écrit au-dessus du tableau `CARDS_VOLUME`.
+
+echo
+say "8 ter ter. Volume et données longues"
+
+for ligne in "${CARDS_VOLUME[@]}"; do
+	poser_card_globale "$ligne"
+done
+
+info "Cards de volume : ${#CARDS_VOLUME[@]} dans « maintenance », qui porte désormais VINGT-SEPT cards actives"
+info "La première page de la vue liste est PLEINE (25 lignes) et la seconde en porte deux — CRM-042"
+info "« $(printf '%s' "${CARDS_VOLUME[0]}" | cut -d'|' -f4 | cut -c1-40)… » porte 128 caractères de titre et 134 de prochaine action"
+info "— docs/SPEC-seed.md §9.11 : les données longues et la seconde page cessent d'être substituées."
 
 
 # --- 8 ter bis. Cards du workflow DÉRIVÉ — docs/SPEC-seed.md §9.3 et §9.4 ----------------------
