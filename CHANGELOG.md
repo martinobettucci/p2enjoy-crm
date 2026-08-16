@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un workflow se crée depuis l'éditeur d'administration** (`CRM-031`,
+  `docs/SPEC-workflow-engine.md` §3 bis, `docs/DESIGN_SYSTEM.md` §5.15). L'éditeur livré par
+  `CRM-076` composait les workflows existants et renvoyait leur création à l'API : l'état vide de
+  l'écran était donc un cul-de-sac, et un espace de travail neuf — qui n'a aucun workflow — restait
+  sans issue. Le geste est livré : un bouton « Nouveau workflow » au-dessus de la liste **et dans
+  l'état vide**, un formulaire de deux ou trois champs — nom, portée globale ou propre à un track,
+  et le track sous cette seconde portée seulement. Le sélecteur de track est **absent** sous la
+  portée globale, non grisé, et la bascule de portée **oublie** le track choisi de sorte qu'aucun
+  `track_id` résiduel ne parte avec une portée globale. Aucune case « par défaut » n'est offerte :
+  elle serait refusée sur tout espace de travail ayant déjà son défaut. Le workflow naît **vide**,
+  devient aussitôt le workflow choisi, et son bloc d'étapes affiche « Ce workflow n'a aucune
+  étape. » — le brouillon que la spécification décrit depuis `CRM-031`, montré plutôt que raconté.
+  Preuves : 13 assertions unitaires, 11 scénarios de composant dont l'état vide, 11 scénarios
+  d'API rejouant les dix refus mesurés — dont deux que l'écran ne peut pas produire —, 7 scénarios
+  d'interface à la souris et au clavier avec la ligne confirmée en base, et 6 captures observées.
+
 - **Le catalogue de nœuds a son écran d'administration** (`CRM-030`,
   `docs/SPEC-workflow-engine.md` §2 bis, `docs/DESIGN_SYSTEM.md` §5.18). Cinquième surface
   d'administration, atteinte par « Réglages ▸ Catalogue de nœuds ». Elle liste le catalogue entier

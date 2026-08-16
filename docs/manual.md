@@ -60,7 +60,7 @@
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. Ce qui manque est l'**éditeur** : aucun écran ne permet encore de dessiner un workflow |
+| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
@@ -1162,13 +1162,40 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 **Ce que cet écran fait, et ce qu'il ne fait pas.** Il **compose** les workflows qui existent
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
 celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
-définit les **questions du formulaire** posées sur chaque affaire. Il ne **crée** pas un workflow,
-ne le copie pas vers un track et ne le rend pas par défaut : ces trois gestes restent hors
-interface.
+définit les **questions du formulaire** posées sur chaque affaire. Depuis `CRM-031`, il **crée**
+aussi un workflow (chapitre 5 bis.0). Il ne le copie pas vers un track et ne le rend pas par
+défaut : ces deux gestes restent hors interface.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
 chapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
 serveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »
+
+### 5 bis.0 Créer un workflow
+
+*Livré par `CRM-031`. Captures dans `docs/captures/CRM-031/`.*
+
+Le bouton **« Nouveau workflow »**, au-dessus de la liste de gauche, ouvre un formulaire à deux ou
+trois champs :
+
+- le **nom**, obligatoire — deux workflows peuvent porter le même, rien ne l'interdit ;
+- la **portée** : « Global », disponible pour tous les tracks, ou « Propre à un track », proposé
+  aux seuls channels de ce track ;
+- le **track**, qui n'apparaît que sous la seconde portée. Sous « Global », il n'existe pas : ce
+  n'est pas un champ grisé, c'est un champ sans objet.
+
+**Le workflow naît vide.** Il n'a aucune étape, et il n'est utilisable par aucun channel tant que
+vous ne lui en avez pas donné au moins une, désignée comme initiale (chapitre 5 bis.2). L'écran le
+dit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un
+brouillon parfaitement licite, pas une erreur.
+
+Le workflow créé devient aussitôt le workflow **choisi**, prêt à être composé.
+
+**Ce que le formulaire ne propose pas, et pourquoi.** Aucune case « par défaut » : un espace de
+travail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir
+un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API.
+
+**Si l'espace de travail est vide**, l'écran affiche « Aucun workflow dans cet espace de travail »
+et porte le même bouton : c'est ainsi que se pose le tout premier workflow d'un espace neuf.
 
 ### 5 bis.1 Choisir un workflow
 
@@ -1366,7 +1393,8 @@ Deux précisions honnêtes :
 - Retirer une exigence n'est pas prévisualisé : cela ne bloque rien, cela lève une contrainte.
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
-- **Créer**, **copier** vers un track et **rendre par défaut** un workflow restent hors interface.
+- **Copier** vers un track et **rendre par défaut** un workflow restent hors interface. Créer, en
+  revanche, est livré depuis `CRM-031` — chapitre 5 bis.0.
 
 ### 5 bis.6 Garder une photographie d'un workflow, et y revenir
 

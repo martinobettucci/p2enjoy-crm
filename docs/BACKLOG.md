@@ -2404,6 +2404,9 @@ une preuve d'interface au lieu d'en tenir lieu.
   Node 24 — exercé dans le conteneur `webapp` depuis `CRM-007`. Limite héritée, inchangée.
 
 ### CRM-031 — Workflows, étapes, transitions `[~]`
+*Reste `[~]` pour **un seul** manque, et il n'appartient pas à cette unité : la contrainte `NOT NULL`
+de `channels.workflow_id`, qui revient à `CRM-033`. L'éditeur, l'E2E de création et les captures que
+la Definition of Done exigeait sont livrés et prouvés — voir plus bas.*
 Éditeur d'administration ; workflow par défaut du seed conforme au graphe spécifié.
 **DoD** : pgTAP (étape initiale unique, unicité `(workflow, nœud)`, transitions distinctes) ;
 E2E de création ; captures de l'éditeur.
@@ -2508,17 +2511,64 @@ E2E de création ; captures de l'éditeur.
       `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.8 et §8, `docs/DAT.md` §7 et §8,
       `docs/PROD_MIGRATIONS.md` §3, `docs/manual.md` chapitre 20 et §3.2, `README.md`,
       `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **Aucun éditeur d'administration, aucun E2E de création par l'interface, aucune capture.**
-      La Definition of Done les exige. Ils supposent un écran d'administration authentifié, et la
-      webapp reste un appelant **anonyme** faute d'écran de connexion — **INC-021, en attente
-      d'arbitrage**. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute
-      façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+- [x] **~~Aucun éditeur d'administration, aucun E2E de création par l'interface, aucune
+      capture.~~ LES TROIS SONT LIVRÉS.** L'éditeur est venu avec `CRM-076`, qui composait les
+      workflows existants et rangeait « un créateur de workflow » parmi ce qu'il n'est pas
+      (§7 bis.1), en renvoyant le geste ici. L'écran d'administration authentifié n'était plus le
+      blocage — INC-021 est close depuis `CRM-009`. **Ce qui manquait était la création elle-même**,
+      livrée par le §3 bis : spécification écrite après mesure et committée avant la première ligne
+      de code, `docs/DESIGN_SYSTEM.md` §5.15 complété de quatre règles visuelles.
+- [x] **Le geste est rendu DEUX FOIS, et la seconde est celle qui comptait** (§3 bis.2). L'état vide
+      de l'écran écrivait « Aucun workflow dans cet espace de travail » sans offrir d'issue : or le
+      §3.2 pose qu'« un workspace neuf n'a aucun workflow ». Un écran d'administration dont l'état
+      vide est un cul-de-sac est un défaut, pas une sobriété.
+- [x] **Le sélecteur de track est ABSENT sous la portée globale, non grisé**, et la bascule de
+      portée **oublie** le track choisi. Les deux moitiés sont figées séparément : par le test de
+      composant pour l'absence, par la mesure d'API pour ce que l'oubli évite — `scope = 'global'`
+      avec un `track_id` rend `400` / `23514` sur `workflows_scope_track_check`. `creerWorkflow`
+      refait le geste de son côté : un état d'interface n'est pas un contrat.
+- [x] **Aucune case « par défaut », et le motif est mesuré** (§3 bis.1) : `is_default` vrai est
+      refusé en `23505` sur l'index unique partiel `workflows_workspace_default_uk` dès qu'un défaut
+      existe — c'est-à-dire dans le cas normal. Le refus est prouvé par l'API précisément parce que
+      l'écran ne peut pas le produire.
+- [x] **Test unitaire dédié** : `webapp/src/lib/administration-workflows.test.ts`, **13 assertions
+      ajoutées** — la quatrième lecture et ses filtres, les deux conditions de la validation de
+      forme, l'identifiant rendu au succès, `track_id` forcé à `null`, `is_default` jamais envoyé,
+      zéro ligne rendu `sans-effet`, et les trois refus classés par leur code SQL. **134 assertions**
+      sur le fichier, aucune anomalie.
+- [x] **Test de composant dédié** : `webapp/src/app/AdministrationWorkflows.test.tsx`, **11
+      scénarios ajoutés**, dont **l'état vide qui porte le geste** — la preuve que seul ce niveau
+      peut rendre, la table du seed n'étant jamais vide et la vider casserait toutes les autres
+      suites (§3 bis.8). **107 scénarios** sur le fichier, aucune anomalie.
+- [x] **Test d'intégration dédié, hors interface** : `e2e/api/workflows.spec.ts` §N8, **11
+      scénarios** rejouant les dix lignes du §3 bis.5 avec les jetons réels des trois profils.
+      Chaque refus **relit la table** avec la clé de service pour constater qu'aucune ligne n'a été
+      écrite. **45 scénarios** sur le fichier, aucune anomalie.
+- [x] **UN FAIT FIGÉ EXPRÈS : un nom déjà porté est ACCEPTÉ en `201`.** Aucune unicité ne pèse sur
+      `workflows.name`, et le §3.2 n'en demande aucune. Sans cette mesure, une unicité ajoutée un
+      jour passerait inaperçue jusqu'au premier refus en production — que l'écran, qui ne la
+      prévient pas, afficherait sans qu'aucune de ses validations ne l'annonce.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/administration-workflows.spec.ts`, **7 scénarios** —
+      le geste à la souris avec la ligne **confirmée en base** par la clé de service, la bascule de
+      portée, le parcours **entièrement au clavier** avec le focus entrant vérifié dans le premier
+      champ, et les quatre paliers sans débordement. **63 scénarios** sur le fichier, aucune
+      anomalie, console vierge. Chaque scénario purge ce qu'il dépose dans son `finally` (INC-099).
+- [x] **Vérification visuelle réellement observée** : `docs/captures/CRM-031/`, six captures — les
+      quatre paliers, la portée propre à un track avec sa commande éteinte, et le succès montrant le
+      workflow neuf **choisi** avec son bloc d'étapes vide.
+- [x] **Build vert**, `npm run typecheck` vert sur les quatre projets.
+- [x] `docs/SPEC-workflow-engine.md` §3 bis (neuf sous-chapitres) et §3.10, `docs/DESIGN_SYSTEM.md`
+      §5.15, `docs/manual.md` chapitre 5 bis.0, 5 bis.5 et §3.2, `CHANGELOG.md` mis à jour dans le
+      même changement.
 - [ ] **La contrainte `NOT NULL` de `channels.workflow_id` n'est pas posée** (INC-029, ci-dessus) :
       elle revient à `CRM-033`. **Bloquée par une frontière d'unité, pas par un défaut.**
 
-*DoD adaptée, écarts explicites.* La Definition of Done exige un « E2E de création » et des
-« captures de l'éditeur ». Aucun n'est livré, et aucun ne pouvait l'être : cette unité ne livre ni
-écran ni parcours, l'éditeur étant suspendu à INC-021. Ses preuves sont unitaires (pgTAP) et
+*DoD adaptée, écarts explicites — LE PARAGRAPHE CI-DESSOUS EST HISTORIQUE, et il est conservé parce
+qu'il dit pourquoi ces preuves ont manqué si longtemps. La Definition of Done exigeait un « E2E de
+création » et des « captures de l'éditeur » : **les deux sont livrés** depuis le §3 bis, INC-021
+étant close et l'éditeur venu avec `CRM-076`. Ce qui suit décrit l'état d'avant.* La Definition of
+Done exige un « E2E de création » et des « captures de l'éditeur ». Aucun n'est livré, et aucun ne
+pouvait l'être : cette unité ne livre ni écran ni parcours, l'éditeur étant suspendu à INC-021. Ses preuves sont unitaires (pgTAP) et
 d'intégration (PostgREST, jetons réels, hors interface). **Aucune vérification visuelle** pour la
 même raison — et non parce qu'elle aurait été omise. Les deux captures réécrites par le rejeu des
 suites d'interface ont été **regardées puis restaurées** : elles montraient un survol laissé par le
