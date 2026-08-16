@@ -15,6 +15,7 @@ import {
 	classerRefusValeur,
 	composerFormulaire,
 	estRenseigne,
+	lireClesExigees,
 	memeValeur,
 	MESSAGE_VALEUR_INVALIDE,
 	normaliserSaisie,
@@ -357,5 +358,140 @@ describe('mise à jour du modèle après écriture (§4 bis.8)', () => {
 	it('la visibilité ne dépend pas de la valeur, et ne bouge donc pas', () => {
 		const apres = appliquerEcriture(modeleInitial(), 'f-source', 'salon')
 		expect(apres.champs.find((champ) => champ.champ.id === 'f-source')?.visibilite).toBe('required')
+	})
+})
+
+// @verifies CRM-037 (docs/BACKLOG.md) — reprise d'un déplacement refusé, quatrième destination
+// @verifies docs/SPEC-form-composer.md §4 ter.2 (le transport est l'adresse), §4 ter.3 (la clé et
+//           l'ordre), §4 ter.4 (rendu saisissable même si la règle le cache), §4 ter.7 (une clé
+//           qui ne désigne rien est ignorée)
+//
+// Le jeu d'essai ci-dessus est **exactement** le cas mesuré sur la pile : `motif-perte` est
+// `hidden` à l'étape courante et sans valeur, donc rendu NULLE PART par les trois destinations du
+// §4.2 — et c'est le champ que `move_card` nomme dans dix des dix-neuf couples refusables du seed.
+describe('les champs exigés par un déplacement refusé (§4 ter)', () => {
+	it("sans `exiges`, rien ne change : un champ `hidden` et vide n'est rendu nulle part (§4.2)", () => {
+		const modele = composer()
+		expect(modele.champs.map((resolu) => resolu.champ.key)).not.toContain('motif-perte')
+		expect(modele.autresEtapes.map((resolu) => resolu.champ.key)).not.toContain('motif-perte')
+		expect(modele.clesExigeesRetenues).toEqual([])
+	})
+
+	it('un champ `hidden` et vide, exigé par le déplacement, REJOINT le formulaire (§4 ter.4)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['motif-perte'],
+		})
+		const resolu = modele.champs.find((entree) => entree.champ.key === 'motif-perte')
+		expect(resolu).toBeDefined()
+		expect(resolu?.exigeParDeplacement).toBe(true)
+		// Sa visibilité N'EST PAS réécrite : la règle de l'étape reste `hidden`, et c'est le chemin
+		// d'arrivée qui le rend, pas une règle inventée. `manquant` garde donc la lecture du §4.4.
+		expect(resolu?.visibilite).toBe('hidden')
+		expect(resolu?.manquant).toBe(false)
+		expect(modele.clesExigeesRetenues).toEqual(['motif-perte'])
+	})
+
+	it("le champ rejoint la liste à sa position naturelle, il ne remonte pas en tête (§4 ter.4)", () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['motif-perte'],
+		})
+		// `source` (position 2) précède `motif-perte` (position 4), qui précède `decideur-identifie`
+		// (position 5) : la même fiche se lit pareil quel que soit le chemin par lequel on y arrive.
+		expect(modele.champs.map((resolu) => resolu.champ.key)).toEqual([
+			'source',
+			'motif-perte',
+			'decideur-identifie',
+		])
+	})
+
+	it('un champ déjà visible qui est exigé porte les DEUX qualités, sans en perdre une (§4 ter.5)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['source'],
+		})
+		const resolu = modele.champs.find((entree) => entree.champ.key === 'source')
+		expect(resolu?.visibilite).toBe('required')
+		expect(resolu?.manquant).toBe(true)
+		expect(resolu?.exigeParDeplacement).toBe(true)
+	})
+
+	it('un champ ARCHIVÉ reste hors du formulaire, même nommé par l’adresse (§4 ter.4)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['budget-previsionnel'],
+		})
+		expect(modele.champs.map((resolu) => resolu.champ.key)).not.toContain('budget-previsionnel')
+		expect(modele.clesExigeesRetenues).toEqual([])
+	})
+
+	it('une clé qui ne désigne aucun champ est ignorée, sans erreur ni champ inventé (§4 ter.7)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['champ-qui-nexiste-pas'],
+		})
+		expect(modele.champs).toEqual(composer().champs)
+		expect(modele.clesExigeesRetenues).toEqual([])
+	})
+
+	it('`clesExigeesRetenues` suit l’ordre du FORMULAIRE, pas celui de l’adresse (§4 ter.3)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			// L'adresse les donne à l'envers : le premier champ du défilement doit rester `source`.
+			clesExigees: ['motif-perte', 'source'],
+		})
+		expect(modele.clesExigeesRetenues).toEqual(['source', 'motif-perte'])
+	})
+
+	it('une écriture ne retire pas l’exigence : elle vient du chemin, pas de la valeur (§4 ter.4)', () => {
+		const modele = composerFormulaire({
+			champs: CHAMPS,
+			regles: REGLES,
+			valeurs: [],
+			etape: ETAPE,
+			clesExigees: ['motif-perte'],
+		})
+		const apres = appliquerEcriture(modele, 'f-motif', 'Budget gelé.')
+		const resolu = apres.champs.find((entree) => entree.champ.key === 'motif-perte')
+		expect(resolu?.exigeParDeplacement).toBe(true)
+		expect(resolu?.renseigne).toBe(true)
+		expect(apres.clesExigeesRetenues).toEqual(['motif-perte'])
+	})
+})
+
+// @verifies docs/SPEC-form-composer.md §4 ter.2 (l'adresse est un texte que l'on peut réécrire)
+describe('lecture du paramètre `exiges` de l’adresse (§4 ter.2)', () => {
+	it('sépare sur la virgule et retire les espaces', () => {
+		expect(lireClesExigees(' budget , motif-perte ')).toEqual(['budget', 'motif-perte'])
+	})
+
+	it('écarte les entrées vides et les doublons, sans jamais échouer', () => {
+		expect(lireClesExigees('budget,,budget, ,motif-perte')).toEqual(['budget', 'motif-perte'])
+	})
+
+	it('un paramètre absent ou vide ne demande rien', () => {
+		expect(lireClesExigees(null)).toEqual([])
+		expect(lireClesExigees(undefined)).toEqual([])
+		expect(lireClesExigees('')).toEqual([])
+		expect(lireClesExigees('  ,  ')).toEqual([])
 	})
 })

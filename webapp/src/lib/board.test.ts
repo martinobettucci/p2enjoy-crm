@@ -526,9 +526,23 @@ describe('appel de la garde `move_card` (§5.2, §7.9)', () => {
 			error: { message: 'transition_not_allowed', details: null, code: 'P0001' },
 		})
 		const resultat = await deplacerCard(client, 'c1', 's3', null, new Map())
+		// GARDE-FOU RÉVISÉ, et le motif est écrit ici plutôt que dans un message de commit.
+		// `RefusDeplacement` porte depuis la reprise d'un déplacement refusé une seconde liste,
+		// `clesManquantes` — les clés que le `DETAIL` transporte réellement, dont l'adresse de la
+		// fiche a besoin (docs/SPEC-form-composer.md §4 ter.3). L'assertion exhaustive a donc échoué
+		// **comme elle le devait** : elle fige la forme entière du refus, et cette forme a changé.
+		// Elle n'est pas relâchée en `toMatchObject` — c'est précisément son exhaustivité qui la
+		// rend utile —, elle est mise à jour. Le refus vérifié ici n'étant pas
+		// `missing_required_fields`, les deux listes sont vides, et cela dit quelque chose : aucun
+		// autre refus ne transporte de champs.
 		expect(resultat).toEqual({
 			statut: 'refus',
-			refus: { cle: 'transition_not_allowed', champsManquants: [], brut: 'transition_not_allowed' },
+			refus: {
+				cle: 'transition_not_allowed',
+				champsManquants: [],
+				clesManquantes: [],
+				brut: 'transition_not_allowed',
+			},
 		})
 	})
 })
