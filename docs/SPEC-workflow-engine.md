@@ -859,7 +859,152 @@ conséquence, elle n'est pas close.
 | pgTAP | Structure des trois tables ; unicité `(workflow_id, node_id)` ; au plus une étape initiale ; transition hors workflow refusée ; `from = to` refusé ; cohérence de portée `scope` / `track_id` ; au plus un workflow par défaut ; ordre attribué dans la portée du workflow ; politiques et privilèges ; autorisations éprouvées contre des comptes réels ; **absence de `cards`**, figée pour devenir rouge à `CRM-040` |
 | API | Les seize lignes du §3.8, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 2, n° 3 et n° 11 au niveau des workflows |
 | Seed | Le workflow du §3.9, ses sept étapes et ses dix transitions, créés par la véritable API REST, convergents ; les six channels rattachés |
-| Interface | **Aucune** — l'éditeur de workflow exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
+| Interface | Livrée par le §3 bis — la **création** d'un workflow depuis l'éditeur d'administration. La ligne d'origine disait « aucune », l'écran d'administration authentifié n'existant pas (INC-021) ; il existe depuis `CRM-009` et `CRM-076`, et l'écart n'a plus de motif |
+
+## 3 bis. Interface : la création d'un workflow — `CRM-031`
+
+L'éditeur de `CRM-076` compose les workflows **existants** : il l'écrit lui-même au §7 bis.1, où
+« un créateur de workflow » figure parmi ce qu'il n'est pas, et renvoie la création à `CRM-031`.
+Cette tranche livre ce geste, dernier comportement dû par `CRM-031` — sa Definition of Done exige
+« E2E de création » et « captures de l'éditeur », et les deux attendaient l'écran.
+
+Ce chapitre est **écrit après mesure** sur la pile réelle, le 2026-08-16, seed appliqué, avec les
+jetons réels des trois profils du seed obtenus par la véritable route de connexion. Les codes du
+§3 bis.5 sont ces mesures ; les lignes créées pour les obtenir ont été détruites, et le compte des
+workflows du seed constaté revenu à deux.
+
+### 3 bis.1 Ce que le geste est, et ce qu'il n'est pas
+
+Créer un workflow, c'est écrire **une ligne dans `workflows`** : un nom, une portée, et le track
+que la portée `track` exige. Rien d'autre.
+
+Il **n'est pas** :
+
+- **une composition.** Le workflow naît **vide**, sans étape ni transition. C'est exactement ce que
+  le §3.5 appelle un *brouillon* : structurellement valide, inutilisable tant qu'aucune étape
+  initiale n'existe. L'écran ne fabrique aucune étape par complaisance — il conduit à l'éditeur, qui
+  est fait pour ça ;
+- **une copie.** Dupliquer un workflow vers un track est `copy_workflow_to_track` (§4), un geste
+  distinct qui remappe des arêtes et pose un lignage. Créer, c'est partir de rien ;
+- **une désignation par défaut.** `is_default` n'est pas exposé. Le §3.2 garantit « au plus un vrai
+  par workspace » par index unique partiel : offrir la case à la création ferait échouer en `23505`
+  tout workspace qui a déjà son défaut — c'est-à-dire le cas normal — pour un réglage qui se prend
+  après coup, sur un workflow qu'on a d'abord composé ;
+- **une autorisation.** Comme `CRM-075` et `CRM-076`, l'écran n'anticipe aucun refus : il envoie, la
+  base tranche, l'écran traduit (`CLAUDE.md` §10). La commande de création est rendue pour tout le
+  monde, y compris le `viewer`, dont le refus est mesuré au §3 bis.5.
+
+### 3 bis.2 Où le geste se trouve, et pourquoi il y est deux fois
+
+`/reglages/workflows`, l'écran du §7 bis. Le formulaire est ancré **au-dessus de la liste de
+gauche**, dans le flux du document — patron du §5.13 de `docs/DESIGN_SYSTEM.md`, jamais une modale.
+
+Il est rendu **aussi bien quand la liste porte des workflows que quand elle est vide**, et cette
+seconde position n'est pas une redondance : c'est le seul cas où le geste est indispensable. Le
+§3.2 pose qu'« un workspace neuf n'a aucun workflow » ; l'état vide de l'écran écrit aujourd'hui
+« Aucun workflow dans cet espace de travail » et n'offre aucune issue. Un écran d'administration
+dont l'état vide est un cul-de-sac est un défaut, pas une sobriété.
+
+### 3 bis.3 Ce que le formulaire demande, et dans quel ordre
+
+| Champ | Contrôle | Obligatoire | Motif |
+|---|---|---|---|
+| Nom | texte | oui | `name` non vide après `btrim` (§3.2) |
+| Portée | liste — « Global » / « Propre à un track » | oui, valeur initiale `global` | `scope`, deux valeurs et pas d'autre |
+| Track | liste des tracks du workspace | **seulement si** la portée vaut `track` | la cohérence de portée du §3.2 |
+
+La liste des tracks est une **quatrième lecture** de l'écran, `tracks?select=id,name&order=position`,
+émise à l'ouverture du formulaire et non au chargement de l'écran — même règle que la lecture 3 du
+§7 bis.3 : un catalogue que personne ne consulte n'a pas à voyager. La RLS la borne au workspace ; il
+n'y a donc **aucun filtre `workspace_id`** dans la requête, et l'écrire laisserait croire que la
+lecture est protégée par lui.
+
+Le sélecteur de track n'est **rendu que sous la portée `track`**. Ce n'est pas un champ désactivé :
+sous la portée `global` il n'a aucun sens, et la règle du §5.15 vaut — une valeur qui n'existe pas
+se nomme, elle ne se grise pas. Basculer de `track` à `global` **oublie** le track choisi, de sorte
+qu'un `track_id` résiduel ne parte jamais avec une portée `global`, ce que le §3.2 refuse.
+
+Le `workspace_id` envoyé n'est **pas saisi** : il est celui du workspace courant, lu comme
+`AdministrationArborescence` le lit (`lireWorkspaces`). Le laisser saisir offrirait un champ dont
+toute autre valeur est refusée en `42501` — mesuré au §3 bis.5.
+
+### 3 bis.4 Validation de forme, et sa seule justification
+
+Comme au §7 bis.5, l'écran ne valide que ce dont la réponse est connue d'avance et dont l'erreur
+reste rattrapée par la base :
+
+- **nom non vide après `btrim`** — la commande reste désactivée tant qu'il l'est ;
+- **track choisi lorsque la portée vaut `track`** — même règle.
+
+Elle économise un aller-retour ; elle ne remplace aucune garde. Tout le reste part et se fait
+refuser.
+
+### 3 bis.5 Les refus, mesurés le 2026-08-16
+
+| Situation | Profil | Mesure |
+|---|---|---|
+| Création `global` valide | `admin` | `201`, `is_default` faux, `track_id` nul, `position` sans objet |
+| Création `track` valide | `admin` | `201`, `track_id` renseigné |
+| Création | `business_developer` | `403`, `42501`, `new row violates row-level security policy for table "workflows"` |
+| Création | `viewer` | `403`, `42501`, même message |
+| `scope = 'track'` sans `track_id` | `admin` | `400`, `23514`, contrainte `workflows_scope_track_check` |
+| `scope = 'global'` avec `track_id` | `admin` | `400`, `23514`, même contrainte |
+| Nom vide ou blanc | `admin` | `400`, `23514`, contrainte `workflows_name_check` |
+| Track d'un autre workspace | `admin` | `409`, `23503`, clé `workflows_track_id_workspace_id_fkey` |
+| `workspace_id` étranger | `admin` | `403`, `42501` — c'est le `WITH CHECK` |
+| `is_default` vrai alors qu'un défaut existe | `admin` | `409`, `23505`, index `workflows_workspace_default_uk` |
+
+**Un nom déjà porté par un autre workflow est ACCEPTÉ — `201`, mesuré.** Aucune unicité ne porte sur
+`name`, et le §3.2 n'en demande aucune : deux workflows homonymes sont un choix d'administration,
+pas une faute. L'écran ne l'invente donc pas, et cette mesure est figée par une preuve — sans elle,
+une unicité ajoutée un jour passerait inaperçue jusqu'au premier refus en production.
+
+**Les deux dernières lignes du tableau ne sont pas atteignables depuis l'écran**, et c'est pour
+cela qu'elles y figurent : le `workspace_id` n'est pas saisi (§3 bis.3) et `is_default` n'est pas
+exposé (§3 bis.1). Elles sont mesurées par la preuve d'API, qui contourne l'interface comme
+`CLAUDE.md` §10 l'exige, et non par un scénario d'écran qui ne pourrait pas les produire.
+
+**La correspondance des refus réutilise `classerRefusEcriture` de `CRM-075`**, et n'en écrit pas de
+jumeau. Trois natures y sont déjà rangées et suffisent : `forbidden` pour `42501`, `forme-refusee`
+pour `23514`, `reference-absente` pour `23503`. Le `23505` de l'index partiel n'est pas atteignable
+depuis l'écran ; il n'y reçoit donc aucune traduction propre, et le classement générique le
+couvrirait si la base venait à l'opposer.
+
+### 3 bis.6 Ce que l'écran fait après un succès
+
+Trois effets, dans cet ordre, et aucun n'est décoratif :
+
+1. **la liste est relue**, non complétée localement — la relecture est la seule chose qui prouve que
+   la ligne existe côté base, et l'ordre `is_default` décroissant puis `name` de la lecture 1 du
+   §7 bis.3 place le nouveau workflow là où il doit être, ce qu'une insertion optimiste ne saurait
+   pas faire ;
+2. **le workflow créé devient le workflow choisi**, et ses blocs se chargent. C'est ce qui rend le
+   brouillon du §3.5 immédiatement composable : créer puis chercher son objet dans une liste serait
+   un geste inachevé ;
+3. **le formulaire se referme et l'annonce est faite** dans la `LiveRegion` de l'écran, comme tout
+   geste de cette surface.
+
+Un workflow neuf n'a **aucune étape** : le bloc des étapes rend alors son état vide, déjà écrit
+(« Ce workflow n'a aucune étape »), et le §3.5 est ainsi montré plutôt que raconté.
+
+### 3 bis.7 États, accessibilité et responsive
+
+Les états de `docs/DESIGN_SYSTEM.md` §5.8 s'appliquent sans exception. Le formulaire vit dans le
+flux, le focus entre dans son premier champ à l'ouverture, la commande d'envoi porte son état
+d'attente, et l'alerte de refus est rendue **dans le bloc du formulaire** — le patron du §5.13, et
+la correction faite à `AdministrationArborescence` après un refus calculé, correct et invisible.
+La console reste vierge.
+
+### 3 bis.8 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | La composition de l'insertion : `track_id` nul sous la portée `global` et renseigné sous `track` ; le nom `btrim`é ; la validation de forme dans ses deux cas, bornes comprises ; la correspondance des refus `42501`, `23514` et `23503` |
+| Composant | L'**état vide de la liste porte le geste** — c'est le cas du §3 bis.2 que l'écran seul peut montrer, la table du seed n'étant jamais vide. Il se prouve par le test de composant, avec une lecture rendue vide, et non en vidant une table que tout le reste du seed emploie |
+| API | Les dix lignes du §3 bis.5 hors interface, avec les jetons réels des trois profils, chaque refus **relisant** la table pour constater qu'aucune ligne n'a été écrite ; le nom homonyme accepté |
+| Interface | Le parcours de création joué à la souris **et** au clavier sur la vraie base, la ligne **confirmée en base** après coup ; la bascule de portée qui fait apparaître le sélecteur de track ; le workflow créé devenu le workflow choisi, son bloc d'étapes vide |
+| Visuel | Captures aux quatre paliers de `docs/DESIGN_SYSTEM.md` §7, formulaire ouvert sous les deux portées, et le workflow neuf choisi montrant son bloc d'étapes vide |
+| Seed | Aucun ajout : le workspace du seed porte déjà deux workflows, dont un dérivé, et le formulaire n'a besoin d'aucune donnée nouvelle. La preuve d'interface crée ses propres lignes sous un nom préfixé `e2e-workflow-` et les **purge dans son `finally`** par la clé de service — la règle d'INC-099 et de la décision 362, sans laquelle deux workflows résiduels rendraient rouges les assertions de compte de `supabase/tests/0007_workflows.test.sql` |
 
 ## 4. Portée, copie vers un track et divergence — `CRM-032`
 

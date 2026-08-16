@@ -847,6 +847,30 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi il a l'air.
   sont la seule trace visible du geste, et les faire disparaître au rechargement du graphe
   effacerait ce qu'on vient de faire.
 
+**La création d'un workflow — `CRM-031`, `docs/SPEC-workflow-engine.md` §3 bis.** Elle n'ajoute pas
+de bloc dans la colonne de droite : elle s'ancre **au-dessus de la liste de gauche**, là où se
+choisit l'objet qu'elle crée.
+
+- **Le geste est rendu DEUX FOIS, et la seconde est celle qui compte.** Au-dessus de la liste
+  peuplée, et dans l'**état vide** de l'écran. Un état vide qui écrit « Aucun workflow dans cet
+  espace de travail » sans offrir d'issue est un cul-de-sac, et c'est précisément l'état d'un
+  workspace neuf (§3.2 du moteur). La règle générale du §5.8 — un état vide dit ce qui manque — se
+  complète ici : sur une surface d'administration, il porte aussi le geste qui le comble.
+
+- **Le sélecteur de track n'est pas grisé sous la portée « Global », il est ABSENT.** La règle du
+  §5.15 s'applique — une valeur qui ne se modifie plus se rend en phrase, jamais en champ désactivé
+  — et sa forme extrême ici : une valeur qui n'a aucun sens sous la portée choisie ne se rend pas
+  du tout. Un `select` grisé poserait la question « pourquoi ? » là où la portée juste au-dessus y
+  répond déjà.
+
+- **Aucune case « par défaut ».** Elle échouerait en `23505` sur tout workspace qui a déjà son
+  workflow par défaut, c'est-à-dire le cas normal (§3 bis.1). Le §1 vaut : on n'offre pas une
+  commande dont on sait qu'elle sera refusée.
+
+- **La liste de gauche est relue après un succès, jamais complétée localement**, et le workflow créé
+  devient le workflow **choisi**. L'ordre de la liste — défaut d'abord, puis le nom — vient de la
+  base ; une insertion optimiste le contredirait le temps d'un rendu.
+
 ### 5.16 Corbeille — `CRM-077`
 
 Quatrième surface d'administration, et la première dont l'**état vide est le cas normal**. Ce que
