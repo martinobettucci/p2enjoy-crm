@@ -1000,6 +1000,18 @@ alerte de refus dans le bloc concerné.
   suffixées par leur unité — « 10 % », « 14 j » — dans leur propre élément, jamais accolées au
   nombre par un nœud de texte nu (§5.11, le défaut « Discussion1 »).
 
+- **Monter et descendre sont deux commandes discrètes en tête du groupe d'actions**, `ArrowUp` et
+  `ArrowDown` de Lucide, avant « Modifier » — la disposition exacte du §5.13, et l'ordre compte : les
+  commandes d'ordre sont les mêmes sur les deux surfaces, et l'œil qui a appris l'une lit l'autre.
+  Elles sont **désactivées aux extrémités, jamais masquées**, et leur `title` dit laquelle des deux
+  causes s'applique — « déjà en tête de liste » n'est pas « les positions ne se distinguent plus »
+  (§8, `docs/SPEC-workflow-engine.md` §2 ter.2).
+
+  - **Elles disparaissent sur une ligne archivée**, comme « Modifier » et pour le même motif : le
+    geste n'a aucun effet observable sur un nœud que les sélecteurs d'étape ignorent déjà. La ligne
+    archivée reste en revanche **comptée comme voisine** par le calcul, puisqu'elle occupe une place
+    à l'œil (`docs/SPEC-workflow-engine.md` §2 ter.3).
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

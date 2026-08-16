@@ -403,15 +403,15 @@ sont au §5.18 de `docs/DESIGN_SYSTEM.md`.
 
 ### 2 bis.8 Ce que cette tranche ne livre PAS, et qui reste dû sous `CRM-030`
 
-- le **réordonnancement** du catalogue. `position` est une `numeric` et le geste serait un `PATCH`,
-  mais le §2 le note depuis l'origine : « le réordonnancement du catalogue n'a pas d'opération
-  atomique ». `calculerDeplacement` de `CRM-075` couvrirait le cas courant ; il reste à prouver, et
-  il n'est pas livré ici plutôt qu'à moitié ;
+- ~~le **réordonnancement** du catalogue~~ — **LIVRÉ PAR LA TRANCHE SUIVANTE, spécifiée au §2 ter.**
+  Le texte d'origine est conservé ci-dessous pour son motif, qui reste exact : « `position` est une
+  `numeric` et le geste serait un `PATCH`, mais le §2 le note depuis l'origine — le réordonnancement
+  du catalogue n'a pas d'opération atomique. `calculerDeplacement` de `CRM-075` couvrirait le cas
+  courant ; il reste à prouver, et il n'est pas livré ici plutôt qu'à moitié. » Il n'est toujours
+  pas atomique, et le §2 ter.6 dit exactement ce que cela coûte ;
 - la **suppression**, qui n'existe pas dans le produit (§2.6) et n'est donc pas un manque ;
 - l'**occupation affichée avant le geste** (§2 bis.3), qui demanderait une lecture que PostgREST
   n'expose pas au client.
-
-Tant que le premier point est dû, `CRM-030` reste `[~]`.
 
 ### 2 bis.9 Preuves attendues de cette tranche
 
@@ -422,6 +422,126 @@ Tant que le premier point est dû, `CRM-030` reste `[~]`.
 | Interface | Les quatre gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'un nœud occupé **constaté et non simulé** ; console vierge |
 | Visuel | Captures à 1440 px et à 390 px, liste chargée, formulaire de création ouvert, refus d'archivage affiché |
 | Seed | Les huit nœuds du §2.9 suffisent : sept actifs, un archivé, et `prospection` occupée par quatre affaires actives — l'écran a de quoi montrer ses deux états de ligne et son refus sans qu'aucune donnée soit ajoutée |
+
+## 2 ter. Réordonnancement du catalogue — `CRM-030`, dernière tranche
+
+Le §2 bis.8 nommait ce geste comme le seul manque de l'unité. Ce chapitre le spécifie, et il est
+écrit **après mesure** sur la pile réelle : chaque code et chaque valeur du §2 ter.4 a été observé
+le 2026-08-16 avec les jetons des comptes seedés, sur les huit nœuds du §2.9, positions restituées
+ensuite. Rien ici n'est déduit du comportement d'une autre table.
+
+### 2 ter.1 Ce que le geste est, et ce qu'il n'est pas
+
+C'est **une écriture d'une seule colonne sur une seule ligne** : `PATCH position`. L'ordre du
+catalogue est celui du §2.4 — une liste unique par workspace, `position` puis `label` —, et le rendre
+manœuvrable est ce qui restait dû.
+
+Il **n'est pas** :
+
+- **un glisser-déposer.** Deux commandes, « Monter » et « Descendre », le même patron que
+  l'arborescence de `CRM-075` et pour la même raison : un déplacement au clavier doit exister
+  (`CLAUDE.md` §22), et une liste plate de huit lignes ne justifie pas le mécanisme de pointage que
+  `docs/DESIGN_SYSTEM.md` ne déclare nulle part ;
+- **une renumérotation.** La liste entière n'est jamais réécrite. `position` est une `numeric`
+  précisément pour qu'un nœud s'insère entre deux autres sans toucher aux voisins (§2.4) ;
+- **une transaction.** Le §2 bis.8 le notait, et cela reste vrai : il n'y a pas d'opération atomique
+  de réordonnancement. Le §2 ter.6 dit ce que cette absence coûte réellement, mesuré et borné.
+
+### 2 ter.2 Le calcul de la position, et pourquoi il n'est pas réécrit ici
+
+Le module réutilise `calculerDeplacement`, `positionEntre` et `positionAvant` de
+`webapp/src/lib/administration-arborescence.ts` (`CRM-075`, `docs/SPEC-administration-arborescence.md`
+§8) **sans en écrire de jumeau**. La règle est celle de `CRM-075` : monter, c'est prendre une
+position strictement comprise entre l'avant-précédente et la précédente ; descendre, c'est en prendre
+une entre la suivante et l'après-suivante ; en queue de liste, `suivante + 1` ; en tête, la moitié de
+la première.
+
+Deux façons de se tromper que ces fonctions attrapent déjà, et qui valent ici comme là-bas :
+
+- **les extrémités** — la première ligne ne monte pas, la dernière ne descend pas. Le calcul rend
+  `impossible` / `extremite`, la commande est **désactivée et dit pourquoi**, jamais masquée ;
+- **les positions indistinctes** — deux nœuds peuvent partager une position, rien en base ne
+  l'interdit, et le §2 bis.3 ordonne alors sur `label`. Le milieu de deux bornes égales n'est
+  strictement compris entre aucune des deux : le calcul rend `impossible` /
+  `positions-indistinctes`, et l'écran le NOMME au lieu d'écrire une valeur sans effet.
+
+### 2 ter.3 Sur quelle liste le calcul porte — les archivés COMPRIS
+
+Le calcul porte sur **la liste affichée**, c'est-à-dire celle du §2 bis.3 : les huit nœuds, archivés
+compris, à leur place.
+
+C'est le seul choix qui ne ment pas. Un nœud archivé **reste dans la liste à sa position**
+(`docs/DESIGN_SYSTEM.md` §5.18), donc il est visible entre deux actifs ; calculer sur la seule
+sous-liste active ferait franchir cette ligne archivée d'un seul clic, ou pire, produirait une
+position identique à la sienne — exactement le cas `positions-indistinctes` que le §2 ter.2 écarte.
+Ce que l'administrateur voit et ce sur quoi le calcul porte sont la même liste.
+
+**Le nœud archivé, lui, ne se déplace pas.** Ses commandes de réordonnancement ne sont pas rendues,
+comme « Modifier » ne l'est pas : le geste n'a aucun effet observable sur un nœud que les sélecteurs
+d'étape ignorent déjà (§2 bis.3). C'est la règle de `docs/DESIGN_SYSTEM.md` §5.13 — « renommer et
+réordonner disparaissent sur une ligne archivée » —, reprise sans changement. Il reste en revanche
+une **voisine** pour le calcul des autres, puisqu'il occupe une place à l'œil.
+
+### 2 ter.4 Contrat d'API, mesuré le 2026-08-16
+
+| # | Appelant | Appel | Mesuré |
+|---|---|---|---|
+| a | `admin` | `PATCH ?key=eq.relance` `{"position":1.5}` | `200`, la ligne rendue porte `position: 1.5` — la **fraction est conservée**, `numeric` ne l'arrondit pas |
+| b | `admin` | `PATCH ?key=eq.prospection` `{"position":2.5}` sur le nœud **occupé par quatre affaires actives** | `200`. **La garde `node_occupied` ne se déclenche PAS** |
+| c | `viewer` | `PATCH ?key=eq.negociation` `{"position":99}` | **`200` et `[]`**, et la ligne relue à la clé de service porte toujours `position: 3` |
+
+**La ligne b est la mesure décisive de ce chapitre, et elle n'allait pas de soi.** La garde du §2.6
+est un trigger `BEFORE UPDATE` sur toute la table : rien dans son nom ne dit qu'un déplacement y
+échappe. Elle ne se déclenche qu'au passage de `archived_at` de `NULL` à une valeur — c'est écrit
+dans son corps et c'est le défaut qu'INC-031 redoutait, « une garde qui ferait échouer toute mise à
+jour du catalogue ». **Mesuré plutôt que lu** : déplacer `prospection`, que le seed occupe de quatre
+affaires actives, rend `200`. Une preuve d'API fige ce fait, sans quoi un resserrement futur de la
+garde rendrait le catalogue immobile sans qu'aucune preuve ne l'annonce.
+
+La ligne c est celle du §2.8 h, reconduite sur cette colonne : le `USING` de la politique de mise à
+jour filtre la ligne, l'`UPDATE` réussit sur zéro ligne, PostgREST rend `200` et un tableau vide.
+`sans-effet` de `ResultatCatalogue` porte déjà ce cas, et l'écran le dit.
+
+### 2 ter.5 Les refus
+
+Aucun refus **nouveau**. Le geste emprunte la politique de mise à jour du §2.7 et
+`classerRefusCatalogue` sans y ajouter de nature :
+
+| Cas | Ce que l'écran en dit |
+|---|---|
+| Le calcul rend `impossible` avant tout appel | l'écran nomme l'impossibilité et **n'écrit rien** — la phrase déjà employée par `CRM-075`, jamais « une erreur est survenue » |
+| `200` et `[]` (ligne c) | « la modification n'a pas été appliquée » — l'état `sans-effet`, jamais un succès |
+| `42501` de la RLS | « vous n'avez pas le droit de modifier le catalogue » |
+
+`noeud-occupe` **ne peut pas survenir** sur ce geste (§2 ter.4 b). Rien dans le module ne l'exclut
+pour autant : le classement reste celui du §2 bis.5, parce qu'un classement qui écarterait d'avance
+un refus que la base pourrait un jour rendre serait un contrôle d'interface (`CLAUDE.md` §10).
+
+### 2 ter.6 Ce que l'absence d'opération atomique coûte réellement
+
+Deux limites, bornées, et aucune n'est masquée :
+
+1. **Deux administrateurs qui déplacent en même temps.** La liste est relue après chaque écriture,
+   mais le calcul part de la liste affichée : deux déplacements concurrents peuvent produire deux
+   positions égales. La conséquence est **un ordre stable mais inattendu** — le §2 bis.3 départage
+   alors sur `label` —, jamais une perte de donnée ni une erreur. Le geste suivant sur l'une des deux
+   lignes rend `positions-indistinctes` et le dit ;
+2. **l'épuisement de la précision.** Insérer sans cesse au même point divise l'intervalle ; après une
+   cinquantaine d'insertions au même endroit, le milieu de deux bornes n'est plus strictement compris
+   entre elles. `positionEntre` vérifie **le résultat** et non les entrées, ce qui attrape ce cas
+   exactement comme l'égalité des bornes. La sortie est un refus nommé, pas une écriture silencieuse
+   qui casserait l'ordre. Une renumérotation reste à écrire le jour où le cas s'observe ; il ne s'est
+   jamais observé sur un catalogue de huit nœuds.
+
+### 2 ter.7 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Le calcul sur une liste de catalogue **archivés compris** ; les deux extrémités ; deux positions égales rendues `positions-indistinctes` ; l'écriture n'envoie **que** `position` et sur **une seule** ligne |
+| API | Les trois lignes du §2 ter.4 avec les jetons réels, dont **le déplacement d'un nœud occupé, rendu `200`** ; la ligne du `viewer` relue inchangée à la clé de service |
+| Interface | Monter et descendre joués **à la souris et au clavier** sur la vraie base, l'ordre relu en base après coup ; les commandes désactivées aux extrémités, avec leur infobulle ; l'ordre du seed restitué en épilogue ; console vierge |
+| Visuel | Une capture de la liste après déplacement, à 1440 px |
+| Seed | Les huit nœuds du §2.9 suffisent : leurs positions sont `1` à `8`, entières et distinctes, donc tout déplacement a un milieu strict |
 
 ## 3. Workflow, étapes, transitions — `CRM-031`
 
