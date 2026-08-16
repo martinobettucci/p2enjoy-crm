@@ -269,6 +269,28 @@ harnais ne posent pas eux-mêmes.
 cette variable ne dit RIEN du produit.** Il ne doit être lu ni comme une régression, ni comme une
 preuve. Toute session qui exécute ces harnais sur cet hôte exporte la variable d'abord.
 
+**CONTRE-ÉPREUVE, ET ELLE FERME LA QUESTION — mesurée le 2026-08-16.** Le même harnais, relancé
+avec la variable exportée **et** le port `4173` libre, rend :
+
+```
+scripts/verify-administration-arborescence.sh  =>  27 contrôles, aucune anomalie.
+```
+
+Les harnais du dépôt sont donc **pleinement exécutables sur cet hôte**, ce qu'aucune session
+n'avait encore constaté. Deux conditions, et elles sont toutes les deux extérieures au dépôt :
+
+1. `export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` — sans quoi tout scénario
+   d'interface meurt sur `browserType.launch`, avant la moindre assertion ;
+2. **aucun `vite preview` résiduel sur le port `4173`** — la configuration pose
+   `reuseExistingServer: false`, et un serveur laissé par une exécution précédente fait échouer
+   l'étape entière sur `http://127.0.0.1:4173 is already used`, message qui ne dit rien du produit
+   non plus. Une série interrompue laisse ce serveur derrière elle : `pkill -f vite` avant de
+   relancer.
+
+**Ce qui reste dû à `CRM-008` est donc précisé** : que les harnais posent eux-mêmes le chemin du
+navigateur, comme `npm run e2e:ui` le fait, plutôt que de dépendre de l'environnement de
+l'appelant.
+
 ### INC-124 — `mail-sync` journalise un `WARNING` légitime que la preuve S3 interdit
 
 *Porteur : `CRM-054` (console opérationnelle de `mail-sync`). Mesuré le 2026-08-16.*

@@ -511,6 +511,38 @@ MESURÉ après l'installation : "scripts/verify-workflows.sh" **franchit la gard
 dans ses étapes, là où il s'arrêtait sur sa première ligne. Les harnais exigent en outre la pile
 debout — ils appellent "docker compose" —, donc §2 puis §2.2 avant eux.
 
+### 2.1 ter. LES `verify-*.sh` SONT EXÉCUTABLES ICI — DEUX CONDITIONS, TOUTES DEUX MESURÉES
+
+Le §2.1 bis a levé le blocage de la version de Node. Il en restait deux autres, extérieurs au
+dépôt, qui faisaient rendre à ces harnais des verdicts ne disant RIEN du produit. Les deux sont
+mesurés le 2026-08-16, et ne se redécouvrent pas.
+
+**1. Exporte le navigateur.** Sans cela, tout scénario d'interface meurt à `browserType.launch`,
+avant la moindre assertion, sur un binaire que l'hôte ne porte pas :
+
+```
+export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium
+```
+
+`npm run e2e:ui` reçoit ce chemin ; les harnais ne le posent pas eux-mêmes.
+
+**2. Libère le port 4173.** La configuration pose `reuseExistingServer: false`. Un `vite preview`
+laissé par une exécution précédente — une série interrompue en laisse un — fait échouer l'étape
+entière sur `http://127.0.0.1:4173 is already used`, ce qui ne dit rien du produit non plus :
+
+```
+pkill -f vite
+```
+
+**Avec ces deux conditions**, `scripts/verify-administration-arborescence.sh` rend
+`27 contrôles, aucune anomalie` là où il rendait `3 en échec`. Sans elles, un verdict rouge de ces
+harnais ne doit être lu ni comme une régression, ni comme une preuve.
+
+**Budget, mesuré aussi.** Ces harnais rejouent des suites E2E complètes : plusieurs dépassent
+quatre minutes chacun, et il y en a **cinquante**. La série entière ne tient pas dans une session
+d'une heure. Exécute d'abord ceux que ton changement touche, puis autant du reste que le temps le
+permet, et dis exactement ce que tu n'as pas exécuté (§4.3).
+
 ### 2.2. DÉMARRAGE DE LA PILE
 
 Ensuite seulement :
