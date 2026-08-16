@@ -14,15 +14,18 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	COLONNES_DERIVATION,
 	COLONNES_ETAPE_ADMIN,
 	COLONNES_NOEUD_AJOUTABLE,
 	COLONNES_WORKFLOW_ADMIN,
 	ajouterEtape,
 	ancienneteConforme,
 	classerRefusEtape,
+	composerMentionDivergence,
 	deplacerEtape,
 	designerEtapeInitiale,
 	libelleEtape,
+	lireDerivation,
 	libelleSurchargeConforme,
 	lireCatalogueActif,
 	lireEtapes,
@@ -1709,5 +1712,115 @@ describe('l’écriture de création (§3 bis.1, §3.2)', () => {
 				refus: { nature: attendu, detail: `refus ${code}` },
 			})
 		}
+	})
+})
+
+// =============================================================================================
+// LA MENTION DE DIVERGENCE — `CRM-032`
+// @verifies CRM-032 (docs/BACKLOG.md) — mention de divergence visible dans l'interface
+// @verifies docs/SPEC-workflow-engine.md §4 bis.3 (lecture 9 et son filtre, mesurée),
+//           §4 bis.4 (les trois phrases et la date affichée), §4 bis.8 (preuves, niveau unitaire),
+//           §4.6 (le verdict vient de `source_modified_since_copy`, et de rien d'autre)
+// =============================================================================================
+
+describe('lireDerivation — lecture 9 du §4 bis.3', () => {
+	it('interroge la vue, filtre sur le workflow choisi, et demande les huit colonnes', async () => {
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireDerivation(client, 'wf-copie')
+		expect(appel.table).toBe('workflow_derivations')
+		expect(appel.colonnes).toBe(COLONNES_DERIVATION)
+		expect(appel.filtres).toEqual([['workflow_id', 'wf-copie']])
+	})
+
+	it('AUCUN filtre de workspace n’est écrit : la vue est `security_invoker` (§4.6)', async () => {
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireDerivation(client, 'wf-copie')
+		expect(appel.filtres.map(([colonne]) => colonne)).not.toContain('workspace_id')
+	})
+
+	it('une liste vide rend `null` — « ce workflow n’est la copie de personne » (§4 bis.2)', async () => {
+		const { client } = espionLecture({ data: [], error: null, status: 200 })
+		const lue = await lireDerivation(client, 'wf-defaut')
+		expect(lue).toEqual({ statut: 'pret', donnees: null })
+	})
+
+	it('une ligne est rendue telle quelle, sans recalcul', async () => {
+		const ligne = {
+			workflow_id: 'wf-copie',
+			name: 'Cycle commercial — Conseil IA',
+			derived_at: '2026-08-16T05:22:07.326603+00:00',
+			source_workflow_id: 'wf-source',
+			source_name: 'Cycle commercial standard',
+			source_archived_at: null,
+			source_modified_at: '2026-08-16T05:22:06.865145+00:00',
+			source_modified_since_copy: false,
+		}
+		const { client } = espionLecture({ data: [ligne], error: null, status: 200 })
+		const lue = await lireDerivation(client, 'wf-copie')
+		expect(lue).toEqual({ statut: 'pret', donnees: ligne })
+	})
+
+	it('une lecture refusée rend une erreur, jamais `null` — une panne n’est pas une absence', async () => {
+		const { client } = espionLecture({ data: null, error: { message: 'boom' }, status: 500 })
+		const lue = await lireDerivation(client, 'wf-copie')
+		expect(lue.statut).toBe('erreur')
+	})
+})
+
+describe('composerMentionDivergence — §4 bis.4', () => {
+	const ligne = {
+		workflow_id: 'wf-copie',
+		name: 'Cycle commercial — Conseil IA',
+		derived_at: '2026-08-16T05:22:07.326603+00:00',
+		source_workflow_id: 'wf-source',
+		source_name: 'Cycle commercial standard',
+		source_archived_at: null,
+		source_modified_at: '2026-08-16T05:22:06.865145+00:00',
+		source_modified_since_copy: false,
+	}
+
+	it('sans dérivation, il n’y a pas de mention du tout', () => {
+		expect(composerMentionDivergence(null)).toBeNull()
+	})
+
+	it('une source inchangée compose une mention non divergente', () => {
+		expect(composerMentionDivergence(ligne)).toEqual({
+			source: 'Cycle commercial standard',
+			divergente: false,
+			sourceArchivee: false,
+			copieLe: '2026-08-16T05:22:07.326603+00:00',
+		})
+	})
+
+	it('LE VERDICT VIENT DE `source_modified_since_copy`, ET DE RIEN D’AUTRE (§4.6)', () => {
+		// La source est ici modifiée AVANT la copie selon les dates, et pourtant divergente : une
+		// suppression ne transmet aucune date à `source_modified_at` (§4.6). Un écran qui
+		// comparerait les deux dates lui-même déclarerait cette copie à jour.
+		const divergente = { ...ligne, source_modified_since_copy: true }
+		expect(composerMentionDivergence(divergente)?.divergente).toBe(true)
+		// Et l'inverse : une source modifiée APRÈS la copie, mais dont l'empreinte est identique,
+		// n'est PAS divergente. C'est le cas d'une modification annulée — mesuré le 2026-08-16 :
+		// retirer la surcharge posée sur une étape de la source éteint le signal.
+		const dateRecente = { ...ligne, source_modified_at: '2026-12-31T00:00:00+00:00' }
+		expect(composerMentionDivergence(dateRecente)?.divergente).toBe(false)
+	})
+
+	it('un verdict nul n’affirme AUCUNE divergence', () => {
+		const inconnu = { ...ligne, source_modified_since_copy: null }
+		expect(composerMentionDivergence(inconnu)?.divergente).toBe(false)
+	})
+
+	it('une source archivée est signalée en plus, jamais à la place', () => {
+		const archivee = { ...ligne, source_archived_at: '2026-08-10T00:00:00+00:00' }
+		const mention = composerMentionDivergence(archivee)
+		expect(mention?.sourceArchivee).toBe(true)
+		expect(mention?.source).toBe('Cycle commercial standard')
+	})
+
+	it('un nom de source absent se replie sur l’identifiant, jamais sur un vide', () => {
+		const sansNom = { ...ligne, source_name: null }
+		expect(composerMentionDivergence(sansNom)?.source).toBe('wf-source')
+		const blanc = { ...ligne, source_name: '   ' }
+		expect(composerMentionDivergence(blanc)?.source).toBe('wf-source')
 	})
 })

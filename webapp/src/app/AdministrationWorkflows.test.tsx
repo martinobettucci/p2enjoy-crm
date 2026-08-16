@@ -234,6 +234,9 @@ type Options = {
 	readonly catalogue?: unknown[]
 	/** Lignes de la lecture 8 — les versions du workflow choisi (`CRM-078`, §7 ter.14.3). */
 	readonly versions?: unknown[]
+	/** Lignes de la lecture 9 — la dérivation du workflow choisi (`CRM-032`, §4 bis.3). */
+	readonly derivations?: unknown[]
+	readonly erreurDerivation?: { message: string; status: number }
 	/** Le workspace courant et les tracks affectables — `CRM-031`, §3 bis.3, lecture 4. */
 	readonly workspaces?: unknown[]
 	readonly tracks?: unknown[]
@@ -325,6 +328,12 @@ function clientFactice(options: Options = {}): {
 				// sans cette branche, la lecture des versions retombait sur le catalogue et
 				// rendait des lignes sans colonne de version — un double qui ment sur la forme.
 				if (table === 'workflow_versions') return lecture(options.versions ?? [])
+				// LECTURE 9, ajoutée par `CRM-032` (§4 bis.3), routée pour la même raison : sans
+				// cette branche elle retombait sur le catalogue, et l'écran aurait rendu une
+				// mention de divergence sur des nœuds — une origine qui n'existe pas.
+				if (table === 'workflow_derivations') {
+					return lecture(options.derivations ?? [], options.erreurDerivation)
+				}
 				// Les deux lectures de la CRÉATION (`CRM-031`, §3 bis.3) sont routées explicitement,
 				// pour la raison exacte qui a valu à `workflow_versions` de l'être : sans ces
 				// branches, elles retombaient sur le catalogue et rendaient des nœuds là où l'écran
@@ -1833,5 +1842,97 @@ describe('la création d’un workflow (§3 bis)', () => {
 		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
 		await userEvent.selectOptions(within(formulaire).getByLabelText('Portée'), 'track')
 		expect(await screen.findByTestId('workflows-sans-track')).toBeTruthy()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// §4 bis — La mention de divergence, `CRM-032`
+// @verifies CRM-032 (docs/BACKLOG.md) — mention de divergence visible dans l'interface
+// @verifies docs/SPEC-workflow-engine.md §4 bis.2 (où elle se trouve, et le cas normal muet),
+//           §4 bis.3 (lecture 9, émise avec le graphe), §4 bis.4 (les trois phrases),
+//           §4 bis.5 (états), §4 bis.6 (aucune écriture)
+// @verifies docs/DESIGN_SYSTEM.md §5.15 (la mention de divergence)
+// ---------------------------------------------------------------------------------------------
+
+/** La ligne de la vue telle que la pile la rend — mesurée le 2026-08-16 sur la copie du seed. */
+const DERIVATION = [
+	{
+		workflow_id: 'wf-1',
+		name: 'Cycle commercial — Conseil IA',
+		derived_at: '2026-08-16T05:22:07.326603+00:00',
+		source_workflow_id: 'wf-source',
+		source_name: 'Cycle commercial standard',
+		source_archived_at: null,
+		source_modified_at: '2026-08-16T05:22:06.865145+00:00',
+		source_modified_since_copy: false,
+	},
+]
+
+describe('la mention de divergence (§4 bis)', () => {
+	it('la lecture 9 part AVEC le graphe, pas dans un second temps (§4 bis.3)', async () => {
+		const { lectures } = monter({ derivations: DERIVATION })
+		await attendreEcran()
+		await waitFor(() => expect(lectures).toContain('workflow_derivations'))
+	})
+
+	it('un workflow copié écrit son origine et l’état de sa source (§4 bis.4)', async () => {
+		monter({ derivations: DERIVATION })
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.textContent).toContain('Ce workflow dérive de « Cycle commercial standard ».')
+		expect(mention.textContent).toContain("La source n'a pas changé depuis la copie du")
+		expect(mention.getAttribute('data-divergente')).toBe('non')
+	})
+
+	it('une source changée écrit la divergence, et dit que rien n’est reporté (§4 bis.4)', async () => {
+		monter({
+			derivations: [{ ...DERIVATION[0], source_modified_since_copy: true }],
+		})
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.textContent).toContain('La source a changé depuis la copie du')
+		expect(mention.textContent).toContain('ne sont pas reportées automatiquement')
+		expect(mention.getAttribute('data-divergente')).toBe('oui')
+	})
+
+	it('une source archivée est signalée EN PLUS, jamais à la place (§4 bis.4)', async () => {
+		monter({
+			derivations: [{ ...DERIVATION[0], source_archived_at: '2026-08-10T00:00:00Z' }],
+		})
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.textContent).toContain('Ce workflow dérive de')
+		expect(mention.textContent).toContain('Cette source est archivée.')
+	})
+
+	it('un workflow qui n’est la copie de personne ne rend RIEN (§4 bis.2)', async () => {
+		monter()
+		await attendreEcran()
+		// La lecture est bien partie — c'est ce qui distingue « pas de copie » de « pas lu ».
+		await waitFor(() => expect(screen.queryByTestId('squelette')).toBeNull())
+		expect(screen.queryByTestId('mention-divergence')).toBeNull()
+		expect(screen.queryByTestId('mention-divergence-erreur')).toBeNull()
+	})
+
+	it('une lecture en erreur est NOMMÉE : une panne n’est pas une absence d’origine (§4 bis.5)', async () => {
+		monter({ erreurDerivation: { message: 'boom', status: 500 } })
+		await attendreEcran()
+		const erreur = await screen.findByTestId('mention-divergence-erreur')
+		expect(erreur.textContent).toContain("L'origine de ce workflow n'a pas pu être lue.")
+	})
+
+	it('la mention ne porte AUCUNE commande — ni resynchroniser, ni comparer (§4 bis.6)', async () => {
+		monter({ derivations: [{ ...DERIVATION[0], source_modified_since_copy: true }] })
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.querySelectorAll('button').length).toBe(0)
+		expect(mention.querySelectorAll('a').length).toBe(0)
+	})
+
+	it('elle est annoncée comme un statut, jamais comme une alerte (§4 bis.5)', async () => {
+		monter({ derivations: DERIVATION })
+		await attendreEcran()
+		const mention = await screen.findByTestId('mention-divergence')
+		expect(mention.getAttribute('role')).toBe('status')
 	})
 })
