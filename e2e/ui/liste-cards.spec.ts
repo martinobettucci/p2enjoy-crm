@@ -1,4 +1,7 @@
 // @verifies CRM-042 (docs/BACKLOG.md) — la vue liste d'un channel dans l'application réelle
+// @verifies CRM-046 (docs/BACKLOG.md) — le volume et les données longues du jeu de démonstration
+// @verifies docs/SPEC-seed.md §9.11 (le contrat du volume), §9.11.4 (la card aux données longues),
+//           §9.11.7 (preuves n° 4 et n° 6)
 // @verifies docs/SPEC-cards.md §12.2 (l'adresse porte tout), §12.4 (tri), §12.5 (filtres),
 //           §12.6 (pagination et `416`), §12.7 (tableau et densité), §12.8 (accessibilité),
 //           §12.9 (états), §12.11 (données longues), §12.12 (preuves attendues)
@@ -17,9 +20,12 @@
 //
 // Les suivants substituent les réponses réseau pour montrer ce que le §12 décrit : le tableau, le
 // tri et son `aria-sort`, les deux filtres, la pagination et ses boutons désactivés, le `416`,
-// l'état vide filtré, la bascule board ↔ liste, et le comportement avec des **données longues**
-// que le seed ne porte pas (§12.11, point 3). La connexion réelle, commune à ces lectures, est
+// l'état vide filtré et la bascule board ↔ liste. La connexion réelle, commune à ces lectures, est
 // prouvée dans `e2e/ui/authentification.spec.ts`.
+//
+// LE DERNIER BLOC N'EN SUBSTITUE AUCUNE. Depuis que `CRM-046` a posé le volume et les données
+// longues dans le seed (`docs/SPEC-seed.md` §9.11), les données longues et la seconde page se
+// prouvent contre la BASE : connexion réelle au clavier, adresse réelle, aucune route posée.
 
 import {
 	autoriserErreursConsole,
@@ -30,6 +36,8 @@ import {
 	type Route,
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
+/** Le mot de passe commun des comptes du seed : la connexion des scénarios réels est la vraie. */
+import { MOT_DE_PASSE_SEED } from '../api/jetons'
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
@@ -147,24 +155,10 @@ const CARDS_SERVIES = [
 	},
 ]
 
-/**
- * Une affaire aux **données longues**, que le seed ne porte pas.
- *
- * MESURÉ : le titre le plus long du seed fait 34 caractères, la prochaine action 34 également. La
- * Definition of Done exige un « comportement avec données longues vérifié en capture » : la
- * donnée est donc **servie**, le fait est nommé, et le manque appartient à `CRM-046` (§12.11).
- */
-const CARD_LONGUE = {
-	id: '5eed0000-0000-4000-8000-0000000000cf',
-	title:
-		'Refonte complète du système d’information commercial et migration des données historiques vers la nouvelle plateforme européenne',
-	amount: 1234567,
-	currency: 'EUR',
-	next_action:
-		'Obtenir la validation du comité d’investissement, puis planifier l’atelier de cadrage technique avec les quatre directions concernées',
-	next_action_at: '2026-12-31T09:00:00+00:00',
-	current_step_id: NEGOCIATION,
-}
+// La card aux données longues qui était SERVIE ici jusqu'au 2026-08-16 a disparu : le seed en
+// porte désormais une vraie, `…d001`, et les deux scénarios de données longues l'exercent contre
+// la pile réelle (`docs/SPEC-seed.md` §9.11.4). Une fixture qui ne sert plus rien n'est pas
+// conservée « au cas où » : elle donnerait à croire qu'une substitution reste nécessaire.
 
 const TRACK_SERVI = [
 	{ id: TRACK.id, name: TRACK.nom, slug: TRACK.slug, color: 'brand', icon: 'folder', position: 1 },
@@ -575,28 +569,70 @@ test.describe('la bascule entre les deux vues (§12.8)', () => {
 	})
 })
 
-// --- Données longues (Definition of Done) ------------------------------------------------------
+// --- Données longues et SECONDE page, SANS AUCUNE SUBSTITUTION ---------------------------------
+//
+// CE BLOC A CHANGÉ DE NATURE LE 2026-08-16, ET IL FAUT DIRE POURQUOI.
+//
+// Jusque-là, les deux scénarios de données longues servaient une card FABRIQUÉE sur le réseau
+// (`docs/DESIGN_SYSTEM.md` §12.5), parce que le seed n'en portait aucune — MESURÉ alors : 36
+// caractères au plus. Le manque était nommé au §12.11 et renvoyé à `CRM-046`, qui l'a comblé :
+// `docs/SPEC-seed.md` §9.11 pose vingt-six affaires dans « maintenance », dont `…d001` à 128
+// caractères de titre et 134 de prochaine action — exactement les longueurs que la substitution
+// servait, pour que ces captures montrent la même chose sans dépendre d'elle.
+//
+// Ces scénarios ne posent donc plus AUCUNE route : la connexion est réelle, au clavier, et chaque
+// requête part à la vraie API. Ils prouvent ce qu'une substitution ne pouvait pas prouver — que la
+// pile rend réellement cette donnée-là, et que l'écran la tient. La seconde page suit le même
+// chemin : elle existe désormais en base, et se franchit par le vrai bouton.
 
-test.describe('le comportement avec des données longues', () => {
-	// La Definition of Done l'exige nommément. Le seed ne porte rien de tel — MESURÉ, 34 caractères
-	// au plus —, la donnée est donc servie et le manque est nommé (§12.11, point 3).
+test.describe('les données longues et la seconde page, contre la pile réelle', () => {
+	/** Le channel de VOLUME du §9.11.1 : 27 cards actives, le seul du seed à avoir deux pages. */
+	const ADRESSE_VOLUME = '/tracks/studio-web/maintenance/liste'
+	/** La card aux données longues du §9.11.4. Son titre commence par « A » : première page. */
+	const CARD_D001 = '5eed0000-0000-4000-8000-00000000d001'
+	/** Mesurés en base, et non recopiés d'un souvenir (§9.11.7, preuve n° 3). */
+	const LONGUEUR_TITRE = 128
+	const LONGUEUR_ACTION = 134
+	/** §9.11.2 : 27 actives, donc une première page pleine et une seconde de deux lignes. */
+	const ACTIVES_MAINTENANCE = 27
+
+	/** Connexion par le formulaire réel — jamais un jeton posé à la main dans l'onglet. */
+	async function connecter(page: Page): Promise<void> {
+		await page.goto('/connexion')
+		await page.getByLabel('Adresse email').click()
+		await page.keyboard.press('ControlOrMeta+A')
+		await page.keyboard.type('admin@p2enjoy.test')
+		await page.keyboard.press('Tab')
+		await page.keyboard.press('ControlOrMeta+A')
+		await page.keyboard.type(MOT_DE_PASSE_SEED)
+		await page.keyboard.press('Enter')
+		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	}
+
 	test('une affaire au titre très long tient sur une ligne et ne fait pas défiler la page', async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await ouvrir(page, ADRESSE, {
-			lignes: [CARD_LONGUE, ...CARDS_SERVIES],
-			total: CARDS_SERVIES.length + 1,
-		})
+		await connecter(page)
+		await page.goto(ADRESSE_VOLUME)
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
 
+		const ligne = page.locator(`[data-testid="ligne-card"][data-card="${CARD_D001}"]`)
+		await expect(ligne).toBeVisible()
+
+		// La LONGUEUR est celle de la base, pas celle d'une fixture : elle est relue dans l'écran.
+		const lien = ligne.getByRole('link').first()
+		const titre = (await lien.getAttribute('title')) ?? ''
+		expect(titre.length, 'le titre servi par la pile réelle').toBe(LONGUEUR_TITRE)
 		// La valeur entière reste atteignable par l'attribut `title` : rien n'est perdu (§12.7).
-		const lien = page.getByRole('link', { name: CARD_LONGUE.title })
-		await expect(lien).toHaveAttribute('title', CARD_LONGUE.title)
+		await expect(lien).toHaveAttribute('title', titre)
+
+		const action = (await ligne.locator('td').nth(4).getAttribute('title')) ?? ''
+		expect(action.length, 'la prochaine action servie par la pile réelle').toBe(LONGUEUR_ACTION)
 
 		// Une seule ligne de texte : la hauteur de la cellule ne dépasse pas la cible de 40 px.
-		const hauteur = await page
-			.locator(`[data-testid="ligne-card"][data-card="${CARD_LONGUE.id}"] td`)
+		const hauteur = await ligne
+			.locator('td')
 			.first()
 			.evaluate((cellule) => cellule.getBoundingClientRect().height)
 		expect(hauteur, 'une ligne de tableau reste à une ligne de texte').toBeLessThanOrEqual(48)
@@ -611,16 +647,43 @@ test.describe('le comportement avec des données longues', () => {
 
 	test('les données longues tiennent aussi au plus petit palier', async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 780 })
-		await ouvrir(page, ADRESSE, {
-			lignes: [CARD_LONGUE, ...CARDS_SERVIES],
-			total: CARDS_SERVIES.length + 1,
-		})
+		await connecter(page)
+		await page.goto(ADRESSE_VOLUME)
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
+		await expect(
+			page.locator(`[data-testid="ligne-card"][data-card="${CARD_D001}"]`),
+		).toBeVisible()
 		const debordement = await page.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 		)
 		expect(debordement).toBeLessThanOrEqual(0)
 		await capturer(page, 'liste-donnees-longues-390', 'CRM-042')
+	})
+
+	// LA PREUVE QUE LA SUBSTITUTION NE POUVAIT PAS RENDRE : une seconde page réellement servie,
+	// franchie par le bouton du produit, sur une donnée que la base porte (§9.11.7, preuve n° 4).
+	test('la première page est PLEINE, et le bouton « suivante » mène à une seconde page réelle', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await page.goto(ADRESSE_VOLUME)
+		await expect(page.getByTestId('tableau-liste')).toBeVisible()
+		await expect(page.getByTestId('ligne-card')).toHaveCount(LIGNES_PAR_PAGE)
+
+		const suivante = page.getByTestId('page-suivante')
+		await expect(suivante).toBeEnabled()
+		await suivante.click()
+
+		await expect(page).toHaveURL(new RegExp('page=2'))
+		await expect(page.getByTestId('ligne-card')).toHaveCount(
+			ACTIVES_MAINTENANCE - LIGNES_PAR_PAGE,
+		)
+		// Au bout de la plage, le produit refuse d'aller plus loin plutôt que d'appeler un `416`.
+		await expect(page.getByTestId('page-suivante')).toBeDisabled()
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+
+		await capturer(page, 'liste-seconde-page-1440', 'CRM-046')
 	})
 })
 
