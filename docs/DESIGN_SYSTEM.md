@@ -938,6 +938,68 @@ d'autres écrans. Ce que le guide lit, mesure et refuse de deviner est spécifi�
   l'écran rend un squelette **par étape**, à la forme de la ligne attendue (§5.8) — jamais l'état
   vide du board, qui écrirait « aucun board » à qui en a.
 
+### 5.18 Administration du catalogue de nœuds — `CRM-030`
+
+Cinquième surface d'administration, et la première dont l'objet est une **liste plate**. Ce que
+l'écran lit, envoie et refuse est spécifié par `docs/SPEC-workflow-engine.md` §2 bis ; les règles
+ci-dessous ne disent que de quoi il a l'air. Tout ce que le §5.13 pose vaut ici sans être répété :
+barre de boutons discrets toujours visibles, formulaires et confirmations dans le flux du document
+— **aucune modale** —, focus entrant dans le premier champ et rendu à la commande qui l'a ouvert,
+alerte de refus dans le bloc concerné.
+
+- **Une `ul` de lignes, ni tableau ni arborescence.** Le §5.9 régit des colonnes comparables et le
+  §5.13 une imbrication ; ici il n'y a qu'un niveau, et les attributs d'un nœud — type, couleur,
+  probabilité, seuil — ne se comparent pas colonne par colonne, ils **qualifient** le nœud. Les
+  hauteurs de ligne et les séparateurs du §5.9 sont conservés : `--size-target`, bordure basse
+  `--color-border`, survol `--color-hover`, aucune zébrure.
+
+- **Le libellé d'un nœud porte sa pilule de couleur** (§5.6, §12.5), avec la même correspondance de
+  jetons que la pilule de track du §5.5 bis — c'est la même donnée, `brand`, `success`, `accent`,
+  `danger`, `neutral`, et une seconde correspondance divergerait au premier changement. L'écran
+  montre le nœud tel que le board le montrera : choisir une couleur à l'aveugle n'aurait aucun sens.
+
+- **La clé se rend en `code`** sur `--color-hover`, à côté du libellé — exactement la règle du §5.15
+  pour la clé d'un champ de formulaire, et pour le même motif : c'est un identifiant technique que
+  l'analytique cite, et l'écrire dans la graisse du libellé laisserait croire à un second nom.
+
+- **Le type est un MOT, jamais une teinte** (§1). « Ouvert », « Gagné », « Perdu » en toutes
+  lettres. `won` et `lost` déterminent l'analytique de conversion (§2.9 du moteur) : les laisser
+  reposer sur la couleur de la pilule, qu'un administrateur choisit librement, rendrait deux nœuds
+  indiscernables dès qu'ils partagent une couleur.
+
+- **Un nœud archivé porte la pilule « Archivé »** `--color-accent-soft` / `--color-accent-on-soft`
+  avec son icône `Archive`, et **reste dans la liste à sa position** — la règle du §5.15 pour un
+  champ archivé, reprise sans changement : l'archivage est le seul retrait que le produit connaisse,
+  et masquer le nœud rendrait sa restauration introuvable.
+
+- **Archiver et désarchiver sont deux commandes distinctes, jamais une bascule** (§5.15) :
+  `Archive` et `ArchiveRestore` occupent la même place, une seule des deux est rendue selon l'état,
+  et leur `aria-label` nomme le geste ET le nœud.
+
+- **La confirmation d'archivage est dans le flux, et son bouton est destructif** (§5.13). Elle
+  nomme le nœud. **Le désarchivage n'en demande aucune** : la règle du §5.16 pour « Restaurer » —
+  le §6 réserve la confirmation à ce qui détruit, et en demander une pour le geste qui répare
+  banaliserait celle qui protège.
+
+- **Le refus d'un nœud occupé est une alerte, jamais une commande éteinte.** La commande
+  « Archiver » n'est **jamais désactivée d'avance** (§5.16) : l'écran ne mesure pas l'occupation, la
+  base la mesure, et un bouton grisé ferait passer une règle de la base pour une décision d'écran
+  (`CLAUDE.md` §10). L'alerte `--color-danger-soft` / `--color-danger-on-soft` avec `role="alert"`
+  s'affiche **dans la ligne concernée**, écrit le nombre d'affaires en toutes lettres et nomme la
+  manœuvre — les déplacer d'abord.
+
+- **La clé d'un nœud existant se rend en PHRASE, jamais en champ désactivé** (§5.15) : « Clé : …
+  Elle ne se modifie pas : archivez ce nœud et créez-en un autre. » Un champ grisé pose la question
+  « pourquoi ? » sans y répondre.
+
+- **Un attribut facultatif non renseigné se rend vide dans la ligne** (§5.9), et son champ de
+  formulaire reste vide — jamais `0`. La distinction entre « ne se prononce pas » et « vaut zéro »
+  est une règle du produit (§2.5 du moteur), et un zéro affiché la détruirait à l'œil comme en base.
+
+- **Les deux valeurs numériques sont des données techniques** (§2) : monospace, chiffres tabulaires,
+  suffixées par leur unité — « 10 % », « 14 j » — dans leur propre élément, jamais accolées au
+  nombre par un nœud de texte nu (§5.11, le défaut « Discussion1 »).
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

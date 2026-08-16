@@ -133,7 +133,7 @@ soit évaluée. `99.999` est stocké `100.00` et **accepté**, `100.004` égalem
 celle que le client a envoyée. Le fait est nommé ici parce qu'un test qui insérerait `99.999` en
 attendant `99.999` échouerait pour une raison qui n'a rien à voir avec la règle métier.
 
-### 2.6 Archivage — et la garde qui n'est pas livrable aujourd'hui
+### 2.6 Archivage — et la garde, livrée depuis `CRM-040`
 
 Un nœud n'est **jamais supprimé** : `archived_at` le masque des sélecteurs, réversiblement.
 Aucune suppression physique n'est exposée — ni politique `for delete`, ni privilège `DELETE`, de
@@ -160,6 +160,26 @@ Le comportement retenu est donc celui des unités précédentes face à la même
 qui est démontrable, **nommer** ce qui ne l'est pas, et **figer l'écart par des assertions** qui
 deviendront rouges le jour où les tables apparaîtront. Contradiction consignée en
 `docs/INCONSISTENCY_REPORT.md`, **INC-031**.
+
+**Les deux paragraphes ci-dessus décrivent l'état du 2026-08-04, et il a cessé d'être vrai.** La
+garde **est livrée** : `supabase/migrations/0011_cards.sql` la pose avec la table qui manquait, sous
+le nom `workflow_nodes_catalog_refuser_archivage_occupe` (`CRM-040`, `docs/JOURNAL.md` décision 111),
+et l'assertion d'absence de `supabase/tests/0006_workflow_nodes_catalog.test.sql` est devenue rouge
+ce jour-là, exactement comme elle avait été écrite pour le faire. Le texte d'origine est conservé
+parce qu'il porte le motif du différé, non parce qu'il décrit le produit.
+
+**Mesuré le 2026-08-16** sur la pile réelle, avec le jeton de l'administratrice seedée :
+
+```
+PATCH /rest/v1/workflow_nodes_catalog?id=eq.<prospection>  {"archived_at": "…"}
+=> 403
+   {"code":"42501","message":"node_occupied : 4 card(s) active(s) se trouvent encore sur ce nœud"}
+```
+
+Le même appel sur un nœud **libre** — `qualification`, qu'aucune étape n'emploie — rend `200` et la
+ligne archivée ; le **désarchivage** est accepté sans condition, l'archivage seul étant gardé. Le
+compte porté par le message est celui des cards `archived_at is null and deleted_at is null` : une
+affaire archivée ou en corbeille n'occupe plus le nœud.
 
 ### 2.7 Autorisations
 
@@ -262,6 +282,146 @@ serait jamais représenté dans les données de démonstration — même raison 
 | API | Les treize lignes du §2.8, hors interface, avec les jetons réels des trois profils ; preuves de refus n° 3 et n° 11 au niveau du catalogue |
 | Seed | Les sept nœuds du §2.9 plus un nœud archivé, créés par la véritable API REST, convergents |
 | Interface | **Aucune** — le catalogue n'a pas d'écran, et n'en aura pas avant l'éditeur de `CRM-031`. Voir INC-021 |
+
+**La dernière ligne a cessé d'être vraie le 2026-08-16.** INC-021 est close depuis `CRM-009`, et
+l'écran d'administration du catalogue est spécifié au §2 bis ci-dessous. Les preuves d'interface
+qu'il apporte sont celles du §2 bis.9, et la Definition of Done de `CRM-030` — « E2E
+d'administration » — s'y appuie.
+
+## 2 bis. Interface : l'administration du catalogue de nœuds — `CRM-030`
+
+Le §2.10 posait qu'aucune interface n'était due, pour deux motifs mesurés en août 2026 : la webapp
+était un appelant **anonyme** (INC-021) et le catalogue n'avait aucun écran d'où l'administrer.
+Le premier motif est tombé avec `CRM-009`, le second n'a jamais été un motif d'absence — c'était
+l'absence elle-même. Ce chapitre spécifie l'écran qui la comble, et il est écrit **après mesure**
+sur la pile réelle : chaque code et chaque message du §2 bis.5 a été observé le 2026-08-16 avec les
+jetons des comptes seedés, jamais supposé.
+
+### 2 bis.1 Ce que l'écran est, et ce qu'il n'est pas
+
+C'est le **vocabulaire d'un workspace**, administré par la seule surface d'où un administrateur
+peut le faire sans passer par l'API. Il est au catalogue ce que `CRM-075` est à l'arborescence et
+ce que le §7 bis est aux workflows : la troisième surface d'administration du produit, et la
+première dont l'objet est une **liste plate**.
+
+Il **n'est pas** :
+
+- **une autorisation.** L'écran envoie, la base tranche, l'écran traduit le refus reçu
+  (`CLAUDE.md` §10). Les trois politiques du §2.7 réservent déjà l'écriture aux administrateurs, et
+  elles sont prouvées hors interface depuis `CRM-030` ;
+- **un éditeur de workflow.** Employer un nœud dans un workflow, l'ordonner, le surcharger : c'est
+  le §7 bis. Ici on déclare **quels états ont un nom**, pas dans quel ordre une affaire les
+  traverse (§2.1) ;
+- **un écran de suppression.** Aucune suppression physique n'est exposée (§2.6), et l'écran ne
+  prétend pas le contraire : il n'offre aucune commande de suppression, pas même désactivée.
+
+### 2 bis.2 Adresse, et comment on y arrive
+
+`/reglages/catalogue`, hors de `ROUTES`, atteinte depuis l'index des réglages — le patron exact de
+`CHEMIN_ADMIN_ARBORESCENCE` et de `CHEMIN_ADMIN_WORKFLOWS`, pour la même raison : ce n'est pas une
+entrée de la barre latérale. Elle est placée **après** les workflows dans l'index, et l'ordre est
+un ordre de lecture : on compose un workflow avec des nœuds, mais on découvre l'éditeur avant le
+vocabulaire qu'il emploie.
+
+### 2 bis.3 Ce que l'écran lit, et en combien de requêtes
+
+| # | Source | Filtre | Ordre | Motif |
+|---|---|---|---|---|
+| 1 | `workflow_nodes_catalog` | **aucun** — la RLS borne au workspace | `position`, puis `label` | la liste entière |
+
+**Une seule lecture, et elle rapporte AUSSI les nœuds archivés** — contrairement à la lecture 3 du
+§7 bis.3, qui filtre `archived_at=is.null`. La distinction est celle du §5.15 de
+`docs/DESIGN_SYSTEM.md` pour les champs archivés : le sélecteur d'ajout d'une étape ne doit pas
+proposer un nœud retiré, mais l'écran d'où l'on **restaure** ce nœud doit le montrer, sans quoi le
+désarchivage serait introuvable.
+
+**L'écran ne lit PAS l'occupation d'un nœud**, et c'est un choix. Le compte des cards actives par
+nœud demanderait une jointure que PostgREST n'expose pas au client, et l'anticiper serait un
+contrôle d'interface là où la base en tient déjà un (§2 bis.5, `CLAUDE.md` §10). Le nombre est
+d'ailleurs **rendu par le refus lui-même**, mesuré et non deviné.
+
+### 2 bis.4 Les gestes de cette tranche
+
+| Geste | Écriture | Ce que la base garantit déjà |
+|---|---|---|
+| **Créer un nœud** | `INSERT` | clé conforme au motif du §2.3 et unique par workspace ; libellé non vide ; `kind` et `color` bornés ; `position` attribuée par trigger si omise (§2.4) |
+| **Modifier un nœud** | `PATCH label, kind, color, default_probability, default_stale_after_days` | les mêmes contraintes de valeur (§2.5), plus le `WITH CHECK` de la politique de mise à jour (§2.7) |
+| **Archiver** | `PATCH archived_at` | la garde `node_occupied` du §2.6 |
+| **Désarchiver** | `PATCH archived_at = null` | rien à garder : le désarchivage n'est jamais refusé (§2.6) |
+
+**La clé ne se modifie pas.** Rien dans la base ne l'interdit — c'est une colonne comme une autre —,
+mais le §2.1 pose que la comparabilité analytique repose sur elle : la renommer réécrirait
+silencieusement l'histoire de toutes les cards passées par ce nœud. L'écran la rend donc en phrase,
+selon la règle du §5.15 de `docs/DESIGN_SYSTEM.md` — « une valeur qui ne se modifie plus se rend en
+PHRASE, jamais en champ désactivé » —, et nomme la manœuvre de remplacement : archiver ce nœud, en
+créer un autre.
+
+**Aucune de ces règles n'est réécrite dans l'écran.** Le module de données réutilise
+`classerRefusEcriture`, `slugConforme` et `proposerSlug` de `CRM-075` plutôt que d'en écrire des
+jumeaux : la clé d'un nœud et le slug d'un track sont contraints par le **même motif** (§2.3).
+
+### 2 bis.5 Les refus, mesurés le 2026-08-16
+
+| Geste tenté | Profil | Mesuré | Ce que l'écran en dit |
+|---|---|---|---|
+| `PATCH archived_at` sur un nœud occupé | `admin` | `403`, `42501`, message `node_occupied : 4 card(s) active(s) se trouvent encore sur ce nœud` | « des affaires en cours se trouvent encore sur ce nœud », **avec leur nombre**, et la manœuvre : les déplacer d'abord |
+| `POST` d'une clé déjà prise | `admin` | `409`, `23505`, contrainte `workflow_nodes_catalog_workspace_id_key_key` | « cette clé est déjà employée dans cet espace de travail » |
+| `POST` d'une clé mal formée | `admin` | `400`, `23514`, contrainte `workflow_nodes_catalog_key_check` | « la forme attendue est … », le champ conservant sa saisie |
+| `POST` | `viewer` | `403`, `42501`, `new row violates row-level security policy` | « vous n'avez pas le droit de modifier le catalogue » |
+| `PATCH` | `viewer` | **`200` et `[]`** | « la modification n'a pas été appliquée » — jamais un succès |
+
+**Les deux `42501` ne disent pas la même chose, et l'écran ne les confond pas.** Celui de la garde
+porte `node_occupied` dans son message ; celui de la RLS porte `row-level security policy`. Les
+classer ensemble sous « interdit » ferait lire un refus **rattrapable** — déplacez les affaires —
+comme un refus de droit, contre lequel l'utilisateur ne peut rien. Le classement se fait donc sur le
+message, et il est le seul endroit du produit où le message d'une exception est lu ; le fait est
+nommé ici pour qu'un changement de libellé côté base rende la preuve rouge plutôt que l'écran muet.
+
+La ligne `viewer` / `PATCH` est celle du §2.8 h, et elle est reconduite sans changement : une mise à
+jour refusée par le `USING` rend `200` et zéro ligne. `ResultatEcriture` de `CRM-075` porte déjà
+l'état `sans-effet` pour ce cas exact ; l'écran l'emploie plutôt que d'inventer un troisième mot.
+
+### 2 bis.6 Validation de forme, et sa seule justification
+
+Comme au §7 bis.5 : l'écran ne valide que ce dont la réponse est connue d'avance et dont l'erreur
+reste rattrapée par la base — clé conforme au motif du §2.3, libellé non vide après `btrim`,
+probabilité de 0 à 100, seuil de relance strictement positif. Elle économise un aller-retour ; elle
+ne remplace aucune garde. Les deux champs numériques sont **facultatifs**, et un champ laissé vide
+vaut `NULL`, jamais `0` — la distinction du §2.5, qu'un `Number('')` valant `0` détruirait en
+silence.
+
+La clé est **proposée** depuis le libellé par `proposerSlug`, et reste modifiable tant que le nœud
+n'existe pas : c'est la commodité du §5.1 de `docs/SPEC-administration-arborescence.md`, jamais une
+garantie.
+
+### 2 bis.7 États, accessibilité et responsive
+
+Les quatre états de `docs/DESIGN_SYSTEM.md` §5.8 sont rendus — chargement, erreur avec reprise,
+vide, succès —, un catalogue vide dit ce qui manque et offre la création, chaque geste est
+atteignable au clavier comme à la souris (§8), et la console reste vierge. Les règles visuelles
+sont au §5.18 de `docs/DESIGN_SYSTEM.md`.
+
+### 2 bis.8 Ce que cette tranche ne livre PAS, et qui reste dû sous `CRM-030`
+
+- le **réordonnancement** du catalogue. `position` est une `numeric` et le geste serait un `PATCH`,
+  mais le §2 le note depuis l'origine : « le réordonnancement du catalogue n'a pas d'opération
+  atomique ». `calculerDeplacement` de `CRM-075` couvrirait le cas courant ; il reste à prouver, et
+  il n'est pas livré ici plutôt qu'à moitié ;
+- la **suppression**, qui n'existe pas dans le produit (§2.6) et n'est donc pas un manque ;
+- l'**occupation affichée avant le geste** (§2 bis.3), qui demanderait une lecture que PostgREST
+  n'expose pas au client.
+
+Tant que le premier point est dû, `CRM-030` reste `[~]`.
+
+### 2 bis.9 Preuves attendues de cette tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Composition de la liste depuis les lignes lues, archivés compris et à leur place ; validation de forme dans ses quatre cas, bornes comprises ; champ numérique vide rendu `NULL` et non `0` ; classement des cinq refus du §2 bis.5, dont la distinction des deux `42501` |
+| API | La lecture du §2 bis.3 et les quatre gestes du §2 bis.4 hors interface, avec les jetons réels de l'administratrice et du viewer ; le refus `node_occupied` constaté sur un nœud réellement occupé par le seed |
+| Interface | Les quatre gestes joués à la souris **et** au clavier sur la vraie base, chacun confirmé en base après coup ; le refus d'un nœud occupé **constaté et non simulé** ; console vierge |
+| Visuel | Captures à 1440 px et à 390 px, liste chargée, formulaire de création ouvert, refus d'archivage affiché |
+| Seed | Les huit nœuds du §2.9 suffisent : sept actifs, un archivé, et `prospection` occupée par quatre affaires actives — l'écran a de quoi montrer ses deux états de ligne et son refus sans qu'aucune donnée soit ajoutée |
 
 ## 3. Workflow, étapes, transitions — `CRM-031`
 
