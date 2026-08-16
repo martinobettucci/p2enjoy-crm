@@ -173,6 +173,8 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			const etat = page.getByTestId(`etat-${CLE_CHAMP}`)
 			await expect(etat).toContainText('Enregistré')
 
+			await capturer(page, 'parcours-saisie-session-reelle-1440', 'CRM-037')
+
 			// 8. RELECTURE HORS INTERFACE, avec le jeton du même profil : un affichage confirmé
 			//    n'est pas une écriture confirmée (§4 quater.4).
 			const valeurEcrite = await request.get(
@@ -209,24 +211,56 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			expect(relecture.status(), await relecture.text()).toBe(200)
 			expect(await relecture.json()).toEqual([{ id: idCard, current_step_id: ETAPE_REALISATION }])
 
+			// La colonne d'arrivée est hors de la fenêtre : le board défile horizontalement. La
+			// capture doit montrer l'affaire À SA NOUVELLE PLACE, sinon elle ne montre qu'un vide.
+			const colonneArrivee = page.locator(
+				`[data-testid="colonne"][data-etape="${ETAPE_REALISATION}"]`,
+			)
+			await colonneArrivee.scrollIntoViewIfNeeded()
+			await expect(colonneArrivee.locator(`[data-card="${idCard}"]`)).toContainText(titre)
 			await capturer(page, 'parcours-transition-reussie-1440', 'CRM-037')
 		} finally {
 			await detruireCard(request, idCard)
 		}
 	})
 
-	test('la garde n’est pas levée par une valeur VIDE : le refus revient à l’identique', async ({
+	test('la garde lit la VALEUR, pas la ligne : présente mais vide, le refus revient à l’identique', async ({
 		page,
 		request,
 	}) => {
-		// Contre-épreuve du scénario ci-dessus. Sans elle, une saisie qui n'écrirait rien passerait
-		// pour la cause de la réussite : ce qui lève le refus est la VALEUR, pas le passage sur la
-		// fiche. Le prédicat « renseigné » du §4.3 range la chaîne vide avec l'absence.
+		// Contre-épreuve du scénario ci-dessus. Sans elle, le seul passage sur la fiche pourrait
+		// passer pour la cause de la réussite (§4 quater.3 bis).
 		const idCard = randomUUID()
 		const titre = `tst-crm037 vide ${idCard.slice(0, 8)}`
 		await fabriquerCard(request, idCard, titre)
 
 		try {
+			// MESURÉ, ligne *g* du §4 quater.3 bis : sur un champ `url`, la chaîne vide n'est pas
+			// exprimable — la validation de `CRM-036` la refuse AVANT la garde. « Vide » s'écrit
+			// donc `null`. Le constat est figé ici plutôt que redécouvert.
+			const chaineVide = await request.post(
+				urlRest('card_field_values', { on_conflict: 'card_id,field_id' }),
+				{
+					headers: {
+						...enTetesAuthentifies(jetonAdmin),
+						Prefer: 'resolution=merge-duplicates',
+					},
+					data: {
+						card_id: idCard,
+						workspace_id: WORKSPACE,
+						workflow_id: WORKFLOW_GLOBAL,
+						field_id: CHAMP_LIEN_PROPOSITION,
+						value: '',
+					},
+				},
+			)
+			expect(chaineVide.status()).toBe(400)
+			expect(await chaineVide.json()).toMatchObject({
+				code: 'P0001',
+				message: 'invalid_field_value',
+			})
+
+			// Lignes *e* et *f* : la ligne EXISTE, sa valeur est vide, et la garde refuse quand même.
 			const ecriture = await request.post(
 				urlRest('card_field_values', { on_conflict: 'card_id,field_id' }),
 				{
@@ -239,11 +273,12 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 						workspace_id: WORKSPACE,
 						workflow_id: WORKFLOW_GLOBAL,
 						field_id: CHAMP_LIEN_PROPOSITION,
-						value: '',
+						value: null,
 					},
 				},
 			)
 			expect(ecriture.status(), await ecriture.text()).toBe(201)
+			expect(await ecriture.json()).toMatchObject([{ value: null }])
 
 			await connecter(page)
 			await page.goto(ROUTE_BOARD)

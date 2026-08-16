@@ -651,3 +651,33 @@ ni de mesure, ni de garde.
 base réelle, deux fois, encadrant le harnais. **Non corrigé** : diagnostiquer une intermittence
 demande d'instrumenter la séquence de dégradation et de restauration du harnais, ce qui dépasse la
 tranche autorisée. Arbitrage attendu.
+
+## Consigné le 2026-08-16 — un constat observé sur une capture de `CRM-037`
+
+### INC-134 — « Requis pour passer à Signature » s'affiche sur une affaire DÉJÀ à l'étape Signature
+
+**Observé le 2026-08-16** sur `docs/captures/CRM-037/parcours-saisie-session-reelle-1440.jpg`,
+produite par le parcours enchaîné sur session réelle, avec le jeton de l'administratrice.
+
+La card support est à l'étape **Signature**. Son formulaire rend trois champs `required` par la
+règle d'étape — `budget`, `date-signature-prevue`, `decideur-identifie` — et chacun porte la
+mention :
+
+```
+Requis pour passer à Signature
+```
+
+L'affaire **est** à Signature. La mention lui demande donc de « passer à » l'étape où elle se
+trouve déjà, ce qui n'est pas faux au sens de la règle — le champ est bien requis à cette étape —
+mais dit à l'utilisateur le contraire de sa situation.
+
+**Ce que ce constat ne dit PAS.** Ni la règle, ni la garde, ni la validation ne sont en défaut :
+`move_card` n'a jamais exigé ces trois champs pour la transition mesurée, et le parcours enchaîné
+le prouve — le seul champ qui bloque est `lien-proposition`, exigé par la **transition**. C'est un
+énoncé d'interface, et lui seul.
+
+**Non corrigé.** La mention est engendrée par le §4.5 de `docs/SPEC-form-composer.md`, et son texte
+exact est figé par des tests unitaires de composant écrits par la tranche de rendu de `CRM-037`.
+La corriger suppose de trancher ce qu'elle doit dire quand l'étape exigeante est l'étape courante —
+« Requis à cette étape » ? le silence ? — puis de réviser les preuves qui la figent, ce qui dépasse
+la tranche autorisée ici. Le comportement est laissé **inchangé**. Arbitrage attendu.

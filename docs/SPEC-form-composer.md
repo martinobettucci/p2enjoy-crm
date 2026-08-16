@@ -978,6 +978,26 @@ La ligne *b* exige **quatre** colonnes et non trois : `workspace_id` **et** `wor
 `not null`, et l'omission du second rend `400` / `23502`. C'est ce que l'écran envoie déjà (§4
 bis.4) ; la preuve le constate au lieu de le supposer.
 
+#### 4 quater.3 bis Contre-épreuve : ce qui lève le refus est la VALEUR, pas la ligne
+
+Sans contre-épreuve, le seul passage sur la fiche pourrait passer pour la cause de la réussite. Ce
+qui lève le refus doit donc être mesuré séparément. **Deux faits ont été trouvés à l'écriture de
+cette contre-épreuve, et aucun n'était supposé :**
+
+| # | Geste | Mesuré |
+|---|---|---|
+| e | `upsert` de `(card, …0086)` avec `value` à **`null`** | `201`, la ligne créée, `value` à `null` |
+| f | `move_card` après *e* | `400`, `missing_required_fields`, `details` = `lien-proposition` |
+| g | `upsert` de `(card, …0086)` avec la **chaîne vide** | `400`, `P0001`, `invalid_field_value`, « `lien-proposition` attend une adresse http(s) » |
+
+La ligne *f* est le fait qui compte : la garde lit la **valeur** et non l'**existence de la ligne**.
+Une card dont la ligne existe mais ne porte rien est refusée exactement comme une card qui n'a
+aucune ligne — c'est le prédicat « renseigné » du §4.3, éprouvé ici de bout en bout.
+
+La ligne *g* dit qu'une valeur vide n'est même pas **exprimable** sur un champ `url` : la
+validation de `CRM-036` la refuse avant la garde. « Vide » s'écrit donc `null`, jamais `''`, sur ce
+type. Le fait est figé par la contre-épreuve plutôt que découvert une seconde fois.
+
 #### 4 quater.4 Ce que le parcours doit enchaîner à l'écran
 
 Dans un seul scénario, une seule session, une seule page :
