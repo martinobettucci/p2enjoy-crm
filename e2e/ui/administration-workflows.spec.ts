@@ -1850,3 +1850,112 @@ test.describe('CRM-031 — créer un workflow depuis l’éditeur (§3 bis)', ()
 		})
 	}
 })
+
+// -------------------------------------------------------------------------------------------
+// La mention de divergence — `CRM-032`, docs/SPEC-workflow-engine.md §4 bis
+// @verifies CRM-032 (docs/BACKLOG.md) — mention de divergence visible dans l'interface
+// @verifies docs/SPEC-workflow-engine.md §4 bis.2 (où elle est, et le cas normal muet),
+//           §4 bis.4 (les trois phrases), §4 bis.8 (preuves attendues, niveaux E2E et visuel),
+//           §4.6 (le verdict vient de l'empreinte de composition)
+// @verifies docs/DESIGN_SYSTEM.md §5.15 (la mention de divergence)
+// -------------------------------------------------------------------------------------------
+//
+// LA DIVERGENCE EST PROVOQUÉE POUR DE VRAI, PUIS DÉFAITE. Le seed livre une copie **à jour** — sa
+// mention dit donc « la source n'a pas changé ». Pour éprouver l'autre état, la preuve modifie la
+// SOURCE par la clé de service, recharge l'écran, constate la phrase, puis restaure exactement la
+// valeur d'origine et vérifie que le signal s'éteint. C'est la règle d'INC-099 : la preuve rend la
+// table dans l'état où elle l'a trouvée. Et c'est aussi ce qui rend la réversibilité du signal
+// observable, fait mesuré au §4 bis.4.
+
+const COPIE_SEED = 'Cycle commercial — Conseil IA'
+const CHEMIN_DERIVATIONS = `${URL_API}/rest/v1/workflow_derivations`
+
+/** Choisit un workflow dans la liste de gauche et attend que son graphe soit rendu. */
+async function choisirWorkflow(page: Page, nom: string): Promise<void> {
+	await page.getByRole('button', { name: new RegExp(nom) }).click()
+	await expect(page.getByRole('button', { name: new RegExp(nom) })).toHaveAttribute(
+		'aria-current',
+		'true',
+	)
+	await expect(page.getByTestId('ligne-etape').first()).toBeVisible()
+}
+
+test.describe('la mention de divergence (§4 bis)', () => {
+	test('la copie du seed porte son origine, le workflow source n’en porte aucune', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+
+		// Le workflow par défaut n'est la copie de personne : AUCUNE mention, pas même un vide nommé.
+		await expect(page.getByTestId('mention-divergence')).toHaveCount(0)
+		await expect(page.getByTestId('mention-divergence-erreur')).toHaveCount(0)
+
+		await choisirWorkflow(page, COPIE_SEED)
+		const mention = page.getByTestId('mention-divergence')
+		await expect(mention).toBeVisible()
+		await expect(mention).toContainText('Ce workflow dérive de « Cycle commercial standard ».')
+		await expect(mention).toContainText("La source n'a pas changé depuis la copie du")
+		await expect(mention).toHaveAttribute('data-divergente', 'non')
+		await capturer(page, 'divergence-a-jour-1440', 'CRM-032')
+	})
+
+	test('modifier la source allume la mention, la restaurer l’éteint', async ({ page, request }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await choisirWorkflow(page, COPIE_SEED)
+		await expect(page.getByTestId('mention-divergence')).toHaveAttribute('data-divergente', 'non')
+
+		try {
+			// La SOURCE est modifiée, jamais la copie : c'est le sens même du signal.
+			const mutation = await request.patch(`${CHEMIN_ETAPES}?id=eq.${ETAPE_INITIALE_SEED}`, {
+				headers: enTetesService(),
+				data: { label_override: 'Sonde de divergence' },
+			})
+			expect(mutation.status(), 'surcharge posée sur une étape de la source').toBe(204)
+
+			await page.reload()
+			await choisirWorkflow(page, COPIE_SEED)
+			const mention = page.getByTestId('mention-divergence')
+			await expect(mention).toHaveAttribute('data-divergente', 'oui')
+			await expect(mention).toContainText('La source a changé depuis la copie du')
+			await expect(mention).toContainText('ne sont pas reportées automatiquement')
+			// La mention n'offre AUCUN geste : ni resynchroniser, ni comparer (§4 bis.6).
+			await expect(mention.getByRole('button')).toHaveCount(0)
+			await expect(mention.getByRole('link')).toHaveCount(0)
+			await capturer(page, 'divergence-signalee-1440', 'CRM-032')
+		} finally {
+			const restauration = await request.patch(`${CHEMIN_ETAPES}?id=eq.${ETAPE_INITIALE_SEED}`, {
+				headers: enTetesService(),
+				data: { label_override: null },
+			})
+			expect(restauration.status(), 'la source est rendue à son état seedé').toBe(204)
+		}
+
+		// L'empreinte redevient identique : le signal s'éteint, et l'écran le montre (§4 bis.4).
+		const apres = await request.get(
+			`${CHEMIN_DERIVATIONS}?select=source_modified_since_copy&name=eq.${encodeURIComponent(COPIE_SEED)}`,
+			{ headers: enTetesService() },
+		)
+		expect(apres.status()).toBe(200)
+		expect((await apres.json())[0]?.source_modified_since_copy).toBe(false)
+		await page.reload()
+		await choisirWorkflow(page, COPIE_SEED)
+		await expect(page.getByTestId('mention-divergence')).toHaveAttribute('data-divergente', 'non')
+	})
+
+	test('la mention tient au palier étroit, sans débordement', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 780 })
+		await connecter(page)
+		await ouvrirEditeur(page)
+		await choisirWorkflow(page, COPIE_SEED)
+		await expect(page.getByTestId('mention-divergence')).toBeVisible()
+		const debordement = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+		)
+		expect(debordement, 'la page ne défile jamais horizontalement').toBe(false)
+		await capturer(page, 'divergence-a-jour-390', 'CRM-032')
+	})
+})
