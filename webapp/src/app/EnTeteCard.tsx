@@ -113,7 +113,13 @@ export function EnTeteCard({
  * écrit juste à côté (§15.6, docs/SPEC-identite.md §7).
  */
 function LigneResponsable({ card }: { readonly card: CardOuverte }) {
-	const profil = card.profiles
+	// `?? null` ET NON `card.profiles` : la relation peut être ABSENTE de la réponse, et non
+	// seulement nulle. Trouvé par la campagne de fin de session — les preuves d'interface qui
+	// substituent le réseau (docs/DESIGN_SYSTEM.md §12.5) servent une card sans ses relations, et
+	// `profil.full_name` levait alors `Cannot read properties of undefined`, faisant tomber la page
+	// entière. Le type ne garantit jamais une valeur (docs/SPEC-types.md) : une clé absente se
+	// traite comme une absence de responsable, ce que le §15.7 nomme déjà.
+	const profil = card.profiles ?? null
 	return (
 		<div data-testid="entete-card-responsable" className="flex flex-wrap items-center gap-2">
 			<dt className="text-text-2">{t('card.header.owner')}</dt>

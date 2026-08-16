@@ -165,3 +165,26 @@ describe("l'action de copie", () => {
 		expect(screen.getByTestId('entete-card-copie-etat').getAttribute('role')).toBe('status')
 	})
 })
+
+// LA RÉGRESSION TROUVÉE PAR LA CAMPAGNE DE FIN DE SESSION, figée ici.
+//
+// Les preuves d'interface qui substituent le réseau (docs/DESIGN_SYSTEM.md §12.5) servent une card
+// SANS ses relations embarquées : `profiles` y est **absente**, et non nulle. `profil.full_name`
+// levait alors `Cannot read properties of undefined` et faisait tomber la page entière — cinquante
+// et un scénarios rouges. Le type ne garantit jamais une valeur (docs/SPEC-types.md).
+describe('une réponse qui ne porte pas les relations embarquées', () => {
+	function sansRelations(): CardOuverte {
+		const { profiles: _p, workspaces: _w, ...reste } = card()
+		return reste as CardOuverte
+	}
+
+	it("traite une relation ABSENTE comme une absence de responsable, sans tomber", () => {
+		render(<EnTeteCard card={sansRelations()} copier={copieQuiReussit} />)
+		expect(screen.getByTestId('entete-card-responsable').textContent).toContain('Aucun responsable')
+	})
+
+	it("traite un workspace ABSENT comme une adresse indisponible", () => {
+		render(<EnTeteCard card={sansRelations()} copier={copieQuiReussit} />)
+		expect(screen.getByTestId('entete-card-adresse-absente')).toBeTruthy()
+	})
+})
