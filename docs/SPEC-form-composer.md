@@ -497,6 +497,238 @@ même écran qu'avant ce paragraphe, pour une raison différente et **mesurable*
 barre qu'on n'a pas alimentée, c'est un refus du backend. La distinction se prouve en substituant
 la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5), et le §7.3 l'exige.
 
+### 4 bis. La saisie depuis la fiche — `CRM-037`
+
+Ce chapitre est écrit **avant la première ligne de code** de la tranche qui livre l'écriture, et
+**après mesure** sur la pile réelle le 2026-08-16 : jetons obtenus par la route de connexion réelle,
+appels `POST` sur `/rest/v1/card_field_values` avec la card `…0000c6` du seed, codes HTTP et
+`SQLSTATE` relevés à la main. Les valeurs citées ne sont pas supposées.
+
+Il existe parce que le §4.7 posait « aucune écriture depuis l'écran » **en invoquant INC-021**,
+close depuis `CRM-009` : la limite a survécu à son motif. La décision 334 (INC-088) la lève et
+ramène l'unité à sa Definition of Done d'origine, qui exige depuis toujours « E2E (transition
+bloquée, **saisie**, transition réussie) ». Aucune règle métier n'est créée ici : `CRM-036` livre
+déjà `card_field_values`, ses politiques et sa validation. Ce chapitre décrit **le chemin vers
+elles**, et rien d'autre.
+
+#### 4 bis.1 Ce que le geste est, et ce qu'il n'est pas
+
+Le geste est : **renseigner ou corriger la valeur d'un champ du formulaire de l'étape courante,
+depuis la fiche de la card**.
+
+Il n'est pas :
+
+- une transition — le menu des transitions reste `CRM-041` (§4.7) ;
+- une modification de l'en-tête de la card — titre, montant, étape : `CRM-040` ;
+- une modification du **formulaire** — déclarer un champ, régler une visibilité : c'est l'éditeur
+  de workflow, `docs/SPEC-workflow-engine.md` §7 bis.10 et §7 bis.11, réservé aux administrateurs ;
+- une suppression — **personne** ne supprime une valeur (§6.9). Vider, c'est écrire (§4 bis.5).
+
+Les champs de la **section repliée** « Informations d'autres étapes » restent en lecture seule, et
+ce n'est pas une omission : le §4.2 les y range précisément parce que l'étape courante ne les
+demande pas. Les rendre modifiables ferait de la section repliée un second formulaire, sans qu'aucune
+règle de visibilité ne l'ait décidé.
+
+#### 4 bis.2 Un champ, une écriture — et pourquoi pas un lot
+
+L'écriture est **par champ**. Un bouton unique qui enverrait tout le formulaire en une requête a été
+écarté, et la mesure décide :
+
+```
+POST /rest/v1/card_field_values   (money recevant "douze mille")
+=> 400  {"code":"P0001","message":"invalid_field_value",
+         "details":"budget attend un nombre, reçu string"}
+```
+
+Le trigger `app.card_field_values_valider` refuse **ligne par ligne**, mais un lot est **une seule
+transaction** : un champ invalide ferait échouer les neuf autres, et l'écran n'aurait qu'un refus
+global à montrer là où le §4.5 exige « les erreurs affichées **au niveau du champ** ». Le `details`
+du refus nomme bien le champ fautif, mais le produit **n'affiche jamais le texte du serveur** —
+règle déjà tenue par les refus de `CRM-075` et de `CRM-077` —, si bien que l'attribution serait
+perdue à l'affichage.
+
+Écrire champ par champ rend en outre chaque écriture **indépendante** : un refus sur un champ laisse
+les autres enregistrés, ce qui est le comportement honnête, et non un « tout ou rien » qui ferait
+perdre une saisie correcte à cause d'une saisie voisine.
+
+C'est aussi l'idiome déjà retenu par la grille champ × étape de l'éditeur
+(`docs/SPEC-workflow-engine.md` §7 bis.11.3) : une case se règle immédiatement, sans bouton
+d'enregistrement global.
+
+#### 4 bis.3 Le moment de l'écriture
+
+| Contrôle | Déclencheur |
+|---|---|
+| texte, zone de texte, nombre, montant, date, horodatage, adresse, courriel, téléphone, lien | **perte du focus** (`blur`), et seulement si la valeur a changé depuis le dernier état connu |
+| case à cocher | **changement** (`change`) |
+| liste et liste multiple | **changement** (`change`) |
+
+La perte de focus, et non la frappe : écrire à chaque caractère produirait une requête par touche,
+donc un événement `field_changed` par touche dans le fil de `CRM-044`, et une histoire illisible.
+Le changement pour les contrôles à choix : leur valeur est **complète** dès qu'elle est choisie, et
+attendre la perte de focus retarderait l'enregistrement sans rien protéger.
+
+**Aucune écriture n'est émise si la valeur n'a pas changé.** La comparaison porte sur la valeur
+**normalisée** (§4 bis.4), pas sur le texte saisi : reprendre le focus sans rien modifier ne doit
+produire ni requête, ni événement de fil.
+
+#### 4 bis.4 Ce qui est écrit, et sous quelle forme
+
+La ligne écrite porte les quatre colonnes que la clé et la RLS exigent, plus la valeur :
+
+| Colonne | Valeur |
+|---|---|
+| `card_id` | l'identifiant de la card ouverte |
+| `field_id` | l'identifiant du champ |
+| `workflow_id` | `cards.workflow_id`, **déjà chargé** par la fiche |
+| `workspace_id` | `cards.workspace_id`, **déjà chargé** par la fiche |
+| `value` | la valeur normalisée ci-dessous |
+
+`workflow_id` et `workspace_id` ne sont pas relus : le §4.6 charge déjà la card avec ces deux
+colonnes. Les redemander serait une requête de plus pour une donnée en main.
+
+**La normalisation par type**, parce qu'un contrôle HTML ne rend que du texte et que le trigger
+refuse une chaîne là où il attend un nombre ou un booléen :
+
+| Type du champ | Ce qui est envoyé |
+|---|---|
+| `number`, `money` | un **nombre** JSON ; une saisie vide vaut vide (§4 bis.5) ; une saisie non convertible n'est pas envoyée — le contrôle `number` du navigateur ne la produit pas |
+| `checkbox` | un **booléen**, `true` ou `false` — et jamais vide : une case décochée est une réponse (§6.6) |
+| `multiselect` | un **tableau** des clés retenues ; le tableau vide vaut vide (§6.6) |
+| tous les autres | la **chaîne** telle quelle, sans `trim` |
+
+**Sans `trim`, et c'est une décision.** Le §6.6 pose qu'une chaîne de blancs est **vide** au sens de
+« renseigné » ; c'est la lecture, pas l'écriture. Rogner à l'écriture ferait diverger ce que
+l'utilisateur voit de ce que la base porte, et effacerait une indentation dans une zone de texte.
+La base accepte la chaîne, la garde de `move_card` la traite comme vide : les deux comportements
+sont cohérents, et l'écran le montre en marquant le champ **manquant** (§4 bis.6).
+
+**`updated_by` n'est PAS écrit, et le motif est mesuré.** MESURÉ : le rôle `authenticated` porte le
+privilège `INSERT` et `UPDATE` sur cette colonne, et aucun trigger ne la dérive — une écriture par
+l'API la laisse à `NULL`. La renseigner depuis le client serait une **déclaration**, pas une preuve :
+rien n'obligerait un appelant à y mettre sa propre identité. La trace faisant foi de l'auteur existe
+déjà et vient du serveur — `app.card_events_apres_ecriture_valeur` inscrit un `field_changed` dont
+l'`actor_id` est posé par `app.card_event_ecrire` à partir de la session réelle. Écrire la colonne
+en plus n'ajouterait aucune garantie et créerait une seconde version de la même information, qui
+pourrait la contredire. **La colonne reste donc telle que `CRM-036` l'a laissée ; l'écart est
+consigné, non résolu ici** — le combler suppose un trigger, donc une migration, donc `CRM-036`.
+
+#### 4 bis.5 Vider un champ
+
+Vider n'est pas supprimer (§6.9). Un contrôle laissé vide écrit `null`, et la mesure confirme que
+tous les types l'acceptent :
+
+```
+POST /rest/v1/card_field_values   (money recevant null)  => 200
+```
+
+La ligne demeure, sa valeur devient explicitement vide, et le champ redevient **manquant** s'il est
+`required` à l'étape courante. C'est exactement la donnée que le seed pose sur `c1` (§6.11) : « une
+ligne présente n'est pas une valeur renseignée ».
+
+La case à cocher est **hors de cette règle** : elle n'a pas d'état vide, seulement `true` et
+`false`.
+
+#### 4 bis.6 Les quatre états d'un champ
+
+Chaque champ du formulaire porte son propre état, et un seul à la fois :
+
+| État | Quand | Ce que l'écran montre |
+|---|---|---|
+| `inactif` | rien n'a été écrit depuis le chargement | rien de plus que le §4.4 |
+| `envoi` | une écriture est en vol | le contrôle **reste utilisable**, et une mention `role="status"` dit que l'enregistrement est en cours |
+| `enregistre` | l'écriture a rendu `200` ou `201` | une mention `role="status"` confirme, et **remplace** la mention d'envoi |
+| `refus` | l'écriture a été refusée | une alerte `role="alert"` près du champ, texte pris au dictionnaire fermé du §4 bis.7 |
+
+**Le contrôle n'est pas désactivé pendant l'envoi.** Le désactiver déplacerait le focus du clavier —
+un contrôle désactivé le perd —, ce que `docs/DESIGN_SYSTEM.md` §5.13 interdit. L'écriture est
+courte, et une seconde écriture sur le même champ remplace la première par `upsert` : il n'existe
+aucun état incohérent à protéger.
+
+**Un refus ne remet pas le contrôle à sa valeur d'avant.** La saisie de l'utilisateur reste à
+l'écran, avec l'explication de son refus : la rejeter effacerait un travail sans le dire. La valeur
+**connue de la base**, elle, ne change pas — l'écran n'annonce enregistré que ce que le serveur a
+confirmé.
+
+#### 4 bis.7 Les refus, dictionnaire fermé
+
+Quatre natures, classées sur le code HTTP et le `SQLSTATE`, jamais sur le message du serveur :
+
+| Nature | Mesure | Ce que l'écran dit |
+|---|---|---|
+| `invalid` | `400`, `P0001`, `message = invalid_field_value` | la valeur ne convient pas à ce champ |
+| `forbidden` | `403`, `42501` | le droit d'écrire sur ce channel manque |
+| `network` | aucune réponse | la connexion a échoué, réessayer |
+| `unknown` | tout le reste | l'enregistrement a échoué |
+
+MESURÉ avec le jeton réel du `viewer`, qui **voit** la card sans pouvoir l'écrire :
+
+```
+POST /rest/v1/card_field_values
+=> 403  {"code":"42501","message":"new row violates row-level security policy
+                                    for table \"card_field_values\""}
+```
+
+**L'écran n'éteint aucun contrôle d'avance en fonction du rôle**, exactement comme le geste de mise
+à la corbeille de `docs/SPEC-corbeille.md` §4 ter.3 : la règle vit dans la politique RLS, et une
+interface qui déciderait à sa place ferait passer une décision de la base pour une décision d'écran
+(`CLAUDE.md` §10). Le refus est **montré**, il n'est pas anticipé.
+
+#### 4 bis.8 Ce que l'écriture change à l'écran, sans relire
+
+Une écriture confirmée met à jour le modèle **en place** : la valeur connue du champ devient celle
+qui vient d'être écrite, et `renseigné` (§4.3) puis `manquant` (§4.4) sont recalculés par le **même**
+prédicat que le chargement. Renseigner un champ exigé fait donc disparaître son alerte « valeur
+manquante » et son `aria-invalid`, et le vider la fait réapparaître — sans requête supplémentaire.
+
+Aucun rechargement complet de la fiche : il rejouerait cinq requêtes pour une donnée déjà connue, et
+ferait clignoter la colonne entière. La **section repliée** n'est pas recomposée pour autant — elle
+ne contient que des champs que l'étape courante ne montre pas, et aucun d'eux n'est modifiable.
+
+#### 4 bis.9 Accessibilité
+
+Le §4.5 vaut intégralement, et trois exigences s'y ajoutent :
+
+| Exigence | Ce qui la rend vérifiable |
+|---|---|
+| L'envoi et la confirmation sont **annoncés** | un élément `role="status"` par champ, cité par l'`aria-describedby` du contrôle |
+| Le refus est **annoncé** et lié | un élément `role="alert"` par champ, cité par le même `aria-describedby` |
+| Le champ refusé est signalé au lecteur d'écran | `aria-invalid="true"` sur le contrôle, comme pour un champ exigé et vide |
+
+Un champ peut être à la fois manquant et refusé : les deux messages coexistent, et
+`aria-describedby` les cite **tous les deux** dans l'ordre du document. Les taire l'un à cause de
+l'autre retirerait une information que l'écran affiche déjà.
+
+#### 4 bis.10 Contrat d'API, mesuré
+
+Sept lignes, mesurées le 2026-08-16 sur la pile réelle avant d'être écrites.
+
+| # | Appelant | Geste | Mesuré |
+|---|---|---|---|
+| a | `admin` | `upsert` d'un couple `(card, champ)` **absent** | `201`, la ligne créée |
+| b | `admin` | `upsert` du **même** couple, autre valeur | `200`, la ligne modifiée, `created_at` inchangé |
+| c | `admin` | `money` recevant une chaîne | `400`, `P0001`, `invalid_field_value` |
+| d | `admin` | `value` à `null` | `200`, la ligne conservée, valeur explicitement vide |
+| e | `viewer` | `upsert` sur une card qu'il **voit** | `403`, `42501` |
+| f | `admin` | `updated_by` fourni par le client | accepté, mais la colonne reste `NULL` — le client ne la renseigne pas (§4 bis.4) |
+| g | — | `DELETE` | hors du produit : aucun privilège, aucune politique (§6.9) |
+
+L'`upsert` porte `onConflict=(card_id, field_id)`, la clé primaire du §6.2. C'est le même motif
+qu'au §7 bis.11.3 de `docs/SPEC-workflow-engine.md` : un écran qui choisirait entre insertion et
+modification d'après ce qu'il a lu prendrait un `409` dès qu'une autre écriture a eu lieu entre la
+lecture et la saisie — un refus que l'utilisateur n'a pas provoqué.
+
+#### 4 bis.11 Ce que cette tranche ne livre pas
+
+- **Aucune transition**, donc toujours aucun parcours « transition bloquée → saisie → transition
+  réussie » complet : le premier et le troisième gestes appartiennent à `CRM-041` (INC-062,
+  inchangée). La **saisie**, deuxième geste, est livrée ici.
+- **Aucune résolution de `user`, `contact` ni `file`** : leur contrôle reste une saisie brute
+  d'`uuid`, comme le §6.5 les valide (INC-053, inchangée).
+- **Aucun `updated_by`** — §4 bis.4, écart consigné.
+- **Aucune reprise hors ligne, aucun brouillon** : une saisie non enregistrée est perdue si l'onglet
+  se ferme. Le produit n'a aucun mécanisme de brouillon, et en inventer un ici dépasserait l'unité.
+
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
 - **~~Aucune écriture.~~ L'écriture appartient à `CRM-037`** — décision 334, INC-088. Le motif
@@ -505,11 +737,10 @@ la réponse réseau (`docs/DESIGN_SYSTEM.md` §12.5), et le §7.3 l'exige.
   « E2E (transition bloquée, **saisie**, transition réussie) » ; l'unité n'est donc pas élargie, elle
   est ramenée à son énoncé. `CRM-036` livre déjà `card_field_values`, ses politiques et sa
   validation : il ne manque que le chemin vers elles, et **aucune règle n'est créée ici**.
-  *État réel tant que la reprise n'est pas livrée* : les contrôles restent **indisponibles**,
-  lisibles, et l'écran **dit pourquoi** — ce que `docs/DESIGN_SYSTEM.md` §8 exige d'un état
-  désactivé. Un formulaire où l'on saisirait sans pouvoir enregistrer serait un piège ; un
-  formulaire qui n'affiche rien serait une perte d'information. Le bandeau « Consultation seule »
-  disparaît avec la livraison, pas avec la décision.
+  *État réel depuis le 2026-08-16* : **l'écriture est livrée**, et elle est spécifiée au §4 bis.
+  Les contrôles du formulaire de l'étape courante sont saisissables, chaque champ s'enregistre pour
+  lui-même, et le bandeau « Consultation seule » a disparu avec la livraison — comme cet alinéa
+  l'annonçait. Les champs de la **section repliée** restent en lecture seule (§4 bis.1).
 - **Aucune transition.** Le menu des transitions déclarées et le glisser-déposer sont `CRM-041`.
   Sans eux, ni les champs exigés par les liaisons de transition (§4.4), ni la mise en évidence
   consécutive à un refus, ni le défilement jusqu'au premier champ (§4.5) n'ont de geste

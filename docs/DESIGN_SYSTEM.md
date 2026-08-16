@@ -303,6 +303,32 @@ Le rendu conditionnel lui-même — composition, section repliée, mention d'exi
 des erreurs — est spécifié dans `docs/SPEC-form-composer.md` §4, et non ici : ce document donne les
 règles visuelles, pas l'algorithme qui décide **quels** champs sont rendus.
 
+### 5.7 ter Champ qui s'enregistre pour lui-même — `CRM-037`
+
+Le formulaire d'une card n'a **aucun bouton d'enregistrement** : chaque champ écrit sa propre valeur
+dès qu'elle est arrêtée (`docs/SPEC-form-composer.md` §4 bis.2 et §4 bis.3). Six règles visuelles en
+découlent, et elles valent pour tout champ du produit adoptant ce mode.
+
+- **La mention d'état vit sous le champ**, à la place et dans la graduation du texte d'aide du §5.7 :
+  13 px, sous le contrôle, jamais en tête d'écran. Un état d'enregistrement se lit près de ce qu'il
+  concerne (§5.13, §5.16).
+- **Trois mentions, jamais deux à la fois** : « Enregistrement… » en `--color-text-3`,
+  « Enregistré » en `--color-success`, le refus en `--color-danger-on-soft` sur `--color-danger-soft`
+  avec son icône, comme toute erreur de champ du §5.7.
+- **La confirmation remplace l'envoi**, elle ne s'y ajoute pas : deux mentions superposées feraient
+  croire à deux écritures.
+- **Le contrôle n'est jamais désactivé pendant l'envoi.** Un contrôle désactivé perd le focus du
+  clavier, ce que le §5.13 interdit ; et l'écriture est trop courte pour qu'une attente soit
+  lisible.
+- **Un refus n'efface pas la saisie.** Elle reste à l'écran avec son explication : rejeter une saisie
+  sans le dire est la « valeur par défaut trompeuse » que `CLAUDE.md` §18 interdit.
+- **L'alerte de valeur manquante et l'alerte de refus coexistent.** Elles disent deux choses
+  différentes — le champ est exigé, et la dernière écriture a échoué — et `aria-describedby` les
+  cite toutes les deux (`docs/SPEC-form-composer.md` §4 bis.9).
+
+Aucune couleur nouvelle : `--color-success` sert déjà aux pilules du §5.6, et le couple
+danger/danger-soft aux erreurs du §5.7.
+
 ### 5.8 États systématiques
 
 Toute vue traite explicitement : chargement (squelettes, pas de spinner plein écran), vide
