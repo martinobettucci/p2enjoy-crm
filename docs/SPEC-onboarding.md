@@ -343,6 +343,87 @@ s'y compare **octet à octet**. La comparaison à `HEAD` est interdite
 (`docs/SPEC-test-harness.md` §7.2, point 9) : le harnais doit fonctionner dans un arbre portant une
 évolution légitime non encore committée, et ne doit ni la déclarer résiduelle, ni la remplacer.
 
+## 8 ter. Le cas « espace de travail neuf » — l'écran du VRAI premier lancement
+
+**Ajouté le 2026-08-16, après mesure sur la pile seedée.** Le §8 exige que les étapes soient
+accomplies par les **données réelles** et non par une réponse substituée. Cette exigence, appliquée
+au seed livré, laissait un trou que le backlog nommait : **aucune preuve d'interface ne montrait
+l'écran que le §1 décrit**, celui d'un compte qui se connecte pour la première fois. Le seed
+accomplit les cinq étapes pour l'administratrice ; la lectrice n'en laisse voir qu'**une** à faire,
+et pour un motif — ses droits fins (§3.1, fait 2) — qui n'est pas celui d'un espace vide. Le guide
+n'avait donc jamais été éprouvé dans l'état pour lequel il a été écrit.
+
+### 8 ter.1 Ce qui a été MESURÉ, le 2026-08-16
+
+Un compte `admin` d'un workspace **sans aucun objet**, ses cinq comptages émis exactement comme le
+guide les émet — `HEAD`, `Prefer: count=exact`, `Range: 0-0`, contre `http://127.0.0.1:8000` :
+
+| Table | Réponse | `count` | État de l'étape |
+|---|---|---|---|
+| `workspaces` | `200` | **1** | accomplie — « l'étape est accomplie par la connexion » (§3) |
+| `tracks` (vivants) | `200` | **0** | à faire |
+| `channels` (vivants) | `200` | **0** | à faire |
+| `cards` (vivantes) | `200` | **0** | à faire |
+| `mail_inbound_accounts` | `200` | **0** | à faire |
+
+**Progression : « 1 étape(s) sur 5 ».**
+
+Deux faits que cette mesure établit, et qu'aucun raisonnement n'aurait donnés :
+
+1. **La cinquième mesure rend `200` et zéro, non `401`.** Le `401` du §3.1, fait 3, est celui de la
+   clé **anonyme** ; une session ouverte sur un espace vide obtient une réponse aboutie et vide.
+   L'étape est donc « à faire », jamais « non mesurable » — c'est la distinction du §6.2, et elle
+   ne tenait jusqu'ici sur aucune mesure.
+2. **Les quatre étapes à faire portent leur phrase d'absence**, celle qui dit ce que l'appelant
+   **voit** (§3.1, fait 1). C'est le seul état où le guide rend quatre lignes « à faire » à la
+   suite, donc le seul où sa lisibilité à ce titre s'observe.
+
+### 8 ter.2 Le seed n'est PAS étendu, et ce n'est pas un contournement
+
+La preuve **fabrique son espace vide et le détruit**, au lieu de l'ajouter au seed. Trois motifs,
+et le premier suffit :
+
+1. **`CRM-005` pose « un workspace », et le dépôt le vérifie.** `scripts/verify-seed.sh`, contrôle
+   n° 1, échoue sur tout second workspace en base — « un seul workspace en base, conformément à
+   `CRM-005` » — et fige `workspaces:1`. Étendre le seed reviendrait à trancher seul un invariant
+   documenté et prouvé, pour le confort d'une preuve. `docs/SPEC-seed.md` §8 réserve d'ailleurs ce
+   choix à `CRM-014`, et le laisse ouvert : « soit étendre le seed, soit continuer de fabriquer ses
+   propres comptes ».
+2. **Le précédent existe, et c'est le second terme de cette phrase.** `scripts/verify-authz.sh`
+   crée puis détruit déjà ses propres workspaces et ses propres comptes pour les preuves de refus
+   n° 3 et n° 7 de `docs/SPEC-permissions-rls.md` §7. Cette preuve suit ce chemin, pas un autre.
+3. **Un espace vide seedé ne le resterait pas.** Le seed est un contrat maintenu (`CLAUDE.md` §8) :
+   toute unité qui y ajoute un track, un channel ou une boîte devrait se souvenir de ne pas toucher
+   à celui-là. Un espace vide n'est pas une donnée de démonstration, c'est l'**absence** de données
+   — elle se fabrique au moment où on l'éprouve.
+
+### 8 ter.3 Le montage, et ce qu'il ne fait pas
+
+| Élément | Valeur | Motif |
+|---|---|---|
+| Workspace | `id` `5eed0000-0000-4000-8000-0000000000f1`, slug `espace-neuf` | identifiant stable et hors de la plage du seed socle, pour être reconnaissable en base |
+| Compte | `neuf@p2enjoy.test`, rôle `admin` du workspace | un premier lancement est celui de la personne qui vient d'ouvrir son espace |
+| Mot de passe | celui du seed (`docs/SPEC-seed.md` §2.3) | aucun secret neuf, même domaine `.test` non routable |
+
+- **Aucune politique n'est posée ni levée.** Le montage écrit deux lignes avec la clé de service,
+  qui contourne la RLS ; les cinq comptages, eux, sont émis avec le **jeton réel** du compte, sous
+  les politiques inchangées. Ce que la preuve mesure est donc bien ce que le produit consent.
+- **Aucun droit fin n'est posé.** L'espace est vide : il n'y a rien à restreindre, et une ligne de
+  `track_members` y désignerait un track inexistant.
+- **La destruction est constatée, jamais supposée.** Le workspace est supprimé — ce qui **cascade**
+  sur son appartenance, mesuré le 2026-08-16 — puis le compte l'est par l'API d'administration. La
+  preuve vérifie ensuite qu'il ne reste **qu'un** workspace en base, celui du seed : c'est la
+  condition pour que `scripts/verify-seed.sh` reste vert après son passage.
+
+### 8 ter.4 Ce que cette preuve N'établit PAS
+
+- **Rien sur les droits.** Elle n'ouvre, ne ferme et n'interroge aucun rôle : elle établit un
+  **rendu** dans un état de données que le seed ne porte pas. Les refus restent l'affaire de
+  `e2e/api/demarrage.spec.ts` et des unités qui portent les cinq tables.
+- **Rien sur la création d'un espace par le produit.** Aucun écran ne crée de workspace
+  (`docs/SPEC-seed.md` §8, INC-015) ; le montage est une opération d'exploitation, et il est nommé
+  comme telle plutôt que déguisé en parcours utilisateur.
+
 ## 9. Limites connues
 
 - **Le `viewer` ne verra jamais la cinquième étape accomplie** (§3.1, fait 2). Le guide dit ce que
