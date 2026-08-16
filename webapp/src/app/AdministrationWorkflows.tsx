@@ -49,6 +49,7 @@ import {
 	ArrowRight,
 	ArrowUp,
 	Flag,
+	GitBranch,
 	MessageSquare,
 	Pencil,
 	Plus,
@@ -79,6 +80,7 @@ import {
 	arriveesPossibles,
 	choixDuChamp,
 	cleChampConforme,
+	composerMentionDivergence,
 	composerOptions,
 	declarerChamp,
 	deplacerChamp,
@@ -127,6 +129,7 @@ import {
 	creationWorkflowConforme,
 	creerWorkflow,
 	lireCatalogueActif,
+	lireDerivation,
 	lireEtapes,
 	lireTracksAffectables,
 	lireTransitions,
@@ -142,6 +145,8 @@ import {
 	type EtapeAdministrable,
 	type NoeudAjoutable,
 	type PorteeWorkflow,
+	type DerivationWorkflow,
+	type MentionDivergence as MentionDivergenceComposee,
 	type RefusChamp,
 	type RefusCreationWorkflow,
 	type RefusEtape,
@@ -2092,6 +2097,80 @@ function FormulaireExigence({
 }
 
 // ---------------------------------------------------------------------------------------------
+// La mention de divergence — CRM-032, docs/SPEC-workflow-engine.md §4 bis
+// ---------------------------------------------------------------------------------------------
+
+/** La date de la copie, au format court du produit — celui du bloc des versions (§5.16). */
+function formaterCopie(horodatage: string): string {
+	const date = new Date(horodatage)
+	if (Number.isNaN(date.getTime())) return horodatage
+	return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(date)
+}
+
+/**
+ * La phrase de contexte d'un workflow copié — §4 bis.2, §4 bis.4, §4 bis.5.
+ *
+ * ELLE NE REND RIEN DANS DEUX CAS, et un seul est un état d'attente : pendant la lecture, et
+ * lorsque le workflow n'est la copie de personne. Le second est le cas normal — le seed livre deux
+ * workflows dont un seul est une copie —, et un état vide nommé sur le cas normal serait du bruit à
+ * chaque ouverture de l'écran (écart assumé au §5.8 du design system, écrit au §4 bis.5).
+ *
+ * L'ERREUR, ELLE, EST NOMMÉE. Le silence ferait passer une panne de lecture pour l'absence
+ * d'origine, c'est-à-dire pour une information.
+ *
+ * AUCUNE COMMANDE N'Y FIGURE, pas même grisée : la copie est une divergence assumée, et ni
+ * « resynchroniser » ni « comparer » n'existent dans le produit (§4 bis.1, §4 bis.6).
+ */
+function MentionDivergence({
+	derivation,
+}: {
+	readonly derivation: EtatAsync<DerivationWorkflow | null>
+}) {
+	if (derivation.statut === 'erreur') {
+		return (
+			<p
+				role="status"
+				data-testid="mention-divergence-erreur"
+				className="flex items-start gap-2 rounded-sm bg-hover text-text-2 px-3 py-2 text-sm"
+			>
+				<TriangleAlert aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-[2px]" />
+				<span>{t('admin.workflows.derived.error')}</span>
+			</p>
+		)
+	}
+	if (derivation.statut !== 'pret') return null
+	const mention: MentionDivergenceComposee | null = composerMentionDivergence(derivation.donnees)
+	if (mention === null) return null
+	// Deux teintes, et le mot porte l'information dans les deux cas (§1 du design system) : la
+	// teinte d'accent signale un fait à connaître — comme « Motif exigé » et l'alerte d'étape
+	// initiale absente du même écran —, jamais une erreur.
+	const teinte = mention.divergente
+		? 'bg-accent-soft text-accent-on-soft'
+		: 'bg-hover text-text-2'
+	return (
+		<p
+			role="status"
+			data-testid="mention-divergence"
+			data-divergente={mention.divergente ? 'oui' : 'non'}
+			className={`flex items-start gap-2 rounded-sm px-3 py-2 text-sm ${teinte}`}
+		>
+			<GitBranch aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-[2px]" />
+			<span className="flex flex-col gap-1">
+				<span>{t('admin.workflows.derived.from', { source: mention.source })}</span>
+				{mention.copieLe === null ? null : (
+					<span>
+						{mention.divergente
+							? t('admin.workflows.derived.changed', { date: formaterCopie(mention.copieLe) })
+							: t('admin.workflows.derived.unchanged', { date: formaterCopie(mention.copieLe) })}
+					</span>
+				)}
+				{mention.sourceArchivee ? <span>{t('admin.workflows.derived.sourceArchived')}</span> : null}
+			</span>
+		</p>
+	)
+}
+
+// ---------------------------------------------------------------------------------------------
 // L'écran
 // ---------------------------------------------------------------------------------------------
 
@@ -2113,6 +2192,8 @@ export function AdministrationWorkflows({
 	const [regles, setRegles] = useState<EtatAsync<readonly RegleAdministrable[]>>(enChargement)
 	const [exigences, setExigences] =
 		useState<EtatAsync<readonly ExigenceAdministrable[]>>(enChargement)
+	/** La dérivation du workflow choisi — CRM-032, §4 bis.3. `null` veut dire « pas une copie ». */
+	const [derivation, setDerivation] = useState<EtatAsync<DerivationWorkflow | null>>(enChargement)
 	const [ouverture, setOuverture] = useState<Ouverture>(AUCUNE)
 	const [refus, setRefus] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState(false)
@@ -2270,18 +2351,23 @@ export function AdministrationWorkflows({
 			// workflow, une règle n'a de sens qu'entre un champ et une étape du MÊME instant, une
 			// exigence qu'entre une arête et un champ du même instant, et toute écriture les rejoue
 			// toutes.
-			const [lues, arretes, formulaire, visibilites, exigees] = await Promise.all([
+			// La dérivation part avec eux par le §4 bis.3 : la mention décrit le même workflow au
+			// même instant que son graphe, et une mention lue à un autre instant pourrait décrire
+			// un état que l'écran ne montre pas.
+			const [lues, arretes, formulaire, visibilites, exigees, origine] = await Promise.all([
 				lireEtapes(client, idWorkflow),
 				lireTransitions(client, idWorkflow),
 				lireChamps(client, idWorkflow),
 				lireRegles(client, idWorkflow),
 				lireExigences(client, idWorkflow),
+				lireDerivation(client, idWorkflow),
 			])
 			setEtapes(lues)
 			setTransitions(arretes)
 			setChamps(formulaire)
 			setRegles(visibilites)
 			setExigences(exigees)
+			setDerivation(origine)
 		},
 		[client],
 	)
@@ -2293,6 +2379,7 @@ export function AdministrationWorkflows({
 		setChamps(enChargement)
 		setRegles(enChargement)
 		setExigences(enChargement)
+		setDerivation(enChargement)
 		void rechargerGraphe(idChoisi)
 	}, [client, idChoisi, rechargerGraphe])
 
@@ -2713,6 +2800,11 @@ export function AdministrationWorkflows({
 								aria-label={t('admin.workflows.steps.aria', { workflow: choisi.name })}
 								className="flex flex-col gap-3"
 							>
+								{/* LA MENTION DE DIVERGENCE EST EN TÊTE DE CETTE COLONNE — CRM-032,
+								    docs/SPEC-workflow-engine.md §4 bis.2 : elle porte sur le workflow ENTIER,
+								    pas sur une de ses étapes, et cette colonne est ce qui décrit le workflow
+								    choisi. */}
+								<MentionDivergence derivation={derivation} />
 								{etapes.statut === 'chargement' ? (
 									<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
 								) : null}

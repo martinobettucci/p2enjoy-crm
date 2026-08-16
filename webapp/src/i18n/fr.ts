@@ -552,6 +552,16 @@ export const fr = {
 	'admin.workflows.initial': 'Étape initiale',
 	'admin.workflows.initial.none':
 		"Ce workflow n'a aucune étape initiale : aucune card ne peut y entrer tant qu'elle n'est pas désignée.",
+	// La mention de divergence — CRM-032, docs/SPEC-workflow-engine.md §4 bis.4. Trois phrases
+	// distinctes plutôt qu'une seule construite par morceaux : le §10 du design system interdit la
+	// concaténation, et « la source a changé » n'est pas une variante de « elle n'a pas changé ».
+	'admin.workflows.derived.from': 'Ce workflow dérive de « {source} ».',
+	'admin.workflows.derived.unchanged': "La source n'a pas changé depuis la copie du {date}.",
+	'admin.workflows.derived.changed':
+		'La source a changé depuis la copie du {date}. Les modifications ne sont pas reportées automatiquement.',
+	'admin.workflows.derived.sourceArchived': 'Cette source est archivée.',
+	'admin.workflows.derived.error': "L'origine de ce workflow n'a pas pu être lue.",
+
 	'admin.workflows.overridden': 'Libellé surchargé',
 	'admin.workflows.fromCatalog': 'Du catalogue : {libelle}',
 	'admin.workflows.probability': 'Probabilité : {valeur} %',

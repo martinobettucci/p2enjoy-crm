@@ -1905,3 +1905,101 @@ export async function creerWorkflow(
 		}
 	}
 }
+
+// =============================================================================================
+// LA MENTION DE DIVERGENCE — `CRM-032`
+// @spec CRM-032 (docs/BACKLOG.md) — copie d'un workflow vers un track, mention de divergence
+// @spec docs/SPEC-workflow-engine.md §4 bis.1 (ce que la mention est et n'est pas),
+//       §4 bis.3 (lecture 9, mesurée), §4 bis.4 (les trois phrases et leur ordre),
+//       §4 bis.6 (aucune écriture), §4.6 (la vue et son verdict)
+// @spec docs/DESIGN_SYSTEM.md §5.15 (la mention de divergence)
+// =============================================================================================
+//
+// AUCUNE MIGRATION, ET AUCUNE ÉCRITURE : `public.workflow_derivations` existe depuis `CRM-032`,
+// révisée par `CRM-018`, et elle est en lecture seule — mesuré deux fois au §4.6. Ce module ne fait
+// que la lire et composer ce que l'écran en dit.
+
+/** Une dérivation, telle que la mention la consomme. */
+export type DerivationWorkflow = Pick<
+	Database['public']['Views']['workflow_derivations']['Row'],
+	| 'workflow_id'
+	| 'name'
+	| 'derived_at'
+	| 'source_workflow_id'
+	| 'source_name'
+	| 'source_archived_at'
+	| 'source_modified_at'
+	| 'source_modified_since_copy'
+>
+
+export const COLONNES_DERIVATION =
+	'workflow_id, name, derived_at, source_workflow_id, source_name, source_archived_at, source_modified_at, source_modified_since_copy'
+
+/**
+ * La dérivation du workflow choisi — lecture 9 du §4 bis.3.
+ *
+ * ELLE REND `null` PLUTÔT QU'UNE LISTE VIDE, et la distinction est celle que l'écran doit faire :
+ * `null` veut dire « ce workflow n'est la copie de personne », qui est le cas normal et ne se rend
+ * pas du tout (§4 bis.2). MESURÉ le 2026-08-16 : le workflow par défaut du seed rend `200` et `[]`,
+ * la copie rend `200` et une ligne.
+ *
+ * AUCUN FILTRE DE WORKSPACE N'EST ÉCRIT : la vue est `security_invoker`, donc les politiques des
+ * tables sous-jacentes s'appliquent à l'appelant (§4.6). L'ajouter ferait croire que l'interface
+ * protège quelque chose (`CLAUDE.md` §10).
+ */
+export async function lireDerivation(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<DerivationWorkflow | null>> {
+	try {
+		const reponse = await client
+			.from('workflow_derivations')
+			.select(COLONNES_DERIVATION)
+			.eq('workflow_id', idWorkflow)
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as readonly DerivationWorkflow[]
+		return pret(lignes[0] ?? null)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Ce que la mention écrit, composé depuis la ligne de la vue — §4 bis.4.
+ *
+ * `divergente` VIENT DE `source_modified_since_copy`, ET DE RIEN D'AUTRE. L'écran ne compare aucune
+ * date et ne recalcule aucune empreinte : le §4.6 pose que `source_modified_at` ne peut pas porter
+ * ce verdict, une suppression dans la source ne lui transmettant aucune date. Une colonne nulle —
+ * ce que rend une vue dont toutes les colonnes sont nullables côté types — est traitée comme
+ * « pas de divergence connue » plutôt que comme une divergence : affirmer un changement qu'aucune
+ * mesure ne porte serait une fausse preuve, dans l'autre sens que celle du §4.6.
+ *
+ * LA DATE COMPOSÉE EST CELLE DE LA COPIE, jamais celle de la modification, et le §4 bis.4 dit
+ * pourquoi : `source_modified_at` ne voit pas les suppressions, et l'afficher à côté de « la source
+ * a changé » ferait mentir l'écran sur la nature du changement.
+ */
+export type MentionDivergence = {
+	readonly source: string
+	readonly divergente: boolean
+	readonly sourceArchivee: boolean
+	/** L'horodatage de la copie, tel que la vue le rend — `null` si la vue ne le porte pas. */
+	readonly copieLe: string | null
+}
+
+export function composerMentionDivergence(
+	derivation: DerivationWorkflow | null,
+): MentionDivergence | null {
+	if (derivation === null) return null
+	// Un nom de source absent n'est pas un cas théorique : les colonnes de la vue sont toutes
+	// nullables côté types engendrés. Le repli nomme l'identifiant plutôt que d'afficher un vide,
+	// par la même règle que `libelleEtape`.
+	const source = derivation.source_name?.trim() ?? ''
+	return {
+		source: source !== '' ? source : (derivation.source_workflow_id ?? ''),
+		divergente: derivation.source_modified_since_copy === true,
+		sourceArchivee: derivation.source_archived_at !== null,
+		copieLe: derivation.derived_at,
+	}
+}
