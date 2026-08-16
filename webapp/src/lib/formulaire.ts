@@ -77,7 +77,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // `'a' + 'b'` rend le type `string`, et `supabase-js` cesse alors d'inférer la forme de la réponse
 // — MESURÉ, `lireCard` retombait sur `GenericStringError`. Le littéral doit rester entier.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain)'
+	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, snoozed_until, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain)'
 
 /** L'étape courante, telle que la mention « requis pour passer à <étape> » a besoin de la nommer. */
 export type EtapeCourante = {
@@ -110,6 +110,10 @@ export type CardOuverte = Pick<
 	| 'next_action'
 	| 'next_action_at'
 	| 'archived_at'
+	// Lue depuis `CRM-081` tranche 2 a : la pastille de sommeil et le geste de réveil en dépendent
+	// (docs/SPEC-cards.md §16.11). Elle reste FERMÉE en écriture — seuls `snooze_card` et
+	// `wake_card` la déplacent (§16.7) —, et la lire ici n'ouvre donc aucun chemin d'écriture.
+	| 'snoozed_until'
 > & {
 	readonly profiles: ProfilAffiche | null
 	readonly workspaces: { readonly inbound_domain: string | null } | null

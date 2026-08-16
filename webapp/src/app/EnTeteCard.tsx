@@ -18,7 +18,7 @@
 // lecture ; charger la liste des membres pour un geste que la plupart des visites ne font pas
 // serait une requête gratuite sur l'écran le plus ouvert du produit.
 
-import { Archive, Copy, PencilLine } from 'lucide-react'
+import { Archive, Copy, Moon, PencilLine, Sun } from 'lucide-react'
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
@@ -36,6 +36,16 @@ import {
 	type MembreAffectable,
 } from '../lib/entete-card'
 import type { CardOuverte } from '../lib/formulaire'
+import {
+	ECHEANCES_USUELLES,
+	echeanceSaisie,
+	echeanceUsuelle,
+	estEnSommeil,
+	formaterEcheanceSommeil,
+	mettreEnSommeil,
+	reveiller,
+	type IssueSommeil,
+} from '../lib/sommeil-card'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { t, type CleTraduction } from '../i18n'
 
@@ -54,17 +64,40 @@ type IssueCopie = 'inactif' | 'copie' | 'refus'
 /** Clés nommées hors du JSX, comme `CLE_TITRE_CARD` : le contrôle de clés mortes les cherche ainsi. */
 const CLE_COPIER: CleTraduction = 'card.header.email.copy'
 const CLE_COPIE: CleTraduction = 'card.header.email.copied'
+const CLE_ENDORMIR: CleTraduction = 'card.sleep.open'
+const CLE_REVEILLER: CleTraduction = 'card.sleep.wake'
+const CLE_SOUMETTRE: CleTraduction = 'card.sleep.submit'
+const CLE_ANNULER: CleTraduction = 'card.sleep.cancel'
+
+/** Les six issues du §16.11.4 que l'écran met en mots ; les deux succès n'en ont pas besoin. */
+const MENTION_SOMMEIL: Readonly<Record<Exclude<IssueSommeil, 'endormie' | 'reveillee'>, CleTraduction>> = {
+	'echeance-requise': 'card.sleep.refus.required',
+	'echeance-passee': 'card.sleep.refus.past',
+	introuvable: 'card.sleep.refus.notfound',
+	refus: 'card.sleep.refus.forbidden',
+	reseau: 'card.sleep.refus.network',
+	inconnu: 'card.sleep.refus.unknown',
+}
 
 export function EnTeteCard({
 	card: cardChargee,
 	copier = copierDansLePressePapier,
 	client = clientCrm,
+	maintenant,
 }: {
 	readonly card: CardOuverte
 	/** Injectable pour les preuves ; en production, l'API du navigateur. */
 	readonly copier?: (texte: string) => Promise<boolean>
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
 	readonly client?: ClientCrm | null
+	/**
+	 * L'instant qui tranche le prédicat de sommeil (docs/SPEC-cards.md §16.11.1).
+	 *
+	 * Injectable pour les preuves, et pour elles seules : sans lui, aucune preuve ne pourrait
+	 * éprouver les deux côtés de l'échéance sans dépendre de l'heure de son exécution. En
+	 * production, il vaut l'instant du rendu.
+	 */
+	readonly maintenant?: Date
 }) {
 	// La card vit ici pendant la visite : une écriture confirmée la met à jour EN PLACE, à partir de
 	// la ligne que le serveur a RENDUE — jamais de la saisie (§15 bis.7). Elle est resynchronisée dès
@@ -103,9 +136,17 @@ export function EnTeteCard({
 		}))
 	}, [])
 
+	// LE GESTE MET LA COLONNE À JOUR EN PLACE, à partir de la ligne que la FONCTION a rendue
+	// (§16.11.4) : c'est l'échéance écrite par la base qui atteint la pastille, jamais la saisie.
+	const appliquerSommeil = useCallback((snoozedUntil: string | null) => {
+		setCard((precedente) => ({ ...precedente, snoozed_until: snoozedUntil }))
+	}, [])
+
 	const adresse = composerAdresseCard(card)
 	const montant = formaterMontant(card)
 	const echeance = formaterEcheance(card.next_action_at)
+	const dort = estEnSommeil(card.snoozed_until, maintenant)
+	const echeanceSommeil = formaterEcheanceSommeil(card.snoozed_until)
 
 	return (
 		<section
@@ -128,6 +169,19 @@ export function EnTeteCard({
 						{t('card.header.archived')}
 					</span>
 				)}
+				{/* LA PASTILLE PORTE L'ÉCHÉANCE, jamais le seul mot « En sommeil » (§5.3 quater) :
+				    « jusqu'à quand » est la moitié de l'information. Elle COEXISTE avec la pilule
+				    d'archivage — une affaire peut être archivée ET endormie, et masquer l'une derrière
+				    l'autre perdrait un fait. */}
+				{dort && echeanceSommeil !== null && (
+					<span
+						data-testid="entete-card-sommeil"
+						className="inline-flex items-center gap-1 rounded-full bg-brand-soft text-brand px-3 py-1 text-sm"
+					>
+						<Moon aria-hidden="true" className="size-4" />
+						{t('card.sleep.badge', { echeance: echeanceSommeil })}
+					</span>
+				)}
 				{/* LA COMMANDE N'EST JAMAIS ÉTEINTE D'AVANCE, quel que soit le rôle (§5.3 ter) : la règle
 				    vit dans `cards_maj`, et une commande grisée ferait passer une décision de la base
 				    pour une décision d'écran (`CLAUDE.md` §10). Un lecteur seul l'ouvre, écrit, et lit
@@ -148,6 +202,18 @@ export function EnTeteCard({
 					</Button>
 				)}
 			</div>
+
+			{/* Le geste de sommeil est masqué pendant l'édition : deux panneaux ouverts sous le même
+			    en-tête feraient de la fiche deux formulaires empilés, ce que le §5.3 ter refuse. */}
+			{client === null || edition ? null : (
+				<BlocSommeil
+					card={card}
+					client={client}
+					dort={dort}
+					maintenant={maintenant}
+					onAppliquer={appliquerSommeil}
+				/>
+			)}
 
 			{edition && client !== null ? (
 				<EditionEntete
@@ -727,4 +793,192 @@ function MentionEtat({
 		)
 	}
 	return null
+}
+
+/**
+ * Le geste de mise en sommeil, ses quatre échéances usuelles et son réveil — §16.11.3, §5.3 quater.
+ *
+ * DEUX VISAGES, UN SEUL RENDU À LA FOIS. Sur une affaire endormie, la commande est « Réveiller » et
+ * appelle `wake_card` DIRECTEMENT : le geste n'a pas de paramètre, et il est réversible d'un autre
+ * geste. Une confirmation pour un geste réversible sans perte est un obstacle, non une sécurité.
+ *
+ * AUCUNE GARDE DE SAISIE NE DOUBLE LA BASE (§5.3 ter, §16.11.3) : le champ d'échéance n'a ni `min`
+ * ni `required`. Une échéance passée est ENVOYÉE, refusée par `snooze_date_in_past`, et le refus
+ * est montré. Doubler la contrainte ici masquerait sa disparition le jour où elle disparaîtrait.
+ */
+function BlocSommeil({
+	card,
+	client,
+	dort,
+	maintenant,
+	onAppliquer,
+}: {
+	readonly card: CardOuverte
+	readonly client: ClientCrm
+	readonly dort: boolean
+	readonly maintenant?: Date
+	readonly onAppliquer: (snoozedUntil: string | null) => void
+}) {
+	const [panneau, setPanneau] = useState(false)
+	const [enCours, setEnCours] = useState(false)
+	const [issue, setIssue] = useState<IssueSommeil | null>(null)
+	const [saisie, setSaisie] = useState('')
+	const commande = useRef<HTMLButtonElement>(null)
+	// Même mécanisme qu'à l'en-tête : la commande est démontée tant que le panneau est ouvert, et
+	// appeler `focus()` depuis le gestionnaire de fermeture viserait une référence nulle (§5.13).
+	const [focusARendre, setFocusARendre] = useState(false)
+	useEffect(() => {
+		if (panneau || !focusARendre) return
+		commande.current?.focus()
+		setFocusARendre(false)
+	}, [panneau, focusARendre])
+
+	const fermer = useCallback(() => {
+		setPanneau(false)
+		setFocusARendre(true)
+	}, [])
+
+	const envoyer = useCallback(
+		async (until: string | null) => {
+			setEnCours(true)
+			setIssue(null)
+			const resultat = await mettreEnSommeil(client, card.id, until)
+			setEnCours(false)
+			setIssue(resultat.issue)
+			if (resultat.issue !== 'endormie') return
+			onAppliquer(resultat.ligne.snoozed_until)
+			// Le panneau se referme sur le SEUL succès : un refus qui refermerait le panneau
+			// effacerait la saisie que l'utilisateur doit corriger (§5.7 ter, « le refus n'efface
+			// pas la saisie »).
+			fermer()
+		},
+		[card.id, client, fermer, onAppliquer],
+	)
+
+	const eveiller = useCallback(async () => {
+		setEnCours(true)
+		setIssue(null)
+		const resultat = await reveiller(client, card.id)
+		setEnCours(false)
+		setIssue(resultat.issue)
+		if (resultat.issue !== 'reveillee') return
+		onAppliquer(resultat.ligne.snoozed_until)
+	}, [card.id, client, onAppliquer])
+
+	const mention =
+		issue === null || issue === 'endormie' || issue === 'reveillee' ? null : MENTION_SOMMEIL[issue]
+
+	return (
+		<div className="flex flex-col gap-2">
+			<div className="flex flex-wrap items-center gap-2">
+				{dort ? (
+					<Button
+						ref={commande}
+						taille="compacte"
+						variante="secondaire"
+						disabled={enCours}
+						aria-label={t('card.sleep.wake.aria')}
+						data-testid="entete-card-reveiller"
+						onClick={() => void eveiller()}
+					>
+						<Sun aria-hidden="true" size={16} strokeWidth={2} />
+						{t(enCours ? 'card.sleep.pending' : CLE_REVEILLER)}
+					</Button>
+				) : panneau ? null : (
+					<Button
+						ref={commande}
+						taille="compacte"
+						variante="secondaire"
+						aria-expanded={false}
+						aria-label={t('card.sleep.open.aria')}
+						data-testid="entete-card-endormir"
+						onClick={() => {
+							setIssue(null)
+							setPanneau(true)
+						}}
+					>
+						<Moon aria-hidden="true" size={16} strokeWidth={2} />
+						{t(CLE_ENDORMIR)}
+					</Button>
+				)}
+			</div>
+
+			{panneau && !dort && (
+				<fieldset
+					data-testid="entete-card-panneau-sommeil"
+					className="flex flex-col gap-2 rounded-lg border border-border p-3"
+					// `Échap` referme le panneau en rendant le focus à la commande (§5.3 quater). Il est
+					// posé sur le conteneur plutôt que sur chaque contrôle : la touche remonte, et
+					// dupliquer le gestionnaire ferait diverger les deux chemins.
+					onKeyDown={(evenement) => {
+						if (evenement.key !== 'Escape') return
+						evenement.stopPropagation()
+						fermer()
+					}}
+				>
+					<legend className="text-sm text-text-2">{t('card.sleep.legend')}</legend>
+					<div className="flex flex-wrap gap-2">
+						{ECHEANCES_USUELLES.map((usuelle) => (
+							<Button
+								key={usuelle.cle}
+								taille="compacte"
+								variante="discret"
+								disabled={enCours}
+								data-testid={`entete-card-sommeil-${usuelle.cle}`}
+								onClick={() => void envoyer(echeanceUsuelle(usuelle.jours, maintenant))}
+							>
+								{t(`card.sleep.preset.${usuelle.cle}` as CleTraduction)}
+							</Button>
+						))}
+					</div>
+					<div className="flex flex-wrap items-end gap-2">
+						<div className="flex flex-col gap-1">
+							<label htmlFor="entete-card-sommeil-echeance" className="text-sm text-text-2">
+								{t('card.sleep.custom')}
+							</label>
+							<input
+								id="entete-card-sommeil-echeance"
+								data-testid="entete-card-sommeil-echeance"
+								type="datetime-local"
+								className="h-10 rounded-sm border border-border px-2"
+								value={saisie}
+								aria-describedby={mention === null ? undefined : 'entete-card-sommeil-mention'}
+								onChange={(evenement) => setSaisie(evenement.target.value)}
+							/>
+						</div>
+						<Button
+							taille="compacte"
+							variante="primaire"
+							disabled={enCours}
+							data-testid="entete-card-sommeil-envoyer"
+							onClick={() => void envoyer(echeanceSaisie(saisie))}
+						>
+							{t(enCours ? 'card.sleep.pending' : CLE_SOUMETTRE)}
+						</Button>
+						<Button
+							taille="compacte"
+							variante="discret"
+							data-testid="entete-card-sommeil-annuler"
+							onClick={fermer}
+						>
+							{t(CLE_ANNULER)}
+						</Button>
+					</div>
+				</fieldset>
+			)}
+
+			{/* Le refus est DIT, jamais avalé (§5.7) : `role="alert"` l'annonce, et il reste affiché
+			    tant qu'un nouveau geste ne l'a pas remplacé. */}
+			{mention !== null && (
+				<p
+					id="entete-card-sommeil-mention"
+					role="alert"
+					data-testid="entete-card-sommeil-mention"
+					className="text-sm text-danger"
+				>
+					{t(mention)}
+				</p>
+			)}
+		</div>
+	)
 }

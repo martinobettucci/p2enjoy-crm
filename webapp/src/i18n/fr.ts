@@ -202,6 +202,30 @@ export const fr = {
 		"La copie n'a pas abouti : sélectionnez l'adresse pour la copier à la main.",
 	// L'ÉCRITURE des six champs d'en-tête — CRM-040, docs/SPEC-cards.md §15 bis,
 	// docs/DESIGN_SYSTEM.md §5.3 ter.
+	// Mise en sommeil d'une affaire — docs/SPEC-cards.md §16.11, docs/DESIGN_SYSTEM.md §5.3 quater.
+	// La pastille porte l'échéance : « jusqu'à quand » est la moitié de l'information.
+	'card.sleep.badge': 'En sommeil jusqu’au {echeance}',
+	'card.sleep.open': 'Mettre en sommeil',
+	'card.sleep.open.aria': 'Mettre cette affaire en sommeil',
+	'card.sleep.wake': 'Réveiller',
+	'card.sleep.wake.aria': 'Réveiller cette affaire',
+	'card.sleep.cancel': 'Annuler',
+	'card.sleep.legend': 'Jusqu’à quand ?',
+	'card.sleep.preset.demain': 'Demain',
+	'card.sleep.preset.troisjours': 'Dans trois jours',
+	'card.sleep.preset.semaine': 'La semaine prochaine',
+	'card.sleep.preset.mois': 'Le mois prochain',
+	'card.sleep.custom': 'Une autre échéance',
+	'card.sleep.submit': 'Mettre en sommeil',
+	'card.sleep.pending': 'Enregistrement…',
+	// Les huit issues du dictionnaire fermé du §16.11.4. Aucune ne prétend savoir ce que le
+	// serveur n'a pas dit.
+	'card.sleep.refus.required': 'Une échéance est nécessaire.',
+	'card.sleep.refus.past': 'L’échéance doit être future.',
+	'card.sleep.refus.notfound': 'Cette affaire n’est plus disponible.',
+	'card.sleep.refus.forbidden': 'Vous ne pouvez pas modifier cette affaire.',
+	'card.sleep.refus.network': 'La demande n’a pas abouti : réessayez.',
+	'card.sleep.refus.unknown': 'La demande a échoué.',
 	'card.header.edit.open': 'Modifier',
 	// Le nom accessible nomme CE QU'ELLE MODIFIE : « Modifier » seul ne dirait pas quoi, hors
 	// contexte visuel (§15 bis.9).
@@ -385,6 +409,8 @@ export const fr = {
 	'timeline.event.restored': 'Affaire restaurée',
 	'timeline.event.field_changed': 'Champ renseigné',
 	'timeline.event.mail_received': 'Message reçu',
+	'timeline.event.snoozed': 'Affaire mise en sommeil',
+	'timeline.event.woken': 'Affaire réveillée',
 	'timeline.event.unknown': 'Événement',
 	// Le fil nomme le courrier qu'il annonce — un événement qui ne dit pas de quel message il
 	// parle n'est pas une mémoire (docs/SPEC-mail-subsystem.md §18.6).

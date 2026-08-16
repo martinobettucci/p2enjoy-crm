@@ -30,6 +30,9 @@ function card(surcharge: Partial<CardOuverte> = {}): CardOuverte {
 		next_action: 'Obtenir le cadrage technique',
 		next_action_at: '2026-08-20T09:00:00+00:00',
 		archived_at: null,
+		// Une affaire ÉVEILLÉE par défaut : le sommeil est l'exception, et une fixture qui
+		// dormirait rendrait la pastille présente dans toutes les preuves (CRM-081, §16.11).
+		snoozed_until: null,
 		profiles: { id: 'p-1', full_name: 'Driss Lemoine', avatar_url: null },
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
 		...surcharge,

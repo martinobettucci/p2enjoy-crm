@@ -39,7 +39,13 @@ export type EvenementLu = Pick<
 	readonly acteur: ProfilAffiche | null
 }
 
-/** Les dix types que la base accepte (docs/SPEC-cards.md §14.4). */
+/**
+ * Les types que l'écran nomme — TREIZE depuis `CRM-081` (docs/SPEC-cards.md §14.4, §16.11.5).
+ *
+ * `mail_sent`, quatorzième valeur du `CHECK` depuis la migration 44, n'est écrit par aucun trigger
+ * et n'est donc pas nommé ici : lui donner un libellé annoncerait un fait que le produit ne trace
+ * pas encore. Le repli de `familleDe` le garderait visible s'il apparaissait.
+ */
 export const TYPES_EVENEMENT = [
 	'created',
 	'moved',
@@ -52,6 +58,8 @@ export const TYPES_EVENEMENT = [
 	'restored',
 	'field_changed',
 	'mail_received',
+	'snoozed',
+	'woken',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -80,6 +88,10 @@ const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// répond à la même question — « qu'est-ce qui s'est dit sur cette affaire ? » — et évite une
 	// sixième bascule pour un seul type (`CRM-057`, docs/SPEC-mail-subsystem.md §18.6).
 	mail_received: 'discussion',
+	// « Qu'est devenue cette affaire ? » est exactement la question à laquelle le sommeil et le
+	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
+	snoozed: 'cycle',
+	woken: 'cycle',
 }
 
 /**
@@ -238,10 +250,30 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		const resume = message === null ? undefined : libelles.messages?.get(message)
 		return { detail: resume ?? null }
 	}
+	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` plutôt qu'un libellé résolu, et l'écart est
+	// motivé (§16.11.5) : une DATE n'est pas un libellé qui pourrait changer de sens demain — c'est
+	// la valeur même du fait. `until` pour la mise en sommeil, `from` pour l'échéance abandonnée.
+	if (ligne.type === 'snoozed' || ligne.type === 'woken') {
+		const cle = ligne.type === 'snoozed' ? 'until' : 'from'
+		return { detail: dateCourte(texte(ligne.payload[cle])) }
+	}
 	return { detail: null }
 }
 
 const texte = (valeur: unknown): string | null => (typeof valeur === 'string' ? valeur : null)
+
+/**
+ * Une date d'événement, au format court du produit — ou `null` lorsqu'elle n'est pas lisible.
+ *
+ * Une date illisible rend un détail ABSENT, jamais « Invalid Date » : le §14.10 exige qu'un détail
+ * non résolu se replie sur le libellé générique du type, et non sur une phrase tronquée.
+ */
+const dateCourte = (valeur: string | null, locale = 'fr-FR'): string | null => {
+	if (valeur === null) return null
+	const date = new Date(valeur)
+	if (Number.isNaN(date.getTime())) return null
+	return new Intl.DateTimeFormat(locale, { dateStyle: 'short' }).format(date)
+}
 
 /** Lit les événements d'une card. */
 export async function lireEvenements(

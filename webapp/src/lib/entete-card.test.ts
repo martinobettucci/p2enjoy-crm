@@ -31,6 +31,9 @@ function card(surcharge: Partial<CardOuverte> = {}): CardOuverte {
 		next_action: null,
 		next_action_at: null,
 		archived_at: null,
+		// Une affaire ÉVEILLÉE par défaut : le sommeil est l'exception, et une fixture qui
+		// dormirait rendrait la pastille présente dans toutes les preuves (CRM-081, §16.11).
+		snoozed_until: null,
 		profiles: null,
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
 		...surcharge,
