@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'éditeur de workflows offre enfin le geste « Comparer à la source »** (`CRM-032`,
+  `docs/SPEC-workflow-engine.md` §4 quater, `docs/DESIGN_SYSTEM.md` §5.15). Le §4.1 le promettait
+  depuis l'origine ; la fonction existait depuis la tranche précédente, mais aucun écran ne
+  l'appelait. Sur un workflow copié, la mention de divergence porte désormais une commande, et le
+  résultat s'écrit sous elle : soit « Cette copie est identique à sa source. », soit les compteurs
+  d'écarts et les **cinq** collections — étapes, transitions, champs, règles, exigences — avec, pour
+  chaque modification, l'attribut nommé et son avant → après. **Aucune écriture, et aucune
+  resynchronisation** : la règle du §4.1 est intacte, seule l'interdiction de *comparer* tombe, et
+  elle tombe parce que le geste existe désormais.
+  **La commande est offerte même quand la source n'a pas changé**, et ce n'est pas une symétrie
+  gratuite : le signal de divergence dit que la SOURCE a bougé, jamais que la copie s'en écarte —
+  une copie modifiée dont la source est intacte diverge pourtant, et ne l'offrir que sur le signal
+  cacherait exactement ce cas. **Elle n'est pas réservée à l'administrateur**, à la différence de
+  tous les autres gestes de cet éditeur : comparer est une lecture, et un `viewer` obtient le même
+  document. **Le résultat s'efface dès qu'il devient faux** — au changement de workflow, et à tout
+  geste qui réécrit la structure : un document de comparaison décrit un instant.
+  **Ce que l'écran n'a pas regardé, il le dit** : le nom, la portée et le track ne sont pas
+  comparés, la copie ne les reprenant pas de sa source, et une ligne l'écrit plutôt qu'un intitulé
+  toujours vide qui laisserait croire à une mesure jamais faite.
+  Un workflow qui n'est la copie de personne ne rend toujours **rien** — ni mention, ni commande.
+  `CRM-032` est **close**.
+
 - **Un workflow copié peut enfin dire EN QUOI il s'écarte de sa source** (`CRM-032`,
   `docs/SPEC-workflow-engine.md` §4 ter, migration 43). Le §4 bis disait **qu'**une source avait
   changé ; il ne disait pas **quoi**. La nouvelle RPC `compare_workflow_with_source(workflow_id)`
