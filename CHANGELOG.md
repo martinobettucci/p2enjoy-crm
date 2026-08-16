@@ -15,6 +15,19 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le parcours « transition bloquée → saisie → transition réussie » est éprouvé de bout en bout,
+  sur une session réelle** (`CRM-037`, `docs/SPEC-form-composer.md` §4 quater). Les trois gestes
+  existaient et étaient prouvés séparément, mais chacun contre des **réponses réseau substituées** :
+  rien ne garantissait que le serveur rende bien le refus attendu, ni que l'écriture émise par la
+  fiche suffise à le lever. `e2e/ui/parcours-transition.spec.ts` enchaîne désormais le tout sans
+  aucune substitution — connexion par le formulaire, refus de la garde, reprise suivie au clic,
+  saisie au clavier, second déplacement réussi — et **relit deux fois hors interface** : la valeur
+  écrite, puis l'étape de l'affaire. Un affichage confirmé n'est pas une écriture confirmée.
+  Sa **contre-épreuve** a établi deux faits qui n'étaient pas supposés : une ligne de valeur
+  **présente mais vide** ne lève pas le refus — la garde lit la valeur, pas l'existence de la ligne
+  —, et sur un champ `url` la **chaîne vide n'est pas exprimable**, la validation la refusant avant
+  la garde.
+
 - **Les six champs d'en-tête d'une affaire se MODIFIENT depuis sa fiche** (`CRM-040`,
   `docs/SPEC-cards.md` §15 bis, `docs/DESIGN_SYSTEM.md` §5.3 ter). L'en-tête livré plus tôt les
   montrait sans permettre de les corriger ; l'écart était nommé — « rien en base ne la bloque, ce

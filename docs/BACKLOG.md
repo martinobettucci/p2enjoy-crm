@@ -3584,14 +3584,17 @@ accessibilité des erreurs vérifiée.
       `docs/SPEC-webapp.md` §5.2, `docs/DAT.md` §3.1, `docs/manual.md` §4.7 et sommaire,
       `docs/INCONSISTENCY_REPORT.md` INC-062, `docs/JOURNAL.md`, `CHANGELOG.md` mis à jour dans le
       même changement.
-- [ ] **LE PARCOURS QUE LA DEFINITION OF DONE EXIGE N'EST PAS ATTEIGNABLE — INC-062.** « Transition
-      bloquée → saisie → transition réussie » suppose une **session** (INC-021) et un **contrôle de
-      transition**, dû par `CRM-041`, que `docs/MASTER_PLAN.md` §2 ordonne **après** cette unité.
-      Il n'y a pas d'erreur d'ordre à corriger : il y a une preuve écrite en supposant un écran que
-      le plan livre plus tard. Trois options d'arbitrage sont portées au responsable, **aucune n'est
-      appliquée en silence**.
-      **Cette preuve est bloquée par une dépendance et par un arbitrage, pas par un défaut de
-      l'unité.**
+- [x] **~~LE PARCOURS QUE LA DEFINITION OF DONE EXIGE N'EST PAS ATTEIGNABLE~~ — LIVRÉ le
+      2026-08-16, INC-062 PERD SON OBJET.** L'alinéa invoquait deux obstacles : l'absence de session
+      (INC-021), **close depuis `CRM-009`**, et l'absence de contrôle de transition, **livré depuis
+      par `CRM-041`**. Les deux ont disparu ; l'attente d'arbitrage portait sur une preuve devenue
+      atteignable. `e2e/ui/parcours-transition.spec.ts` l'enchaîne désormais **sur une session
+      réelle, sans aucune substitution réseau** : connexion par le formulaire, refus de la garde
+      avec sa clé et ses libellés, retour arrière constaté, reprise suivie **au clic**, saisie **au
+      clavier**, second déplacement réussi — avec **deux relectures hors interface**, la valeur
+      écrite puis l'étape de la card. Contrat au §4 quater de `docs/SPEC-form-composer.md`, écrit
+      après mesure et committé avant le code. **Console stricte** : la seule erreur admise est le
+      `400` du refus, consommée là où elle est provoquée.
 - [ ] **« Captures de chaque étape » n'est pas tenu à la lettre.** Les captures montrent **une**
       étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
       destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
@@ -3699,13 +3702,36 @@ accessibilité des erreurs vérifiée.
             le rendait, et le premier porte l'anneau de focus.
       - [x] `npm run typecheck` vert sur les quatre projets, `npm run build` vert.
       - [x] `docs/manual.md` §4.7, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **LE PARCOURS COMPLET DE LA DEFINITION OF DONE RESTE DÛ — INC-062, inchangée.**
-      « Transition bloquée → saisie → transition réussie » est désormais atteignable **en trois
-      écrans** — le board refuse, la fiche reçoit la saisie, le board rejoue —, et chacun des trois
-      gestes est prouvé séparément. Ce qui manque est **un scénario E2E qui les enchaîne sur une
-      session réelle**, sans réponse substituée. Il n'est pas écrit ici, et l'écart est nommé plutôt
-      que compensé : les preuves d'interface de cette tranche substituent le réseau
-      (`docs/DESIGN_SYSTEM.md` §12.5), ce que le §4 ter éprouve étant le rendu, pas la garde.
+- [x] **~~LE PARCOURS COMPLET DE LA DEFINITION OF DONE RESTE DÛ~~ — LIVRÉ le 2026-08-16, tranche du
+      parcours enchaîné.** L'alinéa disait exactement ce qui manquait : « un scénario E2E qui les
+      enchaîne sur une session réelle, sans réponse substituée ». Il est écrit —
+      `e2e/ui/parcours-transition.spec.ts`, **2 scénarios**, verts sur la pile réelle — et il
+      vérifie les **trois jonctions** qu'une substitution remplaçait par l'hypothèse à prouver
+      (§4 quater.1) : la clé que la garde met dans `details` est celle que l'adresse transporte et
+      celle qu'un champ porte ; la ligne écrite par la fiche est celle que la garde relit ; le
+      second déplacement réussit réellement, et la base porte la nouvelle étape.
+      - [x] **Une contre-épreuve accompagne le parcours, et elle a trouvé DEUX faits non supposés**
+            (§4 quater.3 bis). Sans elle, le seul passage sur la fiche pourrait passer pour la cause
+            de la réussite. **Premier fait** : une ligne `card_field_values` **présente mais vide**
+            (`value` à `null`) ne lève pas le refus — la garde lit la **valeur**, pas l'existence de
+            la ligne. **Second fait** : sur un champ `url`, la **chaîne vide n'est pas exprimable**
+            — la validation de `CRM-036` rend `400` / `invalid_field_value`, « attend une adresse
+            http(s) », avant même que la garde soit consultée. Les deux sont figés par la preuve.
+      - [x] **Captures produites ET OBSERVÉES**, depuis la session réelle :
+            `docs/captures/CRM-037/parcours-refus-1440.jpg` — le bandeau nomme « Lien vers la
+            proposition » et offre « Renseigner ces champs » ;
+            `docs/captures/CRM-037/parcours-saisie-session-reelle-1440.jpg` — le champ exigé porte
+            son liseré, sa mention « Exigé par le déplacement que vous avez demandé », la valeur
+            saisie et l'état « Enregistré » ;
+            `docs/captures/CRM-037/parcours-transition-reussie-1440.jpg` — le board défilé jusqu'à
+            la colonne d'arrivée, l'affaire à sa nouvelle place. Sans le défilement, cette dernière
+            ne montrait qu'une colonne vidée : le board défile horizontalement.
+      - [x] **UN CONSTAT TROUVÉ PAR L'OBSERVATION DE LA CAPTURE, ET NON PAR UN TEST — INC-134.**
+            La fiche affiche « Requis pour passer à **Signature** » sur une affaire **déjà** à
+            l'étape Signature. Ni la règle ni la garde ne sont en défaut — le parcours prouve que
+            seul `lien-proposition` bloque —, c'est un énoncé d'interface. **Comportement laissé
+            inchangé** : son texte est figé par des preuves de composant, et trancher ce qu'il doit
+            dire quand l'étape exigeante est l'étape courante dépasse cette tranche. Consigné.
 
 *DoD adaptée, écarts explicites.* **Aucun test pgTAP dédié** : cette unité ne livre ni table, ni
 fonction, ni politique — son objet est un rendu. La règle de base qu'elle doit respecter,
@@ -3805,7 +3831,16 @@ table, ni statut, ni flux.
 
 *Limites nommées, non masquées.*
 
-- **INC-062 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- ~~**INC-062 est ouverte** et conditionne le passage en `[x]`.~~ **Elle perd son objet le
+  2026-08-16** : le parcours qu'elle constatait inatteignable est livré et vert (voir ci-dessus).
+- **CE QUI RETIENT DÉSORMAIS `CRM-037` EN `[~]`, ET C'EST LE SEUL ÉCART.** La Definition of Done
+  demande « captures de **chaque étape** » ; les captures en montrent **trois** — `Prospection`,
+  `Signature` et l'arrivée en `Réalisation en cours`. Les sept exigeraient sept affaires, une par
+  étape, que le seed ne pose pas. Le manque appartient au **seed de démonstration, `CRM-046`**, et
+  l'inventer ici dépasserait l'unité. Aucune autre preuve de la Definition of Done ne manque.
+- **INC-134 est ouverte** (énoncé « Requis pour passer à Signature » sur une affaire déjà à cette
+  étape) : elle ne retient pas l'unité, la règle et la garde étant conformes, mais elle attend un
+  arbitrage sur ce que la mention doit dire.
 - **INC-065 est ouverte** : rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la
   card qu'elle désigne. Aucun droit n'est contourné — chaque lecture reste soumise à sa politique —,
   mais aucune spécification ne dit ce qu'une adresse incohérente doit rendre. Comportement inchangé,
