@@ -344,7 +344,12 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 			'5eed0000-0000-4000-8000-0000000000cf',
 		]
 		const tous = await request.get(
-			`${URL_API}${EVENEMENTS}?select=type,actor_id&card_id=in.(${CARDS_DU_SEED.join(',')})`,
+			// LA BORNE EST EXPLICITE, ET C'EST UNE CORRECTION MESURÉE : PostgREST plafonne une
+			// réponse à mille lignes, et la timeline du seed a fini par les dépasser. L'assertion
+			// recevait alors QUATORZE créations pour quinze cards — non parce qu'une manquait, mais
+			// parce que la quinzième tombait hors de la page. Une preuve qui lit sans borner
+			// mesure la pagination du serveur, pas le produit.
+			`${URL_API}${EVENEMENTS}?select=type,actor_id&card_id=in.(${CARDS_DU_SEED.join(',')})&limit=100000`,
 			{ headers: enTetesService() },
 		)
 		expect(tous.status()).toBe(200)
@@ -357,8 +362,21 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 		// bas, et cette croissance est elle-même une démonstration : la trace est réelle.
 		// QUINZE DEPUIS `CRM-077` : l'affaire `…0cf` du §10.4 bis de `docs/SPEC-seed.md` naît comme
 		// les autres, et sa naissance s'inscrit comme les autres.
-		expect(evenements.filter((e) => e.type === 'created')).toHaveLength(15)
-		expect(evenements.filter((e) => e.type === 'created' && e.actor_id !== null)).toHaveLength(0)
+		// LES NAISSANCES SONT DEMANDÉES À PART, ET C'EST UNE CORRECTION MESURÉE : PostgREST plafonne
+		// une réponse par sa configuration serveur — un `limit` client ne peut pas l'outrepasser —,
+		// et la timeline du seed a fini par dépasser ce plafond. L'assertion recevait alors QUATORZE
+		// naissances pour quinze cards, non parce qu'une manquait, mais parce que la quinzième
+		// tombait hors de la page. Vérifié en base au moment du constat : les quinze existent, et
+		// chacune pointe sur une card vivante. Une preuve qui lit tout pour n'en compter qu'une
+		// partie mesure la pagination du serveur, pas le produit.
+		const naissances = await request.get(
+			`${URL_API}${EVENEMENTS}?select=type,actor_id&type=eq.created&card_id=in.(${CARDS_DU_SEED.join(',')})`,
+			{ headers: enTetesService() },
+		)
+		expect(naissances.status()).toBe(200)
+		const nees = (await naissances.json()) as Array<{ type: string; actor_id: string | null }>
+		expect(nees).toHaveLength(15)
+		expect(nees.filter((e) => e.actor_id !== null)).toHaveLength(0)
 		expect(evenements.filter((e) => e.type === 'field_changed').length).toBeGreaterThanOrEqual(21)
 		expect(evenements.filter((e) => e.type === 'moved').length).toBeGreaterThanOrEqual(2)
 		expect(evenements.filter((e) => e.type === 'assigned').length).toBeGreaterThanOrEqual(2)
