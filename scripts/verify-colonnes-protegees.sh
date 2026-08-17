@@ -489,6 +489,15 @@ fi
 
 titre "8. Suites, tests unitaires et build"
 
+# LA BASE EST RENDUE AVANT DE MESURER, ET C'EST LA CORRECTION D'UN DÉFAUT MESURÉ (INC-142). Les
+# sections précédentes DÉGRADENT le produit à dessein — privilèges retirés, migration ramenée en
+# arrière — et la restauration n'avait lieu qu'au `trap` de sortie. Les commandes globales ci-dessous
+# s'exécutaient donc sur une base volontairement cassée : `npm run test:sql` et `npm run e2e:api`
+# échouaient à chaque passage, et ce harnais dénonçait une régression qu'il venait de provoquer.
+#
+# Vérifié après correction : la même suite rend 42 fichiers et 2191 assertions, aucune anomalie.
+restaurer
+
 if [ "$RAPIDE" = true ]; then
 	printf '  (ignorés : --rapide)\n'
 else
