@@ -1817,8 +1817,8 @@ ne bougent qu'avec le produit.
 | Déplacements déclarés par le workflow général | 11 |
 | Questions du formulaire actives | 12 |
 | Questions du formulaire retirées | 2 |
-| Affaires | 15 |
-| Affaires actives | 13 |
+| Affaires | 41 |
+| Affaires actives | 39 |
 | Affaires archivées | 1 |
 | Affaires en corbeille | 1 |
 | Réponses de formulaire | 21 |

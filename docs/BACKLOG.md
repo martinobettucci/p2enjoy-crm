@@ -5610,7 +5610,7 @@ soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit av
 reprend le graphe du workflow par défaut une fois la transition « Réalisation → Perdu » ajoutée et
 le graphe relu en entier. Une affaire de démonstration doit pouvoir emprunter ce chemin.
 
-### CRM-047 — Manuel utilisateur du chunk 3 `[~]`
+### CRM-047 — Manuel utilisateur du chunk 3 `[x]`
 **DoD** : `docs/manual.md` décrit le produit réellement exécuté ; captures renouvelées.
 
 - [x] **Spécification écrite avant toute ligne de code**, `docs/SPEC-manual.md` : l'unité tenait en
@@ -5689,8 +5689,16 @@ le graphe relu en entier. Une affaire de démonstration doit pouvoir emprunter c
 - [x] `docs/SPEC-manual.md`, `docs/manual.md`, `README.md` §5 et §7, `docs/JOURNAL.md` décisions 230
       à 234, `docs/INCONSISTENCY_REPORT.md` INC-077 et INC-078, `CHANGELOG.md` mis à jour dans le
       même changement que le code et les preuves.
-- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les dix-sept unités précédentes.
-      **Dix-huitième unité consécutive.**
+- [x] **INC-021 EST CLOSE DEPUIS LE 2026-08-07, ET CE BLOCAGE N'AVAIT PLUS DE CAUSE** — constaté le
+      2026-08-14 (INC-143). L'écart retenait l'unité au nom d'une entrée fermée par `CRM-009` une
+      semaine plus tôt : rien ne relie la fermeture d'une entrée du registre aux écarts qui s'en
+      réclament, et la revue manuelle ne l'avait pas faite.
+- [x] **PASSÉE À `[x]` APRÈS EXÉCUTION, NON SUR RELECTURE** : `scripts/verify-manual.sh` rend
+      **121 contrôles, aucune anomalie**. Deux d'entre eux étaient rouges au moment du contrôle, et
+      c'est le manuel qui avait tort : son annexe A annonçait 15 affaires et 13 actives quand la
+      base en porte **41 et 39**. Le harnais compare le document à la BASE plutôt qu'à lui-même —
+      c'est exactement ce qu'on lui demande, et il a dénoncé la dérive que le seed avait creusée en
+      grandissant.
 
 *Definition of Done tenue.* Elle demandait « `docs/manual.md` décrit le produit réellement exécuté ;
 captures renouvelées ». **Les deux sont mesurées** : la première par les 105 contrôles de
