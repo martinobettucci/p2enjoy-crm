@@ -130,11 +130,23 @@ describe('les paramètres d’adresse (§12.2)', () => {
 		expect(lireParametres(new URLSearchParams())).toEqual(PARAMETRES_PAR_DEFAUT)
 	})
 
+	// TÉMOIN RÉVISÉ, `CRM-081` tranche 2 b : cette assertion figeait l'ensemble des paramètres à
+	// CINQ champs. Le sommeil en ajoute un sixième (§16.12.4), et un `toEqual` exhaustif devient
+	// rouge par arbitrage, non par défaut. Le champ est donc nommé avec sa valeur attendue — son
+	// DÉFAUT, l'adresse d'essai ne portant pas `sommeil` —, ce qui garde la propriété que
+	// l'assertion éprouvait : rien d'autre que ce qui est écrit n'entre dans les paramètres.
 	it('lit un tri, un sens, une étape, une recherche et un rang de page', () => {
 		const lus = lireParametres(
 			new URLSearchParams({ tri: 'amount', sens: 'asc', etape: ETAPE, q: 'refonte', page: '3' }),
 		)
-		expect(lus).toEqual({ tri: 'amount', sens: 'asc', etape: ETAPE, recherche: 'refonte', page: 3 })
+		expect(lus).toEqual({
+			tri: 'amount',
+			sens: 'asc',
+			etape: ETAPE,
+			recherche: 'refonte',
+			page: 3,
+			sommeil: 'masquees',
+		})
 	})
 
 	// LA clôture : un `tri=` inconnu ne devient jamais un `order=` envoyé à PostgREST (§12.2).
@@ -310,6 +322,17 @@ type Appel = {
 	nuls: string[]
 	tris: [string, { ascending?: boolean; nullsFirst?: boolean }][]
 	recherches: [string, string, { config?: string; type?: string }][]
+	/**
+	 * Les filtres `or=` envoyés — le filtre d'exclusion du sommeil, et lui seul aujourd'hui
+	 * (`CRM-081` tranche 2 b, docs/SPEC-cards.md §16.12.1).
+	 *
+	 * SON ABSENCE DE CE JEU D'ESSAI A LAISSÉ HUIT TESTS ROUGES. La chaîne factice ne portait aucun
+	 * `or`, et le mode par défaut de la vue liste en émet un à chaque lecture : les huit tests qui
+	 * observent la requête tombaient sur `chaine.or is not a function` avant leur assertion. Une
+	 * chaîne factice doit porter TOUTE méthode que le module appelle, sans quoi elle ne mesure plus
+	 * le module mais elle-même.
+	 */
+	ou: string[]
 	plage?: [number, number]
 }
 
@@ -322,10 +345,14 @@ type Reponse = {
 
 /** Client factice qui **enregistre** la requête construite, puis rend la réponse voulue. */
 function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
-	const appel: Appel = { egalites: [], nuls: [], tris: [], recherches: [] }
+	const appel: Appel = { egalites: [], nuls: [], tris: [], recherches: [], ou: [] }
 	const chaine = {
 		eq: (colonne: string, valeur: unknown) => {
 			appel.egalites.push([colonne, valeur])
+			return chaine
+		},
+		or: (filtre: string) => {
+			appel.ou.push(filtre)
 			return chaine
 		},
 		is: (colonne: string) => {
@@ -502,5 +529,122 @@ describe('la lecture d’une page (§12.3)', () => {
 			})
 			expect(appel.tris[0]?.[0]).toBe(tri.cle)
 		}
+	})
+})
+
+// --- Le sommeil : le cinquième paramètre et son filtre (`CRM-081` tranche 2 b) ------------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : le filtre de la vue liste
+// @verifies docs/SPEC-cards.md §16.12.1 (le prédicat d'exclusion et sa forme), §16.12.2 (l'instant
+//           est envoyé comme VALEUR), §16.12.3 (la liste filtre au SERVEUR, avant la plage),
+//           §16.12.4 (le paramètre d'adresse, son défaut et sa clôture)
+
+describe('le paramètre `sommeil` dans l’adresse (§16.12.4)', () => {
+	it('vaut « masquées » sur une adresse nue : c’est la Definition of Done elle-même', () => {
+		expect(lireParametres(new URLSearchParams()).sommeil).toBe('masquees')
+		expect(PARAMETRES_PAR_DEFAUT.sommeil).toBe('masquees')
+	})
+
+	it('lit « visibles » lorsque l’adresse le demande', () => {
+		expect(lireParametres(new URLSearchParams('sommeil=visibles')).sommeil).toBe('visibles')
+	})
+
+	// La clôture, comme celle des tris : une valeur inconnue ne doit jamais faire apparaître des
+	// affaires qu'on croyait rangées, même par une faute de frappe dans une adresse partagée.
+	it('replie sur le défaut TOUTE valeur inconnue, y compris une casse différente', () => {
+		for (const valeur of ['', 'masquees', 'Visibles', 'VISIBLES', 'oui', 'true', '1', 'visible']) {
+			expect(lireParametres(new URLSearchParams(`sommeil=${valeur}`)).sommeil).toBe('masquees')
+		}
+	})
+
+	it('n’écrit JAMAIS le défaut dans l’adresse : la vue par défaut reste la plus courte', () => {
+		expect(ecrireParametres(parametres()).has(CLES_URL.sommeil)).toBe(false)
+		expect(ecrireParametres(parametres({ sommeil: 'masquees' })).toString()).toBe('')
+	})
+
+	it('écrit « visibles », et fait l’aller-retour sans se perdre', () => {
+		const ecrite = ecrireParametres(parametres({ sommeil: 'visibles' }))
+		expect(ecrite.get(CLES_URL.sommeil)).toBe('visibles')
+		expect(lireParametres(ecrite).sommeil).toBe('visibles')
+	})
+
+	it('cohabite avec les quatre autres paramètres sans en écraser un', () => {
+		const ecrite = ecrireParametres(
+			parametres({ tri: 'amount', sens: 'desc', etape: ETAPE, recherche: 'vallier', page: 3, sommeil: 'visibles' }),
+		)
+		const relue = lireParametres(ecrite)
+		expect(relue.sommeil).toBe('visibles')
+		expect(relue.tri).toBe('amount')
+		expect(relue.etape).toBe(ETAPE)
+		expect(relue.recherche).toBe('vallier')
+		expect(relue.page).toBe(3)
+	})
+})
+
+describe('le filtre du sommeil dans la requête de page (§16.12.1, §16.12.3)', () => {
+	const INSTANT = new Date('2026-08-17T10:00:00.000Z')
+
+	it('exclut les affaires en sommeil par défaut, côté SERVEUR', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres(), maintenant: INSTANT })
+		expect(appel.ou).toEqual(['snoozed_until.is.null,snoozed_until.lte.2026-08-17T10:00:00.000Z'])
+	})
+
+	// LE FILTRE PART AVANT LA PLAGE, et c'est la règle du §12.5 : appliqué après la pagination, il ne
+	// verrait que les 25 lignes rapportées et le total annoncerait des pages qui n'existent pas.
+	// La chaîne factice ne rend la réponse que sur `range` : un `or` enregistré prouve donc qu'il a
+	// été construit avant elle.
+	it('envoie le filtre AVANT la plage, jamais après', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres(), maintenant: INSTANT })
+		expect(appel.ou).toHaveLength(1)
+		expect(appel.plage).toEqual([0, LIGNES_PAR_PAGE - 1])
+	})
+
+	it('n’envoie AUCUN filtre de sommeil en mode « visibles »', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, {
+			channelId: CHANNEL,
+			parametres: parametres({ sommeil: 'visibles' }),
+			maintenant: INSTANT,
+		})
+		expect(appel.ou).toEqual([])
+	})
+
+	// « nulle OU échue », jamais `not.gt` : une colonne NULLE ne satisfait aucune comparaison, et
+	// `not.gt` écarterait toutes les affaires qui n'ont jamais dormi — l'immense majorité.
+	it('écrit « nulle OU échue » et non une négation de comparaison', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres(), maintenant: INSTANT })
+		expect(appel.ou[0]).toContain('snoozed_until.is.null')
+		expect(appel.ou[0]).toContain('snoozed_until.lte.')
+		expect(appel.ou[0]).not.toContain('not.gt')
+	})
+
+	// L'instant est une VALEUR (§16.12.2) : PostgREST n'évalue aucune fonction dans un filtre, et
+	// `lte.now()` comparerait à la chaîne « now() ».
+	it('envoie l’instant comme valeur ISO, jamais un appel de fonction', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres(), maintenant: INSTANT })
+		expect(appel.ou[0]).not.toContain('now()')
+		expect(appel.ou[0]?.endsWith(INSTANT.toISOString())).toBe(true)
+	})
+
+	it('cohabite avec le filtre d’étape et la recherche, sans se substituer à eux', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, {
+			channelId: CHANNEL,
+			parametres: parametres({ etape: ETAPE, recherche: 'vallier' }),
+			maintenant: INSTANT,
+		})
+		expect(appel.ou).toHaveLength(1)
+		expect(appel.egalites).toContainEqual(['current_step_id', ETAPE])
+		expect(appel.recherches).toHaveLength(1)
+	})
+
+	// La colonne doit être RAPPORTÉE, non pour le filtre — il est au serveur — mais pour la marque
+	// des lignes rendues visibles (§16.12.7).
+	it('demande `snoozed_until`, dont la pastille compacte a besoin', () => {
+		expect(COLONNES_CARD_LISTE).toContain('snoozed_until')
 	})
 })

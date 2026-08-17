@@ -548,3 +548,149 @@ describe('appel de la garde `move_card` (§5.2, §7.9)', () => {
 		})
 	})
 })
+
+// --- Le filtre du sommeil à la composition (`CRM-081` tranche 2 b) -----------------------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : le board masque, marque et compte
+// @verifies docs/SPEC-cards.md §16.2 (« en sommeil » = non nulle ET future), §16.12.1 (le prédicat
+//           d'exclusion), §16.12.3 (le board filtre à la COMPOSITION, et pourquoi),
+//           §16.12.6 (le compte des masquées, sans requête supplémentaire),
+//           §16.12.8 (le compteur et le cumul portent sur les cartes RENDUES)
+
+describe('le filtre du sommeil à la composition (§16.12.3)', () => {
+	/** Une échéance à `jours` de l'instant du jeu d'essai. Jamais une date figée : voir §16.11.1. */
+	function echeance(jours: number): string {
+		return new Date(MAINTENANT.getTime() + jours * 24 * 60 * 60 * 1000).toISOString()
+	}
+
+	const EVEILLEE = card({ id: 'eveillee', current_step_id: 's2' })
+	const ENDORMIE = card({ id: 'endormie', current_step_id: 's2', snoozed_until: echeance(10) })
+	const ECHUE = card({ id: 'echue', current_step_id: 's2', snoozed_until: echeance(-2) })
+
+	function composer(cards: readonly CardBoard[], modeSommeil?: 'masquees' | 'visibles') {
+		return composerBoard({
+			etapes: ETAPES,
+			cards,
+			transitions: TRANSITIONS,
+			maintenant: MAINTENANT,
+			...(modeSommeil === undefined ? {} : { modeSommeil }),
+		})
+	}
+
+	// LE DÉFAUT MASQUE, et c'est la Definition of Done de `CRM-081` : « sort des vues par défaut ».
+	// Le mode n'est même pas passé ici — c'est le défaut du module qui doit masquer.
+	it('masque les affaires en sommeil sans qu’on le lui demande', () => {
+		const modele = composer([EVEILLEE, ENDORMIE])
+		expect(modele.colonnes[1]?.cartes.map((carte) => carte.card.id)).toEqual(['eveillee'])
+	})
+
+	// L'ordre attendu est celui du §2.6 — `position` puis départage —, et NON l'ordre du tableau
+	// d'entrée : le filtre ne fait que retirer des lignes, le tri de la colonne reste le sien. Les
+	// deux fixtures partagent la position 1, d'où le départage qui place « endormie » avant
+	// « eveillee ». Écrit ainsi plutôt qu'en ensemble : c'est la propriété du §2.6, et un `Set`
+	// laisserait passer une bascule qui réordonnerait la colonne.
+	it('les ramène toutes en mode « visibles », dans l’ordre de la colonne', () => {
+		const modele = composer([EVEILLEE, ENDORMIE], 'visibles')
+		expect(modele.colonnes[1]?.cartes.map((carte) => carte.card.id)).toEqual(['endormie', 'eveillee'])
+	})
+
+	// UNE ÉCHÉANCE ÉCHUE N'EST PAS UN SOMMEIL (§16.11.1) : l'affaire reste visible partout, sans
+	// bascule et sans marque. C'est le côté du prédicat qu'une fixture de date figée cesserait
+	// d'éprouver au bout de quelques semaines — d'où l'instant injecté.
+	it('ne masque PAS une affaire dont l’échéance est passée, et ne la marque pas non plus', () => {
+		const modele = composer([ECHUE])
+		const carte = modele.colonnes[1]?.cartes[0]
+		expect(carte?.card.id).toBe('echue')
+		expect(carte?.enSommeil).toBe(false)
+	})
+
+	// L'instant EXACT n'est pas un sommeil : le prédicat est « strictement postérieure ».
+	it('ne masque pas une affaire dont l’échéance est l’instant même', () => {
+		const pile = card({ id: 'pile', current_step_id: 's2', snoozed_until: MAINTENANT.toISOString() })
+		expect(composer([pile]).colonnes[1]?.cartes).toHaveLength(1)
+	})
+
+	it('marque d’un `enSommeil` vrai la carte endormie qu’il rend visible', () => {
+		const modele = composer([ENDORMIE], 'visibles')
+		expect(modele.colonnes[1]?.cartes[0]?.enSommeil).toBe(true)
+	})
+
+	// Le prédicat de la marque emploie l'instant du FILTRE (§16.12.3) : une carte rendue par l'un est
+	// nécessairement marquée par l'autre, et aucun second `new Date()` ne peut les désaccorder.
+	it('rend, en mode visible, une carte marquée pour chaque carte que le mode masqué écarte', () => {
+		const toutes = [EVEILLEE, ENDORMIE, ECHUE]
+		const masque = composer(toutes)
+		const visible = composer(toutes, 'visibles')
+		const marquees = visible.colonnes.flatMap((colonne) =>
+			colonne.cartes.filter((carte) => carte.enSommeil).map((carte) => carte.card.id),
+		)
+		const rendues = masque.colonnes.flatMap((colonne) => colonne.cartes.map((carte) => carte.card.id))
+		expect(marquees).toEqual(['endormie'])
+		expect(rendues).not.toContain('endormie')
+	})
+
+	// Une échéance illisible n'est pas un sommeil : la carte reste rendue plutôt que d'être masquée
+	// par une comparaison avec `NaN`, qui serait fausse de toute façon.
+	it('ne masque pas une affaire dont l’échéance est illisible', () => {
+		const cassee = card({ id: 'cassee', current_step_id: 's2', snoozed_until: 'pas-une-date' })
+		const modele = composer([cassee])
+		expect(modele.colonnes[1]?.cartes).toHaveLength(1)
+		expect(modele.colonnes[1]?.cartes[0]?.enSommeil).toBe(false)
+	})
+})
+
+describe('le compte des masquées et les compteurs (§16.12.6, §16.12.8)', () => {
+	function echeance(jours: number): string {
+		return new Date(MAINTENANT.getTime() + jours * 24 * 60 * 60 * 1000).toISOString()
+	}
+
+	const ENDORMIE = card({ id: 'endormie', current_step_id: 's2', snoozed_until: echeance(10) })
+
+	function composer(cards: readonly CardBoard[], modeSommeil: 'masquees' | 'visibles') {
+		return composerBoard({ etapes: ETAPES, cards, transitions: TRANSITIONS, maintenant: MAINTENANT, modeSommeil })
+	}
+
+	// C'EST CE COMPTE QUI PERMET À L'ÉTAT VIDE DE NE PAS MENTIR (§16.12.6) : « toutes les affaires de
+	// ce channel sont en sommeil » plutôt que « aucune affaire », et sans une requête de plus.
+	it('compte les masquées, ce qui rend l’état vide véridique sans seconde requête', () => {
+		const modele = composer([ENDORMIE], 'masquees')
+		expect(modele.nombreCards).toBe(0)
+		expect(modele.nombreEnSommeilMasquees).toBe(1)
+	})
+
+	it('ne compte aucune masquée en mode « visibles » : rien n’y est masqué', () => {
+		const modele = composer([ENDORMIE], 'visibles')
+		expect(modele.nombreCards).toBe(1)
+		expect(modele.nombreEnSommeilMasquees).toBe(0)
+	})
+
+	it('distingue un channel réellement vide d’un channel dont tout dort', () => {
+		expect(composer([], 'masquees').nombreEnSommeilMasquees).toBe(0)
+		expect(composer([ENDORMIE], 'masquees').nombreEnSommeilMasquees).toBe(1)
+	})
+
+	// Le compteur d'une colonne annonce ce qu'elle MONTRE : un compteur incluant les masquées
+	// désignerait des cartes introuvables à l'œil (§16.12.8).
+	it('borne le compteur d’une colonne aux cartes rendues', () => {
+		const cards = [card({ id: 'eveillee', current_step_id: 's2' }), ENDORMIE]
+		expect(composer(cards, 'masquees').colonnes[1]?.cartes).toHaveLength(1)
+		expect(composer(cards, 'visibles').colonnes[1]?.cartes).toHaveLength(2)
+	})
+
+	// Le cumul suit la même règle : il porte sur les cartes rendues, sans quoi une colonne
+	// annoncerait un montant que ses cartes visibles ne totalisent pas.
+	it('exclut du cumul le montant d’une affaire masquée', () => {
+		const cards = [
+			card({ id: 'eveillee', current_step_id: 's2', amount: 1000 }),
+			card({ id: 'dort', current_step_id: 's2', amount: 4000, snoozed_until: echeance(10) }),
+		]
+		expect(composer(cards, 'masquees').colonnes[1]?.cumul?.montant).toBe(1000)
+		expect(composer(cards, 'visibles').colonnes[1]?.cumul?.montant).toBe(5000)
+	})
+
+	// La colonne doit être RAPPORTÉE par la requête, sans quoi ni le filtre ni la marque ne seraient
+	// possibles : le board lit toutes ses cards en une fois (§7.2).
+	it('demande `snoozed_until` dans les colonnes lues', () => {
+		expect(COLONNES_CARD_BOARD).toContain('snoozed_until')
+	})
+})
