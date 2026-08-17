@@ -108,8 +108,13 @@ montant si renseigné, indicateur de prochaine action, et pastille d'ancienneté
 (neutre, puis `--color-danger` au-delà du seuil de relance).
 
 Le glisser-déposer utilise une zone de saisie visible au clavier : chaque card expose aussi un
-menu d'actions listant **uniquement les transitions déclarées**. C'est la garantie que
-l'interface ne propose jamais une action que le backend refuserait.
+menu d'actions dont la **section des transitions** liste **uniquement les transitions déclarées**.
+C'est la garantie que l'interface ne propose jamais un **déplacement** que le backend refuserait.
+
+*Révisé le 2026-08-17 par `CRM-081` (§5.3 sexies).* Cette phrase écrivait « un menu d'actions
+listant uniquement les transitions déclarées », et le menu ne portait effectivement rien d'autre.
+Il porte désormais aussi le geste de sommeil, qui n'est la garde de rien : la garantie ci-dessus
+vaut pour les déplacements, seul endroit où `move_card` refuserait ce que l'écran aurait proposé.
 
 **Identité — contrat `CRM-022`.** L'avatar du responsable est enfin rendu lorsque `owner_id` est
 renseigné. Il mesure 32 px, porte le nom complet comme nom accessible et se replie sur les
@@ -357,6 +362,47 @@ ci-dessous ne disent que de quoi il a l'air.
 - **Un état vide dû au sommeil porte son action.** « Aucune affaire éveillée dans ce channel » et
   « Toutes les affaires de ce channel sont en sommeil » offrent le geste qui les lève, selon le
   patron du §5.8 ; comme lui, l'action n'est alors **pas répétée** dans la barre.
+
+### 5.3 sexies Le menu de la carte du board, et le sommeil qui s'y loge — `CRM-081`
+
+Ce que le geste envoie, refuse et fait disparaître est spécifié dans `docs/SPEC-cards.md` §16.13 ;
+les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **Le menu de la carte est le menu de ses ACTIONS, plus celui de ses seuls déplacements.** Son
+  déclencheur porte « Actions » et n'est **jamais éteint** : une carte porte toujours au moins le
+  geste de sommeil. C'est une mesure qui l'impose — une affaire d'étape terminale ne déclare aucune
+  transition, et son menu éteint la privait de tout geste, alors qu'une affaire livrée est
+  précisément celle qu'on range.
+
+- **Le menu ouvert porte deux sections nommées**, dans cet ordre : les déplacements, puis le
+  sommeil. Un séparateur de 1 px `--color-border` les distingue ; les titres de section sont en
+  `text-xs` `--color-text-3`, comme les étiquettes de la barre de filtres du §5.9.
+
+- **Quand aucune transition n'est déclarée, la phrase reste, et elle entre dans le menu.** « Aucun
+  déplacement déclaré depuis cette étape » se lit désormais **dans** la section des déplacements,
+  au lieu de tenir lieu de libellé à un bouton éteint. L'information est conservée, elle change de
+  place — et ce qui l'accompagnait, l'extinction du menu entier, disparaît.
+
+- **Les quatre échéances usuelles sont rendues dès l'ouverture**, en boutons discrets pleine
+  largeur, sans second dévoilement. Un panneau ouvert dans un menu ouvert ferait trois niveaux pour
+  un choix de quatre boutons. La fiche, elle, garde son panneau (§5.3 quater) : elle a la place, et
+  elle porte aussi l'échéance choisie, que 288 px n'admettent pas.
+
+- **« Réveiller » remplace les quatre boutons sur une affaire endormie**, icône `Sun`, sans
+  confirmation — même règle qu'au §5.3 quater, pour le même motif.
+
+- **Le refus est écrit dans le menu, et le menu reste ouvert.** Mention `role="alert"` en
+  `--color-danger` sous la section, mot pour mot celle de la fiche : un même refus ne se formule pas
+  de deux façons selon l'écran d'où il a été demandé. Le succès, lui, referme le menu — la carte
+  disparaît ou prend sa pastille, et le menu d'une carte disparue n'a rien à montrer.
+
+- **Pendant le vol, les gestes de la section sont éteints et le bouton appuyé dit
+  « Enregistrement… »** : deux appels concurrents sur la même carte feraient gagner le plus lent,
+  exactement comme pour un déplacement (§6).
+
+- **La carte ne bouge qu'après la réponse du serveur.** Le déplacement est optimiste (§6) ; le
+  sommeil ne l'est pas, parce qu'il fait **disparaître** sa carte — une disparition qu'il faudrait
+  annuler serait bien plus déroutante qu'une attente de quelques centaines de millisecondes.
 
 ### 5.4 Inbox
 

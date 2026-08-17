@@ -2910,3 +2910,163 @@ avec la bascule, et c'est la propriété attendue.
 | API | Les deux modes rejoués **avec les jetons réels** sur les deux channels du seed : `prospection` rend 1 ligne sur 2 en mode masqué et 2 sur 2 en mode visible ; `grands-comptes` rend ses 4 lignes dans les deux modes, l'échéance échue n'étant pas un sommeil. Le total du `Content-Range` est constaté à chaque fois |
 | E2E d'interface | Le board de `prospection` ne montre pas l'affaire endormie du seed ; la bascule la ramène **avec sa pastille** ; la vue liste du même channel fait de même et son total passe de 1 à 2 ; l'affaire à l'échéance échue de `grands-comptes` est présente dans les deux modes et **sans** pastille ; le paramètre survit au passage board → liste |
 | Visuel | Captures des deux modes, board et vue liste, plus la pastille compacte au palier étroit, observées conformément à `CLAUDE.md` §16 |
+
+#### 16.13 Tranche 2 d — le geste de sommeil depuis la carte du board
+
+Écrit **après mesure** sur la pile réellement exécutée le 2026-08-17, et committé avant la première
+ligne de code de la tranche. Ce sous-chapitre porte le premier point du §16.10 — « le geste dans
+l'en-tête de la fiche **et dans le menu de la card** » —, dont la moitié est due depuis la
+tranche 2 a : les trois tranches livrées jusqu'ici laissent la **fiche comme seul chemin** pour
+endormir ou réveiller une affaire.
+
+##### Ce que la tranche livre
+
+- le geste des deux visages — « Mettre en sommeil », « Réveiller » — **dans le menu de la carte du
+  board**, avec les quatre échéances usuelles du §16.11.3 ;
+- un menu de carte qui **cesse d'être éteint** lorsque l'étape ne déclare aucune transition ;
+- la disparition de la carte du board par défaut dès que le sommeil est écrit, et sa réapparition
+  au réveil, **sans rechargement** ;
+- le refus dit sur la carte, avec les mêmes mentions qu'à la fiche.
+
+##### Ce qu'elle ne livre pas, et qui est nommé plutôt que suggéré
+
+- **aucune échéance choisie depuis le board** : le champ `datetime-local`, son étiquette et son
+  bouton d'envoi occupent trois lignes d'une carte large de **288 px** (§5.2 bis), soit davantage
+  que la carte entière n'en porte aujourd'hui. Le geste du board sert les quatre échéances
+  usuelles ; une échéance particulière se pose depuis la fiche, à un clic du titre de la carte.
+  L'écart est écrit ici plutôt que découvert à l'usage ;
+- **aucun sommeil de fil de messagerie** : tranche 2 c, inchangée ;
+- **aucun geste de sommeil dans la vue liste** : le §16.10 nomme la fiche et la carte du board, et
+  ajouter une commande par ligne de tableau serait un périmètre inventé (`CLAUDE.md` §1).
+
+##### 16.13.1 LE MENU DE LA CARTE DEVIENT LE MENU DES ACTIONS, ET C'EST UNE MESURE QUI L'IMPOSE
+
+Le menu de la carte ne portait jusqu'ici **que** les transitions déclarées, et il était **éteint**
+quand l'étape n'en déclarait aucune — un bouton `disabled` portant « Aucun déplacement déclaré
+depuis cette étape ».
+
+MESURÉ le 2026-08-17 sur le seed, en comptant les transitions sortantes de l'étape de chaque
+affaire active :
+
+| Channel | Affaire | Étape | Transitions sortantes |
+|---|---|---|---|
+| `grands-comptes` | `Socle analytique — Vertuo` | `Livré` | **0** |
+| `grands-comptes` | `Audit sécurité applicative` | `Prospection` | 2 |
+| `grands-comptes` | `Migration ERP Sogexia` | `Relance` | 2 |
+| `grands-comptes` | `Refonte du site vitrine` | `Relance` | 2 |
+| `prospection` | `Assistant IA support — Nordis` | `Négociation` | 3 |
+| `prospection` | `Cadrage data — Groupe Vallier` | `Prospection` | 2 |
+
+Une affaire d'étape terminale existe donc dans le produit, et loger le geste **à l'intérieur** d'un
+menu éteint pour elle reviendrait à ne pas le livrer là où il sert le plus : une affaire livrée est
+précisément celle qu'on met en sommeil.
+
+La règle change donc, et l'ancienne est retournée avec son motif :
+
+- le déclencheur porte désormais **« Actions »**, et il n'est **jamais éteint d'avance** — une
+  carte porte toujours au moins le geste de sommeil ;
+- le menu ouvert porte **deux sections nommées** : les transitions déclarées, puis le sommeil ;
+- lorsque l'étape ne déclare aucune transition, la section des transitions porte la **phrase**
+  « Aucun déplacement déclaré depuis cette étape » **à l'intérieur du menu**, et non plus sur un
+  bouton éteint. L'information est conservée, elle change seulement de place.
+
+Le §5.1 du design system, qui écrivait que la carte « expose un menu d'actions listant **uniquement**
+les transitions déclarées », est révisé dans le même changement (§5.3 sexies). La garantie qu'il
+portait — « l'interface ne propose jamais une action que le backend refuserait » — n'est **pas**
+affaiblie : les transitions restent celles que `move_card` accepte, et le sommeil n'est la garde de
+rien (§16.12.3) — `snooze_card` est offerte à toute carte visible, et son refus est mesuré, jamais
+deviné (§16.13.4).
+
+##### 16.13.2 Les deux visages, et le geste que chacun déclenche
+
+Ce sont ceux du §16.11.3, transposés sans changement de règle :
+
+| État de l'affaire | Ce que la section « Sommeil » porte | Ce que le geste fait |
+|---|---|---|
+| Éveillée | quatre boutons, un par échéance usuelle | `snooze_card(card_id, échéance)` |
+| Endormie | un bouton « Réveiller » | `wake_card(card_id)`, **directement** |
+
+Aucun second niveau de dévoilement n'est ajouté : les quatre échéances sont rendues **dès
+l'ouverture du menu**, là où la fiche les cache derrière « Mettre en sommeil ». Le motif est la
+place et le nombre de gestes : dans le menu d'une carte, le sommeil est **une** section parmi deux,
+et ouvrir un panneau dans un menu déjà ouvert ferait trois niveaux pour un choix de quatre boutons.
+
+Les quatre échéances sont celles de `ECHEANCES_USUELLES` (§16.11.3) — demain, trois jours, la
+semaine prochaine, le mois prochain —, comptées **depuis l'instant du geste**, jamais depuis
+l'instant du rendu du board : une carte rendue le matin et endormie le soir doit dormir un jour à
+partir du soir.
+
+##### 16.13.3 CE QUE LA CARTE DEVIENT APRÈS LE GESTE, ET C'EST LÀ QUE LE PRODUIT SE VOIT
+
+En mode par défaut — les affaires en sommeil sont masquées (§16.12.4) —, une affaire endormie
+**depuis le board disparaît du board**, et c'est la propriété qui rend le geste utile : ranger une
+affaire sans changer d'écran.
+
+La mécanique n'émet **aucune requête de lecture supplémentaire** :
+
+1. le RPC rend la ligne, et c'est **elle** qui fait foi (§16.11.4) — jamais l'échéance saisie ;
+2. la seule colonne reportée sur la card détenue par l'écran est `snoozed_until`. Les deux fonctions
+   rendent le type composite `public.cards`, **sans la relation `profiles` embarquée** que la carte
+   porte pour son avatar : remplacer la card entière ferait disparaître l'avatar du responsable
+   jusqu'au prochain chargement, ce que le §7.9 de `docs/SPEC-workflow-engine.md` a déjà refusé pour
+   `move_card` ;
+3. la composition du board rejoue son filtre (§16.12.3) et la carte quitte ses colonnes.
+
+Conséquences exigibles, et vérifiables : le **compteur de la colonne** et son **cumul** perdent
+l'affaire (§16.12.8) ; si elle était la dernière, l'état vide « Toutes les affaires de ce channel
+sont en sommeil » apparaît avec son action (§16.12.6) ; en mode `visibles`, la carte **reste** et
+prend sa pastille compacte (§16.12.7).
+
+Le réveil est le chemin inverse, et il n'est observable **que** depuis le mode `visibles` : en mode
+masqué, une affaire endormie n'est pas rendue, donc son menu n'existe pas. Ce n'est pas une
+limitation à contourner, c'est la conséquence exacte du filtre.
+
+**Aucun optimisme.** La carte ne bouge qu'après la réponse du serveur. Le déplacement, lui, est
+optimiste (§7.9) parce qu'il est fréquent et qu'il rend la main au geste suivant ; le sommeil fait
+**disparaître** sa carte, et une disparition qu'il faudrait annuler serait bien plus déroutante
+qu'une attente de quelques centaines de millisecondes.
+
+##### 16.13.4 Les refus, et ce que la carte en dit
+
+Les huit issues du §16.11.4 sont classées par le **même** module — `classerSommeil` de
+`webapp/src/lib/sommeil-card.ts` —, et rendues avec les **mêmes** mentions qu'à la fiche : une
+lectrice qui appuie sur « Demain » depuis le board lit « Vous ne pouvez pas modifier cette
+affaire. », mot pour mot ce qu'elle lit depuis la fiche.
+
+- la mention est écrite **dans le menu**, sous la section « Sommeil », en `role="alert"` (§5.7) ;
+- le menu **reste ouvert** sur un refus : le refermer effacerait le message avant qu'il soit lu ;
+- le menu **se referme** sur un succès, la carte disparaissant ou se marquant selon le mode ;
+- `snooze_date_required` et `snooze_date_in_past` ne sont pas atteignables depuis le board — les
+  quatre échéances usuelles sont toujours futures et jamais nulles — mais leurs mentions restent
+  câblées : le dictionnaire est fermé (§16.11.4), et une issue non traitée serait un refus muet.
+
+**La commande n'est jamais éteinte d'avance**, quel que soit le rôle (§5.3 quater) : le board ne
+sait pas ce que la RLS consentira, et éteindre un geste par supposition remplacerait un refus mesuré
+par une devinette.
+
+Pendant le vol, les quatre échéances et le réveil sont éteints — deux appels concurrents sur la même
+carte feraient gagner le plus lent, exactement comme pour `move_card` —, et le libellé du bouton
+appuyé passe à « Enregistrement… ».
+
+##### 16.13.5 Ce que le board annonce aux technologies d'assistance
+
+Le board porte déjà une région `aria-live` pour le déplacement et son refus (§7.11). Les deux gestes
+du sommeil l'empruntent, et n'en créent pas une seconde :
+
+| Issue | Ce qui est annoncé |
+|---|---|
+| `endormie` | « Affaire mise en sommeil jusqu'au … », l'échéance en date courte |
+| `reveillee` | « Affaire réveillée » |
+| toute autre | la mention du refus, la même que celle écrite dans le menu |
+
+Une carte qui disparaît sans un mot est un écran qui ment à celui qui ne le voit pas : c'est la
+seule raison pour laquelle ces trois annonces existent.
+
+##### 16.13.6 Preuves exigées de la tranche
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | Le report de la seule colonne `snoozed_until` sur la card détenue, l'embed `responsable` conservé, la card étrangère laissée intacte ; le menu **jamais éteint** sans transition et la phrase rendue à l'intérieur ; les deux visages selon l'état de l'affaire ; les quatre échéances envoyées comptées depuis l'instant du geste ; le succès qui referme le menu et le refus qui le laisse ouvert ; les mentions des huit issues ; l'extinction pendant le vol |
+| API | Aucune preuve d'API nouvelle n'est due : le contrat des deux RPC est celui du §16.8, déjà éprouvé par `e2e/api/snooze.spec.ts` (9 scénarios) avec les jetons réels. Cette tranche n'ajoute **aucun** chemin serveur, et le prétendre serait une preuve inventée |
+| E2E d'interface | Depuis le board de `grands-comptes` : le menu de `Socle analytique — Vertuo`, **étape terminale sans transition**, s'ouvre et porte le geste ; l'affaire endormie depuis la carte **quitte le board**, le compteur de sa colonne décroît, et elle est retrouvée par la bascule **avec sa pastille** ; le réveil depuis le mode `visibles` la ramène en mode masqué ; l'affaire est réveillée en fin de scénario pour que le seed sorte intact |
+| Visuel | Captures du menu ouvert sur une affaire éveillée et sur une affaire endormie, du refus rendu à une lectrice, et du board après disparition de la carte, observées conformément à `CLAUDE.md` §16 |
