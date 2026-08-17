@@ -241,6 +241,41 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée
+
+**Nature :** dépendance d'ordre ; le rejeu d'une migration ancienne casse une contrainte élargie depuis.
+**Relevé le :** 2026-08-17, en exécutant `scripts/verify-move-card-to-channel.sh`.
+
+**Reproduit à la main, sur une base saine et seedée** :
+
+```
+psql -f supabase/migrations/0017_move_card_to_channel.sql
+ERROR:  check constraint "card_events_type_check" of relation "card_events"
+        is violated by some row
+```
+
+Idem pour `0020_change_channel_workflow.sql`. Les deux réinstallent `card_events_type_check` avec le
+vocabulaire de leur époque ; or la table contient désormais des événements `mail_received`,
+`mail_sent`, `snoozed` et `woken`, livrés par `CRM-055`, `CRM-058` et `CRM-081`. La contrainte
+étroite est alors refusée par les lignes existantes.
+
+**Pourquoi le `migrations-runner` ne le voit pas.** Il rejoue le répertoire dans l'ordre : sur une
+base **vide** — après `resetMe.sh` — la contrainte étroite passe, puis les migrations suivantes
+l'élargissent. Le défaut n'apparaît que sur une base **peuplée**, c'est-à-dire exactement le cas d'un
+redémarrage de pile en cours de vie. **C'est la même famille que la décision 325**, qui avait déjà
+réparé ce mécanisme pour `mail_received` en conditionnant la convergence — la garde posée alors ne
+couvre pas les types arrivés depuis.
+
+**Ce que la remise en état a révélé au passage.** Le vocabulaire compte **quatorze** types, et non
+douze : `snoozed` et `woken` s'ajoutent aux douze connus. Plusieurs contrôles et migrations
+raisonnent encore sur une liste plus courte.
+
+**Ce qui reste dû.** Étendre la garde de convergence des migrations 17 et 20 pour qu'elles
+n'installent leur contrainte que si aucun type plus récent n'est déjà présent — ou, plus simplement,
+qu'elles cessent de la réinstaller, le vocabulaire étant désormais tenu par les migrations qui
+l'élargissent. **Bloquant** : tant que ce point tient, un redémarrage de pile sur une base contenant
+un événement de sommeil ou de courrier échoue.
+
 ### INC-143 — Quatre unités restent `[~]` au nom d'INC-021, close depuis une semaine
 
 **Nature :** blocage cité longtemps après la disparition de sa cause ; il fausse le décompte du backlog.
