@@ -10,7 +10,7 @@
 # Rejoue les preuves exigées par la Definition of Done de `CRM-013` :
 #
 #   1. la suite pgTAP `supabase/tests/0015_colonnes_protegees.test.sql` est verte ;
-#   2. les douze colonnes ouvertes le sont, la treizième ne l'est plus, et le compte est EXACT :
+#   2. les onze colonnes ouvertes le sont, la douzième ne l'est plus, et le compte est EXACT :
 #      une fermeture de trop est aussi grave qu'une réouverture ;
 #   3. le contrat d'API du §4.4.4 tient contre la pile, avec les jetons réels des trois profils,
 #      chaque refus **relisant la ligne** pour la constater inchangée ;
@@ -77,10 +77,16 @@ MAIL_BIZDEV=bizdev@p2enjoy.test
 MAIL_VIEWER=viewer@p2enjoy.test
 MDP_SEED=SeedDev2026Local
 
-# Les douze colonnes que `CRM-013` laisse ouvertes. Écrite UNE SEULE FOIS : deux copies
+# Les ONZE colonnes que `CRM-013` laisse ouvertes. Écrite UNE SEULE FOIS : deux copies
 # divergeraient, et une restauration silencieusement fausse serait pire que l'absence de contrôle.
+#
+# ELLES ÉTAIENT DOUZE, ET `snoozed_until` EN EST SORTIE LE 2026-08-14. `CRM-081` a livré
+# `endormir_card` / `reveiller_card` comme seul chemin d'écriture du sommeil, avec sa garde et sa
+# trace de timeline ; tant que la colonne restait ouverte, un `PATCH` direct contournait l'une et
+# faisait taire l'autre. Le compte descend donc à onze, et ce contrôle-ci l'a dénoncé dès la
+# fermeture — c'est exactement ce qu'on lui demande, et la révision se fait dans le même changement.
 COLONNES_OUVERTES="title, description, position, owner_id, amount, currency,
-	probability_override, next_action, next_action_at, snoozed_until,
+	probability_override, next_action, next_action_at,
 	archived_at, deleted_at"
 
 RAPIDE=false
@@ -200,7 +206,7 @@ titre "2. L'état des privilèges de colonne"
 nb=$(psql_db -c "select count(*) from information_schema.column_privileges
                   where table_schema='public' and table_name='cards'
                     and grantee='authenticated' and privilege_type='UPDATE';")
-[ "$nb" = "12" ] \
+[ "$nb" = "11" ] \
 	&& ok "DOUZE colonnes ouvertes, ni onze ni treize — le compte exact, pas un ordre de grandeur" \
 	|| fail "colonnes ouvertes : $nb au lieu de 12"
 
