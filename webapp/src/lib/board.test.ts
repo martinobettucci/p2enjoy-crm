@@ -33,6 +33,7 @@ import {
 	lireEtapes,
 	lireLibellesChamps,
 	lireTransitions,
+	appliquerSommeil,
 	remplacerCard,
 	resoudreEtape,
 	type CardBoard,
@@ -692,5 +693,54 @@ describe('le compte des masquées et les compteurs (§16.12.6, §16.12.8)', () =
 	// possibles : le board lit toutes ses cards en une fois (§7.2).
 	it('demande `snoozed_until` dans les colonnes lues', () => {
 		expect(COLONNES_CARD_BOARD).toContain('snoozed_until')
+	})
+})
+
+// --- Le report du sommeil sur la card détenue par l'écran — `CRM-081` tranche 2 d ------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 d
+// @verifies docs/SPEC-cards.md §16.13.3 (la seule colonne reportée, et l'embed préservé),
+//           §16.11.4 (la ligne rendue est la source, jamais la saisie)
+describe('report du sommeil après le geste (§16.13.3)', () => {
+	const RESPONSABLE = {
+		id: 'profil-camille',
+		full_name: 'Camille Roy',
+		avatar_url: null,
+	}
+	const CARDS: readonly CardBoard[] = [
+		card({ id: 'c1', current_step_id: 's1', owner_id: 'profil-camille', responsable: RESPONSABLE }),
+		card({ id: 'c2', current_step_id: 's1', snoozed_until: '2026-09-01T10:00:00.000Z' }),
+	]
+
+	it('reporte l’échéance rendue sur la seule card visée', () => {
+		const apres = appliquerSommeil(CARDS, 'c1', '2026-09-15T09:00:00.000Z')
+		expect(apres.find((c) => c.id === 'c1')?.snoozed_until).toBe('2026-09-15T09:00:00.000Z')
+		// La card étrangère au geste sort intacte, échéance comprise.
+		expect(apres.find((c) => c.id === 'c2')).toEqual(CARDS[1])
+	})
+
+	it('remet l’échéance à `null` au réveil', () => {
+		const apres = appliquerSommeil(CARDS, 'c2', null)
+		expect(apres.find((c) => c.id === 'c2')?.snoozed_until).toBeNull()
+	})
+
+	// LA DIFFÉRENCE AVEC `remplacerCard`, ET C'EST TOUT LE MOTIF DE CETTE FONCTION (§16.13.3) :
+	// `snooze_card` et `wake_card` rendent le type composite `public.cards`, donc SANS la relation
+	// `profiles` embarquée. Remplacer la ligne entière ferait disparaître l'avatar du responsable
+	// jusqu'au prochain chargement.
+	it('préserve l’embed du responsable, que les deux RPC ne rendent pas', () => {
+		const apres = appliquerSommeil(CARDS, 'c1', '2026-09-15T09:00:00.000Z')
+		expect(apres.find((c) => c.id === 'c1')?.responsable).toEqual(RESPONSABLE)
+		expect(apres.find((c) => c.id === 'c1')?.owner_id).toBe('profil-camille')
+	})
+
+	it('ne touche à rien quand l’identifiant est inconnu', () => {
+		expect(appliquerSommeil(CARDS, 'inconnue', '2026-09-15T09:00:00.000Z')).toEqual(CARDS)
+	})
+
+	it('ne modifie pas la liste reçue', () => {
+		const copie = [...CARDS]
+		appliquerSommeil(CARDS, 'c1', '2026-09-15T09:00:00.000Z')
+		expect(CARDS).toEqual(copie)
 	})
 })

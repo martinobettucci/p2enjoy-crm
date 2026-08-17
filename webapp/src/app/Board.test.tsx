@@ -57,6 +57,14 @@ const LIBELLES = new Map([['lien-proposition', 'Lien vers la proposition']])
 type ReponseRpc = {
 	data: unknown
 	error: { message: string; details: string | null; code: string | null } | null
+	/**
+	 * LE STATUT HTTP, AJOUTÉ PAR LA TRANCHE 2 d DE `CRM-081`. `deplacerCard` classe ses refus sur
+	 * le message et le code seuls, et le harnais n'en portait donc pas. `classerSommeil`, lui, lit
+	 * d'abord le statut : une réponse sans statut est une requête qui n'a **jamais abouti**
+	 * (docs/SPEC-cards.md §16.11.4), et l'omettre ferait passer tout geste de sommeil pour une
+	 * panne de réseau. Facultatif : les réponses de déplacement restent écrites sans lui.
+	 */
+	status?: number
 }
 
 /** Client factice : seule `rpc` est employée par le board, et elle est **observée**. */
@@ -227,13 +235,24 @@ describe('menu des transitions (§7.5, §7.7)', () => {
 		expect(gestes.map((geste) => geste.textContent)).toEqual(['Relancer', 'Marquer perdu'])
 	})
 
-	// MESURÉ : les étapes `Livré` et `Perdu` du seed n'ont aucune transition sortante. Le bouton
-	// reste **lisible** et dit pourquoi (docs/DESIGN_SYSTEM.md §8).
-	it('reste lisible et explique l’indisponibilité quand aucune transition n’est déclarée', () => {
+	// TÉMOIN RETOURNÉ LE 2026-08-17 PAR LA TRANCHE 2 d DE `CRM-081`, ET LE MOTIF EST ÉCRIT ICI
+	// (CLAUDE.md §18, décision 51). Cette preuve exigeait un bouton **éteint** : « le menu n'a que
+	// des transitions à offrir, donc il s'éteint quand il n'y en a aucune, mais il dit pourquoi ».
+	// Le menu porte désormais AUSSI le geste de sommeil (docs/SPEC-cards.md §16.13.1), et
+	// l'éteindre priverait de tout geste une affaire d'étape terminale — MESURÉ sur le seed :
+	// `Socle analytique — Vertuo`, à l'étape `Livré`, n'a aucune transition sortante, et une
+	// affaire livrée est précisément celle qu'on range.
+	//
+	// Ce que la preuve garde, parce que c'est ce qu'elle protégeait vraiment : l'indisponibilité
+	// du DÉPLACEMENT reste **dite en toutes lettres** (docs/DESIGN_SYSTEM.md §8). Elle a seulement
+	// changé de place — du libellé d'un bouton mort à une phrase dans le menu ouvert.
+	it('explique l’indisponibilité du déplacement sans éteindre le menu', async () => {
+		const utilisateur = userEvent.setup()
 		monter({ cards: [card({ id: 'c1', current_step_id: 's7' })], client: clientRpc().client })
 		const bouton = screen.getByTestId('menu-transitions') as HTMLButtonElement
-		expect(bouton.disabled).toBe(true)
-		expect(bouton.textContent?.trim().length).toBeGreaterThan(0)
+		expect(bouton.disabled).toBe(false)
+		await utilisateur.click(bouton)
+		expect(screen.getByTestId('aucune-transition').textContent?.trim().length).toBeGreaterThan(0)
 	})
 
 	// LE REPLI DU §7.5, QU'AUCUNE DONNÉE DU SEED N'EXERCE. MESURÉ : `workflow_transitions.label` est
@@ -266,8 +285,12 @@ describe('menu des transitions (§7.5, §7.7)', () => {
 		expect(bouton.getAttribute('aria-expanded')).toBe('false')
 		await utilisateur.click(bouton)
 		expect(bouton.getAttribute('aria-expanded')).toBe('true')
+		// TÉMOIN RETOURNÉ AVEC LE PRÉCÉDENT : `aria-controls` désignait la liste des transitions,
+		// qui ÉTAIT le menu. Le menu porte deux sections depuis la tranche 2 d, et l'attribut
+		// désigne désormais le conteneur qui les porte toutes deux — sans quoi il annoncerait la
+		// moitié de ce que le bouton dévoile.
 		expect(bouton.getAttribute('aria-controls')).toBe(
-			screen.getByTestId('liste-transitions').getAttribute('id'),
+			screen.getByTestId('menu-carte').getAttribute('id'),
 		)
 	})
 
@@ -581,5 +604,206 @@ describe('la pastille compacte sur une carte de board (§16.12.7)', () => {
 		expect(colonne).toBeDefined()
 		if (colonne === undefined) return
 		expect(within(colonne).getAllByTestId('carte-card')).toHaveLength(1)
+	})
+})
+
+// --- Le geste de sommeil dans le menu de la carte — `CRM-081` tranche 2 d -------------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 d
+// @verifies docs/SPEC-cards.md §16.13.1 (le menu n'est plus éteint sans transition),
+//           §16.13.2 (les deux visages et les quatre échéances depuis l'instant du geste),
+//           §16.13.3 (ce que la carte devient après le geste), §16.13.4 (les refus),
+//           §16.13.5 (ce que le board annonce)
+// @verifies docs/DESIGN_SYSTEM.md §5.3 sexies (les deux sections, la mention, l'extinction en vol)
+describe('sommeil depuis le menu de la carte (docs/SPEC-cards.md §16.13)', () => {
+	/** Une échéance relative à l'instant de composition, jamais une date figée. */
+	function echeance(jours: number): string {
+		return new Date(MAINTENANT.getTime() + jours * 24 * 60 * 60 * 1000).toISOString()
+	}
+
+	/** La réponse d'un RPC de sommeil : les deux fonctions rendent la ligne de `cards`, en `200`. */
+	function ligne(id: string, snoozedUntil: string | null): ReponseRpc {
+		return { data: { id, snoozed_until: snoozedUntil }, error: null, status: 200 }
+	}
+
+	/** Un refus tel que PostgREST le rend : le MESSAGE est le jeton du contrat (§16.8). */
+	function refus(message: string, status: number): ReponseRpc {
+		return { data: null, error: { message, details: null, code: 'P0001' }, status }
+	}
+
+	// LE CAS QUI A IMPOSÉ LA RÈGLE (§16.13.1) : une étape terminale ne déclare aucune transition,
+	// et son menu éteint privait l'affaire de TOUT geste. Mesuré sur le seed : `Socle analytique —
+	// Vertuo`, à l'étape `Livré`, a zéro transition sortante.
+	it('ouvre le menu d’une affaire dont l’étape ne déclare aucune transition', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's7' })], client: clientRpc().client })
+		const bouton = screen.getByTestId('menu-transitions') as HTMLButtonElement
+		expect(bouton.disabled).toBe(false)
+		await utilisateur.click(bouton)
+		expect(screen.getByTestId('menu-carte')).toBeDefined()
+		// La phrase n'est pas perdue : elle entre dans le menu au lieu d'être le libellé d'un mort.
+		expect(screen.getByTestId('aucune-transition').textContent).toBe(fr['board.menu.none'])
+		expect(screen.queryByTestId('liste-transitions')).toBeNull()
+		// Et le geste, lui, est bien là.
+		expect(screen.getByTestId('liste-echeances')).toBeDefined()
+	})
+
+	it('porte les deux sections quand l’étape déclare des transitions', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		expect(screen.getAllByTestId('transition')).toHaveLength(2)
+		expect(screen.getAllByTestId(/^carte-sommeil-/)).toHaveLength(4)
+		expect(screen.queryByTestId('aucune-transition')).toBeNull()
+	})
+
+	it('rend « Réveiller » à la place des quatre échéances sur une affaire endormie', async () => {
+		const utilisateur = userEvent.setup()
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		expect(screen.getByTestId('carte-reveiller')).toBeDefined()
+		expect(screen.queryByTestId('liste-echeances')).toBeNull()
+	})
+
+	// L'ÉCHÉANCE EST COMPTÉE DEPUIS L'INSTANT DU GESTE (§16.13.2), et non depuis l'instant du rendu
+	// du board : une carte rendue le matin et endormie le soir doit dormir un jour à partir du soir.
+	// L'horloge est donc figée LOIN de `MAINTENANT`, et c'est elle que l'échéance envoyée doit suivre.
+	it('envoie les quatre échéances usuelles comptées depuis l’instant du geste', async () => {
+		const instantDuGeste = new Date('2026-09-20T08:30:00.000Z')
+		// L'horloge est figée LOIN de `MAINTENANT`, l'instant qui a servi au rendu : c'est ce qui
+		// distingue « compté depuis le geste » de « compté depuis le rendu ». `shouldAdvanceTime`
+		// est nécessaire — `userEvent` attend de vrais tours de boucle —, et l'horloge avance donc
+		// de quelques dizaines de millisecondes pendant les deux clics. L'assertion porte sur un
+		// ENCADREMENT plutôt que sur une égalité à la milliseconde : figer la valeur exacte
+		// éprouverait la vitesse du harnais, pas la règle.
+		vi.useFakeTimers({ shouldAdvanceTime: true })
+		vi.setSystemTime(instantDuGeste)
+		try {
+			const utilisateur = userEvent.setup()
+			const { client, appels } = clientRpc(ligne('c1', echeance(1)))
+			monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+			await utilisateur.click(screen.getByTestId('menu-transitions'))
+			await utilisateur.click(screen.getByTestId('carte-sommeil-semaine'))
+			await waitFor(() => expect(appels).toHaveLength(1))
+			expect(appels[0]?.nom).toBe('snooze_card')
+			expect(appels[0]?.arguments.card_id).toBe('c1')
+			const envoyee = new Date(String(appels[0]?.arguments.until)).getTime()
+			const attendue = instantDuGeste.getTime() + 7 * 24 * 60 * 60 * 1000
+			expect(envoyee).toBeGreaterThanOrEqual(attendue)
+			expect(envoyee).toBeLessThan(attendue + 5000)
+			// Et surtout : elle ne suit PAS l'instant du rendu, dont elle est à un mois et demi.
+			expect(envoyee - MAINTENANT.getTime()).toBeGreaterThan(40 * 24 * 60 * 60 * 1000)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('appelle `wake_card` sans échéance depuis une affaire endormie', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, appels } = clientRpc(ligne('c1', null))
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client,
+			modeSommeil: 'visibles',
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getByTestId('carte-reveiller'))
+		await waitFor(() => expect(appels).toHaveLength(1))
+		expect(appels[0]).toEqual({ nom: 'wake_card', arguments: { card_id: 'c1' } })
+	})
+
+	// LA LIGNE RENDUE EST LA SOURCE, JAMAIS LA SAISIE (§16.13.3) : le serveur peut arrondir, et
+	// c'est son échéance qui doit atteindre l'écran.
+	it('reporte l’échéance RENDUE PAR LE SERVEUR, non celle qui a été envoyée', async () => {
+		const utilisateur = userEvent.setup()
+		const rendue = echeance(3)
+		const vues: (readonly CardBoard[])[] = []
+		const { client } = clientRpc(ligne('c1', rendue))
+		monter({
+			cards: [
+				card({ id: 'c1', current_step_id: 's1' }),
+				card({ id: 'c2', current_step_id: 's1', position: 2 }),
+			],
+			client,
+			onCards: (suivantes) => vues.push(suivantes),
+		})
+		await utilisateur.click(screen.getAllByTestId('menu-transitions')[0] as HTMLElement)
+		await utilisateur.click(screen.getByTestId('carte-sommeil-demain'))
+		await waitFor(() => expect(vues).toHaveLength(1))
+		expect(vues[0]?.find((carte) => carte.id === 'c1')?.snoozed_until).toBe(rendue)
+		// La card étrangère au geste sort intacte.
+		expect(vues[0]?.find((carte) => carte.id === 'c2')?.snoozed_until).toBeNull()
+	})
+
+	it('referme le menu sur un succès et annonce l’échéance', async () => {
+		const utilisateur = userEvent.setup()
+		const { client } = clientRpc(ligne('c1', echeance(10)))
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getByTestId('carte-sommeil-mois'))
+		await waitFor(() => expect(screen.queryByTestId('menu-carte')).toBeNull())
+		// UNE CARTE QUI DISPARAÎT SANS UN MOT MENT À CELUI QUI NE LA VOIT PAS (§16.13.5).
+		const region = screen.getByRole('status')
+		await waitFor(() => expect(region.textContent).toContain('mise en sommeil'))
+	})
+
+	it('annonce le réveil', async () => {
+		const utilisateur = userEvent.setup()
+		const { client } = clientRpc(ligne('c1', null))
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client,
+			modeSommeil: 'visibles',
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getByTestId('carte-reveiller'))
+		const region = screen.getByRole('status')
+		await waitFor(() => expect(region.textContent).toBe(fr['live.board.woken']))
+	})
+
+	// LE MENU RESTE OUVERT SUR UN REFUS (§16.13.4) : le refermer effacerait le message avant qu'il
+	// soit lu. Et la mention est CELLE DE LA FICHE, mot pour mot.
+	it('laisse le menu ouvert sur un refus et écrit la mention de la fiche', async () => {
+		const utilisateur = userEvent.setup()
+		const { client } = clientRpc(refus('forbidden', 403))
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getByTestId('carte-sommeil-demain'))
+		const mention = await screen.findByTestId('carte-sommeil-mention')
+		expect(mention.textContent).toBe(fr['card.sleep.refus.forbidden'])
+		expect(mention.getAttribute('role')).toBe('alert')
+		expect(screen.getByTestId('menu-carte')).toBeDefined()
+		expect(screen.getByTestId('liste-echeances')).toBeDefined()
+	})
+
+	it('ne modifie aucune card quand le geste est refusé', async () => {
+		const utilisateur = userEvent.setup()
+		const vues: (readonly CardBoard[])[] = []
+		const { client } = clientRpc(refus('card_not_found', 400))
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1' })],
+			client,
+			onCards: (suivantes) => vues.push(suivantes),
+		})
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		await utilisateur.click(screen.getByTestId('carte-sommeil-demain'))
+		await screen.findByTestId('carte-sommeil-mention')
+		expect(vues).toHaveLength(0)
+	})
+
+	// LA COMMANDE N'EST JAMAIS ÉTEINTE D'AVANCE (§16.13.4) : le board ne sait pas ce que la RLS
+	// consentira, et éteindre par supposition remplacerait un refus mesuré par une devinette.
+	it('offre les quatre échéances même à qui sera refusé', async () => {
+		const utilisateur = userEvent.setup()
+		const { client } = clientRpc(refus('forbidden', 403))
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client })
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		for (const geste of screen.getAllByTestId(/^carte-sommeil-/)) {
+			expect((geste as HTMLButtonElement).disabled).toBe(false)
+		}
 	})
 })
