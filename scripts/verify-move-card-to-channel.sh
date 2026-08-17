@@ -472,13 +472,43 @@ else
 	fail "le rejeu de la migration ÉCHOUE : voir $TRAVAIL/rejeu.log"
 fi
 
-# La migration 20 est la dernière propriétaire du vocabulaire et du trigger partagé. Rejouer la
-# 17 seule restaurerait CRM-045 tout en retirant silencieusement `workflow_changed`.
+# La migration 20 possède le trigger partagé et `workflow_changed` ; rejouer la 17 seule
+# retirerait silencieusement ce dernier.
 if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 	-f - <"$MIGRATION_ACTUELLE" >"$TRAVAIL/rejeu20.log" 2>&1; then
-	ok "la migration 20 est rejouée en dernier : la restauration conserve CRM-019"
+	ok "la migration 20 est rejouée après la 17 : la restauration conserve CRM-019"
 else
 	fail "le rejeu de la migration 20 ÉCHOUE : voir $TRAVAIL/rejeu20.log"
+fi
+
+# INC-144 — assertion RÉVISÉE, et non retirée. Elle affirmait que rejouer 17 puis 20 suffisait à
+# restaurer le vocabulaire. Ce n'est plus vrai, et pour une raison légitime : ces deux migrations
+# ne posent plus leur liste lorsque les lignes emploient déjà un vocabulaire plus large — sans quoi
+# le rejeu échouerait sur « is violated by some row » et la pile ne redémarrerait plus. Le
+# vocabulaire appartient désormais à la DERNIÈRE migration qui l'étend, aujourd'hui la 44. La
+# restauration rejoue donc TOUT le répertoire, comme le fait le `migrations-runner` au démarrage —
+# c'est la correction déjà appliquée à verify-colonnes-protegees.sh, pour le même motif.
+if docker compose up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
+	! grep -q "ERROR" "$TRAVAIL/rejeu_complet.log"; then
+	ok "le répertoire entier se rejoue sur une base peuplée (INC-144)"
+else
+	fail "le rejeu complet du répertoire ÉCHOUE : voir $TRAVAIL/rejeu_complet.log"
+fi
+
+# Le vocabulaire restauré est le COMPLET, celui de la dernière migration qui l'étend — pas les neuf
+# valeurs de CRM-045 ni les dix de CRM-019. Sans ce contrôle, une restauration partielle laisserait
+# la base amputée de `snoozed` et `woken` sans que rien ne le signale.
+vocabulaire_restaure=$(psql_db -tAc "select pg_get_constraintdef(oid) from pg_constraint
+	where conrelid = 'public.card_events'::regclass and conname = 'card_events_type_check'")
+manquants=""
+for type_attendu in created moved assigned channel_changed workflow_changed archived unarchived \
+	trashed restored field_changed mail_received mail_sent snoozed woken; do
+	case "$vocabulaire_restaure" in *"'$type_attendu'"*) ;; *) manquants="$manquants $type_attendu" ;; esac
+done
+if [ -z "$manquants" ]; then
+	ok "le vocabulaire restauré est COMPLET : les quatorze types, sommeil et courrier compris"
+else
+	fail "le vocabulaire restauré est amputé de :$manquants"
 fi
 
 for fichier in "$MIGRATION" "$TEST_SQL"; do

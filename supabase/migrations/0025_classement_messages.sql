@@ -34,6 +34,15 @@ begin
 		 where conrelid = 'public.card_events'::regclass
 		   and conname = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%mail_received%'
+	) and not exists (
+		-- INC-144 — la garde ci-dessus regarde la contrainte ; celle-ci regarde les lignes. Sur
+		-- une base peuplée dont la contrainte a été déposée, `snoozed` et `woken` sont déjà écrits
+		-- et ces onze valeurs seraient refusées. La migration 44 reste alors seule responsable
+		-- d'installer le vocabulaire complet.
+		select 1 from public.card_events
+		 where type <> all (array[
+			'created', 'moved', 'assigned', 'channel_changed', 'workflow_changed',
+			'archived', 'unarchived', 'trashed', 'restored', 'field_changed', 'mail_received'])
 	) then
 		alter table public.card_events drop constraint if exists card_events_type_check;
 		alter table public.card_events add constraint card_events_type_check

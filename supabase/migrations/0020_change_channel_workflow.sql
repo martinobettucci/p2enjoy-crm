@@ -71,6 +71,15 @@ begin
 		 where conrelid = 'public.card_events'::regclass
 		   and conname = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%workflow_changed%'
+	) and not exists (
+		-- INC-144 — deuxième garde, symétrique de celle de la migration 17. La première ne regarde
+		-- que la contrainte et ne voit rien lorsqu'elle est absente ; les lignes, elles, peuvent
+		-- déjà employer `mail_received`, `mail_sent`, `snoozed` ou `woken`. On ne converge que si
+		-- elles sont compatibles avec les dix valeurs que CETTE migration pose.
+		select 1 from public.card_events
+		 where type <> all (array['created', 'moved', 'assigned', 'channel_changed',
+		                          'workflow_changed', 'archived', 'unarchived', 'trashed',
+		                          'restored', 'field_changed'])
 	) then
 		perform app.migration_0020_converger_contrainte(
 			'public.card_events', 'card_events_type_check',

@@ -10,7 +10,7 @@
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-014` :
 #
-#   1. la suite pgTAP `supabase/tests/0016_preuves_refus.test.sql` est verte — 52 assertions ;
+#   1. la suite pgTAP `supabase/tests/0016_preuves_refus.test.sql` est verte — 55 assertions ;
 #   2. le fichier consolidé `e2e/api/preuves-refus.spec.ts` est vert — 40 scénarios, avec les
 #      jetons réels des trois profils seedés ;
 #   3. l'inventaire des politiques est relevé **avant** toute dégradation, table par table et nom
@@ -56,9 +56,14 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0016_preuves_refus.test.sql
 SPEC_FILE=e2e/api/preuves-refus.spec.ts
+# La preuve n° 9 ne vit plus dans le fichier consolidé : `CRM-054` ayant livré `mail_attachments`
+# et son bucket, l'assertion qui figeait l'absence a été RETOURNÉE en un refus mesuré, et elle a
+# suivi son sujet dans le fichier d'ingestion. Le harnais l'y vérifie plutôt que de la déclarer
+# manquante — une preuve déplacée n'est pas une preuve perdue, mais elle doit rester EXERCÉE.
+SPEC_INGESTION=e2e/api/ingestion.spec.ts
 DB_CONTAINER=p2enjoy-db
 
-ASSERTIONS_ATTENDUES=52
+ASSERTIONS_ATTENDUES=55
 SCENARIOS_ATTENDUS=40
 
 RAPIDE=false
@@ -186,13 +191,26 @@ fi
 # une boucle, et une recherche dans les sources ne les y trouverait pas — mesuré à l'écriture. Un
 # renumérotage silencieux, ou une preuve qui cesserait d'être exercée, sont ainsi dénoncés.
 manquantes=""
-for n in 1 2 3 4 5 6 7 8 9 10 11 12; do
+for n in 1 2 3 4 5 6 7 8 10 11 12; do
 	printf '%s\n' "$sortie_e2e" | grep -qE "PREUVE N° $n( |\b)" || manquantes="$manquantes $n"
 done
 if [ -z "$manquantes" ]; then
-	ok "les douze preuves du §7 sont nommées une à une dans le fichier"
+	ok "les onze preuves du §7 encore consolidées sont nommées une à une dans le fichier"
 else
 	fail "preuves absentes du fichier :$manquantes"
+fi
+
+# La douzième — la n° 9 — est exercée dans le fichier d'ingestion sous le titre `REFUS N° 9`. Le
+# contrôle EXÉCUTE ce fichier au lieu d'y lire le titre : une preuve peut être écrite et ne jamais
+# tourner, et c'est précisément ce que ce harnais existe pour dénoncer.
+sortie_ingestion=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts \
+	--project=api "$SPEC_INGESTION" 2>&1 || true)
+if printf '%s\n' "$sortie_ingestion" | grep -qE "REFUS N° 9( |\b)" &&
+	! printf '%s\n' "$sortie_ingestion" | grep -qE "^ *[1-9][0-9]* failed"; then
+	ok "la preuve n° 9 est exercée et verte dans $SPEC_INGESTION (pièce infected, pièce pending)"
+else
+	fail "la preuve n° 9 n'est pas exercée dans $SPEC_INGESTION"
+	printf '%s\n' "$sortie_ingestion" | tail -6
 fi
 
 # =============================================================================================
@@ -203,10 +221,10 @@ titre "3. Inventaire de référence des politiques"
 # signature textuelle surestimait alors le nombre de politiques (54 lignes pour 48 objets après
 # CRM-018). Le nombre vient du catalogue ; `REFERENCE` reste la signature exacte de restauration.
 nb_politiques=$(psql_db -c "select count(*) from pg_policies where schemaname='public';")
-if [ "$nb_politiques" = "55" ]; then
-	ok "55 politiques relevées dans le schéma public, dont les sept identités de CRM-022"
+if [ "$nb_politiques" = "66" ]; then
+	ok "66 politiques relevées dans le schéma public, boîte de réception et envoi compris"
 else
-	fail "55 politiques attendues, $nb_politiques relevées"
+	fail "66 politiques attendues, $nb_politiques relevées"
 fi
 
 if printf '%s\n' "$REFERENCE" | grep -q '^cards|cards_lecture|SELECT|'; then
@@ -361,10 +379,12 @@ else
 fi
 
 cards_seed=$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")
-if [ "$cards_seed" = "14" ]; then
-	ok "les quatorze cards du seed sont intactes"
+# Compteur porté de 14 à 41 : `CRM-046` a livré le seed de démonstration complet, et les unités
+# de courrier et de sommeil l'ont étendu depuis. `docs/manual.md` annexe A annonce le même nombre.
+if [ "$cards_seed" = "41" ]; then
+	ok "les quarante et une cards du seed sont intactes"
 else
-	fail "14 cards attendues dans le seed, $cards_seed trouvées"
+	fail "41 cards attendues dans le seed, $cards_seed trouvées"
 fi
 
 ws_seed=$(psql_db -c "select count(*) from public.workspaces

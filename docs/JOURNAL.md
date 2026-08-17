@@ -17864,3 +17864,64 @@ sont `test:sql` et `e2e:api`, verts tous deux rejoués seuls.
 spécification est à écrire ; et le §16.12.6 non éprouvé en E2E dans sa variante non filtrée. Une
 prochaine exécution devrait prendre `scripts/verify-snooze.sh` : c'est le dernier écart qui
 appartienne encore aux tranches livrées, et il ferme la dégradation volontaire qui manque à toutes.
+
+
+## décision 431 — Le vocabulaire d'une contrainte appartient à la dernière migration qui l'étend
+
+**Problème.** `scripts/verify-move-card-to-channel.sh` dénonçait trois échecs, dont deux rejeux de
+migration. Contrairement à la plupart des accusations de la veille, celle-ci visait juste : sur une
+base peuplée dont la contrainte `card_events_type_check` a été déposée, les migrations 16, 17, 20,
+25 et 30 la réinstallent avec le vocabulaire de leur époque, et Postgres refuse — « is violated by
+some row ». La pile ne redémarre plus dès qu'un événement `snoozed`, `woken`, `mail_received` ou
+`mail_sent` existe.
+
+**Pourquoi la garde de la décision 325 ne suffisait pas.** Elle demandait : « la contrainte
+contient-elle déjà mon type ? » Cette question ne se pose que si la contrainte EXISTE. Quand elle
+est absente — restauration de harnais, réparation manuelle —, la garde répond « non » et la
+migration pose sa liste courte sur des lignes devenues larges. **La garde regardait la contrainte ;
+il fallait aussi regarder les lignes.**
+
+**Décision.** Chacune des cinq migrations reçoit une seconde garde : elle ne pose sa liste que si
+aucune ligne n'emploie un type absent de cette liste. Sur une base neuve, rien ne change — les
+lignes sont compatibles, chaque migration pose son vocabulaire et la suivante l'étend. Sur une base
+peuplée, les migrations anciennes s'abstiennent et **la dernière qui étend le vocabulaire en devient
+seule responsable**, aujourd'hui la 44.
+
+**Conséquence sur les harnais.** Une restauration qui ne rejoue qu'un préfixe de l'historique ne
+restaure plus le vocabulaire : les migrations rejouées s'abstiennent légitimement, et personne ne
+pose la liste complète. `verify-move-card-to-channel.sh` rejoue désormais **tout le répertoire**,
+comme le `migrations-runner` au démarrage — même correction que celle appliquée à
+`verify-colonnes-protegees.sh`. C'est la contrepartie honnête du mécanisme : en déplaçant la
+responsabilité vers la dernière migration, on oblige toute restauration à aller jusqu'à elle.
+
+**Vérifications réalisées.** Contrainte déposée sur une base peuplée portant `snoozed` et
+`mail_received` : les migrations 16, 17, 20, 25 et 30 se rejouent sans erreur, le répertoire entier
+sort en code 0, et la contrainte finale porte de nouveau les **quatorze** types. Sur base neuve
+après `resetMe.sh` : quatorze types également, **2191 assertions pgTAP vertes**.
+`verify-move-card-to-channel.sh` passe de 47 contrôles / 3 échecs à **49 contrôles, aucune
+anomalie** — deux contrôles ajoutés, dont un qui vérifie que le vocabulaire restauré est COMPLET.
+
+**Ce que la réparation a révélé.** Le vocabulaire compte **quatorze** types et non douze : `snoozed`
+et `woken`, livrés par `CRM-081`, manquaient à toutes les énumérations que je relisais. Une
+énumération qu'on recopie de mémoire vieillit en silence.
+
+## décision 432 — Une preuve déplacée n'est pas une preuve perdue, mais elle doit rester exercée
+
+**Problème.** `verify-preuves-refus.sh` annonçait « preuves absentes du fichier : 9 » et trois
+compteurs faux. Le compteur de politiques attendait 55 pour 66 relevées, celui des cards du seed 14
+pour 41, le plan pgTAP 52 pour 55 — trois unités les avaient fait bouger sans réviser le harnais.
+
+**Le quatrième écart n'était pas un compteur.** La preuve n° 9 avait quitté le fichier consolidé
+quand `CRM-054` a livré `mail_attachments` : l'assertion qui figeait l'absence a été retournée en
+refus mesuré, et elle a suivi son sujet dans `e2e/api/ingestion.spec.ts`. Le harnais, lui, la
+cherchait toujours dans le registre — et la déclarait manquante alors qu'elle existait, sous le
+titre `REFUS N° 9`.
+
+**Décision.** Le harnais vérifie la preuve n° 9 **là où elle vit**, en EXÉCUTANT le fichier
+d'ingestion plutôt qu'en y lisant un titre : une preuve peut être écrite et ne jamais tourner, et
+c'est exactement ce que ce harnais existe pour dénoncer. Le contrôle du registre porte désormais sur
+les onze preuves encore consolidées, ce qui est la vérité et non un contournement.
+
+**Vérification.** `verify-preuves-refus.sh` passe de 26 contrôles / 4 anomalies à **27 contrôles,
+aucune anomalie**. `verify-commentaires.sh` repasse au vert de lui-même : son écart tenait au résidu
+d'un balayage, non au produit.

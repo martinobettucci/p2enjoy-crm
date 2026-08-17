@@ -241,7 +241,7 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
-### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée
+### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée — CLOSE le 2026-08-17
 
 **Nature :** dépendance d'ordre ; le rejeu d'une migration ancienne casse une contrainte élargie depuis.
 **Relevé le :** 2026-08-17, en exécutant `scripts/verify-move-card-to-channel.sh`.
@@ -270,11 +270,18 @@ couvre pas les types arrivés depuis.
 douze : `snoozed` et `woken` s'ajoutent aux douze connus. Plusieurs contrôles et migrations
 raisonnent encore sur une liste plus courte.
 
-**Ce qui reste dû.** Étendre la garde de convergence des migrations 17 et 20 pour qu'elles
-n'installent leur contrainte que si aucun type plus récent n'est déjà présent — ou, plus simplement,
-qu'elles cessent de la réinstaller, le vocabulaire étant désormais tenu par les migrations qui
-l'élargissent. **Bloquant** : tant que ce point tient, un redémarrage de pile sur une base contenant
-un événement de sommeil ou de courrier échoue.
+**CORRIGÉ le 2026-08-17, et le défaut portait plus loin que son titre.** Cinq migrations
+réinstallaient la contrainte, et non deux : **16, 17, 20, 25 et 30**. Chacune reçoit une seconde
+garde qui interroge les LIGNES et non plus seulement la contrainte — elle ne pose sa liste que si
+aucune ligne n'emploie un type qui en est absent. Sur base neuve, rien ne change. Sur base peuplée,
+les migrations anciennes s'abstiennent et la dernière qui étend le vocabulaire, aujourd'hui la 44,
+en devient seule responsable. Voir `docs/JOURNAL.md` décision 431.
+
+**Preuve.** Contrainte déposée sur une base portant `snoozed` et `mail_received` : les cinq
+migrations se rejouent sans erreur, le répertoire entier sort en code 0, la contrainte finale porte
+de nouveau les quatorze types. Sur base neuve après `resetMe.sh` : quatorze types, 2191 assertions
+pgTAP vertes. `verify-move-card-to-channel.sh` — l'accusateur — passe à **49 contrôles, aucune
+anomalie**, avec deux contrôles ajoutés dont un qui exige que le vocabulaire restauré soit COMPLET.
 
 ### INC-143 — Quatre unités restent `[~]` au nom d'INC-021, close depuis une semaine
 

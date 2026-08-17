@@ -110,6 +110,16 @@ begin
 		 where conrelid = 'public.card_events'::regclass
 		   and conname = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%channel_changed%'
+	) and not exists (
+		-- INC-144 — deuxième garde. La première ne voit que la contrainte ; elle est aveugle au
+		-- cas où la contrainte est ABSENTE alors que les lignes emploient déjà un vocabulaire plus
+		-- large — exactement ce que produit la restauration d'un harnais, ou une base peuplée dont
+		-- la contrainte a été déposée. Installer alors les neuf valeurs de CRM-045 échoue sur
+		-- « is violated by some row ». On ne converge donc que si les lignes présentes sont
+		-- compatibles avec la liste que CETTE migration pose.
+		select 1 from public.card_events
+		 where type <> all (array['created', 'moved', 'assigned', 'channel_changed', 'archived',
+		                          'unarchived', 'trashed', 'restored', 'field_changed'])
 	) then
 		perform app.migration_0017_converger_contrainte(
 			'public.card_events', 'card_events_type_check',

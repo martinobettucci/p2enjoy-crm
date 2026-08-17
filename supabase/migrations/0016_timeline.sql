@@ -161,6 +161,17 @@ begin
 		select 1 from pg_constraint
 		 where conrelid = 'public.card_events'::regclass
 		   and conname  = 'card_events_type_check'
+	) and not exists (
+		-- INC-144 — la garde ci-dessus ne pose le vocabulaire initial que si la contrainte est
+		-- absente, ce qui est correct sur une base neuve mais insuffisant sur une base peuplée
+		-- dont la contrainte a été déposée : les lignes y emploient déjà `channel_changed`,
+		-- `mail_received`, `snoozed` ou `woken`, et les huit valeurs de CRM-044 sont alors
+		-- refusées par « is violated by some row ». On ne pose donc le vocabulaire initial que
+		-- s'il est compatible avec les lignes présentes ; sinon les migrations 17, 20, 25, 30 et
+		-- 44 restent seules responsables de l'installer, dans leur propre ordre.
+		select 1 from public.card_events
+		 where type <> all (array['created', 'moved', 'assigned', 'archived', 'unarchived',
+		                          'trashed', 'restored', 'field_changed'])
 	) then
 		alter table public.card_events add constraint card_events_type_check
 			check (type = any (array['created', 'moved', 'assigned', 'archived', 'unarchived',
