@@ -433,3 +433,153 @@ describe('les sept refus, affichés (§7.10)', () => {
 		)
 	})
 })
+
+// --- Le sommeil dans le board (`CRM-081` tranche 2 b) -----------------------------------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : la barre de bascule et la pastille compacte
+// @verifies docs/SPEC-cards.md §16.12.3 (le board filtre à la composition), §16.12.4 (la bascule),
+//           §16.12.7 (la carte porte la pastille compacte, à côté de l'ancienneté)
+// @verifies docs/DESIGN_SYSTEM.md §5.3 quinquies (la première barre du board, rendue même sur un
+//           board vide ; la pastille compacte), §8 (cible de 40 px, nom accessible)
+
+describe('la barre de bascule du sommeil (§16.12.4, §5.3 quinquies)', () => {
+	// LA PREMIÈRE BARRE DU BOARD, et elle ne porte que ce contrôle.
+	it('rend une case à cocher étiquetée, décochée en mode masqué', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		const case_ = screen.getByRole('checkbox', { name: fr['sommeil.afficher'] })
+		expect((case_ as HTMLInputElement).checked).toBe(false)
+	})
+
+	it('la rend cochée en mode visible', () => {
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1' })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		expect(
+			(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] }) as HTMLInputElement).checked,
+		).toBe(true)
+	})
+
+	it('demande le changement de mode dans les deux sens', async () => {
+		const utilisateur = userEvent.setup()
+		const onModeSommeil = vi.fn()
+		monter({ cards: [], client: clientRpc().client, onModeSommeil })
+		await utilisateur.click(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] }))
+		expect(onModeSommeil).toHaveBeenCalledWith('visibles')
+
+		cleanup()
+		onModeSommeil.mockClear()
+		monter({ cards: [], client: clientRpc().client, modeSommeil: 'visibles', onModeSommeil })
+		await utilisateur.click(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] }))
+		expect(onModeSommeil).toHaveBeenCalledWith('masquees')
+	})
+
+	// Elle reste rendue sur un board sans une seule carte : elle est la cause possible de ce vide.
+	it('reste rendue sur un board qui ne montre aucune carte', () => {
+		monter({ cards: [], client: clientRpc().client })
+		expect(screen.getByTestId('barre-sommeil-board')).toBeDefined()
+		expect(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] })).toBeDefined()
+	})
+
+	// La cible interactive fait au moins 40 px (§8), et c'est le `label` entier qui la porte, de
+	// sorte que le texte soit cliquable — pas seulement la case.
+	it('porte la cible de 40 px sur le libellé entier', () => {
+		monter({ cards: [], client: clientRpc().client })
+		expect(screen.getByTestId('bascule-sommeil').className).toContain('min-h-[var(--size-target)]')
+	})
+})
+
+describe('la pastille compacte sur une carte de board (§16.12.7)', () => {
+	/** Une échéance relative à l'instant du jeu d'essai : jamais figée (§16.11.1). */
+	function echeance(jours: number): string {
+		return new Date(MAINTENANT.getTime() + jours * 24 * 60 * 60 * 1000).toISOString()
+	}
+
+	it('ne rend aucune carte endormie en mode masqué, donc aucune pastille', () => {
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client: clientRpc().client,
+		})
+		expect(screen.queryAllByTestId('carte-card')).toHaveLength(0)
+		expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+	})
+
+	it('marque la carte endormie que la bascule ramène', () => {
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		expect(screen.getAllByTestId('carte-card')).toHaveLength(1)
+		expect(screen.getByTestId('pastille-sommeil')).toBeDefined()
+	})
+
+	// UNE ÉCHÉANCE ÉCHUE N'EST PAS UN SOMMEIL : la carte est là dans les DEUX modes, sans marque.
+	it('rend sans marque une carte dont l’échéance est passée, dans les deux modes', () => {
+		for (const mode of ['masquees', 'visibles'] as const) {
+			cleanup()
+			monter({
+				cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(-2) })],
+				client: clientRpc().client,
+				modeSommeil: mode,
+			})
+			expect(screen.getAllByTestId('carte-card')).toHaveLength(1)
+			expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+		}
+	})
+
+	// LES DEUX PASTILLES COEXISTENT (§16.12.7) : l'ancienneté et le sommeil sont deux faits, et
+	// masquer l'un derrière l'autre en perdrait un.
+	it('voisine la pastille d’ancienneté sans la remplacer', () => {
+		monter({
+			// `s1` porte un seuil de 14 jours, et la card y est entrée à l'instant : l'ancienneté est
+			// donc rendue. L'échéance de sommeil est future.
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		const carte = screen.getByTestId('carte-card')
+		expect(within(carte).getByTestId('anciennete')).toBeDefined()
+		expect(within(carte).getByTestId('pastille-sommeil')).toBeDefined()
+	})
+
+	// La phrase entière est le NOM ACCESSIBLE ; l'œil ne lit que la date (§5.3 quinquies).
+	it('porte la phrase entière comme nom accessible, et la date seule à l’œil', () => {
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: echeance(10) })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		const courte = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(
+			new Date(echeance(10)),
+		)
+		const pastille = screen.getByRole('img', {
+			name: fr['card.sleep.badge'].replace('{echeance}', courte),
+		})
+		expect(pastille.textContent).toBe(courte)
+	})
+
+	it('disparaît sur une échéance que `Date` ne sait pas lire', () => {
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1', snoozed_until: 'pas-une-date' })],
+			client: clientRpc().client,
+			modeSommeil: 'visibles',
+		})
+		expect(screen.getAllByTestId('carte-card')).toHaveLength(1)
+		expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+	})
+
+	// Le compteur de la colonne annonce ce qu'elle MONTRE (§16.12.8) : une carte masquée n'y entre pas.
+	it('borne le compteur de la colonne aux cartes rendues', () => {
+		const cards = [
+			card({ id: 'c1', current_step_id: 's1' }),
+			card({ id: 'c2', current_step_id: 's1', snoozed_until: echeance(10) }),
+		]
+		monter({ cards, client: clientRpc().client })
+		const colonne = screen.getAllByTestId('colonne')[0]
+		expect(colonne).toBeDefined()
+		if (colonne === undefined) return
+		expect(within(colonne).getAllByTestId('carte-card')).toHaveLength(1)
+	})
+})

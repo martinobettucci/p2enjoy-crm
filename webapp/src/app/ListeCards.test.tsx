@@ -390,12 +390,17 @@ describe('la pagination (§12.6)', () => {
 			params: parametres({ page: 2, tri: 'amount', sens: 'desc', etape: 's1' }),
 		})
 		await utilisateur.click(screen.getByTestId('page-suivante'))
+		// TÉMOIN RÉVISÉ, `CRM-081` tranche 2 b : l'appel exhaustif figeait CINQ paramètres, et la
+		// pagination en transporte désormais six (§16.12.4). Le sixième est nommé avec son défaut —
+		// la propriété éprouvée reste entière : la pagination conserve TOUT ce qui l'entoure et
+		// n'invente rien.
 		expect(onParametres).toHaveBeenCalledWith({
 			tri: 'amount',
 			sens: 'desc',
 			etape: 's1',
 			recherche: '',
 			page: 3,
+			sommeil: 'masquees',
 		})
 		await utilisateur.click(screen.getByTestId('page-precedente'))
 		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }))
@@ -512,5 +517,224 @@ describe('l’état vide du tableau (§12.9)', () => {
 			</MemoryRouter>,
 		)
 		expect(screen.getByTestId('tableau-liste')).toBeDefined()
+	})
+})
+
+// --- Le sommeil dans la vue liste (`CRM-081` tranche 2 b) --------------------------------------
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule, la marque et l'effacement
+// @verifies docs/SPEC-cards.md §16.12.4 (la bascule et son défaut), §16.12.5 (« effacer les
+//           filtres » efface celui-ci aussi), §16.12.7 (la marque d'une affaire endormie)
+// @verifies docs/DESIGN_SYSTEM.md §5.3 quinquies (case à cocher étiquetée, pastille compacte,
+//           densité du tableau inchangée), §8 (cible de 40 px, nom accessible)
+
+describe('la bascule du sommeil dans la barre de filtres (§16.12.4)', () => {
+	// UNE CASE À COCHER, PAS UN BOUTON À DEUX ÉTATS (§5.3 quinquies) : l'état est lu par le
+	// navigateur et annoncé, là où un bouton unique laisse l'ambiguïté entre le geste et l'état.
+	it('est une case à cocher étiquetée, décochée par défaut', () => {
+		rendre()
+		const case_ = screen.getByRole('checkbox', { name: fr['sommeil.afficher'] })
+		expect(case_).toBeDefined()
+		expect((case_ as HTMLInputElement).checked).toBe(false)
+	})
+
+	it('est cochée lorsque l’adresse demande les affaires en sommeil', () => {
+		rendre({ params: parametres({ sommeil: 'visibles' }) })
+		const case_ = screen.getByRole('checkbox', { name: fr['sommeil.afficher'] })
+		expect((case_ as HTMLInputElement).checked).toBe(true)
+	})
+
+	// Elle ramène à la page 1 : la page 3 de la liste qui masque n'a aucun rapport avec la page 3 de
+	// celle qui montre.
+	it('demande « visibles » et la première page quand on la coche', async () => {
+		const utilisateur = userEvent.setup()
+		const { onParametres } = rendre({ params: parametres({ page: 3 }) })
+		await utilisateur.click(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] }))
+		expect(onParametres).toHaveBeenCalledWith(
+			expect.objectContaining({ sommeil: 'visibles', page: 1 }),
+		)
+	})
+
+	it('redemande le défaut quand on la décoche', async () => {
+		const utilisateur = userEvent.setup()
+		const { onParametres } = rendre({ params: parametres({ sommeil: 'visibles' }) })
+		await utilisateur.click(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] }))
+		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ sommeil: 'masquees' }))
+	})
+
+	// Elle reste rendue sur un total nul, comme les deux autres filtres : elle est la cause possible
+	// du vide, et la masquer priverait l'utilisateur du seul geste qui l'en sort.
+	it('reste rendue lorsque le tableau a disparu', () => {
+		render(
+			<MemoryRouter>
+				<ListeCards
+					cards={[]}
+					etapes={ETAPES}
+					parametres={parametres()}
+					total={0}
+					slugTrack="conseil-ia"
+					slugChannel="grands-comptes"
+					onParametres={vi.fn()}
+					etatVide={<p data-testid="etat-vide-servi">Aucune affaire éveillée</p>}
+				/>
+			</MemoryRouter>,
+		)
+		expect(screen.getByRole('checkbox', { name: fr['sommeil.afficher'] })).toBeDefined()
+	})
+})
+
+describe('« effacer les filtres » efface aussi le sommeil (§16.12.5)', () => {
+	// C'est la lecture la plus prévisible : « effacer les filtres » rend la vue par défaut, et la vue
+	// par défaut ne montre pas les affaires en sommeil.
+	it('apparaît sur une liste dont la SEULE différence est que les endormies sont visibles', () => {
+		rendre({ params: parametres({ sommeil: 'visibles' }) })
+		expect(screen.getByTestId('effacer-filtres')).toBeDefined()
+	})
+
+	it('n’apparaît pas sur une liste réellement nue', () => {
+		rendre()
+		expect(screen.queryByTestId('effacer-filtres')).toBeNull()
+	})
+
+	it('ramène les trois filtres à leur défaut d’un seul geste', async () => {
+		const utilisateur = userEvent.setup()
+		const { onParametres } = rendre({
+			params: parametres({ etape: 's1', recherche: 'audit', sommeil: 'visibles', page: 2 }),
+		})
+		await utilisateur.click(screen.getByTestId('effacer-filtres'))
+		expect(onParametres).toHaveBeenCalledWith(
+			expect.objectContaining({ etape: null, recherche: '', sommeil: 'masquees', page: 1 }),
+		)
+	})
+})
+
+describe('la pastille compacte dans la cellule « Affaire » (§16.12.7)', () => {
+	const MAINTENANT = new Date('2026-08-17T10:00:00.000Z')
+	/** Une échéance relative à l'instant injecté : jamais une date figée (§16.11.1). */
+	function echeance(jours: number): string {
+		return new Date(MAINTENANT.getTime() + jours * 24 * 60 * 60 * 1000).toISOString()
+	}
+
+	function rendreAvec(cards: readonly CardListe[]) {
+		render(
+			<MemoryRouter>
+				<ListeCards
+					cards={cards}
+					etapes={ETAPES}
+					parametres={parametres({ sommeil: 'visibles' })}
+					total={cards.length}
+					slugTrack="conseil-ia"
+					slugChannel="grands-comptes"
+					onParametres={vi.fn()}
+					maintenant={MAINTENANT}
+				/>
+			</MemoryRouter>,
+		)
+	}
+
+	it('marque une affaire endormie rendue visible par la bascule', () => {
+		rendreAvec([card({ id: 'c9', title: 'Cadrage data', snoozed_until: echeance(10) })])
+		expect(screen.getByTestId('pastille-sommeil')).toBeDefined()
+	})
+
+	// UNE ÉCHÉANCE ÉCHUE N'EST PAS UN SOMMEIL (§16.11.1) : l'affaire est là, sans marque.
+	it('ne marque PAS une affaire dont l’échéance est passée', () => {
+		rendreAvec([card({ id: 'c9', title: 'Refonte', snoozed_until: echeance(-2) })])
+		expect(screen.getByTestId('ligne-card')).toBeDefined()
+		expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+	})
+
+	it('ne marque pas une affaire qui n’a jamais dormi', () => {
+		rendreAvec([card({ id: 'c9', title: 'Refonte' })])
+		expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+	})
+
+	// LA PHRASE ENTIÈRE EST LE NOM ACCESSIBLE (§5.3 quinquies) : la place n'admet pas « En sommeil
+	// jusqu'au … » à l'œil, mais un lecteur d'écran doit l'entendre en entier.
+	it('porte la phrase entière comme nom accessible, et la date à l’œil', () => {
+		rendreAvec([card({ id: 'c9', title: 'Cadrage data', snoozed_until: echeance(10) })])
+		const courte = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(
+			new Date(echeance(10)),
+		)
+		const pastille = screen.getByRole('img', {
+			name: fr['card.sleep.badge'].replace('{echeance}', courte),
+		})
+		expect(pastille).toBeDefined()
+		expect(pastille.textContent).toBe(courte)
+	})
+
+	// Une échéance illisible fait disparaître la pastille plutôt que d'écrire « Invalid Date ».
+	it('disparaît sur une échéance que `Date` ne sait pas lire', () => {
+		rendreAvec([card({ id: 'c9', title: 'Cadrage', snoozed_until: 'pas-une-date' })])
+		expect(screen.queryByTestId('pastille-sommeil')).toBeNull()
+	})
+
+	// LA DENSITÉ DU TABLEAU NE BOUGE PAS (§12.7, §5.9) : le lien garde son ellipse, la pastille est
+	// `shrink-0`, et la ligne garde sa hauteur d'une seule ligne de texte.
+	it('laisse au titre son ellipse et à la pastille sa largeur', () => {
+		rendreAvec([
+			card({
+				id: 'c9',
+				title: 'Un titre délibérément très long pour éprouver l’ellipse de la cellule Affaire',
+				snoozed_until: echeance(10),
+			}),
+		])
+		const lien = within(screen.getByTestId('ligne-card')).getByRole('link')
+		expect(lien.className).toContain('truncate')
+		expect(screen.getByTestId('pastille-sommeil').className).toContain('shrink-0')
+	})
+
+	it('suit le lien, et ne le remplace pas', () => {
+		rendreAvec([card({ id: 'c9', title: 'Cadrage data', snoozed_until: echeance(10) })])
+		const lien = within(screen.getByTestId('ligne-card')).getByRole('link')
+		const pastille = screen.getByTestId('pastille-sommeil')
+		expect(lien.compareDocumentPosition(pastille) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+})
+
+describe('la bascule de vue conserve le mode du sommeil (§16.12.4)', () => {
+	function rendreBasculeAvec(mode: 'masquees' | 'visibles') {
+		render(
+			<MemoryRouter>
+				<BasculeVue
+					slugTrack="conseil-ia"
+					slugChannel="grands-comptes"
+					vue="board"
+					modeSommeil={mode}
+				/>
+			</MemoryRouter>,
+		)
+	}
+
+	// Un utilisateur qui a demandé à voir les affaires endormies ne redemande pas à chaque
+	// changement de vue.
+	it('porte le paramètre sur les DEUX liens quand les endormies sont visibles', () => {
+		rendreBasculeAvec('visibles')
+		expect(screen.getAllByTestId('lien-vue').map((lien) => lien.getAttribute('href'))).toEqual([
+			'/tracks/conseil-ia/grands-comptes?sommeil=visibles',
+			'/tracks/conseil-ia/grands-comptes/liste?sommeil=visibles',
+		])
+	})
+
+	// Le défaut ne s'écrit jamais dans l'adresse : la vue par défaut reste la plus courte.
+	it('laisse les deux liens nus en mode masqué', () => {
+		rendreBasculeAvec('masquees')
+		expect(screen.getAllByTestId('lien-vue').map((lien) => lien.getAttribute('href'))).toEqual([
+			'/tracks/conseil-ia/grands-comptes',
+			'/tracks/conseil-ia/grands-comptes/liste',
+		])
+	})
+
+	// IL EST LE SEUL PARAMÈTRE QUE CETTE BASCULE TRAÎNE : ni le tri, ni la recherche, ni l'étape, ni
+	// la page n'ont de sens sur un board, et les recopier écrirait dans l'adresse d'une vue des
+	// paramètres que l'autre ignore.
+	it('ne traîne aucun autre paramètre', () => {
+		rendreBasculeAvec('visibles')
+		for (const lien of screen.getAllByTestId('lien-vue')) {
+			const adresse = lien.getAttribute('href') ?? ''
+			for (const absent of ['tri=', 'sens=', 'etape=', 'q=', 'page=']) {
+				expect(adresse).not.toContain(absent)
+			}
+		}
 	})
 })
