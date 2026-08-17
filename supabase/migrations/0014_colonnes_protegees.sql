@@ -111,11 +111,24 @@ revoke update on public.cards from authenticated;
 -- énumère les douze ouvertes une par une, de sorte qu'une fermeture trop large — ou un oubli
 -- d'énumération dans une migration ultérieure — fasse échouer la suite.
 
+-- `snoozed_until` A ÉTÉ RETIRÉE DE CETTE LISTE PAR `CRM-081`, et le motif est mesuré : l'unité a
+-- livré `endormir_card` / `reveiller_card` comme SEUL chemin d'écriture du sommeil, avec sa garde
+-- et sa trace de timeline. Tant que la colonne restait énumérée ici, `authenticated` pouvait
+-- l'écrire par un `PATCH` direct — la garde était contournable et la trace muette.
+--
+-- LE RETRAIT SE FAIT ICI, DANS LA LISTE ELLE-MÊME, et non par un `revoke` posé dans une migration
+-- ultérieure : le `migrations-runner` rejoue TOUT le répertoire à chaque démarrage, et une liste
+-- qui continuerait d'accorder la colonne la rouvrirait à chaque passage — c'est la dépendance
+-- d'ordre de la décision 108, et elle s'était refermée sur nous. MESURÉ le 2026-08-14 :
+-- `authenticated` portait encore le privilège, et l'assertion de `0013_move_card.test.sql`
+-- « `snoozed_until` est FERMÉE depuis `CRM-081` » était rouge.
 grant update (
 	title, description, position, owner_id, amount, currency,
-	probability_override, next_action, next_action_at, snoozed_until,
+	probability_override, next_action, next_action_at,
 	archived_at, deleted_at
 ) on public.cards to authenticated;
+
+revoke update (snoozed_until) on public.cards from authenticated;
 
 -- `service_role` conserve `all privileges` de la migration 0011 : le `revoke` ci-dessus ne vise
 -- qu'`authenticated`. Le seed, qui écrit avec la clé de service, est donc **inchangé**.
