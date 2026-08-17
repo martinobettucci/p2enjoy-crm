@@ -895,13 +895,19 @@ ligne** et non une erreur ambiguë.
       (migration 14), `docs/manual.md` chapitres 12 et 4.2, `README.md` §7, `CHANGELOG.md`,
       `docs/INCONSISTENCY_REPORT.md` (INC-050 close, INC-056 ouverte) mis à jour dans le même
       changement.
-- [ ] **QUATRE CIBLES SUR SIX NE SONT PAS LIVRÉES, ET LEURS TABLES N'EXISTENT PAS** :
-      `mail_inbound_accounts.secret_id` (`CRM-052`), `mail_outbound_identities.secret_id`
-      (`CRM-053`), `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de
-      refus n° 6 reste donc hors d'atteinte et la n° 8 reste incomplète pour `audit_log`. Chaque
-      absence est figée par une assertion pgTAP **et** par un contrôle du harnais, qui deviendront
-      rouges à la naissance de la table et désigneront alors le `REVOKE` à écrire. **Bloqué par
-      une dépendance, pas par un défaut de l'unité.**
+- [x] **DEUX DES QUATRE CIBLES SONT DÉSORMAIS COUVERTES — révisé le 2026-08-14, sur mesure.**
+      `mail_inbound_accounts` est née à `CRM-052` et `mail_outbound_identities` à `CRM-053` ; les
+      deux témoins d'absence sont **passés au rouge** comme ils l'annonçaient, et ils ont attendu
+      deux unités avant d'être relus. MESURÉ : `authenticated` n'a **aucun** privilège `UPDATE` sur
+      ces deux tables — protection plus stricte que la révocation de colonne réclamée à l'origine,
+      une révocation supposant un `UPDATE` accordé par ailleurs. Les témoins vérifient désormais ce
+      FAIT au lieu de figer une absence, et la preuve de refus n° 6 est **acquise** depuis
+      `CRM-052` (`docs/SPEC-permissions-rls.md` §7.2).
+- [ ] **DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS** :
+      `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de refus n° 8 reste
+      donc incomplète pour `audit_log`. Chaque absence est figée par une assertion pgTAP **et** par
+      un contrôle du harnais, qui deviendront rouges à la naissance de la table et désigneront alors
+      le `REVOKE` à écrire. **Bloqué par une dépendance, pas par un défaut de l'unité.**
 - [x] **`card_events` est livrée et protégée depuis `CRM-044`** : aucun privilège d'écriture pour
       `anon`, `authenticated` ou `service_role`, alimentation uniquement par les triggers privés.
       La suite pgTAP et `scripts/verify-colonnes-protegees.sh` mesurent désormais cet état au lieu
