@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une affaire se met en sommeil depuis la carte du tableau, sans quitter l'écran** (`CRM-081`
+  tranche 2 d, `docs/SPEC-cards.md` §16.13). Les trois tranches précédentes laissaient la **fiche**
+  comme seul chemin : ranger une affaire depuis le tableau demandait de l'ouvrir, d'agir, puis de
+  revenir. Le menu d'une carte devient celui de ses **actions** et porte deux parties — les
+  déplacements déclarés, puis **Sommeil** —, avec les quatre mêmes échéances usuelles rendues dès
+  l'ouverture. La carte **quitte alors le tableau** et le compteur de sa colonne suit ; la bascule
+  « Afficher les affaires en sommeil » la retrouve, marquée de sa pastille, et le menu y porte
+  **Réveiller** à la place des échéances.
+
+  Ce menu **cesse d'être éteint** lorsque l'étape ne déclare aucune transition — cas mesuré sur le
+  seed avec l'affaire livrée « Socle analytique — Vertuo », qui n'avait donc, jusqu'ici, aucun geste
+  du tout alors qu'une affaire livrée est précisément celle qu'on range. La phrase « Aucun
+  déplacement déclaré depuis cette étape » n'est pas perdue : elle entre dans le menu. Un refus
+  laisse le menu **ouvert** et affiche la mention même de la fiche ; le geste n'est jamais éteint
+  d'avance, le serveur restant seul juge. L'échéance libre reste réservée à la fiche : une carte de
+  288 px n'a pas la place d'un champ de date.
+
 - **Une affaire en sommeil sort des vues par défaut, et une bascule la ramène** (`CRM-081`
   tranche 2 b, `docs/SPEC-cards.md` §16.12). La tranche 2 a avait livré la pastille de la fiche en
   nommant elle-même son écart : les deux vues d'un channel montraient l'affaire endormie comme

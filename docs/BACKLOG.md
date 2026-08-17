@@ -8339,7 +8339,53 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       porte **que** des affaires endormies, et atteindre cet état demanderait d'écrire en base depuis
       une preuve — ce que celle-ci ne fait pas. Le cas est couvert en unitaire, par le compte des
       masquées. À trancher : soit le seed pose un tel channel, soit l'écart reste nommé.
-- [ ] **Aucun geste dans le menu de la carte du board** : la fiche est le seul chemin.
+- [x] **LE GESTE EST LIVRÉ DANS LE MENU DE LA CARTE — tranche 2 d**, spécifié `docs/SPEC-cards.md`
+      §16.13 en six sous-chapitres mesurés et `docs/DESIGN_SYSTEM.md` §5.3 sexies, committés avant
+      sa première ligne de code. Le menu de la carte devient celui de ses **actions** — deux
+      sections, les déplacements puis le sommeil — et **cesse d'être éteint** quand l'étape ne
+      déclare aucune transition : MESURÉ sur le seed, `Socle analytique — Vertuo` est à l'étape
+      `Livré` avec **zéro** transition sortante, et n'avait donc aucun geste. La phrase « Aucun
+      déplacement déclaré depuis cette étape » entre dans le menu au lieu d'être le libellé d'un
+      bouton mort. Le §5.1 du design system est révisé dans le même changement.
+- [x] **Les quatre échéances usuelles sont rendues dès l'ouverture**, comptées depuis **l'instant
+      du geste** et non depuis celui du rendu ; « Réveiller » les remplace sur une affaire endormie.
+      L'échéance choisie reste à la fiche, et l'écart est écrit : une carte fait 288 px, où le champ
+      `datetime-local`, son étiquette et son bouton occuperaient trois lignes de plus que la carte
+      entière n'en porte.
+- [x] **`appliquerSommeil` ne reporte QUE `snoozed_until`**, là où `remplacerCard` remplace la
+      ligne : les deux RPC rendent le type composite `public.cards`, **sans** la relation `profiles`
+      embarquée — remplacer la card ferait disparaître l'avatar du responsable jusqu'au prochain
+      chargement, ce que le §7.9 avait déjà refusé pour `move_card`.
+- [x] **Aucun optimisme, et c'est délibéré** : la carte ne bouge qu'après la réponse. Le déplacement
+      l'est parce qu'il rend la main au geste suivant ; le sommeil fait **disparaître** sa carte, et
+      une disparition qu'il faudrait annuler serait plus déroutante qu'une attente.
+- [x] **Le refus laisse le menu ouvert**, avec la mention **même** de la fiche : les libellés des
+      quatre échéances et les six mentions remontent dans `components/ui/Sommeil.tsx`, d'où la fiche
+      les lit désormais. Deux copies auraient divergé au premier ajustement.
+- [x] **Preuves unitaires de la tranche 2 d** : seize assertions de composant — le menu ouvert sans
+      transition et sa phrase, les deux sections, les deux visages, l'échéance comptée depuis
+      l'instant du geste, `wake_card` sans échéance, l'échéance **rendue** reportée sur la seule
+      card visée, le menu refermé sur un succès et ouvert sur un refus, les annonces de la région
+      live, les gestes jamais éteints d'avance — et cinq de module pour `appliquerSommeil`.
+      `npm run test:unit` **1488 tests** sur 46 fichiers, 1472 avant la session.
+- [x] **DEUX TÉMOINS FIGÉS RETOURNÉS, MOTIFS ÉCRITS DANS LE FICHIER** : le menu n'est plus éteint
+      sans transition, et `aria-controls` désigne le conteneur des deux sections plutôt que la seule
+      liste des transitions. Le harnais du board porte en outre le **statut HTTP**, que
+      `classerSommeil` lit d'abord et que `deplacerCard` ignorait — sans lui, tout geste de sommeil
+      passait pour une panne de réseau.
+- [x] **Preuve E2E d'interface** : `e2e/ui/menu-sommeil-board.spec.ts`, **4 scénarios** sans aucune
+      substitution — le menu de l'affaire d'étape terminale, le geste qui la fait quitter le board
+      avec le compteur de colonne de 1 à 0, la bascule qui la retrouve marquée, le réveil vérifié
+      **après rechargement** donc contre la base, le refus mesuré avec le jeton réel de la lectrice
+      sur `maintenance` avec son `403` consommé en console, et le palier étroit où la carte reste à
+      288 px. **Six captures** sous `docs/captures/CRM-081/`, produites et observées. Le seed sort
+      intact : l'affaire est réveillée en fin de scénario.
+- [x] **Aucune preuve d'API nouvelle n'est due, et c'est écrit plutôt que sous-entendu** : cette
+      tranche n'ajoute **aucun** chemin serveur. Le contrat des deux RPC est celui du §16.8, déjà
+      éprouvé par `e2e/api/snooze.spec.ts` (9 scénarios) avec les jetons réels.
+- [x] **`docs/manual.md` suit** : le chapitre 4.9 bis porte le geste du tableau et son écart, le
+      4.8 nomme le bouton « Actions » et le menu qui s'ouvre sans transition, le 4.7 bis corrige ce
+      qu'il disait du menu.
 - [ ] **Aucun sommeil de fil de messagerie** : l'énoncé nomme « les fils et les cards », et les
       fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2 c.
 - [ ] **`scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh` non rejoués** :

@@ -602,8 +602,9 @@ connexion, une card consentie ouvre sa fiche et son fil.
 
 **Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
 corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
-liste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau ne présente que les
-déplacements que le workflow autorise, et une commande de retrait y serait d'une autre nature.
+liste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau porte les gestes qui
+se défont d'eux-mêmes — un déplacement, une mise en sommeil —, et un retrait y serait d'une autre
+nature.
 
 **Ce que le produit demande avant d'agir.** Une confirmation, sous le formulaire, qui **nomme
 l'affaire** et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,
@@ -668,9 +669,10 @@ Si toutes les affaires d'un channel dorment, le tableau ne prétend pas qu'il es
 - **À la souris**, en faisant glisser la carte vers une colonne. Seules les colonnes vers lesquelles
   un déplacement est **déclaré** dans le workflow acceptent le dépôt ; les autres le refusent
   visuellement, et aucune demande n'est envoyée au serveur.
-- **Au clavier**, par le bouton « Déplacer » de la carte, qui ouvre la liste des déplacements
-  déclarés depuis l'étape courante — et **eux seuls**. Lorsqu'une étape n'en propose aucun, le
-  bouton reste lisible et le dit.
+- **Au clavier**, par le bouton « Actions » de la carte, qui ouvre son menu. La partie
+  **Déplacer vers** y liste les déplacements déclarés depuis l'étape courante — et **eux seuls**.
+  Lorsqu'une étape n'en propose aucun, le menu s'ouvre quand même et le dit en toutes lettres : il
+  porte aussi le geste de sommeil (chapitre 4.9 bis), qui, lui, reste disponible.
 
 Les deux gestes passent par le même contrôle du serveur, celui du chapitre 4.3 : l'écran ne propose
 jamais une action que le serveur refuserait, et il ne se substitue jamais à lui.
@@ -769,10 +771,23 @@ après ses congés, une décision reportée au prochain comité. Les laisser dan
 liste les fait relire chaque jour pour rien. Le **sommeil** les range jusqu'à une échéance que vous
 choisissez, sans les archiver et sans rien leur retirer.
 
-**Endormir une affaire.** Depuis sa fiche, le bouton **Mettre en sommeil** ouvre un petit panneau
+**Endormir une affaire, depuis sa fiche.** Le bouton **Mettre en sommeil** ouvre un petit panneau
 qui propose quatre échéances usuelles — *Demain*, *Dans trois jours*, *La semaine prochaine*, *Le
 mois prochain* — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la
 mention **« En sommeil jusqu'au … »**.
+
+**Ou depuis le tableau, sans quitter l'écran.** Le bouton **Actions** d'une carte ouvre son menu,
+qui porte deux parties : les déplacements déclarés, puis **Sommeil**. Les quatre mêmes échéances y
+sont proposées directement. La carte **quitte alors le tableau** — c'est tout l'intérêt du geste :
+ranger une affaire sans changer d'écran — et le compteur de sa colonne suit.
+
+L'**échéance libre**, elle, ne se saisit que depuis la fiche : une carte de tableau est trop étroite
+pour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »
+ramène, ce même menu porte **Réveiller** à la place des quatre échéances.
+
+Si le serveur refuse — vous lisez cette affaire sans avoir le droit de l'écrire —, **le menu reste
+ouvert** et la raison s'affiche dessous, mot pour mot celle de la fiche. Le geste n'est jamais
+éteint d'avance : c'est le serveur qui décide, jamais l'écran.
 
 Une échéance **déjà passée** est refusée, et le message le dit sous le champ sans effacer votre
 saisie. Une affaire peut être **à la fois archivée et endormie** : les deux mentions coexistent, car
@@ -815,9 +830,9 @@ montre, sinon son compteur désignerait des cartes introuvables à l'œil.
 affaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne
 qui pouvait la lire peut encore la retrouver. Le sommeil **range**, il ne protège pas.
 
-**Ce qui n'est pas encore livré.** Le geste ne s'atteint que depuis la **fiche** de l'affaire : la
-carte du tableau n'en porte pas de raccourci. Et seules les **affaires** peuvent dormir — pas encore
-les fils de messagerie.
+**Ce qui n'est pas encore livré.** Seules les **affaires** peuvent dormir : pas encore les fils de
+messagerie. Et la **vue liste** n'offre pas le geste — elle laisse la case d'affichage et le lien
+vers la fiche.
 
 ### 4.10 L'historique et la discussion d'une affaire
 
