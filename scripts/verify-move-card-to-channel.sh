@@ -193,13 +193,24 @@ else
 	fail "le CHECK refuse channel_changed : le trigger écrirait un 23514"
 fi
 
-for refuse in mail_received mail_sent; do
-	if printf '%s' "$contrainte" | grep -q "'$refuse'"; then
-		fail "$refuse est accepté : une capacité inexistante paraîtrait livrée"
+# TÉMOINS RETOURNÉS LE 2026-08-17 (décision 51). Ils figeaient l'absence de deux types en
+# annonçant que `CRM-054` devrait étendre l'énumération : `mail_received` est arrivé avec `CRM-055`
+# et `mail_sent` avec `CRM-058`, et les deux témoins sont passés au rouge exactement comme prévu.
+# Ils vérifient désormais la PRÉSENCE, et le garde-fou se déplace sur un type que le produit n'a pas
+# encore écrit — il suit le vocabulaire, il ne le devance pas.
+for livre in mail_received mail_sent; do
+	if printf '%s' "$contrainte" | grep -q "'$livre'"; then
+		ok "$livre est ACCEPTÉ : le vocabulaire a suivi la capacité livrée"
 	else
-		ok "$refuse reste REFUSÉ : CRM-054 devra étendre l'énumération avec son trigger"
+		fail "$livre n'est plus accepté : une capacité livrée a disparu du vocabulaire"
 	fi
 done
+
+if printf '%s' "$contrainte" | grep -q "'mail_bounced'"; then
+	fail "mail_bounced est accepté : une capacité inexistante paraîtrait livrée"
+else
+	ok "mail_bounced reste REFUSÉ : l'unité qui traitera les rejets devra étendre l'énumération"
+fi
 
 # La garde `moved` doit être CONDITIONNÉE au channel — décision 215. Depuis CRM-019, cette
 # condition est structurelle : `moved` vit dans le dernier `elsif`, après `channel_changed` puis
@@ -236,10 +247,14 @@ done
 ouvertes=$(psql_db -c "select count(*) from information_schema.column_privileges
 	where table_schema='public' and table_name='cards'
 	  and grantee='authenticated' and privilege_type='UPDATE'")
-if [ "$ouvertes" = 12 ]; then
-	ok "DOUZE colonnes ouvertes, et pas une de plus : l'énumération de CRM-013 est intacte"
+# ONZE DEPUIS LE 2026-08-14 : `snoozed_until` est sortie de l'énumération de `CRM-013`, `CRM-081`
+# ayant livré `endormir_card` / `reveiller_card` comme seul chemin d'écriture du sommeil. Ce
+# contrôle a dénoncé la fermeture dès qu'elle a eu lieu — c'est ce qu'on lui demande —, et il est
+# révisé dans le même changement que la preuve qu'il compte.
+if [ "$ouvertes" = 11 ]; then
+	ok "ONZE colonnes ouvertes, et pas une de plus : l'énumération de CRM-013 est intacte"
 else
-	fail "$ouvertes colonnes ouvertes au lieu de 12 : une migration a élargi le privilège"
+	fail "$ouvertes colonnes ouvertes au lieu de 11 : une migration a élargi ou rétréci le privilège"
 fi
 
 if [ "$(psql_db -c "select has_column_privilege('service_role','public.cards','channel_id','update')")" = t ]; then
