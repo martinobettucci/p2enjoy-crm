@@ -852,7 +852,7 @@ en documentant lequel s'applique où. Le responsable tranche. La preuve
 
 ## Consigné le 2026-08-17 — un contrôle de harnais dépassé par le produit, étranger à `CRM-081`
 
-### INC-140 — Un changement de clé Vault rend le seed impossible, et fait échouer sept preuves pour un motif trompeur
+### INC-140 — Un changement de clé Vault rend le seed impossible, et fait échouer sept preuves pour un motif trompeur — **CLOSE**
 
 **Nature :** défaut d'exploitation du seed ; symptôme observable très loin de sa cause.
 **Relevé le :** 2026-08-14, en rejouant les preuves de `CRM-081` après un redémarrage de la pile.
@@ -949,6 +949,19 @@ seules, non sur une comparaison avant/après.
 **Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
 une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
 pour ses suites pgTAP ?
+**CLOSE LE 2026-08-14 — et la correction a révélé une SECONDE panne, plus traîtresse que la
+première.** `upsert_mail_inbound_account` et `upsert_mail_outbound_identity` recréent désormais un
+secret devenu illisible. Mais en éprouvant cette reprise, un autre cas est apparu : lorsque le
+secret n'existe **plus du tout** alors que la ligne du compte garde son identifiant,
+`vault.update_secret` ne lève **rien** — elle met à jour zéro ligne et rend la main. MESURÉ : après
+une purge de `vault.secrets`, le seed se déclarait **réussi** tandis que les trois comptes portaient
+un `secret_id` pendant ; la relève aurait échoué en `credentials_missing` sans que rien n'explique
+pourquoi. **Un succès silencieux est pire qu'une erreur.**
+
+La garde est donc **positive** : on ne se fie pas à l'absence d'exception, on constate que le secret
+existe. Vérifié de bout en bout — seed rejoué sur une base sans aucun secret : **3 secrets recréés,
+0 identifiant pendant**, et la relève ouvre une **vraie session IMAP** avec le secret recréé
+(`folders: 2`, aucune erreur).
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 

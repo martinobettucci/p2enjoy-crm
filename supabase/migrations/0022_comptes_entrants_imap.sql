@@ -331,7 +331,53 @@ begin
 				'CRM-052 — mot de passe IMAP d''un compte entrant'
 			);
 		else
-			perform vault.update_secret(v_secret_id, p_password);
+			-- UN SECRET QU'ON NE PEUT PLUS DÉCHIFFRER EST UN SECRET PERDU — INC-140, mesuré le
+			-- 2026-08-14. La clé racine de Vault vit hors de `PGDATA` (§13.3) : recréer la pile la
+			-- régénère, et les secrets écrits sous l'ancienne deviennent illisibles.
+			-- `vault.update_secret` déchiffre pour réécrire et échoue alors en
+			-- `pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext`, ce qui arrêtait le seed
+			-- net — sur un message que rien ne relie à la clé racine, deux niveaux plus haut.
+			--
+			-- LE SEUL GESTE UTILE EST DE LE RECRÉER. Ce n'est pas masquer une erreur : le secret
+			-- n'est pas récupérable, et le produit sait exactement quoi remettre à sa place — le mot
+			-- de passe que l'appelant vient de fournir. La ligne orpheline est retirée pour que le
+			-- nom redevienne disponible, l'index de `vault.secrets` étant unique sur le nom.
+			-- DEUX PANNES DISTINCTES, ET LA SECONDE EST LA PLUS TRAÎTRESSE.
+			--
+			-- 1. Le secret existe mais n'est plus DÉCHIFFRABLE : `update_secret` lève
+			--    `invalid ciphertext`, et le seed s'arrêtait net (INC-140).
+			-- 2. Le secret n'existe PLUS DU TOUT, alors que la ligne du compte garde son
+			--    identifiant : `update_secret` ne lève alors RIEN — elle met à jour zéro ligne et
+			--    rend la main. MESURÉ le 2026-08-14 : après une purge de `vault.secrets`, le seed
+			--    se déclarait réussi tandis que les trois comptes portaient un `secret_id`
+			--    pendant, et la relève aurait échoué en `credentials_missing` sans que rien
+			--    n'explique pourquoi. Un succès silencieux est pire qu'une erreur.
+			--
+			-- LE SEUL GESTE UTILE EST LE MÊME DANS LES DEUX CAS : recréer. Ce n'est pas masquer
+			-- une erreur — le secret n'est pas récupérable, et le produit sait exactement quoi
+			-- remettre à sa place, le mot de passe que l'appelant vient de fournir. La ligne
+			-- orpheline est retirée pour libérer le nom, l'index de `vault.secrets` étant unique.
+			begin
+				perform vault.update_secret(v_secret_id, p_password);
+			exception when others then
+				v_secret_id := null;
+			end;
+
+			-- LA VÉRIFICATION EST POSITIVE, et c'est elle qui attrape la panne n° 2 : on ne se fie
+			-- pas à l'absence d'exception, on constate que le secret EXISTE.
+			if v_secret_id is not null
+				and not exists (select 1 from vault.secrets s where s.id = v_secret_id) then
+				v_secret_id := null;
+			end if;
+
+			if v_secret_id is null then
+				delete from vault.secrets s where s.name = v_nom_secret;
+				v_secret_id := vault.create_secret(
+					p_password,
+					v_nom_secret,
+					'CRM-052 — secret recréé : l''ancien était illisible ou absent (INC-140)'
+				);
+			end if;
 		end if;
 	else
 		v_secret_id := v_existant.secret_id;
