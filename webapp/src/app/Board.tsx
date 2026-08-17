@@ -7,7 +7,10 @@
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §5.5 (boutons), §5.6 (badges),
 //       §5.8 (états), §6 (glisser-déposer optimiste), §7 (paliers), §8 (accessibilité),
 //       §9 (icônes Lucide), §12.6 (indication de débordement)
-// @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §3.5 (adresse d'une card)
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule du sommeil et la pastille compacte
+// @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §3.5 (adresse d'une card),
+//       §16.12.4 (la bascule, portée par l'adresse), §16.12.7 (la carte porte la pastille compacte)
+// @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (la barre de bascule et la pastille compacte)
 //
 // Ce composant **rend** ; il ne compose pas. Les colonnes, l'ordre, les cumuls, l'ancienneté et
 // la classification des refus vivent dans `webapp/src/lib/board.ts`, où ils sont vérifiables sans
@@ -23,7 +26,9 @@ import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
+import { BasculeSommeil, PastilleSommeil } from '../components/ui/Sommeil'
 import { t } from '../i18n'
+import type { ModeSommeil } from '../lib/filtre-sommeil'
 import {
 	appliquerDeplacement,
 	deplacerCard,
@@ -110,6 +115,9 @@ export type ProprietesBoard = {
 	readonly client: ClientCrm | null
 	readonly slugTrack: string
 	readonly slugChannel: string
+	/** Le mode courant de la bascule du sommeil (§16.12.4), lu de l'adresse par l'appelant. */
+	readonly modeSommeil: ModeSommeil
+	readonly onModeSommeil: (mode: ModeSommeil) => void
 }
 
 /**
@@ -127,6 +135,8 @@ export function Board({
 	client,
 	slugTrack,
 	slugChannel,
+	modeSommeil,
+	onModeSommeil,
 }: ProprietesBoard) {
 	const [idGlissee, setIdGlissee] = useState<string | null>(null)
 	const [cibleSurvolee, setCibleSurvolee] = useState<string | null>(null)
@@ -220,6 +230,18 @@ export function Board({
 	return (
 		<div className="flex flex-col gap-3 min-h-0">
 			<LiveRegion libelle={t('live.board.aria')} message={annonce} />
+			{/* LA PREMIÈRE BARRE DU BOARD, et elle ne porte que ce contrôle (§5.3 quinquies). Comme la
+			    barre de filtres de la vue liste, elle reste rendue **y compris sur un board vide** :
+			    elle est la cause possible de ce vide, et la masquer priverait l'utilisateur du seul
+			    geste qui l'en sort. */}
+			<div
+				data-testid="barre-sommeil-board"
+				role="group"
+				aria-label={t('sommeil.barre.aria')}
+				className="flex flex-wrap items-center gap-3"
+			>
+				<BasculeSommeil mode={modeSommeil} onMode={onModeSommeil} />
+			</div>
 			{refus === null ? null : (
 				<BandeauRefus
 					refus={refus.refus}
@@ -468,22 +490,33 @@ function CarteDeCard({
 					</div>
 				)}
 
-				{carte.seuilJours === null ? null : (
-					<p
-						data-testid="anciennete"
-						data-depassee={carte.ancienneteDepassee ? 'oui' : 'non'}
-						className={[
-							'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm w-fit',
-							carte.ancienneteDepassee ? 'bg-danger-soft text-danger-on-soft' : 'bg-hover text-text-2',
-						].join(' ')}
-					>
-						<Clock aria-hidden="true" size={14} strokeWidth={2} className="shrink-0" />
-						{/* Le nombre est une donnée, le reste une traduction : jamais de phrase
-						    construite par concaténation dans le composant (CLAUDE.md §23). */}
-						<span>
-							{carte.joursDansEtape} {t('board.age.days')}
-						</span>
-					</p>
+				{/* LES DEUX PASTILLES VIVENT CÔTE À CÔTE (§16.12.7), sur une ligne qui passe à la
+				    suivante plutôt que de déborder : une carte fait 288 px, et « 12 jours » suivi
+				    d'une date ne tient pas toujours. Le conteneur n'existe que si l'une des deux a
+				    quelque chose à dire — un `div` vide ajouterait un `gap` visible sous l'avatar. */}
+				{carte.seuilJours === null && !carte.enSommeil ? null : (
+					<div className="flex flex-wrap items-center gap-2">
+						{carte.seuilJours === null ? null : (
+							<p
+								data-testid="anciennete"
+								data-depassee={carte.ancienneteDepassee ? 'oui' : 'non'}
+								className={[
+									'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm w-fit',
+									carte.ancienneteDepassee ? 'bg-danger-soft text-danger-on-soft' : 'bg-hover text-text-2',
+								].join(' ')}
+							>
+								<Clock aria-hidden="true" size={14} strokeWidth={2} className="shrink-0" />
+								{/* Le nombre est une donnée, le reste une traduction : jamais de phrase
+								    construite par concaténation dans le composant (CLAUDE.md §23). */}
+								<span>
+									{carte.joursDansEtape} {t('board.age.days')}
+								</span>
+							</p>
+						)}
+						{/* Le prédicat vient de la COMPOSITION, avec l'instant du filtre (§16.12.3) : le
+						    rendu ne le rejuge pas. */}
+						<PastilleSommeil enSommeil={carte.enSommeil} echeance={card.snoozed_until} />
+					</div>
 				)}
 
 				<MenuTransitions

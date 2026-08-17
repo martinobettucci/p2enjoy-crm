@@ -128,6 +128,18 @@ export type CarteBoard = {
 	readonly joursDansEtape: number
 	readonly seuilJours: number | null
 	readonly ancienneteDepassee: boolean
+	/**
+	 * L'affaire dort-elle ? Calculé ici, avec **l'instant qui a servi au filtre** (§16.12.3).
+	 *
+	 * Le composant ne le recalcule pas, et ce n'est pas une commodité : le board masque et marque
+	 * avec la même définition, et laisser le rendu appeler `estEnSommeil` avec un `new Date()` qui
+	 * lui est propre ferait qu'une carte pourrait être rendue par le filtre et non marquée par la
+	 * pastille — deux instants, deux verdicts. Une seule définition, un seul instant.
+	 *
+	 * Vrai uniquement en mode « visibles » en pratique : en mode masqué, ces cartes ne sont pas
+	 * composées. La valeur n'en dépend pourtant pas — elle dit l'état de l'affaire, pas celui de la vue.
+	 */
+	readonly enSommeil: boolean
 }
 
 /** Cumul d'une colonne, ou son refus explicite lorsque deux devises s'y mêlent (§7.3). */
@@ -254,6 +266,9 @@ export function evaluerAnciennete(
 		joursDansEtape: Number.isFinite(jours) ? Math.max(jours, 0) : 0,
 		seuilJours,
 		ancienneteDepassee: seuilJours !== null && Number.isFinite(jours) && jours >= seuilJours,
+		// Le MÊME instant que celui du filtre de `composerBoard` (§16.12.3) : c'est le seul moyen
+		// qu'une carte rendue par l'un soit marquée par l'autre.
+		enSommeil: estEnSommeil(card.snoozed_until, maintenant),
 	}
 }
 

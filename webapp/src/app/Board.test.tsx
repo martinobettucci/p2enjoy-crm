@@ -17,6 +17,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Board } from './Board'
 import { fr } from '../i18n'
 import { composerBoard, type CardBoard, type EtapeBoard, type TransitionLue } from '../lib/board'
+import type { ModeSommeil } from '../lib/filtre-sommeil'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -80,18 +81,24 @@ function monter({
 	client,
 	onCards = () => {},
 	transitions = TRANSITIONS,
+	modeSommeil = 'masquees',
+	onModeSommeil = () => {},
 }: {
 	readonly cards: readonly CardBoard[]
 	readonly client: ClientCrm
 	readonly onCards?: (cards: readonly CardBoard[]) => void
 	/** Jeu de rechange, pour exercer le **repli** du libellé d'une transition (§7.5). */
 	readonly transitions?: readonly TransitionLue[]
+	/** Le mode de la bascule du sommeil (`CRM-081` tranche 2 b, docs/SPEC-cards.md §16.12.4). */
+	readonly modeSommeil?: ModeSommeil
+	readonly onModeSommeil?: (mode: ModeSommeil) => void
 }) {
 	const modele = composerBoard({
 		etapes: ETAPES,
 		cards,
 		transitions,
 		maintenant: MAINTENANT,
+		modeSommeil,
 	})
 	return render(
 		<MemoryRouter>
@@ -103,6 +110,8 @@ function monter({
 				client={client}
 				slugTrack="conseil-ia"
 				slugChannel="grands-comptes"
+				modeSommeil={modeSommeil}
+				onModeSommeil={onModeSommeil}
 			/>
 		</MemoryRouter>,
 	)

@@ -35,12 +35,17 @@ import { t, type CleTraduction } from '../i18n'
 import { composerBoard, useContenuBoard, type CardBoard, type EtapeBoard } from '../lib/board'
 import { projeterChannels, useContenuTrack, type Channel } from '../lib/channels'
 import {
+	CLE_URL_SOMMEIL,
+	MODE_SOMMEIL_PAR_DEFAUT,
+	VALEUR_URL_SOMMEIL_VISIBLES,
 	bornerPage,
 	ecrireParametres,
+	lireModeSommeil,
 	lireParametres,
 	useEtapesChannel,
 	usePageCards,
 	type CardListe as CardListeRendue,
+	type ModeSommeil,
 	type ParametresListe,
 } from '../lib/liste-cards'
 import { clientCrm } from '../lib/supabase'
@@ -122,6 +127,10 @@ function ContenuTrack({
 	readonly channelOuvert?: Channel
 	readonly slugTrack?: string
 }) {
+	// Lu ici, et non passé par une propriété : l'adresse est la source du mode du sommeil (§16.12.4),
+	// et la bascule de vue rendue ci-dessous est le seul élément de ce composant qui le transporte.
+	const [parametresVue] = useSearchParams()
+
 	// Pendant le chargement, la zone principale ne montre rien plutôt qu'un « introuvable »
 	// prématuré : annoncer l'absence avant d'avoir la réponse serait une valeur par défaut
 	// trompeuse (CLAUDE.md §18). Les squelettes vivent là où la donnée est attendue — barre
@@ -170,7 +179,15 @@ function ContenuTrack({
 	return (
 		<div className="flex flex-col min-w-0">
 			<div className="px-4 pt-4">
-				<BasculeVue slugTrack={slugTrack} slugChannel={channelOuvert.slug} vue={vue} />
+				{/* Le mode du sommeil est lu ICI, au-dessus des deux zones, parce que c'est ici que la
+				    bascule de vue le transporte (§16.12.4). Chaque zone le relit de l'adresse pour son
+				    propre compte : l'adresse est la seule source, et un état partagé la doublerait. */}
+				<BasculeVue
+					slugTrack={slugTrack}
+					slugChannel={channelOuvert.slug}
+					vue={vue}
+					modeSommeil={lireModeSommeil(parametresVue.get(CLE_URL_SOMMEIL))}
+				/>
 			</div>
 			{vue === 'liste' ? (
 				<ZoneListe channel={channelOuvert} slugTrack={slugTrack} />
@@ -195,6 +212,21 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 		channel.workflow_id ?? undefined,
 	)
 	const [cards, setCards] = useState<readonly CardBoard[]>([])
+	// LE BOARD LIT LUI AUSSI L'ADRESSE DEPUIS LA TRANCHE 2 b DE `CRM-081` (§16.12.4) : c'est le même
+	// paramètre `sommeil` que la vue liste, et c'est ce qui fait que la bascule board ↔ liste le
+	// conserve sans que personne n'ait à le recopier. Il était jusqu'ici le seul des deux écrans à
+	// n'avoir aucun paramètre.
+	const [parametresUrl, setParametresUrl] = useSearchParams()
+	const modeSommeil = lireModeSommeil(parametresUrl.get(CLE_URL_SOMMEIL))
+	const changerSommeil = (mode: ModeSommeil) => {
+		const suivants = new URLSearchParams(parametresUrl)
+		// Le défaut ne s'écrit jamais dans l'adresse (§16.12.4) : la vue par défaut reste l'adresse la
+		// plus courte. Les autres paramètres éventuels sont conservés — celui-ci est le seul que ce
+		// geste concerne.
+		if (mode === 'visibles') suivants.set(CLE_URL_SOMMEIL, VALEUR_URL_SOMMEIL_VISIBLES)
+		else suivants.delete(CLE_URL_SOMMEIL)
+		setParametresUrl(suivants)
+	}
 
 	useEffect(() => {
 		if (etat.statut === 'pret') setCards(etat.donnees.cards)
@@ -246,12 +278,36 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 		cards,
 		transitions: etat.donnees.transitions,
 		maintenant: new Date(),
+		modeSommeil,
 	})
 
 	if (modele.nombreCards === 0) {
+		// L'ÉTAT VIDE CESSE DE MENTIR (§16.12.6). Le défaut masque les affaires en sommeil : un board
+		// sans carte n'est donc plus la preuve d'un channel sans affaire. Le board, lui, SAIT combien
+		// il en masque — il a lu toutes les cards actives du channel —, et il l'affirme sans émettre
+		// une requête de plus. L'action qui lève le vide accompagne le message, et elle n'est alors
+		// pas répétée : la barre de bascule reste rendue en dessous, ce qui est le patron du §5.8.
+		const masquees = modele.nombreEnSommeilMasquees > 0
 		return (
 			<div className="flex flex-col gap-4 px-4 py-6">
-				<EtatVide titre={t('route.channel.empty.title')} corps={t('route.channel.empty.body')} />
+				<EtatVide
+					titre={t(masquees ? 'route.channel.empty.sommeil.title' : 'route.channel.empty.title')}
+					corps={t(masquees ? 'route.channel.empty.sommeil.body' : 'route.channel.empty.body')}
+					{...(masquees
+						? {
+								action: (
+									<button
+										type="button"
+										data-testid="afficher-sommeil-vide"
+										onClick={() => changerSommeil('visibles')}
+										className={CLASSES_RETOUR}
+									>
+										{t('sommeil.afficher')}
+									</button>
+								),
+							}
+						: {})}
+				/>
 				<BoardRendu
 					modele={modele}
 					cards={cards}
@@ -259,6 +315,8 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 					libelles={etat.donnees.libellesChamps}
 					slugTrack={slugTrack}
 					slugChannel={channel.slug}
+					modeSommeil={modeSommeil}
+					onModeSommeil={changerSommeil}
 				/>
 			</div>
 		)
@@ -273,6 +331,8 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 				libelles={etat.donnees.libellesChamps}
 				slugTrack={slugTrack}
 				slugChannel={channel.slug}
+				modeSommeil={modeSommeil}
+				onModeSommeil={changerSommeil}
 			/>
 		</div>
 	)
@@ -286,6 +346,8 @@ function BoardRendu({
 	libelles,
 	slugTrack,
 	slugChannel,
+	modeSommeil,
+	onModeSommeil,
 }: {
 	readonly modele: ReturnType<typeof composerBoard>
 	readonly cards: readonly CardBoard[]
@@ -293,6 +355,8 @@ function BoardRendu({
 	readonly libelles: ReadonlyMap<string, string>
 	readonly slugTrack: string
 	readonly slugChannel: string
+	readonly modeSommeil: ModeSommeil
+	readonly onModeSommeil: (mode: ModeSommeil) => void
 }) {
 	return (
 		<Board
@@ -303,6 +367,8 @@ function BoardRendu({
 			client={clientCrm}
 			slugTrack={slugTrack}
 			slugChannel={slugChannel}
+			modeSommeil={modeSommeil}
+			onModeSommeil={onModeSommeil}
 		/>
 	)
 }
@@ -404,6 +470,12 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 
 	const { cards, total: totalFiltre } = etat.donnees
 	const filtre = parametres.etape !== null || parametres.recherche !== ''
+	// TROIS ÉTATS VIDES, ET NON DEUX (§16.12.6). Le troisième n'existe que lorsque le sommeil est la
+	// SEULE cause possible du vide : aucun autre filtre posé, et le mode masqué. La liste, elle, ne
+	// sait pas s'il dort réellement une affaire — elle a demandé les éveillées et n'en a reçu aucune
+	// —, d'où « aucune affaire ÉVEILLÉE », qui est vrai dans les deux cas. Un second comptage pour
+	// les distinguer serait une requête payée sur tous les chargements pour un cas de bord.
+	const videParSommeil = !filtre && parametres.sommeil === 'masquees'
 
 	// Deux états vides distincts, parce que l'utilisateur n'y répond pas de la même façon : un
 	// channel sans affaire n'appelle aucune action, un filtre trop étroit appelle son retrait (§12.9).
@@ -419,20 +491,55 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	// plus lisible des deux, et non plus parce qu'un outil l'exige.
 	let etatVide: ReactNode = undefined
 	if (totalFiltre === 0) {
+		// Les clés sont ÉCRITES, jamais construites : une clé interpolée ne se retrouverait pas par le
+		// contrôle de textes en dur, qui lit l'arbre syntaxique (même règle qu'au §16.11.3 des presets).
+		const titre: CleTraduction = filtre
+			? 'liste.filtered.title'
+			: videParSommeil
+				? 'liste.empty.sommeil.title'
+				: 'liste.empty.title'
+		const corps: CleTraduction = filtre
+			? 'liste.filtered.body'
+			: videParSommeil
+				? 'liste.empty.sommeil.body'
+				: 'liste.empty.body'
 		etatVide = (
 			<EtatVide
-				titre={t(filtre ? 'liste.filtered.title' : 'liste.empty.title')}
-				corps={t(filtre ? 'liste.filtered.body' : 'liste.empty.body')}
+				titre={t(titre)}
+				corps={t(corps)}
 				{...(filtre
 					? {
 							action: (
 								<button
 									type="button"
 									data-testid="effacer-filtres-vide"
-									onClick={() => appliquer({ ...parametres, etape: null, recherche: '', page: 1 })}
+									onClick={() =>
+										appliquer({
+											...parametres,
+											etape: null,
+											recherche: '',
+											// « Effacer les filtres » efface celui-ci aussi (§16.12.5).
+											sommeil: MODE_SOMMEIL_PAR_DEFAUT,
+											page: 1,
+										})
+									}
 									className={CLASSES_RETOUR}
 								>
 									{t('liste.filtre.effacer')}
+								</button>
+							),
+						}
+					: {})}
+				{...(!filtre && videParSommeil
+					? {
+							action: (
+								<button
+									type="button"
+									data-testid="afficher-sommeil-vide"
+									onClick={() => appliquer({ ...parametres, sommeil: 'visibles', page: 1 })}
+									className={CLASSES_RETOUR}
+								>
+									{t('sommeil.afficher')}
 								</button>
 							),
 						}

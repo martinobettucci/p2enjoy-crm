@@ -165,6 +165,11 @@ export const fr = {
 	'route.channel.empty.title': 'Aucune card dans ce channel',
 	'route.channel.empty.body':
 		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+	// Le board, LUI, sait combien il en masque : il a lu toutes les cards actives du channel
+	// (§16.12.3). Son état vide peut donc affirmer ce que la liste ne peut que suggérer.
+	'route.channel.empty.sommeil.title': 'Toutes les affaires de ce channel sont en sommeil',
+	'route.channel.empty.sommeil.body':
+		'Aucune affaire éveillée ne reste à traiter ici. Affichez les affaires en sommeil pour les retrouver.',
 	'route.channel.noworkflow.title': 'Aucun workflow sur ce channel',
 	'route.channel.noworkflow.body':
 		"Un board a besoin des étapes d'un workflow : ce channel n'en désigne aucun que votre compte puisse lire.",
@@ -347,6 +352,10 @@ export const fr = {
 	'liste.filtre.recherche': 'Rechercher une affaire',
 	'liste.filtre.recherche.submit': 'Rechercher',
 	'liste.filtre.effacer': 'Effacer les filtres',
+	// UNE SEULE CLÉ POUR LA CASE ET POUR L'ACTION DES ÉTATS VIDES (§16.12.6) : c'est le même geste,
+	// et deux libellés pour un geste unique se mettraient à diverger.
+	'sommeil.afficher': 'Afficher les affaires en sommeil',
+	'sommeil.barre.aria': 'Affichage des affaires en sommeil',
 	'liste.colonne.title': 'Affaire',
 	'liste.colonne.owner': 'Responsable',
 	'liste.colonne.etape': 'Étape',
@@ -362,6 +371,14 @@ export const fr = {
 	'liste.empty.title': 'Aucune affaire dans ce channel',
 	'liste.empty.body':
 		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+	// LE SOMMEIL A SON PROPRE ÉTAT VIDE, et ce n'est pas une nuance de rédaction (§16.12.6) : le
+	// défaut masque les affaires endormies, donc « aucune affaire dans ce channel » serait FAUX sur
+	// un channel dont toutes les affaires dorment. La liste ne prétend pourtant pas savoir s'il en
+	// dort — « aucune affaire éveillée » est vrai dans les deux cas, et un second comptage à chaque
+	// page pour les distinguer serait une requête payée sur tous les chargements pour un cas de bord.
+	'liste.empty.sommeil.title': 'Aucune affaire éveillée dans ce channel',
+	'liste.empty.sommeil.body':
+		'Les affaires en sommeil sont masquées par défaut. Affichez-les pour voir si ce channel en porte.',
 	'liste.filtered.title': 'Aucune affaire ne correspond',
 	'liste.filtered.body':
 		'Aucune affaire de ce channel ne répond aux filtres appliqués. Effacez-les pour revoir la liste entière.',

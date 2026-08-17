@@ -1,11 +1,15 @@
 // @spec CRM-042 (docs/BACKLOG.md) — vue liste d'un channel : tableau, tri, filtres, pagination
 // @spec CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule du sommeil et la pastille compacte
 // @spec docs/SPEC-cards.md §12.4 (le tri), §12.5 (les filtres), §12.6 (la pagination et le `416`),
 //       §12.7 (le tableau, sa densité et ses colonnes), §12.8 (accessibilité et clavier),
-//       §12.9 (états systématiques)
+//       §12.9 (états systématiques), §16.12.4 (le cinquième paramètre d'adresse),
+//       §16.12.5 (« effacer les filtres » efface celui-ci aussi), §16.12.7 (la marque d'une
+//       affaire endormie rendue visible)
 // @spec docs/DESIGN_SYSTEM.md §5.9 (tableau de données), §5.5 (boutons), §5.6 (badges),
 //       §5.7 (champs), §5.8 (états), §7 (paliers), §8 (accessibilité), §9 (icônes Lucide),
-//       §12.1 (navigation par liens, non `tablist`), §12.6 (débordement signalé)
+//       §12.1 (navigation par liens, non `tablist`), §12.6 (débordement signalé),
+//       §5.3 quinquies (la bascule et la pastille compacte)
 //
 // Ce composant **rend** ; il ne compose pas. La clôture des tris, l'ordre total, le repli des
 // paramètres d'adresse, le bornage du rang de page et la classification du `416` vivent dans
@@ -20,17 +24,23 @@ import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
+import { BasculeSommeil, PastilleSommeil } from '../components/ui/Sommeil'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import type { CouleurNoeud, EtapeBoard } from '../lib/board'
 import {
+	CLE_URL_SOMMEIL,
+	MODE_SOMMEIL_PAR_DEFAUT,
 	TRIS,
+	VALEUR_URL_SOMMEIL_VISIBLES,
 	nombreDePages,
 	type CardListe,
 	type CleTri,
+	type ModeSommeil,
 	type ParametresListe,
 	type SensTri,
 } from '../lib/liste-cards'
+import { estEnSommeil } from '../lib/sommeil-card'
 
 /**
  * Le ton de badge d'une couleur de nœud.
@@ -65,6 +75,16 @@ const LIBELLES: Readonly<Record<CleTri | 'responsable' | 'etape' | 'next_action'
  */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 const CLASSES_CELLULE_TECHNIQUE = 'h-[var(--size-target)] px-3 text-right whitespace-nowrap'
+
+/**
+ * La cellule « Affaire » porte DEUX éléments depuis la tranche 2 b de `CRM-081` : le lien et, le cas
+ * échéant, la pastille compacte du sommeil (§16.12.7).
+ *
+ * Elle ne peut donc plus être `truncate` elle-même — l'ellipse appartient désormais au titre, à
+ * l'intérieur d'un conteneur `flex`. La largeur maximale et la hauteur d'une seule ligne, elles, ne
+ * bougent pas : c'est la densité du §5.9, et une pastille ne l'achète pas.
+ */
+const CLASSES_CELLULE_AFFAIRE = 'h-[var(--size-target)] px-3 max-w-[32ch]'
 
 /**
  * Un montant se rend en **donnée technique** (docs/DESIGN_SYSTEM.md §2, §5.9) : monospace,
@@ -114,6 +134,13 @@ export type ProprietesListeCards = {
 	 * attraper, les trois éléments existant bel et bien (décision 190).
 	 */
 	readonly etatVide?: ReactNode
+	/**
+	 * L'instant qui départage le sommeil pour la **marque** des lignes (§16.12.7).
+	 *
+	 * Injectable pour la même raison qu'au §16.11.1 : sans lui, aucune preuve ne pourrait éprouver
+	 * les deux côtés de l'échéance sans dépendre de l'heure à laquelle elle s'exécute.
+	 */
+	readonly maintenant?: Date
 }
 
 /**
@@ -132,6 +159,7 @@ export function ListeCards({
 	slugChannel,
 	onParametres,
 	etatVide,
+	maintenant = new Date(),
 }: ProprietesListeCards) {
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
 	const pages = nombreDePages(total)
@@ -194,6 +222,7 @@ export function ListeCards({
 										etape={etapesParId.get(card.current_step_id)}
 										slugTrack={slugTrack}
 										slugChannel={slugChannel}
+										maintenant={maintenant}
 									/>
 								))}
 							</tbody>
@@ -289,22 +318,34 @@ function Ligne({
 	etape,
 	slugTrack,
 	slugChannel,
+	maintenant,
 }: {
 	readonly card: CardListe
 	readonly etape: EtapeBoard | undefined
 	readonly slugTrack: string
 	readonly slugChannel: string
+	readonly maintenant: Date
 }) {
 	return (
 		<tr data-testid="ligne-card" data-card={card.id} className="border-b border-border hover:bg-hover">
-			<td className={CLASSES_CELLULE}>
-				<Link
-					to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
-					title={card.title}
-					className="text-ink font-medium hover:text-brand"
-				>
-					{card.title}
-				</Link>
+			{/* LA PASTILLE SUIT LE LIEN, ELLE NE LE REMPLACE PAS (§16.12.7) : elle est `shrink-0`, le
+			    titre garde son ellipse, et la ligne garde sa hauteur d'une seule ligne de texte
+			    (§12.7, §5.9). `truncate` déplacé du `td` vers le titre : appliqué à la cellule, il
+			    aurait rogné la pastille avec le texte. */}
+			<td className={CLASSES_CELLULE_AFFAIRE}>
+				<span className="flex items-center gap-2 min-w-0">
+					<Link
+						to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
+						title={card.title}
+						className="text-ink font-medium hover:text-brand truncate min-w-0"
+					>
+						{card.title}
+					</Link>
+					<PastilleSommeil
+						enSommeil={estEnSommeil(card.snoozed_until, maintenant)}
+						echeance={card.snoozed_until}
+					/>
+				</span>
 			</td>
 			<td className="h-[var(--size-target)] px-3 whitespace-nowrap">
 				{card.responsable === null ? null : (
@@ -365,7 +406,13 @@ function BarreFiltres({
 }) {
 	const idEtape = useId()
 	const idRecherche = useId()
-	const filtre = offrirEffacement && (parametres.etape !== null || parametres.recherche !== '')
+	// « EFFACER LES FILTRES » EFFACE CELUI-CI AUSSI (§16.12.5) : l'action ramène l'adresse à son état
+	// nu, et l'état nu ne montre pas les affaires en sommeil. Elle apparaît donc désormais sur une
+	// liste dont la seule différence est que les affaires endormies y sont visibles — c'est la lecture
+	// la plus prévisible de « effacer les filtres ».
+	const filtre =
+		offrirEffacement &&
+		(parametres.etape !== null || parametres.recherche !== '' || parametres.sommeil === 'visibles')
 
 	return (
 		<form
@@ -429,11 +476,29 @@ function BarreFiltres({
 				{t('liste.filtre.recherche.submit')}
 			</Button>
 
+			{/* La bascule est un filtre comme les deux autres, et elle vit dans leur barre (§5.3
+			    quinquies). Elle ramène à la première page : la page 3 de la liste qui masque n'a aucun
+			    rapport avec la page 3 de celle qui montre. */}
+			<div className="flex flex-col gap-1">
+				<BasculeSommeil
+					mode={parametres.sommeil}
+					onMode={(sommeil) => onParametres({ ...parametres, sommeil, page: 1 })}
+				/>
+			</div>
+
 			{!filtre ? null : (
 				<Button
 					variante="discret"
 					data-testid="effacer-filtres"
-					onClick={() => onParametres({ ...parametres, etape: null, recherche: '', page: 1 })}
+					onClick={() =>
+						onParametres({
+							...parametres,
+							etape: null,
+							recherche: '',
+							sommeil: MODE_SOMMEIL_PAR_DEFAUT,
+							page: 1,
+						})
+					}
 				>
 					{t('liste.filtre.effacer')}
 				</Button>
@@ -503,15 +568,33 @@ export function BasculeVue({
 	slugTrack,
 	slugChannel,
 	vue,
+	modeSommeil = MODE_SOMMEIL_PAR_DEFAUT,
 }: {
 	readonly slugTrack: string
 	readonly slugChannel: string
 	readonly vue: 'board' | 'liste'
+	/**
+	 * Le mode du sommeil, **conservé** par le passage d'une vue à l'autre (§16.12.4).
+	 *
+	 * IL EST LE SEUL PARAMÈTRE QUE CETTE BASCULE TRAÎNE, et c'est délibéré : ni le tri, ni la
+	 * recherche, ni l'étape, ni la page n'ont de sens sur un board, et les recopier écrirait dans
+	 * l'adresse d'une vue des paramètres que l'autre ignore. Un utilisateur qui a demandé à voir les
+	 * affaires endormies, lui, ne redemande pas à chaque changement de vue.
+	 */
+	readonly modeSommeil?: ModeSommeil
 }) {
 	const base = `/tracks/${slugTrack}/${slugChannel}`
+	// Le défaut ne s'écrit pas dans l'adresse (§16.12.4) : les deux liens restent nus tant que la
+	// bascule n'a pas été demandée.
+	const suffixe =
+		modeSommeil === 'visibles' ? `?${CLE_URL_SOMMEIL}=${VALEUR_URL_SOMMEIL_VISIBLES}` : ''
 	const liens = [
-		{ vue: 'board' as const, adresse: base, cle: 'liste.vue.board' as CleTraduction },
-		{ vue: 'liste' as const, adresse: `${base}/liste`, cle: 'liste.vue.liste' as CleTraduction },
+		{ vue: 'board' as const, adresse: `${base}${suffixe}`, cle: 'liste.vue.board' as CleTraduction },
+		{
+			vue: 'liste' as const,
+			adresse: `${base}/liste${suffixe}`,
+			cle: 'liste.vue.liste' as CleTraduction,
+		},
 	]
 
 	return (
