@@ -17806,3 +17806,61 @@ n'existe pas sur ce checkout neuf et sa création n'a pas été tentée, aucun f
 n'étant touché ; `scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh`, que
 l'exécution précédente avait laissés interrompus et qui restent dus ; les **quarante-huit** autres
 `scripts/verify-*.sh`, la série entière ne tenant pas dans une session (§2.1 ter du prompt).
+
+
+## 2026-08-17 — `CRM-081` tranche 2 d : la carte du board porte enfin le geste
+
+**Point de départ.** L'entrée précédente laissait `CRM-081` en `[~]` avec trois écarts nommés, dont
+« aucun geste dans le menu de la carte du board : la fiche est le seul chemin ». C'est une unité
+produit en cours au sens du §4.2 du prompt, et le geste est du comportement à livrer : c'est
+l'unité de la session. Sa spécification n'existait pas — le §16.11 et le §16.12 la nommaient comme
+un écart, pas comme un contrat —, donc §16.13 a été écrit et **committé avant la première ligne de
+code**, avec le §5.3 sexies du design system.
+
+**Une mesure a décidé de la forme.** Le menu de la carte ne portait que les transitions, et il
+était **éteint** quand l'étape n'en déclarait aucune. Or, mesuré sur le seed en comptant les
+transitions sortantes de chaque affaire active, `Socle analytique — Vertuo` est à l'étape `Livré`
+avec **zéro** transition : loger le geste dans ce menu l'aurait rendu inatteignable exactement là
+où il sert le plus, une affaire livrée étant précisément celle qu'on range. Le menu devient donc
+celui des **actions**, en deux sections, et cesse d'être éteint ; la phrase « Aucun déplacement
+déclaré depuis cette étape » entre dans le menu au lieu d'être le libellé d'un bouton mort.
+
+**Ce que la session livre.** Les quatre échéances usuelles rendues dès l'ouverture — pas de panneau
+dans un menu déjà ouvert —, comptées depuis l'instant du **geste** et non du rendu ; « Réveiller »
+à leur place sur une affaire endormie ; la carte qui quitte le board sans requête de lecture
+supplémentaire ; le refus qui laisse le menu ouvert avec la mention **même** de la fiche, les
+libellés ayant été remontés dans `components/ui/Sommeil.tsx` d'où la fiche les lit désormais.
+`appliquerSommeil` ne reporte que `snoozed_until` : les deux RPC rendent `public.cards` sans l'embed
+`profiles`, et remplacer la ligne ferait disparaître l'avatar du responsable.
+
+**Ce que la campagne a corrigé, et c'était MON défaut.** `npm run e2e:ui` a rendu **six** scénarios
+rouges. Un seul défaut à la racine : le nom accessible du menu suit son contenu et est passé de
+« Déplacer <affaire> » à « Actions <affaire> » ; trois preuves l'atteignaient par ce nom et
+expiraient dessus. Les cinq autres en **découlaient** — `authentification` et `parcours-transition`
+détruisent leurs cards d'essai en fin de scénario, et leur expiration a laissé six cards `tst-…`
+dans la base : le seed comptait 47 affaires au lieu de 41, ce qui rendait rouges le total de
+`filtre-sommeil` et le plan de remappage de `versions-workflow`. Leçon à garder : **une preuve qui
+expire ne nettoie pas**, et une seule preuve cassée en pollue d'autres par la base qu'elles
+partagent. Preuves révisées avec leur motif, orphelines retirées, base revenue à 41 cards.
+
+**Une erreur de méthode, dite parce qu'elle coûte du temps.** `npm run test:sql` a d'abord été
+lancé **pendant** `npm run e2e:ui`. Deux suites qui écrivent la même base ne se jugent pas
+simultanément : `0015_colonnes_protegees.test.sql` a rougi sur des cards d'essai que l'autre suite
+venait de créer. Rejoué seul, il rend 42 fichiers et 2191 assertions sans anomalie. La campagne se
+lance **séquentiellement**.
+
+**Deux entrées au registre, l'une avec sa ligne de base.** INC-139 : `verify-board.sh` **complet**
+rend 56 contrôles et 4 échecs, dont trois qui n'apparaissent pas en mode `--rapide` — le code de la
+session a été temporairement remplacé par celui de `f85fc3e` et le harnais rejoué, qui rend les
+**mêmes quatre**, donc préexistants. Le plus sérieux dit qu'une dégradation du retour arrière laisse
+les tests unitaires verts : une preuve complaisante vaut moins que pas de preuve. INC-140 :
+`verify-colonnes-protegees.sh` attend **quinze** cards seedées là où la base en porte **quarante et
+une** — compteur figé depuis `CRM-077`, même famille qu'INC-132 ; ses deux dernières lignes rougies
+sont `test:sql` et `e2e:api`, verts tous deux rejoués seuls.
+
+**Où reprendre.** `CRM-081` reste `[~]`, et ses écarts sont **tous hérités** : le harnais rejouable
+`scripts/verify-snooze.sh`, qui n'existe toujours pas et reste dû avant le passage à `[x]` ; le
+**sommeil des fils de messagerie**, tranche 2 c, dont aucune colonne ne porte le sujet et dont la
+spécification est à écrire ; et le §16.12.6 non éprouvé en E2E dans sa variante non filtrée. Une
+prochaine exécution devrait prendre `scripts/verify-snooze.sh` : c'est le dernier écart qui
+appartienne encore aux tranches livrées, et il ferme la dégradation volontaire qui manque à toutes.

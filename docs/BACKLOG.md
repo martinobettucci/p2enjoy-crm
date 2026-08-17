@@ -8388,9 +8388,14 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       qu'il disait du menu.
 - [ ] **Aucun sommeil de fil de messagerie** : l'énoncé nomme « les fils et les cards », et les
       fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2 c.
-- [ ] **`scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh` non rejoués** :
-      interrompus par le budget de la session du 2026-08-16, ils sont les deux harnais que cette
-      tranche touche le plus directement. À exécuter en priorité par la prochaine exécution.
+- [~] **`scripts/verify-colonnes-protegees.sh` rejoué le 2026-08-17** : **50 contrôles, 8 en
+      échec**, tous étrangers — trois compteurs figés à quinze cards seedées là où la base en porte
+      quarante et une, deux protections de colonne dues à `CRM-013`, et deux suites qui rougissent
+      sous la sonde du harnais alors qu'elles sont vertes rejouées seules. Consigné en **INC-140**.
+      `scripts/verify-timeline.sh` reste **non rejoué**, faute de budget.
+- [x] **`scripts/verify-board.sh` rejoué le 2026-08-17**, complet : **56 contrôles, 4 en échec**,
+      les **mêmes quatre** sur la ligne de base établie au code d'avant la tranche. Préexistants et
+      étrangers, consignés en **INC-139**.
 - [ ] **Les compteurs de `scripts/verify-harness.sh` ne sont pas révisés ici** : ils sont mesurés
       **en retard de bien plus que cette tranche** depuis deux exécutions — dérive antérieure et
       étrangère, que corriger sous cette unité reviendrait à solder une autre (`CLAUDE.md` §13).

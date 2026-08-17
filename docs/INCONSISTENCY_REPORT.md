@@ -195,10 +195,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138 et
-INC-139** — la dernière consignée le 2026-08-17 par la session `CRM-081` tranche 2 d
-(`verify-board.sh` complet rend trois échecs de plus que son mode `--rapide`, tous mesurés
-identiques sur la ligne de base, donc préexistants). **Sept ouvertes auparavant : INC-123, INC-124,
+**Dix ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138, INC-139,
+INC-140 et INC-141** — **INC-139** et **INC-141** consignées le 2026-08-17 par la session
+`CRM-081` tranche 2 d (`verify-board.sh` complet rend trois échecs de plus que son mode
+`--rapide`, tous mesurés identiques sur la ligne de base, donc préexistants ;
+`verify-colonnes-protegees.sh` attend quinze cards seedées là où la base en porte quarante et une),
+**INC-140** par une session concurrente du même jour, dont le numéro était déjà poussé lorsque la
+présente entrée a été rebasée — d'où sa renumérotation en INC-141, résolue sur place et non par une
+branche (`docs/CloudWorker.md` §0). **Sept ouvertes auparavant : INC-123, INC-124,
 INC-125, INC-126, INC-136, INC-137 et INC-138** — les
 deux avant-dernières consignées le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte
 `now()` en affirmant qu'il n'est pas évalué, alors que Postgres l'évalue ; `verify-board.sh` exige
@@ -879,6 +883,72 @@ appartient à `CRM-052`, qui porte l'écriture de ces secrets.
 **Portée réelle.** Toute recréation de la pile reproduit le défaut, et il faut le savoir avant
 d'accuser une unité de messagerie ou de sommeil de ses propres preuves rouges. À rapprocher
 d'INC-139, relevée le même jour : deux preuves rouges, deux causes étrangères à l'unité accusée.
+
+### INC-141 — `verify-colonnes-protegees.sh` compte QUINZE cards seedées ; le seed en porte quarante et une
+
+**Mesuré le 2026-08-17**, `scripts/verify-colonnes-protegees.sh` : **50 contrôles, 8 en échec**.
+Ce harnais n'avait pas été rejoué depuis deux sessions, faute de budget ; il l'est ici, et son
+verdict ne dit rien du produit.
+
+```
+ECHEC  la suite pgTAP signale au moins une anomalie
+ECHEC  le nombre de cards seedées a changé : une sonde n'a pas été nettoyée
+ECHEC  des adresses seedées se répètent
+ECHEC  au moins une adresse seedée n'a pas la forme générée
+ECHEC  mail_inbound_accounts EXISTE désormais : la protection de colonne de CRM-013 doit être écrite
+ECHEC  mail_outbound_identities EXISTE désormais : la protection de colonne de CRM-013 doit être écrite
+ECHEC  npm run test:sql
+ECHEC  npm run e2e:api
+```
+
+**TROIS COMPTEURS FIGÉS À QUINZE, LÀ OÙ LE SEED EN PORTE QUARANTE ET UNE.** Le harnais écrit, à sa
+section 6 (« Le seed, inchangé ») :
+
+```
+select count(*) from public.cards where id::text like '5eed%';   attendu : 15
+```
+
+MESURÉ le 2026-08-17 sur la pile réelle :
+
+```
+count(*)                        = 41
+count(distinct email_local_part) = 41
+```
+
+Le commentaire du harnais date sa valeur : « QUINZE DEPUIS `CRM-077`, cinquième tranche ». Le seed a
+grandi depuis, et les trois contrôles ne l'ont pas suivi. Ce sont des **compteurs figés** au sens de
+la décision 51, de la même famille qu'INC-132 — la suite pgTAP `0015_colonnes_protegees.test.sql`,
+elle, dit bien « les quarante et une cards du seed », et elle est verte.
+
+**Les deux lignes `mail_*` nomment leur propre unité** : « la protection de colonne de `CRM-013`
+doit être écrite ». Les deux tables ont été livrées depuis par le sous-système de messagerie, et le
+contrôle attend une protection qu'aucune unité n'a encore écrite. C'est une tâche due, pas une
+régression.
+
+**Les deux dernières lignes ne disent rien non plus**, et c'est mesurable : rejouées **seules**, à
+la fin de la même session et sur la même pile,
+
+```
+npm run test:sql   42 fichiers, 2191 assertions, aucune anomalie
+npm run e2e:api    678 scénarios, tous verts
+```
+
+Le harnais les lance après ses propres dégradations et sa sonde `tst-crm013-harnais` ; une sonde
+encore présente porte le compte des cards à 42, et `0015_colonnes_protegees.test.sql` — qui, lui,
+attend 41 — rougit alors pour la sonde du harnais, non pour le produit.
+
+**Étranger à `CRM-081` tranche 2 d** : la tranche ne touche que `Board.tsx`, `board.ts`,
+`components/ui/Sommeil.tsx`, `EnTeteCard.tsx`, l'i18n et leurs preuves. Elle ne modifie aucun
+privilège de colonne, aucune table de messagerie et aucune donnée du seed.
+
+**Réserve honnête** : la ligne de base par restauration du code d'avant n'a **pas** été établie sur
+ce harnais, faute de temps — elle l'a été sur `verify-board.sh` (INC-139). L'attribution ci-dessus
+repose donc sur la mesure directe des compteurs et sur le verdict vert des deux suites rejouées
+seules, non sur une comparaison avant/après.
+
+**Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
+une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
+pour ses suites pgTAP ?
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 
