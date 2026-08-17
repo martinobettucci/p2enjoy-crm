@@ -5383,7 +5383,7 @@ aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
 de celui livré ici. `move_card_to_channel(card_id, channel_id, step_id)` est **retenue inchangée** ;
 le geste pluriel devient `change_channel_workflow`, porté par **`CRM-019`**.
 
-### CRM-046 — Seed de démonstration complet `[~]`
+### CRM-046 — Seed de démonstration complet `[x]`
 Trois tracks, plusieurs channels, workflows distincts dont un dérivé, cards à toutes les étapes,
 cas d'erreur et branches alternatives, aucun écran vide.
 **DoD** : `resetMe.sh` reproduit exactement le même état ; chaque fonctionnalité livrée est
@@ -5488,12 +5488,11 @@ démontrable depuis le seed.
       distinctes désormais — l'une compare deux états du même cluster, l'autre deux
       reconstructions —, et la valeur est remplacée par sa **forme** et son **unicité**, vérifiées
       par deux contrôles dédiés.
-- [ ] **~~INC-021 conditionne le passage en `[x]`.~~ INC-021 est close depuis `CRM-009` et
-      `CRM-011`**, et la tranche 2 ci-dessous le démontre : deux captures de cette unité sont prises
-      sur une session **réellement connectée**, sans aucune substitution.
-
-**Tranche 2 — le volume et les données longues (2026-08-16).**
-
+- [x] **PASSÉE À `[x]` LE 2026-08-17, APRÈS EXÉCUTION.** Le dernier écart invoquait INC-021, close
+      depuis le 2026-08-07 par `CRM-009` : le blocage n'avait plus de cause (INC-143). La clôture
+      n'est pourtant pas prononcée sur cette relecture, mais sur les preuves rejouées **après une
+      reconstruction complète de la pile** : `scripts/verify-seed-demo.sh` rend **69 contrôles,
+      aucune anomalie**, et `npm run test:sql` **42 fichiers, 2191 assertions**, aucune anomalie.
 - [x] **Spécification écrite après mesure et committée avant la première ligne de code**,
       `docs/SPEC-seed.md` §9.11, sept sous-chapitres. MESURÉ avant d'écrire : titre le plus long
       **36** caractères, prochaine action **34**, channel le plus chargé **4** cards actives contre
