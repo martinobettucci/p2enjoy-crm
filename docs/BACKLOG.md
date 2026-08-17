@@ -5157,7 +5157,7 @@ prouvé hors interface avec les jetons réels des trois comptes.
   modifié.
 - **Identité Git reposée avant le premier commit** — INC-034 point 2, **sixième** occurrence.
 
-### CRM-045 — Déplacement d'une card entre channels `[~]`
+### CRM-045 — Déplacement d'une card entre channels `[x]`
 `move_card_to_channel` avec remappage explicite.
 **DoD** : pgTAP (remappage obligatoire, événement écrit) ; E2E.
 
@@ -5295,7 +5295,19 @@ prouvé hors interface avec les jetons réels des trois comptes.
       restauration, comme la 14 avait rejoint celle de `verify-cards.sh` à `CRM-013`, et un
       contrôle **constate** que la cinquième garde est rendue. Le harnais passe de 74 à **76**
       contrôles.
-- [ ] **QUATRE DÉFAUTS DU BALAYAGE NE M'APPARTIENNENT PAS, ET AUCUN N'EST CORRIGÉ ICI.** Les
+- [x] **LES QUATRE DÉFAUTS DU BALAYAGE SONT ÉTEINTS, mesurés un à un le 2026-08-17** — et aucun
+      ne l'a été par une révision de compteur seule. **(1)** INC-076 est close depuis `CRM-022`.
+      **(2)** `scripts/verify-commentaires.sh` repasse au vert de lui-même : son échec tenait au
+      résidu d'un balayage séquentiel, non au produit — le fichier avait été aligné entre-temps.
+      **(3)** `scripts/verify-preuves-refus.sh` portait QUATRE écarts et non un : trois compteurs
+      périmés — 55 politiques attendues pour 66, 14 cards de seed pour 41, plan pgTAP de 52 pour
+      55 — et un quatrième qui n'en était pas un, la preuve n° 9 déclarée absente alors qu'elle
+      avait suivi son sujet dans `e2e/api/ingestion.spec.ts` quand `CRM-054` a livré les pièces
+      jointes. Le harnais l'y **exécute** désormais au lieu d'y lire un titre. Il passe à
+      **27 contrôles, aucune anomalie** ; `docs/JOURNAL.md` décision 432. **(4)** INC-036 ne se
+      reproduit plus : les suites d'interface tournent sans `PLAYWRIGHT_CHROMIUM_PATH`.
+      *Le relevé d'origine est conservé ci-dessous, daté du balayage de `CRM-045`.*
+- [x] **Relevé d'origine — QUATRE DÉFAUTS DU BALAYAGE NE M'APPARTENAIENT PAS.** Les
       corriger reviendrait à rouvrir trois unités pendant un passage consacré à une quatrième
       (`CLAUDE.md` §13). Chacun est mesuré, daté et nommé :
       **(1) ~~INC-076, la plus grave~~ — CLOSE depuis `CRM-022` (2026-08-09), preuve rejouée le
@@ -5317,7 +5329,13 @@ prouvé hors interface avec les jetons réels des trois comptes.
       Playwright épinglé exige **1234**. Toute suite d'interface échoue tant que
       `PLAYWRIGHT_CHROMIUM_PATH` n'est pas renseigné — ce qui explique **à lui seul** la majorité
       des échecs du premier balayage. Avec le contournement, **127 scénarios verts**.
-- [ ] **UN BALAYAGE SÉQUENTIEL DE TOUS LES HARNAIS N'EST PAS REPRODUCTIBLE, ET C'EST MESURÉ.** Après
+- [x] **UN BALAYAGE SÉQUENTIEL DE TOUS LES HARNAIS N'EST PAS REPRODUCTIBLE, ET C'EST MESURÉ.**
+      *CONSTAT TRANSFÉRÉ, ET NON RÉSOLU.* Le phénomène tient toujours au 2026-08-17 ; ce qui est
+      terminé ici, c'est sa mesure et son rattachement à un porteur. Il est consigné en INC-142, qui porte la
+      généralisation du purgeage des résidus par clé de service dans le `finally` de chaque suite
+      E2E. Il ne conditionne PAS cette unité : il ne décrit aucun défaut de `move_card_to_channel`,
+      mais une limite de la méthode de balayage, commune à tous les harnais. Le rattacher à
+      `CRM-045` reviendrait à lui faire porter une dette qui n'est pas la sienne.* Après
       une passe complète, la base portait **neuf channels résiduels** (`api-cree-*`, `k6-bizdev`) et
       `appels-offres` archivé — chaque harnais dégrade puis restaure, mais les jeux d'essai
       s'accumulent. Les suites globales, vertes isolément, deviennent rouges. Contre-épreuve :
@@ -5341,9 +5359,14 @@ prouvé hors interface avec les jetons réels des trois comptes.
       **410 scénarios d'API**, **467 tests unitaires**, typecheck et build verts,
       `verify-move-card-to-channel` **45/45**. Les compteurs de `scripts/verify-harness.sh` étaient
       déjà portés à 1405 et 410 par `CRM-046`.
-- [ ] **INC-021 conditionne le passage en `[x]`**, comme pour les quinze unités précédentes : le
-      parcours complet suppose une session, et aucune unité du backlog ne porte l'écran de
-      connexion. **Seizième unité consécutive.**
+- [x] **INC-021 NE CONDITIONNE PLUS RIEN : elle est close depuis `CRM-009`, le 2026-08-07.** Cet
+      écart citait un blocage disparu une semaine avant d'être invoqué — INC-143 le mesure sur
+      quatre unités, dont celle-ci. L'écran de connexion existe, et le parcours authentifié est
+      exerçable. Ce qui reste vrai, et qui est écrit plus bas sans emprunter à INC-021 : cette
+      unité **ne livre aucun écran**, ni le board ni la vue liste ne portant de sélecteur de
+      channel (`docs/SPEC-workflow-engine.md` §6.10). Sa preuve E2E est donc une preuve d'API, et
+      c'est conforme à sa Definition of Done. Le geste utilisateur correspondant appartiendra à
+      l'unité qui livrera cet écran, non à celle-ci.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (remappage obligatoire,
 événement écrit) ; E2E ». **Les trois sont livrés** — 64 assertions pgTAP dont le remappage
