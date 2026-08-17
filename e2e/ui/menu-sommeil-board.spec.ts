@@ -47,6 +47,14 @@ const TERMINALE_LUE = 'Automatisation des sauvegardes — Duchamp'
 
 const AFFICHER = 'Afficher les affaires en sommeil'
 
+/**
+ * Le palier étroit du §7 du design system, désigné par son INDICE LITTÉRAL dans le tuple.
+ * `PALIERS[PALIERS.length - 1]` rendrait un type facultatif — la longueur n'est pas connue du
+ * compilateur comme une constante —, et le harnais s'écrirait alors avec un test d'existence qui
+ * ne prouverait rien.
+ */
+const ETROIT = PALIERS[3]
+
 const carteDe = (page: Page, titre: string) =>
 	page.locator('[data-testid="carte-card"]').filter({ hasText: titre })
 
@@ -107,9 +115,8 @@ test.describe('le menu de la carte porte le geste (docs/SPEC-cards.md §16.13.1)
 	// LE PALIER ÉTROIT (docs/DESIGN_SYSTEM.md §7) : une carte fait 288 px à toute largeur, et c'est
 	// là que le menu ouvert est le plus contraint. Aucun libellé ne doit déborder ni se tronquer.
 	test('le menu ouvert tient dans la carte au palier étroit', async ({ page }) => {
-		const etroit = PALIERS[PALIERS.length - 1]
 		await connecter(page, ADMIN)
-		await page.setViewportSize({ width: etroit.largeur, height: etroit.hauteur })
+		await page.setViewportSize({ width: ETROIT.largeur, height: ETROIT.hauteur })
 		await page.goto(BOARD_GRANDS_COMPTES)
 
 		const carte = carteDe(page, TERMINALE.titre)
@@ -122,7 +129,7 @@ test.describe('le menu de la carte porte le geste (docs/SPEC-cards.md §16.13.1)
 		// La carte ne s'élargit pas pour loger le menu : elle reste à la largeur du §5.2 bis.
 		const boite = await carte.boundingBox()
 		expect(boite?.width).toBeLessThanOrEqual(288)
-		await capturer(page, `menu-sommeil-board-eveillee-${etroit.nom}`, UNITE)
+		await capturer(page, `menu-sommeil-board-eveillee-${ETROIT.nom}`, UNITE)
 	})
 })
 
