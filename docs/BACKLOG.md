@@ -8247,7 +8247,8 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
 - [x] **L'écran du sommeil est livré — tranche 2 a**, spécifiée `docs/SPEC-cards.md` §16.11 et
       committée avant sa première ligne de code, `docs/DESIGN_SYSTEM.md` §5.3 quater pour la forme.
       La tranche 2 est découpée en trois : la fiche et son geste (2 a, livrée), le filtre du board
-      et de la vue liste (2 b, §16.12, **non écrite**), le sommeil des fils (2 c).
+      et de la vue liste (2 b, §16.12, **livrée le 2026-08-17**), le sommeil des fils (2 c, dont la
+      spécification reste à écrire).
 - [x] **Le module `webapp/src/lib/sommeil-card.ts`** porte le prédicat avec son instant
       **injectable**, les quatre échéances usuelles, la conversion d'une saisie `datetime-local`,
       le dictionnaire fermé des huit issues et les deux appels de RPC. **31 assertions unitaires**,
@@ -8278,10 +8279,66 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       volume du seed plutôt qu'à la propriété éprouvée. Le seed endormant désormais sa card cobaye,
       elle est devenue rouge. Corrigée en **deltas** contre une référence prise avant les gestes,
       motifs écrits dans le fichier. Quatrième occurrence de cette famille dans l'unité.
-- [ ] **AUCUN FILTRE : une affaire en sommeil ne sort d'aucune vue.** Le board et la vue liste la
-      montrent comme avant, et aucun filtre explicite ne la ramène. **C'est l'écart principal qui
-      reste**, il porte deux des cinq exigences de la DoD, et il est l'objet de la tranche 2 b,
-      dont la spécification est **due avant sa première ligne de code** (§16.12).
+- [x] **LE FILTRE EST LIVRÉ — tranche 2 b**, spécifié `docs/SPEC-cards.md` §16.12 en neuf
+      sous-chapitres mesurés et `docs/DESIGN_SYSTEM.md` §5.3 quinquies, committés avant sa première
+      ligne de code. Les **deux exigences de la DoD** qu'il portait sont tenues : une affaire en
+      sommeil **sort des vues par défaut** — board et vue liste —, et **reste atteignable** par une
+      bascule explicite. Le board filtre à la composition, la vue liste au serveur avant sa plage
+      (§16.12.3) ; les deux emploient la même fonction et le même instant injectable.
+- [x] **La bascule et la pastille compacte vivent dans un module partagé**,
+      `webapp/src/components/ui/Sommeil.tsx` : une **case à cocher étiquetée** et non un bouton à
+      deux états — l'état est alors lu et annoncé par le navigateur —, cible de 40 px portée par le
+      libellé entier ; une pastille qui rend l'icône `Moon` et la date courte à l'œil en portant la
+      phrase entière comme **nom accessible** (`role="img"`), la place n'admettant pas « En sommeil
+      jusqu'au … » sur une carte de 288 px ni dans une ligne de tableau.
+- [x] **`CarteBoard` porte `enSommeil`, calculé avec l'instant du FILTRE** : le composant ne rejuge
+      pas le prédicat. Un second `new Date()` au rendu pourrait faire disparaître la pastille d'une
+      carte que le filtre vient de rendre — une définition, un instant, deux usages.
+- [x] **Le paramètre `sommeil` est le cinquième de l'adresse**, clos, son défaut jamais écrit, et
+      **conservé par la bascule board ↔ liste** — lui seul : ni le tri, ni la recherche, ni l'étape,
+      ni la page n'ont de sens sur un board. « Effacer les filtres » le ramène à son défaut avec les
+      deux autres (§16.12.5).
+- [x] **Les deux états vides cessent de mentir, sans requête supplémentaire** (§16.12.6) : le board
+      affirme « Toutes les affaires de ce channel sont en sommeil » parce qu'il **connaît** le nombre
+      de masquées — il a lu toutes les cards actives —, et la liste dit « Aucune affaire éveillée
+      dans ce channel », qui est vrai qu'il en dorme ou non. Les deux portent l'action qui lève le
+      vide. Les compteurs de colonne, les cumuls et le total de la liste portent sur ce qui est
+      **affiché** (§16.12.8).
+- [x] **Preuves unitaires de la tranche 2 b** : le cinquième paramètre — défaut, clôture, omission,
+      aller-retour, cohabitation —, le filtre de la requête dans les deux modes, sa forme « nulle OU
+      échue », son instant envoyé comme valeur, son antériorité sur la plage ; la composition du
+      board dans les deux modes, les deux côtés de l'échéance et l'instant exact avec un instant
+      injecté, l'échéance illisible, le compte des masquées et les compteurs bornés.
+      `npm run test:unit` **1472 tests** sur 46 fichiers, 1413 avant la session.
+- [x] **UNE PREUVE HÉRITÉE ÉTAIT ROUGE, ET LE DÉFAUT VENAIT DE LA TRANCHE** :
+      `webapp/src/lib/liste-cards.test.ts` échouait sur **huit** tests depuis le commit des modules
+      de composition — sa chaîne factice ne portait aucune méthode `or`, que le mode par défaut émet
+      à chaque lecture. Recorder ajouté, motif écrit dans le fichier. Deux témoins figés retournés
+      avec leur motif : les `toEqual` exhaustifs des paramètres d'adresse et de la pagination
+      comptaient cinq champs, ils en comptent six.
+- [x] **Preuve d'API dédiée** : `e2e/api/filtre-sommeil.spec.ts`, **11 scénarios** avec les jetons
+      réels de l'administratrice **et de la lectrice**, sur les deux channels du seed. `prospection`
+      rend 1 ligne sur 2 en mode masqué, `grands-comptes` ses 4 lignes dans les deux modes —
+      l'échéance échue n'étant pas un sommeil —, et le total du `Content-Range` **suit le filtre** à
+      chaque fois. Aucune écriture : le seed sort intact.
+- [x] **Preuve E2E d'interface** : `e2e/ui/filtre-sommeil.spec.ts`, **15 scénarios** sans aucune
+      substitution — les deux modes du board et de la liste, le total qui passe de 1 à 2, l'échéance
+      échue présente et non marquée dans les deux modes, la ligne marquée qui garde la hauteur de sa
+      voisine, l'effacement des filtres, le mode qui survit aux deux sens de la bascule de vue sans
+      traîner tri ni recherche, et les quatre paliers sans débordement. **Treize captures** sous
+      `docs/captures/CRM-081/`, produites et observées.
+- [x] **INC-137 consignée, comportement inchangé** : le §16.12.2 écarte `now()` en affirmant qu'il
+      n'est pas évalué. MESURÉ le 2026-08-17, Postgres l'évalue — `'now()'::timestamptz` rend
+      l'instant courant, et le filtre rend `200` avec le même résultat que l'instant envoyé comme
+      valeur. Le produit est correct, son motif écrit est faux : arbitrage demandé, et la preuve
+      d'API consigne la mesure sans affirmer le motif contesté.
+- [x] **`docs/manual.md` porte enfin le sommeil** : un chapitre **4.9 bis** dédié, et les chapitres
+      4.8 et 4.9 mis à jour — trois filtres au lieu de deux, quatre états vides au lieu de trois.
+      Le sommeil n'était nommé **nulle part** dans le manuel, la tranche 2 a ne l'y ayant pas porté.
+- [ ] **Le §16.12.6 n'est éprouvé en E2E que par sa variante filtrée** : aucun channel du seed ne
+      porte **que** des affaires endormies, et atteindre cet état demanderait d'écrire en base depuis
+      une preuve — ce que celle-ci ne fait pas. Le cas est couvert en unitaire, par le compte des
+      masquées. À trancher : soit le seed pose un tel channel, soit l'écart reste nommé.
 - [ ] **Aucun geste dans le menu de la carte du board** : la fiche est le seul chemin.
 - [ ] **Aucun sommeil de fil de messagerie** : l'énoncé nomme « les fils et les cards », et les
       fils n'ont aujourd'hui aucune colonne pour le porter. Tranche 2 c.

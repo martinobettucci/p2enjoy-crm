@@ -17716,3 +17716,68 @@ rejouent des suites E2E complètes et sont les deux harnais que ce changement to
 directement ; les quarante-six autres `scripts/verify-*.sh`. Une prochaine exécution devrait
 commencer par ces deux-là.
 
+
+## 2026-08-17 — `CRM-081` tranche 2 b : le sommeil range enfin les deux vues
+
+**Point de départ, et une surprise.** L'entrée précédente désignait la tranche 2 b et disait sa
+spécification « à écrire ». Elle l'était : deux commits de la session du 2026-08-16 — `0cbbff6` et
+`3da6eeb` — avaient posé le §16.12 en neuf sous-chapitres mesurés, le §5.3 quinquies du design
+system, et les deux **modules de composition** (`filtre-sommeil.ts`, le filtre de `board.ts` et
+celui de `liste-cards.ts`). Le journal et le backlog, eux, n'avaient pas été mis à jour. La
+spécification existant et couvrant ce qui restait, l'exception du §3.2 du prompt s'applique : je ne
+l'ai pas réécrite, et je suis passé au code. Ce qui manquait était **toute la surface** — aucune
+bascule, aucune marque, aucun état vide — et **toutes les preuves**.
+
+**Un rouge hérité, trouvé au premier rejeu.** `webapp/src/lib/liste-cards.test.ts` était **rouge
+depuis ce commit** : sa chaîne factice ne porte aucune méthode `or`, et le mode par défaut de la vue
+liste en émet un à chaque lecture. Huit preuves tombaient sur `chaine.or is not a function` avant
+leur assertion. Même unité, donc corrigé ici, avec le motif écrit dans le fichier. Leçon à garder :
+une chaîne factice doit porter **toute** méthode que le module appelle, sans quoi elle ne mesure
+plus le module mais elle-même.
+
+**Ce que la session livre.** La bascule et la pastille compacte dans un module partagé
+(`components/ui/Sommeil.tsx`) : une case à cocher étiquetée plutôt qu'un bouton à deux états, et une
+pastille qui rend l'icône et la date à l'œil en portant la phrase entière comme nom accessible
+(`role="img"`). Le board reçoit sa **première barre** — rendue même sans carte, elle est la cause
+possible du vide. La vue liste voit la case rejoindre ses filtres, « Effacer les filtres » l'efface
+désormais aussi, et la cellule « Affaire » porte la marque après le lien, l'ellipse passant du `td`
+au titre. `BasculeVue` transporte le paramètre d'une vue à l'autre, et lui seul. Les deux états vides
+cessent de mentir, sans requête supplémentaire.
+
+**Une décision de conception vaut d'être retenue.** `CarteBoard` porte désormais `enSommeil`,
+calculé par `composerBoard` avec **l'instant du filtre**. Le composant ne rejuge pas le prédicat :
+un second `new Date()` dans le rendu pourrait faire disparaître la pastille d'une carte que le filtre
+vient de rendre. Une définition, un instant, deux usages.
+
+**INC-137, et c'est le motif d'une spécification que la mesure contredit.** Le §16.12.2 écarte
+`now()` en affirmant que PostgREST « compare à la chaîne « now() », pas à l'heure du serveur ».
+PostgREST n'évalue effectivement rien — mais il transmet la chaîne à Postgres, dont l'analyseur de
+date accepte la valeur spéciale `now` et tolère les parenthèses. MESURÉ : `'now()'::timestamptz`
+rend l'instant courant, et `or=(snoozed_until.is.null,snoozed_until.lte.now())` rend `200` avec
+exactement le même résultat que l'instant envoyé comme valeur. Le comportement du produit est
+correct ; c'est son **motif écrit** qui est faux. Consigné, comportement laissé inchangé, arbitrage
+demandé — la preuve d'API consigne la mesure sans affirmer le motif contesté.
+
+**Mesuré.** `npm run test:unit` **1472 tests** sur 46 fichiers — 1413 avant cette session, les 59 de
+plus étant les siens ; `npm run typecheck`, `npm run types:check` et `npm run build` verts ;
+`npm run test:sql` **42 fichiers, 2191 assertions, aucune anomalie** ;
+`e2e/api/filtre-sommeil.spec.ts` **11 scénarios** avec les jetons réels de l'administratrice et de
+la lectrice ; `e2e/ui/filtre-sommeil.spec.ts` **15 scénarios**, et **treize captures** produites et
+observées sous `docs/captures/CRM-081/`.
+
+**Un piège de harnais, mesuré et à ne pas redécouvrir.** `locator.check()` clique puis relit l'état
+de la case **une seule fois**. Sur une case pilotée par l'adresse, la relecture tombe avant le commit
+de React : Playwright rend « Clicking the checkbox did not change its state » alors que la capture
+d'échec montre la case cochée, l'affaire visible et sa pastille rendue. Un `click()` suivi d'un
+`expect(...).toBeChecked()`, qui réessaie, éprouve la même chose sans dépendre de l'instant du
+commit.
+
+**Où reprendre.** `CRM-081` reste `[~]`, et ses écarts sont nommés, tous hérités : le harnais
+rejouable `scripts/verify-snooze.sh`, qui n'existe toujours pas et qui est dû avant le passage à
+`[x]` ; le geste dans le **menu de la carte du board**, la fiche restant le seul chemin ; et le
+**sommeil des fils de messagerie**, tranche 2 c, qu'aucune colonne ne porte aujourd'hui — sa
+spécification est à écrire. Le §16.12.6 n'est éprouvé en E2E que par sa variante filtrée : aucun
+channel du seed ne porte que des affaires endormies, et le prouver demanderait d'écrire en base
+depuis une preuve, ce que celle-ci ne fait pas. Restent aussi dus les deux harnais que la tranche
+touche le plus directement, `scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh`,
+que l'exécution précédente avait laissés interrompus par le budget.
