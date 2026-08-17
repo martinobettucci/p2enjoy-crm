@@ -195,8 +195,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137 et INC-138** — les
-deux dernières consignées le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte
+**Huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138 et
+INC-139** — la dernière consignée le 2026-08-17 par la session `CRM-081` tranche 2 d
+(`verify-board.sh` complet rend trois échecs de plus que son mode `--rapide`, tous mesurés
+identiques sur la ligne de base, donc préexistants). **Sept ouvertes auparavant : INC-123, INC-124,
+INC-125, INC-126, INC-136, INC-137 et INC-138** — les
+deux avant-dernières consignées le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte
 `now()` en affirmant qu'il n'est pas évalué, alors que Postgres l'évalue ; `verify-board.sh` exige
 que les channels ne soient lus qu'à un endroit, alors que le produit en compte quatre). **Cinq ouvertes auparavant :
 INC-123, INC-124, INC-125, INC-126 et INC-136** — la dernière
@@ -843,6 +847,57 @@ en documentant lequel s'applique où. Le responsable tranche. La preuve
 ---
 
 ## Consigné le 2026-08-17 — un contrôle de harnais dépassé par le produit, étranger à `CRM-081`
+
+### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
+
+**Mesuré le 2026-08-17**, `scripts/verify-board.sh` **complet** — et non `--rapide`, seul mode que
+INC-138 avait exercé : **56 contrôles, 4 en échec**.
+
+```
+ECHEC  les channels sont lus à plusieurs endroits : les lectures divergeront
+ECHEC  des classes citées n'existent pas dans le CSS produit
+ECHEC  dégradation « un refus inconnu est absorbé (CLAUDE.md §18 nié) » impossible :
+       motif introuvable dans webapp/src/lib/board.ts
+ECHEC  COMPLAISANT : « le retour arrière disparaît après un refus (§7.9 nié) » et les
+       tests unitaires restent verts
+```
+
+Le premier est **INC-138**, déjà consignée. Les trois autres n'apparaissent qu'en mode complet, et
+sont consignés ici.
+
+**LIGNE DE BASE ÉTABLIE, ET C'EST CE QUI TRANCHE** (`docs/CloudWorker.md` §2.4). Le code de la
+session a été temporairement remplacé par celui du commit `f85fc3e` — l'état d'avant la première
+ligne de code de la tranche 2 d — et le harnais rejoué sur cette base :
+
+```
+56 contrôles, 4 en échec.   (les MÊMES quatre, mot pour mot)
+```
+
+Les quatre anomalies sont donc **préexistantes et étrangères** à `CRM-081` tranche 2 d. Le
+comportement est laissé inchangé.
+
+**Ce que chacune paraît dire**, sans que cette session ne tranche :
+
+- *les classes citées absentes du CSS produit* : le harnais compare les classes utilitaires écrites
+  dans les composants du board à celles que la feuille construite contient. Le mécanisme de
+  génération à la demande de Tailwind ne produit que les classes rencontrées ; un écart tient soit à
+  une classe réellement morte, soit à un contrôle qui lit la feuille avant sa construction complète.
+  Le fichier de détail est écrit dans un répertoire temporaire effacé en fin d'exécution, ce qui
+  rend l'anomalie difficile à instruire — c'est en soi un défaut du harnais ;
+- *dégradation impossible, motif introuvable* : le harnais cherche dans `webapp/src/lib/board.ts` un
+  motif de code qu'il sait dégrader pour éprouver qu'une preuve n'est pas complaisante. Le motif n'y
+  est plus sous la forme attendue. La dégradation ne s'exécute donc pas, et le contrôle ne prouve
+  rien — ni dans un sens, ni dans l'autre ;
+- *contrôle complaisant sur le retour arrière* : la dégradation, elle, s'exécute, et les tests
+  unitaires restent **verts** alors qu'ils devraient rougir. C'est la plus sérieuse des trois : elle
+  dit qu'aucune preuve unitaire n'éprouve réellement le retour arrière exact du §7.9. La preuve
+  existe pourtant (`Board.test.tsx`), ce qui suggère que la dégradation ne frappe plus le code
+  qu'elle visait.
+
+**Arbitrage demandé** : ces trois contrôles portent sur des unités antérieures (`CRM-041`) et les
+corriger reviendrait à solder une autre unité que celle de la session (`CLAUDE.md` §13). La
+troisième mérite d'être instruite en priorité, une preuve complaisante valant moins que pas de
+preuve du tout.
 
 ### INC-138 — `verify-board.sh` exige que les channels ne soient lus qu'à UN endroit ; ils le sont à quatre
 
