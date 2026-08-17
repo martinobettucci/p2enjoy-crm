@@ -6330,7 +6330,7 @@ classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et docu
 règles vivent en base et non dans le service, ce qui est le choix d'architecture du produit depuis
 `CRM-010`. L'unité reste `[~]` pour les deux écarts ci-dessus.
 
-### CRM-056 — Dossiers IMAP imbriqués `[~]`
+### CRM-056 — Dossiers IMAP imbriqués `[x]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.
 **DoD** : intégration vérifiant l'arborescence **par un client IMAP** ; observation visuelle dans
 Roundcube ; renommage d'un track propageant le renommage du dossier.
@@ -6404,19 +6404,28 @@ Roundcube ; renommage d'un track propageant le renommage du dossier.
       déplacement.
 - [x] **Compteurs révisés** : 27 → **28** fichiers SQL, 1843 → **1861** assertions,
       35 → **38** scénarios `mail`.
-- [ ] **La reprise d'un rangement manqué n'est pas livrée** : le rangement est tenté à la
-      **première** vue d'un message, et un refus est journalisé sans être rejoué. La reprise
-      appartient à `CRM-059`.
+- [x] **LA REPRISE D'UN RANGEMENT MANQUÉ EST LIVRÉE — dette soldée par `CRM-059`, constatée ici le
+      2026-08-14.** L'écart annonçait un rangement tenté à la **première** vue d'un message et un
+      refus journalisé sans être rejoué ; `CRM-059` l'a repris à son compte et l'a livré. La relève
+      distingue désormais les rangements neufs des reprises, et le rapporte : une passe réelle
+      observée ce jour rend `filed_retried: 4`. Une dette nommée dans un backlog n'est soldée que
+      le jour où une unité la revendique — celle-ci l'a été.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « intégration vérifiant
 l'arborescence **par un client IMAP** ; observation visuelle dans Roundcube ; renommage d'un track
-propageant le renommage du dossier ». **Les trois sont tenues.** L'unité reste `[~]` pour le seul
-écart ci-dessus, porté par une unité nommée.
+propageant le renommage du dossier ». **Les trois sont tenues**, et le seul écart qui maintenait
+l'unité à `[~]` — la reprise d'un rangement manqué — a été soldé par `CRM-059`.
+
+**PASSÉE À `[x]` LE 2026-08-14**, après exécution de ses preuves et non sur relecture :
+`scripts/verify-mail-dossiers.sh` rend **37 contrôles, aucune anomalie**, témoin et trois
+dégradations comprises.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran du produit** ne montre l'arborescence : Roundcube reste le seul moyen de
-  vérification visuelle tant que `CRM-057` n'existe pas.
+- **L'écran du produit existe depuis `CRM-057`** : l'inbox globale montre l'arborescence
+  Track → Channel → Card. Roundcube n'est donc plus le seul moyen de vérification visuelle, et cette
+  limite est levée. Elle est réécrite plutôt que retirée : elle disait vrai le jour où elle a été
+  posée, et c'est l'unité suivante qui l'a défaite.
 - **Les labels Gmail sont détectés, jamais exercés** : aucun serveur à labels n'existe dans la
   pile de développement, et la détection est éprouvée sur un serveur simulé.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
