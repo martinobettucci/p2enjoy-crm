@@ -3,10 +3,11 @@
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.3 (composition des colonnes),
 //       §7.4 (contenu d'une carte), §7.5 (transitions atteignables), §7.9 (optimisme et retour
 //       arrière), §7.10 (les sept refus), §5.2 (signature et valeur de retour de `move_card`)
-// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : le board masque les affaires en sommeil
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : le board masque les affaires en sommeil ;
+//       tranche 2 d : le geste de sommeil depuis la carte
 // @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §5 (« active »), §16.12.3 (le board
 //       filtre à la composition, et pourquoi), §16.12.6 (le compte des masquées), §16.12.8 (ce que
-//       le compteur et le cumul deviennent)
+//       le compteur et le cumul deviennent), §16.13.3 (ce que la carte devient après le geste)
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne de board)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 //
@@ -455,6 +456,27 @@ export function remplacerCard(
 				}
 			: card,
 	)
+}
+
+/**
+ * Reporte sur la card détenue par l'écran la SEULE colonne que les deux gestes de sommeil écrivent
+ * — `docs/SPEC-cards.md` §16.13.3.
+ *
+ * ELLE NE REMPLACE PAS LA CARD, ET C'EST LA DIFFÉRENCE AVEC `remplacerCard` CI-DESSUS.
+ * `snooze_card` et `wake_card` rendent le type composite `public.cards`, donc **sans** la relation
+ * `profiles` embarquée que la carte porte pour son avatar (`CRM-022`) : remplacer la ligne entière
+ * ferait disparaître l'avatar du responsable jusqu'au prochain chargement. Le sommeil ne touche
+ * qu'une colonne ; n'en reporter qu'une est à la fois le plus sûr et le plus exact.
+ *
+ * L'échéance vient de la LIGNE RENDUE, jamais de la saisie (§16.11.4) : l'écran n'annonce jamais un
+ * sommeil que le serveur n'a pas confirmé.
+ */
+export function appliquerSommeil(
+	cards: readonly CardBoard[],
+	idCard: string,
+	snoozedUntil: string | null,
+): readonly CardBoard[] {
+	return cards.map((card) => (card.id === idCard ? { ...card, snoozed_until: snoozedUntil } : card))
 }
 
 // --- Lectures (§7.2) -----------------------------------------------------------------------

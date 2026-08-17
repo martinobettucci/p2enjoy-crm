@@ -1,6 +1,7 @@
-// @spec CRM-081 (docs/BACKLOG.md) — mise en sommeil d'une affaire, tranche 2 b
+// @spec CRM-081 (docs/BACKLOG.md) — mise en sommeil d'une affaire, tranches 2 b et 2 d
 // @spec docs/SPEC-cards.md §16.12.4 (la bascule vit dans l'adresse), §16.12.7 (une affaire endormie
-//       rendue visible est MARQUÉE), §16.11.2 (la pastille porte l'échéance en date courte)
+//       rendue visible est MARQUÉE), §16.11.2 (la pastille porte l'échéance en date courte),
+//       §16.11.4 (dictionnaire fermé des issues), §16.13.4 (les mêmes mentions qu'à la fiche)
 // @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (de quoi la bascule et la pastille compacte ont l'air),
 //       §5.3 quater (les jetons et l'icône dont elles héritent), §8 (cible de 40 px, nom accessible)
 //
@@ -13,9 +14,50 @@
 
 import { Moon } from 'lucide-react'
 import { useId } from 'react'
-import { t } from '../../i18n'
+import { t, type CleTraduction } from '../../i18n'
 import type { ModeSommeil } from '../../lib/filtre-sommeil'
-import { formaterEcheanceSommeil } from '../../lib/sommeil-card'
+import {
+	formaterEcheanceSommeil,
+	type CleEcheanceUsuelle,
+	type IssueSommeil,
+} from '../../lib/sommeil-card'
+
+/**
+ * Les libellés des quatre échéances usuelles, NOMMÉS et non composés par interpolation.
+ *
+ * Une clé construite en `` `card.sleep.preset.${cle}` `` ne se retrouverait pas par le contrôle de
+ * clés mortes du dictionnaire, qui cherche le littéral : les quatre passeraient pour mortes, et une
+ * clé réellement morte s'y cacherait sans être vue.
+ *
+ * REMONTÉES ICI PAR LA TRANCHE 2 d (docs/SPEC-cards.md §16.13.4), où elles étaient privées de
+ * `EnTeteCard.tsx` : la fiche et la carte du board offrent le même geste, et « un même refus ne se
+ * formule pas de deux façons selon l'écran d'où il a été demandé ». Deux copies divergeraient au
+ * premier ajustement de libellé.
+ */
+export const CLE_PRESET_SOMMEIL: Readonly<Record<CleEcheanceUsuelle, CleTraduction>> = {
+	demain: 'card.sleep.preset.demain',
+	troisjours: 'card.sleep.preset.troisjours',
+	semaine: 'card.sleep.preset.semaine',
+	mois: 'card.sleep.preset.mois',
+}
+
+/** Les six issues du §16.11.4 que l'écran met en mots ; les deux succès n'en ont pas besoin. */
+export const MENTION_SOMMEIL: Readonly<
+	Record<Exclude<IssueSommeil, 'endormie' | 'reveillee'>, CleTraduction>
+> = {
+	'echeance-requise': 'card.sleep.refus.required',
+	'echeance-passee': 'card.sleep.refus.past',
+	introuvable: 'card.sleep.refus.notfound',
+	refus: 'card.sleep.refus.forbidden',
+	reseau: 'card.sleep.refus.network',
+	inconnu: 'card.sleep.refus.unknown',
+}
+
+/** La mention d'une issue, ou `null` lorsque le geste a abouti et n'a rien à dire. */
+export function mentionSommeil(issue: IssueSommeil | null): CleTraduction | null {
+	if (issue === null || issue === 'endormie' || issue === 'reveillee') return null
+	return MENTION_SOMMEIL[issue]
+}
 
 /**
  * La pastille **compacte** d'une affaire endormie rendue visible par la bascule (§16.12.7).

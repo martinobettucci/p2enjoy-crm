@@ -315,7 +315,11 @@ export const fr = {
 	'board.aria': 'Board du channel',
 	'board.column.empty': 'Aucune affaire à cette étape.',
 	'board.age.days': 'j dans cette étape',
-	'board.menu.open': 'Déplacer',
+	// LE MENU EST CELUI DES ACTIONS DE LA CARTE, PLUS CELUI DE SES SEULS DÉPLACEMENTS
+	// (docs/SPEC-cards.md §16.13.1) : il porte le sommeil, donc « Déplacer » ne le nomme plus.
+	'board.menu.open': 'Actions',
+	'board.menu.section.transitions': 'Déplacer vers',
+	'board.menu.section.sommeil': 'Sommeil',
 	'board.menu.none': 'Aucun déplacement déclaré depuis cette étape',
 	// Clé **paramétrée** : le repli du libellé d'une transition nomme son étape d'arrivée sans que
 	// le composant construise la phrase (docs/SPEC-workflow-engine.md §7.5, CLAUDE.md §23).
@@ -495,6 +499,10 @@ export const fr = {
 	'live.board.aria': 'Annonces du board',
 	'live.board.moved': 'Affaire déplacée vers',
 	'live.board.refused': 'Déplacement refusé',
+	// UNE CARTE QUI DISPARAÎT SANS UN MOT MENT À CELUI QUI NE LA VOIT PAS (§16.13.5) : les deux
+	// gestes du sommeil empruntent la région du board, ils n'en créent pas une seconde.
+	'live.board.snoozed': 'Affaire mise en sommeil jusqu’au {echeance}',
+	'live.board.woken': 'Affaire réveillée',
 	'live.comments.aria': 'Annonces de la discussion',
 	'live.comments.published': 'Commentaire publié',
 	'live.comments.edited': 'Commentaire modifié',

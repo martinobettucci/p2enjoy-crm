@@ -44,9 +44,12 @@ import {
 	formaterEcheanceSommeil,
 	mettreEnSommeil,
 	reveiller,
-	type CleEcheanceUsuelle,
 	type IssueSommeil,
 } from '../lib/sommeil-card'
+// Les libellés des quatre échéances et les six mentions de refus vivent dans le module partagé
+// depuis la tranche 2 d (docs/SPEC-cards.md §16.13.4) : la fiche et la carte du board offrent le
+// même geste, et un même refus ne se formule pas de deux façons selon l'écran.
+import { CLE_PRESET_SOMMEIL, mentionSommeil } from '../components/ui/Sommeil'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { t, type CleTraduction } from '../i18n'
 
@@ -69,30 +72,6 @@ const CLE_ENDORMIR: CleTraduction = 'card.sleep.open'
 const CLE_REVEILLER: CleTraduction = 'card.sleep.wake'
 const CLE_SOUMETTRE: CleTraduction = 'card.sleep.submit'
 const CLE_ANNULER: CleTraduction = 'card.sleep.cancel'
-
-/**
- * Les libellés des quatre échéances usuelles, NOMMÉS et non composés par interpolation.
- *
- * Une clé construite en `` `card.sleep.preset.${cle}` `` ne se retrouverait pas par le contrôle de
- * clés mortes du dictionnaire, qui cherche le littéral : les quatre passeraient pour mortes, et une
- * clé réellement morte s'y cacherait sans être vue.
- */
-const CLE_PRESET: Readonly<Record<CleEcheanceUsuelle, CleTraduction>> = {
-	demain: 'card.sleep.preset.demain',
-	troisjours: 'card.sleep.preset.troisjours',
-	semaine: 'card.sleep.preset.semaine',
-	mois: 'card.sleep.preset.mois',
-}
-
-/** Les six issues du §16.11.4 que l'écran met en mots ; les deux succès n'en ont pas besoin. */
-const MENTION_SOMMEIL: Readonly<Record<Exclude<IssueSommeil, 'endormie' | 'reveillee'>, CleTraduction>> = {
-	'echeance-requise': 'card.sleep.refus.required',
-	'echeance-passee': 'card.sleep.refus.past',
-	introuvable: 'card.sleep.refus.notfound',
-	refus: 'card.sleep.refus.forbidden',
-	reseau: 'card.sleep.refus.network',
-	inconnu: 'card.sleep.refus.unknown',
-}
 
 export function EnTeteCard({
 	card: cardChargee,
@@ -880,8 +859,7 @@ function BlocSommeil({
 		onAppliquer(resultat.ligne.snoozed_until)
 	}, [card.id, client, onAppliquer])
 
-	const mention =
-		issue === null || issue === 'endormie' || issue === 'reveillee' ? null : MENTION_SOMMEIL[issue]
+	const mention = mentionSommeil(issue)
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -942,7 +920,7 @@ function BlocSommeil({
 								data-testid={`entete-card-sommeil-${usuelle.cle}`}
 								onClick={() => void envoyer(echeanceUsuelle(usuelle.jours, maintenant))}
 							>
-								{t(CLE_PRESET[usuelle.cle])}
+								{t(CLE_PRESET_SOMMEIL[usuelle.cle])}
 							</Button>
 						))}
 					</div>

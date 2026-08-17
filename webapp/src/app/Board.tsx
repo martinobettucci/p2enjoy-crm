@@ -7,10 +7,15 @@
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §5.5 (boutons), §5.6 (badges),
 //       §5.8 (états), §6 (glisser-déposer optimiste), §7 (paliers), §8 (accessibilité),
 //       §9 (icônes Lucide), §12.6 (indication de débordement)
-// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule du sommeil et la pastille compacte
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule du sommeil et la pastille compacte ;
+//       tranche 2 d : le geste de sommeil dans le menu de la carte
 // @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne), §3.5 (adresse d'une card),
-//       §16.12.4 (la bascule, portée par l'adresse), §16.12.7 (la carte porte la pastille compacte)
-// @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (la barre de bascule et la pastille compacte)
+//       §16.12.4 (la bascule, portée par l'adresse), §16.12.7 (la carte porte la pastille compacte),
+//       §16.13.1 (le menu devient celui des actions), §16.13.2 (les deux visages du geste),
+//       §16.13.3 (ce que la carte devient après le geste), §16.13.4 (les refus),
+//       §16.13.5 (ce que le board annonce)
+// @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (la barre de bascule et la pastille compacte),
+//       §5.3 sexies (le menu des actions et le sommeil qui s'y loge)
 //
 // Ce composant **rend** ; il ne compose pas. Les colonnes, l'ordre, les cumuls, l'ancienneté et
 // la classification des refus vivent dans `webapp/src/lib/board.ts`, où ils sont vérifiables sans
@@ -19,18 +24,32 @@
 // Aucune règle d'accès n'est portée ici : ce que le board montre est ce que la RLS a consenti à
 // rendre, et ce qu'il n'offre pas, `move_card` le refuse de son côté (CLAUDE.md §10).
 
-import { CalendarClock, Clock, GripVertical, TriangleAlert } from 'lucide-react'
+import { CalendarClock, Clock, GripVertical, Moon, Sun, TriangleAlert } from 'lucide-react'
 import { useCallback, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
-import { BasculeSommeil, PastilleSommeil } from '../components/ui/Sommeil'
+import {
+	BasculeSommeil,
+	CLE_PRESET_SOMMEIL,
+	PastilleSommeil,
+	mentionSommeil,
+} from '../components/ui/Sommeil'
 import { t } from '../i18n'
 import type { ModeSommeil } from '../lib/filtre-sommeil'
 import {
+	ECHEANCES_USUELLES,
+	echeanceUsuelle,
+	formaterEcheanceSommeil,
+	mettreEnSommeil,
+	reveiller,
+	type IssueSommeil,
+} from '../lib/sommeil-card'
+import {
 	appliquerDeplacement,
+	appliquerSommeil,
 	deplacerCard,
 	remplacerCard,
 	type CardBoard,
@@ -209,6 +228,52 @@ export function Board({
 		[executer],
 	)
 
+	/**
+	 * Les deux gestes du sommeil, appelés depuis le menu d'une carte (§16.13.2).
+	 *
+	 * L'appel vit ICI plutôt que dans le menu pour la même raison que `executer` : la liste des
+	 * cards est détenue par l'appelant du board, et c'est elle que le succès met à jour. Le menu,
+	 * lui, reçoit l'issue en retour — il en tire sa mention et décide de rester ouvert ou non
+	 * (§16.13.4), sans avoir à connaître le client ni la liste.
+	 *
+	 * AUCUN OPTIMISME (§16.13.3) : la carte ne bouge qu'après la réponse. Le déplacement, lui, est
+	 * optimiste parce qu'il rend la main au geste suivant ; le sommeil fait **disparaître** sa
+	 * carte, et une disparition qu'il faudrait annuler serait plus déroutante qu'une attente.
+	 */
+	const gesteSommeil = useCallback(
+		async (idCard: string, until: string | null): Promise<IssueSommeil> => {
+			// `until === null` n'est jamais émis par le board — les quatre échéances usuelles sont
+			// toujours des dates —, et c'est ce qui distingue les deux gestes ici : réveiller, c'est
+			// demander « plus d'échéance ».
+			if (client === null) return 'reseau'
+			const resultat =
+				until === null
+					? await reveiller(client, idCard)
+					: await mettreEnSommeil(client, idCard, until)
+			if (resultat.issue !== 'endormie' && resultat.issue !== 'reveillee') {
+				setAnnonce(t(mentionSommeil(resultat.issue) ?? 'board.refusal.unknown'))
+				return resultat.issue
+			}
+			onCards(appliquerSommeil(cards, idCard, resultat.ligne.snoozed_until))
+			if (resultat.issue === 'reveillee') {
+				setAnnonce(t('live.board.woken'))
+				return resultat.issue
+			}
+			// Une échéance que `Date` ne sait pas lire n'est pas un sommeil au sens du prédicat
+			// (§16.11.1) : la carte reste rendue, et annoncer « mise en sommeil » serait faux. Le
+			// serveur n'en rend pas, mais le type ne le garantit pas — l'annonce dit alors que la
+			// demande n'a pas produit ce qui était attendu, plutôt que d'inventer une date.
+			const courte = formaterEcheanceSommeil(resultat.ligne.snoozed_until)
+			setAnnonce(
+				courte === null
+					? t('board.refusal.unknown')
+					: t('live.board.snoozed', { echeance: courte }),
+			)
+			return resultat.issue
+		},
+		[cards, client, onCards],
+	)
+
 	const deposer = useCallback(
 		(colonne: ColonneBoard) => {
 			setCibleSurvolee(null)
@@ -286,6 +351,7 @@ export function Board({
 							onGlisser={glisser}
 							onDeposer={deposer}
 							onTransition={demander}
+							onSommeil={gesteSommeil}
 						/>
 					))}
 				</ol>
@@ -318,6 +384,7 @@ function Colonne({
 	onGlisser,
 	onDeposer,
 	onTransition,
+	onSommeil,
 }: {
 	readonly colonne: ColonneBoard
 	readonly modele: ModeleBoard
@@ -331,6 +398,7 @@ function Colonne({
 	readonly onGlisser: (idCard: string | null) => void
 	readonly onDeposer: (colonne: ColonneBoard) => void
 	readonly onTransition: (idCard: string, transition: TransitionBoard) => void
+	readonly onSommeil: (idCard: string, until: string | null) => Promise<IssueSommeil>
 }) {
 	const glissee = idGlissee === null ? undefined : cardsParId.get(idGlissee)
 	const atteignable =
@@ -407,6 +475,7 @@ function Colonne({
 							slugChannel={slugChannel}
 							onGlisser={onGlisser}
 							onTransition={onTransition}
+							onSommeil={onSommeil}
 						/>
 					))}
 				</ol>
@@ -424,6 +493,7 @@ function CarteDeCard({
 	slugChannel,
 	onGlisser,
 	onTransition,
+	onSommeil,
 }: {
 	readonly carte: CarteBoard
 	readonly couleur: CouleurNoeud
@@ -433,6 +503,7 @@ function CarteDeCard({
 	readonly slugChannel: string
 	readonly onGlisser: (idCard: string | null) => void
 	readonly onTransition: (idCard: string, transition: TransitionBoard) => void
+	readonly onSommeil: (idCard: string, until: string | null) => Promise<IssueSommeil>
 }) {
 	const { card } = carte
 	return (
@@ -519,12 +590,14 @@ function CarteDeCard({
 					</div>
 				)}
 
-				<MenuTransitions
+				<MenuCarte
 					idCard={card.id}
 					titreCard={card.title}
 					transitions={transitions}
 					desactive={enCours}
+					enSommeil={carte.enSommeil}
 					onTransition={onTransition}
+					onSommeil={onSommeil}
 				/>
 			</div>
 		</li>
@@ -532,42 +605,58 @@ function CarteDeCard({
 }
 
 /**
- * Le chemin clavier du déplacement (docs/DESIGN_SYSTEM.md §8, §7.7).
+ * Le menu des ACTIONS d'une carte : ses déplacements, puis son sommeil — §16.13.1, §5.3 sexies.
  *
  * Patron : un bouton `aria-expanded` révélant une **liste de boutons**. Le patron ARIA
  * `menu` / `menuitem` avec `tabindex` glissant est écarté pour le motif déjà écrit au §12.1 du
  * design system à propos des onglets — il retire la navigation par `Tab` que des boutons
  * ordinaires donnent naturellement.
+ *
+ * IL NE S'ÉTEINT PLUS QUAND L'ÉTAPE NE DÉCLARE AUCUNE TRANSITION, et c'est une mesure qui l'impose
+ * (§16.13.1) : `Socle analytique — Vertuo`, à l'étape `Livré` du seed, n'a **aucune** transition
+ * sortante. Son menu éteint la privait de tout geste, alors qu'une affaire livrée est précisément
+ * celle qu'on range. La phrase « Aucun déplacement déclaré depuis cette étape » n'est pas perdue :
+ * elle entre dans le menu, au lieu de tenir lieu de libellé à un bouton mort.
  */
-function MenuTransitions({
+function MenuCarte({
 	idCard,
 	titreCard,
 	transitions,
 	desactive,
+	enSommeil,
 	onTransition,
+	onSommeil,
 }: {
 	readonly idCard: string
 	readonly titreCard: string
 	readonly transitions: readonly TransitionBoard[]
 	readonly desactive: boolean
+	readonly enSommeil: boolean
 	readonly onTransition: (idCard: string, transition: TransitionBoard) => void
+	readonly onSommeil: (idCard: string, until: string | null) => Promise<IssueSommeil>
 }) {
 	const idMenu = useId()
 	const [ouvert, setOuvert] = useState(false)
+	const [issue, setIssue] = useState<IssueSommeil | null>(null)
+	/** La clé du geste en vol, `null` si aucun : elle éteint la section et nomme le bouton appuyé. */
+	const [enVol, setEnVol] = useState<string | null>(null)
 
-	if (transitions.length === 0) {
-		return (
-			<Button
-				variante="secondaire"
-				disabled
-				className="w-full"
-				data-testid="menu-transitions"
-				title={t('board.menu.none')}
-			>
-				{t('board.menu.none')}
-			</Button>
-		)
-	}
+	const mention = mentionSommeil(issue)
+
+	const jouer = useCallback(
+		async (cle: string, until: string | null) => {
+			setEnVol(cle)
+			setIssue(null)
+			const resultat = await onSommeil(idCard, until)
+			setEnVol(null)
+			setIssue(resultat)
+			// LE MENU RESTE OUVERT SUR UN REFUS (§16.13.4) : le refermer effacerait le message avant
+			// qu'il soit lu. Sur un succès il se referme — la carte disparaît ou prend sa pastille, et
+			// le menu d'une carte disparue n'a rien à montrer.
+			if (resultat === 'endormie' || resultat === 'reveillee') setOuvert(false)
+		},
+		[idCard, onSommeil],
+	)
 
 	return (
 		<div
@@ -584,10 +673,14 @@ function MenuTransitions({
 			<Button
 				variante="secondaire"
 				className="w-full"
+				// L'IDENTIFIANT DE TEST EST CONSERVÉ : c'est le même dévoilement, qui porte désormais
+				// deux sections. Le renommer réécrirait dix-neuf assertions de deux fichiers de preuve
+				// qui n'ont rien à voir avec cette tranche (CLAUDE.md §1).
 				data-testid="menu-transitions"
 				// Un déplacement en vol interdit d'en commencer un second sur la même card : la
 				// réponse de `move_card` remplace la ligne, et deux appels concurrents feraient
-				// gagner le plus lent (docs/SPEC-workflow-engine.md §7.9).
+				// gagner le plus lent (docs/SPEC-workflow-engine.md §7.9). Le menu n'est PLUS éteint
+				// pour une absence de transition — voir l'en-tête de ce composant.
 				disabled={desactive}
 				aria-expanded={ouvert}
 				aria-controls={idMenu}
@@ -597,28 +690,86 @@ function MenuTransitions({
 				{t('board.menu.open')}
 			</Button>
 			{!ouvert ? null : (
-				<ul id={idMenu} data-testid="liste-transitions" className="flex flex-col gap-2">
-					{transitions.map((transition) => (
-						<li key={transition.id}>
-							<Button
-								variante="discret"
-								className="w-full justify-start text-left"
-								data-testid="transition"
-								data-vers={transition.versEtape.id}
-								onClick={() => {
-									setOuvert(false)
-									onTransition(idCard, transition)
-								}}
-							>
-								{/* Un libellé absent est légal : le repli nomme l'étape cible par une clé
-								    **paramétrée**, jamais par concaténation ici — l'ordre des mots appartient
-								    à la traduction, pas au composant (§7.5, CLAUDE.md §23). */}
-								{transition.libelle ??
-									t('board.transition.fallback', { etape: transition.versEtape.libelle })}
-							</Button>
-						</li>
-					))}
-				</ul>
+				<div id={idMenu} data-testid="menu-carte" className="flex flex-col gap-2">
+					<p className="text-xs text-text-3">{t('board.menu.section.transitions')}</p>
+					{transitions.length === 0 ? (
+						<p data-testid="aucune-transition" className="text-sm text-text-2">
+							{t('board.menu.none')}
+						</p>
+					) : (
+						<ul data-testid="liste-transitions" className="flex flex-col gap-2">
+							{transitions.map((transition) => (
+								<li key={transition.id}>
+									<Button
+										variante="discret"
+										className="w-full justify-start text-left"
+										data-testid="transition"
+										data-vers={transition.versEtape.id}
+										onClick={() => {
+											setOuvert(false)
+											onTransition(idCard, transition)
+										}}
+									>
+										{/* Un libellé absent est légal : le repli nomme l'étape cible par une clé
+										    **paramétrée**, jamais par concaténation ici — l'ordre des mots appartient
+										    à la traduction, pas au composant (§7.5, CLAUDE.md §23). */}
+										{transition.libelle ??
+											t('board.transition.fallback', { etape: transition.versEtape.libelle })}
+									</Button>
+								</li>
+							))}
+						</ul>
+					)}
+
+					{/* Le séparateur de 1 px entre les deux sections (§5.3 sexies). */}
+					<hr aria-hidden="true" className="border-border" />
+					<p className="text-xs text-text-3">{t('board.menu.section.sommeil')}</p>
+					{/* LES QUATRE ÉCHÉANCES SONT RENDUES DÈS L'OUVERTURE (§16.13.2) : un panneau ouvert
+					    dans un menu ouvert ferait trois niveaux pour un choix de quatre boutons. La
+					    fiche, elle, garde son panneau — elle a la place, et elle porte aussi l'échéance
+					    choisie, que 288 px n'admettent pas. */}
+					{enSommeil ? (
+						<Button
+							variante="discret"
+							className="w-full justify-start text-left"
+							data-testid="carte-reveiller"
+							disabled={enVol !== null}
+							aria-label={t('card.sleep.wake.aria')}
+							onClick={() => void jouer('reveil', null)}
+						>
+							<Sun aria-hidden="true" size={16} strokeWidth={2} />
+							{t(enVol === 'reveil' ? 'card.sleep.pending' : 'card.sleep.wake')}
+						</Button>
+					) : (
+						<ul data-testid="liste-echeances" className="flex flex-col gap-2">
+							{ECHEANCES_USUELLES.map((usuelle) => (
+								<li key={usuelle.cle}>
+									<Button
+										variante="discret"
+										className="w-full justify-start text-left"
+										data-testid={`carte-sommeil-${usuelle.cle}`}
+										disabled={enVol !== null}
+										// L'ÉCHÉANCE EST COMPTÉE DEPUIS L'INSTANT DU GESTE (§16.13.2), jamais
+										// depuis l'instant du rendu du board : une carte rendue le matin et
+										// endormie le soir doit dormir un jour à partir du soir.
+										onClick={() => void jouer(usuelle.cle, echeanceUsuelle(usuelle.jours))}
+									>
+										<Moon aria-hidden="true" size={16} strokeWidth={2} />
+										{t(
+											enVol === usuelle.cle ? 'card.sleep.pending' : CLE_PRESET_SOMMEIL[usuelle.cle],
+										)}
+									</Button>
+								</li>
+							))}
+						</ul>
+					)}
+					{/* Le refus est DIT, jamais avalé (§5.7, §16.13.4), avec la mention même de la fiche. */}
+					{mention === null ? null : (
+						<p role="alert" data-testid="carte-sommeil-mention" className="text-sm text-danger">
+							{t(mention)}
+						</p>
+					)}
+				</div>
 			)}
 		</div>
 	)
