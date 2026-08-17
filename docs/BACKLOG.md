@@ -5569,10 +5569,17 @@ démontrable depuis le seed.
       INC-075 — « le viewer ne lit PAS le track » —, que la **décision 333** et la migration
       `0034_lecture_track_transitive.sql` ont renversée : elle asserte maintenant la lecture
       **transitive**, motif écrit dans le fichier, et `docs/SPEC-seed.md` §9.7 dit enfin l'état réel.
-- [ ] **`./resetMe.sh` n'a toujours PAS été rejoué** : la convergence reste vérifiée par des
-      applications successives du seed sur le même cluster, jamais par une reconstruction à froid.
-      **Preuve n° 1 du §9.11.7 partiellement acquise**, et preuve n° 14 sous sa forme forte non
-      rejouée depuis la tranche 1.
+- [x] **`./resetMe.sh` A ÉTÉ REJOUÉ — 2026-08-17, et il a trouvé un défaut de démarrage à froid.**
+      La première exécution a ÉCHOUÉ : « dependency failed to start: container p2enjoy-storage is
+      unhealthy ». Le service n'était pourtant pas en panne — ses journaux annonçaient « Started
+      Successfully », et son contrôle de santé rendait `0` quelques secondes plus tard. C'était une
+      course perdue : `start_period: 15s` et cinq tentatives donnaient quarante secondes de
+      tolérance, insuffisantes sur une pile reconstruite de zéro. La fenêtre passe à environ deux
+      minutes, ce qui ne masque aucune erreur — un service réellement en panne échoue toujours,
+      simplement un peu plus tard. **Rejoué après correction : la pile remonte entièrement, le seed
+      s'applique, et `npm run test:sql` rend 42 fichiers et 2191 assertions, aucune anomalie.**
+      La convergence n'est donc plus seulement vérifiée par des rejeux successifs : elle l'est par
+      une reconstruction complète.
 - [x] **LES COMPTEURS SONT RÉVISÉS, SUR MESURE — 2026-08-14.** Les cinq valeurs de
       `scripts/verify-harness.sh` étaient en retard : 36 → **42** fichiers SQL, 2003 → **2191**
       assertions, 514 → **678** scénarios `api`, 241 → **366** `ui`, `mail` inchangé à **42**.

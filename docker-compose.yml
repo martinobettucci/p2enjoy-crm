@@ -266,11 +266,23 @@ services:
       # conteneur résout aussi « localhost » en `::1`, et sur un hôte où la résolution rend cette
       # adresse en premier, le contrôle de santé reçoit un refus de connexion sans que le service
       # n'ait rien : la pile entière échoue alors sur « container p2enjoy-storage is unhealthy ».
+      #
+      # LA FENÊTRE EST ÉLARGIE POUR LE DÉMARRAGE À FROID — mesuré le 2026-08-17 en rejouant
+      # `./resetMe.sh`. Avec `start_period: 15s` et cinq tentatives, la tolérance était de quarante
+      # secondes ; sur une pile reconstruite de zéro, `storage` met plus longtemps à répondre, et le
+      # service qui en dépend renonçait avant lui. La pile entière s'arrêtait alors sur
+      # « dependency failed to start: container p2enjoy-storage is unhealthy » — alors que le
+      # service, lui, avait bel et bien démarré : ses journaux annonçaient « Started Successfully »,
+      # et le contrôle de santé rendait `0` quelques secondes plus tard.
+      #
+      # Ce n'était donc pas une panne, mais une course perdue au démarrage. La fenêtre passe à
+      # environ deux minutes, ce qui ne masque aucune erreur : un service réellement en panne
+      # échoue toujours, simplement un peu plus tard.
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
       timeout: 5s
       interval: 5s
-      retries: 5
-      start_period: 15s
+      retries: 20
+      start_period: 30s
     environment:
       ANON_KEY: ${ANON_KEY}
       SERVICE_KEY: ${SERVICE_ROLE_KEY}
