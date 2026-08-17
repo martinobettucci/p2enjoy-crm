@@ -655,7 +655,13 @@ Ce dernier repère passe au **rouge** quand le seuil de relance de l'étape est 
 n'apparaît pas lorsque l'étape n'en définit aucun.
 
 Les affaires **archivées** et celles en **corbeille** n'y figurent pas : le tableau montre l'activité
-en cours (chapitre 4.4).
+en cours (chapitre 4.4). Les affaires **en sommeil** n'y figurent pas non plus, jusqu'à leur
+échéance : une case à cocher **« Afficher les affaires en sommeil »**, au-dessus des colonnes, les
+ramène — marquées de leur date de réveil (chapitre 4.9 bis). Le nombre d'affaires d'une colonne et
+son cumul de montants portent sur les cartes **affichées** : ils changent donc avec cette case.
+
+Si toutes les affaires d'un channel dorment, le tableau ne prétend pas qu'il est vide : il annonce
+« Toutes les affaires de ce channel sont en sommeil » et propose le geste qui les révèle.
 
 **Faire avancer une affaire : deux gestes, une seule règle.**
 
@@ -710,13 +716,16 @@ pressant `Entrée` : **Affaire** (par ordre alphabétique), **Montant** (la plus
 sans échéance se range **toujours en dernier**, dans les deux sens : une case vide n'est pas la plus
 grosse affaire du channel.
 
-**Filtrer.** Deux filtres, au-dessus du tableau :
+**Filtrer.** Trois filtres, au-dessus du tableau :
 
 - **Étape** — n'afficher que les affaires d'une étape donnée. Toutes les étapes du workflow sont
   proposées, y compris celles qu'aucune affaire n'occupe ;
 - **Rechercher une affaire** — un ou plusieurs mots, cherchés dans le **titre et la description**.
   La recherche part lorsque vous validez, par le bouton ou par `Entrée`, et non à chaque frappe.
-  Elle est faite pour le français : une affaire rédigée en anglais peut lui échapper.
+  Elle est faite pour le français : une affaire rédigée en anglais peut lui échapper ;
+- **Afficher les affaires en sommeil** — une case à cocher, **décochée par défaut**. Les affaires
+  mises en sommeil sont rangées hors de la liste jusqu'à leur échéance ; cette case les ramène.
+  Voir le chapitre 4.9 bis.
 
 Le compte affiché à droite — « Affaires : 3 » — est celui des affaires **qui correspondent aux
 filtres**, pas celui du channel entier.
@@ -730,11 +739,18 @@ la page. Recharger la page vous ramène exactement où vous étiez, et l'adresse
 quelle. Une adresse abîmée à la main — un tri qui n'existe pas, un rang de page trop grand —
 retombe sur les valeurs par défaut sans afficher d'erreur.
 
-**Quand la liste ne montre rien.** Deux messages distincts, parce qu'ils n'appellent pas la même
-réponse : « Aucune affaire dans ce channel », et « Aucune affaire ne correspond », qui propose
-d'effacer les filtres. Un troisième existe : si le nombre d'affaires a diminué pendant que la page
-était ouverte, une page devenue inexistante affiche « Cette page n'existe plus » et propose de
-revenir à la première — jamais un message d'erreur technique.
+**Quand la liste ne montre rien.** Trois messages distincts, parce qu'ils n'appellent pas la même
+réponse : « Aucune affaire dans ce channel » ; « Aucune affaire ne correspond », qui propose
+d'effacer les filtres ; et « Aucune affaire éveillée dans ce channel », qui propose d'**afficher les
+affaires en sommeil** — car les affaires endormies étant masquées par défaut, une liste vide n'est
+plus la preuve d'un channel vide. Un quatrième existe : si le nombre d'affaires a diminué pendant
+que la page était ouverte, une page devenue inexistante affiche « Cette page n'existe plus » et
+propose de revenir à la première — jamais un message d'erreur technique.
+
+**« Effacer les filtres » efface les trois.** L'étape, la recherche **et** l'affichage des affaires
+en sommeil reprennent leur valeur par défaut : le bouton rend la vue par défaut, et la vue par
+défaut ne montre pas les affaires endormies. Il apparaît donc aussi sur une liste dont la seule
+différence est que ces affaires y sont visibles.
 
 **Ce que la liste ne fait pas.** Elle **lit**. On n'y crée, n'y modifie, n'y archive et n'y déplace
 aucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le reste n'a pas encore
@@ -743,6 +759,65 @@ n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identi
 
 Sans connexion, cette adresse affiche « Track introuvable », comme pour le tableau. Après
 connexion, la liste réelle est consultable, triable et filtrable.
+
+### 4.9 bis Mettre une affaire en sommeil, et la retrouver
+
+*Livrée par `CRM-081`. Captures dans `docs/captures/CRM-081/`.*
+
+Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera
+après ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la
+liste les fait relire chaque jour pour rien. Le **sommeil** les range jusqu'à une échéance que vous
+choisissez, sans les archiver et sans rien leur retirer.
+
+**Endormir une affaire.** Depuis sa fiche, le bouton **Mettre en sommeil** ouvre un petit panneau
+qui propose quatre échéances usuelles — *Demain*, *Dans trois jours*, *La semaine prochaine*, *Le
+mois prochain* — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la
+mention **« En sommeil jusqu'au … »**.
+
+Une échéance **déjà passée** est refusée, et le message le dit sous le champ sans effacer votre
+saisie. Une affaire peut être **à la fois archivée et endormie** : les deux mentions coexistent, car
+elles ne disent pas la même chose.
+
+**La réveiller.** Sur une affaire endormie, le même emplacement porte **Réveiller**. Le geste est
+immédiat, sans confirmation : il n'y a rien à perdre, l'affaire redevient simplement visible.
+Réveiller une affaire qui ne dormait pas ne produit rien — ce n'est pas une erreur, c'est un état
+déjà atteint.
+
+**Ce que le sommeil change dans les deux vues.** Une affaire endormie **sort du tableau et de la
+liste** aussi longtemps que son échéance est future. C'est tout l'intérêt du geste : sans cela,
+l'endormir ne changerait rien pour vous.
+
+Elle n'est pour autant jamais perdue. Une case à cocher **Afficher les affaires en sommeil** — au
+dessus des colonnes du tableau, et dans les filtres de la liste — les ramène d'un clic. Rendues
+visibles, elles sont **marquées** d'une petite pastille portant l'icône de lune et leur date de
+réveil, pour que vous ne les confondiez pas avec les autres.
+
+**Le choix suit la vue.** Ce réglage s'inscrit dans l'adresse de la page : recharger vous ramène au
+même état, l'adresse se partage telle quelle, et passer du tableau à la liste — ou l'inverse — le
+conserve. Vous n'avez donc à le demander qu'une fois.
+
+**Une échéance passée n'est plus un sommeil.** Le produit n'a besoin d'aucun réveil automatique :
+dès que l'échéance est dépassée, l'affaire redevient visible partout, sans pastille et sans que
+personne ait à intervenir. Sa date reste inscrite dans son historique, mais elle ne la range plus.
+Rien ne clignote pour autant à la seconde près : la mention disparaît au prochain affichage de
+l'écran, et une échéance de sommeil se compte en jours.
+
+**L'historique garde les deux gestes.** Le fil de l'affaire nomme **« Mise en sommeil »** et
+**« Réveil »**, avec l'échéance concernée. Comme tout le fil, ces lignes ne s'effacent pas
+(chapitre 4.10).
+
+**Les compteurs suivent ce que vous voyez.** Le nombre d'affaires d'une colonne du tableau, le total
+de montants qui l'accompagne et le compte « Affaires : n » de la liste portent sur les affaires
+**affichées** : ils changent donc lorsque vous cochez la case. Une colonne annonce ce qu'elle
+montre, sinon son compteur désignerait des cartes introuvables à l'œil.
+
+**Ce que le sommeil n'est pas.** Ce n'est ni une archive, ni une suppression, ni une permission : une
+affaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne
+qui pouvait la lire peut encore la retrouver. Le sommeil **range**, il ne protège pas.
+
+**Ce qui n'est pas encore livré.** Le geste ne s'atteint que depuis la **fiche** de l'affaire : la
+carte du tableau n'en porte pas de raccourci. Et seules les **affaires** peuvent dormir — pas encore
+les fils de messagerie.
 
 ### 4.10 L'historique et la discussion d'une affaire
 

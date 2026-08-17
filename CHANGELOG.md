@@ -15,6 +15,24 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une affaire en sommeil sort des vues par défaut, et une bascule la ramène** (`CRM-081`
+  tranche 2 b, `docs/SPEC-cards.md` §16.12). La tranche 2 a avait livré la pastille de la fiche en
+  nommant elle-même son écart : les deux vues d'un channel montraient l'affaire endormie comme
+  avant, si bien que l'endormir ne changeait rien pour l'utilisateur. Le **tableau** et la **vue
+  liste** la masquent désormais par défaut, et une case à cocher **« Afficher les affaires en
+  sommeil »** — au-dessus des colonnes du tableau, dans les filtres de la liste — les ramène. Rendue
+  visible, une affaire endormie est **marquée** d'une pastille compacte portant l'icône de lune et sa
+  date de réveil : sans marque, « afficher » reviendrait à noyer. Le réglage vit dans **l'adresse**,
+  se partage, survit au rechargement et **se conserve** au passage d'une vue à l'autre — lui seul, le
+  tri et la recherche n'ayant aucun sens sur un tableau. « Effacer les filtres » le ramène à son
+  défaut avec les deux autres. Les **compteurs suivent ce qui est montré** : le compte d'une colonne,
+  son cumul de montants et le total de la liste portent sur les affaires affichées. Enfin, les
+  **états vides cessent de mentir** : un tableau sans carte dont toutes les affaires dorment annonce
+  « Toutes les affaires de ce channel sont en sommeil » plutôt que « aucune affaire », et la liste
+  dit « Aucune affaire éveillée dans ce channel » — les deux offrant le geste qui lève le vide, et
+  sans qu'aucune requête supplémentaire soit émise pour cela. Une échéance **échue** reste, comme
+  ailleurs, visible partout et sans pastille.
+
 - **Le sommeil d'une affaire se voit et se pilote depuis sa fiche** (`CRM-081` tranche 2 a,
   `docs/SPEC-cards.md` §16.11). La tranche 1 avait posé la règle en base sans aucune surface : une
   affaire endormie restait indistinguable d'une autre. L'en-tête porte désormais une **pastille**
