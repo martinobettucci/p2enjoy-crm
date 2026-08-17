@@ -320,7 +320,11 @@ test('le viewer tente un vrai déplacement, voit le refus et la card reste en pl
 		`[data-testid="carte-card"][data-card="${CARD_MAINTENANCE}"]`,
 	)
 	await expect(card).toBeVisible()
-	await card.getByRole('button', { name: /Déplacer Support niveau 2/ }).click()
+	// LE MENU DE LA CARTE S'APPELLE « ACTIONS » DEPUIS `CRM-081` TRANCHE 2 d : il ne porte plus les
+	// seuls déplacements, mais aussi le geste de sommeil (docs/SPEC-cards.md §16.13.1). Son nom
+	// accessible suit son contenu ; le déplacement, lui, est inchangé et se joue dans la section
+	// « Déplacer vers » que ce bouton dévoile.
+	await card.getByRole('button', { name: /Actions Support niveau 2/ }).click()
 	await card.getByRole('button', { name: 'Relancer' }).click()
 
 	await expect(
@@ -368,7 +372,7 @@ test('l’administratrice déplace une card d’essai et la base confirme la nou
 
 		const card = page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)
 		await expect(card).toContainText(titre)
-		await card.getByRole('button', { name: `Déplacer ${titre}` }).click()
+		await card.getByRole('button', { name: `Actions ${titre}` }).click()
 		await card.getByRole('button', { name: 'Relancer' }).click()
 
 		const colonneRelance = page.locator(

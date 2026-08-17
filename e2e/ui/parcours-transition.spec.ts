@@ -131,7 +131,9 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			await expect(colonneSignature.locator(`[data-card="${idCard}"]`)).toHaveCount(1)
 
 			// 3. Le déplacement est REFUSÉ par la garde, et le refus vient du serveur.
-			await carte.getByRole('button', { name: `Déplacer ${titre}` }).click()
+			// Le bouton du menu s'appelle « Actions » depuis `CRM-081` tranche 2 d : il porte aussi
+			// le geste de sommeil (docs/SPEC-cards.md §16.13.1). Le déplacement est inchangé.
+			await carte.getByRole('button', { name: `Actions ${titre}` }).click()
 			await carte.getByRole('button', { name: TRANSITION }).click()
 
 			const refus = page.getByTestId('refus-deplacement')
@@ -193,7 +195,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			// 9. Retour au board, le même geste est rejoué — et il RÉUSSIT.
 			await page.goto(ROUTE_BOARD)
 			const carteApres = page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)
-			await carteApres.getByRole('button', { name: `Déplacer ${titre}` }).click()
+			await carteApres.getByRole('button', { name: `Actions ${titre}` }).click()
 			await carteApres.getByRole('button', { name: TRANSITION }).click()
 
 			// La colonne bouge de façon optimiste ; la région live n'annonce qu'après la réponse
@@ -283,7 +285,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			await connecter(page)
 			await page.goto(ROUTE_BOARD)
 			const carte = page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)
-			await carte.getByRole('button', { name: `Déplacer ${titre}` }).click()
+			await carte.getByRole('button', { name: `Actions ${titre}` }).click()
 			await carte.getByRole('button', { name: TRANSITION }).click()
 
 			const refus = page.getByTestId('refus-deplacement')
