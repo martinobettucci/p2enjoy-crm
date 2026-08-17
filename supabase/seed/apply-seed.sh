@@ -2048,6 +2048,26 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" 
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
 
+# --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------
+#
+# LE SEED EST UN CONTRAT, ET CELUI-CI DISAIT « aucune card n'atteint son seuil de relance ». Il
+# était tenu le jour de son écriture, puis le calendrier l'a défait : `entered_step_at` n'est posé
+# qu'à la création ou par `move_card`, si bien qu'une base seedée il y a une semaine montre des
+# cards en retard que personne n'a voulues, et `e2e/api/board.spec.ts` le dénonce — à raison.
+#
+# LA DATE EST DONC RAMENÉE À MAINTENANT À CHAQUE PASSAGE. Ce n'est pas maquiller un état : c'est
+# tenir la promesse du jeu de démonstration, qui est de montrer un pipeline SAIN. La démonstration
+# d'une card en retard, quand elle sera voulue, se posera explicitement — avec une date choisie,
+# non avec le temps qui passe.
+#
+# L'ÉCRITURE PASSE PAR LA CLÉ DE SERVICE : `entered_step_at` ne figure pas parmi les colonnes que
+# `CRM-013` ouvre à `authenticated`, et c'est très bien ainsi — un client n'a pas à rajeunir une
+# ancienneté.
+psql_seed() { docker exec -i p2enjoy-db psql -U postgres -d postgres -qtA "$@"; }
+psql_seed -c "update public.cards set entered_step_at = now()
+              where id::text like '5eed%' and archived_at is null and deleted_at is null;" >/dev/null
+info "Ancienneté : les cards seedées repartent à zéro dans leur étape — le pipeline reste sain"
+
 # --- 8 nonies. Deux messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 ---------------
 #
 # L'INBOX GLOBALE NE SE DÉMONTRE PAS SUR UN ÉCRAN VIDE, et CLAUDE.md §8 interdit d'y suppléer par
