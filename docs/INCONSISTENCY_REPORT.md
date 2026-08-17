@@ -195,9 +195,10 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136 et INC-137** — la dernière
-consignée le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte `now()` en
-affirmant qu'il n'est pas évalué, alors que Postgres l'évalue). **Cinq ouvertes auparavant :
+**Sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137 et INC-138** — les
+deux dernières consignées le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte
+`now()` en affirmant qu'il n'est pas évalué, alors que Postgres l'évalue ; `verify-board.sh` exige
+que les channels ne soient lus qu'à un endroit, alors que le produit en compte quatre). **Cinq ouvertes auparavant :
 INC-123, INC-124, INC-125, INC-126 et INC-136** — la dernière
 consignée le 2026-08-16 par la session `CRM-081` (le dépôt d'un objet Storage rend
 `InvalidAccessKeyId` sur un cluster fraîchement créé). **Quatre ouvertes auparavant : INC-123,
@@ -838,3 +839,49 @@ tranchée ici : corriger le seul motif du §16.12.2 en gardant l'instant du clie
 `now` et retirer la conséquence assumée sur les horloges décalées ; ou conserver les deux chemins
 en documentant lequel s'applique où. Le responsable tranche. La preuve
 `e2e/api/filtre-sommeil.spec.ts` consigne la mesure sans affirmer le motif contesté.
+
+---
+
+## Consigné le 2026-08-17 — un contrôle de harnais dépassé par le produit, étranger à `CRM-081`
+
+### INC-138 — `verify-board.sh` exige que les channels ne soient lus qu'à UN endroit ; ils le sont à quatre
+
+**Mesuré le 2026-08-17**, `scripts/verify-board.sh --rapide` : **31 contrôles, 1 en échec**.
+
+```
+ECHEC  les channels sont lus à plusieurs endroits : les lectures divergeront
+```
+
+Le contrôle est écrit ainsi (`scripts/verify-board.sh`, ligne 147) :
+
+```
+if [ "$(grep -rl "from('channels')" webapp/src | wc -l)" -eq 1 ]; then
+```
+
+Il exige **exactement un** fichier lecteur, au nom du §5.4 de `docs/SPEC-channels.md` et des
+décisions 167 et 169 — « deux définitions de « channel non archivé » finiraient par diverger ». Or
+le produit en compte quatre :
+
+```
+webapp/src/lib/channels.ts                      (le lecteur d'origine)
+webapp/src/lib/inbox.ts                         (CRM-060 et suivantes)
+webapp/src/lib/corbeille.ts                     (CRM-070)
+webapp/src/lib/administration-arborescence.ts   (CRM-080)
+```
+
+Les trois autres ont été livrées par des unités postérieures au contrôle, chacune avec ses propres
+preuves. Le contrôle n'a pas suivi : il compte des **fichiers**, là où la règle qu'il prétend tenir
+porte sur la **définition** de « channel non archivé ».
+
+**Étranger à `CRM-081` tranche 2 b** : aucun des quatre fichiers n'est modifié par cette session —
+`git diff 3da6eeb..HEAD` ne les nomme pas. La tranche touche `Board.tsx`, `ListeCards.tsx`,
+`RouteTrack.tsx`, `board.ts`, `components/ui/Sommeil.tsx`, l'i18n et leurs preuves, et ne lit aucun
+channel. La ligne de base n'a donc pas eu besoin d'être établie par `git stash` : la preuve est
+directe.
+
+**Comportement laissé inchangé, arbitrage demandé.** Trois lectures s'offrent, et aucune n'est
+tranchée ici : porter le compte attendu à quatre — ce qui reproduit le défaut des compteurs figés
+déjà consigné pour `verify-harness.sh` et `verify-preuves-refus.sh` ; remplacer le compte par un
+contrôle de la **définition** — que les quatre lecteurs partagent le même prédicat d'archivage, ce
+qui est la règle réellement voulue ; ou reconnaître que le §5.4 a été dépassé par
+`CRM-060`/`CRM-070`/`CRM-080` et le réviser. Le responsable tranche.

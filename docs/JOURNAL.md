@@ -17781,3 +17781,28 @@ channel du seed ne porte que des affaires endormies, et le prouver demanderait d
 depuis une preuve, ce que celle-ci ne fait pas. Restent aussi dus les deux harnais que la tranche
 touche le plus directement, `scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh`,
 que l'exécution précédente avait laissés interrompus par le budget.
+
+### Complément — ce que la campagne de fin de session a rendu
+
+**Vertes, sans anomalie** : `npm run test:unit` **1472 tests** sur 46 fichiers ; `npm run typecheck`,
+`npm run types:check` et `npm run build` ; `npm run test:sql` **42 fichiers, 2191 assertions** ;
+`npm run e2e:api` **678 scénarios** — 667 avant cette session, les 11 de plus étant les siens, et
+**INC-136 ne se reproduit pas** ; `npm run e2e:ui` **362 scénarios** en 12,8 min — 347 avant, les 15
+de plus étant les siens ; `npm run e2e:mail` **42 scénarios** ; et surtout
+`scripts/verify-liste.sh --rapide` **55 contrôles, aucune anomalie**, qui est le harnais le plus
+directement touché par cette tranche.
+
+**`scripts/verify-cards.sh --rapide` : 39 contrôles, 1 en échec** — « état du seed : 15/1/1/15,
+attendu 14/1/1/14 ». C'est **INC-132**, mesurée identique par les deux exécutions précédentes :
+préexistante et étrangère.
+
+**`scripts/verify-board.sh --rapide` : 31 contrôles, 1 en échec** — « les channels sont lus à
+plusieurs endroits ». Le contrôle exige **un** fichier lecteur ; le produit en compte quatre, les
+trois autres livrés par `CRM-060`, `CRM-070` et `CRM-080`. Aucun n'est modifié par cette session, la
+ligne de base était donc inutile : consigné en **INC-138**, arbitrage demandé.
+
+**Non exécutés, et dits comme tels** : `pytest mail-sync/tests` — l'environnement virtuel `.venv/`
+n'existe pas sur ce checkout neuf et sa création n'a pas été tentée, aucun fichier de `mail-sync/`
+n'étant touché ; `scripts/verify-timeline.sh` et `scripts/verify-colonnes-protegees.sh`, que
+l'exécution précédente avait laissés interrompus et qui restent dus ; les **quarante-huit** autres
+`scripts/verify-*.sh`, la série entière ne tenant pas dans une session (§2.1 ter du prompt).
