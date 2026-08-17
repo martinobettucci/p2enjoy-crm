@@ -325,8 +325,16 @@ PORT_RAPPORT=9323
 # qu'elle ne doit pas. Une garde qui refuserait trop serait aussi fautive qu'une garde absente, et
 # c'est l'erreur la plus facile à commettre sur un trigger `before update`.
 # 35 + 1 = **36** ; 1995 + 8 = **2003**. MESURÉ par `npm run test:sql`, non déduit.
-FICHIERS_SQL_ATTENDUS=36
-ASSERTIONS_ATTENDUES=2003
+# --- RÉVISION MESURÉE DU 2026-08-14 ---------------------------------------------------------
+# Les cinq compteurs étaient en retard, et `CRM-046` le nommait comme un écart ouvert. Ils sont
+# repris ici sur MESURE, non sur estimation : `npm run test:sql` rend 42 fichiers et 2191
+# assertions, et `playwright --list` rend 678 scénarios `api`, 366 `ui`, 42 `mail`.
+#
+# Un compteur en retard ne protège plus de rien : il rend « vert mais N au lieu de M » à chaque
+# exécution, et l'œil finit par lire le vert sans lire le nombre. C'est le contraire de ce qu'on lui
+# demande — dénoncer une suite qui cesse d'être découverte.
+FICHIERS_SQL_ATTENDUS=42
+ASSERTIONS_ATTENDUES=2191
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -351,7 +359,7 @@ ASSERTIONS_ATTENDUES=2003
 # affaires qu'il n'a pas le droit d'ouvrir. S'y ajoutent le refus de l'anonyme par le PRIVILÈGE
 # (`401`/`42501`, avant toute politique), les deux refus de cible et les deux cas sans effet.
 # 507 + 7 = **514**.
-SCENARIOS_API=514
+SCENARIOS_API=678
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -462,7 +470,7 @@ SCENARIOS_API=514
 # jamais un compteur à rafraîchir : une boucle de rendu du formulaire d'exigence, qui faisait partir
 # les appels RPC sans fin, puis trois parcours clavier dont le tour du document dépassait le délai
 # par défaut sous la charge de la campagne. Aucun des deux n'aurait été vu par une exécution isolée.
-SCENARIOS_UI=241
+SCENARIOS_UI=366
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

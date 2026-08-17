@@ -5573,10 +5573,12 @@ démontrable depuis le seed.
       applications successives du seed sur le même cluster, jamais par une reconstruction à froid.
       **Preuve n° 1 du §9.11.7 partiellement acquise**, et preuve n° 14 sous sa forme forte non
       rejouée depuis la tranche 1.
-- [ ] **Les compteurs de `scripts/verify-harness.sh` sont en retard, et de bien plus que cette
-      tranche** : 2003 assertions déclarées contre **2161** mesurées, 514 scénarios d'API contre
-      **658**. Dérive **antérieure et étrangère** ; la corriger sous une unité qui ne la porte pas
-      reviendrait à s'attribuer la mesure d'autrui.
+- [x] **LES COMPTEURS SONT RÉVISÉS, SUR MESURE — 2026-08-14.** Les cinq valeurs de
+      `scripts/verify-harness.sh` étaient en retard : 36 → **42** fichiers SQL, 2003 → **2191**
+      assertions, 514 → **678** scénarios `api`, 241 → **366** `ui`, `mail` inchangé à **42**.
+      Chacune est mesurée par l'exécution du jour, aucune n'est estimée. Un compteur en retard ne
+      protège plus de rien : il rend « vert mais N au lieu de M » à chaque passage, et l'œil finit
+      par lire le vert sans lire le nombre — le contraire de ce qu'on lui demande.
 
 *Definition of Done tenue.* Elle demandait « `resetMe.sh` reproduit exactement le même état ;
 chaque fonctionnalité livrée est démontrable depuis le seed ». **Les deux sont mesurées** : la
