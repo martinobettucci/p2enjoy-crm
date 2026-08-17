@@ -195,7 +195,10 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Cinq ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126 et INC-136** — la dernière
+**Six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136 et INC-137** — la dernière
+consignée le 2026-08-17 par la session `CRM-081` tranche 2 b (le §16.12.2 écarte `now()` en
+affirmant qu'il n'est pas évalué, alors que Postgres l'évalue). **Cinq ouvertes auparavant :
+INC-123, INC-124, INC-125, INC-126 et INC-136** — la dernière
 consignée le 2026-08-16 par la session `CRM-081` (le dépôt d'un objet Storage rend
 `InvalidAccessKeyId` sur un cluster fraîchement créé). **Quatre ouvertes auparavant : INC-123,
 INC-124, INC-125 et INC-126** — la dernière consignée le
@@ -787,3 +790,51 @@ tranchée ici : soit les identifiants MinIO du service `storage` ne sont pas con
 création du cluster — auquel cas c'est un défaut d'amorçage que `CRM-001` porterait —, soit la
 preuve suppose un état de MinIO que ni `runDev.sh` ni le seed n'établissent, auquel cas c'est la
 preuve qui doit poser son préalable. Le responsable tranche.
+
+---
+
+## Consigné le 2026-08-17 — un motif de spécification que la mesure contredit, `CRM-081` tranche 2 b
+
+### INC-137 — le §16.12.2 écarte `now()` en affirmant qu'il n'est pas évalué ; Postgres l'évalue pourtant
+
+**Mesuré le 2026-08-17**, pile montée et seedée, avec la clé de service.
+
+`docs/SPEC-cards.md` §16.12.2 justifie l'envoi de l'instant du client comme valeur par cette
+affirmation :
+
+> PostgREST n'évalue aucune fonction dans un filtre : `snoozed_until=lte.now()` compare à la chaîne
+> « now() », pas à l'heure du serveur.
+
+La première moitié est exacte — PostgREST n'évalue rien —, mais la **conséquence est fausse** : la
+chaîne est transmise à Postgres, dont l'analyseur de date accepte la valeur spéciale `now` et
+tolère les parenthèses. Mesuré :
+
+```
+select 'now()'::timestamptz, 'now'::timestamptz, clock_timestamp();
+ 2026-08-17 15:39:35.138762+00 | 2026-08-17 15:39:35.138762+00 | 2026-08-17 15:39:35.139174+00
+```
+
+et par la route réelle, sur `channel_id=eq.…031` (`prospection`) :
+
+| Requête | HTTP | Lignes |
+|---|---|---|
+| `or=(snoozed_until.is.null,snoozed_until.lte.now())` | `200` | 1 — l'endormie est bien écartée |
+| `or=(snoozed_until.is.null,snoozed_until.lte.now)` | `200` | 1 — idem, sans les parenthèses |
+| `snoozed_until=gt.now()` | `200` | 1 — la seule endormie, `+10 j` |
+
+Autrement dit, le chemin que le §16.12.2 déclare impraticable **fonctionne**, et il se comporte
+comme l'horloge du **serveur**. Le filtre du produit — l'instant du client envoyé comme valeur —
+rend le même résultat au même instant, et reste donc correct : ce qui est en cause est son motif
+écrit, pas son comportement.
+
+**Ce que l'arbitrage changerait.** Le §16.12.2 assume une conséquence explicite : « une horloge de
+poste décalée décale la frontière du sommeil d'autant ». Employer `now` la supprimerait, la
+frontière devenant celle du serveur, au prix de faire dépendre le filtre d'une valeur spéciale de
+l'analyseur de date de Postgres plutôt que d'un horodatage explicite — une dépendance qu'aucun type
+généré ne documente, et qu'un changement de version pourrait retirer sans bruit.
+
+**Comportement laissé inchangé, arbitrage demandé.** Trois lectures s'offrent, et aucune n'est
+tranchée ici : corriger le seul motif du §16.12.2 en gardant l'instant du client ; basculer sur
+`now` et retirer la conséquence assumée sur les horloges décalées ; ou conserver les deux chemins
+en documentant lequel s'applique où. Le responsable tranche. La preuve
+`e2e/api/filtre-sommeil.spec.ts` consigne la mesure sans affirmer le motif contesté.
