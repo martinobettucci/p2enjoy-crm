@@ -241,6 +241,34 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-143 — Quatre unités restent `[~]` au nom d'INC-021, close depuis une semaine
+
+**Nature :** blocage cité longtemps après la disparition de sa cause ; il fausse le décompte du backlog.
+**Relevé le :** 2026-08-14, en passant les unités `[~]` en revue une par une.
+
+**Ce qui est mesuré.** `CRM-042`, `CRM-045`, `CRM-046` et `CRM-047` portent chacune un écart ouvert
+rédigé ainsi : « **INC-021 conditionne le passage en `[x]`** ». `CRM-047` précise même
+« dix-huitième unité consécutive ». Or INC-021 — « aucune unité ne portait l'écran de connexion » —
+figure dans le tableau des entrées **CLOSES** de ce registre, fermée le **2026-08-07** par `CRM-009`,
+décision 253. Le motif du blocage a donc disparu il y a une semaine, et quatre unités le citent
+encore.
+
+**Ce que cela ne veut PAS dire.** Fermer INC-021 ne livre aucune preuve : ces quatre unités
+attendaient un parcours E2E **authentifié**, impossible tant qu'aucun écran de connexion n'existait.
+La session existe désormais — `e2e/ui/manuel.spec.ts`, `commentaires-gestes.spec.ts` et les suites du
+sommeil s'y connectent réellement —, mais chaque unité doit **écrire et exécuter** son propre
+parcours avant de passer `[x]`. Le blocage est levé ; le travail, lui, reste dû.
+
+**C'est le même mode de défaillance qu'INC-088**, relevé le 2026-08-11 : la fiche d'une affaire
+restait en lecture seule « au nom d'INC-021 », close depuis `CRM-009`. Deux constats indépendants,
+une seule cause : **une entrée close n'a pas été répercutée dans les unités qui la citaient**. Rien
+ne relie mécaniquement la fermeture d'une entrée aux écarts qui s'en réclament, et la revue manuelle
+ne l'a pas fait pendant sept jours.
+
+**Ce qui reste dû.** Pour chacune des quatre unités : écrire le parcours authentifié que sa
+Definition of Done réclame, l'exécuter, produire et observer ses captures, puis clore. Et
+plus généralement : à la fermeture d'une entrée du registre, chercher les écarts qui la nomment.
+
 ### INC-142 — Les preuves d'interface laissent des résidus, et toute assertion à compteur devient rouge
 
 **Nature :** défaut de nettoyage des preuves ; il rend rouges des assertions étrangères à l'unité fautive.
