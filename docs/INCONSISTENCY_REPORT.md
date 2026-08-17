@@ -269,6 +269,20 @@ redevient verte. Six autres suites restent rouges pour la même raison — cards
 commentaires, copies de workflow —, chacune comptant des lignes qu'une preuve a laissées. **Une
 assertion à compteur ne mesure plus l'unité qu'elle nomme dès qu'une autre preuve écrit sans purger.**
 
+**CONFIRMÉ ET PRÉCISÉ LE 2026-08-14, APRÈS REMISE À ZÉRO.** Les résidus retirés — deux tracks, deux
+channels, une pierre tombale, un envoi du jour, un commentaire au suppresseur perdu — et
+`snoozed_until` refermée, la suite complète est passée au VERT : **42 fichiers, 2191 assertions,
+aucune anomalie**. Puis **une seule exécution de `verify-colonnes-protegees.sh` a suffi à rendre
+trois suites rouges de nouveau.** Le harnais resalit la base qu'il mesure.
+
+**Ce que la seconde salissure n'est PAS.** Mesuré : les trois cards sondées sont à leur étape
+seedée — `c1` Relance, `c4` Négociation, `c5` Prospection. Le défaut ne vient donc pas d'un
+déplacement non restauré. Les assertions 47 et 48 de `0013_move_card.test.sql` échouent en recevant
+`transition_not_allowed` là où elles attendent le refus d'un motif blanc : ce n'est pas le motif qui
+est mal jugé, c'est la **transition elle-même** qui n'est plus autorisée. Piste à suivre : le
+workflow du channel a changé — `change_channel_workflow` est exercée par les preuves —, ou une arête
+du graphe a été retirée puis non rétablie.
+
 **Ce qui reste dû.** Chaque scénario qui crée une ligne inaccessible au `DELETE` client doit purger
 avec la **clé de service** dans son `finally`, comme `commentaires-gestes.spec.ts` le fait déjà pour
 les commentaires : c'est le seul chemin qui le peut, et il existe. À défaut, les compteurs devront
