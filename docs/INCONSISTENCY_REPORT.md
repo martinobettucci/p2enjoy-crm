@@ -241,6 +241,40 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-142 — Les preuves d'interface laissent des résidus, et toute assertion à compteur devient rouge
+
+**Nature :** défaut de nettoyage des preuves ; il rend rouges des assertions étrangères à l'unité fautive.
+**Relevé le :** 2026-08-14, en cherchant la cause des huit échecs de `verify-colonnes-protegees.sh`.
+
+**Ce qui est mesuré, et qui dédouane le seed.** `public.tracks` portait **7** lignes dont **3**
+archivées, là où les suites attendent 5 et 1. Réparti par origine :
+
+| Origine | Lignes | Archivées |
+|---|---|---|
+| Seed (`id like '5eed%'`) | **5** | **1** |
+| Résidus | **2** | **2** |
+
+Les deux résidus s'appelaient `E2E Arbo Souris Renommé` et `E2E Arbo Clavier Renommé`, créés le
+2026-08-13 par `e2e/ui/administration-arborescence.spec.ts` — la preuve d'écran de `CRM-075`. Le seed
+n'a donc jamais dérivé : ce sont les compteurs qui mesuraient « seed + résidus ».
+
+**Pourquoi le scénario ne nettoie pas, et ce n'est pas une négligence.** `tracks` et `channels`
+n'exposent **aucun `DELETE`**, par décision de `CRM-020` et `CRM-021` : archiver masque et reste
+réversible. Le scénario archive donc — le seul geste que le produit offre — et la ligne archivée
+**compte toujours**. Il y a là un conflit structurel entre « aucune suppression » et « le seed est
+rendu intact » que ni l'une ni l'autre unité n'avait vu.
+
+**Ce que cela coûte.** Après la suppression manuelle des deux résidus, `0004_tracks.test.sql`
+redevient verte. Six autres suites restent rouges pour la même raison — cards, valeurs de champs,
+commentaires, copies de workflow —, chacune comptant des lignes qu'une preuve a laissées. **Une
+assertion à compteur ne mesure plus l'unité qu'elle nomme dès qu'une autre preuve écrit sans purger.**
+
+**Ce qui reste dû.** Chaque scénario qui crée une ligne inaccessible au `DELETE` client doit purger
+avec la **clé de service** dans son `finally`, comme `commentaires-gestes.spec.ts` le fait déjà pour
+les commentaires : c'est le seul chemin qui le peut, et il existe. À défaut, les compteurs devront
+tous filtrer sur `id like '5eed%'` — ce qui les rendrait aveugles aux résidus au lieu de les dénoncer.
+La première voie est la bonne ; la seconde renoncerait à ce que ces compteurs servent.
+
 ### INC-123 — l'hôte de vérification ne porte pas le navigateur qu'exige `@playwright/test` 1.62.1
 
 *Porteur : `CRM-008` (harnais de preuves). Mesuré le 2026-08-16, campagne complète.*

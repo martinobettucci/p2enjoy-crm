@@ -404,21 +404,47 @@ titre "6. Le seed, inchangé"
 # QUINZE DEPUIS `CRM-077`, cinquième tranche : l'affaire `…0cf` du §10.4 bis de
 # `docs/SPEC-seed.md` porte l'énumération d'un track en corbeille. Le compte reste EXACT — une
 # tolérance « au moins quatorze » ne dirait plus rien d'une sonde oubliée.
-[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "15" ] \
+# COMPTEUR RÉVISÉ LE 2026-08-14, ET LE CONTRÔLE AVAIT RAISON D'ÊTRE ROUGE (INC-141). Il figeait
+# QUINZE cards seedées — la valeur de `CRM-040` —, et le seed en porte QUARANTE ET UNE depuis que
+# `CRM-046` a livré le jeu de démonstration complet, puis les unités suivantes. La révision n'avait
+# jamais été faite dans le même changement que les preuves qu'elle compte, contrairement à la règle.
+# Les trois valeurs sont MESURÉES ce jour, et elles CONCORDENT — 41 cards, 41 adresses distinctes,
+# 41 adresses bien formées : ni doublon, ni adresse réécrite par ce harnais.
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "41" ] \
 	&& ok "les quinze cards du seed sont intactes" \
 	|| fail "le nombre de cards seedées a changé : une sonde n'a pas été nettoyée"
-[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "15" ] \
+[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "41" ] \
 	&& ok "quinze adresses DISTINCTES : l'index unique tient" \
 	|| fail "des adresses seedées se répètent"
 [ "$(psql_db -c "select count(*) from public.cards
 	                  where id::text like '5eed%'
-	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "15" ] \
+	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "41" ] \
 	&& ok "…et toutes ont la forme générée : aucune n'a été réécrite par ce harnais" \
 	|| fail "au moins une adresse seedée n'a pas la forme générée"
 
 titre "7. Ce qui reste dû à CRM-013, et la cible card_events désormais livrée"
 
-for table in mail_inbound_accounts mail_outbound_identities api_tokens audit_log; do
+# TÉMOINS RÉVISÉS LE 2026-08-14, ET ILS AVAIENT FAIT EXACTEMENT CE QU'ON LEUR DEMANDAIT (décision
+# 51, INC-141). La ligne annonçait : « CETTE LIGNE DOIT DEVENIR ROUGE quand la table naîtra ».
+# `mail_inbound_accounts` est née à `CRM-052`, `mail_outbound_identities` à `CRM-053`, et les deux
+# témoins sont passés au rouge — sans que personne ne les révise pendant deux unités.
+#
+# CE QUE LA MESURE DE CE JOUR ÉTABLIT : `authenticated` n'a **aucun** privilège `UPDATE` sur ces deux
+# tables. La protection est donc en place, et plus stricte que ce que `CRM-013` réclamait — une
+# révocation de colonne suppose un `UPDATE` par ailleurs accordé, et il n'y en a pas. Le témoin cesse
+# donc de figer une absence pour vérifier le FAIT : aucune écriture cliente, colonne par colonne.
+for table in mail_inbound_accounts mail_outbound_identities; do
+	if [ "$(psql_db -c "select count(*) from information_schema.column_privileges
+		where grantee = 'authenticated' and privilege_type = 'UPDATE'
+		  and table_schema = 'public' and table_name = '$table';")" = "0" ]; then
+		ok "$table : aucune colonne n'est modifiable par authenticated — protection plus stricte qu'une révocation"
+	else
+		fail "$table : authenticated a recouvré un droit d'écriture de colonne"
+	fi
+done
+
+# Les deux tables qui n'existent toujours pas gardent leur témoin d'absence, inchangé.
+for table in api_tokens audit_log; do
 	if [ "$(psql_db -c "select to_regclass('public.$table') is null;")" = "t" ]; then
 		ok "$table absente : sa protection reste due — CETTE LIGNE DOIT DEVENIR ROUGE quand la table naîtra"
 	else
