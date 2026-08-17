@@ -848,6 +848,38 @@ en documentant lequel s'applique où. Le responsable tranche. La preuve
 
 ## Consigné le 2026-08-17 — un contrôle de harnais dépassé par le produit, étranger à `CRM-081`
 
+### INC-140 — Un changement de clé Vault rend le seed impossible, et fait échouer sept preuves pour un motif trompeur
+
+**Nature :** défaut d'exploitation du seed ; symptôme observable très loin de sa cause.
+**Relevé le :** 2026-08-14, en rejouant les preuves de `CRM-081` après un redémarrage de la pile.
+
+**Ce qui a été observé, dans cet ordre.** Sept scénarios sur vingt-cinq échouaient dans
+`e2e/ui/filtre-sommeil.spec.ts`, `sommeil-card.spec.ts` et `menu-sommeil-board.spec.ts` — tous ceux
+qui dépendent d'une affaire endormie **du seed**. Le nombre d'échecs et leur dispersion sur trois
+fichiers désignaient un état de données, non un défaut de code.
+
+**La cause, deux niveaux plus bas.** `supabase/seed/apply-seed.sh` échouait à la configuration du
+compte entrant système : `{"code":"22000","message":"pgsodium_crypto_aead_det_decrypt_by_id:
+invalid ciphertext"}`. Six secrets subsistaient dans `vault.secrets`, chiffrés sous une clé racine
+que la pile ne possède plus — elle vit hors de `PGDATA` (`CRM-052` §13.3) et a été régénérée au
+redémarrage. `upsert_mail_inbound_account` déchiffre pour comparer, échoue, et le seed s'arrête.
+**Le seed n'ayant pas abouti, les affaires endormies n'existaient pas**, et sept preuves rouges
+accusaient le sommeil pour une faute de Vault.
+
+**Ce qui a été fait, et qui n'est pas la correction.** Les six secrets indéchiffrables ont été
+supprimés, le seed rejoué — il passe —, puis les trois suites : **25 scénarios, aucun échec**. C'est
+une réparation manuelle de l'environnement, pas un correctif.
+
+**Ce qui reste dû.** Le seed doit reconnaître ce cas et s'en remettre lui-même : un secret
+indéchiffrable est un secret perdu, et le recréer est le seul geste utile. Aujourd'hui l'exploitant
+lit un message de pgsodium à travers PostgREST, sans lien apparent avec la clé racine — la « valeur
+par défaut trompeuse » que `CLAUDE.md` §18 proscrit, transposée à un message d'erreur. La correction
+appartient à `CRM-052`, qui porte l'écriture de ces secrets.
+
+**Portée réelle.** Toute recréation de la pile reproduit le défaut, et il faut le savoir avant
+d'accuser une unité de messagerie ou de sommeil de ses propres preuves rouges. À rapprocher
+d'INC-139, relevée le même jour : deux preuves rouges, deux causes étrangères à l'unité accusée.
+
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 
 **Mesuré le 2026-08-17**, `scripts/verify-board.sh` **complet** — et non `--rapide`, seul mode que
