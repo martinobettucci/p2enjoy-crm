@@ -155,9 +155,27 @@ prive() { psql_db -c "select has_column_privilege('$1', 'public.cards', '$2', '$
 restaurer() {
 	# La 13 AVANT la 14, toujours : la section 5 rejoue la 12, qui ramène `move_card` à sa version à
 	# cinq vérifications. Ne rejouer que la 14 laisserait la garde amputée — mesuré, cf. ci-dessus.
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_INTERMEDIAIRE" >/dev/null 2>&1 || true
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
+	# LE RÉPERTOIRE ENTIER, ET NON TROIS FICHIERS CHOISIS À LA MAIN — corrigé le 2026-08-14.
+	#
+	# La séquence 12 → 13 → 14 → 19 était juste le jour où elle a été écrite, et elle a vieilli :
+	# `move_card` a été reprise depuis par des migrations ultérieures — l'arbitrage du lot G lui a
+	# donné `app.btrim_blancs`, qui refuse un motif fait de blancs UNICODE. Rejouer jusqu'à la 19
+	# seulement RAMENAIT la fonction à sa version d'alors, et la garde disparaissait.
+	#
+	# MESURÉ : après une exécution de ce harnais, `0013_move_card.test.sql` rendait « caught: no
+	# exception » sur le motif blanc — l'assertion accusait le produit d'une régression que le
+	# harnais venait lui-même de provoquer. Trois suites redevenaient rouges à chaque passage
+	# (INC-142).
+	#
+	# Le runner rejoue tout le répertoire, dans l'ordre, et chaque migration est idempotente : c'est
+	# la seule restauration qui ne vieillit pas. Elle coûte quelques secondes de plus, et elle rend
+	# la base à l'état que le dépôt décrit, non à celui d'un instant révolu.
+	# `--force-recreate` N'EST PAS DÉCORATIF, ET C'EST MESURÉ : le `migrations-runner` est un
+	# conteneur à usage unique, et `docker compose up` sur un conteneur déjà sorti ne le REJOUE PAS.
+	# Sans ce drapeau, la restauration ne restaurait rien — `move_card` restait à la version amputée
+	# laissée par la dégradation, et trois suites accusaient le produit d'une régression que ce
+	# harnais venait de provoquer.
+	docker compose up --force-recreate migrations-runner >/dev/null 2>&1 || true
 	psql_db -c "update public.cards set description = null, next_action = 'Relancer la DSI après la démo'
 	             where id = '$CARD_C1';" >/dev/null 2>&1 || true
 	psql_db -c "delete from public.cards where title like 'tst-crm013%';" >/dev/null 2>&1 || true
