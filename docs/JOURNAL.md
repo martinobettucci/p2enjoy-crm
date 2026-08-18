@@ -18031,6 +18031,15 @@ demande, et c'est mesurable. Sur les **34** composants du produit, hors fichiers
 
 Là encore, l'exigence est tenue par construction : un texte en dur serait visible au premier grep.
 
+**Sixième volet : les identifiants du seed cités par les tests existent tous.** Une suite qui vise
+une ligne disparue échoue bruyamment ; une suite qui vise une ligne **jamais créée** peut réussir
+pour la mauvaise raison — c'est la famille d'INC-146. Mesure : les tests, pgTAP compris, citent
+**77** identifiants de seed ; le seed en pose **97**. Treize sont cités sans y figurer, et les
+treize s'expliquent : ce sont des **fixtures créées par le test lui-même** (insertions `values`
+dans les suites pgTAP) ou des identifiants **délibérément inexistants** — `CARD_INCONNUE`,
+`ETAPE_INCONNUE`, `CHANNEL_JETABLE` — dont l'absence est le sujet même de l'assertion. Aucune
+dérive entre le seed et ce que les suites attendent de lui.
+
 **Troisième volet : les références documentaires.** Les **260** chemins de fichiers cités par
 `docs/`, `README.md` et `CLAUDE.md` ont été confrontés au disque. Onze ne s'y trouvent pas, et
 **aucun n'est un défaut** : deux documents fusionnés dans `docs/ARBITRAGES.md` et qui le disent,
