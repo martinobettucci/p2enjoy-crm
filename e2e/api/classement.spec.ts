@@ -177,3 +177,106 @@ test.describe('classement manuel — ce que la pile consent', () => {
 		expect([401, 403, 404]).toContain(refus.status())
 	})
 })
+
+// @verifies CRM-060 tranche 2 (docs/BACKLOG.md) — activation de la règle 3 du classement
+// @verifies docs/SPEC-contacts.md §8 (la suggestion par expéditeur connu), §8.6 (preuve API)
+//
+// La règle 3 SUGGÈRE sans classer. `classer_message_automatiquement` étant réservée à
+// `service_role` (constat de la relève), ces scénarios l'appellent avec la clé de service, par la
+// vraie route REST, et RELISENT la ligne. Léo Marchand (seed) est rattaché à EXACTEMENT une card
+// active — l'état que la règle 3 lit. Ni `page.route()`, ni jeton fabriqué : la donnée est réelle.
+//
+// L'interaction règles 1/2 → pas de suggestion est prouvée en pgTAP (0044, cas g et h), rejouée en
+// transaction sans laisser de résidu sur une card seedée ; on ne la rejoue pas ici pour ne pas
+// écrire un card_event permanent sur une card de démonstration (`card_events` est append-only).
+const CARD_LEO = '5eed0000-0000-4000-8000-0000000000c2'
+
+async function creerMessageDe(
+	request: import('@playwright/test').APIRequestContext,
+	identifiant: string,
+	expediteur: string,
+): Promise<string> {
+	const reponse = await request.post(`${URL_API}/rest/v1/mail_messages`, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: {
+			workspace_id: WORKSPACE,
+			rfc822_message_id: identifiant,
+			from_address: expediteur,
+			subject: 'Sonde règle 3',
+		},
+	})
+	expect(reponse.status(), await reponse.text()).toBe(201)
+	const [ligne] = (await reponse.json()) as { id: string }[]
+	return ligne!.id
+}
+
+test.describe('règle 3 — la suggestion par expéditeur connu', () => {
+	test('un expéditeur contact à une seule card active reçoit une SUGGESTION, sans être classé', async ({
+		request,
+	}) => {
+		const message = await creerMessageDe(
+			request,
+			`<suggestion-leo-${Date.now()}@preuves.test>`,
+			'leo.marchand@sogexia.example',
+		)
+		try {
+			const retour = await request.post(
+				`${URL_API}/rest/v1/rpc/classer_message_automatiquement`,
+				{ headers: enTetesService(), data: { p_message_id: message } },
+			)
+			expect(retour.status(), await retour.text()).toBe(200)
+			// La chaîne rend « non classé » : la règle 3 ne classe pas.
+			expect((await retour.json()) as string | null).toBeNull()
+
+			const apres = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=classification,card_id,suggested_card_id,suggested_at`,
+				{ headers: enTetesService() },
+			)
+			const [ligne] = (await apres.json()) as {
+				classification: string
+				card_id: null
+				suggested_card_id: string | null
+				suggested_at: string | null
+			}[]
+			// SUGGÉRÉ vers la seule card active de Léo, mais TOUJOURS non classé.
+			expect(ligne?.suggested_card_id).toBe(CARD_LEO)
+			expect(ligne?.suggested_at).not.toBeNull()
+			expect(ligne?.classification).toBe('unclassified')
+			expect(ligne?.card_id).toBeNull()
+		} finally {
+			await request.delete(`${URL_API}/rest/v1/mail_messages?id=eq.${message}`, {
+				headers: enTetesService(),
+			})
+		}
+	})
+
+	test('un expéditeur qui n’est aucun contact ne reçoit AUCUNE suggestion', async ({ request }) => {
+		const message = await creerMessageDe(
+			request,
+			`<suggestion-inconnu-${Date.now()}@preuves.test>`,
+			'inconnu@nulle-part.test',
+		)
+		try {
+			const retour = await request.post(
+				`${URL_API}/rest/v1/rpc/classer_message_automatiquement`,
+				{ headers: enTetesService(), data: { p_message_id: message } },
+			)
+			expect(retour.status(), await retour.text()).toBe(200)
+
+			const apres = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=suggested_card_id,classification`,
+				{ headers: enTetesService() },
+			)
+			const [ligne] = (await apres.json()) as {
+				suggested_card_id: string | null
+				classification: string
+			}[]
+			expect(ligne?.suggested_card_id).toBeNull()
+			expect(ligne?.classification).toBe('unclassified')
+		} finally {
+			await request.delete(`${URL_API}/rest/v1/mail_messages?id=eq.${message}`, {
+				headers: enTetesService(),
+			})
+		}
+	})
+})

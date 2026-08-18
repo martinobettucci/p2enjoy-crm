@@ -933,6 +933,8 @@ export type Database = {
           rfc822_message_id: string
           sent_at: string | null
           subject: string | null
+          suggested_at: string | null
+          suggested_card_id: string | null
           to_addresses: string[]
           workspace_id: string
         }
@@ -955,6 +957,8 @@ export type Database = {
           rfc822_message_id: string
           sent_at?: string | null
           subject?: string | null
+          suggested_at?: string | null
+          suggested_card_id?: string | null
           to_addresses?: string[]
           workspace_id: string
         }
@@ -977,6 +981,8 @@ export type Database = {
           rfc822_message_id?: string
           sent_at?: string | null
           subject?: string | null
+          suggested_at?: string | null
+          suggested_card_id?: string | null
           to_addresses?: string[]
           workspace_id?: string
         }
@@ -993,6 +999,13 @@ export type Database = {
             columns: ["classified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_messages_suggested_card_id_fkey"
+            columns: ["suggested_card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
             referencedColumns: ["id"]
           },
           {
