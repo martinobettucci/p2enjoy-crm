@@ -1109,6 +1109,12 @@ retirant temporairement une politique).
       *Reste dû* : retourner cette douzième assertion en refus mesuré. Non fait le 2026-08-18 — le
       poste Docker est tombé (INC-145), et remplacer une fausse preuve par une preuve non exécutée
       ne vaudrait pas mieux.
+      **SOLDÉ le 2026-08-18, PAR EXÉCUTION** (`docs/JOURNAL.md`, décision 444). L'assertion
+      retournée a reçu sa **première exécution** depuis sa réécriture, sur une pile debout et
+      seedée : `e2e/api/preuves-refus.spec.ts` rend **40 scénarios verts**, dont
+      « PREUVE N° 12 — emprunter l'identité sortante d'autrui est REFUSÉ › 403 et
+      `identity_not_available` : la signature est réelle, le refus aussi ». La douzième preuve
+      n'est plus une absence figée : c'est un refus mesuré.
 - [~] **La preuve n° 8 est À MOITIÉ ACQUISE, et l'inventaire le dit désormais.** `card_events`
       existe depuis `CRM-044` : son refus est **mesuré** — `403`, `42501`, `service_role` compris —
       et non plus attendu. `audit_log` reste due par `CRM-072`. L'inventaire du fichier consolidé

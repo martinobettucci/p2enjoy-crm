@@ -18421,3 +18421,44 @@ fonctionne ici**, le blocage de la décision 439 n'est pas celui de ce poste.
 3. `CRM-035` et `CRM-036` : leurs preuves d'interface sont **dues** au même titre que celles de
    `CRM-033`, et pour la même raison — l'écran existe, la règle est exposée, personne ne la mesure.
    C'est la leçon de cette session, et elle est réutilisable telle quelle.
+
+## décision 444 — INC-146 et INC-147 sont exécutées pour la première fois, et l'exécution a trouvé un troisième défaut
+
+**Ce qui restait dû.** La décision 439 laissait les points 4 et 5 en attente : les corrections
+d'INC-146 et d'INC-147 étaient écrites mais **jamais exécutées**, le poste Docker étant tombé le jour
+de leur écriture. Une correction non exécutée n'est pas une correction prouvée.
+
+**Les deux sont exécutées, et vertes.** Pile debout, seedée par le véritable
+`supabase/seed/apply-seed.sh`.
+
+- `e2e/api/preuves-refus.spec.ts` (projet `api`) : **40 scénarios verts**, dont
+  « PREUVE N° 12 — emprunter l'identité sortante d'autrui est REFUSÉ › 403 et
+  `identity_not_available` : la signature est réelle, le refus aussi ». INC-146 est soldée par la
+  mesure : l'appel emploie la signature réelle de `queue_outbound_email`, et le refus est un refus.
+- `e2e/api/inbox.spec.ts -g 'se télécharge'` : **1 scénario vert**,
+  « `clean` se télécharge, `infected`, `pending` et `skipped` non, et l'anonyme rien ». Le témoin
+  positif tient, donc les trois refus sont concluants. INC-147 est soldée de même.
+
+**ET L'EXÉCUTION A TROUVÉ CE QUE LA RELECTURE N'AVAIT PAS VU.**
+`scripts/verify-preuves-refus.sh` s'interrompait sur `SPEC_INGESTION: unbound variable`. La
+correction d'INC-147 avait renommé la cible en `SPEC_PREUVE_9` **sans reprendre le message de la
+branche `ok`**, resté sur l'ancien nom. Sous `set -u`, le harnais mourait donc **sur son propre
+succès** : la branche rouge, qui cite la bonne variable, fonctionnait ; la branche verte tuait le
+script. Le libellé disait par ailleurs encore « sa valeur probante est en défaut », description du
+scénario creux qu'il ne vise plus.
+
+**Ce que cela apprend, et c'est le pendant exact de la décision 438.** Le 2026-08-18 au matin, la
+panne avait rendu un service : elle avait forcé la relecture, seule capable de voir trois contrôles
+verts pour la mauvaise raison. Le même jour, l'exécution rend le service inverse : elle seule pouvait
+voir un contrôle **incapable d'annoncer sa réussite**. La relecture et l'exécution ne trouvent pas
+les mêmes défauts, et aucune ne remplace l'autre. Une correction écrite pendant une panne doit être
+exécutée dès le retour de la pile — c'est précisément ce que la décision 439 avait inscrit, et ce
+qui vient d'être fait.
+
+**Corrigé, et rejoué.** Le message nomme la variable existante et décrit ce que le contrôle mesure
+réellement. `scripts/verify-preuves-refus.sh` rend ensuite **27 contrôles, aucune anomalie**, en
+incluant son `npm run build` vert.
+
+**Ce qui reste `[~]` sur `CRM-014`, et ce n'est pas une preuve manquante par négligence.** La
+preuve n° 8 est à moitié acquise : `card_events` est mesurée, `audit_log` reste due par `CRM-072`,
+dont la table n'existe pas.
