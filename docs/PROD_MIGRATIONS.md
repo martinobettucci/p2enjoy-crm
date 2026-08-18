@@ -644,6 +644,19 @@ sauvegarde vérifiée.
 
 ## 7. Risques connus
 
+- **~~Le rejeu des migrations échouait sur une base contenant des événements récents.~~ LEVÉ le
+  2026-08-18, et à connaître avant tout redémarrage.** Le `migrations-runner` rejoue **tout** le
+  répertoire à chaque démarrage de la pile. Cinq migrations — 16, 17, 20, 25 et 30 — réinstallaient
+  la contrainte de vocabulaire de `public.card_events` avec la liste de leur époque. Sur une base
+  **peuplée**, dont les lignes emploient `mail_received`, `mail_sent`, `snoozed` ou `woken`,
+  PostgreSQL refusait la contrainte étroite et **le démarrage échouait**. Le défaut était invisible
+  sur une base neuve. Chacune ne pose désormais sa liste que si aucune ligne n'emploie un type qui
+  en est absent (INC-144, `docs/JOURNAL.md` décision 431).
+  **Conséquence pour le déploiement : AUCUNE opération supplémentaire.** Les cinq migrations
+  figurent déjà au §3 parmi les migrations en attente, leur contenu corrigé, et l'état final de la
+  contrainte est inchangé — les quatorze types. Rien à appliquer à part, rien à rejouer dans un
+  ordre particulier. Le risque est nommé ici parce qu'il portait sur le **redémarrage**, geste que
+  l'exploitant fera bien après le premier déploiement.
 - **Aucune restauration n'a encore été testée.** Tant que ce n'est pas fait, la capacité de
   reprise est une hypothèse, pas un fait.
 - **La clé racine de Vault est un point de défaillance unique.** Elle vit hors de `PGDATA` et
