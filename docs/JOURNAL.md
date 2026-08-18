@@ -18582,3 +18582,54 @@ l'interface.
 `docs/SPEC-mail-subsystem.md` §16) qui suppose désormais un modèle existant et une donnée de
 démonstration (Léo Marchand sur exactement une card active). L'état exigé par cette tranche est
 **vérifié par le seed lui-même** — la garde échoue à la moindre dérive.
+
+## décision 447 — `CRM-060` tranche 2 : la règle 3 du classement suggère, et un harnais corrompait la base
+
+**L'unité, et le choix.** La dernière entrée du journal désignait `CRM-060` (contacts) comme unité
+PRODUIT en cours, tranche 1 (le modèle) livrée. Suivant `docs/CloudWorker.md` §4.2 point 1, j'ai
+continué l'unité par sa **tranche 2** : activer la règle 3 du classement de messages, que la
+tranche 1 avait rendue satisfaisable en base (Léo Marchand sur exactement une card active).
+
+**Spécification avant code.** Le contrat de la tranche 2 n'était que nommé (`docs/SPEC-contacts.md`
+§1). Je l'ai écrit intégralement au §8 — colonnes de la suggestion, place dans la chaîne, sémantique
+« exactement une card active », cas a à h, preuves —, fondé sur mesure de la pile seedée (contacts,
+emails, rattachements relevés en base ; `mail_messages` sans colonne de suggestion ;
+`classer_message_automatiquement` en version 0025, non redéfinie par 0028). Committé avant la
+première ligne de code.
+
+**Ce que j'ai livré.** Migration `0046` : deux colonnes facultatives sur `mail_messages`
+(`suggested_card_id` FK `cards` `ON DELETE SET NULL`, `suggested_at`) et
+`classer_message_automatiquement` enrichie de la règle 3. Un expéditeur contact rattaché à
+**exactement une** card active reçoit sa card en **suggestion**, le message restant non classé
+(`card_id` nul, `classification` inchangée, aucun `card_event`). Zéro card n'invente rien, deux se
+taisent, une card archivée ne compte pas, la casse est ignorée, le workspace borne l'appariement.
+La règle 3 n'est atteinte que si les règles 1 et 2 sont muettes ; la fonction écrit ou EFFACE la
+suggestion à chaque passage (déterministe). La suggestion ne classe pas et n'accorde aucun droit :
+l'accepter passe toujours par `classify_message` (§18.2).
+
+**Preuves.** pgTAP `0044` **21 assertions** (cas a à h sur états construits par savepoints, la règle
+1/2 gagnante n'ouvrant pas de suggestion, réservation à `service_role`) ; preuve d'API étendue
+**5/5** (deux scénarios de règle 3 via la clé de service, relisant la ligne) ; harnais
+`verify-mail-classement.sh` **révisé, non retiré** — la garde qui figeait la désactivation devient
+une preuve de la règle active, avec témoin — **25 contrôles**. Types régénérés, `types:check`
+octet à octet.
+
+**ET LA CAMPAGNE A TROUVÉ CE QUE LA RELECTURE N'AVAIT PAS VU — INC-153.** `npm run test:sql` rendait
+`0029_inbox_globale.test.sql` rouge (assertions 12-14). Isolé : `classify_message` en base n'avait
+plus sa garde `peut_voir_message` (CRM-057 §18.2). Cause : la dégradation « événement de timeline
+retiré » de `verify-mail-classement.sh` **restaurait `classify_message` depuis la migration 0025**,
+la version d'AVANT cette garde — même classe que la décision 135 et INC-129. Chaque exécution du
+harnais laissait la base dégradée. Défaut antérieur, mais dans le fichier même de cette session et
+révélé par son exécution : corrigé (restauration depuis `0028`), consigné INC-153. Après correction,
+le harnais rejoué laisse la garde en place et `0029` repasse 22/22.
+
+**Campagne de fin de session, sur seed frais.** `typecheck`, `build`, `types:check` verts ;
+`test:sql` **44 fichiers, 2250 assertions, aucune anomalie** ; `test:unit` **1488** ; `e2e:api`
+**698** ; `e2e:mail` **41 verts, 1 échec** sur `ingestion.spec.ts:143` (détection ClamAV) qui
+**passe seul** (3.2 s, ClamAV sain) — motif connu « passe seul, échoue en suite » (INC-128),
+préexistant. **Non exécutés, et dits comme tels** : `e2e:ui` (la règle 3 n'a pas d'écran — sa preuve
+visible attend l'inbox de `CRM-057`, tranche 4) et `pytest` (aucun code `mail-sync` touché).
+
+**Où reprendre.** `CRM-060` reste `[~]`. Tranche 3 — résolution du champ `contact` dans le
+formulaire (`CRM-036` §6.5, INC-053). Tranche 4 — écrans (carnet, fiche, rattachement) et l'inbox
+qui MONTRE la suggestion (`CRM-057`), qui portera la preuve visible de la règle 3.
