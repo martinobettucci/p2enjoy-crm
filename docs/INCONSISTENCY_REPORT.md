@@ -195,7 +195,13 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Douze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Treize ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155 et INC-157** — **INC-157** consignée le 2026-08-18 par
+la session `CRM-060` tranche 4a : la barre d'onglets écrit « Aucun channel » sur les routes
+transverses, qui n'ont pas de channel à lister. Défaut ANTÉRIEUR, observé sur une capture et
+laissé inchangé (`CLAUDE.md` §3.1).
+
+Précédemment douze : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152 et INC-155** — **INC-155** consignée le 2026-08-18 par la session
 `CRM-060` tranche 3 : elle n'est pas un défaut neuf mais le SECOND porteur d'INC-141, le compteur
 « quinze cards seedées » vivant aussi dans `verify-move-card.sh` ; les deux se ferment ensemble.
@@ -244,6 +250,29 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-157 — La barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'en ont pas
+
+**Nature :** un état vide rendu là où il n'y a rien à vider. La barre d'onglets de la coquille
+(`docs/DESIGN_SYSTEM.md` §4 : « les channels du track courant ») est rendue sur **toutes** les
+routes, y compris celles qui n'appartiennent à aucun track — `/inbox`, `/ma-journee`, `/reglages`
+et désormais `/contacts`. Hors d'un track, elle affiche « Aucun channel ». Or ces routes n'ont pas
+« aucun channel » : la notion de channel n'y a **aucun objet**. C'est la distinction que le §5.16
+et le §5.9 posent ailleurs — un vide qui est un **fait** n'est pas un vide qui est une **absence
+de sujet** —, et l'écran écrit ici le premier là où c'est le second.
+
+**Mesuré le :** 2026-08-18, en OBSERVANT les captures (`CLAUDE.md` §16), non en lisant un test.
+`docs/captures/CRM-060/carnet-contacts-1440.jpg` porte la mention sous l'en-tête ; la capture
+antérieure `docs/captures/CRM-057/inbox-lg-1152.jpg`, produite par la session `CRM-057`, la porte
+**déjà**, à l'identique. Le défaut est donc **antérieur** à cette session et étranger à son unité :
+`/contacts` en hérite comme les trois autres routes transverses, il ne l'introduit pas.
+
+**Étranger à l'unité, et laissé inchangé** (`CLAUDE.md` §1, §3.1). Il ne corrompt rien et
+n'empêche aucun geste : il ajoute une ligne sans objet en tête de quatre écrans. La correction
+appartient à la coquille (`CRM-007`) et demande une décision qui n'est pas d'écran : la barre
+doit-elle être **absente** hors d'un track — ce que le §4 laisse entendre en la disant « du track
+courant » —, ou son état vide doit-il être reformulé ? Le premier semble juste, mais toucher la
+coquille depuis une unité de carnet ferait exactement le contraire de ce que le §1 demande.
 
 ### INC-156 — `verify-harness.sh` appelait une fonction inexistante et mourait au milieu — CORRIGÉ le 2026-08-18
 

@@ -230,6 +230,7 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 |---|---|
 | `/` | Board — état vide : aucun track n'est encore livré |
 | `/inbox` | État vide de l'inbox |
+| `/contacts` | **Carnet de contacts** — `CRM-060`, `docs/SPEC-contacts.md` §10. Une route de premier niveau, portée par une entrée de la barre latérale : un contact est un objet métier de première classe (`CLAUDE.md` §4), pas un réglage de structure |
 | `/ma-journee` | État vide de la journée |
 | `/reglages` | Réglages — état vide, et rappel des sources de configuration |
 | `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021`. Avec un channel ouvert, elle rend son **board kanban** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7 |

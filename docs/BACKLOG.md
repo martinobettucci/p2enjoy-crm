@@ -7103,9 +7103,63 @@ migration `0046`) :
 - [x] Tranche 3 — Résolution des champs `contact` **et** `user` dans la validation des valeurs,
       **livrée et prouvée le 2026-08-18** (`docs/SPEC-contacts.md` §9, migration `0047`). Voir le
       détail ci-dessous.
-- [ ] Tranche 4 — Écrans : carnet de contacts, fiche d'organisation, rattachement d'un contact
-      à une affaire depuis la route de détail, **les deux sélecteurs** (§9.1) et
-      **l'enrichissement du seed** différé par le §9.6.
+- [~] Tranche 4 — Écrans. **Sous-découpée en quatre le 2026-08-18** (`docs/SPEC-contacts.md`
+      §10.1), chaque sous-tranche committée et prouvée avant la suivante :
+      - [x] **4a — Le carnet de contacts**, en lecture. **Livrée et prouvée le 2026-08-18** ; voir
+            le détail ci-dessous.
+      - [ ] **4b — La fiche d'organisation** : les contacts d'une organisation, et ce qui la
+            caractérise. Le nom d'organisation du carnet deviendra un lien avec elle.
+      - [ ] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
+            (`card_contacts`), premier geste d'écriture de la tranche.
+      - [ ] **4d — Les deux sélecteurs** du §9.1 (`contact` et `user`) dans le formulaire d'une
+            affaire, et **l'enrichissement du seed** différé par le §9.6, avec la révision des dix
+            comptes qu'il déplace.
+
+**Quatrième tranche, sous-tranche 4a livrée le 2026-08-18 — le carnet de contacts**
+(`docs/SPEC-contacts.md` §10, `docs/DESIGN_SYSTEM.md` §5.19) :
+
+- [x] `webapp/src/lib/contacts.ts` : la lecture du §10.3 — cinq colonnes affichées et
+      **l'organisation embarquée dans la MÊME requête**. Mesuré possible ici : `contacts` ne porte
+      qu'une seule clé étrangère vers `organizations`, donc aucune ambiguïté `PGRST201`,
+      contrairement à `corbeille.ts` et `inbox.ts` qui ont dû se rabattre sur deux lectures.
+      Aucun filtre, aucune pagination, ordre `full_name` **côté serveur**.
+- [x] `webapp/src/app/Carnet.tsx` : le tableau du §5.9 — cinq colonnes, cellule **vide** quand la
+      donnée est absente, email et téléphone en donnée technique — et les quatre états du §5.8.
+      L'état vide n'offre **aucune action**, écart assumé au §5.8 repris du §5.16 : cette
+      sous-tranche ne livre aucun geste de création.
+- [x] **`/contacts` est une route de PREMIER NIVEAU**, ajoutée à `chemins.ts`, à `ROUTES` et à
+      `ENTREES_TRANSVERSES` — et non une section de `/reglages` : un contact est le matériau
+      quotidien d'un commercial, ce que le §3 avait déjà tranché en base en ouvrant son écriture
+      au `business_developer`. L'écran est chargé **à la demande**, comme l'inbox.
+- [x] `webapp/src/app/routes.test.tsx` : l'assertion des « routes en attente » est **RÉVISÉE, non
+      contournée** (mécanisme de la décision 51) — la route rejoint celles qui portent un écran,
+      et reçoit sa propre preuve. L'assertion de couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES`
+      passe **sans révision** : c'est elle qui garantit qu'aucune entrée ne mène nulle part.
+- [x] `webapp/src/lib/contacts.test.ts` (**8 tests**) et `webapp/src/app/Carnet.test.tsx`
+      (**8 tests**) : la requête réellement émise, les trois issues du contrat asynchrone, et les
+      cas a à f du §10.6 sur les données du seed à l'identique.
+- [x] `e2e/ui/contacts.spec.ts` : **9 scénarios verts** sur la pile réelle — la barre latérale mène
+      au carnet par un CLIC, les trois contacts du seed sont rendus, les cellules vides sont
+      vides, la **lectrice** lit le carnet, le parcours **clavier** l'atteint et `aria-current`
+      s'annonce, les quatre paliers du §7 ne font jamais défiler la page, et l'état vide anonyme
+      n'offre aucune action. Console **vierge** — la garde de `fixtures.ts` l'exige.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `carnet-contacts-1440.jpg`, les quatre paliers, `carnet-contacts-vide-1440.jpg`.
+- [x] `docs/DESIGN_SYSTEM.md` §4 révisé et §5.19 ajouté ; `docs/SPEC-webapp.md` §5.2 ;
+      `docs/manual.md` section 3 *ter* et sommaire ; `CHANGELOG.md` mis à jour dans le même
+      changement.
+- [x] **Le seed est rendu INTACT** : les trois contacts et les deux organisations posés par la
+      tranche 1 suffisent à démontrer l'écran, et ils exercent précisément les trois cas de cellule
+      vide. L'enrichissement du §9.6 reste attaché à 4d, avec le sélecteur qui le montre.
+
+**UN DÉFAUT ANTÉRIEUR TROUVÉ EN OBSERVANT UNE CAPTURE — INC-157**, consigné **sans être corrigé** :
+la barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'ont aucun channel à
+lister. La capture `docs/captures/CRM-057/inbox-lg-1152.jpg`, antérieure, porte déjà la mention :
+`/contacts` en hérite, il ne l'introduit pas. La correction appartient à la coquille (`CRM-007`).
+
+*Limites nommées d'emblée pour 4a* (`docs/SPEC-contacts.md` §10.7) : aucune pagination, aucune
+recherche ni filtre, aucun geste de création, de modification ou de suppression, et le nom
+d'organisation reste un **texte** tant que 4b n'a pas livré sa destination.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

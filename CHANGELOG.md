@@ -15,6 +15,19 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4a : le carnet de contacts a son écran**
+  (`docs/SPEC-contacts.md` §10, `docs/DESIGN_SYSTEM.md` §5.19). L'entrée **Contacts** de la barre
+  latérale ouvre le carnet de l'espace de travail : les personnes avec qui les affaires se
+  traitent, leur organisation, leur fonction, leur email et leur téléphone, une ligne par
+  personne, rangées par nom. Jusqu'ici les contacts existaient en base sans qu'aucun écran ne les
+  montre. Tout membre lit le carnet, y compris un compte en lecture seule ; sans session la page
+  s'affiche vide, le serveur ne consentant aucune ligne à un visiteur anonyme.
+  Le carnet est une route de **premier niveau** — `/contacts` —, et non une section de
+  « Réglages » : un contact est le matériau quotidien d'un commercial, pas un réglage de
+  structure. Ce que cette tranche ne livre **pas** est écrit plutôt que laissé à deviner : aucun
+  geste de création, de modification ou de suppression, aucune fiche d'organisation, aucune
+  recherche et aucune pagination. Manuel : section 3 *ter*.
+
 - **`CRM-060` — Contacts et organisations, tranche 3 : un champ « contact » ou « responsable » ne
   peut plus désigner quelqu'un qui n'existe pas** (`docs/SPEC-contacts.md` §9, migration `0047`).
   Jusqu'ici, un formulaire d'affaire acceptait dans un champ de type `contact` ou `user` n'importe

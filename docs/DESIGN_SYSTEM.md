@@ -137,13 +137,20 @@ valeur n'existe. Écrire `p-5` ne produit rien.
 │ (pilules)    │                                                       │
 │              │  Board kanban (colonnes = étapes du workflow)         │
 │ Inbox        │  ou vue liste                                         │
+│ Contacts     │                                                       │
 │ Ma journée   │                                                       │
 │ Réglages     │                                                       │
 └──────────────┴───────────────────────────────────────────────────────┘
 ```
 
-- **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, Ma journée,
-  Réglages). Repliable ; l'état de repli est une préférence de session, pas une donnée
+- **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, **Contacts**,
+  Ma journée, Réglages). Repliable ;
+  *« Contacts » a été ajouté le 2026-08-18 par `CRM-060` (`docs/SPEC-contacts.md` §10.2). Le
+  carnet est une route de PREMIER NIVEAU et non une section de `/reglages` : un contact est le
+  matériau quotidien d'un commercial, au même titre qu'une affaire — ce que la base a déjà tranché
+  en ouvrant son écriture au `business_developer` là où les tracks, les channels et les workflows
+  restent à l'`admin`. Les cinq surfaces de `/reglages` administrent la structure du workspace ;
+  le carnet n'administre rien, il travaille.* l'état de repli est une préférence de session, pas une donnée
   persistée sans consentement.
 - **Onglets** : les channels du track courant, en **liens** de navigation et non en `tablist`
   (§12.1). Débordement horizontal défilable, jamais tronqué sans indication — l'indication est
@@ -1437,6 +1444,50 @@ alerte de refus dans le bloc concerné.
     geste n'a aucun effet observable sur un nœud que les sélecteurs d'étape ignorent déjà. La ligne
     archivée reste en revanche **comptée comme voisine** par le calcul, puisqu'elle occupe une place
     à l'œil (`docs/SPEC-workflow-engine.md` §2 ter.3).
+
+### 5.19 Carnet de contacts — `CRM-060`
+
+Première surface **de travail** transverse du produit — ni un board, ni une administration. Ce que
+l'écran lit, et ce qu'il ne fait pas, est spécifié par `docs/SPEC-contacts.md` §10 ; les règles
+ci-dessous ne disent que de quoi il a l'air.
+
+- **Un tableau du §5.9, et non la liste imbriquée du §5.13.** Les cinq colonnes — nom,
+  organisation, fonction, email, téléphone — sont les **mêmes** pour chaque ligne, et il n'y a rien
+  à imbriquer : un contact n'a pas d'enfant. C'est exactement la distinction que le §5.16 a déjà
+  tranchée pour la corbeille. Les hauteurs de ligne, les séparateurs, l'ellipse et l'en-tête
+  collant du §5.9 sont conservés sans changement.
+
+- **Une donnée absente laisse la cellule VIDE** (§5.9) : ni tiret, ni « — », ni « non renseigné ».
+  La règle est ici **visible à la capture** et non seulement écrite, le seed exerçant les trois cas
+  — un contact sans organisation ni fonction, un contact sans email, un contact sans téléphone.
+  L'écart avec « Jamais relevée » du §5.14 et « Auteur inconnu » du §5.16 tient au même critère que
+  ces deux entrées posent : là, l'absence est un **fait** de la ligne ; ici, c'est une donnée qui
+  n'existe simplement pas pour ce contact.
+
+- **L'email et le téléphone sont des données techniques** (§2) : monospace, chiffres tabulaires,
+  alignés à droite comme au §5.9 — ils se comparent colonne par colonne, ce qui est la seule raison
+  d'avoir des chiffres tabulaires.
+
+- **Aucun lien, ni vers une fiche, ni vers un client de messagerie.** Le nom de l'organisation est
+  un **texte** : sa fiche est due par une sous-tranche ultérieure, et un lien sans destination
+  serait mort (§5.10, « une commande morte »). Aucun `mailto:` ni `tel:` non plus — écrire à un
+  contact depuis le carnet est un geste que personne n'a spécifié, et un lien qui ouvre le client
+  du système sortirait du produit sans le dire.
+
+- **L'état vide n'offre AUCUNE action**, et c'est l'écart au §5.8 que le §5.16 a déjà pris pour la
+  corbeille : cette surface ne livre aucun geste de création, et un bouton y serait un chemin vers
+  nulle part. Les trois autres états du §5.8 sont traités — squelettes à la forme du tableau,
+  erreur avec reprise qui relit réellement, et l'absence d'espace de travail.
+
+- **Aucune pagination, aucun tri commandé, aucun filtre**, contrairement au tableau du §5.9. Ce
+  n'est pas un oubli : l'ordre vient du serveur, et poser une pagination sur une lecture dont
+  personne n'a mesuré le volume serait de l'optimisation sans mesure (`CLAUDE.md` §21). L'écart est
+  nommé dans `docs/SPEC-contacts.md` §10.7, avec la condition de sa reprise.
+
+- **Le conteneur du tableau porte `.indique-debordement-x`** (§12.6), comme la vue liste : à
+  390 px les cinq colonnes ne tiennent pas, et le tableau défile **dans son conteneur** pendant que
+  la page ne défile jamais horizontalement (§7). Aucun `scroll-snap`, faute de colonne sur laquelle
+  s'ancrer — la règle du §5.9.
 
 ## 6. Interactions
 

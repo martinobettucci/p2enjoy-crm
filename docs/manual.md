@@ -26,6 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Ce qui manque est dit : aucun geste de création, de modification ni de suppression, aucune fiche d'organisation, aucune recherche |
 
 ### Suivi quotidien
 
@@ -185,8 +186,8 @@ l'éditeur reste accessible depuis les réglages (chapitre 5 *bis*).
 
 L'écran se lit en trois zones :
 
-- à gauche, la **barre latérale** : le nom du produit, les quatre entrées de navigation — Board,
-  Inbox, Ma journée, Réglages — puis la section **Tracks** ;
+- à gauche, la **barre latérale** : le nom du produit, les cinq entrées de navigation — Board,
+  Inbox, **Contacts**, Ma journée, Réglages — puis la section **Tracks** ;
 - en haut, l'**en-tête** : le fil d'Ariane, qui nomme la page ouverte, et le contexte d'espace de
   travail à droite ;
 - sous l'en-tête, la **barre d'onglets**, qui listera les channels du track courant ;
@@ -205,12 +206,51 @@ connue. Une identité supprimée ne transforme jamais son UUID en libellé : un 
 sa place avec « Compte supprimé », tandis qu'un événement de service reste sans acteur affiché.
 
 **Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
-et la vue liste ; la discussion et l'historique vivent dans la fiche. L'arborescence a son écran
+et la vue liste ; la discussion et l'historique vivent dans la fiche. Le **carnet de contacts** a
+le sien (section 3 *ter*), en lecture. L'arborescence a son écran
 d'administration (chapitre 5), et la **composition d'un workflow** — ses étapes, ses transitions et
 les **questions de son formulaire** — le sien (chapitre 5 bis). En revanche, le catalogue de nœuds,
 la **visibilité question par étape** et les droits d'accès n'ont toujours aucun écran
 d'administration. La connexion rend
 accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents.
+
+### 3 ter. Le carnet de contacts
+
+*Livré par `CRM-060`, sous-tranche 4a. Décrit l'application réellement exécutée ; captures dans
+`docs/captures/CRM-060/`.*
+
+L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
+personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
+
+Le carnet se présente en tableau, une ligne par contact, rangé par nom :
+
+| Colonne | Ce qu'elle porte |
+|---|---|
+| Nom | Le nom complet de la personne. Il est toujours renseigné |
+| Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une |
+| Fonction | Sa fonction, par exemple « Directeur achats » |
+| Email | Son adresse, lorsqu'elle est connue |
+| Téléphone | Son numéro, lorsqu'il est connu |
+
+**Une cellule vide veut dire « pas renseigné », et rien d'autre.** Le carnet n'écrit ni tiret ni
+« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas
+une donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas
+d'organisation et Élise Fabre n'a pas d'email.
+
+**Qui voit quoi.** Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture
+seule. Sans session, la page s'affiche vide : le serveur ne consent aucune ligne à un visiteur
+anonyme, et c'est la règle générale du produit — un refus se manifeste par l'absence de donnée,
+jamais par un message d'erreur technique.
+
+**Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il ne permet ni
+de créer, ni de modifier, ni de supprimer un contact : ces gestes existent dans la base, mais aucun
+écran ne les porte à ce jour. Le nom d'une organisation n'est pas cliquable — sa fiche est prévue et
+n'est pas livrée —, et cliquer sur un email n'ouvre pas votre logiciel de messagerie. Il n'y a pas
+non plus de recherche ni de filtre : le carnet affiche l'ensemble des contacts de l'espace.
+
+Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
+suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
+règle pas encore depuis un écran.
 
 ### 3.2 bis La section Tracks
 
