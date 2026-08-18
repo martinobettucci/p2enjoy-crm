@@ -1383,7 +1383,7 @@ corbeille » — rendent la corbeille visible dans l'inventaire au lieu de la fo
 | 7 | L'affaire `…0cf` existe sous `…037`, active, à l'étape `negociation` | `deleted_at` et `archived_at` nuls |
 | 8 | L'énumération du track `…025` avec le jeton de l'administratrice | **1 channel et 1 affaire** — l'enfant en corbeille n'est pas compté |
 
-## 11. Contacts et organisations — `CRM-060` tranche 1
+## 11. Contacts et organisations — `CRM-060` tranches 1 et 4b
 
 Le carnet de démonstration livré par la première tranche de `CRM-060`, section 8 novies bis de
 `supabase/seed/apply-seed.sh`. Toutes les valeurs ci-dessous sont **le contrat opposable** au
@@ -1391,15 +1391,30 @@ code : `verify-seed.sh` (à venir) les mesure.
 
 ### 11.1 Ce que le seed pose
 
-**Deux organisations** :
+**TROIS organisations** — deux posées par la tranche 1, la troisième par la tranche 4b :
 
-| Identifiant | Nom | Domaine |
-|---|---|---|
-| `5eed…0081` | Sogexia | `sogexia.example` |
-| `5eed…0082` | Studio Meunier | *(aucun)* |
+| Identifiant | Nom | Domaine | Site web | Contacts |
+|---|---|---|---|---|
+| `5eed…0081` | Sogexia | `sogexia.example` | `https://www.sogexia.example` | Léo Marchand |
+| `5eed…0082` | Studio Meunier | *(aucun)* | *(aucun)* | Élise Fabre |
+| `5eed…0083` | Comptoir Vasseur | `comptoir-vasseur.example` | *(aucun)* | **aucun** |
 
 Une organisation sans domaine est le cas licite du §2.1 de `docs/SPEC-contacts.md` — l'unicité
 partielle sur `lower(domain)` autorise plusieurs lignes à `NULL`.
+
+**Les deux ajouts de la tranche 4b sont exigés par la fiche d'organisation**
+(`docs/SPEC-contacts.md` §11.7), et chacun exerce un cas que le seed ne couvrait pas :
+
+- **le `website` de Sogexia** est la seule donnée qui rende le **lien externe** du §11.5. Sans lui,
+  ce lien n'est jamais rendu, et la capture ne le montre pas ;
+- **Comptoir Vasseur, sans aucun contact**, est la seule qui exerce l'**état vide** de la liste de
+  contacts de la fiche (§11.9, cas d). Sans elle, cet état n'est démontrable que contre une réponse
+  substituée, ce que `CLAUDE.md` §8 proscrit.
+
+**Aucun compteur figé n'est déplacé, et c'est MESURÉ** : le seed compare `organizations_count` à la
+taille du tableau `ORGANIZATIONS_SEED` lui-même ; aucun `scripts/verify-*.sh` ne cite
+`organizations` ; `e2e/api/contacts.spec.ts` crée ses **propres** organisations sondes et les
+supprime. Le carnet, qui liste des **contacts**, garde ses trois lignes.
 
 **Trois contacts** :
 

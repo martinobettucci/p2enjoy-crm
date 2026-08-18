@@ -2062,20 +2062,42 @@ info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et
 
 ORG_SOGEXIA='5eed0000-0000-4000-8000-000000000081'
 ORG_ANONYME='5eed0000-0000-4000-8000-000000000082'
+# TROISIÈME ORGANISATION, SANS AUCUN CONTACT — CRM-060 tranche 4b, docs/SPEC-contacts.md §11.7.
+# Sans elle, l'état vide de la liste de contacts de la fiche d'organisation (§11.9, cas d) n'est
+# démontrable que contre une réponse SUBSTITUÉE, ce que CLAUDE.md §8 proscrit.
+ORG_SANS_CONTACT='5eed0000-0000-4000-8000-000000000083'
 CONTACT_MARCHAND='5eed0000-0000-4000-8000-000000000091'
 CONTACT_DUPONT='5eed0000-0000-4000-8000-000000000092'
 CONTACT_ELISE='5eed0000-0000-4000-8000-000000000093'
 
-# `id|workspace_id|name|domain`
+# `id|workspace_id|name|domain|website`
+#
+# TROIS ORGANISATIONS, ET CHACUNE EXERCE UN CAS DE LA FICHE — CRM-060 tranche 4b,
+# docs/SPEC-contacts.md §11.7 :
+#
+#   * Sogexia porte un domaine ET un site web : c'est la seule qui rend le LIEN externe du §11.5.
+#     Sans ce `website`, ce lien n'est jamais rendu et la capture ne le montre pas ;
+#   * Studio Meunier n'a ni domaine ni site : ses deux valeurs restent VIDES (§11.9, cas b) ;
+#   * Comptoir Vasseur n'a AUCUN contact : elle seule exerce l'état vide de la liste de contacts
+#     (§11.9, cas d).
+#
+# AUCUN COMPTEUR FIGÉ N'EST DÉPLACÉ, et c'est MESURÉ : le contrôle ci-dessous compare à la taille
+# du tableau lui-même ; aucun `scripts/verify-*.sh` ne cite `organizations` ; les preuves d'API de
+# `e2e/api/contacts.spec.ts` créent leurs PROPRES organisations sondes. Le carnet, qui liste des
+# CONTACTS et non des organisations, garde ses trois lignes.
 ORGANIZATIONS_SEED=(
-	"$ORG_SOGEXIA|$WS_ID|Sogexia|sogexia.example"
-	"$ORG_ANONYME|$WS_ID|Studio Meunier|"
+	"$ORG_SOGEXIA|$WS_ID|Sogexia|sogexia.example|https://www.sogexia.example"
+	"$ORG_ANONYME|$WS_ID|Studio Meunier||"
+	"$ORG_SANS_CONTACT|$WS_ID|Comptoir Vasseur|comptoir-vasseur.example|"
 )
 
 for entree in "${ORGANIZATIONS_SEED[@]}"; do
-	IFS='|' read -r o_id o_ws o_name o_domain <<< "$entree"
+	IFS='|' read -r o_id o_ws o_name o_domain o_website <<< "$entree"
 	corps=$(jq -nc --arg id "$o_id" --arg ws "$o_ws" --arg n "$o_name" --arg d "$o_domain" \
-		'{id: $id, workspace_id: $ws, name: $n} + (if $d == "" then {} else {domain: $d} end)')
+		--arg w "$o_website" \
+		'{id: $id, workspace_id: $ws, name: $n}
+		 + (if $d == "" then {} else {domain: $d}  end)
+		 + (if $w == "" then {} else {website: $w} end)')
 	code=$(api PUT "/rest/v1/organizations?id=eq.$o_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
 	attendu "$code" "insertion / rattrapage de l'organisation « $o_name »" 201 200 204
 done
