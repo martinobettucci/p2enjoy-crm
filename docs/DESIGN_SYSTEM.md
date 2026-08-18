@@ -25,6 +25,11 @@ Unité de backlog : `CRM-000`. Documents liés : `docs/SPEC-form-composer.md` (r
 Déclinaisons calculées, jamais d'hexadécimal ad hoc dans un composant :
 `--color-brand-soft` (10 %) pour les fonds de pilule et de badge, `--color-brand-hover` `#1B3670`,
 et les équivalents pour succès, danger et accent en fonds à 10–22 %.
+`--color-brand-soft-strong` est ce même fond doux poussé à **22 %**, pour un badge qui doit se
+détacher d'une surface déjà teintée. `--color-white` `#FFFFFF` est le blanc pur, réservé au texte
+posé **sur** un aplat de couleur — il n'est jamais un fond, `--color-surface` l'étant.
+*Ces trois noms ont été ajoutés au document le 2026-08-18 : ils existaient dans les tokens sans
+figurer ici (INC-149).*
 
 `--color-*-on-soft` — le jeton **écrit sur son propre fond doux**, assombri juste assez pour tenir
 le contraste AA du §8 tout en conservant sa teinte. Voir l'écart §12.5 : « texte à la couleur
@@ -66,12 +71,60 @@ un libellé ou une icône.
   `ui-monospace` 13 px, chiffres tabulaires.
 - **Jamais de texte sous 12 px.**
 
+**Tokens de typographie** — ajoutés le 2026-08-18 : le document décrivait ces valeurs en prose sans
+jamais les nommer, si bien qu'un développeur cherchant `--text-h2` ne trouvait rien
+(`docs/INCONSISTENCY_REPORT.md` INC-149).
+
+| Token | Valeur | Emploi |
+|---|---|---|
+| `--font-sans` | `ui-sans-serif, system-ui, sans-serif` | toute l'interface |
+| `--font-mono` | `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` | données techniques |
+| `--text-h1` | 26 px | titre d'écran |
+| `--text-h2` | 20 px | titre de section |
+| `--text-h3` | 16 px | titre de bloc |
+| `--text-xs` | 12 px | **plancher absolu**, jamais en dessous |
+| `--text-base--line-height` | 1,55 | interligne du corps |
+| `--leading-normal` | 1,55 | interligne courant |
+| `--leading-tight` | 1,25 | titres et libellés courts |
+
 ## 3. Espacements et rayons
 
 - Échelle d'espacement : 4, 8, 12, 16, 24, 32, 48 px. Aucune valeur intermédiaire.
 - Rayons : `--radius-sm` 8 px (champs, boutons), `--radius-md` 10 px (pastilles d'icône),
   `--radius-lg` 14 px (cartes, modales), `rounded-full` (badges, pilules, avatars).
 - Ombre de carte : `0 1px 3px rgb(0 0 0 / .06)`, légèrement renforcée au survol.
+
+**Tokens d'espacement, d'ombre et de durée** — ajoutés le 2026-08-18 (INC-149). L'échelle est
+**close** : le thème réinitialise l'espace de noms (`--spacing-*: initial`), si bien qu'aucune autre
+valeur n'existe. Écrire `p-5` ne produit rien.
+
+| Token | Valeur | | Token | Valeur |
+|---|---|---|---|---|
+| `--spacing-0` | 0 px | | `--spacing-4` | 16 px |
+| `--spacing-1` | 4 px | | `--spacing-6` | 24 px |
+| `--spacing-2` | 8 px | | `--spacing-8` | 32 px |
+| `--spacing-3` | 12 px | | `--spacing-12` | 48 px |
+
+| Token | Valeur | Emploi |
+|---|---|---|
+| `--shadow-card` | `0 1px 3px rgb(0 0 0 / 0.06)` | carte au repos |
+| `--shadow-card-hover` | `0 2px 8px rgb(0 0 0 / 0.1)` | carte au survol |
+| `--transition-duration-fast` | 150 ms | survol, focus, bascule |
+| `--transition-duration-slow` | 250 ms | ouverture de panneau ou de modale |
+
+**Tokens de dimension** — les largeurs structurantes des écrans :
+
+| Token | Valeur | Emploi |
+|---|---|---|
+| `--size-target` | 40 px | **cible interactive minimale** (§8) |
+| `--size-sidebar` | 248 px | barre latérale déployée |
+| `--size-sidebar-icons` | 64 px | barre latérale repliée |
+| `--size-inbox-folders` | 264 px | colonne des dossiers de la boîte |
+| `--size-inbox-list` | 360 px | colonne de la liste des messages |
+| `--size-placeholder` | 120 px | réserve d'un contenu absent |
+
+**Tokens de rupture** — les trois seuils responsive (§7) :
+`--breakpoint-md` 768 px, `--breakpoint-lg` 1024 px, `--breakpoint-xl` 1280 px.
 
 ## 4. Architecture des écrans
 

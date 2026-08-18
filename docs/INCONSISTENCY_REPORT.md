@@ -241,6 +241,37 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-149 — Trente et un tokens existaient sans figurer au design system — CORRIGÉ le 2026-08-18
+
+**Nature :** dérive documentaire ; le design system décrivait des valeurs sans jamais les nommer.
+**Relevé le :** 2026-08-18, par audit statique — aucune exécution requise, donc valable malgré la
+panne du poste (INC-145).
+
+**Ce qui est mesuré.** `webapp/src/styles/tokens.css` définit **60** tokens.
+`docs/DESIGN_SYSTEM.md` n'en citait que **29**. Trente et un existaient donc dans le produit sans
+figurer au document que `CLAUDE.md` §4 rend obligatoire — lequel exige nommément que « les tokens »
+y soient décrits.
+
+**La dérive était subtile, et c'est pour cela qu'elle a duré.** Le document décrivait bien les
+*valeurs* — « H1 26 px », « échelle 4, 8, 12, 16, 24, 32, 48 px », « ombre `0 1px 3px` » — mais en
+**prose**, sans jamais donner le nom du token. Un développeur cherchant `--text-h2`, `--spacing-3`
+ou `--size-sidebar` ne trouvait **rien**, et devait relire le CSS. Le document n'était donc pas faux ;
+il était inutilisable pour ce à quoi il sert.
+
+**Corrigé, sans toucher à une seule décision de conception.** Quatre tableaux ajoutés : typographie
+(9 tokens), espacement (8), ombre et durée (4), dimension (6), plus les trois seuils responsive et
+trois couleurs restées anonymes. **Aucune valeur n'a été changée** : le document a été aligné sur le
+CSS, jamais l'inverse.
+
+**Vérification.** Recompté après correction : **58** tokens sur 60 sont désormais nommés
+littéralement. Les deux derniers — `--color-brand-on-soft` et `--color-success-on-soft` — sont
+couverts par la **règle de famille** `--color-*-on-soft`, écrite explicitement au §1 : c'est la
+recherche littérale qui ne la voit pas, non le document qui manque.
+
+**Ce que la dérive apprend.** Une documentation peut être exacte et pourtant manquer à son office.
+Le contrôle utile n'est pas « le document dit-il vrai ? » mais « répond-il à la question qu'on lui
+pose ? ». Ici la question est « que vaut `--spacing-3` ? », et elle restait sans réponse.
+
 ### INC-148 — Quatorze unités n'ont aucun test unitaire dédié, là où `CLAUDE.md` §15 en exige un
 
 **Nature :** exigence générale non tenue, arbitrage dû au responsable.
