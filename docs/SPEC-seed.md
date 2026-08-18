@@ -1382,3 +1382,68 @@ corbeille » — rendent la corbeille visible dans l'inventaire au lieu de la fo
 | 6 | Une dérive est rattrapée : `…025` restauré à la main, seed rejoué | `…025` de nouveau en corbeille, `deleted_by` = `…011` |
 | 7 | L'affaire `…0cf` existe sous `…037`, active, à l'étape `negociation` | `deleted_at` et `archived_at` nuls |
 | 8 | L'énumération du track `…025` avec le jeton de l'administratrice | **1 channel et 1 affaire** — l'enfant en corbeille n'est pas compté |
+
+## 11. Contacts et organisations — `CRM-060` tranche 1
+
+Le carnet de démonstration livré par la première tranche de `CRM-060`, section 8 novies bis de
+`supabase/seed/apply-seed.sh`. Toutes les valeurs ci-dessous sont **le contrat opposable** au
+code : `verify-seed.sh` (à venir) les mesure.
+
+### 11.1 Ce que le seed pose
+
+**Deux organisations** :
+
+| Identifiant | Nom | Domaine |
+|---|---|---|
+| `5eed…0081` | Sogexia | `sogexia.example` |
+| `5eed…0082` | Studio Meunier | *(aucun)* |
+
+Une organisation sans domaine est le cas licite du §2.1 de `docs/SPEC-contacts.md` — l'unicité
+partielle sur `lower(domain)` autorise plusieurs lignes à `NULL`.
+
+**Trois contacts** :
+
+| Identifiant | Nom | Organisation | Email | Téléphone | Rôle |
+|---|---|---|---|---|---|
+| `5eed…0091` | Léo Marchand | Sogexia | `leo.marchand@sogexia.example` | *(aucun)* | Directeur achats |
+| `5eed…0092` | Sophie Dupont | *(aucune)* | `sophie@dupont.test` | *(aucun)* | *(aucun)* |
+| `5eed…0093` | Élise Fabre | Studio Meunier | *(aucun)* | `+33 6 12 34 56 78` | Cheffe d'atelier |
+
+Trois cas licites, choisis pour éprouver la matrice des colonnes facultatives :
+- avec email **et** organisation (Léo) ;
+- avec email, **sans** organisation (Sophie) ;
+- **sans** email, avec organisation et téléphone (Élise).
+
+**Deux rattachements `card_contacts`** :
+
+| Card | Contact | Rôle |
+|---|---|---|
+| `5eed…00c2` (Migration ERP Sogexia, `grands-comptes`) | Léo Marchand | `decideur` |
+| `5eed…00c4` (Refonte intranet Ville de Lyon, `refonte`) | Sophie Dupont | `prescripteur` |
+
+### 11.2 Un contrat mesurable pour la règle 3 du classement
+
+**Léo Marchand est rattaché à EXACTEMENT UNE card active.** C'est l'état précis que la règle 3
+du classement (`CRM-055`, tranche 2 de `CRM-060`, `docs/SPEC-mail-subsystem.md` §16) lira pour
+suggérer une card. Le seed **vérifie** ce compte et **échoue** si un rejeu ou une future tranche
+ajoute une seconde affaire à Léo : sans cette garde, la donnée exigée par la tranche 2 pourrait
+dériver silencieusement.
+
+### 11.3 Convergence
+
+Les insertions passent par un `PUT ... eq.<id>` avec `Prefer: resolution=merge-duplicates`, et
+les rattachements par un `POST /rest/v1/card_contacts` avec la même en-tête sur la clé primaire
+`(card_id, contact_id)`. Le seed est **rejouable sans dédoublonnage** ; deux passages successifs
+laissent `organizations = 2`, `contacts = 3`, `card_contacts = 2`, `leo_cards = 1`, mesuré.
+
+### 11.4 Preuves exigées
+
+| # | Scénario | Attendu |
+|---|---|---|
+| 1 | `select count(*) from public.organizations` | `2` |
+| 2 | `select count(*) from public.contacts` | `3` |
+| 3 | `select count(*) from public.card_contacts` | `2` |
+| 4 | `select count(*) from public.card_contacts where contact_id = '5eed…0091'` | `1` — Léo sur exactement une card active |
+| 5 | Second rejeu du seed | Aucune erreur, mêmes comptes |
+| 6 | Un contact sans email et un contact avec email cohabitent dans le même workspace | Conforme, unicité partielle |
+| 7 | Une organisation sans domaine et une avec cohabitent dans le même workspace | Conforme, unicité partielle |
