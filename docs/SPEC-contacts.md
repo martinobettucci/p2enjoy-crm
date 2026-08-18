@@ -856,7 +856,10 @@ et pour Studio Meunier (`…082`), l'organisation sans domaine :
   étrangère restant unique. Une seconde requête serait ici un coût gratuit.
 - **L'ordre des contacts embarqués est demandé au serveur** — `contacts.order=full_name` —, jamais
   posé après coup : c'est la règle du §10.3, et elle vaut pour une relation embarquée comme pour
-  une table.
+  une table. **Il ne se demande PAS de la même façon, et c'est MESURÉ** : la forme
+  `order=contacts(full_name)`, que produirait un tri écrit comme celui du carnet, est refusée par
+  `PGRST108` — « 'contacts' is not an embedded resource in this request ». Le tri d'une relation
+  embarquée passe par `referencedTable`, qui construit le `contacts.order=full_name` ci-dessus.
 - **`source` n'est pas davantage demandée qu'au §10.3**, et pour la même raison.
 - **`website` EST demandé, alors que le carnet ne le demandait pas** : c'est précisément la fiche
   qui caractérise l'organisation, et le §10.3 avait déjà annoncé que `domain` était demandé « pour

@@ -1,10 +1,13 @@
-// @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a :
-//       ce que le carnet de contacts lit
-// @spec docs/SPEC-contacts.md §10.3 (la lecture, mesurée), §10.4 (l'écran ne calcule aucun droit),
-//       §10.7 (limites nommées : aucune pagination, aucun filtre)
+// @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b :
+//       ce que le carnet de contacts lit, et ce que la fiche d'organisation lit
+// @spec docs/SPEC-contacts.md §10.3 (la lecture du carnet, mesurée), §10.4 (l'écran ne calcule
+//       aucun droit), §10.7 (limites nommées : aucune pagination, aucun filtre)
+// @spec docs/SPEC-contacts.md §11.3 (la lecture de la fiche, mesurée), §11.4 (trois absences
+//       rendent le même écran, et la forme de l'identifiant est contrôlée d'abord),
+//       §11.8 (limites nommées de la fiche)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, jamais une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
-// @spec docs/DESIGN_SYSTEM.md §5.19 (le carnet)
+// @spec docs/DESIGN_SYSTEM.md §5.19 (le carnet), §5.20 (la fiche d'organisation)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit `contacts` sous la RLS posée par la tranche 1
 // (migration 0045, docs/SPEC-contacts.md §3) : la lecture est ouverte à tout membre du workspace,
@@ -109,6 +112,124 @@ export async function lireContactsDuCarnet(
 				organisation: organizations,
 			})),
 		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4b — LA FICHE D'ORGANISATION (docs/SPEC-contacts.md §11)
+// ----------------------------------------------------------------------------------------------
+
+/**
+ * Un contact tel que la fiche d'organisation l'affiche.
+ *
+ * `organization_id` n'y figure PAS, contrairement à `ContactDuCarnet` : sur cette surface, tous
+ * les contacts appartiennent à l'organisation de la page — le répéter ligne à ligne ne dirait
+ * rien (§11.5, le tableau a quatre colonnes et non cinq).
+ */
+export type ContactDeLOrganisation = Pick<
+	Database['public']['Tables']['contacts']['Row'],
+	'id' | 'full_name' | 'email' | 'phone' | 'role_title'
+>
+
+/**
+ * Une organisation telle que sa fiche la rend : ce qui la caractérise, et ses contacts.
+ *
+ * `website` EST demandé, là où le carnet ne le demandait pas : c'est précisément la fiche qui
+ * caractérise l'organisation (§11.3).
+ */
+export type FicheOrganisationLue = Pick<
+	Database['public']['Tables']['organizations']['Row'],
+	'id' | 'name' | 'domain' | 'website'
+> & {
+	readonly contacts: readonly ContactDeLOrganisation[]
+}
+
+/**
+ * Colonnes réellement demandées par la fiche. Exportée pour que le test unitaire vérifie la
+ * requête émise.
+ *
+ * **UNE seule requête, et l'embarquement est mesuré comme possible dans ce sens aussi** (§11.3).
+ * Le §10.3 avait établi que `contacts → organizations` ne rend aucune ambiguïté `PGRST201` ; la
+ * mesure du 2026-08-18 établit la même chose dans le sens inverse, la clé étrangère restant
+ * unique. Une seconde requête serait ici un coût gratuit.
+ */
+export const COLONNES_FICHE_ORGANISATION =
+	'id, name, domain, website, contacts(id, full_name, email, phone, role_title)'
+
+/**
+ * Tri des contacts EMBARQUÉS, demandé au serveur et non posé après coup (§11.3) — la règle du
+ * §10.3 vaut pour une relation embarquée comme pour une table.
+ *
+ * **Le tri d'une relation embarquée ne se demande PAS comme celui d'une table, et c'est MESURÉ.**
+ * `order('contacts(full_name)')` construit `order=contacts(full_name)`, que PostgREST refuse par
+ * `PGRST108` : « 'contacts' is not an embedded resource in this request ». La forme correcte passe
+ * par `referencedTable`, qui construit le `contacts.order=full_name` relevé au §11.3. Les deux
+ * constantes sont donc exportées séparément, et le test unitaire vérifie le couple réellement
+ * transmis plutôt qu'une chaîne recomposée.
+ */
+export const TRI_CONTACTS_FICHE = 'full_name'
+export const TABLE_TRI_CONTACTS_FICHE = 'contacts'
+
+/**
+ * Forme d'un identifiant d'organisation, telle que PostgreSQL l'exige.
+ *
+ * MESURÉ le 2026-08-18 : un `id` qui n'est pas un uuid rend `400` et `22P02`,
+ * `invalid input syntax for type uuid`. Classé par `classerErreur`, ce `400` tomberait sur l'état
+ * d'ERREUR, dont l'action de reprise relancerait la même requête pour recevoir le même `400` —
+ * **une commande morte** (docs/DESIGN_SYSTEM.md §5.10), sur une surface dont l'adresse est
+ * directement éditable par l'utilisateur.
+ *
+ * Le contrôle porte sur la FORME seule (§11.4) : il ne prétend pas savoir si l'organisation
+ * existe, ce que seul le backend peut dire.
+ */
+const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Vrai lorsque la chaîne a la forme d'un uuid. Exportée pour être éprouvée directement. */
+export function estFormeUuid(valeur: string | undefined): valeur is string {
+	return valeur !== undefined && FORME_UUID.test(valeur)
+}
+
+/** Forme brute rendue par PostgREST pour la fiche : `contacts` peut manquer, jamais être `null`. */
+type LigneFicheBrute = Omit<FicheOrganisationLue, 'contacts'> & {
+	readonly contacts?: readonly ContactDeLOrganisation[] | null
+}
+
+/**
+ * L'organisation désignée par `idOrganisation`, avec ses contacts — ou `null` lorsqu'elle n'est
+ * pas lisible.
+ *
+ * **`null` recouvre TROIS situations, et c'est délibéré** (§11.4) : l'organisation n'existe pas,
+ * l'appelant n'a pas le droit de la lire, ou l'identifiant n'a pas la forme d'un uuid. MESURÉ :
+ * les deux premières rendent toutes deux `200` et `[]` — les distinguer renseignerait un appelant
+ * sans droit sur l'EXISTENCE d'une organisation (docs/SPEC-permissions-rls.md §7).
+ *
+ * Un identifiant mal formé **n'émet aucune requête** : la forme est contrôlée d'abord.
+ *
+ * Ne lève jamais : tout échec est rendu comme un état d'erreur classé sur le code HTTP réellement
+ * reçu, jamais sur le texte du message.
+ */
+export async function lireFicheOrganisation(
+	client: ClientCrm,
+	idOrganisation: string | undefined,
+): Promise<EtatAsync<FicheOrganisationLue | null>> {
+	if (!estFormeUuid(idOrganisation)) return pret(null)
+	try {
+		const reponse = await client
+			.from('organizations')
+			.select(COLONNES_FICHE_ORGANISATION)
+			.eq('id', idOrganisation)
+			.order(TRI_CONTACTS_FICHE, { referencedTable: TABLE_TRI_CONTACTS_FICHE })
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneFicheBrute[]
+		const premiere = lignes[0]
+		if (premiere === undefined) return pret(null)
+		// `contacts` absente et `contacts` nulle valent toutes deux « aucun contact » : une
+		// organisation sans contact est un état LÉGITIME (§11.9, cas d), pas une anomalie.
+		return pret({ ...premiere, contacts: premiere.contacts ?? [] })
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
