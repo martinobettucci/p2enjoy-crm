@@ -281,6 +281,16 @@ greffon `docker-buildx` — celui qui segfaute. Aucun repli n'est possible, le c
 ne connaissant pas les secrets de build. **Ces trois contrôles restent ROUGES et ne sont pas
 convertis en non-exécutés** : les convertir reproduirait exactement le défaut décrit ici.
 
+**Le défaut est LOCALISÉ, et c'est mesuré et non supposé.** Les cinquante et un harnais ont été
+passés au crible le 2026-08-18 : `verify-scripts.sh` est le **seul** à porter un mécanisme de saut
+(`skip`) et la **seule** sonde `docker info` du dépôt. Deux autres occurrences d'un `|| true` suivi
+d'un `ok` ont été inspectées une à une et sont légitimes — dans `verify-move-card-to-channel.sh`
+il porte sur la RESTAURATION à l'intérieur de la branche d'échec, la condition mesurée étant le
+véritable `UPDATE` ; dans `verify-harness.sh` une suite est lancée exprès sans regarder son verdict,
+pour mesurer ensuite l'ABSENCE d'un effet de bord. `verify-mail-sync.sh`, seul à ne pas employer la
+formule « aucune anomalie », rend bien un verdict chiffré. **Aucun autre harnais ne dissimule de
+contrôle.** Un négatif mesuré vaut d'être écrit : il dit jusqu'où porte la correction.
+
 **Aggravation constatée le même jour.** En cours de session, `docker compose` s'est mis à segfauter
 à son tour, le montage `/mnt/wsl/docker-desktop/cli-tools/.../cli-plugins` s'est vidé, la socket a
 cessé de répondre au `_ping`, et Kong comme la webapp sont devenus injoignables : **Docker Desktop
