@@ -17964,3 +17964,35 @@ partagées ne répond encore.
 valables — elles ont été faites sur une pile qui répondait, et leurs sorties sont citées. Aucune
 mesure **postérieure** ne peut être produite tant que le poste n'est pas rétabli, et aucune unité ne
 sera passée à `[x]` sur la foi d'une exécution impossible.
+
+
+## décision 435 — Un compteur dérivé doit se déclarer dérivé
+
+**Problème.** Le commit de `CRM-042` ajoutait deux scénarios d'interface sans toucher
+`SCENARIOS_UI` dans `scripts/verify-harness.sh`. `CLAUDE.md` exige le compteur dans le MÊME
+changement que le code ; je l'ai manqué, et c'est une relecture de la traçabilité qui l'a trouvé —
+pas le harnais, qui ne peut plus tourner.
+
+**La difficulté.** La valeur juste est connue par déduction — le fichier est passé de 28 à 30
+scénarios, mesuré par une exécution ciblée la veille — mais le total global ne peut pas être
+remesuré : le poste Docker est tombé (INC-145).
+
+**Décision.** Porter le compteur à 368 ET écrire dans le fichier que **cette valeur est dérivée et
+non observée**, en demandant au prochain balayage complet de la confirmer ou de la corriger. Laisser
+366 aurait rendu le harnais faussement rouge au retour du poste ; poser 368 en silence aurait fait
+passer une déduction pour une mesure. La troisième voie est de poser la déduction en la nommant.
+
+**Ce que j'en retiens.** Un compteur dérivé qui se croirait mesuré est exactement ce que ce harnais
+existe pour attraper. Quand la mesure est impossible, ce n'est pas le chiffre qu'il faut cacher,
+c'est son statut qu'il faut écrire.
+
+## décision 436 — La traçabilité est complète, et c'est une mesure, pas une impression
+
+**Fait.** Audit des 401 fichiers de code versionnés — TypeScript, TSX, SQL, Python, shell, hors
+`node_modules`, `dist` et déclarations `.d.ts`. **Aucun** ne manque son commentaire `@spec` ou
+`@verifies` dans son en-tête. L'exigence de `CLAUDE.md` §5 est donc tenue sur l'intégralité du
+dépôt, et non seulement sur les fichiers récents.
+
+**Pourquoi l'écrire.** Un négatif mesuré vaut d'être consigné : sans lui, la prochaine relecture
+recommencera l'audit sans savoir qu'il a déjà été fait, et une exigence tenue passera pour une
+exigence non vérifiée.
