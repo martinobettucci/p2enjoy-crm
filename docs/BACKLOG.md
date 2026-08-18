@@ -7281,11 +7281,12 @@ de contact.
       preuve rattache donc Élise Fabre puis la **détache par le geste de l'écran** — le détachement
       n'est pas une commodité de test, c'est le second geste livré —, avec un filet de sécurité en
       `afterAll`.
-- [~] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur de scénarios
+- [x] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur de scénarios
       d'interface porté de 390 à **398**, valeur mesurée par `playwright test --list`
       (« Total: 398 tests in 31 files ») **et** par l'exécution de la suite complète, 398 verts.
-      Le harnais lui-même a été lancé en fin de session et **son verdict n'est pas connu** : il
-      reste à rejouer, et c'est la seule preuve manquante de cette sous-tranche.
+      Le harnais lui-même rend **31 contrôles, aucune anomalie** : il constate le compteur, rejoue
+      `e2e:api` (704), `e2e:ui` (398, aucun avertissement), `e2e:mail` (42), `test:unit`,
+      `typecheck` et ses six dégradations de non-complaisance.
 - [x] `scripts/verify-webapp.sh` : **42 contrôles, 1 anomalie**, contre 2 à la session précédente.
       La seule restante est **INC-158**, antérieure et étrangère — `h-10`, `py-0.5`, `text-text-1`,
       portées par trois fichiers qu'aucun diff de cette session ne touche. Vérifié en rejouant

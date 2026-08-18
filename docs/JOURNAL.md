@@ -18969,15 +18969,25 @@ du CSS produit, portées par `Sommeil.tsx`, `EnTeteCard.tsx` et `AdministrationW
 diff de cette session ne touche. Vérifié en rejouant `scripts/lib/classes-css.mjs` seul : **240
 classes citées** — quatre de plus, celles du bloc neuf —, et **aucune des miennes** ne manque.
 
+`scripts/verify-harness.sh` rend **31 contrôles, AUCUNE anomalie** — contre 2 à la session
+précédente. Il constate lui-même le compteur d'interface à **398**, rejoue `e2e:api` (704),
+`e2e:ui` (**398 verts, aucun avertissement**), `e2e:mail` (**42 verts** : IMAP, SMTP, ClamAV et
+Roundcube réels), `test:unit`, `typecheck`, et ses six dégradations de non-complaisance. C'est
+**e2e:mail exécuté**, par le harnais qui l'appelle.
+
 **Preuves NON exécutées, et nommées comme telles** : `pytest` — l'hôte n'a pas le module installé, et
-aucun code `mail-sync` n'est touché par cette sous-tranche —, `e2e:mail`, et **quarante-huit des
-cinquante `scripts/verify-*.sh`**. `scripts/verify-harness.sh` a été lancé en fin de session et son
-verdict n'est **pas** connu à l'heure de ce compte rendu : il est à rejouer, et c'est lui qui doit
-constater le compteur 398 que cette session y a écrit.
+aucun code `mail-sync` n'est touché par cette sous-tranche — et **quarante-huit des cinquante
+`scripts/verify-*.sh`** ; les deux lancés sont ceux que cette livraison touche.
+
+**Les captures réécrites par les DEUX campagnes finales sont restaurées, et le motif est mesuré.**
+La seconde série (celle du harnais) montrait un écart de 20 % en taille : en la **regardant**, la
+différence est entièrement dans la colonne DROITE — le fil unifié a accumulé les « Étape franchie »
+que les campagnes successives ont réellement écrites. C'est de la **résidu de campagne**, pas un
+changement de produit : le bloc livré y est identique. Les captures committées, prises sur un fil
+propre, restent la meilleure trace de l'application exécutée.
 
 **Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4d** — les deux sélecteurs du §9.1
 (`contact` et `user`) dans le formulaire d'une affaire, et l'enrichissement du seed différé par le
 §9.6, avec la révision des dix comptes qu'il déplace. C'est la **dernière** sous-tranche de la
-tranche 4, et donc ce qui reste pour clore `CRM-060`. Avant elle, une vérification courte héritée de
-cette session : rejouer `scripts/verify-harness.sh` jusqu'à son verdict, qui doit constater le
-compteur 398 que cette session y a écrit.
+tranche 4, et donc ce qui reste pour clore `CRM-060`. Rien n'est en suspens de cette session : les deux harnais
+qu'elle touche ont rendu leur verdict, et la seule anomalie restante est INC-158, antérieure.
