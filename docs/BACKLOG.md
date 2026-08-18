@@ -3039,31 +3039,52 @@ refusé) ; refus constaté aussi lors d'un déplacement de channel.
       §2.5, §8 et §10, `docs/SCHEMA.md` §2, `docs/SPEC-seed.md`, `docs/DAT.md`,
       `docs/PROD_MIGRATIONS.md` §3 (migration 8 et **sa vérification obligatoire**), `docs/manual.md`
       chapitre 22 et §3.2, `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Affecter un workflow à un channel
-      suppose un écran d'administration authentifié, et la webapp reste un appelant **anonyme** faute
-      d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
-      2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
-      son écran de connexion, employé par les suites d'interface. **Le motif invoqué ici est donc
-      caduc** : cette preuve n'est plus bloquée par un arbitrage, elle est simplement DUE. Elle
-      n'a pas pu être produite le 2026-08-18, le poste Docker étant tombé (INC-145), et elle
-      reste au premier rang des travaux de cette unité.*
-      La règle est livrée et prouvée **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute
-      façon. **L'écran qui affecte un workflow à un channel EXISTE depuis `CRM-075`** — il est
-      exercé par `e2e/ui/administration-arborescence.spec.ts`, qui choisit le workflow dans un
-      `select` lors de la création d'un channel. Ce qui manque est une preuve que le workflow d'un
-      track ÉTRANGER n'y est pas proposé, et que le refus tient hors de l'écran.
+- [x] **~~Aucun écran, aucune capture, aucun test E2E d'interface.~~ LES DEUX PREUVES D'INTERFACE
+      SONT LIVRÉES ET VERTES, le 2026-08-18.** L'historique de cette ligne mérite d'être conservé :
+      elle a d'abord invoqué INC-021 (« la webapp reste un appelant anonyme »), motif **caduc**
+      depuis le 2026-08-07 puisque `CRM-009` a livré l'écran de connexion ; le constat en a été
+      fait le 2026-08-18 sans que la preuve puisse être produite, le poste Docker étant tombé
+      (INC-145). Elle l'est désormais, sur une pile debout et seedée.
+      Contrat écrit AVANT le code, `docs/SPEC-workflow-engine.md` §4.12.9, et livré par
+      `e2e/ui/coherence-workflow.spec.ts` — **2 scénarios** :
+      **(1) le sélecteur du §7.2 comparé par ÉGALITÉ**, et non par absence : sous « Conseil & IA »
+      il rend exactement `Choisir un workflow…`, `Cycle commercial standard (par défaut)`,
+      `Cycle commercial — Conseil IA` ; sous « Studio web » exactement les deux premiers. Une
+      assertion d'absence seule aurait été tenue par un sélecteur vide ou cassé.
+      **(2) le refus tient hors de l'écran**, la course du §7.2 étant reproduite **sans rien
+      simuler** : un workflow de portée `track` sans channel est déplacé vers un autre track
+      pendant que le formulaire est ouvert — écriture que le §4.12.4 autorise et qui rend `204` —,
+      puis l'envoi est refusé par le trigger. L'écran porte « Ce workflow n'est pas affectable à ce
+      track. », la base ne porte **aucune** ligne sous le slug de la preuve, et le `400` de
+      PostgREST est la **seule** erreur console, consommée nommément.
+      **NON COMPLAISANTES, ÉPROUVÉES PAR DEUX DÉGRADATIONS RÉELLES** : le filtre de
+      `filtreWorkflowsAffectables` relâché à `scope.eq.global,scope.eq.track` fait rougir **les
+      deux** scénarios ; le trigger `channels_verifier_workflow` désactivé fait rougir le **second
+      seul** — et c'est le résultat juste, le trigger n'ayant rien à voir avec ce que le sélecteur
+      propose. Les deux restaurations sont **constatées**, et la base relue : 8 channels, 5 tracks,
+      aucun résidu `e2e-%`.
+      **Trois captures produites ET OBSERVÉES** (`CLAUDE.md` §16), sous `docs/captures/CRM-033/` :
+      `selecteur-workflow-track-porteur.jpg`, `selecteur-workflow-track-voisin.jpg`,
+      `refus-workflow-hors-track.jpg`. Les deux premières sont prises **après le choix** du
+      workflow : un `<select>` natif rend sa liste par le système, hors de la fenêtre, et une
+      capture prise sur l'option vide ne montrerait rien de ce que le scénario mesure.
+      `scripts/verify-coherence-workflow.sh` porte un contrôle **8 bis** qui rejoue ces deux
+      scénarios seuls et constate les trois captures ; `SCENARIOS_UI` passe de 368 à **370**.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur les trois cas » et
 « refus constaté aussi lors d'un déplacement de channel » : les deux sont livrés, et **deux refus de
 plus** que ce qu'elle demandait, la mesure ayant montré que la règle était contournable par
-`workflows`. Elle ne demandait aucune preuve d'interface, et il n'y en a aucune — non par
-renoncement, mais parce que cette unité ne livre ni écran ni parcours. **Aucune vérification
-visuelle** pour la même raison ; les captures réécrites par le rejeu des suites d'interface ont été
-**regardées puis restaurées**, comme aux trois unités précédentes.
+`workflows`. Elle ne demandait **aucune** preuve d'interface. ~~Et il n'y en a aucune — non par
+renoncement, mais parce que cette unité ne livre ni écran ni parcours.~~ **RÉVISÉ le 2026-08-18 :
+il y en a deux, et elles vont AU-DELÀ de ce que la Definition of Done demandait** (§4.12.9). Elles
+sont dues non parce que l'unité livrerait un écran — elle n'en livre toujours aucun —, mais parce
+que l'écran d'une AUTRE unité, `CRM-075`, expose cette règle à l'utilisateur : un sélecteur qui
+proposerait un workflow que le trigger refuse serait un défaut de cette règle-ci, et personne ne le
+mesurait. **Vérification visuelle faite**, trois captures observées.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Septième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
+- **Aucun écran.** Septième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143. **Cette unité ne livre toujours aucun écran** : c'est celui de `CRM-075` qui expose la règle, et le §4.12.9 le prouve depuis le 2026-08-18.)*
 - **Les triggers ne valident pas les lignes existantes.** Un trigger ne s'applique qu'aux écritures
   futures : une base qui porterait déjà un rattachement incohérent le conserverait sans être
   signalée. La requête de détection est écrite dans `docs/PROD_MIGRATIONS.md`, en vérification
