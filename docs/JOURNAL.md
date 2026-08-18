@@ -18991,3 +18991,73 @@ propre, restent la meilleure trace de l'application exécutée.
 §9.6, avec la révision des dix comptes qu'il déplace. C'est la **dernière** sous-tranche de la
 tranche 4, et donc ce qui reste pour clore `CRM-060`. Rien n'est en suspens de cette session : les deux harnais
 qu'elle touche ont rendu leur verdict, et la seule anomalie restante est INC-158, antérieure.
+
+## décision 451 — `CRM-060` sous-tranche 4d : les deux sélecteurs du formulaire, et le seed qui les démontre
+
+**L'unité, et le choix.** Le journal (décision 450) laissait `CRM-060` en `[~]` avec la **4d** pour
+reste dû : « les deux sélecteurs du §9.1 et l'enrichissement du seed différé par le §9.6 ». J'ai
+suivi `docs/CloudWorker.md` §4.2 point 1. C'est la **dernière** des quatre surfaces du §10.1.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §13, après
+mesures relevées à la main sur la pile seedée avec les jetons réels. Une mesure a **décidé** du
+contrat plutôt que de le confirmer : un contact sonde créé, désigné par une valeur de champ, puis
+**supprimé** — la valeur **demeure** (§9.4 le disait, c'est vérifié). Un `select` sans option pour
+elle afficherait sa **première** option comme si elle avait été choisie : une donnée enregistrée
+remplacée à l'écran par une autre, exactement la « valeur par défaut trompeuse » que `CLAUDE.md`
+§18 interdit. D'où le cas j : la valeur garde son option, retenue, sous la mention « Référence
+inconnue », et **aucune écriture n'est émise**.
+
+**Ce que j'ai livré.** `FormulaireCard.tsx` : un champ de type `contact` ou `user` rend un sélecteur
+de **noms** au lieu d'un champ texte où l'on tapait un `uuid` que le produit ne montre nulle part —
+et que la base refuse depuis la migration `0047`. Cinq états, dont deux qui n'existaient nulle part
+ailleurs : la liste **illisible** avec son action de reprise, et la référence inconnue ci-dessus. La
+section repliée **résout** ces deux types en toutes lettres, et rend l'identifiant brut en donnée
+technique quand elle ne le peut pas. `modelePorteType` (`formulaire.ts`) évite **deux requêtes
+gratuites** sur l'écran le plus ouvert du produit : chaque liste n'est lue que si le modèle porte un
+champ de son type. **Aucune requête nouvelle n'est inventée** — `lireContactsDuCarnet` et
+`lireMembresAffectables` existaient —, et la composition « nom — organisation » est **extraite** de
+`BlocContactsCard` pour être partagée.
+
+**L'ordre du seed était faux, et c'est la mesure qui l'a dit.** Les deux valeurs seedées échouaient
+en `400` / `invalid_field_value` : la section des valeurs vient **avant** celle des contacts, et le
+validateur résout ces deux types. La section des contacts est donc remontée avant elle — elle ne
+dépend que des cards. Second effet, nommé au backlog : l'enrichissement **ne converge pas** sur une
+base déjà seedée, la garde de la décision 300 refusant de reconstruire une copie de workflow dont la
+source a divergé. `./resetMe.sh` est nécessaire, ce que le message d'arrêt indique déjà.
+
+**LA CAMPAGNE A TROUVÉ QUATRE COMPTEURS QUE LA SPÉCIFICATION N'AVAIT PAS PRÉVUS.** Le §13.6 en
+annonçait onze ; il y en avait **quinze**. Les quatre manquants : les deux compteurs de l'éditeur de
+workflows (la liste des champs pendant une preuve, et la grille champ × étape — 6 × 7 devenue
+8 × 7), le compte de réponses de « Migration ERP Sogexia » (2 → 4), et surtout l'**empreinte de
+composition** du workflow, figée par assertion et par `docs/SPEC-workflow-engine.md`. Cette dernière
+mérite son motif : ce que cette assertion garde est qu'un **refactor de l'extraction** ne déplace
+pas l'empreinte, non qu'une **composition** ne bouge jamais. Ici c'est la composition qui a changé,
+et une empreinte inchangée aurait été le vrai défaut. Les deux valeurs — source et copie — ont été
+**remesurées** sur la pile, jamais recopiées d'une sortie de test.
+
+**Campagne de fin de session, sur seed frais.** `typecheck` et `build` **verts** ; `test:unit`
+**1589 verts, 50 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** (après
+correction de trois assertions) ; `e2e:api` **704 verts** (après correction de deux comptes de
+valeurs) ; `e2e:ui` **404 verts, AUCUN échec** — la suite entière, rejouée après correction des deux comptes de l'éditeur, et le compteur du harnais porté à cette valeur ; la suite neuve `e2e/ui/formulaire-selecteurs.spec.ts` **6/6**, verte
+dès sa première exécution.
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` — aucun code `mail-sync` touché —,
+`e2e:mail`, et quarante-huit des cinquante `scripts/verify-*.sh`.
+
+**Les captures ont été triées, et le tri est motivé.** Celles des écrans que les deux champs
+modifient réellement sont **conservées** : la fiche d'une affaire porte deux contrôles de plus,
+l'éditeur de workflows deux lignes, et le fil deux événements. Celles des écrans que rien ne touche
+sont **restaurées** — index des réglages, email d'invitation, board d'un channel, catalogue, vue
+liste, vues d'inbox sans fiche —, leur réécriture n'étant que compression (INC-036). Vérifié **en
+regardant** trois d'entre elles, dont `CRM-022/identites-fiche-1440.jpg`, qui porte bien les deux
+nouveaux contrôles, et `CRM-007/route-reglages-1440.jpg`, qui n'a pas changé.
+
+**INC-159 consignée** : « six types distincts » était annoncé pour sept champs qui en couvraient
+sept, dans le seed et dans `docs/SPEC-seed.md`. Écart de commentaire seul, antérieur, qu'aucune
+assertion ne portait — corrigé plutôt que reconduit faux dans un paragraphe que cette sous-tranche
+réécrit de toute façon.
+
+**Où reprendre.** La **tranche 4 est complète** ; `CRM-060` reste `[~]`, et ce qui lui manque est
+nommé au §13.8 et au §6 : la **création** d'un contact, la **fiche** d'un contact, et l'arbitrage
+sur les **références mortes** — une valeur qui désigne un contact supprimé reste en base, et aucune
+surface ne la nettoie. La prochaine exécution peut aussi prendre la première unité `[ ]` du plan.
