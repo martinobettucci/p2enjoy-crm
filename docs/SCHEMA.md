@@ -737,6 +737,8 @@ Message canonique, dédoublonné.
 | `card_id` | `uuid` | FK `cards`, nul tant que non classé |
 | `classification` | `text` | `CHECK (classification IN ('auto','manual','unclassified'))` |
 | `classified_by` | `uuid` | FK `profiles`, nul si automatique |
+| `suggested_card_id` | `uuid` | FK `cards` `on delete set null`, nul par défaut — **suggestion** de la règle 3 du classement (`CRM-060` tranche 2) : card d'un contact expéditeur rattaché à **exactement une** card active. INDICE de tri, jamais un rattachement ; le message reste non classé |
+| `suggested_at` | `timestamptz` | horodate le calcul de la suggestion, nul si aucune |
 | `filed_at` | `timestamptz` | quand le message a été COPIÉ dans le dossier de sa card — `CRM-059` §20.5, nul si non rangé ou rangement manqué |
 | `snoozed_until` | `timestamptz` | mise en sommeil : non nulle ET future ⇒ la card dort. **Fermée en écriture à `authenticated` depuis `CRM-081`** — elle s'écrit par `snooze_card` et `wake_card` |
 | `search_tsv` | `tsvector` | index GIN |

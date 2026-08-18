@@ -1080,20 +1080,24 @@ traversée de répertoire qui attend son heure, et l'empreinte suffit à disting
 
 ## 16. Classement assisté — `CRM-055`
 
-### 16.1 Ce que l'unité livre, et la règle qu'elle DÉSACTIVE
+### 16.1 Ce que l'unité livre — et la règle 3, désactivée puis ACTIVÉE
 
-Livré : les règles **1**, **2** et **4** du §4.4, le classement manuel `classify_message`, sa
-journalisation, et l'événement de timeline `mail_received`.
+Livré par `CRM-055` : les règles **1**, **2** et **4** du §4.4, le classement manuel
+`classify_message`, sa journalisation, et l'événement de timeline `mail_received`.
 
-**LA RÈGLE 3 EST DÉSACTIVÉE, ET C'EST LA DEFINITION OF DONE QUI LE PRÉVOIT** : « si `CRM-060` n'est
-pas livré, règle 3 désactivée et documentée comme telle ». Elle suppose des **contacts** — « une
-adresse rattachée à exactement une card active » —, et aucune table de contacts n'existe. La
-désactivation n'est pas un raccourci : la règle 3 ne classe pas, elle **suggère**, et une
-suggestion fondée sur rien serait pire qu'aucune suggestion. Son absence est **figée par une
-assertion**, non commentée.
+**LA RÈGLE 3 A ÉTÉ DÉSACTIVÉE JUSQU'À `CRM-060`, PUIS ACTIVÉE PAR SA TRANCHE 2** (migration `0046`,
+`docs/SPEC-contacts.md` §8). Tant qu'aucune table de contacts n'existait, la Definition of Done de
+`CRM-055` prévoyait « règle 3 désactivée et documentée comme telle », et son absence était **figée
+par une assertion**. `CRM-060` tranche 1 a livré `contacts` et `card_contacts`, tranche 2 a écrit la
+règle : elle **suggère** — expéditeur contact rattaché à **exactement une** card active — sans
+classer. La suggestion se persiste dans `mail_messages.suggested_card_id` ; le message reste non
+classé (`classification = 'unclassified'`, `card_id` nul, aucun `card_event`). Zéro card active
+n'invente rien, deux ou plus se taisent, une card archivée ne compte pas, la casse de l'email est
+ignorée, le workspace borne l'appariement (`docs/SPEC-contacts.md` §8.2, §8.5).
 
-**Non livré** : l'inbox globale (`CRM-057`) et les dossiers IMAP (`CRM-056`). Le classement écrit
-donc dans la base ; aucun écran ne le montre.
+**Reste non livré** : l'écran qui MONTRE la suggestion (l'inbox globale, `CRM-057`). La règle vit en
+base et se prouve en base (pgTAP `0044`, API `classement.spec.ts`, harnais
+`verify-mail-classement.sh`) ; la preuve visible attend l'écran.
 
 ### 16.2 La chaîne, et pourquoi elle s'arrête à la première règle satisfaite
 
@@ -1101,7 +1105,7 @@ donc dans la base ; aucun écran ne le montre.
 |---|---|---|---|
 | 1 | Une adresse de card figure dans `To`, `Cc` ou `Delivered-To` | `classification = 'auto'` | oui |
 | 2 | `In-Reply-To` ou `References` désigne un message déjà classé | même card que le parent | oui |
-| 3 | L'expéditeur est un contact rattaché à exactement une card active | suggestion, **ne classe pas** | **non — `CRM-060`** |
+| 3 | L'expéditeur est un contact rattaché à exactement une card active | suggestion (`suggested_card_id`), **ne classe pas** | oui — `CRM-060` tranche 2, migration `0046` |
 | 4 | Aucune règle ne s'applique | « non classé » | oui |
 
 L'arrêt à la première règle satisfaite n'est pas une optimisation : c'est ce qui rend le classement

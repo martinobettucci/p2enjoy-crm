@@ -6519,14 +6519,14 @@ désactivée et documentée comme telle.
       témoin et trois dégradations comprises.
 - [x] **Compteurs révisés** : 26 → **27** fichiers SQL, 1823 → **1843** assertions,
       466 → **469** scénarios d'API, 34 → **35** scénarios `mail`.
-- [ ] **LA RÈGLE 3 N'EST PAS LIVRÉE**, et la Definition of Done le prévoit : elle suppose des
-      contacts (`CRM-060`). Son absence était **figée par une assertion**.
-      **DÉBLOQUÉ le 2026-08-18 par `CRM-060` tranche 1 (décision 445) :** les tables `contacts`
-      et `card_contacts` existent, avec un contact du seed (Léo Marchand) rattaché à
-      **exactement une** card active — l'état précis que la règle lira. L'assertion figée par
-      cette unité a été **retournée, non retirée** dans le même changement que la migration
-      (`supabase/tests/0027_classement_messages.test.sql`, assertion 4). L'activation de la
-      règle dans le code de classement reste due : c'est la **tranche 2 de `CRM-060`**.
+- [x] **LA RÈGLE 3 EST LIVRÉE**, et la Definition of Done le prévoyait conditionnellement : elle
+      supposait des contacts (`CRM-060`). Son absence était **figée par une assertion**, retournée
+      par `CRM-060` tranche 1 (décision 445), puis la règle **écrite par `CRM-060` tranche 2**
+      (migration `0046`, `docs/SPEC-contacts.md` §8) : un expéditeur contact rattaché à
+      **exactement une** card active reçoit sa card en **suggestion** (`suggested_card_id`), sans
+      être classé. Prouvée en base — pgTAP `0044` (21), API `classement.spec.ts` (5),
+      `verify-mail-classement.sh` (25, la garde de désactivation révisée en preuve de la règle
+      active). La **preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`).
 - [ ] **Aucun écran** (`CRM-057`), et **aucun déclassement** : rien dans le §4.4 ne le décrit, et
       l'inventer obligerait à décider ce que devient l'événement déjà écrit — une question qui
       appartient à l'unité livrant l'écran.
@@ -7062,11 +7062,38 @@ production. Corrigé par `on delete set null (organization_id)` — syntaxe expl
 depuis PG15, mesurée sur ce PG17. Sans la suite pgTAP, la propriété d'ownership annoncée au §3
 de la spécification aurait été fausse.
 
-**Tranches 2, 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées :
+**Deuxième tranche livrée, 2026-08-18 — la règle 3 du classement** (`docs/SPEC-contacts.md` §8,
+migration `0046`) :
 
-- [ ] Tranche 2 — Activation de la règle 3 du classement de messages (`CRM-055`,
-      `docs/SPEC-mail-subsystem.md` §16). La donnée de démonstration existe (Léo Marchand sur
-      exactement une card active) ; il reste à activer la règle dans le code de classement.
+- [x] `supabase/migrations/0046_regle3_suggestion_classement.sql` : deux colonnes facultatives
+      sur `mail_messages` — `suggested_card_id` (FK `cards` `ON DELETE SET NULL`) et
+      `suggested_at` — et `classer_message_automatiquement` **redéfinie** avec la règle 3. Un
+      expéditeur contact rattaché à **exactement une** card active reçoit sa card en suggestion,
+      le message restant **non classé** (`card_id` nul, `classification` inchangée, aucun
+      `card_event`). Atteinte seulement quand les règles 1 et 2 sont muettes. Zéro card n'invente
+      rien, deux se taisent, une card archivée ne compte pas, la casse est ignorée, le workspace
+      borne l'appariement. Écrit ou efface la suggestion à chaque passage (déterministe).
+- [x] `supabase/tests/0044_regle3_suggestion.test.sql` : **21 assertions, aucune anomalie** —
+      présence et nullabilité des colonnes, cas a à h du §8.5 sur des états construits dans la
+      transaction (savepoints), la règle 1/2 gagnante n'ouvrant pas de suggestion, la fonction
+      réservée à `service_role`.
+- [x] `e2e/api/classement.spec.ts` étendu : **2 scénarios de règle 3** via la clé de service,
+      relisant la ligne — Léo suggéré vers `…00c2` sans être classé, expéditeur inconnu sans
+      suggestion. Suite complète **5/5 verte**.
+- [x] `scripts/verify-mail-classement.sh` **révisé, non retiré** : la garde qui figeait la
+      désactivation (piège devenu rouge à l'arrivée des contacts) est remplacée par une preuve
+      comportementale de la règle active, avec témoin, en transaction roulée en arrière. Suite
+      pgTAP `0044` (21) et compte API porté de 3 à 5 ajoutés. **25 contrôles, aucune anomalie**.
+- [x] Types régénérés (`webapp/src/lib/database.types.ts`) ; `docs/SCHEMA.md`,
+      `docs/SPEC-mail-subsystem.md` §16, `docs/PROD_MIGRATIONS.md` (migration 46), `CHANGELOG.md`
+      mis à jour dans le même changement.
+
+**Tranches 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées, et la
+**preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`) :
+
+- [~] Tranche 2 — Règle 3 du classement **livrée et prouvée en base** (pgTAP, API, harnais). Reste
+      `[~]` au seul titre de la **preuve visible** : aucun écran ne montre encore la suggestion,
+      l'inbox étant due par `CRM-057`.
 - [ ] Tranche 3 — Résolution du champ `contact` dans la saisie du formulaire (`CRM-036` §6.5,
       INC-053) : remplacer le refus d'un UUID opaque par une clé vers un contact du même
       workspace.

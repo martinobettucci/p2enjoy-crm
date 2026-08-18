@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 2 : la règle 3 du classement suggère par
+  expéditeur connu** (`docs/SPEC-contacts.md` §8, migration `0046`). Quand un message arrive et
+  qu'aucune adresse de card ni filiation ne le classe, le CRM regarde son **expéditeur** : si c'est
+  un contact rattaché à **exactement une** affaire active, cette affaire devient une **suggestion**
+  portée par le message (`mail_messages.suggested_card_id`) — un indice de tri, **jamais** un
+  classement. Le message reste non classé tant qu'un membre ne l'a pas rangé à la main. La règle se
+  tait quand elle ne peut pas trancher : zéro affaire active, deux ou plus, une affaire archivée ou
+  en corbeille, un expéditeur inconnu ; la casse de l'email est ignorée et le cloisonnement par
+  workspace est respecté. La suggestion n'accorde **aucun** droit : l'accepter passe toujours par
+  `classify_message`, qui exige de voir le message et d'écrire l'affaire. Suite pgTAP `0044`
+  **21/21** (cas a à h), preuve d'API **5/5** (dont deux scénarios de règle 3 via la clé de
+  service), harnais `verify-mail-classement.sh` **révisé** — la garde qui figeait la désactivation
+  devient une preuve de la règle active, avec témoin — **25 contrôles, aucune anomalie**. **La
+  preuve visible de la suggestion attend l'écran de l'inbox (`CRM-057`)** ; les tranches 3
+  (résolution du champ `contact`) et 4 (écrans) restent dues, l'unité demeure `[~]`.
+
 - **`CRM-060` — Contacts et organisations, tranche 1 : le modèle est livré et prouvé**
   (`docs/SPEC-contacts.md`, migration `0045`, décision 445). Le carnet de contacts d'un
   workspace repose sur trois tables — `organizations`, `contacts`, `card_contacts` — avec des
