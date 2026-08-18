@@ -220,12 +220,14 @@ sortie_preuve_9=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.co
 	--project=api "$SPEC_PREUVE_9" -g 'se télécharge' 2>&1 || true)
 if printf '%s\n' "$sortie_preuve_9" | grep -qE "clean.*se télécharge" &&
 	! printf '%s\n' "$sortie_preuve_9" | grep -qE "^ *[1-9][0-9]* failed"; then
-	# LIBELLÉ CORRIGÉ LE 2026-08-18, ET IL DISAIT PLUS QUE CE QU'IL MESURAIT (INC-147).
-	# Ce contrôle établit que le scénario n° 9 EXISTE et TOURNE. Il n'établit pas que le refus
-	# est prouvé : le scénario ne DÉPOSE aucun objet avant de le demander, et son assertion
-	# accepte 400, 401, 403 ET 404 — un objet jamais déposé rend 404 et la fait passer. Le
-	# libellé d'origine, écrit le matin même, laissait croire à une preuve de refus.
-	ok "la preuve n° 9 EXISTE et TOURNE dans $SPEC_INGESTION — sa valeur probante est en défaut (INC-147)"
+	# LE LIBELLÉ CITAIT UNE VARIABLE DISPARUE, ET LE HARNAIS MOURAIT SUR SON PROPRE SUCCÈS.
+	# La correction d'INC-147 a renommé la cible en `SPEC_PREUVE_9` sans reprendre ce message,
+	# resté sur l'ancien `SPEC_INGESTION` : sous `set -u`, la branche VERTE s'interrompait sur
+	# « unbound variable » tandis que la branche rouge, qui cite la bonne variable, fonctionnait.
+	# Le défaut n'était visible qu'en exécutant, et le poste Docker était tombé le jour même.
+	# Le libellé décrit désormais ce que le contrôle mesure RÉELLEMENT depuis INC-147 : la preuve
+	# saine de `CRM-057`, celle qui dépose les objets et porte son témoin positif.
+	ok "la preuve n° 9 est exercée dans $SPEC_PREUVE_9, témoin positif compris (INC-147)"
 else
 	fail "la preuve n° 9 n'est pas exercée dans $SPEC_PREUVE_9"
 	printf '%s\n' "$sortie_preuve_9" | tail -6
