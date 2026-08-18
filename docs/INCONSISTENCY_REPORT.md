@@ -195,8 +195,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Dix ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138, INC-139,
-INC-140 et INC-141** — **INC-139** et **INC-141** consignées le 2026-08-17 par la session
+**Onze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138, INC-139,
+INC-140, INC-141 et INC-152** — **INC-139** et **INC-141** consignées le 2026-08-17 par la session
 `CRM-081` tranche 2 d (`verify-board.sh` complet rend trois échecs de plus que son mode
 `--rapide`, tous mesurés identiques sur la ligne de base, donc préexistants ;
 `verify-colonnes-protegees.sh` attend quinze cards seedées là où la base en porte quarante et une),
@@ -240,6 +240,36 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-152 — Un scénario au clavier de `commentaires-gestes.spec.ts` rend un verdict intermittent
+
+**Nature :** flake préexistant sur une assertion de focus ; le scénario échoue **1 fois sur 3** en
+rejeu isolé depuis un seed frais, et il échoue avec la même signature — `expect(locator).toBeFocused() failed` —
+que ce soit sur mon changement ou sur la HEAD amont.
+**Relevé le :** 2026-08-18, à la fin d'une campagne `npm run e2e:ui` qui a rendu **369 verts, 1
+échec** sur ce seul scénario : « les deux actions sont atteignables AU CLAVIER, sans jamais
+survoler » (`e2e/ui/commentaires-gestes.spec.ts:224`).
+
+**Ce qui est mesuré, et comment.** Trois rejeus successifs, `--repeat-each=3`, sur la spec entière,
+seed **frais** appliqué à chaque cycle :
+- sur mon changement (deux corrections de harnais shell qui ne touchent AUCUN code d'interface) :
+  **2 verts, 1 échec** ;
+- sur `HEAD` amont, obtenu par `git stash -u`, seed réappliqué, dépendances inchangées :
+  **2 verts, 1 échec** — même erreur, même position dans l'exécution.
+
+Une anomalie présente des deux côtés de la ligne de base est préexistante (§2.4 de
+`docs/CloudWorker.md`). Elle ne vient pas de cette session, et n'y appartient pas.
+
+**Pourquoi cette entrée existe.** Le scénario mesure une propriété d'accessibilité clavier, et il
+la mesure correctement quand il aboutit — sa DoD est bien tenue par le produit. Ce n'est ni un
+défaut à corriger sur mon périmètre, ni une régression : c'est une preuve **intermittente** à
+stabiliser. La consigner ici la rend suivable ; la corriger reste dû à la prochaine session qui
+touchera `commentaires-gestes.spec.ts` ou son support, avec pour piste de départ l'attente d'un
+état de focus effectif (`toHaveClass` du wrapper, `getByRole().and(locator.locator(':focus'))`,
+ou attente d'un événement DOM) plutôt que `toBeFocused()` seul.
+
+**Portée honnête.** L'intermittence n'a jamais été observée sur d'autres scénarios de cette suite ;
+les deux autres files du même dossier passent en 24/24 sur ce même rejeu isolé (§ décision 443).
 
 ### INC-151 — Le projet `mail` était INLISTABLE sans Docker — CORRIGÉ le 2026-08-18
 

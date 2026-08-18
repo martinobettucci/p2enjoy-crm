@@ -18498,3 +18498,30 @@ la suivante. Cette session livre la première tranche.
 **Où reprendre.** Migration `00xx_contacts_et_organisations.sql`, suite pgTAP dédiée, preuve d'API
 dédiée avec les jetons réels des trois profils seedés, seed enrichi, documentation. Le contrat d'API
 et le seed sont écrits ligne à ligne au §4 et au §5 de la spécification, prêts à être exécutés.
+
+
+## décision 446 — Campagne complète du §4.3, exécutée en fin de session sur seed frais, une seule fois
+
+- `npm run typecheck` **vert** ; `npm run test:unit` **1488 verts** ; `npm run test:sql`
+  **42 fichiers, 2191 assertions, aucune anomalie** ; `npm run build` **vert** en 1,08 s.
+- `npm run e2e:api` **678 verts** en 1,3 min.
+- `npm run e2e:mail` **42 verts** en 1,5 min.
+- `pytest` de `mail-sync` sous venv isolé aux versions épinglées : **242 verts**.
+- `npm run e2e:ui`, **369 verts et 1 échec** en 10,4 min, sur un scénario au clavier de
+  `e2e/ui/commentaires-gestes.spec.ts:224`. Ligne de base établie sur ce seul scénario (§2.4) : sur
+  la HEAD amont, seed identique, `--repeat-each=3` rend **2 verts, 1 échec** ; sur mon changement,
+  même mesure, **2 verts, 1 échec**. Verdict : **flake préexistant**, consigné en **INC-152**.
+- Un premier passage `e2e:ui` — exécuté sans re-seeder après les suites API et mail — avait rendu
+  des dizaines d'échecs en cascade, y compris sur `coquille.spec.ts`. Rejeu isolé après
+  `apply-seed.sh` : `coquille.spec.ts` **13/13**, `commentaires.spec.ts` + `commentaires-gestes.spec.ts`
+  + `coherence-workflow.spec.ts` **24/24**. La cause est mesurée : la pollution du seed par les
+  suites précédentes, exactement la leçon consignée le 2026-08-17. Un `apply-seed.sh` a été
+  intercalé, et le compteur passe alors de « cascade » à « un flake isolé ».
+
+**Sur les captures.** L'exécution complète de `e2e/ui` réécrit une soixantaine de captures JPEG,
+même sans modification du produit (INC-036, motif documenté ailleurs). Cette session ne touche
+AUCUN code d'interface : les rewrites sont uniquement des différences de survol de pointeur ou de
+compression. Elles ont été **restaurées** à l'état de `origin/main` avant la garde de fin.
+
+**Preuves d'interface encore dues** — inchangées par cette session : `CRM-033`, `CRM-035`,
+`CRM-036`.
