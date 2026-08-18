@@ -542,10 +542,21 @@ Le second site est corrigé de même : `refus-par-defaut.spec.ts` appelle désor
 avec ses trois arguments réels, si bien qu'un `PGRST202` ne peut plus vouloir dire qu'une chose,
 PostgREST ne route pas vers `app`.
 
-**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `npm run typecheck` est **vert** sur les deux
-fichiers ; la syntaxe et les types sont donc éprouvés. **Les scénarios n'ont PAS été exécutés** — le
-poste Docker est tombé. `CRM-014` et `CRM-053` restent `[~]`, et la première exécution après le
-retour de la pile doit les confirmer ou les corriger.
+**UN DÉFAUT DE MA PROPRE CORRECTION, TROUVÉ PAR RELECTURE ET CORRIGÉ le même jour.** La première
+version du scénario visait la card `…c4`. Or `queue_outbound_email` éprouve ses refus **dans un
+ordre** : `not_authenticated`, puis **`forbidden` si l'appelant ne peut pas ÉCRIRE la card**, et
+seulement ensuite `identity_not_available` (`0030_envoi_sortant.sql`, lignes 196 à 221). Rien ne
+garantissait que `bizdev` puisse écrire `…c4` : le scénario aurait alors levé `forbidden` et
+**prouvé un tout autre refus que celui qu'il annonce** — précisément le défaut que cette entrée
+dénonce. La card est désormais `…c1`, celle qu'emploie `e2e/api/envoi.spec.ts` où `bizdev` obtient
+bien `identity_not_available` : le chemin est éprouvé.
+
+**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `npm run typecheck` est **vert** ; le fichier se
+liste et conserve ses **40** scénarios, donc le compteur du harnais reste juste ; et les erreurs
+attendues ont été **confrontées à la migration** plutôt que recopiées d'un souvenir — `42501`, que
+PostgREST traduit en `403`, et le message `identity_not_available`. **Les scénarios n'ont PAS été
+exécutés** — le poste Docker est tombé. `CRM-014` et `CRM-053` restent `[~]`, et la première
+exécution après le retour de la pile doit les confirmer ou les corriger.
 
 **SECONDE OCCURRENCE, trouvée par l'audit qu'impose ce constat.** Toutes les assertions d'absence du
 dépôt ont été relues. Sur trois qui reposent sur un code PostgREST :

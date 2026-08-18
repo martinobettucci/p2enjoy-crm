@@ -633,7 +633,15 @@ test.describe('PREUVE N° 12 — emprunter l’identité sortante d’autrui est
 		const refus = await request.post('/rest/v1/rpc/queue_outbound_email', {
 			headers: { ...enTetesAuthentifies(jetonBizdev), 'Content-Type': 'application/json' },
 			data: {
-				p_card_id: CARD_VUE_DU_VIEWER,
+				// LA CARD IMPORTE, et le choix est vérifié contre la migration plutôt que supposé.
+				// `queue_outbound_email` éprouve ses refus DANS L'ORDRE : `not_authenticated`, puis
+				// `forbidden` si l'appelant ne peut pas ÉCRIRE la card, et seulement ensuite
+				// `identity_not_available` (0030_envoi_sortant.sql, lignes 196 à 221). Viser une card
+				// que `bizdev` ne peut pas écrire ferait donc lever `forbidden`, et ce scénario
+				// prouverait un tout autre refus que celui qu'il annonce.
+				// `…c1` est la card employée par `e2e/api/envoi.spec.ts`, où `bizdev` l'atteint et
+				// obtient bien `identity_not_available` : le chemin est donc déjà éprouvé.
+				p_card_id: CARD_CACHEE_AU_VIEWER,
 				p_identity_id: service!.id,
 				p_to: ['client@exterieur.test'],
 				p_subject: 'preuve n° 12',
