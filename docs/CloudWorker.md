@@ -531,8 +531,22 @@ laissé par une exécution précédente — une série interrompue en laisse un 
 entière sur `http://127.0.0.1:4173 is already used`, ce qui ne dit rien du produit non plus :
 
 ```
-pkill -f vite
+pkill -f "[v]ite"
 ```
+
+**Le motif DOIT être protégé par la classe `[v]`, et c'est MESURÉ le 2026-08-18.** Écrit
+`pkill -f vite`, le motif se retrouve dans la ligne de commande du shell qui l'exécute — l'agent
+lance ses commandes par `bash -c '… pkill -f vite … ; npm run e2e:ui …'` —, si bien que `pkill`
+**tue son propre appelant** avant que la moindre preuve ne démarre :
+
+```
+pkill -f vite      => le shell meurt, code 144, AUCUNE sortie
+pkill -f "[v]ite"  => rc=0, « port 4173 libre », le shell survit
+```
+
+La classe `[v]ite` désigne toujours le texte `vite`, mais la ligne de commande de l'appelant porte
+`[v]ite` et ne correspond donc plus. Une campagne d'interface lancée derrière un `pkill -f vite`
+non protégé meurt sans rien dire : ce n'est ni un verdict rouge, ni une preuve.
 
 **Avec ces deux conditions**, `scripts/verify-administration-arborescence.sh` rend
 `27 contrôles, aucune anomalie` là où il rendait `3 en échec`. Sans elles, un verdict rouge de ces
