@@ -218,7 +218,7 @@ function ContenuFiche({ client, etat, organisation, onReprise }: ProprietesConte
 			<dl
 				data-testid="caracteristiques-organisation"
 				aria-label={t('organization.details.aria')}
-				className="grid gap-4 sm:grid-cols-2 max-w-[60ch]"
+				className="grid gap-4 md:grid-cols-2 max-w-[60ch]"
 			>
 				<ValeurTechnique libelle={t('organization.field.domain')} valeur={organisation.domain} />
 				<div className="flex flex-col gap-1">

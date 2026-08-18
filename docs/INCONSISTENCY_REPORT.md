@@ -309,8 +309,14 @@ antérieure `docs/captures/CRM-057/inbox-lg-1152.jpg`, produite par la session `
 **déjà**, à l'identique. Le défaut est donc **antérieur** à cette session et étranger à son unité :
 `/contacts` en hérite comme les trois autres routes transverses, il ne l'introduit pas.
 
+**CINQUIÈME PORTEUSE, le 2026-08-18** : la fiche d'organisation
+(`/contacts/organisations/:idOrganisation`), livrée par la tranche 4b, en hérite exactement comme
+les quatre autres — `docs/captures/CRM-060/fiche-organisation-1440.jpg` porte la mention. Le
+constat ne change ni la nature du défaut ni son arbitrage ; il élargit son emprise, et confirme
+que la correction appartient bien à la coquille et non à chaque écran.
+
 **Étranger à l'unité, et laissé inchangé** (`CLAUDE.md` §1, §3.1). Il ne corrompt rien et
-n'empêche aucun geste : il ajoute une ligne sans objet en tête de quatre écrans. La correction
+n'empêche aucun geste : il ajoute une ligne sans objet en tête de cinq écrans. La correction
 appartient à la coquille (`CRM-007`) et demande une décision qui n'est pas d'écran : la barre
 doit-elle être **absente** hors d'un track — ce que le §4 laisse entendre en la disant « du track
 courant » —, ou son état vide doit-il être reformulé ? Le premier semble juste, mais toucher la

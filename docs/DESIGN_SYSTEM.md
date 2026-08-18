@@ -1507,6 +1507,14 @@ n'existe aucune liste d'organisations. Ce que l'écran lit est spécifié par `d
   **quatre** colonnes : nom, fonction, email, téléphone. La colonne « organisation » du carnet
   disparaît — elle répéterait le titre de la page à chaque ligne.
 
+  La liste de définitions passe à **deux colonnes à partir de `md`** (768 px), et reste empilée
+  en dessous. **`md` et non `sm`, et ce n'est pas un choix esthétique** : le §7 ne définit que
+  trois paliers, et `tokens.css` réinitialise explicitement les autres
+  (`--breakpoint-*: initial`). Un `sm:` est donc un **variant inconnu**, dont Tailwind supprime
+  la classe entière sans rien signaler — le défaut exact que le §11 décrit, et qui a été
+  **mesuré** ici : `sm:grid-cols-2` était absente du CSS produit, et la fiche restait empilée à
+  1440 px. Toute règle responsive de ce document s'écrit avec `md`, `lg` ou `xl`, jamais `sm`.
+
 - **Le nom de l'organisation est le titre de la route** : une **donnée**, portée par `titreRoute`
   de la coquille et non par une clé de traduction (§10), avec une clé de repli pendant le
   chargement — le patron du détail de card (§5.3).
