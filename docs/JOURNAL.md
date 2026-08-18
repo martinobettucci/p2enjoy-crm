@@ -18155,3 +18155,31 @@ INC-146, INC-147 — sont de la même famille : **un contrôle qui réussit pour
 celle qu'il annonce**. Aucun n'aurait été trouvé en exécutant les suites, puisqu'ils sont verts. Ils
 l'ont été en relisant, faute de pouvoir exécuter. La panne a donc rendu un service : elle a forcé la
 seule méthode capable de les voir.
+
+
+## décision 440 — La suite Python se rejoue SANS la pile, et je l'ignorais
+
+**Fait, mesuré le 2026-08-18.** Le poste Docker étant tombé, je tenais toute vérification pour
+impossible. C'était faux d'un tiers : **la suite unitaire de `mail-sync` s'exécute nativement**.
+
+- Avec le Python du poste, sept modules ne collectent pas — `imapclient`, `fastapi` et les autres
+  dépendances runtime vivent dans l'image du service. Les autres passent : **135 tests verts**.
+- Avec un environnement virtuel isolé, créé hors du dépôt et rempli depuis
+  `mail-sync/requirements-dev.txt` — donc **aux versions épinglées du projet**, sans rien installer
+  dans l'installation Python du responsable —, la suite **entière** passe : **242 tests verts**.
+
+**Ce que cela change.** Les tests unitaires de `CRM-051` à `CRM-059` ne dépendent pas de la pile :
+ils sont purs, et le seront demain comme aujourd'hui. Une panne d'infrastructure ne suspend donc pas
+la vérification de cette famille — elle suspend l'API, l'E2E et pgTAP, qui exigent la base et les
+services.
+
+**Ce que je me reproche.** J'ai écrit à plusieurs reprises « il ne reste rien de vérifiable sans la
+pile » **sans avoir essayé**. C'est la faute que la décision 341 nomme déjà : vérifier la prémisse
+de la preuve ne suffit pas, il faut vérifier la prémisse de la **mesure**. J'ai déduit une
+impossibilité d'une observation voisine — Docker est tombé, donc plus rien ne tourne — au lieu de la
+mesurer. Une commande de dix secondes la démentait.
+
+**Conséquence pratique, à retenir pour toute panne future.** Trois familles de preuves survivent à
+l'arrêt de Docker : **Vitest** (1488 tests), **pytest** (242 tests) et **le typecheck et le build**.
+Seules pgTAP, les suites d'API et les suites E2E exigent la pile. Le disparaître de Docker retire
+**moins** de la moitié de la couverture, et non sa totalité.
