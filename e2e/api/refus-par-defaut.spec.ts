@@ -35,12 +35,18 @@ test.describe("A2 — le schéma `app` n'est pas exposé par l'API", () => {
 	// Les fonctions d'autorisation de CRM-010 vivent dans `app`, que PostgREST n'expose pas.
 	// Le contrôle porte sur la clé de **service** : si même elle ne les joint pas, aucun
 	// appelant ne le peut.
+	// APPEL CORRIGÉ le 2026-08-18 (INC-146). Il se faisait avec `data: {}`, alors que
+	// `app.resolve_access(text, text, text)` exige TROIS paramètres : `PGRST202` serait rendu même
+	// si la fonction était exposée, et l'assertion ne distinguait donc pas « schéma non exposé » de
+	// « signature non correspondante ». Ce qu'elle affirmait était vrai ; elle ne le mesurait pas.
+	// Avec les VRAIS arguments, un `PGRST202` ne peut plus vouloir dire qu'une chose : PostgREST ne
+	// route pas vers `app`. Si le schéma venait à être exposé, l'assertion rougirait.
 	test('une fonction du schéma app est introuvable, même avec la clé de service', async ({
 		request,
 	}) => {
 		const reponse = await request.post('/rest/v1/rpc/resolve_access', {
 			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-			data: {},
+			data: { ws_role: 'admin', track_access: 'write', channel_access: 'write' },
 		})
 		expect(reponse.status()).toBe(404)
 		expect(await reponse.text()).toContain('PGRST202')

@@ -277,16 +277,20 @@ politique correcte —, puis mesure le refus des pièces `infected`, `pending` e
 l'administratrice, pour un `viewer` et pour l'anonyme. Là, un `404` signifie bien « masqué par la
 politique », puisque l'objet vient d'être déposé et qu'un autre est lisible au même endroit.
 
-**Ce qui reste dû est donc double, et plus simple que je ne l'ai d'abord écrit.**
+**CORRIGÉ le 2026-08-18, sur les deux points.**
 
-1. **Rattacher le contrôle du harnais à la preuve SAINE**, celle de `e2e/api/inbox.spec.ts`, et non
-   à celle d'`ingestion.spec.ts` : c'est l'erreur que j'ai commise le matin même.
-2. **Retourner ou retirer le scénario creux d'`ingestion.spec.ts`** : soit il dépose l'objet et
-   devient une preuve, soit il cesse de s'annoncer comme le refus n° 9. Le laisser tel quel entretient
-   une preuve qui ne peut pas échouer.
+1. **Le contrôle du harnais vise désormais la preuve SAINE**, `e2e/api/inbox.spec.ts`, et exige
+   qu'y figure le **témoin positif** — la pièce `clean` servie en `200`. C'est ce témoin qui rend
+   les refus concluants : sans lui, un refus global passerait pour une politique correcte.
+2. **Le scénario creux cesse de s'annoncer comme le refus n° 9.** Il n'est pas supprimé — ce qu'il
+   mesure garde une valeur propre : la ligne de métadonnées est bien créée, et le bucket ne sert pas
+   un chemin qu'aucun dépôt n'a rempli. Il s'intitule désormais « un chemin de pièce jamais déposée
+   n'est servi à personne », ce qui est exactement ce qu'il fait. Un contrôle d'ingestion, pas une
+   preuve d'autorisation.
 
-Non fait ce jour, le poste Docker étant tombé (INC-145) : rattacher le contrôle exige de vérifier
-que le titre visé est bien exercé, et cette vérification passe par une exécution.
+**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `bash -n` et `npm run typecheck` sont **verts**.
+**Rien n'a été exécuté** : le poste Docker est tombé. La première exécution après son retour doit
+confirmer que le libellé visé par le harnais est bien celui que Playwright imprime.
 
 **Troisième occurrence de la même famille.** INC-146 en décrit deux — une assertion d'absence qui
 lit un `PGRST202` de signature non correspondante, et une seconde de même forme. Le motif commun est
@@ -325,11 +329,27 @@ C'est faux depuis `CRM-058`.
 `forbidden` et `identity_not_available` avec les jetons réels. La règle est donc tenue par le
 produit ; c'est le registre des douze preuves qui ment sur son propre état.
 
-**Ce qui reste dû, et qui n'a PAS pu être fait le 2026-08-18.** Retourner la douzième assertion en
-refus mesuré, comme les trois autres l'ont été — envoyer avec l'identité d'autrui doit être refusé,
-et l'assertion doit porter sur ce refus et non sur un `404`. Le poste Docker est tombé (INC-145) :
-écrire ce scénario sans pouvoir l'exécuter reviendrait à remplacer une fausse preuve par une preuve
-non vérifiée. **Il est donc consigné et non écrit**, et `CRM-014` comme `CRM-053` restent `[~]`.
+**CORRIGÉ le 2026-08-18, ET L'ARBITRAGE A CHANGÉ EN COURS DE ROUTE — il faut le dire.** J'avais
+d'abord décidé de ne PAS réécrire l'assertion, au motif que remplacer une fausse preuve par une
+preuve non exécutée ne vaudrait pas mieux. Le responsable a demandé de poursuivre sans la pile ;
+l'arbitrage bascule alors, et pour une raison mesurable : **une assertion que l'on SAIT fausse et
+que l'on laisse en place ment à chaque exécution**, tandis qu'une assertion correcte non encore
+exécutée dit la vérité dès qu'on la lance. Le risque change de nature, il ne s'aggrave pas.
+
+La douzième preuve est donc **retournée** — neuvième occurrence du mécanisme de la décision 51.
+Elle mesure ce que le §7 lui demandait depuis le début : un membre qui emprunte l'identité sortante
+de **service** du workspace est refusé en `403` / `identity_not_available`. **L'appel emploie la
+signature RÉELLE**, ce qui est tout le point : avec les bons paramètres, un `PGRST202` ne pourrait
+plus signifier qu'une chose — la fonction a disparu — et l'assertion rougirait.
+
+Le second site est corrigé de même : `refus-par-defaut.spec.ts` appelle désormais `resolve_access`
+avec ses trois arguments réels, si bien qu'un `PGRST202` ne peut plus vouloir dire qu'une chose,
+PostgREST ne route pas vers `app`.
+
+**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `npm run typecheck` est **vert** sur les deux
+fichiers ; la syntaxe et les types sont donc éprouvés. **Les scénarios n'ont PAS été exécutés** — le
+poste Docker est tombé. `CRM-014` et `CRM-053` restent `[~]`, et la première exécution après le
+retour de la pile doit les confirmer ou les corriger.
 
 **SECONDE OCCURRENCE, trouvée par l'audit qu'impose ce constat.** Toutes les assertions d'absence du
 dépôt ont été relues. Sur trois qui reposent sur un code PostgREST :

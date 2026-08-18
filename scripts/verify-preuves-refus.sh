@@ -57,10 +57,17 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 TEST_FILE=supabase/tests/0016_preuves_refus.test.sql
 SPEC_FILE=e2e/api/preuves-refus.spec.ts
 # La preuve n° 9 ne vit plus dans le fichier consolidé : `CRM-054` ayant livré `mail_attachments`
-# et son bucket, l'assertion qui figeait l'absence a été RETOURNÉE en un refus mesuré, et elle a
-# suivi son sujet dans le fichier d'ingestion. Le harnais l'y vérifie plutôt que de la déclarer
-# manquante — une preuve déplacée n'est pas une preuve perdue, mais elle doit rester EXERCÉE.
-SPEC_INGESTION=e2e/api/ingestion.spec.ts
+# et son bucket, l'assertion qui figeait l'absence a été RETOURNÉE en un refus mesuré. Le harnais
+# l'y vérifie plutôt que de la déclarer manquante — une preuve déplacée n'est pas une preuve
+# perdue, mais elle doit rester EXERCÉE.
+#
+# CIBLE CORRIGÉE le 2026-08-18 (INC-147). Le harnais visait `e2e/api/ingestion.spec.ts`, dont le
+# scénario ne DÉPOSE aucun objet avant de le demander et accepte `404` : il mesurait une absence,
+# pas un refus, et ne pouvait pas échouer. La preuve SAINE est celle de `CRM-057` — elle dépose les
+# objets avec la clé de service, vérifie que la pièce `clean` se télécharge en `200` avec le bon
+# contenu (le témoin positif), puis mesure le refus des pièces `infected`, `pending` et `skipped`
+# pour l'administratrice, un `viewer` et l'anonyme.
+SPEC_PREUVE_9=e2e/api/inbox.spec.ts
 DB_CONTAINER=p2enjoy-db
 
 ASSERTIONS_ATTENDUES=55
@@ -203,10 +210,10 @@ fi
 # La douzième — la n° 9 — est exercée dans le fichier d'ingestion sous le titre `REFUS N° 9`. Le
 # contrôle EXÉCUTE ce fichier au lieu d'y lire le titre : une preuve peut être écrite et ne jamais
 # tourner, et c'est précisément ce que ce harnais existe pour dénoncer.
-sortie_ingestion=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts \
-	--project=api "$SPEC_INGESTION" 2>&1 || true)
-if printf '%s\n' "$sortie_ingestion" | grep -qE "REFUS N° 9( |\b)" &&
-	! printf '%s\n' "$sortie_ingestion" | grep -qE "^ *[1-9][0-9]* failed"; then
+sortie_preuve_9=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts \
+	--project=api "$SPEC_PREUVE_9" 2>&1 || true)
+if printf '%s\n' "$sortie_preuve_9" | grep -qE "clean.*se télécharge" &&
+	! printf '%s\n' "$sortie_preuve_9" | grep -qE "^ *[1-9][0-9]* failed"; then
 	# LIBELLÉ CORRIGÉ LE 2026-08-18, ET IL DISAIT PLUS QUE CE QU'IL MESURAIT (INC-147).
 	# Ce contrôle établit que le scénario n° 9 EXISTE et TOURNE. Il n'établit pas que le refus
 	# est prouvé : le scénario ne DÉPOSE aucun objet avant de le demander, et son assertion
@@ -214,8 +221,8 @@ if printf '%s\n' "$sortie_ingestion" | grep -qE "REFUS N° 9( |\b)" &&
 	# libellé d'origine, écrit le matin même, laissait croire à une preuve de refus.
 	ok "la preuve n° 9 EXISTE et TOURNE dans $SPEC_INGESTION — sa valeur probante est en défaut (INC-147)"
 else
-	fail "la preuve n° 9 n'est pas exercée dans $SPEC_INGESTION"
-	printf '%s\n' "$sortie_ingestion" | tail -6
+	fail "la preuve n° 9 n'est pas exercée dans $SPEC_PREUVE_9"
+	printf '%s\n' "$sortie_preuve_9" | tail -6
 fi
 
 # =============================================================================================

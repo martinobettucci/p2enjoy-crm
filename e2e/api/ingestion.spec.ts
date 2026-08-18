@@ -17,7 +17,20 @@ const EMPREINTE = 'a'.repeat(64)
 const EMPREINTE_BIS = 'b'.repeat(64)
 
 test.describe('ingestion — ce que la pile refuse', () => {
-	test('REFUS N° 9 : une pièce `infected` et une pièce `pending` ne se téléchargent pas', async ({
+	// TITRE CORRIGÉ le 2026-08-18 (INC-147). Ce scénario s'annonçait comme le REFUS N° 9 du §7. Il
+	// ne l'était pas : il ne DÉPOSE aucun objet avant de le demander, et son assertion accepte
+	// `404`. Un objet jamais déposé rend `404` — il serait donc resté vert sans aucune politique de
+	// Storage, et même si la pièce saine était librement téléchargeable. Il ne distinguait pas
+	// « refusé » de « inexistant ».
+	//
+	// Il n'est PAS supprimé, et ce qu'il mesure garde une valeur propre : la LIGNE de métadonnées
+	// est bien créée, et le bucket ne sert pas un chemin qu'aucun dépôt n'a rempli. C'est un
+	// contrôle d'ingestion, pas une preuve d'autorisation — et il s'appelle désormais ainsi.
+	//
+	// La preuve n° 9, la vraie, est portée par `e2e/api/inbox.spec.ts` §18.5, qui dépose les objets,
+	// vérifie que la pièce `clean` se télécharge en `200` avec le bon contenu — le témoin positif —
+	// puis mesure le refus des autres. C'est elle que `scripts/verify-preuves-refus.sh` exerce.
+	test('un chemin de pièce jamais déposée n’est servi à personne', async ({
 		request,
 	}) => {
 		const identifiant = `<refus9-${Date.now()}@preuves.test>`

@@ -600,16 +600,51 @@ test.describe('PREUVES N° 6 et N° 7 — le compte mail d’un autre, et son se
 	})
 })
 
-test.describe('PREUVE N° 12 — `queue_outbound_email` n’existe pas, et c’est asséré', () => {
-	test('404 et PGRST202 : envoyer avec l’identité d’autrui suppose une fonction d’envoi', async ({
+// PREUVE N° 12 — RETOURNÉE le 2026-08-18, et il faut dire ce qu'elle valait avant.
+//
+// Elle s'intitulait « `queue_outbound_email` n'existe pas, et c'est asséré » et appelait la RPC
+// **sans argument**, en attendant `404` / `PGRST202`. Or `CRM-058` a livré cette fonction, avec
+// SEPT paramètres dont trois obligatoires — et `PGRST202` ne dit pas « fonction absente » mais
+// « aucune surcharge ne correspond à CES paramètres ». L'assertion est donc restée **VERTE** après
+// la naissance de son objet, alors que le §7.3 promet qu'une absence figée devient ROUGE ce
+// jour-là. Elle serait restée verte quoi qu'il arrive : une preuve qui ne peut pas échouer n'est
+// pas une preuve (INC-146, `docs/JOURNAL.md` décision 438).
+//
+// Elle est **retournée**, jamais supprimée — neuvième occurrence du mécanisme de la décision 51,
+// après `card_events` (n° 8), `mail_inbound_accounts` (n° 6), `mail_outbound_identities` (n° 7) et
+// `mail_attachments` (n° 9). Ce qu'elle mesure désormais est le refus réel que le §7 lui demandait
+// depuis le début : **emprunter l'identité sortante d'autrui est refusé**.
+//
+// L'appel emploie la SIGNATURE RÉELLE. C'est le point : avec les bons paramètres, un `PGRST202`
+// signifierait que la fonction a disparu, et l'assertion rougirait — ce qu'elle ne savait pas faire.
+test.describe('PREUVE N° 12 — emprunter l’identité sortante d’autrui est REFUSÉ', () => {
+	test('403 et `identity_not_available` : la signature est réelle, le refus aussi', async ({
 		request,
 	}) => {
-		const reponse = await request.post('/rest/v1/rpc/queue_outbound_email', {
-			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-			data: {},
+		// L'identité de SERVICE du workspace : elle n'appartient à personne (`owner_id is null`) et
+		// n'est donc disponible à aucun membre ordinaire. Relue en base plutôt que devinée.
+		const identites = await request.get(
+			'/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1',
+			{ headers: enTetesService() },
+		)
+		const [service] = (await identites.json()) as { id: string }[]
+		expect(service, 'l’identité de service du seed est introuvable').toBeDefined()
+
+		const refus = await request.post('/rest/v1/rpc/queue_outbound_email', {
+			headers: { ...enTetesAuthentifies(jetonBizdev), 'Content-Type': 'application/json' },
+			data: {
+				p_card_id: CARD_VUE_DU_VIEWER,
+				p_identity_id: service!.id,
+				p_to: ['client@exterieur.test'],
+				p_subject: 'preuve n° 12',
+				p_body_text: 'ce message ne doit jamais partir',
+			},
 		})
-		expect(reponse.status()).toBe(404)
-		expect((await reponse.json()) as Erreur).toMatchObject({ code: 'PGRST202' })
+
+		// Un refus NOMMÉ, et non un ensemble de statuts qui contiendrait `404` : le `404` est
+		// précisément ce qui masquait le défaut d'origine.
+		expect(refus.status()).toBe(403)
+		expect((await refus.json()) as Erreur).toMatchObject({ message: 'identity_not_available' })
 	})
 })
 
