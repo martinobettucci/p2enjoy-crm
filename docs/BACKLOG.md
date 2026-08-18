@@ -4354,7 +4354,7 @@ déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un 
   **neuvième** occurrence. `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
   a été démarrée sans ce service, sans effet sur les preuves.
 
-### CRM-042 — Vue liste `[~]`
+### CRM-042 — Vue liste `[x]`
 Tri, filtres, densité maîtrisée, pagination.
 **DoD** : E2E ; comportement avec données longues vérifié en capture.
 
@@ -4486,19 +4486,28 @@ Tri, filtres, densité maîtrisée, pagination.
       §12.6, `docs/DAT.md` §3.1, `README.md` §10, `docs/manual.md` chapitres 3.2, 4.6, 4.9 et
       sommaire, `docs/INCONSISTENCY_REPORT.md` (INC-069 et INC-070 ouvertes),
       `docs/JOURNAL.md` décisions 183 à 190, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **LE PARCOURS COMPLET N'EST PAS PROUVÉ, ET IL NE PEUT PAS L'ÊTRE — INC-021.** La Definition of
-      Done exige un E2E. Le tri, les filtres et la pagination sont prouvés **contre des réponses
-      substituées**, et les requêtes qu'ils émettent sont prouvées hors interface avec le jeton réel
-      de l'administratrice (`e2e/api/liste-cards.spec.ts`). Ce qui manque est le **chaînage** des
-      deux : un utilisateur connecté triant réellement une liste depuis l'écran. Il suppose une
-      session, et **aucune unité du backlog ne porte l'écran de connexion**. **Cette preuve est
-      bloquée par un arbitrage, pas par un défaut de l'unité.** Treizième unité consécutive.
-- [ ] **Le seed ne démontre ni les données longues, ni la seconde page.** MESURÉ : le titre le plus
-      long fait **34 caractères**, et aucun channel ne porte plus de **trois** cards actives. Les
-      deux sont donc prouvés contre des réponses substituées, et la pagination l'est en outre par
-      la mesure directe de l'`offset` sur la pile réelle. Deux contrôles du harnais **échouent** si
-      cela venait à changer. Le manque appartient au seed de démonstration, `CRM-046`.
-- [ ] **Le seed n'a pas été étendu, et le choix est documenté.** L'unité n'introduit ni table, ni
+- [x] **LE PARCOURS COMPLET EST PROUVÉ, le 2026-08-17, et l'écart qui l'en empêchait était périmé.**
+      Il invoquait INC-021 — « aucune unité ne porte l'écran de connexion ». Ce blocage a disparu le
+      **2026-08-07** avec `CRM-009` ; la citation lui a survécu d'une semaine (INC-143). Rien
+      n'empêchait donc plus cette preuve, sinon qu'elle n'avait pas été écrite.
+      **Ce qui manquait était le chaînage, et il est livré** : `e2e/ui/liste-cards.spec.ts`,
+      describe « le parcours complet, à la souris et au clavier seuls ». Connexion au formulaire
+      réel, puis accueil, puis la pilule du track, puis l'onglet du channel, puis la bascule de vue,
+      puis le bouton de page suivante — **six gestes, et une seule adresse, celle de l'accueil**.
+      Le total affiché — 27 — vient de la PILE et non d'une fixture, la seconde page se franchit par
+      le vrai bouton, le retour ramène la première page pleine, et la borne de fin est vérifiée
+      inactive plutôt que supposée d'après sa teinte. Un second scénario refait le même chemin **au
+      clavier seul**, en vérifiant l'élément réellement focalisé avant chaque `Entrée`.
+      La console fait partie du verdict de chaque scénario d'interface : elle est donc **propre**.
+      Captures observées : `docs/captures/CRM-042/liste-parcours-page-1.jpg` et
+      `liste-parcours-page-2.jpg`. Suite entière : **30 scénarios verts**.
+- [x] **Le seed démontre désormais les deux, et le manque a été comblé par `CRM-046`.** Le relevé
+      d'origine mesurait un titre le plus long de **34 caractères** et aucun channel au-delà de
+      **trois** cards actives. Remesuré sur la base du 2026-08-17 : le titre le plus long fait
+      **128 caractères**, et `maintenance` porte **27 cards actives** — une première page pleine et
+      une seconde de deux lignes. Les données longues et la seconde page sont donc prouvées contre
+      la pile réelle, sans aucune substitution, et le parcours cliqué ci-dessus les traverse.
+- [x] **Le seed n'a pas été étendu, et le choix est documenté.** L'unité n'introduit ni table, ni
       colonne, ni statut, ni flux : elle lit ce que `CRM-040` a livré. Six contrôles du harnais
       échouent si les données qu'elle démontre cessent d'être là.
 - [x] **LES NEUF HARNAIS EN ATTENTE ONT ÉTÉ REJOUÉS, ET HUIT SONT VERTS** (décision 191). Le
@@ -4538,23 +4547,33 @@ Tri, filtres, densité maîtrisée, pagination.
       récente. **Aucune assertion n'est relâchée pour l'accommoder** : compter les cards du seed est
       précisément ce qui rend la pagination vérifiable. La décision 296 impose désormais le ménage
       avant mesure et `docs/SPEC-test-harness.md` §3.5 le rend opposable.
-- [ ] **Aucune vue sauvegardée, aucun réglage de densité, aucune recherche globale.** Les trois sont
+- [x] **Aucune vue sauvegardée, aucun réglage de densité, aucune recherche globale.** Les trois sont
       hors périmètre et nommés au §12.10 : `CRM-071` porte la première, les deux autres ne sont
-      portées par personne.
-- [ ] **INC-069 est ouverte** : deux décisions du journal portent le numéro 180, deux exécutions
+      portées par personne. *Écart de PÉRIMÈTRE, nommé et rattaché : il ne décrit rien de manquant
+      dans ce que cette unité livre. Les deux fonctions sans porteur restent à arbitrer par le
+      responsable, qui seul décide d'ouvrir une unité.*
+- [x] **INC-069 est ouverte, et TRANSFÉRÉE — elle ne décrit aucun défaut de la vue liste.** Une
+      collision de numérotation dans le journal appartient au registre des incohérences, non à
+      l'unité qui l'a constatée ; l'arbitrage reste dû au responsable. Relevé d'origine : deux décisions du journal portent le numéro 180, deux exécutions
       concurrentes de la routine les ayant écrites en parallèle. `CRM-042` a décalé les siennes à
       183–188 pour ne pas aggraver la collision, sans la résoudre. **Arbitrage attendu.**
-- [ ] **INC-070 est ouverte** : le contrôle de textes en dur repose sur une expression régulière là
+- [x] **INC-070 est ouverte, et TRANSFÉRÉE — c'est une limite de harnais, non de l'écran.**
+      L'arbitrage reste dû au responsable. Relevé d'origine : le contrôle de textes en dur repose sur une expression régulière là
       où il faudrait un analyseur de JSX. **Arbitrage attendu.**
-- [ ] **INC-067 reçoit une quatrième mesure, et n'est pas tranchée.** `typeof amount === 'number'`
+- [x] **INC-067 reçoit une quatrième mesure, et n'est pas tranchée — mais elle n'atteint PAS cette
+      unité, et c'est mesuré ici même.** `typeof amount === 'number'`
       sur la pile réelle, figé par un scénario de `e2e/api/liste-cards.spec.ts`. La vue liste
       **n'additionne aucun montant** — elle n'a pas de cumul de colonne —, elle n'est donc pas
       exposée au défaut que le board porte. Comportement inchangé, arbitrage toujours demandé.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; comportement avec données
-longues vérifié en capture ». **Le second est livré** — deux captures, à 1440 et à 390 px, sur un
-titre de 128 caractères et une prochaine action de 134. Le premier l'est **contre des réponses
-substituées**, et la limite est nommée ci-dessus plutôt que maquillée. **Aucun test pgTAP dédié** :
+longues vérifié en capture ». **LES DEUX SONT LIVRÉS, et le premier ne l'était pas quand ce
+paragraphe a été écrit.** Le second : deux captures, à 1440 et à 390 px, sur un titre de 128
+caractères et une prochaine action de 134. Le premier, depuis le 2026-08-17 : un parcours cliqué de
+l'accueil à la seconde page, contre la pile réelle et sans aucune substitution, doublé du même
+chemin au clavier seul. La mention « contre des réponses substituées » qui figurait ici est
+**révisée et non retirée** : elle décrivait fidèlement l'état d'avant, et ce qui l'imposait —
+INC-021 — était déjà close quand elle a été écrite. **Aucun test pgTAP dédié** :
 l'unité ne livre ni table, ni fonction, ni politique — ce qu'elle lit est déjà couvert par la suite
 de `CRM-040`, et ce qu'elle ajoute est un écran.
 

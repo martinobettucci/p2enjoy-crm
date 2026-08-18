@@ -705,3 +705,122 @@ test.describe('paliers responsive', () => {
 		})
 	}
 })
+
+// --- LE PARCOURS ENTIER, DE L'ACCUEIL À LA SECONDE PAGE, SANS UNE SEULE ADRESSE SAISIE ----------
+//
+// CE BLOC LÈVE L'ÉCART QUI MAINTENAIT `CRM-042` OUVERTE, et il faut dire ce qui manquait.
+//
+// L'unité prouvait le tri, les filtres et la pagination contre des réponses substituées ; elle
+// prouvait les requêtes émises hors interface avec le jeton réel de l'administratrice ; et depuis
+// le 2026-08-16 elle prouvait les données longues et la seconde page contre la pile réelle. Ce qui
+// manquait était le CHAÎNAGE : aucun scénario ne partait de l'accueil pour ARRIVER à la liste par
+// des gestes. Tous s'y rendaient en écrivant l'adresse, ce que l'utilisateur ne fait pas.
+//
+// L'écart invoquait INC-021 — « aucune unité ne porte l'écran de connexion ». Ce blocage a disparu
+// le 2026-08-07 avec `CRM-009` ; la citation lui a survécu d'une semaine (INC-143). Rien
+// n'empêchait donc plus cette preuve, sinon qu'elle n'avait pas été écrite.
+//
+// Ici : connexion au formulaire réel, puis accueil, puis la pilule du track, puis l'onglet du
+// channel, puis la bascule de vue, puis le bouton de page suivante. Six gestes, aucune adresse.
+
+test.describe('le parcours complet, à la souris et au clavier seuls', () => {
+	/** Le track et le channel de VOLUME : 27 cards actives, seul channel du seed à deux pages. */
+	const TRACK = 'studio-web'
+	const CHANNEL_VOLUME = 'maintenance'
+	const ACTIVES = 27
+
+	async function connecter(page: Page): Promise<void> {
+		await page.goto('/connexion')
+		await page.getByLabel('Adresse email').click()
+		await page.keyboard.press('ControlOrMeta+A')
+		await page.keyboard.type('admin@p2enjoy.test')
+		await page.keyboard.press('Tab')
+		await page.keyboard.press('ControlOrMeta+A')
+		await page.keyboard.type(MOT_DE_PASSE_SEED)
+		await page.keyboard.press('Enter')
+		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	}
+
+	test('de l’accueil à la seconde page : six gestes, aucune adresse saisie', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+
+		// 1. L'accueil. C'est le seul `goto` du scénario, et c'est la porte d'entrée du produit.
+		await page.goto('/')
+
+		// 2. La pilule du track, désignée par son adresse et non par son rang : le seed en porte
+		//    plusieurs, et « la première » changerait de sens le jour où l'ordre changerait.
+		const pilule = page.locator(`[data-testid="entree-track"][href="/tracks/${TRACK}"]`)
+		await expect(pilule).toBeVisible()
+		await pilule.click()
+		await expect(page).toHaveURL(new RegExp(`/tracks/${TRACK}$`))
+
+		// 3. L'onglet du channel de volume.
+		const onglet = page.locator(`[data-testid="onglet-channel"][href*="${CHANNEL_VOLUME}"]`)
+		await expect(onglet).toBeVisible()
+		await onglet.click()
+		await expect(page.getByTestId('board')).toBeVisible()
+
+		// 4. La bascule vers la vue liste — l'écran que cette unité livre.
+		await page.locator('[data-testid="lien-vue"][data-vue="liste"]').click()
+		await expect(page).toHaveURL(new RegExp(`${CHANNEL_VOLUME}/liste$`))
+		await expect(page.getByTestId('tableau-liste')).toBeVisible()
+
+		// Le total vient de la PILE, pas d'une fixture : c'est ce que la base contient vraiment.
+		await expect(page.getByTestId('total-liste')).toContainText(String(ACTIVES))
+		await expect(page.getByTestId('rang-page')).toContainText('1')
+		await expect(page.getByTestId('ligne-card')).toHaveCount(LIGNES_PAR_PAGE)
+		await capturer(page, 'liste-parcours-page-1', 'CRM-042')
+
+		// 5. La seconde page, franchie par le vrai bouton.
+		await page.getByTestId('page-suivante').click()
+		await expect(page).toHaveURL(/page=2/)
+		await expect(page.getByTestId('rang-page')).toContainText('2')
+		await expect(page.getByTestId('ligne-card')).toHaveCount(ACTIVES - LIGNES_PAR_PAGE)
+		// La dernière page BORNE le parcours : le bouton reste visible, et devient inactif. Le
+		// vérifier plutôt que le supposer — sur la capture, seule sa teinte le distingue, et une
+		// teinte ne dit pas si le clic est refusé.
+		await expect(page.getByTestId('page-suivante')).toBeDisabled()
+		await capturer(page, 'liste-parcours-page-2', 'CRM-042')
+
+		// 6. Et le retour, qui doit ramener la première page pleine.
+		await page.getByTestId('page-precedente').click()
+		await expect(page.getByTestId('rang-page')).toContainText('1')
+		await expect(page.getByTestId('ligne-card')).toHaveCount(LIGNES_PAR_PAGE)
+	})
+
+	test('le même parcours AU CLAVIER SEUL, de l’accueil à la vue liste', async ({ page }) => {
+		await connecter(page)
+		await page.goto('/')
+
+		// On avance à la tabulation jusqu'à la pilule du track : aucune souris, et l'élément
+		// réellement focalisé est vérifié avant d'être activé.
+		const pilule = page.locator(`[data-testid="entree-track"][href="/tracks/${TRACK}"]`)
+		await page.locator('body').press('Tab')
+		for (let saut = 0; saut < 60; saut += 1) {
+			if (await pilule.evaluate((noeud) => noeud === document.activeElement)) break
+			await page.keyboard.press('Tab')
+		}
+		await expect(pilule).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page).toHaveURL(new RegExp(`/tracks/${TRACK}$`))
+
+		const onglet = page.locator(`[data-testid="onglet-channel"][href*="${CHANNEL_VOLUME}"]`)
+		for (let saut = 0; saut < 60; saut += 1) {
+			if (await onglet.evaluate((noeud) => noeud === document.activeElement)) break
+			await page.keyboard.press('Tab')
+		}
+		await expect(onglet).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('board')).toBeVisible()
+
+		const bascule = page.locator('[data-testid="lien-vue"][data-vue="liste"]')
+		for (let saut = 0; saut < 60; saut += 1) {
+			if (await bascule.evaluate((noeud) => noeud === document.activeElement)) break
+			await page.keyboard.press('Tab')
+		}
+		await expect(bascule).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('tableau-liste')).toBeVisible()
+	})
+})
