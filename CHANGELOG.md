@@ -104,6 +104,18 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **Le harnais des scripts ne rend plus sept verdicts qui parlaient du shell de l'appelant**
+  (`CRM-001`, `CRM-002`, `docs/JOURNAL.md` décision 442). `scripts/verify-scripts.sh` lance
+  `./runDev.sh --bootstrap` et `./resetMe.sh --yes` en ne posant que `P2ENJOY_ENV_FILE`. Une
+  variable `NPM_CA_FILE` exportée dans le shell — ce que `docs/CloudWorker.md` §2.1 impose pour que
+  `npm ci` traverse un proxy TLS interposé — fuyait donc dans chacun de ces appels, et `runDev.sh`
+  lui donnait, correctement, priorité sur le `.env` de travail. Les six contrôles qui écrivent une
+  valeur invalide et attendent un refus recevaient une **acceptation**, et le septième, écrit pour
+  prouver que `resetMe.sh` refuse **avant toute destruction**, provoquait la destruction réelle du
+  cluster. La variable est désormais neutralisée une fois en tête du harnais ; les trois contrôles
+  qui éprouvent la priorité du shell la posent eux-mêmes sur leur ligne de commande, et aucune
+  couverture n'est perdue.
+
 - **La pile redémarre de nouveau sur une base contenant du courrier ou du sommeil** (INC-144,
   `docs/JOURNAL.md` décision 431). Le `migrations-runner` rejoue tout le répertoire à chaque
   démarrage. Cinq migrations — 16, 17, 20, 25 et 30 — réinstallaient la contrainte de vocabulaire

@@ -59,6 +59,18 @@ dev ; aucun service de développement présent en prod.
       restera tant que la reconstruction n'aura pas été prouvée sur un poste dont le constructeur
       fonctionne. Ne pas conclure au vert sur trois contrôles qu'on n'a pas su exécuter est
       exactement ce qu'INC-145 reproche au harnais.
+      **RÉVISÉ le 2026-08-18 sur un poste dont `docker buildx v0.31.1` fonctionne (décision 442) :
+      DEUX DES TROIS SONT VERTS.** « build sans cache avec CA : branche active, `npm ci` réussi »
+      et « l'image exclut contexte sensible, secret `npm_ca`, `cafile` et `.npmrc` non vide » sont
+      MESURÉS verts — la reconstruction elle-même, le transport du secret de build et l'absence de
+      résidu dans l'image sont donc prouvés. Le blocage nommé ci-dessus n'était pas une propriété
+      du produit.
+      *Reste dû, et son motif CHANGE* : « la reconstruction sans CA n'emprunte pas sa branche
+      inactive ». Ce contrôle neutralise le secret et attend que `npm ci` réussisse **sans**
+      certificat ; l'hôte de mesure interpose un proxy TLS — son paquet système et le paquet du
+      proxy sont le même fichier —, si bien que `npm ci` ne peut pas y aboutir sans CA. Le contrôle
+      est juste et n'est **pas** modifié ; il exige un hôte sans interception. `CRM-001` reste
+      `[~]` pour ce seul contrôle.
       *Relevé d'origine, conservé :* les preuves de démarrage dataient d'un assemblage comportant
       encore `supavisor`, la base `_supabase` et le mot de passe du rôle `pgbouncer` ; la
       vérification n'avait pas pu être rejouée le 2026-08-13, le démon Docker étant absent.
