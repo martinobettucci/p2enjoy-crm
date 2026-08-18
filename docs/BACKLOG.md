@@ -7107,10 +7107,16 @@ migration `0046`) :
       §10.1), chaque sous-tranche committée et prouvée avant la suivante :
       - [x] **4a — Le carnet de contacts**, en lecture. **Livrée et prouvée le 2026-08-18** ; voir
             le détail ci-dessous.
-      - [ ] **4b — La fiche d'organisation** : les contacts d'une organisation, et ce qui la
-            caractérise. Le nom d'organisation du carnet deviendra un lien avec elle.
-      - [ ] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
-            (`card_contacts`), premier geste d'écriture de la tranche.
+      - [x] **4b — La fiche d'organisation** : les contacts d'une organisation, et ce qui la
+            caractérise. Le nom d'organisation du carnet est un lien vers elle. **Livrée et prouvée
+            le 2026-08-18** ; voir le détail plus bas. *(Case restée à `[ ]` par oubli de la session
+            qui l'a livrée, alors que le corps de l'unité la documente comme livrée : corrigée le
+            2026-08-18 avec la sous-tranche 4c, sans autre changement.)*
+      - [~] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
+            (`card_contacts`), premier geste d'écriture de la tranche. **Spécifiée le 2026-08-18**
+            — `docs/SPEC-contacts.md` §12 et `docs/DESIGN_SYSTEM.md` §5.21, écrits et committés
+            AVANT toute ligne de code (`CLAUDE.md` §5), fondés sur treize réponses PostgREST
+            relevées à la main sur la pile seedée. Implémentation en cours.
       - [ ] **4d — Les deux sélecteurs** du §9.1 (`contact` et `user`) dans le formulaire d'une
             affaire, et **l'enrichissement du seed** différé par le §9.6, avec la révision des dix
             comptes qu'il déplace.

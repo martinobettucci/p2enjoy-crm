@@ -1542,6 +1542,72 @@ n'existe aucune liste d'organisations. Ce que l'écran lit est spécifié par `d
   quatre colonnes ne tiennent pas, et le tableau défile **dans son conteneur** pendant que la page
   ne défile jamais horizontalement (§7).
 
+### 5.21 Contacts d'une affaire — `CRM-060`
+
+Bloc de la **colonne gauche** du détail de card (§5.3), et **première écriture** que le carnet de
+contacts exerce. Ce que le bloc lit, envoie et refuse est spécifié par `docs/SPEC-contacts.md` §12 ;
+les règles ci-dessous ne disent que de quoi il a l'air. Tout ce que le §5.13 pose vaut ici sans être
+répété : formulaire et confirmation **dans le flux du document — aucune modale**, focus entrant dans
+le premier champ et rendu à la commande qui l'a ouvert, alerte de refus **dans le bloc concerné**.
+
+- **Il vit ENTRE le formulaire et le bloc de corbeille**, et l'ordre de la colonne gauche devient :
+  en-tête, formulaire, contacts, corbeille. Les deux bornes sont déjà écrites au §5.3 — la colonne
+  droite « raconte » et n'accueille aucun geste, et le retrait reste en bas « parce qu'un retrait
+  n'est pas ce qu'on vient faire sur une fiche ». Les contacts d'une affaire appartiennent à son
+  dossier, donc ils se lisent avec lui.
+
+- **Une `ul` de lignes, ni le tableau du §5.9 ni l'arborescence du §5.13.** C'est le patron de la
+  liste plate du §5.18, et pour ses deux motifs exactement : la colonne fait `72ch` au plus, et
+  chaque ligne porte **sa propre commande**. Les hauteurs de ligne et les séparateurs du §5.9 sont
+  conservés — `--size-target`, bordure basse `--color-border`, survol `--color-hover`, aucune
+  zébrure.
+
+- **Le rôle dans l'affaire est un MOT, jamais une teinte** (§1), et il n'est **pas traduit** : c'est
+  une valeur métier libre que la base n'énumère pas (`docs/SPEC-contacts.md` §2.3), au même titre
+  qu'un libellé de track (§10). Il se rend en pilule neutre `--color-hover` / `--color-text-2`,
+  `rounded-full` (§5.6). Un rattachement **sans rôle** ne rend **rien** à cette place : ni tiret, ni
+  « non renseigné » — la règle du §5.9 que les §5.19 et §5.20 tiennent déjà.
+
+- **Le nom de l'organisation est un lien vers sa fiche** (§5.20), comme au §5.19 : la destination
+  existe. **Le nom du contact n'en est pas un** — il n'existe pas de fiche de contact, et un lien y
+  serait mort (§5.10, §5.20).
+
+- **Le sélecteur n'offre que les contacts NON ENCORE rattachés.** Ce n'est pas une garde de droit,
+  c'est le refus d'une commande vouée à l'échec : rattacher deux fois le même contact rend `409`
+  (mesuré), et c'est la règle que le §5.15 a posée pour la case « par défaut » d'un workflow. Le
+  refus reste néanmoins traduit : deux utilisateurs peuvent agir à la même seconde.
+
+- **Trois vides distincts, et aucun ne se confond avec un autre** (§5.8) : « aucun contact rattaché
+  à cette affaire », qui **garde son formulaire** — c'est le geste qui le comble, la règle du §5.13
+  pour l'état vide d'une surface qui agit ; « tous les contacts sont déjà rattachés », qui n'affiche
+  **aucun sélecteur vide** ; et « cet espace de travail n'a aucun contact », qui n'offre **aucune
+  action** — aucun écran du produit ne crée de contact, et un bouton y serait un chemin vers nulle
+  part (§5.16, §5.19).
+
+- **Le détachement demande une confirmation NOMMANT le contact** (§6). C'est un retrait : la ligne
+  disparaît et le rôle saisi avec elle, sans reprise possible. Elle se distingue en cela de
+  « Restaurer » du §5.16, qui répare, et son bouton d'action est **destructif** (§5.5) comme celui
+  du §5.3 — la teinte de danger annonce le geste qu'on est sur le point de commettre. La commande
+  qui l'ouvre reste **secondaire discrète**, icône `Unlink`, jamais `Trash2` : un contact détaché
+  n'est ni supprimé ni mis à la corbeille, et l'icône de la corbeille dirait le contraire.
+
+- **« Sans effet » est dit en toutes lettres, et n'est ni un succès ni une erreur** — la règle du
+  §5.3 et du §5.3 ter, reprise sans changement. MESURÉ : la lectrice qui détache reçoit `200` et
+  **zéro ligne**, indistinguable d'une ligne déjà retirée par un tiers. L'écran écrit « aucun
+  rattachement n'a été retiré » et **relit** la liste. Annoncer un retrait qui n'a pas eu lieu
+  serait la simulation de succès que `CLAUDE.md` §18 interdit.
+
+- **Aucune commande n'est éteinte d'avance, quel que soit le rôle** — §5.3, §5.13, §5.16, sans
+  exception. La règle vit dans `card_contacts_insertion` et `card_contacts_suppression` ; une
+  commande grisée ferait passer une décision de la base pour une décision d'écran.
+
+- **Un refus n'efface pas la saisie** (§5.7 ter) : le contact choisi et le rôle tapé restent à
+  l'écran avec leur explication.
+
+- **La liste est RELUE après chaque écriture, jamais complétée localement** — la règle du §5.15 pour
+  la création d'un workflow. Une insertion optimiste contredirait l'ordre du serveur le temps d'un
+  rendu, et masquerait un rattachement posé entre-temps par un collègue.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

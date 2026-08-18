@@ -1005,3 +1005,268 @@ enrichissement de celui que le §9.6 a différé : celui-là déplaçait dix com
 - commentaires `@spec` / `@verifies` sur chaque fichier.
 
 Les sous-tranches 4c et 4d restent dues ; l'unité `CRM-060` **demeure `[~]`**.
+
+---
+
+## 12. Sous-tranche 4c — Le rattachement d'un contact à une affaire
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : les treize réponses PostgREST des §12.3 et §12.4
+ont été relevées à la main avec les jetons réels des trois profils et avec la clé anonyme, et
+`docs/DESIGN_SYSTEM.md` relu **intégralement**. Le seed a été rendu **intact** après chaque
+mesure d'écriture, et c'est vérifié : `card_contacts` compte de nouveau ses deux lignes du §5.
+
+Cette section prolonge les §10 et §11, dont elle reprend les références amont sans les répéter.
+Elle livre la **troisième** des quatre surfaces du §10.1, et la **première à ÉCRIRE** : les §10.4
+et §11.4 ont tous deux écrit « aucun refus d'écriture n'est à traduire, la question ne se pose
+qu'en 4c ». Elle se pose ici, et le §12.5 y répond.
+
+### 12.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, sur la route de détail d'une affaire :
+
+- la **liste des contacts rattachés** à cette affaire, avec leur rôle dans l'affaire ;
+- le **geste de rattachement** d'un contact du carnet à cette affaire, avec un rôle facultatif ;
+- le **geste de détachement**, avec sa confirmation.
+
+**Elle ne livre pas**, et chaque manque est nommé au §12.8 : aucune modification du rôle d'un
+rattachement déjà posé, aucune liste des affaires d'un contact, aucun rattachement depuis le
+carnet ni depuis la fiche d'organisation, et aucune création de contact.
+
+### 12.2 Où le bloc s'ancre — colonne GAUCHE, entre le formulaire et le geste de corbeille
+
+**Décision : un bloc de la colonne gauche du détail de card, posé APRÈS le formulaire et AVANT le
+bloc de mise à la corbeille.**
+
+Le motif est celui que `docs/DESIGN_SYSTEM.md` §5.3 a déjà écrit deux fois :
+
+- **la colonne DROITE raconte**, elle n'agit pas. Elle porte le fil unifié (§5.10, §5.11), et
+  « un geste qui agit n'appartient pas au récit ». Rattacher un contact est un geste ;
+- **le bloc de corbeille reste le DERNIER de la colonne**, « parce qu'un retrait n'est pas ce
+  qu'on vient faire sur une fiche ». Poser les contacts sous lui les mettrait après la sortie.
+
+L'ordre de la colonne gauche devient donc : **en-tête, formulaire, contacts, corbeille**. Les
+contacts d'une affaire appartiennent à son dossier — ils se lisent avec lui, pas après le geste
+qui la retire.
+
+**Aucune route nouvelle, aucune entrée de navigation.** La couverture exacte `ROUTES` ⇄
+`ENTREES_TRANSVERSES` de `routes.test.tsx` reste **inchangée**, comme au §11.2 et pour une raison
+plus forte encore : ce bloc n'a pas d'adresse propre, il vit dans celle de l'affaire.
+
+### 12.3 Ce que le bloc lit — mesuré sur la pile réelle
+
+MESURÉ le 2026-08-18 avec le jeton réel de l'administratrice, la requête **unique** que le bloc
+émettra pour les rattachements :
+
+```
+GET /rest/v1/card_contacts
+    ?card_id=eq.<idCard>
+    &select=contact_id,role,contacts(id,full_name,organization_id,organizations(id,name))
+    &order=contacts(full_name)
+```
+
+rend, pour l'affaire `Migration ERP Sogexia` (`…0c2`) :
+
+```
+[{"contact_id":"5eed…091","role":"decideur",
+  "contacts":{"id":"5eed…091","full_name":"Léo Marchand",
+              "organization_id":"5eed…081",
+              "organizations":{"id":"5eed…081","name":"Sogexia"}}}]
+```
+
+- **L'EMBARQUEMENT TIENT SUR DEUX NIVEAUX**, `card_contacts → contacts → organizations`, et c'est
+  mesuré : aucune ambiguïté `PGRST201` n'apparaît, chacune des deux clés étrangères restant unique
+  dans son sens. Le §10.3 l'avait établi pour un niveau, le §11.3 pour l'autre sens ; la mesure
+  ci-dessus l'établit pour la chaîne. **Une seconde requête serait ici un coût gratuit.**
+- **L'ORDRE SE DEMANDE AU PREMIER NIVEAU, ET C'EST UN ÉCART MESURÉ AVEC LE §11.3.** La fiche
+  d'organisation trie une relation **to-many** embarquée, ce que PostgREST n'accepte que par
+  `referencedTable` (`contacts.order=full_name`), la forme `order=contacts(full_name)` y étant
+  refusée par `PGRST108`. Ici la relation est **to-one** — un rattachement désigne un contact et un
+  seul —, et `order=contacts(full_name)` est **accepté**, mesuré `200` : il trie les
+  **rattachements** eux-mêmes par le nom du contact qu'ils désignent. Vérifié dans les deux sens
+  sur deux lignes — ascendant rend `["Léo Marchand","Sophie Dupont"]`, descendant l'inverse : le
+  tri **agit**, il n'est pas seulement toléré.
+- **`role_title` n'est PAS demandé, et ce n'est pas un oubli.** La fonction d'un contact le
+  qualifie dans son **organisation** ; ce bloc dit son rôle dans **cette affaire**, qui est une
+  autre donnée et porte le même mot. Les afficher tous deux sur une ligne ferait lire deux « rôles »
+  contradictoires. La fonction reste lisible au carnet (§10.3) et sur la fiche (§11.3).
+- **`created_at` n'est pas demandé non plus** : le fil unifié raconte la chronologie d'une affaire
+  (§5.11), pas ce bloc, et une requête ne rapporte que ce qui est affiché (§10.3).
+
+**Les contacts rattachables sont lus par `lireContactsDuCarnet`, sans nouvelle requête ni nouveau
+type** (§10.3). Le sélecteur du §12.6 a besoin exactement de ce que le carnet lit : l'identifiant,
+le nom, et l'organisation qui distingue deux homonymes.
+
+### 12.4 Autorisations — treize mesures, et deux refus qui ne se ressemblent pas
+
+MESURÉ le 2026-08-18, avec les jetons réels. **Lecture** :
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 1 | administratrice, rattachements de `…0c2` | `200`, **1 ligne**, contact et organisation embarqués |
+| 2 | **lectrice**, rattachements de `…0c4` (affaire qu'elle lit) | `200`, **1 ligne** — la lecture suit celle de la card (`app.can_read_card`) |
+| 3 | **anonyme**, rattachements de `…0c2` | `200` et **`[]`** — zéro ligne, jamais une erreur de privilège |
+
+**Écriture — le rattachement** :
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 4 | administratrice, `POST` Élise sur `…0c2` | **`201`** et la ligne |
+| 5 | **business developer**, `POST` Sophie sur `…0c2` | **`201`** et la ligne — le geste n'est PAS un geste d'administration : `card_contacts_insertion` porte sur `app.can_write_card`, jamais sur un rôle |
+| 6 | **lectrice**, `POST` sur `…0c4` | **`403`**, `42501`, « new row violates row-level security policy » |
+| 7 | administratrice, `POST` d'un rattachement **déjà posé** | **`409`**, `23505`, `duplicate key value violates unique constraint "card_contacts_pkey"` |
+| 8 | administratrice, `POST` avec un `contact_id` **inexistant** | **`409`**, `23503`, violation de la FK composite `(contact_id, workspace_id)` |
+| 9 | administratrice, `POST` avec un `contact_id` **qui n'est pas un uuid** | **`400`**, `22P02` |
+| 10 | administratrice, `POST` avec `role: ""` | **`400`**, `23514`, `card_contacts_role_check` |
+
+**Écriture — le détachement** :
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 11 | administratrice / business developer, `DELETE` d'un rattachement existant | **`200`** et la ligne retirée |
+| 12 | **lectrice**, `DELETE` d'un rattachement **existant** de `…0c4` | **`200`** et **`[]`** — la ligne est relue **inchangée** |
+| 13 | administratrice, `DELETE` d'un rattachement **inexistant** | **`200`** et **`[]`** |
+
+**Trois conséquences, et chacune décide d'une règle.**
+
+1. **Le refus d'INSERTION est bruyant, celui de SUPPRESSION est SILENCIEUX.** Les mesures 6 et 12
+   portent sur le même acteur et la même table : l'un rend `403`, l'autre `200` et zéro ligne. La
+   clause `USING` d'une politique `DELETE` filtre la ligne **avant** de supprimer, exactement comme
+   celle de `cards_maj` au §4 ter.3 de `docs/SPEC-corbeille.md`. Le détachement a donc **trois
+   issues**, pas deux, et l'issue « sans effet » n'est **ni** un succès **ni** une erreur.
+2. **Les mesures 12 et 13 sont INDISTINGUABLES**, et c'est délibérément assumé : « aucun
+   rattachement n'a été retiré » est vrai des deux côtés, et prétendre distinguer un refus de droit
+   d'une ligne déjà partie renseignerait un appelant sans droit sur l'état de l'affaire
+   (`docs/SPEC-permissions-rls.md` §7). L'écran dit ce qui est vrai — rien n'a changé — et **relit**.
+3. **`409` recouvre DEUX causes opposées** (mesures 7 et 8), et le code HTTP seul ne les sépare pas.
+   « Ce contact est déjà rattaché » appelle un geste — en choisir un autre — là où « ce contact
+   n'existe pas » signale une donnée périmée. Les fondre sous « une erreur est survenue » serait la
+   valeur par défaut trompeuse de `CLAUDE.md` §18. Le classement lit donc le **code PostgreSQL
+   d'abord, le code HTTP ensuite** — la règle de `classerRefusRestauration` (`corbeille.ts`),
+   reprise sans exception.
+
+**L'écran ne calcule AUCUN droit**, et **aucune commande n'est éteinte d'avance**, quel que soit le
+rôle : c'est la règle du §5.3, du §5.16 et du §5.13 du design system, tenue ici sans exception. La
+règle vit dans `card_contacts_insertion` et `card_contacts_suppression` ; une commande grisée par
+l'interface ferait passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
+
+### 12.5 Les refus, traduits par un dictionnaire FERMÉ
+
+Le message du serveur n'atteint **jamais** l'écran — règle déjà tenue par les codes d'incident de
+`CRM-059`, le classement des refus de `CRM-075` et le geste de corbeille de `CRM-077` : un texte
+d'API n'est pas un texte pour un humain, et le rendre tel quel exposerait le détail de la pile
+(`CLAUDE.md` §20).
+
+| Nature | Reconnue par | Ce que l'écran dit |
+|---|---|---|
+| `deja-rattache` | code `23505` | le contact est déjà rattaché à cette affaire |
+| `contact-inconnu` | code `23503` | ce contact n'existe pas dans cet espace de travail ; la liste est peut-être périmée |
+| `forbidden` | `401` ou `403` | vous ne pouvez pas modifier cette affaire |
+| `network` | statut absent ou `0` | la requête n'a pas abouti |
+| `unknown` | tout le reste | une erreur inattendue |
+
+**Le code PostgreSQL prime sur le code HTTP**, et l'ordre compte : `23505` et `23503` rendent tous
+deux `409`, et un classement qui commencerait par le statut les confondrait.
+
+**La forme `role: ""` n'est jamais envoyée** (mesure 10) : un champ de rôle laissé vide vaut
+**`null`**, l'absence de rôle étant un état légitime que la colonne accepte. Ce n'est **pas** une
+garde de saisie doublant la base au sens du §5.3 ter — la base refuserait `''` —, c'est le choix de
+la valeur qui exprime « pas de rôle ». Le rôle saisi n'est pour le reste **ni contraint ni
+normalisé** : il est libre (§2.3), et en fermer la liste à l'écran poserait une règle de produit que
+personne n'a prise.
+
+### 12.6 De quoi le bloc a l'air — règles renvoyées au design system
+
+Le détail visuel est écrit dans `docs/DESIGN_SYSTEM.md` §5.21, ajouté dans le même changement.
+Quatre décisions découlent de la **donnée** et sont rappelées ici :
+
+1. **Une `ul` de lignes, ni le tableau du §5.9 ni l'arborescence du §5.13.** La colonne gauche est
+   large de `72ch` au plus (§5.3) et chaque ligne porte **sa propre commande** : c'est le patron de
+   la liste plate du §5.18. Deux ou trois colonnes comparables n'y tiendraient pas, et un contact
+   rattaché n'a pas d'enfant à imbriquer.
+2. **Le rôle dans l'affaire est un MOT, jamais une teinte** (§1) — « decideur », « prescripteur »,
+   tel que la donnée le porte, sans traduction : c'est une **valeur métier libre** (§2.3), pas une
+   clé fermée, et la traduire supposerait une énumération que la base refuse d'avoir. Un
+   rattachement **sans rôle** ne rend rien à cette place : ni tiret, ni « non renseigné » (§5.9).
+3. **Le nom de l'organisation est un LIEN vers sa fiche**, comme au §5.19 et pour la même raison :
+   la destination existe depuis 4b. **Le nom du contact n'est PAS un lien** — il n'existe pas de
+   fiche de contact, et un lien y serait mort (§11.8, §5.10).
+4. **Le formulaire de rattachement vit DANS LE FLUX du document, jamais en modale** (§5.13), et sa
+   confirmation de détachement aussi (§5.3, §5.13, `CRM-043` ayant tranché trois fois). Le focus
+   entre dans le premier contrôle à l'ouverture et revient à la commande à la fermeture.
+
+**Le sélecteur n'offre que les contacts NON ENCORE rattachés**, et c'est un filtre posé sur des
+données déjà en main, non une requête de plus. Le motif est mesuré : rattacher un contact déjà
+rattaché rend `409` (mesure 7), et « on n'offre pas une commande dont on sait qu'elle sera
+refusée » — la règle que le §5.15 a posée pour la case « par défaut » d'un workflow. Le refus
+`deja-rattache` du §12.5 reste néanmoins traduit : deux utilisateurs peuvent rattacher le même
+contact à la même seconde, et l'écran ne prétend pas connaître l'état du serveur.
+
+### 12.7 Contrat de comportement — sous-tranche 4c
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | affaire avec un contact rattaché | une ligne par rattachement, dans l'ordre du **nom du contact**, avec son rôle quand il existe |
+| b | rattachement **sans rôle** | la ligne rend le nom et l'organisation, et **rien** à la place du rôle |
+| c | contact **sans organisation** rattaché | la ligne rend le nom seul, sans lien |
+| d | affaire **sans aucun rattachement** | état **vide** nommant ce qui manque, et le formulaire de rattachement reste offert — il est le geste qui comble ce vide (§5.13) |
+| e | lecture en vol | squelettes à la forme de la liste attendue (§5.8), jamais un spinner |
+| f | lecture en échec | état d'erreur avec **action de reprise**, qui relance réellement la lecture |
+| g | rattachement réussi | la liste est **relue** — jamais complétée localement —, le formulaire se referme, et le focus revient à la commande |
+| h | rattachement refusé (lectrice) | alerte `role="alert"` **dans le formulaire**, texte du dictionnaire fermé, la **saisie conservée** |
+| i | rattachement d'un contact déjà rattaché | alerte disant qu'il l'est déjà, jamais « une erreur est survenue » |
+| j | rôle laissé vide | `null` est envoyé, jamais `""` ; le rattachement réussit |
+| k | tous les contacts du workspace sont déjà rattachés | le formulaire dit qu'il n'en reste aucun, et **n'offre pas de sélecteur vide** |
+| l | le workspace n'a **aucun** contact | le formulaire nomme l'absence, **sans action** : aucun écran ne crée de contact (§10.7, §11.8) |
+| m | détachement demandé | une confirmation dans le flux, **nommant le contact** (§6) |
+| n | détachement réussi | la liste est **relue** ; la ligne disparaît |
+| o | détachement sans effet (lectrice, ou ligne déjà partie) | « aucun rattachement n'a été retiré » — ni un succès, ni une erreur —, et la liste est **relue** |
+| p | commandes et rôle | **aucune commande n'est éteinte d'avance**, quel que soit le rôle de l'appelant |
+
+### 12.8 Limites nommées — sous-tranche 4c
+
+Écrites plutôt que découvertes plus tard :
+
+- **le rôle d'un rattachement posé ne se MODIFIE pas.** La politique `card_contacts_maj` existe en
+  base depuis la tranche 1 ; aucun écran ne l'exerce. Détacher puis rattacher reste possible, et
+  l'écart est nommé plutôt que compensé par une commande morte ;
+- **aucune liste des affaires d'un contact.** Elle demanderait une fiche de contact, qui n'existe
+  pas (§11.8) ;
+- **aucun rattachement depuis le carnet ni depuis la fiche d'organisation** : le geste part de
+  l'affaire, qui est ce que la politique `can_write_card` garde ;
+- **aucune création de contact depuis ce bloc.** Si le workspace n'a aucun contact, le bloc le dit
+  et s'arrête là (cas l) — la création reste due, et sa surface n'est spécifiée nulle part ;
+- **aucune pagination du sélecteur**, pour le motif exact du §10.3 : aucun volume n'est mesuré ;
+- **le fil unifié n'apprend rien de ce geste.** `card_contacts` n'écrit aucun `card_event`, et la
+  tranche 1 n'en a posé aucun trigger : un rattachement n'apparaît pas dans la timeline. L'écart est
+  nommé ici et reste à arbitrer.
+
+### 12.9 Preuves exigées — sous-tranche 4c
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la requête émise par la lecture des rattachements — table, colonnes, filtre, ordre au premier niveau ; la charge réellement envoyée par le rattachement, `role` valant `null` sur une saisie vide ; le classement des cinq refus du §12.5, **code PostgreSQL avant code HTTP** ; les trois issues du détachement |
+| Unitaire | `webapp/src/app/BlocContactsCard.test.tsx` : les cas a à p du §12.7 |
+| E2E | `e2e/ui/contacts-affaire.spec.ts` : sur la pile réelle, l'administratrice rattache Élise à `Migration ERP Sogexia` puis la détache — la liste est relue dans les deux sens ; la **lectrice** reçoit le refus écrit ; le parcours au **clavier** ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** conformément à `CLAUDE.md` §16 : le bloc peuplé, son état vide, le formulaire ouvert, le refus, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur |
+| Seed | le seed est rendu **INTACT** par les preuves : `card_contacts` compte de nouveau ses **deux** lignes après la campagne |
+
+**LE SEED EST UNE CONTRAINTE DURE POUR CETTE SOUS-TRANCHE, et c'est mesuré.** `apply-seed.sh`
+compare `card_contacts` à la taille de son propre tableau — **deux** — et **échoue** si le compte
+diffère ; une seconde garde exige que Léo Marchand soit rattaché à **exactement une** card active,
+état que la règle 3 du classement (`CRM-055`) lit. Toute preuve qui rattache un contact **doit donc
+le détacher**, et le détachement n'est pas ici une commodité de test : c'est le geste que la
+sous-tranche livre, exercé par sa propre preuve.
+
+### 12.10 Definition of Done — sous-tranche 4c
+
+- `webapp/src/lib/contacts.ts` : la lecture du §12.3, les deux écritures, le classement du §12.5 ;
+- `webapp/src/app/BlocContactsCard.tsx` : la liste, le formulaire, la confirmation, les états ;
+- `webapp/src/app/RouteCard.tsx` : le bloc monté entre le formulaire et la corbeille (§12.2) ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- preuves du §12.9 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.21 ajouté ; `docs/manual.md` ; `CHANGELOG.md`, dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier.
+
+La sous-tranche 4d reste due ; l'unité `CRM-060` **demeure `[~]`**.
