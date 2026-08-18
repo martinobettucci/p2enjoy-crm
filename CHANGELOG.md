@@ -104,6 +104,15 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **Le harnais des preuves de refus mourait sur sa propre réussite** (`CRM-014`, INC-147,
+  `docs/JOURNAL.md` décision 444). La correction d'INC-147 avait renommé la cible du contrôle de la
+  preuve n° 9 en `SPEC_PREUVE_9` sans reprendre le message de sa branche verte, resté sur l'ancien
+  `SPEC_INGESTION`. Sous `set -u`, `scripts/verify-preuves-refus.sh` s'interrompait donc sur
+  « unbound variable » **exactement quand la preuve passait** — la branche rouge, elle, fonctionnait.
+  Le défaut n'était visible qu'en exécutant, et la pile était tombée le jour de l'écriture. Le
+  libellé nomme désormais la variable existante et décrit ce que le contrôle mesure réellement : la
+  preuve saine de `CRM-057`, témoin positif compris.
+
 - **Le harnais des scripts ne rend plus sept verdicts qui parlaient du shell de l'appelant**
   (`CRM-001`, `CRM-002`, `docs/JOURNAL.md` décision 442). `scripts/verify-scripts.sh` lance
   `./runDev.sh --bootstrap` et `./resetMe.sh --yes` en ne posant que `P2ENJOY_ENV_FILE`. Une
