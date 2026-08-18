@@ -455,7 +455,19 @@ ca_refusal missing "un fichier absent" "$WORK/ca-absent.pem"
 ca_refusal directory "un répertoire" "$WORK/ca-directory"
 ca_refusal empty "un fichier vide" "$WORK/ca-empty.pem"
 ca_refusal nonpem "un fichier sans bloc PEM" "$WORK/ca-not-pem.txt"
-ca_refusal unreadable "un fichier illisible" "$WORK/ca-unreadable.pem"
+
+# La prémisse de ce contrôle — un fichier que le processus ne peut PAS lire — n'existe pas pour
+# `root` : `chmod 000` ne lui oppose rien, `[ -r ]` reste vrai et la lecture aboutit réellement
+# (MESURÉ). Le rendre ROUGE ferait dire au harnais « la garde accepte un fichier illisible » alors
+# qu'aucun fichier illisible n'a pu être fabriqué : ce serait l'accusation fausse qu'INC-145
+# reproche déjà au contrôle des ports. Il est donc DÉCLARÉ non exécutable, avec son motif, et
+# reste pleinement exercé dès que le harnais tourne sous un compte ordinaire.
+# Voir docs/CloudWorker.md §2.4, qui cite ce cas nommément.
+if [ "$(id -u)" = "0" ]; then
+	skip "NPM_CA_FILE refuse un fichier illisible : root peut lire un fichier chmod 000"
+else
+	ca_refusal unreadable "un fichier illisible" "$WORK/ca-unreadable.pem"
+fi
 
 # Le shell a la même priorité que dans Compose : il peut corriger une valeur de `.env`, ou la
 # neutraliser explicitement. Symétriquement, une mauvaise surcharge doit être refusée même si le

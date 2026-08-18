@@ -18300,3 +18300,14 @@ prouve une propriété réelle sur un hôte sans interception. Il reste le derni
 elle-même est prouvée. Ensuite, les points 4 à 6 de la décision 439 restent dus : INC-147 et INC-146
 attendent leur **première exécution** depuis leur correction, et les preuves d'interface de
 `CRM-033`, `CRM-035` et `CRM-036` sont dues.
+
+**Une huitième anomalie, du même genre, et déclarée plutôt que rougie.** Le rejeu sous la correction
+ci-dessus rend six des sept contrôles au vert et en laisse **un** : « `NPM_CA_FILE` accepte un
+fichier illisible ». Mesuré : le harnais tourne ici sous `root`, `chmod 000` ne lui oppose rien,
+`[ -r ]` reste vrai et la lecture aboutit réellement. **La prémisse du contrôle — un fichier que le
+processus ne peut pas lire — n'existe pas sur cet hôte.** Le laisser rouge ferait dire au harnais
+« la garde accepte un fichier illisible » alors qu'aucun fichier illisible n'a pu être fabriqué :
+c'est l'accusation fausse qu'INC-145 reproche déjà au contrôle des ports, et c'est exactement le cas
+que `docs/CloudWorker.md` §2.4 cite en exemple. Le contrôle est donc **déclaré non exécutable**, avec
+son motif, sous `root` seulement, et reste pleinement exercé sous un compte ordinaire. La garde du
+produit n'est pas touchée.
