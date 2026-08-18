@@ -393,6 +393,17 @@ export const fr = {
 	'form.save.refus.network': "La connexion a échoué : la valeur n'a pas été enregistrée. Réessayez.",
 	'form.save.refus.unknown': "L'enregistrement a échoué. Réessayez.",
 
+	// --- Sélecteurs de contact et de membre (docs/SPEC-contacts.md §13.5) ------------------
+	// `{identifiant}` est un paramètre, jamais une concaténation (CLAUDE.md §23) : une langue qui
+	// place son complément avant son verbe doit pouvoir déplacer le marqueur.
+	'form.reference.loading': 'Chargement…',
+	'form.reference.retry': 'Réessayer',
+	'form.reference.unknown': 'Référence inconnue ({identifiant})',
+	'form.reference.empty.contact': "Cet espace de travail n'a aucun contact.",
+	'form.reference.empty.user': "Cet espace de travail n'a aucun membre.",
+	'form.reference.error.contact': "La liste des contacts n'a pas pu être lue.",
+	'form.reference.error.user': "La liste des membres n'a pas pu être lue.",
+
 	// --- Board kanban (docs/SPEC-workflow-engine.md §7) ------------------------------------
 	'board.aria': 'Board du channel',
 	'board.column.empty': 'Aucune affaire à cette étape.',

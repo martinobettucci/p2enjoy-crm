@@ -495,6 +495,25 @@ export function useContenuCard(
 // (§4 bis, décision 334, INC-088).
 
 /**
+ * Le modèle porte-t-il au moins un champ de ce type ? — docs/SPEC-contacts.md §13.4.
+ *
+ * C'est la condition qui décide si une liste de référence — les contacts, les membres — doit être
+ * lue. `lireMembresAffectables` a déjà écrit le motif pour l'en-tête : « charger la liste des
+ * membres pour un geste que la plupart des visites ne font pas serait une requête gratuite sur
+ * l'écran le plus ouvert du produit ». La fiche d'affaire EST cet écran.
+ *
+ * LA SECTION REPLIÉE COMPTE, bien qu'elle soit en lecture seule (§4 bis.1) : c'est précisément là
+ * que la résolution du §13.1 opère, et une valeur y resterait un identifiant illisible si la liste
+ * n'était pas chargée.
+ */
+export function modelePorteType(modele: ModeleFormulaire, type: string): boolean {
+	return (
+		modele.champs.some((resolu) => resolu.champ.type === type) ||
+		modele.autresEtapes.some((resolu) => resolu.champ.type === type)
+	)
+}
+
+/**
  * Normalise une saisie d'écran en la valeur `jsonb` que le trigger de `CRM-036` attend (§4 bis.4).
  *
  * Un contrôle HTML ne rend que du texte, et `app.card_field_values_valider` refuse une chaîne là où

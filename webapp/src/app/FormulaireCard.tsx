@@ -28,11 +28,16 @@
 
 import { ArrowRightLeft, CircleCheck, Info, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
+import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
+import { libelleContactAvecOrganisation, lireContactsDuCarnet } from '../lib/contacts'
+import { lireMembresAffectables } from '../lib/entete-card'
 import {
 	appliquerEcriture,
 	ecrireValeur,
 	memeValeur,
+	modelePorteType,
 	normaliserSaisie,
 	type ChampResolu,
 	type ModeleFormulaire,
@@ -70,6 +75,32 @@ const MESSAGES_REFUS_VALEUR: Readonly<Record<NatureRefusValeur, CleTraduction>> 
  * l'employer ici dirait que la valeur est mauvaise là où elle est seulement absente.
  */
 const CLASSES_EXIGE = 'border-l-[3px] border-brand bg-surface rounded-sm p-3'
+
+/**
+ * Une entrée offerte par un sélecteur de référence — docs/SPEC-contacts.md §13.5.
+ *
+ * Les deux listes — contacts et membres — se ramènent à cette forme unique, ce qui laisse **un
+ * seul** chemin de rendu pour deux types : deux rendus jumeaux divergeraient au premier état ajouté.
+ */
+type OptionReference = {
+	readonly valeur: string
+	readonly libelle: string
+}
+
+/** Les deux types que la sous-tranche 4d résout, et la liste que chacun consomme (§13.3). */
+type TypeReference = 'contact' | 'user'
+
+/**
+ * Les listes de référence du formulaire, une par type résolu (§13.4).
+ *
+ * `null` — et non un état de chargement — signifie **« aucune lecture n'a été lancée »** : c'est le
+ * cas de tout formulaire qui ne porte aucun champ du type, et c'est la propriété que la preuve
+ * unitaire vérifie. Confondre les deux ferait rendre « Chargement… » à jamais sur un champ qui n'en
+ * attend aucune.
+ */
+type ListesReference = Readonly<Record<TypeReference, EtatAsync<readonly OptionReference[]> | null>>
+
+const AUCUNE_LISTE: ListesReference = { contact: null, user: null }
 
 /** Les quatre états d'un champ du §4 bis.6. */
 type EtatEcriture =
@@ -109,6 +140,54 @@ export function FormulaireCard({
 	useEffect(() => setModele(modeleCharge), [modeleCharge])
 
 	const [etats, setEtats] = useState<Readonly<Record<string, EtatEcriture>>>({})
+
+	// LES DEUX LISTES DE RÉFÉRENCE (§13.4), et la CONDITION qui évite deux requêtes gratuites sur
+	// l'écran le plus ouvert du produit : chacune n'est lue que si le modèle porte au moins un champ
+	// de son type, section repliée comprise.
+	const [listes, setListes] = useState<ListesReference>(AUCUNE_LISTE)
+	// Une lecture relancée par l'action de reprise du cas h : incrémenter ce compteur suffit à
+	// rejouer l'effet, sans dupliquer la lecture ailleurs.
+	const [reprises, setReprises] = useState(0)
+
+	const porteContact = modelePorteType(modele, 'contact')
+	const porteUser = modelePorteType(modele, 'user')
+
+	useEffect(() => {
+		if (client === null) return
+		if (!porteContact && !porteUser) return
+		let vivant = true
+		const lire = async (
+			type: TypeReference,
+			charger: () => Promise<EtatAsync<readonly OptionReference[]>>,
+		) => {
+			setListes((precedentes) => ({ ...precedentes, [type]: enChargement() }))
+			const etat = await charger()
+			if (!vivant) return
+			setListes((precedentes) => ({ ...precedentes, [type]: etat }))
+		}
+		if (porteContact) {
+			void lire('contact', async () => {
+				const etat = await lireContactsDuCarnet(client)
+				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
+				return pret(
+					etat.donnees.map((contact) => ({
+						valeur: contact.id,
+						libelle: libelleContactAvecOrganisation(contact),
+					})),
+				)
+			})
+		}
+		if (porteUser) {
+			void lire('user', async () => {
+				const etat = await lireMembresAffectables(client, idWorkspace)
+				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
+				return pret(etat.donnees.map((membre) => ({ valeur: membre.id, libelle: membre.nom })))
+			})
+		}
+		return () => {
+			vivant = false
+		}
+	}, [client, idWorkspace, porteContact, porteUser, reprises])
 
 	// LE DÉFILEMENT ET LE FOCUS DU §4 ter.6, et ils ne se produisent QU'UNE FOIS PAR DEMANDE.
 	//
@@ -195,13 +274,15 @@ export function FormulaireCard({
 							etape={modele.etape.label}
 							etat={etats[resolu.champ.id] ?? INACTIF}
 							ecrituresPossibles={client !== null}
+							listes={listes}
+							onReprise={() => setReprises((tour) => tour + 1)}
 							onEnregistrer={enregistrer}
 						/>
 					))}
 				</div>
 			)}
 
-			<SectionAutresEtapes champs={modele.autresEtapes} />
+			<SectionAutresEtapes champs={modele.autresEtapes} listes={listes} />
 		</section>
 	)
 }
@@ -222,12 +303,16 @@ function ChampSaisie({
 	etape,
 	etat,
 	ecrituresPossibles,
+	listes,
+	onReprise,
 	onEnregistrer,
 }: {
 	readonly resolu: ChampResolu
 	readonly etape: string
 	readonly etat: EtatEcriture
 	readonly ecrituresPossibles: boolean
+	readonly listes: ListesReference
+	readonly onReprise: () => void
 	readonly onEnregistrer: (resolu: ChampResolu, valeur: Json) => Promise<void>
 }) {
 	const { champ, visibilite, manquant, exigeParDeplacement } = resolu
@@ -307,6 +392,8 @@ function ChampSaisie({
 				resolu={resolu}
 				invalide={manquant || enRefus}
 				ecrituresPossibles={ecrituresPossibles}
+				listes={listes}
+				onReprise={onReprise}
 				onProposer={proposer}
 				{...(decrit.length === 0 ? {} : { decritPar: decrit.join(' ') })}
 			/>
@@ -376,18 +463,24 @@ function ChampSaisie({
  * règle vit dans la politique RLS, et une interface qui déciderait à sa place ferait passer une
  * décision de la base pour une décision d'écran (`CLAUDE.md` §10, §4 bis.7).
  *
- * Le seul cas désactivé est l'**absence de client configuré**, où il n'existe aucune destination
- * pour l'écriture ; l'application entière rend alors déjà l'écran de configuration manquante.
+ * Le seul cas désactivé pendant l'envoi est l'**absence de client configuré**, où il n'existe
+ * aucune destination pour l'écriture ; l'application entière rend alors déjà l'écran de
+ * configuration manquante. Les sélecteurs de référence ajoutent une seconde dérogation, bornée et
+ * motivée au §13.5 : pendant la LECTURE de leur liste, et après son échec, il n'y a rien à choisir.
  *
- * Les types que `CRM-036` ne résout pas — `user`, `contact`, `file` (INC-053) — tombent dans le
- * défaut et se saisissent en texte brut : afficher un nom que le produit ne sait pas obtenir serait
- * une invention.
+ * `contact` et `user` SONT RÉSOLUS DEPUIS LA SOUS-TRANCHE 4d (docs/SPEC-contacts.md §13). Ce
+ * commentaire disait l'inverse : « afficher un nom que le produit ne sait pas obtenir serait une
+ * invention ». Le produit sait — la tranche 1 a livré `contacts`, la tranche 3 la résolution en
+ * base, les sous-tranches 4a et 4b les deux lectures. Seul `file` reste en saisie texte : son
+ * chemin vise Storage, service distinct (§13.8).
  */
 function Controle({
 	id,
 	resolu,
 	invalide,
 	ecrituresPossibles,
+	listes,
+	onReprise,
 	onProposer,
 	decritPar,
 }: {
@@ -395,6 +488,8 @@ function Controle({
 	readonly resolu: ChampResolu
 	readonly invalide: boolean
 	readonly ecrituresPossibles: boolean
+	readonly listes: ListesReference
+	readonly onReprise: () => void
 	readonly onProposer: (saisie: string | boolean | readonly string[]) => void
 	readonly decritPar?: string
 }) {
@@ -404,6 +499,20 @@ function Controle({
 		disabled: !ecrituresPossibles,
 		'aria-invalid': invalide,
 		...(decritPar === undefined ? {} : { 'aria-describedby': decritPar }),
+	}
+
+	if (champ.type === 'contact' || champ.type === 'user') {
+		return (
+			<SelecteurReference
+				commun={commun}
+				cle={champ.key}
+				type={champ.type}
+				valeur={valeur}
+				liste={listes[champ.type]}
+				onReprise={onReprise}
+				onProposer={onProposer}
+			/>
+		)
 	}
 
 	if (champ.type === 'checkbox') {
@@ -481,8 +590,166 @@ function Controle({
 	)
 }
 
+/**
+ * Le sélecteur d'un champ `contact` ou `user` — docs/SPEC-contacts.md §13.5,
+ * docs/DESIGN_SYSTEM.md §5.22.
+ *
+ * UN SEUL COMPOSANT POUR LES DEUX TYPES : les deux listes se ramènent à `OptionReference`, et deux
+ * rendus jumeaux divergeraient au premier état ajouté. Ce qui les distingue tient dans deux clés de
+ * traduction, choisies par le type.
+ *
+ * `defaultValue` et non `value` : c'est le patron des autres contrôles de ce fichier, et il suffit
+ * ici. Une écriture confirmée met le modèle à jour en place (§4 bis.8) ; la valeur choisie est déjà
+ * celle du DOM, et l'option « référence inconnue » du cas j — calculée à partir de la valeur connue
+ * de la base — disparaît d'elle-même au rendu suivant (cas k).
+ */
+function SelecteurReference({
+	commun,
+	cle,
+	type,
+	valeur,
+	liste,
+	onReprise,
+	onProposer,
+}: {
+	readonly commun: Record<string, unknown>
+	readonly cle: string
+	readonly type: TypeReference
+	readonly valeur: Json | undefined
+	readonly liste: EtatAsync<readonly OptionReference[]> | null
+	readonly onReprise: () => void
+	readonly onProposer: (saisie: string) => void
+}) {
+	// La valeur enregistrée est un identifiant, ou rien. Toute autre forme — un nombre, un objet —
+	// serait une donnée que ce champ n'a jamais pu produire : elle ne retient aucune option, et la
+	// mention du cas j ne prétend pas la nommer.
+	const identifiant = typeof valeur === 'string' ? valeur : ''
+
+	// `null` vaut « aucune lecture lancée ». Pour un champ de ce type, cela ne dure que le temps du
+	// premier rendu — l'effet part aussitôt —, sauf lorsque aucun client n'est configuré, cas où
+	// l'application entière rend déjà l'écran de configuration manquante.
+	if (liste === null || liste.statut === 'chargement') {
+		return (
+			<select {...commun} disabled aria-busy="true" data-testid={`selecteur-${cle}`} className={CLASSES_CONTROLE}>
+				<option value="">{t('form.reference.loading')}</option>
+			</select>
+		)
+	}
+
+	if (liste.statut === 'erreur') {
+		return (
+			<div className="flex flex-col gap-1">
+				<select {...commun} disabled data-testid={`selecteur-${cle}`} className={CLASSES_CONTROLE}>
+					<option value="">{identifiant === '' ? t('form.select.none') : identifiant}</option>
+				</select>
+				{/* L'ACTION DE REPRISE du §5.8 : sans elle, l'écran dirait qu'il a échoué sans offrir
+				    de sortie. Elle relit la liste, elle ne réécrit rien. */}
+				<p
+					role="alert"
+					data-testid={`selecteur-erreur-${cle}`}
+					className="flex flex-wrap items-center gap-2 text-sm text-danger-on-soft"
+				>
+					<TriangleAlert aria-hidden="true" size={14} strokeWidth={2} className="shrink-0" />
+					<span>{t(MESSAGES_LISTE_ERREUR[type])}</span>
+					<Button variante="discret" taille="compacte" onClick={onReprise}>
+						{t('form.reference.retry')}
+					</Button>
+				</p>
+			</div>
+		)
+	}
+
+	const options = liste.donnees
+	// LE CAS j, ET IL EST MESURÉ : supprimer un contact ne supprime pas les valeurs qui le
+	// désignaient (docs/SPEC-contacts.md §9.4). Sans cette option, le `select` afficherait sa
+	// PREMIÈRE option comme si elle avait été choisie — une donnée enregistrée remplacée à l'écran
+	// par une autre, ce que `CLAUDE.md` §18 interdit.
+	const inconnue = identifiant !== '' && !options.some((option) => option.valeur === identifiant)
+
+	return (
+		<div className="flex flex-col gap-1">
+			<select
+				{...commun}
+				defaultValue={identifiant}
+				data-testid={`selecteur-${cle}`}
+				onChange={(evenement) => onProposer(evenement.currentTarget.value)}
+				className={CLASSES_CONTROLE}
+			>
+				{/* L'option vide est le moyen de VIDER le champ (§4 bis.5), comme pour un `select` à
+				    choix : `normaliserSaisie` rend `null` sur la chaîne vide. */}
+				<option value="">{t('form.select.none')}</option>
+				{inconnue ? (
+					<option value={identifiant}>{t('form.reference.unknown', { identifiant })}</option>
+				) : null}
+				{options.map((option) => (
+					<option key={option.valeur} value={option.valeur}>
+						{option.libelle}
+					</option>
+				))}
+			</select>
+			{/* LE TROISIÈME VIDE du §5.21, repris sans changement : aucun écran du produit ne crée de
+			    contact, et une action ici serait un chemin vers nulle part. */}
+			{options.length === 0 ? (
+				<p data-testid={`selecteur-vide-${cle}`} className="text-sm text-text-3">
+					{t(MESSAGES_LISTE_VIDE[type])}
+				</p>
+			) : null}
+		</div>
+	)
+}
+
+/** Les deux mentions d'une liste vide, indexées par le type — cas i du §13.5. */
+const MESSAGES_LISTE_VIDE: Readonly<Record<TypeReference, CleTraduction>> = {
+	contact: 'form.reference.empty.contact',
+	user: 'form.reference.empty.user',
+}
+
+/** Les deux mentions d'une liste illisible, indexées par le type — cas h du §13.5. */
+const MESSAGES_LISTE_ERREUR: Readonly<Record<TypeReference, CleTraduction>> = {
+	contact: 'form.reference.error.contact',
+	user: 'form.reference.error.user',
+}
+
+/**
+ * La valeur d'un champ de la section repliée — cas l et m du §13.5 de docs/SPEC-contacts.md.
+ *
+ * Trois rendus, et la frontière entre eux est celle de l'honnêteté :
+ *
+ *   * un `contact` ou un `user` que la liste chargée RÉSOUT rend son **nom**, en texte ordinaire ;
+ *   * un `contact` ou un `user` que rien ne résout — référence morte (§9.4), ou liste absente,
+ *     en cours de lecture, ou en échec — rend l'**identifiant brut** en donnée technique. C'est ce
+ *     qu'il est ; le rendre en texte ordinaire le ferait passer pour un nom ;
+ *   * tout autre type suit la règle inchangée du §5.7 bis.
+ */
+function ValeurLectureSeule({
+	resolu,
+	listes,
+}: {
+	readonly resolu: ChampResolu
+	readonly listes: ListesReference
+}) {
+	const { champ, valeur } = resolu
+	if (champ.type === 'contact' || champ.type === 'user') {
+		const liste = listes[champ.type]
+		const identifiant = typeof valeur === 'string' ? valeur : ''
+		const trouvee =
+			liste === null || liste.statut !== 'pret' || identifiant === ''
+				? undefined
+				: liste.donnees.find((option) => option.valeur === identifiant)
+		if (trouvee !== undefined) return <>{trouvee.libelle}</>
+		return identifiant === '' ? <>{enTexte(valeur)}</> : <code>{identifiant}</code>
+	}
+	return estTechnique(champ.type) ? <code>{enTexte(valeur)}</code> : <>{enTexte(valeur)}</>
+}
+
 /** Section repliée « Informations d'autres étapes » (§4.2), en lecture seule (§4 bis.1). */
-function SectionAutresEtapes({ champs }: { readonly champs: readonly ChampResolu[] }) {
+function SectionAutresEtapes({
+	champs,
+	listes,
+}: {
+	readonly champs: readonly ChampResolu[]
+	readonly listes: ListesReference
+}) {
 	if (champs.length === 0) return null
 	return (
 		<details data-testid="autres-etapes" className="rounded-sm border border-border bg-surface">
@@ -500,12 +767,13 @@ function SectionAutresEtapes({ champs }: { readonly champs: readonly ChampResolu
 						<dd className="text-base text-text">
 							{/* Montants, dates et horodatages sont des **données techniques** : monospace
 							    et chiffres tabulaires (docs/DESIGN_SYSTEM.md §2). La règle vit déjà dans
-							    `app.css`, sur `code` : la porter par une classe la dupliquerait. */}
-							{estTechnique(resolu.champ.type) ? (
-								<code>{enTexte(resolu.valeur)}</code>
-							) : (
-								enTexte(resolu.valeur)
-							)}
+							    `app.css`, sur `code` : la porter par une classe la dupliquerait.
+
+							    LES DEUX TYPES RÉSOLUS s'y ajoutent, mais par l'autre bout (§13.5, cas l et
+							    m) : résolus, ils rendent un NOM en texte ordinaire ; non résolus — ou liste
+							    indisponible —, ils rendent l'identifiant brut en donnée technique, jamais un
+							    nom inventé. */}
+							<ValeurLectureSeule resolu={resolu} listes={listes} />
 						</dd>
 					</div>
 				))}

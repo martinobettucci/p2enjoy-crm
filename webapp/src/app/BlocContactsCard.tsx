@@ -30,6 +30,7 @@ import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import {
 	detacherContact,
+	libelleContactAvecOrganisation,
 	lireContactsDeLAffaire,
 	lireContactsDuCarnet,
 	rattacherContact,
@@ -540,13 +541,11 @@ function FormulaireRattachement({
 					{rattachables.map((contact) => (
 						<option key={contact.id} value={contact.id}>
 							{/*
-							  L'ORGANISATION DISTINGUE DEUX HOMONYMES, et la composition reste une
-							  DONNÉE : le nom d'un contact et celui de son organisation sont tous
-							  deux des libellés métier, jamais des traductions (§10).
+							  L'ORGANISATION DISTINGUE DEUX HOMONYMES. La composition vit désormais
+							  dans `contacts.ts` (§13.3) : le sélecteur du formulaire l'emploie
+							  aussi, et une règle d'affichage écrite deux fois divergerait.
 							*/}
-							{contact.organisation === null
-								? contact.full_name
-								: `${contact.full_name} — ${contact.organisation.name}`}
+							{libelleContactAvecOrganisation(contact)}
 						</option>
 					))}
 				</select>

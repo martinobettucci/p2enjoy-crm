@@ -118,6 +118,26 @@ export async function lireContactsDuCarnet(
 	}
 }
 
+/**
+ * Le libellé d'un contact dans une liste de choix — docs/SPEC-contacts.md §13.3,
+ * docs/DESIGN_SYSTEM.md §5.21 et §5.22.
+ *
+ * L'ORGANISATION DISTINGUE DEUX HOMONYMES, et la composition reste une **donnée** : le nom d'un
+ * contact et celui de son organisation sont tous deux des libellés métier, jamais des traductions
+ * (docs/DESIGN_SYSTEM.md §10). Le tiret cadratin est celui du sélecteur de la sous-tranche 4c.
+ *
+ * EXTRAITE ICI par la sous-tranche 4d, où un second sélecteur — celui du formulaire — a besoin de
+ * la même règle : écrite deux fois, elle divergerait au premier changement.
+ */
+export function libelleContactAvecOrganisation(contact: {
+	readonly full_name: string
+	readonly organisation: { readonly name: string } | null
+}): string {
+	return contact.organisation === null
+		? contact.full_name
+		: `${contact.full_name} — ${contact.organisation.name}`
+}
+
 // ----------------------------------------------------------------------------------------------
 // Sous-tranche 4b — LA FICHE D'ORGANISATION (docs/SPEC-contacts.md §11)
 // ----------------------------------------------------------------------------------------------
