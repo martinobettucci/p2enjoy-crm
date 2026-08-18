@@ -600,7 +600,7 @@ committée et prouvée avant la suivante :
 - **4a — Le carnet de contacts.** Une route propre, une entrée de navigation, un tableau des
   contacts du workspace avec leur organisation. **Lecture seule.** Objet de la présente livraison.
 - **4b — La fiche d'organisation.** Les contacts d'une organisation, et ce qui la caractérise.
-  Ultérieure.
+  **Livrée le 2026-08-18, spécifiée au §11.**
 - **4c — Le rattachement d'un contact à une affaire** depuis la route de détail (`card_contacts`),
   premier geste d'écriture de la tranche. Ultérieure.
 - **4d — Les deux sélecteurs du §9.1** (`contact` et `user`) dans le formulaire d'une affaire, et
@@ -708,6 +708,12 @@ trois décisions structurantes sont rappelées ici parce qu'elles découlent de 
    un message à un contact depuis le carnet est un geste que personne n'a spécifié, et un lien qui
    ouvre le client de messagerie du système sortirait du produit sans le dire.
 
+> **RÉVISION DU 2026-08-18, sous-tranche 4b (§11.6).** Le point 3 ci-dessus ajoutait que le nom
+> d'organisation reste un **texte**, la fiche n'existant pas encore. **Cette condition est tombée** :
+> la fiche est livrée au §11, et le nom d'organisation est désormais un **lien** vers elle. La règle
+> change par **livraison**, non par contournement — le reste du point 3 est inchangé, et il n'y a
+> toujours ni `mailto:` ni `tel:`. Une cellule sans organisation reste **vide** et sans lien.
+
 ### 10.6 Contrat de comportement — sous-tranche 4a
 
 | # | Situation | Attendu |
@@ -736,8 +742,10 @@ l'écart est celui du §5.16, où l'état vide de la corbeille n'offre aucune ac
 - **aucun geste de création, de modification ni de suppression.** L'écriture est ouverte en base
   au `business_developer` depuis la tranche 1, et aucun écran ne l'exerce encore : l'écart est
   nommé, non compensé ;
-- **la fiche d'organisation n'existe pas encore** : le nom de l'organisation est un **texte**,
-  jamais un lien mort. Il deviendra un lien en 4b, avec sa destination.
+- ~~**la fiche d'organisation n'existe pas encore** : le nom de l'organisation est un **texte**,
+  jamais un lien mort. Il deviendra un lien en 4b, avec sa destination.~~
+  **LEVÉE le 2026-08-18 par la sous-tranche 4b (§11.6)** : la fiche existe, et le nom
+  d'organisation est le lien qui l'ouvre. Cette limite est tenue, non abandonnée.
 
 ### 10.8 Preuves exigées — sous-tranche 4a
 
@@ -764,3 +772,233 @@ l'écart est celui du §5.16, où l'état vide de la corbeille n'offre aucune ac
 - commentaires `@spec` / `@verifies` sur chaque fichier.
 
 Les sous-tranches 4b, 4c et 4d restent dues ; l'unité `CRM-060` **demeure `[~]`**.
+
+---
+
+## 11. Sous-tranche 4b — La fiche d'organisation
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : les cinq réponses PostgREST du §11.3 ont été
+relevées à la main avec le jeton réel de l'administratrice et avec la clé anonyme, et le §5.19 de
+`docs/DESIGN_SYSTEM.md` relu intégralement.
+
+Cette section prolonge le §10, dont elle reprend les références amont sans les répéter. Elle livre
+la **deuxième** des quatre surfaces du §10.1. Les sous-tranches 4c et 4d restent dues.
+
+### 11.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre** une route de détail qui, pour une organisation donnée :
+
+- rend **ce qui la caractérise** — son nom, son domaine, son site web ;
+- rend **ses contacts**, dans l'ordre du nom ;
+- devient la **destination** que le nom d'organisation du carnet n'avait pas.
+
+**Elle ne livre pas**, et chaque manque est nommé au §11.8 plutôt que découvert plus tard : aucun
+geste d'écriture, aucune liste d'organisations, aucune affaire de l'organisation (`card_contacts`
+est l'objet de 4c), aucun filtre et aucune pagination.
+
+### 11.2 Où la fiche s'ancre — `/contacts/organisations/:idOrganisation`
+
+**Décision : une route de détail SOUS le carnet**, et non une route de premier niveau
+`/organisations/:id`.
+
+Le motif est celui qui a déjà décidé de `CHEMIN_CARD` : une adresse de premier niveau suppose une
+surface d'entrée qui la peuple. Le carnet est cette entrée — on atteint une organisation **par un
+de ses contacts** —, et il n'existe aucune liste d'organisations (§11.8). Poser `/organisations`
+créerait une racine que rien n'ouvre.
+
+Conséquences, toutes tenues dans le même changement :
+
+- **La fiche ne figure PAS dans `ROUTES`**, exactement comme `CHEMIN_CARD` et `CHEMIN_LISTE` : son
+  titre est le **nom de l'organisation**, donc une donnée et non une clé de traduction, et son
+  contenu dépend d'un paramètre d'URL. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` que
+  `routes.test.tsx` exige reste donc **inchangée**, et c'est voulu : le carnet garde son entrée de
+  barre latérale, la fiche n'en réclame aucune.
+- **Elle porte sa propre coquille `AppShell`**, avec `titreRoute` alimenté par le nom lu et une
+  clé de repli pour le chargement et l'introuvable — le patron exact de `RouteCard`.
+
+**L'organisation est désignée par son IDENTIFIANT, et non par un slug.** MESURÉ : `organizations`
+ne porte aucune colonne `slug` (§2.1), et `domain` ne peut pas en tenir lieu — il est **nul** pour
+Studio Meunier, et une adresse qui n'existe que pour la moitié des lignes n'est pas une adresse.
+
+### 11.3 Ce que la fiche lit — mesuré sur la pile réelle
+
+MESURÉ le 2026-08-18 avec le jeton réel de l'administratrice, la requête **unique** que l'écran
+émettra :
+
+```
+GET /rest/v1/organizations
+    ?id=eq.<idOrganisation>
+    &select=id,name,domain,website,contacts(id,full_name,email,phone,role_title)
+    &contacts.order=full_name
+```
+
+rend, pour Sogexia (`…081`) :
+
+```
+[{"id":"5eed…081","name":"Sogexia","domain":"sogexia.example","website":null,
+  "contacts":[{"id":"5eed…091","full_name":"Léo Marchand",
+               "email":"leo.marchand@sogexia.example","phone":null,
+               "role_title":"Directeur achats"}]}]
+```
+
+et pour Studio Meunier (`…082`), l'organisation sans domaine :
+
+```
+[{"id":"5eed…082","name":"Studio Meunier","domain":null,"website":null,
+  "contacts":[{"id":"5eed…093","full_name":"Élise Fabre","email":null,
+               "phone":"+33 6 12 34 56 78","role_title":"Cheffe d'atelier"}]}]
+```
+
+- **UNE seule requête, et l'embarquement est mesuré comme possible dans ce sens aussi.** Le §10.3
+  avait établi que `contacts → organizations` ne rend aucune ambiguïté `PGRST201` ; la mesure
+  ci-dessus établit la même chose **dans le sens inverse**, `organizations → contacts`, la clé
+  étrangère restant unique. Une seconde requête serait ici un coût gratuit.
+- **L'ordre des contacts embarqués est demandé au serveur** — `contacts.order=full_name` —, jamais
+  posé après coup : c'est la règle du §10.3, et elle vaut pour une relation embarquée comme pour
+  une table.
+- **`source` n'est pas davantage demandée qu'au §10.3**, et pour la même raison.
+- **`website` EST demandé, alors que le carnet ne le demandait pas** : c'est précisément la fiche
+  qui caractérise l'organisation, et le §10.3 avait déjà annoncé que `domain` était demandé « pour
+  le jour où la fiche existera ». Ce jour est celui-ci.
+
+### 11.4 Autorisations — l'écran n'en calcule aucun, et trois absences donnent le même écran
+
+MESURÉ, avec les jetons réels :
+
+| # | Acteur / adresse | Mesure |
+|---|---|---|
+| 1 | administratrice, `id` d'une organisation du workspace | `200`, **1 ligne**, contacts embarqués |
+| 2 | administratrice, `id` bien formé mais **inexistant** | `200` et **`[]`** |
+| 3 | **anonyme**, `id` d'une organisation réelle | `200` et **`[]`** |
+| 4 | administratrice, `id` **qui n'est pas un uuid** | **`400`**, `22P02`, `invalid input syntax for type uuid` |
+
+Les cas **2 et 3 rendent la même réponse**, et l'écran rend donc le **même** écran « organisation
+introuvable ». C'est délibéré, et c'est la règle de `docs/SPEC-permissions-rls.md` §7, déjà tenue
+par `RouteCard` : distinguer les deux renseignerait un appelant sans droit sur l'**existence** d'une
+organisation.
+
+**Le cas 4 est celui que la mesure a rendu intéressant, et il décide d'une règle.** Un `400` classé
+par `classerErreur` tomberait sur l'état d'**erreur**, dont l'action de reprise relancerait la même
+requête pour recevoir le même `400` — **une commande morte** (`docs/DESIGN_SYSTEM.md` §5.10), sur une
+surface dont l'adresse est directement éditable par l'utilisateur.
+
+**Décision : la fiche contrôle la FORME de l'identifiant avant d'émettre quoi que ce soit, et un
+identifiant mal formé rend « organisation introuvable », comme les cas 2 et 3.** Aucune requête
+n'est émise. Le motif est écrit dans le code, et le contrôle porte sur la forme uuid seule — il ne
+prétend pas savoir si l'organisation existe, ce que seul le backend peut dire.
+
+Cette sous-tranche ne livre **aucune écriture**, donc **aucun refus d'écriture** n'est à traduire.
+
+### 11.5 De quoi l'écran a l'air
+
+Le détail visuel est écrit dans `docs/DESIGN_SYSTEM.md` §5.20, ajouté dans le même changement.
+Trois décisions découlent de la **donnée** et sont rappelées ici :
+
+1. **Deux zones, et non un tableau unique.** Ce qui caractérise l'organisation est une **liste de
+   définitions** — des couples libellé/valeur qui ne se comparent pas entre eux —, là où ses
+   contacts sont des **lignes homogènes** et reprennent donc le tableau du §5.9. Poser les deux
+   dans la même structure obligerait l'une des deux à mentir sur sa nature.
+2. **`domain` et `website` sont des données techniques** (§2) : monospace. Une valeur absente
+   laisse la valeur **vide**, jamais un tiret — la règle du §5.9 déjà tenue par le carnet.
+3. **`website` est un LIEN, `domain` ne l'est pas.** Un site web a une destination réelle, et la
+   contrainte de base garantit déjà sa forme `http`/`https` (§2.1) : le lien ne peut donc pas être
+   construit sur une valeur qui n'en est pas une. Il s'ouvre dans un nouvel onglet, avec
+   `rel="noreferrer noopener"`, et le fait qu'il **sorte du produit** est annoncé à l'utilisateur
+   plutôt que subi. Un domaine, lui, n'est pas une URL : `sogexia.example` est un pivot de
+   rapprochement d'emails (§2.1), pas une adresse à visiter, et en faire un lien inventerait un
+   schéma que la donnée ne porte pas.
+
+Le tableau des contacts porte **quatre** colonnes — nom, fonction, email, téléphone — et non les
+cinq du carnet : la colonne « organisation » y répéterait le titre de la page à chaque ligne.
+
+### 11.6 Le carnet gagne sa destination — une règle du §10 RÉVISÉE par livraison
+
+Le §10.7 et le §5.19 du design system posaient que le nom d'organisation du carnet est un **texte,
+jamais un lien**, avec leur condition écrite : « sa fiche est due par une sous-tranche ultérieure,
+et un lien sans destination serait mort ». **Cette condition tombe ici.**
+
+La règle change donc par **livraison**, et non par contournement :
+
+- le §10.7 et le §10.5 de ce document sont **révisés**, avec la date et le motif ;
+- `docs/DESIGN_SYSTEM.md` §5.19 est révisé de même ;
+- les deux preuves qui figeaient l'absence de lien — `webapp/src/app/Carnet.test.tsx` et
+  `e2e/ui/contacts.spec.ts` — sont **RÉVISÉES avec leur motif écrit dans le fichier**, jamais
+  retirées ni contournées : c'est le mécanisme de la décision 51, et ce qu'elles exigent devient
+  « le nom d'organisation mène à sa fiche », qui reste une exigence vérifiable.
+
+**Une cellule sans organisation reste VIDE** : Sophie Dupont n'a aucune organisation, donc aucun
+lien. Un lien n'apparaît que là où il a une destination.
+
+### 11.7 Le seed s'enrichit, et les deux ajouts sont mesurés comme sans effet sur les compteurs
+
+`CLAUDE.md` §8 : une fonctionnalité qui introduit une page met à jour le seed **dans le même
+changement**, et les données doivent couvrir les branches alternatives. La fiche en a deux que le
+seed n'exerçait pas :
+
+1. **Une organisation qui porte un site web.** `website` est ajouté à Sogexia :
+   `https://www.sogexia.example`. Sans lui, le lien du §11.5 n'est **jamais rendu** et la capture
+   ne le montre pas.
+2. **Une organisation SANS aucun contact.** Une troisième organisation est seedée — « Comptoir
+   Vasseur », domaine `comptoir-vasseur.example`, aucun contact —, sans laquelle l'état vide de la
+   liste de contacts n'est démontrable que contre une réponse substituée.
+
+**Aucun compteur figé n'est déplacé, et c'est MESURÉ, non supposé** : le seed compare
+`organizations_count` à `${#ORGANIZATIONS_SEED[@]}`, donc à la taille du tableau lui-même ; aucun
+`scripts/verify-*.sh` ne cite `organizations` ; les preuves d'API de `e2e/api/contacts.spec.ts`
+créent leurs **propres** organisations sondes et les suppriment. Le carnet, qui liste des
+**contacts** et non des organisations, garde ses **trois** lignes. C'est ce qui distingue cet
+enrichissement de celui que le §9.6 a différé : celui-là déplaçait dix compteurs, celui-ci aucun.
+
+### 11.8 Limites nommées — sous-tranche 4b
+
+- **aucune liste d'organisations.** On atteint une fiche par un contact du carnet, et par là seul.
+  Une liste demanderait sa propre route, son propre tri et sa propre pagination ;
+- **aucun geste d'écriture** : ni création, ni modification, ni suppression d'organisation. Les
+  privilèges existent en base depuis la tranche 1 ; aucun écran ne les exerce encore. L'écart est
+  nommé, non compensé par une commande morte ;
+- **aucune affaire de l'organisation.** `card_contacts` est lu par 4c ;
+- **aucune pagination des contacts de l'organisation**, pour le motif exact du §10.3 : aucun volume
+  n'est mesuré ;
+- **le contact de la fiche ne mène nulle part.** Il n'existe pas de fiche de contact, et 4b n'en
+  crée pas : un lien serait mort, ce qui est la faute même que le §11.6 vient de réparer ailleurs.
+
+### 11.9 Contrat de comportement — sous-tranche 4b
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | organisation lisible, avec contacts | le nom en titre, ses caractéristiques, et une ligne par contact dans l'ordre du nom |
+| b | organisation sans domaine (Studio Meunier) | la valeur « domaine » est **vide**, aucune erreur |
+| c | organisation avec site web (Sogexia) | le site est un **lien**, ouvert dans un nouvel onglet, `rel="noreferrer noopener"` |
+| d | organisation **sans contact** (Comptoir Vasseur) | la zone des contacts rend l'état **vide**, sans action ; les caractéristiques restent rendues |
+| e | identifiant inexistant, ou appelant sans droit | « organisation introuvable », avec un retour vers le carnet — **le même écran dans les deux cas** |
+| f | identifiant mal formé (non-uuid) | « organisation introuvable », **aucune requête émise** (§11.4) |
+| g | lecture en vol | squelettes, jamais un spinner plein écran |
+| h | lecture en échec | état d'erreur avec action de reprise, qui relance réellement la lecture |
+| i | depuis le carnet | le nom d'organisation est un **lien** qui ouvre la fiche ; une cellule sans organisation reste **vide** et sans lien |
+
+### 11.10 Preuves exigées — sous-tranche 4b
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la requête émise par la lecture de la fiche — table, colonnes, ordre des contacts embarqués, filtre sur `id` ; l'organisation rendue `null` quand la réponse est vide ; le refus de forme du cas f **sans appel réseau** ; les trois issues du contrat asynchrone |
+| Unitaire | `webapp/src/app/FicheOrganisation.test.tsx` : les cas a à h du §11.9 |
+| Unitaire | `webapp/src/app/Carnet.test.tsx` (RÉVISÉ, §11.6) : le nom d'organisation est désormais un lien vers la fiche, et une cellule sans organisation reste vide et sans lien |
+| E2E | `e2e/ui/contacts.spec.ts` (étendu et RÉVISÉ) : depuis le carnet, le clic sur « Sogexia » ouvre la fiche ; le site web y est un lien ; « Comptoir Vasseur » rend l'état vide des contacts ; une adresse mal formée rend « introuvable » ; l'accès au **clavier** |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** conformément à `CLAUDE.md` §16 : la fiche peuplée, la fiche sans contact, l'introuvable, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur |
+| Seed | le seed rejoué **converge** : trois organisations, trois contacts, deux rattachements |
+
+### 11.11 Definition of Done — sous-tranche 4b
+
+- `webapp/src/lib/contacts.ts` : la lecture du §11.3, son type, son contrôle de forme du §11.4 ;
+- `webapp/src/app/FicheOrganisation.tsx` : les deux zones et les cinq états ;
+- `CHEMIN_ORGANISATION` dans `chemins.ts`, montée par `App` **hors de `ROUTES`** ;
+- `webapp/src/app/Carnet.tsx` : le nom d'organisation devient un lien (§11.6) ;
+- seed enrichi des deux ajouts du §11.7 ;
+- preuves du §11.10 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.20 ajouté et §5.19 révisé ; `docs/SPEC-webapp.md` §5.2 ;
+  `docs/SPEC-seed.md` ; `docs/manual.md` ; `CHANGELOG.md`, dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier.
+
+Les sous-tranches 4c et 4d restent dues ; l'unité `CRM-060` **demeure `[~]`**.

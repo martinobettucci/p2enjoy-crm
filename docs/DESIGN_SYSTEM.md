@@ -1468,11 +1468,17 @@ ci-dessous ne disent que de quoi il a l'air.
   alignés à droite comme au §5.9 — ils se comparent colonne par colonne, ce qui est la seule raison
   d'avoir des chiffres tabulaires.
 
-- **Aucun lien, ni vers une fiche, ni vers un client de messagerie.** Le nom de l'organisation est
-  un **texte** : sa fiche est due par une sous-tranche ultérieure, et un lien sans destination
-  serait mort (§5.10, « une commande morte »). Aucun `mailto:` ni `tel:` non plus — écrire à un
-  contact depuis le carnet est un geste que personne n'a spécifié, et un lien qui ouvre le client
-  du système sortirait du produit sans le dire.
+- **Le nom de l'organisation est un LIEN vers sa fiche** (§5.20), et **aucun autre lien n'existe**.
+  Aucun `mailto:` ni `tel:` — écrire à un contact depuis le carnet est un geste que personne n'a
+  spécifié, et un lien qui ouvre le client du système sortirait du produit sans le dire. Une
+  cellule **sans** organisation reste **vide et sans lien** : un lien n'apparaît que là où il a une
+  destination.
+
+  > **RÉVISION DU 2026-08-18** (`docs/SPEC-contacts.md` §11.6). Cette entrée posait auparavant
+  > « aucun lien, ni vers une fiche, ni vers un client de messagerie », le nom d'organisation
+  > restant un texte parce que sa fiche n'existait pas et qu'un lien sans destination serait mort
+  > (§5.10). **La fiche est livrée** par la sous-tranche 4b : la condition est tombée, et la règle
+  > change par **livraison**. Le reste de l'entrée est inchangé.
 
 - **L'état vide n'offre AUCUNE action**, et c'est l'écart au §5.8 que le §5.16 a déjà pris pour la
   corbeille : cette surface ne livre aucun geste de création, et un bouton y serait un chemin vers
@@ -1488,6 +1494,45 @@ ci-dessous ne disent que de quoi il a l'air.
   390 px les cinq colonnes ne tiennent pas, et le tableau défile **dans son conteneur** pendant que
   la page ne défile jamais horizontalement (§7). Aucun `scroll-snap`, faute de colonne sur laquelle
   s'ancrer — la règle du §5.9.
+
+### 5.20 Fiche d'organisation — `CRM-060`
+
+Surface de **détail** atteinte depuis le carnet (§5.19), jamais depuis la barre latérale : il
+n'existe aucune liste d'organisations. Ce que l'écran lit est spécifié par `docs/SPEC-contacts.md`
+§11 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **Deux zones, et deux structures différentes.** Ce qui caractérise l'organisation — domaine, site
+  web — est une **liste de définitions** (`<dl>`), des couples libellé/valeur qui ne se comparent
+  pas entre eux. Ses contacts sont des lignes homogènes et reprennent le **tableau du §5.9**, à
+  **quatre** colonnes : nom, fonction, email, téléphone. La colonne « organisation » du carnet
+  disparaît — elle répéterait le titre de la page à chaque ligne.
+
+- **Le nom de l'organisation est le titre de la route** : une **donnée**, portée par `titreRoute`
+  de la coquille et non par une clé de traduction (§10), avec une clé de repli pendant le
+  chargement — le patron du détail de card (§5.3).
+
+- **`domain` et `website` sont des données techniques** (§2) : monospace. Une valeur absente laisse
+  la valeur **vide** — ni tiret, ni « non renseigné » —, la règle du §5.9 que le §5.19 tient déjà.
+
+- **`website` est un lien, `domain` ne l'est pas.** Un site web a une destination réelle, et la
+  contrainte de base garantit sa forme `http`/`https` : il s'ouvre dans un **nouvel onglet**, avec
+  `rel="noreferrer noopener"`, et sa sortie du produit est **annoncée** — un lien externe se
+  signale (§8). Un domaine n'est pas une URL mais un pivot de rapprochement d'emails : en faire un
+  lien inventerait un schéma que la donnée ne porte pas.
+
+- **Cinq états, tous traités** (§5.8). Squelettes pendant la lecture ; erreur avec reprise qui
+  relit réellement ; **organisation introuvable**, qui porte un retour vers le carnet et qui est le
+  **même** écran pour un identifiant inconnu, pour un appelant sans droit et pour une adresse mal
+  formée (`docs/SPEC-permissions-rls.md` §7) ; **zone des contacts vide** — sans action, comme le
+  §5.19 et le §5.16, cette surface ne livrant aucun geste de création.
+
+- **Le nom d'un contact n'est PAS un lien** : il n'existe pas de fiche de contact, et un lien y
+  serait mort (§5.10). C'est la règle que le §5.19 vient d'abandonner pour l'organisation, tenue
+  ici pour la même raison qu'elle l'avait été là.
+
+- **Le conteneur du tableau porte `.indique-debordement-x`** (§12.6), comme le §5.19 : à 390 px les
+  quatre colonnes ne tiennent pas, et le tableau défile **dans son conteneur** pendant que la page
+  ne défile jamais horizontalement (§7).
 
 ## 6. Interactions
 
