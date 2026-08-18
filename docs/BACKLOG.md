@@ -2985,7 +2985,7 @@ laissé par le pilote Playwright, artefact non déterministe déjà relevé lors
   épinglé, et une arborescence de compatibilité a dû être recréée. Même nature qu'INC-032, dont le
   contournement a également dû être refait pour démarrer la pile.
 
-### CRM-033 — Cohérence workflow ↔ channel `[~]`
+### CRM-033 — Cohérence workflow ↔ channel `[x]`
 Trigger : workflow `global` du workspace, ou `track` du track du channel.
 **DoD** : pgTAP sur les trois cas (global accepté, track du même track accepté, track étranger
 refusé) ; refus constaté aussi lors d'un déplacement de channel.
@@ -3102,6 +3102,15 @@ refusé) ; refus constaté aussi lors d'un déplacement de channel.
       capture prise sur l'option vide ne montrerait rien de ce que le scénario mesure.
       `scripts/verify-coherence-workflow.sh` porte un contrôle **8 bis** qui rejoue ces deux
       scénarios seuls et constate les trois captures ; `SCENARIOS_UI` passe de 368 à **370**.
+
+*Passage à `[x]` le 2026-08-18.* Toutes les preuves de la Definition of Done sont exécutées et
+vertes sur une pile debout et seedée : `npm run test:sql` **2191 assertions**, `npm run test:unit`
+**1488 tests**, `npm run typecheck`, `npm run types:check`, `npm run build`, `npm run e2e:api`
+**678 scénarios**, `npm run e2e:ui` **370 scénarios** en 14,8 min, `npm run e2e:mail`
+**42 scénarios**, `pytest` **242 tests**. Le harnais de l'unité,
+`scripts/verify-coherence-workflow.sh`, rend **37 contrôles, aucune anomalie**, section 8 bis
+comprise, et sa non-complaisance est éprouvée par ses trois dégradations habituelles plus les deux
+de l'interface. Les 135 captures réécrites par le rejeu ont été **regardées puis restaurées**.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur les trois cas » et
 « refus constaté aussi lors d'un déplacement de channel » : les deux sont livrés, et **deux refus de
