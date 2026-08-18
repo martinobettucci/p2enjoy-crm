@@ -365,6 +365,23 @@ rapide ne conclue pas à un trou d'autorisation là où il n'y en a pas.
 *Reste dû, sans urgence de sécurité :* appeler ces RPC avec leur signature réelle, pour que
 l'assertion puisse échouer pour la raison qu'elle nomme.
 
+**L'AUDIT A ÉTÉ ÉTENDU AUX ASSERTIONS D'ABSENCE DE L'INTERFACE, ET IL N'Y A RIEN TROUVÉ.** Une
+assertion `toHaveCount(0)` sur un `data-testid` qu'aucun composant n'émet serait verte par
+construction — même famille. Les **50** assertions d'absence des suites d'interface ont donc été
+confrontées aux `testid` réellement rendus par `webapp/src`. Quinze ne s'y retrouvaient pas ; toutes
+s'expliquent : la plupart sont construites dynamiquement (`entete-${champ}`, `champ-${cle}`,
+`carte-sommeil-${jour}`) ou passées par une prop (`marqueur`, `testId`) que le premier relevé ne
+voyait pas.
+
+Un seul cas restait : `formulaire-lecture-seule`, cité **uniquement** par deux assertions d'absence,
+une unitaire et une E2E. **Il est légitime, et vérifié par l'historique** : `git log -S` montre que
+ce `testid` existait bien dans `FormulaireCard.tsx` et que `CRM-037` l'a retiré en rendant le
+formulaire saisissable (décision 334, INC-088). L'assertion est le **retournement** de l'ancien
+contrôle, conservé plutôt que supprimé, et le scénario ne s'y limite pas : il compte ensuite les
+`input`, `textarea` et `select` réellement rendus et vérifie qu'ils sont saisissables. La substance
+est portée par les assertions POSITIVES qui suivent — ce qui est exactement le remède prescrit
+ci-dessus.
+
 **Un négatif mesuré au passage.** Les **132** assertions pgTAP `has_*`/`hasnt_*` interrogent le
 catalogue directement et ne souffrent pas de ce défaut : leur succès dépend de la présence de
 l'objet et de rien d'autre.
