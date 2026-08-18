@@ -60,6 +60,11 @@ détailler : leur contrat sera écrit, mesuré et committé au moment où elles 
 - **`domain` est le pivot du rapprochement des emails** (`docs/SCHEMA.md` §6) : deux organisations
   d'un même workspace ne peuvent pas revendiquer le même domaine. L'unicité est **partielle** —
   `WHERE domain IS NOT NULL` —, une organisation pouvant naître sans domaine connu.
+- **La base stocke la forme canonique**, en minuscules, conformément à RFC 1035 : la contrainte
+  de forme refuse les majuscules à l'écriture (`23514`), et `lower(domain)` dans l'index unique
+  reste une défense en profondeur. Résultat : l'insensibilité à la casse est éprouvée à
+  l'écriture (refus de forme) et à l'unicité (refus de doublon), plutôt que par une normalisation
+  silencieuse qui aurait rendu la donnée non fidèle à ce que le client a envoyé.
 - Une contrainte `unique (id, workspace_id)` est ajoutée : elle ne change aucun comportement,
   `id` étant déjà la clé primaire, mais elle rend **exprimable** la clé étrangère composite de
   `contacts` (§2.2), qui garantit qu'un contact ne se rattache qu'à une organisation de son
