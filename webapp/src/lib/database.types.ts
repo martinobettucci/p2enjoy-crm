@@ -81,6 +81,45 @@ export type Database = {
           },
         ]
       }
+      card_contacts: {
+        Row: {
+          card_id: string
+          contact_id: string
+          created_at: string
+          role: string | null
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          contact_id: string
+          created_at?: string
+          role?: string | null
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          contact_id?: string
+          created_at?: string
+          role?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_contacts_card_id_workspace_id_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_contacts_contact_id_workspace_id_fkey"
+            columns: ["contact_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       card_events: {
         Row: {
           actor_id: string | null
@@ -456,6 +495,60 @@ export type Database = {
           },
           {
             foreignKeyName: "channels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          organization_id: string | null
+          phone: string | null
+          role_title: string | null
+          source: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          organization_id?: string | null
+          phone?: string | null
+          role_title?: string | null
+          source?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          organization_id?: string | null
+          phone?: string | null
+          role_title?: string | null
+          source?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_workspace_id_fkey"
+            columns: ["organization_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "contacts_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1100,6 +1193,44 @@ export type Database = {
           },
           {
             foreignKeyName: "mail_outbox_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          domain: string | null
+          id: string
+          name: string
+          updated_at: string
+          website: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          website?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          website?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

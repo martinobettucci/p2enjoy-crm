@@ -50,11 +50,13 @@ type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
     | 'card_comments'
+    | 'card_contacts'
     | 'card_events'
     | 'card_field_values'
     | 'cards'
     | 'channel_members'
     | 'channels'
+    | 'contacts'
     | 'form_field_rules'
     | 'form_fields'
     | 'mail_attachments'
@@ -64,6 +66,7 @@ type _tables = Expect<
     | 'mail_messages'
     | 'mail_outbound_identities'
     | 'mail_outbox'
+    | 'organizations'
     | 'profiles'
     | 'track_members'
     | 'tracks'
