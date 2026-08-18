@@ -15,6 +15,34 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4b : la fiche d'organisation**
+  (`docs/SPEC-contacts.md` §11, `docs/DESIGN_SYSTEM.md` §5.20). Le nom d'organisation du carnet
+  devient un **lien** et ouvre la fiche de cette organisation, à l'adresse
+  `/contacts/organisations/:idOrganisation`. La fiche porte le nom en titre, puis ce qui
+  caractérise l'organisation — son **domaine** et son **site web**, ce dernier en lien externe
+  s'ouvrant dans un nouvel onglet — et le tableau de **ses contacts**, à quatre colonnes : nom,
+  fonction, email et téléphone. Une organisation sans contact rattaché le dit explicitement au
+  lieu d'afficher un tableau vide. Une adresse inconnue, une organisation refusée à l'appelant et
+  une adresse mal formée rendent toutes le **même** écran « Organisation introuvable », avec un
+  retour au carnet : les distinguer révélerait à quelqu'un sans droit qu'une organisation existe.
+  La fiche est atteinte **depuis le carnet uniquement** ; il n'existe pas de liste des
+  organisations, et aucun geste d'écriture n'est livré — les écarts sont nommés au §11.8.
+  Le seed s'enrichit de deux données que la fiche exige : un site web sur Sogexia, seule donnée
+  qui rende le lien externe, et une troisième organisation « Comptoir Vasseur » sans aucun
+  contact, seule à exercer l'état vide. Aucun compteur figé n'est déplacé.
+  Preuves : 27 tests unitaires (`contacts.test.ts`, `FicheOrganisation.test.tsx`), 20 scénarios
+  E2E sur la pile seedée, captures observées sous `docs/captures/CRM-060/`.
+
+### Corrigé
+
+- **`CRM-060` tranche 4b — une règle responsive employait un palier qui n'existe pas.** La liste
+  de définitions de la fiche citait `sm:grid-cols-2`, absente du CSS produit : `tokens.css`
+  réinitialise tous les paliers (`--breakpoint-*: initial`) et n'en définit que trois — `md`,
+  `lg`, `xl`. Un `sm:` est donc un variant inconnu, dont la classe entière est supprimée sans
+  aucun signalement. Mesuré en **observant** la capture, la fiche restant empilée à 1440 px.
+  Corrigé en `md:grid-cols-2`, et la règle est écrite au §5.20 du design system pour ne pas se
+  redécouvrir.
+
 - **`CRM-060` — Contacts et organisations, tranche 4a : le carnet de contacts a son écran**
   (`docs/SPEC-contacts.md` §10, `docs/DESIGN_SYSTEM.md` §5.19). L'entrée **Contacts** de la barre
   latérale ouvre le carnet de l'espace de travail : les personnes avec qui les affaires se

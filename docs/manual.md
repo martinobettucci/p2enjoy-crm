@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Ce qui manque est dit : aucun geste de création, de modification ni de suppression, aucune fiche d'organisation, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Ce qui manque est dit : aucun geste de création, de modification ni de suppression, aucune recherche |
 
 ### Suivi quotidien
 
@@ -216,8 +216,8 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranche 4a. Décrit l'application réellement exécutée ; captures dans
-`docs/captures/CRM-060/`.*
+*Livré par `CRM-060`, sous-tranches 4a et 4b. Décrit l'application réellement exécutée ; captures
+dans `docs/captures/CRM-060/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
@@ -227,7 +227,7 @@ Le carnet se présente en tableau, une ligne par contact, rangé par nom :
 | Colonne | Ce qu'elle porte |
 |---|---|
 | Nom | Le nom complet de la personne. Il est toujours renseigné |
-| Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une |
+| Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une. **C'est un lien** : il ouvre la fiche de cette organisation |
 | Fonction | Sa fonction, par exemple « Directeur achats » |
 | Email | Son adresse, lorsqu'elle est connue |
 | Téléphone | Son numéro, lorsqu'il est connu |
@@ -244,13 +244,38 @@ jamais par un message d'erreur technique.
 
 **Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il ne permet ni
 de créer, ni de modifier, ni de supprimer un contact : ces gestes existent dans la base, mais aucun
-écran ne les porte à ce jour. Le nom d'une organisation n'est pas cliquable — sa fiche est prévue et
-n'est pas livrée —, et cliquer sur un email n'ouvre pas votre logiciel de messagerie. Il n'y a pas
-non plus de recherche ni de filtre : le carnet affiche l'ensemble des contacts de l'espace.
+écran ne les porte à ce jour. Cliquer sur un email n'ouvre pas votre logiciel de messagerie. Il n'y
+a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des contacts de l'espace.
 
 Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
 suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
 règle pas encore depuis un écran.
+
+#### La fiche d'une organisation
+
+Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet, ouvre sa
+**fiche**. C'est le seul chemin qui y mène : il n'existe pas de liste des organisations.
+
+La fiche porte le **nom de l'organisation en titre**, puis deux blocs :
+
+- **ce qui la caractérise** — son **domaine** (par exemple `sogexia.example`, celui qui sert à
+  reconnaître ses adresses email) et son **site web**. Le site est un lien : il s'ouvre dans un
+  **nouvel onglet**, et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce
+  n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
+  plutôt qu'un tiret ;
+- **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
+  « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
+  l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
+  tableau vide.
+
+**Une adresse inconnue, une organisation supprimée ou une organisation que vous n'avez pas le droit
+de lire donnent toutes le même écran** : « Organisation introuvable », avec un bouton de retour au
+carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans droit qu'une organisation
+existe.
+
+**Ce que la fiche ne fait pas encore.** Elle ne permet ni de créer, ni de modifier, ni de supprimer
+une organisation. Elle ne montre pas non plus les affaires de l'organisation, et le nom d'un contact
+n'y est pas cliquable : il n'existe pas encore de fiche de contact.
 
 ### 3.2 bis La section Tracks
 
