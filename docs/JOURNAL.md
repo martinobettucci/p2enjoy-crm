@@ -18019,6 +18019,18 @@ L'exigence est donc tenue par construction et non par discipline répétée : un
 diverger de la charte sans qu'un `#` apparaisse là où il n'y en a aucun aujourd'hui — ce qui rend le
 contrôle trivial à rejouer.
 
+**Cinquième volet : les textes ne sont pas dispersés dans les composants.** `CLAUDE.md` §23 le
+demande, et c'est mesurable. Sur les **34** composants du produit, hors fichiers de test :
+
+- **aucun littéral de texte accentué** dans un nœud JSX — la recherche de `>…é/è/ê/à/ç/ù/ô/î/û/œ…<`
+  ne rend **rien** ;
+- **aucune chaîne en dur** dans un `aria-label`, un `title` ou un `placeholder` — l'endroit où le
+  texte se cache d'ordinaire, et qui touche aussi l'accessibilité (§22) ;
+- **25** composants importent explicitement du module de traduction ; les neuf autres ne rendent
+  aucun texte propre.
+
+Là encore, l'exigence est tenue par construction : un texte en dur serait visible au premier grep.
+
 **Troisième volet : les références documentaires.** Les **260** chemins de fichiers cités par
 `docs/`, `README.md` et `CLAUDE.md` ont été confrontés au disque. Onze ne s'y trouvent pas, et
 **aucun n'est un défaut** : deux documents fusionnés dans `docs/ARBITRAGES.md` et qui le disent,
