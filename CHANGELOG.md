@@ -15,17 +15,30 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
-- **`CRM-060` — Spécification des contacts et organisations écrite avant tout code**
-  (`docs/SPEC-contacts.md`, décision 445). Le modèle sera trois tables — `organizations`,
-  `contacts`, `card_contacts` —, avec des clés étrangères composites portant `workspace_id` pour
-  interdire structurellement toute liaison entre deux workspaces (aucun trigger de cohérence
-  requis). Une organisation porte un domaine unique par workspace, un contact un email unique
-  insensible à la casse (l'un et l'autre facultatifs, donc unicité partielle). L'écriture est
-  ouverte au `business_developer` et à l'`admin` — un contact est le matériau quotidien d'un
-  commercial, non une décision de structure. L'unité est **découpée en quatre tranches** :
-  le modèle, la règle 3 du classement de messages (`CRM-055`), la résolution du champ `contact`
-  dans le formulaire (`CRM-036` §6.5), et les écrans. Cette entrée persiste la spécification
-  avant l'écriture du code, conformément à `CLAUDE.md` §5.
+- **`CRM-060` — Contacts et organisations, tranche 1 : le modèle est livré et prouvé**
+  (`docs/SPEC-contacts.md`, migration `0045`, décision 445). Le carnet de contacts d'un
+  workspace repose sur trois tables — `organizations`, `contacts`, `card_contacts` — avec des
+  clés étrangères composites portant `workspace_id` qui interdisent structurellement toute
+  liaison entre deux workspaces (aucun trigger requis). Une organisation porte un domaine
+  unique par workspace, stocké en forme canonique minuscule (RFC 1035) ; un contact un email
+  unique insensible à la casse — l'un et l'autre facultatifs. L'écriture est ouverte au
+  `business_developer` **et** à l'`admin` : un contact est le matériau quotidien d'un
+  commercial, non une décision de structure. `card_contacts` compose `app.can_read_card` en
+  lecture et `app.can_write_card` en écriture, sans exiger le droit d'écriture des contacts en
+  plus — un `business_developer` fermé sur un track ne rattache pas un contact à une affaire
+  qu'il ne peut pas écrire. Suite pgTAP **38/38**, preuve d'API **18/18** avec les jetons réels
+  des trois profils seedés, seed enrichi (deux organisations, trois contacts, deux
+  rattachements) avec Léo Marchand sur **exactement une** card active — l'état précis que la
+  règle 3 du classement (`CRM-055`) lira. **Trois tranches restent dues** : activation de la
+  règle 3 du classement, résolution du champ `contact` dans le formulaire (`CRM-036` §6.5), et
+  les écrans.
+
+  **UN DÉFAUT DE MA MIGRATION, TROUVÉ PAR LE TEST DE CASCADE**, corrigé dans le même
+  changement : `on delete set null` sur la FK composite `(organization_id, workspace_id)`
+  annulait les DEUX colonnes de la clé, ce qui violait le `NOT NULL` sur `contacts.workspace_id`.
+  Sans le test, supprimer une organisation aurait rejeté tous ses contacts en production. Corrigé
+  par `on delete set null (organization_id)` — syntaxe explicite disponible depuis PG15, mesurée
+  sur ce PG17.
 
 - **Une affaire se met en sommeil depuis la carte du tableau, sans quitter l'écran** (`CRM-081`
   tranche 2 d, `docs/SPEC-cards.md` §16.13). Les trois tranches précédentes laissaient la **fiche**

@@ -327,7 +327,7 @@ jour à la main.
 | `card_comments` | Lecture de la card | Écriture sur le channel. **Modification : l'auteur SEUL** — modifier le propos d'autrui est une falsification, non une modération. **Suppression : l'auteur, plus les `admin` du workspace**, bornée par trigger à la seule pose de `deleted_at` et **auditée** par `deleted_by` (INC-072 close, décision 374 ; `docs/SPEC-cards.md` §13.6) |
 | `card_activities` | Lecture de la card | Écriture sur le channel |
 | `card_events` | Lecture de la card | **Aucune écriture par un client** : triggers uniquement |
-| `contacts`, `organizations` | Membres du workspace | `business_developer` et `admin` |
+| `contacts`, `organizations` | Membres du workspace | `business_developer` et `admin` — **livré par `CRM-060` tranche 1** (`app.workspace_role(workspace_id) IN ('business_developer','admin')`, migration `0045`). `card_contacts` compose `app.can_read_card` en lecture et `app.can_write_card` en écriture — le droit d'écriture des contacts n'est pas exigé en plus pour un rattachement, un `business_developer` fermé sur un track ne devant pas rattacher un contact à une affaire qu'il ne peut pas écrire (`docs/SPEC-contacts.md` §3). |
 | `mail_inbound_accounts`, `mail_outbound_identities` | Propriétaire, plus `admin` pour les comptes système | Propriétaire ; `admin` pour les comptes système |
 | `mail_messages` | Message **classé** : `app.can_read_card(card_id)`. Message **non classé** : la boîte où il a été vu — son propriétaire, ou un `admin` du workspace (`CRM-057`, `docs/SPEC-mail-subsystem.md` §18.1) | Classement par RPC uniquement, et le RPC exige **les deux** droits : voir le message, écrire dans la card |
 | `mail_attachments` | Comme le message porteur | Aucune écriture directe |

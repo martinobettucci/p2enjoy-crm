@@ -613,26 +613,50 @@ dernière modification.
 
 ### `organizations`
 
+**Livré par `CRM-060` tranche 1** (migration `0045`, `docs/SPEC-contacts.md` §2.1).
+
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `id`, `workspace_id` | `uuid` | |
-| `name` | `text` | non nul |
-| `domain` | `text` | unique par workspace, pivot du rapprochement des emails |
-| `website` | `text` | |
+| `name` | `text` | non nul, `btrim(name) <> ''` |
+| `domain` | `text` | unique **partielle** par workspace sur `lower(domain)` — forme canonique en minuscules (RFC 1035) —, pivot du rapprochement des emails |
+| `website` | `text` | forme `http(s)://…` lorsqu'il est présent |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales |
+
+Contrainte composite ajoutée : `UNIQUE (id, workspace_id)` — rend exprimable la FK composite
+depuis `contacts`, sans changer aucun comportement.
 
 ### `contacts`
 
+**Livré par `CRM-060` tranche 1** (migration `0045`, `docs/SPEC-contacts.md` §2.2).
+
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `id`, `workspace_id` | `uuid` | |
-| `organization_id` | `uuid` | FK, facultatif |
-| `full_name` | `text` | |
-| `email` | `text` | unique par workspace sur `lower(email)` |
+| `organization_id` | `uuid` | FK **composite** `(organization_id, workspace_id)` → `organizations`, `on delete set null (organization_id)` — cloisonnement structurel, la liste de colonnes évite d'annuler `workspace_id` non nul |
+| `full_name` | `text` | non nul, `btrim(full_name) <> ''` |
+| `email` | `text` | unique **partielle** par workspace sur `lower(email)` |
 | `phone`, `role_title` | `text` | |
-| `source` | `text` | `manual`, `email`, `import` |
+| `source` | `text` | `manual`, `email`, `import` — défaut `manual` |
+| `created_at`, `updated_at` | `timestamptz` | conventions générales |
+
+Contrainte composite ajoutée : `UNIQUE (id, workspace_id)` — rend exprimable la FK composite
+depuis `card_contacts`.
 
 ### `card_contacts`
-Association n-n, avec un rôle (`decideur`, `prescripteur`, `technique`, …).
+
+**Livré par `CRM-060` tranche 1** (migration `0045`, `docs/SPEC-contacts.md` §2.3). Association
+n-n, avec un rôle **libre** (`decideur`, `prescripteur`, `technique`, …).
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `workspace_id`, `card_id`, `contact_id` | `uuid` | non nuls |
+| `role` | `text` | facultatif, non vide lorsqu'il est présent |
+| `created_at` | `timestamptz` | conventions générales |
+
+Clé primaire `(card_id, contact_id)`. FK **composites** vers `cards (id, workspace_id)` et
+`contacts (id, workspace_id)`, toutes deux `on delete cascade` : le cloisonnement `workspace_id`
+est garanti structurellement, aucun trigger requis.
 
 ---
 

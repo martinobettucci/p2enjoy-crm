@@ -7018,27 +7018,51 @@ avant la suivante :
 4. **Les écrans** — carnet de contacts, fiche d'organisation, rattachement d'un contact à une
    affaire depuis la route de détail. Ultérieure.
 
-**Première tranche — attendus, prêts à être livrés dans cette session :**
+**Première tranche livrée, 2026-08-18 — le modèle** :
 
-- [ ] `supabase/migrations/00xx_contacts_et_organisations.sql` : les trois tables, les FK
+- [x] `supabase/migrations/0045_contacts_et_organisations.sql` : les trois tables, les FK
       composites vers `organizations` et `cards`, les unicités partielles sur `lower(email)` et
-      `lower(domain)`, RLS activée, trois politiques par table (lecture, écriture, suppression),
-      privilèges explicites, triggers `updated_at`, contraintes de forme.
-- [ ] `supabase/tests/00xx_contacts_et_organisations.test.sql` : forme des trois tables,
-      contraintes de valeur, unicités partielles éprouvées des deux côtés, FK composites dans les
-      deux sens (workspace différent refusé), RLS activée, politiques nommées, privilèges par rôle,
-      absence de politique `DELETE` non désirée, conformité du seed.
-- [ ] `e2e/api/contacts.spec.ts` : les seize lignes du contrat d'API du §4 rejouées avec les
-      jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater
-      inchangée.
-- [ ] Seed enrichi (§5 de la spécification) : deux organisations dont une avec domaine, trois
-      contacts couvrant l'unicité partielle et l'organisation facultative, deux rattachements dont
-      un contact rattaché à **exactement une** card active (état précis que la règle 3 lira).
-- [ ] `docs/SCHEMA.md` §6, `docs/SPEC-permissions-rls.md` §4, `docs/DAT.md`,
-      `docs/PROD_MIGRATIONS.md` §3, `docs/SPEC-seed.md`, `README.md`, `CHANGELOG.md` mis à jour
-      dans le même changement.
+      `lower(domain)`, RLS activée, quatre politiques par table (lecture, insertion, MAJ,
+      suppression), privilèges explicites, triggers `updated_at`, contraintes de forme.
+      Idempotence éprouvée par un second rejeu. `ON DELETE SET NULL (organization_id)` cible
+      explicitement la colonne à annuler — mesuré : sans cette liste, PostgreSQL annule les deux
+      colonnes de la clé composite, ce qui violerait `contacts.workspace_id NOT NULL`.
+- [x] `supabase/tests/0043_contacts_et_organisations.test.sql` : **38 assertions, aucune
+      anomalie** — forme des trois tables, contraintes de valeur, unicités partielles insensibles
+      à la casse, FK composites dans les deux sens (workspace différent refusé), clé primaire de
+      `card_contacts`, RLS activée, quatre politiques par table, privilèges par rôle,
+      `business_developer` accepté et `viewer` refusé, anonyme lit zéro ligne, cascades et
+      détachement.
+- [x] `e2e/api/contacts.spec.ts` : **18 scénarios verts** avec les jetons réels des trois profils
+      seedés, chaque refus **relisant la ligne** pour la constater inchangée (décision 70).
+- [x] Seed enrichi (`supabase/seed/apply-seed.sh` §8 novies bis, `docs/SPEC-contacts.md` §5) :
+      deux organisations dont une avec domaine (`sogexia.example`, pivot du rapprochement futur),
+      trois contacts couvrant l'unicité partielle sur `email` et l'organisation facultative, deux
+      rattachements dont **Léo Marchand sur exactement une** card active (état précis que la
+      règle 3 du classement lira). Convergence éprouvée par deux passages successifs. Une garde
+      du seed échoue si un rejeu ajoute une seconde affaire à Léo, ce qui empêche la dérive.
+- [x] `docs/SCHEMA.md` §6, `docs/SPEC-permissions-rls.md` §4, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` (migration 45), `CHANGELOG.md` mis à jour dans le même
+      changement.
 
-**Tranches 2, 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées.
+**Un défaut de conception, TROUVÉ PAR LE TEST DE CASCADE** et corrigé dans le même changement :
+la FK composite `(organization_id, workspace_id)` avec `on delete set null` sans liste de
+colonnes annulait les deux colonnes de la clé, ce qui violait le `NOT NULL` sur
+`contacts.workspace_id`. Une organisation supprimée aurait rejeté tous ses contacts en
+production. Corrigé par `on delete set null (organization_id)` — syntaxe explicite disponible
+depuis PG15, mesurée sur ce PG17. Sans la suite pgTAP, la propriété d'ownership annoncée au §3
+de la spécification aurait été fausse.
+
+**Tranches 2, 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées :
+
+- [ ] Tranche 2 — Activation de la règle 3 du classement de messages (`CRM-055`,
+      `docs/SPEC-mail-subsystem.md` §16). La donnée de démonstration existe (Léo Marchand sur
+      exactement une card active) ; il reste à activer la règle dans le code de classement.
+- [ ] Tranche 3 — Résolution du champ `contact` dans la saisie du formulaire (`CRM-036` §6.5,
+      INC-053) : remplacer le refus d'un UUID opaque par une clé vers un contact du même
+      workspace.
+- [ ] Tranche 4 — Écrans : carnet de contacts, fiche d'organisation, rattachement d'un contact
+      à une affaire depuis la route de détail.
 
 *Limites nommées d'emblée* : archivage réversible d'un contact, fusion de doublons, purge RGPD et
 rapprochement automatique email → organisation par domaine sont **hors périmètre** de cette unité
