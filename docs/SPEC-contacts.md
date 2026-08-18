@@ -1526,3 +1526,155 @@ grisée ferait passer une décision de la base pour une décision d'écran (`CLA
 Cette sous-tranche est la **dernière** de la tranche 4 (§10.1). Ce qui reste dû sur `CRM-060` après
 elle est nommé au §13.8 et au §6 : la création d'un contact, la fiche d'un contact, et l'arbitrage
 sur les références mortes.
+
+---
+
+## 14. Sous-tranche 4e — La création d'un contact depuis le carnet
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**onze** mesures relevées à la main le 2026-08-18 sur la pile seedée, avec les jetons réels des
+trois profils. Toutes les insertions de mesure ont été faites sur des **contacts sondes**, détruits
+ensuite : le seed est rendu **intact**, ses trois contacts retrouvés à l'identique.
+
+Le §13.8 nommait ce manque en toutes lettres : « **aucune création de contact « à la volée »**,
+que le §2.3 annonce pourtant pour le type `contact`. Aucun écran du produit ne crée de contact
+(§5.19, §5.21) ». Quatre surfaces lisent désormais les contacts — le carnet, la fiche
+d'organisation, le bloc d'une affaire et les deux sélecteurs du formulaire — et **aucune** ne
+permet d'en ajouter un : le carnet du seed est le seul carnet possible.
+
+### 14.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, dans le carnet (§10, `docs/DESIGN_SYSTEM.md` §5.19) :
+
+- un geste **« Nouveau contact »** qui ouvre un formulaire **dans le flux du document**, au-dessus
+  du tableau, sur le patron du bloc de la sous-tranche 4c (§12.6, `docs/DESIGN_SYSTEM.md` §5.21) ;
+- les **cinq champs** de la ligne du carnet : nom (obligatoire), organisation (choix parmi les
+  organisations du workspace), fonction, email, téléphone ;
+- la **traduction fermée des cinq refus** mesurés au §14.3, un contact créé **rejoignant le
+  tableau** sans rechargement de page.
+
+**Elle ne livre pas**, et chaque manque est nommé au §14.7 : aucune modification ni suppression
+d'un contact existant, aucune création d'**organisation**, aucune création depuis les trois autres
+surfaces qui lisent des contacts, et aucun rapprochement de doublon au-delà de ce que l'unicité de
+la base refuse déjà.
+
+### 14.2 Où le geste s'ancre — au-dessus du tableau, jamais dans une modale
+
+Le carnet est un **tableau du §5.9**, et le geste s'ancre entre son titre et lui, comme le
+formulaire de 4c s'ancre dans le flux du bloc des contacts d'une affaire (§12.2). Le motif est
+identique et déjà écrit au §5.21 du design system : une modale prend le focus, cache la liste que
+l'on vient de lire, et oblige à mémoriser ce qu'elle recouvre — or **la liste est précisément ce
+qui dit si le contact existe déjà**.
+
+Le formulaire est **replié par défaut** : le carnet est d'abord une surface de lecture, et un
+formulaire toujours déplié pousserait le tableau sous la ligne de flottaison à chaque visite.
+
+### 14.3 Ce que l'écriture envoie, et les cinq refus — MESURÉS
+
+L'écriture est un `POST /rest/v1/contacts` avec `Prefer: return=representation`, la ligne créée
+étant insérée dans le tableau sans relecture complète. `workspace_id` est celui du workspace
+courant ; `source` n'est **pas** envoyé — la base pose `manual` par défaut, mesuré.
+
+| # | Envoi | Réponse mesurée le 2026-08-18 |
+|---|---|---|
+| 1 | administratrice, nom seul | `201`, ligne rendue, `source` = `manual`, `organization_id` = `null` |
+| 2 | administratrice, nom + organisation du workspace | `201`, ligne rendue |
+| 3 | `business_developer`, nom + email | `201` — l'écriture n'est pas réservée à l'administration |
+| 4 | **lectrice**, nom seul | `403` / `42501`, « new row violates row-level security policy » |
+| 5 | administratrice, email **déjà porté**, casse différente | `409` / `23505`, `contacts_workspace_email_key` |
+| 6 | administratrice, nom **entièrement blanc** | `400` / `23514`, `contacts_full_name_check` |
+| 7 | administratrice, email malformé (`pasunemail`) | `400` / `23514`, `contacts_email_check` |
+| 8 | administratrice, email **chaîne vide** | `400` / `23514`, `contacts_email_check` |
+| 9 | administratrice, téléphone **chaîne vide** | `400` / `23514`, `contacts_phone_check` |
+| 10 | administratrice, organisation inconnue | `409` / `23503`, `contacts_organization_id_workspace_id_fkey` |
+| 11 | administratrice, `workspace_id` étranger | `403` / `42501` — c'est le `WITH CHECK` |
+
+**Les mesures 8 et 9 décident du contrat de saisie plutôt que de le confirmer.** Un champ
+facultatif laissé vide ne s'envoie **jamais** comme `''` : les contraintes de forme refusent la
+chaîne vide sur `email`, `phone` et `role_title`. C'est exactement la règle que `rattacherContact`
+applique déjà au rôle d'un rattachement (§12.3) — `normaliserFacultatif` rend `null` sur une saisie
+blanche —, et elle est ici **partagée** plutôt que réécrite.
+
+**La mesure 5 décide du classement.** `23505` (email déjà porté) et `23503` (organisation inconnue)
+rendent **tous deux `409`** : le code HTTP seul ne les sépare pas, alors qu'ils appellent des gestes
+opposés — corriger l'email, ou relire une liste d'organisations périmée. Le classement lit donc le
+**code PostgreSQL d'abord**, patron de `classerRefusRattachement` (§12.5).
+
+### 14.4 Les refus, traduits par un dictionnaire FERMÉ
+
+Cinq clés, et aucune interpolation d'un message serveur dans l'interface (`docs/DESIGN_SYSTEM.md`
+§10) :
+
+| Classement | Cause mesurée | Clé |
+|---|---|---|
+| `interdit` | `403` / `42501` | `contacts.creation.refus.interdit` |
+| `doublon` | `409` / `23505` | `contacts.creation.refus.doublon` |
+| `organisationInconnue` | `409` / `23503` | `contacts.creation.refus.organisation` |
+| `saisieInvalide` | `400` / `23514` | `contacts.creation.refus.saisie` |
+| `indisponible` | tout le reste | `contacts.creation.refus.indisponible` |
+
+**Un refus n'efface jamais la saisie** (§12.6) : la personne corrige et renvoie. Le formulaire
+reste ouvert, et le message vit **sous** lui, près de ce qui l'a causé.
+
+### 14.5 Contrat de comportement — sous-tranche 4e
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | carnet chargé, geste replié | un seul bouton « Nouveau contact », le tableau inchangé |
+| b | le geste est déclenché | le formulaire s'ouvre, le **focus entre** sur le champ du nom |
+| c | le formulaire est refermé | le focus **revient** à la commande qui l'a ouvert |
+| d | nom vide ou blanc | l'envoi est **refusé côté écran**, aucun appel réseau, le champ est signalé |
+| e | nom seul, envoi accepté | la ligne **rejoint le tableau à sa place de tri**, le formulaire se referme |
+| f | organisation retenue | la cellule d'organisation de la ligne neuve porte son **lien** (§5.19) |
+| g | email déjà porté | message `doublon`, formulaire ouvert, **saisie conservée** |
+| h | organisation inconnue (liste périmée) | message `organisation`, saisie conservée |
+| i | lectrice | message `interdit`, saisie conservée, **aucune commande éteinte d'avance** |
+| j | pendant l'envoi | la commande d'envoi est `aria-busy` et l'envoi ne part **qu'une fois** |
+| k | liste d'organisations en erreur | le sélecteur est désactivé avec une action de reprise (§13.5 cas h) |
+| l | liste d'organisations vide | le sélecteur n'offre que l'option vide, mention sans action (§13.5 cas i) |
+
+**Le cas d est le seul contrôle d'écran, et il ne remplace aucune règle** : la base refuse déjà un
+nom blanc (mesure 6). L'écran l'anticipe pour ne pas faire payer un aller-retour à une faute
+évidente, mais le refus serveur reste traduit si la saisie passe malgré tout (`CLAUDE.md` §10).
+
+### 14.6 Autorisations — l'écran n'en calcule aucune
+
+Rien de nouveau, et c'est le point : la lectrice **voit** le geste, ouvre le formulaire, envoie, et
+reçoit le refus **traduit**. Une commande grisée selon le rôle ferait passer une décision de la base
+pour une décision d'écran (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.21).
+
+### 14.7 Limites nommées — sous-tranche 4e
+
+- **aucune modification ni suppression** d'un contact existant : les politiques `contacts_maj` et
+  `contacts_suppression` existent (§3), aucun écran ne les exerce, et le cycle de vie d'un contact
+  reste l'arbitrage du §6, point 1 ;
+- **aucune création d'organisation** : le sélecteur n'offre que celles qui existent ;
+- **aucune création depuis les trois autres surfaces** — bloc d'une affaire, sélecteur du
+  formulaire, fiche d'organisation. Le carnet est la surface de gestion du carnet ;
+- **aucun rapprochement de doublon** au-delà de l'unicité que la base refuse : détecter un homonyme
+  sans email est `CRM-P05`, qui a son propre porteur ;
+- **aucune pagination**, pour le motif exact du §10.3.
+
+### 14.8 Preuves exigées — sous-tranche 4e
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la charge réellement envoyée par `creerContact` — les facultatifs blancs rendus `null`, jamais `''` — et le classement des cinq refus du §14.4 |
+| Unitaire | `webapp/src/app/Carnet.test.tsx` (étendu) : les cas a à l du §14.5 |
+| API | `e2e/api/contacts.spec.ts` (étendu) : les onze mesures du §14.3 avec les jetons réels, chaque refus **relisant la ligne** pour la constater absente (décision 70) |
+| E2E | `e2e/ui/carnet-contacts.spec.ts` (étendu) : la création par les gestes de l'écran puis **la suppression du contact créé** pour rendre le seed intact, le même parcours au **clavier**, le refus opposé à la lectrice avec sa saisie conservée ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, préfixées `carnet-creation-`, **observées** (`CLAUDE.md` §16) : le formulaire ouvert, la ligne obtenue, le refus, et les quatre paliers |
+| Seed | rendu **INTACT** : trois contacts, deux rattachements, Léo Marchand sur exactement une card active |
+
+### 14.9 Definition of Done — sous-tranche 4e
+
+- `webapp/src/lib/contacts.ts` : `creerContact` et `classerRefusCreation` ;
+- `webapp/src/app/Carnet.tsx` : le geste, le formulaire replié, les douze cas du §14.5 ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- preuves du §14.8 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.23 ; `docs/manual.md` ; `CHANGELOG.md`, dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche n'ouvre aucune politique et ne crée aucune colonne.** Elle
+n'exerce que la politique d'insertion posée par la migration `0045` et déjà prouvée par la
+tranche 1.
