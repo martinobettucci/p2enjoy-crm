@@ -570,3 +570,197 @@ dans leur transaction (pgTAP) ou avec la clé de service et un ménage garanti (
 La tranche 3 livrée, l'unité `CRM-060` **demeure `[~]`** : la tranche 4 (écrans — carnet de
 contacts, fiche d'organisation, rattachement depuis la route de détail, les deux sélecteurs du
 §9.1 et l'enrichissement du seed du §9.6) reste due.
+
+---
+
+## 10. Tranche 4 — Les écrans
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : réponses PostgREST relevées à la main avec les
+jetons réels des trois profils, table des routes et des entrées de navigation lues ligne à ligne,
+`docs/DESIGN_SYSTEM.md` relu intégralement.
+
+Références amont, qui **précèdent** ce document et le contraignent :
+
+- `docs/DESIGN_SYSTEM.md` §4 (barre latérale et entrées transverses), §5.9 (tableau de données),
+  §5.8 (états systématiques), §5.13 (formulaires dans le flux, jamais de modale), §2 (données
+  techniques), §8 (accessibilité), §10 (aucun texte en dur) ;
+- `docs/SPEC-webapp.md` §5.2 (table des routes), §6.4 (contrat asynchrone), §7 (états) ;
+- `docs/SPEC-permissions-rls.md` §7 : un refus de lecture est **zéro ligne**, jamais une erreur ;
+- `CLAUDE.md` §4 : « l'objet métier principal doit être traité comme un citoyen de première
+  classe » — c'est ce qui décide où le carnet s'ancre (§10.2).
+
+### 10.1 Découpage de la tranche 4, et son motif
+
+La tranche 4 porte quatre surfaces distinctes, qui ne lisent pas les mêmes tables et ne partagent
+aucun geste. Les livrer d'un bloc produirait un changement que personne ne peut relire, et la
+première interruption le perdrait entier. Elle est donc **sous-découpée**, chaque sous-tranche
+committée et prouvée avant la suivante :
+
+- **4a — Le carnet de contacts.** Une route propre, une entrée de navigation, un tableau des
+  contacts du workspace avec leur organisation. **Lecture seule.** Objet de la présente livraison.
+- **4b — La fiche d'organisation.** Les contacts d'une organisation, et ce qui la caractérise.
+  Ultérieure.
+- **4c — Le rattachement d'un contact à une affaire** depuis la route de détail (`card_contacts`),
+  premier geste d'écriture de la tranche. Ultérieure.
+- **4d — Les deux sélecteurs du §9.1** (`contact` et `user`) dans le formulaire d'une affaire, et
+  **l'enrichissement du seed différé par le §9.6**, avec la révision des dix comptes qu'il déplace.
+  Ultérieure.
+
+**La lecture vient avant l'écriture, et ce n'est pas un ordre de confort.** Un sélecteur de contact
+(4d) suppose une liste de contacts lisible ; un rattachement (4c) suppose de savoir désigner un
+contact. 4a livre cette lecture, et rien d'autre.
+
+### 10.2 Où le carnet s'ancre — une route de premier niveau, non une section de réglages
+
+**Décision : `/contacts`, entrée de la barre latérale**, aux côtés de l'Inbox et de Ma journée, et
+**non** `/reglages/contacts`.
+
+Le motif est celui de `CLAUDE.md` §4 : un contact est le matériau **quotidien** d'un commercial,
+au même titre qu'une affaire — c'est d'ailleurs exactement ce que le §3 de ce document a déjà
+tranché en base, en ouvrant l'écriture des contacts au `business_developer` là où les tracks, les
+channels et les workflows restent à l'`admin`. Les cinq surfaces de `/reglages` administrent la
+**structure** du workspace ; le carnet n'administre rien, il travaille.
+
+Deux conséquences, toutes deux tenues dans le même changement :
+
+- **`ROUTES` et `ENTREES_TRANSVERSES` gagnent la même entrée.** Une assertion existante exige que
+  ces deux tables se couvrent **exactement**, sans orpheline dans un sens ni dans l'autre : ajouter
+  l'une sans l'autre fait rougir `webapp/src/app/routes.test.tsx`. C'est voulu, et c'est le
+  mécanisme qui garantit qu'aucune entrée de navigation ne mène nulle part.
+- **`docs/DESIGN_SYSTEM.md` §4 est révisé dans le même changement.** Il énumère les entrées
+  transverses — « Inbox, Ma journée, Réglages » — et cette énumération deviendrait fausse. Le
+  document reçoit aussi le §5.19, qui dit de quoi le carnet a l'air.
+
+L'icône est `Contact` de Lucide (§9 : Lucide exclusivement). `Users` désignerait les **membres** du
+workspace, que `CRM-070` administrera : deux objets distincts ne partagent pas une icône.
+
+### 10.3 Ce que le carnet lit — mesuré sur la pile réelle
+
+MESURÉ le 2026-08-18 avec le jeton réel de l'administratrice, la requête que l'écran émettra :
+
+```
+GET /rest/v1/contacts
+    ?select=id,full_name,email,phone,role_title,organization_id,organizations(id,name,domain)
+    &order=full_name
+```
+
+rend les trois contacts du seed, l'organisation **embarquée** et nulle lorsqu'elle est absente :
+
+```
+{"full_name":"Élise Fabre","email":null,"phone":"+33 6 12 34 56 78",
+ "role_title":"Cheffe d'atelier","organizations":{"name":"Studio Meunier","domain":null}}
+{"full_name":"Léo Marchand","email":"leo.marchand@sogexia.example","phone":null,
+ "role_title":"Directeur achats","organizations":{"name":"Sogexia","domain":"sogexia.example"}}
+{"full_name":"Sophie Dupont","email":"sophie@dupont.test","phone":null,
+ "role_title":null,"organizations":null}
+```
+
+- **L'organisation est EMBARQUÉE, et c'est mesuré comme possible ici.** `contacts` ne porte qu'**une
+  seule** clé étrangère vers `organizations`, si bien que `organizations(...)` ne rend aucune
+  ambiguïté `PGRST201` — le défaut qui a imposé deux lectures séparées à `compterEnfantsInaccessibles`
+  (`corbeille.ts`) et à `lireCardsClassables` (`inbox.ts`). Une seconde requête serait ici un coût
+  gratuit.
+- **`source` n'est PAS demandée.** Une requête ne rapporte que ce qui est affiché
+  (patron de `lireTracks`), et le carnet n'affiche pas la provenance d'un contact : `manual`,
+  `email` et `import` ne veulent rien dire pour un commercial tant qu'aucun import n'existe.
+- **L'ordre est `full_name`**, celui du nom affiché — un carnet se parcourt par le nom. MESURÉ, la
+  collation de la base range « Élise » avant « Léo » : l'ordre est celui du serveur, l'écran ne
+  retrie pas.
+- **Aucune pagination dans cette sous-tranche, et l'écart est NOMMÉ.** Le §5.9 du design system
+  décrit une pagination pour le tableau de la vue liste ; le carnet lit ici **tous** les contacts du
+  workspace. Trois lignes seedées ne mesurent rien, et poser une pagination sur une lecture dont
+  personne n'a mesuré le volume serait de l'optimisation sans mesure (`CLAUDE.md` §21). La limite
+  est écrite au §10.7 et devra être reprise dès qu'un import (`source = 'import'`) existera.
+
+### 10.4 Autorisations — l'écran n'en calcule aucune
+
+MESURÉ, avec les jetons réels :
+
+| Acteur | Requête | Mesure |
+|---|---|---|
+| administratrice `…011` | `GET /contacts` | `200`, **3 lignes** |
+| lectrice `…013` | `GET /contacts` | `200`, `Content-Range: 0-2/3` — **3 lignes**, la lecture est ouverte à tout membre (§3) |
+| anonyme | `GET /contacts` | `200` et **`[]`** — zéro ligne, jamais une erreur de privilège |
+
+L'écran **ne calcule aucun droit** : il rend ce que le backend consent (`docs/DAT.md` §3.1). Un
+carnet vide pour un anonyme est donc l'état vide ordinaire du §5.8, et non un refus à mettre en
+scène — c'est exactement ce que `docs/SPEC-permissions-rls.md` §7 pose.
+
+Cette sous-tranche ne livre **aucune écriture**, donc **aucun refus d'écriture** n'est à traduire.
+La question ne se pose qu'en 4c.
+
+### 10.5 De quoi l'écran a l'air — règles renvoyées au design system
+
+Le détail visuel est écrit dans `docs/DESIGN_SYSTEM.md` §5.19, ajouté dans le même changement. Les
+trois décisions structurantes sont rappelées ici parce qu'elles découlent de la **donnée** :
+
+1. **C'est un tableau du §5.9, non la liste imbriquée du §5.13** : les cinq colonnes — nom,
+   organisation, fonction, email, téléphone — sont les **mêmes** pour chaque ligne, et il n'y a
+   rien à imbriquer, un contact n'ayant pas d'enfant. C'est la distinction que le §5.16 a déjà
+   tranchée pour la corbeille.
+2. **Une donnée absente laisse la cellule VIDE** (§5.9) : ni tiret, ni « non renseigné ». Le seed
+   exerce les trois cas — Sophie sans organisation ni fonction, Élise sans email, Léo sans
+   téléphone —, si bien que la règle est visible à la capture et non seulement écrite.
+3. **L'email et le téléphone sont des données techniques** (§2) : monospace, chiffres tabulaires.
+   Ils se comparent colonne par colonne, ce qui est la seule raison d'avoir des chiffres
+   tabulaires. **Ils ne sont pas des liens `mailto:` ni `tel:`** dans cette sous-tranche : écrire
+   un message à un contact depuis le carnet est un geste que personne n'a spécifié, et un lien qui
+   ouvre le client de messagerie du système sortirait du produit sans le dire.
+
+### 10.6 Contrat de comportement — sous-tranche 4a
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | membre du workspace, contacts présents | le tableau rend une ligne par contact, dans l'ordre du serveur |
+| b | contact sans organisation (Sophie) | cellule « Organisation » **vide**, aucune erreur |
+| c | contact sans email (Élise) | cellule « Email » **vide** |
+| d | lecture en vol | squelettes à la forme du tableau attendu (§5.8), jamais un spinner plein écran |
+| e | lecture en échec | état d'erreur avec **action de reprise**, qui relance la lecture |
+| f | aucun contact lisible (anonyme, ou workspace neuf) | état **vide** nommant ce qui manque, **sans action** — créer un contact est un geste que 4a ne livre pas, et un bouton vers nulle part est une commande morte (§5.16) |
+| g | entrée de navigation | `/contacts` figure dans la barre latérale et porte `aria-current="page"` lorsqu'elle est ouverte |
+
+Le cas **f** mérite son motif : le §5.8 prévoit « message **et action** » pour un état vide, et le
+§5.13 ajoute que sur une surface d'administration l'état vide porte le geste qui le comble. Le
+carnet n'est pas une surface d'administration (§10.2) et **ne livre aucun geste de création** :
+l'écart est celui du §5.16, où l'état vide de la corbeille n'offre aucune action non plus.
+
+### 10.7 Limites nommées — sous-tranche 4a
+
+Écrites plutôt que découvertes plus tard :
+
+- **aucune pagination** (§10.3), à reprendre quand un volume aura été mesuré ;
+- **aucune recherche ni aucun filtre.** Le §5.9 les prévoit pour le tableau de la vue liste ; les
+  poser ici sans pagination reviendrait à filtrer côté client une liste déjà entièrement chargée,
+  ce qui n'est pas la même fonctionnalité et donnerait une fausse idée de son coût ;
+- **aucun geste de création, de modification ni de suppression.** L'écriture est ouverte en base
+  au `business_developer` depuis la tranche 1, et aucun écran ne l'exerce encore : l'écart est
+  nommé, non compensé ;
+- **la fiche d'organisation n'existe pas encore** : le nom de l'organisation est un **texte**,
+  jamais un lien mort. Il deviendra un lien en 4b, avec sa destination.
+
+### 10.8 Preuves exigées — sous-tranche 4a
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` : la requête émise (table, colonnes, ordre) est vérifiée telle quelle ; les trois issues du contrat asynchrone (§6.4) — prêt, erreur classée sur le code HTTP, jamais sur le texte ; l'organisation absente rendue `null` et non `undefined` |
+| Unitaire | `webapp/src/app/Carnet.test.tsx` : les quatre états du §5.8, les cellules vides des cas b et c, l'en-tête du tableau |
+| Unitaire | `webapp/src/app/routes.test.tsx` (existant) : la couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` **inclut** la nouvelle entrée — l'assertion existe déjà et devient la garde de la §10.2 |
+| E2E | `e2e/ui/contacts.spec.ts` : le parcours connecté d'un membre — la barre latérale porte l'entrée, le carnet rend les trois contacts du seed, les cellules vides sont vides, et la navigation au **clavier** atteint l'entrée puis le tableau |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** conformément à `CLAUDE.md` §16 : le carnet peuplé, l'état vide anonyme, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur (§10 du design system) |
+
+### 10.9 Definition of Done — sous-tranche 4a
+
+- `webapp/src/lib/contacts.ts` : la lecture du §10.3, son type et son contrat asynchrone ;
+- `webapp/src/app/Carnet.tsx` : le tableau et les quatre états ;
+- `/contacts` ajouté à `chemins.ts`, à `ROUTES` et à `ENTREES_TRANSVERSES`, avec ses clés de
+  traduction ;
+- tests unitaires du §10.8 verts, et `routes.test.tsx` vert sans révision de son assertion de
+  couverture ;
+- E2E `e2e/ui/contacts.spec.ts` vert, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §4 révisé et §5.19 ajouté ; `docs/SPEC-webapp.md` §5.2 (table des
+  routes) ; `docs/manual.md` ; `CHANGELOG.md` mis à jour dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier.
+
+Les sous-tranches 4b, 4c et 4d restent dues ; l'unité `CRM-060` **demeure `[~]`**.
