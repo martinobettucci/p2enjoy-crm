@@ -294,9 +294,28 @@ contrôle.** Un négatif mesuré vaut d'être écrit : il dit jusqu'où porte la
 **Aggravation constatée le même jour.** En cours de session, `docker compose` s'est mis à segfauter
 à son tour, le montage `/mnt/wsl/docker-desktop/cli-tools/.../cli-plugins` s'est vidé, la socket a
 cessé de répondre au `_ping`, et Kong comme la webapp sont devenus injoignables : **Docker Desktop
-s'est arrêté côté Windows**. Une relance a été tentée depuis WSL. Tant que le poste n'est pas
-rétabli, **aucune vérification de cette session ne peut être rejouée**, et rien ne doit être déclaré
-vérifié sur cette base.
+s'est arrêté côté Windows**.
+
+**CAUSE RACINE ÉTABLIE, et elle n'est pas dans le dépôt.** Le journal du backend
+(`com.docker.backend.exe.log`) répète `connect tcp 192.168.65.7:2376: no route to host` : le backend
+n'atteint plus la machine virtuelle du moteur. La distro `docker-desktop` est pourtant **RUNNING**
+d'après `wsl -l --running`, mais toute exécution dedans échoue en `Wsl/Service/0x8007274c`, c'est-à-dire
+un **délai de connexion dépassé** : la distro tourne et ne répond plus. Le montage
+`/mnt/wsl/docker-desktop/cli-tools/.../cli-plugins` reste vide, ce qui explique les segfaults des
+greffons CLI — ils pointent vers des binaires absents.
+
+**Ce qui a été tenté, et pourquoi cela n'a pas suffi.** Relance de `Docker Desktop.exe` : le journal
+répond `backend already running, signaling show-dashboard` — l'application se croit saine et se
+contente d'ouvrir son tableau de bord. Terminaison de la distro `docker-desktop` par
+`wsl --terminate`, puis arrêt forcé de `Docker Desktop.exe` et relance à froid : la distro redémarre
+et retombe dans le même silence.
+
+**Ce qui reste, et qui demande la main de l'exploitant.** Le remède connu de cette panne est
+`wsl --shutdown`, qui redémarre **toutes** les distros — y compris celle où l'agent s'exécute. Il n'a
+donc **pas** été exécuté : une commande qui détruit son propre contexte d'exécution n'est pas une
+réparation autonome. À défaut, un redémarrage de Windows. Tant que le poste n'est pas rétabli,
+**aucune vérification de cette session ne peut être rejouée**, et rien ne doit être déclaré vérifié
+sur cette base.
 
 ### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée — CLOSE le 2026-08-17
 
