@@ -513,6 +513,20 @@ de conclure à un blocage, les solutions de repli ont été mesurées une à une
 - **Reconstruire la pile ailleurs n'aurait rien prouvé** : les preuves portent sur la pile réelle du
   projet, ses migrations, ses politiques et son seed.
 
+**L'OUTIL OFFICIEL DE DOCKER DESKTOP A ÉTÉ ESSAYÉ AUSSI, ET IL SE BLOQUE.** Une fois l'interop
+revenue, `C:\Program Files\Docker\Docker\DockerCli.exe` répond et offre trois gestes utiles :
+
+- `-SwitchLinuxEngine` rend **code 0** — et rien ne se passe : ni greffons remontés, ni socket, ni
+  `dockerd` dans la distro.
+- `-Shutdown` **ne rend jamais la main** : essayé jusqu'à **280 secondes**, les processus
+  `com.docker.backend.exe` restent vivants. Il attend l'arrêt d'un moteur qui n'a jamais démarré.
+- Relancer l'application après cela ramène le journal à `backend already running, signaling
+  show-dashboard` : elle se croit saine et se contente d'ouvrir son tableau de bord.
+
+Docker Desktop est donc **coincé sur lui-même** : il ne peut ni démarrer son moteur, ni s'arrêter
+proprement pour réessayer. Les processus coincés ont été arrêtés pour laisser un démarrage propre
+après le redémarrage de WSL.
+
 Le blocage est donc **total et mesuré**, et il ne reste qu'un geste humain.
 
 **Ce qui a été tenté après le retour de l'interop, sans succès.** Arrêt forcé de `Docker
