@@ -273,6 +273,16 @@ restés à ceux de `CRM-060` **tranche 1** (43 fichiers / 2229 assertions / 696 
 la tranche 2 en avait livré davantage. L'omission est nommée dans le fichier plutôt que lissée dans
 un total qui semblerait n'avoir jamais dérivé.
 
+**CE QUE LA CORRECTION A FAIT APPARAÎTRE, et qui reste à traiter par le porteur du harnais.** Le
+harnais va désormais jusqu'au bout, et rend **31 contrôles, 3 anomalies** — des sections qui
+n'avaient jamais tourné. L'une est explicitée par la sortie : « `npm run e2e:api` reste rouge après
+restauration », conséquence mécanique d'**INC-136** (le dépôt Storage rend `InvalidAccessKeyId` sur
+ce poste), tout contrôle exigeant une suite d'API **intégralement** verte échouant tant qu'INC-136
+est ouverte. Les deux autres appartiennent aux sections de dénombrement et de balayage, et leur
+diagnostic dépasse cette session : elles sont **laissées inchangées** et nommées ici. Ce n'est pas
+une régression — c'est la mesure d'un harnais qui, jusqu'au 2026-08-18, s'arrêtait avant de les
+rendre.
+
 ### INC-155 — INC-141 a un SECOND porteur : `verify-move-card.sh` fige lui aussi « quinze cards seedées »
 
 **Nature :** compteur périmé dans un harnais — **exactement le défaut d'INC-141**, consignée le
