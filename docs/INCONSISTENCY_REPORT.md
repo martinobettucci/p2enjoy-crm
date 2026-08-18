@@ -278,6 +278,25 @@ et l'assertion doit porter sur ce refus et non sur un `404`. Le poste Docker est
 écrire ce scénario sans pouvoir l'exécuter reviendrait à remplacer une fausse preuve par une preuve
 non vérifiée. **Il est donc consigné et non écrit**, et `CRM-014` comme `CRM-053` restent `[~]`.
 
+**SECONDE OCCURRENCE, trouvée par l'audit qu'impose ce constat.** Toutes les assertions d'absence du
+dépôt ont été relues. Sur trois qui reposent sur un code PostgREST :
+
+- `e2e/api/preuves-refus.spec.ts:510` est **saine** : elle fait un `GET` sur la table et lit
+  `PGRST205`, « table absente du cache de schéma ». Un `GET` de table trouve la table ou ne la
+  trouve pas ; rien ne s'interpose.
+- `e2e/api/preuves-refus.spec.ts:604` est celle décrite ci-dessus.
+- `e2e/api/refus-par-defaut.spec.ts:46` porte **la même faiblesse structurelle**. Elle affirme que
+  le schéma `app` n'est pas exposé, en appelant `rpc/resolve_access` avec `data: {}`. Or
+  `app.resolve_access(text, text, text)` exige **trois** paramètres : l'appel rendrait `PGRST202`
+  même si la fonction était exposée. **Ce qu'elle affirme est vrai** — PostgREST n'expose pas `app`
+  — **mais elle ne le mesure pas** : elle ne distingue pas « schéma non exposé » de « signature non
+  correspondante ». *Reste dû* : l'appeler avec sa signature réelle, pour qu'une exposition
+  accidentelle la fasse rougir.
+
+**Un négatif mesuré au passage.** Les **132** assertions pgTAP `has_*`/`hasnt_*` interrogent le
+catalogue directement et ne souffrent pas de ce défaut : leur succès dépend de la présence de
+l'objet et de rien d'autre.
+
 **Leçon de méthode.** Une assertion qui fige une absence doit être écrite de façon à ne pouvoir
 réussir QUE si l'objet est absent. Ici, le choix d'appeler la fonction sans argument rendait le
 succès insensible à ce qu'elle prétendait mesurer. Une preuve qui ne peut pas échouer n'est pas une
