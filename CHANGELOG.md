@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4d : les deux sélecteurs du formulaire, et le
+  seed qui les démontre** (`docs/SPEC-contacts.md` §13, `docs/DESIGN_SYSTEM.md` §5.22). Une question
+  de formulaire dont le type est **`contact`** ou **`user`** n'est plus un champ texte où l'on
+  saisissait un identifiant que le produit ne montrait nulle part : elle offre désormais la **liste
+  des noms** — les contacts du carnet, avec leur organisation pour distinguer deux homonymes, ou les
+  membres de l'espace de travail. La section repliée « Informations d'autres étapes » **résout** ces
+  deux types en toutes lettres, là où elle affichait trente-six caractères qui ne nommaient
+  personne. Cinq états sont traités, dont deux qui n'existaient nulle part ailleurs : une **liste
+  illisible** offre une action de reprise qui la relit, et une **valeur qui ne désigne plus
+  personne** — un contact supprimé depuis, cas mesuré — garde son option retenue sous la mention
+  « Référence inconnue », plutôt que de laisser la liste afficher son premier nom comme s'il avait
+  été choisi. Aucune requête n'est ajoutée à une fiche qui n'en a pas besoin : chaque liste n'est lue
+  que si le formulaire porte au moins une question de son type. **Le seed s'enrichit de deux
+  questions** — « Contact principal » et « Référent technique » — et de leurs deux réponses sur
+  « Migration ERP Sogexia », ce qui porte le formulaire du workflow global à **neuf** questions et
+  le seed à **vingt-trois** valeurs ; les **onze preuves** qui comparaient ces nombres sont révisées
+  dans le même changement, avec leur motif écrit. La section des contacts du seed passe **avant**
+  celle des valeurs : le validateur résout ces deux types, et une valeur écrite avant que son
+  contact n'existe est refusée. Aucune migration, aucune politique nouvelle.
+
 - **`CRM-060` — Contacts et organisations, tranche 4c : le rattachement d'un contact à une
   affaire** (`docs/SPEC-contacts.md` §12, `docs/DESIGN_SYSTEM.md` §5.21). La fiche d'une affaire
   porte, entre son formulaire et son geste de mise à la corbeille, le bloc **« Contacts de

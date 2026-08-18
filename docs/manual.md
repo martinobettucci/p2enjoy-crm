@@ -32,7 +32,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, et ses réponses s'y saisissent** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et la modification des champs d'**en-tête** — titre, responsable, montant, prochaine action ; les **réponses au formulaire**, elles, se saisissent depuis la fiche depuis le 2026-08-16 |
+| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, et ses réponses s'y saisissent** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et la modification des champs d'**en-tête** — titre, responsable, montant, prochaine action ; les **réponses au formulaire**, elles, se saisissent depuis la fiche depuis le 2026-08-16, et les questions de type **contact** et **membre** se répondent dans une liste de NOMS depuis la sous-tranche 4d de `CRM-060` |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
@@ -632,6 +632,30 @@ quand vous quittez un champ de saisie, ou dès que vous cochez une case ou chois
 - **Rien n'est enregistré tant que le serveur ne l'a pas accepté**, et le droit d'écrire est vérifié
   par le serveur, jamais seulement par l'écran. Une personne en lecture seule voit les questions et
   reçoit un refus explicite si elle tente d'y répondre.
+
+**Deux questions se répondent dans une LISTE DE NOMS, et non en tapant un identifiant.**
+
+Une question dont le type est « contact » ou « membre de l'espace » n'est plus un champ où l'on
+saisit un texte : elle offre la **liste** des personnes concernées, et vous y choisissez un nom.
+
+- **La liste des contacts** est celle du carnet (chapitre 3 *ter*), avec l'organisation à côté du
+  nom lorsqu'elle est connue — « Léo Marchand — Sogexia ». C'est ce qui distingue deux homonymes.
+- **La liste des membres** est celle de l'espace de travail : les personnes qui y ont un accès.
+- **« — Aucun choix — » efface la réponse**, comme pour toute autre liste.
+- **Si la personne choisie a été supprimée depuis**, la question garde ce qui a été enregistré et
+  l'affiche comme **« Référence inconnue »**, suivie de l'identifiant. Le produit ne remplace jamais
+  en silence une réponse enregistrée par une autre : à vous de choisir un nom valide si vous le
+  souhaitez.
+- **Si la liste ne peut pas être lue**, la question le dit et offre **« Réessayer »**. Tant qu'elle
+  n'est pas lue, il n'y a rien à choisir, et la liste reste inactive.
+- **Si l'espace n'a aucun contact**, la question le dit en toutes lettres. Aucun écran ne crée de
+  contact aujourd'hui.
+- **Dans la section repliée**, ces réponses se lisent aussi en toutes lettres. Lorsque le nom ne
+  peut pas être retrouvé, c'est l'identifiant brut qui s'affiche, dans la police des données
+  techniques — jamais un nom inventé.
+
+Le refus, lui, ne change pas : une personne en lecture seule voit les deux listes, peut y choisir,
+et reçoit le même message rouge que pour toute autre question.
 
 **Quand un déplacement vous a été refusé, la fiche vous emmène aux questions qui manquent.**
 

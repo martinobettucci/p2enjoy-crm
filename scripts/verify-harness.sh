@@ -547,7 +547,16 @@ SCENARIOS_API=704
 # FICHIERS passe de 30 à **31**. Valeur MESURÉE par `playwright test --list`
 # (« Total: 398 tests in 31 files »), puis par l'exécution de la suite neuve, **8/8 verts**,
 # rejouée trois fois de suite sans intermittence.
-SCENARIOS_UI=398
+#
+# Porté de 398 à **404** par `CRM-060` sous-tranche 4d, qui livre les deux sélecteurs de référence
+# du formulaire (`docs/SPEC-contacts.md` §13) : le fichier NEUF
+# `e2e/ui/formulaire-selecteurs.spec.ts` ajoute **six** scénarios — les deux champs seedés rendus en
+# NOMS et non en identifiants, les listes offertes avec leur option vide, le changement enregistré
+# qui survit au rechargement PUIS rétabli par le même geste, le parcours au clavier, le refus
+# traduit opposé à la lectrice, et les **quatre paliers** du §7 en un scénario. Le nombre de
+# FICHIERS passe de 31 à **32**. Valeur MESURÉE par `playwright test --list`
+# (« Total: 404 tests in 32 files »), puis par l'exécution de la suite neuve, **6/6 verts**.
+SCENARIOS_UI=404
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
