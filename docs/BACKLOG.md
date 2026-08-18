@@ -1063,12 +1063,20 @@ retirant temporairement une politique).
       §10, `docs/DAT.md` §7, `README.md` §7, `CHANGELOG.md`, `docs/JOURNAL.md` (décisions 146
       à 152), `docs/INCONSISTENCY_REPORT.md` (INC-057 et INC-058 ouvertes) mis à jour dans le même
       changement.
-- [ ] **QUATRE PREUVES SUR DOUZE RESTENT HORS D'ATTEINTE, ET LEURS OBJETS N'EXISTENT PAS** : n° 6
-      (`mail_inbound_accounts`, `CRM-052`), n° 7 (`mail_outbound_identities`, `CRM-053`), n° 9
-      (aucune table de pièces jointes, aucun bucket de storage), n° 12 (`queue_outbound_email`,
-      `CRM-058`). Chaque absence est figée par une assertion pgTAP **et** par un scénario d'API, qui
-      deviendront rouges à la naissance de leur objet et désigneront alors la preuve à écrire.
-      **Bloqué par une dépendance, pas par un défaut de l'unité.**
+- [~] **~~QUATRE PREUVES SUR DOUZE RESTENT HORS D'ATTEINTE.~~ RÉVISÉ le 2026-08-18 : LES QUATRE
+      OBJETS EXISTENT, ET TROIS ASSERTIONS SUR QUATRE ONT TENU LEUR PROMESSE.** n° 6 a été retournée
+      à la livraison de `mail_inbound_accounts` par `CRM-052`, n° 7 à celle de
+      `mail_outbound_identities` par `CRM-053`, n° 9 à celle de `mail_attachments` par `CRM-054` —
+      chacune est aujourd'hui un refus MESURÉ, et non plus une absence figée.
+      **La douzième a échoué en silence, et c'est INC-146.** `queue_outbound_email` est livrée par
+      `CRM-058` depuis `0030_envoi_sortant.sql`, avec sept paramètres dont trois obligatoires ; le
+      scénario l'appelle sans argument et attend `PGRST202`, qui ne dit pas « fonction absente »
+      mais « aucune surcharge ne correspond à CES paramètres ». Il est donc resté **VERT** après la
+      naissance de son objet, et le serait resté quoi qu'il arrive. **Une preuve qui ne peut pas
+      échouer n'est pas une preuve.**
+      *Reste dû* : retourner cette douzième assertion en refus mesuré. Non fait le 2026-08-18 — le
+      poste Docker est tombé (INC-145), et remplacer une fausse preuve par une preuve non exécutée
+      ne vaudrait pas mieux.
 - [~] **La preuve n° 8 est À MOITIÉ ACQUISE, et l'inventaire le dit désormais.** `card_events`
       existe depuis `CRM-044` : son refus est **mesuré** — `403`, `42501`, `service_role` compris —
       et non plus attendu. `audit_log` reste due par `CRM-072`. L'inventaire du fichier consolidé
@@ -3299,13 +3307,19 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
       `verify-webapp` 41, `verify-harness` 25, `verify-tracks` 40, `verify-channels` 23,
       `verify-catalogue` 29, `verify-workflows` 41, `verify-copie-workflow` 27,
       `verify-coherence-workflow` 26 —, aucune anomalie.
-- [ ] **`scripts/verify-scripts.sh` : 51 contrôles verts sur 52, et le 52ᵉ est laissé en échec.**
-      Il appartient à `CRM-002`, livré pendant ce passage par une autre exécution de la routine, et
-      il échoue pour une raison d'**hôte** : ni `ss` ni `netstat` ne sont installés, si bien que
-      `host_listening_ports` rend zéro ligne et que la garde de ports conclut à tort que tout est
-      libre. Le contrôle fait donc exactement ce qu'on lui demande. Consigné en **INC-044**, sans
-      correction — `scripts/lib/env.sh` est un livrable de `CRM-002`, `[x]`, et le corriger ici
-      rouvrirait cette unité (`CLAUDE.md` §13). L'échec est **nommé plutôt que masqué**.
+- [x] **~~`scripts/verify-scripts.sh` : 51 contrôles verts sur 52, et le 52ᵉ est laissé en échec.~~
+      RÉVISÉ le 2026-08-18, ET SUR MESURE.** Le relevé d'origine imputait l'échec à l'**hôte** —
+      ni `ss` ni `netstat` installés, `host_listening_ports` rendant zéro ligne et la garde de ports
+      concluant à tort que tout était libre —, consigné en **INC-044** et laissé sans correction
+      pour ne pas rouvrir `CRM-002`.
+      **Les deux moitiés du constat sont caduques.** INC-044 figure à l'index des entrées
+      **RETIRÉES** du registre, résolue le **2026-08-07** par la reprise de `CRM-002` : la garde lit
+      désormais `/proc/net/tcp`, sans `ss` ni `netstat`. Mesuré le 2026-08-18 sur ce poste, trois
+      contrôles verts le prouvent — conversion hexadécimale et sockets `LISTEN` seuls, un port
+      réellement ouvert vu, un port réellement fermé qui disparaît. Et le harnais ne compte plus 52
+      contrôles mais **104**, sa sonde de disponibilité ayant été corrigée le même jour (INC-145).
+      *Onzième citation de blocage périmée trouvée dans ce balayage — voir `docs/JOURNAL.md`
+      décision 437.*
 - [x] `docs/SPEC-form-composer.md` (§2 et §3 réécrits, §7 scindé par unité), `docs/SCHEMA.md` §4,
       `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.10, `docs/DAT.md`,
       `docs/PROD_MIGRATIONS.md` §3 (migration 9), `docs/manual.md` chapitre 23 et §3.2, `README.md`,
@@ -6268,8 +6282,14 @@ présent dans le seed.
 - [x] **`docs/manual.md` chapitre 4.13** : recevoir et expédier sont deux choses distinctes,
       l'adresse par défaut se déplace, l'adresse d'expédition est vérifiée à l'enregistrement, et
       le quota n'est appliqué par rien.
-- [ ] **La preuve de refus n° 12 reste hors d'atteinte** : elle exige `queue_outbound_email`, due
-      par `CRM-058`. L'absence est **figée par une assertion**, non commentée.
+- [~] **~~La preuve de refus n° 12 reste hors d'atteinte.~~ RÉVISÉ le 2026-08-18 : elle est
+      ATTEIGNABLE depuis `CRM-058`**, qui a livré `queue_outbound_email`. L'assertion qui figeait
+      l'absence n'a pas rougi à cette naissance : elle appelle la fonction sans argument et lit le
+      `PGRST202` d'une signature non correspondante comme une preuve d'absence — **INC-146**.
+      Le refus réel, lui, EST prouvé : `e2e/api/envoi.spec.ts` mesure `forbidden` et
+      `identity_not_available` avec les jetons réels. C'est le registre des douze preuves qui ment
+      sur son état, pas le produit qui manque à sa règle.
+      *Reste dû* : retourner l'assertion, ce qui exige la pile — indisponible ce jour (INC-145).
 - [ ] **Aucun écran**, même écart qu'à `CRM-052` et pour la même raison.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E de configuration ; preuve

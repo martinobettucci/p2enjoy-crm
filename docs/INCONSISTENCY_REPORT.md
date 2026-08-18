@@ -241,6 +241,48 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-146 — Une assertion qui fige une absence est restée VERTE après la naissance de son objet
+
+**Nature :** fausse preuve ; le mécanisme de la décision 51 a échoué sans le dire.
+**Relevé le :** 2026-08-18, par relecture — la pile ne tournait pas, et aucune exécution n'aurait
+trouvé ce défaut, puisque le scénario est **vert**.
+
+**Le mécanisme, et ce qu'il promet.** `e2e/api/preuves-refus.spec.ts` §7.3 fige les preuves de refus
+dont le sujet n'existe pas encore : « chacune deviendra ROUGE le jour où la table ou la fonction
+naîtra, et désignera alors la preuve à écrire ». Trois l'ont tenu — n° 6 à la livraison de
+`mail_inbound_accounts` par `CRM-052`, n° 7 à celle de `mail_outbound_identities` par `CRM-053`,
+n° 9 à celle de `mail_attachments` par `CRM-054`. Toutes trois ont été RETOURNÉES en refus mesurés.
+
+**La douzième ne l'a pas tenu.** Le scénario s'intitule toujours « `queue_outbound_email` n'existe
+pas, et c'est asséré ». Or `CRM-058` l'a livrée : `supabase/migrations/0030_envoi_sortant.sql` la
+crée avec **sept paramètres**, dont trois sans valeur par défaut. Le scénario, lui, appelle
+`POST /rest/v1/rpc/queue_outbound_email` avec `data: {}` et attend `404` / `PGRST202`.
+
+**Pourquoi il reste vert alors que la fonction existe.** `PGRST202` de PostgREST ne signifie pas
+« fonction absente » mais « aucune fonction de ce nom ne correspond à CES paramètres ». Un appel
+sans argument ne peut correspondre à aucune surcharge d'une fonction qui en exige trois. **Le
+scénario mesure une signature qui ne correspond pas, et l'interprète comme une absence.** Il serait
+resté vert quoi qu'il arrive — avant comme après la naissance de la fonction.
+
+**Ce que le défaut a produit.** Deux unités affirment encore, sur la foi de cette assertion, que la
+preuve n° 12 est « hors d'atteinte » et que son objet « n'existe pas » : `CRM-014` et `CRM-053`.
+C'est faux depuis `CRM-058`.
+
+**Ce qui atténue, sans excuser.** Le refus réel EST prouvé ailleurs : `e2e/api/envoi.spec.ts` mesure
+`forbidden` et `identity_not_available` avec les jetons réels. La règle est donc tenue par le
+produit ; c'est le registre des douze preuves qui ment sur son propre état.
+
+**Ce qui reste dû, et qui n'a PAS pu être fait le 2026-08-18.** Retourner la douzième assertion en
+refus mesuré, comme les trois autres l'ont été — envoyer avec l'identité d'autrui doit être refusé,
+et l'assertion doit porter sur ce refus et non sur un `404`. Le poste Docker est tombé (INC-145) :
+écrire ce scénario sans pouvoir l'exécuter reviendrait à remplacer une fausse preuve par une preuve
+non vérifiée. **Il est donc consigné et non écrit**, et `CRM-014` comme `CRM-053` restent `[~]`.
+
+**Leçon de méthode.** Une assertion qui fige une absence doit être écrite de façon à ne pouvoir
+réussir QUE si l'objet est absent. Ici, le choix d'appeler la fonction sans argument rendait le
+succès insensible à ce qu'elle prétendait mesurer. Une preuve qui ne peut pas échouer n'est pas une
+preuve.
+
 ### INC-145 — Un harnais rendait « aucune anomalie » en sautant quatre contrôles
 
 **Nature :** vert obtenu par omission ; la sonde de disponibilité se trompait de sujet.

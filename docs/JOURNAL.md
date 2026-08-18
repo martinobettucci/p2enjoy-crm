@@ -18033,3 +18033,33 @@ invoquée, et pas seulement avant d'être écrite** — c'est le versant documen
 restent `[~]` : leurs preuves d'interface sont désormais reconnues comme dues, et elles n'ont pas pu
 être produites — le poste Docker est tombé le même jour (INC-145). Corriger un motif faux ne fournit
 pas la preuve ; cela dit seulement où elle manque.
+
+
+## décision 438 — Une preuve qui ne peut pas échouer n'est pas une preuve
+
+**Découverte.** Le poste Docker étant tombé, j'ai relu au lieu d'exécuter. Le registre des douze
+preuves de refus fige les preuves dont le sujet n'existe pas encore, avec une promesse écrite :
+« chacune deviendra ROUGE le jour où la table ou la fonction naîtra ». Trois l'ont tenue — n° 6,
+n° 7 et n° 9, retournées en refus mesurés à la livraison de leurs objets.
+
+**La douzième ne l'a pas tenue, et personne ne l'a vu.** Elle s'intitule toujours
+« `queue_outbound_email` n'existe pas, et c'est asséré », alors que `CRM-058` l'a livrée. Elle
+appelle la fonction **sans argument** et attend `PGRST202`. Or `PGRST202` ne dit pas « fonction
+absente » : il dit « aucune surcharge de ce nom ne correspond à CES paramètres ». La fonction en
+exige trois. Le scénario est donc resté **vert** après la naissance de son objet — et le serait
+resté quoi qu'il arrive.
+
+**Ce que cela m'apprend sur la manière de figer une absence.** L'assertion doit être écrite de façon
+à ne pouvoir réussir QUE si l'objet est absent. Appeler une fonction avec des arguments qui ne
+peuvent correspondre à aucune signature rend le succès insensible à ce qu'on prétend mesurer.
+Vérifier l'existence dans le catalogue, ou appeler avec la signature RÉELLE attendue, aurait rougi.
+
+**Ce que je n'ai pas fait, et pourquoi.** Je n'ai pas réécrit le scénario. Le remplacer sans pouvoir
+l'exécuter substituerait une preuve non vérifiée à une fausse preuve — le gain serait apparent.
+INC-146 est consignée, `CRM-014` et `CRM-053` sont révisées et restent `[~]`, et la réécriture
+attend le retour du poste.
+
+**Portée.** Deux unités affirmaient, sur la foi de cette assertion, que l'objet « n'existe pas ».
+La règle, elle, est bien tenue par le produit : `e2e/api/envoi.spec.ts` mesure `forbidden` et
+`identity_not_available` avec les jetons réels. C'est le registre qui mentait sur son propre état,
+pas le produit qui manquait à sa règle — la distinction compte, et elle est écrite.
