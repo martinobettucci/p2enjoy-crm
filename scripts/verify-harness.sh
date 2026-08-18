@@ -479,7 +479,13 @@ SCENARIOS_API=678
 # de le mesurer sans la pile : `playwright test --list` ÉNUMÈRE les scénarios sans en exécuter un
 # seul. Il rend **368 tests dans 28 fichiers**. La déduction était juste, et elle est désormais
 # une observation. Le projet `api` a été confirmé de la même façon, à **678**.
-SCENARIOS_UI=368
+#
+# Porté de 368 à **370** par `CRM-033`, qui livre enfin ses deux preuves d'interface
+# (`docs/SPEC-workflow-engine.md` §4.12.9) : le sélecteur de workflow comparé par égalité sous deux
+# tracks, et la course du §7.2 reproduite jusqu'au refus du trigger. Le fichier
+# `e2e/ui/coherence-workflow.spec.ts` porte le total des fichiers de 28 à **29**. Valeur MESURÉE
+# par `playwright test --list`, contrôle « 2 bis » de la décision 441, puis par l'exécution.
+SCENARIOS_UI=370
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

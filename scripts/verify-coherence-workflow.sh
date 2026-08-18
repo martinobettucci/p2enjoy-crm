@@ -18,16 +18,21 @@
 #   5. le seed est **convergent**, y compris pour le défaut d'INC-041 : une copie déplacée ne fait
 #      plus naître une seconde copie ;
 #   6. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
-#      échouer, et la restauration est constatée, pas supposée.
+#      échouer, et la restauration est constatée, pas supposée ;
+#   7. les deux preuves d'interface du §4.12.9 sont vertes, et leurs trois captures existent.
 #
 # ---------------------------------------------------------------------------------------------
-# Ce que ce harnais ne prouve pas, et le dit.
+# Ce que ce harnais prouve de l'interface, depuis le 2026-08-18.
 # ---------------------------------------------------------------------------------------------
-# Il ne prouve rien d'une interface : affecter un workflow à un channel exige un écran
-# d'administration authentifié, et la webapp reste un appelant **anonyme** faute d'écran de
-# connexion (INC-021). Il n'y a donc ni test E2E d'interface ni capture à produire pour cette unité
-# — non par renoncement, mais parce qu'il n'existe rien à regarder. La règle est livrée et prouvée
-# **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute façon.
+# ~~Il ne prouve rien d'une interface : affecter un workflow à un channel exige un écran
+# d'administration authentifié, et la webapp reste un appelant anonyme faute d'écran de connexion
+# (INC-021).~~ **CE MOTIF EST CADUC.** INC-021 est close depuis le 2026-08-07, `CRM-009` a livré
+# l'écran de connexion, et l'écran d'affectation existe depuis `CRM-075`.
+#
+# Le contrôle 8 bis rejoue donc les deux preuves d'interface de l'unité
+# (`e2e/ui/coherence-workflow.spec.ts`, `docs/SPEC-workflow-engine.md` §4.12.9) et constate les
+# trois captures qu'elles produisent. La règle reste tenue **en base**, ce que `CLAUDE.md` §10 exige
+# de toute façon, et les sections 4 à 7 le mesurent ; l'interface n'en est que le second témoin.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -489,6 +494,32 @@ else
 	npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
 	npm run e2e:ui >/dev/null 2>&1 && ok "npm run e2e:ui" || fail "npm run e2e:ui"
 fi
+
+titre "8 bis. Les deux preuves d'interface de l'unité (§4.12.9)"
+
+# Elles sont DÉJÀ comprises dans `npm run e2e:ui` ci-dessus. Elles sont rejouées ici SEULES pour que
+# le verdict de cette unité nomme SES scénarios : une campagne d'interface rouge ne dit pas lequel
+# des 370 scénarios a cédé, et un harnais d'unité doit pouvoir répondre sans qu'on relise un journal.
+if [ "$RAPIDE" = true ]; then
+	printf '  (ignorés : --rapide)\n'
+else
+	if E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui \
+		e2e/ui/coherence-workflow.spec.ts >/dev/null 2>&1; then
+		ok "e2e/ui/coherence-workflow.spec.ts — sélecteur filtré et refus hors écran"
+	else
+		fail "e2e/ui/coherence-workflow.spec.ts est rouge"
+	fi
+fi
+
+# Les captures sont un livrable de `CLAUDE.md` §16, pas un effet de bord : leur absence est une
+# anomalie même quand les scénarios passent.
+for capture in selecteur-workflow-track-porteur selecteur-workflow-track-voisin refus-workflow-hors-track; do
+	if [ -s "docs/captures/CRM-033/$capture.jpg" ]; then
+		ok "capture docs/captures/CRM-033/$capture.jpg"
+	else
+		fail "capture docs/captures/CRM-033/$capture.jpg absente ou vide"
+	fi
+done
 
 titre "Résultat"
 if [ "$failures" -eq 0 ]; then
