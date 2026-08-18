@@ -189,14 +189,24 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		await page.keyboard.press('Enter')
 		expect(new URL(page.url()).hash).toBe('#contenu-principal')
 
-		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les quatre
+		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les CINQ
 		//    entrées de navigation, dans l'ordre visuel.
+		//
+		// RÉVISÉE le 2026-08-18 par `CRM-060`, ET LA RÈGLE A CHANGÉ PAR LIVRAISON, non par
+		// commodité (`CLAUDE.md` §3.1, mécanisme de la décision 51). Cette liste énumérait les
+		// QUATRE entrées de `CRM-007` ; le carnet de contacts en ajoute une cinquième, entre
+		// « Inbox » et « Ma journée » (`docs/SPEC-contacts.md` §10.2, `docs/DESIGN_SYSTEM.md` §4).
+		// La preuve est donc mise à jour AVEC son ordre réel — et non contournée : ce qu'elle
+		// exige reste identique, l'ordre de tabulation doit suivre l'ordre visuel, et c'est
+		// précisément ce qu'elle a détecté en devenant rouge. La couverture exacte
+		// `ROUTES` ⇄ `ENTREES_TRANSVERSES` est tenue par `routes.test.tsx`, qui garantit qu'aucune
+		// entrée ne manque ici.
 		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 		await page.keyboard.press('Tab')
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('bascule-repli')).toBeFocused()
 
-		for (const libelle of ['Board', 'Inbox', 'Ma journée', 'Réglages']) {
+		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Ma journée', 'Réglages']) {
 			await page.keyboard.press('Tab')
 			await expect(
 				page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle),
