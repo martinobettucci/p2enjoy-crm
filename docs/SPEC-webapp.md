@@ -231,6 +231,7 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 | `/` | Board — état vide : aucun track n'est encore livré |
 | `/inbox` | État vide de l'inbox |
 | `/contacts` | **Carnet de contacts** — `CRM-060`, `docs/SPEC-contacts.md` §10. Une route de premier niveau, portée par une entrée de la barre latérale : un contact est un objet métier de première classe (`CLAUDE.md` §4), pas un réglage de structure |
+| `/contacts/organisations/:idOrganisation` | **Fiche d'organisation** — `CRM-060` tranche 4b, `docs/SPEC-contacts.md` §11.2. Une route de DÉTAIL sous le carnet, et non une racine `/organisations` : une adresse de premier niveau suppose une surface qui la peuple, et il n'existe aucune liste d'organisations. Elle ne figure PAS dans `ROUTES` — son titre est le nom de l'organisation, donc une donnée —, comme le détail d'une card. L'organisation est désignée par son identifiant : `organizations` ne porte aucun slug, et `domain` est nul pour une organisation sur deux |
 | `/ma-journee` | État vide de la journée |
 | `/reglages` | Réglages — état vide, et rappel des sources de configuration |
 | `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021`. Avec un channel ouvert, elle rend son **board kanban** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7 |
