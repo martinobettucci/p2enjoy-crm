@@ -397,6 +397,7 @@ Le refus reste donc **prouvé hors interface**, avec les jetons réels du `viewe
 | Rendu, états, formulaires, confirmation, commandes désactivées aux extrémités | `webapp/src/app/AdministrationArborescence.test.tsx` |
 | Les refus des trois profils, hors interface, avec les jetons réels | `e2e/api/administration-arborescence.spec.ts` |
 | Créer, renommer, réordonner, archiver, désarchiver — track puis channel, clavier **et** souris | `e2e/ui/administration-arborescence.spec.ts` |
+| Le sélecteur de workflow du §7.2 ne propose QUE les affectables, et le refus du §9 tient quand la liste est périmée | `e2e/ui/coherence-workflow.spec.ts` (`CRM-033`, `docs/SPEC-workflow-engine.md` §4.12.9) |
 | Captures aux quatre paliers | `e2e/output/CRM-075/*.jpg` |
 | Seed inchangé après le passage du scénario | `e2e/ui/administration-arborescence.spec.ts`, épilogue |
 | Rejeu complet et non-complaisance | `scripts/verify-administration-arborescence.sh` |

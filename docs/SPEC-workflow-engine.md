@@ -1946,7 +1946,70 @@ Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-041**.
 | pgTAP | Les deux triggers existent et portent sur les bonnes colonnes ; les trois cas de la Definition of Done — global accepté, `track` du même track accepté, `track` étranger refusé ; le déplacement d'un channel refusé ; les portes 3 et 4 refusées ; un workflow `track` **libre** encore déplaçable ; `NOT NULL` posée ; la clé étrangère laissée parler pour un workflow introuvable |
 | API | Les treize lignes du §4.12.6, hors interface, avec les jetons réels des trois profils |
 | Seed | L'ordre nouveau, le rattachement de `prospection` au workflow `track`, et la convergence **éprouvée par une dégradation** (INC-041) |
-| Interface | **Aucune** — l'affectation d'un workflow à un channel exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021). L'écart est nommé dans la Definition of Done, il n'est pas masqué |
+| Interface | ~~**Aucune** — l'affectation d'un workflow à un channel exige un écran d'administration authentifié, et la webapp reste un appelant anonyme (INC-021).~~ **RÉVISÉ le 2026-08-18 : le motif est caduc et les preuves sont DUES.** INC-021 est close depuis le 2026-08-07 (`CRM-009` a livré l'écran de connexion), et l'écran qui affecte un workflow à un channel existe depuis `CRM-075`. Deux preuves d'interface sont donc dues, et le §4.12.9 les énonce |
+
+#### 4.12.9 Les deux preuves d'interface, et ce qu'elles ajoutent au §4.12.6
+
+Le §4.12.8 a longtemps porté « Interface : aucune », pour un motif qui ne tient plus. La règle
+reste une règle de base — `CLAUDE.md` §10 —, et le §4.12.6 en demeure le contrat de référence : ce
+chapitre n'y ajoute pas un second contrat, il éprouve les **deux endroits où l'écran rencontre la
+règle**, et eux seuls.
+
+Ces deux endroits ne sont pas des redites du §4.12.6, parce qu'aucune de ses treize lignes ne peut
+les atteindre : la première porte sur ce que l'écran **propose**, la seconde sur ce que l'écran
+**fait d'un refus** qu'il n'a pas su prévenir.
+
+##### 4.12.9.1 Le sélecteur ne propose QUE les affectables
+
+`docs/SPEC-administration-arborescence.md` §7.2 décrit la requête filtrée côté serveur. La preuve
+porte sur son **résultat visible**, track par track, sur le workspace du seed :
+
+| Track déplié | Options attendues du sélecteur, dans l'ordre | Ce que la preuve établit |
+|---|---|---|
+| **Conseil & IA** | `Choisir un workflow…`, `Cycle commercial standard (par défaut)`, `Cycle commercial — Conseil IA` | un workflow `track` **de ce track** est proposé |
+| **Studio web** | `Choisir un workflow…`, `Cycle commercial standard (par défaut)` | le workflow `track` d'un **autre** track n'est PAS proposé |
+
+L'ordre est celui de la requête — `is_default.desc,name` —, et l'option vide en tête tient le
+« aucun défaut n'est présélectionné » du §7.2 : la preuve la constate plutôt que de la supposer.
+
+**Ce qui est asséré est une ÉGALITÉ, pas une présence.** Vérifier que « Cycle commercial — Conseil
+IA » est absent des options de Studio web serait tenu par un sélecteur vide, ou cassé. La liste
+entière est donc comparée, dans l'ordre : un filtre relâché ajouterait une option et rougirait, un
+filtre trop serré en retirerait une et rougirait aussi.
+
+##### 4.12.9.2 Le refus tient hors de l'écran — la course du §7.2, reproduite et non simulée
+
+Le §7.2 nomme une course : « le refus `23514` `workflow_hors_track`, que la course entre le
+chargement de la liste et l'envoi rend atteignable ». Elle est **reproductible sans rien simuler**,
+et la preuve la joue avec les mécanismes réels du produit :
+
+1. un workflow de portée `track` est créé sur **Studio web**, sans aucun channel — donc **libre** au
+   sens du §4.12.4 ;
+2. l'administrateur ouvre le formulaire de création de channel sous Studio web ; le sélecteur
+   propose ce workflow, et il le choisit ;
+3. **avant l'envoi**, ce workflow est déplacé vers **Conseil & IA**. L'écriture est **acceptée** —
+   le §4.12.4 le dit : « un workflow `track` sans aucun channel change de track librement ». La
+   liste affichée est désormais périmée, ce qui est exactement l'état que la course produit ;
+4. l'administrateur envoie le formulaire.
+
+Attendu, et c'est le cœur de la preuve :
+
+| Observation | Attendu |
+|---|---|
+| Écriture `POST /channels` | refusée par le trigger `channels_verifier_workflow`, `23514`, `workflow_hors_track` (§4.12.3) |
+| Écran | l'alerte `admin-refus` porte « Ce workflow n'est pas affectable à ce track. » (`docs/SPEC-administration-arborescence.md` §9) |
+| Base, relue par la clé de service | **aucune** ligne `channels` sous le slug de la preuve |
+| Console du navigateur | exactement **une** erreur, le `400` que PostgREST rend, consommée par `autoriserErreursConsole` |
+
+**Pourquoi cette preuve n'est pas une redite de la ligne `h` du §4.12.6.** La ligne `h` établit que
+la base refuse. Celle-ci établit que **l'écran ne se croit pas protégé par son propre filtre** : le
+sélecteur est une aide, jamais la règle, et le jour où le filtre serait relâché la ligne resterait
+refusée — ce que `CLAUDE.md` §10 exige de toute règle d'accès et que ce chapitre rend vérifiable.
+
+**Ce que la preuve rend à la base.** Le workflow créé pour la course est supprimé par la clé de
+service dans un `finally`, et son track d'origine n'a pas à être rétabli : il n'a jamais été
+rattaché à un channel seedé, et il disparaît entier. Le seed est rendu tel qu'il a été trouvé, règle
+de la décision 362.
 
 ## 5. Garde centrale : `move_card` — `CRM-034`
 
