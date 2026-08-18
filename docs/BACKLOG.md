@@ -2023,7 +2023,7 @@ nommée comme telle (`docs/DESIGN_SYSTEM.md` §12.5).
   modifiés ici. Trois questions sont portées à l'arbitrage.
 - **Les seuils chiffrés du §8 ne sont mesurés que sur les pilules de track.** Partout ailleurs, la
   conformité AA reste déclarée — c'est-à-dire dans l'état où étaient les pilules avant ce correctif.
-- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.**
+- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.** *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
   Ce n'est plus une gêne locale : `CRM-021`, `CRM-041`, `CRM-042` et les suivantes buteront sur le
   même obstacle et livreront, au mieux, des captures vides. L'arbitrage conditionne la valeur
   démontrable de **tout le chunk 3**.
@@ -2163,7 +2163,7 @@ telle.
 
 *Limites nommées, non masquées.*
 
-- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.**
+- **Aucune donnée métier ne peut apparaître dans l'interface tant qu'INC-021 n'est pas tranchée.** *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
   Troisième unité consécutive du chunk 3 à buter sur le même obstacle, et la plus démonstrative :
   la route d'un track ne peut afficher que « Track introuvable ».
 - **L'administration des channels est une opération d'exploitation**, pas un parcours produit.
@@ -2603,7 +2603,7 @@ pilote Playwright, artefact non déterministe déjà relevé lors de l'intégrat
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Cinquième unité consécutive du chunk 3 à buter sur INC-021.
+- **Aucun écran.** Cinquième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **« Au moins une étape initiale » n'est pas garantie par la base**, et ne peut pas l'être sans
   rendre la création d'un workflow impossible par l'API (décision 72). Un workflow brouillon est un
   état légitime du produit, à traiter par `CRM-033` et `CRM-040`.
@@ -2830,7 +2830,8 @@ mention de divergence visible dans l'interface.
       aucune mention de divergence affichée, aucune capture.** La Definition of Done
       exige que la divergence soit « visible dans l'interface ». Elle suppose un écran
       d'administration authentifié, et la webapp reste un appelant **anonyme** faute d'écran de
-      connexion — **INC-021, en attente d'arbitrage**. Ce qui est livré est la **donnée** qui
+      connexion — **INC-021, alors en attente d'arbitrage, close depuis le 2026-08-07 par
+      `CRM-009`**. Ce qui est livré est la **donnée** qui
       porterait cette phrase, prouvée par l'API. **Cette preuve est bloquée par un arbitrage, pas
       par un défaut de l'unité.**
 - [ ] **Copie complète et divergence exacte à prouver avec `CRM-018`.** Les champs, règles et
@@ -2916,7 +2917,7 @@ laissé par le pilote Playwright, artefact non déterministe déjà relevé lors
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Sixième unité consécutive du chunk 3 à buter sur INC-021.
+- **Aucun écran.** Sixième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **Le signal de divergence historique ne voyait pas une suppression** dans la source. La décision
   293 retient l'empreinte de composition ; le point reste ouvert uniquement jusqu'à sa preuve dans
   `CRM-018`.
@@ -3035,7 +3036,7 @@ visuelle** pour la même raison ; les captures réécrites par le rejeu des suit
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Septième unité consécutive du chunk 3 à buter sur INC-021.
+- **Aucun écran.** Septième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **Les triggers ne valident pas les lignes existantes.** Un trigger ne s'applique qu'aux écritures
   futures : une base qui porterait déjà un rattachement incohérent le conserverait sans être
   signalée. La requête de détection est écrite dans `docs/PROD_MIGRATIONS.md`, en vérification
@@ -3310,7 +3311,7 @@ aux quatre unités précédentes.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Huitième unité consécutive du chunk 3 à buter sur INC-021.
+- **Aucun écran.** Huitième unité consécutive du chunk 3 à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **`required` est une déclaration sans garde.** Ce qui l'applique est `move_card` (`CRM-034`), non
   commencée faute de cible (INC-043). Un champ déclaré obligatoire n'empêche aujourd'hui **rien**, et
   le dire est plus honnête que de laisser croire l'inverse.
@@ -3490,7 +3491,7 @@ compensée par une preuve de substitution.
 
 *Limites nommées, non masquées.*
 
-- **Aucun écran.** Dixième unité consécutive à buter sur INC-021.
+- **Aucun écran.** Dixième unité consécutive à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **`user` et `contact` ne sont pas résolus** — INC-053, arbitrage attendu.
 - **INC-037 est désormais portée par `CRM-018`** : la décision 293 impose la copie atomique des
   champs, règles et exigences. La limite historique reste une mesure utile, mais n'est plus le
@@ -4591,7 +4592,10 @@ de `CRM-040`, et ce qu'elle ajoute est un écran.
 
 *Limites nommées, non masquées.*
 
-- **INC-021 est ouverte** et conditionne le passage en `[x]` (voir ci-dessus).
+- **~~INC-021 est ouverte et conditionne le passage en `[x]`.~~ RÉVISÉ le 2026-08-18.** INC-021
+  est CLOSE depuis le 2026-08-07, fermée par `CRM-009` ; cette ligne lui a survécu (INC-143). Rien
+  ne conditionne plus le passage de cette unité, dont le parcours complet est prouvé à la souris
+  et au clavier — voir ci-dessus.
 - **INC-014 est ouverte** : le nom du responsable n'est lisible par personne, et la colonne
   « Responsable » n'est donc **pas rendue du tout**, plutôt que rendue vide.
 - **INC-069 et INC-070 sont ouvertes**, relevées par cette unité.
@@ -5410,7 +5414,10 @@ aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
 
 - **Aucun écran, donc aucun test E2E d'interface et aucune capture.** La preuve E2E est une preuve
   d'**API**. C'est conforme à la DoD de l'unité, et ce n'est pas un parcours utilisateur.
-- **Aucun parcours par un utilisateur connecté** : INC-021, seizième unité consécutive.
+- **~~Aucun parcours par un utilisateur connecté : INC-021, seizième unité consécutive.~~ RÉVISÉ
+  le 2026-08-18.** INC-021 est close depuis le 2026-08-07. Ce qui reste vrai est écrit plus haut,
+  et sans emprunter à elle : cette unité ne livre aucun écran, le board ne portant pas de
+  sélecteur de channel, et sa preuve E2E est une preuve d'API conforme à sa Definition of Done.
 - **Les réponses de formulaire détruites ne se récupèrent pas.** `card_field_values` n'a pas
   d'historique ; seuls les `field_changed` de la timeline subsistent, **sans libellé** — l'écran
   résout les libellés dans les champs du workflow courant et ne les y trouve plus (§6.10).
@@ -5644,13 +5651,14 @@ démontrable depuis le seed.
 chaque fonctionnalité livrée est démontrable depuis le seed ». **Les deux sont mesurées** : la
 première par une destruction réelle du cluster et deux empreintes identiques, la seconde par les
 soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit avec son jeton réel.
-**Seule INC-021 retient l'unité en `[~]`.**
+**~~Seule INC-021 retient l'unité en `[~]`.~~ RÉVISÉ le 2026-08-18 :** INC-021 est close depuis le
+2026-08-07 et ne retenait plus rien quand cette phrase a été écrite (INC-143). L'unité est `[x]`.
 
 *Limites nommées, non masquées.*
 
 - **Aucun écran, donc aucune capture et aucun test E2E d'interface.** « Aucun écran vide » est
   vérifié au niveau des **données** que chaque jeton réel obtient, jamais au niveau du rendu :
-  INC-021, dix-septième unité consécutive (`docs/SPEC-seed.md` §9.7).
+  INC-021, dix-septième unité consécutive (`docs/SPEC-seed.md` §9.7). *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
 - **Les deux cards du workflow dérivé ne portent aucune valeur de formulaire** : `copy_workflow_to_track`
   ne copie pas les champs, INC-037. L'absence est **figée par une preuve** plutôt que compensée par
   sept champs déclarés à la main (décision 223).
@@ -5778,7 +5786,9 @@ plutôt que comblé par un test de façade.
 - **Le manuel décrit des écrans que personne ne peut atteindre.** Les captures chargées des
   chapitres 4.7 à 4.10 proviennent de réponses **substituées sur le réseau**
   (`docs/DESIGN_SYSTEM.md` §12.5) ; le parcours réel d'un lecteur est celui du jeu `CRM-047` : une
-  suite d'états vides et de refus. INC-021, dix-huitième unité consécutive.
+  suite d'états vides et de refus. *La mention « INC-021, dix-huitième unité consécutive » qui
+  figurait ici est RÉVISÉE le 2026-08-18 : INC-021 est close depuis le 2026-08-07 (INC-143). Le
+  constat sur les captures substituées, lui, reste vrai et n'a jamais dépendu d'elle.*
 - **Trois captures du parcours sont identiques** — track, board et liste — parce que le refus
   anonyme intervient **au niveau du track**, avant que le board ou la liste ne soient atteints.
   C'est ce que le manuel dit, et non un défaut de la série.
