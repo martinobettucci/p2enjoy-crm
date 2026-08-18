@@ -63,7 +63,26 @@ MIGRATION_FILE=supabase/migrations/0013_valeurs_champs.sql
 MIGRATION_COLONNES=supabase/migrations/0014_colonnes_protegees.sql
 # CRM-018 est la dernière autorité sur `move_card`. Tout chemin de restauration doit la rejouer
 # après CRM-036 et CRM-013 pour rendre exactement l'état produit par le runner complet.
+# ET LA 47 SUIT LA 13, QUATRIÈME OCCURRENCE DE LA MÊME CLASSE (décisions 108, 135, 143, 145,
+# INC-153). MESURÉ le 2026-08-18 : la migration 13 définit `app.card_field_values_valider()` dans sa
+# version qui valide la seule FORME d'un uuid ; la 47 la redéfinit avec la RÉSOLUTION des types
+# `contact` et `user` (`CRM-060` tranche 3). Rejouer la 13 sans la 47 derrière retire donc la
+# résolution EN SILENCE, et les harnais exécutés ensuite mesurent un produit amputé — exactement ce
+# qu'INC-153 a coûté à la tranche 2. Mesure de la dégradation, puis de sa réparation :
+#   après rejeu de la 13 seule : la fonction ne contient plus « ne désigne aucun contact » ;
+#   après rejeu de la 47       : elle la contient de nouveau.
+MIGRATION_RESOLUTION=supabase/migrations/0047_resolution_champs_contact_user.sql
 MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
+# ET LA 35 SUIT LA 19, CINQUIÈME OCCURRENCE DE LA MÊME CLASSE — DÉFAUT ANTÉRIEUR, MESURÉ LE
+# 2026-08-18 SUR LA LIGNE DE BASE. `MIGRATION_FINALE` nommait la 19 « dernière autorité sur
+# `move_card` » ; elle ne l'est plus depuis le lot G (décision 374), qui redéfinit la fonction avec
+# `app.btrim_blancs` et la conservation du commentaire de transition (INC-048, INC-052). Toute
+# chaîne de restauration s'arrêtant à la 19 laissait donc `move_card` AMPUTÉE en sortant, et la
+# suite pgTAP `0014` rendait `not ok 99` et `not ok 100` à l'exécution SUIVANTE de ce harnais.
+# MESURÉ des deux côtés d'un `git stash` : rouge avant comme après mes changements, donc antérieur
+# — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
+# session (même geste que la décision 447 pour INC-153).
+MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -127,7 +146,9 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 rejouer_migrations() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || return 1
 }
 
 CORPS=/tmp/p2enjoy-valeurs-body
@@ -226,6 +247,10 @@ psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
 avec_n6=$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure)
                         like '%missing_required_fields%';")
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+# La 47 derrière la 13, ici aussi : ce bloc rejoue la 13 seule pour MESURER l'ordre 12 → 13, et
+# repartirait sinon sur une base dont la résolution a disparu.
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
 [ "$sans_n6" = "f" ] && [ "$avec_n6" = "t" ] \
 	&& ok "l'ORDRE 12 → 13 est ce qui livre la sixième vérification : rejouer la 12 seule la retire, "\
 "rejouer la 13 la remet — mesuré dans les deux sens" \
@@ -335,6 +360,97 @@ vide=$(psql_db -c "select (value is null)::text from public.card_field_values
 	&& ok "INC-054 : \`null\` vide le champ — PostgREST le convertit en SQL NULL, et c'est la seule "\
 "écriture d'API qui le permette (décision 133)" \
 	|| fail "null : code $code, valeur vide « $vide »"
+
+titre "3 bis. La RÉSOLUTION de `contact` et `user` — CRM-060 tranche 3, INC-053 close"
+
+# Ce que ce bloc mesure, et pourquoi il ne peut pas se contenter du §3 : la validation par TYPE dit
+# qu'un uuid est bien formé ; la RÉSOLUTION dit qu'il désigne quelque chose. Un harnais qui
+# n'éprouverait que la forme resterait vert sur le défaut exact qu'INC-053 portait.
+#
+# Les deux champs sondes sont créés ici et RETIRÉS en fin de bloc : le seed n'en porte aucun, et le
+# motif est mesuré (docs/SPEC-contacts.md §9.6) — le nombre « sept champs sur le workflow source »
+# est figé par dix preuves étrangères à cette tranche.
+
+CHAMP_SONDE_CONTACT=a5200000-0000-4000-8000-000000000001
+CHAMP_SONDE_USER=a5200000-0000-4000-8000-000000000002
+CONTACT_LEO=5eed0000-0000-4000-8000-000000000091
+MEMBRE_BIZDEV=5eed0000-0000-4000-8000-000000000012
+UUID_MORT=00000000-0000-4000-8000-000000000000
+
+psql_db -c "
+	insert into public.form_fields (id, workflow_id, workspace_id, key, label, type, options, position)
+	values ('$CHAMP_SONDE_CONTACT', '$WF_GLOBAL', '$WS_SEED', 'sonde-contact-harnais',
+	        'Sonde contact', 'contact', '{}', 910),
+	       ('$CHAMP_SONDE_USER', '$WF_GLOBAL', '$WS_SEED', 'sonde-user-harnais',
+	        'Sonde user', 'user', '{}', 911)
+	on conflict (id) do nothing;" >/dev/null
+
+# TÉMOIN D'ABORD : sans lui, les refus qui suivent seraient verts sur une garde qui refuserait TOUT,
+# y compris une cible légitime. C'est la même précaution que la section 7 prend pour les politiques.
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$CONTACT_LEO\"")
+[ "$code" = "201" ] \
+	&& ok "témoin : un contact RÉEL du workspace est **accepté** sur un champ \`contact\` — la "\
+"résolution discrimine, elle ne refuse pas tout" \
+	|| fail "un contact réel du workspace est refusé : code $code"
+
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
+detail=$(jq -r '.details // empty' < "$CORPS")
+[ "$code" = "400" ] && [ "$(jq -r '.message' < "$CORPS")" = "invalid_field_value" ] \
+	&& case "$detail" in *"ne désigne aucun contact"*) true ;; *) false ;; esac \
+	&& ok "un uuid bien formé ne désignant AUCUN contact est refusé — 400, jeton stable, et le "\
+"DETAIL dit pourquoi. C'est le défaut qu'INC-053 portait, et il est fermé" \
+	|| fail "uuid mort sur \`contact\` : code $code, détail « $detail »"
+
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_USER" "\"$MEMBRE_BIZDEV\"")
+[ "$code" = "201" ] \
+	&& ok "témoin : un MEMBRE du workspace est accepté sur un champ \`user\`" \
+	|| fail "un membre réel est refusé sur \`user\` : code $code"
+
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_USER" "\"$UUID_MORT\"")
+detail=$(jq -r '.details // empty' < "$CORPS")
+[ "$code" = "400" ] \
+	&& case "$detail" in *"ne désigne aucun membre"*) true ;; *) false ;; esac \
+	&& ok "un uuid ne désignant aucun membre du workspace est refusé sur \`user\` — la règle "\
+"d'appartenance de la décision 295 est opposable EN BASE" \
+	|| fail "uuid mort sur \`user\` : code $code, détail « $detail »"
+
+# Vider reste possible : sans ce contrôle, la résolution pourrait rendre un champ `contact`
+# IMPOSSIBLE à vider — le défaut exact qu'INC-054 avait produit sur `money` (décision 133).
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" 'null')
+vide=$(psql_db -c "select (value is null)::text from public.card_field_values
+                    where card_id = '$CARD_C6' and field_id = '$CHAMP_SONDE_CONTACT';")
+{ [ "$code" = "201" ] || [ "$code" = "200" ]; } && [ "$vide" = "true" ] \
+	&& ok "…et un champ \`contact\` reste **vidable** : la résolution n'a pas rendu obligatoire un "\
+"champ facultatif (INC-054, décision 133)" \
+	|| fail "vidage d'un champ contact : code $code, valeur vide « $vide »"
+
+# LA DÉGRADATION EST ICI, au plus près de ce qu'elle éprouve : la migration 13 seule ramène le
+# validateur d'AVANT la résolution. C'est la quatrième occurrence de la classe des décisions 108,
+# 135, 143, 145 et d'INC-153 — et c'est aussi ce que ce harnais aurait fait sans le correctif du
+# `rejouer_migrations` ci-dessus.
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
+[ "$code" != "400" ] \
+	&& ok "dégradation constatée : la migration 13 rejouée SEULE retire la résolution, et l'uuid "\
+"mort repasse (code $code) — les quatre contrôles ci-dessus mesurent bien la migration 47" \
+	|| fail "dégradation sans effet : le refus tient alors que la 13 seule a été rejouée"
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+
+code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
+[ "$code" = "400" ] \
+	&& ok "restauration constatée, non supposée : la 47 rejouée, l'uuid mort est de nouveau refusé" \
+	|| fail "après restauration, l'uuid mort rend encore $code"
+
+# Ménage : les valeurs partent avec les champs (cascade composite), le `delete` est néanmoins
+# explicite — un ménage qui suppose une cascade ne dit pas ce qu'il nettoie.
+psql_db -c "
+	delete from public.card_field_values
+	 where field_id in ('$CHAMP_SONDE_CONTACT', '$CHAMP_SONDE_USER');
+	delete from public.form_fields
+	 where id in ('$CHAMP_SONDE_CONTACT', '$CHAMP_SONDE_USER');" >/dev/null
 
 titre "4. Les autorisations, et le piège du refus silencieux"
 

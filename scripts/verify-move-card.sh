@@ -69,13 +69,34 @@ MIGRATION_SUIVANTE=supabase/migrations/0013_valeurs_champs.sql
 MIGRATION_TROISIEME=supabase/migrations/0014_colonnes_protegees.sql
 # CRM-018 remplace enfin la lecture du tableau historique par la table de liaison. Sans cette
 # dernière migration, un harnais ancien laisserait `move_card` sur son adaptateur de rejeu.
+# ET LA 47 SUIT LA 13, QUATRIÈME OCCURRENCE DE LA MÊME CLASSE (décisions 108, 135, 143, 145,
+# INC-153). MESURÉ le 2026-08-18 : la migration 13 définit `app.card_field_values_valider()` dans sa
+# version qui valide la seule FORME d'un uuid ; la 47 la redéfinit avec la RÉSOLUTION des types
+# `contact` et `user` (`CRM-060` tranche 3). Rejouer la 13 sans la 47 derrière retire donc la
+# résolution EN SILENCE, et les harnais exécutés ensuite mesurent un produit amputé — exactement ce
+# qu'INC-153 a coûté à la tranche 2. Mesure de la dégradation, puis de sa réparation :
+#   après rejeu de la 13 seule : la fonction ne contient plus « ne désigne aucun contact » ;
+#   après rejeu de la 47       : elle la contient de nouveau.
+MIGRATION_RESOLUTION=supabase/migrations/0047_resolution_champs_contact_user.sql
 MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
+# ET LA 35 SUIT LA 19, CINQUIÈME OCCURRENCE DE LA MÊME CLASSE — DÉFAUT ANTÉRIEUR, MESURÉ LE
+# 2026-08-18 SUR LA LIGNE DE BASE. `MIGRATION_FINALE` nommait la 19 « dernière autorité sur
+# `move_card` » ; elle ne l'est plus depuis le lot G (décision 374), qui redéfinit la fonction avec
+# `app.btrim_blancs` et la conservation du commentaire de transition (INC-048, INC-052). Toute
+# chaîne de restauration s'arrêtant à la 19 laissait donc `move_card` AMPUTÉE en sortant, et la
+# suite pgTAP `0014` rendait `not ok 99` et `not ok 100` à l'exécution SUIVANTE de ce harnais.
+# MESURÉ des deux côtés d'un `git stash` : rouge avant comme après mes changements, donc antérieur
+# — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
+# session (même geste que la décision 447 pour INC-153).
+MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 
 rejouer_migration() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || return 1
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || return 1
 }
 DB_CONTAINER=p2enjoy-db
 
@@ -249,7 +270,9 @@ restaurer_privileges() {
 	# Et la 14 derrière elle : elle seule referme `email_local_part` (CRM-013).
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || true
 	# Enfin la 19 remet la définition canonique adossée à la table de liaison (CRM-018).
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
 }
 trap 'restaurer_privileges; rm -f "$CORPS"' EXIT
 

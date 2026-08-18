@@ -63,7 +63,26 @@ MIGRATION_PRECEDENTE=supabase/migrations/0012_move_card.sql
 # l'identique par le harnais suivant. CRM-018 redéfinit ensuite la garde contre la table de liaison :
 # la séquence de restauration finale est donc 12 → 13 → 14 → 19, jamais partielle.
 MIGRATION_INTERMEDIAIRE=supabase/migrations/0013_valeurs_champs.sql
+# ET LA 47 SUIT LA 13, QUATRIÈME OCCURRENCE DE LA MÊME CLASSE (décisions 108, 135, 143, 145,
+# INC-153). MESURÉ le 2026-08-18 : la migration 13 définit `app.card_field_values_valider()` dans sa
+# version qui valide la seule FORME d'un uuid ; la 47 la redéfinit avec la RÉSOLUTION des types
+# `contact` et `user` (`CRM-060` tranche 3). Rejouer la 13 sans la 47 derrière retire donc la
+# résolution EN SILENCE, et les harnais exécutés ensuite mesurent un produit amputé — exactement ce
+# qu'INC-153 a coûté à la tranche 2. Mesure de la dégradation, puis de sa réparation :
+#   après rejeu de la 13 seule : la fonction ne contient plus « ne désigne aucun contact » ;
+#   après rejeu de la 47       : elle la contient de nouveau.
+MIGRATION_RESOLUTION=supabase/migrations/0047_resolution_champs_contact_user.sql
 MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
+# ET LA 35 SUIT LA 19, CINQUIÈME OCCURRENCE DE LA MÊME CLASSE — DÉFAUT ANTÉRIEUR, MESURÉ LE
+# 2026-08-18 SUR LA LIGNE DE BASE. `MIGRATION_FINALE` nommait la 19 « dernière autorité sur
+# `move_card` » ; elle ne l'est plus depuis le lot G (décision 374), qui redéfinit la fonction avec
+# `app.btrim_blancs` et la conservation du commentaire de transition (INC-048, INC-052). Toute
+# chaîne de restauration s'arrêtant à la 19 laissait donc `move_card` AMPUTÉE en sortant, et la
+# suite pgTAP `0014` rendait `not ok 99` et `not ok 100` à l'exécution SUIVANTE de ce harnais.
+# MESURÉ des deux côtés d'un `git stash` : rouge avant comme après mes changements, donc antérieur
+# — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
+# session (même geste que la décision 447 pour INC-153).
+MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -403,8 +422,10 @@ psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_PRECEDENTE" >/dev/null 2>&1 || tru
 	|| fail "la migration 12 ne rouvre pas la colonne : ce contrôle a perdu son sujet, à réviser"
 
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_INTERMEDIAIRE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
 [ "$(prive authenticated email_local_part update)" = "f" ] \
 	&& ok "…et la suite 13 → 14 → 19 la referme puis restaure la garde canonique" \
 	|| fail "la 14 ne referme pas ce que la 12 a rouvert"

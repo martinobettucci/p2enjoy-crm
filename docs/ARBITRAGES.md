@@ -82,7 +82,7 @@ mise en œuvre reste due. Les entrées closes depuis en ont été retirées.
 | INC-037, INC-038, INC-056 | copie intégrale du formulaire et empreinte de composition | `CRM-018` |
 | INC-048, INC-052 | vrai commentaire transactionnel ; blancs Unicode normalisés | reprise `CRM-034` |
 | INC-049, INC-051, INC-057 | propriété exacte de chaque preuve et de chaque `@verifies` | reprise preuves |
-| INC-053 | `user` résolu maintenant ; `contact` refusé jusqu'à `CRM-060` | reprise formulaires, `CRM-060` |
+| INC-053 | `user` résolu maintenant ; `contact` refusé jusqu'à `CRM-060` | **MISE EN ŒUVRE LE 2026-08-18** — `CRM-060` tranche 3, migration `0047` : `user` exige un membre du workspace, `contact` un contact du même workspace ; « membre actif » se lit « membre », le schéma ne portant aucun statut d'appartenance (`docs/SPEC-contacts.md` §9.3) |
 | INC-055, INC-058, INC-060, INC-064 | harnais autonomes, synchrones, restaurés à l'entrée, comptes seedés nommés | reprise harnais |
 | INC-062 | parcours transition détenu par `CRM-041`, contre-preuve de `CRM-037` | reprise DoD |
 | INC-063 | `alert` réservé à l'erreur | reprise formulaire |

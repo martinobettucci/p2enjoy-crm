@@ -142,7 +142,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-045 | Aucun chapitre ne nommait les politiques de `track_members`/`channel_members` | 2026-08-08 | reprise droits fins | 292-299 |
 | INC-049 | La preuve de refus n° 5 figurait dans deux Definitions of Done à la fois | 2026-08-08 | reprise preuves | 292-299 |
 | INC-051 | La ligne i du contrat d'API de `move_card` nommait un profil que le seed ne peut pas mettre en défaut | 2026-08-08 | reprise preuves | 292-299 |
-| INC-053 | `SPEC-form-composer` §2.3 ne disait pas laquelle de `CRM-036`/`CRM-060` résout `user`/`contact` | 2026-08-08 | reprise formulaires, `CRM-060` | 292-299 |
+| INC-053 | `SPEC-form-composer` §2.3 ne disait pas laquelle de `CRM-036`/`CRM-060` résout `user`/`contact` | 2026-08-08 | **LIVRÉE le 2026-08-18** — `CRM-060` tranche 3, migration `0047` : les deux types résolvent leur cible dans le workspace de la valeur | 292-299, 295 |
 | INC-054 | `SCHEMA` §4 exigeait `value` non nul, rendant inatteignable le « vide explicite » | 2026-08-08 | unités existantes | 292-299 |
 | INC-055 | Un harnais qui rejoue sa seule migration laissait la base dans un état que le runner ne produit jamais | 2026-08-08 | reprise harnais | 292-299 |
 | INC-056 | Trois garde-fous comptaient une donnée dépendant de l'âge de la base | 2026-08-09 | `CRM-018`, close — compte déterministe | 262, 293 |
@@ -195,7 +195,11 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Onze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138, INC-139,
+**Douze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152 et INC-155** — **INC-155** consignée le 2026-08-18 par la session
+`CRM-060` tranche 3 : elle n'est pas un défaut neuf mais le SECOND porteur d'INC-141, le compteur
+« quinze cards seedées » vivant aussi dans `verify-move-card.sh` ; les deux se ferment ensemble.
+Précédemment onze : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138, INC-139,
 INC-140, INC-141 et INC-152** — **INC-139** et **INC-141** consignées le 2026-08-17 par la session
 `CRM-081` tranche 2 d (`verify-board.sh` complet rend trois échecs de plus que son mode
 `--rapide`, tous mesurés identiques sur la ligne de base, donc préexistants ;
@@ -240,6 +244,62 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-155 — INC-141 a un SECOND porteur : `verify-move-card.sh` fige lui aussi « quinze cards seedées »
+
+**Nature :** compteur périmé dans un harnais — **exactement le défaut d'INC-141**, consignée le
+2026-08-17 sur `verify-colonnes-protegees.sh`, mais dans un second fichier que cette entrée nomme
+pour qu'une correction d'INC-141 ne laisse pas l'autre derrière elle. La ligne « les quinze cards du
+seed sont là, aux étapes déclarées » compare `count(*) from public.cards where id::text like
+'5eed%'` à `15`. Or le préfixe `5eed` couvre AUSSI les vingt-six cards de volume `…d001` à `…d026`,
+posées par le seed lui-même (`supabase/seed/apply-seed.sh`, tableau `CARDS_VOLUME`,
+`docs/SPEC-seed.md`). Le compte réel est donc **41**, et le contrôle est rouge sur une base
+correctement seedée.
+
+Cette entrée n'est donc PAS un défaut neuf : c'est l'inventaire complet d'un défaut déjà ouvert.
+Elle se ferme avec INC-141, du même geste et par le même porteur.
+
+**Mesuré le :** 2026-08-18, sur la pile seedée par `supabase/seed/apply-seed.sh`. `select count(*)
+from public.cards where id::text like '5eed%'` rend `41` ; les vingt-six intruses portent toutes un
+identifiant `5eed0000-0000-4000-8000-00000000d0xx` et sont bien du seed, non des résidus. Ligne de
+base établie par `git stash -u` : le contrôle est rouge **des deux côtés**, donc antérieur.
+
+**Étranger à l'unité, et laissé inchangé.** Le défaut appartient à l'unité qui a introduit
+`CARDS_VOLUME` sans réviser ces compteurs, non à `CRM-060`. À la différence d'INC-154, il ne corrompt
+rien : il rend un verdict faux, il ne dégrade pas la base — c'est pourquoi il est consigné et non
+corrigé au passage (`CLAUDE.md` §1, §3.1), là où INC-154 l'a été. La correction consiste à comparer
+au préfixe des seules cards de parcours ou à porter le compte à 41 en nommant les deux familles —
+choix qui appartient au porteur d'INC-141.
+
+### INC-154 — Trois harnais restauraient `move_card` depuis la migration 0019, effaçant le lot G — CORRIGÉ le 2026-08-18
+
+**Nature :** des harnais laissaient le produit DÉGRADÉ en sortant — **cinquième occurrence** de la
+classe des décisions 108, 135, 143, 145 et d'INC-153. `scripts/verify-valeurs-champs.sh`,
+`scripts/verify-move-card.sh` et `scripts/verify-colonnes-protegees.sh` rejouent la migration `0013`
+pour poser leurs dégradations, puis restaurent en rejouant la chaîne `12 → 13 → 14 → 19`, dont un
+commentaire nomme la `0019` « dernière autorité sur `move_card` ». Elle ne l'est plus depuis le
+**lot G** (décision 374, migration `0035_commentaires_lot_g.sql`), qui redéfinit `move_card` avec
+`app.btrim_blancs` — les blancs Unicode d'INC-052 — et la conservation du commentaire de transition
+d'INC-048. Chaque exécution de ces harnais réinstallait donc la version d'AVANT le lot G.
+
+**Mesuré le :** 2026-08-18. Après une exécution de `verify-valeurs-champs.sh`,
+`pg_get_functiondef('public.move_card(uuid,uuid,text)')` ne contenait plus `btrim_blancs` ;
+`supabase/tests/0014_valeurs_champs.test.sql` rendait alors **`not ok 99`** (INC-048, le commentaire
+conservé) et **`not ok 100`** (INC-052, une valeur réduite à une tabulation est vide) à l'exécution
+SUIVANTE — un harnais qui s'empoisonne lui-même. Ligne de base établie par `git stash -u` :
+`verify-valeurs-champs.sh` rend **34 contrôles, 1 en échec** sur `origin/main` sans aucun de mes
+changements, et laisse `move_card` amputée. Le défaut est donc **antérieur**.
+
+**Étranger à l'unité, mais dans les fichiers mêmes de cette session.** Il date des unités qui ont
+livré le lot G sans réviser ces trois chaînes de restauration, donc étranger à `CRM-060` tranche 3.
+Mais les trois fichiers étaient déjà modifiés par cette session — la migration `0047` redéfinissant
+la même fonction que la `0013`, il fallait de toute façon l'ajouter à leurs chaînes —, et c'est
+l'exécution de l'un d'eux qui a fait rougir la campagne. Même geste que la décision 447 pour
+INC-153. **Corrigé** : `MIGRATION_LOT_G` est ajoutée derrière `MIGRATION_FINALE` dans les trois
+chaînes, et `MIGRATION_RESOLUTION` derrière la `0013` partout où elle est rejouée seule. Après
+correction, `verify-valeurs-champs.sh` rend **41 contrôles, aucune anomalie**, deux fois de suite,
+et laisse en base un `move_card` porteur de `btrim_blancs` comme un validateur porteur de la
+résolution.
 
 ### INC-153 — `verify-mail-classement.sh` restaurait `classify_message` depuis la migration 0025, effaçant la garde §18.2 — CORRIGÉ le 2026-08-18
 
