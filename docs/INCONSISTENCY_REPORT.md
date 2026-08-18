@@ -241,6 +241,35 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-153 — `verify-mail-classement.sh` restaurait `classify_message` depuis la migration 0025, effaçant la garde §18.2 — CORRIGÉ le 2026-08-18
+
+**Nature :** un harnais laissait le produit DÉGRADÉ en sortant — même classe que la décision 135 et
+qu'INC-129. Sa dégradation « l'événement de timeline retiré du classement manuel » remplaçait
+`public.classify_message` par un corps de sonde, puis le **restaurait en l'extrayant de
+`supabase/migrations/0025_classement_messages.sql`**. Or `CRM-057` (migration `0028`, §18.2) a
+**révisé** `classify_message` pour exiger un **second** droit — voir le message
+(`app.peut_voir_message`) avant de le classer. La restauration depuis 0025 réinstallait donc la
+version d'AVANT cette garde : chaque exécution du harnais laissait en base un `classify_message`
+amputé de son contrôle de visibilité.
+
+**Mesuré le :** 2026-08-18. Après une exécution du harnais, `pg_get_functiondef` de
+`public.classify_message` ne contenait plus `peut_voir_message` ; `npm run test:sql` rendait alors
+`0029_inbox_globale.test.sql` **rouge sur ses assertions 12 à 14** — « classer un message qu'on n'a
+pas le droit de VOIR est refusé » recevait « caught: no exception ». Reproduit hors interface : un
+`business_developer` qui ne voit pas un message non classé mais peut écrire une card **le classait
+chez lui**, puis le lisait — le contrôle d'accès contourné par l'écriture, le défaut exact que
+§18.2 fermait.
+
+**Étranger à l'unité, mais dans le fichier même de cette session.** Le défaut est antérieur (il date
+de la révision `CRM-057` qui n'a pas mis à jour la restauration du harnais), donc étranger à
+`CRM-060` tranche 2. Mais il vit dans `verify-mail-classement.sh`, que cette session modifiait déjà
+pour activer la règle 3, et c'est l'exécution de ce harnais qui a dégradé la base et fait rougir la
+campagne. Le laisser aurait maintenu une mine qui corrompt la base partagée à chaque passage
+(décision 135). **Corrigé** dans le même changement : la restauration extrait désormais
+`classify_message` de `supabase/migrations/0028_inbox_visibilite.sql`, source autoritaire courante.
+Après correction, le harnais rejoué laisse `classify_message` porteur de sa garde, et
+`0029_inbox_globale.test.sql` repasse **22/22**.
+
 ### INC-152 — Un scénario au clavier de `commentaires-gestes.spec.ts` rend un verdict intermittent
 
 **Nature :** flake préexistant sur une assertion de focus ; le scénario échoue **1 fois sur 3** en

@@ -300,7 +300,7 @@ if [ "$RAPIDE" = false ]; then
 		   return p_card_id;
 		 end \$fn\$" \
 		"$(sed -n '/^create or replace function public.classify_message/,/^\\$\\$;$/p' \
-		   supabase/migrations/0025_classement_messages.sql)"
+		   supabase/migrations/0028_inbox_visibilite.sql)"
 
 	titre "6. Restauration"
 	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/restaure.log" 2>&1; then
