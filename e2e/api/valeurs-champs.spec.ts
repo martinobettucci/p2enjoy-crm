@@ -125,16 +125,17 @@ function deplacer(
 // refuse ou qu'elle autorise tout (décision 50).
 
 test.describe('V0 — état de départ', () => {
-	// RÉVISÉ PAR `CRM-046` puis `CRM-018` : quatorze valeurs devenues VINGT ET UNE — quatre
-	// ajoutées sur le workflow global et trois sur les champs remappés de la copie
-	// (docs/SPEC-seed.md §9.6). Le cas éprouvé ici — `budget` de `c1` VIDE — est inchangé.
-	test('le seed pose bien vingt et une valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-046`, puis `CRM-018`, puis la sous-tranche 4d de `CRM-060` : quatorze valeurs
+	// devenues vingt et une, puis VINGT-TROIS — les deux réponses résolues de « Migration ERP
+	// Sogexia », `contact-principal` et `referent-technique` (docs/SPEC-contacts.md §13.6). Le cas
+	// éprouvé ici — `budget` de `c1` VIDE — est inchangé.
+	test('le seed pose bien vingt-trois valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
 		const reponse = await request.get(`${VALEURS}?select=card_id,field_id,value`, {
 			headers: enTetesService(),
 		})
 		expect(reponse.status()).toBe(200)
 		const valeurs = (await reponse.json()) as Valeur[]
-		expect(valeurs.length, 'docs/SPEC-seed.md §2.13 et §9.6').toBe(21)
+		expect(valeurs.length, 'docs/SPEC-seed.md §2.13 et §9.6 ; docs/SPEC-contacts.md §13.6').toBe(23)
 
 		const budgetC1 = valeurs.find((v) => v.card_id === CARD_C1 && v.field_id === CHAMP_BUDGET)
 		expect(budgetC1, 'la LIGNE existe').toBeDefined()
@@ -175,7 +176,7 @@ test.describe('V1 — lecture', () => {
 	test('c) `admin` lit les valeurs de son workspace', async ({ request }) => {
 		const reponse = await request.get(VALEURS, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
-		expect(((await reponse.json()) as Valeur[]).length).toBe(21)
+		expect(((await reponse.json()) as Valeur[]).length).toBe(23)
 	})
 })
 
