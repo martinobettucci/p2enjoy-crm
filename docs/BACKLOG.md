@@ -262,11 +262,14 @@ n'existe pas encore, c'est l'objet de `CRM-005`.
   résolution des droits (`CRM-010`, `CRM-012`). Sur les douze preuves de refus de
   `docs/SPEC-permissions-rls.md` §7, seules la n° 3 et la n° 11 sont acquises.
 - **`track_members.track_id` et `channel_members.channel_id` sont sans clé étrangère**, faute de
-  tables à référencer avant `CRM-020` et `CRM-021` : `docs/INCONSISTENCY_REPORT.md`, INC-010,
-  **en attente d'arbitrage**.
+  tables à référencer avant `CRM-020` et `CRM-021` : `docs/INCONSISTENCY_REPORT.md`, INC-010.
+  *~~En attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-010 figure à l'index des entrées RETIRÉES,
+  résolue le 2026-08-08 par `CRM-020` et `CRM-021`, les tables qui manquaient. La mention d'attente
+  a survécu à sa cause de dix jours.*
 - **Ces deux tables ne portent pas `workspace_id`**, contre la convention générale de
-  `docs/SCHEMA.md` mais conformément à son §1 : INC-011, **en attente d'arbitrage avant
-  `CRM-012`**.
+  `docs/SCHEMA.md` mais conformément à son §1 : INC-011.
+  *~~En attente d'arbitrage avant `CRM-012`.~~ RÉVISÉ le 2026-08-18 : INC-011 figure à l'index des
+  entrées RETIRÉES, tranchée le 2026-08-08 par la reprise des droits fins.*
 
 ### CRM-004 — Décision chiffrement des secrets `[x]`
 **Bloquante pour `CRM-052` et `CRM-053`.** Vérifier la présence de `supabase_vault` et de
@@ -326,7 +329,9 @@ elle-même énonce : vérification exécutée, sortie consignée, décision insc
   racine est acquise et documentée ; la procédure qui la respecte reste à livrer.
 - **Le motif principal de la décision 8 est démenti** : `pg_cron` est disponible. Le résultat de
   la décision est conservé, son énoncé corrigé, et la question de rouvrir l'arbitrage est
-  consignée en `docs/INCONSISTENCY_REPORT.md`, **INC-012, en attente d'arbitrage**.
+  consignée en `docs/INCONSISTENCY_REPORT.md`, INC-012.
+  *~~En attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-012 figure à l'index des entrées RETIRÉES,
+  résolue le 2026-08-09 par `CRM-017` (décisions 8 et 261).*
 
 ### CRM-010 — Fonctions d'autorisation `[x]`
 `app.is_workspace_member`, `app.is_workspace_admin`, `app.can_read_track`,
@@ -481,7 +486,11 @@ ni page, ni statut, ni flux — rien que le seed doive démontrer.
   Leur emploi par le produit est prouvé ici **à travers** les politiques de `CRM-012` et `CRM-040`,
   mais celles-ci restent leurs livrables. Au passage, **aucune unité du backlog ne porte nommément
   les politiques des tables d'identité**, ni la preuve de refus n° 10 :
-  `docs/INCONSISTENCY_REPORT.md`, **INC-014, en attente d'arbitrage** — inchangée.
+  `docs/INCONSISTENCY_REPORT.md`, INC-014.
+  *~~En attente d'arbitrage — inchangée.~~ RÉVISÉ le 2026-08-18 : INC-014 figure à l'index des
+  entrées RETIRÉES, résolue le 2026-08-09 par `CRM-022`, qui a écrit les politiques des tables
+  d'identité (décision 294). `scripts/verify-preuves-refus.sh` le dit d'ailleurs dans son en-tête
+  `@verifies` depuis cette date — deux documents du même dépôt se contredisaient.*
 - **`scripts/verify-migrations.sh` porte le même défaut que celui corrigé ici**, et n'est **pas**
   corrigé : c'est un livrable de `CRM-003`, unité `[x]`, et le reprendre dans ce commit
   contredirait `CLAUDE.md` §13. Le piège reste armé et il est nommé : **INC-060, arbitrage
@@ -2296,7 +2305,9 @@ telle.
       à `to_regclass`. Mesuré aussi, et c'est ce qui a tranché : PostgreSQL **accepte la création**
       d'une fonction PL/pgSQL référençant une table absente, l'échec ne survenant qu'au premier
       appel — un trigger écrit ici ferait échouer **toute** mise à jour du catalogue sans rien
-      protéger. **INC-031, en attente d'arbitrage** (trois options), avec trois assertions
+      protéger. INC-031 — *~~en attente d'arbitrage~~ RÉVISÉ le 2026-08-18 : elle figure à l'index
+      des entrées RETIRÉES, tranchée le 2026-08-08 par les unités existantes* — (trois options),
+      avec trois assertions
       `hasnt_table` et un contrôle du harnais qui deviendront rouges le jour où les tables
       apparaîtront.
       **Cette preuve est bloquée par une dépendance, pas par un défaut de l'unité.**
@@ -3022,9 +3033,17 @@ refusé) ; refus constaté aussi lors d'un déplacement de channel.
       chapitre 22 et §3.2, `README.md`, `CHANGELOG.md` mis à jour dans le même changement.
 - [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Affecter un workflow à un channel
       suppose un écran d'administration authentifié, et la webapp reste un appelant **anonyme** faute
-      d'écran de connexion — **INC-021, en attente d'arbitrage**. La règle est livrée et prouvée **en
-      base et par l'API**, ce que `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par
-      un arbitrage, pas par un défaut de l'unité.**
+      d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
+      2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
+      son écran de connexion, employé par les suites d'interface. **Le motif invoqué ici est donc
+      caduc** : cette preuve n'est plus bloquée par un arbitrage, elle est simplement DUE. Elle
+      n'a pas pu être produite le 2026-08-18, le poste Docker étant tombé (INC-145), et elle
+      reste au premier rang des travaux de cette unité.*
+      La règle est livrée et prouvée **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute
+      façon. **L'écran qui affecte un workflow à un channel EXISTE depuis `CRM-075`** — il est
+      exercé par `e2e/ui/administration-arborescence.spec.ts`, qui choisit le workflow dans un
+      `select` lors de la création d'un channel. Ce qui manque est une preuve que le workflow d'un
+      track ÉTRANGER n'y est pas proposé, et que le refus tient hors de l'écran.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP sur les trois cas » et
 « refus constaté aussi lors d'un déplacement de channel » : les deux sont livrés, et **deux refus de
@@ -3293,9 +3312,14 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
       `CHANGELOG.md` mis à jour dans le même changement.
 - [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La grille champ × étape que la
       Definition of Done nomme suppose un écran d'administration authentifié, et la webapp reste un
-      appelant **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Les
-      règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute
-      façon. **Cette preuve est bloquée par un arbitrage, pas par un défaut de l'unité.**
+      appelant **anonyme** faute d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
+      2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
+      son écran de connexion, employé par les suites d'interface. **Le motif invoqué ici est donc
+      caduc** : cette preuve n'est plus bloquée par un arbitrage, elle est simplement DUE. Elle
+      n'a pas pu être produite le 2026-08-18, le poste Docker étant tombé (INC-145), et elle
+      reste au premier rang des travaux de cette unité.*
+      Les règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de
+      toute façon.
 - [ ] **La copie du formulaire rouvre cette preuve sous `CRM-018`.** La décision 293 remplace la
       frontière historique de la décision 93 : champs, règles et exigences doivent être remappés
       par le vrai geste de copie. Les assertions qui exigeaient zéro champ sont remplacées par des
@@ -3450,11 +3474,15 @@ n'invalidant pas l'existant).
       même changement.
 - [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le rendu du formulaire, sa
       section repliée et la mention « requis pour passer à » sont `CRM-037` ; et la webapp reste un
-      appelant **anonyme** faute d'écran de connexion — **INC-021, en attente d'arbitrage**. Une
-      valeur de formulaire est par construction invisible à un anonyme, qui ne voit déjà aucune
-      card : il n'existe **aucune** vérification visuelle sensée à produire pour cette unité tant
-      que l'arbitrage n'est pas rendu. **Cette preuve est bloquée par un arbitrage, pas par un
-      défaut de l'unité.**
+      appelant **anonyme** faute d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
+      2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
+      son écran de connexion, employé par les suites d'interface. **Le motif invoqué ici est donc
+      caduc** : cette preuve n'est plus bloquée par un arbitrage, elle est simplement DUE. Elle
+      n'a pas pu être produite le 2026-08-18, le poste Docker étant tombé (INC-145), et elle
+      reste au premier rang des travaux de cette unité.*
+      Le raisonnement qui suivait — « une valeur de formulaire est par construction invisible à un
+      anonyme, qui ne voit déjà aucune card, donc aucune vérification visuelle n'a de sens » —
+      **tombe avec sa prémisse** : un utilisateur connecté voit les cards et leurs formulaires.
 - [ ] **`user` et `contact` ne sont pas résolus** : leur valeur est validée comme un `uuid`, et rien
       de plus. `contacts` n'existe pas (`CRM-060`), et résoudre `user` seul rendrait la famille
       incohérente tout en posant une règle d'appartenance que nul document n'énonce —
@@ -5424,7 +5452,9 @@ aucun écran, ni le board ni la vue liste ne portant de sélecteur de channel.
 - **À la clôture de cette unité, INC-046 n'était pas levée** : le workflow d'un channel peuplé
   restait inchangeable. L'option 2 de son arbitrage — une RPC qui remappe l'étape de toutes les
   cards d'un channel — a ensuite été créée et livrée par `CRM-019`.
-- **Aucun déplacement en lot** : INC-073, en attente d'arbitrage.
+- **Aucun déplacement en lot** : INC-073. *~~En attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 :
+  INC-073 figure à l'index des entrées RETIRÉES, résolue le 2026-08-09 par `CRM-019` — ce que la
+  ligne PRÉCÉDENTE de cette même unité disait déjà. Deux phrases voisines se contredisaient.*
 - **Aucun harnais du dépôt ne rejoue le `migrations-runner` sur une base SEEDÉE** : INC-074. Le
   défaut le plus grave de cette unité a été trouvé par `verify-authz`, par effet de bord, alors que
   `verify-migrations` — dont c'est l'objet — ne l'a pas vu.

@@ -17996,3 +17996,40 @@ dépôt, et non seulement sur les fichiers récents.
 **Pourquoi l'écrire.** Un négatif mesuré vaut d'être consigné : sans lui, la prochaine relecture
 recommencera l'audit sans savoir qu'il a déjà été fait, et une exigence tenue passera pour une
 exigence non vérifiée.
+
+
+## décision 437 — Un blocage cité longtemps après sa disparition coûte plus qu'un blocage jamais écrit
+
+**Problème.** INC-143 avait relevé quatre unités bloquées au nom d'INC-021, close depuis une
+semaine. En les corrigeant, j'ai voulu savoir si le motif était isolé. Il ne l'était pas.
+
+**Ce qui est mesuré, le 2026-08-18, sur `docs/BACKLOG.md`.**
+
+- **Quatre unités DÉJÀ CLOSES** portaient encore une ligne affirmant qu'INC-021 conditionnait leur
+  passage en `[x]` — `CRM-042`, `CRM-045`, `CRM-046`, `CRM-047`. **Deux de ces contradictions sont
+  de mon fait**, écrites le jour même en fermant ces unités.
+- **Six lignes au présent**, dans des unités closes de longue date, affirmaient qu'aucune donnée
+  métier ne peut apparaître dans l'interface ou qu'aucun écran n'existe, faute d'arbitrage.
+- **Trois unités ENCORE OUVERTES** — `CRM-033`, `CRM-035`, `CRM-036` — déclaraient leur preuve
+  d'interface « bloquée par un arbitrage, pas par un défaut de l'unité ». C'était faux : la webapp
+  porte son écran de connexion depuis `CRM-009`. Ces preuves ne sont pas bloquées, elles sont
+  **dues**.
+- **Six citations d'AUTRES incohérences** — INC-010, INC-011, INC-012, INC-014, INC-031, INC-073 —
+  se disaient « en attente d'arbitrage » alors que toutes figurent à l'index des entrées
+  **RETIRÉES** du registre, résolues entre le 8 et le 9 août. Pour INC-073, la ligne PRÉCÉDENTE de
+  la même unité disait déjà qu'elle avait été livrée par `CRM-019` : deux phrases voisines se
+  contredisaient. Pour INC-014, `scripts/verify-preuves-refus.sh` porte sa clôture dans son en-tête
+  `@verifies` : deux documents du même dépôt se contredisaient.
+
+**Décision.** Toutes révisées, aucune retirée, chacune datée et rattachée à sa résolution réelle.
+
+**Ce que j'en retiens, et c'est la vraie leçon.** Un blocage cité après sa disparition coûte plus
+cher qu'un blocage jamais écrit : il fait renoncer à un travail faisable. `CRM-042` a passé une
+semaine en `[~]` pour une preuve que rien n'empêchait. **Une limite doit être vérifiée avant d'être
+invoquée, et pas seulement avant d'être écrite** — c'est le versant documentaire de la décision 341,
+« vérifier la prémisse de la preuve ne suffit pas, il faut aussi vérifier la prémisse de la mesure ».
+
+**Portée honnête de ce nettoyage.** Il ne ferme aucune unité. `CRM-033`, `CRM-035` et `CRM-036`
+restent `[~]` : leurs preuves d'interface sont désormais reconnues comme dues, et elles n'ont pas pu
+être produites — le poste Docker est tombé le même jour (INC-145). Corriger un motif faux ne fournit
+pas la preuve ; cela dit seulement où elle manque.
