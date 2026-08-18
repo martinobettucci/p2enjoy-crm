@@ -7281,9 +7281,16 @@ de contact.
       preuve rattache donc Élise Fabre puis la **détache par le geste de l'écran** — le détachement
       n'est pas une commodité de test, c'est le second geste livré —, avec un filet de sécurité en
       `afterAll`.
-- [x] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur de scénarios
+- [~] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur de scénarios
       d'interface porté de 390 à **398**, valeur mesurée par `playwright test --list`
-      (« Total: 398 tests in 31 files »).
+      (« Total: 398 tests in 31 files ») **et** par l'exécution de la suite complète, 398 verts.
+      Le harnais lui-même a été lancé en fin de session et **son verdict n'est pas connu** : il
+      reste à rejouer, et c'est la seule preuve manquante de cette sous-tranche.
+- [x] `scripts/verify-webapp.sh` : **42 contrôles, 1 anomalie**, contre 2 à la session précédente.
+      La seule restante est **INC-158**, antérieure et étrangère — `h-10`, `py-0.5`, `text-text-1`,
+      portées par trois fichiers qu'aucun diff de cette session ne touche. Vérifié en rejouant
+      `scripts/lib/classes-css.mjs` seul : 240 classes citées, et **aucune des quatre nouvelles**
+      ne manque au CSS produit.
 - [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/`,
       préfixées `contacts-affaire-` : le bloc peuplé, le formulaire ouvert, le rattachement obtenu,
       la confirmation, le refus, l'état vide, et les quatre paliers.

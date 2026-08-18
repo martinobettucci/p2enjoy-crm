@@ -18963,14 +18963,21 @@ rejouée **trois fois de suite** après la correction ci-dessus. `scripts/verify
 dans le même changement** : compteur d'interface porté de 390 à **398**, mesuré par
 `playwright test --list` (« Total: 398 tests in 31 files »).
 
-**Preuves NON exécutées, et nommées comme telles** : `pytest` — l'hôte n'a pas le module, et aucun
-code `mail-sync` n'est touché par cette sous-tranche —, `e2e:mail`, et **quarante-huit des cinquante
-`scripts/verify-*.sh`**. `scripts/verify-webapp.sh` a été lancé et n'avait pas rendu son verdict à
-la fin de la session ; son résultat est donc **inconnu**, et non supposé vert.
+`scripts/verify-webapp.sh` rend **42 contrôles, 1 anomalie** — contre 2 à la session précédente. La
+seule restante est **INC-158**, étrangère et antérieure : `h-10`, `py-0.5` et `text-text-1`, absentes
+du CSS produit, portées par `Sommeil.tsx`, `EnTeteCard.tsx` et `AdministrationWorkflows.tsx`, qu'aucun
+diff de cette session ne touche. Vérifié en rejouant `scripts/lib/classes-css.mjs` seul : **240
+classes citées** — quatre de plus, celles du bloc neuf —, et **aucune des miennes** ne manque.
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` — l'hôte n'a pas le module installé, et
+aucun code `mail-sync` n'est touché par cette sous-tranche —, `e2e:mail`, et **quarante-huit des
+cinquante `scripts/verify-*.sh`**. `scripts/verify-harness.sh` a été lancé en fin de session et son
+verdict n'est **pas** connu à l'heure de ce compte rendu : il est à rejouer, et c'est lui qui doit
+constater le compteur 398 que cette session y a écrit.
 
 **Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4d** — les deux sélecteurs du §9.1
 (`contact` et `user`) dans le formulaire d'une affaire, et l'enrichissement du seed différé par le
 §9.6, avec la révision des dix comptes qu'il déplace. C'est la **dernière** sous-tranche de la
-tranche 4, et donc ce qui reste pour clore `CRM-060`. Avant elle, deux vérifications courtes héritées
-de cette session : rejouer `scripts/verify-webapp.sh` et `scripts/verify-harness.sh` jusqu'à leur
-verdict, le second devant constater le compteur 398 que cette session y a écrit.
+tranche 4, et donc ce qui reste pour clore `CRM-060`. Avant elle, une vérification courte héritée de
+cette session : rejouer `scripts/verify-harness.sh` jusqu'à son verdict, qui doit constater le
+compteur 398 que cette session y a écrit.
