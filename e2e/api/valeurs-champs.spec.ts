@@ -1,4 +1,6 @@
 // @verifies CRM-036 (docs/BACKLOG.md) — valeurs de formulaire et validation, hors interface
+// @verifies CRM-060 tranche 3 (docs/BACKLOG.md) — résolution de `contact` et `user`, bloc V5
+// @verifies docs/SPEC-contacts.md §9 (la règle, les cas a à j du §9.5, le seed laissé intact §9.6)
 // @verifies docs/SPEC-form-composer.md §6.10 (contrat d'API, lignes a à r), §6.3 (clés composites),
 //           §6.5 (ce que chaque type accepte), §6.6 (« renseigné »), §6.7 (la sixième
 //           vérification), §6.9 (autorisations), §7.2 (preuves attendues)
@@ -7,8 +9,8 @@
 // @verifies docs/SPEC-workflow-engine.md §5.3 (les six vérifications), §5.7 (la n° 6)
 // @verifies docs/SPEC-seed.md §2.13 (valeurs du seed)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
-// @verifies docs/INCONSISTENCY_REPORT.md INC-047 (**close**), INC-053 (`user` non résolu),
-//           INC-054 (`value` nullable, mesuré)
+// @verifies docs/INCONSISTENCY_REPORT.md INC-047 (**close**), INC-053 (**close** par CRM-060
+//           tranche 3 : `user` et `contact` résolus — bloc V5), INC-054 (`value` nullable, mesuré)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
@@ -561,5 +563,155 @@ test.describe('V4 — la sixième vérification', () => {
 				data: { current_step_id: '5eed0000-0000-4000-8000-000000000062', position: 2 },
 			})
 		}
+	})
+})
+
+// =================================================================================================
+// V5 — la RÉSOLUTION des champs `contact` et `user` — CRM-060 tranche 3
+// =================================================================================================
+// @verifies CRM-060 tranche 3 (docs/BACKLOG.md), docs/SPEC-contacts.md §9 (la règle, les cas a à j
+//           du §9.5), docs/SPEC-form-composer.md §6.5 (révisé), INC-053 (**close**)
+//
+// Ce bloc éprouve par la VRAIE ROUTE PostgREST ce que `supabase/tests/0045` éprouve en base : un
+// champ `contact` n'accepte qu'un contact du workspace, un champ `user` qu'un membre du workspace.
+// Les deux niveaux sont nécessaires et ne se remplacent pas — pgTAP dit ce que la base refuse, ce
+// bloc dit ce qu'un CLIENT reçoit, et c'est le second que l'interface devra rendre (400,
+// `invalid_field_value`, `details` exploitable).
+//
+// LES DEUX CHAMPS SONDES SONT CRÉÉS ICI, PAS DANS LE SEED, et le motif est mesuré
+// (docs/SPEC-contacts.md §9.6) : le nombre « sept champs sur le workflow source » est figé par dix
+// preuves étrangères à cette tranche, que la copie de workflow met en regard. Les sondes sont donc
+// posées avec la clé de service et RETIRÉES dans le `afterAll`, y compris en cas d'échec — le seed
+// est un contrat maintenu.
+
+const CHAMP_SONDE_CONTACT = 'a5100000-0000-4000-8000-000000000001'
+const CHAMP_SONDE_USER = 'a5100000-0000-4000-8000-000000000002'
+
+/** Contacts et membres du seed — docs/SPEC-contacts.md §5, §9.5. */
+const CONTACT_LEO = '5eed0000-0000-4000-8000-000000000091'
+const MEMBRE_BIZDEV = '5eed0000-0000-4000-8000-000000000012'
+const UUID_INEXISTANT = '00000000-0000-4000-8000-000000000000'
+
+test.describe('V5 — résolution de `contact` et `user`', () => {
+	test.beforeAll(async ({ request }) => {
+		for (const [id, cle, type] of [
+			[CHAMP_SONDE_CONTACT, 'sonde-contact-api', 'contact'],
+			[CHAMP_SONDE_USER, 'sonde-user-api', 'user'],
+		] as const) {
+			const reponse = await request.post('/rest/v1/form_fields', {
+				headers: {
+					...enTetesService(),
+					'Content-Type': 'application/json',
+					Prefer: 'resolution=merge-duplicates',
+				},
+				data: {
+					id,
+					workflow_id: WORKFLOW_GLOBAL,
+					workspace_id: WORKSPACE_SEED,
+					key: cle,
+					label: `Sonde ${type}`,
+					type,
+					options: {},
+					position: 900,
+				},
+			})
+			expect(reponse.status(), await reponse.text()).toBeLessThan(300)
+		}
+	})
+
+	test.afterAll(async ({ request }) => {
+		// Les valeurs partent avec le champ (cascade `(field_id, workflow_id)`), mais le ménage est
+		// explicite : un `afterAll` qui suppose une cascade ne dit pas ce qu'il nettoie.
+		for (const champ of [CHAMP_SONDE_CONTACT, CHAMP_SONDE_USER]) {
+			await request.delete(`${VALEURS}?field_id=eq.${champ}`, { headers: enTetesService() })
+			await request.delete(`/rest/v1/form_fields?id=eq.${champ}`, { headers: enTetesService() })
+		}
+	})
+
+	test.afterEach(async ({ request }) => {
+		await menage(request, CARD_C6, CHAMP_SONDE_CONTACT)
+		await menage(request, CARD_C6, CHAMP_SONDE_USER)
+	})
+
+	test('CAS a) un contact du workspace est accepté → 201', async ({ request }) => {
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_CONTACT,
+			value: CONTACT_LEO,
+		})
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		expect((await relire(request, CARD_C6, CHAMP_SONDE_CONTACT))?.value).toBe(CONTACT_LEO)
+	})
+
+	test('CAS b) un uuid bien formé ne désignant aucun contact → 400', async ({ request }) => {
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_CONTACT,
+			value: UUID_INEXISTANT,
+		})
+		expect(
+			reponse.status(),
+			'AVANT la migration 0047, cette écriture rendait 201 : c’est le défaut qu’INC-053 portait',
+		).toBe(400)
+		const erreur = (await reponse.json()) as Erreur
+		expect(erreur.message, 'le jeton reste stable').toBe('invalid_field_value')
+		expect(
+			erreur.details,
+			'le DETAIL nomme la clé du champ et la raison, pour que l’interface sache quoi dire',
+		).toContain('ne désigne aucun contact de ce workspace')
+		expect(
+			await relire(request, CARD_C6, CHAMP_SONDE_CONTACT),
+			'et AUCUNE ligne n’a été créée — un refus se relit (décision 70)',
+		).toBeUndefined()
+	})
+
+	test('CAS g) un membre du workspace est accepté sur un champ `user` → 201', async ({
+		request,
+	}) => {
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_USER,
+			value: MEMBRE_BIZDEV,
+		})
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		expect((await relire(request, CARD_C6, CHAMP_SONDE_USER))?.value).toBe(MEMBRE_BIZDEV)
+	})
+
+	test('CAS i) un uuid ne désignant aucun membre → 400', async ({ request }) => {
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_USER,
+			value: UUID_INEXISTANT,
+		})
+		expect(reponse.status()).toBe(400)
+		const erreur = (await reponse.json()) as Erreur
+		expect(erreur.message).toBe('invalid_field_value')
+		expect(erreur.details).toContain('ne désigne aucun membre de ce workspace')
+		expect(await relire(request, CARD_C6, CHAMP_SONDE_USER)).toBeUndefined()
+	})
+
+	test('CAS e) vider un champ `contact` reste possible → 201', async ({ request }) => {
+		// Sans ce scénario, la résolution pourrait rendre un champ `contact` IMPOSSIBLE à vider :
+		// c’est exactement le défaut qu’INC-054 avait produit sur `money` (décision 133).
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_CONTACT,
+			value: null,
+		})
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		expect(
+			(await relire(request, CARD_C6, CHAMP_SONDE_CONTACT))?.value,
+			'la ligne existe et son contenu est vide — « vidé explicitement » (§6.6)',
+		).toBeNull()
+	})
+
+	test('CAS d) une chaîne qui n’est pas un uuid → 400, forme inchangée', async ({ request }) => {
+		const reponse = await ecrire(request, jetonAdmin, {
+			card_id: CARD_C6,
+			field_id: CHAMP_SONDE_CONTACT,
+			value: 'martin',
+		})
+		expect(reponse.status()).toBe(400)
+		expect(((await reponse.json()) as Erreur).details).toContain('attend un identifiant')
 	})
 })

@@ -514,25 +514,31 @@ Dupont), `…093` (Élise Fabre) ; membres `…011` (admin), `…012` (business 
 Le `DETAIL` nomme la **clé du champ** et la raison, comme les autres refus du §6.5 : le message reste
 `invalid_field_value`, jeton stable comparable par égalité.
 
-### 9.6 Seed — la donnée qui rend la règle démontrable
+### 9.6 Seed — pourquoi la tranche 3 n'y ajoute PAS de champ, et où la donnée arrivera
 
-Le seed ne porte aujourd'hui **aucun** champ de type `contact` ni `user` : les sept champs du
-workflow source sont `money`, `select`, `date`, `textarea`, `checkbox`, `url`, `number` (mesuré).
-La règle serait donc invisible dans le produit et non démontrable par une preuve d'API.
+Le seed ne porte **aucun** champ de type `contact` ni `user` : les sept champs du workflow source
+sont `money`, `select`, `date`, `textarea`, `checkbox`, `url`, `number` (mesuré). Ce paragraphe
+prévoyait d'y ajouter un champ de chaque type ; **la mesure a renversé la décision, et le motif est
+écrit ici plutôt que le changement fait en silence.**
 
-La tranche ajoute au workflow source **un champ de chaque type**, avec leurs identifiants stables :
+MESURÉ le 2026-08-18 : le nombre « sept champs sur le workflow source » est **figé par dix
+preuves** étrangères à cette tranche — `supabase/tests/0008`, `0010`, `0021`,
+`scripts/verify-champs-formulaire.sh`, `verify-copie-workflow.sh`, `verify-seed-demo.sh`,
+`e2e/api/champs-formulaire.spec.ts`, `e2e/api/copie-workflow.spec.ts`,
+`e2e/ui/administration-workflows.spec.ts`, `docs/SPEC-seed.md` §1082 —, parce que la **copie de
+workflow** (`CRM-018`) recopie le formulaire source et que ces preuves comparent les deux
+inventaires. Ajouter deux champs oblige donc à réviser dix preuves qui ne parlent pas de contacts,
+pour une donnée qu'**aucun écran ne rend encore** : les deux sélecteurs sont dus par la tranche 4
+(§9.1).
 
-- `contact-principal` (type `contact`, `5eed…088`) — « Contact principal » ;
-- `responsable` (type `user`, `5eed…089`) — « Responsable de l'affaire ».
+**Décision : la donnée de démonstration arrive avec l'écran qui la montre**, c'est-à-dire à la
+tranche 4, où la révision des dix comptes sera faite dans le même geste que le carnet de contacts —
+un seul déplacement de compteur au lieu de deux. Ce n'est pas un renoncement à `CLAUDE.md` §8 : le
+seed doit démontrer **chaque fonctionnalité livrée**, et cette tranche ne livre aucun écran.
 
-et **deux valeurs** sur des cards seedées : le contact `…091` (Léo Marchand) sur la card `…0c2`
-(Migration ERP Sogexia — la card à laquelle il est déjà rattaché par `card_contacts`, ce qui rend
-les deux mécanismes cohérents dans la démonstration), et le membre `…012` (Driss Lemoine) sur la
-même card. Le seed **converge** et **vérifie** ses comptes, comme le reste du fichier.
-
-Conséquence à traiter dans le même changement : les inventaires du seed comparent le nombre de
-champs source à `${#CHAMPS[@]}` avant la copie de workflow ; ajouter deux champs déplace donc les
-comptes de la copie et des harnais qui les figent. Ces comptes sont **révisés**, jamais contournés.
+Conséquence pour les preuves de la tranche 3 : elles **fabriquent leurs propres champs sondes**,
+dans leur transaction (pgTAP) ou avec la clé de service et un ménage garanti (preuve d'API), comme
+`0014_valeurs_champs.test.sql` le fait déjà pour les quinze types. Le seed est rendu **intact**.
 
 ### 9.7 Preuves exigées — tranche 3
 
@@ -554,12 +560,13 @@ comptes de la copie et des harnais qui les figent. Ces comptes sont **révisés*
 - suite pgTAP dédiée couvrant les cas a à j du §9.5 ;
 - assertions figées par `CRM-036` **retournées** dans le même changement, jamais retirées ;
 - preuve d'API dédiée avec les jetons réels ;
-- seed enrichi (§9.6) et convergent, comptes des harnais révisés dans le même changement ;
+- seed **inchangé** et rendu intact, pour le motif mesuré du §9.6 — l'enrichissement rejoint la
+  tranche 4, avec l'écran qui le montre ;
 - `docs/SPEC-form-composer.md` §6.5, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` (migration 47),
   `docs/INCONSISTENCY_REPORT.md` (INC-053 **close**), `CHANGELOG.md` mis à jour dans le même
   changement ;
 - commentaires `@spec` / `@verifies` sur chaque fichier.
 
 La tranche 3 livrée, l'unité `CRM-060` **demeure `[~]`** : la tranche 4 (écrans — carnet de
-contacts, fiche d'organisation, rattachement depuis la route de détail, et les deux sélecteurs du
-§9.1) reste due.
+contacts, fiche d'organisation, rattachement depuis la route de détail, les deux sélecteurs du
+§9.1 et l'enrichissement du seed du §9.6) reste due.
