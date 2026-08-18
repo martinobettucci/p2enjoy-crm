@@ -89,6 +89,19 @@ d'exécuter le code attendu.
   captures observées, dont `docs/captures/CRM-046/liste-seconde-page-1440.jpg`. Le récapitulatif du
   seed, qui annonçait quinze cards là où la base en porte quarante et une, compte enfin le volume.
 
+- **L'écran d'administration ne propose plus qu'on le croie sur parole : sa liste de workflows est
+  mesurée, et le refus qui la double aussi** (`CRM-033`, `docs/SPEC-workflow-engine.md` §4.12.9).
+  Affecter un workflow à un channel obéit à une règle de base depuis `CRM-033` — un workflow
+  `global` du workspace, ou un workflow `track` du track du channel. L'écran de `CRM-075` filtre sa
+  liste en conséquence, et **rien ne le vérifiait**. Deux scénarios d'interface le font désormais :
+  le premier compare la liste entière, track par track — « Conseil & IA » propose sa copie de portée
+  `track`, « Studio web » ne la propose pas — plutôt que de constater une absence, qu'un sélecteur
+  vide suffirait à satisfaire ; le second reproduit la **course** que la spécification nommait sans
+  l'éprouver : un workflow déplacé vers un autre track pendant que le formulaire est ouvert, puis
+  l'envoi **refusé par la base**, l'écran affichant « Ce workflow n'est pas affectable à ce track. »
+  et aucune ligne n'étant écrite. Trois captures observées, dont
+  `docs/captures/CRM-033/refus-workflow-hors-track.jpg`.
+
 ### Corrigé
 
 - **La pile redémarre de nouveau sur une base contenant du courrier ou du sommeil** (INC-144,
