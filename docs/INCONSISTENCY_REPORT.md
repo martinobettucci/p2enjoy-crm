@@ -482,6 +482,18 @@ re-provisionner la sienne au démarrage suivant. Il n'a donc **pas** été exéc
 détruit son propre contexte d'exécution n'est pas une réparation autonome. À défaut, un redémarrage
 de Windows.
 
+**LES DONNÉES SONT INTACTES, ET C'EST MESURÉ.** Sur le disque Windows, dans le dossier WSL de
+Docker Desktop :
+
+- `disk/docker_data.vhdx` pèse **≈ 120 Go** — c'est le disque des **volumes, images et bases**. Il
+  est là, entier. La base de développement, son seed et les secrets de Vault n'ont rien perdu.
+- `main/ext4.vhdx` ne pèse que **96 Mo** — c'est le système de fichiers de la distro de **service**,
+  celle qui doit porter `dockerd`. Sa taille confirme l'observation faite depuis l'intérieur : elle
+  est **vide de son moteur**, non corrompue par les données.
+
+La panne est donc **entièrement du côté de la distro de service**, et le disque de données n'y est
+pour rien. C'est ce qui rend la réparation à la fois simple et dangereuse à mal choisir.
+
 **AVERTISSEMENT, et il n'est pas théorique.** L'option « Reset to factory defaults » / « Clean /
 Purge data » de Docker Desktop **DÉTRUIRAIT LES VOLUMES**, donc la base de développement, son seed
 et les secrets chiffrés de Vault. Elle ne doit **pas** être employée pour cette panne : le problème
