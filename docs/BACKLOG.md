@@ -7319,8 +7319,70 @@ d'organisation ; aucune création de contact ; aucune pagination du sélecteur ;
 n'apprend rien de ce geste** — `card_contacts` n'écrit aucun `card_event`, écart nommé et **à
 arbitrer**.
 
-**Reste due : 4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed différé par le §9.6,
-avec la révision des dix comptes qu'il déplace). `CRM-060` demeure `[~]`.
+**Sous-tranche 4d livrée, 2026-08-18 — les deux sélecteurs du formulaire, et le seed qui les
+démontre** (`docs/SPEC-contacts.md` §13, `docs/DESIGN_SYSTEM.md` §5.22) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) :
+      `docs/SPEC-contacts.md` §13, fondée sur des réponses PostgREST relevées à la main sur la pile
+      seedée, le seed étant rendu **intact** après chaque mesure d'écriture. Une mesure a décidé du
+      contrat plutôt que de le confirmer : un contact sonde créé, désigné par une valeur, puis
+      **supprimé** — la valeur **demeure**, et un `select` sans option pour elle afficherait sa
+      première option comme si elle avait été choisie (cas j du §13.5).
+- [x] `webapp/src/app/FormulaireCard.tsx` : un champ de type `contact` ou `user` rend un
+      **sélecteur de noms**. Cinq états, dont deux qui n'existaient nulle part ailleurs — la liste
+      illisible avec son **action de reprise**, et la **référence inconnue** qui garde son option
+      retenue sans qu'aucune écriture ne parte. La section repliée **résout** ces deux types, et
+      rend l'identifiant brut en **donnée technique** lorsqu'elle ne le peut pas.
+- [x] `webapp/src/lib/formulaire.ts` : `modelePorteType`, la condition qui évite **deux requêtes
+      gratuites** sur l'écran le plus ouvert du produit — chaque liste n'est lue que si le modèle
+      porte au moins un champ de son type, section repliée comprise.
+- [x] `webapp/src/lib/contacts.ts` : `libelleContactAvecOrganisation` **extraite** et partagée avec
+      le sélecteur du §5.21 — une règle d'affichage écrite deux fois divergerait. **Aucune requête
+      nouvelle** : les deux lectures réutilisées existaient (`lireContactsDuCarnet`,
+      `lireMembresAffectables`).
+- [x] `supabase/seed/apply-seed.sh` : `contact-principal` et `referent-technique` sur le workflow
+      global, et leurs deux valeurs sur « Migration ERP Sogexia » — dont l'organisation est Sogexia,
+      celle de Léo Marchand. La section des contacts est **remontée avant** celle des valeurs :
+      le validateur résout ces deux types, et une valeur écrite avant que son contact n'existe rend
+      `400` — **mesuré**, le seed s'arrêtait là.
+- [x] **La révision des comptes annoncée par le §9.6, faite : quinze fichiers de preuve**, chacun
+      avec son motif écrit dans le fichier, aucun retiré ni désactivé — `verify-champs-formulaire`,
+      `verify-copie-workflow`, `verify-seed-demo`, `verify-valeurs-champs`, `verify-harness`, les
+      suites pgTAP `0008`, `0010`, `0019`, `0021`, `0037`, les preuves d'API `champs-formulaire`,
+      `copie-workflow`, `valeurs-champs`, `rendu-formulaire`, et l'E2E `administration-workflows`.
+      **Onze avaient été prévus par la spécification ; quatre ont été trouvés par la campagne** —
+      les deux compteurs de l'éditeur de workflows, le compte de réponses de `…0c2`, et
+      l'**empreinte de composition** du workflow, remesurée.
+- [x] `webapp/src/app/FormulaireCard.test.tsx` (**17 tests ajoutés**) et
+      `webapp/src/lib/contacts.test.ts` (2) : les cas a à m du §13.5, dont la référence morte et la
+      condition de lecture. `npm run test:unit` : **1589 verts, 50 fichiers**.
+- [x] `e2e/ui/formulaire-selecteurs.spec.ts` : **6 scénarios verts** sur la pile seedée — les deux
+      champs rendus en NOMS, les listes et leur option vide, le changement enregistré qui survit au
+      rechargement puis **rétabli par le même geste**, le clavier, le refus traduit opposé à la
+      lectrice avec sa saisie conservée, et les quatre paliers. Console **vierge** : le `403`
+      provoqué est consommé nommément.
+- [x] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur d'interface porté de
+      398 à **404**, mesuré par `playwright test --list` (« Total: 404 tests in 32 files »).
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/`,
+      préfixées `formulaire-selecteurs-` : les deux sélecteurs renseignés, la liste, la
+      confirmation, le refus de la lectrice, et les quatre paliers.
+- [x] `docs/DESIGN_SYSTEM.md` §5.22 ajouté ; `docs/manual.md` §4.7 et sommaire ; `CHANGELOG.md`,
+      dans le même changement. **INC-159** consignée.
+
+**UNE OPÉRATION D'EXPLOITATION, MESURÉE ET NOMMÉE.** L'enrichissement du seed ne converge **pas**
+sur une base déjà seedée : la garde de la décision 300 refuse de reconstruire une copie de workflow
+« moderne » dont la source a divergé, et `apply-seed.sh` s'arrête en le disant. Une base locale
+neuve — `./resetMe.sh` — est nécessaire, ce que le message d'arrêt indique déjà. Aucun impact en
+production : le seed est un outil de développement.
+
+*Limites nommées d'emblée pour 4d* (`docs/SPEC-contacts.md` §13.8) : aucune création de contact « à
+la volée », que le §2.3 annonce pourtant ; aucune recherche ni filtre dans les deux listes ; aucune
+pagination ; le type `file` reste en saisie texte ; une référence morte est **rendue visible, jamais
+réparée** — le nettoyage reste l'arbitrage attendu du §6 point 4 ; et le rôle d'un membre n'est pas
+affiché dans le sélecteur `user`.
+
+**Ce qui reste dû sur `CRM-060` après la tranche 4** : la **création** d'un contact, la **fiche**
+d'un contact, et l'arbitrage sur les **références mortes**. `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

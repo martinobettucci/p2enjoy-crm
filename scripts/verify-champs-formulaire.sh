@@ -333,10 +333,14 @@ sans_regle=$(psql_db -c "
 	  left join public.form_field_rules r on r.field_id = f.id and r.step_id = s.id
 	 where f.workflow_id = '$WF_GLOBAL' and s.workflow_id = '$WF_GLOBAL'
 	   and f.archived_at is null and r.field_id is null;")
-[ "$sans_regle" = "27" ] \
-	&& ok "vingt-sept couples champ × étape restent **sans règle** : la valeur par défaut \`visible\` "\
+# QUARANTE ET UN, ET NON PLUS VINGT-SEPT, DEPUIS LA SOUS-TRANCHE 4d DE `CRM-060`
+# (docs/SPEC-contacts.md §13.6) : sept étapes fois HUIT champs actifs, moins les quinze règles. Les
+# deux champs ajoutés ne reçoivent AUCUNE règle, et c'est ce qui les rend `visible` par défaut à
+# toutes les étapes — ce que ce contrôle démontre est donc renforcé, non affaibli.
+[ "$sans_regle" = "41" ] \
+	&& ok "quarante et un couples champ × étape restent **sans règle** : la valeur par défaut \`visible\` "\
 "est démontrée, non seulement écrite" \
-	|| fail "couples sans règle : $sans_regle, attendu 27"
+	|| fail "couples sans règle : $sans_regle, attendu 41"
 
 # Convergence : une valeur faussée à la main est **ramenée** au contrat par un rejeu du seed, elle
 # n'est pas seulement laissée telle quelle (décision 34, et INC-041 pour la forme qui manquait).
