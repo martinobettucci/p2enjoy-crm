@@ -610,6 +610,38 @@ else
 	sed 's/^/        /' "$TRAVAIL/sql.log" | tail -n 20
 fi
 
+# --- 2 bis. Les trois compteurs, ÉPROUVÉS SANS INFRASTRUCTURE ------------------------------------
+#
+# AJOUTÉ le 2026-08-18, et le motif est un défaut RÉCURRENT de ce dépôt : les compteurs de scénarios
+# dérivent. Ils n'étaient jusqu'ici confrontés au réel qu'APRÈS l'exécution complète des suites —
+# donc jamais sans Docker, et jamais vite. Plusieurs unités ont livré des scénarios sans réviser le
+# compteur, dont `CRM-042` le 2026-08-17 (décision 435).
+#
+# `playwright test --list` ÉNUMÈRE les scénarios sans en exécuter un seul : ni base, ni services, ni
+# navigateur. La dérive est donc détectable en quelques secondes, et sur un poste sans pile. Ce
+# contrôle ne remplace pas la vérification d'après exécution — il la DEVANCE, et dit lequel des deux
+# nombres a bougé avant qu'on ait payé le prix d'un balayage complet.
+#
+# Le dénombrement de `mail` n'était lui-même possible que depuis la correction d'INC-151 : neuf de
+# ses onze specs appelaient `docker` à l'import et faisaient échouer la collecte du projet entier.
+
+titre "2 bis. Dénombrement des scénarios, sans exécuter une seule suite"
+
+for projet in api ui mail; do
+	case "$projet" in
+		api)  attendu=$SCENARIOS_API ;;
+		ui)   attendu=$SCENARIOS_UI ;;
+		mail) attendu=$SCENARIOS_MAIL ;;
+	esac
+	denombre=$(E2E_PROJETS="$projet" npx playwright test --config e2e/playwright.config.ts \
+		--project="$projet" --list 2>&1 | sed -n 's/^Total: \([0-9]*\) tests.*/\1/p' | tail -1)
+	if [ "${denombre:-vide}" = "$attendu" ]; then
+		ok "projet $projet : $denombre scénarios énumérés, conforme au compteur"
+	else
+		fail "projet $projet : $attendu attendus, ${denombre:-aucun} énumérés"
+	fi
+done
+
 # --- 3. npm run e2e:api ------------------------------------------------------------------------
 
 echo

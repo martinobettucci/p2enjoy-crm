@@ -18204,3 +18204,32 @@ là. **Les suites d'interface exigent donc bien la pile**, et ce n'est pas une d
 
 Seules pgTAP, les suites d'API et les suites E2E exigent la pile. La disparition de Docker retire
 **moins** de la moitié de la couverture, et non sa totalité.
+
+
+## décision 441 — Les compteurs de scénarios sont désormais éprouvés sans exécuter les suites
+
+**Problème, et il est récurrent.** Les compteurs `SCENARIOS_API`, `SCENARIOS_UI` et
+`SCENARIOS_MAIL` de `scripts/verify-harness.sh` n'étaient confrontés au réel qu'**après**
+l'exécution complète des suites : le harnais comparait le nombre de scénarios **passés**. Une
+dérive ne se voyait donc qu'au prix d'un balayage entier, et jamais sur un poste sans pile.
+Plusieurs unités ont livré des scénarios sans réviser le compteur — dont `CRM-042` le 2026-08-17,
+défaut que j'ai commis moi-même (décision 435).
+
+**Ce que la panne a révélé.** `playwright test --list` ÉNUMÈRE les scénarios sans en exécuter un
+seul : ni base, ni services, ni navigateur. La dérive devient détectable en quelques secondes, et
+sur une machine sans infrastructure.
+
+**Décision.** Un contrôle « 2 bis » est ajouté au méta-harnais, AVANT les exécutions coûteuses. Il
+dénombre les trois projets et les compare aux constantes. Il ne remplace pas la vérification
+d'après exécution — il la **devance**, et dit lequel des deux nombres a bougé avant qu'on ait payé
+le prix d'un balayage complet.
+
+**Vérifications réalisées, Docker absent.** La logique du contrôle a été exercée telle qu'écrite :
+`api` **678**, `ui` **368**, `mail` **42** — les trois conformes. Et le contrôle est **non
+complaisant**, éprouvé par un témoin : avec une valeur attendue fausse (999), il rend bien
+« 999 attendus, 678 énumérés ». Un contrôle qui ne sait pas échouer ne prouve rien — c'est la leçon
+d'INC-146 et d'INC-147, appliquée au contrôle que je viens d'écrire.
+
+**Dépendance à noter.** Le dénombrement de `mail` n'était possible que depuis la correction
+d'INC-151 : neuf de ses onze specs appelaient `docker` à l'import et faisaient échouer la collecte
+du projet entier. Une correction en a rendu une autre possible.
