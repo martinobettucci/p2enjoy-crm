@@ -118,8 +118,14 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		await connecter(page, VIEWER)
 		await page.goto('/contacts')
 		await expect(page.getByTestId('ligne-contact')).toHaveCount(3)
-		// §10.7 : aucun geste d'écriture n'est offert, à personne.
-		await expect(page.getByRole('button', { name: /contact/i })).toHaveCount(0)
+		// RÉVISÉE PAR LA SOUS-TRANCHE 4e, NON RETIRÉE (mécanisme de la décision 51). Cette assertion
+		// exigeait qu'AUCUN geste d'écriture ne soit offert, « à personne » : c'était vrai tant que
+		// le §10.7 nommait cette absence comme une limite de 4a. La limite est levée — le carnet
+		// porte le geste de création (§14) —, et ce que la preuve exige devient PLUS FORT : la
+		// lectrice VOIT la commande, car aucune commande n'est éteinte d'avance selon le rôle
+		// (§14.6, docs/DESIGN_SYSTEM.md §5.13). Le refus qui lui est opposé est éprouvé par
+		// `e2e/ui/carnet-creation.spec.ts`, sur la pile réelle.
+		await expect(page.getByRole('button', { name: 'Nouveau contact' })).toBeVisible()
 	})
 
 	test('le carnet est atteignable au CLAVIER seul, et l’entrée courante s’annonce', async ({

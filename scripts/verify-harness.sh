@@ -556,7 +556,13 @@ SCENARIOS_API=704
 # traduit opposé à la lectrice, et les **quatre paliers** du §7 en un scénario. Le nombre de
 # FICHIERS passe de 31 à **32**. Valeur MESURÉE par `playwright test --list`
 # (« Total: 404 tests in 32 files »), puis par l'exécution de la suite neuve, **6/6 verts**.
-SCENARIOS_UI=404
+#
+# Porté de 404 à **407** par `CRM-060` sous-tranche 4e, livrée en parallèle par une autre session :
+# `e2e/ui/carnet-creation.spec.ts` ajoute **trois** scénarios et le fichier n'avait pas été révisé
+# avec eux. Valeur REMESURÉE ici par `playwright test --list` après synchronisation avec
+# `origin/main` (« Total: 407 tests in 33 files »), plutôt que laissée fausse — un compteur figé qui
+# rougit ne dit plus rien du produit.
+SCENARIOS_UI=407
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
