@@ -71,6 +71,18 @@ async function ouvrirCreationChannel(page: Page, nomTrack: string): Promise<void
 	await expect(page.getByTestId('formulaire-channel')).toBeVisible()
 }
 
+/** Rend la valeur, ou échoue en la NOMMANT.
+ *
+ * `noUncheckedIndexedAccess` est actif (`tsconfig.json`) : une ligne cherchée dans une réponse
+ * d'API est toujours `T | undefined`. Un `!` ferait taire le compilateur sans rien dire au lecteur
+ * du rapport ; ce passage explicite transforme l'absence en un échec qui nomme ce qui manque —
+ * presque toujours un seed non appliqué. */
+function exigerDefini<T>(valeur: T | undefined, nom: string): T {
+	expect(valeur, nom).toBeDefined()
+	if (valeur === undefined) throw new Error(`${nom} : absent`)
+	return valeur
+}
+
 /** Referme le bloc d'un track déplié. */
 async function replierTrack(page: Page, nomTrack: string): Promise<void> {
 	await page.getByRole('button', { name: `Replier ${nomTrack}` }).click()
@@ -158,23 +170,28 @@ test.describe('le refus quand la liste est périmée (docs/SPEC-workflow-engine.
 				workspace_id: string
 				name: string
 			}>
-			const studio = lignes.find((ligne) => ligne.name === TRACK_STUDIO)
-			const conseil = lignes.find((ligne) => ligne.name === TRACK_CONSEIL)
-			expect(studio, `le track « ${TRACK_STUDIO} » du seed`).toBeDefined()
-			expect(conseil, `le track « ${TRACK_CONSEIL} » du seed`).toBeDefined()
+			const studio = exigerDefini(
+				lignes.find((ligne) => ligne.name === TRACK_STUDIO),
+				`le track « ${TRACK_STUDIO} » du seed`,
+			)
+			const conseil = exigerDefini(
+				lignes.find((ligne) => ligne.name === TRACK_CONSEIL),
+				`le track « ${TRACK_CONSEIL} » du seed`,
+			)
 
 			const creation = await request.post(CHEMIN_WORKFLOWS, {
 				headers: { ...enTetesService(), Prefer: 'return=representation' },
 				data: {
-					workspace_id: studio!.workspace_id,
-					track_id: studio!.id,
+					workspace_id: studio.workspace_id,
+					track_id: studio.id,
 					name: nomWorkflow,
 					scope: 'track',
 					is_default: false,
 				},
 			})
 			expect(creation.status(), 'le workflow de la course est créé').toBe(201)
-			const [workflow] = (await creation.json()) as ReadonlyArray<{ id: string }>
+			const [ligneCreee] = (await creation.json()) as ReadonlyArray<{ id: string }>
+			const workflow = exigerDefini(ligneCreee, 'la représentation du workflow créé')
 
 			// --- L'administrateur le voit, et le choisit --------------------------------------
 			await connecter(page)
@@ -196,7 +213,7 @@ test.describe('le refus quand la liste est périmée (docs/SPEC-workflow-engine.
 			// que la course du §7.2 produit, obtenu sans rien simuler.
 			const deplacement = await request.patch(`${CHEMIN_WORKFLOWS}?id=eq.${workflow.id}`, {
 				headers: enTetesService(),
-				data: { track_id: conseil!.id },
+				data: { track_id: conseil.id },
 			})
 			expect(
 				deplacement.status(),
