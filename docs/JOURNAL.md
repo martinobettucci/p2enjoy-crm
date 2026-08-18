@@ -18633,3 +18633,85 @@ visible attend l'inbox de `CRM-057`, tranche 4) et `pytest` (aucun code `mail-sy
 **Où reprendre.** `CRM-060` reste `[~]`. Tranche 3 — résolution du champ `contact` dans le
 formulaire (`CRM-036` §6.5, INC-053). Tranche 4 — écrans (carnet, fiche, rattachement) et l'inbox
 qui MONTRE la suggestion (`CRM-057`), qui portera la preuve visible de la règle 3.
+
+## décision 448 — `CRM-060` tranche 3 : les champs `contact` et `user` désignent enfin quelqu'un, et trois harnais s'auto-empoisonnaient
+
+**L'unité, et le choix.** La dernière entrée du journal désignait la tranche 3 de `CRM-060` comme
+reprise (`docs/CloudWorker.md` §4.2 point 1) : la résolution du champ `contact` dans la validation
+des valeurs. La décision **295** la traitait avec `user` dans la même phrase — « une valeur `user`
+doit désigner un membre actif du workspace dès maintenant ; une valeur `contact` est refusée tant
+que `CRM-060` n'a pas livré la table ; cette unité remplacera le refus par une clé vers un contact
+du même workspace » —, et les deux ont donc été livrés ensemble.
+
+**Spécification avant code.** La tranche 3 n'était que **nommée** au §1 de `docs/SPEC-contacts.md`.
+Son contrat a été écrit intégralement au §9 — règle type par type, portée, dix cas de comportement,
+limite assumée, preuves exigées —, fondé sur mesures prises sur la pile seedée : un `uuid` bien formé
+ne désignant rien était **accepté** par les deux types ; ni `workspace_members` ni `profiles` ne
+portent de statut d'appartenance. Committé avant la première ligne de code.
+
+**Ce que j'ai livré.** Migration `0047` : `app.card_field_values_valider()` redéfinie. Les deux types
+exigent désormais que la cible existe **dans le workspace de la valeur écrite** — une ligne de
+`contacts`, une ligne de `workspace_members`. Refus `invalid_field_value`, `DETAIL` nommant la clé et
+la raison. Aucune colonne, aucune politique, aucun privilège ne bouge. **INC-053 est close**, ouverte
+depuis le 2026-08-08.
+
+**« Membre actif » se lit « membre », et la mesure l'impose.** Le schéma ne porte aucune notion de
+membre inactif : l'appartenance **est** l'activité. L'écart entre le mot de l'arbitrage et ce que le
+schéma permet est **nommé** au §9.3 plutôt que résolu en silence, pour que la dette soit visible si
+un statut d'appartenance apparaissait.
+
+**Une décision de la spécification RENVERSÉE par la mesure, dans le même changement.** Le §9.6
+prévoyait d'ajouter deux champs seedés. Mesuré ensuite : le compte « sept champs sur le workflow
+source » est figé par **dix preuves** étrangères à cette tranche, que la copie de workflow met en
+regard. Les déplacer pour une donnée qu'aucun écran ne rend encore aurait obligé à réviser dix
+harnais deux fois. La donnée de démonstration rejoint la tranche 4, avec l'écran qui la montre ; les
+preuves de la tranche 3 fabriquent leurs propres champs sondes et rendent le seed **intact**. Le
+renversement est écrit au §9.6 avec son motif.
+
+**Preuves.** pgTAP `0045` **19 assertions** — les dix cas, dont le contact d'un AUTRE workspace et le
+profil existant mais non membre, chacun précédé de son **témoin** ; le cas j **prouve** la limite du
+§9.4 au lieu de l'écrire seulement. Preuve d'API, bloc `V5`, **6 scénarios** par la vraie route.
+Harnais `verify-valeurs-champs.sh` étendu d'une section 3 bis avec témoin, dégradation réelle et
+restauration constatée — **41 contrôles, aucune anomalie**, deux fois de suite. **Deux assertions
+figées par `CRM-036` retournées** et l'assertion `has_table('contacts')` retournée une seconde fois
+(décision 51), jamais retirées.
+
+**ET LA CAMPAGNE A TROUVÉ DEUX DÉFAUTS ANTÉRIEURS, TOUS DEUX DANS DES FICHIERS DE CETTE SESSION.**
+
+- **INC-154** — `verify-valeurs-champs.sh`, `verify-move-card.sh` et `verify-colonnes-protegees.sh`
+  rejouent la migration `0013` puis restauraient `move_card` depuis la `0019`, nommée « dernière
+  autorité » alors que le lot G (migration `0035`) l'a redéfinie. Chaque passage laissait `move_card`
+  amputée de `btrim_blancs` et de la conservation du commentaire, et `0014` rendait `not ok 99` et
+  `not ok 100` à l'exécution SUIVANTE. Cinquième occurrence de la classe des décisions 108, 135, 143,
+  145 et d'INC-153. Ligne de base par `git stash` : rouge des deux côtés. **Corrigé.**
+- **INC-156** — `verify-harness.sh` ouvrait sa section « 2 bis » par `titre "…"`, fonction qui
+  n'existe pas dans ce fichier. Sous `set -e`, le harnais **mourait à cette ligne** : le dénombrement
+  `--list`, les compteurs `SCENARIOS_UI` et `SCENARIOS_MAIL` et toutes les sections suivantes n'ont
+  jamais tourné depuis que la ligne existe. Le harnais dont le rôle est de dénoncer les compteurs
+  figés s'arrêtait avant de les lire. **Corrigé**, et ses trois compteurs — restés à ceux de la
+  tranche 1 alors que la tranche 2 les avait dépassés — portés à **45 / 2269 / 704**, l'omission de
+  la tranche 2 étant nommée dans le fichier plutôt que lissée.
+
+**INC-155 consignée sans être corrigée** : le compteur « quinze cards seedées » de
+`verify-move-card.sh` est le **second porteur d'INC-141**, déjà ouverte. Il rend un verdict faux mais
+ne dégrade rien ; les deux se fermeront ensemble, par leur porteur.
+
+**Campagne de fin de session, sur seed frais.** `typecheck`, `types:check` (octet à octet) et `build`
+verts ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ; `test:unit` **1488 tests** ;
+`e2e:api` **703 verts, 1 échec** — `inbox.spec.ts:159`, dépôt Storage `InvalidAccessKeyId`, qui est
+**INC-136**, déjà ouverte et étrangère ; `e2e:mail` **40 verts, 2 échecs** — `ingestion.spec.ts:143`
+(ClamAV) et `mail-sync.spec.ts:220` (S3), **mesurés identiques sur la ligne de base** `git stash`,
+donc préexistants et étrangers, cette session ne touchant aucun code de messagerie. **Non exécuté, et
+dit comme tel** : `e2e:ui` — cette tranche ne livre aucun écran, aucun composant d'interface n'est
+modifié — et `pytest`, aucun code `mail-sync` n'étant touché.
+
+**Une leçon d'exploitation, à ne pas redécouvrir.** Un rejeu de harnais **sur la ligne de base**
+(`git stash`) laisse la base dans l'état d'AVANT la session : après une telle mesure, il faut
+réappliquer la migration de la session avant de relancer quoi que ce soit. Faute de l'avoir fait,
+`test:sql` a rendu ma propre suite rouge une fois, pour une raison qui n'était pas le produit.
+
+**Où reprendre.** `CRM-060` reste `[~]`. **Tranche 4** — les écrans : carnet de contacts, fiche
+d'organisation, rattachement d'un contact à une affaire depuis la route de détail, **les deux
+sélecteurs** du §9.1 (contact et membre, en remplacement de la saisie brute de `FormulaireCard.tsx`)
+et **l'enrichissement du seed** différé par le §9.6, dont la révision des dix compteurs « sept
+champs » sera faite du même geste.

@@ -343,8 +343,19 @@ PORT_RAPPORT=9323
 # TROISIÈME assertion — la somme des politiques dans `public` de `0016_preuves_refus.test.sql` —
 # passe de 66 à 78 (+12 : quatre par table sur trois tables).
 # 42 + 1 = **43** ; 2191 + 38 = **2229**. MESURÉ par `npm run test:sql`.
-FICHIERS_SQL_ATTENDUS=43
-ASSERTIONS_ATTENDUES=2229
+# --- CRM-060 tranches 2 ET 3, le 2026-08-18 — ET LA TRANCHE 2 N'AVAIT PAS RÉVISÉ CES COMPTEURS ---
+# La tranche 2 a livré `supabase/tests/0044_regle3_suggestion.test.sql` (+1 fichier, +21 assertions)
+# sans toucher ces trois valeurs : elles sont restées à celles de la tranche 1, et le contrôle
+# aurait dû rougir. Il n'a pas été exécuté, ce qui est la leçon d'INC-101 reprise à l'identique —
+# un compteur figé ne dit rien tant que personne ne le confronte. L'omission est NOMMÉE ici plutôt
+# que lissée dans un total qui semblerait n'avoir jamais dérivé.
+# La tranche 3 livre `supabase/tests/0045_resolution_contact_user.test.sql` (+1 fichier,
+# +19 assertions). **CINQ ASSERTIONS ANTÉRIEURES ONT ÉTÉ RETOURNÉES SANS CHANGER LE TOTAL** — les
+# deux qui figeaient l'acceptation d'un uuid mort par `user` et `contact`, l'assertion
+# `has_table('contacts')` retournée une SECONDE fois, et les deux de la tranche 2 déjà comptées.
+# 43 + 1 + 1 = **45** ; 2229 + 21 + 19 = **2269**. MESURÉ par `npm run test:sql` le 2026-08-18.
+FICHIERS_SQL_ATTENDUS=45
+ASSERTIONS_ATTENDUES=2269
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -378,7 +389,13 @@ ASSERTIONS_ATTENDUES=2229
 # cascade sur suppression d'un contact — plus deux scénarios de gestion : le refus par
 # CONTRAINTE d'un domaine avec majuscules (`e bis`), et un inventaire sanity des trois profils
 # seedés. 678 + 18 = **696**. MESURÉ par `npm run e2e:api` et par `playwright test --list`.
-SCENARIOS_API=696
+# --- CRM-060 tranches 2 et 3, le 2026-08-18 -------------------------------------------------------
+# La tranche 2 a porté `e2e/api/classement.spec.ts` de 3 à 5 scénarios sans réviser ce compteur —
+# même omission que ci-dessus. La tranche 3 ajoute **six** scénarios au bloc `V5` de
+# `e2e/api/valeurs-champs.spec.ts` : la résolution de `contact` et de `user`, acceptations et refus.
+# 696 + 2 + 6 = **704**, valeur COMPTÉE par `npm run e2e:api -- --list` (704 tests dans 44 fichiers)
+# et non déduite d'une exécution — déduire reviendrait à supprimer le contrôle (INC-101).
+SCENARIOS_API=704
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -650,7 +667,13 @@ fi
 # Le dénombrement de `mail` n'était lui-même possible que depuis la correction d'INC-151 : neuf de
 # ses onze specs appelaient `docker` à l'import et faisaient échouer la collecte du projet entier.
 
-titre "2 bis. Dénombrement des scénarios, sans exécuter une seule suite"
+# `titre` N'EXISTE PAS DANS CE FICHIER, et cet appel le tuait ici même — INC-156, mesuré le
+# 2026-08-18 des deux côtés d'un `git stash`, donc antérieur. Sous `set -e`, « titre: command not
+# found » interrompait le harnais À CETTE LIGNE : tout ce qui suit — le dénombrement, les projets
+# `ui` et `mail`, les sections suivantes — n'a jamais été exécuté depuis que cette ligne existe, et
+# le harnais rendait pourtant un verdict. Les autres en-têtes du fichier emploient `echo`.
+echo
+echo "2 bis. Dénombrement des scénarios, sans exécuter une seule suite"
 
 for projet in api ui mail; do
 	case "$projet" in

@@ -245,6 +245,34 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-156 — `verify-harness.sh` appelait une fonction inexistante et mourait au milieu — CORRIGÉ le 2026-08-18
+
+**Nature :** un harnais s'interrompait silencieusement au tiers de son parcours en rendant quand
+même un verdict. Sa section « 2 bis. Dénombrement des scénarios » s'ouvrait par `titre "…"`. **La
+fonction `titre` n'est définie nulle part dans ce fichier** — les autres en-têtes emploient `echo`.
+Sous `set -e`, l'appel rendait « titre: command not found » et **tuait le script à cette ligne**.
+
+**Conséquence, et elle est large :** tout ce qui suit cette ligne n'a **jamais** été exécuté depuis
+qu'elle existe — le dénombrement `--list` des trois projets, les compteurs `SCENARIOS_UI` et
+`SCENARIOS_MAIL`, et toutes les sections suivantes. Le harnais dont le rôle est de dénoncer les
+compteurs figés était lui-même arrêté avant de les lire. C'est la leçon d'INC-101 portée à sa
+limite : un contrôle qui ne s'exécute pas ne ment pas, il se tait.
+
+**Mesuré le :** 2026-08-18, des deux côtés d'un `git stash -u`. Sur `origin/main` sans aucun de mes
+changements, le harnais rend « line 653: titre: command not found » après sa section 2 ; avec mes
+changements, la même mort à la ligne 670. Défaut **antérieur**.
+
+**Corrigé, parce que sans lui la révision des compteurs de cette session serait invérifiable.**
+L'appel devient `echo`, comme les autres en-têtes du fichier, et le motif est écrit au-dessus de la
+ligne. Le fichier était déjà modifié par cette session — `FICHIERS_SQL_ATTENDUS`,
+`ASSERTIONS_ATTENDUES` et `SCENARIOS_API` révisés —, et c'est précisément le contrôle mort qui
+devait valider cette révision. Même geste que pour INC-154.
+
+**Un fait annexe, révélé par la même mesure et NON corrigé :** les compteurs de ce harnais étaient
+restés à ceux de `CRM-060` **tranche 1** (43 fichiers / 2229 assertions / 696 scénarios) alors que
+la tranche 2 en avait livré davantage. L'omission est nommée dans le fichier plutôt que lissée dans
+un total qui semblerait n'avoir jamais dérivé.
+
 ### INC-155 — INC-141 a un SECOND porteur : `verify-move-card.sh` fige lui aussi « quinze cards seedées »
 
 **Nature :** compteur périmé dans un harnais — **exactement le défaut d'INC-141**, consignée le
