@@ -43,13 +43,25 @@ dev ; aucun service de développement présent en prod.
       `auth`, `rest`, `realtime`, `storage`, `functions`, `kong`. Toutes les images épinglées à une
       version exacte. **`supavisor` en a été retiré** le 2026-08-13 (décision 366) : le pooler
       n'avait aucun consommateur.
-- [ ] **Démarrage à froid rejoué après le retrait du pooler.** Les preuves de démarrage et le
-      harnais ci-dessous datent d'un assemblage qui comportait encore `supavisor`, la base
-      `_supabase` et le mot de passe du rôle `pgbouncer`. Le retrait touche des scripts
-      d'initialisation qui ne rejouent qu'à la création du cluster : la seule preuve valable est
-      `./resetMe.sh` puis `./runDev.sh`, suivis de `scripts/verify-stack.sh` et de
-      `scripts/verify-scripts.sh`. **Non rejouée le 2026-08-13 : le démon Docker n'était pas
-      joignable depuis la distribution WSL de la session.** L'unité reste `[~]` jusque-là.
+- [~] **Démarrage à froid REJOUÉ le 2026-08-18, et trois preuves sur quatre sont acquises.** La
+      séquence exigée a été menée dans l'ordre, sur un poste dont le démon répondait :
+      `./resetMe.sh --yes` **code 0**, `./runDev.sh` **code 0**, `scripts/verify-stack.sh`
+      **54 vérifications, aucune anomalie** — dont la chaîne de stockage complète, dépôt et
+      relecture d'objet jusqu'au bucket MinIO. La quatrième, `scripts/verify-scripts.sh`, a
+      **dénoncé un défaut du harnais lui-même avant de pouvoir conclure** : il rendait « aucune
+      anomalie » en sautant quatre contrôles, sonde de disponibilité fautive (INC-145). Sonde
+      corrigée, il exécute **104 vérifications** et il en reste **trois rouges**, toutes sur la
+      reconstruction de l'image `webapp`.
+      **CES TROIS ÉCHECS NE SONT PAS DU PRODUIT, et ils ne sont pas maquillés en non-exécutés** :
+      `webapp/Dockerfile` emploie `RUN --mount=type=secret`, donc BuildKit, donc le greffon
+      `docker-buildx` — celui qui segfaute sur ce poste. Le constructeur historique ne connaît pas
+      les secrets de build : aucun repli n'existe. **Cette unité reste donc `[~]`**, et elle le
+      restera tant que la reconstruction n'aura pas été prouvée sur un poste dont le constructeur
+      fonctionne. Ne pas conclure au vert sur trois contrôles qu'on n'a pas su exécuter est
+      exactement ce qu'INC-145 reproche au harnais.
+      *Relevé d'origine, conservé :* les preuves de démarrage dataient d'un assemblage comportant
+      encore `supavisor`, la base `_supabase` et le mot de passe du rôle `pgbouncer` ; la
+      vérification n'avait pas pu être rejouée le 2026-08-13, le démon Docker étant absent.
 - [x] Overlay `docker-compose.dev.yml` : Studio, `postgres-meta`, MinIO, Inbucket ; ports publiés
       sur l'interface de bouclage uniquement.
 - [x] Overlay `docker-compose.prod.yml` : Caddy, aucun outillage de développement, ni Kong ni

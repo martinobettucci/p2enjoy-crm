@@ -17925,3 +17925,42 @@ les onze preuves encore consolidées, ce qui est la vérité et non un contourne
 **Vérification.** `verify-preuves-refus.sh` passe de 26 contrôles / 4 anomalies à **27 contrôles,
 aucune anomalie**. `verify-commentaires.sh` repasse au vert de lui-même : son écart tenait au résidu
 d'un balayage, non au produit.
+
+
+## décision 433 — Une sonde de disponibilité qui se trompe de sujet fabrique des verts
+
+**Problème.** En cherchant la preuve de démarrage à froid due par `CRM-001`, `verify-scripts.sh` a
+rendu « 95 vérifications, aucune anomalie » — et, une ligne plus haut, « 4 vérification(s) non
+exécutée(s), faute de démon Docker ». Le démon répondait pourtant : la pile tournait, `docker
+compose` fonctionnait, les suites pgTAP passaient.
+
+**Observation.** La sonde était `docker info`. Elle sortait en 1 parce que les greffons CLI de
+Docker Desktop segfaultent sur ce poste, et parce que `info`, `ps` et `version` rendent un 500 sur
+la socket quelle que soit la version d'API forcée. Mesuré à l'intérieur ET à l'extérieur du bac à
+sable, pour écarter l'hypothèse d'un artefact d'outillage.
+
+**Décision.** La sonde interroge ce que les contrôles emploient réellement — `docker compose` — et
+non le démon en général. Elle affirme moins, et ce qu'elle affirme est vérifié. Neuf contrôles se
+remettent à s'exécuter, et **quatre échecs réels apparaissent**.
+
+**Ce que j'en retiens.** Le danger n'était pas le saut : c'était la ligne de bilan. « Aucune
+anomalie » et « quatre non exécutées » ne peuvent pas coexister sans que la seconde efface la
+première. La ligne le dit désormais : un contrôle qui ne s'exécute pas ne prouve rien.
+
+**Et je n'ai pas converti les trois échecs restants en non-exécutés.** La reconstruction de l'image
+`webapp` exige BuildKit — le `Dockerfile` monte un secret de build —, donc le greffon qui segfaute.
+Il aurait été facile de déclarer ces contrôles « non applicables sur ce poste » et de rendre un
+vert. C'est exactement le défaut que je venais de reprocher au harnais. `CRM-001` reste `[~]`.
+
+## décision 434 — Le poste Docker est tombé en cours de session, et rien ne doit être déclaré vérifié après
+
+**Fait.** Après la réparation de la sonde, `docker compose` s'est mis à segfauter à son tour, le
+montage des greffons s'est vidé, la socket a cessé de répondre au `_ping`, et Kong comme la webapp
+sont devenus injoignables. Docker Desktop s'était arrêté côté Windows. Relance tentée depuis WSL :
+les processus Windows sont revenus et la distro `docker-desktop` est active, mais aucune des socket
+partagées ne répond encore.
+
+**Conséquence assumée.** Toutes les mesures de cette session **antérieures** à cette chute restent
+valables — elles ont été faites sur une pile qui répondait, et leurs sorties sont citées. Aucune
+mesure **postérieure** ne peut être produite tant que le poste n'est pas rétabli, et aucune unité ne
+sera passée à `[x]` sur la foi d'une exécution impossible.
