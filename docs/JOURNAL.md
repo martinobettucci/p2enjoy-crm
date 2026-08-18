@@ -18107,3 +18107,51 @@ attend le retour du poste.
 La règle, elle, est bien tenue par le produit : `e2e/api/envoi.spec.ts` mesure `forbidden` et
 `identity_not_available` avec les jetons réels. C'est le registre qui mentait sur son propre état,
 pas le produit qui manquait à sa règle — la distinction compte, et elle est écrite.
+
+
+## décision 439 — Point de reprise du 2026-08-18, et pourquoi le poste n'a pas été redémarré d'autorité
+
+**État à la clôture.** Backlog : **38 terminées, 17 en cours, 1 non commencée**. Arbre propre, tout
+poussé sur `main`. Aucune unité passée à `[x]` sans preuve.
+
+**Ce qui bloque.** Docker Desktop est coincé sur lui-même (INC-145) : sa distro de service démarre
+sans être provisionnée — ni `dockerd`, ni `containerd` —, son backend interroge un moteur qui
+n'existe pas, et son propre outil ne peut ni le démarrer (`-SwitchLinuxEngine` rend 0 sans effet) ni
+l'arrêter (`-Shutdown` ne rend jamais la main). Le disque de données de **120 Go** est **intact**,
+mesuré ; seule la distro de service est vide.
+
+**Pourquoi `wsl --shutdown` n'a PAS été exécuté d'autorité.** Ce n'est pas seulement qu'il détruirait
+le contexte de l'agent — ce serait un argument égoïste. **Il arrête TOUTES les distros WSL du poste**,
+donc les éventuels autres travaux du responsable ouverts ailleurs : autres terminaux, autres projets,
+éditeurs attachés. C'est une action irréversible, à effet extérieur, sur l'environnement de
+quelqu'un d'autre. Elle demande un accord explicite, et l'absence de réponse n'en est pas un.
+
+**Ce qui a été essayé, pour ne pas le réessayer.** `taskkill` puis relance ; `wsl --terminate
+docker-desktop` ; `DockerCli -Shutdown` ; `DockerCli -SwitchLinuxEngine` ; recherche d'un moteur
+alternatif (aucun : ni `podman`, ni `nerdctl`, ni `containerd`, ni `dockerd` natif) ; installation
+native (impossible, `sudo` exige un mot de passe) ; mode rootless (impossible, `newuidmap`,
+`newgidmap`, `slirp4netns` et `fuse-overlayfs` absents). `InstallerCli.exe` n'a **pas** été lancé :
+ses options ne sont pas documentées et un installeur aux drapeaux inconnus, sur une machine portant
+120 Go de données, n'est pas un pari acceptable.
+
+**Ordre de reprise, dès que la pile répond.**
+
+1. `./runDev.sh` puis `scripts/verify-stack.sh` — confirmer que la pile revient entière.
+2. `scripts/verify-scripts.sh` — les **trois** contrôles de reconstruction d'image restent rouges ;
+   ils exigent BuildKit, donc le greffon `docker-buildx`. Dernier écart de `CRM-001`.
+3. Confirmer `SCENARIOS_UI=368` dans `scripts/verify-harness.sh` — valeur **dérivée**, jamais
+   observée (décision 435).
+4. **INC-147** : rattacher le contrôle de la preuve n° 9 à `e2e/api/inbox.spec.ts` — la preuve saine,
+   qui dépose l'objet et porte son témoin positif — et retourner le scénario creux
+   d'`ingestion.spec.ts`.
+5. **INC-146** : retourner la douzième assertion en refus mesuré, et appeler les RPC de
+   `refus-par-defaut.spec.ts` avec leur signature réelle.
+6. `CRM-033`, `CRM-035`, `CRM-036` : leurs preuves d'interface ne sont plus bloquées, elles sont
+   **dues** — l'écran d'administration existe depuis `CRM-075`, et INC-021 est close depuis le
+   2026-08-07.
+
+**Ce que cette journée aura surtout appris.** Trois des défauts trouvés le 2026-08-18 — INC-145,
+INC-146, INC-147 — sont de la même famille : **un contrôle qui réussit pour une raison qui n'est pas
+celle qu'il annonce**. Aucun n'aurait été trouvé en exécutant les suites, puisqu'ils sont verts. Ils
+l'ont été en relisant, faute de pouvoir exécuter. La panne a donc rendu un service : elle a forcé la
+seule méthode capable de les voir.
