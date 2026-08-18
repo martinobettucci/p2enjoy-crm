@@ -18715,3 +18715,86 @@ d'organisation, rattachement d'un contact à une affaire depuis la route de dét
 sélecteurs** du §9.1 (contact et membre, en remplacement de la saisie brute de `FormulaireCard.tsx`)
 et **l'enrichissement du seed** différé par le §9.6, dont la révision des dix compteurs « sept
 champs » sera faite du même geste.
+
+## décision 448 — `CRM-060` tranche 4a : le carnet de contacts a son écran, et la campagne a trouvé une assertion figée
+
+**L'unité, et le choix.** La dernière entrée du journal (décision 447) désignait `CRM-060` comme
+unité PRODUIT en cours et renvoyait à la tranche 4 (les écrans). La tranche 3 a été livrée entre
+temps par une session qui n'a **pas** écrit son entrée de journal — le backlog la documente, les six
+commits `beacd8d`..`fd1f707` la portent. J'ai donc suivi `docs/CloudWorker.md` §4.2 point 1 et
+continué l'unité par sa **tranche 4**.
+
+**Sous-découpage, motivé et committé avant tout code.** La tranche 4 porte quatre surfaces qui ne
+lisent pas les mêmes tables et ne partagent aucun geste ; les livrer d'un bloc produirait un
+changement irrelisable, et la première interruption le perdrait entier. Le §10.1 de
+`docs/SPEC-contacts.md` la découpe donc en **4a** (le carnet, lecture seule), **4b** (fiche
+d'organisation), **4c** (rattachement à une affaire) et **4d** (les deux sélecteurs du §9.1 et
+l'enrichissement du seed différé par le §9.6). La lecture vient avant l'écriture : un sélecteur de
+contact suppose une liste de contacts lisible.
+
+**Spécification écrite AVANT toute ligne de code**, §10 de `docs/SPEC-contacts.md`, fondée sur
+mesures prises sur la pile seedée : réponse PostgREST relevée avec les jetons réels des trois
+profils, `organizations` **embarquée sans ambiguïté** (`contacts` ne porte qu'une seule FK vers
+elle, contrairement à `cards`/`channels` qui a imposé deux lectures à `corbeille.ts` et `inbox.ts`),
+lectrice mesurée à `200` et **3 lignes**, anonyme à `200` et `[]`.
+
+**Une décision d'architecture d'information, et son motif.** Le carnet s'ancre sur **`/contacts`,
+entrée de la barre latérale**, et non sous `/reglages`. Un contact est le matériau quotidien d'un
+commercial — ce que la base avait déjà tranché en tranche 1 en ouvrant son écriture au
+`business_developer` là où tracks, channels et workflows restent à l'`admin`. Les cinq surfaces de
+`/reglages` administrent la structure ; le carnet n'administre rien, il travaille (`CLAUDE.md` §4).
+Conséquence tenue dans le même changement : `ROUTES` et `ENTREES_TRANSVERSES` gagnent la même
+entrée — une assertion existante exige qu'elles se couvrent exactement —, et
+`docs/DESIGN_SYSTEM.md` §4 est révisé, §5.19 ajouté.
+
+**Ce que j'ai livré.** `webapp/src/lib/contacts.ts` (la lecture, sans filtre ni pagination, ordre
+serveur), `webapp/src/app/Carnet.tsx` (tableau du §5.9, cinq colonnes, cellule **vide** quand la
+donnée manque, email et téléphone en donnée technique, quatre états du §5.8, état vide **sans
+action** comme celui de la corbeille), la route chargée à la demande, et les clés de traduction.
+Aucun geste d'écriture : l'écart est nommé au §10.7, non compensé par une commande morte.
+
+**LA CAMPAGNE A TROUVÉ CE QUE LA RELECTURE N'AVAIT PAS VU.** `npm run e2e:ui` a rendu rouge
+`coquille.spec.ts:177`, « le parcours complet est atteignable sans souris » : la preuve énumérait
+les **quatre** entrées de navigation de `CRM-007`, et la cinquième s'insère entre « Inbox » et
+« Ma journée ». La règle a changé par **livraison**, la preuve est donc **RÉVISÉE avec son motif
+écrit dans le fichier**, jamais contournée ni retirée (mécanisme de la décision 51). Ce qu'elle
+exige est inchangé — l'ordre de tabulation suit l'ordre visuel —, et c'est exactement ce qu'elle a
+détecté. Rejouée : 13/13.
+
+**Les 224 captures réécrites sont CONSERVÉES, à rebours des sessions précédentes.** Les décisions
+446 et 447 les avaient restaurées, à juste titre : elles ne touchaient aucun code d'interface, et
+les rewrites n'étaient que compression (INC-036). Ici la barre latérale porte **une entrée de plus
+sur tout écran** : les captures committées ne représentaient plus l'application exécutée, ce que
+`CLAUDE.md` §16 interdit. Vérifié en **regardant** `docs/captures/CRM-007/coquille-vide-1440.jpg`,
+qui montre bien « Contacts ».
+
+**Campagne de fin de session, sur seed frais.** `typecheck`, `build`, `types:check` (octet à octet)
+**verts** ; `test:unit` **1509 verts, 48 fichiers** ; `test:sql` **45 fichiers, 2269 assertions,
+aucune anomalie** ; `e2e:api` **704 verts** ; `e2e:ui` **378 verts, 1 échec** ; `e2e:ui` de la
+nouvelle suite `contacts.spec.ts` **9/9**. **Non exécutés, et dits comme tels** : `pytest`
+(aucun code `mail-sync` touché), `e2e:mail` et la série des cinquante `verify-*.sh` — seuls
+`verify-webapp.sh` et `verify-harness.sh` ont été lancés, le second n'ayant pas terminé dans le
+temps de la session.
+
+**TROIS DÉFAUTS ANTÉRIEURS CONSIGNÉS SANS ÊTRE CORRIGÉS** (`CLAUDE.md` §3.1) :
+
+- **INC-158** — `verify-webapp.sh` rend **236 classes citées, 3 absentes du CSS produit** :
+  `h-10`, `py-0.5`, `text-text-1`, portées par `Sommeil.tsx`, `EnTeteCard.tsx` et
+  `AdministrationWorkflows.tsx`. C'est le défaut le plus dangereux que `docs/DESIGN_SYSTEM.md` §11
+  décrit — une classe non engendrée est silencieusement sans effet. **Antériorité PROUVÉE, non
+  supposée** : `git blame` place les trois lignes au commit `3c58a77`, et le `git diff` de la
+  session montre qu'aucun des trois fichiers n'est touché.
+- **INC-157** — la barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'ont
+  aucun channel à lister. Trouvé **en observant une capture**, pas en lisant un test ; la capture
+  antérieure `docs/captures/CRM-057/inbox-lg-1152.jpg` le porte déjà.
+- **INC-152 étendue** — l'intermittence de la suite d'interface est **plus large** que le scénario
+  qu'elle décrit. Trois campagnes complètes, même code, seed frais : **378 verts et 1 échec** à
+  chaque fois, mais l'échec **change de scénario** — `commentaires-gestes.spec.ts:280` puis
+  `formulaire.spec.ts:242`, chacun **vert au rejeu isolé** (8/8 pour le premier). Le motif
+  ressemble à une intermittence de la suite sous charge, non à trois défauts indépendants.
+
+**Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4b** — la fiche d'organisation, qui donnera
+au nom d'organisation du carnet la destination qui lui manque (aujourd'hui un texte, jamais un lien
+mort). Puis **4c** (rattachement d'un contact à une affaire depuis la route de détail, premier geste
+d'écriture) et **4d** (les deux sélecteurs et l'enrichissement du seed du §9.6, avec la révision des
+dix comptes qu'il déplace).

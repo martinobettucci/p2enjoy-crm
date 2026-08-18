@@ -195,7 +195,13 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Treize ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Quatorze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157 et INC-158** — **INC-158** consignée le
+2026-08-18 par la session `CRM-060` tranche 4a : trois classes citées par trois composants ne sont
+**pas engendrées** dans le CSS produit, donc silencieusement sans effet. Défaut ANTÉRIEUR, prouvé
+tel par `git blame`, et laissé inchangé (`CLAUDE.md` §3.1).
+
+Précédemment treize : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155 et INC-157** — **INC-157** consignée le 2026-08-18 par
 la session `CRM-060` tranche 4a : la barre d'onglets écrit « Aucun channel » sur les routes
 transverses, qui n'ont pas de channel à lister. Défaut ANTÉRIEUR, observé sur une capture et
@@ -250,6 +256,42 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-158 — Trois classes citées par des composants ne sont PAS engendrées, et n'ont donc aucun effet
+
+**Nature :** exactement le défaut que `docs/DESIGN_SYSTEM.md` §11 décrit comme le plus dangereux du
+projet — « une classe dont le jeton n'est pas déclaré n'est **pas engendrée du tout**, et en
+silence ». Les espaces de noms de Tailwind étant remis à zéro, trois classes citées ne correspondent
+à aucun jeton, et la règle CSS n'existe pas : le style annoncé par le composant n'est **jamais
+appliqué**, sans qu'aucune erreur ne le signale. C'est le mécanisme par lequel `min-w-0` avait déjà
+disparu avec sa garde de débordement, et c'est précisément ce que le contrôle du harnais existe pour
+attraper.
+
+**Mesuré le :** 2026-08-18, par `scripts/verify-webapp.sh`, contrôle 4 « Classes utilitaires
+engendrées » : **236 classes citées, 3 absentes du CSS produit** — `h-10`, `py-0.5` et `text-text-1`.
+Leurs trois porteurs, relevés à la source :
+
+- `webapp/src/components/ui/Sommeil.tsx:99` — `py-0.5` sur la pastille « En sommeil » ;
+- `webapp/src/app/EnTeteCard.tsx:936` — `h-10` sur un champ de l'en-tête d'affaire ;
+- `webapp/src/app/AdministrationWorkflows.tsx:2298` — `text-text-1` dans l'éditeur de workflows.
+
+Les trois sont plausibles à l'œil sans être appliquées : `h-10` doublait `--size-target`
+(40 px = 10 × 4 px) mais l'échelle close ne déclare pas `10` ; `py-0.5` demande un demi-pas, que
+l'échelle du §3 — fermée sur 0, 1, 2, 3, 4, 6, 8, 12 — ne connaît pas ; `text-text-1` nomme un jeton
+de texte qui n'existe pas, la palette déclarant `--color-ink`, `--color-text-2` et `--color-text-3`.
+
+**Antérieur, et prouvé tel plutôt que supposé.** `git blame` place les trois lignes au commit
+`3c58a77`, bien avant cette session ; et `git diff` de la session montre qu'aucun des trois fichiers
+n'est touché par `CRM-060` tranche 4a, qui n'ajoute que `Carnet.tsx` et son module de lecture. Le
+contrôle était donc **déjà rouge** — la ligne de base n'a pas eu besoin d'être rejouée, la preuve
+d'antériorité étant directe.
+
+**Étranger à l'unité, et laissé inchangé** (`CLAUDE.md` §1, §3.1). La correction n'est pas
+mécanique et appartient au porteur de chaque composant : elle demande de choisir, pour chacun, entre
+la valeur de l'échelle la plus proche et l'ajout d'un jeton au thème — ce dernier étant une décision
+de design system, pas une retouche de composant. Trois pistes, dans l'ordre de vraisemblance :
+`h-10` → `h-[var(--size-target)]`, la forme déjà employée partout ailleurs ; `py-0.5` → `py-1`, seul
+pas existant sous `py-2` ; `text-text-1` → `text-ink`, le jeton d'encre du §1.
 
 ### INC-157 — La barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'en ont pas
 
@@ -415,6 +457,26 @@ seed **frais** appliqué à chaque cycle :
 
 Une anomalie présente des deux côtés de la ligne de base est préexistante (§2.4 de
 `docs/CloudWorker.md`). Elle ne vient pas de cette session, et n'y appartient pas.
+
+**Observation ajoutée le 2026-08-18 par la session `CRM-060` tranche 4a — l'intermittence est PLUS
+LARGE que ce scénario, et plus large que l'assertion de focus.** Trois campagnes `npm run e2e:ui`
+complètes ont été exécutées dans la même session, sur le même code, seed frais à chaque fois. Les
+trois rendent **378 verts et 1 échec**, mais **l'échec change de scénario à chaque campagne** :
+
+1. `coquille.spec.ts:177` — **échec RÉEL, imputable au changement** (la liste des entrées de
+   navigation était figée à quatre) : révisé, puis vert ;
+2. `commentaires-gestes.spec.ts:224` — ce scénario, mais **pas** sur l'assertion de focus décrite
+   ci-dessus : sur la relecture en base de la ligne (`:280`), l'écran montrant déjà le texte modifié
+   (`:279` verte) alors que la relecture rend l'ancien corps. Rejoué **seul** : **8/8 verts** ;
+3. `formulaire.spec.ts:242` — « l'appelant anonyme n'obtient aucune card », pendant l'exécution de
+   `scripts/verify-harness.sh`.
+
+Trois scénarios distincts, trois fichiers distincts, un seul échec par campagne, et chacun vert au
+rejeu isolé : le motif n'est donc pas propre à `commentaires-gestes.spec.ts`. Il ressemble à une
+intermittence de la **suite sous charge** — un seul worker, dix minutes d'exécution, base partagée —
+plutôt qu'à trois défauts indépendants. Cette observation est ajoutée ici parce qu'elle **élargit**
+l'entrée sans la trancher : la piste de stabilisation reste celle écrite plus bas, mais elle devra
+être cherchée au niveau de la suite, pas seulement du scénario.
 
 **Pourquoi cette entrée existe.** Le scénario mesure une propriété d'accessibilité clavier, et il
 la mesure correctement quand il aboutit — sa DoD est bien tenue par le produit. Ce n'est ni un
