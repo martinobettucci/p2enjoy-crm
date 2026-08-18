@@ -1270,3 +1270,254 @@ sous-tranche livre, exercé par sa propre preuve.
 - commentaires `@spec` / `@verifies` sur chaque fichier.
 
 La sous-tranche 4d reste due ; l'unité `CRM-060` **demeure `[~]`**.
+
+## 13. Sous-tranche 4d — Les deux sélecteurs du formulaire, et le seed qui les démontre
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : les réponses PostgREST des §13.3 et §13.6 ont été
+relevées à la main avec les jetons réels de l'administratrice et de la lectrice, et avec la clé
+anonyme ; `docs/DESIGN_SYSTEM.md` a été relu **intégralement**. Toutes les mesures d'écriture ont
+été faites sur des **champs sondes** créés puis détruits, et le seed a été rendu **intact** : le
+workflow global porte de nouveau ses sept champs seedés, les trois contacts et les vingt et une
+valeurs sont retrouvés à l'identique.
+
+Cette section livre la **quatrième et dernière** surface du §10.1. Elle referme ce que le §9.1 a
+laissé ouvert en toutes lettres : « elle ne livre **pas** le sélecteur d'interface […] ces deux
+contrôles appartiennent aux **écrans** de la tranche 4 ». Elle exécute aussi la décision du §9.6,
+« la donnée de démonstration arrive avec l'écran qui la montre ».
+
+### 13.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, dans le formulaire d'une affaire (`docs/SPEC-form-composer.md` §4) :
+
+- un **sélecteur de contact** pour tout champ de type `contact`, offrant les contacts du workspace
+  au lieu d'un champ texte où l'on tape un `uuid` ;
+- un **sélecteur de membre** pour tout champ de type `user`, offrant les membres du workspace ;
+- la **résolution en toutes lettres** de ces deux types dans la section repliée « Informations
+  d'autres étapes », qui affichait jusqu'ici l'identifiant brut ;
+- **deux champs de démonstration dans le seed**, un de chaque type, avec leur valeur — sans quoi
+  aucun parcours réel n'exercerait ces deux contrôles (`CLAUDE.md` §8).
+
+**Elle ne livre pas**, et chaque manque est nommé au §13.8 : aucune création de contact « à la
+volée » (le §2.3 l'annonce, aucune surface ne la spécifie), aucune recherche ni filtre dans les
+listes, aucune pagination, et le type `file` reste en saisie texte.
+
+### 13.2 Le motif de ce geste — un identifiant n'est pas une saisie
+
+`FormulaireCard.tsx` porte aujourd'hui, en commentaire de sa fonction `Controle`, la phrase qui
+motive cette sous-tranche : « les types que `CRM-036` ne résout pas — `user`, `contact`, `file`
+(INC-053) — tombent dans le défaut et se saisissent en texte brut : afficher un nom que le produit
+ne sait pas obtenir serait une invention ».
+
+**Les deux motifs de cette phrase sont tombés.** La tranche 1 a livré `contacts` ; la tranche 3 a
+livré la résolution en base (migration `0047`) ; les tranches 4a et 4b ont livré la lecture des
+contacts et des organisations. Le produit **sait** désormais obtenir le nom, et la conséquence est
+double :
+
+- **saisir un `uuid` à la main est un chemin qui ne mène nulle part.** Aucun écran ne montre
+  l'identifiant d'un contact ni celui d'un membre ; personne ne peut donc renseigner ces deux
+  champs autrement qu'en le devinant. Depuis la migration `0047`, la base **refuse** toute valeur
+  qui ne désigne rien : le champ texte n'offre plus qu'un refus certain ;
+- **lire un `uuid` en lecture seule ne dit rien.** La section repliée du §4.2 de
+  `docs/SPEC-form-composer.md` affiche la valeur telle quelle ; pour ces deux types, elle affiche
+  trente-six caractères qui ne nomment personne.
+
+### 13.3 Ce que les deux sélecteurs lisent — mesuré, et REPRIS sans nouvelle forme de requête
+
+**Aucune requête nouvelle n'est inventée : les deux lectures existent déjà et sont réutilisées.**
+
+| Type | Fonction réutilisée | Module |
+|---|---|---|
+| `contact` | `lireContactsDuCarnet` (§10.3) | `webapp/src/lib/contacts.ts` |
+| `user` | `lireMembresAffectables` (`docs/SPEC-cards.md` §15 bis.6) | `webapp/src/lib/entete-card.ts` |
+
+MESURÉ le 2026-08-18 avec le jeton réel de l'administratrice, la lecture des membres :
+
+```
+GET /rest/v1/workspace_members
+    ?select=user_id,profiles(id,full_name)
+    &workspace_id=eq.5eed0000-0000-4000-8000-000000000001
+=> 200, 3 lignes : Camille Aubert, Driss Lemoine, Farida Nowak
+```
+
+et la même requête avec le jeton de la **lectrice** rend elle aussi **3 lignes** — « le nom d'un
+collègue est une donnée d'équipe, pas une donnée du dossier ». La lecture des contacts rend les
+trois contacts du seed à l'administratrice **comme** à la lectrice, et `[]` à un appelant anonyme
+(§10.4, remesuré).
+
+**`lireContactsDuCarnet` est réutilisée bien qu'elle rapporte plus que le sélecteur n'affiche** —
+`email`, `phone`, `role_title` et l'organisation embarquée. C'est un écart assumé avec le patron
+« une requête ne rapporte que ce qui est affiché » (§10.3), et il est motivé : le sélecteur du
+§5.21, livré par 4c, compose déjà son libellé d'option en `« nom — organisation »` pour **distinguer
+deux homonymes**, et il emploie cette même fonction. Poser ici une troisième forme de requête pour
+la même relation dupliquerait une lecture sans rien démontrer de plus. **La composition du libellé
+est en revanche EXTRAITE** dans `contacts.ts` — `libelleContactAvecOrganisation` — et les deux
+surfaces l'appellent : une règle d'affichage écrite deux fois divergerait au premier changement.
+
+### 13.4 QUAND les listes sont lues — jamais sur une fiche qui n'en a pas besoin
+
+**Décision : chaque liste n'est lue que si le modèle résolu porte au moins un champ de son type**,
+en comptant les champs de l'étape courante **et** ceux de la section repliée.
+
+Le motif est celui que `lireMembresAffectables` a déjà écrit pour l'en-tête : « charger la liste
+des membres pour un geste que la plupart des visites ne font pas serait une requête gratuite sur
+l'écran le plus ouvert du produit ». La fiche d'affaire est cet écran. Un workflow dont le
+formulaire ne porte aucun champ `contact` ni `user` — c'est le cas de **tous** les workflows du
+dépôt avant le §13.6 — n'émet donc **aucune** requête supplémentaire.
+
+Les deux listes sont lues **indépendamment** : un formulaire qui ne porte qu'un champ `user` ne lit
+pas les contacts.
+
+La section repliée compte dans la condition **bien qu'elle soit en lecture seule** : c'est
+précisément là que la résolution du §13.1 opère, et une valeur y reste illisible si la liste n'est
+pas chargée.
+
+### 13.5 Contrat de comportement — les cinq états d'une liste, et la valeur qui ne se résout pas
+
+Le contrôle rendu est un `select` (`docs/DESIGN_SYSTEM.md` §5.7), et son comportement dépend de
+l'état de sa liste. Les états sont ceux du §5.8, sans invention.
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | liste **chargée**, valeur vide | le `select` affiche l'option vide en tête, aucune option retenue |
+| b | liste **chargée**, valeur désignant une entrée de la liste | l'option correspondante est **retenue**, et son libellé est le nom |
+| c | l'utilisateur retient une autre entrée | une écriture part **au changement**, comme pour `select` (§4 bis.3) ; les quatre états du §4 bis.6 s'appliquent sans changement |
+| d | l'utilisateur retient l'option vide | la valeur est **vidée** — `normaliserSaisie` rend `null` sur `''` (§4 bis.5), aucun code nouveau |
+| e | l'écriture est refusée `400` / `invalid_field_value` | message `form.save.refus.invalid` du dictionnaire fermé existant (§4 bis.7). MESURÉ : `{"code":"P0001","message":"invalid_field_value"}`, `400` |
+| f | l'écriture est refusée à la **lectrice** | `403` / `42501`, message `form.save.refus.forbidden`. MESURÉ, inchangé |
+| g | liste **en cours de lecture** | le `select` porte une **unique** option « Chargement… », est `aria-busy` et **désactivé** |
+| h | liste **en erreur** | le `select` est désactivé, et une **action de reprise** sous le champ relit la liste (§5.8) |
+| i | liste **vide** — le workspace n'a aucun contact, ou aucun membre | le `select` n'offre que l'option vide, et une mention le dit en toutes lettres, **sans action** |
+| j | valeur **non nulle** qui ne désigne aucune entrée de la liste | une option **supplémentaire** est ajoutée, **retenue**, portant l'identifiant brut et la mention « référence inconnue ». Aucune écriture n'est émise |
+| k | l'utilisateur quitte l'option du cas j pour une entrée réelle | l'écriture part ; l'option supplémentaire disparaît à la confirmation |
+| l | section repliée, valeur résolue | le **nom** est affiché, en texte ordinaire |
+| m | section repliée, valeur non résolue, ou liste indisponible | l'**identifiant brut** est affiché en **donnée technique** (§2 du design system, `code`) — jamais un nom inventé |
+
+**Le cas j est le cœur de ce contrat, et il est MESURÉ.** Le §9.4 pose que la résolution est
+vérifiée à l'écriture seule, `value` étant un `jsonb` où aucune clé étrangère n'est possible :
+supprimer un contact laisse en place les valeurs qui le désignaient. Vérifié le 2026-08-18 sur la
+pile — un contact sonde créé, désigné par une valeur, puis supprimé : la valeur **demeure**, et
+PostgREST la rend inchangée. Un `select` qui ne porterait pas d'option pour elle afficherait sa
+**première** option comme si elle avait été choisie : la donnée enregistrée serait **remplacée à
+l'écran** par une autre, et un simple passage sur le champ risquerait de l'écraser en base. C'est
+la « valeur par défaut trompeuse » que `CLAUDE.md` §18 interdit.
+
+**Les cas g et h dérogent explicitement à une règle du §5.7 ter**, et le motif est écrit ici plutôt
+que découvert plus tard : « le contrôle n'est jamais désactivé pendant l'envoi ». Cette règle vise
+l'**envoi**, où les choix existent et où désactiver ferait perdre le focus au clavier ; ici, il n'y
+a **rien à choisir** — la liste n'est pas là. La lecture précède toute interaction, personne n'y a
+encore le focus, et un `select` vide mais actif serait une commande morte (§5.21). Le §13.9 du
+design system porte cette règle.
+
+### 13.6 Le seed enrichi — deux champs, deux valeurs, et les compteurs qu'ils déplacent
+
+Le §9.6 avait **différé** cet enrichissement, en écrivant son motif : « le nombre *sept champs sur
+le workflow source* est figé par dix preuves […] la donnée de démonstration arrive avec l'écran qui
+la montre ». L'écran est ici. Les deux champs sont ajoutés au workflow global, à la suite des sept
+existants :
+
+| id | clé | libellé | type | position | règle de visibilité |
+|---|---|---|---|---|---|
+| `5eed…088` | `contact-principal` | Contact principal | `contact` | 8 | aucune — donc `visible` par défaut (§3.1) |
+| `5eed…089` | `referent-technique` | Référent technique | `user` | 9 | aucune — donc `visible` par défaut (§3.1) |
+
+et deux valeurs, sur l'affaire `Migration ERP Sogexia` (`…0c2`), choisie parce que son organisation
+est **Sogexia**, dont Léo Marchand est le directeur achats — la donnée de démonstration raconte
+alors quelque chose au lieu d'être un remplissage :
+
+| card | champ | valeur | ce qu'elle démontre |
+|---|---|---|---|
+| `…0c2` | `contact-principal` | `"5eed…091"` (Léo Marchand) | un sélecteur de contact **renseigné**, résolu en toutes lettres |
+| `…0c2` | `referent-technique` | `"5eed…012"` (Driss Lemoine) | un sélecteur de membre **renseigné** |
+
+**Aucune règle de visibilité n'est posée sur ces deux champs, et c'est délibéré** : la valeur par
+défaut du §3.1 les rend `visible` à **toutes** les étapes, si bien que les deux contrôles sont
+atteignables depuis n'importe quelle affaire du workflow global. Les poser `required` obligerait en
+outre à les renseigner pour tout déplacement, ce qui déplacerait les preuves de `move_card`
+(`CRM-018`) sans rien démontrer de ces sélecteurs.
+
+**Les compteurs déplacés, énumérés exhaustivement plutôt que découverts par un harnais rouge** —
+c'est la « révision des dix comptes » que le §9.6 annonçait :
+
+| Fichier | Ce qui bouge |
+|---|---|
+| `supabase/seed/apply-seed.sh` | tableau `CHAMPS` (7 → 9), tableau `VALEURS` (18 → 20), commentaires « sept champs », « six champs actifs », « vingt-sept couples sans règle » (7 × 8 − 15 = **41**), « dix-huit valeurs historiques », « les 21 valeurs » (→ 23) |
+| `scripts/verify-champs-formulaire.sh` | `[ "$champs" = "7" ]` → `9` ; « sept champs » ; « chacune 7 champs » |
+| `scripts/verify-copie-workflow.sh` | « sept champs » ; « chacune 7 champs remappés » |
+| `scripts/verify-seed-demo.sh` | « le formulaire dérivé porte 7 champs » ; « 21 valeurs » |
+| `supabase/tests/0008_copie_workflow.test.sql` | deux assertions « sept champs » |
+| `supabase/tests/0010_champs_formulaire.test.sql` | « le seed pose sept champs » ; « la copie porte les sept champs remappés » |
+| `supabase/tests/0021_transition_required_fields.test.sql` | « la copie sonde porte les sept champs » |
+| `e2e/api/champs-formulaire.spec.ts` | deux titres et deux comptes |
+| `e2e/api/copie-workflow.spec.ts` | « les sept champs de la source » |
+| `e2e/ui/administration-workflows.spec.ts` | trois mentions « sept champs » |
+| `docs/SPEC-seed.md` | §1082 (ligne 6 du tableau), §1085 (ligne 9), §1113 |
+
+**Ces révisions ne sont pas des contournements.** La règle a changé par **livraison** : le seed
+porte désormais neuf champs, et une preuve qui exigerait encore sept serait fausse. Le mécanisme
+est celui de la décision 51 — la preuve est **révisée avec son motif écrit dans le fichier**,
+jamais retirée ni désactivée (`docs/CloudWorker.md` §3.1).
+
+### 13.7 Autorisations — l'écran n'en calcule toujours aucune
+
+Rien de nouveau, et c'est le point : les deux sélecteurs écrivent par le **même** chemin que tous
+les autres champs, `ecrireValeur`, sous les mêmes politiques. MESURÉ le 2026-08-18 :
+
+| Acteur | Écriture d'une valeur de champ | Mesure |
+|---|---|---|
+| administratrice `…011` | valeur `contact` désignant `…091` | `201`, ligne écrite |
+| administratrice `…011` | valeur `contact` inexistante | `400`, `P0001`, `invalid_field_value`, `DETAIL` « … ne désigne aucun contact de ce workspace » |
+| administratrice `…011` | valeur `user` désignant le membre `…012` | `201`, ligne écrite |
+| lectrice `…013` | toute valeur | `403`, `42501`, « new row violates row-level security policy » |
+
+**Aucune commande n'est éteinte d'avance selon le rôle** (§5.21, §5.3, §5.13) : la lectrice voit les
+deux sélecteurs, peut y choisir, et reçoit le refus **traduit** du dictionnaire fermé. Une liste
+grisée ferait passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
+
+### 13.8 Limites nommées — sous-tranche 4d
+
+Écrites plutôt que découvertes plus tard :
+
+- **aucune création de contact « à la volée »**, que le §2.3 annonce pourtant pour le type
+  `contact`. Aucun écran du produit ne crée de contact (§5.19, §5.21) ; l'ouvrir ici poserait une
+  surface que rien ne spécifie. Le cas i dit alors la vérité et s'arrête là ;
+- **aucune recherche ni filtre** dans les deux listes : un `select` natif porte déjà la recherche
+  au clavier de la plateforme, et un filtre supposerait un volume que personne n'a mesuré
+  (`CLAUDE.md` §21) ;
+- **aucune pagination**, pour le motif exact du §10.3 ;
+- **le type `file` reste en saisie texte.** Son chemin vise Storage, service distinct (§6.5 de
+  `docs/SPEC-form-composer.md`), et rien n'a changé pour lui ;
+- **une référence morte n'est ni réparée ni signalée ailleurs qu'à l'écran** : le cas j la rend
+  visible là où elle est, sans la corriger. Le nettoyage des références mortes reste l'arbitrage
+  attendu du §6, point 4 ;
+- **le rôle d'un membre n'est pas affiché** dans le sélecteur `user` : `lireMembresAffectables` ne
+  le rapporte pas, et l'ajouter changerait une lecture partagée avec l'en-tête pour un besoin qui
+  n'est pas démontré.
+
+### 13.9 Preuves exigées — sous-tranche 4d
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : `libelleContactAvecOrganisation`, avec et sans organisation |
+| Unitaire | `webapp/src/app/FormulaireCard.test.tsx` (étendu) : les cas a à m du §13.5, dont le cas **j** — l'option supplémentaire d'une référence morte — et le cas **m** — l'identifiant brut en donnée technique ; ainsi que la condition du §13.4, aucune lecture émise quand aucun champ ne porte ces types |
+| API | `e2e/api/valeurs-champs.spec.ts` (existant) : la résolution en base est déjà éprouvée par la tranche 3 ; cette sous-tranche n'ajoute aucune règle de base |
+| E2E | `e2e/ui/formulaire-selecteurs.spec.ts` : sur la pile réelle et le seed, l'administratrice ouvre `Migration ERP Sogexia`, **lit les deux noms** dans les sélecteurs, change le contact principal, obtient « Enregistré », recharge et retrouve son choix, **puis rétablit la valeur seedée** ; la **lectrice** reçoit le refus traduit ; le parcours au **clavier** ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, préfixées `formulaire-selecteurs-`, **observées** conformément à `CLAUDE.md` §16 : les deux sélecteurs renseignés, la liste déroulée, le refus de la lectrice, et les quatre paliers |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur |
+| Seed | le seed est rendu **INTACT** : neuf champs sur le workflow global, vingt-trois valeurs, et `contact-principal` de `…0c2` désignant de nouveau Léo Marchand après la campagne |
+
+### 13.10 Definition of Done — sous-tranche 4d
+
+- `webapp/src/lib/contacts.ts` : `libelleContactAvecOrganisation` extraite et exportée ;
+- `webapp/src/app/FormulaireCard.tsx` : les deux sélecteurs, leurs cinq états, la résolution de la
+  section repliée ; les deux lectures conditionnelles du §13.4 ;
+- `supabase/seed/apply-seed.sh` : les deux champs et les deux valeurs du §13.6 ;
+- les onze fichiers de preuve du §13.6 révisés **dans le même changement**, motif écrit ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- preuves du §13.9 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.22 ajouté ; `docs/manual.md` ; `CHANGELOG.md`, dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+Cette sous-tranche est la **dernière** de la tranche 4 (§10.1). Ce qui reste dû sur `CRM-060` après
+elle est nommé au §13.8 et au §6 : la création d'un contact, la fiche d'un contact, et l'arbitrage
+sur les références mortes.

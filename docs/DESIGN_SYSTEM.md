@@ -1623,6 +1623,55 @@ le premier champ et rendu à la commande qui l'a ouvert, alerte de refus **dans 
   hauteur fixe du §5.9, et la contrepartie de n'être pas un tableau. La page ne défile jamais
   horizontalement (§7), et c'est mesuré aux quatre paliers.
 
+### 5.22 Sélecteur de contact et sélecteur de membre — `CRM-060`
+
+Les deux contrôles que les types `contact` et `user` du formulaire d'une affaire (§5.7, §5.7 ter)
+rendent depuis la sous-tranche 4d. Ce qu'ils lisent, écrivent et refusent est spécifié par
+`docs/SPEC-contacts.md` §13 ; les règles ci-dessous ne disent que de quoi ils ont l'air. Tout ce que
+le §5.7 ter pose vaut ici sans être répété : mention d'état sous le champ, trois mentions jamais
+deux à la fois, un refus n'efface pas la saisie.
+
+- **C'est un `select` du §5.7, et rien d'autre.** Ni combobox, ni liste avec recherche : le nombre
+  de contacts et de membres d'un workspace n'est pas mesuré (§5.19 tient déjà ce raisonnement pour
+  la pagination), et un `select` natif porte la recherche au clavier de la plateforme, le rendu du
+  système sur mobile et le focus visible du §8 sans une ligne de code.
+
+- **Une option vide en tête, comme tout `select` du formulaire.** Elle est le moyen de **vider** le
+  champ, exactement comme pour un `select` à choix (`docs/SPEC-form-composer.md` §4 bis.5) ; sans
+  elle, un champ non renseigné afficherait le premier nom de la liste comme s'il avait été choisi.
+
+- **Le libellé d'une option est une DONNÉE, jamais une traduction** (§10) : le nom du contact, suivi
+  de son organisation quand il en a une — `« Léo Marchand — Sogexia »`. C'est la composition que le
+  §5.21 a déjà retenue pour distinguer deux homonymes, et **c'est la même fonction** qui la produit
+  dans les deux surfaces.
+
+- **Une valeur qui ne désigne plus personne garde son option**, retenue, portant l'identifiant brut
+  et la mention « référence inconnue ». Elle est la seule option du produit dont le libellé est un
+  identifiant, et c'est assumé : la faire disparaître afficherait la **première** option comme si
+  elle avait été choisie, remplaçant à l'écran une donnée enregistrée par une autre — la « valeur
+  par défaut trompeuse » que `CLAUDE.md` §18 interdit. Le cas existe réellement : supprimer un
+  contact ne supprime pas les valeurs qui le désignaient (`docs/SPEC-contacts.md` §9.4, mesuré).
+
+- **Pendant la lecture de sa liste, et après son échec, le contrôle est DÉSACTIVÉ** — unique
+  dérogation à la règle du §5.7 ter, et elle est bornée. Cette règle vise l'**envoi**, où les choix
+  existent et où désactiver ferait perdre le focus au clavier. Ici il n'y a rien à choisir : la
+  liste n'est pas là, personne n'y a encore le focus, et un `select` vide mais actif serait la
+  commande morte que le §5.21 refuse. Le chargement porte une unique option « Chargement… » et
+  `aria-busy` ; l'erreur porte sa mention et son **action de reprise** (§5.8), qui relit la liste.
+
+- **Une liste vide le dit en toutes lettres, sans action** : « cet espace de travail n'a aucun
+  contact ». C'est le troisième vide du §5.21, repris sans changement — aucun écran du produit ne
+  crée de contact, et un bouton y serait un chemin vers nulle part (§5.16, §5.19).
+
+- **En lecture seule, dans la section repliée du formulaire, la valeur se rend en NOM.** Si elle ne
+  se résout pas, ou si la liste n'a pas pu être lue, c'est l'**identifiant brut** qui s'affiche, en
+  **donnée technique** au sens du §2 — monospace, chiffres tabulaires, comme les montants et les
+  dates du §5.7 bis. Un identifiant est une donnée technique ; le rendre en texte ordinaire le
+  ferait passer pour un nom.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.** Ces deux contrôles empruntent entièrement
+  au §5.7 et au §5.7 ter.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;
