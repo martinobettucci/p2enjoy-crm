@@ -18864,6 +18864,30 @@ redécouvre pas. **Consigne d'exploitation** : `npm run build` puis `grep` de la
 pas manifestée cette fois, ce qui ne la clôt pas ; `e2e/ui/contacts.spec.ts` **20/20**, rejouée
 après la correction du palier.
 
+**Harnais, arrivés après la rédaction de ce qui précède, et consignés ici plutôt que résumés.**
+`scripts/verify-harness.sh` rend **31 contrôles, AUCUNE anomalie** — son compteur de scénarios
+d'interface, **imputable à cette livraison**, a été porté de 379 à **390** dans le même changement,
+valeur mesurée par `playwright test --list` puis par l'exécution ; il constate au passage
+`e2e:mail` **42 scénarios verts** (IMAP, SMTP, ClamAV, Roundcube réels).
+`scripts/verify-webapp.sh` rend **42 contrôles, 1 anomalie**, **étrangère** : INC-158, les trois
+classes `h-10`, `py-0.5` et `text-text-1` non engendrées, portées par des fichiers que cette
+livraison ne touche pas — cause **isolée**, non supposée, en rejouant `scripts/lib/classes-css.mjs`.
+Les classes de la fiche, elles, sont bien engendrées : **239 citées** contre 236 à la tranche 4a.
+L'anomalie de flake d'INC-152 que la tranche 4a constatait ne s'est **pas** manifestée : `e2e:ui`
+est vert trois fois de suite dans cette session, ce qui ne clôt pas INC-152.
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` — aucun code `mail-sync` n'est touché
+par cette sous-tranche — et **quarante-huit des cinquante `scripts/verify-*.sh`** : seuls
+`verify-webapp.sh` et `verify-harness.sh` ont été lancés, choisis parce que ce sont les deux que
+cette livraison touche. Ce qui manque est la couverture du RESTE du dépôt, pas celle de 4b.
+
+**Les 85 captures réécrites par la campagne sont RESTAURÉES**, à l'inverse de la tranche 4a. Le
+critère est le même qu'aux décisions 446 et 447, et il a été **vérifié en regardant** :
+`carnet-contacts-1440.jpg`, la seule capture d'un écran que cette session modifie, porte déjà les
+liens d'organisation dans sa version **committée** — la réécriture n'était donc que compression
+(INC-036). Les captures des autres unités ne pouvaient pas changer : aucun de leurs écrans n'est
+touché.
+
 **Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4c** — le rattachement d'un contact à une
 affaire depuis la route de détail (`card_contacts`), **premier geste d'ÉCRITURE** de la tranche :
 c'est là que les refus d'écriture devront être traduits, ce qu'aucune des deux sous-tranches de
