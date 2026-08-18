@@ -241,6 +241,48 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-148 — Quatorze unités n'ont aucun test unitaire dédié, là où `CLAUDE.md` §15 en exige un
+
+**Nature :** exigence générale non tenue, arbitrage dû au responsable.
+**Relevé le :** 2026-08-18, par audit statique — le poste Docker étant tombé, la mesure ne repose
+sur aucune exécution et reste donc valable quel qu'en soit l'état.
+
+**La règle.** `CLAUDE.md` §15 : « Toute unité de backlog doit disposer au minimum d'un test unitaire
+spécifique **et** d'un test E2E spécifique. » Le §27 ajoute qu'une règle locale « ne doit jamais
+réduire les exigences de vérification » du fichier général. Une Definition of Done d'unité qui
+n'exige pas de test unitaire ne peut donc pas, à elle seule, dispenser de cette obligation.
+
+**La mesure.** Les `@verifies` des trois familles de tests unitaires du dépôt — Vitest
+(`webapp/src/**/*.test.ts[x]`), pgTAP (`supabase/tests/*.test.sql`) et pytest
+(`mail-sync/tests/*.py`) — citent **43** unités. Le backlog en déclare **57**. **Quatorze** ne sont
+donc citées par aucun test unitaire :
+
+`CRM-000`, `CRM-001`, `CRM-002`, `CRM-004`, `CRM-006`, `CRM-008`, `CRM-011`, `CRM-015`, `CRM-016`,
+`CRM-046`, `CRM-047`, `CRM-050`, `CRM-070`, `CRM-080`.
+
+**Classées par ce qu'elles livrent réellement, mesuré par leurs `@spec` :**
+
+- **Quatre ne livrent AUCUN fichier de code** — `CRM-011`, `CRM-046`, `CRM-047`, et par construction
+  `CRM-000`, `CRM-070`, `CRM-080`. Pour celles-là, l'exigence n'a pas d'objet évident : `CRM-011`
+  configure GoTrue et l'invitation, `CRM-046` livre un seed, `CRM-047` un manuel. *À noter :
+  la logique d'authentification, elle, EST couverte — `webapp/src/lib/auth.test.ts` — mais sous la
+  citation `CRM-009`.*
+- **Huit livrent du code et n'ont pas de test unitaire propre** : `CRM-001` (6 fichiers),
+  `CRM-002` (4), `CRM-006` (3), `CRM-008` (5), `CRM-015` (3), `CRM-016` (5), `CRM-050` (4), et
+  `CRM-004`. Leurs preuves existent — harnais `verify-stack.sh`, `verify-scripts.sh`, suites d'API —
+  mais ce sont des preuves d'intégration, pas des tests unitaires.
+
+**Ce que je NE tranche PAS, et pourquoi.** Deux lectures se défendent. Ou bien §15 vaut pour toute
+unité sans exception, et huit unités `[x]` doivent être rouvertes pour recevoir leurs tests
+unitaires. Ou bien l'exigence vise le code **testable unitairement** et une unité d'infrastructure
+la satisfait par son harnais. **Trancher moi-même reviendrait à réduire ou à durcir une exigence du
+responsable**, ce que ni le §26 ni le §27 ne m'autorisent. **Arbitrage demandé.**
+
+**Ce que je me refuse à faire en attendant.** Écrire des tests unitaires de complaisance pour faire
+tomber le compteur à zéro. Un test qui affirmerait qu'un script existe, ou qu'un type généré se
+compile, serait exactement l'assertion qui ne peut pas échouer décrite en INC-146 et INC-147. Le
+défaut est nommé ; il n'est pas maquillé.
+
 ### INC-147 — La preuve de refus n° 9 mesure une absence, pas un refus
 
 **Nature :** assertion trop large sur un objet jamais créé ; la preuve ne peut pas échouer.
