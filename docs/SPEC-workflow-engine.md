@@ -3897,8 +3897,14 @@ extraction, sur la base seedée, et à figer par assertion :
 
 | Workflow | Empreinte |
 |---|---|
-| `Cycle commercial standard` (`5eed0000-…-000000000051`) | `6b2f5f2adbadd48680d38b8d4bc19a004ff35881df654593e43d2eb4f577e7c8` |
-| `Cycle commercial — Conseil IA` (`352d02ac-…`) | `6e4faac608cc1d16fdb8db1b6ae9c8b2d4de7728204919d8ebd6166c13a58d89` |
+| `Cycle commercial standard` (`5eed0000-…-000000000051`) | `5ae889f8427111c0faf96a64edffaf98210deda1a37d5e1ec79b16fa1bb42725` |
+| `Cycle commercial — Conseil IA` (`352d02ac-…`) | `a055cba6283581f1c62d236b39e13582b37255042fcdd507fd823e3a6ae838a1` |
+
+**Les deux valeurs ont été RÉVISÉES le 2026-08-18 par la sous-tranche 4d de `CRM-060`**
+(`docs/SPEC-contacts.md` §13.6), et ce n'est pas une contradiction avec l'exigence ci-dessus : elle
+interdit qu'un **refactor de l'extraction** déplace l'empreinte, non qu'une **composition** évolue.
+Le seed pose deux champs de plus sur le workflow source, que la copie recopie ; une empreinte
+inchangée serait ici le vrai défaut. Valeurs remesurées sur la pile seedée après `resetMe.sh`.
 
 Le document conservé est celui du §4.6 sans retrait ni ajout : six clés de premier niveau —
 `workflow`, `steps`, `transitions`, `fields`, `rules`, `required_fields`. Il contient les

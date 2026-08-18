@@ -434,10 +434,14 @@ select lives_ok(
 	'Workflow identique : la vérification n° 8 ne s''applique pas, et le déplacement passe SANS '
 	'`discard_field_values` bien que la card porte des réponses');
 
+-- QUATRE, ET NON PLUS DEUX, DEPUIS LA SOUS-TRANCHE 4d DE `CRM-060` (docs/SPEC-contacts.md §13.6) :
+-- le seed renseigne `contact-principal` et `referent-technique` sur cette affaire précisément, dont
+-- l'organisation est Sogexia. Ce que l'assertion exige est INCHANGÉ — aucune réponse n'est détruite
+-- quand la charnière `workflow_id` ne bouge pas —, et elle le vérifie désormais sur quatre.
 select is(
 	(select count(*) from public.card_field_values
 	  where card_id = '5eed0000-0000-4000-8000-0000000000c2'),
-	2::bigint,
+	4::bigint,
 	'Et les réponses sont CONSERVÉES : la charnière `workflow_id` n''a pas changé, elles restent '
 	'valides (§6.6)');
 

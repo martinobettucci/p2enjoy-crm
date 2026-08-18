@@ -431,11 +431,15 @@ select is(
 	1,
 	'…dont **un archivé**, sans quoi l''état « archivé » serait documenté sans être démontrable');
 
+-- RÉVISÉ PAR LA SOUS-TRANCHE 4d DE `CRM-060`, NON RETIRÉ (docs/SPEC-contacts.md §13.6) : le seed
+-- pose deux champs de plus, `contact` et `user`, qui sont les deux seuls types que le validateur
+-- RÉSOUT vers une autre table depuis la migration `0047`. Ce que l'assertion exige est renforcé :
+-- quatre contraintes de la base sont désormais démontrées par le seed, au lieu de deux.
 select is(
 	(select count(distinct type)::int from public.form_fields
 	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
-	7,
-	'sept types distincts, dont les deux — `money` et `select` — dont la base exige des options');
+	9,
+	'neuf types distincts : les deux qui exigent des options, et les deux qui sont RÉSOLUS');
 
 select is(
 	(select count(*)::int from public.form_field_rules
@@ -462,8 +466,8 @@ select is(
 	    and s.workflow_id = '5eed0000-0000-4000-8000-000000000051'
 	    and f.archived_at is null
 	    and r.field_id is null),
-	27,
-	'vingt-sept couples champ × étape restent **sans règle** : c''est ce qui démontre la valeur par '
+	41,
+	'quarante et un couples champ × étape restent **sans règle** : c''est ce qui démontre la valeur par '
 	'défaut `visible` du §3.1');
 
 select is(

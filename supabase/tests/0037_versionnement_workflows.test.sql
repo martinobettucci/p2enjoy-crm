@@ -63,10 +63,15 @@ $$;
 select has_function('app', 'workflow_composition_document', array['uuid'],
 	'1 — `app.workflow_composition_document` existe');
 
+-- EMPREINTE RÉVISÉE PAR LA SOUS-TRANCHE 4d DE `CRM-060` (docs/SPEC-contacts.md §13.6), ET LE MOTIF
+-- COMPTE : ce que cette assertion garde est qu'un REFACTOR de l'extraction ne déplace pas
+-- l'empreinte. Ici ce n'est pas l'extraction qui a bougé, c'est la COMPOSITION elle-même — le seed
+-- pose deux champs de plus —, et une empreinte qui n'aurait pas bougé serait alors le vrai défaut.
+-- Nouvelle valeur MESURÉE sur la pile seedée, jamais recopiée d'une exécution de test.
 select is(
 	app.workflow_composition_fingerprint('5eed0000-0000-4000-8000-000000000051'),
-	'6b2f5f2adbadd48680d38b8d4bc19a004ff35881df654593e43d2eb4f577e7c8',
-	'2 — empreinte du workflow par défaut INCHANGÉE par l''extraction du document');
+	'5ae889f8427111c0faf96a64edffaf98210deda1a37d5e1ec79b16fa1bb42725',
+	'2 — empreinte du workflow par défaut, révisée par la composition et non par l''extraction');
 
 -- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait
 -- en dur `352d02ac-…` comme identifiant du workflow DÉRIVÉ, et une empreinte constante. Or le seed

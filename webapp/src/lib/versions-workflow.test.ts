@@ -130,7 +130,7 @@ describe('lireVersions (§7 ter.14.3)', () => {
 					note: 'Composition de référence livrée par le seed',
 					published_at: '2026-08-15T16:15:49.405617+00:00',
 					composition_fingerprint:
-						'6b2f5f2adbadd48680d38b8d4bc19a004ff35881df654593e43d2eb4f577e7c8',
+						'5ae889f8427111c0faf96a64edffaf98210deda1a37d5e1ec79b16fa1bb42725',
 					composition: { steps: [] },
 					auteur: { full_name: 'Camille Aubert' },
 				},
