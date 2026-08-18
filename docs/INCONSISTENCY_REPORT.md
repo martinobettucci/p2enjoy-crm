@@ -649,6 +649,25 @@ au vert est pire qu'un harnais absent : il donne une preuve là où il n'y a qu'
 (`docker compose`) et non le démon en général ; elle affirme moins, et le vérifie. La ligne de
 bilan des non-exécutés dit maintenant qu'un contrôle qui ne s'exécute pas ne prouve rien.
 
+**UN DÉFAUT RÉSIDUEL SUBSISTAIT POURTANT, et il a fallu relire pour le voir.** La sonde était
+réparée et l'avertissement ajouté, mais la ligne de verdict disait toujours « **aucune anomalie** »
+et le script sortait en **0** — alors que quatre contrôles n'avaient pas tourné. Un appelant qui ne
+lit que le code de sortie y voyait une réussite pleine. C'est exactement ce que `CLAUDE.md` §25
+interdit : « Ne pas annoncer une réussite lorsque certains contrôles n'ont pas pu être exécutés. »
+
+**Trois issues sont désormais distinguées**, et la correction est **VÉRIFIÉE PAR EXÉCUTION** :
+
+| Code | Sens | Mesuré le 2026-08-18 |
+|---|---|---|
+| `0` | tout a tourné, rien à signaler | — |
+| `2` | rien n'a échoué, mais des contrôles **n'ont pas tourné** | **obtenu** : « 95 vérifications, aucune anomalie, mais 4 NON EXÉCUTÉE(S). Ce n'est pas un succès : le résultat est INCOMPLET. » |
+| `1` | au moins un contrôle a échoué | — |
+
+Le `2` est **délibérément distinct du `1`** : « incomplet » n'est pas « en échec », et les confondre
+rendrait le harnais rouge sur un poste sain qui n'a simplement pas Docker. Mais il n'est pas `0` non
+plus, puisqu'un vert obtenu par omission est précisément ce que cette entrée dénonce. Aucun script
+du dépôt n'appelle `verify-scripts.sh` : le changement de code de sortie ne casse aucun appelant.
+
 **Un second défaut trouvé au même endroit, et corrigé.** Le contrôle de lecture des ports lit
 `docker ps`. Quand celle-ci est muette, `pipefail` propage l'échec et le contrôle sortait en 1,
 c'est-à-dire qu'il **accusait la garde des ports d'un défaut qu'elle n'a pas**. Les trois issues

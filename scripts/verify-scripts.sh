@@ -1043,9 +1043,28 @@ if [ "$skips" -gt 0 ]; then
 	echo "$skips vérification(s) NON EXÉCUTÉE(S) : leur outil ne répond pas sur ce poste."
 	echo "Un contrôle qui ne s'exécute pas ne prouve rien — voir INC-145."
 fi
-if [ "$failures" -eq 0 ]; then
+# LE VERDICT NE PEUT PAS ANNONCER UN SUCCÈS QUAND DES CONTRÔLES N'ONT PAS TOURNÉ — `CLAUDE.md`
+# §25 : « Ne pas annoncer une réussite lorsque certains contrôles n'ont pas pu être exécutés. »
+# C'était le défaut RÉSIDUEL d'INC-145 : la sonde avait été corrigée et l'avertissement ajouté,
+# mais la ligne de bilan disait toujours « aucune anomalie » et le script sortait en **0**. Un
+# appelant qui ne lit que le code de sortie — chaîne d'intégration, harnais englobant — y voyait
+# une réussite pleine. Trois issues sont désormais distinguées :
+#
+#   0 — tout a tourné, rien à signaler ;
+#   2 — rien n'a échoué, mais des contrôles N'ONT PAS TOURNÉ : le résultat est INCOMPLET ;
+#   1 — au moins un contrôle a échoué.
+#
+# Le 2 est délibérément distinct du 1 : « incomplet » n'est pas « en échec », et confondre les deux
+# rendrait le harnais rouge sur un poste sain qui n'a simplement pas Docker. Mais il n'est pas 0 non
+# plus, parce qu'un vert obtenu par omission est ce que cette entrée du registre dénonce.
+if [ "$failures" -eq 0 ] && [ "$skips" -eq 0 ]; then
 	echo "Bilan : $checks vérifications, aucune anomalie."
 	exit 0
+fi
+if [ "$failures" -eq 0 ]; then
+	echo "Bilan : $checks vérifications, aucune anomalie, mais $skips NON EXÉCUTÉE(S)." >&2
+	echo "Ce n'est pas un succès : le résultat est INCOMPLET." >&2
+	exit 2
 fi
 echo "Bilan : $checks vérifications, $failures anomalie(s)." >&2
 exit 1
