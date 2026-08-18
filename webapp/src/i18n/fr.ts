@@ -25,6 +25,7 @@ export const fr = {
 	'nav.section.tracks': 'Tracks',
 	'nav.item.board': 'Board',
 	'nav.item.inbox': 'Inbox',
+	'nav.item.contacts': 'Contacts',
 	'nav.item.today': 'Ma journée',
 	'nav.item.settings': 'Réglages',
 
@@ -149,6 +150,26 @@ export const fr = {
 	'inbox.error.title': 'Messagerie indisponible',
 	'inbox.back.folders': 'Retour aux dossiers',
 	'inbox.back.list': 'Retour aux messages',
+	// --- Carnet de contacts — CRM-060, docs/SPEC-contacts.md §10 ------------------------
+	'route.contacts.title': 'Contacts',
+	'contacts.aria': 'Carnet de contacts',
+	'contacts.table.aria': 'Contacts de l’espace de travail',
+	'contacts.table.name': 'Nom',
+	'contacts.table.organization': 'Organisation',
+	'contacts.table.role': 'Fonction',
+	'contacts.table.email': 'Email',
+	'contacts.table.phone': 'Téléphone',
+	'contacts.empty.title': 'Aucun contact pour le moment',
+	'contacts.empty.body':
+		'Les personnes avec qui vos affaires se traitent apparaîtront ici, avec leur organisation.',
+	'contacts.error.title': 'Le carnet n’a pas pu être chargé',
+	'contacts.error.body':
+		'La lecture des contacts a échoué. Vérifiez votre connexion, puis réessayez.',
+	'contacts.error.retry': 'Réessayer',
+	'contacts.noWorkspace.title': 'Aucun espace de travail',
+	'contacts.noWorkspace.body':
+		'Connectez-vous à un espace de travail pour consulter son carnet de contacts.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',

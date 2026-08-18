@@ -13,6 +13,17 @@
 /** Adresse de l'inbox globale — `CRM-057`. */
 export const CHEMIN_INBOX = '/inbox' as const
 
+/**
+ * Carnet de contacts — `CRM-060`, `docs/SPEC-contacts.md` §10.2.
+ *
+ * Une route de PREMIER NIVEAU, et non une section de `/reglages` : un contact est le matériau
+ * quotidien d'un commercial, au même titre qu'une affaire — ce que le §3 de la spécification a
+ * déjà tranché en base en ouvrant son écriture au `business_developer`, là où les tracks, les
+ * channels et les workflows restent à l'`admin`. Les cinq surfaces de `/reglages` administrent la
+ * structure du workspace ; le carnet n'administre rien, il travaille.
+ */
+export const CHEMIN_CONTACTS = '/contacts' as const
+
 /** Administration de l'arborescence — `CRM-075`. */
 export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 

@@ -13,6 +13,7 @@ import { ChargementRoute } from './App'
 import { ENTREES_TRANSVERSES } from './navigation'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_CONTACTS,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -54,9 +55,18 @@ describe('table des routes', () => {
 	// démarrage est arrivé (docs/SPEC-onboarding.md §4.2). La règle a changé par arbitrage, la
 	// preuve est donc RÉVISÉE et non contournée : `/` rejoint les routes qui portent un écran, et
 	// son assertion propre ci-dessous vérifie qu'aucun de ses quatre cas n'est une page blanche.
+	//
+	// RÉVISÉE UNE QUATRIÈME FOIS PAR `CRM-060`, ET POUR LE MOTIF DÉJÀ ÉCRIT : `/contacts` portait
+	// un état vide inconditionnel, ce qui a cessé d'être vrai le jour où le carnet de contacts est
+	// arrivé (`docs/SPEC-contacts.md` §10). La règle a changé par livraison, la preuve est donc
+	// RÉVISÉE et non contournée : la route rejoint celles qui portent un écran, et son assertion
+	// propre ci-dessous vérifie qu'elle rend bien un état explicite sans session.
 	const ROUTES_EN_ATTENTE = ROUTES.filter(
 		(route) =>
-			route.chemin !== CHEMIN_INBOX && route.chemin !== '/reglages' && route.chemin !== '/',
+			route.chemin !== CHEMIN_INBOX &&
+			route.chemin !== CHEMIN_CONTACTS &&
+			route.chemin !== '/reglages' &&
+			route.chemin !== '/',
 	)
 
 	it.each(ROUTES_EN_ATTENTE.map((route) => [route.chemin, route] as const))(
@@ -117,6 +127,22 @@ describe('table des routes', () => {
 		// exactement les entrées transverses (assertion ci-dessus), et l'écran est monté par `App`.
 		expect(ROUTES.map((route) => route.chemin)).not.toContain(CHEMIN_ADMIN_ARBORESCENCE)
 		expect(CHEMIN_ADMIN_ARBORESCENCE.startsWith('/reglages/')).toBe(true)
+	})
+
+	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {
+		// Même patron que l'inbox ci-dessous, et pour le même motif (`docs/SPEC-contacts.md` §10.2) :
+		// le carnet est chargé à la demande, et le repli de `Suspense` est lui-même un état
+		// explicite. Montée SANS session, la route rend l'état vide « aucun espace de travail »,
+		// jamais une page blanche.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_CONTACTS)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 	})
 
 	it("l'état de la messagerie ne figure PAS dans la table des routes, et son adresse est nommée", () => {

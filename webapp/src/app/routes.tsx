@@ -3,6 +3,7 @@
 // @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-077 (docs/BACKLOG.md) — adresse de la corbeille (docs/SPEC-corbeille.md §4.1)
+// @spec CRM-060 (docs/BACKLOG.md) — route du carnet de contacts (docs/SPEC-contacts.md §10.2)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
@@ -31,6 +32,7 @@ import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_WORKFLOWS,
+	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
@@ -41,6 +43,7 @@ export {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_WORKFLOWS,
+	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
@@ -56,6 +59,13 @@ export {
  * déjà posé par `App` : aucune page blanche n'apparaît pendant le téléchargement.
  */
 const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).RouteInbox }))
+
+/**
+ * Le carnet est chargé à la demande, pour le motif exact de l'inbox juste au-dessus : un écran que
+ * la plupart des sessions n'ouvrent pas n'a pas à peser sur le premier rendu de toutes les autres
+ * (`CLAUDE.md` §21). Le repli de `Suspense` est déjà posé par `App`.
+ */
+const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet }))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -112,6 +122,14 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_INBOX,
 		cleTitre: 'route.inbox.title',
 		rendu: () => <RouteInbox />,
+	},
+	{
+		// Le carnet de contacts — `CRM-060`, `docs/SPEC-contacts.md` §10.2. Une entrée de navigation
+		// transverse, aux côtés de l'Inbox : un contact est un objet métier de première classe
+		// (`CLAUDE.md` §4), pas un réglage de structure.
+		chemin: CHEMIN_CONTACTS,
+		cleTitre: 'route.contacts.title',
+		rendu: () => <Carnet />,
 	},
 	{
 		chemin: '/ma-journee',
