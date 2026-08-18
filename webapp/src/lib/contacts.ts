@@ -532,3 +532,127 @@ export async function detacherContact(
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// Sous-tranche 4e — la CRÉATION d'un contact depuis le carnet
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4, sous-tranche 4e
+// @spec docs/SPEC-contacts.md §14.3 (les onze mesures d'écriture), §14.4 (dictionnaire fermé des
+//       cinq refus), §14.5 (contrat de comportement), §14.7 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.23 (le formulaire de création dans le flux du carnet)
+//
+// AUCUNE POLITIQUE NOUVELLE : cette section n'exerce que `contacts_insertion`, posée par la
+// migration 0045 et prouvée par la tranche 1. MESURÉ le 2026-08-18 : l'administratrice et le
+// `business_developer` reçoivent `201` ; la lectrice reçoit `403` / `42501`.
+// ---------------------------------------------------------------------------------------------
+
+/** Le code d'une contrainte de forme violée — `full_name`, `email` ou `phone` (mesures 6 à 9). */
+export const CODE_SAISIE_INVALIDE = '23514'
+
+/**
+ * Les cinq natures de refus d'une création, et rien d'autre : le dictionnaire est FERMÉ (§14.4).
+ *
+ * `detail` accompagne chaque nature pour le diagnostic — il n'est JAMAIS affiché tel quel, un
+ * message de serveur n'étant pas un texte d'interface (`docs/DESIGN_SYSTEM.md` §10).
+ */
+export type RefusCreationContact = {
+	readonly nature: 'interdit' | 'doublon' | 'organisation-inconnue' | 'saisie-invalide' | 'indisponible'
+	readonly detail: string
+}
+
+/**
+ * Classe un refus de création — LE CODE POSTGRESQL D'ABORD, le statut HTTP ensuite.
+ *
+ * **L'ordre n'est pas un détail, il est MESURÉ** (§14.3, mesures 5 et 10) : un email déjà porté
+ * (`23505`) et une organisation inconnue (`23503`) rendent **tous deux `409`**. Classer par le
+ * statut les confondrait, alors qu'ils appellent des gestes opposés — corriger l'email, ou relire
+ * une liste d'organisations périmée. C'est le patron de `classerRefusRattachement` (§12.5).
+ */
+export function classerRefusCreation(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusCreationContact {
+	if (code === CODE_DOUBLON) return { nature: 'doublon', detail }
+	if (code === CODE_CONTACT_INCONNU) return { nature: 'organisation-inconnue', detail }
+	if (code === CODE_SAISIE_INVALIDE) return { nature: 'saisie-invalide', detail }
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'interdit', detail }
+	return { nature: 'indisponible', detail }
+}
+
+/** Ce que le formulaire du carnet saisit — les cinq colonnes que le tableau affiche (§14.1). */
+export type SaisieContact = {
+	readonly nom: string
+	readonly idOrganisation: string
+	readonly fonction: string
+	readonly email: string
+	readonly telephone: string
+}
+
+/** Les deux issues d'une création : la ligne créée, ou un refus traduit (§14.3). */
+export type ResultatCreationContact =
+	| { readonly statut: 'creee'; readonly contact: ContactDuCarnet }
+	| { readonly statut: 'refus'; readonly refus: RefusCreationContact }
+
+/**
+ * UN FACULTATIF BLANC VAUT `null`, JAMAIS `''`, et c'est MESURÉ (§14.3, mesures 8 et 9) : les
+ * contraintes `contacts_email_check` et `contacts_phone_check` refusent la chaîne vide par
+ * `400` / `23514`. C'est la règle que `rattacherContact` applique déjà au rôle d'un rattachement,
+ * partagée ici plutôt que réécrite.
+ */
+export function normaliserFacultatif(saisie: string): string | null {
+	const nettoyee = saisie.trim()
+	return nettoyee === '' ? null : nettoyee
+}
+
+/**
+ * Crée un contact dans le workspace courant.
+ *
+ * `source` n'est PAS envoyé : la base pose `manual` par défaut, mesuré sur la ligne rendue. En
+ * envoyer un ici figerait dans l'écran une valeur qui appartient au modèle (§2.2).
+ *
+ * `Prefer: return=representation` est obtenu par `.select(...)` : la ligne créée revient avec son
+ * organisation embarquée, ce qui permet au carnet de l'insérer à sa place de tri **sans relire la
+ * liste entière** (§14.5 cas e). Une relecture complète serait une seconde requête pour une donnée
+ * déjà en main.
+ *
+ * L'ÉCRAN N'ANTICIPE AUCUN DROIT : il envoie, puis traduit ce qu'il reçoit (§14.6).
+ * Ne lève jamais.
+ */
+export async function creerContact(
+	client: ClientCrm,
+	creation: { readonly idWorkspace: string; readonly saisie: SaisieContact },
+): Promise<ResultatCreationContact> {
+	const { saisie } = creation
+	try {
+		const reponse = await client
+			.from('contacts')
+			.insert({
+				workspace_id: creation.idWorkspace,
+				full_name: saisie.nom.trim(),
+				organization_id: normaliserFacultatif(saisie.idOrganisation),
+				role_title: normaliserFacultatif(saisie.fonction),
+				email: normaliserFacultatif(saisie.email),
+				phone: normaliserFacultatif(saisie.telephone),
+			})
+			.select(COLONNES_CONTACT_CARNET)
+			.single()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusCreation(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		const { organizations, ...contact } = reponse.data as unknown as LigneBrute
+		return { statut: 'creee', contact: { ...contact, organisation: organizations } }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusCreation(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
