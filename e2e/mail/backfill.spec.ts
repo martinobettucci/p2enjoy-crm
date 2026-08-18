@@ -42,15 +42,25 @@ function docker(...arguments_: string[]): string {
 	return execFileSync('docker', arguments_, { encoding: 'utf8', timeout: 300_000 }).trim()
 }
 
-const RESEAU = docker(
-	'inspect',
-	CONTENEUR,
-	'--format',
-	'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
-)
+// INC-151 — CALCUL RENDU PARESSEUX le 2026-08-18. Cette valeur était une constante de premier
+// niveau, donc un appel `docker` à l'IMPORT du module. Docker absent, l'import levait et Playwright
+// abandonnait le PROJET ENTIER : `--list` rendait « 0 test dans 0 fichier » pour les onze fichiers
+// de `e2e/mail/`, alors que neuf seulement portaient le défaut. On ne pouvait donc ni compter ni
+// inventorier ces scénarios sans l'infrastructure — au moment précis où l'on en a besoin.
+// La valeur et la commande sont INCHANGÉES ; seul le moment du calcul l'est, et il est mémoïsé.
+let reseauMemo: string | undefined
+function reseau(): string {
+	reseauMemo ??= docker(
+		'inspect',
+		CONTENEUR,
+		'--format',
+		'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
+	)
+	return reseauMemo
+}
 
 function python(source: string, variables: Record<string, string> = {}): string {
-	const arguments_ = ['run', '--rm', '--network', RESEAU]
+	const arguments_ = ['run', '--rm', '--network', reseau()]
 	for (const [nom, valeur] of Object.entries(variables)) arguments_.push('-e', `${nom}=${valeur}`)
 	arguments_.push(IMAGE, 'python', '-c', source)
 	return docker(...arguments_)

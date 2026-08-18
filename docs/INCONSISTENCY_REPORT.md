@@ -241,7 +241,7 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
-### INC-151 — Le projet `mail` est INLISTABLE sans Docker : neuf specs appellent `docker` à l'import
+### INC-151 — Le projet `mail` était INLISTABLE sans Docker — CORRIGÉ le 2026-08-18
 
 **Nature :** effet de bord au chargement du module ; la collecte des tests exige l'infrastructure.
 **Relevé le :** 2026-08-18, en cherchant à COMPTER les scénarios sans les exécuter.
@@ -267,12 +267,32 @@ perdu est plus étroit : **on ne peut ni compter ni inventorier ces scénarios s
 les deux autres projets s'y prêtent. Un compteur de harnais devient invérifiable dès que
 l'infrastructure manque, au moment précis où l'on aimerait le vérifier autrement.
 
-**Le remède, et pourquoi il n'est PAS appliqué ici.** Rendre l'appel **paresseux** suffit : une
-fonction mémoïsée à la place de la constante, la valeur étant identique et la commande inchangée.
-Mais le motif est présent dans **neuf** fichiers, et je ne peux exécuter aucun d'eux pour constater
-que le comportement est préservé. Refondre neuf suites d'infrastructure sans pouvoir les rejouer
-n'est pas du même ordre que corriger une assertion démontrée fausse : ici rien n'est faux, et le
-risque introduit dépasserait le gain. **Consigné, chiffré, non corrigé.**
+**CORRIGÉ, et l'arbitrage a d'abord été l'inverse — il faut le dire.** J'avais renoncé au motif que
+refondre neuf suites sans pouvoir les rejouer introduirait plus de risque que de gain. Ce
+raisonnement omettait un fait : **la propriété visée est vérifiable immédiatement**. Si le projet se
+liste sans Docker, les imports sont propres — c'est la preuve même de la correction, et elle ne
+demande aucune infrastructure.
+
+Le remède est mécanique et **préserve le comportement par construction** : la constante devient une
+fonction **mémoïsée**, avec la MÊME commande et la MÊME valeur. Seul le moment du calcul change — au
+premier usage plutôt qu'à l'import —, ce qui est précisément l'intention.
+
+**Preuve, mesurée après correction, Docker toujours absent :**
+
+| Projet | Avant | Après |
+|---|---|---|
+| `mail` | `0 test dans 0 fichier` | **42 tests dans 11 fichiers** |
+| `api` | 678 | 678 — inchangé |
+| `ui` | 368 | 368 — inchangé |
+| **tous projets** | `0 test dans 0 fichier` | **1088 tests dans 82 fichiers** |
+
+678 + 368 + 42 = 1088 : le compte est exact, et le listage **global** fonctionne lui aussi, alors
+qu'il échouait avant pour la même cause. `npm run typecheck` est vert.
+
+**Ce qui reste non vérifié, et qui est nommé.** L'EXÉCUTION des suites `mail` exige l'infrastructure
+et n'a pas eu lieu. La correction ne change ni la commande passée à `docker`, ni sa valeur, ni
+l'ordre des gestes d'un test ; le risque résiduel est celui d'un `docker inspect` déplacé de
+l'import au premier appel. La première exécution après le retour du poste doit le confirmer.
 
 **Bénéfice immédiat de cette découverte, tout de même.** Le compteur `SCENARIOS_UI`, posé par
 déduction le matin faute de pile (décision 435), a pu être **confirmé par mesure directe** :

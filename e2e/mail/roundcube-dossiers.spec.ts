@@ -27,15 +27,22 @@ function docker(...arguments_: string[]): string {
 	return execFileSync('docker', arguments_, { encoding: 'utf8', timeout: 300_000 }).trim()
 }
 
-const RESEAU = docker(
-	'inspect',
-	'p2enjoy-mail-sync',
-	'--format',
-	'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
-)
+// INC-151 — CALCUL RENDU PARESSEUX le 2026-08-18, comme dans les huit autres suites de ce
+// répertoire : un appel `docker` à l'import faisait échouer la COLLECTE du projet entier lorsque
+// l'infrastructure manquait. Valeur et commande inchangées ; seul le moment du calcul l'est.
+let reseauMemo: string | undefined
+function reseau(): string {
+	reseauMemo ??= docker(
+		'inspect',
+		'p2enjoy-mail-sync',
+		'--format',
+		'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
+	)
+	return reseauMemo
+}
 
 function python(source: string, variables: Record<string, string> = {}): string {
-	const arguments_ = ['run', '--rm', '--network', RESEAU]
+	const arguments_ = ['run', '--rm', '--network', reseau()]
 	for (const [nom, valeur] of Object.entries(variables)) arguments_.push('-e', `${nom}=${valeur}`)
 	arguments_.push(IMAGE, 'python', '-c', source)
 	return docker(...arguments_)

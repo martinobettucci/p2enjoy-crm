@@ -32,12 +32,22 @@ function docker(...arguments_: string[]): string {
 }
 
 /** Réseau Compose auquel le service est attaché — jamais supposé, toujours relu. */
-const RESEAU = docker(
-	'inspect',
-	CONTENEUR,
-	'--format',
-	'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
-)
+// INC-151 — CALCUL RENDU PARESSEUX le 2026-08-18. Cette valeur était une constante de premier
+// niveau, donc un appel `docker` à l'IMPORT du module. Docker absent, l'import levait et Playwright
+// abandonnait le PROJET ENTIER : `--list` rendait « 0 test dans 0 fichier » pour les onze fichiers
+// de `e2e/mail/`, alors que neuf seulement portaient le défaut. On ne pouvait donc ni compter ni
+// inventorier ces scénarios sans l'infrastructure — au moment précis où l'on en a besoin.
+// La valeur et la commande sont INCHANGÉES ; seul le moment du calcul l'est, et il est mémoïsé.
+let reseauMemo: string | undefined
+function reseau(): string {
+	reseauMemo ??= docker(
+		'inspect',
+		CONTENEUR,
+		'--format',
+		'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
+	)
+	return reseauMemo
+}
 
 type Reponse = { readonly code: number; readonly corps: string }
 
@@ -46,7 +56,7 @@ function testerCompte(idCompte: string): Reponse {
 		'run',
 		'--rm',
 		'--network',
-		RESEAU,
+		reseau(),
 		'-e',
 		`CHEMIN=/internal/v1/inbound-accounts/${idCompte}/test`,
 		'-e',
@@ -263,7 +273,7 @@ test.describe('comptes entrants — la connexion est RÉELLEMENT ouverte', () =>
 			'run',
 			'--rm',
 			'--network',
-			RESEAU,
+			reseau(),
 			IMAGE_APPELANTE,
 			'python',
 			'-c',
