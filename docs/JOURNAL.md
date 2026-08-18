@@ -18330,3 +18330,25 @@ npm error request to https://registry.npmjs.org/react failed, reason: self-signe
 
 C'est le proxy TLS interposé de l'hôte, et rien d'autre : la même reconstruction **avec** le CA
 réussit dans le même rejeu. Le contrôle est juste et reste inchangé.
+
+**Verdict final, harnais rejoué une troisième fois sous la même condition** (shell exportant
+`NPM_CA_FILE`) : **103 vérifications, 1 anomalie, 1 contrôle déclaré non exécutable**. L'anomalie
+est la reconstruction sans CA, dont la cause est établie ci-dessus. Le harnais est passé de
+**8 anomalies** à **1**, sans qu'aucune garde du produit ait été touchée.
+
+**UN EFFET DE BORD DE LA FUITE, DÉCOUVERT EN REMONTANT LA PILE, ET QUE LA CORRECTION SUPPRIME.**
+Sous la fuite, `runDev.sh` ne s'arrêtait pas à l'amorçage : il allait jusqu'au `docker compose up`
+avec le fichier d'environnement **de travail du harnais**. Le cluster se retrouvait donc amorcé avec
+les secrets du harnais, et le `.env` du dépôt ne les connaissait pas. Constaté à la remontée :
+`p2enjoy-auth` bouclait sur
+`failed SASL auth (FATAL: password authentication failed for user "supabase_auth_admin")`,
+et la pile refusait de démarrer. Réparé par `./resetMe.sh --yes` puis `./runDev.sh` avec le `.env`
+du dépôt, seed réappliqué, puis `scripts/verify-stack.sh` : **54 vérifications, aucune anomalie**.
+Avec la correction, `runDev.sh` refuse dès l'amorçage et **aucun `up` n'a plus lieu** : les deuxième
+et troisième rejeus n'ont pas reproduit l'effet.
+
+**Où reprendre, précisé.** `CRM-001` : un seul contrôle reste dû, et il exige un hôte sans proxy TLS
+interposé. Puis les points 4 à 6 de la décision 439, inchangés : INC-147 et INC-146 attendent leur
+première exécution depuis leur correction — la pile est debout et seedée, `npm run e2e:api` sur
+`preuves-refus.spec.ts` et `inbox.spec.ts` est le geste suivant —, et les preuves d'interface de
+`CRM-033`, `CRM-035` et `CRM-036` sont dues.
