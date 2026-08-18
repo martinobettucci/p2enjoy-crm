@@ -19057,6 +19057,21 @@ sept, dans le seed et dans `docs/SPEC-seed.md`. Écart de commentaire seul, ant�
 assertion ne portait — corrigé plutôt que reconduit faux dans un paragraphe que cette sous-tranche
 réécrit de toute façon.
 
+**Harnais, exécuté après la campagne, et un défaut ANTÉRIEUR qu'il a révélé.**
+`scripts/verify-champs-formulaire.sh` rend **38 contrôles, 2 en échec** — et les deux sont ses
+propres étapes de fin, `npm run test:sql` et `npm run e2e:api`, **qu'il condamne lui-même** : pour se
+restaurer après ses trois dégradations, il rejoue la migration `0009` et laisse en base un
+`move_card` d'AVANT les migrations qui lui ont fait écrire son commentaire (INC-048) et retirer les
+blancs Unicode (INC-052). Ses **36 autres contrôles sont verts**, dont les deux compteurs que cette
+sous-tranche a révisés. Consigné **INC-160**, comportement laissé inchangé — la correction appartient
+au harnais, comme pour INC-129, dont c'est le mécanisme exact.
+
+**La chaîne est mesurée, et elle vaut ligne de base sans `git stash`** : `test:sql` **vert** (2269
+assertions) avec 4d appliquée, puis **3 fichiers rouges** après le seul passage du harnais, sans
+qu'aucun fichier du dépôt n'ait bougé, `pg_get_functiondef(move_card)` ne citant plus
+`card_comments`. Après `./resetMe.sh`, `test:sql` rend de nouveau **45 fichiers, 2269 assertions,
+aucune anomalie** et `e2e:api` **704 verts** : c'est l'état sur lequel cette session se referme.
+
 **Où reprendre.** La **tranche 4 est complète** ; `CRM-060` reste `[~]`, et ce qui lui manque est
 nommé au §13.8 et au §6 : la **création** d'un contact, la **fiche** d'un contact, et l'arbitrage
 sur les **références mortes** — une valeur qui désigne un contact supprimé reste en base, et aucune

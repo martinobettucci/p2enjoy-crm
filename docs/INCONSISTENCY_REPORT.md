@@ -195,7 +195,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Quinze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Seize ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159 et INC-160** — **INC-160**
+consignée le 2026-08-18 par la session `CRM-060` sous-tranche 4d : `verify-champs-formulaire.sh`
+**dégrade `public.move_card`** en rejouant la migration `0009` pour se restaurer, et laisse en base
+une version d'avant les migrations qui lui ont fait ÉCRIRE le commentaire qu'elle exige. Même
+mécanisme qu'INC-129. Défaut ANTÉRIEUR et étranger à l'unité, prouvé tel sans `git stash`.
+
+Précédemment quinze : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158 et INC-159** — **INC-159** consignée
 le 2026-08-18 par la session `CRM-060` sous-tranche 4d : deux commentaires de spécification et de
 seed annonçaient « six types distincts » pour sept champs qui en couvraient **sept**. Écart de
@@ -265,6 +272,42 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-160 — `verify-champs-formulaire.sh` laisse en base un `move_card` d'AVANT les migrations qui lui ont fait écrire son commentaire
+
+**Nature :** exactement le mécanisme d'INC-129, sur un autre harnais. Pour se restaurer après ses
+trois dégradations, `scripts/verify-champs-formulaire.sh` **rejoue**
+`supabase/migrations/0009_champs_formulaire.sql` (quatre fois, lignes 169 à 438). Or des migrations
+POSTÉRIEURES ont révisé `public.move_card` — la cinquième vérification y **conserve** désormais le
+motif dans `card_comments` (INC-048, close) et `app.btrim_blancs` y retire les blancs **Unicode**
+(INC-052, close). Le rejeu réinstalle la version d'avant : chaque exécution du harnais laisse en
+base un `move_card` amputé de ces deux acquis.
+
+**Mesuré le 2026-08-18**, et la chaîne est directe :
+
+1. `npm run test:sql` **vert** avec la sous-tranche 4d appliquée : « 45 fichiers, 2269 assertions,
+   aucune anomalie » ;
+2. `scripts/verify-champs-formulaire.sh` exécuté ;
+3. `npm run test:sql` rejoué **sans rien changer au dépôt** : **3 fichiers rouges, 10 assertions** —
+   `0013_move_card` (8), `0014_valeurs_champs` (1), `0017_commentaires` (1), **toutes** portant sur
+   le commentaire écrit par `move_card` et sur les blancs Unicode ;
+4. état constaté directement : `pg_get_functiondef(public.move_card)` ne cite **plus**
+   `card_comments` ni `btrim_blancs`.
+
+Le harnais s'en aperçoit lui-même : ses deux dernières étapes, `npm run test:sql` et
+`npm run e2e:api`, rendent ÉCHEC **alors que les deux passent isolément** — il se condamne avec sa
+propre restauration.
+
+**Étranger à l'unité, et prouvé sans `git stash`.** La sous-tranche 4d ne touche aucune migration,
+aucune fonction SQL, et rien de `move_card` ; et la preuve n° 1 ci-dessus établit que le dépôt
+modifié rendait `test:sql` **vert** avant l'exécution du harnais. La ligne de base du §2.4 de
+`docs/CloudWorker.md` aurait dit la même chose au prix d'un `resetMe.sh` de plus.
+
+**Comportement laissé INCHANGÉ.** La correction appartient au harnais — restaurer depuis l'état
+courant plutôt qu'en rejouant une migration figée, comme INC-129 le pose déjà —, et elle dépasse
+l'unité autorisée. Conséquence d'exploitation à connaître : **toute campagne qui suit une exécution
+de ce harnais doit repartir d'une base rafraîchie** (`./resetMe.sh`), sans quoi elle mesure la
+dégradation du harnais et non le produit.
 
 ### INC-159 — « Six types distincts » annoncé pour sept champs qui en couvraient sept — écart de commentaire, CORRIGÉ
 
