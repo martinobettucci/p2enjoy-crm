@@ -18233,3 +18233,70 @@ d'INC-146 et d'INC-147, appliquée au contrôle que je viens d'écrire.
 **Dépendance à noter.** Le dénombrement de `mail` n'était possible que depuis la correction
 d'INC-151 : neuf de ses onze specs appelaient `docker` à l'import et faisaient échouer la collecte
 du projet entier. Une correction en a rendu une autre possible.
+
+
+## décision 442 — `scripts/verify-scripts.sh` rendait sept verdicts qui parlaient du shell de l'appelant, pas du produit
+
+**Contexte.** Poste neuf, démon Docker démarré à la main, `docker buildx v0.31.1` **présent et
+fonctionnel** — ce qui manquait au poste de la décision 439. La pile monte entière : 17 services
+`healthy` et les trois conteneurs de tâche sortis en 0. `scripts/verify-scripts.sh` a donc pu être
+rejoué là où il ne pouvait pas l'être.
+
+**Bilan brut du premier rejeu : 104 vérifications, 8 anomalies.** Deux des **trois** contrôles de
+reconstruction d'image que `CRM-001` portait comme dernier écart sont **VERTS** : « build sans cache
+avec CA : branche active, `npm ci` réussi » et « l'image exclut contexte sensible, secret `npm_ca`,
+`cafile` et `.npmrc` non vide ». BuildKit fonctionne, le secret de build est transporté, l'image ne
+retient rien. Le blocage nommé en décision 439 — le greffon `docker-buildx` qui segfaute — **n'est
+pas une propriété du produit**, et le produit passe dès que le constructeur fonctionne.
+
+**Sept des huit anomalies ne disent rien du produit, et la cause est mesurée.** `docs/CloudWorker.md`
+§2.1 impose d'exporter `NPM_CA_FILE` dans le shell de la session, sans quoi `npm ci` échoue derrière
+le proxy TLS interposé. Or le harnais lance `./runDev.sh --bootstrap` et `./resetMe.sh --yes` en ne
+posant que `P2ENJOY_ENV_FILE` : **la variable du shell fuit dans chaque appel**, et `runDev.sh`
+applique — correctement — la priorité du shell sur `.env`. Les six contrôles de `ca_refusal()`
+écrivent une valeur invalide dans un `.env` de travail et attendent un refus ; ils reçoivent une
+acceptation, parce que la valeur que le produit lit n'est pas celle qu'ils ont écrite.
+
+Mesure A/B, faite sur ce seul point comme le veut la ligne de base du §2.4 de `docs/CloudWorker.md` :
+
+```
+NPM_CA_FILE=/root/.ccr/ca-bundle.crt  P2ENJOY_ENV_FILE=<.env à valeur relative> ./runDev.sh --bootstrap
+  => code 0, aucun diagnostic            (le harnais enregistre « accepte un chemin relatif »)
+
+env -u NPM_CA_FILE                     P2ENJOY_ENV_FILE=<.env à valeur relative> ./runDev.sh --bootstrap
+  => code 1, « NPM_CA_FILE doit être un chemin absolu vers un fichier PEM lisible ;
+     valeur relative refusée. »
+```
+
+**La garde du produit est donc juste ; c'est le harnais qui mesurait autre chose que ce qu'il
+annonce.** Même famille qu'INC-146 et INC-147, et symétrique : là une assertion réussissait pour une
+raison qui n'était pas la sienne, ici elle échoue pour une raison qui n'est pas la sienne.
+
+**Et une conséquence qui n'est pas cosmétique.** Le septième contrôle est
+« `resetMe.sh` refuse `NPM_CA_FILE` avant toute destruction ». Sous la même fuite, `resetMe.sh` ne
+refuse pas : il **détruit réellement le cluster**, puis le contrôle constate l'échec. Un contrôle
+écrit pour prouver qu'une destruction n'a pas lieu provoquait la destruction qu'il surveille. Le
+seed de la session a été perdu de cette façon, et il a fallu le réappliquer.
+
+**Correction retenue, et ce qu'elle ne retire pas.** `unset NPM_CA_FILE` une fois en tête du
+harnais, après le `cd` vers la racine : le sujet de ces contrôles est le contenu de `.env`, et la
+variable ambiante est un artefact du shell de l'opérateur, pas du produit. **Aucune couverture n'est
+perdue** : les trois contrôles qui éprouvent précisément la priorité du shell posent la variable
+eux-mêmes sur leur ligne de commande — valeur valide, valeur relative, valeur vide —, et les deux
+contrôles de reconstruction du §7 font de même. Le harnais cesse de dépendre de l'environnement qui
+l'appelle, et c'est tout ce qui change.
+
+**La huitième anomalie reste, et elle est étrangère au produit elle aussi.** « la reconstruction
+sans CA n'emprunte pas sa branche inactive » : le contrôle reconstruit l'image en neutralisant le
+secret, et attend que `npm ci` réussisse sans certificat. Derrière un proxy TLS interposé — le cas de
+cet hôte, où `/etc/ssl/certs/ca-certificates.crt` et `/root/.ccr/ca-bundle.crt` sont le **même**
+paquet, proxy compris — `npm ci` ne peut pas réussir sans CA. Le §2.1 de `docs/CloudWorker.md` le dit
+déjà pour `npm ci`, et le §2.4 le prévoit : « le proxy peut faire échouer certains contrôles qui
+reconstruisent une image SANS certificat ». Ce contrôle n'est **pas** modifié : il est juste, et il
+prouve une propriété réelle sur un hôte sans interception. Il reste le dernier écart de `CRM-001`.
+
+**Où reprendre.** `CRM-001` reste `[~]` pour ce seul contrôle, et son motif change : ce n'est plus
+« BuildKit indisponible », c'est « proxy TLS interposé sur l'hôte de mesure ». La reconstruction
+elle-même est prouvée. Ensuite, les points 4 à 6 de la décision 439 restent dus : INC-147 et INC-146
+attendent leur **première exécution** depuis leur correction, et les preuves d'interface de
+`CRM-033`, `CRM-035` et `CRM-036` sont dues.
