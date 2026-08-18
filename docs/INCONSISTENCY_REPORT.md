@@ -279,6 +279,13 @@ déduction le matin faute de pile (décision 435), a pu être **confirmé par me
 `--list` rend bien **368**. `SCENARIOS_API` l'est aussi, à **678**. Un compteur dérivé est redevenu
 un compteur observé, sans que Docker revienne.
 
+**Et le compteur de `mail` lui-même a pu être corroboré, malgré l'inlistabilité.** Le dénombrement
+des déclarations `test(` dans les onze fichiers rend **40**. L'écart avec les **42** attendus
+s'explique **exactement** : `infrastructure.spec.ts` déclare un test **dans une boucle** sur trois
+boîtes — la boîte système et les deux boîtes personnelles —, si bien qu'une déclaration produit
+trois scénarios. **39 + 3 = 42.** Le compteur du harnais est donc juste, et les **trois** projets
+sont désormais vérifiés sans Docker.
+
 ### INC-150 — Un harnais sur cinquante et un a reçu une façade `npm`, contre la règle du README
 
 **Nature :** doublure d'interface contredisant une règle écrite ; arbitrage dû au responsable.

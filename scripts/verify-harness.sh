@@ -508,6 +508,9 @@ SCENARIOS_UI=368
 # AJOUTÉ à `e2e/mail/` depuis, et il en déclare **1**. Aucun des dix autres n'a gagné ni perdu de
 # scénario : 41 + 1 = **42**. Valeur COMPTÉE par `--list` (42 tests dans 11 fichiers), puis
 # confrontée au nombre de verts.
+# CORROBORÉ le 2026-08-18 sans exécuter la suite, et sans même pouvoir la lister : le projet est
+# inlistable quand Docker manque (INC-151). Le dénombrement statique des déclarations `test(` rend
+# 40 ; `infrastructure.spec.ts` en déclare une DANS UNE BOUCLE sur les trois boîtes, d'où 39 + 3.
 SCENARIOS_MAIL=42
 
 failures=0
