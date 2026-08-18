@@ -34,12 +34,15 @@ chaque tranche est committée et prouvée avant la suivante :
 2. **La règle 3 du classement** — activer la suggestion « expéditeur connu » de `CRM-055`, qui
    suppose ce modèle. Tranche ultérieure, `docs/SPEC-mail-subsystem.md` §16.
 3. **La résolution du champ `contact`** — remplacer, dans la saisie du formulaire, le refus d'un
-   UUID opaque par une clé vers un contact du même workspace (`CRM-036`, §6.5). Tranche ultérieure.
+   UUID opaque par une clé vers un contact du même workspace (`CRM-036`, §6.5). **Spécifiée au §9**,
+   et le champ `user` y est résolu dans le même geste, l'arbitrage de la décision 295 les traitant
+   ensemble.
 4. **Les écrans** — carnet de contacts, fiche d'organisation, rattachement d'un contact à une
    affaire depuis la route de détail. Tranche ultérieure, `docs/DESIGN_SYSTEM.md`.
 
-Ce document spécifie **intégralement la tranche 1** et **nomme** les tranches suivantes sans les
-détailler : leur contrat sera écrit, mesuré et committé au moment où elles seront reprises.
+Ce document a spécifié **intégralement la tranche 1** d'emblée, puis a reçu le contrat de la
+tranche 2 au §8 et celui de la tranche 3 au §9, chacun écrit, mesuré et committé au moment de sa
+reprise. La tranche 4 reste **nommée** sans être détaillée.
 
 ---
 
@@ -224,6 +227,12 @@ Nommés plutôt que tranchés ici (`CLAUDE.md` §1, §26) :
    email d'un domaine connu) touche l'ingestion et mérite son propre arbitrage.
 3. **Rôles de `card_contacts` normalisés.** La tranche 1 laisse le rôle libre ; une éventuelle liste
    contrôlée (`decideur`, `prescripteur`, …) devra être décidée avec le vocabulaire métier.
+4. **Références mortes après suppression d'un contact** (ajouté par la tranche 3, §9.4). La
+   résolution des champs `contact` et `user` est vérifiée **à l'écriture** ; `value` étant un
+   `jsonb`, aucune clé étrangère n'y est possible. Supprimer un contact laisse donc en place les
+   valeurs qui le désignaient. Les balayer par un trigger `AFTER DELETE`, ou remplacer le `jsonb`
+   par une table de liaison, sont deux réponses possibles dont le coût et les effets de bord
+   dépassent l'unité : la question est **nommée**, non tranchée.
 
 ---
 
@@ -377,3 +386,180 @@ Et deux cas où la règle 3 **n'est pas atteinte**, la chaîne s'étant arrêté
 
 La tranche 2 livrée, l'unité `CRM-060` **demeure `[~]`** : les tranches 3 (résolution du champ
 `contact`) et 4 (écrans) restent dues, et la preuve visible de la suggestion attend l'inbox.
+
+---
+
+## 9. Tranche 3 — La résolution des champs `contact` et `user` du formulaire
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : comportement actuel du validateur constaté par
+sondes en transaction sur PostgreSQL `17.6`, colonnes de `workspace_members` et de `profiles`
+inventoriées, contacts et membres du seed relevés à la main.
+
+Références amont, qui **précèdent** ce document et le contraignent :
+
+- **`docs/JOURNAL.md`, décision 295 — l'arbitrage du responsable, cité mot pour mot** : « Une valeur
+  `user` doit désigner un membre actif du workspace dès maintenant. Une valeur `contact` est refusée
+  tant que `CRM-060` n'a pas livré la table ; cette unité remplacera le refus par une clé vers un
+  contact du même workspace. Accepter un UUID opaque temporaire créerait une dette de données
+  impossible à distinguer d'une référence valide. » C'est cette tranche qui l'exécute ;
+- `docs/SPEC-form-composer.md` §6.5, qui laisse aujourd'hui les deux types valider la **forme** d'un
+  `uuid` et **rien de plus**, et nomme l'écart `INC-053`, « arbitrage attendu » ;
+- `docs/ARBITRAGES.md`, ligne `INC-053` : « `user` résolu maintenant ; `contact` refusé jusqu'à
+  `CRM-060` » — porteur « reprise formulaires, `CRM-060` » ;
+- `docs/SPEC-form-composer.md` §6.4 : la validation est un trigger `BEFORE INSERT OR UPDATE`,
+  `SECURITY DEFINER`, `search_path` vide, dont le refus porte le jeton `invalid_field_value` et un
+  `DETAIL` nommant la clé du champ.
+
+### 9.1 Ce que la tranche livre, et ce qu'elle ne livre pas
+
+Elle livre **la règle opposable en base** (`CLAUDE.md` §10) : le validateur de
+`card_field_values` **résout** désormais la cible des deux types au lieu d'en valider la seule
+forme.
+
+Elle ne livre **pas** le sélecteur d'interface. Le §2.3 annonce pour `contact` un « sélecteur de
+contact, création à la volée » et pour `user` un « sélecteur de membre du workspace » : ces deux
+contrôles appartiennent aux **écrans** de la tranche 4, avec le carnet de contacts. La saisie reste
+donc, pour cette tranche, le champ texte du défaut de `FormulaireCard.tsx` — mais elle n'accepte
+plus n'importe quel identifiant : **la base refuse ce qui ne désigne rien**, et l'interface rend ce
+refus par le message d'erreur déjà en place (`docs/SPEC-form-composer.md` §4 bis).
+
+Cet ordre est délibéré : poser d'abord la règle en base, l'écran ensuite. L'inverse aurait offert un
+sélecteur au-dessus d'une base qui accepte encore n'importe quoi — exactement la « décision
+d'écran » que `CLAUDE.md` §10 interdit.
+
+### 9.2 État mesuré avant modification — le défaut à corriger
+
+MESURÉ le 2026-08-18, en transaction roulée en arrière, sur la base seedée :
+
+```
+insert into public.card_field_values (…, value)
+values (…, '"00000000-0000-4000-8000-000000000000"');   -- champ de type `contact`
+=> INSERT 0 1                                            -- ACCEPTÉ
+                                                          -- idem pour un champ de type `user`
+```
+
+Un identifiant **bien formé mais ne désignant rien** est accepté par les deux types. C'est
+exactement la « dette de données impossible à distinguer d'une référence valide » que la décision
+295 refuse. Deux assertions de `supabase/tests/0014_valeurs_champs.test.sql` **figent** cet écart
+et annoncent leur propre révision « le jour où l'arbitrage sera rendu » : elles sont **retournées**
+par cette tranche, non retirées (mécanisme de la décision 51, `CLAUDE.md` §3.1).
+
+### 9.3 La règle, type par type
+
+| Type | Forme exigée | Résolution exigée |
+|---|---|---|
+| `contact` | `string` convertible en `uuid` | il existe une ligne de `public.contacts` d'`id` égal à cette valeur **et** de `workspace_id` égal à celui de la valeur écrite |
+| `user` | `string` convertible en `uuid` | il existe une ligne de `public.workspace_members` de `user_id` égal à cette valeur **et** de `workspace_id` égal à celui de la valeur écrite |
+
+**La portée est le `workspace_id` de la valeur écrite**, non celui du contact ni du profil. La
+colonne est non nulle et sa véracité est garantie structurellement par la clé composite
+`(workflow_id, workspace_id) → workflows (id, workspace_id)` (§6.3 de
+`docs/SPEC-form-composer.md`). Un client qui mentirait sur `workspace_id` verrait sa ligne refusée
+par cette clé — mais **après** le trigger, qui est `BEFORE` : le refus qui remonte est alors celui
+du trigger, et il est juste, puisque la cible n'appartient pas au workspace revendiqué.
+
+**« Membre actif » veut dire « membre », et la mesure l'impose.** La décision 295 dit « membre
+**actif** du workspace ». MESURÉ : `public.workspace_members` porte `(workspace_id, user_id, role,
+created_at)` et **aucune** colonne de statut, de suspension ni de date de sortie ; `public.profiles`
+porte `(id, full_name, avatar_url, locale, created_at, updated_at)` et n'en porte pas davantage. Le
+produit n'a **aucune** notion de membre inactif : l'appartenance **est** l'activité, et retirer un
+membre se fait en supprimant sa ligne. La règle est donc « il existe une ligne de
+`workspace_members` », et ce n'est pas un affaiblissement de l'arbitrage : c'est sa seule lecture
+possible sur ce schéma. Le jour où un statut d'appartenance apparaîtrait, cette règle devrait être
+resserrée dans le même changement — la phrase est écrite ici pour que ce jour-là la dette soit
+visible.
+
+**La résolution lit les tables en entier, pas ce que la RLS de l'appelant montre.** Le trigger est
+`SECURITY DEFINER` pour cette raison même (§6.4) : un contact invisible à l'appelant ne doit pas
+être un contact « inexistant ». En pratique, la RLS de `contacts` porte sur le workspace entier
+(§3), si bien que les deux lectures coïncident ; la propriété est néanmoins posée par construction
+plutôt que par coïncidence.
+
+### 9.4 Ce que la résolution ne garantit toujours PAS — limite nommée, non masquée
+
+La résolution est vérifiée **à l'écriture**, et elle ne peut pas l'être ailleurs : `value` est un
+`jsonb`, où **aucune clé étrangère n'est possible** (`docs/SPEC-form-composer.md` §6.1, propriété
+du type, INC-033). Conséquence assumée et **nommée** :
+
+- supprimer un contact **ne supprime pas** les valeurs qui le désignaient. Elles deviennent des
+  références mortes, exactement comme aujourd'hui, et une relecture ultérieure ne les refusera pas ;
+- ce que la tranche supprime est la création **d'une** référence morte à l'écriture, pas la
+  possibilité qu'une référence meure ensuite.
+
+Traiter le second cas exigerait soit un trigger `AFTER DELETE` sur `contacts` balayant les valeurs,
+soit une table de liaison. Les deux dépassent cette tranche et **appellent l'arbitrage du
+responsable** : la question est ajoutée au §6 (point 4) plutôt que tranchée au passage
+(`CLAUDE.md` §1).
+
+### 9.5 Contrat de comportement — mesuré sur le seed
+
+Acteurs et données du seed : workspace `…001`, contacts `…091` (Léo Marchand), `…092` (Sophie
+Dupont), `…093` (Élise Fabre) ; membres `…011` (admin), `…012` (business developer), `…013`
+(viewer).
+
+| # | Écriture d'une valeur | Attendu |
+|---|---|---|
+| a | champ `contact`, valeur `"5eed…091"` (contact du workspace) | **acceptée** |
+| b | champ `contact`, valeur `"00000000-0000-4000-8000-000000000000"` (bien formé, inexistant) | **refusée** `invalid_field_value`, `DETAIL` : « … ne désigne aucun contact de ce workspace » |
+| c | champ `contact`, valeur d'un contact d'un **autre** workspace | **refusée** — le cloisonnement est la raison d'être de la règle |
+| d | champ `contact`, valeur `"martin"` | **refusée** — la forme, comme avant (inchangé) |
+| e | champ `contact`, valeur `null` ou `'null'::jsonb` | **acceptée** — « vidé explicitement » sort avant le `case` (§6.6, décision 133) |
+| f | champ `contact`, valeur `42` | **refusée** — la forme, comme avant (inchangé) |
+| g | champ `user`, valeur `"5eed…012"` (membre du workspace) | **acceptée** |
+| h | champ `user`, valeur d'un profil **existant mais non membre** du workspace | **refusée** — c'est la règle d'appartenance que la décision 295 énonce |
+| i | champ `user`, valeur `"00000000-…-000000000000"` (inexistante) | **refusée** |
+| j | le contact d'une valeur acceptée est **supprimé** ensuite | la valeur **demeure** — §9.4, limite nommée |
+
+Le `DETAIL` nomme la **clé du champ** et la raison, comme les autres refus du §6.5 : le message reste
+`invalid_field_value`, jeton stable comparable par égalité.
+
+### 9.6 Seed — la donnée qui rend la règle démontrable
+
+Le seed ne porte aujourd'hui **aucun** champ de type `contact` ni `user` : les sept champs du
+workflow source sont `money`, `select`, `date`, `textarea`, `checkbox`, `url`, `number` (mesuré).
+La règle serait donc invisible dans le produit et non démontrable par une preuve d'API.
+
+La tranche ajoute au workflow source **un champ de chaque type**, avec leurs identifiants stables :
+
+- `contact-principal` (type `contact`, `5eed…088`) — « Contact principal » ;
+- `responsable` (type `user`, `5eed…089`) — « Responsable de l'affaire ».
+
+et **deux valeurs** sur des cards seedées : le contact `…091` (Léo Marchand) sur la card `…0c2`
+(Migration ERP Sogexia — la card à laquelle il est déjà rattaché par `card_contacts`, ce qui rend
+les deux mécanismes cohérents dans la démonstration), et le membre `…012` (Driss Lemoine) sur la
+même card. Le seed **converge** et **vérifie** ses comptes, comme le reste du fichier.
+
+Conséquence à traiter dans le même changement : les inventaires du seed comparent le nombre de
+champs source à `${#CHAMPS[@]}` avant la copie de workflow ; ajouter deux champs déplace donc les
+comptes de la copie et des harnais qui les figent. Ces comptes sont **révisés**, jamais contournés.
+
+### 9.7 Preuves exigées — tranche 3
+
+- **pgTAP dédiée** : les cas a à j du §9.5 sur des états construits dans la transaction (savepoints),
+  plus la révision des deux assertions figées de `0014_valeurs_champs.test.sql` et de l'assertion
+  `has_table('contacts')` dont le libellé annonce sa propre péremption à cette tranche ;
+- **preuve d'API dédiée** : les écritures acceptées et refusées par la **vraie route** PostgREST avec
+  les jetons réels, chaque refus **relisant la ligne** pour la constater inchangée (décision 70) ;
+- **harnais** : `scripts/verify-champs-formulaire.sh` étendu d'un contrôle comportemental de la
+  résolution, avec témoin ;
+- **types régénérés** si le schéma bouge (il ne bouge pas : aucune colonne n'est ajoutée) ;
+- **aucune preuve d'interface** n'est due par cette tranche, qui ne livre aucun écran ; l'écart est
+  nommé plutôt que compensé par une preuve de substitution.
+
+### 9.8 Definition of Done — tranche 3
+
+- migration `0047` redéfinissant `app.card_field_values_valider()` avec la résolution des deux
+  types, idempotente et rejouable ;
+- suite pgTAP dédiée couvrant les cas a à j du §9.5 ;
+- assertions figées par `CRM-036` **retournées** dans le même changement, jamais retirées ;
+- preuve d'API dédiée avec les jetons réels ;
+- seed enrichi (§9.6) et convergent, comptes des harnais révisés dans le même changement ;
+- `docs/SPEC-form-composer.md` §6.5, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` (migration 47),
+  `docs/INCONSISTENCY_REPORT.md` (INC-053 **close**), `CHANGELOG.md` mis à jour dans le même
+  changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier.
+
+La tranche 3 livrée, l'unité `CRM-060` **demeure `[~]`** : la tranche 4 (écrans — carnet de
+contacts, fiche d'organisation, rattachement depuis la route de détail, et les deux sélecteurs du
+§9.1) reste due.

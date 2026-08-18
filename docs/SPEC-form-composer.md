@@ -96,9 +96,12 @@ Aucune intégrité référentielle n'est posée sur la **valeur** — elle vivra
 aucune clé étrangère n'est possible, exactement comme c'était le cas pour l'ancien tableau
 `require_fields` avant sa correction par `CRM-018` (INC-033).
 Déclarer un champ de type `contact` est donc licite dès `CRM-035` ; le **résoudre** appartient à
-`CRM-036` et à `CRM-060`. **`CRM-036` ne l'a pas résolu**, et le motif est écrit au §6.5 : `contacts`
-n'existe pas, et résoudre `user` seul rendrait la famille incohérente tout en posant une règle que
-nul document n'énonce. INC-053, arbitrage attendu.
+`CRM-036` et à `CRM-060`. `CRM-036` ne l'a pas résolu — `contacts` n'existait pas et résoudre `user`
+seul aurait posé une règle d'appartenance que nul document n'énonçait. **`CRM-060` tranche 3 l'a
+résolu le 2026-08-18** (migration `0047`, `docs/SPEC-contacts.md` §9) : les deux types désignent
+désormais une cible qui doit exister **dans le workspace de la valeur**. `file` reste non résolu.
+**INC-053 est close.** Le détail de la règle et sa limite — la vérification a lieu à l'écriture, un
+`jsonb` ne portant pas de clé étrangère — sont au §6.5.
 
 ### 2.4 Ce que `options` doit porter, et pourquoi la base l'exige
 
@@ -729,7 +732,9 @@ lecture et la saisie — un refus que l'utilisateur n'a pas provoqué.
   réussie » complet : le premier et le troisième gestes appartiennent à `CRM-041` (INC-062,
   inchangée). La **saisie**, deuxième geste, est livrée ici.
 - **Aucune résolution de `user`, `contact` ni `file`** : leur contrôle reste une saisie brute
-  d'`uuid`, comme le §6.5 les valide (INC-053, inchangée).
+  d'`uuid`, comme le §6.5 les valide (INC-053, inchangée). *(État AU MOMENT DE LA LIVRAISON :
+  depuis `CRM-060` tranche 3, la base **résout** `user` et `contact` — la saisie brute demeure, mais
+  un identifiant qui ne désigne rien y est désormais refusé.)*
 - **Aucun `updated_by`** — §4 bis.4, écart consigné.
 - **Aucune reprise hors ligne, aucun brouillon** : une saisie non enregistrée est perdue si l'onglet
   se ferme. Le produit n'a aucun mécanisme de brouillon, et en inventer un ici dépasserait l'unité.
@@ -1056,6 +1061,9 @@ n'est tolérée, et le second déplacement n'en produit aucune.
   d'un arbitrage sur une preuve inatteignable, et elle est devenue atteignable.
 - **Aucune résolution de `user`, `contact` ni `file`** : le §6.5 ne les résout pas non plus
   (INC-053). Le rendu affiche leur valeur brute plutôt qu'un nom qu'il ne peut pas obtenir.
+  *(Ce constat décrit l'état AU MOMENT DE LA LIVRAISON. `user` et `contact` sont **résolus en base**
+  depuis `CRM-060` tranche 3, le 2026-08-18 — la base refuse désormais un identifiant qui ne désigne
+  rien. Le **rendu** reste une saisie brute : les deux sélecteurs sont dus par la tranche 4.)*
 
 ## 5. Édition du formulaire
 
@@ -1186,7 +1194,8 @@ attendue.
 | `select` | `string` | **la clé doit figurer dans `options.choices`** |
 | `multiselect` | `array` de `string` | **chaque clé doit figurer dans `options.choices`** ; les doublons sont acceptés |
 | `checkbox` | `boolean` | aucune |
-| `user`, `contact` | `string` convertible en `uuid` | **aucune résolution** — voir ci-dessous |
+| `user` | `string` convertible en `uuid` | **la cible doit être membre du workspace de la valeur** — voir ci-dessous |
+| `contact` | `string` convertible en `uuid` | **la cible doit être un contact du workspace de la valeur** — voir ci-dessous |
 | `file` | `string` | aucune : le chemin vise Storage, service distinct |
 
 **`select` et `multiselect` closent le point ouvert n° 4 du §8.** Le §2.4 posait que la base ne
@@ -1195,13 +1204,35 @@ contraint pas la forme des entrées de `choices`, et renvoyait la vérification 
 seed, les quatre clés du champ `source` sont `salon`, `recommandation`, `site`, `prospection` ; une
 cinquième est refusée.
 
-**`user` et `contact` ne sont pas résolus, et c'est nommé plutôt que tu.** Le §2.3 annonce que
-« le résoudre appartient à `CRM-036` et à `CRM-060` » sans dire lequel fait quoi. `contact` vise
-`contacts`, table qui n'existe pas (`CRM-060`) : sa résolution est impossible aujourd'hui.
-Résoudre `user` seul rendrait la famille incohérente — deux types voisins, l'un opposable et
-l'autre non — et **poserait une règle que nul document n'énonce** : un `user` doit-il être membre
-du workspace, ou tout profil convient-il ? Les deux types valident donc la **forme** d'un `uuid`, et
-rien de plus. Consigné en `docs/INCONSISTENCY_REPORT.md`, **INC-053**, arbitrage attendu.
+**`user` et `contact` SONT RÉSOLUS DEPUIS LE 2026-08-18, et INC-053 est close.** Ce paragraphe
+disait l'inverse jusque-là : les deux types ne validaient que la **forme** d'un `uuid`, faute de
+table `contacts` d'un côté et faute de règle d'appartenance énoncée de l'autre. Les deux motifs sont
+tombés — `CRM-060` tranche 1 a livré `contacts`, et la **décision 295** a rendu l'arbitrage : « une
+valeur `user` doit désigner un membre actif du workspace ; une valeur `contact` […] une clé vers un
+contact du même workspace ; accepter un UUID opaque temporaire créerait une dette de données
+impossible à distinguer d'une référence valide. »
+
+La règle exécutée par `app.card_field_values_valider()` depuis la migration `0047` (`CRM-060`
+tranche 3, `docs/SPEC-contacts.md` §9) :
+
+- `contact` — il existe une ligne de `public.contacts` d'`id` égal à la valeur **et** de
+  `workspace_id` égal à celui de la valeur écrite ;
+- `user` — il existe une ligne de `public.workspace_members` de `user_id` égal à la valeur **et** de
+  `workspace_id` égal à celui de la valeur écrite. « Membre actif » se lit « membre » : MESURÉ, ni
+  `workspace_members` ni `profiles` ne portent de statut, de suspension ou de date de sortie ;
+  l'appartenance **est** l'activité sur ce schéma (`docs/SPEC-contacts.md` §9.3).
+
+Le refus reste `invalid_field_value`, son `DETAIL` nommant la clé du champ et la raison. La portée
+est le `workspace_id` **de la valeur écrite**, dont la véracité est tenue par la clé composite du
+§6.3.
+
+**Ce que la résolution ne garantit toujours pas**, et qui est nommé plutôt que tu : elle est
+vérifiée **à l'écriture** seulement. `value` étant un `jsonb`, aucune clé étrangère n'y est possible
+(§6.1, INC-033) ; supprimer un contact laisse donc en place les valeurs qui le désignaient. La
+tranche supprime la création d'une référence morte, pas la possibilité qu'une référence meure
+ensuite — arbitrage nommé au §6 point 4 de `docs/SPEC-contacts.md`.
+
+`file` reste non résolu : son chemin vise Storage, service distinct.
 
 ### 6.6 « Renseigné » : la définition dont dépend la sixième vérification
 
