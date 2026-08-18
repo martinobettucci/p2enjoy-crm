@@ -656,3 +656,39 @@ export async function creerContact(
 		}
 	}
 }
+
+/**
+ * Les organisations du workspace, pour le sélecteur du formulaire de création (§14.1).
+ *
+ * MESURÉ le 2026-08-18 : `GET /rest/v1/organizations?select=id,name&order=name` rend les trois
+ * organisations du seed à l'administratrice comme à la lectrice — le nom d'une organisation est
+ * une donnée d'équipe, comme le nom d'un collègue (§13.3).
+ *
+ * **Aucune requête nouvelle de forme n'est inventée** : c'est la lecture la plus étroite possible,
+ * deux colonnes, et elle ne rapporte que ce que le sélecteur affiche (patron du §10.3). Le tri est
+ * demandé au SERVEUR, jamais rejoué après coup.
+ *
+ * Ne lève jamais.
+ */
+export async function lireOrganisationsDuWorkspace(
+	client: ClientCrm,
+): Promise<EtatAsync<readonly OrganisationChoisissable[]>> {
+	try {
+		const reponse = await client.from('organizations').select(COLONNES_ORGANISATION_CHOIX).order('name')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret((reponse.data ?? []) as unknown as readonly OrganisationChoisissable[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Une organisation telle que le sélecteur la propose : son nom, et l'identifiant à écrire. */
+export type OrganisationChoisissable = Pick<
+	Database['public']['Tables']['organizations']['Row'],
+	'id' | 'name'
+>
+
+/** Colonnes demandées par le sélecteur. Exportée pour que le test vérifie la requête émise. */
+export const COLONNES_ORGANISATION_CHOIX = 'id, name'

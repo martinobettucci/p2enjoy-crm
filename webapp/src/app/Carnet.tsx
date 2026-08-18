@@ -4,14 +4,21 @@
 //       §10.6 (contrat de comportement, cas a à g), §10.7 (limites nommées)
 // @spec docs/SPEC-contacts.md §11.6 (le nom d'organisation devient un lien vers sa fiche : la
 //       règle du §10.7 change par LIVRAISON, sa condition étant tombée), §11.9 cas i
+// @spec docs/SPEC-contacts.md §14 (sous-tranche 4e : la CRÉATION d'un contact) — §14.2 (où le
+//       geste s'ancre), §14.5 (contrat de comportement, cas a à l), §14.6 (l'écran ne calcule
+//       aucun droit), §14.7 (limites nommées)
 // @spec docs/DESIGN_SYSTEM.md §5.19 (cette surface, révisé), §5.20 (la fiche, destination du
 //       lien), §5.9 (tableau de données),
 //       §5.8 (états systématiques), §2 (données techniques), §12.6 (débordement signalé)
 //
-// UN ÉCRAN QUI LIT, ET RIEN D'AUTRE. La sous-tranche 4a ne livre aucun geste de création, de
-// modification ni de suppression : l'écriture est ouverte en base au `business_developer` depuis
-// la tranche 1, et aucun écran ne l'exerce encore. L'écart est NOMMÉ au §10.7, non compensé par
-// une commande morte.
+// UN ÉCRAN QUI LISAIT SEULEMENT, JUSQU'À LA SOUS-TRANCHE 4e. Le carnet porte désormais le geste
+// de CRÉATION (§14), et lui seul : ni modification, ni suppression, ni création d'organisation —
+// ces trois manques sont NOMMÉS au §14.7, non compensés par des commandes mortes.
+//
+// LE WORKSPACE COURANT EST LE PREMIER RENDU PAR `lireWorkspaces`, patron déjà porté par
+// `AdministrationCatalogue`, `AdministrationArborescence`, `AdministrationWorkflows` et le
+// `Header` : le produit n'a pas encore de sélecteur d'espace de travail, et en inventer un ici
+// poserait une surface que rien ne spécifie.
 //
 // L'écran ne calcule AUCUN droit (§10.4) : il rend ce que le backend consent. Un appelant sans
 // droit reçoit `200` et zéro ligne — mesuré —, ce qui est l'état vide ordinaire du §5.8 et non un
@@ -23,9 +30,16 @@ import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
-import { lireContactsDuCarnet, type ContactDuCarnet } from '../lib/contacts'
+import {
+	lireContactsDuCarnet,
+	lireOrganisationsDuWorkspace,
+	type ContactDuCarnet,
+	type OrganisationChoisissable,
+} from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useWorkspaces } from '../lib/workspaces'
 import { cheminOrganisation } from './chemins'
+import { FormulaireCreationContact } from './FormulaireCreationContact'
 
 /** Cellule ordinaire : une seule ligne de texte en ellipse, hauteur de cible (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[28ch]'
@@ -71,6 +85,48 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
+	// LE FORMULAIRE EST REPLIÉ PAR DÉFAUT (§14.2) : le carnet est d'abord une surface de lecture,
+	// et un formulaire toujours déplié pousserait le tableau sous la ligne de flottaison.
+	const [ouvert, setOuvert] = useState(false)
+	const [ajoutes, setAjoutes] = useState<readonly ContactDuCarnet[]>([])
+	const [organisations, setOrganisations] =
+		useState<EtatAsync<readonly OrganisationChoisissable[]>>(enChargement)
+	const [tentativeOrganisations, setTentativeOrganisations] = useState(0)
+	const commandeOuverture = useRef<HTMLButtonElement | null>(null)
+	const espaces = useWorkspaces(client)
+
+	// LA LISTE DES ORGANISATIONS N'EST LUE QUE SI LE FORMULAIRE EST OUVERT — même motif que le
+	// §13.4 : charger une liste pour un geste que la plupart des visites ne font pas serait une
+	// requête gratuite. Le carnet est une surface de lecture avant d'être une surface de saisie.
+	useEffect(() => {
+		if (client === null || !ouvert) return
+		let vivant = true
+		setOrganisations(enChargement())
+		void lireOrganisationsDuWorkspace(client).then((lues) => {
+			if (vivant) setOrganisations(lues)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, ouvert, tentativeOrganisations])
+
+	// LE FOCUS EST RENDU à la commande qui a ouvert le formulaire (§14.5 cas c).
+	const fermer = useCallback(() => {
+		setOuvert(false)
+		commandeOuverture.current?.focus()
+	}, [])
+
+	// LA LIGNE CRÉÉE REJOINT LE TABLEAU SANS RELIRE LA LISTE (§14.5 cas e) : PostgREST rend la
+	// ligne créée avec son organisation embarquée, et le tri est celui du serveur — `full_name`,
+	// avec la collation de la base, que `localeCompare('fr')` reproduit ici.
+	const surCree = useCallback(
+		(contact: ContactDuCarnet) => {
+			setAjoutes((precedents) => [...precedents, contact])
+			fermer()
+		},
+		[fermer],
+	)
+
 	if (client === null) {
 		return <EtatVide titre={t('contacts.noWorkspace.title')} corps={t('contacts.noWorkspace.body')} />
 	}
@@ -90,17 +146,52 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		)
 	}
 
-	const contacts = etat.donnees
+	// Les contacts créés dans cette visite REJOIGNENT leur place de tri, sans relecture (§14.5
+	// cas e). Le tri du serveur est `full_name` ; `localeCompare('fr')` le reproduit à l'écran.
+	const contacts = [...etat.donnees, ...ajoutes].sort((gauche, droite) =>
+		gauche.full_name.localeCompare(droite.full_name, 'fr'),
+	)
+	const idWorkspace = espaces.etat.statut === 'pret' ? (espaces.etat.donnees[0]?.id ?? null) : null
 
-	// L'état vide n'offre AUCUNE action, et c'est l'écart assumé au §5.8 — celui que le §5.16 a
-	// déjà pris pour la corbeille : le carnet ne livre aucun geste de création (§10.7), et un
-	// bouton vers nulle part serait une commande morte.
+	// LE GESTE DE CRÉATION — §14.2. Il vit entre le titre et le tableau, dans le FLUX du document,
+	// et il est le MÊME dans l'état vide : un carnet vide est précisément celui où l'on veut
+	// ajouter un contact. L'écart du §5.8 que la sous-tranche 4a assumait — « l'état vide n'offre
+	// aucune action » — tombe donc par LIVRAISON, sa condition (aucun geste de création) ayant
+	// cessé d'être vraie.
+	const geste =
+		idWorkspace === null ? null : ouvert ? (
+			<FormulaireCreationContact
+				client={client}
+				idWorkspace={idWorkspace}
+				organisations={organisations}
+				onRelireOrganisations={() => setTentativeOrganisations((precedente) => precedente + 1)}
+				onCree={surCree}
+				onFermer={fermer}
+			/>
+		) : (
+			<button
+				type="button"
+				ref={commandeOuverture}
+				data-testid="ouvrir-creation-contact"
+				className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
+				onClick={() => setOuvert(true)}
+			>
+				{t('contacts.creation.open')}
+			</button>
+		)
+
 	if (contacts.length === 0) {
-		return <EtatVide titre={t('contacts.empty.title')} corps={t('contacts.empty.body')} />
+		return (
+			<section aria-label={t('contacts.aria')} className="flex flex-col gap-4">
+				{geste}
+				<EtatVide titre={t('contacts.empty.title')} corps={t('contacts.empty.body')} />
+			</section>
+		)
 	}
 
 	return (
 		<section aria-label={t('contacts.aria')} className="flex flex-col gap-4">
+			{geste}
 			<div className="overflow-x-auto indique-debordement-x">
 				<table data-testid="tableau-contacts" className="w-full border-collapse text-left">
 					<caption className="sr-only">{t('contacts.table.aria')}</caption>

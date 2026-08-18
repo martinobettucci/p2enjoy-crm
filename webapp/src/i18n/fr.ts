@@ -170,6 +170,31 @@ export const fr = {
 	'contacts.noWorkspace.body':
 		'Connectez-vous à un espace de travail pour consulter son carnet de contacts.',
 
+	// --- Création d'un contact — CRM-060 tranche 4e, docs/SPEC-contacts.md §14 ----------
+	'contacts.creation.open': 'Nouveau contact',
+	'contacts.creation.title': 'Nouveau contact',
+	'contacts.creation.name': 'Nom',
+	'contacts.creation.organization': 'Organisation',
+	'contacts.creation.organization.none': 'Aucune organisation',
+	'contacts.creation.organization.loading': 'Chargement…',
+	'contacts.creation.organization.error': 'La liste des organisations n’a pas pu être lue.',
+	'contacts.creation.organization.retry': 'Relire la liste',
+	'contacts.creation.organization.empty':
+		'Aucune organisation n’existe encore dans cet espace de travail.',
+	'contacts.creation.role': 'Fonction',
+	'contacts.creation.email': 'Email',
+	'contacts.creation.phone': 'Téléphone',
+	'contacts.creation.submit': 'Créer le contact',
+	'contacts.creation.cancel': 'Annuler',
+	'contacts.creation.nameRequired': 'Le nom est obligatoire.',
+	'contacts.creation.refus.interdit':
+		'Votre rôle ne permet pas de créer un contact dans cet espace de travail.',
+	'contacts.creation.refus.doublon': 'Un contact porte déjà cette adresse email.',
+	'contacts.creation.refus.organisation':
+		'Cette organisation n’existe plus. Relisez la liste et choisissez-en une autre.',
+	'contacts.creation.refus.saisie': 'Une des valeurs saisies n’a pas la forme attendue.',
+	'contacts.creation.refus.indisponible': 'Le contact n’a pas pu être créé. Réessayez.',
+
 	// --- Fiche d'organisation — CRM-060 tranche 4b, docs/SPEC-contacts.md §11 -----------
 	'organization.route.title': 'Organisation',
 	'organization.aria': 'Fiche d’organisation',
