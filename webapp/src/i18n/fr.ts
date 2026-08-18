@@ -194,6 +194,44 @@ export const fr = {
 	'organization.noWorkspace.body':
 		'Connectez-vous à un espace de travail pour consulter ses organisations.',
 
+	// --- Contacts d'une affaire — CRM-060 tranche 4c, docs/SPEC-contacts.md §12 ----------
+	// Les refus forment un DICTIONNAIRE FERMÉ (§12.5) : le message du serveur n'atteint jamais
+	// l'écran. Le rôle d'un rattachement, lui, n'est PAS traduit — c'est une valeur métier libre
+	// que la base n'énumère pas (§2.3), au même titre qu'un libellé de track.
+	'cardContacts.title': 'Contacts de l’affaire',
+	'cardContacts.aria': 'Contacts rattachés à cette affaire',
+	'cardContacts.list.aria': 'Liste des contacts rattachés',
+	'cardContacts.empty': 'Aucun contact n’est rattaché à cette affaire.',
+	'cardContacts.error.body': 'Les contacts de l’affaire n’ont pas pu être chargés.',
+	'cardContacts.error.retry': 'Réessayer',
+	'cardContacts.attach.action': 'Rattacher un contact',
+	'cardContacts.attach.contact': 'Contact',
+	'cardContacts.attach.contactPlaceholder': 'Choisir un contact',
+	'cardContacts.attach.role': 'Rôle dans l’affaire (facultatif)',
+	'cardContacts.attach.roleHelp':
+		'Par exemple : décideur, prescripteur, technique. Laissez vide si le rôle n’est pas connu.',
+	'cardContacts.attach.submit': 'Rattacher',
+	'cardContacts.attach.cancel': 'Annuler',
+	'cardContacts.attach.pending': 'Rattachement…',
+	'cardContacts.attach.allAttached':
+		'Tous les contacts du carnet sont déjà rattachés à cette affaire.',
+	'cardContacts.attach.noContact':
+		'Cet espace de travail n’a encore aucun contact. Le carnet se remplira depuis une surface que le produit ne livre pas encore.',
+	'cardContacts.detach.action': 'Détacher',
+	'cardContacts.detach.confirm.title': 'Détacher {nom} de cette affaire ?',
+	'cardContacts.detach.confirm.body':
+		'Le rattachement et son rôle sont perdus. Le contact reste au carnet, et peut être rattaché de nouveau.',
+	'cardContacts.detach.confirm.action': 'Détacher',
+	'cardContacts.detach.cancel': 'Annuler',
+	'cardContacts.detach.pending': 'Détachement…',
+	'cardContacts.noeffect': 'Aucun rattachement n’a été retiré.',
+	'cardContacts.refus.alreadyAttached': 'Ce contact est déjà rattaché à cette affaire.',
+	'cardContacts.refus.unknownContact':
+		'Ce contact n’existe pas dans cet espace de travail. La liste affichée est peut-être périmée.',
+	'cardContacts.refus.forbidden': 'Vous ne pouvez pas modifier cette affaire.',
+	'cardContacts.refus.network': 'La requête n’a pas abouti. Vérifiez votre connexion, puis réessayez.',
+	'cardContacts.refus.unknown': 'Une erreur inattendue est survenue.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',

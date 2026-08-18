@@ -1,5 +1,6 @@
-// @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b :
-//       ce que le carnet de contacts lit, et ce que la fiche d'organisation lit
+// @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a, 4b
+//       et 4c : ce que le carnet lit, ce que la fiche d'organisation lit, et ce que le bloc des
+//       contacts d'une affaire lit ET ÉCRIT (le §12 porte ses propres commentaires plus bas)
 // @spec docs/SPEC-contacts.md §10.3 (la lecture du carnet, mesurée), §10.4 (l'écran ne calcule
 //       aucun droit), §10.7 (limites nommées : aucune pagination, aucun filtre)
 // @spec docs/SPEC-contacts.md §11.3 (la lecture de la fiche, mesurée), §11.4 (trois absences
@@ -232,5 +233,282 @@ export async function lireFicheOrganisation(
 		return pret({ ...premiere, contacts: premiere.contacts ?? [] })
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4c — LES CONTACTS D'UNE AFFAIRE (docs/SPEC-contacts.md §12)
+// ----------------------------------------------------------------------------------------------
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4c : le rattachement d'un contact à
+//       une affaire, PREMIÈRE ÉCRITURE de la tranche
+// @spec docs/SPEC-contacts.md §12.3 (la lecture, mesurée), §12.4 (les treize mesures
+//       d'autorisation), §12.5 (le dictionnaire fermé des refus), §12.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.21 (le bloc)
+//
+// CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit et écrit `card_contacts` sous la RLS posée
+// par la tranche 1 (migration 0045) : la lecture suit celle de la card (`app.can_read_card`),
+// l'écriture son droit d'écriture (`app.can_write_card`) — jamais un rôle de workspace.
+
+/**
+ * L'organisation d'un contact rattaché : son nom, et l'identifiant qui mène à sa fiche (§11).
+ *
+ * `domain` n'y figure pas, contrairement à `OrganisationDuContact` : la ligne du bloc n'affiche
+ * que le nom, et une requête ne rapporte que ce qui est affiché (§10.3).
+ */
+export type OrganisationDuContactRattache = Pick<
+	Database['public']['Tables']['organizations']['Row'],
+	'id' | 'name'
+>
+
+/**
+ * Un contact rattaché à une affaire, tel que le bloc l'affiche.
+ *
+ * `role` est celui du RATTACHEMENT — le rôle du contact **dans cette affaire** —, à ne pas
+ * confondre avec `role_title`, qui le qualifie dans son organisation. `role_title` n'est
+ * délibérément PAS demandé (§12.3) : les afficher tous deux sur une ligne ferait lire deux
+ * « rôles » contradictoires.
+ */
+export type ContactRattache = {
+	readonly contactId: string
+	readonly nom: string
+	readonly role: string | null
+	readonly organisation: OrganisationDuContactRattache | null
+}
+
+/**
+ * Colonnes réellement demandées par le bloc. Exportée pour que le test unitaire vérifie la
+ * requête émise.
+ *
+ * **L'EMBARQUEMENT TIENT SUR DEUX NIVEAUX**, et c'est mesuré (§12.3) : `card_contacts → contacts`
+ * puis `contacts → organizations`, sans aucune ambiguïté `PGRST201`, chaque clé étrangère restant
+ * unique dans son sens. Le §10.3 l'avait établi pour un niveau, le §11.3 pour l'autre sens.
+ */
+export const COLONNES_CONTACTS_AFFAIRE =
+	'contact_id, role, contacts(id, full_name, organization_id, organizations(id, name))'
+
+/**
+ * Tri des rattachements, demandé au serveur.
+ *
+ * **IL SE DEMANDE AU PREMIER NIVEAU, ET C'EST UN ÉCART MESURÉ AVEC LE §11.3.** La fiche
+ * d'organisation trie une relation **to-many** embarquée, que PostgREST n'accepte que par
+ * `referencedTable`. Ici la relation est **to-one** — un rattachement désigne un contact et un
+ * seul —, et `order=contacts(full_name)` est accepté : il trie les RATTACHEMENTS par le nom du
+ * contact qu'ils désignent. Vérifié dans les deux sens sur deux lignes : le tri **agit**.
+ */
+export const TRI_CONTACTS_AFFAIRE = 'contacts(full_name)'
+
+/** Forme brute rendue par PostgREST : la relation embarquée porte le nom de la table. */
+type LigneRattachementBrute = {
+	readonly contact_id: string
+	readonly role: string | null
+	readonly contacts:
+		| (Pick<Database['public']['Tables']['contacts']['Row'], 'id' | 'full_name'> & {
+				readonly organizations: OrganisationDuContactRattache | null
+		  })
+		| null
+}
+
+/**
+ * Les contacts rattachés à une affaire, dans l'ordre de leur nom.
+ *
+ * Une ligne dont le contact embarqué est absent est **écartée** plutôt que rendue sans nom : la FK
+ * composite l'interdit en base, et fabriquer une ligne anonyme afficherait une donnée que le
+ * modèle ne produit pas.
+ *
+ * Ne lève jamais : tout échec est rendu comme un état d'erreur classé sur le code HTTP réellement
+ * reçu, jamais sur le texte du message.
+ */
+export async function lireContactsDeLAffaire(
+	client: ClientCrm,
+	idCard: string,
+): Promise<EtatAsync<readonly ContactRattache[]>> {
+	try {
+		const reponse = await client
+			.from('card_contacts')
+			.select(COLONNES_CONTACTS_AFFAIRE)
+			.eq('card_id', idCard)
+			.order(TRI_CONTACTS_AFFAIRE)
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneRattachementBrute[]
+		const rattaches: ContactRattache[] = []
+		for (const ligne of lignes) {
+			if (ligne.contacts === null) continue
+			rattaches.push({
+				contactId: ligne.contact_id,
+				nom: ligne.contacts.full_name,
+				role: ligne.role,
+				organisation: ligne.contacts.organizations,
+			})
+		}
+		return pret(rattaches)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Les refus qu'un rattachement peut recevoir (§12.5).
+ *
+ * `deja-rattache` et `contact-inconnu` sont distingués parce qu'ils appellent des gestes
+ * OPPOSÉS : le premier dit « choisissez-en un autre », geste immédiat sur ce même écran ; le
+ * second dit que la liste affichée est périmée et qu'il faut la relire. Les confondre sous « une
+ * erreur est survenue » serait la valeur par défaut trompeuse de `CLAUDE.md` §18 — et le code HTTP
+ * ne les sépare pas, les DEUX rendant `409` (mesures 7 et 8 du §12.4).
+ */
+export type NatureRefusRattachement =
+	| 'deja-rattache'
+	| 'contact-inconnu'
+	| 'forbidden'
+	| 'network'
+	| 'unknown'
+
+export type RefusRattachement = {
+	readonly nature: NatureRefusRattachement
+	readonly detail: string
+}
+
+/** Violation d'unicité : la clé primaire `(card_id, contact_id)` est déjà prise. MESURÉ. */
+export const CODE_DOUBLON = '23505'
+/** Violation de clé étrangère : le contact n'existe pas dans ce workspace. MESURÉ. */
+export const CODE_CONTACT_INCONNU = '23503'
+
+/**
+ * Classe un refus sur le CODE PostgreSQL d'abord, le code HTTP ensuite — la règle de
+ * `classerRefusRestauration` (`corbeille.ts`), reprise sans exception.
+ *
+ * **L'ORDRE COMPTE, et il est mesuré** : `23505` et `23503` rendent tous deux `409`, et un
+ * classement qui commencerait par le statut les confondrait.
+ */
+export function classerRefusRattachement(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusRattachement {
+	if (code === CODE_DOUBLON) return { nature: 'deja-rattache', detail }
+	if (code === CODE_CONTACT_INCONNU) return { nature: 'contact-inconnu', detail }
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'forbidden', detail }
+	if (statutHttp === undefined || statutHttp === 0) return { nature: 'network', detail }
+	return { nature: 'unknown', detail }
+}
+
+/** Les deux issues d'un rattachement : PostgREST rend `201` et la ligne, ou refuse (§12.4). */
+export type ResultatRattachement =
+	| { readonly statut: 'appliquee' }
+	| { readonly statut: 'refus'; readonly refus: RefusRattachement }
+
+/**
+ * Rattache un contact à une affaire, avec un rôle facultatif.
+ *
+ * **UN RÔLE VIDE VAUT `null`, JAMAIS `""`**, et c'est mesuré : la contrainte
+ * `card_contacts_role_check` refuse la chaîne vide par `400` / `23514` (mesure 10 du §12.4).
+ * Ce n'est PAS une garde de saisie doublant la base au sens du §5.3 ter du design system — la base
+ * refuserait `''` —, c'est le choix de la valeur qui exprime « pas de rôle ». Le rôle est sinon
+ * libre : ni contraint, ni normalisé, ni traduit (§2.3).
+ *
+ * `workspace_id` est TRANSMIS et non deviné : il vient de la card déjà chargée par l'écran, comme
+ * les trois identifiants du formulaire (§4 bis.4 du composeur). La FK composite l'exige, et le
+ * relire serait une requête pour une donnée en main.
+ *
+ * L'ÉCRAN N'ANTICIPE RIEN : il envoie, puis traduit ce qu'il reçoit. Décider d'avance qu'un
+ * rattachement est impossible ferait porter à l'interface une garde qui vit dans la base
+ * (`CLAUDE.md` §10).
+ */
+export async function rattacherContact(
+	client: ClientCrm,
+	rattachement: {
+		readonly idWorkspace: string
+		readonly idCard: string
+		readonly idContact: string
+		readonly role: string
+	},
+): Promise<ResultatRattachement> {
+	const roleNettoye = rattachement.role.trim()
+	try {
+		const reponse = await client.from('card_contacts').insert({
+			workspace_id: rattachement.idWorkspace,
+			card_id: rattachement.idCard,
+			contact_id: rattachement.idContact,
+			role: roleNettoye === '' ? null : roleNettoye,
+		})
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusRattachement(
+					reponse.status,
+					reponse.error.code,
+					reponse.error.message,
+				),
+			}
+		}
+		return { statut: 'appliquee' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusRattachement(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
+
+/**
+ * Les TROIS issues d'un détachement (§12.4, conséquence 1).
+ *
+ * `sans-effet` n'est NI un succès NI une erreur, et c'est MESURÉ : la clause `USING` de
+ * `card_contacts_suppression` filtre la ligne **avant** de supprimer, et PostgREST rend `200` et
+ * zéro ligne. La lectrice qui détache un rattachement existant de `…0c4` reçoit `200` et `[]`, la
+ * ligne relue **inchangée** — indistinguable d'une ligne déjà retirée par un tiers, et c'est
+ * assumé (`docs/SPEC-permissions-rls.md` §7).
+ */
+export type ResultatDetachement =
+	| { readonly statut: 'appliquee' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusRattachement }
+
+/**
+ * Détache un contact d'une affaire.
+ *
+ * `select('contact_id')` accompagne la suppression précisément pour que « zéro ligne touchée »
+ * existe comme réponse : sans lui, PostgREST ne rend aucun corps et le refus silencieux de la
+ * politique serait indistinguable d'un succès (patron de `mettreCardALaCorbeille`).
+ */
+export async function detacherContact(
+	client: ClientCrm,
+	idCard: string,
+	idContact: string,
+): Promise<ResultatDetachement> {
+	try {
+		const reponse = await client
+			.from('card_contacts')
+			.delete()
+			.eq('card_id', idCard)
+			.eq('contact_id', idContact)
+			.select('contact_id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusRattachement(
+					reponse.status,
+					reponse.error.code,
+					reponse.error.message,
+				),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'appliquee' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusRattachement(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
 	}
 }

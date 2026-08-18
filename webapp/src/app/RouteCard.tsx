@@ -1,6 +1,9 @@
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche, en haut de la colonne gauche
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit, et pourquoi au-dessus du formulaire)
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4c : le bloc des contacts de l'affaire
+// @spec docs/SPEC-contacts.md §12.2 (le bloc vit dans la colonne gauche, entre le formulaire et le
+//       geste de corbeille) ; docs/DESIGN_SYSTEM.md §5.21
 // @spec CRM-043 (docs/BACKLOG.md) — colonne de droite : le panneau de commentaires
 // @spec CRM-077 (docs/BACKLOG.md) — huitième tranche : le GESTE de mise à la corbeille d'une affaire
 // @spec docs/SPEC-corbeille.md §4 ter.1 (où le geste vit, et les deux surfaces écartées),
@@ -67,6 +70,7 @@ import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
+import { BlocContactsCard } from './BlocContactsCard'
 import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
@@ -234,6 +238,17 @@ function ContenuCard({
 					modele={etat.donnees.modele}
 					idCard={etat.donnees.card.id}
 					idWorkflow={etat.donnees.card.workflow_id}
+					idWorkspace={etat.donnees.card.workspace_id}
+				/>
+				{/* LES CONTACTS DE L'AFFAIRE — CRM-060 sous-tranche 4c, docs/SPEC-contacts.md §12.2.
+				    Ils vivent ENTRE le formulaire et le bloc de corbeille, et les deux bornes sont déjà
+				    écrites au §5.3 : la colonne DROITE raconte et n'accueille aucun geste, et le retrait
+				    reste EN BAS « parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche ». Les
+				    contacts d'une affaire appartiennent à son dossier, donc ils se lisent avec lui.
+				    Les deux identifiants viennent de la card DÉJÀ chargée : la FK composite exige le
+				    workspace, et le relire serait une requête pour une donnée en main (§4 bis.4). */}
+				<BlocContactsCard
+					idCard={etat.donnees.card.id}
 					idWorkspace={etat.donnees.card.workspace_id}
 				/>
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
