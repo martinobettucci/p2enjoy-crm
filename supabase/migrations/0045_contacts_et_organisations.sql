@@ -126,8 +126,13 @@ create table if not exists public.contacts (
 	created_at      timestamptz not null default now(),
 	updated_at      timestamptz not null default now(),
 	unique (id, workspace_id),
+	-- `ON DELETE SET NULL (organization_id)` cible EXPLICITEMENT la colonne à annuler : sans
+	-- cela, PostgreSQL annule les deux colonnes de la clé composite, ce qui violerait
+	-- `contacts.workspace_id NOT NULL`. Mesuré : sans cette liste, la suppression d'une
+	-- organisation rejette la ligne avec `23502 null value in column "workspace_id"`.
 	foreign key (organization_id, workspace_id)
-		references public.organizations (id, workspace_id) on delete set null
+		references public.organizations (id, workspace_id)
+		on delete set null (organization_id)
 );
 
 -- --- 2.1 Contraintes de valeur ----------------------------------------------------------------
