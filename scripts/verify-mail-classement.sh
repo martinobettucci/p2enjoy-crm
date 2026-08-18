@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # @verifies CRM-055 (docs/BACKLOG.md) — Definition of Done du classement assisté
-# @verifies docs/SPEC-mail-subsystem.md §4.4 (les quatre règles), §16.1 (la règle 3 désactivée),
-#           §16.2 (forme ET domaine, card fermée), §16.3 (classement manuel), §16.4 (preuves)
+# @verifies CRM-060 tranche 2 (docs/BACKLOG.md) — activation de la règle 3 du classement
+# @verifies docs/SPEC-mail-subsystem.md §4.4 (les quatre règles), §16.2 (forme ET domaine, card
+#           fermée, la règle 3), §16.3 (classement manuel), §16.4 (preuves)
+# @verifies docs/SPEC-contacts.md §8 (la suggestion par expéditeur connu)
 # @verifies docs/JOURNAL.md décision 322 ; CLAUDE.md §10
 #
 # ---------------------------------------------------------------------------------------------
@@ -10,18 +12,18 @@
 #   1. les fichiers livrés portent leur traçabilité ;
 #   2. le vocabulaire de la timeline compte ONZE types, et `mail_received` en fait partie ;
 #   3. le classement automatique n'est PAS offert au client, le manuel l'est ;
-#   4. la règle 3 est désactivée, et son absence est FIGÉE par une assertion ;
-#   5. les preuves dédiées sont vertes : pgTAP, API, `mail` avec un vrai message adressé à une card ;
+#   4. la règle 3 est ACTIVE : un expéditeur contact à exactement une card active reçoit une
+#      SUGGESTION, sans être classé — avec son témoin (un inconnu ne suggère rien) ;
+#   5. les preuves dédiées sont vertes : pgTAP (0027 et 0044), API, `mail` ;
 #   6. le harnais est NON COMPLAISANT, témoin compris.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
 # ---------------------------------------------------------------------------------------------
-# LA RÈGLE 3 N'EST PAS LIVRÉE : elle suppose des contacts (`CRM-060`). Elle ne classe pas, elle
-# suggère, et une suggestion fondée sur rien serait pire qu'aucune suggestion. Le harnais échoue
-# le jour où une table de contacts naîtra sans que la règle soit écrite.
+# LA SUGGESTION DE LA RÈGLE 3 N'A PAS D'ÉCRAN : l'inbox qui la montrerait est due par `CRM-057`.
+# Le harnais prouve la RÈGLE en base ; la preuve visible attend l'écran.
 #
-# AUCUN ÉCRAN (`CRM-057`), et aucun déclassement : rien dans le §4.4 ne le décrit.
+# AUCUN DÉCLASSEMENT : rien dans le §4.4 ne le décrit.
 #
 # Usage :
 #   scripts/verify-mail-classement.sh
@@ -35,6 +37,7 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0025_classement_messages.sql
 TEST_SQL=supabase/tests/0027_classement_messages.test.sql
+TEST_SQL_R3=supabase/tests/0044_regle3_suggestion.test.sql
 SPEC_API=e2e/api/classement.spec.ts
 SPEC_MAIL=e2e/mail/ingestion.spec.ts
 DB_CONTAINER=p2enjoy-db
@@ -117,12 +120,50 @@ else
 	fail "classify_message n'est pas appelable : la Definition of Done l'exige"
 fi
 
-# LA RÈGLE 3 EST DÉSACTIVÉE, ET SON ABSENCE EST FIGÉE — non commentée. Cette garde doit devenir
-# rouge le jour où une table de contacts naîtra sans que la règle soit écrite.
-if [ "$(psql_db -c "select (to_regclass('public.contacts') is null and to_regclass('public.card_contacts') is null)")" = t ]; then
-	ok "RÈGLE 3 non satisfaisable : aucune table de contacts — l'absence est figée, pas commentée"
+# LA RÈGLE 3 EST ACTIVE (CRM-060 tranche 2). Elle ne classe pas, elle SUGGÈRE : un expéditeur
+# contact rattaché à EXACTEMENT une card active reçoit sa card en `suggested_card_id`, le message
+# restant non classé. On l'éprouve sur la donnée du seed — Léo Marchand, une seule card active
+# …00c2 — DANS UNE TRANSACTION ROULÉE EN ARRIÈRE, avec son témoin : un expéditeur inconnu ne
+# suggère rien. Sans le témoin, une règle qui suggérerait TOUJOURS passerait pour juste.
+VERDICT_R3="$(psql_db <<'SQL' | grep '|'
+begin;
+insert into public.mail_messages (id, workspace_id, rfc822_message_id, from_address)
+values ('cccc0000-0000-4000-8000-000000000001','5eed0000-0000-4000-8000-000000000001',
+        '<harnais-r3-leo>','leo.marchand@sogexia.example');
+select public.classer_message_automatiquement('cccc0000-0000-4000-8000-000000000001', null, null);
+insert into public.mail_messages (id, workspace_id, rfc822_message_id, from_address)
+values ('cccc0000-0000-4000-8000-000000000002','5eed0000-0000-4000-8000-000000000001',
+        '<harnais-r3-inconnu>','personne@nulle-part.test');
+select public.classer_message_automatiquement('cccc0000-0000-4000-8000-000000000002', null, null);
+select coalesce((select suggested_card_id::text from public.mail_messages
+                  where id='cccc0000-0000-4000-8000-000000000001'), 'AUCUNE')
+    || '|' || coalesce((select suggested_card_id::text from public.mail_messages
+                  where id='cccc0000-0000-4000-8000-000000000002'), 'AUCUNE')
+    || '|' || (select classification from public.mail_messages
+                  where id='cccc0000-0000-4000-8000-000000000001');
+rollback;
+SQL
+)"
+R3_SUGGERE="$(printf '%s' "$VERDICT_R3" | cut -d'|' -f1)"
+R3_TEMOIN="$(printf '%s' "$VERDICT_R3" | cut -d'|' -f2)"
+R3_CLASSE="$(printf '%s' "$VERDICT_R3" | cut -d'|' -f3)"
+
+if [ "$R3_SUGGERE" = "5eed0000-0000-4000-8000-0000000000c2" ]; then
+	ok "RÈGLE 3 active : un expéditeur contact à une seule card active est SUGGÉRÉ vers elle"
 else
-	fail "une table de contacts existe : la règle 3 doit être écrite, ou l'unité rouverte"
+	fail "RÈGLE 3 muette : Léo aurait dû être suggéré vers …00c2, obtenu « $R3_SUGGERE »"
+fi
+
+if [ "$R3_CLASSE" = "unclassified" ]; then
+	ok "RÈGLE 3 SUGGÈRE sans classer : le message reste non classé"
+else
+	fail "RÈGLE 3 a CLASSÉ au lieu de suggérer : classification « $R3_CLASSE »"
+fi
+
+if [ "$R3_TEMOIN" = "AUCUNE" ]; then
+	ok "témoin : un expéditeur inconnu ne suggère rien — la règle ne suggère pas à tort"
+else
+	fail "témoin ROUGE : un inconnu a reçu une suggestion « $R3_TEMOIN »"
 fi
 
 titre "3. Le classement ne s'invente pas"
@@ -151,7 +192,7 @@ if [ "$RAPIDE" = false ]; then
 	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/pgtap.log" 2>&1; then
 		assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap.log" | head -1 | grep -oE '[0-9]+')
 		if [ "${assertions:-0}" -eq 20 ]; then
-			ok "suite pgTAP dédiée — 20 assertions"
+			ok "suite pgTAP du classement (0027) — 20 assertions"
 		else
 			fail "suite pgTAP verte mais ${assertions:-0} assertions au lieu de 20"
 		fi
@@ -159,13 +200,24 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la suite pgTAP ÉCHOUE" "$TRAVAIL/pgtap.log"
 	fi
 
+	if npm run test:sql -- "$TEST_SQL_R3" >"$TRAVAIL/pgtap-r3.log" 2>&1; then
+		assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap-r3.log" | head -1 | grep -oE '[0-9]+')
+		if [ "${assertions:-0}" -eq 21 ]; then
+			ok "suite pgTAP de la règle 3 (0044) — 21 assertions, cas a à h"
+		else
+			fail "suite pgTAP de la règle 3 verte mais ${assertions:-0} assertions au lieu de 21"
+		fi
+	else
+		fail_journal "la suite pgTAP de la règle 3 ÉCHOUE" "$TRAVAIL/pgtap-r3.log"
+	fi
+
 	if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 		"$SPEC_API" >"$TRAVAIL/api.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/api.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 3 ]; then
-			ok "preuve d'API dédiée — 3 scénarios, dont le refus opposé au viewer"
+		if [ "${passes:-0}" -eq 5 ]; then
+			ok "preuve d'API dédiée — 5 scénarios, dont le refus au viewer et la suggestion règle 3"
 		else
-			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 3"
+			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 5"
 		fi
 	else
 		fail_journal "la preuve d'API ÉCHOUE" "$TRAVAIL/api.log"
