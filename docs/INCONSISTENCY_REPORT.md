@@ -272,10 +272,32 @@ donc citées par aucun test unitaire :
   `CRM-004`. Leurs preuves existent — harnais `verify-stack.sh`, `verify-scripts.sh`, suites d'API —
   mais ce sont des preuves d'intégration, pas des tests unitaires.
 
+**CORRECTION DU MÊME JOUR — J'AI SURESTIMÉ L'ÉCART, ET IL FAUT LE DIRE AVANT LA SUITE.** La mesure
+ci-dessus ne comptait que **trois** familles de tests. Elle ignorait la quatrième, et c'est la
+principale du projet : les **51 harnais** `scripts/verify-*.sh`, dont les `@verifies` couvrent
+**51 unités** — `scripts/verify-auth.sh` cite nommément `CRM-011` et porte **42** occurrences de
+l'invitation, exactement la preuve que sa Definition of Done exige dans Inbucket.
+
+**Mesure refaite, toutes familles confondues** — Vitest, pgTAP, pytest, harnais et suites E2E :
+**trois** unités seulement ne sont couvertes par aucune preuve, et les trois ne livrent aucun code —
+`CRM-000` (socle documentaire), `CRM-070` (note d'arbitrage), `CRM-080` (non commencée).
+
+**Ce qui subsiste, et qui est plus étroit que ce que j'avais écrit.** Il n'y a **pas** de trou de
+couverture. La question qui demeure porte sur la **NATURE** de la preuve, non sur son absence :
+`CLAUDE.md` §15 demande un test *unitaire*, et huit unités porteuses de code — `CRM-001`, `CRM-002`,
+`CRM-004`, `CRM-006`, `CRM-008`, `CRM-015`, `CRM-016`, `CRM-050` — sont prouvées par des harnais,
+c'est-à-dire par de l'**intégration**. Leur contrat est vérifié ; il ne l'est pas à l'échelle
+demandée par le §15.
+
+*Le titre de cette entrée est conservé tel qu'il a été écrit, et non réécrit après coup : il dit ce
+que j'avais mesuré, et cette correction dit ce que j'avais manqué. C'est la même discipline que
+j'applique aux assertions du dépôt — réviser, jamais effacer.*
+
 **Ce que je NE tranche PAS, et pourquoi.** Deux lectures se défendent. Ou bien §15 vaut pour toute
-unité sans exception, et huit unités `[x]` doivent être rouvertes pour recevoir leurs tests
-unitaires. Ou bien l'exigence vise le code **testable unitairement** et une unité d'infrastructure
-la satisfait par son harnais. **Trancher moi-même reviendrait à réduire ou à durcir une exigence du
+unité sans exception, et les huit unités `[x]` porteuses de code doivent être rouvertes pour
+recevoir des tests unitaires en plus de leurs harnais. Ou bien l'exigence vise le code **testable
+unitairement**, et une unité d'infrastructure — un script de lancement, une pile Compose, un
+gabarit d'email — la satisfait par le harnais qui l'éprouve réellement. **Trancher moi-même reviendrait à réduire ou à durcir une exigence du
 responsable**, ce que ni le §26 ni le §27 ne m'autorisent. **Arbitrage demandé.**
 
 **Ce que je me refuse à faire en attendant.** Écrire des tests unitaires de complaisance pour faire
