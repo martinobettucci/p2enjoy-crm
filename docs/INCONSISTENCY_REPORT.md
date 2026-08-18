@@ -346,6 +346,25 @@ dépôt ont été relues. Sur trois qui reposent sur un code PostgREST :
   correspondante ». *Reste dû* : l'appeler avec sa signature réelle, pour qu'une exposition
   accidentelle la fasse rougir.
 
+**QUATRE SITES DE PLUS, DE MÊME FORME, ET LA MESURE DE LEUR GRAVITÉ.** Le motif
+« `POST /rpc/<fonction>` avec `data: {}`, puis assertion sur un ensemble contenant `404` » se
+retrouve à `e2e/api/envoi.spec.ts:158`, `e2e/api/comptes-entrants.spec.ts:168` et `:193`,
+`e2e/api/identites-sortantes.spec.ts:144` et `e2e/api/classement.spec.ts:177`. Toutes ces fonctions
+prennent des paramètres : l'appel à vide rend `PGRST202` pour **tout** appelant, autorisé ou non.
+Ces assertions ne distinguent donc pas « fermée au client » de « signature non correspondante ».
+
+**Elles ne sont pourtant PAS les preuves porteuses, et c'est vérifié.** La règle réelle est un
+privilège, et il est prouvé dans le catalogue : `supabase/tests/` compte **50 assertions
+`has_function_privilege`** réparties sur **22 fichiers**, dont
+`not has_function_privilege('authenticated', 'public.reserver_envois(integer)', 'execute')` et son
+équivalent pour `marquer_envoi_reussi`. `classer_message`, `upsert_mail_inbound_account` et
+`upsert_mail_outbound_identity` sont couvertes de même. **Les règles sont donc tenues et prouvées ;
+ce sont les doublures d'API qui sont creuses.** La distinction est faite ici pour qu'une lecture
+rapide ne conclue pas à un trou d'autorisation là où il n'y en a pas.
+
+*Reste dû, sans urgence de sécurité :* appeler ces RPC avec leur signature réelle, pour que
+l'assertion puisse échouer pour la raison qu'elle nomme.
+
 **Un négatif mesuré au passage.** Les **132** assertions pgTAP `has_*`/`hasnt_*` interrogent le
 catalogue directement et ne souffrent pas de ce défaut : leur succès dépend de la présence de
 l'objet et de rien d'autre.
