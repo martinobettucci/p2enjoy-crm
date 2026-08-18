@@ -18311,3 +18311,22 @@ c'est l'accusation fausse qu'INC-145 reproche déjà au contrôle des ports, et 
 que `docs/CloudWorker.md` §2.4 cite en exemple. Le contrôle est donc **déclaré non exécutable**, avec
 son motif, sous `root` seulement, et reste pleinement exercé sous un compte ordinaire. La garde du
 produit n'est pas touchée.
+
+**Mesures du rejeu, et ce qu'elles établissent.** Sous la seule correction du `unset` — le harnais
+étant volontairement lancé depuis un shell exportant `NPM_CA_FILE`, c'est-à-dire dans la condition
+même qui le mettait en défaut — le bilan passe de **104 vérifications, 8 anomalies** à **104
+vérifications, 2 anomalies**. Les six contrôles récupérés incluent celui de `resetMe.sh`, qui prouve
+de nouveau le refus **avant** destruction au lieu de provoquer la destruction. Les deux restantes
+sont celles décrites ci-dessus : le fichier illisible sous `root`, corrigé par la déclaration
+d'inexécutabilité, et la reconstruction sans CA.
+
+**La reconstruction sans CA, cause exacte.** Elle n'est pas déduite : mesurée depuis l'image
+construite, `cafile` valant `null` — l'état exact de la branche inerte —, l'accès au registre rend
+
+```
+npm error code SELF_SIGNED_CERT_IN_CHAIN
+npm error request to https://registry.npmjs.org/react failed, reason: self-signed certificate in certificate chain
+```
+
+C'est le proxy TLS interposé de l'hôte, et rien d'autre : la même reconstruction **avec** le CA
+réussit dans le même rejeu. Le contrôle est juste et reste inchangé.
