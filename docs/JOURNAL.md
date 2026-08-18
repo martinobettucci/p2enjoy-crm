@@ -18188,7 +18188,19 @@ de la preuve ne suffit pas, il faut vérifier la prémisse de la **mesure**. J'a
 impossibilité d'une observation voisine — Docker est tombé, donc plus rien ne tourne — au lieu de la
 mesurer. Une commande de dix secondes la démentait.
 
-**Conséquence pratique, à retenir pour toute panne future.** Trois familles de preuves survivent à
-l'arrêt de Docker : **Vitest** (1488 tests), **pytest** (242 tests) et **le typecheck et le build**.
-Seules pgTAP, les suites d'API et les suites E2E exigent la pile. Le disparaître de Docker retire
+**Conséquence pratique, à retenir pour toute panne future.** Quatre familles de preuves survivent à
+l'arrêt de Docker : **Vitest** (1488 tests), **pytest** (242 tests), **le typecheck et le build**, et
+**le dénombrement des scénarios** — `playwright test --list` en énumère 1088 dans 82 fichiers sans
+en exécuter un seul, ce qui suffit à confirmer les trois compteurs du harnais.
+
+**Et un négatif, mesuré lui aussi plutôt que supposé.** J'ai cherché si les suites d'interface
+*entièrement substituées* — huit fichiers qui posent des `page.route()` et n'emploient aucun jeton
+réel — pouvaient tourner sans la pile. Le navigateur épinglé est présent, l'application se
+**construit et se sert** sans Docker, et les scénarios **s'exécutent réellement**. Ils échouent
+pourtant, et pour une raison juste : la garde de console de `e2e/ui/fixtures.ts` refuse le moindre
+`warning` ou `pageerror`, et l'application en émet **quatre** en échouant à joindre Kong, absent.
+La substitution ne couvre que les routes nommées ; tout le reste part vers un backend qui n'est pas
+là. **Les suites d'interface exigent donc bien la pile**, et ce n'est pas une déduction.
+
+Seules pgTAP, les suites d'API et les suites E2E exigent la pile. La disparition de Docker retire
 **moins** de la moitié de la couverture, et non sa totalité.
