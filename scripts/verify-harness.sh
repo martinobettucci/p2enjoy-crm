@@ -528,7 +528,16 @@ SCENARIOS_API=704
 # carnet, le clavier seul l'atteint), les **quatre paliers** du §7, et l'état vide anonyme. Le
 # fichier porte le total des fichiers de 29 à **30**. Valeur MESURÉE par l'énumération du contrôle
 # « 2 bis » — 379 énumérés — puis par l'exécution de la suite, 9/9 verts.
-SCENARIOS_UI=379
+#
+# Porté de 379 à **390** par `CRM-060` sous-tranche 4b, qui livre la fiche d'organisation
+# (`docs/SPEC-contacts.md` §11) : `e2e/ui/contacts.spec.ts` gagne **onze** scénarios — sept de
+# parcours (le carnet mène à la fiche, l'organisation sans domaine ni site, celle sans contact,
+# l'identifiant inconnu et le mal formé rendant le même écran, le clavier, la lectrice, l'appelant
+# anonyme) et les **quatre paliers** du §7. Le nombre de FICHIERS est inchangé, à 30 : les
+# scénarios rejoignent un fichier existant. Valeur MESURÉE par `playwright test --list`
+# (« Total: 390 tests in 30 files »), puis par l'exécution de la suite complète, **390 verts,
+# aucun échec**.
+SCENARIOS_UI=390
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
