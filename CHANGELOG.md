@@ -114,7 +114,11 @@ d'exécuter le code attendu.
   prouver que `resetMe.sh` refuse **avant toute destruction**, provoquait la destruction réelle du
   cluster. La variable est désormais neutralisée une fois en tête du harnais ; les trois contrôles
   qui éprouvent la priorité du shell la posent eux-mêmes sur leur ligne de commande, et aucune
-  couverture n'est perdue.
+  couverture n'est perdue. Dans la foulée, le refus d'un fichier **illisible** est **déclaré non
+  exécutable** lorsque le harnais tourne sous `root` — `chmod 000` n'oppose rien à `root` et la
+  lecture aboutit, si bien que la prémisse du contrôle ne peut pas être fabriquée ; il reste
+  pleinement exercé sous un compte ordinaire. Mesuré depuis un shell exportant la variable : le
+  bilan passe de **8 anomalies** à **1**.
 
 - **La pile redémarre de nouveau sur une base contenant du courrier ou du sommeil** (INC-144,
   `docs/JOURNAL.md` décision 431). Le `migrations-runner` rejoue tout le répertoire à chaque

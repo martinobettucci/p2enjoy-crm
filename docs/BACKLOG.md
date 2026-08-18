@@ -163,7 +163,16 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       verdicts en dépendaient — dont celui de `resetMe.sh`, qui **détruisait réellement le cluster**
       au lieu de prouver qu'aucune destruction n'a lieu. La variable est neutralisée une fois en
       tête du harnais ; les trois contrôles qui éprouvent la priorité du shell la posent eux-mêmes.
-      MESURÉ, harnais lancé depuis un shell l'exportant : **de 8 anomalies à 2**.
+      MESURÉ, harnais lancé depuis un shell l'exportant : **de 8 anomalies à 1**, verdict final
+      **103 vérifications, 1 anomalie, 1 contrôle déclaré non exécutable** — ce dernier étant le
+      refus d'un fichier illisible, dont la prémisse n'existe pas sous `root` (`chmod 000` ne lui
+      oppose rien, MESURÉ), déclaré avec son motif plutôt que rendu faussement rouge.
+      **Un effet de bord destructeur disparaît avec la fuite** : `runDev.sh` allait jusqu'au
+      `docker compose up` avec le fichier d'environnement de travail du harnais, laissant le cluster
+      amorcé avec des secrets que le `.env` du dépôt ignore — `p2enjoy-auth` bouclait alors sur
+      `password authentication failed for user "supabase_auth_admin"`. Réparé par `./resetMe.sh
+      --yes`, `./runDev.sh` et le seed ; `scripts/verify-stack.sh` **54 vérifications, aucune
+      anomalie**. Les deuxième et troisième rejeus, sous la correction, ne le reproduisent plus.
 - [x] **Gardes d'hôte** livrées et prouvées après échec réel de `./runDev.sh` sur un poste WSL
       (`docs/JOURNAL.md`, décisions 98 à 101) : magasin d'identifiants Docker écarté lorsqu'il
       délègue à un binaire Windows, ports occupés refusés **avant** démarrage en nommant la
