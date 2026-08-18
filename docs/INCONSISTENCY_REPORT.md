@@ -484,9 +484,17 @@ politique », puisque l'objet vient d'être déposé et qu'un autre est lisible 
    n'est servi à personne », ce qui est exactement ce qu'il fait. Un contrôle d'ingestion, pas une
    preuve d'autorisation.
 
-**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `bash -n` et `npm run typecheck` sont **verts**.
-**Rien n'a été exécuté** : le poste Docker est tombé. La première exécution après son retour doit
-confirmer que le libellé visé par le harnais est bien celui que Playwright imprime.
+**UNE CORRECTION DE MA CORRECTION, le même jour.** Le contrôle exécutait d'abord le fichier
+**entier** — neuf scénarios — et échouait si l'un d'eux tombait. Un échec sans rapport avec les
+pièces jointes aurait donc été rendu « la preuve n° 9 n'est pas exercée » : exactement l'accusation
+fausse que ce registre reproche au contrôle des ports en INC-145. La portée est resserrée par un
+filtre `-g`, et le verdict ne peut plus parler que du scénario visé.
+
+**CE QUI EST VÉRIFIÉ, ET CE QUI NE L'EST PAS.** `bash -n` et `npm run typecheck` sont **verts**. Le
+filtre a été éprouvé sans Docker : `--list` avec `-g 'se télécharge'` sélectionne **exactement un
+test**, celui de la preuve — le libellé visé par le harnais est donc bien celui que Playwright
+imprime, et cette moitié du doute est levée. **L'EXÉCUTION du scénario, elle, n'a pas eu lieu** : le
+poste Docker est tombé, et la première exécution après son retour doit la confirmer.
 
 **Troisième occurrence de la même famille.** INC-146 en décrit deux — une assertion d'absence qui
 lit un `PGRST202` de signature non correspondante, et une seconde de même forme. Le motif commun est

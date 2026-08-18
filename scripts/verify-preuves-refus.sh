@@ -210,8 +210,14 @@ fi
 # La douzième — la n° 9 — est exercée dans le fichier d'ingestion sous le titre `REFUS N° 9`. Le
 # contrôle EXÉCUTE ce fichier au lieu d'y lire le titre : une preuve peut être écrite et ne jamais
 # tourner, et c'est précisément ce que ce harnais existe pour dénoncer.
+# PORTÉE RESSERRÉE le 2026-08-18, ET C'EST UNE CORRECTION DE MA PROPRE CORRECTION. Ce contrôle
+# exécutait le fichier ENTIER — neuf scénarios — et échouait si l'un d'eux tombait. Un échec sans
+# rapport avec les pièces jointes aurait donc été rendu « la preuve n° 9 n'est pas exercée » :
+# l'accusation fausse que ce harnais reproche ailleurs (INC-145, contrôle des ports). Le filtre
+# `-g` restreint l'exécution au SEUL scénario qui porte la preuve, si bien que le verdict ne peut
+# plus parler que de lui.
 sortie_preuve_9=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts \
-	--project=api "$SPEC_PREUVE_9" 2>&1 || true)
+	--project=api "$SPEC_PREUVE_9" -g 'se télécharge' 2>&1 || true)
 if printf '%s\n' "$sortie_preuve_9" | grep -qE "clean.*se télécharge" &&
 	! printf '%s\n' "$sortie_preuve_9" | grep -qE "^ *[1-9][0-9]* failed"; then
 	# LIBELLÉ CORRIGÉ LE 2026-08-18, ET IL DISAIT PLUS QUE CE QU'IL MESURAIT (INC-147).
