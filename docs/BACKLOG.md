@@ -3566,10 +3566,14 @@ n'invalidant pas l'existant).
       anonyme, qui ne voit déjà aucune card, donc aucune vérification visuelle n'a de sens » —
       **tombe avec sa prémisse** : un utilisateur connecté voit les cards et leurs formulaires.
 - [ ] **`user` et `contact` ne sont pas résolus** : leur valeur est validée comme un `uuid`, et rien
-      de plus. `contacts` n'existe pas (`CRM-060`), et résoudre `user` seul rendrait la famille
-      incohérente tout en posant une règle d'appartenance que nul document n'énonce —
-      **INC-053, arbitrage attendu** (décision 132). L'écart est figé par une assertion : un `uuid`
-      bien formé désignant un profil **inexistant** est accepté aujourd'hui.
+      de plus. **Le motif a changé le 2026-08-18** : `contacts` **existe** depuis `CRM-060`
+      tranche 1 (décision 445), et l'assertion figée par cette unité qui attendait l'absence de la
+      table a été **retournée** en `has_table` dans le même changement
+      (`supabase/tests/0014_valeurs_champs.test.sql`, assertion 48). La résolution en base du
+      champ `contact` par le validateur de valeurs reste due par la **tranche 3 de `CRM-060`**
+      (INC-053) ; résoudre `user` seul rendrait la famille incohérente tout en posant une règle
+      d'appartenance que nul document n'énonce — arbitrage attendu (décision 132). Un `uuid` bien
+      formé désignant un profil OU un contact **inexistant** reste accepté aujourd'hui.
 - [x] **`npm run e2e:ui` : 37 scénarios verts**, au prix du contournement récurrent d'INC-036
       (**sixième** occurrence). Les captures réécrites par ce rejeu ont été **regardées puis
       restaurées**, comme aux cinq unités précédentes : cette unité ne touche aucun composant de
@@ -6516,8 +6520,13 @@ désactivée et documentée comme telle.
 - [x] **Compteurs révisés** : 26 → **27** fichiers SQL, 1823 → **1843** assertions,
       466 → **469** scénarios d'API, 34 → **35** scénarios `mail`.
 - [ ] **LA RÈGLE 3 N'EST PAS LIVRÉE**, et la Definition of Done le prévoit : elle suppose des
-      contacts (`CRM-060`). Son absence est **figée par une assertion** qui devra tomber ce
-      jour-là.
+      contacts (`CRM-060`). Son absence était **figée par une assertion**.
+      **DÉBLOQUÉ le 2026-08-18 par `CRM-060` tranche 1 (décision 445) :** les tables `contacts`
+      et `card_contacts` existent, avec un contact du seed (Léo Marchand) rattaché à
+      **exactement une** card active — l'état précis que la règle lira. L'assertion figée par
+      cette unité a été **retournée, non retirée** dans le même changement que la migration
+      (`supabase/tests/0027_classement_messages.test.sql`, assertion 4). L'activation de la
+      règle dans le code de classement reste due : c'est la **tranche 2 de `CRM-060`**.
 - [ ] **Aucun écran** (`CRM-057`), et **aucun déclassement** : rien dans le §4.4 ne le décrit, et
       l'inventer obligerait à décider ce que devient l'événement déjà écrit — une question qui
       appartient à l'unité livrant l'écran.
