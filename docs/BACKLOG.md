@@ -69,8 +69,11 @@ dev ; aucun service de développement présent en prod.
       inactive ». Ce contrôle neutralise le secret et attend que `npm ci` réussisse **sans**
       certificat ; l'hôte de mesure interpose un proxy TLS — son paquet système et le paquet du
       proxy sont le même fichier —, si bien que `npm ci` ne peut pas y aboutir sans CA. Le contrôle
-      est juste et n'est **pas** modifié ; il exige un hôte sans interception. `CRM-001` reste
-      `[~]` pour ce seul contrôle.
+      est juste et n'est **pas** modifié ; il exige un hôte sans interception. La cause est
+      MESURÉE et non déduite : depuis l'image construite, `cafile` valant `null` — l'état exact de
+      la branche inerte —, l'accès au registre rend `SELF_SIGNED_CERT_IN_CHAIN`, « self-signed
+      certificate in certificate chain », tandis que la même reconstruction **avec** le CA réussit
+      dans le même rejeu. `CRM-001` reste `[~]` pour ce seul contrôle.
       *Relevé d'origine, conservé :* les preuves de démarrage dataient d'un assemblage comportant
       encore `supavisor`, la base `_supabase` et le mot de passe du rôle `pgbouncer` ; la
       vérification n'avait pas pu être rejouée le 2026-08-13, le démon Docker étant absent.
@@ -153,6 +156,14 @@ aucun secret réel versionné ; `README.md` §5–6 conforme au comportement ré
       documentée, lorsqu'un secret est écrit en clair dans le gabarit, lorsqu'une garde de profil
       est retirée, lorsque la dérivation d'un jeton est faussée, et — mesuré — **9 contrôles
       tombent** dès que les gardes d'hôte sont neutralisées.
+      **Le harnais dépendait du shell qui l'appelait, et c'est corrigé le 2026-08-18**
+      (`docs/JOURNAL.md`, décision 442). Il lance `./runDev.sh --bootstrap` et `./resetMe.sh --yes`
+      en ne posant que `P2ENJOY_ENV_FILE` ; une `NPM_CA_FILE` exportée par l'opérateur fuyait dans
+      chacun de ces appels et recevait, correctement, priorité sur le `.env` de travail. Sept
+      verdicts en dépendaient — dont celui de `resetMe.sh`, qui **détruisait réellement le cluster**
+      au lieu de prouver qu'aucune destruction n'a lieu. La variable est neutralisée une fois en
+      tête du harnais ; les trois contrôles qui éprouvent la priorité du shell la posent eux-mêmes.
+      MESURÉ, harnais lancé depuis un shell l'exportant : **de 8 anomalies à 2**.
 - [x] **Gardes d'hôte** livrées et prouvées après échec réel de `./runDev.sh` sur un poste WSL
       (`docs/JOURNAL.md`, décisions 98 à 101) : magasin d'identifiants Docker écarté lorsqu'il
       délègue à un binaire Windows, ports occupés refusés **avant** démarrage en nommant la
