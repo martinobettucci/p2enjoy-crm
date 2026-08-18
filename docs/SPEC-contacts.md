@@ -240,3 +240,140 @@ Nommés plutôt que tranchés ici (`CLAUDE.md` §1, §26) :
 - commentaires `@spec` / `@verifies` sur chaque fichier.
 
 Les tranches 2 à 4 restent dues ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées.
+
+---
+
+## 8. Tranche 2 — La règle 3 du classement (suggestion par expéditeur connu)
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle seedée le 2026-08-18 : les trois contacts du seed relevés en base, leurs
+emails et leurs rattachements confirmés, les colonnes de `mail_messages` inventoriées (aucune
+colonne de suggestion), et la version courante de `classer_message_automatiquement`
+(migration `0025`, non redéfinie par `0028`) lue ligne à ligne.
+
+Références amont, qui **précèdent** ce document et le contraignent :
+
+- `docs/SPEC-mail-subsystem.md` §4.4 et §16.2, règle 3 : « l'expéditeur est un contact rattaché à
+  **exactement une** card active → **suggestion**, ne classe pas » ;
+- `docs/SPEC-mail-subsystem.md` §16.1, qui **désactivait** la règle 3 faute de contacts et prévoyait
+  sa levée « le jour où `CRM-060` livre les contacts » — ce jour est arrivé (tranche 1) ;
+- `CRM-055` (backlog), dont l'assertion pgTAP et le harnais `verify-mail-classement.sh` **figent**
+  l'absence de la règle 3 par une garde qui devient rouge dès que les tables de contacts existent —
+  cette tranche fait **tomber** cette garde en la remplaçant par une preuve de la règle active.
+
+### 8.1 Ce que la règle 3 fait, et ce qu'elle ne fait PAS
+
+La règle 3 **suggère**, elle **ne classe pas**. Classer automatiquement sur la seule foi d'un
+expéditeur produirait des rattachements faux et difficiles à détecter (`docs/SPEC-mail-subsystem.md`
+§4.4). Concrètement, pour un message que les règles 1 et 2 n'ont pas classé :
+
+- si l'expéditeur est un **contact** du workspace (reconnu à son **email**) rattaché à **exactement
+  une** card **active** (ni archivée, ni en corbeille), cette card devient une **suggestion**
+  persistée sur le message ;
+- le message **reste non classé** : `classification` demeure `unclassified`, `card_id` demeure nul,
+  aucun `card_event` n'est écrit, aucun `mail_attachments.card_id` n'est recopié. La chaîne rend
+  toujours « non classé » (règle 4) ;
+- la suggestion est un **indice de tri** destiné à l'inbox (`CRM-057`) : un membre pourra
+  l'accepter d'un geste, mais l'acceptation passe par `classify_message`, qui exige **les deux
+  droits** (voir le message et écrire la card, §18.2). La suggestion n'accorde donc **aucun** droit
+  et ne contourne **aucun** contrôle : au pire elle propose une card que le membre ne peut pas
+  écrire, et le geste échouera alors comme tout classement manuel non autorisé.
+
+### 8.2 La place dans la chaîne, et pourquoi « exactement une »
+
+La chaîne du §16.2 s'arrête à la **première règle satisfaite**, ce qui la rend déterministe. La
+règle 3 est évaluée **après** les règles 1 (adresse de card) et 2 (filiation), et **avant** la
+règle 4 (non classé). Elle n'est donc atteinte que lorsque `v_card is null`.
+
+**« Exactement une » card active est la condition, et l'ambiguïté est du côté des cards, non des
+contacts** : l'unicité partielle `(workspace_id, lower(email))` de `contacts` (§2.2) garantit qu'un
+email désigne **au plus un** contact dans le workspace. Le nombre à compter est donc celui des cards
+**actives** rattachées à ce contact :
+
+- **zéro** card active → aucune suggestion : la règle ne propose rien plutôt que d'inventer ;
+- **une** card active → cette card est suggérée ;
+- **deux ou plus** cards actives → aucune suggestion : proposer l'une d'elles au hasard serait pire
+  que se taire ; le tri reste manuel.
+
+Une card **archivée ou en corbeille** ne compte pas, exactement comme la règle 1 refuse de classer
+dans une card rangée (§16.2) : suggérer un dossier fermé y ramènerait du courrier.
+
+### 8.3 Persistance de la suggestion — colonnes ajoutées à `mail_messages`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `suggested_card_id` | `uuid` | facultatif ; FK `cards(id)` `on delete set null` |
+| `suggested_at` | `timestamptz` | facultatif ; horodate le calcul de la suggestion |
+
+- **`suggested_card_id` est indépendant de `card_id`** : le premier est un indice, le second un fait.
+  L'invariant `mail_messages_classement_coherent` (`(classification='unclassified') = (card_id is
+  null)`) n'est pas touché — une suggestion vit sur un message non classé, `card_id` nul.
+- **`on delete set null`** : supprimer la card suggérée efface l'indice sans emporter le message.
+- **La suggestion est un instantané de la relève**, comme le classement automatique des règles 1 et
+  2 : elle est calculée à l'ingestion et n'est **pas** recalculée si l'état des contacts ou des
+  rattachements change ensuite. C'est cohérent avec le reste de la chaîne, et nommé ici plutôt que
+  laissé à la surprise ; un recalcul à la lecture appartiendrait à l'écran (`CRM-057`).
+- **Aucune nouvelle politique RLS** : `suggested_card_id` est une colonne de la ligne du message,
+  visible par qui voit déjà le message (politique `mail_messages_lecture`, `CRM-057` §18.1). La
+  résolution du **titre** de la card suggérée reste soumise à la RLS de `cards`.
+
+### 8.4 Reconnaissance de l'expéditeur
+
+L'appariement se fait sur l'**email** stocké dans `mail_messages.from_address`, comparé à
+`contacts.email` du **même workspace**, **insensible à la casse** et après `btrim` :
+`lower(btrim(from_address)) = lower(contacts.email)`, avec `contacts.email IS NOT NULL`.
+
+- **Le workspace borne l'appariement** : un contact d'un autre workspace portant le même email ne
+  peut jamais être suggéré (cloisonnement).
+- **Un contact sans email** (Élise Fabre, seed) n'est jamais apparié : `email` nul ne peut égaler
+  aucune adresse.
+- **La forme de `from_address`** est celle que la relève a stockée. Un `from_address` contenant un
+  nom d'affichage (`"Léo" <leo@…>`) ne s'apparie pas ; la relève d'ingestion stocke l'adresse nue
+  (mesuré : le seed et `e2e/api/classement.spec.ts` posent des adresses nues). Cet écart est
+  **nommé** plutôt que masqué par une extraction fragile ; l'améliorer relèverait de l'ingestion.
+
+### 8.5 Contrat de comportement — mesuré sur le seed
+
+Données du seed (mesurées le 2026-08-18) : Léo Marchand `leo.marchand@sogexia.example` rattaché à la
+seule card active `…0000c2` (« Migration ERP Sogexia ») ; Sophie Dupont `sophie@dupont.test`
+rattachée à la seule card active `…0000c4` ; Élise Fabre sans email.
+
+| # | Message non classé (règles 1 et 2 muettes), expéditeur | Attendu |
+|---|---|---|
+| a | `leo.marchand@sogexia.example` | `suggested_card_id = …0000c2`, message toujours `unclassified`, `card_id` nul, aucun `card_event` |
+| b | `LEO.MARCHAND@Sogexia.Example` | même suggestion : la casse est ignorée |
+| c | `inconnu@nulle-part.test` (aucun contact) | aucune suggestion (`suggested_card_id` nul) |
+| d | contact rattaché à **zéro** card active (rattachement retiré, ou card archivée) | aucune suggestion |
+| e | contact rattaché à **deux** cards actives | aucune suggestion (ambiguïté) |
+| f | expéditeur d'un **autre** workspace portant un email de contact | aucune suggestion (cloisonnement) |
+
+Et deux cas où la règle 3 **n'est pas atteinte**, la chaîne s'étant arrêtée avant :
+
+| # | Message dont | Attendu |
+|---|---|---|
+| g | une **adresse de card** figure dans les destinataires (règle 1) et l'expéditeur est un contact | `classification = 'auto'`, `card_id` = la card de la règle 1, `suggested_card_id` **nul** — la règle 3 n'est pas évaluée |
+| h | la **filiation** désigne une card déjà classée (règle 2) et l'expéditeur est un contact | classé par la règle 2, `suggested_card_id` **nul** |
+
+### 8.6 Preuves exigées — tranche 2
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0044_regle3_suggestion.test.sql` : présence des deux colonnes ; les cas a à h du §8.5 sur des états construits dans la transaction de test ; l'invariant de classement inchangé ; `classer_message_automatiquement` reste réservée à `service_role` |
+| API | `e2e/api/classement.spec.ts` (étendu) : via la RPC de service, un message de Léo reçoit la suggestion `…0000c2` sans être classé ; un message d'un expéditeur inconnu n'en reçoit aucune ; un message portant une adresse de card est classé `auto` **sans** suggestion. Chaque assertion **relit la ligne** (décision 70) |
+| Harnais | `scripts/verify-mail-classement.sh` : la garde de désactivation (§16.1) est **révisée**, non retirée — elle prouve désormais la règle 3 **active** avec son témoin (expéditeur inconnu → aucune suggestion), non complaisante |
+| Visible | La preuve d'interface de la suggestion (l'inbox montrant « message non classé et sa suggestion », §16 tableau) attend l'écran de l'inbox (`CRM-057`), non livré. L'absence est **nommée**, non compensée par une preuve de substitution |
+
+### 8.7 Definition of Done — tranche 2
+
+- migration `0046` : colonnes `suggested_card_id`, `suggested_at` sur `mail_messages` et
+  `classer_message_automatiquement` enrichie de la règle 3, idempotente et rejouable ;
+- suite pgTAP `0044` couvrant les cas a à h du §8.5 ;
+- preuve d'API dédiée étendue avec les jetons réels ;
+- harnais `verify-mail-classement.sh` révisé, non complaisant, avec témoin ;
+- types régénérés (`webapp/src/lib/database.types.ts`) dans le même changement ;
+- `docs/SCHEMA.md`, `docs/SPEC-mail-subsystem.md` §16, `docs/PROD_MIGRATIONS.md` (migration 46),
+  `CHANGELOG.md` mis à jour dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier.
+
+La tranche 2 livrée, l'unité `CRM-060` **demeure `[~]`** : les tranches 3 (résolution du champ
+`contact`) et 4 (écrans) restent dues, et la preuve visible de la suggestion attend l'inbox.
