@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 3 : un champ « contact » ou « responsable » ne
+  peut plus désigner quelqu'un qui n'existe pas** (`docs/SPEC-contacts.md` §9, migration `0047`).
+  Jusqu'ici, un formulaire d'affaire acceptait dans un champ de type `contact` ou `user` n'importe
+  quel identifiant bien formé, y compris un identifiant ne correspondant à **personne** : la donnée
+  paraissait valide et ne l'était pas. Désormais la base **résout** la cible — un champ `contact`
+  n'accepte qu'un contact du carnet du **même espace de travail**, un champ `user` qu'un **membre**
+  de cet espace de travail —, et refuse le reste avec un message qui nomme le champ et la raison.
+  Vider un tel champ reste possible : la résolution n'a pas rendu obligatoire un champ facultatif.
+  La règle est appliquée **en base**, donc opposable à tout client, interface comprise. Exécution de
+  l'arbitrage de la décision 295 ; **INC-053 est close** après dix jours. Suite pgTAP `0045`
+  **19/19** — dont le contact d'un autre espace de travail, le profil existant mais non membre, et
+  la limite assumée : supprimer un contact laisse en place les valeurs qui le désignaient, un
+  `jsonb` ne portant pas de clé étrangère. Preuve d'API **6 scénarios** par la vraie route, harnais
+  `verify-valeurs-champs.sh` étendu — **41 contrôles, aucune anomalie**. **Aucun écran** ne livre
+  encore de sélecteur de contact : la saisie reste un champ texte, et les deux sélecteurs sont dus
+  par la tranche 4, avec le carnet et la donnée de démonstration.
+
 - **`CRM-060` — Contacts et organisations, tranche 2 : la règle 3 du classement suggère par
   expéditeur connu** (`docs/SPEC-contacts.md` §8, migration `0046`). Quand un message arrive et
   qu'aucune adresse de card ni filiation ne le classe, le CRM regarde son **expéditeur** : si c'est
@@ -144,6 +161,17 @@ d'exécuter le code attendu.
   `docs/captures/CRM-033/refus-workflow-hors-track.jpg`.
 
 ### Corrigé
+
+- **Trois harnais de vérification laissaient `move_card` amputée en sortant** (INC-154). Ils
+  rejouent la migration `0013` pour poser leurs dégradations, puis restauraient la fonction depuis
+  la migration `0019` — qui n'en est plus la dernière autorité depuis le lot G (migration `0035`,
+  blancs Unicode et conservation du commentaire de transition). Chaque exécution réinstallait donc
+  une version d'avant le lot G, et la suite pgTAP `0014` rougissait à l'exécution suivante, sur des
+  assertions qui ne parlaient pas du harnais fautif. Cinquième occurrence de la même classe
+  (décisions 108, 135, 143, 145, INC-153). La chaîne de restauration de `verify-valeurs-champs.sh`,
+  `verify-move-card.sh` et `verify-colonnes-protegees.sh` rejoue désormais le lot G, et la migration
+  `0047` derrière la `0013` pour la même raison.
+
 
 - **Le harnais des preuves de refus mourait sur sa propre réussite** (`CRM-014`, INC-147,
   `docs/JOURNAL.md` décision 444). La correction d'INC-147 avait renommé la cible du contrôle de la

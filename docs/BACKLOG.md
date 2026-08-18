@@ -3570,10 +3570,12 @@ n'invalidant pas l'existant).
       tranche 1 (décision 445), et l'assertion figée par cette unité qui attendait l'absence de la
       table a été **retournée** en `has_table` dans le même changement
       (`supabase/tests/0014_valeurs_champs.test.sql`, assertion 48). La résolution en base du
-      champ `contact` par le validateur de valeurs reste due par la **tranche 3 de `CRM-060`**
-      (INC-053) ; résoudre `user` seul rendrait la famille incohérente tout en posant une règle
-      d'appartenance que nul document n'énonce — arbitrage attendu (décision 132). Un `uuid` bien
-      formé désignant un profil OU un contact **inexistant** reste accepté aujourd'hui.
+      champ `contact` par le validateur de valeurs était due par la **tranche 3 de `CRM-060`**
+      (INC-053) ; résoudre `user` seul aurait posé une règle d'appartenance que nul document
+      n'énonçait — arbitrage attendu (décision 132). **LIVRÉE le 2026-08-18** par cette tranche 3
+      (migration `0047`) : un `uuid` bien formé désignant un profil ou un contact **inexistant** est
+      désormais REFUSÉ, et les deux assertions qui figeaient l'écart ont été retournées dans le même
+      changement. **INC-053 est close.**
 - [x] **`npm run e2e:ui` : 37 scénarios verts**, au prix du contournement récurrent d'INC-036
       (**sixième** occurrence). Les captures réécrites par ce rejeu ont été **regardées puis
       restaurées**, comme aux cinq unités précédentes : cette unité ne touche aucun composant de
@@ -3606,7 +3608,8 @@ compensée par une preuve de substitution.
 *Limites nommées, non masquées.*
 
 - **Aucun écran.** Dixième unité consécutive à buter sur INC-021. *(INC-021 est close depuis le 2026-08-07, fermée par `CRM-009` ; ce constat décrit l'état AU MOMENT DE LA LIVRAISON et n'est plus une limite actuelle — INC-143.)*
-- **`user` et `contact` ne sont pas résolus** — INC-053, arbitrage attendu.
+- **`user` et `contact` ne sont pas résolus** — INC-053, arbitrage attendu. *(État AU MOMENT
+  DE LA LIVRAISON : résolus depuis `CRM-060` tranche 3, le 2026-08-18 ; INC-053 close.)*
 - **INC-037 est désormais portée par `CRM-018`** : la décision 293 impose la copie atomique des
   champs, règles et exigences. La limite historique reste une mesure utile, mais n'est plus le
   comportement cible.
@@ -3989,7 +3992,9 @@ table, ni statut, ni flux.
 - **Aucune donnée métier n'apparaît dans l'interface tant qu'INC-021 n'est pas tranchée.** Sixième
   unité consécutive du chunk 3 à buter sur le même obstacle, et la première dont un écran existe
   pourtant : la route rend « card introuvable » à tout visiteur, ce qui est le refus réel du backend.
-- **`user`, `contact` et `file` ne sont pas résolus** (INC-053) : le rendu affiche leur valeur
+- **`user`, `contact` et `file` ne sont pas résolus** (INC-053) *(état AU MOMENT DE LA LIVRAISON :
+  `user` et `contact` sont résolus EN BASE depuis `CRM-060` tranche 3, le 2026-08-18 ; le rendu, lui,
+  reste une saisie brute — les sélecteurs sont dus par la tranche 4)* : le rendu affiche leur valeur
   **brute** plutôt qu'un nom qu'il ne peut pas obtenir.
 - **Les champs exigés par une transition** (`require_fields`, §3.5) ne sont pas signalés : ils
   dépendent de l'arête empruntée, donc d'un geste qui n'existe pas encore.
@@ -7023,7 +7028,8 @@ avant la suivante :
 2. **La règle 3 du classement** — activation de la suggestion « expéditeur connu » aujourd'hui
    désactivée (`CRM-055`, `docs/SPEC-mail-subsystem.md` §16). Ultérieure.
 3. **La résolution du champ `contact`** dans la saisie du formulaire — remplace le refus d'un UUID
-   opaque par une clé vers un contact du même workspace (`CRM-036` §6.5, INC-053). Ultérieure.
+   opaque par une clé vers un contact du même workspace (`CRM-036` §6.5, INC-053). **Livrée le
+   2026-08-18**, et le champ `user` avec elle, l'arbitrage de la décision 295 les traitant ensemble.
 4. **Les écrans** — carnet de contacts, fiche d'organisation, rattachement d'un contact à une
    affaire depuis la route de détail. Ultérieure.
 
@@ -7088,17 +7094,65 @@ migration `0046`) :
       `docs/SPEC-mail-subsystem.md` §16, `docs/PROD_MIGRATIONS.md` (migration 46), `CHANGELOG.md`
       mis à jour dans le même changement.
 
-**Tranches 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées, et la
+**La tranche 4 reste due** ; l'unité demeure `[~]` tant qu'elle n'est pas livrée, et la
 **preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`) :
 
 - [~] Tranche 2 — Règle 3 du classement **livrée et prouvée en base** (pgTAP, API, harnais). Reste
       `[~]` au seul titre de la **preuve visible** : aucun écran ne montre encore la suggestion,
       l'inbox étant due par `CRM-057`.
-- [ ] Tranche 3 — Résolution du champ `contact` dans la saisie du formulaire (`CRM-036` §6.5,
-      INC-053) : remplacer le refus d'un UUID opaque par une clé vers un contact du même
-      workspace.
+- [x] Tranche 3 — Résolution des champs `contact` **et** `user` dans la validation des valeurs,
+      **livrée et prouvée le 2026-08-18** (`docs/SPEC-contacts.md` §9, migration `0047`). Voir le
+      détail ci-dessous.
 - [ ] Tranche 4 — Écrans : carnet de contacts, fiche d'organisation, rattachement d'un contact
-      à une affaire depuis la route de détail.
+      à une affaire depuis la route de détail, **les deux sélecteurs** (§9.1) et
+      **l'enrichissement du seed** différé par le §9.6.
+
+**Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
+(`docs/SPEC-contacts.md` §9, migration `0047`) :
+
+- [x] `supabase/migrations/0047_resolution_champs_contact_user.sql` : `app.card_field_values_valider()`
+      **redéfinie**. Les types `contact` et `user` ne valident plus la seule FORME d'un `uuid` : la
+      cible doit exister **dans le workspace de la valeur écrite** — une ligne de `public.contacts`
+      pour l'un, de `public.workspace_members` pour l'autre. Refus `invalid_field_value`, `DETAIL`
+      nommant la clé et la raison. Aucune colonne, aucune politique, aucun privilège ne bouge.
+      **Exécution de l'arbitrage de la décision 295 ; INC-053 est close**, ouverte depuis le
+      2026-08-08.
+- [x] **« Membre actif » se lit « membre », et la mesure l'impose** : ni `workspace_members` ni
+      `profiles` ne portent de statut, de suspension ou de date de sortie. Le produit n'a aucune
+      notion de membre inactif. L'écart est **nommé** au §9.3 pour que la dette soit visible le jour
+      où un statut d'appartenance apparaîtrait.
+- [x] `supabase/tests/0045_resolution_contact_user.test.sql` : **19 assertions, aucune anomalie** —
+      les dix cas du §9.5, dont le contact d'un AUTRE workspace et le profil existant mais NON
+      membre, chacun précédé de son **témoin** pour qu'un refus ne soit pas vert sur une absence.
+- [x] **Deux assertions figées par `CRM-036` RETOURNÉES**, jamais retirées (décision 51) : celles
+      qui figeaient l'acceptation d'un identifiant désignant un profil ou un contact inexistant, et
+      qui annonçaient elles-mêmes leur révision. L'assertion `has_table('contacts')` est retournée
+      une **seconde** fois : la table n'est plus seulement présente, elle est **lue**.
+- [x] `e2e/api/valeurs-champs.spec.ts`, bloc `V5` : **6 scénarios** par la vraie route PostgREST,
+      chaque refus **relisant la ligne** pour la constater absente (décision 70). Suite complète
+      **28/28**.
+- [x] `scripts/verify-valeurs-champs.sh` étendu d'une section « 3 bis » : témoin d'abord, les deux
+      refus avec leur `DETAIL`, le vidage qui reste possible, une dégradation réelle et sa
+      restauration constatée. **41 contrôles, aucune anomalie**, deux exécutions de suite.
+- [x] `docs/SPEC-form-composer.md` §2.3 et §6.5, `docs/SCHEMA.md` §4, `docs/PROD_MIGRATIONS.md`
+      (migration 47, avec le relevé de sûreté à passer AVANT application), `docs/ARBITRAGES.md`,
+      `docs/INCONSISTENCY_REPORT.md` et `CHANGELOG.md` mis à jour dans le même changement.
+
+**Le seed n'est PAS enrichi, et le motif est mesuré** (`docs/SPEC-contacts.md` §9.6). Le §9.6
+prévoyait deux champs seedés ; la mesure a renversé la décision : le compte « sept champs sur le
+workflow source » est figé par **dix preuves** étrangères à cette tranche, que la copie de workflow
+met en regard. La donnée de démonstration rejoint la tranche 4, avec l'écran qui la montre — un
+seul déplacement de compteur au lieu de deux. Les preuves de la tranche 3 fabriquent donc leurs
+propres champs sondes et rendent le seed **intact**.
+
+**UN DÉFAUT ANTÉRIEUR TROUVÉ PAR L'EXÉCUTION — INC-154.** Trois harnais rejouent la migration `0013`
+puis restauraient `move_card` depuis la `0019`, qui n'en est plus la dernière autorité depuis le lot
+G (migration `0035`). Chaque passage laissait `move_card` amputée de `btrim_blancs` et de la
+conservation du commentaire, et `0014` rougissait à l'exécution suivante. Ligne de base établie par
+`git stash` : rouge des deux côtés, donc antérieur. **Corrigé** parce qu'il vit dans les fichiers
+mêmes de cette session (même geste que la décision 447 pour INC-153). INC-155 consignée **sans être
+corrigée** : le compteur « quinze cards seedées » de `verify-move-card.sh` est le second porteur
+d'INC-141, déjà ouverte.
 
 *Limites nommées d'emblée* : archivage réversible d'un contact, fusion de doublons, purge RGPD et
 rapprochement automatique email → organisation par domaine sont **hors périmètre** de cette unité

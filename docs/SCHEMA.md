@@ -442,7 +442,7 @@ Détail des contraintes, de leurs mesures et de leurs motifs : `docs/SPEC-form-c
 | `field_id` | `uuid` | PK composite ; FK **composite** `(field_id, workflow_id) → form_fields (id, workflow_id)`, `ON DELETE CASCADE` |
 | `workflow_id` | `uuid` | non nul ; **charnière** des deux clés composites — c'est lui qui rend impossible une valeur répondant à la question d'un autre workflow |
 | `workspace_id` | `uuid` | non nul ; FK composite `(workflow_id, workspace_id) → workflows (id, workspace_id)` |
-| `value` | `jsonb` | **nullable** ; SQL `NULL` **et** `'null'::jsonb` signifient explicitement vide. La **forme** est validée par trigger selon `form_fields.type` — un `CHECK` ne peut pas porter de sous-requête, mesuré |
+| `value` | `jsonb` | **nullable** ; SQL `NULL` **et** `'null'::jsonb` signifient explicitement vide. La **forme** est validée par trigger selon `form_fields.type` — un `CHECK` ne peut pas porter de sous-requête, mesuré. **Depuis la migration 47** (`CRM-060` tranche 3), les types `contact` et `user` sont en outre **résolus** : leur cible doit exister dans le **workspace de la valeur** — `public.contacts` pour l'un, `public.workspace_members` pour l'autre. La vérification a lieu **à l'écriture** ; un `jsonb` ne portant pas de clé étrangère, une valeur survit à la suppression de sa cible (`docs/SPEC-contacts.md` §9.4) |
 | `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
