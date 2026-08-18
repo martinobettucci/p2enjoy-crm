@@ -9,7 +9,8 @@
 -- @verifies docs/SPEC-workflow-engine.md §5.3 (les six vérifications), §5.7 (la n° 6)
 -- @verifies docs/SPEC-seed.md §2.13 (valeurs du seed)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-025 (colonnes communes omises), INC-033
---           (liaison CRM-018), INC-047 (**close**), INC-053 (`user` non résolu),
+--           (liaison CRM-018), INC-047 (**close**), INC-053 (**close** par CRM-060 tranche 3 :
+--           `user` et `contact` résolus, migration 0047 — assertions retournées au §4.9),
 --           INC-054 (`value` nullable, mesuré)
 --
 -- Suite pgTAP de l'unité `CRM-036`. Elle prouve huit choses :
@@ -372,38 +373,45 @@ select lives_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e7', '"formulaires/x.pdf"'::jsonb) $$,
 	'`file` accepte un chemin quelconque : la cible vit dans Storage, service distinct');
 
--- --- 4.9 `user` et `contact` : la FORME, pas la cible — INC-053 -------------------------------
+-- --- 4.9 `user` et `contact` : la CIBLE, désormais, et plus seulement la forme — INC-053 CLOSE --
+--
+-- DEUX ASSERTIONS RETOURNÉES, NON RETIRÉES (mécanisme de la décision 51, CLAUDE.md §3.1). Elles
+-- figeaient l'écart d'INC-053 — « un identifiant bien formé désignant un profil ou un contact
+-- INEXISTANT est accepté » — et annonçaient elles-mêmes leur révision « le jour où l'arbitrage
+-- sera rendu ». Il l'est : décision 295, exécutée par `CRM-060` tranche 3 (migration `0047`,
+-- docs/SPEC-contacts.md §9). Elles constatent maintenant le REFUS, et le motif du contrôle change
+-- avec le comportement plutôt qu'en silence.
 select lives_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e5',
 	                        '"5eed0000-0000-4000-8000-000000000012"'::jsonb) $$,
-	'`user` accepte un identifiant bien formé');
+	'`user` accepte un identifiant qui désigne un MEMBRE du workspace (Driss Lemoine)');
 select throws_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e5', '"martin"'::jsonb) $$,
 	'P0001', 'invalid_field_value', '`user` refuse ce qui n''est pas un identifiant');
-select lives_ok(
+select throws_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e5',
 	                        '"00000000-0000-4000-8000-000000000000"'::jsonb) $$,
-	'INC-053, ÉCART FIGÉ : `user` accepte un identifiant bien formé désignant un profil INEXISTANT. '
-	'La forme est validée, PAS la cible. CETTE ASSERTION DOIT ÊTRE RÉVISÉE le jour où l''arbitrage '
-	'sera rendu — résoudre `user` seul poserait une règle d''appartenance que nul document n''énonce');
-select lives_ok(
+	'P0001', 'invalid_field_value',
+	'ASSERTION RETOURNÉE (décision 51) : `user` REFUSE désormais un identifiant bien formé '
+	'désignant un profil inexistant. Elle figeait l''écart inverse au titre d''INC-053 et annonçait '
+	'sa propre révision ; la décision 295 a rendu l''arbitrage et `CRM-060` tranche 3 l''exécute');
+select throws_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e8',
 	                        '"00000000-0000-4000-8000-000000000001"'::jsonb) $$,
-	'`contact` de même : la forme d''un UUID est validée, PAS la cible — la table `contacts` '
-	'existe désormais (CRM-060) mais la résolution en base attend la TRANCHE 3 de CRM-060, '
-	'`CRM-036` §6.5 (INC-053) ; en attendant, un UUID désignant un contact INEXISTANT reste '
-	'accepté à ce niveau');
+	'P0001', 'invalid_field_value',
+	'ASSERTION RETOURNÉE (décision 51) : `contact` REFUSE de même un identifiant qui ne désigne '
+	'aucun contact du workspace. La règle complète — dont le cloisonnement et le cas du profil '
+	'existant mais non membre — est éprouvée par `0045_resolution_contact_user.test.sql`');
 
--- ASSERTION RETOURNÉE, NON RETIRÉE (mécanisme de la décision 51) : elle attendait l'absence de
--- `contacts`, elle constate désormais sa PRÉSENCE. Le motif du contrôle change en même temps que
--- l'unité livrée : ce n'est plus « la résolution est impossible », c'est « la table est là mais
--- la résolution en base n'est pas branchée ». La différence est nommée dans le libellé.
+-- ASSERTION RETOURNÉE UNE SECONDE FOIS. Elle attendait l'ABSENCE de `contacts` (`CRM-036`), a
+-- constaté sa PRÉSENCE à la tranche 1, et son libellé annonçait qu'« elle deviendra rouge à la
+-- tranche 3 lorsque la validation croisera cette table ». Ce jour est arrivé : la table est non
+-- seulement présente, elle est LUE par le validateur. Le motif suit le comportement.
 select has_table('public', 'contacts',
-	'CRM-060 TRANCHE 1 A LIVRÉ `contacts` : la table est PRÉSENTE. La résolution du champ '
-	'`contact` par le validateur de valeurs reste due par la TRANCHE 3 (`CRM-036` §6.5, INC-053) — '
-	'l''ASSERTION D''ABSENCE FIGÉE PAR CRM-036 EST RETOURNÉE POUR CONSTATER LA PRÉSENCE, comme le '
-	'demande le mécanisme de la décision 51 (CLAUDE.md §3.1). Elle deviendra rouge à la tranche 3 '
-	'lorsque la validation croisera cette table');
+	'CRM-060 TRANCHE 3 : `contacts` n''est plus seulement PRÉSENTE, elle est LUE par '
+	'`app.card_field_values_valider()` — un champ `contact` ne peut plus porter un identifiant qui '
+	'ne désigne rien. L''assertion d''absence figée par `CRM-036` a donc été retournée DEUX fois, '
+	'jamais retirée (décision 51, CLAUDE.md §3.1), et INC-053 est close');
 
 -- --- 4.10 « Vidé explicitement » est accepté pour TOUS les types — décision 133 ---------------
 select lives_ok(
