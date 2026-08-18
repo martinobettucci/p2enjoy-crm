@@ -721,8 +721,9 @@ test.describe('les cinq gestes sur les champs, à la souris (§7 bis.10.2)', () 
 			await formulaire.getByLabel('Texte d’aide').fill('Posé par la preuve.')
 			await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
 			await expect(formulaire).toBeHidden()
-			await expect(page.getByTestId('ligne-champ')).toHaveCount(8)
-			// Le trigger a placé le champ EN FIN de formulaire : position 8, après les sept seedés.
+			// DIX depuis la sous-tranche 4d de `CRM-060` : neuf champs seedés plus celui de la preuve.
+			await expect(page.getByTestId('ligne-champ')).toHaveCount(10)
+			// Le trigger a placé le champ EN FIN de formulaire : après les NEUF seedés.
 			const declare = await champEnBase(request, 'e2e-wf-souris')
 			expect(declare).toMatchObject({
 				label: 'E2E Champ Souris',
@@ -731,7 +732,7 @@ test.describe('les cinq gestes sur les champs, à la souris (§7 bis.10.2)', () 
 				options: {},
 				archived_at: null,
 			})
-			expect(declare?.position).toBeGreaterThan(7)
+			expect(declare?.position).toBeGreaterThan(9)
 
 			// --- Modifier : le libellé et l'aide, jamais la clé ni le type (§7 bis.10.3) -----------
 			await page.getByRole('button', { name: 'Modifier le champ E2E Champ Souris' }).click()
@@ -1045,18 +1046,22 @@ function caseDe(page: Page, cleChamp: string, idEtape: string): Locator {
 }
 
 test.describe('la grille champ × étape sur la vraie base (§7 bis.11)', () => {
-	test('la grille montre les six champs actifs, les sept étapes, et les règles seedées', async ({
+	// HUIT CHAMPS ACTIFS depuis la sous-tranche 4d de `CRM-060` (docs/SPEC-contacts.md §13.6) :
+	// `contact-principal` et `referent-technique` s'ajoutent aux six, et n'ont AUCUNE règle — ce
+	// qui est précisément ce qui les rend `visible` par défaut à toutes les étapes. Ce que la
+	// grille doit montrer est inchangé ; son volume, non.
+	test('la grille montre les huit champs actifs, les sept étapes, et les règles seedées', async ({
 		page,
 	}) => {
 		await connecter(page)
 		await ouvrirEditeur(page)
 		await ouvrirGrille(page)
 
-		// Six lignes, pas sept : le champ archivé du seed — `budget-previsionnel` — est écarté
+		// Huit lignes, pas neuf : le champ archivé du seed — `budget-previsionnel` — est écarté
 		// (§7 bis.11.2), et la note le dit au lieu de laisser chercher une ligne absente.
-		await expect(page.getByTestId('ligne-grille')).toHaveCount(6)
+		await expect(page.getByTestId('ligne-grille')).toHaveCount(8)
 		await expect(page.getByTestId('grille-note-archives')).toContainText('Un champ archivé')
-		await expect(page.getByTestId('case-visibilite')).toHaveCount(42)
+		await expect(page.getByTestId('case-visibilite')).toHaveCount(56)
 
 		// Les trois états seedés, lus à l'écran : `hidden`, `required`, et le `visible` EXPLICITE
 		// que le §7 bis.11.4 interdit de replier sur le défaut.
