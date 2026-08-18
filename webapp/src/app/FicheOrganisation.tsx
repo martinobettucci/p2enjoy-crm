@@ -67,6 +67,12 @@ export type ProprietesFicheOrganisation = {
 	readonly client?: ClientCrm | null
 }
 
+export type ProprietesContenuFiche = {
+	readonly client?: ClientCrm | null
+	/** Identifiant tel qu'il vient de l'adresse — donc de forme quelconque (§11.4). */
+	readonly idOrganisation: string | undefined
+}
+
 /**
  * Une valeur de la liste de définitions : un couple libellé / valeur, la valeur restant VIDE
  * lorsque la donnée n'existe pas — ni tiret, ni « non renseigné » (§5.9, §5.20).
@@ -82,8 +88,39 @@ function ValeurTechnique({ libelle, valeur }: { libelle: string; valeur: string 
 	)
 }
 
+/**
+ * LA ROUTE : elle ne fait que deux choses — lire l'identifiant dans l'adresse, et poser la
+ * coquille dont le titre est le NOM de l'organisation, donc une donnée (§11.2).
+ *
+ * Le CONTENU vit dans un composant distinct et exporté. Ce n'est pas un découpage de confort :
+ * `AppShell` lit `clientCrm`, le client de MODULE, pour les espaces de travail et les tracks —
+ * il ne s'injecte pas. Une preuve unitaire montée sur la route entière n'éprouverait donc que la
+ * zone principale de la coquille, jamais la fiche. C'est le patron déjà tenu par `RouteCard`,
+ * dont les preuves unitaires montent `BlocCorbeilleCard` et non la route. Le parcours complet,
+ * coquille comprise, est éprouvé par `e2e/ui/contacts.spec.ts` sur la pile réelle.
+ */
 export function FicheOrganisation({ client = clientCrm }: ProprietesFicheOrganisation = {}) {
 	const { idOrganisation } = useParams()
+	const [nom, setNom] = useState<string | null>(null)
+	return (
+		<AppShell
+			cleTitreRoute={CLE_TITRE_ORGANISATION}
+			{...(nom === null ? {} : { titreRoute: nom })}
+		>
+			<ContenuFicheOrganisation
+				client={client}
+				idOrganisation={idOrganisation}
+				onNomConnu={setNom}
+			/>
+		</AppShell>
+	)
+}
+
+export function ContenuFicheOrganisation({
+	client = clientCrm,
+	idOrganisation,
+	onNomConnu,
+}: ProprietesContenuFiche & { readonly onNomConnu?: (nom: string | null) => void }) {
 	const [etat, setEtat] = useState<EtatAsync<FicheOrganisationLue | null>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	// Une réponse arrivée après le démontage, ou périmée par une nouvelle tentative, ne doit pas
@@ -106,7 +143,12 @@ export function FicheOrganisation({ client = clientCrm }: ProprietesFicheOrganis
 			}
 			if (lu.statut !== 'pret') return
 			setEtat(pret(lu.donnees))
+			// Le titre de la route est une DONNÉE : la coquille l'apprend du contenu, seul à lire.
+			onNomConnu?.(lu.donnees === null ? null : lu.donnees.name)
 		})()
+		// `onNomConnu` est délibérément hors des dépendances : elle ne décrit PAS quoi lire, et
+		// l'y mettre relancerait la lecture à chaque rendu du parent.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [client, idOrganisation, tentative])
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
@@ -114,17 +156,7 @@ export function FicheOrganisation({ client = clientCrm }: ProprietesFicheOrganis
 	const organisation = etat.statut === 'pret' ? etat.donnees : null
 
 	return (
-		<AppShell
-			cleTitreRoute={CLE_TITRE_ORGANISATION}
-			{...(organisation === null ? {} : { titreRoute: organisation.name })}
-		>
-			<ContenuFiche
-				client={client}
-				etat={etat}
-				organisation={organisation}
-				onReprise={reprendre}
-			/>
-		</AppShell>
+		<ContenuFiche client={client} etat={etat} organisation={organisation} onReprise={reprendre} />
 	)
 }
 

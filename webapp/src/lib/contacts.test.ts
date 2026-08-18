@@ -1,7 +1,10 @@
-// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a
+// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b
 // @verifies docs/SPEC-contacts.md §10.3 (la lecture, ses colonnes, son ordre, l'organisation
 //           embarquée), §10.4 (aucun droit calculé : zéro ligne est une liste vide),
 //           §10.7 (aucune pagination, aucun filtre)
+// @verifies docs/SPEC-contacts.md §11.3 (la lecture de la fiche : colonnes, filtre sur `id`, tri
+//           des contacts embarqués par `referencedTable`), §11.4 (trois absences rendent le même
+//           `null`, et un identifiant mal formé n'émet AUCUNE requête), §11.9 cas a et d
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone : l'erreur est classée sur le code HTTP)
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
@@ -11,7 +14,16 @@
 // valeur ne s'en aperçoive.
 
 import { describe, expect, it } from 'vitest'
-import { COLONNES_CONTACT_CARNET, TRI_CARNET, lireContactsDuCarnet } from './contacts'
+import {
+	COLONNES_CONTACT_CARNET,
+	COLONNES_FICHE_ORGANISATION,
+	TABLE_TRI_CONTACTS_FICHE,
+	TRI_CARNET,
+	TRI_CONTACTS_FICHE,
+	estFormeUuid,
+	lireContactsDuCarnet,
+	lireFicheOrganisation,
+} from './contacts'
 import type { ClientCrm } from './supabase'
 
 type Reponse = { data: unknown[] | null; error: { message: string } | null; status: number }
@@ -159,6 +171,192 @@ describe('lireContactsDuCarnet', () => {
 			},
 		} as unknown as ClientCrm
 		const lu = await lireContactsDuCarnet(client)
+		expect(lu.statut).toBe('erreur')
+	})
+})
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4b — LA LECTURE DE LA FICHE D'ORGANISATION (docs/SPEC-contacts.md §11.3, §11.4)
+// ----------------------------------------------------------------------------------------------
+
+/**
+ * Espion de la fiche : il enregistre en plus les filtres `eq` — la fiche en pose UN, sur `id` —
+ * et le couple réellement transmis à `order`, colonne ET table référencée. Cette seconde mesure
+ * n'est pas un détail : la forme du carnet, `order('contacts(full_name)')`, est refusée par
+ * PostgREST avec `PGRST108`, et seul le couple `(colonne, referencedTable)` construit le
+ * `contacts.order=full_name` relevé au §11.3.
+ */
+function espionFiche(reponse: Reponse): {
+	client: ClientCrm
+	appel: { table?: string; colonnes?: string; eq: string[]; tris: unknown[] }
+} {
+	const appel: { table?: string; colonnes?: string; eq: string[]; tris: unknown[] } = {
+		eq: [],
+		tris: [],
+	}
+	const chaine: Record<string, unknown> = {
+		eq: (colonne: string, valeur: string) => {
+			appel.eq.push(`${colonne}=${valeur}`)
+			return chaine
+		},
+		order: (colonne: string, options?: unknown) => {
+			appel.tris.push([colonne, options])
+			return chaine
+		},
+		then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				select: (colonnes: string) => {
+					appel.colonnes = colonnes
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+const ID_SOGEXIA = '5eed0000-0000-4000-8000-000000000081'
+const ID_SANS_CONTACT = '5eed0000-0000-4000-8000-000000000083'
+
+/** Sogexia, du seed enrichi par la tranche 4b : un domaine, un site web, un contact. */
+const SOGEXIA = {
+	id: ID_SOGEXIA,
+	name: 'Sogexia',
+	domain: 'sogexia.example',
+	website: 'https://www.sogexia.example',
+	contacts: [
+		{
+			id: '5eed0000-0000-4000-8000-000000000091',
+			full_name: 'Léo Marchand',
+			email: 'leo.marchand@sogexia.example',
+			phone: null,
+			role_title: 'Directeur achats',
+		},
+	],
+}
+
+describe('estFormeUuid', () => {
+	it('accepte un uuid, refuse tout le reste — §11.4', () => {
+		expect(estFormeUuid(ID_SOGEXIA)).toBe(true)
+		expect(estFormeUuid('5EED0000-0000-4000-8000-000000000081')).toBe(true)
+		expect(estFormeUuid('pas-un-uuid')).toBe(false)
+		expect(estFormeUuid('')).toBe(false)
+		expect(estFormeUuid(undefined)).toBe(false)
+		// Un uuid tronqué reste refusé : la mesure sur la pile rend `400` et `22P02`.
+		expect(estFormeUuid(ID_SOGEXIA.slice(0, -1))).toBe(false)
+	})
+})
+
+describe('lireFicheOrganisation', () => {
+	it('interroge `organizations`, filtre sur `id` et trie les contacts EMBARQUÉS — §11.3', async () => {
+		const { client, appel } = espionFiche({ data: [SOGEXIA], error: null, status: 200 })
+		await lireFicheOrganisation(client, ID_SOGEXIA)
+		expect(appel.table).toBe('organizations')
+		expect(appel.colonnes).toBe(COLONNES_FICHE_ORGANISATION)
+		expect(appel.eq).toEqual([`id=${ID_SOGEXIA}`])
+		// Le couple, et non une chaîne recomposée : `order('contacts(full_name)')` construirait
+		// `order=contacts(full_name)`, que PostgREST refuse par `PGRST108`.
+		expect(appel.tris).toEqual([
+			[TRI_CONTACTS_FICHE, { referencedTable: TABLE_TRI_CONTACTS_FICHE }],
+		])
+	})
+
+	it('embarque les contacts et demande `website`, que le carnet ne demandait pas — §11.3', () => {
+		expect(COLONNES_FICHE_ORGANISATION).toContain(
+			'contacts(id, full_name, email, phone, role_title)',
+		)
+		expect(COLONNES_FICHE_ORGANISATION).toContain('website')
+		// `organization_id` ne figure pas dans les colonnes des contacts embarqués : sur cette
+		// surface, tous appartiennent à l'organisation de la page (§11.5).
+		expect(COLONNES_FICHE_ORGANISATION).not.toContain('organization_id')
+		// `source` n'est pas davantage demandée qu'au §10.3.
+		expect(COLONNES_FICHE_ORGANISATION).not.toContain('source')
+	})
+
+	it("n'émet AUCUNE requête quand l'identifiant n'a pas la forme d'un uuid — §11.4", async () => {
+		// LA RÈGLE QUE LA MESURE A IMPOSÉE. Un `400` classé par `classerErreur` tomberait sur
+		// l'état d'erreur, dont la reprise relancerait la même requête pour le même `400` : une
+		// commande morte, sur une surface dont l'adresse est éditable par l'utilisateur.
+		const { client, appel } = espionFiche({ data: [SOGEXIA], error: null, status: 200 })
+		const lu = await lireFicheOrganisation(client, 'pas-un-uuid')
+		expect(appel.table).toBeUndefined()
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret') return
+		expect(lu.donnees).toBeNull()
+	})
+
+	it("rend `null` — jamais une erreur — quand la réponse est vide, quelle qu'en soit la cause", async () => {
+		// MESURÉ : une organisation inexistante et un appelant anonyme rendent TOUS DEUX `200` et
+		// `[]`. Les distinguer renseignerait un appelant sans droit sur l'EXISTENCE d'une
+		// organisation (docs/SPEC-permissions-rls.md §7).
+		const { client } = espionFiche({ data: [], error: null, status: 200 })
+		const lu = await lireFicheOrganisation(client, ID_SOGEXIA)
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret') return
+		expect(lu.donnees).toBeNull()
+	})
+
+	it('rend une organisation SANS CONTACT comme un état légitime, non comme une anomalie — §11.9 cas d', async () => {
+		// Comptoir Vasseur, seedée par la tranche 4b. MESURÉ sur la pile : `"contacts": []`.
+		const { client } = espionFiche({
+			data: [{ id: ID_SANS_CONTACT, name: 'Comptoir Vasseur', domain: 'comptoir-vasseur.example', website: null, contacts: [] }],
+			error: null,
+			status: 200,
+		})
+		const lu = await lireFicheOrganisation(client, ID_SANS_CONTACT)
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret' || lu.donnees === null) return
+		expect(lu.donnees.contacts).toEqual([])
+		expect(lu.donnees.website).toBeNull()
+	})
+
+	it('traite une relation embarquée ABSENTE comme « aucun contact », jamais comme `undefined`', async () => {
+		const { client } = espionFiche({
+			data: [{ id: ID_SANS_CONTACT, name: 'Comptoir Vasseur', domain: null, website: null }],
+			error: null,
+			status: 200,
+		})
+		const lu = await lireFicheOrganisation(client, ID_SANS_CONTACT)
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret' || lu.donnees === null) return
+		expect(lu.donnees.contacts).toEqual([])
+	})
+
+	it('rend la première ligne avec ses contacts embarqués — §11.9 cas a', async () => {
+		const { client } = espionFiche({ data: [SOGEXIA], error: null, status: 200 })
+		const lu = await lireFicheOrganisation(client, ID_SOGEXIA)
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret' || lu.donnees === null) return
+		expect(lu.donnees.name).toBe('Sogexia')
+		expect(lu.donnees.website).toBe('https://www.sogexia.example')
+		expect(lu.donnees.contacts).toHaveLength(1)
+	})
+
+	it("classe l'erreur sur le code HTTP, jamais sur le texte du message — §6.4", async () => {
+		const { client } = espionFiche({ data: null, error: { message: 'boom' }, status: 500 })
+		const lu = await lireFicheOrganisation(client, ID_SOGEXIA)
+		expect(lu.statut).toBe('erreur')
+		if (lu.statut !== 'erreur') return
+		expect(lu.erreur.nature).toBe('unknown')
+
+		const refus = espionFiche({ data: null, error: { message: 'permission denied' }, status: 403 })
+		const luRefus = await lireFicheOrganisation(refus.client, ID_SOGEXIA)
+		expect(luRefus.statut).toBe('erreur')
+		if (luRefus.statut !== 'erreur') return
+		expect(luRefus.erreur.nature).toBe('forbidden')
+	})
+
+	it('ne lève jamais : une exception du client devient un état d’erreur', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const lu = await lireFicheOrganisation(client, ID_SOGEXIA)
 		expect(lu.statut).toBe('erreur')
 	})
 })

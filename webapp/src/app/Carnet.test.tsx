@@ -1,6 +1,8 @@
-// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a
+// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b
 // @verifies docs/SPEC-contacts.md §10.5 (de quoi l'écran a l'air), §10.6 (cas a à f du contrat
-//           de comportement), §10.7 (aucun geste, le nom d'organisation n'est pas un lien)
+//           de comportement), §10.7 (aucun geste)
+// @verifies docs/SPEC-contacts.md §11.6 (le nom d'organisation est désormais un LIEN vers sa
+//           fiche), §11.9 cas i
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau sémantique, cellule sans valeur VIDE),
 //           §5.8 (quatre états), §2 (données techniques en monospace)
 //
@@ -10,12 +12,26 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Carnet } from './Carnet'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
+
+/**
+ * Le carnet porte désormais un `Link` vers la fiche d'organisation (§11.6) : il lui faut un
+ * routeur. Ce n'est pas une commodité de test — c'est la conséquence directe du lien livré, et un
+ * rendu nu échouerait sur `useHref` avant la moindre assertion.
+ */
+function rendreCarnet(client: ClientCrm | null) {
+	return render(
+		<MemoryRouter>
+			<Carnet client={client} />
+		</MemoryRouter>,
+	)
+}
 
 type Reponse = { data: unknown[] | null; error: { message: string } | null; status: number }
 
@@ -68,7 +84,7 @@ const SEED = [ELISE, LEO, SOPHIE]
 
 describe('Carnet de contacts', () => {
 	it('rend une ligne par contact, dans l’ordre reçu du serveur — cas a du §10.6', async () => {
-		render(<Carnet client={clientQuiRend({ data: SEED, error: null, status: 200 })} />)
+		rendreCarnet(clientQuiRend({ data: SEED, error: null, status: 200 }))
 		const lignes = await screen.findAllByTestId('ligne-contact')
 		expect(lignes).toHaveLength(3)
 		// L'écran ne retrie PAS : l'ordre est celui de la réponse, et la collation de la base range
@@ -81,7 +97,7 @@ describe('Carnet de contacts', () => {
 	})
 
 	it('est un tableau SÉMANTIQUE avec ses cinq en-têtes de colonne — §5.9', async () => {
-		render(<Carnet client={clientQuiRend({ data: SEED, error: null, status: 200 })} />)
+		rendreCarnet(clientQuiRend({ data: SEED, error: null, status: 200 }))
 		expect(await screen.findByTestId('tableau-contacts')).toBeTruthy()
 		const entetes = screen.getAllByRole('columnheader')
 		expect(entetes.map((entete) => entete.textContent)).toEqual([
@@ -94,7 +110,7 @@ describe('Carnet de contacts', () => {
 	})
 
 	it('laisse la cellule VIDE quand la donnée est absente — cas b et c du §10.6', async () => {
-		render(<Carnet client={clientQuiRend({ data: SEED, error: null, status: 200 })} />)
+		rendreCarnet(clientQuiRend({ data: SEED, error: null, status: 200 }))
 		const lignes = await screen.findAllByTestId('ligne-contact')
 		const ligneSophie = lignes.find((ligne) => ligne.getAttribute('data-contact') === SOPHIE.id)!
 		const cellulesSophie = [...ligneSophie.querySelectorAll('td')].map((c) => c.textContent)
@@ -112,22 +128,39 @@ describe('Carnet de contacts', () => {
 		])
 	})
 
-	it('rend email et téléphone en DONNÉE TECHNIQUE, et le nom d’organisation en TEXTE — §10.5, §10.7', async () => {
-		render(<Carnet client={clientQuiRend({ data: SEED, error: null, status: 200 })} />)
+	it('rend email et téléphone en DONNÉE TECHNIQUE, et le nom d’organisation en LIEN — §10.5, §11.6', async () => {
+		rendreCarnet(clientQuiRend({ data: SEED, error: null, status: 200 }))
 		const lignes = await screen.findAllByTestId('ligne-contact')
 		const ligneLeo = lignes.find((ligne) => ligne.getAttribute('data-contact') === LEO.id)!
 		// §2 : email et téléphone sont des données techniques, portées par `code`.
 		expect(ligneLeo.querySelector('code')?.textContent).toBe(LEO.email)
-		// §10.7 : la fiche d'organisation est due par 4b — un lien sans destination serait mort,
-		// et aucun `mailto:` n'est posé, écrire à un contact n'étant spécifié nulle part.
-		expect(ligneLeo.querySelectorAll('a')).toHaveLength(0)
+		// ASSERTION RÉVISÉE le 2026-08-18 — sous-tranche 4b, docs/SPEC-contacts.md §11.6.
+		//
+		// Elle exigeait `toHaveLength(0)` : le nom d'organisation devait rester un TEXTE tant que
+		// la fiche n'existait pas, un lien sans destination étant mort (§10.7, §5.10). La
+		// sous-tranche 4b LIVRE cette destination : la règle change par livraison, et la preuve est
+		// donc RÉVISÉE avec son motif — jamais retirée, jamais contournée (mécanisme de la
+		// décision 51). Ce qu'elle exige reste vérifiable, et devient plus fort : le lien doit
+		// exister ET mener à la bonne fiche.
+		const liens = ligneLeo.querySelectorAll('a')
+		expect(liens).toHaveLength(1)
+		expect(liens[0]?.getAttribute('href')).toBe(
+			`/contacts/organisations/${LEO.organization_id}`,
+		)
+		// Le nom EST le libellé du lien : aucun `aria-label` générique ne le remplace, sans quoi
+		// tous les liens du tableau seraient indistinguables pour un lecteur d'écran (§8).
+		expect(liens[0]?.textContent).toBe('Sogexia')
+		// Aucun `mailto:` ni `tel:` n'est posé pour autant : écrire à un contact depuis le carnet
+		// n'est spécifié nulle part (§10.5, inchangé).
+		expect(ligneLeo.innerHTML).not.toContain('mailto:')
+		expect(ligneLeo.innerHTML).not.toContain('tel:')
 	})
 
 	it('rend des squelettes pendant la lecture, jamais un écran blanc — cas d du §10.6', () => {
 		const jamais = {
 			from: () => ({ select: () => ({ order: () => ({ then: () => new Promise(() => {}) }) }) }),
 		} as unknown as ClientCrm
-		render(<Carnet client={jamais} />)
+		rendreCarnet(jamais)
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
 	})
 
@@ -136,7 +169,7 @@ describe('Carnet de contacts', () => {
 			{ data: null, error: { message: 'boom' }, status: 500 },
 			{ data: SEED, error: null, status: 200 },
 		)
-		render(<Carnet client={client} />)
+		rendreCarnet(client)
 		const reprise = await screen.findByRole('button', { name: fr['contacts.error.retry'] })
 		await userEvent.click(reprise)
 		// La reprise n'est pas décorative : elle relit, et le tableau apparaît.
@@ -144,7 +177,7 @@ describe('Carnet de contacts', () => {
 	})
 
 	it('rend l’état vide SANS action sur zéro contact — cas f du §10.6', async () => {
-		render(<Carnet client={clientQuiRend({ data: [], error: null, status: 200 })} />)
+		rendreCarnet(clientQuiRend({ data: [], error: null, status: 200 }))
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByText(fr['contacts.empty.title'])).toBeTruthy()
 		// Écart assumé au §5.8, celui que le §5.16 a déjà pris pour la corbeille : le carnet ne
@@ -155,7 +188,7 @@ describe('Carnet de contacts', () => {
 
 	it('rend un état explicite sans espace de travail, et n’interroge RIEN', () => {
 		const espion = vi.fn()
-		render(<Carnet client={null} />)
+		rendreCarnet(null)
 		expect(screen.getByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByText(fr['contacts.noWorkspace.title'])).toBeTruthy()
 		expect(espion).not.toHaveBeenCalled()
