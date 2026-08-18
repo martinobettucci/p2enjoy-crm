@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Ce qui manque est dit : aucun geste de création, de modification ni de suppression, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Ce qui manque est dit : aucun geste de création, de modification ni de suppression d'un contact, aucune recherche |
 
 ### Suivi quotidien
 
@@ -660,6 +660,50 @@ deviner.
 
 Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
 connexion, une card consentie ouvre sa fiche et son fil.
+
+### 4.7 ter Les contacts d'une affaire : les rattacher, les détacher
+
+*Livré par `CRM-060`, sous-tranche 4c. Captures dans `docs/captures/CRM-060/`, préfixées
+`contacts-affaire-`.*
+
+**Où.** Dans la colonne de gauche de la fiche, **entre le formulaire et le bouton de mise à la
+corbeille** : le bloc **« Contacts de l'affaire »**. Il dit qui, dans le carnet de l'espace
+(chapitre 3 *ter*), est associé à cette affaire.
+
+**Ce que chaque ligne montre.** Le **nom** de la personne, le nom de son **organisation** — qui est
+un lien vers sa fiche — et son **rôle dans cette affaire** : « décideur », « prescripteur »,
+« technique », ou tout autre mot que vous avez saisi. Le rôle est **libre** : le produit n'en impose
+aucune liste. Lorsqu'aucun rôle n'a été saisi, la place reste vide plutôt que de porter un tiret.
+Une personne sans organisation n'affiche aucun lien.
+
+**Rattacher.** Le bouton **« Rattacher un contact »** ouvre, sous la liste, un formulaire à deux
+champs : la personne à rattacher, choisie dans une liste, et le rôle, **facultatif**. La liste
+n'offre que les personnes **pas encore rattachées** à cette affaire — proposer les autres reviendrait
+à proposer un geste que le produit refuserait. Une fois validé, le rattachement apparaît dans la
+liste, qui est relue depuis le serveur.
+
+Deux cas sont dits en toutes lettres plutôt que laissés à deviner :
+
+- **toutes les personnes du carnet sont déjà rattachées** : le bloc l'écrit, et n'ouvre pas une
+  liste vide ;
+- **le carnet de l'espace est vide** : le bloc l'écrit également. Aucun écran ne permet encore de
+  créer un contact — c'est une limite connue, pas un défaut d'affichage.
+
+**Détacher.** Chaque ligne porte un bouton **« Détacher »**. Il demande une **confirmation qui nomme
+la personne** : le rattachement et le rôle saisi sont perdus, la personne restant au carnet et
+pouvant être rattachée de nouveau. Tant que vous n'avez pas confirmé, **rien n'est écrit**.
+
+**Si vous n'avez pas le droit d'écrire sur cette affaire.** Les deux boutons restent visibles et
+actifs : le produit ne devine pas vos droits, il vous répond. Un rattachement refusé affiche
+**« Vous ne pouvez pas modifier cette affaire. »** sous le formulaire, **sans effacer votre saisie**.
+Un détachement refusé, lui, affiche **« Aucun rattachement n'a été retiré. »** : c'est la réponse
+exacte du serveur, qui ne distingue pas un refus d'une ligne déjà retirée par quelqu'un d'autre — et
+le produit préfère le dire ainsi plutôt qu'annoncer un retrait qui n'a pas eu lieu.
+
+**Ce qui n'est pas encore livré.** Le rôle d'un rattachement ne se **modifie** pas : détachez puis
+rattachez. Une affaire ne se rattache pas depuis le carnet ni depuis la fiche d'organisation — le
+geste part toujours de l'affaire. Et un rattachement n'apparaît **pas** dans l'historique de
+l'affaire (chapitre 4.10).
 
 ### 4.7 bis Mettre une affaire à la corbeille
 

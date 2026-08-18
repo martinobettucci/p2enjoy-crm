@@ -1608,6 +1608,21 @@ le premier champ et rendu à la commande qui l'a ouvert, alerte de refus **dans 
   la création d'un workflow. Une insertion optimiste contredirait l'ordre du serveur le temps d'un
   rendu, et masquerait un rattachement posé entre-temps par un collègue.
 
+- **Le message d'un geste vit dans le BLOC, sous la liste, et non dans la ligne visée.** C'est un
+  défaut trouvé **par la preuve E2E**, qui est devenue intermittente : une relecture repasse le bloc
+  par l'état de chargement, ce qui **démonte** la ligne, et un message qu'elle portait disparaissait
+  avec elle — alors que « sans effet » exige les deux, dire ET relire. Il reste **près de ce qui l'a
+  causé** au sens du §5.13 : la ligne visée peut légitimement avoir disparu, c'est même l'une des
+  deux causes du « sans effet ». Le corriger par une temporisation aurait été le contournement que
+  `CLAUDE.md` §18 interdit.
+
+- **Sous le palier `md`, la ligne se REPLIE et sa commande passe à la ligne suivante.** Observé sur
+  `docs/captures/CRM-060/contacts-affaire-sm-390.jpg` : à 390 px, le nom, l'organisation, le rôle et
+  « Détacher » ne tiennent pas sur une seule ligne. La ligne gagne alors de la hauteur plutôt que de
+  tronquer une donnée ou de rétrécir une cible sous les 40 px du §8 — c'est l'écart assumé avec la
+  hauteur fixe du §5.9, et la contrepartie de n'être pas un tableau. La page ne défile jamais
+  horizontalement (§7), et c'est mesuré aux quatre paliers.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

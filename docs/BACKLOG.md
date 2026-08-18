@@ -7112,11 +7112,9 @@ migration `0046`) :
             le 2026-08-18** ; voir le détail plus bas. *(Case restée à `[ ]` par oubli de la session
             qui l'a livrée, alors que le corps de l'unité la documente comme livrée : corrigée le
             2026-08-18 avec la sous-tranche 4c, sans autre changement.)*
-      - [~] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
-            (`card_contacts`), premier geste d'écriture de la tranche. **Spécifiée le 2026-08-18**
-            — `docs/SPEC-contacts.md` §12 et `docs/DESIGN_SYSTEM.md` §5.21, écrits et committés
-            AVANT toute ligne de code (`CLAUDE.md` §5), fondés sur treize réponses PostgREST
-            relevées à la main sur la pile seedée. Implémentation en cours.
+      - [x] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
+            (`card_contacts`), premier geste d'écriture de la tranche. **Livrée et prouvée le
+            2026-08-18** ; voir le détail plus bas.
       - [ ] **4d — Les deux sélecteurs** du §9.1 (`contact` et `user`) dans le formulaire d'une
             affaire, et **l'enrichissement du seed** différé par le §9.6, avec la révision des dix
             comptes qu'il déplace.
@@ -7246,9 +7244,75 @@ l'unité, la correction appartient à la coquille (`CRM-007`).
 l'organisation (4c), aucune pagination, et le nom d'un contact ne mène nulle part, faute de fiche
 de contact.
 
-**Restent dues : 4c** (rattachement d'un contact à une affaire depuis la route de détail, premier
-geste d'écriture de la tranche) **et 4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed
-différé par le §9.6, avec la révision des dix comptes qu'il déplace). `CRM-060` demeure `[~]`.
+**Sous-tranche 4c livrée, 2026-08-18 — le rattachement d'un contact à une affaire**
+(`docs/SPEC-contacts.md` §12, `docs/DESIGN_SYSTEM.md` §5.21) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) :
+      `docs/SPEC-contacts.md` §12, fondée sur **treize** réponses PostgREST relevées à la main sur
+      la pile seedée, le seed étant rendu **intact** après chaque mesure d'écriture. Trois mesures
+      ont décidé du contrat plutôt que de le confirmer : l'embarquement tient sur **deux niveaux**
+      (`card_contacts → contacts → organizations`) sans ambiguïté `PGRST201` ; le tri se demande au
+      **premier niveau** (`order=contacts(full_name)`), écart mesuré avec le §11.3 où la relation
+      est to-many ; et le refus d'**insertion** est un `403` là où celui de **suppression** est
+      `200` et **zéro ligne**, silencieux.
+- [x] `webapp/src/lib/contacts.ts` : `lireContactsDeLAffaire`, `rattacherContact` — un rôle vide
+      envoyé à `null`, jamais `""`, la contrainte `card_contacts_role_check` refusant la chaîne
+      vide (mesuré `400` / `23514`) —, `detacherContact` à **trois** issues, et
+      `classerRefusRattachement`, qui lit le **code PostgreSQL avant le code HTTP** : `23505` et
+      `23503` rendent tous deux `409`, et un classement par le statut les confondrait.
+- [x] `webapp/src/app/BlocContactsCard.tsx` : la liste plate du §5.18, le formulaire et la
+      confirmation **dans le flux du document**, les **trois vides distincts**, le refus qui
+      n'efface pas la saisie, le focus entrant puis rendu à sa commande, et **aucune commande
+      éteinte d'avance** quel que soit le rôle.
+- [x] `webapp/src/app/RouteCard.tsx` : le bloc monté **entre** le formulaire et le geste de
+      corbeille, position **mesurée à l'écran** par la preuve E2E et non seulement écrite.
+- [x] `webapp/src/lib/contacts.test.ts` (**16 tests ajoutés**) et
+      `webapp/src/app/BlocContactsCard.test.tsx` (**21 tests**) : la requête réellement émise, la
+      charge réellement envoyée, le classement des cinq refus, et les cas a à p du §12.7.
+- [x] `e2e/ui/contacts-affaire.spec.ts` : **8 scénarios verts** sur la pile seedée — le
+      rattachement PUIS le détachement par les gestes de l'écran, le même parcours au **clavier**,
+      le refus opposé à la **lectrice** avec sa saisie conservée, son détachement **sans effet**,
+      l'état vide qui garde son formulaire, et les quatre paliers. Console **vierge** : le `403` que
+      le scénario provoque est consommé nommément. Rejouée **trois fois de suite**, sans
+      intermittence.
+- [x] **Le seed est rendu INTACT, et c'est une contrainte dure** : `apply-seed.sh` échoue si
+      `card_contacts` ne compte pas exactement **deux** lignes, et une garde exige que Léo Marchand
+      reste rattaché à **exactement une** card active (état que la règle 3 du classement lit). La
+      preuve rattache donc Élise Fabre puis la **détache par le geste de l'écran** — le détachement
+      n'est pas une commodité de test, c'est le second geste livré —, avec un filet de sécurité en
+      `afterAll`.
+- [x] `scripts/verify-harness.sh` **révisé dans le même changement** : compteur de scénarios
+      d'interface porté de 390 à **398**, valeur mesurée par `playwright test --list`
+      (« Total: 398 tests in 31 files »).
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/`,
+      préfixées `contacts-affaire-` : le bloc peuplé, le formulaire ouvert, le rattachement obtenu,
+      la confirmation, le refus, l'état vide, et les quatre paliers.
+- [x] `docs/DESIGN_SYSTEM.md` §5.21 ajouté ; `docs/manual.md` §4.7 *ter* et sommaire ;
+      `CHANGELOG.md`, dans le même changement.
+
+**UN DÉFAUT TROUVÉ PAR LA PREUVE E2E, ET CORRIGÉ À SA CAUSE.** La preuve du « sans effet » est
+devenue **intermittente** : le message vivait dans la LIGNE, et une relecture repasse le bloc par
+l'état de chargement, ce qui **démonte** la ligne et le message avec elle — alors que le §12.7
+cas o exige les DEUX, dire « sans effet » ET relire. Le message vit désormais dans le **bloc**, sous
+la liste, où il reste près de ce qui l'a causé (§5.13) : la ligne visée peut légitimement avoir
+disparu, c'est même l'une des deux causes du « sans effet ». La corriger par une temporisation
+aurait été le contournement que `CLAUDE.md` §18 interdit. Une assertion unitaire **ajoutée dans le
+même changement** exige désormais que le message survive à la relecture — aucun test ne le disait.
+
+**UN SECOND DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16) : la première
+`contacts-affaire-1440.jpg` ne montrait **pas** le bloc, qui vit en bas d'une colonne longue alors
+que la fenêtre s'ouvre sur l'en-tête. La capture représentait fidèlement l'application, mais pas la
+fonctionnalité livrée. Les captures amènent désormais le bloc dans la vue avant de déclencher.
+
+*Limites nommées d'emblée pour 4c* (`docs/SPEC-contacts.md` §12.8) : le **rôle** d'un rattachement
+posé ne se modifie pas (la politique `card_contacts_maj` existe, aucun écran ne l'exerce) ; aucune
+liste des affaires d'un contact ; aucun rattachement depuis le carnet ni depuis la fiche
+d'organisation ; aucune création de contact ; aucune pagination du sélecteur ; et **le fil unifié
+n'apprend rien de ce geste** — `card_contacts` n'écrit aucun `card_event`, écart nommé et **à
+arbitrer**.
+
+**Reste due : 4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed différé par le §9.6,
+avec la révision des dix comptes qu'il déplace). `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

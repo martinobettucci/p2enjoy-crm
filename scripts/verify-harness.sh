@@ -537,7 +537,17 @@ SCENARIOS_API=704
 # scénarios rejoignent un fichier existant. Valeur MESURÉE par `playwright test --list`
 # (« Total: 390 tests in 30 files »), puis par l'exécution de la suite complète, **390 verts,
 # aucun échec**.
-SCENARIOS_UI=390
+#
+# Porté de 390 à **398** par `CRM-060` sous-tranche 4c, qui livre le rattachement d'un contact à
+# une affaire (`docs/SPEC-contacts.md` §12) : le fichier NEUF `e2e/ui/contacts-affaire.spec.ts`
+# ajoute **huit** scénarios — la lecture du rattachement du seed, la place du bloc dans la colonne
+# gauche mesurée à l'écran, le rattachement PUIS le détachement par les gestes de l'écran, le même
+# parcours au clavier, le refus d'insertion opposé à la lectrice, son détachement SANS EFFET, l'état
+# vide qui garde son formulaire, et les **quatre paliers** du §7 en un scénario. Le nombre de
+# FICHIERS passe de 30 à **31**. Valeur MESURÉE par `playwright test --list`
+# (« Total: 398 tests in 31 files »), puis par l'exécution de la suite neuve, **8/8 verts**,
+# rejouée trois fois de suite sans intermittence.
+SCENARIOS_UI=398
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

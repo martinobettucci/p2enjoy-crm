@@ -15,6 +15,24 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4c : le rattachement d'un contact à une
+  affaire** (`docs/SPEC-contacts.md` §12, `docs/DESIGN_SYSTEM.md` §5.21). La fiche d'une affaire
+  porte, entre son formulaire et son geste de mise à la corbeille, le bloc **« Contacts de
+  l'affaire »** : une ligne par contact rattaché, avec son organisation en lien vers sa fiche et son
+  **rôle dans l'affaire**, rôle libre que la base n'énumère pas. Deux gestes, les **premiers** que
+  le carnet de contacts exerce en écriture : **rattacher** un contact — la liste n'offre que ceux
+  qui ne le sont pas encore, un rôle facultatif l'accompagne, et un rôle laissé vide est envoyé à
+  `null` plutôt qu'à une chaîne vide que la base refuse — et **détacher**, avec une confirmation qui
+  nomme la personne. Les deux commandes restent offertes quel que soit le rôle de l'appelant : la
+  règle vit dans les politiques `card_contacts_insertion` et `card_contacts_suppression`, et l'écran
+  traduit ce que le serveur répond. Les refus sont dits par un **dictionnaire fermé** — déjà
+  rattaché, contact inconnu, droit manquant, réseau, inattendu —, classés sur le **code PostgreSQL
+  avant le code HTTP, `23505` et `23503` rendant tous deux `409`. Un détachement refusé rend `200` et
+  zéro ligne : l'écran écrit « Aucun rattachement n'a été retiré » plutôt que d'annoncer un retrait
+  qui n'a pas eu lieu. Trois états vides distincts sont traités : aucun contact rattaché — qui garde
+  son formulaire —, tous déjà rattachés, et un carnet vide. Aucune migration, aucune politique
+  nouvelle : le modèle est celui de la tranche 1 (migration `0045`).
+
 - **`CRM-060` — Contacts et organisations, tranche 4b : la fiche d'organisation**
   (`docs/SPEC-contacts.md` §11, `docs/DESIGN_SYSTEM.md` §5.20). Le nom d'organisation du carnet
   devient un **lien** et ouvre la fiche de cette organisation, à l'adresse

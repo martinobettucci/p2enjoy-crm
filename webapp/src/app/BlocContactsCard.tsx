@@ -119,6 +119,24 @@ export function BlocContactsCard({
 	// posé entre-temps par un collègue.
 	const relire = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
+	/**
+	 * LE MESSAGE DU DÉTACHEMENT VIT ICI, ET NON DANS LA LIGNE — défaut trouvé PAR LA PREUVE E2E,
+	 * qui l'a rendue intermittente avant qu'aucune relecture ne soit visible à l'œil.
+	 *
+	 * La cause : une relecture repasse le bloc par `chargement`, ce qui DÉMONTE la liste et la
+	 * ligne avec elle. Un message porté par la ligne disparaissait donc avec son porteur, alors que
+	 * le §12.7 cas o exige les DEUX — dire « sans effet » ET relire. Le corriger par une
+	 * temporisation aurait été le contournement que `CLAUDE.md` §18 interdit.
+	 *
+	 * Il reste DANS le bloc, près de ce qui l'a causé (§5.13, §5.16) : la ligne visée peut
+	 * légitimement avoir disparu — c'est même l'une des deux causes du « sans effet ».
+	 */
+	const [messageGeste, setMessageGeste] = useState<string | null>(null)
+	const relireApresGeste = useCallback((message: string | null) => {
+		setMessageGeste(message)
+		setTentative((precedente) => precedente + 1)
+	}, [])
+
 	// Sans client configuré, l'application entière rend déjà l'écran de configuration manquante
 	// (`AppShell`) : cette branche n'est pas atteignable en production, et un bloc qui n'aurait
 	// aucun client où lire serait une surface morte (§5.10).
@@ -139,6 +157,8 @@ export function BlocContactsCard({
 				idWorkspace={idWorkspace}
 				client={client}
 				onReprise={relire}
+				onGeste={relireApresGeste}
+				messageGeste={messageGeste}
 			/>
 		</section>
 	)
@@ -150,12 +170,16 @@ function ContenuBlocContacts({
 	idWorkspace,
 	client,
 	onReprise,
+	onGeste,
+	messageGeste,
 }: {
 	readonly etat: EtatAsync<ContenuBloc>
 	readonly idCard: string
 	readonly idWorkspace: string
 	readonly client: ClientCrm
 	readonly onReprise: () => void
+	readonly onGeste: (message: string | null) => void
+	readonly messageGeste: string | null
 }) {
 	if (etat.statut === 'chargement') {
 		return <SkeletonListe lignes={2} libelle={t('state.loading.aria')} />
@@ -197,10 +221,21 @@ function ContenuBlocContacts({
 							rattache={rattache}
 							idCard={idCard}
 							client={client}
-							onRelire={onReprise}
+							onGeste={onGeste}
 						/>
 					))}
 				</ul>
+			)}
+			{messageGeste === null ? null : (
+				// Le message du geste se lit DANS le bloc, sous la liste qu'il concerne, jamais en
+				// tête d'écran (§5.13, §5.16). Il survit à la relecture, ce que le §12.7 cas o exige.
+				<p
+					role="alert"
+					data-testid="refus-detachement"
+					className="rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
+				>
+					{messageGeste}
+				</p>
 			)}
 			<FormulaireRattachement
 				rattachables={rattachables}
@@ -224,16 +259,16 @@ function LigneContactRattache({
 	rattache,
 	idCard,
 	client,
-	onRelire,
+	onGeste,
 }: {
 	readonly rattache: ContactRattache
 	readonly idCard: string
 	readonly client: ClientCrm
-	readonly onRelire: () => void
+	/** Remonte le message du geste au BLOC, qui survit à la relecture, et relit la liste. */
+	readonly onGeste: (message: string | null) => void
 }) {
 	const [confirmation, setConfirmation] = useState(false)
 	const [enVol, setEnVol] = useState(false)
-	const [message, setMessage] = useState<string | null>(null)
 	const commande = useRef<HTMLButtonElement>(null)
 	/**
 	 * Le focus est rendu APRÈS le rendu, et c'est le défaut que la preuve clavier de `CRM-077` a
@@ -250,28 +285,26 @@ function LigneContactRattache({
 
 	const confirmer = useCallback(async () => {
 		setEnVol(true)
-		setMessage(null)
 		const resultat = await detacherContact(client, idCard, rattache.contactId)
 		setEnVol(false)
 		if (resultat.statut === 'appliquee') {
-			onRelire()
+			onGeste(null)
 			return
 		}
 		// « Sans effet » n'est NI un succès NI une erreur (§12.4, conséquence 1) : la clause `USING`
 		// a filtré la ligne avant la suppression, rien n'a changé, et l'écran le dit plutôt que
-		// d'annoncer un détachement qui n'a pas eu lieu. La liste est RELUE : la ligne a pu partir
-		// entre-temps, et l'écran ne prétend pas savoir laquelle des deux causes s'applique.
-		setMessage(
+		// d'annoncer un détachement qui n'a pas eu lieu. La liste est RELUE dans les deux cas : la
+		// ligne a pu partir entre-temps, et l'écran ne prétend pas savoir laquelle des deux causes
+		// s'applique (§12.4, conséquence 2).
+		onGeste(
 			resultat.statut === 'sans-effet'
 				? t(CLE_SANS_EFFET)
 				: t(MESSAGES_REFUS[resultat.refus.nature]),
 		)
-		onRelire()
-	}, [client, idCard, onRelire, rattache.contactId])
+	}, [client, idCard, onGeste, rattache.contactId])
 
 	const annuler = useCallback(() => {
 		setConfirmation(false)
-		setMessage(null)
 		setFocusARendre(true)
 	}, [])
 
@@ -319,16 +352,6 @@ function LigneContactRattache({
 					</Button>
 				)}
 			</div>
-			{message === null ? null : (
-				// Le refus se lit PRÈS de ce qui l'a causé, jamais en tête d'écran (§5.13, §5.16).
-				<p
-					role="alert"
-					data-testid="refus-detachement"
-					className="rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
-				>
-					{message}
-				</p>
-			)}
 			{confirmation ? (
 				<ConfirmationDetachement
 					nom={rattache.nom}

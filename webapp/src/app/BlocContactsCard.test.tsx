@@ -392,6 +392,15 @@ describe('BlocContactsCard — détachement (§12.7)', () => {
 		await userEvent.click(await screen.findByTestId('confirmer-detachement'))
 		const message = await screen.findByTestId('refus-detachement')
 		expect(message.textContent).toBe('Aucun rattachement n’a été retiré.')
+
+		// ASSERTION AJOUTÉE APRÈS UN DÉFAUT TROUVÉ PAR LA PREUVE E2E, qui l'a rendue
+		// intermittente : le message vivait dans la LIGNE, et une relecture repasse le bloc par
+		// `chargement`, ce qui la démonte. Le §12.7 cas o exige les DEUX — dire « sans effet » ET
+		// relire —, donc le message doit SURVIVRE à la relecture. Il vit désormais dans le bloc.
+		await waitFor(() => expect(screen.getByTestId('ligne-contact-card')).toBeTruthy())
+		expect(screen.getByTestId('refus-detachement').textContent).toBe(
+			'Aucun rattachement n’a été retiré.',
+		)
 	})
 
 	it('rend le focus à « Détacher » quand la confirmation est annulée — §5.13', async () => {
