@@ -7157,6 +7157,18 @@ la barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'
 lister. La capture `docs/captures/CRM-057/inbox-lg-1152.jpg`, antérieure, porte déjà la mention :
 `/contacts` en hérite, il ne l'introduit pas. La correction appartient à la coquille (`CRM-007`).
 
+**Preuves RÉELLEMENT exécutées le 2026-08-18, pile debout et seedée** — `typecheck`, `build`,
+`types:check` (octet à octet) verts ; `test:unit` **1509 verts, 48 fichiers** ; `test:sql`
+**45 fichiers, 2269 assertions, aucune anomalie** ; `e2e:api` **704 verts** ; `e2e:ui`
+**378 verts, 1 échec** intermittent étranger (INC-152 étendue) ; `e2e/ui/contacts.spec.ts` **9/9**.
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` (aucun code `mail-sync` touché),
+`npm run e2e:mail`, et la série des cinquante `scripts/verify-*.sh` — seuls `verify-webapp.sh`
+(**42 contrôles, 2 anomalies, toutes deux étrangères** : INC-158 et le flake INC-152) et
+`verify-harness.sh` ont été lancés, ce dernier n'ayant pas terminé dans le temps de la session.
+La sous-tranche 4a est néanmoins **prouvée** par ses propres preuves, toutes vertes ; ce qui
+manque est la couverture du RESTE du dépôt, pas celle de cette livraison.
+
 *Limites nommées d'emblée pour 4a* (`docs/SPEC-contacts.md` §10.7) : aucune pagination, aucune
 recherche ni filtre, aucun geste de création, de modification ou de suppression, et le nom
 d'organisation reste un **texte** tant que 4b n'a pas livré sa destination.

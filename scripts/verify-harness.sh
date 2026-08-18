@@ -521,7 +521,14 @@ SCENARIOS_API=704
 # tracks, et la course du §7.2 reproduite jusqu'au refus du trigger. Le fichier
 # `e2e/ui/coherence-workflow.spec.ts` porte le total des fichiers de 28 à **29**. Valeur MESURÉE
 # par `playwright test --list`, contrôle « 2 bis » de la décision 441, puis par l'exécution.
-SCENARIOS_UI=370
+#
+# Porté de 370 à **379** par `CRM-060` tranche 4a, qui livre le carnet de contacts
+# (`docs/SPEC-contacts.md` §10) : `e2e/ui/contacts.spec.ts` ajoute **neuf** scénarios — quatre de
+# parcours (la barre latérale mène au carnet, les cellules vides restent vides, la lectrice lit le
+# carnet, le clavier seul l'atteint), les **quatre paliers** du §7, et l'état vide anonyme. Le
+# fichier porte le total des fichiers de 29 à **30**. Valeur MESURÉE par l'énumération du contrôle
+# « 2 bis » — 379 énumérés — puis par l'exécution de la suite, 9/9 verts.
+SCENARIOS_UI=379
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
