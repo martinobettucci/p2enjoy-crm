@@ -241,6 +241,44 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-151 — Le projet `mail` est INLISTABLE sans Docker : neuf specs appellent `docker` à l'import
+
+**Nature :** effet de bord au chargement du module ; la collecte des tests exige l'infrastructure.
+**Relevé le :** 2026-08-18, en cherchant à COMPTER les scénarios sans les exécuter.
+
+**Ce qui est mesuré.** `playwright test --list` énumère les scénarios sans en exécuter un seul. Il
+rend **678** pour `api` et **368** pour `ui` — mais **`0 test dans 0 fichier`** pour `mail`, alors
+que `e2e/mail/` porte **onze** fichiers et que `scripts/verify-harness.sh` en attend **42**
+scénarios. La cause est nommée par Playwright lui-même :
+
+```
+Error: Command failed: docker inspect p2enjoy-mail-sync --format {{...}}
+   at mail/backfill.spec.ts:42
+```
+
+`backfill.spec.ts` calcule `const RESEAU = docker('inspect', …)` **au premier niveau du module**.
+Docker absent, l'import lève, et Playwright abandonne **tout le projet**. Le défaut est
+**systémique** : **neuf des onze** specs de `mail` portent un appel `docker` ou `execFileSync` au
+chargement.
+
+**Ce qui n'est PAS en cause.** Aucune assertion n'est fausse, et la suite `mail` exige de toute
+façon l'infrastructure pour s'exécuter — ce n'est pas la famille d'INC-146 et INC-147. Ce qui est
+perdu est plus étroit : **on ne peut ni compter ni inventorier ces scénarios sans la pile**, là où
+les deux autres projets s'y prêtent. Un compteur de harnais devient invérifiable dès que
+l'infrastructure manque, au moment précis où l'on aimerait le vérifier autrement.
+
+**Le remède, et pourquoi il n'est PAS appliqué ici.** Rendre l'appel **paresseux** suffit : une
+fonction mémoïsée à la place de la constante, la valeur étant identique et la commande inchangée.
+Mais le motif est présent dans **neuf** fichiers, et je ne peux exécuter aucun d'eux pour constater
+que le comportement est préservé. Refondre neuf suites d'infrastructure sans pouvoir les rejouer
+n'est pas du même ordre que corriger une assertion démontrée fausse : ici rien n'est faux, et le
+risque introduit dépasserait le gain. **Consigné, chiffré, non corrigé.**
+
+**Bénéfice immédiat de cette découverte, tout de même.** Le compteur `SCENARIOS_UI`, posé par
+déduction le matin faute de pile (décision 435), a pu être **confirmé par mesure directe** :
+`--list` rend bien **368**. `SCENARIOS_API` l'est aussi, à **678**. Un compteur dérivé est redevenu
+un compteur observé, sans que Docker revienne.
+
 ### INC-150 — Un harnais sur cinquante et un a reçu une façade `npm`, contre la règle du README
 
 **Nature :** doublure d'interface contredisant une règle écrite ; arbitrage dû au responsable.

@@ -471,12 +471,14 @@ SCENARIOS_API=678
 # les appels RPC sans fin, puis trois parcours clavier dont le tour du document dépassait le délai
 # par défaut sous la charge de la campagne. Aucun des deux n'aurait été vu par une exécution isolée.
 # Porté de 366 à 368 par `CRM-042` : deux scénarios ajoutés à `e2e/ui/liste-cards.spec.ts` — le
-# parcours complet de l'accueil à la seconde page, et le même chemin au clavier seul. Le fichier
-# est passé de 28 à 30 scénarios, MESURÉ par une exécution ciblée le 2026-08-17. Le total global,
-# lui, n'a PAS pu être remesuré : le poste Docker est tombé le 2026-08-18 (INC-145) et la suite
-# d'interface ne peut plus tourner. **Cette valeur est donc DÉRIVÉE, non observée**, et le
-# prochain balayage complet doit la confirmer ou la corriger. Un compteur dérivé qui se croirait
-# mesuré est exactement ce que ce harnais existe pour attraper.
+# parcours complet de l'accueil à la seconde page, et le même chemin au clavier seul.
+#
+# CONFIRMÉ le 2026-08-18, et par une mesure directe. La valeur avait d'abord été posée par
+# DÉDUCTION, le poste Docker étant tombé (INC-145, décision 435) — et un compteur dérivé qui se
+# croit mesuré est exactement ce que ce harnais existe pour attraper. Il restait pourtant un moyen
+# de le mesurer sans la pile : `playwright test --list` ÉNUMÈRE les scénarios sans en exécuter un
+# seul. Il rend **368 tests dans 28 fichiers**. La déduction était juste, et elle est désormais
+# une observation. Le projet `api` a été confirmé de la même façon, à **678**.
 SCENARIOS_UI=368
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
