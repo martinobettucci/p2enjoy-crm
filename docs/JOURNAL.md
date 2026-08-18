@@ -18802,3 +18802,70 @@ au nom d'organisation du carnet la destination qui lui manque (aujourd'hui un te
 mort). Puis **4c** (rattachement d'un contact à une affaire depuis la route de détail, premier geste
 d'écriture) et **4d** (les deux sélecteurs et l'enrichissement du seed du §9.6, avec la révision des
 dix comptes qu'il déplace).
+
+## décision 449 — `CRM-060` sous-tranche 4b : la fiche d'organisation, et un palier responsive qui n'existait pas
+
+**L'unité, et le choix.** La dernière entrée du journal (décision 448) désignait `CRM-060` comme
+unité PRODUIT en cours et renvoyait explicitement à la **sous-tranche 4b**, la fiche d'organisation
+« qui donnera au nom d'organisation du carnet la destination qui lui manque ». J'ai suivi
+`docs/CloudWorker.md` §4.2 point 1.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §11,
+fondée sur cinq réponses PostgREST relevées à la main sur la pile seedée. Deux mesures ont décidé
+du contrat plutôt que de le confirmer :
+
+- **l'embarquement fonctionne aussi dans le sens `organizations → contacts`**, la clé étrangère
+  restant unique : une seule requête, là où `corbeille.ts` et `inbox.ts` avaient dû se dédoubler ;
+- **un identifiant qui n'est pas un `uuid` rend `400` / `22P02`.** Classé par `classerErreur`, ce
+  `400` tomberait sur l'état d'erreur, dont l'action de reprise relancerait la même requête pour
+  recevoir le même `400` — **une commande morte**, sur une surface dont l'adresse est directement
+  éditable par l'utilisateur. D'où la règle du §11.4 : la **forme** est contrôlée avant toute
+  émission, et un identifiant mal formé rejoint l'inconnu et le refusé sur le même écran
+  « introuvable ». Trois absences, un seul écran, délibérément.
+
+**Ce que j'ai livré.** `lireFicheOrganisation` dans `webapp/src/lib/contacts.ts` ;
+`webapp/src/app/FicheOrganisation.tsx` — deux zones, une liste de définitions pour ce qui
+caractérise l'organisation et le tableau du §5.9 à **quatre** colonnes pour ses contacts, plus les
+cinq états ; la route `/contacts/organisations/:idOrganisation` montée **hors de `ROUTES`**, son
+titre étant une donnée, ce qui laisse la couverture `ROUTES` ⇄ `ENTREES_TRANSVERSES` intacte ; et
+le **lien** du carnet vers la fiche.
+
+**Une règle de 4a RENVERSÉE par livraison, et non par contournement.** Le §10.7 et le §5.19
+posaient que le nom d'organisation est un texte, avec leur condition écrite : « un lien sans
+destination serait mort ». La condition tombe. Les deux preuves qui figeaient cette absence —
+`Carnet.test.tsx` et `e2e/ui/contacts.spec.ts` — sont **RÉVISÉES avec leur motif écrit dans le
+fichier**, jamais retirées (mécanisme de la décision 51), et ce qu'elles exigent devient **plus
+fort** : le lien doit exister ET mener à la bonne fiche.
+
+**Le seed s'enrichit de deux données, et cette fois aucun compteur ne bouge.** Le site web de
+Sogexia — seule donnée qui rende le lien externe — et « Comptoir Vasseur », troisième organisation
+**sans aucun contact**, seule à exercer l'état vide. C'est ce qui distingue cet enrichissement de
+celui que le §9.6 avait différé : celui-là déplaçait dix compteurs, celui-ci aucun, et c'est
+**mesuré** — le seed compare à la taille de son propre tableau, aucun `verify-*.sh` ne cite
+`organizations`, et les preuves d'API créent leurs propres sondes.
+
+**UN DÉFAUT DANS MON PROPRE FICHIER, TROUVÉ EN REGARDANT UNE CAPTURE — et aucun test ne l'aurait
+dit.** La liste de définitions citait `sm:grid-cols-2` ; la fiche restait **empilée à 1440 px**.
+Cause : `webapp/src/styles/tokens.css` réinitialise tous les paliers (`--breakpoint-*: initial`) et
+n'en définit que **trois** — `md` 768, `lg` 1024, `xl` 1280. Il n'existe **pas** de palier `sm` dans
+ce produit, si bien qu'un `sm:` est un variant **inconnu** dont Tailwind supprime la classe entière
+sans rien signaler. C'est exactement la classe de défaut d'INC-158, prise ici à sa source : corrigée
+en `md:grid-cols-2`, présence dans le CSS produit **vérifiée après build**, et la règle écrite au
+§5.20 du design system — aucune règle responsive ne s'écrit avec `sm` — pour qu'elle ne se
+redécouvre pas. **Consigne d'exploitation** : `npm run build` puis `grep` de la classe dans
+`webapp/dist/assets/*.css` est la seule vérification qui tranche.
+
+**INC-157 gagne une cinquième porteuse**, consignée sans être corrigée : la fiche hérite du
+« Aucun channel » comme les quatre autres routes transverses. Étranger à l'unité.
+
+**Campagne de fin de session, sur seed frais.** `typecheck` et `build` **verts** ; `test:unit`
+**1532 verts, 49 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ;
+`e2e:api` **704 verts** ; `e2e:ui` **390 verts, AUCUN échec** — l'intermittence d'INC-152 ne s'est
+pas manifestée cette fois, ce qui ne la clôt pas ; `e2e/ui/contacts.spec.ts` **20/20**, rejouée
+après la correction du palier.
+
+**Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4c** — le rattachement d'un contact à une
+affaire depuis la route de détail (`card_contacts`), **premier geste d'ÉCRITURE** de la tranche :
+c'est là que les refus d'écriture devront être traduits, ce qu'aucune des deux sous-tranches de
+lecture n'a eu à faire. Puis **4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed du
+§9.6, avec la révision des dix comptes qu'il déplace).
