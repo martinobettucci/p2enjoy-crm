@@ -500,6 +500,21 @@ et les secrets chiffrés de Vault. Elle ne doit **pas** être employée pour cet
 est le provisionnement de la distro de service, pas les données. `wsl --shutdown` suffit et ne
 touche à aucun volume.
 
+**AUCUNE VOIE DE CONTOURNEMENT N'EXISTE SUR CE POSTE, ET C'EST ÉTABLI PLUTÔT QUE SUPPOSÉ.** Avant
+de conclure à un blocage, les solutions de repli ont été mesurées une à une :
+
+- **Aucun autre moteur de conteneur** n'est installé dans la distro de travail : ni `podman`, ni
+  `nerdctl`, ni `containerd`, ni `dockerd` natif, ni `lima`, ni `colima`.
+- **Installer un moteur natif est impossible** : `sudo` exige un mot de passe, que l'agent ne
+  sollicite pas.
+- **Le mode rootless est impossible aussi** : `newuidmap`, `newgidmap`, `slirp4netns` et
+  `fuse-overlayfs` sont **absents**, et les installer demande root. `/etc/subuid` et `/etc/subgid`
+  portent pourtant les plages nécessaires — c'est l'outillage qui manque, pas la configuration.
+- **Reconstruire la pile ailleurs n'aurait rien prouvé** : les preuves portent sur la pile réelle du
+  projet, ses migrations, ses politiques et son seed.
+
+Le blocage est donc **total et mesuré**, et il ne reste qu'un geste humain.
+
 **Ce qui a été tenté après le retour de l'interop, sans succès.** Arrêt forcé de `Docker
 Desktop.exe`, `wsl --terminate docker-desktop`, relance à froid — et cette fois le journal montre un
 **vrai** redémarrage du backend (« launching com.docker.backend.exe ») et non plus le
