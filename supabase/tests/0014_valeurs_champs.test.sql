@@ -389,11 +389,21 @@ select lives_ok(
 select lives_ok(
 	$$ select pg_temp.poser('5eed0000-0000-4000-8000-0000000000e8',
 	                        '"00000000-0000-4000-8000-000000000001"'::jsonb) $$,
-	'`contact` de même, et sa cible ne peut PAS exister : `contacts` est due par `CRM-060`');
+	'`contact` de même : la forme d''un UUID est validée, PAS la cible — la table `contacts` '
+	'existe désormais (CRM-060) mais la résolution en base attend la TRANCHE 3 de CRM-060, '
+	'`CRM-036` §6.5 (INC-053) ; en attendant, un UUID désignant un contact INEXISTANT reste '
+	'accepté à ce niveau');
 
-select hasnt_table('public', 'contacts',
-	'INC-053 : `contacts` n''existe pas — c''est le fait qui rend la résolution de `contact` '
-	'impossible aujourd''hui, et il est CONSTATÉ plutôt qu''affirmé');
+-- ASSERTION RETOURNÉE, NON RETIRÉE (mécanisme de la décision 51) : elle attendait l'absence de
+-- `contacts`, elle constate désormais sa PRÉSENCE. Le motif du contrôle change en même temps que
+-- l'unité livrée : ce n'est plus « la résolution est impossible », c'est « la table est là mais
+-- la résolution en base n'est pas branchée ». La différence est nommée dans le libellé.
+select has_table('public', 'contacts',
+	'CRM-060 TRANCHE 1 A LIVRÉ `contacts` : la table est PRÉSENTE. La résolution du champ '
+	'`contact` par le validateur de valeurs reste due par la TRANCHE 3 (`CRM-036` §6.5, INC-053) — '
+	'l''ASSERTION D''ABSENCE FIGÉE PAR CRM-036 EST RETOURNÉE POUR CONSTATER LA PRÉSENCE, comme le '
+	'demande le mécanisme de la décision 51 (CLAUDE.md §3.1). Elle deviendra rouge à la tranche 3 '
+	'lorsque la validation croisera cette table');
 
 -- --- 4.10 « Vidé explicitement » est accepté pour TOUS les types — décision 133 ---------------
 select lives_ok(

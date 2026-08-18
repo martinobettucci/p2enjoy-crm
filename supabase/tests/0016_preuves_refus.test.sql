@@ -131,8 +131,11 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	66,
-	'SOIXANTE-SIX politiques dans `public`, et pas une de plus — 65 avant `CRM-078`, plus '
+	78,
+	'SOIXANTE-DIX-HUIT politiques dans `public`, et pas une de plus — 66 avant `CRM-060`, plus '
+	'les DOUZE politiques livrées par `CRM-060` tranche 1 : quatre par table (lecture, insertion, '
+	'MAJ, suppression) sur `organizations`, `contacts` et `card_contacts` '
+	'(docs/SPEC-contacts.md §3). Avant elle : 65 avant `CRM-078`, plus '
 	'l''UNIQUE politique de LECTURE de `workflow_versions` : une version publiée se lit par tout '
 	'membre du workspace et ne s''écrit par personne, l''insertion passant par une RPC '
 	'`security definer` et la mise à jour comme la suppression n''ayant AUCUNE politique '

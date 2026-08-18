@@ -61,13 +61,17 @@ select has_function('public', 'classify_message', array['uuid', 'uuid'],
 select has_function('public', 'classer_message_automatiquement',
 	'3 — le classement automatique existe');
 
--- LA RÈGLE 3 EST DÉSACTIVÉE, ET SON ABSENCE EST FIGÉE — non commentée. Elle suppose des contacts,
--- qu'aucune table ne porte. Cette assertion doit devenir ROUGE à `CRM-060`, et désigner alors la
--- règle à écrire.
+-- ASSERTION RETOURNÉE, NON RETIRÉE (mécanisme de la décision 51) : elle attendait l'absence de
+-- `contacts` et de `card_contacts` ; ces deux tables existent depuis CRM-060 tranche 1. La
+-- désactivation de la règle 3 vit désormais dans le CODE de classement, non dans l'absence de sa
+-- cible. Le motif du contrôle change : on constate la PRÉSENCE des tables, ce qui rend la règle 3
+-- SATISFAISABLE en base ; l'activer dans le code est la TRANCHE 2 de CRM-060.
 select ok(
-	to_regclass('public.contacts') is null and to_regclass('public.card_contacts') is null,
-	'4 — RÈGLE 3 NON SATISFAISABLE : aucune table de contacts. Les deux noms plausibles sont '
-	'testés, et cette assertion devra tomber à `CRM-060`');
+	to_regclass('public.contacts') is not null and to_regclass('public.card_contacts') is not null,
+	'4 — CRM-060 TRANCHE 1 A LIVRÉ `contacts` ET `card_contacts` : la règle 3 devient '
+	'SATISFAISABLE en base. L''activer dans le code de classement est la TRANCHE 2 de CRM-060 ; '
+	'l''ASSERTION D''ABSENCE FIGÉE PAR CRM-055 EST RETOURNÉE POUR CONSTATER LA PRÉSENCE, comme '
+	'le mécanisme de la décision 51 le demande (CLAUDE.md §3.1)');
 
 select is(
 	has_function_privilege('authenticated', 'public.classer_message_automatiquement(uuid, text, text[])', 'execute'),
