@@ -18006,6 +18006,19 @@ Avoir un commentaire ne suffit pas — encore faut-il qu'il désigne quelque cho
   `CRM-000` est le socle documentaire et ne livre pas de code, `CRM-070` est une note d'arbitrage
   et non une unité de livraison, `CRM-080` n'est pas commencée.
 
+**Quatrième volet, le 2026-08-18 : la charte n'est pas contournée, et c'est mesuré.**
+`CLAUDE.md` §4 impose cinq couleurs et un design system. Une charte se contourne d'ordinaire par des
+valeurs en dur glissées dans les composants. Mesure sur `webapp/src`, hors fichiers de test :
+
+- **ZÉRO composant `.tsx` ne code une couleur en dur.** Toutes les valeurs hexadécimales du produit
+  vivent dans un seul fichier, `webapp/src/styles/tokens.css`.
+- **Les cinq couleurs de la charte y sont présentes et exactes** : `#23468C`, `#238C33`, `#D9CF4A`,
+  `#F24141` et `#0D0D0D`.
+
+L'exigence est donc tenue par construction et non par discipline répétée : un composant ne peut pas
+diverger de la charte sans qu'un `#` apparaisse là où il n'y en a aucun aujourd'hui — ce qui rend le
+contrôle trivial à rejouer.
+
 **Troisième volet : les références documentaires.** Les **260** chemins de fichiers cités par
 `docs/`, `README.md` et `CLAUDE.md` ont été confrontés au disque. Onze ne s'y trouvent pas, et
 **aucun n'est un défaut** : deux documents fusionnés dans `docs/ARBITRAGES.md` et qui le disent,
