@@ -91,6 +91,32 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **La pile redémarre de nouveau sur une base contenant du courrier ou du sommeil** (INC-144,
+  `docs/JOURNAL.md` décision 431). Le `migrations-runner` rejoue tout le répertoire à chaque
+  démarrage. Cinq migrations — 16, 17, 20, 25 et 30 — réinstallaient la contrainte de vocabulaire
+  des événements d'affaire avec la liste de leur époque. Sur une base **peuplée**, les lignes
+  existantes emploient depuis longtemps `mail_received`, `mail_sent`, `snoozed` et `woken` :
+  PostgreSQL refusait alors la contrainte étroite, et **le démarrage échouait**. Le défaut
+  n'apparaissait jamais sur une base neuve, où chaque migration pose sa liste avant que la suivante
+  ne l'élargisse.
+
+  Chaque migration ne pose désormais sa liste que si **aucune ligne n'emploie un type qui en est
+  absent**. Le vocabulaire appartient ainsi à la dernière migration qui l'étend. Aucun changement
+  sur une base neuve ; sur une base peuplée, les migrations anciennes s'abstiennent au lieu
+  d'échouer. Le vocabulaire compte **quatorze** types, et non douze comme plusieurs contrôles le
+  supposaient encore.
+
+  *Aucune opération de déploiement n'est requise* : la correction porte sur des migrations
+  idempotentes, et l'état final de la contrainte est inchangé.
+
+- **Un harnais annonçait « aucune anomalie » en sautant quatre contrôles** (INC-145). La sonde de
+  disponibilité de `scripts/verify-scripts.sh` était `docker info`, qui échoue sur un poste dont
+  les greffons CLI sont cassés alors que le démon répond. Le harnais rendait un vert obtenu par
+  omission. La sonde interroge désormais l'outil que les contrôles emploient réellement ; ils
+  passent de 95 à **104**. Deux autres défauts corrigés au même endroit : un contrôle qui accusait
+  la garde des ports d'un défaut inexistant lorsque `docker ps` est muet, et une liste de marqueurs
+  de rôle de migration restée à un seul fichier alors que `CRM-057` en a livré un second.
+
 - **Deux preuves du harnais du jeu de démonstration révisées, aucune retirée** (`CRM-046`,
   `scripts/verify-seed-demo.sh`, désormais **69 contrôles sans anomalie**). Sa dégradation
   volontaire n° 1 vidait l'étape « Livré » en archivant **une** affaire désignée par son
