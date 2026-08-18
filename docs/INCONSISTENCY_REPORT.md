@@ -241,6 +241,42 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-150 — Un harnais sur cinquante et un a reçu une façade `npm`, contre la règle du README
+
+**Nature :** doublure d'interface contredisant une règle écrite ; arbitrage dû au responsable.
+**Relevé le :** 2026-08-18, par audit statique du `package.json` contre `README.md`.
+
+**La règle, écrite au README §5.** « **Les scripts sont la façade canonique, et `npm` ne les double
+jamais** » (INC-008, close le 2026-08-13). Le motif y est donné : « Deux façades pour un même geste
+font diverger la documentation de l'une des deux. » Le `package.json` doit donc porter « les
+commandes qui appartiennent réellement à la chaîne Node — types, build, tests — **et rien d'autre** ».
+
+**Ce qui est mesuré.** Quatre des treize scripts `npm` appellent un script shell :
+
+- `test:sql`, `types:check` et `types:generate` sont **conformes** : ce sont des commandes de la
+  chaîne Node — tests et types — dont l'implémentation se trouve être un shell. La règle vise les
+  gestes de cycle de vie de la pile, pas le langage d'implémentation.
+- **`verify:identites` → `./scripts/verify-identites.sh` ne l'est pas.** Ce n'est ni un type, ni un
+  build, ni un test de la chaîne Node : c'est un **harnais de vérification**, la famille même que le
+  README réserve aux scripts. Et c'est **le seul des cinquante et un harnais** à recevoir un alias
+  `npm`.
+
+**Deux faits qui aggravent la singularité.** Cet alias n'est **appelé par personne** — ni par un
+autre script, ni par la documentation, ni par un harnais : la recherche dans tout le dépôt ne rend
+que sa propre définition. Et il n'est **documenté nulle part** — ni au `README.md`, ni dans `docs/`.
+C'est exactement la divergence que la règle d'INC-008 voulait prévenir : une seconde façade que
+personne n'entretient.
+
+**Ce que je NE fais PAS.** Le retirer. Un script du `package.json` est une **interface publique du
+dépôt** : il peut être appelé par une habitude du responsable, un raccourci d'éditeur ou une chaîne
+d'intégration hors dépôt, qu'aucune recherche locale ne verrait. Le supprimer sur la foi d'un `grep`
+serait une décision d'interface prise sans mandat.
+
+**Arbitrage demandé, deux issues.** Ou bien l'alias est retiré, et les cinquante et un harnais
+gardent une façade unique. Ou bien il est **assumé et documenté** au `README.md`, et la règle y est
+nuancée pour dire quelles vérifications méritent un raccourci `npm`. La situation actuelle — une
+exception non écrite à une règle écrite — est la seule qui ne se défende pas.
+
 ### INC-149 — Trente et un tokens existaient sans figurer au design system — CORRIGÉ le 2026-08-18
 
 **Nature :** dérive documentaire ; le design system décrivait des valeurs sans jamais les nommer.
