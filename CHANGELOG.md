@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4e : la création d'un contact depuis le
+  carnet** (`docs/SPEC-contacts.md` §14, `docs/DESIGN_SYSTEM.md` §5.23). Le carnet était en lecture
+  seule depuis sa livraison : les seuls contacts du produit étaient ceux du seed. Il porte désormais
+  un geste **« Nouveau contact »** qui ouvre, **dans le flux du document** et au-dessus du tableau,
+  un formulaire aux cinq colonnes de la ligne — nom, organisation, fonction, email, téléphone. Le
+  contact créé **rejoint le tableau à sa place de tri**, sans rechargement. Les **cinq refus** de la
+  base sont traduits par un dictionnaire fermé, dont deux que le code HTTP seul confondrait — un
+  email déjà porté et une organisation disparue rendent tous deux `409` — et **aucun refus n'efface
+  la saisie**. La lectrice **voit** le geste et reçoit le refus traduit : aucune commande n'est
+  éteinte d'avance selon le rôle. Aucune migration, aucune politique nouvelle : seule la politique
+  d'insertion posée par la migration `0045` est exercée.
+
 - **`CRM-060` — Contacts et organisations, tranche 4d : les deux sélecteurs du formulaire, et le
   seed qui les démontre** (`docs/SPEC-contacts.md` §13, `docs/DESIGN_SYSTEM.md` §5.22). Une question
   de formulaire dont le type est **`contact`** ou **`user`** n'est plus un champ texte où l'on

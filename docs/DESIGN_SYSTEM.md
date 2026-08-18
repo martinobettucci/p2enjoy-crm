@@ -1879,3 +1879,27 @@ les trois portent la même classe, comme cette entrée l'annonçait les deux foi
 liste ne l'ajoute pas, faute de colonne sur laquelle s'ancrer (§5.9).
 
 Tout écart futur est consigné ici avec sa justification et sa date.
+
+### 5.23 Formulaire de création d'un contact — `CRM-060`
+
+Le geste de création du carnet (`docs/SPEC-contacts.md` §14). Il **hérite du §5.21** — le bloc des
+contacts d'une affaire — plutôt que d'inventer une forme : mêmes règles, même motif.
+
+- **Dans le FLUX du document, jamais une modale**, entre le titre et le tableau. Une modale
+  recouvrirait la liste que l'on vient de lire, or **cette liste est précisément ce qui dit si le
+  contact existe déjà**.
+- **Replié par défaut.** Le carnet est d'abord une surface de lecture ; un formulaire toujours
+  déplié pousserait le tableau sous la ligne de flottaison à chaque visite.
+- **Le focus entre** sur le premier champ à l'ouverture, et **revient** à la commande d'ouverture à
+  la fermeture (§8).
+- **Aucune commande éteinte d'avance selon le rôle** : la lectrice voit le geste, envoie, et reçoit
+  le refus **traduit**. Une commande grisée ferait passer une décision de la base pour une décision
+  d'écran.
+- **Un refus n'efface jamais la saisie**, et son message vit **sous** le formulaire, près de ce qui
+  l'a causé (§5.13).
+- **Le sélecteur d'organisation suit les états du §13.5** — cas h et i : liste illisible → contrôle
+  désactivé avec action de reprise ; liste vide → option vide seule, mention **sans** action, aucune
+  surface ne créant d'organisation.
+- **L'état vide du carnet offre désormais ce geste**, et c'est une **révision par livraison** de la
+  règle du §5.19 : « l'état vide n'offre aucune action » tenait tant qu'aucun geste de création
+  n'existait. Un carnet vide est précisément celui où l'on veut ajouter un contact.

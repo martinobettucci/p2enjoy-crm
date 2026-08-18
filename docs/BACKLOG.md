@@ -7115,9 +7115,16 @@ migration `0046`) :
       - [x] **4c — Le rattachement d'un contact à une affaire** depuis la route de détail
             (`card_contacts`), premier geste d'écriture de la tranche. **Livrée et prouvée le
             2026-08-18** ; voir le détail plus bas.
-      - [ ] **4d — Les deux sélecteurs** du §9.1 (`contact` et `user`) dans le formulaire d'une
+      - [x] **4d — Les deux sélecteurs** du §9.1 (`contact` et `user`) dans le formulaire d'une
             affaire, et **l'enrichissement du seed** différé par le §9.6, avec la révision des dix
-            comptes qu'il déplace.
+            comptes qu'il déplace. **Livrée et prouvée le 2026-08-18** ; voir le détail plus bas.
+            *(Case restée à `[ ]` par la session qui l'a livrée, alors que le corps de l'unité la
+            documente comme livrée et que `docs/JOURNAL.md` décision 451 en rend compte : corrigée
+            le 2026-08-18 avec la sous-tranche 4e, sans autre changement — même oubli qu'en 4b.)*
+      - [~] **4e — La création d'un contact** depuis le carnet (`docs/SPEC-contacts.md` §14,
+            `docs/DESIGN_SYSTEM.md` §5.23). **Spécifiée, codée et prouvée en E2E le 2026-08-18** ;
+            ce qui reste dû est nommé ci-dessous.
+
 
 **Quatrième tranche, sous-tranche 4a livrée le 2026-08-18 — le carnet de contacts**
 (`docs/SPEC-contacts.md` §10, `docs/DESIGN_SYSTEM.md` §5.19) :

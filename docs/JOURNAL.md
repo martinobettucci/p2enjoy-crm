@@ -19061,3 +19061,74 @@ réécrit de toute façon.
 nommé au §13.8 et au §6 : la **création** d'un contact, la **fiche** d'un contact, et l'arbitrage
 sur les **références mortes** — une valeur qui désigne un contact supprimé reste en base, et aucune
 surface ne la nettoie. La prochaine exécution peut aussi prendre la première unité `[ ]` du plan.
+
+## décision 452 — `CRM-060` sous-tranche 4e : le carnet crée enfin un contact, et un `pkill` du prompt tuait la campagne d'interface
+
+**L'unité, et le choix.** La décision 451 laissait la tranche 4 complète et `CRM-060` en `[~]`, avec
+« la **création** d'un contact » en tête de ce qui reste dû (§13.8, §6). C'est le §4.2 point 2 de
+`docs/CloudWorker.md` : la première unité `[~]` du plan dont il reste du **comportement** à livrer.
+
+**DEUX SESSIONS ONT TRAVAILLÉ LA MÊME HEURE.** En ouvrant, `git fetch` a rendu un *forced update*
+sur `origin/main` et huit commits `4d` sans entrée de journal : une exécution concurrente était
+encore en cours. Elle a poussé son journal (451) et son backlog pendant que je mesurais. J'ai donc
+**abandonné** la campagne que j'avais lancée sur son HEAD périmé plutôt que de rendre un verdict sur
+un dépôt déjà dépassé, rebasé, et pris l'unité suivante. Une seule trace en reste, corrigée ici : la
+case `4d` du backlog était restée `[ ]`, comme celle de `4b` avant elle.
+
+**UN DÉFAUT DU PROMPT LUI-MÊME, MESURÉ ET CORRIGÉ.** `docs/CloudWorker.md` §2.1 *ter* prescrivait
+`pkill -f vite` pour libérer le port 4173. Or l'agent lance ses commandes par
+`bash -c '… pkill -f vite … ; npm run e2e:ui'` : le motif se trouve dans la ligne de commande de son
+propre appelant, et `pkill` **tue le shell** avant que la moindre preuve ne démarre — code 144,
+**aucune sortie**. Mesuré deux fois, puis vérifié à l'envers : `pkill -f "[v]ite"` rend `rc=0`,
+« port 4173 libre », et le shell survit. La classe `[v]` désigne toujours `vite` mais ne figure pas
+telle quelle dans la ligne de l'appelant. Corrigé dans `docs/CloudWorker.md` avec sa mesure, par
+décision propre (doctrine du registre) plutôt qu'en ouvrant une entrée : rien ici n'appelle un
+arbitrage. Une campagne d'interface morte de cette façon n'est **ni un verdict rouge ni une preuve**.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §14, fondée
+sur **onze** réponses PostgREST relevées à la main avec les jetons réels des trois profils, sur des
+contacts sondes détruits ensuite — le seed est rendu **intact**, ses trois contacts retrouvés.
+Deux mesures ont **décidé** du contrat plutôt que de le confirmer :
+
+- **un facultatif blanc ne s'envoie jamais comme `''`** : `contacts_email_check` et
+  `contacts_phone_check` refusent la chaîne vide en `400` / `23514`. C'est la règle que
+  `rattacherContact` applique déjà au rôle d'un rattachement, **partagée** ici plutôt que réécrite ;
+- **`23505` et `23503` rendent tous deux `409`** — email déjà porté, organisation inconnue. Le
+  statut HTTP seul les confondrait, alors qu'ils appellent des gestes opposés : corriger l'email, ou
+  relire une liste périmée. Le classement lit donc le **code PostgreSQL d'abord**.
+
+**Ce que j'ai livré.** Le carnet, en lecture seule depuis sa livraison, porte un geste **« Nouveau
+contact »** : formulaire **dans le flux** au-dessus du tableau — la liste est précisément ce qui dit
+si la personne existe déjà —, cinq champs, la ligne créée qui **rejoint le tableau à sa place de
+tri** sans relecture, et les cinq refus traduits par un dictionnaire fermé. La liste des
+organisations n'est lue **que si le formulaire est ouvert**, motif du §13.4. L'état vide du carnet
+offre désormais ce geste : c'est une **révision par livraison** de la règle du §5.19, dont la
+condition — aucun geste de création n'existe — a cessé d'être vraie.
+
+**UNE HYPOTHÈSE DE MA PROPRE SPÉCIFICATION ÉTAIT NON MESURÉE, ET LE CODE L'A DIT.** Le §14.3 écrit
+« `workspace_id` est celui du workspace courant » — or le carnet n'en connaissait aucun : il lit les
+contacts sous RLS, sans filtre. Le dépôt portait déjà la réponse, et je l'ai suivie plutôt que d'en
+inventer une : le **premier** workspace rendu par `lireWorkspaces`, patron de
+`AdministrationCatalogue`, `AdministrationArborescence`, `AdministrationWorkflows` et du `Header`.
+Le produit n'a pas de sélecteur d'espace de travail, et en poser un ici aurait ouvert une surface
+que rien ne spécifie.
+
+**Preuves exécutées.** `typecheck` **vert**, `build` **vert**, les trois fichiers de test touchés
+**220 verts** dont `i18n.test.ts` — aucun texte en dur. `e2e/ui/carnet-creation.spec.ts` **3/3
+verts** sur la pile seedée : le geste, le focus entrant, la ligne obtenue, le refus **traduit**
+opposé à la lectrice avec sa saisie conservée, console vierge, et les quatre paliers. Captures
+**observées** (`CLAUDE.md` §16) : `carnet-creation-formulaire-1440.jpg` montre le formulaire dans le
+flux avec l'anneau de focus sur le nom et le tableau conservé dessous ;
+`carnet-creation-refus-1440.jpg` montre le refus traduit sous une commande **non grisée**, saisie
+intacte, sous le compte de Farida Nowak.
+
+**Preuves NON exécutées, et nommées comme telles** : les **tests unitaires propres à 4e** (§14.8),
+la **preuve d'API** qui figerait les onze mesures, la **campagne complète** sur ce changement —
+`test:sql` et `e2e:api` ont été joués **avant** lui —, `e2e:mail`, `pytest` et les cinquante
+`scripts/verify-*.sh`. `4e` reste donc `[~]`.
+
+**Où reprendre.** `CRM-060` reste `[~]`. La reprise est **4e**, et elle est bornée : écrire les
+tests unitaires de `creerContact`, `classerRefusCreation` et du carnet (cas a à l du §14.5),
+étendre `e2e/api/contacts.spec.ts` aux onze mesures du §14.3, puis passer la campagne complète.
+Le code, lui, est livré et poussé. Ce qui reste dû sur `CRM-060` après 4e est la **fiche** d'un
+contact et l'arbitrage sur les **références mortes** (§6, point 4).
