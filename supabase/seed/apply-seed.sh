@@ -9,6 +9,7 @@
 # @spec CRM-018 (docs/BACKLOG.md) — champs exigés par une transition, avec intégrité référentielle
 # @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
 # @spec CRM-081 (docs/BACKLOG.md) — deux affaires en sommeil, dont une échue (docs/SPEC-cards.md §16.11.6)
+# @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 1 (docs/SPEC-contacts.md §5)
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -2048,6 +2049,100 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" 
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
 
+# --- 8 novies bis. Contacts et organisations — docs/SPEC-contacts.md §5, CRM-060 ---------------
+#
+# DEUX ORGANISATIONS ET TROIS CONTACTS, RATTACHÉS À DES AFFAIRES SEEDÉES. La règle 3 du classement
+# (CRM-055) suppose « un contact rattaché à EXACTEMENT UNE card active » — ce contrat est posé
+# ici, pour que la tranche suivante ait sa donnée de démonstration.
+#
+# Identifiants figés (§4 de docs/SPEC-contacts.md, tranche 1) : préfixe `5eed…08`, bloc réservé.
+#
+# Le seed CONVERGE : les identifiants sont fixes, les insertions sont conditionnées à leur absence.
+# Un rejeu ne dédouble ni les organisations, ni les contacts, ni les rattachements.
+
+ORG_SOGEXIA='5eed0000-0000-4000-8000-000000000081'
+ORG_ANONYME='5eed0000-0000-4000-8000-000000000082'
+CONTACT_MARCHAND='5eed0000-0000-4000-8000-000000000091'
+CONTACT_DUPONT='5eed0000-0000-4000-8000-000000000092'
+CONTACT_ELISE='5eed0000-0000-4000-8000-000000000093'
+
+# `id|workspace_id|name|domain`
+ORGANIZATIONS_SEED=(
+	"$ORG_SOGEXIA|$WS_ID|Sogexia|sogexia.example"
+	"$ORG_ANONYME|$WS_ID|Studio Meunier|"
+)
+
+for entree in "${ORGANIZATIONS_SEED[@]}"; do
+	IFS='|' read -r o_id o_ws o_name o_domain <<< "$entree"
+	corps=$(jq -nc --arg id "$o_id" --arg ws "$o_ws" --arg n "$o_name" --arg d "$o_domain" \
+		'{id: $id, workspace_id: $ws, name: $n} + (if $d == "" then {} else {domain: $d} end)')
+	code=$(api PUT "/rest/v1/organizations?id=eq.$o_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "insertion / rattrapage de l'organisation « $o_name »" 201 200 204
+done
+
+# `id|workspace_id|organization_id|full_name|email|phone|role_title`
+CONTACTS_SEED=(
+	"$CONTACT_MARCHAND|$WS_ID|$ORG_SOGEXIA|Léo Marchand|leo.marchand@sogexia.example||Directeur achats"
+	"$CONTACT_DUPONT|$WS_ID||Sophie Dupont|sophie@dupont.test||"
+	"$CONTACT_ELISE|$WS_ID|$ORG_ANONYME|Élise Fabre||+33 6 12 34 56 78|Cheffe d'atelier"
+)
+
+for entree in "${CONTACTS_SEED[@]}"; do
+	IFS='|' read -r c_id c_ws c_org c_name c_email c_phone c_role <<< "$entree"
+	corps=$(jq -nc --arg id "$c_id" --arg ws "$c_ws" --arg org "$c_org" --arg n "$c_name" \
+		--arg e "$c_email" --arg p "$c_phone" --arg r "$c_role" \
+		'{id: $id, workspace_id: $ws, full_name: $n}
+		 + (if $org == "" then {} else {organization_id: $org} end)
+		 + (if $e   == "" then {} else {email: $e}             end)
+		 + (if $p   == "" then {} else {phone: $p}             end)
+		 + (if $r   == "" then {} else {role_title: $r}        end)')
+	code=$(api PUT "/rest/v1/contacts?id=eq.$c_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "insertion / rattrapage du contact « $c_name »" 201 200 204
+done
+
+# `card_id|contact_id|role`
+# Léo Marchand est rattaché à EXACTEMENT UNE affaire active — la card `Migration ERP Sogexia`
+# (`…0c2`) sur `grands-comptes`. C'est l'état précis que la règle 3 du classement lira.
+# Sophie Dupont est rattachée à une seconde affaire — la card `Refonte intranet Ville de Lyon`
+# (`…0c4`), sur un track distinct — sans être une candidate à la règle 3 (aucune boîte connectée
+# ne l'attire vers l'affaire), démonstration que le rôle est libre.
+CARD_CONTACTS_SEED=(
+	"5eed0000-0000-4000-8000-0000000000c2|$CONTACT_MARCHAND|decideur"
+	"5eed0000-0000-4000-8000-0000000000c4|$CONTACT_DUPONT|prescripteur"
+)
+
+for entree in "${CARD_CONTACTS_SEED[@]}"; do
+	IFS='|' read -r rc_card rc_contact rc_role <<< "$entree"
+	corps=$(jq -nc --arg ws "$WS_ID" --arg ci "$rc_card" --arg co "$rc_contact" --arg r "$rc_role" \
+		'{workspace_id: $ws, card_id: $ci, contact_id: $co, role: $r}')
+	code=$(api POST /rest/v1/card_contacts -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "rattachement de $rc_contact à $rc_card" 201 200 204
+done
+
+organizations_count=$(curl -s "$API/rest/v1/organizations?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+contacts_count=$(curl -s "$API/rest/v1/contacts?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$organizations_count" = "${#ORGANIZATIONS_SEED[@]}" ] || die "organizations :
+        $organizations_count lignes au lieu de ${#ORGANIZATIONS_SEED[@]} — le rejeu a dupliqué."
+[ "$contacts_count" = "${#CONTACTS_SEED[@]}" ] || die "contacts :
+        $contacts_count lignes au lieu de ${#CONTACTS_SEED[@]} — le rejeu a dupliqué."
+[ "$card_contacts_count" = "${#CARD_CONTACTS_SEED[@]}" ] || die "card_contacts :
+        $card_contacts_count lignes au lieu de ${#CARD_CONTACTS_SEED[@]} — le rejeu a dupliqué."
+
+# Léo Marchand : EXACTEMENT UNE card active (contrat du §5, tranche 1). La règle 3 du classement
+# le lit ainsi. Si un rejeu (ou une future tranche) ajoute une seconde affaire à Léo, cette garde
+# rouge dénoncera l'écart avant qu'il n'atteigne CRM-055.
+leo_cards=$(curl -s "$API/rest/v1/card_contacts?select=card_id&contact_id=eq.$CONTACT_MARCHAND" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$leo_cards" = "1" ] || die "Léo Marchand doit être rattaché à EXACTEMENT UNE card active
+        (contrat SPEC-contacts.md §5) — mesuré : $leo_cards. La règle 3 du classement en dépend."
+
+info "Contacts et organisations : $organizations_count organisations, $contacts_count contacts,"
+info "  $card_contacts_count rattachements — Léo Marchand exactement sur UNE card (CRM-060 §5)"
+
 # --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------
 #
 # LE SEED EST UN CONTRAT, ET CELUI-CI DISAIT « aucune card n'atteint son seuil de relance ». Il
@@ -2464,6 +2559,7 @@ info "Valeurs de formulaire : $(( ${#VALEURS[@]} + ${#VALEURS_DERIVE[@]} )) sur 
 info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un supprimé — docs/SPEC-cards.md §13.11"
 info "Comptes entrants IMAP : ${#COMPTES_ENTRANTS[@]}, dont la boîte système ; Farida n'en a pas — docs/SPEC-seed.md §2.17"
 info "Identités sortantes SMTP : ${#IDENTITES_SORTANTES[@]} — entrant et sortant divergent pour Driss — docs/SPEC-seed.md §2.18"
+info "Organisations : ${#ORGANIZATIONS_SEED[@]}, contacts : ${#CONTACTS_SEED[@]}, rattachements : ${#CARD_CONTACTS_SEED[@]} — CRM-060, docs/SPEC-contacts.md §5"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."
