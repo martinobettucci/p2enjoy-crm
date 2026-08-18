@@ -18525,3 +18525,60 @@ compression. Elles ont été **restaurées** à l'état de `origin/main` avant l
 
 **Preuves d'interface encore dues** — inchangées par cette session : `CRM-033`, `CRM-035`,
 `CRM-036`.
+
+## décision 446 — `CRM-060` tranche 1 : livrée, éprouvée par la campagne complète
+
+**Ce que la session a livré.** La première tranche de `CRM-060` — les trois tables
+`organizations`, `contacts` et `card_contacts`, avec leur cloisonnement structurel par FK
+composites, RLS et privilèges —, sa suite pgTAP, sa preuve d'API, son seed. Neuf commits atomiques
+poussés au fil de l'eau sur `origin/main` : la spécification, la migration, la suite pgTAP (avec
+sa correction), la preuve d'API, le seed, la documentation amont (SCHEMA, SPEC-permissions-rls,
+DAT, PROD_MIGRATIONS), trois assertions figées retournées, les types régénérés avec l'assertion
+`test-d.ts` révisée, `docs/SPEC-seed.md` §11, les compteurs de `verify-harness.sh`, et la
+traçabilité mise à jour dans `CRM-055` et `CRM-036`.
+
+**Un défaut réel de la migration, trouvé par la suite pgTAP.** La FK composite
+`(organization_id, workspace_id)` avec `on delete set null` sans liste de colonnes annulait les
+DEUX colonnes de la clé, ce qui violait `contacts.workspace_id NOT NULL`. Une organisation
+supprimée aurait rejeté tous ses contacts en production. Corrigé par
+`on delete set null (organization_id)`, syntaxe explicite disponible depuis PG15. Sans le test,
+la propriété d'ownership annoncée au §3 de la spécification aurait été fausse.
+
+**Un ajustement de spécification, trouvé par la preuve d'API.** Le §2.1 disait « unicité
+insensible à la casse » sans dire ce qu'un client peut envoyer : la contrainte de forme refuse en
+réalité les majuscules (RFC 1035, stockage canonique). La spec l'écrit désormais explicitement
+avec un scénario dédié `e bis`.
+
+**TROIS ASSERTIONS FIGÉES par des unités précédentes RETOURNÉES DANS LE MÊME CHANGEMENT** —
+mécanisme de la décision 51 :
+
+- `0014_valeurs_champs.test.sql` assertion 48 : `hasnt_table('contacts')` → `has_table('contacts')`,
+  motif changé.
+- `0027_classement_messages.test.sql` assertion 4 : « aucune table de contacts » → « les deux
+  tables existent, la règle 3 devient satisfaisable, l'activer est la tranche 2 ».
+- `0016_preuves_refus.test.sql` assertion 16 : compte de politiques de `public` passe de 66 à 78.
+
+Aucune n'a été retirée. Les compteurs de `verify-harness.sh` sont révisés dans le même changement :
+42 → 43 fichiers pgTAP, 2191 → 2229 assertions, 678 → 696 scénarios d'API.
+
+**Campagne complète, exécutée en fin de session, avec la pile debout et seedée sur ce poste :**
+
+- `npm run test:sql` : **43 fichiers, 2229 assertions, aucune anomalie** ;
+- `npm run test:unit` : **1488 tests verts** ;
+- `npm run typecheck` : vert sur les quatre projets ;
+- `npm run types:check` : correspondance octet à octet avec la base ;
+- `npm run build` : vert ;
+- `npm run e2e:api` : **696 scénarios verts en 1m43s** ;
+- `npm run e2e:mail` : **42 scénarios verts en 1m47s** ;
+- `npm run e2e:ui` : **370 scénarios verts en 13,1 min** ;
+- `pytest` : non exécuté cette session, faute d'environnement virtuel préparé — l'unité ne livre
+  aucun code Python, aucune régression n'est attendue de ce côté.
+
+Les captures réécrites par le rejeu de `e2e:ui` ont été **restaurées** — 143 fichiers,
+identiques au pixel, différents à l'octet —, cette unité ne touchant aucun composant de
+l'interface.
+
+**Où reprendre.** La tranche 2 de `CRM-060` : activer la règle 3 du classement (`CRM-055`,
+`docs/SPEC-mail-subsystem.md` §16) qui suppose désormais un modèle existant et une donnée de
+démonstration (Léo Marchand sur exactement une card active). L'état exigé par cette tranche est
+**vérifié par le seed lui-même** — la garde échoue à la moindre dérive.
