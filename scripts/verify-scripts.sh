@@ -31,6 +31,24 @@ set -uo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$REPO_ROOT"
 
+# @spec CRM-001, CRM-002 (docs/BACKLOG.md) — le verdict du harnais ne parle que du dépôt
+# @spec docs/JOURNAL.md, décision 442 ; docs/CloudWorker.md §2.1
+#
+# Le sujet de ce harnais est le contenu de `.env` et la garde que `runDev.sh` lui oppose. Or
+# `runDev.sh` applique — correctement — la priorité du shell sur `.env`, et `docs/CloudWorker.md`
+# §2.1 impose à l'opérateur d'exporter `NPM_CA_FILE` pour que `npm ci` traverse un proxy TLS
+# interposé. Sans cette neutralisation, la variable de l'appelant fuit dans chacun des appels à
+# `./runDev.sh` et `./resetMe.sh` ci-dessous, qui ne posent que `P2ENJOY_ENV_FILE` : les six
+# contrôles de `ca_refusal()` reçoivent alors une acceptation là où ils écrivaient une valeur
+# invalide, et le contrôle de `resetMe.sh` **détruit réellement le cluster** au lieu de prouver
+# qu'aucune destruction n'a lieu. MESURÉ le 2026-08-18 : sept anomalies qui ne disaient rien du
+# produit.
+#
+# Aucune couverture n'est perdue : les trois contrôles qui éprouvent précisément la priorité du
+# shell posent la variable eux-mêmes sur leur ligne de commande — valeur valide, valeur relative,
+# valeur vide —, et les deux reconstructions d'image du §7 font de même.
+unset NPM_CA_FILE
+
 ENV_EXAMPLE="$REPO_ROOT/.env.example"
 WORK=$(mktemp -d)
 cleanup() {
