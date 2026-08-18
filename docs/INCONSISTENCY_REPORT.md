@@ -269,11 +269,24 @@ au motif qu'elle avait migré de fichier. **J'ai vérifié qu'elle TOURNE, pas q
 libellé du contrôle est corrigé le jour même : il annonce désormais que le scénario existe et tourne,
 et que sa valeur probante est en défaut.
 
-**Ce qui reste dû.** Déposer réellement l'objet avec la clé de service — comme le service le fait —
-puis le demander en anonyme et en authentifié, et asserter un refus NOMMÉ (403, ou 400 avec le
-message de la politique), jamais un ensemble qui contient 404. Éprouver en outre la pièce **saine**,
-qui doit, elle, être téléchargeable : sans ce témoin, un refus global passerait pour une politique
-correcte. Non fait ce jour, le poste Docker étant tombé (INC-145).
+**LE REFUS EST POURTANT BIEN PROUVÉ — AILLEURS, ET CORRECTEMENT.** La suite de `CRM-057`,
+`e2e/api/inbox.spec.ts` §18.5, fait exactement ce qu'il faut : elle **DÉPOSE** les objets avec la
+clé de service (`200`/`201` assertés), vérifie que la pièce **`clean` se télécharge en `200` et que
+son contenu est le bon** — le témoin positif sans lequel un refus global passerait pour une
+politique correcte —, puis mesure le refus des pièces `infected`, `pending` et `skipped`, pour
+l'administratrice, pour un `viewer` et pour l'anonyme. Là, un `404` signifie bien « masqué par la
+politique », puisque l'objet vient d'être déposé et qu'un autre est lisible au même endroit.
+
+**Ce qui reste dû est donc double, et plus simple que je ne l'ai d'abord écrit.**
+
+1. **Rattacher le contrôle du harnais à la preuve SAINE**, celle de `e2e/api/inbox.spec.ts`, et non
+   à celle d'`ingestion.spec.ts` : c'est l'erreur que j'ai commise le matin même.
+2. **Retourner ou retirer le scénario creux d'`ingestion.spec.ts`** : soit il dépose l'objet et
+   devient une preuve, soit il cesse de s'annoncer comme le refus n° 9. Le laisser tel quel entretient
+   une preuve qui ne peut pas échouer.
+
+Non fait ce jour, le poste Docker étant tombé (INC-145) : rattacher le contrôle exige de vérifier
+que le titre visé est bien exercé, et cette vérification passe par une exécution.
 
 **Troisième occurrence de la même famille.** INC-146 en décrit deux — une assertion d'absence qui
 lit un `PGRST202` de signature non correspondante, et une seconde de même forme. Le motif commun est
