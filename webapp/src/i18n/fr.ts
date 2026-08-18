@@ -199,7 +199,6 @@ export const fr = {
 	// l'écran. Le rôle d'un rattachement, lui, n'est PAS traduit — c'est une valeur métier libre
 	// que la base n'énumère pas (§2.3), au même titre qu'un libellé de track.
 	'cardContacts.title': 'Contacts de l’affaire',
-	'cardContacts.aria': 'Contacts rattachés à cette affaire',
 	'cardContacts.list.aria': 'Liste des contacts rattachés',
 	'cardContacts.empty': 'Aucun contact n’est rattaché à cette affaire.',
 	'cardContacts.error.body': 'Les contacts de l’affaire n’ont pas pu être chargés.',
