@@ -24,6 +24,28 @@ export const CHEMIN_INBOX = '/inbox' as const
  */
 export const CHEMIN_CONTACTS = '/contacts' as const
 
+/**
+ * Fiche d'organisation — `CRM-060` tranche 4b, `docs/SPEC-contacts.md` §11.2.
+ *
+ * Une route de DÉTAIL sous le carnet, et non une route de premier niveau `/organisations/:id` :
+ * une adresse de premier niveau suppose une surface d'entrée qui la peuple, et il n'existe aucune
+ * liste d'organisations (§11.8). Le carnet est cette entrée — on atteint une organisation par un
+ * de ses contacts.
+ *
+ * Elle ne figure PAS dans `ROUTES`, exactement comme `CHEMIN_CARD` et `CHEMIN_LISTE` : son titre
+ * est le nom de l'organisation, donc une donnée, et son contenu dépend d'un paramètre d'URL. La
+ * couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` reste ainsi inchangée.
+ *
+ * L'organisation est désignée par son IDENTIFIANT : `organizations` ne porte aucun slug, et
+ * `domain` ne peut pas en tenir lieu — il est nul pour une organisation sur deux du seed, et une
+ * adresse qui n'existe que pour la moitié des lignes n'est pas une adresse.
+ */
+export const CHEMIN_ORGANISATION = '/contacts/organisations/:idOrganisation' as const
+
+/** Adresse concrète de la fiche d'une organisation donnée. */
+export const cheminOrganisation = (idOrganisation: string) =>
+	`/contacts/organisations/${idOrganisation}`
+
 /** Administration de l'arborescence — `CRM-075`. */
 export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 

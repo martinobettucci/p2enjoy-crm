@@ -170,6 +170,30 @@ export const fr = {
 	'contacts.noWorkspace.body':
 		'Connectez-vous à un espace de travail pour consulter son carnet de contacts.',
 
+	// --- Fiche d'organisation — CRM-060 tranche 4b, docs/SPEC-contacts.md §11 -----------
+	'organization.route.title': 'Organisation',
+	'organization.aria': 'Fiche d’organisation',
+	'organization.details.aria': 'Caractéristiques de l’organisation',
+	'organization.field.domain': 'Domaine',
+	'organization.field.website': 'Site web',
+	'organization.website.newTab': 'Ouvre un nouvel onglet',
+	'organization.contacts.title': 'Contacts',
+	'organization.contacts.aria': 'Contacts de cette organisation',
+	'organization.contacts.empty.title': 'Aucun contact rattaché',
+	'organization.contacts.empty.body':
+		'Aucun contact du carnet n’est rattaché à cette organisation pour le moment.',
+	'organization.notFound.title': 'Organisation introuvable',
+	'organization.notFound.body':
+		'Cette organisation n’existe pas, ou elle ne vous est pas accessible.',
+	'organization.notFound.action': 'Revenir au carnet',
+	'organization.error.title': 'La fiche n’a pas pu être chargée',
+	'organization.error.body':
+		'La lecture de l’organisation a échoué. Vérifiez votre connexion, puis réessayez.',
+	'organization.error.retry': 'Réessayer',
+	'organization.noWorkspace.title': 'Aucun espace de travail',
+	'organization.noWorkspace.body':
+		'Connectez-vous à un espace de travail pour consulter ses organisations.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',

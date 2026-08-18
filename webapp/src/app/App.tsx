@@ -4,6 +4,7 @@
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-077 (docs/BACKLOG.md) — route de la corbeille (docs/SPEC-corbeille.md §4.1)
+// @spec CRM-060 (docs/BACKLOG.md) — route de la fiche d'organisation (docs/SPEC-contacts.md §11.2)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //
@@ -28,6 +29,7 @@ import {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
+	CHEMIN_ORGANISATION,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
 	CLE_TITRE_ADMIN_CATALOGUE,
@@ -70,6 +72,17 @@ const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Cor
  * paquet principal contient de toute façon.
  */
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
+/**
+ * La fiche d'organisation de `CRM-060` tranche 4b, chargée à la demande comme le carnet dont elle
+ * prolonge la lecture — même motif : un écran que la plupart des sessions n'ouvrent pas n'a pas à
+ * peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21).
+ *
+ * Elle porte sa PROPRE coquille, comme `RouteCard` : son titre est le nom de l'organisation, donc
+ * une donnée (docs/SPEC-contacts.md §11.2).
+ */
+const FicheOrganisation = lazy(async () => ({
+	default: (await import('./FicheOrganisation')).FicheOrganisation,
+}))
 
 /** État bref mais explicite pendant le téléchargement d'une route métier. */
 export function ChargementRoute() {
@@ -120,6 +133,11 @@ function RoutesApplication() {
 				    la card, et son contenu dépend de son identifiant (`CRM-037`). Déclarée **après**
 				    les routes de track, dont elle prolonge le chemin. */}
 				<Route path={CHEMIN_CARD} element={<RouteCard />} />
+				{/* La fiche d'organisation — `CRM-060` tranche 4b, docs/SPEC-contacts.md §11.2. Une
+				    route de DÉTAIL sous le carnet, hors de `ROUTES` : son titre est le nom de
+				    l'organisation — une donnée —, et son contenu dépend d'un paramètre d'URL.
+				    Déclarée APRÈS la route du carnet, dont elle prolonge le chemin. */}
+				<Route path={CHEMIN_ORGANISATION} element={<FicheOrganisation />} />
 				{/* L'administration de l'arborescence — `CRM-075`. Elle porte la coquille commune et
 				    son titre est une clé de traduction, mais elle n'est pas une entrée de la barre
 				    latérale : on y arrive par l'index des réglages

@@ -2,7 +2,10 @@
 //       le carnet de contacts
 // @spec docs/SPEC-contacts.md §10.2 (où le carnet s'ancre), §10.5 (de quoi il a l'air),
 //       §10.6 (contrat de comportement, cas a à g), §10.7 (limites nommées)
-// @spec docs/DESIGN_SYSTEM.md §5.19 (cette surface), §5.9 (tableau de données),
+// @spec docs/SPEC-contacts.md §11.6 (le nom d'organisation devient un lien vers sa fiche : la
+//       règle du §10.7 change par LIVRAISON, sa condition étant tombée), §11.9 cas i
+// @spec docs/DESIGN_SYSTEM.md §5.19 (cette surface, révisé), §5.20 (la fiche, destination du
+//       lien), §5.9 (tableau de données),
 //       §5.8 (états systématiques), §2 (données techniques), §12.6 (débordement signalé)
 //
 // UN ÉCRAN QUI LIT, ET RIEN D'AUTRE. La sous-tranche 4a ne livre aucun geste de création, de
@@ -15,12 +18,14 @@
 // refus à mettre en scène (docs/SPEC-permissions-rls.md §7).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { lireContactsDuCarnet, type ContactDuCarnet } from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { cheminOrganisation } from './chemins'
 
 /** Cellule ordinaire : une seule ligne de texte en ellipse, hauteur de cible (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[28ch]'
@@ -130,16 +135,36 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 									{contact.full_name}
 								</td>
 								{/*
-								  Le nom de l'organisation est un TEXTE, jamais un lien : la fiche
-								  d'organisation est due par 4b, et un lien sans destination serait
-								  mort (§10.7). Une cellule sans valeur reste VIDE — ni tiret, ni
-								  « non renseigné » (§5.9).
+								  LE NOM DE L'ORGANISATION EST UN LIEN VERS SA FICHE — §11.6, révision
+								  du 2026-08-18. Il était un TEXTE tant que la fiche n'existait pas :
+								  un lien sans destination aurait été mort (§10.7, §5.10). La
+								  sous-tranche 4b livre cette destination, et la règle change donc par
+								  LIVRAISON, non par contournement.
+
+								  Une cellule sans organisation reste VIDE et SANS LIEN — ni tiret, ni
+								  « non renseigné » (§5.9) : un lien n'apparaît que là où il a une
+								  destination.
+
+								  AUCUN `aria-label` sur le lien, et c'est délibéré : il remplacerait
+								  le nom de l'organisation par un libellé identique sur chaque ligne,
+								  rendant les liens indistinguables pour un lecteur d'écran (§8). Le
+								  nom EST le libellé du lien.
 								*/}
 								<td
 									className={CLASSES_CELLULE}
 									title={contact.organisation === null ? undefined : contact.organisation.name}
 								>
-									{contact.organisation === null ? '' : contact.organisation.name}
+									{contact.organisation === null ? (
+										''
+									) : (
+										<Link
+											to={cheminOrganisation(contact.organisation.id)}
+											data-testid="lien-organisation"
+											className="inline-flex items-center min-h-[var(--size-target)] text-brand hover:underline"
+										>
+											{contact.organisation.name}
+										</Link>
+									)}
 								</td>
 								<td
 									className={CLASSES_CELLULE}
