@@ -7162,12 +7162,18 @@ lister. La capture `docs/captures/CRM-057/inbox-lg-1152.jpg`, antérieure, porte
 **45 fichiers, 2269 assertions, aucune anomalie** ; `e2e:api` **704 verts** ; `e2e:ui`
 **378 verts, 1 échec** intermittent étranger (INC-152 étendue) ; `e2e/ui/contacts.spec.ts` **9/9**.
 
-**Preuves NON exécutées, et nommées comme telles** : `pytest` (aucun code `mail-sync` touché),
-`npm run e2e:mail`, et la série des cinquante `scripts/verify-*.sh` — seuls `verify-webapp.sh`
-(**42 contrôles, 2 anomalies, toutes deux étrangères** : INC-158 et le flake INC-152) et
-`verify-harness.sh` ont été lancés, ce dernier n'ayant pas terminé dans le temps de la session.
-La sous-tranche 4a est néanmoins **prouvée** par ses propres preuves, toutes vertes ; ce qui
-manque est la couverture du RESTE du dépôt, pas celle de cette livraison.
+`npm run e2e:mail` **42 scénarios verts** (IMAP, SMTP, ClamAV, Roundcube réels), constatés par
+`scripts/verify-harness.sh`, qui rend **31 contrôles, 2 anomalies** : le compteur de scénarios
+d'interface — **imputable à cette livraison, et RÉVISÉ dans le même changement**, 370 → 379,
+valeur mesurée par `playwright test --list` (« 379 tests in 30 files ») — et le flake d'interface
+étranger d'INC-152. `scripts/verify-webapp.sh` rend **42 contrôles, 2 anomalies, toutes deux
+étrangères** : INC-158 (trois classes non engendrées) et le même flake.
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` (aucun code `mail-sync` n'est touché
+par cette sous-tranche) et **quarante-huit des cinquante `scripts/verify-*.sh`** — seuls
+`verify-webapp.sh` et `verify-harness.sh` ont été lancés, choisis parce que ce sont les deux que
+cette livraison touche. La sous-tranche 4a est néanmoins **prouvée** par ses propres preuves,
+toutes vertes ; ce qui manque est la couverture du RESTE du dépôt, pas celle de cette livraison.
 
 *Limites nommées d'emblée pour 4a* (`docs/SPEC-contacts.md` §10.7) : aucune pagination, aucune
 recherche ni filtre, aucun geste de création, de modification ou de suppression, et le nom

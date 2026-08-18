@@ -18771,10 +18771,14 @@ qui montre bien « Contacts ».
 **Campagne de fin de session, sur seed frais.** `typecheck`, `build`, `types:check` (octet à octet)
 **verts** ; `test:unit` **1509 verts, 48 fichiers** ; `test:sql` **45 fichiers, 2269 assertions,
 aucune anomalie** ; `e2e:api` **704 verts** ; `e2e:ui` **378 verts, 1 échec** ; `e2e:ui` de la
-nouvelle suite `contacts.spec.ts` **9/9**. **Non exécutés, et dits comme tels** : `pytest`
-(aucun code `mail-sync` touché), `e2e:mail` et la série des cinquante `verify-*.sh` — seuls
-`verify-webapp.sh` et `verify-harness.sh` ont été lancés, le second n'ayant pas terminé dans le
-temps de la session.
+nouvelle suite `contacts.spec.ts` **9/9**. `e2e:mail` **42 verts** (IMAP, SMTP, ClamAV,
+Roundcube réels). `scripts/verify-harness.sh` a terminé : **31 contrôles, 2 anomalies** — le
+compteur de scénarios d'interface, **imputable à cette livraison et révisé dans le même
+changement** (370 → 379, mesuré par `playwright test --list` : « 379 tests in 30 files »), et le
+flake étranger d'INC-152. `scripts/verify-webapp.sh` : **42 contrôles, 2 anomalies**, toutes deux
+étrangères (INC-158 et le même flake). **Non exécutés, et dits comme tels** : `pytest` (aucun code
+`mail-sync` touché) et **quarante-huit des cinquante `verify-*.sh`** — les deux lancés sont ceux
+que cette livraison touche.
 
 **TROIS DÉFAUTS ANTÉRIEURS CONSIGNÉS SANS ÊTRE CORRIGÉS** (`CLAUDE.md` §3.1) :
 
