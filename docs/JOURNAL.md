@@ -18352,3 +18352,72 @@ interposé. Puis les points 4 à 6 de la décision 439, inchangés : INC-147 et 
 première exécution depuis leur correction — la pile est debout et seedée, `npm run e2e:api` sur
 `preuves-refus.spec.ts` et `inbox.spec.ts` est le geste suivant —, et les preuves d'interface de
 `CRM-033`, `CRM-035` et `CRM-036` sont dues.
+
+## décision 443 — `CRM-033` reçoit enfin ses preuves d'interface, sur un poste où Docker répond
+
+**Le contexte a changé, et c'est le fait le plus important de la session.** Les décisions 439 à 441
+ont toutes été prises Docker tombé (INC-145), et elles disaient où reprendre « dès que la pile
+répond ». Elle répond : sur ce poste, `dockerd` se lance directement, les **18 services** montent
+`healthy`, le seed s'applique, et `docker buildx` **fonctionne** — l'image `webapp` se construit.
+
+**L'unité choisie, et pourquoi elle.** `CRM-033` est la première unité `[~]` de l'ordre du plan dont
+il restait du comportement mesurable à livrer. Sa dernière ligne ouverte demandait « une preuve que
+le workflow d'un track ÉTRANGER n'est pas proposé, et que le refus tient hors de l'écran ».
+
+**Ce que j'ai mesuré avant d'écrire.** La spécification existait — §4.12 en huit sous-chapitres —
+mais son tableau des preuves attendues portait encore « Interface : **aucune** », au motif qu'« la
+webapp reste un appelant anonyme (INC-021) ». Ce motif est **caduc** depuis le 2026-08-07. C'est le
+seul point sur lequel j'ai complété la spécification, comme la règle de reprise l'autorise : un
+§4.12.9 énonce le contrat des deux preuves, committé avant la première ligne de code.
+
+**Ce que j'ai livré.** `e2e/ui/coherence-workflow.spec.ts`, deux scénarios.
+
+Le premier compare la liste du sélecteur par **égalité**, et c'est le choix qui compte : asserter
+que « Cycle commercial — Conseil IA » est absent sous « Studio web » serait **tenu par un sélecteur
+vide**, ou cassé. La liste entière est comparée, dans l'ordre. Un filtre relâché ajoute une option
+et rougit ; un filtre trop serré en retire une et rougit aussi.
+
+Le second reproduit la course que le §7.2 nommait **sans jamais l'éprouver** : un workflow de portée
+`track` sans channel — donc libre, et le §4.12.4 dit qu'il se déplace librement — est déplacé vers
+un autre track **pendant que le formulaire est ouvert**. La liste affichée devient périmée, ce qui
+est exactement l'état que la course produit, et l'envoi est alors refusé par le trigger. Rien n'est
+simulé : ni `page.route()`, ni jeton fabriqué, ni chemin de test.
+
+**Non-complaisance, éprouvée par deux dégradations réelles et non par confiance.** Filtre relâché à
+`scope.eq.global,scope.eq.track` : **les deux** scénarios rougissent. Trigger
+`channels_verifier_workflow` désactivé : le **second seul** rougit — et c'est le résultat juste,
+puisque le trigger n'a rien à voir avec ce que le sélecteur propose. Un témoin qui rougirait dans
+les deux cas m'aurait appris que mes deux scénarios mesurent la même chose. Restaurations
+constatées, base relue : 8 channels, 5 tracks, aucun résidu.
+
+**Ce que cette unité m'a appris sur la place d'une preuve.** `CRM-033` ne livre **aucun écran**, et
+n'en livrera jamais. J'ai longtemps lu cela comme « donc aucune preuve d'interface n'est due », et
+c'est faux : l'écran d'une AUTRE unité, `CRM-075`, expose cette règle à l'utilisateur. Un sélecteur
+qui proposerait un workflow que le trigger refuse serait un défaut **de cette règle-ci**, et
+personne ne le mesurait. La preuve d'interface d'une règle backend n'appartient pas à l'unité qui
+porte l'écran ; elle appartient à celle qui porte la **règle**.
+
+**Campagne complète, exécutée en fin de session.** `test:sql` 42 fichiers / **2191 assertions**,
+`test:unit` **1488**, `typecheck`, `types:check`, `build`, `e2e:api` **678**, `e2e:ui` **370** en
+14,8 min, `e2e:mail` **42**, `pytest` **242** dans un environnement virtuel hors dépôt. Aucune
+anomalie. Le typecheck a d'ailleurs attrapé un vrai défaut de mon fichier — `noUncheckedIndexedAccess`
+refusait la lecture de l'identifiant rendu par la création du workflow — corrigé par un passage
+explicite plutôt que par un `!`.
+
+**Les captures réécrites par le rejeu ont été regardées puis restaurées**, comme aux unités
+précédentes : 148 fichiers, identiques au pixel, différents à l'octet.
+
+**Une session parallèle a poussé sa propre décision 442 pendant celle-ci**, sur le même `main` et
+depuis un poste au contexte identique. Le conflit a été résolu **sur place**, les deux entrées
+conservées, la mienne renumérotée en 443. Elle a traité `scripts/verify-scripts.sh` — le point 1 que
+j'allais nommer ci-dessous —, et son constat rejoint le mien sur le point qui compte : **BuildKit
+fonctionne ici**, le blocage de la décision 439 n'est pas celui de ce poste.
+
+**Où reprendre.** L'ordre de la décision 439, amputé de ce que la 442 a soldé :
+
+1. **INC-147** — rattacher le contrôle de la preuve n° 9 à `e2e/api/inbox.spec.ts`.
+2. **INC-146** — retourner la douzième assertion en refus mesuré. La pile est debout et seedée sur
+   ce type de poste : ces deux entrées attendent leur première exécution depuis leur correction.
+3. `CRM-035` et `CRM-036` : leurs preuves d'interface sont **dues** au même titre que celles de
+   `CRM-033`, et pour la même raison — l'écran existe, la règle est exposée, personne ne la mesure.
+   C'est la leçon de cette session, et elle est réutilisable telle quelle.
