@@ -527,3 +527,260 @@ describe('champs exigés par un déplacement refusé (§4 ter)', () => {
 		expect(screen.queryByTestId('exige-source')).toBeNull()
 	})
 })
+
+// =============================================================================================
+// Sous-tranche 4d de `CRM-060` — LES DEUX SÉLECTEURS DE RÉFÉRENCE
+// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, sous-tranche 4d
+// @verifies docs/SPEC-contacts.md §13.4 (quand les listes sont lues), §13.5 (cas a à m),
+//           §13.8 (limites nommées)
+// @verifies docs/DESIGN_SYSTEM.md §5.22 (sélecteur de contact et sélecteur de membre)
+// =============================================================================================
+
+const CHAMPS_REFERENCE: readonly ChampFormulaire[] = [
+	{
+		id: 'f-contact',
+		key: 'contact-principal',
+		label: 'Contact principal',
+		type: 'contact',
+		position: 1,
+		options: {},
+		help_text: null,
+		archived_at: null,
+	},
+	{
+		id: 'f-membre',
+		key: 'referent-technique',
+		label: 'Référent technique',
+		type: 'user',
+		position: 2,
+		options: {},
+		help_text: null,
+		archived_at: null,
+	},
+]
+
+type ReponseLecture = { readonly data: unknown; readonly error: { message: string } | null; readonly status: number }
+
+const CONTACTS_LUS = [
+	{ id: 'c-leo', full_name: 'Léo Marchand', email: null, phone: null, role_title: null, organization_id: 'o-1', organizations: { id: 'o-1', name: 'Sogexia', domain: null } },
+	{ id: 'c-sophie', full_name: 'Sophie Dupont', email: null, phone: null, role_title: null, organization_id: null, organizations: null },
+]
+
+const MEMBRES_LUS = [
+	{ user_id: 'u-driss', profiles: { id: 'u-driss', full_name: 'Driss Lemoine' } },
+	{ user_id: 'u-camille', profiles: { id: 'u-camille', full_name: 'Camille Aubert' } },
+]
+
+/**
+ * Client factice qui sert AUSSI les deux lectures de référence, et **compte** les tables lues.
+ *
+ * Le compte est ce qui prouve la condition du §13.4 : un formulaire sans champ de ces types
+ * n'émet aucune de ces deux lectures. Une preuve qui n'observerait que le rendu ne dirait rien de
+ * la requête épargnée.
+ */
+function clientReferences(reponses: Readonly<Record<string, ReponseLecture>> = {}): {
+	client: ClientCrm
+	lues: string[]
+	ecritures: Ecriture[]
+} {
+	const lues: string[] = []
+	const ecritures: Ecriture[] = []
+	const defauts: Readonly<Record<string, ReponseLecture>> = {
+		contacts: { data: CONTACTS_LUS, error: null, status: 200 },
+		workspace_members: { data: MEMBRES_LUS, error: null, status: 200 },
+	}
+	const client = {
+		from: (table: string) => {
+			const reponse = reponses[table] ?? defauts[table] ?? { data: [], error: null, status: 200 }
+			const chaine: Record<string, unknown> = {}
+			for (const methode of ['select', 'order', 'eq']) {
+				chaine[methode] = () => chaine
+			}
+			chaine['then'] = (resoudre: (valeur: unknown) => unknown) => {
+				lues.push(table)
+				return Promise.resolve(reponse).then(resoudre)
+			}
+			chaine['upsert'] = (charge: Record<string, unknown>, options?: Record<string, unknown>) => {
+				ecritures.push({ table, charge, options })
+				const apres: Record<string, unknown> = {}
+				apres['select'] = () => apres
+				apres['then'] = (resoudre: (valeur: unknown) => unknown) =>
+					Promise.resolve({ data: [{ field_id: 'f' }], error: null, status: 200 }).then(resoudre)
+				return apres
+			}
+			return chaine
+		},
+	} as unknown as ClientCrm
+	return { client, lues, ecritures }
+}
+
+function monterReferences(
+	valeurs: readonly ValeurChamp[] = [],
+	reponses?: Readonly<Record<string, ReponseLecture>>,
+	champs: readonly ChampFormulaire[] = CHAMPS_REFERENCE,
+) {
+	const modele = composerFormulaire({ champs, regles: [], valeurs, etape: ETAPE })
+	const factice = clientReferences(reponses)
+	render(<FormulaireCard modele={modele} {...CARD} client={factice.client} />)
+	return factice
+}
+
+/**
+ * Attend que le sélecteur ait REÇU sa liste.
+ *
+ * `findByTestId` ne suffit pas : l'état de chargement porte le MÊME identifiant de test — c'est le
+ * même contrôle, pas un autre —, si bien qu'il résout immédiatement sur le `select` désactivé. La
+ * condition d'attente est donc la disparition d'`aria-busy`, qui EST le signal du §13.5, cas g.
+ */
+async function attendreSelecteur(cle: string): Promise<HTMLSelectElement> {
+	// La requête est REFAITE à chaque tour : l'état prêt enveloppe le contrôle, si bien que le
+	// `select` est un AUTRE nœud du DOM que celui du chargement. Une référence capturée d'avance
+	// resterait éternellement `aria-busy`, et la preuve mesurerait alors un nœud abandonné.
+	await waitFor(() =>
+		expect(screen.getByTestId(`selecteur-${cle}`).getAttribute('aria-busy')).toBeNull(),
+	)
+	return screen.getByTestId(`selecteur-${cle}`) as HTMLSelectElement
+}
+
+describe('sélecteurs de contact et de membre (docs/SPEC-contacts.md §13)', () => {
+	it('cas a — liste chargée, valeur vide : l’option vide est retenue, aucun nom ne l’est', async () => {
+		monterReferences()
+		const selecteur = await attendreSelecteur('contact-principal')
+		expect(selecteur.value).toBe('')
+		expect(within(selecteur).getByText('Léo Marchand — Sogexia')).toBeDefined()
+		// Sophie n'a aucune organisation : son libellé est son seul nom, sans tiret orphelin.
+		expect(within(selecteur).getByText('Sophie Dupont')).toBeDefined()
+	})
+
+	it('cas b — une valeur qui désigne une entrée RETIENT son option, et le libellé est un nom', async () => {
+		monterReferences([{ field_id: 'f-contact', value: 'c-leo' }])
+		const selecteur = await attendreSelecteur('contact-principal')
+		expect(selecteur.value).toBe('c-leo')
+		expect(selecteur.selectedOptions[0]?.textContent).toBe('Léo Marchand — Sogexia')
+	})
+
+	it('cas c — retenir une autre entrée émet l’écriture, avec l’identifiant en valeur', async () => {
+		const factice = monterReferences()
+		const selecteur = await attendreSelecteur('contact-principal')
+		fireEvent.change(selecteur, { target: { value: 'c-sophie' } })
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		expect(factice.ecritures[0]?.charge).toMatchObject({ field_id: 'f-contact', value: 'c-sophie' })
+	})
+
+	it('cas d — retenir l’option vide VIDE le champ : la valeur envoyée est `null` (§4 bis.5)', async () => {
+		const factice = monterReferences([{ field_id: 'f-contact', value: 'c-leo' }])
+		const selecteur = await attendreSelecteur('contact-principal')
+		fireEvent.change(selecteur, { target: { value: '' } })
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		expect(factice.ecritures[0]?.charge['value']).toBeNull()
+	})
+
+	it('cas g — pendant la lecture, le contrôle est désactivé et `aria-busy`', () => {
+		monterReferences()
+		const selecteur = screen.getByTestId('selecteur-contact-principal') as HTMLSelectElement
+		expect(selecteur.disabled).toBe(true)
+		expect(selecteur.getAttribute('aria-busy')).toBe('true')
+	})
+
+	it('cas h — une lecture en échec offre une ACTION DE REPRISE, qui relit la liste (§5.8)', async () => {
+		const factice = monterReferences([], {
+			contacts: { data: null, error: { message: 'boum' }, status: 500 },
+		})
+		const alerte = await screen.findByTestId('selecteur-erreur-contact-principal')
+		expect(alerte.getAttribute('role')).toBe('alert')
+		const lecturesAvant = factice.lues.filter((table) => table === 'contacts').length
+		fireEvent.click(within(alerte).getByRole('button', { name: 'Réessayer' }))
+		await waitFor(() =>
+			expect(factice.lues.filter((table) => table === 'contacts').length).toBeGreaterThan(lecturesAvant),
+		)
+	})
+
+	it('cas i — une liste vide le dit en toutes lettres, et n’offre AUCUNE action', async () => {
+		monterReferences([], { contacts: { data: [], error: null, status: 200 } })
+		const mention = await screen.findByTestId('selecteur-vide-contact-principal')
+		expect(mention.textContent).toBe("Cet espace de travail n'a aucun contact.")
+		expect(within(mention).queryByRole('button')).toBeNull()
+	})
+
+	it('cas j — une référence morte GARDE son option retenue, et rien n’est écrit', async () => {
+		const factice = monterReferences([{ field_id: 'f-contact', value: 'c-disparu' }])
+		const selecteur = await attendreSelecteur('contact-principal')
+		expect(selecteur.value).toBe('c-disparu')
+		expect(selecteur.selectedOptions[0]?.textContent).toBe('Référence inconnue (c-disparu)')
+		// AUCUNE écriture : l'écran constate la référence morte, il ne la répare pas (§13.8).
+		expect(factice.ecritures).toHaveLength(0)
+	})
+
+	it('cas k — quitter la référence morte pour une entrée réelle écrit, et l’option disparaît', async () => {
+		const factice = monterReferences([{ field_id: 'f-contact', value: 'c-disparu' }])
+		const selecteur = await attendreSelecteur('contact-principal')
+		fireEvent.change(selecteur, { target: { value: 'c-leo' } })
+		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
+		await waitFor(() =>
+			expect(within(selecteur).queryByText('Référence inconnue (c-disparu)')).toBeNull(),
+		)
+	})
+
+	it('le sélecteur de MEMBRE lit `workspace_members` et rend les noms des profils', async () => {
+		const factice = monterReferences()
+		const selecteur = await attendreSelecteur('referent-technique')
+		expect(factice.lues).toContain('workspace_members')
+		expect(within(selecteur).getByText('Driss Lemoine')).toBeDefined()
+		expect(within(selecteur).getByText('Camille Aubert')).toBeDefined()
+	})
+
+	it('§13.4 — un formulaire SANS champ de ces types n’émet AUCUNE des deux lectures', async () => {
+		const factice = monterReferences([], undefined, CHAMPS)
+		await waitFor(() => expect(screen.getByTestId('formulaire-card')).toBeDefined())
+		expect(factice.lues).not.toContain('contacts')
+		expect(factice.lues).not.toContain('workspace_members')
+	})
+
+	it('§13.4 — un formulaire qui ne porte QUE `user` ne lit pas les contacts', async () => {
+		const factice = monterReferences([], undefined, [CHAMPS_REFERENCE[1] as ChampFormulaire])
+		await waitFor(() => expect(factice.lues).toContain('workspace_members'))
+		expect(factice.lues).not.toContain('contacts')
+	})
+})
+
+describe('section repliée : les deux types résolus (§13.5, cas l et m)', () => {
+	// `hidden` **et** renseigné : c'est la condition du §4.2 pour rejoindre la section repliée.
+	const REGLES_REPLIEE = [
+		{ field_id: 'f-contact', step_id: ETAPE.id, visibility: 'hidden' },
+		{ field_id: 'f-membre', step_id: ETAPE.id, visibility: 'hidden' },
+	]
+
+	function monterRepliee(valeurs: readonly ValeurChamp[], reponses?: Readonly<Record<string, ReponseLecture>>) {
+		const modele = composerFormulaire({
+			champs: CHAMPS_REFERENCE,
+			regles: REGLES_REPLIEE,
+			valeurs,
+			etape: ETAPE,
+		})
+		const factice = clientReferences(reponses)
+		render(<FormulaireCard modele={modele} {...CARD} client={factice.client} />)
+		return factice
+	}
+
+	it('cas l — une valeur résolue se lit en NOM, pas en identifiant', async () => {
+		monterRepliee([{ field_id: 'f-contact', value: 'c-leo' }])
+		await waitFor(() =>
+			expect(screen.getByTestId('autre-contact-principal').textContent).toContain('Léo Marchand — Sogexia'),
+		)
+	})
+
+	it('cas m — une valeur non résolue se lit en IDENTIFIANT BRUT, en donnée technique', async () => {
+		monterRepliee([{ field_id: 'f-contact', value: 'c-disparu' }])
+		const bloc = await screen.findByTestId('autre-contact-principal')
+		await waitFor(() => expect(bloc.querySelector('code')?.textContent).toBe('c-disparu'))
+	})
+
+	it('cas m — liste illisible : l’identifiant brut, jamais un nom inventé', async () => {
+		monterRepliee([{ field_id: 'f-contact', value: 'c-leo' }], {
+			contacts: { data: null, error: { message: 'boum' }, status: 500 },
+		})
+		const bloc = await screen.findByTestId('autre-contact-principal')
+		await waitFor(() => expect(bloc.querySelector('code')?.textContent).toBe('c-leo'))
+		expect(bloc.textContent).not.toContain('Léo Marchand')
+	})
+})

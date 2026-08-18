@@ -27,6 +27,7 @@ import {
 	classerRefusRattachement,
 	detacherContact,
 	estFormeUuid,
+	libelleContactAvecOrganisation,
 	lireContactsDeLAffaire,
 	lireContactsDuCarnet,
 	lireFicheOrganisation,
@@ -682,5 +683,22 @@ describe('detacherContact', () => {
 		expect(resultat.statut).toBe('refus')
 		if (resultat.statut !== 'refus') return
 		expect(resultat.refus.nature).toBe('forbidden')
+	})
+})
+
+// @verifies CRM-060 (docs/BACKLOG.md) — sous-tranche 4d
+// @verifies docs/SPEC-contacts.md §13.3 (la composition du libellé, EXTRAITE et partagée)
+// @verifies docs/DESIGN_SYSTEM.md §5.21, §5.22 (le libellé d'une option est une donnée)
+describe('libelleContactAvecOrganisation (§13.3)', () => {
+	it('compose « nom — organisation » lorsque le contact en a une : deux homonymes se distinguent', () => {
+		expect(
+			libelleContactAvecOrganisation({ full_name: 'Léo Marchand', organisation: { name: 'Sogexia' } }),
+		).toBe('Léo Marchand — Sogexia')
+	})
+
+	it('rend le SEUL nom lorsque le contact n’a pas d’organisation : aucun tiret orphelin', () => {
+		expect(libelleContactAvecOrganisation({ full_name: 'Sophie Dupont', organisation: null })).toBe(
+			'Sophie Dupont',
+		)
 	})
 })
