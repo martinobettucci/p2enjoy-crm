@@ -333,8 +333,18 @@ PORT_RAPPORT=9323
 # Un compteur en retard ne protège plus de rien : il rend « vert mais N au lieu de M » à chaque
 # exécution, et l'œil finit par lire le vert sans lire le nombre. C'est le contraire de ce qu'on lui
 # demande — dénoncer une suite qui cesse d'être découverte.
-FICHIERS_SQL_ATTENDUS=42
-ASSERTIONS_ATTENDUES=2191
+# --- CRM-060 tranche 1, le 2026-08-18 -----------------------------------------------------------
+# +1 fichier, +38 assertions : `supabase/tests/0043_contacts_et_organisations.test.sql` livre la
+# suite pgTAP des trois nouvelles tables — forme, contraintes de valeur, unicités partielles
+# insensibles à la casse, FK composites dans les deux sens, RLS, quatre politiques par table,
+# privilèges par rôle, cascades et détachement. **DEUX ASSERTIONS ANTÉRIEURES ONT ÉTÉ RETOURNÉES
+# SANS CHANGER LE TOTAL** — celles qui figeaient l'absence de `contacts` et de `card_contacts`
+# dans `0014_valeurs_champs.test.sql` et `0027_classement_messages.test.sql`. Le compte d'une
+# TROISIÈME assertion — la somme des politiques dans `public` de `0016_preuves_refus.test.sql` —
+# passe de 66 à 78 (+12 : quatre par table sur trois tables).
+# 42 + 1 = **43** ; 2191 + 38 = **2229**. MESURÉ par `npm run test:sql`.
+FICHIERS_SQL_ATTENDUS=43
+ASSERTIONS_ATTENDUES=2229
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -359,7 +369,16 @@ ASSERTIONS_ATTENDUES=2191
 # affaires qu'il n'a pas le droit d'ouvrir. S'y ajoutent le refus de l'anonyme par le PRIVILÈGE
 # (`401`/`42501`, avant toute politique), les deux refus de cible et les deux cas sans effet.
 # 507 + 7 = **514**.
-SCENARIOS_API=678
+# --- CRM-060 tranche 1, le 2026-08-18 -----------------------------------------------------------
+# +18 scénarios : `e2e/api/contacts.spec.ts` livre les seize lignes du contrat d'API du §4 de
+# `docs/SPEC-contacts.md` — les quatre profils sur `organizations`, l'unicité partielle du
+# domaine et la contrainte de casse, les cas nominaux et de forme sur `contacts`, le
+# cloisonnement structurel par FK composite, la lecture par les membres et le refus par zéro
+# ligne pour l'anonyme, `card_contacts` composant `can_read_card` / `can_write_card`, et la
+# cascade sur suppression d'un contact — plus deux scénarios de gestion : le refus par
+# CONTRAINTE d'un domaine avec majuscules (`e bis`), et un inventaire sanity des trois profils
+# seedés. 678 + 18 = **696**. MESURÉ par `npm run e2e:api` et par `playwright test --list`.
+SCENARIOS_API=696
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
