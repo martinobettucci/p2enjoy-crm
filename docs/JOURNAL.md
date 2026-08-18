@@ -18893,3 +18893,84 @@ affaire depuis la route de détail (`card_contacts`), **premier geste d'ÉCRITUR
 c'est là que les refus d'écriture devront être traduits, ce qu'aucune des deux sous-tranches de
 lecture n'a eu à faire. Puis **4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed du
 §9.6, avec la révision des dix comptes qu'il déplace).
+
+## décision 450 — `CRM-060` sous-tranche 4c : le rattachement d'un contact à une affaire, première écriture de la tranche
+
+**L'unité, et le choix.** La dernière entrée du journal (décision 449) désignait `CRM-060` comme
+unité PRODUIT en cours et renvoyait explicitement à la **sous-tranche 4c**, « le rattachement d'un
+contact à une affaire depuis la route de détail, premier geste d'ÉCRITURE de la tranche : c'est là
+que les refus d'écriture devront être traduits, ce qu'aucune des deux sous-tranches de lecture n'a
+eu à faire ». J'ai suivi `docs/CloudWorker.md` §4.2 point 1.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §12 et
+`docs/DESIGN_SYSTEM.md` §5.21, fondées sur **treize** réponses PostgREST relevées à la main sur la
+pile seedée, le seed étant rendu **intact** après chaque mesure d'écriture — vérifié, `card_contacts`
+compte de nouveau ses deux lignes. Trois mesures ont **décidé** du contrat plutôt que de le
+confirmer :
+
+- **l'embarquement tient sur DEUX niveaux** — `card_contacts → contacts → organizations` — sans
+  ambiguïté `PGRST201`, chaque clé étrangère restant unique dans son sens. Une seconde requête
+  aurait été un coût gratuit ;
+- **le tri se demande au PREMIER niveau**, `order=contacts(full_name)`, et c'est un **écart mesuré
+  avec le §11.3** : la fiche d'organisation trie une relation *to-many*, que PostgREST n'accepte que
+  par `referencedTable` (`PGRST108` sinon) ; ici la relation est *to-one*, et le tri porte sur les
+  **rattachements**. Vérifié dans les deux sens sur deux lignes : le tri **agit** ;
+- **le refus d'INSERTION est bruyant, celui de SUPPRESSION est SILENCIEUX.** La lectrice qui insère
+  reçoit `403` / `42501` ; la même lectrice qui **supprime un rattachement existant** reçoit `200` et
+  **zéro ligne**, la ligne relue inchangée — la clause `USING` filtre avant de supprimer. Le
+  détachement a donc **trois** issues, et « sans effet » n'est ni un succès ni une erreur.
+
+**Une quatrième mesure a décidé du classement des refus.** `23505` (déjà rattaché) et `23503`
+(contact inconnu) rendent **tous deux `409`** : le code HTTP seul ne les sépare pas, alors qu'ils
+appellent des gestes opposés — en choisir un autre, ou relire une liste périmée. Le classement lit
+donc le **code PostgreSQL d'abord**, patron de `classerRefusRestauration`.
+
+**Ce que j'ai livré.** `lireContactsDeLAffaire`, `rattacherContact` — un rôle vide envoyé à `null`,
+jamais `""`, mesuré refusé en `400` / `23514` — et `detacherContact` dans
+`webapp/src/lib/contacts.ts` ; `webapp/src/app/BlocContactsCard.tsx` (liste plate du §5.18,
+formulaire et confirmation dans le flux, trois vides distincts, refus qui n'efface pas la saisie,
+focus entrant puis rendu) ; et le bloc monté dans `RouteCard` **entre** le formulaire et le geste de
+corbeille — position dictée par le §5.3, et **mesurée à l'écran** par la preuve E2E.
+
+**UN DÉFAUT TROUVÉ PAR LA PREUVE E2E, CORRIGÉ À SA CAUSE.** La preuve du « sans effet » est devenue
+**intermittente** : le message vivait dans la LIGNE, et une relecture repasse le bloc par l'état de
+chargement, ce qui **démonte** la ligne et le message avec elle — alors que le contrat exige les
+DEUX, dire « sans effet » ET relire. Une temporisation aurait verdi la preuve en masquant la cause,
+ce que `CLAUDE.md` §18 interdit. Le message vit désormais dans le **bloc**, sous la liste, où il
+reste près de ce qui l'a causé : la ligne visée peut légitimement avoir disparu, c'est même l'une des
+deux causes du « sans effet ». Une **assertion unitaire ajoutée dans le même changement** exige
+maintenant que le message survive à la relecture — aucun test ne le disait, et c'est pourquoi le
+défaut avait passé la revue unitaire.
+
+**UN SECOND DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16) : la première
+`contacts-affaire-1440.jpg` ne montrait **pas** le bloc, qui vit en bas d'une colonne longue quand la
+fenêtre s'ouvre sur l'en-tête. Elle représentait fidèlement l'application, mais **pas la
+fonctionnalité livrée**. Les captures amènent désormais le bloc dans la vue avant de déclencher.
+Une troisième observation, à 390 px, a fait écrire une règle : la ligne **se replie** et sa commande
+passe en dessous, plutôt que de tronquer une donnée ou de rétrécir une cible sous 40 px (§5.21).
+
+**Les 45 captures de fiche sont CONSERVÉES, les 87 autres restaurées.** La campagne en a réécrit
+132. Le critère est **mesuré, non supposé** : moins de 2 % d'écart de taille pour une réécriture de
+compression (INC-036), 3 à 45 % pour un écran que le bloc modifie réellement. Vérifié **en
+regardant** `docs/captures/CRM-077/card-geste-confirmation.jpg`, qui porte bien le nouveau bloc
+au-dessus de la confirmation de corbeille.
+
+**Campagne de fin de session, sur seed frais.** `typecheck` et `build` **verts** ; `test:unit`
+**1572 verts, 50 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ;
+`e2e:api` **704 verts** ; `e2e:ui` **398 verts, AUCUN échec** — l'intermittence d'INC-152 ne s'est
+pas manifestée, ce qui ne la clôt pas ; la suite neuve `e2e/ui/contacts-affaire.spec.ts` **8/8**,
+rejouée **trois fois de suite** après la correction ci-dessus. `scripts/verify-harness.sh` **révisé
+dans le même changement** : compteur d'interface porté de 390 à **398**, mesuré par
+`playwright test --list` (« Total: 398 tests in 31 files »).
+
+**Preuves NON exécutées, et nommées comme telles** : `pytest` — l'hôte n'a pas le module, et aucun
+code `mail-sync` n'est touché par cette sous-tranche —, `e2e:mail`, et **quarante-huit des cinquante
+`scripts/verify-*.sh`**. `scripts/verify-webapp.sh` a été lancé et n'avait pas rendu son verdict à
+la fin de la session ; son résultat est donc **inconnu**, et non supposé vert.
+
+**Où reprendre.** `CRM-060` reste `[~]`. **Sous-tranche 4d** — les deux sélecteurs du §9.1
+(`contact` et `user`) dans le formulaire d'une affaire, et l'enrichissement du seed différé par le
+§9.6, avec la révision des dix comptes qu'il déplace. C'est la **dernière** sous-tranche de la
+tranche 4, et donc ce qui reste pour clore `CRM-060`. Avant elle, deux vérifications courtes héritées
+de cette session : rejouer `scripts/verify-webapp.sh` et `scripts/verify-harness.sh` jusqu'à leur
+verdict, le second devant constater le compteur 398 que cette session y a écrit.
