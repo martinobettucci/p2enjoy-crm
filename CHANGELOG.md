@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Spécification des contacts et organisations écrite avant tout code**
+  (`docs/SPEC-contacts.md`, décision 445). Le modèle sera trois tables — `organizations`,
+  `contacts`, `card_contacts` —, avec des clés étrangères composites portant `workspace_id` pour
+  interdire structurellement toute liaison entre deux workspaces (aucun trigger de cohérence
+  requis). Une organisation porte un domaine unique par workspace, un contact un email unique
+  insensible à la casse (l'un et l'autre facultatifs, donc unicité partielle). L'écriture est
+  ouverte au `business_developer` et à l'`admin` — un contact est le matériau quotidien d'un
+  commercial, non une décision de structure. L'unité est **découpée en quatre tranches** :
+  le modèle, la règle 3 du classement de messages (`CRM-055`), la résolution du champ `contact`
+  dans le formulaire (`CRM-036` §6.5), et les écrans. Cette entrée persiste la spécification
+  avant l'écriture du code, conformément à `CLAUDE.md` §5.
+
 - **Une affaire se met en sommeil depuis la carte du tableau, sans quitter l'écran** (`CRM-081`
   tranche 2 d, `docs/SPEC-cards.md` §16.13). Les trois tranches précédentes laissaient la **fiche**
   comme seul chemin : ranger une affaire depuis le tableau demandait de l'ouvrir, d'agir, puis de

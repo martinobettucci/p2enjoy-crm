@@ -18462,3 +18462,39 @@ incluant son `npm run build` vert.
 **Ce qui reste `[~]` sur `CRM-014`, et ce n'est pas une preuve manquante par négligence.** La
 preuve n° 8 est à moitié acquise : `card_events` est mesurée, `audit_log` reste due par `CRM-072`,
 dont la table n'existe pas.
+
+## décision 445 — `CRM-060` reçoit sa spécification écrite avant tout code, et le motif du choix est de plan et non de registre
+
+**L'unité de la session est `CRM-060`, et le choix suit `docs/CloudWorker.md` §4.2 à la lettre.**
+La dernière entrée du journal (décision 444) ne désignait aucune unité PRODUIT à reprendre : elle
+soldait deux corrections d'incohérences. Les premières `[~]` du plan — `CRM-013`, `CRM-014`,
+`CRM-034`, `CRM-035`, `CRM-036`, `CRM-037`, `CRM-040`, `CRM-052`, `CRM-053`, `CRM-057`, `CRM-058`,
+`CRM-077`, `CRM-081` — ont été relues, et **aucune ne porte de comportement à livrer** dans une
+session d'une heure sans dépendance bloquée : `CRM-013` et `CRM-014` attendent `audit_log`
+(`CRM-072`) et `api_tokens` (`CRM-073`) ; `CRM-035`, `CRM-036` et `CRM-037` sont livrées, y compris
+leurs preuves d'interface via `CRM-076` et `CRM-037` lui-même ; `CRM-034` est complète, ses
+checkboxes ouvertes soldées par `CRM-036` ; `CRM-052` / `CRM-053` renvoient explicitement leurs
+écrans à une unité qui n'existe pas ; `CRM-055` attend précisément ce que cette session livre ;
+`CRM-077` n'a « plus de dette de construction » et reste `[~]` pour trois arbitrages ouverts.
+
+**Application de `docs/CloudWorker.md` §4.2, point 3** : « sinon, la première unité `[ ]` dans
+l'ordre du plan ». `docs/MASTER_PLAN.md` §2 impose « `CRM-060` (contacts) précède `CRM-055` ». En
+livrant `CRM-060`, cette session **débloque** la règle 3 du classement (`CRM-055`) et la résolution
+du champ `contact` (`CRM-036` §6.5, INC-053) — deux unités `[~]` qui l'attendent depuis
+respectivement `CRM-055` et `CRM-036`.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md`, fondée
+sur mesures prises sur la pile réelle : trois tables inexistantes (`to_regclass` → `NULL`), `cards`
+porte déjà `workspace_id` et une contrainte `UNIQUE (id, workspace_id)`, ce qui rend la garantie de
+cloisonnement de `card_contacts` **structurelle** — même patron que `form_field_rules` (`CRM-035`),
+aucun trigger de cohérence n'est requis. `docs/SCHEMA.md` §6, `docs/SPEC-permissions-rls.md` §4 et
+`docs/SPEC-mail-subsystem.md` §16 étaient les trois documents amont ; la spécification cite chacun
+et n'introduit **aucune** règle qu'ils ne portent pas.
+
+**L'unité est découpée en quatre tranches, motivées au §1** : le modèle (première livraison), la
+règle 3 du classement, la résolution du champ `contact`, et les écrans. Chacune est prouvée avant
+la suivante. Cette session livre la première tranche.
+
+**Où reprendre.** Migration `00xx_contacts_et_organisations.sql`, suite pgTAP dédiée, preuve d'API
+dédiée avec les jetons réels des trois profils seedés, seed enrichi, documentation. Le contrat d'API
+et le seed sont écrits ligne à ligne au §4 et au §5 de la spécification, prêts à être exécutés.

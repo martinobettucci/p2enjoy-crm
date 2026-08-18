@@ -6960,7 +6960,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 
 | Unité | Objet | État |
 |---|---|---|
-| CRM-060 | Contacts et organisations, historique transverse | `[ ]` |
+| CRM-060 | Contacts et organisations, historique transverse | `[~]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[ ]` |
 | CRM-062 | Relances automatiques des cards figées | `[ ]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[ ]` |
@@ -6990,6 +6990,60 @@ en `CRM-081`** : l'administration est déjà citée par la décision 332, par `C
 INC-086 et par le corps de ce document, là où le snooze n'existait qu'en ligne de table. Un numéro
 d'unité s'attribue désormais en lisant **cette table**, jamais le dernier numéro cité dans le corps
 du document.*
+
+### CRM-060 — Contacts et organisations `[~]`
+
+Carnet de contacts et d'organisations d'un workspace, historique transverse, rattachement d'un
+contact à une affaire. Objet métier de première classe, débloque la règle 3 du classement
+(`CRM-055`) et la résolution du champ `contact` (`CRM-036`).
+**DoD** : les trois tables avec leurs contraintes, RLS et privilèges ; suite pgTAP dédiée ; preuve
+d'API dédiée avec les jetons réels ; seed enrichi ; écrans (carnet, fiche, rattachement) ;
+règle 3 activée ; résolution `contact` livrée.
+
+**Spécifiée le 2026-08-18** — `docs/SPEC-contacts.md`, écrite avant toute ligne de code
+(`CLAUDE.md` §5), fondée sur mesures prises sur la pile réelle : trois tables inexistantes
+(`to_regclass` → `NULL`), `cards` porte déjà `workspace_id` et une contrainte `UNIQUE (id,
+workspace_id)` qui rend la garantie de cloisonnement de `card_contacts` **structurelle** (aucun
+trigger requis, patron des clés composites de `CRM-035`), rôles du seed relevés.
+
+**Découpage en quatre tranches, motivé** (§1 de la spécification) — chacune committée et prouvée
+avant la suivante :
+
+1. **Le modèle** — les trois tables, contraintes, RLS, privilèges, tests, seed. Objet de la
+   première livraison en cours.
+2. **La règle 3 du classement** — activation de la suggestion « expéditeur connu » aujourd'hui
+   désactivée (`CRM-055`, `docs/SPEC-mail-subsystem.md` §16). Ultérieure.
+3. **La résolution du champ `contact`** dans la saisie du formulaire — remplace le refus d'un UUID
+   opaque par une clé vers un contact du même workspace (`CRM-036` §6.5, INC-053). Ultérieure.
+4. **Les écrans** — carnet de contacts, fiche d'organisation, rattachement d'un contact à une
+   affaire depuis la route de détail. Ultérieure.
+
+**Première tranche — attendus, prêts à être livrés dans cette session :**
+
+- [ ] `supabase/migrations/00xx_contacts_et_organisations.sql` : les trois tables, les FK
+      composites vers `organizations` et `cards`, les unicités partielles sur `lower(email)` et
+      `lower(domain)`, RLS activée, trois politiques par table (lecture, écriture, suppression),
+      privilèges explicites, triggers `updated_at`, contraintes de forme.
+- [ ] `supabase/tests/00xx_contacts_et_organisations.test.sql` : forme des trois tables,
+      contraintes de valeur, unicités partielles éprouvées des deux côtés, FK composites dans les
+      deux sens (workspace différent refusé), RLS activée, politiques nommées, privilèges par rôle,
+      absence de politique `DELETE` non désirée, conformité du seed.
+- [ ] `e2e/api/contacts.spec.ts` : les seize lignes du contrat d'API du §4 rejouées avec les
+      jetons réels des trois profils seedés, chaque refus **relisant la ligne** pour la constater
+      inchangée.
+- [ ] Seed enrichi (§5 de la spécification) : deux organisations dont une avec domaine, trois
+      contacts couvrant l'unicité partielle et l'organisation facultative, deux rattachements dont
+      un contact rattaché à **exactement une** card active (état précis que la règle 3 lira).
+- [ ] `docs/SCHEMA.md` §6, `docs/SPEC-permissions-rls.md` §4, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` §3, `docs/SPEC-seed.md`, `README.md`, `CHANGELOG.md` mis à jour
+      dans le même changement.
+
+**Tranches 2, 3 et 4 restent dues** ; l'unité demeure `[~]` tant qu'elles ne sont pas livrées.
+
+*Limites nommées d'emblée* : archivage réversible d'un contact, fusion de doublons, purge RGPD et
+rapprochement automatique email → organisation par domaine sont **hors périmètre** de cette unité
+et **nommés au §6** de la spécification comme appelant l'arbitrage du responsable, plutôt que
+inventés au passage (`CLAUDE.md` §1).
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
