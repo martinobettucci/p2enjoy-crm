@@ -7177,7 +7177,72 @@ toutes vertes ; ce qui manque est la couverture du RESTE du dépôt, pas celle d
 
 *Limites nommées d'emblée pour 4a* (`docs/SPEC-contacts.md` §10.7) : aucune pagination, aucune
 recherche ni filtre, aucun geste de création, de modification ou de suppression, et le nom
-d'organisation reste un **texte** tant que 4b n'a pas livré sa destination.
+d'organisation reste un **texte** tant que 4b n'a pas livré sa destination. **Cette dernière limite
+est LEVÉE le 2026-08-18 par la sous-tranche 4b**, ci-dessous : la destination existe, le nom est
+un lien. Les autres restent.
+
+**Sous-tranche 4b livrée, 2026-08-18 — la fiche d'organisation** (`docs/SPEC-contacts.md` §11,
+`docs/DESIGN_SYSTEM.md` §5.20) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) :
+      `docs/SPEC-contacts.md` §11, fondée sur cinq réponses PostgREST relevées à la main sur la
+      pile seedée — l'embarquement `organizations → contacts` mesuré sans ambiguïté `PGRST201`,
+      l'identifiant inconnu et l'appelant anonyme rendant tous deux `200` et `[]`, et l'identifiant
+      mal formé rendant `400` / `22P02`.
+- [x] `webapp/src/lib/contacts.ts` : `lireFicheOrganisation`, **une seule requête**, contacts
+      embarqués triés côté serveur. **La forme de l'identifiant est contrôlée AVANT toute
+      émission** : un `400` tomberait sur l'état d'erreur, dont la reprise relancerait la même
+      requête pour le même `400` — une commande morte, sur une surface dont l'adresse est éditable.
+- [x] `webapp/src/app/FicheOrganisation.tsx` : deux zones — liste de définitions pour ce qui
+      caractérise l'organisation, tableau du §5.9 à **quatre** colonnes pour ses contacts — et les
+      cinq états. Site web en **lien externe annoncé** ; domaine en **texte**, n'étant pas une URL.
+- [x] `CHEMIN_ORGANISATION` monté par `App` **hors de `ROUTES`** : le titre est le nom de
+      l'organisation, donc une donnée. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` de
+      `routes.test.tsx` reste **inchangée**, et c'est vérifié.
+- [x] `webapp/src/app/Carnet.tsx` : le nom d'organisation devient un **lien** (§11.6). Les deux
+      preuves qui figeaient son absence — `Carnet.test.tsx` et `e2e/ui/contacts.spec.ts` — sont
+      **RÉVISÉES avec leur motif écrit dans le fichier**, jamais retirées (mécanisme de la
+      décision 51), et ce qu'elles exigent devient plus fort : le lien doit exister ET mener à la
+      bonne fiche.
+- [x] **Seed enrichi de deux données que la fiche EXIGE** (§11.7) : le `website` de Sogexia, seule
+      donnée qui rende le lien externe, et une troisième organisation « Comptoir Vasseur » **sans
+      aucun contact**, seule à exercer l'état vide. **Aucun compteur figé n'est déplacé**, et c'est
+      mesuré : le seed compare à la taille de son propre tableau, aucun `verify-*.sh` ne cite
+      `organizations`, et `e2e/api/contacts.spec.ts` crée ses propres sondes.
+- [x] `webapp/src/lib/contacts.test.ts` **17 tests** et `webapp/src/app/FicheOrganisation.test.tsx`
+      **10 tests** : les cas a à h du §11.9, le refus de forme **sans appel réseau**, et le couple
+      `(colonne, referencedTable)` réellement transmis.
+- [x] `e2e/ui/contacts.spec.ts` : **20 scénarios verts** sur la pile seedée — le parcours PART DU
+      CARNET par un clic, le nom en titre de route (seule preuve à monter la coquille), les quatre
+      colonnes, le lien externe, l'organisation sans domaine, celle sans contact, l'identifiant
+      inconnu et le mal formé rendant le MÊME écran, le clavier, la lectrice, l'anonyme, et les
+      quatre paliers. Console **vierge**.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) : `fiche-organisation-1440.jpg`,
+      `fiche-organisation-sans-contact-1440.jpg`, `fiche-organisation-introuvable-1440.jpg` et les
+      quatre paliers, sous `docs/captures/CRM-060/`.
+- [x] `docs/DESIGN_SYSTEM.md` §5.20 ajouté et §5.19 **révisé** ; `docs/SPEC-seed.md` §11 ;
+      `docs/manual.md` §3 *ter* et sommaire ; `CHANGELOG.md`, dans le même changement.
+
+**UN DÉFAUT DANS MON PROPRE FICHIER, TROUVÉ EN OBSERVANT UNE CAPTURE — corrigé, non consigné.** La
+liste de définitions citait `sm:grid-cols-2`, **absente du CSS produit** : `tokens.css`
+réinitialise tous les paliers (`--breakpoint-*: initial`) et n'en définit que trois — `md`, `lg`,
+`xl`. Un `sm:` est donc un variant **inconnu**, dont Tailwind supprime la classe entière sans rien
+signaler. La fiche restait empilée à 1440 px, et aucun test ne l'aurait dit. Corrigé en
+`md:grid-cols-2`, présence dans le CSS vérifiée après build, et la règle est écrite au §5.20 pour
+ne pas se redécouvrir. C'est la classe de défaut d'INC-158, prise à sa source cette fois.
+
+**INC-157 gagne une CINQUIÈME porteuse**, consignée sans être corrigée : la fiche hérite du
+« Aucun channel » de la barre d'onglets comme les quatre autres routes transverses. Étranger à
+l'unité, la correction appartient à la coquille (`CRM-007`).
+
+*Limites nommées d'emblée pour 4b* (`docs/SPEC-contacts.md` §11.8) : aucune liste d'organisations
+— la fiche s'atteint depuis le carnet, et par là seul —, aucun geste d'écriture, aucune affaire de
+l'organisation (4c), aucune pagination, et le nom d'un contact ne mène nulle part, faute de fiche
+de contact.
+
+**Restent dues : 4c** (rattachement d'un contact à une affaire depuis la route de détail, premier
+geste d'écriture de la tranche) **et 4d** (les deux sélecteurs du §9.1 et l'enrichissement du seed
+différé par le §9.6, avec la révision des dix comptes qu'il déplace). `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
