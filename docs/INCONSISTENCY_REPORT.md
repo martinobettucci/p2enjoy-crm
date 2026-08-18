@@ -241,6 +241,53 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-145 — Un harnais rendait « aucune anomalie » en sautant quatre contrôles
+
+**Nature :** vert obtenu par omission ; la sonde de disponibilité se trompait de sujet.
+**Relevé le :** 2026-08-18, en rejouant `scripts/verify-scripts.sh` pour la preuve de démarrage à
+froid due par `CRM-001`.
+
+**Ce qui est mesuré.** `scripts/verify-scripts.sh` annonçait « 95 vérifications, aucune anomalie »
+et, une ligne plus haut, « 4 vérification(s) non exécutée(s), faute de démon Docker ». Le démon
+répondait pourtant : `docker compose` fonctionnait, la pile tournait, les suites pgTAP passaient. La
+sonde était `docker info`, qui sortait en **1** parce que les greffons CLI de Docker Desktop
+segfaultent sur ce poste — `docker-agent`, `docker-ai`, `docker-buildx`, `docker-debug`. Les points
+d'entrée classiques (`info`, `ps`, `version`) rendent en outre un **500** sur la socket, quelle que
+soit la version d'API forcée ; mesuré à l'intérieur comme à l'extérieur du bac à sable.
+
+**Pourquoi c'est grave.** Le bilan disait « aucune anomalie » alors que neuf contrôles ne
+s'exécutaient pas. Sonde corrigée, ces contrôles remontent à **104 vérifications** et font
+apparaître **quatre échecs réels**. Un harnais qui saute ses contrôles les plus coûteux et conclut
+au vert est pire qu'un harnais absent : il donne une preuve là où il n'y a qu'un silence.
+
+**Corrigé.** La sonde interroge désormais ce que les contrôles emploient réellement
+(`docker compose`) et non le démon en général ; elle affirme moins, et le vérifie. La ligne de
+bilan des non-exécutés dit maintenant qu'un contrôle qui ne s'exécute pas ne prouve rien.
+
+**Un second défaut trouvé au même endroit, et corrigé.** Le contrôle de lecture des ports lit
+`docker ps`. Quand celle-ci est muette, `pipefail` propage l'échec et le contrôle sortait en 1,
+c'est-à-dire qu'il **accusait la garde des ports d'un défaut qu'elle n'a pas**. Les trois issues
+sont désormais distinguées : port absent des écoutes (échec), aucun port publié (non exécuté),
+lecture impossible (non exécuté, et nommé pour ce qu'il est).
+
+**Un compteur périmé au même endroit, et révisé.** Le contrôle des marqueurs `@migration-role`
+exigeait un fichier unique, `0018_pg_cron.sql`. `CRM-057` a livré
+`0029_pieces_jointes_telechargeables.sql`, qui pose la politique de Storage : le schéma `storage`
+appartient à `supabase_admin`. La liste reste **close et nommée**, à deux entrées.
+
+**Ce qui reste dû, et qui n'est PAS du produit.** Trois contrôles de reconstruction d'image restent
+rouges sur ce poste : `webapp/Dockerfile` emploie `RUN --mount=type=secret`, donc BuildKit, donc le
+greffon `docker-buildx` — celui qui segfaute. Aucun repli n'est possible, le constructeur historique
+ne connaissant pas les secrets de build. **Ces trois contrôles restent ROUGES et ne sont pas
+convertis en non-exécutés** : les convertir reproduirait exactement le défaut décrit ici.
+
+**Aggravation constatée le même jour.** En cours de session, `docker compose` s'est mis à segfauter
+à son tour, le montage `/mnt/wsl/docker-desktop/cli-tools/.../cli-plugins` s'est vidé, la socket a
+cessé de répondre au `_ping`, et Kong comme la webapp sont devenus injoignables : **Docker Desktop
+s'est arrêté côté Windows**. Une relance a été tentée depuis WSL. Tant que le poste n'est pas
+rétabli, **aucune vérification de cette session ne peut être rejouée**, et rien ne doit être déclaré
+vérifié sur cette base.
+
 ### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée — CLOSE le 2026-08-17
 
 **Nature :** dépendance d'ordre ; le rejeu d'une migration ancienne casse une contrainte élargie depuis.

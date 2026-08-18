@@ -617,10 +617,19 @@ else
 	fail "migrations-runner absent, non exécutable ou syntaxiquement invalide"
 fi
 
+# DEUX migrations portent le marqueur, et non plus une seule. `CRM-057` a livré
+# `0029_pieces_jointes_telechargeables.sql`, qui pose la politique de Storage : le schéma `storage`
+# appartient à `supabase_admin`, et `postgres` n'y crée aucune politique. Le contrôle est RÉVISÉ et
+# non relâché — il continue d'énumérer NOMMÉMENT les fichiers autorisés, et refuse toute élévation
+# qui apparaîtrait ailleurs. Une liste close reste une liste close, même à deux entrées.
+MARQUEURS_ATTENDUS='supabase/migrations/0018_pg_cron.sql
+supabase/migrations/0029_pieces_jointes_telechargeables.sql'
 role_markers=$(grep -l '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null || true)
-if [ "$role_markers" = supabase/migrations/0018_pg_cron.sql ] \
-	&& grep -qx -- '-- @migration-role: supabase_admin' "$role_markers"; then
-	ok "seule la migration pg_cron exige explicitement le rôle propriétaire supabase_admin"
+role_valeurs=$(grep -h '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null |
+	sort -u || true)
+if [ "$role_markers" = "$MARQUEURS_ATTENDUS" ] \
+	&& [ "$role_valeurs" = '-- @migration-role: supabase_admin' ]; then
+	ok "seules pg_cron et la politique de Storage exigent le rôle propriétaire supabase_admin"
 else
 	fail "marqueurs de rôle de migration inattendus : ${role_markers:-aucun}"
 fi
@@ -667,7 +676,24 @@ fi
 echo
 echo "7. Interpolation des fichiers Compose"
 
-if docker info >/dev/null 2>&1; then
+# ---------------------------------------------------------------------------------------------
+# Sonde du démon : ce qu'elle mesure, et pourquoi ce n'est plus `docker info`.
+# ---------------------------------------------------------------------------------------------
+# `docker info` sortait en 1 sur ce poste ALORS QUE LE DÉMON RÉPONDAIT : les greffons CLI de
+# Docker Desktop y segfaultent, et les points d'entrée classiques — `info`, `ps`, `version` —
+# rendent un 500 sur la socket, quelle que soit la version d'API forcée. Mesuré le 2026-08-18,
+# à l'intérieur comme à l'extérieur du bac à sable. `docker compose`, lui, répond normalement.
+#
+# La garde faisait donc SAUTER quatre contrôles en annonçant « faute de démon Docker », et le
+# harnais rendait un vert obtenu par omission. Un contrôle qui ne s'exécute pas ne prouve rien ;
+# une sonde qui se trompe de sujet transforme ce silence en satisfecit.
+#
+# La sonde interroge désormais CE QUE LES CONTRÔLES EMPLOIENT : `docker compose`. Elle est plus
+# étroite et plus honnête — elle n'affirme rien du démon en général, seulement que l'outil dont ces
+# vérifications dépendent répond.
+demon_repond() { docker compose version >/dev/null 2>&1; }
+
+if demon_repond; then
 	for overlay in dev prod; do
 		env_for_overlay="$BOOT1"
 		[ "$overlay" = prod ] && env_for_overlay="$AS_PROD"
@@ -736,9 +762,9 @@ assert c["services"]["webapp"]["build"]["secrets"] == [{"source":"npm_ca"}]' \
 		fail "un certificat a été ajouté au dépôt au lieu d'être fourni par l'environnement"
 	fi
 else
-	skip "interpolation Compose : le démon Docker ne répond pas"
-	skip "interpolation Compose (production) : le démon Docker ne répond pas"
-	skip "reconstruction et inspection réelles de l'image webapp : le démon Docker ne répond pas"
+	skip "interpolation Compose : docker compose ne répond pas"
+	skip "interpolation Compose (production) : docker compose ne répond pas"
+	skip "reconstruction et inspection réelles de l'image webapp : docker compose ne répond pas"
 fi
 
 # --- 8. Robustesse face à l'hôte ----------------------------------------------------------------
@@ -987,26 +1013,35 @@ fi
 
 # La liste réelle des ports de l'hôte n'est pas simulable : elle est éprouvée contre un port dont
 # Docker affirme par ailleurs qu'il est publié.
-if docker info >/dev/null 2>&1; then
+if demon_repond; then
 	# shellcheck source=scripts/lib/env.sh
 	( . "$REPO_ROOT/scripts/lib/env.sh"
-	  reference=$(docker_published_ports | awk 'NR == 1 { print $1 }')
+	  # `docker_published_ports` lit `docker ps`. Là où cette commande est cassée — INC-145 —, le
+	  # pipeline échoue, `pipefail` propage l'échec, et le contrôle sortait en 1 : il ACCUSAIT la
+	  # garde des ports d'un défaut qu'elle n'a pas. Une accusation fausse coûte plus qu'une
+	  # vérification absente : elle envoie chercher une cause qui n'existe pas. Les trois issues
+	  # sont distinguées, et l'impossibilité de LIRE n'est jamais rendue comme une absence de port.
+	  publies=$(docker_published_ports 2>/dev/null || true)
+	  [ -n "$publies" ] || exit 3
+	  reference=$(printf '%s\n' "$publies" | awk 'NR == 1 { print $1 }')
 	  [ -n "$reference" ] || exit 2
 	  host_listening_ports | grep -qx "$reference" )
 	case $? in
 		0) ok "les ports réellement en écoute sont bien vus par la garde" ;;
 		2) skip "aucun conteneur ne publie de port : lecture réelle non éprouvée" ;;
+		3) skip "docker ps ne rend aucune ligne : lire les ports publiés est IMPOSSIBLE ici" ;;
 		*) fail "un port publié par un conteneur n'apparaît pas dans les ports en écoute" ;;
 	esac
 else
-	skip "lecture réelle des ports de l'hôte : le démon Docker ne répond pas"
+	skip "lecture réelle des ports de l'hôte : docker compose ne répond pas"
 fi
 
 # --- Bilan --------------------------------------------------------------------------------------
 
 echo
 if [ "$skips" -gt 0 ]; then
-	echo "$skips vérification(s) non exécutée(s), faute de démon Docker."
+	echo "$skips vérification(s) NON EXÉCUTÉE(S) : leur outil ne répond pas sur ce poste."
+	echo "Un contrôle qui ne s'exécute pas ne prouve rien — voir INC-145."
 fi
 if [ "$failures" -eq 0 ]; then
 	echo "Bilan : $checks vérifications, aucune anomalie."
