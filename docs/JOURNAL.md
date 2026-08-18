@@ -17993,6 +17993,25 @@ c'est son statut qu'il faut écrire.
 `@verifies` dans son en-tête. L'exigence de `CLAUDE.md` §5 est donc tenue sur l'intégralité du
 dépôt, et non seulement sur les fichiers récents.
 
+**Second volet, le 2026-08-18 : la traçabilité ne pointe pas dans le vide, et c'est mesuré aussi.**
+Avoir un commentaire ne suffit pas — encore faut-il qu'il désigne quelque chose.
+
+- **Aucun `@spec` ni `@verifies` ne cite un document inexistant.** `CLAUDE.md` §5 nomme en exemple
+  `docs/GAME_BOOK.md`, `docs/GAME_BIBLE.md`, `docs/DESIGN_GUIDE.md` et `docs/MANUAL_PLAN.md`, qui
+  n'existent pas dans ce dépôt ; **aucun fichier ne les cite**. Les commentaires renvoient tous à
+  des documents réellement présents.
+- **Les 54 unités citées par la traçabilité existent toutes au backlog.** Zéro citation vers une
+  unité inventée ou renommée.
+- **Trois unités déclarées ne sont citées par aucun fichier, et les trois sont légitimes** :
+  `CRM-000` est le socle documentaire et ne livre pas de code, `CRM-070` est une note d'arbitrage
+  et non une unité de livraison, `CRM-080` n'est pas commencée.
+
+**Troisième volet : les références documentaires.** Les **260** chemins de fichiers cités par
+`docs/`, `README.md` et `CLAUDE.md` ont été confrontés au disque. Onze ne s'y trouvent pas, et
+**aucun n'est un défaut** : deux documents fusionnés dans `docs/ARBITRAGES.md` et qui le disent,
+deux fichiers du pooler retirés et consignés comme tels, deux harnais annoncés comme **dus**,
+quatre exemples génériques de `CLAUDE.md`, et une contradiction déjà consignée.
+
 **Pourquoi l'écrire.** Un négatif mesuré vaut d'être consigné : sans lui, la prochaine relecture
 recommencera l'audit sans savoir qu'il a déjà été fait, et une exigence tenue passera pour une
 exigence non vérifiée.
