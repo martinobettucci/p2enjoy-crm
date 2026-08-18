@@ -17,7 +17,7 @@
 #   4. le contrat d'API du §4.9 est rejoué avec les jetons réels des trois profils seedés, y compris
 #      les codes HTTP mesurés du §4.4 ;
 #   5. le seed est **convergent** : rejoué, il laisse **une** copie, ni zéro ni deux, portant sept
-#      étapes, onze transitions, sept champs, quinze règles et une exigence ;
+#      étapes, onze transitions, neuf champs, quinze règles et une exigence ;
 #   6. INC-037 et INC-038 sont **refermées** : le formulaire est remappé et une suppression dans
 #      la source change l'empreinte de composition ;
 #   7. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
@@ -413,9 +413,12 @@ champs_copie=$(psql_db -c "
 	  join public.workflows w on w.id = f.workflow_id
 	 where w.derived_from_workflow_id = '$WF_SEED'
 	   and w.name = '$NOM_COPIE_SEED';")
-[ "$champs_source" = "7" ] && [ "$champs_copie" = "7" ] \
-	&& ok "INC-037 : source et copie portent chacune 7 champs remappés" \
-	|| fail "INC-037 : source $champs_source champs, copie $champs_copie — attendu 7 et 7"
+# NEUF depuis la sous-tranche 4d de `CRM-060` (docs/SPEC-contacts.md §13.6) : le seed pose deux
+# champs de plus, et la copie du produit les recopie comme les autres. Ce que ce contrôle exige est
+# inchangé — la copie porte AUTANT de champs que sa source, avec des identifiants remappés.
+[ "$champs_source" = "9" ] && [ "$champs_copie" = "9" ] \
+	&& ok "INC-037 : source et copie portent chacune 9 champs remappés" \
+	|| fail "INC-037 : source $champs_source champs, copie $champs_copie — attendu 9 et 9"
 
 # INC-038 : une copie est faite pendant qu'une arête d'essai existe, puis l'arête est supprimée.
 # La date ne peut voir aucun survivant modifié ; seule l'empreinte peut rendre vrai.

@@ -686,19 +686,24 @@ select has_table(
 	'`form_fields` existe depuis `CRM-035` — l''assertion d''absence posée ici est devenue rouge le '
 	'jour prévu, et a été révisée plutôt que retirée');
 
+-- RÉVISÉ PAR LA SOUS-TRANCHE 4d DE `CRM-060`, NON RETIRÉ (mécanisme de la décision 51,
+-- docs/SPEC-contacts.md §13.6) : le seed pose deux champs de plus sur le workflow source —
+-- `contact-principal` et `referent-technique` —, parce que les sélecteurs du §13 sont les premiers
+-- écrans à rendre les types `contact` et `user`. La règle a changé par LIVRAISON ; ce que
+-- l'assertion exige est inchangé.
 select is(
 	(select count(*)::int from public.form_fields
 	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
-	7,
-	'INC-037 : la source du seed porte sept champs de formulaire');
+	9,
+	'INC-037 : la source du seed porte neuf champs de formulaire');
 
 select is(
 	(select count(*)::int from public.form_fields f
 	   join public.workflows w on w.id = f.workflow_id
 	  where w.derived_from_workflow_id = '5eed0000-0000-4000-8000-000000000051'
 	    and w.name = 'Cycle commercial — Conseil IA'),
-	7,
-	'INC-037 : sa copie porte les sept champs remappés par le produit');
+	9,
+	'INC-037 : sa copie porte les neuf champs remappés par le produit');
 
 -- INC-039 : la suppression d'un workspace est refusée dès qu'un workflow instancie ses nœuds. Ce
 -- n'est le défaut d'aucune des deux clés étrangères, correctes isolément ; c'est leur interaction,

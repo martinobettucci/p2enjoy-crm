@@ -438,7 +438,7 @@ select is(
 select is(
 	(select count(*)::int from public.form_fields
 	  where workflow_id = (select id from pg_temp_copie_crm018)),
-	7, 'la copie sonde porte les sept champs de la source');
+	9, 'la copie sonde porte les neuf champs de la source');
 select is(
 	(select count(*)::int from public.form_field_rules
 	  where workflow_id = (select id from pg_temp_copie_crm018)),

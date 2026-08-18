@@ -1412,10 +1412,12 @@ livrée ». Elle l'est ; `CRM-018` porte désormais la même exigence dans une l
 c'est la seule donnée du seed qui exerce le **second membre** de l'union du §3.5, et sans elle
 cette moitié de la règle ne serait démontrée par aucune donnée.
 
-Sept types sur quinze sont exercés par le seed — `money`, `select`, `date`, `textarea`, `checkbox`,
-`url`, `number` —, ce sont ceux que `CRM-035` a déclarés. Les huit autres sont éprouvés par la
-suite pgTAP sur des champs sondes, créés puis détruits : ajouter des champs au seed pour eux
-rouvrirait `CRM-035`.
+NEUF types sur quinze sont exercés par le seed — `money`, `select`, `date`, `textarea`, `checkbox`,
+`url`, `number`, puis `contact` et `user`. Les sept premiers sont ceux que `CRM-035` a déclarés ; les
+deux derniers sont arrivés avec la sous-tranche 4d de `CRM-060` (`docs/SPEC-contacts.md` §13.6),
+c'est-à-dire **avec les sélecteurs qui les rendent** — une donnée de démonstration qu'aucun écran ne
+montre ne démontre rien. Les six autres restent éprouvés par la suite pgTAP sur des champs sondes,
+créés puis détruits.
 
 ### 6.12 Ce que `CRM-036` ne livre pas, et qui est nommé
 

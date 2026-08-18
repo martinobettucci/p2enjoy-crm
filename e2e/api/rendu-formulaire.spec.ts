@@ -80,7 +80,7 @@ async function poserChampExige(
 			key: `${PREFIXE}${rang}`,
 			label: `Champ d’essai ${rang}`,
 			type,
-			// Position au-delà des sept champs du seed : la liste des clés manquantes est ordonnée
+			// Position au-delà des neuf champs du seed : la liste des clés manquantes est ordonnée
 			// par `position` (§6.7), et le champ d'essai doit donc arriver **après** `budget`.
 			position: 100 + rang,
 			// `multiselect` exige des choix non vides (§2.4), et la valeur `['choix-a']` du tableau

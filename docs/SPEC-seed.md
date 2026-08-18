@@ -443,7 +443,7 @@ identifiants et n'en supprime aucune.
 seedée choisie, sa composition métier est comparée à celle de la source en faisant abstraction des
 identifiants que la RPC remappe : étapes par nœud, transitions par couple de nœuds, champs par clé,
 règles et exigences par ces mêmes clés durables. Toute différence fonctionnelle — même un simple
-libellé modifié avec sept champs toujours présents — arrête le seed avant qu'il n'écrive la
+libellé modifié avec tous les champs toujours présents — arrête le seed avant qu'il n'écrive la
 composition cible. Il ne maquille jamais une personnalisation en copie conforme et ne reconstruit
 que l'ancienne fixture sans empreinte sous les cinq gardes de la décision 300.
 
@@ -477,10 +477,20 @@ Contrat détaillé et motifs : `docs/SPEC-form-composer.md` §2.9.
 | `…085` | `decideur-identifie` | Décideur identifié | `checkbox` | 5 | actif |
 | `…086` | `lien-proposition` | Lien vers la proposition | `url` | 6 | actif |
 | `…087` | `budget-previsionnel` | Budget prévisionnel | `number` | 7 | **archivé** le 2026-03-15 |
+| `…088` | `contact-principal` | Contact principal | `contact` | 8 | actif |
+| `…089` | `referent-technique` | Référent technique | `user` | 9 | actif |
 
-Six types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
-seuls dont la base **exige** des options (`docs/SPEC-form-composer.md` §2.4, décision 94). Sans eux
-dans le seed, ces deux contraintes seraient documentées sans être démontrables.
+**Les deux derniers arrivent avec la sous-tranche 4d de `CRM-060`** (`docs/SPEC-contacts.md` §13.6),
+et non avec la tranche 3 qui a livré leur règle en base : le §9.6 avait écrit que « la donnée de
+démonstration arrive avec l'écran qui la montre », les sélecteurs étant alors dus. Ils sont livrés,
+et ces deux champs avec eux.
+
+NEUF types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
+seuls dont la base **exige** des options (`docs/SPEC-form-composer.md` §2.4, décision 94) ;
+`contact` et `user` sont les deux seuls que le validateur **résout** vers une autre table depuis la
+migration `0047`. Sans eux dans le seed, ces quatre contraintes seraient documentées sans être
+démontrables. *(Ce paragraphe annonçait « six types » pour sept champs couvrant sept types : écart
+de commentaire, antérieur, corrigé ici — INC-159.)*
 
 Le champ archivé démontre deux choses d'un seul geste : l'état « archivé » côté formulaire, comme un
 track, un channel et un nœud archivés avant lui, **et** le fait qu'un champ archivé garde sa clé
@@ -498,8 +508,10 @@ Les quinze règles couvrent les **trois** visibilités :
 valeur `'visible'` de la colonne ne serait jamais exercée par aucune donnée, et rien ne
 distinguerait « déclaré facultatif » de « non déclaré ».
 
-**Et vingt-sept couples champ × étape restent sans règle** — sept étapes fois six champs actifs,
-moins les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par défaut du
+**Et quarante et un couples champ × étape restent sans règle** — sept étapes fois HUIT champs
+actifs, moins les quinze règles, qui portent toutes sur un champ actif. Vingt-sept jusqu'à la
+sous-tranche 4d : les deux champs ajoutés sont actifs et ne reçoivent aucune règle, précisément pour
+que la valeur par défaut les rende `visible` à toutes les étapes. C'est ce qui démontre la valeur par défaut du
 §3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
 
 **`require_fields` restait vide sur les dix transitions** tant qu'aucune garde ne la lisait. Le
@@ -1079,10 +1091,10 @@ Exécutées **hors interface**, contre l'API réelle et la base, par
 | 3 | Le workflow **dérivé** porte ≥ 1 card active à ≥ 2 étapes distinctes | Conforme |
 | 4 | Tout channel **actif** porte ≥ 1 card active | Conforme — `appels-offres` exclu, archivé |
 | 5 | Les deux cards du workflow dérivé désignent bien la **copie**, jamais le workflow global | `workflow_id` = copie, résolu à l'exécution |
-| 6 | Le formulaire de la copie est complet et autonome | 7 champs, 15 règles, 1 exigence ; aucun identifiant de champ partagé avec la source |
+| 6 | Le formulaire de la copie est complet et autonome | 9 champs, 15 règles, 1 exigence ; aucun identifiant de champ partagé avec la source |
 | 7 | Les sept valeurs du §9.6 existent, dont les trois réponses des cards dérivées | Conforme |
 | 8 | 14 cards, dont **12 actives**, une archivée, une en corbeille | Conforme |
-| 9 | 21 valeurs sur 11 cards, 5 commentaires ; **14 `created`, un par card** | Égalité stricte |
+| 9 | 23 valeurs sur 11 cards, 5 commentaires ; **14 `created`, un par card** | Égalité stricte |
 | 9 bis | Total des événements, `field_changed`, `moved`, `assigned`, `channel_changed` | **Minorants** — 41, 21, 2, 2, 2 : un cumul ne se fige pas (décision 226) |
 | 10 | Le seed est **rejouable avec des cards dans `prospection`** : second passage, sortie `0` | Aucune écriture en sections 4 et 7, aucun `23503` |
 | 11 | Une dérive **réparable** de la copie — nom, défaut, archivage — est rattrapée | Le seed la ramène à son contrat, même avec des cards dans `prospection` (décision 225) |
@@ -1110,7 +1122,7 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
 
 - **Aucun message, aucune pièce jointe.** `card_messages` et le sous-système de messagerie relèvent
   du chunk 4 (`CRM-050` à `CRM-059`). L'énoncé de `CRM-046` n'en demande pas.
-- **Le formulaire dérivé n'est plus une limite** : `CRM-018` copie ses sept champs, ses quinze
+- **Le formulaire dérivé n'est plus une limite** : `CRM-018` copie ses neuf champs, ses quinze
   règles et son exigence, et le seed renseigne trois valeurs par leurs identifiants remappés.
 - **Aucun second workspace, aucun compte extérieur** : inchangé depuis le §8.
 - **Le parcours connecté est désormais vérifié par `CRM-011`.** Les trois tracks, une fiche, la

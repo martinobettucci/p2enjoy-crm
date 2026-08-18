@@ -20,7 +20,7 @@
 --      clé acceptée dans un autre workflow ;
 --   6. la **RLS**, les six politiques, et l'asymétrie de privilège de la décision 96 : aucun
 --      `DELETE` sur les champs, `DELETE` sur les règles ;
---   7. la **conformité du seed** : source et copie portent sept champs, quinze règles et leur
+--   7. la **conformité du seed** : source et copie portent neuf champs, quinze règles et leur
 --      exigence remappée.
 --
 -- Exécution : `npm run test:sql`, `scripts/verify-champs-formulaire.sh`, ou directement
@@ -413,11 +413,16 @@ select ok(
 -- 10. Conformité du seed, et l'écart d'INC-037 **compté**
 -- =============================================================================================
 
+-- RÉVISÉ PAR LA SOUS-TRANCHE 4d DE `CRM-060`, NON RETIRÉ (mécanisme de la décision 51,
+-- docs/SPEC-contacts.md §13.6) : le seed pose deux champs de plus sur le workflow source —
+-- `contact-principal` et `referent-technique` —, parce que les sélecteurs du §13 sont les premiers
+-- écrans à rendre les types `contact` et `user`. La règle a changé par LIVRAISON ; ce que
+-- l'assertion exige est inchangé.
 select is(
 	(select count(*)::int from public.form_fields
 	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
-	7,
-	'le seed pose sept champs sur le workflow par défaut — docs/SPEC-seed.md §2.10');
+	9,
+	'le seed pose neuf champs sur le workflow par défaut — docs/SPEC-seed.md §2.10');
 
 select is(
 	(select count(*)::int from public.form_fields
@@ -474,8 +479,8 @@ select is(
 	   join public.workflows w on w.id = f.workflow_id
 	  where w.derived_from_workflow_id = '5eed0000-0000-4000-8000-000000000051'
 	    and w.name = 'Cycle commercial — Conseil IA'),
-	7,
-	'INC-037 : la copie de portée `track` porte les sept champs remappés de sa source');
+	9,
+	'INC-037 : la copie de portée `track` porte les neuf champs remappés de sa source');
 
 select is(
 	(select count(*)::int from public.form_field_rules r

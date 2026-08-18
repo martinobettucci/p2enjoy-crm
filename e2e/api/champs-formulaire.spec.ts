@@ -91,7 +91,10 @@ test.afterEach(async ({ request }) => {
 test.describe('F0 — le seed est dans l’état que le §2.10 déclare', () => {
 	// Condition de validité de tout ce qui suit (décision 50). Sans elle, « l'anonyme ne lit rien »
 	// serait vrai même si aucun champ n'existait.
-	test('sept champs, dont un archivé, et quinze règles sur le workflow global', async ({
+	// RÉVISÉ PAR LA SOUS-TRANCHE 4d DE `CRM-060`, NON RETIRÉ (docs/SPEC-contacts.md §13.6) : le seed
+	// pose deux champs de plus — `contact-principal` et `referent-technique` —, les deux types que
+	// les sélecteurs du §13 sont les premiers à rendre. La règle a changé par LIVRAISON.
+	test('neuf champs, dont un archivé, et quinze règles sur le workflow global', async ({
 		request,
 	}) => {
 		const champs = await request.get(
@@ -100,9 +103,9 @@ test.describe('F0 — le seed est dans l’état que le §2.10 déclare', () => 
 		)
 		expect(champs.status()).toBe(200)
 		const lignes = (await champs.json()) as Champ[]
-		expect(lignes).toHaveLength(7)
+		expect(lignes).toHaveLength(9)
 		expect(lignes.filter((c) => c.archived_at !== null)).toHaveLength(1)
-		expect(new Set(lignes.map((c) => c.type)).size).toBe(7)
+		expect(new Set(lignes.map((c) => c.type)).size).toBe(9)
 
 		const regles = await request.get(
 			`${REGLES}?select=field_id,step_id,visibility&workflow_id=eq.${WORKFLOW_GLOBAL}`,
@@ -117,7 +120,7 @@ test.describe('F0 — le seed est dans l’état que le §2.10 déclare', () => 
 	})
 
 	// CRM-018 retourne l'ancien constat d'INC-037 : la copie doit porter son propre formulaire.
-	test('INC-037 close — la copie porte sept champs et quinze règles remappés', async ({ request }) => {
+	test('INC-037 close — la copie porte neuf champs et quinze règles remappés', async ({ request }) => {
 		const copie = await request.get(
 			`/rest/v1/workflows?select=id&derived_from_workflow_id=eq.${WORKFLOW_GLOBAL}&name=eq.${encodeURIComponent(NOM_COPIE_SEED)}`,
 			{ headers: enTetesService() },
@@ -131,7 +134,7 @@ test.describe('F0 — le seed est dans l’état que le §2.10 déclare', () => 
 		})
 		expect(champs.status()).toBe(200)
 		const champsCopies = (await champs.json()) as Pick<Champ, 'id'>[]
-		expect(champsCopies).toHaveLength(7)
+		expect(champsCopies).toHaveLength(9)
 
 		const source = await request.get(`${CHAMPS}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}`, {
 			headers: enTetesService(),
@@ -156,7 +159,7 @@ test.describe('F1 — lecture (lignes a, b, u)', () => {
 				headers: enTetesAuthentifies(jeton),
 			})
 			expect(reponse.status(), `profil ${compte.role}`).toBe(200)
-			expect((await reponse.json()) as Champ[], `profil ${compte.role}`).toHaveLength(7)
+			expect((await reponse.json()) as Champ[], `profil ${compte.role}`).toHaveLength(9)
 		}
 	})
 

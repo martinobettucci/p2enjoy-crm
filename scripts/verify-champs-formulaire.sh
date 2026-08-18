@@ -18,7 +18,7 @@
 #   4. les refus tiennent contre l'API, avec le jeton réel de l'administrateur et celui du
 #      business developer, chaque refus **relisant la ligne** pour la constater inchangée ;
 #   5. le seed est conforme au contrat du §2.9 et **convergent** ;
-#   6. INC-037 est **refermée** : source et copie portent sept champs, avec identifiants remappés ;
+#   6. INC-037 est **refermée** : source et copie portent neuf champs, avec identifiants remappés ;
 #   7. le harnais est **non complaisant** : chaque affaiblissement volontaire du produit le fait
 #      échouer, et la restauration est constatée, pas supposée.
 #
@@ -312,12 +312,16 @@ regles=$(psql_db -c "select count(*) from public.form_field_rules where workflow
 visibilites=$(psql_db -c "select count(distinct visibility) from public.form_field_rules
                            where workflow_id = '$WF_GLOBAL';")
 
-[ "$champs" = "7" ] && ok "sept champs sur le workflow par défaut" \
-	|| fail "champs : $champs, attendu 7"
+# NEUF, ET NON PLUS SEPT, DEPUIS LA SOUS-TRANCHE 4d DE `CRM-060` (docs/SPEC-contacts.md §13.6) :
+# le seed pose `contact-principal` et `referent-technique`, les deux types que le validateur résout
+# vers une autre table depuis la migration `0047` et que les sélecteurs du §13 rendent. La règle a
+# changé par LIVRAISON ; ces trois contrôles sont RÉVISÉS avec leur motif, jamais retirés.
+[ "$champs" = "9" ] && ok "neuf champs sur le workflow par défaut" \
+	|| fail "champs : $champs, attendu 9"
 [ "$archives" = "1" ] && ok "dont **un archivé** : l'état est démontrable et non seulement documenté" \
 	|| fail "champs archivés : $archives, attendu 1"
-[ "$types" = "7" ] && ok "sept types distincts, dont les deux qui exigent des options" \
-	|| fail "types distincts : $types, attendu 7"
+[ "$types" = "9" ] && ok "neuf types distincts, dont les deux qui exigent des options et les deux résolus" \
+	|| fail "types distincts : $types, attendu 9"
 [ "$regles" = "15" ] && ok "quinze règles de visibilité" || fail "règles : $regles, attendu 15"
 [ "$visibilites" = "3" ] \
 	&& ok "les **trois** visibilités sont exercées par des données réelles, \`visible\` comprise" \
@@ -358,9 +362,9 @@ champs_copie=$(psql_db -c "
 	  join public.workflows w on w.id = f.workflow_id
 	 where w.derived_from_workflow_id = '$WF_GLOBAL'
 	   and w.name = 'Cycle commercial — Conseil IA';")
-[ "$champs_source" = "7" ] && [ "$champs_copie" = "7" ] \
-	&& ok "la source et sa copie portent chacune 7 champs, avec des identifiants remappés" \
-	|| fail "source $champs_source, copie $champs_copie — attendu 7 et 7"
+[ "$champs_source" = "9" ] && [ "$champs_copie" = "9" ] \
+	&& ok "la source et sa copie portent chacune 9 champs, avec des identifiants remappés" \
+	|| fail "source $champs_source, copie $champs_copie — attendu 9 et 9"
 
 # RÉVISÉ À `CRM-036`, NON RETIRÉ — mécanisme de la décision 51. Ce contrôle constatait le vide, et
 # nommait son motif : aucune garde ne lisait la colonne. `move_card` la lit désormais, et le seed

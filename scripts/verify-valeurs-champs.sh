@@ -367,9 +367,10 @@ titre "3 bis. La RÉSOLUTION de `contact` et `user` — CRM-060 tranche 3, INC-0
 # qu'un uuid est bien formé ; la RÉSOLUTION dit qu'il désigne quelque chose. Un harnais qui
 # n'éprouverait que la forme resterait vert sur le défaut exact qu'INC-053 portait.
 #
-# Les deux champs sondes sont créés ici et RETIRÉS en fin de bloc : le seed n'en porte aucun, et le
-# motif est mesuré (docs/SPEC-contacts.md §9.6) — le nombre « sept champs sur le workflow source »
-# est figé par dix preuves étrangères à cette tranche.
+# Les deux champs sondes sont créés ici et RETIRÉS en fin de bloc, et ils le restent bien que le seed
+# porte désormais `contact-principal` et `referent-technique` (docs/SPEC-contacts.md §13.6) : ce bloc
+# doit pouvoir ÉCRIRE et REFUSER sans toucher aux deux champs seedés, dont les valeurs sont un
+# contrat maintenu que la sous-tranche 4d éprouve à l'écran.
 
 CHAMP_SONDE_CONTACT=a5200000-0000-4000-8000-000000000001
 CHAMP_SONDE_USER=a5200000-0000-4000-8000-000000000002

@@ -637,7 +637,8 @@ test.describe('les trois gestes sur une arête (§7 bis.9.2)', () => {
 //
 // MÊME DISCIPLINE QUE LES DEUX PREMIÈRES TRANCHES : chaque geste est joué par l'écran, puis
 // confirmé EN BASE par la clé de service. Les champs de preuve portent la clé préfixée `e2e-wf-`
-// et sont purgés dans le `finally` — le seed retrouve exactement ses sept champs.
+// et sont purgés dans le `finally` — le seed retrouve exactement ses NEUF champs (sept jusqu'à la
+// sous-tranche 4d de `CRM-060`, docs/SPEC-contacts.md §13.6).
 //
 // LE CHAMP ARCHIVÉ N'EST PAS CRÉÉ PAR LA PREUVE : le seed en pose un, `budget-previsionnel`, et
 // l'archivage se joue sur un champ de preuve pour ne pas déplacer l'état seedé.
@@ -675,7 +676,7 @@ async function champEnBase(
 	return lignes[0] ?? null
 }
 
-/** Purge les champs de preuve, valeurs comprises : le seed doit retrouver ses sept champs. */
+/** Purge les champs de preuve, valeurs comprises : le seed doit retrouver ses neuf champs. */
 async function purgerChamps(request: APIRequestContext): Promise<void> {
 	const lecture = await request.get(
 		`${CHEMIN_CHAMPS}?select=id&workflow_id=eq.${WORKFLOW_DEFAUT}&key=like.e2e-wf-*`,
@@ -693,8 +694,9 @@ async function purgerChamps(request: APIRequestContext): Promise<void> {
 /** Amène le bloc des champs à l'écran — il est le troisième, sous les étapes et les arêtes. */
 async function ouvrirBlocChamps(page: Page): Promise<void> {
 	await page.getByTestId('liste-champs').scrollIntoViewIfNeeded()
-	// Le seed pose sept champs, dont un archivé : c'est le contrat du §7 bis.10.8.
-	await expect(page.getByTestId('ligne-champ')).toHaveCount(7)
+	// Le seed pose NEUF champs, dont un archivé : c'est le contrat du §7 bis.10.8, révisé par la
+	// sous-tranche 4d de `CRM-060` qui ajoute `contact-principal` et `referent-technique`.
+	await expect(page.getByTestId('ligne-champ')).toHaveCount(9)
 	await expect(page.getByTestId('champ-archive')).toHaveCount(1)
 }
 
@@ -855,8 +857,8 @@ test.describe('les cinq gestes sur les champs, à la souris (§7 bis.10.2)', () 
 		// Le `409` de l'unicité traverse la console : il est consommé ici, nommément, parce que le
 		// scénario vient de le provoquer ET de vérifier que l'écran l'explique (décision 248).
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
-		// Le seed est intact : sept champs, et `budget` porte toujours son libellé seedé.
-		await expect(page.getByTestId('ligne-champ')).toHaveCount(7)
+		// Le seed est intact : neuf champs, et `budget` porte toujours son libellé seedé.
+		await expect(page.getByTestId('ligne-champ')).toHaveCount(9)
 		expect(await champEnBase(request, 'budget')).toMatchObject({ label: 'Budget estimé' })
 	})
 })

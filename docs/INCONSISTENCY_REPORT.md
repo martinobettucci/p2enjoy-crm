@@ -195,7 +195,16 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Quatorze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Quinze ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158 et INC-159** — **INC-159** consignée
+le 2026-08-18 par la session `CRM-060` sous-tranche 4d : deux commentaires de spécification et de
+seed annonçaient « six types distincts » pour sept champs qui en couvraient **sept**. Écart de
+COMMENTAIRE seul, qu'aucune assertion ne portait — `verify-champs-formulaire.sh` comptait bien sept.
+Corrigé dans le même changement plutôt que reconduit faux, la sous-tranche réécrivant ces deux
+paragraphes pour y porter le nouveau compte ; consigné ici pour que la correction ne passe pas pour
+une livraison.
+
+Précédemment quatorze : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157 et INC-158** — **INC-158** consignée le
 2026-08-18 par la session `CRM-060` tranche 4a : trois classes citées par trois composants ne sont
 **pas engendrées** dans le CSS produit, donc silencieusement sans effet. Défaut ANTÉRIEUR, prouvé
@@ -256,6 +265,25 @@ Les trois suivent la doctrine du §1 : ils sont **mesurés**, ils sont **étrang
 session**, et le comportement est laissé **inchangé**. Aucun des trois ne demande d'arbitrage : ce
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
+
+### INC-159 — « Six types distincts » annoncé pour sept champs qui en couvraient sept — écart de commentaire, CORRIGÉ
+
+**Nature :** `supabase/seed/apply-seed.sh` et `docs/SPEC-seed.md` §2.10 écrivaient tous deux « Six
+types distincts sont couverts » à propos des sept champs seedés du workflow global. MESURÉ, ces sept
+champs couvrent **sept** types : `money`, `select`, `date`, `textarea`, `checkbox`, `url`, `number`
+— aucun n'est répété.
+
+**Portée réelle : le commentaire, et lui seul.** Aucune assertion ne portait le six :
+`scripts/verify-champs-formulaire.sh` comparait `types distincts` à **7** et rendait vert. Le défaut
+était donc de la documentation vers le lecteur, non du produit vers la base.
+
+**Antériorité.** Les deux phrases précèdent la sous-tranche 4d ; elles ne sont réécrites par elle
+que parce qu'elle déplace le nombre lui-même (sept champs → neuf, sept types → neuf).
+
+**Comportement retenu, et non arbitrage demandé** (doctrine du §1) : reconduire un nombre connu faux
+dans une phrase qu'on réécrit n'est pas défendable. Les deux paragraphes portent désormais le compte
+exact, et cette entrée existe pour que la correction soit **traçable** et ne se confonde pas avec la
+livraison de 4d.
 
 ### INC-158 — Trois classes citées par des composants ne sont PAS engendrées, et n'ont donc aucun effet
 

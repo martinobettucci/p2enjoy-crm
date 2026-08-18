@@ -533,7 +533,12 @@ pour une donnée qu'**aucun écran ne rend encore** : les deux sélecteurs sont 
 
 **Décision : la donnée de démonstration arrive avec l'écran qui la montre**, c'est-à-dire à la
 tranche 4, où la révision des dix comptes sera faite dans le même geste que le carnet de contacts —
-un seul déplacement de compteur au lieu de deux. Ce n'est pas un renoncement à `CLAUDE.md` §8 : le
+un seul déplacement de compteur au lieu de deux.
+
+> **EXÉCUTÉ le 2026-08-18 par la sous-tranche 4d** (§13.6). Le seed porte depuis lors
+> `contact-principal` et `referent-technique`, et les onze fichiers de preuve que ce paragraphe
+> annonçait ont été révisés dans le même changement. Le premier alinéa ci-dessus décrit donc l'état
+> ANTÉRIEUR, conservé pour son motif ; l'état courant est au §13.6. Ce n'est pas un renoncement à `CLAUDE.md` §8 : le
 seed doit démontrer **chaque fonctionnalité livrée**, et cette tranche ne livre aucun écran.
 
 Conséquence pour les preuves de la tranche 3 : elles **fabriquent leurs propres champs sondes**,

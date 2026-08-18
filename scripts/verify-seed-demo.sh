@@ -20,10 +20,10 @@
 #   3. le workflow DÉRIVÉ porte au moins une card active à au moins deux étapes distinctes ;
 #   4. tout channel ACTIF porte au moins une card active ;
 #   5. les deux cards du workflow dérivé désignent la COPIE, jamais le workflow global ;
-#   6. le formulaire dérivé porte 7 champs, 15 règles et 1 exigence, tous remappés ;
+#   6. le formulaire dérivé porte 9 champs, 15 règles et 1 exigence, tous remappés ;
 #   7. les sept valeurs ajoutées existent, dont les trois valeurs de la copie ;
 #   8. les volumes : 15 cards, 13 actives, une archivée, une en corbeille ;
-#   9. 21 valeurs, 5 commentaires, au moins 41 événements ;
+#   9. 23 valeurs, 5 commentaires, au moins 41 événements ;
 #  10. le seed est REJOUABLE alors que des cards occupent « prospection » ;
 #  11. une dérive du rattachement de « prospection » est RATTRAPÉE ;
 #  12. pour chacun des trois profils, tout channel actif lisible rend au moins une card active ;
@@ -406,10 +406,14 @@ fi
 titre "6. Preuve n° 6 — formulaire et exigences remappés sur le workflow dérivé"
 
 champs_derive=$(psql_db -c "select count(*) from form_fields where workflow_id = '$COPIE_ID'")
-if [ "$champs_derive" = '7' ]; then
-	ok "le workflow dérivé porte les sept champs de sa source"
+# NEUF, ET NON PLUS SEPT, DEPUIS LA SOUS-TRANCHE 4d DE `CRM-060` (docs/SPEC-contacts.md §13.6) :
+# le seed pose deux champs de plus sur la source — `contact-principal` et `referent-technique` —, et
+# la copie du produit les recopie comme les autres. La règle a changé par LIVRAISON ; ce contrôle
+# est donc RÉVISÉ, jamais retiré.
+if [ "$champs_derive" = '9' ]; then
+	ok "le workflow dérivé porte les neuf champs de sa source"
 else
-	fail "le workflow dérivé porte $champs_derive champ(s), sept attendus"
+	fail "le workflow dérivé porte $champs_derive champ(s), neuf attendus"
 fi
 
 regles_derive=$(psql_db -c "select count(*) from form_field_rules where workflow_id = '$COPIE_ID'")
@@ -493,7 +497,9 @@ verifier_volume 'cards seedées'                15 "select count(*) from cards w
 verifier_volume 'cards seedées actives'        13 "select count(*) from cards where id in ($CARDS_SEED_SQL) and archived_at is null and deleted_at is null"
 verifier_volume 'card seedée archivée'          1 "select count(*) from cards where id in ($CARDS_SEED_SQL) and archived_at is not null"
 verifier_volume 'card seedée en corbeille'      1 "select count(*) from cards where id in ($CARDS_SEED_SQL) and deleted_at is not null"
-verifier_volume 'valeurs seedées de formulaire' 21 "select count(*) from card_field_values where card_id in ($CARDS_SEED_SQL)"
+# 23 depuis la sous-tranche 4d de `CRM-060` : les deux valeurs résolues de l'affaire « Migration ERP
+# Sogexia » (docs/SPEC-contacts.md §13.6).
+verifier_volume 'valeurs seedées de formulaire' 23 "select count(*) from card_field_values where card_id in ($CARDS_SEED_SQL)"
 verifier_volume 'cards seedées portant des valeurs' 11 "select count(distinct card_id) from card_field_values where card_id in ($CARDS_SEED_SQL)"
 verifier_volume 'commentaires seedés'            5 "select count(*) from card_comments where id in ($COMMENTAIRES_SEED_SQL)"
 

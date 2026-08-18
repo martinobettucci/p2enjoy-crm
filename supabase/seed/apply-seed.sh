@@ -309,14 +309,26 @@ TRANSITIONS=(
 # Champs de formulaire du workflow par défaut — docs/SPEC-form-composer.md §2.9,
 # docs/SPEC-seed.md §2.10.
 #
-# Sept champs, dont **un archivé** : sans lui, l'état « archivé » serait documenté sans être
+# NEUF champs, dont **un archivé** : sans lui, l'état « archivé » serait documenté sans être
 # démontrable côté formulaire, ce que `CLAUDE.md` §8 refuse. C'est le même choix qu'un track, un
 # channel et un nœud archivés avant lui, et il démontre en outre qu'un champ archivé **garde sa clé
 # réservée** (décision 96).
 #
-# Six types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
-# seuls dont la base **exige** des options (décision 94). Sans eux ici, ces deux contraintes
-# seraient documentées sans être démontrables.
+# SEPT ÉTAIENT SEEDÉS JUSQU'À LA SOUS-TRANCHE 4d DE `CRM-060`. Les deux derniers — `contact` et
+# `user` — arrivent avec l'écran qui les montre, et c'est la décision écrite au §9.6 de
+# `docs/SPEC-contacts.md` : ces deux types n'avaient aucun contrôle avant les sélecteurs du §13, et
+# une donnée de démonstration qu'aucun écran ne rend ne démontre rien. Elle déplace en revanche onze
+# preuves qui comparaient ce nombre — révisées dans le même changement, motif écrit (§13.6).
+#
+# NEUF types distincts sont couverts, et ce n'est pas un hasard : `money` et `select` sont les deux
+# seuls dont la base **exige** des options (décision 94) ; `contact` et `user` sont les deux seuls
+# que le validateur **RÉSOUT** vers une autre table depuis la migration `0047` (tranche 3). Sans eux
+# ici, ces quatre contraintes seraient documentées sans être démontrables.
+#
+# Ce commentaire annonçait « six types distincts » alors que les sept champs en couvraient **sept** —
+# `money`, `select`, `date`, `textarea`, `checkbox`, `url`, `number`. L'écart était antérieur à cette
+# sous-tranche et ne portait que sur le commentaire, jamais sur une assertion : `verify-champs-formulaire.sh`
+# comptait bien sept. Corrigé ici plutôt que reconduit faux, et consigné (INC-159).
 #
 # `options` est envoyé pour **tous** les champs, `{}` compris, et non omis : omettre laisserait la
 # valeur précédente en place lors d'un rejeu convergent, de sorte qu'un `choices` posé à la main sur
@@ -336,6 +348,8 @@ CHAMPS=(
 	'5eed0000-0000-4000-8000-000000000085|decideur-identifie|Décideur identifié|checkbox|5|-|-'
 	'5eed0000-0000-4000-8000-000000000086|lien-proposition|Lien vers la proposition|url|6|-|-'
 	'5eed0000-0000-4000-8000-000000000087|budget-previsionnel|Budget prévisionnel|number|7|-|2026-03-15T09:00:00Z'
+	'5eed0000-0000-4000-8000-000000000088|contact-principal|Contact principal|contact|8|-|-'
+	'5eed0000-0000-4000-8000-000000000089|referent-technique|Référent technique|user|9|-|-'
 )
 
 # Options des deux champs qui ne peuvent pas s'en passer. Écrites à part parce qu'elles contiennent
@@ -355,9 +369,14 @@ OPTIONS_SOURCE='{"choices": [
 # jamais exercée par aucune donnée, et rien ne distinguerait « déclaré facultatif » de « non
 # déclaré ».
 #
-# Vingt-sept couples champ × étape restent **sans règle** — sept étapes fois six champs actifs, moins
-# les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par défaut du §3.1 :
-# une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
+# QUARANTE ET UN couples champ × étape restent **sans règle** — sept étapes fois HUIT champs actifs,
+# moins les quinze règles, qui portent toutes sur un champ actif. C'est ce qui démontre la valeur par
+# défaut du §3.1 : une valeur par défaut qu'aucune donnée n'exerce n'est pas démontrée.
+#
+# Le compte était de vingt-sept avant la sous-tranche 4d de `CRM-060` : les deux champs `contact` et
+# `user` sont actifs et ne reçoivent **aucune** règle, précisément pour que la valeur par défaut les
+# rende `visible` à toutes les étapes — sans quoi les deux sélecteurs du §13 ne seraient atteignables
+# que depuis certaines affaires.
 #
 # Le champ archivé n'a **aucune** règle : l'archivage ne demande aucun ménage.
 #
@@ -609,6 +628,13 @@ VALEURS=(
 	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000081|64000'
 	'5eed0000-0000-4000-8000-0000000000cd|5eed0000-0000-4000-8000-000000000081|210000'
 	'5eed0000-0000-4000-8000-0000000000ce|5eed0000-0000-4000-8000-000000000084|"Budget arbitré au profit d’un organisme déjà référencé."'
+	# LES DEUX VALEURS RÉSOLUES de la sous-tranche 4d (docs/SPEC-contacts.md §13.6). L'affaire `…0c2`
+	# est « Migration ERP Sogexia », et Léo Marchand est le directeur achats de **Sogexia** : la donnée
+	# de démonstration raconte alors quelque chose au lieu de remplir une case. Le validateur les
+	# résout comme toute autre écriture — une valeur qui ne désignerait personne ferait échouer le
+	# seed, ce qui est exactement le comportement voulu.
+	'5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000088|"5eed0000-0000-4000-8000-000000000091"'
+	'5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000089|"5eed0000-0000-4000-8000-000000000012"'
 )
 
 # card dérivée | clé du champ dérivé | valeur JSON
@@ -1699,6 +1725,129 @@ info "Leurs workflow_id et current_step_id sont RÉSOLUS, jamais écrits — doc
 info "Leurs valeurs de formulaire seront résolues par clé vers les champs réellement copiés (§9.5)"
 
 
+# --- 8 ter quater. Contacts et organisations — docs/SPEC-contacts.md §5, CRM-060 --------------
+#
+# CETTE SECTION A ÉTÉ REMONTÉE AVANT « 8 quater. Valeurs de formulaire » PAR LA SOUS-TRANCHE 4d
+# (docs/SPEC-contacts.md §13.6), et l'ordre est STRUCTUREL, non cosmétique : le seed pose depuis
+# lors une valeur de type `contact` et une de type `user`, que le trigger `app.card_field_values_valider()`
+# RÉSOUT (migration 0047). Une valeur écrite avant que son contact n'existe rend `400` /
+# `invalid_field_value` — MESURÉ, le seed s'arrêtait là. Elle ne dépend, elle, que des cards, qui
+# sont posées plus haut.
+#
+# DEUX ORGANISATIONS ET TROIS CONTACTS, RATTACHÉS À DES AFFAIRES SEEDÉES. La règle 3 du classement
+# (CRM-055) suppose « un contact rattaché à EXACTEMENT UNE card active » — ce contrat est posé
+# ici, pour que la tranche suivante ait sa donnée de démonstration.
+#
+# Identifiants figés (§4 de docs/SPEC-contacts.md, tranche 1) : préfixe `5eed…08`, bloc réservé.
+#
+# Le seed CONVERGE : les identifiants sont fixes, les insertions sont conditionnées à leur absence.
+# Un rejeu ne dédouble ni les organisations, ni les contacts, ni les rattachements.
+
+ORG_SOGEXIA='5eed0000-0000-4000-8000-000000000081'
+ORG_ANONYME='5eed0000-0000-4000-8000-000000000082'
+# TROISIÈME ORGANISATION, SANS AUCUN CONTACT — CRM-060 tranche 4b, docs/SPEC-contacts.md §11.7.
+# Sans elle, l'état vide de la liste de contacts de la fiche d'organisation (§11.9, cas d) n'est
+# démontrable que contre une réponse SUBSTITUÉE, ce que CLAUDE.md §8 proscrit.
+ORG_SANS_CONTACT='5eed0000-0000-4000-8000-000000000083'
+CONTACT_MARCHAND='5eed0000-0000-4000-8000-000000000091'
+CONTACT_DUPONT='5eed0000-0000-4000-8000-000000000092'
+CONTACT_ELISE='5eed0000-0000-4000-8000-000000000093'
+
+# `id|workspace_id|name|domain|website`
+#
+# TROIS ORGANISATIONS, ET CHACUNE EXERCE UN CAS DE LA FICHE — CRM-060 tranche 4b,
+# docs/SPEC-contacts.md §11.7 :
+#
+#   * Sogexia porte un domaine ET un site web : c'est la seule qui rend le LIEN externe du §11.5.
+#     Sans ce `website`, ce lien n'est jamais rendu et la capture ne le montre pas ;
+#   * Studio Meunier n'a ni domaine ni site : ses deux valeurs restent VIDES (§11.9, cas b) ;
+#   * Comptoir Vasseur n'a AUCUN contact : elle seule exerce l'état vide de la liste de contacts
+#     (§11.9, cas d).
+#
+# AUCUN COMPTEUR FIGÉ N'EST DÉPLACÉ, et c'est MESURÉ : le contrôle ci-dessous compare à la taille
+# du tableau lui-même ; aucun `scripts/verify-*.sh` ne cite `organizations` ; les preuves d'API de
+# `e2e/api/contacts.spec.ts` créent leurs PROPRES organisations sondes. Le carnet, qui liste des
+# CONTACTS et non des organisations, garde ses trois lignes.
+ORGANIZATIONS_SEED=(
+	"$ORG_SOGEXIA|$WS_ID|Sogexia|sogexia.example|https://www.sogexia.example"
+	"$ORG_ANONYME|$WS_ID|Studio Meunier||"
+	"$ORG_SANS_CONTACT|$WS_ID|Comptoir Vasseur|comptoir-vasseur.example|"
+)
+
+for entree in "${ORGANIZATIONS_SEED[@]}"; do
+	IFS='|' read -r o_id o_ws o_name o_domain o_website <<< "$entree"
+	corps=$(jq -nc --arg id "$o_id" --arg ws "$o_ws" --arg n "$o_name" --arg d "$o_domain" \
+		--arg w "$o_website" \
+		'{id: $id, workspace_id: $ws, name: $n}
+		 + (if $d == "" then {} else {domain: $d}  end)
+		 + (if $w == "" then {} else {website: $w} end)')
+	code=$(api PUT "/rest/v1/organizations?id=eq.$o_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "insertion / rattrapage de l'organisation « $o_name »" 201 200 204
+done
+
+# `id|workspace_id|organization_id|full_name|email|phone|role_title`
+CONTACTS_SEED=(
+	"$CONTACT_MARCHAND|$WS_ID|$ORG_SOGEXIA|Léo Marchand|leo.marchand@sogexia.example||Directeur achats"
+	"$CONTACT_DUPONT|$WS_ID||Sophie Dupont|sophie@dupont.test||"
+	"$CONTACT_ELISE|$WS_ID|$ORG_ANONYME|Élise Fabre||+33 6 12 34 56 78|Cheffe d'atelier"
+)
+
+for entree in "${CONTACTS_SEED[@]}"; do
+	IFS='|' read -r c_id c_ws c_org c_name c_email c_phone c_role <<< "$entree"
+	corps=$(jq -nc --arg id "$c_id" --arg ws "$c_ws" --arg org "$c_org" --arg n "$c_name" \
+		--arg e "$c_email" --arg p "$c_phone" --arg r "$c_role" \
+		'{id: $id, workspace_id: $ws, full_name: $n}
+		 + (if $org == "" then {} else {organization_id: $org} end)
+		 + (if $e   == "" then {} else {email: $e}             end)
+		 + (if $p   == "" then {} else {phone: $p}             end)
+		 + (if $r   == "" then {} else {role_title: $r}        end)')
+	code=$(api PUT "/rest/v1/contacts?id=eq.$c_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "insertion / rattrapage du contact « $c_name »" 201 200 204
+done
+
+# `card_id|contact_id|role`
+# Léo Marchand est rattaché à EXACTEMENT UNE affaire active — la card `Migration ERP Sogexia`
+# (`…0c2`) sur `grands-comptes`. C'est l'état précis que la règle 3 du classement lira.
+# Sophie Dupont est rattachée à une seconde affaire — la card `Refonte intranet Ville de Lyon`
+# (`…0c4`), sur un track distinct — sans être une candidate à la règle 3 (aucune boîte connectée
+# ne l'attire vers l'affaire), démonstration que le rôle est libre.
+CARD_CONTACTS_SEED=(
+	"5eed0000-0000-4000-8000-0000000000c2|$CONTACT_MARCHAND|decideur"
+	"5eed0000-0000-4000-8000-0000000000c4|$CONTACT_DUPONT|prescripteur"
+)
+
+for entree in "${CARD_CONTACTS_SEED[@]}"; do
+	IFS='|' read -r rc_card rc_contact rc_role <<< "$entree"
+	corps=$(jq -nc --arg ws "$WS_ID" --arg ci "$rc_card" --arg co "$rc_contact" --arg r "$rc_role" \
+		'{workspace_id: $ws, card_id: $ci, contact_id: $co, role: $r}')
+	code=$(api POST /rest/v1/card_contacts -H 'Prefer: resolution=merge-duplicates' -d "$corps")
+	attendu "$code" "rattachement de $rc_contact à $rc_card" 201 200 204
+done
+
+organizations_count=$(curl -s "$API/rest/v1/organizations?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+contacts_count=$(curl -s "$API/rest/v1/contacts?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$organizations_count" = "${#ORGANIZATIONS_SEED[@]}" ] || die "organizations :
+        $organizations_count lignes au lieu de ${#ORGANIZATIONS_SEED[@]} — le rejeu a dupliqué."
+[ "$contacts_count" = "${#CONTACTS_SEED[@]}" ] || die "contacts :
+        $contacts_count lignes au lieu de ${#CONTACTS_SEED[@]} — le rejeu a dupliqué."
+[ "$card_contacts_count" = "${#CARD_CONTACTS_SEED[@]}" ] || die "card_contacts :
+        $card_contacts_count lignes au lieu de ${#CARD_CONTACTS_SEED[@]} — le rejeu a dupliqué."
+
+# Léo Marchand : EXACTEMENT UNE card active (contrat du §5, tranche 1). La règle 3 du classement
+# le lit ainsi. Si un rejeu (ou une future tranche) ajoute une seconde affaire à Léo, cette garde
+# rouge dénoncera l'écart avant qu'il n'atteigne CRM-055.
+leo_cards=$(curl -s "$API/rest/v1/card_contacts?select=card_id&contact_id=eq.$CONTACT_MARCHAND" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$leo_cards" = "1" ] || die "Léo Marchand doit être rattaché à EXACTEMENT UNE card active
+        (contrat SPEC-contacts.md §5) — mesuré : $leo_cards. La règle 3 du classement en dépend."
+
+info "Contacts et organisations : $organizations_count organisations, $contacts_count contacts,"
+info "  $card_contacts_count rattachements — Léo Marchand exactement sur UNE card (CRM-060 §5)"
+
 # --- 8 quater. Valeurs de formulaire — docs/SPEC-form-composer.md §6.11 ------------------------
 # Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
 # convergente sur la clé primaire composite `(card_id, field_id)`.
@@ -1708,7 +1857,7 @@ info "Leurs valeurs de formulaire seront résolues par clé vers les champs rée
 # deux, et qu'ils désignent le MÊME workflow. Un ordre différent ferait échouer le seed en `23503`,
 # jamais en silence.
 #
-# `workflow_id` vaut `$WF_ID` pour les dix-huit valeurs historiques ; les trois autres résolvent
+# `workflow_id` vaut `$WF_ID` pour les VINGT valeurs du workflow global ; les trois autres résolvent
 # leurs champs dans `$WF_COPIE_ID`. Dans les deux familles, les clés composites refusent toute
 # valeur dont la card et le champ ne suivent pas le même workflow.
 #
@@ -1845,7 +1994,7 @@ info "Celui de la card c4 est retiré par un TIERS : deleted_by diffère d'autho
 # LE SEED N'ÉCRIT AUCUN ÉVÉNEMENT, ET IL NE LE PEUT PAS. `card_events` n'accorde le privilège
 # `INSERT` à personne, `service_role` compris — MESURÉ, décision 205. Cette section est donc la
 # première dont le contenu est ENTIÈREMENT DÉRIVÉ des autres actes du seed : les 14 cards
-# produisent chacune un `created`, et les 21 valeurs un `field_changed` lors d'un seed froid.
+# produisent chacune un `created`, et les 23 valeurs un `field_changed` lors d'un seed froid.
 #
 # Restent deux familles qu'aucune écriture du seed ne produit spontanément, parce que le seed pose
 # ses cards dans leur état final : `moved` et `assigned`. Elles sont démontrées par DEUX
@@ -2048,122 +2197,6 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" 
 [ "$identites_sortantes" = "${#IDENTITES_SORTANTES[@]}" ] || die "identités sortantes :
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
-
-# --- 8 novies bis. Contacts et organisations — docs/SPEC-contacts.md §5, CRM-060 ---------------
-#
-# DEUX ORGANISATIONS ET TROIS CONTACTS, RATTACHÉS À DES AFFAIRES SEEDÉES. La règle 3 du classement
-# (CRM-055) suppose « un contact rattaché à EXACTEMENT UNE card active » — ce contrat est posé
-# ici, pour que la tranche suivante ait sa donnée de démonstration.
-#
-# Identifiants figés (§4 de docs/SPEC-contacts.md, tranche 1) : préfixe `5eed…08`, bloc réservé.
-#
-# Le seed CONVERGE : les identifiants sont fixes, les insertions sont conditionnées à leur absence.
-# Un rejeu ne dédouble ni les organisations, ni les contacts, ni les rattachements.
-
-ORG_SOGEXIA='5eed0000-0000-4000-8000-000000000081'
-ORG_ANONYME='5eed0000-0000-4000-8000-000000000082'
-# TROISIÈME ORGANISATION, SANS AUCUN CONTACT — CRM-060 tranche 4b, docs/SPEC-contacts.md §11.7.
-# Sans elle, l'état vide de la liste de contacts de la fiche d'organisation (§11.9, cas d) n'est
-# démontrable que contre une réponse SUBSTITUÉE, ce que CLAUDE.md §8 proscrit.
-ORG_SANS_CONTACT='5eed0000-0000-4000-8000-000000000083'
-CONTACT_MARCHAND='5eed0000-0000-4000-8000-000000000091'
-CONTACT_DUPONT='5eed0000-0000-4000-8000-000000000092'
-CONTACT_ELISE='5eed0000-0000-4000-8000-000000000093'
-
-# `id|workspace_id|name|domain|website`
-#
-# TROIS ORGANISATIONS, ET CHACUNE EXERCE UN CAS DE LA FICHE — CRM-060 tranche 4b,
-# docs/SPEC-contacts.md §11.7 :
-#
-#   * Sogexia porte un domaine ET un site web : c'est la seule qui rend le LIEN externe du §11.5.
-#     Sans ce `website`, ce lien n'est jamais rendu et la capture ne le montre pas ;
-#   * Studio Meunier n'a ni domaine ni site : ses deux valeurs restent VIDES (§11.9, cas b) ;
-#   * Comptoir Vasseur n'a AUCUN contact : elle seule exerce l'état vide de la liste de contacts
-#     (§11.9, cas d).
-#
-# AUCUN COMPTEUR FIGÉ N'EST DÉPLACÉ, et c'est MESURÉ : le contrôle ci-dessous compare à la taille
-# du tableau lui-même ; aucun `scripts/verify-*.sh` ne cite `organizations` ; les preuves d'API de
-# `e2e/api/contacts.spec.ts` créent leurs PROPRES organisations sondes. Le carnet, qui liste des
-# CONTACTS et non des organisations, garde ses trois lignes.
-ORGANIZATIONS_SEED=(
-	"$ORG_SOGEXIA|$WS_ID|Sogexia|sogexia.example|https://www.sogexia.example"
-	"$ORG_ANONYME|$WS_ID|Studio Meunier||"
-	"$ORG_SANS_CONTACT|$WS_ID|Comptoir Vasseur|comptoir-vasseur.example|"
-)
-
-for entree in "${ORGANIZATIONS_SEED[@]}"; do
-	IFS='|' read -r o_id o_ws o_name o_domain o_website <<< "$entree"
-	corps=$(jq -nc --arg id "$o_id" --arg ws "$o_ws" --arg n "$o_name" --arg d "$o_domain" \
-		--arg w "$o_website" \
-		'{id: $id, workspace_id: $ws, name: $n}
-		 + (if $d == "" then {} else {domain: $d}  end)
-		 + (if $w == "" then {} else {website: $w} end)')
-	code=$(api PUT "/rest/v1/organizations?id=eq.$o_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
-	attendu "$code" "insertion / rattrapage de l'organisation « $o_name »" 201 200 204
-done
-
-# `id|workspace_id|organization_id|full_name|email|phone|role_title`
-CONTACTS_SEED=(
-	"$CONTACT_MARCHAND|$WS_ID|$ORG_SOGEXIA|Léo Marchand|leo.marchand@sogexia.example||Directeur achats"
-	"$CONTACT_DUPONT|$WS_ID||Sophie Dupont|sophie@dupont.test||"
-	"$CONTACT_ELISE|$WS_ID|$ORG_ANONYME|Élise Fabre||+33 6 12 34 56 78|Cheffe d'atelier"
-)
-
-for entree in "${CONTACTS_SEED[@]}"; do
-	IFS='|' read -r c_id c_ws c_org c_name c_email c_phone c_role <<< "$entree"
-	corps=$(jq -nc --arg id "$c_id" --arg ws "$c_ws" --arg org "$c_org" --arg n "$c_name" \
-		--arg e "$c_email" --arg p "$c_phone" --arg r "$c_role" \
-		'{id: $id, workspace_id: $ws, full_name: $n}
-		 + (if $org == "" then {} else {organization_id: $org} end)
-		 + (if $e   == "" then {} else {email: $e}             end)
-		 + (if $p   == "" then {} else {phone: $p}             end)
-		 + (if $r   == "" then {} else {role_title: $r}        end)')
-	code=$(api PUT "/rest/v1/contacts?id=eq.$c_id" -H 'Prefer: resolution=merge-duplicates' -d "$corps")
-	attendu "$code" "insertion / rattrapage du contact « $c_name »" 201 200 204
-done
-
-# `card_id|contact_id|role`
-# Léo Marchand est rattaché à EXACTEMENT UNE affaire active — la card `Migration ERP Sogexia`
-# (`…0c2`) sur `grands-comptes`. C'est l'état précis que la règle 3 du classement lira.
-# Sophie Dupont est rattachée à une seconde affaire — la card `Refonte intranet Ville de Lyon`
-# (`…0c4`), sur un track distinct — sans être une candidate à la règle 3 (aucune boîte connectée
-# ne l'attire vers l'affaire), démonstration que le rôle est libre.
-CARD_CONTACTS_SEED=(
-	"5eed0000-0000-4000-8000-0000000000c2|$CONTACT_MARCHAND|decideur"
-	"5eed0000-0000-4000-8000-0000000000c4|$CONTACT_DUPONT|prescripteur"
-)
-
-for entree in "${CARD_CONTACTS_SEED[@]}"; do
-	IFS='|' read -r rc_card rc_contact rc_role <<< "$entree"
-	corps=$(jq -nc --arg ws "$WS_ID" --arg ci "$rc_card" --arg co "$rc_contact" --arg r "$rc_role" \
-		'{workspace_id: $ws, card_id: $ci, contact_id: $co, role: $r}')
-	code=$(api POST /rest/v1/card_contacts -H 'Prefer: resolution=merge-duplicates' -d "$corps")
-	attendu "$code" "rattachement de $rc_contact à $rc_card" 201 200 204
-done
-
-organizations_count=$(curl -s "$API/rest/v1/organizations?select=id" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-contacts_count=$(curl -s "$API/rest/v1/contacts?select=id" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-[ "$organizations_count" = "${#ORGANIZATIONS_SEED[@]}" ] || die "organizations :
-        $organizations_count lignes au lieu de ${#ORGANIZATIONS_SEED[@]} — le rejeu a dupliqué."
-[ "$contacts_count" = "${#CONTACTS_SEED[@]}" ] || die "contacts :
-        $contacts_count lignes au lieu de ${#CONTACTS_SEED[@]} — le rejeu a dupliqué."
-[ "$card_contacts_count" = "${#CARD_CONTACTS_SEED[@]}" ] || die "card_contacts :
-        $card_contacts_count lignes au lieu de ${#CARD_CONTACTS_SEED[@]} — le rejeu a dupliqué."
-
-# Léo Marchand : EXACTEMENT UNE card active (contrat du §5, tranche 1). La règle 3 du classement
-# le lit ainsi. Si un rejeu (ou une future tranche) ajoute une seconde affaire à Léo, cette garde
-# rouge dénoncera l'écart avant qu'il n'atteigne CRM-055.
-leo_cards=$(curl -s "$API/rest/v1/card_contacts?select=card_id&contact_id=eq.$CONTACT_MARCHAND" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-[ "$leo_cards" = "1" ] || die "Léo Marchand doit être rattaché à EXACTEMENT UNE card active
-        (contrat SPEC-contacts.md §5) — mesuré : $leo_cards. La règle 3 du classement en dépend."
-
-info "Contacts et organisations : $organizations_count organisations, $contacts_count contacts,"
-info "  $card_contacts_count rattachements — Léo Marchand exactement sur UNE card (CRM-060 §5)"
 
 # --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------
 #

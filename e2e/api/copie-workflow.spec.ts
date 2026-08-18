@@ -202,10 +202,12 @@ test.describe('C1 — la copie, et ce qu’elle contient (§4.9, lignes a, b, l)
 			)
 			expect(champsDeLaCopie.status()).toBe(200)
 			const champsCopies = (await champsDeLaCopie.json()) as { id: string; key: string }[]
+			// NEUF depuis la sous-tranche 4d de `CRM-060` (docs/SPEC-contacts.md §13.6) : le seed
+			// source porte deux champs de plus, et la copie du produit les recopie comme les autres.
 			expect(
 				champsCopies,
-				'les sept champs de la source, archivé compris, sont copiés',
-			).toHaveLength(7)
+				'les neuf champs de la source, archivé compris, sont copiés',
+			).toHaveLength(9)
 
 			const champsSource = await request.get(
 				`${FIELDS}?workflow_id=eq.${WORKFLOW_SEED}&select=id,key`,

@@ -578,11 +578,11 @@ test.describe('V4 — la sixième vérification', () => {
 // bloc dit ce qu'un CLIENT reçoit, et c'est le second que l'interface devra rendre (400,
 // `invalid_field_value`, `details` exploitable).
 //
-// LES DEUX CHAMPS SONDES SONT CRÉÉS ICI, PAS DANS LE SEED, et le motif est mesuré
-// (docs/SPEC-contacts.md §9.6) : le nombre « sept champs sur le workflow source » est figé par dix
-// preuves étrangères à cette tranche, que la copie de workflow met en regard. Les sondes sont donc
-// posées avec la clé de service et RETIRÉES dans le `afterAll`, y compris en cas d'échec — le seed
-// est un contrat maintenu.
+// LES DEUX CHAMPS SONDES SONT CRÉÉS ICI, ET ILS LE RESTENT bien que le seed porte désormais
+// `contact-principal` et `referent-technique` (docs/SPEC-contacts.md §13.6) : ce bloc écrit des
+// valeurs refusées et acceptées à répétition, et le faire sur les deux champs seedés déplacerait des
+// valeurs que la sous-tranche 4d éprouve à l'écran. Les sondes sont posées avec la clé de service et
+// RETIRÉES dans le `afterAll`, y compris en cas d'échec — le seed est un contrat maintenu.
 
 const CHAMP_SONDE_CONTACT = 'a5100000-0000-4000-8000-000000000001'
 const CHAMP_SONDE_USER = 'a5100000-0000-4000-8000-000000000002'
