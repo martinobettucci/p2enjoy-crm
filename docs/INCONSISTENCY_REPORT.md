@@ -460,10 +460,38 @@ contente d'ouvrir son tableau de bord. Terminaison de la distro `docker-desktop`
 `wsl --terminate`, puis arrêt forcé de `Docker Desktop.exe` et relance à froid : la distro redémarre
 et retombe dans le même silence.
 
-**Ce qui reste, et qui demande la main de l'exploitant.** Le remède connu de cette panne est
-`wsl --shutdown`, qui redémarre **toutes** les distros — y compris celle où l'agent s'exécute. Il n'a
-donc **pas** été exécuté : une commande qui détruit son propre contexte d'exécution n'est pas une
-réparation autonome. À défaut, un redémarrage de Windows. Tant que le poste n'est pas rétabli,
+**DIAGNOSTIC AFFINÉ, une fois l'interop Windows revenue.** Les premiers symptômes — `no route to
+host`, `Wsl/Service/0x8007274c`, `accept4 failed 110` — laissaient croire à une rupture de la
+communication vsock. Ils n'en étaient qu'un effet. Une fois `wsl.exe` de nouveau utilisable, une
+inspection **à l'intérieur** de la distro `docker-desktop` montre la vraie cause :
+
+- elle **démarre**, mais ne porte que `init` et `vpnkit-bridge` — **ni `dockerd`, ni `containerd`**,
+  et ces binaires ne sont même pas dans le `PATH` ;
+- `/run/guest-services/` est **vide**, `/containers` **n'existe pas**, et
+  `/mnt/wsl/docker-desktop/cli-tools/.../cli-plugins` reste **vide** — ce qui explique enfin les
+  segfauts des greffons CLI : ils pointent vers des binaires absents ;
+- `/var/run/docker.sock` n'existe pas **à l'intérieur** de la distro.
+
+**La distro tourne sans être provisionnée** : son image de service n'est pas attachée. Le backend
+Windows, lui, est bien relancé — il interroge le moteur toutes les secondes et reçoit une connexion
+fermée, indéfiniment.
+
+**Ce qui reste, et qui demande la main de l'exploitant.** Le remède est `wsl --shutdown`, qui
+redémarre **toutes** les distros — y compris celle où l'agent s'exécute — et laisse Docker Desktop
+re-provisionner la sienne au démarrage suivant. Il n'a donc **pas** été exécuté : une commande qui
+détruit son propre contexte d'exécution n'est pas une réparation autonome. À défaut, un redémarrage
+de Windows.
+
+**AVERTISSEMENT, et il n'est pas théorique.** L'option « Reset to factory defaults » / « Clean /
+Purge data » de Docker Desktop **DÉTRUIRAIT LES VOLUMES**, donc la base de développement, son seed
+et les secrets chiffrés de Vault. Elle ne doit **pas** être employée pour cette panne : le problème
+est le provisionnement de la distro de service, pas les données. `wsl --shutdown` suffit et ne
+touche à aucun volume.
+
+**Ce qui a été tenté après le retour de l'interop, sans succès.** Arrêt forcé de `Docker
+Desktop.exe`, `wsl --terminate docker-desktop`, relance à froid — et cette fois le journal montre un
+**vrai** redémarrage du backend (« launching com.docker.backend.exe ») et non plus le
+« backend already running » des tentatives précédentes. Le moteur n'est pas revenu pour autant. Tant que le poste n'est pas rétabli,
 **aucune vérification de cette session ne peut être rejouée**, et rien ne doit être déclaré vérifié
 sur cette base.
 
