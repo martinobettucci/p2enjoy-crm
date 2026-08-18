@@ -207,7 +207,12 @@ sortie_ingestion=$(E2E_PROJETS=api npx playwright test --config e2e/playwright.c
 	--project=api "$SPEC_INGESTION" 2>&1 || true)
 if printf '%s\n' "$sortie_ingestion" | grep -qE "REFUS N° 9( |\b)" &&
 	! printf '%s\n' "$sortie_ingestion" | grep -qE "^ *[1-9][0-9]* failed"; then
-	ok "la preuve n° 9 est exercée et verte dans $SPEC_INGESTION (pièce infected, pièce pending)"
+	# LIBELLÉ CORRIGÉ LE 2026-08-18, ET IL DISAIT PLUS QUE CE QU'IL MESURAIT (INC-147).
+	# Ce contrôle établit que le scénario n° 9 EXISTE et TOURNE. Il n'établit pas que le refus
+	# est prouvé : le scénario ne DÉPOSE aucun objet avant de le demander, et son assertion
+	# accepte 400, 401, 403 ET 404 — un objet jamais déposé rend 404 et la fait passer. Le
+	# libellé d'origine, écrit le matin même, laissait croire à une preuve de refus.
+	ok "la preuve n° 9 EXISTE et TOURNE dans $SPEC_INGESTION — sa valeur probante est en défaut (INC-147)"
 else
 	fail "la preuve n° 9 n'est pas exercée dans $SPEC_INGESTION"
 	printf '%s\n' "$sortie_ingestion" | tail -6

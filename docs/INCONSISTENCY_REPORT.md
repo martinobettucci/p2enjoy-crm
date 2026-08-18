@@ -241,6 +241,46 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-147 — La preuve de refus n° 9 mesure une absence, pas un refus
+
+**Nature :** assertion trop large sur un objet jamais créé ; la preuve ne peut pas échouer.
+**Relevé le :** 2026-08-18, par relecture, dans le prolongement d'INC-146 — et **le scénario est
+vert**, comme l'était le précédent.
+
+**Ce que le scénario prétend prouver.** `e2e/api/ingestion.spec.ts`, `REFUS N° 9` : « une pièce
+`infected` et une pièce `pending` ne se téléchargent pas ». C'est la preuve n° 9 du §7 de
+`docs/SPEC-permissions-rls.md`, retournée en refus mesuré quand `CRM-054` a livré
+`mail_attachments` et son bucket.
+
+**Ce qu'il fait réellement.** Il insère la LIGNE de métadonnées via PostgREST, puis demande
+`GET /storage/v1/object/mail-attachments/<chemin>` avec deux jeux d'en-têtes, et asserte
+`expect([400, 401, 403, 404]).toContain(statut)`. **Aucun octet n'est jamais déposé** : les deux
+seuls appels à Storage du fichier sont ce `GET` et un `list`. Le commentaire du scénario le dit
+lui-même — « le dépôt réel se fait par le service ; ici, seule la LECTURE est éprouvée ».
+
+**Pourquoi il ne peut pas échouer.** Un objet qui n'a jamais été déposé rend **404**, valeur
+acceptée par l'assertion. Le scénario serait vert avec ou sans politique de Storage, avec ou sans
+`av_status`, et même si la pièce saine était librement téléchargeable — puisqu'il ne teste jamais
+une pièce réellement présente. **Il ne distingue pas « refusé » de « inexistant ».**
+
+**Ma part dans ce constat, et elle n'est pas mince.** Le matin du 2026-08-18, en corrigeant
+`scripts/verify-preuves-refus.sh`, j'ai câblé ce scénario comme la preuve n° 9 « exercée et verte »,
+au motif qu'elle avait migré de fichier. **J'ai vérifié qu'elle TOURNE, pas qu'elle PROUVE.** Le
+libellé du contrôle est corrigé le jour même : il annonce désormais que le scénario existe et tourne,
+et que sa valeur probante est en défaut.
+
+**Ce qui reste dû.** Déposer réellement l'objet avec la clé de service — comme le service le fait —
+puis le demander en anonyme et en authentifié, et asserter un refus NOMMÉ (403, ou 400 avec le
+message de la politique), jamais un ensemble qui contient 404. Éprouver en outre la pièce **saine**,
+qui doit, elle, être téléchargeable : sans ce témoin, un refus global passerait pour une politique
+correcte. Non fait ce jour, le poste Docker étant tombé (INC-145).
+
+**Troisième occurrence de la même famille.** INC-146 en décrit deux — une assertion d'absence qui
+lit un `PGRST202` de signature non correspondante, et une seconde de même forme. Le motif commun est
+constant : **l'assertion réussit pour une raison qui n'est pas celle qu'elle nomme**. Le remède est
+constant lui aussi : écrire l'assertion de façon qu'elle ne puisse réussir QUE pour la raison
+annoncée, et lui adjoindre un témoin positif quand un refus est en jeu.
+
 ### INC-146 — Une assertion qui fige une absence est restée VERTE après la naissance de son objet
 
 **Nature :** fausse preuve ; le mécanisme de la décision 51 a échoué sans le dire.
