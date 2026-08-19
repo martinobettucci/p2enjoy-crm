@@ -2243,6 +2243,11 @@ command -v docker >/dev/null 2>&1 || die "docker est introuvable : l'envoi réel
 
 MSGID_CLASSE='seed-inbox-classe@p2enjoy.test'
 MSGID_NON_CLASSE='seed-inbox-non-classe@p2enjoy.test'
+# LE TROISIÈME MESSAGE EST UNE RÉPONSE, ET IL EXISTE POUR LE GROUPEMENT — CRM-081 tranche 2 f,
+# docs/SPEC-cards.md §16.16.8. MESURÉ le 2026-08-19 : les deux messages ci-dessus portent des clés
+# de fil DISTINCTES, donc deux fils d'un message chacun — l'inbox groupée aurait été identique à
+# l'inbox d'avant, et aucune capture n'aurait montré la fonctionnalité (CLAUDE.md §8).
+MSGID_REPONSE='seed-inbox-reponse@p2enjoy.test'
 CARD_COURRIER=5eed0000-0000-4000-8000-0000000000c1   # Refonte du site vitrine
 
 compte_systeme=$(curl -s "$API/rest/v1/mail_inbound_accounts?select=id&imap_username=eq.systeme@$INBOUND_DOMAIN" \
@@ -2275,18 +2280,18 @@ except urllib.error.HTTPError as erreur:
 }
 
 messages_seedes() {
-	curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
+	curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E,%3C$MSGID_REPONSE%3E)" \
 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length'
 }
 
-if [ "$(messages_seedes)" != 2 ]; then
+if [ "$(messages_seedes)" != 3 ]; then
 	releve=$(relever_boite)
 	echo "$releve" | jq -e '.account_id? != null' >/dev/null 2>&1 \
 		|| die "la relève n'a rien rendu d'exploitable : « $releve ». Le service mail-sync
         est-il démarré ? (./runDev.sh)"
 fi
 
-if [ "$(messages_seedes)" != 2 ]; then
+if [ "$(messages_seedes)" != 3 ]; then
 	# LA SOUMISSION AUTHENTIFIÉE, seul chemin d'un message légitime (§15.4). Elle part du conteneur
 	# mail-sync parce qu'il est sur le réseau Compose et joint `stalwart` par son nom ; le port
 	# publié sur l'hôte servirait aussi, mais un seul mécanisme vaut mieux que deux.
@@ -2304,16 +2309,23 @@ if [ "$(messages_seedes)" != 2 ]; then
 		-e MDP="$MAILBOX_PASSWORD" \
 		-e MSGID_CLASSE="$MSGID_CLASSE" \
 		-e MSGID_NON_CLASSE="$MSGID_NON_CLASSE" \
+		-e MSGID_REPONSE="$MSGID_REPONSE" \
 		mail-sync python -c '
 import os, smtplib
 from email.message import EmailMessage
 
-def composer(objet, destinataire, identifiant, corps):
+def composer(objet, destinataire, identifiant, corps, repond_a=None):
     message = EmailMessage()
     message["From"] = "bizdev@p2enjoy.test"
     message["To"] = destinataire
     message["Subject"] = objet
     message["Message-ID"] = "<" + identifiant + ">"
+    # LES DEUX EN-TÊTES, ET PAS SEULEMENT « In-Reply-To » : c est « References » que
+    # `app.cle_fil` lit (docs/SPEC-cards.md §16.14.2), et un message qui ne porterait que le
+    # premier resterait sa propre racine — donc un fil de plus, pas un fil de deux.
+    if repond_a is not None:
+        message["In-Reply-To"] = "<" + repond_a + ">"
+        message["References"] = "<" + repond_a + ">"
     message.set_content(corps)
     return message
 
@@ -2324,6 +2336,11 @@ messages = [
     composer("Candidature spontanée", os.environ["DEST_SYSTEME"], os.environ["MSGID_NON_CLASSE"],
              "Bonjour,\n\nJe vous adresse ma candidature spontanée pour un poste de développeur.\n\n"
              "Cordialement,\nMalik Ferreira"),
+    composer("Re: Demande de devis — refonte", os.environ["DEST_CARD"],
+             os.environ["MSGID_REPONSE"],
+             "Bonjour,\n\nJ ajoute une precision : le site devra rester en ligne pendant la "
+             "refonte.\n\nBien a vous,\nSolène Ferrand",
+             repond_a=os.environ["MSGID_CLASSE"]),
 ]
 session = smtplib.SMTP("stalwart", 587, timeout=60)
 session.ehlo()
@@ -2340,12 +2357,12 @@ print("envoyes")
 	# valent mieux qu'un délai fixe, qui serait soit trop court, soit du temps perdu.
 	for _tentative in 1 2 3 4 5; do
 		relever_boite >/dev/null
-		[ "$(messages_seedes)" = 2 ] && break
+		[ "$(messages_seedes)" = 3 ] && break
 		sleep 3
 	done
 fi
 
-[ "$(messages_seedes)" = 2 ] || die "les deux messages de démonstration ne sont pas arrivés en base
+[ "$(messages_seedes)" = 3 ] || die "les trois messages de démonstration ne sont pas arrivés en base
         après relève : l inbox globale serait vide, et le §2.19 ne serait pas tenu."
 
 etat_courrier=$(curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id,classification,card_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
@@ -2359,8 +2376,31 @@ non_classe=$(echo "$etat_courrier" | jq -r --arg m "<$MSGID_NON_CLASSE>" \
         classer_message_automatiquement qui écrit, ou personne."
 [ "$non_classe" = unclassified ] || die "le message adressé à la seule boîte système est « $non_classe »
         au lieu de « unclassified » : le panneau des non classés serait vide."
-info "Courrier : 2 messages réellement reçus — un classé sur ${CARD_COURRIER: -2} par la règle 1,"
-info "          un non classé pour le panneau de tri. Rien n a été forgé en base (§2.19)"
+# LE FIL EST VÉRIFIÉ, ET NON SUPPOSÉ — CRM-081 tranche 2 f, docs/SPEC-cards.md §16.16.8.
+#
+# LE SEED EST UN CONTRAT, et celui-ci promet un fil de DEUX messages dans la card ${CARD_COURRIER: -2}.
+# Il ne tient que si la chaîne `References` du message reçu a été PERSISTÉE : sans le correctif du
+# §16.16.2, `mail-sync` composait sa charge d insertion sans `references_ids`, la colonne retombait
+# sur son défaut vide, et la réponse devenait sa propre racine — deux fils au lieu d un, sans la
+# moindre erreur. Un seed qui accepterait un fil coupé ne serait plus un contrat : il annoncerait
+# une démonstration que l écran ne pourrait pas faire.
+references_reponse=$(curl -s "$API/rest/v1/mail_messages?select=references_ids&rfc822_message_id=eq.%3C$MSGID_REPONSE%3E" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].references_ids | join(",")')
+[ "$references_reponse" = "<$MSGID_CLASSE>" ] || die "la réponse de démonstration porte
+        « $references_reponse » au lieu de « <$MSGID_CLASSE> » : la chaîne References n a pas été
+        persistée à l ingestion, et le fil de la card ${CARD_COURRIER: -2} serait COUPÉ en deux. Le
+        service mail-sync est-il à jour ? (docs/SPEC-cards.md §16.16.2)"
+
+# LA CLÉ DE FIL EST RELUE EN BASE, par la fonction que le produit emploie : deux définitions
+# concordantes valent mieux qu une supposition sur la forme des en-têtes.
+fils_card=$(psql_seed -c "select count(distinct app.cle_fil(references_ids, rfc822_message_id))
+                          from public.mail_messages where card_id = '$CARD_COURRIER';" | tr -d ' ')
+[ "$fils_card" = 1 ] || die "la card ${CARD_COURRIER: -2} porte $fils_card fils au lieu d un seul :
+        le groupement du §16.16.3 n aurait rien à grouper."
+
+info "Courrier : 3 messages réellement reçus — deux classés sur ${CARD_COURRIER: -2} par la règle 1"
+info "          et réunis en UN SEUL fil, un non classé pour le panneau de tri (§16.16.8)."
+info "          Rien n a été forgé en base (§2.19)"
 
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
