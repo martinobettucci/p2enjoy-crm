@@ -754,3 +754,198 @@ describe('canevas — la fiche d’édition, §3 et §5.5', () => {
 		expect(jauges[0]?.getAttribute('class')).toBe(jauges[1]?.getAttribute('class'))
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// TRANCHE 2b-2a — LE LIEN VERS UN CHANNEL
+//
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-2a
+// @verifies docs/SPEC-goals.md §3 (sélecteur des channels LISIBLES groupés par track ; retirer le
+//           lien remet `channel_id` à nul), §4.2 (poser le lien exige `app.can_write_channel` —
+//           l'écran ne l'anticipe pas et TRADUIT le refus), §5.4 (« lien perdu »)
+//
+// L'ASSERTION QUI COMPTE LE PLUS EST CELLE DE LA DESTINATION ABSENTE DE LA LISTE : un channel
+// archivé, ou dont la lecture vient de se fermer, ne figure pas parmi les liables. Un sélecteur
+// qui retomberait alors sur « Aucun channel » afficherait un retrait de lien qui n'a pas eu lieu,
+// et le premier geste sur un autre champ le rendrait vrai.
+// ---------------------------------------------------------------------------------------------
+
+const WORKSPACE = { id: 'w1', name: 'P2Enjoy', slug: 'p2enjoy' }
+
+const CHANNELS_LIABLES = [
+	{ id: 'c1', name: 'Refonte de site', tracks: { id: 't1', name: 'Studio web' } },
+	{ id: 'c2', name: 'Audit technique', tracks: { id: 't1', name: 'Studio web' } },
+	{ id: 'c3', name: 'Appel d’offres', tracks: { id: 't2', name: 'Grands comptes' } },
+]
+
+/** Les lectures d'un canevas dont le sélecteur de destination est servi. */
+const LECTURES_AVEC_CHANNELS = {
+	...LECTURES_UN_BLOC,
+	workspaces: ok([WORKSPACE]),
+	channels: ok(CHANNELS_LIABLES),
+}
+
+/** Ouvre la fiche du premier bloc rendu, et attend le sélecteur. */
+async function ouvrirFiche(): Promise<HTMLSelectElement> {
+	fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+	await screen.findByTestId('fiche-bloc')
+	return (await screen.findByTestId('champ-lien')) as HTMLSelectElement
+}
+
+describe('canevas — lier un bloc à un channel, §3 et §4.2', () => {
+	it('groupe les channels PAR TRACK et offre toujours l’option vide', async () => {
+		const { client } = clientEcrivant(LECTURES_AVEC_CHANNELS, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		const selecteur = await ouvrirFiche()
+
+		await waitFor(() => expect(selecteur.querySelectorAll('optgroup')).toHaveLength(2))
+		const groupes = [...selecteur.querySelectorAll('optgroup')]
+		expect(groupes.map((groupe) => groupe.getAttribute('label'))).toEqual(['Studio web', 'Grands comptes'])
+		expect([...groupes[0]!.querySelectorAll('option')].map((option) => option.textContent)).toEqual([
+			'Refonte de site',
+			'Audit technique',
+		])
+		// L'option vide est TOUJOURS là : c'est elle qui retire le lien au clavier, et un sélecteur
+		// dont on ne pourrait pas sortir enfermerait le bloc dans sa première destination.
+		expect(selecteur.querySelector('option')?.value).toBe('')
+		expect(selecteur.querySelector('option')?.textContent).toBe(fr['goals.edit.link.none'])
+	})
+
+	it('choisir une destination n’envoie QUE `channel_id`', async () => {
+		// La règle des tranches 2a et 2b-1, reposée ici : renvoyer les colonnes voisines écraserait
+		// ce qu'un collègue vient d'y écrire.
+		const { client, ecritures } = clientEcrivant(
+			LECTURES_AVEC_CHANNELS,
+			ok([{ ...BLOC_LIBRE, channel_id: 'c1', channels: CHANNEL_VIVANT }]),
+		)
+		rendreCanevas(client)
+		const selecteur = await ouvrirFiche()
+		await waitFor(() => expect(selecteur.querySelectorAll('optgroup').length).toBeGreaterThan(0))
+
+		await act(async () => {
+			fireEvent.change(selecteur, { target: { value: 'c1' } })
+		})
+		const lien = ecritures.filter((ecriture) => ecriture.operation === 'update')
+		expect(lien).toHaveLength(1)
+		expect(lien[0]?.charge).toEqual({ channel_id: 'c1' })
+		expect(await screen.findByTestId('etat-lien')).toBeTruthy()
+		expect(screen.getByTestId('etat-lien').textContent).toBe(fr['goals.write.saved'])
+	})
+
+	it('le bouton de retrait N’EXISTE PAS tant qu’il n’y a rien à retirer', async () => {
+		// Une commande qui n'aurait rien à défaire serait une commande morte, et l'entête du
+		// fichier d'écran s'interdit d'en poser.
+		const { client } = clientEcrivant(LECTURES_AVEC_CHANNELS, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		await ouvrirFiche()
+		expect(screen.queryByTestId('retirer-lien')).toBeNull()
+	})
+
+	it('retirer le lien envoie `channel_id: null`, et non une colonne omise', async () => {
+		const { client, ecritures } = clientEcrivant(
+			{ ...LECTURES_AVEC_CHANNELS, goal_blocks: ok([BLOC_LIE]) },
+			ok([{ ...BLOC_LIE, channel_id: null, channels: null }]),
+		)
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('retirer-lien'))
+		})
+		// Omettre la colonne n'écrirait RIEN : le lien resterait, et l'écran annoncerait pourtant un
+		// retrait — la simulation de succès que `CLAUDE.md` §18 interdit.
+		const lien = ecritures.filter((ecriture) => ecriture.operation === 'update')
+		expect(lien[0]?.charge).toEqual({ channel_id: null })
+	})
+
+	it('LA DESTINATION ACTUELLE RESTE UNE OPTION même absente de la liste des liables', async () => {
+		// Éprouvé CONTRE SON SUCCÈS : sans cette option, le sélecteur retomberait sur « Aucun
+		// channel » et afficherait un retrait de lien qui n'a pas eu lieu.
+		const { client } = clientEcrivant(
+			{
+				...LECTURES_AVEC_CHANNELS,
+				goal_blocks: ok([BLOC_LIE]),
+				channels: ok([CHANNELS_LIABLES[2]]),
+			},
+			ok([BLOC_LIE]),
+		)
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+		const selecteur = (await screen.findByTestId('champ-lien')) as HTMLSelectElement
+
+		await waitFor(() => expect(selecteur.value).toBe('c1'))
+		expect([...selecteur.querySelectorAll('option')].map((option) => option.textContent)).toContain(
+			CHANNEL_VIVANT.name,
+		)
+	})
+
+	it('TRADUIT le refus de `app.can_write_channel` par SON texte, jamais par celui du tableau', async () => {
+		// « Vous ne pouvez pas modifier ce tableau » serait faux quand c'est le droit d'écrire dans
+		// la DESTINATION qui manque (§4.2), et ferait chercher le problème du mauvais côté.
+		const { client } = clientEcrivant(LECTURES_AVEC_CHANNELS, {
+			data: null,
+			error: { message: 'row-level security' },
+			status: 403,
+		})
+		rendreCanevas(client)
+		const selecteur = await ouvrirFiche()
+		await waitFor(() => expect(selecteur.querySelectorAll('optgroup').length).toBeGreaterThan(0))
+
+		await act(async () => {
+			fireEvent.change(selecteur, { target: { value: 'c1' } })
+		})
+		await waitFor(() =>
+			expect(screen.getByTestId('etat-lien').textContent).toBe(fr['goals.edit.link.refused.forbidden']),
+		)
+		expect(screen.getByTestId('etat-lien').getAttribute('role')).toBe('alert')
+	})
+
+	it('un RETRAIT refusé garde le texte commun : retirer n’engage aucune destination', async () => {
+		// §4.2 : retirer le lien n'exige rien de plus que l'écriture sur le bloc. Employer le texte
+		// de la destination ferait alors accuser un droit qui n'est pas en cause.
+		const { client } = clientEcrivant({ ...LECTURES_AVEC_CHANNELS, goal_blocks: ok([BLOC_LIE]) }, {
+			data: null,
+			error: { message: 'row-level security' },
+			status: 403,
+		})
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('retirer-lien'))
+		})
+		await waitFor(() =>
+			expect(screen.getByTestId('etat-lien').textContent).toBe(fr['goals.write.refused.forbidden']),
+		)
+	})
+
+	it('une liste de channels EN ERREUR laisse le lien inchangé et propose une reprise', async () => {
+		const { client } = clientEcrivant(
+			{
+				...LECTURES_AVEC_CHANNELS,
+				goal_blocks: ok([BLOC_LIE]),
+				channels: { data: null, error: { message: 'coupure' }, status: 500 },
+			},
+			ok([BLOC_LIE]),
+		)
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		expect(await screen.findByTestId('erreur-channels')).toBeTruthy()
+		expect(screen.getByTestId('recharger-channels')).toBeTruthy()
+		// LE LIEN EXISTANT NE BOUGE PAS : l'échec porte sur la LISTE, pas sur le bloc.
+		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).value).toBe('c1')
+	})
+
+	it('dit « aucun channel à viser » plutôt que de laisser un sélecteur muet', async () => {
+		const { client } = clientEcrivant({ ...LECTURES_AVEC_CHANNELS, channels: ok([]) }, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		await ouvrirFiche()
+		await waitFor(() =>
+			expect(screen.getByText(fr['goals.edit.link.empty'])).toBeTruthy(),
+		)
+	})
+})

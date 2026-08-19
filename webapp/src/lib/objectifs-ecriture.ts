@@ -27,7 +27,8 @@
 // se retrouve ici pour la même cause. Annoncer « Enregistré » sur zéro ligne serait la simulation
 // de succès que `CLAUDE.md` §18 interdit.
 
-import { classerErreur, enErreur, pret, type EtatAsync } from './async'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { BlocObjectif } from './objectifs'
 import { destinationDepuisEmbarque } from './objectifs'
 import { COLONNES_BLOC } from './objectifs'

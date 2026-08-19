@@ -37,6 +37,9 @@ import {
 	classerRefusBloc,
 	ecrireContenuBloc,
 	ecrireGeometrieBloc,
+	grouperChannelsParTrack,
+	lierBlocAChannel,
+	lireChannelsLiables,
 	poserBloc,
 } from './objectifs-ecriture'
 import { COLONNES_BLOC } from './objectifs'
@@ -429,5 +432,222 @@ describe('ecrireContenuBloc', () => {
 
 	it('offre les cinq couleurs de jeton du §2.2, et rien d’autre', async () => {
 		expect([...COULEURS_BLOC]).toEqual(['brand', 'success', 'accent', 'danger', 'neutral'])
+	})
+})
+
+// --- Tranche 2b-2a : le LIEN d'un bloc vers un channel -------------------------------------
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-2a : lier un bloc à un
+//           channel, et retirer ce lien
+// @verifies docs/SPEC-goals.md §3 (sélecteur des channels LISIBLES par l'appelant, groupés par
+//           track ; retirer le lien remet `channel_id` à nul), §4.2 (poser le lien exige
+//           `app.can_write_channel`, le retirer non — l'écran n'anticipe NI l'un NI l'autre),
+//           §2.2 (`channel_id` facultatif)
+
+/** Espion de LECTURE : la chaîne du sélecteur emploie `is` et `order`, que l'espion d'écriture ignore. */
+function espionLecture(reponse: {
+	data: unknown[] | null
+	error: { message: string; code?: string } | null
+	status: number
+}): { client: ClientCrm; appel: { table?: string; colonnes?: string; filtres: string[] } } {
+	const appel: { table?: string; colonnes?: string; filtres: string[] } = { filtres: [] }
+	const chaine: Record<string, unknown> = {
+		eq: (colonne: string, valeur: unknown) => {
+			appel.filtres.push(`eq(${colonne},${String(valeur)})`)
+			return chaine
+		},
+		is: (colonne: string, valeur: unknown) => {
+			appel.filtres.push(`is(${colonne},${String(valeur)})`)
+			return chaine
+		},
+		order: (colonne: string) => {
+			appel.filtres.push(`order(${colonne})`)
+			return chaine
+		},
+		then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				select: (colonnes: string) => {
+					appel.colonnes = colonnes
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+const ID_WORKSPACE = '5eed0000-0000-4000-8000-0000000000a1'
+const ID_CHANNEL = '5eed0000-0000-4000-8000-0000000000c1'
+
+describe('lireChannelsLiables', () => {
+	it('écarte les channels ARCHIVÉS et ceux de la CORBEILLE, côté serveur', async () => {
+		// Une destination en corbeille rendrait immédiatement l'état « lien perdu » du §5.4 : la
+		// proposer reviendrait à offrir un lien qui naît cassé. Le filtre est dans la requête, et
+		// non dans un tri d'écran qui ferait transiter des lignes jamais montrées.
+		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
+		await lireChannelsLiables(client, ID_WORKSPACE)
+		expect(appel.table).toBe('channels')
+		expect(appel.filtres).toContain(`eq(workspace_id,${ID_WORKSPACE})`)
+		expect(appel.filtres).toContain('is(archived_at,null)')
+		expect(appel.filtres).toContain('is(deleted_at,null)')
+	})
+
+	it('traduit l’imbrication du track, qu’elle soit objet ou tableau d’un élément', async () => {
+		const { client } = espionLecture({
+			data: [
+				{ id: ID_CHANNEL, name: 'Refonte', tracks: { id: 'tr-1', name: 'Studio web' } },
+				{ id: 'ch-2', name: 'Audit', tracks: [{ id: 'tr-1', name: 'Studio web' }] },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireChannelsLiables(client, ID_WORKSPACE)
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect(etat.donnees[0]).toEqual({ id: ID_CHANNEL, nom: 'Refonte', track: { id: 'tr-1', nom: 'Studio web' } })
+		expect(etat.donnees[1]?.track).toEqual({ id: 'tr-1', nom: 'Studio web' })
+	})
+
+	it('garde le channel dont le TRACK n’est pas rendu, sans lui inventer de parent', async () => {
+		// L'appelant lit ce channel : il a donc le droit de le viser. Le faire disparaître du
+		// sélecteur parce que son parent n'est pas lisible lui retirerait une destination légitime
+		// sans jamais le dire.
+		const { client } = espionLecture({
+			data: [{ id: ID_CHANNEL, name: 'Refonte', tracks: null }],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireChannelsLiables(client, ID_WORKSPACE)
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect(etat.donnees[0]?.track).toBeNull()
+	})
+
+	it('rend une erreur plutôt que de lever, et ne rend jamais une liste vide à sa place', async () => {
+		// Éprouvé CONTRE SON SUCCÈS : une implémentation qui rendrait `pret([])` sur une erreur
+		// ferait dire au sélecteur « aucun channel à viser », ce qui est un mensonge.
+		const { client } = espionLecture({ data: null, error: { message: 'coupure' }, status: 500 })
+		const etat = await lireChannelsLiables(client, ID_WORKSPACE)
+		expect(etat.statut).toBe('erreur')
+	})
+})
+
+describe('grouperChannelsParTrack', () => {
+	const studio = { id: 'tr-1', nom: 'Studio web' }
+	const grands = { id: 'tr-2', nom: 'Grands comptes' }
+
+	it('groupe par track en conservant l’ordre du SERVEUR, sans retrier', () => {
+		// La requête ordonne déjà par `position` puis par nom ; rejouer ce tri ici le ferait
+		// diverger le jour où la requête changera.
+		const groupes = grouperChannelsParTrack([
+			{ id: 'c1', nom: 'Refonte', track: studio },
+			{ id: 'c2', nom: 'Appel d’offres', track: grands },
+			{ id: 'c3', nom: 'Audit', track: studio },
+		])
+		expect(groupes.map((groupe) => groupe.nomTrack)).toEqual(['Studio web', 'Grands comptes'])
+		expect(groupes[0]?.channels.map((channel) => channel.nom)).toEqual(['Refonte', 'Audit'])
+		expect(groupes[1]?.channels.map((channel) => channel.nom)).toEqual(['Appel d’offres'])
+	})
+
+	it('range les channels SANS track dans un groupe anonyme, placé en dernier', () => {
+		const groupes = grouperChannelsParTrack([
+			{ id: 'c1', nom: 'Orphelin', track: null },
+			{ id: 'c2', nom: 'Refonte', track: studio },
+		])
+		expect(groupes.map((groupe) => groupe.nomTrack)).toEqual(['Studio web', null])
+		expect(groupes[1]?.channels.map((channel) => channel.nom)).toEqual(['Orphelin'])
+	})
+
+	it('ne perd aucun channel', () => {
+		const channels = [
+			{ id: 'c1', nom: 'Refonte', track: studio },
+			{ id: 'c2', nom: 'Orphelin', track: null },
+			{ id: 'c3', nom: 'Appel d’offres', track: grands },
+		]
+		const groupes = grouperChannelsParTrack(channels)
+		expect(groupes.flatMap((groupe) => groupe.channels)).toHaveLength(channels.length)
+	})
+
+	it('rend une liste vide sur une entrée vide, jamais un groupe fantôme', () => {
+		expect(grouperChannelsParTrack([])).toEqual([])
+	})
+})
+
+describe('lierBlocAChannel', () => {
+	it('n’envoie QUE `channel_id`, jamais les colonnes de contenu ou de géométrie', async () => {
+		// C'est la règle que les tranches 2a et 2b-1 ont posée deux fois : renvoyer les colonnes
+		// voisines écraserait ce qu'un collègue vient d'y écrire.
+		const { client, appel } = espion({ data: [ligneRendue({ channel_id: ID_CHANNEL })], error: null, status: 200 })
+		await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ channel_id: ID_CHANNEL })
+		expect(appel.filtres).toContain(`eq(id,${ID_BLOC})`)
+		expect(appel.colonnes).toBe(COLONNES_BLOC)
+	})
+
+	it('retire le lien en envoyant `null`, et non en omettant la colonne', async () => {
+		// Omettre la colonne n'écrirait RIEN : le lien resterait en place, et l'écran annoncerait
+		// pourtant un retrait — la simulation de succès que `CLAUDE.md` §18 interdit.
+		const { client, appel } = espion({ data: [ligneRendue({ channel_id: null })], error: null, status: 200 })
+		const resultat = await lierBlocAChannel(client, ID_BLOC, null)
+		expect(appel.charge).toEqual({ channel_id: null })
+		expect(resultat.statut).toBe('enregistree')
+	})
+
+	it('rend la ligne du serveur avec sa destination TRADUITE', async () => {
+		const { client } = espion({
+			data: [
+				ligneRendue({
+					channel_id: ID_CHANNEL,
+					channels: {
+						id: ID_CHANNEL,
+						name: 'Refonte',
+						slug: 'refonte',
+						deleted_at: null,
+						tracks: { name: 'Studio web', slug: 'studio-web', deleted_at: null },
+					},
+				}),
+			],
+			error: null,
+			status: 200,
+		})
+		const resultat = await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(resultat.statut).toBe('enregistree')
+		if (resultat.statut !== 'enregistree') return
+		expect(resultat.bloc.destination?.nom).toBe('Refonte')
+		expect(resultat.bloc.destination?.track?.nom).toBe('Studio web')
+	})
+
+	it('traduit en `interdit` le refus de `app.can_write_channel`, sans jamais l’anticiper', async () => {
+		// §4.2 : poser un lien exige l'écriture sur la DESTINATION. Cette règle vit dans la clause
+		// `with check` de la politique ; le module envoie et traduit.
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+
+	it('rend « sans-effet » sur zéro ligne — le silence de la clause `using`', async () => {
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const resultat = await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(resultat.statut).toBe('sans-effet')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(resultat.statut).toBe('refus')
 	})
 })
