@@ -60,6 +60,7 @@ const ID_SOPHIE = '5eed0000-0000-4000-8000-000000000092'
 const ID_ELISE = '5eed0000-0000-4000-8000-000000000093'
 const ID_SOGEXIA = '5eed0000-0000-4000-8000-000000000081'
 const ID_CARD_ERP = '5eed0000-0000-4000-8000-0000000000c2'
+const ID_WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 
 /** Léo Marchand, tel que la pile réelle le rend — mesure 1 du §15.3. */
 const LEO = {
@@ -69,6 +70,8 @@ const LEO = {
 	phone: null,
 	role_title: 'Directeur achats',
 	organization_id: ID_SOGEXIA,
+	// Porté depuis 4h (§17.5) : le rattachement l'exige, et la fiche le lit dans la même requête.
+	workspace_id: ID_WORKSPACE,
 	organizations: { id: ID_SOGEXIA, name: 'Sogexia', domain: 'sogexia.example' },
 	card_contacts: [
 		{
@@ -91,6 +94,7 @@ const SOPHIE = {
 	phone: null,
 	role_title: null,
 	organization_id: null,
+	workspace_id: ID_WORKSPACE,
 	organizations: null,
 	card_contacts: [
 		{
@@ -113,6 +117,7 @@ const ELISE = {
 	phone: '+33 6 12 34 56 78',
 	role_title: "Cheffe d'atelier",
 	organization_id: '5eed0000-0000-4000-8000-000000000082',
+	workspace_id: ID_WORKSPACE,
 	organizations: { id: '5eed0000-0000-4000-8000-000000000082', name: 'Studio Meunier', domain: null },
 	card_contacts: [],
 }
@@ -562,5 +567,297 @@ describe('modification d’un contact depuis sa fiche (docs/SPEC-contacts.md §1
 		monter(null, ID_LEO)
 		expect(screen.getByText(fr['contact.noWorkspace.title'])).toBeTruthy()
 		expect(screen.queryByTestId('ouvrir-modification-contact')).toBeNull()
+	})
+})
+
+// =================================================================================================
+// SOUS-TRANCHE 4h — LE RATTACHEMENT D'UNE AFFAIRE DEPUIS LA FICHE
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4h
+// @verifies docs/SPEC-contacts.md §17.2 (où le geste s'ancre), §17.3 (la liste n'est lue qu'à
+//           l'ouverture), §17.4 (le refus EXPLICITE, et non le silence de 4g),
+//           §17.6 (l'exclusion des déjà rattachées, la relecture, aucune commande éteinte),
+//           §17.7 (contrat de comportement, cas a à n)
+// @verifies docs/DESIGN_SYSTEM.md §5.26 (ce geste)
+
+/**
+ * Client qui LIT la fiche, LIT les affaires et ÉCRIT un rattachement.
+ *
+ * `insert` est distingué de `update` : la sous-tranche 4h insère dans `card_contacts`, là où 4g
+ * met à jour `contacts`. Un espion qui confondrait les deux laisserait passer un code qui écrirait
+ * dans la mauvaise table.
+ */
+function clientQuiRattache(options: {
+	lectures: Reponse[]
+	affaires: Reponse
+	insertion?: { error: { message: string; code?: string } | null; status: number }
+}) {
+	const envois: unknown[] = []
+	let rangLecture = 0
+	const faire = (reponse: () => Reponse) => {
+		const chaine: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse()).then(resoudre),
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+		return chaine
+	}
+	return {
+		envois,
+		client: {
+			from: (table: string) => ({
+				select: () =>
+					table === 'cards'
+						? faire(() => options.affaires)
+						: faire(() => {
+								const reponse = options.lectures[Math.min(rangLecture, options.lectures.length - 1)]
+								rangLecture += 1
+								return reponse
+							}),
+				insert: (charge: unknown) => {
+					envois.push({ table, charge })
+					return Promise.resolve(options.insertion ?? { error: null, status: 201 })
+				},
+			}),
+		} as unknown as ClientCrm,
+	}
+}
+
+const ERP = { id: ID_CARD_ERP, title: 'Migration ERP Sogexia', archived_at: null }
+const VITRINE = { id: '5eed0000-0000-4000-8000-0000000000c1', title: 'Refonte du site vitrine', archived_at: null }
+/** « Contrat cadre 2025 » du seed : la seule affaire ARCHIVÉE lisible (§17.3, mesure 15). */
+const CONTRAT_ARCHIVE = {
+	id: '5eed0000-0000-4000-8000-0000000000c8',
+	title: 'Contrat cadre 2025',
+	archived_at: '2026-03-31T16:00:00+00:00',
+}
+
+const AFFAIRES = (...lignes: unknown[]) => ({ data: lignes, error: null, status: 200 })
+
+async function ouvrirLeRattachement() {
+	await userEvent.click(await screen.findByTestId('ouvrir-rattachement-affaire'))
+	return screen.getByTestId('formulaire-rattachement-affaire')
+}
+
+describe('rattachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §17.7)', () => {
+	it('cas a — la commande est rendue, et AUCUNE affaire n’est lue tant qu’elle n’est pas ouverte', async () => {
+		let lecturesAffaires = 0
+		const chaine: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(OK(LEO)).then(resoudre),
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+		const client = {
+			from: (table: string) => ({
+				select: () => {
+					if (table === 'cards') lecturesAffaires += 1
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		monter(client, ID_LEO)
+		expect(await screen.findByTestId('ouvrir-rattachement-affaire')).toBeTruthy()
+		// Charger quarante affaires pour un geste que la plupart des visites ne font pas serait une
+		// requête gratuite (§17.3). C'est la règle du §13.4, tenue par le sélecteur d'organisations.
+		expect(lecturesAffaires).toBe(0)
+	})
+
+	it('cas b — l’ouverture monte le formulaire, lit la liste, et le focus ENTRE dans le sélecteur', async () => {
+		const { client } = clientQuiRattache({ lectures: [OK(LEO)], affaires: AFFAIRES(ERP, VITRINE) })
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		const selecteur = await screen.findByTestId('champ-affaire')
+		expect(document.activeElement).toBe(selecteur)
+		// La commande et le formulaire s'EXCLUENT (§17.6) : ouvrir remplace le bouton.
+		expect(screen.queryByTestId('ouvrir-rattachement-affaire')).toBeNull()
+	})
+
+	it('cas c — « Annuler » remonte la commande ET LUI REND LE FOCUS', async () => {
+		const { client } = clientQuiRattache({ lectures: [OK(LEO)], affaires: AFFAIRES(VITRINE) })
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		await userEvent.click(screen.getByText(fr['contact.attach.cancel']))
+		const commande = await screen.findByTestId('ouvrir-rattachement-affaire')
+		// Le retour est DIFFÉRÉ d'un tour de rendu : la commande est démontée pendant que le
+		// formulaire est ouvert, et l'appeler depuis le gestionnaire viserait une référence nulle.
+		// C'est le défaut trouvé au carnet par la décision 453. Aucune temporisation.
+		expect(document.activeElement).toBe(commande)
+	})
+
+	it('cas d — le sélecteur n’offre AUCUNE affaire déjà rattachée à ce contact', async () => {
+		// Léo est rattaché à « Migration ERP Sogexia » : elle ne doit pas être offerte. Ce n'est pas
+		// une garde de droit, c'est le refus d'une commande vouée au `409` (§17.4, mesure 8).
+		const { client } = clientQuiRattache({ lectures: [OK(LEO)], affaires: AFFAIRES(ERP, VITRINE) })
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		const options = [...(await screen.findByTestId('champ-affaire')).querySelectorAll('option')]
+		const libelles = options.map((option) => option.textContent)
+		expect(libelles).toContain('Refonte du site vitrine')
+		expect(libelles).not.toContain('Migration ERP Sogexia')
+	})
+
+	it('cas d — une affaire ARCHIVÉE est offerte, et son option le DIT', async () => {
+		const { client } = clientQuiRattache({
+			lectures: [OK(ELISE)],
+			affaires: AFFAIRES(CONTRAT_ARCHIVE),
+		})
+		monter(client, ID_ELISE)
+		await ouvrirLeRattachement()
+		const options = [...(await screen.findByTestId('champ-affaire')).querySelectorAll('option')]
+		// La base ACCEPTE ce rattachement (mesure 6). La mention est un TEXTE dans le libellé :
+		// une `option` native ne porte ni icône ni pilule, et le §1 interdit qu'une couleur porte
+		// seule une information (§5.26).
+		expect(options.map((option) => option.textContent)).toContain('Contrat cadre 2025 (archivée)')
+	})
+
+	it('cas e — la commande d’envoi est éteinte tant qu’aucune affaire n’est choisie, et rien n’est envoyé', async () => {
+		const { client, envois } = clientQuiRattache({
+			lectures: [OK(LEO)],
+			affaires: AFFAIRES(VITRINE),
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		const envoyer = (await screen.findByTestId('confirmer-rattachement-affaire')) as HTMLButtonElement
+		// Elle n'est PAS éteinte par un rôle (§17.6) : elle l'est faute d'objet à envoyer.
+		expect(envoyer.disabled).toBe(true)
+		await userEvent.click(envoyer)
+		expect(envois).toEqual([])
+	})
+
+	it('cas f et h — le rattachement accepté envoie les quatre colonnes, un rôle vide valant `null`, et RELIT la fiche', async () => {
+		let lectures = 0
+		const chaineLecture: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => {
+				lectures += 1
+				return Promise.resolve(OK(ELISE)).then(resoudre)
+			},
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaineLecture[nom] = () => chaineLecture
+		const chaineAffaires: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) =>
+				Promise.resolve(AFFAIRES(VITRINE)).then(resoudre),
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaineAffaires[nom] = () => chaineAffaires
+		const envois: unknown[] = []
+		const client = {
+			from: (table: string) => ({
+				select: () => (table === 'cards' ? chaineAffaires : chaineLecture),
+				insert: (charge: unknown) => {
+					envois.push(charge)
+					return Promise.resolve({ error: null, status: 201 })
+				},
+			}),
+		} as unknown as ClientCrm
+		monter(client, ID_ELISE)
+		await ouvrirLeRattachement()
+		await userEvent.selectOptions(screen.getByTestId('champ-affaire'), VITRINE.id)
+		await userEvent.click(screen.getByTestId('confirmer-rattachement-affaire'))
+		// UN RÔLE VIDE VAUT `null`, JAMAIS `""` : la contrainte `card_contacts_role_check` refuse
+		// la chaîne vide par `400` / `23514` (§17.4, mesure 11).
+		expect(envois).toEqual([
+			{ workspace_id: ID_WORKSPACE, card_id: VITRINE.id, contact_id: ID_ELISE, role: null },
+		])
+		// LA FICHE EST RELUE, jamais complétée localement (§17.6) : la relecture rapporte l'état
+		// d'archivage et l'adresse de l'affaire ajoutée, que le sélecteur ne connaissait pas.
+		await screen.findByTestId('ouvrir-rattachement-affaire')
+		expect(lectures).toBeGreaterThan(1)
+	})
+
+	it('cas i et k — un refus 403 est DIT, le formulaire RESTE ouvert et la saisie est conservée', async () => {
+		const { client } = clientQuiRattache({
+			lectures: [OK(LEO)],
+			affaires: AFFAIRES(VITRINE),
+			insertion: { error: { message: 'row-level security', code: '42501' }, status: 403 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		await userEvent.selectOptions(screen.getByTestId('champ-affaire'), VITRINE.id)
+		await userEvent.type(screen.getByTestId('champ-role-affaire'), 'sponsor')
+		await userEvent.click(screen.getByTestId('confirmer-rattachement-affaire'))
+		// AUCUN « SANS EFFET » ICI, et c'est l'écart mesuré avec 4g : une insertion est filtrée par
+		// WITH CHECK, qui REJETTE la ligne — `403` explicite (mesure 9) —, là où une mise à jour
+		// l'est par USING et rend `200` avec zéro ligne sans erreur.
+		const refus = await screen.findByTestId('refus-rattachement-affaire')
+		expect(refus.textContent).toBe(fr['contact.attach.refus.forbidden'])
+		// UN REFUS N'EFFACE PAS LA SAISIE (§5.7 ter), et le formulaire reste ouvert.
+		expect(screen.getByTestId('formulaire-rattachement-affaire')).toBeTruthy()
+		expect((screen.getByTestId('champ-role-affaire') as HTMLInputElement).value).toBe('sponsor')
+		expect((screen.getByTestId('champ-affaire') as HTMLSelectElement).value).toBe(VITRINE.id)
+	})
+
+	it('cas j — un doublon 409 est traduit par SON message, distinct du refus d’autorisation', async () => {
+		const { client } = clientQuiRattache({
+			lectures: [OK(LEO)],
+			affaires: AFFAIRES(VITRINE),
+			insertion: { error: { message: 'duplicate key', code: '23505' }, status: 409 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		await userEvent.selectOptions(screen.getByTestId('champ-affaire'), VITRINE.id)
+		await userEvent.click(screen.getByTestId('confirmer-rattachement-affaire'))
+		// Le sélecteur exclut déjà les affaires rattachées, mais deux utilisateurs peuvent agir à
+		// la même seconde : l'écran ne prétend pas connaître l'état du serveur (§17.6).
+		const refus = await screen.findByTestId('refus-rattachement-affaire')
+		expect(refus.textContent).toBe(fr['contact.attach.refus.alreadyAttached'])
+	})
+
+	it('cas l — une liste illisible désactive le sélecteur et porte son action de reprise', async () => {
+		const { client } = clientQuiRattache({
+			lectures: [OK(LEO)],
+			affaires: { data: null, error: { message: 'boom' }, status: 500 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		expect(await screen.findByTestId('erreur-affaires-rattachables')).toBeTruthy()
+		expect(screen.getByTestId('relire-affaires')).toBeTruthy()
+		// Un `select` vide mais actif serait la commande morte que le §5.21 refuse : il n'est pas
+		// rendu du tout (§5.22).
+		expect(screen.queryByTestId('champ-affaire')).toBeNull()
+	})
+
+	it('cas m — aucune affaire offerte : mention SANS action, et aucun sélecteur vide', async () => {
+		// Léo est rattaché à la seule affaire lisible : il ne reste rien à offrir.
+		const { client } = clientQuiRattache({ lectures: [OK(LEO)], affaires: AFFAIRES(ERP) })
+		monter(client, ID_LEO)
+		await ouvrirLeRattachement()
+		expect(await screen.findByTestId('aucune-affaire-rattachable')).toBeTruthy()
+		expect(screen.queryByTestId('champ-affaire')).toBeNull()
+		expect(screen.queryByTestId('confirmer-rattachement-affaire')).toBeNull()
+	})
+
+	it('cas n — aucun geste sur l’introuvable, sur l’erreur, ni sans espace de travail', async () => {
+		const { client } = clientQuiRattache({ lectures: [VIDE], affaires: AFFAIRES(VITRINE) })
+		monter(client, ID_LEO)
+		// Il n'y a PAS d'objet à rattacher : le rattachement a besoin de l'identifiant du contact
+		// et de son workspace, qu'un contact absent ne porte pas.
+		expect(await screen.findByText(fr['contact.notFound.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-rattachement-affaire')).toBeNull()
+
+		cleanup()
+		const { client: enErreur } = clientQuiRattache({
+			lectures: [{ data: null, error: { message: 'boom' }, status: 500 }],
+			affaires: AFFAIRES(VITRINE),
+		})
+		monter(enErreur, ID_LEO)
+		expect(await screen.findByText(fr['contact.error.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-rattachement-affaire')).toBeNull()
+
+		cleanup()
+		monter(null, ID_LEO)
+		expect(await screen.findByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-rattachement-affaire')).toBeNull()
+	})
+
+	it('le geste vit DANS la zone des affaires, et l’état vide le GARDE (§17.2, §5.24 révisé)', async () => {
+		// Élise n'a AUCUNE affaire : l'état vide de la zone garde désormais son geste — c'est lui
+		// qui le comble, la règle du §5.13. C'est la RÉVISION PAR LIVRAISON du §5.24.
+		const { client } = clientQuiRattache({ lectures: [OK(ELISE)], affaires: AFFAIRES(VITRINE) })
+		monter(client, ID_ELISE)
+		expect(await screen.findByText(fr['contact.deals.empty.title'])).toBeTruthy()
+		const commande = screen.getByTestId('ouvrir-rattachement-affaire')
+		// Il est DANS la section des affaires, et non à côté de « Modifier » : un geste se pose près
+		// de ce qu'il change (§17.2).
+		const section = commande.closest('section')
+		expect(section?.textContent).toContain(fr['contact.deals.title'])
+		expect(section?.textContent).not.toContain(fr['contact.modification.open'])
 	})
 })

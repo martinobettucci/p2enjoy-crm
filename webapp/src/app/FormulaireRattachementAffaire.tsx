@@ -90,12 +90,29 @@ export function FormulaireRattachementAffaire({
 	const [enVol, setEnVol] = useState(false)
 	const [message, setMessage] = useState<string | null>(null)
 	const premierChamp = useRef<HTMLSelectElement>(null)
+	const focusEntre = useRef(false)
 
-	// Le focus ENTRE dans le premier contrôle à l'ouverture (§5.13, cas b du §17.7). Sans cela,
-	// ouvrir le formulaire au clavier laisse le focus sur une commande qui vient de disparaître.
+	/**
+	 * LE FOCUS ENTRE DANS LE SÉLECTEUR DÈS QU'IL EST FOCALISABLE (§5.13, cas b du §17.7).
+	 *
+	 * **Il ne peut PAS entrer au montage, et c'est un défaut trouvé PAR LA PREUVE unitaire.** Le
+	 * sélecteur est `disabled` tant que la liste se lit (§5.22), et **un élément désactivé ne reçoit
+	 * pas le focus** : un effet à dépendances vides visait un contrôle qui le refusait, et ouvrir le
+	 * formulaire au clavier laissait le focus sur le document — exactement le défaut que le §5.13
+	 * interdit, déplacé de la fermeture vers l'ouverture.
+	 *
+	 * L'effet suit donc l'état de la liste, et le drapeau garantit qu'il n'entre **qu'une fois** :
+	 * une relecture demandée par le cas l ne doit pas reprendre le focus pendant la saisie, ce qui
+	 * serait le vol de focus que le §5.7 quater proscrit. **Aucune temporisation** (`CLAUDE.md` §18) :
+	 * c'est le cycle de rendu de React qui ordonne les deux gestes.
+	 */
 	useEffect(() => {
-		premierChamp.current?.focus()
-	}, [])
+		if (focusEntre.current) return
+		const selecteur = premierChamp.current
+		if (selecteur === null || selecteur.disabled) return
+		selecteur.focus()
+		focusEntre.current = true
+	})
 
 	const envoyer = useCallback(async () => {
 		if (idCard === '') return

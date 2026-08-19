@@ -22,8 +22,13 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	AFFAIRES_RATTACHABLES_MAX,
+	COLONNES_AFFAIRE_RATTACHABLE,
 	COLONNES_CONTACT_CARNET,
 	CHEMIN_FILTRE_CORBEILLE,
+	FILTRE_CORBEILLE_AFFAIRE,
+	TRI_AFFAIRES_RATTACHABLES,
+	lireAffairesRattachables,
 	COLONNES_FICHE_CONTACT,
 	COLONNES_FICHE_ORGANISATION,
 	TABLE_TRI_AFFAIRES_FICHE,
@@ -1377,5 +1382,95 @@ describe('modifierContact (§16.3)', () => {
 		if (resultat.statut !== 'refus') throw new Error('refus attendu')
 		expect(resultat.refus.nature).toBe('indisponible')
 		expect(resultat.refus.detail).toContain('réseau coupé')
+	})
+})
+
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4h : le rattachement d'une affaire
+//           depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §17.3 (la lecture du sélecteur : ses colonnes, le filtre qui
+//           écarte la CORBEILLE, le tri demandé au serveur, la borne), §17.4 (un refus de lecture
+//           est zéro ligne), §17.5 (`workspace_id` porté par la fiche), §17.7 cas d, h, l
+// @verifies docs/DESIGN_SYSTEM.md §5.26 (une affaire archivée est offerte, la corbeille non)
+describe('lireAffairesRattachables (§17.3)', () => {
+	const AFFAIRE = { id: '5eed0000-0000-4000-8000-0000000000c2', title: 'Migration ERP Sogexia', archived_at: null }
+	const ARCHIVEE = {
+		id: '5eed0000-0000-4000-8000-0000000000c8',
+		title: 'Contrat cadre 2025',
+		archived_at: '2026-03-31T16:00:00+00:00',
+	}
+
+	it('demande les trois colonnes du §17.3, et NI le track NI le channel', async () => {
+		const { client, appel } = espion({ data: [AFFAIRE], error: null, status: 200 })
+		await lireAffairesRattachables(client)
+		expect(appel.table).toBe('cards')
+		expect(appel.colonnes).toBe(COLONNES_AFFAIRE_RATTACHABLE)
+		// Un sélecteur n'a AUCUNE adresse à construire : il envoie un identifiant. Demander les
+		// slugs imposerait la levée d'ambiguïté `PGRST201` du §15.3 pour une donnée que rien
+		// n'afficherait, et le §10.3 a posé qu'une requête ne rapporte que ce qui est affiché.
+		expect(appel.colonnes).not.toContain('channels')
+		expect(appel.colonnes).not.toContain('tracks')
+	})
+
+	it('ÉCARTE LES AFFAIRES DE LA CORBEILLE, que la base accepterait pourtant', async () => {
+		const { client, appel } = espion({ data: [], error: null, status: 200 })
+		await lireAffairesRattachables(client)
+		// MESURÉ (§17.3, mesure 7) : la base rend `201` sur une affaire supprimée. C'est l'ÉCRAN
+		// qui l'écarte, la fiche ne listant jamais une affaire en corbeille (§15.3) — le
+		// rattachement serait invisible dès sa création. Le filtre est donc une exigence du
+		// produit, et sa disparition ne serait rattrapée par aucune assertion de valeur.
+		expect(appel.filtres).toContain(`is(${FILTRE_CORBEILLE_AFFAIRE},null)`)
+	})
+
+	it('demande le tri au SERVEUR et pose la borne du sélecteur', async () => {
+		const { client, appel } = espion({ data: [], error: null, status: 200 })
+		await lireAffairesRattachables(client)
+		expect(appel.tris).toEqual([TRI_AFFAIRES_RATTACHABLES])
+		expect(appel.filtres).toContain(`limit(${AFFAIRES_RATTACHABLES_MAX})`)
+	})
+
+	it('rend une affaire ARCHIVÉE, en la marquant comme telle', async () => {
+		const { client } = espion({ data: [AFFAIRE, ARCHIVEE], error: null, status: 200 })
+		const lues = await lireAffairesRattachables(client)
+		expect(lues.statut).toBe('pret')
+		if (lues.statut !== 'pret') return
+		// Elle est OFFERTE — la base accepte ce rattachement (mesure 6) —, et son archivage est
+		// PORTÉ pour que l'option puisse le dire (§5.26). L'exclure poserait à l'écran une règle
+		// de produit que personne n'a prise.
+		expect(lues.donnees).toEqual([
+			{ id: AFFAIRE.id, titre: 'Migration ERP Sogexia', archivee: false },
+			{ id: ARCHIVEE.id, titre: 'Contrat cadre 2025', archivee: true },
+		])
+	})
+
+	it('rend une liste VIDE sans erreur quand la RLS ne consent aucune ligne', async () => {
+		// MESURÉ (§17.4, mesure 17) : l'anonyme reçoit `200` et `[]`, jamais une erreur de
+		// privilège. L'écran n'a donc aucun refus de lecture à mettre en scène.
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const lues = await lireAffairesRattachables(client)
+		expect(lues).toEqual({ statut: 'pret', donnees: [] })
+	})
+
+	it('classe une erreur sur le CODE HTTP réellement reçu, jamais sur le texte', async () => {
+		const { client } = espion({ data: null, error: { message: 'boom' }, status: 500 })
+		const lues = await lireAffairesRattachables(client)
+		expect(lues.statut).toBe('erreur')
+	})
+})
+
+describe('la fiche porte `workspace_id` depuis 4h (§17.5)', () => {
+	it('le demande dans ses colonnes et le rend', async () => {
+		const { client, appel } = espion({
+			data: [{ ...LEO, workspace_id: '5eed0000-0000-4000-8000-000000000001', card_contacts: [] }],
+			error: null,
+			status: 200,
+		})
+		const lue = await lireFicheContact(client, LEO.id)
+		expect(appel.colonnes).toContain('workspace_id')
+		expect(lue.statut).toBe('pret')
+		if (lue.statut !== 'pret' || lue.donnees === null) return
+		// La clé composite de `card_contacts` l'exige au rattachement, et le §12.5 a posé qu'elle
+		// est TRANSMISE et non devinée. C'est une colonne de plus dans une requête déjà émise,
+		// contre une requête entière si on la relisait.
+		expect(lue.donnees.workspace_id).toBe('5eed0000-0000-4000-8000-000000000001')
 	})
 })
