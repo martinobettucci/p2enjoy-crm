@@ -20377,3 +20377,57 @@ leur côté ; le backlog n'a donc pas été écrasé. Preuves rejouées APRÈS s
 `i18n.test.ts` **297 tests verts**, `e2e/ui/objectifs.spec.ts` **24 scénarios verts**, console
 vierge. Le point « où reprendre » ci-dessus est donc déjà dépassé sur ce point : les flèches sont
 livrées par cette session voisine.
+
+## décision 468 — `CRM-083` tranche 2b-2c : le bloc et la flèche se SUPPRIMENT, et la cascade reste en base
+
+**L'unité, et le choix.** La décision 467 laisse `CRM-083` en `[~]` et désigne la tranche 2b-2b
+comme reprise ; celle-ci a été poussée entre-temps par une session voisine (`3f507da`) — **du code
+seul, sans une seule preuve et sans documentation**. Cette session livre donc la **tranche 2b-2c,
+les suppressions**, et rattrape au passage les preuves manquantes de la 2b-2b. La spécification
+existe déjà et couvre le geste (`docs/SPEC-goals.md` §3, « supprimer une flèche, supprimer un bloc
+— la suppression d'un bloc emporte ses flèches ») : le §3.2 point 3 de `docs/CloudWorker.md`
+s'applique dans sa forme d'exception, elle est lue intégralement et le code commence.
+
+**Ce qui a été livré.** `supprimerBloc` et `supprimerFleche` dans le module d'écriture, avec les
+trois issues des autres gestes. Au pied de la fiche d'un bloc, dans un bloc séparé par une bordure
+haute — la place que `docs/DESIGN_SYSTEM.md` §5.3 donne à un retrait —, la commande « Supprimer le
+bloc » et sa confirmation. Sur chaque ligne de la liste des liens, la commande « Supprimer la
+flèche » et la sienne.
+
+**LA CASCADE RESTE EN BASE, ET L'ÉCRAN EN TIRE UNE RÈGLE DE RENDU.** `goal_links` est
+`on delete cascade` sur ses deux extrémités (§2.3) : aucune requête d'écran ne nomme les flèches
+avant de supprimer le bloc — les retirer une à une ferait de l'écran la garde d'une règle du schéma,
+et laisserait un état incohérent si la seconde requête échouait. La conséquence à l'écran ne se
+devine pas : la flèche d'un bloc supprimé **disparaît**, elle ne devient pas le moignon pointillé du
+§5.4. Les deux causes n'ont rien de commun — le moignon rend une extrémité que la RLS **masque**,
+la ligne existant toujours en base ; ici la cascade l'a **détruite**, et la laisser pendre
+dessinerait un lien que plus rien ne porte.
+
+**DEUX DÉFAUTS TROUVÉS PAR LES PREUVES, AUCUN PAR UNE PREUVE VERTE.** (1) Le retour du focus après
+une annulation ne se faisait pas : la commande reste montée pendant sa confirmation — le patron du
+§5.27 — mais elle est **désactivée**, et un bouton désactivé **refuse le focus**. Appelé depuis le
+gestionnaire d'annulation, `focus()` laissait le focus sur le document. Corrigé par le remède du
+§5.25 — un drapeau, puis un effet —, pour une cause voisine mais distincte : là-bas la commande est
+démontée, ici seulement éteinte ; aucune temporisation. (2) La preuve « la fiche n'a aucun bouton
+d'enregistrement » comptait les boutons et en exigeait **un seul**. La règle qu'elle défend n'a pas
+bougé, mais la fiche porte désormais un second geste : la preuve est **révisée** avec son motif
+écrit dans le fichier, et énumère les commandes attendues — ce qui refuse toujours un bouton
+d'enregistrement, là où un simple compte l'aurait laissé passer dès qu'un autre geste disparaîtrait.
+
+**L'accord du nombre passe par TROIS clés** — aucune flèche, une flèche, plusieurs — et non par un
+gabarit paramétré : « les 1 flèches » est faux, et une langue qui accorde autrement n'aurait aucun
+moyen de le corriger depuis un gabarit unique (`CLAUDE.md` §23).
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs-ecriture.test.ts` **69 assertions**
+(21 pour cette tranche et pour le rattrapage de la 2b-2b), `Objectifs.test.tsx` **61 scénarios**
+(14 pour cette tranche), `e2e/ui/objectifs.spec.ts` **27 scénarios** dont 3 pour cette tranche,
+écrivant réellement dans la base — chacun pose **son propre** bloc et sa propre flèche par la clé de
+service et les détruit par l'interface, de sorte que le seed n'est jamais entamé. La cascade est
+mesurée **en base** après le geste, pas déduite de l'écran. Console vierge, **quatre captures
+observées** : `suppression-bloc-confirmation-1440.jpg`, `suppression-bloc-1440.jpg`,
+`suppression-fleche-confirmation-1440.jpg`, `suppression-refus-lectrice-1440.jpg`.
+
+**Où reprendre.** `CRM-083` reste `[~]`. Son reste est désormais : **créer, renommer, réordonner et
+archiver un tableau** (§3), le harnais dédié `scripts/verify-objectifs-canevas.sh`, et l'état
+lecture seule du `viewer` qui reste **bloqué par l'arbitrage INC-170**. Deux arbitrages restent en
+attente : **INC-169** et **INC-170**.

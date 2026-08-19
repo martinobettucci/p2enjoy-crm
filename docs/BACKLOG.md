@@ -8100,9 +8100,60 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       le canevas. Une capture qui ne montre pas ce qu'elle prouve ne prouve rien ; le champ est
       désormais amené dans la vue avant la prise.
 
-**CE QUI RESTE — TRANCHE 2b-2b, LES FLÈCHES.** Aucune commande morte n'est posée pour ces gestes.
-- [ ] **Tracer une flèche** : `Espace` puis sélection d'un second bloc (§5.5), choix de la direction
-      à la création et modifiable ensuite ; supprimer une flèche, supprimer un bloc.
+**TRANCHE 2b-2b LIVRÉE — LES FLÈCHES.** Le code a été poussé par une session parallèle (`3f507da`)
+**sans aucune preuve ni documentation** ; la session de la tranche 2b-2c les a rattrapées.
+
+- [x] **Tracer une flèche entre deux blocs**, avec le choix de la direction **avant** le tracé
+      (§3) : `Espace` sur le bloc de départ au clavier, commande puis deux clics à la souris. La
+      direction se corrige ensuite depuis la liste des liens — seul endroit du diagramme que le
+      clavier et un lecteur d'écran atteignent. `webapp/src/lib/objectifs-ecriture.ts`
+      (`tracerFleche`, `changerDirectionFleche`, `classerRefusFleche`).
+- [x] **Le doublon d'une paire de blocs porte SA propre nature de refus** : le §2.3 dit que changer
+      la direction d'une flèche existante est une MODIFICATION, pas un ajout, et un texte générique
+      enverrait retenter indéfiniment le même geste.
+- [x] **Preuves rattrapées par la tranche 2b-2c** : 12 assertions unitaires sur `tracerFleche`,
+      `changerDirectionFleche` et `classerRefusFleche` — dont `backward` envoyé TEL QUEL, sans
+      inversion des extrémités (§2.3), et le « sans-effet » éprouvé contre son succès.
+
+**TRANCHE 2b-2c LIVRÉE — LES SUPPRESSIONS.**
+
+- [x] **Supprimer un bloc et supprimer une flèche** (§3), chacune derrière une confirmation qui
+      **nomme ce qu'elle détruit** (`docs/DESIGN_SYSTEM.md` §6). La commande d'un bloc vit au pied
+      de sa fiche, dans un bloc séparé par une bordure haute — la place du §5.3 ; celle d'une flèche
+      vit sur sa ligne de la liste des liens. `webapp/src/lib/objectifs-ecriture.ts`
+      (`supprimerBloc`, `supprimerFleche`), `webapp/src/app/Objectifs.tsx`.
+- [x] **LA CASCADE RESTE EN BASE, et l'écran en tire une règle de rendu.** Aucune requête d'écran ne
+      nomme les flèches avant de supprimer le bloc (§2.3) ; en revanche la flèche d'un bloc supprimé
+      **disparaît** au lieu de devenir le moignon pointillé du §5.4 — celui-ci rend une extrémité
+      que la RLS masque, la ligne existant toujours, là où la cascade l'a détruite.
+- [x] **La confirmation du bloc ANNONCE les flèches qui partent avec lui**, et l'accord se fait par
+      **trois clés** — aucune, une, plusieurs — jamais par un gabarit paramétré : « les 1 flèches »
+      est faux (`CLAUDE.md` §23). Le compte est celui des flèches **rendues**, jamais un total de la
+      base.
+- [x] **Les trois issues sont traitées, et la troisième est dite en toutes lettres** : `200` et zéro
+      ligne garde le bloc à l'écran et invite à recharger. Le faire disparaître annoncerait une
+      suppression qui n'a pas eu lieu. **Mesuré avec le jeton de la lectrice**, et la ligne relue en
+      base après le geste.
+- [x] **UN DÉFAUT TROUVÉ PAR LA PREUVE** : le retour du focus après une annulation ne se faisait
+      pas. La commande reste montée pendant sa confirmation (§5.27) mais elle est **désactivée**, et
+      un bouton désactivé refuse le focus. Corrigé par le remède du §5.25 — un drapeau, puis un
+      effet —, sans aucune temporisation.
+- [x] **UNE PREUVE RÉVISÉE, avec son motif écrit dans le fichier** : « la fiche n'a aucun bouton
+      d'enregistrement » comptait les boutons et en exigeait un seul ; elle énumère désormais les
+      commandes attendues, ce qui refuse toujours un bouton d'enregistrement là où un compte
+      l'aurait laissé passer dès qu'un autre geste disparaîtrait.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** :
+      `webapp/src/lib/objectifs-ecriture.test.ts` **69 assertions**,
+      `webapp/src/app/Objectifs.test.tsx` **61 scénarios** (14 pour cette tranche),
+      `e2e/ui/objectifs.spec.ts` **27 scénarios** dont 3 pour cette tranche. Chaque scénario de
+      suppression **pose son propre bloc et sa propre flèche** par la clé de service et les détruit
+      par l'interface : le seed n'est jamais entamé, là où une remise en état après une CASCADE
+      devrait recréer des lignes que plus rien ne garde. Console vierge. **Quatre captures
+      observées** sous `docs/captures/CRM-083/` : `suppression-bloc-confirmation-1440.jpg`,
+      `suppression-bloc-1440.jpg`, `suppression-fleche-confirmation-1440.jpg`,
+      `suppression-refus-lectrice-1440.jpg`.
+
+**CE QUI RESTE — LES TABLEAUX, ET LE HARNAIS.** Aucune commande morte n'est posée pour ces gestes.
 - [ ] **Créer, renommer, réordonner et archiver un tableau** (§3).
 - [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
       l'écran disant pourquoi (§5.4). **BLOQUÉ PAR UN ARBITRAGE, ET C'EST INC-170** : cet énoncé
@@ -8115,16 +8166,21 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       l'écriture** : `title`, `body`, `color`, `fill_percent` et `channel_id` vivent tous dans
       `goal_blocks`, sous la politique de modification déjà mesurée. Le refus du LIEN est en outre
       remesuré hors interface par le scénario E2E de la lectrice, qui relit `channel_id` sur la
-      ligne après le geste et le trouve inchangé. Ce qui reste dû est le refus des gestes de la
-      tranche 2b-2b, qui touche `goal_links`.
+      ligne après le geste et le trouve inchangé. **La tranche 2b-2c remesure le refus de la
+      SUPPRESSION hors interface** : le scénario de la lectrice relit la ligne du bloc après le
+      geste et la trouve intacte. Ce qui reste dû est le refus **en écriture sur `goal_links`** pour
+      les gestes de flèche — tracé, direction, suppression —, que `e2e/api/objectifs.spec.ts`
+      mesure déjà en insertion mais pas encore en suppression.
 - [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
       dégradations réelles.
 - [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
       `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage, le défilement, **la pose, le
       déplacement, le redimensionnement**, et depuis la tranche 2b-1 **l'ouverture de la fiche par
       `Entrée`, sa saisie complète et sa fermeture par `Échap` avec retour du focus au bloc** sont
-      livrés au clavier et prouvés ; le tracé d'une flèche au clavier reste dû avec la tranche 2b-2.
-      C'est la partie la plus facile à oublier de cette unité.
+      livrés au clavier et prouvés ; **le tracé d'une flèche par `Espace` l'est depuis la tranche
+      2b-2b**, et **les deux suppressions depuis la 2b-2c** — commande, confirmation, annulation et
+      retour du focus, toutes atteignables au clavier. Ce qui reste dû au clavier suivra les gestes
+      d'administration d'un tableau. C'est la partie la plus facile à oublier de cette unité.
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à

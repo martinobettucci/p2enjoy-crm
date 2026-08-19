@@ -40,6 +40,18 @@ d'exécuter le code attendu.
   la pilule « Track › Channel » et le clic y mène.
 - **Lier un objectif à un dossier demande d'y écrire, le délier non.** Un refus le dit dans ses
   propres termes, plutôt que d'accuser un droit sur le tableau qui n'est pas en cause.
+- **Une flèche se trace entre deux blocs, et sa direction se choisit avant** (`CRM-083`
+  tranche 2b-2b, `docs/SPEC-goals.md` §2.3 et §3). `Espace` sur un bloc au clavier, ou la commande
+  « Tracer une flèche » puis deux clics à la souris ; la direction — l'un des trois sens — se
+  choisit dans le bandeau **avant** le second bloc, et se corrige ensuite depuis la liste des liens.
+- **Un bloc et une flèche se suppriment** (`CRM-083` tranche 2b-2c, `docs/SPEC-goals.md` §3). La
+  commande d'un bloc vit au pied de sa fiche, celle d'une flèche sur sa ligne de la liste des
+  liens ; chacune demande une confirmation **qui nomme ce qu'elle détruit**. Supprimer un bloc
+  emporte les flèches qui le relient, et la confirmation l'annonce avant le geste. Un bloc se
+  supprime réellement — il ne s'archive pas, et il n'y a aucune reprise.
+- **Un refus silencieux de suppression est dit en toutes lettres** : lorsque la base ne retire
+  aucune ligne, l'écran écrit « aucun bloc n'a été supprimé », garde le bloc et invite à recharger,
+  plutôt que d'annoncer une suppression qui n'a pas eu lieu.
 
 ### Corrigé
 
