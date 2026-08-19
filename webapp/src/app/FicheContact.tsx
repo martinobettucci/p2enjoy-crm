@@ -22,16 +22,21 @@
 //       §17.7 (contrat de comportement, cas a à n), §17.8 (limites nommées)
 // @spec docs/DESIGN_SYSTEM.md §5.26 (le geste de rattachement de la fiche de contact)
 //
-// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, ET IL RATTACHE DEPUIS 4h — cela, et rien de plus. Deux écarts
-// demeurent, et ils sont NOMMÉS plutôt que compensés par des commandes mortes :
+// @spec docs/SPEC-contacts.md §18.4 (où le geste de DÉTACHEMENT s'ancre : une quatrième colonne,
+//       et la confirmation sur une ligne à elle), §18.6 (de quoi il a l'air, et la relecture dans
+//       les TROIS issues), §18.7 (contrat de comportement, cas a à m), §18.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.27 (le geste de détachement), §5.24 révisé par livraison (le
+//       tableau des affaires se lit désormais à QUATRE colonnes)
 //
-// - la SUPPRESSION d'un contact, dont le motif n'est pas le temps : elle dépend de l'arbitrage NON
-//   TRANCHÉ du §6 point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base ;
-// - le DÉTACHEMENT depuis cette page (§17.8). Le geste existe, livré depuis la fiche de l'affaire
-//   (§12.6), que le tableau de la zone 2 atteint EN UN CLIC — chaque titre est un lien. Le livrer
-//   ici demanderait sa confirmation nommant l'objet, la place où la poser dans une ligne de tableau,
-//   et le traitement du « sans effet » que la clause USING produit à la suppression : c'est une
-//   sous-tranche à part entière. L'asymétrie est ASSUMÉE.
+// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, IL RATTACHE DEPUIS 4h ET IL DÉTACHE DEPUIS 4i. Un écart
+// demeure, et il est NOMMÉ plutôt que compensé par une commande morte : la SUPPRESSION d'un
+// contact, dont le motif n'est pas le temps — elle dépend de l'arbitrage NON TRANCHÉ du §6 point 4,
+// les valeurs `jsonb` qui désignent un contact supprimé demeurant en base.
+//
+// L'ASYMÉTRIE QUE LE §17.8 ASSUMAIT EST COMBLÉE : le détachement, qui n'existait que depuis la
+// fiche de l'affaire (§12.6), vit désormais aussi ici. Ce que 4h laissait ouvert — la place de la
+// confirmation dans une LIGNE DE TABLEAU — est tranché au §18.4 : une ligne à elle, en `colSpan`,
+// seul emplacement à la fois dans le flux, adjacent à sa ligne, et assez large pour nommer l'objet.
 //
 // TROIS ABSENCES, UN SEUL ÉCRAN, DÉLIBÉRÉMENT (§15.4). Un contact inexistant, un contact refusé à
 // l'appelant et un identifiant qui n'est pas un uuid rendent tous les trois « contact
@@ -72,6 +77,10 @@ import {
 	CommandeRattachementAffaire,
 	FormulaireRattachementAffaire,
 } from './FormulaireRattachementAffaire'
+import {
+	CommandeDetachementAffaire,
+	ConfirmationDetachementAffaire,
+} from './DetachementAffaireContact'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -337,6 +346,33 @@ export function ContenuFicheContact({
 		setTentative((precedente) => precedente + 1)
 	}, [fermerRattachement])
 
+	// --- SOUS-TRANCHE 4i : LE GESTE DE DÉTACHEMENT (§18.4) --------------------------------------
+	// L'état vit ICI et non dans la ligne, pour deux raisons que la spécification mesure :
+	//
+	// - UNE SEULE CONFIRMATION À TOUT INSTANT (cas d du §18.7) : deux questions destructrices
+	//   simultanées ne diraient pas à laquelle on répond. L'identifiant de l'affaire est la clé
+	//   d'exclusivité, et l'ouvrir sur une autre ligne ferme la précédente sans code de plus ;
+	// - LE MESSAGE DU GESTE SURVIT À LA RELECTURE (§18.6) : la relecture démonte et remonte le
+	//   tableau, et un message porté par la ligne partirait avec elle — c'est-à-dire exactement dans
+	//   le cas où il compte le plus, l'issue « sans effet » où la ligne RESTE.
+	const [confirmationDetachement, setConfirmationDetachement] = useState<string | null>(null)
+	const [messageDetachement, setMessageDetachement] = useState<string | null>(null)
+
+	/**
+	 * LA FICHE EST RELUE DANS LES TROIS ISSUES, JAMAIS AMPUTÉE LOCALEMENT (§18.6, §5.21).
+	 *
+	 * Après un succès parce que la ligne doit partir ; après un « sans effet » parce que l'écran ne
+	 * sait pas laquelle des deux causes s'applique et ne prétend pas le savoir ; après un refus
+	 * parce que l'état affiché peut être périmé. Un retrait optimiste contredirait l'ordre du
+	 * serveur le temps d'un rendu, et sur l'issue « sans effet » il EFFACERAIT UNE LIGNE QUE LA BASE
+	 * A GARDÉE — précisément le mensonge que le §18.3 interdit.
+	 */
+	const surDetachement = useCallback((message: string | null) => {
+		setMessageDetachement(message)
+		setConfirmationDetachement(null)
+		setTentative((precedente) => precedente + 1)
+	}, [])
+
 	/**
 	 * LE SÉLECTEUR N'OFFRE QUE LES AFFAIRES NON ENCORE RATTACHÉES à ce contact (§17.6, cas d).
 	 *
@@ -364,6 +400,12 @@ export function ContenuFicheContact({
 			etat={etat}
 			contact={contact}
 			onReprise={reprendre}
+			detachement={{
+				confirmee: confirmationDetachement,
+				message: messageDetachement,
+				onDemander: setConfirmationDetachement,
+				onGeste: surDetachement,
+			}}
 			gesteRattachement={
 				// LE GESTE N'EXISTE QUE S'IL Y A UN CONTACT À RATTACHER (cas n du §17.7) : ni sur
 				// l'introuvable, ni sur l'erreur, ni sans client. `ContenuFiche` rend ces trois états
@@ -434,6 +476,18 @@ type ProprietesContenu = {
 	readonly geste?: React.ReactNode
 	/** Le geste de rattachement, ou `null` quand il n'y a rien à rattacher (§17.7 cas n). */
 	readonly gesteRattachement?: React.ReactNode
+	/** L'état du geste de DÉTACHEMENT, tenu par la fiche pour l'exclusivité et le message (§18.4). */
+	readonly detachement?: EtatDetachement
+}
+
+/** Ce que la fiche transmet au tableau pour que chaque ligne porte son geste (§18.4). */
+type EtatDetachement = {
+	/** L'affaire dont la confirmation est ouverte, ou `null` — la clé d'exclusivité du cas d. */
+	readonly confirmee: string | null
+	/** Le message du geste, sous le tableau, qui SURVIT à la relecture (§18.6). */
+	readonly message: string | null
+	readonly onDemander: (idCard: string | null) => void
+	readonly onGeste: (message: string | null) => void
 }
 
 function ContenuFiche({
@@ -443,6 +497,7 @@ function ContenuFiche({
 	onReprise,
 	geste = null,
 	gesteRattachement = null,
+	detachement,
 }: ProprietesContenu) {
 	if (client === null) {
 		return (
@@ -561,70 +616,190 @@ function ContenuFiche({
 									<th scope="col" className={CLASSES_ENTETE}>
 										{t('contact.deals.table.state')}
 									</th>
+									{/*
+									  QUATRIÈME COLONNE — LES COMMANDES (§18.4, §5.27). Son en-tête est
+									  un LIBELLÉ LISIBLE et non une cellule vide : une colonne sans nom
+									  n'est pas annonçable au lecteur d'écran (§8). Le motif des « trois
+									  colonnes et non cinq » du §5.24 est INCHANGÉ — il visait les
+									  colonnes de DONNÉE, le track et le channel restant dans l'adresse.
+									*/}
+									{detachement === undefined || client === null ? null : (
+										<th scope="col" className={CLASSES_ENTETE}>
+											{t('contact.detach.column')}
+										</th>
+									)}
 								</tr>
 							</thead>
 							<tbody>
 								{contact.affaires.map((affaire) => (
-									<tr
+									<LigneAffaireContact
 										key={affaire.idCard}
-										data-testid="ligne-affaire-contact"
-										data-card={affaire.idCard}
-										className="border-b border-border hover:bg-hover"
-									>
-										{/*
-										  LE TITRE D'UNE AFFAIRE EST UN LIEN VERS ELLE, construit sur
-										  les slugs rapportés par l'embarquement (§15.3). Le track et
-										  le channel ne sont PAS des colonnes : ils sont dans
-										  l'adresse, et les répéter remplirait la ligne d'une
-										  information que le clic donne déjà (§15.5).
-										*/}
-										<td className={CLASSES_CELLULE} title={affaire.titre}>
-											<Link
-												to={affaire.adresse}
-												data-testid="lien-affaire-contact"
-												className="text-brand hover:underline"
-											>
-												{affaire.titre}
-											</Link>
-										</td>
-										{/*
-										  Le rôle du RATTACHEMENT — le rôle du contact dans cette
-										  affaire —, à ne pas confondre avec sa fonction, rendue en
-										  zone 1. Les deux zones portent la distinction ; aucune glose
-										  n'est nécessaire (§15.3). Valeur libre, donc jamais traduite.
-										*/}
-										<td
-											className={CLASSES_CELLULE}
-											title={affaire.role === null ? undefined : affaire.role}
-										>
-											{affaire.role ?? ''}
-										</td>
-										<td className="h-[var(--size-target)] px-3">
-											{/*
-											  UNE AFFAIRE ARCHIVÉE RESTE ATTEIGNABLE, ET SON ÉTAT EST DIT
-											  (§15.3). La taire mentirait sur le passé, que cette page
-											  sert précisément. Pilule du §5.6, précédée d'une icône afin
-											  que l'information ne repose jamais sur la seule couleur.
-											*/}
-											{affaire.archivee ? (
-												<span
-													data-testid="pilule-affaire-archivee"
-													className="inline-flex items-center gap-1 rounded-full bg-accent-soft text-accent-on-soft px-3 py-1 text-sm"
-												>
-													<Archive aria-hidden="true" size={14} strokeWidth={2} />
-													{t('contact.deals.archived')}
-												</span>
-											) : (
-												''
-											)}
-										</td>
-									</tr>
+										affaire={affaire}
+										client={client}
+										idContact={contact.id}
+										detachement={detachement}
+									/>
 								))}
 							</tbody>
 						</table>
 					</div>
 				)}
+				{/*
+				  LE MESSAGE DU GESTE SE LIT SOUS LE TABLEAU, jamais en tête d'écran (§5.13, §5.16,
+				  §18.6) — la place que le §5.21 lui donne déjà pour l'autre sens. Il SURVIT à la
+				  relecture, ce que l'issue « sans effet » exige : c'est précisément le cas où la
+				  ligne RESTE, et où un message emporté par le remontage du tableau laisserait
+				  l'utilisateur devant une liste inchangée sans la moindre explication.
+				*/}
+				{detachement?.message == null ? null : (
+					<p
+						role="alert"
+						data-testid="message-detachement-affaire"
+						className="rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
+					>
+						{detachement.message}
+					</p>
+				)}
 			</section>
 		</section>
+	)
+}
+
+/**
+ * Une ligne du tableau des affaires, et — quand sa confirmation est ouverte — LA LIGNE QUI LA PORTE.
+ *
+ * **La confirmation occupe une ligne à elle, en `colSpan`, immédiatement sous la sienne** (§18.4,
+ * §5.27). Les deux autres emplacements sont écartés pour une raison mesurable : dans la cellule de
+ * la commande, elle serait TRONQUÉE par `CLASSES_CELLULE` (`max-w-[32ch]`, `truncate`) et la règle
+ * du §6 — nommer l'objet — serait tenue dans le balisage et perdue à l'écran ; sous le tableau,
+ * rien ne la relierait à SA ligne. Le fragment rend deux `tr` frères, ce qu'un `tbody` accepte.
+ */
+function LigneAffaireContact({
+	affaire,
+	client,
+	idContact,
+	detachement,
+}: {
+	readonly affaire: FicheContactLue['affaires'][number]
+	readonly client: ClientCrm | null
+	readonly idContact: string
+	readonly detachement: EtatDetachement | undefined
+}) {
+	const commande = useRef<HTMLButtonElement>(null)
+	const confirmee = detachement?.confirmee === affaire.idCard
+
+	/**
+	 * LE FOCUS REVIENT À LA COMMANDE DE SA LIGNE À LA FERMETURE, ET CE RETOUR EST DIFFÉRÉ (cas c
+	 * du §18.7).
+	 *
+	 * **LE MOTIF DIFFÈRE DE CELUI DE 4g ET DE 4h.** Là-bas la commande est DÉMONTÉE pendant que le
+	 * formulaire est ouvert, et sa référence vaut `null`. Ici elle reste montée — mais elle est
+	 * `disabled` tant que la confirmation est ouverte, et **un élément désactivé ne reçoit pas le
+	 * focus** : `focus()` appelé depuis le gestionnaire d'annulation serait un geste sans effet,
+	 * exactement comme le sélecteur de 4h au montage. Le drapeau est posé à la fermeture, l'effet
+	 * rend le focus au tour suivant, quand le bouton est de nouveau actif. **Aucune temporisation**
+	 * (`CLAUDE.md` §18) : c'est le cycle de rendu de React qui ordonne les deux gestes.
+	 */
+	const [focusARendre, setFocusARendre] = useState(false)
+
+	useEffect(() => {
+		if (confirmee || !focusARendre) return
+		commande.current?.focus()
+		setFocusARendre(false)
+	}, [confirmee, focusARendre])
+
+	const annuler = useCallback(() => {
+		detachement?.onDemander(null)
+		setFocusARendre(true)
+	}, [detachement])
+
+	return (
+		<>
+			<tr
+				data-testid="ligne-affaire-contact"
+				data-card={affaire.idCard}
+				className="border-b border-border hover:bg-hover"
+			>
+				{/*
+				  LE TITRE D'UNE AFFAIRE EST UN LIEN VERS ELLE, construit sur les slugs rapportés par
+				  l'embarquement (§15.3). Le track et le channel ne sont PAS des colonnes : ils sont
+				  dans l'adresse, et les répéter remplirait la ligne d'une information que le clic
+				  donne déjà (§15.5).
+				*/}
+				<td className={CLASSES_CELLULE} title={affaire.titre}>
+					<Link
+						to={affaire.adresse}
+						data-testid="lien-affaire-contact"
+						className="text-brand hover:underline"
+					>
+						{affaire.titre}
+					</Link>
+				</td>
+				{/*
+				  Le rôle du RATTACHEMENT — le rôle du contact dans cette affaire —, à ne pas
+				  confondre avec sa fonction, rendue en zone 1. Les deux zones portent la
+				  distinction ; aucune glose n'est nécessaire (§15.3). Valeur libre, jamais traduite.
+				*/}
+				<td className={CLASSES_CELLULE} title={affaire.role === null ? undefined : affaire.role}>
+					{affaire.role ?? ''}
+				</td>
+				<td className="h-[var(--size-target)] px-3">
+					{/*
+					  UNE AFFAIRE ARCHIVÉE RESTE ATTEIGNABLE, ET SON ÉTAT EST DIT (§15.3). La taire
+					  mentirait sur le passé, que cette page sert précisément. Pilule du §5.6, précédée
+					  d'une icône afin que l'information ne repose jamais sur la seule couleur.
+					*/}
+					{affaire.archivee ? (
+						<span
+							data-testid="pilule-affaire-archivee"
+							className="inline-flex items-center gap-1 rounded-full bg-accent-soft text-accent-on-soft px-3 py-1 text-sm"
+						>
+							<Archive aria-hidden="true" size={14} strokeWidth={2} />
+							{t('contact.deals.archived')}
+						</span>
+					) : (
+						''
+					)}
+				</td>
+				{/*
+				  LA COMMANDE DE DÉTACHEMENT — §18.4. TOUTES LES LIGNES LA PORTENT, y compris celle
+				  d'une affaire ARCHIVÉE : MESURÉ, la base accepte ce détachement, `app.can_write_card`
+				  dérivant du channel et ne lisant ni `archived_at` ni `deleted_at` (§18.3, mesure 4).
+				  AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (§18.6) : la lectrice RÉUSSIT
+				  ce geste sur une affaire et reçoit le silence sur une autre, toutes deux lisibles
+				  par elle (mesure 7) — l'écran qui calculerait ce droit se tromperait.
+				*/}
+				{detachement === undefined || client === null ? null : (
+					<td className="h-[var(--size-target)] px-3">
+						<CommandeDetachementAffaire
+							commande={commande}
+							idCard={affaire.idCard}
+							confirmationOuverte={confirmee}
+							onDemander={() => detachement.onDemander(affaire.idCard)}
+						/>
+					</td>
+				)}
+			</tr>
+			{detachement === undefined || client === null || !confirmee ? null : (
+				<tr data-testid="ligne-confirmation-detachement" data-card={affaire.idCard}>
+					{/*
+					  UNE LIGNE À ELLE, SUR TOUTE LA LARGEUR (§18.4, §5.27) : c'est le seul emplacement
+					  à la fois DANS LE FLUX (§5.13), ADJACENT à la ligne concernée, et ASSEZ LARGE
+					  pour nommer l'affaire — ce que la cellule bornée à `32ch` et tronquée de la
+					  commande ne permettrait pas.
+					*/}
+					<td colSpan={4} className="px-3">
+						<ConfirmationDetachementAffaire
+							client={client}
+							idCard={affaire.idCard}
+							idContact={idContact}
+							titre={affaire.titre}
+							onGeste={detachement.onGeste}
+							onAnnuler={annuler}
+						/>
+					</td>
+				</tr>
+			)}
+		</>
 	)
 }

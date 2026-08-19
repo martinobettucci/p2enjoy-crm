@@ -266,6 +266,28 @@ export const fr = {
 	'contact.attach.refus.network':
 		'Le rattachement n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
 	'contact.attach.refus.unknown': 'Le rattachement a échoué. Réessayez dans un instant.',
+	// Sous-tranche 4i — le détachement d'une affaire depuis la fiche (docs/SPEC-contacts.md §18).
+	'contact.detach.column': 'Commandes',
+	'contact.detach.action': 'Détacher',
+	// LA CONFIRMATION NOMME L'AFFAIRE, ET NON LE CONTACT (docs/SPEC-contacts.md §18.6) : c'est le
+	// §12.6 retourné, le contact étant ici le décor — on lit sa fiche — et l'affaire la variable.
+	'contact.detach.confirm.title': 'Détacher ce contact de « {titre} » ?',
+	'contact.detach.confirm.body':
+		'Le rattachement sera retiré, ainsi que le rôle du contact dans cette affaire. Vous pourrez le rattacher de nouveau, mais le rôle devra être ressaisi.',
+	'contact.detach.confirm.action': 'Détacher',
+	'contact.detach.cancel': 'Annuler',
+	'contact.detach.pending': 'Détachement…',
+	// LA TROISIÈME ISSUE, QUI N'EST NI UN SUCCÈS NI UNE ERREUR (docs/SPEC-contacts.md §18.3,
+	// mesures 2 et 3) : la clause `USING` rend la ligne invisible à l'écriture, et le serveur rend
+	// `200` avec zéro ligne, SANS erreur. Le texte n'affirme ni le refus ni la disparition — les
+	// deux causes sont indistinguables par construction —, et il dit ce qui est vrai des deux.
+	'contact.detach.noeffect':
+		'Aucun rattachement n’a été retiré. Vous n’avez peut-être pas le droit de modifier cette affaire, ou le rattachement avait déjà été supprimé.',
+	'contact.detach.refus.forbidden':
+		'Le détachement a été refusé. Rechargez la fiche pour voir son état réel.',
+	'contact.detach.refus.network':
+		'Le détachement n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
+	'contact.detach.refus.unknown': 'Le détachement a échoué. Réessayez dans un instant.',
 	'contact.notFound.title': 'Contact introuvable',
 	'contact.notFound.body': 'Ce contact n’existe pas, ou il ne vous est pas accessible.',
 	'contact.notFound.action': 'Revenir au carnet',
