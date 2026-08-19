@@ -552,6 +552,36 @@ export const fr = {
 	'goals.link.refused.invalid': 'Cette flèche a été refusée : elle ne relie pas deux blocs de ce tableau.',
 	'goals.link.refused.unavailable': 'Le tracé n’a pas abouti. Réessayez.',
 
+	// --- Objectifs, tranche 2b-2c : les suppressions — CRM-083, docs/SPEC-goals.md §2.3 et §3 ---
+	// CHAQUE CONFIRMATION NOMME CE QU'ELLE DÉTRUIT (`docs/DESIGN_SYSTEM.md` §6), et celle du bloc
+	// nomme AUSSI ce qui part avec lui : la cascade du §2.3 emporte ses flèches, et c'est la seule
+	// perte que le geste cause au-delà de son objet. Les deux textes sont distincts, comme le §5.27
+	// l'exige d'une confirmation qui nomme son objet : « ce bloc » et « cette flèche » n'engagent
+	// pas la même chose.
+	'goals.block.delete': 'Supprimer le bloc',
+	'goals.block.delete.confirm.title': 'Supprimer le bloc « {titre} » ?',
+	'goals.block.delete.confirm.body':
+		'Le bloc est supprimé définitivement, et les flèches qui le relient à d’autres blocs partent avec lui. Un bloc ne s’archive pas : il n’y a aucune reprise.',
+	'goals.block.delete.confirm.body.links':
+		'Le bloc est supprimé définitivement, et les {compte} flèches qui le relient à d’autres blocs partent avec lui. Un bloc ne s’archive pas : il n’y a aucune reprise.',
+	'goals.block.delete.confirm.action': 'Supprimer définitivement',
+	'goals.block.delete.cancel': 'Annuler la suppression',
+	'goals.block.deleted': 'Bloc supprimé',
+	'goals.link.delete': 'Supprimer la flèche',
+	'goals.link.delete.aria': 'Supprimer la flèche {source} {symbole} {cible}',
+	'goals.link.delete.confirm': 'Supprimer la flèche {source} {symbole} {cible} ? Elle ne se restaure pas.',
+	'goals.link.delete.confirm.action': 'Supprimer',
+	'goals.link.delete.cancel': 'Annuler',
+	'goals.link.deleted': 'Flèche supprimée',
+	'goals.delete.noeffect.block':
+		'Aucun bloc n’a été supprimé. Il a peut-être déjà été retiré, ou vous ne pouvez pas l’écrire. Rechargez le tableau.',
+	'goals.delete.noeffect.link':
+		'Aucune flèche n’a été supprimée. Elle a peut-être déjà été retirée, ou vous ne pouvez pas écrire les deux blocs qu’elle relie. Rechargez le tableau.',
+	'goals.delete.refused.block': 'Vous ne pouvez pas supprimer ce bloc.',
+	'goals.delete.refused.link':
+		'Vous ne pouvez pas supprimer cette flèche : elle demande de pouvoir écrire les deux blocs qu’elle relie.',
+	'goals.delete.refused.unavailable': 'La suppression n’a pas abouti. Réessayez.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',

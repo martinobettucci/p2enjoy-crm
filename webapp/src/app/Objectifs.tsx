@@ -4,9 +4,11 @@
 //       tranche 2b-1 : la fiche d'édition — titre, corps, couleur, remplissage ;
 //       tranche 2b-2a : le LIEN d'un bloc vers un channel, et son retrait ;
 //       tranche 2b-2b : les FLÈCHES — tracer une flèche entre deux blocs avec le choix de sa
-//       direction, et corriger cette direction ensuite
+//       direction, et corriger cette direction ensuite ;
+//       tranche 2b-2c : les SUPPRESSIONS — supprimer une flèche depuis la liste des liens,
+//       supprimer un bloc depuis sa fiche, chacune derrière sa confirmation
 // @spec docs/SPEC-goals.md §2.3 (trois directions ; unicité de la paire — corriger une flèche
-//       existante est une modification, pas un ajout)
+//       existante est une modification, pas un ajout ; `on delete cascade` des deux extrémités)
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
 //       §5.4 (les cinq états), §5.5 (accessibilité, gestes clavier, `Entrée` ouvre la fiche
 //       d'édition), §3 (ouvrir le channel d'un bloc, poser un bloc, le déplacer, le
@@ -35,9 +37,12 @@
 //   * TRANCHE 2b-2b, LES FLÈCHES : tracer une flèche entre deux blocs — `Espace` sur le bloc de
 //     départ au clavier, commande puis deux clics à la souris —, avec le choix de sa direction
 //     AVANT le tracé, et la correction de cette direction ensuite depuis la liste des liens ;
-//   * NON LIVRÉ, et donc non simulé : supprimer une flèche ou un bloc, administrer les tableaux.
-//     Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien ment plus
-//     qu'une absence.
+//   * TRANCHE 2b-2c, LES SUPPRESSIONS : supprimer une flèche depuis la liste des liens, et
+//     supprimer un bloc depuis sa fiche — chacune derrière une confirmation qui NOMME ce qu'elle
+//     détruit, et celle du bloc nommant aussi les flèches que la cascade emporte ;
+//   * NON LIVRÉ, et donc non simulé : administrer les tableaux — créer, renommer, réordonner,
+//     archiver. Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien
+//     ment plus qu'une absence.
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
 // le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
@@ -47,7 +52,17 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Minus, MoveRight, Plus, SquareArrowOutUpRight, SquarePlus, Unlink, X } from 'lucide-react'
+import {
+	ArrowLeft,
+	Minus,
+	MoveRight,
+	Plus,
+	SquareArrowOutUpRight,
+	SquarePlus,
+	Trash2,
+	Unlink,
+	X,
+} from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -78,6 +93,8 @@ import {
 	grouperChannelsParTrack,
 	lierBlocAChannel,
 	poserBloc,
+	supprimerBloc,
+	supprimerFleche,
 	tracerFleche,
 	useChannelsLiables,
 	PAS_CLAVIER,
@@ -305,6 +322,26 @@ export function texteRefusFleche(refus: RefusFleche): string {
 }
 
 /**
+ * Traduit un refus de SUPPRESSION de bloc.
+ *
+ * SON DICTIONNAIRE EST DISTINCT DE CELUI DE LA MODIFICATION, et pas par symétrie : « vous ne
+ * pouvez pas modifier ce tableau » décrirait mal un geste qui détruit, et l'utilisateur chercherait
+ * ce qu'il vient d'écrire. La nature `saisie-invalide` n'a ici aucun emploi — une suppression
+ * n'envoie aucune valeur —, et elle retombe donc sur l'indisponibilité plutôt que d'inventer un
+ * texte pour une issue que la base ne produit pas.
+ */
+export function texteRefusSuppressionBloc(refus: RefusBloc): string {
+	if (refus.nature === 'interdit') return t('goals.delete.refused.block')
+	return t('goals.delete.refused.unavailable')
+}
+
+/** Traduit un refus de suppression de FLÈCHE — il porte sur les DEUX blocs reliés (§4.2). */
+export function texteRefusSuppressionFleche(refus: RefusFleche): string {
+	if (refus.nature === 'interdit') return t('goals.delete.refused.link')
+	return t('goals.delete.refused.unavailable')
+}
+
+/**
  * Direction → clé de son nom en clair, ÉCRITE LITTÉRALEMENT, pour la raison déjà nommée en
  * `NOMS_COULEUR` : une clé construite est une clé que le détecteur de clés mortes ne peut plus
  * suivre, et qui survit à la suppression du code qui l'employait.
@@ -380,6 +417,11 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// de `blocsRendus` et change à chaque écriture, tandis que la fiche doit rester ouverte SUR LE
 	// MÊME bloc à travers ces changements.
 	const [edite, setEdite] = useState<string | null>(null)
+	// LES SUPPRESSIONS TIENNENT LEUR PROPRE ÉTAT, et il est de RETRAIT là où `ecrits` et `ajoutes`
+	// sont de remplacement et d'ajout : une ligne supprimée n'a plus aucune valeur à rendre,
+	// seulement une absence à opposer à ce que la lecture du serveur porte encore.
+	const [blocsSupprimes, setBlocsSupprimes] = useState<ReadonlySet<string>>(() => new Set())
+	const [flechesSupprimees, setFlechesSupprimees] = useState<ReadonlySet<string>>(() => new Set())
 
 	const contenu = etat.statut === 'pret' ? etat.donnees : null
 
@@ -401,6 +443,8 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		setEbauche(null)
 		setFlechesEcrites(new Map())
 		setFlechesTracees([])
+		setBlocsSupprimes(new Set())
+		setFlechesSupprimees(new Set())
 		// LE TRACÉ EN COURS TOMBE AVEC LA RELECTURE, et ce n'est pas une commodité : son bloc de
 		// départ peut ne plus être rendu, et une flèche partant d'un bloc disparu serait tracée vers
 		// une origine que l'écran ne montre plus.
@@ -423,8 +467,8 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// saisie, transposé au canevas.
 	const blocs = useMemo(() => {
 		const lus = (contenu?.blocs ?? []).map((bloc) => ecrits.get(bloc.id) ?? bloc)
-		return ordreTabulation([...lus, ...ajoutes])
-	}, [contenu, ecrits, ajoutes])
+		return ordreTabulation([...lus, ...ajoutes].filter((bloc) => !blocsSupprimes.has(bloc.id)))
+	}, [contenu, ecrits, ajoutes, blocsSupprimes])
 
 	const blocsRendus = useMemo(
 		() => blocs.map((bloc) => (ebauche !== null && ebauche.id === bloc.id ? avecGeometrie(bloc, ebauche.geometrie) : bloc)),
@@ -434,10 +478,20 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// Les flèches rendues suivent le patron des blocs : la ligne écrite remplace la ligne lue, et
 	// celles tracées pendant cette session s'ajoutent à la fin — dans l'ordre où elles ont été
 	// tracées, qui est celui que `created_at` leur donnera au prochain chargement.
+	// LA FLÈCHE D'UN BLOC SUPPRIMÉ DISPARAÎT, ELLE NE DEVIENT PAS UN MOIGNON POINTILLÉ, et cette
+	// distinction est celle de deux causes que rien ne rapproche : le moignon du §5.4 rend une
+	// flèche dont une extrémité EXISTE mais que la RLS masque — la ligne est bien là en base. Ici
+	// la cascade du §2.3 l'a détruite avec le bloc, et la laisser pendre dessinerait un lien que
+	// plus rien ne porte.
 	const flechesRendues = useMemo(() => {
 		const lues = (contenu?.fleches ?? []).map((fleche) => flechesEcrites.get(fleche.id) ?? fleche)
-		return [...lues, ...flechesTracees]
-	}, [contenu, flechesEcrites, flechesTracees])
+		return [...lues, ...flechesTracees].filter(
+			(fleche) =>
+				!flechesSupprimees.has(fleche.id) &&
+				!blocsSupprimes.has(fleche.source_block_id) &&
+				!blocsSupprimes.has(fleche.target_block_id),
+		)
+	}, [contenu, flechesEcrites, flechesTracees, flechesSupprimees, blocsSupprimes])
 
 	const fleches = useMemo(
 		() => composerDiagramme(blocsRendus, flechesRendues),
@@ -601,6 +655,62 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	)
 
 	/**
+	 * Supprime un bloc, et retire de l'écran les flèches que la BASE emporte avec lui (§2.3, §3).
+	 *
+	 * LES TROIS ISSUES SONT TRAITÉES, et la troisième — `200` et zéro ligne — est ici la plus
+	 * trompeuse de toutes : faire disparaître le bloc sur ce silence annoncerait une suppression
+	 * qui n'a pas eu lieu, et le bloc reparaîtrait au rechargement (`docs/DESIGN_SYSTEM.md` §5.27).
+	 * L'écran ne retire donc rien tant que le serveur n'a pas rendu la ligne retirée.
+	 *
+	 * LA FICHE SE FERME SEULE, par l'effet qui la ferme dès que son bloc n'est plus rendu : ce
+	 * geste part d'elle, et la refermer ici la fermerait DEUX fois sur la même cause.
+	 */
+	const supprimerLeBloc = useCallback(
+		async (idBloc: string) => {
+			if (client === null) return
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await supprimerBloc(client, idBloc)
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusSuppressionBloc(resultat.refus) })
+				return
+			}
+			if (resultat.statut === 'sans-effet') {
+				setMessage({ ton: 'refus', texte: t('goals.delete.noeffect.block') })
+				return
+			}
+			setBlocsSupprimes((precedents) => new Set(precedents).add(idBloc))
+			setMessage({ ton: 'succes', texte: t('goals.block.deleted') })
+		},
+		[client],
+	)
+
+	/**
+	 * Supprime une flèche, et laisse ses deux blocs intacts (§3).
+	 *
+	 * Le refus emprunte le dictionnaire des flèches : la politique de `goal_links` exige le droit
+	 * d'écrire les DEUX blocs (§4.2), et « vous ne pouvez pas supprimer ce bloc » enverrait chercher
+	 * le problème du mauvais côté.
+	 */
+	const supprimerLaFleche = useCallback(
+		async (idFleche: string) => {
+			if (client === null) return
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await supprimerFleche(client, idFleche)
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusSuppressionFleche(resultat.refus) })
+				return
+			}
+			if (resultat.statut === 'sans-effet') {
+				setMessage({ ton: 'refus', texte: t('goals.delete.noeffect.link') })
+				return
+			}
+			setFlechesSupprimees((precedentes) => new Set(precedentes).add(idFleche))
+			setMessage({ ton: 'succes', texte: t('goals.link.deleted') })
+		},
+		[client],
+	)
+
+	/**
 	 * CE QU'UN GESTE SUR UN BLOC VEUT DIRE DÉPEND DE L'ÉTAT DU TRACÉ, et c'est le canevas qui en
 	 * décide — le bloc, lui, ne connaît que son propre geste.
 	 *
@@ -680,6 +790,17 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// Le bloc de la fiche est relu dans la liste RENDUE, et non gardé en état : c'est ainsi que la
 	// fiche affiche la valeur du serveur dès qu'une écriture aboutit, sans la recopier.
 	const blocEdite = blocsRendus.find((bloc) => bloc.id === edite) ?? null
+
+	// LE COMPTE DES FLÈCHES DU BLOC ÉDITÉ EST CELUI DES FLÈCHES RENDUES, jamais un total de la
+	// base : une flèche dont l'autre extrémité est masquée par la RLS pend déjà dans le vide
+	// (§5.4), et la confirmation de suppression ne peut annoncer que ce que celui qui la lit
+	// verra disparaître.
+	const flechesDuBlocEdite =
+		blocEdite === null
+			? 0
+			: flechesRendues.filter(
+					(fleche) => fleche.source_block_id === blocEdite.id || fleche.target_block_id === blocEdite.id,
+				).length
 
 	return (
 		<section aria-label={t('goals.canvas.aria')} className="flex flex-col gap-4">
@@ -855,6 +976,8 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					key={blocEdite.id}
 					bloc={blocEdite}
 					etatChannels={etatChannels}
+					flechesDuBloc={flechesDuBlocEdite}
+					onSupprimer={() => void supprimerLeBloc(blocEdite.id)}
 					onRechargerChannels={rechargerChannels}
 					onEcrire={(contenu) => enregistrerContenu(blocEdite.id, contenu)}
 					onLier={(idChannel) => enregistrerLien(blocEdite.id, idChannel)}
@@ -868,7 +991,11 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				/>
 			)}
 
-			<EquivalentTextuel lignes={lignes} onChangerDirection={corrigerDirection} />
+			<EquivalentTextuel
+				lignes={lignes}
+				onChangerDirection={corrigerDirection}
+				onSupprimerFleche={(idFleche) => void supprimerLaFleche(idFleche)}
+			/>
 		</section>
 	)
 }
@@ -1058,6 +1185,8 @@ const CLASSES_CONTROLE = [
 function FicheEditionBloc({
 	bloc,
 	etatChannels,
+	flechesDuBloc,
+	onSupprimer,
 	onRechargerChannels,
 	onEcrire,
 	onLier,
@@ -1065,6 +1194,8 @@ function FicheEditionBloc({
 }: {
 	readonly bloc: BlocObjectif
 	readonly etatChannels: EtatAsync<readonly ChannelLiable[]>
+	readonly flechesDuBloc: number
+	readonly onSupprimer: () => void
 	readonly onRechargerChannels: () => void
 	readonly onEcrire: (contenu: ContenuBloc) => Promise<ResultatEcritureBloc>
 	readonly onLier: (idChannel: string | null) => Promise<ResultatEcritureBloc>
@@ -1081,8 +1212,10 @@ function FicheEditionBloc({
 	// valeur le temps de la requête, sous les yeux de celui qui vient de cliquer.
 	const [couleur, setCouleur] = useState(bloc.color)
 	const [messages, setMessages] = useState<Readonly<Partial<Record<ChampFiche, MessageEcriture>>>>({})
+	const [confirmeSuppression, setConfirmeSuppression] = useState(false)
 
 	const champTitre = useRef<HTMLInputElement | null>(null)
+	const commandeSuppression = useRef<HTMLButtonElement | null>(null)
 
 	// LE FOCUS ENTRE DANS LA FICHE À SON OUVERTURE (`docs/DESIGN_SYSTEM.md` §5.13). Sans cela, la
 	// fiche ouverte par `Entrée` obligerait à traverser tout le canevas au clavier pour l'atteindre,
@@ -1423,7 +1556,99 @@ function FicheEditionBloc({
 				) : null}
 				<MentionChamp identifiant="fiche-bloc-lien-etat" champ="lien" message={messages.lien ?? null} />
 			</div>
+
+			{/* LE GESTE QUI DÉTRUIT EST EN BAS DE LA FICHE, dans un bloc séparé par une bordure
+			    haute — la place exacte que le §5.3 donne au retrait d'une affaire, et pour son
+			    motif : supprimer n'est pas ce qu'on vient faire sur une fiche d'édition.
+			    LA COMMANDE RESTE MONTÉE PENDANT SA CONFIRMATION, seulement désactivée — le patron
+			    du §5.27 plutôt que celui du §5.25 : la commande démontée y obligeait à différer le
+			    retour du focus d'un tour de rendu, remède dont ce bloc n'a pas besoin. */}
+			<div className="flex flex-col gap-2 border-t border-border pt-3">
+				<Button
+					ref={commandeSuppression}
+					variante="secondaire"
+					taille="compacte"
+					data-testid="supprimer-bloc"
+					disabled={confirmeSuppression}
+					onClick={() => setConfirmeSuppression(true)}
+					className="gap-2 self-start"
+				>
+					<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+					{t('goals.block.delete')}
+				</Button>
+				{confirmeSuppression ? (
+					<ConfirmationSuppressionBloc
+						titre={bloc.title}
+						fleches={flechesDuBloc}
+						onConfirmer={() => {
+							setConfirmeSuppression(false)
+							onSupprimer()
+						}}
+						onAnnuler={() => {
+							setConfirmeSuppression(false)
+							commandeSuppression.current?.focus()
+						}}
+					/>
+				) : null}
+			</div>
 		</section>
+	)
+}
+
+/**
+ * La confirmation de suppression d'un bloc — dans le FLUX du document, jamais une modale
+ * (`docs/DESIGN_SYSTEM.md` §5.13, §5.21, §5.27, tranché trois fois).
+ *
+ * ELLE NOMME LE BLOC ET CE QUI PART AVEC LUI (§6). La cascade du §2.3 emporte les flèches qui le
+ * relient, et c'est la seule perte que le geste cause au-delà de son objet : une confirmation qui
+ * la tairait ferait découvrir après coup la disparition de liens que personne n'a demandé de
+ * retirer. Le compte n'est écrit QUE lorsqu'il y en a — « les 0 flèches » se lit deux fois pour
+ * comprendre qu'il n'y en a aucune (§5.13, l'énumération et son état vide).
+ *
+ * LE FOCUS ENTRE SUR LE BOUTON D'ACTION, patron de `ConfirmationRetrait` de l'éditeur de
+ * workflows : la confirmation ouverte au clavier doit être atteignable sans traverser la fiche.
+ */
+function ConfirmationSuppressionBloc({
+	titre,
+	fleches,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly titre: string
+	readonly fleches: number
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	const action = useRef<HTMLButtonElement | null>(null)
+	useEffect(() => {
+		action.current?.focus()
+	}, [])
+	return (
+		<div
+			data-testid="confirmation-suppression-bloc"
+			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+		>
+			<p className="font-medium">{t('goals.block.delete.confirm.title', { titre })}</p>
+			<p className="text-sm text-text-2">
+				{fleches === 0
+					? t('goals.block.delete.confirm.body')
+					: t('goals.block.delete.confirm.body.links', { compte: String(fleches) })}
+			</p>
+			<div className="flex flex-wrap gap-2">
+				<Button
+					ref={action}
+					variante="destructif"
+					taille="compacte"
+					data-testid="confirmer-suppression-bloc"
+					onClick={onConfirmer}
+				>
+					{t('goals.block.delete.confirm.action')}
+				</Button>
+				<Button variante="secondaire" taille="compacte" data-testid="annuler-suppression-bloc" onClick={onAnnuler}>
+					{t('goals.block.delete.cancel')}
+				</Button>
+			</div>
+		</div>
 	)
 }
 
@@ -1903,13 +2128,65 @@ function Jauge({ valeur }: { readonly valeur: number }) {
  * Une extrémité non rendue est nommée « extrémité hors de portée », formulation qui ne dit rien
  * de ce qui manque — l'écran ne nomme jamais ce qu'il cache (§4.1).
  */
+/**
+ * La confirmation de suppression d'une flèche — même forme que celle du bloc, texte distinct.
+ *
+ * ELLE NOMME LA FLÈCHE PAR SES DEUX EXTRÉMITÉS ET SON SYMBOLE (§6), jamais par un identifiant :
+ * une liste qui porte cinq flèches ne dirait pas laquelle on retire. Elle ne parle d'aucune
+ * cascade — une flèche n'emporte rien —, et c'est ce qui la distingue de celle du bloc.
+ */
+function ConfirmationSuppressionFleche({
+	question,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly question: string
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	const action = useRef<HTMLButtonElement | null>(null)
+	useEffect(() => {
+		action.current?.focus()
+	}, [])
+	return (
+		<div
+			data-testid="confirmation-suppression-fleche"
+			className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-3"
+		>
+			<p className="text-sm text-ink max-w-[70ch]">{question}</p>
+			<Button
+				ref={action}
+				variante="destructif"
+				taille="compacte"
+				data-testid="confirmer-suppression-fleche"
+				onClick={onConfirmer}
+			>
+				{t('goals.link.delete.confirm.action')}
+			</Button>
+			<Button variante="secondaire" taille="compacte" data-testid="annuler-suppression-fleche" onClick={onAnnuler}>
+				{t('goals.link.delete.cancel')}
+			</Button>
+		</div>
+	)
+}
+
 function EquivalentTextuel({
 	lignes,
 	onChangerDirection,
+	onSupprimerFleche,
 }: {
 	readonly lignes: readonly LigneDiagramme[]
 	readonly onChangerDirection: (idFleche: string, direction: DirectionFleche) => void
+	readonly onSupprimerFleche: (idFleche: string) => void
 }) {
+	// UNE SEULE CONFIRMATION À TOUT INSTANT, la règle du §5.27 : deux questions destructrices
+	// ouvertes ensemble ne diraient pas à laquelle on répond. L'état porte donc l'identifiant de la
+	// ligne qui interroge, jamais un drapeau par ligne.
+	const [confirme, setConfirme] = useState<string | null>(null)
+	// LES COMMANDES SONT RETENUES PAR LEUR LIGNE, pour rendre le focus à CELLE qui a ouvert la
+	// confirmation (§5.13). Une seule référence désignerait la dernière rendue, et annuler sur la
+	// deuxième ligne renverrait le focus sur la troisième.
+	const commandes = useRef<Map<string, HTMLButtonElement | null>>(new Map())
 	return (
 		<section data-testid="equivalent-textuel" aria-label={t('goals.diagram.aria')} className="flex flex-col gap-2">
 			<h3 className="text-sm font-medium text-text-2">{t('goals.diagram.title')}</h3>
@@ -1928,7 +2205,8 @@ function EquivalentTextuel({
 							libelle: ligne.libelle ?? '',
 						}
 						return (
-							<li key={ligne.id} data-testid="ligne-diagramme" className="flex flex-wrap items-center gap-2">
+							<li key={ligne.id} data-testid="ligne-diagramme" className="flex flex-col gap-2">
+								<div className="flex flex-wrap items-center gap-2">
 								<span>
 									{ligne.libelle === null
 										? t('goals.diagram.line', parametres)
@@ -1964,6 +2242,39 @@ function EquivalentTextuel({
 										</option>
 									))}
 								</select>
+								{/* LA SUPPRESSION VIT OÙ VIT LA CORRECTION, et pour son motif exact : le trait est un
+								    `<path>` dans un SVG `aria-hidden` que ni le clavier ni un lecteur d'écran n'atteignent.
+								    Le nom accessible de la commande NOMME la flèche — « Supprimer » seul, répété sur
+								    chaque ligne, ne dirait pas laquelle. */}
+								<Button
+									ref={(element) => {
+										commandes.current.set(ligne.id, element)
+									}}
+									variante="secondaire"
+									taille="compacte"
+									data-testid="supprimer-fleche"
+									aria-label={t('goals.link.delete.aria', parametres)}
+									disabled={confirme === ligne.id}
+									onClick={() => setConfirme(ligne.id)}
+									className="gap-2"
+								>
+									<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+									{t('goals.link.delete')}
+								</Button>
+							</div>
+							{confirme === ligne.id ? (
+								<ConfirmationSuppressionFleche
+									question={t('goals.link.delete.confirm', parametres)}
+									onConfirmer={() => {
+										setConfirme(null)
+										onSupprimerFleche(ligne.id)
+									}}
+									onAnnuler={() => {
+										setConfirme(null)
+										commandes.current.get(ligne.id)?.focus()
+									}}
+								/>
+							) : null}
 							</li>
 						)
 					})}

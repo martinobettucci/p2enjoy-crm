@@ -5,7 +5,9 @@
 //       tranche 2b-2a : LE LIEN, c'est-à-dire désigner le channel qu'un bloc vise, et retirer ce
 //       lien ;
 //       tranche 2b-2b : LES FLÈCHES, c'est-à-dire tracer une flèche entre deux blocs avec le choix
-//       de sa direction, et corriger cette direction ensuite
+//       de sa direction, et corriger cette direction ensuite ;
+//       tranche 2b-2c : LES SUPPRESSIONS, c'est-à-dire supprimer une flèche, et supprimer un bloc
+//       — ce dernier emportant ses flèches par la cascade de la base
 // @spec docs/SPEC-goals.md §2.3 (trois directions et non deux ; une flèche d'un bloc vers lui-même
 //       n'a pas de sens ; unicité sur la paire — changer la direction d'une flèche existante est
 //       une MODIFICATION, pas un ajout ; aucun refus de cycle)
@@ -15,7 +17,8 @@
 //       saisir le titre, le corps, la couleur ; régler le remplissage — curseur ET champ
 //       numérique, les deux écrivant la même valeur ; lier le bloc à un channel — sélecteur des
 //       channels LISIBLES par l'appelant, groupés par track ; retirer le lien — remet `channel_id`
-//       à nul)
+//       à nul ; supprimer une flèche, supprimer un bloc — la suppression d'un bloc emporte ses
+//       flèches par cascade, et un bloc se supprime réellement, il ne s'archive pas)
 // @spec docs/SPEC-goals.md §4.2 (écriture ouverte à tout membre pouvant écrire ; un `viewer`
 //       n'écrit rien ; POSER le lien exige `app.can_write_channel`, le RETIRER non ; une flèche
 //       s'écrit par « tout membre pouvant écrire les DEUX blocs qu'elle relie »),
@@ -709,6 +712,96 @@ export async function changerDirectionFleche(
 		const lignes = reponse.data ?? []
 		if (lignes.length === 0) return { statut: 'sans-effet' }
 		return { statut: 'enregistree', fleche: flecheDepuisLigne(lignes[0]) }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusFleche(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
+}
+
+// =================================================================================================
+// TRANCHE 2b-2c — LES SUPPRESSIONS
+// =================================================================================================
+//
+// UN BLOC SE SUPPRIME RÉELLEMENT, IL NE S'ARCHIVE PAS (§3) : contrairement aux tracks et aux
+// channels, il ne porte aucune donnée métier et n'est référencé par rien d'autre que ses flèches.
+// C'est le tableau qui s'archive, parce que c'est lui qui contient le travail.
+//
+// LA CASCADE VIT EN BASE, JAMAIS ICI. `goal_links.source_block_id` et `target_block_id` sont
+// `on delete cascade` (§2.3) : supprimer un bloc emporte ses flèches sans qu'aucune requête d'écran
+// ne les nomme. Les retirer une à une avant le bloc ferait de l'écran la garde d'une règle qui vit
+// dans le schéma, et laisserait un état incohérent si la seconde requête échouait.
+
+/**
+ * Les trois issues d'une suppression, et la troisième est ici la plus probable : la clause `using`
+ * de la politique rend la ligne invisible à l'écriture, si bien que le serveur répond `200` avec
+ * ZÉRO ligne retirée — ni un succès, ni une erreur. C'est la règle que `docs/DESIGN_SYSTEM.md`
+ * §5.27 a déjà posée pour le détachement d'un rattachement, et elle se retrouve ici pour la même
+ * cause structurelle. Faire disparaître le bloc sur ce silence annoncerait une suppression qui n'a
+ * pas eu lieu.
+ */
+export type ResultatSuppressionBloc =
+	| { readonly statut: 'supprime' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusBloc }
+
+/** Les trois issues d'une suppression de flèche — mêmes natures que son tracé. */
+export type ResultatSuppressionFleche =
+	| { readonly statut: 'supprimee' }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusFleche }
+
+/**
+ * Supprime un bloc, et avec lui les flèches que la base fait tomber en cascade (§2.3, §3).
+ *
+ * `.select('id')` ACCOMPAGNE LA SUPPRESSION, pour la raison exacte qui le fait accompagner une
+ * modification : sans lui, PostgREST ne rend aucun corps, et « la ligne était invisible à
+ * l'écriture » serait indistinguable de « la ligne a bien été retirée ».
+ *
+ * AUCUN DROIT N'EST ANTICIPÉ (`CLAUDE.md` §10) : la requête part, et le refus est traduit.
+ *
+ * Ne lève jamais.
+ */
+export async function supprimerBloc(client: ClientCrm, idBloc: string): Promise<ResultatSuppressionBloc> {
+	try {
+		const reponse = await client.from('goal_blocks').delete().eq('id', idBloc).select('id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusBloc(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		return (reponse.data ?? []).length === 0 ? { statut: 'sans-effet' } : { statut: 'supprime' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusBloc(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
+}
+
+/**
+ * Supprime une flèche (§3), sans toucher aux deux blocs qu'elle reliait.
+ *
+ * Son refus emprunte le dictionnaire des flèches et non celui des blocs : la politique de
+ * `goal_links` exige le droit d'écrire les DEUX blocs (§4.2), et un refus formulé comme celui d'un
+ * bloc ferait chercher le problème du mauvais côté. La nature `doublon` y est sans emploi — une
+ * suppression n'insère rien —, mais le dictionnaire reste commun : le partager évite deux
+ * traductions du même refus selon le geste qui l'a reçu.
+ *
+ * Ne lève jamais.
+ */
+export async function supprimerFleche(client: ClientCrm, idFleche: string): Promise<ResultatSuppressionFleche> {
+	try {
+		const reponse = await client.from('goal_links').delete().eq('id', idFleche).select('id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusFleche(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		return (reponse.data ?? []).length === 0 ? { statut: 'sans-effet' } : { statut: 'supprimee' }
 	} catch (cause) {
 		return {
 			statut: 'refus',
