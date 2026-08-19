@@ -35,7 +35,7 @@ import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { lireFicheOrganisation, type FicheOrganisationLue } from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
-import { CHEMIN_CONTACTS } from './chemins'
+import { CHEMIN_CONTACTS, cheminContact } from './chemins'
 
 /** Cellule ordinaire du tableau des contacts — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[28ch]'
@@ -292,13 +292,22 @@ function ContenuFiche({ client, etat, organisation, onReprise }: ProprietesConte
 										className="border-b border-border hover:bg-hover"
 									>
 										{/*
-										  Le nom d'un contact n'est PAS un lien : il n'existe pas de
-										  fiche de contact, et un lien y serait mort (§11.8). C'est la
-										  règle que le §11.6 vient d'abandonner pour l'organisation,
-										  tenue ici pour la raison exacte qui la fondait là.
+										  LE NOM D'UN CONTACT EST UN LIEN VERS SA FICHE — §15.6,
+										  révision du 2026-08-19. Il était un TEXTE tant que la
+										  fiche de contact n'existait pas, et le §11.8 nommait ce
+										  manque comme celui à combler. La sous-tranche 4f livre
+										  cette destination : la règle change par LIVRAISON, jamais
+										  par contournement, comme le §11.6 l'avait fait ici même
+										  pour l'organisation.
 										*/}
 										<td className={CLASSES_CELLULE} title={contact.full_name}>
-											{contact.full_name}
+											<Link
+												to={cheminContact(contact.id)}
+												data-testid="lien-contact-organisation"
+												className="text-brand hover:underline"
+											>
+												{contact.full_name}
+											</Link>
 										</td>
 										<td
 											className={CLASSES_CELLULE}

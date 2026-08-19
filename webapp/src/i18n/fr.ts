@@ -219,6 +219,36 @@ export const fr = {
 	'organization.noWorkspace.body':
 		'Connectez-vous à un espace de travail pour consulter ses organisations.',
 
+	// --- Fiche d'un contact — CRM-060 tranche 4f, docs/SPEC-contacts.md §15 -------------
+	// Le RÔLE d'un rattachement n'est PAS traduit — c'est une valeur métier libre que la base
+	// n'énumère pas (§2.3), au même titre qu'un libellé de track.
+	'contact.route.title': 'Contact',
+	'contact.aria': 'Fiche de contact',
+	'contact.details.aria': 'Caractéristiques du contact',
+	'contact.field.role': 'Fonction',
+	'contact.field.organization': 'Organisation',
+	'contact.field.email': 'Email',
+	'contact.field.phone': 'Téléphone',
+	'contact.deals.title': 'Affaires',
+	'contact.deals.aria': 'Affaires de ce contact',
+	'contact.deals.table.deal': 'Affaire',
+	'contact.deals.table.role': 'Rôle dans l’affaire',
+	'contact.deals.table.state': 'État',
+	'contact.deals.archived': 'Archivée',
+	'contact.deals.empty.title': 'Aucune affaire',
+	'contact.deals.empty.body':
+		'Ce contact n’est rattaché à aucune affaire qui vous soit accessible.',
+	'contact.notFound.title': 'Contact introuvable',
+	'contact.notFound.body': 'Ce contact n’existe pas, ou il ne vous est pas accessible.',
+	'contact.notFound.action': 'Revenir au carnet',
+	'contact.error.title': 'La fiche n’a pas pu être chargée',
+	'contact.error.body':
+		'La lecture du contact a échoué. Vérifiez votre connexion, puis réessayez.',
+	'contact.error.retry': 'Réessayer',
+	'contact.noWorkspace.title': 'Aucun espace de travail',
+	'contact.noWorkspace.body':
+		'Connectez-vous à un espace de travail pour consulter ses contacts.',
+
 	// --- Contacts d'une affaire — CRM-060 tranche 4c, docs/SPEC-contacts.md §12 ----------
 	// Les refus forment un DICTIONNAIRE FERMÉ (§12.5) : le message du serveur n'atteint jamais
 	// l'écran. Le rôle d'un rattachement, lui, n'est PAS traduit — c'est une valeur métier libre

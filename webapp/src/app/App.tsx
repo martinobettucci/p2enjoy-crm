@@ -29,6 +29,7 @@ import {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
+	CHEMIN_CONTACT,
 	CHEMIN_ORGANISATION,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
@@ -82,6 +83,16 @@ const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).Rou
  */
 const FicheOrganisation = lazy(async () => ({
 	default: (await import('./FicheOrganisation')).FicheOrganisation,
+}))
+
+/**
+ * La fiche d'un contact — `CRM-060` tranche 4f.
+ *
+ * Elle porte sa PROPRE coquille, comme `FicheOrganisation` : son titre est le nom du contact, donc
+ * une donnée (docs/SPEC-contacts.md §15.2).
+ */
+const FicheContact = lazy(async () => ({
+	default: (await import('./FicheContact')).FicheContact,
 }))
 
 /** État bref mais explicite pendant le téléchargement d'une route métier. */
@@ -138,6 +149,12 @@ function RoutesApplication() {
 				    l'organisation — une donnée —, et son contenu dépend d'un paramètre d'URL.
 				    Déclarée APRÈS la route du carnet, dont elle prolonge le chemin. */}
 				<Route path={CHEMIN_ORGANISATION} element={<FicheOrganisation />} />
+				{/* La fiche d'un contact — `CRM-060` tranche 4f, docs/SPEC-contacts.md §15.2. Elle
+				    est déclarée APRÈS celle de l'organisation, mais l'ordre ne la départage pas :
+				    ce patron porte DEUX segments là où celui de l'organisation en porte TROIS, et
+				    aucune adresse ne peut satisfaire les deux. Hors de `ROUTES` : son titre est le
+				    nom du contact — une donnée —, et son contenu dépend d'un paramètre d'URL. */}
+				<Route path={CHEMIN_CONTACT} element={<FicheContact />} />
 				{/* L'administration de l'arborescence — `CRM-075`. Elle porte la coquille commune et
 				    son titre est une clé de traduction, mais elle n'est pas une entrée de la barre
 				    latérale : on y arrive par l'index des réglages

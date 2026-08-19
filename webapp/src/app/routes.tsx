@@ -37,6 +37,8 @@ import {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
+	CHEMIN_CONTACT,
+	cheminContact,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 } from './chemins'
@@ -50,6 +52,8 @@ export {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
+	CHEMIN_CONTACT,
+	cheminContact,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 }

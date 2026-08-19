@@ -46,6 +46,26 @@ export const CHEMIN_ORGANISATION = '/contacts/organisations/:idOrganisation' as 
 export const cheminOrganisation = (idOrganisation: string) =>
 	`/contacts/organisations/${idOrganisation}`
 
+/**
+ * Fiche d'un contact — `CRM-060` tranche 4f, `docs/SPEC-contacts.md` §15.2.
+ *
+ * Une route de DÉTAIL sous le carnet, pour le motif exact de `CHEMIN_ORGANISATION` : le carnet est
+ * la surface d'entrée qui la peuple.
+ *
+ * **Aucune collision avec `CHEMIN_ORGANISATION`, et ce n'est pas une chance mais une propriété du
+ * chemin** : la fiche d'organisation porte TROIS segments, celle du contact DEUX. Un patron à deux
+ * segments ne peut pas apparier une adresse qui en a trois, quel que soit le classement des routes.
+ * Le contact garde donc l'adresse la plus courte, qui est celle de l'objet de première classe.
+ *
+ * Elle ne figure PAS dans `ROUTES` : son titre est le nom du contact, donc une donnée, et son
+ * contenu dépend d'un paramètre d'URL. Le contact est désigné par son IDENTIFIANT — `contacts` ne
+ * porte aucun slug, et l'email ne peut pas en tenir lieu : il est nul pour Élise Fabre.
+ */
+export const CHEMIN_CONTACT = '/contacts/:idContact' as const
+
+/** Adresse concrète de la fiche d'un contact donné. */
+export const cheminContact = (idContact: string) => `/contacts/${idContact}`
+
 /** Administration de l'arborescence — `CRM-075`. */
 export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 

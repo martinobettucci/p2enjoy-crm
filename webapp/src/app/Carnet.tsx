@@ -38,7 +38,7 @@ import {
 } from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
-import { cheminOrganisation } from './chemins'
+import { cheminContact, cheminOrganisation } from './chemins'
 import { FormulaireCreationContact } from './FormulaireCreationContact'
 
 /** Cellule ordinaire : une seule ligne de texte en ellipse, hauteur de cible (§5.9). */
@@ -244,8 +244,26 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 								data-contact={contact.id}
 								className="border-b border-border hover:bg-hover"
 							>
+								{/*
+								  LE NOM DU CONTACT EST UN LIEN VERS SA FICHE — §15.6, révision du
+								  2026-08-19. Il était un TEXTE tant que la fiche n'existait pas :
+								  un lien sans destination aurait été mort (§11.8, §5.10). La
+								  sous-tranche 4f livre cette destination, et la règle change donc
+								  par LIVRAISON, exactement comme le §11.6 l'avait fait pour
+								  l'organisation — non par contournement.
+
+								  Le nom est TOUJOURS présent : `contacts_full_name_check` refuse
+								  un nom blanc en base. Il n'existe donc ici aucune cellule sans
+								  lien, contrairement à celle de l'organisation juste dessous.
+								*/}
 								<td className={CLASSES_CELLULE} title={contact.full_name}>
-									{contact.full_name}
+									<Link
+										to={cheminContact(contact.id)}
+										data-testid="lien-contact"
+										className="text-brand hover:underline"
+									>
+										{contact.full_name}
+									</Link>
 								</td>
 								{/*
 								  LE NOM DE L'ORGANISATION EST UN LIEN VERS SA FICHE — §11.6, révision
