@@ -19955,3 +19955,27 @@ de preuve écrites à sa DoD par la décision 462 : `scripts/verify-snooze.sh` n
 d'affichage hors adresse attend un arbitrage. La suite est `CRM-082`, comme la décision 462 le dit.
 Un arbitrage nouveau est en attente : **INC-167**, la clé du stockage objet en développement, et la
 question qu'il ouvre — un stockage indisponible doit-il faire perdre le **message** lui-même ?
+
+## décision 461 (suite) — la campagne de fin de session de la tranche 2 e
+
+> Cette session et celle qui a livré la tranche 2 f se sont exécutées **en parallèle** sur le même
+> dépôt. Ce bilan arrive après au rebase et prend donc place ici, à la suite, plutôt qu'auprès de
+> la décision 461 qu'il complète.
+
+**La campagne complète de fin de session, et ce qu'elle a rendu.** Les huit preuves globales sont
+**vertes** : `test:sql` **46 fichiers / 2306 assertions**, `e2e:api` **774 scénarios**, `e2e:mail`
+**42**, `test:unit` **52 fichiers / 1752 tests**, `pytest` **242**, `typecheck` et `build` verts.
+`e2e:ui` a rendu **440 verts sur 443** au premier passage ; les **deux** échecs imputables à la
+tranche sont corrigés — un visiteur anonyme sur `/inbox` provoque désormais **deux** refus `401` et
+non un, l'écran lisant une table de plus, et les témoins figés de `manuel.spec.ts` et
+`coquille.spec.ts` sont **révisés** avec leur motif écrit dans le fichier. Rejoués, ils sont verts,
+comme les 6 scénarios de `sommeil-fil.spec.ts`.
+
+**Deux harnais exécutés, et leurs deux anomalies sont étrangères** : `scripts/verify-types.sh` rend
+**30 contrôles, aucune anomalie** — dégradation volontaire comprise ; `scripts/verify-webapp.sh`
+rend **42 contrôles, 2 anomalies**, toutes deux nommées plutôt que compensées — les trois classes
+non engendrées d'**INC-158** (`h-10`, `py-0.5`, `text-text-1`), et le `purgerChamps` de
+`administration-workflows.spec.ts`, dont la **ligne de base a été exécutée** (§2.4) : rejoué sur le
+code d'avant la session, il échoue à l'identique. Consigné en **INC-166**. **Les quarante-sept
+autres `scripts/verify-*.sh` n'ont pas été exécutés**, faute de temps — la série entière ne tient
+pas dans une session (§2.1 ter).
