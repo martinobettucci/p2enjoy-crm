@@ -525,3 +525,232 @@ describe('canevas — les trois issues d’une écriture, §4.2', () => {
 		expect(ecritures.filter((ecriture) => ecriture.operation === 'update')).toHaveLength(1)
 	})
 })
+
+// --- TRANCHE 2b-1 : LA FICHE D'ÉDITION ----------------------------------------------------
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-1 : le contenu
+// @verifies docs/SPEC-goals.md §3 (saisir titre, corps, couleur ; régler le remplissage au
+//           curseur ET au champ, les deux écrivant la même valeur), §5.5 (`Entrée` ouvre la
+//           fiche d'édition), §1 (le remplissage n'est jamais calculé)
+// @verifies docs/DESIGN_SYSTEM.md §5.7 ter (chaque champ s'enregistre pour lui-même), §5.29
+//
+// L'ASSERTION QUI COMPTE LE PLUS ICI EST, COMME POUR LA GÉOMÉTRIE, CELLE DES COLONNES ENVOYÉES :
+// une saisie de titre qui emporterait le corps, la couleur et le remplissage écraserait ce qu'un
+// collègue vient d'écrire dans un autre champ du même bloc.
+
+describe('canevas — la fiche d’édition, §3 et §5.5', () => {
+	it('`Entrée` sur un bloc OUVRE sa fiche, et le focus y entre', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		const bloc = (await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement
+
+		expect(screen.queryByTestId('fiche-bloc')).toBeNull()
+		fireEvent.keyDown(bloc, { key: 'Enter' })
+
+		expect(await screen.findByTestId('fiche-bloc')).toBeTruthy()
+		// Le focus ENTRE dans la fiche : sans cela, il faudrait traverser tout le canevas au
+		// clavier pour l'atteindre, et le geste du §5.5 ne serait tenu qu'en apparence.
+		expect(document.activeElement).toBe(screen.getByTestId('champ-titre'))
+	})
+
+	it('la fiche montre les valeurs du bloc, et le bloc édité est DÉSIGNÉ', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		expect((screen.getByTestId('champ-titre') as HTMLInputElement).value).toBe(BLOC_LIBRE.title)
+		expect((screen.getByTestId('champ-remplissage') as HTMLInputElement).value).toBe(String(BLOC_LIBRE.fill_percent))
+		expect((screen.getByTestId('curseur-remplissage') as HTMLInputElement).value).toBe(String(BLOC_LIBRE.fill_percent))
+		// Sans cette marque, une fiche posée sous un canevas de douze blocs n'aurait aucun lien
+		// lisible avec le sien.
+		expect(screen.getAllByTestId('bloc-objectif')[0]?.getAttribute('data-edite')).toBe('oui')
+	})
+
+	it('la saisie d’un titre n’envoie QUE le titre, et à la sortie du champ — jamais à la frappe', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, title: 'Doubler le MRR' }]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = await screen.findByTestId('champ-titre')
+
+		fireEvent.change(champ, { target: { value: 'Doubler le MRR' } })
+		// Rien n'est parti : écrire à chaque touche émettrait une requête par caractère.
+		expect(ecritures).toHaveLength(0)
+
+		await act(async () => {
+			fireEvent.blur(champ)
+		})
+		expect(ecritures).toHaveLength(1)
+		expect(ecritures[0]?.charge).toEqual({ title: 'Doubler le MRR' })
+		expect(screen.getByTestId('etat-titre').textContent).toBe(fr['goals.write.saved'])
+	})
+
+	it('`Entrée` dans le champ de titre enregistre sans attendre la sortie du champ', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, title: 'Doubler le MRR' }]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = await screen.findByTestId('champ-titre')
+
+		fireEvent.change(champ, { target: { value: 'Doubler le MRR' } })
+		await act(async () => {
+			fireEvent.keyDown(champ, { key: 'Enter' })
+		})
+		expect(ecritures[0]?.charge).toEqual({ title: 'Doubler le MRR' })
+	})
+
+	it('une valeur INCHANGÉE n’écrit rien : sortir d’un champ qu’on n’a pas touché n’est pas une saisie', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = await screen.findByTestId('champ-titre')
+
+		await act(async () => {
+			fireEvent.blur(champ)
+		})
+		expect(ecritures).toHaveLength(0)
+	})
+
+	it('le corps VIDÉ part à `null`, et n’emporte pas le titre', async () => {
+		const { client, ecritures } = clientEcrivant(
+			{ ...LECTURES_UN_BLOC, goal_blocks: ok([{ ...BLOC_LIBRE, body: 'Ancien corps.' }]) },
+			ok([{ ...BLOC_LIBRE, body: null }]),
+		)
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = await screen.findByTestId('champ-corps')
+
+		fireEvent.change(champ, { target: { value: '   ' } })
+		await act(async () => {
+			fireEvent.blur(champ)
+		})
+		expect(ecritures[0]?.charge).toEqual({ body: null })
+	})
+
+	it('choisir une couleur écrit la seule couleur, et le choix reste coché sans attendre le serveur', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, color: 'danger' }]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		const option = screen.getByTestId('couleur-danger').querySelector('input') as HTMLInputElement
+		await act(async () => {
+			fireEvent.click(option)
+		})
+		expect(ecritures[0]?.charge).toEqual({ color: 'danger' })
+		expect(option.checked).toBe(true)
+	})
+
+	it('LE CURSEUR ET LE CHAMP ÉCRIVENT LA MÊME VALEUR, et le curseur n’écrit qu’au relâchement', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, fill_percent: 80 }]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const curseur = (await screen.findByTestId('curseur-remplissage')) as HTMLInputElement
+		const nombre = screen.getByTestId('champ-remplissage') as HTMLInputElement
+
+		fireEvent.change(curseur, { target: { value: '80' } })
+		// Rien n'est parti : un glissement émettrait une requête par pour cent parcouru.
+		expect(ecritures).toHaveLength(0)
+		// Les deux entrées montrent la MÊME valeur : elles partagent un seul état.
+		expect(nombre.value).toBe('80')
+
+		await act(async () => {
+			fireEvent.pointerUp(curseur)
+		})
+		expect(ecritures[0]?.charge).toEqual({ fill_percent: 80 })
+	})
+
+	it('le champ numérique borne la valeur, et une saisie illisible n’écrit RIEN plutôt que zéro', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, fill_percent: 100 }]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const nombre = (await screen.findByTestId('champ-remplissage')) as HTMLInputElement
+
+		fireEvent.change(nombre, { target: { value: '' } })
+		await act(async () => {
+			fireEvent.blur(nombre)
+		})
+		// Écrire zéro sur un champ vidé serait la valeur par défaut trompeuse de `CLAUDE.md` §18.
+		expect(ecritures).toHaveLength(0)
+
+		fireEvent.change(nombre, { target: { value: '140' } })
+		await act(async () => {
+			fireEvent.blur(nombre)
+		})
+		expect(ecritures[0]?.charge).toEqual({ fill_percent: 100 })
+	})
+
+	it('un REFUS n’efface pas la saisie, et le dit SOUS le champ concerné', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, {
+			data: null,
+			error: { message: 'new row violates row-level security policy' },
+			status: 403,
+		})
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = (await screen.findByTestId('champ-titre')) as HTMLInputElement
+
+		fireEvent.change(champ, { target: { value: 'Doubler le MRR' } })
+		await act(async () => {
+			fireEvent.blur(champ)
+		})
+
+		const mention = screen.getByTestId('etat-titre')
+		expect(mention.textContent).toBe(fr['goals.write.refused.forbidden'])
+		expect(mention.getAttribute('role')).toBe('alert')
+		expect(mention.textContent).not.toContain('row-level security')
+		// La saisie RESTE : la rejeter sans le dire serait la valeur par défaut trompeuse du §18.
+		expect(champ.value).toBe('Doubler le MRR')
+		// Et la mention vit sous SON champ, cité par `aria-describedby`.
+		expect(champ.getAttribute('aria-describedby')).toContain('fiche-bloc-titre-etat')
+	})
+
+	it('le SILENCE de la clause `using` est dit, jamais rendu comme un succès', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const champ = await screen.findByTestId('champ-titre')
+
+		fireEvent.change(champ, { target: { value: 'Doubler le MRR' } })
+		await act(async () => {
+			fireEvent.blur(champ)
+		})
+		expect(screen.getByTestId('etat-titre').textContent).toBe(fr['goals.write.noeffect'])
+	})
+
+	it('`Échap` ferme la fiche et rend le focus au bloc', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const fiche = await screen.findByTestId('fiche-bloc')
+
+		fireEvent.keyDown(fiche, { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByTestId('fiche-bloc')).toBeNull())
+		// Le focus REVIENT au bloc : le renvoyer au début du document ferait perdre sa place.
+		expect(document.activeElement).toBe(screen.getAllByTestId('bloc-objectif')[0])
+	})
+
+	it('la fiche n’a AUCUN bouton d’enregistrement, et c’est la règle du §5.7 ter', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		const fiche = await screen.findByTestId('fiche-bloc')
+
+		// La seule commande de la fiche est la fermeture. Un bouton d'enregistrement renverrait
+		// les quatre colonnes à chaque fois et écraserait le champ d'un collègue.
+		const boutons = [...fiche.querySelectorAll('button')]
+		expect(boutons).toHaveLength(1)
+		expect(boutons[0]?.getAttribute('data-testid')).toBe('fermer-fiche')
+	})
+
+	it('LA JAUGE DU BLOC NE CHANGE PAS DE COULEUR AVEC LA VALEUR, quel que soit le remplissage', async () => {
+		// L'écart le plus tentant du composant (`docs/DESIGN_SYSTEM.md` §5.29), reposé ici parce
+		// que la tranche 2b rend la valeur modifiable et donc l'écart accessible.
+		const { client } = clientEcrivant(
+			{ ...LECTURES_UN_BLOC, goal_blocks: ok([{ ...BLOC_LIBRE, fill_percent: 5 }, { ...BLOC_LIBRE, id: 'e9', fill_percent: 95 }]) },
+			ok([]),
+		)
+		rendreCanevas(client)
+		const jauges = await screen.findAllByTestId('jauge-remplissage')
+		expect(jauges).toHaveLength(2)
+		expect(jauges[0]?.getAttribute('class')).toBe(jauges[1]?.getAttribute('class'))
+	})
+})

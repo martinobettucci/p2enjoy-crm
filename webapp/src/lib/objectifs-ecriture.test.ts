@@ -23,14 +23,19 @@ import { describe, expect, it } from 'vitest'
 import {
 	CODE_INTERDIT,
 	CODE_SAISIE_INVALIDE,
+	COULEURS_BLOC,
 	PAS_CLAVIER,
 	PAS_CLAVIER_FIN,
+	REMPLISSAGE_MAXIMAL,
+	REMPLISSAGE_MINIMAL,
 	TAILLE_BLOC_MINIMALE,
 	TAILLE_BLOC_NEUF,
 	blocDepuisLigne,
 	bornerCoordonnee,
 	bornerDimension,
+	bornerRemplissage,
 	classerRefusBloc,
+	ecrireContenuBloc,
 	ecrireGeometrieBloc,
 	poserBloc,
 } from './objectifs-ecriture'
@@ -293,5 +298,136 @@ describe('ecrireGeometrieBloc', () => {
 			statut: 'refus',
 			refus: { nature: 'indisponible', detail: 'réseau coupé' },
 		})
+	})
+})
+
+// --- TRANCHE 2b-1 : LE CONTENU ------------------------------------------------------------
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-1 : le contenu
+// @verifies docs/SPEC-goals.md §3 (saisir titre, corps, couleur ; régler le remplissage —
+//           curseur ET champ numérique écrivant la MÊME valeur), §2.2 (bornes des colonnes),
+//           §1 (le remplissage est SAISI, jamais calculé)
+// @verifies docs/DESIGN_SYSTEM.md §5.7 ter (un champ s'enregistre pour lui-même), §5.29 (fiche)
+//
+// COMME POUR LA GÉOMÉTRIE, CE SONT LES COLONNES ENVOYÉES QUI SONT ÉPROUVÉES, et pas seulement la
+// valeur rendue : un champ qui renverrait les quatre colonnes à chaque saisie écraserait ce qu'un
+// collègue vient d'écrire dans un autre champ du même bloc.
+
+describe('bornerRemplissage', () => {
+	it('rend un ENTIER : `fill_percent` est un smallint, et une décimale suggérerait un calcul', () => {
+		expect(bornerRemplissage(60.4)).toBe(60)
+		expect(bornerRemplissage('60,5'.replace(',', '.'))).toBe(61)
+	})
+
+	it('borne aux deux extrémités de `goal_blocks_fill_percent_check`', () => {
+		expect(bornerRemplissage(-10)).toBe(REMPLISSAGE_MINIMAL)
+		expect(bornerRemplissage(140)).toBe(REMPLISSAGE_MAXIMAL)
+	})
+
+	it('rend `null` sur une saisie illisible, JAMAIS zéro', () => {
+		// Zéro est une valeur — « finalement rien fait » —, et l'écrire à la place d'un champ vidé
+		// serait la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+		expect(bornerRemplissage('')).toBeNull()
+		expect(bornerRemplissage('   ')).toBeNull()
+		expect(bornerRemplissage('soixante')).toBeNull()
+		expect(bornerRemplissage(Number.NaN)).toBeNull()
+		expect(bornerRemplissage(0)).toBe(0)
+	})
+})
+
+describe('ecrireContenuBloc', () => {
+	it('n’envoie QUE le champ saisi : un titre ne réécrit ni le corps, ni la couleur, ni le remplissage', async () => {
+		const { client, appel } = espion({ data: [ligneRendue({ title: 'Doubler le MRR' })], error: null, status: 200 })
+		await ecrireContenuBloc(client, ID_BLOC, { titre: 'Doubler le MRR' })
+		expect(appel.operation).toBe('update')
+		expect(appel.table).toBe('goal_blocks')
+		expect(Object.keys(appel.charge ?? {})).toEqual(['title'])
+		expect(appel.filtres).toEqual([`eq(id,${ID_BLOC})`])
+		expect(appel.colonnes).toBe(COLONNES_BLOC)
+	})
+
+	it('débarrasse le titre de ses espaces de bord, comme à la pose', async () => {
+		const { client, appel } = espion({ data: [ligneRendue()], error: null, status: 200 })
+		await ecrireContenuBloc(client, ID_BLOC, { titre: '  Doubler le MRR  ' })
+		expect(appel.charge?.title).toBe('Doubler le MRR')
+	})
+
+	it('N’ANTICIPE PAS le refus d’un titre vide : il part, et c’est la base qui refuse', async () => {
+		// `CLAUDE.md` §10 — la règle réelle vit dans `goal_blocks_titre_check`. La filtrer ici
+		// ferait diverger l'écran de la base au premier changement de contrainte.
+		const { client, appel } = espion({
+			data: null,
+			error: { message: 'violates check constraint', code: CODE_SAISIE_INVALIDE },
+			status: 400,
+		})
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { titre: '   ' })
+		expect(appel.charge?.title).toBe('')
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('saisie-invalide')
+	})
+
+	it('ramène un corps vidé à `null`, pour que « pas de corps » n’ait qu’une seule représentation', async () => {
+		const { client, appel } = espion({ data: [ligneRendue({ body: null })], error: null, status: 200 })
+		await ecrireContenuBloc(client, ID_BLOC, { corps: '   ' })
+		expect(appel.charge?.body).toBeNull()
+	})
+
+	it('envoie la couleur TELLE QUELLE : une valeur hors énumération est refusée par la base', async () => {
+		const { client, appel } = espion({
+			data: null,
+			error: { message: 'violates check constraint', code: CODE_SAISIE_INVALIDE },
+			status: 400,
+		})
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { couleur: 'fuchsia' })
+		expect(appel.charge?.color).toBe('fuchsia')
+		expect(resultat.statut).toBe('refus')
+	})
+
+	it('rend la ligne du serveur, destination traduite comprise', async () => {
+		const { client } = espion({
+			data: [ligneRendue({ fill_percent: 60, color: 'success' })],
+			error: null,
+			status: 200,
+		})
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { remplissage: 60 })
+		expect(resultat.statut).toBe('enregistree')
+		if (resultat.statut !== 'enregistree') return
+		expect(resultat.bloc.fill_percent).toBe(60)
+		expect(resultat.bloc.color).toBe('success')
+		expect(resultat.bloc.destination).toBeNull()
+	})
+
+	it('rend « sans-effet » sur zéro ligne — le silence de la clause `using`, ni succès ni erreur', async () => {
+		// Éprouvé CONTRE SON SUCCÈS : une implémentation qui annoncerait « enregistrée » sur une
+		// réponse vide passerait tous les autres cas de ce bloc.
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { titre: 'Doubler le MRR' })
+		expect(resultat.statut).toBe('sans-effet')
+	})
+
+	it('traduit un refus de politique en `interdit`', async () => {
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { couleur: 'danger' })
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await ecrireContenuBloc(client, ID_BLOC, { titre: 'Doubler le MRR' })
+		expect(resultat.statut).toBe('refus')
+	})
+
+	it('offre les cinq couleurs de jeton du §2.2, et rien d’autre', async () => {
+		expect([...COULEURS_BLOC]).toEqual(['brand', 'success', 'accent', 'danger', 'neutral'])
 	})
 })
