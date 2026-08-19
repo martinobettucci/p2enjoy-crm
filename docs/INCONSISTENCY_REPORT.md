@@ -2120,3 +2120,47 @@ déjà consigné pour `verify-harness.sh` et `verify-preuves-refus.sh` ; remplac
 contrôle de la **définition** — que les quatre lecteurs partagent le même prédicat d'archivage, ce
 qui est la règle réellement voulue ; ou reconnaître que le §5.4 a été dépassé par
 `CRM-060`/`CRM-070`/`CRM-080` et le réviser. Le responsable tranche.
+
+### INC-163 — deux suites pgTAP comptent un seed qui a grandi depuis qu'elles ont été écrites
+
+**Nature :** même famille qu'INC-162, sur une autre surface. Deux fichiers de `supabase/tests/`
+figent un **compte de lignes du seed** ; le seed a été enrichi après leur écriture, et les compteurs
+n'ont pas été révisés dans le même changement. Les suites rougissent donc sur une **dérive de
+compteur**, pas sur un défaut du produit — aucune assertion de *comportement* n'échoue.
+
+**Mesure, 2026-08-19, sur la pile seedée de cette session :**
+
+```
+npm run test:sql
+  ECHEC supabase/tests/0015_colonnes_protegees.test.sql — 3 assertions en échec sur 41
+        not ok 33 - les quarante et une cards du seed sont intactes
+        not ok 34 - et leurs quarante et une adresses ont toujours la forme générée
+        not ok 35 - quarante et une adresses DISTINCTES
+  ECHEC supabase/tests/0034_previsualisation_exigence.test.sql — 1 assertion en échec sur 10
+        not ok 5 - `date-signature-prevue` × `Prospection` : 11 sur place, 0 à l'entrée
+  45 fichiers, 2 en échec.
+```
+
+**Le compte réel, relevé sur la pile :** `GET /rest/v1/cards?select=id` rend **42** lignes, et les
+quarante-deux portent un identifiant du seed (`5eed…`), toutes créées à la même seconde par
+`apply-seed.sh`. Il ne s'agit donc pas d'une sonde oubliée par une suite interrompue : **c'est le
+seed lui-même qui produit quarante-deux cards** là où la preuve en attend quarante et une.
+
+**L'ordre des changements est établi, pas supposé.** `git log -S "quarante et une cards"` désigne
+`bf61359` (`CRM-060` tranche **4c**) comme l'auteur du compteur, et
+`git log -- supabase/seed/apply-seed.sh` désigne `7452bc1` (`CRM-060` tranche **4d**) comme dernier
+changement du seed — **postérieur**. La tranche 4d a enrichi le seed sans réviser ces deux suites.
+
+**Étrangère à l'unité de la session.** `CRM-060` sous-tranche **4h** ne modifie **ni le seed, ni
+aucune migration, ni aucun fichier de `supabase/`**, et c'est vérifié plutôt que supposé :
+`git log --name-only -- supabase/` sur les commits de la session ne rend **rien**. La sous-tranche
+n'ajoute aucune card et n'en retire aucune ; ses sondes sont des **contacts** et des
+**rattachements**, tous détruits, le seed étant relu intact par un scénario dédié. Le comportement
+est laissé **inchangé**.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** comme pour INC-162, deux
+réponses sont défendables — porter les compteurs au nouvel état du seed, ou rendre ces assertions
+**relatives** plutôt qu'absolues, afin qu'un seed qui grandit ne les casse plus. La seconde change
+ce que la preuve prouve, et ce choix appartient à l'unité qui possède ces suites. Le trancher au
+passage serait corriger un défaut étranger à l'unité autorisée (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.1).
