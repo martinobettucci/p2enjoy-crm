@@ -505,7 +505,9 @@ describe('modification d’un contact depuis sa fiche (docs/SPEC-contacts.md §1
 	})
 
 	it('cas o : pendant l’envoi, la commande est aria-busy et l’envoi ne part QU’UNE fois', async () => {
-		let debloquer: (() => void) | null = null
+		// `debloquer` est déclaré hors de la promesse et typé explicitement : TypeScript réduirait
+		// sinon son type à `never` après l'affectation faite dans l'exécuteur, qu'il ne suit pas.
+		let debloquer: () => void = () => undefined
 		const enAttente = new Promise<void>((resoudre) => {
 			debloquer = resoudre
 		})
@@ -538,7 +540,7 @@ describe('modification d’un contact depuis sa fiche (docs/SPEC-contacts.md §1
 		// Un second déclenchement pendant l'aller-retour écrirait deux fois la même chose.
 		await userEvent.click(envoyer)
 		expect(envois).toHaveLength(1)
-		debloquer?.()
+		debloquer()
 	})
 
 	it('cas r : ni sur l’introuvable, ni sur l’erreur, ni sans client, aucune commande', async () => {
