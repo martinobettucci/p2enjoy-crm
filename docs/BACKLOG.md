@@ -8224,7 +8224,9 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       traçabilité des huit fichiers de l'unité, les captures des quatre paliers et des trois états,
       les trois suites Vitest (**25**, **84**, **73**), la preuve d'API (**13 passés**) et le
       parcours d'interface (**33 passés**), puis constate que celui-ci **rend le seed intact** —
-      toujours six blocs. `--rapide` annonce ce qu'il n'exécute pas plutôt que de le taire.
+      toujours six blocs. `--rapide` annonce ce qu'il n'exécute pas plutôt que de le taire. **Rejoué par la
+      session de la tranche 2c sur la liste administrable**, il rend les mêmes **44 contrôles,
+      aucune anomalie**, les deux modules dégradés redevenant verts après restauration.
 - [x] **SEPT DÉGRADATIONS RÉELLES, ET CHACUNE PORTE SUR UNE RÈGLE DE `docs/SPEC-goals.md`** : le
       moignon qui porterait son libellé et l'équivalent textuel qui NOMMERAIT l'extrémité masquée
       (§5.4, §4.1 — les deux formes sous lesquelles l'écran dirait ce que la RLS cache), le point de

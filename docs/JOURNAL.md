@@ -20506,9 +20506,31 @@ différent échouerait.
 tableau et le détruisant par la clé de service — un archivage laisserait son nom pris et ferait
 échouer l'exécution suivante. Console vierge, **six captures observées**.
 
-**Où reprendre.** `CRM-083` reste `[~]`. Son reste est désormais le **harnais dédié**
-`scripts/verify-objectifs-canevas.sh`, non complaisant et éprouvé par des dégradations réelles, et
-l'état lecture seule du `viewer` qui reste **bloqué par l'arbitrage INC-170**. Le désarchivage d'un
+**Campagne complète de la session, exécutée une fois.** `test:unit` **57 fichiers / 1963 tests**,
+`test:sql` **47 fichiers / 2351 assertions**, `e2e:api` **787 passés**, `e2e:ui` **482 passés,
+aucun échec** — INC-166 n'a pas reparu de cette exécution —, `e2e:mail` **42 passés**, `pytest`
+**244**, `typecheck`, `types:check` et `build` verts. `scripts/verify-objectifs.sh` **46 contrôles,
+aucune anomalie**. `scripts/verify-webapp.sh` rend **42 contrôles, 1 anomalie**, MESURÉE et non
+déduite : `node scripts/lib/classes-css.mjs` cite **276** classes — trois de plus que la veille,
+celles de cette tranche — et n'en trouve que trois absentes du CSS produit, `h-10 py-0.5
+text-text-1`, exactement celles d'INC-158. **Aucune des classes de cette tranche n'y figure.** Les
+quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas
+dans une session (`docs/CloudWorker.md` §2.1 ter). Les cent soixante-cinq captures d'autres unités
+régénérées par la campagne ont été **restaurées** : ce changement ne touche que la liste des
+tableaux.
+
+**Rebase sur une session parallèle, et preuves rejouées.** `origin/main` avait avancé pendant la
+campagne : le **harnais dédié** `scripts/verify-objectifs-canevas.sh` a été poussé (`d34cfac`),
+là encore **sans mise à jour du suivi**, ainsi que deux preuves d'API. Le rebase s'est fait sans
+conflit. Preuves rejouées APRÈS synchronisation (`CLAUDE.md` §13) : `typecheck` vert, les trois
+suites d'objectifs **182 tests verts**, `e2e/ui/objectifs.spec.ts` **33 scénarios verts**, et le
+harnais neuf exécuté sur ce changement en place — **44 contrôles, aucune anomalie**. Le backlog
+porte cette mesure, que la session voisine n'avait pas consignée.
+
+**Où reprendre.** `CRM-083` reste `[~]`, et il ne lui reste qu'UN point : l'état lecture seule du
+`viewer`, **bloqué par l'arbitrage INC-170** — cet énoncé est le seul du dépôt à demander une
+extinction par rôle, là où `docs/DESIGN_SYSTEM.md` pose neuf fois qu'aucune commande n'est éteinte
+d'avance. Tant qu'il n'est pas tranché, l'unité ne peut pas passer à `[x]`. Le désarchivage d'un
 tableau n'est pas livré, et c'est une limite nommée au backlog : aucune surface ne rend un tableau
 archivé. Trois arbitrages restent en attente : **INC-169**, **INC-170** et **INC-172**.
 
