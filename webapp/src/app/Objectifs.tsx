@@ -922,14 +922,20 @@ function BlocCanevas({
 			<span
 				data-testid="poignee-taille"
 				aria-hidden="true"
-				className="absolute right-0 bottom-0 size-6 cursor-se-resize border-r-2 border-b-2 border-text-3 rounded-br-lg"
+				className="absolute right-0 bottom-0 flex items-end justify-end size-6 p-1 cursor-se-resize"
 				onPointerDown={armer('taille')}
 				onPointerMove={suivre}
 				onPointerUp={relacher}
 				onPointerCancel={() => {
 					ancre.current = null
 				}}
-			/>
+			>
+				{/* La MARQUE est plus petite que la zone qui la reçoit — écart trouvé en regardant
+				    une capture (`CLAUDE.md` §16) : dessinée à même les 24 px et suivant le rayon de
+				    la carte, l'équerre se lisait comme une languette accrochée au coin de chaque
+				    bloc. Elle mesure donc 10 px, la zone sensible gardant les 24 px du §5.29. */}
+				<span className="block size-3 border-r-2 border-b-2 border-text-3" />
+			</span>
 		</article>
 	)
 }

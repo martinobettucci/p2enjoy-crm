@@ -344,6 +344,99 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		).toBe(largeur)
 	})
 
+
+	test('poser un bloc À LA SOURIS : le bloc naît au POINT DU CLIC — §3', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		await expect(page.getByTestId('bloc-objectif')).toHaveCount(6)
+
+		await page.getByTestId('poser-bloc').click()
+		const surface = page.getByTestId('canevas-surface')
+		const cadre = await surface.boundingBox()
+		expect(cadre).not.toBeNull()
+		if (cadre === null) return
+
+		// Un point de la zone LIBRE, sous les six blocs du seed, et surtout DANS la partie visible
+		// du conteneur : celui-ci est borné à 70 % de la hauteur de la fenêtre (§5.2), si bien
+		// qu'un point pris plus bas tomberait hors de la zone rognée et le clic n'atteindrait
+		// jamais la surface. Mesuré : à `+620`, la surface ne reçoit rien du tout.
+		const cible = { x: cadre.x + 120, y: cadre.y + 450 }
+		await page.mouse.click(cible.x, cible.y)
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+
+		await page.reload()
+		const pose = page.getByTestId('bloc-objectif').filter({ hasText: 'Nouvel objectif' })
+		await expect(pose).toHaveCount(1)
+		// LA POSITION VIENT DU GESTE : le coin haut gauche du bloc est le point du clic, à la
+		// tolérance d'arrondi près. Aucun placement automatique, aucune grille.
+		expect(Math.abs((await positionGauche(pose.first())) - 120)).toBeLessThanOrEqual(2)
+		expect(Math.abs((await mesure(pose.first(), 'top')) - 450)).toBeLessThanOrEqual(2)
+		await capturer(page, 'bloc-pose-souris-1440', UNITE)
+
+		const retrait = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.Nouvel%20objectif`,
+			{ method: 'DELETE', headers: enTetesService() },
+		)
+		expect(retrait.status).toBe(204)
+	})
+
+	test('déplacer et redimensionner À LA SOURIS, puis remettre le bloc en place', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		const gauche = await positionGauche(bloc)
+		const haut = await mesure(bloc, 'top')
+		const cadre = await bloc.boundingBox()
+		expect(cadre).not.toBeNull()
+		if (cadre === null) return
+
+		// Le glissement part du CORPS du bloc, jamais de sa pilule : un `pointerdown` sur un lien
+		// n'arme aucun déplacement, sans quoi ouvrir un channel deviendrait impossible.
+		await page.mouse.move(cadre.x + 60, cadre.y + 20)
+		await page.mouse.down()
+		await page.mouse.move(cadre.x + 120, cadre.y + 80, { steps: 5 })
+		await page.mouse.up()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+
+		await page.reload()
+		const apres = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		expect(await positionGauche(apres)).toBe(gauche + 60)
+		expect(await mesure(apres, 'top')).toBe(haut + 60)
+		await capturer(page, 'bloc-deplace-souris-1440', UNITE)
+
+		// La POIGNÉE redimensionne, et elle seule : la position ne bouge pas.
+		const largeur = await mesure(apres, 'width')
+		const cadreApres = await apres.boundingBox()
+		expect(cadreApres).not.toBeNull()
+		if (cadreApres === null) return
+		await page.mouse.move(cadreApres.x + cadreApres.width - 6, cadreApres.y + cadreApres.height - 6)
+		await page.mouse.down()
+		await page.mouse.move(cadreApres.x + cadreApres.width + 34, cadreApres.y + cadreApres.height - 6, {
+			steps: 5,
+		})
+		await page.mouse.up()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+
+		await page.reload()
+		const redimensionne = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		expect(await mesure(redimensionne, 'width')).toBe(largeur + 40)
+		expect(await positionGauche(redimensionne)).toBe(gauche + 60)
+
+		// REMISE EN ÉTAT du seed, par la clé de service : le geste de souris ne se rejoue pas à
+		// l'identique en sens inverse, et une preuve qui laisserait le tableau déformé rendrait
+		// les captures des exécutions suivantes différentes des siennes.
+		const remise = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(BLOC_LIBRE)}`,
+			{
+				method: 'PATCH',
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				body: JSON.stringify({ pos_x: gauche, pos_y: haut, width: largeur }),
+			},
+		)
+		expect(remise.status).toBe(204)
+	})
+
 	test('la LECTRICE voit les gestes, les tente, et lit le refus du backend — §4.2', async ({ page }) => {
 		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (docs/DESIGN_SYSTEM.md §5.26) :
 		// l'écran envoie, et la politique décide. Le refus mesuré ici est celui de la base, pas
