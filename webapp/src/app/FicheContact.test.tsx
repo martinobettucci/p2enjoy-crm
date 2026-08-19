@@ -612,7 +612,11 @@ function clientQuiRattache(options: {
 						: faire(() => {
 								const reponse = options.lectures[Math.min(rangLecture, options.lectures.length - 1)]
 								rangLecture += 1
-								return reponse
+								// La dernière réponse est REJOUÉE indéfiniment : une relecture déclenchée
+								// par un rattachement réussi (cas f) en demande une de plus que la liste
+								// n'en porte, et rendre `undefined` ferait échouer la lecture sur un état
+								// que la pile ne produit jamais.
+								return reponse ?? { data: [], error: null, status: 200 }
 							}),
 				insert: (charge: unknown) => {
 					envois.push({ table, charge })
