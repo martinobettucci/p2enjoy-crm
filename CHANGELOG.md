@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4g : la modification d'un contact depuis sa
+  fiche** (`docs/SPEC-contacts.md` §16, `docs/DESIGN_SYSTEM.md` §5.25). Un contact créé au carnet
+  était jusqu'ici **définitif** : une coquille dans un nom, un email qui change d'employeur, une
+  fonction promue n'avaient aucune surface pour se corriger, alors que la politique de mise à jour
+  existait en base depuis la tranche 1 sans qu'aucun écran ne l'exerce. La fiche porte désormais un
+  bouton **« Modifier »** qui ouvre, dans le flux du document, un formulaire **prérempli** des cinq
+  valeurs courantes ; la ligne rendue par le serveur remplace les caractéristiques **sans
+  relecture**, et le titre de la route suit le nouveau nom. Le tableau des affaires n'est pas
+  touché.
+
+  **Un refus d'autorisation est ici SILENCIEUX, et le produit le dit.** Mesuré : la clause `USING`
+  de la politique rend la ligne invisible à l'écriture, si bien que le serveur répond `200` avec
+  **aucune ligne modifiée** au lieu du `403` explicite que rend la création. Ce silence est
+  indistinguable d'un contact disparu entre l'ouverture de la fiche et l'envoi : un **seul**
+  message couvre les deux, n'affirme ni l'un ni l'autre, et invite à recharger la fiche. Refermer
+  le formulaire sur ce silence aurait fait croire à une modification qui n'a pas eu lieu.
+
+  Les cinq champs sont **extraits et partagés** avec le formulaire de création
+  (`webapp/src/app/ChampsContact.tsx`), dont le comportement est inchangé — `Carnet.test.tsx` reste
+  vert sans modification.
+
+  **La suppression d'un contact n'est délibérément pas livrée** : elle dépend de l'arbitrage non
+  tranché du §6 point 4 de la spécification — supprimer un contact laisse en place les valeurs
+  `jsonb` qui le désignaient. Une commande morte aurait été pire que l'absence.
+
+  Aucune migration : cette sous-tranche n'ouvre aucune politique et ne crée aucune colonne.
+
 - **`CRM-060` — Contacts et organisations, tranche 4f : la fiche d'un contact**
   (`docs/SPEC-contacts.md` §15, `docs/DESIGN_SYSTEM.md` §5.24). Le contact était le seul objet de
   la tranche à n'avoir **aucune page** : quatre surfaces le nommaient — le carnet, la fiche

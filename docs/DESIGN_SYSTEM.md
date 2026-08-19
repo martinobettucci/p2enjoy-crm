@@ -1952,3 +1952,43 @@ spécifié par `docs/SPEC-contacts.md` §15 ; les règles ci-dessous ne disent q
   mettre en scène (§5.8, `docs/SPEC-contacts.md` §15.4).
 
 - **Le conteneur du tableau porte `.indique-debordement-x`** (§12.6), comme le §5.19 et le §5.20.
+
+- **RÈGLE RÉVISÉE PAR LIVRAISON, 2026-08-19.** Cette surface ne livrait « aucun geste », et son
+  état vide n'offrait donc aucune action. La sous-tranche 4g livre le geste de **modification**
+  (§5.25) : la fiche porte désormais une commande, posée avant les deux zones. Ce qui reste vrai,
+  et qui est ce que la règle visait, est plus étroit : **l'état vide de la zone des affaires
+  n'offre toujours aucune action**, aucun rattachement n'étant livré depuis cette page.
+
+### 5.25 Formulaire de modification d'un contact — `CRM-060`
+
+Le geste d'édition de la fiche de contact (`docs/SPEC-contacts.md` §16). Il **hérite du §5.23** —
+le formulaire de création — plutôt que d'inventer une forme : mêmes champs, mêmes règles, même
+motif. Ce qui suit ne dit que ce qui lui est propre.
+
+- **Dans le FLUX du document, jamais une modale**, entre le titre de la route et la zone des
+  caractéristiques. Le motif est celui du §5.23, transposé : **ce que la fiche affiche est
+  précisément ce que l'on vient corriger**, et une modale le recouvrirait. Les deux zones de
+  lecture restent rendues **sous** le formulaire.
+- **Replié par défaut**, et **la commande et le formulaire s'excluent** : ouvrir remplace le
+  bouton, refermer le remonte.
+- **Les champs sont PRÉREMPLIS** des valeurs courantes. Une colonne nulle donne un champ **vide**,
+  jamais le texte « null » : c'est la règle du §5.9 appliquée à la saisie.
+- **Le focus entre** sur le champ du nom, et **revient** à la commande d'ouverture à la fermeture
+  (§8). Ce retour est **différé d'un tour de rendu** : la commande étant démontée pendant que le
+  formulaire est ouvert, l'appeler depuis le gestionnaire de fermeture viserait une référence nulle
+  et laisserait le focus sur le document. C'est le défaut trouvé au carnet le 2026-08-19, et le
+  remède que `BlocContactsCard` porte déjà — un drapeau, puis un effet. **Aucune temporisation.**
+- **Aucune commande éteinte d'avance selon le rôle**, comme au §5.23.
+- **UN REFUS SILENCIEUX DOIT ÊTRE DIT, et c'est la règle propre à cette surface.** À la création,
+  un refus d'autorisation est un `403` explicite. À la modification, la clause `USING` de la
+  politique rend la ligne invisible à l'écriture : le serveur rend « aucune ligne modifiée », sans
+  erreur. Le formulaire **reste ouvert**, la saisie est **conservée**, et un message le dit — il
+  n'affirme ni le refus ni la disparition, les deux étant indistinguables, et il invite à recharger
+  la fiche. **Refermer le formulaire sur un tel silence ferait croire à une modification qui n'a
+  pas eu lieu**, et c'est précisément ce que cette règle interdit.
+- **La fiche s'actualise sans relire**, et le **titre de la route suit le nouveau nom** — il est une
+  donnée (§5.24). La **zone des affaires n'est pas touchée** : aucun champ de ce formulaire n'entre
+  dans un rattachement.
+- **Aucune commande de suppression**, et l'absence est **assumée** : le cycle de vie d'un contact
+  dépend d'un arbitrage ouvert (`docs/SPEC-contacts.md` §6, point 4). Une commande morte serait
+  pire que l'absence.

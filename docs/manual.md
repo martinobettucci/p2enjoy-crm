@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Ce qui manque est dit : aucune modification ni suppression d'un contact, aucune création d'organisation, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
 
 ### Suivi quotidien
 
@@ -216,7 +216,7 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e et 4f. Décrit l'application réellement exécutée ;
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f et 4g. Décrit l'application réellement exécutée ;
 captures dans `docs/captures/CRM-060/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
@@ -305,9 +305,46 @@ listée, avec la mention **« Archivée »**, parce que l'historique d'une perso
 donnent tous le même écran** : « Contact introuvable », avec un bouton de retour au carnet — même
 règle que pour l'organisation, et pour la même raison.
 
-**Ce que la fiche ne fait pas encore.** Elle ne permet ni de modifier, ni de supprimer un contact,
-ni de le rattacher à une affaire depuis cette page. Elle ne montre pas non plus les emails échangés
-avec la personne : la messagerie d'une affaire reste dans l'affaire.
+#### Modifier un contact
+
+Le bouton **« Modifier »**, en haut de la fiche, ouvre un formulaire **dans la page** — pas une
+fenêtre par-dessus : les deux blocs restent visibles en dessous, et vous corrigez en voyant ce que
+vous corrigez.
+
+Les cinq champs sont ceux de la création, **déjà remplis** avec les valeurs actuelles. Le **nom**
+reste obligatoire ; les autres peuvent être vidés, et ils redeviennent alors vides sur la fiche.
+Vider le champ **Organisation** détache la personne de son organisation, sans la supprimer.
+
+Une fois enregistrée, la modification apparaît **immédiatement** dans le bloc du haut, et le titre
+de la page suit le nouveau nom. Le tableau des affaires, lui, ne bouge pas : modifier une personne
+ne change rien à ce sur quoi elle travaille.
+
+**Si la modification est refusée**, le message le dit en clair et **votre saisie est conservée** :
+
+- *« Un autre contact porte déjà cette adresse email »* — l'adresse est unique dans l'espace de
+  travail, quelle que soit la casse. Vous pouvez en revanche réenregistrer la personne avec sa
+  **propre** adresse sans rien changer : elle ne se heurte pas à elle-même ;
+- *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
+- *« Une des valeurs saisies n'a pas la forme attendue »* — un email mal formé, par exemple ;
+- *« Rien n'a été modifié »* — et ce message-là mérite une explication.
+
+**Pourquoi « Rien n'a été modifié » ne dit pas pourquoi.** Deux situations donnent exactement la
+même réponse du serveur, et le produit ne peut pas les distinguer : soit votre rôle ne vous permet
+pas de modifier ce contact — un compte en **lecture seule** voit le bouton et le formulaire, comme
+partout, et c'est le serveur qui refuse —, soit le contact a été supprimé entre le moment où vous
+avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche donc pas, et vous
+invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
+ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
+
+**Ce que la fiche ne fait pas encore.** Elle ne permet ni de **supprimer** un contact, ni de le
+rattacher à une affaire depuis cette page — le rattachement se règle depuis l'affaire (chapitre
+4.7 *ter*). Elle ne montre pas non plus les emails échangés avec la personne : la messagerie d'une
+affaire reste dans l'affaire.
+
+**La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
+d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
+plus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas
+avant.
 
 #### Créer un contact
 
@@ -336,9 +373,10 @@ page ne se recharge.
   bouton et le formulaire, comme partout dans le produit, et c'est le serveur qui refuse. Rien
   n'est grisé d'avance.
 
-**Ce que ce formulaire ne fait pas**, et c'est dit plutôt que caché : il ne **modifie** ni ne
-**supprime** un contact existant, il ne crée pas d'organisation, et il n'existe que sur le carnet —
-ni depuis la fiche d'une affaire, ni depuis un champ de formulaire.
+**Ce que ce formulaire ne fait pas**, et c'est dit plutôt que caché : il ne **supprime** pas un
+contact existant et il ne crée pas d'organisation ; il n'existe que sur le carnet — ni depuis la
+fiche d'une affaire, ni depuis un champ de formulaire. Pour **modifier** une personne déjà créée,
+ouvrez sa fiche : le bouton « Modifier » y attend.
 
 ### 3.2 bis La section Tracks
 
