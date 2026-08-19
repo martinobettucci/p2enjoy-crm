@@ -682,8 +682,18 @@ function MentionEcriture({ message }: { readonly message: MessageEcriture | null
 /** Les quatre champs de la fiche. Chacun porte SA mention d'état (`docs/DESIGN_SYSTEM.md` §5.7 ter). */
 type ChampFiche = 'titre' | 'corps' | 'couleur' | 'remplissage'
 
+/**
+ * Le contrôle NE PORTE PAS SA LARGEUR, et ce n'est pas une omission — c'est un défaut trouvé en
+ * regardant une capture (`CLAUDE.md` §16).
+ *
+ * Écrites d'abord avec `w-full`, ces classes rendaient le champ numérique du remplissage large de
+ * toute la fiche, malgré le `w-[10ch]` ajouté derrière lui : **l'ordre des classes dans l'attribut
+ * ne décide de rien**, c'est l'ordre des règles dans la feuille qui tranche, et deux utilitaires de
+ * largeur du même espace de noms s'y disputent sans arbitre. La largeur est donc posée par chaque
+ * champ, une seule fois.
+ */
 const CLASSES_CONTROLE = [
-	'w-full min-h-[var(--size-target)] px-3 py-2',
+	'min-h-[var(--size-target)] px-3 py-2',
 	'rounded-sm border border-border bg-surface text-base text-ink',
 ].join(' ')
 
@@ -802,7 +812,7 @@ function FicheEditionBloc({
 					value={titre}
 					required
 					aria-describedby="fiche-bloc-titre-aide fiche-bloc-titre-etat"
-					className={CLASSES_CONTROLE}
+					className={[CLASSES_CONTROLE, 'w-full'].join(' ')}
 					onChange={(evenement) => setTitre(evenement.target.value)}
 					/* LA VALEUR EST ARRÊTÉE À LA SORTIE DU CHAMP OU SUR `Entrée`, jamais à la frappe :
 					   écrire à chaque touche émettrait une requête par caractère. Aucune temporisation
@@ -837,7 +847,7 @@ function FicheEditionBloc({
 					rows={3}
 					value={corps}
 					aria-describedby="fiche-bloc-corps-aide fiche-bloc-corps-etat"
-					className={CLASSES_CONTROLE}
+					className={[CLASSES_CONTROLE, 'w-full'].join(' ')}
 					onChange={(evenement) => setCorps(evenement.target.value)}
 					onBlur={() => {
 						if (corps.trim() === (bloc.body ?? '')) return

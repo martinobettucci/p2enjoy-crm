@@ -467,4 +467,159 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		await page.getByTestId('bloc-objectif').first().focus()
 		await expect(page.getByTestId('equivalent-textuel')).toBeVisible()
 	})
+
+	// --- TRANCHE 2b-1 : LE CONTENU ---------------------------------------------------------
+	// @verifies docs/SPEC-goals.md §3 (saisir titre, corps, couleur ; régler le remplissage au
+	//           curseur ET au champ), §5.5 (`Entrée` ouvre la fiche d'édition)
+	// @verifies docs/DESIGN_SYSTEM.md §5.7 ter (chaque champ s'enregistre pour lui-même), §5.29
+	//
+	// CES SCÉNARIOS ÉCRIVENT RÉELLEMENT DANS LA BASE, avec le jeton réel de l'administratrice, et
+	// REMETTENT le seed en état par la clé de service. Sans cette remise, les comptes et les
+	// captures des scénarios de lecture dériveraient d'une exécution à l'autre.
+
+	test('`Entrée` ouvre la fiche, et le TITRE saisi survit au rechargement — §3 et §5.5', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+
+		const fiche = page.getByTestId('fiche-bloc')
+		await expect(fiche).toBeVisible()
+		// LE FOCUS EST ENTRÉ DANS LA FICHE : sans cela, il faudrait traverser tout le canevas au
+		// clavier pour l'atteindre, et le geste du §5.5 ne serait tenu qu'en apparence.
+		await expect(page.getByTestId('champ-titre')).toBeFocused()
+		await capturer(page, 'fiche-edition-1440', UNITE)
+
+		const NOUVEAU = 'Doubler le pipeline commercial (révisé)'
+		await page.getByTestId('champ-titre').fill(NOUVEAU)
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('etat-titre')).toHaveText('Enregistré')
+
+		// LE TITRE EST BIEN EN BASE : la mention seule ne le prouverait pas.
+		await page.reload()
+		await expect(page.getByRole('heading', { name: NOUVEAU })).toBeVisible()
+
+		const remise = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(NOUVEAU)}`,
+			{
+				method: 'PATCH',
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title: BLOC_LIBRE }),
+			},
+		)
+		expect(remise.status).toBe(204)
+	})
+
+	test('LE CURSEUR ET LE CHAMP ÉCRIVENT LA MÊME VALEUR, et la jauge du bloc la porte — §3', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		const jauge = bloc.getByTestId('jauge-remplissage')
+		const avant = await jauge.evaluate((element) => (element as HTMLElement).style.width)
+
+		await bloc.click()
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		// Le champ numérique écrit, et le CURSEUR affiche la même valeur : un seul état les porte.
+		await page.getByTestId('champ-remplissage').fill('85')
+		await page.getByTestId('champ-remplissage').press('Enter')
+		await expect(page.getByTestId('etat-remplissage')).toHaveText('Enregistré')
+		await expect(page.getByTestId('curseur-remplissage')).toHaveValue('85')
+		await expect(jauge).toHaveCSS('width', /.+/)
+
+		await page.reload()
+		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await expect(recharge).toContainText('Remplissage 85 %')
+		expect(
+			await recharge.getByTestId('jauge-remplissage').evaluate((element) => (element as HTMLElement).style.width),
+		).not.toBe(avant)
+		await capturer(page, 'remplissage-saisi-1440', UNITE)
+
+		const remise = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(BLOC_LIBRE)}`,
+			{
+				method: 'PATCH',
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				body: JSON.stringify({ fill_percent: 25 }),
+			},
+		)
+		expect(remise.status).toBe(204)
+	})
+
+	test('LA COULEUR CHOISIE change le liseré du bloc, et n’emporte aucune autre colonne — §2.2', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		await page.getByTestId('couleur-danger').getByRole('radio').check()
+		await expect(page.getByTestId('etat-couleur')).toHaveText('Enregistré')
+
+		await page.reload()
+		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		// Le liseré porte le jeton `danger` ; le titre et le remplissage, eux, n'ont pas bougé.
+		await expect(recharge.locator('span.bg-danger').first()).toBeVisible()
+		await expect(recharge).toContainText('Remplissage 25 %')
+
+		const remise = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(BLOC_LIBRE)}`,
+			{
+				method: 'PATCH',
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				body: JSON.stringify({ color: 'brand' }),
+			},
+		)
+		expect(remise.status).toBe(204)
+	})
+
+	test('la LECTRICE ouvre la fiche, saisit, et lit le refus SOUS le champ — §4.2', async ({ page }) => {
+		// Même règle que la tranche 2a : aucune commande n'est éteinte d'avance selon le rôle
+		// (docs/DESIGN_SYSTEM.md §5.26). L'écran envoie, la politique décide, l'écran traduit —
+		// et la contradiction avec le §5.4 de la spécification reste consignée en INC-170.
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		await page.getByTestId('champ-titre').fill('Titre écrit par une lectrice')
+		await page.keyboard.press('Enter')
+
+		const mention = page.getByTestId('etat-titre')
+		await expect(mention).toBeVisible()
+		await expect(mention).not.toHaveText('Enregistré')
+		// LA SAISIE RESTE : un refus n'efface pas ce qui a été tapé (§5.7 ter).
+		await expect(page.getByTestId('champ-titre')).toHaveValue('Titre écrit par une lectrice')
+		await capturer(page, 'fiche-refus-lectrice-1440', UNITE)
+	})
+
+	test('`Échap` ferme la fiche et rend le focus au bloc — §5.5', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('fiche-bloc')).toHaveCount(0)
+		// Le focus REVIENT au bloc : le renvoyer au début du document ferait perdre sa place au
+		// clavier, et le canevas ne serait plus pilotable sans souris.
+		await expect(bloc).toBeFocused()
+	})
 })
