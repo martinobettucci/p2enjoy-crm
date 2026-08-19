@@ -719,6 +719,22 @@ describe('classerRefusFleche', () => {
 		expect(classerRefusFleche(200, CODE_INTERDIT, 'row-level security').nature).toBe('interdit')
 	})
 
+	it('garde le doublon quand un statut d’interdiction l’accompagne — L’ORDRE est la règle', () => {
+		// AJOUTÉ PARCE QUE LE HARNAIS L'A TROUVÉ MANQUANT (`scripts/verify-objectifs-canevas.sh`,
+		// dégradation « le statut HTTP est classé avant le code PostgreSQL ») : la suite pinçait
+		// bien l'ordre pour `42501`, jamais pour `23505`. Remonter la branche HTTP au-dessus du
+		// doublon ne rendait donc AUCUNE preuve rouge, alors que la règle du module est écrite
+		// « le code PostgreSQL D'ABORD, le statut HTTP ensuite ».
+		//
+		// La paire est délibérément CONTRADICTOIRE — c'est le seul montage où l'ordre devienne
+		// observable, et c'est l'idiome déjà employé par le scénario ci-dessus, qui associe un
+		// `200` à un code d'erreur pour la même raison. Ce que la preuve défend n'est pas une
+		// réponse que PostgREST émettrait telle quelle, c'est la PRÉCÉDENCE du classifieur : deux
+		// causes qui appellent des gestes opposés — corriger la flèche déjà tracée, ou renoncer —
+		// peuvent partager un statut, jamais un code (§2.3).
+		expect(classerRefusFleche(403, CODE_DOUBLON, 'duplicate key').nature).toBe('doublon')
+	})
+
 	it('retombe sur `indisponible` quand rien ne se reconnaît', () => {
 		expect(classerRefusFleche(500, undefined, 'boom').nature).toBe('indisponible')
 	})
