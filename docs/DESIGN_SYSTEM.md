@@ -1808,11 +1808,17 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
   parcours de tabulation : le clavier dispose du geste complet (`Alt` + flèches), et un bouton qui
   ne ferait rien sur `Entrée` serait la commande morte que le §5.10 proscrit.
 
-  **ÉCART ASSUMÉ AU §8, ET IL EST BORNÉ.** Elle mesure **24 px** et non les 40 px de la cible
-  minimale. Le motif est la géométrie du composant : un bloc peut descendre à 120 × 72 px, et une
-  poignée de 40 px y couvrirait son pied — donc sa jauge et sa pilule de channel. L'écart ne prive
-  d'aucun geste, puisque le chemin clavier est **complet et équivalent** ; c'est la condition à
-  laquelle il est pris, et il tombe si ce chemin disparaît.
+  **ÉCART ASSUMÉ AU §8, ET IL EST BORNÉ.** Sa zone sensible mesure **24 px** et non les 40 px de la
+  cible minimale. Le motif est la géométrie du composant : un bloc peut descendre à 120 × 72 px, et
+  une poignée de 40 px y couvrirait son pied — donc sa jauge et sa pilule de channel. L'écart ne
+  prive d'aucun geste, puisque le chemin clavier est **complet et équivalent** ; c'est la condition
+  à laquelle il est pris, et il tombe si ce chemin disparaît.
+
+  **Sa MARQUE est plus petite que sa zone sensible — 12 px pour 24 —, et c'est un défaut trouvé en
+  regardant une capture** (`CLAUDE.md` §16). Dessinée d'abord à même les 24 px et suivant le rayon
+  de la carte, l'équerre se lisait comme une **languette accrochée au coin** de chaque bloc. La
+  règle vaut au-delà de ce composant : une affordance d'angle se dessine à l'intérieur de sa zone
+  sensible, elle n'en épouse pas le contour.
 
 - **Un déplacement refusé replace le bloc à sa position d'origine** — la règle du §6 pour le
   glisser-déposer d'une card, tenue sans changement. Le geste est **optimiste** à l'écran ; la
