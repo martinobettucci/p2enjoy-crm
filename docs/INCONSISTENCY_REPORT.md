@@ -2338,3 +2338,42 @@ que la relève distingue un échec d'écriture de PIÈCE d'un échec d'écriture
 qu'un stockage indisponible ne fasse plus perdre le message lui-même. La seconde est un changement
 de comportement du sous-système de messagerie, étranger à `CRM-081` (`CLAUDE.md` §13). Le
 comportement est laissé **inchangé**, et l'arbitrage revient au responsable.
+
+### INC-168 — l'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés
+
+**Nature :** point de spécification **incomplet**, relevé en écrivant `CRM-082` et laissé
+**inchangé** conformément au `CLAUDE.md` §5 — la correction dépasse la tâche autorisée, l'arbitrage
+revient au responsable.
+
+**Ce que la spécification dit.** `docs/SPEC-goals.md` §2.1 et `docs/SCHEMA.md` §9 bis.1 écrivent,
+pour `goal_boards.name` : « non vide, unique par workspace **sur la forme normalisée** ». La
+restriction n'est assortie d'aucune condition, et la migration 49 l'implémente donc telle quelle :
+
+```
+create unique index goal_boards_workspace_name_key
+	on public.goal_boards (workspace_id, app.btrim_blancs(name));
+```
+
+**Ce qui rend ce point douteux, et pourquoi il n'est pas tranché ici.** Le même document impose que
+« l'archivage tient lieu de suppression » (§2.1). Un tableau archivé continue donc d'occuper son nom,
+et **un nom libéré par l'archivage reste pris** : archiver « Objectifs du trimestre » puis vouloir
+en ouvrir un nouveau pour le trimestre suivant, sous le même nom, échoue avec
+`duplicate key value violates unique constraint "goal_boards_workspace_name_key"`.
+
+**La comparaison qui rend l'écart visible.** La spécification-sœur écrite le même jour tranche
+l'exact contraire pour les budgets — `docs/SCHEMA.md` §9 bis.4 : « unique par track **parmi les
+budgets non clôturés** (index partiel `where closed_at is null`) ». Deux objets voisins, spécifiés
+dans la même journée, reçoivent donc deux règles opposées sur la même question. L'un des deux est
+probablement un oubli de rédaction ; décider lequel n'appartient pas à l'agent.
+
+**Mesure, 2026-08-19.** Le comportement est celui qui est écrit, et il est éprouvé : l'assertion 20
+de `supabase/tests/0047_objectifs.test.sql` établit que `'  Tableau d'essai de la suite 0047  '`
+entre en collision avec `'Tableau d'essai de la suite 0047'`. Aucune assertion ne porte sur le cas
+archivé, précisément parce que la règle attendue n'est pas tranchée.
+
+**Ce qu'il faudrait pour le corriger, si le responsable le décide :** remplacer l'index par sa forme
+partielle `where archived_at is null`, dans une migration convergente, et réviser les deux documents
+dans le même changement. Le coût est faible **aujourd'hui**, aucun écran ne créant encore de
+tableau ; il croîtra dès que `CRM-083` sera livrée.
+
+**Statut :** ouvert, en attente d'arbitrage. Le comportement reste celui de la spécification.

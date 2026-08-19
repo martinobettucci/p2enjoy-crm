@@ -7815,7 +7815,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 
 | Unité | Objet | État |
 |---|---|---|
-| CRM-082 | Objectifs : modèle, RLS et API | `[ ]` |
+| CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[ ]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[ ]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[ ]` |
@@ -7824,7 +7824,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
 `CRM-086`. Les deux chaînes sont indépendantes et peuvent s'intercaler.
 
-### CRM-082 — Objectifs : modèle, RLS et API `[ ]`
+### CRM-082 — Objectifs : modèle, RLS et API `[~]`
 
 `goal_boards`, `goal_blocks`, `goal_links` (`docs/SCHEMA.md` §9 bis.1 à §9 bis.3), leurs triggers
 et leurs politiques (§9 bis.7). **Aucun écran.**
@@ -7838,11 +7838,63 @@ tableau, six blocs dont un lié et un fermé à la lectrice, et quatre flèches 
 directions ; harnais dédié `scripts/verify-objectifs.sh` non complaisant, éprouvé par des
 dégradations réelles.
 
-- [ ] **Point de vigilance, à ne pas découvrir en cours de route** : la politique de lecture de
+- [x] **Point de vigilance TENU, et il l'a été d'emblée** : la politique de lecture de
       `goal_blocks` appelle `app.can_read_channel`, et celle de `goal_links` lit `goal_blocks`. Le
       §3.5 de `docs/SPEC-permissions-rls.md` interdit qu'une politique relise sa propre table —
-      `goal_links` ne relit pas `goal_links`, donc la règle tient, mais la fonction d'appui doit
-      être `SECURITY DEFINER` comme ses sœurs, sous peine de la récursion mesurée à la décision 27.
+      `goal_links` ne relit pas `goal_links`, donc la règle tient. Les **quatre** fonctions d'appui
+      sont `SECURITY DEFINER`, `search_path` vidé, propriétaire `postgres` ; une assertion pgTAP et
+      un contrôle du harnais le remesurent au catalogue.
+- [x] **La migration est livrée** : `supabase/migrations/0049_objectifs.sql` — les trois tables,
+      leurs contraintes convergentes, l'index unique du nom normalisé, les deux fonctions de
+      trigger, les quatre fonctions d'appui et **douze politiques**, quatre par table. Appliquée et
+      **rejouée** sans erreur.
+- [x] **L'ASYMÉTRIE DU `using` ET DU `with check` EST LA RÈGLE, ET ELLE EST PROUVÉE DEUX FOIS.**
+      `docs/SPEC-goals.md` §4.2 : poser un lien exige `app.can_write_channel`, le retirer n'exige
+      que l'écriture du bloc. Le `using` ne porte donc que la LECTURE du channel actuel. Les deux
+      refus NE SE MESURENT PAS DE LA MÊME FAÇON, et c'est écrit plutôt que découvert : un refus par
+      le `using` **filtre** — zéro ligne, aucune erreur (décision 106) —, un refus par le
+      `with check` **lève `403` / `42501`**. La première rédaction de la suite pgTAP attendait le
+      mauvais code, et l'exécution l'a corrigée.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0047_objectifs.test.sql`, **45 assertions, aucune
+      anomalie** — les quatre gardes de la DoD chacune CONTRE SON SUCCÈS, dont le **cycle accepté**,
+      seule assertion qu'une implémentation zélée refusant les cycles rendrait rouge.
+- [x] **Preuve d'API dédiée** : `e2e/api/objectifs.spec.ts`, **12 scénarios** avec les jetons réels
+      des trois profils. La DoD exige des refus « mesurés comme zéro ligne ou `403` **selon le
+      geste** », distinction qui n'existe qu'au niveau HTTP : la lectrice reçoit `403` / `42501` en
+      insertion **sur chacune des trois tables**, et `200` avec un corps vide en modification comme
+      en suppression — le tableau est relu ensuite pour établir qu'il est toujours là.
+- [x] **LES ÉCARTS DU SEED PORTENT LES PREUVES, ET ILS ONT ÉTÉ MESURÉS AVANT D'ÊTRE UTILISÉS** :
+      Farida ne lit ni « Grands comptes » ni « Appels d'offres » — six channels sur huit —, Driss
+      lit « Maintenance » **sans l'écrire**, Camille écrit les huit. Le bloc invisible ne se prouve
+      qu'avec le premier écart, l'asymétrie du `using` et du `with check` qu'avec le second : ce
+      sont les seuls cas du seed qui les séparent.
+- [x] **Le seed porte son tableau démontrable** : un tableau, **six blocs** dont trois liés et un
+      fermé à la lectrice, **quatre flèches** couvrant les trois directions, et les deux bornes de
+      remplissage. Le seed vérifie lui-même, avec le **vrai jeton** de la lectrice obtenu par la
+      route de connexion, qu'elle voit cinq blocs sur six et les quatre flèches. Convergent :
+      rejoué, il ne duplique rien.
+- [x] **Harnais dédié `scripts/verify-objectifs.sh`** : **46 contrôles, aucune anomalie**, dont
+      **six dégradations** volontaires qui mordent toutes — la lecture d'un bloc qui cesserait de
+      regarder son channel, le lien qui n'exigerait plus que la lecture, l'écriture ouverte au
+      `viewer`, le trigger de cohérence retiré, la borne de `fill_percent` élargie, et un refus de
+      cycle ajouté. Le harnais interroge le CATALOGUE, jamais le fichier de migration.
+- [x] **Contrat de types révisé dans le même changement** — c'est précisément ce que la tranche 2 c
+      de `CRM-081` avait manqué (INC-165) : `database.types.ts` régénéré, témoin figé porté de
+      vingt-neuf à **trente-deux** tables, `npm run types:check` et `npm run typecheck` verts.
+- [x] `docs/PROD_MIGRATIONS.md` (migration 49 et ses vérifications obligatoires) et `CHANGELOG.md`
+      mis à jour dans le même changement.
+- [ ] **CE QUI RESTE, ET C'EST LA SEULE RAISON DU `[~]` : la campagne complète du dépôt n'a pas
+      été rejouée en entier.** Les preuves de l'unité sont vertes, ainsi que `typecheck` et
+      `types:check`. Restent à exécuter, pour constater qu'aucune régression n'a été introduite
+      ailleurs : `npm run test:sql` global, `npm run e2e:api` global, `npm run test:unit`,
+      `npm run build`, `pytest`, `npm run e2e:ui`, `npm run e2e:mail`.
+- [ ] **Écart nommé, à trancher par le responsable : l'unicité du nom d'un tableau porte sur TOUS
+      les tableaux, archivés compris.** La spécification (§2.1) et `docs/SCHEMA.md` §9 bis.1
+      écrivent « unique par workspace sur la forme normalisée », sans la restreindre aux tableaux
+      vivants — là où celle des budgets le sera explicitement (§9 bis.4, index partiel
+      `where closed_at is null`). Conséquence : **un nom libéré par l'archivage reste pris**. Le
+      comportement suit ici la spécification à la lettre, et l'écart est consigné plutôt que
+      tranché seul.
 
 ### CRM-083 — Canevas d'objectifs `[ ]`
 

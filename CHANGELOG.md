@@ -13,6 +13,43 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **`CRM-082` — le tableau d'objectifs existe en base : modèle, RLS et API.** Trois tables
+  (`goal_boards`, `goal_blocks`, `goal_links`), leurs gardes et leurs douze politiques
+  (`supabase/migrations/0049_objectifs.sql`). **Aucun écran** : le canevas est `CRM-083`. Un
+  utilisateur pose des blocs, indique **à la main** où chacun en est, et les relie par des flèches
+  à trois directions ; un bloc peut désigner un channel.
+- **Un bloc lié à un channel qu'on ne lit pas est INVISIBLE, pas grisé.** Le griser révélerait
+  qu'un objectif existe sur un dossier interdit, et son titre en dirait déjà trop. Conséquence
+  assumée et prouvée : deux personnes du même workspace ne voient pas le même dessin — la lectrice
+  seedée lit cinq blocs sur six. Ses flèches, elles, restent lisibles : l'écran les rendra « vers
+  le vide » plutôt que de faire disparaître le diagramme.
+- **Poser un lien vers un channel exige le droit d'y ÉCRIRE, le retirer non.** Un lien est une
+  affirmation publique — « cet objectif porte sur ce dossier » — que verront tous ceux qui lisent
+  le channel ; on peut en revanche toujours défaire ce qui gêne. L'asymétrie est portée par le
+  `using` et le `with check` de la même politique, et les deux refus ne se mesurent pas de la même
+  façon : le premier **filtre** sans erreur, le second lève **403 / 42501**.
+- **Aucun refus de cycle, et c'est délibéré** : « A nourrit B, B nourrit A » est une intention
+  légitime. Une assertion pgTAP et un scénario d'API le figent, parce que refuser les cycles
+  paraîtrait un durcissement de bonne foi.
+- **Un `viewer` n'écrit rien**, tableau libre compris — y compris la lectrice seedée, qui détient
+  pourtant un droit fin d'écriture sur un channel. La garde des objectifs tient au **rôle de
+  workspace**, et une assertion l'établit sur ce cas précis.
+- **Le seed porte un tableau démontrable** : six blocs dont trois liés et un fermé à la lectrice,
+  quatre flèches couvrant les trois directions, et des remplissages qui incluent les **deux
+  bornes**, 0 et 100 — une jauge n'est fausse qu'aux bords. Le seed vérifie lui-même la règle de
+  visibilité avec le **vrai jeton** de la lectrice, jamais avec la clé de service.
+
+### Vérifié
+
+- `supabase/tests/0047_objectifs.test.sql` — **45 assertions**, aucune anomalie.
+- `e2e/api/objectifs.spec.ts` — **12 scénarios** avec les jetons réels des trois profils seedés.
+- `scripts/verify-objectifs.sh` — **46 contrôles**, aucune anomalie, dont **six dégradations**
+  volontaires qui font toutes réellement échouer une preuve.
+- `database.types.ts` régénéré et son témoin figé révisé **dans le même changement** que la
+  migration : vingt-neuf tables deviennent trente-deux.
+
 ### Documentation
 
 - **Deux fonctionnalités neuves sont spécifiées avant toute ligne de code** (décisions 431 et 432,
