@@ -1213,6 +1213,48 @@ export type Database = {
           },
         ]
       }
+      mail_thread_snoozes: {
+        Row: {
+          created_at: string
+          snoozed_by: string | null
+          snoozed_until: string
+          thread_key: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          snoozed_by?: string | null
+          snoozed_until: string
+          thread_key: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          snoozed_by?: string | null
+          snoozed_until?: string
+          thread_key?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_thread_snoozes_snoozed_by_fkey"
+            columns: ["snoozed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_thread_snoozes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -2230,6 +2272,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      snooze_thread: {
+        Args: { thread_key: string; until: string; workspace: string }
+        Returns: {
+          created_at: string
+          snoozed_by: string | null
+          snoozed_until: string
+          thread_key: string
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "mail_thread_snoozes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       upsert_mail_inbound_account: {
         Args: {
           p_backfill_months?: number
@@ -2299,6 +2358,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      wake_thread: {
+        Args: { thread_key: string; workspace: string }
+        Returns: boolean
       }
     }
     Enums: {

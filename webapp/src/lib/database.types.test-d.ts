@@ -45,6 +45,14 @@ type Expect<T extends true> = T
 // type généré, lui, expose `Insert` et `Update` comme pour n'importe quelle table : le générateur
 // ne lit ni les politiques, ni les privilèges, ni les triggers. C'est la même limite qu'INC-027,
 // et elle est nommée ici plutôt que laissée à la surprise du prochain lecteur.
+//
+// RÉVISÉ PAR `CRM-081`, tranche 2 e, qui régénère le contrat laissé en arrière par la tranche 2 c :
+// `mail_thread_snoozes` — l'état de sommeil d'un fil de messagerie, livré par la migration `0048`.
+// Le client la LIT et n'y écrit JAMAIS : `snooze_thread` et `wake_thread` sont la seule porte, et
+// la fermeture est tenue par le PRIVILÈGE plutôt que par une politique (docs/SPEC-cards.md
+// §16.14.6) — un `POST` direct rend `42501`, mesuré au point J du §16.15.1. Le type généré expose
+// pourtant `Insert` et `Update`, exactement la limite déjà nommée ci-dessus pour
+// `workflow_versions`.
 
 type _tables = Expect<
   Equal<
@@ -66,6 +74,7 @@ type _tables = Expect<
     | 'mail_messages'
     | 'mail_outbound_identities'
     | 'mail_outbox'
+    | 'mail_thread_snoozes'
     | 'organizations'
     | 'profiles'
     | 'track_members'
@@ -688,7 +697,16 @@ type _vueDerivationColonnes = Expect<
 // `cards.snoozed_until`, que `CRM-081` vient de fermer à `authenticated` — une fonction qui ne
 // prêterait pas ses privilèges ne pourrait plus rien écrire (docs/SPEC-cards.md §16.3, §16.7).
 // Trente-deux devient trente-quatre.
-type _lesTrenteQuatreFonctions = Expect<
+// RÉVISÉ UNE DIX-NEUVIÈME FOIS PAR `CRM-081`, tranche 2 e. La règle n'a pas changé : la migration
+// `0048` de la tranche 2 c ajoute `snooze_thread` et `wake_thread`, DEUX fonctions appelables par un
+// écran, et le contrat de types n'avait pas été régénéré dans ce changement — le témoin figé n'a
+// donc pas menti, il n'a simplement pas été relu. La tranche 2 e, PREMIÈRE à les appeler depuis un
+// écran (docs/SPEC-cards.md §16.15.6), le régénère. Elles sont `SECURITY DEFINER` et rejoignent la
+// famille de `snooze_card` pour le motif du §16.14.4 : `mail_thread_snoozes` n'accorde AUCUNE
+// écriture à `authenticated` (mesure J du §16.15.1, `42501` sur un `POST` direct), donc une fonction
+// qui ne prêterait pas ses privilèges ne pourrait rien écrire.
+// Trente-quatre devient TRENTE-SIX.
+type _lesTrenteSixFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'change_channel_workflow'
@@ -725,6 +743,8 @@ type _lesTrenteQuatreFonctions = Expect<
     | 'upsert_mail_inbound_account'
     | 'upsert_mail_outbound_identity'
     | 'wake_card'
+    | 'snooze_thread'
+    | 'wake_thread'
   >
 >
 
@@ -896,7 +916,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteQuatreFonctions,
+  _lesTrenteSixFonctions,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

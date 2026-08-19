@@ -28,8 +28,15 @@ import {
 } from './inbox'
 import type { ClientCrm } from './supabase'
 
+// TROIS CHAMPS AJOUTÉS PAR `CRM-081` TRANCHE 2 e (docs/SPEC-cards.md §16.15.3) : la projection
+// calcule désormais la clé du fil, qui exige `references_ids` et `rfc822_message_id`, et rattache le
+// message à son workspace. Le seed porte `references_ids` VIDE — mesure A du §16.15.1 —, et la
+// fixture le reproduit plutôt que d'inventer une chaîne de références que le produit ne voit jamais.
 const ligne = (partiel: Partial<Parameters<typeof projeterMessage>[0]> = {}) => ({
 	id: 'm1',
+	workspace_id: 'w1',
+	references_ids: [] as string[],
+	rfc822_message_id: '<m1@p2enjoy.test>',
 	card_id: null,
 	classification: 'unclassified',
 	subject: 'Demande de devis',

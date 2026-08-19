@@ -4,6 +4,8 @@
 //       message dans la card)
 // @spec docs/DESIGN_SYSTEM.md §5.4 (inbox), §5.8 (états systématiques)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : les trois colonnes du fil et la lecture des fils
+//       endormis, docs/SPEC-cards.md §16.15.3
 // @spec docs/JOURNAL.md décision 327
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
@@ -16,6 +18,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -25,13 +28,21 @@ import type { ClientCrm } from './supabase'
 const CONFIGURATION_ABSENTE = { nature: 'unknown', detail: 'configuration_absente' } as const
 
 /**
- * Colonnes réellement demandées pour la LISTE — et `body_html` n'en fait pas partie.
+ * Colonnes réellement demandées pour la LISTE — et `body_html` n'en fait toujours pas partie.
  *
  * Une liste affiche un expéditeur, un objet et une date. Rapporter le corps de chaque message pour
  * n'en montrer aucun multiplierait le poids de la réponse par la taille des courriers.
+ *
+ * TROIS COLONNES AJOUTÉES PAR LA TRANCHE 2 e (docs/SPEC-cards.md §16.15.3), et chacune est
+ * NÉCESSAIRE : sans `references_ids` et `rfc822_message_id`, aucune clé de fil ne se calcule — la
+ * décision du §16.14.2 laisse cette clé hors des colonnes de la table ; sans `workspace_id`, cette
+ * clé ne se rattache à aucun workspace, et la mesure 5 du §16.14.1 interdit de l'ignorer.
  */
+// UNE SEULE CHAÎNE LITTÉRALE, JAMAIS UNE CONCATÉNATION : `supabase-js` infère le type des lignes
+// rendues à partir du littéral lui-même, et un `+` le réduit à `string` — la réponse devient alors
+// `GenericStringError` et tout appelant cesse de compiler. Mesuré en ajoutant les trois colonnes.
 export const COLONNES_LISTE =
-	'id, card_id, classification, subject, from_address, from_name, received_at'
+	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id'
 
 /** Colonnes du panneau de lecture. Le corps y est demandé, puisqu'il y est montré. */
 export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, body_text, body_html, sent_at`
@@ -40,6 +51,10 @@ type LigneMessage = Database['public']['Tables']['mail_messages']['Row']
 
 export type MessageListe = {
 	readonly id: string
+	/** Le workspace du message : la moitié de la clé d'un fil (docs/SPEC-cards.md §16.15.3). */
+	readonly workspaceId: string
+	/** La racine RFC 5322 du fil, calculée par `cleFil` — une définition, deux langages (§16.15.2). */
+	readonly cleFil: string
 	readonly cardId: string | null
 	readonly classement: LigneMessage['classification']
 	readonly objet: string
@@ -76,10 +91,23 @@ const nomAffiche = (adresse: string, nom: string | null): string =>
 /** Projette une ligne de la base en une ligne de liste. */
 export function projeterMessage(ligne: Pick<
 	LigneMessage,
-	'id' | 'card_id' | 'classification' | 'subject' | 'from_address' | 'from_name' | 'received_at'
+	| 'id'
+	| 'workspace_id'
+	| 'card_id'
+	| 'classification'
+	| 'subject'
+	| 'from_address'
+	| 'from_name'
+	| 'received_at'
+	| 'references_ids'
+	| 'rfc822_message_id'
 >): MessageListe {
 	return {
 		id: ligne.id,
+		workspaceId: ligne.workspace_id,
+		// LA CLÉ EST CALCULÉE ICI, UNE SEULE FOIS PAR MESSAGE : la recalculer à chaque rendu de
+		// ligne exposerait deux définitions au même endroit, et le §16.15.2 n'en veut qu'une.
+		cleFil: cleFil(ligne.references_ids, ligne.rfc822_message_id),
 		cardId: ligne.card_id,
 		classement: ligne.classification,
 		objet: ligne.subject !== null && ligne.subject.trim() !== '' ? ligne.subject : OBJET_ABSENT,
@@ -501,6 +529,21 @@ export function useMessages(client: ClientCrm | null, selection: Selection | nul
 
 export function useMessage(client: ClientCrm | null, id: string | null): Relecture<MessageComplet | null> {
 	return useLecture(async () => (id === null ? pret(null) : lireMessage(client, id)), [client, id])
+}
+
+/**
+ * Les fils endormis, relus par le MÊME contrat que le reste de l'écran (docs/SPEC-cards.md §16.15.3).
+ *
+ * UNE SEULE LECTURE PAR CHARGEMENT, non une par message : la table ne porte que les gestes, jamais
+ * les messages, et son volume est celui des fils endormis.
+ *
+ * ELLE N'A PAS D'ÉTAT D'ERREUR PROPRE, et c'est délibéré : `lireFilsEndormis` rend une table vide
+ * lorsqu'elle échoue, donc un fil dont l'état est inconnu s'affiche comme éveillé — l'état par
+ * défaut, et le moins surprenant. Ajouter ici un second bandeau d'erreur ferait deux messages pour
+ * une seule liste, alors que celle des messages porte déjà le sien.
+ */
+export function useFilsEndormis(client: ClientCrm | null): Relecture<FilsEndormis> {
+	return useLecture(async () => pret(await lireFilsEndormis(client)), [client])
 }
 
 // =================================================================================================
