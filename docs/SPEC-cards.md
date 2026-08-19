@@ -3202,17 +3202,32 @@ a réellement été retirée, `false` sinon. Un réveil sans sommeil **n'est pas
 demandeur** (§16.4) : rendre `false` dit ce qui s'est passé sans le lui reprocher, et un appelant
 qui n'en a que faire peut l'ignorer.
 
-##### 16.14.6 QUI LIT LA LIGNE — la table est fermée en écriture par défaut, et c'est le cas facile
+##### 16.14.6 QUI LIT LA LIGNE — et une table neuve n'est PAS fermée, c'est mesuré
 
-`public.mail_thread_snoozes` naît sans aucun privilège : une table neuve n'en accorde à personne.
-Sont donc accordés, nominativement :
+**LA PREMIÈRE RÉDACTION DE CE SOUS-CHAPITRE ÉTAIT FAUSSE, ET LA SUITE pgTAP L'A DÉMENTIE AVANT LE
+COMMIT.** Elle affirmait qu'une table neuve n'accorde de privilège à personne et que la fermeture
+en écriture était donc acquise. **MESURÉ le 2026-08-19** : les `alter default privileges` de la
+plateforme accordent `all privileges` à `anon`, `authenticated` **et** `service_role` sur toute
+table créée dans `public`. À sa naissance, `mail_thread_snoozes` était ouverte en `INSERT`,
+`UPDATE` et `DELETE` **à un appelant anonyme** — l'exact contraire de ce que le §16.14.4 garde.
+
+La fermeture ne s'hérite pas, elle se prend : `revoke all … from anon, authenticated`, puis les
+`grant` par action — convention déjà écrite par la migration 45 pour `contacts`. Sont accordés,
+nominativement :
 
 - à `authenticated` : **`SELECT` seul**, sur toutes les colonnes. L'écran devra lire l'état pour le
   montrer ; il n'écrira jamais directement ;
 - à `service_role` : `all privileges`, comme partout ailleurs, pour le seed et l'exploitation ;
-- **aucun `INSERT`, `UPDATE` ni `DELETE` à `authenticated`.** Les deux fonctions du §16.14.4 et du
-  §16.14.5 sont le seul chemin, et l'être **par le privilège** vaut mieux que l'être par une
-  politique qu'on pourrait élargir sans y penser.
+- **aucun privilège à `anon`, et aucun `INSERT`, `UPDATE` ni `DELETE` à `authenticated`.** Les deux
+  fonctions du §16.14.4 et du §16.14.5 sont le seul chemin, et l'être **par le privilège** vaut
+  mieux que l'être par une politique qu'on pourrait élargir sans y penser.
+
+Les fonctions se ferment de la même façon, et pour la même raison mesurée : `revoke … from public`
+**ne suffit pas** dans le schéma `public`, `anon` y conservant un `EXECUTE` hérité que le `revoke`
+doit **nommer**. La migration 44 l'avait mesuré pour les deux RPC de l'affaire ; c'est remesuré
+ici. `app.fil_lisible` fait exception dans un sens précis : la politique de lecture l'appelle,
+donc elle est évaluée **avec les droits de l'appelant**, et `authenticated` doit pouvoir
+l'exécuter — même forme que `app.peut_voir_message`.
 
 La RLS est active, et sa politique de lecture est `app.fil_lisible(workspace_id, thread_key)` — le
 même prédicat que les deux gardes, pour que la ligne visible et le fil visible ne puissent jamais

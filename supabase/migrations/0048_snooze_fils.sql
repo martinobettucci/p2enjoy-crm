@@ -304,15 +304,22 @@ comment on function public.wake_thread(uuid, text) is
 -- =============================================================================================
 -- 7. Qui lit la ligne — docs/SPEC-cards.md §16.14.6
 -- =============================================================================================
--- La table naît sans aucun privilège : une table neuve n'en accorde à personne. La fermeture en
--- écriture est donc ACQUISE, et non reprise — c'est le cas facile, à la différence du §16.7 qui
--- devait retirer un privilège déjà accordé.
+-- UNE TABLE NEUVE N'EST PAS FERMÉE, ET C'EST MESURÉ — la première rédaction de cette section
+-- affirmait le contraire, et la suite pgTAP l'a démentie AVANT le commit. Les `alter default
+-- privileges` de la plateforme accordent `all privileges` à `anon`, `authenticated` et
+-- `service_role` sur toute table créée dans `public` : à sa naissance, la table était donc
+-- ouverte en INSERT, UPDATE et DELETE à un appelant ANONYME. La fermeture n'est pas acquise, elle
+-- se prend.
+--
+-- `revoke all` puis `grant` par action, convention déjà écrite par la migration 45 : le
+-- comportement du produit ne dépend alors plus de ce que la plateforme accorde par défaut.
 --
 -- Les deux fonctions des sections 5 et 6 sont le seul chemin d'écriture, et l'être PAR LE
 -- PRIVILÈGE vaut mieux que l'être par une politique qu'on pourrait élargir sans y penser.
 
 alter table public.mail_thread_snoozes enable row level security;
 
+revoke all on public.mail_thread_snoozes from anon, authenticated;
 grant select on public.mail_thread_snoozes to authenticated;
 grant all privileges on public.mail_thread_snoozes to service_role;
 
@@ -328,5 +335,20 @@ comment on policy mail_thread_snoozes_lecture on public.mail_thread_snoozes is
 	'ligne visible et le fil visible ne puissent jamais diverger.';
 
 -- Les deux RPC sont appelables par un membre authentifié ; leurs gardes décident du reste.
-grant execute on function public.snooze_thread(uuid, text, timestamptz) to authenticated;
-grant execute on function public.wake_thread(uuid, text)                to authenticated;
+--
+-- `revoke ... from public` ne suffit PAS dans le schéma `public` : `anon` conserve un `EXECUTE`
+-- hérité, et le `revoke` doit donc le NOMMER. La migration 44 l'avait déjà mesuré pour les deux
+-- RPC de l'affaire ; la suite pgTAP de cette tranche l'a remesuré ici avant le commit.
+revoke all on function public.snooze_thread(uuid, text, timestamptz) from public, anon;
+revoke all on function public.wake_thread(uuid, text)                from public, anon;
+grant execute on function public.snooze_thread(uuid, text, timestamptz) to authenticated, service_role;
+grant execute on function public.wake_thread(uuid, text)                to authenticated, service_role;
+
+-- `app.fil_lisible` est appelée par la POLITIQUE de la section 7, donc évaluée avec les droits de
+-- l'appelant : `authenticated` doit pouvoir l'exécuter, sans quoi toute lecture de la table
+-- échouerait sur un refus de privilège. `anon`, qui ne lit pas la table, ne l'exécute pas — même
+-- forme que `app.peut_voir_message`, mesurée le 2026-08-19.
+revoke all on function app.fil_lisible(uuid, text) from public, anon;
+revoke all on function app.cle_fil(text[], text)   from public, anon;
+grant execute on function app.fil_lisible(uuid, text) to authenticated, service_role;
+grant execute on function app.cle_fil(text[], text)   to authenticated, service_role;
