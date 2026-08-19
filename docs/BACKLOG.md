@@ -7426,8 +7426,54 @@ avant toute ligne de code) :
       l'anneau de focus est bien sur « Nouveau contact » après la création, et la ligne créée a
       rejoint le tableau. `CHANGELOG.md` mis à jour dans le même changement.
 
-**Ce qui reste dû sur `CRM-060` après la tranche 4** : la **fiche** d'un contact, et l'arbitrage sur
-les **références mortes** (§6, point 4). `CRM-060` demeure `[~]`.
+**Sous-tranche 4f, livrée le 2026-08-19 — la fiche d'un contact, et l'HISTORIQUE TRANSVERSE**
+(`docs/SPEC-contacts.md` §15, écrite et committée avant toute ligne de code, après seize mesures
+relevées sur la pile seedée) :
+
+- [x] `webapp/src/lib/contacts.ts` — `lireFicheContact` : **une seule requête** porte la chaîne à
+      quatre niveaux `contacts → card_contacts → cards → channels → tracks`. L'ambiguïté
+      **`PGRST201`** entre `cards` et `channels` — deux clés étrangères — est **DÉSIGNÉE** par la
+      clé de cloisonnement au lieu d'être contournée par les trois lectures en cascade de
+      `lireCheminCard` ; l'adresse d'une affaire s'en déduit sans requête supplémentaire. Une
+      affaire à la **corbeille** est écartée par le serveur (`cards!inner` + `deleted_at=is.null`,
+      qui retire la ligne au lieu de rendre `cards: null`, mesuré) ; une affaire **archivée** reste
+      rendue avec son état.
+- [x] `webapp/src/app/FicheContact.tsx` — deux zones et les cinq états, sur le patron de la fiche
+      d'organisation. `CHEMIN_CONTACT` monté hors de `ROUTES` ; **aucune collision** avec
+      `CHEMIN_ORGANISATION`, ce patron portant deux segments contre trois.
+- [x] **Le nom d'un contact devient un LIEN** dans le carnet et dans la fiche d'organisation
+      (§15.6). Les deux règles qui figeaient son absence tombent par **livraison**, et les
+      **quatre assertions** qui les portaient sont **RÉVISÉES avec leur motif écrit dans le
+      fichier**, jamais retirées (mécanisme de la décision 51). Le bloc des contacts d'une affaire
+      ne gagne PAS ce lien : sa ligne porte une commande destructrice dont la preuve clavier
+      devrait être rejouée, écart nommé au §15.8.
+- [x] `webapp/src/app/FicheContact.test.tsx` (**13 tests**) : les cas a à l du §15.9. Le cas f —
+      l'affaire **archivée** — y est éprouvé parce que le seed ne le porte pas : l'ajouter
+      déplacerait une garde de convergence et le compteur que lit la règle 3 du classement (§15.7).
+- [x] `webapp/src/lib/contacts.test.ts` (**14 tests ajoutés**, 61 dans le fichier) : la requête
+      réellement émise — clé de désambiguïsation, `!inner`, filtre de corbeille, tri —, et l'adresse
+      rendue `null` plutôt que partielle quand un slug manque.
+- [x] `e2e/api/contacts.spec.ts` (**11 scénarios ajoutés**, 38 dans le fichier) : les mesures du
+      §15.3 et du §15.4 avec les jetons réels des trois profils et la clé anonyme. L'ambiguïté
+      `PGRST201` est **figée comme telle**, et le filtre de corbeille vérifié **des deux côtés** sur
+      une sonde retirée dans un `finally`. **Mesure décisive** : les droits fins de `cards`
+      traversent l'embarquement — la lectrice obtient zéro rattachement sur Léo et l'affaire de
+      Sophie sur Sophie —, ce qui autorise l'écran à ne calculer aucun droit.
+- [x] `e2e/ui/contacts.spec.ts` (**12 scénarios ajoutés**, 32 verts dans le fichier, console
+      vierge) : le lien vers une affaire est **SUIVI** et l'affaire s'ouvre — pas seulement son
+      `href` vérifié —, le parcours clavier, l'introuvable, la lectrice, et les quatre paliers.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `fiche-contact-1440.jpg`, `fiche-contact-sans-affaire-1440.jpg`,
+      `fiche-contact-introuvable-1440.jpg`, et les quatre paliers.
+- [x] `docs/DESIGN_SYSTEM.md` §5.24 ajouté et §5.20 révisé ; `docs/SPEC-webapp.md` §5.2 ;
+      `docs/manual.md` §3 ter ; `CHANGELOG.md`, dans le même changement.
+
+**Aucune migration, et le seed n'est PAS modifié** : ses trois contacts couvrent déjà toutes les
+branches sauf l'affaire archivée (§15.7).
+
+**Ce qui reste dû sur `CRM-060` après la tranche 4** : l'arbitrage sur les **références mortes**
+(§6, point 4) et les gestes d'écriture nommés au §15.8 — modifier ou supprimer un contact,
+le rattacher depuis sa fiche. `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

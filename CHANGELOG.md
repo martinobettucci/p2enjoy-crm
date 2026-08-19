@@ -15,6 +15,29 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4f : la fiche d'un contact**
+  (`docs/SPEC-contacts.md` §15, `docs/DESIGN_SYSTEM.md` §5.24). Le contact était le seul objet de
+  la tranche à n'avoir **aucune page** : quatre surfaces le nommaient — le carnet, la fiche
+  d'organisation, le bloc d'une affaire, le sélecteur du formulaire — et aucune ne menait à lui.
+  Sa fiche rend ce qui le caractérise — fonction, organisation, email, téléphone — et **ses
+  affaires**, avec le rôle qu'il tient dans chacune et un lien vers chacune. C'est l'**historique
+  transverse** que la Definition of Done de l'unité nomme, livré jusqu'ici dans l'autre sens
+  seulement : la tranche 4c disait les contacts d'une affaire, 4f dit les affaires d'un contact.
+
+  Le **nom d'un contact devient un lien** dans le carnet et dans la fiche d'organisation. Les deux
+  règles qui figeaient son absence — « il n'existe pas de fiche de contact, et un lien y serait
+  mort » — tombent par **livraison**, jamais par contournement, et les preuves qui les figeaient
+  sont **révisées avec leur motif écrit dans le fichier**.
+
+  Une affaire **archivée** reste listée avec sa pilule ; une affaire **à la corbeille** n'est pas
+  listée. Un identifiant inconnu, un appelant sans droit et une adresse mal formée rendent le
+  **même** écran « contact introuvable », et une adresse mal formée n'émet **aucune requête**.
+
+  **Aucune migration** : la fiche ne fait que lire sous la RLS de la migration `0045` et sous les
+  droits fins de `cards`. **Le seed n'est pas modifié** — ses trois contacts couvrent déjà toutes
+  les branches sauf l'affaire archivée, dont l'ajout déplacerait une garde de convergence et le
+  compteur que lit la règle 3 du classement ; l'écart est nommé et éprouvé par une preuve unitaire.
+
 - **`CRM-060` — Contacts et organisations, tranche 4e : la création d'un contact depuis le
   carnet** (`docs/SPEC-contacts.md` §14, `docs/DESIGN_SYSTEM.md` §5.23). Le carnet était en lecture
   seule depuis sa livraison : les seuls contacts du produit étaient ceux du seed. Il porte désormais

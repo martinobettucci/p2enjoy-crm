@@ -216,8 +216,8 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a et 4b. Décrit l'application réellement exécutée ; captures
-dans `docs/captures/CRM-060/`.*
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e et 4f. Décrit l'application réellement exécutée ;
+captures dans `docs/captures/CRM-060/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
@@ -226,7 +226,7 @@ Le carnet se présente en tableau, une ligne par contact, rangé par nom :
 
 | Colonne | Ce qu'elle porte |
 |---|---|
-| Nom | Le nom complet de la personne. Il est toujours renseigné |
+| Nom | Le nom complet de la personne. Il est toujours renseigné. **C'est un lien** : il ouvre la fiche de ce contact |
 | Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une. **C'est un lien** : il ouvre la fiche de cette organisation |
 | Fonction | Sa fonction, par exemple « Directeur achats » |
 | Email | Son adresse, lorsqu'elle est connue |
@@ -274,8 +274,40 @@ carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans 
 existe.
 
 **Ce que la fiche ne fait pas encore.** Elle ne permet ni de créer, ni de modifier, ni de supprimer
-une organisation. Elle ne montre pas non plus les affaires de l'organisation, et le nom d'un contact
-n'y est pas cliquable : il n'existe pas encore de fiche de contact.
+une organisation, et elle ne montre pas les affaires de l'organisation. Le nom d'un contact, lui,
+**est désormais un lien** vers sa fiche.
+
+#### La fiche d'un contact
+
+Cliquer sur le nom d'une personne — dans le carnet, ou dans la liste des contacts d'une
+organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux blocs :
+
+- **ce qui la caractérise** — sa **fonction**, son **organisation**, son **email** et son
+  **téléphone**. L'organisation est un lien vers sa propre fiche ; comme partout dans le carnet, une
+  valeur absente laisse la place **vide** plutôt qu'un tiret ;
+- **ses affaires** — un tableau à trois colonnes : l'affaire, le **rôle** que la personne y tient
+  (par exemple « decideur »), et son **état**. Le titre de chaque affaire est un lien qui l'ouvre.
+
+C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? ».
+Le rattachement lui-même, en revanche, se règle toujours depuis l'affaire (chapitre 4.7 ter).
+
+**Le rôle dans l'affaire n'est pas la fonction.** La fonction qualifie la personne dans son
+organisation ; le rôle dit ce qu'elle est **dans cette affaire-là**. Les deux portent le même mot
+dans la langue courante, c'est pourquoi ils vivent dans deux blocs séparés.
+
+**Quelles affaires sont listées.** Uniquement celles que **vous** avez le droit de lire : si une
+affaire appartient à un univers qui vous est fermé, elle n'apparaît pas, et la page ne le signale
+pas — elle ne peut pas vous parler de ce que vous ne pouvez pas voir. Une affaire **archivée** reste
+listée, avec la mention **« Archivée »**, parce que l'historique d'une personne compte. Une affaire
+**mise à la corbeille** n'est pas listée : c'est la corbeille qui en répond.
+
+**Une adresse inconnue, un contact supprimé ou un contact que vous n'avez pas le droit de lire
+donnent tous le même écran** : « Contact introuvable », avec un bouton de retour au carnet — même
+règle que pour l'organisation, et pour la même raison.
+
+**Ce que la fiche ne fait pas encore.** Elle ne permet ni de modifier, ni de supprimer un contact,
+ni de le rattacher à une affaire depuis cette page. Elle ne montre pas non plus les emails échangés
+avec la personne : la messagerie d'une affaire reste dans l'affaire.
 
 #### Créer un contact
 

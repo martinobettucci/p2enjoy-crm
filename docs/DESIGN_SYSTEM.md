@@ -1534,9 +1534,11 @@ n'existe aucune liste d'organisations. Ce que l'écran lit est spécifié par `d
   formée (`docs/SPEC-permissions-rls.md` §7) ; **zone des contacts vide** — sans action, comme le
   §5.19 et le §5.16, cette surface ne livrant aucun geste de création.
 
-- **Le nom d'un contact n'est PAS un lien** : il n'existe pas de fiche de contact, et un lien y
-  serait mort (§5.10). C'est la règle que le §5.19 vient d'abandonner pour l'organisation, tenue
-  ici pour la même raison qu'elle l'avait été là.
+- **Le nom d'un contact EST un lien vers sa fiche** — RÉVISÉ le 2026-08-19 par la livraison de la
+  fiche de contact (§5.24). La règle posée ici était : « il n'existe pas de fiche de contact, et un
+  lien y serait mort » — la règle exacte que le §5.19 venait d'abandonner pour l'organisation,
+  tenue ici pour la raison qui la fondait là. Cette condition tombe par LIVRAISON, jamais par
+  contournement.
 
 - **Le conteneur du tableau porte `.indique-debordement-x`** (§12.6), comme le §5.19 : à 390 px les
   quatre colonnes ne tiennent pas, et le tableau défile **dans son conteneur** pendant que la page
@@ -1903,3 +1905,50 @@ contacts d'une affaire — plutôt que d'inventer une forme : mêmes règles, m�
 - **L'état vide du carnet offre désormais ce geste**, et c'est une **révision par livraison** de la
   règle du §5.19 : « l'état vide n'offre aucune action » tenait tant qu'aucun geste de création
   n'existait. Un carnet vide est précisément celui où l'on veut ajouter un contact.
+
+### 5.24 Fiche de contact — `CRM-060`
+
+Surface de **détail** atteinte depuis le carnet (§5.19) et depuis la fiche d'organisation (§5.20),
+jamais depuis la barre latérale : le carnet est la liste qui la peuple. Ce que l'écran lit est
+spécifié par `docs/SPEC-contacts.md` §15 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **Deux zones, et le patron du §5.20 tenu à l'identique.** Ce qui caractérise le contact —
+  fonction, organisation, email, téléphone — est une **liste de définitions** (`<dl>`) à deux
+  colonnes à partir de `md`, empilée en dessous. Ses affaires sont des lignes homogènes et
+  reprennent le **tableau du §5.9**, à **trois** colonnes : affaire, rôle dans l'affaire, état.
+
+  **Trois colonnes et non cinq** : le track et le channel d'une affaire sont dans son **adresse**,
+  et les poser en colonnes remplirait la ligne d'une information que le clic donne déjà.
+
+  Le palier est `md`, jamais `sm` — même motif qu'au §5.20 : `sm` est un variant inconnu que
+  Tailwind supprime sans rien signaler (§11, §12.5).
+
+- **Le nom du contact est le titre de la route** : une **donnée**, portée par `titreRoute` de la
+  coquille et non par une clé de traduction (§10), avec une clé de repli pendant le chargement.
+
+- **`email` et `phone` sont des données techniques** (§2) : monospace. **`role_title` n'en est
+  pas une** — c'est un intitulé de fonction, du texte ordinaire, et le rendre en monospace lui
+  donnerait l'apparence d'un identifiant. Une valeur absente laisse la valeur **vide** — ni tiret,
+  ni « non renseigné » —, la règle du §5.9.
+
+- **Deux liens, et leurs deux règles.** L'**organisation** mène à sa fiche (§5.20), et reste
+  **vide et sans lien** quand le contact n'en a aucune. Le **titre d'une affaire** mène à cette
+  affaire ; il est toujours un lien, l'adresse étant construite dans la même lecture.
+
+- **Une affaire archivée porte une pilule « Archivée »** (§5.6), précédée d'une icône afin que
+  l'information ne repose jamais sur la seule couleur, et **reste atteignable** : une affaire
+  archivée est une affaire réelle, et l'historique d'un contact est ce que cette page sert. Une
+  affaire **à la corbeille** n'est pas listée du tout — la corbeille (§5.16) est la surface qui en
+  répond.
+
+- **Cinq états, tous traités** (§5.8). Squelettes pendant la lecture ; erreur avec reprise qui
+  relit réellement ; **contact introuvable**, qui porte un retour vers le carnet et qui est le
+  **même** écran pour un identifiant inconnu, pour un appelant sans droit et pour une adresse mal
+  formée (`docs/SPEC-permissions-rls.md` §7) ; **zone des affaires vide** — sans action, cette
+  surface ne livrant aucun geste.
+
+  **La zone vide est AUSSI l'écran d'un lecteur restreint**, et c'est délibéré : les droits fins de
+  `cards` retirent les affaires que l'appelant ne peut pas lire, et l'écran n'a donc aucun refus à
+  mettre en scène (§5.8, `docs/SPEC-contacts.md` §15.4).
+
+- **Le conteneur du tableau porte `.indique-debordement-x`** (§12.6), comme le §5.19 et le §5.20.
