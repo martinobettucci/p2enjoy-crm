@@ -2123,6 +2123,84 @@ Déplacer un état dans la liste ne déplace aucune affaire.
 - Le nombre d'affaires posées sur un nœud n'est **pas affiché à l'avance** ; il apparaît dans le
   refus d'archivage.
 
+## 5 quinquies. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé
+
+*Livré par `CRM-086` tranche 3. Captures dans `docs/captures/CRM-086/`.*
+
+**Où.** Ouvrez un track, puis l'entrée **« Coûts »** de la barre d'onglets, à droite des channels et
+séparée d'eux par un filet. L'adresse est partageable et rechargeable.
+
+**L'entrée est là même si le track n'a aucun channel.** Un track porte ses budgets indépendamment de
+ses channels ; ne pas encore avoir ouvert de channel n'empêche pas d'avoir engagé des dépenses.
+
+**Ce que l'écran montre.** Pour chaque budget **ouvert** du track, deux barres côte à côte : le
+**prévisionnel** — la somme des coûts estimés des lignes rattachées à ce budget — et le **réel** — la
+somme des coûts réellement saisis. La barre du réel passe au rouge lorsqu'elle **dépasse** le
+prévisionnel, et le tableau sous le graphique l'écrit aussi en toutes lettres : une couleur ne porte
+jamais seule une information dans ce produit.
+
+**Le tableau sous le graphique n'est pas un doublon.** C'est la version que lit un lecteur d'écran,
+et celle qui reste juste si les couleurs ne passent pas — à l'impression, sur un projecteur, ou pour
+qui les distingue mal. Il porte les mêmes chiffres, plus une colonne **« Sans réel »** qui compte les
+lignes dont le coût réel n'a pas encore été saisi, budget par budget.
+
+**Un budget récurrent apparaît ici en UNE seule paire de barres**, toutes ses occurrences confondues.
+Le détail occurrence par occurrence appartient à l'écran du budget, qui n'est pas encore livré.
+
+**Un budget clôturé n'apparaît pas sur cet écran.** Il n'a pas disparu : ses lignes existent
+toujours, et leur coût réel reste saisissable — clôturer une campagne n'empêche pas les factures
+d'arriver ensuite. Il sort simplement de la comparaison des budgets en cours.
+
+### 5 quinquies.1 La phrase sous le graphique, et pourquoi elle compte
+
+Quand des coûts réels manquent, l'écran écrit sous le graphique :
+
+> « 1 ligne(s) sans coût réel saisi, pour 100 € de prévisionnel. »
+
+**Sans elle, un réel bas se lirait comme une économie alors qu'il n'est qu'une saisie en retard**,
+et c'est la principale façon dont un tel écran pourrait mentir. Une ligne sans coût réel **ne compte
+pas** dans la barre du réel : le produit ne confond jamais « pas encore su » et « rien dépensé ».
+
+**Elle disparaît quand tous les réels sont saisis**, au lieu d'afficher « 0 ligne ». Un
+avertissement affiché en permanence cesse d'être lu, et c'est quand il apparaît qu'il doit se
+remarquer.
+
+### 5 quinquies.2 Plusieurs devises
+
+Si le track porte des budgets dans plusieurs devises, l'écran rend **un graphique par devise**,
+chacun avec son propre total. Il n'additionne jamais deux devises : aucune conversion et aucun taux
+de change n'existent dans le produit, et un total unique n'aurait donc aucun sens. Si tout est dans
+la même devise — le cas courant — vous ne voyez rien de cette mécanique.
+
+### 5 quinquies.3 Les états que vous pouvez rencontrer
+
+| Ce que vous voyez | Ce que cela veut dire |
+|---|---|
+| « Aucun budget sur ce track » | Aucun budget **ouvert** que vous ayez le droit de lire. Un administrateur en crée depuis « Réglages ▸ Arborescence » |
+| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne de coût |
+| « Accès refusé » | Votre compte n'a pas le droit de lire ces budgets |
+| « Track introuvable » | L'adresse ne désigne aucun track que vous puissiez lire |
+
+**Ce que vous voyez est ce que vos droits vous consentent.** Un budget que vous n'avez pas le droit
+de lire n'entre pas dans le total, et **l'écran ne vous signale aucun manque** : le signaler
+reviendrait à vous apprendre l'existence de ce qu'il cache. Votre total peut donc être plus petit
+que celui d'un collègue, et c'est le comportement voulu.
+
+### 5 quinquies.4 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût d'une affaire se créent et se modifient depuis la fiche
+  de l'affaire, section « Coûts ». Les budgets s'administrent depuis « Réglages ▸ Arborescence ».
+- **Aucun filtre, aucun tri, aucune période.** L'écran rend les budgets ouverts du track dans l'ordre
+  de leur administration.
+
+### 5 quinquies.5 Ce qui n'est pas encore là
+
+- L'**écran d'un budget**, qui le détaillera **occurrence par occurrence** avec la liste de ses
+  lignes de coût.
+- Le **cumul de l'espace de travail**, un graphique par track.
+- L'onglet **« À saisir »**, qui listera toutes les lignes en attente de leur coût réel et permettra
+  de les saisir à la suite, sans ouvrir les affaires une par une.
+
 ## 6. Consulter l'état de la messagerie
 
 *Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
