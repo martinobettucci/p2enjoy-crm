@@ -1,4 +1,10 @@
 // @verifies CRM-082 (docs/BACKLOG.md) — objectifs : modèle, RLS et API, hors interface
+// @verifies CRM-083 (docs/BACKLOG.md) — sa Definition of Done exige que le refus du `viewer` soit
+//           mesuré HORS INTERFACE, et c'est CE fichier qui le tient pour le canevas : insertion
+//           refusée `403` / `42501` sur les trois tables, modification et SUPPRESSION filtrées à
+//           zéro ligne, les lignes relues intactes derrière. La citation est écrite ici plutôt que
+//           laissée implicite : sans elle, la trace de cette exigence ne mène plus à l'unité de
+//           l'écran, et `scripts/verify-objectifs-canevas.sh` la refuse
 // @verifies docs/SPEC-goals.md §2 (objets et contraintes), §4.1 (lecture, et le bloc invisible),
 //           §4.2 (écriture, et le lien qui engage la destination)
 // @verifies docs/SCHEMA.md §9 bis.1 à §9 bis.3 (colonnes), §9 bis.7 (politiques)
