@@ -39,6 +39,9 @@ import {
 	CHEMIN_INBOX,
 	CHEMIN_CONTACT,
 	cheminContact,
+	CHEMIN_OBJECTIFS,
+	CHEMIN_OBJECTIFS_TABLEAU,
+	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 } from './chemins'
@@ -54,6 +57,9 @@ export {
 	CHEMIN_INBOX,
 	CHEMIN_CONTACT,
 	cheminContact,
+	CHEMIN_OBJECTIFS,
+	CHEMIN_OBJECTIFS_TABLEAU,
+	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 }
@@ -74,6 +80,13 @@ const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).R
  * (`CLAUDE.md` §21). Le repli de `Suspense` est déjà posé par `App`.
  */
 const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet }))
+
+/**
+ * La liste des tableaux d'objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1. Chargée à la demande
+ * pour le motif exact du carnet et de l'inbox : un écran que la plupart des sessions n'ouvrent pas
+ * n'a pas à peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21).
+ */
+const Objectifs = lazy(async () => ({ default: (await import('./Objectifs')).Objectifs }))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -114,6 +127,16 @@ export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
  */
 export const CLE_TITRE_DEMARRAGE: CleTraduction = 'onboarding.title'
 
+/**
+ * Titre du canevas d'un tableau — `CRM-083`, `docs/SPEC-goals.md` §5.2.
+ *
+ * Le canevas suit le patron de `CHEMIN_CARD` et de la fiche de contact : son adresse ne figure pas
+ * dans `ROUTES`, la couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` restant ainsi inchangée. Le
+ * titre porté par la coquille est cette clé ; le NOM du tableau, qui est une donnée, est rendu par
+ * l'écran lui-même.
+ */
+export const CLE_TITRE_OBJECTIFS: CleTraduction = 'route.goals.title'
+
 export const ROUTES: readonly DescriptionRoute[] = [
 	{
 		// `CRM-079` remplace l'état vide inconditionnel de `CRM-007` par l'accueil du guide de
@@ -138,6 +161,15 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_CONTACTS,
 		cleTitre: 'route.contacts.title',
 		rendu: () => <Carnet />,
+	},
+	{
+		// Les objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1 : « entrée de navigation
+		// **« Objectifs »**, au même niveau que la messagerie ». C'est une entrée TRANSVERSE et
+		// non une section des réglages, pour la raison qui a déjà placé le carnet hors des
+		// réglages : un tableau d'objectifs n'administre rien, il porte le travail.
+		chemin: CHEMIN_OBJECTIFS,
+		cleTitre: 'route.goals.title',
+		rendu: () => <Objectifs />,
 	},
 	{
 		chemin: '/ma-journee',

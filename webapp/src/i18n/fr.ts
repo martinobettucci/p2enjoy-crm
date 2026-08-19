@@ -26,6 +26,7 @@ export const fr = {
 	'nav.item.board': 'Board',
 	'nav.item.inbox': 'Inbox',
 	'nav.item.contacts': 'Contacts',
+	'nav.item.goals': 'Objectifs',
 	'nav.item.today': 'Ma journée',
 	'nav.item.settings': 'Réglages',
 
@@ -422,6 +423,46 @@ export const fr = {
 	'cardContacts.refus.forbidden': 'Vous ne pouvez pas modifier cette affaire.',
 	'cardContacts.refus.network': 'La requête n’a pas abouti. Vérifiez votre connexion, puis réessayez.',
 	'cardContacts.refus.unknown': 'Une erreur inattendue est survenue.',
+
+	// --- Objectifs — CRM-083, docs/SPEC-goals.md §5 --------------------------------------
+	// Le canevas ne porte AUCUN texte qui nommerait ce qu'il cache : un bloc masqué par la RLS
+	// n'a ni libellé, ni infobulle, ni ligne dédiée (§4.1 et §5.4). Les clés ci-dessous sont
+	// donc volontairement muettes sur l'absence — « extrémité hors de portée » ne dit pas
+	// qu'un bloc existe, il dit que la flèche ne joint rien de visible.
+	'route.goals.title': 'Objectifs',
+	'goals.aria': 'Tableaux d’objectifs',
+	'goals.list.blocks': '{compte} blocs',
+	'goals.list.blocks.one': '1 bloc',
+	'goals.list.blocks.none': 'Aucun bloc',
+	'goals.list.empty.title': 'Aucun tableau d’objectifs',
+	'goals.list.empty.body':
+		'Un tableau d’objectifs est une surface libre : on y pose des blocs, on les relie, et on indique à la main où chacun en est.',
+	'goals.error.title': 'Les objectifs n’ont pas pu être chargés',
+	'goals.error.body': 'La requête n’a pas abouti. Vérifiez votre connexion, puis réessayez.',
+	'goals.error.retry': 'Réessayer',
+	'goals.board.empty.title': 'Aucun objectif sur ce tableau',
+	'goals.board.empty.body': 'Posez un premier bloc pour commencer à dessiner vos objectifs.',
+	'goals.board.notfound.title': 'Tableau introuvable',
+	'goals.board.notfound.body':
+		'Aucun tableau d’objectifs de cet espace de travail ne correspond à cette adresse, ou votre compte n’y a pas accès.',
+	'goals.canvas.aria': 'Canevas des objectifs',
+	'goals.block.fill': 'Remplissage {valeur} %',
+	'goals.block.aria': '{titre} — remplissage {valeur} %',
+	'goals.block.aria.channel': '{titre} — remplissage {valeur} %, lié à {track} › {channel}',
+	'goals.block.link.lost': 'Lien perdu',
+	'goals.block.link.lost.hint': 'La destination de ce bloc n’existe plus. Reposez un lien.',
+	'goals.block.open': 'Ouvrir le channel lié',
+	'goals.diagram.title': 'Liens du diagramme',
+	'goals.diagram.aria': 'Équivalent textuel du diagramme',
+	'goals.diagram.empty': 'Aucun lien entre les blocs de ce tableau.',
+	'goals.diagram.unreachable': 'extrémité hors de portée',
+	'goals.diagram.line': '{source} {symbole} {cible}',
+	'goals.diagram.line.labelled': '{source} {symbole} {cible} ({libelle})',
+	'goals.block.pill': '{track} › {channel}',
+	'goals.zoom.in': 'Agrandir le canevas',
+	'goals.zoom.out': 'Réduire le canevas',
+	'goals.zoom.value': '{valeur} %',
+	'goals.back.list': 'Retour aux tableaux',
 
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',

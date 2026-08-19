@@ -30,6 +30,7 @@ import {
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMIN_CONTACT,
+	CHEMIN_OBJECTIFS_TABLEAU,
 	CHEMIN_ORGANISATION,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
@@ -39,6 +40,7 @@ import {
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
+	CLE_TITRE_OBJECTIFS,
 	PageIntrouvable,
 	ROUTES,
 } from './routes'
@@ -55,6 +57,14 @@ const AdministrationArborescence = lazy(async () => ({
 /** L'éditeur de workflows de `CRM-076`, chargé à la demande pour la même raison. */
 const AdministrationWorkflows = lazy(async () => ({
 	default: (await import('./AdministrationWorkflows')).AdministrationWorkflows,
+}))
+/**
+ * Le canevas d'objectifs de `CRM-083`, chargé à la demande pour la même raison que les surfaces
+ * d'administration : il emporte le tracé SVG du diagramme, que les sessions qui n'ouvrent jamais
+ * un tableau n'ont pas à télécharger (`CLAUDE.md` §21).
+ */
+const CanevasObjectifs = lazy(async () => ({
+	default: (await import('./Objectifs')).CanevasObjectifs,
 }))
 /** L'administration du catalogue de `CRM-030`, chargée à la demande pour la même raison. */
 const AdministrationCatalogue = lazy(async () => ({
@@ -155,6 +165,18 @@ function RoutesApplication() {
 				    aucune adresse ne peut satisfaire les deux. Hors de `ROUTES` : son titre est le
 				    nom du contact — une donnée —, et son contenu dépend d'un paramètre d'URL. */}
 				<Route path={CHEMIN_CONTACT} element={<FicheContact />} />
+				{/* Le canevas d'un tableau d'objectifs — `CRM-083`, docs/SPEC-goals.md §5.2. Hors
+				    de `ROUTES` : son titre est le nom du tableau — une donnée —, et son contenu
+				    dépend d'un paramètre d'URL. Déclarée APRÈS la liste, dont elle prolonge le
+				    chemin. */}
+				<Route
+					path={CHEMIN_OBJECTIFS_TABLEAU}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_OBJECTIFS}>
+							<CanevasObjectifs />
+						</AppShell>
+					}
+				/>
 				{/* L'administration de l'arborescence — `CRM-075`. Elle porte la coquille commune et
 				    son titre est une clé de traduction, mais elle n'est pas une entrée de la barre
 				    latérale : on y arrive par l'index des réglages

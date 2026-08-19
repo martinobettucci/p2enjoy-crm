@@ -81,5 +81,30 @@ export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 /** Corbeille — `CRM-077`. */
 export const CHEMIN_CORBEILLE = '/reglages/corbeille' as const
 
+/**
+ * Objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1.
+ *
+ * Une route de PREMIER NIVEAU, « au même niveau que la messagerie » comme la spécification
+ * l'écrit, et non une section de `/reglages` : un tableau d'objectifs n'administre rien, il porte
+ * le travail — le même raisonnement exactement que celui qui a placé le carnet de contacts hors
+ * des réglages.
+ */
+export const CHEMIN_OBJECTIFS = '/objectifs' as const
+
+/**
+ * Canevas d'un tableau donné — `docs/SPEC-goals.md` §5.2.
+ *
+ * Le tableau est désigné par son IDENTIFIANT : `goal_boards` ne porte aucun slug, et son `name`
+ * ne peut pas en tenir lieu — il est libre, renommable, et unique seulement après normalisation.
+ *
+ * Cette adresse ne figure PAS dans `ROUTES` : son titre est le nom du tableau, donc une donnée,
+ * et son contenu dépend d'un paramètre d'URL. La couverture exacte `ROUTES` ⇄
+ * `ENTREES_TRANSVERSES` reste ainsi inchangée.
+ */
+export const CHEMIN_OBJECTIFS_TABLEAU = '/objectifs/:idTableau' as const
+
+/** Adresse concrète du canevas d'un tableau donné. */
+export const cheminTableauObjectifs = (idTableau: string) => `/objectifs/${idTableau}`
+
 /** Guide de démarrage — `CRM-079`, `docs/SPEC-onboarding.md` §4.1. */
 export const CHEMIN_DEMARRAGE = '/demarrage' as const
